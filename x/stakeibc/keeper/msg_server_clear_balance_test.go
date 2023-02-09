@@ -55,7 +55,7 @@ func (s *KeeperTestSuite) SetupClearBalance() ClearBalanceTestCase {
 		initialState: ClearBalanceState{
 			hz: hostZone,
 			feeChannel: Channel{
-				PortID:    icatypes.PortKeyPrefix + feeAccountOwner,
+				PortID:    icatypes.ControllerPortPrefix + feeAccountOwner,
 				ChannelID: feeChannelID,
 			},
 		},

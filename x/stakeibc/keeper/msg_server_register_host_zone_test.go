@@ -99,7 +99,7 @@ func (s *KeeperTestSuite) createNewHostZoneMessage(chainID string, denom string,
 //
 //	so that the registration fails
 func (s *KeeperTestSuite) createActiveChannelOnICAPort(accountName string, channelID string) {
-	portID := fmt.Sprintf("%s%s.%s", icatypes.PortKeyPrefix, HostChainId, accountName)
+	portID := fmt.Sprintf("%s%s.%s", icatypes.ControllerPortPrefix, HostChainId, accountName)
 	openChannel := channeltypes.Channel{State: channeltypes.OPEN}
 
 	// The channel ID doesn't matter here - all that matters is that theres an open channel on the port

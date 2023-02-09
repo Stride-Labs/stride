@@ -203,7 +203,7 @@ func (s *KeeperTestSuite) SetupDepositRecords() DepositRecordsTestCase {
 			ChannelID: ibctesting.FirstChannelID,
 		},
 		DelegationChannel: Channel{
-			PortID:    icatypes.PortKeyPrefix + delegationAccountOwner,
+			PortID:    icatypes.ControllerPortPrefix + delegationAccountOwner,
 			ChannelID: delegationChannelID,
 		},
 	}
