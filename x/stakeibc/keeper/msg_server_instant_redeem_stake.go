@@ -2,9 +2,7 @@ package keeper
 
 import (
 	"context"
-	sdkmath "cosmossdk.io/math"
 	"fmt"
-	recordstypes "github.com/Stride-Labs/stride/v5/x/records/types"
 	"github.com/spf13/cast"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -73,27 +71,9 @@ func (k msgServer) InstantRedeemStake(goCtx context.Context, msg *types.MsgInsta
 		return nil, sdkerrors.Wrapf(sdkerrors.ErrInvalidCoins, "balance is lower than redemption amount. redemption amount: %v, balance %v: ", msg.Amount, balance.Amount)
 	}
 
-	// Find and subtract this amount from a deposit record if it is big enough
-	depositRecords := k.RecordsKeeper.GetAllDepositRecord(ctx)
-	pendingDepositRecords := k.RecordsKeeper.FilterDepositRecords(depositRecords, func(record recordstypes.DepositRecord) (condition bool) {
-		return record.Status == recordstypes.DepositRecord_TRANSFER_QUEUE && record.HostZoneId == hostZone.ChainId
-	})
-	totalPendingDeposits := k.RecordsKeeper.SumDepositRecords(pendingDepositRecords)
-	if nativeAmount.GT(totalPendingDeposits) {
-		return nil, sdkerrors.Wrapf(types.ErrInvalidAmount, "cannot instant redeem stake an amount %v g.t. pending deposit balance on host zone: %v", nativeAmount, msg.Amount)
-	}
-	// Subtract all of nativeAmount from one or more pending deposit records
-	nativeAmountRemaining := nativeAmount
-	for _, depositRecord := range pendingDepositRecords {
-		if nativeAmountRemaining.GTE(depositRecord.Amount) {
-			nativeAmountRemaining = nativeAmountRemaining.Sub(depositRecord.Amount)
-			depositRecord.Amount = sdkmath.ZeroInt()
-
-		} else {
-			depositRecord.Amount = depositRecord.Amount.Sub(nativeAmountRemaining)
-			nativeAmountRemaining = sdkmath.ZeroInt()
-		}
-		k.RecordsKeeper.SetDepositRecord(ctx, depositRecord)
+	err = k.RecordsKeeper.SubtractFromDepositRecords(ctx, nativeAmount, hostZone.ChainId)
+	if err != nil {
+		return nil, err
 	}
 	bech32ZoneAddress, err := sdk.AccAddressFromBech32(hostZone.Address)
 	if err != nil {
