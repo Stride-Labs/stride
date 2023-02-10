@@ -34,4 +34,6 @@ message Params {
   uint64 ibc_transfer_timeout_nanos = 16;
   uint64 safety_num_validators = 17;
   uint64 safety_max_slash_percent = 18;
+  map<string, string> max_redemption_rates = 19; // maxrrs = {chainidA: "1.5", chainidB: "2.0",…}
+  map<string, string> min_redemption_rates = 20; // minrrs = {chainidA: "0.6", chainidB: "0.8",…}
 }
