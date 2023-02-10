@@ -2,10 +2,8 @@ package keeper
 
 import (
 	"context"
-	sdkmath "cosmossdk.io/math"
 	"fmt"
-	"github.com/Stride-Labs/stride/v5/utils"
-	recordstypes "github.com/Stride-Labs/stride/v5/x/records/types"
+	"github.com/spf13/cast"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -36,6 +34,19 @@ func (k msgServer) InstantRedeemStake(goCtx context.Context, msg *types.MsgInsta
 		return nil, sdkerrors.Wrapf(types.ErrRedemptionRateOutsideSafetyBounds, errMsg)
 	}
 
+	// Determine the instant redemption commission rate to the relevant portion can be sent to the community pool for now
+	params := k.GetParams(ctx)
+	instantRedemptionCommissionInt, err := cast.ToInt64E(params.InstantRedemptionCommission)
+	if err != nil {
+		return nil, err
+	}
+
+	// check that instant redemption commission is between 0 and 1
+	instantRedemptionCommission := sdk.NewDec(instantRedemptionCommissionInt).Quo(sdk.NewDec(10000))
+	if instantRedemptionCommission.LT(sdk.ZeroDec()) || instantRedemptionCommission.GT(sdk.OneDec()) {
+		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "Aborting instant redemption -- instant redemption commission must be between 0 and 1!")
+	}
+
 	// construct desired unstaking amount from host zone
 	nativeAmount := sdk.NewDecFromInt(msg.Amount).Mul(hostZone.RedemptionRate).RoundInt()
 	// safety checks on the coin
@@ -43,10 +54,14 @@ func (k msgServer) InstantRedeemStake(goCtx context.Context, msg *types.MsgInsta
 	if !nativeAmount.IsPositive() {
 		return nil, sdkerrors.Wrapf(sdkerrors.ErrInvalidCoins, "amount must be greater than 0. found: %v", msg.Amount)
 	}
+	// Compute the fee amount from the by using the redemption commission of the native amount to return to user
+	feeAmount := instantRedemptionCommission.Mul(sdk.NewDecFromInt(nativeAmount)).TruncateInt()
+	redemptionAmount := nativeAmount.Sub(feeAmount)
 
-	// get the native Ibc coin to return to user
+	// get the native Ibc coin to return to user, and feeCoin for community pool
 	ibcDenom := hostZone.GetIbcDenom()
-	nativeCoin := sdk.NewCoin(ibcDenom, nativeAmount)
+	redemptionCoin := sdk.NewCoin(ibcDenom, redemptionAmount)
+	feeCoin := sdk.NewCoin(ibcDenom, feeAmount)
 
 	stDenom := types.StAssetDenomFromHostZoneDenom(hostZone.HostDenom)
 	// 	- Creator owns at least "amount" stAssets
@@ -56,36 +71,30 @@ func (k msgServer) InstantRedeemStake(goCtx context.Context, msg *types.MsgInsta
 		return nil, sdkerrors.Wrapf(sdkerrors.ErrInvalidCoins, "balance is lower than redemption amount. redemption amount: %v, balance %v: ", msg.Amount, balance.Amount)
 	}
 
-	// Find and subtract this amount from a deposit record if it is big enough
-	depositRecords := k.RecordsKeeper.GetAllDepositRecord(ctx)
-	pendingDepositRecords := utils.FilterDepositRecords(depositRecords, func(record recordstypes.DepositRecord) (condition bool) {
-		return record.Status == recordstypes.DepositRecord_TRANSFER_QUEUE && record.HostZoneId == hostZone.ChainId
-	})
-	totalPendingDeposits := utils.SumDepositRecords(pendingDepositRecords)
-	if nativeAmount.GT(totalPendingDeposits) {
-		return nil, sdkerrors.Wrapf(types.ErrInvalidAmount, "cannot instant redeem stake an amount %v g.t. pending deposit balance on host zone: %v", nativeAmount, msg.Amount)
-	}
-	// Subtract all of nativeAmount from one or more pending deposit records
-	nativeAmountRemaining := nativeAmount
-	for _, depositRecord := range pendingDepositRecords {
-		if nativeAmountRemaining.GTE(depositRecord.Amount) {
-			nativeAmountRemaining = nativeAmountRemaining.Sub(depositRecord.Amount)
-			depositRecord.Amount = sdkmath.ZeroInt()
-			k.RecordsKeeper.SetDepositRecord(ctx, depositRecord)
-
-		} else {
-			depositRecord.Amount.Sub(nativeAmountRemaining)
-		}
+	err = k.RecordsKeeper.SubtractFromDepositRecords(ctx, nativeAmount, hostZone.ChainId)
+	if err != nil {
+		return nil, err
 	}
 	bech32ZoneAddress, err := sdk.AccAddressFromBech32(hostZone.Address)
 	if err != nil {
 		return nil, fmt.Errorf("could not bech32 decode address %s of zone with id: %s", hostZone.Address, hostZone.ChainId)
 	}
+
 	// Send that amount back to user
-	err = k.bankKeeper.SendCoins(ctx, bech32ZoneAddress, sender, sdk.NewCoins(nativeCoin))
+	err = k.bankKeeper.SendCoins(ctx, bech32ZoneAddress, sender, sdk.NewCoins(redemptionCoin))
 	if err != nil {
-		k.Logger(ctx).Error("Failed to send sdk.NewCoins(nativeCoin) back to user")
-		return nil, sdkerrors.Wrapf(types.ErrInsufficientFunds, "couldn't send %v derivative %s tokens from module account. err: %s", nativeCoin.Amount, nativeCoin.Denom, err.Error())
+		k.Logger(ctx).Error("Failed to send sdk.NewCoins(redemptionCoin) back to user")
+		return nil, sdkerrors.Wrapf(types.ErrInsufficientFunds, "couldn't send %v derivative %s tokens from module account. err: %s", redemptionCoin.Amount, redemptionCoin.Denom, err.Error())
+	}
+	bech32PoolAddress, err := sdk.AccAddressFromBech32(types.CommunityPoolAccount)
+	if err != nil {
+		return nil, fmt.Errorf("could not bech32 decode community pool address %s", types.CommunityPoolAccount)
+	}
+	// Send the fee amount to the community pool
+	err = k.bankKeeper.SendCoins(ctx, bech32ZoneAddress, bech32PoolAddress, sdk.NewCoins(feeCoin))
+	if err != nil {
+		k.Logger(ctx).Error("Failed to send sdk.NewCoins(feeCoin) to the community pool")
+		return nil, sdkerrors.Wrapf(types.ErrInsufficientFunds, "couldn't send %v derivative %s tokens from module account. err: %s", feeCoin.Amount, feeCoin.Denom, err.Error())
 	}
 
 	// Send tokens back to module to burn
@@ -103,6 +112,6 @@ func (k msgServer) InstantRedeemStake(goCtx context.Context, msg *types.MsgInsta
 	}
 	k.Logger(ctx).Info(fmt.Sprintf("Total supply %s", k.bankKeeper.GetSupply(ctx, stDenom)))
 
-	k.Logger(ctx).Info(fmt.Sprintf("executed fast unbond: %s", msg.String()))
+	k.Logger(ctx).Info(fmt.Sprintf("executed instant redeem stake: %s", msg.String()))
 	return &types.MsgInstantRedeemStakeResponse{}, nil
 }

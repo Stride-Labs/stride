@@ -1,7 +1,9 @@
 package keeper
 
 import (
+	sdkmath "cosmossdk.io/math"
 	"encoding/binary"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -110,4 +112,48 @@ func (k Keeper) GetDepositRecordByEpochAndChain(ctx sdk.Context, epochNumber uin
 		}
 	}
 	return nil, false
+}
+
+func (k Keeper) FilterDepositRecords(arr []types.DepositRecord, condition func(types.DepositRecord) bool) (ret []types.DepositRecord) {
+	for _, elem := range arr {
+		if condition(elem) {
+			ret = append(ret, elem)
+		}
+	}
+	return ret
+}
+
+func (k Keeper) SumDepositRecords(arr []types.DepositRecord) sdkmath.Int {
+	// sum the amounts of the deposit records
+	totalAmount := sdkmath.ZeroInt()
+	for _, depositRecord := range arr {
+		totalAmount = totalAmount.Add(depositRecord.Amount)
+	}
+	return totalAmount
+}
+
+func (k Keeper) SubtractFromDepositRecords(ctx sdk.Context, amount sdkmath.Int, chainId string) (err error) {
+	// Find and subtract this amount from a deposit record if it is big enough
+	depositRecords := k.GetAllDepositRecord(ctx)
+	pendingDepositRecords := k.FilterDepositRecords(depositRecords, func(record types.DepositRecord) (condition bool) {
+		return record.Status == types.DepositRecord_TRANSFER_QUEUE && record.HostZoneId == chainId
+	})
+	totalPendingDeposits := k.SumDepositRecords(pendingDepositRecords)
+	if amount.GT(totalPendingDeposits) {
+		return sdkerrors.Wrapf(types.ErrInvalidAmount, "cannot remove an amount %v g.t. pending deposit balance on host zone: %v", amount, totalPendingDeposits)
+	}
+	// Subtract all of nativeAmount from one or more pending deposit records
+	amountRemaining := amount
+	for _, depositRecord := range pendingDepositRecords {
+		if amountRemaining.GTE(depositRecord.Amount) {
+			amountRemaining = amountRemaining.Sub(depositRecord.Amount)
+			depositRecord.Amount = sdkmath.ZeroInt()
+
+		} else {
+			depositRecord.Amount = depositRecord.Amount.Sub(amountRemaining)
+			amountRemaining = sdkmath.ZeroInt()
+		}
+		k.SetDepositRecord(ctx, depositRecord)
+	}
+	return nil
 }

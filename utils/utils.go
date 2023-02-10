@@ -1,7 +1,6 @@
 package utils
 
 import (
-	sdkmath "cosmossdk.io/math"
 	"errors"
 	"fmt"
 	"sort"
@@ -18,26 +17,7 @@ import (
 
 	config "github.com/Stride-Labs/stride/v5/cmd/strided/config"
 	icacallbacktypes "github.com/Stride-Labs/stride/v5/x/icacallbacks/types"
-	recordstypes "github.com/Stride-Labs/stride/v5/x/records/types"
 )
-
-func FilterDepositRecords(arr []recordstypes.DepositRecord, condition func(recordstypes.DepositRecord) bool) (ret []recordstypes.DepositRecord) {
-	for _, elem := range arr {
-		if condition(elem) {
-			ret = append(ret, elem)
-		}
-	}
-	return ret
-}
-
-func SumDepositRecords(arr []recordstypes.DepositRecord) sdkmath.Int {
-	// sum the amounts of the deposit records
-	totalAmount := sdkmath.ZeroInt()
-	for _, depositRecord := range arr {
-		totalAmount = totalAmount.Add(depositRecord.Amount)
-	}
-	return totalAmount
-}
 
 func Int64ToCoinString(amount int64, denom string) string {
 	return strconv.FormatInt(amount, 10) + denom
