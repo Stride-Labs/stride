@@ -290,7 +290,7 @@ func (s *KeeperTestSuite) TestRedeemStake_InvalidHostAddress() {
 func (s *KeeperTestSuite) TestRedeemStake_HaltedZone() {
 	tc := s.SetupRedeemStake()
 
-	// Update hostzone with invalid address
+	// Update hostzone with halted
 	haltedHostZone, _ := s.App.StakeibcKeeper.GetHostZone(s.Ctx, tc.validMsg.HostZone)
 	haltedHostZone.Halted = true
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, haltedHostZone)

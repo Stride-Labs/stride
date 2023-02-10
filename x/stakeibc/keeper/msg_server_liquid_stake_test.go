@@ -252,7 +252,6 @@ func (s *KeeperTestSuite) TestLiquidStake_HaltedZone() {
 	haltedHostZone := tc.initialState.hostZone
 	haltedHostZone.Halted = true
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, haltedHostZone)
-	// Fund the user with the non-ibc denom
 	s.FundAccount(tc.user.acc, sdk.NewInt64Coin(haltedHostZone.IbcDenom, 1000000000))
 	_, err := s.GetMsgServer().LiquidStake(sdk.WrapSDKContext(s.Ctx), &tc.validMsg)
 
