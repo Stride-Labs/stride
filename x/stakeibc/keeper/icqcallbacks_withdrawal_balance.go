@@ -113,6 +113,8 @@ func WithdrawalBalanceCallback(k Keeper, ctx sdk.Context, args []byte, query icq
 			Receiver:         hostZone.Address,
 			TimeoutTimestamp: timeoutTimestamp,
 		})
+		k.Logger(ctx).Info(utils.LogICQCallbackWithHostZone(chainId, ICQCallbackID_WithdrawalBalance,
+			"Preparing MsgTransfer of %v from the withdrawal account to the deposit account (for instant redemption)", reinvestCoin.String()))
 	}
 
 	// add callback data before calling reinvestment ICA
