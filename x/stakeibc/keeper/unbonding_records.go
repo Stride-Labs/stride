@@ -148,6 +148,11 @@ func (k Keeper) GetHostZoneUnbondingMsgs(ctx sdk.Context, hostZone types.HostZon
 	for _, validatorAddress := range utils.StringMapKeys(finalUnbondingsByValidator) { // DO NOT REMOVE: StringMapKeys fixes non-deterministic map iteration
 		undelegationAmount := sdk.NewCoin(hostZone.HostDenom, finalUnbondingsByValidator[validatorAddress])
 
+		// Ignore validators with a zero undelegation amount to prevent a failed transaction on the host
+		if undelegationAmount.IsZero() {
+			continue
+		}
+
 		// Store the ICA transactions
 		msgs = append(msgs, &stakingtypes.MsgUndelegate{
 			DelegatorAddress: delegationAccount.Address,
@@ -160,6 +165,11 @@ func (k Keeper) GetHostZoneUnbondingMsgs(ctx sdk.Context, hostZone types.HostZon
 			Validator: validatorAddress,
 			Amount:    undelegationAmount.Amount,
 		})
+	}
+
+	// Shouldn't be possible, but if all the validator's had a target unbonding of zero, do not send an ICA
+	if len(msgs) == 0 {
+		return nil, sdkmath.ZeroInt(), nil, nil, sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "Target unbonded amount was 0 for each validator")
 	}
 
 	// Store the callback data
