@@ -1,0 +1,21 @@
+syntax = "proto3";
+package cosmwasm.wasm.v1;
+
+option go_package = "github.com/Stride-Labs/stride/v5/x/stakeibc/types";
+import "gogoproto/gogo.proto";
+import "cosmos/base/v1beta1/coin.proto";
+
+// MsgExecuteContract submits the given message data to a smart contract
+message MsgExecuteContract {
+  // Sender is the that actor that signed the messages
+  string sender = 1;
+  // Contract is the address of the smart contract
+  string contract = 2;
+  // Msg json encoded message to be passed to the contract
+  bytes msg = 3 [ (gogoproto.casttype) = "RawContractMessage" ];
+  // Funds coins that are transferred to the contract on execution
+  repeated cosmos.base.v1beta1.Coin funds = 5 [
+    (gogoproto.nullable) = false,
+    (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"
+  ];
+}

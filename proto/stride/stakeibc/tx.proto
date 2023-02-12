@@ -29,6 +29,7 @@ service Msg {
   rpc UpdateValidatorSharesExchRate(MsgUpdateValidatorSharesExchRate)
       returns (MsgUpdateValidatorSharesExchRateResponse);
   rpc ClearBalance(MsgClearBalance) returns (MsgClearBalanceResponse);
+  rpc UpdateMetric(MsgUpdateMetric) returns (MsgUpdateMetricResponse);
   // this line is used by starport scaffolding # proto/tx/rpc
 }
 
@@ -149,5 +150,12 @@ message MsgUpdateValidatorSharesExchRate {
 }
 
 message MsgUpdateValidatorSharesExchRateResponse {}
+
+message MsgUpdateMetric {
+  string creator = 1;
+  string contract_address = 2;
+}
+
+message MsgUpdateMetricResponse {}
 
 // this line is used by starport scaffolding # proto/tx/message

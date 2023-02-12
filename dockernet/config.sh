@@ -30,7 +30,7 @@ HOST_CHAINS=()
 if [[ "${ALL_HOST_CHAINS:-false}" == "true" ]]; then 
   HOST_CHAINS=(GAIA OSMO HOST)
 elif [[ "${#HOST_CHAINS[@]}" == "0" ]]; then 
-  HOST_CHAINS=(GAIA)
+  HOST_CHAINS=(JUNO)
 fi
 
 # Sets up upgrade if {UPGRADE_NAME} is non-empty
