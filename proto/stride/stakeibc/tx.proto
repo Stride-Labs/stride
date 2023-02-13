@@ -153,7 +153,7 @@ message MsgUpdateValidatorSharesExchRateResponse {}
 
 message MsgUpdateMetric {
   string creator = 1;
-  string contract_address = 2;
+  uint64 code_id = 2;
 }
 
 message MsgUpdateMetricResponse {}

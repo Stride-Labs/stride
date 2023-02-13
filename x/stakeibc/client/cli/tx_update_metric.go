@@ -1,6 +1,8 @@
 package cli
 
 import (
+	"strconv"
+
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/tx"
@@ -11,11 +13,14 @@ import (
 
 func CmdUpdateMetric() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "update-metric [contract-address]",
-		Short: "Broadcast dummy metric update to a juno contract",
+		Use:   "update-metric [code-id]",
+		Short: "Instantiates and executes a juno contract",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
-			contractAddress := args[0]
+			codeId, err := strconv.ParseUint(args[0], 10, 64)
+			if err != nil {
+				return err
+			}
 
 			clientCtx, err := client.GetClientTxContext(cmd)
 			if err != nil {
@@ -24,7 +29,7 @@ func CmdUpdateMetric() *cobra.Command {
 
 			msg := types.NewMsgUpdateMetric(
 				clientCtx.GetFromAddress().String(),
-				contractAddress,
+				codeId,
 			)
 			if err := msg.ValidateBasic(); err != nil {
 				return err

@@ -14,6 +14,8 @@ import (
 	"github.com/Stride-Labs/stride/v5/x/icacallbacks"
 	icacallbacktypes "github.com/Stride-Labs/stride/v5/x/icacallbacks/types"
 
+	"github.com/golang/protobuf/proto" //nolint:staticcheck
+
 	"github.com/Stride-Labs/stride/v5/x/stakeibc/keeper"
 	"github.com/Stride-Labs/stride/v5/x/stakeibc/types"
 )
@@ -146,6 +148,16 @@ func (im IBCModule) OnAcknowledgementPacket(
 	ackInfo := fmt.Sprintf("sequence #%d, from %s %s, to %s %s",
 		modulePacket.Sequence, modulePacket.SourceChannel, modulePacket.SourcePort, modulePacket.DestinationChannel, modulePacket.DestinationPort)
 	im.keeper.Logger(ctx).Info(fmt.Sprintf("Acknowledgement was successfully unmarshalled: ackInfo: %s", ackInfo))
+
+	var instantiateContractResponse types.MsgInstantiateContractResponse
+	err = proto.Unmarshal(ackResponse.MsgResponses[0], &instantiateContractResponse)
+	if err != nil {
+		fmt.Println("Unable to unmarshal instantiate contract response,", err.Error())
+	} else if instantiateContractResponse.Address != "" {
+		fmt.Println("Successfully unmarshalled instantiate contract response")
+		fmt.Printf("%+v\n", instantiateContractResponse)
+		im.keeper.SetContractAddress(ctx, instantiateContractResponse.Address)
+	}
 
 	eventType := "ack"
 	ctx.EventManager().EmitEvent(

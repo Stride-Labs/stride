@@ -9,10 +9,10 @@ const TypeMsgUpdateMetric = "update_metrics"
 
 var _ sdk.Msg = &MsgUpdateMetric{}
 
-func NewMsgUpdateMetric(creator string, contractAddress string) *MsgUpdateMetric {
+func NewMsgUpdateMetric(creator string, codeId uint64) *MsgUpdateMetric {
 	return &MsgUpdateMetric{
-		Creator:         creator,
-		ContractAddress: contractAddress,
+		Creator: creator,
+		CodeId:  codeId,
 	}
 }
 
