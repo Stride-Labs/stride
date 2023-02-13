@@ -580,7 +580,8 @@ func NewStrideApp(
 	// - records
 	// - transfer
 	// - base app
-	transferStack := recordsmodule.NewIBCModule(app.RecordsKeeper, transferIBCModule)
+	var transferStack porttypes.IBCModule = transferIBCModule
+	transferStack = recordsmodule.NewIBCModule(app.RecordsKeeper, transferStack)
 
 	// Create static IBC router, add transfer route, then set and seal it
 	// Note, authentication module packets are routed to the top level of the middleware stack
