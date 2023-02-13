@@ -11,17 +11,25 @@ import (
 )
 
 // StartNewAuction updates the relevant auctionPool in the store to have start and end blocks running now
-func (k Keeper) StartNewAuction(ctx sdk.Context, auctionPool types.AuctionPool, auctionDuration uint64) {
+func (k Keeper) StartNewAuction(ctx sdk.Context, auctionPool types.AuctionPool, auctionSettings interface{}) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefix(types.AuctionPoolKey))
+
 	now := cast.ToUint64(ctx.BlockHeight())
-	if auctionPool.GetLastBlock() < now {
-		auctionPool.FirstBlock = now
-		auctionPool.LastBlock = now + auctionDuration
-		// TODO: check the amount of coin in the address of this pool and update that
-		// TODO: also take in an auction type and if it is sealed, then also update the revealBlock
-		updated := k.cdc.MustMarshal(&auctionPool)
-		store.Set(GetAuctionPoolIDBytes(auctionPool.Id), updated)
+
+	switch auctionSettings.(type) {
+	case types.SealedBidAuction:
+		auction := auctionPool.GetLatestAuction().GetAuction().(*types.SealedBidAuction)
+		auction.FirstBlock = now
+		auction.LastBlock = auction.FirstBlock + auction.GetAuctionDuration()
+		auction.RevealBlock = auction.LastBlock + auction.GetRevealDuration()
+	default:
+
 	}
+	// TODO: check the amount of coin in the address of this pool and update that
+	// TODO: also take in an auction type and if it is sealed, then also update the revealBlock
+
+	updated := k.cdc.MustMarshal(&auctionPool)
+	store.Set(GetAuctionPoolIDBytes(auctionPool.Id), updated)
 }
 
 // GetAuctionPoolCount get the total number of auctionPool

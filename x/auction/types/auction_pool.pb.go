@@ -5,6 +5,7 @@ package types
 
 import (
 	fmt "fmt"
+	_ "github.com/cosmos/cosmos-sdk/codec/types"
 	proto "github.com/gogo/protobuf/proto"
 	io "io"
 	math "math"
@@ -22,23 +23,571 @@ var _ = math.Inf
 // proto package needs to be updated.
 const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 
+type AuctionType int32
+
+const (
+	AuctionType_UNKNOWN    AuctionType = 0
+	AuctionType_ASCENDING  AuctionType = 1
+	AuctionType_DESCENDING AuctionType = 2
+	AuctionType_SEALEDBID  AuctionType = 3
+)
+
+var AuctionType_name = map[int32]string{
+	0: "UNKNOWN",
+	1: "ASCENDING",
+	2: "DESCENDING",
+	3: "SEALEDBID",
+}
+
+var AuctionType_value = map[string]int32{
+	"UNKNOWN":    0,
+	"ASCENDING":  1,
+	"DESCENDING": 2,
+	"SEALEDBID":  3,
+}
+
+func (x AuctionType) String() string {
+	return proto.EnumName(AuctionType_name, int32(x))
+}
+
+func (AuctionType) EnumDescriptor() ([]byte, []int) {
+	return fileDescriptor_e7c158d68ebb3589, []int{0}
+}
+
+type AuctionState int32
+
+const (
+	AuctionState_WAITING  AuctionState = 0
+	AuctionState_RUNNING  AuctionState = 1
+	AuctionState_COMPLETE AuctionState = 2
+	AuctionState_REVEAL   AuctionState = 3
+	AuctionState_PAYOUT   AuctionState = 4
+)
+
+var AuctionState_name = map[int32]string{
+	0: "WAITING",
+	1: "RUNNING",
+	2: "COMPLETE",
+	3: "REVEAL",
+	4: "PAYOUT",
+}
+
+var AuctionState_value = map[string]int32{
+	"WAITING":  0,
+	"RUNNING":  1,
+	"COMPLETE": 2,
+	"REVEAL":   3,
+	"PAYOUT":   4,
+}
+
+func (x AuctionState) String() string {
+	return proto.EnumName(AuctionState_name, int32(x))
+}
+
+func (AuctionState) EnumDescriptor() ([]byte, []int) {
+	return fileDescriptor_e7c158d68ebb3589, []int{1}
+}
+
+// English style auction specific parameters
+// Starts low with increasing bids, auction ends if no new bids occur
+// for endDuration blocks in a row and goes to current winner
+// When a higher bid comes in, the lastBlock is set now + endDuration
+type AscendingAuction struct {
+	Status        AuctionState `protobuf:"varint,2,opt,name=status,proto3,enum=stride.auction.AuctionState" json:"status,omitempty"`
+	Target        string       `protobuf:"bytes,3,opt,name=target,proto3" json:"target,omitempty"`
+	Supply        uint64       `protobuf:"varint,4,opt,name=supply,proto3" json:"supply,omitempty"`
+	MinAllowedBid uint64       `protobuf:"varint,5,opt,name=minAllowedBid,proto3" json:"minAllowedBid,omitempty"`
+	MaxAllowedBid uint64       `protobuf:"varint,6,opt,name=maxAllowedBid,proto3" json:"maxAllowedBid,omitempty"`
+	EndDuration   uint64       `protobuf:"varint,7,opt,name=endDuration,proto3" json:"endDuration,omitempty"`
+	LastBlock     uint64       `protobuf:"varint,8,opt,name=lastBlock,proto3" json:"lastBlock,omitempty"`
+	CurrentBid    uint64       `protobuf:"varint,9,opt,name=currentBid,proto3" json:"currentBid,omitempty"`
+	CurrentWinner string       `protobuf:"bytes,10,opt,name=currentWinner,proto3" json:"currentWinner,omitempty"`
+}
+
+func (m *AscendingAuction) Reset()         { *m = AscendingAuction{} }
+func (m *AscendingAuction) String() string { return proto.CompactTextString(m) }
+func (*AscendingAuction) ProtoMessage()    {}
+func (*AscendingAuction) Descriptor() ([]byte, []int) {
+	return fileDescriptor_e7c158d68ebb3589, []int{0}
+}
+func (m *AscendingAuction) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *AscendingAuction) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_AscendingAuction.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *AscendingAuction) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_AscendingAuction.Merge(m, src)
+}
+func (m *AscendingAuction) XXX_Size() int {
+	return m.Size()
+}
+func (m *AscendingAuction) XXX_DiscardUnknown() {
+	xxx_messageInfo_AscendingAuction.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_AscendingAuction proto.InternalMessageInfo
+
+func (m *AscendingAuction) GetStatus() AuctionState {
+	if m != nil {
+		return m.Status
+	}
+	return AuctionState_WAITING
+}
+
+func (m *AscendingAuction) GetTarget() string {
+	if m != nil {
+		return m.Target
+	}
+	return ""
+}
+
+func (m *AscendingAuction) GetSupply() uint64 {
+	if m != nil {
+		return m.Supply
+	}
+	return 0
+}
+
+func (m *AscendingAuction) GetMinAllowedBid() uint64 {
+	if m != nil {
+		return m.MinAllowedBid
+	}
+	return 0
+}
+
+func (m *AscendingAuction) GetMaxAllowedBid() uint64 {
+	if m != nil {
+		return m.MaxAllowedBid
+	}
+	return 0
+}
+
+func (m *AscendingAuction) GetEndDuration() uint64 {
+	if m != nil {
+		return m.EndDuration
+	}
+	return 0
+}
+
+func (m *AscendingAuction) GetLastBlock() uint64 {
+	if m != nil {
+		return m.LastBlock
+	}
+	return 0
+}
+
+func (m *AscendingAuction) GetCurrentBid() uint64 {
+	if m != nil {
+		return m.CurrentBid
+	}
+	return 0
+}
+
+func (m *AscendingAuction) GetCurrentWinner() string {
+	if m != nil {
+		return m.CurrentWinner
+	}
+	return ""
+}
+
+// Dutch style auction specific parameters
+// Starts high at startingBid, moves bid down bidStepSize each
+// bidStepDuration blocks until someone is willing to bid and win
+type DescendingAuction struct {
+	Status          AuctionState `protobuf:"varint,2,opt,name=status,proto3,enum=stride.auction.AuctionState" json:"status,omitempty"`
+	Target          string       `protobuf:"bytes,3,opt,name=target,proto3" json:"target,omitempty"`
+	Supply          uint64       `protobuf:"varint,4,opt,name=supply,proto3" json:"supply,omitempty"`
+	MinAllowedBid   uint64       `protobuf:"varint,5,opt,name=minAllowedBid,proto3" json:"minAllowedBid,omitempty"`
+	MaxAllowedBid   uint64       `protobuf:"varint,6,opt,name=maxAllowedBid,proto3" json:"maxAllowedBid,omitempty"`
+	StartingBid     uint64       `protobuf:"varint,7,opt,name=startingBid,proto3" json:"startingBid,omitempty"`
+	CurrentBid      uint64       `protobuf:"varint,8,opt,name=currentBid,proto3" json:"currentBid,omitempty"`
+	BidStepSize     uint64       `protobuf:"varint,9,opt,name=bidStepSize,proto3" json:"bidStepSize,omitempty"`
+	BidStepDuration uint64       `protobuf:"varint,10,opt,name=bidStepDuration,proto3" json:"bidStepDuration,omitempty"`
+	NextStep        uint64       `protobuf:"varint,11,opt,name=nextStep,proto3" json:"nextStep,omitempty"`
+}
+
+func (m *DescendingAuction) Reset()         { *m = DescendingAuction{} }
+func (m *DescendingAuction) String() string { return proto.CompactTextString(m) }
+func (*DescendingAuction) ProtoMessage()    {}
+func (*DescendingAuction) Descriptor() ([]byte, []int) {
+	return fileDescriptor_e7c158d68ebb3589, []int{1}
+}
+func (m *DescendingAuction) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *DescendingAuction) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_DescendingAuction.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *DescendingAuction) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_DescendingAuction.Merge(m, src)
+}
+func (m *DescendingAuction) XXX_Size() int {
+	return m.Size()
+}
+func (m *DescendingAuction) XXX_DiscardUnknown() {
+	xxx_messageInfo_DescendingAuction.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_DescendingAuction proto.InternalMessageInfo
+
+func (m *DescendingAuction) GetStatus() AuctionState {
+	if m != nil {
+		return m.Status
+	}
+	return AuctionState_WAITING
+}
+
+func (m *DescendingAuction) GetTarget() string {
+	if m != nil {
+		return m.Target
+	}
+	return ""
+}
+
+func (m *DescendingAuction) GetSupply() uint64 {
+	if m != nil {
+		return m.Supply
+	}
+	return 0
+}
+
+func (m *DescendingAuction) GetMinAllowedBid() uint64 {
+	if m != nil {
+		return m.MinAllowedBid
+	}
+	return 0
+}
+
+func (m *DescendingAuction) GetMaxAllowedBid() uint64 {
+	if m != nil {
+		return m.MaxAllowedBid
+	}
+	return 0
+}
+
+func (m *DescendingAuction) GetStartingBid() uint64 {
+	if m != nil {
+		return m.StartingBid
+	}
+	return 0
+}
+
+func (m *DescendingAuction) GetCurrentBid() uint64 {
+	if m != nil {
+		return m.CurrentBid
+	}
+	return 0
+}
+
+func (m *DescendingAuction) GetBidStepSize() uint64 {
+	if m != nil {
+		return m.BidStepSize
+	}
+	return 0
+}
+
+func (m *DescendingAuction) GetBidStepDuration() uint64 {
+	if m != nil {
+		return m.BidStepDuration
+	}
+	return 0
+}
+
+func (m *DescendingAuction) GetNextStep() uint64 {
+	if m != nil {
+		return m.NextStep
+	}
+	return 0
+}
+
+// Sealed Bid style auction specific parameters
+// Auction is open for sealed bids from firstBlock to lastBlock
+// after last block but before revealBlock send same bids unsealed
+type SealedBidAuction struct {
+	Status          AuctionState `protobuf:"varint,2,opt,name=status,proto3,enum=stride.auction.AuctionState" json:"status,omitempty"`
+	Target          string       `protobuf:"bytes,3,opt,name=target,proto3" json:"target,omitempty"`
+	Supply          uint64       `protobuf:"varint,4,opt,name=supply,proto3" json:"supply,omitempty"`
+	MinAllowedBid   uint64       `protobuf:"varint,5,opt,name=minAllowedBid,proto3" json:"minAllowedBid,omitempty"`
+	MaxAllowedBid   uint64       `protobuf:"varint,6,opt,name=maxAllowedBid,proto3" json:"maxAllowedBid,omitempty"`
+	AuctionDuration uint64       `protobuf:"varint,7,opt,name=auctionDuration,proto3" json:"auctionDuration,omitempty"`
+	RevealDuration  uint64       `protobuf:"varint,8,opt,name=revealDuration,proto3" json:"revealDuration,omitempty"`
+	FirstBlock      uint64       `protobuf:"varint,9,opt,name=firstBlock,proto3" json:"firstBlock,omitempty"`
+	LastBlock       uint64       `protobuf:"varint,10,opt,name=lastBlock,proto3" json:"lastBlock,omitempty"`
+	RevealBlock     uint64       `protobuf:"varint,11,opt,name=revealBlock,proto3" json:"revealBlock,omitempty"`
+}
+
+func (m *SealedBidAuction) Reset()         { *m = SealedBidAuction{} }
+func (m *SealedBidAuction) String() string { return proto.CompactTextString(m) }
+func (*SealedBidAuction) ProtoMessage()    {}
+func (*SealedBidAuction) Descriptor() ([]byte, []int) {
+	return fileDescriptor_e7c158d68ebb3589, []int{2}
+}
+func (m *SealedBidAuction) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *SealedBidAuction) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_SealedBidAuction.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *SealedBidAuction) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_SealedBidAuction.Merge(m, src)
+}
+func (m *SealedBidAuction) XXX_Size() int {
+	return m.Size()
+}
+func (m *SealedBidAuction) XXX_DiscardUnknown() {
+	xxx_messageInfo_SealedBidAuction.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_SealedBidAuction proto.InternalMessageInfo
+
+func (m *SealedBidAuction) GetStatus() AuctionState {
+	if m != nil {
+		return m.Status
+	}
+	return AuctionState_WAITING
+}
+
+func (m *SealedBidAuction) GetTarget() string {
+	if m != nil {
+		return m.Target
+	}
+	return ""
+}
+
+func (m *SealedBidAuction) GetSupply() uint64 {
+	if m != nil {
+		return m.Supply
+	}
+	return 0
+}
+
+func (m *SealedBidAuction) GetMinAllowedBid() uint64 {
+	if m != nil {
+		return m.MinAllowedBid
+	}
+	return 0
+}
+
+func (m *SealedBidAuction) GetMaxAllowedBid() uint64 {
+	if m != nil {
+		return m.MaxAllowedBid
+	}
+	return 0
+}
+
+func (m *SealedBidAuction) GetAuctionDuration() uint64 {
+	if m != nil {
+		return m.AuctionDuration
+	}
+	return 0
+}
+
+func (m *SealedBidAuction) GetRevealDuration() uint64 {
+	if m != nil {
+		return m.RevealDuration
+	}
+	return 0
+}
+
+func (m *SealedBidAuction) GetFirstBlock() uint64 {
+	if m != nil {
+		return m.FirstBlock
+	}
+	return 0
+}
+
+func (m *SealedBidAuction) GetLastBlock() uint64 {
+	if m != nil {
+		return m.LastBlock
+	}
+	return 0
+}
+
+func (m *SealedBidAuction) GetRevealBlock() uint64 {
+	if m != nil {
+		return m.RevealBlock
+	}
+	return 0
+}
+
+// Would be more elegant if protobuf had a nice way to do interfaces but
+// the algorithm is used to determine which one of the optional fields is set
+type Auction struct {
+	Algorithm AuctionType `protobuf:"varint,1,opt,name=algorithm,proto3,enum=stride.auction.AuctionType" json:"algorithm,omitempty"`
+	// Types that are valid to be assigned to XAscendingAuction:
+	//	*Auction_AscendingAuction
+	XAscendingAuction isAuction_XAscendingAuction `protobuf_oneof:"_ascendingAuction"`
+	// Types that are valid to be assigned to XDescendingAuction:
+	//	*Auction_DescendingAuction
+	XDescendingAuction isAuction_XDescendingAuction `protobuf_oneof:"_descendingAuction"`
+	// Types that are valid to be assigned to XSealedBidAuction:
+	//	*Auction_SealedBidAuction
+	XSealedBidAuction isAuction_XSealedBidAuction `protobuf_oneof:"_sealedBidAuction"`
+}
+
+func (m *Auction) Reset()         { *m = Auction{} }
+func (m *Auction) String() string { return proto.CompactTextString(m) }
+func (*Auction) ProtoMessage()    {}
+func (*Auction) Descriptor() ([]byte, []int) {
+	return fileDescriptor_e7c158d68ebb3589, []int{3}
+}
+func (m *Auction) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *Auction) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_Auction.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *Auction) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_Auction.Merge(m, src)
+}
+func (m *Auction) XXX_Size() int {
+	return m.Size()
+}
+func (m *Auction) XXX_DiscardUnknown() {
+	xxx_messageInfo_Auction.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_Auction proto.InternalMessageInfo
+
+type isAuction_XAscendingAuction interface {
+	isAuction_XAscendingAuction()
+	MarshalTo([]byte) (int, error)
+	Size() int
+}
+type isAuction_XDescendingAuction interface {
+	isAuction_XDescendingAuction()
+	MarshalTo([]byte) (int, error)
+	Size() int
+}
+type isAuction_XSealedBidAuction interface {
+	isAuction_XSealedBidAuction()
+	MarshalTo([]byte) (int, error)
+	Size() int
+}
+
+type Auction_AscendingAuction struct {
+	AscendingAuction *AscendingAuction `protobuf:"bytes,2,opt,name=ascendingAuction,proto3,oneof" json:"ascendingAuction,omitempty"`
+}
+type Auction_DescendingAuction struct {
+	DescendingAuction *DescendingAuction `protobuf:"bytes,3,opt,name=descendingAuction,proto3,oneof" json:"descendingAuction,omitempty"`
+}
+type Auction_SealedBidAuction struct {
+	SealedBidAuction *SealedBidAuction `protobuf:"bytes,4,opt,name=sealedBidAuction,proto3,oneof" json:"sealedBidAuction,omitempty"`
+}
+
+func (*Auction_AscendingAuction) isAuction_XAscendingAuction()   {}
+func (*Auction_DescendingAuction) isAuction_XDescendingAuction() {}
+func (*Auction_SealedBidAuction) isAuction_XSealedBidAuction()   {}
+
+func (m *Auction) GetXAscendingAuction() isAuction_XAscendingAuction {
+	if m != nil {
+		return m.XAscendingAuction
+	}
+	return nil
+}
+func (m *Auction) GetXDescendingAuction() isAuction_XDescendingAuction {
+	if m != nil {
+		return m.XDescendingAuction
+	}
+	return nil
+}
+func (m *Auction) GetXSealedBidAuction() isAuction_XSealedBidAuction {
+	if m != nil {
+		return m.XSealedBidAuction
+	}
+	return nil
+}
+
+func (m *Auction) GetAlgorithm() AuctionType {
+	if m != nil {
+		return m.Algorithm
+	}
+	return AuctionType_UNKNOWN
+}
+
+func (m *Auction) GetAscendingAuction() *AscendingAuction {
+	if x, ok := m.GetXAscendingAuction().(*Auction_AscendingAuction); ok {
+		return x.AscendingAuction
+	}
+	return nil
+}
+
+func (m *Auction) GetDescendingAuction() *DescendingAuction {
+	if x, ok := m.GetXDescendingAuction().(*Auction_DescendingAuction); ok {
+		return x.DescendingAuction
+	}
+	return nil
+}
+
+func (m *Auction) GetSealedBidAuction() *SealedBidAuction {
+	if x, ok := m.GetXSealedBidAuction().(*Auction_SealedBidAuction); ok {
+		return x.SealedBidAuction
+	}
+	return nil
+}
+
+// XXX_OneofWrappers is for the internal use of the proto package.
+func (*Auction) XXX_OneofWrappers() []interface{} {
+	return []interface{}{
+		(*Auction_AscendingAuction)(nil),
+		(*Auction_DescendingAuction)(nil),
+		(*Auction_SealedBidAuction)(nil),
+	}
+}
+
+// Auction Pool has an address with some assets and restrictions on the types
+// of auctions which can be run for this pool.
 type AuctionPool struct {
-	Id              uint64 `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
-	PoolName        string `protobuf:"bytes,2,opt,name=poolName,proto3" json:"poolName,omitempty"`
-	PoolAddress     string `protobuf:"bytes,3,opt,name=poolAddress,proto3" json:"poolAddress,omitempty"`
-	AvailableSupply uint64 `protobuf:"varint,4,opt,name=availableSupply,proto3" json:"availableSupply,omitempty"`
-	AuctionType     string `protobuf:"bytes,5,opt,name=auctionType,proto3" json:"auctionType,omitempty"`
-	MinimumBid      uint64 `protobuf:"varint,6,opt,name=minimumBid,proto3" json:"minimumBid,omitempty"`
-	FirstBlock      uint64 `protobuf:"varint,7,opt,name=firstBlock,proto3" json:"firstBlock,omitempty"`
-	LastBlock       uint64 `protobuf:"varint,8,opt,name=lastBlock,proto3" json:"lastBlock,omitempty"`
-	RevealBlock     uint64 `protobuf:"varint,9,opt,name=revealBlock,proto3" json:"revealBlock,omitempty"`
+	Id                uint64        `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	PoolAddress       string        `protobuf:"bytes,2,opt,name=poolAddress,proto3" json:"poolAddress,omitempty"`
+	MinAllowedSupply  uint64        `protobuf:"varint,3,opt,name=minAllowedSupply,proto3" json:"minAllowedSupply,omitempty"`
+	MaxAllowedSupply  uint64        `protobuf:"varint,4,opt,name=maxAllowedSupply,proto3" json:"maxAllowedSupply,omitempty"`
+	AllowedAlgorithms []AuctionType `protobuf:"varint,5,rep,packed,name=allowedAlgorithms,proto3,enum=stride.auction.AuctionType" json:"allowedAlgorithms,omitempty"`
+	LatestAuction     *Auction      `protobuf:"bytes,6,opt,name=latestAuction,proto3" json:"latestAuction,omitempty"`
 }
 
 func (m *AuctionPool) Reset()         { *m = AuctionPool{} }
 func (m *AuctionPool) String() string { return proto.CompactTextString(m) }
 func (*AuctionPool) ProtoMessage()    {}
 func (*AuctionPool) Descriptor() ([]byte, []int) {
-	return fileDescriptor_e7c158d68ebb3589, []int{0}
+	return fileDescriptor_e7c158d68ebb3589, []int{4}
 }
 func (m *AuctionPool) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -74,13 +623,6 @@ func (m *AuctionPool) GetId() uint64 {
 	return 0
 }
 
-func (m *AuctionPool) GetPoolName() string {
-	if m != nil {
-		return m.PoolName
-	}
-	return ""
-}
-
 func (m *AuctionPool) GetPoolAddress() string {
 	if m != nil {
 		return m.PoolAddress
@@ -88,77 +630,439 @@ func (m *AuctionPool) GetPoolAddress() string {
 	return ""
 }
 
-func (m *AuctionPool) GetAvailableSupply() uint64 {
+func (m *AuctionPool) GetMinAllowedSupply() uint64 {
 	if m != nil {
-		return m.AvailableSupply
+		return m.MinAllowedSupply
 	}
 	return 0
 }
 
-func (m *AuctionPool) GetAuctionType() string {
+func (m *AuctionPool) GetMaxAllowedSupply() uint64 {
 	if m != nil {
-		return m.AuctionType
-	}
-	return ""
-}
-
-func (m *AuctionPool) GetMinimumBid() uint64 {
-	if m != nil {
-		return m.MinimumBid
+		return m.MaxAllowedSupply
 	}
 	return 0
 }
 
-func (m *AuctionPool) GetFirstBlock() uint64 {
+func (m *AuctionPool) GetAllowedAlgorithms() []AuctionType {
 	if m != nil {
-		return m.FirstBlock
+		return m.AllowedAlgorithms
 	}
-	return 0
+	return nil
 }
 
-func (m *AuctionPool) GetLastBlock() uint64 {
+func (m *AuctionPool) GetLatestAuction() *Auction {
 	if m != nil {
-		return m.LastBlock
+		return m.LatestAuction
 	}
-	return 0
-}
-
-func (m *AuctionPool) GetRevealBlock() uint64 {
-	if m != nil {
-		return m.RevealBlock
-	}
-	return 0
+	return nil
 }
 
 func init() {
+	proto.RegisterEnum("stride.auction.AuctionType", AuctionType_name, AuctionType_value)
+	proto.RegisterEnum("stride.auction.AuctionState", AuctionState_name, AuctionState_value)
+	proto.RegisterType((*AscendingAuction)(nil), "stride.auction.AscendingAuction")
+	proto.RegisterType((*DescendingAuction)(nil), "stride.auction.DescendingAuction")
+	proto.RegisterType((*SealedBidAuction)(nil), "stride.auction.SealedBidAuction")
+	proto.RegisterType((*Auction)(nil), "stride.auction.Auction")
 	proto.RegisterType((*AuctionPool)(nil), "stride.auction.AuctionPool")
 }
 
 func init() { proto.RegisterFile("stride/auction/auction_pool.proto", fileDescriptor_e7c158d68ebb3589) }
 
 var fileDescriptor_e7c158d68ebb3589 = []byte{
-	// 295 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x5c, 0x91, 0xc1, 0x4a, 0xfb, 0x30,
-	0x1c, 0xc7, 0x97, 0xfe, 0xf7, 0x9f, 0x5b, 0x06, 0x13, 0x72, 0x0a, 0x22, 0xa1, 0x7a, 0xea, 0xc5,
-	0x56, 0x10, 0x1f, 0x60, 0x3d, 0x8a, 0x88, 0x6c, 0x9e, 0xbc, 0x48, 0xda, 0x44, 0x0d, 0xa6, 0x4b,
-	0x68, 0xd2, 0x62, 0xdf, 0xc2, 0xb7, 0xf0, 0x55, 0x3c, 0xee, 0xe8, 0x51, 0xda, 0x17, 0x91, 0xa6,
-	0xdd, 0x56, 0x3c, 0xf5, 0xd7, 0xcf, 0x27, 0xf9, 0x26, 0xe4, 0x0b, 0xcf, 0x8c, 0xcd, 0x05, 0xe3,
-	0x11, 0x2d, 0x52, 0x2b, 0xd4, 0x66, 0xf7, 0x7d, 0xd2, 0x4a, 0xc9, 0x50, 0xe7, 0xca, 0x2a, 0xb4,
-	0xe8, 0x96, 0x84, 0xbd, 0x3a, 0xff, 0xf4, 0xe0, 0x7c, 0xd9, 0xcd, 0xf7, 0x4a, 0x49, 0xb4, 0x80,
-	0x9e, 0x60, 0x18, 0xf8, 0x20, 0x18, 0xaf, 0x3c, 0xc1, 0xd0, 0x09, 0x9c, 0xb6, 0xbb, 0xef, 0x68,
-	0xc6, 0xb1, 0xe7, 0x83, 0x60, 0xb6, 0xda, 0xff, 0x23, 0x1f, 0xce, 0xdb, 0x79, 0xc9, 0x58, 0xce,
-	0x8d, 0xc1, 0xff, 0x9c, 0x1e, 0x22, 0x14, 0xc0, 0x63, 0x5a, 0x52, 0x21, 0x69, 0x22, 0xf9, 0xba,
-	0xd0, 0x5a, 0x56, 0x78, 0xec, 0xa2, 0xff, 0xe2, 0x36, 0xab, 0xbf, 0xd2, 0x43, 0xa5, 0x39, 0xfe,
-	0xdf, 0x65, 0x0d, 0x10, 0x22, 0x10, 0x66, 0x62, 0x23, 0xb2, 0x22, 0x8b, 0x05, 0xc3, 0x13, 0x17,
-	0x33, 0x20, 0xad, 0x7f, 0x16, 0xb9, 0xb1, 0xb1, 0x54, 0xe9, 0x1b, 0x3e, 0xea, 0xfc, 0x81, 0xa0,
-	0x53, 0x38, 0x93, 0x74, 0xa7, 0xa7, 0x4e, 0x1f, 0x40, 0x7b, 0x7e, 0xce, 0x4b, 0x4e, 0x65, 0xe7,
-	0x67, 0xce, 0x0f, 0x51, 0x7c, 0xf3, 0x55, 0x13, 0xb0, 0xad, 0x09, 0xf8, 0xa9, 0x09, 0xf8, 0x68,
-	0xc8, 0x68, 0xdb, 0x90, 0xd1, 0x77, 0x43, 0x46, 0x8f, 0x97, 0x2f, 0xc2, 0xbe, 0x16, 0x49, 0x98,
-	0xaa, 0x2c, 0x5a, 0xbb, 0xe7, 0xbd, 0xb8, 0xa5, 0x89, 0x89, 0xfa, 0x36, 0xca, 0xeb, 0xe8, 0x7d,
-	0x5f, 0x89, 0xad, 0x34, 0x37, 0xc9, 0xc4, 0x95, 0x71, 0xf5, 0x1b, 0x00, 0x00, 0xff, 0xff, 0x9a,
-	0x90, 0x5c, 0xe1, 0xb1, 0x01, 0x00, 0x00,
+	// 776 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xdc, 0x55, 0x31, 0x6f, 0xd3, 0x5c,
+	0x14, 0x8d, 0x9d, 0x34, 0x4d, 0xae, 0xdb, 0xd4, 0x79, 0xdf, 0x27, 0x30, 0xa5, 0x8a, 0xdc, 0x08,
+	0xa1, 0xa8, 0x12, 0x09, 0x2a, 0x30, 0x30, 0x30, 0x38, 0x8d, 0x45, 0x02, 0xc1, 0x6d, 0xed, 0x94,
+	0x0a, 0x96, 0xea, 0x25, 0x7e, 0x4d, 0x2d, 0x5c, 0x3b, 0xb2, 0x5f, 0x4a, 0xc3, 0xc4, 0xd8, 0x91,
+	0xbf, 0xc0, 0xbf, 0x41, 0x4c, 0x1d, 0x19, 0x51, 0xfb, 0x03, 0xd8, 0x98, 0x91, 0x9f, 0x9d, 0xc4,
+	0xb1, 0xa9, 0x98, 0x61, 0x8a, 0xef, 0xb9, 0xe7, 0x5d, 0x5f, 0x9f, 0x7b, 0x6e, 0x1e, 0x6c, 0xfa,
+	0xd4, 0xb3, 0x4c, 0xd2, 0xc0, 0xe3, 0x01, 0xb5, 0x5c, 0x67, 0xfa, 0x7b, 0x34, 0x72, 0x5d, 0xbb,
+	0x3e, 0xf2, 0x5c, 0xea, 0xa2, 0x52, 0x48, 0xa9, 0x47, 0xa9, 0xf5, 0x3b, 0x43, 0xd7, 0x1d, 0xda,
+	0xa4, 0xc1, 0xb2, 0xfd, 0xf1, 0x71, 0x03, 0x3b, 0x93, 0x90, 0x5a, 0xfd, 0xca, 0x83, 0xa8, 0xf8,
+	0x03, 0xe2, 0x98, 0x96, 0x33, 0x54, 0x42, 0x3e, 0x7a, 0x0c, 0x79, 0x9f, 0x62, 0x3a, 0xf6, 0x25,
+	0x5e, 0xe6, 0x6a, 0xa5, 0xed, 0x8d, 0xfa, 0x62, 0xc1, 0x7a, 0x44, 0x34, 0x28, 0xa6, 0x44, 0x8f,
+	0xb8, 0xe8, 0x16, 0xe4, 0x29, 0xf6, 0x86, 0x84, 0x4a, 0x59, 0x99, 0xab, 0x15, 0xf5, 0x28, 0x0a,
+	0x70, 0x7f, 0x3c, 0x1a, 0xd9, 0x13, 0x29, 0x27, 0x73, 0xb5, 0x9c, 0x1e, 0x45, 0xe8, 0x1e, 0xac,
+	0x9e, 0x5a, 0x8e, 0x62, 0xdb, 0xee, 0x7b, 0x62, 0x36, 0x2d, 0x53, 0x5a, 0x62, 0xe9, 0x45, 0x90,
+	0xb1, 0xf0, 0x79, 0x8c, 0x95, 0x8f, 0x58, 0x71, 0x10, 0xc9, 0x20, 0x10, 0xc7, 0x6c, 0x8d, 0x3d,
+	0x1c, 0xf4, 0x25, 0x2d, 0x33, 0x4e, 0x1c, 0x42, 0x1b, 0x50, 0xb4, 0xb1, 0x4f, 0x9b, 0xb6, 0x3b,
+	0x78, 0x27, 0x15, 0x58, 0x7e, 0x0e, 0xa0, 0x0a, 0xc0, 0x60, 0xec, 0x79, 0xc4, 0xa1, 0xc1, 0x2b,
+	0x8a, 0x2c, 0x1d, 0x43, 0x82, 0x2e, 0xa2, 0xe8, 0xd0, 0x72, 0x1c, 0xe2, 0x49, 0xc0, 0x3e, 0x71,
+	0x11, 0xac, 0xfe, 0xe0, 0xa1, 0xdc, 0x22, 0xff, 0x84, 0x9a, 0x3e, 0xc5, 0x1e, 0xb5, 0x9c, 0x61,
+	0xc0, 0x89, 0xd4, 0x8c, 0x41, 0x09, 0xbd, 0x0a, 0x29, 0xbd, 0x64, 0x10, 0xfa, 0x96, 0x69, 0x50,
+	0x32, 0x32, 0xac, 0x0f, 0x24, 0x12, 0x34, 0x0e, 0xa1, 0x1a, 0xac, 0x45, 0xe1, 0x6c, 0x6a, 0xc0,
+	0x58, 0x49, 0x18, 0xad, 0x43, 0xc1, 0x21, 0xe7, 0x34, 0xc0, 0x24, 0x81, 0x51, 0x66, 0x71, 0xf5,
+	0x27, 0x0f, 0xa2, 0x41, 0xb0, 0xcd, 0xfa, 0xfe, 0x7b, 0x05, 0xaf, 0xc1, 0x5a, 0xd4, 0x5b, 0xc2,
+	0xc2, 0x49, 0x18, 0xdd, 0x87, 0x92, 0x47, 0xce, 0x08, 0xb6, 0x67, 0xc4, 0x50, 0xfc, 0x04, 0x1a,
+	0x0c, 0xe8, 0xd8, 0xf2, 0xa6, 0x7e, 0x8f, 0x0c, 0x3d, 0x47, 0x16, 0xd7, 0x01, 0x92, 0xeb, 0x20,
+	0x83, 0x10, 0xd6, 0x0b, 0xf3, 0xa1, 0xea, 0x71, 0xa8, 0xfa, 0x31, 0x0b, 0xcb, 0x53, 0xbd, 0x9f,
+	0x42, 0x11, 0xdb, 0x43, 0xd7, 0xb3, 0xe8, 0xc9, 0xa9, 0xc4, 0x31, 0xc9, 0xef, 0xde, 0x20, 0x79,
+	0x6f, 0x32, 0x22, 0xfa, 0x9c, 0x8d, 0xf6, 0x41, 0xc4, 0x89, 0x7d, 0x61, 0x43, 0x13, 0xb6, 0xe5,
+	0x54, 0x85, 0x04, 0xaf, 0x9d, 0xd1, 0x53, 0x67, 0x2f, 0x38, 0x0e, 0xf5, 0xa0, 0x6c, 0x26, 0x77,
+	0x90, 0x8d, 0x54, 0xd8, 0xde, 0x4c, 0xd6, 0x4c, 0x2d, 0x6b, 0x9b, 0xd3, 0xd3, 0xa7, 0x83, 0xaa,
+	0xfb, 0x20, 0xfa, 0x09, 0x9f, 0x31, 0x3f, 0xfc, 0xa6, 0xd1, 0xa4, 0x1f, 0xdb, 0xbc, 0x9e, 0x3a,
+	0x7b, 0xc1, 0x71, 0xcd, 0xff, 0xa0, 0x7c, 0x94, 0xfc, 0x80, 0xe6, 0xff, 0x80, 0x8e, 0x52, 0x0d,
+	0x30, 0x6a, 0xb2, 0x44, 0xf5, 0x33, 0x0f, 0x42, 0xf4, 0xbc, 0xe7, 0xba, 0x36, 0x2a, 0x01, 0x6f,
+	0x99, 0x4c, 0xff, 0x9c, 0xce, 0x87, 0x3b, 0x18, 0xdc, 0x09, 0x8a, 0x69, 0x7a, 0xc4, 0x0f, 0x77,
+	0xa1, 0xa8, 0xc7, 0x21, 0xb4, 0x05, 0xe2, 0xdc, 0xad, 0x46, 0x68, 0xf2, 0x2c, 0x3b, 0x9f, 0xc2,
+	0x19, 0x77, 0xe6, 0x59, 0x23, 0xbe, 0x10, 0x29, 0x1c, 0x75, 0xa0, 0x8c, 0x43, 0x40, 0x99, 0x4e,
+	0xda, 0x97, 0x96, 0xe4, 0xec, 0x9f, 0x8c, 0x91, 0x3e, 0x85, 0x9e, 0xc1, 0xaa, 0x8d, 0x29, 0xf1,
+	0xe9, 0x54, 0xf4, 0x3c, 0x13, 0xfd, 0xf6, 0x0d, 0x65, 0xf4, 0x45, 0xf6, 0x56, 0x7b, 0x26, 0x51,
+	0xf0, 0x02, 0x24, 0xc0, 0xf2, 0x81, 0xf6, 0x52, 0xdb, 0x3d, 0xd4, 0xc4, 0x0c, 0x5a, 0x85, 0xa2,
+	0x62, 0xec, 0xa8, 0x5a, 0xab, 0xa3, 0x3d, 0x17, 0x39, 0x54, 0x02, 0x68, 0xa9, 0xb3, 0x98, 0x0f,
+	0xd2, 0x86, 0xaa, 0x74, 0xd5, 0x56, 0xb3, 0xd3, 0x12, 0xb3, 0x5b, 0x1a, 0xac, 0xc4, 0xff, 0x36,
+	0x82, 0x52, 0x87, 0x4a, 0xa7, 0x17, 0x70, 0x33, 0x41, 0xa0, 0x1f, 0x68, 0x5a, 0x58, 0x68, 0x05,
+	0x0a, 0x3b, 0xbb, 0xaf, 0xf6, 0xba, 0x6a, 0x4f, 0x15, 0x79, 0x04, 0x90, 0xd7, 0xd5, 0xd7, 0xaa,
+	0xd2, 0x15, 0xb3, 0xc1, 0xf3, 0x9e, 0xf2, 0x66, 0xf7, 0xa0, 0x27, 0xe6, 0x9a, 0x2f, 0xbe, 0x5c,
+	0x55, 0xb8, 0xcb, 0xab, 0x0a, 0xf7, 0xfd, 0xaa, 0xc2, 0x7d, 0xba, 0xae, 0x64, 0x2e, 0xaf, 0x2b,
+	0x99, 0x6f, 0xd7, 0x95, 0xcc, 0xdb, 0x87, 0x43, 0x8b, 0x9e, 0x8c, 0xfb, 0xf5, 0x81, 0x7b, 0xda,
+	0x30, 0xd8, 0x57, 0x3e, 0xe8, 0xe2, 0xbe, 0xdf, 0x88, 0xee, 0xfd, 0xb3, 0x27, 0x8d, 0xf3, 0xd9,
+	0xe5, 0x4f, 0x27, 0x23, 0xe2, 0xf7, 0xf3, 0xec, 0x2e, 0x7f, 0xf4, 0x2b, 0x00, 0x00, 0xff, 0xff,
+	0x4f, 0x47, 0x4a, 0x86, 0x1b, 0x08, 0x00, 0x00,
 }
 
+func (m *AscendingAuction) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *AscendingAuction) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *AscendingAuction) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if len(m.CurrentWinner) > 0 {
+		i -= len(m.CurrentWinner)
+		copy(dAtA[i:], m.CurrentWinner)
+		i = encodeVarintAuctionPool(dAtA, i, uint64(len(m.CurrentWinner)))
+		i--
+		dAtA[i] = 0x52
+	}
+	if m.CurrentBid != 0 {
+		i = encodeVarintAuctionPool(dAtA, i, uint64(m.CurrentBid))
+		i--
+		dAtA[i] = 0x48
+	}
+	if m.LastBlock != 0 {
+		i = encodeVarintAuctionPool(dAtA, i, uint64(m.LastBlock))
+		i--
+		dAtA[i] = 0x40
+	}
+	if m.EndDuration != 0 {
+		i = encodeVarintAuctionPool(dAtA, i, uint64(m.EndDuration))
+		i--
+		dAtA[i] = 0x38
+	}
+	if m.MaxAllowedBid != 0 {
+		i = encodeVarintAuctionPool(dAtA, i, uint64(m.MaxAllowedBid))
+		i--
+		dAtA[i] = 0x30
+	}
+	if m.MinAllowedBid != 0 {
+		i = encodeVarintAuctionPool(dAtA, i, uint64(m.MinAllowedBid))
+		i--
+		dAtA[i] = 0x28
+	}
+	if m.Supply != 0 {
+		i = encodeVarintAuctionPool(dAtA, i, uint64(m.Supply))
+		i--
+		dAtA[i] = 0x20
+	}
+	if len(m.Target) > 0 {
+		i -= len(m.Target)
+		copy(dAtA[i:], m.Target)
+		i = encodeVarintAuctionPool(dAtA, i, uint64(len(m.Target)))
+		i--
+		dAtA[i] = 0x1a
+	}
+	if m.Status != 0 {
+		i = encodeVarintAuctionPool(dAtA, i, uint64(m.Status))
+		i--
+		dAtA[i] = 0x10
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *DescendingAuction) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *DescendingAuction) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *DescendingAuction) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if m.NextStep != 0 {
+		i = encodeVarintAuctionPool(dAtA, i, uint64(m.NextStep))
+		i--
+		dAtA[i] = 0x58
+	}
+	if m.BidStepDuration != 0 {
+		i = encodeVarintAuctionPool(dAtA, i, uint64(m.BidStepDuration))
+		i--
+		dAtA[i] = 0x50
+	}
+	if m.BidStepSize != 0 {
+		i = encodeVarintAuctionPool(dAtA, i, uint64(m.BidStepSize))
+		i--
+		dAtA[i] = 0x48
+	}
+	if m.CurrentBid != 0 {
+		i = encodeVarintAuctionPool(dAtA, i, uint64(m.CurrentBid))
+		i--
+		dAtA[i] = 0x40
+	}
+	if m.StartingBid != 0 {
+		i = encodeVarintAuctionPool(dAtA, i, uint64(m.StartingBid))
+		i--
+		dAtA[i] = 0x38
+	}
+	if m.MaxAllowedBid != 0 {
+		i = encodeVarintAuctionPool(dAtA, i, uint64(m.MaxAllowedBid))
+		i--
+		dAtA[i] = 0x30
+	}
+	if m.MinAllowedBid != 0 {
+		i = encodeVarintAuctionPool(dAtA, i, uint64(m.MinAllowedBid))
+		i--
+		dAtA[i] = 0x28
+	}
+	if m.Supply != 0 {
+		i = encodeVarintAuctionPool(dAtA, i, uint64(m.Supply))
+		i--
+		dAtA[i] = 0x20
+	}
+	if len(m.Target) > 0 {
+		i -= len(m.Target)
+		copy(dAtA[i:], m.Target)
+		i = encodeVarintAuctionPool(dAtA, i, uint64(len(m.Target)))
+		i--
+		dAtA[i] = 0x1a
+	}
+	if m.Status != 0 {
+		i = encodeVarintAuctionPool(dAtA, i, uint64(m.Status))
+		i--
+		dAtA[i] = 0x10
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *SealedBidAuction) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *SealedBidAuction) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *SealedBidAuction) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if m.RevealBlock != 0 {
+		i = encodeVarintAuctionPool(dAtA, i, uint64(m.RevealBlock))
+		i--
+		dAtA[i] = 0x58
+	}
+	if m.LastBlock != 0 {
+		i = encodeVarintAuctionPool(dAtA, i, uint64(m.LastBlock))
+		i--
+		dAtA[i] = 0x50
+	}
+	if m.FirstBlock != 0 {
+		i = encodeVarintAuctionPool(dAtA, i, uint64(m.FirstBlock))
+		i--
+		dAtA[i] = 0x48
+	}
+	if m.RevealDuration != 0 {
+		i = encodeVarintAuctionPool(dAtA, i, uint64(m.RevealDuration))
+		i--
+		dAtA[i] = 0x40
+	}
+	if m.AuctionDuration != 0 {
+		i = encodeVarintAuctionPool(dAtA, i, uint64(m.AuctionDuration))
+		i--
+		dAtA[i] = 0x38
+	}
+	if m.MaxAllowedBid != 0 {
+		i = encodeVarintAuctionPool(dAtA, i, uint64(m.MaxAllowedBid))
+		i--
+		dAtA[i] = 0x30
+	}
+	if m.MinAllowedBid != 0 {
+		i = encodeVarintAuctionPool(dAtA, i, uint64(m.MinAllowedBid))
+		i--
+		dAtA[i] = 0x28
+	}
+	if m.Supply != 0 {
+		i = encodeVarintAuctionPool(dAtA, i, uint64(m.Supply))
+		i--
+		dAtA[i] = 0x20
+	}
+	if len(m.Target) > 0 {
+		i -= len(m.Target)
+		copy(dAtA[i:], m.Target)
+		i = encodeVarintAuctionPool(dAtA, i, uint64(len(m.Target)))
+		i--
+		dAtA[i] = 0x1a
+	}
+	if m.Status != 0 {
+		i = encodeVarintAuctionPool(dAtA, i, uint64(m.Status))
+		i--
+		dAtA[i] = 0x10
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *Auction) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *Auction) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *Auction) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if m.XSealedBidAuction != nil {
+		{
+			size := m.XSealedBidAuction.Size()
+			i -= size
+			if _, err := m.XSealedBidAuction.MarshalTo(dAtA[i:]); err != nil {
+				return 0, err
+			}
+		}
+	}
+	if m.XDescendingAuction != nil {
+		{
+			size := m.XDescendingAuction.Size()
+			i -= size
+			if _, err := m.XDescendingAuction.MarshalTo(dAtA[i:]); err != nil {
+				return 0, err
+			}
+		}
+	}
+	if m.XAscendingAuction != nil {
+		{
+			size := m.XAscendingAuction.Size()
+			i -= size
+			if _, err := m.XAscendingAuction.MarshalTo(dAtA[i:]); err != nil {
+				return 0, err
+			}
+		}
+	}
+	if m.Algorithm != 0 {
+		i = encodeVarintAuctionPool(dAtA, i, uint64(m.Algorithm))
+		i--
+		dAtA[i] = 0x8
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *Auction_AscendingAuction) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *Auction_AscendingAuction) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	if m.AscendingAuction != nil {
+		{
+			size, err := m.AscendingAuction.MarshalToSizedBuffer(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = encodeVarintAuctionPool(dAtA, i, uint64(size))
+		}
+		i--
+		dAtA[i] = 0x12
+	}
+	return len(dAtA) - i, nil
+}
+func (m *Auction_DescendingAuction) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *Auction_DescendingAuction) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	if m.DescendingAuction != nil {
+		{
+			size, err := m.DescendingAuction.MarshalToSizedBuffer(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = encodeVarintAuctionPool(dAtA, i, uint64(size))
+		}
+		i--
+		dAtA[i] = 0x1a
+	}
+	return len(dAtA) - i, nil
+}
+func (m *Auction_SealedBidAuction) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *Auction_SealedBidAuction) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	if m.SealedBidAuction != nil {
+		{
+			size, err := m.SealedBidAuction.MarshalToSizedBuffer(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = encodeVarintAuctionPool(dAtA, i, uint64(size))
+		}
+		i--
+		dAtA[i] = 0x22
+	}
+	return len(dAtA) - i, nil
+}
 func (m *AuctionPool) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
@@ -179,49 +1083,50 @@ func (m *AuctionPool) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	_ = i
 	var l int
 	_ = l
-	if m.RevealBlock != 0 {
-		i = encodeVarintAuctionPool(dAtA, i, uint64(m.RevealBlock))
+	if m.LatestAuction != nil {
+		{
+			size, err := m.LatestAuction.MarshalToSizedBuffer(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = encodeVarintAuctionPool(dAtA, i, uint64(size))
+		}
 		i--
-		dAtA[i] = 0x48
+		dAtA[i] = 0x32
 	}
-	if m.LastBlock != 0 {
-		i = encodeVarintAuctionPool(dAtA, i, uint64(m.LastBlock))
-		i--
-		dAtA[i] = 0x40
-	}
-	if m.FirstBlock != 0 {
-		i = encodeVarintAuctionPool(dAtA, i, uint64(m.FirstBlock))
-		i--
-		dAtA[i] = 0x38
-	}
-	if m.MinimumBid != 0 {
-		i = encodeVarintAuctionPool(dAtA, i, uint64(m.MinimumBid))
-		i--
-		dAtA[i] = 0x30
-	}
-	if len(m.AuctionType) > 0 {
-		i -= len(m.AuctionType)
-		copy(dAtA[i:], m.AuctionType)
-		i = encodeVarintAuctionPool(dAtA, i, uint64(len(m.AuctionType)))
+	if len(m.AllowedAlgorithms) > 0 {
+		dAtA6 := make([]byte, len(m.AllowedAlgorithms)*10)
+		var j5 int
+		for _, num := range m.AllowedAlgorithms {
+			for num >= 1<<7 {
+				dAtA6[j5] = uint8(uint64(num)&0x7f | 0x80)
+				num >>= 7
+				j5++
+			}
+			dAtA6[j5] = uint8(num)
+			j5++
+		}
+		i -= j5
+		copy(dAtA[i:], dAtA6[:j5])
+		i = encodeVarintAuctionPool(dAtA, i, uint64(j5))
 		i--
 		dAtA[i] = 0x2a
 	}
-	if m.AvailableSupply != 0 {
-		i = encodeVarintAuctionPool(dAtA, i, uint64(m.AvailableSupply))
+	if m.MaxAllowedSupply != 0 {
+		i = encodeVarintAuctionPool(dAtA, i, uint64(m.MaxAllowedSupply))
 		i--
 		dAtA[i] = 0x20
+	}
+	if m.MinAllowedSupply != 0 {
+		i = encodeVarintAuctionPool(dAtA, i, uint64(m.MinAllowedSupply))
+		i--
+		dAtA[i] = 0x18
 	}
 	if len(m.PoolAddress) > 0 {
 		i -= len(m.PoolAddress)
 		copy(dAtA[i:], m.PoolAddress)
 		i = encodeVarintAuctionPool(dAtA, i, uint64(len(m.PoolAddress)))
-		i--
-		dAtA[i] = 0x1a
-	}
-	if len(m.PoolName) > 0 {
-		i -= len(m.PoolName)
-		copy(dAtA[i:], m.PoolName)
-		i = encodeVarintAuctionPool(dAtA, i, uint64(len(m.PoolName)))
 		i--
 		dAtA[i] = 0x12
 	}
@@ -244,32 +1149,111 @@ func encodeVarintAuctionPool(dAtA []byte, offset int, v uint64) int {
 	dAtA[offset] = uint8(v)
 	return base
 }
-func (m *AuctionPool) Size() (n int) {
+func (m *AscendingAuction) Size() (n int) {
 	if m == nil {
 		return 0
 	}
 	var l int
 	_ = l
-	if m.Id != 0 {
-		n += 1 + sovAuctionPool(uint64(m.Id))
+	if m.Status != 0 {
+		n += 1 + sovAuctionPool(uint64(m.Status))
 	}
-	l = len(m.PoolName)
+	l = len(m.Target)
 	if l > 0 {
 		n += 1 + l + sovAuctionPool(uint64(l))
 	}
-	l = len(m.PoolAddress)
+	if m.Supply != 0 {
+		n += 1 + sovAuctionPool(uint64(m.Supply))
+	}
+	if m.MinAllowedBid != 0 {
+		n += 1 + sovAuctionPool(uint64(m.MinAllowedBid))
+	}
+	if m.MaxAllowedBid != 0 {
+		n += 1 + sovAuctionPool(uint64(m.MaxAllowedBid))
+	}
+	if m.EndDuration != 0 {
+		n += 1 + sovAuctionPool(uint64(m.EndDuration))
+	}
+	if m.LastBlock != 0 {
+		n += 1 + sovAuctionPool(uint64(m.LastBlock))
+	}
+	if m.CurrentBid != 0 {
+		n += 1 + sovAuctionPool(uint64(m.CurrentBid))
+	}
+	l = len(m.CurrentWinner)
 	if l > 0 {
 		n += 1 + l + sovAuctionPool(uint64(l))
 	}
-	if m.AvailableSupply != 0 {
-		n += 1 + sovAuctionPool(uint64(m.AvailableSupply))
+	return n
+}
+
+func (m *DescendingAuction) Size() (n int) {
+	if m == nil {
+		return 0
 	}
-	l = len(m.AuctionType)
+	var l int
+	_ = l
+	if m.Status != 0 {
+		n += 1 + sovAuctionPool(uint64(m.Status))
+	}
+	l = len(m.Target)
 	if l > 0 {
 		n += 1 + l + sovAuctionPool(uint64(l))
 	}
-	if m.MinimumBid != 0 {
-		n += 1 + sovAuctionPool(uint64(m.MinimumBid))
+	if m.Supply != 0 {
+		n += 1 + sovAuctionPool(uint64(m.Supply))
+	}
+	if m.MinAllowedBid != 0 {
+		n += 1 + sovAuctionPool(uint64(m.MinAllowedBid))
+	}
+	if m.MaxAllowedBid != 0 {
+		n += 1 + sovAuctionPool(uint64(m.MaxAllowedBid))
+	}
+	if m.StartingBid != 0 {
+		n += 1 + sovAuctionPool(uint64(m.StartingBid))
+	}
+	if m.CurrentBid != 0 {
+		n += 1 + sovAuctionPool(uint64(m.CurrentBid))
+	}
+	if m.BidStepSize != 0 {
+		n += 1 + sovAuctionPool(uint64(m.BidStepSize))
+	}
+	if m.BidStepDuration != 0 {
+		n += 1 + sovAuctionPool(uint64(m.BidStepDuration))
+	}
+	if m.NextStep != 0 {
+		n += 1 + sovAuctionPool(uint64(m.NextStep))
+	}
+	return n
+}
+
+func (m *SealedBidAuction) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if m.Status != 0 {
+		n += 1 + sovAuctionPool(uint64(m.Status))
+	}
+	l = len(m.Target)
+	if l > 0 {
+		n += 1 + l + sovAuctionPool(uint64(l))
+	}
+	if m.Supply != 0 {
+		n += 1 + sovAuctionPool(uint64(m.Supply))
+	}
+	if m.MinAllowedBid != 0 {
+		n += 1 + sovAuctionPool(uint64(m.MinAllowedBid))
+	}
+	if m.MaxAllowedBid != 0 {
+		n += 1 + sovAuctionPool(uint64(m.MaxAllowedBid))
+	}
+	if m.AuctionDuration != 0 {
+		n += 1 + sovAuctionPool(uint64(m.AuctionDuration))
+	}
+	if m.RevealDuration != 0 {
+		n += 1 + sovAuctionPool(uint64(m.RevealDuration))
 	}
 	if m.FirstBlock != 0 {
 		n += 1 + sovAuctionPool(uint64(m.FirstBlock))
@@ -283,11 +1267,1028 @@ func (m *AuctionPool) Size() (n int) {
 	return n
 }
 
+func (m *Auction) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if m.Algorithm != 0 {
+		n += 1 + sovAuctionPool(uint64(m.Algorithm))
+	}
+	if m.XAscendingAuction != nil {
+		n += m.XAscendingAuction.Size()
+	}
+	if m.XDescendingAuction != nil {
+		n += m.XDescendingAuction.Size()
+	}
+	if m.XSealedBidAuction != nil {
+		n += m.XSealedBidAuction.Size()
+	}
+	return n
+}
+
+func (m *Auction_AscendingAuction) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if m.AscendingAuction != nil {
+		l = m.AscendingAuction.Size()
+		n += 1 + l + sovAuctionPool(uint64(l))
+	}
+	return n
+}
+func (m *Auction_DescendingAuction) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if m.DescendingAuction != nil {
+		l = m.DescendingAuction.Size()
+		n += 1 + l + sovAuctionPool(uint64(l))
+	}
+	return n
+}
+func (m *Auction_SealedBidAuction) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if m.SealedBidAuction != nil {
+		l = m.SealedBidAuction.Size()
+		n += 1 + l + sovAuctionPool(uint64(l))
+	}
+	return n
+}
+func (m *AuctionPool) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if m.Id != 0 {
+		n += 1 + sovAuctionPool(uint64(m.Id))
+	}
+	l = len(m.PoolAddress)
+	if l > 0 {
+		n += 1 + l + sovAuctionPool(uint64(l))
+	}
+	if m.MinAllowedSupply != 0 {
+		n += 1 + sovAuctionPool(uint64(m.MinAllowedSupply))
+	}
+	if m.MaxAllowedSupply != 0 {
+		n += 1 + sovAuctionPool(uint64(m.MaxAllowedSupply))
+	}
+	if len(m.AllowedAlgorithms) > 0 {
+		l = 0
+		for _, e := range m.AllowedAlgorithms {
+			l += sovAuctionPool(uint64(e))
+		}
+		n += 1 + sovAuctionPool(uint64(l)) + l
+	}
+	if m.LatestAuction != nil {
+		l = m.LatestAuction.Size()
+		n += 1 + l + sovAuctionPool(uint64(l))
+	}
+	return n
+}
+
 func sovAuctionPool(x uint64) (n int) {
 	return (math_bits.Len64(x|1) + 6) / 7
 }
 func sozAuctionPool(x uint64) (n int) {
 	return sovAuctionPool(uint64((x << 1) ^ uint64((int64(x) >> 63))))
+}
+func (m *AscendingAuction) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowAuctionPool
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: AscendingAuction: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: AscendingAuction: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 2:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Status", wireType)
+			}
+			m.Status = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowAuctionPool
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.Status |= AuctionState(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 3:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Target", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowAuctionPool
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthAuctionPool
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthAuctionPool
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Target = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 4:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Supply", wireType)
+			}
+			m.Supply = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowAuctionPool
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.Supply |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 5:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field MinAllowedBid", wireType)
+			}
+			m.MinAllowedBid = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowAuctionPool
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.MinAllowedBid |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 6:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field MaxAllowedBid", wireType)
+			}
+			m.MaxAllowedBid = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowAuctionPool
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.MaxAllowedBid |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 7:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field EndDuration", wireType)
+			}
+			m.EndDuration = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowAuctionPool
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.EndDuration |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 8:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field LastBlock", wireType)
+			}
+			m.LastBlock = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowAuctionPool
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.LastBlock |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 9:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field CurrentBid", wireType)
+			}
+			m.CurrentBid = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowAuctionPool
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.CurrentBid |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 10:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field CurrentWinner", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowAuctionPool
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthAuctionPool
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthAuctionPool
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.CurrentWinner = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipAuctionPool(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthAuctionPool
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *DescendingAuction) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowAuctionPool
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: DescendingAuction: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: DescendingAuction: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 2:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Status", wireType)
+			}
+			m.Status = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowAuctionPool
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.Status |= AuctionState(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 3:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Target", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowAuctionPool
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthAuctionPool
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthAuctionPool
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Target = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 4:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Supply", wireType)
+			}
+			m.Supply = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowAuctionPool
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.Supply |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 5:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field MinAllowedBid", wireType)
+			}
+			m.MinAllowedBid = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowAuctionPool
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.MinAllowedBid |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 6:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field MaxAllowedBid", wireType)
+			}
+			m.MaxAllowedBid = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowAuctionPool
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.MaxAllowedBid |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 7:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field StartingBid", wireType)
+			}
+			m.StartingBid = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowAuctionPool
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.StartingBid |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 8:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field CurrentBid", wireType)
+			}
+			m.CurrentBid = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowAuctionPool
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.CurrentBid |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 9:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field BidStepSize", wireType)
+			}
+			m.BidStepSize = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowAuctionPool
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.BidStepSize |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 10:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field BidStepDuration", wireType)
+			}
+			m.BidStepDuration = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowAuctionPool
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.BidStepDuration |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 11:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field NextStep", wireType)
+			}
+			m.NextStep = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowAuctionPool
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.NextStep |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		default:
+			iNdEx = preIndex
+			skippy, err := skipAuctionPool(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthAuctionPool
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *SealedBidAuction) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowAuctionPool
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: SealedBidAuction: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: SealedBidAuction: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 2:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Status", wireType)
+			}
+			m.Status = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowAuctionPool
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.Status |= AuctionState(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 3:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Target", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowAuctionPool
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthAuctionPool
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthAuctionPool
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Target = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 4:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Supply", wireType)
+			}
+			m.Supply = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowAuctionPool
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.Supply |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 5:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field MinAllowedBid", wireType)
+			}
+			m.MinAllowedBid = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowAuctionPool
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.MinAllowedBid |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 6:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field MaxAllowedBid", wireType)
+			}
+			m.MaxAllowedBid = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowAuctionPool
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.MaxAllowedBid |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 7:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field AuctionDuration", wireType)
+			}
+			m.AuctionDuration = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowAuctionPool
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.AuctionDuration |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 8:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field RevealDuration", wireType)
+			}
+			m.RevealDuration = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowAuctionPool
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.RevealDuration |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 9:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field FirstBlock", wireType)
+			}
+			m.FirstBlock = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowAuctionPool
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.FirstBlock |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 10:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field LastBlock", wireType)
+			}
+			m.LastBlock = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowAuctionPool
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.LastBlock |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 11:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field RevealBlock", wireType)
+			}
+			m.RevealBlock = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowAuctionPool
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.RevealBlock |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		default:
+			iNdEx = preIndex
+			skippy, err := skipAuctionPool(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthAuctionPool
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *Auction) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowAuctionPool
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: Auction: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: Auction: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Algorithm", wireType)
+			}
+			m.Algorithm = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowAuctionPool
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.Algorithm |= AuctionType(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field AscendingAuction", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowAuctionPool
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthAuctionPool
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthAuctionPool
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			v := &AscendingAuction{}
+			if err := v.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			m.XAscendingAuction = &Auction_AscendingAuction{v}
+			iNdEx = postIndex
+		case 3:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field DescendingAuction", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowAuctionPool
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthAuctionPool
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthAuctionPool
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			v := &DescendingAuction{}
+			if err := v.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			m.XDescendingAuction = &Auction_DescendingAuction{v}
+			iNdEx = postIndex
+		case 4:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field SealedBidAuction", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowAuctionPool
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthAuctionPool
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthAuctionPool
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			v := &SealedBidAuction{}
+			if err := v.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			m.XSealedBidAuction = &Auction_SealedBidAuction{v}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipAuctionPool(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthAuctionPool
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
 }
 func (m *AuctionPool) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
@@ -339,38 +2340,6 @@ func (m *AuctionPool) Unmarshal(dAtA []byte) error {
 			}
 		case 2:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field PoolName", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowAuctionPool
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthAuctionPool
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return ErrInvalidLengthAuctionPool
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.PoolName = string(dAtA[iNdEx:postIndex])
-			iNdEx = postIndex
-		case 3:
-			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field PoolAddress", wireType)
 			}
 			var stringLen uint64
@@ -401,11 +2370,11 @@ func (m *AuctionPool) Unmarshal(dAtA []byte) error {
 			}
 			m.PoolAddress = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
-		case 4:
+		case 3:
 			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field AvailableSupply", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field MinAllowedSupply", wireType)
 			}
-			m.AvailableSupply = 0
+			m.MinAllowedSupply = 0
 			for shift := uint(0); ; shift += 7 {
 				if shift >= 64 {
 					return ErrIntOverflowAuctionPool
@@ -415,16 +2384,104 @@ func (m *AuctionPool) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				m.AvailableSupply |= uint64(b&0x7F) << shift
+				m.MinAllowedSupply |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 4:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field MaxAllowedSupply", wireType)
+			}
+			m.MaxAllowedSupply = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowAuctionPool
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.MaxAllowedSupply |= uint64(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}
 			}
 		case 5:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field AuctionType", wireType)
+			if wireType == 0 {
+				var v AuctionType
+				for shift := uint(0); ; shift += 7 {
+					if shift >= 64 {
+						return ErrIntOverflowAuctionPool
+					}
+					if iNdEx >= l {
+						return io.ErrUnexpectedEOF
+					}
+					b := dAtA[iNdEx]
+					iNdEx++
+					v |= AuctionType(b&0x7F) << shift
+					if b < 0x80 {
+						break
+					}
+				}
+				m.AllowedAlgorithms = append(m.AllowedAlgorithms, v)
+			} else if wireType == 2 {
+				var packedLen int
+				for shift := uint(0); ; shift += 7 {
+					if shift >= 64 {
+						return ErrIntOverflowAuctionPool
+					}
+					if iNdEx >= l {
+						return io.ErrUnexpectedEOF
+					}
+					b := dAtA[iNdEx]
+					iNdEx++
+					packedLen |= int(b&0x7F) << shift
+					if b < 0x80 {
+						break
+					}
+				}
+				if packedLen < 0 {
+					return ErrInvalidLengthAuctionPool
+				}
+				postIndex := iNdEx + packedLen
+				if postIndex < 0 {
+					return ErrInvalidLengthAuctionPool
+				}
+				if postIndex > l {
+					return io.ErrUnexpectedEOF
+				}
+				var elementCount int
+				if elementCount != 0 && len(m.AllowedAlgorithms) == 0 {
+					m.AllowedAlgorithms = make([]AuctionType, 0, elementCount)
+				}
+				for iNdEx < postIndex {
+					var v AuctionType
+					for shift := uint(0); ; shift += 7 {
+						if shift >= 64 {
+							return ErrIntOverflowAuctionPool
+						}
+						if iNdEx >= l {
+							return io.ErrUnexpectedEOF
+						}
+						b := dAtA[iNdEx]
+						iNdEx++
+						v |= AuctionType(b&0x7F) << shift
+						if b < 0x80 {
+							break
+						}
+					}
+					m.AllowedAlgorithms = append(m.AllowedAlgorithms, v)
+				}
+			} else {
+				return fmt.Errorf("proto: wrong wireType = %d for field AllowedAlgorithms", wireType)
 			}
-			var stringLen uint64
+		case 6:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field LatestAuction", wireType)
+			}
+			var msglen int
 			for shift := uint(0); ; shift += 7 {
 				if shift >= 64 {
 					return ErrIntOverflowAuctionPool
@@ -434,100 +2491,28 @@ func (m *AuctionPool) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
+				msglen |= int(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}
 			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
+			if msglen < 0 {
 				return ErrInvalidLengthAuctionPool
 			}
-			postIndex := iNdEx + intStringLen
+			postIndex := iNdEx + msglen
 			if postIndex < 0 {
 				return ErrInvalidLengthAuctionPool
 			}
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.AuctionType = string(dAtA[iNdEx:postIndex])
+			if m.LatestAuction == nil {
+				m.LatestAuction = &Auction{}
+			}
+			if err := m.LatestAuction.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
 			iNdEx = postIndex
-		case 6:
-			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field MinimumBid", wireType)
-			}
-			m.MinimumBid = 0
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowAuctionPool
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				m.MinimumBid |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-		case 7:
-			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field FirstBlock", wireType)
-			}
-			m.FirstBlock = 0
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowAuctionPool
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				m.FirstBlock |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-		case 8:
-			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field LastBlock", wireType)
-			}
-			m.LastBlock = 0
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowAuctionPool
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				m.LastBlock |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-		case 9:
-			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field RevealBlock", wireType)
-			}
-			m.RevealBlock = 0
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowAuctionPool
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				m.RevealBlock |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
 		default:
 			iNdEx = preIndex
 			skippy, err := skipAuctionPool(dAtA[iNdEx:])

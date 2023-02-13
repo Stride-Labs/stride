@@ -8,7 +8,6 @@ import (
 	// this line is used by starport scaffolding # 1
 
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
-	"github.com/spf13/cast"
 	"github.com/spf13/cobra"
 
 	abci "github.com/tendermint/tendermint/abci/types"
@@ -150,31 +149,26 @@ func (am AppModule) ExportGenesis(ctx sdk.Context, cdc codec.JSONCodec) json.Raw
 	return cdc.MustMarshalJSON(genState)
 }
 
-// ConsensusVersion is a sequence number for state-breaking change of the module. It should be incremented on each consensus-breaking change introduced by the module. To avoid wrong/empty versions, the initial version should be set to 1
+// ConsensusVersion is a sequence number for state-breaking change of the module.
+// It should be incremented on each consensus-breaking change introduced by the module.
+// To avoid wrong/empty versions, the initial version should be set to 1
 func (AppModule) ConsensusVersion() uint64 { return 1 }
 
 // BeginBlock contains the logic that is automatically triggered at the beginning of each block
 // In this case we need to check if it is the lastBlock (or revealBlock) for any auctions
 func (am AppModule) BeginBlock(ctx sdk.Context, _ abci.RequestBeginBlock) {
 	k := am.keeper
-	now := cast.ToUint64(ctx.BlockHeight())
 	pools := k.GetAllAuctionPool(ctx)
 	for _, pool := range pools {
-		if pool.GetLastBlock() == now {
-			// call to the resolver function which loads bids and determines which bidders get which amounts
-			// pass the AppModule to the resolver because it needs am.bankKeeper to take and send coins
-			return
+		auction := pool.GetLatestAuction().GetAuction()
+		if auction.GetStatus() != types.AuctionState_COMPLETE {
+			auction.CheckBlock(ctx)     // algorithm specific update to the auction datastruct
+			k.SetAuctionPool(ctx, pool) // persist changes to pool which contains auction
 		}
 	}
 }
 
 // EndBlock contains the logic that is automatically triggered at the end of each block
 func (am AppModule) EndBlock(ctx sdk.Context, _ abci.RequestEndBlock) []abci.ValidatorUpdate {
-	//k := am.keeper
-	//pools := k.GetAllAuctionPool(ctx)
-	//for _, pool := range pools {
-	// TODO: check how many coins are in pool.poolAddress and update it if it has changed
-
-	//}
 	return []abci.ValidatorUpdate{}
 }

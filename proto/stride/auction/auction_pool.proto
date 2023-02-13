@@ -2,16 +2,107 @@ syntax = "proto3";
 
 package stride.auction;
 
+import "google/protobuf/any.proto";
+
 option go_package = "github.com/Stride-Labs/stride/v5/x/auction/types";
 
+/* ****************************************************************************
+An AuctionPool is a combination of an address which holds assets and rules 
+that any auctions for those assets would be restricted to follow.  It is like
+a potential auction defining the bounds of what is allowed.
+
+In contrast, an Auction is a specific instance which is either running now
+or completed in the past, for a specific amount, with specific param settings. 
+Auction contains fields which are common across all different auction types
+
+But depending on the algorithm which the auction is running, there are some
+algorithm specific parameters
+
+**************************************************************************** */
+
+enum AuctionType {
+  UNKNOWN = 0;
+  ASCENDING = 1;
+  DESCENDING = 2;
+  SEALEDBID = 3;
+}
+
+enum AuctionState {
+  WAITING = 0;
+  RUNNING = 1;
+  COMPLETE = 2;
+  REVEAL = 3;
+  PAYOUT = 4;
+}
+
+// An Auction is a specific auction for a specific target asset and supply 
+// even if the supply in the address of the pool changes during that time
+// Depending on the algorithm chosen there are different specific params
+
+// English style auction specific parameters
+// Starts low with increasing bids, auction ends if no new bids occur 
+// for endDuration blocks in a row and goes to current winner
+// When a higher bid comes in, the lastBlock is set now + endDuration
+message AscendingAuction {
+  AuctionState status = 2;
+  string target = 3;
+  uint64 supply = 4;
+  uint64 minAllowedBid = 5;
+  uint64 maxAllowedBid = 6;
+  uint64 endDuration = 7;
+  uint64 lastBlock = 8;
+  uint64 currentBid = 9;
+  string currentWinner = 10;
+}
+
+// Dutch style auction specific parameters
+// Starts high at startingBid, moves bid down bidStepSize each
+// bidStepDuration blocks until someone is willing to bid and win
+message DescendingAuction {
+  AuctionState status = 2;
+  string target = 3;
+  uint64 supply = 4;
+  uint64 minAllowedBid = 5;
+  uint64 maxAllowedBid = 6;
+  uint64 startingBid = 7;
+  uint64 currentBid = 8;
+  uint64 bidStepSize = 9;
+  uint64 bidStepDuration = 10;
+  uint64 nextStep = 11;
+}
+
+// Sealed Bid style auction specific parameters
+// Auction is open for sealed bids from firstBlock to lastBlock
+// after last block but before revealBlock send same bids unsealed 
+message SealedBidAuction {
+  AuctionState status = 2;
+  string target = 3;
+  uint64 supply = 4;
+  uint64 minAllowedBid = 5;
+  uint64 maxAllowedBid = 6;  
+  uint64 auctionDuration = 7;
+  uint64 revealDuration = 8;
+  uint64 firstBlock = 9;
+  uint64 lastBlock = 10;
+  uint64 revealBlock = 11;
+}
+
+// Would be more elegant if protobuf had a nice way to do interfaces but
+// the algorithm is used to determine which one of the optional fields is set
+message Auction {
+  AuctionType algorithm = 1;
+  optional AscendingAuction ascendingAuction = 2;
+  optional DescendingAuction descendingAuction = 3;
+  optional SealedBidAuction sealedBidAuction = 4;
+}
+
+// Auction Pool has an address with some assets and restrictions on the types
+// of auctions which can be run for this pool.
 message AuctionPool {
   uint64 id = 1;
-  string poolName = 2;
-  string poolAddress = 3;
-  uint64 availableSupply = 4;
-  string auctionType = 5;
-  uint64 minimumBid = 6;
-  uint64 firstBlock = 7;
-  uint64 lastBlock = 8;
-  uint64 revealBlock = 9;
+  string poolAddress = 2;
+  uint64 minAllowedSupply = 3;
+  uint64 maxAllowedSupply = 4;
+  repeated AuctionType allowedAlgorithms = 5;
+  Auction latestAuction = 6; //google.protobuf.Any latestAuction = 6;
 }

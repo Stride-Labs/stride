@@ -13,7 +13,8 @@ service Msg {
 
 message MsgStartAuction {
   string creator = 1;
-  string poolName = 2;
+  string zone = 2;
+  uint64 poolID = 3;
 }
 
 message MsgStartAuctionResponse {}
