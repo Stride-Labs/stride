@@ -1,8 +1,6 @@
 package keeper_test
 
 import (
-	"fmt"
-
 	sdkmath "cosmossdk.io/math"
 	_ "github.com/stretchr/testify/suite"
 
@@ -145,7 +143,6 @@ func (s *KeeperTestSuite) TestRebalanceValidators_Successful() {
 
 	// get stored callback data
 	callbackKey := icacallbackstypes.PacketID(portId, tc.delegationChannel, startSequence)
-	fmt.Println(callbackKey)
 	callbackData, found := s.App.StakeibcKeeper.ICACallbacksKeeper.GetCallbackData(s.Ctx, callbackKey)
 	s.Require().True(found, "callback should exist")
 	s.Require().Equal("rebalance", callbackData.CallbackId, "callback key should be rebalance")

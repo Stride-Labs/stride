@@ -306,7 +306,7 @@ func (k Keeper) SubmitTxs(
 
 	res, err := msgServer.SendTx(ctx, msg)
 
-	if res != nil {
+	if err != nil {
 		return 0, err
 	}
 
@@ -327,6 +327,7 @@ func (k Keeper) SubmitTxs(
 			CallbackArgs: callbackArgs,
 		}
 		k.Logger(ctx).Info(utils.LogWithHostZone(chainId, "Storing callback data: %+v", callback))
+
 		k.ICACallbacksKeeper.SetCallbackData(ctx, callback)
 	}
 
