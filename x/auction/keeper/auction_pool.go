@@ -5,28 +5,33 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/spf13/cast"
 
 	"github.com/Stride-Labs/stride/v5/x/auction/types"
 )
 
 // StartNewAuction updates the relevant auctionPool in the store to have start and end blocks running now
-func (k Keeper) StartNewAuction(ctx sdk.Context, auctionPool types.AuctionPool, auctionSettings interface{}) {
+func (k Keeper) StartNewAuction(ctx sdk.Context, auctionPool types.AuctionPool, auctionParams types.Params) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefix(types.AuctionPoolKey))
 
-	now := cast.ToUint64(ctx.BlockHeight())
+	// send this in from msg as a function argument?
+	algorithm := types.AuctionType_SEALEDBID
+	auctionPool.LatestAuction = &types.Auction{}
+	auctionPool.GetLatestAuction().Algorithm = algorithm
 
-	switch auctionSettings.(type) {
-	case types.SealedBidAuction:
-		auction := auctionPool.GetLatestAuction().GetAuction().(*types.SealedBidAuction)
-		auction.FirstBlock = now
-		auction.LastBlock = auction.FirstBlock + auction.GetAuctionDuration()
-		auction.RevealBlock = auction.LastBlock + auction.GetRevealDuration()
-	default:
-
+	switch algorithm {
+	case types.AuctionType_ASCENDING:
+		auction := types.AscendingAuction{}
+		auctionPool.GetLatestAuction().XAscendingAuction = &types.Auction_AscendingAuction{&auction}
+		auction.CreateNew(ctx, auctionParams)
+	case types.AuctionType_DESCENDING:
+		auction := types.DescendingAuction{}
+		auctionPool.GetLatestAuction().XDescendingAuction = &types.Auction_DescendingAuction{&auction}
+		auction.CreateNew(ctx, auctionParams)
+	case types.AuctionType_SEALEDBID:
+		auction := types.SealedBidAuction{}
+		auctionPool.GetLatestAuction().XSealedBidAuction = &types.Auction_SealedBidAuction{&auction}
+		auction.CreateNew(ctx, auctionParams)
 	}
-	// TODO: check the amount of coin in the address of this pool and update that
-	// TODO: also take in an auction type and if it is sealed, then also update the revealBlock
 
 	updated := k.cdc.MustMarshal(&auctionPool)
 	store.Set(GetAuctionPoolIDBytes(auctionPool.Id), updated)

@@ -13,16 +13,15 @@ const (
 	// MemStoreKey defines the in-memory store key
 	MemStoreKey = "mem_auction"
 
-    
+	// ParamsKey defines the store key for claim module parameters
+	ParamsKey string = "params"
 )
 
-
-
 func KeyPrefix(p string) []byte {
-    return []byte(p)
+	return []byte(p)
 }
 
 const (
-	AuctionPoolKey= "AuctionPool/value/"
-	AuctionPoolCountKey= "AuctionPool/count/"
+	AuctionPoolKey      = "AuctionPool/value/"
+	AuctionPoolCountKey = "AuctionPool/count/"
 )

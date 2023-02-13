@@ -7,4 +7,13 @@ import "gogoproto/gogo.proto";
 option go_package = "github.com/Stride-Labs/stride/v5/x/auction/types";
 
 // Params defines the parameters for the module.
-message Params { option (gogoproto.goproto_stringer) = false; }
+message Params { 
+    uint64 minAllowedBid = 1 ;
+    uint64 maxAllowedBid = 2;  
+    uint64 sealedAuctionDuration = 3;
+    uint64 sealedRevealDuration = 4;
+    uint64 ascendingEndDuration = 5;   
+    uint64 descendingStartingBid = 6;
+    uint64 descendingBidStepSize = 7;
+    uint64 descendingBidStepDuration = 8;
+}

@@ -1,12 +1,14 @@
 package types
 
 import (
+	"fmt"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/spf13/cast"
 )
 
 type GeneralAuction interface {
-	CreateNew(ctx sdk.Context)
+	CreateNew(ctx sdk.Context, params Params)
 	CheckBlock(ctx sdk.Context)
 	ResolveAuction(ctx sdk.Context)
 	GetStatus() AuctionState
@@ -24,7 +26,7 @@ func (a *Auction) GetAuction() GeneralAuction {
 	return nil
 }
 
-func (a *AscendingAuction) CreateNew(ctx sdk.Context) {
+func (a *AscendingAuction) CreateNew(ctx sdk.Context, params Params) {
 	return
 }
 
@@ -33,10 +35,11 @@ func (a *AscendingAuction) CheckBlock(ctx sdk.Context) {
 }
 
 func (a *AscendingAuction) ResolveAuction(ctx sdk.Context) {
+	a.Status = AuctionState_COMPLETE
 	return
 }
 
-func (a *DescendingAuction) CreateNew(ctx sdk.Context) {
+func (a *DescendingAuction) CreateNew(ctx sdk.Context, params Params) {
 	return
 }
 
@@ -45,12 +48,21 @@ func (a *DescendingAuction) CheckBlock(ctx sdk.Context) {
 }
 
 func (a *DescendingAuction) ResolveAuction(ctx sdk.Context) {
+	a.Status = AuctionState_COMPLETE
 	return
 }
 
-func (a *SealedBidAuction) CreateNew(ctx sdk.Context) {
+func (a *SealedBidAuction) CreateNew(ctx sdk.Context, params Params) {
 	// reset the bids data structure
-	return
+	now := cast.ToUint64(ctx.BlockHeight())
+	a.AuctionDuration = params.GetSealedAuctionDuration()
+	a.RevealDuration = params.GetSealedRevealDuration()
+	a.FirstBlock = now
+	a.LastBlock = a.FirstBlock + a.GetAuctionDuration()
+	a.RevealBlock = a.LastBlock + a.GetRevealDuration()
+
+	a.Status = AuctionState_RUNNING
+	ctx.Logger().Info(fmt.Sprintf("[auction] New auction starting, state RUNNING at block %d", now))
 }
 
 func (a *SealedBidAuction) CheckBlock(ctx sdk.Context) {
@@ -62,21 +74,21 @@ func (a *SealedBidAuction) CheckBlock(ctx sdk.Context) {
 		if a.Status == AuctionState_RUNNING &&
 			a.GetLastBlock()+1 <= now {
 			a.Status = AuctionState_REVEAL
+			ctx.Logger().Info(fmt.Sprintf("[auction] State Change from RUNNING to REVEAL at block %d", now))
 		}
 		// if the current block has now >= revealBlock+1 and Status is Reveal
 		// then Status needs to be set to payout and we need to call resolve
 		if a.Status == AuctionState_REVEAL &&
 			a.GetRevealBlock()+1 <= now {
 			a.Status = AuctionState_PAYOUT
+			ctx.Logger().Info(fmt.Sprintf("[auction] State Change from REVEAL to PAYOUT at block %d", now))
 			a.ResolveAuction(ctx)
 		}
-
-		return
 	}
-	return
 }
 
 func (a *SealedBidAuction) ResolveAuction(ctx sdk.Context) {
 	a.Status = AuctionState_COMPLETE
+	ctx.Logger().Info(fmt.Sprintf("[auction] Running resolve to determine payouts... state now COMPLETE"))
 	return
 }

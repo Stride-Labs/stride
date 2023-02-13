@@ -4,9 +4,10 @@ import (
 	"context"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/Stride-Labs/stride/v5/x/auction/types"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+
+	"github.com/Stride-Labs/stride/v5/x/auction/types"
 )
 
 func (k Keeper) Params(goCtx context.Context, req *types.QueryParamsRequest) (*types.QueryParamsResponse, error) {
@@ -15,5 +16,6 @@ func (k Keeper) Params(goCtx context.Context, req *types.QueryParamsRequest) (*t
 	}
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	return &types.QueryParamsResponse{Params: k.GetParams(ctx)}, nil
+	params, err := k.GetParams(ctx)
+	return &types.QueryParamsResponse{Params: params}, err
 }

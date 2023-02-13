@@ -161,7 +161,7 @@ func (am AppModule) BeginBlock(ctx sdk.Context, _ abci.RequestBeginBlock) {
 	pools := k.GetAllAuctionPool(ctx)
 	for _, pool := range pools {
 		auction := pool.GetLatestAuction().GetAuction()
-		if auction.GetStatus() != types.AuctionState_COMPLETE {
+		if auction != nil && auction.GetStatus() != types.AuctionState_COMPLETE {
 			auction.CheckBlock(ctx)     // algorithm specific update to the auction datastruct
 			k.SetAuctionPool(ctx, pool) // persist changes to pool which contains auction
 		}

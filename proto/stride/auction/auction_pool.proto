@@ -28,11 +28,10 @@ enum AuctionType {
 }
 
 enum AuctionState {
-  WAITING = 0;
+  COMPLETE = 0;
   RUNNING = 1;
-  COMPLETE = 2;
-  REVEAL = 3;
-  PAYOUT = 4;
+  REVEAL = 2;
+  PAYOUT = 3;
 }
 
 // An Auction is a specific auction for a specific target asset and supply 
@@ -44,47 +43,47 @@ enum AuctionState {
 // for endDuration blocks in a row and goes to current winner
 // When a higher bid comes in, the lastBlock is set now + endDuration
 message AscendingAuction {
-  AuctionState status = 2;
-  string target = 3;
-  uint64 supply = 4;
-  uint64 minAllowedBid = 5;
-  uint64 maxAllowedBid = 6;
-  uint64 endDuration = 7;
-  uint64 lastBlock = 8;
-  uint64 currentBid = 9;
-  string currentWinner = 10;
+  AuctionState status = 1;
+  string target = 2;
+  uint64 supply = 3;
+  uint64 minAllowedBid = 4;
+  uint64 maxAllowedBid = 5;
+  uint64 endDuration = 6;
+  uint64 lastBlock = 7;
+  uint64 currentBid = 8;
+  string currentWinner = 9;
 }
 
 // Dutch style auction specific parameters
 // Starts high at startingBid, moves bid down bidStepSize each
 // bidStepDuration blocks until someone is willing to bid and win
 message DescendingAuction {
-  AuctionState status = 2;
-  string target = 3;
-  uint64 supply = 4;
-  uint64 minAllowedBid = 5;
-  uint64 maxAllowedBid = 6;
-  uint64 startingBid = 7;
-  uint64 currentBid = 8;
-  uint64 bidStepSize = 9;
-  uint64 bidStepDuration = 10;
-  uint64 nextStep = 11;
+  AuctionState status = 1;
+  string target = 2;
+  uint64 supply = 3;
+  uint64 minAllowedBid = 4;
+  uint64 maxAllowedBid = 5;
+  uint64 startingBid = 6;
+  uint64 currentBid = 7;
+  uint64 bidStepSize = 8;
+  uint64 bidStepDuration = 9;
+  uint64 nextStep = 10;
 }
 
 // Sealed Bid style auction specific parameters
 // Auction is open for sealed bids from firstBlock to lastBlock
 // after last block but before revealBlock send same bids unsealed 
 message SealedBidAuction {
-  AuctionState status = 2;
-  string target = 3;
-  uint64 supply = 4;
-  uint64 minAllowedBid = 5;
-  uint64 maxAllowedBid = 6;  
-  uint64 auctionDuration = 7;
-  uint64 revealDuration = 8;
-  uint64 firstBlock = 9;
-  uint64 lastBlock = 10;
-  uint64 revealBlock = 11;
+  AuctionState status = 1;
+  string target = 2;
+  uint64 supply = 3;
+  uint64 minAllowedBid = 4;
+  uint64 maxAllowedBid = 5;  
+  uint64 auctionDuration = 6;
+  uint64 revealDuration = 7;
+  uint64 firstBlock = 8;
+  uint64 lastBlock = 9;
+  uint64 revealBlock = 10;
 }
 
 // Would be more elegant if protobuf had a nice way to do interfaces but

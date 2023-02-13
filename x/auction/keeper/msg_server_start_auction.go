@@ -15,17 +15,19 @@ import (
 func (k msgServer) StartAuction(goCtx context.Context, msg *types.MsgStartAuction) (*types.MsgStartAuctionResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
+	params, _ := k.Keeper.GetParams(ctx)
 	now := cast.ToUint64(ctx.BlockHeight())
+
 	ctx.Logger().Info(fmt.Sprintf("[auction] Request to start auction for pool %d at block %d", msg.GetPoolID(), now))
+
 	auctionPools := k.Keeper.GetAllAuctionPool(ctx)
 	for _, pool := range auctionPools {
 		// find which pool the incoming message is targeting
 		if pool.GetId() == msg.GetPoolID() {
 			auction := pool.GetLatestAuction().GetAuction()
-			if auction.GetStatus() == types.AuctionState_COMPLETE {
-				// TODO: get auctionDuration as well as algorithm from module level params
-				k.Keeper.StartNewAuction(ctx, pool, 150)
-				ctx.Logger().Info(fmt.Sprintf("[auction] Starting new auction at block %d", now))
+			if auction == nil || auction.GetStatus() == types.AuctionState_COMPLETE {
+				ctx.Logger().Info(fmt.Sprintf("[auction] params auctionDuration %d and revealDuration %d", params.GetSealedAuctionDuration(), params.GetSealedRevealDuration()))
+				k.Keeper.StartNewAuction(ctx, pool, params)
 			} else {
 				ctx.Logger().Info(fmt.Sprintf("[auction] Request to start auction for pool %d at block %d failed because already a running auction!", msg.GetPoolID(), now))
 			}

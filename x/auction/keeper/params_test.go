@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+
 	testkeeper "github.com/Stride-Labs/stride/v5/testutil/keeper"
 	"github.com/Stride-Labs/stride/v5/x/auction/types"
 )
@@ -14,5 +15,6 @@ func TestGetParams(t *testing.T) {
 
 	k.SetParams(ctx, params)
 
-	require.EqualValues(t, params, k.GetParams(ctx))
+	p, _ := k.GetParams(ctx)
+	require.EqualValues(t, params, p)
 }
