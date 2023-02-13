@@ -561,34 +561,39 @@ func NewStrideApp(
 	icaModule := ica.NewAppModule(&app.ICAControllerKeeper, &app.ICAHostKeeper)
 
 	// Create the middleware stacks
-
-	// Stack one contains
+	// Stack one (ICAHost Stack) contains:
 	// - IBC
-	// - ICA
-	// - icacallbacks
-	// - stakeibc
+	// - ICAHost
 	// - base app
-	var icamiddlewareStack porttypes.IBCModule
-	icamiddlewareStack = icacallbacksmodule.NewIBCModule(app.IcacallbacksKeeper, stakeibcIBCModule)
-	icamiddlewareStack = icacontroller.NewIBCMiddleware(icamiddlewareStack, app.ICAControllerKeeper)
 	icaHostIBCModule := icahost.NewIBCModule(app.ICAHostKeeper)
 
-	// Stack two contains
+	// Stack two (Stakeibc Stack) contains
+	// - IBC
+	// - ICA
+	// - stakeibc
+	// - base app
+	var stakeibcStack porttypes.IBCModule = stakeibcIBCModule
+	stakeibcStack = icacontroller.NewIBCMiddleware(stakeibcStack, app.ICAControllerKeeper)
+
+	// Stack three contains
 	// - IBC
 	// - records
 	// - transfer
 	// - base app
-	recordsStack := recordsmodule.NewIBCModule(app.RecordsKeeper, transferIBCModule)
+	transferStack := recordsmodule.NewIBCModule(app.RecordsKeeper, transferIBCModule)
 
 	// Create static IBC router, add transfer route, then set and seal it
+	// Note, authentication module packets are routed to the top level of the middleware stack
 	ibcRouter := ibcporttypes.NewRouter()
 	ibcRouter.
-		AddRoute(ibctransfertypes.ModuleName, recordsStack).
-		AddRoute(icacontrollertypes.SubModuleName, icamiddlewareStack).
+		// ICAHost Stack
 		AddRoute(icahosttypes.SubModuleName, icaHostIBCModule).
-		// Note, authentication module packets are routed to the top level of the middleware stack
-		AddRoute(stakeibcmoduletypes.ModuleName, icamiddlewareStack).
-		AddRoute(icacallbacksmoduletypes.ModuleName, icamiddlewareStack)
+		// Stakeibc Stack
+		AddRoute(icacontrollertypes.SubModuleName, stakeibcStack).
+		AddRoute(stakeibcmoduletypes.ModuleName, stakeibcStack).
+		// Transfer stack
+		AddRoute(ibctransfertypes.ModuleName, transferStack)
+
 	// this line is used by starport scaffolding # ibc/app/router
 	app.IBCKeeper.SetRouter(ibcRouter)
 
