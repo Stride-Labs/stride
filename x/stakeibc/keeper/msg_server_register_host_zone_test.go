@@ -300,7 +300,7 @@ func (s *KeeperTestSuite) TestRegisterHostZone_CannotRegisterDelegationAccount()
 
 	_, err := s.GetMsgServer().RegisterHostZone(sdk.WrapSDKContext(s.Ctx), &tc.validMsg)
 	expectedErrMsg := "unable to register delegation account, err: existing active channel channel-1 for portID icacontroller-GAIA.DELEGATION "
-	expectedErrMsg += "on connection connection-0 for owner GAIA.DELEGATION: active channel already set for this owner: "
+	expectedErrMsg += "on connection connection-0: active channel already set for this owner: "
 	expectedErrMsg += "failed to register host zone"
 	s.Require().EqualError(err, expectedErrMsg, "can't register delegation account")
 }
@@ -314,7 +314,7 @@ func (s *KeeperTestSuite) TestRegisterHostZone_CannotRegisterFeeAccount() {
 
 	_, err := s.GetMsgServer().RegisterHostZone(sdk.WrapSDKContext(s.Ctx), &tc.validMsg)
 	expectedErrMsg := "unable to register fee account, err: existing active channel channel-1 for portID icacontroller-GAIA.FEE "
-	expectedErrMsg += "on connection connection-0 for owner GAIA.FEE: active channel already set for this owner: "
+	expectedErrMsg += "on connection connection-0: active channel already set for this owner: "
 	expectedErrMsg += "failed to register host zone"
 	s.Require().EqualError(err, expectedErrMsg, "can't register redemption account")
 }
@@ -328,7 +328,7 @@ func (s *KeeperTestSuite) TestRegisterHostZone_CannotRegisterWithdrawalAccount()
 
 	_, err := s.GetMsgServer().RegisterHostZone(sdk.WrapSDKContext(s.Ctx), &tc.validMsg)
 	expectedErrMsg := "unable to register withdrawal account, err: existing active channel channel-1 for portID icacontroller-GAIA.WITHDRAWAL "
-	expectedErrMsg += "on connection connection-0 for owner GAIA.WITHDRAWAL: active channel already set for this owner: "
+	expectedErrMsg += "on connection connection-0: active channel already set for this owner: "
 	expectedErrMsg += "failed to register host zone"
 	s.Require().EqualError(err, expectedErrMsg, "can't register redemption account")
 }
@@ -342,7 +342,7 @@ func (s *KeeperTestSuite) TestRegisterHostZone_CannotRegisterRedemptionAccount()
 
 	_, err := s.GetMsgServer().RegisterHostZone(sdk.WrapSDKContext(s.Ctx), &tc.validMsg)
 	expectedErrMsg := "unable to register redemption account, err: existing active channel channel-1 for portID icacontroller-GAIA.REDEMPTION "
-	expectedErrMsg += "on connection connection-0 for owner GAIA.REDEMPTION: active channel already set for this owner: "
+	expectedErrMsg += "on connection connection-0: active channel already set for this owner: "
 	expectedErrMsg += "failed to register host zone"
 	s.Require().EqualError(err, expectedErrMsg, "can't register redemption account")
 }

@@ -236,10 +236,7 @@ func (s *KeeperTestSuite) TestRestoreInterchainAccount_FailsIfAccountExists() {
 	msg := tc.validMsg
 
 	_, err := s.GetMsgServer().RestoreInterchainAccount(sdk.WrapSDKContext(s.Ctx), &msg)
-	expectedErrMsg := fmt.Sprintf("existing active channel channel-1 for portID icacontroller-%s.DELEGATION on connection %s: active channel already set for this owner",
-		tc.validMsg.ChainId,
-		s.TransferPath.EndpointB.ConnectionID,
-	)
+	expectedErrMsg := "channel is already active or a handshake is in flight: invalid message sent to channel end"
 	s.Require().EqualError(err, expectedErrMsg, "registered ica account fails when account already exists")
 }
 
@@ -249,11 +246,7 @@ func (s *KeeperTestSuite) TestRestoreInterchainAccount_RevertDepositRecords_Fail
 	msg := tc.validMsg
 
 	_, err := s.GetMsgServer().RestoreInterchainAccount(sdk.WrapSDKContext(s.Ctx), &msg)
-	expectedErrMsg := fmt.Sprintf("existing active channel channel-1 for portID icacontroller-%s.DELEGATION on connection %s for owner %s.DELEGATION: active channel already set for this owner",
-		tc.validMsg.ChainId,
-		s.TransferPath.EndpointB.ConnectionID,
-		tc.validMsg.ChainId,
-	)
+	expectedErrMsg := "channel is already active or a handshake is in flight: invalid message sent to channel end"
 	s.Require().EqualError(err, expectedErrMsg, "registered ica account fails when account already exists")
 
 	// Verify the record status' were NOT reverted
