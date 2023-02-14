@@ -1,0 +1,26 @@
+syntax = "proto3";
+package stride.icaoracle;
+
+option go_package = "github.com/Stride-Labs/stride/v5/x/icaoracle/types";
+
+message Oracle {
+  string moniker = 1;
+  string connection_id = 2;
+  string channel_id = 3;
+  string contract_address = 4;
+  string ica_address = 5;
+  bool active = 6;
+}
+
+message Metadata {
+  string update_time = 1;
+  string update_height = 2;
+}
+
+message Metric {
+  string key = 1;
+  string value = 2;
+  Metadata metadata = 3;
+}
+
+message ExecuteContractUpdateMetric { Metric update_metric = 1; }

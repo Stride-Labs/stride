@@ -1,0 +1,11 @@
+syntax = "proto3";
+package stride.icaoracle;
+
+import "stride/icaoracle/icaoracle.proto";
+
+option go_package = "github.com/Stride-Labs/stride/v5/x/icaoracle/types";
+
+message OracleCallback {
+  string oracle_moniker = 1;
+  Metric metric = 2;
+}
