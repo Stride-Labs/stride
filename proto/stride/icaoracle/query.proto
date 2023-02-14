@@ -1,7 +1,65 @@
 syntax = "proto3";
 package stride.icaoracle;
 
+import "stride/icaoracle/icaoracle.proto";
+import "google/api/annotations.proto";
+
 option go_package = "github.com/Stride-Labs/stride/v5/x/icaoracle/types";
 
 // Query defines the gRPC querier service.
-service Query {}
+service Query {
+  // Query a specific oracle
+  rpc Oracle(QueryOracleRequest) returns (QueryOracleResponse) {
+    option (google.api.http).get =
+        "/Stride-Labs/stride/icaoracle/oracle/{moniker}";
+  }
+
+  // Query all oracles
+  rpc AllOracles(QueryAllOraclesRequest) returns (QueryAllOraclesResponse) {
+    option (google.api.http).get = "/Stride-Labs/stride/icaoracle/oracles";
+  }
+
+  // Query oracles with active ffilter:
+  // - /oracles/by_active?active=true
+  // - /oracles/by_active?active=false
+  rpc ActiveOracles(QueryActiveOraclesRequest)
+      returns (QueryActiveOraclesResponse) {
+    option (google.api.http).get =
+        "/Stride-Labs/stride/icaoracle/oracles/by_active";
+  }
+
+  // Query all pending metrics
+  rpc AllPendingMetricUpdates(QueryAllPendingMetricUpdatesRequest)
+      returns (QueryAllPendingMetricUpdatesResponse) {
+    option (google.api.http).get =
+        "/Stride-Labs/stride/icaoracle/pending_metric_updates";
+  }
+
+  // Query pending metrics with optional filters:
+  // - /pending_metric_updates/by_key_or_moniker?metric_key=X
+  // - /pending_metric_updates/by_key_or_moniker?oracle_moniker=Y
+  // - /pending_metric_updates/by_key_or_moniker?metric_key=X&oracle_moniker=Y
+  rpc PendingMetricUpdates(QueryPendingMetricUpdatesRequest)
+      returns (QueryPendingMetricUpdatesResponse) {
+    option (google.api.http).get = "/Stride-Labs/stride/icaoracle/"
+                                   "pending_metric_updates/by_key_or_moniker";
+  }
+}
+
+message QueryOracleRequest { string moniker = 1; }
+message QueryOracleResponse { Oracle oracle = 1; }
+
+message QueryAllOraclesRequest {}
+message QueryAllOraclesResponse { repeated Oracle oracles = 1; }
+
+message QueryActiveOraclesRequest { bool active = 1; }
+message QueryActiveOraclesResponse { repeated Oracle oracles = 1; }
+
+message QueryAllPendingMetricUpdatesRequest {}
+message QueryAllPendingMetricUpdatesResponse { repeated Metric metrics = 1; }
+
+message QueryPendingMetricUpdatesRequest {
+  string metric_key = 1;
+  string oracle_moniker = 2;
+}
+message QueryPendingMetricUpdatesResponse { repeated Metric metrics = 1; }

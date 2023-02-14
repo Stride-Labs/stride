@@ -8,8 +8,13 @@ import (
 	fmt "fmt"
 	grpc1 "github.com/gogo/protobuf/grpc"
 	proto "github.com/gogo/protobuf/proto"
+	_ "google.golang.org/genproto/googleapis/api/annotations"
 	grpc "google.golang.org/grpc"
+	codes "google.golang.org/grpc/codes"
+	status "google.golang.org/grpc/status"
+	io "io"
 	math "math"
+	math_bits "math/bits"
 )
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -23,19 +28,492 @@ var _ = math.Inf
 // proto package needs to be updated.
 const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 
+type QueryOracleRequest struct {
+	Moniker string `protobuf:"bytes,1,opt,name=moniker,proto3" json:"moniker,omitempty"`
+}
+
+func (m *QueryOracleRequest) Reset()         { *m = QueryOracleRequest{} }
+func (m *QueryOracleRequest) String() string { return proto.CompactTextString(m) }
+func (*QueryOracleRequest) ProtoMessage()    {}
+func (*QueryOracleRequest) Descriptor() ([]byte, []int) {
+	return fileDescriptor_d4d4563f64cd9510, []int{0}
+}
+func (m *QueryOracleRequest) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *QueryOracleRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_QueryOracleRequest.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *QueryOracleRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryOracleRequest.Merge(m, src)
+}
+func (m *QueryOracleRequest) XXX_Size() int {
+	return m.Size()
+}
+func (m *QueryOracleRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_QueryOracleRequest.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_QueryOracleRequest proto.InternalMessageInfo
+
+func (m *QueryOracleRequest) GetMoniker() string {
+	if m != nil {
+		return m.Moniker
+	}
+	return ""
+}
+
+type QueryOracleResponse struct {
+	Oracle *Oracle `protobuf:"bytes,1,opt,name=oracle,proto3" json:"oracle,omitempty"`
+}
+
+func (m *QueryOracleResponse) Reset()         { *m = QueryOracleResponse{} }
+func (m *QueryOracleResponse) String() string { return proto.CompactTextString(m) }
+func (*QueryOracleResponse) ProtoMessage()    {}
+func (*QueryOracleResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_d4d4563f64cd9510, []int{1}
+}
+func (m *QueryOracleResponse) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *QueryOracleResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_QueryOracleResponse.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *QueryOracleResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryOracleResponse.Merge(m, src)
+}
+func (m *QueryOracleResponse) XXX_Size() int {
+	return m.Size()
+}
+func (m *QueryOracleResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_QueryOracleResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_QueryOracleResponse proto.InternalMessageInfo
+
+func (m *QueryOracleResponse) GetOracle() *Oracle {
+	if m != nil {
+		return m.Oracle
+	}
+	return nil
+}
+
+type QueryAllOraclesRequest struct {
+}
+
+func (m *QueryAllOraclesRequest) Reset()         { *m = QueryAllOraclesRequest{} }
+func (m *QueryAllOraclesRequest) String() string { return proto.CompactTextString(m) }
+func (*QueryAllOraclesRequest) ProtoMessage()    {}
+func (*QueryAllOraclesRequest) Descriptor() ([]byte, []int) {
+	return fileDescriptor_d4d4563f64cd9510, []int{2}
+}
+func (m *QueryAllOraclesRequest) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *QueryAllOraclesRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_QueryAllOraclesRequest.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *QueryAllOraclesRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryAllOraclesRequest.Merge(m, src)
+}
+func (m *QueryAllOraclesRequest) XXX_Size() int {
+	return m.Size()
+}
+func (m *QueryAllOraclesRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_QueryAllOraclesRequest.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_QueryAllOraclesRequest proto.InternalMessageInfo
+
+type QueryAllOraclesResponse struct {
+	Oracles []*Oracle `protobuf:"bytes,1,rep,name=oracles,proto3" json:"oracles,omitempty"`
+}
+
+func (m *QueryAllOraclesResponse) Reset()         { *m = QueryAllOraclesResponse{} }
+func (m *QueryAllOraclesResponse) String() string { return proto.CompactTextString(m) }
+func (*QueryAllOraclesResponse) ProtoMessage()    {}
+func (*QueryAllOraclesResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_d4d4563f64cd9510, []int{3}
+}
+func (m *QueryAllOraclesResponse) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *QueryAllOraclesResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_QueryAllOraclesResponse.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *QueryAllOraclesResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryAllOraclesResponse.Merge(m, src)
+}
+func (m *QueryAllOraclesResponse) XXX_Size() int {
+	return m.Size()
+}
+func (m *QueryAllOraclesResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_QueryAllOraclesResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_QueryAllOraclesResponse proto.InternalMessageInfo
+
+func (m *QueryAllOraclesResponse) GetOracles() []*Oracle {
+	if m != nil {
+		return m.Oracles
+	}
+	return nil
+}
+
+type QueryActiveOraclesRequest struct {
+	Active bool `protobuf:"varint,1,opt,name=active,proto3" json:"active,omitempty"`
+}
+
+func (m *QueryActiveOraclesRequest) Reset()         { *m = QueryActiveOraclesRequest{} }
+func (m *QueryActiveOraclesRequest) String() string { return proto.CompactTextString(m) }
+func (*QueryActiveOraclesRequest) ProtoMessage()    {}
+func (*QueryActiveOraclesRequest) Descriptor() ([]byte, []int) {
+	return fileDescriptor_d4d4563f64cd9510, []int{4}
+}
+func (m *QueryActiveOraclesRequest) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *QueryActiveOraclesRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_QueryActiveOraclesRequest.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *QueryActiveOraclesRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryActiveOraclesRequest.Merge(m, src)
+}
+func (m *QueryActiveOraclesRequest) XXX_Size() int {
+	return m.Size()
+}
+func (m *QueryActiveOraclesRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_QueryActiveOraclesRequest.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_QueryActiveOraclesRequest proto.InternalMessageInfo
+
+func (m *QueryActiveOraclesRequest) GetActive() bool {
+	if m != nil {
+		return m.Active
+	}
+	return false
+}
+
+type QueryActiveOraclesResponse struct {
+	Oracles []*Oracle `protobuf:"bytes,1,rep,name=oracles,proto3" json:"oracles,omitempty"`
+}
+
+func (m *QueryActiveOraclesResponse) Reset()         { *m = QueryActiveOraclesResponse{} }
+func (m *QueryActiveOraclesResponse) String() string { return proto.CompactTextString(m) }
+func (*QueryActiveOraclesResponse) ProtoMessage()    {}
+func (*QueryActiveOraclesResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_d4d4563f64cd9510, []int{5}
+}
+func (m *QueryActiveOraclesResponse) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *QueryActiveOraclesResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_QueryActiveOraclesResponse.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *QueryActiveOraclesResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryActiveOraclesResponse.Merge(m, src)
+}
+func (m *QueryActiveOraclesResponse) XXX_Size() int {
+	return m.Size()
+}
+func (m *QueryActiveOraclesResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_QueryActiveOraclesResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_QueryActiveOraclesResponse proto.InternalMessageInfo
+
+func (m *QueryActiveOraclesResponse) GetOracles() []*Oracle {
+	if m != nil {
+		return m.Oracles
+	}
+	return nil
+}
+
+type QueryAllPendingMetricUpdatesRequest struct {
+}
+
+func (m *QueryAllPendingMetricUpdatesRequest) Reset()         { *m = QueryAllPendingMetricUpdatesRequest{} }
+func (m *QueryAllPendingMetricUpdatesRequest) String() string { return proto.CompactTextString(m) }
+func (*QueryAllPendingMetricUpdatesRequest) ProtoMessage()    {}
+func (*QueryAllPendingMetricUpdatesRequest) Descriptor() ([]byte, []int) {
+	return fileDescriptor_d4d4563f64cd9510, []int{6}
+}
+func (m *QueryAllPendingMetricUpdatesRequest) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *QueryAllPendingMetricUpdatesRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_QueryAllPendingMetricUpdatesRequest.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *QueryAllPendingMetricUpdatesRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryAllPendingMetricUpdatesRequest.Merge(m, src)
+}
+func (m *QueryAllPendingMetricUpdatesRequest) XXX_Size() int {
+	return m.Size()
+}
+func (m *QueryAllPendingMetricUpdatesRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_QueryAllPendingMetricUpdatesRequest.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_QueryAllPendingMetricUpdatesRequest proto.InternalMessageInfo
+
+type QueryAllPendingMetricUpdatesResponse struct {
+	Metrics []*Metric `protobuf:"bytes,1,rep,name=metrics,proto3" json:"metrics,omitempty"`
+}
+
+func (m *QueryAllPendingMetricUpdatesResponse) Reset()         { *m = QueryAllPendingMetricUpdatesResponse{} }
+func (m *QueryAllPendingMetricUpdatesResponse) String() string { return proto.CompactTextString(m) }
+func (*QueryAllPendingMetricUpdatesResponse) ProtoMessage()    {}
+func (*QueryAllPendingMetricUpdatesResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_d4d4563f64cd9510, []int{7}
+}
+func (m *QueryAllPendingMetricUpdatesResponse) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *QueryAllPendingMetricUpdatesResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_QueryAllPendingMetricUpdatesResponse.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *QueryAllPendingMetricUpdatesResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryAllPendingMetricUpdatesResponse.Merge(m, src)
+}
+func (m *QueryAllPendingMetricUpdatesResponse) XXX_Size() int {
+	return m.Size()
+}
+func (m *QueryAllPendingMetricUpdatesResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_QueryAllPendingMetricUpdatesResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_QueryAllPendingMetricUpdatesResponse proto.InternalMessageInfo
+
+func (m *QueryAllPendingMetricUpdatesResponse) GetMetrics() []*Metric {
+	if m != nil {
+		return m.Metrics
+	}
+	return nil
+}
+
+type QueryPendingMetricUpdatesRequest struct {
+	MetricKey     string `protobuf:"bytes,1,opt,name=metric_key,json=metricKey,proto3" json:"metric_key,omitempty"`
+	OracleMoniker string `protobuf:"bytes,2,opt,name=oracle_moniker,json=oracleMoniker,proto3" json:"oracle_moniker,omitempty"`
+}
+
+func (m *QueryPendingMetricUpdatesRequest) Reset()         { *m = QueryPendingMetricUpdatesRequest{} }
+func (m *QueryPendingMetricUpdatesRequest) String() string { return proto.CompactTextString(m) }
+func (*QueryPendingMetricUpdatesRequest) ProtoMessage()    {}
+func (*QueryPendingMetricUpdatesRequest) Descriptor() ([]byte, []int) {
+	return fileDescriptor_d4d4563f64cd9510, []int{8}
+}
+func (m *QueryPendingMetricUpdatesRequest) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *QueryPendingMetricUpdatesRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_QueryPendingMetricUpdatesRequest.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *QueryPendingMetricUpdatesRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryPendingMetricUpdatesRequest.Merge(m, src)
+}
+func (m *QueryPendingMetricUpdatesRequest) XXX_Size() int {
+	return m.Size()
+}
+func (m *QueryPendingMetricUpdatesRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_QueryPendingMetricUpdatesRequest.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_QueryPendingMetricUpdatesRequest proto.InternalMessageInfo
+
+func (m *QueryPendingMetricUpdatesRequest) GetMetricKey() string {
+	if m != nil {
+		return m.MetricKey
+	}
+	return ""
+}
+
+func (m *QueryPendingMetricUpdatesRequest) GetOracleMoniker() string {
+	if m != nil {
+		return m.OracleMoniker
+	}
+	return ""
+}
+
+type QueryPendingMetricUpdatesResponse struct {
+	Metrics []*Metric `protobuf:"bytes,1,rep,name=metrics,proto3" json:"metrics,omitempty"`
+}
+
+func (m *QueryPendingMetricUpdatesResponse) Reset()         { *m = QueryPendingMetricUpdatesResponse{} }
+func (m *QueryPendingMetricUpdatesResponse) String() string { return proto.CompactTextString(m) }
+func (*QueryPendingMetricUpdatesResponse) ProtoMessage()    {}
+func (*QueryPendingMetricUpdatesResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_d4d4563f64cd9510, []int{9}
+}
+func (m *QueryPendingMetricUpdatesResponse) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *QueryPendingMetricUpdatesResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_QueryPendingMetricUpdatesResponse.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *QueryPendingMetricUpdatesResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryPendingMetricUpdatesResponse.Merge(m, src)
+}
+func (m *QueryPendingMetricUpdatesResponse) XXX_Size() int {
+	return m.Size()
+}
+func (m *QueryPendingMetricUpdatesResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_QueryPendingMetricUpdatesResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_QueryPendingMetricUpdatesResponse proto.InternalMessageInfo
+
+func (m *QueryPendingMetricUpdatesResponse) GetMetrics() []*Metric {
+	if m != nil {
+		return m.Metrics
+	}
+	return nil
+}
+
+func init() {
+	proto.RegisterType((*QueryOracleRequest)(nil), "stride.icaoracle.QueryOracleRequest")
+	proto.RegisterType((*QueryOracleResponse)(nil), "stride.icaoracle.QueryOracleResponse")
+	proto.RegisterType((*QueryAllOraclesRequest)(nil), "stride.icaoracle.QueryAllOraclesRequest")
+	proto.RegisterType((*QueryAllOraclesResponse)(nil), "stride.icaoracle.QueryAllOraclesResponse")
+	proto.RegisterType((*QueryActiveOraclesRequest)(nil), "stride.icaoracle.QueryActiveOraclesRequest")
+	proto.RegisterType((*QueryActiveOraclesResponse)(nil), "stride.icaoracle.QueryActiveOraclesResponse")
+	proto.RegisterType((*QueryAllPendingMetricUpdatesRequest)(nil), "stride.icaoracle.QueryAllPendingMetricUpdatesRequest")
+	proto.RegisterType((*QueryAllPendingMetricUpdatesResponse)(nil), "stride.icaoracle.QueryAllPendingMetricUpdatesResponse")
+	proto.RegisterType((*QueryPendingMetricUpdatesRequest)(nil), "stride.icaoracle.QueryPendingMetricUpdatesRequest")
+	proto.RegisterType((*QueryPendingMetricUpdatesResponse)(nil), "stride.icaoracle.QueryPendingMetricUpdatesResponse")
+}
+
 func init() { proto.RegisterFile("stride/icaoracle/query.proto", fileDescriptor_d4d4563f64cd9510) }
 
 var fileDescriptor_d4d4563f64cd9510 = []byte{
-	// 136 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xe2, 0x92, 0x29, 0x2e, 0x29, 0xca,
-	0x4c, 0x49, 0xd5, 0xcf, 0x4c, 0x4e, 0xcc, 0x2f, 0x4a, 0x4c, 0xce, 0x49, 0xd5, 0x2f, 0x2c, 0x4d,
-	0x2d, 0xaa, 0xd4, 0x2b, 0x28, 0xca, 0x2f, 0xc9, 0x17, 0x12, 0x80, 0xc8, 0xea, 0xc1, 0x65, 0x8d,
-	0xd8, 0xb9, 0x58, 0x03, 0x41, 0x0a, 0x9c, 0x7c, 0x4e, 0x3c, 0x92, 0x63, 0xbc, 0xf0, 0x48, 0x8e,
-	0xf1, 0xc1, 0x23, 0x39, 0xc6, 0x09, 0x8f, 0xe5, 0x18, 0x2e, 0x3c, 0x96, 0x63, 0xb8, 0xf1, 0x58,
-	0x8e, 0x21, 0xca, 0x28, 0x3d, 0xb3, 0x24, 0xa3, 0x34, 0x49, 0x2f, 0x39, 0x3f, 0x57, 0x3f, 0x18,
-	0xac, 0x5f, 0xd7, 0x27, 0x31, 0xa9, 0x58, 0x1f, 0x6a, 0x53, 0x99, 0xa9, 0x7e, 0x05, 0x92, 0x75,
-	0x25, 0x95, 0x05, 0xa9, 0xc5, 0x49, 0x6c, 0x60, 0xfb, 0x8c, 0x01, 0x01, 0x00, 0x00, 0xff, 0xff,
-	0x33, 0xe4, 0x1a, 0xda, 0x8f, 0x00, 0x00, 0x00,
+	// 578 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xa4, 0x95, 0xc1, 0x6e, 0xd3, 0x40,
+	0x10, 0x86, 0xb3, 0x45, 0xa4, 0x74, 0x50, 0x11, 0x1a, 0x50, 0x1b, 0xac, 0x62, 0x05, 0xd3, 0x88,
+	0x22, 0xa8, 0x5d, 0x12, 0x1a, 0x2e, 0x5c, 0xe0, 0x00, 0x48, 0x34, 0x50, 0x82, 0x10, 0x52, 0x2f,
+	0x91, 0x93, 0xac, 0x52, 0x2b, 0x89, 0xd7, 0xf5, 0x6e, 0x2a, 0x2c, 0xc4, 0x85, 0x3b, 0x52, 0x25,
+	0x1e, 0x81, 0x77, 0x41, 0xdc, 0xa8, 0xc4, 0x85, 0x23, 0x4a, 0xb8, 0xf1, 0x12, 0xa8, 0xbb, 0xeb,
+	0x86, 0xe0, 0xd8, 0xa4, 0xe5, 0x94, 0x78, 0xe7, 0x9f, 0xf9, 0xbf, 0x59, 0xcf, 0xc8, 0xb0, 0xc2,
+	0x45, 0xe8, 0xb5, 0xa9, 0xe3, 0xb5, 0x5c, 0x16, 0xba, 0xad, 0x1e, 0x75, 0xf6, 0x06, 0x34, 0x8c,
+	0xec, 0x20, 0x64, 0x82, 0xe1, 0x45, 0x15, 0xb5, 0x8f, 0xa3, 0x46, 0x31, 0xa1, 0x3f, 0xfe, 0xa7,
+	0x72, 0x8c, 0x95, 0x0e, 0x63, 0x9d, 0x1e, 0x75, 0xdc, 0xc0, 0x73, 0x5c, 0xdf, 0x67, 0xc2, 0x15,
+	0x1e, 0xf3, 0xb9, 0x8a, 0x5a, 0x36, 0xe0, 0x8b, 0x23, 0x83, 0xe7, 0x32, 0xa5, 0x4e, 0xf7, 0x06,
+	0x94, 0x0b, 0x2c, 0xc0, 0x7c, 0x9f, 0xf9, 0x5e, 0x97, 0x86, 0x05, 0x52, 0x24, 0x6b, 0x0b, 0xf5,
+	0xf8, 0xd1, 0x7a, 0x0c, 0x97, 0x26, 0xf4, 0x3c, 0x60, 0x3e, 0xa7, 0xb8, 0x01, 0x79, 0x65, 0x2a,
+	0xf5, 0xe7, 0xcb, 0x05, 0xfb, 0x6f, 0x52, 0x5b, 0x67, 0x68, 0x9d, 0x55, 0x80, 0x25, 0x59, 0xe8,
+	0x41, 0xaf, 0xa7, 0x22, 0x5c, 0x9b, 0x5b, 0x35, 0x58, 0x4e, 0x44, 0xb4, 0x4d, 0x19, 0xe6, 0x55,
+	0x3a, 0x2f, 0x90, 0xe2, 0x99, 0x4c, 0x9f, 0x58, 0x68, 0x55, 0xe0, 0x8a, 0x2a, 0xd7, 0x12, 0xde,
+	0x3e, 0x9d, 0xf4, 0xc2, 0x25, 0xc8, 0xbb, 0xf2, 0x5c, 0x72, 0x9f, 0xab, 0xeb, 0x27, 0x6b, 0x1b,
+	0x8c, 0x69, 0x49, 0xff, 0x81, 0x51, 0x82, 0xeb, 0x71, 0x57, 0xdb, 0xd4, 0x6f, 0x7b, 0x7e, 0xa7,
+	0x46, 0x45, 0xe8, 0xb5, 0x5e, 0x05, 0x6d, 0x57, 0x8c, 0x9b, 0xdf, 0x81, 0xd5, 0x6c, 0xd9, 0x18,
+	0xa1, 0x2f, 0x03, 0x19, 0x08, 0x2a, 0xb3, 0x1e, 0x0b, 0xad, 0x5d, 0x28, 0xca, 0xda, 0x19, 0xfe,
+	0x78, 0x15, 0x40, 0xc9, 0x1b, 0x5d, 0x1a, 0xe9, 0x97, 0xbf, 0xa0, 0x4e, 0x9e, 0xd2, 0x08, 0x4b,
+	0x70, 0x41, 0x15, 0x6f, 0xc4, 0xf3, 0x31, 0x27, 0x25, 0x8b, 0xea, 0xb4, 0xa6, 0xa7, 0xe4, 0x35,
+	0x5c, 0xcb, 0x70, 0x3a, 0x7d, 0x0b, 0xe5, 0x5f, 0x79, 0x38, 0x2b, 0x2b, 0xe3, 0x07, 0x02, 0x79,
+	0x75, 0xc7, 0xb8, 0x9a, 0xcc, 0x4b, 0xce, 0xb4, 0x51, 0xfa, 0x87, 0x4a, 0x51, 0x59, 0xd5, 0xf7,
+	0xdf, 0x7e, 0x7e, 0x9c, 0xdb, 0x40, 0xdb, 0x79, 0x29, 0xe5, 0xeb, 0x5b, 0x6e, 0x93, 0x3b, 0x89,
+	0x2d, 0xd3, 0x3f, 0x6f, 0xf5, 0x35, 0xbc, 0xc3, 0x03, 0x02, 0x30, 0x9e, 0x58, 0x5c, 0x4b, 0x71,
+	0x4b, 0x8c, 0xbb, 0x71, 0x73, 0x06, 0xa5, 0x66, 0x5b, 0x97, 0x6c, 0x37, 0xb0, 0x34, 0x0b, 0x1b,
+	0xc7, 0x4f, 0x04, 0x16, 0x27, 0x06, 0x18, 0x6f, 0xa5, 0x79, 0x4d, 0xd9, 0x0d, 0xe3, 0xf6, 0x6c,
+	0x62, 0xcd, 0x76, 0x4f, 0xb2, 0xdd, 0x41, 0x67, 0x26, 0x36, 0xa7, 0x19, 0x35, 0xd4, 0xaa, 0xe1,
+	0x67, 0x02, 0xcb, 0x29, 0xd3, 0x8e, 0x9b, 0xe9, 0x77, 0x93, 0x31, 0xc4, 0x46, 0xf5, 0xa4, 0x69,
+	0xba, 0x87, 0xfb, 0xb2, 0x87, 0x2a, 0xde, 0xcd, 0xee, 0x21, 0x50, 0x35, 0x1a, 0x7a, 0x51, 0x06,
+	0x1a, 0xf6, 0x2b, 0x81, 0xcb, 0x53, 0xbb, 0x28, 0xa7, 0xe0, 0x64, 0xb5, 0x50, 0x39, 0x51, 0x8e,
+	0xe6, 0x7f, 0x26, 0xf9, 0x9f, 0xe0, 0xa3, 0xd3, 0xf0, 0x1f, 0xbd, 0x92, 0x2e, 0x8d, 0x1a, 0x2c,
+	0x8c, 0x77, 0xfb, 0xe1, 0xd6, 0x97, 0xa1, 0x49, 0x0e, 0x87, 0x26, 0xf9, 0x31, 0x34, 0xc9, 0xc1,
+	0xc8, 0xcc, 0x1d, 0x8e, 0xcc, 0xdc, 0xf7, 0x91, 0x99, 0xdb, 0x29, 0x77, 0x3c, 0xb1, 0x3b, 0x68,
+	0xda, 0x2d, 0xd6, 0x9f, 0xe6, 0xb5, 0xbf, 0xe9, 0xbc, 0xf9, 0xc3, 0x50, 0x44, 0x01, 0xe5, 0xcd,
+	0xbc, 0xfc, 0xe2, 0x54, 0x7e, 0x07, 0x00, 0x00, 0xff, 0xff, 0x5a, 0x33, 0x51, 0x7c, 0xe3, 0x06,
+	0x00, 0x00,
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -50,6 +528,21 @@ const _ = grpc.SupportPackageIsVersion4
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://godoc.org/google.golang.org/grpc#ClientConn.NewStream.
 type QueryClient interface {
+	// Query a specific oracle
+	Oracle(ctx context.Context, in *QueryOracleRequest, opts ...grpc.CallOption) (*QueryOracleResponse, error)
+	// Query all oracles
+	AllOracles(ctx context.Context, in *QueryAllOraclesRequest, opts ...grpc.CallOption) (*QueryAllOraclesResponse, error)
+	// Query oracles with active ffilter:
+	// - /oracles/by_active?active=true
+	// - /oracles/by_active?active=false
+	ActiveOracles(ctx context.Context, in *QueryActiveOraclesRequest, opts ...grpc.CallOption) (*QueryActiveOraclesResponse, error)
+	// Query all pending metrics
+	AllPendingMetricUpdates(ctx context.Context, in *QueryAllPendingMetricUpdatesRequest, opts ...grpc.CallOption) (*QueryAllPendingMetricUpdatesResponse, error)
+	// Query pending metrics with optional filters:
+	// - /pending_metric_updates/by_key_or_moniker?metric_key=X
+	// - /pending_metric_updates/by_key_or_moniker?oracle_moniker=Y
+	// - /pending_metric_updates/by_key_or_moniker?metric_key=X&oracle_moniker=Y
+	PendingMetricUpdates(ctx context.Context, in *QueryPendingMetricUpdatesRequest, opts ...grpc.CallOption) (*QueryPendingMetricUpdatesResponse, error)
 }
 
 type queryClient struct {
@@ -60,22 +553,1561 @@ func NewQueryClient(cc grpc1.ClientConn) QueryClient {
 	return &queryClient{cc}
 }
 
+func (c *queryClient) Oracle(ctx context.Context, in *QueryOracleRequest, opts ...grpc.CallOption) (*QueryOracleResponse, error) {
+	out := new(QueryOracleResponse)
+	err := c.cc.Invoke(ctx, "/stride.icaoracle.Query/Oracle", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *queryClient) AllOracles(ctx context.Context, in *QueryAllOraclesRequest, opts ...grpc.CallOption) (*QueryAllOraclesResponse, error) {
+	out := new(QueryAllOraclesResponse)
+	err := c.cc.Invoke(ctx, "/stride.icaoracle.Query/AllOracles", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *queryClient) ActiveOracles(ctx context.Context, in *QueryActiveOraclesRequest, opts ...grpc.CallOption) (*QueryActiveOraclesResponse, error) {
+	out := new(QueryActiveOraclesResponse)
+	err := c.cc.Invoke(ctx, "/stride.icaoracle.Query/ActiveOracles", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *queryClient) AllPendingMetricUpdates(ctx context.Context, in *QueryAllPendingMetricUpdatesRequest, opts ...grpc.CallOption) (*QueryAllPendingMetricUpdatesResponse, error) {
+	out := new(QueryAllPendingMetricUpdatesResponse)
+	err := c.cc.Invoke(ctx, "/stride.icaoracle.Query/AllPendingMetricUpdates", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *queryClient) PendingMetricUpdates(ctx context.Context, in *QueryPendingMetricUpdatesRequest, opts ...grpc.CallOption) (*QueryPendingMetricUpdatesResponse, error) {
+	out := new(QueryPendingMetricUpdatesResponse)
+	err := c.cc.Invoke(ctx, "/stride.icaoracle.Query/PendingMetricUpdates", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // QueryServer is the server API for Query service.
 type QueryServer interface {
+	// Query a specific oracle
+	Oracle(context.Context, *QueryOracleRequest) (*QueryOracleResponse, error)
+	// Query all oracles
+	AllOracles(context.Context, *QueryAllOraclesRequest) (*QueryAllOraclesResponse, error)
+	// Query oracles with active ffilter:
+	// - /oracles/by_active?active=true
+	// - /oracles/by_active?active=false
+	ActiveOracles(context.Context, *QueryActiveOraclesRequest) (*QueryActiveOraclesResponse, error)
+	// Query all pending metrics
+	AllPendingMetricUpdates(context.Context, *QueryAllPendingMetricUpdatesRequest) (*QueryAllPendingMetricUpdatesResponse, error)
+	// Query pending metrics with optional filters:
+	// - /pending_metric_updates/by_key_or_moniker?metric_key=X
+	// - /pending_metric_updates/by_key_or_moniker?oracle_moniker=Y
+	// - /pending_metric_updates/by_key_or_moniker?metric_key=X&oracle_moniker=Y
+	PendingMetricUpdates(context.Context, *QueryPendingMetricUpdatesRequest) (*QueryPendingMetricUpdatesResponse, error)
 }
 
 // UnimplementedQueryServer can be embedded to have forward compatible implementations.
 type UnimplementedQueryServer struct {
 }
 
+func (*UnimplementedQueryServer) Oracle(ctx context.Context, req *QueryOracleRequest) (*QueryOracleResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Oracle not implemented")
+}
+func (*UnimplementedQueryServer) AllOracles(ctx context.Context, req *QueryAllOraclesRequest) (*QueryAllOraclesResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method AllOracles not implemented")
+}
+func (*UnimplementedQueryServer) ActiveOracles(ctx context.Context, req *QueryActiveOraclesRequest) (*QueryActiveOraclesResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ActiveOracles not implemented")
+}
+func (*UnimplementedQueryServer) AllPendingMetricUpdates(ctx context.Context, req *QueryAllPendingMetricUpdatesRequest) (*QueryAllPendingMetricUpdatesResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method AllPendingMetricUpdates not implemented")
+}
+func (*UnimplementedQueryServer) PendingMetricUpdates(ctx context.Context, req *QueryPendingMetricUpdatesRequest) (*QueryPendingMetricUpdatesResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method PendingMetricUpdates not implemented")
+}
+
 func RegisterQueryServer(s grpc1.Server, srv QueryServer) {
 	s.RegisterService(&_Query_serviceDesc, srv)
+}
+
+func _Query_Oracle_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(QueryOracleRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(QueryServer).Oracle(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/stride.icaoracle.Query/Oracle",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(QueryServer).Oracle(ctx, req.(*QueryOracleRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Query_AllOracles_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(QueryAllOraclesRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(QueryServer).AllOracles(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/stride.icaoracle.Query/AllOracles",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(QueryServer).AllOracles(ctx, req.(*QueryAllOraclesRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Query_ActiveOracles_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(QueryActiveOraclesRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(QueryServer).ActiveOracles(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/stride.icaoracle.Query/ActiveOracles",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(QueryServer).ActiveOracles(ctx, req.(*QueryActiveOraclesRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Query_AllPendingMetricUpdates_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(QueryAllPendingMetricUpdatesRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(QueryServer).AllPendingMetricUpdates(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/stride.icaoracle.Query/AllPendingMetricUpdates",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(QueryServer).AllPendingMetricUpdates(ctx, req.(*QueryAllPendingMetricUpdatesRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Query_PendingMetricUpdates_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(QueryPendingMetricUpdatesRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(QueryServer).PendingMetricUpdates(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/stride.icaoracle.Query/PendingMetricUpdates",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(QueryServer).PendingMetricUpdates(ctx, req.(*QueryPendingMetricUpdatesRequest))
+	}
+	return interceptor(ctx, in, info, handler)
 }
 
 var _Query_serviceDesc = grpc.ServiceDesc{
 	ServiceName: "stride.icaoracle.Query",
 	HandlerType: (*QueryServer)(nil),
-	Methods:     []grpc.MethodDesc{},
-	Streams:     []grpc.StreamDesc{},
-	Metadata:    "stride/icaoracle/query.proto",
+	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "Oracle",
+			Handler:    _Query_Oracle_Handler,
+		},
+		{
+			MethodName: "AllOracles",
+			Handler:    _Query_AllOracles_Handler,
+		},
+		{
+			MethodName: "ActiveOracles",
+			Handler:    _Query_ActiveOracles_Handler,
+		},
+		{
+			MethodName: "AllPendingMetricUpdates",
+			Handler:    _Query_AllPendingMetricUpdates_Handler,
+		},
+		{
+			MethodName: "PendingMetricUpdates",
+			Handler:    _Query_PendingMetricUpdates_Handler,
+		},
+	},
+	Streams:  []grpc.StreamDesc{},
+	Metadata: "stride/icaoracle/query.proto",
 }
+
+func (m *QueryOracleRequest) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *QueryOracleRequest) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *QueryOracleRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if len(m.Moniker) > 0 {
+		i -= len(m.Moniker)
+		copy(dAtA[i:], m.Moniker)
+		i = encodeVarintQuery(dAtA, i, uint64(len(m.Moniker)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *QueryOracleResponse) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *QueryOracleResponse) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *QueryOracleResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if m.Oracle != nil {
+		{
+			size, err := m.Oracle.MarshalToSizedBuffer(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = encodeVarintQuery(dAtA, i, uint64(size))
+		}
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *QueryAllOraclesRequest) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *QueryAllOraclesRequest) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *QueryAllOraclesRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	return len(dAtA) - i, nil
+}
+
+func (m *QueryAllOraclesResponse) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *QueryAllOraclesResponse) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *QueryAllOraclesResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if len(m.Oracles) > 0 {
+		for iNdEx := len(m.Oracles) - 1; iNdEx >= 0; iNdEx-- {
+			{
+				size, err := m.Oracles[iNdEx].MarshalToSizedBuffer(dAtA[:i])
+				if err != nil {
+					return 0, err
+				}
+				i -= size
+				i = encodeVarintQuery(dAtA, i, uint64(size))
+			}
+			i--
+			dAtA[i] = 0xa
+		}
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *QueryActiveOraclesRequest) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *QueryActiveOraclesRequest) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *QueryActiveOraclesRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if m.Active {
+		i--
+		if m.Active {
+			dAtA[i] = 1
+		} else {
+			dAtA[i] = 0
+		}
+		i--
+		dAtA[i] = 0x8
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *QueryActiveOraclesResponse) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *QueryActiveOraclesResponse) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *QueryActiveOraclesResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if len(m.Oracles) > 0 {
+		for iNdEx := len(m.Oracles) - 1; iNdEx >= 0; iNdEx-- {
+			{
+				size, err := m.Oracles[iNdEx].MarshalToSizedBuffer(dAtA[:i])
+				if err != nil {
+					return 0, err
+				}
+				i -= size
+				i = encodeVarintQuery(dAtA, i, uint64(size))
+			}
+			i--
+			dAtA[i] = 0xa
+		}
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *QueryAllPendingMetricUpdatesRequest) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *QueryAllPendingMetricUpdatesRequest) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *QueryAllPendingMetricUpdatesRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	return len(dAtA) - i, nil
+}
+
+func (m *QueryAllPendingMetricUpdatesResponse) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *QueryAllPendingMetricUpdatesResponse) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *QueryAllPendingMetricUpdatesResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if len(m.Metrics) > 0 {
+		for iNdEx := len(m.Metrics) - 1; iNdEx >= 0; iNdEx-- {
+			{
+				size, err := m.Metrics[iNdEx].MarshalToSizedBuffer(dAtA[:i])
+				if err != nil {
+					return 0, err
+				}
+				i -= size
+				i = encodeVarintQuery(dAtA, i, uint64(size))
+			}
+			i--
+			dAtA[i] = 0xa
+		}
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *QueryPendingMetricUpdatesRequest) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *QueryPendingMetricUpdatesRequest) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *QueryPendingMetricUpdatesRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if len(m.OracleMoniker) > 0 {
+		i -= len(m.OracleMoniker)
+		copy(dAtA[i:], m.OracleMoniker)
+		i = encodeVarintQuery(dAtA, i, uint64(len(m.OracleMoniker)))
+		i--
+		dAtA[i] = 0x12
+	}
+	if len(m.MetricKey) > 0 {
+		i -= len(m.MetricKey)
+		copy(dAtA[i:], m.MetricKey)
+		i = encodeVarintQuery(dAtA, i, uint64(len(m.MetricKey)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *QueryPendingMetricUpdatesResponse) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *QueryPendingMetricUpdatesResponse) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *QueryPendingMetricUpdatesResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if len(m.Metrics) > 0 {
+		for iNdEx := len(m.Metrics) - 1; iNdEx >= 0; iNdEx-- {
+			{
+				size, err := m.Metrics[iNdEx].MarshalToSizedBuffer(dAtA[:i])
+				if err != nil {
+					return 0, err
+				}
+				i -= size
+				i = encodeVarintQuery(dAtA, i, uint64(size))
+			}
+			i--
+			dAtA[i] = 0xa
+		}
+	}
+	return len(dAtA) - i, nil
+}
+
+func encodeVarintQuery(dAtA []byte, offset int, v uint64) int {
+	offset -= sovQuery(v)
+	base := offset
+	for v >= 1<<7 {
+		dAtA[offset] = uint8(v&0x7f | 0x80)
+		v >>= 7
+		offset++
+	}
+	dAtA[offset] = uint8(v)
+	return base
+}
+func (m *QueryOracleRequest) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.Moniker)
+	if l > 0 {
+		n += 1 + l + sovQuery(uint64(l))
+	}
+	return n
+}
+
+func (m *QueryOracleResponse) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if m.Oracle != nil {
+		l = m.Oracle.Size()
+		n += 1 + l + sovQuery(uint64(l))
+	}
+	return n
+}
+
+func (m *QueryAllOraclesRequest) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	return n
+}
+
+func (m *QueryAllOraclesResponse) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if len(m.Oracles) > 0 {
+		for _, e := range m.Oracles {
+			l = e.Size()
+			n += 1 + l + sovQuery(uint64(l))
+		}
+	}
+	return n
+}
+
+func (m *QueryActiveOraclesRequest) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if m.Active {
+		n += 2
+	}
+	return n
+}
+
+func (m *QueryActiveOraclesResponse) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if len(m.Oracles) > 0 {
+		for _, e := range m.Oracles {
+			l = e.Size()
+			n += 1 + l + sovQuery(uint64(l))
+		}
+	}
+	return n
+}
+
+func (m *QueryAllPendingMetricUpdatesRequest) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	return n
+}
+
+func (m *QueryAllPendingMetricUpdatesResponse) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if len(m.Metrics) > 0 {
+		for _, e := range m.Metrics {
+			l = e.Size()
+			n += 1 + l + sovQuery(uint64(l))
+		}
+	}
+	return n
+}
+
+func (m *QueryPendingMetricUpdatesRequest) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.MetricKey)
+	if l > 0 {
+		n += 1 + l + sovQuery(uint64(l))
+	}
+	l = len(m.OracleMoniker)
+	if l > 0 {
+		n += 1 + l + sovQuery(uint64(l))
+	}
+	return n
+}
+
+func (m *QueryPendingMetricUpdatesResponse) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if len(m.Metrics) > 0 {
+		for _, e := range m.Metrics {
+			l = e.Size()
+			n += 1 + l + sovQuery(uint64(l))
+		}
+	}
+	return n
+}
+
+func sovQuery(x uint64) (n int) {
+	return (math_bits.Len64(x|1) + 6) / 7
+}
+func sozQuery(x uint64) (n int) {
+	return sovQuery(uint64((x << 1) ^ uint64((int64(x) >> 63))))
+}
+func (m *QueryOracleRequest) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowQuery
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: QueryOracleRequest: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: QueryOracleRequest: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Moniker", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthQuery
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Moniker = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipQuery(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *QueryOracleResponse) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowQuery
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: QueryOracleResponse: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: QueryOracleResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Oracle", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthQuery
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.Oracle == nil {
+				m.Oracle = &Oracle{}
+			}
+			if err := m.Oracle.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipQuery(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *QueryAllOraclesRequest) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowQuery
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: QueryAllOraclesRequest: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: QueryAllOraclesRequest: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		default:
+			iNdEx = preIndex
+			skippy, err := skipQuery(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *QueryAllOraclesResponse) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowQuery
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: QueryAllOraclesResponse: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: QueryAllOraclesResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Oracles", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthQuery
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Oracles = append(m.Oracles, &Oracle{})
+			if err := m.Oracles[len(m.Oracles)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipQuery(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *QueryActiveOraclesRequest) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowQuery
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: QueryActiveOraclesRequest: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: QueryActiveOraclesRequest: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Active", wireType)
+			}
+			var v int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				v |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			m.Active = bool(v != 0)
+		default:
+			iNdEx = preIndex
+			skippy, err := skipQuery(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *QueryActiveOraclesResponse) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowQuery
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: QueryActiveOraclesResponse: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: QueryActiveOraclesResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Oracles", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthQuery
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Oracles = append(m.Oracles, &Oracle{})
+			if err := m.Oracles[len(m.Oracles)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipQuery(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *QueryAllPendingMetricUpdatesRequest) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowQuery
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: QueryAllPendingMetricUpdatesRequest: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: QueryAllPendingMetricUpdatesRequest: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		default:
+			iNdEx = preIndex
+			skippy, err := skipQuery(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *QueryAllPendingMetricUpdatesResponse) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowQuery
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: QueryAllPendingMetricUpdatesResponse: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: QueryAllPendingMetricUpdatesResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Metrics", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthQuery
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Metrics = append(m.Metrics, &Metric{})
+			if err := m.Metrics[len(m.Metrics)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipQuery(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *QueryPendingMetricUpdatesRequest) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowQuery
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: QueryPendingMetricUpdatesRequest: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: QueryPendingMetricUpdatesRequest: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field MetricKey", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthQuery
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.MetricKey = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field OracleMoniker", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthQuery
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.OracleMoniker = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipQuery(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *QueryPendingMetricUpdatesResponse) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowQuery
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: QueryPendingMetricUpdatesResponse: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: QueryPendingMetricUpdatesResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Metrics", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthQuery
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Metrics = append(m.Metrics, &Metric{})
+			if err := m.Metrics[len(m.Metrics)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipQuery(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func skipQuery(dAtA []byte) (n int, err error) {
+	l := len(dAtA)
+	iNdEx := 0
+	depth := 0
+	for iNdEx < l {
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return 0, ErrIntOverflowQuery
+			}
+			if iNdEx >= l {
+				return 0, io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= (uint64(b) & 0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		wireType := int(wire & 0x7)
+		switch wireType {
+		case 0:
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return 0, ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return 0, io.ErrUnexpectedEOF
+				}
+				iNdEx++
+				if dAtA[iNdEx-1] < 0x80 {
+					break
+				}
+			}
+		case 1:
+			iNdEx += 8
+		case 2:
+			var length int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return 0, ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return 0, io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				length |= (int(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if length < 0 {
+				return 0, ErrInvalidLengthQuery
+			}
+			iNdEx += length
+		case 3:
+			depth++
+		case 4:
+			if depth == 0 {
+				return 0, ErrUnexpectedEndOfGroupQuery
+			}
+			depth--
+		case 5:
+			iNdEx += 4
+		default:
+			return 0, fmt.Errorf("proto: illegal wireType %d", wireType)
+		}
+		if iNdEx < 0 {
+			return 0, ErrInvalidLengthQuery
+		}
+		if depth == 0 {
+			return iNdEx, nil
+		}
+	}
+	return 0, io.ErrUnexpectedEOF
+}
+
+var (
+	ErrInvalidLengthQuery        = fmt.Errorf("proto: negative length found during unmarshaling")
+	ErrIntOverflowQuery          = fmt.Errorf("proto: integer overflow")
+	ErrUnexpectedEndOfGroupQuery = fmt.Errorf("proto: unexpected end of group")
+)
