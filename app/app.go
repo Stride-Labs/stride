@@ -120,6 +120,9 @@ import (
 	icacallbacksmodule "github.com/Stride-Labs/stride/v5/x/icacallbacks"
 	icacallbacksmodulekeeper "github.com/Stride-Labs/stride/v5/x/icacallbacks/keeper"
 	icacallbacksmoduletypes "github.com/Stride-Labs/stride/v5/x/icacallbacks/types"
+	icaoracle "github.com/Stride-Labs/stride/v5/x/icaoracle"
+	icaoraclekeeper "github.com/Stride-Labs/stride/v5/x/icaoracle/keeper"
+	icaoracletypes "github.com/Stride-Labs/stride/v5/x/icaoracle/types"
 	recordsmodule "github.com/Stride-Labs/stride/v5/x/records"
 	recordsmodulekeeper "github.com/Stride-Labs/stride/v5/x/records/keeper"
 	recordsmoduletypes "github.com/Stride-Labs/stride/v5/x/records/types"
@@ -195,6 +198,7 @@ var (
 		recordsmodule.AppModuleBasic{},
 		icacallbacksmodule.AppModuleBasic{},
 		claim.AppModuleBasic{},
+		icaoracle.AppModuleBasic{},
 		// this line is used by starport scaffolding # stargate/app/moduleBasic
 	)
 
@@ -284,6 +288,8 @@ type StrideApp struct {
 	ScopedIcacallbacksKeeper capabilitykeeper.ScopedKeeper
 	IcacallbacksKeeper       icacallbacksmodulekeeper.Keeper
 	ClaimKeeper              claimkeeper.Keeper
+	icaoracleKeeper          icaoraclekeeper.Keeper
+	scopedIcaoracleKeeper    capabilitykeeper.ScopedKeeper
 	// this line is used by starport scaffolding # stargate/app/keeperDeclaration
 
 	mm           *module.Manager
@@ -326,6 +332,7 @@ func NewStrideApp(
 		recordsmoduletypes.StoreKey,
 		icacallbacksmoduletypes.StoreKey,
 		claimtypes.StoreKey,
+		icaoracletypes.StoreKey,
 		// this line is used by starport scaffolding # stargate/app/storeKey
 	)
 	tkeys := sdk.NewTransientStoreKeys(paramstypes.TStoreKey)
@@ -531,6 +538,18 @@ func NewStrideApp(
 	)
 	epochsModule := epochsmodule.NewAppModule(appCodec, app.EpochsKeeper)
 
+	scopedIcaoracleKeeper := app.CapabilityKeeper.ScopeToModule(icaoracletypes.ModuleName)
+	app.scopedIcaoracleKeeper = scopedIcaoracleKeeper
+	app.icaoracleKeeper = *icaoraclekeeper.NewKeeper(
+		appCodec,
+		keys[icaoracletypes.StoreKey],
+		app.GetSubspace(icaoracletypes.ModuleName),
+		app.IBCKeeper.ChannelKeeper,
+		app.ICAControllerKeeper,
+		app.IcacallbacksKeeper,
+	)
+	icaoracleModule := icaoracle.NewAppModule(appCodec, app.icaoracleKeeper)
+
 	icacallbacksModule := icacallbacksmodule.NewAppModule(appCodec, app.IcacallbacksKeeper, app.AccountKeeper, app.BankKeeper)
 	// Register ICA calllbacks
 	// stakeibc
@@ -631,6 +650,7 @@ func NewStrideApp(
 		icaModule,
 		recordsModule,
 		icacallbacksModule,
+		icaoracleModule,
 		// this line is used by starport scaffolding # stargate/app/appModule
 	)
 
@@ -665,6 +685,7 @@ func NewStrideApp(
 		recordsmoduletypes.ModuleName,
 		icacallbacksmoduletypes.ModuleName,
 		claimtypes.ModuleName,
+		icaoracletypes.ModuleName,
 		// this line is used by starport scaffolding # stargate/app/beginBlockers
 	)
 
@@ -695,6 +716,7 @@ func NewStrideApp(
 		recordsmoduletypes.ModuleName,
 		icacallbacksmoduletypes.ModuleName,
 		claimtypes.ModuleName,
+		icaoracletypes.ModuleName,
 		// this line is used by starport scaffolding # stargate/app/endBlockers
 	)
 
@@ -730,6 +752,7 @@ func NewStrideApp(
 		recordsmoduletypes.ModuleName,
 		icacallbacksmoduletypes.ModuleName,
 		claimtypes.ModuleName,
+		icaoracletypes.ModuleName,
 		// this line is used by starport scaffolding # stargate/app/initGenesis
 	)
 
@@ -992,6 +1015,7 @@ func initParamsKeeper(appCodec codec.BinaryCodec, legacyAmino *codec.LegacyAmino
 	paramsKeeper.Subspace(icahosttypes.SubModuleName)
 	paramsKeeper.Subspace(recordsmoduletypes.ModuleName)
 	paramsKeeper.Subspace(icacallbacksmoduletypes.ModuleName)
+	paramsKeeper.Subspace(icaoracletypes.ModuleName)
 	// this line is used by starport scaffolding # stargate/app/paramSubspace
 
 	paramsKeeper.Subspace(claimtypes.ModuleName)

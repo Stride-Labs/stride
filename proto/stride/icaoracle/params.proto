@@ -1,0 +1,7 @@
+syntax = "proto3";
+package stride.icaoracle;
+
+option go_package = "github.com/Stride-Labs/stride/v5/x/icaoracle/types";
+
+// Params defines the icaoracle module's parameters.
+message Params {}
