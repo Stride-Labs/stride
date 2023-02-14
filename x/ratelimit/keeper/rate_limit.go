@@ -1,6 +1,8 @@
 package keeper
 
 import (
+	"strings"
+
 	sdkmath "cosmossdk.io/math"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -42,7 +44,20 @@ func (k Keeper) CheckRateLimitAndUpdateFlow(ctx sdk.Context, direction types.Pac
 	}
 
 	// Update the flow object with the change in amount
-	if err := k.UpdateFlow(rateLimit, direction, amount); err != nil {
+	err := k.UpdateFlow(rateLimit, direction, amount)
+	if err != nil {
+		// If the rate limit was exceeded, emit an event
+		ctx.EventManager().EmitEvent(
+			sdk.NewEvent(
+				types.EventRateLimitExceeded,
+				sdk.NewAttribute(sdk.AttributeKeyModule, types.ModuleName),
+				sdk.NewAttribute(types.AttributeKeyAction, strings.ToLower(direction.String())), // packet_send or packet_recv
+				sdk.NewAttribute(types.AttributeKeyDenom, denom),
+				sdk.NewAttribute(types.AttributeKeyChannel, channelId),
+				sdk.NewAttribute(types.AttributeKeyAmount, amount.String()),
+				sdk.NewAttribute(types.AttributeKeyError, err.Error()),
+			),
+		)
 		return err
 	}
 
