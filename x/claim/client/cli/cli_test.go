@@ -95,9 +95,11 @@ func (s *IntegrationTestSuite) SetupSuite() {
 			val.Address,
 			distributorAddr,
 			sdk.NewCoins(sdk.NewInt64Coin(s.cfg.BondDenom, 1020)), fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
+			fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastSync),
 			strideclitestutil.DefaultFeeString(s.cfg),
 		)
 		s.Require().NoError(err)
+		s.Require().NoError(s.network.WaitForNextBlock())
 	}
 
 	// Create a new airdrop
@@ -113,6 +115,7 @@ func (s *IntegrationTestSuite) SetupSuite() {
 		fmt.Sprintf("--%s=%s", flags.FlagFrom, distributorAddrs[0]),
 		// common args
 		fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
+		fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastSync),
 		strideclitestutil.DefaultFeeString(s.cfg),
 	})
 
@@ -190,6 +193,7 @@ func (s *IntegrationTestSuite) TestCmdTxSetAirdropAllocations() {
 				fmt.Sprintf("--%s=%s", flags.FlagFrom, distributorAddrs[0]),
 				// common args
 				fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
+				fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastSync),
 				strideclitestutil.DefaultFeeString(s.cfg),
 			},
 			[]sdk.Coins{
@@ -220,6 +224,7 @@ func (s *IntegrationTestSuite) TestCmdTxSetAirdropAllocations() {
 
 			var result types.QueryClaimRecordResponse
 			s.Require().NoError(clientCtx.Codec.UnmarshalJSON(out.Bytes(), &result))
+			fmt.Println(result)
 			s.Require().Equal(result.ClaimRecord.String(), claimRecords[0].String())
 
 			// Check if claimable amount for actions is correct
@@ -268,6 +273,7 @@ func (s *IntegrationTestSuite) TestCmdTxCreateAirdrop() {
 				fmt.Sprintf("--%s=%s", flags.FlagFrom, distributorAddrs[1]),
 				// common args
 				fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
+				fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastSync),
 				strideclitestutil.DefaultFeeString(s.cfg),
 			},
 			airdrop,
@@ -293,6 +299,7 @@ func (s *IntegrationTestSuite) TestCmdTxCreateAirdrop() {
 
 			var result types.Params
 			s.Require().NoError(clientCtx.Codec.UnmarshalJSON(out.Bytes(), &result))
+			fmt.Println(result)
 			s.Require().Equal(tc.expAirdrop.AirdropDuration, result.Airdrops[1].AirdropDuration)
 		})
 	}
