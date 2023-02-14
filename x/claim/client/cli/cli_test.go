@@ -99,8 +99,8 @@ func (s *IntegrationTestSuite) SetupSuite() {
 			strideclitestutil.DefaultFeeString(s.cfg),
 		)
 		s.Require().NoError(err)
+		s.Require().NoError(s.network.WaitForNextBlock())
 	}
-	s.Require().NoError(s.network.WaitForNextBlock())
 
 	// Create a new airdrop
 	cmd := cli.CmdCreateAirdrop()
@@ -212,10 +212,8 @@ func (s *IntegrationTestSuite) TestCmdTxSetAirdropAllocations() {
 			cmd := cli.CmdSetAirdropAllocations()
 			clientCtx := val.ClientCtx
 
-			res, err := clitestutil.ExecTestCLICmd(clientCtx, cmd, tc.args)
+			_, err := clitestutil.ExecTestCLICmd(clientCtx, cmd, tc.args)
 			s.Require().NoError(err)
-
-			fmt.Println(res)
 
 			s.Require().NoError(s.network.WaitForNextBlock())
 
@@ -230,7 +228,6 @@ func (s *IntegrationTestSuite) TestCmdTxSetAirdropAllocations() {
 
 			var result types.QueryClaimRecordResponse
 			s.Require().NoError(clientCtx.Codec.UnmarshalJSON(out.Bytes(), &result))
-			fmt.Println(result)
 			s.Require().Equal(result.ClaimRecord.String(), claimRecords[0].String())
 
 			// Check if claimable amount for actions is correct
@@ -289,12 +286,16 @@ func (s *IntegrationTestSuite) TestCmdTxCreateAirdrop() {
 	for _, tc := range testCases {
 		tc := tc
 
+		s.Require().NoError(s.network.WaitForNextBlock())
+
 		s.Run(tc.name, func() {
 			cmd := cli.CmdCreateAirdrop()
 			clientCtx := val.ClientCtx
 
 			_, err := clitestutil.ExecTestCLICmd(clientCtx, cmd, tc.args)
 			s.Require().NoError(err)
+
+			s.Require().NoError(s.network.WaitForNextBlock())
 
 			// Check if airdrop was created properly
 			cmd = cli.GetCmdQueryParams()
@@ -305,7 +306,6 @@ func (s *IntegrationTestSuite) TestCmdTxCreateAirdrop() {
 
 			var result types.Params
 			s.Require().NoError(clientCtx.Codec.UnmarshalJSON(out.Bytes(), &result))
-			fmt.Println(result)
 			s.Require().Equal(tc.expAirdrop.AirdropDuration, result.Airdrops[1].AirdropDuration)
 		})
 	}
