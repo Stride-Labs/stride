@@ -99,8 +99,8 @@ func (s *IntegrationTestSuite) SetupSuite() {
 			strideclitestutil.DefaultFeeString(s.cfg),
 		)
 		s.Require().NoError(err)
-		s.Require().NoError(s.network.WaitForNextBlock())
 	}
+	s.Require().NoError(s.network.WaitForNextBlock())
 
 	// Create a new airdrop
 	cmd := cli.CmdCreateAirdrop()
@@ -206,12 +206,18 @@ func (s *IntegrationTestSuite) TestCmdTxSetAirdropAllocations() {
 	for _, tc := range testCases {
 		tc := tc
 
+		s.Require().NoError(s.network.WaitForNextBlock())
+
 		s.Run(tc.name, func() {
 			cmd := cli.CmdSetAirdropAllocations()
 			clientCtx := val.ClientCtx
 
-			_, err := clitestutil.ExecTestCLICmd(clientCtx, cmd, tc.args)
+			res, err := clitestutil.ExecTestCLICmd(clientCtx, cmd, tc.args)
 			s.Require().NoError(err)
+
+			fmt.Println(res)
+
+			s.Require().NoError(s.network.WaitForNextBlock())
 
 			// Check if claim record is properly set
 			cmd = cli.GetCmdQueryClaimRecord()
