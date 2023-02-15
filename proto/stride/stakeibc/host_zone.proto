@@ -8,7 +8,7 @@ import "cosmos_proto/cosmos.proto";
 
 option go_package = "github.com/Stride-Labs/stride/v5/x/stakeibc/types";
 
-// next id: 19
+// next id: 20
 message HostZone {
   string chain_id = 1;
   string connection_id = 2;
