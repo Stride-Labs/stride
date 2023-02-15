@@ -4,7 +4,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
-	"github.com/Stride-Labs/stride/utils"
+	"github.com/Stride-Labs/stride/v5/utils"
 )
 
 // Msg type for MsgSetAirdropAllocations
@@ -90,10 +90,9 @@ const TypeMsgClaimFreeAmount = "claim_free_amount"
 
 var _ sdk.Msg = &MsgClaimFreeAmount{}
 
-func NewMsgClaimFreeAmount(user string, airdropIdentifier string) *MsgClaimFreeAmount {
+func NewMsgClaimFreeAmount(user string) *MsgClaimFreeAmount {
 	return &MsgClaimFreeAmount{
-		User:              user,
-		AirdropIdentifier: airdropIdentifier,
+		User: user,
 	}
 }
 
@@ -119,9 +118,6 @@ func (msg *MsgClaimFreeAmount) GetSignBytes() []byte {
 }
 
 func (msg *MsgClaimFreeAmount) ValidateBasic() error {
-	if msg.AirdropIdentifier == "" {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "airdrop identifier not set")
-	}
 
 	_, err := sdk.AccAddressFromBech32(msg.User)
 	if err != nil {

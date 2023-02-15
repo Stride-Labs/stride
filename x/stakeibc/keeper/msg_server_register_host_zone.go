@@ -4,11 +4,13 @@ import (
 	"context"
 	"fmt"
 
+	sdkmath "cosmossdk.io/math"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+	icatypes "github.com/cosmos/ibc-go/v5/modules/apps/27-interchain-accounts/types"
 
-	epochtypes "github.com/Stride-Labs/stride/x/epochs/types"
-	recordstypes "github.com/Stride-Labs/stride/x/records/types"
-	"github.com/Stride-Labs/stride/x/stakeibc/types"
+	epochtypes "github.com/Stride-Labs/stride/v5/x/epochs/types"
+	recordstypes "github.com/Stride-Labs/stride/v5/x/records/types"
+	"github.com/Stride-Labs/stride/v5/x/stakeibc/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -16,6 +18,15 @@ import (
 
 func (k msgServer) RegisterHostZone(goCtx context.Context, msg *types.MsgRegisterHostZone) (*types.MsgRegisterHostZoneResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	// Get ConnectionEnd (for counterparty connection)
+	connectionEnd, found := k.IBCKeeper.ConnectionKeeper.GetConnection(ctx, msg.ConnectionId)
+	if !found {
+		errMsg := fmt.Sprintf("invalid connection id, %s not found", msg.ConnectionId)
+		k.Logger(ctx).Error(errMsg)
+		return nil, sdkerrors.Wrapf(types.ErrFailedToRegisterHostZone, errMsg)
+	}
+	counterpartyConnection := connectionEnd.Counterparty
 
 	// Get chain id from connection
 	chainId, err := k.GetChainID(ctx, msg.ConnectionId)
@@ -26,7 +37,7 @@ func (k msgServer) RegisterHostZone(goCtx context.Context, msg *types.MsgRegiste
 	}
 
 	// get zone
-	_, found := k.GetHostZone(ctx, chainId)
+	_, found = k.GetHostZone(ctx, chainId)
 	if found {
 		errMsg := fmt.Sprintf("invalid chain id, zone for %s already registered", chainId)
 		k.Logger(ctx).Error(errMsg)
@@ -69,7 +80,7 @@ func (k msgServer) RegisterHostZone(goCtx context.Context, msg *types.MsgRegiste
 		ChainId:           chainId,
 		ConnectionId:      msg.ConnectionId,
 		Bech32Prefix:      msg.Bech32Prefix,
-		IBCDenom:          msg.IbcDenom,
+		IbcDenom:          msg.IbcDenom,
 		HostDenom:         msg.HostDenom,
 		TransferChannelId: msg.TransferChannelId,
 		// Start exchange rate at 1 upon registration
@@ -81,10 +92,18 @@ func (k msgServer) RegisterHostZone(goCtx context.Context, msg *types.MsgRegiste
 	// write the zone back to the store
 	k.SetHostZone(ctx, zone)
 
+	appVersion := string(icatypes.ModuleCdc.MustMarshalJSON(&icatypes.Metadata{
+		Version:                icatypes.Version,
+		ControllerConnectionId: zone.ConnectionId,
+		HostConnectionId:       counterpartyConnection.ConnectionId,
+		Encoding:               icatypes.EncodingProtobuf,
+		TxType:                 icatypes.TxTypeSDKMultiMsg,
+	}))
+
 	// generate delegate account
 	// NOTE: in the future, if we implement proxy governance, we'll need many more delegate accounts
 	delegateAccount := types.FormatICAAccountOwner(chainId, types.ICAAccountType_DELEGATION)
-	if err := k.ICAControllerKeeper.RegisterInterchainAccount(ctx, zone.ConnectionId, delegateAccount); err != nil {
+	if err := k.ICAControllerKeeper.RegisterInterchainAccount(ctx, zone.ConnectionId, delegateAccount, appVersion); err != nil {
 		errMsg := fmt.Sprintf("unable to register delegation account, err: %s", err.Error())
 		k.Logger(ctx).Error(errMsg)
 		return nil, sdkerrors.Wrapf(types.ErrFailedToRegisterHostZone, errMsg)
@@ -92,7 +111,7 @@ func (k msgServer) RegisterHostZone(goCtx context.Context, msg *types.MsgRegiste
 
 	// generate fee account
 	feeAccount := types.FormatICAAccountOwner(chainId, types.ICAAccountType_FEE)
-	if err := k.ICAControllerKeeper.RegisterInterchainAccount(ctx, zone.ConnectionId, feeAccount); err != nil {
+	if err := k.ICAControllerKeeper.RegisterInterchainAccount(ctx, zone.ConnectionId, feeAccount, appVersion); err != nil {
 		errMsg := fmt.Sprintf("unable to register fee account, err: %s", err.Error())
 		k.Logger(ctx).Error(errMsg)
 		return nil, sdkerrors.Wrapf(types.ErrFailedToRegisterHostZone, errMsg)
@@ -100,7 +119,7 @@ func (k msgServer) RegisterHostZone(goCtx context.Context, msg *types.MsgRegiste
 
 	// generate withdrawal account
 	withdrawalAccount := types.FormatICAAccountOwner(chainId, types.ICAAccountType_WITHDRAWAL)
-	if err := k.ICAControllerKeeper.RegisterInterchainAccount(ctx, zone.ConnectionId, withdrawalAccount); err != nil {
+	if err := k.ICAControllerKeeper.RegisterInterchainAccount(ctx, zone.ConnectionId, withdrawalAccount, appVersion); err != nil {
 		errMsg := fmt.Sprintf("unable to register withdrawal account, err: %s", err.Error())
 		k.Logger(ctx).Error(errMsg)
 		return nil, sdkerrors.Wrapf(types.ErrFailedToRegisterHostZone, errMsg)
@@ -108,7 +127,7 @@ func (k msgServer) RegisterHostZone(goCtx context.Context, msg *types.MsgRegiste
 
 	// generate redemption account
 	redemptionAccount := types.FormatICAAccountOwner(chainId, types.ICAAccountType_REDEMPTION)
-	if err := k.ICAControllerKeeper.RegisterInterchainAccount(ctx, zone.ConnectionId, redemptionAccount); err != nil {
+	if err := k.ICAControllerKeeper.RegisterInterchainAccount(ctx, zone.ConnectionId, redemptionAccount, appVersion); err != nil {
 		errMsg := fmt.Sprintf("unable to register redemption account, err: %s", err.Error())
 		k.Logger(ctx).Error(errMsg)
 		return nil, sdkerrors.Wrapf(types.ErrFailedToRegisterHostZone, errMsg)
@@ -127,15 +146,16 @@ func (k msgServer) RegisterHostZone(goCtx context.Context, msg *types.MsgRegiste
 		return nil, sdkerrors.Wrapf(recordstypes.ErrEpochUnbondingRecordNotFound, errMsg)
 	}
 	hostZoneUnbonding := &recordstypes.HostZoneUnbonding{
-		NativeTokenAmount: 0,
-		StTokenAmount:     0,
+		NativeTokenAmount: sdkmath.ZeroInt(),
+		StTokenAmount:     sdkmath.ZeroInt(),
 		Denom:             zone.HostDenom,
 		HostZoneId:        zone.ChainId,
 		Status:            recordstypes.HostZoneUnbonding_UNBONDING_QUEUE,
 	}
 	updatedEpochUnbondingRecord, success := k.RecordsKeeper.AddHostZoneToEpochUnbondingRecord(ctx, epochUnbondingRecord.EpochNumber, chainId, hostZoneUnbonding)
 	if !success {
-		errMsg := fmt.Sprintf("Failed to set host zone epoch unbonding record: epochNumber %d, chainId %s, hostZoneUnbonding %v. Err: %s", epochUnbondingRecord.EpochNumber, chainId, hostZoneUnbonding, err.Error())
+		errMsg := fmt.Sprintf("Failed to set host zone epoch unbonding record: epochNumber %d, chainId %s, hostZoneUnbonding %v. Err: %s",
+			epochUnbondingRecord.EpochNumber, chainId, hostZoneUnbonding, err.Error())
 		k.Logger(ctx).Error(errMsg)
 		return nil, sdkerrors.Wrapf(types.ErrEpochNotFound, errMsg)
 	}
@@ -148,7 +168,7 @@ func (k msgServer) RegisterHostZone(goCtx context.Context, msg *types.MsgRegiste
 	}
 	depositRecord := recordstypes.DepositRecord{
 		Id:                 0,
-		Amount:             0,
+		Amount:             sdkmath.ZeroInt(),
 		Denom:              zone.HostDenom,
 		HostZoneId:         zone.ChainId,
 		Status:             recordstypes.DepositRecord_TRANSFER_QUEUE,

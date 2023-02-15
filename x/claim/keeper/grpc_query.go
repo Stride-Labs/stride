@@ -7,7 +7,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	"github.com/Stride-Labs/stride/x/claim/types"
+	"github.com/Stride-Labs/stride/v5/x/claim/types"
 )
 
 var _ types.QueryServer = Keeper{}
@@ -68,7 +68,7 @@ func (k Keeper) ClaimableForAction(
 		return nil, err
 	}
 
-	coins, err := k.GetClaimableAmountForAction(ctx, addr, req.Action, req.AirdropIdentifier)
+	coins, err := k.GetClaimableAmountForAction(ctx, addr, req.Action, req.AirdropIdentifier, false)
 
 	return &types.QueryClaimableForActionResponse{
 		Coins: coins,
@@ -90,9 +90,32 @@ func (k Keeper) TotalClaimable(
 		return nil, err
 	}
 
-	coins, err := k.GetUserTotalClaimable(ctx, addr, req.AirdropIdentifier)
+	coins, err := k.GetUserTotalClaimable(ctx, addr, req.AirdropIdentifier, req.IncludeClaimed)
 
 	return &types.QueryTotalClaimableResponse{
 		Coins: coins,
+	}, err
+}
+
+// UserVestings returns all vestings for user
+func (k Keeper) UserVestings(
+	goCtx context.Context,
+	req *types.QueryUserVestingsRequest,
+) (*types.QueryUserVestingsResponse, error) {
+	if req == nil {
+		return nil, status.Error(codes.InvalidArgument, "empty request")
+	}
+
+	ctx := sdk.UnwrapSDKContext(goCtx)
+	addr, err := sdk.AccAddressFromBech32(req.Address)
+	if err != nil {
+		return nil, err
+	}
+
+	vestings, spendableCoins := k.GetUserVestings(ctx, addr)
+
+	return &types.QueryUserVestingsResponse{
+		SpendableCoins: spendableCoins,
+		Periods:        vestings,
 	}, err
 }

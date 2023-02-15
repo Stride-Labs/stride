@@ -3,8 +3,8 @@ package keeper
 import (
 	"fmt"
 
-	epochstypes "github.com/Stride-Labs/stride/x/epochs/types"
-	"github.com/Stride-Labs/stride/x/mint/types"
+	epochstypes "github.com/Stride-Labs/stride/v5/x/epochs/types"
+	"github.com/Stride-Labs/stride/v5/x/mint/types"
 
 	"github.com/cosmos/cosmos-sdk/telemetry"
 	sdk "github.com/cosmos/cosmos-sdk/types"

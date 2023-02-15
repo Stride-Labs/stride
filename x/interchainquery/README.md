@@ -1,3 +1,9 @@
+---
+title: "Interchainquery"
+excerpt: ""
+category: 6392913957c533007128548e
+---
+
 <!--
 order: 0
 title: "Epochs Overview"
@@ -8,6 +14,7 @@ parent:
 # Interchain Query
 
 ## Abstract
+
 Stride uses interchain queries and interchain accounts to perform multichain liquid staking. The `interchainquery` module creates a framework that allows other modules to query other appchains using IBC. The `interchainquery` module is used to make bank balance ICQ queries to withdrawal account every N. The callback triggers ICA bank sends for 90% of the rewards to the delegation account and 10% to the stride hostzone revenue account. The ICA bank send logic is in x/stakeibc/keeper/callbacks.go.
 
 ## Contents
@@ -15,17 +22,9 @@ Stride uses interchain queries and interchain accounts to perform multichain liq
 1. **[Concepts](#concepts)**
 2. **[State](#state)**
 3. **[Events](#events)**
-4. **[Keeper](#keeper)**   
+4. **[Keeper](#keeper)**
 5. **[Msgs](#msgs)**  
-
-## Concepts
-
-Nearly all of Stride's functionality is built using interchain accounts (ICAs), which are a new functionality in Cosmos, and a critical component of IBC. ICAs allow accounts on Zone A to be controlled by Zone B. ICAs communicate with one another using Interchain Queries (ICQs), which involve Zone A querying Zone B for relevant information. 
-
-Two Zones communicate via a connection and channel. All communications between the Controller Zone (the chain that is querying) and the Host Zone (the chain that is being queried) is done through a dedicated IBC channel between the two chains, which is opened the first time the two chains interact.
-
-For context, ICS standards define that each channel is associated with a particular connection, and a connection may have any number of associated channels.
-
+6. **[Queries](#queries)**
 
 ## State
 
@@ -36,15 +35,13 @@ The `interchainquery` module keeps `Query` objects and modifies the information 
 `Query` has information types that pertain to the query itself. `Query` keeps the following:
 
 1. `id` keeps the query identification string.
-2. `connection_id` keeps the id of the channel or connection between the controller and host chain.
+2. `connection_id` keeps the id of the connection between the controller and host chain.
 3. `chain_id` keeps the id of the queried chain.
-4. `query_type` keeps the type of interchain query
+4. `query_type` keeps the type of interchain query (e.g. bank store query)
 5. `request` keeps an bytecode encoded version of the interchain query
-6. `period` TODO
-7. `last_height` keeps the blockheight of the last block before the query was made
-8. `callback_id` keeps the function that will be called by the interchain query
-9. `ttl` TODO
-10. `height` keeps the height at which the ICQ query should execute on the host zone. This is often `0`, meaning the query should execute at the latest height on the host zone.
+6. `callback_id` keeps the function that will be called by the interchain query
+7. `ttl` time at which the query expires (in unix nano)
+8. `request_sent` keeps a boolean indicating whether the query event has been emitted (and can be identified by a relayer)
 
 `DataPoint` has information types that pertain to the data that is queried. `DataPoint` keeps the following:
 
@@ -55,28 +52,28 @@ The `interchainquery` module keeps `Query` objects and modifies the information 
 
 ## Events
 
-The `interchainquery` module emits an event at the end of every 3 `stride_epoch`s (e.g. 15 minutes on local testnet).
+The `interchainquery` module emits an event at the end of every `stride_epoch`s (e.g. 15 minutes on local testnet).
 
 The purpose of this event is to send interchainqueries that query data about staking rewards, which Stride uses to reinvest (aka autocompound) staking rewards.
 
 ```go
-			event := sdk.NewEvent(
-				sdk.EventTypeMessage,
-				sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
-				sdk.NewAttribute(sdk.AttributeKeyAction, types.AttributeValueQuery),
-				sdk.NewAttribute(types.AttributeKeyQueryId, queryInfo.Id),
-				sdk.NewAttribute(types.AttributeKeyChainId, queryInfo.ChainId),
-				sdk.NewAttribute(types.AttributeKeyConnectionId, queryInfo.ConnectionId),
-				sdk.NewAttribute(types.AttributeKeyType, queryInfo.QueryType),
-				// TODO: add height to request type
-				sdk.NewAttribute(types.AttributeKeyHeight, "0"),
-				sdk.NewAttribute(types.AttributeKeyRequest, hex.EncodeToString(queryInfo.Request)),
-			)
+   event := sdk.NewEvent(
+    sdk.EventTypeMessage,
+    sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
+    sdk.NewAttribute(sdk.AttributeKeyAction, types.AttributeValueQuery),
+    sdk.NewAttribute(types.AttributeKeyQueryId, queryInfo.Id),
+    sdk.NewAttribute(types.AttributeKeyChainId, queryInfo.ChainId),
+    sdk.NewAttribute(types.AttributeKeyConnectionId, queryInfo.ConnectionId),
+    sdk.NewAttribute(types.AttributeKeyType, queryInfo.QueryType),
+    sdk.NewAttribute(types.AttributeKeyHeight, "0"),
+    sdk.NewAttribute(types.AttributeKeyRequest, hex.EncodeToString(queryInfo.Request)),
+   )
 ```
 
 ## Keeper
 
 ### Keeper Functions
+
 `interchainquery/keeper/` module provides utility functions to manage ICQs
 
 ```go
@@ -94,12 +91,22 @@ AllQueries(ctx sdk.Context) []types.Query
 
 ## Msgs
 
-`interchainquery` has a `Msg` service that passes messages between chains. 
-
 ```protobuf
-service Msg {
-  // SubmitQueryResponse defines a method for submiting query responses.
-  rpc SubmitQueryResponse(MsgSubmitQueryResponse) returns (MsgSubmitQueryResponseResponse)
+// SubmitQueryResponse is used to return the query response back to Stride
+message MsgSubmitQueryResponse {
+  string chain_id = 1;
+  string query_id = 2;
+  bytes result = 3;
+  tendermint.crypto.ProofOps proof_ops = 4;
+  int64 height = 5;
+  string from_address = 6;
 }
 ```
 
+## Queries
+
+```protobuf
+// Query PendingQueries lists all queries that have been requested (i.e. emitted)
+//  but have not had a response submitted yet
+message QueryPendingQueriesRequest {}
+```

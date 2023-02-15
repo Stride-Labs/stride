@@ -3,10 +3,11 @@ package cli
 import (
 	"context"
 
-	"github.com/Stride-Labs/stride/x/records/types"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/spf13/cobra"
+
+	"github.com/Stride-Labs/stride/v5/x/records/types"
 )
 
 func CmdQueryParams() *cobra.Command {

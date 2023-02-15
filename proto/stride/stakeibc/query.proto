@@ -6,12 +6,11 @@ import "google/api/annotations.proto";
 import "cosmos/base/query/v1beta1/pagination.proto";
 import "stride/stakeibc/params.proto";
 import "stride/stakeibc/validator.proto";
-import "stride/stakeibc/ica_account.proto";
 import "stride/stakeibc/host_zone.proto";
 import "stride/stakeibc/epoch_tracker.proto";
 // this line is used by starport scaffolding # 1
 
-option go_package = "github.com/Stride-Labs/stride/x/stakeibc/types";
+option go_package = "github.com/Stride-Labs/stride/v5/x/stakeibc/types";
 
 // Query defines the gRPC querier service.
 service Query {
@@ -24,11 +23,6 @@ service Query {
       returns (QueryGetValidatorsResponse) {
     option (google.api.http).get =
         "/Stride-Labs/stride/stakeibc/validators/{chain_id}";
-  }
-  // Queries a ICAAccount by index.
-  rpc ICAAccount(QueryGetICAAccountRequest)
-      returns (QueryGetICAAccountResponse) {
-    option (google.api.http).get = "/Stride-Labs/stride/stakeibc/ica_account";
   }
   // Queries a HostZone by id.
   rpc HostZone(QueryGetHostZoneRequest) returns (QueryGetHostZoneResponse) {
@@ -65,7 +59,13 @@ service Query {
     option (google.api.http).get = "/Stride-Labs/stride/stakeibc/epoch_tracker";
   }
 
-  // this line is used by starport scaffolding # 2
+  // Queries the next packet sequence for one for a given channel
+  rpc NextPacketSequence(QueryGetNextPacketSequenceRequest)
+      returns (QueryGetNextPacketSequenceResponse) {
+    option (google.api.http).get =
+        "/Stride-Labs/stride/stakeibc/next_packet_sequence/{channel_id}/"
+        "{port_id}";
+  }
 }
 
 // QueryInterchainAccountFromAddressRequest is the request type for the
@@ -95,11 +95,6 @@ message QueryGetValidatorsRequest { string chain_id = 1; }
 
 message QueryGetValidatorsResponse { repeated Validator validators = 1; }
 
-message QueryGetICAAccountRequest {}
-
-message QueryGetICAAccountResponse {
-  ICAAccount ica_account = 1 [ (gogoproto.nullable) = false ];
-}
 message QueryGetHostZoneRequest { string chain_id = 1; }
 
 message QueryGetHostZoneResponse {
@@ -125,13 +120,15 @@ message QueryGetEpochTrackerResponse {
   EpochTracker epoch_tracker = 1 [ (gogoproto.nullable) = false ];
 }
 
-message QueryAllEpochTrackerRequest {
-  cosmos.base.query.v1beta1.PageRequest pagination = 1;
-}
+message QueryAllEpochTrackerRequest {}
 
 message QueryAllEpochTrackerResponse {
   repeated EpochTracker epoch_tracker = 1 [ (gogoproto.nullable) = false ];
-  cosmos.base.query.v1beta1.PageResponse pagination = 2;
 }
 
-// this line is used by starport scaffolding # 3
+message QueryGetNextPacketSequenceRequest {
+  string channel_id = 1;
+  string port_id = 2;
+}
+
+message QueryGetNextPacketSequenceResponse { uint64 sequence = 1; }

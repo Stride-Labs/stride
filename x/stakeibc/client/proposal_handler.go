@@ -1,12 +1,11 @@
 package client
 
 import (
-	"github.com/Stride-Labs/stride/x/stakeibc/client/cli"
-	"github.com/Stride-Labs/stride/x/stakeibc/client/rest"
+	"github.com/Stride-Labs/stride/v5/x/stakeibc/client/cli"
 
 	govclient "github.com/cosmos/cosmos-sdk/x/gov/client"
 )
 
 var (
-	AddValidatorProposalHandler = govclient.NewProposalHandler(cli.CmdAddValidatorProposal, rest.ProposalAddValidatorRESTHandler)
+	AddValidatorProposalHandler = govclient.NewProposalHandler(cli.CmdAddValidatorProposal)
 )

@@ -3,11 +3,12 @@ package icacallbacks_test
 import (
 	"testing"
 
-	keepertest "github.com/Stride-Labs/stride/testutil/keeper"
-	"github.com/Stride-Labs/stride/testutil/nullify"
-	"github.com/Stride-Labs/stride/x/icacallbacks"
-	"github.com/Stride-Labs/stride/x/icacallbacks/types"
 	"github.com/stretchr/testify/require"
+
+	keepertest "github.com/Stride-Labs/stride/v5/testutil/keeper"
+	"github.com/Stride-Labs/stride/v5/testutil/nullify"
+	"github.com/Stride-Labs/stride/v5/x/icacallbacks"
+	"github.com/Stride-Labs/stride/v5/x/icacallbacks/types"
 )
 
 func TestGenesis(t *testing.T) {

@@ -10,9 +10,9 @@ import (
 	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
 	"github.com/cosmos/cosmos-sdk/x/simulation"
 
-	"github.com/Stride-Labs/stride/testutil/sample"
-	stakeibcsimulation "github.com/Stride-Labs/stride/x/stakeibc/simulation"
-	"github.com/Stride-Labs/stride/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v5/testutil/sample"
+	stakeibcsimulation "github.com/Stride-Labs/stride/v5/x/stakeibc/simulation"
+	"github.com/Stride-Labs/stride/v5/x/stakeibc/types"
 )
 
 // avoid unused import issue

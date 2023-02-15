@@ -7,7 +7,7 @@ import (
 	"github.com/spf13/cast"
 	"github.com/spf13/cobra"
 
-	"github.com/Stride-Labs/stride/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v5/x/stakeibc/types"
 )
 
 func CmdAddValidator() *cobra.Command {

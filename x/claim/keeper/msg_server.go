@@ -7,7 +7,7 @@ import (
 
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
-	"github.com/Stride-Labs/stride/x/claim/types"
+	"github.com/Stride-Labs/stride/v5/x/claim/types"
 )
 
 type msgServer struct {
@@ -74,7 +74,7 @@ func (server msgServer) ClaimFreeAmount(goCtx context.Context, msg *types.MsgCla
 		return nil, err
 	}
 
-	coins, err := server.keeper.ClaimCoinsForAction(ctx, addr, types.ActionFree, msg.AirdropIdentifier)
+	coins, err := server.keeper.ClaimAllCoinsForAction(ctx, addr, types.ACTION_FREE)
 	if err != nil {
 		return nil, err
 	}

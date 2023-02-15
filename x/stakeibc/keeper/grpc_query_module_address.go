@@ -3,10 +3,11 @@ package keeper
 import (
 	"context"
 
-	"github.com/Stride-Labs/stride/x/stakeibc/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+
+	"github.com/Stride-Labs/stride/v5/x/stakeibc/types"
 )
 
 func (k Keeper) ModuleAddress(goCtx context.Context, req *types.QueryModuleAddressRequest) (*types.QueryModuleAddressResponse, error) {

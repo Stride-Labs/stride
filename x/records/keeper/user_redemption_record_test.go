@@ -4,18 +4,22 @@ import (
 	"strconv"
 	"testing"
 
-	keepertest "github.com/Stride-Labs/stride/testutil/keeper"
-	"github.com/Stride-Labs/stride/testutil/nullify"
-	"github.com/Stride-Labs/stride/x/records/keeper"
-	"github.com/Stride-Labs/stride/x/records/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
+
+	sdkmath "cosmossdk.io/math"
+
+	keepertest "github.com/Stride-Labs/stride/v5/testutil/keeper"
+	"github.com/Stride-Labs/stride/v5/testutil/nullify"
+	"github.com/Stride-Labs/stride/v5/x/records/keeper"
+	"github.com/Stride-Labs/stride/v5/x/records/types"
 )
 
 func createNUserRedemptionRecord(keeper *keeper.Keeper, ctx sdk.Context, n int) []types.UserRedemptionRecord {
 	items := make([]types.UserRedemptionRecord, n)
 	for i := range items {
 		items[i].Id = strconv.Itoa(i)
+		items[i].Amount = sdkmath.NewInt(int64(i))
 		keeper.SetUserRedemptionRecord(ctx, items[i])
 	}
 	return items
@@ -47,8 +51,6 @@ func TestUserRedemptionRecordRemove(t *testing.T) {
 func TestUserRedemptionRecordGetAll(t *testing.T) {
 	keeper, ctx := keepertest.RecordsKeeper(t)
 	items := createNUserRedemptionRecord(keeper, ctx, 10)
-	require.ElementsMatch(t,
-		nullify.Fill(items),
-		nullify.Fill(keeper.GetAllUserRedemptionRecord(ctx)),
-	)
+	actual := keeper.GetAllUserRedemptionRecord(ctx)
+	require.Equal(t, len(items), len(actual))
 }

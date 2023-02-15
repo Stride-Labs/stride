@@ -3,20 +3,18 @@ package stakeibc_test
 import (
 	"testing"
 
-	keepertest "github.com/Stride-Labs/stride/testutil/keeper"
-	"github.com/Stride-Labs/stride/testutil/nullify"
-	"github.com/Stride-Labs/stride/x/stakeibc"
-	"github.com/Stride-Labs/stride/x/stakeibc/types"
 	"github.com/stretchr/testify/require"
+
+	keepertest "github.com/Stride-Labs/stride/v5/testutil/keeper"
+	"github.com/Stride-Labs/stride/v5/testutil/nullify"
+	"github.com/Stride-Labs/stride/v5/x/stakeibc"
+	"github.com/Stride-Labs/stride/v5/x/stakeibc/types"
 )
 
 func TestGenesis(t *testing.T) {
 	genesisState := types.GenesisState{
 		Params: types.DefaultParams(),
 		PortId: types.PortID,
-		ICAAccount: &types.ICAAccount{
-			Address: "78",
-		},
 		EpochTrackerList: []types.EpochTracker{
 			{EpochIdentifier: "stride_epoch"},
 		},
@@ -32,7 +30,6 @@ func TestGenesis(t *testing.T) {
 	nullify.Fill(got)
 
 	require.Equal(t, genesisState.PortId, got.PortId)
-	require.Equal(t, genesisState.ICAAccount, got.ICAAccount)
 	require.Equal(t, genesisState.EpochTrackerList, got.EpochTrackerList)
 	require.Equal(t, genesisState.Params, got.Params)
 	// this line is used by starport scaffolding # genesis/test/assert

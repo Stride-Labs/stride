@@ -3,11 +3,12 @@ package cli
 import (
 	"strconv"
 
-	"github.com/Stride-Labs/stride/x/stakeibc/types"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/tx"
 	"github.com/spf13/cobra"
+
+	"github.com/Stride-Labs/stride/v5/x/stakeibc/types"
 )
 
 var _ = strconv.Itoa(0)

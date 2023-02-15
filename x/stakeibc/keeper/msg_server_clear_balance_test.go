@@ -3,13 +3,14 @@ package keeper_test
 import (
 	"fmt"
 
+	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	icatypes "github.com/cosmos/ibc-go/v3/modules/apps/27-interchain-accounts/types"
-	ibctesting "github.com/cosmos/ibc-go/v3/testing"
+	icatypes "github.com/cosmos/ibc-go/v5/modules/apps/27-interchain-accounts/types"
+	ibctesting "github.com/cosmos/ibc-go/v5/testing"
 	_ "github.com/stretchr/testify/suite"
 
-	"github.com/Stride-Labs/stride/x/stakeibc/types"
-	stakeibctypes "github.com/Stride-Labs/stride/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v5/x/stakeibc/types"
+	stakeibctypes "github.com/Stride-Labs/stride/v5/x/stakeibc/types"
 )
 
 type ClearBalanceState struct {
@@ -33,7 +34,7 @@ func (s *KeeperTestSuite) SetupClearBalance() ClearBalanceTestCase {
 		ChainId:        HostChainId,
 		ConnectionId:   ibctesting.FirstConnectionID,
 		HostDenom:      Atom,
-		IBCDenom:       IbcAtom,
+		IbcDenom:       IbcAtom,
 		RedemptionRate: sdk.NewDec(1.0),
 		Address:        zoneAddress.String(),
 		FeeAccount: &stakeibctypes.ICAAccount{
@@ -42,13 +43,13 @@ func (s *KeeperTestSuite) SetupClearBalance() ClearBalanceTestCase {
 		},
 	}
 
-	amount := uint64(1_000_000)
+	amount := sdkmath.NewInt(1_000_000)
 
 	user := Account{
 		acc: s.TestAccs[0],
 	}
 
-	s.App.StakeibcKeeper.SetHostZone(s.Ctx(), hostZone)
+	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
 
 	return ClearBalanceTestCase{
 		initialState: ClearBalanceState{
@@ -75,14 +76,14 @@ func (s *KeeperTestSuite) TestClearBalance_Successful() {
 	feePortId := feeChannel.PortID
 	feeChannelId := feeChannel.ChannelID
 
-	startSequence, found := s.App.IBCKeeper.ChannelKeeper.GetNextSequenceSend(s.Ctx(), feePortId, feeChannelId)
+	startSequence, found := s.App.IBCKeeper.ChannelKeeper.GetNextSequenceSend(s.Ctx, feePortId, feeChannelId)
 	s.Require().True(found, "sequence number not found before clear balance")
 
-	_, err := s.GetMsgServer().ClearBalance(sdk.WrapSDKContext(s.Ctx()), &tc.validMsg)
+	_, err := s.GetMsgServer().ClearBalance(sdk.WrapSDKContext(s.Ctx), &tc.validMsg)
 	s.Require().NoError(err, "balance clears")
 
 	// Confirm the sequence number was incremented
-	endSequence, found := s.App.IBCKeeper.ChannelKeeper.GetNextSequenceSend(s.Ctx(), feePortId, feeChannelId)
+	endSequence, found := s.App.IBCKeeper.ChannelKeeper.GetNextSequenceSend(s.Ctx, feePortId, feeChannelId)
 	s.Require().True(found, "sequence number not found after clear balance")
 	s.Require().Equal(endSequence, startSequence+1, "sequence number after clear balance")
 }
@@ -90,8 +91,8 @@ func (s *KeeperTestSuite) TestClearBalance_Successful() {
 func (s *KeeperTestSuite) TestClearBalance_HostChainMissing() {
 	tc := s.SetupClearBalance()
 	// remove the host zone
-	s.App.StakeibcKeeper.RemoveHostZone(s.Ctx(), HostChainId)
-	_, err := s.GetMsgServer().ClearBalance(sdk.WrapSDKContext(s.Ctx()), &tc.validMsg)
+	s.App.StakeibcKeeper.RemoveHostZone(s.Ctx, HostChainId)
+	_, err := s.GetMsgServer().ClearBalance(sdk.WrapSDKContext(s.Ctx), &tc.validMsg)
 	s.Require().EqualError(err, "chainId: GAIA: host zone not registered")
 }
 
@@ -99,8 +100,8 @@ func (s *KeeperTestSuite) TestClearBalance_FeeAccountMissing() {
 	tc := s.SetupClearBalance()
 	// no fee account
 	tc.initialState.hz.FeeAccount = nil
-	s.App.StakeibcKeeper.SetHostZone(s.Ctx(), tc.initialState.hz)
-	_, err := s.GetMsgServer().ClearBalance(sdk.WrapSDKContext(s.Ctx()), &tc.validMsg)
+	s.App.StakeibcKeeper.SetHostZone(s.Ctx, tc.initialState.hz)
+	_, err := s.GetMsgServer().ClearBalance(sdk.WrapSDKContext(s.Ctx), &tc.validMsg)
 	s.Require().EqualError(err, "chainId: GAIA: fee account is not registered")
 }
 
@@ -108,7 +109,7 @@ func (s *KeeperTestSuite) TestClearBalance_ParseCoinError() {
 	tc := s.SetupClearBalance()
 	// invalid denom
 	tc.initialState.hz.HostDenom = ":"
-	s.App.StakeibcKeeper.SetHostZone(s.Ctx(), tc.initialState.hz)
-	_, err := s.GetMsgServer().ClearBalance(sdk.WrapSDKContext(s.Ctx()), &tc.validMsg)
+	s.App.StakeibcKeeper.SetHostZone(s.Ctx, tc.initialState.hz)
+	_, err := s.GetMsgServer().ClearBalance(sdk.WrapSDKContext(s.Ctx), &tc.validMsg)
 	s.Require().EqualError(err, "failed to parse coin (1000000:): invalid decimal coin expression: 1000000:")
 }

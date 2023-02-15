@@ -1,0 +1,154 @@
+global:
+  api-listen-addr: :5183
+  timeout: 10s
+  memo: ""
+  light-cache-size: 20
+chains:
+  stride:
+    type: cosmos
+    value:
+      key: rly1
+      chain-id: STRIDE
+      rpc-addr: http://stride1:26657
+      account-prefix: stride
+      keyring-backend: test
+      gas-adjustment: 1.2
+      gas-prices: 0.01ustrd
+      debug: false
+      timeout: 20s
+      output-format: json
+      sign-mode: direct
+  gaia:
+    type: cosmos
+    value:
+      key: rly2
+      chain-id: GAIA
+      rpc-addr: http://gaia1:26657
+      account-prefix: cosmos
+      keyring-backend: test
+      gas-adjustment: 1.2
+      gas-prices: 0.01uatom
+      debug: false
+      timeout: 20s
+      output-format: json
+      sign-mode: direct
+  juno:
+    type: cosmos
+    value:
+      key: rly3
+      chain-id: JUNO
+      rpc-addr: http://juno1:26657
+      account-prefix: juno
+      keyring-backend: test
+      gas-adjustment: 1.2
+      gas-prices: 0.01ujuno
+      debug: false
+      timeout: 20s
+      output-format: json
+      sign-mode: direct
+  osmo:
+    type: cosmos
+    value:
+      key: rly4
+      chain-id: OSMO
+      rpc-addr: http://osmo1:26657
+      account-prefix: osmo
+      keyring-backend: test
+      gas-adjustment: 1.2
+      gas-prices: 0.01uosmo
+      debug: false
+      timeout: 20s
+      output-format: json
+      sign-mode: direct
+  stars:
+    type: cosmos
+    value:
+      key: rly5
+      chain-id: STARS
+      rpc-addr: http://stars1:26657
+      account-prefix: stars
+      keyring-backend: test
+      gas-adjustment: 1.2
+      gas-prices: 0.01ustars
+      debug: false
+      timeout: 20s
+      output-format: json
+      sign-mode: direct
+  host:
+    type: cosmos
+    value:
+      key: rly6
+      chain-id: HOST
+      rpc-addr: http://host1:26657
+      account-prefix: stride
+      keyring-backend: test
+      gas-adjustment: 1.2
+      gas-prices: 0.01uwalk
+      debug: false
+      timeout: 20s
+      output-format: json
+      sign-mode: direct
+  # {new-host-zone}:
+  #   type: cosmos
+  #   value:
+  #     key: rly{N}
+  #     chain-id: {CHAIN_ID}
+  #     rpc-addr: http://{node_prefix}1:26657
+  #     account-prefix: {bech32_hrp_account_prefix}
+  #     keyring-backend: test
+  #     gas-adjustment: 1.2
+  #     gas-prices: 0.01{minimal_denom}
+  #     debug: false
+  #     timeout: 20s
+  #     output-format: json
+  #     sign-mode: direct
+
+paths:
+  stride-gaia:
+    src:
+      chain-id: STRIDE
+    dst:
+      chain-id: GAIA
+    src-channel-filter:
+      rule: ""
+      channel-list: []
+  stride-osmo:
+    src:
+      chain-id: STRIDE
+    dst:
+      chain-id: OSMO
+    src-channel-filter:
+      rule: ""
+      channel-list: []
+  stride-juno:
+    src:
+      chain-id: STRIDE
+    dst:
+      chain-id: JUNO
+    src-channel-filter:
+      rule: ""
+      channel-list: []
+  stride-stars:
+    src:
+      chain-id: STRIDE
+    dst:
+      chain-id: STARS
+    src-channel-filter:
+      rule: ""
+      channel-list: []
+  stride-host:
+    src:
+      chain-id: STRIDE
+    dst:
+      chain-id: HOST
+    src-channel-filter:
+      rule: ""
+      channel-list: []
+  # stride-{new-host-zone}:
+  #   src:
+  #     chain-id: STRIDE
+  #   dst:
+  #     chain-id: {CHAIN_ID}
+  #   src-channel-filter:
+  #     rule: ""
+  #     channel-list: []

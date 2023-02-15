@@ -3,8 +3,8 @@ package records
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/Stride-Labs/stride/x/records/keeper"
-	"github.com/Stride-Labs/stride/x/records/types"
+	"github.com/Stride-Labs/stride/v5/x/records/keeper"
+	"github.com/Stride-Labs/stride/v5/x/records/types"
 )
 
 // InitGenesis initializes the capability module's state from a provided genesis

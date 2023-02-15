@@ -13,26 +13,28 @@ import (
 	capabilitykeeper "github.com/cosmos/cosmos-sdk/x/capability/keeper"
 	capabilitytypes "github.com/cosmos/cosmos-sdk/x/capability/types"
 
-	icqkeeper "github.com/Stride-Labs/stride/x/interchainquery/keeper"
-	"github.com/Stride-Labs/stride/x/stakeibc/types"
+	icqkeeper "github.com/Stride-Labs/stride/v5/x/interchainquery/keeper"
+	"github.com/Stride-Labs/stride/v5/x/stakeibc/types"
 
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
 	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
-	icacontrollerkeeper "github.com/cosmos/ibc-go/v3/modules/apps/27-interchain-accounts/controller/keeper"
-	ibckeeper "github.com/cosmos/ibc-go/v3/modules/core/keeper"
-	ibctmtypes "github.com/cosmos/ibc-go/v3/modules/light-clients/07-tendermint/types"
+	icacontrollerkeeper "github.com/cosmos/ibc-go/v5/modules/apps/27-interchain-accounts/controller/keeper"
+	ibckeeper "github.com/cosmos/ibc-go/v5/modules/core/keeper"
+	ibctmtypes "github.com/cosmos/ibc-go/v5/modules/light-clients/07-tendermint/types"
 
-	epochstypes "github.com/Stride-Labs/stride/x/epochs/types"
-	icacallbackskeeper "github.com/Stride-Labs/stride/x/icacallbacks/keeper"
-	recordsmodulekeeper "github.com/Stride-Labs/stride/x/records/keeper"
+	storetypes "github.com/cosmos/cosmos-sdk/store/types"
+
+	epochstypes "github.com/Stride-Labs/stride/v5/x/epochs/types"
+	icacallbackskeeper "github.com/Stride-Labs/stride/v5/x/icacallbacks/keeper"
+	recordsmodulekeeper "github.com/Stride-Labs/stride/v5/x/records/keeper"
 )
 
 type (
 	Keeper struct {
 		// *cosmosibckeeper.Keeper
 		cdc                   codec.BinaryCodec
-		storeKey              sdk.StoreKey
-		memKey                sdk.StoreKey
+		storeKey              storetypes.StoreKey
+		memKey                storetypes.StoreKey
 		paramstore            paramtypes.Subspace
 		ICAControllerKeeper   icacontrollerkeeper.Keeper
 		IBCKeeper             ibckeeper.Keeper
@@ -50,7 +52,7 @@ type (
 func NewKeeper(
 	cdc codec.BinaryCodec,
 	storeKey,
-	memKey sdk.StoreKey,
+	memKey storetypes.StoreKey,
 	ps paramtypes.Subspace,
 	// channelKeeper cosmosibckeeper.ChannelKeeper,
 	// portKeeper cosmosibckeeper.PortKeeper,
@@ -225,7 +227,7 @@ func (k Keeper) IsWithinBufferWindow(ctx sdk.Context) (bool, error) {
 
 	inWindow := elapsedShareOfEpoch.GT(epochShareThresh)
 	if !inWindow {
-		k.Logger(ctx).Error(fmt.Sprintf("ICQCB: We're %d pct through the epoch, ICQ cutoff is %d", elapsedShareOfEpoch, epochShareThresh))
+		k.Logger(ctx).Error(fmt.Sprintf("Outside ICQ Callback Window. We're %d pct through the epoch, ICQ cutoff is %d", elapsedShareOfEpoch, epochShareThresh))
 	}
 	return inWindow, nil
 }
@@ -250,7 +252,6 @@ func (k Keeper) GetICATimeoutNanos(ctx sdk.Context, epochType string) (uint64, e
 		k.Logger(ctx).Error(fmt.Sprintf("Failed to convert timeoutNanos to uint64, error: %s", err.Error()))
 		return 0, sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "Failed to convert timeoutNanos to uint64, error: %s", err.Error())
 	}
-	k.Logger(ctx).Info(fmt.Sprintf("Submitting txs for epoch %s %d %d", epochTracker.EpochIdentifier, epochTracker.NextEpochStartTime, timeoutNanos))
 	return timeoutNanosUint64, nil
 }
 
@@ -274,8 +275,8 @@ func (k Keeper) IsRedemptionRateWithinSafetyBounds(ctx sdk.Context, zone types.H
 
 // Check the max number of validators to confirm we won't exceed it when adding a new validator
 // Types of additions:
-//	* change a weight from zero to non-zero
-//  * add a new validator with non-zero weight
+//   - change a weight from zero to non-zero
+//   - add a new validator with non-zero weight
 func (k Keeper) ConfirmValSetHasSpace(ctx sdk.Context, validators []*types.Validator) error {
 
 	// get max val parameter

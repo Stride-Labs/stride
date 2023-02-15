@@ -10,15 +10,15 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	keepertest "github.com/Stride-Labs/stride/testutil/keeper"
-	"github.com/Stride-Labs/stride/testutil/nullify"
-	"github.com/Stride-Labs/stride/x/records/types"
+	keepertest "github.com/Stride-Labs/stride/v5/testutil/keeper"
+	"github.com/Stride-Labs/stride/v5/testutil/nullify"
+	"github.com/Stride-Labs/stride/v5/x/records/types"
 )
 
 func TestEpochUnbondingRecordQuerySingle(t *testing.T) {
 	keeper, ctx := keepertest.RecordsKeeper(t)
 	wctx := sdk.WrapSDKContext(ctx)
-	msgs := createNEpochUnbondingRecord(keeper, ctx, 2)
+	msgs, _ := createNEpochUnbondingRecord(keeper, ctx, 2)
 	for _, tc := range []struct {
 		desc     string
 		request  *types.QueryGetEpochUnbondingRecordRequest
@@ -63,7 +63,7 @@ func TestEpochUnbondingRecordQuerySingle(t *testing.T) {
 func TestEpochUnbondingRecordQueryPaginated(t *testing.T) {
 	keeper, ctx := keepertest.RecordsKeeper(t)
 	wctx := sdk.WrapSDKContext(ctx)
-	msgs := createNEpochUnbondingRecord(keeper, ctx, 5)
+	msgs, _ := createNEpochUnbondingRecord(keeper, ctx, 5)
 
 	request := func(next []byte, offset, limit uint64, total bool) *types.QueryAllEpochUnbondingRecordRequest {
 		return &types.QueryAllEpochUnbondingRecordRequest{
