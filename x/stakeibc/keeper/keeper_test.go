@@ -48,25 +48,90 @@ func TestKeeperTestSuite(t *testing.T) {
 
 func (s *KeeperTestSuite) TestIsRedemptionRateWithinSafetyBounds() {
 	params := s.App.StakeibcKeeper.GetParams(s.Ctx)
+	params.SafetyMinRedemptionRateThreshold = 75
+	params.SafetyMaxRedemptionRateThreshold = 150
+	params.MinRedemptionRates["gaia-1"] = "1.5"
+	params.MaxRedemptionRates["gaia-1"] = "2.5"
 	params.MinRedemptionRates["osmosis-1"] = "0.3"
 	params.MaxRedemptionRates["osmosis-1"] = "2.0"
 	s.App.StakeibcKeeper.SetParams(s.Ctx, params)
 
-	zone := types.HostZone{
-		ChainId:        "osmosis-1",
-		RedemptionRate: sdk.NewDec(1),
+	for _, tc := range []struct {
+		chainId        string
+		redemptionRate sdk.Dec
+		expSafe        bool
+	}{
+		{
+			chainId:        "osmosis-1",
+			redemptionRate: sdk.NewDecWithPrec(1, 1), // 0.1
+			expSafe:        false,
+		},
+		{
+			chainId:        "osmosis-1",
+			redemptionRate: sdk.NewDecWithPrec(3, 1), // 0.3
+			expSafe:        true,
+		},
+		{
+			chainId:        "osmosis-1",
+			redemptionRate: sdk.NewDecWithPrec(15, 1), // 1.5
+			expSafe:        true,
+		},
+		{
+			chainId:        "osmosis-1",
+			redemptionRate: sdk.NewDecWithPrec(25, 1), // 2.5
+			expSafe:        false,
+		},
+		{
+			chainId:        "gaia-1",
+			redemptionRate: sdk.NewDecWithPrec(1, 1), // 0.1
+			expSafe:        false,
+		},
+		{
+			chainId:        "gaia-1",
+			redemptionRate: sdk.NewDecWithPrec(3, 1), // 0.3
+			expSafe:        false,
+		},
+		{
+			chainId:        "gaia-1",
+			redemptionRate: sdk.NewDecWithPrec(15, 1), // 1.5
+			expSafe:        true,
+		},
+		{
+			chainId:        "gaia-1",
+			redemptionRate: sdk.NewDecWithPrec(25, 1), // 2.5
+			expSafe:        true,
+		},
+		{
+			chainId:        "stars-1",
+			redemptionRate: sdk.NewDecWithPrec(1, 1), // 0.1
+			expSafe:        false,
+		},
+		{
+			chainId:        "stars-1",
+			redemptionRate: sdk.NewDecWithPrec(3, 1), // 0.3
+			expSafe:        false,
+		},
+		{
+			chainId:        "stars-1",
+			redemptionRate: sdk.NewDecWithPrec(15, 1), // 1.5
+			expSafe:        true,
+		},
+		{
+			chainId:        "stars-1",
+			redemptionRate: sdk.NewDecWithPrec(25, 1), // 2.5
+			expSafe:        false,
+		},
+	} {
+		rrSafe, err := s.App.StakeibcKeeper.IsRedemptionRateWithinSafetyBounds(s.Ctx, types.HostZone{
+			ChainId:        tc.chainId,
+			RedemptionRate: tc.redemptionRate,
+		})
+		if tc.expSafe {
+			s.Require().NoError(err)
+			s.Require().True(rrSafe)
+		} else {
+			s.Require().Error(err)
+			s.Require().False(rrSafe)
+		}
 	}
-	rrSafe, err := s.App.StakeibcKeeper.IsRedemptionRateWithinSafetyBounds(s.Ctx, zone)
-	s.Require().NoError(err)
-	s.Require().True(rrSafe)
-
-	zone.RedemptionRate = sdk.NewDecWithPrec(16, 1) // 1.6
-	rrSafe, err = s.App.StakeibcKeeper.IsRedemptionRateWithinSafetyBounds(s.Ctx, zone)
-	s.Require().NoError(err)
-	s.Require().True(rrSafe)
-
-	zone.RedemptionRate = sdk.NewDecWithPrec(21, 1) // 2.1
-	rrSafe, err = s.App.StakeibcKeeper.IsRedemptionRateWithinSafetyBounds(s.Ctx, zone)
-	s.Require().Error(err)
-	s.Require().False(rrSafe)
 }
