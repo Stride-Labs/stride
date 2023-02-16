@@ -5,6 +5,7 @@ import (
 
 	"regexp"
 
+	errorsmod "cosmossdk.io/errors"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
 )
@@ -47,15 +48,15 @@ func (p *ResetRateLimitProposal) ValidateBasic() error {
 	}
 
 	if p.Denom == "" {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "invalid denom (%s)", p.Denom)
+		return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "invalid denom (%s)", p.Denom)
 	}
 
 	matched, err := regexp.MatchString(`^channel-\d+$`, p.ChannelId)
 	if err != nil {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "unable to verify channel-id (%s)", p.ChannelId)
+		return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "unable to verify channel-id (%s)", p.ChannelId)
 	}
 	if !matched {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "invalid channel-id (%s), must be of the format 'channel-{N}'", p.ChannelId)
+		return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "invalid channel-id (%s), must be of the format 'channel-{N}'", p.ChannelId)
 	}
 
 	return nil

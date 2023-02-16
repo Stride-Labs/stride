@@ -3,9 +3,11 @@ package keeper
 import (
 	"strings"
 
+	errorsmod "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
 	"github.com/Stride-Labs/stride/v5/x/ratelimit/types"
@@ -45,7 +47,7 @@ func (k Keeper) UpdateFlow(rateLimit types.RateLimit, direction types.PacketDire
 	case types.PACKET_RECV:
 		return rateLimit.Flow.AddInflow(amount, *rateLimit.Quota)
 	default:
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "invalid packet direction (%s)", direction.String())
+		return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "invalid packet direction (%s)", direction.String())
 	}
 }
 
@@ -54,7 +56,7 @@ func (k Keeper) UpdateFlow(rateLimit types.RateLimit, direction types.PacketDire
 func (k Keeper) CheckRateLimitAndUpdateFlow(ctx sdk.Context, direction types.PacketDirection, denom string, channelId string, amount sdkmath.Int) error {
 	// First check if the denom is blacklisted
 	if k.IsDenomBlacklisted(ctx, denom) {
-		err := sdkerrors.Wrapf(types.ErrDenomIsBlacklisted, "denom %s is blacklisted", denom)
+		err := errorsmod.Wrapf(types.ErrDenomIsBlacklisted, "denom %s is blacklisted", denom)
 		EmitRateLimitExceededEvent(ctx, denom, channelId, direction, amount, err)
 		return err
 	}
@@ -172,7 +174,7 @@ func (k Keeper) IsDenomBlacklisted(ctx sdk.Context, denom string) bool {
 	key := types.KeyPrefix(denom)
 	value := store.Get(key)
 
-	if value == nil || len(value) == 0 {
+	if len(value) == 0 {
 		return false
 	}
 	denomFromStore := string(value)

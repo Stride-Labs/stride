@@ -3,6 +3,7 @@ package keeper
 import (
 	"encoding/json"
 
+	errorsmod "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	capabilitytypes "github.com/cosmos/cosmos-sdk/x/capability/types"
@@ -115,7 +116,7 @@ func (k Keeper) SendRateLimitedPacket(ctx sdk.Context, packet ibcexported.Packet
 
 	amount, ok := sdk.NewIntFromString(packetData.Amount)
 	if !ok {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "Unable to cast packet amount to sdkmath.Int")
+		return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "Unable to cast packet amount to sdkmath.Int")
 	}
 
 	denom := ParseDenomFromSendPacket(packetData)
@@ -145,7 +146,7 @@ func (k Keeper) ReceiveRateLimitedPacket(ctx sdk.Context, packet channeltypes.Pa
 
 	amount, ok := sdk.NewIntFromString(packetData.Amount)
 	if !ok {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "Unable to cast packet amount to sdkmath.Int")
+		return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "Unable to cast packet amount to sdkmath.Int")
 	}
 
 	denom := ParseDenomFromRecvPacket(packet, packetData)
