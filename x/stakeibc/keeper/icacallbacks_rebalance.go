@@ -7,6 +7,7 @@ import (
 	icacallbackstypes "github.com/Stride-Labs/stride/v5/x/icacallbacks/types"
 	"github.com/Stride-Labs/stride/v5/x/stakeibc/types"
 
+	errorsmod "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	channeltypes "github.com/cosmos/ibc-go/v5/modules/core/04-channel/types"
@@ -42,7 +43,7 @@ func RebalanceCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ac
 	// Fetch callback args
 	rebalanceCallback, err := k.UnmarshalRebalanceCallbackArgs(ctx, args)
 	if err != nil {
-		return sdkerrors.Wrapf(types.ErrUnmarshalFailure, fmt.Sprintf("Unable to unmarshal rebalance callback args: %s", err.Error()))
+		return errorsmod.Wrapf(types.ErrUnmarshalFailure, fmt.Sprintf("Unable to unmarshal rebalance callback args: %s", err.Error()))
 	}
 	chainId := rebalanceCallback.HostZoneId
 	k.Logger(ctx).Info(utils.LogICACallbackWithHostZone(chainId, ICACallbackID_Rebalance, "Starting rebalance callback"))
@@ -69,7 +70,7 @@ func RebalanceCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ac
 	// Confirm the host zone exists
 	hostZone, found := k.GetHostZone(ctx, chainId)
 	if !found {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "host zone not found %s", chainId)
+		return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "host zone not found %s", chainId)
 	}
 
 	// Assemble a map from validatorAddress -> validator
@@ -87,14 +88,14 @@ func RebalanceCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ac
 		if _, valFound := valAddrMap[srcValidator]; valFound {
 			valAddrMap[srcValidator].DelegationAmt = valAddrMap[srcValidator].DelegationAmt.Sub(rebalancing.Amt)
 		} else {
-			return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "validator not found %s", srcValidator)
+			return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "validator not found %s", srcValidator)
 		}
 
 		// Increment the total delegation for the destination validator
 		if _, valFound := valAddrMap[dstValidator]; valFound {
 			valAddrMap[dstValidator].DelegationAmt = valAddrMap[dstValidator].DelegationAmt.Add(rebalancing.Amt)
 		} else {
-			return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "validator not found %s", dstValidator)
+			return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "validator not found %s", dstValidator)
 		}
 	}
 	k.SetHostZone(ctx, hostZone)
