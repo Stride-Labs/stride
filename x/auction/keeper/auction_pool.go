@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"encoding/binary"
+	"fmt"
 
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -9,11 +10,21 @@ import (
 	"github.com/Stride-Labs/stride/v5/x/auction/types"
 )
 
+// StartNewAuctionPool can be called by external modules like stakeibc
+// In the future instead of a single set of pools, should be prefixed by hostzone
+func (k Keeper) StartNewAuctionPool(ctx sdk.Context, properties types.AuctionPoolProperties) {
+	pool := types.AuctionPool{}
+
+	pool.PoolProperties = &properties
+	pool.LatestAuction = &types.Auction{}
+
+	k.AppendAuctionPool(ctx, pool)
+}
+
 // StartNewAuction updates the relevant auctionPool in the store to have start and end blocks running now
-func (k Keeper) StartNewAuction(ctx sdk.Context, auctionPool types.AuctionPool, auctionParams types.Params) {
+func (k Keeper) StartNewAuction(ctx sdk.Context, auctionPool types.AuctionPool) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefix(types.AuctionPoolKey))
 
-	// send this in from msg as a function argument?
 	algorithm := types.AuctionType_SEALEDBID
 	auctionPool.LatestAuction = &types.Auction{}
 	auctionPool.GetLatestAuction().Algorithm = algorithm
@@ -22,15 +33,28 @@ func (k Keeper) StartNewAuction(ctx sdk.Context, auctionPool types.AuctionPool, 
 	case types.AuctionType_ASCENDING:
 		auction := types.AscendingAuction{}
 		auctionPool.GetLatestAuction().XAscendingAuction = &types.Auction_AscendingAuction{&auction}
-		auction.CreateNew(ctx, auctionParams)
+		properties := auctionPool.GetPoolProperties().GetDefaultAscendingAuctionProperties()
+		auction.CreateNew(ctx, properties)
 	case types.AuctionType_DESCENDING:
 		auction := types.DescendingAuction{}
 		auctionPool.GetLatestAuction().XDescendingAuction = &types.Auction_DescendingAuction{&auction}
-		auction.CreateNew(ctx, auctionParams)
+		properties := auctionPool.GetPoolProperties().GetDefaultDescendingAuctionProperties()
+		auction.CreateNew(ctx, properties)
 	case types.AuctionType_SEALEDBID:
 		auction := types.SealedBidAuction{}
 		auctionPool.GetLatestAuction().XSealedBidAuction = &types.Auction_SealedBidAuction{&auction}
-		auction.CreateNew(ctx, auctionParams)
+
+		properties := auctionPool.GetPoolProperties().GetDefaultSealedBidAuctionProperties()
+
+		addr, _ := sdk.AccAddressFromBech32(auctionPool.GetPoolProperties().GetPoolAddress())
+		coins := k.bankKeeper.SpendableCoins(ctx, addr)
+		//very temporary, normally the SupplyDenom is fixed and used to look for which coins match
+		auctionPool.GetPoolProperties().SupplyDenom = coins[0].Denom
+		properties.Supply = coins[0].Amount.Uint64()
+
+		ctx.Logger().Info(fmt.Sprintf("[auction] Coins in the auction address %d %s", properties.GetSupply(), auctionPool.GetPoolProperties().GetSupplyDenom()))
+
+		auction.CreateNew(ctx, properties)
 	}
 
 	updated := k.cdc.MustMarshal(&auctionPool)

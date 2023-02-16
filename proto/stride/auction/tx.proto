@@ -3,12 +3,15 @@ syntax = "proto3";
 package stride.auction;
 
 import "stride/auction/auction_pool.proto";
+import "stride/auction/bid.proto";
 
 option go_package = "github.com/Stride-Labs/stride/v5/x/auction/types";
 
 // Msg defines the Msg service.
 service Msg {
   rpc StartAuction(MsgStartAuction) returns (MsgStartAuctionResponse);
+  rpc SubmitSealedBid(MsgSubmitSealedBid) returns (MsgSubmitSealedBidResponse);
+  rpc RevealBid(MsgRevealBid) returns (MsgRevealBidResponse);    
 }
 
 message MsgStartAuction {
@@ -18,3 +21,25 @@ message MsgStartAuction {
 }
 
 message MsgStartAuctionResponse {}
+
+
+
+message MsgSubmitSealedBid {
+  string creator = 1;
+  string zone = 2;
+  uint64 poolID = 3;
+  string hashedBid = 4;
+}
+
+message MsgSubmitSealedBidResponse {}
+
+
+message MsgRevealBid {
+  string creator = 1;
+  string zone = 2;
+  uint64 poolID = 3;
+  string bid = 4;
+  string salt = 5;
+}
+
+message MsgRevealBidResponse {}

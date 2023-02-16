@@ -1,0 +1,68 @@
+syntax = "proto3";
+
+package stride.auction;
+
+import "google/protobuf/any.proto";
+import "gogoproto/gogo.proto";
+import "stride/auction/params.proto";
+
+
+
+option go_package = "github.com/Stride-Labs/stride/v5/x/auction/types";
+
+/* ****************************************************************************
+Properties are used to set unchanging aspects of auction pools and auctions
+
+In contrast to params which are module-wide defaults, properties are specific
+to the new pool or auction being created.
+
+Properties remained fixed for the life of the pool or auction whereas the 
+other fields represent changing state
+**************************************************************************** */
+
+enum AuctionType {
+    UNKNOWN = 0;
+    ASCENDING = 1;
+    DESCENDING = 2;
+    SEALEDBID = 3;
+}
+
+message AscendingAuctionProperties {
+    uint64 supply = 1;
+    uint64 minAllowedBid = 2;
+    uint64 maxAllowedBid = 3;
+    float redemptionRate = 4;
+    uint64 endDuration = 5;  
+}
+
+message DescendingAuctionProperties {
+    uint64 supply = 1;
+    uint64 minAllowedBid = 2;
+    uint64 maxAllowedBid = 3;
+    float redemptionRate = 4;
+    uint64 startingBid = 5;
+    uint64 bidStepSize = 6;
+    uint64 bidStepDuration = 7;
+}
+
+message SealedBidAuctionProperties {
+    uint64 supply = 1;
+    uint64 minAllowedBid = 2;
+    uint64 maxAllowedBid = 3;
+    float redemptionRate = 4;  
+    uint64 collateral = 5;
+    uint64 auctionDuration = 6;
+    uint64 revealDuration = 7;
+}
+
+message AuctionPoolProperties {
+    string poolAddress = 1;
+    string bidDenom = 2;
+    string supplyDenom = 3;
+    uint64 minAllowedSupply = 4;
+    uint64 maxAllowedSupply = 5;
+    repeated AuctionType allowedAlgorithms = 6; 
+    AscendingAuctionProperties defaultAscendingAuctionProperties = 7;
+    DescendingAuctionProperties defaultDescendingAuctionProperties = 8;
+    SealedBidAuctionProperties defaultSealedBidAuctionProperties = 9;        
+}

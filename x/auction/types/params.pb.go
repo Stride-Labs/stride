@@ -23,16 +23,14 @@ var _ = math.Inf
 // proto package needs to be updated.
 const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 
-// Params defines the parameters for the module.
+// Params defines the defaults for the whole auction module.
 type Params struct {
-	MinAllowedBid             uint64 `protobuf:"varint,1,opt,name=minAllowedBid,proto3" json:"minAllowedBid,omitempty"`
-	MaxAllowedBid             uint64 `protobuf:"varint,2,opt,name=maxAllowedBid,proto3" json:"maxAllowedBid,omitempty"`
-	SealedAuctionDuration     uint64 `protobuf:"varint,3,opt,name=sealedAuctionDuration,proto3" json:"sealedAuctionDuration,omitempty"`
-	SealedRevealDuration      uint64 `protobuf:"varint,4,opt,name=sealedRevealDuration,proto3" json:"sealedRevealDuration,omitempty"`
-	AscendingEndDuration      uint64 `protobuf:"varint,5,opt,name=ascendingEndDuration,proto3" json:"ascendingEndDuration,omitempty"`
-	DescendingStartingBid     uint64 `protobuf:"varint,6,opt,name=descendingStartingBid,proto3" json:"descendingStartingBid,omitempty"`
-	DescendingBidStepSize     uint64 `protobuf:"varint,7,opt,name=descendingBidStepSize,proto3" json:"descendingBidStepSize,omitempty"`
-	DescendingBidStepDuration uint64 `protobuf:"varint,8,opt,name=descendingBidStepDuration,proto3" json:"descendingBidStepDuration,omitempty"`
+	DefaultSealedAuctionDuration     uint64 `protobuf:"varint,1,opt,name=defaultSealedAuctionDuration,proto3" json:"defaultSealedAuctionDuration,omitempty"`
+	DefaultSealedRevealDuration      uint64 `protobuf:"varint,2,opt,name=defaultSealedRevealDuration,proto3" json:"defaultSealedRevealDuration,omitempty"`
+	DefaultAscendingEndDuration      uint64 `protobuf:"varint,3,opt,name=defaultAscendingEndDuration,proto3" json:"defaultAscendingEndDuration,omitempty"`
+	DefaultDescendingStartingBid     uint64 `protobuf:"varint,4,opt,name=defaultDescendingStartingBid,proto3" json:"defaultDescendingStartingBid,omitempty"`
+	DefaultDescendingBidStepSize     uint64 `protobuf:"varint,5,opt,name=defaultDescendingBidStepSize,proto3" json:"defaultDescendingBidStepSize,omitempty"`
+	DefaultDescendingBidStepDuration uint64 `protobuf:"varint,6,opt,name=defaultDescendingBidStepDuration,proto3" json:"defaultDescendingBidStepDuration,omitempty"`
 }
 
 func (m *Params) Reset()         { *m = Params{} }
@@ -68,58 +66,44 @@ func (m *Params) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_Params proto.InternalMessageInfo
 
-func (m *Params) GetMinAllowedBid() uint64 {
+func (m *Params) GetDefaultSealedAuctionDuration() uint64 {
 	if m != nil {
-		return m.MinAllowedBid
+		return m.DefaultSealedAuctionDuration
 	}
 	return 0
 }
 
-func (m *Params) GetMaxAllowedBid() uint64 {
+func (m *Params) GetDefaultSealedRevealDuration() uint64 {
 	if m != nil {
-		return m.MaxAllowedBid
+		return m.DefaultSealedRevealDuration
 	}
 	return 0
 }
 
-func (m *Params) GetSealedAuctionDuration() uint64 {
+func (m *Params) GetDefaultAscendingEndDuration() uint64 {
 	if m != nil {
-		return m.SealedAuctionDuration
+		return m.DefaultAscendingEndDuration
 	}
 	return 0
 }
 
-func (m *Params) GetSealedRevealDuration() uint64 {
+func (m *Params) GetDefaultDescendingStartingBid() uint64 {
 	if m != nil {
-		return m.SealedRevealDuration
+		return m.DefaultDescendingStartingBid
 	}
 	return 0
 }
 
-func (m *Params) GetAscendingEndDuration() uint64 {
+func (m *Params) GetDefaultDescendingBidStepSize() uint64 {
 	if m != nil {
-		return m.AscendingEndDuration
+		return m.DefaultDescendingBidStepSize
 	}
 	return 0
 }
 
-func (m *Params) GetDescendingStartingBid() uint64 {
+func (m *Params) GetDefaultDescendingBidStepDuration() uint64 {
 	if m != nil {
-		return m.DescendingStartingBid
-	}
-	return 0
-}
-
-func (m *Params) GetDescendingBidStepSize() uint64 {
-	if m != nil {
-		return m.DescendingBidStepSize
-	}
-	return 0
-}
-
-func (m *Params) GetDescendingBidStepDuration() uint64 {
-	if m != nil {
-		return m.DescendingBidStepDuration
+		return m.DefaultDescendingBidStepDuration
 	}
 	return 0
 }
@@ -131,27 +115,25 @@ func init() {
 func init() { proto.RegisterFile("stride/auction/params.proto", fileDescriptor_6275af0170699b1d) }
 
 var fileDescriptor_6275af0170699b1d = []byte{
-	// 306 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x74, 0x92, 0x3f, 0x4b, 0xc4, 0x30,
-	0x18, 0x87, 0x5b, 0xef, 0xac, 0x12, 0xd0, 0xa1, 0x9c, 0x50, 0x15, 0x82, 0x88, 0x83, 0x8b, 0x8d,
-	0xf8, 0x67, 0x73, 0xb9, 0xa2, 0x8b, 0x38, 0xc8, 0x75, 0x73, 0x4b, 0x9b, 0x50, 0x03, 0x6d, 0x52,
-	0x9a, 0xf4, 0x3c, 0xfd, 0x14, 0x7e, 0x00, 0x3f, 0x90, 0xe3, 0x8d, 0x8e, 0xd2, 0x7e, 0x11, 0x69,
-	0x52, 0x4b, 0x4f, 0x7b, 0x53, 0xc2, 0xfb, 0xfc, 0x1e, 0xf2, 0x86, 0xf7, 0x05, 0x87, 0x52, 0x15,
-	0x8c, 0x50, 0x84, 0xcb, 0x58, 0x31, 0xc1, 0x51, 0x8e, 0x0b, 0x9c, 0x49, 0x3f, 0x2f, 0x84, 0x12,
-	0xee, 0xae, 0x81, 0x7e, 0x0b, 0x0f, 0x26, 0x89, 0x48, 0x84, 0x46, 0xa8, 0xb9, 0x99, 0xd4, 0xf1,
-	0xc7, 0x08, 0x38, 0x8f, 0x5a, 0x73, 0x4f, 0xc0, 0x4e, 0xc6, 0xf8, 0x34, 0x4d, 0xc5, 0x0b, 0x25,
-	0x01, 0x23, 0x9e, 0x7d, 0x64, 0x9f, 0x8e, 0x67, 0xab, 0x45, 0x9d, 0xc2, 0x8b, 0x5e, 0x6a, 0xa3,
-	0x4d, 0xf5, 0x8b, 0xee, 0x15, 0xd8, 0x93, 0x14, 0xa7, 0x94, 0x4c, 0xcd, 0xeb, 0xb7, 0x65, 0x81,
-	0x9b, 0xd3, 0x1b, 0xe9, 0xf4, 0x30, 0x74, 0x2f, 0xc0, 0xc4, 0x80, 0x19, 0x9d, 0x53, 0x9c, 0x76,
-	0xd2, 0x58, 0x4b, 0x83, 0xac, 0x71, 0xb0, 0x8c, 0x29, 0x27, 0x8c, 0x27, 0x77, 0x9c, 0x74, 0xce,
-	0xa6, 0x71, 0x86, 0x58, 0xd3, 0x1d, 0xa1, 0xbf, 0x20, 0x54, 0xb8, 0x50, 0x8c, 0x27, 0xcd, 0x5f,
-	0x1c, 0xd3, 0xdd, 0x20, 0x5c, 0xb5, 0x02, 0x46, 0x42, 0x45, 0xf3, 0x90, 0xbd, 0x51, 0x6f, 0xeb,
-	0xaf, 0xd5, 0x83, 0xee, 0x0d, 0xd8, 0xff, 0x07, 0xba, 0x26, 0xb7, 0xb5, 0xb9, 0x3e, 0x10, 0xdc,
-	0x7f, 0x56, 0xd0, 0x5e, 0x56, 0xd0, 0xfe, 0xae, 0xa0, 0xfd, 0x5e, 0x43, 0x6b, 0x59, 0x43, 0xeb,
-	0xab, 0x86, 0xd6, 0xd3, 0x79, 0xc2, 0xd4, 0x73, 0x19, 0xf9, 0xb1, 0xc8, 0x50, 0xa8, 0x27, 0x7d,
-	0xf6, 0x80, 0x23, 0x89, 0xda, 0x95, 0x98, 0x5f, 0xa3, 0x45, 0xb7, 0x17, 0xea, 0x35, 0xa7, 0x32,
-	0x72, 0xf4, 0xc4, 0x2f, 0x7f, 0x02, 0x00, 0x00, 0xff, 0xff, 0x42, 0x45, 0x53, 0x7d, 0x36, 0x02,
-	0x00, 0x00,
+	// 284 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xe2, 0x92, 0x2e, 0x2e, 0x29, 0xca,
+	0x4c, 0x49, 0xd5, 0x4f, 0x2c, 0x4d, 0x2e, 0xc9, 0xcc, 0xcf, 0xd3, 0x2f, 0x48, 0x2c, 0x4a, 0xcc,
+	0x2d, 0xd6, 0x2b, 0x28, 0xca, 0x2f, 0xc9, 0x17, 0xe2, 0x83, 0x48, 0xea, 0x41, 0x25, 0xa5, 0x44,
+	0xd2, 0xf3, 0xd3, 0xf3, 0xc1, 0x52, 0xfa, 0x20, 0x16, 0x44, 0x95, 0xd2, 0x12, 0x66, 0x2e, 0xb6,
+	0x00, 0xb0, 0x36, 0x21, 0x27, 0x2e, 0x99, 0x94, 0xd4, 0xb4, 0xc4, 0xd2, 0x9c, 0x92, 0xe0, 0xd4,
+	0xc4, 0x9c, 0xd4, 0x14, 0x47, 0x88, 0x46, 0x97, 0xd2, 0xa2, 0x44, 0x10, 0x2d, 0xc1, 0xa8, 0xc0,
+	0xa8, 0xc1, 0x12, 0x84, 0x57, 0x8d, 0x90, 0x03, 0x97, 0x34, 0x8a, 0x7c, 0x50, 0x6a, 0x59, 0x6a,
+	0x62, 0x0e, 0xdc, 0x08, 0x26, 0xb0, 0x11, 0xf8, 0x94, 0x20, 0x99, 0xe0, 0x58, 0x9c, 0x9c, 0x9a,
+	0x97, 0x92, 0x99, 0x97, 0xee, 0x9a, 0x97, 0x02, 0x37, 0x81, 0x19, 0xc5, 0x04, 0x6c, 0x4a, 0x90,
+	0xfc, 0xe1, 0x92, 0x0a, 0x93, 0x0f, 0x2e, 0x49, 0x2c, 0x2a, 0xc9, 0xcc, 0x4b, 0x77, 0xca, 0x4c,
+	0x91, 0x60, 0x41, 0xf1, 0x07, 0x56, 0x35, 0x58, 0xcd, 0x70, 0xca, 0x4c, 0x09, 0x2e, 0x49, 0x2d,
+	0x08, 0xce, 0xac, 0x4a, 0x95, 0x60, 0xc5, 0x61, 0x06, 0x92, 0x1a, 0x21, 0x2f, 0x2e, 0x05, 0x5c,
+	0xf2, 0x70, 0xef, 0xb0, 0x81, 0xcd, 0x21, 0xa8, 0xce, 0xc9, 0xeb, 0xc4, 0x23, 0x39, 0xc6, 0x0b,
+	0x8f, 0xe4, 0x18, 0x1f, 0x3c, 0x92, 0x63, 0x9c, 0xf0, 0x58, 0x8e, 0xe1, 0xc2, 0x63, 0x39, 0x86,
+	0x1b, 0x8f, 0xe5, 0x18, 0xa2, 0x0c, 0xd2, 0x33, 0x4b, 0x32, 0x4a, 0x93, 0xf4, 0x92, 0xf3, 0x73,
+	0xf5, 0x83, 0xc1, 0x31, 0xae, 0xeb, 0x93, 0x98, 0x54, 0xac, 0x0f, 0x4d, 0x1a, 0x65, 0xa6, 0xfa,
+	0x15, 0xf0, 0xf4, 0x51, 0x52, 0x59, 0x90, 0x5a, 0x9c, 0xc4, 0x06, 0x8e, 0x79, 0x63, 0x40, 0x00,
+	0x00, 0x00, 0xff, 0xff, 0x40, 0x43, 0x9b, 0x20, 0x3e, 0x02, 0x00, 0x00,
 }
 
 func (m *Params) Marshal() (dAtA []byte, err error) {
@@ -174,43 +156,33 @@ func (m *Params) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	_ = i
 	var l int
 	_ = l
-	if m.DescendingBidStepDuration != 0 {
-		i = encodeVarintParams(dAtA, i, uint64(m.DescendingBidStepDuration))
-		i--
-		dAtA[i] = 0x40
-	}
-	if m.DescendingBidStepSize != 0 {
-		i = encodeVarintParams(dAtA, i, uint64(m.DescendingBidStepSize))
-		i--
-		dAtA[i] = 0x38
-	}
-	if m.DescendingStartingBid != 0 {
-		i = encodeVarintParams(dAtA, i, uint64(m.DescendingStartingBid))
+	if m.DefaultDescendingBidStepDuration != 0 {
+		i = encodeVarintParams(dAtA, i, uint64(m.DefaultDescendingBidStepDuration))
 		i--
 		dAtA[i] = 0x30
 	}
-	if m.AscendingEndDuration != 0 {
-		i = encodeVarintParams(dAtA, i, uint64(m.AscendingEndDuration))
+	if m.DefaultDescendingBidStepSize != 0 {
+		i = encodeVarintParams(dAtA, i, uint64(m.DefaultDescendingBidStepSize))
 		i--
 		dAtA[i] = 0x28
 	}
-	if m.SealedRevealDuration != 0 {
-		i = encodeVarintParams(dAtA, i, uint64(m.SealedRevealDuration))
+	if m.DefaultDescendingStartingBid != 0 {
+		i = encodeVarintParams(dAtA, i, uint64(m.DefaultDescendingStartingBid))
 		i--
 		dAtA[i] = 0x20
 	}
-	if m.SealedAuctionDuration != 0 {
-		i = encodeVarintParams(dAtA, i, uint64(m.SealedAuctionDuration))
+	if m.DefaultAscendingEndDuration != 0 {
+		i = encodeVarintParams(dAtA, i, uint64(m.DefaultAscendingEndDuration))
 		i--
 		dAtA[i] = 0x18
 	}
-	if m.MaxAllowedBid != 0 {
-		i = encodeVarintParams(dAtA, i, uint64(m.MaxAllowedBid))
+	if m.DefaultSealedRevealDuration != 0 {
+		i = encodeVarintParams(dAtA, i, uint64(m.DefaultSealedRevealDuration))
 		i--
 		dAtA[i] = 0x10
 	}
-	if m.MinAllowedBid != 0 {
-		i = encodeVarintParams(dAtA, i, uint64(m.MinAllowedBid))
+	if m.DefaultSealedAuctionDuration != 0 {
+		i = encodeVarintParams(dAtA, i, uint64(m.DefaultSealedAuctionDuration))
 		i--
 		dAtA[i] = 0x8
 	}
@@ -234,29 +206,23 @@ func (m *Params) Size() (n int) {
 	}
 	var l int
 	_ = l
-	if m.MinAllowedBid != 0 {
-		n += 1 + sovParams(uint64(m.MinAllowedBid))
+	if m.DefaultSealedAuctionDuration != 0 {
+		n += 1 + sovParams(uint64(m.DefaultSealedAuctionDuration))
 	}
-	if m.MaxAllowedBid != 0 {
-		n += 1 + sovParams(uint64(m.MaxAllowedBid))
+	if m.DefaultSealedRevealDuration != 0 {
+		n += 1 + sovParams(uint64(m.DefaultSealedRevealDuration))
 	}
-	if m.SealedAuctionDuration != 0 {
-		n += 1 + sovParams(uint64(m.SealedAuctionDuration))
+	if m.DefaultAscendingEndDuration != 0 {
+		n += 1 + sovParams(uint64(m.DefaultAscendingEndDuration))
 	}
-	if m.SealedRevealDuration != 0 {
-		n += 1 + sovParams(uint64(m.SealedRevealDuration))
+	if m.DefaultDescendingStartingBid != 0 {
+		n += 1 + sovParams(uint64(m.DefaultDescendingStartingBid))
 	}
-	if m.AscendingEndDuration != 0 {
-		n += 1 + sovParams(uint64(m.AscendingEndDuration))
+	if m.DefaultDescendingBidStepSize != 0 {
+		n += 1 + sovParams(uint64(m.DefaultDescendingBidStepSize))
 	}
-	if m.DescendingStartingBid != 0 {
-		n += 1 + sovParams(uint64(m.DescendingStartingBid))
-	}
-	if m.DescendingBidStepSize != 0 {
-		n += 1 + sovParams(uint64(m.DescendingBidStepSize))
-	}
-	if m.DescendingBidStepDuration != 0 {
-		n += 1 + sovParams(uint64(m.DescendingBidStepDuration))
+	if m.DefaultDescendingBidStepDuration != 0 {
+		n += 1 + sovParams(uint64(m.DefaultDescendingBidStepDuration))
 	}
 	return n
 }
@@ -298,9 +264,9 @@ func (m *Params) Unmarshal(dAtA []byte) error {
 		switch fieldNum {
 		case 1:
 			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field MinAllowedBid", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field DefaultSealedAuctionDuration", wireType)
 			}
-			m.MinAllowedBid = 0
+			m.DefaultSealedAuctionDuration = 0
 			for shift := uint(0); ; shift += 7 {
 				if shift >= 64 {
 					return ErrIntOverflowParams
@@ -310,16 +276,16 @@ func (m *Params) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				m.MinAllowedBid |= uint64(b&0x7F) << shift
+				m.DefaultSealedAuctionDuration |= uint64(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}
 			}
 		case 2:
 			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field MaxAllowedBid", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field DefaultSealedRevealDuration", wireType)
 			}
-			m.MaxAllowedBid = 0
+			m.DefaultSealedRevealDuration = 0
 			for shift := uint(0); ; shift += 7 {
 				if shift >= 64 {
 					return ErrIntOverflowParams
@@ -329,16 +295,16 @@ func (m *Params) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				m.MaxAllowedBid |= uint64(b&0x7F) << shift
+				m.DefaultSealedRevealDuration |= uint64(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}
 			}
 		case 3:
 			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field SealedAuctionDuration", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field DefaultAscendingEndDuration", wireType)
 			}
-			m.SealedAuctionDuration = 0
+			m.DefaultAscendingEndDuration = 0
 			for shift := uint(0); ; shift += 7 {
 				if shift >= 64 {
 					return ErrIntOverflowParams
@@ -348,16 +314,16 @@ func (m *Params) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				m.SealedAuctionDuration |= uint64(b&0x7F) << shift
+				m.DefaultAscendingEndDuration |= uint64(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}
 			}
 		case 4:
 			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field SealedRevealDuration", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field DefaultDescendingStartingBid", wireType)
 			}
-			m.SealedRevealDuration = 0
+			m.DefaultDescendingStartingBid = 0
 			for shift := uint(0); ; shift += 7 {
 				if shift >= 64 {
 					return ErrIntOverflowParams
@@ -367,16 +333,16 @@ func (m *Params) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				m.SealedRevealDuration |= uint64(b&0x7F) << shift
+				m.DefaultDescendingStartingBid |= uint64(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}
 			}
 		case 5:
 			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field AscendingEndDuration", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field DefaultDescendingBidStepSize", wireType)
 			}
-			m.AscendingEndDuration = 0
+			m.DefaultDescendingBidStepSize = 0
 			for shift := uint(0); ; shift += 7 {
 				if shift >= 64 {
 					return ErrIntOverflowParams
@@ -386,16 +352,16 @@ func (m *Params) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				m.AscendingEndDuration |= uint64(b&0x7F) << shift
+				m.DefaultDescendingBidStepSize |= uint64(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}
 			}
 		case 6:
 			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field DescendingStartingBid", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field DefaultDescendingBidStepDuration", wireType)
 			}
-			m.DescendingStartingBid = 0
+			m.DefaultDescendingBidStepDuration = 0
 			for shift := uint(0); ; shift += 7 {
 				if shift >= 64 {
 					return ErrIntOverflowParams
@@ -405,45 +371,7 @@ func (m *Params) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				m.DescendingStartingBid |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-		case 7:
-			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field DescendingBidStepSize", wireType)
-			}
-			m.DescendingBidStepSize = 0
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowParams
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				m.DescendingBidStepSize |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-		case 8:
-			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field DescendingBidStepDuration", wireType)
-			}
-			m.DescendingBidStepDuration = 0
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowParams
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				m.DescendingBidStepDuration |= uint64(b&0x7F) << shift
+				m.DefaultDescendingBidStepDuration |= uint64(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}

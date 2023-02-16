@@ -9,14 +9,14 @@ const DefaultIndex uint64 = 1
 
 // DefaultGenesis returns the default genesis state
 func DefaultGenesis() *GenesisState {
-	pool := AuctionPool{}
-	pool.PoolAddress = "stride1u20df3trc2c2zdhm8qvh2hdjx9ewh00sv6eyy8"
-	pool.AllowedAlgorithms = [](AuctionType){
+	/*pool := AuctionPool{}
+	pool.PoolProperties.PoolAddress = "stride1u20df3trc2c2zdhm8qvh2hdjx9ewh00sv6eyy8"
+	pool.PoolProperties.AllowedAlgorithms = [](AuctionType){
 		AuctionType_ASCENDING,
 		AuctionType_DESCENDING,
 		AuctionType_SEALEDBID,
 	}
-	pool.LatestAuction = &Auction{}
+	pool.LatestAuction = &Auction{}*/
 
 	return &GenesisState{
 		AuctionPoolList: []AuctionPool{},

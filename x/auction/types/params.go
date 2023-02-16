@@ -20,10 +20,8 @@ func NewParams() Params {
 func DefaultParams() Params {
 	p := NewParams()
 
-	p.MinAllowedBid = 0
-	p.MaxAllowedBid = ^uint64(0) // largest uint possible via 2 complement
-	p.SealedAuctionDuration = 30
-	p.SealedRevealDuration = 5
+	p.DefaultSealedAuctionDuration = 20
+	p.DefaultSealedRevealDuration = 10
 
 	return p
 }

@@ -1,0 +1,45 @@
+syntax = "proto3";
+
+package stride.auction;
+
+import "google/protobuf/any.proto";
+import "gogoproto/gogo.proto";
+
+
+option go_package = "github.com/Stride-Labs/stride/v5/x/auction/types";
+
+/* ****************************************************************************
+An Order is a pair of price and volume
+A Bid is one or more orders
+
+A SealedBid is who sent it and the hash of the bid + secretSalt
+An OpenBid is who sent it with the Bid data structure
+**************************************************************************** */
+
+message Order {
+    uint64 price = 1 [
+        (gogoproto.jsontag) = "price,omitempty",
+        (gogoproto.moretags) = "yaml:\"price\""
+      ];
+    uint64 volume = 2 [
+        (gogoproto.jsontag) = "volume,omitempty",
+        (gogoproto.moretags) = "yaml:\"volume\""
+      ];
+}
+
+message Bid {
+    repeated Order orders = 1 [
+        (gogoproto.jsontag) = "orders,omitempty",
+        (gogoproto.moretags) = "yaml:\"orders\""
+      ];
+}
+
+message SealedBid {
+  string address = 1;
+  string hashedBid = 2;
+}
+
+message OpenBid {
+  string address = 1;
+  Bid bid = 2;
+}

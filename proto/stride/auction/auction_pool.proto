@@ -3,6 +3,10 @@ syntax = "proto3";
 package stride.auction;
 
 import "google/protobuf/any.proto";
+import "stride/auction/bid.proto";
+import "stride/auction/params.proto";
+import "stride/auction/properties.proto";
+
 
 option go_package = "github.com/Stride-Labs/stride/v5/x/auction/types";
 
@@ -16,16 +20,21 @@ or completed in the past, for a specific amount, with specific param settings.
 Auction contains fields which are common across all different auction types
 
 But depending on the algorithm which the auction is running, there are some
-algorithm specific parameters
+algorithm specific parameters.
+
+
+RedemptionRate is important to what a bid means -- if it is exactly 0, then
+the price is a ratio the bidder is willing to pay between the auctionDenom
+and the bidDenom.  If RR is any other number then the RR represents the fixed
+rate which auctionDenom trades against bidDenom and the price is an additional
+marginal price the bidder is willing to pay in order to get to exchange at this
+known fixed rate.  If the order is partially filled, this additional price will
+proportionally also be charged.
+
+The marginal model is "I will pay Price to convert Volume A to B at fixed RR"
+The ratio model is "I will convert Volume A into B at Price ratio of A to B"
 
 **************************************************************************** */
-
-enum AuctionType {
-  UNKNOWN = 0;
-  ASCENDING = 1;
-  DESCENDING = 2;
-  SEALEDBID = 3;
-}
 
 enum AuctionState {
   COMPLETE = 0;
@@ -44,14 +53,9 @@ enum AuctionState {
 // When a higher bid comes in, the lastBlock is set now + endDuration
 message AscendingAuction {
   AuctionState status = 1;
-  string target = 2;
-  uint64 supply = 3;
-  uint64 minAllowedBid = 4;
-  uint64 maxAllowedBid = 5;
-  uint64 endDuration = 6;
-  uint64 lastBlock = 7;
-  uint64 currentBid = 8;
-  string currentWinner = 9;
+  AscendingAuctionProperties auctionProperties = 2;
+  uint64 lastBlock = 3;
+  repeated OpenBid bids = 4;
 }
 
 // Dutch style auction specific parameters
@@ -59,31 +63,23 @@ message AscendingAuction {
 // bidStepDuration blocks until someone is willing to bid and win
 message DescendingAuction {
   AuctionState status = 1;
-  string target = 2;
-  uint64 supply = 3;
-  uint64 minAllowedBid = 4;
-  uint64 maxAllowedBid = 5;
-  uint64 startingBid = 6;
-  uint64 currentBid = 7;
-  uint64 bidStepSize = 8;
-  uint64 bidStepDuration = 9;
-  uint64 nextStep = 10;
+  DescendingAuctionProperties auctionProperties = 2;
+  uint64 currentBid = 3;
+  uint64 nextStep = 4;
+  repeated OpenBid bids = 5;
 }
 
 // Sealed Bid style auction specific parameters
 // Auction is open for sealed bids from firstBlock to lastBlock
-// after last block but before revealBlock send same bids unsealed 
+// after last block but before revealBlock, bidders reveal unsealed bids
 message SealedBidAuction {
   AuctionState status = 1;
-  string target = 2;
-  uint64 supply = 3;
-  uint64 minAllowedBid = 4;
-  uint64 maxAllowedBid = 5;  
-  uint64 auctionDuration = 6;
-  uint64 revealDuration = 7;
-  uint64 firstBlock = 8;
-  uint64 lastBlock = 9;
-  uint64 revealBlock = 10;
+  SealedBidAuctionProperties auctionProperties = 2;
+  uint64 firstBlock = 3;
+  uint64 lastBlock = 4;
+  uint64 revealBlock = 5;
+  repeated SealedBid sealedBids = 6;
+  repeated OpenBid revealedBids = 7;
 }
 
 // Would be more elegant if protobuf had a nice way to do interfaces but
@@ -99,9 +95,6 @@ message Auction {
 // of auctions which can be run for this pool.
 message AuctionPool {
   uint64 id = 1;
-  string poolAddress = 2;
-  uint64 minAllowedSupply = 3;
-  uint64 maxAllowedSupply = 4;
-  repeated AuctionType allowedAlgorithms = 5;
-  Auction latestAuction = 6; //google.protobuf.Any latestAuction = 6;
+  AuctionPoolProperties poolProperties = 2;
+  Auction latestAuction = 8;
 }

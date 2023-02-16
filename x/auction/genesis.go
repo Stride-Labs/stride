@@ -16,15 +16,24 @@ func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState types.GenesisState) 
 	// Set auctionPool count
 	k.SetAuctionPoolCount(ctx, genState.AuctionPoolCount)
 
-	pool := types.AuctionPool{}
-	pool.PoolAddress = "stride1u20df3trc2c2zdhm8qvh2hdjx9ewh00sv6eyy8"
-	pool.AllowedAlgorithms = [](types.AuctionType){
-		types.AuctionType_ASCENDING,
-		types.AuctionType_DESCENDING,
+	// Hard coding this initialization of an auction pool now to be SealedBid
+	// Generating pools should eventually be called from the stakeibc module
+
+	properties := types.AuctionPoolProperties{}
+	properties.PoolAddress = "stride1u20df3trc2c2zdhm8qvh2hdjx9ewh00sv6eyy8"
+	properties.MaxAllowedSupply = ^uint64(0) // max value from 2 complement
+	properties.AllowedAlgorithms = [](types.AuctionType){
 		types.AuctionType_SEALEDBID,
 	}
-	pool.LatestAuction = &types.Auction{}
-	k.AppendAuctionPool(ctx, pool)
+
+	properties.DefaultSealedBidAuctionProperties = &types.SealedBidAuctionProperties{}
+	properties.DefaultSealedBidAuctionProperties.AuctionDuration = 20
+	properties.DefaultSealedBidAuctionProperties.RevealDuration = 10
+	properties.DefaultSealedBidAuctionProperties.MaxAllowedBid = ^uint64(0)
+	properties.DefaultSealedBidAuctionProperties.RedemptionRate = 1.0
+	properties.DefaultSealedBidAuctionProperties.Collateral = 0
+
+	k.StartNewAuctionPool(ctx, properties)
 
 	// this line is used by starport scaffolding # genesis/module/init
 	k.SetParams(ctx, genState.Params)

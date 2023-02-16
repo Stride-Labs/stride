@@ -15,9 +15,7 @@ import (
 func (k msgServer) StartAuction(goCtx context.Context, msg *types.MsgStartAuction) (*types.MsgStartAuctionResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	params, _ := k.Keeper.GetParams(ctx)
 	now := cast.ToUint64(ctx.BlockHeight())
-
 	ctx.Logger().Info(fmt.Sprintf("[auction] Request to start auction for pool %d at block %d", msg.GetPoolID(), now))
 
 	auctionPools := k.Keeper.GetAllAuctionPool(ctx)
@@ -26,8 +24,7 @@ func (k msgServer) StartAuction(goCtx context.Context, msg *types.MsgStartAuctio
 		if pool.GetId() == msg.GetPoolID() {
 			auction := pool.GetLatestAuction().GetAuction()
 			if auction == nil || auction.GetStatus() == types.AuctionState_COMPLETE {
-				ctx.Logger().Info(fmt.Sprintf("[auction] params auctionDuration %d and revealDuration %d", params.GetSealedAuctionDuration(), params.GetSealedRevealDuration()))
-				k.Keeper.StartNewAuction(ctx, pool, params)
+				k.Keeper.StartNewAuction(ctx, pool)
 			} else {
 				ctx.Logger().Info(fmt.Sprintf("[auction] Request to start auction for pool %d at block %d failed because already a running auction!", msg.GetPoolID(), now))
 			}
