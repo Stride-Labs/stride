@@ -6,7 +6,8 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+
+	errorsmod "cosmossdk.io/errors"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	authz "github.com/cosmos/cosmos-sdk/x/authz"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
@@ -71,22 +72,22 @@ func CreateUpgradeHandler(
 		//    - stakeibc
 		logModuleMigration(ctx, currentVersions, claimtypes.ModuleName)
 		if err := claimmigration.MigrateStore(ctx, claimStoreKey, cdc); err != nil {
-			return vm, sdkerrors.Wrapf(err, "unable to migrate claim store")
+			return vm, errorsmod.Wrapf(err, "unable to migrate claim store")
 		}
 
 		logModuleMigration(ctx, currentVersions, icacallbacktypes.ModuleName)
 		if err := icacallbacksmigration.MigrateStore(ctx, icacallbackStorekey, cdc); err != nil {
-			return vm, sdkerrors.Wrapf(err, "unable to migrate icacallbacks store")
+			return vm, errorsmod.Wrapf(err, "unable to migrate icacallbacks store")
 		}
 
 		logModuleMigration(ctx, currentVersions, recordtypes.ModuleName)
 		if err := recordsmigration.MigrateStore(ctx, recordStoreKey, cdc); err != nil {
-			return vm, sdkerrors.Wrapf(err, "unable to migrate records store")
+			return vm, errorsmod.Wrapf(err, "unable to migrate records store")
 		}
 
 		logModuleMigration(ctx, currentVersions, stakeibctypes.ModuleName)
 		if err := stakeibcmigration.MigrateStore(ctx, stakeibcStoreKey, cdc); err != nil {
-			return vm, sdkerrors.Wrapf(err, "unable to migrate stakeibc store")
+			return vm, errorsmod.Wrapf(err, "unable to migrate stakeibc store")
 		}
 
 		// `RunMigrations` (below) checks the old consensus version of each module (found in
