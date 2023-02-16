@@ -1,15 +1,11 @@
 package v2
 
 import (
-	sdkerrors "cosmossdk.io/errors"
 	"github.com/cosmos/cosmos-sdk/codec"
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-<<<<<<< HEAD
-=======
 
 	errorsmod "cosmossdk.io/errors"
->>>>>>> main
 
 	oldclaimtypes "github.com/Stride-Labs/stride/v5/x/claim/migrations/v2/types"
 	claimtypes "github.com/Stride-Labs/stride/v5/x/claim/types"

@@ -24,7 +24,7 @@ require (
 	gopkg.in/yaml.v2 v2.4.0
 )
 
-require github.com/cosmos/ics23/go v0.9.1-0.20221207100636-b1abd8678aab // indirect
+require github.com/cosmos/ics23/go v0.9.1-0.20221207100636-b1abd8678aab
 
 require (
 	cloud.google.com/go v0.105.0 // indirect
