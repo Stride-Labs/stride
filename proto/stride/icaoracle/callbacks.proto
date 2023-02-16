@@ -5,7 +5,9 @@ import "stride/icaoracle/icaoracle.proto";
 
 option go_package = "github.com/Stride-Labs/stride/v5/x/icaoracle/types";
 
-message OracleCallback {
+message InstantiateOracleCallback { string oracle_moniker = 1; }
+
+message UpdateOracleCallback {
   string oracle_moniker = 1;
   Metric metric = 2;
 }
