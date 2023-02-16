@@ -282,12 +282,9 @@ func (k Keeper) SubmitTxs(
 	if !found {
 		return 0, errorsmod.Wrapf(icatypes.ErrActiveChannelNotFound, "failed to retrieve active channel for port %s", portID)
 	}
-	_, found = k.scopedKeeper.GetCapability(ctx, host.ChannelCapabilityPath(portID, channelID))
+	_, found = k.IBCScopperKeeper.GetCapability(ctx, host.ChannelCapabilityPath(portID, channelID))
 	if !found {
-		_, err = k.scopedKeeper.NewCapability(ctx, host.ChannelCapabilityPath(portID, channelID))
-		if err != nil {
-			return 0, sdkerrors.Wrap(channeltypes.ErrChannelCapabilityNotFound, "fail to set channel capability")
-		}
+		return 0, errorsmod.Wrap(channeltypes.ErrChannelCapabilityNotFound, "module does not own channel capability")
 	}
 
 	data, err := icatypes.SerializeCosmosTx(k.cdc, protoMsgs)
