@@ -6,6 +6,10 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
+	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
+
+	"github.com/Stride-Labs/stride/v5/x/icaoracle/keeper/gov"
+
 	"github.com/Stride-Labs/stride/v5/x/icaoracle/keeper"
 	"github.com/Stride-Labs/stride/v5/x/icaoracle/types"
 )
@@ -28,6 +32,22 @@ func NewMessageHandler(k keeper.Keeper) sdk.Handler {
 		default:
 			errMsg := fmt.Sprintf("unrecognized %s message type: %T", types.ModuleName, msg)
 			return nil, sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, errMsg)
+		}
+	}
+}
+
+// NewProposalHandler returns icaoracle module's proposals
+func NewProposalHandler(k keeper.Keeper) govtypes.Handler {
+	return func(ctx sdk.Context, content govtypes.Content) error {
+		switch c := content.(type) {
+		case *types.ToggleOracleProposal:
+			return gov.ToggleOracle(ctx, k, c)
+		case *types.RemoveOracleProposal:
+			return gov.RemoveOracle(ctx, k, c)
+		case *types.UpdateOracleContractProposal:
+			return gov.UpdateOracleContract(ctx, k, c)
+		default:
+			return sdkerrors.Wrapf(sdkerrors.ErrUnknownRequest, "unrecognized icaoracle proposal content type: %T", c)
 		}
 	}
 }
