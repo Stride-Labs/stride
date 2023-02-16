@@ -18,4 +18,7 @@ var (
 		"unable to determine client state from channelId")
 	ErrChannelNotFound = sdkerrors.Register(ModuleName, 6,
 		"channel does not exist")
+	ErrDenomIsBlacklisted = sdkerrors.Register(ModuleName, 7,
+		"denom is blacklisted",
+	)
 )

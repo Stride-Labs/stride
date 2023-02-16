@@ -44,6 +44,8 @@ Using the example above, let's say we created a 24 hour rate limit on `ibc/D24B4
 |   5  |      8usomo Osmosis → Stride     |    Successful   |   16   |    12   |     4%     |             |      100      |
 |   6  |            Quota Reset           |                 |    0   |    0    |            |             |      104      |
 
+## Denom Blacklist
+The module also consists of a blacklist to completely halt all IBC transfers for a given denom. There are keeper functions to add or remove denoms from the blacklist; however, these functions are not exposed externally through transactions or governance, and they should only be leveraged internally from the protocol in extreme scenarios.
 
 ## Denoms
 We always want to refer to the channel ID and denom as they appear on Stride. For instance, in the example above, we would store the rate limit with denom `ibc/D24B4564BCD51D3D02D9987D92571EAC5915676A9BD6D9B0C1D0254CB8A5EA34` and `channel-5`, instead of `uosmo` and `channel-326` (the ChannelID on Osmosis).

@@ -16,14 +16,26 @@ const (
 )
 
 type action struct {
-	direction types.PacketDirection
-	amount    int64
+	direction           types.PacketDirection
+	amount              int64
+	addToBlacklist      bool
+	removeFromBlacklist bool
 }
 
 type checkRateLimitTestCase struct {
 	name          string
 	actions       []action
 	expectedError string
+}
+
+// Helper function to check if an element is in an array
+func isInArray(element string, arr []string) bool {
+	for _, e := range arr {
+		if e == element {
+			return true
+		}
+	}
+	return false
 }
 
 func (s *KeeperTestSuite) TestGetChannelValue() {
@@ -99,6 +111,50 @@ func (s *KeeperTestSuite) TestGetAllRateLimits() {
 	s.Require().ElementsMatch(expectedRateLimits, actualRateLimits, "all rate limits")
 }
 
+func (s *KeeperTestSuite) TestDenomBlacklist() {
+	allDenoms := []string{"denom1", "denom2", "denom3", "denom4"}
+	denomsToBlacklist := []string{"denom1", "denom3"}
+
+	// No denoms are currently blacklisted
+	for _, denom := range allDenoms {
+		isBlacklisted := s.App.RatelimitKeeper.IsDenomBlacklisted(s.Ctx, denom)
+		s.Require().False(isBlacklisted, "%s should not be blacklisted yet", denom)
+	}
+
+	// Blacklist two denoms
+	for _, denom := range denomsToBlacklist {
+		s.App.RatelimitKeeper.AddDenomToBlacklist(s.Ctx, denom)
+	}
+
+	// Confirm half the list was blacklisted and the others were not
+	for _, denom := range allDenoms {
+		isBlacklisted := s.App.RatelimitKeeper.IsDenomBlacklisted(s.Ctx, denom)
+
+		if isInArray(denom, denomsToBlacklist) {
+			s.Require().True(isBlacklisted, "%s should have been blacklisted", denom)
+		} else {
+			s.Require().False(isBlacklisted, "%s should not have been blacklisted", denom)
+		}
+	}
+	actualBlacklistedDenoms := s.App.RatelimitKeeper.GetAllBlacklistedDenoms(s.Ctx)
+	s.Require().Len(actualBlacklistedDenoms, len(denomsToBlacklist), "number of blacklisted denoms")
+	s.Require().ElementsMatch(denomsToBlacklist, actualBlacklistedDenoms, "list of blacklisted denoms")
+
+	// Finally, remove denoms from blacklist and confirm they were removed
+	for _, denom := range denomsToBlacklist {
+		s.App.RatelimitKeeper.RemoveDenomFromBlacklist(s.Ctx, denom)
+	}
+	for _, denom := range allDenoms {
+		isBlacklisted := s.App.RatelimitKeeper.IsDenomBlacklisted(s.Ctx, denom)
+
+		if isInArray(denom, denomsToBlacklist) {
+			s.Require().False(isBlacklisted, "%s should have been removed from the blacklist", denom)
+		} else {
+			s.Require().False(isBlacklisted, "%s should never have been blacklisted", denom)
+		}
+	}
+}
+
 // Adds a rate limit object to the store in preparation for the check rate limit tests
 func (s *KeeperTestSuite) SetupCheckRateLimitAndUpdateFlowTest() {
 	channelValue := sdkmath.NewInt(100)
@@ -121,6 +177,8 @@ func (s *KeeperTestSuite) SetupCheckRateLimitAndUpdateFlowTest() {
 			ChannelValue: channelValue,
 		},
 	})
+
+	s.App.RatelimitKeeper.RemoveDenomFromBlacklist(s.Ctx, denom)
 }
 
 // Helper function to check the rate limit across a series of transfers
@@ -130,13 +188,22 @@ func (s *KeeperTestSuite) processCheckRateLimitAndUpdateFlowTestCase(tc checkRat
 	expectedInflow := sdkmath.NewInt(0)
 	expectedOutflow := sdkmath.NewInt(0)
 	for i, action := range tc.actions {
+		if action.addToBlacklist {
+			s.App.RatelimitKeeper.AddDenomToBlacklist(s.Ctx, denom)
+			continue
+		} else if action.removeFromBlacklist {
+			s.App.RatelimitKeeper.RemoveDenomFromBlacklist(s.Ctx, denom)
+			continue
+		}
+
 		amount := sdkmath.NewInt(action.amount)
 		err := s.App.RatelimitKeeper.CheckRateLimitAndUpdateFlow(s.Ctx, action.direction, denom, channelId, amount)
 
+		// Only check the error on the last action
 		if i == len(tc.actions)-1 && tc.expectedError != "" {
-			s.Require().ErrorIs(err, types.ErrQuotaExceeded, tc.name+" - action: #%d - error type", i)
-			s.Require().ErrorContains(err, tc.expectedError, tc.name+"- action: #%d - error string", i)
+			s.Require().ErrorContains(err, tc.expectedError, tc.name+"- action: #%d - error", i)
 		} else {
+			// All but the last action should succeed
 			s.Require().NoError(err, tc.name+"- action: #%d - no error", i)
 
 			// Update expected flow
@@ -261,6 +328,68 @@ func (s *KeeperTestSuite) TestCheckRateLimitAndUpdatedFlow_BidirectionalFlow() {
 				{direction: types.PACKET_SEND, amount: 10}, //  +6, Net: -12 (exceeds threshold)
 			},
 			expectedError: "Outflow exceeds quota",
+		},
+	}
+
+	for _, tc := range testCases {
+		s.Run(tc.name, func() {
+			s.processCheckRateLimitAndUpdateFlowTestCase(tc)
+		})
+	}
+}
+
+func (s *KeeperTestSuite) TestCheckRateLimitAndUpdatedFlow_Blacklist() {
+	testCases := []checkRateLimitTestCase{
+		{
+			name: "add_then_remove_from_blacklist", // should succeed
+			actions: []action{
+				{direction: types.PACKET_RECV, amount: 6},
+				{direction: types.PACKET_SEND, amount: 6},
+				{addToBlacklist: true},
+				{removeFromBlacklist: true},
+				{direction: types.PACKET_RECV, amount: 6},
+				{direction: types.PACKET_SEND, amount: 6},
+			},
+		},
+		{
+			name: "send_recv_blacklist_send",
+			actions: []action{
+				{direction: types.PACKET_SEND, amount: 6},
+				{direction: types.PACKET_RECV, amount: 6},
+				{addToBlacklist: true},
+				{direction: types.PACKET_SEND, amount: 6},
+			},
+			expectedError: types.ErrDenomIsBlacklisted.Error(),
+		},
+		{
+			name: "send_recv_blacklist_recv",
+			actions: []action{
+				{direction: types.PACKET_SEND, amount: 6},
+				{direction: types.PACKET_RECV, amount: 6},
+				{addToBlacklist: true},
+				{direction: types.PACKET_RECV, amount: 6},
+			},
+			expectedError: types.ErrDenomIsBlacklisted.Error(),
+		},
+		{
+			name: "recv_send_blacklist_send",
+			actions: []action{
+				{direction: types.PACKET_RECV, amount: 6},
+				{direction: types.PACKET_SEND, amount: 6},
+				{addToBlacklist: true},
+				{direction: types.PACKET_SEND, amount: 6},
+			},
+			expectedError: types.ErrDenomIsBlacklisted.Error(),
+		},
+		{
+			name: "recv_send_blacklist_recv",
+			actions: []action{
+				{direction: types.PACKET_RECV, amount: 6},
+				{direction: types.PACKET_SEND, amount: 6},
+				{addToBlacklist: true},
+				{direction: types.PACKET_RECV, amount: 6},
+			},
+			expectedError: types.ErrDenomIsBlacklisted.Error(),
 		},
 	}
 

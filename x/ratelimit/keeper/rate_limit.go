@@ -22,6 +22,21 @@ func (k Keeper) GetChannelValue(ctx sdk.Context, denom string) sdkmath.Int {
 	return k.bankKeeper.GetSupply(ctx, denom).Amount
 }
 
+// If the rate limit is exceeded or the denom is blacklisted, we emit an event
+func EmitRateLimitExceededEvent(ctx sdk.Context, denom, channelId string, direction types.PacketDirection, amount sdkmath.Int, err error) {
+	ctx.EventManager().EmitEvent(
+		sdk.NewEvent(
+			types.EventRateLimitExceeded,
+			sdk.NewAttribute(sdk.AttributeKeyModule, types.ModuleName),
+			sdk.NewAttribute(types.AttributeKeyAction, strings.ToLower(direction.String())), // packet_send or packet_recv
+			sdk.NewAttribute(types.AttributeKeyDenom, denom),
+			sdk.NewAttribute(types.AttributeKeyChannel, channelId),
+			sdk.NewAttribute(types.AttributeKeyAmount, amount.String()),
+			sdk.NewAttribute(types.AttributeKeyError, err.Error()),
+		),
+	)
+}
+
 // Adds an amount to the flow in either the SEND or RECV direction
 func (k Keeper) UpdateFlow(rateLimit types.RateLimit, direction types.PacketDirection, amount sdkmath.Int) error {
 	switch direction {
@@ -37,6 +52,13 @@ func (k Keeper) UpdateFlow(rateLimit types.RateLimit, direction types.PacketDire
 // Checks whether the given packet will exceed the rate limit
 // Called by OnRecvPacket and OnSendPacket
 func (k Keeper) CheckRateLimitAndUpdateFlow(ctx sdk.Context, direction types.PacketDirection, denom string, channelId string, amount sdkmath.Int) error {
+	// First check if the denom is blacklisted
+	if k.IsDenomBlacklisted(ctx, denom) {
+		err := sdkerrors.Wrapf(types.ErrDenomIsBlacklisted, "denom %s is blacklisted", denom)
+		EmitRateLimitExceededEvent(ctx, denom, channelId, direction, amount, err)
+		return err
+	}
+
 	// If there's no rate limit yet for this denom, no action is necessary
 	rateLimit, found := k.GetRateLimit(ctx, denom, channelId)
 	if !found {
@@ -47,17 +69,7 @@ func (k Keeper) CheckRateLimitAndUpdateFlow(ctx sdk.Context, direction types.Pac
 	err := k.UpdateFlow(rateLimit, direction, amount)
 	if err != nil {
 		// If the rate limit was exceeded, emit an event
-		ctx.EventManager().EmitEvent(
-			sdk.NewEvent(
-				types.EventRateLimitExceeded,
-				sdk.NewAttribute(sdk.AttributeKeyModule, types.ModuleName),
-				sdk.NewAttribute(types.AttributeKeyAction, strings.ToLower(direction.String())), // packet_send or packet_recv
-				sdk.NewAttribute(types.AttributeKeyDenom, denom),
-				sdk.NewAttribute(types.AttributeKeyChannel, channelId),
-				sdk.NewAttribute(types.AttributeKeyAmount, amount.String()),
-				sdk.NewAttribute(types.AttributeKeyError, err.Error()),
-			),
-		)
+		EmitRateLimitExceededEvent(ctx, denom, channelId, direction, amount, err)
 		return err
 	}
 
@@ -134,4 +146,51 @@ func (k Keeper) GetAllRateLimits(ctx sdk.Context) []types.RateLimit {
 	}
 
 	return allRateLimits
+}
+
+// Adds a denom to a blacklist to prevent all IBC transfers with this denom
+func (k Keeper) AddDenomToBlacklist(ctx sdk.Context, denom string) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.BlacklistKeyPrefix)
+
+	key := types.KeyPrefix(denom)
+	value := key // The denom will act as both the key and value
+
+	store.Set(key, value)
+}
+
+// Removes a denom from a blacklist to re-enable IBC transfers for that denom
+func (k Keeper) RemoveDenomFromBlacklist(ctx sdk.Context, denom string) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.BlacklistKeyPrefix)
+	key := types.KeyPrefix(denom)
+	store.Delete(key)
+}
+
+// Check if a denom is currently blacklistec
+func (k Keeper) IsDenomBlacklisted(ctx sdk.Context, denom string) bool {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.BlacklistKeyPrefix)
+
+	key := types.KeyPrefix(denom)
+	value := store.Get(key)
+
+	if value == nil || len(value) == 0 {
+		return false
+	}
+	denomFromStore := string(value)
+
+	return denom == denomFromStore
+}
+
+// Get all the blacklisted denoms
+func (k Keeper) GetAllBlacklistedDenoms(ctx sdk.Context) []string {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.BlacklistKeyPrefix)
+
+	iterator := store.Iterator(nil, nil)
+	defer iterator.Close()
+
+	allBlacklistedDenoms := []string{}
+	for ; iterator.Valid(); iterator.Next() {
+		allBlacklistedDenoms = append(allBlacklistedDenoms, string(iterator.Key()))
+	}
+
+	return allBlacklistedDenoms
 }

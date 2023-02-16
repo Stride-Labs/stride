@@ -179,7 +179,7 @@ func (s *KeeperTestSuite) createRateLimitCloseToQuota(denom string, channelId st
 	})
 }
 
-func (s *KeeperTestSuite) TestSendRateLimitedPacket(t *testing.T) {
+func (s *KeeperTestSuite) TestSendRateLimitedPacket() {
 	// For send packets, the source will be stride and the destination will be the host
 	denom := ustrd
 	sourceChannel := channelOnStride
@@ -191,7 +191,7 @@ func (s *KeeperTestSuite) TestSendRateLimitedPacket(t *testing.T) {
 
 	// This packet should cause an Outflow quota exceed error
 	packetData, err := json.Marshal(transfertypes.FungibleTokenPacketData{Denom: denom, Amount: amountToExceed})
-	require.NoError(t, err)
+	s.Require().NoError(err)
 	packet := channeltypes.Packet{
 		SourcePort:         transferPort,
 		SourceChannel:      sourceChannel,
@@ -203,11 +203,11 @@ func (s *KeeperTestSuite) TestSendRateLimitedPacket(t *testing.T) {
 	// We check for a quota error because it doesn't appear until the end of the function
 	// We're avoiding checking for a success here because we can get a false positive if the rate limit doesn't exist
 	err = s.App.RatelimitKeeper.SendRateLimitedPacket(s.Ctx, packet)
-	require.ErrorIs(t, err, types.ErrQuotaExceeded, "error type")
-	require.ErrorContains(t, err, "Outflow exceeds quota", "error text")
+	s.Require().ErrorIs(err, types.ErrQuotaExceeded, "error type")
+	s.Require().ErrorContains(err, "Outflow exceeds quota", "error text")
 }
 
-func (s *KeeperTestSuite) TestReceiveRateLimitedPacket(t *testing.T) {
+func (s *KeeperTestSuite) TestReceiveRateLimitedPacket() {
 	// For receive packets, the source will be the host and the destination will be stride
 	packetDenom := uosmo
 	sourceChannel := channelOnHost
@@ -223,7 +223,7 @@ func (s *KeeperTestSuite) TestReceiveRateLimitedPacket(t *testing.T) {
 
 	// This packet should cause an Outflow quota exceed error
 	packetData, err := json.Marshal(transfertypes.FungibleTokenPacketData{Denom: packetDenom, Amount: amountToExceed})
-	require.NoError(t, err)
+	s.Require().NoError(err)
 	packet := channeltypes.Packet{
 		SourcePort:         transferPort,
 		SourceChannel:      sourceChannel,
@@ -235,6 +235,6 @@ func (s *KeeperTestSuite) TestReceiveRateLimitedPacket(t *testing.T) {
 	// We check for a quota error because it doesn't appear until the end of the function
 	// We're avoiding checking for a success here because we can get a false positive if the rate limit doesn't exist
 	err = s.App.RatelimitKeeper.ReceiveRateLimitedPacket(s.Ctx, packet)
-	require.ErrorIs(t, err, types.ErrQuotaExceeded, "error type")
-	require.ErrorContains(t, err, "Inflow exceeds quota", "error text")
+	s.Require().ErrorIs(err, types.ErrQuotaExceeded, "error type")
+	s.Require().ErrorContains(err, "Inflow exceeds quota", "error text")
 }
