@@ -3,10 +3,11 @@ package keeper
 import (
 	"fmt"
 
-	sdkerrors "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	legacysdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+
+	errorsmod "cosmossdk.io/errors"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	proto "github.com/cosmos/gogoproto/proto"
@@ -84,7 +85,7 @@ func (k Keeper) GetHostZoneUnbondingMsgs(ctx sdk.Context, hostZone types.HostZon
 	if err != nil {
 		errMsg := fmt.Sprintf("Error getting target val amts for host zone %s %v: %s", hostZone.ChainId, totalAmountToUnbond, err)
 		k.Logger(ctx).Error(errMsg)
-		return nil, sdkmath.ZeroInt(), nil, nil, sdkerrors.Wrap(types.ErrNoValidatorAmts, errMsg)
+		return nil, sdkmath.ZeroInt(), nil, nil, errorsmod.Wrap(types.ErrNoValidatorAmts, errMsg)
 	}
 
 	// Check if each validator has enough current delegations to cover the target unbonded amount
@@ -137,7 +138,7 @@ func (k Keeper) GetHostZoneUnbondingMsgs(ctx sdk.Context, hostZone types.HostZon
 		errMsg := fmt.Sprintf("Could not unbond %v on Host Zone %s, unable to balance the unbond amount across validators",
 			totalAmountToUnbond, hostZone.ChainId)
 		k.Logger(ctx).Error(errMsg)
-		return nil, sdkmath.ZeroInt(), nil, nil, sdkerrors.Wrap(legacysdkerrors.ErrNotFound, errMsg)
+		return nil, sdkmath.ZeroInt(), nil, nil, errorsmod.Wrap(sdkerrors.ErrNotFound, errMsg)
 	}
 
 	// Get the delegation account
@@ -145,7 +146,7 @@ func (k Keeper) GetHostZoneUnbondingMsgs(ctx sdk.Context, hostZone types.HostZon
 	if delegationAccount == nil || delegationAccount.Address == "" {
 		errMsg := fmt.Sprintf("Zone %s is missing a delegation address!", hostZone.ChainId)
 		k.Logger(ctx).Error(errMsg)
-		return nil, sdkmath.ZeroInt(), nil, nil, sdkerrors.Wrap(types.ErrHostZoneICAAccountNotFound, errMsg)
+		return nil, sdkmath.ZeroInt(), nil, nil, errorsmod.Wrap(types.ErrHostZoneICAAccountNotFound, errMsg)
 	}
 
 	// Construct the MsgUndelegate transaction
@@ -174,7 +175,7 @@ func (k Keeper) GetHostZoneUnbondingMsgs(ctx sdk.Context, hostZone types.HostZon
 
 	// Shouldn't be possible, but if all the validator's had a target unbonding of zero, do not send an ICA
 	if len(msgs) == 0 {
-		return nil, sdkmath.ZeroInt(), nil, nil, sdkerrors.Wrap(legacysdkerrors.ErrInvalidRequest, "Target unbonded amount was 0 for each validator")
+		return nil, sdkmath.ZeroInt(), nil, nil, errorsmod.Wrap(sdkerrors.ErrInvalidRequest, "Target unbonded amount was 0 for each validator")
 	}
 
 	// Store the callback data
@@ -187,7 +188,7 @@ func (k Keeper) GetHostZoneUnbondingMsgs(ctx sdk.Context, hostZone types.HostZon
 	marshalledCallbackArgs, err = k.MarshalUndelegateCallbackArgs(ctx, undelegateCallback)
 	if err != nil {
 		k.Logger(ctx).Error(err.Error())
-		return nil, sdkmath.ZeroInt(), nil, nil, sdkerrors.Wrap(legacysdkerrors.ErrNotFound, err.Error())
+		return nil, sdkmath.ZeroInt(), nil, nil, errorsmod.Wrap(sdkerrors.ErrNotFound, err.Error())
 	}
 
 	return msgs, totalAmountToUnbond, marshalledCallbackArgs, epochUnbondingRecordIds, nil
@@ -199,14 +200,14 @@ func (k Keeper) SubmitHostZoneUnbondingMsg(ctx sdk.Context, msgs []proto.Message
 
 	// safety check: if msgs is nil, error
 	if msgs == nil {
-		return sdkerrors.Wrap(legacysdkerrors.ErrInvalidRequest, "no msgs to submit for host zone unbondings")
+		return errorsmod.Wrap(sdkerrors.ErrInvalidRequest, "no msgs to submit for host zone unbondings")
 	}
 
 	_, err := k.SubmitTxsDayEpoch(ctx, hostZone.GetConnectionId(), msgs, *delegationAccount, ICACallbackID_Undelegate, marshalledCallbackArgs)
 	if err != nil {
 		errMsg := fmt.Sprintf("Error submitting unbonding tx: %s", err)
 		k.Logger(ctx).Error(errMsg)
-		return sdkerrors.Wrap(legacysdkerrors.ErrNotFound, errMsg)
+		return errorsmod.Wrap(sdkerrors.ErrNotFound, errMsg)
 	}
 
 	ctx.EventManager().EmitEvent(
@@ -288,7 +289,7 @@ func (k Keeper) CleanupEpochUnbondingRecords(ctx sdk.Context, epochNumber uint64
 		for _, hostZoneUnbonding := range hostZoneUnbondings {
 			// if an EpochUnbondingRecord has any HostZoneUnbonding with non-zero balances, we don't delete the EpochUnbondingRecord
 			// because it has outstanding tokens that need to be claimed
-			if hostZoneUnbonding.NativeTokenAmount != sdkmath.ZeroInt() {
+			if !hostZoneUnbonding.NativeTokenAmount.Equal(sdkmath.ZeroInt()) {
 				shouldDeleteEpochUnbondingRecord = false
 				break
 			}

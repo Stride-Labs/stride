@@ -3,9 +3,9 @@ package icacallbacks
 import (
 	"fmt"
 
-	sdkerrors "cosmossdk.io/errors"
+	errorsmod "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	legacysdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	ibctransfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
 	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
 	"github.com/gogo/protobuf/proto"
@@ -21,7 +21,7 @@ import (
 func ParseTxMsgData(acknowledgementResult []byte) ([][]byte, error) {
 	txMsgData := &sdk.TxMsgData{}
 	if err := proto.Unmarshal(acknowledgementResult, txMsgData); err != nil {
-		return nil, sdkerrors.Wrapf(legacysdkerrors.ErrUnknownRequest, "cannot unmarshal ICS-27 tx message data: %s", err.Error())
+		return nil, errorsmod.Wrapf(sdkerrors.ErrUnknownRequest, "cannot unmarshal ICS-27 tx message data: %s", err.Error())
 	}
 
 	// Unpack all the message responses based on the sdk version (determined from the length of txMsgData.Data)
@@ -55,7 +55,7 @@ func UnpackAcknowledgementResponse(ctx sdk.Context, logger log.Logger, ack []byt
 	// Unmarshal the raw ack response
 	var acknowledgement channeltypes.Acknowledgement
 	if err := ibctransfertypes.ModuleCdc.UnmarshalJSON(ack, &acknowledgement); err != nil {
-		return nil, sdkerrors.Wrapf(legacysdkerrors.ErrUnknownRequest, "cannot unmarshal ICS-20 transfer packet acknowledgement: %s", err.Error())
+		return nil, errorsmod.Wrapf(sdkerrors.ErrUnknownRequest, "cannot unmarshal ICS-20 transfer packet acknowledgement: %s", err.Error())
 	}
 
 	// The ack can come back as either AcknowledgementResult or AcknowledgementError
@@ -63,7 +63,7 @@ func UnpackAcknowledgementResponse(ctx sdk.Context, logger log.Logger, ack []byt
 	switch response := acknowledgement.Response.(type) {
 	case *channeltypes.Acknowledgement_Result:
 		if len(response.Result) == 0 {
-			return nil, sdkerrors.Wrapf(channeltypes.ErrInvalidAcknowledgement, "acknowledgement result cannot be empty")
+			return nil, errorsmod.Wrapf(channeltypes.ErrInvalidAcknowledgement, "acknowledgement result cannot be empty")
 		}
 
 		// If this is an ack from a non-ICA transaction (e.g. an IBC transfer), there is no need to decode the data field
@@ -75,7 +75,7 @@ func UnpackAcknowledgementResponse(ctx sdk.Context, logger log.Logger, ack []byt
 		// Otherwise, if this ack is from an ICA, unmarshal the message data from within the ack
 		msgResponses, err := ParseTxMsgData(acknowledgement.GetResult())
 		if err != nil {
-			return nil, sdkerrors.Wrapf(legacysdkerrors.ErrUnknownRequest, "cannot parse TxMsgData from ICA acknowledgement packet: %s", err.Error())
+			return nil, errorsmod.Wrapf(sdkerrors.ErrUnknownRequest, "cannot parse TxMsgData from ICA acknowledgement packet: %s", err.Error())
 		}
 		return &types.AcknowledgementResponse{Status: types.AckResponseStatus_SUCCESS, MsgResponses: msgResponses}, nil
 
@@ -83,6 +83,6 @@ func UnpackAcknowledgementResponse(ctx sdk.Context, logger log.Logger, ack []byt
 		logger.Error(fmt.Sprintf("acknowledgement error: %s", response.Error))
 		return &types.AcknowledgementResponse{Status: types.AckResponseStatus_FAILURE, Error: response.Error}, nil
 	default:
-		return nil, sdkerrors.Wrapf(channeltypes.ErrInvalidAcknowledgement, "unsupported acknowledgement response field type %T", response)
+		return nil, errorsmod.Wrapf(channeltypes.ErrInvalidAcknowledgement, "unsupported acknowledgement response field type %T", response)
 	}
 }

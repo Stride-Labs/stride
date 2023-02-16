@@ -3,9 +3,9 @@ package keeper
 import (
 	"context"
 
-	sdkerrors "cosmossdk.io/errors"
+	errorsmod "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	legacysdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
@@ -20,7 +20,7 @@ func (k Keeper) UserRedemptionRecordForUser(c context.Context, req *types.QueryA
 	// validate the address
 	_, err := sdk.AccAddressFromBech32(req.Address)
 	if err != nil {
-		return nil, sdkerrors.Wrap(legacysdkerrors.ErrInvalidAddress, req.Address)
+		return nil, errorsmod.Wrap(sdkerrors.ErrInvalidAddress, req.Address)
 	}
 
 	var userRedemptionRecords []types.UserRedemptionRecord

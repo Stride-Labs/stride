@@ -5,9 +5,10 @@ import (
 
 	"github.com/tendermint/tendermint/libs/log"
 
-	sdkerrors "cosmossdk.io/errors"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	errorsmod "cosmossdk.io/errors"
 	capabilitykeeper "github.com/cosmos/cosmos-sdk/x/capability/keeper"
 	capabilitytypes "github.com/cosmos/cosmos-sdk/x/capability/types"
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
@@ -126,7 +127,7 @@ func (k Keeper) GetICACallbackHandlerFromPacket(ctx sdk.Context, modulePacket ch
 	// fetch the callback function
 	callbackHandler, err := k.GetICACallbackHandler(module)
 	if err != nil {
-		return nil, sdkerrors.Wrapf(types.ErrCallbackHandlerNotFound, "Callback handler does not exist for module %s | err: %s", module, err.Error())
+		return nil, errorsmod.Wrapf(types.ErrCallbackHandlerNotFound, "Callback handler does not exist for module %s | err: %s", module, err.Error())
 	}
 	return &callbackHandler, nil
 }
@@ -151,7 +152,7 @@ func (k Keeper) CallRegisteredICACallback(ctx sdk.Context, modulePacket channelt
 		if err != nil {
 			errMsg := fmt.Sprintf("Error occured while calling ICACallback (%s) | err: %s", callbackData.CallbackId, err.Error())
 			k.Logger(ctx).Error(errMsg)
-			return sdkerrors.Wrapf(types.ErrCallbackFailed, errMsg)
+			return errorsmod.Wrapf(types.ErrCallbackFailed, errMsg)
 		}
 	} else {
 		k.Logger(ctx).Error(fmt.Sprintf("Callback %v has no associated callback", callbackData))

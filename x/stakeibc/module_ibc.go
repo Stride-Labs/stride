@@ -3,7 +3,7 @@ package stakeibc
 import (
 	"fmt"
 
-	sdkerrors "cosmossdk.io/errors"
+	errorsmod "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	capabilitytypes "github.com/cosmos/cosmos-sdk/x/capability/types"
 	icatypes "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/types"
@@ -146,7 +146,7 @@ func (im IBCModule) OnAcknowledgementPacket(
 		errMsg := fmt.Sprintf("Unable to unpack message data from acknowledgement, Sequence %d, from %s %s, to %s %s: %s",
 			modulePacket.Sequence, modulePacket.SourceChannel, modulePacket.SourcePort, modulePacket.DestinationChannel, modulePacket.DestinationPort, err.Error())
 		im.keeper.Logger(ctx).Error(errMsg)
-		return sdkerrors.Wrapf(icacallbacktypes.ErrInvalidAcknowledgement, errMsg)
+		return errorsmod.Wrapf(icacallbacktypes.ErrInvalidAcknowledgement, errMsg)
 	}
 
 	ackInfo := fmt.Sprintf("sequence #%d, from %s %s, to %s %s",
@@ -167,7 +167,7 @@ func (im IBCModule) OnAcknowledgementPacket(
 		errMsg := fmt.Sprintf("Unable to call registered callback from stakeibc OnAcknowledgePacket | Sequence %d, from %s %s, to %s %s",
 			modulePacket.Sequence, modulePacket.SourceChannel, modulePacket.SourcePort, modulePacket.DestinationChannel, modulePacket.DestinationPort)
 		im.keeper.Logger(ctx).Error(errMsg)
-		return sdkerrors.Wrapf(icacallbacktypes.ErrCallbackFailed, errMsg)
+		return errorsmod.Wrapf(icacallbacktypes.ErrCallbackFailed, errMsg)
 	}
 	return nil
 }

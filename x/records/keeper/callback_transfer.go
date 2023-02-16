@@ -8,9 +8,9 @@ import (
 	icacallbackstypes "github.com/Stride-Labs/stride/v5/x/icacallbacks/types"
 	"github.com/Stride-Labs/stride/v5/x/records/types"
 
-	sdkerrors "cosmossdk.io/errors"
+	errorsmod "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	legacysdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
 	"github.com/golang/protobuf/proto" //nolint:staticcheck
 )
@@ -39,13 +39,13 @@ func TransferCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ack
 	// deserialize the args
 	transferCallbackData, err := k.UnmarshalTransferCallbackArgs(ctx, args)
 	if err != nil {
-		return sdkerrors.Wrapf(types.ErrUnmarshalFailure, "cannot unmarshal transfer callback args: %s", err.Error())
+		return errorsmod.Wrapf(types.ErrUnmarshalFailure, "cannot unmarshal transfer callback args: %s", err.Error())
 	}
 	k.Logger(ctx).Info(fmt.Sprintf("TransferCallback %v", transferCallbackData))
 	depositRecord, found := k.GetDepositRecord(ctx, transferCallbackData.DepositRecordId)
 	if !found {
 		k.Logger(ctx).Error(fmt.Sprintf("TransferCallback deposit record not found, packet %v", packet))
-		return sdkerrors.Wrapf(types.ErrUnknownDepositRecord, "deposit record not found %d", transferCallbackData.DepositRecordId)
+		return errorsmod.Wrapf(types.ErrUnknownDepositRecord, "deposit record not found %d", transferCallbackData.DepositRecordId)
 	}
 
 	if ackResponse.Status == icacallbackstypes.AckResponseStatus_TIMEOUT {
@@ -69,7 +69,7 @@ func TransferCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ack
 	var data ibctransfertypes.FungibleTokenPacketData
 	if err := ibctransfertypes.ModuleCdc.UnmarshalJSON(packet.GetData(), &data); err != nil {
 		k.Logger(ctx).Error(fmt.Sprintf("Error unmarshalling packet  %v", err.Error()))
-		return sdkerrors.Wrapf(legacysdkerrors.ErrUnknownRequest, "cannot unmarshal ICS-20 transfer packet data: %s", err.Error())
+		return errorsmod.Wrapf(sdkerrors.ErrUnknownRequest, "cannot unmarshal ICS-20 transfer packet data: %s", err.Error())
 	}
 	k.Logger(ctx).Info(fmt.Sprintf("TransferCallback unmarshalled FungibleTokenPacketData %v", data))
 

@@ -3,9 +3,9 @@ package types
 import (
 	"strings"
 
-	sdkerrors "cosmossdk.io/errors"
+	errorsmod "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	legacysdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
 	"github.com/Stride-Labs/stride/v5/utils"
 )
@@ -46,21 +46,21 @@ func (msg *MsgUpdateValidatorSharesExchRate) GetSignBytes() []byte {
 func (msg *MsgUpdateValidatorSharesExchRate) ValidateBasic() error {
 	_, err := sdk.AccAddressFromBech32(msg.Creator)
 	if err != nil {
-		return sdkerrors.Wrapf(legacysdkerrors.ErrInvalidAddress, "invalid creator address (%s)", err)
+		return errorsmod.Wrapf(sdkerrors.ErrInvalidAddress, "invalid creator address (%s)", err)
 	}
 	if err := utils.ValidateAdminAddress(msg.Creator); err != nil {
 		return err
 	}
 	// basic checks on host denom
 	if len(msg.ChainId) == 0 {
-		return sdkerrors.Wrapf(legacysdkerrors.ErrInvalidRequest, "chainid is required")
+		return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "chainid is required")
 	}
 	// basic checks on host zone
 	if len(msg.Valoper) == 0 {
-		return sdkerrors.Wrapf(legacysdkerrors.ErrInvalidRequest, "valoper is required")
+		return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "valoper is required")
 	}
 	if !strings.Contains(msg.Valoper, "valoper") {
-		return sdkerrors.Wrapf(legacysdkerrors.ErrInvalidRequest, "validator operator address must contrain 'valoper'")
+		return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "validator operator address must contrain 'valoper'")
 	}
 
 	return nil

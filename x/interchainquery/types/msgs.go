@@ -1,9 +1,9 @@
 package types
 
 import (
-	sdkerrors "cosmossdk.io/errors"
+	errorsmod "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	legacysdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
 
 // interchainquery message types
@@ -24,11 +24,11 @@ func (msg MsgSubmitQueryResponse) ValidateBasic() error {
 	// check from address
 	_, err := sdk.AccAddressFromBech32(msg.FromAddress)
 	if err != nil {
-		return sdkerrors.Wrapf(legacysdkerrors.ErrInvalidAddress, "invalid fromAddress in ICQ response (%s)", err)
+		return errorsmod.Wrapf(sdkerrors.ErrInvalidAddress, "invalid fromAddress in ICQ response (%s)", err)
 	}
 	// check chain_id is not empty
 	if msg.ChainId == "" {
-		return sdkerrors.Wrap(legacysdkerrors.ErrInvalidRequest, "chain_id cannot be empty in ICQ response")
+		return errorsmod.Wrap(sdkerrors.ErrInvalidRequest, "chain_id cannot be empty in ICQ response")
 	}
 
 	return nil

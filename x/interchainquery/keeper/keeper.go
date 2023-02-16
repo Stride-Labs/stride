@@ -4,10 +4,11 @@ import (
 	"fmt"
 	"strings"
 
-	sdkerrors "cosmossdk.io/errors"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	legacysdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+
+	errorsmod "cosmossdk.io/errors"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	ibckeeper "github.com/cosmos/ibc-go/v7/modules/core/keeper"
 	"github.com/tendermint/tendermint/libs/log"
 
@@ -57,17 +58,17 @@ func (k *Keeper) MakeRequest(ctx sdk.Context, module string, callbackId string, 
 	if connectionId == "" {
 		errMsg := "[ICQ Validation Check] Failed! connection id cannot be empty"
 		k.Logger(ctx).Error(errMsg)
-		return sdkerrors.Wrapf(legacysdkerrors.ErrInvalidRequest, errMsg)
+		return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, errMsg)
 	}
 	if !strings.HasPrefix(connectionId, "connection") {
 		errMsg := "[ICQ Validation Check] Failed! connection id must begin with 'connection'"
 		k.Logger(ctx).Error(errMsg)
-		return sdkerrors.Wrapf(legacysdkerrors.ErrInvalidRequest, errMsg)
+		return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, errMsg)
 	}
 	if chainId == "" {
 		errMsg := "[ICQ Validation Check] Failed! chain_id cannot be empty"
 		k.Logger(ctx).Error(errMsg)
-		return sdkerrors.Wrapf(legacysdkerrors.ErrInvalidRequest, errMsg)
+		return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, errMsg)
 	}
 
 	// Confirm the module and callbackId exist
@@ -75,12 +76,12 @@ func (k *Keeper) MakeRequest(ctx sdk.Context, module string, callbackId string, 
 		if _, exists := k.callbacks[module]; !exists {
 			err := fmt.Errorf("no callback handler registered for module %s", module)
 			k.Logger(ctx).Error(err.Error())
-			return sdkerrors.Wrap(legacysdkerrors.ErrInvalidRequest, "no callback handler registered for module")
+			return errorsmod.Wrap(sdkerrors.ErrInvalidRequest, "no callback handler registered for module")
 		}
 		if exists := k.callbacks[module].HasICQCallback(callbackId); !exists {
 			err := fmt.Errorf("no callback %s registered for module %s", callbackId, module)
 			k.Logger(ctx).Error(err.Error())
-			return sdkerrors.Wrap(legacysdkerrors.ErrInvalidRequest, "no callback handler registered for module")
+			return errorsmod.Wrap(sdkerrors.ErrInvalidRequest, "no callback handler registered for module")
 		}
 	}
 

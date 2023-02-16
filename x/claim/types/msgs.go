@@ -1,9 +1,9 @@
 package types
 
 import (
-	sdkerrors "cosmossdk.io/errors"
+	errorsmod "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	legacysdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
 	"github.com/Stride-Labs/stride/v5/utils"
 )
@@ -46,40 +46,40 @@ func (msg *MsgSetAirdropAllocations) GetSignBytes() []byte {
 func (msg *MsgSetAirdropAllocations) ValidateBasic() error {
 	_, err := sdk.AccAddressFromBech32(msg.Allocator)
 	if err != nil {
-		return sdkerrors.Wrapf(legacysdkerrors.ErrInvalidAddress, "invalid allocator address (%s)", err)
+		return errorsmod.Wrapf(sdkerrors.ErrInvalidAddress, "invalid allocator address (%s)", err)
 	}
 
 	if msg.AirdropIdentifier == "" {
-		return sdkerrors.Wrapf(legacysdkerrors.ErrInvalidRequest, "airdrop identifier not set")
+		return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "airdrop identifier not set")
 	}
 
 	if len(msg.Users) == 0 {
-		return sdkerrors.Wrapf(legacysdkerrors.ErrInvalidRequest, "empty users list")
+		return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "empty users list")
 	}
 
 	if len(msg.Weights) == 0 {
-		return sdkerrors.Wrapf(legacysdkerrors.ErrInvalidRequest, "empty weights list")
+		return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "empty weights list")
 	}
 
 	if len(msg.Users) != len(msg.Weights) {
-		return sdkerrors.Wrapf(legacysdkerrors.ErrInvalidRequest, "different length")
+		return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "different length")
 	}
 
 	for _, user := range msg.Users {
 		strideAddr := utils.ConvertAddressToStrideAddress(user)
 		if strideAddr == "" {
-			return sdkerrors.Wrapf(legacysdkerrors.ErrInvalidAddress, "invalid bech32 address")
+			return errorsmod.Wrapf(sdkerrors.ErrInvalidAddress, "invalid bech32 address")
 		}
 
 		_, err := sdk.AccAddressFromBech32(strideAddr)
 		if err != nil {
-			return sdkerrors.Wrapf(legacysdkerrors.ErrInvalidAddress, "invalid user address (%s)", err)
+			return errorsmod.Wrapf(sdkerrors.ErrInvalidAddress, "invalid user address (%s)", err)
 		}
 	}
 
 	for _, weight := range msg.Weights {
 		if weight.Equal(sdk.NewDec(0)) {
-			return sdkerrors.Wrapf(legacysdkerrors.ErrInvalidRequest, "invalid user weight")
+			return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "invalid user weight")
 		}
 	}
 
@@ -122,7 +122,7 @@ func (msg *MsgClaimFreeAmount) ValidateBasic() error {
 
 	_, err := sdk.AccAddressFromBech32(msg.User)
 	if err != nil {
-		return sdkerrors.Wrapf(legacysdkerrors.ErrInvalidAddress, "invalid user address (%s)", err)
+		return errorsmod.Wrapf(sdkerrors.ErrInvalidAddress, "invalid user address (%s)", err)
 	}
 
 	return nil
@@ -167,19 +167,19 @@ func (msg *MsgCreateAirdrop) GetSignBytes() []byte {
 func (msg *MsgCreateAirdrop) ValidateBasic() error {
 	_, err := sdk.AccAddressFromBech32(msg.Distributor)
 	if err != nil {
-		return sdkerrors.Wrapf(legacysdkerrors.ErrInvalidAddress, "invalid distributor address (%s)", err)
+		return errorsmod.Wrapf(sdkerrors.ErrInvalidAddress, "invalid distributor address (%s)", err)
 	}
 
 	if msg.Identifier == "" {
-		return sdkerrors.Wrapf(legacysdkerrors.ErrInvalidRequest, "airdrop identifier not set")
+		return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "airdrop identifier not set")
 	}
 
 	if msg.StartTime == 0 {
-		return sdkerrors.Wrapf(legacysdkerrors.ErrInvalidRequest, "airdrop start time not set")
+		return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "airdrop start time not set")
 	}
 
 	if msg.Duration == 0 {
-		return sdkerrors.Wrapf(legacysdkerrors.ErrInvalidRequest, "airdrop duration not set")
+		return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "airdrop duration not set")
 	}
 	return nil
 }
@@ -220,11 +220,11 @@ func (msg *MsgDeleteAirdrop) GetSignBytes() []byte {
 func (msg *MsgDeleteAirdrop) ValidateBasic() error {
 	_, err := sdk.AccAddressFromBech32(msg.Distributor)
 	if err != nil {
-		return sdkerrors.Wrapf(legacysdkerrors.ErrInvalidAddress, "invalid distributor address (%s)", err)
+		return errorsmod.Wrapf(sdkerrors.ErrInvalidAddress, "invalid distributor address (%s)", err)
 	}
 
 	if msg.Identifier == "" {
-		return sdkerrors.Wrapf(legacysdkerrors.ErrInvalidRequest, "airdrop identifier not set")
+		return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "airdrop identifier not set")
 	}
 	return nil
 }
