@@ -292,8 +292,8 @@ type StrideApp struct {
 	ScopedIcacallbacksKeeper capabilitykeeper.ScopedKeeper
 	IcacallbacksKeeper       icacallbacksmodulekeeper.Keeper
 	ClaimKeeper              claimkeeper.Keeper
-	icaoracleKeeper          icaoraclekeeper.Keeper
-	scopedIcaoracleKeeper    capabilitykeeper.ScopedKeeper
+	ICAOracleKeeper          icaoraclekeeper.Keeper
+	scopedICAOracleKeeper    capabilitykeeper.ScopedKeeper
 	// this line is used by starport scaffolding # stargate/app/keeperDeclaration
 
 	mm           *module.Manager
@@ -514,16 +514,19 @@ func NewStrideApp(
 	stakeibcIBCModule := stakeibcmodule.NewIBCModule(app.StakeibcKeeper)
 
 	scopedIcaoracleKeeper := app.CapabilityKeeper.ScopeToModule(icaoracletypes.ModuleName)
-	app.scopedIcaoracleKeeper = scopedIcaoracleKeeper
-	app.icaoracleKeeper = *icaoraclekeeper.NewKeeper(
+	app.scopedICAOracleKeeper = scopedIcaoracleKeeper
+	app.ICAOracleKeeper = *icaoraclekeeper.NewKeeper(
 		appCodec,
 		keys[icaoracletypes.StoreKey],
 		app.GetSubspace(icaoracletypes.ModuleName),
+		scopedIcaoracleKeeper,
+		app.IBCKeeper.PortKeeper,
 		app.IBCKeeper.ChannelKeeper,
 		app.ICAControllerKeeper,
 		app.IcacallbacksKeeper,
 	)
-	icaoracleModule := icaoracle.NewAppModule(appCodec, app.icaoracleKeeper)
+	icaoracleModule := icaoracle.NewAppModule(appCodec, app.ICAOracleKeeper)
+	icaoracleIBCModule := icaoracle.NewIBCModule(app.ICAOracleKeeper)
 
 	// Register Gov (must be registerd after stakeibc)
 	govRouter := govtypesv1beta1.NewRouter()
@@ -533,7 +536,7 @@ func NewStrideApp(
 		AddRoute(upgradetypes.RouterKey, upgrade.NewSoftwareUpgradeProposalHandler(app.UpgradeKeeper)).
 		AddRoute(ibcclienttypes.RouterKey, ibcclient.NewClientProposalHandler(app.IBCKeeper.ClientKeeper)).
 		AddRoute(stakeibcmoduletypes.RouterKey, stakeibcmodule.NewStakeibcProposalHandler(app.StakeibcKeeper)).
-		AddRoute(icaoracletypes.RouterKey, icaoracle.NewProposalHandler(app.icaoracleKeeper))
+		AddRoute(icaoracletypes.RouterKey, icaoracle.NewProposalHandler(app.ICAOracleKeeper))
 
 	app.GovKeeper = govkeeper.NewKeeper(
 		appCodec, keys[govtypes.StoreKey], app.GetSubspace(govtypes.ModuleName), app.AccountKeeper, app.BankKeeper,
@@ -604,6 +607,13 @@ func NewStrideApp(
 	// - base app
 	recordsStack := recordsmodule.NewIBCModule(app.RecordsKeeper, transferIBCModule)
 
+	// Stack three contains
+	// - IBC
+	// - ICA
+	// - icaoracle
+	// - base app
+	icaoracleStack := icacontroller.NewIBCMiddleware(icaoracleIBCModule, app.ICAControllerKeeper)
+
 	// Create static IBC router, add transfer route, then set and seal it
 	ibcRouter := ibcporttypes.NewRouter()
 	ibcRouter.
@@ -612,7 +622,9 @@ func NewStrideApp(
 		AddRoute(icahosttypes.SubModuleName, icaHostIBCModule).
 		// Note, authentication module packets are routed to the top level of the middleware stack
 		AddRoute(stakeibcmoduletypes.ModuleName, icamiddlewareStack).
-		AddRoute(icacallbacksmoduletypes.ModuleName, icamiddlewareStack)
+		AddRoute(icacallbacksmoduletypes.ModuleName, icamiddlewareStack).
+		AddRoute(icaoracletypes.ModuleName, icaoracleStack)
+
 	// this line is used by starport scaffolding # ibc/app/router
 	app.IBCKeeper.SetRouter(ibcRouter)
 

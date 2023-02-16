@@ -5,11 +5,12 @@ option go_package = "github.com/Stride-Labs/stride/v5/x/icaoracle/types";
 
 message Oracle {
   string moniker = 1;
-  string connection_id = 2;
-  string channel_id = 3;
-  string contract_address = 4;
-  string ica_address = 5;
-  bool active = 6;
+  string chain_id = 2;
+  string connection_id = 3;
+  string channel_id = 4;
+  string contract_address = 5;
+  string ica_address = 6;
+  bool active = 7;
 }
 
 message Metadata {

@@ -6,9 +6,11 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	capabilitykeeper "github.com/cosmos/cosmos-sdk/x/capability/keeper"
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
 	icacontrollerkeeper "github.com/cosmos/ibc-go/v5/modules/apps/27-interchain-accounts/controller/keeper"
 	channelkeeper "github.com/cosmos/ibc-go/v5/modules/core/04-channel/keeper"
+	portkeeper "github.com/cosmos/ibc-go/v5/modules/core/05-port/keeper"
 
 	"github.com/tendermint/tendermint/libs/log"
 
@@ -21,6 +23,9 @@ type Keeper struct {
 	storeKey   storetypes.StoreKey
 	paramstore paramtypes.Subspace
 
+	scopedKeeper capabilitykeeper.ScopedKeeper
+	portKeeper   portkeeper.Keeper
+
 	channelKeeper       channelkeeper.Keeper
 	icaControllerKeeper icacontrollerkeeper.Keeper
 	ICACallbacksKeeper  icacallbackskeeper.Keeper
@@ -30,6 +35,8 @@ func NewKeeper(
 	cdc codec.BinaryCodec,
 	key storetypes.StoreKey,
 	paramstore paramtypes.Subspace,
+	scopedKeeper capabilitykeeper.ScopedKeeper,
+	portKeeper portkeeper.Keeper,
 	channelKeeper channelkeeper.Keeper,
 	icaControllerKeeper icacontrollerkeeper.Keeper,
 	icaCallbacksKeeper icacallbackskeeper.Keeper,
@@ -38,6 +45,8 @@ func NewKeeper(
 		cdc:                 cdc,
 		storeKey:            key,
 		paramstore:          paramstore,
+		scopedKeeper:        scopedKeeper,
+		portKeeper:          portKeeper,
 		channelKeeper:       channelKeeper,
 		icaControllerKeeper: icaControllerKeeper,
 		ICACallbacksKeeper:  icaCallbacksKeeper,

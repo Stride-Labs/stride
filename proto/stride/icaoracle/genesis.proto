@@ -8,8 +8,8 @@ option go_package = "github.com/Stride-Labs/stride/v5/x/icaoracle/types";
 
 // GenesisState defines the icaoracle module's genesis state.
 message GenesisState {
-  // params defines all the parameters of the module.
-  Params params = 1 [
+  string port_id = 1;
+  Params params = 2 [
     (gogoproto.moretags) = "yaml:\"params\"",
     (gogoproto.nullable) = false
   ];
