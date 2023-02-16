@@ -3,6 +3,7 @@ package types
 import (
 	"strings"
 
+	errorsmod "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
@@ -48,18 +49,18 @@ func (msg *MsgAddValidator) GetSignBytes() []byte {
 func (msg *MsgAddValidator) ValidateBasic() error {
 	_, err := sdk.AccAddressFromBech32(msg.Creator)
 	if err != nil {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid creator address (%s)", err)
+		return errorsmod.Wrapf(sdkerrors.ErrInvalidAddress, "invalid creator address (%s)", err)
 	}
 	if err := utils.ValidateAdminAddress(msg.Creator); err != nil {
 		return err
 	}
 	// name validation
 	if len(strings.TrimSpace(msg.Name)) == 0 {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "name is required")
+		return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "name is required")
 	}
 	// commission validation
 	if msg.Commission > 100 {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "commission must be between 0 and 100")
+		return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "commission must be between 0 and 100")
 	}
 
 	return nil
