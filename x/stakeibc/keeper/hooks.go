@@ -7,10 +7,10 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/spf13/cast"
 
-	"github.com/Stride-Labs/stride/v4/utils"
-	epochstypes "github.com/Stride-Labs/stride/v4/x/epochs/types"
-	recordstypes "github.com/Stride-Labs/stride/v4/x/records/types"
-	"github.com/Stride-Labs/stride/v4/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v5/utils"
+	epochstypes "github.com/Stride-Labs/stride/v5/x/epochs/types"
+	recordstypes "github.com/Stride-Labs/stride/v5/x/records/types"
+	"github.com/Stride-Labs/stride/v5/x/stakeibc/types"
 )
 
 func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochInfo epochstypes.EpochInfo) {
@@ -209,8 +209,8 @@ func (k Keeper) ReinvestRewards(ctx sdk.Context) {
 
 	for _, hostZone := range k.GetAllHostZone(ctx) {
 		// only process host zones once withdrawal accounts are registered
-		withdrawalIca := hostZone.WithdrawalAccount
-		if withdrawalIca == nil {
+		withdrawalAccount := hostZone.WithdrawalAccount
+		if withdrawalAccount == nil || withdrawalAccount.Address == "" {
 			k.Logger(ctx).Info(utils.LogWithHostZone(hostZone.ChainId, "Withdrawal account not registered for host zone"))
 			continue
 		}

@@ -7,7 +7,7 @@ import (
 
 	porttypes "github.com/cosmos/ibc-go/v5/modules/core/05-port/types"
 
-	"github.com/Stride-Labs/stride/v4/utils"
+	"github.com/Stride-Labs/stride/v5/utils"
 
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/client"
@@ -26,9 +26,6 @@ import (
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	"github.com/cosmos/cosmos-sdk/x/auth/vesting"
 	vestingtypes "github.com/cosmos/cosmos-sdk/x/auth/vesting/types"
-	"github.com/cosmos/cosmos-sdk/x/authz"
-	authzkeeper "github.com/cosmos/cosmos-sdk/x/authz/keeper"
-	authzmodule "github.com/cosmos/cosmos-sdk/x/authz/module"
 	"github.com/cosmos/cosmos-sdk/x/bank"
 	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
@@ -57,12 +54,12 @@ import (
 	govtypesv1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
 	govtypesv1beta1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
 
-	claimvesting "github.com/Stride-Labs/stride/v4/x/claim/vesting"
-	claimvestingtypes "github.com/Stride-Labs/stride/v4/x/claim/vesting/types"
+	claimvesting "github.com/Stride-Labs/stride/v5/x/claim/vesting"
+	claimvestingtypes "github.com/Stride-Labs/stride/v5/x/claim/vesting/types"
 
-	"github.com/Stride-Labs/stride/v4/x/mint"
-	mintkeeper "github.com/Stride-Labs/stride/v4/x/mint/keeper"
-	minttypes "github.com/Stride-Labs/stride/v4/x/mint/types"
+	"github.com/Stride-Labs/stride/v5/x/mint"
+	mintkeeper "github.com/Stride-Labs/stride/v5/x/mint/keeper"
+	minttypes "github.com/Stride-Labs/stride/v5/x/mint/types"
 
 	"github.com/cosmos/cosmos-sdk/x/params"
 	paramsclient "github.com/cosmos/cosmos-sdk/x/params/client"
@@ -109,27 +106,27 @@ import (
 	// monitoringp "github.com/tendermint/spn/x/monitoringp"
 	// monitoringpkeeper "github.com/tendermint/spn/x/monitoringp/keeper"
 
-	epochsmodule "github.com/Stride-Labs/stride/v4/x/epochs"
-	epochsmodulekeeper "github.com/Stride-Labs/stride/v4/x/epochs/keeper"
-	epochsmoduletypes "github.com/Stride-Labs/stride/v4/x/epochs/types"
+	epochsmodule "github.com/Stride-Labs/stride/v5/x/epochs"
+	epochsmodulekeeper "github.com/Stride-Labs/stride/v5/x/epochs/keeper"
+	epochsmoduletypes "github.com/Stride-Labs/stride/v5/x/epochs/types"
 
-	"github.com/Stride-Labs/stride/v4/x/interchainquery"
-	interchainquerykeeper "github.com/Stride-Labs/stride/v4/x/interchainquery/keeper"
-	interchainquerytypes "github.com/Stride-Labs/stride/v4/x/interchainquery/types"
+	"github.com/Stride-Labs/stride/v5/x/interchainquery"
+	interchainquerykeeper "github.com/Stride-Labs/stride/v5/x/interchainquery/keeper"
+	interchainquerytypes "github.com/Stride-Labs/stride/v5/x/interchainquery/types"
 
-	"github.com/Stride-Labs/stride/v4/x/claim"
-	claimkeeper "github.com/Stride-Labs/stride/v4/x/claim/keeper"
-	claimtypes "github.com/Stride-Labs/stride/v4/x/claim/types"
-	icacallbacksmodule "github.com/Stride-Labs/stride/v4/x/icacallbacks"
-	icacallbacksmodulekeeper "github.com/Stride-Labs/stride/v4/x/icacallbacks/keeper"
-	icacallbacksmoduletypes "github.com/Stride-Labs/stride/v4/x/icacallbacks/types"
-	recordsmodule "github.com/Stride-Labs/stride/v4/x/records"
-	recordsmodulekeeper "github.com/Stride-Labs/stride/v4/x/records/keeper"
-	recordsmoduletypes "github.com/Stride-Labs/stride/v4/x/records/types"
-	stakeibcmodule "github.com/Stride-Labs/stride/v4/x/stakeibc"
-	stakeibcclient "github.com/Stride-Labs/stride/v4/x/stakeibc/client"
-	stakeibcmodulekeeper "github.com/Stride-Labs/stride/v4/x/stakeibc/keeper"
-	stakeibcmoduletypes "github.com/Stride-Labs/stride/v4/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v5/x/claim"
+	claimkeeper "github.com/Stride-Labs/stride/v5/x/claim/keeper"
+	claimtypes "github.com/Stride-Labs/stride/v5/x/claim/types"
+	icacallbacksmodule "github.com/Stride-Labs/stride/v5/x/icacallbacks"
+	icacallbacksmodulekeeper "github.com/Stride-Labs/stride/v5/x/icacallbacks/keeper"
+	icacallbacksmoduletypes "github.com/Stride-Labs/stride/v5/x/icacallbacks/types"
+	recordsmodule "github.com/Stride-Labs/stride/v5/x/records"
+	recordsmodulekeeper "github.com/Stride-Labs/stride/v5/x/records/keeper"
+	recordsmoduletypes "github.com/Stride-Labs/stride/v5/x/records/types"
+	stakeibcmodule "github.com/Stride-Labs/stride/v5/x/stakeibc"
+	stakeibcclient "github.com/Stride-Labs/stride/v5/x/stakeibc/client"
+	stakeibcmodulekeeper "github.com/Stride-Labs/stride/v5/x/stakeibc/keeper"
+	stakeibcmoduletypes "github.com/Stride-Labs/stride/v5/x/stakeibc/types"
 
 	// this line is used by starport scaffolding # stargate/app/moduleImport
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
@@ -141,7 +138,7 @@ import (
 const (
 	AccountAddressPrefix = "stride"
 	Name                 = "stride"
-	Version              = "4.0.3"
+	Version              = "5.0.0"
 )
 
 // this line is used by starport scaffolding # stargate/wasm/app/enabledProposals
@@ -173,7 +170,6 @@ var (
 	// and genesis verification.
 	ModuleBasics = module.NewBasicManager(
 		auth.AppModuleBasic{},
-		authzmodule.AppModuleBasic{},
 		genutil.AppModuleBasic{},
 		bank.AppModuleBasic{},
 		capability.AppModuleBasic{},
@@ -253,7 +249,6 @@ type StrideApp struct {
 
 	// keepers
 	AccountKeeper    authkeeper.AccountKeeper
-	AuthzKeeper      authzkeeper.Keeper
 	BankKeeper       bankkeeper.Keeper
 	CapabilityKeeper *capabilitykeeper.Keeper
 	StakingKeeper    stakingkeeper.Keeper
@@ -330,7 +325,6 @@ func NewStrideApp(
 		icacontrollertypes.StoreKey, icahosttypes.StoreKey,
 		recordsmoduletypes.StoreKey,
 		icacallbacksmoduletypes.StoreKey,
-		authzkeeper.StoreKey,
 		claimtypes.StoreKey,
 		// this line is used by starport scaffolding # stargate/app/storeKey
 	)
@@ -366,13 +360,6 @@ func NewStrideApp(
 	// add keepers
 	app.AccountKeeper = authkeeper.NewAccountKeeper(
 		appCodec, keys[authtypes.StoreKey], app.GetSubspace(authtypes.ModuleName), authtypes.ProtoBaseAccount, maccPerms, AccountAddressPrefix,
-	)
-
-	app.AuthzKeeper = authzkeeper.NewKeeper(
-		keys[authzkeeper.StoreKey],
-		appCodec,
-		app.BaseApp.MsgServiceRouter(),
-		app.AccountKeeper,
 	)
 
 	app.BankKeeper = bankkeeper.NewBaseKeeper(
@@ -644,7 +631,6 @@ func NewStrideApp(
 		icaModule,
 		recordsModule,
 		icacallbacksModule,
-		authzmodule.NewAppModule(appCodec, app.AuthzKeeper, app.AccountKeeper, app.BankKeeper, app.interfaceRegistry),
 		// this line is used by starport scaffolding # stargate/app/appModule
 	)
 
@@ -679,7 +665,6 @@ func NewStrideApp(
 		recordsmoduletypes.ModuleName,
 		icacallbacksmoduletypes.ModuleName,
 		claimtypes.ModuleName,
-		authz.ModuleName,
 		// this line is used by starport scaffolding # stargate/app/beginBlockers
 	)
 
@@ -710,7 +695,6 @@ func NewStrideApp(
 		recordsmoduletypes.ModuleName,
 		icacallbacksmoduletypes.ModuleName,
 		claimtypes.ModuleName,
-		authz.ModuleName,
 		// this line is used by starport scaffolding # stargate/app/endBlockers
 	)
 
@@ -746,7 +730,6 @@ func NewStrideApp(
 		recordsmoduletypes.ModuleName,
 		icacallbacksmoduletypes.ModuleName,
 		claimtypes.ModuleName,
-		authz.ModuleName,
 		// this line is used by starport scaffolding # stargate/app/initGenesis
 	)
 
