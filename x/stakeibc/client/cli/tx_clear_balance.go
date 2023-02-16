@@ -7,6 +7,8 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/tx"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	errorsmod "cosmossdk.io/errors"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/spf13/cobra"
 
@@ -24,7 +26,7 @@ func CmdClearBalance() *cobra.Command {
 			argChainId := args[0]
 			argAmount, found := sdk.NewIntFromString(args[1])
 			if !found {
-				return sdkerrors.Wrap(sdkerrors.ErrInvalidType, "can not convert string to int")
+				return errorsmod.Wrap(sdkerrors.ErrInvalidType, "can not convert string to int")
 			}
 			argChannelId := args[2]
 
