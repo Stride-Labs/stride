@@ -22,16 +22,17 @@ var _ types.MsgServer = msgServer{}
 
 // Adds a new oracle as a destination for metric updates
 // Registers a new ICA account along this connection and instantiates the oracle's cosmwasm contract in the callback
-func (server msgServer) AddOracle(goCtx context.Context, msg *types.MsgAddOracle) (*types.MsgAddOracleResponse, error) {
+func (k msgServer) AddOracle(goCtx context.Context, msg *types.MsgAddOracle) (*types.MsgAddOracleResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
 	// TODO
 	_ = ctx
+
 	return &types.MsgAddOracleResponse{}, nil
 }
 
 // Creates a new ICA channel and restores the oracle ICA account after a channel closer
-func (server msgServer) RestoreOracleICA(goCtx context.Context, msg *types.MsgRestoreOracleICA) (*types.MsgRestoreOracleICAResponse, error) {
+func (k msgServer) RestoreOracleICA(goCtx context.Context, msg *types.MsgRestoreOracleICA) (*types.MsgRestoreOracleICAResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
 	// TODO

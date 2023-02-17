@@ -518,6 +518,7 @@ func NewStrideApp(
 		appCodec,
 		keys[icaoracletypes.StoreKey],
 		app.GetSubspace(icaoracletypes.ModuleName),
+		app.IBCKeeper.ChannelKeeper, // ICS4Wrapper - Note: this technically should be ICAController but it doesn't implement ICS4
 		app.IBCKeeper.ChannelKeeper,
 		app.ICAControllerKeeper,
 		app.IcacallbacksKeeper,
@@ -592,10 +593,12 @@ func NewStrideApp(
 
 	// Stack two (Stakeibc Stack) contains
 	// - IBC
-	// - ICA
+	// - ICAController
+	// - ICAOracle
 	// - stakeibc
 	// - base app
 	var stakeibcStack porttypes.IBCModule = stakeibcIBCModule
+	stakeibcStack = icaoracle.NewIBCMiddleware(stakeibcStack, app.ICAOracleKeeper)
 	stakeibcStack = icacontroller.NewIBCMiddleware(stakeibcStack, app.ICAControllerKeeper)
 
 	// Stack three contains

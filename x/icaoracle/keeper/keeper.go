@@ -21,8 +21,9 @@ type Keeper struct {
 	storeKey   storetypes.StoreKey
 	paramstore paramtypes.Subspace
 
-	channelKeeper       channelkeeper.Keeper
-	icaControllerKeeper icacontrollerkeeper.Keeper
+	ICS4Wrapper         types.ICS4Wrapper
+	ChannelKeeper       channelkeeper.Keeper
+	ICAControllerKeeper icacontrollerkeeper.Keeper
 	ICACallbacksKeeper  icacallbackskeeper.Keeper
 }
 
@@ -30,6 +31,8 @@ func NewKeeper(
 	cdc codec.BinaryCodec,
 	key storetypes.StoreKey,
 	paramstore paramtypes.Subspace,
+
+	ics4Wrapper types.ICS4Wrapper,
 	channelKeeper channelkeeper.Keeper,
 	icaControllerKeeper icacontrollerkeeper.Keeper,
 	icaCallbacksKeeper icacallbackskeeper.Keeper,
@@ -38,8 +41,9 @@ func NewKeeper(
 		cdc:                 cdc,
 		storeKey:            key,
 		paramstore:          paramstore,
-		channelKeeper:       channelKeeper,
-		icaControllerKeeper: icaControllerKeeper,
+		ICS4Wrapper:         ics4Wrapper,
+		ChannelKeeper:       channelKeeper,
+		ICAControllerKeeper: icaControllerKeeper,
 		ICACallbacksKeeper:  icaCallbacksKeeper,
 	}
 }
