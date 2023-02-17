@@ -13,7 +13,7 @@ func TestMsgRestoreOracleICA(t *testing.T) {
 	apptesting.SetupConfig()
 	validAddr, invalidAddr := apptesting.GenerateTestAddrs()
 
-	validMoniker := "moniker1"
+	validChainId := "chain-1"
 
 	tests := []struct {
 		name string
@@ -24,32 +24,24 @@ func TestMsgRestoreOracleICA(t *testing.T) {
 			name: "successful message",
 			msg: types.MsgRestoreOracleICA{
 				Creator:       validAddr,
-				OracleMoniker: validMoniker,
+				OracleChainId: validChainId,
 			},
 		},
 		{
 			name: "invalid creator",
 			msg: types.MsgRestoreOracleICA{
 				Creator:       invalidAddr,
-				OracleMoniker: validMoniker,
+				OracleChainId: validChainId,
 			},
 			err: "invalid creator address",
 		},
 		{
-			name: "empty moniker",
+			name: "empty chain-id",
 			msg: types.MsgRestoreOracleICA{
 				Creator:       validAddr,
-				OracleMoniker: "",
+				OracleChainId: "",
 			},
-			err: "oracle-moniker is required",
-		},
-		{
-			name: "invalid moniker",
-			msg: types.MsgRestoreOracleICA{
-				Creator:       validAddr,
-				OracleMoniker: "moniker 1",
-			},
-			err: "oracle-moniker cannot contain any spaces",
+			err: "oracle-chain-id is required",
 		},
 	}
 
@@ -64,7 +56,7 @@ func TestMsgRestoreOracleICA(t *testing.T) {
 				require.Equal(t, len(signers), 1)
 				require.Equal(t, signers[0].String(), validAddr)
 
-				require.Equal(t, test.msg.OracleMoniker, validMoniker, "oracle-moniker")
+				require.Equal(t, test.msg.OracleChainId, validChainId, "oracle-chain-id")
 			} else {
 				require.ErrorContains(t, test.msg.ValidateBasic(), test.err, "test: %v", test.name)
 			}

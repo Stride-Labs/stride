@@ -73,17 +73,17 @@ func (k Keeper) RemoveMetricFromQueue(ctx sdk.Context, key string) {
 func (k Keeper) SetMetricUpdateInProgress(ctx sdk.Context, pendingMetric types.PendingMetricUpdate) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.MetricPendingKeyPrefix)
 
-	pendingMetricKey := types.GetPendingMetricKey(pendingMetric.Metric.Key, pendingMetric.OracleMoniker)
+	pendingMetricKey := types.GetPendingMetricKey(pendingMetric.Metric.Key, pendingMetric.OracleChainId)
 	pendingMetricBz := k.cdc.MustMarshal(&pendingMetric)
 
 	store.Set(pendingMetricKey, pendingMetricBz)
 }
 
 // Gets a pending metric update from the pending store
-func (k Keeper) GetPendingMetricUpdate(ctx sdk.Context, key string, oracleMoniker string) (pendingMetric types.PendingMetricUpdate, found bool) {
+func (k Keeper) GetPendingMetricUpdate(ctx sdk.Context, key string, oracleChainId string) (pendingMetric types.PendingMetricUpdate, found bool) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.MetricPendingKeyPrefix)
 
-	pendingMetricKey := types.GetPendingMetricKey(key, oracleMoniker)
+	pendingMetricKey := types.GetPendingMetricKey(key, oracleChainId)
 	pendingMetricBz := store.Get(pendingMetricKey)
 
 	if len(pendingMetricBz) == 0 {
@@ -114,8 +114,8 @@ func (k Keeper) GetAllPendingMetricUpdates(ctx sdk.Context) []types.PendingMetri
 
 // Marks a metric update as "complete", meaning it has been updated on the oracle
 // and the ack has been received. Indicated by removing it from the pending store
-func (k Keeper) SetMetricUpdateComplete(ctx sdk.Context, metricKey string, oracleMoniker string) {
+func (k Keeper) SetMetricUpdateComplete(ctx sdk.Context, metricKey string, oracleChainId string) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.MetricPendingKeyPrefix)
-	metricUpdateKey := types.GetPendingMetricKey(metricKey, oracleMoniker)
+	metricUpdateKey := types.GetPendingMetricKey(metricKey, oracleChainId)
 	store.Delete(metricUpdateKey)
 }

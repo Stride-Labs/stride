@@ -14,7 +14,7 @@ func TestGovRemoveOracle(t *testing.T) {
 
 	validTitle := "RemoveOracle"
 	validDescription := "Remove oracle"
-	validMoniker := "moniker"
+	validChainId := "chain-id"
 
 	tests := []struct {
 		name     string
@@ -26,7 +26,7 @@ func TestGovRemoveOracle(t *testing.T) {
 			proposal: types.RemoveOracleProposal{
 				Title:         validTitle,
 				Description:   validDescription,
-				OracleMoniker: validMoniker,
+				OracleChainId: validChainId,
 			},
 		},
 		{
@@ -34,7 +34,7 @@ func TestGovRemoveOracle(t *testing.T) {
 			proposal: types.RemoveOracleProposal{
 				Title:         "",
 				Description:   validDescription,
-				OracleMoniker: validMoniker,
+				OracleChainId: validChainId,
 			},
 			err: "title cannot be blank",
 		},
@@ -43,27 +43,18 @@ func TestGovRemoveOracle(t *testing.T) {
 			proposal: types.RemoveOracleProposal{
 				Title:         validTitle,
 				Description:   "",
-				OracleMoniker: validMoniker,
+				OracleChainId: validChainId,
 			},
 			err: "description cannot be blank",
 		},
 		{
-			name: "empty moniker",
+			name: "empty chain-id",
 			proposal: types.RemoveOracleProposal{
 				Title:         validTitle,
 				Description:   validDescription,
-				OracleMoniker: "",
+				OracleChainId: "",
 			},
-			err: "oracle-moniker is required",
-		},
-		{
-			name: "invalid moniker",
-			proposal: types.RemoveOracleProposal{
-				Title:         validTitle,
-				Description:   validDescription,
-				OracleMoniker: "moniker 1",
-			},
-			err: "oracle-moniker cannot contain any spaces",
+			err: "oracle-chain-id is required",
 		},
 	}
 
@@ -71,7 +62,7 @@ func TestGovRemoveOracle(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			if test.err == "" {
 				require.NoError(t, test.proposal.ValidateBasic(), "test: %v", test.name)
-				require.Equal(t, test.proposal.OracleMoniker, validMoniker, "oracle moniker")
+				require.Equal(t, test.proposal.OracleChainId, validChainId, "oracle chain-id")
 			} else {
 				require.ErrorContains(t, test.proposal.ValidateBasic(), test.err, "test: %v", test.name)
 			}

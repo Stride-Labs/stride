@@ -5,5 +5,5 @@ import (
 )
 
 var (
-	ErrOracleNotFound = errorsmod.Register(ModuleName, 1101, "oracle not found")
+	ErrOracleNotFound = errorsmod.Register(ModuleName, 1, "oracle not found")
 )

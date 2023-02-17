@@ -74,7 +74,7 @@ Where proposal.json contains:
 {
 	"title": "Toggle Oracle ...",
     "description": "Deactivate oracle because ...",
-    "oracle_moniker": "osmosis",
+    "oracle_chain_id": "osmosis-1",
 }
 `, version.AppName),
 		),
@@ -130,7 +130,7 @@ Where proposal.json contains:
 {
 	"title": "Remove Oracle ...",
     "description": "Remove oracle because ...",
-    "oracle_moniker": "osmosis",
+    "oracle_chain_id": "osmosis-1",
 }
 `, version.AppName),
 		),
@@ -186,7 +186,7 @@ Where proposal.json contains:
 {
 	"title": "Update Oracle Contract ...",
     "description": "Update oracle contract address to ... because ...",
-    "oracle_moniker": "osmosis",
+    "oracle_chain_id": "osmosis-1",
 	"contract_address": "osmo..."
 }
 `, version.AppName),

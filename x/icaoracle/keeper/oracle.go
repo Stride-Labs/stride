@@ -11,17 +11,17 @@ import (
 func (k Keeper) SetOracle(ctx sdk.Context, oracle types.Oracle) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.OracleKeyPrefix)
 
-	oracleKey := types.KeyPrefix(oracle.Moniker)
+	oracleKey := types.KeyPrefix(oracle.ChainId)
 	oracleValue := k.cdc.MustMarshal(&oracle)
 
 	store.Set(oracleKey, oracleValue)
 }
 
-// Grabs and returns an oracle object from the store using the moniker
-func (k Keeper) GetOracle(ctx sdk.Context, moniker string) (oracle types.Oracle, found bool) {
+// Grabs and returns an oracle object from the store using the chain-id
+func (k Keeper) GetOracle(ctx sdk.Context, chainId string) (oracle types.Oracle, found bool) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.OracleKeyPrefix)
 
-	oracleKey := types.KeyPrefix(moniker)
+	oracleKey := types.KeyPrefix(chainId)
 	oracleBz := store.Get(oracleKey)
 
 	if len(oracleBz) == 0 {
@@ -51,15 +51,15 @@ func (k Keeper) GetAllOracles(ctx sdk.Context) []types.Oracle {
 }
 
 // Removes an oracle from the store
-func (k Keeper) RemoveOracle(ctx sdk.Context, moniker string) {
+func (k Keeper) RemoveOracle(ctx sdk.Context, chainId string) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.OracleKeyPrefix)
-	oracleKey := types.KeyPrefix(moniker)
+	oracleKey := types.KeyPrefix(chainId)
 	store.Delete(oracleKey)
 }
 
 // Toggle whether an oracle is active
-func (k Keeper) ToggleOracle(ctx sdk.Context, moniker string, active bool) error {
-	oracle, found := k.GetOracle(ctx, moniker)
+func (k Keeper) ToggleOracle(ctx sdk.Context, chainId string, active bool) error {
+	oracle, found := k.GetOracle(ctx, chainId)
 	if !found {
 		return types.ErrOracleNotFound
 	}

@@ -14,7 +14,7 @@ var _ types.QueryServer = Keeper{}
 func (k Keeper) Oracle(c context.Context, req *types.QueryOracleRequest) (*types.QueryOracleResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
 
-	oracle, found := k.GetOracle(ctx, req.Moniker)
+	oracle, found := k.GetOracle(ctx, req.ChainId)
 	if !found {
 		return &types.QueryOracleResponse{}, types.ErrOracleNotFound
 	}
@@ -56,7 +56,7 @@ func (k Keeper) PendingMetricUpdates(c context.Context, req *types.QueryPendingM
 	pendingMetricUpdates := []types.PendingMetricUpdate{}
 	for _, metricUpdate := range k.GetAllPendingMetricUpdates(ctx) {
 		if req.MetricKey == "" || req.MetricKey == metricUpdate.Metric.Key {
-			if req.OracleMoniker == "" || req.OracleMoniker == metricUpdate.OracleMoniker {
+			if req.OracleChainId == "" || req.OracleChainId == metricUpdate.OracleChainId {
 				pendingMetricUpdates = append(pendingMetricUpdates, metricUpdate)
 			}
 		}

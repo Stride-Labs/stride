@@ -16,7 +16,6 @@ func TestMsgAddOracle(t *testing.T) {
 	validAdminAddress, ok := apptesting.GetAdminAddress()
 	require.True(t, ok)
 
-	validMoniker := "moniker1"
 	validConnectionId := "connection-10"
 	validCodeId := uint64(1)
 
@@ -29,7 +28,6 @@ func TestMsgAddOracle(t *testing.T) {
 			name: "successful message",
 			msg: types.MsgAddOracle{
 				Creator:        validAdminAddress,
-				Moniker:        validMoniker,
 				ConnectionId:   validConnectionId,
 				ContractCodeId: validCodeId,
 			},
@@ -38,7 +36,6 @@ func TestMsgAddOracle(t *testing.T) {
 			name: "invalid creator",
 			msg: types.MsgAddOracle{
 				Creator:        validNotAdminAddress,
-				Moniker:        validMoniker,
 				ConnectionId:   validConnectionId,
 				ContractCodeId: validCodeId,
 			},
@@ -48,37 +45,15 @@ func TestMsgAddOracle(t *testing.T) {
 			name: "invalid admin address",
 			msg: types.MsgAddOracle{
 				Creator:        invalidAddress,
-				Moniker:        validMoniker,
 				ConnectionId:   validConnectionId,
 				ContractCodeId: validCodeId,
 			},
 			err: "invalid creator address",
 		},
 		{
-			name: "empty moniker",
-			msg: types.MsgAddOracle{
-				Creator:        validAdminAddress,
-				Moniker:        "",
-				ConnectionId:   validConnectionId,
-				ContractCodeId: validCodeId,
-			},
-			err: "moniker is required",
-		},
-		{
-			name: "invalid moniker",
-			msg: types.MsgAddOracle{
-				Creator:        validAdminAddress,
-				Moniker:        "moniker 1",
-				ConnectionId:   validConnectionId,
-				ContractCodeId: validCodeId,
-			},
-			err: "moniker cannot contain any spaces",
-		},
-		{
 			name: "invalid connection prefix",
 			msg: types.MsgAddOracle{
 				Creator:        validAdminAddress,
-				Moniker:        validMoniker,
 				ConnectionId:   "connect-1",
 				ContractCodeId: validCodeId,
 			},
@@ -88,7 +63,6 @@ func TestMsgAddOracle(t *testing.T) {
 			name: "invalid connection suffix",
 			msg: types.MsgAddOracle{
 				Creator:        validAdminAddress,
-				Moniker:        validMoniker,
 				ConnectionId:   "connection-X",
 				ContractCodeId: validCodeId,
 			},
@@ -98,7 +72,6 @@ func TestMsgAddOracle(t *testing.T) {
 			name: "invalid code ID",
 			msg: types.MsgAddOracle{
 				Creator:        validAdminAddress,
-				Moniker:        validMoniker,
 				ConnectionId:   validConnectionId,
 				ContractCodeId: 0,
 			},
@@ -117,7 +90,6 @@ func TestMsgAddOracle(t *testing.T) {
 				require.Equal(t, len(signers), 1)
 				require.Equal(t, signers[0].String(), validAdminAddress)
 
-				require.Equal(t, test.msg.Moniker, validMoniker, "moniker")
 				require.Equal(t, test.msg.ConnectionId, validConnectionId, "connnectionId")
 				require.Equal(t, test.msg.ContractCodeId, validCodeId, "codeId")
 			} else {

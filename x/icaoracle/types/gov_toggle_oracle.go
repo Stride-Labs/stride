@@ -2,7 +2,6 @@ package types
 
 import (
 	"fmt"
-	"strings"
 
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
@@ -20,11 +19,11 @@ var (
 	_ govtypes.Content = &ToggleOracleProposal{}
 )
 
-func NewToggleOracleProposal(title, description, oracleMoniker string) govtypes.Content {
+func NewToggleOracleProposal(title, description, oracleChainId string) govtypes.Content {
 	return &ToggleOracleProposal{
 		Title:         title,
 		Description:   description,
-		OracleMoniker: oracleMoniker,
+		OracleChainId: oracleChainId,
 	}
 }
 
@@ -44,11 +43,8 @@ func (p *ToggleOracleProposal) ValidateBasic() error {
 		return err
 	}
 
-	if p.OracleMoniker == "" {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "oracle-moniker is required")
-	}
-	if strings.Contains(p.OracleMoniker, " ") {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "oracle-moniker cannot contain any spaces")
+	if p.OracleChainId == "" {
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "oracle-chain-id is required")
 	}
 
 	return nil
@@ -58,6 +54,6 @@ func (p *ToggleOracleProposal) String() string {
 	return fmt.Sprintf(`Toggle Oracle Proposal:
 	Title:         %s
 	Description:   %s
-	OracleMoniker: %s
-  `, p.Title, p.Description, p.OracleMoniker)
+	OracleChainId: %s
+  `, p.Title, p.Description, p.OracleChainId)
 }

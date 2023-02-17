@@ -14,14 +14,13 @@ service Msg {
 
 message MsgAddOracle {
   string creator = 1;
-  string moniker = 2;
-  string connection_id = 3;
-  uint64 contract_code_id = 4;
+  string connection_id = 2;
+  uint64 contract_code_id = 3;
 }
 message MsgAddOracleResponse {}
 
 message MsgRestoreOracleICA {
   string creator = 1;
-  string oracle_moniker = 2;
+  string oracle_chain_id = 2;
 }
 message MsgRestoreOracleICAResponse {}

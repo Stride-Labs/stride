@@ -14,7 +14,7 @@ func TestGovUpdateOracleContract(t *testing.T) {
 
 	validTitle := "UpdateOracleContract"
 	validDescription := "Update oracle contract"
-	validMoniker := "moniker"
+	validChainId := "chain-1"
 	validContractAddress := "juno14hj2tavq8fpesdwxxcu44rty3hh90vhujrvcmstl4zr3txmfvw9skjuwg8"
 
 	tests := []struct {
@@ -27,7 +27,7 @@ func TestGovUpdateOracleContract(t *testing.T) {
 			proposal: types.UpdateOracleContractProposal{
 				Title:           validTitle,
 				Description:     validDescription,
-				OracleMoniker:   validMoniker,
+				OracleChainId:   validChainId,
 				ContractAddress: validContractAddress,
 			},
 		},
@@ -36,7 +36,7 @@ func TestGovUpdateOracleContract(t *testing.T) {
 			proposal: types.UpdateOracleContractProposal{
 				Title:           "",
 				Description:     validDescription,
-				OracleMoniker:   validMoniker,
+				OracleChainId:   validChainId,
 				ContractAddress: validContractAddress,
 			},
 			err: "title cannot be blank",
@@ -46,37 +46,27 @@ func TestGovUpdateOracleContract(t *testing.T) {
 			proposal: types.UpdateOracleContractProposal{
 				Title:           validTitle,
 				Description:     "",
-				OracleMoniker:   validMoniker,
+				OracleChainId:   validChainId,
 				ContractAddress: validContractAddress,
 			},
 			err: "description cannot be blank",
 		},
 		{
-			name: "empty moniker",
+			name: "empty chain-id",
 			proposal: types.UpdateOracleContractProposal{
 				Title:           validTitle,
 				Description:     validDescription,
-				OracleMoniker:   "",
+				OracleChainId:   "",
 				ContractAddress: validContractAddress,
 			},
-			err: "oracle-moniker is required",
-		},
-		{
-			name: "invalid moniker",
-			proposal: types.UpdateOracleContractProposal{
-				Title:           validTitle,
-				Description:     validDescription,
-				OracleMoniker:   "moniker 1",
-				ContractAddress: validContractAddress,
-			},
-			err: "oracle-moniker cannot contain any spaces",
+			err: "oracle-chain-id is required",
 		},
 		{
 			name: "invalid contract address",
 			proposal: types.UpdateOracleContractProposal{
 				Title:           validTitle,
 				Description:     validDescription,
-				OracleMoniker:   validMoniker,
+				OracleChainId:   validChainId,
 				ContractAddress: "",
 			},
 			err: "contract address is required",
@@ -87,7 +77,7 @@ func TestGovUpdateOracleContract(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			if test.err == "" {
 				require.NoError(t, test.proposal.ValidateBasic(), "test: %v", test.name)
-				require.Equal(t, test.proposal.OracleMoniker, validMoniker, "oracle moniker")
+				require.Equal(t, test.proposal.OracleChainId, validChainId, "oracle chain-id")
 			} else {
 				require.ErrorContains(t, test.proposal.ValidateBasic(), test.err, "test: %v", test.name)
 			}

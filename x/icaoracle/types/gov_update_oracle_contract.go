@@ -2,7 +2,6 @@ package types
 
 import (
 	"fmt"
-	"strings"
 
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
@@ -20,11 +19,11 @@ var (
 	_ govtypes.Content = &UpdateOracleContractProposal{}
 )
 
-func NewUpdateOracleContractProposal(title, description, oracleMoniker, contractAddress string) govtypes.Content {
+func NewUpdateOracleContractProposal(title, description, oracleChainId, contractAddress string) govtypes.Content {
 	return &UpdateOracleContractProposal{
 		Title:           title,
 		Description:     description,
-		OracleMoniker:   oracleMoniker,
+		OracleChainId:   oracleChainId,
 		ContractAddress: contractAddress,
 	}
 }
@@ -45,11 +44,8 @@ func (p *UpdateOracleContractProposal) ValidateBasic() error {
 		return err
 	}
 
-	if p.OracleMoniker == "" {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "oracle-moniker is required")
-	}
-	if strings.Contains(p.OracleMoniker, " ") {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "oracle-moniker cannot contain any spaces")
+	if p.OracleChainId == "" {
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "oracle-chain-id is required")
 	}
 
 	if p.ContractAddress == "" {
@@ -63,7 +59,7 @@ func (p *UpdateOracleContractProposal) String() string {
 	return fmt.Sprintf(`Update Oracle Contract Proposal:
 	Title:         %s
 	Description:   %s
-	OracleMoniker: %s
+	OracleChainId: %s
 	ContractAddress: %s
-  `, p.Title, p.Description, p.OracleMoniker, p.ContractAddress)
+  `, p.Title, p.Description, p.OracleChainId, p.ContractAddress)
 }

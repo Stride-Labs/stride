@@ -11,9 +11,9 @@ func (s *KeeperTestSuite) TestQueryOracle() {
 	allOracles := s.createOracles()
 	for _, expectedOracle := range allOracles {
 		queryResponse, err := s.QueryClient.Oracle(context.Background(), &types.QueryOracleRequest{
-			Moniker: expectedOracle.Moniker,
+			ChainId: expectedOracle.ChainId,
 		})
-		s.Require().NoError(err, "no error expected when querying oracle %s", expectedOracle.Moniker)
+		s.Require().NoError(err, "no error expected when querying oracle %s", expectedOracle.ChainId)
 		s.Require().Equal(expectedOracle, *queryResponse.Oracle)
 	}
 }
@@ -30,7 +30,7 @@ func (s *KeeperTestSuite) TestQueryActiveOracles() {
 	activeOracles := []types.Oracle{}
 	inActiveOracles := []types.Oracle{}
 	for i := 1; i <= 6; i++ {
-		oracle := types.Oracle{Moniker: fmt.Sprintf("moniker-%d", i)}
+		oracle := types.Oracle{ChainId: fmt.Sprintf("chain-%d", i)}
 		if i%2 == 0 {
 			oracle.Active = true
 			activeOracles = append(activeOracles, oracle)
@@ -64,32 +64,32 @@ func (s *KeeperTestSuite) TestQueryAllPendingMetricUpdates() {
 }
 
 func (s *KeeperTestSuite) TestQueryPendingMetricUpdates() {
-	filterKey := "key2"
-	filterMoniker := "moniker2"
+	filterMetricKey := "key-2"
+	filterOracleChainId := "chain-2"
 
 	// Add pending metrics across 2 keys and 2 oracles
-	updatesByKey := make(map[string][]types.PendingMetricUpdate)
-	updatesByMoniker := make(map[string][]types.PendingMetricUpdate)
+	updatesByMetric := make(map[string][]types.PendingMetricUpdate)
+	updatesByOracle := make(map[string][]types.PendingMetricUpdate)
 	allPendingUpdates := []types.PendingMetricUpdate{
 		{
-			Metric: &types.Metric{Key: "key1"}, OracleMoniker: "moniker1",
+			Metric: &types.Metric{Key: "key-1"}, OracleChainId: "chain-1",
 		},
 		{
-			Metric: &types.Metric{Key: "key2"}, OracleMoniker: "moniker1",
+			Metric: &types.Metric{Key: "key-2"}, OracleChainId: "chain-1",
 		},
 		{
-			Metric: &types.Metric{Key: "key1"}, OracleMoniker: "moniker2",
+			Metric: &types.Metric{Key: "key-1"}, OracleChainId: "chain-2",
 		},
 		{
-			Metric: &types.Metric{Key: "key2"}, OracleMoniker: "moniker2",
+			Metric: &types.Metric{Key: "key-2"}, OracleChainId: "chain-2",
 		},
 	}
 	for _, pendingUpdate := range allPendingUpdates {
 		key := pendingUpdate.Metric.Key
-		moniker := pendingUpdate.OracleMoniker
+		chainId := pendingUpdate.OracleChainId
 
-		updatesByKey[key] = append(updatesByKey[key], pendingUpdate)
-		updatesByMoniker[moniker] = append(updatesByMoniker[moniker], pendingUpdate)
+		updatesByMetric[key] = append(updatesByMetric[key], pendingUpdate)
+		updatesByOracle[chainId] = append(updatesByOracle[chainId], pendingUpdate)
 
 		s.App.ICAOracleKeeper.SetMetricUpdateInProgress(s.Ctx, pendingUpdate)
 	}
@@ -100,29 +100,29 @@ func (s *KeeperTestSuite) TestQueryPendingMetricUpdates() {
 	s.Require().NoError(err, "no error expected when querying pending metric updates with no filter")
 	s.Require().ElementsMatch(expectedNoFilters, queryResponse.PendingUpdates)
 
-	// Check with a filter on the key (key == "key2")
+	// Check with a filter on the metric (metric key == "key-2")
 	queryResponse, err = s.QueryClient.PendingMetricUpdates(s.Ctx, &types.QueryPendingMetricUpdatesRequest{
-		MetricKey: filterKey,
+		MetricKey: filterMetricKey,
 	})
-	s.Require().NoError(err, "no error expected when querying pending metric updates with key filter")
-	s.Require().ElementsMatch(updatesByKey[filterKey], queryResponse.PendingUpdates)
+	s.Require().NoError(err, "no error expected when querying pending metric updates with metric key filter")
+	s.Require().ElementsMatch(updatesByMetric[filterMetricKey], queryResponse.PendingUpdates)
 
-	// Check with a filter on the moniker (moniker == "moniker2")
+	// Check with a filter on the oracle (chain-id == "chain-2")
 	queryResponse, err = s.QueryClient.PendingMetricUpdates(s.Ctx, &types.QueryPendingMetricUpdatesRequest{
-		OracleMoniker: filterMoniker,
+		OracleChainId: filterOracleChainId,
 	})
-	s.Require().NoError(err, "no error expected when querying pending metric updates with key filter")
-	s.Require().ElementsMatch(updatesByMoniker[filterMoniker], queryResponse.PendingUpdates)
+	s.Require().NoError(err, "no error expected when querying pending metric updates with oracle filter")
+	s.Require().ElementsMatch(updatesByOracle[filterOracleChainId], queryResponse.PendingUpdates)
 
-	// Check with a filter on both the key and moniker (key == "key2", moniker == "moniker2")
-	expectedKeyAndMonikerFilter := []types.PendingMetricUpdate{{
-		Metric:        &types.Metric{Key: filterKey},
-		OracleMoniker: filterMoniker,
+	// Check with a filter on both the metric and oracle (metric key == "key2", chain-id == "chain-2")
+	expectedMetricAndOracleFilter := []types.PendingMetricUpdate{{
+		Metric:        &types.Metric{Key: filterMetricKey},
+		OracleChainId: filterOracleChainId,
 	}}
 	queryResponse, err = s.QueryClient.PendingMetricUpdates(s.Ctx, &types.QueryPendingMetricUpdatesRequest{
-		MetricKey:     filterKey,
-		OracleMoniker: filterMoniker,
+		MetricKey:     filterMetricKey,
+		OracleChainId: filterOracleChainId,
 	})
-	s.Require().NoError(err, "no error expected when querying pending metric updates with key filter")
-	s.Require().ElementsMatch(expectedKeyAndMonikerFilter, queryResponse.PendingUpdates)
+	s.Require().NoError(err, "no error expected when querying pending metric updates with metric key and oracle filter")
+	s.Require().ElementsMatch(expectedMetricAndOracleFilter, queryResponse.PendingUpdates)
 }

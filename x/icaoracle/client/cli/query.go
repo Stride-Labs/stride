@@ -18,7 +18,7 @@ import (
 
 const (
 	FlagMetricKey     = "metric-key"
-	FlagOracleMoniker = "oracle-moniker"
+	FlagOracleChainId = "oracle-chain-id"
 	FlagActive        = "active"
 )
 
@@ -41,20 +41,20 @@ func GetQueryCmd() *cobra.Command {
 	return cmd
 }
 
-// GetCmdQueryOracle implements a command to query a specific oracle using the oracle's moniker
+// GetCmdQueryOracle implements a command to query a specific oracle using the oracle's chain ID
 func GetCmdQueryOracle() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "oracle",
 		Short: "Queries a specific oracle",
 		Long: strings.TrimSpace(
-			fmt.Sprintf(`Queries a specific oracle using the oracle's moniker
+			fmt.Sprintf(`Queries a specific oracle using the oracle's chain ID
 Example:
-  $ %s query %s oracle [moniker]
+  $ %s query %s oracle [chain-id]
 `, version.AppName, types.ModuleName),
 		),
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			moniker := args[0]
+			chainId := args[0]
 
 			clientCtx, err := client.GetClientQueryContext(cmd)
 			if err != nil {
@@ -63,7 +63,7 @@ Example:
 			queryClient := types.NewQueryClient(clientCtx)
 
 			req := &types.QueryOracleRequest{
-				Moniker: moniker,
+				ChainId: chainId,
 			}
 			res, err := queryClient.Oracle(context.Background(), req)
 			if err != nil {
@@ -137,7 +137,7 @@ Examples:
 }
 
 // GetCmdQueryPendingMetricUpdates implements a command to query pending metric updates with optional
-// key and/or oracle moniker filters
+// key and/or oracle chain-id filters
 func GetCmdQueryPendingMetricUpdates() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "pending-metric-updates",
@@ -147,7 +147,7 @@ func GetCmdQueryPendingMetricUpdates() *cobra.Command {
 Examples:
   $ %[1]s query %[2]s pending-metric-updates 
   $ %[1]s query %[2]s pending-metric-updates --metric-key=[key]
-  $ %[1]s query %[2]s pending-metric-updates --oracle-moniker=[moniker]
+  $ %[1]s query %[2]s pending-metric-updates --oracle-chain-id=[chain-id]
 `, version.AppName, types.ModuleName),
 		),
 		Args: cobra.ExactArgs(0),
@@ -156,7 +156,7 @@ Examples:
 			if err != nil {
 				return err
 			}
-			oracleMoniker, err := cmd.Flags().GetString(FlagOracleMoniker)
+			oracleChainId, err := cmd.Flags().GetString(FlagOracleChainId)
 			if err != nil {
 				return err
 			}
@@ -169,17 +169,17 @@ Examples:
 
 			// If no filters are passed, return all pending metrics
 			var res proto.Message
-			if metricKey == "" && oracleMoniker == "" {
+			if metricKey == "" && oracleChainId == "" {
 				req := &types.QueryAllPendingMetricUpdatesRequest{}
 				res, err = queryClient.AllPendingMetricUpdates(context.Background(), req)
 				if err != nil {
 					return err
 				}
 			} else {
-				// Otherwise filter by metric key and moniker
+				// Otherwise filter by metric key and chain ID
 				req := &types.QueryPendingMetricUpdatesRequest{
 					MetricKey:     metricKey,
-					OracleMoniker: oracleMoniker,
+					OracleChainId: oracleChainId,
 				}
 				res, err = queryClient.PendingMetricUpdates(context.Background(), req)
 				if err != nil {
@@ -192,7 +192,7 @@ Examples:
 	}
 
 	cmd.Flags().String(FlagMetricKey, "", "The metric key")
-	cmd.Flags().String(FlagOracleMoniker, "", "The oracle moniker")
+	cmd.Flags().String(FlagOracleChainId, "", "The oracle chain ID")
 	flags.AddQueryFlagsToCmd(cmd)
 
 	return cmd

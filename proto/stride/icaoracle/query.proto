@@ -12,7 +12,7 @@ service Query {
   // Query a specific oracle
   rpc Oracle(QueryOracleRequest) returns (QueryOracleResponse) {
     option (google.api.http).get =
-        "/Stride-Labs/stride/icaoracle/oracle/{moniker}";
+        "/Stride-Labs/stride/icaoracle/oracle/{chain_id}";
   }
 
   // Query all oracles
@@ -37,17 +37,18 @@ service Query {
   }
 
   // Query pending metrics with optional filters:
-  // - /pending_metric_updates/by_key_or_moniker?metric_key=X
-  // - /pending_metric_updates/by_key_or_moniker?oracle_moniker=Y
-  // - /pending_metric_updates/by_key_or_moniker?metric_key=X&oracle_moniker=Y
+  // - /pending_metric_updates/by_metric_or_oracle?metric_key=X
+  // - /pending_metric_updates/by_metric_or_oracle?oracle_chain_id=Y
+  // -
+  // /pending_metric_updates/by_metric_or_oracle?metric_key=X&oracle_chain_id=Y
   rpc PendingMetricUpdates(QueryPendingMetricUpdatesRequest)
       returns (QueryPendingMetricUpdatesResponse) {
     option (google.api.http).get = "/Stride-Labs/stride/icaoracle/"
-                                   "pending_metric_updates/by_key_or_moniker";
+                                   "pending_metric_updates/by_metric_or_oracle";
   }
 }
 
-message QueryOracleRequest { string moniker = 1; }
+message QueryOracleRequest { string chain_id = 1; }
 message QueryOracleResponse { Oracle oracle = 1; }
 
 message QueryAllOraclesRequest {}
@@ -68,7 +69,7 @@ message QueryAllPendingMetricUpdatesResponse {
 
 message QueryPendingMetricUpdatesRequest {
   string metric_key = 1;
-  string oracle_moniker = 2;
+  string oracle_chain_id = 2;
 }
 message QueryPendingMetricUpdatesResponse {
   repeated PendingMetricUpdate pending_updates = 1

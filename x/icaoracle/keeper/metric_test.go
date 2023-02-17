@@ -64,7 +64,7 @@ func (s *KeeperTestSuite) addPendingMetrics() []types.PendingMetricUpdate {
 				Key:   "key-" + suffix,
 				Value: "value-" + suffix,
 			},
-			OracleMoniker: "moniker-" + suffix,
+			OracleChainId: "chain-" + suffix,
 		}
 
 		pendingMetrics = append(pendingMetrics, metricUpdate)
@@ -79,9 +79,9 @@ func (s *KeeperTestSuite) TestGetPendingMetricUpdate() {
 
 	expectedPendingMetric := pendingMetrics[1]
 	metricKey := expectedPendingMetric.Metric.Key
-	oracleMoniker := expectedPendingMetric.OracleMoniker
+	oracleChainId := expectedPendingMetric.OracleChainId
 
-	actualPendingMetric, found := s.App.ICAOracleKeeper.GetPendingMetricUpdate(s.Ctx, metricKey, oracleMoniker)
+	actualPendingMetric, found := s.App.ICAOracleKeeper.GetPendingMetricUpdate(s.Ctx, metricKey, oracleChainId)
 	s.Require().True(found, "metric should have been found, but was not")
 	s.Require().Equal(expectedPendingMetric, actualPendingMetric)
 }
@@ -98,9 +98,9 @@ func (s *KeeperTestSuite) TestSetMetricUpdateComplete() {
 
 	expectedPendingMetric := pendingMetrics[1]
 	metricKey := expectedPendingMetric.Metric.Key
-	oracleMoniker := expectedPendingMetric.OracleMoniker
+	oracleChainId := expectedPendingMetric.OracleChainId
 
-	s.App.ICAOracleKeeper.SetMetricUpdateComplete(s.Ctx, metricKey, oracleMoniker)
-	_, found := s.App.ICAOracleKeeper.GetPendingMetricUpdate(s.Ctx, metricKey, oracleMoniker)
+	s.App.ICAOracleKeeper.SetMetricUpdateComplete(s.Ctx, metricKey, oracleChainId)
+	_, found := s.App.ICAOracleKeeper.GetPendingMetricUpdate(s.Ctx, metricKey, oracleChainId)
 	s.Require().False(found, "the removed metric should not have been found, but it was")
 }

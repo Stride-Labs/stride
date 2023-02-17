@@ -4,7 +4,7 @@ package stride.icaoracle;
 option go_package = "github.com/Stride-Labs/stride/v5/x/icaoracle/types";
 
 message Oracle {
-  string moniker = 1;
+  string chain_id = 1;
   string connection_id = 2;
   string channel_id = 3;
   string contract_address = 4;
@@ -25,7 +25,7 @@ message Metric {
 
 message PendingMetricUpdate {
   Metric metric = 1;
-  string oracle_moniker = 2;
+  string oracle_chain_id = 2;
 }
 
 message ExecuteContractUpdateMetric { Metric update_metric = 1; }

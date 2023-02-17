@@ -20,8 +20,8 @@ func KeyPrefix(p string) []byte {
 
 // Generates a byte key for a pending metric update
 // (i.e. a metric update ICA that has been sent to an specific oracle)
-func GetPendingMetricKey(metricKey string, oracleMoniker string) []byte {
-	return append([]byte(metricKey), []byte(oracleMoniker)...)
+func GetPendingMetricKey(metricKey string, oracleChainId string) []byte {
+	return append([]byte(metricKey), []byte(oracleChainId)...)
 }
 
 var (

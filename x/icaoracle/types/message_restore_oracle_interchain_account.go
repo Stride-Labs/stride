@@ -1,8 +1,6 @@
 package types
 
 import (
-	"strings"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
@@ -11,10 +9,10 @@ const TypeMsgRestoreOracleICA = "restore_oracle_ica"
 
 var _ sdk.Msg = &MsgRestoreOracleICA{}
 
-func NewMsgRestoreOracleICA(creator string, oracleMoniker string) *MsgRestoreOracleICA {
+func NewMsgRestoreOracleICA(creator string, oracleChainId string) *MsgRestoreOracleICA {
 	return &MsgRestoreOracleICA{
 		Creator:       creator,
-		OracleMoniker: oracleMoniker,
+		OracleChainId: oracleChainId,
 	}
 }
 
@@ -45,11 +43,8 @@ func (msg *MsgRestoreOracleICA) ValidateBasic() error {
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid creator address (%s)", err)
 	}
 
-	if msg.OracleMoniker == "" {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "oracle-moniker is required")
-	}
-	if strings.Contains(msg.OracleMoniker, " ") {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "oracle-moniker cannot contain any spaces")
+	if msg.OracleChainId == "" {
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "oracle-chain-id is required")
 	}
 
 	return nil

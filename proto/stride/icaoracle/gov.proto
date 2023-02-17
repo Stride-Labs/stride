@@ -14,7 +14,7 @@ message ToggleOracleProposal {
   string description = 2;
   string deposit = 3 [ (gogoproto.moretags) = "yaml:\"deposit\"" ];
 
-  string oracle_moniker = 4;
+  string oracle_chain_id = 4;
 }
 
 message RemoveOracleProposal {
@@ -26,7 +26,7 @@ message RemoveOracleProposal {
   string description = 2;
   string deposit = 3 [ (gogoproto.moretags) = "yaml:\"deposit\"" ];
 
-  string oracle_moniker = 4;
+  string oracle_chain_id = 4;
 }
 
 message UpdateOracleContractProposal {
@@ -38,6 +38,6 @@ message UpdateOracleContractProposal {
   string description = 2;
   string deposit = 3 [ (gogoproto.moretags) = "yaml:\"deposit\"" ];
 
-  string oracle_moniker = 4;
+  string oracle_chain_id = 4;
   string contract_address = 5;
 }

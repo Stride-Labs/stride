@@ -2,7 +2,6 @@ package types
 
 import (
 	"regexp"
-	"strings"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -14,10 +13,9 @@ const TypeMsgAddOracle = "add_oracle"
 
 var _ sdk.Msg = &MsgAddOracle{}
 
-func NewMsgAddOracle(creator string, moniker string, connectionId string, contractCodeId uint64) *MsgAddOracle {
+func NewMsgAddOracle(creator string, connectionId string, contractCodeId uint64) *MsgAddOracle {
 	return &MsgAddOracle{
 		Creator:        creator,
-		Moniker:        moniker,
 		ConnectionId:   connectionId,
 		ContractCodeId: contractCodeId,
 	}
@@ -51,13 +49,6 @@ func (msg *MsgAddOracle) ValidateBasic() error {
 	}
 	if err := utils.ValidateAdminAddress(msg.Creator); err != nil {
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid creator address (%s)", err)
-	}
-
-	if msg.Moniker == "" {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "moniker is required")
-	}
-	if strings.Contains(msg.Moniker, " ") {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "moniker cannot contain any spaces")
 	}
 
 	matched, err := regexp.MatchString(`^connection-\d+$`, msg.ConnectionId)
