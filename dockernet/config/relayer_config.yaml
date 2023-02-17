@@ -74,6 +74,21 @@ chains:
       timeout: 20s
       output-format: json
       sign-mode: direct
+  # {new-host-zone}:
+  #   type: cosmos
+  #   value:
+  #     key: rly{N}
+  #     chain-id: {CHAIN_ID}
+  #     rpc-addr: http://{node_prefix}1:26657
+  #     account-prefix: {bech32_hrp_account_prefix}
+  #     keyring-backend: test
+  #     gas-adjustment: 1.2
+  #     gas-prices: 0.01{minimal_denom}
+  #     debug: false
+  #     timeout: 20s
+  #     output-format: json
+  #     sign-mode: direct
+
 paths:
   stride-gaia:
     src:
@@ -107,3 +122,11 @@ paths:
     src-channel-filter:
       rule: ""
       channel-list: []
+  # stride-{new-host-zone}:
+  #   src:
+  #     chain-id: STRIDE
+  #   dst:
+  #     chain-id: {CHAIN_ID}
+  #   src-channel-filter:
+  #     rule: ""
+  #     channel-list: []

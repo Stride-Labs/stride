@@ -134,6 +134,7 @@ services:
     image: stridezone:stars
     volumes:
       - ./state/stars5:/home/stars/.starsd
+  # Fill in new host zone being tested here
 
   hermes:
     image: stridezone:hermes
