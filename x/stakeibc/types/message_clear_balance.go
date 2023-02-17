@@ -1,18 +1,21 @@
 package types
 
 import (
+	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	channeltypes "github.com/cosmos/ibc-go/v3/modules/core/04-channel/types"
 
-	"github.com/Stride-Labs/stride/v4/utils"
+	errorsmod "cosmossdk.io/errors"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	channeltypes "github.com/cosmos/ibc-go/v5/modules/core/04-channel/types"
+
+	"github.com/Stride-Labs/stride/v5/utils"
 )
 
 const TypeMsgClearBalance = "clear_balance"
 
 var _ sdk.Msg = &MsgClearBalance{}
 
-func NewMsgClearBalance(creator string, chainId string, amount sdk.Int, channelId string) *MsgClearBalance {
+func NewMsgClearBalance(creator string, chainId string, amount sdkmath.Int, channelId string) *MsgClearBalance {
 	return &MsgClearBalance{
 		Creator: creator,
 		ChainId: chainId,
@@ -45,21 +48,21 @@ func (msg *MsgClearBalance) GetSignBytes() []byte {
 func (msg *MsgClearBalance) ValidateBasic() error {
 	_, err := sdk.AccAddressFromBech32(msg.Creator)
 	if err != nil {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid creator address (%s)", err)
+		return errorsmod.Wrapf(sdkerrors.ErrInvalidAddress, "invalid creator address (%s)", err)
 	}
 	if err := utils.ValidateAdminAddress(msg.Creator); err != nil {
 		return err
 	}
 	// basic checks on host denom
 	if len(msg.ChainId) == 0 {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "chainid is required")
+		return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "chainid is required")
 	}
 
-	if msg.Amount.LTE(sdk.ZeroInt()) {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "amount must be greater than 0")
+	if msg.Amount.LTE(sdkmath.ZeroInt()) {
+		return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "amount must be greater than 0")
 	}
 	if isValid := channeltypes.IsValidChannelID(msg.Channel); !isValid {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "channel is invalid")
+		return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "channel is invalid")
 	}
 	return nil
 }

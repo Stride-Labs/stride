@@ -5,16 +5,16 @@ import (
 
 	"github.com/spf13/cast"
 
-	"github.com/Stride-Labs/stride/v4/utils"
-	"github.com/Stride-Labs/stride/v4/x/icacallbacks"
-	recordstypes "github.com/Stride-Labs/stride/v4/x/records/types"
-	"github.com/Stride-Labs/stride/v4/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v5/utils"
+	recordstypes "github.com/Stride-Labs/stride/v5/x/records/types"
+	"github.com/Stride-Labs/stride/v5/x/stakeibc/types"
 
-	icacallbackstypes "github.com/Stride-Labs/stride/v4/x/icacallbacks/types"
+	icacallbackstypes "github.com/Stride-Labs/stride/v5/x/icacallbacks/types"
 
+	errorsmod "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	channeltypes "github.com/cosmos/ibc-go/v3/modules/core/04-channel/types"
+	channeltypes "github.com/cosmos/ibc-go/v5/modules/core/04-channel/types"
 	"github.com/golang/protobuf/proto" //nolint:staticcheck
 )
 
@@ -45,45 +45,40 @@ func (k Keeper) UnmarshalDelegateCallbackArgs(ctx sdk.Context, delegateCallback 
 //      * Does nothing
 //   If failure:
 //		* Reverts deposit record status
-func DelegateCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ack *channeltypes.Acknowledgement, args []byte) error {
+func DelegateCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ackResponse *icacallbackstypes.AcknowledgementResponse, args []byte) error {
 	// Deserialize the callback args
 	delegateCallback, err := k.UnmarshalDelegateCallbackArgs(ctx, args)
 	if err != nil {
-		return err
+		return errorsmod.Wrapf(types.ErrUnmarshalFailure, fmt.Sprintf("Unable to unmarshal delegate callback args: %s", err.Error()))
 	}
 	chainId := delegateCallback.HostZoneId
-	k.Logger(ctx).Info(utils.LogCallbackWithHostZone(chainId, ICACallbackID_Delegate,
-		"Starting callback for Deposit Record: %d", delegateCallback.DepositRecordId))
+	k.Logger(ctx).Info(utils.LogICACallbackWithHostZone(chainId, ICACallbackID_Delegate,
+		"Starting delegate callback for Deposit Record: %d", delegateCallback.DepositRecordId))
 
 	// Confirm chainId and deposit record Id exist
 	hostZone, found := k.GetHostZone(ctx, chainId)
 	if !found {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "host zone not found %s", chainId)
+		return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "host zone not found %s", chainId)
 	}
 	recordId := delegateCallback.DepositRecordId
 	depositRecord, found := k.RecordsKeeper.GetDepositRecord(ctx, recordId)
 	if !found {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "deposit record not found %d", recordId)
+		return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "deposit record not found %d", recordId)
 	}
 
 	// Check for timeout (ack nil)
-	// No need to reset the deposit record status since it will get revertted when the channel is restored
-	if ack == nil {
-		k.Logger(ctx).Error(utils.LogCallbackWithHostZone(chainId, ICACallbackID_Delegate,
-			"TIMEOUT (ack is nil), Packet: %+v", packet))
+	// No need to reset the deposit record status since it will get reverted when the channel is restored
+	if ackResponse.Status == icacallbackstypes.AckResponseStatus_TIMEOUT {
+		k.Logger(ctx).Error(utils.LogICACallbackStatusWithHostZone(chainId, ICACallbackID_Delegate,
+			icacallbackstypes.AckResponseStatus_TIMEOUT, packet))
 		return nil
 	}
 
 	// Check for a failed transaction (ack error)
 	// Reset the deposit record status upon failure
-	txMsgData, err := icacallbacks.GetTxMsgData(ctx, *ack, k.Logger(ctx))
-	if err != nil {
-		k.Logger(ctx).Error(fmt.Sprintf("failed to fetch txMsgData, packet %v", packet))
-		return sdkerrors.Wrap(icacallbackstypes.ErrTxMsgData, err.Error())
-	}
-	if len(txMsgData.Data) == 0 {
-		k.Logger(ctx).Error(utils.LogCallbackWithHostZone(chainId, ICACallbackID_Delegate,
-			"ICA TX FAILED (ack is empty / ack error), Packet: %+v", packet))
+	if ackResponse.Status == icacallbackstypes.AckResponseStatus_FAILURE {
+		k.Logger(ctx).Error(utils.LogICACallbackStatusWithHostZone(chainId, ICACallbackID_Delegate,
+			icacallbackstypes.AckResponseStatus_FAILURE, packet))
 
 		// Reset deposit record status
 		depositRecord.Status = recordstypes.DepositRecord_DELEGATION_QUEUE
@@ -91,14 +86,15 @@ func DelegateCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ack
 		return nil
 	}
 
-	k.Logger(ctx).Info(utils.LogCallbackWithHostZone(chainId, ICACallbackID_Delegate, "SUCCESS, Packet: %+v", packet))
+	k.Logger(ctx).Info(utils.LogICACallbackStatusWithHostZone(chainId, ICACallbackID_Delegate,
+		icacallbackstypes.AckResponseStatus_SUCCESS, packet))
 
 	// Update delegations on the host zone
 	for _, splitDelegation := range delegateCallback.SplitDelegations {
 		hostZone.StakedBal = hostZone.StakedBal.Add(splitDelegation.Amount)
 		success := k.AddDelegationToValidator(ctx, hostZone, splitDelegation.Validator, splitDelegation.Amount, ICACallbackID_Delegate)
 		if !success {
-			return sdkerrors.Wrapf(types.ErrValidatorDelegationChg, "Failed to add delegation to validator")
+			return errorsmod.Wrapf(types.ErrValidatorDelegationChg, "Failed to add delegation to validator")
 		}
 		k.SetHostZone(ctx, hostZone)
 	}

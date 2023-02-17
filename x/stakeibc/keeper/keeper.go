@@ -3,6 +3,7 @@ package keeper
 import (
 	"fmt"
 
+	errorsmod "cosmossdk.io/errors"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/spf13/cast"
 	"github.com/tendermint/tendermint/libs/log"
@@ -13,26 +14,28 @@ import (
 	capabilitykeeper "github.com/cosmos/cosmos-sdk/x/capability/keeper"
 	capabilitytypes "github.com/cosmos/cosmos-sdk/x/capability/types"
 
-	icqkeeper "github.com/Stride-Labs/stride/v4/x/interchainquery/keeper"
-	"github.com/Stride-Labs/stride/v4/x/stakeibc/types"
+	icqkeeper "github.com/Stride-Labs/stride/v5/x/interchainquery/keeper"
+	"github.com/Stride-Labs/stride/v5/x/stakeibc/types"
 
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
 	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
-	icacontrollerkeeper "github.com/cosmos/ibc-go/v3/modules/apps/27-interchain-accounts/controller/keeper"
-	ibckeeper "github.com/cosmos/ibc-go/v3/modules/core/keeper"
-	ibctmtypes "github.com/cosmos/ibc-go/v3/modules/light-clients/07-tendermint/types"
+	icacontrollerkeeper "github.com/cosmos/ibc-go/v5/modules/apps/27-interchain-accounts/controller/keeper"
+	ibckeeper "github.com/cosmos/ibc-go/v5/modules/core/keeper"
+	ibctmtypes "github.com/cosmos/ibc-go/v5/modules/light-clients/07-tendermint/types"
 
-	epochstypes "github.com/Stride-Labs/stride/v4/x/epochs/types"
-	icacallbackskeeper "github.com/Stride-Labs/stride/v4/x/icacallbacks/keeper"
-	recordsmodulekeeper "github.com/Stride-Labs/stride/v4/x/records/keeper"
+	storetypes "github.com/cosmos/cosmos-sdk/store/types"
+
+	epochstypes "github.com/Stride-Labs/stride/v5/x/epochs/types"
+	icacallbackskeeper "github.com/Stride-Labs/stride/v5/x/icacallbacks/keeper"
+	recordsmodulekeeper "github.com/Stride-Labs/stride/v5/x/records/keeper"
 )
 
 type (
 	Keeper struct {
 		// *cosmosibckeeper.Keeper
 		cdc                   codec.BinaryCodec
-		storeKey              sdk.StoreKey
-		memKey                sdk.StoreKey
+		storeKey              storetypes.StoreKey
+		memKey                storetypes.StoreKey
 		paramstore            paramtypes.Subspace
 		ICAControllerKeeper   icacontrollerkeeper.Keeper
 		IBCKeeper             ibckeeper.Keeper
@@ -50,7 +53,7 @@ type (
 func NewKeeper(
 	cdc codec.BinaryCodec,
 	storeKey,
-	memKey sdk.StoreKey,
+	memKey storetypes.StoreKey,
 	ps paramtypes.Subspace,
 	// channelKeeper cosmosibckeeper.ChannelKeeper,
 	// portKeeper cosmosibckeeper.PortKeeper,
@@ -172,7 +175,7 @@ func (k Keeper) GetStrideEpochElapsedShare(ctx sdk.Context) (sdk.Dec, error) {
 	if !found {
 		errMsg := fmt.Sprintf("Failed to get epoch tracker for %s", epochstypes.STRIDE_EPOCH)
 		k.Logger(ctx).Error(errMsg)
-		return sdk.ZeroDec(), sdkerrors.Wrapf(sdkerrors.ErrNotFound, errMsg)
+		return sdk.ZeroDec(), errorsmod.Wrapf(sdkerrors.ErrNotFound, errMsg)
 	}
 
 	// Get epoch start time, end time, and duration
@@ -180,13 +183,13 @@ func (k Keeper) GetStrideEpochElapsedShare(ctx sdk.Context) (sdk.Dec, error) {
 	if err != nil {
 		errMsg := fmt.Sprintf("unable to convert epoch duration to int64, err: %s", err.Error())
 		k.Logger(ctx).Error(errMsg)
-		return sdk.ZeroDec(), sdkerrors.Wrapf(types.ErrIntCast, errMsg)
+		return sdk.ZeroDec(), errorsmod.Wrapf(types.ErrIntCast, errMsg)
 	}
 	epochEndTime, err := cast.ToInt64E(epochTracker.NextEpochStartTime)
 	if err != nil {
 		errMsg := fmt.Sprintf("unable to convert next epoch start time to int64, err: %s", err.Error())
 		k.Logger(ctx).Error(errMsg)
-		return sdk.ZeroDec(), sdkerrors.Wrapf(types.ErrIntCast, errMsg)
+		return sdk.ZeroDec(), errorsmod.Wrapf(types.ErrIntCast, errMsg)
 	}
 	epochStartTime := epochEndTime - epochDuration
 
@@ -195,7 +198,7 @@ func (k Keeper) GetStrideEpochElapsedShare(ctx sdk.Context) (sdk.Dec, error) {
 	if currBlockTime < epochStartTime || currBlockTime > epochEndTime {
 		errMsg := fmt.Sprintf("current block time %d is not within current epoch (ending at %d)", currBlockTime, epochTracker.NextEpochStartTime)
 		k.Logger(ctx).Error(errMsg)
-		return sdk.ZeroDec(), sdkerrors.Wrapf(types.ErrInvalidEpoch, errMsg)
+		return sdk.ZeroDec(), errorsmod.Wrapf(types.ErrInvalidEpoch, errMsg)
 	}
 
 	// Get elapsed share
@@ -204,7 +207,7 @@ func (k Keeper) GetStrideEpochElapsedShare(ctx sdk.Context) (sdk.Dec, error) {
 	if elapsedShare.LT(sdk.ZeroDec()) || elapsedShare.GT(sdk.OneDec()) {
 		errMsg := fmt.Sprintf("elapsed share (%s) for epoch is not between 0 and 1", elapsedShare)
 		k.Logger(ctx).Error(errMsg)
-		return sdk.ZeroDec(), sdkerrors.Wrapf(types.ErrInvalidEpoch, errMsg)
+		return sdk.ZeroDec(), errorsmod.Wrapf(types.ErrInvalidEpoch, errMsg)
 	}
 
 	k.Logger(ctx).Info(fmt.Sprintf("Epoch elapsed share: %v (Block Time: %d, Epoch End Time: %d)", elapsedShare, currBlockTime, epochEndTime))
@@ -225,7 +228,7 @@ func (k Keeper) IsWithinBufferWindow(ctx sdk.Context) (bool, error) {
 
 	inWindow := elapsedShareOfEpoch.GT(epochShareThresh)
 	if !inWindow {
-		k.Logger(ctx).Error(fmt.Sprintf("ICQCB: We're %d pct through the epoch, ICQ cutoff is %d", elapsedShareOfEpoch, epochShareThresh))
+		k.Logger(ctx).Error(fmt.Sprintf("Outside ICQ Callback Window. We're %d pct through the epoch, ICQ cutoff is %d", elapsedShareOfEpoch, epochShareThresh))
 	}
 	return inWindow, nil
 }
@@ -234,7 +237,7 @@ func (k Keeper) GetICATimeoutNanos(ctx sdk.Context, epochType string) (uint64, e
 	epochTracker, found := k.GetEpochTracker(ctx, epochType)
 	if !found {
 		k.Logger(ctx).Error(fmt.Sprintf("Failed to get epoch tracker for %s", epochType))
-		return 0, sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "Failed to get epoch tracker for %s", epochType)
+		return 0, errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "Failed to get epoch tracker for %s", epochType)
 	}
 	// BUFFER by 5% of the epoch length
 	bufferSizeParam := k.GetParam(ctx, types.KeyBufferSize)
@@ -242,13 +245,13 @@ func (k Keeper) GetICATimeoutNanos(ctx sdk.Context, epochType string) (uint64, e
 	// buffer size should not be negative or longer than the epoch duration
 	if bufferSize > epochTracker.Duration {
 		k.Logger(ctx).Error(fmt.Sprintf("Invalid buffer size %d", bufferSize))
-		return 0, sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "Invalid buffer size %d", bufferSize)
+		return 0, errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "Invalid buffer size %d", bufferSize)
 	}
 	timeoutNanos := epochTracker.NextEpochStartTime - bufferSize
 	timeoutNanosUint64, err := cast.ToUint64E(timeoutNanos)
 	if err != nil {
 		k.Logger(ctx).Error(fmt.Sprintf("Failed to convert timeoutNanos to uint64, error: %s", err.Error()))
-		return 0, sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "Failed to convert timeoutNanos to uint64, error: %s", err.Error())
+		return 0, errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "Failed to convert timeoutNanos to uint64, error: %s", err.Error())
 	}
 	return timeoutNanosUint64, nil
 }
@@ -266,7 +269,7 @@ func (k Keeper) IsRedemptionRateWithinSafetyBounds(ctx sdk.Context, zone types.H
 	if redemptionRate.LT(minSafetyThreshold) || redemptionRate.GT(maxSafetyThreshold) {
 		errMsg := fmt.Sprintf("IsRedemptionRateWithinSafetyBounds check failed %s is outside safety bounds [%s, %s]", redemptionRate.String(), minSafetyThreshold.String(), maxSafetyThreshold.String())
 		k.Logger(ctx).Error(errMsg)
-		return false, sdkerrors.Wrapf(types.ErrRedemptionRateOutsideSafetyBounds, errMsg)
+		return false, errorsmod.Wrapf(types.ErrRedemptionRateOutsideSafetyBounds, errMsg)
 	}
 	return true, nil
 }
@@ -282,7 +285,7 @@ func (k Keeper) ConfirmValSetHasSpace(ctx sdk.Context, validators []*types.Valid
 	if err != nil {
 		errMsg := fmt.Sprintf("Error getting safety max num validators | err: %s", err.Error())
 		k.Logger(ctx).Error(errMsg)
-		return sdkerrors.Wrap(types.ErrMaxNumValidators, errMsg)
+		return errorsmod.Wrap(types.ErrMaxNumValidators, errMsg)
 	}
 
 	// count up the number of validators with non-zero weights
@@ -297,7 +300,7 @@ func (k Keeper) ConfirmValSetHasSpace(ctx sdk.Context, validators []*types.Valid
 	if numNonzeroWgtValidators >= maxNumVals {
 		errMsg := fmt.Sprintf("Attempting to add new validator but already reached max number of validators (%d)", maxNumVals)
 		k.Logger(ctx).Error(errMsg)
-		return sdkerrors.Wrap(types.ErrMaxNumValidators, errMsg)
+		return errorsmod.Wrap(types.ErrMaxNumValidators, errMsg)
 	}
 
 	return nil

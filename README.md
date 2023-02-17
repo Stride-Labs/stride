@@ -10,11 +10,12 @@ Stride is a blockchain ("zone") that provides liquidity for staked assets. Using
 
 **Stride** is built using Cosmos SDK and Tendermint. Stride allows users to liquid stake any IBC-compatible cosmos SDK native appchain token. Under the hood, Stride leverages the [Inter-Blockchain Communication protocol](https://ibc.cosmos.network/), [Interchain Accounts](https://blog.cosmos.network/interchain-accounts-take-cosmos-interoperability-to-the-next-level-39c9a8aad4ad) and [Interchain Queries](https://github.com/schnetzlerjoe/interchain-query-spec).
 
-
-
 ## How does Multichain Liquid Staking work?
 
 ![](https://drive.google.com/uc?id=1RuK2YeMH7O6P9-8ro_ybOg5n79ySwFjN)
+
+## Running a Mainnet Node
+If you want to setup your node for the Stride mainnet, find the relevant files and instructions [here](https://github.com/Stride-Labs/mainnet/blob/main/mainnet/README.md)
 
 ## Getting Started as a Developer
 ### Developing on Stride
@@ -26,7 +27,7 @@ The fastest way to develop on Stride is local development mode.
 #### Set up local development mode 
 Install the required git submodule dependencies (various chains, relayers, bats). 
 ```
-git submodule update --init
+git submodule update --init --recursive
 ```
 
 Build executables, initialize state, and start the network with
@@ -43,7 +44,7 @@ You can optionally pass build arguments to specify which binary to rebuild
 7. `h` This will re-build the Hermes binary
 
 Example: `make start-docker build=sg`, this will:
-- Rebuild the Stride and Gaia binarys
+- Rebuild the Stride and Gaia binaries
 - Start 1 Stride and 1 Gaia node in the docker
 - Start Relayers
 
@@ -97,7 +98,7 @@ On the backend, Stride permissionly stakes these tokens on the host chain and co
 
 <img src="https://drive.google.com/uc?id=11kJZE93BdhNjkaNig3DGYnTnuSNClP8Y" width="900">
 
-Users can always redeem from Stride. When they select "redeeem" on the Stride website, Stride will initiate unbonding on the host zone. Once the unbonding period elapses, the users will receive native tokens in their wallets. 
+Users can always redeem from Stride. When they select "redeem" on the Stride website, Stride will initiate unbonding on the host zone. Once the unbonding period elapses, the users will receive native tokens in their wallets. 
 
 <img src="https://drive.google.com/uc?id=1rtFiUwziiKjeUkJcJ9YuT1AN3JUtSVVr" width="900">
 

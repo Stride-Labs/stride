@@ -15,7 +15,7 @@ var (
 	DefaultReinvestInterval       uint64 = 1
 	DefaultRewardsInterval        uint64 = 1
 	DefaultRedemptionRateInterval uint64 = 1
-	// you apparantly cannot safely encode floats, so we make commission / 100
+	// you apparently cannot safely encode floats, so we make commission / 100
 	DefaultStrideCommission                 uint64 = 10
 	DefaultValidatorRebalancingThreshold    uint64 = 100 // divide by 10,000, so 100 = 1%
 	DefaultICATimeoutNanos                  uint64 = 600000000000
@@ -29,6 +29,7 @@ var (
 	DefaultSafetyNumValidators              uint64 = 35
 	DefaultMinNumRebalance					uint64 = 1
 	DefaultMaxNumRebalance					uint64 = 10
+	DefaultSafetyMaxSlashPercent            uint64 = 10
 
 	// KeyDepositInterval is store's key for the DepositInterval option
 	KeyDepositInterval                  = []byte("DepositInterval")
@@ -49,6 +50,7 @@ var (
 	KeySafetyNumValidators              = []byte("SafetyNumValidators")
 	KeyMinNumRebalance					= []byte("MinNumRebalance")
 	KeyMaxNumRebalance					= []byte("MaxNumRebalance")
+	KeySafetyMaxSlashPercent            = []byte("SafetyMaxSlashPercent")
 )
 
 var _ paramtypes.ParamSet = (*Params)(nil)
@@ -60,44 +62,46 @@ func ParamKeyTable() paramtypes.KeyTable {
 
 // NewParams creates a new Params instance
 func NewParams(
-	deposit_interval uint64,
-	delegate_interval uint64,
-	rewards_interval uint64,
-	redemption_rate_interval uint64,
-	stride_commission uint64,
-	reinvest_interval uint64,
-	validator_rebalancing_threshold uint64,
-	ica_timeout_nanos uint64,
-	buffer_size uint64,
-	ibc_timeout_blocks uint64,
-	fee_transfer_timeout_nanos uint64,
-	max_stake_ica_calls_per_epoch uint64,
-	safety_min_redemption_rate_threshold uint64,
-	safety_max_redemption_rate_threshold uint64,
-	ibc_transfer_timeout_nanos uint64,
-	safety_num_validators uint64,
-	min_num_rebalance uint64,
-	max_num_rebalance uint64,
+	depositInterval uint64,
+	delegateInterval uint64,
+	rewardsInterval uint64,
+	redemptionRateInterval uint64,
+	strideCommission uint64,
+	reinvestInterval uint64,
+	validatorRebalancingThreshold uint64,
+	icaTimeoutNanos uint64,
+	bufferSize uint64,
+	ibcTimeoutBlocks uint64,
+	feeTransferTimeoutNanos uint64,
+	maxStakeIcaCallsPerEpoch uint64,
+	safetyMinRedemptionRateThreshold uint64,
+	safetyMaxRedemptionRateThreshold uint64,
+	ibcTransferTimeoutNanos uint64,
+	safetyNumValidators uint64,
+	minNumRebalance uint64,
+	maxNumRebalance uint64,
+	safetyMaxSlashPercent uint64,
 ) Params {
 	return Params{
-		DepositInterval:                  deposit_interval,
-		DelegateInterval:                 delegate_interval,
-		RewardsInterval:                  rewards_interval,
-		RedemptionRateInterval:           redemption_rate_interval,
-		StrideCommission:                 stride_commission,
-		ReinvestInterval:                 reinvest_interval,
-		ValidatorRebalancingThreshold:    validator_rebalancing_threshold,
-		IcaTimeoutNanos:                  ica_timeout_nanos,
-		BufferSize:                       buffer_size,
-		IbcTimeoutBlocks:                 ibc_timeout_blocks,
-		FeeTransferTimeoutNanos:          fee_transfer_timeout_nanos,
-		MaxStakeIcaCallsPerEpoch:         max_stake_ica_calls_per_epoch,
-		SafetyMinRedemptionRateThreshold: safety_min_redemption_rate_threshold,
-		SafetyMaxRedemptionRateThreshold: safety_max_redemption_rate_threshold,
-		IbcTransferTimeoutNanos:          ibc_transfer_timeout_nanos,
-		SafetyNumValidators:              safety_num_validators,
-		MinNumRebalance: 				  min_num_rebalance,
-		MaxNumRebalance: 				  max_num_rebalance,		
+		DepositInterval:                  depositInterval,
+		DelegateInterval:                 delegateInterval,
+		RewardsInterval:                  rewardsInterval,
+		RedemptionRateInterval:           redemptionRateInterval,
+		StrideCommission:                 strideCommission,
+		ReinvestInterval:                 reinvestInterval,
+		ValidatorRebalancingThreshold:    validatorRebalancingThreshold,
+		IcaTimeoutNanos:                  icaTimeoutNanos,
+		BufferSize:                       bufferSize,
+		IbcTimeoutBlocks:                 ibcTimeoutBlocks,
+		FeeTransferTimeoutNanos:          feeTransferTimeoutNanos,
+		MaxStakeIcaCallsPerEpoch:         maxStakeIcaCallsPerEpoch,
+		SafetyMinRedemptionRateThreshold: safetyMinRedemptionRateThreshold,
+		SafetyMaxRedemptionRateThreshold: safetyMaxRedemptionRateThreshold,
+		IbcTransferTimeoutNanos:          ibcTransferTimeoutNanos,
+		SafetyNumValidators:              safetyNumValidators,
+		MinNumRebalance: 				  minNumRebalance,
+		MaxNumRebalance: 				  maxNumRebalance,	
+		SafetyMaxSlashPercent:            safetyMaxSlashPercent,
 	}
 }
 
@@ -122,6 +126,7 @@ func DefaultParams() Params {
 		DefaultSafetyNumValidators,
 		DefaultMinNumRebalance,
 		DefaultMaxNumRebalance,
+		DefaultSafetyMaxSlashPercent,
 	)
 }
 
@@ -146,6 +151,7 @@ func (p *Params) ParamSetPairs() paramtypes.ParamSetPairs {
 		paramtypes.NewParamSetPair(KeySafetyNumValidators, &p.SafetyNumValidators, isPositive),
 		paramtypes.NewParamSetPair(KeyMinNumRebalance, &p.MinNumRebalance, isPositive),
 		paramtypes.NewParamSetPair(KeyMaxNumRebalance, &p.MaxNumRebalance, isPositive),
+		paramtypes.NewParamSetPair(KeySafetyMaxSlashPercent, &p.SafetyMaxSlashPercent, validSlashPercent),
 	}
 }
 
@@ -207,6 +213,18 @@ func validMinRedemptionRateThreshold(i interface{}) error {
 
 	if ival < minVal {
 		return fmt.Errorf("parameter must be g.t. 75: %d", ival)
+	}
+
+	return nil
+}
+
+func validSlashPercent(i interface{}) error {
+	ival, ok := i.(uint64)
+	if !ok {
+		return fmt.Errorf("parameter not accepted: %T", i)
+	}
+	if ival > 100 {
+		return fmt.Errorf("parameter must be between 0 and 100: %d", ival)
 	}
 
 	return nil

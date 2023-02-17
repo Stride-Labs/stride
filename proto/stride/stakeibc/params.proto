@@ -3,7 +3,7 @@ package stride.stakeibc;
 
 import "gogoproto/gogo.proto";
 
-option go_package = "github.com/Stride-Labs/stride/v4/x/stakeibc/types";
+option go_package = "github.com/Stride-Labs/stride/v5/x/stakeibc/types";
 
 // Params defines the parameters for the module.
 // next id: 18
@@ -35,4 +35,5 @@ message Params {
   uint64 safety_num_validators = 17;
   uint64 min_num_rebalance = 18;
   uint64 max_num_rebalance = 19;
+  uint64 safety_max_slash_percent = 20;
 }
