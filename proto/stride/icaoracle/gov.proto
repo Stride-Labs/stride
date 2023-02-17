@@ -15,6 +15,7 @@ message ToggleOracleProposal {
   string deposit = 3 [ (gogoproto.moretags) = "yaml:\"deposit\"" ];
 
   string oracle_chain_id = 4;
+  bool active = 5;
 }
 
 message RemoveOracleProposal {
