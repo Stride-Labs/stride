@@ -583,7 +583,14 @@ func NewStrideApp(
 	transferStack = recordsmodule.NewIBCModule(app.RecordsKeeper, transferStack)
 
 	// Create static IBC router, add transfer route, then set and seal it
-	// Note, authentication module packets are routed to the top level of the middleware stack
+	// Two routes are included for the ICAController because of the following procedure when registering an ICA
+	//     1. RegisterInterchainAccount binds the new portId to the icacontroller module and initiates a channel opening
+	//     2. MsgChanOpenInit is invoked from the IBC message server.  The message server identifies that the
+	//        icacontroller module owns the portID and routes to the stakeibc stack (the "icacontroller" route below)
+	//     3. The stakeibc stack works top-down, first in the ICAController's OnChanOpenInit, and then in stakeibc's OnChanOpenInit
+	//     4. In stakeibc's OnChanOpenInit, the stakeibc module steals the portId from the icacontroller module
+	//     5. Now in OnChanOpenAck and any other subsequent IBC callback, the message server will identify
+	//        the portID owner as stakeibc and route to the same stakeibcStack, this time using the "stakeibc" route instead
 	ibcRouter := ibcporttypes.NewRouter()
 	ibcRouter.
 		// ICAHost Stack
