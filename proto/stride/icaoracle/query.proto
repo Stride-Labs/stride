@@ -3,6 +3,7 @@ package stride.icaoracle;
 
 import "stride/icaoracle/icaoracle.proto";
 import "google/api/annotations.proto";
+import "gogoproto/gogo.proto";
 
 option go_package = "github.com/Stride-Labs/stride/v5/x/icaoracle/types";
 
@@ -50,16 +51,26 @@ message QueryOracleRequest { string moniker = 1; }
 message QueryOracleResponse { Oracle oracle = 1; }
 
 message QueryAllOraclesRequest {}
-message QueryAllOraclesResponse { repeated Oracle oracles = 1; }
+message QueryAllOraclesResponse {
+  repeated Oracle oracles = 1 [ (gogoproto.nullable) = false ];
+}
 
 message QueryActiveOraclesRequest { bool active = 1; }
-message QueryActiveOraclesResponse { repeated Oracle oracles = 1; }
+message QueryActiveOraclesResponse {
+  repeated Oracle oracles = 1 [ (gogoproto.nullable) = false ];
+}
 
 message QueryAllPendingMetricUpdatesRequest {}
-message QueryAllPendingMetricUpdatesResponse { repeated Metric metrics = 1; }
+message QueryAllPendingMetricUpdatesResponse {
+  repeated PendingMetricUpdate pending_updates = 1
+      [ (gogoproto.nullable) = false ];
+}
 
 message QueryPendingMetricUpdatesRequest {
   string metric_key = 1;
   string oracle_moniker = 2;
 }
-message QueryPendingMetricUpdatesResponse { repeated Metric metrics = 1; }
+message QueryPendingMetricUpdatesResponse {
+  repeated PendingMetricUpdate pending_updates = 1
+      [ (gogoproto.nullable) = false ];
+}

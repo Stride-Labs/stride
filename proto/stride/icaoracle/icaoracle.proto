@@ -23,4 +23,9 @@ message Metric {
   Metadata metadata = 3;
 }
 
+message PendingMetricUpdate {
+  Metric metric = 1;
+  string oracle_moniker = 2;
+}
+
 message ExecuteContractUpdateMetric { Metric update_metric = 1; }

@@ -292,7 +292,7 @@ type StrideApp struct {
 	ScopedIcacallbacksKeeper capabilitykeeper.ScopedKeeper
 	IcacallbacksKeeper       icacallbacksmodulekeeper.Keeper
 	ClaimKeeper              claimkeeper.Keeper
-	icaoracleKeeper          icaoraclekeeper.Keeper
+	ICAOracleKeeper          icaoraclekeeper.Keeper
 	scopedIcaoracleKeeper    capabilitykeeper.ScopedKeeper
 	// this line is used by starport scaffolding # stargate/app/keeperDeclaration
 
@@ -514,7 +514,7 @@ func NewStrideApp(
 
 	scopedIcaoracleKeeper := app.CapabilityKeeper.ScopeToModule(icaoracletypes.ModuleName)
 	app.scopedIcaoracleKeeper = scopedIcaoracleKeeper
-	app.icaoracleKeeper = *icaoraclekeeper.NewKeeper(
+	app.ICAOracleKeeper = *icaoraclekeeper.NewKeeper(
 		appCodec,
 		keys[icaoracletypes.StoreKey],
 		app.GetSubspace(icaoracletypes.ModuleName),
@@ -522,7 +522,7 @@ func NewStrideApp(
 		app.ICAControllerKeeper,
 		app.IcacallbacksKeeper,
 	)
-	icaoracleModule := icaoracle.NewAppModule(appCodec, app.icaoracleKeeper)
+	icaoracleModule := icaoracle.NewAppModule(appCodec, app.ICAOracleKeeper)
 
 	// Register Gov (must be registerd after stakeibc)
 	govRouter := govtypesv1beta1.NewRouter()
@@ -532,7 +532,7 @@ func NewStrideApp(
 		AddRoute(upgradetypes.RouterKey, upgrade.NewSoftwareUpgradeProposalHandler(app.UpgradeKeeper)).
 		AddRoute(ibcclienttypes.RouterKey, ibcclient.NewClientProposalHandler(app.IBCKeeper.ClientKeeper)).
 		AddRoute(stakeibcmoduletypes.RouterKey, stakeibcmodule.NewStakeibcProposalHandler(app.StakeibcKeeper)).
-		AddRoute(icaoracletypes.RouterKey, icaoracle.NewProposalHandler(app.icaoracleKeeper))
+		AddRoute(icaoracletypes.RouterKey, icaoracle.NewProposalHandler(app.ICAOracleKeeper))
 
 	app.GovKeeper = govkeeper.NewKeeper(
 		appCodec, keys[govtypes.StoreKey], app.GetSubspace(govtypes.ModuleName), app.AccountKeeper, app.BankKeeper,
