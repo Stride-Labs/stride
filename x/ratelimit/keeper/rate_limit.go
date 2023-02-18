@@ -25,11 +25,12 @@ func (k Keeper) GetChannelValue(ctx sdk.Context, denom string) sdkmath.Int {
 }
 
 // If the rate limit is exceeded or the denom is blacklisted, we emit an event
-func EmitRateLimitExceededEvent(ctx sdk.Context, denom, channelId string, direction types.PacketDirection, amount sdkmath.Int, err error) {
+func EmitTransferDeniedEvent(ctx sdk.Context, reason, denom, channelId string, direction types.PacketDirection, amount sdkmath.Int, err error) {
 	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(
-			types.EventRateLimitExceeded,
+			types.EventTransferDenied,
 			sdk.NewAttribute(sdk.AttributeKeyModule, types.ModuleName),
+			sdk.NewAttribute(types.AttributeKeyReason, reason),
 			sdk.NewAttribute(types.AttributeKeyAction, strings.ToLower(direction.String())), // packet_send or packet_recv
 			sdk.NewAttribute(types.AttributeKeyDenom, denom),
 			sdk.NewAttribute(types.AttributeKeyChannel, channelId),
@@ -57,7 +58,7 @@ func (k Keeper) CheckRateLimitAndUpdateFlow(ctx sdk.Context, direction types.Pac
 	// First check if the denom is blacklisted
 	if k.IsDenomBlacklisted(ctx, denom) {
 		err := errorsmod.Wrapf(types.ErrDenomIsBlacklisted, "denom %s is blacklisted", denom)
-		EmitRateLimitExceededEvent(ctx, denom, channelId, direction, amount, err)
+		EmitTransferDeniedEvent(ctx, types.EventBlacklistedDenom, denom, channelId, direction, amount, err)
 		return err
 	}
 
@@ -71,7 +72,7 @@ func (k Keeper) CheckRateLimitAndUpdateFlow(ctx sdk.Context, direction types.Pac
 	err := k.UpdateFlow(rateLimit, direction, amount)
 	if err != nil {
 		// If the rate limit was exceeded, emit an event
-		EmitRateLimitExceededEvent(ctx, denom, channelId, direction, amount, err)
+		EmitTransferDeniedEvent(ctx, types.EventRateLimitExceeded, denom, channelId, direction, amount, err)
 		return err
 	}
 
