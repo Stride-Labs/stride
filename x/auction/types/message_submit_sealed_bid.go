@@ -23,7 +23,7 @@ func (msg *MsgSubmitSealedBid) Route() string {
 }
 
 func (msg *MsgSubmitSealedBid) Type() string {
-	return TypeMsgStartAuction
+	return TypeMsgSubmitSealedBid
 }
 
 func (msg *MsgSubmitSealedBid) GetSigners() []sdk.AccAddress {

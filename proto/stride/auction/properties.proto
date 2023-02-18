@@ -32,7 +32,8 @@ message AscendingAuctionProperties {
     uint64 minAllowedBid = 2;
     uint64 maxAllowedBid = 3;
     float redemptionRate = 4;
-    uint64 endDuration = 5;  
+    uint64 auctionDuration = 5;
+    uint64 extendDuration = 6; 
 }
 
 message DescendingAuctionProperties {

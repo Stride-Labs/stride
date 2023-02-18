@@ -25,36 +25,45 @@ func (k Keeper) StartNewAuctionPool(ctx sdk.Context, properties types.AuctionPoo
 func (k Keeper) StartNewAuction(ctx sdk.Context, auctionPool types.AuctionPool) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefix(types.AuctionPoolKey))
 
-	algorithm := types.AuctionType_SEALEDBID
+	algorithm := types.AuctionType_SEALEDBID // default for now
+	allowedAlgorithms := auctionPool.GetPoolProperties().GetAllowedAlgorithms()
+	if len(allowedAlgorithms) == 1 {
+		algorithm = allowedAlgorithms[0]
+	}
 	auctionPool.LatestAuction = &types.Auction{}
 	auctionPool.GetLatestAuction().Algorithm = algorithm
+
+	addr, _ := sdk.AccAddressFromBech32(auctionPool.GetPoolProperties().GetPoolAddress())
+	coins := k.bankKeeper.SpendableCoins(ctx, addr)
+	//very temporary, normally the Denom properties are fixed and used to look for which coins match
+	auctionPool.GetPoolProperties().SupplyDenom = coins[0].Denom
+	auctionPool.GetPoolProperties().BidDenom = coins[0].Denom
 
 	switch algorithm {
 	case types.AuctionType_ASCENDING:
 		auction := types.AscendingAuction{}
 		auctionPool.GetLatestAuction().XAscendingAuction = &types.Auction_AscendingAuction{&auction}
 		properties := auctionPool.GetPoolProperties().GetDefaultAscendingAuctionProperties()
+		properties.Supply = coins[0].Amount.Uint64()
+		ctx.Logger().Info(fmt.Sprintf("[auction] Coins in the auction address %d %s", properties.GetSupply(), auctionPool.GetPoolProperties().GetSupplyDenom()))
 		auction.CreateNew(ctx, properties)
+		auction.PoolProperties = auctionPool.GetPoolProperties()
 	case types.AuctionType_DESCENDING:
 		auction := types.DescendingAuction{}
 		auctionPool.GetLatestAuction().XDescendingAuction = &types.Auction_DescendingAuction{&auction}
 		properties := auctionPool.GetPoolProperties().GetDefaultDescendingAuctionProperties()
+		properties.Supply = coins[0].Amount.Uint64()
+		ctx.Logger().Info(fmt.Sprintf("[auction] Coins in the auction address %d %s", properties.GetSupply(), auctionPool.GetPoolProperties().GetSupplyDenom()))
 		auction.CreateNew(ctx, properties)
+		auction.PoolProperties = auctionPool.GetPoolProperties()
 	case types.AuctionType_SEALEDBID:
 		auction := types.SealedBidAuction{}
 		auctionPool.GetLatestAuction().XSealedBidAuction = &types.Auction_SealedBidAuction{&auction}
-
 		properties := auctionPool.GetPoolProperties().GetDefaultSealedBidAuctionProperties()
-
-		addr, _ := sdk.AccAddressFromBech32(auctionPool.GetPoolProperties().GetPoolAddress())
-		coins := k.bankKeeper.SpendableCoins(ctx, addr)
-		//very temporary, normally the SupplyDenom is fixed and used to look for which coins match
-		auctionPool.GetPoolProperties().SupplyDenom = coins[0].Denom
 		properties.Supply = coins[0].Amount.Uint64()
-
 		ctx.Logger().Info(fmt.Sprintf("[auction] Coins in the auction address %d %s", properties.GetSupply(), auctionPool.GetPoolProperties().GetSupplyDenom()))
-
 		auction.CreateNew(ctx, properties)
+		auction.PoolProperties = auctionPool.GetPoolProperties()
 	}
 
 	updated := k.cdc.MustMarshal(&auctionPool)

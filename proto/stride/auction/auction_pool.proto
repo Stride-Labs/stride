@@ -54,8 +54,9 @@ enum AuctionState {
 message AscendingAuction {
   AuctionState status = 1;
   AscendingAuctionProperties auctionProperties = 2;
-  uint64 lastBlock = 3;
-  repeated OpenBid bids = 4;
+  AuctionPoolProperties poolProperties = 3;
+  uint64 lastBlock = 4;
+  repeated OpenBid bids = 5;
 }
 
 // Dutch style auction specific parameters
@@ -64,9 +65,11 @@ message AscendingAuction {
 message DescendingAuction {
   AuctionState status = 1;
   DescendingAuctionProperties auctionProperties = 2;
-  uint64 currentBid = 3;
-  uint64 nextStep = 4;
-  repeated OpenBid bids = 5;
+  AuctionPoolProperties poolProperties = 3;
+  uint64 currentSupply = 4;
+  uint64 currentBid = 5;
+  uint64 nextStep = 6;
+  repeated OpenBid bids = 7;
 }
 
 // Sealed Bid style auction specific parameters
@@ -75,11 +78,12 @@ message DescendingAuction {
 message SealedBidAuction {
   AuctionState status = 1;
   SealedBidAuctionProperties auctionProperties = 2;
-  uint64 firstBlock = 3;
-  uint64 lastBlock = 4;
-  uint64 revealBlock = 5;
-  repeated SealedBid sealedBids = 6;
-  repeated OpenBid revealedBids = 7;
+  AuctionPoolProperties poolProperties = 3;
+  uint64 firstBlock = 4;
+  uint64 lastBlock = 5;
+  uint64 revealBlock = 6;
+  repeated SealedBid sealedBids = 7;
+  repeated OpenBid revealedBids = 8;
 }
 
 // Would be more elegant if protobuf had a nice way to do interfaces but

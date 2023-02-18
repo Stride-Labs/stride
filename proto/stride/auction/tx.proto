@@ -10,6 +10,7 @@ option go_package = "github.com/Stride-Labs/stride/v5/x/auction/types";
 // Msg defines the Msg service.
 service Msg {
   rpc StartAuction(MsgStartAuction) returns (MsgStartAuctionResponse);
+  rpc SubmitOpenBid(MsgSubmitOpenBid) returns (MsgSubmitOpenBidResponse);  
   rpc SubmitSealedBid(MsgSubmitSealedBid) returns (MsgSubmitSealedBidResponse);
   rpc RevealBid(MsgRevealBid) returns (MsgRevealBidResponse);    
 }
@@ -32,6 +33,18 @@ message MsgSubmitSealedBid {
 }
 
 message MsgSubmitSealedBidResponse {}
+
+
+
+message MsgSubmitOpenBid {
+  string creator = 1;
+  string zone = 2;
+  uint64 poolID = 3;
+  string bid = 4;
+}
+
+message MsgSubmitOpenBidResponse {}
+
 
 
 message MsgRevealBid {
