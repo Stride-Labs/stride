@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"encoding/json"
+	"fmt"
 
 	errorsmod "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -164,6 +165,7 @@ func (k Keeper) ReceiveRateLimitedPacket(ctx sdk.Context, packet channeltypes.Pa
 // If the packet does not get rate limited, it passes the packet to the IBC Channel keeper
 func (k Keeper) SendPacket(ctx sdk.Context, chanCap *capabilitytypes.Capability, packet ibcexported.PacketI) error {
 	if err := k.SendRateLimitedPacket(ctx, packet); err != nil {
+		k.Logger(ctx).Error(fmt.Sprintf("ICS20 packet send was denied: %s", err.Error()))
 		return err
 	}
 	return k.ics4Wrapper.SendPacket(ctx, chanCap, packet)
