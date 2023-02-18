@@ -17,7 +17,7 @@ import (
 	"github.com/Stride-Labs/stride/v5/utils"
 	icqtypes "github.com/Stride-Labs/stride/v5/x/interchainquery/types"
 	"github.com/Stride-Labs/stride/v5/x/stakeibc/types"
-	distrtypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 )
 
 // WithdrawalBalanceCallback is a callback handler for WithdrawalBalance queries.
@@ -97,7 +97,7 @@ func WithdrawalBalanceCallback(k Keeper, ctx sdk.Context, args []byte, query icq
 	if feeCoin.Amount.GT(sdk.ZeroInt()) {
 		ibcTransferTimeoutNanos := k.GetParam(ctx, types.KeyIBCTransferTimeoutNanos)
 		timeoutTimestamp := uint64(ctx.BlockTime().UnixNano()) + ibcTransferTimeoutNanos
-		receiver := k.accountKeeper.GetModuleAccount(ctx, distrtypes.ModuleName).GetAddress()
+		receiver := k.accountKeeper.GetModuleAccount(ctx, authtypes.FeeCollectorName).GetAddress()
 		msg := ibctypes.NewMsgTransfer(ibctransfertypes.PortID, hostZone.TransferChannelId, feeCoin, withdrawalAccount.Address, receiver.String(), clienttypes.Height{}, timeoutTimestamp)
 
 		msgs = append(msgs, msg)
