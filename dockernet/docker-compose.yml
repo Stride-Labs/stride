@@ -214,3 +214,10 @@ services:
       - ./state/relayer-host:/home/relayer/.relayer
     restart: always
     command: [ "bash", "start.sh", "stride-host" ]
+
+  relayer-juno-osmo:
+    image: stridezone:relayer
+    volumes:
+      - ./state/relayer-juno-osmo:/home/relayer/.relayer
+    restart: always
+    command: [ "bash", "start.sh", "juno-osmo" ]

@@ -1,0 +1,10 @@
+{
+    "title": "Update uosmo Rate Limit",
+    "description": "Proposal to increase the receive threshold on the usmo rate limit from Stride <> Osmo",
+    "denom": "ibc/13B2C536BB057AC79D5616B8EA1B9540EC1F2170718CAFF6F0083C966FFFED0B",
+    "channel_id": "channel-2",
+    "max_percent_send": "10",
+    "max_percent_recv": "11",
+    "duration_hours": "1",
+    "deposit": "10000000ustrd"
+}
