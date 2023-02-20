@@ -11,7 +11,6 @@ import (
 	errorsmod "cosmossdk.io/errors"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	stakingTypes "github.com/cosmos/cosmos-sdk/x/staking/types"
-	"github.com/spf13/cast"
 
 	"github.com/Stride-Labs/stride/v5/utils"
 	"github.com/Stride-Labs/stride/v5/x/stakeibc/types"
