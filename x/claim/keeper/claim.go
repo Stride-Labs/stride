@@ -171,29 +171,39 @@ func (k Keeper) EndAirdrop(ctx sdk.Context, airdropIdentifier string) error {
 func (k Keeper) IsInitialPeriodPassed(ctx sdk.Context, airdropIdentifier string) bool {
 	airdrop := k.GetAirdropByIdentifier(ctx, airdropIdentifier)
 	if airdrop == nil {
+		k.Logger(ctx).Info("[CLAIM] airdrop is nil")
 		return false
 	}
 	goneTime := ctx.BlockTime().Sub(airdrop.AirdropStartTime)
+	k.Logger(ctx).Info(fmt.Sprintf("[CLAIM] goneTime %v", goneTime))
 	// Check if elapsed time since airdrop start is over the initial period of vesting
+	k.Logger(ctx).Info(fmt.Sprintf("[CLAIM] goneTime.Seconds() %v", goneTime.Seconds()))
+	k.Logger(ctx).Info(fmt.Sprintf("[CLAIM] types.DefaultVestingInitialPeriod.Seconds() %v", types.DefaultVestingInitialPeriod.Seconds()))
 	return goneTime.Seconds() >= types.DefaultVestingInitialPeriod.Seconds()
 }
 
 // ResetClaimStatus clear users' claimed status only after initial period of vesting is passed
 func (k Keeper) ResetClaimStatus(ctx sdk.Context, airdropIdentifier string) error {
-
-	if k.IsInitialPeriodPassed(ctx, airdropIdentifier) {
+	passed := k.IsInitialPeriodPassed(ctx, airdropIdentifier)
+	k.Logger(ctx).Info(fmt.Sprintf("[CLAIM] k.IsInitialPeriodPassed(ctx, airdropIdentifier) %v", passed))
+	if passed {
 		k.Logger(ctx).Info("Resetting claim status")
 		// first, reset the claim records
 		records := k.GetClaimRecords(ctx, airdropIdentifier)
+		k.Logger(ctx).Info(fmt.Sprintf("[CLAIM] len(records) %v", len(records)))
 		for idx := range records {
 			records[idx].ActionCompleted = []bool{false, false, false}
 		}
 
+		k.Logger(ctx).Info("[CLAIM] SetClaimRecords...")
 		if err := k.SetClaimRecords(ctx, records); err != nil {
+			k.Logger(ctx).Info(fmt.Sprintf("[CLAIM] SetClaimRecords  %v", err.Error()))
 			return err
 		}
 		// then, reset the airdrop ClaimedSoFar
+		k.Logger(ctx).Info("[CLAIM] ResetClaimedSoFar...")
 		if err := k.ResetClaimedSoFar(ctx); err != nil {
+			k.Logger(ctx).Info(fmt.Sprintf("[CLAIM] ResetClaimedSoFar %v", err.Error()))
 			return err
 		}
 	}
@@ -641,6 +651,7 @@ func (k Keeper) IncrementClaimedSoFar(ctx sdk.Context, identifier string, amount
 // ResetClaimedSoFar resets ClaimedSoFar for a all airdrops
 func (k Keeper) ResetClaimedSoFar(ctx sdk.Context) error {
 	params, err := k.GetParams(ctx)
+	k.Logger(ctx).Info(fmt.Sprintf("[CLAIM] params.Airdrops %v", params.Airdrops))
 	if err != nil {
 		panic(err)
 	}
@@ -651,6 +662,7 @@ func (k Keeper) ResetClaimedSoFar(ctx sdk.Context) error {
 		newAirdrops = append(newAirdrops, airdrop)
 	}
 	params.Airdrops = newAirdrops
+	k.Logger(ctx).Info(fmt.Sprintf("[CLAIM] params.Airdrops %v", params.Airdrops))
 	return k.SetParams(ctx, params)
 }
 

@@ -78,6 +78,7 @@ func (h Hooks) BeforeEpochStart(ctx sdk.Context, epochInfo epochstypes.EpochInfo
 }
 
 func (h Hooks) AfterEpochEnd(ctx sdk.Context, epochInfo epochstypes.EpochInfo) {
+	h.k.Logger(ctx).Info("[CLAIM] h.k.AfterEpochEnd")
 	h.k.AfterEpochEnd(ctx, epochInfo)
 }
 
