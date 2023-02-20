@@ -7,7 +7,6 @@ import (
 	"strings"
 
 	errorsmod "cosmossdk.io/errors"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	clienttypes "github.com/cosmos/ibc-go/v7/modules/core/02-client/types"
@@ -68,7 +67,7 @@ func (k Keeper) VerifyKeyProof(ctx sdk.Context, msg *types.MsgSubmitQueryRespons
 
 	consensusState, found := k.IBCKeeper.ClientKeeper.GetClientConsensusState(ctx, connection.ClientId, height)
 	if !found {
-		return sdkerrors.Wrapf(types.ErrInvalidICQProof, "Consensus state not found for client %s and height %d", connection.ClientId, height)
+		return errorsmod.Wrapf(types.ErrInvalidICQProof, "Consensus state not found for client %s and height %d", connection.ClientId, height)
 	}
 
 	var stateRoot exported.Root
@@ -78,17 +77,17 @@ func (k Keeper) VerifyKeyProof(ctx sdk.Context, msg *types.MsgSubmitQueryRespons
 	case exported.Tendermint:
 		tendermintConsensusState, ok := consensusState.(*tendermint.ConsensusState)
 		if !ok {
-			return sdkerrors.Wrapf(types.ErrInvalidConsensusState, "Error casting consensus state: %s", err.Error())
+			return errorsmod.Wrapf(types.ErrInvalidConsensusState, "Error casting consensus state: %s", err.Error())
 		}
 		stateRoot = tendermintConsensusState.GetRoot()
 	case exported.Wasm:
 		wasmConsensusState, ok := consensusState.(*wasm.ConsensusState)
 		if !ok {
-			return sdkerrors.Wrapf(types.ErrInvalidConsensusState, "Error casting consensus state: %s", err.Error())
+			return errorsmod.Wrapf(types.ErrInvalidConsensusState, "Error casting consensus state: %s", err.Error())
 		}
 		tmClientState, ok := clientState.(*tmclienttypes.ClientState)
 		if !ok {
-			return sdkerrors.Wrapf(types.ErrInvalidICQProof, "Client state is not tendermint")
+			return errorsmod.Wrapf(types.ErrInvalidICQProof, "Client state is not tendermint")
 		}
 		clientStateProof = tmClientState.ProofSpecs
 		stateRoot = wasmConsensusState.GetRoot()
@@ -106,14 +105,14 @@ func (k Keeper) VerifyKeyProof(ctx sdk.Context, msg *types.MsgSubmitQueryRespons
 	// If we got a non-nil response, verify inclusion proof
 	if len(msg.Result) != 0 {
 		if err := merkleProof.VerifyMembership(clientStateProof, stateRoot, path, msg.Result); err != nil {
-			return sdkerrors.Wrapf(types.ErrInvalidICQProof, "Unable to verify membership proof: %s", err.Error())
+			return errorsmod.Wrapf(types.ErrInvalidICQProof, "Unable to verify membership proof: %s", err.Error())
 		}
 		k.Logger(ctx).Info(utils.LogICQCallbackWithHostZone(query.ChainId, query.CallbackId, "Inclusion proof validated - QueryId %s", query.Id))
 
 	} else {
 		// if we got a nil query response, verify non inclusion proof.
 		if err := merkleProof.VerifyNonMembership(clientStateProof, stateRoot, path); err != nil {
-			return sdkerrors.Wrapf(types.ErrInvalidICQProof, "Unable to verify non-membership proof: %s", err.Error())
+			return errorsmod.Wrapf(types.ErrInvalidICQProof, "Unable to verify non-membership proof: %s", err.Error())
 		}
 		k.Logger(ctx).Info(utils.LogICQCallbackWithHostZone(query.ChainId, query.CallbackId, "Non-inclusion proof validated - QueryId %s", query.Id))
 	}
