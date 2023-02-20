@@ -44,6 +44,7 @@ func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochInfo epochstypes.EpochInf
 }
 
 func (k Keeper) AfterEpochEnd(ctx sdk.Context, epochInfo epochstypes.EpochInfo) {
+	k.Logger(ctx).Info(fmt.Sprintf("[CLAIM] epoch ended %s", epochInfo.Identifier))
 	err := k.ResetClaimStatus(ctx, epochInfo.Identifier)
 	if err != nil {
 		k.Logger(ctx).Error(fmt.Sprintf("failed to reset claim status for epoch %s: %s", epochInfo.Identifier, err.Error()))

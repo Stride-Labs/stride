@@ -180,7 +180,9 @@ func (k Keeper) IsInitialPeriodPassed(ctx sdk.Context, airdropIdentifier string)
 
 // ResetClaimStatus clear users' claimed status only after initial period of vesting is passed
 func (k Keeper) ResetClaimStatus(ctx sdk.Context, airdropIdentifier string) error {
+
 	if k.IsInitialPeriodPassed(ctx, airdropIdentifier) {
+		k.Logger(ctx).Info("Resetting claim status")
 		// first, reset the claim records
 		records := k.GetClaimRecords(ctx, airdropIdentifier)
 		for idx := range records {
