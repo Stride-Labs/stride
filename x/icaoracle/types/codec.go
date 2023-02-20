@@ -11,6 +11,7 @@ import (
 
 func RegisterCodec(cdc *codec.LegacyAmino) {
 	cdc.RegisterConcrete(&MsgAddOracle{}, "icaoracle/AddOracle", nil)
+	cdc.RegisterConcrete(&MsgInstantiateOracle{}, "icaoracle/InstantiateOracle", nil)
 	cdc.RegisterConcrete(&MsgRestoreOracleICA{}, "icaoracle/RestoreOracleICA", nil)
 }
 

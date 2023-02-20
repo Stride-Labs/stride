@@ -17,7 +17,6 @@ func TestMsgAddOracle(t *testing.T) {
 	require.True(t, ok)
 
 	validConnectionId := "connection-10"
-	validCodeId := uint64(1)
 
 	tests := []struct {
 		name string
@@ -27,55 +26,41 @@ func TestMsgAddOracle(t *testing.T) {
 		{
 			name: "successful message",
 			msg: types.MsgAddOracle{
-				Creator:        validAdminAddress,
-				ConnectionId:   validConnectionId,
-				ContractCodeId: validCodeId,
+				Creator:      validAdminAddress,
+				ConnectionId: validConnectionId,
 			},
 		},
 		{
 			name: "invalid creator",
 			msg: types.MsgAddOracle{
-				Creator:        validNotAdminAddress,
-				ConnectionId:   validConnectionId,
-				ContractCodeId: validCodeId,
+				Creator:      validNotAdminAddress,
+				ConnectionId: validConnectionId,
 			},
 			err: "invalid creator address",
 		},
 		{
 			name: "invalid admin address",
 			msg: types.MsgAddOracle{
-				Creator:        invalidAddress,
-				ConnectionId:   validConnectionId,
-				ContractCodeId: validCodeId,
+				Creator:      invalidAddress,
+				ConnectionId: validConnectionId,
 			},
 			err: "invalid creator address",
 		},
 		{
 			name: "invalid connection prefix",
 			msg: types.MsgAddOracle{
-				Creator:        validAdminAddress,
-				ConnectionId:   "connect-1",
-				ContractCodeId: validCodeId,
+				Creator:      validAdminAddress,
+				ConnectionId: "connect-1",
 			},
 			err: "invalid connection-id",
 		},
 		{
 			name: "invalid connection suffix",
 			msg: types.MsgAddOracle{
-				Creator:        validAdminAddress,
-				ConnectionId:   "connection-X",
-				ContractCodeId: validCodeId,
+				Creator:      validAdminAddress,
+				ConnectionId: "connection-X",
 			},
 			err: "invalid connection-id",
-		},
-		{
-			name: "invalid code ID",
-			msg: types.MsgAddOracle{
-				Creator:        validAdminAddress,
-				ConnectionId:   validConnectionId,
-				ContractCodeId: 0,
-			},
-			err: "contract code-id cannot be 0",
 		},
 	}
 
@@ -91,7 +76,6 @@ func TestMsgAddOracle(t *testing.T) {
 				require.Equal(t, signers[0].String(), validAdminAddress)
 
 				require.Equal(t, test.msg.ConnectionId, validConnectionId, "connnectionId")
-				require.Equal(t, test.msg.ContractCodeId, validCodeId, "codeId")
 			} else {
 				require.ErrorContains(t, test.msg.ValidateBasic(), test.err, "test: %v", test.name)
 			}

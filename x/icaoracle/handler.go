@@ -26,6 +26,9 @@ func NewMessageHandler(k keeper.Keeper) sdk.Handler {
 		case *types.MsgAddOracle:
 			res, err := msgServer.AddOracle(context, msg)
 			return sdk.WrapServiceResult(ctx, res, err)
+		case *types.MsgInstantiateOracle:
+			res, err := msgServer.InstantiateOracle(context, msg)
+			return sdk.WrapServiceResult(ctx, res, err)
 		case *types.MsgRestoreOracleICA:
 			res, err := msgServer.RestoreOracleICA(context, msg)
 			return sdk.WrapServiceResult(ctx, res, err)

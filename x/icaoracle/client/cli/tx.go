@@ -27,28 +27,69 @@ func GetTxCmd() *cobra.Command {
 
 	cmd.AddCommand(
 		CmdAddOracle(),
+		CmdInstantiateOracle(),
 		CmdRestoreOracleICA(),
 	)
 
 	return cmd
 }
 
-// Adds a new oracle given a provided connection and cosmwasm contract
+// Adds a new oracle given a provided connection and registers the oracle ICA
 func CmdAddOracle() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "add-oracle [connection-id] [contract-code-id]",
+		Use:   "add-oracle [connection-id]",
 		Short: "Adds an oracle as a destination for metric updates",
 		Long: strings.TrimSpace(
-			fmt.Sprintf(`Registers a new cosmwasm oracle to mark it as a destination for metric updates.
-Must provide the ID of an existing connection and a cosmwasm contract that has been uploaded to the host chain.
+			fmt.Sprintf(`Registers a new oracle ICA as a destination for metric updates.
+Must provide the ID of an existing connection.
 
 Example:
-  $ %[1]s tx %[2]s add-oracle connection-0 10
+  $ %[1]s tx %[2]s add-oracle connection-0 
+`, version.AppName, types.ModuleName),
+		),
+		Args: cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			connectionId := args[0]
+
+			clientCtx, err := client.GetClientTxContext(cmd)
+			if err != nil {
+				return err
+			}
+
+			msg := types.NewMsgAddOracle(
+				clientCtx.GetFromAddress().String(),
+				connectionId,
+			)
+
+			if err := msg.ValidateBasic(); err != nil {
+				return err
+			}
+
+			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
+		},
+	}
+
+	flags.AddTxFlagsToCmd(cmd)
+
+	return cmd
+}
+
+// Instantiates an oracle cosmwasm contract
+func CmdInstantiateOracle() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "instantiate-oracle [oracle-chain-id] [contract-code-id]",
+		Short: "Instantiates an oracle cosmwasm contract",
+		Long: strings.TrimSpace(
+			fmt.Sprintf(`Submits an ICA to instantiate the oracle cosmwasm contract.
+Must provide the codeID of a cosmwasm contract that has already been uploaded to the host chain.
+
+Example:
+  $ %[1]s tx %[2]s instantiate-oracle osmosis-1 1000
 `, version.AppName, types.ModuleName),
 		),
 		Args: cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			connectionId := args[0]
+			chainId := args[0]
 			contractCodeId, err := strconv.ParseUint(args[1], 10, 64)
 			if err != nil {
 				return err
@@ -59,9 +100,9 @@ Example:
 				return err
 			}
 
-			msg := types.NewMsgAddOracle(
+			msg := types.NewMsgInstantiateOracle(
 				clientCtx.GetFromAddress().String(),
-				connectionId,
+				chainId,
 				contractCodeId,
 			)
 

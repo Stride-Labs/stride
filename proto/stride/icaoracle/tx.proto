@@ -5,8 +5,11 @@ option go_package = "github.com/Stride-Labs/stride/v5/x/icaoracle/types";
 
 // Msg defines the Msg service.
 service Msg {
-  // Adds a new given a provided connection and cosmwasm contract
+  // Adds a new oracle given a provided connection
   rpc AddOracle(MsgAddOracle) returns (MsgAddOracleResponse);
+  // Instantiates an Oracle CW contract
+  rpc InstantiateOracle(MsgInstantiateOracle)
+      returns (MsgInstantiateOracleResponse);
   // Restores the oracle ICA channel after a closure
   rpc RestoreOracleICA(MsgRestoreOracleICA)
       returns (MsgRestoreOracleICAResponse);
@@ -15,9 +18,15 @@ service Msg {
 message MsgAddOracle {
   string creator = 1;
   string connection_id = 2;
-  uint64 contract_code_id = 3;
 }
 message MsgAddOracleResponse {}
+
+message MsgInstantiateOracle {
+  string creator = 1;
+  string oracle_chain_id = 2;
+  uint64 contract_code_id = 3;
+}
+message MsgInstantiateOracleResponse {}
 
 message MsgRestoreOracleICA {
   string creator = 1;

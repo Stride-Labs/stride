@@ -13,11 +13,10 @@ const TypeMsgAddOracle = "add_oracle"
 
 var _ sdk.Msg = &MsgAddOracle{}
 
-func NewMsgAddOracle(creator string, connectionId string, contractCodeId uint64) *MsgAddOracle {
+func NewMsgAddOracle(creator string, connectionId string) *MsgAddOracle {
 	return &MsgAddOracle{
-		Creator:        creator,
-		ConnectionId:   connectionId,
-		ContractCodeId: contractCodeId,
+		Creator:      creator,
+		ConnectionId: connectionId,
 	}
 }
 
@@ -57,10 +56,6 @@ func (msg *MsgAddOracle) ValidateBasic() error {
 	}
 	if !matched {
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "invalid connection-id (%s), must be of the format 'connection-{N}'", msg.ConnectionId)
-	}
-
-	if msg.ContractCodeId == 0 {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "contract code-id cannot be 0")
 	}
 
 	return nil

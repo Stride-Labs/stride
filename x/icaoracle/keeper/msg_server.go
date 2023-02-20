@@ -27,7 +27,7 @@ func NewMsgServerImpl(keeper Keeper) types.MsgServer {
 var _ types.MsgServer = msgServer{}
 
 // Adds a new oracle as a destination for metric updates
-// Registers a new ICA account along this connection and instantiates the oracle's cosmwasm contract in the callback
+// Registers a new ICA account along this connection
 func (k msgServer) AddOracle(goCtx context.Context, msg *types.MsgAddOracle) (*types.MsgAddOracleResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
@@ -51,10 +51,9 @@ func (k msgServer) AddOracle(goCtx context.Context, msg *types.MsgAddOracle) (*t
 
 	// Create the oracle struct, marked as inactive
 	oracle := types.Oracle{
-		ChainId:        chainId,
-		ConnectionId:   controllerConnectionId,
-		Active:         false,
-		ContractCodeId: msg.ContractCodeId,
+		ChainId:      chainId,
+		ConnectionId: controllerConnectionId,
+		Active:       false,
 	}
 	k.SetOracle(ctx, oracle)
 
@@ -79,6 +78,15 @@ func (k msgServer) AddOracle(goCtx context.Context, msg *types.MsgAddOracle) (*t
 	}
 
 	return &types.MsgAddOracleResponse{}, nil
+}
+
+// Instantiates the oracle cosmwasm contract
+func (k msgServer) InstantiateOracle(goCtx context.Context, msg *types.MsgInstantiateOracle) (*types.MsgInstantiateOracleResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	// TODO
+	_ = ctx
+	return &types.MsgInstantiateOracleResponse{}, nil
 }
 
 // Creates a new ICA channel and restores the oracle ICA account after a channel closer
