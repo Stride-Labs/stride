@@ -255,6 +255,6 @@ func (s *KeeperTestSuite) TestRebalanceValidators_InvalidNumRebalance() {
 		NumRebalance: 11,
 	}
 	_, err := s.GetMsgServer().RebalanceValidators(sdk.WrapSDKContext(s.Ctx), &badMsg_invalidNumRebalance)
-	expectedErrMsg := fmt.Sprintf("invalid number of validators to rebalance (%d)", badMsg_invalidNumRebalance.NumRebalance)
+	expectedErrMsg := fmt.Sprintf("invalid number of validators to rebalance (%d): invalid number of validators", badMsg_invalidNumRebalance.NumRebalance)
 	s.Require().EqualError(err, expectedErrMsg, "rebalancing with invalid num rebalance should fail")
 }
