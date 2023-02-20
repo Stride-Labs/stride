@@ -36,5 +36,4 @@ message Params {
   uint64 safety_max_slash_percent = 18;
   uint64 min_num_rebalance = 19;
   uint64 max_num_rebalance = 20;
-  
 }
