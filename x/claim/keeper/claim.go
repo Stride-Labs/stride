@@ -179,6 +179,8 @@ func (k Keeper) IsInitialPeriodPassed(ctx sdk.Context, airdropIdentifier string)
 	// Check if elapsed time since airdrop start is over the initial period of vesting
 	k.Logger(ctx).Info(fmt.Sprintf("[CLAIM] goneTime.Seconds() %v", goneTime.Seconds()))
 	k.Logger(ctx).Info(fmt.Sprintf("[CLAIM] types.DefaultVestingInitialPeriod.Seconds() %v", types.DefaultVestingInitialPeriod.Seconds()))
+	k.Logger(ctx).Info(fmt.Sprintf("[CLAIM] goneTime.Seconds() >= types.DefaultVestingInitialPeriod.Seconds() %v", goneTime.Seconds() >= types.DefaultVestingInitialPeriod.Seconds()))
+	k.Logger(ctx).Info(fmt.Sprintf("[CLAIM] seconds diff %v", goneTime.Seconds()-types.DefaultVestingInitialPeriod.Seconds()))
 	return goneTime.Seconds() >= types.DefaultVestingInitialPeriod.Seconds()
 }
 
