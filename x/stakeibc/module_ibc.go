@@ -2,6 +2,7 @@ package stakeibc
 
 import (
 	"fmt"
+	"strings"
 
 	errorsmod "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -13,6 +14,7 @@ import (
 
 	"github.com/Stride-Labs/stride/v5/x/icacallbacks"
 	icacallbacktypes "github.com/Stride-Labs/stride/v5/x/icacallbacks/types"
+	icaoracletypes "github.com/Stride-Labs/stride/v5/x/icaoracle/types"
 
 	"github.com/Stride-Labs/stride/v5/x/stakeibc/keeper"
 	"github.com/Stride-Labs/stride/v5/x/stakeibc/types"
@@ -45,12 +47,19 @@ func (im IBCModule) OnChanOpenInit(
 	version string,
 ) (string, error) {
 	im.keeper.Logger(ctx).Info(fmt.Sprintf("OnChanOpenInit (Stakeibc): portID %s, channelID %s", portID, channelID))
+
+	// TODO: Update IBC-go to v6/v7 and then there's no longer a need to claim the channel capability here
+	// Until then, we need to make sure we ignore the oracle port
+	if strings.Contains(portID, icaoracletypes.ICAAccountType_Oracle) {
+		return version, nil
+	}
+
 	// Note: The channel capability must be claimed by the authentication module in OnChanOpenInit otherwise the
 	// authentication module will not be able to send packets on the channel created for the associated interchain account.
 	if err := im.keeper.ClaimCapability(ctx, channelCap, host.ChannelCapabilityPath(portID, channelID)); err != nil {
 		return version, err
 	}
-	im.keeper.Logger(ctx).Info(fmt.Sprintf("%s claimed the channel capability %v", types.ModuleName, channelCap))
+	im.keeper.Logger(ctx).Info(fmt.Sprintf("%s claimed the channel capability for %s %s", types.ModuleName, channelID, portID))
 	return version, nil
 }
 
@@ -119,7 +128,7 @@ func (im IBCModule) OnChanOpenAck(
 	case portID == redemptionAddress:
 		zoneInfo.RedemptionAccount = &types.ICAAccount{Address: address, Target: types.ICAAccountType_REDEMPTION}
 	default:
-		ctx.Logger().Error(fmt.Sprintf("Missing portId: %s", portID))
+		im.keeper.Logger(ctx).Info(fmt.Sprintf("PortID %s does not belong to a stakeibc ICA ", portID))
 	}
 
 	im.keeper.SetHostZone(ctx, zoneInfo)

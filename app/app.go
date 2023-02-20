@@ -293,7 +293,7 @@ type StrideApp struct {
 	IcacallbacksKeeper       icacallbacksmodulekeeper.Keeper
 	ClaimKeeper              claimkeeper.Keeper
 	ICAOracleKeeper          icaoraclekeeper.Keeper
-	scopedIcaoracleKeeper    capabilitykeeper.ScopedKeeper
+	scopedICAOracleKeeper    capabilitykeeper.ScopedKeeper
 	// this line is used by starport scaffolding # stargate/app/keeperDeclaration
 
 	mm           *module.Manager
@@ -512,14 +512,15 @@ func NewStrideApp(
 	stakeibcModule := stakeibcmodule.NewAppModule(appCodec, app.StakeibcKeeper, app.AccountKeeper, app.BankKeeper)
 	stakeibcIBCModule := stakeibcmodule.NewIBCModule(app.StakeibcKeeper)
 
-	scopedIcaoracleKeeper := app.CapabilityKeeper.ScopeToModule(icaoracletypes.ModuleName)
-	app.scopedIcaoracleKeeper = scopedIcaoracleKeeper
+	scopedICAOracleKeeper := app.CapabilityKeeper.ScopeToModule(icaoracletypes.ModuleName)
+	app.scopedICAOracleKeeper = scopedICAOracleKeeper
 	app.ICAOracleKeeper = *icaoraclekeeper.NewKeeper(
 		appCodec,
 		keys[icaoracletypes.StoreKey],
 		app.GetSubspace(icaoracletypes.ModuleName),
+		app.scopedICAOracleKeeper,
 		app.IBCKeeper.ChannelKeeper, // ICS4Wrapper - Note: this technically should be ICAController but it doesn't implement ICS4
-		app.IBCKeeper.ChannelKeeper,
+		*app.IBCKeeper,
 		app.ICAControllerKeeper,
 		app.IcacallbacksKeeper,
 	)
@@ -623,8 +624,10 @@ func NewStrideApp(
 		// ICAHost Stack
 		AddRoute(icahosttypes.SubModuleName, icaHostIBCModule).
 		// Stakeibc Stack
+		// TODO: Only need icacontroller after upgrading to v6
 		AddRoute(icacontrollertypes.SubModuleName, stakeibcStack).
 		AddRoute(stakeibcmoduletypes.ModuleName, stakeibcStack).
+		AddRoute(icaoracletypes.ModuleName, stakeibcStack).
 		// Transfer stack
 		AddRoute(ibctransfertypes.ModuleName, transferStack)
 

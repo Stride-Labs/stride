@@ -68,3 +68,13 @@ func (k Keeper) ToggleOracle(ctx sdk.Context, chainId string, active bool) error
 	k.SetOracle(ctx, oracle)
 	return nil
 }
+
+// Grab's an oracle from it's connectionId
+func (k Keeper) GetOracleFromConnectionId(ctx sdk.Context, connectionId string) (oracle types.Oracle, found bool) {
+	for _, oracle := range k.GetAllOracles(ctx) {
+		if oracle.ConnectionId == connectionId {
+			return oracle, true
+		}
+	}
+	return oracle, false
+}

@@ -3,9 +3,9 @@ package icaoracle
 import (
 	"fmt"
 
+	errorsmod "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	capabilitytypes "github.com/cosmos/cosmos-sdk/x/capability/types"
-
 	channeltypes "github.com/cosmos/ibc-go/v5/modules/core/04-channel/types"
 	porttypes "github.com/cosmos/ibc-go/v5/modules/core/05-port/types"
 	ibcexported "github.com/cosmos/ibc-go/v5/modules/core/exported"
@@ -40,6 +40,12 @@ func (im IBCMiddleware) OnChanOpenInit(
 	version string,
 ) (string, error) {
 	im.keeper.Logger(ctx).Info(fmt.Sprintf("OnChanOpenAck (ICAOracle): portID %s, channelID %s", portID, channelID))
+
+	if err := im.keeper.OnChanOpenInit(ctx, portID, channelID, channelCap); err != nil {
+		im.keeper.Logger(ctx).Error(fmt.Sprintf("ICAOracle ChanOpenInit failed: %s", err.Error()))
+		return version, errorsmod.Wrapf(err, "ICAOracle ChanOpenInit failed")
+	}
+
 	return im.app.OnChanOpenInit(
 		ctx,
 		order,
@@ -63,7 +69,10 @@ func (im IBCMiddleware) OnChanOpenAck(
 	im.keeper.Logger(ctx).Info(fmt.Sprintf("OnChanOpenAck (ICAOracle): portID %s, channelID %s, counterpartyChannelID %s, counterpartyVersion %s",
 		portID, channelID, counterpartyChannelID, counterpartyVersion))
 
-	// TODO: Store ICA address
+	if err := im.keeper.OnChanOpenAck(ctx, portID, channelID); err != nil {
+		im.keeper.Logger(ctx).Error(fmt.Sprintf("ICAOracle ChanOpenAck failed: %s", err.Error()))
+		return errorsmod.Wrapf(err, "ICAOracle ChanOpenInit failed")
+	}
 
 	return im.app.OnChanOpenAck(
 		ctx,

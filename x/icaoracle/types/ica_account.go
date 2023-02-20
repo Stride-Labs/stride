@@ -1,5 +1,11 @@
 package types
 
+import fmt "fmt"
+
 const (
-	ICAAccount_Oracle = "ORACLE"
+	ICAAccountType_Oracle = "ORACLE"
 )
+
+func FormatICAAccountOwner(chainId string, accountType string) string {
+	return fmt.Sprintf("%s.%s", chainId, accountType)
+}
