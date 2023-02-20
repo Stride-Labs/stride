@@ -49,7 +49,7 @@ func (msg *MsgRebalanceValidators) ValidateBasic() error {
 	if err := utils.ValidateAdminAddress(msg.Creator); err != nil {
 		return err
 	}
-	if (msg.NumRebalance < 1) || (msg.NumRebalance > 10) {
+	if (msg.NumRebalance < DefaultMinNumRebalance) || (msg.NumRebalance > DefaultMaxNumRebalance) {
 		return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "invalid number of validators to rebalance (%d)", msg.NumRebalance)
 	}
 	return nil
