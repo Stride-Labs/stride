@@ -99,9 +99,13 @@ func (im IBCMiddleware) OnAcknowledgementPacket(
 	acknowledgement []byte,
 	relayer sdk.AccAddress,
 ) error {
-	im.keeper.Logger(ctx).Info(fmt.Sprintf("OnAcknowledgementPacket (ICAOracle): SourcePort %s, SourceChannel %s, DestinationPort %s, DestinationChannel %s",
-		packet.SourcePort, packet.SourceChannel, packet.DestinationPort, packet.DestinationChannel))
-	// TODO: Unpack ack and call ICA callbacks
+	im.keeper.Logger(ctx).Info(fmt.Sprintf("OnAcknowledgementPacket (ICAOracle): Sequence %d, SourcePort %s, SourceChannel %s, DestinationPort %s, DestinationChannel %s",
+		packet.Sequence, packet.SourcePort, packet.SourceChannel, packet.DestinationPort, packet.DestinationChannel))
+
+	if err := im.keeper.OnAcknowledgementPacket(ctx, packet, acknowledgement); err != nil {
+		im.keeper.Logger(ctx).Error(fmt.Sprintf("ICAOracle OnAcknowledementPacket failed: %s", err.Error()))
+		return errorsmod.Wrapf(err, "ICAOracle OnAcknowledementPacket failed")
+	}
 
 	return im.app.OnTimeoutPacket(ctx, packet, relayer)
 }

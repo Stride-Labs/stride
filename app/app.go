@@ -568,6 +568,11 @@ func NewStrideApp(
 	if err != nil {
 		return nil
 	}
+	// icaoracle
+	app.IcacallbacksKeeper.SetICACallbackHandler(icaoracletypes.ModuleName, app.ICAOracleKeeper.ICACallbackHandler())
+	if err != nil {
+		return nil
+	}
 
 	// this line is used by starport scaffolding # stargate/app/keeperDefinition
 	ibcFeeKeeper := ibcfeekeeper.NewKeeper(
