@@ -10,7 +10,6 @@ import (
 
 	errorsmod "cosmossdk.io/errors"
 	capabilitykeeper "github.com/cosmos/cosmos-sdk/x/capability/keeper"
-	capabilitytypes "github.com/cosmos/cosmos-sdk/x/capability/types"
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
 
 	ibckeeper "github.com/cosmos/ibc-go/v7/modules/core/keeper"
@@ -26,6 +25,8 @@ import (
 	clienttypes "github.com/cosmos/ibc-go/v7/modules/core/02-client/types"
 	porttypes "github.com/cosmos/ibc-go/v7/modules/core/05-port/types"
 	"github.com/cosmos/ibc-go/v7/modules/core/exported"
+
+	capabilitytypes "github.com/cosmos/cosmos-sdk/x/capability/types"
 )
 
 type (
@@ -91,11 +92,6 @@ func (k *Keeper) GetICACallbackHandler(module string) (types.ICACallbackHandler,
 		return nil, fmt.Errorf("no callback handler found for %s", module)
 	}
 	return callback, nil
-}
-
-// ClaimCapability claims the channel capability passed via the OnOpenChanInit callback
-func (k *Keeper) ClaimCapability(ctx sdk.Context, cap *capabilitytypes.Capability, name string) error {
-	return k.scopedKeeper.ClaimCapability(ctx, cap, name)
 }
 
 func (k Keeper) GetCallbackDataFromPacket(ctx sdk.Context, modulePacket channeltypes.Packet, callbackDataKey string) (cbd *types.CallbackData, found bool) {

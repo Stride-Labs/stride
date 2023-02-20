@@ -171,7 +171,7 @@ func (k Keeper) GetLatestCompletionTime(ctx sdk.Context, msgResponses [][]byte) 
 }
 
 // UpdateHostZoneUnbondings does two things:
-//  1. Update the status and time of each hostZoneUnbonding on each epochUnbondingRecord
+//  1. Update the time of each hostZoneUnbonding on each epochUnbondingRecord
 //  2. Return the number of stTokens that need to be burned
 func (k Keeper) UpdateHostZoneUnbondings(
 	ctx sdk.Context,
@@ -198,8 +198,7 @@ func (k Keeper) UpdateHostZoneUnbondings(
 		stTokenAmount := hostZoneUnbonding.StTokenAmount
 		stTokenBurnAmount = stTokenBurnAmount.Add(stTokenAmount)
 
-		// Update the bonded status and time
-		hostZoneUnbonding.Status = recordstypes.HostZoneUnbonding_EXIT_TRANSFER_QUEUE
+		// Update the bonded time
 		hostZoneUnbonding.UnbondingTime = cast.ToUint64(latestCompletionTime.UnixNano())
 		updatedEpochUnbondingRecord, success := k.RecordsKeeper.AddHostZoneToEpochUnbondingRecord(ctx, epochUnbondingRecord.EpochNumber, chainId, hostZoneUnbonding)
 		if !success {

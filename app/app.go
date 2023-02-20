@@ -88,7 +88,6 @@ import (
 	ibcclient "github.com/cosmos/ibc-go/v7/modules/core/02-client"
 	ibcclientclient "github.com/cosmos/ibc-go/v7/modules/core/02-client/client"
 	ibcclienttypes "github.com/cosmos/ibc-go/v7/modules/core/02-client/types"
-	ibcporttypes "github.com/cosmos/ibc-go/v7/modules/core/05-port/types"
 	ibchost "github.com/cosmos/ibc-go/v7/modules/core/exported"
 	ibckeeper "github.com/cosmos/ibc-go/v7/modules/core/keeper"
 	ibctesting "github.com/cosmos/ibc-go/v7/testing"
@@ -125,6 +124,10 @@ import (
 	icacallbacksmodule "github.com/Stride-Labs/stride/v5/x/icacallbacks"
 	icacallbacksmodulekeeper "github.com/Stride-Labs/stride/v5/x/icacallbacks/keeper"
 	icacallbacksmoduletypes "github.com/Stride-Labs/stride/v5/x/icacallbacks/types"
+	ratelimitmodule "github.com/Stride-Labs/stride/v5/x/ratelimit"
+	ratelimitclient "github.com/Stride-Labs/stride/v5/x/ratelimit/client"
+	ratelimitmodulekeeper "github.com/Stride-Labs/stride/v5/x/ratelimit/keeper"
+	ratelimitmoduletypes "github.com/Stride-Labs/stride/v5/x/ratelimit/types"
 	recordsmodule "github.com/Stride-Labs/stride/v5/x/records"
 	recordsmodulekeeper "github.com/Stride-Labs/stride/v5/x/records/keeper"
 	recordsmoduletypes "github.com/Stride-Labs/stride/v5/x/records/types"
@@ -158,6 +161,10 @@ func getGovProposalHandlers() []govclient.ProposalHandler {
 		ibcclientclient.UpdateClientProposalHandler,
 		ibcclientclient.UpgradeProposalHandler,
 		stakeibcclient.AddValidatorProposalHandler,
+		ratelimitclient.AddRateLimitProposalHandler,
+		ratelimitclient.UpdateRateLimitProposalHandler,
+		ratelimitclient.RemoveRateLimitProposalHandler,
+		ratelimitclient.ResetRateLimitProposalHandler,
 		// this line is used by starport scaffolding # stargate/app/govProposalHandler
 	)
 
@@ -196,6 +203,7 @@ var (
 		interchainquery.AppModuleBasic{},
 		ica.AppModuleBasic{},
 		recordsmodule.AppModuleBasic{},
+		ratelimitmodule.AppModuleBasic{},
 		icacallbacksmodule.AppModuleBasic{},
 		claim.AppModuleBasic{},
 		tendermint.AppModuleBasic{},
@@ -288,6 +296,8 @@ type StrideApp struct {
 	RecordsKeeper            recordsmodulekeeper.Keeper
 	ScopedIcacallbacksKeeper capabilitykeeper.ScopedKeeper
 	IcacallbacksKeeper       icacallbacksmodulekeeper.Keeper
+	ScopedratelimitKeeper    capabilitykeeper.ScopedKeeper
+	RatelimitKeeper          ratelimitmodulekeeper.Keeper
 	ClaimKeeper              claimkeeper.Keeper
 	ConsensusParamsKeeper    consensusparamkeeper.Keeper
 	// this line is used by starport scaffolding # stargate/app/keeperDeclaration
@@ -330,6 +340,7 @@ func NewStrideApp(
 		interchainquerytypes.StoreKey,
 		icacontrollertypes.StoreKey, icahosttypes.StoreKey,
 		recordsmoduletypes.StoreKey,
+		ratelimitmoduletypes.StoreKey,
 		icacallbacksmoduletypes.StoreKey,
 		claimtypes.StoreKey,
 		crisistypes.StoreKey,
@@ -416,11 +427,30 @@ func NewStrideApp(
 		appCodec, keys[ibchost.StoreKey], app.GetSubspace(ibchost.ModuleName), app.StakingKeeper, app.UpgradeKeeper, scopedIBCKeeper,
 	)
 
+	// Create Ratelimit Keeper
+	scopedratelimitKeeper := app.CapabilityKeeper.ScopeToModule(ratelimitmoduletypes.ModuleName)
+	app.ScopedratelimitKeeper = scopedratelimitKeeper
+	app.RatelimitKeeper = *ratelimitmodulekeeper.NewKeeper(
+		appCodec,
+		keys[ratelimitmoduletypes.StoreKey],
+		app.GetSubspace(ratelimitmoduletypes.ModuleName),
+		app.BankKeeper,
+		app.IBCKeeper.ChannelKeeper,
+		// TODO: Implement ICS4Wrapper in Records and pass records keeper here
+		app.IBCKeeper.ChannelKeeper, // ICS4Wrapper
+	)
+	ratelimitModule := ratelimitmodule.NewAppModule(appCodec, app.RatelimitKeeper)
+
 	// Create Transfer Keepers
 	app.TransferKeeper = ibctransferkeeper.NewKeeper(
-		appCodec, keys[ibctransfertypes.StoreKey], app.GetSubspace(ibctransfertypes.ModuleName),
-		app.IBCKeeper.ChannelKeeper, app.IBCKeeper.ChannelKeeper, &app.IBCKeeper.PortKeeper,
-		app.AccountKeeper, app.BankKeeper, scopedTransferKeeper,
+		appCodec, keys[ibctransfertypes.StoreKey],
+		app.GetSubspace(ibctransfertypes.ModuleName),
+		app.RatelimitKeeper, // ICS4Wrapper
+		app.IBCKeeper.ChannelKeeper,
+		&app.IBCKeeper.PortKeeper,
+		app.AccountKeeper,
+		app.BankKeeper,
+		scopedTransferKeeper,
 	)
 	transferModule := transfer.NewAppModule(app.TransferKeeper)
 	transferIBCModule := transfer.NewIBCModule(app.TransferKeeper)
@@ -520,7 +550,8 @@ func NewStrideApp(
 		// AddRoute(distrtypes.RouterKey, distr.NewCommunityPoolSpendProposalHandler(app.DistrKeeper)).
 		AddRoute(upgradetypes.RouterKey, upgrade.NewSoftwareUpgradeProposalHandler(app.UpgradeKeeper)).
 		AddRoute(ibcclienttypes.RouterKey, ibcclient.NewClientProposalHandler(app.IBCKeeper.ClientKeeper)).
-		AddRoute(stakeibcmoduletypes.RouterKey, stakeibcmodule.NewStakeibcProposalHandler(app.StakeibcKeeper))
+		AddRoute(stakeibcmoduletypes.RouterKey, stakeibcmodule.NewStakeibcProposalHandler(app.StakeibcKeeper)).
+		AddRoute(ratelimitmoduletypes.RouterKey, ratelimitmodule.NewRateLimitProposalHandler(app.RatelimitKeeper, app.IBCKeeper.ChannelKeeper))
 
 	govKeeper := *govkeeper.NewKeeper(
 		appCodec, keys[govtypes.StoreKey], app.AccountKeeper, app.BankKeeper,
@@ -546,6 +577,7 @@ func NewStrideApp(
 			app.StakeibcKeeper.Hooks(),
 			app.MintKeeper.Hooks(),
 			app.ClaimKeeper.Hooks(),
+			app.RatelimitKeeper.Hooks(),
 		),
 	)
 	epochsModule := epochsmodule.NewAppModule(appCodec, app.EpochsKeeper)
@@ -585,34 +617,49 @@ func NewStrideApp(
 	icaModule := ica.NewAppModule(&app.ICAControllerKeeper, &app.ICAHostKeeper)
 
 	// Create the middleware stacks
-
-	// Stack one contains
+	// Stack one (ICAHost Stack) contains:
 	// - IBC
-	// - ICA
-	// - icacallbacks
-	// - stakeibc
+	// - ICAHost
 	// - base app
-	var icamiddlewareStack porttypes.IBCModule
-	icamiddlewareStack = icacallbacksmodule.NewIBCModule(app.IcacallbacksKeeper, stakeibcIBCModule)
-	icamiddlewareStack = icacontroller.NewIBCMiddleware(icamiddlewareStack, app.ICAControllerKeeper)
 	icaHostIBCModule := icahost.NewIBCModule(app.ICAHostKeeper)
 
-	// Stack two contains
+	// Stack two (Stakeibc Stack) contains
+	// - IBC
+	// - ICA
+	// - stakeibc
+	// - base app
+	var stakeibcStack porttypes.IBCModule = stakeibcIBCModule
+	stakeibcStack = icacontroller.NewIBCMiddleware(stakeibcStack, app.ICAControllerKeeper)
+
+	// Stack three contains
 	// - IBC
 	// - records
+	// - ratelimit
 	// - transfer
 	// - base app
-	recordsStack := recordsmodule.NewIBCModule(app.RecordsKeeper, transferIBCModule)
+	var transferStack porttypes.IBCModule = transferIBCModule
+	transferStack = ratelimitmodule.NewIBCMiddleware(app.RatelimitKeeper, transferStack)
+	transferStack = recordsmodule.NewIBCModule(app.RecordsKeeper, transferStack)
 
 	// Create static IBC router, add transfer route, then set and seal it
-	ibcRouter := ibcporttypes.NewRouter()
+	// Two routes are included for the ICAController because of the following procedure when registering an ICA
+	//     1. RegisterInterchainAccount binds the new portId to the icacontroller module and initiates a channel opening
+	//     2. MsgChanOpenInit is invoked from the IBC message server.  The message server identifies that the
+	//        icacontroller module owns the portID and routes to the stakeibc stack (the "icacontroller" route below)
+	//     3. The stakeibc stack works top-down, first in the ICAController's OnChanOpenInit, and then in stakeibc's OnChanOpenInit
+	//     4. In stakeibc's OnChanOpenInit, the stakeibc module steals the portId from the icacontroller module
+	//     5. Now in OnChanOpenAck and any other subsequent IBC callback, the message server will identify
+	//        the portID owner as stakeibc and route to the same stakeibcStack, this time using the "stakeibc" route instead
+	ibcRouter := porttypes.NewRouter()
 	ibcRouter.
-		AddRoute(ibctransfertypes.ModuleName, recordsStack).
-		AddRoute(icacontrollertypes.SubModuleName, icamiddlewareStack).
+		// ICAHost Stack
 		AddRoute(icahosttypes.SubModuleName, icaHostIBCModule).
-		// Note, authentication module packets are routed to the top level of the middleware stack
-		AddRoute(stakeibcmoduletypes.ModuleName, icamiddlewareStack).
-		AddRoute(icacallbacksmoduletypes.ModuleName, icamiddlewareStack)
+		// Stakeibc Stack
+		AddRoute(icacontrollertypes.SubModuleName, stakeibcStack).
+		AddRoute(stakeibcmoduletypes.ModuleName, stakeibcStack).
+		// Transfer stack
+		AddRoute(ibctransfertypes.ModuleName, transferStack)
+
 	// this line is used by starport scaffolding # ibc/app/router
 	app.IBCKeeper.SetRouter(ibcRouter)
 
@@ -654,6 +701,7 @@ func NewStrideApp(
 		interchainQueryModule,
 		icaModule,
 		recordsModule,
+		ratelimitModule,
 		icacallbacksModule,
 		// this line is used by starport scaffolding # stargate/app/appModule
 	)
@@ -687,6 +735,7 @@ func NewStrideApp(
 		epochsmoduletypes.ModuleName,
 		interchainquerytypes.ModuleName,
 		recordsmoduletypes.ModuleName,
+		ratelimitmoduletypes.ModuleName,
 		icacallbacksmoduletypes.ModuleName,
 		claimtypes.ModuleName,
 		// this line is used by starport scaffolding # stargate/app/beginBlockers
@@ -717,6 +766,7 @@ func NewStrideApp(
 		epochsmoduletypes.ModuleName,
 		interchainquerytypes.ModuleName,
 		recordsmoduletypes.ModuleName,
+		ratelimitmoduletypes.ModuleName,
 		icacallbacksmoduletypes.ModuleName,
 		claimtypes.ModuleName,
 		// this line is used by starport scaffolding # stargate/app/endBlockers
@@ -752,6 +802,7 @@ func NewStrideApp(
 		epochsmoduletypes.ModuleName,
 		interchainquerytypes.ModuleName,
 		recordsmoduletypes.ModuleName,
+		ratelimitmoduletypes.ModuleName,
 		icacallbacksmoduletypes.ModuleName,
 		claimtypes.ModuleName,
 		// this line is used by starport scaffolding # stargate/app/initGenesis
@@ -1020,6 +1071,7 @@ func initParamsKeeper(appCodec codec.BinaryCodec, legacyAmino *codec.LegacyAmino
 	paramsKeeper.Subspace(icacontrollertypes.SubModuleName)
 	paramsKeeper.Subspace(icahosttypes.SubModuleName)
 	paramsKeeper.Subspace(recordsmoduletypes.ModuleName)
+	paramsKeeper.Subspace(ratelimitmoduletypes.ModuleName)
 	paramsKeeper.Subspace(icacallbacksmoduletypes.ModuleName)
 	// this line is used by starport scaffolding # stargate/app/paramSubspace
 

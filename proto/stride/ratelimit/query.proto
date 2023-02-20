@@ -1,0 +1,51 @@
+syntax = "proto3";
+package stride.ratelimit;
+
+import "stride/ratelimit/ratelimit.proto";
+import "google/api/annotations.proto";
+import "gogoproto/gogo.proto";
+
+option go_package = "github.com/Stride-Labs/stride/v5/x/ratelimit/types";
+
+// Query defines the gRPC querier service.
+service Query {
+  rpc AllRateLimits(QueryAllRateLimitsRequest)
+      returns (QueryAllRateLimitsResponse) {
+    option (google.api.http).get = "/Stride-Labs/stride/ratelimit/ratelimits";
+  }
+  rpc RateLimit(QueryRateLimitRequest) returns (QueryRateLimitResponse) {
+    option (google.api.http).get =
+        "/Stride-Labs/stride/ratelimit/ratelimit/{channel_id}/by_denom";
+  }
+  rpc RateLimitsByChainId(QueryRateLimitsByChainIdRequest)
+      returns (QueryRateLimitsByChainIdResponse) {
+    option (google.api.http).get =
+        "/Stride-Labs/stride/ratelimit/ratelimits/{chain_id}";
+  }
+  rpc RateLimitsByChannelId(QueryRateLimitsByChannelIdRequest)
+      returns (QueryRateLimitsByChannelIdResponse) {
+    option (google.api.http).get =
+        "/Stride-Labs/stride/ratelimit/ratelimits/{channel_id}";
+  }
+}
+
+message QueryAllRateLimitsRequest {}
+message QueryAllRateLimitsResponse {
+  repeated RateLimit rate_limits = 1 [ (gogoproto.nullable) = false ];
+}
+
+message QueryRateLimitRequest {
+  string denom = 1;
+  string channel_id = 2;
+}
+message QueryRateLimitResponse { RateLimit rate_limit = 1; }
+
+message QueryRateLimitsByChainIdRequest { string chain_id = 1; }
+message QueryRateLimitsByChainIdResponse {
+  repeated RateLimit rate_limits = 1 [ (gogoproto.nullable) = false ];
+}
+
+message QueryRateLimitsByChannelIdRequest { string channel_id = 1; }
+message QueryRateLimitsByChannelIdResponse {
+  repeated RateLimit rate_limits = 1 [ (gogoproto.nullable) = false ];
+}
