@@ -7,10 +7,11 @@ message Oracle {
   string chain_id = 1;
   string connection_id = 2;
   string channel_id = 3;
-  string ica_address = 4;
-  string contract_address = 5;
-  uint64 contract_code_id = 6;
-  bool active = 7;
+  string port_id = 4;
+  string ica_address = 5;
+  string contract_address = 6;
+  uint64 contract_code_id = 7;
+  bool active = 8;
 }
 
 message Metadata {
