@@ -32,7 +32,6 @@ func (k msgServer) RebalanceValidators(goCtx context.Context, msg *types.MsgReba
 		return nil, fmt.Errorf("invalid number of validators to rebalance (%d)", msg.NumRebalance)
 	}
 	
-	maxNumRebalance := cast.ToInt(msg.NumRebalance)
 	
 	validatorDeltas, err := k.GetValidatorDelegationAmtDifferences(ctx, hostZone)
 	if err != nil {
@@ -91,7 +90,7 @@ func (k msgServer) RebalanceValidators(goCtx context.Context, msg *types.MsgReba
 		Rebalancings: []*types.Rebalancing{},
 	}
 
-	for i := 1; i <= maxNumRebalance; i++ {
+	for i := uint64(1); i <= msg.NumRebalance; i++ {
 		underWeightElem := valDeltaList[underWeightIndex]
 		overWeightElem := valDeltaList[overWeightIndex]
 		if underWeightElem.deltaAmt.LT(sdkmath.ZeroInt()) {
