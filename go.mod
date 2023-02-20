@@ -25,6 +25,8 @@ require (
 	gopkg.in/yaml.v2 v2.4.0
 )
 
+require github.com/regen-network/cosmos-proto v0.3.1 // indirect
+
 require (
 	cloud.google.com/go v0.105.0 // indirect
 	cloud.google.com/go/compute v1.14.0 // indirect
