@@ -29,7 +29,7 @@ func (k msgServer) RebalanceValidators(goCtx context.Context, msg *types.MsgReba
 
 	params := k.GetParams(ctx)
 	if (msg.NumRebalance < params.MinNumRebalance) || (msg.NumRebalance > params.MaxNumRebalance) {
-		return nil, fmt.Errorf("invalid number of validators to rebalance (%d)", msg.NumRebalance)
+		return nil, errorsmod.Wrapf(types.ErrInvalidNumValidator, "invalid number of validators to rebalance (%d)", msg.NumRebalance)
 	}
 	
 	maxNumRebalance := cast.ToInt(msg.NumRebalance)
