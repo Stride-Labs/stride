@@ -26,19 +26,26 @@ If channel marked as `frozen`, please, visit [Stride Discord Server](https://dis
 | 	 	| 			 | 		 | channel-21 (ica.fee)		 | channel-109 |  
 | 	 	| 			 | 		 | channel-22 (ica.withdrawal) | channel-110 | 
 | 	 	| 			 | 		 | channel-23 (ica.redemption) | channel-107 |  
-| EVMOS | evmos_9001-2 | EVMOS | channel-9 | channel-25 |  
+| EVMOS | evmos_9001-2 | EVMOS | channel-9 (transfer) | channel-25 |  
 | 	 	| 			 | 		 | channel-62 (ica.delegation) | channel-50	|  
 | 	 	| 			 | 		 | channel-63 (ica.fee)		 | channel-53 |  
 | 	 	| 			 | 		 | channel-64 (ica.withdrawal) | channel-55 | 
 | 	 	| 			 | 		 | channel-65 (ica.redemption) | channel-52 |
-| UMEE | umee-1 | UMEE | channel-29 | channel-34 |  
-| TERRA | phoenix-1 | LUNA | channel-13 | channel-25 |  
+| TERRA | phoenix-1 | LUNA | channel-52 (transfer) | channel-46 |  
+| 	 	| 			 | 		 | channel-70 (ica.delegation) | channel-88	|  
+| 	 	| 			 | 		 | channel-59 (ica.fee)		 | channel-82 |  
+| 	 	| 			 | 		 | channel-60 (ica.withdrawal) | channel-79 | 
+| 	 	| 			 | 		 | channel-61 (ica.redemption) | channel-81 |
 | INJECTIVE | injective-1 | INJ | channel-6 | channel-89 |  
-| TERITORI	 | teritori-1 | TORI | channel-41 | channel-9 |  
-| KI CHAIN | kichain-2 | XKI | channel-15 (frozen)| channel-20 (frozen) | 
-| COMDEX | comdex-1 | CMDX | channel-39 | channel-41 | 
-| RIZON | titan-1 | ATOLO | channel-14 (frozen) | channel-11 (frozen) | 
+| UMEE | umee-1 | UMEE | channel-29 | channel-34 |  
+| Persistence | core-1 | XPRT | channel-53 | channel-67 | 
+| COMDEX | comdex-1 | CMDX | channel-49 | channel-45 | 
 | SECRET | secret-4 | SCRT | Channel-40 | channel-37 |  
-| REGEN | regen-1 | REGEN | channel-17 | channel-49 |  
 | AXELAR | axelar-dojo-1 | AXL | channel-11 | channel-33 | 
+| Crescent | crescent-1 | CRE/ bCRE  | channel-51 | channel-29 | 
 | KUJIRA | kaiyo-1 | KUJI | channel-8 | channel-32 |  
+| TERITORI	 | teritori-1 | TORI | channel-41 (frozen) | channel-9 (frozen) | 
+| RIZON | titan-1 | ATOLO | channel-14 (frozen) | channel-11 (frozen) | 
+| REGEN | regen-1 | REGEN | channel-17 (frozen) | channel-49 (frozen) | 
+| KI CHAIN | kichain-2 | XKI | channel-15 (frozen)| channel-20 (frozen) | 
+| Carbon | carbon-1 | SWTH | channel-47 | channel-8 |  
