@@ -1,0 +1,7 @@
+syntax = "proto3";
+package stride.ratelimit;
+
+option go_package = "github.com/Stride-Labs/stride/v5/x/ratelimit/types";
+
+// Params defines the ratelimit module's parameters.
+message Params {}
