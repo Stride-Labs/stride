@@ -24,7 +24,7 @@ TRIM_TX() {
 STRIDE_MAIN_CMD="docker-compose -f ${SCRIPT_DIR}/../docker-compose.yml exec -it stride strided"
 
 printf "PROPOSAL\n"
-$STRIDE_MAIN_CMD tx gov submit-proposal software-upgrade $upgrade_name \
+$STRIDE_MAIN_CMD tx gov submit-legacy-proposal software-upgrade $upgrade_name \
     --title $upgrade_name --description "upgrade" \
     --upgrade-height $upgrade_height --from val -y | TRIM_TX
 
