@@ -233,8 +233,8 @@ func (k Keeper) DistributeMintedCoin(ctx sdk.Context, mintedCoin sdk.Coin) error
 func (k Keeper) SetupNewModuleAccount(ctx sdk.Context, submoduleName string, submoduleNamespace string) {
 	// create and save the module account to the account keeper
 	acctAddress := k.GetSubmoduleAddress(submoduleName, submoduleNamespace)
-	acctAddressIsExist := k.accountKeeper.GetAccount(ctx, acctAddress) 
-	if acctAddressIsExist != nil {
+	checkAcctAddress := k.accountKeeper.GetAccount(ctx, acctAddress) 
+	if checkAcctAddress != nil {
 		return
 	}
 	acc := k.accountKeeper.NewAccount(
