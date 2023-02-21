@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"fmt"
+	"strings"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
@@ -44,9 +45,15 @@ func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochInfo epochstypes.EpochInf
 }
 
 func (k Keeper) AfterEpochEnd(ctx sdk.Context, epochInfo epochstypes.EpochInfo) {
-	err := k.ResetClaimStatus(ctx, epochInfo.Identifier)
-	if err != nil {
-		k.Logger(ctx).Error(fmt.Sprintf("failed to reset claim status for epoch %s: %s", epochInfo.Identifier, err.Error()))
+	// check if epochInfo.Identifier is an airdrop epoch
+	// if yes, reset claim status for all users
+	// check if epochInfo.Identifier starts with "airdrop"
+	if strings.HasPrefix(epochInfo.Identifier, "airdrop-") {
+		airdropIdentifier := strings.TrimPrefix(epochInfo.Identifier, "airdrop-")
+		err := k.ResetClaimStatus(ctx, airdropIdentifier)
+		if err != nil {
+			k.Logger(ctx).Error(fmt.Sprintf("failed to reset claim status for epoch %s: %s", epochInfo.Identifier, err.Error()))
+		}
 	}
 }
 

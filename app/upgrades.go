@@ -12,6 +12,7 @@ import (
 	v3 "github.com/Stride-Labs/stride/v5/app/upgrades/v3"
 	v4 "github.com/Stride-Labs/stride/v5/app/upgrades/v4"
 	v5 "github.com/Stride-Labs/stride/v5/app/upgrades/v5"
+	v6 "github.com/Stride-Labs/stride/v5/app/upgrades/v6"
 	claimtypes "github.com/Stride-Labs/stride/v5/x/claim/types"
 	icacallbacktypes "github.com/Stride-Labs/stride/v5/x/icacallbacks/types"
 	recordtypes "github.com/Stride-Labs/stride/v5/x/records/types"
@@ -50,6 +51,17 @@ func (app *StrideApp) setupUpgradeHandlers() {
 			app.keys[icacallbacktypes.StoreKey],
 			app.keys[recordtypes.StoreKey],
 			app.keys[stakeibctypes.StoreKey],
+		),
+	)
+
+	// v6 upgrade handler
+	app.UpgradeKeeper.SetUpgradeHandler(
+		v6.UpgradeName,
+		v6.CreateUpgradeHandler(
+			app.mm,
+			app.configurator,
+			app.appCodec,
+			app.ClaimKeeper,
 		),
 	)
 
