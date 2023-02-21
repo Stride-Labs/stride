@@ -27,7 +27,6 @@ const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 // next id: 1
 type Params struct {
 	// optionally, turn off this module
-	// TODO: implement
 	Active bool `protobuf:"varint,1,opt,name=active,proto3" json:"active,omitempty"`
 }
 
