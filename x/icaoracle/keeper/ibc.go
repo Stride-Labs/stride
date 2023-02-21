@@ -10,6 +10,7 @@ import (
 	icatypes "github.com/cosmos/ibc-go/v5/modules/apps/27-interchain-accounts/types"
 	channeltypes "github.com/cosmos/ibc-go/v5/modules/core/04-channel/types"
 	host "github.com/cosmos/ibc-go/v5/modules/core/24-host"
+	"github.com/golang/protobuf/proto" //nolint:staticcheck
 
 	"github.com/Stride-Labs/stride/v5/x/icacallbacks"
 	icacallbacktypes "github.com/Stride-Labs/stride/v5/x/icacallbacks/types"
@@ -92,6 +93,52 @@ func (k Keeper) OnAcknowledgementPacket(ctx sdk.Context, packet channeltypes.Pac
 			packet.Sequence, packet.SourceChannel, packet.SourcePort, packet.DestinationChannel, packet.DestinationPort)
 		return errorsmod.Wrapf(icacallbacktypes.ErrCallbackFailed, errMsg)
 	}
+
+	return nil
+}
+
+func (k Keeper) SubmitICATx(ctx sdk.Context, tx types.ICATx) error {
+	// Validate the ICATx struct has all the required fields
+	if err := tx.ValidateICATx(ctx); err != nil {
+		return err
+	}
+
+	// Serialize tx messages
+	txBz, err := icatypes.SerializeCosmosTx(k.cdc, tx.Messages)
+	if err != nil {
+		return errorsmod.Wrapf(err, "unable to serialize execute contract message")
+	}
+	packetData := icatypes.InterchainAccountPacketData{
+		Type: icatypes.EXECUTE_TX,
+		Data: txBz,
+	}
+
+	// TODO: After upgrading ibc-go to v6/v7, we can just pass nil as the chanCap in SendTx
+	chanCap, found := k.scopedKeeper.GetCapability(ctx, host.ChannelCapabilityPath(tx.PortId, tx.ChannelId))
+	if !found {
+		return errorsmod.Wrap(channeltypes.ErrChannelCapabilityNotFound, "module does not own channel capability")
+	}
+
+	// Submit ICA and grab sequence number for the callback key
+	sequence, err := k.ICAControllerKeeper.SendTx(ctx, chanCap, tx.ConnectionId, tx.PortId, packetData, tx.Timeout)
+	if err != nil {
+		return errorsmod.Wrapf(err, "unable to submit ICA to execute contract")
+	}
+
+	// Store the callback data
+	callbackArgsBz, err := proto.Marshal(tx.CallbackArgs)
+	if err != nil {
+		return errorsmod.Wrapf(types.ErrMarshalFailure, "unable to marshal callback: %s", err.Error())
+	}
+	callbackData := icacallbacktypes.CallbackData{
+		CallbackKey:  icacallbacktypes.PacketID(tx.PortId, tx.ChannelId, sequence),
+		PortId:       tx.PortId,
+		ChannelId:    tx.ChannelId,
+		Sequence:     sequence,
+		CallbackId:   tx.CallbackId,
+		CallbackArgs: callbackArgsBz,
+	}
+	k.ICACallbacksKeeper.SetCallbackData(ctx, callbackData)
 
 	return nil
 }

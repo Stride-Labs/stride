@@ -12,16 +12,6 @@ import (
 	"github.com/golang/protobuf/proto" //nolint:staticcheck
 )
 
-// Marshalls oracle callback arguments
-func (k Keeper) MarshalUpdateOracleCallbackArgs(ctx sdk.Context, updateCallback types.UpdateOracleCallback) ([]byte, error) {
-	out, err := proto.Marshal(&updateCallback)
-	if err != nil {
-		k.Logger(ctx).Error(fmt.Sprintf("MarshalUpdateOracleCallbackArgs %v", err.Error()))
-		return nil, err
-	}
-	return out, nil
-}
-
 // Unmarshalls oracle callback arguments into a OracleCallback struct
 func (k Keeper) UnmarshalUpdateOracleCallbackArgs(ctx sdk.Context, updateCallbackBz []byte) (*types.UpdateOracleCallback, error) {
 	updateCallback := types.UpdateOracleCallback{}

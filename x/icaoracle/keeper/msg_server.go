@@ -11,11 +11,8 @@ import (
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
 	icatypes "github.com/cosmos/ibc-go/v5/modules/apps/27-interchain-accounts/types"
-	channeltypes "github.com/cosmos/ibc-go/v5/modules/core/04-channel/types"
-	host "github.com/cosmos/ibc-go/v5/modules/core/24-host"
 	ibctmtypes "github.com/cosmos/ibc-go/v5/modules/light-clients/07-tendermint/types"
 
-	icacallbacktypes "github.com/Stride-Labs/stride/v5/x/icacallbacks/types"
 	"github.com/Stride-Labs/stride/v5/x/icaoracle/types"
 )
 
@@ -99,14 +96,8 @@ func (k msgServer) InstantiateOracle(goCtx context.Context, msg *types.MsgInstan
 	}
 
 	// Confirm the oracle ICA was registered
-	if oracle.ConnectionId == "" {
-		return &types.MsgInstantiateOracleResponse{}, errorsmod.Wrapf(types.ErrOracleICANotRegistered, "connectionId is empty")
-	}
-	if oracle.ChannelId == "" {
-		return &types.MsgInstantiateOracleResponse{}, errorsmod.Wrapf(types.ErrOracleICANotRegistered, "channelId is empty")
-	}
-	if oracle.PortId == "" {
-		return &types.MsgInstantiateOracleResponse{}, errorsmod.Wrapf(types.ErrOracleICANotRegistered, "portId is empty")
+	if err := oracle.ValidateICASetup(); err != nil {
+		return &types.MsgInstantiateOracleResponse{}, err
 	}
 
 	// Build the contract-specific instantiation message
@@ -128,46 +119,27 @@ func (k msgServer) InstantiateOracle(goCtx context.Context, msg *types.MsgInstan
 		Label:  "Stride ICA Oracle",
 		Msg:    contractMsgBz,
 	}}
-	txBz, err := icatypes.SerializeCosmosTx(k.cdc, msgs)
-	if err != nil {
-		return &types.MsgInstantiateOracleResponse{}, errorsmod.Wrapf(err, "unable to serialize instantiate contract message")
-	}
-	packetData := icatypes.InterchainAccountPacketData{
-		Type: icatypes.EXECUTE_TX,
-		Data: txBz,
-	}
-
-	// TODO: After upgrading ibc-go to v6/v7, we can just pass nil as the chanCap in SendTx
-	chanCap, found := k.scopedKeeper.GetCapability(ctx, host.ChannelCapabilityPath(oracle.PortId, oracle.ChannelId))
-	if !found {
-		return &types.MsgInstantiateOracleResponse{}, errorsmod.Wrap(channeltypes.ErrChannelCapabilityNotFound, "module does not own channel capability")
-	}
 
 	// Submit the ICA with a 1 day timeout
 	// The timeout time here is arbitrary, but 1 day gives enough time to manually relay the packet if it gets stuck
 	timeout := uint64(ctx.BlockTime().UnixNano() + (time.Hour * 24).Nanoseconds())
-	sequence, err := k.ICAControllerKeeper.SendTx(ctx, chanCap, oracle.ConnectionId, oracle.PortId, packetData, timeout)
-	if err != nil {
-		return &types.MsgInstantiateOracleResponse{}, errorsmod.Wrapf(err, "unable to submit ICA to instantiate contract")
-	}
 
-	// Store the ICA callback data
+	// Submit the ICA
 	callbackArgs := types.InstantiateOracleCallback{
 		OracleChainId: oracle.ChainId,
 	}
-	callbackArgsBz, err := k.MarshalInstantiateOracleCallbackArgs(ctx, callbackArgs)
-	if err != nil {
-		return &types.MsgInstantiateOracleResponse{}, err
-	}
-	callbackData := icacallbacktypes.CallbackData{
-		CallbackKey:  icacallbacktypes.PacketID(oracle.PortId, oracle.ChannelId, sequence),
-		PortId:       oracle.PortId,
+	icaTx := types.ICATx{
+		ConnectionId: oracle.ConnectionId,
 		ChannelId:    oracle.ChannelId,
-		Sequence:     sequence,
+		PortId:       oracle.PortId,
+		Messages:     msgs,
+		Timeout:      timeout,
+		CallbackArgs: &callbackArgs,
 		CallbackId:   ICACallbackID_InstantiateOracle,
-		CallbackArgs: callbackArgsBz,
 	}
-	k.ICACallbacksKeeper.SetCallbackData(ctx, callbackData)
+	if err := k.SubmitICATx(ctx, icaTx); err != nil {
+		return &types.MsgInstantiateOracleResponse{}, errorsmod.Wrapf(err, "unable to submit instantiate oracle contract ICA")
+	}
 
 	return &types.MsgInstantiateOracleResponse{}, nil
 }
