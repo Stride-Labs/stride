@@ -43,9 +43,13 @@ If channel marked as `frozen`, please, visit [Stride Discord Server](https://dis
 | SECRET | secret-4 | SCRT | Channel-40 | channel-37 |  
 | AXELAR | axelar-dojo-1 | AXL | channel-11 | channel-33 | 
 | Crescent | crescent-1 | CRE/ bCRE  | channel-51 | channel-29 | 
-| KUJIRA | kaiyo-1 | KUJI | channel-8 | channel-32 |  
+| KUJIRA | kaiyo-1 | KUJI | channel-8 | channel-32 | 
+| Carbon | carbon-1 | SWTH | channel-47 | channel-8 |  
+| Planq | planq_7070-2 | PLANQ | channel-54 | channel-8 |
+| Acrechain | acre_9052-1 | ACRE | channel-57 | channel-13 |
+| Oraichain | Oraichain  | ORAI | channel-50 | channel-31 |
 | TERITORI	 | teritori-1 | TORI | channel-41 (frozen) | channel-9 (frozen) | 
 | RIZON | titan-1 | ATOLO | channel-14 (frozen) | channel-11 (frozen) | 
 | REGEN | regen-1 | REGEN | channel-17 (frozen) | channel-49 (frozen) | 
 | KI CHAIN | kichain-2 | XKI | channel-15 (frozen)| channel-20 (frozen) | 
-| Carbon | carbon-1 | SWTH | channel-47 | channel-8 |  
+
