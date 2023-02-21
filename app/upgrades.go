@@ -74,6 +74,14 @@ func (app *StrideApp) setupUpgradeHandlers() {
 			Deleted: []string{authz.ModuleName},
 		}
 	}
+	// TODO: RATE LIMIT UPGRADE
+	//  1. Add ratelimit store key when module is added
+	//     storeUpgrades = &storetypes.StoreUpgrades{
+	// 	     Added: []string{ratelimittypes.StoreKey},
+	//     }
+	//
+	// 2. Add hour epoch to store
+	// 3. Add rate limits for existing denoms
 
 	if storeUpgrades != nil {
 		app.SetStoreLoader(upgradetypes.UpgradeStoreLoader(upgradeInfo.Height, storeUpgrades))
