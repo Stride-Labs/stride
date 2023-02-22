@@ -1,4 +1,4 @@
-package v6
+package v8
 
 import (
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -12,7 +12,7 @@ import (
 
 const (
 	// UpgradeName defines the on-chain upgrade name for the SimApp v7 upgrade.
-	UpgradeName = "v6"
+	UpgradeName = "v8"
 )
 
 // CreateUpgradeHandler creates an upgrade handler for the v7 SimApp upgrade.
