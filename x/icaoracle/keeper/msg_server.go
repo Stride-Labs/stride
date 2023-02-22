@@ -95,6 +95,12 @@ func (k msgServer) InstantiateOracle(goCtx context.Context, msg *types.MsgInstan
 		return &types.MsgInstantiateOracleResponse{}, types.ErrOracleAlreadyInstantiated
 	}
 
+	// Store the contract code id
+	// QUESTION/TODO: Do we need to store the contract code id at all?
+	// I'm guessing no, unless we need to reinstantiatlize for some reason
+	oracle.ContractCodeId = msg.ContractCodeId
+	k.SetOracle(ctx, oracle)
+
 	// Confirm the oracle ICA was registered
 	if err := oracle.ValidateICASetup(); err != nil {
 		return &types.MsgInstantiateOracleResponse{}, err

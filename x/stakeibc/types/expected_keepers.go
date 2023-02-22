@@ -4,6 +4,8 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/auth/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+
+	icaoracletypes "github.com/Stride-Labs/stride/v5/x/icaoracle/types"
 )
 
 // AccountKeeper defines the expected account keeper used for simulations (noalias)
@@ -33,4 +35,8 @@ type BankKeeper interface {
 // StakeIBCHooks event hooks for stakeibc
 type StakeIBCHooks interface {
 	AfterLiquidStake(ctx sdk.Context, addr sdk.AccAddress) // Must be called after liquid stake is completed
+}
+
+type ICAOracleKeeper interface {
+	QueueMetricUpdate(ctx sdk.Context, metric icaoracletypes.Metric)
 }

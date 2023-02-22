@@ -47,6 +47,7 @@ type (
 		ICACallbacksKeeper    icacallbackskeeper.Keeper
 		hooks                 types.StakeIBCHooks
 		accountKeeper         types.AccountKeeper
+		ICAOracleKeeper       types.ICAOracleKeeper
 	}
 )
 
@@ -67,6 +68,7 @@ func NewKeeper(
 	RecordsKeeper recordsmodulekeeper.Keeper,
 	StakingKeeper stakingkeeper.Keeper,
 	ICACallbacksKeeper icacallbackskeeper.Keeper,
+	icaOracleKeeper types.ICAOracleKeeper,
 ) Keeper {
 	// set KeyTable if it has not already been set
 	if !ps.HasKeyTable() {
@@ -87,6 +89,7 @@ func NewKeeper(
 		RecordsKeeper:         RecordsKeeper,
 		StakingKeeper:         StakingKeeper,
 		ICACallbacksKeeper:    ICACallbacksKeeper,
+		ICAOracleKeeper:       icaOracleKeeper,
 	}
 }
 

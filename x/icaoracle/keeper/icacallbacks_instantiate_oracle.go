@@ -13,40 +13,23 @@ import (
 	"github.com/golang/protobuf/proto" //nolint:staticcheck
 )
 
-// Unmarshalls oracle callback arguments into a OracleCallback struct
-func (k Keeper) UnmarshalInstantiateOracleCallbackArgs(ctx sdk.Context, oracleCallbackBz []byte) (*types.InstantiateOracleCallback, error) {
-	instantiateCallback := types.InstantiateOracleCallback{}
-	if err := proto.Unmarshal(oracleCallbackBz, &instantiateCallback); err != nil {
-		return nil, errorsmod.Wrapf(types.ErrUnmarshalFailure, "unable to unmarshal instantiate oracle callback: %s", err.Error())
-	}
-	return &instantiateCallback, nil
-}
-
 // Callback after an instantiating an oracle's CW contract
 //     If successful: Stores the cosmwasm contract address on the oracle object
 //     If timeout/failure: Does nothing
 func InstantiateOracleCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ackResponse *icacallbackstypes.AcknowledgementResponse, args []byte) error {
 	// Fetch callback args
-	instantiateCallback, err := k.UnmarshalInstantiateOracleCallbackArgs(ctx, args)
-	if err != nil {
-		return err
+	instantiateCallback := types.InstantiateOracleCallback{}
+	if err := proto.Unmarshal(args, &instantiateCallback); err != nil {
+		return errorsmod.Wrapf(types.ErrUnmarshalFailure, "unable to unmarshal instantiate oracle callback: %s", err.Error())
 	}
 	chainId := instantiateCallback.OracleChainId
 	k.Logger(ctx).Info(utils.LogICACallbackWithHostZone(chainId, ICACallbackID_InstantiateOracle, "Starting instantiate oracle callback"))
 
-	// Check for timeout (ack nil)
+	// Check for timeout/failure
 	// No action is necessary on a timeout
-	if ackResponse.Status == icacallbackstypes.AckResponseStatus_TIMEOUT {
-		k.Logger(ctx).Error(utils.LogICACallbackStatusWithHostZone(chainId, ICACallbackID_InstantiateOracle,
-			icacallbackstypes.AckResponseStatus_TIMEOUT, packet))
-		return nil
-	}
-
-	// Check for a failed transaction (ack error)
-	// No action is necessary on a failure
-	if ackResponse.Status == icacallbackstypes.AckResponseStatus_FAILURE {
-		k.Logger(ctx).Error(utils.LogICACallbackStatusWithHostZone(chainId, ICACallbackID_InstantiateOracle,
-			icacallbackstypes.AckResponseStatus_FAILURE, packet))
+	if ackResponse.Status == icacallbackstypes.AckResponseStatus_TIMEOUT ||
+		ackResponse.Status == icacallbackstypes.AckResponseStatus_FAILURE {
+		k.Logger(ctx).Error(utils.LogICACallbackStatusWithHostZone(chainId, ICACallbackID_InstantiateOracle, ackResponse.Status, packet))
 		return nil
 	}
 

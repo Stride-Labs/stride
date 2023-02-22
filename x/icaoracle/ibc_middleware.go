@@ -107,12 +107,12 @@ func (im IBCMiddleware) OnAcknowledgementPacket(
 		return errorsmod.Wrapf(err, "ICAOracle OnAcknowledementPacket failed")
 	}
 
-	return im.app.OnTimeoutPacket(ctx, packet, relayer)
+	return im.app.OnAcknowledgementPacket(ctx, packet, acknowledgement, relayer)
 }
 
 // OnTimeoutPacket implements the IBCMiddleware interface
 func (im IBCMiddleware) OnTimeoutPacket(ctx sdk.Context, packet channeltypes.Packet, relayer sdk.AccAddress) error {
-	im.keeper.Logger(ctx).Info(fmt.Sprintf("OnTimeoutPacket: packet %v, relayer %v", packet, relayer))
+	im.keeper.Logger(ctx).Info(fmt.Sprintf("OnTimeoutPacket (ICAOracle): packet %v, relayer %v", packet, relayer))
 
 	// TODO: Call ICA callbacks with timeout
 

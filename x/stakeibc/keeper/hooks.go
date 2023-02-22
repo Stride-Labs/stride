@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"fmt"
+	"strconv"
 
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -9,6 +10,7 @@ import (
 
 	"github.com/Stride-Labs/stride/v5/utils"
 	epochstypes "github.com/Stride-Labs/stride/v5/x/epochs/types"
+	icaoracletypes "github.com/Stride-Labs/stride/v5/x/icaoracle/types"
 	recordstypes "github.com/Stride-Labs/stride/v5/x/records/types"
 	"github.com/Stride-Labs/stride/v5/x/stakeibc/types"
 )
@@ -171,6 +173,18 @@ func (k Keeper) UpdateRedemptionRates(ctx sdk.Context, depositRecords []recordst
 		hostZone.LastRedemptionRate = hostZone.RedemptionRate
 		hostZone.RedemptionRate = redemptionRate
 		k.SetHostZone(ctx, hostZone)
+
+		// Queue an oracle metric update - Key is of format: {stToken}_redemption_rate
+		stDenom := types.StAssetDenomFromHostZoneDenom(hostZone.HostDenom)
+		redemptionRateOracleUpdate := icaoracletypes.Metric{
+			Key:   stDenom + "_redemption_rate",
+			Value: redemptionRate.String(),
+			Metadata: &icaoracletypes.Metadata{
+				UpdateTime:   strconv.FormatInt(ctx.BlockTime().Unix(), 10),
+				UpdateHeight: strconv.FormatInt(ctx.BlockHeight(), 10),
+			},
+		}
+		k.ICAOracleKeeper.QueueMetricUpdate(ctx, redemptionRateOracleUpdate)
 	}
 }
 

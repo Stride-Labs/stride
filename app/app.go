@@ -449,7 +449,7 @@ func NewStrideApp(
 	// )
 	// monitoringModule := monitoringp.NewAppModule(appCodec, app.MonitoringKeeper)
 
-	// Note: must be above app.StakeibcKeeper
+	// Note: must be above app.StakeibcKeeper and app.ICAOracleKeeper
 	app.ICAControllerKeeper = icacontrollerkeeper.NewKeeper(
 		appCodec, keys[icacontrollertypes.StoreKey], app.GetSubspace(icacontrollertypes.SubModuleName),
 		app.IBCKeeper.ChannelKeeper, // may be replaced with middleware such as ics29 fee
@@ -486,6 +486,21 @@ func NewStrideApp(
 	)
 	recordsModule := recordsmodule.NewAppModule(appCodec, app.RecordsKeeper, app.AccountKeeper, app.BankKeeper)
 
+	// Note: Must be above stakeibc keeper
+	scopedICAOracleKeeper := app.CapabilityKeeper.ScopeToModule(icaoracletypes.ModuleName)
+	app.scopedICAOracleKeeper = scopedICAOracleKeeper
+	app.ICAOracleKeeper = *icaoraclekeeper.NewKeeper(
+		appCodec,
+		keys[icaoracletypes.StoreKey],
+		app.GetSubspace(icaoracletypes.ModuleName),
+		app.scopedICAOracleKeeper,
+		app.IBCKeeper.ChannelKeeper, // ICS4Wrapper - Note: this technically should be ICAController but it doesn't implement ICS4
+		*app.IBCKeeper,
+		app.ICAControllerKeeper,
+		app.IcacallbacksKeeper,
+	)
+	icaoracleModule := icaoracle.NewAppModule(appCodec, app.ICAOracleKeeper)
+
 	scopedStakeibcKeeper := app.CapabilityKeeper.ScopeToModule(stakeibcmoduletypes.ModuleName)
 	app.ScopedStakeibcKeeper = scopedStakeibcKeeper
 	stakeibcKeeper := stakeibcmodulekeeper.NewKeeper(
@@ -504,6 +519,7 @@ func NewStrideApp(
 		app.RecordsKeeper,
 		app.StakingKeeper,
 		app.IcacallbacksKeeper,
+		app.ICAOracleKeeper,
 	)
 	app.StakeibcKeeper = *stakeibcKeeper.SetHooks(
 		stakeibcmoduletypes.NewMultiStakeIBCHooks(app.ClaimKeeper.Hooks()),
@@ -511,20 +527,6 @@ func NewStrideApp(
 
 	stakeibcModule := stakeibcmodule.NewAppModule(appCodec, app.StakeibcKeeper, app.AccountKeeper, app.BankKeeper)
 	stakeibcIBCModule := stakeibcmodule.NewIBCModule(app.StakeibcKeeper)
-
-	scopedICAOracleKeeper := app.CapabilityKeeper.ScopeToModule(icaoracletypes.ModuleName)
-	app.scopedICAOracleKeeper = scopedICAOracleKeeper
-	app.ICAOracleKeeper = *icaoraclekeeper.NewKeeper(
-		appCodec,
-		keys[icaoracletypes.StoreKey],
-		app.GetSubspace(icaoracletypes.ModuleName),
-		app.scopedICAOracleKeeper,
-		app.IBCKeeper.ChannelKeeper, // ICS4Wrapper - Note: this technically should be ICAController but it doesn't implement ICS4
-		*app.IBCKeeper,
-		app.ICAControllerKeeper,
-		app.IcacallbacksKeeper,
-	)
-	icaoracleModule := icaoracle.NewAppModule(appCodec, app.ICAOracleKeeper)
 
 	// Register Gov (must be registerd after stakeibc)
 	govRouter := govtypesv1beta1.NewRouter()
