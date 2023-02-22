@@ -51,7 +51,7 @@ func (s *UpgradeTestSuite) TestUpgrade() {
 func (s *UpgradeTestSuite) SetupClaimStore(codec codec.Codec) func() {
 	claimStore := s.Ctx.KVStore(s.App.GetKey(claimtypes.StoreKey))
 
-	airdropId := "osmo"
+	airdropId := "osmosis"
 	params := claimtypes.Params{
 		Airdrops: []*claimtypes.Airdrop{
 			{

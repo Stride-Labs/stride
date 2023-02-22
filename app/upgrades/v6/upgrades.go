@@ -1,6 +1,8 @@
 package v6
 
 import (
+	"fmt"
+
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -15,7 +17,7 @@ var (
 	UpgradeName = "v6"
 )
 
-// CreateUpgradeHandler creates an SDK upgrade handler for v5
+// CreateUpgradeHandler creates an SDK upgrade handler for v6
 func CreateUpgradeHandler(
 	mm *module.Manager,
 	configurator module.Configurator,
@@ -24,20 +26,11 @@ func CreateUpgradeHandler(
 ) upgradetypes.UpgradeHandler {
 	return func(ctx sdk.Context, _ upgradetypes.Plan, vm module.VersionMap) (module.VersionMap, error) {
 		// Reset Claims
-		if err := claimKeeper.ResetClaimStatus(ctx, "stride"); err != nil {
-			return vm, sdkerrors.Wrapf(err, "unable to reset stride claim status")
-		}
-		if err := claimKeeper.ResetClaimStatus(ctx, "gaia"); err != nil {
-			return vm, sdkerrors.Wrapf(err, "unable to reset gaia claim status")
-		}
-		if err := claimKeeper.ResetClaimStatus(ctx, "osmo"); err != nil {
-			return vm, sdkerrors.Wrapf(err, "unable to reset osmo claim status")
-		}
-		if err := claimKeeper.ResetClaimStatus(ctx, "juno"); err != nil {
-			return vm, sdkerrors.Wrapf(err, "unable to reset juno claim status")
-		}
-		if err := claimKeeper.ResetClaimStatus(ctx, "stars"); err != nil {
-			return vm, sdkerrors.Wrapf(err, "unable to reset stars claim status")
+		airdropClaimTypes := []string{"stride", "gaia", "osmosis", "juno", "stars"}
+		for _, claimType := range airdropClaimTypes {
+			if err := claimKeeper.ResetClaimStatus(ctx, claimType); err != nil {
+				return vm, sdkerrors.Wrapf(err, fmt.Sprintf("unable to reset %s claim status", claimType))
+			}
 		}
 		return mm.RunMigrations(ctx, configurator, vm)
 	}
