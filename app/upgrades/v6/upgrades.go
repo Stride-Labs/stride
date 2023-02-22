@@ -28,6 +28,7 @@ func CreateUpgradeHandler(
 		claimKeeper.ResetClaimStatus(ctx, "osmo")
 		claimKeeper.ResetClaimStatus(ctx, "juno")
 		claimKeeper.ResetClaimStatus(ctx, "stars")
+
 		return mm.RunMigrations(ctx, configurator, vm)
 	}
 }
