@@ -173,6 +173,34 @@ func (im IBCModule) OnRecvPacket(
 			}, ack)
 		}
 		return ack
+	} else if data.Memo == "stakeibc/LiquidStakeAndIBCTransfer" {
+		strideAccAddress, err := sdk.AccAddressFromBech32(data.Receiver)
+		if err != nil {
+			return channeltypes.NewErrorAcknowledgement(err.Error())
+		}
+
+		ack := im.app.OnRecvPacket(ctx, packet, relayer)
+		if ack.Success() {
+			return im.keeper.TryLiquidStaking(ctx, packet, data, &types.ParsedReceiver{
+				ShouldLiquidStake: true,
+				StrideAccAddress:  strideAccAddress,
+			}, ack)
+		}
+		return ack
+	} else if data.Memo == "stakeibc/RedeemStake" {
+		strideAccAddress, err := sdk.AccAddressFromBech32(data.Receiver)
+		if err != nil {
+			return channeltypes.NewErrorAcknowledgement(err.Error())
+		}
+
+		ack := im.app.OnRecvPacket(ctx, packet, relayer)
+		if ack.Success() {
+			return im.keeper.TryRedeemStake(ctx, packet, data, &types.ParsedReceiver{
+				ShouldLiquidStake: true,
+				StrideAccAddress:  strideAccAddress,
+			}, ack)
+		}
+		return ack
 	}
 
 	// parse out any forwarding info
