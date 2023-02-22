@@ -13,8 +13,8 @@ import (
 	tmclienttypes "github.com/cosmos/ibc-go/v5/modules/light-clients/07-tendermint/types"
 	"github.com/spf13/cast"
 
-	"github.com/Stride-Labs/stride/v5/utils"
-	"github.com/Stride-Labs/stride/v5/x/interchainquery/types"
+	"github.com/Stride-Labs/stride/v6/utils"
+	"github.com/Stride-Labs/stride/v6/x/interchainquery/types"
 )
 
 type msgServer struct {

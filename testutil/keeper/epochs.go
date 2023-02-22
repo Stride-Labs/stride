@@ -7,8 +7,8 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 
-	strideapp "github.com/Stride-Labs/stride/v5/app"
-	"github.com/Stride-Labs/stride/v5/x/epochs/keeper"
+	strideapp "github.com/Stride-Labs/stride/v6/app"
+	"github.com/Stride-Labs/stride/v6/x/epochs/keeper"
 )
 
 func EpochsKeeper(t testing.TB) (*keeper.Keeper, sdk.Context) {

@@ -7,7 +7,7 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/Stride-Labs/stride/v5/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v6/x/stakeibc/types"
 )
 
 const ErrorResettingUnbondingRecord = "Reset of epoch unbonding record epoch numbers was not successful"

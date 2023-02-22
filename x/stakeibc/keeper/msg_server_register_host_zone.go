@@ -8,9 +8,9 @@ import (
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	icatypes "github.com/cosmos/ibc-go/v5/modules/apps/27-interchain-accounts/types"
 
-	epochtypes "github.com/Stride-Labs/stride/v5/x/epochs/types"
-	recordstypes "github.com/Stride-Labs/stride/v5/x/records/types"
-	"github.com/Stride-Labs/stride/v5/x/stakeibc/types"
+	epochtypes "github.com/Stride-Labs/stride/v6/x/epochs/types"
+	recordstypes "github.com/Stride-Labs/stride/v6/x/records/types"
+	"github.com/Stride-Labs/stride/v6/x/stakeibc/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"

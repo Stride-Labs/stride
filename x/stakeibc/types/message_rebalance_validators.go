@@ -6,7 +6,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
-	"github.com/Stride-Labs/stride/v5/utils"
+	"github.com/Stride-Labs/stride/v6/utils"
 )
 
 const TypeMsgRebalanceValidators = "rebalance_validators"
