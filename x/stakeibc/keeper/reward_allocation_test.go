@@ -14,6 +14,7 @@ import (
 	ibctesting "github.com/cosmos/ibc-go/v5/testing"
 
 	icatypes "github.com/cosmos/ibc-go/v5/modules/apps/27-interchain-accounts/types"
+	clienttypes "github.com/cosmos/ibc-go/v5/modules/core/02-client/types"
 
 	sdkmath "cosmossdk.io/math"
 
@@ -23,23 +24,28 @@ import (
 
 	// icacallbackstypes "github.com/Stride-Labs/stride/v5/x/icacallbacks/types"
 	// recordstypes "github.com/Stride-Labs/stride/v5/x/records/types"
-	// disttypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+	// distrtypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
 
 	// abci "github.com/tendermint/tendermint/abci/types"
 
-	// stakeibckeeper "github.com/Stride-Labs/stride/v5/x/stakeibc/keeper"
 	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
+
+	// stakeibckeeper "github.com/Stride-Labs/stride/v5/x/stakeibc/keeper"
 
 	stakeibctypes "github.com/Stride-Labs/stride/v5/x/stakeibc/types"
 
 	// icaapp "github.com/cosmos/interchain-accounts/app"
 	"github.com/cosmos/cosmos-sdk/simapp"
+	"github.com/cosmos/cosmos-sdk/x/staking"
 	"github.com/cosmos/cosmos-sdk/x/staking/teststaking"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
-	"github.com/cosmos/cosmos-sdk/x/staking"
+	// ibctransfertypes "github.com/cosmos/ibc-go/v5/modules/apps/transfer/types"
+	ibctypes "github.com/cosmos/ibc-go/v5/modules/apps/transfer/types"
+	channeltypes "github.com/cosmos/ibc-go/v5/modules/core/04-channel/types"
 )
 
-func (s *KeeperTestSuite) SetupWithdrawAccount() (WithdrawalBalanceICQCallbackArgs, Channel, stakeibctypes.HostZone) {
+func (s *KeeperTestSuite) SetupWithdrawAccount() (WithdrawalBalanceICQCallbackArgs, Channel, stakeibctypes.HostZone, channeltypes.Packet) {
 	
 	delegationAccountOwner := fmt.Sprintf("%s.%s", HostChainId, "DELEGATION")
 	_ = s.CreateICAChannel(delegationAccountOwner)
@@ -68,7 +74,6 @@ func (s *KeeperTestSuite) SetupWithdrawAccount() (WithdrawalBalanceICQCallbackAr
 	s.HostApp.BankKeeper.SendCoinsFromModuleToAccount(s.HostChain.GetContext(), minttypes.ModuleName, sdk.MustAccAddressFromBech32(withdrawalAddress), sdk.NewCoins(initialModuleAccountBalance))
 	fmt.Println("withdrawalAddress", s.HostApp.BankKeeper.GetAllBalances(s.HostChain.GetContext(), sdk.MustAccAddressFromBech32(withdrawalAddress)))
 
-	
 	validators := []*stakeibctypes.Validator{
 		{
 			Name:    "val1",
@@ -122,42 +127,67 @@ func (s *KeeperTestSuite) SetupWithdrawAccount() (WithdrawalBalanceICQCallbackAr
 		callbackArgs: queryResponse,
 	}
 
+	feeCollector := s.App.AccountKeeper.GetModuleAccount(s.Ctx, authtypes.FeeCollectorName)
+	// Call the ICQ callback
+	var msgs []sdk.Msg
+	ibcTransferTimeoutNanos := s.App.StakeibcKeeper.GetParam(s.Ctx, stakeibctypes.KeyIBCTransferTimeoutNanos)
+	timeoutTimestamp := uint64(s.HostChain.GetContext().BlockTime().UnixNano()) + ibcTransferTimeoutNanos
+	msg := ibctypes.NewMsgTransfer("transfer", "channel-0", initialModuleAccountBalance, withdrawalAddress, feeCollector.GetAddress().String(), clienttypes.NewHeight(1, 100), timeoutTimestamp)
+	msgs = append(msgs, msg)
+	data, _ := icatypes.SerializeCosmosTx(s.App.AppCodec(), msgs)
+	
+
+	packetData := icatypes.InterchainAccountPacketData{
+		Type: icatypes.EXECUTE_TX,
+		Data: data,
+	}
+	packet := channeltypes.NewPacket(
+		packetData.GetBytes(),
+		1,
+		icatypes.PortPrefix + withdrawalAccountOwner,
+		withdrawalChannelID,
+		s.TransferPath.EndpointB.ChannelConfig.PortID,
+		s.TransferPath.EndpointB.ChannelID,
+		clienttypes.NewHeight(1, 100),
+		0,
+	)
+
+	s.App.StakeibcKeeper.SubmitTxs(s.Ctx, hostZone.ConnectionId, msgs, *hostZone.WithdrawalAccount, 0, "", nil)
+
 	return validArgs, Channel{
 		PortID: icatypes.PortPrefix + withdrawalAccountOwner,
 		ChannelID: withdrawalChannelID,
-	}, hostZone
+	}, hostZone, packet
 }
 
-// func (s *KeeperTestSuite) TestAllocateReward() {
-// 	args, channel, hostzone := s.SetupWithdrawAccount()
-// 	startSequence, found := s.App.IBCKeeper.ChannelKeeper.GetNextSequenceSend(s.Ctx, channel.PortID, channel.ChannelID)
-// 	s.Require().True(found, "sequence number not found before reinvestment")
-// 	fmt.Println("startSequence", startSequence)
-// 	distAcc := s.App.AccountKeeper.GetModuleAccount(s.Ctx, distrtypes.ModuleName).GetAddress()
-// 	oldBalances := s.App.BankKeeper.GetAllBalances(s.Ctx, distAcc)
-// 	fmt.Println("oldBalances", oldBalances)
-// 	// Call the ICQ callback
-// 	err := stakeibckeeper.WithdrawalBalanceCallback(s.App.StakeibcKeeper, s.Ctx, args.callbackArgs, args.query)
-// 	s.Require().NoError(err)
+func (s *KeeperTestSuite) TestAllocateRewardIBC() {
+	_, channel, _, packet := s.SetupWithdrawAccount()
+	chanels := s.App.IBCKeeper.ChannelKeeper.GetAllChannels(s.Ctx)
+			fmt.Println("channel", chanels)
+	startSequence, found := s.App.IBCKeeper.ChannelKeeper.GetNextSequenceSend(s.Ctx, channel.PortID, channel.ChannelID)
+	s.Require().True(found, "sequence number not found before reinvestment")
+	fmt.Println("startSequence", startSequence)
+	feeCollector := s.App.AccountKeeper.GetModuleAccount(s.Ctx, authtypes.FeeCollectorName).GetAddress()
+	oldBalances := s.App.BankKeeper.GetAllBalances(s.Ctx, feeCollector)
+	fmt.Println("oldBalances", oldBalances)
 
-// 	endSequence, found := s.App.IBCKeeper.ChannelKeeper.GetNextSequenceSend(s.Ctx, channel.PortID, channel.ChannelID)
-// 	s.Require().True(found, "sequence number not found before reinvestment")
-// 	fmt.Println("endSequence", endSequence)
-// 	newBalances := s.App.BankKeeper.GetAllBalances(s.Ctx, distAcc)
-// 	fmt.Println("newBalances", newBalances)
+	module, _, err := s.HostChain.App.GetIBCKeeper().PortKeeper.LookupModuleByPort(s.HostChain.GetContext(), "icahost")
+	fmt.Println("module", module, err)
+	s.Require().NoError(err)
 
-// 	// Confirm ICA reinvestment callback data was stored
-// 	s.Require().Len(s.App.IcacallbacksKeeper.GetAllCallbackData(s.Ctx), 1, "number of callbacks found")
-// 	callbackKey := icacallbackstypes.PacketID(channel.PortID, channel.ChannelID, startSequence)
-// 	callbackData, found := s.App.IcacallbacksKeeper.GetCallbackData(s.Ctx, callbackKey)
-// 	fmt.Println("callbackData", callbackData)
-// 	s.Require().True(found, "callback data was not found for callback key (%s)", callbackKey)
-// 	s.Require().Equal("reinvest", callbackData.CallbackId, "callback ID")
+	cbs, ok := s.HostChain.App.GetIBCKeeper().Router.GetRoute(module)
+	s.Require().True(ok)
 
-// 	// s.TransferPath.EndpointA.UpdateClient()
+	ack := cbs.OnRecvPacket(s.HostChain.GetContext(), packet, nil)
+	fmt.Println("ack", ack.Acknowledgement(), ack.Success())
 
-// 	fmt.Println("fee address", s.HostApp.BankKeeper.GetAllBalances(s.HostChain.GetContext(), sdk.MustAccAddressFromBech32(hostzone.FeeAccount.Address)))
-// }
+	endSequence, found := s.App.IBCKeeper.ChannelKeeper.GetNextSequenceSend(s.Ctx, channel.PortID, channel.ChannelID)
+	s.Require().True(found, "sequence number not found before reinvestment")
+	fmt.Println("endSequence", endSequence)
+	newBalances := s.App.BankKeeper.GetAllBalances(s.Ctx, feeCollector)
+	fmt.Println("newBalances", newBalances)
+
+}
 
 func (s *KeeperTestSuite) TestAllocateReward() {
 	s.Setup()
