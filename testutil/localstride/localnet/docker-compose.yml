@@ -3,12 +3,13 @@ version: "3"
 services:
 
   strided:
-    image: stridezone:localstride
+    image: stridezone:stride
+    user: "0"
     build:
       context: ../../../
       args:
         RUNNER_IMAGE: alpine:3.15
-        GO_VERSION: 1.18
+        GO_VERSION: 1.19 
     volumes:
       - ./scripts/start.sh:/home/stride/start.sh
       - $HOME/.stride/:/home/stride/.stride/

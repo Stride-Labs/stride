@@ -6,19 +6,39 @@ ARG RUNNER_IMAGE="alpine:3.16"
 FROM golang:${GO_VERSION}-alpine as builder
 
 WORKDIR /opt
-RUN apk add --no-cache make git gcc musl-dev openssl-dev linux-headers
+RUN apk add --no-cache make git gcc musl-dev openssl-dev linux-headers ca-certificates build-base
 
 COPY go.mod .
 COPY go.sum .
 
-RUN --mount=type=cache,target=/root/.cache/go-build \
-    --mount=type=cache,target=/root/go/pkg/mod \
-    go mod download
+RUN  go mod download
+
+RUN WASMVM_VERSION=$(go list -m github.com/CosmWasm/wasmvm | cut -d ' ' -f 2) && \
+    wget https://github.com/CosmWasm/wasmvm/releases/download/$WASMVM_VERSION/libwasmvm_muslc.$(uname -m).a \
+        -O /lib/libwasmvm_muslc.a && \
+    # verify checksum
+    wget https://github.com/CosmWasm/wasmvm/releases/download/$WASMVM_VERSION/checksums.txt -O /tmp/checksums.txt && \
+    sha256sum /lib/libwasmvm_muslc.a | grep $(cat /tmp/checksums.txt | grep $(uname -m) | cut -d ' ' -f 1)
+
 
 # Copy the remaining files
 COPY . .
 
-RUN LINK_STATICALLY=true make build
+RUN --mount=type=cache,target=/root/.cache/go-build \
+    --mount=type=cache,target=/root/go/pkg/mod \
+    GOWORK=off go build \
+        -mod=readonly \
+        -tags "netgo,ledger,muslc" \
+        -ldflags \
+            "-X github.com/cosmos/cosmos-sdk/version.Name="stride" \
+            -X github.com/cosmos/cosmos-sdk/version.AppName="strided" \
+            -X github.com/cosmos/cosmos-sdk/version.Version=${GIT_VERSION} \
+            -X github.com/cosmos/cosmos-sdk/version.Commit=${GIT_COMMIT} \
+            -X github.com/cosmos/cosmos-sdk/version.BuildTags='netgo,ledger,muslc' \
+            -w -s -linkmode=external -extldflags '-Wl,-z,muldefs -static'" \
+        -trimpath \
+        -o /opt/build/ \
+        ./...
 
 # Add to a distroless container
 FROM ${RUNNER_IMAGE}
