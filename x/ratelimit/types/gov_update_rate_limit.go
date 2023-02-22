@@ -5,6 +5,7 @@ import (
 
 	"regexp"
 
+	errorsmod "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
@@ -51,31 +52,31 @@ func (p *UpdateRateLimitProposal) ValidateBasic() error {
 	}
 
 	if p.Denom == "" {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "invalid denom (%s)", p.Denom)
+		return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "invalid denom (%s)", p.Denom)
 	}
 
 	matched, err := regexp.MatchString(`^channel-\d+$`, p.ChannelId)
 	if err != nil {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "unable to verify channel-id (%s)", p.ChannelId)
+		return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "unable to verify channel-id (%s)", p.ChannelId)
 	}
 	if !matched {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "invalid channel-id (%s), must be of the format 'channel-{N}'", p.ChannelId)
+		return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "invalid channel-id (%s), must be of the format 'channel-{N}'", p.ChannelId)
 	}
 
 	if p.MaxPercentSend.GT(sdkmath.NewInt(100)) || p.MaxPercentSend.LT(sdkmath.ZeroInt()) {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "max-percent-send percent must be between 0 and 100 (inclusively), Provided: %v", p.MaxPercentSend)
+		return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "max-percent-send percent must be between 0 and 100 (inclusively), Provided: %v", p.MaxPercentSend)
 	}
 
 	if p.MaxPercentRecv.GT(sdkmath.NewInt(100)) || p.MaxPercentRecv.LT(sdkmath.ZeroInt()) {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "max-percent-recv percent must be between 0 and 100 (inclusively), Provided: %v", p.MaxPercentRecv)
+		return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "max-percent-recv percent must be between 0 and 100 (inclusively), Provided: %v", p.MaxPercentRecv)
 	}
 
 	if p.MaxPercentRecv.IsZero() && p.MaxPercentSend.IsZero() {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "either the max send or max receive threshold must be greater than 0")
+		return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "either the max send or max receive threshold must be greater than 0")
 	}
 
 	if p.DurationHours == 0 {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "duration can not be zero")
+		return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "duration can not be zero")
 	}
 
 	return nil
