@@ -38,6 +38,11 @@ var (
 	}))
 )
 
+type SuitelessAppTestHelper struct {
+	App *app.StrideApp
+	Ctx sdk.Context
+}
+
 type AppTestHelper struct {
 	suite.Suite
 
@@ -67,6 +72,16 @@ func (s *AppTestHelper) Setup() {
 	s.TestAccs = CreateRandomAccounts(3)
 	s.IbcEnabled = false
 	s.IcaAddresses = make(map[string]string)
+}
+
+// Instantiates an TestHelper without the test suite
+// This is for testing scenarios where we simply need the setup function to run,
+// and need access to the TestHelper attributes and keepers (e.g. genesis tests)
+func SetupSuitelessTestHelper() SuitelessAppTestHelper {
+	s := SuitelessAppTestHelper{}
+	s.App = app.InitStrideTestApp(true)
+	s.Ctx = s.App.BaseApp.NewContext(false, tmtypes.Header{Height: 1, ChainID: StrideChainID})
+	return s
 }
 
 // Mints coins directly to a module account

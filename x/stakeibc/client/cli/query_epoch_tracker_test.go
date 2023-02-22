@@ -92,6 +92,7 @@ func TestListEpochTracker(t *testing.T) {
 
 	expected := []types.EpochTracker{
 		{EpochIdentifier: "day", EpochNumber: 1},
+		{EpochIdentifier: "hour", EpochNumber: 1},
 		{EpochIdentifier: "mint", EpochNumber: 1},
 		{EpochIdentifier: "stride_epoch", EpochNumber: 1},
 		{EpochIdentifier: "week", EpochNumber: 1},
@@ -102,7 +103,7 @@ func TestListEpochTracker(t *testing.T) {
 	require.NoError(t, net.Config.Codec.UnmarshalJSON(out.Bytes(), &actual))
 
 	require.NotNil(t, actual.EpochTracker)
-	require.Len(t, actual.EpochTracker, 4)
+	require.Len(t, actual.EpochTracker, len(expected))
 
 	actualTrim := []types.EpochTracker{}
 	for _, epochTracker := range actual.EpochTracker {
