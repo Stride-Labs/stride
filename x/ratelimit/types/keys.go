@@ -20,4 +20,5 @@ func KeyPrefix(p string) []byte {
 var (
 	PathKeyPrefix      = KeyPrefix("path")
 	RateLimitKeyPrefix = KeyPrefix("rate-limit")
+	BlacklistKeyPrefix = KeyPrefix("blacklist")
 )

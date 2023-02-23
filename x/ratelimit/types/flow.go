@@ -1,8 +1,8 @@
 package types
 
 import (
+	errorsmod "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
 
 // Initializes a new flow from the channel value
@@ -22,7 +22,7 @@ func (f *Flow) AddInflow(amount sdkmath.Int, quota Quota) error {
 	netInflow := f.Inflow.Sub(f.Outflow).Add(amount)
 
 	if quota.CheckExceedsQuota(PACKET_RECV, netInflow, f.ChannelValue) {
-		return sdkerrors.Wrapf(ErrQuotaExceeded,
+		return errorsmod.Wrapf(ErrQuotaExceeded,
 			"Inflow exceeds quota - Net Inflow: %v, Channel Value: %v, Threshold: %v%%",
 			netInflow, f.ChannelValue, quota.MaxPercentRecv)
 	}
@@ -37,7 +37,7 @@ func (f *Flow) AddOutflow(amount sdkmath.Int, quota Quota) error {
 	netOutflow := f.Outflow.Sub(f.Inflow).Add(amount)
 
 	if quota.CheckExceedsQuota(PACKET_SEND, netOutflow, f.ChannelValue) {
-		return sdkerrors.Wrapf(ErrQuotaExceeded,
+		return errorsmod.Wrapf(ErrQuotaExceeded,
 			"Outflow exceeds quota - Net Outflow: %v, Channel Value: %v, Threshold: %v%%",
 			netOutflow, f.ChannelValue, quota.MaxPercentSend)
 	}

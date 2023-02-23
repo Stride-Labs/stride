@@ -208,6 +208,10 @@ func (k Keeper) ReinvestRewards(ctx sdk.Context) {
 	k.Logger(ctx).Info("Reinvesting tokens...")
 
 	for _, hostZone := range k.GetAllHostZone(ctx) {
+		if hostZone.Halted {
+			k.Logger(ctx).Info(fmt.Sprintf("Host zone halted for %s", hostZone.ChainId))
+			continue
+		}
 		// only process host zones once withdrawal accounts are registered
 		withdrawalAccount := hostZone.WithdrawalAccount
 		if withdrawalAccount == nil || withdrawalAccount.Address == "" {

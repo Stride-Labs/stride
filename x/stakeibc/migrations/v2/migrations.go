@@ -5,8 +5,8 @@ import (
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 
+	errorsmod "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
 	oldstakeibctypes "github.com/Stride-Labs/stride/v5/x/stakeibc/migrations/v2/types"
 	stakeibctypes "github.com/Stride-Labs/stride/v5/x/stakeibc/types"
@@ -23,14 +23,14 @@ func migrateHostZone(store sdk.KVStore, cdc codec.BinaryCodec) error {
 		var oldHostZone oldstakeibctypes.HostZone
 		err := cdc.Unmarshal(iterator.Value(), &oldHostZone)
 		if err != nil {
-			return sdkerrors.Wrapf(err, "unable to unmarshal host zone (%v) using old data type", iterator.Key())
+			return errorsmod.Wrapf(err, "unable to unmarshal host zone (%v) using old data type", iterator.Key())
 		}
 
 		// Convert and serialize using the new type
 		newHostZone := convertToNewHostZone(oldHostZone)
 		newHostZoneBz, err := cdc.Marshal(&newHostZone)
 		if err != nil {
-			return sdkerrors.Wrapf(err, "unable to marshal host zone (%v) using new data type", iterator.Key())
+			return errorsmod.Wrapf(err, "unable to marshal host zone (%v) using new data type", iterator.Key())
 		}
 
 		// Store new type

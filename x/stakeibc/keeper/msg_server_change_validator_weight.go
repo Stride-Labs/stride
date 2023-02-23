@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 
+	errorsmod "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
 	"github.com/Stride-Labs/stride/v5/x/stakeibc/types"
 )
@@ -27,7 +27,7 @@ func (k msgServer) ChangeValidatorWeight(goCtx context.Context, msg *types.MsgCh
 			if validator.Weight == 0 && msg.Weight > 0 {
 				err := k.ConfirmValSetHasSpace(ctx, validators)
 				if err != nil {
-					return nil, sdkerrors.Wrap(types.ErrMaxNumValidators, "cannot set val weight from zero to nonzero on host zone")
+					return nil, errorsmod.Wrap(types.ErrMaxNumValidators, "cannot set val weight from zero to nonzero on host zone")
 				}
 			}
 			validator.Weight = msg.Weight

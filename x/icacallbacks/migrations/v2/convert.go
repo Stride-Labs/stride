@@ -1,8 +1,8 @@
 package v2
 
 import (
+	errorsmod "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/golang/protobuf/proto" //nolint:staticcheck
 
 	icacallbacktypes "github.com/Stride-Labs/stride/v5/x/icacallbacks/types"
@@ -74,14 +74,14 @@ func convertCallbackData(oldCallbackData icacallbacktypes.CallbackData) (icacall
 		// Deserialize the callback args with the old DelegateCallback type
 		oldDelegateCallback := oldstakeibctypes.DelegateCallback{}
 		if err := proto.Unmarshal(oldCallbackData.CallbackArgs, &oldDelegateCallback); err != nil {
-			return icacallbacktypes.CallbackData{}, sdkerrors.Wrapf(stakeibctypes.ErrUnmarshalFailure, err.Error())
+			return icacallbacktypes.CallbackData{}, errorsmod.Wrapf(stakeibctypes.ErrUnmarshalFailure, err.Error())
 		}
 
 		// Convert and serialize with the new DelegateCallback type
 		newDelegateCallback := convertDelegateCallback(oldDelegateCallback)
 		newDelegateCallbackBz, err := proto.Marshal(&newDelegateCallback)
 		if err != nil {
-			return icacallbacktypes.CallbackData{}, sdkerrors.Wrapf(stakeibctypes.ErrMarshalFailure, err.Error())
+			return icacallbacktypes.CallbackData{}, errorsmod.Wrapf(stakeibctypes.ErrMarshalFailure, err.Error())
 		}
 
 		// Update the CallbackData with the new args
@@ -91,14 +91,14 @@ func convertCallbackData(oldCallbackData icacallbacktypes.CallbackData) (icacall
 		// Deserialize the callback args with the old UndelegateCallback type
 		oldUndelegateCallback := oldstakeibctypes.UndelegateCallback{}
 		if err := proto.Unmarshal(oldCallbackData.CallbackArgs, &oldUndelegateCallback); err != nil {
-			return icacallbacktypes.CallbackData{}, sdkerrors.Wrapf(stakeibctypes.ErrUnmarshalFailure, err.Error())
+			return icacallbacktypes.CallbackData{}, errorsmod.Wrapf(stakeibctypes.ErrUnmarshalFailure, err.Error())
 		}
 
 		// Convert and serialize with the new UndelegateCallback type
 		newUndelegateCallback := convertUndelegateCallback(oldUndelegateCallback)
 		newUndelegateCallbackBz, err := proto.Marshal(&newUndelegateCallback)
 		if err != nil {
-			return icacallbacktypes.CallbackData{}, sdkerrors.Wrapf(stakeibctypes.ErrMarshalFailure, err.Error())
+			return icacallbacktypes.CallbackData{}, errorsmod.Wrapf(stakeibctypes.ErrMarshalFailure, err.Error())
 		}
 
 		// Update the CallbackData with the new args
@@ -108,14 +108,14 @@ func convertCallbackData(oldCallbackData icacallbacktypes.CallbackData) (icacall
 		// Deserialize the callback args with the old RebalanceCallback type
 		oldRebalanceCallback := oldstakeibctypes.RebalanceCallback{}
 		if err := proto.Unmarshal(oldCallbackData.CallbackArgs, &oldRebalanceCallback); err != nil {
-			return icacallbacktypes.CallbackData{}, sdkerrors.Wrapf(stakeibctypes.ErrUnmarshalFailure, err.Error())
+			return icacallbacktypes.CallbackData{}, errorsmod.Wrapf(stakeibctypes.ErrUnmarshalFailure, err.Error())
 		}
 
 		// Convert and serialize with the new RebalanceCallback type
 		newRebalanceCallback := convertRebalanceCallback(oldRebalanceCallback)
 		newRebalanceCallbackBz, err := proto.Marshal(&newRebalanceCallback)
 		if err != nil {
-			return icacallbacktypes.CallbackData{}, sdkerrors.Wrapf(stakeibctypes.ErrMarshalFailure, err.Error())
+			return icacallbacktypes.CallbackData{}, errorsmod.Wrapf(stakeibctypes.ErrMarshalFailure, err.Error())
 		}
 
 		// Update the CallbackData with the new args
