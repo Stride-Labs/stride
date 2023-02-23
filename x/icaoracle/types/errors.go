@@ -17,4 +17,5 @@ var (
 	ErrInvalidICAResponse        = errorsmod.Register(ModuleName, 10, "invalid ICA response")
 	ErrMarshalFailure            = errorsmod.Register(ModuleName, 11, "unable to marshal data structure")
 	ErrUnmarshalFailure          = errorsmod.Register(ModuleName, 12, "unable to unmarshal data structure")
+	ErrInvalidCallback           = errorsmod.Register(ModuleName, 13, "invalid callback data")
 )

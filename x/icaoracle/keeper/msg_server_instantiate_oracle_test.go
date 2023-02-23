@@ -35,6 +35,10 @@ func (s *KeeperTestSuite) SetupTestInstantiateOracle() InstantiateOracleTestCase
 	}
 	s.App.ICAOracleKeeper.SetOracle(s.Ctx, oracle)
 
+	// Confirm the oracle was stored
+	_, found := s.App.ICAOracleKeeper.GetOracle(s.Ctx, HostChainId)
+	s.Require().True(found, "oracle should be in the store during setup")
+
 	return InstantiateOracleTestCase{
 		OracleChannelId: channelId,
 		OraclePortId:    portId,
