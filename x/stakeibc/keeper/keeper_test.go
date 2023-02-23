@@ -50,10 +50,17 @@ func (s *KeeperTestSuite) TestIsRedemptionRateWithinSafetyBounds() {
 	params := s.App.StakeibcKeeper.GetParams(s.Ctx)
 	params.SafetyMinRedemptionRateThreshold = 75
 	params.SafetyMaxRedemptionRateThreshold = 150
-	params.MinRedemptionRates["gaia-1"] = "1.5"
-	params.MaxRedemptionRates["gaia-1"] = "2.5"
-	params.MinRedemptionRates["osmosis-1"] = "0.3"
-	params.MaxRedemptionRates["osmosis-1"] = "2.0"
+	hostZones := make(map[string]types.HostZone)
+	hostZones["gaia-1"] = types.HostZone{
+		ChainId:           "gaia-1",
+		MinRedemptionRate: sdk.NewDecWithPrec(15, 1), // 1.5
+		MaxRedemptionRate: sdk.NewDecWithPrec(25, 1), // 2.5
+	}
+	hostZones["osmosis-1"] = types.HostZone{
+		ChainId:           "osmosis-1",
+		MinRedemptionRate: sdk.NewDecWithPrec(3, 1),  // 0.3
+		MaxRedemptionRate: sdk.NewDecWithPrec(20, 1), // 2
+	}
 	s.App.StakeibcKeeper.SetParams(s.Ctx, params)
 
 	for _, tc := range []struct {
@@ -122,10 +129,14 @@ func (s *KeeperTestSuite) TestIsRedemptionRateWithinSafetyBounds() {
 			expSafe:        false,
 		},
 	} {
-		rrSafe, err := s.App.StakeibcKeeper.IsRedemptionRateWithinSafetyBounds(s.Ctx, types.HostZone{
-			ChainId:        tc.chainId,
-			RedemptionRate: tc.redemptionRate,
-		})
+		hostZone, ok := hostZones[tc.chainId]
+		if !ok {
+			hostZone = types.HostZone{
+				ChainId: tc.chainId,
+			}
+		}
+		hostZone.RedemptionRate = tc.redemptionRate
+		rrSafe, err := s.App.StakeibcKeeper.IsRedemptionRateWithinSafetyBounds(s.Ctx, hostZone)
 		if tc.expSafe {
 			s.Require().NoError(err)
 			s.Require().True(rrSafe)

@@ -3,7 +3,6 @@ package types
 import (
 	fmt "fmt"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
 	"gopkg.in/yaml.v2"
 )
@@ -29,8 +28,6 @@ var (
 	DefaultIBCTransferTimeoutNanos          uint64 = 1800000000000 // 30 minutes
 	DefaultSafetyNumValidators              uint64 = 35
 	DefaultSafetyMaxSlashPercent            uint64 = 10
-	DefaultMaxRedemptionRates                      = make(map[string]string)
-	DefaultMinRedemptionRates                      = make(map[string]string)
 
 	// KeyDepositInterval is store's key for the DepositInterval option
 	KeyDepositInterval                  = []byte("DepositInterval")
@@ -80,8 +77,6 @@ func NewParams(
 	ibcTransferTimeoutNanos uint64,
 	safetyNumValidators uint64,
 	safetyMaxSlashPercent uint64,
-	maxRedemptionRates map[string]string,
-	minRedemptionRates map[string]string,
 ) Params {
 	return Params{
 		DepositInterval:                  depositInterval,
@@ -101,8 +96,6 @@ func NewParams(
 		IbcTransferTimeoutNanos:          ibcTransferTimeoutNanos,
 		SafetyNumValidators:              safetyNumValidators,
 		SafetyMaxSlashPercent:            safetyMaxSlashPercent,
-		MaxRedemptionRates:               maxRedemptionRates,
-		MinRedemptionRates:               minRedemptionRates,
 	}
 }
 
@@ -126,8 +119,6 @@ func DefaultParams() Params {
 		DefaultIBCTransferTimeoutNanos,
 		DefaultSafetyNumValidators,
 		DefaultSafetyMaxSlashPercent,
-		DefaultMaxRedemptionRates,
-		DefaultMinRedemptionRates,
 	)
 }
 
@@ -151,8 +142,6 @@ func (p *Params) ParamSetPairs() paramtypes.ParamSetPairs {
 		paramtypes.NewParamSetPair(KeyIBCTransferTimeoutNanos, &p.IbcTransferTimeoutNanos, validTimeoutNanos),
 		paramtypes.NewParamSetPair(KeySafetyNumValidators, &p.SafetyNumValidators, isPositive),
 		paramtypes.NewParamSetPair(KeySafetyMaxSlashPercent, &p.SafetyMaxSlashPercent, validSlashPercent),
-		paramtypes.NewParamSetPair(KeyMaxRedemptionRates, &p.MaxRedemptionRates, validMaxRedemptionRates),
-		paramtypes.NewParamSetPair(KeyMinRedemptionRates, &p.MinRedemptionRates, validMinRedemptionRates),
 	}
 }
 
@@ -255,43 +244,6 @@ func isCommission(i interface{}) error {
 	return nil
 }
 
-func validMaxRedemptionRates(i interface{}) error {
-	rrs, ok := i.(map[string]string)
-	if !ok {
-		return fmt.Errorf("max redemption rates not accepted: %T", i)
-	}
-
-	for _, rateStr := range rrs {
-		rate, err := sdk.NewDecFromStr(rateStr)
-		if err != nil {
-			return err
-		}
-		if !rate.IsPositive() {
-			return fmt.Errorf("redemption rate should be positive")
-		}
-	}
-
-	return nil
-}
-
-func validMinRedemptionRates(i interface{}) error {
-	rrs, ok := i.(map[string]string)
-	if !ok {
-		return fmt.Errorf("min redemption rates not accepted: %T", i)
-	}
-
-	for _, rateStr := range rrs {
-		rate, err := sdk.NewDecFromStr(rateStr)
-		if err != nil {
-			return err
-		}
-		if !rate.IsPositive() {
-			return fmt.Errorf("redemption rate should be positive")
-		}
-	}
-	return nil
-}
-
 // Validate validates the set of params
 func (p Params) Validate() error {
 	if err := isPositive(p.DepositInterval); err != nil {
@@ -343,12 +295,6 @@ func (p Params) Validate() error {
 		return err
 	}
 	if err := validSlashPercent(p.SafetyMaxSlashPercent); err != nil {
-		return err
-	}
-	if err := validMaxRedemptionRates(p.MaxRedemptionRates); err != nil {
-		return err
-	}
-	if err := validMinRedemptionRates(p.MinRedemptionRates); err != nil {
 		return err
 	}
 
