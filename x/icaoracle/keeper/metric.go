@@ -77,7 +77,7 @@ func (k Keeper) SubmitMetricUpdate(ctx sdk.Context, oracle types.Oracle, metric 
 		return err
 	}
 	if !oracle.Active {
-		return errorsmod.Wrapf(types.ErrOracleInactive, "oracle %s is inactive", oracle.ChainId)
+		return errorsmod.Wrapf(types.ErrOracleInactive, "oracle (%s) is inactive", oracle.ChainId)
 	}
 
 	// Build contract message with metric update

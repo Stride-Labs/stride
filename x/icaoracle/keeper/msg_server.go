@@ -37,13 +37,13 @@ func (k msgServer) AddOracle(goCtx context.Context, msg *types.MsgAddOracle) (*t
 	controllerConnectionId := msg.ConnectionId
 	connectionEnd, found := k.IBCKeeper.ConnectionKeeper.GetConnection(ctx, controllerConnectionId)
 	if !found {
-		return &types.MsgAddOracleResponse{}, errorsmod.Wrapf(sdkerrors.ErrNotFound, "connection %s not found", controllerConnectionId)
+		return &types.MsgAddOracleResponse{}, errorsmod.Wrapf(sdkerrors.ErrNotFound, "connection (%s) not found", controllerConnectionId)
 	}
 
 	// Get chain id from the connection
 	clientState, found := k.ICACallbacksKeeper.IBCKeeper.ClientKeeper.GetClientState(ctx, connectionEnd.ClientId)
 	if !found {
-		return &types.MsgAddOracleResponse{}, errorsmod.Wrapf(sdkerrors.ErrNotFound, "client %s not found", connectionEnd.ClientId)
+		return &types.MsgAddOracleResponse{}, errorsmod.Wrapf(sdkerrors.ErrNotFound, "client (%s) not found", connectionEnd.ClientId)
 	}
 	client, ok := clientState.(*ibctmtypes.ClientState)
 	if !ok {

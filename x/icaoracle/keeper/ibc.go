@@ -31,34 +31,37 @@ func (k Keeper) OnChanOpenAck(ctx sdk.Context, portID, channelID string) error {
 	// Get the connectionId from the port and channel
 	connectionId, _, err := k.IBCKeeper.ChannelKeeper.GetChannelConnection(ctx, portID, channelID)
 	if err != nil {
-		return errorsmod.Wrapf(err, "unable to get connection from channel %s and port %s", channelID, portID)
+		return errorsmod.Wrapf(err, "unable to get connection from channel (%s) and port (%s)", channelID, portID)
+	}
+
+	// If the callback is not for an oracle ICA, it should do nothing and then pass the ack down to stakeibc
+	oracle, found := k.GetOracleFromConnectionId(ctx, connectionId)
+	if !found {
+		return nil
+	}
+	expectedOraclePort, err := icatypes.NewControllerPortID(types.FormatICAAccountOwner(oracle.ChainId, types.ICAAccountType_Oracle))
+	if err != nil {
+		return err
+	}
+	if portID != expectedOraclePort {
+		return nil
 	}
 
 	// If this callback is for an oracle channel, store the ICA address and channel on the oracle struct
-	// If the callback is not for an oracle ICA, it should do nothing and then pass the ack down to stakeibc
-	oracle, found := k.GetOracleFromConnectionId(ctx, connectionId)
-	if found {
-		// Confirm the portId is for an oracle ICA
-		expectedOraclePort, err := icatypes.NewControllerPortID(types.FormatICAAccountOwner(oracle.ChainId, types.ICAAccountType_Oracle))
-		if err != nil {
-			return err
-		}
-		if portID == expectedOraclePort {
-			// Get the associated ICA address from the port and connection
-			icaAddress, found := k.ICAControllerKeeper.GetInterchainAccountAddress(ctx, connectionId, portID)
-			if !found {
-				return errorsmod.Wrapf(err, "unable to get ica address from connection %s", connectionId)
-			}
-			k.Logger(ctx).Info(fmt.Sprintf("Oracle ICA registered to channel %s and address %s", channelID, icaAddress))
-
-			// Update the ICA address and channel in the oracle
-			oracle.IcaAddress = icaAddress
-			oracle.ChannelId = channelID
-			oracle.PortId = portID
-
-			k.SetOracle(ctx, oracle)
-		}
+	// Get the associated ICA address from the port and connection
+	icaAddress, found := k.ICAControllerKeeper.GetInterchainAccountAddress(ctx, connectionId, portID)
+	if !found {
+		return errorsmod.Wrapf(icatypes.ErrInterchainAccountNotFound, "unable to get ica address from connection (%s)", connectionId)
 	}
+	k.Logger(ctx).Info(fmt.Sprintf("Oracle ICA registered to channel %s and address %s", channelID, icaAddress))
+
+	// Update the ICA address and channel in the oracle
+	oracle.IcaAddress = icaAddress
+	oracle.ChannelId = channelID
+	oracle.PortId = portID
+
+	k.SetOracle(ctx, oracle)
+
 	return nil
 }
 
@@ -106,7 +109,7 @@ func (k Keeper) SubmitICATx(ctx sdk.Context, tx types.ICATx) error {
 	// Serialize tx messages
 	txBz, err := icatypes.SerializeCosmosTx(k.cdc, tx.Messages)
 	if err != nil {
-		return errorsmod.Wrapf(err, "unable to serialize execute contract message")
+		return errorsmod.Wrapf(err, "unable to serialize cosmos transaction")
 	}
 	packetData := icatypes.InterchainAccountPacketData{
 		Type: icatypes.EXECUTE_TX,
@@ -122,7 +125,7 @@ func (k Keeper) SubmitICATx(ctx sdk.Context, tx types.ICATx) error {
 	// Submit ICA and grab sequence number for the callback key
 	sequence, err := k.ICAControllerKeeper.SendTx(ctx, chanCap, tx.ConnectionId, tx.PortId, packetData, tx.Timeout)
 	if err != nil {
-		return errorsmod.Wrapf(err, "unable to submit ICA to execute contract")
+		return errorsmod.Wrapf(err, "unable to submit ICA transaction")
 	}
 
 	// Store the callback data

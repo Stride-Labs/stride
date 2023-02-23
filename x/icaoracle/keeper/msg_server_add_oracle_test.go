@@ -57,7 +57,7 @@ func (s *KeeperTestSuite) TestAddOracle_Failure_ControllerConnectionDoesNotExist
 	invalidMsg := validMsg
 	invalidMsg.ConnectionId = "fake_connection"
 	_, err := s.GetMsgServer().AddOracle(sdk.WrapSDKContext(s.Ctx), &invalidMsg)
-	s.Require().ErrorContains(err, "connection fake_connection not found", "error expected when adding oracle")
+	s.Require().ErrorContains(err, "connection (fake_connection) not found", "error expected when adding oracle")
 }
 
 func (s *KeeperTestSuite) TestAddOracle_Failure_HostConnectionDoesNotExist() {
@@ -85,5 +85,5 @@ func (s *KeeperTestSuite) TestAddOracle_Failure_ClientDoesNotExist() {
 
 	// Submit the AddOracle message - it should fail
 	_, err := s.GetMsgServer().AddOracle(sdk.WrapSDKContext(s.Ctx), &validMsg)
-	s.Require().ErrorContains(err, "client fake_client not found", "error expected when adding oracle")
+	s.Require().ErrorContains(err, "client (fake_client) not found", "error expected when adding oracle")
 }
