@@ -10,8 +10,7 @@ message Oracle {
   string port_id = 4;
   string ica_address = 5;
   string contract_address = 6;
-  uint64 contract_code_id = 7;
-  bool active = 8;
+  bool active = 7;
 }
 
 message Metadata {

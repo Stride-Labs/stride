@@ -24,6 +24,7 @@ type ICATx struct {
 }
 
 func (i ICATx) ValidateICATx(ctx sdk.Context) error {
+	blockTime := ctx.BlockTime().UnixNano()
 	if i.ConnectionId == "" {
 		return errorsmod.Wrapf(ErrInvalidICARequest, "connection-id is empty")
 	}
@@ -37,7 +38,8 @@ func (i ICATx) ValidateICATx(ctx sdk.Context) error {
 		return errorsmod.Wrapf(ErrInvalidICARequest, "messages are empty")
 	}
 	if i.Timeout < uint64(ctx.BlockTime().UnixNano()) {
-		return errorsmod.Wrapf(ErrInvalidICARequest, "timeout is not in future")
+		return errorsmod.Wrapf(ErrInvalidICARequest,
+			"timeout is not in the future, timeout: %d, block time: %d", i.Timeout, blockTime)
 	}
 	if i.CallbackId == "" {
 		return errorsmod.Wrapf(ErrInvalidICARequest, "callback-id is empty")

@@ -51,6 +51,12 @@ func (k msgServer) AddOracle(goCtx context.Context, msg *types.MsgAddOracle) (*t
 	}
 	chainId := client.ChainId
 
+	// Confirm oracle was not already created
+	_, found = k.GetOracle(ctx, chainId)
+	if found {
+		return &types.MsgAddOracleResponse{}, types.ErrOracleAlreadyExists
+	}
+
 	// Create the oracle struct, marked as inactive
 	oracle := types.Oracle{
 		ChainId:      chainId,
@@ -95,19 +101,12 @@ func (k msgServer) InstantiateOracle(goCtx context.Context, msg *types.MsgInstan
 		return &types.MsgInstantiateOracleResponse{}, types.ErrOracleAlreadyInstantiated
 	}
 
-	// Store the contract code id
-	// QUESTION/TODO: Do we need to store the contract code id at all?
-	// I'm guessing no, unless we need to reinstantiatlize for some reason
-	oracle.ContractCodeId = msg.ContractCodeId
-	k.SetOracle(ctx, oracle)
-
 	// Confirm the oracle ICA was registered
 	if err := oracle.ValidateICASetup(); err != nil {
 		return &types.MsgInstantiateOracleResponse{}, err
 	}
 
 	// Build the contract-specific instantiation message
-	// QUESTION: Should the admin address be a user address?
 	contractMsg := types.MsgInstantiateOracleContract{
 		AdminAddress: oracle.IcaAddress,
 		IcaAddress:   oracle.IcaAddress,
