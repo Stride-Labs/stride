@@ -22,7 +22,7 @@ import (
 	stakeibctypes "github.com/Stride-Labs/stride/v4/x/stakeibc/types"
 )
 
-func (suite *KeeperTestSuite) TestOnRecvPacket() {
+func (suite *KeeperTestSuite) TestOnRecvPacket_LiquidStake() {
 	now := time.Now()
 
 	packet := channeltypes.Packet{
