@@ -31,9 +31,9 @@ func TestMsgAddOracle(t *testing.T) {
 			},
 		},
 		{
-			name: "invalid creator",
+			name: "invalid creator address",
 			msg: types.MsgAddOracle{
-				Creator:      validNotAdminAddress,
+				Creator:      invalidAddress,
 				ConnectionId: validConnectionId,
 			},
 			err: "invalid creator address",
@@ -41,7 +41,7 @@ func TestMsgAddOracle(t *testing.T) {
 		{
 			name: "invalid admin address",
 			msg: types.MsgAddOracle{
-				Creator:      invalidAddress,
+				Creator:      validNotAdminAddress,
 				ConnectionId: validConnectionId,
 			},
 			err: "invalid creator address",

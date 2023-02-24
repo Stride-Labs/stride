@@ -33,9 +33,9 @@ func TestMsgInstantiateOracle(t *testing.T) {
 			},
 		},
 		{
-			name: "invalid creator",
+			name: "invalid creator address",
 			msg: types.MsgInstantiateOracle{
-				Creator:        validNotAdminAddress,
+				Creator:        invalidAddress,
 				OracleChainId:  validChainId,
 				ContractCodeId: validCodeId,
 			},
@@ -44,7 +44,7 @@ func TestMsgInstantiateOracle(t *testing.T) {
 		{
 			name: "invalid admin address",
 			msg: types.MsgInstantiateOracle{
-				Creator:        invalidAddress,
+				Creator:        validNotAdminAddress,
 				OracleChainId:  validChainId,
 				ContractCodeId: validCodeId,
 			},
