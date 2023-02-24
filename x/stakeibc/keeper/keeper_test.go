@@ -48,8 +48,8 @@ func TestKeeperTestSuite(t *testing.T) {
 
 func (s *KeeperTestSuite) TestIsRedemptionRateWithinSafetyBounds() {
 	params := s.App.StakeibcKeeper.GetParams(s.Ctx)
-	params.SafetyMinRedemptionRateThreshold = 75
-	params.SafetyMaxRedemptionRateThreshold = 150
+	params.DefaultMinRedemptionRateThreshold = 75
+	params.DefaultMaxRedemptionRateThreshold = 150
 	hostZones := make(map[string]types.HostZone)
 	hostZones["gaia-1"] = types.HostZone{
 		ChainId:           "gaia-1",
