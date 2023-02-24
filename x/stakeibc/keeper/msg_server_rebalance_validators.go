@@ -11,7 +11,6 @@ import (
 	errorsmod "cosmossdk.io/errors"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	stakingTypes "github.com/cosmos/cosmos-sdk/x/staking/types"
-	"github.com/spf13/cast"
 
 	"github.com/Stride-Labs/stride/v5/utils"
 	"github.com/Stride-Labs/stride/v5/x/stakeibc/types"
@@ -26,15 +25,7 @@ func (k msgServer) RebalanceValidators(goCtx context.Context, msg *types.MsgReba
 		k.Logger(ctx).Error(fmt.Sprintf("Host Zone not found %s", msg.HostZone))
 		return nil, types.ErrInvalidHostZone
 	}
-	maxNumRebalance := cast.ToInt(msg.NumRebalance)
-	if maxNumRebalance < 1 {
-		k.Logger(ctx).Error(fmt.Sprintf("Invalid number of validators to rebalance %d", maxNumRebalance))
-		return nil, types.ErrInvalidNumValidator
-	}
-	if maxNumRebalance > 4 {
-		k.Logger(ctx).Error(fmt.Sprintf("Invalid number of validators to rebalance %d", maxNumRebalance))
-		return nil, types.ErrInvalidNumValidator
-	}
+
 	validatorDeltas, err := k.GetValidatorDelegationAmtDifferences(ctx, hostZone)
 	if err != nil {
 		k.Logger(ctx).Error(fmt.Sprintf("Error getting validator deltas for Host Zone %s: %s", hostZone.ChainId, err))
@@ -92,7 +83,7 @@ func (k msgServer) RebalanceValidators(goCtx context.Context, msg *types.MsgReba
 		Rebalancings: []*types.Rebalancing{},
 	}
 
-	for i := 1; i <= maxNumRebalance; i++ {
+	for i := uint64(1); i <= msg.NumRebalance; i++ {
 		underWeightElem := valDeltaList[underWeightIndex]
 		overWeightElem := valDeltaList[overWeightIndex]
 		if underWeightElem.deltaAmt.LT(sdkmath.ZeroInt()) {
