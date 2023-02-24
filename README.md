@@ -112,6 +112,7 @@ We use the following modules from [Osmosis](https://github.com/osmosis-labs/osmo
 ```
 x/epochs
 x/mint
+x/ratelimit
 ```
 We use the following module (marketed as public infra) from [Quicksilver](https://github.com/ingenuity-build/quicksilver) provided under [this License](https://github.com/ingenuity-build/quicksilver/blob/main/LICENSE): 
 ```

@@ -13,6 +13,7 @@ category: 62c5c5ff03a5bf069004def2
 `interchainquery` - Issues queries between IBC chains, verifies state proof and executes callbacks.
 `epochs` - Makes on-chain timers which other modules can execute code during.
 `mint` - Controls token supply emissions, and what modules they are directed to.
+`ratelimit` - IBC middleware wrapping the transfer module, thottles large IBC transfers.
 
 ### Attribution
 
