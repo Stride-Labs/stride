@@ -109,7 +109,6 @@ func (k msgServer) InstantiateOracle(goCtx context.Context, msg *types.MsgInstan
 	// Build the contract-specific instantiation message
 	contractMsg := types.MsgInstantiateOracleContract{
 		AdminAddress: oracle.IcaAddress,
-		IcaAddress:   oracle.IcaAddress,
 	}
 	contractMsgBz, err := json.Marshal(contractMsg)
 	if err != nil {
