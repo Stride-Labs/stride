@@ -5,9 +5,9 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
+	errorsmod "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
 	transfertypes "github.com/cosmos/ibc-go/v5/modules/apps/transfer/types"
 	channeltypes "github.com/cosmos/ibc-go/v5/modules/core/04-channel/types"
@@ -74,7 +74,7 @@ func (s *KeeperTestSuite) createChannelValue(denom string, channelValue sdkmath.
 }
 
 // Helper function to add a rate limit with an optional error expectation
-func (s *KeeperTestSuite) addRateLimit(expectedErr *sdkerrors.Error) {
+func (s *KeeperTestSuite) addRateLimit(expectedErr *errorsmod.Error) {
 	actualErr := gov.AddRateLimit(s.Ctx, s.App.RatelimitKeeper, s.App.IBCKeeper.ChannelKeeper, &addRateLimitMsg)
 
 	// If it should have been added successfully, confirm no error
@@ -96,7 +96,7 @@ func (s *KeeperTestSuite) addRateLimitSuccessful() {
 }
 
 // Helper function to add a rate limit with an expected error
-func (s *KeeperTestSuite) addRateLimitWithError(expectedErr *sdkerrors.Error) {
+func (s *KeeperTestSuite) addRateLimitWithError(expectedErr *errorsmod.Error) {
 	s.addRateLimit(expectedErr)
 }
 

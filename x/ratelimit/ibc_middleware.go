@@ -1,6 +1,8 @@
 package ratelimit
 
 import (
+	"fmt"
+
 	"github.com/Stride-Labs/stride/v5/x/ratelimit/keeper"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -108,6 +110,7 @@ func (im IBCMiddleware) OnRecvPacket(
 	// Check if the packet would cause the rate limit to be exceeded,
 	// and if so, return an ack error
 	if err := im.keeper.ReceiveRateLimitedPacket(ctx, packet); err != nil {
+		im.keeper.Logger(ctx).Error(fmt.Sprintf("ICS20 packet receive was denied: %s", err.Error()))
 		return channeltypes.NewErrorAcknowledgement(err)
 	}
 

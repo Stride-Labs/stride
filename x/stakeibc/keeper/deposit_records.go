@@ -63,6 +63,11 @@ func (k Keeper) TransferExistingDepositsToHostZones(ctx sdk.Context, epochNumber
 			continue
 		}
 
+		if hostZone.Halted {
+			k.Logger(ctx).Error(fmt.Sprintf("[TransferExistingDepositsToHostZones] Host zone halted for deposit record id %d", depositRecord.Id))
+			continue
+		}
+
 		hostZoneModuleAddress := hostZone.Address
 		delegateAccount := hostZone.DelegationAccount
 		if delegateAccount == nil || delegateAccount.Address == "" {
@@ -124,6 +129,11 @@ func (k Keeper) StakeExistingDepositsOnHostZones(ctx sdk.Context, epochNumber ui
 		hostZone, hostZoneFound := k.GetHostZone(ctx, depositRecord.HostZoneId)
 		if !hostZoneFound {
 			k.Logger(ctx).Error(fmt.Sprintf("[StakeExistingDepositsOnHostZones] Host zone not found for deposit record {%d}", depositRecord.Id))
+			continue
+		}
+
+		if hostZone.Halted {
+			k.Logger(ctx).Error(fmt.Sprintf("[StakeExistingDepositsOnHostZones] Host zone halted for deposit record {%d}", depositRecord.Id))
 			continue
 		}
 

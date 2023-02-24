@@ -2,7 +2,9 @@ package keeper
 
 import (
 	"encoding/json"
+	"fmt"
 
+	errorsmod "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	capabilitytypes "github.com/cosmos/cosmos-sdk/x/capability/types"
@@ -115,7 +117,7 @@ func (k Keeper) SendRateLimitedPacket(ctx sdk.Context, packet ibcexported.Packet
 
 	amount, ok := sdk.NewIntFromString(packetData.Amount)
 	if !ok {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "Unable to cast packet amount to sdkmath.Int")
+		return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "Unable to cast packet amount to sdkmath.Int")
 	}
 
 	denom := ParseDenomFromSendPacket(packetData)
@@ -145,7 +147,7 @@ func (k Keeper) ReceiveRateLimitedPacket(ctx sdk.Context, packet channeltypes.Pa
 
 	amount, ok := sdk.NewIntFromString(packetData.Amount)
 	if !ok {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "Unable to cast packet amount to sdkmath.Int")
+		return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "Unable to cast packet amount to sdkmath.Int")
 	}
 
 	denom := ParseDenomFromRecvPacket(packet, packetData)
@@ -163,6 +165,7 @@ func (k Keeper) ReceiveRateLimitedPacket(ctx sdk.Context, packet channeltypes.Pa
 // If the packet does not get rate limited, it passes the packet to the IBC Channel keeper
 func (k Keeper) SendPacket(ctx sdk.Context, chanCap *capabilitytypes.Capability, packet ibcexported.PacketI) error {
 	if err := k.SendRateLimitedPacket(ctx, packet); err != nil {
+		k.Logger(ctx).Error(fmt.Sprintf("ICS20 packet send was denied: %s", err.Error()))
 		return err
 	}
 	return k.ics4Wrapper.SendPacket(ctx, chanCap, packet)

@@ -5,7 +5,8 @@ import (
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+
+	errorsmod "cosmossdk.io/errors"
 
 	oldrecordtypes "github.com/Stride-Labs/stride/v5/x/records/migrations/v2/types"
 	recordtypes "github.com/Stride-Labs/stride/v5/x/records/types"
@@ -22,14 +23,14 @@ func migrateDepositRecord(store sdk.KVStore, cdc codec.BinaryCodec) error {
 		var oldDepositRecord oldrecordtypes.DepositRecord
 		err := cdc.Unmarshal(iterator.Value(), &oldDepositRecord)
 		if err != nil {
-			return sdkerrors.Wrapf(err, "unable to unmarshal deposit record (%v) using old data type", iterator.Key())
+			return errorsmod.Wrapf(err, "unable to unmarshal deposit record (%v) using old data type", iterator.Key())
 		}
 
 		// Convert and serialize using the new type
 		newDepositRecord := convertToNewDepositRecord(oldDepositRecord)
 		newDepositRecordBz, err := cdc.Marshal(&newDepositRecord)
 		if err != nil {
-			return sdkerrors.Wrapf(err, "unable to marshal deposit record (%v) using new data type", iterator.Key())
+			return errorsmod.Wrapf(err, "unable to marshal deposit record (%v) using new data type", iterator.Key())
 		}
 
 		// Store the new type
@@ -50,14 +51,14 @@ func migrateUserRedemptionRecord(store sdk.KVStore, cdc codec.BinaryCodec) error
 		var oldRedemptionRecord oldrecordtypes.UserRedemptionRecord
 		err := cdc.Unmarshal(iterator.Value(), &oldRedemptionRecord)
 		if err != nil {
-			return sdkerrors.Wrapf(err, "unable to unmarshal redemption record (%v) using old data type", iterator.Key())
+			return errorsmod.Wrapf(err, "unable to unmarshal redemption record (%v) using old data type", iterator.Key())
 		}
 
 		// Convert and serialize using the new type
 		newRedemptionRecord := convertToNewUserRedemptionRecord(oldRedemptionRecord)
 		newRedemptionRecordBz, err := cdc.Marshal(&newRedemptionRecord)
 		if err != nil {
-			return sdkerrors.Wrapf(err, "unable to marshal redemption record (%v) using new data type", iterator.Key())
+			return errorsmod.Wrapf(err, "unable to marshal redemption record (%v) using new data type", iterator.Key())
 		}
 
 		// Store the new type
@@ -78,14 +79,14 @@ func migrateEpochUnbondingRecord(store sdk.KVStore, cdc codec.BinaryCodec) error
 		var oldEpochUnbondingRecord oldrecordtypes.EpochUnbondingRecord
 		err := cdc.Unmarshal(iterator.Value(), &oldEpochUnbondingRecord)
 		if err != nil {
-			return sdkerrors.Wrapf(err, "unable to unmarshal epoch unbonding record (%v) using old data type", iterator.Key())
+			return errorsmod.Wrapf(err, "unable to unmarshal epoch unbonding record (%v) using old data type", iterator.Key())
 		}
 
 		// Convert and serialize using the new type
 		newEpochUnbondingRecord := convertToNewEpochUnbondingRecord(oldEpochUnbondingRecord)
 		newEpochUnbondingRecordBz, err := cdc.Marshal(&newEpochUnbondingRecord)
 		if err != nil {
-			return sdkerrors.Wrapf(err, "unable to marshal epoch unbonding record (%v) using new data type", iterator.Key())
+			return errorsmod.Wrapf(err, "unable to marshal epoch unbonding record (%v) using new data type", iterator.Key())
 		}
 
 		// Store the new type

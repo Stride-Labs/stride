@@ -3,8 +3,8 @@ package keeper
 import (
 	"context"
 
+	errorsmod "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
 	transfertypes "github.com/cosmos/ibc-go/v5/modules/apps/transfer/types"
 	ibctmtypes "github.com/cosmos/ibc-go/v5/modules/light-clients/07-tendermint/types"
@@ -41,11 +41,11 @@ func (k Keeper) RateLimitsByChainId(c context.Context, req *types.QueryRateLimit
 		// Determine the client state from the channel Id
 		_, clientState, err := k.channelKeeper.GetChannelClientState(ctx, transfertypes.PortID, rateLimit.Path.ChannelId)
 		if err != nil {
-			return &types.QueryRateLimitsByChainIdResponse{}, sdkerrors.Wrapf(types.ErrInvalidClientState, "Unable to fetch client state from channelId")
+			return &types.QueryRateLimitsByChainIdResponse{}, errorsmod.Wrapf(types.ErrInvalidClientState, "Unable to fetch client state from channelId")
 		}
 		client, ok := clientState.(*ibctmtypes.ClientState)
 		if !ok {
-			return &types.QueryRateLimitsByChainIdResponse{}, sdkerrors.Wrapf(types.ErrInvalidClientState, "Client state is not tendermint")
+			return &types.QueryRateLimitsByChainIdResponse{}, errorsmod.Wrapf(types.ErrInvalidClientState, "Client state is not tendermint")
 		}
 
 		// If the chain ID matches, add the rate limit to the returned list
