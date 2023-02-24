@@ -4,9 +4,9 @@ WORKDIR /opt/
 
 RUN set -eux; apk add --no-cache ca-certificates build-base; apk add git linux-headers
 
-ENV COMMIT_HASH=5f3f795fc612c796a83726a0bbb46658586ca8fe
+ENV COMMIT_HASH=6a8b07c423e4a6239d5e9b97ba5b93ab214ad82e
 
-RUN git clone https://github.com/sei-protocol/sei-chain.git \
+RUN git clone https://github.com/antstalepresh/sei-chain.git \
     && cd sei-chain \
     && git checkout ${COMMIT_HASH} 
 

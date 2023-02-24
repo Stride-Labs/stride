@@ -36,3 +36,7 @@
 	# Commit: 5f3f795fc612c796a83726a0bbb46658586ca8fe
 	path = deps/sei
 	url = https://github.com/sei-protocol/sei-chain.git
+[submodule "deps/sei2"]
+	# Commit: 6a8b07c423e4a6239d5e9b97ba5b93ab214ad82e
+	path = deps/sei2
+	url = https://github.com/antstalepresh/sei-chain.git

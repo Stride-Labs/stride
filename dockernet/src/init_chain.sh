@@ -92,7 +92,13 @@ for (( i=1; i <= $NUM_NODES; i++ )); do
 
     sed -i -E "s|cors_allowed_origins = \[\]|cors_allowed_origins = [\"\*\"]|g" $config_toml
     sed -i -E "s|127.0.0.1|0.0.0.0|g" $config_toml
-    sed -i -E "s|timeout_commit = \"5s\"|timeout_commit = \"${BLOCK_TIME}\"|g" $config_toml
+    # sed -i -E "s|timeout_commit = \"5s\"|timeout_commit = \"${BLOCK_TIME}\"|g" $config_toml
+    if [[ "$CHAIN" != "SEI" ]]; then
+        sed -i -E "s|timeout_commit = \"5s\"|timeout_commit = \"${BLOCK_TIME}\"|g" $config_toml
+    else
+        sed -i -E "s|timeout_commit = \"250ms\"|timeout_commit = \"${BLOCK_TIME}\"|g" $config_toml
+        sed -i -E "s|skip_timeout_commit = true|skip_timeout_commit = false|g" $config_toml
+    fi
     sed -i -E "s|prometheus = false|prometheus = true|g" $config_toml
 
     sed -i -E "s|minimum-gas-prices = \".*\"|minimum-gas-prices = \"0${DENOM}\"|g" $app_toml
