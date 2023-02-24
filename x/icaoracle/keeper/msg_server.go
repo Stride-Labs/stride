@@ -37,24 +37,24 @@ func (k msgServer) AddOracle(goCtx context.Context, msg *types.MsgAddOracle) (*t
 	controllerConnectionId := msg.ConnectionId
 	connectionEnd, found := k.IBCKeeper.ConnectionKeeper.GetConnection(ctx, controllerConnectionId)
 	if !found {
-		return &types.MsgAddOracleResponse{}, errorsmod.Wrapf(sdkerrors.ErrNotFound, "connection (%s) not found", controllerConnectionId)
+		return nil, errorsmod.Wrapf(sdkerrors.ErrNotFound, "connection (%s) not found", controllerConnectionId)
 	}
 
 	// Get chain id from the connection
 	clientState, found := k.ICACallbacksKeeper.IBCKeeper.ClientKeeper.GetClientState(ctx, connectionEnd.ClientId)
 	if !found {
-		return &types.MsgAddOracleResponse{}, errorsmod.Wrapf(sdkerrors.ErrNotFound, "client (%s) not found", connectionEnd.ClientId)
+		return nil, errorsmod.Wrapf(sdkerrors.ErrNotFound, "client (%s) not found", connectionEnd.ClientId)
 	}
 	client, ok := clientState.(*ibctmtypes.ClientState)
 	if !ok {
-		return &types.MsgAddOracleResponse{}, types.ErrClientStateNotTendermint
+		return nil, types.ErrClientStateNotTendermint
 	}
 	chainId := client.ChainId
 
 	// Confirm oracle was not already created
 	_, found = k.GetOracle(ctx, chainId)
 	if found {
-		return &types.MsgAddOracleResponse{}, types.ErrOracleAlreadyExists
+		return nil, types.ErrOracleAlreadyExists
 	}
 
 	// Create the oracle struct, marked as inactive
@@ -68,7 +68,7 @@ func (k msgServer) AddOracle(goCtx context.Context, msg *types.MsgAddOracle) (*t
 	// Get the corresponding connection on the host
 	hostConnectionId := connectionEnd.Counterparty.ConnectionId
 	if hostConnectionId == "" {
-		return &types.MsgAddOracleResponse{}, types.ErrHostConnectionNotFound
+		return nil, types.ErrHostConnectionNotFound
 	}
 
 	// Register the oracle interchain account
@@ -82,7 +82,7 @@ func (k msgServer) AddOracle(goCtx context.Context, msg *types.MsgAddOracle) (*t
 
 	owner := types.FormatICAAccountOwner(chainId, types.ICAAccountType_Oracle)
 	if err := k.ICAControllerKeeper.RegisterInterchainAccount(ctx, controllerConnectionId, owner, appVersion); err != nil {
-		return &types.MsgAddOracleResponse{}, errorsmod.Wrapf(err, "unable to register oracle interchain account")
+		return nil, errorsmod.Wrapf(err, "unable to register oracle interchain account")
 	}
 
 	return &types.MsgAddOracleResponse{}, nil
@@ -95,15 +95,15 @@ func (k msgServer) InstantiateOracle(goCtx context.Context, msg *types.MsgInstan
 	// Confirm the oracle has already been added, but has not yet been instantiated
 	oracle, found := k.GetOracle(ctx, msg.OracleChainId)
 	if !found {
-		return &types.MsgInstantiateOracleResponse{}, types.ErrOracleNotFound
+		return nil, types.ErrOracleNotFound
 	}
 	if oracle.ContractAddress != "" {
-		return &types.MsgInstantiateOracleResponse{}, types.ErrOracleAlreadyInstantiated
+		return nil, types.ErrOracleAlreadyInstantiated
 	}
 
 	// Confirm the oracle ICA was registered
 	if err := oracle.ValidateICASetup(); err != nil {
-		return &types.MsgInstantiateOracleResponse{}, err
+		return nil, err
 	}
 
 	// Build the contract-specific instantiation message
@@ -113,7 +113,7 @@ func (k msgServer) InstantiateOracle(goCtx context.Context, msg *types.MsgInstan
 	}
 	contractMsgBz, err := json.Marshal(contractMsg)
 	if err != nil {
-		return &types.MsgInstantiateOracleResponse{}, errorsmod.Wrapf(err, "unable to marshal instantiate oracle contract")
+		return nil, errorsmod.Wrapf(err, "unable to marshal instantiate oracle contract")
 	}
 
 	// Build the ICA message to instantiate the contract
@@ -143,7 +143,7 @@ func (k msgServer) InstantiateOracle(goCtx context.Context, msg *types.MsgInstan
 		CallbackId:   ICACallbackID_InstantiateOracle,
 	}
 	if err := k.SubmitICATx(ctx, icaTx); err != nil {
-		return &types.MsgInstantiateOracleResponse{}, errorsmod.Wrapf(err, "unable to submit instantiate oracle contract ICA")
+		return nil, errorsmod.Wrapf(err, "unable to submit instantiate oracle contract ICA")
 	}
 
 	return &types.MsgInstantiateOracleResponse{}, nil
@@ -153,7 +153,51 @@ func (k msgServer) InstantiateOracle(goCtx context.Context, msg *types.MsgInstan
 func (k msgServer) RestoreOracleICA(goCtx context.Context, msg *types.MsgRestoreOracleICA) (*types.MsgRestoreOracleICAResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	// TODO
-	_ = ctx
+	// Confirm the oracle exists and has already had has already had an ICA registered
+	oracle, found := k.GetOracle(ctx, msg.OracleChainId)
+	if !found {
+		return nil, types.ErrOracleNotFound
+	}
+	if err := oracle.ValidateICASetup(); err != nil {
+		return nil, errorsmod.Wrapf(err, "the oracle (%s) has never had an registered ICA", oracle.ChainId)
+	}
+
+	// Grab the connectionEnd for the counterparty connection
+	connectionEnd, found := k.IBCKeeper.ConnectionKeeper.GetConnection(ctx, oracle.ConnectionId)
+	if !found {
+		return nil, errorsmod.Wrapf(sdkerrors.ErrNotFound, "connection (%s) not found", oracle.ConnectionId)
+	}
+	hostConnectionId := connectionEnd.Counterparty.ConnectionId
+
+	// Only allow restoring an ICA if the account already exists
+	owner := types.FormatICAAccountOwner(oracle.ChainId, types.ICAAccountType_Oracle)
+	portId, err := icatypes.NewControllerPortID(owner)
+	if err != nil {
+		return nil, errorsmod.Wrapf(err, "unable to build portId from owner (%s)", owner)
+	}
+	_, exists := k.ICAControllerKeeper.GetInterchainAccountAddress(ctx, oracle.ConnectionId, portId)
+	if !exists {
+		return nil, errorsmod.Wrapf(types.ErrICAAccountDoesNotExist, "cannot find ICA account for connection (%s) and port (%s)", oracle.ConnectionId, portId)
+	}
+
+	// Call register ICA again to restore the account
+	appVersion := string(icatypes.ModuleCdc.MustMarshalJSON(&icatypes.Metadata{
+		Version:                icatypes.Version,
+		ControllerConnectionId: oracle.ConnectionId,
+		HostConnectionId:       hostConnectionId,
+		Encoding:               icatypes.EncodingProtobuf,
+		TxType:                 icatypes.TxTypeSDKMultiMsg,
+	}))
+	if err := k.ICAControllerKeeper.RegisterInterchainAccount(ctx, oracle.ConnectionId, owner, appVersion); err != nil {
+		return nil, errorsmod.Wrapf(err, "unable to register oracle interchain account")
+	}
+
+	// Delete all pending ICAs along the old channel
+	for _, pendingMetricUpdate := range k.GetAllPendingMetricUpdates(ctx) {
+		if pendingMetricUpdate.OracleChainId == oracle.ChainId {
+			k.SetMetricUpdateComplete(ctx, pendingMetricUpdate.Metric.Key, oracle.ChainId)
+		}
+	}
+
 	return &types.MsgRestoreOracleICAResponse{}, nil
 }
