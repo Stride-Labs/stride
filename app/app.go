@@ -220,6 +220,7 @@ var (
 		claimtypes.ModuleName:           nil,
 		interchainquerytypes.ModuleName: nil,
 		icatypes.ModuleName:             nil,
+		stakeibcmoduletypes.RewardCollectorName: nil,
 		// this line is used by starport scaffolding # stargate/app/maccPerms
 	}
 )
