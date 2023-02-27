@@ -39,6 +39,8 @@ func (suite *KeeperTestSuite) TestOnRecvPacket() {
 	atomHostDenom := "uatom"
 	prefixedDenom := transfertypes.GetPrefixedDenom(packet.GetDestPort(), packet.GetDestChannel(), atomHostDenom)
 	atomIbcDenom := transfertypes.ParseDenomTrace(prefixedDenom).IBCDenom()
+	prefixedDenom2 := transfertypes.GetPrefixedDenom(packet.GetDestPort(), "channel-1000", atomHostDenom)
+	atomIbcDenom2 := transfertypes.ParseDenomTrace(prefixedDenom2).IBCDenom()
 
 	strdDenom := "ustrd"
 	prefixedDenom = transfertypes.GetPrefixedDenom(packet.GetSourcePort(), packet.GetSourceChannel(), strdDenom)
@@ -49,6 +51,7 @@ func (suite *KeeperTestSuite) TestOnRecvPacket() {
 		forwardingActive bool
 		recvDenom        string
 		packetData       transfertypes.FungibleTokenPacketData
+		destChannel      string
 		expSuccess       bool
 		expLiquidStake   bool
 	}{
@@ -61,6 +64,7 @@ func (suite *KeeperTestSuite) TestOnRecvPacket() {
 				Receiver: fmt.Sprintf("%s|stakeibc/LiquidStake", addr1.String()),
 				Memo:     "",
 			},
+			destChannel:    "channel-0",
 			recvDenom:      atomIbcDenom,
 			expSuccess:     false,
 			expLiquidStake: false,
@@ -74,6 +78,7 @@ func (suite *KeeperTestSuite) TestOnRecvPacket() {
 				Receiver: fmt.Sprintf("%s|stakeibc/LiquidStake", addr1.String()),
 				Memo:     "",
 			},
+			destChannel:    "channel-0",
 			recvDenom:      "ustrd",
 			expSuccess:     false,
 			expLiquidStake: false,
@@ -87,9 +92,24 @@ func (suite *KeeperTestSuite) TestOnRecvPacket() {
 				Receiver: fmt.Sprintf("%s|stakeibc/LiquidStake", addr1.String()),
 				Memo:     "",
 			},
+			destChannel:    "channel-0",
 			recvDenom:      atomIbcDenom,
 			expSuccess:     true,
 			expLiquidStake: true,
+		},
+		{ // ibc denom uatom from different channel
+			forwardingActive: true,
+			packetData: transfertypes.FungibleTokenPacketData{
+				Denom:    "uatom",
+				Amount:   "1000000",
+				Sender:   "cosmos16plylpsgxechajltx9yeseqexzdzut9g8vla4k",
+				Receiver: fmt.Sprintf("%s|stakeibc/LiquidStake", addr1.String()),
+				Memo:     "",
+			},
+			destChannel:    "channel-1000",
+			recvDenom:      atomIbcDenom2,
+			expSuccess:     false,
+			expLiquidStake: false,
 		},
 		{ // all okay with memo liquidstaking since ibc-go v5.1.0
 			forwardingActive: true,
@@ -100,6 +120,7 @@ func (suite *KeeperTestSuite) TestOnRecvPacket() {
 				Receiver: fmt.Sprintf("%s", addr1.String()),
 				Memo:     "stakeibc/LiquidStake",
 			},
+			destChannel:    "channel-0",
 			recvDenom:      atomIbcDenom,
 			expSuccess:     true,
 			expLiquidStake: true,
@@ -113,6 +134,7 @@ func (suite *KeeperTestSuite) TestOnRecvPacket() {
 				Receiver: fmt.Sprintf("%s", addr1.String()),
 				Memo:     "",
 			},
+			destChannel:    "channel-0",
 			recvDenom:      atomIbcDenom,
 			expSuccess:     true,
 			expLiquidStake: false,
@@ -126,6 +148,7 @@ func (suite *KeeperTestSuite) TestOnRecvPacket() {
 				Receiver: "xxx|stakeibc/LiquidStake",
 				Memo:     "",
 			},
+			destChannel:    "channel-0",
 			recvDenom:      atomIbcDenom,
 			expSuccess:     false,
 			expLiquidStake: false,
@@ -139,6 +162,7 @@ func (suite *KeeperTestSuite) TestOnRecvPacket() {
 				Receiver: "xxx|stakeibc/LiquidStake",
 				Memo:     "",
 			},
+			destChannel:    "channel-0",
 			recvDenom:      atomIbcDenom,
 			expSuccess:     false,
 			expLiquidStake: false,
@@ -147,6 +171,7 @@ func (suite *KeeperTestSuite) TestOnRecvPacket() {
 
 	for i, tc := range testCases {
 		suite.Run(fmt.Sprintf("Case %d", i), func() {
+			packet.DestinationChannel = tc.destChannel
 			packet.Data = transfertypes.ModuleCdc.MustMarshalJSON(&tc.packetData)
 
 			suite.SetupTest() // reset
