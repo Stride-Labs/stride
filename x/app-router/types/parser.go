@@ -10,6 +10,7 @@ type ParsedReceiver struct {
 	ShouldLiquidStake bool
 	ShouldRedeemStake bool
 	StrideAccAddress  sdk.AccAddress
+	ResultReceiver    string
 }
 
 // {stride_address}|{module_id}/{function_id}
@@ -43,6 +44,17 @@ func ParseReceiverData(receiverData string) (*ParsedReceiver, error) {
 				ShouldRedeemStake: false,
 				StrideAccAddress:  strideAccAddress,
 			}, nil
+		}
+		return &ParsedReceiver{
+			ShouldLiquidStake: false,
+			ShouldRedeemStake: false,
+		}, nil
+	case 3:
+		addressPart := parts[0]
+		functionPart := parts[1]
+		receiverPart := parts[2]
+
+		switch functionPart {
 		case "stakeibc/LiquidStakeAndIBCTransfer":
 			strideAccAddress, err := sdk.AccAddressFromBech32(addressPart)
 			if err != nil {
@@ -53,6 +65,7 @@ func ParseReceiverData(receiverData string) (*ParsedReceiver, error) {
 				ShouldLiquidStake: true,
 				ShouldRedeemStake: false,
 				StrideAccAddress:  strideAccAddress,
+				ResultReceiver:    receiverPart,
 			}, nil
 		case "stakeibc/RedeemStake":
 			strideAccAddress, err := sdk.AccAddressFromBech32(addressPart)
@@ -64,13 +77,13 @@ func ParseReceiverData(receiverData string) (*ParsedReceiver, error) {
 				ShouldLiquidStake: false,
 				ShouldRedeemStake: true,
 				StrideAccAddress:  strideAccAddress,
+				ResultReceiver:    receiverPart,
 			}, nil
 		}
 		return &ParsedReceiver{
 			ShouldLiquidStake: false,
 			ShouldRedeemStake: false,
 		}, nil
-
 	default:
 		return nil, ErrInvalidReceiverData
 	}

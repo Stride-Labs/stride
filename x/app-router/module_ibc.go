@@ -2,6 +2,7 @@ package app_router
 
 import (
 	"fmt"
+	"strings"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -173,31 +174,37 @@ func (im IBCModule) OnRecvPacket(
 			}, ack)
 		}
 		return ack
-	} else if data.Memo == "stakeibc/LiquidStakeAndIBCTransfer" {
+	} else if strings.HasPrefix(data.Memo, "stakeibc/LiquidStakeAndIBCTransfer|") {
 		strideAccAddress, err := sdk.AccAddressFromBech32(data.Receiver)
 		if err != nil {
 			return channeltypes.NewErrorAcknowledgement(err.Error())
 		}
+
+		receiver := data.Memo[len("stakeibc/LiquidStakeAndIBCTransfer|"):]
 
 		ack := im.app.OnRecvPacket(ctx, packet, relayer)
 		if ack.Success() {
 			return im.keeper.TryLiquidStaking(ctx, packet, data, &types.ParsedReceiver{
 				ShouldLiquidStake: true,
 				StrideAccAddress:  strideAccAddress,
+				ResultReceiver:    receiver,
 			}, ack)
 		}
 		return ack
-	} else if data.Memo == "stakeibc/RedeemStake" {
+	} else if strings.HasPrefix(data.Memo, "stakeibc/RedeemStake|") {
 		strideAccAddress, err := sdk.AccAddressFromBech32(data.Receiver)
 		if err != nil {
 			return channeltypes.NewErrorAcknowledgement(err.Error())
 		}
+
+		receiver := data.Memo[len("stakeibc/RedeemStake|"):]
 
 		ack := im.app.OnRecvPacket(ctx, packet, relayer)
 		if ack.Success() {
 			return im.keeper.TryRedeemStake(ctx, packet, data, &types.ParsedReceiver{
 				ShouldLiquidStake: true,
 				StrideAccAddress:  strideAccAddress,
+				ResultReceiver:    receiver,
 			}, ack)
 		}
 		return ack

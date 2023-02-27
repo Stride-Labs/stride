@@ -46,7 +46,7 @@ func (k Keeper) TryRedeemStake(
 	// Note: newData.denom is ibc denom for st assets - e.g. ibc/xxx
 	var token = sdk.NewCoin(newData.Denom, amount)
 
-	err := k.RunRedeemStake(ctx, parsedReceiver.StrideAccAddress, newData.Sender, hostZoneDenom, token, []metrics.Label{})
+	err := k.RunRedeemStake(ctx, parsedReceiver.StrideAccAddress, parsedReceiver.ResultReceiver, hostZoneDenom, token, []metrics.Label{})
 	if err != nil {
 		ack = channeltypes.NewErrorAcknowledgement(err.Error())
 	}
