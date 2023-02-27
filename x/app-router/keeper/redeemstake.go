@@ -25,29 +25,36 @@ func (k Keeper) TryRedeemStake(
 		return channeltypes.NewErrorAcknowledgement("packet forwarding param is not active")
 	}
 
-	// In this case, we can't process a liquid staking transaction, because we're dealing with STRD tokens
-	if transfertypes.ReceiverChainIsSource(packet.GetSourcePort(), packet.GetSourceChannel(), newData.Denom) {
-		return channeltypes.NewErrorAcknowledgement("the native token is not supported for liquid staking")
+	// In this case, we can't process a liquid staking transaction, because we're dealing IBC tokens from other chains
+	if !transfertypes.ReceiverChainIsSource(packet.GetSourcePort(), packet.GetSourceChannel(), newData.Denom) {
+		return channeltypes.NewErrorAcknowledgement("the ibc tokens are not supported for redeem stake")
 	}
+
+	voucherPrefix := transfertypes.GetDenomPrefix(packet.GetSourcePort(), packet.GetSourceChannel())
+	stAssetDenom := newData.Denom[len(voucherPrefix):]
+	if !stakeibctypes.IsStAssetDenom(stAssetDenom) {
+		return channeltypes.NewErrorAcknowledgement("not a liquid staking token")
+	}
+
+	hostZoneDenom := stakeibctypes.HostZoneDenomFromStAssetDenom(stAssetDenom)
 
 	amount, ok := sdk.NewIntFromString(newData.Amount)
 	if !ok {
 		return channeltypes.NewErrorAcknowledgement("not a parsable amount field")
 	}
 
-	// Note: newData.denom is base denom e.g. uatom - not ibc/xxx
+	// Note: newData.denom is ibc denom for st assets - e.g. ibc/xxx
 	var token = sdk.NewCoin(newData.Denom, amount)
 
-	err := k.RunRedeemStake(ctx, parsedReceiver.StrideAccAddress, newData.Sender, token, []metrics.Label{})
+	err := k.RunRedeemStake(ctx, parsedReceiver.StrideAccAddress, newData.Sender, hostZoneDenom, token, []metrics.Label{})
 	if err != nil {
 		ack = channeltypes.NewErrorAcknowledgement(err.Error())
 	}
 	return ack
 }
 
-func (k Keeper) RunRedeemStake(ctx sdk.Context, addr sdk.AccAddress, receiver string, token sdk.Coin, labels []metrics.Label) error {
-	// then make sure host zone is valid
-	hostZone, err := k.stakeibcKeeper.GetHostZoneFromIBCDenom(ctx, token.Denom)
+func (k Keeper) RunRedeemStake(ctx sdk.Context, addr sdk.AccAddress, receiver string, hostZoneDenom string, token sdk.Coin, labels []metrics.Label) error {
+	hostZone, err := k.stakeibcKeeper.GetHostZoneFromHostDenom(ctx, hostZoneDenom)
 	if err != nil {
 		return err
 	}
