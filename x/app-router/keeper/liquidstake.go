@@ -38,7 +38,19 @@ func (k Keeper) TryLiquidStaking(
 	// Note: newData.denom is base denom e.g. uatom - not ibc/xxx
 	var token = sdk.NewCoin(newData.Denom, amount)
 
-	err := k.RunLiquidStake(ctx, parsedReceiver.StrideAccAddress, token, []metrics.Label{})
+	prefixedDenom := transfertypes.GetDenomPrefix(packet.GetDestPort(), packet.GetDestChannel()) + newData.Denom
+	ibcDenom := transfertypes.ParseDenomTrace(prefixedDenom).IBCDenom()
+
+	hostZone, err := k.stakeibcKeeper.GetHostZoneFromHostDenom(ctx, token.Denom)
+	if err != nil {
+		return channeltypes.NewErrorAcknowledgement(err.Error())
+	}
+
+	if hostZone.IbcDenom != ibcDenom {
+		return channeltypes.NewErrorAcknowledgement("ibc denom is not equal to host zone ibc denom")
+	}
+
+	err = k.RunLiquidStake(ctx, parsedReceiver.StrideAccAddress, token, []metrics.Label{})
 	if err != nil {
 		ack = channeltypes.NewErrorAcknowledgement(err.Error())
 	}
