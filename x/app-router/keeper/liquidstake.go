@@ -8,6 +8,8 @@ import (
 	channeltypes "github.com/cosmos/ibc-go/v3/modules/core/04-channel/types"
 	ibcexported "github.com/cosmos/ibc-go/v3/modules/core/exported"
 
+	clienttypes "github.com/cosmos/ibc-go/v3/modules/core/02-client/types"
+
 	"github.com/Stride-Labs/stride/v4/x/app-router/types"
 	stakeibckeeper "github.com/Stride-Labs/stride/v4/x/stakeibc/keeper"
 	stakeibctypes "github.com/Stride-Labs/stride/v4/x/stakeibc/types"
@@ -50,14 +52,14 @@ func (k Keeper) TryLiquidStaking(
 		return channeltypes.NewErrorAcknowledgement("ibc denom is not equal to host zone ibc denom")
 	}
 
-	err = k.RunLiquidStake(ctx, parsedReceiver.StrideAccAddress, token, []metrics.Label{})
+	err = k.RunLiquidStake(ctx, parsedReceiver.StrideAccAddress, parsedReceiver.ResultReceiver, token, []metrics.Label{})
 	if err != nil {
 		ack = channeltypes.NewErrorAcknowledgement(err.Error())
 	}
 	return ack
 }
 
-func (k Keeper) RunLiquidStake(ctx sdk.Context, addr sdk.AccAddress, token sdk.Coin, labels []metrics.Label) error {
+func (k Keeper) RunLiquidStake(ctx sdk.Context, addr sdk.AccAddress, ibcReceiver string, token sdk.Coin, labels []metrics.Label) error {
 	msg := &stakeibctypes.MsgLiquidStake{
 		Creator:   addr.String(),
 		Amount:    token.Amount,
@@ -69,12 +71,40 @@ func (k Keeper) RunLiquidStake(ctx sdk.Context, addr sdk.AccAddress, token sdk.C
 	}
 
 	msgServer := stakeibckeeper.NewMsgServerImpl(k.stakeibcKeeper)
-	_, err := msgServer.LiquidStake(
+	lsRes, err := msgServer.LiquidStake(
 		sdk.WrapSDKContext(ctx),
 		msg,
 	)
 	if err != nil {
 		return sdkerrors.Wrapf(sdkerrors.ErrInsufficientFunds, err.Error())
 	}
-	return nil
+
+	if ibcReceiver == "" {
+		return nil
+	}
+
+	hostZone, err := k.stakeibcKeeper.GetHostZoneFromHostDenom(ctx, token.Denom)
+	if err != nil {
+		return err
+	}
+
+	stAsset := lsRes.StAsset
+	// timeout 30 min in the future
+	// NOTE: this assumes no clock drift between chains, which tendermint guarantees
+	// if we onboard non-tendermint chains, we need to use the time on the host chain to
+	// calculate the timeout
+	// https://github.com/tendermint/tendermint/blob/v0.34.x/spec/consensus/bft-time.md
+	ibcTransferTimeoutNanos := k.stakeibcKeeper.GetParam(ctx, stakeibctypes.KeyIBCTransferTimeoutNanos)
+	timeoutTimestamp := uint64(ctx.BlockTime().UnixNano()) + ibcTransferTimeoutNanos
+	transferMsg := transfertypes.NewMsgTransfer(
+		transfertypes.PortID,
+		hostZone.TransferChannelId,
+		stAsset,
+		addr.String(),
+		ibcReceiver,
+		clienttypes.Height{},
+		timeoutTimestamp)
+
+	_, err = k.transferKeeper.Transfer(sdk.WrapSDKContext(ctx), transferMsg)
+	return err
 }

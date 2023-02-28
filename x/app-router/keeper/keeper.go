@@ -9,6 +9,8 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
 
+	ibctransferkeeper "github.com/cosmos/ibc-go/v3/modules/apps/transfer/keeper"
+
 	"github.com/Stride-Labs/stride/v4/x/app-router/types"
 	stakeibckeeper "github.com/Stride-Labs/stride/v4/x/stakeibc/keeper"
 )
@@ -19,6 +21,7 @@ type (
 		storeKey       sdk.StoreKey
 		paramstore     paramtypes.Subspace
 		stakeibcKeeper stakeibckeeper.Keeper
+		transferKeeper ibctransferkeeper.Keeper
 	}
 )
 
@@ -27,6 +30,7 @@ func NewKeeper(
 	storeKey sdk.StoreKey,
 	ps paramtypes.Subspace,
 	stakeibcKeeper stakeibckeeper.Keeper,
+	transferKeeper ibctransferkeeper.Keeper,
 ) *Keeper {
 	// set KeyTable if it has not already been set
 	if !ps.HasKeyTable() {
@@ -38,6 +42,7 @@ func NewKeeper(
 		storeKey:       storeKey,
 		paramstore:     ps,
 		stakeibcKeeper: stakeibcKeeper,
+		transferKeeper: transferKeeper,
 	}
 }
 

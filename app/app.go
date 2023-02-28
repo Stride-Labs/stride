@@ -518,7 +518,9 @@ func NewStrideApp(
 		appCodec,
 		keys[routertypes.StoreKey],
 		app.GetSubspace(routertypes.ModuleName),
-		app.StakeibcKeeper)
+		app.StakeibcKeeper,
+		app.TransferKeeper,
+	)
 	routerModule := router.NewAppModule(appCodec, app.RouterKeeper)
 
 	// Register Gov (must be registerd after stakeibc)

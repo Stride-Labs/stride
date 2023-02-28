@@ -7,6 +7,7 @@ import "stride/stakeibc/ica_account.proto";
 option go_package = "github.com/Stride-Labs/stride/v4/x/stakeibc/types";
 import "gogoproto/gogo.proto";
 import "cosmos_proto/cosmos.proto";
+import "cosmos/base/v1beta1/coin.proto";
 
 // Msg defines the Msg service.
 service Msg {
@@ -42,7 +43,12 @@ message MsgLiquidStake {
   string host_denom = 3;
 }
 
-message MsgLiquidStakeResponse {}
+message MsgLiquidStakeResponse {
+  cosmos.base.v1beta1.Coin st_asset = 1 [
+    (gogoproto.nullable) = false,
+    (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coin"
+  ];
+}
 
 message MsgClearBalance {
   string creator = 1;
