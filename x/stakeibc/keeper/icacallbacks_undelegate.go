@@ -127,17 +127,17 @@ func UndelegateCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, a
 func (k Keeper) UpdateDelegationBalances(ctx sdk.Context, zone types.HostZone, undelegateCallback types.UndelegateCallback) error {
 	// Undelegate from each validator and update host zone staked balance, if successful
 	for _, undelegation := range undelegateCallback.SplitDelegations {
-		success := k.AddDelegationToValidator(ctx, zone, undelegation.Validator, undelegation.Amount.Neg(), ICACallbackID_Undelegate)
-		if !success {
-			return errorsmod.Wrapf(types.ErrValidatorDelegationChg, "Failed to remove delegation to validator")
-		}
-
 		if undelegation.Amount.GT(zone.StakedBal) {
 			// handle incoming underflow
 			// Once we add a killswitch, we should also stop liquid staking on the zone here
 			return errorsmod.Wrapf(types.ErrUndelegationAmount, "undelegation.Amount > zone.StakedBal, undelegation.Amount: %v, zone.StakedBal %v", undelegation.Amount, zone.StakedBal)
 		} else {
 			zone.StakedBal = zone.StakedBal.Sub(undelegation.Amount)
+		}
+
+		success := k.AddDelegationToValidator(ctx, zone, undelegation.Validator, undelegation.Amount.Neg(), ICACallbackID_Undelegate)
+		if !success {
+			return errorsmod.Wrapf(types.ErrValidatorDelegationChg, "Failed to remove delegation to validator")
 		}
 	}
 	k.SetHostZone(ctx, zone)
