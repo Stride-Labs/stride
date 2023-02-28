@@ -29,8 +29,8 @@ message Params {
   uint64 ibc_timeout_blocks = 11;
   uint64 fee_transfer_timeout_nanos = 12;
   uint64 max_stake_ica_calls_per_epoch = 13;
-  uint64 safety_min_redemption_rate_threshold = 14;
-  uint64 safety_max_redemption_rate_threshold = 15;
+  uint64 default_min_redemption_rate_threshold = 14;
+  uint64 default_max_redemption_rate_threshold = 15;
   uint64 ibc_transfer_timeout_nanos = 16;
   uint64 safety_num_validators = 17;
   uint64 safety_max_slash_percent = 18;

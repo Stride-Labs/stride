@@ -8,7 +8,7 @@ import "cosmos_proto/cosmos.proto";
 
 option go_package = "github.com/Stride-Labs/stride/v5/x/stakeibc/types";
 
-// next id: 20
+// next id: 22
 message HostZone {
   string chain_id = 1;
   string connection_id = 2;
@@ -46,4 +46,14 @@ message HostZone {
   string address = 18 [ (gogoproto.moretags) = "yaml:\"address\"" ];
   bool halted = 19;
   reserved 15;
+  string min_redemption_rate = 20 [
+    (cosmos_proto.scalar) = "cosmos.Dec",
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
+  string max_redemption_rate = 21 [
+    (cosmos_proto.scalar) = "cosmos.Dec",
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
 }
