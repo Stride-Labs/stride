@@ -27,8 +27,6 @@ service Msg {
   rpc UpdateValidatorSharesExchRate(MsgUpdateValidatorSharesExchRate)
       returns (MsgUpdateValidatorSharesExchRateResponse);
   rpc ClearBalance(MsgClearBalance) returns (MsgClearBalanceResponse);
-  rpc ResetUnbondingRecordEpochNumbers(MsgResetUnbondingRecordEpochNumbers)
-      returns (MsgResetUnbondingRecordEpochNumbersResponse);
 }
 
 message MsgLiquidStake {
@@ -139,6 +137,3 @@ message MsgUpdateValidatorSharesExchRate {
   string valoper = 3;
 }
 message MsgUpdateValidatorSharesExchRateResponse {}
-
-message MsgResetUnbondingRecordEpochNumbers { string creator = 1; }
-message MsgResetUnbondingRecordEpochNumbersResponse {}

@@ -3,7 +3,6 @@ package keeper_test
 import (
 	"testing"
 
-	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 
@@ -170,37 +169,4 @@ func TestSetHostZoneUnbondings(t *testing.T) {
 		expectedEpochUnbondingRecords,
 		actualEpochUnbondingRecord,
 	)
-}
-
-func (s *KeeperTestSuite) TestResetEpochUnbondingRecordEpochNumbers() {
-	// Create 4 epoch unbonding records with epoch numbers 0,1,2, and 3
-	initialEpochUnbondingRecords, _ := createNEpochUnbondingRecord(&s.App.RecordsKeeper, s.Ctx, 4)
-
-	// Update each epoch unbonding record to have a 0 epoch number
-	for _, epochUnbondingRecord := range initialEpochUnbondingRecords {
-		recordsStore := s.Ctx.KVStore(s.App.GetKey(types.ModuleName))
-		epochUnbondingRecordStore := prefix.NewStore(recordsStore, types.KeyPrefix(types.EpochUnbondingRecordKey))
-
-		// Update the epoch number to 0 and reset the record with the old store key
-		storedEpochNumberBz := keeper.GetEpochUnbondingRecordIDBytes(epochUnbondingRecord.EpochNumber)
-		epochUnbondingRecord.EpochNumber = 0
-
-		epochUnbondingRecordBz, err := s.App.RecordsKeeper.Cdc.Marshal(&epochUnbondingRecord)
-		s.Require().NoError(err, "there should be no error marshalling the epoch unbonding record")
-		epochUnbondingRecordStore.Set(storedEpochNumberBz, epochUnbondingRecordBz)
-	}
-
-	// Confirm all epoch unbonding records are 0
-	for i, epochUnbondingRecord := range s.App.RecordsKeeper.GetAllEpochUnbondingRecord(s.Ctx) {
-		s.Require().Equal(uint64(0), epochUnbondingRecord.EpochNumber, "before the reset, epoch unbonding record %d should have EpochNumber 0", i)
-	}
-
-	// Reset epoch unbonding record numbers
-	err := s.App.RecordsKeeper.ResetEpochUnbondingRecordEpochNumbers(s.Ctx)
-	s.Require().NoError(err, "resetting the epoch unbonding record numbers should not error")
-
-	// Config epoch unbonding records were updated
-	for i, epochUnbondingRecord := range s.App.RecordsKeeper.GetAllEpochUnbondingRecord(s.Ctx) {
-		s.Require().Equal(uint64(i), epochUnbondingRecord.EpochNumber, "after the reset, epoch unbonding record %d should have EpochNumber %d", i)
-	}
 }
