@@ -3,6 +3,8 @@ package types
 import (
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	errorsmod "cosmossdk.io/errors"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	channeltypes "github.com/cosmos/ibc-go/v5/modules/core/04-channel/types"
 
@@ -46,21 +48,21 @@ func (msg *MsgClearBalance) GetSignBytes() []byte {
 func (msg *MsgClearBalance) ValidateBasic() error {
 	_, err := sdk.AccAddressFromBech32(msg.Creator)
 	if err != nil {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid creator address (%s)", err)
+		return errorsmod.Wrapf(sdkerrors.ErrInvalidAddress, "invalid creator address (%s)", err)
 	}
 	if err := utils.ValidateAdminAddress(msg.Creator); err != nil {
 		return err
 	}
 	// basic checks on host denom
 	if len(msg.ChainId) == 0 {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "chainid is required")
+		return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "chainid is required")
 	}
 
 	if msg.Amount.LTE(sdkmath.ZeroInt()) {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "amount must be greater than 0")
+		return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "amount must be greater than 0")
 	}
 	if isValid := channeltypes.IsValidChannelID(msg.Channel); !isValid {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "channel is invalid")
+		return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "channel is invalid")
 	}
 	return nil
 }

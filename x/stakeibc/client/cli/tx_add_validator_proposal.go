@@ -10,6 +10,8 @@ import (
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/tx"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	errorsmod "cosmossdk.io/errors"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/version"
 	govcli "github.com/cosmos/cosmos-sdk/x/gov/client/cli"
@@ -48,7 +50,7 @@ func CmdAddValidatorProposal() *cobra.Command {
 The proposal details must be supplied via a JSON file.
 
 Example:
-$ %s tx gov submit-proposal add-validator <path/to/proposal.json> --from=<key_or_address>
+$ %s tx gov submit-legacy-proposal add-validator <path/to/proposal.json> --from=<key_or_address>
 
 Where proposal.json contains:
 {
@@ -94,7 +96,7 @@ Where proposal.json contains:
 			}
 
 			if len(deposit) != 1 || deposit.GetDenomByIndex(0) != strideDenom {
-				return sdkerrors.Wrapf(sdkerrors.ErrInvalidCoins, "Deposit token denom must be %s", strideDenom)
+				return errorsmod.Wrapf(sdkerrors.ErrInvalidCoins, "Deposit token denom must be %s", strideDenom)
 			}
 
 			msg, err := govtypes.NewMsgSubmitProposal(&proposal, deposit, from)

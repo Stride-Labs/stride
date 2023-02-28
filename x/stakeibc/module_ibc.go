@@ -3,8 +3,8 @@ package stakeibc
 import (
 	"fmt"
 
+	errorsmod "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	capabilitytypes "github.com/cosmos/cosmos-sdk/x/capability/types"
 	icatypes "github.com/cosmos/ibc-go/v5/modules/apps/27-interchain-accounts/types"
 	channeltypes "github.com/cosmos/ibc-go/v5/modules/core/04-channel/types"
@@ -44,7 +44,7 @@ func (im IBCModule) OnChanOpenInit(
 	counterparty channeltypes.Counterparty,
 	version string,
 ) (string, error) {
-	im.keeper.Logger(ctx).Info(fmt.Sprintf("OnChanOpenAck: portID %s, channelID %s", portID, channelID))
+	im.keeper.Logger(ctx).Info(fmt.Sprintf("OnChanOpenInit: portID %s, channelID %s", portID, channelID))
 	// Note: The channel capability must be claimed by the authentication module in OnChanOpenInit otherwise the
 	// authentication module will not be able to send packets on the channel created for the associated interchain account.
 	if err := im.keeper.ClaimCapability(ctx, channelCap, host.ChannelCapabilityPath(portID, channelID)); err != nil {
@@ -140,7 +140,7 @@ func (im IBCModule) OnAcknowledgementPacket(
 		errMsg := fmt.Sprintf("Unable to unpack message data from acknowledgement, Sequence %d, from %s %s, to %s %s: %s",
 			modulePacket.Sequence, modulePacket.SourceChannel, modulePacket.SourcePort, modulePacket.DestinationChannel, modulePacket.DestinationPort, err.Error())
 		im.keeper.Logger(ctx).Error(errMsg)
-		return sdkerrors.Wrapf(icacallbacktypes.ErrInvalidAcknowledgement, errMsg)
+		return errorsmod.Wrapf(icacallbacktypes.ErrInvalidAcknowledgement, errMsg)
 	}
 
 	ackInfo := fmt.Sprintf("sequence #%d, from %s %s, to %s %s",
@@ -161,7 +161,7 @@ func (im IBCModule) OnAcknowledgementPacket(
 		errMsg := fmt.Sprintf("Unable to call registered callback from stakeibc OnAcknowledgePacket | Sequence %d, from %s %s, to %s %s",
 			modulePacket.Sequence, modulePacket.SourceChannel, modulePacket.SourcePort, modulePacket.DestinationChannel, modulePacket.DestinationPort)
 		im.keeper.Logger(ctx).Error(errMsg)
-		return sdkerrors.Wrapf(icacallbacktypes.ErrCallbackFailed, errMsg)
+		return errorsmod.Wrapf(icacallbacktypes.ErrCallbackFailed, errMsg)
 	}
 	return nil
 }

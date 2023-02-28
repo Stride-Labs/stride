@@ -7,6 +7,8 @@ import (
 
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	errorsmod "cosmossdk.io/errors"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	stakingTypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/spf13/cast"
@@ -63,7 +65,7 @@ func (k msgServer) RebalanceValidators(goCtx context.Context, msg *types.MsgReba
 	// check if there is a large enough rebalance, if not, just exit
 	total_delegation := k.GetTotalValidatorDelegations(hostZone)
 	if total_delegation.IsZero() {
-		return nil, sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "no validator delegations found for Host Zone %s, cannot rebalance 0 delegations!", hostZone.ChainId)
+		return nil, errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "no validator delegations found for Host Zone %s, cannot rebalance 0 delegations!", hostZone.ChainId)
 	}
 
 	overweight_delta := sdk.NewDecFromInt(valDeltaList[overWeightIndex].deltaAmt).Quo(sdk.NewDecFromInt(total_delegation))
@@ -79,7 +81,7 @@ func (k msgServer) RebalanceValidators(goCtx context.Context, msg *types.MsgReba
 	delegationIca := hostZone.GetDelegationAccount()
 	if delegationIca == nil || delegationIca.GetAddress() == "" {
 		k.Logger(ctx).Error(fmt.Sprintf("Zone %s is missing a delegation address!", hostZone.ChainId))
-		return nil, sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "Invalid delegation account")
+		return nil, errorsmod.Wrapf(sdkerrors.ErrInvalidAddress, "Invalid delegation account")
 	}
 
 	delegatorAddress := delegationIca.GetAddress()
@@ -160,7 +162,7 @@ func (k msgServer) RebalanceValidators(goCtx context.Context, msg *types.MsgReba
 	connectionId := hostZone.GetConnectionId()
 	_, err = k.SubmitTxsStrideEpoch(ctx, connectionId, msgs, *hostZone.GetDelegationAccount(), ICACallbackID_Rebalance, marshalledCallbackArgs)
 	if err != nil {
-		return nil, sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "Failed to SubmitTxs for %s, %s, %s, %s", connectionId, hostZone.ChainId, msgs, err.Error())
+		return nil, errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "Failed to SubmitTxs for %s, %s, %s, %s", connectionId, hostZone.ChainId, msgs, err.Error())
 	}
 
 	return &types.MsgRebalanceValidatorsResponse{}, nil

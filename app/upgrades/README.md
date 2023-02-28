@@ -124,7 +124,7 @@ func CreateUpgradeHandler(
 ) upgradetypes.UpgradeHandler {
 	return func(ctx sdk.Context, _ upgradetypes.Plan, vm module.VersionMap) (module.VersionMap, error) {
 		if err := {module}migration.MigrateStore(ctx, {module}StoreKey, cdc); err != nil {
-			return vm, sdkerrors.Wrapf(err, "unable to migrate {module} store")
+			return vm, errorsmod.Wrapf(err, "unable to migrate {module} store")
 		}
 		vm[{moduleName}] = mm.GetVersionMap()[{moduleName}] 
 		return mm.RunMigrations(ctx, configurator, vm)

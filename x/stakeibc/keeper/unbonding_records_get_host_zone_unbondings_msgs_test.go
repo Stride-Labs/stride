@@ -29,7 +29,8 @@ func (s *KeeperTestSuite) SetupGetHostZoneUnbondingMsgs() GetHostZoneUnbondingMs
 	hostVal1Addr := "cosmos_VALIDATOR_1"
 	hostVal2Addr := "cosmos_VALIDATOR_2"
 	hostVal3Addr := "cosmos_VALIDATOR_3"
-	valNames := []string{hostVal1Addr, hostVal2Addr, hostVal3Addr}
+	hostVal4Addr := "cosmos_VALIDATOR_4"
+	valNames := []string{hostVal1Addr, hostVal2Addr, hostVal3Addr, hostVal4Addr}
 	delegationAddr := "cosmos_DELEGATION"
 	amtToUnbond := sdkmath.NewInt(1_000_000)
 	amtVal1 := sdkmath.NewInt(1_000_000)
@@ -58,6 +59,12 @@ func (s *KeeperTestSuite) SetupGetHostZoneUnbondingMsgs() GetHostZoneUnbondingMs
 			// DelegationAmt and Weight are the same as Val2, to test tie breaking
 			DelegationAmt: amtVal2,
 			Weight:        wgtVal2,
+		},
+		{
+			Address: hostVal4Addr,
+			// Zero weight validator
+			DelegationAmt: sdkmath.NewInt(0),
+			Weight:        0,
 		},
 	}
 
@@ -121,13 +128,16 @@ func (s *KeeperTestSuite) TestGetHostZoneUnbondingMsgs_Successful() {
 	// verify the callback attributes are as expected
 	actualCallbackResult, err := s.App.StakeibcKeeper.UnmarshalUndelegateCallbackArgs(s.Ctx, actualCallbackArgs)
 	s.Require().NoError(err, "could unmarshal undelegation callback args")
-	s.Require().Equal(len(tc.hostZone.Validators), len(actualCallbackResult.SplitDelegations), "number of split delegations in success unbonding case")
+
+	// The zero weight validator should not be included in the message
+	expectedNumMessages := len(tc.hostZone.Validators) - 1
+	s.Require().Equal(expectedNumMessages, len(actualCallbackResult.SplitDelegations), "number of split delegations in success unbonding case")
 	s.Require().Equal(tc.hostZone.ChainId, actualCallbackResult.HostZoneId, "host zone id in success unbonding case")
 
 	// TODO add case that checks the *marshaled* callback args against expectations
 
 	// the number of unbonding messages should be (number of validators) * (records to unbond)
-	s.Require().Equal(len(tc.valNames), len(actualUnbondMsgs), "number of unbonding messages should be number of records to unbond")
+	s.Require().Equal(expectedNumMessages, len(actualUnbondMsgs), "number of unbonding messages should be number of records to unbond")
 
 	s.Require().Equal(tc.amtToUnbond.Mul(sdkmath.NewInt(int64(len(tc.epochUnbondingRecords)))), actualAmtToUnbond, "total amount to unbond should match input amtToUnbond")
 
@@ -214,10 +224,11 @@ func (s *KeeperTestSuite) TestGetTargetValAmtsForHostZone_Success() {
 
 	// verify the order of the validators is expected
 	// GetTargetValAmtsForHostZone first reverses the list, then sorts by weight using SliceStable
-	// E.g. given A:1, B:2, C:2
-	// 1. C:2, B:2, A:1
-	// 2. A:1, C:2, B:2
-	s.Require().Equal(tc.valNames[0], tc.hostZone.Validators[0].Address)
-	s.Require().Equal(tc.valNames[1], tc.hostZone.Validators[2].Address)
-	s.Require().Equal(tc.valNames[2], tc.hostZone.Validators[1].Address)
+	// E.g. given A:1, B:2, C:2, D:0
+	// 1. D:0, C:2, B:2, A:1
+	// 2. D:0, A:1, C:2, B:2
+	s.Require().Equal(tc.valNames[3], tc.hostZone.Validators[0].Address)
+	s.Require().Equal(tc.valNames[0], tc.hostZone.Validators[1].Address)
+	s.Require().Equal(tc.valNames[2], tc.hostZone.Validators[2].Address)
+	s.Require().Equal(tc.valNames[1], tc.hostZone.Validators[3].Address)
 }
