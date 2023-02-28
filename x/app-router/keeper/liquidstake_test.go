@@ -44,7 +44,7 @@ func (suite *KeeperTestSuite) TestOnRecvPacket_LiquidStake() {
 
 	strdDenom := "ustrd"
 	prefixedDenom = transfertypes.GetPrefixedDenom(packet.GetSourcePort(), packet.GetSourceChannel(), strdDenom)
-	strdIbcDenom := transfertypes.ParseDenomTrace(prefixedDenom).IBCDenom()
+	strdFullDenomPath := transfertypes.ParseDenomTrace(prefixedDenom).GetFullDenomPath()
 
 	addr1 := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address().Bytes())
 	testCases := []struct {
@@ -72,7 +72,7 @@ func (suite *KeeperTestSuite) TestOnRecvPacket_LiquidStake() {
 		{ // strd denom
 			forwardingActive: true,
 			packetData: transfertypes.FungibleTokenPacketData{
-				Denom:    strdIbcDenom,
+				Denom:    strdFullDenomPath,
 				Amount:   "1000000",
 				Sender:   "cosmos16plylpsgxechajltx9yeseqexzdzut9g8vla4k",
 				Receiver: fmt.Sprintf("%s|stakeibc/LiquidStake", addr1.String()),

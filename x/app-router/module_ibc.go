@@ -217,7 +217,7 @@ func (im IBCModule) OnRecvPacket(
 	}
 
 	// move on to the next middleware
-	if !parsedReceiver.ShouldLiquidStake {
+	if !parsedReceiver.ShouldLiquidStake && !parsedReceiver.ShouldRedeemStake {
 		return im.app.OnRecvPacket(ctx, packet, relayer)
 	}
 
@@ -235,7 +235,11 @@ func (im IBCModule) OnRecvPacket(
 	// NOTE: this code is pulled from packet-forwarding-middleware
 	ack := im.app.OnRecvPacket(ctx, newPacket, relayer)
 	if ack.Success() {
-		return im.keeper.TryLiquidStaking(ctx, packet, newData, parsedReceiver, ack)
+		if parsedReceiver.ShouldLiquidStake {
+			return im.keeper.TryLiquidStaking(ctx, packet, newData, parsedReceiver, ack)
+		} else {
+			return im.keeper.TryRedeemStake(ctx, packet, data, parsedReceiver, ack)
+		}
 	}
 	return ack
 }

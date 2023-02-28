@@ -41,33 +41,32 @@ func (suite *KeeperTestSuite) TestOnRecvPacket_RedeemStake() {
 	prefixedDenom := transfertypes.GetPrefixedDenom(packet.GetDestPort(), packet.GetDestChannel(), atomHostDenom)
 	atomIbcDenom := transfertypes.ParseDenomTrace(prefixedDenom).IBCDenom()
 
-	prefixedDenom2 := transfertypes.GetPrefixedDenom(packet.GetDestPort(), "channel-1000", atomHostDenom)
-	atomIbcDenom2 := transfertypes.ParseDenomTrace(prefixedDenom2).IBCDenom()
-
 	strdDenom := "ustrd"
 	prefixedDenom = transfertypes.GetPrefixedDenom(packet.GetSourcePort(), packet.GetSourceChannel(), strdDenom)
 	strdIbcDenom := transfertypes.ParseDenomTrace(prefixedDenom).IBCDenom()
+
+	stAtomDenom := "stuatom"
+	prefixedDenom = transfertypes.GetPrefixedDenom(packet.GetSourcePort(), packet.GetSourceChannel(), stAtomDenom)
+	stAtomFullDenomPath := transfertypes.ParseDenomTrace(prefixedDenom).GetFullDenomPath()
 
 	addr1 := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address().Bytes())
 	testCases := []struct {
 		forwardingActive bool
 		recvDenom        string
 		packetData       transfertypes.FungibleTokenPacketData
-		destChannel      string
 		expSuccess       bool
 		expRedeemStake   bool
 	}{
 		{ // params not enabled
 			forwardingActive: false,
 			packetData: transfertypes.FungibleTokenPacketData{
-				Denom:    "uatom",
+				Denom:    stAtomFullDenomPath,
 				Amount:   "1000000",
 				Sender:   "cosmos16plylpsgxechajltx9yeseqexzdzut9g8vla4k",
 				Receiver: fmt.Sprintf("%s|stakeibc/RedeemStake|cosmos16plylpsgxechajltx9yeseqexzdzut9g8vla4k", addr1.String()),
 				Memo:     "",
 			},
-			destChannel:    "channel-0",
-			recvDenom:      atomIbcDenom,
+			recvDenom:      stAtomDenom,
 			expSuccess:     false,
 			expRedeemStake: false,
 		},
@@ -80,7 +79,6 @@ func (suite *KeeperTestSuite) TestOnRecvPacket_RedeemStake() {
 				Receiver: fmt.Sprintf("%s|stakeibc/RedeemStake|cosmos16plylpsgxechajltx9yeseqexzdzut9g8vla4k", addr1.String()),
 				Memo:     "",
 			},
-			destChannel:    "channel-0",
 			recvDenom:      "ustrd",
 			expSuccess:     false,
 			expRedeemStake: false,
@@ -88,84 +86,52 @@ func (suite *KeeperTestSuite) TestOnRecvPacket_RedeemStake() {
 		{ // all okay
 			forwardingActive: true,
 			packetData: transfertypes.FungibleTokenPacketData{
-				Denom:    "uatom",
+				Denom:    stAtomFullDenomPath,
 				Amount:   "1000000",
 				Sender:   "cosmos16plylpsgxechajltx9yeseqexzdzut9g8vla4k",
 				Receiver: fmt.Sprintf("%s|stakeibc/RedeemStake|cosmos16plylpsgxechajltx9yeseqexzdzut9g8vla4k", addr1.String()),
 				Memo:     "",
 			},
-			destChannel:    "channel-0",
-			recvDenom:      atomIbcDenom,
+			recvDenom:      stAtomDenom,
 			expSuccess:     true,
 			expRedeemStake: true,
-		},
-		{ // ibc denom uatom from different channel
-			forwardingActive: true,
-			packetData: transfertypes.FungibleTokenPacketData{
-				Denom:    "uatom",
-				Amount:   "1000000",
-				Sender:   "cosmos16plylpsgxechajltx9yeseqexzdzut9g8vla4k",
-				Receiver: fmt.Sprintf("%s|stakeibc/RedeemStake|cosmos16plylpsgxechajltx9yeseqexzdzut9g8vla4k", addr1.String()),
-				Memo:     "",
-			},
-			destChannel:    "channel-1000",
-			recvDenom:      atomIbcDenom2,
-			expSuccess:     false,
-			expRedeemStake: false,
 		},
 		{ // all okay with memo liquidstaking since ibc-go v5.1.0
 			forwardingActive: true,
 			packetData: transfertypes.FungibleTokenPacketData{
-				Denom:    "uatom",
+				Denom:    stAtomFullDenomPath,
 				Amount:   "1000000",
 				Sender:   "cosmos16plylpsgxechajltx9yeseqexzdzut9g8vla4k",
 				Receiver: fmt.Sprintf("%s", addr1.String()),
 				Memo:     "stakeibc/RedeemStake|cosmos16plylpsgxechajltx9yeseqexzdzut9g8vla4k",
 			},
-			destChannel:    "channel-0",
-			recvDenom:      atomIbcDenom,
+			recvDenom:      stAtomDenom,
 			expSuccess:     true,
 			expRedeemStake: true,
-		},
-		{ // all okay with no functional part
-			forwardingActive: true,
-			packetData: transfertypes.FungibleTokenPacketData{
-				Denom:    "uatom",
-				Amount:   "1000000",
-				Sender:   "cosmos16plylpsgxechajltx9yeseqexzdzut9g8vla4k",
-				Receiver: fmt.Sprintf("%s", addr1.String()),
-				Memo:     "",
-			},
-			destChannel:    "channel-0",
-			recvDenom:      atomIbcDenom,
-			expSuccess:     true,
-			expRedeemStake: false,
 		},
 		{ // invalid receiver
 			forwardingActive: true,
 			packetData: transfertypes.FungibleTokenPacketData{
-				Denom:    "uatom",
+				Denom:    stAtomFullDenomPath,
 				Amount:   "1000000",
 				Sender:   "cosmos16plylpsgxechajltx9yeseqexzdzut9g8vla4k",
 				Receiver: "xxx|stakeibc/RedeemStake|cosmos16plylpsgxechajltx9yeseqexzdzut9g8vla4k",
 				Memo:     "",
 			},
-			destChannel:    "channel-0",
-			recvDenom:      atomIbcDenom,
+			recvDenom:      stAtomDenom,
 			expSuccess:     false,
 			expRedeemStake: false,
 		},
-		{ // invalid receiver liquid staking
+		{ // invalid redeem receiver
 			forwardingActive: true,
 			packetData: transfertypes.FungibleTokenPacketData{
-				Denom:    "uatom",
+				Denom:    stAtomFullDenomPath,
 				Amount:   "1000000",
 				Sender:   "cosmos16plylpsgxechajltx9yeseqexzdzut9g8vla4k",
-				Receiver: "xxx|stakeibc/RedeemStake|cosmos16plylpsgxechajltx9yeseqexzdzut9g8vla4k",
+				Receiver: fmt.Sprintf("%s|stakeibc/RedeemStake|xxx", addr1.String()),
 				Memo:     "",
 			},
-			destChannel:    "channel-0",
-			recvDenom:      atomIbcDenom,
+			recvDenom:      stAtomDenom,
 			expSuccess:     false,
 			expRedeemStake: false,
 		},
@@ -187,6 +153,12 @@ func (suite *KeeperTestSuite) TestOnRecvPacket_RedeemStake() {
 				NextEpochStartTime: uint64(now.Unix()),
 				Duration:           43200,
 			})
+			suite.App.StakeibcKeeper.SetEpochTracker(ctx, stakeibctypes.EpochTracker{
+				EpochIdentifier:    "day",
+				EpochNumber:        1,
+				NextEpochStartTime: uint64(now.Unix()),
+				Duration:           86400,
+			})
 			// set deposit record for env
 			suite.App.RecordsKeeper.SetDepositRecord(ctx, recordstypes.DepositRecord{
 				Id:                 1,
@@ -197,6 +169,19 @@ func (suite *KeeperTestSuite) TestOnRecvPacket_RedeemStake() {
 				DepositEpochNumber: 1,
 				Source:             recordstypes.DepositRecord_STRIDE,
 			})
+
+			suite.App.RecordsKeeper.SetEpochUnbondingRecord(ctx, recordstypes.EpochUnbondingRecord{
+				EpochNumber: 1,
+				HostZoneUnbondings: []*recordstypes.HostZoneUnbonding{
+					{
+						HostZoneId:            "hub-1",
+						Status:                recordstypes.HostZoneUnbonding_CLAIMABLE,
+						UserRedemptionRecords: []string{},
+						NativeTokenAmount:     sdk.NewInt(1000000),
+					},
+				},
+			})
+
 			// set host zone for env
 			suite.App.StakeibcKeeper.SetHostZone(ctx, stakeibctypes.HostZone{
 				ChainId:               "hub-1",
@@ -213,6 +198,7 @@ func (suite *KeeperTestSuite) TestOnRecvPacket_RedeemStake() {
 				HostDenom:             atomHostDenom,
 				RedemptionRate:        sdk.NewDec(1),
 				Address:               addr1.String(),
+				StakedBal:             sdk.NewInt(1000000),
 			})
 
 			// mint coins to be spent on liquid staking
@@ -224,9 +210,14 @@ func (suite *KeeperTestSuite) TestOnRecvPacket_RedeemStake() {
 
 			// issue liquid-stake tokens
 			msgServer := stakeibckeeper.NewMsgServerImpl(suite.App.StakeibcKeeper)
-			msg := stakeibctypes.NewMsgLiquidStake(addr1.String(), sdk.NewInt(1000000), atomIbcDenom)
+			msg := stakeibctypes.NewMsgLiquidStake(addr1.String(), sdk.NewInt(1000000), atomHostDenom)
 			_, err = msgServer.LiquidStake(sdk.WrapSDKContext(suite.Ctx), msg)
-			suite.Require().Error(err)
+			suite.Require().NoError(err)
+
+			// send tokens to ibc transfer channel escrow address
+			escrowAddr := transfertypes.GetEscrowAddress(packet.DestinationPort, packet.DestinationChannel)
+			err = suite.App.BankKeeper.SendCoins(suite.Ctx, addr1, escrowAddr, sdk.Coins{sdk.NewInt64Coin(stAtomDenom, 1000000)})
+			suite.Require().NoError(err)
 
 			transferIBCModule := transfer.NewIBCModule(suite.App.TransferKeeper)
 			recordsStack := recordsmodule.NewIBCModule(suite.App.RecordsKeeper, transferIBCModule)
@@ -239,14 +230,10 @@ func (suite *KeeperTestSuite) TestOnRecvPacket_RedeemStake() {
 			if tc.expSuccess {
 				suite.Require().True(ack.Success(), string(ack.Acknowledgement()))
 
-				// check minted balance for liquid staking
-				allBalance := suite.App.BankKeeper.GetAllBalances(ctx, addr1)
-				liquidBalance := suite.App.BankKeeper.GetBalance(ctx, addr1, "stuatom")
-				if tc.expRedeemStake {
-					suite.Require().True(liquidBalance.Amount.IsPositive(), allBalance.String())
-				} else {
-					suite.Require().True(liquidBalance.Amount.IsZero(), allBalance.String())
-				}
+				// check if redeem record is created
+				hostZoneUnbonding, found := suite.App.RecordsKeeper.GetHostZoneUnbondingByChainId(ctx, 1, "hub-1")
+				suite.Require().True(found)
+				suite.Require().True(len(hostZoneUnbonding.UserRedemptionRecords) > 0)
 			} else {
 				suite.Require().False(ack.Success(), string(ack.Acknowledgement()))
 			}
