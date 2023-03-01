@@ -88,23 +88,23 @@ func (k Keeper) RunLiquidStake(ctx sdk.Context, addr sdk.AccAddress, ibcReceiver
 		return err
 	}
 
-	stAsset := lsRes.StAsset
-	// timeout 30 min in the future
-	// NOTE: this assumes no clock drift between chains, which tendermint guarantees
-	// if we onboard non-tendermint chains, we need to use the time on the host chain to
-	// calculate the timeout
-	// https://github.com/tendermint/tendermint/blob/v0.34.x/spec/consensus/bft-time.md
+	return k.IBCTransferStAsset(ctx, lsRes.StAsset, hostZone.TransferChannelId, addr.String(), ibcReceiver)
+}
+
+func (k Keeper) IBCTransferStAsset(ctx sdk.Context, stAsset sdk.Coin, channelId string, addr string, ibcReceiver string) error {
 	ibcTransferTimeoutNanos := k.stakeibcKeeper.GetParam(ctx, stakeibctypes.KeyIBCTransferTimeoutNanos)
 	timeoutTimestamp := uint64(ctx.BlockTime().UnixNano()) + ibcTransferTimeoutNanos
-	transferMsg := transfertypes.NewMsgTransfer(
-		transfertypes.PortID,
-		hostZone.TransferChannelId,
-		stAsset,
-		addr.String(),
-		ibcReceiver,
-		clienttypes.Height{},
-		timeoutTimestamp)
+	transferMsg := &transfertypes.MsgTransfer{
+		SourcePort:       transfertypes.PortID,
+		SourceChannel:    channelId,
+		Token:            stAsset,
+		Sender:           addr,
+		Receiver:         ibcReceiver,
+		TimeoutHeight:    clienttypes.Height{},
+		TimeoutTimestamp: timeoutTimestamp,
+		Memo:             "stTokenIBCTransfer",
+	}
 
-	_, err = k.transferKeeper.Transfer(sdk.WrapSDKContext(ctx), transferMsg)
+	_, err := k.transferKeeper.Transfer(sdk.WrapSDKContext(ctx), transferMsg)
 	return err
 }

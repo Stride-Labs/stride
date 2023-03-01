@@ -262,9 +262,25 @@ func (im IBCModule) OnTimeoutPacket(
 	packet channeltypes.Packet,
 	relayer sdk.AccAddress,
 ) error {
-	// doCustomLogic(packet)
+	var data transfertypes.FungibleTokenPacketData
+	if err := transfertypes.ModuleCdc.UnmarshalJSON(packet.GetData(), &data); err != nil {
+		return err
+	}
+
 	im.keeper.Logger(ctx).Error(fmt.Sprintf("[IBC-TRANSFER] OnTimeoutPacket  %v", packet))
-	return im.app.OnTimeoutPacket(ctx, packet, relayer)
+	err := im.app.OnTimeoutPacket(ctx, packet, relayer)
+	if err != nil {
+		return err
+	}
+
+	if data.Memo == "stTokenIBCTransfer" {
+		amount, ok := sdk.NewIntFromString(data.Amount)
+		if !ok {
+			return fmt.Errorf("[IBC-TRANSFER] OnTimeoutPacket: invalid amount field on FungibleTokenPacketData")
+		}
+		return im.keeper.IBCTransferStAsset(ctx, sdk.NewCoin(data.Denom, amount), packet.SourceChannel, data.Sender, data.Receiver)
+	}
+	return nil
 }
 
 // This is implemented by ICS4 and all middleware that are wrapping base application.
