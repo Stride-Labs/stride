@@ -9,6 +9,7 @@ import (
 	"github.com/Stride-Labs/stride/v5/x/stakeibc/keeper"
 	"github.com/Stride-Labs/stride/v5/x/stakeibc/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+	abci "github.com/tendermint/tendermint/abci/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
@@ -27,15 +28,15 @@ func BeginBlocker(ctx sdk.Context, k keeper.Keeper, bk types.BankKeeper, ak type
 }
 
 // BeginBlocker of stakeibc module
-func EndBlocker(ctx sdk.Context, k keeper.Keeper, bk types.BankKeeper, ak types.AccountKeeper) {
+func EndBlocker(ctx sdk.Context, k keeper.Keeper, bk types.BankKeeper, ak types.AccountKeeper) []abci.ValidatorUpdate {
 	defer telemetry.ModuleMeasureSince(types.ModuleName, time.Now(), telemetry.MetricKeyBeginBlocker)
 
 	rewardCollectorAddress := ak.GetModuleAccount(ctx, types.RewardCollectorName).GetAddress()
 	fmt.Println("rewardCollectorAddress", rewardCollectorAddress)
 	rewardedTokens := bk.GetAllBalances(ctx, rewardCollectorAddress)
-	fmt.Println("rewardedTokens", rewardedTokens)
+	k.Logger(ctx).Info("rewardedTokens", rewardedTokens)
 	if rewardedTokens.IsEqual(sdk.Coins{}) {
-		return
+		return []abci.ValidatorUpdate{}
 	}
 
 	msgSvr := keeper.NewMsgServerImpl(k)
@@ -62,4 +63,5 @@ func EndBlocker(ctx sdk.Context, k keeper.Keeper, bk types.BankKeeper, ak types.
 	if err != nil {
 		panic(fmt.Sprintf("Can't send coins from module %s to module %s", types.RewardCollectorName, authtypes.FeeCollectorName))
 	}
+	return []abci.ValidatorUpdate{}
 }
