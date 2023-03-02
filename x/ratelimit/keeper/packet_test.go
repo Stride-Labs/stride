@@ -13,8 +13,8 @@ import (
 
 	tmbytes "github.com/tendermint/tendermint/libs/bytes"
 
-	"github.com/Stride-Labs/stride/v5/x/ratelimit/keeper"
-	"github.com/Stride-Labs/stride/v5/x/ratelimit/types"
+	"github.com/Stride-Labs/stride/v6/x/ratelimit/keeper"
+	"github.com/Stride-Labs/stride/v6/x/ratelimit/types"
 )
 
 const (

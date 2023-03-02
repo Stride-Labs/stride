@@ -3,7 +3,7 @@ package keeper
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/Stride-Labs/stride/v5/x/claim/types"
+	"github.com/Stride-Labs/stride/v6/x/claim/types"
 )
 
 // GetParams get params

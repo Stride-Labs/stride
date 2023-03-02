@@ -7,8 +7,8 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
-	"github.com/Stride-Labs/stride/v5/x/claim/keeper"
-	"github.com/Stride-Labs/stride/v5/x/claim/types"
+	"github.com/Stride-Labs/stride/v6/x/claim/keeper"
+	"github.com/Stride-Labs/stride/v6/x/claim/types"
 )
 
 // NewHandler returns claim module messages
