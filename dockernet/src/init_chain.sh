@@ -105,7 +105,7 @@ for (( i=1; i <= $NUM_NODES; i++ )); do
 
     sed -i -E "s|minimum-gas-prices = \".*\"|minimum-gas-prices = \"0${DENOM}\"|g" $app_toml
     sed -i -E '/\[api\]/,/^enable = .*$/ s/^enable = .*$/enable = true/' $app_toml
-    sed -i -E '/\[api\]/,/^address = .*$/ s/^address = .*$/address = "tcp:\/\/0.0.0.0:1337"\/' $app_toml
+    sed -i -E '/\[api\]/,/^address = .*$/ s|^address = .*$|address = "tcp://0.0.0.0:1337"|' $app_toml
     sed -i -E 's|unsafe-cors = .*|unsafe-cors = true|g' $app_toml
     sed -i -E "s|snapshot-interval = 0|snapshot-interval = 300|g" $app_toml
 
