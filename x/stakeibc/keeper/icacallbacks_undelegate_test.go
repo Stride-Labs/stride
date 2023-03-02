@@ -1,6 +1,7 @@
 package keeper_test
 
 import (
+	"fmt"
 	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -266,6 +267,38 @@ func (s *KeeperTestSuite) TestUpdateDelegationBalances_Success() {
 	s.Require().Equal(val1.DelegationAmt, tc.initialState.val1Bal.Sub(tc.val1UndelegationAmount), "val1 delegation has decreased")
 	val2 := updatedHostZone.Validators[1]
 	s.Require().Equal(val2.DelegationAmt, tc.initialState.val2Bal.Sub(tc.val2UndelegationAmount), "val2 delegation has decreased")
+}
+
+func (s *KeeperTestSuite) TestUpdateDelegationBalances_ErrUndelegationAmount() {
+	tc := s.SetupUndelegateCallback()
+	// Add invalid args
+	invalidArgs := tc.validArgs
+	tc.initialState.callbackArgs.SplitDelegations[0].Amount = sdkmath.NewInt(1_000_001)
+	callbackArgsBz, err := s.App.StakeibcKeeper.MarshalUndelegateCallbackArgs(s.Ctx, tc.initialState.callbackArgs)
+	s.Require().NoError(err, "callback args unmarshalled")
+	hostZone, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx, HostChainId)
+	s.Require().True(found, "host zone found")
+
+	invalidArgs.args = callbackArgsBz
+	err = s.App.StakeibcKeeper.UpdateDelegationBalances(s.Ctx, hostZone, tc.initialState.callbackArgs)
+	msgError := fmt.Sprintf("undelegation.Amount > zone.StakedBal, undelegation.Amount: %v, zone.StakedBal %v: Undelegation amount is greater than stakedBal", tc.initialState.callbackArgs.SplitDelegations[0].Amount, hostZone.StakedBal)
+	s.Require().EqualError(err, msgError)
+}
+
+func (s *KeeperTestSuite) TestUpdateDelegationBalances_FailToRemoveDelegationToValidator() {
+	tc := s.SetupUndelegateCallback()
+	// Add invalid args
+	invalidArgs := tc.validArgs
+	tc.initialState.callbackArgs.SplitDelegations[0].Amount = sdkmath.NewInt(400_001)
+	callbackArgsBz, err := s.App.StakeibcKeeper.MarshalUndelegateCallbackArgs(s.Ctx, tc.initialState.callbackArgs)
+	s.Require().NoError(err, "callback args unmarshalled")
+	hostZone, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx, HostChainId)
+	s.Require().True(found, "host zone found")
+
+	invalidArgs.args = callbackArgsBz
+	err = s.App.StakeibcKeeper.UpdateDelegationBalances(s.Ctx, hostZone, tc.initialState.callbackArgs)
+	msgError := fmt.Sprintf("Failed to remove delegation to validator: can't change delegation on validator")
+	s.Require().EqualError(err, msgError)
 }
 
 // GetLatestCompletionTime tests
