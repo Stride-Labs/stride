@@ -3,6 +3,7 @@ package keeper
 import (
 	"fmt"
 
+	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	"github.com/tendermint/tendermint/libs/log"
 
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -16,7 +17,7 @@ import (
 type (
 	Keeper struct {
 		Cdc            codec.BinaryCodec
-		storeKey       sdk.StoreKey
+		storeKey       storetypes.StoreKey
 		paramstore     paramtypes.Subspace
 		stakeibcKeeper stakeibckeeper.Keeper
 	}
@@ -24,7 +25,7 @@ type (
 
 func NewKeeper(
 	Cdc codec.BinaryCodec,
-	storeKey sdk.StoreKey,
+	storeKey storetypes.StoreKey,
 	ps paramtypes.Subspace,
 	stakeibcKeeper stakeibckeeper.Keeper,
 ) *Keeper {

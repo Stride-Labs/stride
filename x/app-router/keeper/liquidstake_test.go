@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/cosmos/ibc-go/v3/modules/apps/transfer"
-	transfertypes "github.com/cosmos/ibc-go/v3/modules/apps/transfer/types"
-	clienttypes "github.com/cosmos/ibc-go/v3/modules/core/02-client/types"
-	channeltypes "github.com/cosmos/ibc-go/v3/modules/core/04-channel/types"
+	"github.com/cosmos/ibc-go/v5/modules/apps/transfer"
+	transfertypes "github.com/cosmos/ibc-go/v5/modules/apps/transfer/types"
+	clienttypes "github.com/cosmos/ibc-go/v5/modules/core/02-client/types"
+	channeltypes "github.com/cosmos/ibc-go/v5/modules/core/04-channel/types"
 	"github.com/tendermint/tendermint/crypto/ed25519"
 
 	recordsmodule "github.com/Stride-Labs/stride/v6/x/records"

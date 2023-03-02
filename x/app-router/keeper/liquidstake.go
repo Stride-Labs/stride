@@ -1,12 +1,14 @@
 package keeper
 
 import (
+	"errors"
+
 	"github.com/armon/go-metrics"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	transfertypes "github.com/cosmos/ibc-go/v3/modules/apps/transfer/types"
-	channeltypes "github.com/cosmos/ibc-go/v3/modules/core/04-channel/types"
-	ibcexported "github.com/cosmos/ibc-go/v3/modules/core/exported"
+	transfertypes "github.com/cosmos/ibc-go/v5/modules/apps/transfer/types"
+	channeltypes "github.com/cosmos/ibc-go/v5/modules/core/04-channel/types"
+	ibcexported "github.com/cosmos/ibc-go/v5/modules/core/exported"
 
 	"github.com/Stride-Labs/stride/v6/x/app-router/types"
 	stakeibckeeper "github.com/Stride-Labs/stride/v6/x/stakeibc/keeper"
@@ -22,17 +24,17 @@ func (k Keeper) TryLiquidStaking(
 ) ibcexported.Acknowledgement {
 	params := k.GetParams(ctx)
 	if !params.Active {
-		return channeltypes.NewErrorAcknowledgement("packet forwarding param is not active")
+		return channeltypes.NewErrorAcknowledgement(errors.New("packet forwarding param is not active"))
 	}
 
 	// In this case, we can't process a liquid staking transaction, because we're dealing with STRD tokens
 	if transfertypes.ReceiverChainIsSource(packet.GetSourcePort(), packet.GetSourceChannel(), newData.Denom) {
-		return channeltypes.NewErrorAcknowledgement("the native token is not supported for liquid staking")
+		return channeltypes.NewErrorAcknowledgement(errors.New("the native token is not supported for liquid staking"))
 	}
 
 	amount, ok := sdk.NewIntFromString(newData.Amount)
 	if !ok {
-		return channeltypes.NewErrorAcknowledgement("not a parsable amount field")
+		return channeltypes.NewErrorAcknowledgement(errors.New("not a parsable amount field"))
 	}
 
 	// Note: newData.denom is base denom e.g. uatom - not ibc/xxx
@@ -40,7 +42,7 @@ func (k Keeper) TryLiquidStaking(
 
 	err := k.RunLiquidStake(ctx, parsedReceiver.StrideAccAddress, token, []metrics.Label{})
 	if err != nil {
-		ack = channeltypes.NewErrorAcknowledgement(err.Error())
+		ack = channeltypes.NewErrorAcknowledgement(err)
 	}
 	return ack
 }
