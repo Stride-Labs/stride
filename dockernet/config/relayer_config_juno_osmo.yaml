@@ -1,0 +1,45 @@
+# Sometimes it's beneficial to test a channel that is not connected with Stride
+# For this case, we can use juno <> osmo
+global:
+  api-listen-addr: :5183
+  timeout: 10s
+  memo: ""
+  light-cache-size: 20
+chains:
+  juno:
+    type: cosmos
+    value:
+      key: juno-osmo-rly1
+      chain-id: JUNO
+      rpc-addr: http://juno1:26657
+      account-prefix: juno
+      keyring-backend: test
+      gas-adjustment: 1.2
+      gas-prices: 0.01ujuno
+      debug: false
+      timeout: 20s
+      output-format: json
+      sign-mode: direct
+  osmo:
+    type: cosmos
+    value:
+      key: juno-osmo-rly2
+      chain-id: OSMO
+      rpc-addr: http://osmo1:26657
+      account-prefix: osmo
+      keyring-backend: test
+      gas-adjustment: 1.2
+      gas-prices: 0.01uosmo
+      debug: false
+      timeout: 20s
+      output-format: json
+      sign-mode: direct
+paths:
+  juno-osmo:
+    src:
+      chain-id: JUNO
+    dst:
+      chain-id: OSMO
+    src-channel-filter:
+      rule: ""
+      channel-list: []

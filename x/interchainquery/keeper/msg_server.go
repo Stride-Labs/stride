@@ -6,8 +6,8 @@ import (
 	"sort"
 	"strings"
 
+	errorsmod "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	clienttypes "github.com/cosmos/ibc-go/v5/modules/core/02-client/types"
 	commitmenttypes "github.com/cosmos/ibc-go/v5/modules/core/23-commitment/types"
 	tmclienttypes "github.com/cosmos/ibc-go/v5/modules/light-clients/07-tendermint/types"
@@ -40,7 +40,7 @@ func (k Keeper) VerifyKeyProof(ctx sdk.Context, msg *types.MsgSubmitQueryRespons
 
 	// If the query is a "key" proof query, verify the results are valid by checking the poof
 	if msg.ProofOps == nil {
-		return sdkerrors.Wrapf(types.ErrInvalidICQProof, "Unable to validate proof. No proof submitted")
+		return errorsmod.Wrapf(types.ErrInvalidICQProof, "Unable to validate proof. No proof submitted")
 	}
 
 	// Get the client consensus state at the height 1 block above the message height
@@ -53,39 +53,39 @@ func (k Keeper) VerifyKeyProof(ctx sdk.Context, msg *types.MsgSubmitQueryRespons
 	// Get the client state and consensus state from the connection Id
 	connection, found := k.IBCKeeper.ConnectionKeeper.GetConnection(ctx, query.ConnectionId)
 	if !found {
-		return sdkerrors.Wrapf(types.ErrInvalidICQProof, "ConnectionId %s does not exist", query.ConnectionId)
+		return errorsmod.Wrapf(types.ErrInvalidICQProof, "ConnectionId %s does not exist", query.ConnectionId)
 	}
 	consensusState, found := k.IBCKeeper.ClientKeeper.GetClientConsensusState(ctx, connection.ClientId, height)
 	if !found {
-		return sdkerrors.Wrapf(types.ErrInvalidICQProof, "Consensus state not found for client %s and height %d", connection.ClientId, height)
+		return errorsmod.Wrapf(types.ErrInvalidICQProof, "Consensus state not found for client %s and height %d", connection.ClientId, height)
 	}
 	clientState, found := k.IBCKeeper.ClientKeeper.GetClientState(ctx, connection.ClientId)
 	if !found {
-		return sdkerrors.Wrapf(types.ErrInvalidICQProof, "Unable to fetch client state for client %s", connection.ClientId)
+		return errorsmod.Wrapf(types.ErrInvalidICQProof, "Unable to fetch client state for client %s", connection.ClientId)
 	}
 	tmClientState, ok := clientState.(*tmclienttypes.ClientState)
 	if !ok {
-		return sdkerrors.Wrapf(types.ErrInvalidICQProof, "Client state is not tendermint")
+		return errorsmod.Wrapf(types.ErrInvalidICQProof, "Client state is not tendermint")
 	}
 
 	// Get the merkle path and merkle proof
 	path := commitmenttypes.NewMerklePath([]string{pathParts[1], url.PathEscape(string(query.Request))}...)
 	merkleProof, err := commitmenttypes.ConvertProofs(msg.ProofOps)
 	if err != nil {
-		return sdkerrors.Wrapf(types.ErrInvalidICQProof, "Error converting proofs: %s", err.Error())
+		return errorsmod.Wrapf(types.ErrInvalidICQProof, "Error converting proofs: %s", err.Error())
 	}
 
 	// If we got a non-nil response, verify inclusion proof
 	if len(msg.Result) != 0 {
 		if err := merkleProof.VerifyMembership(tmClientState.ProofSpecs, consensusState.GetRoot(), path, msg.Result); err != nil {
-			return sdkerrors.Wrapf(types.ErrInvalidICQProof, "Unable to verify membership proof: %s", err.Error())
+			return errorsmod.Wrapf(types.ErrInvalidICQProof, "Unable to verify membership proof: %s", err.Error())
 		}
 		k.Logger(ctx).Info(utils.LogICQCallbackWithHostZone(query.ChainId, query.CallbackId, "Inclusion proof validated - QueryId %s", query.Id))
 
 	} else {
 		// if we got a nil query response, verify non inclusion proof.
 		if err := merkleProof.VerifyNonMembership(tmClientState.ProofSpecs, consensusState.GetRoot(), path); err != nil {
-			return sdkerrors.Wrapf(types.ErrInvalidICQProof, "Unable to verify non-membership proof: %s", err.Error())
+			return errorsmod.Wrapf(types.ErrInvalidICQProof, "Unable to verify non-membership proof: %s", err.Error())
 		}
 		k.Logger(ctx).Info(utils.LogICQCallbackWithHostZone(query.ChainId, query.CallbackId, "Non-inclusion proof validated - QueryId %s", query.Id))
 	}
