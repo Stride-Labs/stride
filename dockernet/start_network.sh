@@ -48,12 +48,9 @@ bash $SRC/start_chain.sh
 bash $SRC/start_relayers.sh 
 
 # Register all host zones 
-for i in ${!HOST_CHAINS[@]}; do
-    bash $SRC/register_host.sh ${HOST_CHAINS[$i]} $i 
-    
-    # Exiting prematurely while debugging injective
-    break
-done
+# for i in ${!HOST_CHAINS[@]}; do
+#     bash $SRC/register_host.sh ${HOST_CHAINS[$i]} $i 
+# done
 
 # Pulling this out of register_host since this is the command that fails
 echo "INJECTIVE - Registering host zone..."
