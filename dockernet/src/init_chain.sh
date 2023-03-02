@@ -83,6 +83,7 @@ for (( i=1; i <= $NUM_NODES; i++ )); do
     # Otherwise, if they're run locally, append the home directory
     if [[ $BINARY == docker-compose* ]]; then
         cmd=$BINARY
+        MAIN_CMD=$cmd
     else
         cmd="$BINARY --home ${STATE}/$node_name"
     fi
