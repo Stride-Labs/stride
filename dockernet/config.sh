@@ -18,7 +18,7 @@ KEYS_LOGS=$DOCKERNET_HOME/logs/keys.log
 # List of hosts enabled 
 #  `start-docker` defaults to just GAIA if HOST_CHAINS is empty
 # `start-docker-all` always runs all hosts
-HOST_CHAINS=(GAIA INJECTIVE) 
+HOST_CHAINS=(INJECTIVE) 
 
 # If no host zones are specified above:
 #  `start-docker` defaults to just GAIA if HOST_CHAINS is empty
