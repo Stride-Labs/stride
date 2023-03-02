@@ -154,7 +154,7 @@ services:
       - ./state/injective1:/home/injective/.injectived
     ports:
       - "26057:26657"
-      - "1257:1317"
+      - "1257:1337"
       - "9030:9090"
 
   host2:
