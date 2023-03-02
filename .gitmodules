@@ -3,10 +3,10 @@
 	path = deps/hermes
 	url = https://github.com/informalsystems/ibc-rs.git
 [submodule "deps/relayer"]
-	# Commit: 65e8b74
-	# Branch: main
+	# Commit: 04a2ba872fecbfbdfe75a7011ff59ad03d53de74
+	# Branch: sam/injectivehd-patch
 	path = deps/relayer
-	url = https://github.com/cosmos/relayer
+	url = https://github.com/Stride-Labs/relayer
 [submodule "deps/gaia"]
 	# Commit: 5b47714dd5607993a1a91f2b06a6d92cbb504721
 	path = deps/gaia
