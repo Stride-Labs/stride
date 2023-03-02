@@ -59,6 +59,48 @@ close soup mirror crew erode defy knock trigger gather eyebrow tent farm gym glo
 ```
 This mnemonic will have tokens on every chain running locally.
 
+#### Test host zone reward allocation
+Set up local development mode (see above)
+
+After localnet is up, cd to dockernet. It's easier to use bash script that existed
+```
+cd dockernet/
+```
+
+Set up relayer
+```
+bash src/start_relayer.sh
+```
+
+Regist host zone. Edit `CHAIN` & `HOST_ZONE_NUM` in `src/register_host.sh`. They present for your chain-id & connection id.
+Example: `CHAIN="GAIA"` `HOST_ZONE_NUM="0"`
+```
+bash src/register_host.sh
+```
+
+Transfer native token from host chain to stride
+```
+bash scripts/1.sh
+```
+
+Liquid stake
+```
+bash scripts/2.sh
+```
+
+Wait few block then redeeming stake
+```
+bash scripts/3.sh
+```
+
+Claim delegation reward, we will get both `STRD` & `stTokens`
+```
+docker excec -it strided tx distribution withdraw-rewards [validator-addr]
+```
+Check wallet balances if got both `stTokens` & `STRD`
+
+#### Test hostzone reward allocate to STRD delegator
+
 ### Making changes to this repository
 ###### Summary
 Add summary of the pull request here (*E.g. This pull request adds XYZ feature to the x/ABC module and associated unit tests.*)
