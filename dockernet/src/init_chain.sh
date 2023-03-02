@@ -76,6 +76,7 @@ for (( i=1; i <= $NUM_NODES; i++ )); do
 
     # Create a state directory for the current node and initialize the chain
     mkdir -p $STATE/$node_name
+    chmod -R 777 $STATE/$node_name
     
     # If the chains commands are run only from docker, grab the command from the config
     # Otherwise, if they're run locally, append the home directory
