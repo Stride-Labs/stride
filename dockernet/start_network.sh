@@ -55,7 +55,7 @@ bash $SRC/start_relayers.sh
 # Pulling this out of register_host since this is the command that fails
 echo "INJECTIVE - Registering host zone..."
 $STRIDE_MAIN_CMD tx stakeibc register-host-zone \
-    connection-1 inj inj $IBC_INJECTIVE_CHANNEL_1_DENOM channel-1 1 \
+    connection-0 inj inj $IBC_INJECTIVE_CHANNEL_0_DENOM channel-0 1 \
     --gas 1000000 --from $STRIDE_ADMIN_ACCT --home $DOCKERNET_HOME/state/stride1 -y | TRIM_TX
 
 echo "Done"
