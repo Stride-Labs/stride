@@ -79,7 +79,7 @@ func CmdShowDepositRecord() *cobra.Command {
 
 func CmdListDepositRecordByHost() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "deposit-records-by-host",
+		Use:   "deposit-records-by-host [host]",
 		Short: "list all depositRecords for a given host zone",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
