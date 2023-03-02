@@ -10,16 +10,16 @@ import (
 	channeltypes "github.com/cosmos/ibc-go/v3/modules/core/04-channel/types"
 	"github.com/tendermint/tendermint/crypto/ed25519"
 
-	recordsmodule "github.com/Stride-Labs/stride/v4/x/records"
+	recordsmodule "github.com/Stride-Labs/stride/v6/x/records"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	router "github.com/Stride-Labs/stride/v4/x/app-router"
-	"github.com/Stride-Labs/stride/v4/x/app-router/types"
-	epochtypes "github.com/Stride-Labs/stride/v4/x/epochs/types"
-	minttypes "github.com/Stride-Labs/stride/v4/x/mint/types"
-	recordstypes "github.com/Stride-Labs/stride/v4/x/records/types"
-	stakeibctypes "github.com/Stride-Labs/stride/v4/x/stakeibc/types"
+	router "github.com/Stride-Labs/stride/v6/x/app-router"
+	"github.com/Stride-Labs/stride/v6/x/app-router/types"
+	epochtypes "github.com/Stride-Labs/stride/v6/x/epochs/types"
+	minttypes "github.com/Stride-Labs/stride/v6/x/mint/types"
+	recordstypes "github.com/Stride-Labs/stride/v6/x/records/types"
+	stakeibctypes "github.com/Stride-Labs/stride/v6/x/stakeibc/types"
 )
 
 func (suite *KeeperTestSuite) TestOnRecvPacket() {

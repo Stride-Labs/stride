@@ -4,7 +4,7 @@ package stride.app_router;
 import "gogoproto/gogo.proto";
 import "stride/app_router/params.proto";
 
-option go_package = "github.com/Stride-Labs/stride/v4/x/app-router/types";
+option go_package = "github.com/Stride-Labs/stride/v6/x/app-router/types";
 
 // GenesisState defines the claim module's genesis state.
 message GenesisState {
