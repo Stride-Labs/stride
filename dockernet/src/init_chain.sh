@@ -88,8 +88,7 @@ for (( i=1; i <= $NUM_NODES; i++ )); do
     fi
 
     # Initialize the chain
-    echo "$cmd init $moniker --chain-id $CHAIN_ID --overwrite"
-    $cmd init $moniker --chain-id $CHAIN_ID --overwrite 
+    $cmd init $moniker --chain-id $CHAIN_ID --overwrite &> /dev/null
     chmod -R 777 $STATE/$node_name
 
     # Update node networking configuration 
