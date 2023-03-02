@@ -68,8 +68,6 @@ BUILD_FLAGS := -tags "$(build_tags)" -ldflags '$(ldflags)'
 
 .PHONY: build
 
-all: lint check-dependencies build-local
-
 ###############################################################################
 ###                            Build & Clean                                ###
 ###############################################################################
@@ -81,14 +79,12 @@ build:
 install: go.sum
 		go install $(BUILD_FLAGS) ./cmd/strided
 
-clean: 
-	rm -rf $(BUILDDIR)/* 
+clean:
+	rm -rf $(BUILDDIR)/*
 
 ###############################################################################
 ###                                CI                                       ###
 ###############################################################################
-
-ci: lint check-dependencies test-unit gosec build-local
 
 gosec:
 	gosec -exclude-dir=deps -severity=high ./...
@@ -101,10 +97,13 @@ lint:
 ###############################################################################
 
 test-unit:
-	@go test -mod=readonly ./x/$(module)/...
+	@go test -mod=readonly ./x/... ./app/...
+
+test-unit-path:
+	@go test -mod=readonly ./x/$(path)/...
 
 test-cover:
-	@go test -mod=readonly -race -coverprofile=coverage.out -covermode=atomic ./x/$(module)/...
+	@go test -mod=readonly -race -coverprofile=coverage.out -covermode=atomic ./x/$(path)/...
 
 test-integration-docker:
 	bash $(DOCKERNET_HOME)/tests/run_all_tests.sh
@@ -113,24 +112,33 @@ test-integration-docker:
 ###                                DockerNet                                ###
 ###############################################################################
 
-build-docker: 
+build-docker:
 	@bash $(DOCKERNET_HOME)/build.sh -${build} ${BUILDDIR}
-	
+
 start-docker: build-docker
-	@bash $(DOCKERNET_HOME)/start_network.sh 
+	@bash $(DOCKERNET_HOME)/start_network.sh
 
 start-docker-all: build-docker
-	@ALL_HOST_CHAINS=true bash $(DOCKERNET_HOME)/start_network.sh 
+	@ALL_HOST_CHAINS=true bash $(DOCKERNET_HOME)/start_network.sh
 
-clean-docker: 
-	@docker-compose -f $(DOCKERNET_COMPOSE_FILE) stop 
-	@docker-compose -f $(DOCKERNET_COMPOSE_FILE) down 
+clean-docker:
+	@docker-compose -f $(DOCKERNET_COMPOSE_FILE) stop
+	@docker-compose -f $(DOCKERNET_COMPOSE_FILE) down
 	rm -rf $(DOCKERNET_HOME)/state
 	docker image prune -a
-	
+
 stop-docker:
 	@bash $(DOCKERNET_HOME)/pkill.sh
 	docker-compose -f $(DOCKERNET_COMPOSE_FILE) down
+
+upgrade-init:
+	PART=1 bash $(DOCKERNET_HOME)/tests/run_tests_upgrade.sh
+
+upgrade-submit:
+	UPGRADE_HEIGHT=400 bash $(DOCKERNET_HOME)/upgrades/submit_upgrade.sh
+
+upgrade-validate:
+	PART=2 bash $(DOCKERNET_HOME)/tests/run_tests_upgrade.sh
 
 ###############################################################################
 ###                                Protobuf                                 ###
@@ -193,6 +201,9 @@ localnet-state-export-start:
 
 localnet-state-export-startd:
 	@docker-compose -f $(STATE_EXPORT_COMPOSE_FILE) up -d
+
+localnet-state-export-upgrade:
+	bash $(LOCALSTRIDE_HOME)/state-export/scripts/submit_upgrade.sh
 
 localnet-state-export-stop:
 	@docker-compose -f $(STATE_EXPORT_COMPOSE_FILE) down

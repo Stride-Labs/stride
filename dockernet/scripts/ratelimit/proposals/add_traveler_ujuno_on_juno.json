@@ -1,0 +1,10 @@
+{
+    "title": "Add Rate Limit to traveler juno on Stride <> Juno Channel",
+    "description": "Proposal to enable rate limiting on traveler juno for Stride <> Juno",
+    "denom": "ibc/CD369927BBCE5198E0DC0D1A341C2F1DE51B1228BFD0633430055A39F58D229C",
+    "channel_id": "channel-1",
+    "max_percent_send": "10",
+    "max_percent_recv": "10",
+    "duration_hours": "1",
+    "deposit": "10000000ustrd"
+}

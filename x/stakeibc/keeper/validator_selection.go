@@ -7,8 +7,8 @@ import (
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/Stride-Labs/stride/v4/utils"
-	"github.com/Stride-Labs/stride/v4/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v6/utils"
+	"github.com/Stride-Labs/stride/v6/x/stakeibc/types"
 )
 
 // This function returns a map from Validator Address to how many extra tokens need to be given to that validator

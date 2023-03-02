@@ -16,9 +16,9 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 
-	"github.com/Stride-Labs/stride/v4/x/claim/client/cli"
-	"github.com/Stride-Labs/stride/v4/x/claim/keeper"
-	"github.com/Stride-Labs/stride/v4/x/claim/types"
+	"github.com/Stride-Labs/stride/v6/x/claim/client/cli"
+	"github.com/Stride-Labs/stride/v6/x/claim/keeper"
+	"github.com/Stride-Labs/stride/v6/x/claim/types"
 )
 
 var (
@@ -155,4 +155,4 @@ func (am AppModule) EndBlock(ctx sdk.Context, _ abci.RequestEndBlock) []abci.Val
 }
 
 // ConsensusVersion implements AppModule/ConsensusVersion.
-func (AppModule) ConsensusVersion() uint64 { return 1 }
+func (AppModule) ConsensusVersion() uint64 { return 2 }

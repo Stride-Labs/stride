@@ -19,10 +19,10 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 
-	"github.com/Stride-Labs/stride/v4/x/interchainquery/keeper"
+	"github.com/Stride-Labs/stride/v6/x/interchainquery/keeper"
 
-	"github.com/Stride-Labs/stride/v4/x/interchainquery/client/cli"
-	"github.com/Stride-Labs/stride/v4/x/interchainquery/types"
+	"github.com/Stride-Labs/stride/v6/x/interchainquery/client/cli"
+	"github.com/Stride-Labs/stride/v6/x/interchainquery/types"
 )
 
 var (

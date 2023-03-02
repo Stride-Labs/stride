@@ -17,12 +17,13 @@ import (
 	tmrand "github.com/tendermint/tendermint/libs/rand"
 	tmdb "github.com/tendermint/tm-db"
 
-	"github.com/Stride-Labs/stride/v4/app"
+	"github.com/Stride-Labs/stride/v6/app"
 )
 
 type (
-	Network = network.Network
-	Config  = network.Config
+	Network   = network.Network
+	Config    = network.Config
+	Validator = network.Validator
 )
 
 // New creates instance with fully configured cosmos network.

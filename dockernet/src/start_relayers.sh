@@ -16,6 +16,7 @@ for chain in ${HOST_CHAINS[@]}; do
     relayer_config=$STATE/relayer-${chain_name}/config
 
     mkdir -p $relayer_config
+    chmod -R 777 $STATE/relayer-${chain_name}
     cp ${DOCKERNET_HOME}/config/relayer_config.yaml $relayer_config/config.yaml
 
     printf "STRIDE <> $chain - Adding relayer keys..."

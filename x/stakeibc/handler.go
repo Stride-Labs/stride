@@ -3,13 +3,14 @@ package stakeibc
 import (
 	"fmt"
 
+	errorsmod "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
 
-	"github.com/Stride-Labs/stride/v4/x/stakeibc/keeper"
-	"github.com/Stride-Labs/stride/v4/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v6/x/stakeibc/keeper"
+	"github.com/Stride-Labs/stride/v6/x/stakeibc/types"
 )
 
 // NewHandler ...
@@ -54,10 +55,9 @@ func NewHandler(k keeper.Keeper) sdk.Handler {
 		case *types.MsgUpdateValidatorSharesExchRate:
 			res, err := msgServer.UpdateValidatorSharesExchRate(sdk.WrapSDKContext(ctx), msg)
 			return sdk.WrapServiceResult(ctx, res, err)
-			// this line is used by starport scaffolding # 1
 		default:
 			errMsg := fmt.Sprintf("unrecognized %s message type: %T", types.ModuleName, msg)
-			return nil, sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, errMsg)
+			return nil, errorsmod.Wrap(sdkerrors.ErrUnknownRequest, errMsg)
 		}
 	}
 }
@@ -81,7 +81,7 @@ func NewAddValidatorProposalHandler(k keeper.Keeper) govtypes.Handler {
 			return nil
 
 		default:
-			return sdkerrors.Wrapf(sdkerrors.ErrUnknownRequest, "unrecognized addValidator proposal content type: %T", c)
+			return errorsmod.Wrapf(sdkerrors.ErrUnknownRequest, "unrecognized addValidator proposal content type: %T", c)
 		}
 	}
 }

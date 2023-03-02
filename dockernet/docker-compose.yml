@@ -135,8 +135,11 @@ services:
     volumes:
       - ./state/stars5:/home/stars/.starsd
 
+  # For the host chain, we must override the command to prevent an old binary from
+  # being run when testing upgrades
   host1:
     image: stridezone:stride
+    command: strided start
     volumes:
       - ./state/host1:/home/stride/.stride
     ports:
@@ -156,21 +159,25 @@ services:
 
   host2:
     image: stridezone:stride
+    command: strided start
     volumes:
       - ./state/host2:/home/stride/.stride
 
   host3:
     image: stridezone:stride
+    command: strided start
     volumes:
       - ./state/host3:/home/stride/.stride
 
   host4:
     image: stridezone:stride
+    command: strided start
     volumes:
       - ./state/host4:/home/stride/.stride
 
   host5:
     image: stridezone:stride
+    command: strided start
     volumes:
       - ./state/host5:/home/stride/.stride
 
@@ -224,3 +231,10 @@ services:
       - ./state/relayer-host:/home/relayer/.relayer
     restart: always
     command: [ "bash", "start.sh", "stride-host" ]
+
+  relayer-juno-osmo:
+    image: stridezone:relayer
+    volumes:
+      - ./state/relayer-juno-osmo:/home/relayer/.relayer
+    restart: always
+    command: [ "bash", "start.sh", "juno-osmo" ]

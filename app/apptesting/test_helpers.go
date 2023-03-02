@@ -23,7 +23,7 @@ import (
 	"github.com/tendermint/tendermint/crypto/ed25519"
 	tmtypes "github.com/tendermint/tendermint/proto/tendermint/types"
 
-	"github.com/Stride-Labs/stride/v4/app"
+	"github.com/Stride-Labs/stride/v6/app"
 )
 
 var (
@@ -37,6 +37,11 @@ var (
 		TxType:                 icatypes.TxTypeSDKMultiMsg,
 	}))
 )
+
+type SuitelessAppTestHelper struct {
+	App *app.StrideApp
+	Ctx sdk.Context
+}
 
 type AppTestHelper struct {
 	suite.Suite
@@ -67,6 +72,16 @@ func (s *AppTestHelper) Setup() {
 	s.TestAccs = CreateRandomAccounts(3)
 	s.IbcEnabled = false
 	s.IcaAddresses = make(map[string]string)
+}
+
+// Instantiates an TestHelper without the test suite
+// This is for testing scenarios where we simply need the setup function to run,
+// and need access to the TestHelper attributes and keepers (e.g. genesis tests)
+func SetupSuitelessTestHelper() SuitelessAppTestHelper {
+	s := SuitelessAppTestHelper{}
+	s.App = app.InitStrideTestApp(true)
+	s.Ctx = s.App.BaseApp.NewContext(false, tmtypes.Header{Height: 1, ChainID: StrideChainID})
+	return s
 }
 
 // Mints coins directly to a module account
@@ -318,26 +333,18 @@ func (s *AppTestHelper) MarshalledICS20PacketData() sdk.AccAddress {
 	return data.GetBytes()
 }
 
-func (s *AppTestHelper) ICS20PacketAcknowledgement() channeltypes.Acknowledgement {
-	// see: https://github.com/cosmos/ibc-go/blob/8de555db76d0320842dacaa32e5500e1fd55e667/modules/apps/transfer/keeper/relay.go#L151
-	ack := channeltypes.NewResultAcknowledgement(s.MarshalledICS20PacketData())
-	return ack
-}
-
 func (s *AppTestHelper) ConfirmUpgradeSucceededs(upgradeName string, upgradeHeight int64) {
-	contextBeforeUpgrade := s.Ctx.WithBlockHeight(upgradeHeight - 1)
-	contextAtUpgrade := s.Ctx.WithBlockHeight(upgradeHeight)
-
+	s.Ctx = s.Ctx.WithBlockHeight(upgradeHeight - 1)
 	plan := upgradetypes.Plan{Name: upgradeName, Height: upgradeHeight}
-	err := s.App.UpgradeKeeper.ScheduleUpgrade(contextBeforeUpgrade, plan)
+	err := s.App.UpgradeKeeper.ScheduleUpgrade(s.Ctx, plan)
 	s.Require().NoError(err)
-
-	_, exists := s.App.UpgradeKeeper.GetUpgradePlan(contextBeforeUpgrade)
+	_, exists := s.App.UpgradeKeeper.GetUpgradePlan(s.Ctx)
 	s.Require().True(exists)
 
+	s.Ctx = s.Ctx.WithBlockHeight(upgradeHeight)
 	s.Require().NotPanics(func() {
 		beginBlockRequest := abci.RequestBeginBlock{}
-		s.App.BeginBlocker(contextAtUpgrade, beginBlockRequest)
+		s.App.BeginBlocker(s.Ctx, beginBlockRequest)
 	})
 }
 

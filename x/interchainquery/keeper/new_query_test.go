@@ -1,8 +1,8 @@
 package keeper_test
 
 import (
+	icqtypes "github.com/Stride-Labs/stride/v6/x/interchainquery/types"
 	_ "github.com/stretchr/testify/suite"
-	icqtypes "github.com/Stride-Labs/stride/v4/x/interchainquery/types"
 )
 
 type NewQueryTestCase struct {
