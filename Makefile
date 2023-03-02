@@ -129,9 +129,7 @@ clean-docker:
 	docker image prune -a
 	
 stop-docker:
-	@pkill -f "docker-compose .*stride.* logs" | true
-	@pkill -f "/bin/bash.*create_logs.sh" | true
-	@pkill -f "tail .*.log" | true
+	@bash $(DOCKERNET_HOME)/pkill.sh
 	docker-compose -f $(DOCKERNET_COMPOSE_FILE) down
 
 ###############################################################################
