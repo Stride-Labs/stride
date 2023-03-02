@@ -297,8 +297,7 @@ func (s *KeeperTestSuite) TestUpdateDelegationBalances_FailToRemoveDelegationToV
 
 	invalidArgs.args = callbackArgsBz
 	err = s.App.StakeibcKeeper.UpdateDelegationBalances(s.Ctx, hostZone, tc.initialState.callbackArgs)
-	msgError := fmt.Sprintf("Failed to remove delegation to validator: can't change delegation on validator")
-	s.Require().EqualError(err, msgError)
+	s.Require().EqualError(err, "Failed to remove delegation to validator: can't change delegation on validator")
 }
 
 // GetLatestCompletionTime tests
