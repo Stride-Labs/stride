@@ -7,7 +7,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	"github.com/Stride-Labs/stride/v5/x/claim/types"
+	"github.com/Stride-Labs/stride/v6/x/claim/types"
 )
 
 var _ types.QueryServer = Keeper{}

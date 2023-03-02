@@ -10,7 +10,7 @@ import (
 	_ "github.com/stretchr/testify/suite"
 	"github.com/tendermint/tendermint/proto/tendermint/crypto"
 
-	"github.com/Stride-Labs/stride/v5/x/interchainquery/types"
+	"github.com/Stride-Labs/stride/v6/x/interchainquery/types"
 )
 
 const (
