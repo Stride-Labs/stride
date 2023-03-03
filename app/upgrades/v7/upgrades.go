@@ -8,6 +8,7 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 
 	"github.com/cosmos/cosmos-sdk/types/module"
@@ -27,7 +28,9 @@ import (
 
 // Note: ensure these values are properly set before running upgrade
 var (
-	UpgradeName = "v7"
+	UpgradeName             = "v7"
+	IncentiveProgramAddress = "stride1tlxk4as9sgpqkh42cfaxqja0mdj6qculqshy0gg3glazmrnx3y8s8gsvqk"
+	StrideFoundationAddress = "stride1yz3mp7c2m739nftfrv5r3h6j64aqp95f3degpf"
 )
 
 // Helper function to log the migrated modules consensus versions
@@ -44,11 +47,12 @@ func CreateUpgradeHandler(
 	epochskeeper epochskeeper.Keeper,
 	stakeibckeeper stakeibckeeper.Keeper,
 	icahostkeeper icahostkeeper.Keeper,
+	bankkeeper bankkeeper.Keeper,
 ) upgradetypes.UpgradeHandler {
 	return func(ctx sdk.Context, _ upgradetypes.Plan, vm module.VersionMap) (module.VersionMap, error) {
 		// TODO:
 		//  	add min/max redemption rate
-		// 		incentive diversification
+		//      autopilot store key
 		// 		inflation
 		//  	BaseAccount issue
 
@@ -66,6 +70,11 @@ func CreateUpgradeHandler(
 		// Add min/max redemption rate threshold for each host zone
 		if err := AddMinMaxRedemptionRate(ctx, stakeibckeeper); err != nil {
 			return vm, errorsmod.Wrapf(err, "unable to set min/max redemption rate on host zones")
+		}
+
+		// Incentive diversification
+		if err := IncentiveDiversification(ctx, bankkeeper); err != nil {
+			return vm, errorsmod.Wrapf(err, "unable to send ustrd tokens for prop #153 (incentive diversification)")
 		}
 
 		return mm.RunMigrations(ctx, configurator, vm)
@@ -133,5 +142,21 @@ func ModifyJunoUnbondingFrequency(ctx sdk.Context, k stakeibckeeper.Keeper) erro
 // Use the default min/max for each
 func AddMinMaxRedemptionRate(ctx sdk.Context, k stakeibckeeper.Keeper) error {
 	// TODO
+	return nil
+}
+
+// Incentive diversification (Prop #153) - Send 3M STRD from Incentive Program to Stride Foundation
+func IncentiveDiversification(ctx sdk.Context, k bankkeeper.Keeper) error {
+	incentiveProgramAddress, err := sdk.AccAddressFromBech32(IncentiveProgramAddress)
+	if err != nil {
+		return err
+	}
+	strideFoundationAddress, err := sdk.AccAddressFromBech32(StrideFoundationAddress)
+	if err != nil {
+		return err
+	}
+	amount := sdk.NewCoin("ustrd", sdk.NewInt(3_000_000_000_000))
+	k.SendCoins(ctx, incentiveProgramAddress, strideFoundationAddress, sdk.NewCoins(amount))
+
 	return nil
 }

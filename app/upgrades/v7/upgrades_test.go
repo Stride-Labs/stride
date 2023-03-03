@@ -21,10 +21,11 @@ import (
 	oldstakeibctypes "github.com/Stride-Labs/stride/v6/x/stakeibc/migrations/v2/types"
 )
 
-var DummyUpgradeHeight = int64(5)
 var (
-	JunoChainId    = "juno-1"
-	OsmosisChainId = "osmosis-1"
+	DummyUpgradeHeight = int64(5)
+	JunoChainId        = "juno-1"
+	OsmosisChainId     = "osmosis-1"
+	ustrd              = "ustrd"
 )
 var ExpectedHourEpoch = epochstypes.EpochInfo{
 	Identifier:              epochstypes.HOUR_EPOCH,
@@ -107,6 +108,19 @@ func (s *UpgradeTestSuite) SetupUpgrade() {
 
 	hostzoneStore.Set([]byte(osmosis.ChainId), osmosisBz)
 	hostzoneStore.Set([]byte(juno.ChainId), junoBz)
+
+	// Get addresses for source and destination
+	incentiveProgramAddress, err := sdk.AccAddressFromBech32(v7.IncentiveProgramAddress)
+	s.Require().NoError(err, "no error expected when converting Incentive Program address")
+	strideFoundationAddress, err := sdk.AccAddressFromBech32(v7.StrideFoundationAddress)
+	s.Require().NoError(err, "no error expected when converting Stride Foundation address")
+
+	// Fund incentive program account with 23M, and stride foundation with 4.1M
+	// (any values can be used here for the test, but these are used to resemble mainnet)
+	initialProgram := sdk.NewCoin(ustrd, sdk.NewInt(23_000_000_000_000))
+	initialFoundation := sdk.NewCoin(ustrd, sdk.NewInt(4_157_085_999_543))
+	s.FundAccount(incentiveProgramAddress, initialProgram)
+	s.FundAccount(strideFoundationAddress, initialFoundation)
 }
 
 func (s *UpgradeTestSuite) CheckStateAfterUpgrade() {
@@ -146,6 +160,19 @@ func (s *UpgradeTestSuite) CheckStateAfterUpgrade() {
 
 	s.Require().Equal(ExpectedJunoUnbondingFrequency, juno.UnbondingFrequency)
 
+	// Confirm balances after incentive diversification
+	incentiveProgramAddress, err := sdk.AccAddressFromBech32(v7.IncentiveProgramAddress)
+	s.Require().NoError(err, "no error expected when converting Incentive Program address")
+	strideFoundationAddress, err := sdk.AccAddressFromBech32(v7.StrideFoundationAddress)
+	s.Require().NoError(err, "no error expected when converting Stride Foundation address")
+
+	expectedIncentiveBalance := sdk.NewCoin(ustrd, sdk.NewInt(20_000_000_000_000))
+	expectedFoundationBalance := sdk.NewCoin(ustrd, sdk.NewInt(7_157_085_999_543))
+	actualIncentiveBalance := s.App.BankKeeper.GetBalance(s.Ctx, incentiveProgramAddress, ustrd)
+	actualFoundationBalance := s.App.BankKeeper.GetBalance(s.Ctx, strideFoundationAddress, ustrd)
+
+	s.CompareCoins(expectedIncentiveBalance, actualIncentiveBalance, "incentive balance after upgrade")
+	s.CompareCoins(expectedFoundationBalance, actualFoundationBalance, "foundation balance after upgrade")
 }
 
 func (s *UpgradeTestSuite) TestAddHourEpoch() {
@@ -198,4 +225,31 @@ func (s *UpgradeTestSuite) TestModifyJunoUnbondingFrequency() {
 
 func (s *UpgradeTestSuite) TestAddMinMaxRedemptionRate() {
 
+}
+
+func (s *UpgradeTestSuite) TestIncentiveDiversification() {
+	// Get addresses for source and destination
+	incentiveProgramAddress, err := sdk.AccAddressFromBech32(v7.IncentiveProgramAddress)
+	s.Require().NoError(err, "no error expected when converting Incentive Program address")
+	strideFoundationAddress, err := sdk.AccAddressFromBech32(v7.StrideFoundationAddress)
+	s.Require().NoError(err, "no error expected when converting Stride Foundation address")
+
+	// Fund incentive program account with 23M, and stride foundation with 4.1M
+	// (any values can be used here for the test, but these are used to resemble mainnet)
+	initialProgram := sdk.NewCoin(ustrd, sdk.NewInt(23_000_000_000_000))
+	initialFoundation := sdk.NewCoin(ustrd, sdk.NewInt(4_157_085_999_543))
+	s.FundAccount(incentiveProgramAddress, initialProgram)
+	s.FundAccount(strideFoundationAddress, initialFoundation)
+
+	// Trigger bank send from upgrade
+	v7.IncentiveDiversification(s.Ctx, s.App.BankKeeper)
+
+	// Confirm balances
+	expectedIncentiveBalance := sdk.NewCoin(ustrd, sdk.NewInt(20_000_000_000_000))
+	expectedFoundationBalance := sdk.NewCoin(ustrd, sdk.NewInt(7_157_085_999_543))
+	actualIncentiveBalance := s.App.BankKeeper.GetBalance(s.Ctx, incentiveProgramAddress, ustrd)
+	actualFoundationBalance := s.App.BankKeeper.GetBalance(s.Ctx, strideFoundationAddress, ustrd)
+
+	s.CompareCoins(expectedIncentiveBalance, actualIncentiveBalance, "incentive balance after upgrade")
+	s.CompareCoins(expectedFoundationBalance, actualFoundationBalance, "foundation balance after upgrade")
 }
