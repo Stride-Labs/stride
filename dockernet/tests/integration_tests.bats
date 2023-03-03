@@ -159,7 +159,7 @@ setup_file() {
   assert_equal "$diff" $STAKE_AMOUNT
 }
 
-@test "[INTEGRATION-BASIC-$CHAIN_NAME] packet forwarding automatically liquid stake" {
+@test "[INTEGRATION-BASIC-$CHAIN_NAME] packet forwarding automatically liquid stakes" {
   # get initial balances
   sttoken_balance_start=$($STRIDE_MAIN_CMD q bank balances $(STRIDE_ADDRESS) --denom st$HOST_DENOM | GETBAL)
 
@@ -167,7 +167,7 @@ setup_file() {
   $HOST_MAIN_CMD tx ibc-transfer transfer transfer $HOST_TRANSFER_CHANNEL $(STRIDE_ADDRESS)'|stakeibc/LiquidStake' ${PACKET_FORWARD_STAKE_AMOUNT}${HOST_DENOM} --from $HOST_VAL -y &
 
   # Wait for the transfer to complete
-  WAIT_FOR_BALANCE_CHANGE $CHAIN_NAME $(STRIDE_ADDRESS) st$HOST_DENOM
+  WAIT_FOR_BALANCE_CHANGE STRIDE $(STRIDE_ADDRESS) st$HOST_DENOM
 
   # make sure stATOM balance increased
   sttoken_balance_end=$($STRIDE_MAIN_CMD q bank balances $(STRIDE_ADDRESS) --denom st$HOST_DENOM | GETBAL)
