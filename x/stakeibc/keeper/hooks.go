@@ -11,6 +11,7 @@ import (
 	epochstypes "github.com/Stride-Labs/stride/v5/x/epochs/types"
 	recordstypes "github.com/Stride-Labs/stride/v5/x/records/types"
 	"github.com/Stride-Labs/stride/v5/x/stakeibc/types"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 )
 
 func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochInfo epochstypes.EpochInfo) {
@@ -67,6 +68,9 @@ func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochInfo epochstypes.EpochInf
 		if epochNumber%reinvestInterval == 0 { // allow a few blocks from UpdateUndelegatedBal to avoid conflicts
 			k.ReinvestRewards(ctx)
 		}
+	}
+	if epochInfo.Identifier == epochstypes.MINT_EPOCH {
+		k.AllocateHostZoneReward(ctx)
 	}
 }
 
@@ -229,4 +233,41 @@ func (k Keeper) ReinvestRewards(ctx sdk.Context) {
 			continue
 		}
 	}
+}
+
+func (k Keeper) AllocateHostZoneReward(ctx sdk.Context) error {
+	k.Logger(ctx).Info("Allocate host zone reward to delegator")
+
+	rewardCollectorAddress := k.accountKeeper.GetModuleAccount(ctx, types.RewardCollectorName).GetAddress()
+	rewardedTokens := k.bankKeeper.GetAllBalances(ctx, rewardCollectorAddress)
+	if rewardedTokens.IsEqual(sdk.Coins{}) {
+		return nil
+	}
+
+	msgSvr := NewMsgServerImpl(k)
+	for _, token := range rewardedTokens {
+		// get hostzone by reward token (in ibc denom format)
+		hz, err := k.GetHostZoneFromIBCDenom(ctx, token.Denom)
+		if err != nil {
+			k.Logger(ctx).Info("Can't get host zone from ibc token %s", token.Denom)
+			return err
+		}
+
+		// liquid stake all tokens
+		msg := types.NewMsgLiquidStake(rewardCollectorAddress.String(), token.Amount, hz.HostDenom)
+		_, err = msgSvr.LiquidStake(ctx, msg)
+		if err != nil {
+			k.Logger(ctx).Info("Can't liquid stake %s for hostzone %s", token.String(), hz.ChainId)
+			return err
+		}
+	}
+	// After liquid stake all tokens, reward collector receive stTokens
+	// Send all stTokens to fee collector to distribute to delegator later
+	stTokens := k.bankKeeper.GetAllBalances(ctx, rewardCollectorAddress)
+	err := k.bankKeeper.SendCoinsFromModuleToModule(ctx, types.RewardCollectorName, authtypes.FeeCollectorName, stTokens)
+	if err != nil {
+		k.Logger(ctx).Info("Can't send coins from module %s to module %s", types.RewardCollectorName, authtypes.FeeCollectorName)
+		return err
+	}
+	return nil
 }

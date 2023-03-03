@@ -934,6 +934,9 @@ func (app *StrideApp) BlacklistedModuleAccountAddrs() map[string]bool {
 		if acc == "stakeibc" {
 			continue
 		}
+		if acc == stakeibcmoduletypes.RewardCollectorName {
+			continue
+		}
 		modAccAddrs[authtypes.NewModuleAddress(acc).String()] = true
 	}
 

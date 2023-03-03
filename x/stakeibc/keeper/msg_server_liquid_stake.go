@@ -119,7 +119,7 @@ func (k msgServer) MintStAssetAndTransfer(ctx sdk.Context, sender sdk.AccAddress
 	}
 
 	// transfer those coins to the user
-	err = k.bankKeeper.SendCoins(ctx, k.accountKeeper.GetModuleAccount(ctx, types.ModuleName).GetAddress(), sender, stCoins)
+	err = k.bankKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, sender, stCoins)
 	if err != nil {
 		k.Logger(ctx).Error("Failed to send coins from module to account")
 		return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "Failed to send %s from module to account", stCoins.GetDenomByIndex(0))
