@@ -78,6 +78,7 @@ func (app *StrideApp) setupUpgradeHandlers() {
 			app.StakeibcKeeper,
 			app.ICAHostKeeper,
 			app.BankKeeper,
+			app.MintKeeper,
 		),
 	)
 

@@ -22,6 +22,8 @@ import (
 
 	epochskeeper "github.com/Stride-Labs/stride/v6/x/epochs/keeper"
 	epochstypes "github.com/Stride-Labs/stride/v6/x/epochs/types"
+	mintkeeper "github.com/Stride-Labs/stride/v6/x/mint/keeper"
+	minttypes "github.com/Stride-Labs/stride/v6/x/mint/types"
 	stakeibckeeper "github.com/Stride-Labs/stride/v6/x/stakeibc/keeper"
 	stakeibctypes "github.com/Stride-Labs/stride/v6/x/stakeibc/types"
 )
@@ -44,39 +46,43 @@ func CreateUpgradeHandler(
 	mm *module.Manager,
 	configurator module.Configurator,
 	cdc codec.Codec,
-	epochskeeper epochskeeper.Keeper,
-	stakeibckeeper stakeibckeeper.Keeper,
-	icahostkeeper icahostkeeper.Keeper,
-	bankkeeper bankkeeper.Keeper,
+	epochsKeeper epochskeeper.Keeper,
+	stakeibcKeeper stakeibckeeper.Keeper,
+	icahostKeeper icahostkeeper.Keeper,
+	bankKeeper bankkeeper.Keeper,
+	mintKeeper mintkeeper.Keeper,
 ) upgradetypes.UpgradeHandler {
 	return func(ctx sdk.Context, _ upgradetypes.Plan, vm module.VersionMap) (module.VersionMap, error) {
+		ctx.Logger().Info("Starting upgrade v7...")
+
 		// TODO:
 		//  	add min/max redemption rate
 		//      autopilot store key
-		// 		inflation
 		//  	BaseAccount issue
 
 		// Add an hourly epoch which will be used by the rate limit store
-		AddHourEpoch(ctx, epochskeeper)
+		AddHourEpoch(ctx, epochsKeeper)
+
+		// Increase stride inflation to 1078 STRD
+		IncreaseStrideInflation(ctx, mintKeeper)
 
 		// Add stride messages to the ICA host allow messages
-		AddICAHostAllowMessages(ctx, icahostkeeper)
+		AddICAHostAllowMessages(ctx, icahostKeeper)
+
+		// Add min/max redemption rate threshold for each host zone
+		AddMinMaxRedemptionRate(ctx, stakeibcKeeper)
 
 		// Change the juno unbonding frequency to 5
-		if err := ModifyJunoUnbondingFrequency(ctx, stakeibckeeper); err != nil {
+		if err := ModifyJunoUnbondingFrequency(ctx, stakeibcKeeper); err != nil {
 			return vm, errorsmod.Wrapf(err, "unable to modify juno unbonding frequency")
 		}
 
-		// Add min/max redemption rate threshold for each host zone
-		if err := AddMinMaxRedemptionRate(ctx, stakeibckeeper); err != nil {
-			return vm, errorsmod.Wrapf(err, "unable to set min/max redemption rate on host zones")
-		}
-
 		// Incentive diversification
-		if err := IncentiveDiversification(ctx, bankkeeper); err != nil {
+		if err := IncentiveDiversification(ctx, bankKeeper); err != nil {
 			return vm, errorsmod.Wrapf(err, "unable to send ustrd tokens for prop #153 (incentive diversification)")
 		}
 
+		ctx.Logger().Info("Running module mogrations...")
 		return mm.RunMigrations(ctx, configurator, vm)
 	}
 }
@@ -98,9 +104,20 @@ func AddHourEpoch(ctx sdk.Context, k epochskeeper.Keeper) {
 	k.SetEpochInfo(ctx, hourEpoch)
 }
 
+// Increase stride inflation from 285 STRD to 1078 STRD
+func IncreaseStrideInflation(ctx sdk.Context, k mintkeeper.Keeper) {
+	ctx.Logger().Info("Increasing STRD inflation")
+
+	epochProvisions := sdk.NewDec(1_078_767_123_000_000)
+	minter := minttypes.NewMinter(epochProvisions)
+	k.SetMinter(ctx, minter)
+}
+
 // Add stride messages (LiquidStake, RedeemStake, Claim) to the ICAHost allow messages
 // to allow other protocols to liquid stake via ICA
 func AddICAHostAllowMessages(ctx sdk.Context, k icahostkeeper.Keeper) {
+	ctx.Logger().Info("Adding ICA Host allow messages")
+
 	params := icahosttypes.Params{
 		HostEnabled: true,
 		AllowMessages: []string{
@@ -121,6 +138,15 @@ func AddICAHostAllowMessages(ctx sdk.Context, k icahostkeeper.Keeper) {
 	k.SetParams(ctx, params)
 }
 
+// Add the min/max redemption rate to each host zone as safety bounds
+// Use the default min/max for each
+func AddMinMaxRedemptionRate(ctx sdk.Context, k stakeibckeeper.Keeper) {
+	ctx.Logger().Info("Setting min/max redemption rate safety bounds on each host zone")
+
+	// TODO
+	return
+}
+
 // Update the unbonding frequency of juno to 5 to align with the 28 day unbonding period
 func ModifyJunoUnbondingFrequency(ctx sdk.Context, k stakeibckeeper.Keeper) error {
 	ctx.Logger().Info("Updating juno unbonding frequency")
@@ -138,15 +164,10 @@ func ModifyJunoUnbondingFrequency(ctx sdk.Context, k stakeibckeeper.Keeper) erro
 	return nil
 }
 
-// Add the min/max redemption rate to each host zone as safety bounds
-// Use the default min/max for each
-func AddMinMaxRedemptionRate(ctx sdk.Context, k stakeibckeeper.Keeper) error {
-	// TODO
-	return nil
-}
-
 // Incentive diversification (Prop #153) - Send 3M STRD from Incentive Program to Stride Foundation
 func IncentiveDiversification(ctx sdk.Context, k bankkeeper.Keeper) error {
+	ctx.Logger().Info("Sending funds for Prop #153")
+
 	incentiveProgramAddress, err := sdk.AccAddressFromBech32(IncentiveProgramAddress)
 	if err != nil {
 		return err

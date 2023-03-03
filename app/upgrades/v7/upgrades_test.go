@@ -37,6 +37,7 @@ var ExpectedHourEpoch = epochstypes.EpochInfo{
 	EpochCountingStarted:    false,
 }
 var ExpectedJunoUnbondingFrequency = uint64(5)
+var ExpectedEpochProvisions = sdk.NewDec(1_078_767_123_000_000)
 var ExpectedAllowMessages = []string{
 	"/cosmos.bank.v1beta1.MsgSend",
 	"/cosmos.bank.v1beta1.MsgMultiSend",
@@ -173,6 +174,10 @@ func (s *UpgradeTestSuite) CheckStateAfterUpgrade() {
 
 	s.CompareCoins(expectedIncentiveBalance, actualIncentiveBalance, "incentive balance after upgrade")
 	s.CompareCoins(expectedFoundationBalance, actualFoundationBalance, "foundation balance after upgrade")
+
+	// Confirm inflation provisions
+	minter := s.App.MintKeeper.GetMinter(s.Ctx)
+	s.Require().Equal(ExpectedEpochProvisions, minter.EpochProvisions)
 }
 
 func (s *UpgradeTestSuite) TestAddHourEpoch() {
@@ -181,6 +186,13 @@ func (s *UpgradeTestSuite) TestAddHourEpoch() {
 	actualEpochInfo, found := s.App.EpochsKeeper.GetEpochInfo(s.Ctx, "hour")
 	s.Require().True(found, "hour epoch should have been found")
 	s.Require().Equal(ExpectedHourEpoch, actualEpochInfo, "epoch info")
+}
+
+func (s *UpgradeTestSuite) TestIncreaseStrideInflation() {
+	v7.IncreaseStrideInflation(s.Ctx, s.App.MintKeeper)
+
+	minter := s.App.MintKeeper.GetMinter(s.Ctx)
+	s.Require().Equal(ExpectedEpochProvisions, minter.EpochProvisions)
 }
 
 func (s *UpgradeTestSuite) TestAddICAHostAllowMessages() {
