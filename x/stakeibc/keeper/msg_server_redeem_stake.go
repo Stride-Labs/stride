@@ -31,7 +31,7 @@ func (k msgServer) RedeemStake(goCtx context.Context, msg *types.MsgRedeemStake)
 
 	if hostZone.Halted {
 		k.Logger(ctx).Error(fmt.Sprintf("Host Zone halted for zone (%s)", msg.HostZone))
-		return nil, sdkerrors.Wrapf(types.ErrHaltedHostZone, "halted host zone found for zone (%s)", msg.HostZone)
+		return nil, errorsmod.Wrapf(types.ErrHaltedHostZone, "halted host zone found for zone (%s)", msg.HostZone)
 	}
 
 	// first construct a user redemption record

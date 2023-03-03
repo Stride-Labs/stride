@@ -31,7 +31,7 @@ func (k msgServer) LiquidStake(goCtx context.Context, msg *types.MsgLiquidStake)
 
 	if hostZone.Halted {
 		k.Logger(ctx).Error(fmt.Sprintf("Host Zone halted for denom (%s)", msg.HostDenom))
-		return nil, sdkerrors.Wrapf(types.ErrHaltedHostZone, "halted host zone found for denom (%s)", msg.HostDenom)
+		return nil, errorsmod.Wrapf(types.ErrHaltedHostZone, "halted host zone found for denom (%s)", msg.HostDenom)
 	}
 
 	// get the sender address
