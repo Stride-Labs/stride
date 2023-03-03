@@ -76,6 +76,7 @@ func (app *StrideApp) setupUpgradeHandlers() {
 			app.appCodec,
 			app.EpochsKeeper,
 			app.StakeibcKeeper,
+			app.ICAHostKeeper,
 		),
 	)
 

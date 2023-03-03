@@ -4,15 +4,23 @@ import (
 	"fmt"
 	"time"
 
+	errorsmod "cosmossdk.io/errors"
+
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 
 	"github.com/cosmos/cosmos-sdk/types/module"
+	distrtypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
+	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
+	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
+	icahostkeeper "github.com/cosmos/ibc-go/v5/modules/apps/27-interchain-accounts/host/keeper"
+	icahosttypes "github.com/cosmos/ibc-go/v5/modules/apps/27-interchain-accounts/host/types"
+	transfertypes "github.com/cosmos/ibc-go/v5/modules/apps/transfer/types"
 
 	epochskeeper "github.com/Stride-Labs/stride/v6/x/epochs/keeper"
 	epochstypes "github.com/Stride-Labs/stride/v6/x/epochs/types"
-
 	stakeibckeeper "github.com/Stride-Labs/stride/v6/x/stakeibc/keeper"
 	stakeibctypes "github.com/Stride-Labs/stride/v6/x/stakeibc/types"
 )
@@ -35,12 +43,11 @@ func CreateUpgradeHandler(
 	cdc codec.Codec,
 	epochskeeper epochskeeper.Keeper,
 	stakeibckeeper stakeibckeeper.Keeper,
+	icahostkeeper icahostkeeper.Keeper,
 ) upgradetypes.UpgradeHandler {
 	return func(ctx sdk.Context, _ upgradetypes.Plan, vm module.VersionMap) (module.VersionMap, error) {
 		// TODO:
-		// ICA
-		// 		add allow messages
-		// misc
+		//  	add min/max redemption rate
 		// 		incentive diversification
 		// 		inflation
 		//  	BaseAccount issue
@@ -48,11 +55,18 @@ func CreateUpgradeHandler(
 		// Add an hourly epoch which will be used by the rate limit store
 		AddHourEpoch(ctx, epochskeeper)
 
+		// Add stride messages to the ICA host allow messages
+		AddICAHostAllowMessages(ctx, icahostkeeper)
+
 		// Change the juno unbonding frequency to 5
-		ModifyJunoUnbondingFrequency(ctx, stakeibckeeper)
+		if err := ModifyJunoUnbondingFrequency(ctx, stakeibckeeper); err != nil {
+			return vm, errorsmod.Wrapf(err, "unable to modify juno unbonding frequency")
+		}
 
 		// Add min/max redemption rate threshold for each host zone
-		AddMinMaxRedemptionRate(ctx, stakeibckeeper)
+		if err := AddMinMaxRedemptionRate(ctx, stakeibckeeper); err != nil {
+			return vm, errorsmod.Wrapf(err, "unable to set min/max redemption rate on host zones")
+		}
 
 		return mm.RunMigrations(ctx, configurator, vm)
 	}
@@ -73,6 +87,29 @@ func AddHourEpoch(ctx sdk.Context, k epochskeeper.Keeper) {
 	}
 
 	k.SetEpochInfo(ctx, hourEpoch)
+}
+
+// Add stride messages (LiquidStake, RedeemStake, Claim) to the ICAHost allow messages
+// to allow other protocols to liquid stake via ICA
+func AddICAHostAllowMessages(ctx sdk.Context, k icahostkeeper.Keeper) {
+	params := icahosttypes.Params{
+		HostEnabled: true,
+		AllowMessages: []string{
+			sdk.MsgTypeURL(&banktypes.MsgSend{}),
+			sdk.MsgTypeURL(&banktypes.MsgMultiSend{}),
+			sdk.MsgTypeURL(&stakingtypes.MsgDelegate{}),
+			sdk.MsgTypeURL(&stakingtypes.MsgUndelegate{}),
+			sdk.MsgTypeURL(&stakingtypes.MsgBeginRedelegate{}),
+			sdk.MsgTypeURL(&distrtypes.MsgWithdrawDelegatorReward{}),
+			sdk.MsgTypeURL(&distrtypes.MsgSetWithdrawAddress{}),
+			sdk.MsgTypeURL(&transfertypes.MsgTransfer{}),
+			sdk.MsgTypeURL(&govtypes.MsgVote{}),
+			sdk.MsgTypeURL(&stakeibctypes.MsgLiquidStake{}),
+			sdk.MsgTypeURL(&stakeibctypes.MsgRedeemStake{}),
+			sdk.MsgTypeURL(&stakeibctypes.MsgClaimUndelegatedTokens{}),
+		},
+	}
+	k.SetParams(ctx, params)
 }
 
 // Update the unbonding frequency of juno to 5 to align with the 28 day unbonding period
