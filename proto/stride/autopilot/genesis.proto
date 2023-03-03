@@ -1,10 +1,10 @@
 syntax = "proto3";
-package stride.app_router;
+package stride.autopilot;
 
 import "gogoproto/gogo.proto";
-import "stride/app_router/params.proto";
+import "stride/autopilot/params.proto";
 
-option go_package = "github.com/Stride-Labs/stride/v6/x/app-router/types";
+option go_package = "github.com/Stride-Labs/stride/v6/x/autopilot/types";
 
 // GenesisState defines the claim module's genesis state.
 message GenesisState {

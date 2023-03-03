@@ -1,4 +1,4 @@
-package app_router
+package autopilot
 
 import (
 	"fmt"
@@ -7,8 +7,8 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
-	"github.com/Stride-Labs/stride/v6/x/app-router/keeper"
-	"github.com/Stride-Labs/stride/v6/x/app-router/types"
+	"github.com/Stride-Labs/stride/v6/x/autopilot/keeper"
+	"github.com/Stride-Labs/stride/v6/x/autopilot/types"
 )
 
 // NewHandler returns autopilot module messages

@@ -10,7 +10,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
 
-	"github.com/Stride-Labs/stride/v6/x/app-router/types"
+	"github.com/Stride-Labs/stride/v6/x/autopilot/types"
 	stakeibckeeper "github.com/Stride-Labs/stride/v6/x/stakeibc/keeper"
 )
 

@@ -14,8 +14,8 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	router "github.com/Stride-Labs/stride/v6/x/app-router"
-	"github.com/Stride-Labs/stride/v6/x/app-router/types"
+	"github.com/Stride-Labs/stride/v6/x/autopilot"
+	"github.com/Stride-Labs/stride/v6/x/autopilot/types"
 	epochtypes "github.com/Stride-Labs/stride/v6/x/epochs/types"
 	minttypes "github.com/Stride-Labs/stride/v6/x/mint/types"
 	recordstypes "github.com/Stride-Labs/stride/v6/x/records/types"
@@ -152,7 +152,7 @@ func (suite *KeeperTestSuite) TestOnRecvPacket() {
 			suite.SetupTest() // reset
 			ctx := suite.Ctx
 
-			suite.App.RouterKeeper.SetParams(ctx, types.Params{Active: tc.forwardingActive})
+			suite.App.AutopilotKeeper.SetParams(ctx, types.Params{Active: tc.forwardingActive})
 
 			// set epoch tracker for env
 			suite.App.StakeibcKeeper.SetEpochTracker(ctx, stakeibctypes.EpochTracker{
@@ -198,7 +198,7 @@ func (suite *KeeperTestSuite) TestOnRecvPacket() {
 
 			transferIBCModule := transfer.NewIBCModule(suite.App.TransferKeeper)
 			recordsStack := recordsmodule.NewIBCModule(suite.App.RecordsKeeper, transferIBCModule)
-			routerIBCModule := router.NewIBCModule(suite.App.RouterKeeper, recordsStack)
+			routerIBCModule := autopilot.NewIBCModule(suite.App.AutopilotKeeper, recordsStack)
 			ack := routerIBCModule.OnRecvPacket(
 				ctx,
 				packet,

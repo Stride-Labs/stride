@@ -1,4 +1,4 @@
-package app_router
+package autopilot
 
 import (
 	"fmt"
@@ -10,8 +10,8 @@ import (
 	channeltypes "github.com/cosmos/ibc-go/v5/modules/core/04-channel/types"
 	porttypes "github.com/cosmos/ibc-go/v5/modules/core/05-port/types"
 
-	"github.com/Stride-Labs/stride/v6/x/app-router/keeper"
-	"github.com/Stride-Labs/stride/v6/x/app-router/types"
+	"github.com/Stride-Labs/stride/v6/x/autopilot/keeper"
+	"github.com/Stride-Labs/stride/v6/x/autopilot/types"
 
 	ibcexported "github.com/cosmos/ibc-go/v5/modules/core/exported"
 )

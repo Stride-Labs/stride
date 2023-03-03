@@ -1,4 +1,4 @@
-package app_router
+package autopilot
 
 import (
 	"encoding/json"
@@ -18,9 +18,9 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 
-	"github.com/Stride-Labs/stride/v6/x/app-router/client/cli"
-	"github.com/Stride-Labs/stride/v6/x/app-router/keeper"
-	"github.com/Stride-Labs/stride/v6/x/app-router/types"
+	"github.com/Stride-Labs/stride/v6/x/autopilot/client/cli"
+	"github.com/Stride-Labs/stride/v6/x/autopilot/keeper"
+	"github.com/Stride-Labs/stride/v6/x/autopilot/types"
 )
 
 var (

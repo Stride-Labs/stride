@@ -1,4 +1,4 @@
-package app_router_test
+package autopilot_test
 
 import (
 	"testing"
@@ -6,8 +6,8 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/Stride-Labs/stride/v6/app/apptesting"
-	router "github.com/Stride-Labs/stride/v6/x/app-router"
-	"github.com/Stride-Labs/stride/v6/x/app-router/types"
+	"github.com/Stride-Labs/stride/v6/x/autopilot"
+	"github.com/Stride-Labs/stride/v6/x/autopilot/types"
 )
 
 func TestGenesis(t *testing.T) {
@@ -16,9 +16,9 @@ func TestGenesis(t *testing.T) {
 	}
 
 	s := apptesting.SetupSuitelessTestHelper()
-	router.InitGenesis(s.Ctx, s.App.RouterKeeper, expectedGenesisState)
+	autopilot.InitGenesis(s.Ctx, s.App.AutopilotKeeper, expectedGenesisState)
 
-	actualGenesisState := router.ExportGenesis(s.Ctx, s.App.RouterKeeper)
+	actualGenesisState := autopilot.ExportGenesis(s.Ctx, s.App.AutopilotKeeper)
 	require.NotNil(t, actualGenesisState)
 	require.Equal(t, expectedGenesisState.Params, actualGenesisState.Params)
 }

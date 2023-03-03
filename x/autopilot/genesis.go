@@ -1,10 +1,10 @@
-package app_router
+package autopilot
 
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/Stride-Labs/stride/v6/x/app-router/keeper"
-	"github.com/Stride-Labs/stride/v6/x/app-router/types"
+	"github.com/Stride-Labs/stride/v6/x/autopilot/keeper"
+	"github.com/Stride-Labs/stride/v6/x/autopilot/types"
 )
 
 // InitGenesis initializes the capability module's state from a provided genesis
