@@ -28,6 +28,13 @@ func BeginBlocker(ctx sdk.Context, k keeper.Keeper, bk types.BankKeeper, ak type
 			k.RatelimitKeeper.AddDenomToBlacklist(ctx, stDenom)
 
 			k.Logger(ctx).Error(fmt.Sprintf("[INVARIANT BROKEN!!!] %s's RR is %s. ERR: %v", hz.GetChainId(), hz.RedemptionRate.String(), err.Error()))
+			ctx.EventManager().EmitEvent(
+				sdk.NewEvent(
+					types.EventTypeHostZoneHalt,
+					sdk.NewAttribute(types.AttributeKeyHostZone, hz.ChainId),
+					sdk.NewAttribute(types.AttributeKeyRedemptionRate, hz.RedemptionRate.String()),
+				),
+			)
 		}
 	}
 }

@@ -229,6 +229,11 @@ func (k Keeper) InitiateAllHostZoneUnbondings(ctx sdk.Context, dayNumber uint64)
 	successfulUnbondings = []string{}
 	failedUnbondings = []string{}
 	for _, hostZone := range k.GetAllHostZone(ctx) {
+		if hostZone.Halted {
+			k.Logger(ctx).Info(fmt.Sprintf("\tSkipping InitiateHostZoneUnbondings for halted zone %s", hostZone.ChainId))
+			continue
+		}
+
 		// Confirm the unbonding is supposed to be triggered this epoch
 		if dayNumber%hostZone.UnbondingFrequency != 0 {
 			k.Logger(ctx).Info(utils.LogWithHostZone(hostZone.ChainId,
@@ -303,6 +308,11 @@ func (k Keeper) CleanupEpochUnbondingRecords(ctx sdk.Context, epochNumber uint64
 // Batch transfers any unbonded tokens from the delegation account to the redemption account
 func (k Keeper) SweepAllUnbondedTokensForHostZone(ctx sdk.Context, hostZone types.HostZone, epochUnbondingRecords []recordstypes.EpochUnbondingRecord) (success bool, sweepAmount sdkmath.Int) {
 	k.Logger(ctx).Info(utils.LogWithHostZone(hostZone.ChainId, "Sweeping unbonded tokens"))
+
+	if hostZone.Halted {
+		k.Logger(ctx).Error(fmt.Sprintf("\tSkipping SweepAllUnbondedTokensForHostZone for halted zone %s", hostZone.ChainId))
+		return
+	}
 
 	// Sum up all host zone unbonding records that have finished unbonding
 	totalAmtTransferToRedemptionAcct := sdkmath.ZeroInt()

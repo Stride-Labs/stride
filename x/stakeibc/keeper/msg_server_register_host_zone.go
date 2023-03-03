@@ -75,6 +75,14 @@ func (k msgServer) RegisterHostZone(goCtx context.Context, msg *types.MsgRegiste
 	)
 	k.accountKeeper.SetAccount(ctx, acc)
 
+	params := k.GetParams(ctx)
+	if msg.MinRedemptionRate.IsNil() || msg.MinRedemptionRate.IsZero() {
+		msg.MinRedemptionRate = sdk.NewDecWithPrec(int64(params.DefaultMinRedemptionRateThreshold), 2)
+	}
+	if msg.MaxRedemptionRate.IsNil() || msg.MaxRedemptionRate.IsZero() {
+		msg.MaxRedemptionRate = sdk.NewDecWithPrec(int64(params.DefaultMaxRedemptionRateThreshold), 2)
+	}
+
 	// set the zone
 	zone := types.HostZone{
 		ChainId:           chainId,

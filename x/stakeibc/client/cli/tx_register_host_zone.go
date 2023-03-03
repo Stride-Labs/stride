@@ -46,18 +46,24 @@ func CmdRegisterHostZone() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			minRedemptionRate, err := sdk.NewDecFromStr(minRedemptionRateStr)
-			if err != nil {
-				return err
+			minRedemptionRate := sdk.ZeroDec()
+			if minRedemptionRateStr != "" {
+				minRedemptionRate, err = sdk.NewDecFromStr(minRedemptionRateStr)
+				if err != nil {
+					return err
+				}
 			}
 
 			maxRedemptionRateStr, err := cmd.Flags().GetString(FlagMaxRedemptionRate)
 			if err != nil {
 				return err
 			}
-			maxRedemptionRate, err := sdk.NewDecFromStr(maxRedemptionRateStr)
-			if err != nil {
-				return err
+			maxRedemptionRate := sdk.ZeroDec()
+			if maxRedemptionRateStr != "" {
+				maxRedemptionRate, err = sdk.NewDecFromStr(maxRedemptionRateStr)
+				if err != nil {
+					return err
+				}
 			}
 
 			msg := types.NewMsgRegisterHostZone(
@@ -81,8 +87,8 @@ func CmdRegisterHostZone() *cobra.Command {
 	}
 
 	flags.AddTxFlagsToCmd(cmd)
-	cmd.Flags().String(FlagMinRedemptionRate, "0.95", "minimum redemption rate")
-	cmd.Flags().String(FlagMinRedemptionRate, "1.5", "maximum redemption rate")
+	cmd.Flags().String(FlagMinRedemptionRate, "", "minimum redemption rate")
+	cmd.Flags().String(FlagMaxRedemptionRate, "", "maximum redemption rate")
 
 	return cmd
 }

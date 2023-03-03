@@ -107,14 +107,18 @@ func (msg *MsgRegisterHostZone) ValidateBasic() error {
 		return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "unbonding frequency must be greater than zero")
 	}
 	// min/max redemption rate check
-	if msg.MinRedemptionRate.IsNegative() {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "min redemption rate should not be negative")
+	if !msg.MinRedemptionRate.IsNil() && msg.MinRedemptionRate.IsNegative() {
+		return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "min redemption rate should not be negative")
 	}
-	if msg.MaxRedemptionRate.IsNegative() {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "max redemption rate should not be negative")
+	if !msg.MaxRedemptionRate.IsNil() && msg.MaxRedemptionRate.IsNegative() {
+		return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "max redemption rate should not be negative")
 	}
-	if msg.MinRedemptionRate.GTE(msg.MaxRedemptionRate) {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "min redemption rate should be lower than max redemption rate")
+	if !msg.MinRedemptionRate.IsNil() &&
+		!msg.MaxRedemptionRate.IsNil() &&
+		!msg.MinRedemptionRate.IsZero() &&
+		!msg.MaxRedemptionRate.IsZero() &&
+		msg.MinRedemptionRate.GTE(msg.MaxRedemptionRate) {
+		return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "min redemption rate should be lower than max redemption rate")
 	}
 
 	return nil
