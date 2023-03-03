@@ -8,7 +8,7 @@ func (s *KeeperTestSuite) TestGetParams() {
 	params := types.DefaultParams()
 	params.Active = true
 
-	s.App.RouterKeeper.SetParams(s.Ctx, params)
+	s.App.AutopilotKeeper.SetParams(s.Ctx, params)
 
-	s.Require().Equal(params, s.App.RouterKeeper.GetParams(s.Ctx))
+	s.Require().Equal(params, s.App.AutopilotKeeper.GetParams(s.Ctx))
 }
