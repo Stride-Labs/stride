@@ -7,7 +7,7 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
-	"github.com/Stride-Labs/stride/v5/app/apptesting"
+	"github.com/Stride-Labs/stride/v6/app/apptesting"
 )
 
 const dummyUpgradeHeight = 5
