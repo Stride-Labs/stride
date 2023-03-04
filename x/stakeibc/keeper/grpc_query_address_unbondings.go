@@ -60,7 +60,7 @@ func (k Keeper) AddressUnbondings(c context.Context, req *types.QueryAddressUnbo
 						unbondingTime = unbondingStartTime + unbondingDurationEstimate*nanosecondsInDay
 					}
 					unbondingTime = unbondingTime + nanosecondsInDay
-					unbondingTimeStr := time.Unix(0, int64(unbondingTime)).String()
+					unbondingTimeStr := time.Unix(0, int64(unbondingTime)).UTC().String()
 
 					addressUnbonding := types.AddressUnbonding{
 						Address:                req.Address,
