@@ -1,4 +1,4 @@
-use cosmwasm_std::StdError;
+use cosmwasm_std::{StdError};
 use thiserror::Error;
 
 #[derive(Error, Debug, PartialEq)]
@@ -8,11 +8,15 @@ pub enum ContractError {
 
     #[error("Unauthorized")]
     Unauthorized {},
-    
-    #[error("The provided metric update with time ({new_time:?}) is stale. Metric for key ({key:?}) already exists with newer timestamp ({old_time:?})")]
-    StaleMetric {
-        key: String,
-        new_time: String, 
-        old_time: String,
+
+    #[error("The provided metric (type {metric_type:?}) has an invalid metadata attributes")]
+    InvalidMetricMetadataAttributes {
+        metric_type: String,
+    },
+
+    #[error("Invalid denom: {reason}")]
+    InvalidDenom {
+        reason: String,
     },
 }
+
