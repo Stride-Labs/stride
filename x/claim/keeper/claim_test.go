@@ -7,7 +7,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 
-	"github.com/Stride-Labs/stride/v5/x/claim/types"
+	"github.com/Stride-Labs/stride/v6/x/claim/types"
 )
 
 // Test functionality for loading allocation data(csv)

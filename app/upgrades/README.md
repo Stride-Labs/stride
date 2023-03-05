@@ -112,7 +112,7 @@ func MigrateStore(ctx sdk.Context) error {
 // app/upgrades/{upgradeVersion}/upgrades.go
 
 import (
-	{module}migration "github.com/Stride-Labs/stride/v5/x/{module}/migrations/{new-consensus-version}"
+	{module}migration "github.com/Stride-Labs/stride/v6/x/{module}/migrations/{new-consensus-version}"
 )
 
 // CreateUpgradeHandler creates an SDK upgrade handler for {upgradeVersion}
