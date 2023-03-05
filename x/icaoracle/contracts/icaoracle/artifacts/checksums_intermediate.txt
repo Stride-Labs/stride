@@ -1,1 +1,1 @@
-e375032cb72014f50bece6937476b41ea61cae44d1fbfb6b7ee1bd0b8f041130  ./target/wasm32-unknown-unknown/release/ica_oracle.wasm
+f37b7dd7d60223cdab5979b9fb21916589f645f470b387974d444c6ea86ddefd  ./target/wasm32-unknown-unknown/release/ica_oracle.wasm

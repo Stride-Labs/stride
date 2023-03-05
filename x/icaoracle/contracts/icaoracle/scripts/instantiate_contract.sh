@@ -4,7 +4,7 @@ source ${SCRIPT_DIR}/vars.sh
 
 juno_val=$($JUNOD keys show jval1 -a)
 code_id=$(cat $METADATA/code_id.txt)
-init_msg="{ \"admin_address\": \"$juno_val\", \"ica_address\": \"$juno_val\" }"
+init_msg="{ \"admin_address\": \"$juno_val\" }"
 
 echo "Instantiating contract..."
 

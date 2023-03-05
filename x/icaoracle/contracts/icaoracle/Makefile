@@ -26,42 +26,38 @@ build-optimized:
 		--mount type=volume,source=registry_cache,target=/usr/local/cargo/registry \
 		cosmwasm/rust-optimizer:0.12.11
 
-build-wasmd:
-	cd deps/wasmd && go build -mod=readonly -o $(BUILDDIR)/wasmd ./cmd/wasmd
-	docker build -t wasmd:local .
-
-start-wasmd:
-	@bash wasmd/init_state.sh
-	docker-compose up 
-
-stop-wasmd:
-	docker-compose down
-
 validate:
 	cosmwasm-check ./target/wasm32-unknown-unknown/release/ica_oracle.wasm
 
+# Uploads the contract to juno
 store-contract: 
 	@STRIDE_HOME=$(STRIDE_HOME) bash scripts/store_contract.sh
 
-instantiate: 
-	@STRIDE_HOME=$(STRIDE_HOME) bash scripts/instantiate.sh
+# Instantiates the contract directly with the juno dockernet validator as the admin
+instantiate-contract: 
+	@STRIDE_HOME=$(STRIDE_HOME) bash scripts/instantiate_contract.sh
 
-deploy-contract:
-	@make store-contract 
-	@echo ""
-	@make instantiate
-
-query-oracles:
-	@STRIDE_HOME=$(STRIDE_HOME) bash scripts/query_oracles.sh
-
-query-metrics:
-	@STRIDE_HOME=$(STRIDE_HOME) bash scripts/query_metrics.sh
-
+# Adds a metric directly to the contract from the juno dockernet validator
 add-metric:
-	@KEY=$(KEY) VALUE=$(VALUE) STRIDE_HOME=$(STRIDE_HOME) bash scripts/add_metric.sh
+	@STRIDE_HOME=$(STRIDE_HOME) bash scripts/add_metric.sh
 
+# Add's an oracle to Stride
 add-oracle:
 	@STRIDE_HOME=$(STRIDE_HOME) bash scripts/add_oracle.sh
 
+# Instantiates the contract through a Stride ICA
+instantiate-oracle: 
+	@STRIDE_HOME=$(STRIDE_HOME) bash scripts/instantiate_oracle.sh
+
+# Queries all oracles on Stride
+query-oracles:
+	@STRIDE_HOME=$(STRIDE_HOME) bash scripts/query_oracles.sh
+
+# Queries all metrics stored in the contract
+query-metrics:
+	@STRIDE_HOME=$(STRIDE_HOME) bash scripts/query_metrics.sh
+
+# Queries all ICA errors
 query-errors:
 	@STRIDE_HOME=$(STRIDE_HOME) bash scripts/query_errors.sh
+

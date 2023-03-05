@@ -1,1 +1,1 @@
-1eaefdef89679203aaf101e3c87a1f17494789edb9e66a9f46b80d28aa58ffc2  ica_oracle.wasm
+de16fc9342654ff410d135fea1a9800b0724b56ae4137cb17915d276aefb9a19  ica_oracle.wasm

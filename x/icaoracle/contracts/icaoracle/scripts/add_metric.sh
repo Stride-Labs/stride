@@ -8,7 +8,7 @@ echo "Adding metric..."
 
 key=${KEY:-key1}
 value=${VALUE:-value1}
-msg="{ \"post_metric\": { \"key\": \"$key\", \"value\": \"$value\" } }"
+msg=$(cat ${SCRIPT_DIR}/post_metric.json)
 
 echo ">>> junod tx wasm execute $contract_address $msg"
 tx_hash=$($JUNOD tx wasm execute $contract_address "$msg" --from jval1 -y | grep -E "txhash:" | awk '{print $2}')
