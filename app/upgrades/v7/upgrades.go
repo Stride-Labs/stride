@@ -108,7 +108,7 @@ func AddHourEpoch(ctx sdk.Context, k epochskeeper.Keeper) {
 func IncreaseStrideInflation(ctx sdk.Context, k mintkeeper.Keeper) {
 	ctx.Logger().Info("Increasing STRD inflation")
 
-	epochProvisions := sdk.NewDec(1_078_767_123_000_000)
+	epochProvisions := sdk.NewDec(1_078_767_123)
 	minter := minttypes.NewMinter(epochProvisions)
 	k.SetMinter(ctx, minter)
 }

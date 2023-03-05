@@ -37,7 +37,7 @@ var ExpectedHourEpoch = epochstypes.EpochInfo{
 	EpochCountingStarted:    false,
 }
 var ExpectedJunoUnbondingFrequency = uint64(5)
-var ExpectedEpochProvisions = sdk.NewDec(1_078_767_123_000_000)
+var ExpectedEpochProvisions = sdk.NewDec(1_078_767_123)
 var ExpectedAllowMessages = []string{
 	"/cosmos.bank.v1beta1.MsgSend",
 	"/cosmos.bank.v1beta1.MsgMultiSend",
