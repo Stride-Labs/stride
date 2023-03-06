@@ -8,8 +8,9 @@ use crate::state::{
     get_price_key,
 };
 
-// QUESTION: Judging from the unit tests, it looks like this function is not atomic
-// If so, do we have to revert store writes to the LATEST_METRIC and HISTORICAL_METRIC store if the subsequent logic fails
+// QUESTION: Do we have to revert store writes to the LATEST_METRIC and HISTORICAL_METRIC store if the subsequent logic fails?
+// I originally thought it was unnecessary as this full function should be atomic when executed on chain, but
+// the unit tests make it appear as if partital state persists in the case an error. 
 
 // Stores a given metric passed via an ICA from a source chain
 // The oracle stores each metric generically with key and value attributes

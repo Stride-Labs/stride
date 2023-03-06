@@ -9,7 +9,7 @@ pub enum ContractError {
     #[error("Unauthorized")]
     Unauthorized {},
 
-    #[error("The provided metric (type {metric_type:?}) has an invalid metadata attributes")]
+    #[error("The provided metric (type {metric_type:?}) has invalid metadata attributes")]
     InvalidMetricMetadataAttributes {
         metric_type: String,
     },

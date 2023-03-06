@@ -1,12 +1,12 @@
 {
     "post_metric": {
-        "key": "statom_redemption_rate",
+        "key": "stujuno_redemption_rate",
         "value": "1.0303",
         "metric_type": "redemption_rate",
         "metadata": {
             "update_time": 100,
             "block_height": 1000,
-            "attributes": "{\"denom\": \"statom\", \"base_denom\": \"ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2\"}"
+            "attributes": "{\"denom\": \"stujuno\", \"base_denom\": \"ibc/04F5F501207C3626A2C14BFEF654D51C2E0B8F7CA578AB8ED272A66FE4E48097\"}"
         }
     }
 }

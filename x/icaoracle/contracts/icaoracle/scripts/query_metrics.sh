@@ -11,13 +11,13 @@ $JUNOD q wasm contract-state smart $contract_address "$msg"
 sleep 1
 
 printf "\nHISTORICAL_METRICS\n"
-msg='{ "historical_metrics" : { "key": "statom_redemption_rate" } }'
+msg='{ "historical_metrics" : { "key": "stujuno_redemption_rate" } }'
 echo ">>> junod q wasm contract-state smart $contract_address $msg"
 $JUNOD q wasm contract-state smart $contract_address "$msg"
 sleep 1
 
 printf "\nPRICES\n"
-msg='{ "price" : { "denom": "statom", "base_denom": "ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2" } }'
+msg='{ "price" : { "denom": "stujuno", "base_denom": "ibc/04F5F501207C3626A2C14BFEF654D51C2E0B8F7CA578AB8ED272A66FE4E48097" } }'
 echo ">>> junod q wasm contract-state smart $contract_address $msg"
 $JUNOD q wasm contract-state smart $contract_address "$msg"
 sleep 1
