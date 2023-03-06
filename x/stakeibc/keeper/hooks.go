@@ -1,8 +1,8 @@
 package keeper
 
 import (
+	"encoding/json"
 	"fmt"
-	"strconv"
 
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -176,12 +176,22 @@ func (k Keeper) UpdateRedemptionRates(ctx sdk.Context, depositRecords []recordst
 
 		// Queue an oracle metric update - Key is of format: {stToken}_redemption_rate
 		stDenom := types.StAssetDenomFromHostZoneDenom(hostZone.HostDenom)
+		nativeDenom := hostZone.IbcDenom
+		attributes, err := json.Marshal(icaoracletypes.RedemptionRateAttributes{
+			Denom:     stDenom,
+			BaseDenom: nativeDenom,
+		})
+		if err != nil {
+			k.Logger(ctx).Error(fmt.Sprintf("Unable to marshal redemption rate attributes for oracle: %s", err.Error()))
+		}
 		redemptionRateOracleUpdate := icaoracletypes.Metric{
-			Key:   stDenom + "_redemption_rate",
-			Value: redemptionRate.String(),
+			Key:        fmt.Sprintf("%s_%s", stDenom, icaoracletypes.MetricType_RedemptionRate),
+			Value:      redemptionRate.String(),
+			MetricType: icaoracletypes.MetricType_RedemptionRate,
 			Metadata: &icaoracletypes.Metadata{
-				UpdateTime:   strconv.FormatInt(ctx.BlockTime().Unix(), 10),
-				UpdateHeight: strconv.FormatInt(ctx.BlockHeight(), 10),
+				UpdateTime:  ctx.BlockTime().Unix(),
+				BlockHeight: ctx.BlockHeight(),
+				Attributes:  string(attributes),
 			},
 		}
 		k.ICAOracleKeeper.QueueMetricUpdate(ctx, redemptionRateOracleUpdate)

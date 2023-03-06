@@ -24,8 +24,8 @@ func (k Keeper) SubmitMetricUpdate(ctx sdk.Context, oracle types.Oracle, metric 
 	}
 
 	// Build contract message with metric update
-	contractMsg := types.MsgExecuteContractUpdateMetric{
-		UpdateMetric: &metric,
+	contractMsg := types.MsgExecuteContractPostMetric{
+		PostMetric: &metric,
 	}
 	contractMsgBz, err := json.Marshal(contractMsg)
 	if err != nil {

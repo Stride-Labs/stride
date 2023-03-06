@@ -13,15 +13,22 @@ message Oracle {
   bool active = 7;
 }
 
-message Metadata {
-  string update_time = 1;
-  string update_height = 2;
-}
-
 message Metric {
   string key = 1;
   string value = 2;
-  Metadata metadata = 3;
+  string metric_type = 3;
+  Metadata metadata = 4;
+}
+
+message Metadata {
+  int64 update_time = 1;
+  int64 block_height = 2;
+  string attributes = 3;
+}
+
+message RedemptionRateAttributes {
+  string denom = 1;
+  string base_denom = 2;
 }
 
 message PendingMetricUpdate {
