@@ -1,6 +1,6 @@
 use cosmwasm_schema::{cw_serde, QueryResponses};
 use cosmwasm_std::{Binary, Decimal};
-use crate::state::{Config, Metric, Metadata};
+use crate::state::{Metric, Metadata};
 #[cw_serde]
 pub struct InstantiateMsg {
     pub admin_address: String,
@@ -28,7 +28,7 @@ pub enum ExecuteMsg {
 #[cw_serde]
 #[derive(QueryResponses)]
 pub enum QueryMsg {
-    #[returns(Config)]
+    #[returns(crate::state::Config)]
     Config {},
 
     #[returns(Metric)]

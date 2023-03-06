@@ -18,7 +18,7 @@ echo ">>> strided tx icaoracle instantiate-oracle JUNO $code_id"
 tx_hash=$($STRIDED tx icaoracle instantiate-oracle JUNO $code_id --from admin -y | grep -E "txhash:" | awk '{print $2}') 
 
 echo "Tx Hash: $tx_hash"
-echo $tx_hash > $METADATA/instantiate_oracle_tx_hash.txt
+echo $tx_hash > $METADATA/instantiate_tx_hash.txt
 
 sleep 10
 

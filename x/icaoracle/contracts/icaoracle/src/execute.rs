@@ -3,7 +3,7 @@ use std::str::FromStr;
 use crate::error::ContractError;
 use crate::helpers::validate_native_denom;
 use crate::state::{
-    Metric, MetricHistory, MetricType, Metadata, RedemptionRateAttributes, Price, 
+    Metric, MetricHistory, MetricType, Metadata, Price, RedemptionRateAttributes,
     LATEST_METRICS, HISTORICAL_METRICS, PRICES, CONFIG,
     get_price_key,
 };
@@ -80,12 +80,13 @@ pub fn post_metric(
                     // Deserialize a the metric attributes to get the denom and base denom
                     let attributes: RedemptionRateAttributes = match metadata.attributes.as_ref() {
                         Some(attributes) => {
-                            serde_json::from_str(&attributes).map_err(|_| ContractError::InvalidMetricMetadataAttributes {
+                            serde_json_wasm::from_str(&attributes).map_err(|_| ContractError::InvalidMetricMetadataAttributes {
                                 metric_type: new_metric.metric_type.clone(),
                             })?
                         },
                         None => return Err(ContractError::InvalidMetricMetadataAttributes { metric_type: new_metric.metric_type.clone() })
                     };
+
                     let denom = attributes.denom.clone();
                     let base_denom = attributes.base_denom.clone();
 

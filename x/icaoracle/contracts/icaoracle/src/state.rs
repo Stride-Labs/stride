@@ -40,6 +40,9 @@ pub struct Metric {
     pub metadata: Metadata
 }
 
+// QUESTION: What's the best way to handle these attributes, considering
+// there's a different schema for each message type?
+//
 // The Metadata struct stores additional context for each metric  
 // The update_time/block_height are the time and block height at which 
 //   the value was updated on the source chain
@@ -87,14 +90,14 @@ pub fn get_price_key(denom: &str, base_denom: &str) -> String {
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct MetricHistory {
     deque: VecDeque<Metric>,
-    capacity: usize,
+    capacity: u64,
 }
 impl MetricHistory {
     // Instantiates a new deque with a fixed capacity
     pub fn new() -> Self {
         let capacity = 100;
         MetricHistory {
-            deque: VecDeque::with_capacity(capacity),
+            deque: VecDeque::with_capacity(capacity as usize),
             capacity,
         }
     }
@@ -114,7 +117,7 @@ impl MetricHistory {
     pub fn add(&mut self, metric: Metric) {
         if let Err(index) = self.deque.binary_search_by_key(&metric.metadata.update_time, |m| m.metadata.update_time) {
             self.deque.insert(index, metric);
-            if self.deque.len() > self.capacity {
+            if self.deque.len() > self.capacity as usize {
                 self.deque.pop_back();
             }
         }

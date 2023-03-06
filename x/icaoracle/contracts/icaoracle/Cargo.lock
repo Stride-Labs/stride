@@ -456,7 +456,7 @@ dependencies = [
  "cw2",
  "schemars",
  "serde",
- "serde_json",
+ "serde-json-wasm",
  "strum",
  "strum_macros",
  "thiserror",

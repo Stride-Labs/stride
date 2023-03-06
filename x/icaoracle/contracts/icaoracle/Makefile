@@ -27,7 +27,7 @@ build-optimized:
 		cosmwasm/rust-optimizer:0.12.11
 
 validate:
-	cosmwasm-check ./target/wasm32-unknown-unknown/release/ica_oracle.wasm
+	cosmwasm-check ./artifacts/ica_oracle.wasm
 
 # Uploads the contract to juno
 store-contract: 
@@ -41,13 +41,9 @@ instantiate-contract:
 add-metric:
 	@STRIDE_HOME=$(STRIDE_HOME) bash scripts/add_metric.sh
 
-# Add's an oracle to Stride
+# Add's an oracle to Stride and instantiates the contract with an ICA
 add-oracle:
 	@STRIDE_HOME=$(STRIDE_HOME) bash scripts/add_oracle.sh
-
-# Instantiates the contract through a Stride ICA
-instantiate-oracle: 
-	@STRIDE_HOME=$(STRIDE_HOME) bash scripts/instantiate_oracle.sh
 
 # Queries all oracles on Stride
 query-oracles:

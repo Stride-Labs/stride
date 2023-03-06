@@ -72,7 +72,6 @@ mod tests {
     use cosmwasm_std::{attr, Addr, Decimal};
     use cosmwasm_std::testing::{mock_dependencies, mock_env, mock_info, MockStorage, MockApi, MockQuerier};
     use cosmwasm_std::{from_binary, OwnedDeps, DepsMut, Env, MessageInfo, Empty};
-    use serde_json::json;
 
     use crate::msg::{InstantiateMsg, ExecuteMsg, QueryMsg, Metrics, PriceResponse};
     use crate::state::{Metric, Config, Metadata, RedemptionRateAttributes};
@@ -114,7 +113,7 @@ mod tests {
             denom: DENOM.to_string(),
             base_denom: IBC_DENOM.to_string(),
         };
-        let redemption_rate_attributes = Some(json!(redemption_rate_attributes).to_string());
+        let redemption_rate_attributes = Some(serde_json_wasm::to_string(&redemption_rate_attributes).unwrap());
         let metric = Metric{
             key: key.to_string(),
             value: value.to_string(),

@@ -4,12 +4,9 @@
         "value": "1.0303",
         "metric_type": "redemption_rate",
         "metadata": {
-            "update_time": "100",
-            "update_block": "1000",
-            "attributes": {
-                "denom": "stuatom",
-                "base_denom": "ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2"
-            }
+            "update_time": 100,
+            "block_height": 1000,
+            "attributes": "{\"denom\": \"statom\", \"base_denom\": \"ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2\"}"
         }
     }
 }
