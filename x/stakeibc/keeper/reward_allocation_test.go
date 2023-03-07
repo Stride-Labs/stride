@@ -10,9 +10,9 @@ import (
 	icatypes "github.com/cosmos/ibc-go/v5/modules/apps/27-interchain-accounts/types"
 	clienttypes "github.com/cosmos/ibc-go/v5/modules/core/02-client/types"
 	sdkmath "cosmossdk.io/math"
-	epochtypes "github.com/Stride-Labs/stride/v5/x/epochs/types"
+	epochtypes "github.com/Stride-Labs/stride/v6/x/epochs/types"
 	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
-	stakeibctypes "github.com/Stride-Labs/stride/v5/x/stakeibc/types"
+	stakeibctypes "github.com/Stride-Labs/stride/v6/x/stakeibc/types"
 	"github.com/cosmos/cosmos-sdk/simapp"
 	"github.com/cosmos/cosmos-sdk/x/staking/teststaking"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
@@ -20,7 +20,7 @@ import (
 	ibctypes "github.com/cosmos/ibc-go/v5/modules/apps/transfer/types"
 	channeltypes "github.com/cosmos/ibc-go/v5/modules/core/04-channel/types"
 	abci "github.com/tendermint/tendermint/abci/types"
-	recordtypes "github.com/Stride-Labs/stride/v5/x/records/types"
+	recordtypes "github.com/Stride-Labs/stride/v6/x/records/types"
 )
 
 var (
