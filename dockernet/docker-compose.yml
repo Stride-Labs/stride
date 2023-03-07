@@ -173,6 +173,44 @@ services:
 
   # Fill in new host zone being tested here
 
+  comdex1:
+    image: stridezone:comdex
+    command: comdex start
+    volumes:
+      - ./state/comdex1:/home/comdex/.comdex
+    ports:
+      - "26057:26657"
+      - "1267:1317"
+      - "9040:9090"
+
+  comdex2:
+    image: stridezone:comdex
+    command: comdex start
+    volumes:
+      - ./state/comdex2:/home/comdex/.comdex
+
+  comdex3:
+    image: stridezone:comdex
+    command: comdex start
+    volumes:
+      - ./state/comdex3:/home/comdex/.comdex
+
+  comdex4:
+    image: stridezone:comdex
+    command: comdex start
+    volumes:
+      - ./state/comdex4:/home/comdex/.comdex
+
+  comdex5:
+    image: stridezone:comdex
+    command: comdex start
+    volumes:
+      - ./state/comdex5:/home/comdex/.comdex
+
+
+
+
+
   hermes:
     image: stridezone:hermes
     volumes:
@@ -208,6 +246,13 @@ services:
     restart: always
     command: [ "bash", "start.sh", "stride-stars" ]
 
+  relayer-comdex:
+    image: stridezone:relayer
+    volumes:
+      - ./state/relayer-comdex:/home/relayer/.relayer
+    restart: always
+    command: [ "bash", "start.sh", "stride-comdex" ]
+
   relayer-host:
     image: stridezone:relayer
     volumes:
@@ -221,3 +266,6 @@ services:
       - ./state/relayer-juno-osmo:/home/relayer/.relayer
     restart: always
     command: [ "bash", "start.sh", "juno-osmo" ]
+
+
+

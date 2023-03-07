@@ -74,6 +74,20 @@ chains:
       timeout: 20s
       output-format: json
       sign-mode: direct
+  comdex:
+    type: cosmos
+    value:
+      key: rly7
+      chain-id: COMDEX
+      rpc-addr: http://comdex1:26657
+      account-prefix: COMDEX
+      keyring-backend: test
+      gas-adjustment: 1.2
+      gas-prices: 0.01ucmdx
+      debug: false
+      timeout: 20s
+      output-format: json
+      sign-mode: direct
   host:
     type: cosmos
     value:
@@ -133,6 +147,14 @@ paths:
       chain-id: STRIDE
     dst:
       chain-id: STARS
+    src-channel-filter:
+      rule: ""
+      channel-list: []
+  stride-comdex:
+    src:
+      chain-id: STRIDE
+    dst:
+      chain-id: COMDEX
     src-channel-filter:
       rule: ""
       channel-list: []
