@@ -60,8 +60,10 @@ func (s *KeeperTestSuite) SetupWithdrawAccount() (stakeibctypes.HostZone, Channe
 	// Fund withdraw ica
 	initialModuleAccountBalance := sdk.NewCoin(Atom, sdkmath.NewInt(15_000))
 	s.FundAccount(sdk.MustAccAddressFromBech32(withdrawalAddress), initialModuleAccountBalance)
-	s.HostApp.BankKeeper.MintCoins(s.HostChain.GetContext(), minttypes.ModuleName, sdk.NewCoins(initialModuleAccountBalance))
-	s.HostApp.BankKeeper.SendCoinsFromModuleToAccount(s.HostChain.GetContext(), minttypes.ModuleName, sdk.MustAccAddressFromBech32(withdrawalAddress), sdk.NewCoins(initialModuleAccountBalance))
+	err := s.HostApp.BankKeeper.MintCoins(s.HostChain.GetContext(), minttypes.ModuleName, sdk.NewCoins(initialModuleAccountBalance))
+	s.Require().NoError(err)
+	err = s.HostApp.BankKeeper.SendCoinsFromModuleToAccount(s.HostChain.GetContext(), minttypes.ModuleName, sdk.MustAccAddressFromBech32(withdrawalAddress), sdk.NewCoins(initialModuleAccountBalance))
+	s.Require().NoError(err)
 
 	// Allow ica call ibc transfer in host chain
 	s.HostApp.ICAHostKeeper.SetParams(s.HostChain.GetContext(), hosttypes.Params{
@@ -133,6 +135,8 @@ func (s *KeeperTestSuite) TestAllocateRewardIBC() {
 	msg := ibctypes.NewMsgTransfer("transfer", "channel-0", sdk.NewCoin(Atom, sdkmath.NewInt(15_000)), hz.WithdrawalAccount.Address, rewardCollector.GetAddress().String(), clienttypes.NewHeight(1, 100), timeoutTimestamp)
 	msgs = append(msgs, msg)
 	data, _ := icatypes.SerializeCosmosTx(s.App.AppCodec(), msgs)
+	icaTimeOutNanos := s.App.StakeibcKeeper.GetParam(s.Ctx, stakeibctypes.KeyICATimeoutNanos)
+	icaTimeoutTimestamp := uint64(s.StrideChain.GetContext().BlockTime().UnixNano()) + icaTimeOutNanos
 	
 	packetData := icatypes.InterchainAccountPacketData{
 		Type: icatypes.EXECUTE_TX,
@@ -148,7 +152,8 @@ func (s *KeeperTestSuite) TestAllocateRewardIBC() {
 		clienttypes.NewHeight(1, 100),
 		0,
 	)
-	s.App.StakeibcKeeper.SubmitTxs(s.Ctx, hz.ConnectionId, msgs, *hz.WithdrawalAccount, 0, "", nil)
+	_, err := s.App.StakeibcKeeper.SubmitTxs(s.Ctx, hz.ConnectionId, msgs, *hz.WithdrawalAccount, icaTimeoutTimestamp, "", nil)
+	s.Require().NoError(err)
 
 	// Simulate the process of receiving ica packets on the hostchain
 	module, _, err := s.HostChain.App.GetIBCKeeper().PortKeeper.LookupModuleByPort(s.HostChain.GetContext(), "icahost")
@@ -223,10 +228,9 @@ func (s *KeeperTestSuite) TestAllocateRewardIBC() {
 	s.App.DistrKeeper.AllocateTokens(s.Ctx, 200, 200, sdk.ConsAddress(PK[1].Address()), votes)
 
 	// Withdraw reward
-	s.App.DistrKeeper.WithdrawDelegationRewards(s.Ctx, sdk.AccAddress(valAddrs[1]), valAddrs[1])
+	rewards, err := s.App.DistrKeeper.WithdrawDelegationRewards(s.Ctx, sdk.AccAddress(valAddrs[1]), valAddrs[1])
 
 	// Check balances contains stTokens
-	rewards := s.App.BankKeeper.GetAllBalances(s.Ctx, sdk.AccAddress(valAddrs[1]))
 	s.Require().True(strings.Contains(rewards.String(), "stuatom"))
 
 }
