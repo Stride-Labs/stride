@@ -184,6 +184,7 @@ func (s *KeeperTestSuite) TestAllocateRewardIBC() {
 	// Liquid stake all hostzone token then get stTokens back
 	// s.App.BeginBlocker(s.Ctx, abci.RequestBeginBlock{})
 	err = s.App.StakeibcKeeper.AllocateHostZoneReward(s.Ctx)
+	s.Require().NoError(err)
 
 	// Set up validator & delegation
 	addrs := s.TestAccs
@@ -229,6 +230,7 @@ func (s *KeeperTestSuite) TestAllocateRewardIBC() {
 
 	// Withdraw reward
 	rewards, err := s.App.DistrKeeper.WithdrawDelegationRewards(s.Ctx, sdk.AccAddress(valAddrs[1]), valAddrs[1])
+	s.Require().NoError(err)
 
 	// Check balances contains stTokens
 	s.Require().True(strings.Contains(rewards.String(), "stuatom"))
