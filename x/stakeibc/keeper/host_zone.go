@@ -212,7 +212,7 @@ func (k Keeper) GetHostZoneFromIBCDenom(ctx sdk.Context, denom string) (*types.H
 func (k Keeper) CheckIsStToken(ctx sdk.Context, denom string) bool {
 	isStToken := false
 	k.IterateHostZones(ctx, func(ctx sdk.Context, index int64, zoneInfo types.HostZone) error {
-		if "st"+zoneInfo.IbcDenom == denom {
+		if "st"+zoneInfo.HostDenom == denom {
 			isStToken = true
 			return nil
 		}

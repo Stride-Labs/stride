@@ -75,7 +75,7 @@ func (s *KeeperTestSuite) SetupWithdrawAccount() RewardAllocationTestCase {
 		TransferChannelId: ibctesting.FirstChannelID,
 		HostDenom:         Atom,
 		IbcDenom:          ibcDenomTrace.IBCDenom(),
-		// RedemptionRate:    sdk.OneDec(),
+		RedemptionRate:    sdk.OneDec(),
 	}
 
 	currentEpoch := uint64(2)
@@ -179,36 +179,142 @@ func (s *KeeperTestSuite) TestIbcTransferRewardsFromWithdrawalToRewardCollector(
 }
 
 // Test the process of liquid staking staking rewards then sweeping them to the Fee Collector
-func (s *KeeperTestSuite) TestSweepRewardCollectorToFeeCollector() {
-	// Setup
+func (s *KeeperTestSuite) TestLiquidStakeAndSweepSuccess() {
 	tc := s.SetupWithdrawAccount()
 
 	// Fund reward collector account with ibc'd reward tokens
 	s.FundModuleAccount(stakeibctypes.RewardCollectorName, sdk.NewCoin(tc.hz.IbcDenom, tc.withdrawalAcctBal))
 
 	// Liquid stake all hostzone token then get stTokens back
-	err := s.App.StakeibcKeeper.AllocateHostZoneReward(s.Ctx)
+	err := s.App.StakeibcKeeper.LiquidStakeRewardCollectorBalance(s.Ctx, s.GetMsgServer())
 	s.Require().NoError(err)
 
-	// Check that reward collector account has no more ibc denom tokens
+	// Reward Collector acct should have no more ibc/XXX tokens after liquid staking them all
 	rewardCollectorAddress := s.App.AccountKeeper.GetModuleAccount(s.Ctx, stakeibctypes.RewardCollectorName).GetAddress()
 	rewardedTokens := s.App.BankKeeper.GetAllBalances(s.Ctx, rewardCollectorAddress)
 	s.Require().Equal("0", rewardedTokens.AmountOf(tc.hz.IbcDenom).String())
 
-	// Check that fee collector account has stTokens
+	// Sweep stTokens from Reward Collector to Fee Collector
+	err = s.App.StakeibcKeeper.SweepStTokensFromRewardCollToFeeColl(s.Ctx)
+	s.Require().NoError(err)
+
+	// Fee Collector acct should have stTokens after they're swept there from Reward Collector
 	feeCollectorAddress := s.App.AccountKeeper.GetModuleAccount(s.Ctx, authtypes.FeeCollectorName).GetAddress()
 	liquidStakedTokens := s.App.BankKeeper.GetAllBalances(s.Ctx, feeCollectorAddress)
-	s.Require().Equal(tc.withdrawalAcctBal, liquidStakedTokens.AmountOf("st"+tc.hz.HostDenom).String())
+	s.Require().Equal(tc.withdrawalAcctBal.String(), liquidStakedTokens.AmountOf("st"+tc.hz.HostDenom).String())
 }
 
-// Test the process of a delegator claiming staking reward stTokens
-func (s *KeeperTestSuite) TestClaimStakingRewardStTokens() {
+func (s *KeeperTestSuite) TestLiquidStakeRewardCollectorIbcTokensNoIbcTokens() {
+	_ = s.SetupWithdrawAccount()
 
-	// Setup
+	// Fund reward collector account with non-ibc reward tokens
+	nonIbcTokenDenom := "XXX"
+	nonIbctokenAmt := sdk.NewInt(10)
+	s.FundModuleAccount(stakeibctypes.RewardCollectorName, sdk.NewCoin(nonIbcTokenDenom, nonIbctokenAmt))
+
+	// Liquid stake all hostzone token then get stTokens back
+	err := s.App.StakeibcKeeper.LiquidStakeRewardCollectorBalance(s.Ctx, s.GetMsgServer())
+	s.Require().NoError(err)
+
+	// Reward Collector acct should stil have nonIbcTokenDenom tokens after liquid staking only its stTokens
+	rewardCollectorAddress := s.App.AccountKeeper.GetModuleAccount(s.Ctx, stakeibctypes.RewardCollectorName).GetAddress()
+	rewardedTokens := s.App.BankKeeper.GetAllBalances(s.Ctx, rewardCollectorAddress)
+	s.Require().Equal(nonIbctokenAmt.String(), rewardedTokens.AmountOf(nonIbcTokenDenom).String())
+}
+
+func (s *KeeperTestSuite) TestLiquidStakeRewardCollectorIbcTokensNoTokens() {
+	tc := s.SetupWithdrawAccount()
+
+	// Do not fund reward collector account, should have 0 balance
+	rewardCollectorAddress := s.App.AccountKeeper.GetModuleAccount(s.Ctx, stakeibctypes.RewardCollectorName).GetAddress()
+	rewardedTokens := s.App.BankKeeper.GetAllBalances(s.Ctx, rewardCollectorAddress)
+	s.Require().Equal("0", rewardedTokens.AmountOf(tc.hz.IbcDenom).String())
+
+	// Liquid stake all hostzone token should fail
+	err := s.App.StakeibcKeeper.LiquidStakeRewardCollectorBalance(s.Ctx, s.GetMsgServer())
+	s.Require().ErrorContains(err, "No reward to allocate from RewardCollector")
+}
+
+func (s *KeeperTestSuite) TestSweepRewardCollToFeeCollectorSuccess() {
+	tc := s.SetupWithdrawAccount()
+
+	// Fund reward collector account with stTokens
+	s.FundModuleAccount(stakeibctypes.RewardCollectorName, sdk.NewCoin("st"+tc.hz.HostDenom, tc.withdrawalAcctBal))
+
+	// Sweep stTokens from Reward Collector to Fee Collector
+	err := s.App.StakeibcKeeper.SweepStTokensFromRewardCollToFeeColl(s.Ctx)
+	s.Require().NoError(err)
+
+	// Reward Collector acct should have no more stTokens after they're swept
+	rewardCollectorAddress := s.App.AccountKeeper.GetModuleAccount(s.Ctx, stakeibctypes.RewardCollectorName).GetAddress()
+	rewardLiquidStakedTokens := s.App.BankKeeper.GetAllBalances(s.Ctx, rewardCollectorAddress)
+	s.Require().Equal("0", rewardLiquidStakedTokens.AmountOf("st"+tc.hz.HostDenom).String())
+
+	// Fee Collector acct should have stTokens after they're swept there from Reward Collector
+	feeCollectorAddress := s.App.AccountKeeper.GetModuleAccount(s.Ctx, authtypes.FeeCollectorName).GetAddress()
+	feeLiquidStakedTokens := s.App.BankKeeper.GetAllBalances(s.Ctx, feeCollectorAddress)
+	s.Require().Equal(tc.withdrawalAcctBal.String(), feeLiquidStakedTokens.AmountOf("st"+tc.hz.HostDenom).String())
+}
+
+func (s *KeeperTestSuite) TestSweepRewardCollToFeeCollectorNonStTokens() {
+	tc := s.SetupWithdrawAccount()
+
+	// Fund reward collector account with stTokens
+	nonStTokenDenom := "XXX"
+	nonStTokenAmt := sdk.NewInt(10)
+	s.FundModuleAccount(stakeibctypes.RewardCollectorName, sdk.NewCoin(nonStTokenDenom, nonStTokenAmt))
+
+	// Sweep stTokens from Reward Collector to Fee Collector
+	err := s.App.StakeibcKeeper.SweepStTokensFromRewardCollToFeeColl(s.Ctx)
+	s.Require().NoError(err)
+
+	// Reward Collector acct should still contain nonStTokenDenom after stTokens after they're swept
+	rewardCollectorAddress := s.App.AccountKeeper.GetModuleAccount(s.Ctx, stakeibctypes.RewardCollectorName).GetAddress()
+	rewardLiquidStakedTokens := s.App.BankKeeper.GetAllBalances(s.Ctx, rewardCollectorAddress)
+	s.Require().Equal(nonStTokenAmt.String(), rewardLiquidStakedTokens.AmountOf(nonStTokenDenom).String())
+
+	// Fee Collector acct should have no stTokens or nonStTokenDenom tokens
+	feeCollectorAddress := s.App.AccountKeeper.GetModuleAccount(s.Ctx, authtypes.FeeCollectorName).GetAddress()
+	feeLiquidStakedTokens := s.App.BankKeeper.GetAllBalances(s.Ctx, feeCollectorAddress)
+	s.Require().Equal("0", feeLiquidStakedTokens.AmountOf("st"+tc.hz.HostDenom).String())
+	s.Require().Equal("0", feeLiquidStakedTokens.AmountOf(nonStTokenDenom).String())
+}
+
+func (s *KeeperTestSuite) TestSweepRewardCollToFeeCollectorNoTokens() {
+	tc := s.SetupWithdrawAccount()
+
+	// Do not fund the reward collector account, check it has no stTokens
+	rewardCollectorAddress := s.App.AccountKeeper.GetModuleAccount(s.Ctx, stakeibctypes.RewardCollectorName).GetAddress()
+	rewardLiquidStakedTokens := s.App.BankKeeper.GetAllBalances(s.Ctx, rewardCollectorAddress)
+	s.Require().Equal("0", rewardLiquidStakedTokens.AmountOf("st"+tc.hz.HostDenom).String())
+
+	// Sweep stTokens from Reward Collector to Fee Collector, should not error
+	err := s.App.StakeibcKeeper.SweepStTokensFromRewardCollToFeeColl(s.Ctx)
+	s.Require().NoError(err)
+
+	// Fee Collector acct should have no stTokens tokens
+	feeCollectorAddress := s.App.AccountKeeper.GetModuleAccount(s.Ctx, authtypes.FeeCollectorName).GetAddress()
+	feeLiquidStakedTokens := s.App.BankKeeper.GetAllBalances(s.Ctx, feeCollectorAddress)
+	s.Require().Equal("0", feeLiquidStakedTokens.AmountOf("st"+tc.hz.HostDenom).String())
+}
+
+// Test the process of a delegator claiming staking reward stTokens (tests that Fee Account can distribute arbitrary denoms)
+func (s *KeeperTestSuite) TestClaimStakingRewardStTokens() {
 	tc := s.SetupWithdrawAccount()
 
 	// Fund fee collector account with stTokens
 	s.FundModuleAccount(authtypes.FeeCollectorName, sdk.NewCoin("st"+tc.hz.HostDenom, tc.withdrawalAcctBal))
+
+	rewards, err := SimulateProcessingDelegationRewards(s)
+	s.Require().NoError(err)
+
+	// Check balances contains stTokens
+	s.Require().True(strings.Contains(rewards.String(), "stuatom"))
+
+}
+
+// Helper: setup staking accounts, advance Stride 1 block and distribute rewards to stakers
+func SimulateProcessingDelegationRewards(s *KeeperTestSuite) (sdk.Coins, error) {
 
 	// Set up validators & delegators on Stride
 	addrs := s.TestAccs
@@ -253,10 +359,5 @@ func (s *KeeperTestSuite) TestClaimStakingRewardStTokens() {
 	s.App.DistrKeeper.AllocateTokens(s.Ctx, 200, 200, sdk.ConsAddress(PK[1].Address()), votes)
 
 	// Withdraw reward
-	rewards, err := s.App.DistrKeeper.WithdrawDelegationRewards(s.Ctx, sdk.AccAddress(valAddrs[1]), valAddrs[1])
-	s.Require().NoError(err)
-
-	// Check balances contains stTokens
-	s.Require().True(strings.Contains(rewards.String(), "stuatom"))
-
+	return s.App.DistrKeeper.WithdrawDelegationRewards(s.Ctx, sdk.AccAddress(valAddrs[1]), valAddrs[1])
 }

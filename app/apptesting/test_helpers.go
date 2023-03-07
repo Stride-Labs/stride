@@ -70,9 +70,6 @@ func (s *AppTestHelper) Setup() {
 		Ctx:             s.Ctx,
 	}
 	s.TestAccs = CreateRandomAccounts(3)
-	for _, acc := range s.TestAccs {
-		s.FundAccount(acc, sdk.NewCoin(sdk.DefaultBondDenom, sdk.NewInt(1000000)))
-	}
 	s.IbcEnabled = false
 	s.IcaAddresses = make(map[string]string)
 }

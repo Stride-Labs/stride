@@ -3,8 +3,10 @@ package keeper
 import (
 	"fmt"
 
+	errorsmod "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/spf13/cast"
 
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
@@ -239,17 +241,17 @@ func (k Keeper) ReinvestRewards(ctx sdk.Context) {
 	}
 }
 
-func (k Keeper) AllocateHostZoneReward(ctx sdk.Context) error {
-	k.Logger(ctx).Info("Allocating host zone reward to delegator")
-
+// Liquid Stake Reward Collector Balance
+func (k Keeper) LiquidStakeRewardCollectorBalance(ctx sdk.Context, msgSvr types.MsgServer) error {
+	k.Logger(ctx).Info("Liquid Staking stake reward collector balance")
 	rewardCollectorAddress := k.accountKeeper.GetModuleAccount(ctx, types.RewardCollectorName).GetAddress()
 	rewardedTokens := k.bankKeeper.GetAllBalances(ctx, rewardCollectorAddress)
 	if rewardedTokens.IsEqual(sdk.Coins{}) {
-		k.Logger(ctx).Info("No reward to allocate from RewardCollector")
-		return nil
+		errMsg := "No reward to allocate from RewardCollector"
+		k.Logger(ctx).Info(errMsg)
+		return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, errMsg)
 	}
 
-	msgSvr := NewMsgServerImpl(k)
 	for _, token := range rewardedTokens {
 		// get hostzone by reward token (in ibc denom format)
 		hz, err := k.GetHostZoneFromIBCDenom(ctx, token.Denom)
@@ -265,23 +267,54 @@ func (k Keeper) AllocateHostZoneReward(ctx sdk.Context) error {
 			k.Logger(ctx).Error("Can't liquid stake %s for hostzone %s", token.String(), hz.ChainId)
 			continue
 		}
-		k.Logger(ctx).Info("Liquid staked %s for hostzone %s's accrued rewards", token.String(), hz.ChainId)
+		k.Logger(ctx).Info(fmt.Sprintf("Liquid staked %s for hostzone %s's accrued rewards", token.String(), hz.ChainId))
 	}
-	// After liquid stake all tokens, reward collector receive stTokens
+	return nil
+}
+
+// Sweep stTokens from Reward Collector to Fee Collector
+func (k Keeper) SweepStTokensFromRewardCollToFeeColl(ctx sdk.Context) error {
 	// Send all stTokens to fee collector to distribute to delegator later
+	rewardCollectorAddress := k.accountKeeper.GetModuleAccount(ctx, types.RewardCollectorName).GetAddress()
+
 	rewardCollCoins := k.bankKeeper.GetAllBalances(ctx, rewardCollectorAddress)
+	k.Logger(ctx).Info(fmt.Sprintf("Reward collector has %s", rewardCollCoins.String()))
 	stTokens := sdk.NewCoins()
 	for _, token := range rewardCollCoins {
 		// get hostzone by reward token (in ibc denom format)
-		isStToken := k.CheckIsStToken(ctx, token.String())
+		k.Logger(ctx).Info(fmt.Sprintf("Checking if %s is stToken", token.String()))
+		isStToken := k.CheckIsStToken(ctx, token.Denom)
+		k.Logger(ctx).Info(fmt.Sprintf("%s is stToken: %t", token.String(), isStToken))
 		if isStToken {
 			stTokens = append(stTokens, token)
 		}
 	}
-	k.Logger(ctx).Info("Sending %s stTokens from %s to %s", stTokens.String(), types.RewardCollectorName, authtypes.FeeCollectorName)
+	k.Logger(ctx).Info(fmt.Sprintf("Sending %s stTokens from %s to %s", stTokens.String(), types.RewardCollectorName, authtypes.FeeCollectorName))
+
 	err := k.bankKeeper.SendCoinsFromModuleToModule(ctx, types.RewardCollectorName, authtypes.FeeCollectorName, stTokens)
 	if err != nil {
-		k.Logger(ctx).Error("Can't send coins from module %s to module %s", types.RewardCollectorName, authtypes.FeeCollectorName)
+		errMsg := fmt.Sprintf("Can't send coins from module %s to module %s, err %s", types.RewardCollectorName, authtypes.FeeCollectorName, err.Error())
+		k.Logger(ctx).Error(errMsg)
+		return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "errMsg")
+	}
+	return nil
+}
+
+func (k Keeper) AllocateHostZoneReward(ctx sdk.Context) error {
+
+	msgSvr := NewMsgServerImpl(k)
+	err := k.LiquidStakeRewardCollectorBalance(ctx, msgSvr)
+	if err != nil {
+		// log then clobber the error so that the rest of the hooks can proceed
+		k.Logger(ctx).Error(fmt.Sprintf("Can't liquid stake reward collector balance, err: %s", err.Error()))
+		return nil
+	}
+
+	err = k.SweepStTokensFromRewardCollToFeeColl(ctx)
+	if err != nil {
+		// log then clobber the error so that the rest of the hooks can proceed
+		k.Logger(ctx).Error(fmt.Sprintf("Can't sweep stTokens from reward collector to fee collector, err: %s", err.Error()))
+		return nil
 	}
 	return nil
 }
