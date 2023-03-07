@@ -1,31 +1,29 @@
-FROM golang:1.19-alpine3.15 AS builder
+FROM rust:latest AS builder1
 
 WORKDIR /opt/
 
-RUN set -eux; apk add --no-cache ca-certificates build-base; apk add git linux-headers
+RUN set -eux; apt-get update; apt-get upgrade; apt-get install git perl cmake clang -y
 
-ENV COMMIT_HASH=6a8b07c423e4a6239d5e9b97ba5b93ab214ad82e
+ENV COMMIT_HASH=56901156b6d406b712bcf50d1a1ff4bd6adc5290
 
-RUN git clone https://github.com/antstalepresh/sei-chain.git \
+RUN git clone https://github.com/sei-protocol/sei-chain.git \
     && cd sei-chain \
     && git checkout ${COMMIT_HASH} 
 
 WORKDIR /opt/sei-chain
 
-# Cosmwasm - download correct libwasmvm version and verify checksum
-RUN WASMVM_VERSION=$(go list -m github.com/CosmWasm/wasmvm | cut -d ' ' -f 2) \
-    && wget https://github.com/CosmWasm/wasmvm/releases/download/$WASMVM_VERSION/libwasmvm_muslc.$(uname -m).a \
-    -O /lib/libwasmvm_muslc.a \
-    && wget https://github.com/CosmWasm/wasmvm/releases/download/v1.0.0/checksums.txt -O /tmp/checksums.txt \
-    && sha256sum /lib/libwasmvm_muslc.a | grep $(cat /tmp/checksums.txt | grep $(uname -m) | cut -d ' ' -f 1)
+RUN make build-nitro
 
-RUN BUILD_TAGS=muslc LINK_STATICALLY=true make build
+FROM golang:latest AS builder2
+COPY --from=builder1 /opt/sei-chain /opt/sei-chain
 
-FROM alpine:3.15
-COPY --from=builder /opt/sei-chain/build/seid /usr/local/bin/
-RUN apk add bash vim \
-    && addgroup -g 1000 sei \
-    && adduser -S -h /home/sei -D sei -u 1000 -G sei
+WORKDIR /opt/sei-chain
+RUN make clean
+RUN make build
+
+RUN cp /opt/sei-chain/build/seid /usr/local/bin/
+RUN addgroup --gid 1000 sei \
+    && adduser --system --home /home/sei --disabled-password sei --uid 1000 --gid 1000
 
 USER 1000
 WORKDIR /home/sei

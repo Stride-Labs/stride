@@ -100,6 +100,7 @@ for (( i=1; i <= $NUM_NODES; i++ )); do
         sed -i -E "s|skip_timeout_commit = true|skip_timeout_commit = false|g" $config_toml
     fi
     sed -i -E "s|prometheus = false|prometheus = true|g" $config_toml
+    sed -i -E "s|mode = \"full\"|mode = \"validator\"|g" $config_toml
 
     sed -i -E "s|minimum-gas-prices = \".*\"|minimum-gas-prices = \"0${DENOM}\"|g" $app_toml
     sed -i -E '/\[api\]/,/^enable = .*$/ s/^enable = .*$/enable = true/' $app_toml
