@@ -21,6 +21,7 @@ import (
 	abci "github.com/tendermint/tendermint/abci/types"
 
 	epochtypes "github.com/Stride-Labs/stride/v6/x/epochs/types"
+	recordtypes "github.com/Stride-Labs/stride/v6/x/records/types"
 	stakeibctypes "github.com/Stride-Labs/stride/v6/x/stakeibc/types"
 )
 
@@ -90,17 +91,18 @@ func (s *KeeperTestSuite) SetupWithdrawAccount() RewardAllocationTestCase {
 		NextEpochStartTime: uint64(s.Coordinator.CurrentTime.UnixNano() + 60_000_000_000), // dictates timeouts
 	}
 
-	// initialDepositRecord := recordtypes.DepositRecord{
-	// 	Id:                 1,
-	// 	DepositEpochNumber: 2,
-	// 	HostZoneId:         "GAIA",
-	// 	Amount:             sdkmath.ZeroInt(),
-	// }
+	// we need a deposit record to liquid stake 
+	initialDepositRecord := recordtypes.DepositRecord{
+		Id:                 1,
+		DepositEpochNumber: 2,
+		HostZoneId:         "GAIA",
+		Amount:             sdkmath.ZeroInt(),
+	}
 
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
 	s.App.StakeibcKeeper.SetEpochTracker(s.Ctx, strideEpochTracker)
 	s.App.StakeibcKeeper.SetEpochTracker(s.Ctx, mintEpochTracker)
-	// s.App.RecordsKeeper.SetDepositRecord(s.Ctx, initialDepositRecord)
+	s.App.RecordsKeeper.SetDepositRecord(s.Ctx, initialDepositRecord)
 
 	return RewardAllocationTestCase{
 		hz: hostZone,
@@ -186,8 +188,8 @@ func (s *KeeperTestSuite) TestLiquidStakeAndSweepSuccess() {
 	s.FundModuleAccount(stakeibctypes.RewardCollectorName, sdk.NewCoin(tc.hz.IbcDenom, tc.withdrawalAcctBal))
 
 	// Liquid stake all hostzone token then get stTokens back
-	err := s.App.StakeibcKeeper.LiquidStakeRewardCollectorBalance(s.Ctx, s.GetMsgServer())
-	s.Require().NoError(err)
+	rewardsFound := s.App.StakeibcKeeper.LiquidStakeRewardCollectorBalance(s.Ctx, s.GetMsgServer())
+	s.Require().True(rewardsFound)
 
 	// Reward Collector acct should have no more ibc/XXX tokens after liquid staking them all
 	rewardCollectorAddress := s.App.AccountKeeper.GetModuleAccount(s.Ctx, stakeibctypes.RewardCollectorName).GetAddress()
@@ -195,7 +197,7 @@ func (s *KeeperTestSuite) TestLiquidStakeAndSweepSuccess() {
 	s.Require().Equal("0", rewardedTokens.AmountOf(tc.hz.IbcDenom).String())
 
 	// Sweep stTokens from Reward Collector to Fee Collector
-	err = s.App.StakeibcKeeper.SweepStTokensFromRewardCollToFeeColl(s.Ctx)
+	err := s.App.StakeibcKeeper.SweepStTokensFromRewardCollToFeeColl(s.Ctx)
 	s.Require().NoError(err)
 
 	// Fee Collector acct should have stTokens after they're swept there from Reward Collector
@@ -213,10 +215,10 @@ func (s *KeeperTestSuite) TestLiquidStakeRewardCollectorIbcTokensNoIbcTokens() {
 	s.FundModuleAccount(stakeibctypes.RewardCollectorName, sdk.NewCoin(nonIbcTokenDenom, nonIbctokenAmt))
 
 	// Liquid stake all hostzone token then get stTokens back
-	err := s.App.StakeibcKeeper.LiquidStakeRewardCollectorBalance(s.Ctx, s.GetMsgServer())
-	s.Require().NoError(err)
+	rewardsFound := s.App.StakeibcKeeper.LiquidStakeRewardCollectorBalance(s.Ctx, s.GetMsgServer())
+	s.Require().False(rewardsFound)
 
-	// Reward Collector acct should stil have nonIbcTokenDenom tokens after liquid staking only its stTokens
+	// Reward Collector acct should stil have nonIbcTokenDenom tokens after liquid staking only its stTokens (of which there are none)
 	rewardCollectorAddress := s.App.AccountKeeper.GetModuleAccount(s.Ctx, stakeibctypes.RewardCollectorName).GetAddress()
 	rewardedTokens := s.App.BankKeeper.GetAllBalances(s.Ctx, rewardCollectorAddress)
 	s.Require().Equal(nonIbctokenAmt.String(), rewardedTokens.AmountOf(nonIbcTokenDenom).String())
@@ -231,8 +233,8 @@ func (s *KeeperTestSuite) TestLiquidStakeRewardCollectorIbcTokensNoTokens() {
 	s.Require().Equal("0", rewardedTokens.AmountOf(tc.hz.IbcDenom).String())
 
 	// Liquid stake all hostzone token should fail
-	err := s.App.StakeibcKeeper.LiquidStakeRewardCollectorBalance(s.Ctx, s.GetMsgServer())
-	s.Require().ErrorContains(err, "No reward to allocate from RewardCollector")
+	rewardsFound := s.App.StakeibcKeeper.LiquidStakeRewardCollectorBalance(s.Ctx, s.GetMsgServer())
+	s.Require().False(rewardsFound)
 }
 
 func (s *KeeperTestSuite) TestSweepRewardCollToFeeCollectorSuccess() {

@@ -230,18 +230,6 @@ func (s *KeeperTestSuite) TestWithdrawalBalanceCallback_NoDelegationAccount() {
 	s.Require().EqualError(err, "no delegation account found for GAIA: ICA acccount not found on host zone")
 }
 
-func (s *KeeperTestSuite) TestWithdrawalBalanceCallback_NoFeeAccount() {
-	tc := s.SetupWithdrawalBalanceCallbackTest()
-
-	// Remove the fee account
-	badHostZone := tc.initialState.hostZone
-	badHostZone.FeeAccount = nil
-	s.App.StakeibcKeeper.SetHostZone(s.Ctx, badHostZone)
-
-	err := stakeibckeeper.WithdrawalBalanceCallback(s.App.StakeibcKeeper, s.Ctx, tc.validArgs.callbackArgs, tc.validArgs.query)
-	s.Require().EqualError(err, "no fee account found for GAIA: ICA acccount not found on host zone")
-}
-
 func (s *KeeperTestSuite) TestWithdrawalBalanceCallback_FailedSubmitTx() {
 	tc := s.SetupWithdrawalBalanceCallbackTest()
 
