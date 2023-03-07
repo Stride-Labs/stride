@@ -7,11 +7,12 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/spf13/cast"
 
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+
 	"github.com/Stride-Labs/stride/v6/utils"
 	epochstypes "github.com/Stride-Labs/stride/v6/x/epochs/types"
 	recordstypes "github.com/Stride-Labs/stride/v6/x/records/types"
 	"github.com/Stride-Labs/stride/v6/x/stakeibc/types"
-	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 )
 
 func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochInfo epochstypes.EpochInfo) {
@@ -70,7 +71,10 @@ func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochInfo epochstypes.EpochInf
 		}
 	}
 	if epochInfo.Identifier == epochstypes.MINT_EPOCH {
-		k.AllocateHostZoneReward(ctx)
+		err := k.AllocateHostZoneReward(ctx)
+		if err != nil {
+			k.Logger(ctx).Error(fmt.Sprintf("Unable to allocate host zone reward, err: %s", err.Error()))
+		}
 	}
 }
 
