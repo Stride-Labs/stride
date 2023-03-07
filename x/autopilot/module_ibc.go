@@ -141,7 +141,7 @@ func (im IBCModule) OnRecvPacket(
 	} else if strings.HasPrefix(data.Memo, "stakeibc/LiquidStakeAndIBCTransfer|") {
 		strideAccAddress, err := sdk.AccAddressFromBech32(data.Receiver)
 		if err != nil {
-			return channeltypes.NewErrorAcknowledgement(err.Error())
+			return channeltypes.NewErrorAcknowledgement(err)
 		}
 
 		receiver := data.Memo[len("stakeibc/LiquidStakeAndIBCTransfer|"):]
@@ -158,7 +158,7 @@ func (im IBCModule) OnRecvPacket(
 	} else if strings.HasPrefix(data.Memo, "stakeibc/RedeemStake|") {
 		strideAccAddress, err := sdk.AccAddressFromBech32(data.Receiver)
 		if err != nil {
-			return channeltypes.NewErrorAcknowledgement(err.Error())
+			return channeltypes.NewErrorAcknowledgement(err)
 		}
 
 		receiver := data.Memo[len("stakeibc/RedeemStake|"):]

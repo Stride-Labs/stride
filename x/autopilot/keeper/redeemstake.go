@@ -1,16 +1,18 @@
 package keeper
 
 import (
+	"fmt"
+
 	"github.com/armon/go-metrics"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	transfertypes "github.com/cosmos/ibc-go/v3/modules/apps/transfer/types"
-	channeltypes "github.com/cosmos/ibc-go/v3/modules/core/04-channel/types"
-	ibcexported "github.com/cosmos/ibc-go/v3/modules/core/exported"
+	transfertypes "github.com/cosmos/ibc-go/v5/modules/apps/transfer/types"
+	channeltypes "github.com/cosmos/ibc-go/v5/modules/core/04-channel/types"
+	ibcexported "github.com/cosmos/ibc-go/v5/modules/core/exported"
 
-	"github.com/Stride-Labs/stride/v4/x/app-router/types"
-	stakeibckeeper "github.com/Stride-Labs/stride/v4/x/stakeibc/keeper"
-	stakeibctypes "github.com/Stride-Labs/stride/v4/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v6/x/autopilot/types"
+	stakeibckeeper "github.com/Stride-Labs/stride/v6/x/stakeibc/keeper"
+	stakeibctypes "github.com/Stride-Labs/stride/v6/x/stakeibc/types"
 )
 
 func (k Keeper) TryRedeemStake(
@@ -22,25 +24,25 @@ func (k Keeper) TryRedeemStake(
 ) ibcexported.Acknowledgement {
 	params := k.GetParams(ctx)
 	if !params.Active {
-		return channeltypes.NewErrorAcknowledgement("packet forwarding param is not active")
+		return channeltypes.NewErrorAcknowledgement(fmt.Errorf("packet forwarding param is not active"))
 	}
 
 	// In this case, we can't process a liquid staking transaction, because we're dealing IBC tokens from other chains
 	if !transfertypes.ReceiverChainIsSource(packet.GetSourcePort(), packet.GetSourceChannel(), newData.Denom) {
-		return channeltypes.NewErrorAcknowledgement("the ibc tokens are not supported for redeem stake")
+		return channeltypes.NewErrorAcknowledgement(fmt.Errorf("the ibc tokens are not supported for redeem stake"))
 	}
 
 	voucherPrefix := transfertypes.GetDenomPrefix(packet.GetSourcePort(), packet.GetSourceChannel())
 	stAssetDenom := newData.Denom[len(voucherPrefix):]
 	if !stakeibctypes.IsStAssetDenom(stAssetDenom) {
-		return channeltypes.NewErrorAcknowledgement("not a liquid staking token")
+		return channeltypes.NewErrorAcknowledgement(fmt.Errorf("not a liquid staking token"))
 	}
 
 	hostZoneDenom := stakeibctypes.HostZoneDenomFromStAssetDenom(stAssetDenom)
 
 	amount, ok := sdk.NewIntFromString(newData.Amount)
 	if !ok {
-		return channeltypes.NewErrorAcknowledgement("not a parsable amount field")
+		return channeltypes.NewErrorAcknowledgement(fmt.Errorf("not a parsable amount field"))
 	}
 
 	// Note: newData.denom is ibc denom for st assets - e.g. ibc/xxx
@@ -48,7 +50,7 @@ func (k Keeper) TryRedeemStake(
 
 	err := k.RunRedeemStake(ctx, parsedReceiver.StrideAccAddress, parsedReceiver.ResultReceiver, hostZoneDenom, token, []metrics.Label{})
 	if err != nil {
-		ack = channeltypes.NewErrorAcknowledgement(err.Error())
+		ack = channeltypes.NewErrorAcknowledgement(err)
 	}
 	return ack
 }

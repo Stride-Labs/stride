@@ -4,23 +4,23 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/cosmos/ibc-go/v3/modules/apps/transfer"
-	transfertypes "github.com/cosmos/ibc-go/v3/modules/apps/transfer/types"
-	clienttypes "github.com/cosmos/ibc-go/v3/modules/core/02-client/types"
-	channeltypes "github.com/cosmos/ibc-go/v3/modules/core/04-channel/types"
+	"github.com/cosmos/ibc-go/v5/modules/apps/transfer"
+	transfertypes "github.com/cosmos/ibc-go/v5/modules/apps/transfer/types"
+	clienttypes "github.com/cosmos/ibc-go/v5/modules/core/02-client/types"
+	channeltypes "github.com/cosmos/ibc-go/v5/modules/core/04-channel/types"
 	"github.com/tendermint/tendermint/crypto/ed25519"
 
-	recordsmodule "github.com/Stride-Labs/stride/v4/x/records"
+	recordsmodule "github.com/Stride-Labs/stride/v6/x/records"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	router "github.com/Stride-Labs/stride/v4/x/app-router"
-	"github.com/Stride-Labs/stride/v4/x/app-router/types"
-	epochtypes "github.com/Stride-Labs/stride/v4/x/epochs/types"
-	minttypes "github.com/Stride-Labs/stride/v4/x/mint/types"
-	recordstypes "github.com/Stride-Labs/stride/v4/x/records/types"
-	stakeibckeeper "github.com/Stride-Labs/stride/v4/x/stakeibc/keeper"
-	stakeibctypes "github.com/Stride-Labs/stride/v4/x/stakeibc/types"
+	router "github.com/Stride-Labs/stride/v6/x/autopilot"
+	"github.com/Stride-Labs/stride/v6/x/autopilot/types"
+	epochtypes "github.com/Stride-Labs/stride/v6/x/epochs/types"
+	minttypes "github.com/Stride-Labs/stride/v6/x/mint/types"
+	recordstypes "github.com/Stride-Labs/stride/v6/x/records/types"
+	stakeibckeeper "github.com/Stride-Labs/stride/v6/x/stakeibc/keeper"
+	stakeibctypes "github.com/Stride-Labs/stride/v6/x/stakeibc/types"
 )
 
 func (suite *KeeperTestSuite) TestOnRecvPacket_RedeemStake() {
@@ -144,7 +144,7 @@ func (suite *KeeperTestSuite) TestOnRecvPacket_RedeemStake() {
 			suite.SetupTest() // reset
 			ctx := suite.Ctx
 
-			suite.App.RouterKeeper.SetParams(ctx, types.Params{Active: tc.forwardingActive})
+			suite.App.AutopilotKeeper.SetParams(ctx, types.Params{Active: tc.forwardingActive})
 
 			// set epoch tracker for env
 			suite.App.StakeibcKeeper.SetEpochTracker(ctx, stakeibctypes.EpochTracker{
@@ -221,7 +221,7 @@ func (suite *KeeperTestSuite) TestOnRecvPacket_RedeemStake() {
 
 			transferIBCModule := transfer.NewIBCModule(suite.App.TransferKeeper)
 			recordsStack := recordsmodule.NewIBCModule(suite.App.RecordsKeeper, transferIBCModule)
-			routerIBCModule := router.NewIBCModule(suite.App.RouterKeeper, recordsStack)
+			routerIBCModule := router.NewIBCModule(suite.App.AutopilotKeeper, recordsStack)
 			ack := routerIBCModule.OnRecvPacket(
 				ctx,
 				packet,
