@@ -106,30 +106,3 @@ func (s *KeeperTestSuite) TestGovRemoveOracle() {
 		}
 	}
 }
-
-func (s *KeeperTestSuite) TestGovUpdateOracleContract() {
-	oracles := s.addOracles()
-
-	oracleIndexToChange := 1
-	newContract := "contract-X"
-	oracleToChange := oracles[oracleIndexToChange]
-
-	// Update the oracle contract through governance
-	err := gov.UpdateOracleContract(s.Ctx, s.App.ICAOracleKeeper, &types.UpdateOracleContractProposal{
-		OracleChainId:   oracleToChange.ChainId,
-		ContractAddress: newContract,
-	})
-	s.Require().NoError(err)
-
-	// Confirm all contract addresses
-	for i, oracle := range s.App.ICAOracleKeeper.GetAllOracles(s.Ctx) {
-		_, found := s.App.ICAOracleKeeper.GetOracle(s.Ctx, oracle.ChainId)
-		s.Require().True(found, "oracle %s does not exist", oracle.ChainId)
-
-		if i == oracleIndexToChange {
-			s.Require().Equal(newContract, oracle.ContractAddress, "oracle %s contract address", oracle.ChainId)
-		} else {
-			s.Require().Equal(oracles[i].ContractAddress, oracle.ContractAddress, "oracle %s contract address", oracle.ChainId)
-		}
-	}
-}

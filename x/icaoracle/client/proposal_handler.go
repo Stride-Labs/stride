@@ -7,7 +7,6 @@ import (
 )
 
 var (
-	ToggleOracleProposalHandler         = govclient.NewProposalHandler(cli.CmdToggleOracleProposal)
-	RemoveOracleProposalHandler         = govclient.NewProposalHandler(cli.CmdRemoveOracleProposal)
-	UpdateOracleContractProposalHandler = govclient.NewProposalHandler(cli.CmdUpdateOracleContractProposal)
+	ToggleOracleProposalHandler = govclient.NewProposalHandler(cli.CmdToggleOracleProposal)
+	RemoveOracleProposalHandler = govclient.NewProposalHandler(cli.CmdRemoveOracleProposal)
 )

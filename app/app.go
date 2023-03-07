@@ -161,7 +161,6 @@ func getGovProposalHandlers() []govclient.ProposalHandler {
 		stakeibcclient.AddValidatorProposalHandler,
 		icaoracleclient.ToggleOracleProposalHandler,
 		icaoracleclient.RemoveOracleProposalHandler,
-		icaoracleclient.UpdateOracleContractProposalHandler,
 		// this line is used by starport scaffolding # stargate/app/govProposalHandler
 	)
 

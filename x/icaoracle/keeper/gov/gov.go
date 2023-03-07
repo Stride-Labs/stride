@@ -22,16 +22,3 @@ func RemoveOracle(ctx sdk.Context, k keeper.Keeper, proposal *types.RemoveOracle
 	k.RemoveOracle(ctx, proposal.OracleChainId)
 	return nil
 }
-
-// Updates the cosmwasm contract address for an oracle
-func UpdateOracleContract(ctx sdk.Context, k keeper.Keeper, proposal *types.UpdateOracleContractProposal) error {
-	oracle, found := k.GetOracle(ctx, proposal.OracleChainId)
-	if !found {
-		return types.ErrOracleNotFound
-	}
-
-	oracle.ContractAddress = proposal.ContractAddress
-	k.SetOracle(ctx, oracle)
-
-	return nil
-}

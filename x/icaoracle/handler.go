@@ -47,8 +47,6 @@ func NewProposalHandler(k keeper.Keeper) govtypes.Handler {
 			return gov.ToggleOracle(ctx, k, proposal)
 		case *types.RemoveOracleProposal:
 			return gov.RemoveOracle(ctx, k, proposal)
-		case *types.UpdateOracleContractProposal:
-			return gov.UpdateOracleContract(ctx, k, proposal)
 		default:
 			return sdkerrors.Wrapf(sdkerrors.ErrUnknownRequest, "unrecognized icaoracle proposal content type: %T", proposal)
 		}

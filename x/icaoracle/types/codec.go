@@ -24,7 +24,6 @@ func RegisterInterfaces(registry cdctypes.InterfaceRegistry) {
 	registry.RegisterImplementations((*govtypes.Content)(nil),
 		&ToggleOracleProposal{},
 		&RemoveOracleProposal{},
-		&UpdateOracleContractProposal{},
 	)
 
 	msgservice.RegisterMsgServiceDesc(registry, &_Msg_serviceDesc)
