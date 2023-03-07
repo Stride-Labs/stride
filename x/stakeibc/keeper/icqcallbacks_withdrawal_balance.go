@@ -12,6 +12,10 @@ import (
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/spf13/cast"
 
+	ibctransfertypes "github.com/cosmos/ibc-go/v5/modules/apps/transfer/types"
+	ibctypes "github.com/cosmos/ibc-go/v5/modules/apps/transfer/types"
+	clienttypes "github.com/cosmos/ibc-go/v5/modules/core/02-client/types"
+
 	"github.com/Stride-Labs/stride/v6/utils"
 	icqtypes "github.com/Stride-Labs/stride/v6/x/interchainquery/types"
 	"github.com/Stride-Labs/stride/v6/x/stakeibc/types"
@@ -23,6 +27,7 @@ import (
 //  to the delegation account (for reinvestment) and fee account (for commission)
 // Note: for now, to get proofs in your ICQs, you need to query the entire store on the host zone! e.g. "store/bank/key"
 func WithdrawalBalanceCallback(k Keeper, ctx sdk.Context, args []byte, query icqtypes.Query) error {
+	fmt.Println("WithdrawalBalanceCallback")
 	k.Logger(ctx).Info(utils.LogICQCallbackWithHostZone(query.ChainId, ICQCallbackID_WithdrawalBalance,
 		"Starting withdrawal balance callback, QueryId: %vs, QueryType: %s, Connection: %s", query.Id, query.QueryType, query.ConnectionId))
 
@@ -91,13 +96,14 @@ func WithdrawalBalanceCallback(k Keeper, ctx sdk.Context, args []byte, query icq
 
 	var msgs []sdk.Msg
 	if feeCoin.Amount.GT(sdk.ZeroInt()) {
-		msgs = append(msgs, &banktypes.MsgSend{
-			FromAddress: withdrawalAccount.Address,
-			ToAddress:   feeAccount.Address,
-			Amount:      sdk.NewCoins(feeCoin),
-		})
+		ibcTransferTimeoutNanos := k.GetParam(ctx, types.KeyIBCTransferTimeoutNanos)
+		timeoutTimestamp := uint64(ctx.BlockTime().UnixNano()) + ibcTransferTimeoutNanos
+		receiver := k.accountKeeper.GetModuleAccount(ctx, types.RewardCollectorName).GetAddress()
+		msg := ibctypes.NewMsgTransfer(ibctransfertypes.PortID, hostZone.TransferChannelId, feeCoin, withdrawalAccount.Address, receiver.String(), clienttypes.Height{}, timeoutTimestamp)
+
+		msgs = append(msgs, msg)
 		k.Logger(ctx).Info(utils.LogICQCallbackWithHostZone(chainId, ICQCallbackID_WithdrawalBalance,
-			"Preparing MsgSends of %v from the withdrawal account to the fee account (for commission)", feeCoin.String()))
+			"Preparing MsgSends of %v from the withdrawal account to the distribution module account (for commission)", feeCoin.String()))
 	}
 	if reinvestCoin.Amount.GT(sdk.ZeroInt()) {
 		msgs = append(msgs, &banktypes.MsgSend{
