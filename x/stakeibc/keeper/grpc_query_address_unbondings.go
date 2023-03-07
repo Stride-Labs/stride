@@ -29,6 +29,13 @@ func (k Keeper) AddressUnbondings(c context.Context, req *types.QueryAddressUnbo
 
 	var addressUnbondings []types.AddressUnbonding
 
+	// get the relevant day
+	dayEpochTracker, found := k.GetEpochTracker(ctx, "day")
+	if !found {
+		return nil, sdkerrors.ErrKeyNotFound
+	}
+	currentDay := dayEpochTracker.EpochNumber
+
 	epochUnbondingRecords := k.RecordsKeeper.GetAllEpochUnbondingRecord(ctx)
 
 	for _, epochUnbondingRecord := range epochUnbondingRecords {
@@ -49,11 +56,6 @@ func (k Keeper) AddressUnbondings(c context.Context, req *types.QueryAddressUnbo
 						if !found {
 							return nil, sdkerrors.ErrKeyNotFound
 						}
-						dayEpochTracker, found := k.GetEpochTracker(ctx, "day")
-						if !found {
-							return nil, sdkerrors.ErrKeyNotFound
-						}
-						currentDay := dayEpochTracker.EpochNumber
 						daysUntilUnbonding := hostZone.UnbondingFrequency - (currentDay % hostZone.UnbondingFrequency)
 						unbondingStartTime := dayEpochTracker.NextEpochStartTime + daysUntilUnbonding - 1
 						unbondingDurationEstimate := (hostZone.UnbondingFrequency - 1) * 7
