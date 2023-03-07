@@ -63,9 +63,9 @@ func WithdrawalBalanceCallback(k Keeper, ctx sdk.Context, args []byte, query icq
 	if delegationAccount == nil || delegationAccount.Address == "" {
 		return errorsmod.Wrapf(types.ErrICAAccountNotFound, "no delegation account found for %s", chainId)
 	}
-	feeAccount := hostZone.FeeAccount
-	if feeAccount == nil || feeAccount.Address == "" {
-		return errorsmod.Wrapf(types.ErrICAAccountNotFound, "no fee account found for %s", chainId)
+	rewardCollectorAccount := k.accountKeeper.GetModuleAccount(ctx, types.RewardCollectorName)
+	if rewardCollectorAccount == nil || rewardCollectorAccount.GetAddress().String() == "" {
+		return errorsmod.Wrapf(types.ErrRewardCollectorAccountNotFound, "no reward collector account found for %s", chainId)
 	}
 
 	// Determine the stride commission rate to the relevant portion can be sent to the fee account
@@ -88,7 +88,7 @@ func WithdrawalBalanceCallback(k Keeper, ctx sdk.Context, args []byte, query icq
 	// Safety check, balances should add to original amount
 	if !feeAmount.Add(reinvestAmount).Equal(withdrawalBalanceAmount) {
 		k.Logger(ctx).Error(fmt.Sprintf("Error with withdraw logic: %v, Fee Portion: %v, Reinvest Portion %v", withdrawalBalanceAmount, feeAmount, reinvestAmount))
-		return errorsmod.Wrap(sdkerrors.ErrInvalidRequest, "Failed to subdivide rewards to feeAccount and delegationAccount")
+		return errorsmod.Wrap(sdkerrors.ErrInvalidRequest, "Failed to subdivide rewards to commission and delegationAccount")
 	}
 
 	// Prepare MsgSends from the withdrawal account

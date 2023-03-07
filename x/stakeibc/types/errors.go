@@ -46,4 +46,5 @@ var (
 	ErrNoValidatorAmts                   = errorsmod.Register(ModuleName, 1538, "could not fetch validator amts")
 	ErrMaxNumValidators                  = errorsmod.Register(ModuleName, 1539, "max number of validators reached")
 	ErrUndelegationAmount                = errorsmod.Register(ModuleName, 1540, "Undelegation amount is greater than stakedBal")
+	ErrRewardCollectorAccountNotFound    = errorsmod.Register(ModuleName, 1541, "Reward Collector account not found")
 )
