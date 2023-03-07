@@ -13,7 +13,8 @@ import (
 func (s *KeeperTestSuite) SetupTestUpdateOracleCallback() types.Metric {
 	// Store pending metric update
 	metric := types.Metric{
-		Key: "key1",
+		Key:        "key1",
+		UpdateTime: 1,
 	}
 	s.App.ICAOracleKeeper.SetMetricUpdateInProgress(s.Ctx, types.PendingMetricUpdate{
 		Metric:        &metric,
@@ -21,7 +22,7 @@ func (s *KeeperTestSuite) SetupTestUpdateOracleCallback() types.Metric {
 	})
 
 	// Confirm update is stored
-	_, found := s.App.ICAOracleKeeper.GetPendingMetricUpdate(s.Ctx, metric.Key, HostChainId)
+	_, found := s.App.ICAOracleKeeper.GetPendingMetricUpdate(s.Ctx, metric.Key, HostChainId, metric.UpdateTime)
 	s.Require().True(found, "pending metric update should be in the store during setup")
 
 	return metric
@@ -44,7 +45,7 @@ func (s *KeeperTestSuite) CallCallbackAndCheckState(ackStatus icacallbacktypes.A
 	keeper.UpdateOracleCallback(s.App.ICAOracleKeeper, s.Ctx, channeltypes.Packet{}, &ackResponse, callbackBz)
 
 	// Confirm the pending update was removed
-	_, found := s.App.ICAOracleKeeper.GetPendingMetricUpdate(s.Ctx, metric.Key, HostChainId)
+	_, found := s.App.ICAOracleKeeper.GetPendingMetricUpdate(s.Ctx, metric.Key, HostChainId, metric.UpdateTime)
 	s.Require().True(found, "pending metric update should have been removed")
 }
 

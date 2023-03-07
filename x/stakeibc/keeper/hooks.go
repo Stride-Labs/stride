@@ -188,8 +188,8 @@ func (k Keeper) UpdateRedemptionRates(ctx sdk.Context, depositRecords []recordst
 			Key:        fmt.Sprintf("%s_%s", stDenom, icaoracletypes.MetricType_RedemptionRate),
 			Value:      redemptionRate.String(),
 			MetricType: icaoracletypes.MetricType_RedemptionRate,
+			UpdateTime: uint64(ctx.BlockTime().Unix()),
 			Metadata: &icaoracletypes.Metadata{
-				UpdateTime:  ctx.BlockTime().Unix(),
 				BlockHeight: ctx.BlockHeight(),
 				Attributes:  string(attributes),
 			},

@@ -57,10 +57,10 @@ func (s *KeeperTestSuite) TestQueryActiveOracles() {
 }
 
 func (s *KeeperTestSuite) TestQueryAllPendingMetricUpdates() {
-	expectedPendingMetrics := s.addPendingMetrics()
+	expectedPendingUpdates := s.addPendingUpdates()
 	queryResponse, err := s.QueryClient.AllPendingMetricUpdates(s.Ctx, &types.QueryAllPendingMetricUpdatesRequest{})
 	s.Require().NoError(err, "no error expected when querying pending metric updates")
-	s.Require().ElementsMatch(expectedPendingMetrics, queryResponse.PendingUpdates)
+	s.Require().ElementsMatch(expectedPendingUpdates, queryResponse.PendingUpdates)
 }
 
 func (s *KeeperTestSuite) TestQueryPendingMetricUpdates() {

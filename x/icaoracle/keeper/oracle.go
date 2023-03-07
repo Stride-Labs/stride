@@ -4,6 +4,8 @@ import (
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
+	channeltypes "github.com/cosmos/ibc-go/v5/modules/core/04-channel/types"
+
 	"github.com/Stride-Labs/stride/v5/x/icaoracle/types"
 )
 
@@ -77,4 +79,13 @@ func (k Keeper) GetOracleFromConnectionId(ctx sdk.Context, connectionId string) 
 		}
 	}
 	return oracle, false
+}
+
+// Checks if the oracle ICA channel is open
+func (k Keeper) IsOracleICAChannelOpen(ctx sdk.Context, oracle types.Oracle) bool {
+	channel, found := k.IBCKeeper.ChannelKeeper.GetChannel(ctx, oracle.PortId, oracle.ChannelId)
+	if !found {
+		return false
+	}
+	return channel.State == channeltypes.OPEN
 }

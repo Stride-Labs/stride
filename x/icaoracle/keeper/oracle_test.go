@@ -3,6 +3,10 @@ package keeper_test
 import (
 	"strconv"
 
+	transfertypes "github.com/cosmos/ibc-go/v5/modules/apps/transfer/types"
+	channeltypes "github.com/cosmos/ibc-go/v5/modules/core/04-channel/types"
+	ibctesting "github.com/cosmos/ibc-go/v5/testing"
+
 	"github.com/Stride-Labs/stride/v5/x/icaoracle/types"
 )
 
@@ -80,4 +84,32 @@ func (s *KeeperTestSuite) TestGetOracleFromConnectionId() {
 	// Attempt to get an oracle with a fake connectionId - should fail
 	actualOracle, found = s.App.ICAOracleKeeper.GetOracleFromConnectionId(s.Ctx, "fake-connection-id")
 	s.Require().False(found, "oracle should not have been found, but it was")
+}
+
+func (s *KeeperTestSuite) TestIsOracleICAChannelOpen() {
+	s.CreateTransferChannel("chain-1")
+
+	oracle := types.Oracle{
+		PortId:    transfertypes.PortID,
+		ChannelId: ibctesting.FirstChannelID,
+	}
+
+	// Check with an open channel, should equal true
+	isOpen := s.App.ICAOracleKeeper.IsOracleICAChannelOpen(s.Ctx, oracle)
+	s.Require().True(isOpen, "channel should be open")
+
+	// Close the channel
+	channel, found := s.App.IBCKeeper.ChannelKeeper.GetChannel(s.Ctx, transfertypes.PortID, ibctesting.FirstChannelID)
+	s.Require().True(found, "transfer channel should have been found")
+	channel.State = channeltypes.CLOSED
+	s.App.IBCKeeper.ChannelKeeper.SetChannel(s.Ctx, transfertypes.PortID, ibctesting.FirstChannelID, channel)
+
+	// Try again, it should be false this time
+	isOpen = s.App.ICAOracleKeeper.IsOracleICAChannelOpen(s.Ctx, oracle)
+	s.Require().False(isOpen, "channel should now be closed")
+
+	// Try with a fake channel
+	oracle.ChannelId = "fake_channel"
+	isOpen = s.App.ICAOracleKeeper.IsOracleICAChannelOpen(s.Ctx, oracle)
+	s.Require().False(isOpen, "channel does not exist")
 }

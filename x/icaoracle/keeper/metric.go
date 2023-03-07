@@ -72,18 +72,20 @@ func (k Keeper) RemoveMetricFromQueue(ctx sdk.Context, key string) {
 // will be stored multiple times in the pending store if there are multiple oracles
 func (k Keeper) SetMetricUpdateInProgress(ctx sdk.Context, pendingMetric types.PendingMetricUpdate) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.MetricPendingKeyPrefix)
+	substoreKey := types.GetPendingMetricSubstoreKey(pendingMetric.Metric.Key, pendingMetric.OracleChainId)
 
-	pendingMetricKey := types.GetPendingMetricKey(pendingMetric.Metric.Key, pendingMetric.OracleChainId)
+	pendingMetricKey := append(substoreKey, types.GetPendingMetricKey(pendingMetric.Metric.UpdateTime)...)
 	pendingMetricBz := k.cdc.MustMarshal(&pendingMetric)
 
 	store.Set(pendingMetricKey, pendingMetricBz)
 }
 
 // Gets a pending metric update from the pending store
-func (k Keeper) GetPendingMetricUpdate(ctx sdk.Context, key string, oracleChainId string) (pendingMetric types.PendingMetricUpdate, found bool) {
+func (k Keeper) GetPendingMetricUpdate(ctx sdk.Context, metricKey string, oracleChainId string, updateTime uint64) (pendingMetric types.PendingMetricUpdate, found bool) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.MetricPendingKeyPrefix)
+	substoreKey := types.GetPendingMetricSubstoreKey(metricKey, oracleChainId)
 
-	pendingMetricKey := types.GetPendingMetricKey(key, oracleChainId)
+	pendingMetricKey := append(substoreKey, types.GetPendingMetricKey(updateTime)...)
 	pendingMetricBz := store.Get(pendingMetricKey)
 
 	if len(pendingMetricBz) == 0 {
@@ -94,7 +96,7 @@ func (k Keeper) GetPendingMetricUpdate(ctx sdk.Context, key string, oracleChainI
 	return pendingMetric, true
 }
 
-// Gets all pending metric updates from the pending store
+// Gets all pending metric updates from the pending store, across all metrics and oracles
 func (k Keeper) GetAllPendingMetricUpdates(ctx sdk.Context) []types.PendingMetricUpdate {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.MetricPendingKeyPrefix)
 
@@ -112,10 +114,33 @@ func (k Keeper) GetAllPendingMetricUpdates(ctx sdk.Context) []types.PendingMetri
 	return allPendingMetricUpdates
 }
 
+// Returns all pending metrics in the the metric + oracle substore
+// This will have more than 1 metric if multiple ICAs have been sent without a response
+// The resulting list will have the same metric key for each metric, but a different updateTime for each
+func (k Keeper) GetPendingMetrics(ctx sdk.Context, metricKey string, oracleChainId string) []types.Metric {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.MetricPendingKeyPrefix)
+	substoreKey := types.GetPendingMetricSubstoreKey(metricKey, oracleChainId)
+
+	iterator := sdk.KVStorePrefixIterator(store, substoreKey)
+	defer iterator.Close()
+
+	allPendingMetrics := []types.Metric{}
+	for ; iterator.Valid(); iterator.Next() {
+
+		pendingMetricUpdate := types.PendingMetricUpdate{}
+		k.cdc.MustUnmarshal(iterator.Value(), &pendingMetricUpdate)
+		allPendingMetrics = append(allPendingMetrics, *pendingMetricUpdate.Metric)
+	}
+
+	return allPendingMetrics
+}
+
 // Marks a metric update as "complete", meaning it has been updated on the oracle
 // and the ack has been received. Indicated by removing it from the pending store
-func (k Keeper) SetMetricUpdateComplete(ctx sdk.Context, metricKey string, oracleChainId string) {
+func (k Keeper) SetMetricUpdateComplete(ctx sdk.Context, metricKey string, oracleChainId string, updateTime uint64) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.MetricPendingKeyPrefix)
-	metricUpdateKey := types.GetPendingMetricKey(metricKey, oracleChainId)
-	store.Delete(metricUpdateKey)
+	substoreKey := types.GetPendingMetricSubstoreKey(metricKey, oracleChainId)
+
+	pendingMetricKey := append(substoreKey, types.GetPendingMetricKey(updateTime)...)
+	store.Delete(pendingMetricKey)
 }

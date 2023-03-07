@@ -29,7 +29,7 @@ func (k Keeper) SubmitMetricUpdate(ctx sdk.Context, oracle types.Oracle, metric 
 	}
 	contractMsgBz, err := json.Marshal(contractMsg)
 	if err != nil {
-		return errorsmod.Wrapf(types.ErrMarshalFailure, "unable to marshal execute contract update metric: %s", err.Error())
+		return errorsmod.Wrapf(types.ErrMarshalFailure, "unable to marshal execute contract post metric: %s", err.Error())
 	}
 
 	// Build ICA message to execute the CW contract
@@ -62,13 +62,6 @@ func (k Keeper) SubmitMetricUpdate(ctx sdk.Context, oracle types.Oracle, metric 
 	if err := k.SubmitICATx(ctx, icaTx); err != nil {
 		return errorsmod.Wrapf(err, "unable to submit update oracle contract ICA")
 	}
-
-	// Add the metric to the pending store
-	pendingMetricUpdate := types.PendingMetricUpdate{
-		OracleChainId: oracle.ChainId,
-		Metric:        &metric,
-	}
-	k.SetMetricUpdateInProgress(ctx, pendingMetricUpdate)
 
 	return nil
 }

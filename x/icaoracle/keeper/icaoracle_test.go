@@ -82,12 +82,6 @@ func (s *KeeperTestSuite) TestSubmitMetricUpdate_Success() {
 	actualCallbackData, found := s.App.ICAOracleKeeper.ICACallbacksKeeper.GetCallbackData(s.Ctx, callbackKey)
 	s.Require().True(found, "callback data should have been found")
 	s.Require().Equal(expectedCallbackData, actualCallbackData, "callback data")
-
-	// Confirm the metric has been marked as pending
-	expectedPendingUpdate := types.PendingMetricUpdate{Metric: &tc.Metric, OracleChainId: HostChainId}
-	actualPendingUpdates, found := s.App.ICAOracleKeeper.GetPendingMetricUpdate(s.Ctx, tc.Metric.Key, tc.Oracle.ChainId)
-	s.Require().True(found, "pending metric update should have been stored after the ICA submission")
-	s.Require().Equal(expectedPendingUpdate, actualPendingUpdates, "pending update")
 }
 
 func (s *KeeperTestSuite) TestSubmitMetricUpdate_IcaNotRegistered() {

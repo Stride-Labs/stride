@@ -59,9 +59,10 @@ func (k msgServer) AddOracle(goCtx context.Context, msg *types.MsgAddOracle) (*t
 
 	// Create the oracle struct, marked as inactive
 	oracle := types.Oracle{
-		ChainId:      chainId,
-		ConnectionId: controllerConnectionId,
-		Active:       false,
+		ChainId:             chainId,
+		ConnectionId:        controllerConnectionId,
+		Active:              false,
+		FlushPendingMetrics: false,
 	}
 	k.SetOracle(ctx, oracle)
 
@@ -152,7 +153,7 @@ func (k msgServer) InstantiateOracle(goCtx context.Context, msg *types.MsgInstan
 func (k msgServer) RestoreOracleICA(goCtx context.Context, msg *types.MsgRestoreOracleICA) (*types.MsgRestoreOracleICAResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	// Confirm the oracle exists and has already had has already had an ICA registered
+	// Confirm the oracle exists and has already had an ICA registered
 	oracle, found := k.GetOracle(ctx, msg.OracleChainId)
 	if !found {
 		return nil, types.ErrOracleNotFound
@@ -191,12 +192,9 @@ func (k msgServer) RestoreOracleICA(goCtx context.Context, msg *types.MsgRestore
 		return nil, errorsmod.Wrapf(err, "unable to register oracle interchain account")
 	}
 
-	// Delete all pending ICAs along the old channel
-	for _, pendingMetricUpdate := range k.GetAllPendingMetricUpdates(ctx) {
-		if pendingMetricUpdate.OracleChainId == oracle.ChainId {
-			k.SetMetricUpdateComplete(ctx, pendingMetricUpdate.Metric.Key, oracle.ChainId)
-		}
-	}
+	// Enable the FlushPendingMetrics flag so any old metrics get resubmitted once the ICA channel opens back up
+	oracle.FlushPendingMetrics = true
+	k.SetOracle(ctx, oracle)
 
 	return &types.MsgRestoreOracleICAResponse{}, nil
 }
