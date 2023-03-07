@@ -15,6 +15,7 @@ import (
 	ibctransfertypes "github.com/cosmos/ibc-go/v5/modules/apps/transfer/types"
 	ibctypes "github.com/cosmos/ibc-go/v5/modules/apps/transfer/types"
 	clienttypes "github.com/cosmos/ibc-go/v5/modules/core/02-client/types"
+	channeltypes "github.com/cosmos/ibc-go/v5/modules/core/04-channel/types"
 
 	"github.com/Stride-Labs/stride/v6/utils"
 	icqtypes "github.com/Stride-Labs/stride/v6/x/interchainquery/types"
@@ -99,7 +100,15 @@ func WithdrawalBalanceCallback(k Keeper, ctx sdk.Context, args []byte, query icq
 		ibcTransferTimeoutNanos := k.GetParam(ctx, types.KeyIBCTransferTimeoutNanos)
 		timeoutTimestamp := uint64(ctx.BlockTime().UnixNano()) + ibcTransferTimeoutNanos
 		receiver := k.accountKeeper.GetModuleAccount(ctx, types.RewardCollectorName).GetAddress()
-		msg := ibctypes.NewMsgTransfer(ibctransfertypes.PortID, hostZone.TransferChannelId, feeCoin, withdrawalAccount.Address, receiver.String(), clienttypes.Height{}, timeoutTimestamp)
+
+		// get counterparty chain's transfer channel id
+		transferChannel, found := k.IBCKeeper.ChannelKeeper.GetChannel(ctx, ibctransfertypes.PortID, hostZone.TransferChannelId)
+		if !found {
+			return errorsmod.Wrapf(channeltypes.ErrChannelNotFound, hostZone.TransferChannelId)
+		}
+		counterpartyChannelId := transferChannel.Counterparty.ChannelId
+
+		msg := ibctypes.NewMsgTransfer(ibctransfertypes.PortID, counterpartyChannelId, feeCoin, withdrawalAccount.Address, receiver.String(), clienttypes.Height{}, timeoutTimestamp)
 
 		msgs = append(msgs, msg)
 		k.Logger(ctx).Info(utils.LogICQCallbackWithHostZone(chainId, ICQCallbackID_WithdrawalBalance,

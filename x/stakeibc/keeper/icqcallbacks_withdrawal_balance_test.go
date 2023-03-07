@@ -70,6 +70,7 @@ func (s *KeeperTestSuite) SetupWithdrawalBalanceCallbackTest() WithdrawalBalance
 			Address: feeAddress,
 			Target:  stakeibctypes.ICAAccountType_FEE,
 		},
+		TransferChannelId: "channel-0",
 	}
 
 	strideEpochTracker := stakeibctypes.EpochTracker{
