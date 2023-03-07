@@ -153,12 +153,44 @@ setup_file() {
 
   # do IBC transfer
   $HOST_MAIN_CMD tx ibc-transfer transfer transfer $HOST_TRANSFER_CHANNEL $(STRIDE_ADDRESS)'|stakeibc/LiquidStake' ${PACKET_FORWARD_STAKE_AMOUNT}${HOST_DENOM} --from $HOST_VAL -y &
-  WAIT_FOR_BLOCK $STRIDE_LOGS 8
+  WAIT_FOR_BLOCK $STRIDE_LOGS 30
 
   # make sure stATOM balance increased
   sttoken_balance_end=$($STRIDE_MAIN_CMD q bank balances $(STRIDE_ADDRESS) --denom st$HOST_DENOM | GETBAL)
   sttoken_balance_diff=$(($sttoken_balance_end-$sttoken_balance_start))
   assert_equal "$sttoken_balance_diff" "$PACKET_FORWARD_STAKE_AMOUNT"
+}
+
+@test "[INTEGRATION-BASIC-$CHAIN_NAME] transfer st$HOST_DENOM to host chain" {
+  # get initial balances
+  sttoken_balance_start=$($STRIDE_MAIN_CMD q bank balances $(STRIDE_ADDRESS) --denom st$HOST_DENOM | GETBAL)
+  stibctoken_balance_start=$($HOST_MAIN_CMD q bank balances $HOST_VAL_ADDRESS --denom $IBC_GAIA_STATOM_DENOM | GETBAL)
+
+  # do IBC transfer
+  $STRIDE_MAIN_CMD tx ibc-transfer transfer transfer $STRIDE_TRANFER_CHANNEL $HOST_VAL_ADDRESS ${PACKET_FORWARD_STAKE_AMOUNT}st${HOST_DENOM} --from $STRIDE_VAL -y &
+  WAIT_FOR_BLOCK $STRIDE_LOGS 8
+
+  # make sure stATOM balance decreased
+  sttoken_balance_end=$($STRIDE_MAIN_CMD q bank balances $(STRIDE_ADDRESS) --denom st$HOST_DENOM | GETBAL)
+  stibctoken_balance_end=$($HOST_MAIN_CMD q bank balances $HOST_VAL_ADDRESS --denom $IBC_GAIA_STATOM_DENOM | GETBAL)
+  sttoken_balance_diff=$(($sttoken_balance_start-$sttoken_balance_end))
+  stibctoken_balance_diff=$(($stibctoken_balance_end-$stibctoken_balance_start))
+  assert_equal "$sttoken_balance_diff" "$PACKET_FORWARD_STAKE_AMOUNT"
+  assert_equal "$stibctoken_balance_diff" "$PACKET_FORWARD_STAKE_AMOUNT"
+}
+
+@test "[INTEGRATION-BASIC-$CHAIN_NAME] packet forwarding automatically redeem stake" {
+  # get initial balances
+  stibctoken_balance_start=$($HOST_MAIN_CMD q bank balances $HOST_VAL_ADDRESS --denom $IBC_GAIA_STATOM_DENOM | GETBAL)
+
+  # do IBC transfer
+  $HOST_MAIN_CMD tx ibc-transfer transfer transfer $HOST_TRANSFER_CHANNEL $(STRIDE_ADDRESS)'|stakeibc/RedeemStake|'$HOST_RECEIVER_ADDRESS ${PACKET_FORWARD_STAKE_AMOUNT}${HOST_DENOM} --from $HOST_VAL -y &
+  WAIT_FOR_BLOCK $STRIDE_LOGS 20
+
+  # make sure stATOM balance increased
+  stibctoken_balance_end=$($HOST_MAIN_CMD q bank balances $HOST_VAL_ADDRESS --denom $IBC_GAIA_STATOM_DENOM | GETBAL)
+  stibctoken_balance_diff=$(($stibctoken_balance_start-$stibctoken_balance_end))
+  assert_equal "$stibctoken_balance_diff" "$PACKET_FORWARD_STAKE_AMOUNT"
 }
 
 # check that tokens were transferred to host after liquid stake
