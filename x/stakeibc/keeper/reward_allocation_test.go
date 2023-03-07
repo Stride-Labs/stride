@@ -49,7 +49,6 @@ func (s *KeeperTestSuite) SetupWithdrawAccount() (stakeibctypes.HostZone, Channe
 	withdrawalAccountOwner := fmt.Sprintf("%s.%s", HostChainId, "WITHDRAWAL")
 	withdrawalChannelID := s.CreateICAChannel(withdrawalAccountOwner)
 	withdrawalAddress := s.IcaAddresses[withdrawalAccountOwner]
-
 	feeAccountOwner := fmt.Sprintf("%s.%s", HostChainId, "FEE")
 	s.CreateICAChannel(feeAccountOwner)
 	feeAddress := s.IcaAddresses[feeAccountOwner]
@@ -128,7 +127,6 @@ func (s *KeeperTestSuite) TestAllocateRewardIBC() {
 	hz, channel := s.SetupWithdrawAccount()
 
 	rewardCollector := s.App.AccountKeeper.GetModuleAccount(s.Ctx, stakeibctypes.RewardCollectorName)
-
 	// Send tx to withdraw ica to perform ibc transfer from hostzone to stride
 	var msgs []sdk.Msg
 	ibcTransferTimeoutNanos := s.App.StakeibcKeeper.GetParam(s.Ctx, stakeibctypes.KeyIBCTransferTimeoutNanos)
@@ -138,6 +136,8 @@ func (s *KeeperTestSuite) TestAllocateRewardIBC() {
 		rewardCollector.GetAddress().String(), clienttypes.NewHeight(1, 100), timeoutTimestamp)
 	msgs = append(msgs, msg)
 	data, _ := icatypes.SerializeCosmosTx(s.App.AppCodec(), msgs)
+	icaTimeOutNanos := s.App.StakeibcKeeper.GetParam(s.Ctx, stakeibctypes.KeyICATimeoutNanos)
+	icaTimeoutTimestamp := uint64(s.StrideChain.GetContext().BlockTime().UnixNano()) + icaTimeOutNanos
 
 	packetData := icatypes.InterchainAccountPacketData{
 		Type: icatypes.EXECUTE_TX,
@@ -153,7 +153,7 @@ func (s *KeeperTestSuite) TestAllocateRewardIBC() {
 		clienttypes.NewHeight(1, 100),
 		timeoutTimestamp,
 	)
-	_, err := s.App.StakeibcKeeper.SubmitTxs(s.Ctx, hz.ConnectionId, msgs, *hz.WithdrawalAccount, timeoutTimestamp, "", nil)
+	_, err := s.App.StakeibcKeeper.SubmitTxs(s.Ctx, hz.ConnectionId, msgs, *hz.WithdrawalAccount, icaTimeoutTimestamp, "", nil)
 	s.Require().NoError(err)
 
 	// Simulate the process of receiving ica packets on the hostchain
@@ -230,10 +230,10 @@ func (s *KeeperTestSuite) TestAllocateRewardIBC() {
 	s.App.DistrKeeper.AllocateTokens(s.Ctx, 200, 200, sdk.ConsAddress(PK[1].Address()), votes)
 
 	// Withdraw reward
-	_, err = s.App.DistrKeeper.WithdrawDelegationRewards(s.Ctx, sdk.AccAddress(valAddrs[1]), valAddrs[1])
+	rewards, err := s.App.DistrKeeper.WithdrawDelegationRewards(s.Ctx, sdk.AccAddress(valAddrs[1]), valAddrs[1])
 	s.Require().NoError(err)
 
 	// Check balances contains stTokens
-	rewards := s.App.BankKeeper.GetAllBalances(s.Ctx, sdk.AccAddress(valAddrs[1]))
 	s.Require().True(strings.Contains(rewards.String(), "stuatom"))
+
 }

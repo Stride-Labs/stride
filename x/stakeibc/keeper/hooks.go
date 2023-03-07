@@ -9,6 +9,8 @@ import (
 
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+
 	"github.com/Stride-Labs/stride/v6/utils"
 	epochstypes "github.com/Stride-Labs/stride/v6/x/epochs/types"
 	recordstypes "github.com/Stride-Labs/stride/v6/x/records/types"
