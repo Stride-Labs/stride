@@ -269,7 +269,16 @@ func (k Keeper) AllocateHostZoneReward(ctx sdk.Context) error {
 	}
 	// After liquid stake all tokens, reward collector receive stTokens
 	// Send all stTokens to fee collector to distribute to delegator later
-	stTokens := k.bankKeeper.GetAllBalances(ctx, rewardCollectorAddress)
+	rewardCollCoins := k.bankKeeper.GetAllBalances(ctx, rewardCollectorAddress)
+	stTokens := sdk.NewCoins()
+	for _, token := range rewardCollCoins {
+		// get hostzone by reward token (in ibc denom format)
+		isStToken := k.CheckIsStToken(ctx, token.String())
+		if isStToken {
+			stTokens = append(stTokens, token)
+		}
+	}
+	k.Logger(ctx).Info("Sending %s stTokens from %s to %s", stTokens.String(), types.RewardCollectorName, authtypes.FeeCollectorName)
 	err := k.bankKeeper.SendCoinsFromModuleToModule(ctx, types.RewardCollectorName, authtypes.FeeCollectorName, stTokens)
 	if err != nil {
 		k.Logger(ctx).Error("Can't send coins from module %s to module %s", types.RewardCollectorName, authtypes.FeeCollectorName)

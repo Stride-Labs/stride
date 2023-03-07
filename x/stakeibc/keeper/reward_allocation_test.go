@@ -7,6 +7,7 @@ import (
 	sdkmath "cosmossdk.io/math"
 	"github.com/cosmos/cosmos-sdk/simapp"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
 	"github.com/cosmos/cosmos-sdk/x/staking/teststaking"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
@@ -20,49 +21,38 @@ import (
 	abci "github.com/tendermint/tendermint/abci/types"
 
 	epochtypes "github.com/Stride-Labs/stride/v6/x/epochs/types"
-	recordtypes "github.com/Stride-Labs/stride/v6/x/records/types"
 	stakeibctypes "github.com/Stride-Labs/stride/v6/x/stakeibc/types"
 )
 
 var (
-	validators = []*stakeibctypes.Validator{
-		{
-			Name:    "val1",
-			Address: "gaia_VAL1",
-			Weight:  1,
-		},
-		{
-			Name:    "val2",
-			Address: "gaia_VAL2",
-			Weight:  4,
-		},
-	}
 	hostModuleAddress = stakeibctypes.NewZoneAddress(HostChainId)
 )
 
-func (s *KeeperTestSuite) SetupWithdrawAccount() (stakeibctypes.HostZone, Channel) {
-	// Set up host zone ica
-	delegationAccountOwner := fmt.Sprintf("%s.%s", HostChainId, "DELEGATION")
-	_ = s.CreateICAChannel(delegationAccountOwner)
-	delegationAddress := s.IcaAddresses[delegationAccountOwner]
+type RewardAllocationTestCase struct {
+	hz                 stakeibctypes.HostZone
+	channel            Channel
+	withdrawalAcctBal  sdkmath.Int
+	withdrawalAcctCoin sdk.Coin
+	timeoutHeight      clienttypes.Height
+}
 
+func (s *KeeperTestSuite) SetupWithdrawAccount() RewardAllocationTestCase {
+	// Set up host zone withdrawal ICA
 	withdrawalAccountOwner := fmt.Sprintf("%s.%s", HostChainId, "WITHDRAWAL")
 	withdrawalChannelID := s.CreateICAChannel(withdrawalAccountOwner)
 	withdrawalAddress := s.IcaAddresses[withdrawalAccountOwner]
-	feeAccountOwner := fmt.Sprintf("%s.%s", HostChainId, "FEE")
-	s.CreateICAChannel(feeAccountOwner)
-	feeAddress := s.IcaAddresses[feeAccountOwner]
 
 	// Set up ibc denom
 	ibcDenomTrace := s.GetIBCDenomTrace(Atom) // we need a true IBC denom here
 	s.App.TransferKeeper.SetDenomTrace(s.Ctx, ibcDenomTrace)
 
-	// Fund withdraw ica
-	initialModuleAccountBalance := sdk.NewCoin(Atom, sdkmath.NewInt(15_000))
-	s.FundAccount(sdk.MustAccAddressFromBech32(withdrawalAddress), initialModuleAccountBalance)
-	err := s.HostApp.BankKeeper.MintCoins(s.HostChain.GetContext(), minttypes.ModuleName, sdk.NewCoins(initialModuleAccountBalance))
+	// Fund withdrawal ica (mint -> send to withdrawal ica)
+	initialModuleAccountBal := sdkmath.NewInt(15_000)
+	initialModuleAccountCoin := sdk.NewCoin(Atom, initialModuleAccountBal)
+	s.FundAccount(sdk.MustAccAddressFromBech32(withdrawalAddress), initialModuleAccountCoin)
+	err := s.HostApp.BankKeeper.MintCoins(s.HostChain.GetContext(), minttypes.ModuleName, sdk.NewCoins(initialModuleAccountCoin))
 	s.Require().NoError(err)
-	err = s.HostApp.BankKeeper.SendCoinsFromModuleToAccount(s.HostChain.GetContext(), minttypes.ModuleName, sdk.MustAccAddressFromBech32(withdrawalAddress), sdk.NewCoins(initialModuleAccountBalance))
+	err = s.HostApp.BankKeeper.SendCoinsFromModuleToAccount(s.HostChain.GetContext(), minttypes.ModuleName, sdk.MustAccAddressFromBech32(withdrawalAddress), sdk.NewCoins(initialModuleAccountCoin))
 	s.Require().NoError(err)
 
 	// Allow ica call ibc transfer in host chain
@@ -73,24 +63,19 @@ func (s *KeeperTestSuite) SetupWithdrawAccount() (stakeibctypes.HostZone, Channe
 		},
 	})
 
+	// Set up host zone
 	hostZone := stakeibctypes.HostZone{
-		ChainId:           HostChainId,
-		Address:           hostModuleAddress.String(),
-		DelegationAccount: &stakeibctypes.ICAAccount{Address: delegationAddress},
+		ChainId: HostChainId,
+		Address: hostModuleAddress.String(),
 		WithdrawalAccount: &stakeibctypes.ICAAccount{
 			Address: withdrawalAddress,
 			Target:  stakeibctypes.ICAAccountType_WITHDRAWAL,
-		},
-		FeeAccount: &stakeibctypes.ICAAccount{
-			Address: feeAddress,
-			Target:  stakeibctypes.ICAAccountType_FEE,
 		},
 		ConnectionId:      ibctesting.FirstConnectionID,
 		TransferChannelId: ibctesting.FirstChannelID,
 		HostDenom:         Atom,
 		IbcDenom:          ibcDenomTrace.IBCDenom(),
-		Validators:        validators,
-		RedemptionRate:    sdk.OneDec(),
+		// RedemptionRate:    sdk.OneDec(),
 	}
 
 	currentEpoch := uint64(2)
@@ -105,35 +90,41 @@ func (s *KeeperTestSuite) SetupWithdrawAccount() (stakeibctypes.HostZone, Channe
 		NextEpochStartTime: uint64(s.Coordinator.CurrentTime.UnixNano() + 60_000_000_000), // dictates timeouts
 	}
 
-	initialDepositRecord := recordtypes.DepositRecord{
-		Id:                 1,
-		DepositEpochNumber: 2,
-		HostZoneId:         "GAIA",
-		Amount:             sdkmath.ZeroInt(),
-	}
+	// initialDepositRecord := recordtypes.DepositRecord{
+	// 	Id:                 1,
+	// 	DepositEpochNumber: 2,
+	// 	HostZoneId:         "GAIA",
+	// 	Amount:             sdkmath.ZeroInt(),
+	// }
 
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
 	s.App.StakeibcKeeper.SetEpochTracker(s.Ctx, strideEpochTracker)
 	s.App.StakeibcKeeper.SetEpochTracker(s.Ctx, mintEpochTracker)
-	s.App.RecordsKeeper.SetDepositRecord(s.Ctx, initialDepositRecord)
+	// s.App.RecordsKeeper.SetDepositRecord(s.Ctx, initialDepositRecord)
 
-	return hostZone, Channel{
-		PortID:    icatypes.PortPrefix + withdrawalAccountOwner,
-		ChannelID: withdrawalChannelID,
+	return RewardAllocationTestCase{
+		hz: hostZone,
+		channel: Channel{
+			PortID:    icatypes.PortPrefix + withdrawalAccountOwner,
+			ChannelID: withdrawalChannelID,
+		},
+		withdrawalAcctBal:  initialModuleAccountBal,
+		withdrawalAcctCoin: initialModuleAccountCoin,
+		timeoutHeight:      clienttypes.NewHeight(1, 100),
 	}
 }
 
-func (s *KeeperTestSuite) TestAllocateRewardIBC() {
-	hz, channel := s.SetupWithdrawAccount()
+// Test the process of sweeping staking rewards from the withdrawal account to the Reward Collector account
+func (s *KeeperTestSuite) TestIbcTransferRewardsFromWithdrawalToRewardCollector() {
+	// Setup
+	tc := s.SetupWithdrawAccount()
 
 	rewardCollector := s.App.AccountKeeper.GetModuleAccount(s.Ctx, stakeibctypes.RewardCollectorName)
-	// Send tx to withdraw ica to perform ibc transfer from hostzone to stride
+	// Send msgs to withdraw ICA that would occur in the icq withdrawal callback, to test ibc-transfer from hostzone withdrawal acct -> stride rewardscollector
 	var msgs []sdk.Msg
 	ibcTransferTimeoutNanos := s.App.StakeibcKeeper.GetParam(s.Ctx, stakeibctypes.KeyIBCTransferTimeoutNanos)
 	timeoutTimestamp := uint64(s.HostChain.GetContext().BlockTime().UnixNano()) + ibcTransferTimeoutNanos
-	msg := ibctypes.NewMsgTransfer("transfer", "channel-0",
-		sdk.NewCoin(Atom, sdkmath.NewInt(15_000)), hz.WithdrawalAccount.Address,
-		rewardCollector.GetAddress().String(), clienttypes.NewHeight(1, 100), timeoutTimestamp)
+	msg := ibctypes.NewMsgTransfer("transfer", "channel-0", tc.withdrawalAcctCoin, tc.hz.WithdrawalAccount.Address, rewardCollector.GetAddress().String(), tc.timeoutHeight, timeoutTimestamp)
 	msgs = append(msgs, msg)
 	data, _ := icatypes.SerializeCosmosTx(s.App.AppCodec(), msgs)
 	icaTimeOutNanos := s.App.StakeibcKeeper.GetParam(s.Ctx, stakeibctypes.KeyICATimeoutNanos)
@@ -146,14 +137,14 @@ func (s *KeeperTestSuite) TestAllocateRewardIBC() {
 	packet := channeltypes.NewPacket(
 		packetData.GetBytes(),
 		1,
-		channel.PortID,
-		channel.ChannelID,
+		tc.channel.PortID,
+		tc.channel.ChannelID,
 		s.TransferPath.EndpointB.ChannelConfig.PortID,
 		s.TransferPath.EndpointB.ChannelID,
-		clienttypes.NewHeight(1, 100),
+		tc.timeoutHeight,
 		timeoutTimestamp,
 	)
-	_, err := s.App.StakeibcKeeper.SubmitTxs(s.Ctx, hz.ConnectionId, msgs, *hz.WithdrawalAccount, icaTimeoutTimestamp, "", nil)
+	_, err := s.App.StakeibcKeeper.SubmitTxs(s.Ctx, tc.hz.ConnectionId, msgs, *tc.hz.WithdrawalAccount, icaTimeoutTimestamp, "", nil)
 	s.Require().NoError(err)
 
 	// Simulate the process of receiving ica packets on the hostchain
@@ -165,7 +156,7 @@ func (s *KeeperTestSuite) TestAllocateRewardIBC() {
 
 	// After withdraw ica send ibc transfer, simulate receiving transfer packet at stride
 	transferPacketData := ibctypes.NewFungibleTokenPacketData(
-		Atom, sdkmath.NewInt(15_000).String(), hz.WithdrawalAccount.Address, rewardCollector.GetAddress().String(),
+		Atom, tc.withdrawalAcctBal.String(), tc.hz.WithdrawalAccount.Address, rewardCollector.GetAddress().String(),
 	)
 	transferPacketData.Memo = ""
 	transferPacket := channeltypes.NewPacket(
@@ -175,19 +166,51 @@ func (s *KeeperTestSuite) TestAllocateRewardIBC() {
 		s.TransferPath.EndpointB.ChannelID,
 		s.TransferPath.EndpointA.ChannelConfig.PortID,
 		s.TransferPath.EndpointA.ChannelID,
-		clienttypes.NewHeight(1, 100),
-		0,
+		tc.timeoutHeight,
+		timeoutTimestamp,
 	)
 	cbs, ok = s.StrideChain.App.GetIBCKeeper().Router.GetRoute("transfer")
 	s.Require().True(ok)
 	cbs.OnRecvPacket(s.StrideChain.GetContext(), transferPacket, nil)
 
+	rewardCollectorAddress := s.App.AccountKeeper.GetModuleAccount(s.Ctx, stakeibctypes.RewardCollectorName).GetAddress()
+	rewardedTokens := s.App.BankKeeper.GetAllBalances(s.Ctx, rewardCollectorAddress)
+	s.Require().Equal(tc.withdrawalAcctBal, rewardedTokens.AmountOf(tc.hz.IbcDenom))
+}
+
+// Test the process of liquid staking staking rewards then sweeping them to the Fee Collector
+func (s *KeeperTestSuite) TestSweepRewardCollectorToFeeCollector() {
+	// Setup
+	tc := s.SetupWithdrawAccount()
+
+	// Fund reward collector account with ibc'd reward tokens
+	s.FundModuleAccount(stakeibctypes.RewardCollectorName, sdk.NewCoin(tc.hz.IbcDenom, tc.withdrawalAcctBal))
+
 	// Liquid stake all hostzone token then get stTokens back
-	// s.App.BeginBlocker(s.Ctx, abci.RequestBeginBlock{})
-	err = s.App.StakeibcKeeper.AllocateHostZoneReward(s.Ctx)
+	err := s.App.StakeibcKeeper.AllocateHostZoneReward(s.Ctx)
 	s.Require().NoError(err)
 
-	// Set up validator & delegation
+	// Check that reward collector account has no more ibc denom tokens
+	rewardCollectorAddress := s.App.AccountKeeper.GetModuleAccount(s.Ctx, stakeibctypes.RewardCollectorName).GetAddress()
+	rewardedTokens := s.App.BankKeeper.GetAllBalances(s.Ctx, rewardCollectorAddress)
+	s.Require().Equal("0", rewardedTokens.AmountOf(tc.hz.IbcDenom).String())
+
+	// Check that fee collector account has stTokens
+	feeCollectorAddress := s.App.AccountKeeper.GetModuleAccount(s.Ctx, authtypes.FeeCollectorName).GetAddress()
+	liquidStakedTokens := s.App.BankKeeper.GetAllBalances(s.Ctx, feeCollectorAddress)
+	s.Require().Equal(tc.withdrawalAcctBal, liquidStakedTokens.AmountOf("st"+tc.hz.HostDenom).String())
+}
+
+// Test the process of a delegator claiming staking reward stTokens
+func (s *KeeperTestSuite) TestClaimStakingRewardStTokens() {
+
+	// Setup
+	tc := s.SetupWithdrawAccount()
+
+	// Fund fee collector account with stTokens
+	s.FundModuleAccount(authtypes.FeeCollectorName, sdk.NewCoin("st"+tc.hz.HostDenom, tc.withdrawalAcctBal))
+
+	// Set up validators & delegators on Stride
 	addrs := s.TestAccs
 	for _, acc := range addrs {
 		s.FundAccount(acc, sdk.NewCoin(sdk.DefaultBondDenom, sdk.NewInt(1000000)))

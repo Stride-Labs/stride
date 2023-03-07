@@ -28,7 +28,7 @@ import (
 //  to the delegation account (for reinvestment) and fee account (for commission)
 // Note: for now, to get proofs in your ICQs, you need to query the entire store on the host zone! e.g. "store/bank/key"
 func WithdrawalBalanceCallback(k Keeper, ctx sdk.Context, args []byte, query icqtypes.Query) error {
-	fmt.Println("WithdrawalBalanceCallback")
+	k.Logger(ctx).Info("Entered the WithdrawalBalanceCallback.")
 	k.Logger(ctx).Info(utils.LogICQCallbackWithHostZone(query.ChainId, ICQCallbackID_WithdrawalBalance,
 		"Starting withdrawal balance callback, QueryId: %vs, QueryType: %s, Connection: %s", query.Id, query.QueryType, query.ConnectionId))
 
@@ -101,7 +101,7 @@ func WithdrawalBalanceCallback(k Keeper, ctx sdk.Context, args []byte, query icq
 		timeoutTimestamp := uint64(ctx.BlockTime().UnixNano()) + ibcTransferTimeoutNanos
 		receiver := k.accountKeeper.GetModuleAccount(ctx, types.RewardCollectorName).GetAddress()
 
-		// get counterparty chain's transfer channel id
+		// get counterparty chain's transfer channel
 		transferChannel, found := k.IBCKeeper.ChannelKeeper.GetChannel(ctx, ibctransfertypes.PortID, hostZone.TransferChannelId)
 		if !found {
 			return errorsmod.Wrapf(channeltypes.ErrChannelNotFound, hostZone.TransferChannelId)
