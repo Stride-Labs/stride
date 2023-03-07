@@ -7,7 +7,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 
-	"github.com/Stride-Labs/stride/v4/x/claim/types"
+	"github.com/Stride-Labs/stride/v6/x/claim/types"
 )
 
 // Test functionality for loading allocation data(csv)
@@ -109,7 +109,8 @@ func (suite *KeeperTestSuite) TestHookBeforeAirdropStart() {
 	// Now, it is before starting air drop, so this value should return the empty coins
 	suite.True(coins.Empty())
 
-	suite.app.ClaimKeeper.AfterDelegationModified(suite.ctx, addr1, val1)
+	err = suite.app.ClaimKeeper.AfterDelegationModified(suite.ctx, addr1, val1)
+	suite.NoError(err)
 	balances := suite.app.BankKeeper.GetAllBalances(suite.ctx, addr1)
 	// Now, it is before starting air drop, so claim module should not send the balances to the user after swap.
 	suite.True(balances.Empty())

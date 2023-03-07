@@ -2,17 +2,20 @@ package keeper_test
 
 import (
 	"fmt"
+	"testing"
 
+	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	ibctesting "github.com/cosmos/ibc-go/v3/testing"
+	ibctesting "github.com/cosmos/ibc-go/v5/testing"
+	"github.com/stretchr/testify/require"
 
-	icatypes "github.com/cosmos/ibc-go/v3/modules/apps/27-interchain-accounts/types"
+	icatypes "github.com/cosmos/ibc-go/v5/modules/apps/27-interchain-accounts/types"
 
-	epochtypes "github.com/Stride-Labs/stride/v4/x/epochs/types"
-	icacallbackstypes "github.com/Stride-Labs/stride/v4/x/icacallbacks/types"
-	icqtypes "github.com/Stride-Labs/stride/v4/x/interchainquery/types"
-	stakeibckeeper "github.com/Stride-Labs/stride/v4/x/stakeibc/keeper"
-	stakeibctypes "github.com/Stride-Labs/stride/v4/x/stakeibc/types"
+	epochtypes "github.com/Stride-Labs/stride/v6/x/epochs/types"
+	icacallbackstypes "github.com/Stride-Labs/stride/v6/x/icacallbacks/types"
+	icqtypes "github.com/Stride-Labs/stride/v6/x/interchainquery/types"
+	stakeibckeeper "github.com/Stride-Labs/stride/v6/x/stakeibc/keeper"
+	stakeibctypes "github.com/Stride-Labs/stride/v6/x/stakeibc/types"
 )
 
 type WithdrawalBalanceICQCallbackState struct {
@@ -35,8 +38,8 @@ type WithdrawalBalanceICQCallbackTestCase struct {
 // The response from the WithdrawalBalance ICQ is a serialized sdk.Coin containing
 // the address' balance. This function creates the serialized response
 func (s *KeeperTestSuite) CreateBalanceQueryResponse(amount int64, denom string) []byte {
-	coin := sdk.NewCoin(denom, sdk.NewInt(amount))
-	coinBz := s.App.RecordsKeeper.Cdc.MustMarshal(&coin)
+	coin := sdk.NewCoin(denom, sdkmath.NewInt(amount))
+	coinBz := s.App.AppCodec().MustMarshal(&coin)
 	return coinBz
 }
 
@@ -53,6 +56,7 @@ func (s *KeeperTestSuite) SetupWithdrawalBalanceCallbackTest() WithdrawalBalance
 
 	hostZone := stakeibctypes.HostZone{
 		ChainId:      HostChainId,
+		HostDenom:    Atom,
 		ConnectionId: ibctesting.FirstConnectionID,
 		DelegationAccount: &stakeibctypes.ICAAccount{
 			Address: delegationAddress,
@@ -79,7 +83,7 @@ func (s *KeeperTestSuite) SetupWithdrawalBalanceCallbackTest() WithdrawalBalance
 
 	withdrawalBalance := int64(1000)
 	commission := uint64(10)
-	expectedReinvestment := sdk.NewCoin(Atom, sdk.NewInt(int64(900)))
+	expectedReinvestment := sdk.NewCoin(Atom, sdkmath.NewInt(int64(900)))
 
 	params := s.App.StakeibcKeeper.GetParams(s.Ctx)
 	params.StrideCommission = uint64(commission)
@@ -198,9 +202,7 @@ func (s *KeeperTestSuite) TestWithdrawalBalanceCallback_InvalidArgs() {
 	invalidArgs := []byte("random bytes")
 	err := stakeibckeeper.WithdrawalBalanceCallback(s.App.StakeibcKeeper, s.Ctx, invalidArgs, tc.validArgs.query)
 
-	expectedErrMsg := "unable to unmarshal balance in callback args for zone: GAIA, "
-	expectedErrMsg += "err: unexpected EOF: unable to marshal data structure"
-	s.Require().EqualError(err, expectedErrMsg)
+	s.Require().ErrorContains(err, "unable to determine balance from query response")
 }
 
 func (s *KeeperTestSuite) TestWithdrawalBalanceCallback_NoWithdrawalAccount() {
@@ -212,9 +214,7 @@ func (s *KeeperTestSuite) TestWithdrawalBalanceCallback_NoWithdrawalAccount() {
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, badHostZone)
 
 	err := stakeibckeeper.WithdrawalBalanceCallback(s.App.StakeibcKeeper, s.Ctx, tc.validArgs.callbackArgs, tc.validArgs.query)
-	expectedErrMsg := "WithdrawalBalanceCallback: no withdrawal account found for zone: GAIA: "
-	expectedErrMsg += "ICA acccount not found on host zone"
-	s.Require().EqualError(err, expectedErrMsg)
+	s.Require().EqualError(err, "no withdrawal account found for GAIA: ICA acccount not found on host zone")
 }
 
 func (s *KeeperTestSuite) TestWithdrawalBalanceCallback_NoDelegationAccount() {
@@ -226,9 +226,7 @@ func (s *KeeperTestSuite) TestWithdrawalBalanceCallback_NoDelegationAccount() {
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, badHostZone)
 
 	err := stakeibckeeper.WithdrawalBalanceCallback(s.App.StakeibcKeeper, s.Ctx, tc.validArgs.callbackArgs, tc.validArgs.query)
-	expectedErrMsg := "WithdrawalBalanceCallback: no delegation account found for zone: GAIA: "
-	expectedErrMsg += "ICA acccount not found on host zone"
-	s.Require().EqualError(err, expectedErrMsg)
+	s.Require().EqualError(err, "no delegation account found for GAIA: ICA acccount not found on host zone")
 }
 
 func (s *KeeperTestSuite) TestWithdrawalBalanceCallback_NoFeeAccount() {
@@ -240,9 +238,7 @@ func (s *KeeperTestSuite) TestWithdrawalBalanceCallback_NoFeeAccount() {
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, badHostZone)
 
 	err := stakeibckeeper.WithdrawalBalanceCallback(s.App.StakeibcKeeper, s.Ctx, tc.validArgs.callbackArgs, tc.validArgs.query)
-	expectedErrMsg := "WithdrawalBalanceCallback: no fee account found for zone: GAIA: "
-	expectedErrMsg += "ICA acccount not found on host zone"
-	s.Require().EqualError(err, expectedErrMsg)
+	s.Require().EqualError(err, "no fee account found for GAIA: ICA acccount not found on host zone")
 }
 
 func (s *KeeperTestSuite) TestWithdrawalBalanceCallback_FailedSubmitTx() {
@@ -254,6 +250,117 @@ func (s *KeeperTestSuite) TestWithdrawalBalanceCallback_FailedSubmitTx() {
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, badHostZone)
 
 	err := stakeibckeeper.WithdrawalBalanceCallback(s.App.StakeibcKeeper, s.Ctx, tc.validArgs.callbackArgs, tc.validArgs.query)
-	s.Require().ErrorContains(err, "Failed to SubmitTxs for GAIA - connection-X")
+	s.Require().ErrorContains(err, "Failed to SubmitTxs")
 	s.Require().ErrorContains(err, "invalid connection id, connection-X not found")
+}
+
+func TestUnmarshalAmountFromBalanceQuery(t *testing.T) {
+	type InputType int64
+	const (
+		rawBytes InputType = iota
+		coinType
+		intType
+	)
+
+	testCases := []struct {
+		name           string
+		inputType      InputType
+		raw            []byte
+		coin           sdk.Coin
+		integer        sdkmath.Int
+		expectedAmount sdkmath.Int
+		expectedError  string
+	}{
+		{
+			name:           "full_coin",
+			inputType:      coinType,
+			coin:           sdk.Coin{Denom: "denom", Amount: sdkmath.NewInt(50)},
+			expectedAmount: sdkmath.NewInt(50),
+		},
+		{
+			name:           "coin_no_denom",
+			inputType:      coinType,
+			coin:           sdk.Coin{Amount: sdkmath.NewInt(60)},
+			expectedAmount: sdkmath.NewInt(60),
+		},
+		{
+			name:           "coin_no_amount",
+			inputType:      coinType,
+			coin:           sdk.Coin{Denom: "denom"},
+			expectedAmount: sdkmath.NewInt(0),
+		},
+		{
+			name:           "zero_coin",
+			inputType:      coinType,
+			coin:           sdk.Coin{Amount: sdkmath.NewInt(0)},
+			expectedAmount: sdkmath.NewInt(0),
+		},
+		{
+			name:           "empty_coin",
+			inputType:      coinType,
+			coin:           sdk.Coin{},
+			expectedAmount: sdkmath.NewInt(0),
+		},
+		{
+			name:           "positive_int",
+			inputType:      intType,
+			integer:        sdkmath.NewInt(20),
+			expectedAmount: sdkmath.NewInt(20),
+		},
+		{
+			name:           "zero_int",
+			inputType:      intType,
+			integer:        sdkmath.NewInt(0),
+			expectedAmount: sdkmath.NewInt(0),
+		},
+		{
+			name:           "empty_int",
+			inputType:      intType,
+			integer:        sdkmath.Int{},
+			expectedAmount: sdkmath.NewInt(0),
+		},
+		{
+			name:           "empty_bytes",
+			inputType:      rawBytes,
+			raw:            []byte{},
+			expectedAmount: sdkmath.NewInt(0),
+		},
+		{
+			name:          "invalid_bytes",
+			inputType:     rawBytes,
+			raw:           []byte{1, 2},
+			expectedError: "unable to unmarshal balance query response",
+		},
+		{
+			name:          "nil_bytes",
+			inputType:     rawBytes,
+			raw:           nil,
+			expectedError: "query response is nil",
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			var args []byte
+			var err error
+			switch tc.inputType {
+			case rawBytes:
+				args = tc.raw
+			case coinType:
+				args, err = tc.coin.Marshal()
+			case intType:
+				args, err = tc.integer.Marshal()
+			}
+			require.NoError(t, err)
+
+			if tc.expectedError == "" {
+				actualAmount, err := stakeibckeeper.UnmarshalAmountFromBalanceQuery(stakeibctypes.ModuleCdc, args)
+				require.NoError(t, err)
+				require.Equal(t, tc.expectedAmount.Int64(), actualAmount.Int64())
+			} else {
+				_, err := stakeibckeeper.UnmarshalAmountFromBalanceQuery(stakeibctypes.ModuleCdc, args)
+				require.ErrorContains(t, err, tc.expectedError)
+			}
+		})
+	}
 }

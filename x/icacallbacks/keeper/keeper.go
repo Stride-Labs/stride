@@ -7,42 +7,40 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+
+	errorsmod "cosmossdk.io/errors"
 	capabilitykeeper "github.com/cosmos/cosmos-sdk/x/capability/keeper"
-	capabilitytypes "github.com/cosmos/cosmos-sdk/x/capability/types"
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
 
-	ibckeeper "github.com/cosmos/ibc-go/v3/modules/core/keeper"
+	ibckeeper "github.com/cosmos/ibc-go/v5/modules/core/keeper"
 
-	"github.com/Stride-Labs/stride/v4/x/icacallbacks/types"
-	recordstypes "github.com/Stride-Labs/stride/v4/x/records/types"
+	"github.com/Stride-Labs/stride/v6/x/icacallbacks/types"
+	recordstypes "github.com/Stride-Labs/stride/v6/x/records/types"
 
-	channeltypes "github.com/cosmos/ibc-go/v3/modules/core/04-channel/types"
+	channeltypes "github.com/cosmos/ibc-go/v5/modules/core/04-channel/types"
 
-	icacontrollerkeeper "github.com/cosmos/ibc-go/v3/modules/apps/27-interchain-accounts/controller/keeper"
+	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 )
 
 type (
 	Keeper struct {
-		cdc                 codec.BinaryCodec
-		storeKey            sdk.StoreKey
-		memKey              sdk.StoreKey
-		paramstore          paramtypes.Subspace
-		scopedKeeper        capabilitykeeper.ScopedKeeper
-		icacallbacks        map[string]types.ICACallbackHandler
-		IBCKeeper           ibckeeper.Keeper
-		ICAControllerKeeper icacontrollerkeeper.Keeper
+		cdc          codec.BinaryCodec
+		storeKey     storetypes.StoreKey
+		memKey       storetypes.StoreKey
+		paramstore   paramtypes.Subspace
+		scopedKeeper capabilitykeeper.ScopedKeeper
+		icacallbacks map[string]types.ICACallbackHandler
+		IBCKeeper    ibckeeper.Keeper
 	}
 )
 
 func NewKeeper(
 	cdc codec.BinaryCodec,
 	storeKey,
-	memKey sdk.StoreKey,
+	memKey storetypes.StoreKey,
 	ps paramtypes.Subspace,
 	scopedKeeper capabilitykeeper.ScopedKeeper,
 	ibcKeeper ibckeeper.Keeper,
-	icacontrollerkeeper icacontrollerkeeper.Keeper,
 ) *Keeper {
 	// set KeyTable if it has not already been set
 	if !ps.HasKeyTable() {
@@ -50,14 +48,13 @@ func NewKeeper(
 	}
 
 	return &Keeper{
-		cdc:                 cdc,
-		storeKey:            storeKey,
-		memKey:              memKey,
-		paramstore:          ps,
-		scopedKeeper:        scopedKeeper,
-		icacallbacks:        make(map[string]types.ICACallbackHandler),
-		IBCKeeper:           ibcKeeper,
-		ICAControllerKeeper: icacontrollerkeeper,
+		cdc:          cdc,
+		storeKey:     storeKey,
+		memKey:       memKey,
+		paramstore:   ps,
+		scopedKeeper: scopedKeeper,
+		icacallbacks: make(map[string]types.ICACallbackHandler),
+		IBCKeeper:    ibcKeeper,
 	}
 }
 
@@ -81,11 +78,6 @@ func (k *Keeper) GetICACallbackHandler(module string) (types.ICACallbackHandler,
 		return nil, fmt.Errorf("no callback handler found for %s", module)
 	}
 	return callback, nil
-}
-
-// ClaimCapability claims the channel capability passed via the OnOpenChanInit callback
-func (k *Keeper) ClaimCapability(ctx sdk.Context, cap *capabilitytypes.Capability, name string) error {
-	return k.scopedKeeper.ClaimCapability(ctx, cap, name)
 }
 
 func (k Keeper) GetCallbackDataFromPacket(ctx sdk.Context, modulePacket channeltypes.Packet, callbackDataKey string) (cbd *types.CallbackData, found bool) {
@@ -117,12 +109,12 @@ func (k Keeper) GetICACallbackHandlerFromPacket(ctx sdk.Context, modulePacket ch
 	// fetch the callback function
 	callbackHandler, err := k.GetICACallbackHandler(module)
 	if err != nil {
-		return nil, sdkerrors.Wrapf(types.ErrCallbackHandlerNotFound, "Callback handler does not exist for module %s | err: %s", module, err.Error())
+		return nil, errorsmod.Wrapf(types.ErrCallbackHandlerNotFound, "Callback handler does not exist for module %s | err: %s", module, err.Error())
 	}
 	return &callbackHandler, nil
 }
 
-func (k Keeper) CallRegisteredICACallback(ctx sdk.Context, modulePacket channeltypes.Packet, ack *channeltypes.Acknowledgement) error {
+func (k Keeper) CallRegisteredICACallback(ctx sdk.Context, modulePacket channeltypes.Packet, ackResponse *types.AcknowledgementResponse) error {
 	callbackDataKey := types.PacketID(modulePacket.GetSourcePort(), modulePacket.GetSourceChannel(), modulePacket.Sequence)
 	callbackData, found := k.GetCallbackDataFromPacket(ctx, modulePacket, callbackDataKey)
 	if !found {
@@ -138,17 +130,15 @@ func (k Keeper) CallRegisteredICACallback(ctx sdk.Context, modulePacket channelt
 	if (*callbackHandler).HasICACallback(callbackData.CallbackId) {
 		k.Logger(ctx).Info(fmt.Sprintf("Calling callback for %s", callbackData.CallbackId))
 		// if acknowledgement is empty, then it is a timeout
-		err := (*callbackHandler).CallICACallback(ctx, callbackData.CallbackId, modulePacket, ack, callbackData.CallbackArgs)
+		err := (*callbackHandler).CallICACallback(ctx, callbackData.CallbackId, modulePacket, ackResponse, callbackData.CallbackArgs)
 		if err != nil {
 			errMsg := fmt.Sprintf("Error occured while calling ICACallback (%s) | err: %s", callbackData.CallbackId, err.Error())
 			k.Logger(ctx).Error(errMsg)
-			return sdkerrors.Wrapf(types.ErrCallbackFailed, errMsg)
+			return errorsmod.Wrapf(types.ErrCallbackFailed, errMsg)
 		}
 	} else {
 		k.Logger(ctx).Error(fmt.Sprintf("Callback %v has no associated callback", callbackData))
 	}
-	// QUESTION: Do we want to catch the case where the callback ID has not been registered?
-	// Maybe just as an info log if it's expected that some acks do not have an associated callback?
 
 	// remove the callback data
 	k.RemoveCallbackData(ctx, callbackDataKey)

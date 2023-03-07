@@ -84,60 +84,20 @@ func (app *StrideApp) setupUpgradeHandlers() {
 ```
 
 ## Increment the Module's Consensus Version
+* The consensus version is different from the chain version - it is specific to each module and is incremented every time state is migrated
 ```go
 // x/{moduleName}/module.go
 func (AppModule) ConsensusVersion() uint64 { return 2 }
 ```
 
-## Specify the Migration in the Upgrade Handler
-```go
-// app/upgrades/{upgradeVersion}/upgrades.go
-
-// CreateUpgradeHandler creates an SDK upgrade handler for {upgradeVersion}
-func CreateUpgradeHandler(
-	mm *module.Manager,
-	configurator module.Configurator,
-) upgradetypes.UpgradeHandler {
-	return func(ctx sdk.Context, _ upgradetypes.Plan, vm module.VersionMap) (module.VersionMap, error) {
-		vm[{moduleName}] = 2 // <- ADD THIS
-		return mm.RunMigrations(ctx, configurator, vm)
-	}
-}
-```
-
-## Add Migration Handler
-```go
-// x/{moduleName}/keeper/migrations.go
-
-package keeper
-
-import (
-	sdk "github.com/cosmos/cosmos-sdk/types"
-
-    {upgradeVersion} "github.com/Stride-Labs/stride/v4/x/records/migrations/{upgradeVersion}"
-)
-
-type Migrator struct {
-	keeper Keeper
-}
-
-func NewMigrator(keeper Keeper) Migrator {
-	return Migrator{keeper: keeper}
-}
-
-func (m Migrator) Migrate1to2(ctx sdk.Context) error {
-	return {upgradeVersion}.MigrateStore(ctx)
-}
-```
-
 ## Define Migration Logic
 ```go
-// x/{moduleName}/migrations/{upgradeVersion}/migrations.go
+// x/{moduleName}/migrations/{new-consensus-version}/migrations.go
 package {upgradeVersion}
 
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	{oldVersion} "github.com/Stride-Labs/stride/v4/x/records/migrations/{oldVersion}"
+	{new-consensus-version} "github.com/Stride-Labs/stride/v6/x/records/migrations/{new-consensus-version}"
 )
 
 // TODO: Add migration logic to deserialize with old protos and re-serialize with new ones
@@ -147,16 +107,35 @@ func MigrateStore(ctx sdk.Context) error {
 }
 ```
 
-## Register Migration Handler
+## Specify the Migration in the Upgrade Handler
 ```go
-// x/{moduleName}/module.go
-...
-func (am AppModule) RegisterServices(cfg module.Configurator) {
-	types.RegisterQueryServer(cfg.QueryServer(), am.keeper)
-	migrator := keeper.NewMigrator(am.keeper)
+// app/upgrades/{upgradeVersion}/upgrades.go
 
-	if err := cfg.RegisterMigration(types.ModuleName, 1, migrator.Migrate1to2); err != nil {
-		panic(fmt.Errorf("failed to migrate %s to {upgradeVersion}: %w", types.ModuleName, err))
+import (
+	{module}migration "github.com/Stride-Labs/stride/v6/x/{module}/migrations/{new-consensus-version}"
+)
+
+// CreateUpgradeHandler creates an SDK upgrade handler for {upgradeVersion}
+func CreateUpgradeHandler(
+	mm *module.Manager,
+	configurator module.Configurator,
+	cdc codec.Codec,
+	{module}StoreKey,
+) upgradetypes.UpgradeHandler {
+	return func(ctx sdk.Context, _ upgradetypes.Plan, vm module.VersionMap) (module.VersionMap, error) {
+		if err := {module}migration.MigrateStore(ctx, {module}StoreKey, cdc); err != nil {
+			return vm, errorsmod.Wrapf(err, "unable to migrate {module} store")
+		}
+		vm[{moduleName}] = mm.GetVersionMap()[{moduleName}] 
+		return mm.RunMigrations(ctx, configurator, vm)
 	}
 }
+```
+
+## Add Additional Parameters to `CreateUpgradeHandler` Invocation 
+```go
+// app/upgrades.go
+	...
+		{upgradeVersion}.CreateUpgradeHandler(app.mm, app.configurator, app.appCodec, app.{module}Keeper),
+	...
 ```

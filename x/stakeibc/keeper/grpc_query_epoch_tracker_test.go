@@ -5,14 +5,13 @@ import (
 	"testing"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/types/query"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	keepertest "github.com/Stride-Labs/stride/v4/testutil/keeper"
-	"github.com/Stride-Labs/stride/v4/testutil/nullify"
-	"github.com/Stride-Labs/stride/v4/x/stakeibc/types"
+	keepertest "github.com/Stride-Labs/stride/v6/testutil/keeper"
+	"github.com/Stride-Labs/stride/v6/testutil/nullify"
+	"github.com/Stride-Labs/stride/v6/x/stakeibc/types"
 )
 
 // Prevent strconv unused error
@@ -69,58 +68,16 @@ func TestEpochTrackerQuerySingle(t *testing.T) {
 	}
 }
 
-func TestEpochTrackerQueryPaginated(t *testing.T) {
+func TestAllEpochTrackerQuery(t *testing.T) {
 	keeper, ctx := keepertest.StakeibcKeeper(t)
 	wctx := sdk.WrapSDKContext(ctx)
 	msgs := createNEpochTracker(keeper, ctx, 5)
 
-	request := func(next []byte, offset, limit uint64, total bool) *types.QueryAllEpochTrackerRequest {
-		return &types.QueryAllEpochTrackerRequest{
-			Pagination: &query.PageRequest{
-				Key:        next,
-				Offset:     offset,
-				Limit:      limit,
-				CountTotal: total,
-			},
-		}
-	}
-	t.Run("ByOffset", func(t *testing.T) {
-		step := 2
-		for i := 0; i < len(msgs); i += step {
-			resp, err := keeper.EpochTrackerAll(wctx, request(nil, uint64(i), uint64(step), false))
-			require.NoError(t, err)
-			require.LessOrEqual(t, len(resp.EpochTracker), step)
-			require.Subset(t,
-				nullify.Fill(msgs),
-				nullify.Fill(resp.EpochTracker),
-			)
-		}
-	})
-	t.Run("ByKey", func(t *testing.T) {
-		step := 2
-		var next []byte
-		for i := 0; i < len(msgs); i += step {
-			resp, err := keeper.EpochTrackerAll(wctx, request(next, 0, uint64(step), false))
-			require.NoError(t, err)
-			require.LessOrEqual(t, len(resp.EpochTracker), step)
-			require.Subset(t,
-				nullify.Fill(msgs),
-				nullify.Fill(resp.EpochTracker),
-			)
-			next = resp.Pagination.NextKey
-		}
-	})
-	t.Run("Total", func(t *testing.T) {
-		resp, err := keeper.EpochTrackerAll(wctx, request(nil, 0, 0, true))
-		require.NoError(t, err)
-		require.Equal(t, len(msgs), int(resp.Pagination.Total))
-		require.ElementsMatch(t,
-			nullify.Fill(msgs),
-			nullify.Fill(resp.EpochTracker),
-		)
-	})
-	t.Run("InvalidRequest", func(t *testing.T) {
-		_, err := keeper.EpochTrackerAll(wctx, nil)
-		require.ErrorIs(t, err, status.Error(codes.InvalidArgument, "invalid request"))
-	})
+	resp, err := keeper.EpochTrackerAll(wctx, &types.QueryAllEpochTrackerRequest{})
+	require.NoError(t, err)
+	require.Len(t, resp.EpochTracker, 5)
+	require.Subset(t,
+		nullify.Fill(msgs),
+		nullify.Fill(resp.EpochTracker),
+	)
 }
