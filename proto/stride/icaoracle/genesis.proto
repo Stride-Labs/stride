@@ -3,13 +3,28 @@ package stride.icaoracle;
 
 import "gogoproto/gogo.proto";
 import "stride/icaoracle/params.proto";
+import "stride/icaoracle/icaoracle.proto";
 
 option go_package = "github.com/Stride-Labs/stride/v5/x/icaoracle/types";
 
 // GenesisState defines the icaoracle module's genesis state.
 message GenesisState {
-  // params defines all the parameters of the module.
   Params params = 1 [
+    (gogoproto.moretags) = "yaml:\"params\"",
+    (gogoproto.nullable) = false
+  ];
+
+  repeated Oracle oracles = 2 [
+    (gogoproto.moretags) = "yaml:\"params\"",
+    (gogoproto.nullable) = false
+  ];
+
+  repeated Metric queued_metrics = 3 [
+    (gogoproto.moretags) = "yaml:\"params\"",
+    (gogoproto.nullable) = false
+  ];
+
+  repeated PendingMetricUpdate pending_metrics = 4 [
     (gogoproto.moretags) = "yaml:\"params\"",
     (gogoproto.nullable) = false
   ];
