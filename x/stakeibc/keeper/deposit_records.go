@@ -20,7 +20,7 @@ import (
 func (k Keeper) CreateDepositRecordsForEpoch(ctx sdk.Context, epochNumber uint64) {
 	k.Logger(ctx).Info(fmt.Sprintf("Creating Deposit Records for Epoch %d", epochNumber))
 
-	for _, hostZone := range k.GetAllHostZone(ctx) {
+	for _, hostZone := range k.GetAllActiveHostZone(ctx) {
 		k.Logger(ctx).Info(utils.LogWithHostZone(hostZone.ChainId, "Creating Deposit Record"))
 
 		depositRecord := recordstypes.DepositRecord{

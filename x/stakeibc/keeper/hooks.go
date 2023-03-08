@@ -124,7 +124,7 @@ func (k Keeper) UpdateEpochTracker(ctx sdk.Context, epochInfo epochstypes.EpochI
 func (k Keeper) SetWithdrawalAddress(ctx sdk.Context) {
 	k.Logger(ctx).Info("Setting Withdrawal Addresses...")
 
-	for _, hostZone := range k.GetAllHostZone(ctx) {
+	for _, hostZone := range k.GetAllActiveHostZone(ctx) {
 		err := k.SetWithdrawalAddressOnHost(ctx, hostZone)
 		if err != nil {
 			k.Logger(ctx).Error(fmt.Sprintf("Unable to set withdrawal address on %s, err: %s", hostZone.ChainId, err))
@@ -139,7 +139,7 @@ func (k Keeper) UpdateRedemptionRates(ctx sdk.Context, depositRecords []recordst
 	k.Logger(ctx).Info("Updating Redemption Rates...")
 
 	// Update the redemption rate for each host zone
-	for _, hostZone := range k.GetAllHostZone(ctx) {
+	for _, hostZone := range k.GetAllActiveHostZone(ctx) {
 
 		// Gather redemption rate components
 		stSupply := k.bankKeeper.GetSupply(ctx, types.StAssetDenomFromHostZoneDenom(hostZone.HostDenom)).Amount
@@ -207,11 +207,7 @@ func (k Keeper) GetModuleAccountBalance(hostZone types.HostZone, depositRecords 
 func (k Keeper) ReinvestRewards(ctx sdk.Context) {
 	k.Logger(ctx).Info("Reinvesting tokens...")
 
-	for _, hostZone := range k.GetAllHostZone(ctx) {
-		if hostZone.Halted {
-			k.Logger(ctx).Error(fmt.Sprintf("Host zone halted for %s", hostZone.ChainId))
-			continue
-		}
+	for _, hostZone := range k.GetAllActiveHostZone(ctx) {
 		// only process host zones once withdrawal accounts are registered
 		withdrawalAccount := hostZone.WithdrawalAccount
 		if withdrawalAccount == nil || withdrawalAccount.Address == "" {
