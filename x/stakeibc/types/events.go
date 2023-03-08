@@ -1,6 +1,6 @@
 package types
 
-// IBC events
+// Events
 const (
 	EventTypeTimeout = "timeout"
 	// this line is used by starport scaffolding # ibc/packet/event
@@ -21,6 +21,12 @@ const (
 	AttributeKeyBurnAmount       = "burn_amount"
 	AttributeKeyRedeemAmount     = "redeem_amount"
 	AttributeKeySourceAddress    = "source"
+	AttributeKeyUser             = "user"
+	AttributeKeyHostZone         = "host_zone"
+	AttributeKeyNativeBaseDenom  = "native_base_denom"
+	AttributeKeyNativeIBCDenom   = "native_ibc_denom"
+	AttributeKeyNativeAmount     = "native_amount"
+	AttributeKeyStTokenAmount    = "sttoken_amount"
 
 	AttributeValueCategory = ModuleName
 )

@@ -68,6 +68,7 @@ func (s *KeeperTestSuite) SetupLiquidStake() LiquidStakeTestCase {
 		DepositEpochNumber: 1,
 		HostZoneId:         "GAIA",
 		Amount:             initialDepositAmount,
+		Status:             recordtypes.DepositRecord_TRANSFER_QUEUE,
 	}
 
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
@@ -176,19 +177,7 @@ func (s *KeeperTestSuite) TestLiquidStake_HostZoneNotFound() {
 	invalidMsg.HostDenom = "ufakedenom"
 	_, err := s.GetMsgServer().LiquidStake(sdk.WrapSDKContext(s.Ctx), &invalidMsg)
 
-	s.Require().EqualError(err, "no host zone found for denom (ufakedenom): host zone not registered")
-}
-
-func (s *KeeperTestSuite) TestLiquidStake_IbcCoinParseError() {
-	tc := s.SetupLiquidStake()
-	// Update hostzone with denom that can't be parsed
-	badHostZone := tc.initialState.hostZone
-	badHostZone.IbcDenom = "ibc,0atom"
-	s.App.StakeibcKeeper.SetHostZone(s.Ctx, badHostZone)
-	_, err := s.GetMsgServer().LiquidStake(sdk.WrapSDKContext(s.Ctx), &tc.validMsg)
-
-	badCoin := fmt.Sprintf("%v%s", tc.validMsg.Amount, badHostZone.IbcDenom)
-	s.Require().EqualError(err, fmt.Sprintf("failed to parse coin (%s): invalid decimal coin expression: %s", badCoin, badCoin))
+	s.Require().EqualError(err, "no host zone found for denom (ufakedenom): invalid token denom")
 }
 
 func (s *KeeperTestSuite) TestLiquidStake_NotIbcDenom() {
@@ -235,6 +224,17 @@ func (s *KeeperTestSuite) TestLiquidStake_NoDepositRecord() {
 	s.Require().EqualError(err, fmt.Sprintf("no deposit record for epoch (%d): not found", 1))
 }
 
+func (s *KeeperTestSuite) TestLiquidStake_InvalidUserAddress() {
+	tc := s.SetupLiquidStake()
+
+	// Update hostzone with invalid address
+	invalidMsg := tc.validMsg
+	invalidMsg.Creator = "cosmosXXX"
+
+	_, err := s.GetMsgServer().LiquidStake(sdk.WrapSDKContext(s.Ctx), &invalidMsg)
+	s.Require().EqualError(err, "user's address is invalid: decoding bech32 failed: string not all lowercase or all uppercase")
+}
+
 func (s *KeeperTestSuite) TestLiquidStake_InvalidHostAddress() {
 	tc := s.SetupLiquidStake()
 
@@ -244,5 +244,5 @@ func (s *KeeperTestSuite) TestLiquidStake_InvalidHostAddress() {
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, badHostZone)
 
 	_, err := s.GetMsgServer().LiquidStake(sdk.WrapSDKContext(s.Ctx), &tc.validMsg)
-	s.Require().EqualError(err, "could not bech32 decode address cosmosXXX of zone with id: GAIA")
+	s.Require().EqualError(err, "host zone address is invalid: decoding bech32 failed: string not all lowercase or all uppercase")
 }
