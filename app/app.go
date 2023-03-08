@@ -225,6 +225,7 @@ var (
 		claimtypes.ModuleName:           nil,
 		interchainquerytypes.ModuleName: nil,
 		icatypes.ModuleName:             nil,
+		stakeibcmoduletypes.RewardCollectorName: nil,
 		// this line is used by starport scaffolding # stargate/app/maccPerms
 	}
 )
@@ -951,6 +952,9 @@ func (app *StrideApp) BlacklistedModuleAccountAddrs() map[string]bool {
 	for _, acc := range utils.StringMapKeys(maccPerms) {
 		// don't blacklist stakeibc module account, so that it can ibc transfer tokens
 		if acc == "stakeibc" {
+			continue
+		}
+		if acc == stakeibcmoduletypes.RewardCollectorName {
 			continue
 		}
 		modAccAddrs[authtypes.NewModuleAddress(acc).String()] = true
