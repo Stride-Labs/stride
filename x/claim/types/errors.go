@@ -20,4 +20,6 @@ var (
 		"airdrop with same distributor already exists")
 	ErrInvalidAmount = errorsmod.Register(ModuleName, 1108,
 		"cannot claim negative tokens")
+	ErrInvalidAccount = errorsmod.Register(ModuleName, 1109,
+		"only BaseAccount and StridePeriodicVestingAccount can claim")
 )
