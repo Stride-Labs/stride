@@ -54,3 +54,20 @@ func (k Keeper) DepositRecord(c context.Context, req *types.QueryGetDepositRecor
 
 	return &types.QueryGetDepositRecordResponse{DepositRecord: depositRecord}, nil
 }
+
+func (k Keeper) DepositRecordByHost(c context.Context, req *types.QueryDepositRecordByHostRequest) (*types.QueryDepositRecordByHostResponse, error) {
+	ctx := sdk.UnwrapSDKContext(c)
+
+	if req == nil {
+		return nil, status.Error(codes.InvalidArgument, "invalid request")
+	}
+
+	var depositRecordsForHost []types.DepositRecord
+	for _, depositRecord := range k.GetAllDepositRecord(ctx) {
+		if depositRecord.HostZoneId == req.HostZoneId {
+			depositRecordsForHost = append(depositRecordsForHost, depositRecord)
+		}
+	}
+
+	return &types.QueryDepositRecordByHostResponse{DepositRecord: depositRecordsForHost}, nil
+}
