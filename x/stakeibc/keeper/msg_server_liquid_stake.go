@@ -15,14 +15,14 @@ import (
 func (k msgServer) LiquidStake(goCtx context.Context, msg *types.MsgLiquidStake) (*types.MsgLiquidStakeResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	// Get the host zones from the base denom in the message (e.g. uatom)
+	// Get the host zone from the base denom in the message (e.g. uatom)
 	hostZone, err := k.GetHostZoneFromHostDenom(ctx, msg.HostDenom)
 	if err != nil {
 		return nil, errorsmod.Wrapf(types.ErrInvalidToken, "no host zone found for denom (%s)", msg.HostDenom)
 	}
 
 	// Get user and module account addresses
-	sender, err := sdk.AccAddressFromBech32(msg.Creator)
+	userAddress, err := sdk.AccAddressFromBech32(msg.Creator)
 	if err != nil {
 		return nil, errorsmod.Wrapf(err, "user's address is invalid")
 	}
@@ -55,7 +55,7 @@ func (k msgServer) LiquidStake(goCtx context.Context, msg *types.MsgLiquidStake)
 	}
 
 	// Confirm the user has a sufficient balance to execute the liquid stake
-	balance := k.bankKeeper.GetBalance(ctx, sender, nativeDenom)
+	balance := k.bankKeeper.GetBalance(ctx, userAddress, nativeDenom)
 	if balance.IsLT(nativeCoin) {
 		return nil, errorsmod.Wrapf(sdkerrors.ErrInsufficientFunds, "balance is lower than staking amount. staking amount: %v, balance: %v", msg.Amount, balance.Amount)
 	}
@@ -64,11 +64,11 @@ func (k msgServer) LiquidStake(goCtx context.Context, msg *types.MsgLiquidStake)
 	stAmount := (sdk.NewDecFromInt(msg.Amount).Quo(hostZone.RedemptionRate)).TruncateInt()
 	if stAmount.IsZero() {
 		return nil, errorsmod.Wrapf(types.ErrInsufficientLiquidStake,
-			"Liquid stake of %s%s would result in a 0 stTokens", msg.Amount, hostZone.HostDenom)
+			"Liquid stake of %s%s would return 0 stTokens", msg.Amount.String(), hostZone.HostDenom)
 	}
 
 	// Transfer the native tokens from the user to module account
-	if err := k.bankKeeper.SendCoins(ctx, sender, hostZoneAddress, sdk.NewCoins(nativeCoin)); err != nil {
+	if err := k.bankKeeper.SendCoins(ctx, userAddress, hostZoneAddress, sdk.NewCoins(nativeCoin)); err != nil {
 		return nil, errorsmod.Wrap(err, "failed to send tokens from Account to Module")
 	}
 
@@ -76,10 +76,10 @@ func (k msgServer) LiquidStake(goCtx context.Context, msg *types.MsgLiquidStake)
 	stDenom := types.StAssetDenomFromHostZoneDenom(msg.HostDenom)
 	stCoin := sdk.NewCoin(stDenom, stAmount)
 	if err := k.bankKeeper.MintCoins(ctx, types.ModuleName, sdk.NewCoins(stCoin)); err != nil {
-		return nil, errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "Failed to mint coins")
+		return nil, errorsmod.Wrapf(err, "Failed to mint coins")
 	}
-	if err := k.bankKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, sender, sdk.NewCoins(stCoin)); err != nil {
-		return nil, errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "Failed to send %s from module to account", stCoin.String())
+	if err := k.bankKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, userAddress, sdk.NewCoins(stCoin)); err != nil {
+		return nil, errorsmod.Wrapf(err, "Failed to send %s from module to account", stCoin.String())
 	}
 
 	// Update the liquid staked amount on the deposit record
@@ -100,6 +100,6 @@ func (k msgServer) LiquidStake(goCtx context.Context, msg *types.MsgLiquidStake)
 		),
 	)
 
-	k.hooks.AfterLiquidStake(ctx, sender)
+	k.hooks.AfterLiquidStake(ctx, userAddress)
 	return &types.MsgLiquidStakeResponse{}, nil
 }

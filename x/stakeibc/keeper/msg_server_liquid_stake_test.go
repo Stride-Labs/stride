@@ -157,19 +157,6 @@ func (s *KeeperTestSuite) TestLiquidStake_DifferentRedemptionRates() {
 	}
 }
 
-func (s *KeeperTestSuite) TestLiquidStake_RateBelowMinThreshold() {
-	tc := s.SetupLiquidStake()
-	msg := tc.validMsg
-
-	// Update rate in host zone to below min threshold
-	hz := tc.initialState.hostZone
-	hz.RedemptionRate = sdk.NewDec(8).Quo(sdk.NewDec(10))
-	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hz)
-
-	_, err := s.GetMsgServer().LiquidStake(sdk.WrapSDKContext(s.Ctx), &msg)
-	s.Require().Error(err)
-}
-
 func (s *KeeperTestSuite) TestLiquidStake_HostZoneNotFound() {
 	tc := s.SetupLiquidStake()
 	// Update message with invalid denom
@@ -178,50 +165,6 @@ func (s *KeeperTestSuite) TestLiquidStake_HostZoneNotFound() {
 	_, err := s.GetMsgServer().LiquidStake(sdk.WrapSDKContext(s.Ctx), &invalidMsg)
 
 	s.Require().EqualError(err, "no host zone found for denom (ufakedenom): invalid token denom")
-}
-
-func (s *KeeperTestSuite) TestLiquidStake_NotIbcDenom() {
-	tc := s.SetupLiquidStake()
-	// Update hostzone with non-ibc denom
-	badDenom := "i/uatom"
-	badHostZone := tc.initialState.hostZone
-	badHostZone.IbcDenom = badDenom
-	s.App.StakeibcKeeper.SetHostZone(s.Ctx, badHostZone)
-	// Fund the user with the non-ibc denom
-	s.FundAccount(tc.user.acc, sdk.NewInt64Coin(badDenom, 1000000000))
-	_, err := s.GetMsgServer().LiquidStake(sdk.WrapSDKContext(s.Ctx), &tc.validMsg)
-
-	s.Require().EqualError(err, fmt.Sprintf("denom is not an IBC token (%s): invalid token denom", badHostZone.IbcDenom))
-}
-
-func (s *KeeperTestSuite) TestLiquidStake_InsufficientBalance() {
-	tc := s.SetupLiquidStake()
-	// Set liquid stake amount to value greater than account balance
-	invalidMsg := tc.validMsg
-	balance := tc.user.atomBalance.Amount
-	invalidMsg.Amount = balance.Add(sdkmath.NewInt(1000))
-	_, err := s.GetMsgServer().LiquidStake(sdk.WrapSDKContext(s.Ctx), &invalidMsg)
-
-	expectedErr := fmt.Sprintf("balance is lower than staking amount. staking amount: %v, balance: %v: insufficient funds", balance.Add(sdkmath.NewInt(1000)), balance)
-	s.Require().EqualError(err, expectedErr)
-}
-
-func (s *KeeperTestSuite) TestLiquidStake_NoEpochTracker() {
-	tc := s.SetupLiquidStake()
-	// Remove epoch tracker
-	s.App.StakeibcKeeper.RemoveEpochTracker(s.Ctx, epochtypes.STRIDE_EPOCH)
-	_, err := s.GetMsgServer().LiquidStake(sdk.WrapSDKContext(s.Ctx), &tc.validMsg)
-
-	s.Require().EqualError(err, fmt.Sprintf("no epoch number for epoch (%s): not found", epochtypes.STRIDE_EPOCH))
-}
-
-func (s *KeeperTestSuite) TestLiquidStake_NoDepositRecord() {
-	tc := s.SetupLiquidStake()
-	// Remove deposit record
-	s.App.RecordsKeeper.RemoveDepositRecord(s.Ctx, 1)
-	_, err := s.GetMsgServer().LiquidStake(sdk.WrapSDKContext(s.Ctx), &tc.validMsg)
-
-	s.Require().EqualError(err, fmt.Sprintf("no deposit record for epoch (%d): not found", 1))
 }
 
 func (s *KeeperTestSuite) TestLiquidStake_InvalidUserAddress() {
@@ -245,4 +188,76 @@ func (s *KeeperTestSuite) TestLiquidStake_InvalidHostAddress() {
 
 	_, err := s.GetMsgServer().LiquidStake(sdk.WrapSDKContext(s.Ctx), &tc.validMsg)
 	s.Require().EqualError(err, "host zone address is invalid: decoding bech32 failed: string not all lowercase or all uppercase")
+}
+
+func (s *KeeperTestSuite) TestLiquidStake_RateBelowMinThreshold() {
+	tc := s.SetupLiquidStake()
+	msg := tc.validMsg
+
+	// Update rate in host zone to below min threshold
+	hz := tc.initialState.hostZone
+	hz.RedemptionRate = sdk.NewDec(8).Quo(sdk.NewDec(10))
+	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hz)
+
+	_, err := s.GetMsgServer().LiquidStake(sdk.WrapSDKContext(s.Ctx), &msg)
+	s.Require().Error(err)
+}
+
+func (s *KeeperTestSuite) TestLiquidStake_NoEpochTracker() {
+	tc := s.SetupLiquidStake()
+	// Remove epoch tracker
+	s.App.StakeibcKeeper.RemoveEpochTracker(s.Ctx, epochtypes.STRIDE_EPOCH)
+	_, err := s.GetMsgServer().LiquidStake(sdk.WrapSDKContext(s.Ctx), &tc.validMsg)
+
+	s.Require().EqualError(err, fmt.Sprintf("no epoch number for epoch (%s): not found", epochtypes.STRIDE_EPOCH))
+}
+
+func (s *KeeperTestSuite) TestLiquidStake_NoDepositRecord() {
+	tc := s.SetupLiquidStake()
+	// Remove deposit record
+	s.App.RecordsKeeper.RemoveDepositRecord(s.Ctx, 1)
+	_, err := s.GetMsgServer().LiquidStake(sdk.WrapSDKContext(s.Ctx), &tc.validMsg)
+
+	s.Require().EqualError(err, fmt.Sprintf("no deposit record for epoch (%d): not found", 1))
+}
+
+func (s *KeeperTestSuite) TestLiquidStake_NotIbcDenom() {
+	tc := s.SetupLiquidStake()
+	// Update hostzone with non-ibc denom
+	badDenom := "i/uatom"
+	badHostZone := tc.initialState.hostZone
+	badHostZone.IbcDenom = badDenom
+	s.App.StakeibcKeeper.SetHostZone(s.Ctx, badHostZone)
+	// Fund the user with the non-ibc denom
+	s.FundAccount(tc.user.acc, sdk.NewInt64Coin(badDenom, 1000000000))
+	_, err := s.GetMsgServer().LiquidStake(sdk.WrapSDKContext(s.Ctx), &tc.validMsg)
+
+	s.Require().EqualError(err, fmt.Sprintf("denom is not an IBC token (%s): invalid token denom", badHostZone.IbcDenom))
+}
+
+func (s *KeeperTestSuite) TestLiquidStake_ZeroStTokens() {
+	tc := s.SetupLiquidStake()
+
+	// Adjust redemption rate and liquid stake amount so that the number of stTokens would be zero
+	// stTokens = 1(amount) / 1.1(RR) = rounds down to 0
+	hostZone := tc.initialState.hostZone
+	hostZone.RedemptionRate = sdk.NewDecWithPrec(11, 1)
+	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
+	tc.validMsg.Amount = sdkmath.NewInt(1)
+
+	// The liquid stake should fail
+	_, err := s.GetMsgServer().LiquidStake(sdk.WrapSDKContext(s.Ctx), &tc.validMsg)
+	s.Require().EqualError(err, fmt.Sprintf("Liquid stake of 1uatom would return 0 stTokens: Liquid staked amount is too small"))
+}
+
+func (s *KeeperTestSuite) TestLiquidStake_InsufficientBalance() {
+	tc := s.SetupLiquidStake()
+	// Set liquid stake amount to value greater than account balance
+	invalidMsg := tc.validMsg
+	balance := tc.user.atomBalance.Amount
+	invalidMsg.Amount = balance.Add(sdkmath.NewInt(1000))
+	_, err := s.GetMsgServer().LiquidStake(sdk.WrapSDKContext(s.Ctx), &invalidMsg)
+
+	expectedErr := fmt.Sprintf("balance is lower than staking amount. staking amount: %v, balance: %v: insufficient funds", balance.Add(sdkmath.NewInt(1000)), balance)
+	s.Require().EqualError(err, expectedErr)
 }
