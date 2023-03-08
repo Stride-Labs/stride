@@ -17,7 +17,7 @@ import (
 	tmrand "github.com/tendermint/tendermint/libs/rand"
 	tmdb "github.com/tendermint/tm-db"
 
-	"github.com/Stride-Labs/stride/v5/app"
+	"github.com/Stride-Labs/stride/v6/app"
 )
 
 type (

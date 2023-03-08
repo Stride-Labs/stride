@@ -10,7 +10,7 @@ import (
 	// "github.com/cosmos/cosmos-sdk/client/flags"
 	// sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/Stride-Labs/stride/v5/x/records/types"
+	"github.com/Stride-Labs/stride/v6/x/records/types"
 )
 
 // GetQueryCmd returns the cli query commands for this module
@@ -31,6 +31,7 @@ func GetQueryCmd(queryRoute string) *cobra.Command {
 	cmd.AddCommand(CmdShowEpochUnbondingRecord())
 	cmd.AddCommand(CmdListDepositRecord())
 	cmd.AddCommand(CmdShowDepositRecord())
+	cmd.AddCommand(CmdListDepositRecordByHost())
 	// this line is used by starport scaffolding # 1
 
 	return cmd

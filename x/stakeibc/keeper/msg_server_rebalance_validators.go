@@ -12,8 +12,8 @@ import (
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	stakingTypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
-	"github.com/Stride-Labs/stride/v5/utils"
-	"github.com/Stride-Labs/stride/v5/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v6/utils"
+	"github.com/Stride-Labs/stride/v6/x/stakeibc/types"
 )
 
 func (k msgServer) RebalanceValidators(goCtx context.Context, msg *types.MsgRebalanceValidators) (*types.MsgRebalanceValidatorsResponse, error) {

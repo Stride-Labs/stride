@@ -11,20 +11,20 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/suite"
 
-	"github.com/Stride-Labs/stride/v5/app"
+	"github.com/Stride-Labs/stride/v6/app"
 
-	"github.com/Stride-Labs/stride/v5/app/apptesting"
-	upgradev5 "github.com/Stride-Labs/stride/v5/app/upgrades/v5"
-	oldclaimtypes "github.com/Stride-Labs/stride/v5/x/claim/migrations/v2/types"
-	claimtypes "github.com/Stride-Labs/stride/v5/x/claim/types"
-	icacallbacktypes "github.com/Stride-Labs/stride/v5/x/icacallbacks/types"
-	icqtypes "github.com/Stride-Labs/stride/v5/x/interchainquery/types"
-	recordkeeper "github.com/Stride-Labs/stride/v5/x/records/keeper"
-	oldrecordtypes "github.com/Stride-Labs/stride/v5/x/records/migrations/v2/types"
-	recordtypes "github.com/Stride-Labs/stride/v5/x/records/types"
-	stakeibckeeper "github.com/Stride-Labs/stride/v5/x/stakeibc/keeper"
-	oldstakeibctypes "github.com/Stride-Labs/stride/v5/x/stakeibc/migrations/v2/types"
-	stakeibctypes "github.com/Stride-Labs/stride/v5/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v6/app/apptesting"
+	upgradev5 "github.com/Stride-Labs/stride/v6/app/upgrades/v5"
+	oldclaimtypes "github.com/Stride-Labs/stride/v6/x/claim/migrations/v2/types"
+	claimtypes "github.com/Stride-Labs/stride/v6/x/claim/types"
+	icacallbacktypes "github.com/Stride-Labs/stride/v6/x/icacallbacks/types"
+	icqtypes "github.com/Stride-Labs/stride/v6/x/interchainquery/types"
+	recordkeeper "github.com/Stride-Labs/stride/v6/x/records/keeper"
+	oldrecordtypes "github.com/Stride-Labs/stride/v6/x/records/migrations/v2/types"
+	recordtypes "github.com/Stride-Labs/stride/v6/x/records/types"
+	stakeibckeeper "github.com/Stride-Labs/stride/v6/x/stakeibc/keeper"
+	oldstakeibctypes "github.com/Stride-Labs/stride/v6/x/stakeibc/migrations/v2/types"
+	stakeibctypes "github.com/Stride-Labs/stride/v6/x/stakeibc/types"
 )
 
 const dummyUpgradeHeight = 5
