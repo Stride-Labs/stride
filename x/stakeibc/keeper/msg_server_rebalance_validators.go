@@ -11,7 +11,6 @@ import (
 	errorsmod "cosmossdk.io/errors"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	stakingTypes "github.com/cosmos/cosmos-sdk/x/staking/types"
-	"github.com/spf13/cast"
 
 	"github.com/Stride-Labs/stride/v6/utils"
 	"github.com/Stride-Labs/stride/v6/x/stakeibc/types"
@@ -26,15 +25,7 @@ func (k msgServer) RebalanceValidators(goCtx context.Context, msg *types.MsgReba
 		k.Logger(ctx).Error(fmt.Sprintf("Host Zone not found %s", msg.HostZone))
 		return nil, types.ErrInvalidHostZone
 	}
-	maxNumRebalance := cast.ToInt(msg.NumRebalance)
-	if maxNumRebalance < 1 {
-		k.Logger(ctx).Error(fmt.Sprintf("Invalid number of validators to rebalance %d", maxNumRebalance))
-		return nil, types.ErrInvalidNumValidator
-	}
-	if maxNumRebalance > 4 {
-		k.Logger(ctx).Error(fmt.Sprintf("Invalid number of validators to rebalance %d", maxNumRebalance))
-		return nil, types.ErrInvalidNumValidator
-	}
+
 	validatorDeltas, err := k.GetValidatorDelegationAmtDifferences(ctx, hostZone)
 	if err != nil {
 		k.Logger(ctx).Error(fmt.Sprintf("Error getting validator deltas for Host Zone %s: %s", hostZone.ChainId, err))
@@ -68,14 +59,7 @@ func (k msgServer) RebalanceValidators(goCtx context.Context, msg *types.MsgReba
 		return nil, errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "no validator delegations found for Host Zone %s, cannot rebalance 0 delegations!", hostZone.ChainId)
 	}
 
-	overweight_delta := sdk.NewDecFromInt(valDeltaList[overWeightIndex].deltaAmt).Quo(sdk.NewDecFromInt(total_delegation))
-	underweight_delta := sdk.NewDecFromInt(valDeltaList[underWeightIndex].deltaAmt).Quo(sdk.NewDecFromInt(total_delegation))
-	max_delta := sdk.MaxDec(overweight_delta, underweight_delta)
-	rebalanceThreshold := sdk.NewDec(int64(k.GetParam(ctx, types.KeyValidatorRebalancingThreshold))).Quo(sdk.NewDec(10000))
-	if max_delta.LT(rebalanceThreshold) {
-		k.Logger(ctx).Error("Not enough validator disruption to rebalance")
-		return nil, types.ErrWeightsNotDifferent
-	}
+	// TODO Remove ValidatorRebalancingThreshold from our params
 
 	var msgs []sdk.Msg
 	delegationIca := hostZone.GetDelegationAccount()
@@ -92,7 +76,7 @@ func (k msgServer) RebalanceValidators(goCtx context.Context, msg *types.MsgReba
 		Rebalancings: []*types.Rebalancing{},
 	}
 
-	for i := 1; i <= maxNumRebalance; i++ {
+	for i := uint64(1); i <= msg.NumRebalance; i++ {
 		underWeightElem := valDeltaList[underWeightIndex]
 		overWeightElem := valDeltaList[overWeightIndex]
 		if underWeightElem.deltaAmt.LT(sdkmath.ZeroInt()) {
