@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"context"
+	"fmt"
 	"strings"
 	"time"
 
@@ -42,6 +43,10 @@ func (k Keeper) AddressUnbondings(c context.Context, req *types.QueryAddressUnbo
 		for _, hostZoneUnbonding := range epochUnbondingRecord.GetHostZoneUnbondings() {
 			for _, userRedemptionRecordId := range hostZoneUnbonding.GetUserRedemptionRecords() {
 				userRedemptionRecordComponents := strings.Split(userRedemptionRecordId, ".")
+				if len(userRedemptionRecordComponents) != 3 {
+					k.Logger(ctx).Error(fmt.Sprintf("invalid user redemption record id %s", userRedemptionRecordId))
+					continue
+				}
 				userRedemptionRecordAddress := userRedemptionRecordComponents[2]
 				if userRedemptionRecordAddress == req.Address {
 					userRedemptionRecord, found := k.RecordsKeeper.GetUserRedemptionRecord(ctx, userRedemptionRecordId)

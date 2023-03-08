@@ -77,7 +77,6 @@ build:
 	go build -mod=readonly -ldflags '$(ldflags)' -trimpath -o $(BUILDDIR) ./...;
 
 install: go.sum
-	go env -w CGO_ENABLED="0"
 	go install $(BUILD_FLAGS) ./cmd/strided
 
 clean:
