@@ -12,7 +12,7 @@ import (
 
 const (
 	MinNumRebalanceValidators = 1
-	MaxNumRebalanceValidators = 10
+	MaxNumRebalanceValidators = 1
 )
 
 const TypeMsgRebalanceValidators = "rebalance_validators"

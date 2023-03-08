@@ -31,14 +31,14 @@ func TestMsgRebalanceValidators_ValidateBasic(t *testing.T) {
 			name: "successful message mid vals",
 			msg: types.MsgRebalanceValidators{
 				Creator:      validAdminAddress,
-				NumRebalance: 5,
+				NumRebalance: 1,
 			},
 		},
 		{
 			name: "successful message max vals",
 			msg: types.MsgRebalanceValidators{
 				Creator:      validAdminAddress,
-				NumRebalance: 10,
+				NumRebalance: 1,
 			},
 		},
 		{
@@ -53,7 +53,7 @@ func TestMsgRebalanceValidators_ValidateBasic(t *testing.T) {
 			name: "too many validators",
 			msg: types.MsgRebalanceValidators{
 				Creator:      validAdminAddress,
-				NumRebalance: 11,
+				NumRebalance: 2,
 			},
 			err: sdkerrors.ErrInvalidRequest,
 		},

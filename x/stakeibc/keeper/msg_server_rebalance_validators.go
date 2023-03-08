@@ -59,14 +59,7 @@ func (k msgServer) RebalanceValidators(goCtx context.Context, msg *types.MsgReba
 		return nil, errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "no validator delegations found for Host Zone %s, cannot rebalance 0 delegations!", hostZone.ChainId)
 	}
 
-	overweight_delta := sdk.NewDecFromInt(valDeltaList[overWeightIndex].deltaAmt).Quo(sdk.NewDecFromInt(total_delegation))
-	underweight_delta := sdk.NewDecFromInt(valDeltaList[underWeightIndex].deltaAmt).Quo(sdk.NewDecFromInt(total_delegation))
-	max_delta := sdk.MaxDec(overweight_delta, underweight_delta)
-	rebalanceThreshold := sdk.NewDec(int64(k.GetParam(ctx, types.KeyValidatorRebalancingThreshold))).Quo(sdk.NewDec(10000))
-	if max_delta.LT(rebalanceThreshold) {
-		k.Logger(ctx).Error("Not enough validator disruption to rebalance")
-		return nil, types.ErrWeightsNotDifferent
-	}
+	// TODO Remove ValidatorRebalancingThreshold from our params
 
 	var msgs []sdk.Msg
 	delegationIca := hostZone.GetDelegationAccount()
