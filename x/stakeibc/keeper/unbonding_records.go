@@ -305,11 +305,6 @@ func (k Keeper) CleanupEpochUnbondingRecords(ctx sdk.Context, epochNumber uint64
 func (k Keeper) SweepAllUnbondedTokensForHostZone(ctx sdk.Context, hostZone types.HostZone, epochUnbondingRecords []recordstypes.EpochUnbondingRecord) (success bool, sweepAmount sdkmath.Int) {
 	k.Logger(ctx).Info(utils.LogWithHostZone(hostZone.ChainId, "Sweeping unbonded tokens"))
 
-	if hostZone.Halted {
-		k.Logger(ctx).Error(fmt.Sprintf("\tSkipping SweepAllUnbondedTokensForHostZone for halted zone %s", hostZone.ChainId))
-		return
-	}
-
 	// Sum up all host zone unbonding records that have finished unbonding
 	totalAmtTransferToRedemptionAcct := sdkmath.ZeroInt()
 	epochUnbondingRecordIds := []uint64{}
