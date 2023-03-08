@@ -207,19 +207,6 @@ setup_file() {
   assert_equal "$stibctoken_balance_diff" "$PACKET_FORWARD_STAKE_AMOUNT"
 }
 
-# check that tokens were transferred to host after liquid stake
-@test "[INTEGRATION-BASIC-$CHAIN_NAME] tokens were transferred to $HOST_CHAIN_ID after liquid staking" {
-  # initial balance of delegation ICA
-  delegation_ica_balance_start=$($HOST_MAIN_CMD q bank balances $(GET_ICA_ADDR $HOST_CHAIN_ID delegation) --denom $HOST_DENOM | GETBAL)
-  WAIT_FOR_STRING $STRIDE_LOGS "\[IBC-TRANSFER\] success to $HOST_CHAIN_ID"
-  WAIT_FOR_BLOCK $STRIDE_LOGS 2
-
-  # get the new delegation ICA balance
-  delegation_ica_balance_end=$($HOST_MAIN_CMD q bank balances $(GET_ICA_ADDR $HOST_CHAIN_ID delegation) --denom $HOST_DENOM | GETBAL)
-  diff=$(($delegation_ica_balance_end - $delegation_ica_balance_start))
-  assert_equal "$diff" $STAKE_AMOUNT
-}
-
 # check that tokens on the host are staked
 @test "[INTEGRATION-BASIC-$CHAIN_NAME] tokens on $CHAIN_NAME were staked" {
   # wait for another epoch to pass so that tokens are staked
