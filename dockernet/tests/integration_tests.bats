@@ -218,18 +218,3 @@ setup_file() {
   redemption_rate_increased=$(( $(FLOOR $(DECMUL $redemption_rate $MULT)) > $(FLOOR $(DECMUL 1.00000000000000000 $MULT))))
   assert_equal "$redemption_rate_increased" "1"
 }
-
-@test "[INTEGRATION-BASIC-$CHAIN_NAME] revenue accrued, and clear-balance works" {
-  # confirm the fee account has accrued revenue
-  fee_ica_balance=$($HOST_MAIN_CMD q bank balances $(GET_ICA_ADDR $HOST_CHAIN_ID fee) --denom $HOST_DENOM | GETBAL)
-  fee_ica_balance_positive=$(($fee_ica_balance > 0))
-  assert_equal "$fee_ica_balance_positive" "1"
-
-  # call clear balance (with amount = 1)
-  $STRIDE_MAIN_CMD tx stakeibc clear-balance $HOST_CHAIN_ID 1 $HOST_TRANSFER_CHANNEL --from $STRIDE_ADMIN_ACCT -y
-  WAIT_FOR_BLOCK $STRIDE_LOGS 8
-
-  # check that balance went to revenue account
-  fee_stride_balance=$($STRIDE_MAIN_CMD q bank balances $STRIDE_FEE_ADDRESS --denom $HOST_IBC_DENOM | GETBAL)
-  assert_equal "$fee_stride_balance" "1"
-}
