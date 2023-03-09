@@ -24,7 +24,7 @@ for chain_id in STRIDE ${HOST_CHAINS[@]}; do
     node_prefix=$(GET_VAR_VALUE ${chain_id}_NODE_PREFIX)
     log_file=$DOCKERNET_HOME/logs/${node_prefix}.log
 
-    ( tail -f -n0 $log_file & ) | grep -q "finalizing commit of block"
+    ( tail -f -n0 $log_file & ) | grep -q "committed state"
     echo "Done"
 done
 

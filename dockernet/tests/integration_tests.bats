@@ -34,8 +34,8 @@ setup_file() {
   HOST_TRANSFER_CHANNEL="channel-0"
 
   TRANSFER_AMOUNT=500000
-  STAKE_AMOUNT=100000
-  REDEEM_AMOUNT=1000
+  STAKE_AMOUNT=100000000000000000
+  REDEEM_AMOUNT=1000000000000000
 
   GETBAL() {
     head -n 1 | grep -o -E '[0-9]+' || "0"
@@ -100,7 +100,7 @@ setup_file() {
 
   # do IBC transfer
   $STRIDE_MAIN_CMD tx ibc-transfer transfer transfer $STRIDE_TRANFER_CHANNEL $HOST_VAL_ADDRESS ${TRANSFER_AMOUNT}${STRIDE_DENOM} --from $STRIDE_VAL -y &
-  $HOST_MAIN_CMD   tx ibc-transfer transfer transfer $HOST_TRANSFER_CHANNEL  $(STRIDE_ADDRESS) ${TRANSFER_AMOUNT}${HOST_DENOM} --from $HOST_VAL -y &
+  $HOST_MAIN_CMD   tx ibc-transfer transfer transfer $HOST_TRANSFER_CHANNEL  $(STRIDE_ADDRESS) ${TRANSFER_AMOUNT}000000000000${HOST_DENOM} --from $HOST_VAL --keyring-backend test -y &
 
   WAIT_FOR_BLOCK $STRIDE_LOGS 8
 
@@ -119,8 +119,8 @@ setup_file() {
   # get all host balance diffs
   sval_token_balance_diff=$(($sval_token_balance_start - $sval_token_balance_end))
   hval_token_balance_diff=$(($hval_token_balance_start - $hval_token_balance_end))
-  assert_equal "$sval_token_balance_diff" "-$TRANSFER_AMOUNT"
-  assert_equal "$hval_token_balance_diff" "$TRANSFER_AMOUNT"
+  assert_equal "$sval_token_balance_diff" "-$TRANSFER_AMOUNT"000000000000
+  assert_equal "$hval_token_balance_diff" "$TRANSFER_AMOUNT"000000000000
 }
 
 @test "[INTEGRATION-BASIC-$CHAIN_NAME] liquid stake mint and transfer" {

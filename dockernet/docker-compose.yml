@@ -149,7 +149,7 @@ services:
 
   # Fill in new host zone being tested here
   injective1:
-    image: stridezone:injective
+    image: public.ecr.aws/l9h3g6c6/injective-core:stride-support
     volumes:
       - ./state/injective1:/home/injective/.injectived
     ports:
