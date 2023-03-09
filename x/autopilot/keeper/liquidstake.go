@@ -2,7 +2,6 @@ package keeper
 
 import (
 	"errors"
-	"fmt"
 
 	errorsmod "cosmossdk.io/errors"
 
@@ -51,7 +50,7 @@ func (k Keeper) TryLiquidStaking(
 	}
 
 	if hostZone.IbcDenom != ibcDenom {
-		return channeltypes.NewErrorAcknowledgement(fmt.Errorf("ibc denom is not equal to host zone ibc denom"))
+		return channeltypes.NewErrorAcknowledgement(errors.New("ibc denom is not equal to host zone ibc denom"))
 	}
 
 	err = k.RunLiquidStake(ctx, parsedReceiver.StrideAccAddress, token)
