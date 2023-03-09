@@ -36,3 +36,8 @@ type BankKeeper interface {
 type StakeIBCHooks interface {
 	AfterLiquidStake(ctx sdk.Context, addr sdk.AccAddress) // Must be called after liquid stake is completed
 }
+
+type RatelimitKeeper interface {
+	AddDenomToBlacklist(ctx sdk.Context, denom string)
+	RemoveDenomFromBlacklist(ctx sdk.Context, denom string)
+}
