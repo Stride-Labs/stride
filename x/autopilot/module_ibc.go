@@ -117,14 +117,17 @@ func (im IBCModule) OnRecvPacket(
 	packet channeltypes.Packet,
 	relayer sdk.AccAddress,
 ) ibcexported.Acknowledgement {
+	fmt.Println("Autopilot.OnRecvPacket1")
 	// NOTE: acknowledgement will be written synchronously during IBC handler execution.
 	var data transfertypes.FungibleTokenPacketData
 	if err := transfertypes.ModuleCdc.UnmarshalJSON(packet.GetData(), &data); err != nil {
 		return channeltypes.NewErrorAcknowledgement(err)
 	}
 
+	fmt.Println("Autopilot.OnRecvPacket2")
 	// to be utilized from ibc-go v5.1.0
 	if data.Memo == "stakeibc/LiquidStake" {
+		fmt.Println("Autopilot.OnRecvPacket3")
 		strideAccAddress, err := sdk.AccAddressFromBech32(data.Receiver)
 		if err != nil {
 			return channeltypes.NewErrorAcknowledgement(err)
@@ -139,6 +142,7 @@ func (im IBCModule) OnRecvPacket(
 		}
 		return ack
 	} else if strings.HasPrefix(data.Memo, "stakeibc/LiquidStakeAndIBCTransfer|") {
+		fmt.Println("Autopilot.OnRecvPacket4")
 		strideAccAddress, err := sdk.AccAddressFromBech32(data.Receiver)
 		if err != nil {
 			return channeltypes.NewErrorAcknowledgement(err)
@@ -156,6 +160,7 @@ func (im IBCModule) OnRecvPacket(
 		}
 		return ack
 	} else if strings.HasPrefix(data.Memo, "stakeibc/RedeemStake|") {
+		fmt.Println("Autopilot.OnRecvPacket5")
 		strideAccAddress, err := sdk.AccAddressFromBech32(data.Receiver)
 		if err != nil {
 			return channeltypes.NewErrorAcknowledgement(err)
@@ -174,17 +179,20 @@ func (im IBCModule) OnRecvPacket(
 		return ack
 	}
 
+	fmt.Println("Autopilot.OnRecvPacket6")
 	// parse out any forwarding info
 	parsedReceiver, err := types.ParseReceiverData(data.Receiver)
 	if err != nil {
 		return channeltypes.NewErrorAcknowledgement(err)
 	}
 
+	fmt.Println("Autopilot.OnRecvPacket7")
 	// move on to the next middleware
 	if !parsedReceiver.ShouldLiquidStake && !parsedReceiver.ShouldRedeemStake {
 		return im.app.OnRecvPacket(ctx, packet, relayer)
 	}
 
+	fmt.Println("Autopilot.OnRecvPacket8")
 	// Modify packet data to process packet transfer for this chain, omitting liquid staking info
 	newData := data
 	newData.Receiver = parsedReceiver.StrideAccAddress.String()
@@ -195,13 +203,17 @@ func (im IBCModule) OnRecvPacket(
 	newPacket := packet
 	newPacket.Data = bz
 
+	fmt.Println("Autopilot.OnRecvPacket9")
 	// process the transfer receipt
 	// NOTE: this code is pulled from packet-forwarding-middleware
 	ack := im.app.OnRecvPacket(ctx, newPacket, relayer)
 	if ack.Success() {
+		fmt.Println("Autopilot.OnRecvPacket10")
 		if parsedReceiver.ShouldLiquidStake {
+			fmt.Println("Autopilot.OnRecvPacket11")
 			return im.keeper.TryLiquidStaking(ctx, packet, newData, parsedReceiver, ack)
 		} else {
+			fmt.Println("Autopilot.OnRecvPacket12")
 			return im.keeper.TryRedeemStake(ctx, packet, data, parsedReceiver, ack)
 		}
 	}

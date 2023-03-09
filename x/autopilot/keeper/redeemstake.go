@@ -22,11 +22,13 @@ func (k Keeper) TryRedeemStake(
 	parsedReceiver *types.ParsedReceiver,
 	ack ibcexported.Acknowledgement,
 ) ibcexported.Acknowledgement {
+	fmt.Println("Autopilot.TryRedeemStake1")
 	params := k.GetParams(ctx)
 	if !params.Active {
 		return channeltypes.NewErrorAcknowledgement(fmt.Errorf("packet forwarding param is not active"))
 	}
 
+	fmt.Println("Autopilot.TryRedeemStake2")
 	// In this case, we can't process a liquid staking transaction, because we're dealing IBC tokens from other chains
 	if !transfertypes.ReceiverChainIsSource(packet.GetSourcePort(), packet.GetSourceChannel(), newData.Denom) {
 		return channeltypes.NewErrorAcknowledgement(fmt.Errorf("the ibc tokens are not supported for redeem stake"))
@@ -38,6 +40,7 @@ func (k Keeper) TryRedeemStake(
 		return channeltypes.NewErrorAcknowledgement(fmt.Errorf("not a liquid staking token"))
 	}
 
+	fmt.Println("Autopilot.TryRedeemStake3")
 	hostZoneDenom := stakeibctypes.HostZoneDenomFromStAssetDenom(stAssetDenom)
 
 	amount, ok := sdk.NewIntFromString(newData.Amount)
@@ -45,6 +48,7 @@ func (k Keeper) TryRedeemStake(
 		return channeltypes.NewErrorAcknowledgement(fmt.Errorf("not a parsable amount field"))
 	}
 
+	fmt.Println("Autopilot.TryRedeemStake4")
 	// Note: newData.denom is ibc denom for st assets - e.g. ibc/xxx
 	var token = sdk.NewCoin(newData.Denom, amount)
 
@@ -52,6 +56,7 @@ func (k Keeper) TryRedeemStake(
 	if err != nil {
 		ack = channeltypes.NewErrorAcknowledgement(err)
 	}
+	fmt.Println("Autopilot.TryRedeemStake5")
 	return ack
 }
 

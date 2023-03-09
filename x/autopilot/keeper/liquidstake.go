@@ -27,6 +27,7 @@ func (k Keeper) TryLiquidStaking(
 	parsedReceiver *types.ParsedReceiver,
 	ack ibcexported.Acknowledgement,
 ) ibcexported.Acknowledgement {
+	fmt.Println("Autopilot.TryLiquidStaking1")
 	params := k.GetParams(ctx)
 	if !params.Active {
 		return channeltypes.NewErrorAcknowledgement(errors.New("packet forwarding param is not active"))
@@ -45,22 +46,27 @@ func (k Keeper) TryLiquidStaking(
 	// Note: newData.denom is base denom e.g. uatom - not ibc/xxx
 	var token = sdk.NewCoin(newData.Denom, amount)
 
+	fmt.Println("Autopilot.TryLiquidStaking2")
 	prefixedDenom := transfertypes.GetPrefixedDenom(packet.GetDestPort(), packet.GetDestChannel(), newData.Denom)
 	ibcDenom := transfertypes.ParseDenomTrace(prefixedDenom).IBCDenom()
 
+	fmt.Println("Autopilot.TryLiquidStaking3")
 	hostZone, err := k.stakeibcKeeper.GetHostZoneFromHostDenom(ctx, token.Denom)
 	if err != nil {
 		return channeltypes.NewErrorAcknowledgement(err)
 	}
 
+	fmt.Println("Autopilot.TryLiquidStaking4")
 	if hostZone.IbcDenom != ibcDenom {
 		return channeltypes.NewErrorAcknowledgement(fmt.Errorf("ibc denom is not equal to host zone ibc denom"))
 	}
 
+	fmt.Println("Autopilot.TryLiquidStaking5")
 	err = k.RunLiquidStake(ctx, parsedReceiver.StrideAccAddress, parsedReceiver.ResultReceiver, token, []metrics.Label{})
 	if err != nil {
 		ack = channeltypes.NewErrorAcknowledgement(err)
 	}
+	fmt.Println("Autopilot.TryLiquidStaking6", err)
 	return ack
 }
 
