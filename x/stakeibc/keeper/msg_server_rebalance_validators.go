@@ -87,21 +87,23 @@ func (k msgServer) RebalanceValidators(goCtx context.Context, msg *types.MsgReba
 			// if overWeightElem is positive, we're done rebalancing
 			break
 		}
+		// underweight Elem is positive, overweight Elem is negative
+		overWeightElemAbs := overWeightElem.deltaAmt.Abs()
 		var redelegateMsg *stakingTypes.MsgBeginRedelegate
-		if underWeightElem.deltaAmt.Abs().GT(overWeightElem.deltaAmt) {
+		if underWeightElem.deltaAmt.GT(overWeightElemAbs) {
 			// if the underweight element is more off than the overweight element
 			// we transfer stake from the underweight element to the overweight element
-			underWeightElem.deltaAmt = underWeightElem.deltaAmt.Sub(overWeightElem.deltaAmt.Abs())
+			underWeightElem.deltaAmt = underWeightElem.deltaAmt.Sub(overWeightElemAbs)
 			overWeightIndex += 1
 			// issue an ICA call to the host zone to rebalance the validator
 			redelegateMsg = &stakingTypes.MsgBeginRedelegate{
 				DelegatorAddress:    delegatorAddress,
 				ValidatorSrcAddress: overWeightElem.valAddr,
 				ValidatorDstAddress: underWeightElem.valAddr,
-				Amount:              sdk.NewCoin(hostZone.HostDenom, overWeightElem.deltaAmt.Abs())}
+				Amount:              sdk.NewCoin(hostZone.HostDenom, overWeightElemAbs)}
 			msgs = append(msgs, redelegateMsg)
 			overWeightElem.deltaAmt = sdkmath.ZeroInt()
-		} else if underWeightElem.deltaAmt.Abs().LT(overWeightElem.deltaAmt) {
+		} else if underWeightElem.deltaAmt.LT(overWeightElemAbs) {
 			// if the overweight element is more overweight than the underweight element
 			overWeightElem.deltaAmt = overWeightElem.deltaAmt.Add(underWeightElem.deltaAmt)
 			underWeightIndex -= 1
