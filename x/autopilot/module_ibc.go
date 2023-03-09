@@ -18,6 +18,7 @@ import (
 
 // IBC MODULE IMPLEMENTATION
 // IBCModule implements the ICS26 interface for transfer given the transfer keeper.
+// TODO: Use IBCMiddleware struct
 type IBCModule struct {
 	keeper keeper.Keeper
 	app    porttypes.IBCModule
