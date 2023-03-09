@@ -55,7 +55,7 @@ func (k Keeper) SweepStTokensFromRewardCollToFeeColl(ctx sdk.Context) error {
 	k.Logger(ctx).Info(fmt.Sprintf("Reward collector has %s", rewardCollCoins.String()))
 	stTokens := sdk.NewCoins()
 	for _, token := range rewardCollCoins {
-		// get hostzone by reward token (in ibc denom format)
+		// get hostzone by reward token (in stToken denom format)
 		isStToken := k.CheckIsStToken(ctx, token.Denom)
 		k.Logger(ctx).Info(fmt.Sprintf("%s is stToken: %t", token.String(), isStToken))
 		if isStToken {
