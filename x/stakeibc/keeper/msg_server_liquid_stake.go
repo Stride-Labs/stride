@@ -5,10 +5,12 @@ import (
 	"fmt"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	errorsmod "cosmossdk.io/errors"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
-	epochtypes "github.com/Stride-Labs/stride/v4/x/epochs/types"
-	"github.com/Stride-Labs/stride/v4/x/stakeibc/types"
+	epochtypes "github.com/Stride-Labs/stride/v6/x/epochs/types"
+	"github.com/Stride-Labs/stride/v6/x/stakeibc/types"
 )
 
 func (k msgServer) LiquidStake(goCtx context.Context, msg *types.MsgLiquidStake) (*types.MsgLiquidStakeResponse, error) {
@@ -23,7 +25,7 @@ func (k msgServer) LiquidStake(goCtx context.Context, msg *types.MsgLiquidStake)
 	hostZone, err := k.GetHostZoneFromHostDenom(ctx, msg.HostDenom)
 	if err != nil {
 		k.Logger(ctx).Error(fmt.Sprintf("Host Zone not found for denom (%s)", msg.HostDenom))
-		return nil, sdkerrors.Wrapf(types.ErrInvalidHostZone, "no host zone found for denom (%s)", msg.HostDenom)
+		return nil, errorsmod.Wrapf(types.ErrInvalidHostZone, "no host zone found for denom (%s)", msg.HostDenom)
 	}
 	// get the sender address
 	sender, _ := sdk.AccAddressFromBech32(msg.Creator)
@@ -34,27 +36,27 @@ func (k msgServer) LiquidStake(goCtx context.Context, msg *types.MsgLiquidStake)
 	inCoin, err := sdk.ParseCoinNormalized(coinString)
 	if err != nil {
 		k.Logger(ctx).Error(fmt.Sprintf("failed to parse coin (%s)", coinString))
-		return nil, sdkerrors.Wrapf(err, "failed to parse coin (%s)", coinString)
+		return nil, errorsmod.Wrapf(err, "failed to parse coin (%s)", coinString)
 	}
 
 	// Creator owns at least "amount" of inCoin
 	balance := k.bankKeeper.GetBalance(ctx, sender, ibcDenom)
 	if balance.IsLT(inCoin) {
 		k.Logger(ctx).Error(fmt.Sprintf("balance is lower than staking amount. staking amount: %v, balance: %v", msg.Amount, balance.Amount))
-		return nil, sdkerrors.Wrapf(sdkerrors.ErrInsufficientFunds, "balance is lower than staking amount. staking amount: %v, balance: %v", msg.Amount, balance.Amount)
+		return nil, errorsmod.Wrapf(sdkerrors.ErrInsufficientFunds, "balance is lower than staking amount. staking amount: %v, balance: %v", msg.Amount, balance.Amount)
 	}
 	// check that the token is an IBC token
 	isIbcToken := types.IsIBCToken(ibcDenom)
 	if !isIbcToken {
 		k.Logger(ctx).Error("invalid token denom - denom is not an IBC token (%s)", ibcDenom)
-		return nil, sdkerrors.Wrapf(types.ErrInvalidToken, "denom is not an IBC token (%s)", ibcDenom)
+		return nil, errorsmod.Wrapf(types.ErrInvalidToken, "denom is not an IBC token (%s)", ibcDenom)
 	}
 
 	// safety check: redemption rate must be above safety threshold
 	rateIsSafe, err := k.IsRedemptionRateWithinSafetyBounds(ctx, *hostZone)
 	if !rateIsSafe || (err != nil) {
 		errMsg := fmt.Sprintf("IsRedemptionRateWithinSafetyBounds check failed. hostZone: %s, err: %s", hostZone.String(), err.Error())
-		return nil, sdkerrors.Wrapf(types.ErrRedemptionRateOutsideSafetyBounds, errMsg)
+		return nil, errorsmod.Wrapf(types.ErrRedemptionRateOutsideSafetyBounds, errMsg)
 	}
 
 	bech32ZoneAddress, err := sdk.AccAddressFromBech32(hostZone.Address)
@@ -64,27 +66,27 @@ func (k msgServer) LiquidStake(goCtx context.Context, msg *types.MsgLiquidStake)
 	err = k.bankKeeper.SendCoins(ctx, sender, bech32ZoneAddress, sdk.NewCoins(inCoin))
 	if err != nil {
 		k.Logger(ctx).Error("failed to send tokens from Account to Module")
-		return nil, sdkerrors.Wrap(err, "failed to send tokens from Account to Module")
+		return nil, errorsmod.Wrap(err, "failed to send tokens from Account to Module")
 	}
 	// mint user `amount` of the corresponding stAsset
 	// NOTE: We should ensure that denoms are unique - we don't want anyone spoofing denoms
 	stCoin, err := k.MintStAssetAndTransfer(ctx, sender, msg.Amount, msg.HostDenom)
 	if err != nil {
 		k.Logger(ctx).Error("failed to send tokens from Account to Module")
-		return nil, sdkerrors.Wrapf(err, "failed to mint %s stAssets to user", msg.HostDenom)
+		return nil, errorsmod.Wrapf(err, "failed to mint %s stAssets to user", msg.HostDenom)
 	}
 
 	// create a deposit record of these tokens (pending transfer)
 	strideEpochTracker, found := k.GetEpochTracker(ctx, epochtypes.STRIDE_EPOCH)
 	if !found {
 		k.Logger(ctx).Error("failed to find stride epoch")
-		return nil, sdkerrors.Wrapf(sdkerrors.ErrNotFound, "no epoch number for epoch (%s)", epochtypes.STRIDE_EPOCH)
+		return nil, errorsmod.Wrapf(sdkerrors.ErrNotFound, "no epoch number for epoch (%s)", epochtypes.STRIDE_EPOCH)
 	}
 	// Does this use too much gas?
 	depositRecord, found := k.RecordsKeeper.GetDepositRecordByEpochAndChain(ctx, strideEpochTracker.EpochNumber, hostZone.ChainId)
 	if !found {
 		k.Logger(ctx).Error("failed to find deposit record")
-		return nil, sdkerrors.Wrapf(sdkerrors.ErrNotFound, fmt.Sprintf("no deposit record for epoch (%d)", strideEpochTracker.EpochNumber))
+		return nil, errorsmod.Wrapf(sdkerrors.ErrNotFound, fmt.Sprintf("no deposit record for epoch (%d)", strideEpochTracker.EpochNumber))
 	}
 	depositRecord.Amount = depositRecord.Amount.Add(msg.Amount)
 	k.RecordsKeeper.SetDepositRecord(ctx, *depositRecord)
@@ -106,7 +108,7 @@ func (k msgServer) MintStAssetAndTransfer(ctx sdk.Context, sender sdk.AccAddress
 	stCoins, err := sdk.ParseCoinsNormalized(coinString)
 	if err != nil {
 		k.Logger(ctx).Error("Failed to parse coins")
-		return sdk.Coin{}, sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "Failed to parse coins %s", coinString)
+		return sdk.Coin{}, errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "Failed to parse coins %s", coinString)
 	}
 
 	// Mints coins to the module account, will error if the module account does not exist or is unauthorized.
@@ -114,14 +116,14 @@ func (k msgServer) MintStAssetAndTransfer(ctx sdk.Context, sender sdk.AccAddress
 	err = k.bankKeeper.MintCoins(ctx, types.ModuleName, stCoins)
 	if err != nil {
 		k.Logger(ctx).Error("Failed to mint coins")
-		return sdk.Coin{}, sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "Failed to mint coins")
+		return sdk.Coin{}, errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "Failed to mint coins")
 	}
 
 	// transfer those coins to the user
 	err = k.bankKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, sender, stCoins)
 	if err != nil {
 		k.Logger(ctx).Error("Failed to send coins from module to account")
-		return sdk.Coin{}, sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "Failed to send %s from module to account", stCoins.GetDenomByIndex(0))
+		return sdk.Coin{}, errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "Failed to send %s from module to account", stCoins.GetDenomByIndex(0))
 	}
 
 	k.Logger(ctx).Info(fmt.Sprintf("[MINT ST ASSET] success on %s.", hz.GetChainId()))

@@ -17,7 +17,7 @@ setup_file() {
 
   # set allows us to export all variables in account_vars
   set -a
-  source dockernet/config.sh
+  NEW_BINARY="${NEW_BINARY:-false}" source dockernet/config.sh
 
   HOST_CHAIN_ID=$(GET_VAR_VALUE  ${CHAIN_NAME}_CHAIN_ID)
   HOST_DENOM=$(GET_VAR_VALUE     ${CHAIN_NAME}_DENOM)
@@ -124,10 +124,14 @@ setup_file() {
   assert_equal "$hval_token_balance_diff" "$TRANSFER_AMOUNT"
 }
 
-@test "[INTEGRATION-BASIC-$CHAIN_NAME] liquid stake mints stToken" {
-  # get initial balances
+@test "[INTEGRATION-BASIC-$CHAIN_NAME] liquid stake mint and transfer" {
+  # get initial balances on stride account
   token_balance_start=$($STRIDE_MAIN_CMD   q bank balances $(STRIDE_ADDRESS) --denom $HOST_IBC_DENOM | GETBAL)
   sttoken_balance_start=$($STRIDE_MAIN_CMD q bank balances $(STRIDE_ADDRESS) --denom st$HOST_DENOM   | GETBAL)
+
+  # get initial ICA accound balance
+  delegation_address=$(GET_ICA_ADDR $HOST_CHAIN_ID delegation)
+  delegation_ica_balance_start=$($HOST_MAIN_CMD q bank balances $delegation_address --denom $HOST_DENOM | GETBAL)
 
   # liquid stake
   $STRIDE_MAIN_CMD tx stakeibc liquid-stake $STAKE_AMOUNT $HOST_DENOM --from $STRIDE_VAL -y 
@@ -145,33 +149,30 @@ setup_file() {
   sttoken_balance_end=$($STRIDE_MAIN_CMD q bank balances $(STRIDE_ADDRESS) --denom st$HOST_DENOM | GETBAL)
   sttoken_balance_diff=$(($sttoken_balance_end-$sttoken_balance_start))
   assert_equal "$sttoken_balance_diff" $STAKE_AMOUNT
+
+  # Wait for the transfer to complete
+  WAIT_FOR_BALANCE_CHANGE $CHAIN_NAME $delegation_address $HOST_DENOM 
+
+  # get the new delegation ICA balance
+  delegation_ica_balance_end=$($HOST_MAIN_CMD q bank balances $delegation_address --denom $HOST_DENOM | GETBAL)
+  diff=$(($delegation_ica_balance_end - $delegation_ica_balance_start))
+  assert_equal "$diff" $STAKE_AMOUNT
 }
 
-@test "[INTEGRATION-BASIC-$CHAIN_NAME] packet forwarding automatically liquid stake" {
+@test "[INTEGRATION-BASIC-$CHAIN_NAME] packet forwarding automatically liquid stakes" {
   # get initial balances
   sttoken_balance_start=$($STRIDE_MAIN_CMD q bank balances $(STRIDE_ADDRESS) --denom st$HOST_DENOM | GETBAL)
 
   # do IBC transfer
   $HOST_MAIN_CMD tx ibc-transfer transfer transfer $HOST_TRANSFER_CHANNEL $(STRIDE_ADDRESS)'|stakeibc/LiquidStake' ${PACKET_FORWARD_STAKE_AMOUNT}${HOST_DENOM} --from $HOST_VAL -y &
-  WAIT_FOR_BLOCK $STRIDE_LOGS 8
+
+  # Wait for the transfer to complete
+  WAIT_FOR_BALANCE_CHANGE STRIDE $(STRIDE_ADDRESS) st$HOST_DENOM
 
   # make sure stATOM balance increased
   sttoken_balance_end=$($STRIDE_MAIN_CMD q bank balances $(STRIDE_ADDRESS) --denom st$HOST_DENOM | GETBAL)
   sttoken_balance_diff=$(($sttoken_balance_end-$sttoken_balance_start))
   assert_equal "$sttoken_balance_diff" "$PACKET_FORWARD_STAKE_AMOUNT"
-}
-
-# check that tokens were transferred to host after liquid stake
-@test "[INTEGRATION-BASIC-$CHAIN_NAME] tokens were transferred to $HOST_CHAIN_ID after liquid staking" {
-  # initial balance of delegation ICA
-  delegation_ica_balance_start=$($HOST_MAIN_CMD q bank balances $(GET_ICA_ADDR $HOST_CHAIN_ID delegation) --denom $HOST_DENOM | GETBAL)
-  WAIT_FOR_STRING $STRIDE_LOGS "\[IBC-TRANSFER\] success to $HOST_CHAIN_ID"
-  WAIT_FOR_BLOCK $STRIDE_LOGS 2
-
-  # get the new delegation ICA balance
-  delegation_ica_balance_end=$($HOST_MAIN_CMD q bank balances $(GET_ICA_ADDR $HOST_CHAIN_ID delegation) --denom $HOST_DENOM | GETBAL)
-  diff=$(($delegation_ica_balance_end - $delegation_ica_balance_start))
-  assert_equal "$diff" $STAKE_AMOUNT
 }
 
 # check that tokens on the host are staked
@@ -181,7 +182,7 @@ setup_file() {
   WAIT_FOR_BLOCK $STRIDE_LOGS 2
 
   # check staked tokens
-  NEW_STAKE=$($HOST_MAIN_CMD q staking delegation $(GET_ICA_ADDR $HOST_CHAIN_ID delegation) $(GET_VAL_ADDR $HOST_CHAIN_ID 1) | GETSTAKE)
+  NEW_STAKE=$($HOST_MAIN_CMD q staking delegation $(GET_ICA_ADDR $HOST_CHAIN_ID delegation) $(GET_VAL_ADDR $CHAIN_NAME 1) | GETSTAKE)
   stake_diff=$(($NEW_STAKE > 0))
   assert_equal "$stake_diff" "1"
 }

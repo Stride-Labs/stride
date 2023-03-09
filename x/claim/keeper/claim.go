@@ -6,17 +6,18 @@ import (
 	"strings"
 	"time"
 
+	errorsmod "cosmossdk.io/errors"
+	sdkmath "cosmossdk.io/math"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
-	authvestingtypes "github.com/cosmos/cosmos-sdk/x/auth/vesting/types"
 	"github.com/gogo/protobuf/proto"
 
-	"github.com/Stride-Labs/stride/v4/utils"
-	"github.com/Stride-Labs/stride/v4/x/claim/types"
-	vestingtypes "github.com/Stride-Labs/stride/v4/x/claim/vesting/types"
-	epochstypes "github.com/Stride-Labs/stride/v4/x/epochs/types"
+	"github.com/Stride-Labs/stride/v6/utils"
+	"github.com/Stride-Labs/stride/v6/x/claim/types"
+	vestingtypes "github.com/Stride-Labs/stride/v6/x/claim/vesting/types"
+	epochstypes "github.com/Stride-Labs/stride/v6/x/epochs/types"
 )
 
 func (k Keeper) LoadAllocationData(ctx sdk.Context, allocationData string) bool {
@@ -149,7 +150,7 @@ func (k Keeper) GetAirdropByIdentifier(ctx sdk.Context, airdropIdentifier string
 func (k Keeper) GetDistributorAccountBalance(ctx sdk.Context, airdropIdentifier string) (sdk.Coin, error) {
 	airdrop := k.GetAirdropByIdentifier(ctx, airdropIdentifier)
 	if airdrop == nil {
-		return sdk.Coin{}, sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid airdrop identifier: GetDistributorAccountBalance")
+		return sdk.Coin{}, errorsmod.Wrapf(sdkerrors.ErrInvalidAddress, "invalid airdrop identifier: GetDistributorAccountBalance")
 	}
 
 	addr, err := k.GetAirdropDistributor(ctx, airdropIdentifier)
@@ -170,27 +171,39 @@ func (k Keeper) EndAirdrop(ctx sdk.Context, airdropIdentifier string) error {
 func (k Keeper) IsInitialPeriodPassed(ctx sdk.Context, airdropIdentifier string) bool {
 	airdrop := k.GetAirdropByIdentifier(ctx, airdropIdentifier)
 	if airdrop == nil {
+		k.Logger(ctx).Info("[CLAIM] airdrop is nil")
 		return false
 	}
 	goneTime := ctx.BlockTime().Sub(airdrop.AirdropStartTime)
+	k.Logger(ctx).Info(fmt.Sprintf("[CLAIM] goneTime %v", goneTime))
 	// Check if elapsed time since airdrop start is over the initial period of vesting
+	k.Logger(ctx).Info(fmt.Sprintf("[CLAIM] goneTime.Seconds() %v", goneTime.Seconds()))
+	k.Logger(ctx).Info(fmt.Sprintf("[CLAIM] types.DefaultVestingInitialPeriod.Seconds() %v", types.DefaultVestingInitialPeriod.Seconds()))
 	return goneTime.Seconds() >= types.DefaultVestingInitialPeriod.Seconds()
 }
 
 // ResetClaimStatus clear users' claimed status only after initial period of vesting is passed
 func (k Keeper) ResetClaimStatus(ctx sdk.Context, airdropIdentifier string) error {
-	if k.IsInitialPeriodPassed(ctx, airdropIdentifier) {
+	passed := k.IsInitialPeriodPassed(ctx, airdropIdentifier)
+	k.Logger(ctx).Info(fmt.Sprintf("[CLAIM] k.IsInitialPeriodPassed(ctx, airdropIdentifier) %v", passed))
+	if passed {
+		k.Logger(ctx).Info("Resetting claim status")
 		// first, reset the claim records
 		records := k.GetClaimRecords(ctx, airdropIdentifier)
+		k.Logger(ctx).Info(fmt.Sprintf("[CLAIM] len(records) %v", len(records)))
 		for idx := range records {
 			records[idx].ActionCompleted = []bool{false, false, false}
 		}
 
+		k.Logger(ctx).Info("[CLAIM] SetClaimRecords...")
 		if err := k.SetClaimRecords(ctx, records); err != nil {
+			k.Logger(ctx).Info(fmt.Sprintf("[CLAIM] SetClaimRecords  %v", err.Error()))
 			return err
 		}
 		// then, reset the airdrop ClaimedSoFar
+		k.Logger(ctx).Info("[CLAIM] ResetClaimedSoFar...")
 		if err := k.ResetClaimedSoFar(ctx); err != nil {
+			k.Logger(ctx).Info(fmt.Sprintf("[CLAIM] ResetClaimedSoFar %v", err.Error()))
 			return err
 		}
 	}
@@ -330,7 +343,7 @@ func (k Keeper) SetClaimRecord(ctx sdk.Context, claimRecord types.ClaimRecord) e
 func (k Keeper) GetAirdropDistributor(ctx sdk.Context, airdropIdentifier string) (sdk.AccAddress, error) {
 	airdrop := k.GetAirdropByIdentifier(ctx, airdropIdentifier)
 	if airdrop == nil {
-		return sdk.AccAddress{}, sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid airdrop identifier: GetAirdropDistributor")
+		return sdk.AccAddress{}, errorsmod.Wrapf(sdkerrors.ErrInvalidAddress, "invalid airdrop identifier: GetAirdropDistributor")
 	}
 	return sdk.AccAddressFromBech32(airdrop.DistributorAddress)
 }
@@ -339,7 +352,7 @@ func (k Keeper) GetAirdropDistributor(ctx sdk.Context, airdropIdentifier string)
 func (k Keeper) GetAirdropClaimDenom(ctx sdk.Context, airdropIdentifier string) (string, error) {
 	airdrop := k.GetAirdropByIdentifier(ctx, airdropIdentifier)
 	if airdrop == nil {
-		return "", sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "invalid airdrop identifier: GetAirdropClaimDenom")
+		return "", errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "invalid airdrop identifier: GetAirdropClaimDenom")
 	}
 	return airdrop.ClaimDenom, nil
 }
@@ -384,7 +397,7 @@ func (k Keeper) GetClaimableAmountForAction(ctx sdk.Context, addr sdk.AccAddress
 
 	poolBal := distributorAccountBalance.AddAmount(airdrop.ClaimedSoFar)
 
-	claimableAmount := poolBal.Amount.ToDec().
+	claimableAmount := sdk.NewDec(poolBal.Amount.Int64()).
 		Mul(percentageForAction).
 		Mul(claimRecord.Weight).
 		Quo(totalWeight).RoundInt()
@@ -451,12 +464,12 @@ func (k Keeper) GetAirdropIdentifiersForUser(ctx sdk.Context, addr sdk.AccAddres
 	return identifiers
 }
 
-func (k Keeper) AfterClaim(ctx sdk.Context, airdropIdentifier string, claimAmount sdk.Int) error {
+func (k Keeper) AfterClaim(ctx sdk.Context, airdropIdentifier string, claimAmount sdkmath.Int) error {
 	// Increment ClaimedSoFar on the airdrop record
 	// fetch the airdrop
 	airdrop := k.GetAirdropByIdentifier(ctx, airdropIdentifier)
 	if airdrop == nil {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "invalid airdrop identifier: AfterClaim")
+		return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "invalid airdrop identifier: AfterClaim")
 	}
 	// increment the claimed so far
 	err := k.IncrementClaimedSoFar(ctx, airdropIdentifier, claimAmount)
@@ -485,7 +498,7 @@ func (k Keeper) ClaimAllCoinsForAction(ctx sdk.Context, addr sdk.AccAddress, act
 func (k Keeper) ClaimCoinsForAction(ctx sdk.Context, addr sdk.AccAddress, action types.Action, airdropIdentifier string) (sdk.Coins, error) {
 	isPassed := k.IsInitialPeriodPassed(ctx, airdropIdentifier)
 	if airdropIdentifier == "" {
-		return nil, sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "invalid airdrop identifier: ClaimCoinsForAction")
+		return nil, errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "invalid airdrop identifier: ClaimCoinsForAction")
 	}
 
 	claimableAmount, err := k.GetClaimableAmountForAction(ctx, addr, action, airdropIdentifier, false)
@@ -502,11 +515,13 @@ func (k Keeper) ClaimCoinsForAction(ctx sdk.Context, addr sdk.AccAddress, action
 		return nil, err
 	}
 
-	// If the account is a default vesting account, don't grant new vestings
+	// Only BaseAccounts and StridePeriodicVestingAccount can claim
 	acc := k.accountKeeper.GetAccount(ctx, addr)
-	_, isDefaultVestingAccount := acc.(*authvestingtypes.BaseVestingAccount)
-	if isDefaultVestingAccount {
-		return nil, err
+	_, isStrideVestingAccount := acc.(*vestingtypes.StridePeriodicVestingAccount)
+	_, isBaseAcc := acc.(*authtypes.BaseAccount)
+	canClaim := isStrideVestingAccount || isBaseAcc
+	if !canClaim {
+		return nil, errorsmod.Wrapf(types.ErrInvalidAccount, "Account: %v", acc)
 	}
 
 	// Claims don't vest if action type is ActionFree or initial period of vesting is passed
@@ -518,7 +533,7 @@ func (k Keeper) ClaimCoinsForAction(ctx sdk.Context, addr sdk.AccAddress, action
 			// Convert user account into stride veting account.
 			baseAccount := k.accountKeeper.NewAccountWithAddress(ctx, addr)
 			if _, ok := baseAccount.(*authtypes.BaseAccount); !ok {
-				return nil, sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "invalid account type; expected: BaseAccount, got: %T", baseAccount)
+				return nil, errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "invalid account type; expected: BaseAccount, got: %T", baseAccount)
 			}
 
 			periodLength := GetAirdropDurationForAction(action)
@@ -561,7 +576,7 @@ func (k Keeper) ClaimCoinsForAction(ctx sdk.Context, addr sdk.AccAddress, action
 
 	airdrop := k.GetAirdropByIdentifier(ctx, airdropIdentifier)
 	if airdrop == nil {
-		return nil, sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "invalid airdrop identifier: ClaimCoinsForAction")
+		return nil, errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "invalid airdrop identifier: ClaimCoinsForAction")
 	}
 	err = k.AfterClaim(ctx, airdropIdentifier, claimableAmount.AmountOf(airdrop.ClaimDenom))
 	if err != nil {
@@ -614,13 +629,13 @@ func (k Keeper) CreateAirdropAndEpoch(ctx sdk.Context, distributor string, denom
 }
 
 // IncrementClaimedSoFar increments ClaimedSoFar for a single airdrop
-func (k Keeper) IncrementClaimedSoFar(ctx sdk.Context, identifier string, amount sdk.Int) error {
+func (k Keeper) IncrementClaimedSoFar(ctx sdk.Context, identifier string, amount sdkmath.Int) error {
 	params, err := k.GetParams(ctx)
 	if err != nil {
 		panic(err)
 	}
 
-	if amount.LT(sdk.ZeroInt()) {
+	if amount.LT(sdkmath.ZeroInt()) {
 		return types.ErrInvalidAmount
 	}
 
@@ -638,16 +653,18 @@ func (k Keeper) IncrementClaimedSoFar(ctx sdk.Context, identifier string, amount
 // ResetClaimedSoFar resets ClaimedSoFar for a all airdrops
 func (k Keeper) ResetClaimedSoFar(ctx sdk.Context) error {
 	params, err := k.GetParams(ctx)
+	k.Logger(ctx).Info(fmt.Sprintf("[CLAIM] params.Airdrops %v", params.Airdrops))
 	if err != nil {
 		panic(err)
 	}
 
 	newAirdrops := []*types.Airdrop{}
 	for _, airdrop := range params.Airdrops {
-		airdrop.ClaimedSoFar = sdk.ZeroInt()
+		airdrop.ClaimedSoFar = sdkmath.ZeroInt()
 		newAirdrops = append(newAirdrops, airdrop)
 	}
 	params.Airdrops = newAirdrops
+	k.Logger(ctx).Info(fmt.Sprintf("[CLAIM] params.Airdrops %v", params.Airdrops))
 	return k.SetParams(ctx, params)
 }
 
