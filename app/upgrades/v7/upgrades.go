@@ -8,6 +8,7 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
 	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 
@@ -25,6 +26,7 @@ import (
 	mintkeeper "github.com/Stride-Labs/stride/v6/x/mint/keeper"
 	minttypes "github.com/Stride-Labs/stride/v6/x/mint/types"
 	stakeibckeeper "github.com/Stride-Labs/stride/v6/x/stakeibc/keeper"
+	"github.com/Stride-Labs/stride/v6/x/stakeibc/types"
 	stakeibctypes "github.com/Stride-Labs/stride/v6/x/stakeibc/types"
 )
 
@@ -46,19 +48,15 @@ func CreateUpgradeHandler(
 	mm *module.Manager,
 	configurator module.Configurator,
 	cdc codec.Codec,
-	epochsKeeper epochskeeper.Keeper,
-	stakeibcKeeper stakeibckeeper.Keeper,
-	icahostKeeper icahostkeeper.Keeper,
+	accountKeeper authkeeper.AccountKeeper,
 	bankKeeper bankkeeper.Keeper,
+	epochsKeeper epochskeeper.Keeper,
+	icahostKeeper icahostkeeper.Keeper,
 	mintKeeper mintkeeper.Keeper,
+	stakeibcKeeper stakeibckeeper.Keeper,
 ) upgradetypes.UpgradeHandler {
 	return func(ctx sdk.Context, _ upgradetypes.Plan, vm module.VersionMap) (module.VersionMap, error) {
 		ctx.Logger().Info("Starting upgrade v7...")
-
-		// TODO:
-		//  	add min/max redemption rate
-		//      autopilot store key
-		//  	Create RewardCollector module account
 
 		// Add an hourly epoch which will be used by the rate limit store
 		AddHourEpoch(ctx, epochsKeeper)
@@ -80,6 +78,11 @@ func CreateUpgradeHandler(
 		// Incentive diversification
 		if err := IncentiveDiversification(ctx, bankKeeper); err != nil {
 			return vm, errorsmod.Wrapf(err, "unable to send ustrd tokens for prop #153 (incentive diversification)")
+		}
+
+		// Create reward collector module account
+		if err := CreateRewardCollectorModuleAccount(ctx, accountKeeper); err != nil {
+			return vm, errorsmod.Wrapf(err, "unable create reward collector module account")
 		}
 
 		ctx.Logger().Info("Running module mogrations...")
@@ -143,10 +146,15 @@ func AddICAHostAllowMessages(ctx sdk.Context, k icahostkeeper.Keeper) {
 func AddRedemptionRateSafetyChecks(ctx sdk.Context, k stakeibckeeper.Keeper) {
 	ctx.Logger().Info("Setting min/max redemption rate safety bounds on each host zone")
 
+	// Get default min/max redemption rate
+	defaultMinRedemptionRate := sdk.NewDecWithPrec(int64(k.GetParam(ctx, types.KeyDefaultMinRedemptionRateThreshold)), 2)
+	defaultMaxRedemptionRate := sdk.NewDecWithPrec(int64(k.GetParam(ctx, types.KeyDefaultMaxRedemptionRateThreshold)), 2)
+
 	for _, hostZone := range k.GetAllHostZone(ctx) {
-		// hostZone.Halted = false
-		// hostZone.MinRedemptionRate =
-		// hostZone.MaxRedemptionRate =
+
+		hostZone.MinRedemptionRate = defaultMinRedemptionRate
+		hostZone.MaxRedemptionRate = defaultMaxRedemptionRate
+		hostZone.Halted = false
 
 		k.SetHostZone(ctx, hostZone)
 	}
@@ -185,4 +193,9 @@ func IncentiveDiversification(ctx sdk.Context, k bankkeeper.Keeper) error {
 	k.SendCoins(ctx, incentiveProgramAddress, strideFoundationAddress, sdk.NewCoins(amount))
 
 	return nil
+}
+
+// Create reward collector module account for Prop #8
+func CreateRewardCollectorModuleAccount(ctx sdk.Context, k authkeeper.AccountKeeper) error {
+	return utils.CreateModuleAccount(ctx, k, stakeibctypes.RewardCollectorName)
 }

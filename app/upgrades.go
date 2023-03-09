@@ -14,6 +14,7 @@ import (
 	v5 "github.com/Stride-Labs/stride/v6/app/upgrades/v5"
 	v6 "github.com/Stride-Labs/stride/v6/app/upgrades/v6"
 	v7 "github.com/Stride-Labs/stride/v6/app/upgrades/v7"
+	autopilottypes "github.com/Stride-Labs/stride/v6/x/autopilot/types"
 	claimtypes "github.com/Stride-Labs/stride/v6/x/claim/types"
 	icacallbacktypes "github.com/Stride-Labs/stride/v6/x/icacallbacks/types"
 	ratelimittypes "github.com/Stride-Labs/stride/v6/x/ratelimit/types"
@@ -74,11 +75,12 @@ func (app *StrideApp) setupUpgradeHandlers() {
 			app.mm,
 			app.configurator,
 			app.appCodec,
-			app.EpochsKeeper,
-			app.StakeibcKeeper,
-			app.ICAHostKeeper,
+			app.AccountKeeper,
 			app.BankKeeper,
+			app.EpochsKeeper,
+			app.ICAHostKeeper,
 			app.MintKeeper,
+			app.StakeibcKeeper,
 		),
 	)
 
@@ -104,7 +106,7 @@ func (app *StrideApp) setupUpgradeHandlers() {
 		}
 	case "v7":
 		storeUpgrades = &storetypes.StoreUpgrades{
-			Added: []string{ratelimittypes.StoreKey},
+			Added: []string{ratelimittypes.StoreKey, autopilottypes.StoreKey},
 		}
 	}
 

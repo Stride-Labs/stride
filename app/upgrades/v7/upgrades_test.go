@@ -83,6 +83,7 @@ func (s *UpgradeTestSuite) TestUpgrade() {
 	s.CheckRedemptionRateSafetyParamsAfterUpgrade()
 	s.CheckUnbondingFrequencyAfterUpgrade()
 	s.CheckIncentiveDiversificationAfterUpgrade()
+	s.CheckRewardCollectorModuleAccountAfterUpgrade()
 }
 
 // Sets up the epoch info before the upgrade by adding only the stride and day epoch to the store
@@ -185,11 +186,14 @@ func (s *UpgradeTestSuite) CheckRedemptionRateSafetyParamsAfterUpgrade() {
 	allHostZones := s.App.StakeibcKeeper.GetAllHostZone(s.Ctx)
 	s.Require().Len(allHostZones, 2, "number of host zones")
 
-	// for _, hostZone := range allHostZones {
-	// 	s.Require().False(hostZone.Halted, "host zone %s should not be halted", hostZone.ChainId)
-	// 	s.Require().Equal(hostZone.MinRedemptionRate, "host zone %s min redemption rate", hostZone.ChainId)
-	// 	s.Require().Equal(hostZone.MaxRedemptionRate, "host zone %s min redemption rate", hostZone.ChainId)
-	// }
+	for _, hostZone := range allHostZones {
+		s.Require().False(hostZone.Halted, "host zone %s should not be halted", hostZone.ChainId)
+
+		s.Require().Equal(hostZone.MinRedemptionRate, sdk.MustNewDecFromStr("0.9"),
+			"host zone %s min redemption rate", hostZone.ChainId)
+		s.Require().Equal(hostZone.MaxRedemptionRate, sdk.MustNewDecFromStr("1.5"),
+			"host zone %s max redemption rate", hostZone.ChainId)
+	}
 }
 
 // Funds the relevant accounts for incentive diversification
@@ -226,6 +230,11 @@ func (s *UpgradeTestSuite) CheckIncentiveDiversificationAfterUpgrade() {
 	s.CompareCoins(expectedFoundationBalance, actualFoundationBalance, "foundation balance after upgrade")
 }
 
+// Check that the reward collector module account has been created after the upgrade
+func (s *UpgradeTestSuite) CheckRewardCollectorModuleAccountAfterUpgrade() {
+	s.Require().NotNil(s.App.AccountKeeper.GetModuleAddress(stakeibctypes.RewardCollectorName))
+}
+
 func (s *UpgradeTestSuite) TestAddHourEpoch() {
 	s.SetupEpochs()
 	v7.AddHourEpoch(s.Ctx, s.App.EpochsKeeper)
@@ -250,10 +259,17 @@ func (s *UpgradeTestSuite) TestModifyJunoUnbondingFrequency() {
 
 func (s *UpgradeTestSuite) TestAddRedemptionRateSafetyChecks() {
 	s.SetupHostZones()
+	v7.AddRedemptionRateSafetyChecks(s.Ctx, s.App.StakeibcKeeper)
 	s.CheckRedemptionRateSafetyParamsAfterUpgrade()
 }
 
 func (s *UpgradeTestSuite) TestIncentiveDiversification() {
 	s.SetupIncentiveDiversification()
+	v7.IncentiveDiversification(s.Ctx, s.App.BankKeeper)
 	s.CheckIncentiveDiversificationAfterUpgrade()
+}
+
+func (s *UpgradeTestSuite) TestCreateRewardCollectorModuleAccount() {
+	v7.CreateRewardCollectorModuleAccount(s.Ctx, s.App.AccountKeeper)
+	s.CheckRewardCollectorModuleAccountAfterUpgrade()
 }
