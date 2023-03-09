@@ -2,10 +2,10 @@ package keeper
 
 import (
 	"errors"
+	"fmt"
 
 	errorsmod "cosmossdk.io/errors"
 
-	"github.com/armon/go-metrics"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	transfertypes "github.com/cosmos/ibc-go/v5/modules/apps/transfer/types"
@@ -42,14 +42,26 @@ func (k Keeper) TryLiquidStaking(
 	// Note: newData.denom is base denom e.g. uatom - not ibc/xxx
 	var token = sdk.NewCoin(newData.Denom, amount)
 
-	err := k.RunLiquidStake(ctx, parsedReceiver.StrideAccAddress, token, []metrics.Label{})
+	prefixedDenom := transfertypes.GetDenomPrefix(packet.GetDestPort(), packet.GetDestChannel()) + newData.Denom
+	ibcDenom := transfertypes.ParseDenomTrace(prefixedDenom).IBCDenom()
+
+	hostZone, err := k.stakeibcKeeper.GetHostZoneFromHostDenom(ctx, token.Denom)
+	if err != nil {
+		return channeltypes.NewErrorAcknowledgement(err)
+	}
+
+	if hostZone.IbcDenom != ibcDenom {
+		return channeltypes.NewErrorAcknowledgement(fmt.Errorf("ibc denom is not equal to host zone ibc denom"))
+	}
+
+	err = k.RunLiquidStake(ctx, parsedReceiver.StrideAccAddress, token)
 	if err != nil {
 		ack = channeltypes.NewErrorAcknowledgement(err)
 	}
 	return ack
 }
 
-func (k Keeper) RunLiquidStake(ctx sdk.Context, addr sdk.AccAddress, token sdk.Coin, labels []metrics.Label) error {
+func (k Keeper) RunLiquidStake(ctx sdk.Context, addr sdk.AccAddress, token sdk.Coin) error {
 	msg := &stakeibctypes.MsgLiquidStake{
 		Creator:   addr.String(),
 		Amount:    token.Amount,
