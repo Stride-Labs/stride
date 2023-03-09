@@ -24,6 +24,8 @@ type BankKeeper interface {
 	SendCoinsFromModuleToAccount(ctx sdk.Context, senderModule string, recipientAddr sdk.AccAddress, amt sdk.Coins) error
 	SendCoinsFromAccountToModule(ctx sdk.Context, senderAddr sdk.AccAddress, recipientModule string, amt sdk.Coins) error
 	MintCoins(ctx sdk.Context, moduleName string, amt sdk.Coins) error
+	GetAllBalances(ctx sdk.Context, addr sdk.AccAddress) sdk.Coins
+	SendCoinsFromModuleToModule(ctx sdk.Context, senderModule string, recipientModule string, amt sdk.Coins) error
 }
 
 // Event Hooks
@@ -33,4 +35,9 @@ type BankKeeper interface {
 // StakeIBCHooks event hooks for stakeibc
 type StakeIBCHooks interface {
 	AfterLiquidStake(ctx sdk.Context, addr sdk.AccAddress) // Must be called after liquid stake is completed
+}
+
+type RatelimitKeeper interface {
+	AddDenomToBlacklist(ctx sdk.Context, denom string)
+	RemoveDenomFromBlacklist(ctx sdk.Context, denom string)
 }

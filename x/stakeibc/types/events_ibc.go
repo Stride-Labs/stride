@@ -14,6 +14,7 @@ const (
 	EventTypeRegisterZone       = "register_zone"
 	EventTypeRedemptionRequest  = "request_redemption"
 	EventTypeLiquidStakeRequest = "liquid_stake"
+	EventTypeHostZoneHalt       = "halt_zone"
 
 	AttributeKeyConnectionId     = "connection_id"
 	AttributeKeyRecipientChain   = "chain_id"
@@ -21,6 +22,8 @@ const (
 	AttributeKeyBurnAmount       = "burn_amount"
 	AttributeKeyRedeemAmount     = "redeem_amount"
 	AttributeKeySourceAddress    = "source"
+	AttributeKeyHostZone         = "host_zone"
+	AttributeKeyRedemptionRate   = "redemption_rate"
 
 	AttributeValueCategory = ModuleName
 )

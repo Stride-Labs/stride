@@ -21,6 +21,8 @@ func createNHostZone(keeper *keeper.Keeper, ctx sdk.Context, n int) []types.Host
 		items[i].ChainId = strconv.Itoa(i)
 		items[i].RedemptionRate = sdk.NewDec(1)
 		items[i].LastRedemptionRate = sdk.NewDec(1)
+		items[i].MinRedemptionRate = sdk.NewDecWithPrec(5, 1)
+		items[i].MaxRedemptionRate = sdk.NewDecWithPrec(15, 1)
 		items[i].StakedBal = sdkmath.ZeroInt()
 		keeper.SetHostZone(ctx, items[i])
 	}
@@ -56,6 +58,66 @@ func TestHostZoneGetAll(t *testing.T) {
 	require.ElementsMatch(t,
 		nullify.Fill(items),
 		nullify.Fill(keeper.GetAllHostZone(ctx)),
+	)
+}
+
+func TestHostZoneGetAllActiveCase1(t *testing.T) {
+	keeper, ctx := keepertest.StakeibcKeeper(t)
+
+	// Case 1: some active some inactive
+	numZones := 3
+	items := createNHostZone(keeper, ctx, numZones)
+	// set the last host zone as halted
+	items[numZones-1].Halted = true
+	keeper.SetHostZone(ctx, items[numZones-1])
+
+	// only the last host zone is active, so we expect all except that one
+	actualActiveHzs := items[:numZones-1]
+	getActiveHzResults := keeper.GetAllActiveHostZone(ctx)
+	require.ElementsMatch(t,
+		nullify.Fill(actualActiveHzs),
+		nullify.Fill(getActiveHzResults),
+	)
+}
+
+func TestHostZoneGetAllActiveCase2(t *testing.T) {
+	keeper, ctx := keepertest.StakeibcKeeper(t)
+
+	// Case 2: all active
+	numZones := 3
+	items := createNHostZone(keeper, ctx, numZones)
+	require.ElementsMatch(t,
+		nullify.Fill(items),
+		nullify.Fill(keeper.GetAllActiveHostZone(ctx)),
+	)
+}
+
+func TestHostZoneGetAllActiveCase3(t *testing.T) {
+	keeper, ctx := keepertest.StakeibcKeeper(t)
+
+	// Case 3: all inactive
+	numZones := 3
+	items := createNHostZone(keeper, ctx, numZones)
+	// set the last host zone as halted
+	items[0].Halted = true
+	items[1].Halted = true
+	items[2].Halted = true
+	keeper.SetHostZone(ctx, items[0])
+	keeper.SetHostZone(ctx, items[1])
+	keeper.SetHostZone(ctx, items[2])
+	require.ElementsMatch(t,
+		nullify.Fill(types.HostZone{}),
+		nullify.Fill(keeper.GetAllActiveHostZone(ctx)),
+	)
+}
+
+func TestHostZoneGetAllActiveCase4(t *testing.T) {
+	keeper, ctx := keepertest.StakeibcKeeper(t)
+
+	// create no zones, check the output is an empty list
+	require.ElementsMatch(t,
+		nullify.Fill(types.HostZone{}),
+		nullify.Fill(keeper.GetAllActiveHostZone(ctx)),
 	)
 }
 
