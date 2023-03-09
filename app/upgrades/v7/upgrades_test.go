@@ -22,10 +22,12 @@ import (
 )
 
 var (
-	DummyUpgradeHeight = int64(5)
-	JunoChainId        = "juno-1"
-	OsmosisChainId     = "osmosis-1"
-	ustrd              = "ustrd"
+	DummyUpgradeHeight            = int64(5)
+	JunoChainId                   = "juno-1"
+	OsmosisChainId                = "osmosis-1"
+	OsmosisUnbondingFrequency     = uint64(3)
+	InitialJunoUnbondingFrequency = uint64(4)
+	ustrd                         = "ustrd"
 )
 var ExpectedHourEpoch = epochstypes.EpochInfo{
 	Identifier:              epochstypes.HOUR_EPOCH,
@@ -66,14 +68,25 @@ func TestKeeperTestSuite(t *testing.T) {
 }
 
 func (s *UpgradeTestSuite) TestUpgrade() {
-	s.SetupUpgrade()
+	// Setup store before upgrade
+	s.SetupEpochs()
+	s.SetupHostZones()
+	s.SetupIncentiveDiversification()
+
+	// Run the upgrade and iterate 1 block
 	s.ConfirmUpgradeSucceededs("v7", DummyUpgradeHeight)
-	s.CheckStateAfterUpgrade()
+
+	// Confirm state after upgrade
+	s.CheckEpochsAfterUpgrade(true)
+	s.CheckInflationAfterUpgrade()
+	s.CheckICAAllowMessagesAfterUpgrade()
+	s.CheckRedemptionRateSafetyParamsAfterUpgrade()
+	s.CheckUnbondingFrequencyAfterUpgrade()
+	s.CheckIncentiveDiversificationAfterUpgrade()
 }
 
-func (s *UpgradeTestSuite) SetupUpgrade() {
-	codec := app.MakeEncodingConfig().Marshaler
-
+// Sets up the epoch info before the upgrade by adding only the stride and day epoch to the store
+func (s *UpgradeTestSuite) SetupEpochs() {
 	// Remove any epochs that are initialized by default
 	for _, epoch := range s.App.EpochsKeeper.AllEpochInfos(s.Ctx) {
 		s.App.EpochsKeeper.DeleteEpochInfo(s.Ctx, epoch.Identifier)
@@ -86,46 +99,13 @@ func (s *UpgradeTestSuite) SetupUpgrade() {
 	s.App.EpochsKeeper.SetEpochInfo(s.Ctx, epochstypes.EpochInfo{
 		Identifier: epochstypes.STRIDE_EPOCH,
 	})
-
-	// Add host zones (use old types so that the min/max redemption rate are not present)
-	stakeibcStore := s.Ctx.KVStore(s.App.GetKey(stakeibctypes.StoreKey))
-	hostzoneStore := prefix.NewStore(stakeibcStore, stakeibctypes.KeyPrefix(stakeibctypes.HostZoneKey))
-
-	// Redemption rates is required so invariant is not broken during upgrade
-	osmosis := oldstakeibctypes.HostZone{
-		ChainId:            OsmosisChainId,
-		UnbondingFrequency: 3,
-		RedemptionRate:     sdk.NewDec(1),
-	}
-	juno := oldstakeibctypes.HostZone{
-		ChainId:            JunoChainId,
-		UnbondingFrequency: 4,
-		RedemptionRate:     sdk.NewDec(1),
-	}
-	osmosisBz, err := codec.Marshal(&osmosis)
-	s.Require().NoError(err, "no error expected when marshalling osmosis host zone")
-	junoBz, err := codec.Marshal(&juno)
-	s.Require().NoError(err, "no error expected when marshalling juno host zone")
-
-	hostzoneStore.Set([]byte(osmosis.ChainId), osmosisBz)
-	hostzoneStore.Set([]byte(juno.ChainId), junoBz)
-
-	// Get addresses for source and destination
-	incentiveProgramAddress, err := sdk.AccAddressFromBech32(v7.IncentiveProgramAddress)
-	s.Require().NoError(err, "no error expected when converting Incentive Program address")
-	strideFoundationAddress, err := sdk.AccAddressFromBech32(v7.StrideFoundationAddress)
-	s.Require().NoError(err, "no error expected when converting Stride Foundation address")
-
-	// Fund incentive program account with 23M, and stride foundation with 4.1M
-	// (any values can be used here for the test, but these are used to resemble mainnet)
-	initialProgram := sdk.NewCoin(ustrd, sdk.NewInt(23_000_000_000_000))
-	initialFoundation := sdk.NewCoin(ustrd, sdk.NewInt(4_157_085_999_543))
-	s.FundAccount(incentiveProgramAddress, initialProgram)
-	s.FundAccount(strideFoundationAddress, initialFoundation)
 }
 
-func (s *UpgradeTestSuite) CheckStateAfterUpgrade() {
-	// Check epochs
+// Checks that the hour epoch has been added
+// For the unit test that calls the AddHourEpoch function directly, the epoch should not have started yet
+// But for the full upgrade unit test case, a block will be incremented which should start the epoch
+func (s *UpgradeTestSuite) CheckEpochsAfterUpgrade(epochStarted bool) {
+	// Confirm stride and day epoch are still present
 	allEpochs := s.App.EpochsKeeper.AllEpochInfos(s.Ctx)
 	s.Require().Len(allEpochs, 3, "total number of epochs")
 
@@ -134,112 +114,86 @@ func (s *UpgradeTestSuite) CheckStateAfterUpgrade() {
 	_, found = s.App.EpochsKeeper.GetEpochInfo(s.Ctx, epochstypes.STRIDE_EPOCH)
 	s.Require().True(found, "stride epoch found")
 
-	// Epoch should have been started after the upgrade
-	hourEpochAfterUpgrade := ExpectedHourEpoch
-	hourEpochAfterUpgrade.EpochCountingStarted = true
-	hourEpochAfterUpgrade.CurrentEpoch = 1
-	hourEpochAfterUpgrade.CurrentEpochStartHeight = DummyUpgradeHeight
+	// If the upgrade passed an a block was incremented, the epoch should be started
+	expectedHourEpoch := ExpectedHourEpoch
+	if epochStarted {
+		expectedHourEpoch.EpochCountingStarted = true
+		expectedHourEpoch.CurrentEpoch = 1
+		expectedHourEpoch.CurrentEpochStartHeight = DummyUpgradeHeight
+	}
 
 	actualHourEpoch, found := s.App.EpochsKeeper.GetEpochInfo(s.Ctx, epochstypes.HOUR_EPOCH)
-	s.Require().True(found)
-	s.Require().Equal(hourEpochAfterUpgrade, actualHourEpoch, "hour epoch found")
-
-	// Check allow messages
-	params := s.App.ICAHostKeeper.GetParams(s.Ctx)
-	s.Require().True(params.HostEnabled, "host enabled")
-	s.Require().ElementsMatch(ExpectedAllowMessages, params.AllowMessages, "allow messages")
-
-	// Check host zones
-	allHostZones := s.App.StakeibcKeeper.GetAllHostZone(s.Ctx)
-	s.Require().Len(allHostZones, 2, "total number of host zones")
-
-	_, found = s.App.StakeibcKeeper.GetHostZone(s.Ctx, "osmosis-1")
-	s.Require().True(found, "osmosis host zone should have been found")
-
-	juno, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx, JunoChainId)
-	s.Require().True(found, "juno host zone should have been found")
-
-	s.Require().Equal(ExpectedJunoUnbondingFrequency, juno.UnbondingFrequency)
-
-	// Confirm balances after incentive diversification
-	incentiveProgramAddress, err := sdk.AccAddressFromBech32(v7.IncentiveProgramAddress)
-	s.Require().NoError(err, "no error expected when converting Incentive Program address")
-	strideFoundationAddress, err := sdk.AccAddressFromBech32(v7.StrideFoundationAddress)
-	s.Require().NoError(err, "no error expected when converting Stride Foundation address")
-
-	expectedIncentiveBalance := sdk.NewCoin(ustrd, sdk.NewInt(20_000_000_000_000))
-	expectedFoundationBalance := sdk.NewCoin(ustrd, sdk.NewInt(7_157_085_999_543))
-	actualIncentiveBalance := s.App.BankKeeper.GetBalance(s.Ctx, incentiveProgramAddress, ustrd)
-	actualFoundationBalance := s.App.BankKeeper.GetBalance(s.Ctx, strideFoundationAddress, ustrd)
-
-	s.CompareCoins(expectedIncentiveBalance, actualIncentiveBalance, "incentive balance after upgrade")
-	s.CompareCoins(expectedFoundationBalance, actualFoundationBalance, "foundation balance after upgrade")
-
-	// Confirm inflation provisions
-	minter := s.App.MintKeeper.GetMinter(s.Ctx)
-	s.Require().Equal(ExpectedEpochProvisions, minter.EpochProvisions)
-}
-
-func (s *UpgradeTestSuite) TestAddHourEpoch() {
-	v7.AddHourEpoch(s.Ctx, s.App.EpochsKeeper)
-
-	actualEpochInfo, found := s.App.EpochsKeeper.GetEpochInfo(s.Ctx, "hour")
 	s.Require().True(found, "hour epoch should have been found")
-	s.Require().Equal(ExpectedHourEpoch, actualEpochInfo, "epoch info")
+	s.Require().Equal(expectedHourEpoch, actualHourEpoch, "hour epoch info")
 }
 
-func (s *UpgradeTestSuite) TestIncreaseStrideInflation() {
-	v7.IncreaseStrideInflation(s.Ctx, s.App.MintKeeper)
-
+// Confirms the inflation has been set properly after the upgrade
+func (s *UpgradeTestSuite) CheckInflationAfterUpgrade() {
 	minter := s.App.MintKeeper.GetMinter(s.Ctx)
 	s.Require().Equal(ExpectedEpochProvisions, minter.EpochProvisions)
 }
 
-func (s *UpgradeTestSuite) TestAddICAHostAllowMessages() {
-	v7.AddICAHostAllowMessages(s.Ctx, s.App.ICAHostKeeper)
-
+// Confirms the ICA allow messages have been set after the upgrade
+func (s *UpgradeTestSuite) CheckICAAllowMessagesAfterUpgrade() {
 	params := s.App.ICAHostKeeper.GetParams(s.Ctx)
 	s.Require().True(params.HostEnabled, "host enabled")
 	s.Require().ElementsMatch(ExpectedAllowMessages, params.AllowMessages, "allow messages")
 }
 
-func (s *UpgradeTestSuite) TestModifyJunoUnbondingFrequency() {
-	osmoUnbondingFrequency := uint64(3)
-	initialJunoUnbondingFrequency := uint64(4)
+// Stores an old osmo and juno host zone
+// Juno should have an unbonding frequency of 4 in the old store
+func (s *UpgradeTestSuite) SetupHostZones() {
+	codec := app.MakeEncodingConfig().Marshaler
+	stakeibcStore := s.Ctx.KVStore(s.App.GetKey(stakeibctypes.StoreKey))
+	hostzoneStore := prefix.NewStore(stakeibcStore, stakeibctypes.KeyPrefix(stakeibctypes.HostZoneKey))
 
-	// Add osmo and juno host zones
-	hostZones := []stakeibctypes.HostZone{
-		{
-			ChainId:            OsmosisChainId,
-			UnbondingFrequency: osmoUnbondingFrequency,
-		},
-		{
-			ChainId:            JunoChainId,
-			UnbondingFrequency: initialJunoUnbondingFrequency,
-		},
+	// Redemption rates is required so invariant is not broken during upgrade
+	osmosis := oldstakeibctypes.HostZone{
+		ChainId:            OsmosisChainId,
+		UnbondingFrequency: OsmosisUnbondingFrequency,
+		RedemptionRate:     sdk.NewDec(1),
 	}
-	for _, hz := range hostZones {
-		s.App.StakeibcKeeper.SetHostZone(s.Ctx, hz)
+	juno := oldstakeibctypes.HostZone{
+		ChainId:            JunoChainId,
+		UnbondingFrequency: InitialJunoUnbondingFrequency,
+		RedemptionRate:     sdk.NewDec(1),
 	}
 
-	// Modify the juno unbonding frequency
-	v7.ModifyJunoUnbondingFrequency(s.Ctx, s.App.StakeibcKeeper)
+	osmosisBz, err := codec.Marshal(&osmosis)
+	s.Require().NoError(err, "no error expected when marshalling osmosis host zone")
+	junoBz, err := codec.Marshal(&juno)
+	s.Require().NoError(err, "no error expected when marshalling juno host zone")
 
-	// Confirm the osmo and juno unbonding frequencies
+	hostzoneStore.Set([]byte(osmosis.ChainId), osmosisBz)
+	hostzoneStore.Set([]byte(juno.ChainId), junoBz)
+}
+
+// Check that the juno unbondinng frequency was changed after the upgrade
+func (s *UpgradeTestSuite) CheckUnbondingFrequencyAfterUpgrade() {
 	osmosis, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx, OsmosisChainId)
 	s.Require().True(found, "osmosis host zone should have been found")
-	s.Require().Equal(osmoUnbondingFrequency, osmosis.UnbondingFrequency)
+	s.Require().Equal(OsmosisUnbondingFrequency, osmosis.UnbondingFrequency)
 
 	juno, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx, JunoChainId)
 	s.Require().True(found, "juno host zone should have been found")
 	s.Require().Equal(ExpectedJunoUnbondingFrequency, juno.UnbondingFrequency)
 }
 
-func (s *UpgradeTestSuite) TestAddMinMaxRedemptionRate() {
+// Checks that the redemption rate safety params have been set after the upgrade
+func (s *UpgradeTestSuite) CheckRedemptionRateSafetyParamsAfterUpgrade() {
+	// Confirm the parameters on each host
+	allHostZones := s.App.StakeibcKeeper.GetAllHostZone(s.Ctx)
+	s.Require().Len(allHostZones, 2, "number of host zones")
 
+	// for _, hostZone := range allHostZones {
+	// 	s.Require().False(hostZone.Halted, "host zone %s should not be halted", hostZone.ChainId)
+	// 	s.Require().Equal(hostZone.MinRedemptionRate, "host zone %s min redemption rate", hostZone.ChainId)
+	// 	s.Require().Equal(hostZone.MaxRedemptionRate, "host zone %s min redemption rate", hostZone.ChainId)
+	// }
 }
 
-func (s *UpgradeTestSuite) TestIncentiveDiversification() {
+// Funds the relevant accounts for incentive diversification
+func (s *UpgradeTestSuite) SetupIncentiveDiversification() {
 	// Get addresses for source and destination
 	incentiveProgramAddress, err := sdk.AccAddressFromBech32(v7.IncentiveProgramAddress)
 	s.Require().NoError(err, "no error expected when converting Incentive Program address")
@@ -252,11 +206,17 @@ func (s *UpgradeTestSuite) TestIncentiveDiversification() {
 	initialFoundation := sdk.NewCoin(ustrd, sdk.NewInt(4_157_085_999_543))
 	s.FundAccount(incentiveProgramAddress, initialProgram)
 	s.FundAccount(strideFoundationAddress, initialFoundation)
+}
 
-	// Trigger bank send from upgrade
-	v7.IncentiveDiversification(s.Ctx, s.App.BankKeeper)
+// Check that the incentive diversification transfer was successful
+func (s *UpgradeTestSuite) CheckIncentiveDiversificationAfterUpgrade() {
+	// Get addresses for source and destination
+	incentiveProgramAddress, err := sdk.AccAddressFromBech32(v7.IncentiveProgramAddress)
+	s.Require().NoError(err, "no error expected when converting Incentive Program address")
+	strideFoundationAddress, err := sdk.AccAddressFromBech32(v7.StrideFoundationAddress)
+	s.Require().NoError(err, "no error expected when converting Stride Foundation address")
 
-	// Confirm balances
+	// Confirm 3M were sent from the incentive program accoun to the stride foundation
 	expectedIncentiveBalance := sdk.NewCoin(ustrd, sdk.NewInt(20_000_000_000_000))
 	expectedFoundationBalance := sdk.NewCoin(ustrd, sdk.NewInt(7_157_085_999_543))
 	actualIncentiveBalance := s.App.BankKeeper.GetBalance(s.Ctx, incentiveProgramAddress, ustrd)
@@ -264,4 +224,36 @@ func (s *UpgradeTestSuite) TestIncentiveDiversification() {
 
 	s.CompareCoins(expectedIncentiveBalance, actualIncentiveBalance, "incentive balance after upgrade")
 	s.CompareCoins(expectedFoundationBalance, actualFoundationBalance, "foundation balance after upgrade")
+}
+
+func (s *UpgradeTestSuite) TestAddHourEpoch() {
+	s.SetupEpochs()
+	v7.AddHourEpoch(s.Ctx, s.App.EpochsKeeper)
+	s.CheckEpochsAfterUpgrade(false)
+}
+
+func (s *UpgradeTestSuite) TestIncreaseStrideInflation() {
+	v7.IncreaseStrideInflation(s.Ctx, s.App.MintKeeper)
+	s.CheckInflationAfterUpgrade()
+}
+
+func (s *UpgradeTestSuite) TestAddICAHostAllowMessages() {
+	v7.AddICAHostAllowMessages(s.Ctx, s.App.ICAHostKeeper)
+	s.CheckICAAllowMessagesAfterUpgrade()
+}
+
+func (s *UpgradeTestSuite) TestModifyJunoUnbondingFrequency() {
+	s.SetupHostZones()
+	v7.ModifyJunoUnbondingFrequency(s.Ctx, s.App.StakeibcKeeper)
+	s.CheckUnbondingFrequencyAfterUpgrade()
+}
+
+func (s *UpgradeTestSuite) TestAddRedemptionRateSafetyChecks() {
+	s.SetupHostZones()
+	s.CheckRedemptionRateSafetyParamsAfterUpgrade()
+}
+
+func (s *UpgradeTestSuite) TestIncentiveDiversification() {
+	s.SetupIncentiveDiversification()
+	s.CheckIncentiveDiversificationAfterUpgrade()
 }

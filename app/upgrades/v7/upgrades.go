@@ -58,7 +58,7 @@ func CreateUpgradeHandler(
 		// TODO:
 		//  	add min/max redemption rate
 		//      autopilot store key
-		//  	BaseAccount issue
+		//  	Create RewardCollector module account
 
 		// Add an hourly epoch which will be used by the rate limit store
 		AddHourEpoch(ctx, epochsKeeper)
@@ -69,8 +69,8 @@ func CreateUpgradeHandler(
 		// Add stride messages to the ICA host allow messages
 		AddICAHostAllowMessages(ctx, icahostKeeper)
 
-		// Add min/max redemption rate threshold for each host zone
-		AddMinMaxRedemptionRate(ctx, stakeibcKeeper)
+		// Add min/max redemption rate threshold and a `Halted`` boolean to each host zone
+		AddRedemptionRateSafetyChecks(ctx, stakeibcKeeper)
 
 		// Change the juno unbonding frequency to 5
 		if err := ModifyJunoUnbondingFrequency(ctx, stakeibcKeeper); err != nil {
@@ -138,13 +138,18 @@ func AddICAHostAllowMessages(ctx sdk.Context, k icahostkeeper.Keeper) {
 	k.SetParams(ctx, params)
 }
 
-// Add the min/max redemption rate to each host zone as safety bounds
-// Use the default min/max for each
-func AddMinMaxRedemptionRate(ctx sdk.Context, k stakeibckeeper.Keeper) {
+// Add the min/max redemption rate to each host zone as safety bounds, using the default for each
+// Also set the Halted boolean to false
+func AddRedemptionRateSafetyChecks(ctx sdk.Context, k stakeibckeeper.Keeper) {
 	ctx.Logger().Info("Setting min/max redemption rate safety bounds on each host zone")
 
-	// TODO
-	return
+	for _, hostZone := range k.GetAllHostZone(ctx) {
+		// hostZone.Halted = false
+		// hostZone.MinRedemptionRate =
+		// hostZone.MaxRedemptionRate =
+
+		k.SetHostZone(ctx, hostZone)
+	}
 }
 
 // Update the unbonding frequency of juno to 5 to align with the 28 day unbonding period
