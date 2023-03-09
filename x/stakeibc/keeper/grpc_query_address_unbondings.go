@@ -12,16 +12,15 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
+	epochtypes "github.com/Stride-Labs/stride/v6/x/epochs/types"
 	"github.com/Stride-Labs/stride/v6/x/stakeibc/types"
 )
 
 const nanosecondsInDay = 86400000000000
 
 func (k Keeper) AddressUnbondings(c context.Context, req *types.QueryAddressUnbondings) (*types.QueryAddressUnbondingsResponse, error) {
-	/*
-		The function queries all the unbondings associated with a Stride address.
-		This should provide more visiblity into the unbonding process for a user.
-	*/
+	// The function queries all the unbondings associated with a Stride address.
+	// This should provide more visiblity into the unbonding process for a user.
 
 	if req == nil || req.Address == "" {
 		return nil, status.Error(codes.InvalidArgument, "invalid request")
@@ -31,7 +30,7 @@ func (k Keeper) AddressUnbondings(c context.Context, req *types.QueryAddressUnbo
 	var addressUnbondings []types.AddressUnbonding
 
 	// get the relevant day
-	dayEpochTracker, found := k.GetEpochTracker(ctx, "day")
+	dayEpochTracker, found := k.GetEpochTracker(ctx, epochtypes.DAY_EPOCH)
 	if !found {
 		return nil, sdkerrors.ErrKeyNotFound
 	}
@@ -62,9 +61,9 @@ func (k Keeper) AddressUnbondings(c context.Context, req *types.QueryAddressUnbo
 							return nil, sdkerrors.ErrKeyNotFound
 						}
 						daysUntilUnbonding := hostZone.UnbondingFrequency - (currentDay % hostZone.UnbondingFrequency)
-						unbondingStartTime := dayEpochTracker.NextEpochStartTime + daysUntilUnbonding - 1
+						unbondingStartTime := dayEpochTracker.NextEpochStartTime + ((daysUntilUnbonding - 1) * nanosecondsInDay)
 						unbondingDurationEstimate := (hostZone.UnbondingFrequency - 1) * 7
-						unbondingTime = unbondingStartTime + unbondingDurationEstimate*nanosecondsInDay
+						unbondingTime = unbondingStartTime + (unbondingDurationEstimate * nanosecondsInDay)
 					}
 					unbondingTime = unbondingTime + nanosecondsInDay
 					unbondingTimeStr := time.Unix(0, int64(unbondingTime)).UTC().String()
