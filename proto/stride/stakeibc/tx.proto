@@ -64,7 +64,7 @@ message MsgRedeemStake {
 
 message MsgRedeemStakeResponse {}
 
-// next: 13
+// next: 15
 message MsgRegisterHostZone {
   option (gogoproto.equal) = false;
   option (gogoproto.goproto_getters) = false;
@@ -78,6 +78,16 @@ message MsgRegisterHostZone {
       [ (gogoproto.moretags) = "yaml:\"transfer_channel_id\"" ];
   uint64 unbonding_frequency = 11
       [ (gogoproto.moretags) = "yaml:\"unbonding_frequency\"" ];
+  string min_redemption_rate = 13 [
+    (cosmos_proto.scalar) = "cosmos.Dec",
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
+  string max_redemption_rate = 14 [
+    (cosmos_proto.scalar) = "cosmos.Dec",
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
 }
 
 message MsgRegisterHostZoneResponse {}
