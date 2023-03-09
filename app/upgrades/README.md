@@ -97,7 +97,7 @@ package {upgradeVersion}
 
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	{new-consensus-version} "github.com/Stride-Labs/stride/v3/x/records/migrations/{new-consensus-version}"
+	{new-consensus-version} "github.com/Stride-Labs/stride/v6/x/records/migrations/{new-consensus-version}"
 )
 
 // TODO: Add migration logic to deserialize with old protos and re-serialize with new ones
