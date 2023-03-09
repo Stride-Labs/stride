@@ -7,7 +7,7 @@ import "cosmos/base/query/v1beta1/pagination.proto";
 import "stride/records/genesis.proto";
 // this line is used by starport scaffolding # 1
 
-option go_package = "github.com/Stride-Labs/stride/v4/x/records/types";
+option go_package = "github.com/Stride-Labs/stride/v6/x/records/types";
 
 // Query defines the gRPC querier service.
 service Query {
@@ -65,7 +65,13 @@ service Query {
       returns (QueryAllDepositRecordResponse) {
     option (google.api.http).get = "/Stride-Labs/stride/records/deposit_record";
   }
-  // this line is used by starport scaffolding # 2
+
+  // Queries a list of DepositRecord items for a given host zone
+  rpc DepositRecordByHost(QueryDepositRecordByHostRequest)
+      returns (QueryDepositRecordByHostResponse) {
+    option (google.api.http).get = "/Stride-Labs/stride/records/"
+                                   "deposit_record_by_host_zone/{host_zone_id}";
+  }
 }
 
 // QueryParamsRequest is request type for the Query/Params RPC method.
@@ -90,6 +96,12 @@ message QueryAllDepositRecordRequest {
 message QueryAllDepositRecordResponse {
   repeated DepositRecord deposit_record = 1 [ (gogoproto.nullable) = false ];
   cosmos.base.query.v1beta1.PageResponse pagination = 2;
+}
+
+message QueryDepositRecordByHostRequest { string host_zone_id = 1; }
+
+message QueryDepositRecordByHostResponse {
+  repeated DepositRecord deposit_record = 1 [ (gogoproto.nullable) = false ];
 }
 
 message QueryGetUserRedemptionRecordRequest { string id = 1; }

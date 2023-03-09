@@ -3,13 +3,15 @@ package keeper
 import (
 	"fmt"
 
+	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/spf13/cast"
 
-	"github.com/Stride-Labs/stride/v4/utils"
-	epochstypes "github.com/Stride-Labs/stride/v4/x/epochs/types"
-	recordstypes "github.com/Stride-Labs/stride/v4/x/records/types"
-	"github.com/Stride-Labs/stride/v4/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v6/utils"
+	epochstypes "github.com/Stride-Labs/stride/v6/x/epochs/types"
+	recordstypes "github.com/Stride-Labs/stride/v6/x/records/types"
+	"github.com/Stride-Labs/stride/v6/x/stakeibc/types"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 )
 
 func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochInfo epochstypes.EpochInfo) {
@@ -66,6 +68,14 @@ func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochInfo epochstypes.EpochInf
 		if epochNumber%reinvestInterval == 0 { // allow a few blocks from UpdateUndelegatedBal to avoid conflicts
 			k.ReinvestRewards(ctx)
 		}
+	}
+	if epochInfo.Identifier == epochstypes.MINT_EPOCH {
+		err := k.AllocateHostZoneReward(ctx)
+		if err != nil {
+			k.Logger(ctx).Error(fmt.Sprintf("Unable to allocate host zone reward, err: %s", err.Error()))
+			return
+		}
+		
 	}
 }
 
@@ -173,14 +183,14 @@ func (k Keeper) UpdateRedemptionRates(ctx sdk.Context, depositRecords []recordst
 	}
 }
 
-func (k Keeper) GetUndelegatedBalance(hostZone types.HostZone, depositRecords []recordstypes.DepositRecord) (sdk.Int, error) {
+func (k Keeper) GetUndelegatedBalance(hostZone types.HostZone, depositRecords []recordstypes.DepositRecord) (sdkmath.Int, error) {
 	// filter to only the deposit records for the host zone with status DELEGATION_QUEUE
 	UndelegatedDepositRecords := utils.FilterDepositRecords(depositRecords, func(record recordstypes.DepositRecord) (condition bool) {
 		return ((record.Status == recordstypes.DepositRecord_DELEGATION_QUEUE || record.Status == recordstypes.DepositRecord_DELEGATION_IN_PROGRESS) && record.HostZoneId == hostZone.ChainId)
 	})
 
 	// sum the amounts of the deposit records
-	totalAmount := sdk.ZeroInt()
+	totalAmount := sdkmath.ZeroInt()
 	for _, depositRecord := range UndelegatedDepositRecords {
 		totalAmount = totalAmount.Add(depositRecord.Amount)
 	}
@@ -188,14 +198,14 @@ func (k Keeper) GetUndelegatedBalance(hostZone types.HostZone, depositRecords []
 	return totalAmount, nil
 }
 
-func (k Keeper) GetModuleAccountBalance(hostZone types.HostZone, depositRecords []recordstypes.DepositRecord) (sdk.Int, error) {
+func (k Keeper) GetModuleAccountBalance(hostZone types.HostZone, depositRecords []recordstypes.DepositRecord) (sdkmath.Int, error) {
 	// filter to only the deposit records for the host zone with status DELEGATION
 	ModuleAccountRecords := utils.FilterDepositRecords(depositRecords, func(record recordstypes.DepositRecord) (condition bool) {
 		return (record.Status == recordstypes.DepositRecord_TRANSFER_QUEUE || record.Status == recordstypes.DepositRecord_TRANSFER_IN_PROGRESS) && record.HostZoneId == hostZone.ChainId
 	})
 
 	// sum the amounts of the deposit records
-	totalAmount := sdk.ZeroInt()
+	totalAmount := sdkmath.ZeroInt()
 	for _, depositRecord := range ModuleAccountRecords {
 		totalAmount = totalAmount.Add(depositRecord.Amount)
 	}
@@ -208,8 +218,8 @@ func (k Keeper) ReinvestRewards(ctx sdk.Context) {
 
 	for _, hostZone := range k.GetAllHostZone(ctx) {
 		// only process host zones once withdrawal accounts are registered
-		withdrawalIca := hostZone.WithdrawalAccount
-		if withdrawalIca == nil {
+		withdrawalAccount := hostZone.WithdrawalAccount
+		if withdrawalAccount == nil || withdrawalAccount.Address == "" {
 			k.Logger(ctx).Info(utils.LogWithHostZone(hostZone.ChainId, "Withdrawal account not registered for host zone"))
 			continue
 		}
@@ -228,4 +238,41 @@ func (k Keeper) ReinvestRewards(ctx sdk.Context) {
 			continue
 		}
 	}
+}
+
+func (k Keeper) AllocateHostZoneReward(ctx sdk.Context) error {
+	k.Logger(ctx).Info("Allocate host zone reward to delegator")
+
+	rewardCollectorAddress := k.accountKeeper.GetModuleAccount(ctx, types.RewardCollectorName).GetAddress()
+	rewardedTokens := k.bankKeeper.GetAllBalances(ctx, rewardCollectorAddress)
+	if rewardedTokens.IsEqual(sdk.Coins{}) {
+		return nil
+	}
+
+	msgSvr := NewMsgServerImpl(k)
+	for _, token := range rewardedTokens {
+		// get hostzone by reward token (in ibc denom format)
+		hz, err := k.GetHostZoneFromIBCDenom(ctx, token.Denom)
+		if err != nil {
+			k.Logger(ctx).Info("Can't get host zone from ibc token %s", token.Denom)
+			return err
+		}
+
+		// liquid stake all tokens
+		msg := types.NewMsgLiquidStake(rewardCollectorAddress.String(), token.Amount, hz.HostDenom)
+		_, err = msgSvr.LiquidStake(ctx, msg)
+		if err != nil {
+			k.Logger(ctx).Info("Can't liquid stake %s for hostzone %s", token.String(), hz.ChainId)
+			return err
+		}
+	}
+	// After liquid stake all tokens, reward collector receive stTokens
+	// Send all stTokens to fee collector to distribute to delegator later
+	stTokens := k.bankKeeper.GetAllBalances(ctx, rewardCollectorAddress)
+	err := k.bankKeeper.SendCoinsFromModuleToModule(ctx, types.RewardCollectorName, authtypes.FeeCollectorName, stTokens)
+	if err != nil {
+		k.Logger(ctx).Info("Can't send coins from module %s to module %s", types.RewardCollectorName, authtypes.FeeCollectorName)
+		return err
+	}
+	return nil
 }

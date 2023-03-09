@@ -7,7 +7,10 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 
-	"github.com/Stride-Labs/stride/v4/x/claim/types"
+	vestingtypes "github.com/cosmos/cosmos-sdk/x/auth/vesting/types"
+
+	"github.com/Stride-Labs/stride/v6/x/claim/types"
+	stridevestingtypes "github.com/Stride-Labs/stride/v6/x/claim/vesting/types"
 )
 
 // Test functionality for loading allocation data(csv)
@@ -109,7 +112,8 @@ func (suite *KeeperTestSuite) TestHookBeforeAirdropStart() {
 	// Now, it is before starting air drop, so this value should return the empty coins
 	suite.True(coins.Empty())
 
-	suite.app.ClaimKeeper.AfterDelegationModified(suite.ctx, addr1, val1)
+	err = suite.app.ClaimKeeper.AfterDelegationModified(suite.ctx, addr1, val1)
+	suite.NoError(err)
 	balances := suite.app.BankKeeper.GetAllBalances(suite.ctx, addr1)
 	// Now, it is before starting air drop, so claim module should not send the balances to the user after swap.
 	suite.True(balances.Empty())
@@ -161,6 +165,89 @@ func (suite *KeeperTestSuite) TestBalancesAfterAccountConversion() {
 	suite.Require().Equal(spendableCoinsBal.String(), sdk.NewCoins(sdk.NewInt64Coin(sdk.DefaultBondDenom, initialBal)).String())
 }
 
+// Check original user balances after being converted into stride vesting account
+func (suite *KeeperTestSuite) TestClaimAccountTypes() {
+	suite.SetupTest()
+
+	// set a normal account
+	addr := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
+	// Base Account can claim
+	suite.app.AccountKeeper.SetAccount(suite.ctx, authtypes.NewBaseAccount(addr, nil, 0, 0))
+
+	initialBal := int64(1000)
+	err := suite.app.BankKeeper.SendCoins(suite.ctx, distributors["stride"], addr, sdk.NewCoins(sdk.NewInt64Coin(sdk.DefaultBondDenom, initialBal)))
+	suite.Require().NoError(err)
+
+	claimRecords := []types.ClaimRecord{
+		{
+			Address:           addr.String(),
+			Weight:            sdk.NewDecWithPrec(50, 2), // 50%
+			ActionCompleted:   []bool{false, false, false},
+			AirdropIdentifier: types.DefaultAirdropIdentifier,
+		},
+	}
+
+	err = suite.app.ClaimKeeper.SetClaimRecordsWithWeights(suite.ctx, claimRecords)
+	suite.Require().NoError(err)
+
+	// check if original account tokens are not affected after stride vesting
+	_, err = suite.app.ClaimKeeper.ClaimCoinsForAction(suite.ctx, addr, types.ACTION_DELEGATE_STAKE, "stride")
+	suite.Require().NoError(err)
+	claimableAmountForStake := sdk.NewDecWithPrec(20, 2).
+		Mul(sdk.NewDec(100_000_000 - initialBal)).
+		RoundInt64() // remaining balance is 100000000*(80/100), claim 20% for stake
+
+	coinsBal := suite.app.BankKeeper.GetAllBalances(suite.ctx, addr)
+	suite.Require().Equal(coinsBal.String(), sdk.NewCoins(sdk.NewInt64Coin(sdk.DefaultBondDenom, initialBal+claimableAmountForStake)).String())
+
+	spendableCoinsBal := suite.app.BankKeeper.SpendableCoins(suite.ctx, addr)
+	suite.Require().Equal(spendableCoinsBal.String(), sdk.NewCoins(sdk.NewInt64Coin(sdk.DefaultBondDenom, initialBal)).String())
+
+	// Verify the account type has changed to stride vesting account
+	acc := suite.app.AccountKeeper.GetAccount(suite.ctx, addr)
+	_, isVestingAcc := acc.(*stridevestingtypes.StridePeriodicVestingAccount)
+	suite.Require().True(isVestingAcc)
+
+	// Initialize vesting accounts
+	addr2 := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
+	account := suite.app.AccountKeeper.NewAccountWithAddress(suite.ctx, addr2)
+	err = suite.app.BankKeeper.SendCoins(suite.ctx, distributors["stride"], addr2, sdk.NewCoins(sdk.NewInt64Coin(sdk.DefaultBondDenom, initialBal)))
+	suite.Require().NoError(err)
+	suite.app.AccountKeeper.SetAccount(suite.ctx, vestingtypes.NewBaseVestingAccount(account.(*authtypes.BaseAccount), nil, 0))
+
+	addr3 := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
+	account = suite.app.AccountKeeper.NewAccountWithAddress(suite.ctx, addr3)
+	err = suite.app.BankKeeper.SendCoins(suite.ctx, distributors["stride"], addr3, sdk.NewCoins(sdk.NewInt64Coin(sdk.DefaultBondDenom, initialBal)))
+	suite.Require().NoError(err)
+	suite.app.AccountKeeper.SetAccount(suite.ctx, vestingtypes.NewContinuousVestingAccount(account.(*authtypes.BaseAccount), nil, 0, 0))
+
+	addr4 := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
+	account = suite.app.AccountKeeper.NewAccountWithAddress(suite.ctx, addr4)
+	err = suite.app.BankKeeper.SendCoins(suite.ctx, distributors["stride"], addr4, sdk.NewCoins(sdk.NewInt64Coin(sdk.DefaultBondDenom, initialBal)))
+	suite.Require().NoError(err)
+	suite.app.AccountKeeper.SetAccount(suite.ctx, vestingtypes.NewPeriodicVestingAccount(account.(*authtypes.BaseAccount), nil, 0, nil))
+
+	// Init claim records
+	for _, addr := range []sdk.AccAddress{addr2, addr3, addr4} {
+		claimRecords := []types.ClaimRecord{
+			{
+				Address:           addr.String(),
+				Weight:            sdk.NewDecWithPrec(50, 2),
+				ActionCompleted:   []bool{false, false, false},
+				AirdropIdentifier: types.DefaultAirdropIdentifier,
+			},
+		}
+		err = suite.app.ClaimKeeper.SetClaimRecordsWithWeights(suite.ctx, claimRecords)
+		suite.Require().NoError(err)
+	}
+
+	// Try to claim tokens with each account type
+	for _, addr := range []sdk.AccAddress{addr2, addr3, addr4} {
+		_, err = suite.app.ClaimKeeper.ClaimCoinsForAction(suite.ctx, addr, types.ACTION_DELEGATE_STAKE, "stride")
+		suite.Require().ErrorContains(err, "only BaseAccount and StridePeriodicVestingAccount can claim")
+	}
+}
+
 // Run all airdrop flow
 func (suite *KeeperTestSuite) TestAirdropFlow() {
 	suite.SetupTest()
@@ -169,6 +256,14 @@ func (suite *KeeperTestSuite) TestAirdropFlow() {
 	addr2 := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
 	addr3 := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
 	weight := sdk.NewDecWithPrec(50, 2)
+
+	for _, addr := range []sdk.AccAddress{addr1, addr2, addr3} {
+		initialBal := int64(1000)
+		err := suite.app.BankKeeper.SendCoins(suite.ctx, distributors["stride"], addr, sdk.NewCoins(sdk.NewInt64Coin(sdk.DefaultBondDenom, initialBal)))
+		suite.Require().NoError(err)
+		err = suite.app.BankKeeper.SendCoins(suite.ctx, addr, distributors["stride"], sdk.NewCoins(sdk.NewInt64Coin(sdk.DefaultBondDenom, initialBal)))
+		suite.Require().NoError(err)
+	}
 
 	claimRecords := []types.ClaimRecord{
 		{
@@ -263,6 +358,14 @@ func (suite *KeeperTestSuite) TestMultiChainAirdropFlow() {
 
 	addr1 := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
 	addr2 := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
+
+	for _, addr := range []sdk.AccAddress{addr1, addr2} {
+		initialBal := int64(1000)
+		err := suite.app.BankKeeper.SendCoins(suite.ctx, distributors["stride"], addr, sdk.NewCoins(sdk.NewInt64Coin(sdk.DefaultBondDenom, initialBal)))
+		suite.Require().NoError(err)
+		err = suite.app.BankKeeper.SendCoins(suite.ctx, addr, distributors["stride"], sdk.NewCoins(sdk.NewInt64Coin(sdk.DefaultBondDenom, initialBal)))
+		suite.Require().NoError(err)
+	}
 
 	claimRecords := []types.ClaimRecord{
 		{

@@ -15,21 +15,23 @@ import (
 	clitestutil "github.com/cosmos/cosmos-sdk/testutil/cli"
 	banktestutil "github.com/cosmos/cosmos-sdk/x/bank/client/testutil"
 
-	strideclitestutil "github.com/Stride-Labs/stride/v4/testutil/cli"
+	strideclitestutil "github.com/Stride-Labs/stride/v6/testutil/cli"
 
-	"github.com/Stride-Labs/stride/v4/testutil/network"
+	"github.com/Stride-Labs/stride/v6/testutil/network"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/suite"
 
 	tmcli "github.com/tendermint/tendermint/libs/cli"
 
-	"github.com/Stride-Labs/stride/v4/x/claim/client/cli"
+	"github.com/Stride-Labs/stride/v6/x/claim/client/cli"
 
-	"github.com/Stride-Labs/stride/v4/app"
-	cmdcfg "github.com/Stride-Labs/stride/v4/cmd/strided/config"
-	"github.com/Stride-Labs/stride/v4/x/claim/types"
-	claimtypes "github.com/Stride-Labs/stride/v4/x/claim/types"
+	sdkmath "cosmossdk.io/math"
+
+	"github.com/Stride-Labs/stride/v6/app"
+	cmdcfg "github.com/Stride-Labs/stride/v6/cmd/strided/config"
+	"github.com/Stride-Labs/stride/v6/x/claim/types"
+	claimtypes "github.com/Stride-Labs/stride/v6/x/claim/types"
 )
 
 var addr1 sdk.AccAddress
@@ -87,7 +89,8 @@ func (s *IntegrationTestSuite) SetupSuite() {
 	val := s.network.Validators[0]
 	for idx := range distributorMnemonics {
 		info, _ := val.ClientCtx.Keyring.NewAccount("distributor"+strconv.Itoa(idx), distributorMnemonics[idx], keyring.DefaultBIP39Passphrase, sdk.FullFundraiserPath, hd.Secp256k1)
-		distributorAddr := sdk.AccAddress(info.GetPubKey().Address())
+		pubkey, _ := info.GetPubKey()
+		distributorAddr := sdk.AccAddress(pubkey.Address())
 		_, err = banktestutil.MsgSendExec(
 			val.ClientCtx,
 			val.Address,
@@ -194,8 +197,8 @@ func (s *IntegrationTestSuite) TestCmdTxSetAirdropAllocations() {
 				strideclitestutil.DefaultFeeString(s.cfg),
 			},
 			[]sdk.Coins{
-				sdk.NewCoins(sdk.NewCoin(s.cfg.BondDenom, sdk.NewInt(77))),
-				sdk.NewCoins(sdk.NewCoin(s.cfg.BondDenom, sdk.NewInt(46))),
+				sdk.NewCoins(sdk.NewCoin(s.cfg.BondDenom, sdkmath.NewInt(77))),
+				sdk.NewCoins(sdk.NewCoin(s.cfg.BondDenom, sdkmath.NewInt(46))),
 			},
 		},
 	}

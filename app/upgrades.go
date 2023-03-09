@@ -6,10 +6,17 @@ import (
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 
-	v2 "github.com/Stride-Labs/stride/v4/app/upgrades/v2"
-	v3 "github.com/Stride-Labs/stride/v4/app/upgrades/v3"
-	v4 "github.com/Stride-Labs/stride/v4/app/upgrades/v4"
-	claimtypes "github.com/Stride-Labs/stride/v4/x/claim/types"
+	authz "github.com/cosmos/cosmos-sdk/x/authz"
+
+	v2 "github.com/Stride-Labs/stride/v6/app/upgrades/v2"
+	v3 "github.com/Stride-Labs/stride/v6/app/upgrades/v3"
+	v4 "github.com/Stride-Labs/stride/v6/app/upgrades/v4"
+	v5 "github.com/Stride-Labs/stride/v6/app/upgrades/v5"
+	v6 "github.com/Stride-Labs/stride/v6/app/upgrades/v6"
+	claimtypes "github.com/Stride-Labs/stride/v6/x/claim/types"
+	icacallbacktypes "github.com/Stride-Labs/stride/v6/x/icacallbacks/types"
+	recordtypes "github.com/Stride-Labs/stride/v6/x/records/types"
+	stakeibctypes "github.com/Stride-Labs/stride/v6/x/stakeibc/types"
 )
 
 func (app *StrideApp) setupUpgradeHandlers() {
@@ -31,6 +38,33 @@ func (app *StrideApp) setupUpgradeHandlers() {
 		v4.CreateUpgradeHandler(app.mm, app.configurator),
 	)
 
+	// v5 upgrade handler
+	app.UpgradeKeeper.SetUpgradeHandler(
+		v5.UpgradeName,
+		v5.CreateUpgradeHandler(
+			app.mm,
+			app.configurator,
+			app.appCodec,
+			app.InterchainqueryKeeper,
+			app.StakeibcKeeper,
+			app.keys[claimtypes.StoreKey],
+			app.keys[icacallbacktypes.StoreKey],
+			app.keys[recordtypes.StoreKey],
+			app.keys[stakeibctypes.StoreKey],
+		),
+	)
+
+	// v6 upgrade handler
+	app.UpgradeKeeper.SetUpgradeHandler(
+		v6.UpgradeName,
+		v6.CreateUpgradeHandler(
+			app.mm,
+			app.configurator,
+			app.appCodec,
+			app.ClaimKeeper,
+		),
+	)
+
 	upgradeInfo, err := app.UpgradeKeeper.ReadUpgradeInfoFromDisk()
 	if err != nil {
 		panic(fmt.Errorf("Failed to read upgrade info from disk: %w", err))
@@ -47,7 +81,19 @@ func (app *StrideApp) setupUpgradeHandlers() {
 		storeUpgrades = &storetypes.StoreUpgrades{
 			Added: []string{claimtypes.StoreKey},
 		}
+	case "v5":
+		storeUpgrades = &storetypes.StoreUpgrades{
+			Deleted: []string{authz.ModuleName},
+		}
 	}
+	// TODO: RATE LIMIT UPGRADE
+	//  1. Add ratelimit store key when module is added
+	//     storeUpgrades = &storetypes.StoreUpgrades{
+	// 	     Added: []string{ratelimittypes.StoreKey},
+	//     }
+	//
+	// 2. Add hour epoch to store
+	// 3. Add rate limits for existing denoms
 
 	if storeUpgrades != nil {
 		app.SetStoreLoader(upgradetypes.UpgradeStoreLoader(upgradeInfo.Height, storeUpgrades))
