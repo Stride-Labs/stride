@@ -246,3 +246,14 @@ func (s *KeeperTestSuite) TestLiquidStake_InvalidHostAddress() {
 	_, err := s.GetMsgServer().LiquidStake(sdk.WrapSDKContext(s.Ctx), &tc.validMsg)
 	s.Require().EqualError(err, "could not bech32 decode address cosmosXXX of zone with id: GAIA")
 }
+
+func (s *KeeperTestSuite) TestLiquidStake_HaltedZone() {
+	tc := s.SetupLiquidStake()
+	haltedHostZone := tc.initialState.hostZone
+	haltedHostZone.Halted = true
+	s.App.StakeibcKeeper.SetHostZone(s.Ctx, haltedHostZone)
+	s.FundAccount(tc.user.acc, sdk.NewInt64Coin(haltedHostZone.IbcDenom, 1000000000))
+	_, err := s.GetMsgServer().LiquidStake(sdk.WrapSDKContext(s.Ctx), &tc.validMsg)
+
+	s.Require().EqualError(err, fmt.Sprintf("halted host zone found for denom (%s): Halted host zone found", haltedHostZone.HostDenom))
+}

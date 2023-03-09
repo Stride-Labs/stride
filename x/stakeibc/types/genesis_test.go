@@ -31,6 +31,7 @@ func TestGenesisState_Validate(t *testing.T) {
 						ChainId: "1",
 					},
 				},
+				Params: types.DefaultParams(),
 			},
 			valid: true,
 		},
