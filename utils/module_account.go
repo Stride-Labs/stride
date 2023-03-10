@@ -2,7 +2,7 @@ package utils
 
 // Borrowed from Osmosis
 // https://github.com/osmosis-labs/osmosis/blob/5297ea4b641c0c1090cb253a34a510dd0c85b407/osmoutils/module_account.go
-// Allows the safe creation of module accounts in the event that funds have already been sent to the address
+// Allows the safe creation of module accounts in the event that an account has already been initialized at an address
 
 import (
 	"errors"
