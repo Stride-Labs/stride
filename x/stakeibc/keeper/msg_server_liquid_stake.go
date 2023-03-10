@@ -30,6 +30,11 @@ func (k msgServer) LiquidStake(goCtx context.Context, msg *types.MsgLiquidStake)
 		return nil, errorsmod.Wrapf(types.ErrInvalidToken, "no host zone found for denom (%s)", msg.HostDenom)
 	}
 
+	// Error immediately if the host zone is halted
+	if hostZone.Halted {
+		return nil, errorsmod.Wrapf(types.ErrHaltedHostZone, "halted host zone found for denom (%s)", msg.HostDenom)
+	}
+
 	// Get user and module account addresses
 	liquidStakerAddress, err := sdk.AccAddressFromBech32(msg.Creator)
 	if err != nil {
@@ -100,7 +105,7 @@ func (k msgServer) LiquidStake(goCtx context.Context, msg *types.MsgLiquidStake)
 		sdk.NewEvent(
 			types.EventTypeLiquidStakeRequest,
 			sdk.NewAttribute(sdk.AttributeKeyModule, types.ModuleName),
-			sdk.NewAttribute(types.AttributeKeyUser, msg.Creator),
+			sdk.NewAttribute(types.AttributeKeyLiquidStaker, msg.Creator),
 			sdk.NewAttribute(types.AttributeKeyHostZone, hostZone.ChainId),
 			sdk.NewAttribute(types.AttributeKeyNativeBaseDenom, msg.HostDenom),
 			sdk.NewAttribute(types.AttributeKeyNativeIBCDenom, hostZone.IbcDenom),

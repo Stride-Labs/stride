@@ -20,7 +20,7 @@ import (
 func (k Keeper) CreateDepositRecordsForEpoch(ctx sdk.Context, epochNumber uint64) {
 	k.Logger(ctx).Info(fmt.Sprintf("Creating Deposit Records for Epoch %d", epochNumber))
 
-	for _, hostZone := range k.GetAllHostZone(ctx) {
+	for _, hostZone := range k.GetAllActiveHostZone(ctx) {
 		k.Logger(ctx).Info(utils.LogWithHostZone(hostZone.ChainId, "Creating Deposit Record"))
 
 		depositRecord := recordstypes.DepositRecord{
@@ -60,6 +60,11 @@ func (k Keeper) TransferExistingDepositsToHostZones(ctx sdk.Context, epochNumber
 		hostZone, hostZoneFound := k.GetHostZone(ctx, depositRecord.HostZoneId)
 		if !hostZoneFound {
 			k.Logger(ctx).Error(fmt.Sprintf("[TransferExistingDepositsToHostZones] Host zone not found for deposit record id %d", depositRecord.Id))
+			continue
+		}
+
+		if hostZone.Halted {
+			k.Logger(ctx).Error(fmt.Sprintf("[TransferExistingDepositsToHostZones] Host zone halted for deposit record id %d", depositRecord.Id))
 			continue
 		}
 
@@ -124,6 +129,11 @@ func (k Keeper) StakeExistingDepositsOnHostZones(ctx sdk.Context, epochNumber ui
 		hostZone, hostZoneFound := k.GetHostZone(ctx, depositRecord.HostZoneId)
 		if !hostZoneFound {
 			k.Logger(ctx).Error(fmt.Sprintf("[StakeExistingDepositsOnHostZones] Host zone not found for deposit record {%d}", depositRecord.Id))
+			continue
+		}
+
+		if hostZone.Halted {
+			k.Logger(ctx).Error(fmt.Sprintf("[StakeExistingDepositsOnHostZones] Host zone halted for deposit record {%d}", depositRecord.Id))
 			continue
 		}
 

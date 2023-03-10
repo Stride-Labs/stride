@@ -22,7 +22,7 @@ func (k Keeper) CreateEpochUnbondingRecord(ctx sdk.Context, epochNumber uint64) 
 
 	hostZoneUnbondings := []*recordstypes.HostZoneUnbonding{}
 
-	for _, hostZone := range k.GetAllHostZone(ctx) {
+	for _, hostZone := range k.GetAllActiveHostZone(ctx) {
 		k.Logger(ctx).Info(utils.LogWithHostZone(hostZone.ChainId, "Creating Epoch Unbonding Record"))
 
 		hostZoneUnbonding := recordstypes.HostZoneUnbonding{
@@ -228,7 +228,8 @@ func (k Keeper) InitiateAllHostZoneUnbondings(ctx sdk.Context, dayNumber uint64)
 	success = true
 	successfulUnbondings = []string{}
 	failedUnbondings = []string{}
-	for _, hostZone := range k.GetAllHostZone(ctx) {
+	for _, hostZone := range k.GetAllActiveHostZone(ctx) {
+
 		// Confirm the unbonding is supposed to be triggered this epoch
 		if dayNumber%hostZone.UnbondingFrequency != 0 {
 			k.Logger(ctx).Info(utils.LogWithHostZone(hostZone.ChainId,
@@ -420,7 +421,7 @@ func (k Keeper) SweepAllUnbondedTokens(ctx sdk.Context) (success bool, successfu
 	successfulSweeps = []string{}
 	sweepAmounts = []sdkmath.Int{}
 	failedSweeps = []string{}
-	hostZones := k.GetAllHostZone(ctx)
+	hostZones := k.GetAllActiveHostZone(ctx)
 
 	epochUnbondingRecords := k.RecordsKeeper.GetAllEpochUnbondingRecord(ctx)
 	for _, hostZone := range hostZones {

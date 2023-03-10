@@ -261,3 +261,14 @@ func (s *KeeperTestSuite) TestLiquidStake_InsufficientBalance() {
 	expectedErr := fmt.Sprintf("balance is lower than staking amount. staking amount: %v, balance: %v: insufficient funds", balance.Add(sdkmath.NewInt(1000)), balance)
 	s.Require().EqualError(err, expectedErr)
 }
+
+func (s *KeeperTestSuite) TestLiquidStake_HaltedZone() {
+	tc := s.SetupLiquidStake()
+	haltedHostZone := tc.initialState.hostZone
+	haltedHostZone.Halted = true
+	s.App.StakeibcKeeper.SetHostZone(s.Ctx, haltedHostZone)
+	s.FundAccount(tc.user.acc, sdk.NewInt64Coin(haltedHostZone.IbcDenom, 1000000000))
+	_, err := s.GetMsgServer().LiquidStake(sdk.WrapSDKContext(s.Ctx), &tc.validMsg)
+
+	s.Require().EqualError(err, fmt.Sprintf("halted host zone found for denom (%s): Halted host zone found", haltedHostZone.HostDenom))
+}
