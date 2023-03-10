@@ -167,6 +167,18 @@ func (s *KeeperTestSuite) TestLiquidStake_HostZoneNotFound() {
 	s.Require().EqualError(err, "no host zone found for denom (ufakedenom): invalid token denom")
 }
 
+func (s *KeeperTestSuite) TestLiquidStake_HostZoneHalted() {
+	tc := s.SetupLiquidStake()
+
+	// Update the host zone so that it's halted
+	badHostZone := tc.initialState.hostZone
+	badHostZone.Halted = true
+	s.App.StakeibcKeeper.SetHostZone(s.Ctx, badHostZone)
+
+	_, err := s.GetMsgServer().LiquidStake(sdk.WrapSDKContext(s.Ctx), &tc.validMsg)
+	s.Require().EqualError(err, "halted host zone found for denom (uatom): Halted host zone found")
+}
+
 func (s *KeeperTestSuite) TestLiquidStake_InvalidUserAddress() {
 	tc := s.SetupLiquidStake()
 
@@ -196,7 +208,20 @@ func (s *KeeperTestSuite) TestLiquidStake_RateBelowMinThreshold() {
 
 	// Update rate in host zone to below min threshold
 	hz := tc.initialState.hostZone
-	hz.RedemptionRate = sdk.NewDec(8).Quo(sdk.NewDec(10))
+	hz.RedemptionRate = sdk.MustNewDecFromStr("0.8")
+	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hz)
+
+	_, err := s.GetMsgServer().LiquidStake(sdk.WrapSDKContext(s.Ctx), &msg)
+	s.Require().Error(err)
+}
+
+func (s *KeeperTestSuite) TestLiquidStake_RateAboveMaxThreshold() {
+	tc := s.SetupLiquidStake()
+	msg := tc.validMsg
+
+	// Update rate in host zone to below min threshold
+	hz := tc.initialState.hostZone
+	hz.RedemptionRate = sdk.NewDec(2)
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hz)
 
 	_, err := s.GetMsgServer().LiquidStake(sdk.WrapSDKContext(s.Ctx), &msg)
@@ -247,7 +272,7 @@ func (s *KeeperTestSuite) TestLiquidStake_ZeroStTokens() {
 
 	// The liquid stake should fail
 	_, err := s.GetMsgServer().LiquidStake(sdk.WrapSDKContext(s.Ctx), &tc.validMsg)
-	s.Require().EqualError(err, fmt.Sprintf("Liquid stake of 1uatom would return 0 stTokens: Liquid staked amount is too small"))
+	s.Require().EqualError(err, "Liquid stake of 1uatom would return 0 stTokens: Liquid staked amount is too small")
 }
 
 func (s *KeeperTestSuite) TestLiquidStake_InsufficientBalance() {

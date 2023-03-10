@@ -63,10 +63,10 @@ func (k msgServer) LiquidStake(goCtx context.Context, msg *types.MsgLiquidStake)
 
 	// The tokens that are sent to the protocol are denominated in the ibc hash of the native token on stride (e.g. ibc/xxx)
 	nativeDenom := hostZone.IbcDenom
+	nativeCoin := sdk.NewCoin(nativeDenom, msg.Amount)
 	if !types.IsIBCToken(nativeDenom) {
 		return nil, errorsmod.Wrapf(types.ErrInvalidToken, "denom is not an IBC token (%s)", nativeDenom)
 	}
-	nativeCoin := sdk.NewCoin(nativeDenom, msg.Amount)
 
 	// Confirm the user has a sufficient balance to execute the liquid stake
 	balance := k.bankKeeper.GetBalance(ctx, liquidStakerAddress, nativeDenom)
