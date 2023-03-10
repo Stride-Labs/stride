@@ -12,6 +12,15 @@ import (
 	"github.com/Stride-Labs/stride/v6/x/stakeibc/types"
 )
 
+// Exchanges a user's native tokens for stTokens using the current redemption rate
+// The native tokens must live on Stride with an IBC denomination before this function is called
+// The typical flow consists, first, of a transfer of native tokens from the host zone to Stride,
+//    and then the invocation of this LiquidStake function
+//
+// WARNING: This function is invoked from the begin/end blocker in a way that does not revert partial state when
+//    an error is thrown (i.e. the execution is non-atomic).
+//    As a result, it is important that the validation steps are positioned at the top of the function,
+//    and logic that creates state changes (e.g. bank sends, mint) appear towards the end of the function
 func (k msgServer) LiquidStake(goCtx context.Context, msg *types.MsgLiquidStake) (*types.MsgLiquidStakeResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
@@ -22,7 +31,7 @@ func (k msgServer) LiquidStake(goCtx context.Context, msg *types.MsgLiquidStake)
 	}
 
 	// Get user and module account addresses
-	userAddress, err := sdk.AccAddressFromBech32(msg.Creator)
+	liquidStakerAddress, err := sdk.AccAddressFromBech32(msg.Creator)
 	if err != nil {
 		return nil, errorsmod.Wrapf(err, "user's address is invalid")
 	}
@@ -31,7 +40,7 @@ func (k msgServer) LiquidStake(goCtx context.Context, msg *types.MsgLiquidStake)
 		return nil, errorsmod.Wrapf(err, "host zone address is invalid")
 	}
 
-	// Safety check: redemption rate must be above safety threshold
+	// Safety check: redemption rate must be within safety bounds
 	rateIsSafe, err := k.IsRedemptionRateWithinSafetyBounds(ctx, *hostZone)
 	if !rateIsSafe || (err != nil) {
 		return nil, errorsmod.Wrapf(types.ErrRedemptionRateOutsideSafetyBounds, "HostZone: %s, err: %s", hostZone.ChainId, err.Error())
@@ -49,13 +58,13 @@ func (k msgServer) LiquidStake(goCtx context.Context, msg *types.MsgLiquidStake)
 
 	// The tokens that are sent to the protocol are denominated in the ibc hash of the native token on stride (e.g. ibc/xxx)
 	nativeDenom := hostZone.IbcDenom
-	nativeCoin := sdk.NewCoin(nativeDenom, msg.Amount)
 	if !types.IsIBCToken(nativeDenom) {
 		return nil, errorsmod.Wrapf(types.ErrInvalidToken, "denom is not an IBC token (%s)", nativeDenom)
 	}
+	nativeCoin := sdk.NewCoin(nativeDenom, msg.Amount)
 
 	// Confirm the user has a sufficient balance to execute the liquid stake
-	balance := k.bankKeeper.GetBalance(ctx, userAddress, nativeDenom)
+	balance := k.bankKeeper.GetBalance(ctx, liquidStakerAddress, nativeDenom)
 	if balance.IsLT(nativeCoin) {
 		return nil, errorsmod.Wrapf(sdkerrors.ErrInsufficientFunds, "balance is lower than staking amount. staking amount: %v, balance: %v", msg.Amount, balance.Amount)
 	}
@@ -68,7 +77,7 @@ func (k msgServer) LiquidStake(goCtx context.Context, msg *types.MsgLiquidStake)
 	}
 
 	// Transfer the native tokens from the user to module account
-	if err := k.bankKeeper.SendCoins(ctx, userAddress, hostZoneAddress, sdk.NewCoins(nativeCoin)); err != nil {
+	if err := k.bankKeeper.SendCoins(ctx, liquidStakerAddress, hostZoneAddress, sdk.NewCoins(nativeCoin)); err != nil {
 		return nil, errorsmod.Wrap(err, "failed to send tokens from Account to Module")
 	}
 
@@ -78,7 +87,7 @@ func (k msgServer) LiquidStake(goCtx context.Context, msg *types.MsgLiquidStake)
 	if err := k.bankKeeper.MintCoins(ctx, types.ModuleName, sdk.NewCoins(stCoin)); err != nil {
 		return nil, errorsmod.Wrapf(err, "Failed to mint coins")
 	}
-	if err := k.bankKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, userAddress, sdk.NewCoins(stCoin)); err != nil {
+	if err := k.bankKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, liquidStakerAddress, sdk.NewCoins(stCoin)); err != nil {
 		return nil, errorsmod.Wrapf(err, "Failed to send %s from module to account", stCoin.String())
 	}
 
@@ -100,6 +109,6 @@ func (k msgServer) LiquidStake(goCtx context.Context, msg *types.MsgLiquidStake)
 		),
 	)
 
-	k.hooks.AfterLiquidStake(ctx, userAddress)
+	k.hooks.AfterLiquidStake(ctx, liquidStakerAddress)
 	return &types.MsgLiquidStakeResponse{}, nil
 }
