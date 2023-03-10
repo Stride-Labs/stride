@@ -27,7 +27,6 @@ func (k Keeper) LiquidStakeRewardCollectorBalance(ctx sdk.Context, msgSvr types.
 		hz, err := k.GetHostZoneFromIBCDenom(ctx, token.Denom)
 		if err != nil {
 			k.Logger(ctx).Info("Token denom %s in module account is not from a supported host zone", token.Denom)
-			fmt.Println("nodenom")
 			continue
 		}
 
@@ -35,8 +34,6 @@ func (k Keeper) LiquidStakeRewardCollectorBalance(ctx sdk.Context, msgSvr types.
 		msg := types.NewMsgLiquidStake(rewardCollectorAddress.String(), token.Amount, hz.HostDenom)
 		_, err = msgSvr.LiquidStake(ctx, msg)
 		if err != nil {
-			fmt.Println("noLS")
-			fmt.Println(err.Error())
 			k.Logger(ctx).Error("Can't liquid stake %s for hostzone %s", token.String(), hz.ChainId)
 			continue
 		}
