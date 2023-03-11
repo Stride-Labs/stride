@@ -24,7 +24,7 @@ Deposit Records
 - `GetDepositRecord()`
 - `RemoveDepositRecord()`
 - `GetAllDepositRecord()`
-- `GetDepositRecordByEpochAndChain()`
+- `GetTransferDepositRecordByEpochAndChain()`
 
 Epoch Unbonding Records
 - `SetEpochUnbondingRecord()`
