@@ -8,7 +8,7 @@ import "cosmos_proto/cosmos.proto";
 
 option go_package = "github.com/Stride-Labs/stride/v6/x/stakeibc/types";
 
-// next id: 22
+// next id: 26
 message HostZone {
   string chain_id = 1;
   string connection_id = 2;
@@ -38,11 +38,11 @@ message HostZone {
   ];
   // stores how many days we should wait before issuing unbondings
   uint64 unbonding_frequency = 14;
-  // TODO(TEST-101) int to dec
   string staked_bal = 13 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
     (gogoproto.nullable) = false
   ];
+  // Module account address
   string address = 18 [ (gogoproto.moretags) = "yaml:\"address\"" ];
   bool halted = 19;
   string min_redemption_rate = 20 [
@@ -53,6 +53,23 @@ message HostZone {
   string max_redemption_rate = 21 [
     (cosmos_proto.scalar) = "cosmos.Dec",
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
+  // Used for invariant checks
+  string begin_block_module_acct_host_denom_bal = 22 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable) = false
+  ];
+  string begin_block_st_denom_bal = 23 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable) = false
+  ];
+  string begin_tx_module_acct_host_denom_bal = 24 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable) = false
+  ];
+  string begin_tx_st_denom_bal = 25 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
     (gogoproto.nullable) = false
   ];
   reserved 15;

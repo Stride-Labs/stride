@@ -285,6 +285,31 @@ func (k Keeper) IsRedemptionRateWithinSafetyBounds(ctx sdk.Context, zone types.H
 	return true, nil
 }
 
+// safety check: ensure the implied redemption rate is NOT below our min safety threshold && NOT above our max safety threshold on host zone
+func (k Keeper) IsImpliedRedemptionRateWithinSafetyBounds(ctx sdk.Context, zone types.HostZone, impliedRedemptionRate sdk.Dec) (bool, error) {
+	minSafetyThresholdInt := k.GetParam(ctx, types.KeyDefaultMinRedemptionRateThreshold)
+	minSafetyThreshold := sdk.NewDec(int64(minSafetyThresholdInt)).Quo(sdk.NewDec(100))
+
+	if !zone.MinRedemptionRate.IsNil() && zone.MinRedemptionRate.IsPositive() {
+		minSafetyThreshold = zone.MinRedemptionRate
+	}
+
+	maxSafetyThresholdInt := k.GetParam(ctx, types.KeyDefaultMaxRedemptionRateThreshold)
+	maxSafetyThreshold := sdk.NewDec(int64(maxSafetyThresholdInt)).Quo(sdk.NewDec(100))
+
+	if !zone.MaxRedemptionRate.IsNil() && zone.MaxRedemptionRate.IsPositive() {
+		maxSafetyThreshold = zone.MaxRedemptionRate
+	}
+
+
+	if impliedRedemptionRate.LT(minSafetyThreshold) || impliedRedemptionRate.GT(maxSafetyThreshold) {
+		errMsg := fmt.Sprintf("IsImpliedRedemptionRateWithinSafetyBounds check failed %s is outside safety bounds [%s, %s]", impliedRedemptionRate.String(), minSafetyThreshold.String(), maxSafetyThreshold.String())
+		k.Logger(ctx).Error(errMsg)
+		return false, errorsmod.Wrapf(types.ErrImpliedRedemptionRateOutsideSafetyBounds, errMsg)
+	}
+	return true, nil
+}
+
 // Check the max number of validators to confirm we won't exceed it when adding a new validator
 // Types of additions:
 //   - change a weight from zero to non-zero
