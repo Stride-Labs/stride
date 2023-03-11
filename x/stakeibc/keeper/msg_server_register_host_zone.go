@@ -70,6 +70,14 @@ func (k msgServer) RegisterHostZone(goCtx context.Context, msg *types.MsgRegiste
 		return nil, errorsmod.Wrapf(err, "unable to create module account for host zone %s", chainId)
 	}
 
+	params := k.GetParams(ctx)
+	if msg.MinRedemptionRate.IsNil() || msg.MinRedemptionRate.IsZero() {
+		msg.MinRedemptionRate = sdk.NewDecWithPrec(int64(params.DefaultMinRedemptionRateThreshold), 2)
+	}
+	if msg.MaxRedemptionRate.IsNil() || msg.MaxRedemptionRate.IsZero() {
+		msg.MaxRedemptionRate = sdk.NewDecWithPrec(int64(params.DefaultMaxRedemptionRateThreshold), 2)
+	}
+
 	// set the zone
 	zone := types.HostZone{
 		ChainId:           chainId,
@@ -83,6 +91,8 @@ func (k msgServer) RegisterHostZone(goCtx context.Context, msg *types.MsgRegiste
 		LastRedemptionRate: sdk.NewDec(1),
 		UnbondingFrequency: msg.UnbondingFrequency,
 		Address:            zoneAddress.String(),
+		MinRedemptionRate:  msg.MinRedemptionRate,
+		MaxRedemptionRate:  msg.MaxRedemptionRate,
 	}
 	// write the zone back to the store
 	k.SetHostZone(ctx, zone)
