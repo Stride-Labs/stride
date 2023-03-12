@@ -136,6 +136,8 @@ import (
 	ibcfeekeeper "github.com/cosmos/ibc-go/v5/modules/apps/29-fee/keeper"
 	ibcfeetypes "github.com/cosmos/ibc-go/v5/modules/apps/29-fee/types"
 	ibctestingtypes "github.com/cosmos/ibc-go/v5/testing/types"
+
+	strideante "github.com/Stride-Labs/stride/v6/app/ante"
 )
 
 const (
@@ -823,8 +825,8 @@ func NewStrideApp(
 	app.SetInitChainer(app.InitChainer)
 	app.SetBeginBlocker(app.BeginBlocker)
 
-	anteHandler, err := NewAnteHandler(
-		HandlerOptions{
+	anteHandler, err := strideante.NewAnteHandler(
+		strideante.HandlerOptions{
 			HandlerOptions: ante.HandlerOptions{
 				AccountKeeper:   app.AccountKeeper,
 				BankKeeper:      app.BankKeeper,
@@ -832,7 +834,7 @@ func NewStrideApp(
 				SignModeHandler: encodingConfig.TxConfig.SignModeHandler(),
 				SigGasConsumer:  ante.DefaultSigVerificationGasConsumer,
 			},
-			GovKeeper: app.GovKeeper,
+			GovKeeper: &app.GovKeeper,
 			Cdc:       appCodec,
 		},
 	)
