@@ -211,7 +211,7 @@ func (k Keeper) GetHostZoneFromIBCDenom(ctx sdk.Context, denom string) (*types.H
 // Validate whether a denom is a supported liquid staking token
 func (k Keeper) CheckIsStToken(ctx sdk.Context, denom string) bool {
 	for _, hostZone := range k.GetAllHostZone(ctx) {
-		if "st"+hostZone.HostDenom == denom {
+		if types.StAssetDenomFromHostZoneDenom(hostZone.HostDenom) == denom {
 			return true
 		}
 	}

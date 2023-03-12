@@ -34,6 +34,7 @@ func (k Keeper) LiquidStakeRewardCollectorBalance(ctx sdk.Context, msgSvr types.
 		msg := types.NewMsgLiquidStake(rewardCollectorAddress.String(), token.Amount, hz.HostDenom)
 		if err := msg.ValidateBasic(); err != nil {
 			k.Logger(ctx).Error("Liquid stake from reward collector address failed validate basic: %s", err.Error())
+			continue
 		}
 		_, err = msgSvr.LiquidStake(ctx, msg)
 		if err != nil {
@@ -72,10 +73,13 @@ func (k Keeper) SweepStTokensFromRewardCollToFeeColl(ctx sdk.Context) error {
 }
 
 // (1) liquid stake reward collector balance, then (2) sweet stTokens from reward collector to fee collector
-func (k Keeper) AllocateHostZoneReward(ctx sdk.Context) error {
+func (k Keeper) AllocateHostZoneReward(ctx sdk.Context) {
 	msgSvr := NewMsgServerImpl(k)
 	if rewardsFound := k.LiquidStakeRewardCollectorBalance(ctx, msgSvr); !rewardsFound {
-		return nil
+		k.Logger(ctx).Info("No accrued rewards in the reward collector account")
+		return
 	}
-	return k.SweepStTokensFromRewardCollToFeeColl(ctx)
+	if err := k.SweepStTokensFromRewardCollToFeeColl(ctx); err != nil {
+		k.Logger(ctx).Error(fmt.Sprintf("Unable to allocate host zone reward, err: %s", err.Error()))
+	}
 }

@@ -69,10 +69,7 @@ func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochInfo epochstypes.EpochInf
 		}
 	}
 	if epochInfo.Identifier == epochstypes.MINT_EPOCH {
-		err := k.AllocateHostZoneReward(ctx)
-		if err != nil {
-			k.Logger(ctx).Error(fmt.Sprintf("Unable to allocate host zone reward, err: %s", err.Error()))
-		}
+		k.AllocateHostZoneReward(ctx)
 	}
 }
 

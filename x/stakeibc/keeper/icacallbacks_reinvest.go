@@ -43,7 +43,7 @@ func (k Keeper) UnmarshalReinvestCallbackArgs(ctx sdk.Context, reinvestCallback 
 // ICA Callback after reinvestment
 //   If successful:
 //      * Creates a new DepositRecord with the reinvestment amount
-// 		* Issues an ICQ to query the rewards balance
+//      * Issues an ICQ to query the rewards balance
 //   If timeout/failure:
 //      * Does nothing
 func ReinvestCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ackResponse *icacallbackstypes.AcknowledgementResponse, args []byte) error {
@@ -124,8 +124,6 @@ func ReinvestCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ack
 		ICQCallbackID_FeeBalance,
 		chainId,
 		hostZone.ConnectionId,
-		// use "bank" store to access acct balances which live in the bank module
-		// use "key" suffix to retrieve a proof alongside the query result
 		icqtypes.BANK_STORE_QUERY_WITH_PROOF,
 		queryData,
 		timeout,
