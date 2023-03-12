@@ -1,12 +1,12 @@
-package decorators
+package ante
 
 import (
 	"github.com/cosmos/cosmos-sdk/codec"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
+	errorsmod "cosmossdk.io/errors"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-
 	"github.com/cosmos/cosmos-sdk/x/authz"
 
 	govkeeper "github.com/cosmos/cosmos-sdk/x/gov/keeper"
@@ -17,12 +17,12 @@ import (
 var MiniumInitialDepositRate = sdk.NewDecWithPrec(20, 2)
 
 type GovPreventSpamDecorator struct {
-	govKeeper govkeeper.Keeper
+	govKeeper *govkeeper.Keeper
 
 	cdc codec.BinaryCodec
 }
 
-func NewGovPreventSpamDecorator(cdc codec.BinaryCodec, govKeeper govkeeper.Keeper) GovPreventSpamDecorator {
+func NewGovPreventSpamDecorator(cdc codec.BinaryCodec, govKeeper *govkeeper.Keeper) GovPreventSpamDecorator {
 
 	return GovPreventSpamDecorator{
 
@@ -43,7 +43,7 @@ func (gpsd GovPreventSpamDecorator) AnteHandle(
 
 	msgs := tx.GetMsgs()
 
-	err = gpsd.checkSpamSubmitProposalMsg(ctx, msgs)
+	err = gpsd.CheckSpamSubmitProposalMsg(ctx, msgs)
 
 	if err != nil {
 
@@ -55,7 +55,7 @@ func (gpsd GovPreventSpamDecorator) AnteHandle(
 
 }
 
-func (gpsd GovPreventSpamDecorator) checkSpamSubmitProposalMsg(ctx sdk.Context, msgs []sdk.Msg) error {
+func (gpsd GovPreventSpamDecorator) CheckSpamSubmitProposalMsg(ctx sdk.Context, msgs []sdk.Msg) error {
 
 	validMsg := func(m sdk.Msg) error {
 
@@ -71,7 +71,7 @@ func (gpsd GovPreventSpamDecorator) checkSpamSubmitProposalMsg(ctx sdk.Context, 
 
 			if msg.InitialDeposit.IsAllLT(miniumInitialDeposit) {
 
-				return sdkerrors.Wrapf(sdkerrors.ErrUnauthorized, "not enough initial deposit. required: %v", miniumInitialDeposit)
+				return errorsmod.Wrapf(sdkerrors.ErrUnauthorized, "not enough initial deposit. required: %v", miniumInitialDeposit)
 
 			}
 
@@ -91,7 +91,7 @@ func (gpsd GovPreventSpamDecorator) checkSpamSubmitProposalMsg(ctx sdk.Context, 
 
 			if err != nil {
 
-				return sdkerrors.Wrapf(sdkerrors.ErrUnauthorized, "cannot unmarshal authz exec msgs")
+				return errorsmod.Wrapf(sdkerrors.ErrUnauthorized, "cannot unmarshal authz exec msgs")
 
 			}
 

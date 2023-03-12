@@ -1,4 +1,4 @@
-package app
+package ante
 
 import (
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -8,8 +8,6 @@ import (
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
 
 	govkeeper "github.com/cosmos/cosmos-sdk/x/gov/keeper"
-
-	decorators "github.com/Stride-Labs/stride/v6/app/decorators"
 )
 
 // HandlerOptions extends the SDK's AnteHandler options by requiring the IBC
@@ -17,7 +15,7 @@ import (
 type HandlerOptions struct {
 	ante.HandlerOptions
 
-	GovKeeper       govkeeper.Keeper
+	GovKeeper       *govkeeper.Keeper
 	Cdc             codec.BinaryCodec
 	StakingSubspace paramtypes.Subspace
 }
@@ -45,7 +43,7 @@ func NewAnteHandler(options HandlerOptions) (sdk.AnteHandler, error) {
 
 	anteDecorators := []sdk.AnteDecorator{
 		ante.NewSetUpContextDecorator(), // outermost AnteDecorator. SetUpContext must be called first
-		decorators.NewGovPreventSpamDecorator(options.Cdc, options.GovKeeper),
+		NewGovPreventSpamDecorator(options.Cdc, options.GovKeeper),
 		ante.NewValidateBasicDecorator(),
 		ante.NewTxTimeoutHeightDecorator(),
 		ante.NewValidateMemoDecorator(options.AccountKeeper),
