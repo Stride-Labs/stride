@@ -137,7 +137,6 @@ setup_file() {
   $STRIDE_MAIN_CMD tx stakeibc liquid-stake $STAKE_AMOUNT $HOST_DENOM --from $STRIDE_VAL -y 
 
   # sleep two block for the tx to settle on stride
-  WAIT_FOR_STRING $STRIDE_LOGS "\[MINT ST ASSET\] success on $HOST_CHAIN_ID"
   WAIT_FOR_BLOCK $STRIDE_LOGS 2
 
   # make sure IBC_DENOM went down
@@ -235,4 +234,17 @@ setup_file() {
   redemption_rate=$($STRIDE_MAIN_CMD q stakeibc show-host-zone $HOST_CHAIN_ID | grep -Fiw 'redemption_rate' | grep -Eo '[+-]?[0-9]+([.][0-9]+)?')
   redemption_rate_increased=$(( $(FLOOR $(DECMUL $redemption_rate $MULT)) > $(FLOOR $(DECMUL 1.00000000000000000 $MULT))))
   assert_equal "$redemption_rate_increased" "1"
+}
+
+# rewards have been collected and distributed to strd stakers
+@test "[INTEGRATION-BASIC-$CHAIN_NAME] rewards are being distributed to stakers" {
+  # collect the 2nd validator's outstanding rewards
+  val_address=$($STRIDE_MAIN_CMD keys show ${STRIDE_VAL_PREFIX}2 --keyring-backend test -a)
+  $STRIDE_MAIN_CMD tx distribution withdraw-all-rewards --from ${STRIDE_VAL_PREFIX}2 -y 
+  WAIT_FOR_BLOCK $STRIDE_LOGS 2
+
+  # confirm they've recieved stTokens
+  sttoken_balance=$($STRIDE_MAIN_CMD q bank balances $val_address --denom st$HOST_DENOM | GETBAL)
+  rewards_accumulated=$(($sttoken_balance > 0))
+  assert_equal "$rewards_accumulated" "1"
 }

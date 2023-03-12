@@ -26,8 +26,10 @@ const (
 // new chain
 
 const (
+	// The staking store is key'd by the validator's address
 	STAKING_STORE_QUERY_WITH_PROOF = "store/staking/key"
-	BANK_STORE_QUERY_WITH_PROOF    = "store/bank/key"
+	// The bank store is key'd by the account address
+	BANK_STORE_QUERY_WITH_PROOF = "store/bank/key"
 )
 
 var (
