@@ -9,6 +9,8 @@ import (
 
 	errorsmod "cosmossdk.io/errors"
 	govkeeper "github.com/cosmos/cosmos-sdk/x/gov/keeper"
+	ibcante "github.com/cosmos/ibc-go/v5/modules/core/ante"
+	ibckeeper "github.com/cosmos/ibc-go/v5/modules/core/keeper"
 )
 
 // HandlerOptions extends the SDK's AnteHandler options by requiring the IBC
@@ -17,6 +19,7 @@ type HandlerOptions struct {
 	ante.HandlerOptions
 
 	GovKeeper       *govkeeper.Keeper
+	IBCkeeper       *ibckeeper.Keeper
 	Cdc             codec.BinaryCodec
 	StakingSubspace paramtypes.Subspace
 }
@@ -31,6 +34,10 @@ func NewAnteHandler(options HandlerOptions) (sdk.AnteHandler, error) {
 
 	if options.BankKeeper == nil {
 		return nil, errorsmod.Wrap(sdkerrors.ErrLogic, "bank keeper is required for ante builder")
+	}
+
+	if options.IBCkeeper == nil {
+		return nil, sdkerrors.Wrap(sdkerrors.ErrLogic, "IBC keeper is required for AnteHandler")
 	}
 
 	if options.SignModeHandler == nil {
@@ -55,6 +62,7 @@ func NewAnteHandler(options HandlerOptions) (sdk.AnteHandler, error) {
 		ante.NewSigGasConsumeDecorator(options.AccountKeeper, sigGasConsumer),
 		ante.NewSigVerificationDecorator(options.AccountKeeper, options.SignModeHandler),
 		ante.NewIncrementSequenceDecorator(options.AccountKeeper),
+		ibcante.NewRedundantRelayDecorator(options.IBCkeeper),
 	}
 
 	return sdk.ChainAnteDecorators(anteDecorators...), nil
