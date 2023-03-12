@@ -253,7 +253,10 @@ func (s *UpgradeTestSuite) TestAddICAHostAllowMessages() {
 
 func (s *UpgradeTestSuite) TestModifyJunoUnbondingFrequency() {
 	s.SetupHostZones()
-	v7.ModifyJunoUnbondingFrequency(s.Ctx, s.App.StakeibcKeeper)
+
+	err := v7.ModifyJunoUnbondingFrequency(s.Ctx, s.App.StakeibcKeeper)
+	s.Require().NoError(err)
+
 	s.CheckUnbondingFrequencyAfterUpgrade()
 }
 
@@ -265,11 +268,15 @@ func (s *UpgradeTestSuite) TestAddRedemptionRateSafetyChecks() {
 
 func (s *UpgradeTestSuite) TestIncentiveDiversification() {
 	s.SetupIncentiveDiversification()
-	v7.IncentiveDiversification(s.Ctx, s.App.BankKeeper)
+
+	err := v7.IncentiveDiversification(s.Ctx, s.App.BankKeeper)
+	s.Require().NoError(err)
+
 	s.CheckIncentiveDiversificationAfterUpgrade()
 }
 
 func (s *UpgradeTestSuite) TestCreateRewardCollectorModuleAccount() {
-	v7.CreateRewardCollectorModuleAccount(s.Ctx, s.App.AccountKeeper)
+	err := v7.CreateRewardCollectorModuleAccount(s.Ctx, s.App.AccountKeeper)
+	s.Require().NoError(err)
 	s.CheckRewardCollectorModuleAccountAfterUpgrade()
 }

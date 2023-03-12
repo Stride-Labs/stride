@@ -1,7 +1,6 @@
 package v7
 
 import (
-	"fmt"
 	"time"
 
 	errorsmod "cosmossdk.io/errors"
@@ -38,12 +37,6 @@ var (
 	IncentiveProgramAddress = "stride1tlxk4as9sgpqkh42cfaxqja0mdj6qculqshy0gg3glazmrnx3y8s8gsvqk"
 	StrideFoundationAddress = "stride1yz3mp7c2m739nftfrv5r3h6j64aqp95f3degpf"
 )
-
-// Helper function to log the migrated modules consensus versions
-func logModuleMigration(ctx sdk.Context, versionMap module.VersionMap, moduleName string) {
-	currentVersion := versionMap[moduleName]
-	ctx.Logger().Info(fmt.Sprintf("migrating module %s from version %d to version %d", moduleName, currentVersion-1, currentVersion))
-}
 
 // CreateUpgradeHandler creates an SDK upgrade handler for v7
 func CreateUpgradeHandler(
@@ -192,7 +185,9 @@ func IncentiveDiversification(ctx sdk.Context, k bankkeeper.Keeper) error {
 		return err
 	}
 	amount := sdk.NewCoin("ustrd", sdk.NewInt(3_000_000_000_000))
-	k.SendCoins(ctx, incentiveProgramAddress, strideFoundationAddress, sdk.NewCoins(amount))
+	if err := k.SendCoins(ctx, incentiveProgramAddress, strideFoundationAddress, sdk.NewCoins(amount)); err != nil {
+		return err
+	}
 
 	return nil
 }
