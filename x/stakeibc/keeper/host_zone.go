@@ -73,6 +73,24 @@ func (k Keeper) GetAllHostZone(ctx sdk.Context) (list []types.HostZone) {
 	return
 }
 
+// GetAllActiveHostZone returns all hostZones that are active (halted = false)
+func (k Keeper) GetAllActiveHostZone(ctx sdk.Context) (list []types.HostZone) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefix(types.HostZoneKey))
+	iterator := sdk.KVStorePrefixIterator(store, []byte{})
+
+	defer iterator.Close()
+
+	for ; iterator.Valid(); iterator.Next() {
+		var val types.HostZone
+		k.cdc.MustUnmarshal(iterator.Value(), &val)
+		if !val.Halted {
+			list = append(list, val)
+		}
+	}
+
+	return
+}
+
 func (k Keeper) AddDelegationToValidator(ctx sdk.Context, hostZone types.HostZone, validatorAddress string, amount sdkmath.Int, callbackId string) (success bool) {
 	for _, validator := range hostZone.Validators {
 		if validator.Address == validatorAddress {
