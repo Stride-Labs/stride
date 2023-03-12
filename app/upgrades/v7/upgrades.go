@@ -8,6 +8,7 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/types/address"
 	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
 	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
@@ -21,6 +22,7 @@ import (
 	icahosttypes "github.com/cosmos/ibc-go/v5/modules/apps/27-interchain-accounts/host/types"
 	transfertypes "github.com/cosmos/ibc-go/v5/modules/apps/transfer/types"
 
+	"github.com/Stride-Labs/stride/v6/utils"
 	epochskeeper "github.com/Stride-Labs/stride/v6/x/epochs/keeper"
 	epochstypes "github.com/Stride-Labs/stride/v6/x/epochs/types"
 	mintkeeper "github.com/Stride-Labs/stride/v6/x/mint/keeper"
@@ -197,5 +199,6 @@ func IncentiveDiversification(ctx sdk.Context, k bankkeeper.Keeper) error {
 
 // Create reward collector module account for Prop #8
 func CreateRewardCollectorModuleAccount(ctx sdk.Context, k authkeeper.AccountKeeper) error {
-	return utils.CreateModuleAccount(ctx, k, stakeibctypes.RewardCollectorName)
+	rewardCollectorAddress := address.Module(stakeibctypes.RewardCollectorName, []byte(stakeibctypes.RewardCollectorName))
+	return utils.CreateModuleAccount(ctx, k, rewardCollectorAddress)
 }
