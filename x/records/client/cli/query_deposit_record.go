@@ -76,3 +76,30 @@ func CmdShowDepositRecord() *cobra.Command {
 
 	return cmd
 }
+
+func CmdListDepositRecordByHost() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "deposit-records-by-host [host]",
+		Short: "list all depositRecords for a given host zone",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			hostZoneId := args[0]
+
+			clientCtx := client.GetClientContextFromCmd(cmd)
+			queryClient := types.NewQueryClient(clientCtx)
+
+			res, err := queryClient.DepositRecordByHost(context.Background(), &types.QueryDepositRecordByHostRequest{
+				HostZoneId: hostZoneId,
+			})
+			if err != nil {
+				return err
+			}
+
+			return clientCtx.PrintProto(res)
+		},
+	}
+
+	flags.AddQueryFlagsToCmd(cmd)
+
+	return cmd
+}

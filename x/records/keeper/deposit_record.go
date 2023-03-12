@@ -101,10 +101,12 @@ func GetDepositRecordIDBytes(id uint64) []byte {
 	return bz
 }
 
-func (k Keeper) GetDepositRecordByEpochAndChain(ctx sdk.Context, epochNumber uint64, chainId string) (val *types.DepositRecord, found bool) {
+func (k Keeper) GetTransferDepositRecordByEpochAndChain(ctx sdk.Context, epochNumber uint64, chainId string) (val *types.DepositRecord, found bool) {
 	records := k.GetAllDepositRecord(ctx)
 	for _, depositRecord := range records {
-		if depositRecord.DepositEpochNumber == epochNumber && depositRecord.HostZoneId == chainId {
+		if depositRecord.DepositEpochNumber == epochNumber &&
+			depositRecord.HostZoneId == chainId &&
+			depositRecord.Status == types.DepositRecord_TRANSFER_QUEUE {
 			return &depositRecord, true
 		}
 	}
