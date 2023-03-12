@@ -7,11 +7,8 @@ import (
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
 	"github.com/stretchr/testify/suite"
 
-	"github.com/cosmos/cosmos-sdk/client"
-
 	"github.com/Stride-Labs/stride/v6/app/apptesting"
 
-	strideapp "github.com/Stride-Labs/stride/v6/app"
 	"github.com/Stride-Labs/stride/v6/app/ante"
 )
 
@@ -27,9 +24,6 @@ var (
 type GovAnteHandlerTestSuite struct {
 	suite.Suite
 
-	app       *strideapp.StrideApp
-	ctx       sdk.Context
-	clientCtx client.Context
 	apptesting.AppTestHelper
 }
 
