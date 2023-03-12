@@ -9,7 +9,7 @@ category: 6392913957c533007128548e
 The StakeIBC Module contains Stride's main app logic:
 
 - it exposes core liquid staking entry points to the user (liquid staking and redeeming)
-- it executes automated beginBlocker and endBlocker logic to stake funds on relevant host zones using Interchain Accounts  
+- it executes automated beginBlocker and endBlocker logic to stake funds on relevant host zones using Interchain Accounts
 - it handles registering new host zones and adjusting host zone validator sets and weights
 - it defines Stride's core data structures (e.g. hostZone)
 - it defines all the callbacks used when issuing Interchain Account logic
@@ -31,11 +31,11 @@ RedemptionRateInterval (default uint64 = 1)
 StrideCommission (default uint64 = 10)
 ValidatorRebalancingThreshold (default uint64 = 100)
 ICATimeoutNanos(default uint64 = 600000000000)
-BufferSize (default uint64 = 5)  
+BufferSize (default uint64 = 5)
 IbcTimeoutBlocks (default uint64 = 300)
 FeeTransferTimeoutNanos (default uint64 = 1800000000000
-SafetyMinRedemptionRateThreshold (default uint64 = 90)     
-SafetyMaxRedemptionRateThreshold (default uint64 = 150)         
+DefaultMinRedemptionRateThreshold (default uint64 = 90)
+DefaultMaxRedemptionRateThreshold (default uint64 = 150)
 MaxStakeICACallsPerEpoch (default uint64 = 100)
 IBCTransferTimeoutNanos (default uint64 = 1800000000000)
 SafetyNumValidators (default uint64 = 35)
@@ -59,13 +59,13 @@ SafetyNumValidators (default uint64 = 35)
 
 Callbacks
 
-- `SplitDelegation`  
+- `SplitDelegation`
 - `DelegateCallback`
 - `ClaimCallback`
 - `ReinvestCallback`
 - `UndelegateCallback`
 - `RedemptionCallback`
-- `Rebalancing`  
+- `Rebalancing`
 - `RebalanceCallback`
 
 HostZone

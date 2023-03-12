@@ -113,6 +113,10 @@ import (
 	interchainquerykeeper "github.com/Stride-Labs/stride/v6/x/interchainquery/keeper"
 	interchainquerytypes "github.com/Stride-Labs/stride/v6/x/interchainquery/types"
 
+	"github.com/Stride-Labs/stride/v6/x/autopilot"
+	autopilotkeeper "github.com/Stride-Labs/stride/v6/x/autopilot/keeper"
+	autopilottypes "github.com/Stride-Labs/stride/v6/x/autopilot/types"
+
 	"github.com/Stride-Labs/stride/v6/x/claim"
 	claimkeeper "github.com/Stride-Labs/stride/v6/x/claim/keeper"
 	claimtypes "github.com/Stride-Labs/stride/v6/x/claim/types"
@@ -205,6 +209,7 @@ var (
 		ratelimitmodule.AppModuleBasic{},
 		icacallbacksmodule.AppModuleBasic{},
 		claim.AppModuleBasic{},
+		autopilot.AppModuleBasic{},
 		// this line is used by starport scaffolding # stargate/app/moduleBasic
 	)
 
@@ -222,6 +227,7 @@ var (
 		claimtypes.ModuleName:           nil,
 		interchainquerytypes.ModuleName: nil,
 		icatypes.ModuleName:             nil,
+		stakeibcmoduletypes.RewardCollectorName: nil,
 		// this line is used by starport scaffolding # stargate/app/maccPerms
 	}
 )
@@ -276,6 +282,7 @@ type StrideApp struct {
 	// MonitoringKeeper    monitoringpkeeper.Keeper
 	ICAControllerKeeper icacontrollerkeeper.Keeper
 	ICAHostKeeper       icahostkeeper.Keeper
+	AutopilotKeeper     autopilotkeeper.Keeper
 
 	// make scoped keepers public for test purposes
 	ScopedIBCKeeper      capabilitykeeper.ScopedKeeper
@@ -332,6 +339,7 @@ func NewStrideApp(
 		govtypes.StoreKey, paramstypes.StoreKey, ibchost.StoreKey, upgradetypes.StoreKey, feegrant.StoreKey,
 		evidencetypes.StoreKey, ibctransfertypes.StoreKey, capabilitytypes.StoreKey, // monitoringptypes.StoreKey,
 		stakeibcmoduletypes.StoreKey,
+		autopilottypes.StoreKey,
 		epochsmoduletypes.StoreKey,
 		interchainquerytypes.StoreKey,
 		icacontrollertypes.StoreKey, icahosttypes.StoreKey,
@@ -525,6 +533,7 @@ func NewStrideApp(
 		app.RecordsKeeper,
 		app.StakingKeeper,
 		app.IcacallbacksKeeper,
+		app.RatelimitKeeper,
 	)
 	app.StakeibcKeeper = *stakeibcKeeper.SetHooks(
 		stakeibcmoduletypes.NewMultiStakeIBCHooks(app.ClaimKeeper.Hooks()),
@@ -532,6 +541,13 @@ func NewStrideApp(
 
 	stakeibcModule := stakeibcmodule.NewAppModule(appCodec, app.StakeibcKeeper, app.AccountKeeper, app.BankKeeper)
 	stakeibcIBCModule := stakeibcmodule.NewIBCModule(app.StakeibcKeeper)
+
+	app.AutopilotKeeper = *autopilotkeeper.NewKeeper(
+		appCodec,
+		keys[autopilottypes.StoreKey],
+		app.GetSubspace(autopilottypes.ModuleName),
+		app.StakeibcKeeper)
+	autopilotModule := autopilot.NewAppModule(appCodec, app.AutopilotKeeper)
 
 	// Register Gov (must be registerd after stakeibc)
 	govRouter := govtypesv1beta1.NewRouter()
@@ -610,6 +626,7 @@ func NewStrideApp(
 
 	// Stack three contains
 	// - IBC
+	// - autopilot
 	// - records
 	// - ratelimit
 	// - transfer
@@ -617,6 +634,7 @@ func NewStrideApp(
 	var transferStack porttypes.IBCModule = transferIBCModule
 	transferStack = ratelimitmodule.NewIBCMiddleware(app.RatelimitKeeper, transferStack)
 	transferStack = recordsmodule.NewIBCModule(app.RecordsKeeper, transferStack)
+	transferStack = autopilot.NewIBCModule(app.AutopilotKeeper, transferStack)
 
 	// Create static IBC router, add transfer route, then set and seal it
 	// Two routes are included for the ICAController because of the following procedure when registering an ICA
@@ -680,6 +698,7 @@ func NewStrideApp(
 		recordsModule,
 		ratelimitModule,
 		icacallbacksModule,
+		autopilotModule,
 		// this line is used by starport scaffolding # stargate/app/appModule
 	)
 
@@ -715,6 +734,7 @@ func NewStrideApp(
 		ratelimitmoduletypes.ModuleName,
 		icacallbacksmoduletypes.ModuleName,
 		claimtypes.ModuleName,
+		autopilottypes.ModuleName,
 		// this line is used by starport scaffolding # stargate/app/beginBlockers
 	)
 
@@ -746,6 +766,7 @@ func NewStrideApp(
 		ratelimitmoduletypes.ModuleName,
 		icacallbacksmoduletypes.ModuleName,
 		claimtypes.ModuleName,
+		autopilottypes.ModuleName,
 		// this line is used by starport scaffolding # stargate/app/endBlockers
 	)
 
@@ -782,6 +803,7 @@ func NewStrideApp(
 		ratelimitmoduletypes.ModuleName,
 		icacallbacksmoduletypes.ModuleName,
 		claimtypes.ModuleName,
+		autopilottypes.ModuleName,
 		// this line is used by starport scaffolding # stargate/app/initGenesis
 	)
 
@@ -939,6 +961,9 @@ func (app *StrideApp) BlacklistedModuleAccountAddrs() map[string]bool {
 		if acc == "stakeibc" {
 			continue
 		}
+		if acc == stakeibcmoduletypes.RewardCollectorName {
+			continue
+		}
 		modAccAddrs[authtypes.NewModuleAddress(acc).String()] = true
 	}
 
@@ -1049,6 +1074,7 @@ func initParamsKeeper(appCodec codec.BinaryCodec, legacyAmino *codec.LegacyAmino
 	paramsKeeper.Subspace(recordsmoduletypes.ModuleName)
 	paramsKeeper.Subspace(ratelimitmoduletypes.ModuleName)
 	paramsKeeper.Subspace(icacallbacksmoduletypes.ModuleName)
+	paramsKeeper.Subspace(autopilottypes.ModuleName)
 	// this line is used by starport scaffolding # stargate/app/paramSubspace
 
 	paramsKeeper.Subspace(claimtypes.ModuleName)

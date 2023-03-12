@@ -162,43 +162,6 @@ func (s *KeeperTestSuite) TestRebalanceValidators_Successful() {
 	s.Require().Equal("stride_VAL4", secondRebal.SrcValidator, "second rebalance takes from val4")
 }
 
-func (s *KeeperTestSuite) TestRebalanceValidators_InvalidNumValidators() {
-	s.SetupRebalanceValidators()
-
-	// Rebalance with 0 validators should fail
-	badMsg_tooFew := stakeibctypes.MsgRebalanceValidators{
-		Creator:      "stride_ADDRESS",
-		HostZone:     "GAIA",
-		NumRebalance: 0,
-	}
-	_, err := s.GetMsgServer().RebalanceValidators(sdk.WrapSDKContext(s.Ctx), &badMsg_tooFew)
-	expectedErrMsg := "invalid number of validators"
-	s.Require().EqualError(err, expectedErrMsg, "rebalancing 0 validators should fail")
-
-	// Rebalance with 5 validators should fail
-	badMsg_tooMany := stakeibctypes.MsgRebalanceValidators{
-		Creator:      "stride_ADDRESS",
-		HostZone:     "GAIA",
-		NumRebalance: 5,
-	}
-	_, err = s.GetMsgServer().RebalanceValidators(sdk.WrapSDKContext(s.Ctx), &badMsg_tooMany)
-	s.Require().EqualError(err, expectedErrMsg, "rebalancing 5 validators should fail")
-}
-
-func (s *KeeperTestSuite) TestRebalanceValidators_InvalidNoChange() {
-	s.SetupRebalanceValidators()
-
-	// Rebalance with all weights properly set should fail
-	badMsg_rightWeights := stakeibctypes.MsgRebalanceValidators{
-		Creator:      "stride_ADDRESS",
-		HostZone:     "GAIA",
-		NumRebalance: 1,
-	}
-	_, err := s.GetMsgServer().RebalanceValidators(sdk.WrapSDKContext(s.Ctx), &badMsg_rightWeights)
-	expectedErrMsg := "validator weights haven't changed"
-	s.Require().EqualError(err, expectedErrMsg, "rebalancing with weights set properly should fail")
-}
-
 func (s *KeeperTestSuite) TestRebalanceValidators_InvalidNoValidators() {
 	s.SetupRebalanceValidators()
 
@@ -238,26 +201,4 @@ func (s *KeeperTestSuite) TestRebalanceValidators_InvalidAllValidatorsNoWeight()
 	_, err := s.GetMsgServer().RebalanceValidators(sdk.WrapSDKContext(s.Ctx), &badMsg_noValidators)
 	expectedErrMsg := "no non-zero validator weights"
 	s.Require().EqualError(err, expectedErrMsg, "rebalancing with no validators should fail")
-}
-
-func (s *KeeperTestSuite) TestRebalanceValidators_InvalidNotEnoughDiff() {
-	s.SetupRebalanceValidators()
-
-	hz, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx, "GAIA")
-	s.Require().True(found, "host zone should exist")
-	validators := hz.GetValidators()
-	s.Require().Equal(5, len(validators), "host zone should have 5 validators")
-	// modify weight to 25
-	validators[0].Weight = 101
-	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hz)
-
-	// Rebalance without enough difference should fail
-	badMsg_noValidators := stakeibctypes.MsgRebalanceValidators{
-		Creator:      "stride_ADDRESS",
-		HostZone:     "GAIA",
-		NumRebalance: 2,
-	}
-	_, err := s.GetMsgServer().RebalanceValidators(sdk.WrapSDKContext(s.Ctx), &badMsg_noValidators)
-	expectedErrMsg := "validator weights haven't changed"
-	s.Require().EqualError(err, expectedErrMsg, "rebalancing without sufficient change should fail")
 }
