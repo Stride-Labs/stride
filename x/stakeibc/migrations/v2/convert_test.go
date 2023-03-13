@@ -8,7 +8,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	oldstakeibctypes "github.com/Stride-Labs/stride/v7/x/stakeibc/migrations/v2/types"
+	oldstakeibctypes "github.com/Stride-Labs/stride/v6/x/stakeibc/migrations/v2/types"
 	stakeibctypes "github.com/Stride-Labs/stride/v7/x/stakeibc/types"
 )
 

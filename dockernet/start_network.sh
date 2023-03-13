@@ -10,6 +10,7 @@ rm -rf $STATE $LOGS
 mkdir -p $STATE
 mkdir -p $LOGS
 
+
 # If we're testing an upgrade, setup cosmovisor
 if [[ "$UPGRADE_NAME" != "" ]]; then
     printf "\n>>> UPGRADE ENABLED! ($UPGRADE_NAME)\n\n"
@@ -38,10 +39,12 @@ if [[ "$UPGRADE_NAME" != "" ]]; then
     echo "Done"
 fi
 
+
 # Initialize the state for each chain
 for chain in STRIDE ${HOST_CHAINS[@]}; do
     bash $SRC/init_chain.sh $chain
 done
+
 
 # Start the chain and create the transfer channels
 bash $SRC/start_chain.sh 
