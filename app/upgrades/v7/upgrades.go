@@ -30,9 +30,6 @@ import (
 	stakeibctypes "github.com/Stride-Labs/stride/v7/x/stakeibc/types"
 )
 
-// Note: ensure these values are properly set before running upgrade
-var ()
-
 // CreateUpgradeHandler creates an SDK upgrade handler for v7
 func CreateUpgradeHandler(
 	mm *module.Manager,
