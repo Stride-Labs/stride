@@ -48,7 +48,16 @@ set_host_genesis() {
 
     # Add interchain accounts to the genesis set
     jq "del(.app_state.interchain_accounts)" $genesis_config > json.tmp && mv json.tmp $genesis_config
-    interchain_accts=$(cat $DOCKERNET_HOME/config/ica.json)
+    echo "moose"
+    echo $genesis_config
+    # if genesis_config contains substring "gaia" then
+    if [[ "$genesis_config" == *"gaia"* ]]; then
+        echo "It's there."
+        interchain_accts=$(cat $DOCKERNET_HOME/config/ica.json)
+    else
+        echo "It's not there."
+        interchain_accts=$(cat $DOCKERNET_HOME/config/ica_off.json)
+    fi
     jq ".app_state += $interchain_accts" $genesis_config > json.tmp && mv json.tmp $genesis_config
 
     # Slightly harshen slashing parameters (if 5 blocks are missed, the validator will be slashed)

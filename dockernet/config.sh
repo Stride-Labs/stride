@@ -28,7 +28,7 @@ HOST_CHAINS=()
 #  - STARS
 #  - HOST (Stride chain enabled as a host zone)
 if [[ "${ALL_HOST_CHAINS:-false}" == "true" ]]; then 
-  HOST_CHAINS=(GAIA OSMO HOST)
+  HOST_CHAINS=(GAIA OSMO) # OSMO HOST)
 elif [[ "${#HOST_CHAINS[@]}" == "0" ]]; then 
   HOST_CHAINS=(GAIA)
 fi
