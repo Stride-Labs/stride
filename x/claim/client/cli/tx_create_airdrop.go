@@ -8,7 +8,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/tx"
 	"github.com/spf13/cobra"
 
-	"github.com/Stride-Labs/stride/v6/x/claim/types"
+	"github.com/Stride-Labs/stride/v7/x/claim/types"
 )
 
 func CmdCreateAirdrop() *cobra.Command {

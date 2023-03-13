@@ -9,7 +9,7 @@ import (
 
 const (
 	// DefaultActive is the default value for the active param (set to true)
-	DefaultActive = true
+	DefaultActive = false
 )
 
 // KeyActive is the store key for Params
