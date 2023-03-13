@@ -13,8 +13,11 @@ import (
 	v4 "github.com/Stride-Labs/stride/v6/app/upgrades/v4"
 	v5 "github.com/Stride-Labs/stride/v6/app/upgrades/v5"
 	v6 "github.com/Stride-Labs/stride/v6/app/upgrades/v6"
+	v7 "github.com/Stride-Labs/stride/v6/app/upgrades/v7"
+	autopilottypes "github.com/Stride-Labs/stride/v6/x/autopilot/types"
 	claimtypes "github.com/Stride-Labs/stride/v6/x/claim/types"
 	icacallbacktypes "github.com/Stride-Labs/stride/v6/x/icacallbacks/types"
+	ratelimittypes "github.com/Stride-Labs/stride/v6/x/ratelimit/types"
 	recordtypes "github.com/Stride-Labs/stride/v6/x/records/types"
 	stakeibctypes "github.com/Stride-Labs/stride/v6/x/stakeibc/types"
 )
@@ -65,6 +68,22 @@ func (app *StrideApp) setupUpgradeHandlers() {
 		),
 	)
 
+	// v7 upgrade handler
+	app.UpgradeKeeper.SetUpgradeHandler(
+		v7.UpgradeName,
+		v7.CreateUpgradeHandler(
+			app.mm,
+			app.configurator,
+			app.appCodec,
+			app.AccountKeeper,
+			app.BankKeeper,
+			app.EpochsKeeper,
+			app.ICAHostKeeper,
+			app.MintKeeper,
+			app.StakeibcKeeper,
+		),
+	)
+
 	upgradeInfo, err := app.UpgradeKeeper.ReadUpgradeInfoFromDisk()
 	if err != nil {
 		panic(fmt.Errorf("Failed to read upgrade info from disk: %w", err))
@@ -85,15 +104,11 @@ func (app *StrideApp) setupUpgradeHandlers() {
 		storeUpgrades = &storetypes.StoreUpgrades{
 			Deleted: []string{authz.ModuleName},
 		}
+	case "v7":
+		storeUpgrades = &storetypes.StoreUpgrades{
+			Added: []string{ratelimittypes.StoreKey, autopilottypes.StoreKey},
+		}
 	}
-	// TODO: RATE LIMIT UPGRADE
-	//  1. Add ratelimit store key when module is added
-	//     storeUpgrades = &storetypes.StoreUpgrades{
-	// 	     Added: []string{ratelimittypes.StoreKey},
-	//     }
-	//
-	// 2. Add hour epoch to store
-	// 3. Add rate limits for existing denoms
 
 	if storeUpgrades != nil {
 		app.SetStoreLoader(upgradetypes.UpgradeStoreLoader(upgradeInfo.Height, storeUpgrades))
