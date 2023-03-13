@@ -21,13 +21,13 @@ import (
 	icahosttypes "github.com/cosmos/ibc-go/v5/modules/apps/27-interchain-accounts/host/types"
 	transfertypes "github.com/cosmos/ibc-go/v5/modules/apps/transfer/types"
 
-	"github.com/Stride-Labs/stride/v6/utils"
-	epochskeeper "github.com/Stride-Labs/stride/v6/x/epochs/keeper"
-	epochstypes "github.com/Stride-Labs/stride/v6/x/epochs/types"
-	mintkeeper "github.com/Stride-Labs/stride/v6/x/mint/keeper"
-	minttypes "github.com/Stride-Labs/stride/v6/x/mint/types"
-	stakeibckeeper "github.com/Stride-Labs/stride/v6/x/stakeibc/keeper"
-	stakeibctypes "github.com/Stride-Labs/stride/v6/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v7/utils"
+	epochskeeper "github.com/Stride-Labs/stride/v7/x/epochs/keeper"
+	epochstypes "github.com/Stride-Labs/stride/v7/x/epochs/types"
+	mintkeeper "github.com/Stride-Labs/stride/v7/x/mint/keeper"
+	minttypes "github.com/Stride-Labs/stride/v7/x/mint/types"
+	stakeibckeeper "github.com/Stride-Labs/stride/v7/x/stakeibc/keeper"
+	stakeibctypes "github.com/Stride-Labs/stride/v7/x/stakeibc/types"
 )
 
 // Note: ensure these values are properly set before running upgrade
