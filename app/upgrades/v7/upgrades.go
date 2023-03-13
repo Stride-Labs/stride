@@ -33,9 +33,9 @@ import (
 
 // Note: ensure these values are properly set before running upgrade
 var (
-	UpgradeName             = "v7"
-	IncentiveProgramAddress = "stride1tlxk4as9sgpqkh42cfaxqja0mdj6qculqshy0gg3glazmrnx3y8s8gsvqk"
-	StrideFoundationAddress = "stride1yz3mp7c2m739nftfrv5r3h6j64aqp95f3degpf"
+	UpgradeName                = "v7"
+	IncentiveProgramAddress    = "stride1tlxk4as9sgpqkh42cfaxqja0mdj6qculqshy0gg3glazmrnx3y8s8gsvqk"
+	StrideFoundationAddress_F4 = "stride1yz3mp7c2m739nftfrv5r3h6j64aqp95f3degpf"
 )
 
 // CreateUpgradeHandler creates an SDK upgrade handler for v7
@@ -71,7 +71,7 @@ func CreateUpgradeHandler(
 		}
 
 		// Incentive diversification
-		if err := IncentiveDiversification(ctx, bankKeeper); err != nil {
+		if err := ExecuteProp153(ctx, bankKeeper); err != nil {
 			return vm, errorsmod.Wrapf(err, "unable to send ustrd tokens for prop #153 (incentive diversification)")
 		}
 
@@ -173,18 +173,20 @@ func ModifyJunoUnbondingFrequency(ctx sdk.Context, k stakeibckeeper.Keeper) erro
 }
 
 // Incentive diversification (Prop #153) - Send 3M STRD from Incentive Program to Stride Foundation
-func IncentiveDiversification(ctx sdk.Context, k bankkeeper.Keeper) error {
-	ctx.Logger().Info("Sending funds for Prop #153")
+// so that it can be swapped for USDC and deployed as incentives
+// The 3M STRD will be swapped to USDC.
+func ExecuteProp153(ctx sdk.Context, k bankkeeper.Keeper) error {
+	ctx.Logger().Info("Sending 3M STRD from the incentive pool to Stride Foundation for Prop #153")
 
 	incentiveProgramAddress, err := sdk.AccAddressFromBech32(IncentiveProgramAddress)
 	if err != nil {
 		return err
 	}
-	strideFoundationAddress, err := sdk.AccAddressFromBech32(StrideFoundationAddress)
+	strideFoundationAddress, err := sdk.AccAddressFromBech32(StrideFoundationAddress_F4)
 	if err != nil {
 		return err
 	}
-	amount := sdk.NewCoin("ustrd", sdk.NewInt(3_000_000_000_000))
+	amount := sdk.NewCoin("ustrd", sdk.NewInt(STRDProp153SendAmount))
 	if err := k.SendCoins(ctx, incentiveProgramAddress, strideFoundationAddress, sdk.NewCoins(amount)); err != nil {
 		return err
 	}
