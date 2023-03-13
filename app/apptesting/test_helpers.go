@@ -23,8 +23,8 @@ import (
 	"github.com/tendermint/tendermint/crypto/ed25519"
 	tmtypes "github.com/tendermint/tendermint/proto/tendermint/types"
 
-	"github.com/Stride-Labs/stride/v6/app"
-	"github.com/Stride-Labs/stride/v6/utils"
+	"github.com/Stride-Labs/stride/v7/app"
+	"github.com/Stride-Labs/stride/v7/utils"
 )
 
 var (
