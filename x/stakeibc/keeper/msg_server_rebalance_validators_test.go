@@ -5,8 +5,8 @@ import (
 	_ "github.com/stretchr/testify/suite"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	icatypes "github.com/cosmos/ibc-go/v5/modules/apps/27-interchain-accounts/types"
-	ibctesting "github.com/cosmos/ibc-go/v5/testing"
+	icatypes "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/types"
+	ibctesting "github.com/cosmos/ibc-go/v7/testing"
 
 	epochtypes "github.com/Stride-Labs/stride/v6/x/epochs/types"
 	icacallbackstypes "github.com/Stride-Labs/stride/v6/x/icacallbacks/types"
@@ -128,7 +128,7 @@ func (s *KeeperTestSuite) TestRebalanceValidators_Successful() {
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hz)
 
 	// get sequence ID for callbacks
-	portId := icatypes.PortPrefix + "GAIA.DELEGATION"
+	portId := icatypes.ControllerPortPrefix + "GAIA.DELEGATION"
 	startSequence, found := s.App.IBCKeeper.ChannelKeeper.GetNextSequenceSend(s.Ctx, portId, tc.delegationChannel)
 	s.Require().True(found, "sequence number not found before rebalance")
 

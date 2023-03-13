@@ -4,23 +4,25 @@ import (
 	"fmt"
 	"strings"
 
-	_ "github.com/stretchr/testify/suite"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	ibctesting "github.com/cosmos/ibc-go/v5/testing"
-	icatypes "github.com/cosmos/ibc-go/v5/modules/apps/27-interchain-accounts/types"
-	clienttypes "github.com/cosmos/ibc-go/v5/modules/core/02-client/types"
 	sdkmath "cosmossdk.io/math"
-	epochtypes "github.com/Stride-Labs/stride/v6/x/epochs/types"
+	simtestutil "github.com/cosmos/cosmos-sdk/testutil/sims"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
-	stakeibctypes "github.com/Stride-Labs/stride/v6/x/stakeibc/types"
-	"github.com/cosmos/cosmos-sdk/simapp"
-	"github.com/cosmos/cosmos-sdk/x/staking/teststaking"
+	"github.com/cosmos/cosmos-sdk/x/staking/testutil"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
-	hosttypes "github.com/cosmos/ibc-go/v5/modules/apps/27-interchain-accounts/host/types"
-	ibctypes "github.com/cosmos/ibc-go/v5/modules/apps/transfer/types"
-	channeltypes "github.com/cosmos/ibc-go/v5/modules/core/04-channel/types"
+	proto "github.com/cosmos/gogoproto/proto"
+	hosttypes "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/host/types"
+	icatypes "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/types"
+	ibctypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
+	clienttypes "github.com/cosmos/ibc-go/v7/modules/core/02-client/types"
+	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
+	ibctesting "github.com/cosmos/ibc-go/v7/testing"
+	_ "github.com/stretchr/testify/suite"
 	abci "github.com/tendermint/tendermint/abci/types"
+
+	epochtypes "github.com/Stride-Labs/stride/v6/x/epochs/types"
 	recordtypes "github.com/Stride-Labs/stride/v6/x/records/types"
+	stakeibctypes "github.com/Stride-Labs/stride/v6/x/stakeibc/types"
 )
 
 var (
@@ -48,7 +50,7 @@ func (s *KeeperTestSuite) SetupWithdrawAccount() (stakeibctypes.HostZone, Channe
 	withdrawalAccountOwner := fmt.Sprintf("%s.%s", HostChainId, "WITHDRAWAL")
 	withdrawalChannelID := s.CreateICAChannel(withdrawalAccountOwner)
 	withdrawalAddress := s.IcaAddresses[withdrawalAccountOwner]
-		
+
 	feeAccountOwner := fmt.Sprintf("%s.%s", HostChainId, "FEE")
 	s.CreateICAChannel(feeAccountOwner)
 	feeAddress := s.IcaAddresses[feeAccountOwner]
@@ -83,14 +85,14 @@ func (s *KeeperTestSuite) SetupWithdrawAccount() (stakeibctypes.HostZone, Channe
 		},
 		FeeAccount: &stakeibctypes.ICAAccount{
 			Address: feeAddress,
-			Target: stakeibctypes.ICAAccountType_FEE,
+			Target:  stakeibctypes.ICAAccountType_FEE,
 		},
 		ConnectionId:      ibctesting.FirstConnectionID,
 		TransferChannelId: ibctesting.FirstChannelID,
 		HostDenom:         Atom,
 		IbcDenom:          ibcDenomTrace.IBCDenom(),
 		Validators:        validators,
-		RedemptionRate: sdk.OneDec(),
+		RedemptionRate:    sdk.OneDec(),
 	}
 
 	currentEpoch := uint64(2)
@@ -118,7 +120,7 @@ func (s *KeeperTestSuite) SetupWithdrawAccount() (stakeibctypes.HostZone, Channe
 	s.App.RecordsKeeper.SetDepositRecord(s.Ctx, initialDepositRecord)
 
 	return hostZone, Channel{
-		PortID: icatypes.PortPrefix + withdrawalAccountOwner,
+		PortID:    icatypes.ControllerPortPrefix + withdrawalAccountOwner,
 		ChannelID: withdrawalChannelID,
 	}
 }
@@ -127,17 +129,17 @@ func (s *KeeperTestSuite) TestAllocateRewardIBC() {
 	hz, channel := s.SetupWithdrawAccount()
 
 	rewardCollector := s.App.AccountKeeper.GetModuleAccount(s.Ctx, stakeibctypes.RewardCollectorName)
-	
+
 	// Send tx to withdraw ica to perform ibc transfer from hostzone to stride
-	var msgs []sdk.Msg
+	var msgs []proto.Message
 	ibcTransferTimeoutNanos := s.App.StakeibcKeeper.GetParam(s.Ctx, stakeibctypes.KeyIBCTransferTimeoutNanos)
 	timeoutTimestamp := uint64(s.HostChain.GetContext().BlockTime().UnixNano()) + ibcTransferTimeoutNanos
-	msg := ibctypes.NewMsgTransfer("transfer", "channel-0", sdk.NewCoin(Atom, sdkmath.NewInt(15_000)), hz.WithdrawalAccount.Address, rewardCollector.GetAddress().String(), clienttypes.NewHeight(1, 100), timeoutTimestamp)
+	msg := ibctypes.NewMsgTransfer("transfer", "channel-0", sdk.NewCoin(Atom, sdkmath.NewInt(15_000)), hz.WithdrawalAccount.Address, rewardCollector.GetAddress().String(), clienttypes.NewHeight(1, 100), timeoutTimestamp, "")
 	msgs = append(msgs, msg)
 	data, _ := icatypes.SerializeCosmosTx(s.App.AppCodec(), msgs)
 	icaTimeOutNanos := s.App.StakeibcKeeper.GetParam(s.Ctx, stakeibctypes.KeyICATimeoutNanos)
 	icaTimeoutTimestamp := uint64(s.StrideChain.GetContext().BlockTime().UnixNano()) + icaTimeOutNanos
-	
+
 	packetData := icatypes.InterchainAccountPacketData{
 		Type: icatypes.EXECUTE_TX,
 		Data: data,
@@ -162,9 +164,9 @@ func (s *KeeperTestSuite) TestAllocateRewardIBC() {
 	s.Require().True(ok)
 	cbs.OnRecvPacket(s.HostChain.GetContext(), packet, nil)
 
-    // After withdraw ica send ibc transfer, simulate receiving transfer packet at stride
+	// After withdraw ica send ibc transfer, simulate receiving transfer packet at stride
 	transferPacketData := ibctypes.NewFungibleTokenPacketData(
-		Atom, sdkmath.NewInt(15_000).String(), hz.WithdrawalAccount.Address, rewardCollector.GetAddress().String(),
+		Atom, sdkmath.NewInt(15_000).String(), hz.WithdrawalAccount.Address, rewardCollector.GetAddress().String(), "",
 	)
 	transferPacketData.Memo = ""
 	transferPacket := channeltypes.NewPacket(
@@ -191,10 +193,10 @@ func (s *KeeperTestSuite) TestAllocateRewardIBC() {
 	for _, acc := range addrs {
 		s.FundAccount(acc, sdk.NewCoin(sdk.DefaultBondDenom, sdk.NewInt(1000000)))
 	}
-	valAddrs := simapp.ConvertAddrsToValAddrs(addrs)
-	tstaking := teststaking.NewHelper(s.T(), s.Ctx, s.App.StakingKeeper)
+	valAddrs := simtestutil.ConvertAddrsToValAddrs(addrs)
+	tstaking := testutil.NewHelper(s.T(), s.Ctx, &s.App.StakingKeeper)
 
-	PK := simapp.CreateTestPubKeys(2)
+	PK := simtestutil.CreateTestPubKeys(2)
 
 	// create validator with 50% commission
 	tstaking.Commission = stakingtypes.NewCommissionRates(sdk.NewDecWithPrec(5, 1), sdk.NewDecWithPrec(5, 1), sdk.NewDec(0))
@@ -218,15 +220,15 @@ func (s *KeeperTestSuite) TestAllocateRewardIBC() {
 	}
 	votes := []abci.VoteInfo{
 		{
-			Validator: abciValA,
+			Validator:       abciValA,
 			SignedLastBlock: true,
 		},
 		{
-			Validator: abciValB,
+			Validator:       abciValB,
 			SignedLastBlock: true,
 		},
 	}
-	s.App.DistrKeeper.AllocateTokens(s.Ctx, 200, 200, sdk.ConsAddress(PK[1].Address()), votes)
+	s.App.DistrKeeper.AllocateTokens(s.Ctx, 200, votes)
 
 	// Withdraw reward
 	rewards, err := s.App.DistrKeeper.WithdrawDelegationRewards(s.Ctx, sdk.AccAddress(valAddrs[1]), valAddrs[1])

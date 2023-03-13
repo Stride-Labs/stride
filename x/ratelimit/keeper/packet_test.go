@@ -7,8 +7,8 @@ import (
 	"testing"
 
 	sdkmath "cosmossdk.io/math"
-	transfertypes "github.com/cosmos/ibc-go/v5/modules/apps/transfer/types"
-	channeltypes "github.com/cosmos/ibc-go/v5/modules/core/04-channel/types"
+	transfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
+	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
 	"github.com/stretchr/testify/require"
 
 	tmbytes "github.com/tendermint/tendermint/libs/bytes"
@@ -202,7 +202,7 @@ func (s *KeeperTestSuite) TestSendRateLimitedPacket() {
 
 	// We check for a quota error because it doesn't appear until the end of the function
 	// We're avoiding checking for a success here because we can get a false positive if the rate limit doesn't exist
-	err = s.App.RatelimitKeeper.SendRateLimitedPacket(s.Ctx, packet)
+	err = s.App.RatelimitKeeper.SendRateLimitedPacket(s.Ctx, packet.SourceChannel, packet.Data)
 	s.Require().ErrorIs(err, types.ErrQuotaExceeded, "error type")
 	s.Require().ErrorContains(err, "Outflow exceeds quota", "error text")
 }

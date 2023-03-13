@@ -5,12 +5,12 @@ import (
 
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	ibctesting "github.com/cosmos/ibc-go/v5/testing"
+	ibctesting "github.com/cosmos/ibc-go/v7/testing"
 	_ "github.com/stretchr/testify/suite"
 
-	icatypes "github.com/cosmos/ibc-go/v5/modules/apps/27-interchain-accounts/types"
+	icatypes "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/types"
 
-	channeltypes "github.com/cosmos/ibc-go/v5/modules/core/04-channel/types"
+	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
 
 	epochtypes "github.com/Stride-Labs/stride/v6/x/epochs/types"
 	recordstypes "github.com/Stride-Labs/stride/v6/x/records/types"
@@ -99,7 +99,7 @@ func (s *KeeperTestSuite) createNewHostZoneMessage(chainID string, denom string,
 //
 //	so that the registration fails
 func (s *KeeperTestSuite) createActiveChannelOnICAPort(accountName string, channelID string) {
-	portID := fmt.Sprintf("%s%s.%s", icatypes.PortPrefix, HostChainId, accountName)
+	portID := fmt.Sprintf("%s%s.%s", icatypes.ControllerPortPrefix, HostChainId, accountName)
 	openChannel := channeltypes.Channel{State: channeltypes.OPEN}
 
 	// The channel ID doesn't matter here - all that matters is that theres an open channel on the port

@@ -19,9 +19,9 @@ import (
 
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
 	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
-	icacontrollerkeeper "github.com/cosmos/ibc-go/v5/modules/apps/27-interchain-accounts/controller/keeper"
-	ibckeeper "github.com/cosmos/ibc-go/v5/modules/core/keeper"
-	ibctmtypes "github.com/cosmos/ibc-go/v5/modules/light-clients/07-tendermint/types"
+	icacontrollerkeeper "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/controller/keeper"
+	ibckeeper "github.com/cosmos/ibc-go/v7/modules/core/keeper"
+	ibctmtypes "github.com/cosmos/ibc-go/v7/modules/light-clients/07-tendermint"
 
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 
@@ -40,6 +40,7 @@ type (
 		ICAControllerKeeper   icacontrollerkeeper.Keeper
 		IBCKeeper             ibckeeper.Keeper
 		scopedKeeper          capabilitykeeper.ScopedKeeper
+		IBCScopperKeeper      capabilitykeeper.ScopedKeeper
 		bankKeeper            bankkeeper.Keeper
 		InterchainQueryKeeper icqkeeper.Keeper
 		RecordsKeeper         recordsmodulekeeper.Keeper
@@ -64,6 +65,7 @@ func NewKeeper(
 	icacontrollerkeeper icacontrollerkeeper.Keeper,
 	ibcKeeper ibckeeper.Keeper,
 	scopedKeeper capabilitykeeper.ScopedKeeper,
+	IBCScopperKeeper capabilitykeeper.ScopedKeeper,
 	interchainQueryKeeper icqkeeper.Keeper,
 	RecordsKeeper recordsmodulekeeper.Keeper,
 	StakingKeeper stakingkeeper.Keeper,
@@ -85,6 +87,7 @@ func NewKeeper(
 		ICAControllerKeeper:   icacontrollerkeeper,
 		IBCKeeper:             ibcKeeper,
 		scopedKeeper:          scopedKeeper,
+		IBCScopperKeeper:      IBCScopperKeeper,
 		InterchainQueryKeeper: interchainQueryKeeper,
 		RecordsKeeper:         RecordsKeeper,
 		StakingKeeper:         StakingKeeper,
