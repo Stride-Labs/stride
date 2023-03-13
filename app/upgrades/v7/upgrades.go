@@ -27,7 +27,6 @@ import (
 	mintkeeper "github.com/Stride-Labs/stride/v6/x/mint/keeper"
 	minttypes "github.com/Stride-Labs/stride/v6/x/mint/types"
 	stakeibckeeper "github.com/Stride-Labs/stride/v6/x/stakeibc/keeper"
-	"github.com/Stride-Labs/stride/v6/x/stakeibc/types"
 	stakeibctypes "github.com/Stride-Labs/stride/v6/x/stakeibc/types"
 )
 
@@ -141,9 +140,15 @@ func AddICAHostAllowMessages(ctx sdk.Context, k icahostkeeper.Keeper) {
 func AddRedemptionRateSafetyChecks(ctx sdk.Context, k stakeibckeeper.Keeper) {
 	ctx.Logger().Info("Setting min/max redemption rate safety bounds on each host zone")
 
+	// Set new stakeibc params
+	params := k.GetParams(ctx)
+	params.DefaultMinRedemptionRateThreshold = stakeibctypes.DefaultMinRedemptionRateThreshold
+	params.DefaultMaxRedemptionRateThreshold = stakeibctypes.DefaultMaxRedemptionRateThreshold
+	k.SetParams(ctx, params)
+
 	// Get default min/max redemption rate
-	defaultMinRedemptionRate := sdk.NewDecWithPrec(int64(k.GetParam(ctx, types.KeyDefaultMinRedemptionRateThreshold)), 2)
-	defaultMaxRedemptionRate := sdk.NewDecWithPrec(int64(k.GetParam(ctx, types.KeyDefaultMaxRedemptionRateThreshold)), 2)
+	defaultMinRedemptionRate := sdk.NewDecWithPrec(int64(params.DefaultMinRedemptionRateThreshold), 2)
+	defaultMaxRedemptionRate := sdk.NewDecWithPrec(int64(params.DefaultMaxRedemptionRateThreshold), 2)
 
 	for _, hostZone := range k.GetAllHostZone(ctx) {
 
