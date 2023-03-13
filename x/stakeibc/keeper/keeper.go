@@ -47,6 +47,7 @@ type (
 		ICACallbacksKeeper    icacallbackskeeper.Keeper
 		hooks                 types.StakeIBCHooks
 		accountKeeper         types.AccountKeeper
+		RatelimitKeeper       types.RatelimitKeeper
 	}
 )
 
@@ -67,6 +68,7 @@ func NewKeeper(
 	RecordsKeeper recordsmodulekeeper.Keeper,
 	StakingKeeper stakingkeeper.Keeper,
 	ICACallbacksKeeper icacallbackskeeper.Keeper,
+	RatelimitKeeper types.RatelimitKeeper,
 ) Keeper {
 	// set KeyTable if it has not already been set
 	if !ps.HasKeyTable() {
@@ -87,6 +89,7 @@ func NewKeeper(
 		RecordsKeeper:         RecordsKeeper,
 		StakingKeeper:         StakingKeeper,
 		ICACallbacksKeeper:    ICACallbacksKeeper,
+		RatelimitKeeper:       RatelimitKeeper,
 	}
 }
 
@@ -258,11 +261,19 @@ func (k Keeper) GetICATimeoutNanos(ctx sdk.Context, epochType string) (uint64, e
 
 // safety check: ensure the redemption rate is NOT below our min safety threshold && NOT above our max safety threshold on host zone
 func (k Keeper) IsRedemptionRateWithinSafetyBounds(ctx sdk.Context, zone types.HostZone) (bool, error) {
-	minSafetyThresholdInt := k.GetParam(ctx, types.KeySafetyMinRedemptionRateThreshold)
+	minSafetyThresholdInt := k.GetParam(ctx, types.KeyDefaultMinRedemptionRateThreshold)
 	minSafetyThreshold := sdk.NewDec(int64(minSafetyThresholdInt)).Quo(sdk.NewDec(100))
 
-	maxSafetyThresholdInt := k.GetParam(ctx, types.KeySafetyMaxRedemptionRateThreshold)
+	if !zone.MinRedemptionRate.IsNil() && zone.MinRedemptionRate.IsPositive() {
+		minSafetyThreshold = zone.MinRedemptionRate
+	}
+
+	maxSafetyThresholdInt := k.GetParam(ctx, types.KeyDefaultMaxRedemptionRateThreshold)
 	maxSafetyThreshold := sdk.NewDec(int64(maxSafetyThresholdInt)).Quo(sdk.NewDec(100))
+
+	if !zone.MaxRedemptionRate.IsNil() && zone.MaxRedemptionRate.IsPositive() {
+		maxSafetyThreshold = zone.MaxRedemptionRate
+	}
 
 	redemptionRate := zone.RedemptionRate
 

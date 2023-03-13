@@ -73,6 +73,24 @@ func (k Keeper) GetAllHostZone(ctx sdk.Context) (list []types.HostZone) {
 	return
 }
 
+// GetAllActiveHostZone returns all hostZones that are active (halted = false)
+func (k Keeper) GetAllActiveHostZone(ctx sdk.Context) (list []types.HostZone) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefix(types.HostZoneKey))
+	iterator := sdk.KVStorePrefixIterator(store, []byte{})
+
+	defer iterator.Close()
+
+	for ; iterator.Valid(); iterator.Next() {
+		var val types.HostZone
+		k.cdc.MustUnmarshal(iterator.Value(), &val)
+		if !val.Halted {
+			list = append(list, val)
+		}
+	}
+
+	return
+}
+
 func (k Keeper) AddDelegationToValidator(ctx sdk.Context, hostZone types.HostZone, validatorAddress string, amount sdkmath.Int, callbackId string) (success bool) {
 	for _, validator := range hostZone.Validators {
 		if validator.Address == validatorAddress {
@@ -206,6 +224,16 @@ func (k Keeper) GetHostZoneFromIBCDenom(ctx sdk.Context, denom string) (*types.H
 		return &matchZone, nil
 	}
 	return nil, errorsmod.Wrapf(sdkerrors.ErrUnknownRequest, "No HostZone for %s found", denom)
+}
+
+// Validate whether a denom is a supported liquid staking token
+func (k Keeper) CheckIsStToken(ctx sdk.Context, denom string) bool {
+	for _, hostZone := range k.GetAllHostZone(ctx) {
+		if types.StAssetDenomFromHostZoneDenom(hostZone.HostDenom) == denom {
+			return true
+		}
+	}
+	return false
 }
 
 // IterateHostZones iterates zones

@@ -31,6 +31,16 @@ func (k msgServer) ClaimUndelegatedTokens(goCtx context.Context, msg *types.MsgC
 		return nil, errorsmod.Wrap(types.ErrRecordNotFound, errMsg)
 	}
 
+	hostZone, found := k.GetHostZone(ctx, msg.HostZoneId)
+	if !found {
+		return nil, errorsmod.Wrap(types.ErrHostZoneNotFound, fmt.Sprintf("Host zone %s not found", msg.HostZoneId))
+	}
+
+	if hostZone.Halted {
+		k.Logger(ctx).Error(fmt.Sprintf("Host Zone %s halted", msg.HostZoneId))
+		return nil, errorsmod.Wrapf(types.ErrHaltedHostZone, "Host Zone %s halted", msg.HostZoneId)
+	}
+
 	icaTx, err := k.GetRedemptionTransferMsg(ctx, userRedemptionRecord, msg.HostZoneId)
 	if err != nil {
 		return nil, errorsmod.Wrap(err, "unable to build redemption transfer message")

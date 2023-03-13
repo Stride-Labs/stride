@@ -5,9 +5,9 @@ import (
 	"fmt"
 
 	sdkmath "cosmossdk.io/math"
-	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	icatypes "github.com/cosmos/ibc-go/v5/modules/apps/27-interchain-accounts/types"
 
+	"github.com/Stride-Labs/stride/v6/utils"
 	epochtypes "github.com/Stride-Labs/stride/v6/x/epochs/types"
 	recordstypes "github.com/Stride-Labs/stride/v6/x/records/types"
 	"github.com/Stride-Labs/stride/v6/x/stakeibc/types"
@@ -64,16 +64,19 @@ func (k msgServer) RegisterHostZone(goCtx context.Context, msg *types.MsgRegiste
 		}
 	}
 
-	// create and save the zones's module account to the account keeper
+	// create and save the zones's module account
 	zoneAddress := types.NewZoneAddress(chainId)
-	acc := k.accountKeeper.NewAccount(
-		ctx,
-		authtypes.NewModuleAccount(
-			authtypes.NewBaseAccountWithAddress(zoneAddress),
-			zoneAddress.String(),
-		),
-	)
-	k.accountKeeper.SetAccount(ctx, acc)
+	if err := utils.CreateModuleAccount(ctx, k.accountKeeper, zoneAddress); err != nil {
+		return nil, errorsmod.Wrapf(err, "unable to create module account for host zone %s", chainId)
+	}
+
+	params := k.GetParams(ctx)
+	if msg.MinRedemptionRate.IsNil() || msg.MinRedemptionRate.IsZero() {
+		msg.MinRedemptionRate = sdk.NewDecWithPrec(int64(params.DefaultMinRedemptionRateThreshold), 2)
+	}
+	if msg.MaxRedemptionRate.IsNil() || msg.MaxRedemptionRate.IsZero() {
+		msg.MaxRedemptionRate = sdk.NewDecWithPrec(int64(params.DefaultMaxRedemptionRateThreshold), 2)
+	}
 
 	// set the zone
 	zone := types.HostZone{
@@ -88,6 +91,8 @@ func (k msgServer) RegisterHostZone(goCtx context.Context, msg *types.MsgRegiste
 		LastRedemptionRate: sdk.NewDec(1),
 		UnbondingFrequency: msg.UnbondingFrequency,
 		Address:            zoneAddress.String(),
+		MinRedemptionRate:  msg.MinRedemptionRate,
+		MaxRedemptionRate:  msg.MaxRedemptionRate,
 	}
 	// write the zone back to the store
 	k.SetHostZone(ctx, zone)

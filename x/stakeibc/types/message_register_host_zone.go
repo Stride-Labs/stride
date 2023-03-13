@@ -17,7 +17,7 @@ const TypeMsgRegisterHostZone = "register_host_zone"
 
 var _ sdk.Msg = &MsgRegisterHostZone{}
 
-func NewMsgRegisterHostZone(creator string, connectionId string, bech32prefix string, hostDenom string, ibcDenom string, transferChannelId string, unbondingFrequency uint64) *MsgRegisterHostZone {
+func NewMsgRegisterHostZone(creator string, connectionId string, bech32prefix string, hostDenom string, ibcDenom string, transferChannelId string, unbondingFrequency uint64, minRedemptionRate, maxRedemptionRate sdk.Dec) *MsgRegisterHostZone {
 	return &MsgRegisterHostZone{
 		Creator:            creator,
 		ConnectionId:       connectionId,
@@ -26,6 +26,8 @@ func NewMsgRegisterHostZone(creator string, connectionId string, bech32prefix st
 		IbcDenom:           ibcDenom,
 		TransferChannelId:  transferChannelId,
 		UnbondingFrequency: unbondingFrequency,
+		MinRedemptionRate:  minRedemptionRate,
+		MaxRedemptionRate:  maxRedemptionRate,
 	}
 }
 
@@ -103,6 +105,20 @@ func (msg *MsgRegisterHostZone) ValidateBasic() error {
 	// unbonding frequency must be positive nonzero
 	if msg.UnbondingFrequency < 1 {
 		return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "unbonding frequency must be greater than zero")
+	}
+	// min/max redemption rate check
+	if !msg.MinRedemptionRate.IsNil() && msg.MinRedemptionRate.IsNegative() {
+		return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "min redemption rate should not be negative")
+	}
+	if !msg.MaxRedemptionRate.IsNil() && msg.MaxRedemptionRate.IsNegative() {
+		return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "max redemption rate should not be negative")
+	}
+	if !msg.MinRedemptionRate.IsNil() &&
+		!msg.MaxRedemptionRate.IsNil() &&
+		!msg.MinRedemptionRate.IsZero() &&
+		!msg.MaxRedemptionRate.IsZero() &&
+		msg.MinRedemptionRate.GTE(msg.MaxRedemptionRate) {
+		return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "min redemption rate should be lower than max redemption rate")
 	}
 
 	return nil
