@@ -16,9 +16,9 @@ import (
 	ibctypes "github.com/cosmos/ibc-go/v5/modules/apps/transfer/types"
 	clienttypes "github.com/cosmos/ibc-go/v5/modules/core/02-client/types"
 
-	"github.com/Stride-Labs/stride/v6/utils"
-	icqtypes "github.com/Stride-Labs/stride/v6/x/interchainquery/types"
-	"github.com/Stride-Labs/stride/v6/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v7/utils"
+	icqtypes "github.com/Stride-Labs/stride/v7/x/interchainquery/types"
+	"github.com/Stride-Labs/stride/v7/x/stakeibc/types"
 )
 
 // WithdrawalBalanceCallback is a callback handler for WithdrawalBalance queries.

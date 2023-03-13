@@ -8,15 +8,15 @@ import (
 
 	authz "github.com/cosmos/cosmos-sdk/x/authz"
 
-	v2 "github.com/Stride-Labs/stride/v6/app/upgrades/v2"
-	v3 "github.com/Stride-Labs/stride/v6/app/upgrades/v3"
-	v4 "github.com/Stride-Labs/stride/v6/app/upgrades/v4"
-	v5 "github.com/Stride-Labs/stride/v6/app/upgrades/v5"
-	v6 "github.com/Stride-Labs/stride/v6/app/upgrades/v6"
-	claimtypes "github.com/Stride-Labs/stride/v6/x/claim/types"
-	icacallbacktypes "github.com/Stride-Labs/stride/v6/x/icacallbacks/types"
-	recordtypes "github.com/Stride-Labs/stride/v6/x/records/types"
-	stakeibctypes "github.com/Stride-Labs/stride/v6/x/stakeibc/types"
+	v2 "github.com/Stride-Labs/stride/v7/app/upgrades/v2"
+	v3 "github.com/Stride-Labs/stride/v7/app/upgrades/v3"
+	v4 "github.com/Stride-Labs/stride/v7/app/upgrades/v4"
+	v5 "github.com/Stride-Labs/stride/v7/app/upgrades/v5"
+	v6 "github.com/Stride-Labs/stride/v7/app/upgrades/v6"
+	claimtypes "github.com/Stride-Labs/stride/v7/x/claim/types"
+	icacallbacktypes "github.com/Stride-Labs/stride/v7/x/icacallbacks/types"
+	recordtypes "github.com/Stride-Labs/stride/v7/x/records/types"
+	stakeibctypes "github.com/Stride-Labs/stride/v7/x/stakeibc/types"
 )
 
 func (app *StrideApp) setupUpgradeHandlers() {
