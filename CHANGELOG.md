@@ -40,12 +40,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [v7.0.0](https://github.com/Stride-Labs/stride/releases/tag/v7.0.0) - 2023-03-08
+## [v7.0.0](https://github.com/Stride-Labs/stride/releases/tag/v7.0.0) - 2023-03-12
 ### On-Chain changes
 1. IBC Rate Limiting ([94e3a91](https://github.com/Stride-Labs/stride/commit/94e3a91dc582218a477771d9a694966bf901fdf5))
 2. Host Zone Reward Reallocation ([3539983](https://github.com/Stride-Labs/stride/commit/353998347af20ae14967e5da73a3f9059c0e1826))
 3. Add Autopilot ([1c173fe](https://github.com/Stride-Labs/stride/commit/1c173fed57418bea8fbb19240245757708f25472))
-3.  Prevent undelegations of amount 0 ([3e0f404](https://github.com/Stride-Labs/stride/commit/3e0f40457ed90faa964556c6498c9d976336aa84))
+3. Prevent undelegations of amount 0 ([3e0f404](https://github.com/Stride-Labs/stride/commit/3e0f40457ed90faa964556c6498c9d976336aa84))
 4. Change `sdkerrors` to `errorsmod` ([dfc5fb0](https://github.com/Stride-Labs/stride/commit/dfc5fb0fb33a471f86f1f74992ff3809919e7e80))
 5. Remove Epoch Unbonding Records with 0 amounts ([470268d](https://github.com/Stride-Labs/stride/commit/470268d393b15b0a4014e3a61c0478eaddc10756))
 6. Remove ICACallbacks from Middleware ([59a872b](https://github.com/Stride-Labs/stride/commit/59a872b20d8553c1a0e8187b2d70304c2a7341b7))
