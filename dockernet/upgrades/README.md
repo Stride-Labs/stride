@@ -35,7 +35,7 @@ bash dockernet/upgrades/submit_upgrade.sh
 ```
 make start-docker-all && make upgrade-init && make upgrade-submit
 ```
-* Once the integration tests pass and the upgrade has been proposed, wait for the upgrade to occur at block 750. Check the stride logs to confirm the upgrade passes successfully
+* Once the integration tests pass and the upgrade has been proposed, wait for the upgrade to occur at block 400. Check the stride logs to confirm the upgrade passes successfully
 * Finally, run the remaining integration tests 
 ```
 make upgrade-validate
