@@ -5,7 +5,6 @@ import (
 
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
-	v7 "github.com/osmosis-labs/osmosis/v9/app/upgrades/v7"
 
 	authz "github.com/cosmos/cosmos-sdk/x/authz"
 
@@ -14,6 +13,7 @@ import (
 	v4 "github.com/Stride-Labs/stride/v7/app/upgrades/v4"
 	v5 "github.com/Stride-Labs/stride/v7/app/upgrades/v5"
 	v6 "github.com/Stride-Labs/stride/v7/app/upgrades/v6"
+	v7 "github.com/Stride-Labs/stride/v7/app/upgrades/v7"
 	autopilottypes "github.com/Stride-Labs/stride/v7/x/autopilot/types"
 	claimtypes "github.com/Stride-Labs/stride/v7/x/claim/types"
 	icacallbacktypes "github.com/Stride-Labs/stride/v7/x/icacallbacks/types"
