@@ -55,6 +55,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 10. Minor optimizations ([c3df52d](https://github.com/Stride-Labs/stride/commit/c3df52d178ebe1e7e3ccf0a697bec3a9fecfdc48), [85e76ec](https://github.com/Stride-Labs/stride/commit/85e76ec9b932f0b5bf5617677d1b8306fd33298f), [5ff42a9](https://github.com/Stride-Labs/stride/commit/5ff42a93b189a240f8cc0ac0a750ac4cd26272f7, [b3196d2](https://github.com/Stride-Labs/stride/commit/b3196d2b3fca62b72b2ba451237379b0747f7b1c), [ddc951a](https://github.com/Stride-Labs/stride/commit/ddc951a7656423c7277671ea89a4fff9b8d0be6f), [bdd05b0](https://github.com/Stride-Labs/stride/commit/bdd05b0f39317e9ce428508fdcda0d66bd2a0ce1) [3d4ba72](https://github.com/Stride-Labs/stride/commit/3d4ba729cfd2529730fdccdb8ee0fdfe151413bd))
 11. Queries ([9b17edf](https://github.com/Stride-Labs/stride/commit/9b17edfe62a752865eaa9b7b95103345d5c66448), [f07ff73](https://github.com/Stride-Labs/stride/commit/f07ff73bd957a6e23afb5c7ec48a6d2334e0d5d7))
 12. Dependency Bumps ([2a04046](https://github.com/Stride-Labs/stride/commit/2a040460dcafdabafca15010facc7e6e2d29609c))
+13. v7 Upgrade Handler ([9bc47dc](https://github.com/Stride-Labs/stride/commit/9bc47dc4efb3ebbbbb8a50fd5b371cb5a37bfb14))
+14. v7 Import Paths ([563bc25](https://github.com/Stride-Labs/stride/commit/563bc25b341c85c8e09d4499f5b3f810338ded60))
+
 
 ### Off-Chain changes
 These changes do not affect any on-chain functionality, but have been implemented since `v6.0.0`.
