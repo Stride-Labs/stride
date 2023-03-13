@@ -31,11 +31,7 @@ import (
 )
 
 // Note: ensure these values are properly set before running upgrade
-var (
-	UpgradeName                = "v7"
-	IncentiveProgramAddress    = "stride1tlxk4as9sgpqkh42cfaxqja0mdj6qculqshy0gg3glazmrnx3y8s8gsvqk"
-	StrideFoundationAddress_F4 = "stride1yz3mp7c2m739nftfrv5r3h6j64aqp95f3degpf"
-)
+var ()
 
 // CreateUpgradeHandler creates an SDK upgrade handler for v7
 func CreateUpgradeHandler(
@@ -191,7 +187,7 @@ func ExecuteProp153(ctx sdk.Context, k bankkeeper.Keeper) error {
 	if err != nil {
 		return err
 	}
-	amount := sdk.NewCoin("ustrd", sdk.NewInt(STRDProp153SendAmount))
+	amount := sdk.NewCoin(Ustrd, sdk.NewInt(STRDProp153SendAmount))
 	if err := k.SendCoins(ctx, incentiveProgramAddress, strideFoundationAddress, sdk.NewCoins(amount)); err != nil {
 		return err
 	}

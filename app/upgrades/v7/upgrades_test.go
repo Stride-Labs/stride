@@ -201,7 +201,7 @@ func (s *UpgradeTestSuite) SetupIncentiveDiversification() {
 	// Get addresses for source and destination
 	incentiveProgramAddress, err := sdk.AccAddressFromBech32(v7.IncentiveProgramAddress)
 	s.Require().NoError(err, "no error expected when converting Incentive Program address")
-	strideFoundationAddress, err := sdk.AccAddressFromBech32(v7.StrideFoundationAddress)
+	strideFoundationAddress, err := sdk.AccAddressFromBech32(v7.StrideFoundationAddress_F4)
 	s.Require().NoError(err, "no error expected when converting Stride Foundation address")
 
 	// Fund incentive program account with 23M, and stride foundation with 4.1M
@@ -217,7 +217,7 @@ func (s *UpgradeTestSuite) CheckIncentiveDiversificationAfterUpgrade() {
 	// Get addresses for source and destination
 	incentiveProgramAddress, err := sdk.AccAddressFromBech32(v7.IncentiveProgramAddress)
 	s.Require().NoError(err, "no error expected when converting Incentive Program address")
-	strideFoundationAddress, err := sdk.AccAddressFromBech32(v7.StrideFoundationAddress)
+	strideFoundationAddress, err := sdk.AccAddressFromBech32(v7.StrideFoundationAddress_F4)
 	s.Require().NoError(err, "no error expected when converting Stride Foundation address")
 
 	// Confirm 3M were sent from the incentive program accoun to the stride foundation
@@ -269,7 +269,7 @@ func (s *UpgradeTestSuite) TestAddRedemptionRateSafetyChecks() {
 func (s *UpgradeTestSuite) TestIncentiveDiversification() {
 	s.SetupIncentiveDiversification()
 
-	err := v7.IncentiveDiversification(s.Ctx, s.App.BankKeeper)
+	err := v7.ExecuteProp153(s.Ctx, s.App.BankKeeper)
 	s.Require().NoError(err)
 
 	s.CheckIncentiveDiversificationAfterUpgrade()
