@@ -91,6 +91,11 @@ func (h Hooks) AfterEpochEnd(ctx sdk.Context, epochInfo epochstypes.EpochInfo) {
 	h.k.AfterEpochEnd(ctx, epochInfo)
 }
 
+func (h Hooks) AfterUnbondingInitiated(ctx sdk.Context, id uint64) error {
+	// TODO: implement
+	return nil
+}
+
 // staking hooks
 func (h Hooks) AfterValidatorCreated(ctx sdk.Context, valAddr sdk.ValAddress) error {
 	return nil

@@ -10,11 +10,12 @@ import (
 	errorsmod "cosmossdk.io/errors"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+	proto "github.com/cosmos/gogoproto/proto"
 	"github.com/spf13/cast"
 
-	ibctransfertypes "github.com/cosmos/ibc-go/v5/modules/apps/transfer/types"
-	ibctypes "github.com/cosmos/ibc-go/v5/modules/apps/transfer/types"
-	clienttypes "github.com/cosmos/ibc-go/v5/modules/core/02-client/types"
+	ibctransfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
+	ibctypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
+	clienttypes "github.com/cosmos/ibc-go/v7/modules/core/02-client/types"
 
 	"github.com/Stride-Labs/stride/v6/utils"
 	icqtypes "github.com/Stride-Labs/stride/v6/x/interchainquery/types"
@@ -24,7 +25,9 @@ import (
 // WithdrawalBalanceCallback is a callback handler for WithdrawalBalance queries.
 // The query response will return the withdrawal account balance
 // If the balance is non-zero, ICA MsgSends are submitted to transfer from the withdrawal account
-//  to the delegation account (for reinvestment) and fee account (for commission)
+//
+//	to the delegation account (for reinvestment) and fee account (for commission)
+//
 // Note: for now, to get proofs in your ICQs, you need to query the entire store on the host zone! e.g. "store/bank/key"
 func WithdrawalBalanceCallback(k Keeper, ctx sdk.Context, args []byte, query icqtypes.Query) error {
 	fmt.Println("WithdrawalBalanceCallback")
@@ -94,12 +97,12 @@ func WithdrawalBalanceCallback(k Keeper, ctx sdk.Context, args []byte, query icq
 	feeCoin := sdk.NewCoin(hostZone.HostDenom, feeAmount)
 	reinvestCoin := sdk.NewCoin(hostZone.HostDenom, reinvestAmount)
 
-	var msgs []sdk.Msg
+	var msgs []proto.Message
 	if feeCoin.Amount.GT(sdk.ZeroInt()) {
 		ibcTransferTimeoutNanos := k.GetParam(ctx, types.KeyIBCTransferTimeoutNanos)
 		timeoutTimestamp := uint64(ctx.BlockTime().UnixNano()) + ibcTransferTimeoutNanos
 		receiver := k.accountKeeper.GetModuleAccount(ctx, types.RewardCollectorName).GetAddress()
-		msg := ibctypes.NewMsgTransfer(ibctransfertypes.PortID, hostZone.TransferChannelId, feeCoin, withdrawalAccount.Address, receiver.String(), clienttypes.Height{}, timeoutTimestamp)
+		msg := ibctypes.NewMsgTransfer(ibctransfertypes.PortID, hostZone.TransferChannelId, feeCoin, withdrawalAccount.Address, receiver.String(), clienttypes.Height{}, timeoutTimestamp, "")
 
 		msgs = append(msgs, msg)
 		k.Logger(ctx).Info(utils.LogICQCallbackWithHostZone(chainId, ICQCallbackID_WithdrawalBalance,
