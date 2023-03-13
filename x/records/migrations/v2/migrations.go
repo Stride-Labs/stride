@@ -8,7 +8,7 @@ import (
 
 	errorsmod "cosmossdk.io/errors"
 
-	oldrecordtypes "github.com/Stride-Labs/stride/v6/x/records/migrations/v2/types"
+	oldrecordtypes "github.com/Stride-Labs/stride/v7/x/records/migrations/v2/types"
 	recordtypes "github.com/Stride-Labs/stride/v7/x/records/types"
 )
 

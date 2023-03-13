@@ -7,7 +7,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	oldrecordstypes "github.com/Stride-Labs/stride/v6/x/records/migrations/v2/types"
+	oldrecordstypes "github.com/Stride-Labs/stride/v7/x/records/migrations/v2/types"
 	recordstypes "github.com/Stride-Labs/stride/v7/x/records/types"
 )
 

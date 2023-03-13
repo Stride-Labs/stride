@@ -13,17 +13,17 @@ import (
 
 	"github.com/Stride-Labs/stride/v7/app"
 
-	oldclaimtypes "github.com/Stride-Labs/stride/v6/x/claim/migrations/v2/types"
-	oldrecordtypes "github.com/Stride-Labs/stride/v6/x/records/migrations/v2/types"
-	oldstakeibctypes "github.com/Stride-Labs/stride/v6/x/stakeibc/migrations/v2/types"
 	"github.com/Stride-Labs/stride/v7/app/apptesting"
 	upgradev5 "github.com/Stride-Labs/stride/v7/app/upgrades/v5"
+	oldclaimtypes "github.com/Stride-Labs/stride/v7/x/claim/migrations/v2/types"
 	claimtypes "github.com/Stride-Labs/stride/v7/x/claim/types"
 	icacallbacktypes "github.com/Stride-Labs/stride/v7/x/icacallbacks/types"
 	icqtypes "github.com/Stride-Labs/stride/v7/x/interchainquery/types"
 	recordkeeper "github.com/Stride-Labs/stride/v7/x/records/keeper"
+	oldrecordtypes "github.com/Stride-Labs/stride/v7/x/records/migrations/v2/types"
 	recordtypes "github.com/Stride-Labs/stride/v7/x/records/types"
 	stakeibckeeper "github.com/Stride-Labs/stride/v7/x/stakeibc/keeper"
+	oldstakeibctypes "github.com/Stride-Labs/stride/v7/x/stakeibc/migrations/v2/types"
 	stakeibctypes "github.com/Stride-Labs/stride/v7/x/stakeibc/types"
 )
 

@@ -7,7 +7,7 @@ import (
 
 	errorsmod "cosmossdk.io/errors"
 
-	oldclaimtypes "github.com/Stride-Labs/stride/v6/x/claim/migrations/v2/types"
+	oldclaimtypes "github.com/Stride-Labs/stride/v7/x/claim/migrations/v2/types"
 	claimtypes "github.com/Stride-Labs/stride/v7/x/claim/types"
 )
 

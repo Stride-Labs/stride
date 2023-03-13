@@ -3,7 +3,7 @@ package v2
 import (
 	sdkmath "cosmossdk.io/math"
 
-	oldclaimtypes "github.com/Stride-Labs/stride/v6/x/claim/migrations/v2/types"
+	oldclaimtypes "github.com/Stride-Labs/stride/v7/x/claim/migrations/v2/types"
 	claimtypes "github.com/Stride-Labs/stride/v7/x/claim/types"
 )
 
