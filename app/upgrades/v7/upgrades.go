@@ -83,11 +83,11 @@ func AddHourEpoch(ctx sdk.Context, k epochskeeper.Keeper) {
 
 	hourEpoch := epochstypes.EpochInfo{
 		Identifier:              epochstypes.HOUR_EPOCH,
-		StartTime:               time.Time{},
+		StartTime:               ctx.BlockTime(),
 		Duration:                time.Hour,
-		CurrentEpoch:            0,
-		CurrentEpochStartHeight: 0,
-		CurrentEpochStartTime:   time.Time{},
+		CurrentEpoch:            1,
+		CurrentEpochStartHeight: ctx.BlockHeight(),
+		CurrentEpochStartTime:   ctx.BlockTime(),
 		EpochCountingStarted:    false,
 	}
 
@@ -134,9 +134,7 @@ func AddRedemptionRateSafetyChecks(ctx sdk.Context, k stakeibckeeper.Keeper) {
 	ctx.Logger().Info("Setting min/max redemption rate safety bounds on each host zone")
 
 	// Set new stakeibc params
-	params := k.GetParams(ctx)
-	params.DefaultMinRedemptionRateThreshold = stakeibctypes.DefaultMinRedemptionRateThreshold
-	params.DefaultMaxRedemptionRateThreshold = stakeibctypes.DefaultMaxRedemptionRateThreshold
+	params := stakeibctypes.DefaultParams()
 	k.SetParams(ctx, params)
 
 	// Get default min/max redemption rate
