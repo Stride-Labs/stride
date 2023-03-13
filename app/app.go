@@ -216,15 +216,15 @@ var (
 		authtypes.FeeCollectorName: nil,
 		distrtypes.ModuleName:      nil,
 		// mint module needs burn access to remove excess validator tokens (it overallocates, then burns)
-		minttypes.ModuleName:            {authtypes.Minter, authtypes.Burner},
-		stakingtypes.BondedPoolName:     {authtypes.Burner, authtypes.Staking},
-		stakingtypes.NotBondedPoolName:  {authtypes.Burner, authtypes.Staking},
-		govtypes.ModuleName:             {authtypes.Burner},
-		ibctransfertypes.ModuleName:     {authtypes.Minter, authtypes.Burner},
-		stakeibcmoduletypes.ModuleName:  {authtypes.Minter, authtypes.Burner, authtypes.Staking},
-		claimtypes.ModuleName:           nil,
-		interchainquerytypes.ModuleName: nil,
-		icatypes.ModuleName:             nil,
+		minttypes.ModuleName:                    {authtypes.Minter, authtypes.Burner},
+		stakingtypes.BondedPoolName:             {authtypes.Burner, authtypes.Staking},
+		stakingtypes.NotBondedPoolName:          {authtypes.Burner, authtypes.Staking},
+		govtypes.ModuleName:                     {authtypes.Burner},
+		ibctransfertypes.ModuleName:             {authtypes.Minter, authtypes.Burner},
+		stakeibcmoduletypes.ModuleName:          {authtypes.Minter, authtypes.Burner, authtypes.Staking},
+		claimtypes.ModuleName:                   nil,
+		interchainquerytypes.ModuleName:         nil,
+		icatypes.ModuleName:                     nil,
 		stakeibcmoduletypes.RewardCollectorName: nil,
 		// this line is used by starport scaffolding # stargate/app/maccPerms
 	}
@@ -952,10 +952,7 @@ func (app *StrideApp) BlacklistedModuleAccountAddrs() map[string]bool {
 	// DO NOT REMOVE: StringMapKeys fixes non-deterministic map iteration
 	for _, acc := range utils.StringMapKeys(maccPerms) {
 		// don't blacklist stakeibc module account, so that it can ibc transfer tokens
-		if acc == "stakeibc" {
-			continue
-		}
-		if acc == stakeibcmoduletypes.RewardCollectorName {
+		if acc == stakeibcmoduletypes.ModuleName || acc == stakeibcmoduletypes.RewardCollectorName {
 			continue
 		}
 		modAccAddrs[authtypes.NewModuleAddress(acc).String()] = true

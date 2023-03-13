@@ -226,6 +226,16 @@ func (k Keeper) GetHostZoneFromIBCDenom(ctx sdk.Context, denom string) (*types.H
 	return nil, errorsmod.Wrapf(sdkerrors.ErrUnknownRequest, "No HostZone for %s found", denom)
 }
 
+// Validate whether a denom is a supported liquid staking token
+func (k Keeper) CheckIsStToken(ctx sdk.Context, denom string) bool {
+	for _, hostZone := range k.GetAllHostZone(ctx) {
+		if types.StAssetDenomFromHostZoneDenom(hostZone.HostDenom) == denom {
+			return true
+		}
+	}
+	return false
+}
+
 // IterateHostZones iterates zones
 func (k Keeper) IterateHostZones(ctx sdk.Context, fn func(ctx sdk.Context, index int64, zoneInfo types.HostZone) error) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefix(types.HostZoneKey))

@@ -173,8 +173,6 @@ func (k Keeper) UpdateWithdrawalBalance(ctx sdk.Context, hostZone types.HostZone
 		ICQCallbackID_WithdrawalBalance,
 		hostZone.ChainId,
 		hostZone.ConnectionId,
-		// use "bank" store to access acct balances which live in the bank module
-		// use "key" suffix to retrieve a proof alongside the query result
 		icqtypes.BANK_STORE_QUERY_WITH_PROOF,
 		queryData,
 		ttl,
@@ -401,8 +399,6 @@ func (k Keeper) QueryValidatorExchangeRate(ctx sdk.Context, msg *types.MsgUpdate
 		ICQCallbackID_Validator,
 		hostZone.ChainId,
 		hostZone.ConnectionId,
-		// use "staking" store to access validator which lives in the staking module
-		// use "key" suffix to retrieve a proof alongside the query result
 		icqtypes.STAKING_STORE_QUERY_WITH_PROOF,
 		queryData,
 		ttl,
@@ -454,8 +450,6 @@ func (k Keeper) QueryDelegationsIcq(ctx sdk.Context, hostZone types.HostZone, va
 		ICQCallbackID_Delegation,
 		hostZone.ChainId,
 		hostZone.ConnectionId,
-		// use "staking" store to access delegation which lives in the staking module
-		// use "key" suffix to retrieve a proof alongside the query result
 		icqtypes.STAKING_STORE_QUERY_WITH_PROOF,
 		queryData,
 		ttl,
