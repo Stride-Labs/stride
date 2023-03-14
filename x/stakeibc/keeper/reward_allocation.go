@@ -33,12 +33,12 @@ func (k Keeper) LiquidStakeRewardCollectorBalance(ctx sdk.Context, msgSvr types.
 		// liquid stake all tokens
 		msg := types.NewMsgLiquidStake(rewardCollectorAddress.String(), token.Amount, hz.HostDenom)
 		if err := msg.ValidateBasic(); err != nil {
-			k.Logger(ctx).Error("Liquid stake from reward collector address failed validate basic: %s", err.Error())
+			k.Logger(ctx).Error(fmt.Sprintf("Liquid stake from reward collector address failed validate basic: %s", err.Error()))
 			continue
 		}
 		_, err = msgSvr.LiquidStake(ctx, msg)
 		if err != nil {
-			k.Logger(ctx).Error("Can't liquid stake %s for hostzone %s", token.String(), hz.ChainId)
+			k.Logger(ctx).Error(fmt.Sprintf("Failed to liquid stake %s for hostzone %s: %s", token.String(), hz.ChainId, err.Error()))
 			continue
 		}
 		k.Logger(ctx).Info(fmt.Sprintf("Liquid staked %s for hostzone %s's accrued rewards", token.String(), hz.ChainId))

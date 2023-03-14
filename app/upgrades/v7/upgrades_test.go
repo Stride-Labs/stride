@@ -29,14 +29,16 @@ var (
 	InitialJunoUnbondingFrequency = uint64(4)
 	ustrd                         = "ustrd"
 )
+
+// The block time here is arbitrary, but it's must start at a time that is not at an even hour
+var InitialBlockTime = time.Date(2023, 1, 1, 8, 43, 0, 0, time.UTC) // January 1st 2023 at 8:43 AM
+var EpochStartTime = time.Date(2023, 1, 1, 8, 00, 0, 0, time.UTC)   // January 1st 2023 at 8:00 AM
 var ExpectedHourEpoch = epochstypes.EpochInfo{
-	Identifier:              epochstypes.HOUR_EPOCH,
-	StartTime:               time.Time{},
-	Duration:                time.Hour,
-	CurrentEpoch:            0,
-	CurrentEpochStartHeight: 0,
-	CurrentEpochStartTime:   time.Time{},
-	EpochCountingStarted:    false,
+	Identifier:            epochstypes.HOUR_EPOCH,
+	Duration:              time.Hour,
+	CurrentEpoch:          0,
+	StartTime:             EpochStartTime,
+	CurrentEpochStartTime: EpochStartTime,
 }
 var ExpectedJunoUnbondingFrequency = uint64(5)
 var ExpectedEpochProvisions = sdk.NewDec(1_078_767_123)
@@ -100,6 +102,9 @@ func (s *UpgradeTestSuite) SetupEpochs() {
 	s.App.EpochsKeeper.SetEpochInfo(s.Ctx, epochstypes.EpochInfo{
 		Identifier: epochstypes.STRIDE_EPOCH,
 	})
+
+	// Change the context to be a time that's not rounded on the hour
+	s.Ctx = s.Ctx.WithBlockTime(InitialBlockTime)
 }
 
 // Checks that the hour epoch has been added
@@ -118,9 +123,12 @@ func (s *UpgradeTestSuite) CheckEpochsAfterUpgrade(epochStarted bool) {
 	// If the upgrade passed an a block was incremented, the epoch should be started
 	expectedHourEpoch := ExpectedHourEpoch
 	if epochStarted {
-		expectedHourEpoch.EpochCountingStarted = true
 		expectedHourEpoch.CurrentEpoch = 1
+		expectedHourEpoch.EpochCountingStarted = true
 		expectedHourEpoch.CurrentEpochStartHeight = DummyUpgradeHeight
+	} else {
+		expectedHourEpoch.EpochCountingStarted = false
+		expectedHourEpoch.CurrentEpochStartHeight = s.Ctx.BlockHeight()
 	}
 
 	actualHourEpoch, found := s.App.EpochsKeeper.GetEpochInfo(s.Ctx, epochstypes.HOUR_EPOCH)
