@@ -192,6 +192,7 @@ func ExecuteProp153(ctx sdk.Context, k bankkeeper.Keeper) error {
 
 // Create reward collector module account for Prop #8
 func CreateRewardCollectorModuleAccount(ctx sdk.Context, k authkeeper.AccountKeeper) error {
+	ctx.Logger().Info("Creating reward collector module account")
 	rewardCollectorAddress := address.Module(stakeibctypes.RewardCollectorName, []byte(stakeibctypes.RewardCollectorName))
 	return utils.CreateModuleAccount(ctx, k, rewardCollectorAddress)
 }
