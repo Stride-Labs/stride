@@ -139,21 +139,6 @@ func (p *Params) ParamSetPairs() paramtypes.ParamSetPairs {
 	}
 }
 
-func isThreshold(i interface{}) error {
-	ival, ok := i.(uint64)
-	if !ok {
-		return fmt.Errorf("parameter not accepted: %T", i)
-	}
-
-	if ival <= 0 {
-		return fmt.Errorf("parameter must be positive: %d", ival)
-	}
-	if ival > 10000 {
-		return fmt.Errorf("parameter must be less than 10,000: %d", ival)
-	}
-	return nil
-}
-
 func validTimeoutNanos(i interface{}) error {
 	ival, ok := i.(uint64)
 	if !ok {
