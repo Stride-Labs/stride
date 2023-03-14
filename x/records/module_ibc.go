@@ -11,6 +11,8 @@ import (
 	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
 	porttypes "github.com/cosmos/ibc-go/v7/modules/core/05-port/types"
 
+	host "github.com/cosmos/ibc-go/v7/modules/core/24-host"
+
 	icacallbacks "github.com/Stride-Labs/stride/v6/x/icacallbacks"
 	icacallbacktypes "github.com/Stride-Labs/stride/v6/x/icacallbacks/types"
 
@@ -54,6 +56,12 @@ func (im IBCModule) OnChanOpenInit(
 	// 	return err
 	// }
 	// doCustomLogic()
+	if channelCap == nil {
+		path := host.ChannelCapabilityPath(portID, channelID)
+		chanCap, _ := im.keeper.IBCScopperKeeper.GetCapability(ctx, path)
+
+		channelCap = chanCap
+	}
 	version, err := im.app.OnChanOpenInit(
 		ctx,
 		order,

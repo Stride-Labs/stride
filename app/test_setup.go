@@ -5,6 +5,11 @@ import (
 	"time"
 
 	sdkmath "cosmossdk.io/math"
+	cometbftdb "github.com/cometbft/cometbft-db"
+	abci "github.com/cometbft/cometbft/abci/types"
+	"github.com/cometbft/cometbft/crypto/secp256k1"
+	"github.com/cometbft/cometbft/libs/log"
+	tmtypes "github.com/cometbft/cometbft/types"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
 	"github.com/cosmos/cosmos-sdk/testutil/mock"
@@ -14,11 +19,6 @@ import (
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	ibctesting "github.com/cosmos/ibc-go/v7/testing"
-	abci "github.com/tendermint/tendermint/abci/types"
-	"github.com/tendermint/tendermint/crypto/secp256k1"
-	"github.com/tendermint/tendermint/libs/log"
-	tmtypes "github.com/tendermint/tendermint/types"
-	dbm "github.com/tendermint/tm-db"
 
 	cmdcfg "github.com/Stride-Labs/stride/v6/cmd/strided/config"
 )
@@ -40,7 +40,7 @@ func SetupConfig() {
 
 // Initializes a new StrideApp without IBC functionality
 func InitStrideTestApp(initChain bool) *StrideApp {
-	db := dbm.NewMemDB()
+	db := cometbftdb.NewMemDB()
 	app := NewStrideApp(
 		log.NewNopLogger(),
 		db,

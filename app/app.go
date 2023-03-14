@@ -64,6 +64,11 @@ import (
 	mintkeeper "github.com/Stride-Labs/stride/v6/x/mint/keeper"
 	minttypes "github.com/Stride-Labs/stride/v6/x/mint/types"
 
+	cometbftdb "github.com/cometbft/cometbft-db"
+	abci "github.com/cometbft/cometbft/abci/types"
+	tmjson "github.com/cometbft/cometbft/libs/json"
+	"github.com/cometbft/cometbft/libs/log"
+	tmos "github.com/cometbft/cometbft/libs/os"
 	"github.com/cosmos/cosmos-sdk/x/params"
 	paramsclient "github.com/cosmos/cosmos-sdk/x/params/client"
 	paramskeeper "github.com/cosmos/cosmos-sdk/x/params/keeper"
@@ -90,11 +95,6 @@ import (
 	ibckeeper "github.com/cosmos/ibc-go/v7/modules/core/keeper"
 	ibctesting "github.com/cosmos/ibc-go/v7/testing"
 	"github.com/spf13/cast"
-	abci "github.com/tendermint/tendermint/abci/types"
-	tmjson "github.com/tendermint/tendermint/libs/json"
-	"github.com/tendermint/tendermint/libs/log"
-	tmos "github.com/tendermint/tendermint/libs/os"
-	dbm "github.com/tendermint/tm-db"
 
 	ica "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts"
 	icacontroller "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/controller"
@@ -142,8 +142,6 @@ import (
 
 	// this line is used by starport scaffolding # stargate/app/moduleImport
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
-	ibcfeekeeper "github.com/cosmos/ibc-go/v7/modules/apps/29-fee/keeper"
-	ibcfeetypes "github.com/cosmos/ibc-go/v7/modules/apps/29-fee/types"
 	ibctestingtypes "github.com/cosmos/ibc-go/v7/testing/types"
 )
 
@@ -186,7 +184,7 @@ var (
 	// and genesis verification.
 	ModuleBasics = module.NewBasicManager(
 		auth.AppModuleBasic{},
-		genutil.AppModuleBasic{},
+		genutil.NewAppModuleBasic(genutiltypes.DefaultMessageValidator),
 		bank.AppModuleBasic{},
 		capability.AppModuleBasic{},
 		staking.AppModuleBasic{},
@@ -318,7 +316,7 @@ type StrideApp struct {
 // New returns a reference to an initialized blockchain app
 func NewStrideApp(
 	logger log.Logger,
-	db dbm.DB,
+	db cometbftdb.DB,
 	traceStore io.Writer,
 	loadLatest bool,
 	skipUpgradeHeights map[int64]bool,
@@ -499,7 +497,9 @@ func NewStrideApp(
 		keys[icacallbacksmoduletypes.MemStoreKey],
 		app.GetSubspace(icacallbacksmoduletypes.ModuleName),
 		scopedIcacallbacksKeeper,
+		scopedIBCKeeper,
 		*app.IBCKeeper,
+		app.ICAControllerKeeper,
 	)
 
 	app.InterchainqueryKeeper = interchainquerykeeper.NewKeeper(appCodec, keys[interchainquerytypes.StoreKey], app.IBCKeeper)
@@ -513,6 +513,7 @@ func NewStrideApp(
 		keys[recordsmoduletypes.MemStoreKey],
 		app.GetSubspace(recordsmoduletypes.ModuleName),
 		scopedRecordsKeeper,
+		scopedIBCKeeper,
 		app.AccountKeeper,
 		app.TransferKeeper,
 		*app.IBCKeeper,
@@ -600,17 +601,17 @@ func NewStrideApp(
 	}
 
 	// this line is used by starport scaffolding # stargate/app/keeperDefinition
-	ibcFeeKeeper := ibcfeekeeper.NewKeeper(
-		appCodec, app.keys[ibcfeetypes.StoreKey],
-		app.IBCKeeper.ChannelKeeper, // may be replaced with IBC middleware
-		app.IBCKeeper.ChannelKeeper,
-		&app.IBCKeeper.PortKeeper, app.AccountKeeper, app.BankKeeper,
-	)
+	// ibcFeeKeeper := ibcfeekeeper.NewKeeper(
+	// 	appCodec, app.keys[ibcfeetypes.StoreKey],
+	// 	app.IBCKeeper.ChannelKeeper, // may be replaced with IBC middleware
+	// 	app.IBCKeeper.ChannelKeeper,
+	// 	&app.IBCKeeper.PortKeeper, app.AccountKeeper, app.BankKeeper,
+	// )
 
 	// create IBC middleware stacks by combining middleware with base application
 	app.ICAHostKeeper = icahostkeeper.NewKeeper(
 		appCodec, keys[icahosttypes.StoreKey], app.GetSubspace(icahosttypes.SubModuleName),
-		ibcFeeKeeper,
+		app.IcacallbacksKeeper,
 		app.IBCKeeper.ChannelKeeper, &app.IBCKeeper.PortKeeper,
 		app.AccountKeeper, scopedICAHostKeeper, app.MsgServiceRouter())
 	icaModule := ica.NewAppModule(&app.ICAControllerKeeper, &app.ICAHostKeeper)

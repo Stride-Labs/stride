@@ -5,6 +5,8 @@ import (
 	"testing"
 	"time"
 
+	cometbftdb "github.com/cometbft/cometbft-db"
+	tmrand "github.com/cometbft/cometbft/libs/rand"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/crypto/hd"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
@@ -14,8 +16,6 @@ import (
 	simtestutil "github.com/cosmos/cosmos-sdk/testutil/sims"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
-	tmrand "github.com/tendermint/tendermint/libs/rand"
-	tmdb "github.com/tendermint/tm-db"
 
 	"github.com/Stride-Labs/stride/v6/app"
 )
@@ -55,7 +55,7 @@ func DefaultConfig() network.Config {
 		AccountRetriever:  authtypes.AccountRetriever{},
 		AppConstructor: func(val network.ValidatorI) servertypes.Application {
 			return app.NewStrideApp(
-				val.GetCtx().Logger, tmdb.NewMemDB(), nil, true, map[int64]bool{}, val.GetCtx().Config.RootDir, 0,
+				val.GetCtx().Logger, cometbftdb.NewMemDB(), nil, true, map[int64]bool{}, val.GetCtx().Config.RootDir, 0,
 				encoding,
 				simtestutil.EmptyAppOptions{},
 				baseapp.SetPruning(pruningtypes.NewPruningOptionsFromString(val.GetAppConfig().Pruning)),

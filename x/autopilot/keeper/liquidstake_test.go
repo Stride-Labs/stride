@@ -4,11 +4,11 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/cometbft/cometbft/crypto/ed25519"
 	"github.com/cosmos/ibc-go/v7/modules/apps/transfer"
 	transfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
 	clienttypes "github.com/cosmos/ibc-go/v7/modules/core/02-client/types"
 	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
-	"github.com/tendermint/tendermint/crypto/ed25519"
 
 	recordsmodule "github.com/Stride-Labs/stride/v6/x/records"
 

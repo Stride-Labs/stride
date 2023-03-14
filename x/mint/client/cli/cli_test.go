@@ -8,8 +8,8 @@ import (
 	"strings"
 	"testing"
 
+	tmcli "github.com/cometbft/cometbft/libs/cli"
 	"github.com/stretchr/testify/suite"
-	tmcli "github.com/tendermint/tendermint/libs/cli"
 
 	"github.com/Stride-Labs/stride/v6/app"
 	"github.com/Stride-Labs/stride/v6/x/mint/client/cli"

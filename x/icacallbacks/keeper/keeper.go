@@ -3,7 +3,7 @@ package keeper
 import (
 	"fmt"
 
-	"github.com/tendermint/tendermint/libs/log"
+	"github.com/cometbft/cometbft/libs/log"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -11,6 +11,8 @@ import (
 	errorsmod "cosmossdk.io/errors"
 	capabilitykeeper "github.com/cosmos/cosmos-sdk/x/capability/keeper"
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
+
+	"github.com/cosmos/ibc-go/v7/modules/core/exported"
 
 	ibckeeper "github.com/cosmos/ibc-go/v7/modules/core/keeper"
 
@@ -20,17 +22,24 @@ import (
 	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
 
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
+	capabilitytypes "github.com/cosmos/cosmos-sdk/x/capability/types"
+	icacontrollerkeeper "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/controller/keeper"
+	clienttypes "github.com/cosmos/ibc-go/v7/modules/core/02-client/types"
+	porttypes "github.com/cosmos/ibc-go/v7/modules/core/05-port/types"
 )
 
 type (
 	Keeper struct {
-		cdc          codec.BinaryCodec
-		storeKey     storetypes.StoreKey
-		memKey       storetypes.StoreKey
-		paramstore   paramtypes.Subspace
-		scopedKeeper capabilitykeeper.ScopedKeeper
-		icacallbacks map[string]types.ICACallbackHandler
-		IBCKeeper    ibckeeper.Keeper
+		cdc                 codec.BinaryCodec
+		storeKey            storetypes.StoreKey
+		memKey              storetypes.StoreKey
+		paramstore          paramtypes.Subspace
+		scopedKeeper        capabilitykeeper.ScopedKeeper
+		IBCScopperKeeper    capabilitykeeper.ScopedKeeper
+		icacallbacks        map[string]types.ICACallbackHandler
+		IBCKeeper           ibckeeper.Keeper
+		ICAControllerKeeper icacontrollerkeeper.Keeper
+		ics4Wrapper         porttypes.ICS4Wrapper
 	}
 )
 
@@ -40,7 +49,9 @@ func NewKeeper(
 	memKey storetypes.StoreKey,
 	ps paramtypes.Subspace,
 	scopedKeeper capabilitykeeper.ScopedKeeper,
+	IBCScopperKeeper capabilitykeeper.ScopedKeeper,
 	ibcKeeper ibckeeper.Keeper,
+	icacontrollerkeeper icacontrollerkeeper.Keeper,
 ) *Keeper {
 	// set KeyTable if it has not already been set
 	if !ps.HasKeyTable() {
@@ -48,13 +59,15 @@ func NewKeeper(
 	}
 
 	return &Keeper{
-		cdc:          cdc,
-		storeKey:     storeKey,
-		memKey:       memKey,
-		paramstore:   ps,
-		scopedKeeper: scopedKeeper,
-		icacallbacks: make(map[string]types.ICACallbackHandler),
-		IBCKeeper:    ibcKeeper,
+		cdc:                 cdc,
+		storeKey:            storeKey,
+		memKey:              memKey,
+		paramstore:          ps,
+		scopedKeeper:        scopedKeeper,
+		IBCScopperKeeper:    IBCScopperKeeper,
+		icacallbacks:        make(map[string]types.ICACallbackHandler),
+		IBCKeeper:           ibcKeeper,
+		ICAControllerKeeper: icacontrollerkeeper,
 	}
 }
 
@@ -143,4 +156,36 @@ func (k Keeper) CallRegisteredICACallback(ctx sdk.Context, modulePacket channelt
 	// remove the callback data
 	k.RemoveCallbackData(ctx, callbackDataKey)
 	return nil
+}
+
+func (k Keeper) WriteAcknowledgement(ctx sdk.Context, channelCap *capabilitytypes.Capability, packet exported.PacketI, ack exported.Acknowledgement) error {
+	return k.ics4Wrapper.WriteAcknowledgement(ctx, channelCap, packet, ack)
+}
+
+func (k Keeper) GetAppVersion(ctx sdk.Context, portID, channelID string) (string, bool) {
+	return k.ics4Wrapper.GetAppVersion(ctx, portID, channelID)
+}
+
+func (k Keeper) SendPacket(
+	ctx sdk.Context,
+	channelCap *capabilitytypes.Capability,
+	sourcePort string,
+	sourceChannel string,
+	timeoutHeight clienttypes.Height,
+	timeoutTimestamp uint64,
+	data []byte,
+) (sequence uint64, err error) {
+	sequence, err = k.ics4Wrapper.SendPacket(
+		ctx,
+		channelCap,
+		sourcePort,
+		sourceChannel,
+		timeoutHeight,
+		timeoutTimestamp,
+		data,
+	)
+	if err != nil {
+		return 0, err
+	}
+	return sequence, nil
 }

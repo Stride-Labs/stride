@@ -55,7 +55,7 @@ func (k msgServer) RestoreInterchainAccount(goCtx context.Context, msg *types.Ms
 		TxType:                 icatypes.TxTypeSDKMultiMsg,
 	}))
 
-	if err := k.ICAControllerKeeper.RegisterInterchainAccount(ctx, hostZone.ConnectionId, owner, appVersion); err != nil {
+	if err := k.RegisterInterchainAccount(ctx, hostZone.ConnectionId, owner, appVersion); err != nil {
 		k.Logger(ctx).Error(fmt.Sprintf("unable to register %s account : %s", msg.AccountType.String(), err))
 		return nil, err
 	}

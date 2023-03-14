@@ -4,9 +4,9 @@ import (
 	"fmt"
 
 	errorsmod "cosmossdk.io/errors"
+	"github.com/cometbft/cometbft/libs/log"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/spf13/cast"
-	"github.com/tendermint/tendermint/libs/log"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -20,6 +20,7 @@ import (
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
 	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 	icacontrollerkeeper "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/controller/keeper"
+	icacontrollertypes "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/controller/types"
 	ibckeeper "github.com/cosmos/ibc-go/v7/modules/core/keeper"
 	ibctmtypes "github.com/cosmos/ibc-go/v7/modules/light-clients/07-tendermint"
 
@@ -317,5 +318,16 @@ func (k Keeper) ConfirmValSetHasSpace(ctx sdk.Context, validators []*types.Valid
 		return errorsmod.Wrap(types.ErrMaxNumValidators, errMsg)
 	}
 
+	return nil
+}
+
+func (k msgServer) RegisterInterchainAccount(ctx sdk.Context, connectionId string, owner string, appVersion string) error {
+	msgServer := icacontrollerkeeper.NewMsgServerImpl(&k.ICAControllerKeeper)
+	msgRegisterInterchainAccount := icacontrollertypes.NewMsgRegisterInterchainAccount(connectionId, owner, appVersion)
+
+	_, err := msgServer.RegisterInterchainAccount(ctx, msgRegisterInterchainAccount)
+	if err != nil {
+		return err
+	}
 	return nil
 }

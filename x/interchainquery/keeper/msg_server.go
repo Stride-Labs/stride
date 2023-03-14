@@ -12,8 +12,7 @@ import (
 	commitmenttypes "github.com/cosmos/ibc-go/v7/modules/core/23-commitment/types"
 	"github.com/cosmos/ibc-go/v7/modules/core/exported"
 	tendermint "github.com/cosmos/ibc-go/v7/modules/light-clients/07-tendermint"
-	tmclienttypes "github.com/cosmos/ibc-go/v7/modules/light-clients/07-tendermint"
-	wasm "github.com/cosmos/ibc-go/v7/modules/light-clients/08-wasm"
+
 	ics23 "github.com/cosmos/ics23/go"
 	"github.com/spf13/cast"
 
@@ -59,13 +58,13 @@ func (k Keeper) VerifyKeyProof(ctx sdk.Context, msg *types.MsgSubmitQueryRespons
 	if !found {
 		return errorsmod.Wrapf(types.ErrInvalidICQProof, "ConnectionId %s does not exist", query.ConnectionId)
 	}
-	consensusState, found := k.IBCKeeper.ClientKeeper.GetClientConsensusState(ctx, connection.ClientId, height)
-	if !found {
-		return errorsmod.Wrapf(types.ErrInvalidICQProof, "Consensus state not found for client %s and height %d", connection.ClientId, height)
-	}
 	clientState, found := k.IBCKeeper.ClientKeeper.GetClientState(ctx, connection.ClientId)
 	if !found {
 		return errorsmod.Wrapf(types.ErrInvalidICQProof, "Unable to fetch client state for client %s", connection.ClientId)
+	}
+	consensusState, found := k.IBCKeeper.ClientKeeper.GetClientConsensusState(ctx, connection.ClientId, height)
+	if !found {
+		return errorsmod.Wrapf(types.ErrInvalidICQProof, "Consensus state not found for client %s and height %d", connection.ClientId, height)
 	}
 	var stateRoot exported.Root
 	var clientStateProof []*ics23.ProofSpec
@@ -77,17 +76,17 @@ func (k Keeper) VerifyKeyProof(ctx sdk.Context, msg *types.MsgSubmitQueryRespons
 			return errorsmod.Wrapf(types.ErrInvalidConsensusState, "Error casting consensus state: %s", err.Error())
 		}
 		stateRoot = tendermintConsensusState.GetRoot()
-	case exported.Wasm:
-		wasmConsensusState, ok := consensusState.(*wasm.ConsensusState)
-		if !ok {
-			return errorsmod.Wrapf(types.ErrInvalidConsensusState, "Error casting consensus state: %s", err.Error())
-		}
-		tmClientState, ok := clientState.(*tmclienttypes.ClientState)
-		if !ok {
-			return errorsmod.Wrapf(types.ErrInvalidICQProof, "Client state is not tendermint")
-		}
-		clientStateProof = tmClientState.ProofSpecs
-		stateRoot = wasmConsensusState.GetRoot()
+	// case exported.Wasm:
+	// 	wasmConsensusState, ok := consensusState.(*wasm.ConsensusState)
+	// 	if !ok {
+	// 		return errorsmod.Wrapf(types.ErrInvalidConsensusState, "Error casting consensus state: %s", err.Error())
+	// 	}
+	// 	tmClientState, ok := clientState.(*tmclienttypes.ClientState)
+	// 	if !ok {
+	// 		return errorsmod.Wrapf(types.ErrInvalidICQProof, "Client state is not tendermint")
+	// 	}
+	// 	clientStateProof = tmClientState.ProofSpecs
+	// 	stateRoot = wasmConsensusState.GetRoot()
 	default:
 		panic("not implemented")
 	}

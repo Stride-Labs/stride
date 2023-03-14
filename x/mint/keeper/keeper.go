@@ -3,8 +3,8 @@ package keeper
 import (
 	"fmt"
 
+	"github.com/cometbft/cometbft/libs/log"
 	"github.com/spf13/cast"
-	"github.com/tendermint/tendermint/libs/log"
 
 	errorsmod "cosmossdk.io/errors"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"

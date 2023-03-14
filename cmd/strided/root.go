@@ -10,15 +10,14 @@ import (
 
 	"github.com/Stride-Labs/stride/v6/utils"
 
-	tmDb "github.com/tendermint/tm-db"
-
+	cometbftdb "github.com/cometbft/cometbft-db"
+	tmcli "github.com/cometbft/cometbft/libs/cli"
+	"github.com/cometbft/cometbft/libs/log"
 	"github.com/spf13/cast"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
-	tmcli "github.com/tendermint/tendermint/libs/cli"
-	"github.com/tendermint/tendermint/libs/log"
-	dbm "github.com/tendermint/tm-db"
 
+	tmcfg "github.com/cometbft/cometbft/config"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/client"
 	config "github.com/cosmos/cosmos-sdk/client/config"
@@ -40,7 +39,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/genutil"
 	genutilcli "github.com/cosmos/cosmos-sdk/x/genutil/client/cli"
 	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
-	tmcfg "github.com/tendermint/tendermint/config"
 
 	"github.com/Stride-Labs/stride/v6/app"
 	// "github.com/Stride-Labs/stride/v6/app/params"
@@ -268,7 +266,7 @@ type appCreator struct {
 }
 
 // newApp is an AppCreator
-func (a appCreator) newApp(logger log.Logger, db dbm.DB, traceStore io.Writer, appOpts servertypes.AppOptions) servertypes.Application {
+func (a appCreator) newApp(logger log.Logger, db cometbftdb.DB, traceStore io.Writer, appOpts servertypes.AppOptions) servertypes.Application {
 	var cache sdk.MultiStorePersistentCache
 
 	if cast.ToBool(appOpts.Get(server.FlagInterBlockCache)) {
@@ -290,7 +288,7 @@ func (a appCreator) newApp(logger log.Logger, db dbm.DB, traceStore io.Writer, a
 	}
 
 	snapshotDir := filepath.Join(cast.ToString(appOpts.Get(flags.FlagHome)), "data", "snapshots")
-	snapshotDB, err := tmDb.NewDB("metadata", tmDb.GoLevelDBBackend, snapshotDir)
+	snapshotDB, err := cometbftdb.NewDB("metadata", cometbftdb.GoLevelDBBackend, snapshotDir)
 	if err != nil {
 		panic(err)
 	}
@@ -327,7 +325,7 @@ func (a appCreator) newApp(logger log.Logger, db dbm.DB, traceStore io.Writer, a
 
 // appExport creates a new simapp (optionally at a given height)
 func (a appCreator) appExport(
-	logger log.Logger, db dbm.DB, traceStore io.Writer, height int64, forZeroHeight bool, jailAllowedAddrs []string,
+	logger log.Logger, db cometbftdb.DB, traceStore io.Writer, height int64, forZeroHeight bool, jailAllowedAddrs []string,
 	appOpts servertypes.AppOptions, modulesToExport []string,
 ) (servertypes.ExportedApp, error) {
 	var anApp *app.StrideApp
