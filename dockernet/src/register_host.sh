@@ -26,7 +26,7 @@ sleep 10
 echo "$CHAIN - Registering validators..."
 weights=(5 10 5 10 5) # alternate weights across vals
 for (( i=1; i <= $NUM_VALS; i++ )); do
-    delegate_val=$(GET_VAL_ADDR $CHAIN $i)
+    delegate_val=$(GET_VAL_ADDR $CHAIN $i | tr -cd '[:alnum:]._-')
     weight=${weights[$i]}
 
     $STRIDE_MAIN_CMD tx stakeibc add-validator $CHAIN_ID ${VAL_PREFIX}${i} $delegate_val 10 $weight \

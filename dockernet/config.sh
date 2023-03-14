@@ -345,14 +345,14 @@ GET_VAL_ADDR() {
   val_index=$2
 
   MAIN_CMD=$(GET_VAR_VALUE ${chain}_MAIN_CMD)
-  $MAIN_CMD q staking validators | grep ${chain}_${val_index} -A 5 | grep operator | awk '{print $2}'
+  $MAIN_CMD q staking validators | grep ${chain}_${val_index} -A 5 | grep operator | awk '{print $2}' | tr -cd '[:alnum:]._-'
 }
 
 GET_ICA_ADDR() {
   chain_id="$1"
   ica_type="$2" #delegation, fee, redemption, or withdrawal
 
-  $STRIDE_MAIN_CMD q stakeibc show-host-zone $chain_id | grep ${ica_type}_account -A 1 | grep address | awk '{print $2}'
+  $STRIDE_MAIN_CMD q stakeibc show-host-zone $chain_id | grep ${ica_type}_account -A 1 | grep address | awk '{print $2}' | tr -cd '[:alnum:]._-'
 }
 
 TRIM_TX() {

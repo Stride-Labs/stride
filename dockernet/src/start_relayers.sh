@@ -23,7 +23,7 @@ for chain in ${HOST_CHAINS[@]}; do
 
     printf "STRIDE <> $chain - Adding relayer keys..."
     $relayer_exec rly keys restore stride $RELAYER_STRIDE_ACCT "$mnemonic" >> $relayer_logs 2>&1
-    $relayer_exec rly keys restore $chain_name $account_name "$mnemonic" --coin-type $coin_type >> $relayer_logs 2>&1
+    $relayer_exec rly keys restore $chain_name $account_name "$mnemonic" >> $relayer_logs 2>&1
     echo "Done restoring relayer keys"
 
     printf "STRIDE <> $chain - Creating client, connection, and transfer channel..." | tee -a $relayer_logs
