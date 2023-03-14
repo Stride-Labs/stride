@@ -3,9 +3,9 @@ package keeper
 import (
 	"fmt"
 
+	"github.com/cometbft/cometbft/crypto"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/tendermint/tendermint/crypto"
 
 	"github.com/Stride-Labs/stride/v6/x/interchainquery/types"
 )

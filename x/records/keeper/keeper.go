@@ -3,8 +3,8 @@ package keeper
 import (
 	"fmt"
 
+	"github.com/cometbft/cometbft/libs/log"
 	ibckeeper "github.com/cosmos/ibc-go/v7/modules/core/keeper"
-	"github.com/tendermint/tendermint/libs/log"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -35,6 +35,7 @@ type (
 		TransferKeeper     ibctransferkeeper.Keeper
 		IBCKeeper          ibckeeper.Keeper
 		ICACallbacksKeeper icacallbackskeeper.Keeper
+		IBCScopperKeeper   capabilitykeeper.ScopedKeeper
 	}
 )
 
@@ -44,6 +45,7 @@ func NewKeeper(
 	memKey storetypes.StoreKey,
 	ps paramtypes.Subspace,
 	scopedKeeper capabilitykeeper.ScopedKeeper,
+	IBCScopperKeeper capabilitykeeper.ScopedKeeper,
 	AccountKeeper types.AccountKeeper,
 	TransferKeeper ibctransferkeeper.Keeper,
 	ibcKeeper ibckeeper.Keeper,
@@ -60,6 +62,7 @@ func NewKeeper(
 		memKey:             memKey,
 		paramstore:         ps,
 		scopedKeeper:       scopedKeeper,
+		IBCScopperKeeper:   IBCScopperKeeper,
 		AccountKeeper:      AccountKeeper,
 		TransferKeeper:     TransferKeeper,
 		IBCKeeper:          ibcKeeper,

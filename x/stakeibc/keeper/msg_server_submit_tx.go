@@ -308,10 +308,6 @@ func (k Keeper) SubmitTxs(
 
 	sequence := res.Sequence
 
-	if err != nil {
-		return 0, err
-	}
-
 	// Store the callback data
 	if callbackId != "" && callbackArgs != nil {
 		callback := icacallbackstypes.CallbackData{
