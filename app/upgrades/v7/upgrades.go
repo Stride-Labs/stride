@@ -81,13 +81,14 @@ func CreateUpgradeHandler(
 func AddHourEpoch(ctx sdk.Context, k epochskeeper.Keeper) {
 	ctx.Logger().Info("Adding hour epoch")
 
+	startTime := ctx.BlockTime().Truncate(time.Hour)
 	hourEpoch := epochstypes.EpochInfo{
 		Identifier:              epochstypes.HOUR_EPOCH,
-		StartTime:               time.Time{},
+		StartTime:               startTime,
 		Duration:                time.Hour,
 		CurrentEpoch:            0,
-		CurrentEpochStartHeight: 0,
-		CurrentEpochStartTime:   time.Time{},
+		CurrentEpochStartHeight: ctx.BlockHeight(),
+		CurrentEpochStartTime:   startTime,
 		EpochCountingStarted:    false,
 	}
 
@@ -134,9 +135,12 @@ func AddRedemptionRateSafetyChecks(ctx sdk.Context, k stakeibckeeper.Keeper) {
 	ctx.Logger().Info("Setting min/max redemption rate safety bounds on each host zone")
 
 	// Set new stakeibc params
-	params := k.GetParams(ctx)
-	params.DefaultMinRedemptionRateThreshold = stakeibctypes.DefaultMinRedemptionRateThreshold
-	params.DefaultMaxRedemptionRateThreshold = stakeibctypes.DefaultMaxRedemptionRateThreshold
+	// In this case, we're using `DefaultParams` because all of our current params are the defaults
+	// You can verify this by hand by running `strided q stakeibc params`, and comparing the output to the values defined in params.go.
+	// This is a safer way of adding a new parameter that avoids having to unmarshal using the old types
+	// In future upgrades, if we are simply modifying parameter values (instead of adding a new parameter),
+	// we should read in params using GetParams, modify them, and then set them using SetParams
+	params := stakeibctypes.DefaultParams()
 	k.SetParams(ctx, params)
 
 	// Get default min/max redemption rate
@@ -194,6 +198,8 @@ func ExecuteProp153(ctx sdk.Context, k bankkeeper.Keeper) error {
 
 // Create reward collector module account for Prop #8
 func CreateRewardCollectorModuleAccount(ctx sdk.Context, k authkeeper.AccountKeeper) error {
+	ctx.Logger().Info("Creating reward collector module account")
+
 	rewardCollectorAddress := address.Module(stakeibctypes.RewardCollectorName, []byte(stakeibctypes.RewardCollectorName))
 	return utils.CreateModuleAccount(ctx, k, rewardCollectorAddress)
 }
