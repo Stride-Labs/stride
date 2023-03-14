@@ -7,6 +7,7 @@ import (
 
 	authsims "github.com/cosmos/cosmos-sdk/x/auth/simulation"
 	porttypes "github.com/cosmos/ibc-go/v7/modules/core/05-port/types"
+	tendermint "github.com/cosmos/ibc-go/v7/modules/light-clients/07-tendermint"
 
 	nodeservice "github.com/cosmos/cosmos-sdk/client/grpc/node"
 
@@ -211,6 +212,7 @@ var (
 		icacallbacksmodule.AppModuleBasic{},
 		claim.AppModuleBasic{},
 		autopilot.AppModuleBasic{},
+		tendermint.AppModuleBasic{},
 		// this line is used by starport scaffolding # stargate/app/moduleBasic
 	)
 
