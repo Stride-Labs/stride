@@ -16,18 +16,17 @@ var (
 	DefaultRewardsInterval        uint64 = 1
 	DefaultRedemptionRateInterval uint64 = 1
 	// you apparently cannot safely encode floats, so we make commission / 100
-	DefaultStrideCommission              uint64 = 10
-	DefaultValidatorRebalancingThreshold uint64 = 100 // divide by 10,000, so 100 = 1%
-	DefaultICATimeoutNanos               uint64 = 600000000000
-	DefaultBufferSize                    uint64 = 5             // 1/5=20% of the epoch
-	DefaultIbcTimeoutBlocks              uint64 = 300           // 300 blocks ~= 30 minutes
-	DefaultFeeTransferTimeoutNanos       uint64 = 1800000000000 // 30 minutes
-	DefaultMinRedemptionRateThreshold    uint64 = 90            // divide by 100, so 90 = 0.9
-	DefaultMaxRedemptionRateThreshold    uint64 = 150           // divide by 100, so 150 = 1.5
-	DefaultMaxStakeICACallsPerEpoch      uint64 = 100
-	DefaultIBCTransferTimeoutNanos       uint64 = 1800000000000 // 30 minutes
-	DefaultSafetyNumValidators           uint64 = 35
-	DefaultSafetyMaxSlashPercent         uint64 = 10
+	DefaultStrideCommission           uint64 = 10
+	DefaultICATimeoutNanos            uint64 = 600000000000
+	DefaultBufferSize                 uint64 = 5             // 1/5=20% of the epoch
+	DefaultIbcTimeoutBlocks           uint64 = 300           // 300 blocks ~= 30 minutes
+	DefaultFeeTransferTimeoutNanos    uint64 = 1800000000000 // 30 minutes
+	DefaultMinRedemptionRateThreshold uint64 = 90            // divide by 100, so 90 = 0.9
+	DefaultMaxRedemptionRateThreshold uint64 = 150           // divide by 100, so 150 = 1.5
+	DefaultMaxStakeICACallsPerEpoch   uint64 = 100
+	DefaultIBCTransferTimeoutNanos    uint64 = 1800000000000 // 30 minutes
+	DefaultSafetyNumValidators        uint64 = 35
+	DefaultSafetyMaxSlashPercent      uint64 = 10
 
 	// KeyDepositInterval is store's key for the DepositInterval option
 	KeyDepositInterval                   = []byte("DepositInterval")
@@ -36,7 +35,6 @@ var (
 	KeyRewardsInterval                   = []byte("RewardsInterval")
 	KeyRedemptionRateInterval            = []byte("RedemptionRateInterval")
 	KeyStrideCommission                  = []byte("StrideCommission")
-	KeyValidatorRebalancingThreshold     = []byte("ValidatorRebalancingThreshold")
 	KeyICATimeoutNanos                   = []byte("ICATimeoutNanos")
 	KeyFeeTransferTimeoutNanos           = []byte("FeeTransferTimeoutNanos")
 	KeyBufferSize                        = []byte("BufferSize")
@@ -66,7 +64,6 @@ func NewParams(
 	redemptionRateInterval uint64,
 	strideCommission uint64,
 	reinvestInterval uint64,
-	validatorRebalancingThreshold uint64,
 	icaTimeoutNanos uint64,
 	bufferSize uint64,
 	ibcTimeoutBlocks uint64,
@@ -85,7 +82,6 @@ func NewParams(
 		RedemptionRateInterval:            redemptionRateInterval,
 		StrideCommission:                  strideCommission,
 		ReinvestInterval:                  reinvestInterval,
-		ValidatorRebalancingThreshold:     validatorRebalancingThreshold,
 		IcaTimeoutNanos:                   icaTimeoutNanos,
 		BufferSize:                        bufferSize,
 		IbcTimeoutBlocks:                  ibcTimeoutBlocks,
@@ -108,7 +104,6 @@ func DefaultParams() Params {
 		DefaultRedemptionRateInterval,
 		DefaultStrideCommission,
 		DefaultReinvestInterval,
-		DefaultValidatorRebalancingThreshold,
 		DefaultICATimeoutNanos,
 		DefaultBufferSize,
 		DefaultIbcTimeoutBlocks,
@@ -131,7 +126,6 @@ func (p *Params) ParamSetPairs() paramtypes.ParamSetPairs {
 		paramtypes.NewParamSetPair(KeyRedemptionRateInterval, &p.RedemptionRateInterval, isPositive),
 		paramtypes.NewParamSetPair(KeyStrideCommission, &p.StrideCommission, isCommission),
 		paramtypes.NewParamSetPair(KeyReinvestInterval, &p.ReinvestInterval, isPositive),
-		paramtypes.NewParamSetPair(KeyValidatorRebalancingThreshold, &p.ValidatorRebalancingThreshold, isThreshold),
 		paramtypes.NewParamSetPair(KeyICATimeoutNanos, &p.IcaTimeoutNanos, isPositive),
 		paramtypes.NewParamSetPair(KeyBufferSize, &p.BufferSize, isPositive),
 		paramtypes.NewParamSetPair(KeyIbcTimeoutBlocks, &p.IbcTimeoutBlocks, isPositive),
@@ -262,9 +256,6 @@ func (p Params) Validate() error {
 		return err
 	}
 	if err := isPositive(p.ReinvestInterval); err != nil {
-		return err
-	}
-	if err := isThreshold(p.ValidatorRebalancingThreshold); err != nil {
 		return err
 	}
 	if err := isPositive(p.IcaTimeoutNanos); err != nil {
