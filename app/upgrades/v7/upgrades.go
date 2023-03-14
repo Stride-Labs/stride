@@ -81,13 +81,14 @@ func CreateUpgradeHandler(
 func AddHourEpoch(ctx sdk.Context, k epochskeeper.Keeper) {
 	ctx.Logger().Info("Adding hour epoch")
 
+	startTime := ctx.BlockTime().Truncate(time.Hour)
 	hourEpoch := epochstypes.EpochInfo{
 		Identifier:              epochstypes.HOUR_EPOCH,
-		StartTime:               ctx.BlockTime(),
+		StartTime:               startTime,
 		Duration:                time.Hour,
-		CurrentEpoch:            1,
+		CurrentEpoch:            0,
 		CurrentEpochStartHeight: ctx.BlockHeight(),
-		CurrentEpochStartTime:   ctx.BlockTime(),
+		CurrentEpochStartTime:   startTime,
 		EpochCountingStarted:    false,
 	}
 
@@ -193,6 +194,7 @@ func ExecuteProp153(ctx sdk.Context, k bankkeeper.Keeper) error {
 // Create reward collector module account for Prop #8
 func CreateRewardCollectorModuleAccount(ctx sdk.Context, k authkeeper.AccountKeeper) error {
 	ctx.Logger().Info("Creating reward collector module account")
+
 	rewardCollectorAddress := address.Module(stakeibctypes.RewardCollectorName, []byte(stakeibctypes.RewardCollectorName))
 	return utils.CreateModuleAccount(ctx, k, rewardCollectorAddress)
 }
