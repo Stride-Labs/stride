@@ -134,11 +134,12 @@ func AddICAHostAllowMessages(ctx sdk.Context, k icahostkeeper.Keeper) {
 func AddRedemptionRateSafetyChecks(ctx sdk.Context, k stakeibckeeper.Keeper) {
 	ctx.Logger().Info("Setting min/max redemption rate safety bounds on each host zone")
 
-	// Set new stakeibc params - in this case, we're using `DefaultParams` because all of our current params are the defaults,
-	// with the exception of `DefaultValidatorRebalancingThreshold` which was deprecated in v7. You can verify this by hand
-	// by running `strided q stakeibc params`, and comparing the output to the values defined in params.go.
-	// In the future, we'll instead read in params using GetParams, modify them, and then set them using SetParams, if
-	// params have changed.
+	// Set new stakeibc params
+	// In this case, we're using `DefaultParams` because all of our current params are the defaults
+	// You can verify this by hand by running `strided q stakeibc params`, and comparing the output to the values defined in params.go.
+	// This is a safer way of adding a new parameter that avoids having to unmarshal using the old types
+	// In future upgrades, if we are simply modifying parameter values (instead of adding a new parameter),
+	// we should read in params using GetParams, modify them, and then set them using SetParams
 	params := stakeibctypes.DefaultParams()
 	k.SetParams(ctx, params)
 
