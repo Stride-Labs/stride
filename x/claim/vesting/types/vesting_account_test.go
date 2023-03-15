@@ -17,6 +17,7 @@ import (
 var (
 	stakeDenom = "stake"
 	feeDenom   = "fee"
+	emptyCoins = sdk.Coins{}
 )
 
 func TestGetVestedCoinsPeriodicVestingAcc(t *testing.T) {
@@ -76,7 +77,7 @@ func TestGetVestingCoinsPeriodicVestingAcc(t *testing.T) {
 
 	// require no coins vesting at the end of the vesting schedule
 	vestingCoins = pva.GetVestingCoins(endTime)
-	require.Equal(t, vestingCoins, sdk.Coins{})
+	require.Equal(t, emptyCoins, vestingCoins)
 
 	// require 50% of coins vesting
 	vestingCoins = pva.GetVestingCoins(now.Add(12 * time.Hour))
@@ -92,7 +93,7 @@ func TestGetVestingCoinsPeriodicVestingAcc(t *testing.T) {
 
 	// require 0% of coins vesting after vesting complete
 	vestingCoins = pva.GetVestingCoins(now.Add(48 * time.Hour))
-	require.Equal(t, vestingCoins, sdk.Coins{})
+	require.Equal(t, emptyCoins, vestingCoins)
 }
 
 func TestSpendableCoinsPeriodicVestingAcc(t *testing.T) {
@@ -123,7 +124,7 @@ func TestSpendableCoinsPeriodicVestingAcc(t *testing.T) {
 
 	// require that vesting coins (0%) are locked
 	lockedCoins = pva.LockedCoins(now.Add(21 * time.Hour))
-	require.Equal(t, sdk.Coins{}, lockedCoins)
+	require.Equal(t, emptyCoins, lockedCoins)
 }
 
 func TestTrackDelegationPeriodicVestingAcc(t *testing.T) {
@@ -197,23 +198,23 @@ func TestTrackUndelegationPeriodicVestingAcc(t *testing.T) {
 	pva := types.NewStridePeriodicVestingAccount(bacc, origCoins, periods)
 	pva.TrackDelegation(now, origCoins, origCoins)
 	pva.TrackUndelegation(origCoins)
-	require.Equal(t, pva.DelegatedFree, sdk.Coins(nil))
-	require.Equal(t, pva.DelegatedVesting, sdk.Coins{})
+	require.Nil(t, pva.DelegatedFree)
+	require.Equal(t, emptyCoins, pva.DelegatedVesting)
 
 	// require the ability to undelegate all vested coins at the end of vesting
 	pva = types.NewStridePeriodicVestingAccount(bacc, origCoins, periods)
 
 	pva.TrackDelegation(endTime, origCoins, origCoins)
 	pva.TrackUndelegation(origCoins)
-	require.Equal(t, pva.DelegatedFree, sdk.Coins{})
-	require.Equal(t, pva.DelegatedVesting, sdk.Coins(nil))
+	require.Equal(t, emptyCoins, pva.DelegatedFree)
+	require.Nil(t, pva.DelegatedVesting)
 
 	// require the ability to undelegate half of coins
 	pva = types.NewStridePeriodicVestingAccount(bacc, origCoins, periods)
 	pva.TrackDelegation(endTime, origCoins, periods[0].Amount)
 	pva.TrackUndelegation(periods[0].Amount)
-	require.Equal(t, pva.DelegatedFree, sdk.Coins{})
-	require.Equal(t, pva.DelegatedVesting, sdk.Coins(nil))
+	require.Equal(t, emptyCoins, pva.DelegatedFree)
+	require.Nil(t, pva.DelegatedVesting)
 
 	// require no modifications when the undelegation amount is zero
 	pva = types.NewStridePeriodicVestingAccount(bacc, origCoins, periods)
@@ -221,8 +222,8 @@ func TestTrackUndelegationPeriodicVestingAcc(t *testing.T) {
 	require.Panics(t, func() {
 		pva.TrackUndelegation(sdk.Coins{sdk.NewInt64Coin(stakeDenom, 0)})
 	})
-	require.Equal(t, pva.DelegatedFree, sdk.Coins(nil))
-	require.Equal(t, pva.DelegatedVesting, sdk.Coins(nil))
+	require.Nil(t, pva.DelegatedFree)
+	require.Nil(t, pva.DelegatedVesting)
 
 	// vest 50% and delegate to two validators
 	pva = types.NewStridePeriodicVestingAccount(bacc, origCoins, periods)
@@ -236,7 +237,7 @@ func TestTrackUndelegationPeriodicVestingAcc(t *testing.T) {
 
 	// undelegate from the other validator that did not get slashed
 	pva.TrackUndelegation(sdk.Coins{sdk.NewInt64Coin(stakeDenom, 50)})
-	require.Equal(t, pva.DelegatedFree, sdk.Coins{})
+	require.Equal(t, emptyCoins, pva.DelegatedFree)
 	require.Equal(t, sdk.Coins{sdk.NewInt64Coin(stakeDenom, 25)}, pva.DelegatedVesting)
 }
 
