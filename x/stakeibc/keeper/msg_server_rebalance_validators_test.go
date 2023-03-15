@@ -8,9 +8,9 @@ import (
 	icatypes "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/types"
 	ibctesting "github.com/cosmos/ibc-go/v7/testing"
 
-	epochtypes "github.com/Stride-Labs/stride/v6/x/epochs/types"
-	icacallbackstypes "github.com/Stride-Labs/stride/v6/x/icacallbacks/types"
-	stakeibctypes "github.com/Stride-Labs/stride/v6/x/stakeibc/types"
+	epochtypes "github.com/Stride-Labs/stride/v7/x/epochs/types"
+	icacallbackstypes "github.com/Stride-Labs/stride/v7/x/icacallbacks/types"
+	stakeibctypes "github.com/Stride-Labs/stride/v7/x/stakeibc/types"
 )
 
 type RebalanceValidatorsTestCase struct {

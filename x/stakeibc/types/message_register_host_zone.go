@@ -10,7 +10,7 @@ import (
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	ibctransfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
 
-	"github.com/Stride-Labs/stride/v6/utils"
+	"github.com/Stride-Labs/stride/v7/utils"
 )
 
 const TypeMsgRegisterHostZone = "register_host_zone"

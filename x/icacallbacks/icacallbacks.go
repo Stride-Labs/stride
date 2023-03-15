@@ -11,7 +11,7 @@ import (
 	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
 	"github.com/gogo/protobuf/proto"
 
-	"github.com/Stride-Labs/stride/v6/x/icacallbacks/types"
+	"github.com/Stride-Labs/stride/v7/x/icacallbacks/types"
 )
 
 // Parses ICA tx responses and returns a list of each serialized response

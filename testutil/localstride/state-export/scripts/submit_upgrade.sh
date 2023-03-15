@@ -25,7 +25,7 @@ STRIDE_MAIN_CMD="docker-compose -f ${SCRIPT_DIR}/../docker-compose.yml exec -it 
 
 printf "PROPOSAL\n"
 $STRIDE_MAIN_CMD tx gov submit-legacy-proposal software-upgrade $upgrade_name \
-    --title $upgrade_name --description "upgrade" \
+    --title $upgrade_name --description "upgrade" --upgrade-info "test" --no-validate \
     --upgrade-height $upgrade_height --from val -y | TRIM_TX
 
 sleep 5
@@ -35,7 +35,7 @@ $STRIDE_MAIN_CMD query gov proposal $proposal_id
 
 sleep 5 
 printf "\nDEPOSIT\n"
-$STRIDE_MAIN_CMD tx gov deposit $proposal_id 10000001ustrd --from val -y | TRIM_TX
+$STRIDE_MAIN_CMD tx gov deposit $proposal_id 20000000001ustrd --from val -y | TRIM_TX
 
 sleep 5
 printf "\nDEPOSIT CONFIRMATION\n"
