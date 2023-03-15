@@ -198,13 +198,21 @@ setup_file() {
   stibctoken_balance_start=$($HOST_MAIN_CMD q bank balances $HOST_VAL_ADDRESS --denom $IBC_GAIA_STATOM_DENOM | GETBAL)
 
   # do IBC transfer
-  $HOST_MAIN_CMD tx ibc-transfer transfer transfer $HOST_TRANSFER_CHANNEL $(STRIDE_ADDRESS)'|stakeibc/RedeemStake|'$HOST_RECEIVER_ADDRESS ${PACKET_FORWARD_STAKE_AMOUNT}${HOST_DENOM} --from $HOST_VAL -y &
-  WAIT_FOR_BLOCK $STRIDE_LOGS 20
+  # assert_equal "$HOST_MAIN_CMD tx ibc-transfer transfer transfer $HOST_TRANSFER_CHANNEL $(STRIDE_ADDRESS)'|stakeibc/RedeemStake|'$HOST_RECEIVER_ADDRESS 200${IBC_GAIA_STATOM_DENOM} --from $HOST_VAL -y" ""
+  $HOST_MAIN_CMD tx ibc-transfer transfer transfer $HOST_TRANSFER_CHANNEL "$(STRIDE_ADDRESS)|stakeibc/RedeemStake|$HOST_RECEIVER_ADDRESS" 200${IBC_GAIA_STATOM_DENOM} --from $HOST_VAL -y 
+  WAIT_FOR_BALANCE_CHANGE $CHAIN_NAME $HOST_VAL_ADDRESS $IBC_GAIA_STATOM_DENOM 
 
-  # make sure stATOM balance increased
+  # make sure stATOM balance decreased
   stibctoken_balance_end=$($HOST_MAIN_CMD q bank balances $HOST_VAL_ADDRESS --denom $IBC_GAIA_STATOM_DENOM | GETBAL)
   stibctoken_balance_diff=$(($stibctoken_balance_start-$stibctoken_balance_end))
-  assert_equal "$stibctoken_balance_diff" "$PACKET_FORWARD_STAKE_AMOUNT"
+  assert_equal "$stibctoken_balance_diff" "200"
+
+  WAIT_FOR_BLOCK $STRIDE_LOGS 5
+
+  # check that the tokens were transferred to the redemption account
+  AMOUNT=$($STRIDE_MAIN_CMD q records list-user-redemption-record  | grep -Fiw 'amount' | head -n 1 | grep -o -E '[0-9]+')
+  amount_positive=$(($AMOUNT > 0))
+  assert_equal "$amount_positive" "1"
 }
 
 # check that tokens on the host are staked
