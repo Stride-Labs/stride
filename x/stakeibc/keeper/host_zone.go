@@ -13,8 +13,8 @@ import (
 	errorsmod "cosmossdk.io/errors"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
-	"github.com/Stride-Labs/stride/v6/utils"
-	"github.com/Stride-Labs/stride/v6/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v7/utils"
+	"github.com/Stride-Labs/stride/v7/x/stakeibc/types"
 )
 
 // SetHostZone set a specific hostZone in the store
@@ -224,6 +224,16 @@ func (k Keeper) GetHostZoneFromIBCDenom(ctx sdk.Context, denom string) (*types.H
 		return &matchZone, nil
 	}
 	return nil, errorsmod.Wrapf(sdkerrors.ErrUnknownRequest, "No HostZone for %s found", denom)
+}
+
+// Validate whether a denom is a supported liquid staking token
+func (k Keeper) CheckIsStToken(ctx sdk.Context, denom string) bool {
+	for _, hostZone := range k.GetAllHostZone(ctx) {
+		if types.StAssetDenomFromHostZoneDenom(hostZone.HostDenom) == denom {
+			return true
+		}
+	}
+	return false
 }
 
 // IterateHostZones iterates zones

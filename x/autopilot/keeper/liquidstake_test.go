@@ -10,16 +10,16 @@ import (
 	clienttypes "github.com/cosmos/ibc-go/v7/modules/core/02-client/types"
 	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
 
-	recordsmodule "github.com/Stride-Labs/stride/v6/x/records"
+	recordsmodule "github.com/Stride-Labs/stride/v7/x/records"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/Stride-Labs/stride/v6/x/autopilot"
-	"github.com/Stride-Labs/stride/v6/x/autopilot/types"
-	epochtypes "github.com/Stride-Labs/stride/v6/x/epochs/types"
-	minttypes "github.com/Stride-Labs/stride/v6/x/mint/types"
-	recordstypes "github.com/Stride-Labs/stride/v6/x/records/types"
-	stakeibctypes "github.com/Stride-Labs/stride/v6/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v7/x/autopilot"
+	"github.com/Stride-Labs/stride/v7/x/autopilot/types"
+	epochtypes "github.com/Stride-Labs/stride/v7/x/epochs/types"
+	minttypes "github.com/Stride-Labs/stride/v7/x/mint/types"
+	recordstypes "github.com/Stride-Labs/stride/v7/x/records/types"
+	stakeibctypes "github.com/Stride-Labs/stride/v7/x/stakeibc/types"
 )
 
 func (suite *KeeperTestSuite) TestOnRecvPacket() {

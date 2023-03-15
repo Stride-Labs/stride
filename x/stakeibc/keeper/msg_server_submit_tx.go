@@ -10,11 +10,11 @@ import (
 	proto "github.com/cosmos/gogoproto/proto"
 	"github.com/spf13/cast"
 
-	"github.com/Stride-Labs/stride/v6/utils"
-	icacallbackstypes "github.com/Stride-Labs/stride/v6/x/icacallbacks/types"
+	"github.com/Stride-Labs/stride/v7/utils"
+	icacallbackstypes "github.com/Stride-Labs/stride/v7/x/icacallbacks/types"
 
-	recordstypes "github.com/Stride-Labs/stride/v6/x/records/types"
-	"github.com/Stride-Labs/stride/v6/x/stakeibc/types"
+	recordstypes "github.com/Stride-Labs/stride/v7/x/records/types"
+	"github.com/Stride-Labs/stride/v7/x/stakeibc/types"
 
 	bankTypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	distributiontypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
@@ -22,8 +22,8 @@ import (
 
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
-	epochstypes "github.com/Stride-Labs/stride/v6/x/epochs/types"
-	icqtypes "github.com/Stride-Labs/stride/v6/x/interchainquery/types"
+	epochstypes "github.com/Stride-Labs/stride/v7/x/epochs/types"
+	icqtypes "github.com/Stride-Labs/stride/v7/x/interchainquery/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	icacontrollerkeeper "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/controller/keeper"
@@ -176,8 +176,6 @@ func (k Keeper) UpdateWithdrawalBalance(ctx sdk.Context, hostZone types.HostZone
 		ICQCallbackID_WithdrawalBalance,
 		hostZone.ChainId,
 		hostZone.ConnectionId,
-		// use "bank" store to access acct balances which live in the bank module
-		// use "key" suffix to retrieve a proof alongside the query result
 		icqtypes.BANK_STORE_QUERY_WITH_PROOF,
 		queryData,
 		ttl,
@@ -413,8 +411,6 @@ func (k Keeper) QueryValidatorExchangeRate(ctx sdk.Context, msg *types.MsgUpdate
 		ICQCallbackID_Validator,
 		hostZone.ChainId,
 		hostZone.ConnectionId,
-		// use "staking" store to access validator which lives in the staking module
-		// use "key" suffix to retrieve a proof alongside the query result
 		icqtypes.STAKING_STORE_QUERY_WITH_PROOF,
 		queryData,
 		ttl,
@@ -466,8 +462,6 @@ func (k Keeper) QueryDelegationsIcq(ctx sdk.Context, hostZone types.HostZone, va
 		ICQCallbackID_Delegation,
 		hostZone.ChainId,
 		hostZone.ConnectionId,
-		// use "staking" store to access delegation which lives in the staking module
-		// use "key" suffix to retrieve a proof alongside the query result
 		icqtypes.STAKING_STORE_QUERY_WITH_PROOF,
 		queryData,
 		ttl,

@@ -13,8 +13,8 @@ import (
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	stakingTypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
-	"github.com/Stride-Labs/stride/v6/utils"
-	"github.com/Stride-Labs/stride/v6/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v7/utils"
+	"github.com/Stride-Labs/stride/v7/x/stakeibc/types"
 )
 
 func (k msgServer) RebalanceValidators(goCtx context.Context, msg *types.MsgRebalanceValidators) (*types.MsgRebalanceValidatorsResponse, error) {
@@ -59,8 +59,6 @@ func (k msgServer) RebalanceValidators(goCtx context.Context, msg *types.MsgReba
 	if total_delegation.IsZero() {
 		return nil, errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "no validator delegations found for Host Zone %s, cannot rebalance 0 delegations!", hostZone.ChainId)
 	}
-
-	// TODO Remove ValidatorRebalancingThreshold from our params
 
 	var msgs []proto.Message
 	delegationIca := hostZone.GetDelegationAccount()
