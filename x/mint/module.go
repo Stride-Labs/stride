@@ -170,7 +170,7 @@ func (AppModule) EndBlock(_ sdk.Context, _ abci.RequestEndBlock) []abci.Validato
 // }
 
 // ProposalContents doesn't return any content functions for governance proposals.
-func (AppModule) ProposalContents(simState module.SimulationState) []simtypes.WeightedProposalContent {
+func (AppModule) ProposalContents(simState module.SimulationState) []simtypes.WeightedProposalMsg {
 	return nil
 }
 
