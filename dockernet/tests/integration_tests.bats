@@ -193,6 +193,19 @@ setup_file() {
   assert_equal "$stibctoken_balance_diff" "$PACKET_FORWARD_STAKE_AMOUNT"
 }
 
+
+# check that tokens on the host are staked
+@test "[INTEGRATION-BASIC-$CHAIN_NAME] tokens on $CHAIN_NAME were staked" {
+  # wait for another epoch to pass so that tokens are staked
+  WAIT_FOR_STRING $STRIDE_LOGS "\[DELEGATION\] success on $HOST_CHAIN_ID"
+  WAIT_FOR_BLOCK $STRIDE_LOGS 2
+
+  # check staked tokens
+  NEW_STAKE=$($HOST_MAIN_CMD q staking delegation $(GET_ICA_ADDR $HOST_CHAIN_ID delegation) $(GET_VAL_ADDR $CHAIN_NAME 1) | GETSTAKE)
+  stake_diff=$(($NEW_STAKE > 0))
+  assert_equal "$stake_diff" "1"
+}
+
 @test "[INTEGRATION-BASIC-$CHAIN_NAME] packet forwarding automatically redeem stake" {
   # get initial balances
   stibctoken_balance_start=$($HOST_MAIN_CMD q bank balances $HOST_VAL_ADDRESS --denom $IBC_GAIA_STATOM_DENOM | GETBAL)
@@ -213,18 +226,6 @@ setup_file() {
   AMOUNT=$($STRIDE_MAIN_CMD q records list-user-redemption-record  | grep -Fiw 'amount' | head -n 1 | grep -o -E '[0-9]+')
   amount_positive=$(($AMOUNT > 0))
   assert_equal "$amount_positive" "1"
-}
-
-# check that tokens on the host are staked
-@test "[INTEGRATION-BASIC-$CHAIN_NAME] tokens on $CHAIN_NAME were staked" {
-  # wait for another epoch to pass so that tokens are staked
-  WAIT_FOR_STRING $STRIDE_LOGS "\[DELEGATION\] success on $HOST_CHAIN_ID"
-  WAIT_FOR_BLOCK $STRIDE_LOGS 2
-
-  # check staked tokens
-  NEW_STAKE=$($HOST_MAIN_CMD q staking delegation $(GET_ICA_ADDR $HOST_CHAIN_ID delegation) $(GET_VAL_ADDR $CHAIN_NAME 1) | GETSTAKE)
-  stake_diff=$(($NEW_STAKE > 0))
-  assert_equal "$stake_diff" "1"
 }
 
 # check that redemptions and claims work
