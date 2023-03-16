@@ -15,10 +15,11 @@ type ParsedReceiver struct {
 
 // {stride_address}|{module_id}/{function_id}
 // for now, only allow liquid staking transactions
-// TODO: consider - addresses that previously *could not* liquid stake, now *can*
+// Note: some addresses that previously *could not* easily liquid stake, now *can* (e.g. module accounts)
 // stride10d07y265gmmuvt4z0w9aw880jnsr700jefnezl|stakeibc/LiquidStake
 // need args: Creator, HostDenom, Amount
 func ParseReceiverData(receiverData string) (*ParsedReceiver, error) {
+	// TODO: Use JSON parsing instead of string parsing
 	parts := strings.Split(receiverData, "|")
 
 	switch len(parts) {

@@ -24,6 +24,7 @@ import (
 	tmtypes "github.com/tendermint/tendermint/proto/tendermint/types"
 
 	"github.com/Stride-Labs/stride/v6/app"
+	"github.com/Stride-Labs/stride/v6/utils"
 )
 
 var (
@@ -86,7 +87,10 @@ func SetupSuitelessTestHelper() SuitelessAppTestHelper {
 
 // Mints coins directly to a module account
 func (s *AppTestHelper) FundModuleAccount(moduleName string, amount sdk.Coin) {
-	err := s.App.BankKeeper.MintCoins(s.Ctx, moduleName, sdk.NewCoins(amount))
+	amountCoins := sdk.NewCoins(amount)
+	err := s.App.BankKeeper.MintCoins(s.Ctx, minttypes.ModuleName, amountCoins)
+	s.Require().NoError(err)
+	err = s.App.BankKeeper.SendCoinsFromModuleToModule(s.Ctx, minttypes.ModuleName, moduleName, amountCoins)
 	s.Require().NoError(err)
 }
 
@@ -354,6 +358,14 @@ func GenerateTestAddrs() (string, string) {
 	validAddr := sdk.AccAddress(pk1.Address()).String()
 	invalidAddr := sdk.AccAddress("invalid").String()
 	return validAddr, invalidAddr
+}
+
+// Grabs an admin address to test validate basic on admin txs
+func GetAdminAddress() (address string, ok bool) {
+	for address := range utils.Admins {
+		return address, true
+	}
+	return "", false
 }
 
 // Modifies sdk config to have stride address prefixes (used for non-keeper tests)
