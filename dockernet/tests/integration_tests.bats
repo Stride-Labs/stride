@@ -194,6 +194,22 @@ setup_file() {
 }
 
 
+@test "[INTEGRATION-BASIC-$CHAIN_NAME] packet forwarding automatically liquid stake and ibc transfer stAsset to original network" {
+  # get initial balances
+  stibctoken_balance_start=$($HOST_MAIN_CMD q bank balances $HOST_VAL_ADDRESS --denom $IBC_GAIA_STATOM_DENOM | GETBAL)
+
+  # do IBC transfer
+  $HOST_MAIN_CMD tx ibc-transfer transfer transfer $HOST_TRANSFER_CHANNEL $(STRIDE_ADDRESS)'|stakeibc/LiquidStakeAndIBCTransfer|'$HOST_VAL_ADDRESS ${PACKET_FORWARD_STAKE_AMOUNT}${HOST_DENOM} --from $HOST_VAL -y &
+
+  # Wait for the transfer to complete
+  WAIT_FOR_BALANCE_CHANGE $CHAIN_NAME $HOST_VAL_ADDRESS $IBC_GAIA_STATOM_DENOM
+
+  # make sure stATOM balance increased
+  stibctoken_balance_end=$($HOST_MAIN_CMD q bank balances $HOST_VAL_ADDRESS --denom $IBC_GAIA_STATOM_DENOM | GETBAL)
+  stibctoken_balance_diff=$(($stibctoken_balance_end-$stibctoken_balance_start))
+  assert_equal "$stibctoken_balance_diff" "$PACKET_FORWARD_STAKE_AMOUNT"
+}
+
 # check that tokens on the host are staked
 @test "[INTEGRATION-BASIC-$CHAIN_NAME] tokens on $CHAIN_NAME were staked" {
   # wait for another epoch to pass so that tokens are staked

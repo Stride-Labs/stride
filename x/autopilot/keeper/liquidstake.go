@@ -13,8 +13,6 @@ import (
 	channeltypes "github.com/cosmos/ibc-go/v5/modules/core/04-channel/types"
 	ibcexported "github.com/cosmos/ibc-go/v5/modules/core/exported"
 
-	clienttypes "github.com/cosmos/ibc-go/v5/modules/core/02-client/types"
-
 	"github.com/Stride-Labs/stride/v6/x/autopilot/types"
 	stakeibckeeper "github.com/Stride-Labs/stride/v6/x/stakeibc/keeper"
 	stakeibctypes "github.com/Stride-Labs/stride/v6/x/stakeibc/types"
@@ -105,9 +103,9 @@ func (k Keeper) IBCTransferStAsset(ctx sdk.Context, stAsset sdk.Coin, channelId 
 		Token:            stAsset,
 		Sender:           addr,
 		Receiver:         ibcReceiver,
-		TimeoutHeight:    clienttypes.Height{},
 		TimeoutTimestamp: timeoutTimestamp,
-		Memo:             "stTokenIBCTransfer",
+		// TimeoutHeight:    clienttypes.Height{},
+		// Memo:             "stTokenIBCTransfer",
 	}
 
 	_, err := k.transferKeeper.Transfer(sdk.WrapSDKContext(ctx), transferMsg)
