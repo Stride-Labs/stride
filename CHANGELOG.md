@@ -40,9 +40,38 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v7.0.0](https://github.com/Stride-Labs/stride/releases/tag/v7.0.0) - 2023-03-12
+### On-Chain changes
+1. IBC Rate Limiting ([94e3a91](https://github.com/Stride-Labs/stride/commit/94e3a91dc582218a477771d9a694966bf901fdf5))
+2. Host Zone Reward Reallocation ([3539983](https://github.com/Stride-Labs/stride/commit/353998347af20ae14967e5da73a3f9059c0e1826))
+3. Add Autopilot ([1c173fe](https://github.com/Stride-Labs/stride/commit/1c173fed57418bea8fbb19240245757708f25472))
+3. Prevent undelegations of amount 0 ([3e0f404](https://github.com/Stride-Labs/stride/commit/3e0f40457ed90faa964556c6498c9d976336aa84))
+4. Change `sdkerrors` to `errorsmod` ([dfc5fb0](https://github.com/Stride-Labs/stride/commit/dfc5fb0fb33a471f86f1f74992ff3809919e7e80))
+5. Remove Epoch Unbonding Records with 0 amounts ([470268d](https://github.com/Stride-Labs/stride/commit/470268d393b15b0a4014e3a61c0478eaddc10756))
+6. Remove ICACallbacks from Middleware ([59a872b](https://github.com/Stride-Labs/stride/commit/59a872b20d8553c1a0e8187b2d70304c2a7341b7))
+7. Remove unnecessary setting of EXIT_TRANSFER_QUEUE ([0413e99](https://github.com/Stride-Labs/stride/commit/0413e999d3c67369e50ca40c61763f522dd02e06))
+8. Airdrop Reset ([b7371d7](https://github.com/Stride-Labs/stride/commit/b7371d7b4e02e40cc979d0a0e417113276e3b8a3))
+9. Module Account Safety ([0a325de](https://github.com/Stride-Labs/stride/commit/0a325deddc0bac58cc43e650773cc3408eabc011)) 
+10. Minor optimizations ([c3df52d](https://github.com/Stride-Labs/stride/commit/c3df52d178ebe1e7e3ccf0a697bec3a9fecfdc48), [85e76ec](https://github.com/Stride-Labs/stride/commit/85e76ec9b932f0b5bf5617677d1b8306fd33298f), [5ff42a9](https://github.com/Stride-Labs/stride/commit/5ff42a93b189a240f8cc0ac0a750ac4cd26272f7, [b3196d2](https://github.com/Stride-Labs/stride/commit/b3196d2b3fca62b72b2ba451237379b0747f7b1c), [ddc951a](https://github.com/Stride-Labs/stride/commit/ddc951a7656423c7277671ea89a4fff9b8d0be6f), [bdd05b0](https://github.com/Stride-Labs/stride/commit/bdd05b0f39317e9ce428508fdcda0d66bd2a0ce1) [3d4ba72](https://github.com/Stride-Labs/stride/commit/3d4ba729cfd2529730fdccdb8ee0fdfe151413bd))
+11. Queries ([9b17edf](https://github.com/Stride-Labs/stride/commit/9b17edfe62a752865eaa9b7b95103345d5c66448), [f07ff73](https://github.com/Stride-Labs/stride/commit/f07ff73bd957a6e23afb5c7ec48a6d2334e0d5d7))
+12. Dependency Bumps ([2a04046](https://github.com/Stride-Labs/stride/commit/2a040460dcafdabafca15010facc7e6e2d29609c))
+13. v7 Upgrade Handler ([9bc47dc](https://github.com/Stride-Labs/stride/commit/9bc47dc4efb3ebbbbb8a50fd5b371cb5a37bfb14))
+14. v7 Import Paths ([563bc25](https://github.com/Stride-Labs/stride/commit/563bc25b341c85c8e09d4499f5b3f810338ded60))
+
+
+### Off-Chain changes
+These changes do not affect any on-chain functionality, but have been implemented since `v6.0.0`.
+
+1. Relayer Permissions ([42e2618](https://github.com/Stride-Labs/stride/commit/42e26186e1a4e3fdac60674c322919b5999b5f47))
+2. Setup works across Linux distros ([c7ae1f5](https://github.com/Stride-Labs/stride/commit/c7ae1f558fd4773c6ffbf948ff996976ed45ce5a))
+3. Minor README updates ([7414ce9](https://github.com/Stride-Labs/stride/commit/7414ce9a4c273a92f7a033cb2552eff651c25143))
+4. Dependency Bumps ([24487b8](https://github.com/Stride-Labs/stride/commit/24487b8744c3490aced1e153a81eaa8c5ec3b200))
+
+
 ## [v6.0.0](https://github.com/Stride-Labs/stride/releases/tag/v6.0.0) - 2023-02-22
 ### On-Chain changes
 1. Reset Stride Airdrops to kick off Season 2.
+
 
 ## [v5.0.0](https://github.com/Stride-Labs/stride/releases/tag/v5.0.0) - 2023-01-19
 ### On-Chain changes

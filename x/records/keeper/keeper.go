@@ -14,13 +14,13 @@ import (
 	ibctransferkeeper "github.com/cosmos/ibc-go/v5/modules/apps/transfer/keeper"
 	ibctypes "github.com/cosmos/ibc-go/v5/modules/apps/transfer/types"
 
-	"github.com/Stride-Labs/stride/v6/utils"
-	icacallbackskeeper "github.com/Stride-Labs/stride/v6/x/icacallbacks/keeper"
-	icacallbackstypes "github.com/Stride-Labs/stride/v6/x/icacallbacks/types"
+	"github.com/Stride-Labs/stride/v7/utils"
+	icacallbackskeeper "github.com/Stride-Labs/stride/v7/x/icacallbacks/keeper"
+	icacallbackstypes "github.com/Stride-Labs/stride/v7/x/icacallbacks/types"
 
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 
-	"github.com/Stride-Labs/stride/v6/x/records/types"
+	"github.com/Stride-Labs/stride/v7/x/records/types"
 )
 
 type (

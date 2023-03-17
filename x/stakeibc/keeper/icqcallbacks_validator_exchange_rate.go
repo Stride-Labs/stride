@@ -7,10 +7,10 @@ import (
 
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
-	"github.com/Stride-Labs/stride/v6/utils"
-	epochtypes "github.com/Stride-Labs/stride/v6/x/epochs/types"
-	icqtypes "github.com/Stride-Labs/stride/v6/x/interchainquery/types"
-	"github.com/Stride-Labs/stride/v6/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v7/utils"
+	epochtypes "github.com/Stride-Labs/stride/v7/x/epochs/types"
+	icqtypes "github.com/Stride-Labs/stride/v7/x/interchainquery/types"
+	"github.com/Stride-Labs/stride/v7/x/stakeibc/types"
 )
 
 // ValidatorCallback is a callback handler for validator queries.
