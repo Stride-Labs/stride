@@ -3,7 +3,7 @@ package keeper
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/Stride-Labs/stride/v6/x/claim/types"
+	"github.com/Stride-Labs/stride/v7/x/claim/types"
 )
 
 // InitGenesis initializes the capability module's state from a provided genesis

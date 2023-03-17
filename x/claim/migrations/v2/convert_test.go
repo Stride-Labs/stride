@@ -10,8 +10,8 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 
-	oldclaimtypes "github.com/Stride-Labs/stride/v6/x/claim/migrations/v2/types"
-	claimtypes "github.com/Stride-Labs/stride/v6/x/claim/types"
+	oldclaimtypes "github.com/Stride-Labs/stride/v7/x/claim/migrations/v2/types"
+	claimtypes "github.com/Stride-Labs/stride/v7/x/claim/types"
 )
 
 func TestConvertToNewAirdrop(t *testing.T) {

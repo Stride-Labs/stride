@@ -7,7 +7,7 @@ import (
 
 	porttypes "github.com/cosmos/ibc-go/v5/modules/core/05-port/types"
 
-	"github.com/Stride-Labs/stride/v6/utils"
+	"github.com/Stride-Labs/stride/v7/utils"
 
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/client"
@@ -54,12 +54,12 @@ import (
 	govtypesv1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
 	govtypesv1beta1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
 
-	claimvesting "github.com/Stride-Labs/stride/v6/x/claim/vesting"
-	claimvestingtypes "github.com/Stride-Labs/stride/v6/x/claim/vesting/types"
+	claimvesting "github.com/Stride-Labs/stride/v7/x/claim/vesting"
+	claimvestingtypes "github.com/Stride-Labs/stride/v7/x/claim/vesting/types"
 
-	"github.com/Stride-Labs/stride/v6/x/mint"
-	mintkeeper "github.com/Stride-Labs/stride/v6/x/mint/keeper"
-	minttypes "github.com/Stride-Labs/stride/v6/x/mint/types"
+	"github.com/Stride-Labs/stride/v7/x/mint"
+	mintkeeper "github.com/Stride-Labs/stride/v7/x/mint/keeper"
+	minttypes "github.com/Stride-Labs/stride/v7/x/mint/types"
 
 	"github.com/cosmos/cosmos-sdk/x/params"
 	paramsclient "github.com/cosmos/cosmos-sdk/x/params/client"
@@ -105,35 +105,35 @@ import (
 	// monitoringp "github.com/tendermint/spn/x/monitoringp"
 	// monitoringpkeeper "github.com/tendermint/spn/x/monitoringp/keeper"
 
-	epochsmodule "github.com/Stride-Labs/stride/v6/x/epochs"
-	epochsmodulekeeper "github.com/Stride-Labs/stride/v6/x/epochs/keeper"
-	epochsmoduletypes "github.com/Stride-Labs/stride/v6/x/epochs/types"
+	epochsmodule "github.com/Stride-Labs/stride/v7/x/epochs"
+	epochsmodulekeeper "github.com/Stride-Labs/stride/v7/x/epochs/keeper"
+	epochsmoduletypes "github.com/Stride-Labs/stride/v7/x/epochs/types"
 
-	"github.com/Stride-Labs/stride/v6/x/interchainquery"
-	interchainquerykeeper "github.com/Stride-Labs/stride/v6/x/interchainquery/keeper"
-	interchainquerytypes "github.com/Stride-Labs/stride/v6/x/interchainquery/types"
+	"github.com/Stride-Labs/stride/v7/x/interchainquery"
+	interchainquerykeeper "github.com/Stride-Labs/stride/v7/x/interchainquery/keeper"
+	interchainquerytypes "github.com/Stride-Labs/stride/v7/x/interchainquery/types"
 
-	"github.com/Stride-Labs/stride/v6/x/autopilot"
-	autopilotkeeper "github.com/Stride-Labs/stride/v6/x/autopilot/keeper"
-	autopilottypes "github.com/Stride-Labs/stride/v6/x/autopilot/types"
+	"github.com/Stride-Labs/stride/v7/x/autopilot"
+	autopilotkeeper "github.com/Stride-Labs/stride/v7/x/autopilot/keeper"
+	autopilottypes "github.com/Stride-Labs/stride/v7/x/autopilot/types"
 
-	"github.com/Stride-Labs/stride/v6/x/claim"
-	claimkeeper "github.com/Stride-Labs/stride/v6/x/claim/keeper"
-	claimtypes "github.com/Stride-Labs/stride/v6/x/claim/types"
-	icacallbacksmodule "github.com/Stride-Labs/stride/v6/x/icacallbacks"
-	icacallbacksmodulekeeper "github.com/Stride-Labs/stride/v6/x/icacallbacks/keeper"
-	icacallbacksmoduletypes "github.com/Stride-Labs/stride/v6/x/icacallbacks/types"
-	ratelimitmodule "github.com/Stride-Labs/stride/v6/x/ratelimit"
-	ratelimitclient "github.com/Stride-Labs/stride/v6/x/ratelimit/client"
-	ratelimitmodulekeeper "github.com/Stride-Labs/stride/v6/x/ratelimit/keeper"
-	ratelimitmoduletypes "github.com/Stride-Labs/stride/v6/x/ratelimit/types"
-	recordsmodule "github.com/Stride-Labs/stride/v6/x/records"
-	recordsmodulekeeper "github.com/Stride-Labs/stride/v6/x/records/keeper"
-	recordsmoduletypes "github.com/Stride-Labs/stride/v6/x/records/types"
-	stakeibcmodule "github.com/Stride-Labs/stride/v6/x/stakeibc"
-	stakeibcclient "github.com/Stride-Labs/stride/v6/x/stakeibc/client"
-	stakeibcmodulekeeper "github.com/Stride-Labs/stride/v6/x/stakeibc/keeper"
-	stakeibcmoduletypes "github.com/Stride-Labs/stride/v6/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v7/x/claim"
+	claimkeeper "github.com/Stride-Labs/stride/v7/x/claim/keeper"
+	claimtypes "github.com/Stride-Labs/stride/v7/x/claim/types"
+	icacallbacksmodule "github.com/Stride-Labs/stride/v7/x/icacallbacks"
+	icacallbacksmodulekeeper "github.com/Stride-Labs/stride/v7/x/icacallbacks/keeper"
+	icacallbacksmoduletypes "github.com/Stride-Labs/stride/v7/x/icacallbacks/types"
+	ratelimitmodule "github.com/Stride-Labs/stride/v7/x/ratelimit"
+	ratelimitclient "github.com/Stride-Labs/stride/v7/x/ratelimit/client"
+	ratelimitmodulekeeper "github.com/Stride-Labs/stride/v7/x/ratelimit/keeper"
+	ratelimitmoduletypes "github.com/Stride-Labs/stride/v7/x/ratelimit/types"
+	recordsmodule "github.com/Stride-Labs/stride/v7/x/records"
+	recordsmodulekeeper "github.com/Stride-Labs/stride/v7/x/records/keeper"
+	recordsmoduletypes "github.com/Stride-Labs/stride/v7/x/records/types"
+	stakeibcmodule "github.com/Stride-Labs/stride/v7/x/stakeibc"
+	stakeibcclient "github.com/Stride-Labs/stride/v7/x/stakeibc/client"
+	stakeibcmodulekeeper "github.com/Stride-Labs/stride/v7/x/stakeibc/keeper"
+	stakeibcmoduletypes "github.com/Stride-Labs/stride/v7/x/stakeibc/types"
 
 	// this line is used by starport scaffolding # stargate/app/moduleImport
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
@@ -147,7 +147,7 @@ import (
 const (
 	AccountAddressPrefix = "stride"
 	Name                 = "stride"
-	Version              = "6.0.0"
+	Version              = "7.0.0"
 )
 
 // this line is used by starport scaffolding # stargate/wasm/app/enabledProposals
@@ -959,10 +959,7 @@ func (app *StrideApp) BlacklistedModuleAccountAddrs() map[string]bool {
 	// DO NOT REMOVE: StringMapKeys fixes non-deterministic map iteration
 	for _, acc := range utils.StringMapKeys(maccPerms) {
 		// don't blacklist stakeibc module account, so that it can ibc transfer tokens
-		if acc == "stakeibc" {
-			continue
-		}
-		if acc == stakeibcmoduletypes.RewardCollectorName {
+		if acc == stakeibcmoduletypes.ModuleName || acc == stakeibcmoduletypes.RewardCollectorName {
 			continue
 		}
 		modAccAddrs[authtypes.NewModuleAddress(acc).String()] = true
