@@ -1,16 +1,16 @@
 package keeper
 
 import (
-	"fmt"
-
+	errorsmod "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
-	epochtypes "github.com/Stride-Labs/stride/v3/x/epochs/types"
-	icqtypes "github.com/Stride-Labs/stride/v3/x/interchainquery/types"
-	"github.com/Stride-Labs/stride/v3/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v7/utils"
+	epochtypes "github.com/Stride-Labs/stride/v7/x/epochs/types"
+	icqtypes "github.com/Stride-Labs/stride/v7/x/interchainquery/types"
+	"github.com/Stride-Labs/stride/v7/x/stakeibc/types"
 )
 
 // ValidatorCallback is a callback handler for validator queries.
@@ -23,53 +23,52 @@ import (
 //
 // This is the callback from query #1
 func ValidatorExchangeRateCallback(k Keeper, ctx sdk.Context, args []byte, query icqtypes.Query) error {
-	hostZone, found := k.GetHostZone(ctx, query.GetChainId())
+	k.Logger(ctx).Info(utils.LogICQCallbackWithHostZone(query.ChainId, ICQCallbackID_Validator,
+		"Starting validator exchange rate balance callback, QueryId: %vs, QueryType: %s, Connection: %s", query.Id, query.QueryType, query.ConnectionId))
+
+	// Confirm host exists
+	chainId := query.ChainId
+	hostZone, found := k.GetHostZone(ctx, query.ChainId)
 	if !found {
-		errMsg := fmt.Sprintf("no registered zone for queried chain ID (%s)", query.GetChainId())
-		k.Logger(ctx).Error(errMsg)
-		return sdkerrors.Wrapf(types.ErrHostZoneNotFound, errMsg)
+		return errorsmod.Wrapf(types.ErrHostZoneNotFound, "no registered zone for queried chain ID (%s)", chainId)
 	}
+
+	// Unmarshal the query response args into a Validator struct
 	queriedValidator := stakingtypes.Validator{}
 	err := k.cdc.Unmarshal(args, &queriedValidator)
 	if err != nil {
-		errMsg := fmt.Sprintf("unable to unmarshal queriedValidator info for zone %s, err: %s", hostZone.ChainId, err.Error())
-		k.Logger(ctx).Error(errMsg)
-		return sdkerrors.Wrapf(types.ErrMarshalFailure, errMsg)
+		return errorsmod.Wrapf(types.ErrMarshalFailure, "unable to unmarshal query response into Validator type, err: %s", err.Error())
 	}
-	k.Logger(ctx).Info(fmt.Sprintf("ValidatorCallback: HostZone %s, Queried Validator %v, Jailed: %v, Tokens: %v, Shares: %v",
-		hostZone.ChainId, queriedValidator.OperatorAddress, queriedValidator.Jailed, queriedValidator.Tokens, queriedValidator.DelegatorShares))
+	k.Logger(ctx).Info(utils.LogICQCallbackWithHostZone(chainId, ICQCallbackID_Validator, "Query response - Validator: %s, Jailed: %v, Tokens: %v, Shares: %v",
+		queriedValidator.OperatorAddress, queriedValidator.Jailed, queriedValidator.Tokens, queriedValidator.DelegatorShares))
 
-	// ensure ICQ can be issued now! else fail the callback
+	// Ensure ICQ can be issued now, else fail the callback
 	withinBufferWindow, err := k.IsWithinBufferWindow(ctx)
 	if err != nil {
-		errMsg := fmt.Sprintf("unable to determine if ICQ callback is inside buffer window, err: %s", err.Error())
-		k.Logger(ctx).Error(errMsg)
-		return sdkerrors.Wrapf(types.ErrOutsideIcqWindow, errMsg)
-	} else if !withinBufferWindow {
-		k.Logger(ctx).Error("validator exchange rate callback is outside ICQ window")
-		return nil
+		return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "unable to determine if ICQ callback is inside buffer window, err: %s", err.Error())
+	}
+	if !withinBufferWindow {
+		return errorsmod.Wrapf(types.ErrOutsideIcqWindow, "callback is outside ICQ window")
 	}
 
-	// get the validator from the host zone
+	// Get the validator from the host zone
 	validator, valIndex, found := GetValidatorFromAddress(hostZone.Validators, queriedValidator.OperatorAddress)
 	if !found {
-		errMsg := fmt.Sprintf("no registered validator for address (%s)", queriedValidator.OperatorAddress)
-		k.Logger(ctx).Error(errMsg)
-		return sdkerrors.Wrapf(types.ErrValidatorNotFound, errMsg)
+		return errorsmod.Wrapf(types.ErrValidatorNotFound, "no registered validator for address (%s)", queriedValidator.OperatorAddress)
 	}
-	// get the stride epoch number
+
+	// Get the stride epoch number
 	strideEpochTracker, found := k.GetEpochTracker(ctx, epochtypes.STRIDE_EPOCH)
 	if !found {
 		k.Logger(ctx).Error("failed to find stride epoch")
-		return sdkerrors.Wrapf(sdkerrors.ErrNotFound, "no epoch number for epoch (%s)", epochtypes.STRIDE_EPOCH)
+		return errorsmod.Wrapf(sdkerrors.ErrNotFound, "no epoch number for epoch (%s)", epochtypes.STRIDE_EPOCH)
 	}
 
 	// If the validator's delegation shares is 0, we'll get a division by zero error when trying to get the exchange rate
 	//  because `validator.TokensFromShares` uses delegation shares in the denominator
 	if queriedValidator.DelegatorShares.IsZero() {
-		errMsg := fmt.Sprintf("can't calculate validator internal exchange rate because delegation amount is 0 (validator: %s)", validator.Address)
-		k.Logger(ctx).Error(errMsg)
-		return sdkerrors.Wrapf(types.ErrDivisionByZero, errMsg)
+		return errorsmod.Wrapf(types.ErrDivisionByZero,
+			"can't calculate validator internal exchange rate because delegation amount is 0 (validator: %s)", validator.Address)
 	}
 
 	// We want the validator's internal exchange rate which is held internally behind `validator.TokensFromShares`
@@ -84,15 +83,13 @@ func ValidatorExchangeRateCallback(k Keeper, ctx sdk.Context, args []byte, query
 	hostZone.Validators[valIndex] = &validator
 	k.SetHostZone(ctx, hostZone)
 
-	k.Logger(ctx).Info(fmt.Sprintf("ValidatorCallback: HostZone %s, Validator %v, tokensFromShares %v",
-		hostZone.ChainId, validator.Address, validator.InternalExchangeRate.InternalTokensToSharesRate))
+	k.Logger(ctx).Info(utils.LogICQCallbackWithHostZone(chainId, ICQCallbackID_Validator, "Validator Internal Exchange Rate: %v",
+		validator.InternalExchangeRate.InternalTokensToSharesRate))
 
-	// armed with the exch rate, we can now query the (val,del) delegation
-	err = k.QueryDelegationsIcq(ctx, hostZone, queriedValidator.OperatorAddress)
-	if err != nil {
-		errMsg := fmt.Sprintf("ValidatorCallback: failed to query delegation, zone %s, err: %s", hostZone.ChainId, err.Error())
-		k.Logger(ctx).Error(errMsg)
-		return sdkerrors.Wrapf(types.ErrICQFailed, errMsg)
+	// Armed with the exch rate, we can now query the (validator,delegator) delegation
+	if err := k.QueryDelegationsIcq(ctx, hostZone, queriedValidator.OperatorAddress); err != nil {
+		return errorsmod.Wrapf(types.ErrICQFailed, "Failed to query delegations, err: %s", err.Error())
 	}
+
 	return nil
 }

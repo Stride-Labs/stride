@@ -4,14 +4,16 @@ import (
 	"fmt"
 	"strings"
 
+	errorsmod "cosmossdk.io/errors"
 	"github.com/cosmos/cosmos-sdk/types/bech32"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/spf13/cast"
 
-	icacallbackstypes "github.com/Stride-Labs/stride/v3/x/icacallbacks/types"
+	"github.com/Stride-Labs/stride/v7/utils"
+	icacallbackstypes "github.com/Stride-Labs/stride/v7/x/icacallbacks/types"
 
-	recordstypes "github.com/Stride-Labs/stride/v3/x/records/types"
-	"github.com/Stride-Labs/stride/v3/x/stakeibc/types"
+	recordstypes "github.com/Stride-Labs/stride/v7/x/records/types"
+	"github.com/Stride-Labs/stride/v7/x/stakeibc/types"
 
 	bankTypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	distributiontypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
@@ -19,61 +21,58 @@ import (
 
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
-	epochstypes "github.com/Stride-Labs/stride/v3/x/epochs/types"
-	icqtypes "github.com/Stride-Labs/stride/v3/x/interchainquery/types"
+	epochstypes "github.com/Stride-Labs/stride/v7/x/epochs/types"
+	icqtypes "github.com/Stride-Labs/stride/v7/x/interchainquery/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	icatypes "github.com/cosmos/ibc-go/v3/modules/apps/27-interchain-accounts/types"
-	channeltypes "github.com/cosmos/ibc-go/v3/modules/core/04-channel/types"
-	host "github.com/cosmos/ibc-go/v3/modules/core/24-host"
+	icatypes "github.com/cosmos/ibc-go/v5/modules/apps/27-interchain-accounts/types"
+	channeltypes "github.com/cosmos/ibc-go/v5/modules/core/04-channel/types"
+	host "github.com/cosmos/ibc-go/v5/modules/core/24-host"
 )
 
 func (k Keeper) DelegateOnHost(ctx sdk.Context, hostZone types.HostZone, amt sdk.Coin, depositRecord recordstypes.DepositRecord) error {
-	var msgs []sdk.Msg
-
 	// the relevant ICA is the delegate account
 	owner := types.FormatICAAccountOwner(hostZone.ChainId, types.ICAAccountType_DELEGATION)
 	portID, err := icatypes.NewControllerPortID(owner)
 	if err != nil {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "%s has no associated portId", owner)
+		return errorsmod.Wrapf(sdkerrors.ErrInvalidAddress, "%s has no associated portId", owner)
 	}
 	connectionId, err := k.GetConnectionId(ctx, portID)
 	if err != nil {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidChainID, "%s has no associated connection", portID)
+		return errorsmod.Wrapf(sdkerrors.ErrInvalidChainID, "%s has no associated connection", portID)
 	}
 
 	// Fetch the relevant ICA
-	delegationIca := hostZone.GetDelegationAccount()
-	if delegationIca == nil || delegationIca.GetAddress() == "" {
+	delegationAccount := hostZone.DelegationAccount
+	if delegationAccount == nil || delegationAccount.Address == "" {
 		k.Logger(ctx).Error(fmt.Sprintf("Zone %s is missing a delegation address!", hostZone.ChainId))
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "Invalid delegation account")
+		return errorsmod.Wrapf(sdkerrors.ErrInvalidAddress, "Invalid delegation account")
 	}
 
 	// Construct the transaction
-	targetDelegatedAmts, err := k.GetTargetValAmtsForHostZone(ctx, hostZone, amt.Amount.Uint64())
+	targetDelegatedAmts, err := k.GetTargetValAmtsForHostZone(ctx, hostZone, amt.Amount)
 	if err != nil {
 		k.Logger(ctx).Error(fmt.Sprintf("Error getting target delegation amounts for host zone %s", hostZone.ChainId))
 		return err
 	}
 
 	var splitDelegations []*types.SplitDelegation
-	for _, validator := range hostZone.GetValidators() {
-		relativeAmount := sdk.NewCoin(amt.Denom, sdk.NewIntFromUint64(targetDelegatedAmts[validator.GetAddress()]))
+	var msgs []sdk.Msg
+	for _, validator := range hostZone.Validators {
+		relativeAmount := sdk.NewCoin(amt.Denom, targetDelegatedAmts[validator.Address])
 		if relativeAmount.Amount.IsPositive() {
-			k.Logger(ctx).Info(fmt.Sprintf("Appending MsgDelegate to msgs, DelegatorAddress: %s, ValidatorAddress: %s, relativeAmount: %v",
-				delegationIca.GetAddress(), validator.GetAddress(), relativeAmount))
-
 			msgs = append(msgs, &stakingTypes.MsgDelegate{
-				DelegatorAddress: delegationIca.GetAddress(),
-				ValidatorAddress: validator.GetAddress(),
+				DelegatorAddress: delegationAccount.Address,
+				ValidatorAddress: validator.Address,
 				Amount:           relativeAmount,
 			})
 		}
 		splitDelegations = append(splitDelegations, &types.SplitDelegation{
-			Validator: validator.GetAddress(),
-			Amount:    relativeAmount.Amount.Uint64(),
+			Validator: validator.Address,
+			Amount:    relativeAmount.Amount,
 		})
 	}
+	k.Logger(ctx).Info(utils.LogWithHostZone(hostZone.ChainId, "Preparing MsgDelegates from the delegation account to each validator"))
 
 	// add callback data
 	delegateCallback := types.DelegateCallback{
@@ -81,102 +80,107 @@ func (k Keeper) DelegateOnHost(ctx sdk.Context, hostZone types.HostZone, amt sdk
 		DepositRecordId:  depositRecord.Id,
 		SplitDelegations: splitDelegations,
 	}
-	k.Logger(ctx).Info(fmt.Sprintf("Marshalling DelegateCallback args: %v", delegateCallback))
+	k.Logger(ctx).Info(utils.LogWithHostZone(hostZone.ChainId, "Marshalling DelegateCallback args: %+v", delegateCallback))
 	marshalledCallbackArgs, err := k.MarshalDelegateCallbackArgs(ctx, delegateCallback)
 	if err != nil {
 		return err
 	}
 
 	// Send the transaction through SubmitTx
-	_, err = k.SubmitTxsStrideEpoch(ctx, connectionId, msgs, *delegationIca, ICACallbackID_Delegate, marshalledCallbackArgs)
+	_, err = k.SubmitTxsStrideEpoch(ctx, connectionId, msgs, *delegationAccount, ICACallbackID_Delegate, marshalledCallbackArgs)
 	if err != nil {
-		return sdkerrors.Wrapf(err, "Failed to SubmitTxs for connectionId %s on %s. Messages: %s", connectionId, hostZone.ChainId, msgs)
+		return errorsmod.Wrapf(err, "Failed to SubmitTxs for connectionId %s on %s. Messages: %s", connectionId, hostZone.ChainId, msgs)
 	}
+	k.Logger(ctx).Info(utils.LogWithHostZone(hostZone.ChainId, "ICA MsgDelegates Successfully Sent"))
+
 	// update the record state to DELEGATION_IN_PROGRESS
 	depositRecord.Status = recordstypes.DepositRecord_DELEGATION_IN_PROGRESS
 	k.RecordsKeeper.SetDepositRecord(ctx, depositRecord)
+
 	return nil
 }
 
 func (k Keeper) SetWithdrawalAddressOnHost(ctx sdk.Context, hostZone types.HostZone) error {
-	_ = ctx
-	var msgs []sdk.Msg
-	// the relevant ICA is the delegate account
+	// The relevant ICA is the delegate account
 	owner := types.FormatICAAccountOwner(hostZone.ChainId, types.ICAAccountType_DELEGATION)
 	portID, err := icatypes.NewControllerPortID(owner)
 	if err != nil {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "%s has no associated portId", owner)
+		return errorsmod.Wrapf(sdkerrors.ErrInvalidAddress, "%s has no associated portId", owner)
 	}
 	connectionId, err := k.GetConnectionId(ctx, portID)
 	if err != nil {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidChainID, "%s has no associated connection", portID)
+		return errorsmod.Wrapf(sdkerrors.ErrInvalidChainID, "%s has no associated connection", portID)
 	}
 
 	// Fetch the relevant ICA
-	delegationIca := hostZone.GetDelegationAccount()
-	if delegationIca == nil || delegationIca.Address == "" {
+	delegationAccount := hostZone.DelegationAccount
+	if delegationAccount == nil || delegationAccount.Address == "" {
 		k.Logger(ctx).Error(fmt.Sprintf("Zone %s is missing a delegation address!", hostZone.ChainId))
 		return nil
 	}
-	withdrawalIca := hostZone.GetWithdrawalAccount()
-	if withdrawalIca == nil || withdrawalIca.Address == "" {
+	withdrawalAccount := hostZone.WithdrawalAccount
+	if withdrawalAccount == nil || withdrawalAccount.Address == "" {
 		k.Logger(ctx).Error(fmt.Sprintf("Zone %s is missing a withdrawal address!", hostZone.ChainId))
 		return nil
 	}
-	withdrawalIcaAddr := hostZone.GetWithdrawalAccount().GetAddress()
+	k.Logger(ctx).Info(utils.LogWithHostZone(hostZone.ChainId, "Withdrawal Address: %s, Delegator Address: %s",
+		withdrawalAccount.Address, delegationAccount.Address))
 
-	k.Logger(ctx).Info(fmt.Sprintf("Setting withdrawal address on host zone. DelegatorAddress: %s WithdrawAddress: %s ConnectionID: %s", delegationIca.GetAddress(), withdrawalIcaAddr, connectionId))
-	// construct the msg
-	msgs = append(msgs, &distributiontypes.MsgSetWithdrawAddress{DelegatorAddress: delegationIca.GetAddress(), WithdrawAddress: withdrawalIcaAddr})
-	// Send the transaction through SubmitTx
-	_, err = k.SubmitTxsStrideEpoch(ctx, connectionId, msgs, *delegationIca, "", nil)
-	if err != nil {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "Failed to SubmitTxs for %s, %s, %s", connectionId, hostZone.ChainId, msgs)
+	// Construct the ICA message
+	msgs := []sdk.Msg{
+		&distributiontypes.MsgSetWithdrawAddress{
+			DelegatorAddress: delegationAccount.Address,
+			WithdrawAddress:  withdrawalAccount.Address,
+		},
 	}
+	_, err = k.SubmitTxsStrideEpoch(ctx, connectionId, msgs, *delegationAccount, "", nil)
+	if err != nil {
+		return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "Failed to SubmitTxs for %s, %s, %s", connectionId, hostZone.ChainId, msgs)
+	}
+
 	return nil
 }
 
-// Simple balance query helper using new ICQ module
-func (k Keeper) UpdateWithdrawalBalance(ctx sdk.Context, zoneInfo types.HostZone) error {
-	k.Logger(ctx).Info(fmt.Sprintf("\tUpdating withdrawal balances on %s", zoneInfo.ChainId))
+// Submits an ICQ for the withdrawal account balance
+func (k Keeper) UpdateWithdrawalBalance(ctx sdk.Context, hostZone types.HostZone) error {
+	k.Logger(ctx).Info(utils.LogWithHostZone(hostZone.ChainId, "Submitting ICQ for withdrawal account balance"))
 
-	withdrawalIca := zoneInfo.GetWithdrawalAccount()
-	if withdrawalIca == nil || withdrawalIca.Address == "" {
-		k.Logger(ctx).Error(fmt.Sprintf("Zone %s is missing a withdrawal address!", zoneInfo.ChainId))
+	// Get the withdrawal account address from the host zone
+	withdrawalAccount := hostZone.WithdrawalAccount
+	if withdrawalAccount == nil || withdrawalAccount.Address == "" {
+		return errorsmod.Wrapf(types.ErrICAAccountNotFound, "no withdrawal account found for %s", hostZone.ChainId)
 	}
-	k.Logger(ctx).Info(fmt.Sprintf("\tQuerying withdrawalBalances for %s", zoneInfo.ChainId))
 
-	_, addr, _ := bech32.DecodeAndConvert(withdrawalIca.GetAddress())
-	data := bankTypes.CreateAccountBalancesPrefix(addr)
-
-	// get ttl, the end of the ICA buffer window
-	epochType := epochstypes.STRIDE_EPOCH
-	ttl, err := k.GetICATimeoutNanos(ctx, epochType)
+	// Encode the withdrawal account address for the query request
+	// The query request consists of the withdrawal account address and denom
+	_, withdrawalAddressBz, err := bech32.DecodeAndConvert(withdrawalAccount.Address)
 	if err != nil {
-		errMsg := fmt.Sprintf("Failed to get ICA timeout nanos for epochType %s using param, error: %s", epochType, err.Error())
-		k.Logger(ctx).Error(errMsg)
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, errMsg)
+		return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "invalid withdrawal account address, could not decode (%s)", err.Error())
+	}
+	queryData := append(bankTypes.CreateAccountBalancesPrefix(withdrawalAddressBz), []byte(hostZone.HostDenom)...)
+
+	// The query should timeout at the end of the ICA buffer window
+	ttl, err := k.GetICATimeoutNanos(ctx, epochstypes.STRIDE_EPOCH)
+	if err != nil {
+		return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest,
+			"Failed to get ICA timeout nanos for epochType %s using param, error: %s", epochstypes.STRIDE_EPOCH, err.Error())
 	}
 
-	k.Logger(ctx).Info("Querying for value", "key", icqtypes.BANK_STORE_QUERY_WITH_PROOF, "denom", zoneInfo.HostDenom)
-	err = k.InterchainQueryKeeper.MakeRequest(
+	// Submit the ICQ for the withdrawal account balance
+	if err := k.InterchainQueryKeeper.MakeRequest(
 		ctx,
-		zoneInfo.ConnectionId,
-		zoneInfo.ChainId,
-		// use "bank" store to access acct balances which live in the bank module
-		// use "key" suffix to retrieve a proof alongside the query result
-		icqtypes.BANK_STORE_QUERY_WITH_PROOF,
-		append(data, []byte(zoneInfo.HostDenom)...),
-		sdk.NewInt(-1),
 		types.ModuleName,
 		ICQCallbackID_WithdrawalBalance,
-		ttl, // ttl
-		0,   // height always 0 (which means current height)
-	)
-	if err != nil {
+		hostZone.ChainId,
+		hostZone.ConnectionId,
+		icqtypes.BANK_STORE_QUERY_WITH_PROOF,
+		queryData,
+		ttl,
+	); err != nil {
 		k.Logger(ctx).Error(fmt.Sprintf("Error querying for withdrawal balance, error: %s", err.Error()))
 		return err
 	}
+
 	return nil
 }
 
@@ -185,7 +189,7 @@ func (k Keeper) GetStartTimeNextEpoch(ctx sdk.Context, epochType string) (uint64
 	epochTracker, found := k.GetEpochTracker(ctx, epochType)
 	if !found {
 		k.Logger(ctx).Error(fmt.Sprintf("Failed to get epoch tracker for %s", epochType))
-		return 0, sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "Failed to get epoch tracker for %s", epochType)
+		return 0, errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "Failed to get epoch tracker for %s", epochType)
 	}
 	return epochTracker.NextEpochStartTime, nil
 }
@@ -198,7 +202,6 @@ func (k Keeper) SubmitTxsDayEpoch(
 	callbackId string,
 	callbackArgs []byte,
 ) (uint64, error) {
-	k.Logger(ctx).Info(fmt.Sprintf("SubmitTxsDayEpoch %v", msgs))
 	sequence, err := k.SubmitTxsEpoch(ctx, connectionId, msgs, account, epochstypes.DAY_EPOCH, callbackId, callbackArgs)
 	if err != nil {
 		return 0, err
@@ -214,7 +217,6 @@ func (k Keeper) SubmitTxsStrideEpoch(
 	callbackId string,
 	callbackArgs []byte,
 ) (uint64, error) {
-	k.Logger(ctx).Info(fmt.Sprintf("SubmitTxsStrideEpoch %v", msgs))
 	sequence, err := k.SubmitTxsEpoch(ctx, connectionId, msgs, account, epochstypes.STRIDE_EPOCH, callbackId, callbackArgs)
 	if err != nil {
 		return 0, err
@@ -234,13 +236,12 @@ func (k Keeper) SubmitTxsEpoch(
 	timeoutNanosUint64, err := k.GetICATimeoutNanos(ctx, epochType)
 	if err != nil {
 		k.Logger(ctx).Error(fmt.Sprintf("Failed to get ICA timeout nanos for epochType %s using param, error: %s", epochType, err.Error()))
-		return 0, sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "Failed to convert timeoutNanos to uint64, error: %s", err.Error())
+		return 0, errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "Failed to convert timeoutNanos to uint64, error: %s", err.Error())
 	}
 	sequence, err := k.SubmitTxs(ctx, connectionId, msgs, account, timeoutNanosUint64, callbackId, callbackArgs)
 	if err != nil {
 		return 0, err
 	}
-	k.Logger(ctx).Info(fmt.Sprintf("Submitted Txs, connectionId: %s, sequence: %d, block: %d", connectionId, sequence, ctx.BlockHeight()))
 	return sequence, nil
 }
 
@@ -254,25 +255,29 @@ func (k Keeper) SubmitTxs(
 	callbackId string,
 	callbackArgs []byte,
 ) (uint64, error) {
-	k.Logger(ctx).Info(fmt.Sprintf("SubmitTxs %v", msgs))
 	chainId, err := k.GetChainID(ctx, connectionId)
 	if err != nil {
 		return 0, err
 	}
-	owner := types.FormatICAAccountOwner(chainId, account.GetTarget())
+	owner := types.FormatICAAccountOwner(chainId, account.Target)
 	portID, err := icatypes.NewControllerPortID(owner)
 	if err != nil {
 		return 0, err
 	}
 
+	k.Logger(ctx).Info(utils.LogWithHostZone(chainId, "  Submitting ICA Tx on %s, %s with TTL: %d", portID, connectionId, timeoutTimestamp))
+	for _, msg := range msgs {
+		k.Logger(ctx).Info(utils.LogWithHostZone(chainId, "    Msg: %+v", msg))
+	}
+
 	channelID, found := k.ICAControllerKeeper.GetActiveChannelID(ctx, connectionId, portID)
 	if !found {
-		return 0, sdkerrors.Wrapf(icatypes.ErrActiveChannelNotFound, "failed to retrieve active channel for port %s", portID)
+		return 0, errorsmod.Wrapf(icatypes.ErrActiveChannelNotFound, "failed to retrieve active channel for port %s", portID)
 	}
 
 	chanCap, found := k.scopedKeeper.GetCapability(ctx, host.ChannelCapabilityPath(portID, channelID))
 	if !found {
-		return 0, sdkerrors.Wrap(channeltypes.ErrChannelCapabilityNotFound, "module does not own channel capability")
+		return 0, errorsmod.Wrap(channeltypes.ErrChannelCapabilityNotFound, "module does not own channel capability")
 	}
 
 	data, err := icatypes.SerializeCosmosTx(k.cdc, msgs)
@@ -300,6 +305,7 @@ func (k Keeper) SubmitTxs(
 			CallbackId:   callbackId,
 			CallbackArgs: callbackArgs,
 		}
+		k.Logger(ctx).Info(utils.LogWithHostZone(chainId, "Storing callback data: %+v", callback))
 		k.ICACallbacksKeeper.SetCallbackData(ctx, callback)
 	}
 
@@ -350,111 +356,107 @@ func (k Keeper) GetLightClientTimeSafely(ctx sdk.Context, connectionID string) (
 	}
 }
 
-// query and update validator exchange rate
+// Submits an ICQ to get a validator's exchange rate
 func (k Keeper) QueryValidatorExchangeRate(ctx sdk.Context, msg *types.MsgUpdateValidatorSharesExchRate) (*types.MsgUpdateValidatorSharesExchRateResponse, error) {
-	// ensure ICQ can be issued now! else fail the callback
-	valid, err := k.IsWithinBufferWindow(ctx)
+	k.Logger(ctx).Info(utils.LogWithHostZone(msg.ChainId, "Submitting ICQ for validator exchange rate to %s", msg.Valoper))
+
+	// Ensure ICQ can be issued now! else fail the callback
+	withinBufferWindow, err := k.IsWithinBufferWindow(ctx)
 	if err != nil {
-		return nil, err
-	} else if !valid {
-		return nil, sdkerrors.Wrapf(types.ErrOutsideIcqWindow, "outside the buffer time during which ICQs are allowed (%s)", msg.ChainId)
+		return nil, errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "unable to determine if ICQ callback is inside buffer window, err: %s", err.Error())
+	} else if !withinBufferWindow {
+		return nil, errorsmod.Wrapf(types.ErrOutsideIcqWindow, "outside the buffer time during which ICQs are allowed (%s)", msg.ChainId)
 	}
 
+	// Confirm the host zone exists
 	hostZone, found := k.GetHostZone(ctx, msg.ChainId)
 	if !found {
-		errMsg := fmt.Sprintf("Host zone not found (%s)", msg.ChainId)
-		k.Logger(ctx).Error(errMsg)
-		return nil, sdkerrors.Wrapf(types.ErrInvalidHostZone, errMsg)
+		return nil, errorsmod.Wrapf(types.ErrInvalidHostZone, "Host zone not found (%s)", msg.ChainId)
 	}
 
 	// check that the validator address matches the bech32 prefix of the hz
 	if !strings.Contains(msg.Valoper, hostZone.Bech32Prefix) {
-		return nil, sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "validator operator address must match the host zone bech32 prefix")
+		return nil, errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "validator operator address must match the host zone bech32 prefix")
 	}
 
-	_, valAddr, err := bech32.DecodeAndConvert(msg.Valoper)
+	// Encode the validator address to form the query request
+	_, validatorAddressBz, err := bech32.DecodeAndConvert(msg.Valoper)
 	if err != nil {
-		return nil, sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "invalid validator operator address, could not decode (%s)", err.Error())
+		return nil, errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "invalid validator operator address, could not decode (%s)", err.Error())
 	}
-	data := stakingtypes.GetValidatorKey(valAddr)
+	queryData := stakingtypes.GetValidatorKey(validatorAddressBz)
 
-	// get ttl
+	// The query should timeout at the start of the next epoch
 	ttl, err := k.GetStartTimeNextEpoch(ctx, epochstypes.STRIDE_EPOCH)
 	if err != nil {
-		errMsg := fmt.Sprintf("could not get start time for next epoch: %s", err.Error())
-		k.Logger(ctx).Error(errMsg)
-		return nil, sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, errMsg)
+		return nil, errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "could not get start time for next epoch: %s", err.Error())
 	}
 
-	k.Logger(ctx).Info(fmt.Sprintf("Querying validator %v, key %v, denom %v", msg.Valoper, icqtypes.STAKING_STORE_QUERY_WITH_PROOF, hostZone.ChainId))
-	err = k.InterchainQueryKeeper.MakeRequest(
+	// Submit validator exchange rate ICQ
+	if err := k.InterchainQueryKeeper.MakeRequest(
 		ctx,
-		hostZone.ConnectionId,
-		hostZone.ChainId,
-		// use "staking" store to access validator which lives in the staking module
-		// use "key" suffix to retrieve a proof alongside the query result
-		icqtypes.STAKING_STORE_QUERY_WITH_PROOF,
-		data,
-		sdk.NewInt(-1),
 		types.ModuleName,
 		ICQCallbackID_Validator,
-		ttl, // ttl
-		0,   // height always 0 (which means current height)
-	)
-	if err != nil {
-		k.Logger(ctx).Error(fmt.Sprintf("Error querying for validator, error %s", err.Error()))
+		hostZone.ChainId,
+		hostZone.ConnectionId,
+		icqtypes.STAKING_STORE_QUERY_WITH_PROOF,
+		queryData,
+		ttl,
+	); err != nil {
+		k.Logger(ctx).Error(fmt.Sprintf("Error submitting ICQ for validator exchange rate, error %s", err.Error()))
 		return nil, err
 	}
 	return &types.MsgUpdateValidatorSharesExchRateResponse{}, nil
 }
 
-// to icq delegation amounts, this fn is executed after validator exch rates are icq'd
+// Submits an ICQ to get a validator's delegations
+// This is called after the validator's exchange rate is determined
 func (k Keeper) QueryDelegationsIcq(ctx sdk.Context, hostZone types.HostZone, valoper string) error {
-	// ensure ICQ can be issued now! else fail the callback
+	k.Logger(ctx).Info(utils.LogWithHostZone(hostZone.ChainId, "Submitting ICQ for delegations to %s", valoper))
+
+	// Ensure ICQ can be issued now! else fail the callback
 	valid, err := k.IsWithinBufferWindow(ctx)
 	if err != nil {
-		return err
+		return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "unable to determine if ICQ callback is inside buffer window, err: %s", err.Error())
 	} else if !valid {
-		return sdkerrors.Wrapf(types.ErrOutsideIcqWindow, "outside the buffer time during which ICQs are allowed (%s)", hostZone.HostDenom)
+		return errorsmod.Wrapf(types.ErrOutsideIcqWindow, "outside the buffer time during which ICQs are allowed (%s)", hostZone.HostDenom)
 	}
 
-	delegationIca := hostZone.GetDelegationAccount()
-	if delegationIca == nil || delegationIca.GetAddress() == "" {
-		errMsg := fmt.Sprintf("Zone %s is missing a delegation address!", hostZone.ChainId)
-		k.Logger(ctx).Error(errMsg)
-		return sdkerrors.Wrapf(types.ErrICAAccountNotFound, errMsg)
+	// Get the validator and delegator encoded addresses to form the query request
+	delegationAccount := hostZone.DelegationAccount
+	if delegationAccount == nil || delegationAccount.Address == "" {
+		return errorsmod.Wrapf(types.ErrICAAccountNotFound, "no delegation address found for %s", hostZone.ChainId)
 	}
-	delegationAcctAddr := delegationIca.GetAddress()
-	_, valAddr, _ := bech32.DecodeAndConvert(valoper)
-	_, delAddr, _ := bech32.DecodeAndConvert(delegationAcctAddr)
-	data := stakingtypes.GetDelegationKey(delAddr, valAddr)
+	_, validatorAddressBz, err := bech32.DecodeAndConvert(valoper)
+	if err != nil {
+		return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "invalid validator address, could not decode (%s)", err.Error())
+	}
+	_, delegatorAddressBz, err := bech32.DecodeAndConvert(delegationAccount.Address)
+	if err != nil {
+		return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "invalid delegator address, could not decode (%s)", err.Error())
+	}
+	queryData := stakingtypes.GetDelegationKey(delegatorAddressBz, validatorAddressBz)
 
-	// get ttl
+	// The query should timeout at the start of the next epoch
 	ttl, err := k.GetStartTimeNextEpoch(ctx, epochstypes.STRIDE_EPOCH)
 	if err != nil {
-		errMsg := fmt.Sprintf("could not get start time for next epoch: %s", err.Error())
-		k.Logger(ctx).Error(errMsg)
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, errMsg)
+		return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "could not get start time for next epoch: %s", err.Error())
 	}
 
-	k.Logger(ctx).Info(fmt.Sprintf("Querying delegation for %s on %s", delegationAcctAddr, valoper))
-	err = k.InterchainQueryKeeper.MakeRequest(
+	// Submit delegator shares ICQ
+	if err := k.InterchainQueryKeeper.MakeRequest(
 		ctx,
-		hostZone.ConnectionId,
-		hostZone.ChainId,
-		// use "staking" store to access delegation which lives in the staking module
-		// use "key" suffix to retrieve a proof alongside the query result
-		icqtypes.STAKING_STORE_QUERY_WITH_PROOF,
-		data,
-		sdk.NewInt(-1),
 		types.ModuleName,
 		ICQCallbackID_Delegation,
-		ttl, // ttl
-		0,   // height always 0 (which means current height)
-	)
-	if err != nil {
-		k.Logger(ctx).Error(fmt.Sprintf("Error querying for delegation, error : %s", err.Error()))
+		hostZone.ChainId,
+		hostZone.ConnectionId,
+		icqtypes.STAKING_STORE_QUERY_WITH_PROOF,
+		queryData,
+		ttl,
+	); err != nil {
+		k.Logger(ctx).Error(fmt.Sprintf("Error submitting ICQ for delegation, error : %s", err.Error()))
 		return err
 	}
+
 	return nil
 }

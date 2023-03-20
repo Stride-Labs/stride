@@ -4,7 +4,7 @@ package stride.interchainquery.v1;
 import "gogoproto/gogo.proto";
 import "cosmos_proto/cosmos.proto";
 
-option go_package = "github.com/Stride-Labs/stride/v3/x/interchainquery/types";
+option go_package = "github.com/Stride-Labs/stride/v7/x/interchainquery/types";
 
 message Query {
   string id = 1;
@@ -12,19 +12,9 @@ message Query {
   string chain_id = 3;
   string query_type = 4;
   bytes request = 5;
-  string period = 6 [
-    (cosmos_proto.scalar) = "cosmos.Int",
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
-    (gogoproto.nullable) = false
-  ];
-  string last_height = 7 [
-    (cosmos_proto.scalar) = "cosmos.Int",
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
-    (gogoproto.nullable) = false
-  ];
   string callback_id = 8;
   uint64 ttl = 9;
-  int64 height = 10;
+  bool request_sent = 11;
 }
 
 message DataPoint {

@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/gorilla/mux"
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 	"github.com/spf13/cobra"
 
@@ -17,10 +16,9 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 
-	"github.com/Stride-Labs/stride/v3/x/claim/client/cli"
-	"github.com/Stride-Labs/stride/v3/x/claim/client/rest"
-	"github.com/Stride-Labs/stride/v3/x/claim/keeper"
-	"github.com/Stride-Labs/stride/v3/x/claim/types"
+	"github.com/Stride-Labs/stride/v7/x/claim/client/cli"
+	"github.com/Stride-Labs/stride/v7/x/claim/keeper"
+	"github.com/Stride-Labs/stride/v7/x/claim/types"
 )
 
 var (
@@ -66,11 +64,6 @@ func (AppModuleBasic) ValidateGenesis(cdc codec.JSONCodec, config client.TxEncod
 		return fmt.Errorf("failed to unmarshal %s genesis state: %w", types.ModuleName, err)
 	}
 	return genState.Validate()
-}
-
-// RegisterRESTRoutes registers the capability module's REST service handlers.
-func (AppModuleBasic) RegisterRESTRoutes(clientCtx client.Context, rtr *mux.Router) {
-	rest.RegisterRoutes(clientCtx, rtr)
 }
 
 // RegisterGRPCGatewayRoutes registers the gRPC Gateway routes for the module.
@@ -162,4 +155,4 @@ func (am AppModule) EndBlock(ctx sdk.Context, _ abci.RequestEndBlock) []abci.Val
 }
 
 // ConsensusVersion implements AppModule/ConsensusVersion.
-func (AppModule) ConsensusVersion() uint64 { return 1 }
+func (AppModule) ConsensusVersion() uint64 { return 2 }

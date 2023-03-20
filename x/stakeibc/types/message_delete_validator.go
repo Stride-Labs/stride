@@ -1,10 +1,11 @@
 package types
 
 import (
+	errorsmod "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
-	"github.com/Stride-Labs/stride/v3/utils"
+	"github.com/Stride-Labs/stride/v7/utils"
 )
 
 const TypeMsgDeleteValidator = "delete_validator"
@@ -43,7 +44,7 @@ func (msg *MsgDeleteValidator) GetSignBytes() []byte {
 func (msg *MsgDeleteValidator) ValidateBasic() error {
 	_, err := sdk.AccAddressFromBech32(msg.Creator)
 	if err != nil {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid creator address (%s)", err)
+		return errorsmod.Wrapf(sdkerrors.ErrInvalidAddress, "invalid creator address (%s)", err)
 	}
 	if err := utils.ValidateAdminAddress(msg.Creator); err != nil {
 		return err

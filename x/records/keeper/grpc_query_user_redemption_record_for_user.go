@@ -3,12 +3,13 @@ package keeper
 import (
 	"context"
 
+	errorsmod "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	"github.com/Stride-Labs/stride/v3/x/records/types"
+	"github.com/Stride-Labs/stride/v7/x/records/types"
 )
 
 func (k Keeper) UserRedemptionRecordForUser(c context.Context, req *types.QueryAllUserRedemptionRecordForUserRequest) (*types.QueryAllUserRedemptionRecordForUserResponse, error) {
@@ -19,7 +20,7 @@ func (k Keeper) UserRedemptionRecordForUser(c context.Context, req *types.QueryA
 	// validate the address
 	_, err := sdk.AccAddressFromBech32(req.Address)
 	if err != nil {
-		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, req.Address)
+		return nil, errorsmod.Wrap(sdkerrors.ErrInvalidAddress, req.Address)
 	}
 
 	var userRedemptionRecords []types.UserRedemptionRecord

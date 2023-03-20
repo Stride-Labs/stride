@@ -7,9 +7,9 @@ import (
 	"google.golang.org/grpc/status"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	icatypes "github.com/cosmos/ibc-go/v3/modules/apps/27-interchain-accounts/types"
+	icatypes "github.com/cosmos/ibc-go/v5/modules/apps/27-interchain-accounts/types"
 
-	"github.com/Stride-Labs/stride/v3/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v7/x/stakeibc/types"
 )
 
 // InterchainAccountFromAddress implements the Query/InterchainAccountFromAddress gRPC method

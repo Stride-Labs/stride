@@ -1,0 +1,14 @@
+syntax = "proto3";
+package stride.autopilot;
+
+import "gogoproto/gogo.proto";
+
+option go_package = "github.com/Stride-Labs/stride/v7/x/autopilot/types";
+
+// Params defines the parameters for the module.
+// next id: 1
+message Params {
+  option (gogoproto.goproto_stringer) = false;
+  // optionally, turn off this module
+  bool active = 1;
+}

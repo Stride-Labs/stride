@@ -10,9 +10,9 @@ import (
 	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
 	"github.com/cosmos/cosmos-sdk/crypto/hd"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
+	pruningtypes "github.com/cosmos/cosmos-sdk/pruning/types"
 	servertypes "github.com/cosmos/cosmos-sdk/server/types"
 	"github.com/cosmos/cosmos-sdk/simapp"
-	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	"github.com/cosmos/cosmos-sdk/testutil/network"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -25,13 +25,13 @@ import (
 	tmtypes "github.com/tendermint/tendermint/types"
 	tmdb "github.com/tendermint/tm-db"
 
-	"github.com/Stride-Labs/stride/v3/app"
-	testutil "github.com/Stride-Labs/stride/v3/testutil"
+	"github.com/Stride-Labs/stride/v7/app"
 )
 
 type (
-	Network = network.Network
-	Config  = network.Config
+	Network   = network.Network
+	Config    = network.Config
+	Validator = network.Validator
 )
 
 // New creates instance with fully configured cosmos network.
@@ -46,7 +46,7 @@ func New(t *testing.T, configs ...network.Config) *network.Network {
 	} else {
 		cfg = configs[0]
 	}
-	net := network.New(t, cfg)
+	net, _ := network.New(t, t.TempDir(), cfg)
 	t.Cleanup(net.Cleanup)
 	return net
 }
@@ -72,7 +72,7 @@ func DefaultConfig() network.Config {
 				val.Ctx.Logger, tmdb.NewMemDB(), nil, true, map[int64]bool{}, val.Ctx.Config.RootDir, 0,
 				encoding,
 				simapp.EmptyAppOptions{},
-				baseapp.SetPruning(storetypes.NewPruningOptionsFromString(val.AppConfig.Pruning)),
+				baseapp.SetPruning(pruningtypes.NewPruningOptionsFromString(val.AppConfig.Pruning)),
 				baseapp.SetMinGasPrices(val.AppConfig.MinGasPrices),
 			)
 		},
@@ -87,7 +87,7 @@ func DefaultConfig() network.Config {
 		AccountTokens:   sdk.TokensFromConsensusPower(1000, sdk.DefaultPowerReduction),
 		StakingTokens:   sdk.TokensFromConsensusPower(500, sdk.DefaultPowerReduction),
 		BondedTokens:    sdk.TokensFromConsensusPower(100, sdk.DefaultPowerReduction),
-		PruningStrategy: storetypes.PruningOptionNothing,
+		PruningStrategy: pruningtypes.PruningOptionNothing,
 		CleanupDir:      true,
 		SigningAlgo:     string(hd.Secp256k1Type),
 		KeyringOptions:  []keyring.Option{},
