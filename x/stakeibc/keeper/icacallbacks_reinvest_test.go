@@ -104,25 +104,10 @@ func (s *KeeperTestSuite) SetupReinvestCallback() ReinvestCallbackTestCase {
 
 func (s *KeeperTestSuite) TestReinvestCallback_Successful() {
 	tc := s.SetupReinvestCallback()
-	initialState := tc.initialState
-	expectedRecord := initialState.depositRecord
 	validArgs := tc.validArgs
 
 	err := stakeibckeeper.ReinvestCallback(s.App.StakeibcKeeper, s.Ctx, validArgs.packet, validArgs.ackResponse, validArgs.args)
 	s.Require().NoError(err)
-
-	// Confirm deposit record has been added
-	records := s.App.RecordsKeeper.GetAllDepositRecord(s.Ctx)
-	s.Require().Len(records, 1, "number of deposit records")
-	record := records[0]
-
-	// Confirm deposit record fields match those expected
-	s.Require().Equal(int64(expectedRecord.Id), int64(record.Id), "deposit record Id")
-	s.Require().Equal(expectedRecord.Amount, record.Amount, "deposit record Amount")
-	s.Require().Equal(expectedRecord.HostZoneId, record.HostZoneId, "deposit record HostZoneId")
-	s.Require().Equal(expectedRecord.Status, record.Status, "deposit record Status")
-	s.Require().Equal(expectedRecord.Source, record.Source, "deposit record Source")
-	s.Require().Equal(int64(expectedRecord.DepositEpochNumber), int64(record.DepositEpochNumber), "deposit record DepositEpochNumber")
 
 	// Confirm an interchain query was submitted for the fee account balance
 	allQueries := s.App.InterchainqueryKeeper.AllQueries(s.Ctx)
@@ -219,7 +204,7 @@ func (s *KeeperTestSuite) TestReinvestCallback_MissingEpoch() {
 	s.App.StakeibcKeeper.RemoveEpochTracker(s.Ctx, epochtypes.STRIDE_EPOCH)
 
 	err := stakeibckeeper.ReinvestCallback(s.App.StakeibcKeeper, s.Ctx, invalidArgs.packet, invalidArgs.ackResponse, invalidArgs.args)
-	s.Require().ErrorContains(err, "no number for epoch (stride_epoch)")
+	s.Require().ErrorContains(err, "Failed to get epoch tracker for stride_epoch")
 }
 
 func (s *KeeperTestSuite) TestReinvestCallback_FailedToSubmitQuery() {

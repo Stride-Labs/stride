@@ -3,11 +3,61 @@ package keeper
 import (
 	"encoding/binary"
 
+	sdkmath "cosmossdk.io/math"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/Stride-Labs/stride/v7/x/records/types"
 )
+
+func (k Keeper) FilterDepositRecords(arr []types.DepositRecord, condition func(types.DepositRecord) bool) (ret []types.DepositRecord) {
+	for _, elem := range arr {
+		if condition(elem) {
+			ret = append(ret, elem)
+		}
+	}
+	return ret
+}
+
+// SumDepositRecords returns sum amount of deposit records
+func (k Keeper) SumDepositRecords(arr []types.DepositRecord) sdkmath.Int {
+	totalAmount := sdkmath.ZeroInt()
+	for _, depositRecord := range arr {
+		totalAmount = totalAmount.Add(depositRecord.Amount)
+	}
+	return totalAmount
+}
+
+func (k Keeper) SubtractFromDepositRecordsByChain(ctx sdk.Context, amount sdkmath.Int, chainId string) (err error) {
+	// filter to only the pending deposit records with status DepositRecord_TRANSFER_QUEUE
+	depositRecords := k.GetAllDepositRecord(ctx)
+	pendingDepositRecords := k.FilterDepositRecords(depositRecords, func(record types.DepositRecord) (condition bool) {
+		return record.Status == types.DepositRecord_TRANSFER_QUEUE && record.HostZoneId == chainId
+	})
+
+	// return error if amount is greater than sum of pending deposit records
+	totalPendingDeposits := k.SumDepositRecords(pendingDepositRecords)
+	if amount.GT(totalPendingDeposits) {
+		return sdkerrors.Wrapf(types.ErrInvalidAmount, "cannot remove an amount %v g.t. pending deposit balance on host zone: %v", amount, totalPendingDeposits)
+	}
+
+	// Subtract all of the amount from one or more pending deposit records
+	amountRemaining := amount
+	for _, depositRecord := range pendingDepositRecords {
+		if amountRemaining.GTE(depositRecord.Amount) {
+			amountRemaining = amountRemaining.Sub(depositRecord.Amount)
+			depositRecord.Amount = sdkmath.ZeroInt()
+
+		} else {
+			depositRecord.Amount = depositRecord.Amount.Sub(amountRemaining)
+			amountRemaining = sdkmath.ZeroInt()
+		}
+		k.SetDepositRecord(ctx, depositRecord)
+	}
+	return nil
+}
 
 // GetDepositRecordCount get the total number of depositRecord
 func (k Keeper) GetDepositRecordCount(ctx sdk.Context) uint64 {

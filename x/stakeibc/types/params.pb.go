@@ -189,6 +189,13 @@ func (m *Params) GetSafetyMaxSlashPercent() uint64 {
 	return 0
 }
 
+func (m *Params) GetInstantRedemptionCommission() uint64 {
+	if m != nil {
+		return m.InstantRedemptionCommission
+	}
+	return 0
+}
+
 func init() {
 	proto.RegisterType((*Params)(nil), "stride.stakeibc.Params")
 }
@@ -255,6 +262,13 @@ func (m *Params) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	_ = i
 	var l int
 	_ = l
+	if m.InstantRedemptionCommission != 0 {
+		i = encodeVarintParams(dAtA, i, uint64(m.InstantRedemptionCommission))
+		i--
+		dAtA[i] = 0x1
+		i--
+		dAtA[i] = 0x98
+	}
 	if m.SafetyMaxSlashPercent != 0 {
 		i = encodeVarintParams(dAtA, i, uint64(m.SafetyMaxSlashPercent))
 		i--
@@ -408,6 +422,9 @@ func (m *Params) Size() (n int) {
 	}
 	if m.SafetyMaxSlashPercent != 0 {
 		n += 2 + sovParams(uint64(m.SafetyMaxSlashPercent))
+	}
+	if m.InstantRedemptionCommission != 0 {
+		n += 2 + sovParams(uint64(m.InstantRedemptionCommission))
 	}
 	return n
 }
@@ -747,6 +764,25 @@ func (m *Params) Unmarshal(dAtA []byte) error {
 				b := dAtA[iNdEx]
 				iNdEx++
 				m.SafetyMaxSlashPercent |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 19:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field InstantRedemptionCommission", wireType)
+			}
+			m.InstantRedemptionCommission = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowParams
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.InstantRedemptionCommission |= uint64(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}

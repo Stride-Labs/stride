@@ -34,11 +34,40 @@ func (k Keeper) CreateDepositRecordsForEpoch(ctx sdk.Context, epochNumber uint64
 	}
 }
 
+// Create new deposit records to be used for instant redemption and liquid staking
+func (k Keeper) CreateDepositRecrodsForReinvestment(ctx sdk.Context, epochNumber uint64) {
+	k.Logger(ctx).Info("Creating Deposit Records for accrued reinvestment...")
+
+	// Get all accrued rewards amount in ReinvestmentCollector module account
+	reinvestmentCollectorAddress := k.accountKeeper.GetModuleAccount(ctx, types.ReinvestmentCollectorName).GetAddress()
+	reinvestmentTokens := k.bankKeeper.GetAllBalances(ctx, reinvestmentCollectorAddress)
+
+	// Create new deposit records that will be proceed at epoch n+1
+	for _, token := range reinvestmentTokens {
+		// get hostzone by reward token (in ibc denom format)
+		hz, err := k.GetHostZoneFromIBCDenom(ctx, token.Denom)
+		if err != nil {
+			k.Logger(ctx).Info("Token denom %s in module account is not from a supported host zone", token.Denom)
+			continue
+		}
+
+		depositRecord := recordstypes.DepositRecord{
+			Amount:             token.Amount,
+			Denom:              hz.HostDenom,
+			HostZoneId:         hz.ChainId,
+			Status:             recordstypes.DepositRecord_TRANSFER_QUEUE,
+			DepositEpochNumber: epochNumber + 1,
+		}
+
+		k.RecordsKeeper.AppendDepositRecord(ctx, depositRecord)
+	}
+}
+
 // Iterate each deposit record marked TRANSFER_QUEUE and IBC transfer tokens from the Stride controller account to the delegation ICAs on each host zone
 func (k Keeper) TransferExistingDepositsToHostZones(ctx sdk.Context, epochNumber uint64, depositRecords []recordstypes.DepositRecord) {
 	k.Logger(ctx).Info("Transfering deposit records...")
 
-	transferDepositRecords := utils.FilterDepositRecords(depositRecords, func(record recordstypes.DepositRecord) (condition bool) {
+	transferDepositRecords := k.RecordsKeeper.FilterDepositRecords(depositRecords, func(record recordstypes.DepositRecord) (condition bool) {
 		isTransferRecord := record.Status == recordstypes.DepositRecord_TRANSFER_QUEUE
 		isBeforeCurrentEpoch := record.DepositEpochNumber < epochNumber
 		return isTransferRecord && isBeforeCurrentEpoch
@@ -105,7 +134,7 @@ func (k Keeper) TransferExistingDepositsToHostZones(ctx sdk.Context, epochNumber
 func (k Keeper) StakeExistingDepositsOnHostZones(ctx sdk.Context, epochNumber uint64, depositRecords []recordstypes.DepositRecord) {
 	k.Logger(ctx).Info("Staking deposit records...")
 
-	stakeDepositRecords := utils.FilterDepositRecords(depositRecords, func(record recordstypes.DepositRecord) (condition bool) {
+	stakeDepositRecords := k.RecordsKeeper.FilterDepositRecords(depositRecords, func(record recordstypes.DepositRecord) (condition bool) {
 		isStakeRecord := record.Status == recordstypes.DepositRecord_DELEGATION_QUEUE
 		isBeforeCurrentEpoch := record.DepositEpochNumber < epochNumber
 		return isStakeRecord && isBeforeCurrentEpoch

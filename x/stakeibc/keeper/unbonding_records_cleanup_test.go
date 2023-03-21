@@ -92,11 +92,9 @@ func (s *KeeperTestSuite) SetupCleanupEpochUnbondingRecords() CleanupEpochUnbond
 func (s *KeeperTestSuite) TestCleanupEpochUnbondingRecords_Successful() {
 	tc := s.SetupCleanupEpochUnbondingRecords()
 
-	// Call cleanup on each unbonding record
-	for i := range tc.epochUnbondingRecords {
-		success := s.App.StakeibcKeeper.CleanupEpochUnbondingRecords(s.Ctx, uint64(i))
-		s.Require().True(success, "cleanup unbonding record for epoch %d should succeed", i)
-	}
+	// Call cleanup on all unbonding records
+	success := s.App.StakeibcKeeper.CleanupEpochUnbondingRecords(s.Ctx)
+	s.Require().True(success, "cleanup all unbonding records should succeed")
 
 	// Check one record was removed
 	finalUnbondingRecords := s.App.RecordsKeeper.GetAllEpochUnbondingRecord(s.Ctx)

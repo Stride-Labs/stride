@@ -28,7 +28,7 @@ func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochInfo epochstypes.EpochInf
 		// Check previous epochs to see if unbondings finished, and sweep the tokens if so
 		k.SweepAllUnbondedTokens(ctx)
 		// Cleanup any records that are no longer needed
-		k.CleanupEpochUnbondingRecords(ctx, epochNumber)
+		k.CleanupEpochUnbondingRecords(ctx)
 		// Create an empty unbonding record for this epoch
 		k.CreateEpochUnbondingRecord(ctx, epochNumber)
 	}
@@ -39,18 +39,22 @@ func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochInfo epochstypes.EpochInf
 		redemptionRateInterval := k.GetParam(ctx, types.KeyRedemptionRateInterval)
 		depositInterval := k.GetParam(ctx, types.KeyDepositInterval)
 		delegationInterval := k.GetParam(ctx, types.KeyDelegateInterval)
-		reinvestInterval := k.GetParam(ctx, types.KeyReinvestInterval)
+		rewardsInterval := k.GetParam(ctx, types.KeyRewardsInterval)
 
-		// Create a new deposit record for each host zone and the grab all deposit records
+		// Create a new deposit record for each host zone and the grab all deposit records (without reinvestment)
 		k.CreateDepositRecordsForEpoch(ctx, epochNumber)
 		depositRecords := k.RecordsKeeper.GetAllDepositRecord(ctx)
+
+		// Create new deposit records for reinvestment and the grab all deposit records
+		k.CreateDepositRecrodsForReinvestment(ctx, epochNumber)
+		depositRecordsWithReinvestment := k.RecordsKeeper.GetAllDepositRecord(ctx)
 
 		// TODO: move this to an external function that anyone can call, so that we don't have to call it every epoch
 		k.SetWithdrawalAddress(ctx)
 
-		// Update the redemption rate
+		// Update the redemption rate using all deposit records (including reinvestment)
 		if epochNumber%redemptionRateInterval == 0 {
-			k.UpdateRedemptionRates(ctx, depositRecords)
+			k.UpdateRedemptionRates(ctx, depositRecordsWithReinvestment)
 		}
 
 		// Transfer deposited funds from the controller account to the delegation account on the host zone
@@ -63,9 +67,9 @@ func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochInfo epochstypes.EpochInf
 			k.StakeExistingDepositsOnHostZones(ctx, epochNumber, depositRecords)
 		}
 
-		// Reinvest staking rewards
-		if epochNumber%reinvestInterval == 0 { // allow a few blocks from UpdateUndelegatedBal to avoid conflicts
-			k.ReinvestRewards(ctx)
+		// Collect staking rewards and create a deposit record for all accured rewards
+		if epochNumber%rewardsInterval == 0 { // allow a few blocks from UpdateUndelegatedBal to avoid conflicts
+			k.CollectRewards(ctx)
 		}
 	}
 	if epochInfo.Identifier == epochstypes.MINT_EPOCH {
@@ -172,36 +176,24 @@ func (k Keeper) UpdateRedemptionRates(ctx sdk.Context, depositRecords []recordst
 
 func (k Keeper) GetUndelegatedBalance(hostZone types.HostZone, depositRecords []recordstypes.DepositRecord) sdkmath.Int {
 	// filter to only the deposit records for the host zone with status DELEGATION_QUEUE
-	UndelegatedDepositRecords := utils.FilterDepositRecords(depositRecords, func(record recordstypes.DepositRecord) (condition bool) {
+	UndelegatedDepositRecords := k.RecordsKeeper.FilterDepositRecords(depositRecords, func(record recordstypes.DepositRecord) (condition bool) {
 		return ((record.Status == recordstypes.DepositRecord_DELEGATION_QUEUE || record.Status == recordstypes.DepositRecord_DELEGATION_IN_PROGRESS) && record.HostZoneId == hostZone.ChainId)
 	})
 
-	// sum the amounts of the deposit records
-	totalAmount := sdkmath.ZeroInt()
-	for _, depositRecord := range UndelegatedDepositRecords {
-		totalAmount = totalAmount.Add(depositRecord.Amount)
-	}
-
-	return totalAmount
+	return k.RecordsKeeper.SumDepositRecords(UndelegatedDepositRecords)
 }
 
 func (k Keeper) GetModuleAccountBalance(hostZone types.HostZone, depositRecords []recordstypes.DepositRecord) sdkmath.Int {
 	// filter to only the deposit records for the host zone with status DELEGATION
-	ModuleAccountRecords := utils.FilterDepositRecords(depositRecords, func(record recordstypes.DepositRecord) (condition bool) {
+	ModuleAccountRecords := k.RecordsKeeper.FilterDepositRecords(depositRecords, func(record recordstypes.DepositRecord) (condition bool) {
 		return (record.Status == recordstypes.DepositRecord_TRANSFER_QUEUE || record.Status == recordstypes.DepositRecord_TRANSFER_IN_PROGRESS) && record.HostZoneId == hostZone.ChainId
 	})
 
-	// sum the amounts of the deposit records
-	totalAmount := sdkmath.ZeroInt()
-	for _, depositRecord := range ModuleAccountRecords {
-		totalAmount = totalAmount.Add(depositRecord.Amount)
-	}
-
-	return totalAmount
+	return k.RecordsKeeper.SumDepositRecords(ModuleAccountRecords)
 }
 
-func (k Keeper) ReinvestRewards(ctx sdk.Context) {
-	k.Logger(ctx).Info("Reinvesting tokens...")
+func (k Keeper) CollectRewards(ctx sdk.Context) {
+	k.Logger(ctx).Info("Collecting staking rewards...")
 
 	for _, hostZone := range k.GetAllActiveHostZone(ctx) {
 		// only process host zones once withdrawal accounts are registered

@@ -16,17 +16,18 @@ var (
 	DefaultRewardsInterval        uint64 = 1
 	DefaultRedemptionRateInterval uint64 = 1
 	// you apparently cannot safely encode floats, so we make commission / 100
-	DefaultStrideCommission           uint64 = 10
-	DefaultICATimeoutNanos            uint64 = 600000000000
-	DefaultBufferSize                 uint64 = 5             // 1/5=20% of the epoch
-	DefaultIbcTimeoutBlocks           uint64 = 300           // 300 blocks ~= 30 minutes
-	DefaultFeeTransferTimeoutNanos    uint64 = 1800000000000 // 30 minutes
-	DefaultMinRedemptionRateThreshold uint64 = 90            // divide by 100, so 90 = 0.9
-	DefaultMaxRedemptionRateThreshold uint64 = 150           // divide by 100, so 150 = 1.5
-	DefaultMaxStakeICACallsPerEpoch   uint64 = 100
-	DefaultIBCTransferTimeoutNanos    uint64 = 1800000000000 // 30 minutes
-	DefaultSafetyNumValidators        uint64 = 35
-	DefaultSafetyMaxSlashPercent      uint64 = 10
+	DefaultStrideCommission            uint64 = 10
+	DefaultInstantRedemptionCommission uint64 = 0
+	DefaultICATimeoutNanos             uint64 = 600000000000
+	DefaultBufferSize                  uint64 = 5             // 1/5=20% of the epoch
+	DefaultIbcTimeoutBlocks            uint64 = 300           // 300 blocks ~= 30 minutes
+	DefaultFeeTransferTimeoutNanos     uint64 = 1800000000000 // 30 minutes
+	DefaultMinRedemptionRateThreshold  uint64 = 90            // divide by 100, so 90 = 0.9
+	DefaultMaxRedemptionRateThreshold  uint64 = 150           // divide by 100, so 150 = 1.5
+	DefaultMaxStakeICACallsPerEpoch    uint64 = 100
+	DefaultIBCTransferTimeoutNanos     uint64 = 1800000000000 // 30 minutes
+	DefaultSafetyNumValidators         uint64 = 35
+	DefaultSafetyMaxSlashPercent       uint64 = 10
 
 	// KeyDepositInterval is store's key for the DepositInterval option
 	KeyDepositInterval                   = []byte("DepositInterval")
@@ -35,6 +36,7 @@ var (
 	KeyRewardsInterval                   = []byte("RewardsInterval")
 	KeyRedemptionRateInterval            = []byte("RedemptionRateInterval")
 	KeyStrideCommission                  = []byte("StrideCommission")
+	KeyInstantRedemptionCommission       = []byte("InstantRedemptionCommission")
 	KeyICATimeoutNanos                   = []byte("ICATimeoutNanos")
 	KeyFeeTransferTimeoutNanos           = []byte("FeeTransferTimeoutNanos")
 	KeyBufferSize                        = []byte("BufferSize")
@@ -63,6 +65,7 @@ func NewParams(
 	rewardsInterval uint64,
 	redemptionRateInterval uint64,
 	strideCommission uint64,
+	instantRedemptionCommission uint64,
 	reinvestInterval uint64,
 	icaTimeoutNanos uint64,
 	bufferSize uint64,
@@ -81,6 +84,7 @@ func NewParams(
 		RewardsInterval:                   rewardsInterval,
 		RedemptionRateInterval:            redemptionRateInterval,
 		StrideCommission:                  strideCommission,
+		InstantRedemptionCommission:       instantRedemptionCommission,
 		ReinvestInterval:                  reinvestInterval,
 		IcaTimeoutNanos:                   icaTimeoutNanos,
 		BufferSize:                        bufferSize,
@@ -103,6 +107,7 @@ func DefaultParams() Params {
 		DefaultRewardsInterval,
 		DefaultRedemptionRateInterval,
 		DefaultStrideCommission,
+		DefaultInstantRedemptionCommission,
 		DefaultReinvestInterval,
 		DefaultICATimeoutNanos,
 		DefaultBufferSize,
@@ -125,6 +130,7 @@ func (p *Params) ParamSetPairs() paramtypes.ParamSetPairs {
 		paramtypes.NewParamSetPair(KeyRewardsInterval, &p.RewardsInterval, isPositive),
 		paramtypes.NewParamSetPair(KeyRedemptionRateInterval, &p.RedemptionRateInterval, isPositive),
 		paramtypes.NewParamSetPair(KeyStrideCommission, &p.StrideCommission, isCommission),
+		paramtypes.NewParamSetPair(KeyInstantRedemptionCommission, &p.InstantRedemptionCommission, isBpsCommission),
 		paramtypes.NewParamSetPair(KeyReinvestInterval, &p.ReinvestInterval, isPositive),
 		paramtypes.NewParamSetPair(KeyICATimeoutNanos, &p.IcaTimeoutNanos, isPositive),
 		paramtypes.NewParamSetPair(KeyBufferSize, &p.BufferSize, isPositive),
@@ -219,6 +225,18 @@ func isCommission(i interface{}) error {
 
 	if ival > 100 {
 		return fmt.Errorf("commission must be less than 100: %d", ival)
+	}
+	return nil
+}
+
+func isBpsCommission(i interface{}) error {
+	ival, ok := i.(uint64)
+	if !ok {
+		return fmt.Errorf("commission not accepted: %T", i)
+	}
+
+	if ival > 10000 {
+		return fmt.Errorf("bps commission must be less than 10000: %d", ival)
 	}
 	return nil
 }

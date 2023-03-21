@@ -12,7 +12,6 @@ import (
 	"github.com/Stride-Labs/stride/v7/utils"
 	epochtypes "github.com/Stride-Labs/stride/v7/x/epochs/types"
 	icacallbackstypes "github.com/Stride-Labs/stride/v7/x/icacallbacks/types"
-	recordstypes "github.com/Stride-Labs/stride/v7/x/records/types"
 	"github.com/Stride-Labs/stride/v7/x/stakeibc/types"
 
 	errorsmod "cosmossdk.io/errors"
@@ -42,11 +41,12 @@ func (k Keeper) UnmarshalReinvestCallbackArgs(ctx sdk.Context, reinvestCallback 
 }
 
 // ICA Callback after reinvestment
-//   If successful:
-//      * Creates a new DepositRecord with the reinvestment amount
-//      * Issues an ICQ to query the rewards balance
-//   If timeout/failure:
-//      * Does nothing
+//
+//	If successful:
+//	   * Creates a new DepositRecord with the reinvestment amount
+//	   * Issues an ICQ to query the rewards balance
+//	If timeout/failure:
+//	   * Does nothing
 func ReinvestCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ackResponse *icacallbackstypes.AcknowledgementResponse, args []byte) error {
 	// Fetch callback args
 	reinvestCallback, err := k.UnmarshalReinvestCallbackArgs(ctx, args)
@@ -80,24 +80,6 @@ func ReinvestCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ack
 
 	k.Logger(ctx).Info(utils.LogICACallbackStatusWithHostZone(chainId, ICACallbackID_Reinvest,
 		icacallbackstypes.AckResponseStatus_SUCCESS, packet))
-
-	// Get the current stride epoch number
-	strideEpochTracker, found := k.GetEpochTracker(ctx, epochtypes.STRIDE_EPOCH)
-	if !found {
-		k.Logger(ctx).Error("failed to find epoch")
-		return errorsmod.Wrapf(types.ErrInvalidLengthEpochTracker, "no number for epoch (%s)", epochtypes.STRIDE_EPOCH)
-	}
-
-	// Create a new deposit record so that rewards are reinvested
-	record := recordstypes.DepositRecord{
-		Amount:             reinvestCallback.ReinvestAmount.Amount,
-		Denom:              reinvestCallback.ReinvestAmount.Denom,
-		HostZoneId:         reinvestCallback.HostZoneId,
-		Status:             recordstypes.DepositRecord_DELEGATION_QUEUE,
-		Source:             recordstypes.DepositRecord_WITHDRAWAL_ICA,
-		DepositEpochNumber: strideEpochTracker.EpochNumber,
-	}
-	k.RecordsKeeper.AppendDepositRecord(ctx, record)
 
 	// Encode the fee account address for the query request
 	// The query request consists of the fee account address and denom

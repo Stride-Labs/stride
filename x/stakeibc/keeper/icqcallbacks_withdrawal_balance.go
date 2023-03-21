@@ -5,6 +5,7 @@ import (
 
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	ibctransfertypes "github.com/cosmos/ibc-go/v5/modules/apps/transfer/types"
 
 	errorsmod "cosmossdk.io/errors"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -20,8 +21,8 @@ import (
 
 // WithdrawalBalanceCallback is a callback handler for WithdrawalBalance queries.
 // The query response will return the withdrawal account balance
-// If the balance is non-zero, ICA MsgSends are submitted to transfer from the withdrawal account
-//  to the delegation account (for reinvestment) and fee account (for commission)
+// If the balance is non-zero, ICA MsgSends are submitted to transfer from the withdrawal account to the delegation account (for reinvestment) and fee account (for commission)
+//
 // Note: for now, to get proofs in your ICQs, you need to query the entire store on the host zone! e.g. "store/bank/key"
 func WithdrawalBalanceCallback(k Keeper, ctx sdk.Context, args []byte, query icqtypes.Query) error {
 	k.Logger(ctx).Info(utils.LogICQCallbackWithHostZone(query.ChainId, ICQCallbackID_WithdrawalBalance,
@@ -101,13 +102,21 @@ func WithdrawalBalanceCallback(k Keeper, ctx sdk.Context, args []byte, query icq
 			"Preparing MsgSends of %v from the withdrawal account to the fee account (for commission)", feeCoin.String()))
 	}
 	if reinvestCoin.Amount.GT(sdk.ZeroInt()) {
-		msgs = append(msgs, &banktypes.MsgSend{
-			FromAddress: withdrawalAccount.Address,
-			ToAddress:   delegationAccount.Address,
-			Amount:      sdk.NewCoins(reinvestCoin),
+		// KeyICATimeoutNanos are for our Stride ICA calls, KeyFeeTransferTimeoutNanos is for the IBC transfer
+		feeTransferTimeoutNanos := k.GetParam(ctx, types.KeyFeeTransferTimeoutNanos)
+		timeoutTimestamp := cast.ToUint64(ctx.BlockTime().UnixNano()) + feeTransferTimeoutNanos
+		reinvestmentCollectorAddress := k.accountKeeper.GetModuleAccount(ctx, types.ReinvestmentCollectorName).GetAddress()
+		// Send it back to the HostZone Deposit Account for one epoch for instant redemptions
+		msgs = append(msgs, &ibctransfertypes.MsgTransfer{
+			SourcePort:       ibctransfertypes.PortID,
+			SourceChannel:    hostZone.TransferChannelId,
+			Token:            reinvestCoin,
+			Sender:           withdrawalAccount.Address,
+			Receiver:         reinvestmentCollectorAddress.String(),
+			TimeoutTimestamp: timeoutTimestamp,
 		})
 		k.Logger(ctx).Info(utils.LogICQCallbackWithHostZone(chainId, ICQCallbackID_WithdrawalBalance,
-			"Preparing MsgSends of %v from the withdrawal account to the delegation account (for reinvestment)", reinvestCoin.String()))
+			"Preparing MsgTransfer of %v from the withdrawal account to the deposit account (for instant redemption)", reinvestCoin.String()))
 	}
 
 	// add callback data before calling reinvestment ICA

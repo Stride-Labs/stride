@@ -8,9 +8,8 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	ibctesting "github.com/cosmos/ibc-go/v5/testing"
 
-	icatypes "github.com/cosmos/ibc-go/v5/modules/apps/27-interchain-accounts/types"
-
 	sdkmath "cosmossdk.io/math"
+	icatypes "github.com/cosmos/ibc-go/v5/modules/apps/27-interchain-accounts/types"
 
 	epochtypes "github.com/Stride-Labs/stride/v7/x/epochs/types"
 	icacallbackstypes "github.com/Stride-Labs/stride/v7/x/icacallbacks/types"
@@ -279,6 +278,71 @@ func (s *KeeperTestSuite) TestCreateDepositRecordsForEpoch_Successful() {
 		{
 			Id:                 5,
 			Amount:             sdkmath.ZeroInt(),
+			Denom:              "denom3",
+			HostZoneId:         "HOST3",
+			Status:             recordstypes.DepositRecord_TRANSFER_QUEUE,
+			DepositEpochNumber: 2,
+		},
+	}
+
+	// Confirm deposit records
+	actualDepositRecords := s.App.RecordsKeeper.GetAllDepositRecord(s.Ctx)
+	s.Require().Equal(len(expectedDepositRecords), len(actualDepositRecords), "number of deposit records")
+	s.Require().Equal(expectedDepositRecords, actualDepositRecords, "deposit records")
+}
+
+func (s *KeeperTestSuite) TestCreateDepositRecrodsForReinvestment_Successful() {
+	// Set host zones and reinvestment amount for each host zone
+	hostZones := []stakeibctypes.HostZone{
+		{
+			ChainId:   "HOST1",
+			HostDenom: "denom1",
+			IbcDenom:  "ibc/denom1",
+		},
+		{
+			ChainId:   "HOST2",
+			HostDenom: "denom2",
+			IbcDenom:  "ibc/denom2",
+		},
+		{
+			ChainId:   "HOST3",
+			HostDenom: "denom3",
+			IbcDenom:  "ibc/denom3",
+		},
+	}
+
+	for idx, hostZone := range hostZones {
+		s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
+
+		// Fund ReinvestmentCollector module account with reinvestment coins
+		hzInvestmentAmount := sdk.NewInt64Coin(hostZone.IbcDenom, int64((idx+1)*100))
+		s.FundModuleAccount(stakeibctypes.ReinvestmentCollectorName, hzInvestmentAmount)
+	}
+
+	// Create depoist records
+	s.App.StakeibcKeeper.CreateDepositRecrodsForReinvestment(s.Ctx, 1)
+
+	expectedDepositRecords := []recordstypes.DepositRecord{
+		// Epoch 2
+		{
+			Id:                 0,
+			Amount:             sdkmath.NewIntFromUint64(100),
+			Denom:              "denom1",
+			HostZoneId:         "HOST1",
+			Status:             recordstypes.DepositRecord_TRANSFER_QUEUE,
+			DepositEpochNumber: 2,
+		},
+		{
+			Id:                 1,
+			Amount:             sdkmath.NewIntFromUint64(200),
+			Denom:              "denom2",
+			HostZoneId:         "HOST2",
+			Status:             recordstypes.DepositRecord_TRANSFER_QUEUE,
+			DepositEpochNumber: 2,
+		},
+		{
+			Id:                 2,
+			Amount:             sdkmath.NewIntFromUint64(300),
 			Denom:              "denom3",
 			HostZoneId:         "HOST3",
 			Status:             recordstypes.DepositRecord_TRANSFER_QUEUE,
