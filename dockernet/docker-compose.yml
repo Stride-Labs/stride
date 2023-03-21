@@ -171,6 +171,25 @@ services:
     volumes:
       - ./state/host5:/home/stride/.stride
 
+  lsm1:
+    image: stridezone:lsm
+    volumes:
+      - ./state/lsm1:/home/lsm/.simapp
+    ports:
+      - "26057:26657"
+      - "1257:1317"
+      - "9030:9090"
+
+  lsm2:
+    image: stridezone:lsm
+    volumes:
+      - ./state/lsm2:/home/lsm/.simapp
+
+  lsm3:
+    image: stridezone:lsm
+    volumes:
+      - ./state/lsm3:/home/lsm/.simapp
+
   # Fill in new host zone being tested here
 
   hermes:
@@ -214,6 +233,13 @@ services:
       - ./state/relayer-host:/home/relayer/.relayer
     restart: always
     command: [ "bash", "start.sh", "stride-host" ]
+
+  relayer-lsm:
+    image: stridezone:relayer
+    volumes:
+      - ./state/relayer-lsm:/home/relayer/.relayer
+    restart: always
+    command: [ "bash", "start.sh", "stride-lsm" ]
 
   relayer-juno-osmo:
     image: stridezone:relayer

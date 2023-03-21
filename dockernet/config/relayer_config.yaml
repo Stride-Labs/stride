@@ -88,6 +88,20 @@ chains:
       timeout: 20s
       output-format: json
       sign-mode: direct
+  lsm:
+    type: cosmos
+    value:
+      key: rly7
+      chain-id: LSM
+      rpc-addr: http://lsm1:26657
+      account-prefix: cosmos
+      keyring-backend: test
+      gas-adjustment: 1.2
+      gas-prices: 0.01stake
+      debug: false
+      timeout: 20s
+      output-format: json
+      sign-mode: direct
   # {new-host-zone}:
   #   type: cosmos
   #   value:
@@ -141,6 +155,14 @@ paths:
       chain-id: STRIDE
     dst:
       chain-id: HOST
+    src-channel-filter:
+      rule: ""
+      channel-list: []
+  stride-lsm:
+    src:
+      chain-id: STRIDE
+    dst:
+      chain-id: LSM
     src-channel-filter:
       rule: ""
       channel-list: []
