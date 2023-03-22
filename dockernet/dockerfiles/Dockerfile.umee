@@ -20,19 +20,25 @@ RUN WASMVM_VERSION=$(go list -m github.com/CosmWasm/wasmvm | cut -d ' ' -f 2) &&
     sha256sum /lib/libwasmvm_muslc.a | grep $(cat /tmp/checksums.txt | grep $(uname -m) | cut -d ' ' -f 1)
 
 
-RUN wget --no-check-certificate https://raw.githubusercontent.com/CosmWasm/wasmvm/v1.1.1/internal/api/libwasmvm.$(uname -m).so -O /lib/libwasmvm.$(uname -m).so
-RUN make build 
+RUN LEDGER_ENABLED=false BUILD_TAGS=muslc LINK_STATICALLY=true make install && \
+    cd price-feeder && LEDGER_ENABLED=false BUILD_TAGS=muslc LINK_STATICALLY=true make install
 
-FROM alpine:3.15
-COPY --from=builder /go/bin/gaiad /usr/local/bin/
-COPY --from=builder /go/pkg/mod/github.com/\!cosm\!wasm/wasmvm\@v*/internal/api/libwasmvm.*.so /usr/lib/
-RUN apk add bash vim \
-    && addgroup -g 1000 umee \
-    && adduser -S -h /home/umee -D umee -u 1000 -G umee
+
+## Build Peggo
+WORKDIR /src
+RUN git clone https://github.com/umee-network/peggo.git && cd peggo && \
+    # git checkout v1.4.0 && \
+    go mod download
+RUN cd /src/peggo; BUILD_TAGS=muslc LDFLAGS='-linkmode=external -extldflags "-Wl,-z,muldefs -static"' make build
+
 
 USER 1000
 WORKDIR /home/umee
 
-EXPOSE 26657 26656 1317 9090
+FROM alpine:latest
+EXPOSE 26656 26657 1317 9090 7171
+ENTRYPOINT ["umeed", "start"]
 
-CMD ["umeed", "start"]
+COPY --from=builder /go/bin/* /usr/local/bin/
+COPY --from=builder /src/peggo/build/peggo /usr/local/bin/
+RUN apk add ca-certificates
