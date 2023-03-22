@@ -9,7 +9,7 @@ import (
 	"github.com/Stride-Labs/stride/v7/x/stakeibc/types"
 )
 
-func TestMsgAddValidator_ValidateBasic(t *testing.T) {
+func TestMsgAddValidators_ValidateBasic(t *testing.T) {
 	validNonAdminAddress, invalidAddress := apptesting.GenerateTestAddrs()
 	adminAddress, ok := apptesting.GetAdminAddress()
 	require.True(t, ok)

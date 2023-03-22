@@ -10,13 +10,13 @@ import (
 	stakeibctypes "github.com/Stride-Labs/stride/v7/x/stakeibc/types"
 )
 
-type AddValidatorTestCase struct {
+type AddValidatorsTestCase struct {
 	hostZone           stakeibctypes.HostZone
 	validMsg           stakeibctypes.MsgAddValidators
 	expectedValidators []*stakeibctypes.Validator
 }
 
-func (s *KeeperTestSuite) SetupAddValidator() AddValidatorTestCase {
+func (s *KeeperTestSuite) SetupAddValidators() AddValidatorsTestCase {
 	hostZone := stakeibctypes.HostZone{
 		ChainId:    "GAIA",
 		Validators: []*stakeibctypes.Validator{},
@@ -40,18 +40,18 @@ func (s *KeeperTestSuite) SetupAddValidator() AddValidatorTestCase {
 
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
 
-	return AddValidatorTestCase{
+	return AddValidatorsTestCase{
 		hostZone:           hostZone,
 		validMsg:           validMsg,
 		expectedValidators: expectedValidators,
 	}
 }
 
-func (s *KeeperTestSuite) TestAddValidator_Successful() {
-	tc := s.SetupAddValidator()
+func (s *KeeperTestSuite) TestAddValidators_Successful() {
+	tc := s.SetupAddValidators()
 
 	// Add validators
-	_, err := s.GetMsgServer().AddValidator(sdk.WrapSDKContext(s.Ctx), &tc.validMsg)
+	_, err := s.GetMsgServer().AddValidators(sdk.WrapSDKContext(s.Ctx), &tc.validMsg)
 	s.Require().NoError(err)
 
 	hostZone, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx, "GAIA")
@@ -63,18 +63,18 @@ func (s *KeeperTestSuite) TestAddValidator_Successful() {
 	}
 }
 
-func (s *KeeperTestSuite) TestAddValidator_HostZoneNotFound() {
-	tc := s.SetupAddValidator()
+func (s *KeeperTestSuite) TestAddValidators_HostZoneNotFound() {
+	tc := s.SetupAddValidators()
 
 	// Replace hostzone in msg to a host zone that doesn't exist
 	badHostZoneMsg := tc.validMsg
 	badHostZoneMsg.HostZone = "gaia"
-	_, err := s.GetMsgServer().AddValidator(sdk.WrapSDKContext(s.Ctx), &badHostZoneMsg)
+	_, err := s.GetMsgServer().AddValidators(sdk.WrapSDKContext(s.Ctx), &badHostZoneMsg)
 	s.Require().EqualError(err, "Host Zone (gaia) not found: host zone not found")
 }
 
-func (s *KeeperTestSuite) TestAddValidator_AddressAlreadyExists() {
-	tc := s.SetupAddValidator()
+func (s *KeeperTestSuite) TestAddValidators_AddressAlreadyExists() {
+	tc := s.SetupAddValidators()
 
 	// Update host zone so that the name val1 already exists
 	hostZone := tc.hostZone
@@ -83,12 +83,12 @@ func (s *KeeperTestSuite) TestAddValidator_AddressAlreadyExists() {
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
 
 	// Change the validator address to val1 so that the message errors
-	_, err := s.GetMsgServer().AddValidator(sdk.WrapSDKContext(s.Ctx), &tc.validMsg)
+	_, err := s.GetMsgServer().AddValidators(sdk.WrapSDKContext(s.Ctx), &tc.validMsg)
 	s.Require().EqualError(err, "Validator address (stride_VAL1) already exists on Host Zone (GAIA): validator already exists")
 }
 
-func (s *KeeperTestSuite) TestAddValidator_NameAlreadyExists() {
-	tc := s.SetupAddValidator()
+func (s *KeeperTestSuite) TestAddValidators_NameAlreadyExists() {
+	tc := s.SetupAddValidators()
 
 	// Update host zone so that val1's address already exists
 	hostZone := tc.hostZone
@@ -97,6 +97,6 @@ func (s *KeeperTestSuite) TestAddValidator_NameAlreadyExists() {
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
 
 	// Change the validator name to val1 so that the message errors
-	_, err := s.GetMsgServer().AddValidator(sdk.WrapSDKContext(s.Ctx), &tc.validMsg)
+	_, err := s.GetMsgServer().AddValidators(sdk.WrapSDKContext(s.Ctx), &tc.validMsg)
 	s.Require().EqualError(err, "Validator name (val1) already exists on Host Zone (GAIA): validator already exists")
 }

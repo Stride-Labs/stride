@@ -18,7 +18,7 @@ service Msg {
       returns (MsgClaimUndelegatedTokensResponse);
   rpc RebalanceValidators(MsgRebalanceValidators)
       returns (MsgRebalanceValidatorsResponse);
-  rpc AddValidator(MsgAddValidators) returns (MsgAddValidatorsResponse);
+  rpc AddValidators(MsgAddValidators) returns (MsgAddValidatorsResponse);
   rpc ChangeValidatorWeight(MsgChangeValidatorWeight)
       returns (MsgChangeValidatorWeightResponse);
   rpc DeleteValidator(MsgDeleteValidator) returns (MsgDeleteValidatorResponse);

@@ -8,7 +8,7 @@ import (
 	"github.com/Stride-Labs/stride/v7/x/stakeibc/types"
 )
 
-func (k msgServer) AddValidator(goCtx context.Context, msg *types.MsgAddValidators) (*types.MsgAddValidatorsResponse, error) {
+func (k msgServer) AddValidators(goCtx context.Context, msg *types.MsgAddValidators) (*types.MsgAddValidatorsResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
 	for _, validator := range msg.Validators {

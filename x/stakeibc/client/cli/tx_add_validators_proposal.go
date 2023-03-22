@@ -38,14 +38,14 @@ func parseAddValidatorsProposalFile(cdc codec.JSONCodec, proposalFile string) (p
 
 func CmdAddValidatorsProposal() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "add-validator [proposal-file]",
+		Use:   "add-validators [proposal-file]",
 		Short: "Submit an add-validator proposal",
 		Long: strings.TrimSpace(
-			fmt.Sprintf(`Submit an add-validator proposal along with an initial deposit.
+			fmt.Sprintf(`Submit an add-validators proposal along with an initial deposit.
 The proposal details must be supplied via a JSON file.
 
 Example:
-$ %s tx gov submit-legacy-proposal add-validator <path/to/proposal.json> --from=<key_or_address>
+$ %s tx gov submit-legacy-proposal add-validators <path/to/proposal.json> --from=<key_or_address>
 
 Where proposal.json contains:
 {

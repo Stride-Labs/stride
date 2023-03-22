@@ -39,7 +39,7 @@ func NewHandler(k keeper.Keeper) sdk.Handler {
 			res, err := msgServer.RebalanceValidators(sdk.WrapSDKContext(ctx), msg)
 			return sdk.WrapServiceResult(ctx, res, err)
 		case *types.MsgAddValidators:
-			res, err := msgServer.AddValidator(sdk.WrapSDKContext(ctx), msg)
+			res, err := msgServer.AddValidators(sdk.WrapSDKContext(ctx), msg)
 			return sdk.WrapServiceResult(ctx, res, err)
 		case *types.MsgChangeValidatorWeight:
 			res, err := msgServer.ChangeValidatorWeight(sdk.WrapSDKContext(ctx), msg)
