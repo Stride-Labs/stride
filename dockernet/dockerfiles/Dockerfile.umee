@@ -13,14 +13,19 @@ RUN git clone https://github.com/umee-network/umee.git \
 WORKDIR /opt/umee
 
 # Cosmwasm - download correct libwasmvm version and verify checksum
+RUN WASMVM_VERSION=$(go list -m github.com/CosmWasm/wasmvm | cut -d ' ' -f 2) && \
+    wget https://github.com/CosmWasm/wasmvm/releases/download/$WASMVM_VERSION/libwasmvm_muslc.$(uname -m).a -O /lib/libwasmvm_muslc.a && \
+    # verify checksum
+    wget https://github.com/CosmWasm/wasmvm/releases/download/$WASMVM_VERSION/checksums.txt -O /tmp/checksums.txt && \
+    sha256sum /lib/libwasmvm_muslc.a | grep $(cat /tmp/checksums.txt | grep $(uname -m) | cut -d ' ' -f 1)
 
-RUN WASMVM_VERSION=$(go install cosmossdk.io/tools/cosmovisor/cmd/cosmovisor@latest)
 
-RUN wget https://raw.githubusercontent.com/CosmWasm/wasmvm/v1.1.1/internal/api/libwasmvm.$(uname -m).so -O /lib/libwasmvm.$(uname -m).so
+RUN wget --no-check-certificate https://raw.githubusercontent.com/CosmWasm/wasmvm/v1.1.1/internal/api/libwasmvm.$(uname -m).so -O /lib/libwasmvm.$(uname -m).so
 RUN make build 
 
 FROM alpine:3.15
-COPY --from=builder /go/bin/umeed /usr/local/bin/
+COPY --from=builder /go/bin/gaiad /usr/local/bin/
+COPY --from=builder /go/pkg/mod/github.com/\!cosm\!wasm/wasmvm\@v*/internal/api/libwasmvm.*.so /usr/lib/
 RUN apk add bash vim \
     && addgroup -g 1000 umee \
     && adduser -S -h /home/umee -D umee -u 1000 -G umee
