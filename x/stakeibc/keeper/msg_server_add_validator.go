@@ -8,12 +8,14 @@ import (
 	"github.com/Stride-Labs/stride/v7/x/stakeibc/types"
 )
 
-func (k msgServer) AddValidator(goCtx context.Context, msg *types.MsgAddValidator) (*types.MsgAddValidatorResponse, error) {
+func (k msgServer) AddValidator(goCtx context.Context, msg *types.MsgAddValidators) (*types.MsgAddValidatorsResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	err := k.AddValidatorToHostZone(ctx, msg, false)
-	if err != nil {
-		return nil, err
+	for _, validator := range msg.Validators {
+		if err := k.AddValidatorToHostZone(ctx, msg.HostZone, *validator, false); err != nil {
+			return nil, err
+		}
 	}
-	return &types.MsgAddValidatorResponse{}, nil
+
+	return &types.MsgAddValidatorsResponse{}, nil
 }

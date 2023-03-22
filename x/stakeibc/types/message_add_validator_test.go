@@ -1,42 +1,93 @@
-package types
+package types_test
 
 import (
 	"testing"
 
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/stretchr/testify/require"
 
-	"github.com/Stride-Labs/stride/v7/testutil/sample"
+	"github.com/Stride-Labs/stride/v7/app/apptesting"
+	"github.com/Stride-Labs/stride/v7/x/stakeibc/types"
 )
 
 func TestMsgAddValidator_ValidateBasic(t *testing.T) {
+	validNonAdminAddress, invalidAddress := apptesting.GenerateTestAddrs()
+	adminAddress, ok := apptesting.GetAdminAddress()
+	require.True(t, ok)
+
+	valName1 := "val1"
+	valName2 := "val2"
+	valAddress1 := "stridevaloper1uk4ze0x4nvh4fk0xm4jdud58eqn4yxhrgpwsqm"
+	valAddress2 := "stridevaloper17kht2x2ped6qytr2kklevtvmxpw7wq9rcfud5c"
+
 	tests := []struct {
 		name string
-		msg  MsgAddValidator
-		err  error
+		msg  types.MsgAddValidators
+		err  string
 	}{
 		{
+			name: "valid message",
+			msg: types.MsgAddValidators{
+				Creator: adminAddress,
+				Validators: []*types.Validator{
+					{Name: valName1, Address: valAddress1},
+					{Name: valName2, Address: valAddress2},
+				},
+			},
+		},
+		{
 			name: "invalid address",
-			msg: MsgAddValidator{
-				Creator: "invalid_address",
+			msg: types.MsgAddValidators{
+				Creator: invalidAddress,
 			},
-			err: sdkerrors.ErrInvalidAddress,
-		}, {
-			name: "valid but not whitelisted address",
-			msg: MsgAddValidator{
-				Creator: sample.AccAddress(),
+			err: "invalid address",
+		},
+		{
+			name: "non-admin address",
+			msg: types.MsgAddValidators{
+				Creator: validNonAdminAddress,
 			},
-			err: sdkerrors.ErrInvalidAddress,
+			err: "invalid address",
+		},
+		{
+			name: "no validators",
+			msg: types.MsgAddValidators{
+				Creator:    adminAddress,
+				Validators: []*types.Validator{},
+			},
+			err: "at least one validator must be provided",
+		},
+		{
+			name: "invalid validator name",
+			msg: types.MsgAddValidators{
+				Creator: adminAddress,
+				Validators: []*types.Validator{
+					{Name: valName1, Address: valAddress1},
+					{Name: "", Address: valAddress2},
+				},
+			},
+			err: "validator name is required (index 2)",
+		},
+		{
+			name: "invalid validator address",
+			msg: types.MsgAddValidators{
+				Creator: adminAddress,
+				Validators: []*types.Validator{
+					{Name: valName1, Address: valAddress1},
+					{Name: valName2, Address: validNonAdminAddress}, // not a valoper address
+				},
+			},
+			err: "invalid validator address",
 		},
 	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			err := tt.msg.ValidateBasic()
-			if tt.err != nil {
-				require.ErrorIs(t, err, tt.err)
-				return
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			actualError := tc.msg.ValidateBasic()
+			if tc.err != "" {
+				require.NoError(t, actualError)
+			} else {
+				require.ErrorContains(t, actualError, tc.err)
 			}
-			require.NoError(t, err)
 		})
 	}
 }

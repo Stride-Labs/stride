@@ -1,29 +1,51 @@
 package cli
 
 import (
+	"encoding/json"
+	"os"
+
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/tx"
-	"github.com/spf13/cast"
 	"github.com/spf13/cobra"
 
 	"github.com/Stride-Labs/stride/v7/x/stakeibc/types"
 )
 
-func CmdAddValidator() *cobra.Command {
+type ValidatorsList struct {
+	Validators []*types.Validator `json:"validators,omitempty"`
+}
+
+// Parse a JSON with a list of validators in the format
+// {
+//	  "validators": [
+//	     {"name": "val1", "address": "cosmosXXX", "weight": 1},
+//		 {"name": "val2", "address": "cosmosXXX", "weight": 2}
+//    ]
+// }
+func parseAddValidatorsFile(validatorsFile string) (validators []*types.Validator, err error) {
+	fileContents, err := os.ReadFile(validatorsFile)
+	if err != nil {
+		return validators, err
+	}
+
+	if err = json.Unmarshal(fileContents, &validators); err != nil {
+		return validators, err
+	}
+
+	return validators, nil
+}
+
+func CmdAddValidators() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "add-validator [host-zone] [name] [address] [commission] [weight]",
-		Short: "Broadcast message add-validator",
-		Args:  cobra.ExactArgs(5),
+		Use:   "add-validators [host-zone] [validator-list-file]",
+		Short: "Broadcast message add-validators",
+		Args:  cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
-			argHostZone := args[0]
-			argName := args[1]
-			argAddress := args[2]
-			argCommission, err := cast.ToUint64E(args[3])
-			if err != nil {
-				return err
-			}
-			argWeight, err := cast.ToUint64E(args[4])
+			hostZone := args[0]
+			validatorListProposalFile := args[1]
+
+			validators, err := parseAddValidatorsFile(validatorListProposalFile)
 			if err != nil {
 				return err
 			}
@@ -33,13 +55,10 @@ func CmdAddValidator() *cobra.Command {
 				return err
 			}
 
-			msg := types.NewMsgAddValidator(
+			msg := types.NewMsgAddValidators(
 				clientCtx.GetFromAddress().String(),
-				argHostZone,
-				argName,
-				argAddress,
-				argCommission,
-				argWeight,
+				hostZone,
+				validators,
 			)
 			if err := msg.ValidateBasic(); err != nil {
 				return err

@@ -10,30 +10,27 @@ import (
 	"github.com/Stride-Labs/stride/v7/utils"
 )
 
-const TypeMsgAddValidator = "add_validator"
+const TypeMsgAddValidators = "add_validators"
 
-var _ sdk.Msg = &MsgAddValidator{}
+var _ sdk.Msg = &MsgAddValidators{}
 
-func NewMsgAddValidator(creator string, hostZone string, name string, address string, commission uint64, weight uint64) *MsgAddValidator {
-	return &MsgAddValidator{
+func NewMsgAddValidators(creator string, hostZone string, validators []*Validator) *MsgAddValidators {
+	return &MsgAddValidators{
 		Creator:    creator,
 		HostZone:   hostZone,
-		Name:       name,
-		Address:    address,
-		Commission: commission,
-		Weight:     weight,
+		Validators: validators,
 	}
 }
 
-func (msg *MsgAddValidator) Route() string {
+func (msg *MsgAddValidators) Route() string {
 	return RouterKey
 }
 
-func (msg *MsgAddValidator) Type() string {
-	return TypeMsgAddValidator
+func (msg *MsgAddValidators) Type() string {
+	return TypeMsgAddValidators
 }
 
-func (msg *MsgAddValidator) GetSigners() []sdk.AccAddress {
+func (msg *MsgAddValidators) GetSigners() []sdk.AccAddress {
 	creator, err := sdk.AccAddressFromBech32(msg.Creator)
 	if err != nil {
 		panic(err)
@@ -41,12 +38,12 @@ func (msg *MsgAddValidator) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{creator}
 }
 
-func (msg *MsgAddValidator) GetSignBytes() []byte {
+func (msg *MsgAddValidators) GetSignBytes() []byte {
 	bz := ModuleCdc.MustMarshalJSON(msg)
 	return sdk.MustSortJSON(bz)
 }
 
-func (msg *MsgAddValidator) ValidateBasic() error {
+func (msg *MsgAddValidators) ValidateBasic() error {
 	_, err := sdk.AccAddressFromBech32(msg.Creator)
 	if err != nil {
 		return errorsmod.Wrapf(sdkerrors.ErrInvalidAddress, "invalid creator address (%s)", err)
@@ -54,13 +51,18 @@ func (msg *MsgAddValidator) ValidateBasic() error {
 	if err := utils.ValidateAdminAddress(msg.Creator); err != nil {
 		return err
 	}
-	// name validation
-	if len(strings.TrimSpace(msg.Name)) == 0 {
-		return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "name is required")
+
+	if len(msg.Validators) == 0 {
+		return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "at least one validator must be provided")
 	}
-	// commission validation
-	if msg.Commission > 100 {
-		return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "commission must be between 0 and 100")
+
+	for i, validator := range msg.Validators {
+		if len(strings.TrimSpace(validator.Name)) == 0 {
+			return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "validator name is required (index %d)", i)
+		}
+		if _, err := sdk.ValAddressFromBech32(validator.Address); err != nil {
+			return errorsmod.Wrapf(err, "invalid validator address (%s)", validator.Address)
+		}
 	}
 
 	return nil

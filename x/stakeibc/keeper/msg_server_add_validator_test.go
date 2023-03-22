@@ -11,7 +11,7 @@ import (
 
 type AddValidatorTestCase struct {
 	hostZone           stakeibctypes.HostZone
-	validMsgs          []stakeibctypes.MsgAddValidator
+	validMsgs          []stakeibctypes.MsgAddValidators
 	expectedValidators []*stakeibctypes.Validator
 }
 
@@ -21,7 +21,7 @@ func (s *KeeperTestSuite) SetupAddValidator() AddValidatorTestCase {
 		Validators: []*stakeibctypes.Validator{},
 	}
 
-	validMsgs := []stakeibctypes.MsgAddValidator{
+	validMsgs := []stakeibctypes.MsgAddValidators{
 		{
 			Creator:    "stride_ADMIN",
 			HostZone:   "GAIA",

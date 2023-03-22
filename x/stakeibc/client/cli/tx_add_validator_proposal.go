@@ -21,10 +21,7 @@ import (
 	"github.com/Stride-Labs/stride/v7/x/stakeibc/types"
 )
 
-func parseAddValidatorProposalFile(cdc codec.JSONCodec, proposalFile string) (types.AddValidatorProposal, error) {
-
-	proposal := types.AddValidatorProposal{}
-
+func parseAddValidatorsProposalFile(cdc codec.JSONCodec, proposalFile string) (proposal types.AddValidatorsProposal, err error) {
 	contents, err := os.ReadFile(proposalFile)
 	if err != nil {
 		return proposal, err
@@ -34,14 +31,12 @@ func parseAddValidatorProposalFile(cdc codec.JSONCodec, proposalFile string) (ty
 		return proposal, err
 	}
 
-	proposal.Title = fmt.Sprintf("Add %s validator %s (address: %s)",
-		proposal.HostZone, proposal.ValidatorName, proposal.ValidatorAddress)
+	proposal.Title = fmt.Sprintf("Add validators to %s", proposal.HostZone)
 
 	return proposal, nil
 }
 
-func CmdAddValidatorProposal() *cobra.Command {
-
+func CmdAddValidatorsProposal() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "add-validator [proposal-file]",
 		Short: "Submit an add-validator proposal",
@@ -56,8 +51,12 @@ Where proposal.json contains:
 {
     "description": "Proposal to add Imperator because they contribute in XYZ ways!",
     "hostZone": "GAIA",
-    "validatorName": "Imperator",
-    "validatorAddress": "cosmosvaloper1v5y0tg0jllvxf5c3afml8s3awue0ymju89frut",
+    "validators": [
+		{
+			"name": "Imperator",
+    		"address": "cosmosvaloper1v5y0tg0jllvxf5c3afml8s3awue0ymju89frut",
+		},
+	],
     "deposit": "64000000ustrd"
 }
 `, version.AppName),
@@ -69,7 +68,7 @@ Where proposal.json contains:
 				return err
 			}
 
-			proposal, err := parseAddValidatorProposalFile(clientCtx.Codec, args[0])
+			proposal, err := parseAddValidatorsProposalFile(clientCtx.Codec, args[0])
 			if err != nil {
 				return err
 			}
