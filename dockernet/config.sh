@@ -31,7 +31,7 @@ HOST_CHAINS=()
 #  - STARS
 #  - HOST (Stride chain enabled as a host zone)
 if [[ "${ALL_HOST_CHAINS:-false}" == "true" ]]; then 
-  HOST_CHAINS=(GAIA OSMO HOST UMEE)
+  HOST_CHAINS=(GAIA OSMO JUNO UMEE)
 elif [[ "${#HOST_CHAINS[@]}" == "0" ]]; then 
   HOST_CHAINS=(GAIA UMEE)
 fi
@@ -131,21 +131,6 @@ VAL_MNEMONICS=(
 )
 REV_MNEMONIC="tonight bonus finish chaos orchard plastic view nurse salad regret pause awake link bacon process core talent whale million hope luggage sauce card weasel"
 
-# UMEE 
-UMEE_CHAIN_ID=UMEE
-UMEE_NODE_PREFIX=umee
-UMEE_NUM_NODES=3
-UMEE_CMD="$DOCKERNET_HOME/../build/umeed"
-UMEE_VAL_PREFIX=uval
-UMEE_ADDRESS_PREFIX=umee
-UMEE_REV_ACCT=urev1
-UMEE_DENOM=$UMEE_DENOM
-UMEE_COIN_TYPE=$COSMOS_COIN_TYPE
-UMEE_RPC_PORT=26057
-UMEE_MAIN_CMD="$UMEE_CMD --home $DOCKERNET_HOME/state/$UMEE_NODE_PREFIX}1"
-UMEE_RECEIVER_ADDRESS=umee1s84d29zk3k20xk9f0hvczkax90l9t94g72n6wm
-
-
 # STRIDE 
 STRIDE_CHAIN_ID=STRIDE
 STRIDE_NODE_PREFIX=stride
@@ -198,6 +183,20 @@ JUNO_RPC_PORT=26457
 JUNO_COIN_TYPE=$COSMOS_COIN_TYPE
 JUNO_MAIN_CMD="$JUNO_BINARY --home $DOCKERNET_HOME/state/${JUNO_NODE_PREFIX}1"
 JUNO_RECEIVER_ADDRESS='juno1sy0q0jpaw4t3hnf6k5wdd4384g0syzlp7rrtsg'
+
+# UMEE 
+UMEE_CHAIN_ID=UMEE
+UMEE_NODE_PREFIX=umee
+UMEE_NUM_NODES=3
+UMEE_CMD="$DOCKERNET_HOME/../build/umeed"
+UMEE_VAL_PREFIX=uval
+UMEE_ADDRESS_PREFIX=umee
+UMEE_REV_ACCT=urev1
+UMEE_DENOM=$UMEE_DENOM
+UMEE_COIN_TYPE=$COSMOS_COIN_TYPE
+UMEE_RPC_PORT=26057
+UMEE_MAIN_CMD="$UMEE_CMD --home $DOCKERNET_HOME/state/$UMEE_NODE_PREFIX}1"
+UMEE_RECEIVER_ADDRESS=umee1s84d29zk3k20xk9f0hvczkax90l9t94g72n6wm
 
 # OSMO 
 OSMO_CHAIN_ID=OSMO
@@ -265,7 +264,7 @@ RELAYER_JUNO_MNEMONIC="kiwi betray topple van vapor flag decorate cement crystal
 RELAYER_OSMO_MNEMONIC="unaware wine ramp february bring trust leaf beyond fever inside option dilemma save know captain endless salute radio humble chicken property culture foil taxi"
 RELAYER_STARS_MNEMONIC="deposit dawn erosion talent old broom flip recipe pill hammer animal hill nice ten target metal gas shoe visual nephew soda harbor child simple"
 RELAYER_HOST_MNEMONIC="renew umbrella teach spoon have razor knee sock divert inner nut between immense library inhale dog truly return run remain dune virus diamond clinic"
-RELAYER_UMEE_MNEMONIC="renew umbrella teach spoon have razor knee sock divert inner nut between immense library inhale dog truly return run remain dune virus diamond clinic"
+RELAYER_UMEE_MNEMONIC="whip situate rule else issue pause just cruel change tiger curve latin accuse tumble sea host tree drop require interest board toward supply catch"
 RELAYER_MNEMONICS=(
   "$RELAYER_GAIA_MNEMONIC"
   "$RELAYER_JUNO_MNEMONIC"

@@ -179,7 +179,7 @@ services:
       - ./dockernet/state/umee1:/home/umee/.umeed
     ports:
       - "26057:26657"
-      - "1267:1317"
+      - "1257:1317"
       - "9030:9090"
 
   umee2:
