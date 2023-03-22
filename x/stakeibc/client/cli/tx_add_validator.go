@@ -23,7 +23,7 @@ type ValidatorsList struct {
 //		 {"name": "val2", "address": "cosmosXXX", "weight": 2}
 //    ]
 // }
-func parseAddValidatorsFile(validatorsFile string) (validators []*types.Validator, err error) {
+func parseAddValidatorsFile(validatorsFile string) (validators ValidatorsList, err error) {
 	fileContents, err := os.ReadFile(validatorsFile)
 	if err != nil {
 		return validators, err
@@ -58,7 +58,7 @@ func CmdAddValidators() *cobra.Command {
 			msg := types.NewMsgAddValidators(
 				clientCtx.GetFromAddress().String(),
 				hostZone,
-				validators,
+				validators.Validators,
 			)
 			if err := msg.ValidateBasic(); err != nil {
 				return err

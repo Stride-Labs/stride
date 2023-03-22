@@ -60,8 +60,8 @@ func (msg *MsgAddValidators) ValidateBasic() error {
 		if len(strings.TrimSpace(validator.Name)) == 0 {
 			return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "validator name is required (index %d)", i)
 		}
-		if _, err := sdk.ValAddressFromBech32(validator.Address); err != nil {
-			return errorsmod.Wrapf(err, "invalid validator address (%s)", validator.Address)
+		if len(strings.TrimSpace(validator.Address)) == 0 {
+			return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "validator address is required (index %d)", i)
 		}
 	}
 

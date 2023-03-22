@@ -157,8 +157,8 @@ func (k Keeper) AddValidatorToHostZone(ctx sdk.Context, chainId string, validato
 	hostZone.Validators = append(hostZone.Validators, &types.Validator{
 		Name:          validator.Name,
 		Address:       validator.Address,
-		DelegationAmt: sdkmath.ZeroInt(),
 		Weight:        valWeight,
+		DelegationAmt: sdkmath.ZeroInt(),
 	})
 
 	k.SetHostZone(ctx, hostZone)

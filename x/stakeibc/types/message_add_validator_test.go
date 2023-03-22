@@ -16,8 +16,8 @@ func TestMsgAddValidator_ValidateBasic(t *testing.T) {
 
 	valName1 := "val1"
 	valName2 := "val2"
-	valAddress1 := "stridevaloper1uk4ze0x4nvh4fk0xm4jdud58eqn4yxhrgpwsqm"
-	valAddress2 := "stridevaloper17kht2x2ped6qytr2kklevtvmxpw7wq9rcfud5c"
+	valAddress1 := "cosmosvaloper1"
+	valAddress2 := "cosmosvaloper2"
 
 	tests := []struct {
 		name string
@@ -65,7 +65,7 @@ func TestMsgAddValidator_ValidateBasic(t *testing.T) {
 					{Name: "", Address: valAddress2},
 				},
 			},
-			err: "validator name is required (index 2)",
+			err: "validator name is required (index 1)",
 		},
 		{
 			name: "invalid validator address",
@@ -73,17 +73,17 @@ func TestMsgAddValidator_ValidateBasic(t *testing.T) {
 				Creator: adminAddress,
 				Validators: []*types.Validator{
 					{Name: valName1, Address: valAddress1},
-					{Name: valName2, Address: validNonAdminAddress}, // not a valoper address
+					{Name: valName2, Address: ""},
 				},
 			},
-			err: "invalid validator address",
+			err: "validator address is required (index 1)",
 		},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			actualError := tc.msg.ValidateBasic()
-			if tc.err != "" {
+			if tc.err == "" {
 				require.NoError(t, actualError)
 			} else {
 				require.ErrorContains(t, actualError, tc.err)
