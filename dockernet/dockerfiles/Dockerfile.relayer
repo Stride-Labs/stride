@@ -8,8 +8,14 @@ ENV COMMIT_HASH=2d9fe1acf9081ec7bdcefd8c212a21d28febaba7
 RUN apk add --update git make gcc linux-headers libc-dev eudev-dev 
 RUN git clone https://github.com/cosmos/relayer.git \
     && cd relayer \
-    && git checkout $COMMIT_HASH \
-    && make install
+    && git checkout $COMMIT_HASH 
+
+WORKDIR /src/relayer
+
+COPY provider.go /src/relayer/relayer/chains/cosmos/provider.go
+COPY query.go /src/relayer/relayer/chains/cosmos/query.go
+
+RUN make install
 
 FROM alpine:3.15
 COPY --from=builder /go/bin/rly /usr/local/bin/

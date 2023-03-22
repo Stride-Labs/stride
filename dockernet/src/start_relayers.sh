@@ -25,7 +25,7 @@ for chain in ${HOST_CHAINS[@]}; do
     echo "Done restoring relayer keys"
 
     printf "STRIDE <> $chain - Creating client, connection, and transfer channel..." | tee -a $relayer_logs
-    $relayer_exec rly transact link stride-${chain_name} >> $relayer_logs 2>&1
+    $relayer_exec rly transact link stride-${chain_name} --client-tp 100s >> $relayer_logs 2>&1
     echo "Done."
 
     $DOCKER_COMPOSE up -d relayer-${chain_name}

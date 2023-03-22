@@ -33,6 +33,6 @@
 	path = dockernet/tests/bats/bats-support
 	url = https://github.com/bats-core/bats-support.git
 [submodule "deps/lsm"]
-	# Commit: 42b8d393030f3deb9c298bf8c76bc571cbb5efa3
+	# Commit: 057d68c6a5226358ff404843f3a11d72ae61b0bf
 	path = deps/lsm
-	url = https://github.com/iqlusioninc/liquidity-staking-module.git
+	url = https://github.com/Stride-Labs/liquidity-staking-module.git
