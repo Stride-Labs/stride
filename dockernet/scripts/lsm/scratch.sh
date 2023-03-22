@@ -34,7 +34,7 @@ stride_address="stride1uk4ze0x4nvh4fk0xm4jdud58eqn4yxhrt52vv7"
 # sleep 5
 
 # echo "Send Token:"
-# $LSM_MAIN_CMD tx bank send $liquid_staked_address $delegation_account 1000000cosmosvaloper1uk4ze0x4nvh4fk0xm4jdud58eqn4yxhrdt795p/2 --from hot -y | TRIM_TX
+# $LSM_MAIN_CMD tx bank send $liquid_staked_address $delegation_account 1000000cosmosvaloper1uk4ze0x4nvh4fk0xm4jdud58eqn4yxhrdt795p/1 --from hot -y | TRIM_TX
 # sleep 5
 
 # echo "IBC Transfer:"
@@ -42,20 +42,17 @@ stride_address="stride1uk4ze0x4nvh4fk0xm4jdud58eqn4yxhrt52vv7"
 # sleep 5
 
 # echo "Transfer Rewards:"
-# $LSM_MAIN_CMD tx staking transfer-tokenize-share-record 1 cosmos1wdplq6qjh2xruc7qqagma9ya665q6qhcwju3ng --from hot -y --gas auto | TRIM_TX
+# $LSM_MAIN_CMD tx staking transfer-tokenize-share-record 1 $delegation_account --from hot -y --gas auto | TRIM_TX
 # sleep 5
 
 
 ######## Queries
-# # Validator shares
 # echo "Validator Shares:"
 # $LSM_MAIN_CMD q staking validators && echo ""
 
-# # Delegations
 # echo "Delegations:"
 # $LSM_MAIN_CMD q staking delegations $liquid_staked_address && echo ""
 
-# Rewards 
 # echo "Rewards:"
 # $LSM_MAIN_CMD q distribution rewards $liquid_staked_address $validator_address && echo ""
 
