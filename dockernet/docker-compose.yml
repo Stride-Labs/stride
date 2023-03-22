@@ -173,6 +173,42 @@ services:
 
   # Fill in new host zone being tested here
 
+  umee1:
+    image: stridezone:umee
+    volumes:
+      - ./dockernet/state/umee1:/home/umee/.umeed
+    ports:
+      - "26057:26657"
+      - "1267:1317"
+      - "9030:9090"
+
+  umee2:
+    image: stridezone:umee
+    volumes:
+      - ./dockernet/state/umee2:/home/umee/.umeed
+
+  umee3:
+    image: stridezone:umee
+    volumes:
+      - ./dockernet/state/umee3:/home/umee/.umeed
+
+  umee4:
+    image: stridezone:umee
+    volumes:
+      - ./dockernet/state/umee4:/home/umee/.umeed
+
+  umee5:
+    image: stridezone:umee
+    volumes:
+      - ./dockernet/state/umee5:/home/umee/.umeed
+
+  relayer-umee:
+    image: stridezone:relayer
+    volumes:
+      - ./state/relayer-umee:/home/relayer/.relayer
+    restart: always
+    command: ["bash", "start.sh", "stride-umee"]
+
   hermes:
     image: stridezone:hermes
     volumes:
@@ -185,39 +221,39 @@ services:
     volumes:
       - ./state/relayer-gaia:/home/relayer/.relayer
     restart: always
-    command: [ "bash", "start.sh", "stride-gaia" ]
+    command: ["bash", "start.sh", "stride-gaia"]
 
   relayer-juno:
     image: stridezone:relayer
     volumes:
       - ./state/relayer-juno:/home/relayer/.relayer
     restart: always
-    command: [ "bash", "start.sh", "stride-juno" ]
+    command: ["bash", "start.sh", "stride-juno"]
 
   relayer-osmo:
     image: stridezone:relayer
     volumes:
       - ./state/relayer-osmo:/home/relayer/.relayer
     restart: always
-    command: [ "bash", "start.sh", "stride-osmo" ]
+    command: ["bash", "start.sh", "stride-osmo"]
 
   relayer-stars:
     image: stridezone:relayer
     volumes:
       - ./state/relayer-stars:/home/relayer/.relayer
     restart: always
-    command: [ "bash", "start.sh", "stride-stars" ]
+    command: ["bash", "start.sh", "stride-stars"]
 
   relayer-host:
     image: stridezone:relayer
     volumes:
       - ./state/relayer-host:/home/relayer/.relayer
     restart: always
-    command: [ "bash", "start.sh", "stride-host" ]
+    command: ["bash", "start.sh", "stride-host"]
 
   relayer-juno-osmo:
     image: stridezone:relayer
     volumes:
       - ./state/relayer-juno-osmo:/home/relayer/.relayer
     restart: always
-    command: [ "bash", "start.sh", "juno-osmo" ]
+    command: ["bash", "start.sh", "juno-osmo"]

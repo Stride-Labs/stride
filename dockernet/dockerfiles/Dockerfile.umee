@@ -6,23 +6,21 @@ RUN set -eux; apk add --no-cache ca-certificates build-base; apk add git linux-h
 
 ENV COMMIT_HASH=d50edeea01c34ac342b6d3f505e29836ccd3a381
 
-RUN git clone https://github.com/umee-network/umee/umee.git \
+RUN git clone https://github.com/umee-network/umee.git \
     && cd umee \
     && git checkout ${COMMIT_HASH} 
 
 WORKDIR /opt/umee
 
 # Cosmwasm - download correct libwasmvm version and verify checksum
-RUN WASMVM_VERSION=$(go list -m github.com/CosmWasm/wasmvm | cut -d ' ' -f 2) \
-    && wget https://github.com/CosmWasm/wasmvm/releases/download/$WASMVM_VERSION/libwasmvm_muslc.$(uname -m).a \
-    -O /lib/libwasmvm_muslc.a \
-    && wget https://github.com/CosmWasm/wasmvm/releases/download/v1.0.0/checksums.txt -O /tmp/checksums.txt \
-    && sha256sum /lib/libwasmvm_muslc.a | grep $(cat /tmp/checksums.txt | grep $(uname -m) | cut -d ' ' -f 1)
 
-RUN BUILD_TAGS=muslc LINK_STATICALLY=true make build
+RUN WASMVM_VERSION=$(go install cosmossdk.io/tools/cosmovisor/cmd/cosmovisor@latest)
+
+RUN wget https://raw.githubusercontent.com/CosmWasm/wasmvm/v1.1.1/internal/api/libwasmvm.$(uname -m).so -O /lib/libwasmvm.$(uname -m).so
+RUN make build 
 
 FROM alpine:3.15
-COPY --from=builder /opt/umee/build/umeed /usr/local/bin/
+COPY --from=builder /go/bin/umeed /usr/local/bin/
 RUN apk add bash vim \
     && addgroup -g 1000 umee \
     && adduser -S -h /home/umee -D umee -u 1000 -G umee
