@@ -162,6 +162,7 @@ func (k Keeper) ClaimMetadata(
 	}
 
 	return &types.QueryClaimMetadataResponse{
-		ClaimMetadata: ClaimMetadata,
+		
+ClaimMetadata: claimMetadata,
 	}, err
 }
