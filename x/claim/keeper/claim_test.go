@@ -534,7 +534,7 @@ func (suite *KeeperTestSuite) TestAreAllTrue() {
 	suite.Require().False(claimkeeper.AreAllTrue([]bool{false, false, false}))
 }
 
-func TestCurrentAirdropRound(suite *KeeperTestSuite) {
+func (suite *KeeperTestSuite) TestCurrentAirdropRound() {
 	startTime := time.Now().Add(-100 * 24 * time.Hour) // 100 days ago
 
 	round := claimkeeper.CurrentAirdropRound(startTime)
