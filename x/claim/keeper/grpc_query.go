@@ -50,7 +50,7 @@ func (k Keeper) ClaimRecord(
 	}
 
 	claimRecord, err := k.GetClaimRecord(ctx, addr, req.AirdropIdentifier)
-	return &types.QueryClaimRecordResponse{ClaimRecord: claimRecord}, err
+	return &types.QueryClaimRecordResponse{ClaimRecord: claimRecord}, nil
 }
 
 // ClaimableForAction returns claimable amount per action
@@ -72,7 +72,7 @@ func (k Keeper) ClaimableForAction(
 
 	return &types.QueryClaimableForActionResponse{
 		Coins: coins,
-	}, err
+	}, nil
 }
 
 // TotalClaimable returns total claimable amount for user
@@ -94,7 +94,7 @@ func (k Keeper) TotalClaimable(
 
 	return &types.QueryTotalClaimableResponse{
 		Coins: coins,
-	}, err
+	}, nil
 }
 
 // UserVestings returns all vestings for user
@@ -117,7 +117,7 @@ func (k Keeper) UserVestings(
 	return &types.QueryUserVestingsResponse{
 		SpendableCoins: spendableCoins,
 		Periods:        vestings,
-	}, err
+	}, nil
 }
 
 // ClaimStatus returns all vestings for user
@@ -140,9 +140,7 @@ func (k Keeper) ClaimStatus(
 		return nil, err
 	}
 
-	return &types.QueryClaimStatusResponse{
-		ClaimStatus: claimStatus,
-	}, err
+	return &types.QueryClaimStatusResponse{ClaimStatus: claimStatus}, nil
 }
 
 // ClaimMetadata returns all vestings for user
@@ -156,14 +154,7 @@ func (k Keeper) ClaimMetadata(
 
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	
-claimMetadata, err := k.GetClaimMetadata(ctx)
-	if err != nil {
-		return nil, err
-	}
+	claimMetadata := k.GetClaimMetadata(ctx)
 
-	return &types.QueryClaimMetadataResponse{
-		
-ClaimMetadata: claimMetadata,
-	}, err
+	return &types.QueryClaimMetadataResponse{ClaimMetadata: claimMetadata}, nil
 }

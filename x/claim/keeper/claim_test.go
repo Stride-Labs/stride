@@ -9,6 +9,7 @@ import (
 
 	vestingtypes "github.com/cosmos/cosmos-sdk/x/auth/vesting/types"
 
+	"github.com/Stride-Labs/stride/v7/app/apptesting"
 	claimkeeper "github.com/Stride-Labs/stride/v7/x/claim/keeper"
 
 	"github.com/Stride-Labs/stride/v7/x/claim/types"
@@ -535,22 +536,85 @@ func (suite *KeeperTestSuite) TestAreAllTrue() {
 }
 
 func (suite *KeeperTestSuite) TestCurrentAirdropRound() {
-	startTime := time.Now().Add(-100 * 24 * time.Hour) // 100 days ago
-
+	startTime := time.Now().Add(-50 * 24 * time.Hour) // 50 days ago
 	round := claimkeeper.CurrentAirdropRound(startTime)
+	suite.Require().Equal(1, round)
+
+	startTime = time.Now().Add(-100 * 24 * time.Hour) // 100 days ago
+	round = claimkeeper.CurrentAirdropRound(startTime)
 	suite.Require().Equal(2, round)
 
-	startTime = time.Now().Add(-50 * 24 * time.Hour) // 50 days ago
+	startTime = time.Now().Add(-100 * 24 * time.Hour) // 130 days ago
 	round = claimkeeper.CurrentAirdropRound(startTime)
-	suite.Require().Equal(1, round)
+	suite.Require().Equal(3, round)
+}
+
+func (suite *KeeperTestSuite) TestGetClaimStatus() {
+	address, otherAddress := apptesting.GenerateTestAddrs()
+
+	// Add 5 airdrops
+	airdrops := types.Params{
+		Airdrops: []*types.Airdrop{
+			{AirdropIdentifier: types.DefaultAirdropIdentifier},
+			{AirdropIdentifier: "juno"},
+			{AirdropIdentifier: "osmosis"},
+			{AirdropIdentifier: "terra"},
+			{AirdropIdentifier: "stargaze"},
+		},
+	}
+	suite.app.ClaimKeeper.SetParams(suite.ctx, airdrops)
+
+	// For the given user, add 4 claim records
+	// Stride and Juno are incomplete
+	// Osmosis and terra are complete
+	// User is not eligible for stargaze
+	claimRecords := []types.ClaimRecord{
+		{
+			Address:           address,
+			ActionCompleted:   []bool{false, false, false},
+			AirdropIdentifier: types.DefaultAirdropIdentifier,
+		},
+		{
+			Address:           address,
+			ActionCompleted:   []bool{false, true, false},
+			AirdropIdentifier: "juno",
+		},
+		{
+			Address:           address,
+			ActionCompleted:   []bool{true, true, true},
+			AirdropIdentifier: "osmosis",
+		},
+		{
+			Address:           otherAddress, // different address
+			ActionCompleted:   []bool{true, true, true},
+			AirdropIdentifier: "terra",
+		},
+	}
+	for _, claimRecord := range claimRecords {
+		suite.app.ClaimKeeper.SetClaimRecord(suite.ctx, claimRecord)
+	}
+
+	expectedClaimStatus := []types.ClaimStatus{
+		{AirdropIdentifier: types.DefaultAirdropIdentifier, Claimed: false},
+		{AirdropIdentifier: "juno", Claimed: false},
+		{AirdropIdentifier: "osmosis", Claimed: true},
+	}
+
+	// Confirm status lines up with expectations
+	status, err := suite.app.ClaimKeeper.GetClaimStatus(suite.ctx, sdk.MustAccAddressFromBech32(address))
+	suite.Require().NoError(err, "no error expected when getting claim status")
+
+	suite.Require().Equal(len(expectedClaimStatus), len(status), "number of airdrops")
+	for i := 0; i < len(expectedClaimStatus); i++ {
+		suite.Require().Equal(expectedClaimStatus[i].AirdropIdentifier, status[i].AirdropIdentifier, "airdrop ID for %d", i)
+		suite.Require().Equal(expectedClaimStatus[i].AirdropIdentifier, status[i].AirdropIdentifier, "airdrop claimed for %i", i)
+	}
+
 }
 
 func (suite *KeeperTestSuite) TestGetClaimMetadata() {
-
 	// Test GetClaimMetadata
-	claimMetadataList, err := suite.app.ClaimKeeper.GetClaimMetadata(suite.ctx)
-
-	suite.Require().NoError(err)
+	claimMetadataList := suite.app.ClaimKeeper.GetClaimMetadata(suite.ctx)
 	suite.Require().NotNil(claimMetadataList)
 	suite.Require().Len(claimMetadataList, 3)
 

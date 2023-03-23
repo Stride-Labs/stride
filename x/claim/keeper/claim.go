@@ -467,8 +467,7 @@ func (k Keeper) GetClaimStatus(ctx sdk.Context, addr sdk.AccAddress) ([]types.Cl
 		}
 
 		// If all actions are completed, the user has claimed
-		
-claimed := AreAllTrue(claimRecord.ActionCompleted) 
+		claimed := AreAllTrue(claimRecord.ActionCompleted)
 		claimStatus := types.ClaimStatus{
 			AirdropIdentifier: airdropId,
 			Claimed:           claimed,
@@ -503,7 +502,7 @@ func CurrentAirdropRound(start time.Time) int {
 }
 
 // GetClaimMetadata returns all claim status associated with the user account
-func (k Keeper) GetClaimMetadata(ctx sdk.Context) ([]types.ClaimMetadata, error) {
+func (k Keeper) GetClaimMetadata(ctx sdk.Context) []types.ClaimMetadata {
 	var claimMetadataList []types.ClaimMetadata
 
 	airdropIdentifiers := k.GetAirdropIds(ctx)
@@ -537,7 +536,7 @@ func (k Keeper) GetClaimMetadata(ctx sdk.Context) ([]types.ClaimMetadata, error)
 		claimMetadataList = append(claimMetadataList, claimMetadata)
 	}
 
-	return claimMetadataList, nil
+	return claimMetadataList
 }
 
 // GetClaimable returns claimable amount for a specific action done by an address
