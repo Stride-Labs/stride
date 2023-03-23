@@ -252,6 +252,9 @@ STRIDE_ADDRESS() {
   # so we need to filter by valid addresses using the prefix
   $STRIDE_MAIN_CMD keys show ${STRIDE_VAL_PREFIX}1 --keyring-backend test -a | grep $STRIDE_ADDRESS_PREFIX
 }
+STRIDE_ADDRESS2() {
+  $STRIDE_MAIN_CMD keys show ${STRIDE_VAL_PREFIX}2 --keyring-backend test -a | grep $STRIDE_ADDRESS_PREFIX
+}
 GAIA_ADDRESS() { 
   $GAIA_MAIN_CMD keys show ${GAIA_VAL_PREFIX}1 --keyring-backend test -a 
 }

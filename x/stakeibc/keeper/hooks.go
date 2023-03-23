@@ -45,7 +45,7 @@ func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochInfo epochstypes.EpochInf
 		k.CreateDepositRecordsForEpoch(ctx, epochNumber)
 		depositRecords := k.RecordsKeeper.GetAllDepositRecord(ctx)
 
-		// Create new deposit records for reinvestment and the grab all deposit records
+		// Create new deposit records for reinvestment and grab all deposit records
 		k.CreateDepositRecrodsForReinvestment(ctx, epochNumber)
 		depositRecordsWithReinvestment := k.RecordsKeeper.GetAllDepositRecord(ctx)
 

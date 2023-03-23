@@ -29,6 +29,7 @@ setup_file() {
 
   HOST_VAL="$(GET_VAR_VALUE ${CHAIN_NAME}_VAL_PREFIX)1"
   STRIDE_VAL=${STRIDE_VAL_PREFIX}1
+  STRIDE_VAL2=${STRIDE_VAL_PREFIX}2
 
   STRIDE_TRANFER_CHANNEL="channel-${TRANSFER_CHANNEL_NUMBER}"
   HOST_TRANSFER_CHANNEL="channel-0"
@@ -36,6 +37,7 @@ setup_file() {
   TRANSFER_AMOUNT=500000
   STAKE_AMOUNT=100000
   REDEEM_AMOUNT=1000
+  INSTANT_REDEEM_AMOUNT=1000
   PACKET_FORWARD_STAKE_AMOUNT=3000
 
   GETBAL() {
@@ -122,6 +124,10 @@ setup_file() {
   hval_token_balance_diff=$(($hval_token_balance_start - $hval_token_balance_end))
   assert_equal "$sval_token_balance_diff" "-$TRANSFER_AMOUNT"
   assert_equal "$hval_token_balance_diff" "$TRANSFER_AMOUNT"
+
+  # do IBC transfer to second stride address (no more need to check balances after ibc transfer here)
+  $HOST_MAIN_CMD tx ibc-transfer transfer transfer $HOST_TRANSFER_CHANNEL  $(STRIDE_ADDRESS2) ${TRANSFER_AMOUNT}${HOST_DENOM} --from $HOST_VAL -y &
+  WAIT_FOR_BLOCK $STRIDE_LOGS 8
 }
 
 @test "[INTEGRATION-BASIC-$CHAIN_NAME] liquid stake mint and transfer" {
@@ -185,6 +191,32 @@ setup_file() {
   NEW_STAKE=$($HOST_MAIN_CMD q staking delegation $(GET_ICA_ADDR $HOST_CHAIN_ID delegation) $(GET_VAL_ADDR $CHAIN_NAME 1) | GETSTAKE)
   stake_diff=$(($NEW_STAKE > 0))
   assert_equal "$stake_diff" "1"
+}
+
+# check that instant redemptions work
+@test "[INTEGRATION-BASIC-$CHAIN_NAME] instant redemption works(from newly staked amounts and accrued rewards)" {
+  # get initial balance of first stride address
+  sttoken_balance_start=$($STRIDE_MAIN_CMD q bank balances $(STRIDE_ADDRESS) --denom st$HOST_DENOM | GETBAL)
+  native_token_balance_start=$($STRIDE_MAIN_CMD q bank balances $(STRIDE_ADDRESS) --denom $HOST_IBC_DENOM | GETBAL)
+
+  # liquid stake from second stride address for creating new deposit records
+  $STRIDE_MAIN_CMD tx stakeibc liquid-stake $STAKE_AMOUNT $HOST_DENOM --from $STRIDE_VAL2 -y 
+  WAIT_FOR_BLOCK $STRIDE_LOGS 2
+
+  # call instant-redeem-stake from first stride address
+  $STRIDE_MAIN_CMD tx stakeibc instant-redeem-stake $INSTANT_REDEEM_AMOUNT $HOST_CHAIN_ID \
+      --from $STRIDE_VAL --keyring-backend test --chain-id $STRIDE_CHAIN_ID -y
+  WAIT_FOR_BLOCK $STRIDE_LOGS 2
+  
+  # get balance diffs for stToken and ibc token in first stride address
+  sttoken_balance_end=$($STRIDE_MAIN_CMD q bank balances $(STRIDE_ADDRESS) --denom st$HOST_DENOM | GETBAL)
+  native_token_balance_end=$($STRIDE_MAIN_CMD q bank balances $(STRIDE_ADDRESS) --denom $HOST_IBC_DENOM | GETBAL)
+
+  sttoken_balance_diff=$(($sttoken_balance_start - $sttoken_balance_end))
+  native_token_balance_diff=$(($native_token_balance_end > $native_token_balance_start))
+
+  assert_equal "$native_token_balance_diff" "1"
+  assert_equal "$sttoken_balance_diff" "$INSTANT_REDEEM_AMOUNT"
 }
 
 # check that redemptions and claims work

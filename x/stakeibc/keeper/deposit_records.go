@@ -51,6 +51,14 @@ func (k Keeper) CreateDepositRecrodsForReinvestment(ctx sdk.Context, epochNumber
 			continue
 		}
 
+		// Send the reinvestment from ReinvestmentCollector module account to each zone account
+		zoneAccount := sdk.MustAccAddressFromBech32(hz.Address)
+		err = k.bankKeeper.SendCoinsFromModuleToAccount(ctx, types.ReinvestmentCollectorName, zoneAccount, sdk.NewCoins(token))
+		if err != nil {
+			k.Logger(ctx).Info("Failed to transfer %s%s from reinvestment collector to zone account", token.Amount, token.Denom)
+			continue
+		}
+
 		depositRecord := recordstypes.DepositRecord{
 			Amount:             token.Amount,
 			Denom:              hz.HostDenom,
