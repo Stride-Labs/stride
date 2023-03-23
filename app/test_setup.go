@@ -61,9 +61,8 @@ func InitStrideTestApp(initChain bool) *StrideApp {
 
 		app.InitChain(
 			abci.RequestInitChain{
-				Validators:      []abci.ValidatorUpdate{},
-				ConsensusParams: simapp.DefaultConsensusParams,
-				AppStateBytes:   stateBytes,
+				Validators:    []abci.ValidatorUpdate{},
+				AppStateBytes: stateBytes,
 			},
 		)
 	}

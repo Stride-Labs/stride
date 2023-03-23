@@ -107,6 +107,14 @@ func (h Hooks) AfterValidatorBonded(ctx sdk.Context, consAddr sdk.ConsAddress, v
 func (h Hooks) AfterValidatorBeginUnbonding(ctx sdk.Context, consAddr sdk.ConsAddress, valAddr sdk.ValAddress) error {
 	return nil
 }
+func (h Hooks) BeforeUnBondingInitiated(ctx sdk.Context, addr sdk.AccAddress, valAddr sdk.ValAddress) error {
+	return nil
+}
+
+func (h Hooks) AfterUnbondingInitiated(sdk.Context, uint64) error {
+	return nil
+}
+
 func (h Hooks) BeforeDelegationCreated(ctx sdk.Context, delAddr sdk.AccAddress, valAddr sdk.ValAddress) error {
 	return nil
 }

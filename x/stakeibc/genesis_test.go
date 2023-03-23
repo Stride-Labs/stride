@@ -18,7 +18,6 @@ func TestGenesis(t *testing.T) {
 		EpochTrackerList: []types.EpochTracker{
 			{EpochIdentifier: "stride_epoch"},
 		},
-		// this line is used by starport scaffolding # genesis/test/state
 	}
 
 	k, ctx := keepertest.StakeibcKeeper(t)
@@ -32,5 +31,4 @@ func TestGenesis(t *testing.T) {
 	require.Equal(t, genesisState.PortId, got.PortId)
 	require.Equal(t, genesisState.EpochTrackerList, got.EpochTrackerList)
 	require.Equal(t, genesisState.Params, got.Params)
-	// this line is used by starport scaffolding # genesis/test/assert
 }

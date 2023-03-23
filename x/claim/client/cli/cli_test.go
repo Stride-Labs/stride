@@ -96,7 +96,7 @@ func (s *IntegrationTestSuite) SetupSuite() {
 			val.Address,
 			distributorAddr,
 			sdk.NewCoins(sdk.NewInt64Coin(s.cfg.BondDenom, 1020)), fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
-			fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastBlock),
+			fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode),
 			strideclitestutil.DefaultFeeString(s.cfg),
 		)
 		s.Require().NoError(err)
@@ -115,7 +115,7 @@ func (s *IntegrationTestSuite) SetupSuite() {
 		fmt.Sprintf("--%s=%s", flags.FlagFrom, distributorAddrs[0]),
 		// common args
 		fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
-		fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastBlock),
+		fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode),
 		strideclitestutil.DefaultFeeString(s.cfg),
 	})
 
@@ -193,7 +193,7 @@ func (s *IntegrationTestSuite) TestCmdTxSetAirdropAllocations() {
 				fmt.Sprintf("--%s=%s", flags.FlagFrom, distributorAddrs[0]),
 				// common args
 				fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
-				fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastBlock),
+				fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode),
 				strideclitestutil.DefaultFeeString(s.cfg),
 			},
 			[]sdk.Coins{

@@ -5,7 +5,6 @@ import (
 	"testing"
 	"time"
 
-	"cosmossdk.io/simapp"
 	tmdb "github.com/cometbft/cometbft-db"
 	tmrand "github.com/cometbft/cometbft/libs/rand"
 	"github.com/cosmos/cosmos-sdk/baseapp"
@@ -56,10 +55,8 @@ func DefaultConfig() network.Config {
 		AppConstructor: func(val network.Validator) servertypes.Application {
 			return app.NewStrideApp(
 				val.Ctx.Logger, tmdb.NewMemDB(), nil, true, map[int64]bool{}, val.Ctx.Config.RootDir, 0,
-				encoding,
-				simapp.EmptyAppOptions{},
-				baseapp.SetPruning(pruningtypes.NewPruningOptionsFromString(val.AppConfig.Pruning)),
-				baseapp.SetMinGasPrices(val.AppConfig.MinGasPrices),
+				encoding.MakeMegaCodec(), baseapp.SetPruning(pruningtypes.PruningOptionNothing),
+				baseapp.SetMinGasPrices(fmt.Sprintf("0.000006%s", sdk.DefaultBondDenom)),
 			)
 		},
 		GenesisState:    app.ModuleBasics.DefaultGenesis(encoding.Marshaler),
