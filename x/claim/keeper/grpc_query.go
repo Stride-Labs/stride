@@ -119,3 +119,49 @@ func (k Keeper) UserVestings(
 		Periods:        vestings,
 	}, err
 }
+
+// ClaimStatus returns all vestings for user
+func (k Keeper) ClaimStatus(
+	goCtx context.Context,
+	req *types.QueryClaimStatusRequest,
+) (*types.QueryClaimStatusResponse, error) {
+	if req == nil {
+		return nil, status.Error(codes.InvalidArgument, "empty request")
+	}
+
+	ctx := sdk.UnwrapSDKContext(goCtx)
+	addr, err := sdk.AccAddressFromBech32(req.Address)
+	if err != nil {
+		return nil, err
+	}
+
+	claimStatus, err := k.GetClaimStatus(ctx, addr)
+	if err != nil {
+		return nil, err
+	}
+
+	return &types.QueryClaimStatusResponse{
+		ClaimStatus: claimStatus,
+	}, err
+}
+
+// ClaimMetadata returns all vestings for user
+func (k Keeper) ClaimMetadata(
+	goCtx context.Context,
+	req *types.QueryClaimMetadataRequest,
+) (*types.QueryClaimMetadataResponse, error) {
+	if req == nil {
+		return nil, status.Error(codes.InvalidArgument, "empty request")
+	}
+
+	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	ClaimMetadata, err := k.GetClaimMetadata(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return &types.QueryClaimMetadataResponse{
+		ClaimMetadata: ClaimMetadata,
+	}, err
+}

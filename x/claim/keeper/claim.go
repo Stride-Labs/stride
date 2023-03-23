@@ -422,6 +422,53 @@ func (k Keeper) GetUserVestings(ctx sdk.Context, addr sdk.AccAddress) (vestingty
 	}
 }
 
+// GetClaimStatus returns all claim status associated with the user account
+func (k Keeper) GetClaimStatus(ctx sdk.Context, addr sdk.AccAddress) ([]types.ClaimStatus, error) {
+	// acc := k.accountKeeper.GetAccount(ctx, addr)
+	// strideVestingAcc, isStrideVestingAccount := acc.(*vestingtypes.StridePeriodicVestingAccount)
+	// if !isStrideVestingAccount {
+	// 	return vestingtypes.Periods{}, sdk.Coins{}
+	// } else {
+	// 	return strideVestingAcc.VestingPeriods, strideVestingAcc.GetVestedCoins(ctx.BlockTime())
+	// }
+	var claimStatusList []types.ClaimStatus
+	airdropIdentifiers := []string{"stride", "gaia", "osmosis", "juno", "stars"}
+
+	for i, id := range airdropIdentifiers {
+		claimed := i%2 == 0 // alternate between true and false
+		claimStatus := types.ClaimStatus{
+			AirdropIdentifier: id,
+			Claimed:           claimed,
+		}
+		claimStatusList = append(claimStatusList, claimStatus)
+	}
+
+	return claimStatusList, nil
+}
+
+// GetClaimMetadata returns all claim status associated with the user account
+func (k Keeper) GetClaimMetadata(ctx sdk.Context) ([]types.ClaimMetadata, error) {
+	var claimMetadataList []types.ClaimMetadata
+	airdropIdentifiers := []string{"stride", "gaia", "osmosis", "juno", "stars"}
+
+	for _, id := range airdropIdentifiers {
+		currentRound := "1"
+		currentRoundStart := time.Date(2023, 3, 23, 0, 0, 0, 0, time.UTC)
+		currentRoundEnd := time.Date(2023, 4, 23, 0, 0, 0, 0, time.UTC)
+
+		claimMetadata := types.ClaimMetadata{
+			AirdropIdentifier: id,
+			CurrentRound:      currentRound,
+			CurrentRoundStart: currentRoundStart,
+			CurrentRoundEnd:   currentRoundEnd,
+		}
+
+		claimMetadataList = append(claimMetadataList, claimMetadata)
+	}
+
+	return claimMetadataList, nil
+}
+
 // GetClaimable returns claimable amount for a specific action done by an address
 func (k Keeper) GetUserTotalClaimable(ctx sdk.Context, addr sdk.AccAddress, airdropIdentifier string, includeClaimed bool) (sdk.Coins, error) {
 	claimRecord, err := k.GetClaimRecord(ctx, addr, airdropIdentifier)
