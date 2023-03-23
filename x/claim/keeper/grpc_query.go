@@ -156,7 +156,8 @@ func (k Keeper) ClaimMetadata(
 
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	ClaimMetadata, err := k.GetClaimMetadata(ctx)
+	
+claimMetadata, err := k.GetClaimMetadata(ctx)
 	if err != nil {
 		return nil, err
 	}
