@@ -96,6 +96,9 @@ func DelegatorSharesCallback(k Keeper, ctx sdk.Context, args []byte, query icqty
 		hostZone.Validators[valIndex] = &validator
 		k.SetHostZone(ctx, hostZone)
 
+		k.Logger(ctx).Info(utils.LogICQCallbackWithHostZone(chainId, ICQCallbackID_Delegation,
+			"Delegation updated to %v", validator.DelegationAmt))
+
 		return nil
 	}
 
