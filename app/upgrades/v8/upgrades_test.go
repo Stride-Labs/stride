@@ -16,6 +16,7 @@ import (
 )
 
 var (
+	ustrd              = "ustrd"
 	dummyUpgradeHeight = int64(5)
 	osmoAirdropId      = "osmosis"
 	addresses          = []string{
@@ -95,16 +96,29 @@ func (s *UpgradeTestSuite) CheckStoreAfterUpgrade() {
 	afterCtx := s.Ctx.WithBlockHeight(dummyUpgradeHeight)
 
 	// Check that the evmos airdrop was added
+	claimParams, err := s.App.ClaimKeeper.GetParams(s.Ctx)
+	s.Require().NoError(err, "no error expected when getting params")
+	s.Require().Len(claimParams.Airdrops, 2, "there should be two airdrops (evmos and osmo)")
+	osmoAirdrop := claimParams.Airdrops[0]
+	evmosAirdrop := claimParams.Airdrops[1]
+
+	// Check that the params of the osmo airdrop were reset
+	s.Require().Equal(osmoAirdropId, osmoAirdrop.AirdropIdentifier, "osmo airdrop identifier")
+	s.Require().Zero(osmoAirdrop.ClaimedSoFar.Int64(), "osmo claimed so far")
+
+	// Check that the params of the evmos airdrop were initialized
+	s.Require().Equal(v8.EvmosAirdropIdentifier, evmosAirdrop.AirdropIdentifier, "evmos airdrop identifier")
+	s.Require().Zero(evmosAirdrop.ClaimedSoFar.Int64(), "cevmos laimed so far")
+	s.Require().Equal(v8.EvmosAirdropDistributor, evmosAirdrop.DistributorAddress, "evmos airdrop distributor")
+	s.Require().Equal(v8.AirdropDuration, evmosAirdrop.AirdropDuration, "evmos airdrop duration")
+	s.Require().Equal(ustrd, evmosAirdrop.ClaimDenom, "evmos airdrop claim denom")
+	s.Require().Equal(s.Ctx.BlockTime(), evmosAirdrop.AirdropStartTime, "evmos airdrop start time")
+
+	// Check that the evmos claims records were added
 	evmosClaimRecords := s.App.ClaimKeeper.GetClaimRecords(afterCtx, v8.EvmosAirdropIdentifier)
 	s.Require().Positive(len(evmosClaimRecords))
 
-	// Check that the osmo airdrop params were reset
-	claimParams, err := s.App.ClaimKeeper.GetParams(s.Ctx)
-	s.Require().NoError(err, "no error expected when getting params")
-	s.Require().Equal(osmoAirdropId, claimParams.Airdrops[0].AirdropIdentifier, "airdrop identifier")
-	s.Require().Zero(claimParams.Airdrops[0].ClaimedSoFar.Int64(), "claimed so far")
-
-	// Check that the claim actions were reset
+	// Check that the osmo claim actions were reset
 	osmoClaimRecords := s.App.ClaimKeeper.GetClaimRecords(s.Ctx, osmoAirdropId)
 	s.Require().Equal(len(osmoClaimRecords), 3, "claim records length")
 
