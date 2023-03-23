@@ -23,7 +23,6 @@ func TestGenesis(t *testing.T) {
 				CallbackKey: "1",
 			},
 		},
-		// this line is used by starport scaffolding # genesis/test/state
 	}
 
 	k, ctx := keepertest.IcacallbacksKeeper(t)
@@ -37,5 +36,4 @@ func TestGenesis(t *testing.T) {
 	require.Equal(t, genesisState.PortId, got.PortId)
 
 	require.ElementsMatch(t, genesisState.CallbackDataList, got.CallbackDataList)
-	// this line is used by starport scaffolding # genesis/test/assert
 }

@@ -19,7 +19,6 @@ func DefaultGenesis() *GenesisState {
 		EpochUnbondingRecordList:  []EpochUnbondingRecord{},
 		DepositRecordList:         []DepositRecord{},
 		DepositRecordCount:        0,
-		// this line is used by starport scaffolding # genesis/types/default
 	}
 }
 
@@ -57,8 +56,6 @@ func (gs GenesisState) Validate() error {
 		}
 		depositRecordIdMap[elem.Id] = true
 	}
-
-	// this line is used by starport scaffolding # genesis/types/validate
 
 	return gs.Params.Validate()
 }

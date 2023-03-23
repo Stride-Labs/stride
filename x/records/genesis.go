@@ -20,7 +20,6 @@ func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState types.GenesisState) 
 		k.SetEpochUnbondingRecord(ctx, elem)
 	}
 
-	// this line is used by starport scaffolding # genesis/module/init
 	k.SetParams(ctx, genState.Params)
 
 	// Set all the depositRecord
@@ -41,7 +40,6 @@ func ExportGenesis(ctx sdk.Context, k keeper.Keeper) *types.GenesisState {
 
 	genesis.UserRedemptionRecordList = k.GetAllUserRedemptionRecord(ctx)
 	genesis.EpochUnbondingRecordList = k.GetAllEpochUnbondingRecord(ctx)
-	// this line is used by starport scaffolding # genesis/module/export
 
 	return genesis
 }
