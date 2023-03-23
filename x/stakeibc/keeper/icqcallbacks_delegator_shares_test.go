@@ -318,10 +318,10 @@ func (s *KeeperTestSuite) TestDelegatorSharesCallback_PrecisionError() {
 	hostZone, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx, tc.initialState.hostZone.ChainId)
 	s.Require().True(found, "host zone found")
 
-	expectedStakedBalance := tc.initialState.hostZone.StakedBal.Sub(precisionErrorTokens)
+	expectedStakedBalance := tc.initialState.hostZone.StakedBal.Add(precisionErrorTokens)
 	s.Require().Equal(expectedStakedBalance.Int64(), hostZone.StakedBal.Int64(), "host zone staked balance")
 
 	validator := hostZone.Validators[tc.valIndexQueried]
-	expectedDelegationAmt := tc.initialState.hostZone.Validators[tc.valIndexQueried].DelegationAmt.Sub(precisionErrorTokens)
+	expectedDelegationAmt := tc.initialState.hostZone.Validators[tc.valIndexQueried].DelegationAmt.Add(precisionErrorTokens)
 	s.Require().Equal(expectedDelegationAmt.Int64(), validator.DelegationAmt.Int64(), "validator delegation amount")
 }

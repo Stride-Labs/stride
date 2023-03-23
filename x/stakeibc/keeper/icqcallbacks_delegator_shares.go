@@ -90,8 +90,8 @@ func DelegatorSharesCallback(k Keeper, ctx sdk.Context, args []byte, query icqty
 	precisionError := delegatedTokens.Sub(validator.DelegationAmt)
 	if precisionError.IsPositive() && precisionError.LTE(precisionErrorThreshold) {
 		// Update the validator on the host zone
-		validator.DelegationAmt = validator.DelegationAmt.Sub(precisionError)
-		hostZone.StakedBal = hostZone.StakedBal.Sub(precisionError)
+		validator.DelegationAmt = validator.DelegationAmt.Add(precisionError)
+		hostZone.StakedBal = hostZone.StakedBal.Add(precisionError)
 
 		hostZone.Validators[valIndex] = &validator
 		k.SetHostZone(ctx, hostZone)
