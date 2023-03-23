@@ -37,6 +37,3 @@
 [submodule "dockernet/tests/bats/bats-support"]
 	path = dockernet/tests/bats/bats-support
 	url = https://github.com/bats-core/bats-support.git
-[submodule "deps/umee"]
-	path = deps/umee
-	url = https://github.com/umee-network/umee
