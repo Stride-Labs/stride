@@ -9,7 +9,7 @@ import (
 
 	"github.com/Stride-Labs/stride/v7/x/claim/types"
 
-	abci "github.com/tendermint/tendermint/abci/types"
+	abci "github.com/cometbft/cometbft/abci/types"
 )
 
 // NewQuerier returns legacy querier endpoint

@@ -3,8 +3,8 @@ package gov
 import (
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	transfertypes "github.com/cosmos/ibc-go/v5/modules/apps/transfer/types"
-	channelkeeper "github.com/cosmos/ibc-go/v5/modules/core/04-channel/keeper"
+	transfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
+	channelkeeper "github.com/cosmos/ibc-go/v7/modules/core/04-channel/keeper"
 
 	"github.com/Stride-Labs/stride/v7/x/ratelimit/keeper"
 	"github.com/Stride-Labs/stride/v7/x/ratelimit/types"

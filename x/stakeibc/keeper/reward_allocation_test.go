@@ -4,13 +4,13 @@ import (
 	"strings"
 
 	sdkmath "cosmossdk.io/math"
-	"github.com/cosmos/cosmos-sdk/simapp"
+	"cosmossdk.io/simapp"
+	abci "github.com/cometbft/cometbft/abci/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
-	"github.com/cosmos/cosmos-sdk/x/staking/teststaking"
+	"github.com/cosmos/cosmos-sdk/x/staking/testutil"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	_ "github.com/stretchr/testify/suite"
-	abci "github.com/tendermint/tendermint/abci/types"
 
 	epochtypes "github.com/Stride-Labs/stride/v7/x/epochs/types"
 	recordtypes "github.com/Stride-Labs/stride/v7/x/records/types"
@@ -176,7 +176,7 @@ func (s *KeeperTestSuite) TestClaimStakingRewardStTokens() {
 		s.FundAccount(acc, sdk.NewCoin(sdk.DefaultBondDenom, sdk.NewInt(1000000)))
 	}
 	valAddrs := simapp.ConvertAddrsToValAddrs(addrs)
-	tstaking := teststaking.NewHelper(s.T(), s.Ctx, s.App.StakingKeeper)
+	tstaking := testutil.NewHelper(s.T(), s.Ctx, s.App.StakingKeeper)
 
 	pubkeys := simapp.CreateTestPubKeys(2)
 	stakeAmount := sdk.NewInt(100)
