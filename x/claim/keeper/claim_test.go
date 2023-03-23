@@ -528,7 +528,7 @@ func (suite *KeeperTestSuite) TestMultiChainAirdropFlow() {
 	//*********************** End of Juno airdrop *************************
 }
 
-func TestAreAllTrue(suite *KeeperTestSuite) {
+func (suite *KeeperTestSuite) TestAreAllTrue() {
 	suite.Require().True(claimkeeper.AreAllTrue([]bool{true, true, true}))
 	suite.Require().False(claimkeeper.AreAllTrue([]bool{true, false, true}))
 	suite.Require().False(claimkeeper.AreAllTrue([]bool{false, false, false}))
