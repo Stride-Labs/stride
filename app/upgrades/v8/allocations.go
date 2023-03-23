@@ -1,6 +1,6 @@
 package v8
 
 var allocations = `identifier,address,weight
-evmos,stride1a784enjjr2lgwe3uqzj857l4f8xh9fh6hl4r8d,32828
-evmos,stride14egt7yngswlq640pxqkuk40rwxkfqneyzhlaxh,31630'
+evmos,evmos12wmlcr0hmaxgvmwzn86sejkqcpvxp28rdywza2,32828
+evmos,evmos1ctmjqtapj7kj5khywf7pv9rc9e0ne467d7uxzz,31630'
 `
