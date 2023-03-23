@@ -467,10 +467,8 @@ func (k Keeper) GetClaimStatus(ctx sdk.Context, addr sdk.AccAddress) ([]types.Cl
 		}
 
 		// If all actions are completed, the user has claimed
-		claimed := false
-		if AreAllTrue(claimRecord.ActionCompleted) {
-			claimed = true
-		}
+		
+claimed := AreAllTrue(claimRecord.ActionCompleted) 
 		claimStatus := types.ClaimStatus{
 			AirdropIdentifier: airdropId,
 			Claimed:           claimed,
