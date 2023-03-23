@@ -18,10 +18,15 @@ import (
 var (
 	dummyUpgradeHeight = int64(5)
 	osmoAirdropId      = "osmosis"
-	dummyAddresses     = []string{
+	addresses          = []string{
 		"stride12a06af3mm5j653446xr4dguacuxfkj293ey2vh",
 		"stride1udf2vyj5wyjckl7nzqn5a2vh8fpmmcffey92y8",
 		"stride1uc8ccxy5s2hw55fn8963ukfdycaamq95jqcfnr",
+	}
+	weights = []sdk.Dec{
+		sdk.NewDec(1000),
+		sdk.NewDec(2000),
+		sdk.NewDec(3000),
 	}
 )
 
@@ -61,20 +66,20 @@ func (s *UpgradeTestSuite) SetupStoreBeforeUpgrade() {
 	claimRecords := []claimtypes.ClaimRecord{
 		{
 			AirdropIdentifier: osmoAirdropId,
-			Address:           dummyAddresses[0],
-			Weight:            sdk.NewDec(1000),
+			Address:           addresses[0],
+			Weight:            weights[0],
 			ActionCompleted:   []bool{true, true, false},
 		},
 		{
 			AirdropIdentifier: osmoAirdropId,
-			Address:           dummyAddresses[1],
-			Weight:            sdk.NewDec(50),
+			Address:           addresses[1],
+			Weight:            weights[1],
 			ActionCompleted:   []bool{true, true, true},
 		},
 		{
 			AirdropIdentifier: osmoAirdropId,
-			Address:           dummyAddresses[2],
-			Weight:            sdk.NewDec(100),
+			Address:           addresses[2],
+			Weight:            weights[2],
 			ActionCompleted:   []bool{false, false, false},
 		},
 	}
@@ -106,7 +111,7 @@ func (s *UpgradeTestSuite) CheckStoreAfterUpgrade() {
 	fullyResetAction := []bool{false, false, false}
 	for i, claimRecord := range osmoClaimRecords {
 		s.Require().Equal(fullyResetAction, claimRecord.ActionCompleted, "record %d reset", i)
-		s.Require().Equal(dummyAddresses[i], claimRecord.Address, "record %d address", i)
-		s.Require().Equal(sdk.NewDec(1000), claimRecord.Weight, "record %d weight", i)
+		s.Require().Equal(addresses[i], claimRecord.Address, "record %d address", i)
+		s.Require().Equal(weights[i], claimRecord.Weight, "record %d weight", i)
 	}
 }
