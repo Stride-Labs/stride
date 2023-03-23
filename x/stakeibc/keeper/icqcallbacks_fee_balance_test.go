@@ -57,7 +57,7 @@ func (s *KeeperTestSuite) SetupFeeBalanceCallbackTest() FeeBalanceICQCallbackTes
 	s.App.StakeibcKeeper.SetEpochTracker(s.Ctx, strideEpochTracker)
 
 	// Get the next sequence number to confirm if an ICA was sent
-	feePortId := icatypes.PortPrefix + feeAccountOwner
+	feePortId := icatypes.ControllerPortPrefix + feeAccountOwner
 	startSequence, found := s.App.IBCKeeper.ChannelKeeper.GetNextSequenceSend(s.Ctx, feePortId, feeChannelId)
 	s.Require().True(found, "sequence number not found before ICA")
 

@@ -176,7 +176,7 @@ func (s *KeeperTestSuite) TestRestoreInterchainAccount_Success() {
 	tc := s.SetupRestoreInterchainAccount()
 	owner := "GAIA.DELEGATION"
 	channelID := s.CreateICAChannel(owner)
-	portID := icatypes.PortPrefix + owner
+	portID := icatypes.ControllerPortPrefix + owner
 
 	// Confirm there are two channels originally
 	channels := s.App.IBCKeeper.ChannelKeeper.GetAllChannels(s.Ctx)

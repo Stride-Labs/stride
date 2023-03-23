@@ -77,6 +77,7 @@ func FeeBalanceCallback(k Keeper, ctx sdk.Context, args []byte, query icqtypes.Q
 		rewardsCollectorAddress.String(),
 		clienttypes.Height{},
 		timeout,
+		"thisisamemo",
 	)
 
 	msgs := []sdk.Msg{transferMsg}
