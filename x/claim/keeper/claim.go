@@ -146,6 +146,23 @@ func (k Keeper) GetAirdropByIdentifier(ctx sdk.Context, airdropIdentifier string
 	return nil
 }
 
+func (k Keeper) GetAirdropIds(ctx sdk.Context) []string {
+	params, err := k.GetParams(ctx)
+	if err != nil {
+		panic(err)
+	}
+
+	// init airdrop ids
+	airdropIds := []string{}
+
+	for _, airdrop := range params.Airdrops {
+		// append airdrop to airdrop ids
+		airdropIds = append(airdropIds, airdrop.AirdropIdentifier)
+	}
+
+	return airdropIds
+}
+
 // GetDistributorAccountBalance gets the airdrop coin balance of module account
 func (k Keeper) GetDistributorAccountBalance(ctx sdk.Context, airdropIdentifier string) (sdk.Coin, error) {
 	airdrop := k.GetAirdropByIdentifier(ctx, airdropIdentifier)
@@ -422,22 +439,40 @@ func (k Keeper) GetUserVestings(ctx sdk.Context, addr sdk.AccAddress) (vestingty
 	}
 }
 
+func AreAllTrue(bools []bool) bool {
+	for _, b := range bools {
+		if !b {
+			return false
+		}
+	}
+	return true
+}
+
 // GetClaimStatus returns all claim status associated with the user account
 func (k Keeper) GetClaimStatus(ctx sdk.Context, addr sdk.AccAddress) ([]types.ClaimStatus, error) {
-	// acc := k.accountKeeper.GetAccount(ctx, addr)
-	// strideVestingAcc, isStrideVestingAccount := acc.(*vestingtypes.StridePeriodicVestingAccount)
-	// if !isStrideVestingAccount {
-	// 	return vestingtypes.Periods{}, sdk.Coins{}
-	// } else {
-	// 	return strideVestingAcc.VestingPeriods, strideVestingAcc.GetVestedCoins(ctx.BlockTime())
-	// }
+	// Get all airdrop identifiers
+	airdropIdentifiers := k.GetAirdropIds(ctx)
 	var claimStatusList []types.ClaimStatus
-	airdropIdentifiers := []string{"stride", "gaia", "osmosis", "juno", "stars"}
+	for _, airdropId := range airdropIdentifiers {
 
-	for i, id := range airdropIdentifiers {
-		claimed := i%2 == 0 // alternate between true and false
+		// Get the claim record for a user, airdrop pair
+		claimRecord, err := k.GetClaimRecord(ctx, addr, airdropId)
+		if err != nil {
+			return nil, err
+		}
+		if claimRecord.Address == "" {
+			// if there's no claim record, the user is not eligible
+			// for this airdrop, so skip it
+			continue
+		}
+
+		// If all actions are completed, the user has claimed
+		claimed := false
+		if AreAllTrue(claimRecord.ActionCompleted) {
+			claimed = true
+		}
 		claimStatus := types.ClaimStatus{
-			AirdropIdentifier: id,
+			AirdropIdentifier: airdropId,
 			Claimed:           claimed,
 		}
 		claimStatusList = append(claimStatusList, claimStatus)
@@ -446,15 +481,53 @@ func (k Keeper) GetClaimStatus(ctx sdk.Context, addr sdk.AccAddress) ([]types.Cl
 	return claimStatusList, nil
 }
 
+func CurrentAirdropRound(start time.Time) int {
+	// Define constants for 90 days and 30 days
+	const initialRoundDuration = 90 * 24 * time.Hour
+	const subsequentRoundDuration = 30 * 24 * time.Hour
+
+	// Calculate the time passed since the start
+	timePassed := time.Since(start)
+
+	// Check if the initial round is still ongoing
+	if timePassed < initialRoundDuration {
+		return 1
+	}
+
+	// Calculate the time passed after the initial round
+	timePassedAfterInitialRound := timePassed - initialRoundDuration
+
+	// Calculate the number of subsequent rounds passed
+	subsequentRoundsPassed := timePassedAfterInitialRound / subsequentRoundDuration
+
+	// Add 1 for the initial round and 1 for the current round
+	return 1 + 1 + int(subsequentRoundsPassed)
+}
+
 // GetClaimMetadata returns all claim status associated with the user account
 func (k Keeper) GetClaimMetadata(ctx sdk.Context) ([]types.ClaimMetadata, error) {
 	var claimMetadataList []types.ClaimMetadata
-	airdropIdentifiers := []string{"stride", "gaia", "osmosis", "juno", "stars"}
+
+	airdropIdentifiers := k.GetAirdropIds(ctx)
+	epochs := k.epochsKeeper.AllEpochInfos(ctx)
 
 	for _, id := range airdropIdentifiers {
-		currentRound := "1"
-		currentRoundStart := time.Date(2023, 3, 23, 0, 0, 0, 0, time.UTC)
-		currentRoundEnd := time.Date(2023, 4, 23, 0, 0, 0, 0, time.UTC)
+		// loop over epochs to match epochs to airdrop identifier
+		var currentRoundStart time.Time
+		var currentRoundEnd time.Time
+		var absoluteStartTime time.Time
+		var duration time.Duration
+		for _, epoch := range epochs {
+			if epoch.Identifier == id {
+				// found the epoch for this airdrop
+				currentRoundStart = epoch.CurrentEpochStartTime
+				absoluteStartTime = epoch.StartTime
+				duration = epoch.Duration
+			}
+		}
+
+		currentRoundEnd = currentRoundStart.Add(duration)
+		currentRound := strconv.Itoa(CurrentAirdropRound(absoluteStartTime))
 
 		claimMetadata := types.ClaimMetadata{
 			AirdropIdentifier: id,

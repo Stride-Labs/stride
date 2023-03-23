@@ -9,6 +9,8 @@ import (
 
 	vestingtypes "github.com/cosmos/cosmos-sdk/x/auth/vesting/types"
 
+	claimkeeper "github.com/Stride-Labs/stride/v7/x/claim/keeper"
+
 	"github.com/Stride-Labs/stride/v7/x/claim/types"
 	stridevestingtypes "github.com/Stride-Labs/stride/v7/x/claim/vesting/types"
 )
@@ -524,4 +526,49 @@ func (suite *KeeperTestSuite) TestMultiChainAirdropFlow() {
 	records = suite.app.ClaimKeeper.GetClaimRecords(suite.ctx, types.DefaultAirdropIdentifier)
 	suite.Require().Equal(0, len(records))
 	//*********************** End of Juno airdrop *************************
+}
+
+func TestAreAllTrue(suite *KeeperTestSuite) {
+	suite.Require().True(claimkeeper.AreAllTrue([]bool{true, true, true}))
+	suite.Require().False(claimkeeper.AreAllTrue([]bool{true, false, true}))
+	suite.Require().False(claimkeeper.AreAllTrue([]bool{false, false, false}))
+}
+
+func TestCurrentAirdropRound(suite *KeeperTestSuite) {
+	startTime := time.Now().Add(-100 * 24 * time.Hour) // 100 days ago
+
+	round := claimkeeper.CurrentAirdropRound(startTime)
+	suite.Require().Equal(2, round)
+
+	startTime = time.Now().Add(-50 * 24 * time.Hour) // 50 days ago
+	round = claimkeeper.CurrentAirdropRound(startTime)
+	suite.Require().Equal(1, round)
+}
+
+func (suite *KeeperTestSuite) TestGetClaimMetadata() {
+
+	// Test GetClaimMetadata
+	claimMetadataList, err := suite.app.ClaimKeeper.GetClaimMetadata(suite.ctx)
+
+	suite.Require().NoError(err)
+	suite.Require().NotNil(claimMetadataList)
+	suite.Require().Len(claimMetadataList, 3)
+
+	// Check the contents of the metadata
+	for _, metadata := range claimMetadataList {
+		suite.Require().Contains([]string{types.DefaultAirdropIdentifier, "juno", "osmosis"}, metadata.AirdropIdentifier)
+		suite.Require().Equal("1", metadata.CurrentRound)
+
+		airdropStartTime := suite.ctx.BlockTime()
+		switch metadata.AirdropIdentifier {
+		case types.DefaultAirdropIdentifier:
+			suite.Require().True(airdropStartTime.Equal(metadata.CurrentRoundStart))
+		case "juno":
+			suite.Require().True(airdropStartTime.Add(time.Hour).Equal(metadata.CurrentRoundStart))
+		case "osmosis":
+			suite.Require().True(airdropStartTime.Equal(metadata.CurrentRoundStart))
+		}
+
+		suite.Require().True(metadata.CurrentRoundEnd.Equal(metadata.CurrentRoundStart.Add(types.DefaultAirdropDuration)))
+	}
 }
