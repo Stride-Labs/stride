@@ -33,6 +33,7 @@ type DelegatorSharesICQCallbackTestCase struct {
 	expectedDelegationAmount sdkmath.Int
 	expectedSlashAmount      sdkmath.Int
 	expectedWeight           uint64
+	exchangeRate             sdk.Dec
 }
 
 // Mocks the query response that's returned from an ICQ for the number of shares for a given validator/delegator pair
@@ -126,6 +127,7 @@ func (s *KeeperTestSuite) SetupDelegatorSharesICQCallback() DelegatorSharesICQCa
 		expectedDelegationAmount: expectedTokensAfterSlash,
 		expectedSlashAmount:      expectedSlashAmount,
 		expectedWeight:           expectedWeightAfterSlash,
+		exchangeRate:             internalExchangeRate,
 	}
 }
 
@@ -139,12 +141,12 @@ func (s *KeeperTestSuite) TestDelegatorSharesCallback_Successful() {
 	// Confirm the staked balance was decreased on the host
 	hostZone, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx, tc.initialState.hostZone.ChainId)
 	s.Require().True(found, "host zone found")
-	s.Require().Equal(tc.expectedSlashAmount, tc.initialState.hostZone.StakedBal.Sub(hostZone.StakedBal))
+	s.Require().Equal(tc.expectedSlashAmount.Int64(), tc.initialState.hostZone.StakedBal.Sub(hostZone.StakedBal).Int64(), "staked bal slash")
 
 	// Confirm the validator's weight and delegation amount were reduced
 	validator := hostZone.Validators[tc.valIndexQueried]
 	s.Require().Equal(tc.expectedWeight, validator.Weight, "validator weight")
-	s.Require().Equal(tc.expectedDelegationAmount, validator.DelegationAmt, "validator delegation amount")
+	s.Require().Equal(tc.expectedDelegationAmount.Int64(), validator.DelegationAmt.Int64(), "validator delegation amount")
 }
 
 func (s *KeeperTestSuite) checkStateIfValidatorNotSlashed(tc DelegatorSharesICQCallbackTestCase) {
@@ -255,7 +257,7 @@ func (s *KeeperTestSuite) TestDelegatorSharesCallback_InvalidNumTokens() {
 	tc := s.SetupDelegatorSharesICQCallback()
 
 	// Update the delegator shares query response so that it shows that there are more tokens delegated
-	// that were tracked in state (which shouldn't be possible)
+	// than were tracked in state (which shouldn't be possible)
 	// Any large number of shares will work here so we'll use 10_000
 	valAddress := tc.initialState.hostZone.Validators[tc.valIndexQueried].Address
 	numShares := sdk.NewDec(10_000)
@@ -294,4 +296,32 @@ func (s *KeeperTestSuite) TestDelegatorSharesCallback_SlashGtTenPercent() {
 	expectedErrMsg := "Validator slashed but ABORTING update, slash (0.200000000000000000) is greater than safety threshold (0.100000000000000000): "
 	expectedErrMsg += "slash is greater than safety threshold"
 	s.Require().EqualError(err, expectedErrMsg)
+}
+
+func (s *KeeperTestSuite) TestDelegatorSharesCallback_PrecisionError() {
+	tc := s.SetupDelegatorSharesICQCallback()
+	initialValidator := tc.initialState.hostZone.Validators[tc.valIndexQueried]
+
+	// Update the delegator shares query response so that it shows that there are 5 more tokens delegated
+	// than were tracked in state
+	// This should be interpretted as a precision error and our record keeping should be adjusted
+	precisionErrorTokens := sdk.NewInt(5)
+	precisionErrorShares := sdk.NewDecFromInt(precisionErrorTokens).Quo(tc.exchangeRate)
+	sharesBeforeSlash := sdk.NewDecFromInt(initialValidator.DelegationAmt).Quo(tc.exchangeRate)
+
+	queryShares := sharesBeforeSlash.Add(precisionErrorShares)
+	callbackArgs := s.CreateDelegatorSharesQueryResponse(initialValidator.Address, queryShares)
+	err := stakeibckeeper.DelegatorSharesCallback(s.App.StakeibcKeeper, s.Ctx, callbackArgs, tc.validArgs.query)
+	s.Require().NoError(err)
+
+	// Confirm host zone and validator were updated
+	hostZone, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx, tc.initialState.hostZone.ChainId)
+	s.Require().True(found, "host zone found")
+
+	expectedStakedBalance := tc.initialState.hostZone.StakedBal.Sub(precisionErrorTokens)
+	s.Require().Equal(expectedStakedBalance.Int64(), hostZone.StakedBal.Int64(), "host zone staked balance")
+
+	validator := hostZone.Validators[tc.valIndexQueried]
+	expectedDelegationAmt := tc.initialState.hostZone.Validators[tc.valIndexQueried].DelegationAmt.Sub(precisionErrorTokens)
+	s.Require().Equal(expectedDelegationAmt.Int64(), validator.DelegationAmt.Int64(), "validator delegation amount")
 }
