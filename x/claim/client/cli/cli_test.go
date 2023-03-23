@@ -272,7 +272,7 @@ func (s *IntegrationTestSuite) TestCmdTxCreateAirdrop() {
 				fmt.Sprintf("--%s=%s", flags.FlagFrom, distributorAddrs[1]),
 				// common args
 				fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
-				fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastBlock),
+				fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode),
 				strideclitestutil.DefaultFeeString(s.cfg),
 			},
 			airdrop,
