@@ -9,45 +9,51 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-type RawReceiver struct {
-	Stakeibc *RawStakeibcReceiver `json:"stakeibc"`
-	Claim    *RawClaimReceiver    `json:"claim"`
+// QUESTION: Should we just leave the address as a string in the parsed type
+// and then combine these raw and parsed types?
+type rawPacketMetadata struct {
+	Autopilot *struct {
+		Stakeibc *RawStakeibcPacketMetadata `json:"stakeibc"`
+		Claim    *RawClaimPacketMetadata    `json:"claim"`
+	} `json:"autopilot"`
 }
 
-type RawStakeibcReceiver struct {
+type RawStakeibcPacketMetadata struct {
 	Action        string `json:"action"`
 	StrideAddress string `json:"stride_address"`
 }
 
-type RawClaimReceiver struct {
+type RawClaimPacketMetadata struct {
 	AirdropId     string `json:"airdrop_id"`
 	StrideAddress string `json:"stride_address"`
 }
 
-type ParsedReceiver struct {
-	Stakeibc ParsedStakeibcReceiver
-	Claim    ParsedClaimReceiver
+type PacketMetadata struct {
+	Reciever string
+	Stakeibc StakeibcPacketMetadata
+	Claim    ClaimPacketMetadata
 }
 
-type ParsedStakeibcReceiver struct {
+type StakeibcPacketMetadata struct {
 	Enabled       bool
 	Action        string
 	StrideAddress sdk.AccAddress
 }
 
-type ParsedClaimReceiver struct {
+type ClaimPacketMetadata struct {
 	Enabled       bool
 	AirdropId     string
 	StrideAddress sdk.AccAddress
 }
 
-// Validate stakeibc receiver fields
-func (r *RawStakeibcReceiver) ParseAndValidate() (*ParsedStakeibcReceiver, error) {
+// Validate stakeibc packet metadata fields
+func (r *RawStakeibcPacketMetadata) ParseAndValidate() (*StakeibcPacketMetadata, error) {
 	// If the stakeibc section of the memo field was empty, mark stakeibc as disabled
 	if r == nil {
-		return &ParsedStakeibcReceiver{Enabled: false}, nil
+		return &StakeibcPacketMetadata{Enabled: false}, nil
 	}
 
+	// Validate the stride address and action
 	address, err := sdk.AccAddressFromBech32(r.StrideAddress)
 	if err != nil {
 		return nil, err
@@ -55,18 +61,19 @@ func (r *RawStakeibcReceiver) ParseAndValidate() (*ParsedStakeibcReceiver, error
 	if r.Action != "LiquidStake" {
 		return nil, errorsmod.Wrapf(ErrUnsupportedStakeibcAction, "action %s is not supported", r.Action)
 	}
-	return &ParsedStakeibcReceiver{
+
+	return &StakeibcPacketMetadata{
 		Action:        r.Action,
 		StrideAddress: address,
 		Enabled:       true,
 	}, nil
 }
 
-// Validate claim receiver fields
-func (r *RawClaimReceiver) ParseAndValidate() (*ParsedClaimReceiver, error) {
+// Validate claim packet metadata fields
+func (r *RawClaimPacketMetadata) ParseAndValidate() (*ClaimPacketMetadata, error) {
 	// If the claim section of the memo field was empty, mark claim as disabled
 	if r == nil {
-		return &ParsedClaimReceiver{Enabled: false}, nil
+		return &ClaimPacketMetadata{Enabled: false}, nil
 	}
 
 	// Validate the stride address and airdrop ID
@@ -78,39 +85,48 @@ func (r *RawClaimReceiver) ParseAndValidate() (*ParsedClaimReceiver, error) {
 		return nil, ErrInvalidClaimAirdropId
 	}
 
-	return &ParsedClaimReceiver{
+	return &ClaimPacketMetadata{
 		AirdropId:     r.AirdropId,
 		StrideAddress: address,
 		Enabled:       true,
 	}, nil
 }
 
-func ParseReceiverData(receiverData string) (receiver *ParsedReceiver, err error) {
-	// If an empty string is provided, add brackets so it gets unmarshalled as an empty JSON
-	if receiverData == "" {
-		receiverData = "{}"
+// Parse packet metadata intended for autopilot
+// Returns nil if there was no metadata found
+func ParsePacketMetadata(metadata string) (packetMetadata *PacketMetadata, err error) {
+	// If we can't unmarshal the metadata into a PacketMetadata struct,
+	// assume packet forwarding was no used and pass back nil so that autopilot is ignored
+	var raw rawPacketMetadata
+	if err := json.Unmarshal([]byte(metadata), &raw); err != nil {
+		return nil, nil
 	}
 
-	// Unmarshal the memo field in to the raw receiver object
-	var raw RawReceiver
-	if err := json.Unmarshal([]byte(receiverData), &raw); err != nil {
-		return receiver, errorsmod.Wrapf(err, ErrInvalidReceiverData.Error())
+	// If no forwarding logic was used for autopilot, return the metadata with each disabled
+	if raw.Autopilot == nil {
+		return nil, nil
 	}
 
 	// Parse and validate the stakeibc module component from the receiver object
-	parsedStakeibcReceiver, err := raw.Stakeibc.ParseAndValidate()
+	parsedStakeibcPacketData, err := raw.Autopilot.Stakeibc.ParseAndValidate()
 	if err != nil {
-		return receiver, errorsmod.Wrapf(err, ErrInvalidReceiverData.Error())
+		return nil, errorsmod.Wrapf(err, ErrInvalidPacketMetadata.Error())
 	}
 
 	// Parse and validate the claim module component from the receiver object
-	parsedClaimReceiver, err := raw.Claim.ParseAndValidate()
+	parsedClaimPacketData, err := raw.Autopilot.Claim.ParseAndValidate()
 	if err != nil {
-		return receiver, errorsmod.Wrapf(err, ErrInvalidReceiverData.Error())
+		return nil, errorsmod.Wrapf(err, ErrInvalidPacketMetadata.Error())
 	}
 
-	return &ParsedReceiver{
-		Stakeibc: *parsedStakeibcReceiver,
-		Claim:    *parsedClaimReceiver,
+	// Confirm only one module was enabled for autopilot
+	if parsedStakeibcPacketData.Enabled && parsedClaimPacketData.Enabled {
+		return nil, errorsmod.Wrapf(ErrInvalidPacketMetadata, ErrMulitpleAutopilotRoutesInTx.Error())
+	}
+
+	// Return the combined metadata struct with each module flagged as enabled/disabled
+	return &PacketMetadata{
+		Stakeibc: *parsedStakeibcPacketData,
+		Claim:    *parsedClaimPacketData,
 	}, nil
 }

@@ -20,7 +20,7 @@ func (k Keeper) TryLiquidStaking(
 	ctx sdk.Context,
 	packet channeltypes.Packet,
 	newData transfertypes.FungibleTokenPacketData,
-	parsedReceiver *types.ParsedReceiver,
+	packetMetadata *types.StakeibcPacketMetadata,
 	ack ibcexported.Acknowledgement,
 ) ibcexported.Acknowledgement {
 	params := k.GetParams(ctx)
@@ -53,7 +53,7 @@ func (k Keeper) TryLiquidStaking(
 		return channeltypes.NewErrorAcknowledgement(errors.New("ibc denom is not equal to host zone ibc denom"))
 	}
 
-	err = k.RunLiquidStake(ctx, parsedReceiver.StrideAccAddress, token)
+	err = k.RunLiquidStake(ctx, packetMetadata.StrideAddress, token)
 	if err != nil {
 		ack = channeltypes.NewErrorAcknowledgement(err)
 	}

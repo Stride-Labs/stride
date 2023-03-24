@@ -16,142 +16,159 @@ func init() {
 }
 
 func getStakeibcMemo(address, action string) string {
-	return fmt.Sprintf(`{"stakeibc": { "stride_address": "%s", "action": "%s" } }`, address, action)
+	return fmt.Sprintf(`
+		{
+			"autopilot": {
+				"stakeibc": { "stride_address": "%s", "action": "%s" } 
+			}
+		}`, address, action)
 }
 
 func getClaimMemo(address, airdropId string) string {
-	return fmt.Sprintf(`{"claim": { "stride_address": "%s", "airdrop_id": "%s" } }`, address, airdropId)
+	return fmt.Sprintf(`
+		{
+			"autopilot": {
+				"claim": { "stride_address": "%s", "airdrop_id": "%s" } 
+			}
+		}`, address, airdropId)
 }
 
 func getClaimAndStakeibcMemo(address, action, airdropId string) string {
 	return fmt.Sprintf(`
 	    {
-			"stakeibc": { "stride_address": "%[1]s", "action": "%[2]s" },
-			"claim": { "stride_address": "%[1]s", "airdrop_id": "%[3]s" } 
+			"autopilot": {
+				"stakeibc": { "stride_address": "%[1]s", "action": "%[2]s" },
+				"claim": { "stride_address": "%[1]s", "airdrop_id": "%[3]s" } 
+			}
 		}`, address, action, airdropId)
 }
 
-func TestParseReceiver(t *testing.T) {
+func TestParsePacketMetadata(t *testing.T) {
 	validAddress, invalidAddress := apptesting.GenerateTestAddrs()
 	validStakeibcAction := "LiquidStake"
 	validAirdropId := "gaia"
 
-	validParsedStakeibcReceiver := types.ParsedStakeibcReceiver{
+	validParsedStakeibcPacketMetadata := types.StakeibcPacketMetadata{
 		Enabled:       true,
 		StrideAddress: sdk.MustAccAddressFromBech32(validAddress),
 		Action:        validStakeibcAction,
 	}
-	disabledStakeibcReceiver := types.ParsedStakeibcReceiver{
+	disabledStakeibcPacketMetadata := types.StakeibcPacketMetadata{
 		Enabled: false,
 	}
 
-	validParsedClaimReceiver := types.ParsedClaimReceiver{
+	validParsedClaimPacketMetadata := types.ClaimPacketMetadata{
 		Enabled:       true,
 		StrideAddress: sdk.MustAccAddressFromBech32(validAddress),
 		AirdropId:     validAirdropId,
 	}
-	disabledClaimReceiver := types.ParsedClaimReceiver{
+	disabledClaimPacketMetadata := types.ClaimPacketMetadata{
 		Enabled: false,
 	}
 
 	testCases := []struct {
-		name           string
-		receivedData   string
-		parsedStakeibc types.ParsedStakeibcReceiver
-		parsedClaim    types.ParsedClaimReceiver
-		expectedErr    string
+		name                string
+		metadata            string
+		parsedMetadata      types.PacketMetadata
+		parsedStakeibc      types.StakeibcPacketMetadata
+		parsedClaim         types.ClaimPacketMetadata
+		expectedNilMetadata bool
+		expectedErr         string
 	}{
 		{
 			name:           "valid stakeibc memo",
-			receivedData:   getStakeibcMemo(validAddress, validStakeibcAction),
-			parsedStakeibc: validParsedStakeibcReceiver,
-			parsedClaim:    disabledClaimReceiver,
+			metadata:       getStakeibcMemo(validAddress, validStakeibcAction),
+			parsedStakeibc: validParsedStakeibcPacketMetadata,
+			parsedClaim:    disabledClaimPacketMetadata,
 		},
 		{
 			name:           "valid claim memo",
-			receivedData:   getClaimMemo(validAddress, validAirdropId),
-			parsedStakeibc: disabledStakeibcReceiver,
-			parsedClaim:    validParsedClaimReceiver,
+			metadata:       getClaimMemo(validAddress, validAirdropId),
+			parsedStakeibc: disabledStakeibcPacketMetadata,
+			parsedClaim:    validParsedClaimPacketMetadata,
 		},
 		{
-			name:           "valid claim and stakeibc memo",
-			receivedData:   getClaimAndStakeibcMemo(validAddress, validStakeibcAction, validAirdropId),
-			parsedStakeibc: validParsedStakeibcReceiver,
-			parsedClaim:    validParsedClaimReceiver,
+			name:                "normal IBC transfer",
+			metadata:            validAddress, // normal address - not autopilot JSON
+			expectedNilMetadata: true,
 		},
 		{
-			name:           "no messages",
-			receivedData:   "{}",
-			parsedStakeibc: disabledStakeibcReceiver,
-			parsedClaim:    disabledClaimReceiver,
+			name:                "no messages",
+			metadata:            "{}",
+			parsedStakeibc:      disabledStakeibcPacketMetadata,
+			parsedClaim:         disabledClaimPacketMetadata,
+			expectedNilMetadata: true,
 		},
 		{
-			name:           "no message - empty",
-			receivedData:   "",
-			parsedStakeibc: disabledStakeibcReceiver,
-			parsedClaim:    disabledClaimReceiver,
+			name:                "no message - empty",
+			metadata:            "",
+			parsedStakeibc:      disabledStakeibcPacketMetadata,
+			parsedClaim:         disabledClaimPacketMetadata,
+			expectedNilMetadata: true,
 		},
 		{
-			name:           "invalid memo",
-			receivedData:   "bad_memo",
-			parsedStakeibc: disabledStakeibcReceiver,
-			parsedClaim:    disabledClaimReceiver,
-			expectedErr:    "invalid character",
+			name:        "invalid stakeibc address",
+			metadata:    getStakeibcMemo(invalidAddress, validStakeibcAction),
+			expectedErr: "unknown address",
 		},
 		{
-			name:         "invalid stakeibc address",
-			receivedData: getStakeibcMemo(invalidAddress, validStakeibcAction),
-			expectedErr:  "unknown address",
+			name:        "invalid stakeibc action",
+			metadata:    getStakeibcMemo(validAddress, "bad_action"),
+			expectedErr: "unsupported stakeibc action",
 		},
 		{
-			name:         "invalid stakeibc action",
-			receivedData: getStakeibcMemo(validAddress, "bad_action"),
-			expectedErr:  "unsupported stakeibc action",
+			name:        "invalid claim address",
+			metadata:    getClaimMemo(invalidAddress, validAirdropId),
+			expectedErr: "unknown address",
 		},
 		{
-			name:         "invalid claim address",
-			receivedData: getClaimMemo(invalidAddress, validAirdropId),
-			expectedErr:  "unknown address",
+			name:        "invalid claim airdrop",
+			metadata:    getClaimMemo(validAddress, ""),
+			expectedErr: "invalid claim airdrop ID",
 		},
 		{
-			name:         "invalid claim airdrop",
-			receivedData: getClaimMemo(validAddress, ""),
-			expectedErr:  "invalid claim airdrop ID",
+			name:        "both claim and stakeibc memo set",
+			metadata:    getClaimAndStakeibcMemo(validAddress, validStakeibcAction, validAirdropId),
+			expectedErr: "multiple autopilot routes in the same transaction",
 		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			parsedData, actualErr := types.ParseReceiverData(tc.receivedData)
+			parsedData, actualErr := types.ParsePacketMetadata(tc.metadata)
 			if tc.expectedErr == "" {
 				require.NoError(t, actualErr)
-				require.Equal(t, tc.parsedStakeibc, parsedData.Stakeibc, "parsed stakeibc")
-				require.Equal(t, tc.parsedClaim, parsedData.Claim, "parsed claim")
+				if tc.expectedNilMetadata {
+					require.Nil(t, parsedData, "parsed data response should be nil")
+				} else {
+					require.Equal(t, tc.parsedStakeibc, parsedData.Stakeibc, "parsed stakeibc")
+					require.Equal(t, tc.parsedClaim, parsedData.Claim, "parsed claim")
+				}
 			} else {
-				require.ErrorContains(t, actualErr, types.ErrInvalidReceiverData.Error(), "expected error type for %s", tc.name)
+				require.ErrorContains(t, actualErr, types.ErrInvalidPacketMetadata.Error(), "expected error type for %s", tc.name)
 				require.ErrorContains(t, actualErr, tc.expectedErr, "expected error for %s", tc.name)
 			}
 		})
 	}
 }
 
-func TestParseStakeibcReceiverData(t *testing.T) {
+func TestParseStakeibcMetadataData(t *testing.T) {
 	validAddress, _ := apptesting.GenerateTestAddrs()
 	validAction := "LiquidStake"
 
 	testCases := []struct {
 		name           string
-		raw            *types.RawStakeibcReceiver
-		expectedParsed types.ParsedStakeibcReceiver
+		raw            *types.RawStakeibcPacketMetadata
+		expectedParsed types.StakeibcPacketMetadata
 		expectedErr    string
 	}{
 		{
-			name: "valid receiver data",
-			raw: &types.RawStakeibcReceiver{
+			name: "valid Metadata data",
+			raw: &types.RawStakeibcPacketMetadata{
 				StrideAddress: validAddress,
 				Action:        validAction,
 			},
-			expectedParsed: types.ParsedStakeibcReceiver{
+			expectedParsed: types.StakeibcPacketMetadata{
 				StrideAddress: sdk.MustAccAddressFromBech32(validAddress),
 				Action:        validAction,
 				Enabled:       true,
@@ -160,13 +177,13 @@ func TestParseStakeibcReceiverData(t *testing.T) {
 		{
 			name: "empty raw message",
 			raw:  nil,
-			expectedParsed: types.ParsedStakeibcReceiver{
+			expectedParsed: types.StakeibcPacketMetadata{
 				Enabled: false,
 			},
 		},
 		{
 			name: "invalid address",
-			raw: &types.RawStakeibcReceiver{
+			raw: &types.RawStakeibcPacketMetadata{
 				StrideAddress: "bad_address",
 				Action:        validAction,
 			},
@@ -174,7 +191,7 @@ func TestParseStakeibcReceiverData(t *testing.T) {
 		},
 		{
 			name: "invalid action",
-			raw: &types.RawStakeibcReceiver{
+			raw: &types.RawStakeibcPacketMetadata{
 				StrideAddress: validAddress,
 				Action:        "bad_action",
 			},
@@ -186,7 +203,7 @@ func TestParseStakeibcReceiverData(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			actualParsed, actualErr := tc.raw.ParseAndValidate()
 			if tc.expectedErr == "" {
-				require.Equal(t, tc.expectedParsed, *actualParsed, "parsed receiver")
+				require.Equal(t, tc.expectedParsed, *actualParsed, "parsed metadata")
 				require.NoError(t, actualErr, "no error expected for %s", tc.name)
 			} else {
 				require.ErrorContains(t, actualErr, tc.expectedErr, "error expected for %s", tc.name)
@@ -195,23 +212,23 @@ func TestParseStakeibcReceiverData(t *testing.T) {
 	}
 }
 
-func TestParseClaimReceiverData(t *testing.T) {
+func TestParseClaimMetadataData(t *testing.T) {
 	validAddress, _ := apptesting.GenerateTestAddrs()
 	validAirdropId := "gaia"
 
 	testCases := []struct {
 		name           string
-		raw            *types.RawClaimReceiver
-		expectedParsed types.ParsedClaimReceiver
+		raw            *types.RawClaimPacketMetadata
+		expectedParsed types.ClaimPacketMetadata
 		expectedErr    string
 	}{
 		{
-			name: "valid receiver data",
-			raw: &types.RawClaimReceiver{
+			name: "valid metadata",
+			raw: &types.RawClaimPacketMetadata{
 				StrideAddress: validAddress,
 				AirdropId:     validAirdropId,
 			},
-			expectedParsed: types.ParsedClaimReceiver{
+			expectedParsed: types.ClaimPacketMetadata{
 				StrideAddress: sdk.MustAccAddressFromBech32(validAddress),
 				AirdropId:     validAirdropId,
 				Enabled:       true,
@@ -220,13 +237,13 @@ func TestParseClaimReceiverData(t *testing.T) {
 		{
 			name: "empty raw message",
 			raw:  nil,
-			expectedParsed: types.ParsedClaimReceiver{
+			expectedParsed: types.ClaimPacketMetadata{
 				Enabled: false,
 			},
 		},
 		{
 			name: "invalid address",
-			raw: &types.RawClaimReceiver{
+			raw: &types.RawClaimPacketMetadata{
 				StrideAddress: "bad_address",
 				AirdropId:     validAirdropId,
 			},
@@ -234,7 +251,7 @@ func TestParseClaimReceiverData(t *testing.T) {
 		},
 		{
 			name: "invalid airdrop-id",
-			raw: &types.RawClaimReceiver{
+			raw: &types.RawClaimPacketMetadata{
 				StrideAddress: validAddress,
 				AirdropId:     "",
 			},
@@ -246,7 +263,7 @@ func TestParseClaimReceiverData(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			actualParsed, actualErr := tc.raw.ParseAndValidate()
 			if tc.expectedErr == "" {
-				require.Equal(t, tc.expectedParsed, *actualParsed, "parsed receiver")
+				require.Equal(t, tc.expectedParsed, *actualParsed, "parsed metadata")
 				require.NoError(t, actualErr, "no error expected for %s", tc.name)
 			} else {
 				require.ErrorContains(t, actualErr, tc.expectedErr, "error expected for %s", tc.name)

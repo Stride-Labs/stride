@@ -123,51 +123,52 @@ func (im IBCModule) OnRecvPacket(
 		return channeltypes.NewErrorAcknowledgement(err)
 	}
 
-	// to be utilized from ibc-go v5.1.0
-	if data.Memo == "stakeibc/LiquidStake" {
-		strideAccAddress, err := sdk.AccAddressFromBech32(data.Receiver)
-		if err != nil {
-			return channeltypes.NewErrorAcknowledgement(err)
-		}
-
-		ack := im.app.OnRecvPacket(ctx, packet, relayer)
-		if ack.Success() {
-			return im.keeper.TryLiquidStaking(ctx, packet, data, &types.ParsedReceiver{
-				ShouldLiquidStake: true,
-				StrideAccAddress:  strideAccAddress,
-			}, ack)
-		}
-		return ack
+	// ibc-go v5 has a Memo field that can store forwarding info
+	// For older version of ibc-go, the data must be stored in the receiver field
+	var metadata string
+	if data.Memo != "" {
+		metadata = data.Memo
+	} else {
+		metadata = data.Receiver
 	}
 
 	// parse out any forwarding info
-	parsedReceiver, err := types.ParseReceiverData(data.Receiver)
+	parsedPacketMetadata, err := types.ParsePacketMetadata(metadata)
 	if err != nil {
 		return channeltypes.NewErrorAcknowledgement(err)
 	}
 
-	// move on to the next middleware
-	if !parsedReceiver.ShouldLiquidStake {
+	// If the parsed metadata is nil, that means there is no forwarding logic
+	// Pass the packet down to the next middleware
+	if parsedPacketMetadata == nil {
 		return im.app.OnRecvPacket(ctx, packet, relayer)
 	}
 
-	// Modify packet data to process packet transfer for this chain, omitting liquid staking info
-	newData := data
-	newData.Receiver = parsedReceiver.StrideAccAddress.String()
-	bz, err := transfertypes.ModuleCdc.MarshalJSON(&newData)
-	if err != nil {
-		return channeltypes.NewErrorAcknowledgement(err)
-	}
-	newPacket := packet
-	newPacket.Data = bz
+	// Handle for each module
+	if parsedPacketMetadata.Stakeibc.Enabled {
+		// Modify packet data to process packet transfer for this chain, omitting liquid staking info
+		newData := data
+		newData.Receiver = parsedPacketMetadata.Stakeibc.StrideAddress.String()
+		bz, err := transfertypes.ModuleCdc.MarshalJSON(&newData)
+		if err != nil {
+			return channeltypes.NewErrorAcknowledgement(err)
+		}
+		newPacket := packet
+		newPacket.Data = bz
 
-	// process the transfer receipt
-	// NOTE: this code is pulled from packet-forwarding-middleware
-	ack := im.app.OnRecvPacket(ctx, newPacket, relayer)
-	if ack.Success() {
-		return im.keeper.TryLiquidStaking(ctx, packet, newData, parsedReceiver, ack)
+		// process the transfer receipt
+		// NOTE: this code is pulled from packet-forwarding-middleware
+		ack := im.app.OnRecvPacket(ctx, newPacket, relayer)
+		if ack.Success() {
+			return im.keeper.TryLiquidStaking(ctx, packet, newData, &parsedPacketMetadata.Stakeibc, ack)
+		}
+		return ack
+	} else if parsedPacketMetadata.Claim.Enabled {
+		// TODO
+		return im.app.OnRecvPacket(ctx, packet, relayer)
+	} else {
+		return channeltypes.NewErrorAcknowledgement(types.ErrUnsupportedAutopilotRoute)
 	}
-	return ack
 }
 
 // OnAcknowledgementPacket implements the IBCModule interface

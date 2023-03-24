@@ -22,6 +22,15 @@ import (
 	stakeibctypes "github.com/Stride-Labs/stride/v7/x/stakeibc/types"
 )
 
+func getPacketMetadata(address, action string) string {
+	return fmt.Sprintf(`
+		{
+			"autopilot": {
+				"stakeibc": { "stride_address": "%s", "action": "%s" } 
+			}
+		}`, address, action)
+}
+
 func (suite *KeeperTestSuite) TestOnRecvPacket() {
 	now := time.Now()
 
@@ -61,7 +70,7 @@ func (suite *KeeperTestSuite) TestOnRecvPacket() {
 				Denom:    "uatom",
 				Amount:   "1000000",
 				Sender:   "cosmos16plylpsgxechajltx9yeseqexzdzut9g8vla4k",
-				Receiver: fmt.Sprintf("%s|stakeibc/LiquidStake", addr1.String()),
+				Receiver: getPacketMetadata(addr1.String(), "LiquidStake"),
 				Memo:     "",
 			},
 			destChannel:    "channel-0",
@@ -75,7 +84,7 @@ func (suite *KeeperTestSuite) TestOnRecvPacket() {
 				Denom:    strdIbcDenom,
 				Amount:   "1000000",
 				Sender:   "cosmos16plylpsgxechajltx9yeseqexzdzut9g8vla4k",
-				Receiver: fmt.Sprintf("%s|stakeibc/LiquidStake", addr1.String()),
+				Receiver: getPacketMetadata(addr1.String(), "LiquidStake"),
 				Memo:     "",
 			},
 			destChannel:    "channel-0",
@@ -89,7 +98,7 @@ func (suite *KeeperTestSuite) TestOnRecvPacket() {
 				Denom:    "uatom",
 				Amount:   "1000000",
 				Sender:   "cosmos16plylpsgxechajltx9yeseqexzdzut9g8vla4k",
-				Receiver: fmt.Sprintf("%s|stakeibc/LiquidStake", addr1.String()),
+				Receiver: getPacketMetadata(addr1.String(), "LiquidStake"),
 				Memo:     "",
 			},
 			destChannel:    "channel-0",
@@ -103,7 +112,7 @@ func (suite *KeeperTestSuite) TestOnRecvPacket() {
 				Denom:    "uatom",
 				Amount:   "1000000",
 				Sender:   "cosmos16plylpsgxechajltx9yeseqexzdzut9g8vla4k",
-				Receiver: fmt.Sprintf("%s|stakeibc/LiquidStake", addr1.String()),
+				Receiver: getPacketMetadata(addr1.String(), "LiquidStake"),
 				Memo:     "",
 			},
 			destChannel:    "channel-1000",
@@ -118,7 +127,7 @@ func (suite *KeeperTestSuite) TestOnRecvPacket() {
 				Amount:   "1000000",
 				Sender:   "cosmos16plylpsgxechajltx9yeseqexzdzut9g8vla4k",
 				Receiver: addr1.String(),
-				Memo:     "stakeibc/LiquidStake",
+				Memo:     getPacketMetadata(addr1.String(), "LiquidStake"),
 			},
 			destChannel:    "channel-0",
 			recvDenom:      atomIbcDenom,
@@ -139,13 +148,13 @@ func (suite *KeeperTestSuite) TestOnRecvPacket() {
 			expSuccess:     true,
 			expLiquidStake: false,
 		},
-		{ // invalid receiver
+		{ // invalid stride address (receiver)
 			forwardingActive: true,
 			packetData: transfertypes.FungibleTokenPacketData{
 				Denom:    "uatom",
 				Amount:   "1000000",
 				Sender:   "cosmos16plylpsgxechajltx9yeseqexzdzut9g8vla4k",
-				Receiver: "xxx|stakeibc/LiquidStake",
+				Receiver: getPacketMetadata("invalid_address", "LiquidStake"),
 				Memo:     "",
 			},
 			destChannel:    "channel-0",
@@ -153,14 +162,14 @@ func (suite *KeeperTestSuite) TestOnRecvPacket() {
 			expSuccess:     false,
 			expLiquidStake: false,
 		},
-		{ // invalid receiver liquid staking
+		{ // invalid stride address (memo)
 			forwardingActive: true,
 			packetData: transfertypes.FungibleTokenPacketData{
 				Denom:    "uatom",
 				Amount:   "1000000",
 				Sender:   "cosmos16plylpsgxechajltx9yeseqexzdzut9g8vla4k",
-				Receiver: "xxx|stakeibc/LiquidStake",
-				Memo:     "",
+				Receiver: addr1.String(),
+				Memo:     getPacketMetadata("invalid_address", "LiquidStake"),
 			},
 			destChannel:    "channel-0",
 			recvDenom:      atomIbcDenom,
