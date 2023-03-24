@@ -803,3 +803,47 @@ func (k Keeper) DeleteAirdropAndEpoch(ctx sdk.Context, identifier string) error 
 	k.epochsKeeper.DeleteEpochInfo(ctx, fmt.Sprintf("airdrop-%s", identifier))
 	return k.SetParams(ctx, params)
 }
+
+func (k Keeper) UpdateAirdropAddress(ctx sdk.Context, existingAddress string, newStrideAddress string, airdropId string) bool {
+	logPrefix := "[CLAIM] UpdateAirdropAddress -"
+	airdrop := k.GetAirdropByIdentifier(ctx, airdropId)
+	if airdrop == nil {
+		k.Logger(ctx).Error(fmt.Sprintf("%s airdrop not found for identifier %s", logPrefix, airdropId))
+		return false
+	}
+
+	// verify that the strideAddress is valid
+	_, err := sdk.AccAddressFromBech32(newStrideAddress)
+	if err != nil {
+		k.Logger(ctx).Error(fmt.Sprintf("%s invalid stride address %s", logPrefix, newStrideAddress))
+		return false
+	}
+
+	// note: existingAccAddress will be a STRIDE address with the same coin type as existingAddress
+	existingAccAddress, _ := sdk.AccAddressFromBech32(existingAddress)
+
+	store := ctx.KVStore(k.storeKey)
+	prefixStore := prefix.NewStore(store, append([]byte(types.ClaimRecordsStorePrefix), []byte(airdrop.AirdropIdentifier)...))
+	if !prefixStore.Has(existingAccAddress) {
+		k.Logger(ctx).Error(fmt.Sprintf("%s no airdrop found in Store for address %s and airdrop identifier %s", logPrefix, existingAddress, airdrop.AirdropIdentifier))
+		return false
+	}
+
+	bz := prefixStore.Get(existingAccAddress)
+	claimRecord := types.ClaimRecord{}
+	err = proto.Unmarshal(bz, &claimRecord)
+	if err != nil {
+		k.Logger(ctx).Error(fmt.Sprintf("%s error unmarshalling claim record for address %s on airdrop %s", logPrefix, existingAddress, airdropId))
+		return false
+	}
+	claimRecord.Address = newStrideAddress
+	err = k.SetClaimRecord(ctx, claimRecord) // this does NOT delete the old record, because claims are indexed by address
+	if err != nil {
+		k.Logger(ctx).Error(fmt.Sprintf("%s error setting claim record from address %s to address %s on airdrop %s", logPrefix, existingAddress, newStrideAddress, airdropId))
+		return false
+	}
+	// this deletes the old record
+	prefixStore.Delete(existingAccAddress)
+
+	return true
+}

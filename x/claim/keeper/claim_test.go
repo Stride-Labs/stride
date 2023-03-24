@@ -1,6 +1,7 @@
 package keeper_test
 
 import (
+	"strings"
 	"time"
 
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
@@ -10,6 +11,7 @@ import (
 	vestingtypes "github.com/cosmos/cosmos-sdk/x/auth/vesting/types"
 
 	"github.com/Stride-Labs/stride/v7/app/apptesting"
+	"github.com/Stride-Labs/stride/v7/utils"
 	claimkeeper "github.com/Stride-Labs/stride/v7/x/claim/keeper"
 
 	"github.com/Stride-Labs/stride/v7/x/claim/types"
@@ -70,7 +72,7 @@ func (suite *KeeperTestSuite) TestHookOfUnclaimableAccount() {
 	suite.Equal(sdk.Coins{}, balances)
 }
 
-//Check balances before and after airdrop starts
+// Check balances before and after airdrop starts
 func (suite *KeeperTestSuite) TestHookBeforeAirdropStart() {
 	suite.SetupTest()
 
@@ -666,4 +668,129 @@ func (suite *KeeperTestSuite) TestGetClaimMetadata() {
 			suite.Require().Equal(now.Add(-20*24*time.Hour), metadata.CurrentRoundStart, "osmo round start time") // 20 days ago
 		}
 	}
+}
+
+func (suite *KeeperTestSuite) SetupUpdateAirdropAddressChangeTests() (string, string, string, string) {
+	suite.SetupTest()
+
+	airdropId := "osmosis"
+
+	EVMOS_ADDR := "evmos1wg6vh689gw93umxqquhe3yaqf0h9wt9d4q7550"
+	STRIDE_ADDR := "stride1svy5pga6g2er2wjrcujcrg0efce4pref8dksr9"
+
+	parsedEvmosAddress := utils.ConvertAddressToStrideAddress(EVMOS_ADDR)
+	addr1, err := sdk.AccAddressFromBech32(parsedEvmosAddress)
+	suite.Require().NoError(err)
+	weight := sdk.NewDecWithPrec(50, 2)
+
+	strideAccAddress, err := sdk.AccAddressFromBech32(STRIDE_ADDR)
+	suite.Require().NoError(err)
+
+	for _, addr := range []sdk.AccAddress{addr1, strideAccAddress} {
+		initialBal := int64(1000)
+		err := suite.app.BankKeeper.SendCoins(suite.ctx, distributors[airdropId], addr, sdk.NewCoins(sdk.NewInt64Coin(sdk.DefaultBondDenom, initialBal)))
+		suite.Require().NoError(err)
+		err = suite.app.BankKeeper.SendCoins(suite.ctx, addr, distributors[airdropId], sdk.NewCoins(sdk.NewInt64Coin(sdk.DefaultBondDenom, initialBal)))
+		suite.Require().NoError(err)
+	}
+
+	claimRecords := []types.ClaimRecord{
+		{
+			Address:           addr1.String(),
+			Weight:            weight, // 50%
+			ActionCompleted:   []bool{false, false, false},
+			AirdropIdentifier: airdropId,
+		},
+	}
+
+	err = suite.app.ClaimKeeper.SetClaimRecordsWithWeights(suite.ctx, claimRecords)
+	suite.Require().NoError(err)
+
+	return airdropId, EVMOS_ADDR, addr1.String(), STRIDE_ADDR
+}
+
+func (suite *KeeperTestSuite) TestUpdateAirdropAddress() {
+	airdropId, evmosAddress, evmosParsedAddress, strideAddress := suite.SetupUpdateAirdropAddressChangeTests()
+	evmosParsedAccAddress, err := sdk.AccAddressFromBech32(evmosParsedAddress)
+	suite.Require().NoError(err)
+	strideAccAddress, err := sdk.AccAddressFromBech32(strideAddress)
+	suite.Require().NoError(err)
+
+	airdropClaimCoins := sdk.NewCoins(sdk.NewInt64Coin(sdk.DefaultBondDenom, 100_000_000))
+
+	// verify that the Evmos address changed
+	suite.Require().NotEqual(evmosAddress, evmosParsedAddress, "evmos address should have changed")
+	// verify new Evmos address starts with "stride"
+	suite.Require().True(strings.HasPrefix(evmosParsedAddress, "stride"), "evmos address should start with stride")
+
+	coins, err := suite.app.ClaimKeeper.GetUserTotalClaimable(suite.ctx, evmosParsedAccAddress, airdropId, false)
+	suite.Require().NoError(err)
+	suite.Require().Equal(coins.String(), airdropClaimCoins.String())
+
+	// verify that we can't claim the airdrop with the original stride address
+	coins, err = suite.app.ClaimKeeper.GetUserTotalClaimable(suite.ctx, strideAccAddress, airdropId, false)
+	suite.Require().NoError(err)
+	emptyCoins := sdk.NewCoins()
+	suite.Require().Equal(coins, emptyCoins, "stride address should claim 0 coins before update", strideAccAddress)
+	claims, err := suite.app.ClaimKeeper.GetClaimStatus(suite.ctx, strideAccAddress)
+	suite.Require().NoError(err)
+	suite.Require().Empty(claims, "stride address should have 0 claim records before update")
+
+	// verify that evmos can claim the address
+	coins, err = suite.app.ClaimKeeper.GetUserTotalClaimable(suite.ctx, evmosParsedAccAddress, airdropId, false)
+	suite.Require().NoError(err)
+	suite.Require().Equal(coins, sdk.NewCoins(sdk.NewCoin("stake", sdk.NewIntFromUint64(100_000_000))), "parsed evmos address should be allowed to claim")
+	claims, err = suite.app.ClaimKeeper.GetClaimStatus(suite.ctx, evmosParsedAccAddress)
+	suite.Require().NoError(err)
+	properClaims := []types.ClaimStatus{{AirdropIdentifier: airdropId, Claimed: false}}
+	suite.Require().Equal(claims, properClaims, "evmos address should have 1 claim record before update")
+
+	// update the address
+	success := suite.app.ClaimKeeper.UpdateAirdropAddress(suite.ctx, evmosParsedAddress, strideAddress, airdropId)
+	suite.Require().True(success, "airdrop update address should succeed")
+
+	// verify that the evmos address CAN NOT claim after the update
+	coins, err = suite.app.ClaimKeeper.GetUserTotalClaimable(suite.ctx, evmosParsedAccAddress, airdropId, false)
+	suite.Require().NoError(err)
+	suite.Require().Equal(coins, emptyCoins, "evmos address should claim 0 coins after update", evmosParsedAccAddress)
+	claims, err = suite.app.ClaimKeeper.GetClaimStatus(suite.ctx, evmosParsedAccAddress)
+	suite.Require().NoError(err)
+	suite.Require().Empty(claims, "evmos address should have 0 claim records after update")
+
+	// verify that the stride address CAN claim after the update
+	coins, err = suite.app.ClaimKeeper.GetUserTotalClaimable(suite.ctx, strideAccAddress, airdropId, false)
+	suite.Require().NoError(err)
+	suite.Require().Equal(coins, sdk.NewCoins(sdk.NewCoin("stake", sdk.NewIntFromUint64(100_000_000))), "stride address should be allowed to claim after update")
+	claims, err = suite.app.ClaimKeeper.GetClaimStatus(suite.ctx, strideAccAddress)
+	suite.Require().NoError(err)
+	suite.Require().Equal(claims, properClaims, "stride address should have 1 claim record after update")
+
+	// claim with the Stride address
+	coins, err = suite.app.ClaimKeeper.ClaimCoinsForAction(suite.ctx, strideAccAddress, types.ACTION_FREE, airdropId)
+	suite.Require().NoError(err)
+	suite.Require().Equal(coins, sdk.NewCoins(sdk.NewCoin("stake", sdk.NewIntFromUint64(20_000_000))), "stride address should be allowed to claim after update")
+	// verify Stride address can't claim again
+	coins, err = suite.app.ClaimKeeper.ClaimCoinsForAction(suite.ctx, strideAccAddress, types.ACTION_FREE, airdropId)
+	suite.Require().NoError(err)
+	suite.Require().Equal(coins, sdk.NewCoins(sdk.NewCoin("stake", sdk.NewIntFromUint64(0))), "can't claim twice after update")
+	// verify Stride address balance went up
+	strideBalance := suite.app.BankKeeper.GetBalance(suite.ctx, strideAccAddress, "stake")
+	suite.Require().Equal(strideBalance.Amount, sdk.NewIntFromUint64(20_000_000), "stride address balance should have increased after claiming")
+}
+
+func (suite *KeeperTestSuite) TestUpdateAirdropAddress_AirdropNotFound() {
+	_, _, evmosParsedAddress, strideAddress := suite.SetupUpdateAirdropAddressChangeTests()
+
+	// update the address
+	success := suite.app.ClaimKeeper.UpdateAirdropAddress(suite.ctx, evmosParsedAddress, strideAddress, "stride")
+	suite.Require().False(success, "airdrop address update shouldn't work with incorrect airdrop id")
+}
+
+func (suite *KeeperTestSuite) TestUpdateAirdropAddress_StrideAddressIncorrect() {
+	_, _, evmosParsedAddress, strideAddress := suite.SetupUpdateAirdropAddressChangeTests()
+
+	// update the address
+	incorrectStrideAddress := strideAddress + "a"
+	success := suite.app.ClaimKeeper.UpdateAirdropAddress(suite.ctx, evmosParsedAddress, incorrectStrideAddress, "stride")
+	suite.Require().False(success, "airdrop address update shouldn't work with incorrect host address")
 }
