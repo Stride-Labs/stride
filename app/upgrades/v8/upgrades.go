@@ -18,7 +18,7 @@ import (
 
 var (
 	UpgradeName             = "v8"
-	EvmosAirdropDistributor = "TODO"
+	EvmosAirdropDistributor = "stride10dy5pmc2fq7fnmufjfschkfrxaqnpykl6ezy5j"
 	EvmosAirdropIdentifier  = "evmos"
 	AirdropDuration         = time.Hour * 24 * 30 * 12 * 3 // 3 years
 	ResetAirdropIdentifiers = []string{"stride", "gaia", "osmosis", "juno", "stars"}
