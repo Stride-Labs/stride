@@ -51,7 +51,7 @@ func (k Keeper) AfterEpochEnd(ctx sdk.Context, epochInfo epochstypes.EpochInfo) 
 	if strings.HasPrefix(epochInfo.Identifier, "airdrop-") {
 		airdropIdentifier := strings.TrimPrefix(epochInfo.Identifier, "airdrop-")
 		airdropFound := k.GetAirdropByIdentifier(ctx, airdropIdentifier)
-		if airdropFound == nil {
+		if airdropFound != nil {
 			k.Logger(ctx).Info(fmt.Sprintf("resetting claims for airdrop %s", epochInfo.Identifier))
 			err := k.ResetClaimStatus(ctx, airdropIdentifier)
 			if err != nil {
