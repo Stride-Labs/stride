@@ -508,14 +508,18 @@ func (k Keeper) GetClaimMetadata(ctx sdk.Context) []types.ClaimMetadata {
 	airdropIdentifiers := k.GetAirdropIds(ctx)
 	epochs := k.epochsKeeper.AllEpochInfos(ctx)
 
-	for _, id := range airdropIdentifiers {
+	for _, airdropId := range airdropIdentifiers {
 		// loop over epochs to match epochs to airdrop identifier
 		var currentRoundStart time.Time
 		var currentRoundEnd time.Time
 		var absoluteStartTime time.Time
 		var duration time.Duration
 		for _, epoch := range epochs {
-			if epoch.Identifier == id {
+			epochIdentifier := epoch.Identifier
+			if strings.HasPrefix(epochIdentifier, "airdrop-") {
+				epochIdentifier = strings.TrimPrefix(epochIdentifier, "airdrop-")
+			}
+			if epochIdentifier == airdropId {
 				// found the epoch for this airdrop
 				currentRoundStart = epoch.CurrentEpochStartTime
 				absoluteStartTime = epoch.StartTime
@@ -527,7 +531,7 @@ func (k Keeper) GetClaimMetadata(ctx sdk.Context) []types.ClaimMetadata {
 		currentRound := strconv.Itoa(CurrentAirdropRound(absoluteStartTime))
 
 		claimMetadata := types.ClaimMetadata{
-			AirdropIdentifier: id,
+			AirdropIdentifier: airdropId,
 			CurrentRound:      currentRound,
 			CurrentRoundStart: currentRoundStart,
 			CurrentRoundEnd:   currentRoundEnd,

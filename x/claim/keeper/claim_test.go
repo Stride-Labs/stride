@@ -544,7 +544,7 @@ func (suite *KeeperTestSuite) TestCurrentAirdropRound() {
 	round = claimkeeper.CurrentAirdropRound(startTime)
 	suite.Require().Equal(2, round)
 
-	startTime = time.Now().Add(-100 * 24 * time.Hour) // 130 days ago
+	startTime = time.Now().Add(-130 * 24 * time.Hour) // 130 days ago
 	round = claimkeeper.CurrentAirdropRound(startTime)
 	suite.Require().Equal(3, round)
 }
@@ -613,26 +613,53 @@ func (suite *KeeperTestSuite) TestGetClaimStatus() {
 }
 
 func (suite *KeeperTestSuite) TestGetClaimMetadata() {
-	// Test GetClaimMetadata
+	// Update airdrop epochs timing
+	now := time.Now().UTC()
+	epochs := suite.app.EpochsKeeper.AllEpochInfos(suite.ctx)
+	for _, epoch := range epochs {
+		// Each airdrop's round will end 10 days from now
+		// Round 1 epoch started 80 days ago
+		// Round 2 and 3 epochs have their current epoch started 20 days ago
+		//  but had their genesis 110 and 140 days ago respectively
+		epoch.CurrentEpochStartTime = now.Add(-20 * 24 * time.Hour) // 20 day ago
+
+		switch epoch.Identifier {
+		case "airdrop-" + types.DefaultAirdropIdentifier:
+			epoch.Duration = time.Hour * 24 * 90                        // 90 days
+			epoch.StartTime = now.Add(-80 * 24 * time.Hour)             // 80 days ago - round 1
+			epoch.CurrentEpochStartTime = now.Add(-80 * 24 * time.Hour) // 80 days ago
+		case "airdrop-juno":
+			epoch.Duration = time.Hour * 24 * 30                        // 30 days
+			epoch.StartTime = now.Add(-110 * 24 * time.Hour)            // 110 days ago - round 2
+			epoch.CurrentEpochStartTime = now.Add(-20 * 24 * time.Hour) // 20 days ago
+		case "airdrop-osmosis":
+			epoch.Duration = time.Hour * 24 * 30                        // 30 days
+			epoch.StartTime = now.Add(-140 * 24 * time.Hour)            // 140 days ago - round 3
+			epoch.CurrentEpochStartTime = now.Add(-20 * 24 * time.Hour) // 20 days ago
+		}
+		suite.app.EpochsKeeper.SetEpochInfo(suite.ctx, epoch)
+	}
+
+	// Get claim metadata
 	claimMetadataList := suite.app.ClaimKeeper.GetClaimMetadata(suite.ctx)
 	suite.Require().NotNil(claimMetadataList)
 	suite.Require().Len(claimMetadataList, 3)
 
 	// Check the contents of the metadata
 	for _, metadata := range claimMetadataList {
-		suite.Require().Contains([]string{types.DefaultAirdropIdentifier, "juno", "osmosis"}, metadata.AirdropIdentifier)
-		suite.Require().Equal("1", metadata.CurrentRound)
+		suite.Require().Contains([]string{types.DefaultAirdropIdentifier, "juno", "osmosis"}, metadata.AirdropIdentifier, "airdrop ID")
+		suite.Require().Equal(now.Add(10*24*time.Hour), metadata.CurrentRoundEnd, "%s round end time", metadata.AirdropIdentifier) // 10 days from now
 
-		airdropStartTime := suite.ctx.BlockTime()
 		switch metadata.AirdropIdentifier {
 		case types.DefaultAirdropIdentifier:
-			suite.Require().True(airdropStartTime.Equal(metadata.CurrentRoundStart))
+			suite.Require().Equal("1", metadata.CurrentRound, "stride current round")
+			suite.Require().Equal(now.Add(-80*24*time.Hour), metadata.CurrentRoundStart, "stride round start time") // 80 days ago
 		case "juno":
-			suite.Require().True(airdropStartTime.Add(time.Hour).Equal(metadata.CurrentRoundStart))
+			suite.Require().Equal("2", metadata.CurrentRound, "juno current round")
+			suite.Require().Equal(now.Add(-20*24*time.Hour), metadata.CurrentRoundStart, "juno round start time") // 20 days ago
 		case "osmosis":
-			suite.Require().True(airdropStartTime.Equal(metadata.CurrentRoundStart))
+			suite.Require().Equal("3", metadata.CurrentRound, "osmo current round")
+			suite.Require().Equal(now.Add(-20*24*time.Hour), metadata.CurrentRoundStart, "osmo round start time") // 20 days ago
 		}
-
-		suite.Require().True(metadata.CurrentRoundEnd.Equal(metadata.CurrentRoundStart.Add(types.DefaultAirdropDuration)))
 	}
 }
