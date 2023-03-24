@@ -11,6 +11,7 @@ import (
 
 	"github.com/Stride-Labs/stride/v7/app/apptesting"
 	v8 "github.com/Stride-Labs/stride/v7/app/upgrades/v8"
+	autopilottypes "github.com/Stride-Labs/stride/v7/x/autopilot/types"
 	"github.com/Stride-Labs/stride/v7/x/claim/types"
 	claimtypes "github.com/Stride-Labs/stride/v7/x/claim/types"
 )
@@ -128,4 +129,11 @@ func (s *UpgradeTestSuite) CheckStoreAfterUpgrade() {
 		s.Require().Equal(addresses[i], claimRecord.Address, "record %d address", i)
 		s.Require().Equal(weights[i], claimRecord.Weight, "record %d weight", i)
 	}
+
+	// Check autopilot params
+	expectedAutoPilotParams := autopilottypes.Params{
+		Active: true,
+	}
+	actualAutopilotParams := s.App.AutopilotKeeper.GetParams(s.Ctx)
+	s.Require().Equal(expectedAutoPilotParams, actualAutopilotParams, "autopilot params")
 }

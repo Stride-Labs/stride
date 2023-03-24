@@ -12,6 +12,8 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/module"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 
+	autopilotkeeper "github.com/Stride-Labs/stride/v7/x/autopilot/keeper"
+	autopilottypes "github.com/Stride-Labs/stride/v7/x/autopilot/types"
 	claimkeeper "github.com/Stride-Labs/stride/v7/x/claim/keeper"
 	claimtypes "github.com/Stride-Labs/stride/v7/x/claim/types"
 )
@@ -30,6 +32,7 @@ func CreateUpgradeHandler(
 	configurator module.Configurator,
 	cdc codec.Codec,
 	claimKeeper claimkeeper.Keeper,
+	autopilotKeeper autopilotkeeper.Keeper,
 ) upgradetypes.UpgradeHandler {
 	return func(ctx sdk.Context, _ upgradetypes.Plan, vm module.VersionMap) (module.VersionMap, error) {
 		ctx.Logger().Info("Starting upgrade v8...")
@@ -52,6 +55,10 @@ func CreateUpgradeHandler(
 
 		ctx.Logger().Info("Loading airdrop allocations...")
 		claimKeeper.LoadAllocationData(ctx, allocations)
+
+		// Update autopilot params
+		autopilotParams := autopilottypes.DefaultParams()
+		autopilotKeeper.SetParams(ctx, autopilotParams)
 
 		ctx.Logger().Info("Running module mogrations...")
 		return mm.RunMigrations(ctx, configurator, vm)
