@@ -118,13 +118,11 @@ func (k Keeper) AddDelegationToValidator(ctx sdk.Context, hostZone types.HostZon
 // Appends a validator to host zone (if the host zone is not already at capacity)
 // If the validator is added through governance, the weight is equal to the minimum weight across the set
 // If the validator is added through an admin transactions, the weight is specified in the message
-func (k Keeper) AddValidatorToHostZone(ctx sdk.Context, msg *types.MsgAddValidator, fromGovernance bool) error {
+func (k Keeper) AddValidatorToHostZone(ctx sdk.Context, chainId string, validator types.Validator, fromGovernance bool) error {
 	// Get the corresponding host zone
-	hostZone, found := k.GetHostZone(ctx, msg.HostZone)
+	hostZone, found := k.GetHostZone(ctx, chainId)
 	if !found {
-		errMsg := fmt.Sprintf("Host Zone (%s) not found", msg.HostZone)
-		k.Logger(ctx).Error(errMsg)
-		return errorsmod.Wrap(types.ErrHostZoneNotFound, errMsg)
+		return errorsmod.Wrapf(types.ErrHostZoneNotFound, "Host Zone (%s) not found", chainId)
 	}
 
 	// Get max number of validators and confirm we won't exceed it
@@ -136,37 +134,31 @@ func (k Keeper) AddValidatorToHostZone(ctx sdk.Context, msg *types.MsgAddValidat
 	// Check that we don't already have this validator
 	// Grab the minimum weight in the process (to assign to validator's added through governance)
 	var minWeight uint64 = math.MaxUint64
-	for _, validator := range hostZone.Validators {
-		if validator.Address == msg.Address {
-			errMsg := fmt.Sprintf("Validator address (%s) already exists on Host Zone (%s)", msg.Address, msg.HostZone)
-			k.Logger(ctx).Error(errMsg)
-			return errorsmod.Wrap(types.ErrValidatorAlreadyExists, errMsg)
+	for _, existingValidator := range hostZone.Validators {
+		if existingValidator.Address == validator.Address {
+			return errorsmod.Wrapf(types.ErrValidatorAlreadyExists, "Validator address (%s) already exists on Host Zone (%s)", validator.Address, chainId)
 		}
-		if validator.Name == msg.Name {
-			errMsg := fmt.Sprintf("Validator name (%s) already exists on Host Zone (%s)", msg.Name, msg.HostZone)
-			k.Logger(ctx).Error(errMsg)
-			return errorsmod.Wrap(types.ErrValidatorAlreadyExists, errMsg)
+		if existingValidator.Name == validator.Name {
+			return errorsmod.Wrapf(types.ErrValidatorAlreadyExists, "Validator name (%s) already exists on Host Zone (%s)", validator.Name, chainId)
 		}
 		// Store the min weight to assign to new validator added through governance (ignore zero-weight validators)
-		if validator.Weight < minWeight && validator.Weight > 0 {
-			minWeight = validator.Weight
+		if existingValidator.Weight < minWeight && existingValidator.Weight > 0 {
+			minWeight = existingValidator.Weight
 		}
 	}
 
 	// If the validator was added via governance, set the weight to the min validator weight of the host zone
-	valWeight := msg.Weight
+	valWeight := validator.Weight
 	if fromGovernance {
 		valWeight = minWeight
 	}
 
 	// Finally, add the validator to the host
 	hostZone.Validators = append(hostZone.Validators, &types.Validator{
-		Name:           msg.Name,
-		Address:        msg.Address,
-		Status:         types.Validator_ACTIVE,
-		CommissionRate: msg.Commission,
-		DelegationAmt:  sdkmath.ZeroInt(),
-		Weight:         valWeight,
+		Name:          validator.Name,
+		Address:       validator.Address,
+		Weight:        valWeight,
+		DelegationAmt: sdkmath.ZeroInt(),
 	})
 
 	k.SetHostZone(ctx, hostZone)
