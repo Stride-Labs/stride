@@ -93,6 +93,7 @@ func (app *StrideApp) setupUpgradeHandlers() {
 			app.configurator,
 			app.appCodec,
 			app.ClaimKeeper,
+			app.AutopilotKeeper,
 		),
 	)
 

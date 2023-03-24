@@ -24,6 +24,7 @@ var (
 	EvmosAirdropIdentifier  = "evmos"
 	AirdropDuration         = time.Hour * 24 * 30 * 12 * 3 // 3 years
 	ResetAirdropIdentifiers = []string{"stride", "gaia", "osmosis", "juno", "stars"}
+	AirdropStartTime        = time.Date(2023, 4, 3, 16, 0, 0, 0, time.UTC).Unix() // April 3, 2023 @ 16:00 UTC (12:00 EST)
 )
 
 // CreateUpgradeHandler creates an SDK upgrade handler for v8
@@ -47,9 +48,8 @@ func CreateUpgradeHandler(
 
 		// Add the evmos airdrop
 		ctx.Logger().Info("Adding evmos airdrop...")
-		blockTime := uint64(ctx.BlockTime().Unix())
 		duration := uint64(AirdropDuration.Seconds())
-		if err := claimKeeper.CreateAirdropAndEpoch(ctx, EvmosAirdropDistributor, claimtypes.DefaultClaimDenom, blockTime, duration, EvmosAirdropIdentifier); err != nil {
+		if err := claimKeeper.CreateAirdropAndEpoch(ctx, EvmosAirdropDistributor, claimtypes.DefaultClaimDenom, uint64(AirdropStartTime), duration, EvmosAirdropIdentifier); err != nil {
 			return vm, err
 		}
 

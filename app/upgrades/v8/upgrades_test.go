@@ -109,7 +109,7 @@ func (s *UpgradeTestSuite) CheckStoreAfterUpgrade() {
 
 	// Check that the params of the evmos airdrop were initialized
 	s.Require().Equal(v8.EvmosAirdropIdentifier, evmosAirdrop.AirdropIdentifier, "evmos airdrop identifier")
-	s.Require().Zero(evmosAirdrop.ClaimedSoFar.Int64(), "cevmos laimed so far")
+	s.Require().Zero(evmosAirdrop.ClaimedSoFar.Int64(), "evmos claimed so far")
 	s.Require().Equal(v8.EvmosAirdropDistributor, evmosAirdrop.DistributorAddress, "evmos airdrop distributor")
 	s.Require().Equal(v8.AirdropDuration, evmosAirdrop.AirdropDuration, "evmos airdrop duration")
 	s.Require().Equal(ustrd, evmosAirdrop.ClaimDenom, "evmos airdrop claim denom")
