@@ -181,6 +181,8 @@ service Query {
   rpc ClaimRecord(QueryClaimRecordRequest) returns (QueryClaimRecordResponse) {}
   rpc ClaimableForAction(QueryClaimableForActionRequest) returns (QueryClaimableForActionResponse) {}
   rpc TotalClaimable(QueryTotalClaimableRequest) returns (QueryTotalClaimableResponse) {}
+  rpc ClaimStatus(QueryClaimStatusRequest) returns (QueryClaimStatusResponse) {}
+  rpc ClaimMetadata(QueryClaimMetadataRequest) returns (QueryClaimMetadataResponse) {}
 }
 ```
 
@@ -205,6 +207,32 @@ Query the total claimable amount that would be earned if all remaining actions w
 
 ```sh
 strided query claim total-claimable $(strided keys show -a {your key name}) ActionAddLiquidity
+```
+
+Query claim status, across all claims, for an address. Returns a list of `ClaimStatus` structs.
+```
+message ClaimStatus {
+  string airdrop_identifier = 1;
+  bool claimed = 2;
+}
+```
+
+```sh
+strided query claim claim-status $(strided keys show -a {your key name})
+```
+
+Query claim metadata, across all claims. Returns a `ClaimMetadata` struct, which contains data about the status of each claim.
+```
+message ClaimMetadata {
+  string airdrop_identifier = 1;
+  string current_round = 2;
+  google.protobuf.Timestamp current_round_start = 3;
+  google.protobuf.Timestamp current_round_end = 4;
+}
+```
+
+```sh
+strided query claim claim-metadata
 ```
 
 ## Events
