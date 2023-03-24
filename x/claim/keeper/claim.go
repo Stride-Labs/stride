@@ -146,6 +146,23 @@ func (k Keeper) GetAirdropByIdentifier(ctx sdk.Context, airdropIdentifier string
 	return nil
 }
 
+func (k Keeper) GetAirdropIds(ctx sdk.Context) []string {
+	params, err := k.GetParams(ctx)
+	if err != nil {
+		panic(err)
+	}
+
+	// init airdrop ids
+	airdropIds := []string{}
+
+	for _, airdrop := range params.Airdrops {
+		// append airdrop to airdrop ids
+		airdropIds = append(airdropIds, airdrop.AirdropIdentifier)
+	}
+
+	return airdropIds
+}
+
 // GetDistributorAccountBalance gets the airdrop coin balance of module account
 func (k Keeper) GetDistributorAccountBalance(ctx sdk.Context, airdropIdentifier string) (sdk.Coin, error) {
 	airdrop := k.GetAirdropByIdentifier(ctx, airdropIdentifier)
@@ -420,6 +437,107 @@ func (k Keeper) GetUserVestings(ctx sdk.Context, addr sdk.AccAddress) (vestingty
 	} else {
 		return strideVestingAcc.VestingPeriods, strideVestingAcc.GetVestedCoins(ctx.BlockTime())
 	}
+}
+
+func AreAllTrue(bools []bool) bool {
+	for _, b := range bools {
+		if !b {
+			return false
+		}
+	}
+	return true
+}
+
+// GetClaimStatus returns all claim status associated with the user account
+func (k Keeper) GetClaimStatus(ctx sdk.Context, addr sdk.AccAddress) ([]types.ClaimStatus, error) {
+	// Get all airdrop identifiers
+	airdropIdentifiers := k.GetAirdropIds(ctx)
+	var claimStatusList []types.ClaimStatus
+	for _, airdropId := range airdropIdentifiers {
+
+		// Get the claim record for a user, airdrop pair
+		claimRecord, err := k.GetClaimRecord(ctx, addr, airdropId)
+		if err != nil {
+			return nil, err
+		}
+		if claimRecord.Address == "" {
+			// if there's no claim record, the user is not eligible
+			// for this airdrop, so skip it
+			continue
+		}
+
+		// If all actions are completed, the user has claimed
+		claimed := AreAllTrue(claimRecord.ActionCompleted)
+		claimStatus := types.ClaimStatus{
+			AirdropIdentifier: airdropId,
+			Claimed:           claimed,
+		}
+		claimStatusList = append(claimStatusList, claimStatus)
+	}
+
+	return claimStatusList, nil
+}
+
+func CurrentAirdropRound(start time.Time) int {
+	// Define constants for 90 days and 30 days
+	const initialRoundDuration = 90 * 24 * time.Hour
+	const subsequentRoundDuration = 30 * 24 * time.Hour
+
+	// Calculate the time passed since the start
+	timePassed := time.Since(start)
+
+	// Check if the initial round is still ongoing
+	if timePassed < initialRoundDuration {
+		return 1
+	}
+
+	// Calculate the time passed after the initial round
+	timePassedAfterInitialRound := timePassed - initialRoundDuration
+
+	// Calculate the number of subsequent rounds passed
+	subsequentRoundsPassed := timePassedAfterInitialRound / subsequentRoundDuration
+
+	// Add 1 for the initial round and 1 for the current round
+	return 1 + 1 + int(subsequentRoundsPassed)
+}
+
+// GetClaimMetadata returns all claim status associated with the user account
+func (k Keeper) GetClaimMetadata(ctx sdk.Context) []types.ClaimMetadata {
+	var claimMetadataList []types.ClaimMetadata
+
+	airdropIdentifiers := k.GetAirdropIds(ctx)
+	epochs := k.epochsKeeper.AllEpochInfos(ctx)
+
+	for _, airdropId := range airdropIdentifiers {
+		// loop over epochs to match epochs to airdrop identifier
+		var currentRoundStart time.Time
+		var currentRoundEnd time.Time
+		var absoluteStartTime time.Time
+		var duration time.Duration
+		for _, epoch := range epochs {
+			epochIdentifier := strings.TrimPrefix(epoch.Identifier, "airdrop-")
+			if epochIdentifier == airdropId {
+				// found the epoch for this airdrop
+				currentRoundStart = epoch.CurrentEpochStartTime
+				absoluteStartTime = epoch.StartTime
+				duration = epoch.Duration
+			}
+		}
+
+		currentRoundEnd = currentRoundStart.Add(duration)
+		currentRound := strconv.Itoa(CurrentAirdropRound(absoluteStartTime))
+
+		claimMetadata := types.ClaimMetadata{
+			AirdropIdentifier: airdropId,
+			CurrentRound:      currentRound,
+			CurrentRoundStart: currentRoundStart,
+			CurrentRoundEnd:   currentRoundEnd,
+		}
+
+		claimMetadataList = append(claimMetadataList, claimMetadata)
+	}
+
+	return claimMetadataList
 }
 
 // GetClaimable returns claimable amount for a specific action done by an address
