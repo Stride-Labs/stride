@@ -29,7 +29,7 @@ func GetTxCmd() *cobra.Command {
 	cmd.AddCommand(CmdRedeemStake())
 	cmd.AddCommand(CmdClaimUndelegatedTokens())
 	cmd.AddCommand(CmdRebalanceValidators())
-	cmd.AddCommand(CmdAddValidator())
+	cmd.AddCommand(CmdAddValidators())
 	cmd.AddCommand(CmdChangeValidatorWeight())
 	cmd.AddCommand(CmdDeleteValidator())
 	cmd.AddCommand(CmdRestoreInterchainAccount())
