@@ -9,11 +9,11 @@ import (
 
 	vestingtypes "github.com/cosmos/cosmos-sdk/x/auth/vesting/types"
 
-	"github.com/Stride-Labs/stride/v7/app/apptesting"
-	claimkeeper "github.com/Stride-Labs/stride/v7/x/claim/keeper"
+	"github.com/Stride-Labs/stride/v8/app/apptesting"
+	claimkeeper "github.com/Stride-Labs/stride/v8/x/claim/keeper"
 
-	"github.com/Stride-Labs/stride/v7/x/claim/types"
-	stridevestingtypes "github.com/Stride-Labs/stride/v7/x/claim/vesting/types"
+	"github.com/Stride-Labs/stride/v8/x/claim/types"
+	stridevestingtypes "github.com/Stride-Labs/stride/v8/x/claim/vesting/types"
 )
 
 // Test functionality for loading allocation data(csv)
