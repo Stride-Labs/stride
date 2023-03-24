@@ -24,7 +24,7 @@ func (k Keeper) TryLiquidStaking(
 	ack ibcexported.Acknowledgement,
 ) ibcexported.Acknowledgement {
 	params := k.GetParams(ctx)
-	if !params.Active {
+	if !params.StakeibcActive {
 		return channeltypes.NewErrorAcknowledgement(errors.New("packet forwarding param is not active"))
 	}
 

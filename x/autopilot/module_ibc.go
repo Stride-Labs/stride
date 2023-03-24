@@ -167,6 +167,8 @@ func (im IBCModule) OnRecvPacket(
 		// TODO
 		return im.app.OnRecvPacket(ctx, packet, relayer)
 	} else {
+		// This branch should not be possible - it would mean that the packet was successfully
+		// parsed into one of the autopilot modules, but the module is not displayed in this if/else statement
 		return channeltypes.NewErrorAcknowledgement(types.ErrUnsupportedAutopilotRoute)
 	}
 }

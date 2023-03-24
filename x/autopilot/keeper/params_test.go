@@ -6,7 +6,8 @@ import (
 
 func (s *KeeperTestSuite) TestGetParams() {
 	params := types.DefaultParams()
-	params.Active = true
+	params.StakeibcActive = true
+	params.ClaimActive = true
 
 	s.App.AutopilotKeeper.SetParams(s.Ctx, params)
 

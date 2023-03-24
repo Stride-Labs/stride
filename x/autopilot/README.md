@@ -17,7 +17,8 @@ Note: This will support more functions that can reduce number of users' operatio
 ## Params
 
 ```
-Active (default bool = true)
+StakeibcActive (default bool = false)
+ClaimActive (default bool = false)
 ```
 
 ## Keeper functions

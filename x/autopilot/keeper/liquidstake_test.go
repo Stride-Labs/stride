@@ -186,7 +186,7 @@ func (suite *KeeperTestSuite) TestOnRecvPacket() {
 			suite.SetupTest() // reset
 			ctx := suite.Ctx
 
-			suite.App.AutopilotKeeper.SetParams(ctx, types.Params{Active: tc.forwardingActive})
+			suite.App.AutopilotKeeper.SetParams(ctx, types.Params{StakeibcActive: tc.forwardingActive})
 
 			// set epoch tracker for env
 			suite.App.StakeibcKeeper.SetEpochTracker(ctx, stakeibctypes.EpochTracker{
