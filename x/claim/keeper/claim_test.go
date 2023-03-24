@@ -550,7 +550,9 @@ func (suite *KeeperTestSuite) TestCurrentAirdropRound() {
 }
 
 func (suite *KeeperTestSuite) TestGetClaimStatus() {
-	address, otherAddress := apptesting.GenerateTestAddrs()
+	addresses := apptesting.CreateRandomAccounts(2)
+	address := addresses[0].String()
+	otherAddress := addresses[1].String()
 
 	// Add 5 airdrops
 	airdrops := types.Params{
