@@ -562,7 +562,8 @@ func (suite *KeeperTestSuite) TestGetClaimStatus() {
 			{AirdropIdentifier: "stargaze"},
 		},
 	}
-	suite.app.ClaimKeeper.SetParams(suite.ctx, airdrops)
+	err := suite.app.ClaimKeeper.SetParams(suite.ctx, airdrops)
+	suite.Require().NoError(err)
 
 	// For the given user, add 4 claim records
 	// Stride and Juno are incomplete
@@ -591,7 +592,8 @@ func (suite *KeeperTestSuite) TestGetClaimStatus() {
 		},
 	}
 	for _, claimRecord := range claimRecords {
-		suite.app.ClaimKeeper.SetClaimRecord(suite.ctx, claimRecord)
+		err := suite.app.ClaimKeeper.SetClaimRecord(suite.ctx, claimRecord)
+		suite.Require().NoError(err)
 	}
 
 	expectedClaimStatus := []types.ClaimStatus{

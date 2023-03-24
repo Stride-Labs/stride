@@ -50,6 +50,9 @@ func (k Keeper) ClaimRecord(
 	}
 
 	claimRecord, err := k.GetClaimRecord(ctx, addr, req.AirdropIdentifier)
+	if err != nil {
+		return nil, err
+	}
 	return &types.QueryClaimRecordResponse{ClaimRecord: claimRecord}, nil
 }
 
@@ -69,10 +72,11 @@ func (k Keeper) ClaimableForAction(
 	}
 
 	coins, err := k.GetClaimableAmountForAction(ctx, addr, req.Action, req.AirdropIdentifier, false)
+	if err != nil {
+		return nil, err
+	}
 
-	return &types.QueryClaimableForActionResponse{
-		Coins: coins,
-	}, nil
+	return &types.QueryClaimableForActionResponse{Coins: coins}, nil
 }
 
 // TotalClaimable returns total claimable amount for user
@@ -91,10 +95,11 @@ func (k Keeper) TotalClaimable(
 	}
 
 	coins, err := k.GetUserTotalClaimable(ctx, addr, req.AirdropIdentifier, req.IncludeClaimed)
+	if err != nil {
+		return nil, err
+	}
 
-	return &types.QueryTotalClaimableResponse{
-		Coins: coins,
-	}, nil
+	return &types.QueryTotalClaimableResponse{Coins: coins}, nil
 }
 
 // UserVestings returns all vestings for user

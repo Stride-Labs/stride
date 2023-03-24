@@ -515,10 +515,7 @@ func (k Keeper) GetClaimMetadata(ctx sdk.Context) []types.ClaimMetadata {
 		var absoluteStartTime time.Time
 		var duration time.Duration
 		for _, epoch := range epochs {
-			epochIdentifier := epoch.Identifier
-			if strings.HasPrefix(epochIdentifier, "airdrop-") {
-				epochIdentifier = strings.TrimPrefix(epochIdentifier, "airdrop-")
-			}
+			epochIdentifier := strings.TrimPrefix(epoch.Identifier, "airdrop-")
 			if epochIdentifier == airdropId {
 				// found the epoch for this airdrop
 				currentRoundStart = epoch.CurrentEpochStartTime
