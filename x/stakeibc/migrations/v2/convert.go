@@ -11,8 +11,6 @@ func convertToNewValidator(oldValidator oldstakeibctypes.Validator) stakeibctype
 	return stakeibctypes.Validator{
 		Name:                 oldValidator.Name,
 		Address:              oldValidator.Address,
-		Status:               stakeibctypes.Validator_ValidatorStatus(oldValidator.Status),
-		CommissionRate:       oldValidator.CommissionRate,
 		DelegationAmt:        sdkmath.NewIntFromUint64(oldValidator.DelegationAmt),
 		Weight:               oldValidator.Weight,
 		InternalExchangeRate: (*stakeibctypes.ValidatorExchangeRate)(oldValidator.InternalExchangeRate),
