@@ -14,15 +14,11 @@ import (
 func NewStakeibcProposalHandler(k keeper.Keeper) govtypes.Handler {
 	return func(ctx sdk.Context, content govtypes.Content) error {
 		switch c := content.(type) {
-		case *types.AddValidatorProposal:
-			return handleAddValidatorProposal(ctx, k, c)
+		case *types.AddValidatorsProposal:
+			return k.AddValidatorsProposal(ctx, c)
 
 		default:
 			return errorsmod.Wrapf(sdkerrors.ErrUnknownRequest, "unrecognized stakeibc proposal content type: %T", c)
 		}
 	}
-}
-
-func handleAddValidatorProposal(ctx sdk.Context, k keeper.Keeper, proposal *types.AddValidatorProposal) error {
-	return k.AddValidatorProposal(ctx, proposal)
 }

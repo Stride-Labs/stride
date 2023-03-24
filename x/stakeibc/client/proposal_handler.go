@@ -7,5 +7,5 @@ import (
 )
 
 var (
-	AddValidatorProposalHandler = govclient.NewProposalHandler(cli.CmdAddValidatorProposal)
+	AddValidatorsProposalHandler = govclient.NewProposalHandler(cli.CmdAddValidatorsProposal)
 )
