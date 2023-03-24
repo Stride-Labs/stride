@@ -18,20 +18,16 @@ type DeleteValidatorTestCase struct {
 func (s *KeeperTestSuite) SetupDeleteValidator() DeleteValidatorTestCase {
 	initialValidators := []*stakeibctypes.Validator{
 		{
-			Name:           "val1",
-			Address:        "stride_VAL1",
-			CommissionRate: 1,
-			Weight:         0,
-			Status:         stakeibctypes.Validator_ACTIVE,
-			DelegationAmt:  sdkmath.ZeroInt(),
+			Name:          "val1",
+			Address:       "stride_VAL1",
+			Weight:        0,
+			DelegationAmt: sdkmath.ZeroInt(),
 		},
 		{
-			Name:           "val2",
-			Address:        "stride_VAL2",
-			CommissionRate: 2,
-			Weight:         0,
-			Status:         stakeibctypes.Validator_ACTIVE,
-			DelegationAmt:  sdkmath.ZeroInt(),
+			Name:          "val2",
+			Address:       "stride_VAL2",
+			Weight:        0,
+			DelegationAmt: sdkmath.ZeroInt(),
 		},
 	}
 

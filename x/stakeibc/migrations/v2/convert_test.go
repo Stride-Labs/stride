@@ -34,12 +34,10 @@ func TestConvertToNewValidator(t *testing.T) {
 		},
 	}
 	expectedNewValidator := stakeibctypes.Validator{
-		Name:           name,
-		Address:        address,
-		Status:         stakeibctypes.Validator_ACTIVE,
-		CommissionRate: commmissionRate,
-		DelegationAmt:  sdkmath.NewInt(1),
-		Weight:         weight,
+		Name:          name,
+		Address:       address,
+		DelegationAmt: sdkmath.NewInt(1),
+		Weight:        weight,
 		InternalExchangeRate: &stakeibctypes.ValidatorExchangeRate{
 			InternalTokensToSharesRate: tokensToShares,
 			EpochNumber:                epochNumber,
