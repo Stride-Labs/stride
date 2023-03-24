@@ -6,12 +6,12 @@ import (
 	channeltypes "github.com/cosmos/ibc-go/v5/modules/core/04-channel/types"
 	_ "github.com/stretchr/testify/suite"
 
-	icacallbacktypes "github.com/Stride-Labs/stride/v7/x/icacallbacks/types"
+	icacallbacktypes "github.com/Stride-Labs/stride/v8/x/icacallbacks/types"
 
-	recordtypes "github.com/Stride-Labs/stride/v7/x/records/types"
-	stakeibckeeper "github.com/Stride-Labs/stride/v7/x/stakeibc/keeper"
-	"github.com/Stride-Labs/stride/v7/x/stakeibc/types"
-	stakeibc "github.com/Stride-Labs/stride/v7/x/stakeibc/types"
+	recordtypes "github.com/Stride-Labs/stride/v8/x/records/types"
+	stakeibckeeper "github.com/Stride-Labs/stride/v8/x/stakeibc/keeper"
+	"github.com/Stride-Labs/stride/v8/x/stakeibc/types"
+	stakeibc "github.com/Stride-Labs/stride/v8/x/stakeibc/types"
 )
 
 type DelegateCallbackState struct {

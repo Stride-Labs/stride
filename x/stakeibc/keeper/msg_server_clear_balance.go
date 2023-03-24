@@ -9,7 +9,7 @@ import (
 	ibctransfertypes "github.com/cosmos/ibc-go/v5/modules/apps/transfer/types"
 	"github.com/spf13/cast"
 
-	"github.com/Stride-Labs/stride/v7/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v8/x/stakeibc/types"
 )
 
 func (k msgServer) ClearBalance(goCtx context.Context, msg *types.MsgClearBalance) (*types.MsgClearBalanceResponse, error) {
