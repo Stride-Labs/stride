@@ -356,6 +356,15 @@ func (k Keeper) SetClaimRecord(ctx sdk.Context, claimRecord types.ClaimRecord) e
 	return nil
 }
 
+func (k Keeper) DeleteClaimRecord(ctx sdk.Context, addr sdk.AccAddress, airdropId string) error {
+	store := ctx.KVStore(k.storeKey)
+	prefixStore := prefix.NewStore(store, append([]byte(types.ClaimRecordsStorePrefix), []byte(airdropId)...))
+
+	prefixStore.Delete(addr)
+
+	return nil
+}
+
 // Get airdrop distributor address
 func (k Keeper) GetAirdropDistributor(ctx sdk.Context, airdropIdentifier string) (sdk.AccAddress, error) {
 	airdrop := k.GetAirdropByIdentifier(ctx, airdropIdentifier)
@@ -804,46 +813,41 @@ func (k Keeper) DeleteAirdropAndEpoch(ctx sdk.Context, identifier string) error 
 	return k.SetParams(ctx, params)
 }
 
-func (k Keeper) UpdateAirdropAddress(ctx sdk.Context, existingAddress string, newStrideAddress string, airdropId string) bool {
-	logPrefix := "[CLAIM] UpdateAirdropAddress -"
+func (k Keeper) UpdateAirdropAddress(ctx sdk.Context, existingStrideAddress string, newStrideAddress string, airdropId string) error {
 	airdrop := k.GetAirdropByIdentifier(ctx, airdropId)
 	if airdrop == nil {
-		k.Logger(ctx).Error(fmt.Sprintf("%s airdrop not found for identifier %s", logPrefix, airdropId))
-		return false
+		return errorsmod.Wrapf(types.ErrAirdropNotFound, fmt.Sprintf("airdrop not found for identifier %s", airdropId))
 	}
 
 	// verify that the strideAddress is valid
 	_, err := sdk.AccAddressFromBech32(newStrideAddress)
 	if err != nil {
-		k.Logger(ctx).Error(fmt.Sprintf("%s invalid stride address %s", logPrefix, newStrideAddress))
-		return false
+		return errorsmod.Wrapf(sdkerrors.ErrInvalidAddress, fmt.Sprintf("invalid stride address %s", newStrideAddress))
 	}
 
 	// note: existingAccAddress will be a STRIDE address with the same coin type as existingAddress
-	existingAccAddress, _ := sdk.AccAddressFromBech32(existingAddress)
-
-	store := ctx.KVStore(k.storeKey)
-	prefixStore := prefix.NewStore(store, append([]byte(types.ClaimRecordsStorePrefix), []byte(airdrop.AirdropIdentifier)...))
-	if !prefixStore.Has(existingAccAddress) {
-		k.Logger(ctx).Error(fmt.Sprintf("%s no airdrop found in Store for address %s and airdrop identifier %s", logPrefix, existingAddress, airdrop.AirdropIdentifier))
-		return false
-	}
-
-	bz := prefixStore.Get(existingAccAddress)
-	claimRecord := types.ClaimRecord{}
-	err = proto.Unmarshal(bz, &claimRecord)
+	// when new airdrops are ingested, we call utils.ConvertAddressToStrideAddress to convert
+	// the host zone (e.g. Evmos) address to a Stride address. The same conversion must be done
+	// if you're attempting to access a claim record for a non-Stride-address.
+	existingAccAddress, err := sdk.AccAddressFromBech32(existingStrideAddress)
 	if err != nil {
-		k.Logger(ctx).Error(fmt.Sprintf("%s error unmarshalling claim record for address %s on airdrop %s", logPrefix, existingAddress, airdropId))
-		return false
+		return errorsmod.Wrapf(types.ErrClaimNotFound, fmt.Sprintf("error getting claim record for address %s on airdrop %s", existingStrideAddress, airdropId))
+	}
+	claimRecord, err := k.GetClaimRecord(ctx, existingAccAddress, airdrop.AirdropIdentifier)
+	if (err != nil) || (claimRecord.Address == "") {
+		fmt.Printf("error getting claim record for address %s on airdrop %s", existingStrideAddress, airdropId)
+		return errorsmod.Wrapf(types.ErrClaimNotFound, fmt.Sprintf("error getting claim record for address %s on airdrop %s", existingStrideAddress, airdropId))
 	}
 	claimRecord.Address = newStrideAddress
 	err = k.SetClaimRecord(ctx, claimRecord) // this does NOT delete the old record, because claims are indexed by address
 	if err != nil {
-		k.Logger(ctx).Error(fmt.Sprintf("%s error setting claim record from address %s to address %s on airdrop %s", logPrefix, existingAddress, newStrideAddress, airdropId))
-		return false
+		return errorsmod.Wrapf(types.ErrModifyingClaimRecord, fmt.Sprintf("error setting claim record from address %s to address %s on airdrop %s", existingStrideAddress, newStrideAddress, airdropId))
 	}
 	// this deletes the old record
-	prefixStore.Delete(existingAccAddress)
+	err = k.DeleteClaimRecord(ctx, existingAccAddress, airdrop.AirdropIdentifier)
+	if err != nil {
+		return errorsmod.Wrapf(types.ErrModifyingClaimRecord, fmt.Sprintf("error deleting claim record for address %s on airdrop %s", existingStrideAddress, airdropId))
+	}
 
-	return true
+	return nil
 }

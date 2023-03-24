@@ -746,9 +746,8 @@ func (suite *KeeperTestSuite) TestUpdateAirdropAddress() {
 	suite.Require().Equal(claims, properClaims, "evmos address should have 1 claim record before update")
 
 	// update the address
-	success := suite.app.ClaimKeeper.UpdateAirdropAddress(suite.ctx, evmosParsedAddress, strideAddress, airdropId)
-	suite.Require().True(success, "airdrop update address should succeed")
-
+	err = suite.app.ClaimKeeper.UpdateAirdropAddress(suite.ctx, evmosParsedAddress, strideAddress, airdropId)
+	suite.Require().NoError(err, "airdrop update address should succeed")
 	// verify that the evmos address CAN NOT claim after the update
 	coins, err = suite.app.ClaimKeeper.GetUserTotalClaimable(suite.ctx, evmosParsedAccAddress, airdropId, false)
 	suite.Require().NoError(err)
@@ -782,15 +781,37 @@ func (suite *KeeperTestSuite) TestUpdateAirdropAddress_AirdropNotFound() {
 	_, _, evmosParsedAddress, strideAddress := suite.SetupUpdateAirdropAddressChangeTests()
 
 	// update the address
-	success := suite.app.ClaimKeeper.UpdateAirdropAddress(suite.ctx, evmosParsedAddress, strideAddress, "stride")
-	suite.Require().False(success, "airdrop address update shouldn't work with incorrect airdrop id")
+	err := suite.app.ClaimKeeper.UpdateAirdropAddress(suite.ctx, evmosParsedAddress, strideAddress, "stride")
+	suite.Require().Error(err, "airdrop address update should fail with incorrect airdrop id")
 }
 
 func (suite *KeeperTestSuite) TestUpdateAirdropAddress_StrideAddressIncorrect() {
-	_, _, evmosParsedAddress, strideAddress := suite.SetupUpdateAirdropAddressChangeTests()
+	airdropId, _, evmosParsedAddress, strideAddress := suite.SetupUpdateAirdropAddressChangeTests()
 
 	// update the address
 	incorrectStrideAddress := strideAddress + "a"
-	success := suite.app.ClaimKeeper.UpdateAirdropAddress(suite.ctx, evmosParsedAddress, incorrectStrideAddress, "stride")
-	suite.Require().False(success, "airdrop address update shouldn't work with incorrect host address")
+	err := suite.app.ClaimKeeper.UpdateAirdropAddress(suite.ctx, evmosParsedAddress, incorrectStrideAddress, airdropId)
+	suite.Require().Error(err, "airdrop address update should fail with incorrect stride address")
+}
+
+func (suite *KeeperTestSuite) TestUpdateAirdropAddress_HostAddressIncorrect() {
+	airdropId, evmosAddress, evmosParsedAccAddress, strideAddress := suite.SetupUpdateAirdropAddressChangeTests()
+
+	// should fail with a clearly wrong host address
+	err := suite.app.ClaimKeeper.UpdateAirdropAddress(suite.ctx, "evmostest", strideAddress, airdropId)
+	suite.Require().Error(err, "airdrop address update should fail with clearly incorrect host address")
+
+	// should fail if host address is not a stride address
+	err = suite.app.ClaimKeeper.UpdateAirdropAddress(suite.ctx, evmosAddress, strideAddress, airdropId)
+	suite.Require().Error(err, "airdrop address update should fail with host address in wrong zone")
+
+	// should fail is host address is slightly incorrect
+	modifiedAddress := evmosParsedAccAddress[:len(evmosParsedAccAddress)-1] + "a"
+	err = suite.app.ClaimKeeper.UpdateAirdropAddress(suite.ctx, modifiedAddress, strideAddress, airdropId)
+	suite.Require().Error(err, "airdrop address update should fail with incorrect host address")
+
+	// should fail is host address is correct but doesn't have a claimrecord
+	randomStrideAddress := "stride16qv5wnkwwvd2qj5ttwznmngc09cet8l9zhm2ru"
+	err = suite.app.ClaimKeeper.UpdateAirdropAddress(suite.ctx, randomStrideAddress, strideAddress, airdropId)
+	suite.Require().Error(err, "airdrop address update should fail with not present host address")
 }
