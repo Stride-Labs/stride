@@ -23,7 +23,7 @@ func (s *KeeperTestSuite) TestAfterEpochEnd() {
 
 	// Add two airdrops - one that ended, and one that's in progress
 	types.DefaultVestingInitialPeriod = time.Minute * 2 // vesting period of 2 minutes
-	s.app.ClaimKeeper.SetParams(s.ctx, types.Params{
+	err := s.app.ClaimKeeper.SetParams(s.ctx, types.Params{
 		Airdrops: []*types.Airdrop{
 			{
 				AirdropIdentifier: airdropEndedId,
@@ -37,6 +37,7 @@ func (s *KeeperTestSuite) TestAfterEpochEnd() {
 			},
 		},
 	})
+	s.Require().NoError(err, "no error expected when setting claims params")
 
 	// Add the corresponding epoch for each airdrop
 	epochEnded := epochtypes.EpochInfo{Identifier: epochEndedId}
@@ -53,16 +54,20 @@ func (s *KeeperTestSuite) TestAfterEpochEnd() {
 	addressToAction := map[string][]bool{}
 	for i, action := range actions {
 		address := addresses[i].String()
-		s.app.ClaimKeeper.SetClaimRecord(s.ctx, types.ClaimRecord{
+
+		err := s.app.ClaimKeeper.SetClaimRecord(s.ctx, types.ClaimRecord{
 			AirdropIdentifier: airdropEndedId,
 			Address:           address,
 			ActionCompleted:   action,
 		})
-		s.app.ClaimKeeper.SetClaimRecord(s.ctx, types.ClaimRecord{
+		s.Require().NoError(err, "no error expected when setting claims record for airdrop-ended, claim %d", i)
+
+		err = s.app.ClaimKeeper.SetClaimRecord(s.ctx, types.ClaimRecord{
 			AirdropIdentifier: airdropInProgressId,
 			Address:           address,
 			ActionCompleted:   action,
 		})
+		s.Require().NoError(err, "no error expected when setting claims record for airdrop-in-progress, claim %d", i)
 		addressToAction[address] = action
 	}
 
