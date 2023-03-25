@@ -13,10 +13,10 @@ import (
 
 	host "github.com/cosmos/ibc-go/v7/modules/core/24-host"
 
-	icacallbacks "github.com/Stride-Labs/stride/v7/x/icacallbacks"
-	icacallbacktypes "github.com/Stride-Labs/stride/v7/x/icacallbacks/types"
+	icacallbacks "github.com/Stride-Labs/stride/v8/x/icacallbacks"
+	icacallbacktypes "github.com/Stride-Labs/stride/v8/x/icacallbacks/types"
 
-	"github.com/Stride-Labs/stride/v7/x/records/keeper"
+	"github.com/Stride-Labs/stride/v8/x/records/keeper"
 
 	// "google.golang.org/protobuf/proto" <-- this breaks tx parsing
 

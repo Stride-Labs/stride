@@ -12,9 +12,9 @@ import (
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	_ "github.com/stretchr/testify/suite"
 
-	epochtypes "github.com/Stride-Labs/stride/v7/x/epochs/types"
-	recordtypes "github.com/Stride-Labs/stride/v7/x/records/types"
-	stakeibctypes "github.com/Stride-Labs/stride/v7/x/stakeibc/types"
+	epochtypes "github.com/Stride-Labs/stride/v8/x/epochs/types"
+	recordtypes "github.com/Stride-Labs/stride/v8/x/records/types"
+	stakeibctypes "github.com/Stride-Labs/stride/v8/x/stakeibc/types"
 
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 )

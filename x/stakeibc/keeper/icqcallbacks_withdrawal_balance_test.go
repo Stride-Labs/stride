@@ -9,11 +9,11 @@ import (
 
 	icatypes "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/types"
 
-	epochtypes "github.com/Stride-Labs/stride/v7/x/epochs/types"
-	icacallbackstypes "github.com/Stride-Labs/stride/v7/x/icacallbacks/types"
-	icqtypes "github.com/Stride-Labs/stride/v7/x/interchainquery/types"
-	stakeibckeeper "github.com/Stride-Labs/stride/v7/x/stakeibc/keeper"
-	stakeibctypes "github.com/Stride-Labs/stride/v7/x/stakeibc/types"
+	epochtypes "github.com/Stride-Labs/stride/v8/x/epochs/types"
+	icacallbackstypes "github.com/Stride-Labs/stride/v8/x/icacallbacks/types"
+	icqtypes "github.com/Stride-Labs/stride/v8/x/interchainquery/types"
+	stakeibckeeper "github.com/Stride-Labs/stride/v8/x/stakeibc/keeper"
+	stakeibctypes "github.com/Stride-Labs/stride/v8/x/stakeibc/types"
 )
 
 type WithdrawalBalanceICQCallbackState struct {

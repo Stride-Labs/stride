@@ -10,7 +10,7 @@ import (
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	_ "github.com/stretchr/testify/suite"
 
-	"github.com/Stride-Labs/stride/v7/x/interchainquery/types"
+	"github.com/Stride-Labs/stride/v8/x/interchainquery/types"
 )
 
 const (
