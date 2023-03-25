@@ -192,10 +192,10 @@ func (im IBCModule) OnRecvPacket(
 
 		im.keeper.Logger(ctx).Info("Forwaring packet from %s to claim", newData.Sender)
 
-		// if err := im.keeper.TryUpdateAirdropClaim(ctx, newData, routingInfo); err != nil {
-		// 	im.keeper.Logger(ctx).Error("Error updating airdrop claim from autopilot: %s", err.Error())
-		// 	return channeltypes.NewErrorAcknowledgement(err)
-		// }
+		if err := im.keeper.TryUpdateAirdropClaim(ctx, newData, routingInfo); err != nil {
+			im.keeper.Logger(ctx).Error("Error updating airdrop claim from autopilot: %s", err.Error())
+			return channeltypes.NewErrorAcknowledgement(err)
+		}
 
 		return ack
 
