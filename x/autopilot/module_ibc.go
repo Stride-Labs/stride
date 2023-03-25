@@ -129,10 +129,10 @@ func (im IBCModule) OnRecvPacket(
 
 	// Error any transactions with a Memo or Receiver field are greater than the max characters
 	if len(data.Memo) > MaxMemoCharLength {
-		return channeltypes.NewErrorAcknowledgement(errorsmod.Wrapf(types.ErrInvalidMemoSize, "memo length: %s", len(data.Memo)))
+		return channeltypes.NewErrorAcknowledgement(errorsmod.Wrapf(types.ErrInvalidMemoSize, "memo length: %d", len(data.Memo)))
 	}
 	if len(data.Receiver) > MaxMemoCharLength {
-		return channeltypes.NewErrorAcknowledgement(errorsmod.Wrapf(types.ErrInvalidMemoSize, "receiver length: %s", len(data.Receiver)))
+		return channeltypes.NewErrorAcknowledgement(errorsmod.Wrapf(types.ErrInvalidMemoSize, "receiver length: %d", len(data.Receiver)))
 	}
 
 	// ibc-go v5 has a Memo field that can store forwarding info
@@ -148,7 +148,7 @@ func (im IBCModule) OnRecvPacket(
 	// this is clearly just an normal IBC transfer
 	// Pass down the stack immediately instead of parsing
 	_, err := sdk.AccAddressFromBech32(data.Receiver)
-	if err != nil && data.Memo == "" {
+	if err == nil && data.Memo == "" {
 		return im.app.OnRecvPacket(ctx, packet, relayer)
 	}
 

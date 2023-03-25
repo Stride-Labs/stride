@@ -2,6 +2,7 @@ package keeper_test
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/cosmos/ibc-go/v5/modules/apps/transfer"
 	transfertypes "github.com/cosmos/ibc-go/v5/modules/apps/transfer/types"
@@ -15,6 +16,10 @@ import (
 	"github.com/Stride-Labs/stride/v8/x/autopilot/types"
 	claimtypes "github.com/Stride-Labs/stride/v8/x/claim/types"
 )
+
+// TODO: Separate out tests cases that are not necessarily Claim or Stakeibc related,
+// but more just test the parsing that occurs in OnRecvPacket
+// Move them to a different test file
 
 func getClaimPacketMetadata(address, airdropId string) string {
 	return fmt.Sprintf(`
@@ -71,26 +76,6 @@ func (s *KeeperTestSuite) TestAirdropOnRecvPacket() {
 		airdropShouldUpdate   bool
 	}{
 		{
-			name:             "successful receiver routing schema, but routing inactive",
-			forwardingActive: false,
-			packetData: transfertypes.FungibleTokenPacketData{
-				Receiver: getClaimPacketMetadata(strideAddress, evmosAirdropId),
-				Memo:     "",
-			},
-			transferShouldSucceed: true,
-			airdropShouldUpdate:   false,
-		},
-		{
-			name:             "successful memo routing schema, but routing inactive",
-			forwardingActive: false,
-			packetData: transfertypes.FungibleTokenPacketData{
-				Receiver: getClaimPacketMetadata(strideAddress, evmosAirdropId),
-				Memo:     "",
-			},
-			transferShouldSucceed: true,
-			airdropShouldUpdate:   false,
-		},
-		{
 			name:             "successful airdrop update from receiver",
 			forwardingActive: true,
 			packetData: transfertypes.FungibleTokenPacketData{
@@ -119,6 +104,26 @@ func (s *KeeperTestSuite) TestAirdropOnRecvPacket() {
 			},
 			transferShouldSucceed: true,
 			airdropShouldUpdate:   true,
+		},
+		{
+			name:             "valid receiver routing schema, but routing inactive",
+			forwardingActive: false,
+			packetData: transfertypes.FungibleTokenPacketData{
+				Receiver: getClaimPacketMetadata(strideAddress, evmosAirdropId),
+				Memo:     "",
+			},
+			transferShouldSucceed: false,
+			airdropShouldUpdate:   false,
+		},
+		{
+			name:             "valid memo routing schema, but routing inactive",
+			forwardingActive: false,
+			packetData: transfertypes.FungibleTokenPacketData{
+				Receiver: getClaimPacketMetadata(strideAddress, evmosAirdropId),
+				Memo:     "",
+			},
+			transferShouldSucceed: false,
+			airdropShouldUpdate:   false,
 		},
 		{
 			name:             "airdrop does not exist",
@@ -165,7 +170,7 @@ func (s *KeeperTestSuite) TestAirdropOnRecvPacket() {
 			forwardingActive: true,
 			packetData: transfertypes.FungibleTokenPacketData{
 				Receiver: strideAddress,
-				Memo:     `{ "wasmd": { } }`,
+				Memo:     `{ "other_module": { } }`,
 			},
 			transferShouldSucceed: true,
 			airdropShouldUpdate:   false,
@@ -186,6 +191,26 @@ func (s *KeeperTestSuite) TestAirdropOnRecvPacket() {
 			packetData: transfertypes.FungibleTokenPacketData{
 				Receiver: strideAddress,
 				Memo:     fmt.Sprintf(`{ "autopilot": { "receiver": "%s" } }`, strideAddress),
+			},
+			transferShouldSucceed: false,
+			airdropShouldUpdate:   false,
+		},
+		{
+			name:             "memo too long",
+			forwardingActive: true,
+			packetData: transfertypes.FungibleTokenPacketData{
+				Receiver: strideAddress,
+				Memo:     strings.Repeat("X", 300),
+			},
+			transferShouldSucceed: false,
+			airdropShouldUpdate:   false,
+		},
+		{
+			name:             "receiver too long",
+			forwardingActive: true,
+			packetData: transfertypes.FungibleTokenPacketData{
+				Receiver: strings.Repeat("X", 300),
+				Memo:     "",
 			},
 			transferShouldSucceed: false,
 			airdropShouldUpdate:   false,

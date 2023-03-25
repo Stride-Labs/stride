@@ -98,13 +98,18 @@ func TestParsePacketMetadata(t *testing.T) {
 			expectedNilMetadata: true,
 		},
 		{
-			name:                "no messages",
+			name:                "empty memo",
+			metadata:            "",
+			expectedNilMetadata: true,
+		},
+		{
+			name:                "empty JSON memo",
 			metadata:            "{}",
 			expectedNilMetadata: true,
 		},
 		{
-			name:                "no message - empty",
-			metadata:            "",
+			name:                "different module specified",
+			metadata:            `{ "other_module": { } }`,
 			expectedNilMetadata: true,
 		},
 		{
@@ -113,9 +118,14 @@ func TestParsePacketMetadata(t *testing.T) {
 			expectedErr: "receiver address must be specified when using autopilot",
 		},
 		{
+			name:        "invalid receiver address",
+			metadata:    `{ "autopilot": { "receiver": "invalid_address" } }`,
+			expectedErr: "receiver address must be specified when using autopilot",
+		},
+		{
 			name:        "invalid stakeibc address",
 			metadata:    getStakeibcMemo(invalidAddress, validStakeibcAction),
-			expectedErr: "unknown address",
+			expectedErr: "receiver address must be specified when using autopilot",
 		},
 		{
 			name:        "invalid stakeibc action",
@@ -125,7 +135,7 @@ func TestParsePacketMetadata(t *testing.T) {
 		{
 			name:        "invalid claim address",
 			metadata:    getClaimMemo(invalidAddress, validAirdropId),
-			expectedErr: "unknown address",
+			expectedErr: "receiver address must be specified when using autopilot",
 		},
 		{
 			name:        "invalid claim airdrop",

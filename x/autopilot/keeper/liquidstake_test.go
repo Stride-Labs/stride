@@ -242,13 +242,17 @@ func (suite *KeeperTestSuite) TestLiquidStakeOnRecvPacket() {
 			if tc.expSuccess {
 				suite.Require().True(ack.Success(), "ack should be successful - ack: %+v", string(ack.Acknowledgement()))
 
+				// Check funds were transferred
+				coin := suite.App.BankKeeper.GetBalance(suite.Ctx, addr1, tc.recvDenom)
+				suite.Require().Equal("2000000", coin.Amount.String(), "balance should have updated after successful transfer")
+
 				// check minted balance for liquid staking
 				allBalance := suite.App.BankKeeper.GetAllBalances(ctx, addr1)
 				liquidBalance := suite.App.BankKeeper.GetBalance(ctx, addr1, "stuatom")
 				if tc.expLiquidStake {
-					suite.Require().True(liquidBalance.Amount.IsPositive(), allBalance.String(), "liquid balance should be positive")
+					suite.Require().True(liquidBalance.Amount.IsPositive(), "liquid balance should be positive but was %s", allBalance.String())
 				} else {
-					suite.Require().True(liquidBalance.Amount.IsZero(), allBalance.String(), "liquid balance should be zero")
+					suite.Require().True(liquidBalance.Amount.IsZero(), "liquid balance should be zero but was %s", allBalance.String())
 				}
 			} else {
 				suite.Require().False(ack.Success(), "ack should have failed - ack: %+v", string(ack.Acknowledgement()))
