@@ -163,15 +163,32 @@ func (im IBCModule) OnRecvPacket(
 		return ack
 	}
 
+	autopilotParams := im.keeper.GetParams(ctx)
+
 	// If the transfer was successful, then route to the corresponding module, if applicable
 	switch routingInfo := packetForwardMetadata.RoutingInfo.(type) {
 	case types.StakeibcPacketMetadata:
-		im.keeper.Logger(ctx).Info("Forwaring packet from %s to stakeibc", newData.Sender)
-		return im.keeper.TryLiquidStaking(ctx, packet, newData, routingInfo, ack)
+		if autopilotParams.StakeibcActive {
+			im.keeper.Logger(ctx).Info("Forwaring packet from %s to stakeibc", newData.Sender)
+
+			if err := im.keeper.TryLiquidStaking(ctx, packet, newData, routingInfo); err != nil {
+				im.keeper.Logger(ctx).Error("Error liquid staking packet from autopilot: %s", err.Error())
+				return channeltypes.NewErrorAcknowledgement(err)
+			}
+		}
+
+		return ack
 
 	case types.ClaimPacketMetadata:
-		im.keeper.Logger(ctx).Info("Forwaring packet from %s to claim", newData.Sender)
-		// return im.keeper.TryUpdateAirdropClaim(ctx, packet, newData, routingInfo.(*types.ClaimPacketMetadata), ack)
+		if autopilotParams.ClaimActive {
+			im.keeper.Logger(ctx).Info("Forwaring packet from %s to claim", newData.Sender)
+
+			// if err := im.keeper.TryUpdateAirdropClaim(ctx, newData, routingInfo); err != nil {
+			// 	im.keeper.Logger(ctx).Error("Error updating airdrop claim from autopilot: %s", err.Error())
+			// 	return channeltypes.NewErrorAcknowledgement(err)
+			// }
+		}
+
 		return ack
 
 	default:
