@@ -4,6 +4,7 @@ source ${SCRIPT_DIR}/../config.sh
 
 # CLEANUP if running tests twice, clear out and re-fund accounts
 $STRIDE_MAIN_CMD keys delete distributor-test -y &> /dev/null || true 
+$GAIA_MAIN_CMD keys delete hosttest -y &> /dev/null || true 
 $STRIDE_MAIN_CMD keys delete airdrop-test -y &> /dev/null || true 
 $OSMO_MAIN_CMD keys delete host-address-test -y &> /dev/null || true 
 
@@ -21,26 +22,26 @@ echo "barrel salmon half click confirm crunch sense defy salute process cart fis
 echo "royal auction state december october hip monster hotel south help bulk supreme history give deliver pigeon license gold carpet rabbit raw wool fatigue donate" | \
     $STRIDE_MAIN_CMD keys add airdrop-test --recover
 
-## AIRDROP SETUP
-echo "Funding accounts..."
-# Transfer uatom from gaia to stride, so that we can liquid stake later
-$GAIA_MAIN_CMD tx ibc-transfer transfer transfer channel-0 stride1nf6v2paty9m22l3ecm7dpakq2c92ueyununayr 1000000uatom --from ${GAIA_VAL_PREFIX}1 -y 
-sleep 5
-# Fund the distributor account
-$STRIDE_MAIN_CMD tx bank send val1 stride1z835j3j65nqr6ng257q0xkkc9gta72gf48txwl 600000ustrd --from val1 -y
-sleep 5
-# Fund the airdrop account
-$STRIDE_MAIN_CMD tx bank send val1 stride1nf6v2paty9m22l3ecm7dpakq2c92ueyununayr 1000000000ustrd --from val1 -y
-sleep 5
-# Create the airdrop, so that the airdrop account can claim tokens
-$STRIDE_MAIN_CMD tx claim create-airdrop stride 1666792900 40000000 ustrd --from distributor-test -y
-sleep 5
-# Set airdrop allocations
-$STRIDE_MAIN_CMD tx claim set-airdrop-allocations stride stride1nf6v2paty9m22l3ecm7dpakq2c92ueyununayr 1 --from distributor-test -y
-sleep 5
+# ## AIRDROP SETUP
+# echo "Funding accounts..."
+# # Transfer uatom from gaia to stride, so that we can liquid stake later
+# $GAIA_MAIN_CMD tx ibc-transfer transfer transfer channel-0 stride1nf6v2paty9m22l3ecm7dpakq2c92ueyununayr 1000000uatom --from ${GAIA_VAL_PREFIX}1 -y 
+# sleep 5
+# # Fund the distributor account
+# $STRIDE_MAIN_CMD tx bank send val1 stride1z835j3j65nqr6ng257q0xkkc9gta72gf48txwl 600000ustrd --from val1 -y
+# sleep 5
+# # Fund the airdrop account
+# $STRIDE_MAIN_CMD tx bank send val1 stride1nf6v2paty9m22l3ecm7dpakq2c92ueyununayr 1000000000ustrd --from val1 -y
+# sleep 5
+# # Create the airdrop, so that the airdrop account can claim tokens
+# $STRIDE_MAIN_CMD tx claim create-airdrop stride 1666792900 40000000 ustrd --from distributor-test -y
+# sleep 5
+# # Set airdrop allocations
+# $STRIDE_MAIN_CMD tx claim set-airdrop-allocations stride stride1nf6v2paty9m22l3ecm7dpakq2c92ueyununayr 1 --from distributor-test -y
+# sleep 5
 
-# AIRDROP CLAIMS
-# Check balances before claims
+# # AIRDROP CLAIMS
+# # Check balances before claims
 # echo "Initial balance before claim:"
 # $STRIDE_MAIN_CMD query bank balances stride1nf6v2paty9m22l3ecm7dpakq2c92ueyununayr
 # # NOTE: You can claim here using the CLI, or from the frontend!
@@ -65,54 +66,55 @@ sleep 5
 
 
 
-### Test airdrop flow for chains who have non-standard coin types (not type 118). 
-    #   For example Evmos is using coin type 60, while Stride uses 118. Therefore, we can't map Evmos <> Stride addresses, because the one-way mapping works like this
-    #       seed phrase  ----> Evmos address (e.g. evmos123z469cfejeusvk87ufrs5520wmdxmmlc7qzuw)
-    #                    ----> Stride address (e.g. stride19uvw0azm9u0k6vqe4e22cga6kteskdqq3ulj6q)
-    #       and there is no function that can map between the two addresses.
+## Test airdrop flow for chains who have non-standard coin types (not type 118). 
+#       For example Evmos is using coin type 60, while Stride uses 118. Therefore, we can't map Evmos <> Stride addresses, because the one-way mapping works like this
+#           seed phrase  ----> Evmos address (e.g. evmos123z469cfejeusvk87ufrs5520wmdxmmlc7qzuw)
+#                        ----> Stride address (e.g. stride19uvw0azm9u0k6vqe4e22cga6kteskdqq3ulj6q)
+#           and there is no function that can map between the two addresses.
 
-    #     evmos airdrop-test address: osmo18y9zdh00fr2t6uw20anr6e89svqmfddgder25f
-    #        to test, we don't need to use evmos, just an address from a different mnemonic (can come from a coin_type 118 chain) 
-    #        here we choose to use an osmosis address with a new menmonic since we don't have an Evmos binary set up
+#         evmos airdrop-test address: cosmos16lmf7t0jhaatan6vnxlgv47h2wf0k5lnhvye5h (rly2)
+#            to test, we don't need to use evmos, just an address from a different mnemonic (can come from a coin_type 118 chain) 
+#            here we choose to use an osmosis address with a new menmonic since we don't have an Evmos binary set up
 
-    # host-address-test address: osmo18y9zdh00fr2t6uw20anr6e89svqmfddgder25f 
-    # host-address-test mnemonic: profit elbow stay reunion street spatial empty swarm ball vast scatter blue repeat law hurdle name lottery unable suspect toy awesome unable sense goddess
-# echo "profit elbow stay reunion street spatial empty swarm ball vast scatter blue repeat law hurdle name lottery unable suspect toy awesome unable sense goddess" | \
-#     $OSMO_MAIN_CMD keys add hosttest --recover
+echo "Testing airdrop for coin types != 118..."
 
-    # setup: set an airdrop allocation for the mechanically converted stride address, converted using utils.ConvertAddressToStrideAddress()
-    #    mechanically-converted stride address: stride18y9zdh00fr2t6uw20anr6e89svqmfddgxfsxkh
-# $STRIDE_MAIN_CMD tx claim set-airdrop-allocations stride stride18y9zdh00fr2t6uw20anr6e89svqmfddgxfsxkh 1 --from distributor-test -y
-# sleep 5
+# Transfer uatom from gaia to stride, so that we can liquid stake later
+$GAIA_MAIN_CMD tx bank send cosmos1uk4ze0x4nvh4fk0xm4jdud58eqn4yxhrgl2scj cosmos16lmf7t0jhaatan6vnxlgv47h2wf0k5lnhvye5h 1000000uatom --from ${GAIA_VAL_PREFIX}1 -y 
 
-    # 1. Overwrite incorrectly-derived stride address associated with an airdrop account with the proper Stride address (e.g. stride1abc...xyz)
-    #     a. query the claims module to verify that the airdrop-eligible address is as expected
-# $STRIDE_MAIN_CMD q claim claim-record stride stride18y9zdh00fr2t6uw20anr6e89svqmfddgxfsxkh
+#     setup: set an airdrop allocation for the mechanically converted stride address, converted using utils.ConvertAddressToStrideAddress()
+#        mechanically-converted stride address: stride18y9zdh00fr2t6uw20anr6e89svqmfddgxfsxkh
+$STRIDE_MAIN_CMD tx claim set-airdrop-allocations stride stride16lmf7t0jhaatan6vnxlgv47h2wf0k5ln58y9qm 1 --from distributor-test -y
+sleep 5
 
-    #     b. ibc-transfer from Osmo to Stride to change the airdrop account to stride1qz677nj82mszxjuh4mzy52zv5md5qrgg60pxpc
-    #          Memo: {
-    #            "autopilot": {
-    #                 "stakeibc": {
-    #                   "stride_address": "stride1qz677nj82mszxjuh4mzy52zv5md5qrgg60pxpc",
-    #                   },
-    #                     "claim": {
-    #                     }
-    #                },
-    #            }
-    #           Receiver: "xxx"
-# $OSMO_MAIN_CMD ibc-transfer transfer ...
+#     1. Overwrite incorrectly-derived stride address associated with an airdrop account with the proper Stride address (e.g. stride1abc...xyz)
+#         a. query the claims module to verify that the airdrop-eligible address is as expected
+$STRIDE_MAIN_CMD q claim claim-record stride stride16lmf7t0jhaatan6vnxlgv47h2wf0k5ln58y9qm
 
-    #     c. query the claims module 
-    #       - to verify nothing is eligible from the old address anymore stride18y9zdh00fr2t6uw20anr6e89svqmfddgxfsxkh
-    #       - to get the updated airdrop-eligible address's eligible amount from stride1qz677nj82mszxjuh4mzy52zv5md5qrgg60pxpc
-# $STRIDE_MAIN_CMD q claim claim-record stride stride18y9zdh00fr2t6uw20anr6e89svqmfddgxfsxkh
-# $STRIDE_MAIN_CMD q claim claim-record stride stride1qz677nj82mszxjuh4mzy52zv5md5qrgg60pxpc
+#         b. ibc-transfer from Osmo to Stride to change the airdrop account to stride1qz677nj82mszxjuh4mzy52zv5md5qrgg60pxpc
+#              Memo: {
+#                "autopilot": {
+#                     "stakeibc": {
+#                       "stride_address": "stride1qz677nj82mszxjuh4mzy52zv5md5qrgg60pxpc",
+#                       },
+#                         "claim": {
+#                         }
+#                    },
+#                }
+#               Receiver: "xxx"
+$GAIA_MAIN_CMD tx ibc-transfer transfer transfer channel-0 stride1qz677nj82mszxjuh4mzy52zv5md5qrgg60pxpc 1uatom --from rly2 -y \
+         --note '{"autopilot": {"receiver": "stride1qz677nj82mszxjuh4mzy52zv5md5qrgg60pxpc","claim": { "stride_address": "stride1qz677nj82mszxjuh4mzy52zv5md5qrgg60pxpc", "airdrop_id": "stride" } }}'
 
-    #     d. claim the airdrop from this address
+#         c. query the claims module 
+#           - to verify nothing is eligible from the old address anymore stride18y9zdh00fr2t6uw20anr6e89svqmfddgxfsxkh
+#           - to get the updated airdrop-eligible address's eligible amount from stride1qz677nj82mszxjuh4mzy52zv5md5qrgg60pxpc
+$STRIDE_MAIN_CMD q claim claim-record stride stride16lmf7t0jhaatan6vnxlgv47h2wf0k5ln58y9qm
+$STRIDE_MAIN_CMD q claim claim-record stride stride1qz677nj82mszxjuh4mzy52zv5md5qrgg60pxpc
+
+        # d. claim the airdrop from this address
 # $STRIDE_MAIN_CMD tx claim claim-free-amount --from stride1qz677nj82mszxjuh4mzy52zv5md5qrgg60pxpc
 
-    #     e. verify the vesting account is created for stride1qz677nj82mszxjuh4mzy52zv5md5qrgg60pxpc
-# $STRIDE_MAIN_CMD q auth account stride18y9zdh00fr2t6uw20anr6e89svqmfddgxfsxkh
+        # e. verify the vesting account is created for stride1qz677nj82mszxjuh4mzy52zv5md5qrgg60pxpc
+# $STRIDE_MAIN_CMD q auth account stride1qz677nj82mszxjuh4mzy52zv5md5qrgg60pxpc
 
 
 
