@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"errors"
+	"fmt"
 
 	errorsmod "cosmossdk.io/errors"
 
@@ -20,7 +21,7 @@ func (k Keeper) TryLiquidStaking(
 	ctx sdk.Context,
 	packet channeltypes.Packet,
 	newData transfertypes.FungibleTokenPacketData,
-	packetMetadata *types.StakeibcPacketMetadata,
+	packetMetadata types.StakeibcPacketMetadata,
 	ack ibcexported.Acknowledgement,
 ) ibcexported.Acknowledgement {
 	params := k.GetParams(ctx)
@@ -46,14 +47,20 @@ func (k Keeper) TryLiquidStaking(
 
 	hostZone, err := k.stakeibcKeeper.GetHostZoneFromHostDenom(ctx, token.Denom)
 	if err != nil {
-		return channeltypes.NewErrorAcknowledgement(err)
+		return channeltypes.NewErrorAcknowledgement(fmt.Errorf("host zone not found for denom (%s)", token.Denom))
 	}
 
 	if hostZone.IbcDenom != ibcDenom {
-		return channeltypes.NewErrorAcknowledgement(errors.New("ibc denom is not equal to host zone ibc denom"))
+		return channeltypes.NewErrorAcknowledgement(fmt.Errorf("ibc denom %s is not equal to host zone ibc denom %s", ibcDenom, hostZone.IbcDenom))
 	}
 
-	err = k.RunLiquidStake(ctx, packetMetadata.StrideAddress, token)
+	strideAddress, err := sdk.AccAddressFromBech32(packetMetadata.StrideAddress)
+	if err != nil {
+		return channeltypes.NewErrorAcknowledgement(errorsmod.Wrapf(sdkerrors.ErrInvalidAddress,
+			"invalid stride_address (%s) in autopilot memo", strideAddress))
+	}
+
+	err = k.RunLiquidStake(ctx, strideAddress, token)
 	if err != nil {
 		ack = channeltypes.NewErrorAcknowledgement(err)
 	}

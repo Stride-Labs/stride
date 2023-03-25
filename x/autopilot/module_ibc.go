@@ -3,6 +3,8 @@ package autopilot
 import (
 	"fmt"
 
+	errorsmod "cosmossdk.io/errors"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	capabilitytypes "github.com/cosmos/cosmos-sdk/x/capability/types"
 	ibctransfertypes "github.com/cosmos/ibc-go/v5/modules/apps/transfer/types"
@@ -126,50 +128,54 @@ func (im IBCModule) OnRecvPacket(
 	// ibc-go v5 has a Memo field that can store forwarding info
 	// For older version of ibc-go, the data must be stored in the receiver field
 	var metadata string
-	if data.Memo != "" {
+	if data.Memo != "" { // ibc-go v5+
 		metadata = data.Memo
-	} else {
+	} else { // before ibc-go v5
 		metadata = data.Receiver
 	}
 
 	// parse out any forwarding info
-	parsedPacketMetadata, err := types.ParsePacketMetadata(metadata)
+	packetForwardMetadata, err := types.ParsePacketMetadata(metadata)
 	if err != nil {
 		return channeltypes.NewErrorAcknowledgement(err)
 	}
 
 	// If the parsed metadata is nil, that means there is no forwarding logic
 	// Pass the packet down to the next middleware
-	if parsedPacketMetadata == nil {
+	if packetForwardMetadata == nil {
 		return im.app.OnRecvPacket(ctx, packet, relayer)
 	}
 
-	// Handle for each module
-	if parsedPacketMetadata.Stakeibc.ShouldForward {
-		// Modify packet data to process packet transfer for this chain, omitting liquid staking info
-		newData := data
-		newData.Receiver = parsedPacketMetadata.Stakeibc.StrideAddress.String()
-		bz, err := transfertypes.ModuleCdc.MarshalJSON(&newData)
-		if err != nil {
-			return channeltypes.NewErrorAcknowledgement(err)
-		}
-		newPacket := packet
-		newPacket.Data = bz
+	// Modify the packet data by replacing the JSON metadata field with a receiver address
+	// to allow the packet to continue down the stack
+	newData := data
+	newData.Receiver = packetForwardMetadata.Reciever
+	bz, err := transfertypes.ModuleCdc.MarshalJSON(&newData)
+	if err != nil {
+		return channeltypes.NewErrorAcknowledgement(err)
+	}
+	newPacket := packet
+	newPacket.Data = bz
 
-		// process the transfer receipt
-		// NOTE: this code is pulled from packet-forwarding-middleware
-		ack := im.app.OnRecvPacket(ctx, newPacket, relayer)
-		if ack.Success() {
-			return im.keeper.TryLiquidStaking(ctx, packet, newData, &parsedPacketMetadata.Stakeibc, ack)
-		}
+	// Pass the new packet down the middleware stack first
+	ack := im.app.OnRecvPacket(ctx, newPacket, relayer)
+	if !ack.Success() {
 		return ack
-	} else if parsedPacketMetadata.Claim.ShouldForward {
-		// TODO
-		return im.app.OnRecvPacket(ctx, packet, relayer)
-	} else {
-		// This branch should not be possible - it would mean that the packet was successfully
-		// parsed into one of the autopilot modules, but the module is not displayed in this if/else statement
-		return channeltypes.NewErrorAcknowledgement(types.ErrUnsupportedAutopilotRoute)
+	}
+
+	// If the transfer was successful, then route to the corresponding module, if applicable
+	switch routingInfo := packetForwardMetadata.RoutingInfo.(type) {
+	case types.StakeibcPacketMetadata:
+		im.keeper.Logger(ctx).Info("Forwaring packet from %s to stakeibc", newData.Sender)
+		return im.keeper.TryLiquidStaking(ctx, packet, newData, routingInfo, ack)
+
+	case types.ClaimPacketMetadata:
+		im.keeper.Logger(ctx).Info("Forwaring packet from %s to claim", newData.Sender)
+		// return im.keeper.TryUpdateAirdropClaim(ctx, packet, newData, routingInfo.(*types.ClaimPacketMetadata), ack)
+		return ack
+
+	default:
+		return channeltypes.NewErrorAcknowledgement(errorsmod.Wrapf(types.ErrUnsupportedAutopilotRoute, "%T", routingInfo))
 	}
 }
 

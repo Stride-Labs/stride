@@ -9,98 +9,72 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-// QUESTION: Should we just leave the address as a string in the parsed type
-// and then combine these raw and parsed types?
-type rawPacketMetadata struct {
+type RawPacketMetadata struct {
 	Autopilot *struct {
-		Stakeibc *RawStakeibcPacketMetadata `json:"stakeibc"`
-		Claim    *RawClaimPacketMetadata    `json:"claim"`
+		Receiver string                  `json:"receiver"`
+		Stakeibc *StakeibcPacketMetadata `json:"stakeibc,omitempty"`
+		Claim    *ClaimPacketMetadata    `json:"claim,omitempty"`
 	} `json:"autopilot"`
 }
 
-type RawStakeibcPacketMetadata struct {
+type PacketForwardMetadata struct {
+	Reciever    string
+	RoutingInfo ModuleRoutingInfo
+}
+
+type ModuleRoutingInfo interface {
+	Validate() error
+}
+
+// Packet metadata info specific to Stakeibc (e.g. 1-click liquid staking)
+type StakeibcPacketMetadata struct {
 	Action        string `json:"action"`
 	StrideAddress string `json:"stride_address"`
 }
 
-type RawClaimPacketMetadata struct {
+// Packet metadata info specific to Claim (e.g. airdrops for non-118 coins)
+type ClaimPacketMetadata struct {
 	AirdropId     string `json:"airdrop_id"`
 	StrideAddress string `json:"stride_address"`
 }
 
-type PacketMetadata struct {
-	Reciever string
-	Stakeibc StakeibcPacketMetadata
-	Claim    ClaimPacketMetadata
-}
-
-type StakeibcPacketMetadata struct {
-	ShouldForward bool
-	Action        string
-	StrideAddress sdk.AccAddress
-}
-
-type ClaimPacketMetadata struct {
-	ShouldForward bool
-	AirdropId     string
-	StrideAddress sdk.AccAddress
-}
-
 // Validate stakeibc packet metadata fields
-func (r *RawStakeibcPacketMetadata) ParseAndValidate() (*StakeibcPacketMetadata, error) {
-	// If the stakeibc section of the memo field was empty, mark stakeibc as disabled
-	if r == nil {
-		return &StakeibcPacketMetadata{ShouldForward: false}, nil
-	}
-
-	// Validate the stride address and action
-	address, err := sdk.AccAddressFromBech32(r.StrideAddress)
+// including the stride address and action type
+func (m StakeibcPacketMetadata) Validate() error {
+	_, err := sdk.AccAddressFromBech32(m.StrideAddress)
 	if err != nil {
-		return nil, err
+		return err
 	}
-	if r.Action != "LiquidStake" {
-		return nil, errorsmod.Wrapf(ErrUnsupportedStakeibcAction, "action %s is not supported", r.Action)
+	if m.Action != "LiquidStake" {
+		return errorsmod.Wrapf(ErrUnsupportedStakeibcAction, "action %s is not supported", m.Action)
 	}
 
-	return &StakeibcPacketMetadata{
-		Action:        r.Action,
-		StrideAddress: address,
-		ShouldForward: true,
-	}, nil
+	return nil
 }
 
-// Validate claim packet metadata fields
-func (r *RawClaimPacketMetadata) ParseAndValidate() (*ClaimPacketMetadata, error) {
-	// If the claim section of the memo field was empty, mark claim as disabled
-	if r == nil {
-		return &ClaimPacketMetadata{ShouldForward: false}, nil
-	}
-
-	// Validate the stride address and airdrop ID
-	address, err := sdk.AccAddressFromBech32(r.StrideAddress)
+// Validate claim packet metadata fields including the
+// stride address and Airdrop type
+func (m ClaimPacketMetadata) Validate() error {
+	_, err := sdk.AccAddressFromBech32(m.StrideAddress)
 	if err != nil {
-		return nil, err
+		return err
 	}
-	if len(strings.TrimSpace(r.AirdropId)) == 0 {
-		return nil, ErrInvalidClaimAirdropId
+	if len(strings.TrimSpace(m.AirdropId)) == 0 {
+		return ErrInvalidClaimAirdropId
 	}
 
-	return &ClaimPacketMetadata{
-		AirdropId:     r.AirdropId,
-		StrideAddress: address,
-		ShouldForward: true,
-	}, nil
+	return nil
 }
 
 // Parse packet metadata intended for autopilot
 // In the ICS-20 packet, the metadata can optionally indicate a module to route to (e.g. stakeibc)
-// The PacketMetadata returned from this function contains attributes for each autopilot supported module
-// It can only be forward to one module per packet so the `ShouldForward` can only be true for one module
+// The PacketForwardMetadata returned from this function contains attributes for each autopilot supported module
+// It can only be forward to one module per packet
 // Returns nil if there was no metadata found
-func ParsePacketMetadata(metadata string) (packetMetadata *PacketMetadata, err error) {
+func ParsePacketMetadata(metadata string) (*PacketForwardMetadata, error) {
 	// If we can't unmarshal the metadata into a PacketMetadata struct,
 	// assume packet forwarding was no used and pass back nil so that autopilot is ignored
-	var raw rawPacketMetadata
+	var raw RawPacketMetadata
 	if err := json.Unmarshal([]byte(metadata), &raw); err != nil {
 		return nil, nil
 	}
@@ -110,26 +84,34 @@ func ParsePacketMetadata(metadata string) (packetMetadata *PacketMetadata, err e
 		return nil, nil
 	}
 
-	// Parse and validate the stakeibc module component from the receiver object
-	parsedStakeibcPacketData, err := raw.Autopilot.Stakeibc.ParseAndValidate()
-	if err != nil {
+	// Confirm a receiver address was supplied
+	if raw.Autopilot.Receiver == "" {
+		return nil, ErrInvalidReceiverAddress
+	}
+
+	// Parse the packet info into the specific module type
+	// We increment the module count to ensure only one module type was provided
+	moduleCount := 0
+	var routingInfo ModuleRoutingInfo
+	if raw.Autopilot.Stakeibc != nil {
+		moduleCount++
+		routingInfo = *raw.Autopilot.Stakeibc
+	}
+	if raw.Autopilot.Claim != nil {
+		moduleCount++
+		routingInfo = *raw.Autopilot.Claim
+	}
+	if moduleCount != 1 {
+		return nil, errorsmod.Wrapf(ErrInvalidPacketMetadata, ErrInvalidModuleRoutes.Error())
+	}
+
+	// Validate the packet info according to the specific module type
+	if err := routingInfo.Validate(); err != nil {
 		return nil, errorsmod.Wrapf(err, ErrInvalidPacketMetadata.Error())
 	}
 
-	// Parse and validate the claim module component from the receiver object
-	parsedClaimPacketData, err := raw.Autopilot.Claim.ParseAndValidate()
-	if err != nil {
-		return nil, errorsmod.Wrapf(err, ErrInvalidPacketMetadata.Error())
-	}
-
-	// Confirm the packet only specified one module to route to
-	if parsedStakeibcPacketData.ShouldForward && parsedClaimPacketData.ShouldForward {
-		return nil, errorsmod.Wrapf(ErrInvalidPacketMetadata, ErrMulitpleAutopilotRoutesInTx.Error())
-	}
-
-	// Return the combined metadata struct with each module flagged as enabled/disabled
-	return &PacketMetadata{
-		Stakeibc: *parsedStakeibcPacketData,
-		Claim:    *parsedClaimPacketData,
+	return &PacketForwardMetadata{
+		Reciever:    raw.Autopilot.Receiver,
+		RoutingInfo: routingInfo,
 	}, nil
 }

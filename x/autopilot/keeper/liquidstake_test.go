@@ -26,7 +26,8 @@ func getPacketMetadata(address, action string) string {
 	return fmt.Sprintf(`
 		{
 			"autopilot": {
-				"stakeibc": { "stride_address": "%s", "action": "%s" } 
+				"receiver": "%[1]s",
+				"stakeibc": { "stride_address": "%[1]s", "action": "%[2]s" } 
 			}
 		}`, address, action)
 }
@@ -239,18 +240,18 @@ func (suite *KeeperTestSuite) TestOnRecvPacket() {
 				addr1,
 			)
 			if tc.expSuccess {
-				suite.Require().True(ack.Success(), string(ack.Acknowledgement()))
+				suite.Require().True(ack.Success(), "ack should be successful - ack: %+v", string(ack.Acknowledgement()))
 
 				// check minted balance for liquid staking
 				allBalance := suite.App.BankKeeper.GetAllBalances(ctx, addr1)
 				liquidBalance := suite.App.BankKeeper.GetBalance(ctx, addr1, "stuatom")
 				if tc.expLiquidStake {
-					suite.Require().True(liquidBalance.Amount.IsPositive(), allBalance.String())
+					suite.Require().True(liquidBalance.Amount.IsPositive(), allBalance.String(), "liquid balance should be positive")
 				} else {
-					suite.Require().True(liquidBalance.Amount.IsZero(), allBalance.String())
+					suite.Require().True(liquidBalance.Amount.IsZero(), allBalance.String(), "liquid balance should be zero")
 				}
 			} else {
-				suite.Require().False(ack.Success(), string(ack.Acknowledgement()))
+				suite.Require().False(ack.Success(), "ack should have failed - ack: %+v", string(ack.Acknowledgement()))
 			}
 		})
 	}
