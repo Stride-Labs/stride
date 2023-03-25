@@ -44,7 +44,7 @@ func (s *KeeperTestSuite) TestAirdropOnRecvPacket() {
 	strideAddress := strideAccAddress.String()
 
 	// Build the template for the transfer packet (the data and channel fields will get updated from each unit test)
-	packet := channeltypes.Packet{
+	packetTemplate := channeltypes.Packet{
 		Sequence:           1,
 		SourcePort:         "transfer",
 		SourceChannel:      "channel-0",
@@ -54,6 +54,14 @@ func (s *KeeperTestSuite) TestAirdropOnRecvPacket() {
 		TimeoutHeight:      clienttypes.Height{},
 		TimeoutTimestamp:   0,
 	}
+	packetDataTemplate := transfertypes.FungibleTokenPacketData{
+		Denom:  evmosDenom,
+		Amount: "1000000",
+		Sender: evmosAddress,
+	}
+
+	prefixedDenom := transfertypes.GetPrefixedDenom(packetTemplate.GetSourcePort(), packetTemplate.GetSourceChannel(), evmosDenom)
+	evmosIbcDenom := transfertypes.ParseDenomTrace(prefixedDenom).IBCDenom()
 
 	testCases := []struct {
 		name                  string
@@ -66,9 +74,6 @@ func (s *KeeperTestSuite) TestAirdropOnRecvPacket() {
 			name:             "successful airdrop update from receiver",
 			forwardingActive: true,
 			packetData: transfertypes.FungibleTokenPacketData{
-				Denom:    evmosDenom,
-				Amount:   "1000000",
-				Sender:   evmosAddress,
 				Receiver: getClaimPacketMetadata(strideAddress, evmosAirdropId),
 				Memo:     "",
 			},
@@ -79,10 +84,17 @@ func (s *KeeperTestSuite) TestAirdropOnRecvPacket() {
 			name:             "successful airdrop update from memo",
 			forwardingActive: true,
 			packetData: transfertypes.FungibleTokenPacketData{
-				Denom:    evmosDenom,
-				Amount:   "1000000",
-				Sender:   evmosAddress,
 				Receiver: strideAddress,
+				Memo:     getClaimPacketMetadata(strideAddress, evmosAirdropId),
+			},
+			transferShouldSucceed: true,
+			airdropShouldUpdate:   true,
+		},
+		{
+			name:             "memo receiver overrides original receiver field",
+			forwardingActive: true,
+			packetData: transfertypes.FungibleTokenPacketData{
+				Receiver: "address-will-get-overriden",
 				Memo:     getClaimPacketMetadata(strideAddress, evmosAirdropId),
 			},
 			transferShouldSucceed: true,
@@ -92,9 +104,6 @@ func (s *KeeperTestSuite) TestAirdropOnRecvPacket() {
 			name:             "airdrop does not exist",
 			forwardingActive: true,
 			packetData: transfertypes.FungibleTokenPacketData{
-				Denom:    evmosDenom,
-				Amount:   "1000000",
-				Sender:   evmosAddress,
 				Receiver: strideAddress,
 				Memo:     getClaimPacketMetadata(strideAddress, "fake_airdrop"),
 			},
@@ -105,9 +114,6 @@ func (s *KeeperTestSuite) TestAirdropOnRecvPacket() {
 			name:             "invalid stride address",
 			forwardingActive: true,
 			packetData: transfertypes.FungibleTokenPacketData{
-				Denom:    "uevmos",
-				Amount:   "1000000",
-				Sender:   evmosAddress,
 				Receiver: strideAddress,
 				Memo:     getClaimPacketMetadata("invalid_address", evmosAirdropId),
 			},
@@ -118,9 +124,6 @@ func (s *KeeperTestSuite) TestAirdropOnRecvPacket() {
 			name:             "normal transfer packet - no memo",
 			forwardingActive: true,
 			packetData: transfertypes.FungibleTokenPacketData{
-				Denom:    evmosDenom,
-				Amount:   "1000000",
-				Sender:   evmosAddress,
 				Receiver: strideAddress,
 				Memo:     "",
 			},
@@ -131,9 +134,6 @@ func (s *KeeperTestSuite) TestAirdropOnRecvPacket() {
 			name:             "normal transfer packet - empty JSON memo",
 			forwardingActive: true,
 			packetData: transfertypes.FungibleTokenPacketData{
-				Denom:    evmosDenom,
-				Amount:   "1000000",
-				Sender:   evmosAddress,
 				Receiver: strideAddress,
 				Memo:     "{}",
 			},
@@ -144,9 +144,6 @@ func (s *KeeperTestSuite) TestAirdropOnRecvPacket() {
 			name:             "invalid autopilot JSON - no receiver",
 			forwardingActive: true,
 			packetData: transfertypes.FungibleTokenPacketData{
-				Denom:    evmosDenom,
-				Amount:   "1000000",
-				Sender:   evmosAddress,
 				Receiver: strideAddress,
 				Memo:     `{ "autopilot": {} }`,
 			},
@@ -157,9 +154,6 @@ func (s *KeeperTestSuite) TestAirdropOnRecvPacket() {
 			name:             "invalid autopilot JSON - no routing module",
 			forwardingActive: true,
 			packetData: transfertypes.FungibleTokenPacketData{
-				Denom:    evmosDenom,
-				Amount:   "1000000",
-				Sender:   evmosAddress,
 				Receiver: strideAddress,
 				Memo:     fmt.Sprintf(`{ "autopilot": { "receiver": "%s" } }`, strideAddress),
 			},
@@ -200,8 +194,15 @@ func (s *KeeperTestSuite) TestAirdropOnRecvPacket() {
 			transferIBCModule := transfer.NewIBCModule(s.App.TransferKeeper)
 			autopilotStack := autopilot.NewIBCModule(s.App.AutopilotKeeper, transferIBCModule)
 
+			// Update packet and packet data
+			packetData := packetDataTemplate
+			packetData.Memo = tc.packetData.Memo
+			packetData.Receiver = tc.packetData.Receiver
+
+			packet := packetTemplate
+			packet.Data = transfertypes.ModuleCdc.MustMarshalJSON(&packetData)
+
 			// Call OnRecvPacket for autopilot
-			packet.Data = transfertypes.ModuleCdc.MustMarshalJSON(&tc.packetData)
 			ack := autopilotStack.OnRecvPacket(
 				s.Ctx,
 				packet,
@@ -212,6 +213,8 @@ func (s *KeeperTestSuite) TestAirdropOnRecvPacket() {
 				s.Require().True(ack.Success(), "ack should be successful - ack: %+v", string(ack.Acknowledgement()))
 
 				// Check funds were transferred
+				coin := s.App.BankKeeper.GetBalance(s.Ctx, sdk.MustAccAddressFromBech32(strideAddress), evmosIbcDenom)
+				s.Require().Equal(packetDataTemplate.Amount, coin.Amount.String(), "balance should have updated after successful transfer")
 
 				if tc.airdropShouldUpdate {
 					// Check that we have a new record for the user
