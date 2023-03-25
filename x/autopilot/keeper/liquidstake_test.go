@@ -22,7 +22,7 @@ import (
 	stakeibctypes "github.com/Stride-Labs/stride/v8/x/stakeibc/types"
 )
 
-func getPacketMetadata(address, action string) string {
+func getStakeibcPacketMetadata(address, action string) string {
 	return fmt.Sprintf(`
 		{
 			"autopilot": {
@@ -32,7 +32,7 @@ func getPacketMetadata(address, action string) string {
 		}`, address, action)
 }
 
-func (suite *KeeperTestSuite) TestOnRecvPacket() {
+func (suite *KeeperTestSuite) TestLiquidStakeOnRecvPacket() {
 	now := time.Now()
 
 	packet := channeltypes.Packet{
@@ -71,7 +71,7 @@ func (suite *KeeperTestSuite) TestOnRecvPacket() {
 				Denom:    "uatom",
 				Amount:   "1000000",
 				Sender:   "cosmos16plylpsgxechajltx9yeseqexzdzut9g8vla4k",
-				Receiver: getPacketMetadata(addr1.String(), "LiquidStake"),
+				Receiver: getStakeibcPacketMetadata(addr1.String(), "LiquidStake"),
 				Memo:     "",
 			},
 			destChannel:    "channel-0",
@@ -85,7 +85,7 @@ func (suite *KeeperTestSuite) TestOnRecvPacket() {
 				Denom:    strdIbcDenom,
 				Amount:   "1000000",
 				Sender:   "cosmos16plylpsgxechajltx9yeseqexzdzut9g8vla4k",
-				Receiver: getPacketMetadata(addr1.String(), "LiquidStake"),
+				Receiver: getStakeibcPacketMetadata(addr1.String(), "LiquidStake"),
 				Memo:     "",
 			},
 			destChannel:    "channel-0",
@@ -99,7 +99,7 @@ func (suite *KeeperTestSuite) TestOnRecvPacket() {
 				Denom:    "uatom",
 				Amount:   "1000000",
 				Sender:   "cosmos16plylpsgxechajltx9yeseqexzdzut9g8vla4k",
-				Receiver: getPacketMetadata(addr1.String(), "LiquidStake"),
+				Receiver: getStakeibcPacketMetadata(addr1.String(), "LiquidStake"),
 				Memo:     "",
 			},
 			destChannel:    "channel-0",
@@ -113,7 +113,7 @@ func (suite *KeeperTestSuite) TestOnRecvPacket() {
 				Denom:    "uatom",
 				Amount:   "1000000",
 				Sender:   "cosmos16plylpsgxechajltx9yeseqexzdzut9g8vla4k",
-				Receiver: getPacketMetadata(addr1.String(), "LiquidStake"),
+				Receiver: getStakeibcPacketMetadata(addr1.String(), "LiquidStake"),
 				Memo:     "",
 			},
 			destChannel:    "channel-1000",
@@ -128,7 +128,7 @@ func (suite *KeeperTestSuite) TestOnRecvPacket() {
 				Amount:   "1000000",
 				Sender:   "cosmos16plylpsgxechajltx9yeseqexzdzut9g8vla4k",
 				Receiver: addr1.String(),
-				Memo:     getPacketMetadata(addr1.String(), "LiquidStake"),
+				Memo:     getStakeibcPacketMetadata(addr1.String(), "LiquidStake"),
 			},
 			destChannel:    "channel-0",
 			recvDenom:      atomIbcDenom,
@@ -155,7 +155,7 @@ func (suite *KeeperTestSuite) TestOnRecvPacket() {
 				Denom:    "uatom",
 				Amount:   "1000000",
 				Sender:   "cosmos16plylpsgxechajltx9yeseqexzdzut9g8vla4k",
-				Receiver: getPacketMetadata("invalid_address", "LiquidStake"),
+				Receiver: getStakeibcPacketMetadata("invalid_address", "LiquidStake"),
 				Memo:     "",
 			},
 			destChannel:    "channel-0",
@@ -170,7 +170,7 @@ func (suite *KeeperTestSuite) TestOnRecvPacket() {
 				Amount:   "1000000",
 				Sender:   "cosmos16plylpsgxechajltx9yeseqexzdzut9g8vla4k",
 				Receiver: addr1.String(),
-				Memo:     getPacketMetadata("invalid_address", "LiquidStake"),
+				Memo:     getStakeibcPacketMetadata("invalid_address", "LiquidStake"),
 			},
 			destChannel:    "channel-0",
 			recvDenom:      atomIbcDenom,
