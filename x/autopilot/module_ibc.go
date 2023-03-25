@@ -164,7 +164,7 @@ func (im IBCModule) OnRecvPacket(
 		}
 		return ack
 	} else if parsedPacketMetadata.Claim.Enabled {
-		// TODO
+		_ = im.keeper.TryUpdateAirdropClaim(ctx, packet, data, &parsedPacketMetadata.Claim)
 		return im.app.OnRecvPacket(ctx, packet, relayer)
 	} else {
 		// This branch should not be possible - it would mean that the packet was successfully
