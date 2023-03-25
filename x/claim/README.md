@@ -54,6 +54,21 @@ type ClaimRecord struct {
 
 ```
 
+## A Note on Address Mappings
+
+When an airdrop is created, we call `LoadAllocationData` to load the airdrop data from the allocations file. 
+This will apply `utils.ConvertAddressToStrideAddress` on each of those addresses, and then store those with the `ClaimRecords`.
+For an airdrop to, say, the Cosmos Hub, this will be the proper Stride address associated with that account. 
+`claim` state will only ever store this Stride address.
+
+However, for zones with a different coin type, _this will be an incorrect Stride address_. This should not cause any issues though,
+as this Stride address will be unusable.
+
+In order to claim that airdrop, the user will have to verify that they own the corresponding Evmos address. When the user tries to verify,
+we call `utils.ConvertAddressToStrideAddress` on that address, and verify it gives the same "incorrect" Stride address from earlier. 
+Through this, we can confirm that the user owns the Evmos address. 
+We then replace the Stride address with a "correct" one that the user verifies they own. 
+
 ## Params
 
 The airdrop logic has 4 parameters:
