@@ -670,148 +670,154 @@ func (suite *KeeperTestSuite) TestGetClaimMetadata() {
 	}
 }
 
-func (suite *KeeperTestSuite) SetupUpdateAirdropAddressChangeTests() (string, string, string, string) {
+type UpdateAirdropTestCase struct {
+	airdropId     string
+	evmosAddress  string
+	strideAddress string
+	recordKey     sdk.AccAddress
+}
+
+func (suite *KeeperTestSuite) SetupUpdateAirdropAddressChangeTests() UpdateAirdropTestCase {
 	suite.SetupTest()
 
 	airdropId := "osmosis"
 
-	EVMOS_ADDR := "evmos1wg6vh689gw93umxqquhe3yaqf0h9wt9d4q7550"
-	STRIDE_ADDR := "stride1svy5pga6g2er2wjrcujcrg0efce4pref8dksr9"
+	evmosAddress := "evmos1wg6vh689gw93umxqquhe3yaqf0h9wt9d4q7550"
+	strideAddress := "stride1svy5pga6g2er2wjrcujcrg0efce4pref8dksr9"
 
-	parsedEvmosAddress := utils.ConvertAddressToStrideAddress(EVMOS_ADDR)
-	addr1, err := sdk.AccAddressFromBech32(parsedEvmosAddress)
-	suite.Require().NoError(err)
-	weight := sdk.NewDecWithPrec(50, 2)
+	recordKeyString := utils.ConvertAddressToStrideAddress(evmosAddress)
+	recordKey := sdk.MustAccAddressFromBech32(recordKeyString)
 
-	strideAccAddress, err := sdk.AccAddressFromBech32(STRIDE_ADDR)
-	suite.Require().NoError(err)
-
-	for _, addr := range []sdk.AccAddress{addr1, strideAccAddress} {
-		initialBal := int64(1000)
-		err := suite.app.BankKeeper.SendCoins(suite.ctx, distributors[airdropId], addr, sdk.NewCoins(sdk.NewInt64Coin(sdk.DefaultBondDenom, initialBal)))
-		suite.Require().NoError(err)
-		err = suite.app.BankKeeper.SendCoins(suite.ctx, addr, distributors[airdropId], sdk.NewCoins(sdk.NewInt64Coin(sdk.DefaultBondDenom, initialBal)))
-		suite.Require().NoError(err)
+	claimRecord := types.ClaimRecord{
+		Address:           recordKeyString,
+		Weight:            sdk.NewDecWithPrec(50, 2), // 50%
+		ActionCompleted:   []bool{false, false, false},
+		AirdropIdentifier: airdropId,
 	}
 
-	claimRecords := []types.ClaimRecord{
-		{
-			Address:           addr1.String(),
-			Weight:            weight, // 50%
-			ActionCompleted:   []bool{false, false, false},
-			AirdropIdentifier: airdropId,
-		},
-	}
-
-	err = suite.app.ClaimKeeper.SetClaimRecordsWithWeights(suite.ctx, claimRecords)
+	err := suite.app.ClaimKeeper.SetClaimRecordsWithWeights(suite.ctx, []types.ClaimRecord{claimRecord})
 	suite.Require().NoError(err)
 
-	return airdropId, EVMOS_ADDR, addr1.String(), STRIDE_ADDR
+	// Create stride account so that it can claim
+	suite.app.AccountKeeper.SetAccount(suite.ctx, &authtypes.BaseAccount{Address: strideAddress})
+
+	return UpdateAirdropTestCase{
+		airdropId:     airdropId,
+		evmosAddress:  evmosAddress,
+		recordKey:     recordKey,
+		strideAddress: strideAddress,
+	}
 }
 
 func (suite *KeeperTestSuite) TestUpdateAirdropAddress() {
-	airdropId, evmosAddress, evmosParsedAddress, strideAddress := suite.SetupUpdateAirdropAddressChangeTests()
-	evmosParsedAccAddress, err := sdk.AccAddressFromBech32(evmosParsedAddress)
-	suite.Require().NoError(err)
-	strideAccAddress, err := sdk.AccAddressFromBech32(strideAddress)
-	suite.Require().NoError(err)
+	tc := suite.SetupUpdateAirdropAddressChangeTests()
 
+	strideAccAddress := sdk.MustAccAddressFromBech32(tc.strideAddress)
 	airdropClaimCoins := sdk.NewCoins(sdk.NewInt64Coin(sdk.DefaultBondDenom, 100_000_000))
 
-	// verify that the Evmos address changed
-	suite.Require().NotEqual(evmosAddress, evmosParsedAddress, "evmos address should have changed")
+	// verify that the Evmos address is different from the address in the key used to store the claim
+	suite.Require().NotEqual(tc.evmosAddress, tc.recordKey.String(), "evmos address should not equal the address key")
 	// verify new Evmos address starts with "stride"
-	suite.Require().True(strings.HasPrefix(evmosParsedAddress, "stride"), "evmos address should start with stride")
+	suite.Require().True(strings.HasPrefix(tc.recordKey.String(), "stride"), "evmos address should start with stride")
 
-	coins, err := suite.app.ClaimKeeper.GetUserTotalClaimable(suite.ctx, evmosParsedAccAddress, airdropId, false)
+	// Confirm that the user (using the old key'd address) has claimable tokens
+	coins, err := suite.app.ClaimKeeper.GetUserTotalClaimable(suite.ctx, tc.recordKey, tc.airdropId, false)
 	suite.Require().NoError(err)
 	suite.Require().Equal(coins.String(), airdropClaimCoins.String())
 
-	// verify that we can't claim the airdrop with the original stride address
-	coins, err = suite.app.ClaimKeeper.GetUserTotalClaimable(suite.ctx, strideAccAddress, airdropId, false)
+	// verify that we can't yet claim with the stride address (because it hasn't been remapped yet)
+	coins, err = suite.app.ClaimKeeper.GetUserTotalClaimable(suite.ctx, strideAccAddress, tc.airdropId, false)
 	suite.Require().NoError(err)
-	emptyCoins := sdk.NewCoins()
-	suite.Require().Equal(coins, emptyCoins, "stride address should claim 0 coins before update", strideAccAddress)
+	suite.Require().Equal(coins, sdk.NewCoins(), "stride address should claim 0 coins before update", strideAccAddress)
+
 	claims, err := suite.app.ClaimKeeper.GetClaimStatus(suite.ctx, strideAccAddress)
 	suite.Require().NoError(err)
 	suite.Require().Empty(claims, "stride address should have 0 claim records before update")
 
-	// verify that evmos can claim the address
-	coins, err = suite.app.ClaimKeeper.GetUserTotalClaimable(suite.ctx, evmosParsedAccAddress, airdropId, false)
+	// verify that we can claim the airdrop with the current airdrop key (which represents the incorrect stride address)
+	coins, err = suite.app.ClaimKeeper.GetUserTotalClaimable(suite.ctx, tc.recordKey, tc.airdropId, false)
 	suite.Require().NoError(err)
 	suite.Require().Equal(coins, sdk.NewCoins(sdk.NewCoin("stake", sdk.NewIntFromUint64(100_000_000))), "parsed evmos address should be allowed to claim")
-	claims, err = suite.app.ClaimKeeper.GetClaimStatus(suite.ctx, evmosParsedAccAddress)
+
+	claims, err = suite.app.ClaimKeeper.GetClaimStatus(suite.ctx, tc.recordKey)
 	suite.Require().NoError(err)
-	properClaims := []types.ClaimStatus{{AirdropIdentifier: airdropId, Claimed: false}}
+
+	properClaims := []types.ClaimStatus{{AirdropIdentifier: tc.airdropId, Claimed: false}}
 	suite.Require().Equal(claims, properClaims, "evmos address should have 1 claim record before update")
 
-	// update the address
-	err = suite.app.ClaimKeeper.UpdateAirdropAddress(suite.ctx, evmosParsedAddress, strideAddress, airdropId)
+	// update the stride address so that there's now a correct mapping from evmos -> stride address
+	err = suite.app.ClaimKeeper.UpdateAirdropAddress(suite.ctx, tc.recordKey.String(), tc.strideAddress, tc.airdropId)
 	suite.Require().NoError(err, "airdrop update address should succeed")
-	// verify that the evmos address CAN NOT claim after the update
-	coins, err = suite.app.ClaimKeeper.GetUserTotalClaimable(suite.ctx, evmosParsedAccAddress, airdropId, false)
+
+	// verify that the old key CAN NOT claim after the update
+	coins, err = suite.app.ClaimKeeper.GetUserTotalClaimable(suite.ctx, tc.recordKey, tc.airdropId, false)
 	suite.Require().NoError(err)
-	suite.Require().Equal(coins, emptyCoins, "evmos address should claim 0 coins after update", evmosParsedAccAddress)
-	claims, err = suite.app.ClaimKeeper.GetClaimStatus(suite.ctx, evmosParsedAccAddress)
+	suite.Require().Equal(coins, sdk.NewCoins(), "evmos address should claim 0 coins after update", tc.recordKey)
+
+	claims, err = suite.app.ClaimKeeper.GetClaimStatus(suite.ctx, tc.recordKey)
 	suite.Require().NoError(err)
 	suite.Require().Empty(claims, "evmos address should have 0 claim records after update")
 
 	// verify that the stride address CAN claim after the update
-	coins, err = suite.app.ClaimKeeper.GetUserTotalClaimable(suite.ctx, strideAccAddress, airdropId, false)
+	coins, err = suite.app.ClaimKeeper.GetUserTotalClaimable(suite.ctx, strideAccAddress, tc.airdropId, false)
 	suite.Require().NoError(err)
 	suite.Require().Equal(coins, sdk.NewCoins(sdk.NewCoin("stake", sdk.NewIntFromUint64(100_000_000))), "stride address should be allowed to claim after update")
+
 	claims, err = suite.app.ClaimKeeper.GetClaimStatus(suite.ctx, strideAccAddress)
 	suite.Require().NoError(err)
 	suite.Require().Equal(claims, properClaims, "stride address should have 1 claim record after update")
 
 	// claim with the Stride address
-	coins, err = suite.app.ClaimKeeper.ClaimCoinsForAction(suite.ctx, strideAccAddress, types.ACTION_FREE, airdropId)
+	coins, err = suite.app.ClaimKeeper.ClaimCoinsForAction(suite.ctx, strideAccAddress, types.ACTION_FREE, tc.airdropId)
 	suite.Require().NoError(err)
 	suite.Require().Equal(coins, sdk.NewCoins(sdk.NewCoin("stake", sdk.NewIntFromUint64(20_000_000))), "stride address should be allowed to claim after update")
+
 	// verify Stride address can't claim again
-	coins, err = suite.app.ClaimKeeper.ClaimCoinsForAction(suite.ctx, strideAccAddress, types.ACTION_FREE, airdropId)
+	coins, err = suite.app.ClaimKeeper.ClaimCoinsForAction(suite.ctx, strideAccAddress, types.ACTION_FREE, tc.airdropId)
 	suite.Require().NoError(err)
 	suite.Require().Equal(coins, sdk.NewCoins(sdk.NewCoin("stake", sdk.NewIntFromUint64(0))), "can't claim twice after update")
+
 	// verify Stride address balance went up
 	strideBalance := suite.app.BankKeeper.GetBalance(suite.ctx, strideAccAddress, "stake")
 	suite.Require().Equal(strideBalance.Amount, sdk.NewIntFromUint64(20_000_000), "stride address balance should have increased after claiming")
 }
 
 func (suite *KeeperTestSuite) TestUpdateAirdropAddress_AirdropNotFound() {
-	_, _, evmosParsedAddress, strideAddress := suite.SetupUpdateAirdropAddressChangeTests()
+	tc := suite.SetupUpdateAirdropAddressChangeTests()
 
 	// update the address
-	err := suite.app.ClaimKeeper.UpdateAirdropAddress(suite.ctx, evmosParsedAddress, strideAddress, "stride")
+	err := suite.app.ClaimKeeper.UpdateAirdropAddress(suite.ctx, tc.evmosAddress, tc.strideAddress, "stride")
 	suite.Require().Error(err, "airdrop address update should fail with incorrect airdrop id")
 }
 
 func (suite *KeeperTestSuite) TestUpdateAirdropAddress_StrideAddressIncorrect() {
-	airdropId, _, evmosParsedAddress, strideAddress := suite.SetupUpdateAirdropAddressChangeTests()
+	tc := suite.SetupUpdateAirdropAddressChangeTests()
 
 	// update the address
-	incorrectStrideAddress := strideAddress + "a"
-	err := suite.app.ClaimKeeper.UpdateAirdropAddress(suite.ctx, evmosParsedAddress, incorrectStrideAddress, airdropId)
+	incorrectStrideAddress := tc.strideAddress + "a"
+	err := suite.app.ClaimKeeper.UpdateAirdropAddress(suite.ctx, tc.evmosAddress, incorrectStrideAddress, tc.airdropId)
 	suite.Require().Error(err, "airdrop address update should fail with incorrect stride address")
 }
 
 func (suite *KeeperTestSuite) TestUpdateAirdropAddress_HostAddressIncorrect() {
-	airdropId, evmosAddress, evmosParsedAccAddress, strideAddress := suite.SetupUpdateAirdropAddressChangeTests()
+	tc := suite.SetupUpdateAirdropAddressChangeTests()
 
 	// should fail with a clearly wrong host address
-	err := suite.app.ClaimKeeper.UpdateAirdropAddress(suite.ctx, "evmostest", strideAddress, airdropId)
+	err := suite.app.ClaimKeeper.UpdateAirdropAddress(suite.ctx, "evmostest", tc.strideAddress, tc.airdropId)
 	suite.Require().Error(err, "airdrop address update should fail with clearly incorrect host address")
 
 	// should fail if host address is not a stride address
-	err = suite.app.ClaimKeeper.UpdateAirdropAddress(suite.ctx, evmosAddress, strideAddress, airdropId)
+	err = suite.app.ClaimKeeper.UpdateAirdropAddress(suite.ctx, tc.evmosAddress, tc.strideAddress, tc.airdropId)
 	suite.Require().Error(err, "airdrop address update should fail with host address in wrong zone")
 
-	// should fail is host address is slightly incorrect
-	modifiedAddress := evmosParsedAccAddress[:len(evmosParsedAccAddress)-1] + "a"
-	err = suite.app.ClaimKeeper.UpdateAirdropAddress(suite.ctx, modifiedAddress, strideAddress, airdropId)
+	// should fail is host address (record key) is slightly incorrect
+	recordKeyString := tc.recordKey.String()
+	modifiedAddress := recordKeyString[:len(recordKeyString)-1] + "a"
+	err = suite.app.ClaimKeeper.UpdateAirdropAddress(suite.ctx, modifiedAddress, tc.strideAddress, tc.airdropId)
 	suite.Require().Error(err, "airdrop address update should fail with incorrect host address")
 
 	// should fail is host address is correct but doesn't have a claimrecord
 	randomStrideAddress := "stride16qv5wnkwwvd2qj5ttwznmngc09cet8l9zhm2ru"
-	err = suite.app.ClaimKeeper.UpdateAirdropAddress(suite.ctx, randomStrideAddress, strideAddress, airdropId)
+	err = suite.app.ClaimKeeper.UpdateAirdropAddress(suite.ctx, randomStrideAddress, tc.strideAddress, tc.airdropId)
 	suite.Require().Error(err, "airdrop address update should fail with not present host address")
 }
