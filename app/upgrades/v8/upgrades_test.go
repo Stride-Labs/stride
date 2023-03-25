@@ -133,7 +133,8 @@ func (s *UpgradeTestSuite) CheckStoreAfterUpgrade() {
 
 	// Check autopilot params
 	expectedAutoPilotParams := autopilottypes.Params{
-		Active: false,
+		StakeibcActive: false,
+		ClaimActive:    true,
 	}
 	actualAutopilotParams := s.App.AutopilotKeeper.GetParams(s.Ctx)
 	s.Require().Equal(expectedAutoPilotParams, actualAutopilotParams, "autopilot params")
