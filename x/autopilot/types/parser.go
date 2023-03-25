@@ -35,13 +35,13 @@ type PacketMetadata struct {
 }
 
 type StakeibcPacketMetadata struct {
-	Enabled       bool
+	ShouldForward bool
 	Action        string
 	StrideAddress sdk.AccAddress
 }
 
 type ClaimPacketMetadata struct {
-	Enabled       bool
+	ShouldForward bool
 	AirdropId     string
 	StrideAddress sdk.AccAddress
 }
@@ -50,7 +50,7 @@ type ClaimPacketMetadata struct {
 func (r *RawStakeibcPacketMetadata) ParseAndValidate() (*StakeibcPacketMetadata, error) {
 	// If the stakeibc section of the memo field was empty, mark stakeibc as disabled
 	if r == nil {
-		return &StakeibcPacketMetadata{Enabled: false}, nil
+		return &StakeibcPacketMetadata{ShouldForward: false}, nil
 	}
 
 	// Validate the stride address and action
@@ -65,7 +65,7 @@ func (r *RawStakeibcPacketMetadata) ParseAndValidate() (*StakeibcPacketMetadata,
 	return &StakeibcPacketMetadata{
 		Action:        r.Action,
 		StrideAddress: address,
-		Enabled:       true,
+		ShouldForward: true,
 	}, nil
 }
 
@@ -73,7 +73,7 @@ func (r *RawStakeibcPacketMetadata) ParseAndValidate() (*StakeibcPacketMetadata,
 func (r *RawClaimPacketMetadata) ParseAndValidate() (*ClaimPacketMetadata, error) {
 	// If the claim section of the memo field was empty, mark claim as disabled
 	if r == nil {
-		return &ClaimPacketMetadata{Enabled: false}, nil
+		return &ClaimPacketMetadata{ShouldForward: false}, nil
 	}
 
 	// Validate the stride address and airdrop ID
@@ -88,11 +88,14 @@ func (r *RawClaimPacketMetadata) ParseAndValidate() (*ClaimPacketMetadata, error
 	return &ClaimPacketMetadata{
 		AirdropId:     r.AirdropId,
 		StrideAddress: address,
-		Enabled:       true,
+		ShouldForward: true,
 	}, nil
 }
 
 // Parse packet metadata intended for autopilot
+// In the ICS-20 packet, the metadata can optionally indicate a module to route to (e.g. stakeibc)
+// The PacketMetadata returned from this function contains attributes for each autopilot supported module
+// It can only be forward to one module per packet so the `ShouldForward` can only be true for one module
 // Returns nil if there was no metadata found
 func ParsePacketMetadata(metadata string) (packetMetadata *PacketMetadata, err error) {
 	// If we can't unmarshal the metadata into a PacketMetadata struct,
@@ -119,8 +122,8 @@ func ParsePacketMetadata(metadata string) (packetMetadata *PacketMetadata, err e
 		return nil, errorsmod.Wrapf(err, ErrInvalidPacketMetadata.Error())
 	}
 
-	// Confirm only one module was enabled for autopilot
-	if parsedStakeibcPacketData.Enabled && parsedClaimPacketData.Enabled {
+	// Confirm the packet only specified one module to route to
+	if parsedStakeibcPacketData.ShouldForward && parsedClaimPacketData.ShouldForward {
 		return nil, errorsmod.Wrapf(ErrInvalidPacketMetadata, ErrMulitpleAutopilotRoutesInTx.Error())
 	}
 

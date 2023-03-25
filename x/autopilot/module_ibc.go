@@ -145,7 +145,7 @@ func (im IBCModule) OnRecvPacket(
 	}
 
 	// Handle for each module
-	if parsedPacketMetadata.Stakeibc.Enabled {
+	if parsedPacketMetadata.Stakeibc.ShouldForward {
 		// Modify packet data to process packet transfer for this chain, omitting liquid staking info
 		newData := data
 		newData.Receiver = parsedPacketMetadata.Stakeibc.StrideAddress.String()
@@ -163,7 +163,7 @@ func (im IBCModule) OnRecvPacket(
 			return im.keeper.TryLiquidStaking(ctx, packet, newData, &parsedPacketMetadata.Stakeibc, ack)
 		}
 		return ack
-	} else if parsedPacketMetadata.Claim.Enabled {
+	} else if parsedPacketMetadata.Claim.ShouldForward {
 		// TODO
 		return im.app.OnRecvPacket(ctx, packet, relayer)
 	} else {
