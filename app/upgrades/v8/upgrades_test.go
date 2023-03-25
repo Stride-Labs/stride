@@ -114,7 +114,7 @@ func (s *UpgradeTestSuite) CheckStoreAfterUpgrade() {
 	s.Require().Equal(v8.EvmosAirdropDistributor, evmosAirdrop.DistributorAddress, "evmos airdrop distributor")
 	s.Require().Equal(v8.AirdropDuration, evmosAirdrop.AirdropDuration, "evmos airdrop duration")
 	s.Require().Equal(ustrd, evmosAirdrop.ClaimDenom, "evmos airdrop claim denom")
-	s.Require().Equal(s.Ctx.BlockTime(), evmosAirdrop.AirdropStartTime, "evmos airdrop start time")
+	s.Require().Equal(v8.AirdropStartTime, evmosAirdrop.AirdropStartTime, "evmos airdrop start time")
 
 	// Check that the evmos claims records were added
 	evmosClaimRecords := s.App.ClaimKeeper.GetClaimRecords(afterCtx, v8.EvmosAirdropIdentifier)
@@ -133,7 +133,7 @@ func (s *UpgradeTestSuite) CheckStoreAfterUpgrade() {
 
 	// Check autopilot params
 	expectedAutoPilotParams := autopilottypes.Params{
-		Active: true,
+		Active: false,
 	}
 	actualAutopilotParams := s.App.AutopilotKeeper.GetParams(s.Ctx)
 	s.Require().Equal(expectedAutoPilotParams, actualAutopilotParams, "autopilot params")
