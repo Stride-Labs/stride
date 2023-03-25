@@ -24,9 +24,6 @@ func NewHandler(k keeper.Keeper) sdk.Handler {
 		case *types.MsgClaimFreeAmount:
 			res, err := msgServer.ClaimFreeAmount(sdk.WrapSDKContext(ctx), msg)
 			return sdk.WrapServiceResult(ctx, res, err)
-		case *types.MsgCreateAirdrop:
-			res, err := msgServer.CreateAirdrop(sdk.WrapSDKContext(ctx), msg)
-			return sdk.WrapServiceResult(ctx, res, err)
 		case *types.MsgDeleteAirdrop:
 			res, err := msgServer.DeleteAirdrop(sdk.WrapSDKContext(ctx), msg)
 			return sdk.WrapServiceResult(ctx, res, err)

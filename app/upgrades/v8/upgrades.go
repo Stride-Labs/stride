@@ -12,9 +12,11 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/module"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 
+	"github.com/Stride-Labs/stride/v8/utils"
 	autopilotkeeper "github.com/Stride-Labs/stride/v8/x/autopilot/keeper"
 	autopilottypes "github.com/Stride-Labs/stride/v8/x/autopilot/types"
 	claimkeeper "github.com/Stride-Labs/stride/v8/x/claim/keeper"
+	"github.com/Stride-Labs/stride/v8/x/claim/types"
 	claimtypes "github.com/Stride-Labs/stride/v8/x/claim/types"
 )
 
@@ -44,6 +46,26 @@ func CreateUpgradeHandler(
 			if err := claimKeeper.ResetClaimStatus(ctx, claimType); err != nil {
 				return vm, errorsmod.Wrapf(err, fmt.Sprintf("unable to reset %s claim status", claimType))
 			}
+		}
+
+		// Delete all unofficial airdrops from the store so they don't conflict with the evmos addition
+		claimParams, err := claimKeeper.GetParams(ctx)
+		if err != nil {
+			return vm, errorsmod.Wrapf(err, "unable to get claim parameters")
+		}
+
+		updatedAirdropList := []*types.Airdrop{}
+		for _, existingAirdrop := range claimParams.Airdrops {
+			if utils.ContainsString(ResetAirdropIdentifiers, existingAirdrop.AirdropIdentifier) {
+				updatedAirdropList = append(updatedAirdropList, existingAirdrop)
+			}
+		}
+		updatedClaimsParams := claimtypes.Params{
+			Airdrops: updatedAirdropList,
+		}
+
+		if err := claimKeeper.SetParams(ctx, updatedClaimsParams); err != nil {
+			return vm, errorsmod.Wrapf(err, "unable to remove unofficial airdrops")
 		}
 
 		// Add the evmos airdrop
