@@ -121,6 +121,9 @@ func (im IBCModule) OnRecvPacket(
 	packet channeltypes.Packet,
 	relayer sdk.AccAddress,
 ) ibcexported.Acknowledgement {
+	im.keeper.Logger(ctx).Info(fmt.Sprintf("OnRecvPacket (autopilot): Source: %s, %s; Destination: %s, %s",
+		packet.SourcePort, packet.SourceChannel, packet.DestinationPort, packet.DestinationChannel))
+
 	// NOTE: acknowledgement will be written synchronously during IBC handler execution.
 	var data transfertypes.FungibleTokenPacketData
 	if err := transfertypes.ModuleCdc.UnmarshalJSON(packet.GetData(), &data); err != nil {
@@ -188,14 +191,14 @@ func (im IBCModule) OnRecvPacket(
 	case types.StakeibcPacketMetadata:
 		// If stakeibc routing is inactive (but the packet had routing info in the memo) return an ack error
 		if !autopilotParams.StakeibcActive {
-			im.keeper.Logger(ctx).Error("Packet from %s had stakeibc routing info but autopilot stakeibc routing is disabled", newData.Sender)
+			im.keeper.Logger(ctx).Error(fmt.Sprintf("Packet from %s had stakeibc routing info but autopilot stakeibc routing is disabled", newData.Sender))
 			return channeltypes.NewErrorAcknowledgement(types.ErrPacketForwardingInactive)
 		}
-		im.keeper.Logger(ctx).Info("Forwaring packet from %s to stakeibc", newData.Sender)
+		im.keeper.Logger(ctx).Info(fmt.Sprintf("Forwaring packet from %s to stakeibc", newData.Sender))
 
 		// Try to liquid stake - return an ack error if it fails, otherwise return the ack generated from the earlier packet propogation
 		if err := im.keeper.TryLiquidStaking(ctx, packet, newData, routingInfo); err != nil {
-			im.keeper.Logger(ctx).Error("Error liquid staking packet from autopilot: %s", err.Error())
+			im.keeper.Logger(ctx).Error(fmt.Sprintf("Error liquid staking packet from autopilot for %s: %s", newData.Sender, err.Error()))
 			return channeltypes.NewErrorAcknowledgement(err)
 		}
 
@@ -204,13 +207,13 @@ func (im IBCModule) OnRecvPacket(
 	case types.ClaimPacketMetadata:
 		// If claim routing is inactive (but the packet had routing info in the memo) return an ack error
 		if !autopilotParams.ClaimActive {
-			im.keeper.Logger(ctx).Error("Packet from %s had claim routing info but autopilot claim routing is disabled", newData.Sender)
+			im.keeper.Logger(ctx).Error(fmt.Sprintf("Packet from %s had claim routing info but autopilot claim routing is disabled", newData.Sender))
 			return channeltypes.NewErrorAcknowledgement(types.ErrPacketForwardingInactive)
 		}
-		im.keeper.Logger(ctx).Info("Forwaring packet from %s to claim", newData.Sender)
+		im.keeper.Logger(ctx).Info(fmt.Sprintf("Forwaring packet from %s to claim", newData.Sender))
 
 		if err := im.keeper.TryUpdateAirdropClaim(ctx, newData, routingInfo); err != nil {
-			im.keeper.Logger(ctx).Error("Error updating airdrop claim from autopilot: %s", err.Error())
+			im.keeper.Logger(ctx).Error(fmt.Sprintf("Error updating airdrop claim from autopilot for %s: %s", newData.Sender, err.Error()))
 			return channeltypes.NewErrorAcknowledgement(err)
 		}
 
