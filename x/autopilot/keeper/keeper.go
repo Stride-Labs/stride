@@ -11,6 +11,7 @@ import (
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
 
 	"github.com/Stride-Labs/stride/v8/x/autopilot/types"
+	claimkeeper "github.com/Stride-Labs/stride/v8/x/claim/keeper"
 	stakeibckeeper "github.com/Stride-Labs/stride/v8/x/stakeibc/keeper"
 )
 
@@ -20,6 +21,7 @@ type (
 		storeKey       storetypes.StoreKey
 		paramstore     paramtypes.Subspace
 		stakeibcKeeper stakeibckeeper.Keeper
+		claimKeeper    claimkeeper.Keeper
 	}
 )
 
@@ -28,6 +30,7 @@ func NewKeeper(
 	storeKey storetypes.StoreKey,
 	ps paramtypes.Subspace,
 	stakeibcKeeper stakeibckeeper.Keeper,
+	claimKeeper claimkeeper.Keeper,
 ) *Keeper {
 	// set KeyTable if it has not already been set
 	if !ps.HasKeyTable() {
@@ -39,6 +42,7 @@ func NewKeeper(
 		storeKey:       storeKey,
 		paramstore:     ps,
 		stakeibcKeeper: stakeibcKeeper,
+		claimKeeper:    claimKeeper,
 	}
 }
 

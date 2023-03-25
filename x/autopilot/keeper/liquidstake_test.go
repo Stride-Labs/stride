@@ -22,7 +22,17 @@ import (
 	stakeibctypes "github.com/Stride-Labs/stride/v8/x/stakeibc/types"
 )
 
-func (suite *KeeperTestSuite) TestOnRecvPacket() {
+func getStakeibcPacketMetadata(address, action string) string {
+	return fmt.Sprintf(`
+		{
+			"autopilot": {
+				"receiver": "%[1]s",
+				"stakeibc": { "stride_address": "%[1]s", "action": "%[2]s" } 
+			}
+		}`, address, action)
+}
+
+func (suite *KeeperTestSuite) TestLiquidStakeOnRecvPacket() {
 	now := time.Now()
 
 	packet := channeltypes.Packet{
@@ -61,7 +71,7 @@ func (suite *KeeperTestSuite) TestOnRecvPacket() {
 				Denom:    "uatom",
 				Amount:   "1000000",
 				Sender:   "cosmos16plylpsgxechajltx9yeseqexzdzut9g8vla4k",
-				Receiver: fmt.Sprintf("%s|stakeibc/LiquidStake", addr1.String()),
+				Receiver: getStakeibcPacketMetadata(addr1.String(), "LiquidStake"),
 				Memo:     "",
 			},
 			destChannel:    "channel-0",
@@ -75,7 +85,7 @@ func (suite *KeeperTestSuite) TestOnRecvPacket() {
 				Denom:    strdIbcDenom,
 				Amount:   "1000000",
 				Sender:   "cosmos16plylpsgxechajltx9yeseqexzdzut9g8vla4k",
-				Receiver: fmt.Sprintf("%s|stakeibc/LiquidStake", addr1.String()),
+				Receiver: getStakeibcPacketMetadata(addr1.String(), "LiquidStake"),
 				Memo:     "",
 			},
 			destChannel:    "channel-0",
@@ -89,7 +99,7 @@ func (suite *KeeperTestSuite) TestOnRecvPacket() {
 				Denom:    "uatom",
 				Amount:   "1000000",
 				Sender:   "cosmos16plylpsgxechajltx9yeseqexzdzut9g8vla4k",
-				Receiver: fmt.Sprintf("%s|stakeibc/LiquidStake", addr1.String()),
+				Receiver: getStakeibcPacketMetadata(addr1.String(), "LiquidStake"),
 				Memo:     "",
 			},
 			destChannel:    "channel-0",
@@ -103,7 +113,7 @@ func (suite *KeeperTestSuite) TestOnRecvPacket() {
 				Denom:    "uatom",
 				Amount:   "1000000",
 				Sender:   "cosmos16plylpsgxechajltx9yeseqexzdzut9g8vla4k",
-				Receiver: fmt.Sprintf("%s|stakeibc/LiquidStake", addr1.String()),
+				Receiver: getStakeibcPacketMetadata(addr1.String(), "LiquidStake"),
 				Memo:     "",
 			},
 			destChannel:    "channel-1000",
@@ -118,7 +128,7 @@ func (suite *KeeperTestSuite) TestOnRecvPacket() {
 				Amount:   "1000000",
 				Sender:   "cosmos16plylpsgxechajltx9yeseqexzdzut9g8vla4k",
 				Receiver: addr1.String(),
-				Memo:     "stakeibc/LiquidStake",
+				Memo:     getStakeibcPacketMetadata(addr1.String(), "LiquidStake"),
 			},
 			destChannel:    "channel-0",
 			recvDenom:      atomIbcDenom,
@@ -139,13 +149,13 @@ func (suite *KeeperTestSuite) TestOnRecvPacket() {
 			expSuccess:     true,
 			expLiquidStake: false,
 		},
-		{ // invalid receiver
+		{ // invalid stride address (receiver)
 			forwardingActive: true,
 			packetData: transfertypes.FungibleTokenPacketData{
 				Denom:    "uatom",
 				Amount:   "1000000",
 				Sender:   "cosmos16plylpsgxechajltx9yeseqexzdzut9g8vla4k",
-				Receiver: "xxx|stakeibc/LiquidStake",
+				Receiver: getStakeibcPacketMetadata("invalid_address", "LiquidStake"),
 				Memo:     "",
 			},
 			destChannel:    "channel-0",
@@ -153,14 +163,14 @@ func (suite *KeeperTestSuite) TestOnRecvPacket() {
 			expSuccess:     false,
 			expLiquidStake: false,
 		},
-		{ // invalid receiver liquid staking
+		{ // invalid stride address (memo)
 			forwardingActive: true,
 			packetData: transfertypes.FungibleTokenPacketData{
 				Denom:    "uatom",
 				Amount:   "1000000",
 				Sender:   "cosmos16plylpsgxechajltx9yeseqexzdzut9g8vla4k",
-				Receiver: "xxx|stakeibc/LiquidStake",
-				Memo:     "",
+				Receiver: addr1.String(),
+				Memo:     getStakeibcPacketMetadata("invalid_address", "LiquidStake"),
 			},
 			destChannel:    "channel-0",
 			recvDenom:      atomIbcDenom,
@@ -177,7 +187,7 @@ func (suite *KeeperTestSuite) TestOnRecvPacket() {
 			suite.SetupTest() // reset
 			ctx := suite.Ctx
 
-			suite.App.AutopilotKeeper.SetParams(ctx, types.Params{Active: tc.forwardingActive})
+			suite.App.AutopilotKeeper.SetParams(ctx, types.Params{StakeibcActive: tc.forwardingActive})
 
 			// set epoch tracker for env
 			suite.App.StakeibcKeeper.SetEpochTracker(ctx, stakeibctypes.EpochTracker{
@@ -230,18 +240,22 @@ func (suite *KeeperTestSuite) TestOnRecvPacket() {
 				addr1,
 			)
 			if tc.expSuccess {
-				suite.Require().True(ack.Success(), string(ack.Acknowledgement()))
+				suite.Require().True(ack.Success(), "ack should be successful - ack: %+v", string(ack.Acknowledgement()))
+
+				// Check funds were transferred
+				coin := suite.App.BankKeeper.GetBalance(suite.Ctx, addr1, tc.recvDenom)
+				suite.Require().Equal("2000000", coin.Amount.String(), "balance should have updated after successful transfer")
 
 				// check minted balance for liquid staking
 				allBalance := suite.App.BankKeeper.GetAllBalances(ctx, addr1)
 				liquidBalance := suite.App.BankKeeper.GetBalance(ctx, addr1, "stuatom")
 				if tc.expLiquidStake {
-					suite.Require().True(liquidBalance.Amount.IsPositive(), allBalance.String())
+					suite.Require().True(liquidBalance.Amount.IsPositive(), "liquid balance should be positive but was %s", allBalance.String())
 				} else {
-					suite.Require().True(liquidBalance.Amount.IsZero(), allBalance.String())
+					suite.Require().True(liquidBalance.Amount.IsZero(), "liquid balance should be zero but was %s", allBalance.String())
 				}
 			} else {
-				suite.Require().False(ack.Success(), string(ack.Acknowledgement()))
+				suite.Require().False(ack.Success(), "ack should have failed - ack: %+v", string(ack.Acknowledgement()))
 			}
 		})
 	}
