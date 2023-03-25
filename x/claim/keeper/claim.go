@@ -834,22 +834,27 @@ func (k Keeper) UpdateAirdropAddress(ctx sdk.Context, existingStrideAddress stri
 	// if you're attempting to access a claim record for a non-Stride-address.
 	existingAccAddress, err := sdk.AccAddressFromBech32(existingStrideAddress)
 	if err != nil {
-		return errorsmod.Wrapf(types.ErrClaimNotFound, fmt.Sprintf("error getting claim record for address %s on airdrop %s", existingStrideAddress, airdropId))
+		return errorsmod.Wrapf(types.ErrClaimNotFound,
+			fmt.Sprintf("error getting claim record for address %s on airdrop %s", existingStrideAddress, airdropId))
 	}
 	claimRecord, err := k.GetClaimRecord(ctx, existingAccAddress, airdrop.AirdropIdentifier)
 	if (err != nil) || (claimRecord.Address == "") {
-		fmt.Printf("error getting claim record for address %s on airdrop %s", existingStrideAddress, airdropId)
-		return errorsmod.Wrapf(types.ErrClaimNotFound, fmt.Sprintf("error getting claim record for address %s on airdrop %s", existingStrideAddress, airdropId))
+		return errorsmod.Wrapf(types.ErrClaimNotFound,
+			fmt.Sprintf("error getting claim record for address %s on airdrop %s", existingStrideAddress, airdropId))
 	}
+
 	claimRecord.Address = newStrideAddress
 	err = k.SetClaimRecord(ctx, claimRecord) // this does NOT delete the old record, because claims are indexed by address
 	if err != nil {
-		return errorsmod.Wrapf(types.ErrModifyingClaimRecord, fmt.Sprintf("error setting claim record from address %s to address %s on airdrop %s", existingStrideAddress, newStrideAddress, airdropId))
+		return errorsmod.Wrapf(types.ErrModifyingClaimRecord,
+			fmt.Sprintf("error setting claim record from address %s to address %s on airdrop %s", existingStrideAddress, newStrideAddress, airdropId))
 	}
+
 	// this deletes the old record
 	err = k.DeleteClaimRecord(ctx, existingAccAddress, airdrop.AirdropIdentifier)
 	if err != nil {
-		return errorsmod.Wrapf(types.ErrModifyingClaimRecord, fmt.Sprintf("error deleting claim record for address %s on airdrop %s", existingStrideAddress, airdropId))
+		return errorsmod.Wrapf(types.ErrModifyingClaimRecord,
+			fmt.Sprintf("error deleting claim record for address %s on airdrop %s", existingStrideAddress, airdropId))
 	}
 
 	return nil
