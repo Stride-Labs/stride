@@ -121,8 +121,8 @@ func (im IBCModule) OnRecvPacket(
 	packet channeltypes.Packet,
 	relayer sdk.AccAddress,
 ) ibcexported.Acknowledgement {
-	im.keeper.Logger(ctx).Info(fmt.Sprintf("OnRecvPacket (autopilot): Source: %s, %s; Destination: %s, %s",
-		packet.SourcePort, packet.SourceChannel, packet.DestinationPort, packet.DestinationChannel))
+	im.keeper.Logger(ctx).Info(fmt.Sprintf("OnRecvPacket (autopilot): Sequence: %d, Source: %s, %s; Destination: %s, %s",
+		packet.Sequence, packet.SourcePort, packet.SourceChannel, packet.DestinationPort, packet.DestinationChannel))
 
 	// NOTE: acknowledgement will be written synchronously during IBC handler execution.
 	var data transfertypes.FungibleTokenPacketData

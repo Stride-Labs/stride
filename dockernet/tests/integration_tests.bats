@@ -100,8 +100,8 @@ setup_file() {
   hval_token_balance_start=$($HOST_MAIN_CMD   q bank balances $HOST_VAL_ADDRESS --denom $HOST_DENOM     | GETBAL)
 
   # do IBC transfer
-  $STRIDE_MAIN_CMD tx ibc-transfer transfer transfer $STRIDE_TRANFER_CHANNEL $HOST_VAL_ADDRESS ${TRANSFER_AMOUNT}${STRIDE_DENOM} --from $STRIDE_VAL -y &
-  $HOST_MAIN_CMD   tx ibc-transfer transfer transfer $HOST_TRANSFER_CHANNEL  $(STRIDE_ADDRESS) ${TRANSFER_AMOUNT}${HOST_DENOM} --from $HOST_VAL -y &
+  $STRIDE_MAIN_CMD tx ibc-transfer transfer transfer $STRIDE_TRANFER_CHANNEL $HOST_VAL_ADDRESS ${TRANSFER_AMOUNT}${STRIDE_DENOM} --from $STRIDE_VAL -y 
+  $HOST_MAIN_CMD   tx ibc-transfer transfer transfer $HOST_TRANSFER_CHANNEL  $(STRIDE_ADDRESS) ${TRANSFER_AMOUNT}${HOST_DENOM} --from $HOST_VAL -y 
 
   WAIT_FOR_BLOCK $STRIDE_LOGS 8
 
@@ -159,12 +159,26 @@ setup_file() {
 }
 
 @test "[INTEGRATION-BASIC-$CHAIN_NAME] packet forwarding automatically liquid stakes" {
-  skip "DefaultActive set to false, skip test"
+  # skip "DefaultActive set to false, skip test"
+  memo='{ "autopilot": { "receiver": "'"$(STRIDE_ADDRESS)"'",  "stakeibc": { "stride_address": "'"$(STRIDE_ADDRESS)"'", "action": "LiquidStake" } } }'
+
   # get initial balances
   sttoken_balance_start=$($STRIDE_MAIN_CMD q bank balances $(STRIDE_ADDRESS) --denom st$HOST_DENOM | GETBAL)
 
-  # do IBC transfer
-  $HOST_MAIN_CMD tx ibc-transfer transfer transfer $HOST_TRANSFER_CHANNEL $(STRIDE_ADDRESS)'|stakeibc/LiquidStake' ${PACKET_FORWARD_STAKE_AMOUNT}${HOST_DENOM} --from $HOST_VAL -y &
+  # Build the transfer args, including the JSON memo
+  if [[ "$CHAIN_NAME" == "GAIA" ]]; then
+    # For GAIA (ibc-v3), pass the memo into the receiver field
+    transfer_args="$memo ${PACKET_FORWARD_STAKE_AMOUNT}${HOST_DENOM}"
+  elif [[ "$CHAIN_NAME" == "HOST" ]]; then
+    # For HOST (ibc-v5), pass the memo in the --memo field
+    transfer_args="$(STRIDE_ADDRESS) ${PACKET_FORWARD_STAKE_AMOUNT}${HOST_DENOM} --memo $memo"
+  else
+    # For all other hosts, skip this test
+    skip "Packet forward liquid stake test is only run on GAIA and HOST"
+  fi
+
+  # send the transfer
+  $HOST_MAIN_CMD tx ibc-transfer transfer transfer $HOST_TRANSFER_CHANNEL $transfer_args --from $HOST_VAL -y 
 
   # Wait for the transfer to complete
   WAIT_FOR_BALANCE_CHANGE STRIDE $(STRIDE_ADDRESS) st$HOST_DENOM
