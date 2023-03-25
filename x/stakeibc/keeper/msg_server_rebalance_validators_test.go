@@ -8,9 +8,9 @@ import (
 	icatypes "github.com/cosmos/ibc-go/v5/modules/apps/27-interchain-accounts/types"
 	ibctesting "github.com/cosmos/ibc-go/v5/testing"
 
-	epochtypes "github.com/Stride-Labs/stride/v7/x/epochs/types"
-	icacallbackstypes "github.com/Stride-Labs/stride/v7/x/icacallbacks/types"
-	stakeibctypes "github.com/Stride-Labs/stride/v7/x/stakeibc/types"
+	epochtypes "github.com/Stride-Labs/stride/v8/x/epochs/types"
+	icacallbackstypes "github.com/Stride-Labs/stride/v8/x/icacallbacks/types"
+	stakeibctypes "github.com/Stride-Labs/stride/v8/x/stakeibc/types"
 )
 
 type RebalanceValidatorsTestCase struct {
@@ -38,44 +38,34 @@ func (s *KeeperTestSuite) SetupRebalanceValidators() RebalanceValidatorsTestCase
 	// define validators for host zone
 	initialValidators := []*stakeibctypes.Validator{
 		{
-			Name:           "val1",
-			Address:        "stride_VAL1",
-			CommissionRate: 1,
-			Weight:         100,
-			Status:         stakeibctypes.Validator_ACTIVE,
-			DelegationAmt:  sdkmath.NewInt(100),
+			Name:          "val1",
+			Address:       "stride_VAL1",
+			Weight:        100,
+			DelegationAmt: sdkmath.NewInt(100),
 		},
 		{
-			Name:           "val2",
-			Address:        "stride_VAL2",
-			CommissionRate: 2,
-			Weight:         500,
-			Status:         stakeibctypes.Validator_ACTIVE,
-			DelegationAmt:  sdkmath.NewInt(500),
+			Name:          "val2",
+			Address:       "stride_VAL2",
+			Weight:        500,
+			DelegationAmt: sdkmath.NewInt(500),
 		},
 		{
-			Name:           "val3",
-			Address:        "stride_VAL3",
-			CommissionRate: 2,
-			Weight:         200,
-			Status:         stakeibctypes.Validator_ACTIVE,
-			DelegationAmt:  sdkmath.NewInt(200),
+			Name:          "val3",
+			Address:       "stride_VAL3",
+			Weight:        200,
+			DelegationAmt: sdkmath.NewInt(200),
 		},
 		{
-			Name:           "val4",
-			Address:        "stride_VAL4",
-			CommissionRate: 2,
-			Weight:         400,
-			Status:         stakeibctypes.Validator_ACTIVE,
-			DelegationAmt:  sdkmath.NewInt(400),
+			Name:          "val4",
+			Address:       "stride_VAL4",
+			Weight:        400,
+			DelegationAmt: sdkmath.NewInt(400),
 		},
 		{
-			Name:           "val5",
-			Address:        "stride_VAL5",
-			CommissionRate: 2,
-			Weight:         400,
-			Status:         stakeibctypes.Validator_ACTIVE,
-			DelegationAmt:  sdkmath.NewInt(400),
+			Name:          "val5",
+			Address:       "stride_VAL5",
+			Weight:        400,
+			DelegationAmt: sdkmath.NewInt(400),
 		},
 	}
 

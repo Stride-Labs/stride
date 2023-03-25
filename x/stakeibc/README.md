@@ -46,7 +46,7 @@ SafetyNumValidators (default uint64 = 35)
 - `RedeemStake()`
 - `ClaimUndelegatedTokens()`
 - `RebalanceValidators()`
-- `AddValidator()`
+- `AddValidators()`
 - `ChangeValidatorWeight()`
 - `DeleteValidator()`
 - `RegisterHostZone()`
@@ -86,7 +86,7 @@ Misc
 
 Governance
 
-- `AddValidatorProposal`
+- `AddValidatorsProposal`
 
 ## Queries
 

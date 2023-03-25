@@ -9,9 +9,9 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	keepertest "github.com/Stride-Labs/stride/v7/testutil/keeper"
-	"github.com/Stride-Labs/stride/v7/testutil/nullify"
-	"github.com/Stride-Labs/stride/v7/x/claim/types"
+	keepertest "github.com/Stride-Labs/stride/v8/testutil/keeper"
+	"github.com/Stride-Labs/stride/v8/testutil/nullify"
+	"github.com/Stride-Labs/stride/v8/x/claim/types"
 )
 
 func TestGenesis(t *testing.T) {
