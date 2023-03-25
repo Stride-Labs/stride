@@ -12,9 +12,9 @@ import (
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/spf13/cast"
 
-	"github.com/Stride-Labs/stride/v7/utils"
-	recordstypes "github.com/Stride-Labs/stride/v7/x/records/types"
-	"github.com/Stride-Labs/stride/v7/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v8/utils"
+	recordstypes "github.com/Stride-Labs/stride/v8/x/records/types"
+	"github.com/Stride-Labs/stride/v8/x/stakeibc/types"
 )
 
 func (k Keeper) CreateEpochUnbondingRecord(ctx sdk.Context, epochNumber uint64) bool {

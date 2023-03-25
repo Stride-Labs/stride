@@ -5,14 +5,17 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/Stride-Labs/stride/v7/app/apptesting"
-	"github.com/Stride-Labs/stride/v7/x/autopilot"
-	"github.com/Stride-Labs/stride/v7/x/autopilot/types"
+	"github.com/Stride-Labs/stride/v8/app/apptesting"
+	"github.com/Stride-Labs/stride/v8/x/autopilot"
+	"github.com/Stride-Labs/stride/v8/x/autopilot/types"
 )
 
 func TestGenesis(t *testing.T) {
 	expectedGenesisState := types.GenesisState{
-		Params: types.Params{Active: true},
+		Params: types.Params{
+			StakeibcActive: true,
+			ClaimActive:    true,
+		},
 	}
 
 	s := apptesting.SetupSuitelessTestHelper()
