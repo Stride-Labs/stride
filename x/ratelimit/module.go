@@ -17,9 +17,9 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 
-	"github.com/Stride-Labs/stride/v7/x/ratelimit/client/cli"
-	"github.com/Stride-Labs/stride/v7/x/ratelimit/keeper"
-	"github.com/Stride-Labs/stride/v7/x/ratelimit/types"
+	"github.com/Stride-Labs/stride/v8/x/ratelimit/client/cli"
+	"github.com/Stride-Labs/stride/v8/x/ratelimit/keeper"
+	"github.com/Stride-Labs/stride/v8/x/ratelimit/types"
 )
 
 var (

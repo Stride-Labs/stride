@@ -20,7 +20,7 @@ import (
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	ibctesting "github.com/cosmos/ibc-go/v7/testing"
 
-	cmdcfg "github.com/Stride-Labs/stride/v7/cmd/strided/config"
+	cmdcfg "github.com/Stride-Labs/stride/v8/cmd/strided/config"
 )
 
 const Bech32Prefix = "stride"

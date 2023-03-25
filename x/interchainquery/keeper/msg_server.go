@@ -16,8 +16,8 @@ import (
 	ics23 "github.com/cosmos/ics23/go"
 	"github.com/spf13/cast"
 
-	"github.com/Stride-Labs/stride/v7/utils"
-	"github.com/Stride-Labs/stride/v7/x/interchainquery/types"
+	"github.com/Stride-Labs/stride/v8/utils"
+	"github.com/Stride-Labs/stride/v8/x/interchainquery/types"
 )
 
 type msgServer struct {
