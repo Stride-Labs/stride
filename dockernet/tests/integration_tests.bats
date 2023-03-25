@@ -165,20 +165,18 @@ setup_file() {
   # get initial balances
   sttoken_balance_start=$($STRIDE_MAIN_CMD q bank balances $(STRIDE_ADDRESS) --denom st$HOST_DENOM | GETBAL)
 
-  # Build the transfer args, including the JSON memo
+  # Send the IBC transfer with the JSON memo
+  transfer_msg_prefix="$HOST_MAIN_CMD tx ibc-transfer transfer transfer $HOST_TRANSFER_CHANNEL"
   if [[ "$CHAIN_NAME" == "GAIA" ]]; then
     # For GAIA (ibc-v3), pass the memo into the receiver field
-    transfer_args="$memo ${PACKET_FORWARD_STAKE_AMOUNT}${HOST_DENOM}"
+    $transfer_msg_prefix "$memo" ${PACKET_FORWARD_STAKE_AMOUNT}${HOST_DENOM} --from $HOST_VAL -y 
   elif [[ "$CHAIN_NAME" == "HOST" ]]; then
-    # For HOST (ibc-v5), pass the memo in the --memo field
-    transfer_args="$(STRIDE_ADDRESS) ${PACKET_FORWARD_STAKE_AMOUNT}${HOST_DENOM} --memo $memo"
+    # For HOST (ibc-v5), pass an address for a receiver and the memo in the --memo field
+    $transfer_msg_prefix $(STRIDE_ADDRESS) ${PACKET_FORWARD_STAKE_AMOUNT}${HOST_DENOM} --memo "$memo" --from $HOST_VAL -y 
   else
     # For all other hosts, skip this test
     skip "Packet forward liquid stake test is only run on GAIA and HOST"
   fi
-
-  # send the transfer
-  $HOST_MAIN_CMD tx ibc-transfer transfer transfer $HOST_TRANSFER_CHANNEL $transfer_args --from $HOST_VAL -y 
 
   # Wait for the transfer to complete
   WAIT_FOR_BALANCE_CHANGE STRIDE $(STRIDE_ADDRESS) st$HOST_DENOM
