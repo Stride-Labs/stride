@@ -62,7 +62,8 @@ func (s *UpgradeTestSuite) SetupStoreBeforeUpgrade() {
 			},
 		},
 	}
-	s.App.ClaimKeeper.SetParams(s.Ctx, params)
+	err := s.App.ClaimKeeper.SetParams(s.Ctx, params)
+	s.Require().NoError(err, "no error expected when setting claim params")
 
 	// Add claim records for the airdrop
 	claimRecords := []claimtypes.ClaimRecord{
@@ -85,7 +86,7 @@ func (s *UpgradeTestSuite) SetupStoreBeforeUpgrade() {
 			ActionCompleted:   []bool{false, false, false},
 		},
 	}
-	err := s.App.ClaimKeeper.SetClaimRecords(s.Ctx, claimRecords)
+	err = s.App.ClaimKeeper.SetClaimRecords(s.Ctx, claimRecords)
 	s.Require().NoError(err, "no error expected when setting claim record")
 
 	// Set vesting to 0s
