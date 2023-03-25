@@ -168,26 +168,34 @@ func (im IBCModule) OnRecvPacket(
 	// If the transfer was successful, then route to the corresponding module, if applicable
 	switch routingInfo := packetForwardMetadata.RoutingInfo.(type) {
 	case types.StakeibcPacketMetadata:
-		if autopilotParams.StakeibcActive {
-			im.keeper.Logger(ctx).Info("Forwaring packet from %s to stakeibc", newData.Sender)
+		// If stakeibc routing is inactive (but the packet had routing info in the memo) return an ack error
+		if !autopilotParams.StakeibcActive {
+			im.keeper.Logger(ctx).Error("Packet from %s had stakeibc routing info but autopilot stakeibc routing is disabled", newData.Sender)
+			return channeltypes.NewErrorAcknowledgement(types.ErrPacketForwardingInactive)
+		}
+		im.keeper.Logger(ctx).Info("Forwaring packet from %s to stakeibc", newData.Sender)
 
-			if err := im.keeper.TryLiquidStaking(ctx, packet, newData, routingInfo); err != nil {
-				im.keeper.Logger(ctx).Error("Error liquid staking packet from autopilot: %s", err.Error())
-				return channeltypes.NewErrorAcknowledgement(err)
-			}
+		// Try to liquid stake - return an ack error if it fails, otherwise return the ack generated from the earlier packet propogation
+		if err := im.keeper.TryLiquidStaking(ctx, packet, newData, routingInfo); err != nil {
+			im.keeper.Logger(ctx).Error("Error liquid staking packet from autopilot: %s", err.Error())
+			return channeltypes.NewErrorAcknowledgement(err)
 		}
 
 		return ack
 
 	case types.ClaimPacketMetadata:
-		if autopilotParams.ClaimActive {
-			im.keeper.Logger(ctx).Info("Forwaring packet from %s to claim", newData.Sender)
-
-			// if err := im.keeper.TryUpdateAirdropClaim(ctx, newData, routingInfo); err != nil {
-			// 	im.keeper.Logger(ctx).Error("Error updating airdrop claim from autopilot: %s", err.Error())
-			// 	return channeltypes.NewErrorAcknowledgement(err)
-			// }
+		// If claim routing is inactive (but the packet had routing info in the memo) return an ack error
+		if !autopilotParams.ClaimActive {
+			im.keeper.Logger(ctx).Error("Packet from %s had claim routing info but autopilot claim routing is disabled", newData.Sender)
+			return channeltypes.NewErrorAcknowledgement(types.ErrPacketForwardingInactive)
 		}
+
+		im.keeper.Logger(ctx).Info("Forwaring packet from %s to claim", newData.Sender)
+
+		// if err := im.keeper.TryUpdateAirdropClaim(ctx, newData, routingInfo); err != nil {
+		// 	im.keeper.Logger(ctx).Error("Error updating airdrop claim from autopilot: %s", err.Error())
+		// 	return channeltypes.NewErrorAcknowledgement(err)
+		// }
 
 		return ack
 

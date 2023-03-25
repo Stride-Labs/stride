@@ -12,4 +12,5 @@ var (
 	ErrInvalidModuleRoutes       = errorsmod.Register(ModuleName, 1504, "invalid number of module routes, only 1 module is allowed at a time")
 	ErrUnsupportedAutopilotRoute = errorsmod.Register(ModuleName, 1505, "unsupported autpilot route")
 	ErrInvalidReceiverAddress    = errorsmod.Register(ModuleName, 1506, "receiver address must be specified when using autopilot")
+	ErrPacketForwardingInactive  = errorsmod.Register(ModuleName, 1507, "autopilot packet forwarding is disabled")
 )

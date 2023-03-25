@@ -24,7 +24,7 @@ func (k Keeper) TryLiquidStaking(
 ) error {
 	params := k.GetParams(ctx)
 	if !params.StakeibcActive {
-		return errors.New("packet forwarding param is not active")
+		return errorsmod.Wrapf(types.ErrPacketForwardingInactive, "autopilot stakeibc routing is inactive")
 	}
 
 	// In this case, we can't process a liquid staking transaction, because we're dealing with STRD tokens

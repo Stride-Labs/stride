@@ -86,7 +86,7 @@ func ParsePacketMetadata(metadata string) (*PacketForwardMetadata, error) {
 
 	// Confirm a receiver address was supplied
 	if raw.Autopilot.Receiver == "" {
-		return nil, ErrInvalidReceiverAddress
+		return nil, errorsmod.Wrapf(ErrInvalidPacketMetadata, ErrInvalidReceiverAddress.Error())
 	}
 
 	// Parse the packet info into the specific module type
