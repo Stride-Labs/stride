@@ -18,6 +18,8 @@ import (
 	ibcexported "github.com/cosmos/ibc-go/v5/modules/core/exported"
 )
 
+const MaxMemoCharLength = 256
+
 // IBC MODULE IMPLEMENTATION
 // IBCModule implements the ICS26 interface for transfer given the transfer keeper.
 // TODO: Use IBCMiddleware struct
@@ -125,6 +127,14 @@ func (im IBCModule) OnRecvPacket(
 		return channeltypes.NewErrorAcknowledgement(err)
 	}
 
+	// Error any transactions with a Memo or Receiver field are greater than the max characters
+	if len(data.Memo) > MaxMemoCharLength {
+		return channeltypes.NewErrorAcknowledgement(errorsmod.Wrapf(types.ErrInvalidMemoSize, "memo length: %s", len(data.Memo)))
+	}
+	if len(data.Receiver) > MaxMemoCharLength {
+		return channeltypes.NewErrorAcknowledgement(errorsmod.Wrapf(types.ErrInvalidMemoSize, "receiver length: %s", len(data.Receiver)))
+	}
+
 	// ibc-go v5 has a Memo field that can store forwarding info
 	// For older version of ibc-go, the data must be stored in the receiver field
 	var metadata string
@@ -132,6 +142,14 @@ func (im IBCModule) OnRecvPacket(
 		metadata = data.Memo
 	} else { // before ibc-go v5
 		metadata = data.Receiver
+	}
+
+	// If a valid receiver address has been provided and no memo,
+	// this is clearly just an normal IBC transfer
+	// Pass down the stack immediately instead of parsing
+	_, err := sdk.AccAddressFromBech32(data.Receiver)
+	if err != nil && data.Memo == "" {
+		return im.app.OnRecvPacket(ctx, packet, relayer)
 	}
 
 	// parse out any forwarding info
@@ -149,7 +167,7 @@ func (im IBCModule) OnRecvPacket(
 	// Modify the packet data by replacing the JSON metadata field with a receiver address
 	// to allow the packet to continue down the stack
 	newData := data
-	newData.Receiver = packetForwardMetadata.Reciever
+	newData.Receiver = packetForwardMetadata.Receiver
 	bz, err := transfertypes.ModuleCdc.MarshalJSON(&newData)
 	if err != nil {
 		return channeltypes.NewErrorAcknowledgement(err)
@@ -189,7 +207,6 @@ func (im IBCModule) OnRecvPacket(
 			im.keeper.Logger(ctx).Error("Packet from %s had claim routing info but autopilot claim routing is disabled", newData.Sender)
 			return channeltypes.NewErrorAcknowledgement(types.ErrPacketForwardingInactive)
 		}
-
 		im.keeper.Logger(ctx).Info("Forwaring packet from %s to claim", newData.Sender)
 
 		if err := im.keeper.TryUpdateAirdropClaim(ctx, newData, routingInfo); err != nil {

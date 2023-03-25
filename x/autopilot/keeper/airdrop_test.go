@@ -71,6 +71,26 @@ func (s *KeeperTestSuite) TestAirdropOnRecvPacket() {
 		airdropShouldUpdate   bool
 	}{
 		{
+			name:             "successful receiver routing schema, but routing inactive",
+			forwardingActive: false,
+			packetData: transfertypes.FungibleTokenPacketData{
+				Receiver: getClaimPacketMetadata(strideAddress, evmosAirdropId),
+				Memo:     "",
+			},
+			transferShouldSucceed: true,
+			airdropShouldUpdate:   false,
+		},
+		{
+			name:             "successful memo routing schema, but routing inactive",
+			forwardingActive: false,
+			packetData: transfertypes.FungibleTokenPacketData{
+				Receiver: getClaimPacketMetadata(strideAddress, evmosAirdropId),
+				Memo:     "",
+			},
+			transferShouldSucceed: true,
+			airdropShouldUpdate:   false,
+		},
+		{
 			name:             "successful airdrop update from receiver",
 			forwardingActive: true,
 			packetData: transfertypes.FungibleTokenPacketData{
@@ -141,6 +161,16 @@ func (s *KeeperTestSuite) TestAirdropOnRecvPacket() {
 			airdropShouldUpdate:   false,
 		},
 		{
+			name:             "normal transfer packet - different middleware",
+			forwardingActive: true,
+			packetData: transfertypes.FungibleTokenPacketData{
+				Receiver: strideAddress,
+				Memo:     `{ "wasmd": { } }`,
+			},
+			transferShouldSucceed: true,
+			airdropShouldUpdate:   false,
+		},
+		{
 			name:             "invalid autopilot JSON - no receiver",
 			forwardingActive: true,
 			packetData: transfertypes.FungibleTokenPacketData{
@@ -186,7 +216,7 @@ func (s *KeeperTestSuite) TestAirdropOnRecvPacket() {
 			err = s.App.ClaimKeeper.SetClaimRecord(s.Ctx, oldClaimRecord)
 			s.Require().NoError(err, "no error expected when setting claim record")
 
-			// Store the expected new cliam record which should have the address changed
+			// Store the expected new claim record which should have the address changed
 			expectedNewClaimRecord := oldClaimRecord
 			expectedNewClaimRecord.Address = strideAddress
 

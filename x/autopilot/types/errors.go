@@ -13,4 +13,5 @@ var (
 	ErrUnsupportedAutopilotRoute = errorsmod.Register(ModuleName, 1505, "unsupported autpilot route")
 	ErrInvalidReceiverAddress    = errorsmod.Register(ModuleName, 1506, "receiver address must be specified when using autopilot")
 	ErrPacketForwardingInactive  = errorsmod.Register(ModuleName, 1507, "autopilot packet forwarding is disabled")
+	ErrInvalidMemoSize           = errorsmod.Register(ModuleName, 1508, "the memo or receiver field exceeded the max allowable size")
 )

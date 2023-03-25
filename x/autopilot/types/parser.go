@@ -18,7 +18,7 @@ type RawPacketMetadata struct {
 }
 
 type PacketForwardMetadata struct {
-	Reciever    string
+	Receiver    string
 	RoutingInfo ModuleRoutingInfo
 }
 
@@ -111,7 +111,7 @@ func ParsePacketMetadata(metadata string) (*PacketForwardMetadata, error) {
 	}
 
 	return &PacketForwardMetadata{
-		Reciever:    raw.Autopilot.Receiver,
+		Receiver:    raw.Autopilot.Receiver,
 		RoutingInfo: routingInfo,
 	}, nil
 }
