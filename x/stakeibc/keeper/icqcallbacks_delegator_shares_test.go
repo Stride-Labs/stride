@@ -8,10 +8,10 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
-	epochtypes "github.com/Stride-Labs/stride/v7/x/epochs/types"
-	icqtypes "github.com/Stride-Labs/stride/v7/x/interchainquery/types"
-	stakeibckeeper "github.com/Stride-Labs/stride/v7/x/stakeibc/keeper"
-	stakeibctypes "github.com/Stride-Labs/stride/v7/x/stakeibc/types"
+	epochtypes "github.com/Stride-Labs/stride/v8/x/epochs/types"
+	icqtypes "github.com/Stride-Labs/stride/v8/x/interchainquery/types"
+	stakeibckeeper "github.com/Stride-Labs/stride/v8/x/stakeibc/keeper"
+	stakeibctypes "github.com/Stride-Labs/stride/v8/x/stakeibc/types"
 )
 
 type DelegatorSharesICQCallbackState struct {

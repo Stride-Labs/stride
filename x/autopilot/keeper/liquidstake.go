@@ -11,9 +11,9 @@ import (
 	transfertypes "github.com/cosmos/ibc-go/v5/modules/apps/transfer/types"
 	channeltypes "github.com/cosmos/ibc-go/v5/modules/core/04-channel/types"
 
-	"github.com/Stride-Labs/stride/v7/x/autopilot/types"
-	stakeibckeeper "github.com/Stride-Labs/stride/v7/x/stakeibc/keeper"
-	stakeibctypes "github.com/Stride-Labs/stride/v7/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v8/x/autopilot/types"
+	stakeibckeeper "github.com/Stride-Labs/stride/v8/x/stakeibc/keeper"
+	stakeibctypes "github.com/Stride-Labs/stride/v8/x/stakeibc/types"
 )
 
 func (k Keeper) TryLiquidStaking(

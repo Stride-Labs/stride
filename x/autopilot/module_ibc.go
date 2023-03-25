@@ -12,8 +12,8 @@ import (
 	channeltypes "github.com/cosmos/ibc-go/v5/modules/core/04-channel/types"
 	porttypes "github.com/cosmos/ibc-go/v5/modules/core/05-port/types"
 
-	"github.com/Stride-Labs/stride/v7/x/autopilot/keeper"
-	"github.com/Stride-Labs/stride/v7/x/autopilot/types"
+	"github.com/Stride-Labs/stride/v8/x/autopilot/keeper"
+	"github.com/Stride-Labs/stride/v8/x/autopilot/types"
 
 	ibcexported "github.com/cosmos/ibc-go/v5/modules/core/exported"
 )
