@@ -85,7 +85,7 @@ func ParsePacketMetadata(metadata string) (*PacketForwardMetadata, error) {
 	}
 
 	// Confirm a receiver address was supplied
-	if raw.Autopilot.Receiver == "" {
+	if _, err := sdk.AccAddressFromBech32(raw.Autopilot.Receiver); err != nil {
 		return nil, errorsmod.Wrapf(ErrInvalidPacketMetadata, ErrInvalidReceiverAddress.Error())
 	}
 
