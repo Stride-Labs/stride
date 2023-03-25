@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"errors"
+	"fmt"
 
 	errorsmod "cosmossdk.io/errors"
 
@@ -9,33 +10,31 @@ import (
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	transfertypes "github.com/cosmos/ibc-go/v5/modules/apps/transfer/types"
 	channeltypes "github.com/cosmos/ibc-go/v5/modules/core/04-channel/types"
-	ibcexported "github.com/cosmos/ibc-go/v5/modules/core/exported"
 
-	"github.com/Stride-Labs/stride/v7/x/autopilot/types"
-	stakeibckeeper "github.com/Stride-Labs/stride/v7/x/stakeibc/keeper"
-	stakeibctypes "github.com/Stride-Labs/stride/v7/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v8/x/autopilot/types"
+	stakeibckeeper "github.com/Stride-Labs/stride/v8/x/stakeibc/keeper"
+	stakeibctypes "github.com/Stride-Labs/stride/v8/x/stakeibc/types"
 )
 
 func (k Keeper) TryLiquidStaking(
 	ctx sdk.Context,
 	packet channeltypes.Packet,
 	newData transfertypes.FungibleTokenPacketData,
-	packetMetadata *types.StakeibcPacketMetadata,
-	ack ibcexported.Acknowledgement,
-) ibcexported.Acknowledgement {
+	packetMetadata types.StakeibcPacketMetadata,
+) error {
 	params := k.GetParams(ctx)
 	if !params.StakeibcActive {
-		return channeltypes.NewErrorAcknowledgement(errors.New("packet forwarding param is not active"))
+		return errorsmod.Wrapf(types.ErrPacketForwardingInactive, "autopilot stakeibc routing is inactive")
 	}
 
 	// In this case, we can't process a liquid staking transaction, because we're dealing with STRD tokens
 	if transfertypes.ReceiverChainIsSource(packet.GetSourcePort(), packet.GetSourceChannel(), newData.Denom) {
-		return channeltypes.NewErrorAcknowledgement(errors.New("the native token is not supported for liquid staking"))
+		return errors.New("the native token is not supported for liquid staking")
 	}
 
 	amount, ok := sdk.NewIntFromString(newData.Amount)
 	if !ok {
-		return channeltypes.NewErrorAcknowledgement(errors.New("not a parsable amount field"))
+		return errors.New("not a parsable amount field")
 	}
 
 	// Note: newData.denom is base denom e.g. uatom - not ibc/xxx
@@ -46,18 +45,19 @@ func (k Keeper) TryLiquidStaking(
 
 	hostZone, err := k.stakeibcKeeper.GetHostZoneFromHostDenom(ctx, token.Denom)
 	if err != nil {
-		return channeltypes.NewErrorAcknowledgement(err)
+		return fmt.Errorf("host zone not found for denom (%s)", token.Denom)
 	}
 
 	if hostZone.IbcDenom != ibcDenom {
-		return channeltypes.NewErrorAcknowledgement(errors.New("ibc denom is not equal to host zone ibc denom"))
+		return fmt.Errorf("ibc denom %s is not equal to host zone ibc denom %s", ibcDenom, hostZone.IbcDenom)
 	}
 
-	err = k.RunLiquidStake(ctx, packetMetadata.StrideAddress, token)
+	strideAddress, err := sdk.AccAddressFromBech32(packetMetadata.StrideAddress)
 	if err != nil {
-		ack = channeltypes.NewErrorAcknowledgement(err)
+		return errorsmod.Wrapf(sdkerrors.ErrInvalidAddress, "invalid stride_address (%s) in autopilot memo", strideAddress)
 	}
-	return ack
+
+	return k.RunLiquidStake(ctx, strideAddress, token)
 }
 
 func (k Keeper) RunLiquidStake(ctx sdk.Context, addr sdk.AccAddress, token sdk.Coin) error {

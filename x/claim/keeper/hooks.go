@@ -7,10 +7,10 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
-	epochstypes "github.com/Stride-Labs/stride/v7/x/epochs/types"
-	stakingibctypes "github.com/Stride-Labs/stride/v7/x/stakeibc/types"
+	epochstypes "github.com/Stride-Labs/stride/v8/x/epochs/types"
+	stakingibctypes "github.com/Stride-Labs/stride/v8/x/stakeibc/types"
 
-	"github.com/Stride-Labs/stride/v7/x/claim/types"
+	"github.com/Stride-Labs/stride/v8/x/claim/types"
 )
 
 func (k Keeper) AfterDelegationModified(ctx sdk.Context, delAddr sdk.AccAddress, valAddr sdk.ValAddress) error {
@@ -50,11 +50,14 @@ func (k Keeper) AfterEpochEnd(ctx sdk.Context, epochInfo epochstypes.EpochInfo) 
 	// check if epochInfo.Identifier starts with "airdrop"
 	k.Logger(ctx).Info(fmt.Sprintf("[CLAIM] checking if epoch %s is an airdrop epoch", epochInfo.Identifier))
 	if strings.HasPrefix(epochInfo.Identifier, "airdrop-") {
+
 		airdropIdentifier := strings.TrimPrefix(epochInfo.Identifier, "airdrop-")
 		k.Logger(ctx).Info(fmt.Sprintf("[CLAIM] trimmed airdrop identifier: %s", airdropIdentifier))
-		airdropFound := k.GetAirdropByIdentifier(ctx, airdropIdentifier)
-		k.Logger(ctx).Info(fmt.Sprintf("[CLAIM] airdrop found: %v", airdropFound))
-		if airdropFound == nil {
+
+		airdrop := k.GetAirdropByIdentifier(ctx, airdropIdentifier)
+		k.Logger(ctx).Info(fmt.Sprintf("[CLAIM] airdrop found: %v", airdrop))
+
+		if airdrop != nil {
 			k.Logger(ctx).Info(fmt.Sprintf("[CLAIM] resetting claims for airdrop %s", epochInfo.Identifier))
 			err := k.ResetClaimStatus(ctx, airdropIdentifier)
 			if err != nil {

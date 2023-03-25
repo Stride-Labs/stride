@@ -14,10 +14,10 @@ import (
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	"github.com/gogo/protobuf/proto"
 
-	"github.com/Stride-Labs/stride/v7/utils"
-	"github.com/Stride-Labs/stride/v7/x/claim/types"
-	vestingtypes "github.com/Stride-Labs/stride/v7/x/claim/vesting/types"
-	epochstypes "github.com/Stride-Labs/stride/v7/x/epochs/types"
+	"github.com/Stride-Labs/stride/v8/utils"
+	"github.com/Stride-Labs/stride/v8/x/claim/types"
+	vestingtypes "github.com/Stride-Labs/stride/v8/x/claim/vesting/types"
+	epochstypes "github.com/Stride-Labs/stride/v8/x/epochs/types"
 )
 
 func (k Keeper) LoadAllocationData(ctx sdk.Context, allocationData string) bool {
@@ -219,7 +219,7 @@ func (k Keeper) ResetClaimStatus(ctx sdk.Context, airdropIdentifier string) erro
 		}
 		// then, reset the airdrop ClaimedSoFar
 		k.Logger(ctx).Info("[CLAIM] ResetClaimedSoFar...")
-		if err := k.ResetClaimedSoFar(ctx); err != nil {
+		if err := k.ResetClaimedSoFar(ctx, airdropIdentifier); err != nil {
 			k.Logger(ctx).Info(fmt.Sprintf("[CLAIM] ResetClaimedSoFar %v", err.Error()))
 			return err
 		}
@@ -778,7 +778,7 @@ func (k Keeper) IncrementClaimedSoFar(ctx sdk.Context, identifier string, amount
 }
 
 // ResetClaimedSoFar resets ClaimedSoFar for a all airdrops
-func (k Keeper) ResetClaimedSoFar(ctx sdk.Context) error {
+func (k Keeper) ResetClaimedSoFar(ctx sdk.Context, airdropIdentifier string) error {
 	params, err := k.GetParams(ctx)
 	k.Logger(ctx).Info(fmt.Sprintf("[CLAIM] params.Airdrops %v", params.Airdrops))
 	if err != nil {
@@ -787,7 +787,10 @@ func (k Keeper) ResetClaimedSoFar(ctx sdk.Context) error {
 
 	newAirdrops := []*types.Airdrop{}
 	for _, airdrop := range params.Airdrops {
-		airdrop.ClaimedSoFar = sdkmath.ZeroInt()
+		if airdrop.AirdropIdentifier == airdropIdentifier {
+			airdrop.ClaimedSoFar = sdkmath.ZeroInt()
+			k.Logger(ctx).Info(fmt.Sprintf("[CLAIM] resetting claimSoFar for %s", airdropIdentifier))
+		}
 		newAirdrops = append(newAirdrops, airdrop)
 	}
 	params.Airdrops = newAirdrops

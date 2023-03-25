@@ -7,7 +7,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/spf13/cobra"
 
-	"github.com/Stride-Labs/stride/v7/x/records/types"
+	"github.com/Stride-Labs/stride/v8/x/records/types"
 )
 
 func CmdListUserRedemptionRecord() *cobra.Command {
