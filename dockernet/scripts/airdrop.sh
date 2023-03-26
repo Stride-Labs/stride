@@ -79,7 +79,7 @@ $STRIDE_MAIN_CMD query bank balances stride1nf6v2paty9m22l3ecm7dpakq2c92ueyununa
 echo "Testing airdrop for coin types != 118..."
 
 # Transfer uatom from gaia to stride, so that we can liquid stake later
-$GAIA_MAIN_CMD tx bank send cosmos1uk4ze0x4nvh4fk0xm4jdud58eqn4yxhrgl2scj cosmos16lmf7t0jhaatan6vnxlgv47h2wf0k5lnhvye5h 1000000uatom --from ${GAIA_VAL_PREFIX}1 -y 
+$GAIA_MAIN_CMD tx bank send cosmos1uk4ze0x4nvh4fk0xm4jdud58eqn4yxhrgl2scj cosmos16lmf7t0jhaatan6vnxlgv47h2wf0k5lnhvye5h 1uatom --from ${GAIA_VAL_PREFIX}1 -y 
 
 #     setup: set an airdrop allocation for the mechanically converted stride address, converted using utils.ConvertAddressToStrideAddress()
 #        mechanically-converted stride address: stride18y9zdh00fr2t6uw20anr6e89svqmfddgxfsxkh
@@ -101,8 +101,8 @@ $STRIDE_MAIN_CMD q claim claim-record stride stride16lmf7t0jhaatan6vnxlgv47h2wf0
 #                    },
 #                }
 #               Receiver: "xxx"
-$GAIA_MAIN_CMD tx ibc-transfer transfer transfer channel-0 stride1qz677nj82mszxjuh4mzy52zv5md5qrgg60pxpc 1uatom --from rly2 -y \
-         --note '{"autopilot": {"receiver": "stride1qz677nj82mszxjuh4mzy52zv5md5qrgg60pxpc","claim": { "stride_address": "stride1qz677nj82mszxjuh4mzy52zv5md5qrgg60pxpc", "airdrop_id": "stride" } }}'
+memo='{"autopilot": {"receiver": "stride1qz677nj82mszxjuh4mzy52zv5md5qrgg60pxpc","claim": { "stride_address": "stride1qz677nj82mszxjuh4mzy52zv5md5qrgg60pxpc", "airdrop_id": "stride" } }}'
+$GAIA_MAIN_CMD tx ibc-transfer transfer transfer channel-0 "$memo" 1uatom --from rly2 -y 
 
 #         c. query the claims module 
 #           - to verify nothing is eligible from the old address anymore stride18y9zdh00fr2t6uw20anr6e89svqmfddgxfsxkh

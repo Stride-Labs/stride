@@ -60,7 +60,7 @@ func CreateUpgradeHandler(
 		autopilotParams := autopilottypes.DefaultParams()
 		autopilotKeeper.SetParams(ctx, autopilotParams)
 
-		ctx.Logger().Info("Running module mogrations...")
+		ctx.Logger().Info("Running module migrations...")
 		return mm.RunMigrations(ctx, configurator, vm)
 	}
 }
