@@ -56,7 +56,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 These changes do not affect any on-chain functionality, but have been implemented since `v7.0.0`.
 1. Fixed typo in docs for adding a new host ([75f6b6b](https://github.com/Stride-Labs/stride/commit/75f6b6b06fa9058b200eba9395f4b516941bba69))
 2. Automatically Build Docker Image on New Release (in CI) ([26aaf00](https://github.com/Stride-Labs/stride/commit/26aaf00e636c317e5a57cc29a973e1f476072976)),([4febc23](https://github.com/Stride-Labs/stride/commit/4febc230f40dba8c7e1d6443677f8eb0ba34c00a))
-3. Airdrop Testing Scripts ([]())
+3. Airdrop Testing Scripts ([f305dc](https://github.com/Stride-Labs/stride/commit/f305dc16fb91ec6526292ab039c8dd29a66f619b))
 
 ## [v7.0.0](https://github.com/Stride-Labs/stride/releases/tag/v7.0.0) - 2023-03-12
 ### On-Chain changes
