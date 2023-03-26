@@ -43,15 +43,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [v8.0.0](https://github.com/Stride-Labs/stride/releases/tag/v8.0.0) - 2023-03-23
 ### On-Chain changes
-1. v8 Upgrade Handler (incl. adding evmos airdrop and reseting existing airdrops) ([]())
-2. Add Multiple Validators in One Transaction ([]())
+1. Add Multiple Validators in One Transaction ([4ce1317](https://github.com/Stride-Labs/stride/commit/4ce1317073f4119a891229530677603c10e5700c)))
+2. Add new claim queries ([7e7335a](https://github.com/Stride-Labs/stride/commit/7e7335a6466abc13fd51aed1f7c76d621fb3d524))
+3. Autopilot JSON Memo ([d16d7f2](https://github.com/Stride-Labs/stride/commit/d16d7f2676dc6182dd0fd655530136ff3e5780ad))
+4. Enable Delegator Shares Query to Correct DelegationAmt ([5868b82](https://github.com/Stride-Labs/stride/commit/5868b82b60e8548f8e791f1d90dfa9c05031127f))
+5. Add Unit Test for claim module AfterEpochEnd ([29fce22](https://github.com/Stride-Labs/stride/commit/29fce22718002c5bcc76e0dc889f80cd4e392804))
+6. Airdrop Safety Checks ([a7ebe87](https://github.com/Stride-Labs/stride/commit/a7ebe87c7d133b1d40de6d6c3297777f233d61fd))
+7. v8 Upgrade Handler ([31c5dc4](https://github.com/Stride-Labs/stride/commit/31c5dc412019e2e69ccf9cba8fcc5d793ccd6a64))
+8. v8 Import Paths ([0a42766](https://github.com/Stride-Labs/stride/commit/0a42766e900310ce31a9b0b62354229924cb1ee9))
 
 ### Off-Chain changes
 These changes do not affect any on-chain functionality, but have been implemented since `v7.0.0`.
-1. Enable Delegator Shares Query to Correct DelegationAmt ([5868b82](https://github.com/Stride-Labs/stride/commit/5868b82b60e8548f8e791f1d90dfa9c05031127f))
-2. Fixed typo in docs for adding a new host ([75f6b6b](https://github.com/Stride-Labs/stride/commit/75f6b6b06fa9058b200eba9395f4b516941bba69))
-3. Automatically Build Docker Image on New Release (in CI) ([26aaf00](https://github.com/Stride-Labs/stride/commit/26aaf00e636c317e5a57cc29a973e1f476072976)),([4febc23](https://github.com/Stride-Labs/stride/commit/4febc230f40dba8c7e1d6443677f8eb0ba34c00a))
-4. Add new claim queries ([7e7335a](https://github.com/Stride-Labs/stride/commit/7e7335a6466abc13fd51aed1f7c76d621fb3d524))
+1. Fixed typo in docs for adding a new host ([75f6b6b](https://github.com/Stride-Labs/stride/commit/75f6b6b06fa9058b200eba9395f4b516941bba69))
+2. Automatically Build Docker Image on New Release (in CI) ([26aaf00](https://github.com/Stride-Labs/stride/commit/26aaf00e636c317e5a57cc29a973e1f476072976)),([4febc23](https://github.com/Stride-Labs/stride/commit/4febc230f40dba8c7e1d6443677f8eb0ba34c00a))
+3. Airdrop Testing Scripts ([]())
 
 ## [v7.0.0](https://github.com/Stride-Labs/stride/releases/tag/v7.0.0) - 2023-03-12
 ### On-Chain changes
