@@ -8,12 +8,14 @@ import (
 )
 
 const (
-	// DefaultActive is the default value for the active param (set to true)
-	DefaultActive = false
+	// Default active value for each autopilot supported module
+	DefaultStakeibcActive = false
+	DefaultClaimActive    = true
 )
 
 // KeyActive is the store key for Params
-var KeyActive = []byte("Active")
+var KeyStakeibcActive = []byte("StakeibcActive")
+var KeyClaimActive = []byte("ClaimActive")
 
 var _ paramtypes.ParamSet = (*Params)(nil)
 
@@ -23,27 +25,32 @@ func ParamKeyTable() paramtypes.KeyTable {
 }
 
 // NewParams creates a new Params instance
-func NewParams(active bool) Params {
+func NewParams(stakeibcActive, claimActive bool) Params {
 	return Params{
-		Active: active,
+		StakeibcActive: stakeibcActive,
+		ClaimActive:    claimActive,
 	}
 }
 
 // DefaultParams returns a default set of parameters
 func DefaultParams() Params {
-	return NewParams(DefaultActive)
+	return NewParams(DefaultStakeibcActive, DefaultClaimActive)
 }
 
 // ParamSetPairs get the params.ParamSet
 func (p *Params) ParamSetPairs() paramtypes.ParamSetPairs {
 	return paramtypes.ParamSetPairs{
-		paramtypes.NewParamSetPair(KeyActive, &p.Active, validateActive),
+		paramtypes.NewParamSetPair(KeyStakeibcActive, &p.StakeibcActive, validateBool),
+		paramtypes.NewParamSetPair(KeyClaimActive, &p.ClaimActive, validateBool),
 	}
 }
 
 // Validate validates the set of params
 func (p Params) Validate() error {
-	if err := validateActive(p.Active); err != nil {
+	if err := validateBool(p.StakeibcActive); err != nil {
+		return err
+	}
+	if err := validateBool(p.ClaimActive); err != nil {
 		return err
 	}
 
@@ -56,7 +63,7 @@ func (p Params) String() string {
 	return string(out)
 }
 
-func validateActive(i interface{}) error {
+func validateBool(i interface{}) error {
 	_, ok := i.(bool)
 	if !ok {
 		return fmt.Errorf("invalid parameter type: %T", i)

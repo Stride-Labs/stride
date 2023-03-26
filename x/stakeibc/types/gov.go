@@ -2,64 +2,84 @@ package types
 
 import (
 	"fmt"
+	"strings"
 
+	errorsmod "cosmossdk.io/errors"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
 )
 
 const (
-	ProposalTypeAddValidator = "AddValidator"
+	ProposalTypeAddValidators = "AddValidators"
 )
 
 func init() {
-	govtypes.RegisterProposalType(ProposalTypeAddValidator)
+	govtypes.RegisterProposalType(ProposalTypeAddValidators)
 }
 
 var (
-	_ govtypes.Content = &AddValidatorProposal{}
+	_ govtypes.Content = &AddValidatorsProposal{}
 )
 
-func NewAddValidatorProposal(title, description, hostZone, name, address string) govtypes.Content {
-	return &AddValidatorProposal{
-		Title:            title,
-		Description:      description,
-		HostZone:         hostZone,
-		ValidatorName:    name,
-		ValidatorAddress: address,
+func NewAddValidatorsProposal(title, description, hostZone string, validators []*Validator) govtypes.Content {
+	return &AddValidatorsProposal{
+		Title:       title,
+		Description: description,
+		HostZone:    hostZone,
+		Validators:  validators,
 	}
 }
 
-func (p *AddValidatorProposal) GetTitle() string { return p.Title }
+func (p *AddValidatorsProposal) GetTitle() string { return p.Title }
 
-func (p *AddValidatorProposal) GetDescription() string { return p.Description }
+func (p *AddValidatorsProposal) GetDescription() string { return p.Description }
 
-func (p *AddValidatorProposal) ProposalRoute() string { return RouterKey }
+func (p *AddValidatorsProposal) ProposalRoute() string { return RouterKey }
 
-func (p *AddValidatorProposal) ProposalType() string {
-	return ProposalTypeAddValidator
+func (p *AddValidatorsProposal) ProposalType() string {
+	return ProposalTypeAddValidators
 }
 
-func (p *AddValidatorProposal) ValidateBasic() error {
+func (p *AddValidatorsProposal) ValidateBasic() error {
 	err := govtypes.ValidateAbstract(p)
 	if err != nil {
 		return err
 	}
 
-	if len(p.ValidatorAddress) == 0 {
-		return ErrRequiredFieldEmpty
+	if len(p.Validators) == 0 {
+		return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "at least one validator must be provided")
 	}
-	if len(p.ValidatorName) == 0 {
-		return ErrRequiredFieldEmpty
+
+	for i, validator := range p.Validators {
+		if len(strings.TrimSpace(validator.Name)) == 0 {
+			return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "validator name is required (index %d)", i)
+		}
+		if len(strings.TrimSpace(validator.Address)) == 0 {
+			return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "validator address is required (index %d)", i)
+		}
 	}
 
 	return nil
 }
 
-func (p AddValidatorProposal) String() string {
-	return fmt.Sprintf(`Add Validator Proposal:
+func (p AddValidatorsProposal) String() string {
+	return fmt.Sprintf(`Add Validators Proposal:
 	Title:            %s
 	Description:      %s
 	HostZone:         %s
-	ValidatorName:    %s
-	ValidatorAddress: %s
-  `, p.Title, p.Description, p.HostZone, p.ValidatorName, p.ValidatorAddress)
+	Validators:       %+v
+  `, p.Title, p.Description, p.HostZone, p.Validators)
+}
+
+func (v *Validator) Equal(other *Validator) bool {
+	if v == nil || other == nil {
+		return false
+	}
+	if v.Address != other.Address {
+		return false
+	}
+	if v.Name != other.Name {
+		return false
+	}
+	return true
 }

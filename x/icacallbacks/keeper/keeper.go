@@ -14,8 +14,8 @@ import (
 
 	ibckeeper "github.com/cosmos/ibc-go/v5/modules/core/keeper"
 
-	"github.com/Stride-Labs/stride/v7/x/icacallbacks/types"
-	recordstypes "github.com/Stride-Labs/stride/v7/x/records/types"
+	"github.com/Stride-Labs/stride/v8/x/icacallbacks/types"
+	recordstypes "github.com/Stride-Labs/stride/v8/x/records/types"
 
 	channeltypes "github.com/cosmos/ibc-go/v5/modules/core/04-channel/types"
 

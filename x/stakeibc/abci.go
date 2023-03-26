@@ -6,8 +6,8 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/telemetry"
 
-	"github.com/Stride-Labs/stride/v7/x/stakeibc/keeper"
-	"github.com/Stride-Labs/stride/v7/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v8/x/stakeibc/keeper"
+	"github.com/Stride-Labs/stride/v8/x/stakeibc/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )

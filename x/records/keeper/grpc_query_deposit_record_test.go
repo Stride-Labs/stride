@@ -10,13 +10,13 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	keepertest "github.com/Stride-Labs/stride/v7/testutil/keeper"
-	"github.com/Stride-Labs/stride/v7/testutil/nullify"
+	keepertest "github.com/Stride-Labs/stride/v8/testutil/keeper"
+	"github.com/Stride-Labs/stride/v8/testutil/nullify"
 
 	sdkmath "cosmossdk.io/math"
 
-	"github.com/Stride-Labs/stride/v7/x/records/keeper"
-	"github.com/Stride-Labs/stride/v7/x/records/types"
+	"github.com/Stride-Labs/stride/v8/x/records/keeper"
+	"github.com/Stride-Labs/stride/v8/x/records/types"
 )
 
 func createNDepositRecord(keeper *keeper.Keeper, ctx sdk.Context, n int) []types.DepositRecord {
