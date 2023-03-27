@@ -7,8 +7,8 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
-	"github.com/Stride-Labs/stride/v7/x/claim/keeper"
-	"github.com/Stride-Labs/stride/v7/x/claim/types"
+	"github.com/Stride-Labs/stride/v8/x/claim/keeper"
+	"github.com/Stride-Labs/stride/v8/x/claim/types"
 )
 
 // NewHandler returns claim module messages
@@ -23,9 +23,6 @@ func NewHandler(k keeper.Keeper) sdk.Handler {
 			return sdk.WrapServiceResult(ctx, res, err)
 		case *types.MsgClaimFreeAmount:
 			res, err := msgServer.ClaimFreeAmount(sdk.WrapSDKContext(ctx), msg)
-			return sdk.WrapServiceResult(ctx, res, err)
-		case *types.MsgCreateAirdrop:
-			res, err := msgServer.CreateAirdrop(sdk.WrapSDKContext(ctx), msg)
 			return sdk.WrapServiceResult(ctx, res, err)
 		case *types.MsgDeleteAirdrop:
 			res, err := msgServer.DeleteAirdrop(sdk.WrapSDKContext(ctx), msg)

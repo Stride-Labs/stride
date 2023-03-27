@@ -7,10 +7,8 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
-	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
-
-	"github.com/Stride-Labs/stride/v7/x/stakeibc/keeper"
-	"github.com/Stride-Labs/stride/v7/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v8/x/stakeibc/keeper"
+	"github.com/Stride-Labs/stride/v8/x/stakeibc/types"
 )
 
 // NewHandler ...
@@ -40,8 +38,8 @@ func NewHandler(k keeper.Keeper) sdk.Handler {
 		case *types.MsgRebalanceValidators:
 			res, err := msgServer.RebalanceValidators(sdk.WrapSDKContext(ctx), msg)
 			return sdk.WrapServiceResult(ctx, res, err)
-		case *types.MsgAddValidator:
-			res, err := msgServer.AddValidator(sdk.WrapSDKContext(ctx), msg)
+		case *types.MsgAddValidators:
+			res, err := msgServer.AddValidators(sdk.WrapSDKContext(ctx), msg)
 			return sdk.WrapServiceResult(ctx, res, err)
 		case *types.MsgChangeValidatorWeight:
 			res, err := msgServer.ChangeValidatorWeight(sdk.WrapSDKContext(ctx), msg)
@@ -58,30 +56,6 @@ func NewHandler(k keeper.Keeper) sdk.Handler {
 		default:
 			errMsg := fmt.Sprintf("unrecognized %s message type: %T", types.ModuleName, msg)
 			return nil, errorsmod.Wrap(sdkerrors.ErrUnknownRequest, errMsg)
-		}
-	}
-}
-
-// NewAddValidatorHandler creates a new governance Handler for a AddValidatorProposal
-func NewAddValidatorProposalHandler(k keeper.Keeper) govtypes.Handler {
-	msgServer := keeper.NewMsgServerImpl(k)
-
-	return func(ctx sdk.Context, content govtypes.Content) error {
-		switch c := content.(type) {
-		case *types.AddValidatorProposal:
-			_, err := msgServer.AddValidator(sdk.WrapSDKContext(ctx), &types.MsgAddValidator{
-				Creator:  "GOV",
-				HostZone: c.HostZone,
-				Name:     c.ValidatorName,
-				Address:  c.ValidatorAddress,
-			})
-			if err != nil {
-				return err
-			}
-			return nil
-
-		default:
-			return errorsmod.Wrapf(sdkerrors.ErrUnknownRequest, "unrecognized addValidator proposal content type: %T", c)
 		}
 	}
 }
