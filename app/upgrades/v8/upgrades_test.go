@@ -17,10 +17,11 @@ import (
 )
 
 var (
-	ustrd              = "ustrd"
-	dummyUpgradeHeight = int64(5)
-	osmoAirdropId      = "osmosis"
-	addresses          = []string{
+	ustrd               = "ustrd"
+	dummyUpgradeHeight  = int64(5)
+	osmoAirdropId       = "osmosis"
+	unofficialAirdropId = "unofficial-airdrop"
+	addresses           = []string{
 		"stride12a06af3mm5j653446xr4dguacuxfkj293ey2vh",
 		"stride1udf2vyj5wyjckl7nzqn5a2vh8fpmmcffey92y8",
 		"stride1uc8ccxy5s2hw55fn8963ukfdycaamq95jqcfnr",
@@ -60,6 +61,10 @@ func (s *UpgradeTestSuite) SetupStoreBeforeUpgrade() {
 				AirdropIdentifier: osmoAirdropId,
 				ClaimedSoFar:      sdkmath.NewInt(1000000),
 			},
+			{
+				AirdropIdentifier: unofficialAirdropId, // this should be removed
+				ClaimedSoFar:      sdkmath.NewInt(1000000),
+			},
 		},
 	}
 	err := s.App.ClaimKeeper.SetParams(s.Ctx, params)
@@ -97,10 +102,10 @@ func (s *UpgradeTestSuite) SetupStoreBeforeUpgrade() {
 func (s *UpgradeTestSuite) CheckStoreAfterUpgrade() {
 	afterCtx := s.Ctx.WithBlockHeight(dummyUpgradeHeight)
 
-	// Check that the evmos airdrop was added
+	// Check that the evmos airdrop was added and the unofficial airdrop was removed
 	claimParams, err := s.App.ClaimKeeper.GetParams(s.Ctx)
 	s.Require().NoError(err, "no error expected when getting params")
-	s.Require().Len(claimParams.Airdrops, 2, "there should be two airdrops (evmos and osmo)")
+	s.Require().Len(claimParams.Airdrops, 2, "there should be only two airdrops (evmos and osmo)")
 	osmoAirdrop := claimParams.Airdrops[0]
 	evmosAirdrop := claimParams.Airdrops[1]
 
@@ -133,7 +138,8 @@ func (s *UpgradeTestSuite) CheckStoreAfterUpgrade() {
 
 	// Check autopilot params
 	expectedAutoPilotParams := autopilottypes.Params{
-		Active: false,
+		StakeibcActive: false,
+		ClaimActive:    true,
 	}
 	actualAutopilotParams := s.App.AutopilotKeeper.GetParams(s.Ctx)
 	s.Require().Equal(expectedAutoPilotParams, actualAutopilotParams, "autopilot params")

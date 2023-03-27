@@ -12,7 +12,10 @@ import (
 
 func TestGenesis(t *testing.T) {
 	expectedGenesisState := types.GenesisState{
-		Params: types.Params{Active: true},
+		Params: types.Params{
+			StakeibcActive: true,
+			ClaimActive:    true,
+		},
 	}
 
 	s := apptesting.SetupSuitelessTestHelper()

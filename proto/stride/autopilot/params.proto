@@ -9,6 +9,7 @@ option go_package = "github.com/Stride-Labs/stride/v8/x/autopilot/types";
 // next id: 1
 message Params {
   option (gogoproto.goproto_stringer) = false;
-  // optionally, turn off this module
-  bool active = 1;
+  // optionally, turn off each module
+  bool stakeibc_active = 1;
+  bool claim_active = 2;
 }

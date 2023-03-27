@@ -3,6 +3,8 @@ package autopilot
 import (
 	"fmt"
 
+	errorsmod "cosmossdk.io/errors"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	capabilitytypes "github.com/cosmos/cosmos-sdk/x/capability/types"
 	ibctransfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
@@ -15,6 +17,8 @@ import (
 
 	ibcexported "github.com/cosmos/ibc-go/v7/modules/core/exported"
 )
+
+const MaxMemoCharLength = 256
 
 // IBC MODULE IMPLEMENTATION
 // IBCModule implements the ICS26 interface for transfer given the transfer keeper.
@@ -117,43 +121,56 @@ func (im IBCModule) OnRecvPacket(
 	packet channeltypes.Packet,
 	relayer sdk.AccAddress,
 ) ibcexported.Acknowledgement {
+	im.keeper.Logger(ctx).Info(fmt.Sprintf("OnRecvPacket (autopilot): Sequence: %d, Source: %s, %s; Destination: %s, %s",
+		packet.Sequence, packet.SourcePort, packet.SourceChannel, packet.DestinationPort, packet.DestinationChannel))
+
 	// NOTE: acknowledgement will be written synchronously during IBC handler execution.
 	var data transfertypes.FungibleTokenPacketData
 	if err := transfertypes.ModuleCdc.UnmarshalJSON(packet.GetData(), &data); err != nil {
 		return channeltypes.NewErrorAcknowledgement(err)
 	}
 
-	// to be utilized from ibc-go v5.1.0
-	if data.Memo == "stakeibc/LiquidStake" {
-		strideAccAddress, err := sdk.AccAddressFromBech32(data.Receiver)
-		if err != nil {
-			return channeltypes.NewErrorAcknowledgement(err)
-		}
+	// Error any transactions with a Memo or Receiver field are greater than the max characters
+	if len(data.Memo) > MaxMemoCharLength {
+		return channeltypes.NewErrorAcknowledgement(errorsmod.Wrapf(types.ErrInvalidMemoSize, "memo length: %d", len(data.Memo)))
+	}
+	if len(data.Receiver) > MaxMemoCharLength {
+		return channeltypes.NewErrorAcknowledgement(errorsmod.Wrapf(types.ErrInvalidMemoSize, "receiver length: %d", len(data.Receiver)))
+	}
 
-		ack := im.app.OnRecvPacket(ctx, packet, relayer)
-		if ack.Success() {
-			return im.keeper.TryLiquidStaking(ctx, packet, data, &types.ParsedReceiver{
-				ShouldLiquidStake: true,
-				StrideAccAddress:  strideAccAddress,
-			}, ack)
-		}
-		return ack
+	// ibc-go v5 has a Memo field that can store forwarding info
+	// For older version of ibc-go, the data must be stored in the receiver field
+	var metadata string
+	if data.Memo != "" { // ibc-go v5+
+		metadata = data.Memo
+	} else { // before ibc-go v5
+		metadata = data.Receiver
+	}
+
+	// If a valid receiver address has been provided and no memo,
+	// this is clearly just an normal IBC transfer
+	// Pass down the stack immediately instead of parsing
+	_, err := sdk.AccAddressFromBech32(data.Receiver)
+	if err == nil && data.Memo == "" {
+		return im.app.OnRecvPacket(ctx, packet, relayer)
 	}
 
 	// parse out any forwarding info
-	parsedReceiver, err := types.ParseReceiverData(data.Receiver)
+	packetForwardMetadata, err := types.ParsePacketMetadata(metadata)
 	if err != nil {
 		return channeltypes.NewErrorAcknowledgement(err)
 	}
 
-	// move on to the next middleware
-	if !parsedReceiver.ShouldLiquidStake {
+	// If the parsed metadata is nil, that means there is no forwarding logic
+	// Pass the packet down to the next middleware
+	if packetForwardMetadata == nil {
 		return im.app.OnRecvPacket(ctx, packet, relayer)
 	}
 
-	// Modify packet data to process packet transfer for this chain, omitting liquid staking info
+	// Modify the packet data by replacing the JSON metadata field with a receiver address
+	// to allow the packet to continue down the stack
 	newData := data
-	newData.Receiver = parsedReceiver.StrideAccAddress.String()
+	newData.Receiver = packetForwardMetadata.Receiver
 	bz, err := transfertypes.ModuleCdc.MarshalJSON(&newData)
 	if err != nil {
 		return channeltypes.NewErrorAcknowledgement(err)
@@ -161,13 +178,50 @@ func (im IBCModule) OnRecvPacket(
 	newPacket := packet
 	newPacket.Data = bz
 
-	// process the transfer receipt
-	// NOTE: this code is pulled from packet-forwarding-middleware
+	// Pass the new packet down the middleware stack first
 	ack := im.app.OnRecvPacket(ctx, newPacket, relayer)
-	if ack.Success() {
-		return im.keeper.TryLiquidStaking(ctx, packet, newData, parsedReceiver, ack)
+	if !ack.Success() {
+		return ack
 	}
-	return ack
+
+	autopilotParams := im.keeper.GetParams(ctx)
+
+	// If the transfer was successful, then route to the corresponding module, if applicable
+	switch routingInfo := packetForwardMetadata.RoutingInfo.(type) {
+	case types.StakeibcPacketMetadata:
+		// If stakeibc routing is inactive (but the packet had routing info in the memo) return an ack error
+		if !autopilotParams.StakeibcActive {
+			im.keeper.Logger(ctx).Error(fmt.Sprintf("Packet from %s had stakeibc routing info but autopilot stakeibc routing is disabled", newData.Sender))
+			return channeltypes.NewErrorAcknowledgement(types.ErrPacketForwardingInactive)
+		}
+		im.keeper.Logger(ctx).Info(fmt.Sprintf("Forwaring packet from %s to stakeibc", newData.Sender))
+
+		// Try to liquid stake - return an ack error if it fails, otherwise return the ack generated from the earlier packet propogation
+		if err := im.keeper.TryLiquidStaking(ctx, packet, newData, routingInfo); err != nil {
+			im.keeper.Logger(ctx).Error(fmt.Sprintf("Error liquid staking packet from autopilot for %s: %s", newData.Sender, err.Error()))
+			return channeltypes.NewErrorAcknowledgement(err)
+		}
+
+		return ack
+
+	case types.ClaimPacketMetadata:
+		// If claim routing is inactive (but the packet had routing info in the memo) return an ack error
+		if !autopilotParams.ClaimActive {
+			im.keeper.Logger(ctx).Error(fmt.Sprintf("Packet from %s had claim routing info but autopilot claim routing is disabled", newData.Sender))
+			return channeltypes.NewErrorAcknowledgement(types.ErrPacketForwardingInactive)
+		}
+		im.keeper.Logger(ctx).Info(fmt.Sprintf("Forwaring packet from %s to claim", newData.Sender))
+
+		if err := im.keeper.TryUpdateAirdropClaim(ctx, newData, routingInfo); err != nil {
+			im.keeper.Logger(ctx).Error(fmt.Sprintf("Error updating airdrop claim from autopilot for %s: %s", newData.Sender, err.Error()))
+			return channeltypes.NewErrorAcknowledgement(err)
+		}
+
+		return ack
+
+	default:
+		return channeltypes.NewErrorAcknowledgement(errorsmod.Wrapf(types.ErrUnsupportedAutopilotRoute, "%T", routingInfo))
+	}
 }
 
 // OnAcknowledgementPacket implements the IBCModule interface
