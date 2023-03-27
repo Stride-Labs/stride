@@ -12,11 +12,17 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/module"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 
+<<<<<<< HEAD
 	"github.com/Stride-Labs/stride/v8/utils"
 	autopilotkeeper "github.com/Stride-Labs/stride/v8/x/autopilot/keeper"
 	autopilottypes "github.com/Stride-Labs/stride/v8/x/autopilot/types"
 	claimkeeper "github.com/Stride-Labs/stride/v8/x/claim/keeper"
 	"github.com/Stride-Labs/stride/v8/x/claim/types"
+=======
+	autopilotkeeper "github.com/Stride-Labs/stride/v8/x/autopilot/keeper"
+	autopilottypes "github.com/Stride-Labs/stride/v8/x/autopilot/types"
+	claimkeeper "github.com/Stride-Labs/stride/v8/x/claim/keeper"
+>>>>>>> 4176429cb29563d30aa8f037ea2dc113411fb320
 	claimtypes "github.com/Stride-Labs/stride/v8/x/claim/types"
 )
 
@@ -48,6 +54,7 @@ func CreateUpgradeHandler(
 			}
 		}
 
+<<<<<<< HEAD
 		// Delete all unofficial airdrops from the store so they don't conflict with the evmos addition
 		claimParams, err := claimKeeper.GetParams(ctx)
 		if err != nil {
@@ -68,6 +75,8 @@ func CreateUpgradeHandler(
 			return vm, errorsmod.Wrapf(err, "unable to remove unofficial airdrops")
 		}
 
+=======
+>>>>>>> 4176429cb29563d30aa8f037ea2dc113411fb320
 		// Add the evmos airdrop
 		ctx.Logger().Info("Adding evmos airdrop...")
 		duration := uint64(AirdropDuration.Seconds())
@@ -82,7 +91,11 @@ func CreateUpgradeHandler(
 		autopilotParams := autopilottypes.DefaultParams()
 		autopilotKeeper.SetParams(ctx, autopilotParams)
 
+<<<<<<< HEAD
 		ctx.Logger().Info("Running module migrations...")
+=======
+		ctx.Logger().Info("Running module mogrations...")
+>>>>>>> 4176429cb29563d30aa8f037ea2dc113411fb320
 		return mm.RunMigrations(ctx, configurator, vm)
 	}
 }

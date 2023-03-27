@@ -47,18 +47,27 @@ $STRIDE_MAIN_CMD query bank balances stride1nf6v2paty9m22l3ecm7dpakq2c92ueyununa
 # NOTE: You can claim here using the CLI, or from the frontend!
 # Claim 20% of the free tokens
 echo "Claiming fee amount..."
+<<<<<<< HEAD
 $STRIDE_MAIN_CMD tx claim claim-free-amount --from airdrop-test --gas 400000 -y
+=======
+$STRIDE_MAIN_CMD tx claim claim-free-amount --from airdrop-test --gas 400000
+>>>>>>> 4176429cb29563d30aa8f037ea2dc113411fb320
 sleep 5
 echo "Balance after claim:" 
 $STRIDE_MAIN_CMD query bank balances stride1nf6v2paty9m22l3ecm7dpakq2c92ueyununayr
 # Stake, to claim another 20%
 echo "Staking..."
+<<<<<<< HEAD
 $STRIDE_MAIN_CMD tx staking delegate stridevaloper1nnurja9zt97huqvsfuartetyjx63tc5zrj5x9f 100ustrd --from airdrop-test --gas 400000 -y
+=======
+$STRIDE_MAIN_CMD tx staking delegate stridevaloper1nnurja9zt97huqvsfuartetyjx63tc5zrj5x9f 100ustrd --from airdrop-test --gas 400000
+>>>>>>> 4176429cb29563d30aa8f037ea2dc113411fb320
 sleep 5
 echo "Balance after stake:" 
 $STRIDE_MAIN_CMD query bank balances stride1nf6v2paty9m22l3ecm7dpakq2c92ueyununayr
 # Liquid stake, to claim the final 60% of tokens
 echo "Liquid staking..."
+<<<<<<< HEAD
 $STRIDE_MAIN_CMD tx stakeibc liquid-stake 1000 uatom --from airdrop-test --gas 400000 -y
 sleep 5
 echo "Balance after liquid stake:" 
@@ -193,3 +202,9 @@ $STRIDE_MAIN_CMD q claim claim-record stride stride1qz677nj82mszxjuh4mzy52zv5md5
 # $STRIDE_MAIN_CMD tx claim claim-free-amount --from stride1kd3z076usuqytj9rdfqnqaj9sdyx9aq5j2lqs5
 # $STRIDE_MAIN_CMD q bank balances stride1kd3z076usuqytj9rdfqnqaj9sdyx9aq5j2lqs5
 
+=======
+$STRIDE_MAIN_CMD tx stakeibc liquid-stake 1000 uatom --from airdrop-test --gas 400000
+sleep 5
+echo "Balance after liquid stake:" 
+$STRIDE_MAIN_CMD query bank balances stride1nf6v2paty9m22l3ecm7dpakq2c92ueyununayr
+>>>>>>> 4176429cb29563d30aa8f037ea2dc113411fb320

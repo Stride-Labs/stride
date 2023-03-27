@@ -71,7 +71,11 @@ func (suite *KeeperTestSuite) TestLiquidStakeOnRecvPacket() {
 				Denom:    "uatom",
 				Amount:   "1000000",
 				Sender:   "cosmos16plylpsgxechajltx9yeseqexzdzut9g8vla4k",
+<<<<<<< HEAD
 				Receiver: getStakeibcPacketMetadata(addr1.String(), "LiquidStake"),
+=======
+				Receiver: fmt.Sprintf("%s|stakeibc/LiquidStake", addr1.String()),
+>>>>>>> 4176429cb29563d30aa8f037ea2dc113411fb320
 				Memo:     "",
 			},
 			destChannel:    "channel-0",
@@ -85,7 +89,11 @@ func (suite *KeeperTestSuite) TestLiquidStakeOnRecvPacket() {
 				Denom:    strdIbcDenom,
 				Amount:   "1000000",
 				Sender:   "cosmos16plylpsgxechajltx9yeseqexzdzut9g8vla4k",
+<<<<<<< HEAD
 				Receiver: getStakeibcPacketMetadata(addr1.String(), "LiquidStake"),
+=======
+				Receiver: fmt.Sprintf("%s|stakeibc/LiquidStake", addr1.String()),
+>>>>>>> 4176429cb29563d30aa8f037ea2dc113411fb320
 				Memo:     "",
 			},
 			destChannel:    "channel-0",
@@ -99,7 +107,11 @@ func (suite *KeeperTestSuite) TestLiquidStakeOnRecvPacket() {
 				Denom:    "uatom",
 				Amount:   "1000000",
 				Sender:   "cosmos16plylpsgxechajltx9yeseqexzdzut9g8vla4k",
+<<<<<<< HEAD
 				Receiver: getStakeibcPacketMetadata(addr1.String(), "LiquidStake"),
+=======
+				Receiver: fmt.Sprintf("%s|stakeibc/LiquidStake", addr1.String()),
+>>>>>>> 4176429cb29563d30aa8f037ea2dc113411fb320
 				Memo:     "",
 			},
 			destChannel:    "channel-0",
@@ -113,7 +125,11 @@ func (suite *KeeperTestSuite) TestLiquidStakeOnRecvPacket() {
 				Denom:    "uatom",
 				Amount:   "1000000",
 				Sender:   "cosmos16plylpsgxechajltx9yeseqexzdzut9g8vla4k",
+<<<<<<< HEAD
 				Receiver: getStakeibcPacketMetadata(addr1.String(), "LiquidStake"),
+=======
+				Receiver: fmt.Sprintf("%s|stakeibc/LiquidStake", addr1.String()),
+>>>>>>> 4176429cb29563d30aa8f037ea2dc113411fb320
 				Memo:     "",
 			},
 			destChannel:    "channel-1000",
@@ -128,7 +144,11 @@ func (suite *KeeperTestSuite) TestLiquidStakeOnRecvPacket() {
 				Amount:   "1000000",
 				Sender:   "cosmos16plylpsgxechajltx9yeseqexzdzut9g8vla4k",
 				Receiver: addr1.String(),
+<<<<<<< HEAD
 				Memo:     getStakeibcPacketMetadata(addr1.String(), "LiquidStake"),
+=======
+				Memo:     "stakeibc/LiquidStake",
+>>>>>>> 4176429cb29563d30aa8f037ea2dc113411fb320
 			},
 			destChannel:    "channel-0",
 			recvDenom:      atomIbcDenom,
@@ -149,13 +169,21 @@ func (suite *KeeperTestSuite) TestLiquidStakeOnRecvPacket() {
 			expSuccess:     true,
 			expLiquidStake: false,
 		},
+<<<<<<< HEAD
 		{ // invalid stride address (receiver)
+=======
+		{ // invalid receiver
+>>>>>>> 4176429cb29563d30aa8f037ea2dc113411fb320
 			forwardingActive: true,
 			packetData: transfertypes.FungibleTokenPacketData{
 				Denom:    "uatom",
 				Amount:   "1000000",
 				Sender:   "cosmos16plylpsgxechajltx9yeseqexzdzut9g8vla4k",
+<<<<<<< HEAD
 				Receiver: getStakeibcPacketMetadata("invalid_address", "LiquidStake"),
+=======
+				Receiver: "xxx|stakeibc/LiquidStake",
+>>>>>>> 4176429cb29563d30aa8f037ea2dc113411fb320
 				Memo:     "",
 			},
 			destChannel:    "channel-0",
@@ -163,14 +191,23 @@ func (suite *KeeperTestSuite) TestLiquidStakeOnRecvPacket() {
 			expSuccess:     false,
 			expLiquidStake: false,
 		},
+<<<<<<< HEAD
 		{ // invalid stride address (memo)
+=======
+		{ // invalid receiver liquid staking
+>>>>>>> 4176429cb29563d30aa8f037ea2dc113411fb320
 			forwardingActive: true,
 			packetData: transfertypes.FungibleTokenPacketData{
 				Denom:    "uatom",
 				Amount:   "1000000",
 				Sender:   "cosmos16plylpsgxechajltx9yeseqexzdzut9g8vla4k",
+<<<<<<< HEAD
 				Receiver: addr1.String(),
 				Memo:     getStakeibcPacketMetadata("invalid_address", "LiquidStake"),
+=======
+				Receiver: "xxx|stakeibc/LiquidStake",
+				Memo:     "",
+>>>>>>> 4176429cb29563d30aa8f037ea2dc113411fb320
 			},
 			destChannel:    "channel-0",
 			recvDenom:      atomIbcDenom,
@@ -187,7 +224,11 @@ func (suite *KeeperTestSuite) TestLiquidStakeOnRecvPacket() {
 			suite.SetupTest() // reset
 			ctx := suite.Ctx
 
+<<<<<<< HEAD
 			suite.App.AutopilotKeeper.SetParams(ctx, types.Params{StakeibcActive: tc.forwardingActive})
+=======
+			suite.App.AutopilotKeeper.SetParams(ctx, types.Params{Active: tc.forwardingActive})
+>>>>>>> 4176429cb29563d30aa8f037ea2dc113411fb320
 
 			// set epoch tracker for env
 			suite.App.StakeibcKeeper.SetEpochTracker(ctx, stakeibctypes.EpochTracker{
@@ -240,22 +281,35 @@ func (suite *KeeperTestSuite) TestLiquidStakeOnRecvPacket() {
 				addr1,
 			)
 			if tc.expSuccess {
+<<<<<<< HEAD
 				suite.Require().True(ack.Success(), "ack should be successful - ack: %+v", string(ack.Acknowledgement()))
 
 				// Check funds were transferred
 				coin := suite.App.BankKeeper.GetBalance(suite.Ctx, addr1, tc.recvDenom)
 				suite.Require().Equal("2000000", coin.Amount.String(), "balance should have updated after successful transfer")
+=======
+				suite.Require().True(ack.Success(), string(ack.Acknowledgement()))
+>>>>>>> 4176429cb29563d30aa8f037ea2dc113411fb320
 
 				// check minted balance for liquid staking
 				allBalance := suite.App.BankKeeper.GetAllBalances(ctx, addr1)
 				liquidBalance := suite.App.BankKeeper.GetBalance(ctx, addr1, "stuatom")
 				if tc.expLiquidStake {
+<<<<<<< HEAD
 					suite.Require().True(liquidBalance.Amount.IsPositive(), "liquid balance should be positive but was %s", allBalance.String())
 				} else {
 					suite.Require().True(liquidBalance.Amount.IsZero(), "liquid balance should be zero but was %s", allBalance.String())
 				}
 			} else {
 				suite.Require().False(ack.Success(), "ack should have failed - ack: %+v", string(ack.Acknowledgement()))
+=======
+					suite.Require().True(liquidBalance.Amount.IsPositive(), allBalance.String())
+				} else {
+					suite.Require().True(liquidBalance.Amount.IsZero(), allBalance.String())
+				}
+			} else {
+				suite.Require().False(ack.Success(), string(ack.Acknowledgement()))
+>>>>>>> 4176429cb29563d30aa8f037ea2dc113411fb320
 			}
 		})
 	}

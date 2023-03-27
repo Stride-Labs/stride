@@ -17,11 +17,18 @@ import (
 )
 
 var (
+<<<<<<< HEAD
 	ustrd               = "ustrd"
 	dummyUpgradeHeight  = int64(5)
 	osmoAirdropId       = "osmosis"
 	unofficialAirdropId = "unofficial-airdrop"
 	addresses           = []string{
+=======
+	ustrd              = "ustrd"
+	dummyUpgradeHeight = int64(5)
+	osmoAirdropId      = "osmosis"
+	addresses          = []string{
+>>>>>>> 4176429cb29563d30aa8f037ea2dc113411fb320
 		"stride12a06af3mm5j653446xr4dguacuxfkj293ey2vh",
 		"stride1udf2vyj5wyjckl7nzqn5a2vh8fpmmcffey92y8",
 		"stride1uc8ccxy5s2hw55fn8963ukfdycaamq95jqcfnr",
@@ -61,10 +68,13 @@ func (s *UpgradeTestSuite) SetupStoreBeforeUpgrade() {
 				AirdropIdentifier: osmoAirdropId,
 				ClaimedSoFar:      sdkmath.NewInt(1000000),
 			},
+<<<<<<< HEAD
 			{
 				AirdropIdentifier: unofficialAirdropId, // this should be removed
 				ClaimedSoFar:      sdkmath.NewInt(1000000),
 			},
+=======
+>>>>>>> 4176429cb29563d30aa8f037ea2dc113411fb320
 		},
 	}
 	err := s.App.ClaimKeeper.SetParams(s.Ctx, params)
@@ -102,10 +112,17 @@ func (s *UpgradeTestSuite) SetupStoreBeforeUpgrade() {
 func (s *UpgradeTestSuite) CheckStoreAfterUpgrade() {
 	afterCtx := s.Ctx.WithBlockHeight(dummyUpgradeHeight)
 
+<<<<<<< HEAD
 	// Check that the evmos airdrop was added and the unofficial airdrop was removed
 	claimParams, err := s.App.ClaimKeeper.GetParams(s.Ctx)
 	s.Require().NoError(err, "no error expected when getting params")
 	s.Require().Len(claimParams.Airdrops, 2, "there should be only two airdrops (evmos and osmo)")
+=======
+	// Check that the evmos airdrop was added
+	claimParams, err := s.App.ClaimKeeper.GetParams(s.Ctx)
+	s.Require().NoError(err, "no error expected when getting params")
+	s.Require().Len(claimParams.Airdrops, 2, "there should be two airdrops (evmos and osmo)")
+>>>>>>> 4176429cb29563d30aa8f037ea2dc113411fb320
 	osmoAirdrop := claimParams.Airdrops[0]
 	evmosAirdrop := claimParams.Airdrops[1]
 
@@ -138,8 +155,12 @@ func (s *UpgradeTestSuite) CheckStoreAfterUpgrade() {
 
 	// Check autopilot params
 	expectedAutoPilotParams := autopilottypes.Params{
+<<<<<<< HEAD
 		StakeibcActive: false,
 		ClaimActive:    true,
+=======
+		Active: false,
+>>>>>>> 4176429cb29563d30aa8f037ea2dc113411fb320
 	}
 	actualAutopilotParams := s.App.AutopilotKeeper.GetParams(s.Ctx)
 	s.Require().Equal(expectedAutoPilotParams, actualAutopilotParams, "autopilot params")
