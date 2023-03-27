@@ -54,6 +54,21 @@ type ClaimRecord struct {
 
 ```
 
+## A Note on Address Mappings
+
+When an airdrop is created, we call `LoadAllocationData` to load the airdrop data from the allocations file. 
+This will apply `utils.ConvertAddressToStrideAddress` on each of those addresses, and then store those with the `ClaimRecords`.
+For an airdrop to, say, the Cosmos Hub, this will be the proper Stride address associated with that account. 
+`claim` state will only ever store this Stride address.
+
+However, for zones with a different coin type, _this will be an incorrect Stride address_. This should not cause any issues though,
+as this Stride address will be unusable.
+
+In order to claim that airdrop, the user will have to verify that they own the corresponding Evmos address. When the user tries to verify,
+we call `utils.ConvertAddressToStrideAddress` on that address, and verify it gives the same "incorrect" Stride address from earlier. 
+Through this, we can confirm that the user owns the Evmos address. 
+We then replace the Stride address with a "correct" one that the user verifies they own. 
+
 ## Params
 
 The airdrop logic has 4 parameters:
@@ -181,6 +196,8 @@ service Query {
   rpc ClaimRecord(QueryClaimRecordRequest) returns (QueryClaimRecordResponse) {}
   rpc ClaimableForAction(QueryClaimableForActionRequest) returns (QueryClaimableForActionResponse) {}
   rpc TotalClaimable(QueryTotalClaimableRequest) returns (QueryTotalClaimableResponse) {}
+  rpc ClaimStatus(QueryClaimStatusRequest) returns (QueryClaimStatusResponse) {}
+  rpc ClaimMetadata(QueryClaimMetadataRequest) returns (QueryClaimMetadataResponse) {}
 }
 ```
 
@@ -205,6 +222,32 @@ Query the total claimable amount that would be earned if all remaining actions w
 
 ```sh
 strided query claim total-claimable $(strided keys show -a {your key name}) ActionAddLiquidity
+```
+
+Query claim status, across all claims, for an address. Returns a list of `ClaimStatus` structs.
+```
+message ClaimStatus {
+  string airdrop_identifier = 1;
+  bool claimed = 2;
+}
+```
+
+```sh
+strided query claim claim-status $(strided keys show -a {your key name})
+```
+
+Query claim metadata, across all claims. Returns a `ClaimMetadata` struct, which contains data about the status of each claim.
+```
+message ClaimMetadata {
+  string airdrop_identifier = 1;
+  string current_round = 2;
+  google.protobuf.Timestamp current_round_start = 3;
+  google.protobuf.Timestamp current_round_end = 4;
+}
+```
+
+```sh
+strided query claim claim-metadata
 ```
 
 ## Events

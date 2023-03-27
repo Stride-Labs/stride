@@ -14,8 +14,8 @@ import (
 	capabilitykeeper "github.com/cosmos/cosmos-sdk/x/capability/keeper"
 	capabilitytypes "github.com/cosmos/cosmos-sdk/x/capability/types"
 
-	icqkeeper "github.com/Stride-Labs/stride/v7/x/interchainquery/keeper"
-	"github.com/Stride-Labs/stride/v7/x/stakeibc/types"
+	icqkeeper "github.com/Stride-Labs/stride/v8/x/interchainquery/keeper"
+	"github.com/Stride-Labs/stride/v8/x/stakeibc/types"
 
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
 	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
@@ -25,9 +25,9 @@ import (
 
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 
-	epochstypes "github.com/Stride-Labs/stride/v7/x/epochs/types"
-	icacallbackskeeper "github.com/Stride-Labs/stride/v7/x/icacallbacks/keeper"
-	recordsmodulekeeper "github.com/Stride-Labs/stride/v7/x/records/keeper"
+	epochstypes "github.com/Stride-Labs/stride/v8/x/epochs/types"
+	icacallbackskeeper "github.com/Stride-Labs/stride/v8/x/icacallbacks/keeper"
+	recordsmodulekeeper "github.com/Stride-Labs/stride/v8/x/records/keeper"
 )
 
 type (

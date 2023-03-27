@@ -12,8 +12,8 @@ import (
 
 	sdkmath "cosmossdk.io/math"
 
-	"github.com/Stride-Labs/stride/v7/utils"
-	vestexported "github.com/Stride-Labs/stride/v7/x/claim/vesting/exported"
+	"github.com/Stride-Labs/stride/v8/utils"
+	vestexported "github.com/Stride-Labs/stride/v8/x/claim/vesting/exported"
 )
 
 // Compile-time type assertions

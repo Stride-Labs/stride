@@ -9,7 +9,7 @@ on:
         description: "Specify the Stride version tag"
 
 jobs:
-  build:
+  build-image:
     runs-on: ubuntu-latest
     steps:
       - name: Get Version
@@ -46,6 +46,8 @@ jobs:
           gcloud auth configure-docker gcr.io
 
       - name: Build and Push Image
+        env:
+          DOCKER_BUILDKIT: 1
         shell: bash
         run: |
           tag=gcr.io/stride-nodes/core/stride:${{ env.version }}

@@ -11,11 +11,11 @@ import (
 
 	sdkmath "cosmossdk.io/math"
 
-	icacallbacktypes "github.com/Stride-Labs/stride/v7/x/icacallbacks/types"
-	recordtypes "github.com/Stride-Labs/stride/v7/x/records/types"
-	stakeibckeeper "github.com/Stride-Labs/stride/v7/x/stakeibc/keeper"
-	"github.com/Stride-Labs/stride/v7/x/stakeibc/types"
-	stakeibc "github.com/Stride-Labs/stride/v7/x/stakeibc/types"
+	icacallbacktypes "github.com/Stride-Labs/stride/v8/x/icacallbacks/types"
+	recordtypes "github.com/Stride-Labs/stride/v8/x/records/types"
+	stakeibckeeper "github.com/Stride-Labs/stride/v8/x/stakeibc/keeper"
+	"github.com/Stride-Labs/stride/v8/x/stakeibc/types"
+	stakeibc "github.com/Stride-Labs/stride/v8/x/stakeibc/types"
 )
 
 type UndelegateCallbackState struct {

@@ -12,9 +12,9 @@ import (
 	_ "github.com/stretchr/testify/suite"
 	abci "github.com/tendermint/tendermint/abci/types"
 
-	epochtypes "github.com/Stride-Labs/stride/v7/x/epochs/types"
-	recordtypes "github.com/Stride-Labs/stride/v7/x/records/types"
-	stakeibctypes "github.com/Stride-Labs/stride/v7/x/stakeibc/types"
+	epochtypes "github.com/Stride-Labs/stride/v8/x/epochs/types"
+	recordtypes "github.com/Stride-Labs/stride/v8/x/records/types"
+	stakeibctypes "github.com/Stride-Labs/stride/v8/x/stakeibc/types"
 )
 
 func (s *KeeperTestSuite) SetupTestRewardAllocation() {
