@@ -1,5 +1,4 @@
 # Upgrade v8 Changelog
-<<<<<<< HEAD
 1. Add Multiple Validators in One Transaction ([4ce1317](https://github.com/Stride-Labs/stride/commit/4ce1317073f4119a891229530677603c10e5700c)))
 2. Add new claim queries ([7e7335a](https://github.com/Stride-Labs/stride/commit/7e7335a6466abc13fd51aed1f7c76d621fb3d524))
 3. Autopilot JSON Memo ([d16d7f2](https://github.com/Stride-Labs/stride/commit/d16d7f2676dc6182dd0fd655530136ff3e5780ad))
@@ -8,6 +7,3 @@
 6. Airdrop Safety Checks ([a7ebe87](https://github.com/Stride-Labs/stride/commit/a7ebe87c7d133b1d40de6d6c3297777f233d61fd))
 7. v8 Upgrade Handler ([31c5dc4](https://github.com/Stride-Labs/stride/commit/31c5dc412019e2e69ccf9cba8fcc5d793ccd6a64))
 8. v8 Import Paths ([0a42766](https://github.com/Stride-Labs/stride/commit/0a42766e900310ce31a9b0b62354229924cb1ee9))
-=======
-TODO
->>>>>>> 4176429cb29563d30aa8f037ea2dc113411fb320
