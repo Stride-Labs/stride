@@ -141,7 +141,7 @@ import (
 	ibcfeetypes "github.com/cosmos/ibc-go/v5/modules/apps/29-fee/types"
 	ibctestingtypes "github.com/cosmos/ibc-go/v5/testing/types"
 
-	strideante "github.com/Stride-Labs/stride/v7/app/ante"
+	strideante "github.com/Stride-Labs/stride/v8/app/ante"
 )
 
 const (

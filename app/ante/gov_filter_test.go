@@ -7,9 +7,9 @@ import (
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
 	"github.com/stretchr/testify/suite"
 
-	"github.com/Stride-Labs/stride/v7/app/apptesting"
+	"github.com/Stride-Labs/stride/v8/app/apptesting"
 
-	"github.com/Stride-Labs/stride/v7/app/ante"
+	"github.com/Stride-Labs/stride/v8/app/ante"
 )
 
 var (
