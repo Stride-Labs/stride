@@ -3,12 +3,13 @@ package keeper
 import (
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	proto "github.com/cosmos/gogoproto/proto"
 
 	errorsmod "cosmossdk.io/errors"
-	ibctypes "github.com/cosmos/ibc-go/v5/modules/apps/transfer/types"
-	transfertypes "github.com/cosmos/ibc-go/v5/modules/apps/transfer/types"
-	clienttypes "github.com/cosmos/ibc-go/v5/modules/core/02-client/types"
-	channeltypes "github.com/cosmos/ibc-go/v5/modules/core/04-channel/types"
+	ibctypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
+	transfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
+	clienttypes "github.com/cosmos/ibc-go/v7/modules/core/02-client/types"
+	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
 
 	"github.com/Stride-Labs/stride/v8/utils"
 	epochtypes "github.com/Stride-Labs/stride/v8/x/epochs/types"
@@ -77,9 +78,10 @@ func FeeBalanceCallback(k Keeper, ctx sdk.Context, args []byte, query icqtypes.Q
 		rewardsCollectorAddress.String(),
 		clienttypes.Height{},
 		timeout,
+		"",
 	)
 
-	msgs := []sdk.Msg{transferMsg}
+	msgs := []proto.Message{transferMsg}
 	k.Logger(ctx).Info(utils.LogICQCallbackWithHostZone(chainId, ICQCallbackID_FeeBalance,
 		"Preparing MsgTransfer of %v from the fee account to the rewards collector module account (for commission)", rewardsCoin.String()))
 

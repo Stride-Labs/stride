@@ -8,20 +8,23 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	capabilitytypes "github.com/cosmos/cosmos-sdk/x/capability/types"
-	transfertypes "github.com/cosmos/ibc-go/v5/modules/apps/transfer/types"
-	channeltypes "github.com/cosmos/ibc-go/v5/modules/core/04-channel/types"
-	ibcexported "github.com/cosmos/ibc-go/v5/modules/core/exported"
+	transfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
+	clienttypes "github.com/cosmos/ibc-go/v7/modules/core/02-client/types"
+	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
+	ibcexported "github.com/cosmos/ibc-go/v7/modules/core/exported"
 
 	"github.com/Stride-Labs/stride/v8/x/ratelimit/types"
 )
 
 // Parse the denom from the Send Packet that will be used by the rate limit module
 // The denom that the rate limiter will use for a SEND packet depends on whether
-//    it was a NATIVE token (e.g. ustrd, stuatom, etc.) or NON-NATIVE token (e.g. ibc/...)...
+//
+//	it was a NATIVE token (e.g. ustrd, stuatom, etc.) or NON-NATIVE token (e.g. ibc/...)...
 //
 // We can identify if the token is native or not by parsing the trace denom from the packet
 // If the token is NATIVE, it will not have a prefix (e.g. ustrd),
-//    and if it is NON-NATIVE, it will have a prefix (e.g. transfer/channel-2/uosmo)
+//
+//	and if it is NON-NATIVE, it will have a prefix (e.g. transfer/channel-2/uosmo)
 //
 // For NATIVE denoms, return as is (e.g. ustrd)
 // For NON-NATIVE denoms, take the ibc hash (e.g. hash "transfer/channel-2/usoms" into "ibc/...")
@@ -42,36 +45,37 @@ func ParseDenomFromSendPacket(packet transfertypes.FungibleTokenPacketData) (den
 
 // Parse the denom from the Recv Packet that will be used by the rate limit module
 // The denom that the rate limiter will use for a RECEIVE packet depends on whether it was a source or sink
-//      Sink:   The token moves forward, to a chain different than its previous hop
-//              The new port and channel are APPENDED to the denom trace.
-//              (e.g. A -> B, B is a sink) (e.g. A -> B -> C, C is a sink)
-// 		Source: The token moves backwards (i.e. revisits the last chain it was sent from)
-// 				The port and channel are REMOVED from the denom trace - undoing the last hop.
-//              (e.g. A -> B -> A, A is a source) (e.g. A -> B -> C -> B, B is a source)
 //
-//      If the chain is acting as a SINK:
-//      	We add on the Stride port and channel and hash it
-//          Ex1: uosmo sent from Osmosis to Stride
-//              Packet Denom:   uosmo
-//               -> Add Prefix: transfer/channel-X/uosmo
-//               -> Hash:       ibc/...
+//	     Sink:   The token moves forward, to a chain different than its previous hop
+//	             The new port and channel are APPENDED to the denom trace.
+//	             (e.g. A -> B, B is a sink) (e.g. A -> B -> C, C is a sink)
+//			Source: The token moves backwards (i.e. revisits the last chain it was sent from)
+//					The port and channel are REMOVED from the denom trace - undoing the last hop.
+//	             (e.g. A -> B -> A, A is a source) (e.g. A -> B -> C -> B, B is a source)
 //
-//          Ex2: ujuno sent from Osmosis to Stride
-//              PacketDenom:    transfer/channel-Y/ujuno  (channel-Y is the Juno <> Osmosis channel)
-//               -> Add Prefix: transfer/channel-X/transfer/channel-Y/ujuno
-//               -> Hash:       ibc/...
+//	     If the chain is acting as a SINK:
+//	     	We add on the Stride port and channel and hash it
+//	         Ex1: uosmo sent from Osmosis to Stride
+//	             Packet Denom:   uosmo
+//	              -> Add Prefix: transfer/channel-X/uosmo
+//	              -> Hash:       ibc/...
 //
-//      If the chain is acting as a SOURCE:
-//      	First, remove the prefix. Then if there is still a denom trace, hash it
-//          Ex1: ustrd sent back to Stride from Osmosis
-//              Packet Denom:      transfer/channel-X/ustrd
-//               -> Remove Prefix: ustrd
-//               -> Leave as is:   ustrd
+//	         Ex2: ujuno sent from Osmosis to Stride
+//	             PacketDenom:    transfer/channel-Y/ujuno  (channel-Y is the Juno <> Osmosis channel)
+//	              -> Add Prefix: transfer/channel-X/transfer/channel-Y/ujuno
+//	              -> Hash:       ibc/...
 //
-//			Ex2: juno was sent to Stride, then to Osmosis, then back to Stride
-//              Packet Denom:      transfer/channel-X/transfer/channel-Z/ujuno
-//               -> Remove Prefix: transfer/channel-Z/ujuno
-//               -> Hash:          ibc/...
+//	     If the chain is acting as a SOURCE:
+//	     	First, remove the prefix. Then if there is still a denom trace, hash it
+//	         Ex1: ustrd sent back to Stride from Osmosis
+//	             Packet Denom:      transfer/channel-X/ustrd
+//	              -> Remove Prefix: ustrd
+//	              -> Leave as is:   ustrd
+//
+//				Ex2: juno was sent to Stride, then to Osmosis, then back to Stride
+//	             Packet Denom:      transfer/channel-X/transfer/channel-Z/ujuno
+//	              -> Remove Prefix: transfer/channel-Z/ujuno
+//	              -> Hash:          ibc/...
 func ParseDenomFromRecvPacket(packet channeltypes.Packet, packetData transfertypes.FungibleTokenPacketData) (denom string) {
 	// To determine the denom, first check whether Stride is acting as source
 	if transfertypes.ReceiverChainIsSource(packet.GetSourcePort(), packet.GetSourceChannel(), packetData.Denom) {
@@ -101,17 +105,17 @@ func ParseDenomFromRecvPacket(packet channeltypes.Packet, packetData transfertyp
 }
 
 // Middleware implementation for SendPacket with rate limiting
-func (k Keeper) SendRateLimitedPacket(ctx sdk.Context, packet ibcexported.PacketI) error {
+func (k Keeper) SendRateLimitedPacket(ctx sdk.Context, sourceChannel string, data []byte) error {
 	// The Stride channelID should always be used as the key for the RateLimit object (not the counterparty channelID)
 	// For a SEND packet, the Stride channelID is the SOURCE channel
 	// This is because the Source and Desination are defined from the perspective of a packet recipient
 	// Meaning, when this packet lands on a the host chain, the "Source" will be the Stride Channel,
 	//   and the "Destination" will be the Host Channel
-	channelId := packet.GetSourceChannel()
+	channelId := sourceChannel
 
 	// Parse the packet data
 	var packetData transfertypes.FungibleTokenPacketData
-	if err := json.Unmarshal(packet.GetData(), &packetData); err != nil {
+	if err := json.Unmarshal(data, &packetData); err != nil {
 		return err
 	}
 
@@ -163,12 +167,33 @@ func (k Keeper) ReceiveRateLimitedPacket(ctx sdk.Context, packet channeltypes.Pa
 
 // SendPacket wraps IBC ChannelKeeper's SendPacket function
 // If the packet does not get rate limited, it passes the packet to the IBC Channel keeper
-func (k Keeper) SendPacket(ctx sdk.Context, chanCap *capabilitytypes.Capability, packet ibcexported.PacketI) error {
-	if err := k.SendRateLimitedPacket(ctx, packet); err != nil {
+func (k Keeper) SendPacket(
+	ctx sdk.Context,
+	channelCap *capabilitytypes.Capability,
+	sourcePort string,
+	sourceChannel string,
+	timeoutHeight clienttypes.Height,
+	timeoutTimestamp uint64,
+	data []byte,
+) (sequence uint64, err error) {
+
+	if err := k.SendRateLimitedPacket(ctx, sourceChannel, data); err != nil {
 		k.Logger(ctx).Error(fmt.Sprintf("ICS20 packet send was denied: %s", err.Error()))
-		return err
+		return 0, err
 	}
-	return k.ics4Wrapper.SendPacket(ctx, chanCap, packet)
+	sequence, err = k.ics4Wrapper.SendPacket(
+		ctx,
+		channelCap,
+		sourcePort,
+		sourceChannel,
+		timeoutHeight,
+		timeoutTimestamp,
+		data,
+	)
+	if err != nil {
+		return 0, err
+	}
+	return sequence, nil
 }
 
 // WriteAcknowledgement wraps IBC ChannelKeeper's WriteAcknowledgement function

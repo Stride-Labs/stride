@@ -5,8 +5,8 @@ import (
 
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	icatypes "github.com/cosmos/ibc-go/v5/modules/apps/27-interchain-accounts/types"
-	ibctesting "github.com/cosmos/ibc-go/v5/testing"
+	icatypes "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/types"
+	ibctesting "github.com/cosmos/ibc-go/v7/testing"
 	_ "github.com/stretchr/testify/suite"
 
 	"github.com/Stride-Labs/stride/v8/x/stakeibc/types"
@@ -55,7 +55,7 @@ func (s *KeeperTestSuite) SetupClearBalance() ClearBalanceTestCase {
 		initialState: ClearBalanceState{
 			hz: hostZone,
 			feeChannel: Channel{
-				PortID:    icatypes.PortPrefix + feeAccountOwner,
+				PortID:    icatypes.ControllerPortPrefix + feeAccountOwner,
 				ChannelID: feeChannelID,
 			},
 		},

@@ -7,9 +7,11 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	capabilitytypes "github.com/cosmos/cosmos-sdk/x/capability/types"
-	ibctransfertypes "github.com/cosmos/ibc-go/v5/modules/apps/transfer/types"
-	channeltypes "github.com/cosmos/ibc-go/v5/modules/core/04-channel/types"
-	porttypes "github.com/cosmos/ibc-go/v5/modules/core/05-port/types"
+	ibctransfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
+	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
+	porttypes "github.com/cosmos/ibc-go/v7/modules/core/05-port/types"
+
+	host "github.com/cosmos/ibc-go/v7/modules/core/24-host"
 
 	icacallbacks "github.com/Stride-Labs/stride/v8/x/icacallbacks"
 	icacallbacktypes "github.com/Stride-Labs/stride/v8/x/icacallbacks/types"
@@ -18,7 +20,7 @@ import (
 
 	// "google.golang.org/protobuf/proto" <-- this breaks tx parsing
 
-	ibcexported "github.com/cosmos/ibc-go/v5/modules/core/exported"
+	ibcexported "github.com/cosmos/ibc-go/v7/modules/core/exported"
 )
 
 // IBC MODULE IMPLEMENTATION
@@ -54,6 +56,12 @@ func (im IBCModule) OnChanOpenInit(
 	// 	return err
 	// }
 	// doCustomLogic()
+	if channelCap == nil {
+		path := host.ChannelCapabilityPath(portID, channelID)
+		chanCap, _ := im.keeper.IBCScopperKeeper.GetCapability(ctx, path)
+
+		channelCap = chanCap
+	}
 	version, err := im.app.OnChanOpenInit(
 		ctx,
 		order,

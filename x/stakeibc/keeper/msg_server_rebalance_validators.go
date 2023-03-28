@@ -7,6 +7,7 @@ import (
 
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	proto "github.com/cosmos/gogoproto/proto"
 
 	errorsmod "cosmossdk.io/errors"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -59,7 +60,7 @@ func (k msgServer) RebalanceValidators(goCtx context.Context, msg *types.MsgReba
 		return nil, errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "no validator delegations found for Host Zone %s, cannot rebalance 0 delegations!", hostZone.ChainId)
 	}
 
-	var msgs []sdk.Msg
+	var msgs []proto.Message
 	delegationIca := hostZone.GetDelegationAccount()
 	if delegationIca == nil || delegationIca.GetAddress() == "" {
 		k.Logger(ctx).Error(fmt.Sprintf("Zone %s is missing a delegation address!", hostZone.ChainId))

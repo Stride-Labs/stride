@@ -8,9 +8,9 @@ import (
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
 	errorsmod "cosmossdk.io/errors"
+	"github.com/cometbft/cometbft/crypto"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
-	"github.com/tendermint/tendermint/crypto"
 
 	"github.com/Stride-Labs/stride/v8/x/interchainquery/types"
 )
