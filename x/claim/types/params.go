@@ -9,7 +9,7 @@ var (
 	DefaultAirdropDuration                 = time.Hour * 24 * 30 * 12 * 3 // 3 years
 	DefaultVestingDurationForDelegateStake = time.Hour * 24 * 30 * 3      // 3 months
 	DefaultVestingDurationForLiquidStake   = time.Hour * 24 * 30 * 3      // 3 months
-	DefaultVestingInitialPeriod            = time.Second * 60
+	DefaultVestingInitialPeriod            = time.Second * 120
 	// DefaultVestingInitialPeriod            = time.Hour * 24 * 30 * 3      // 3 months
 	DefaultAirdropIdentifier = "stride"
 )
