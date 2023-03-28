@@ -6,15 +6,15 @@ SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 # DO NOT USE STRIDE MAINNET CHAIN ID!
 STRIDE_CHAIN_ID=local-test-1
 HOST_CHAIN_ID=injective-1
-HOST_RPC=https://k8s.global.mainnet.tm.injective.network:443
+HOST_RPC=https://injective-rpc.polkachu.com:443
 HOST_ACCOUNT_PREFIX=inj
 HOST_DENOM=inj
-HOST_BINARY= #TODO
+HOST_BINARY=build/injectived
 HOST_VAL_NAME_1=imperator
 HOST_VAL_ADDRESS_1=injvaloper1esud09zs5754g5nlkmrgxsfdj276xm64cgmd3w
 HOST_VAL_NAME_2=notional
 HOST_VAL_ADDRESS_2=injvaloper16eg6wf2k6v0lzwu2vsrhxhe0tcycgr7jm98nyz
-HOT_WALLET_1_ADDRESS= #TODO
+HOT_WALLET_1_ADDRESS=inj1p3dwxql6htufpmcnu8xt328st7v7d20jv5ku8q
 
 STATE=$SCRIPT_DIR/../state
 LOGS=$SCRIPT_DIR/../logs
@@ -61,19 +61,19 @@ sed -i -E "s|HOST_RPC|$HOST_RPC|g" $RELAYER_CONFIG_FILE
 sed -i -E "s|HOST_ACCOUNT_PREFIX|$HOST_ACCOUNT_PREFIX|g" $RELAYER_CONFIG_FILE
 sed -i -E "s|HOST_DENOM|$HOST_DENOM|g" $RELAYER_CONFIG_FILE
 
-echo "Adding Hermes keys"
-HERMES_CMD="$SCRIPT_DIR/../../build/hermes/release/hermes --config $STATE/hermes/config.toml"
-TMP_MNEMONICS=$STATE/mnemonic.txt 
-echo "$HERMES_STRIDE_MNEMONIC" > $TMP_MNEMONICS
-$HERMES_CMD keys add --key-name hrly1 --chain $STRIDE_CHAIN_ID --mnemonic-file $TMP_MNEMONICS --overwrite
-echo "$HOT_WALLET_2_MNEMONIC" > $TMP_MNEMONICS
-$HERMES_CMD keys add --key-name hrly2 --chain $HOST_CHAIN_ID --mnemonic-file $TMP_MNEMONICS --overwrite
-rm -f $TMP_MNEMONICS
+# echo "Adding Hermes keys"
+# HERMES_CMD="$SCRIPT_DIR/../../build/hermes/release/hermes --config $STATE/hermes/config.toml"
+# TMP_MNEMONICS=$STATE/mnemonic.txt 
+# echo "$HERMES_STRIDE_MNEMONIC" > $TMP_MNEMONICS
+# $HERMES_CMD keys add --key-name hrly1 --chain $STRIDE_CHAIN_ID --mnemonic-file $TMP_MNEMONICS --overwrite
+# echo "$HOT_WALLET_2_MNEMONIC" > $TMP_MNEMONICS
+# $HERMES_CMD keys add --key-name hrly2 --chain $HOST_CHAIN_ID --mnemonic-file $TMP_MNEMONICS --overwrite
+# rm -f $TMP_MNEMONICS
 
 echo "Adding Relayer keys"
 RELAYER_CMD="$SCRIPT_DIR/../../build/relayer --home $STATE/relayer"
 $RELAYER_CMD keys restore stride rly1 "$RELAYER_STRIDE_MNEMONIC" 
-$RELAYER_CMD keys restore host rly2 "$HOT_WALLET_3_MNEMONIC" 
+$RELAYER_CMD keys restore host rly2 --coin-type 60 "$HOT_WALLET_3_MNEMONIC" 
 
 # Update commands template
 COMMANDS_FILE=${SCRIPT_DIR}/commands.sh
