@@ -197,7 +197,7 @@ func (s *IntegrationTestSuite) TestCmdTxSetAirdropAllocations() {
 				strideclitestutil.DefaultFeeString(s.cfg),
 			},
 			[]sdk.Coins{
-				sdk.NewCoins(sdk.NewCoin(s.cfg.BondDenom, sdkmath.NewInt(77))),
+				sdk.NewCoins(sdk.NewCoin(s.cfg.BondDenom, sdkmath.NewInt(78))),
 				sdk.NewCoins(sdk.NewCoin(s.cfg.BondDenom, sdkmath.NewInt(46))),
 			},
 		},
