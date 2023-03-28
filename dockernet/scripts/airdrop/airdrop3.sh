@@ -27,8 +27,11 @@ echo "Funding accounts..."
 # Transfer uatom from gaia to stride, so that we can liquid stake later
 $GAIA_MAIN_CMD tx ibc-transfer transfer transfer channel-0 stride1nf6v2paty9m22l3ecm7dpakq2c92ueyununayr 1000000uatom --from ${GAIA_VAL_PREFIX}1 -y | TRIM_TX
 sleep 5
-# Fund the distributor account
-$STRIDE_MAIN_CMD tx bank send val1 stride12lw3587g97lgrwr2fjtr8gg5q6sku33e5yq9wl 600000ustrd --from val1 -y | TRIM_TX
+# query the distribution-test3 account
+echo "query the distribution-test3 account"
+$STRIDE_MAIN_CMD q bank balances stride12lw3587g97lgrwr2fjtr8gg5q6sku33e5yq9wl
+# Fund the distributor-test3 account
+$STRIDE_MAIN_CMD tx bank send val1 stride12lw3587g97lgrwr2fjtr8gg5q6sku33e5yq9wl 100ustrd --from val1 -y | TRIM_TX
 sleep 5
 # Fund the airdrop account
 $STRIDE_MAIN_CMD tx bank send val1 stride1nf6v2paty9m22l3ecm7dpakq2c92ueyununayr 1000000000ustrd --from val1 -y | TRIM_TX
@@ -44,7 +47,7 @@ sleep 5
 
 # Create the airdrop, so that the airdrop account can claim tokens
 echo ">>> Testing multiple airdrop reset and claims flow..."
-$STRIDE_MAIN_CMD tx claim create-airdrop stride2 $(date +%s) 30 ustrd --from distributor-test3 -y | TRIM_TX
+$STRIDE_MAIN_CMD tx claim create-airdrop stride2 $(date +%s) 180 ustrd --from distributor-test3 -y | TRIM_TX
 sleep 5
 # # Set airdrop allocations
 $STRIDE_MAIN_CMD tx claim set-airdrop-allocations stride2 stride1kwll0uet4mkj867s4q8dgskp03txgjnswc2u4z 1 --from distributor-test3 -y | TRIM_TX
@@ -54,60 +57,42 @@ sleep 5
 #     # 3. Check eligibility and claim the airdrop
 echo "> Checking claim record elibility"
 $STRIDE_MAIN_CMD q claim claim-record stride stride1kwll0uet4mkj867s4q8dgskp03txgjnswc2u4z
+$STRIDE_MAIN_CMD q bank balances stride1kwll0uet4mkj867s4q8dgskp03txgjnswc2u4z
 echo "> Claiming airdrop"
 $STRIDE_MAIN_CMD tx claim claim-free-amount --from stride1kwll0uet4mkj867s4q8dgskp03txgjnswc2u4z -y | TRIM_TX
 sleep 5
 
 #     # 5. Query to check airdrop vesting account was created (w/ correct amount)
 echo "Verifying funds are vesting, should be 1."
-$STRIDE_MAIN_CMD q claim user-vestings stride1jrmtt5c6z8h5yrrwml488qnm7p3vxrrml2kgvl
+$STRIDE_MAIN_CMD q claim user-vestings stride1kwll0uet4mkj867s4q8dgskp03txgjnswc2u4z
+$STRIDE_MAIN_CMD q bank balances stride1kwll0uet4mkj867s4q8dgskp03txgjnswc2u4z
 
 
     # BATCH 2
-    # 6. Wait 30 seconds
-echo "> Waiting 30 seconds for next batch..."
-sleep 30
+    # 6. Wait 60 seconds
+echo "> Waiting 60 seconds for next batch..."
+sleep 60
+$STRIDE_MAIN_CMD q claim user-vestings stride1kwll0uet4mkj867s4q8dgskp03txgjnswc2u4z
+$STRIDE_MAIN_CMD q bank balances stride1kwll0uet4mkj867s4q8dgskp03txgjnswc2u4z
     # 7. Claim the airdrop
 $STRIDE_MAIN_CMD tx claim claim-free-amount --from stride1kwll0uet4mkj867s4q8dgskp03txgjnswc2u4z -y | TRIM_TX
 
 #     # 8. Query to check airdrop vesting account was created (w/ correct amount)
 echo "> Verifying more funds are vesting, should be 2."
-$STRIDE_MAIN_CMD q claim user-vestings stride1jrmtt5c6z8h5yrrwml488qnm7p3vxrrml2kgvl
+$STRIDE_MAIN_CMD q claim user-vestings stride1kwll0uet4mkj867s4q8dgskp03txgjnswc2u4z
+$STRIDE_MAIN_CMD q bank balances stride1kwll0uet4mkj867s4q8dgskp03txgjnswc2u4z
 
 #     # BATCH 3
-#     # 10. Wait 30 seconds
-echo "> Waiting 30 seconds for next batch..."
-sleep 30
+#     # 10. Wait 60 seconds
+echo "> Waiting 60 seconds for next batch..."
+sleep 60
+$STRIDE_MAIN_CMD q claim user-vestings stride1kwll0uet4mkj867s4q8dgskp03txgjnswc2u4z
+$STRIDE_MAIN_CMD q bank balances stride1kwll0uet4mkj867s4q8dgskp03txgjnswc2u4z
 #     # 11. Claim the airdrop
 $STRIDE_MAIN_CMD tx claim claim-free-amount --from stride1kwll0uet4mkj867s4q8dgskp03txgjnswc2u4z -y | TRIM_TX
 
 #     # 12. Query to check airdrop vesting account was created (w/ correct amount)
 echo "> Verifying more funds are vesting, should be 3."
-$STRIDE_MAIN_CMD q claim user-vestings stride1jrmtt5c6z8h5yrrwml488qnm7p3vxrrml2kgvl
-
-
-
-
-# ### Test staggered airdrops
-
-# # create airdrop 1 with a 60 day start window, 60 sec reset, claim, sleep 35
-# # $STRIDE_MAIN_CMD tx claim create-airdrop airdrop1 $(date +%s) 60 ustrd --from distributor-test3 -y
-# # sleep 5
-# # $STRIDE_MAIN_CMD tx claim set-airdrop-allocations airdrop1 stride1kwll0uet4mkj867s4q8dgskp03txgjnswc2u4z 1 --from distributor-test3 -y
-# # sleep 5
-# # $STRIDE_MAIN_CMD tx claim claim-free-amount --from stride1kwll0uet4mkj867s4q8dgskp03txgjnswc2u4z
-# # sleep 35
-
-# # # create airdrop 2 with a 60 day start window, 60 sec reset, claim, sleep 35
-# # $STRIDE_MAIN_CMD tx claim create-airdrop airdrop1 $(date +%s) 60 stuatom --from distributor-test3 -y
-# # sleep 5
-# # $STRIDE_MAIN_CMD tx claim set-airdrop-allocations airdrop1 stride1kwll0uet4mkj867s4q8dgskp03txgjnswc2u4z 1 --from distributor-test3 -y
-# # sleep 5
-# # $STRIDE_MAIN_CMD tx claim claim-free-amount --from stride1kwll0uet4mkj867s4q8dgskp03txgjnswc2u4z
-# # sleep 35
-
-# # # airdrop 1 resets
-# # $STRIDE_MAIN_CMD q bank balances stride1kwll0uet4mkj867s4q8dgskp03txgjnswc2u4z
-# # $STRIDE_MAIN_CMD tx claim claim-free-amount --from stride1kwll0uet4mkj867s4q8dgskp03txgjnswc2u4z
-# # $STRIDE_MAIN_CMD q bank balances stride1kwll0uet4mkj867s4q8dgskp03txgjnswc2u4z
-
+# $STRIDE_MAIN_CMD q claim user-vestings stride1kwll0uet4mkj867s4q8dgskp03txgjnswc2u4z
+$STRIDE_MAIN_CMD q claim user-vestings stride1kwll0uet4mkj867s4q8dgskp03txgjnswc2u4z
+$STRIDE_MAIN_CMD q bank balances stride1kwll0uet4mkj867s4q8dgskp03txgjnswc2u4z

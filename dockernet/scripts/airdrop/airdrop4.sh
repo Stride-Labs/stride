@@ -2,6 +2,7 @@
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 source ${SCRIPT_DIR}/../../config.sh
 
+echo $STRIDE_MAIN_CMD
 # CLEANUP if running tests twice, clear out and re-fund accounts
 $STRIDE_MAIN_CMD keys delete distributor-test3 -y &> /dev/null || true 
 $STRIDE_MAIN_CMD keys delete distributor-test4 -y &> /dev/null || true 
