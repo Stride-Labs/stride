@@ -27,7 +27,7 @@ AIRDROP_NAME="evmos"
 AIRDROP_RECIPIENT_1="stride1uk4ze0x4nvh4fk0xm4jdud58eqn4yxhrt52vv7"
 AIRDROP_RECIPIENT_2="stride17kht2x2ped6qytr2kklevtvmxpw7wq9rmuc3ca"
 AIRDROP_RECIPIENT_3="stride1nnurja9zt97huqvsfuartetyjx63tc5zq8s6fv"
-AIRDROP_RECIPIENT_4="stride1py0fvhdtq4au3d9l88rec6vyda3e0wtt9szext"
+AIRDROP_RECIPIENT_4_TO_BE_REPLACED="stride16lmf7t0jhaatan6vnxlgv47h2wf0k5ln58y9qm"
 AIRDROP_DISTRIBUTOR_1="stride1qs6c3jgk7fcazrz328sqxqdv9d5lu5qqqgqsvj"
 
 # cleanup: clear out and re-fund accounts
@@ -59,12 +59,33 @@ $STRIDE_MAIN_CMD tx claim set-airdrop-allocations $AIRDROP_NAME $AIRDROP_RECIPIE
 sleep 5
 $STRIDE_MAIN_CMD tx claim set-airdrop-allocations $AIRDROP_NAME $AIRDROP_RECIPIENT_3 3 --from d1 -y | TRIM_TX
 sleep 5
-$STRIDE_MAIN_CMD tx claim set-airdrop-allocations $AIRDROP_NAME $AIRDROP_RECIPIENT_4 4 --from d1 -y | TRIM_TX
+$STRIDE_MAIN_CMD tx claim set-airdrop-allocations $AIRDROP_NAME $AIRDROP_RECIPIENT_4_TO_BE_REPLACED 4 --from d1 -y | TRIM_TX
 sleep 5
 
 echo "\n Querying airdrop eligibilities. The results of the query show the total claimable amount for each account. If they're non-zero, the airdrop is live! :)"
 $STRIDE_MAIN_CMD q claim total-claimable $AIRDROP_NAME $AIRDROP_RECIPIENT_1 true
 $STRIDE_MAIN_CMD q claim total-claimable $AIRDROP_NAME $AIRDROP_RECIPIENT_2 true
 $STRIDE_MAIN_CMD q claim total-claimable $AIRDROP_NAME $AIRDROP_RECIPIENT_3 true
-$STRIDE_MAIN_CMD q claim total-claimable $AIRDROP_NAME $AIRDROP_RECIPIENT_4 true
+$STRIDE_MAIN_CMD q claim total-claimable $AIRDROP_NAME $AIRDROP_RECIPIENT_4_TO_BE_REPLACED true
 
+echo "Sleeping 2 minutes before linking the evmos address to its stride address..."
+sleep 120
+echo "\n Overwrite airdrop elibibility for recipient 4. They should no longer be eligible." 
+#         b. ibc-transfer from Osmo to Stride to change the airdrop account to stride1jrmtt5c6z8h5yrrwml488qnm7p3vxrrml2kgvl
+#              Memo: {
+#                "autopilot": {
+#                     "stakeibc": {
+#                       "stride_address": "stride1jrmtt5c6z8h5yrrwml488qnm7p3vxrrml2kgvl",
+#                       },
+#                         "claim": {
+#                         }
+#                    },
+#                }
+#               Receiver: "xxx"
+MEMO='{"autopilot": {"receiver": "stride1jrmtt5c6z8h5yrrwml488qnm7p3vxrrml2kgvl","claim": { "stride_address": "stride1jrmtt5c6z8h5yrrwml488qnm7p3vxrrml2kgvl", "airdrop_id": "evmos" } }}'
+$GAIA_MAIN_CMD tx ibc-transfer transfer transfer channel-0 "$MEMO" 1uatom --from rly2 -y | TRIM_TX
+echo ">>> Waiting for 15 seconds to allow the IBC transfer to complete..."
+sleep 15
+
+echo ">>> Querying the claims module to verify that the new address is eligible"
+$STRIDE_MAIN_CMD q claim total-claimable $AIRDROP_NAME $NEW_AIRDROP_RECIPIENT_4 true
