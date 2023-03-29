@@ -9,7 +9,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	ibctypes "github.com/cosmos/ibc-go/v5/modules/apps/transfer/types"
 	clienttypes "github.com/cosmos/ibc-go/v5/modules/core/02-client/types"
-	"github.com/spf13/cast"
 
 	"github.com/Stride-Labs/stride/v8/utils"
 	recordstypes "github.com/Stride-Labs/stride/v8/x/records/types"
@@ -116,13 +115,7 @@ func (k Keeper) StakeExistingDepositsOnHostZones(ctx sdk.Context, epochNumber ui
 		return
 	}
 
-	// limit the number of staking deposits to process per epoch
-	maxDepositRecordsToStake := utils.Min(len(stakeDepositRecords), cast.ToInt(k.GetParam(ctx, types.KeyMaxStakeICACallsPerEpoch)))
-	if maxDepositRecordsToStake < len(stakeDepositRecords) {
-		k.Logger(ctx).Info(fmt.Sprintf("  MaxStakeICACallsPerEpoch limit reached - Only staking %d out of %d deposit records", maxDepositRecordsToStake, len(stakeDepositRecords)))
-	}
-
-	for _, depositRecord := range stakeDepositRecords[:maxDepositRecordsToStake] {
+	for _, depositRecord := range stakeDepositRecords {
 		k.Logger(ctx).Info(utils.LogWithHostZone(depositRecord.HostZoneId,
 			"Processing deposit record %d: %v%s", depositRecord.Id, depositRecord.Amount, depositRecord.Denom))
 
