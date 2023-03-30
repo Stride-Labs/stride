@@ -28,7 +28,7 @@ AIRDROP_NAME="evmos"
 # airdrop recipient 1 key
 # add airdrop recipient 1
 echo "prosper vivid sign donkey involve flee behind save satoshi reason girl cable ranch can arrive unable coyote race model disagree buzz peasant mechanic position" | \
-    $STRIDE_MAIN_CMD keys add d1 --recover
+    $STRIDE_MAIN_CMD keys add airdrop-recipient-1 --recover
 
 AIRDROP_RECIPIENT_1_STRIDE="stride1qlly03ar5ll85ww4usvkv09832vv5tkhtnnaep"
 AIRDROP_RECIPIENT_1_EVMOS="evmos1nmwp5uh5a3g08668c5eynes0hyfaw94dfnj796"
@@ -52,6 +52,13 @@ $STRIDE_MAIN_CMD tx bank send val1 $AIRDROP_DISTRIBUTOR_1 100000000ustrd --from 
 sleep 5
 # query the balance of the d1 account to make sure it was funded
 $STRIDE_MAIN_CMD q bank balances $AIRDROP_DISTRIBUTOR_1
+
+# fund the evmos account
+$EVMOS_MAIN_CMD tx bank send val1 evmos1nmwp5uh5a3g08668c5eynes0hyfaw94dfnj796 1000aevmos --from val1 -y
+sleep 5
+# query the balance of the airdrop-recipient-1 account to make sure it was funded
+$EVMOS_MAIN_CMD q bank balances $AIRDROP_RECIPIENT_1_EVMOS
+
 
 
 # ### Set up the airdrop
@@ -94,7 +101,7 @@ echo "\n Overwrite airdrop elibibility for recipient 4. They should no longer be
 # Note: autopilot will look at the sender of the packet (evmos1nmwp5uh5a3g08668c5eynes0hyfaw94dfnj796) and convert this address to the mechanical
 # stride address (stride1nmwp5uh5a3g08668c5eynes0hyfaw94dgervt7), then reset it to the true stride address (stride1qlly03ar5ll85ww4usvkv09832vv5tkhtnnaep)
 MEMO='{"autopilot": {"receiver": "stride1qlly03ar5ll85ww4usvkv09832vv5tkhtnnaep","claim": { "stride_address": "stride1qlly03ar5ll85ww4usvkv09832vv5tkhtnnaep", "airdrop_id": "evmos" } }}'
-$GAIA_MAIN_CMD tx ibc-transfer transfer transfer channel-0 "$MEMO" 1uatom --from rly2 -y | TRIM_TX
+$EVMOS_MAIN_CMD tx ibc-transfer transfer transfer channel-0 "$MEMO" 1aevmos --from airdrop-recipient-1 -y | TRIM_TX
 echo ">>> Waiting for 15 seconds to allow the IBC transfer to complete..."
 sleep 15
 
