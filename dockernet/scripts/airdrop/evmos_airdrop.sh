@@ -80,18 +80,20 @@ $STRIDE_MAIN_CMD q claim total-claimable $AIRDROP_NAME $AIRDROP_RECIPIENT_4_TO_B
 echo "Sleeping 2 minutes before linking the evmos address to its stride address..."
 sleep 120
 echo "\n Overwrite airdrop elibibility for recipient 4. They should no longer be eligible." 
-#         b. ibc-transfer from Osmo to Stride to change the airdrop account to stride1jrmtt5c6z8h5yrrwml488qnm7p3vxrrml2kgvl
+#         b. ibc-transfer from Osmo to Stride to change the airdrop account to stride1qlly03ar5ll85ww4usvkv09832vv5tkhtnnaep
 #              Memo: {
 #                "autopilot": {
 #                     "stakeibc": {
-#                       "stride_address": "stride1jrmtt5c6z8h5yrrwml488qnm7p3vxrrml2kgvl",
+#                       "stride_address": "stride1qlly03ar5ll85ww4usvkv09832vv5tkhtnnaep",
 #                       },
 #                         "claim": {
 #                         }
 #                    },
 #                }
 #               Receiver: "xxx"
-MEMO='{"autopilot": {"receiver": "stride1jrmtt5c6z8h5yrrwml488qnm7p3vxrrml2kgvl","claim": { "stride_address": "stride1jrmtt5c6z8h5yrrwml488qnm7p3vxrrml2kgvl", "airdrop_id": "evmos" } }}'
+# Note: autopilot will look at the sender of the packet (evmos1nmwp5uh5a3g08668c5eynes0hyfaw94dfnj796) and convert this address to the mechanical
+# stride address (stride1nmwp5uh5a3g08668c5eynes0hyfaw94dgervt7), then reset it to the true stride address (stride1qlly03ar5ll85ww4usvkv09832vv5tkhtnnaep)
+MEMO='{"autopilot": {"receiver": "stride1qlly03ar5ll85ww4usvkv09832vv5tkhtnnaep","claim": { "stride_address": "stride1qlly03ar5ll85ww4usvkv09832vv5tkhtnnaep", "airdrop_id": "evmos" } }}'
 $GAIA_MAIN_CMD tx ibc-transfer transfer transfer channel-0 "$MEMO" 1uatom --from rly2 -y | TRIM_TX
 echo ">>> Waiting for 15 seconds to allow the IBC transfer to complete..."
 sleep 15
