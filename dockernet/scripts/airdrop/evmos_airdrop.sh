@@ -2,7 +2,7 @@
 #
 #  Instructions: 
 #   1. First, start the network with `make start-docker`
-#   2. Then, run this script with `bash dockernet/scripts/airdrop/airdrop_evmos_test.sh`
+#   2. Then, run this script with `bash dockernet/scripts/airdrop/evmos_airdrop.sh`
 #   3. If the final stdout print lines from the script match what's below, the airdrop is live!
 #    
 #      \n Querying airdrop eligibilities
@@ -30,6 +30,9 @@ AIRDROP_NAME="evmos"
 echo "prosper vivid sign donkey involve flee behind save satoshi reason girl cable ranch can arrive unable coyote race model disagree buzz peasant mechanic position" | \
     $STRIDE_MAIN_CMD keys add airdrop-recipient-1 --recover
 
+echo "prosper vivid sign donkey involve flee behind save satoshi reason girl cable ranch can arrive unable coyote race model disagree buzz peasant mechanic position" | \
+    $EVMOS_MAIN_CMD keys add airdrop-recipient-1 --recover
+
 AIRDROP_RECIPIENT_1_STRIDE="stride1qlly03ar5ll85ww4usvkv09832vv5tkhtnnaep"
 AIRDROP_RECIPIENT_1_EVMOS="evmos1nmwp5uh5a3g08668c5eynes0hyfaw94dfnj796"
 AIRDROP_RECIPIENT_1_MECHANICAL="stride1nmwp5uh5a3g08668c5eynes0hyfaw94dgervt7"
@@ -54,7 +57,7 @@ sleep 5
 $STRIDE_MAIN_CMD q bank balances $AIRDROP_DISTRIBUTOR_1
 
 # fund the evmos account
-$EVMOS_MAIN_CMD tx bank send val1 evmos1nmwp5uh5a3g08668c5eynes0hyfaw94dfnj796 1000aevmos --from val1 -y
+$EVMOS_MAIN_CMD tx bank send nval1 evmos1nmwp5uh5a3g08668c5eynes0hyfaw94dfnj796 1000aevmos --from val1 -y
 sleep 5
 # query the balance of the airdrop-recipient-1 account to make sure it was funded
 $EVMOS_MAIN_CMD q bank balances $AIRDROP_RECIPIENT_1_EVMOS
@@ -106,4 +109,4 @@ echo ">>> Waiting for 15 seconds to allow the IBC transfer to complete..."
 sleep 15
 
 echo ">>> Querying the claims module to verify that the new address is eligible"
-$STRIDE_MAIN_CMD q claim total-claimable $AIRDROP_NAME $NEW_AIRDROP_RECIPIENT_4 true
+$STRIDE_MAIN_CMD q claim total-claimable $AIRDROP_NAME $AIRDROP_RECIPIENT_1_STRIDE true
