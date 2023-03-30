@@ -97,7 +97,7 @@ package {upgradeVersion}
 
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	{new-consensus-version} "github.com/Stride-Labs/stride/v3/x/records/migrations/{new-consensus-version}"
+	{new-consensus-version} "github.com/Stride-Labs/stride/v8/x/records/migrations/{new-consensus-version}"
 )
 
 // TODO: Add migration logic to deserialize with old protos and re-serialize with new ones
@@ -112,7 +112,7 @@ func MigrateStore(ctx sdk.Context) error {
 // app/upgrades/{upgradeVersion}/upgrades.go
 
 import (
-	{module}migration "github.com/Stride-Labs/stride/v5/x/{module}/migrations/{new-consensus-version}"
+	{module}migration "github.com/Stride-Labs/stride/v8/x/{module}/migrations/{new-consensus-version}"
 )
 
 // CreateUpgradeHandler creates an SDK upgrade handler for {upgradeVersion}
@@ -124,7 +124,7 @@ func CreateUpgradeHandler(
 ) upgradetypes.UpgradeHandler {
 	return func(ctx sdk.Context, _ upgradetypes.Plan, vm module.VersionMap) (module.VersionMap, error) {
 		if err := {module}migration.MigrateStore(ctx, {module}StoreKey, cdc); err != nil {
-			return vm, sdkerrors.Wrapf(err, "unable to migrate {module} store")
+			return vm, errorsmod.Wrapf(err, "unable to migrate {module} store")
 		}
 		vm[{moduleName}] = mm.GetVersionMap()[{moduleName}] 
 		return mm.RunMigrations(ctx, configurator, vm)

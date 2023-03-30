@@ -3,7 +3,7 @@ FROM golang:1.19-alpine3.15 AS builder
 
 WORKDIR /src/
 
-ENV COMMIT_HASH=7f78a4d608329b2ae07a6512381bbadffee66be6
+ENV COMMIT_HASH=2d9fe1acf9081ec7bdcefd8c212a21d28febaba7
 
 RUN apk add --update git make gcc linux-headers libc-dev eudev-dev 
 RUN git clone https://github.com/cosmos/relayer.git \
@@ -21,5 +21,5 @@ USER 1000
 WORKDIR /home/relayer
 
 # Create startup script that takes a path as a parameter
-RUN echo 'rly start $1 -p events' > start.sh
+RUN echo 'rly start $1' > start.sh
 

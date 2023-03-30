@@ -4,9 +4,9 @@ import (
 	sdkmath "cosmossdk.io/math"
 	_ "github.com/stretchr/testify/suite"
 
-	recordtypes "github.com/Stride-Labs/stride/v5/x/records/types"
+	recordtypes "github.com/Stride-Labs/stride/v8/x/records/types"
 
-	stakeibc "github.com/Stride-Labs/stride/v5/x/stakeibc/types"
+	stakeibc "github.com/Stride-Labs/stride/v8/x/stakeibc/types"
 )
 
 type CleanupEpochUnbondingRecordsTestCase struct {
@@ -89,14 +89,21 @@ func (s *KeeperTestSuite) SetupCleanupEpochUnbondingRecords() CleanupEpochUnbond
 	}
 }
 
-func (s *KeeperTestSuite) CleanupEpochUnbondingRecords_Successful() {
-	// successfully clean up epoch unbonding records
-	tc := s.SetupGetHostZoneUnbondingMsgs()
-	// clean up epoch unbonding record 0
-	success := s.App.StakeibcKeeper.CleanupEpochUnbondingRecords(s.Ctx, 0)
-	s.Require().True(success, "cleanup unbonding records returns true")
-	epochUnbondings := tc.epochUnbondingRecords
-	s.Require().Len(epochUnbondings, 1, "only one epoch unbonding record should be left")
-	epochUnbonding := epochUnbondings[0]
-	s.Require().Equal(1, epochUnbonding.EpochNumber, "correct unbonding record remains unprocessed")
+func (s *KeeperTestSuite) TestCleanupEpochUnbondingRecords_Successful() {
+	tc := s.SetupCleanupEpochUnbondingRecords()
+
+	// Call cleanup on each unbonding record
+	for i := range tc.epochUnbondingRecords {
+		success := s.App.StakeibcKeeper.CleanupEpochUnbondingRecords(s.Ctx, uint64(i))
+		s.Require().True(success, "cleanup unbonding record for epoch %d should succeed", i)
+	}
+
+	// Check one record was removed
+	finalUnbondingRecords := s.App.RecordsKeeper.GetAllEpochUnbondingRecord(s.Ctx)
+	expectedNumUnbondingRecords := len(tc.epochUnbondingRecords) - 1
+	s.Require().Len(finalUnbondingRecords, expectedNumUnbondingRecords, "two epoch unbonding records should remain")
+
+	// Confirm it was the last record that was removed
+	_, found := s.App.RecordsKeeper.GetEpochUnbondingRecord(s.Ctx, uint64(2))
+	s.Require().False(found, "removed record should not be found")
 }

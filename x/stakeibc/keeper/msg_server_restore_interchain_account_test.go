@@ -10,8 +10,8 @@ import (
 	icatypes "github.com/cosmos/ibc-go/v5/modules/apps/27-interchain-accounts/types"
 	channeltypes "github.com/cosmos/ibc-go/v5/modules/core/04-channel/types"
 
-	recordtypes "github.com/Stride-Labs/stride/v5/x/records/types"
-	stakeibc "github.com/Stride-Labs/stride/v5/x/stakeibc/types"
+	recordtypes "github.com/Stride-Labs/stride/v8/x/records/types"
+	stakeibc "github.com/Stride-Labs/stride/v8/x/stakeibc/types"
 )
 
 type DepositRecordStatusUpdate struct {

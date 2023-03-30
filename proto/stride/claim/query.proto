@@ -7,8 +7,9 @@ import "cosmos/base/v1beta1/coin.proto";
 import "stride/claim/claim.proto";
 import "stride/claim/params.proto";
 import "stride/vesting/vesting.proto";
+import "google/protobuf/timestamp.proto";
 
-option go_package = "github.com/Stride-Labs/stride/v5/x/claim/types";
+option go_package = "github.com/Stride-Labs/stride/v8/x/claim/types";
 
 // Query defines the gRPC querier service.
 service Query {
@@ -35,6 +36,49 @@ service Query {
       returns (QueryUserVestingsResponse) {
     option (google.api.http).get = "/claim/user_vestings/{address}";
   }
+  rpc ClaimStatus(QueryClaimStatusRequest) returns (QueryClaimStatusResponse) {
+    option (google.api.http).get = "/claim/claim_status/{address}";
+  }
+  rpc ClaimMetadata(QueryClaimMetadataRequest)
+      returns (QueryClaimMetadataResponse) {
+    option (google.api.http).get = "/claim/claim_metadata";
+  }
+}
+
+message ClaimStatus {
+  string airdrop_identifier = 1;
+  bool claimed = 2;
+}
+message QueryClaimStatusRequest {
+  string address = 1 [ (gogoproto.moretags) = "yaml:\"address\"" ];
+}
+message QueryClaimStatusResponse {
+  repeated ClaimStatus claim_status = 1 [
+    (gogoproto.moretags) = "yaml:\"claim_status\"",
+    (gogoproto.nullable) = false
+  ];
+}
+
+message ClaimMetadata {
+  string airdrop_identifier = 1;
+  string current_round = 2;
+  google.protobuf.Timestamp current_round_start = 3 [
+    (gogoproto.stdtime) = true,
+    (gogoproto.nullable) = false,
+    (gogoproto.moretags) = "yaml:\"current_round_start\""
+  ];
+  google.protobuf.Timestamp current_round_end = 4 [
+    (gogoproto.stdtime) = true,
+    (gogoproto.nullable) = false,
+    (gogoproto.moretags) = "yaml:\"current_round_end\""
+  ];
+}
+message QueryClaimMetadataRequest {}
+message QueryClaimMetadataResponse {
+  repeated ClaimMetadata claim_metadata = 1 [
+    (gogoproto.moretags) = "yaml:\"claim_metadata\"",
+    (gogoproto.nullable) = false
+  ];
 }
 
 // QueryParamsRequest is the request type for the Query/Params RPC method.

@@ -36,6 +36,7 @@ setup_file() {
   TRANSFER_AMOUNT=500000
   STAKE_AMOUNT=100000
   REDEEM_AMOUNT=1000
+  PACKET_FORWARD_STAKE_AMOUNT=3000
 
   GETBAL() {
     head -n 1 | grep -o -E '[0-9]+' || "0"
@@ -99,8 +100,8 @@ setup_file() {
   hval_token_balance_start=$($HOST_MAIN_CMD   q bank balances $HOST_VAL_ADDRESS --denom $HOST_DENOM     | GETBAL)
 
   # do IBC transfer
-  $STRIDE_MAIN_CMD tx ibc-transfer transfer transfer $STRIDE_TRANFER_CHANNEL $HOST_VAL_ADDRESS ${TRANSFER_AMOUNT}${STRIDE_DENOM} --from $STRIDE_VAL -y &
-  $HOST_MAIN_CMD   tx ibc-transfer transfer transfer $HOST_TRANSFER_CHANNEL  $(STRIDE_ADDRESS) ${TRANSFER_AMOUNT}${HOST_DENOM} --from $HOST_VAL -y &
+  $STRIDE_MAIN_CMD tx ibc-transfer transfer transfer $STRIDE_TRANFER_CHANNEL $HOST_VAL_ADDRESS ${TRANSFER_AMOUNT}${STRIDE_DENOM} --from $STRIDE_VAL -y 
+  $HOST_MAIN_CMD   tx ibc-transfer transfer transfer $HOST_TRANSFER_CHANNEL  $(STRIDE_ADDRESS) ${TRANSFER_AMOUNT}${HOST_DENOM} --from $HOST_VAL -y 
 
   WAIT_FOR_BLOCK $STRIDE_LOGS 8
 
@@ -136,7 +137,6 @@ setup_file() {
   $STRIDE_MAIN_CMD tx stakeibc liquid-stake $STAKE_AMOUNT $HOST_DENOM --from $STRIDE_VAL -y 
 
   # sleep two block for the tx to settle on stride
-  WAIT_FOR_STRING $STRIDE_LOGS "\[MINT ST ASSET\] success on $HOST_CHAIN_ID"
   WAIT_FOR_BLOCK $STRIDE_LOGS 2
 
   # make sure IBC_DENOM went down
@@ -156,6 +156,35 @@ setup_file() {
   delegation_ica_balance_end=$($HOST_MAIN_CMD q bank balances $delegation_address --denom $HOST_DENOM | GETBAL)
   diff=$(($delegation_ica_balance_end - $delegation_ica_balance_start))
   assert_equal "$diff" $STAKE_AMOUNT
+}
+
+@test "[INTEGRATION-BASIC-$CHAIN_NAME] packet forwarding automatically liquid stakes" {
+  skip "DefaultActive set to false, skip test"
+  memo='{ "autopilot": { "receiver": "'"$(STRIDE_ADDRESS)"'",  "stakeibc": { "stride_address": "'"$(STRIDE_ADDRESS)"'", "action": "LiquidStake" } } }'
+
+  # get initial balances
+  sttoken_balance_start=$($STRIDE_MAIN_CMD q bank balances $(STRIDE_ADDRESS) --denom st$HOST_DENOM | GETBAL)
+
+  # Send the IBC transfer with the JSON memo
+  transfer_msg_prefix="$HOST_MAIN_CMD tx ibc-transfer transfer transfer $HOST_TRANSFER_CHANNEL"
+  if [[ "$CHAIN_NAME" == "GAIA" ]]; then
+    # For GAIA (ibc-v3), pass the memo into the receiver field
+    $transfer_msg_prefix "$memo" ${PACKET_FORWARD_STAKE_AMOUNT}${HOST_DENOM} --from $HOST_VAL -y 
+  elif [[ "$CHAIN_NAME" == "HOST" ]]; then
+    # For HOST (ibc-v5), pass an address for a receiver and the memo in the --memo field
+    $transfer_msg_prefix $(STRIDE_ADDRESS) ${PACKET_FORWARD_STAKE_AMOUNT}${HOST_DENOM} --memo "$memo" --from $HOST_VAL -y 
+  else
+    # For all other hosts, skip this test
+    skip "Packet forward liquid stake test is only run on GAIA and HOST"
+  fi
+
+  # Wait for the transfer to complete
+  WAIT_FOR_BALANCE_CHANGE STRIDE $(STRIDE_ADDRESS) st$HOST_DENOM
+
+  # make sure stATOM balance increased
+  sttoken_balance_end=$($STRIDE_MAIN_CMD q bank balances $(STRIDE_ADDRESS) --denom st$HOST_DENOM | GETBAL)
+  sttoken_balance_diff=$(($sttoken_balance_end-$sttoken_balance_start))
+  assert_equal "$sttoken_balance_diff" "$PACKET_FORWARD_STAKE_AMOUNT"
 }
 
 # check that tokens on the host are staked
@@ -220,17 +249,15 @@ setup_file() {
   assert_equal "$redemption_rate_increased" "1"
 }
 
-@test "[INTEGRATION-BASIC-$CHAIN_NAME] revenue accrued, and clear-balance works" {
-  # confirm the fee account has accrued revenue
-  fee_ica_balance=$($HOST_MAIN_CMD q bank balances $(GET_ICA_ADDR $HOST_CHAIN_ID fee) --denom $HOST_DENOM | GETBAL)
-  fee_ica_balance_positive=$(($fee_ica_balance > 0))
-  assert_equal "$fee_ica_balance_positive" "1"
+# rewards have been collected and distributed to strd stakers
+@test "[INTEGRATION-BASIC-$CHAIN_NAME] rewards are being distributed to stakers" {
+  # collect the 2nd validator's outstanding rewards
+  val_address=$($STRIDE_MAIN_CMD keys show ${STRIDE_VAL_PREFIX}2 --keyring-backend test -a)
+  $STRIDE_MAIN_CMD tx distribution withdraw-all-rewards --from ${STRIDE_VAL_PREFIX}2 -y 
+  WAIT_FOR_BLOCK $STRIDE_LOGS 2
 
-  # call clear balance (with amount = 1)
-  $STRIDE_MAIN_CMD tx stakeibc clear-balance $HOST_CHAIN_ID 1 $HOST_TRANSFER_CHANNEL --from $STRIDE_ADMIN_ACCT -y
-  WAIT_FOR_BLOCK $STRIDE_LOGS 8
-
-  # check that balance went to revenue account
-  fee_stride_balance=$($STRIDE_MAIN_CMD q bank balances $STRIDE_FEE_ADDRESS --denom $HOST_IBC_DENOM | GETBAL)
-  assert_equal "$fee_stride_balance" "1"
+  # confirm they've recieved stTokens
+  sttoken_balance=$($STRIDE_MAIN_CMD q bank balances $val_address --denom st$HOST_DENOM | GETBAL)
+  rewards_accumulated=$(($sttoken_balance > 0))
+  assert_equal "$rewards_accumulated" "1"
 }

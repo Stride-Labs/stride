@@ -5,12 +5,13 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/types/query"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	"github.com/Stride-Labs/stride/v5/x/records/types"
+	"github.com/Stride-Labs/stride/v8/x/records/types"
 )
 
 func (k Keeper) DepositRecordAll(c context.Context, req *types.QueryAllDepositRecordRequest) (*types.QueryAllDepositRecordResponse, error) {
@@ -52,4 +53,21 @@ func (k Keeper) DepositRecord(c context.Context, req *types.QueryGetDepositRecor
 	}
 
 	return &types.QueryGetDepositRecordResponse{DepositRecord: depositRecord}, nil
+}
+
+func (k Keeper) DepositRecordByHost(c context.Context, req *types.QueryDepositRecordByHostRequest) (*types.QueryDepositRecordByHostResponse, error) {
+	ctx := sdk.UnwrapSDKContext(c)
+
+	if req == nil {
+		return nil, status.Error(codes.InvalidArgument, "invalid request")
+	}
+
+	var depositRecordsForHost []types.DepositRecord
+	for _, depositRecord := range k.GetAllDepositRecord(ctx) {
+		if depositRecord.HostZoneId == req.HostZoneId {
+			depositRecordsForHost = append(depositRecordsForHost, depositRecord)
+		}
+	}
+
+	return &types.QueryDepositRecordByHostResponse{DepositRecord: depositRecordsForHost}, nil
 }

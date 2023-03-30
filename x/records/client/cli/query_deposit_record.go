@@ -8,7 +8,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/spf13/cobra"
 
-	"github.com/Stride-Labs/stride/v5/x/records/types"
+	"github.com/Stride-Labs/stride/v8/x/records/types"
 )
 
 func CmdListDepositRecord() *cobra.Command {
@@ -64,6 +64,33 @@ func CmdShowDepositRecord() *cobra.Command {
 			}
 
 			res, err := queryClient.DepositRecord(context.Background(), params)
+			if err != nil {
+				return err
+			}
+
+			return clientCtx.PrintProto(res)
+		},
+	}
+
+	flags.AddQueryFlagsToCmd(cmd)
+
+	return cmd
+}
+
+func CmdListDepositRecordByHost() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "deposit-records-by-host [host]",
+		Short: "list all depositRecords for a given host zone",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			hostZoneId := args[0]
+
+			clientCtx := client.GetClientContextFromCmd(cmd)
+			queryClient := types.NewQueryClient(clientCtx)
+
+			res, err := queryClient.DepositRecordByHost(context.Background(), &types.QueryDepositRecordByHostRequest{
+				HostZoneId: hostZoneId,
+			})
 			if err != nil {
 				return err
 			}

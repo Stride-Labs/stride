@@ -9,10 +9,12 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	errorsmod "cosmossdk.io/errors"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
-	"github.com/Stride-Labs/stride/v5/utils"
-	"github.com/Stride-Labs/stride/v5/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v8/utils"
+	"github.com/Stride-Labs/stride/v8/x/stakeibc/types"
 )
 
 // SetHostZone set a specific hostZone in the store
@@ -46,7 +48,7 @@ func (k Keeper) GetHostZoneFromHostDenom(ctx sdk.Context, denom string) (*types.
 	if matchZone.ChainId != "" {
 		return &matchZone, nil
 	}
-	return nil, sdkerrors.Wrapf(sdkerrors.ErrUnknownRequest, "No HostZone for %s found", denom)
+	return nil, errorsmod.Wrapf(sdkerrors.ErrUnknownRequest, "No HostZone for %s found", denom)
 }
 
 // RemoveHostZone removes a hostZone from the store
@@ -66,6 +68,24 @@ func (k Keeper) GetAllHostZone(ctx sdk.Context) (list []types.HostZone) {
 		var val types.HostZone
 		k.cdc.MustUnmarshal(iterator.Value(), &val)
 		list = append(list, val)
+	}
+
+	return
+}
+
+// GetAllActiveHostZone returns all hostZones that are active (halted = false)
+func (k Keeper) GetAllActiveHostZone(ctx sdk.Context) (list []types.HostZone) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefix(types.HostZoneKey))
+	iterator := sdk.KVStorePrefixIterator(store, []byte{})
+
+	defer iterator.Close()
+
+	for ; iterator.Valid(); iterator.Next() {
+		var val types.HostZone
+		k.cdc.MustUnmarshal(iterator.Value(), &val)
+		if !val.Halted {
+			list = append(list, val)
+		}
 	}
 
 	return
@@ -98,55 +118,47 @@ func (k Keeper) AddDelegationToValidator(ctx sdk.Context, hostZone types.HostZon
 // Appends a validator to host zone (if the host zone is not already at capacity)
 // If the validator is added through governance, the weight is equal to the minimum weight across the set
 // If the validator is added through an admin transactions, the weight is specified in the message
-func (k Keeper) AddValidatorToHostZone(ctx sdk.Context, msg *types.MsgAddValidator, fromGovernance bool) error {
+func (k Keeper) AddValidatorToHostZone(ctx sdk.Context, chainId string, validator types.Validator, fromGovernance bool) error {
 	// Get the corresponding host zone
-	hostZone, found := k.GetHostZone(ctx, msg.HostZone)
+	hostZone, found := k.GetHostZone(ctx, chainId)
 	if !found {
-		errMsg := fmt.Sprintf("Host Zone (%s) not found", msg.HostZone)
-		k.Logger(ctx).Error(errMsg)
-		return sdkerrors.Wrap(types.ErrHostZoneNotFound, errMsg)
+		return errorsmod.Wrapf(types.ErrHostZoneNotFound, "Host Zone (%s) not found", chainId)
 	}
 
 	// Get max number of validators and confirm we won't exceed it
 	err := k.ConfirmValSetHasSpace(ctx, hostZone.Validators)
 	if err != nil {
-		return sdkerrors.Wrap(types.ErrMaxNumValidators, "cannot add validator on host zone")
+		return errorsmod.Wrap(types.ErrMaxNumValidators, "cannot add validator on host zone")
 	}
 
 	// Check that we don't already have this validator
 	// Grab the minimum weight in the process (to assign to validator's added through governance)
 	var minWeight uint64 = math.MaxUint64
-	for _, validator := range hostZone.Validators {
-		if validator.Address == msg.Address {
-			errMsg := fmt.Sprintf("Validator address (%s) already exists on Host Zone (%s)", msg.Address, msg.HostZone)
-			k.Logger(ctx).Error(errMsg)
-			return sdkerrors.Wrap(types.ErrValidatorAlreadyExists, errMsg)
+	for _, existingValidator := range hostZone.Validators {
+		if existingValidator.Address == validator.Address {
+			return errorsmod.Wrapf(types.ErrValidatorAlreadyExists, "Validator address (%s) already exists on Host Zone (%s)", validator.Address, chainId)
 		}
-		if validator.Name == msg.Name {
-			errMsg := fmt.Sprintf("Validator name (%s) already exists on Host Zone (%s)", msg.Name, msg.HostZone)
-			k.Logger(ctx).Error(errMsg)
-			return sdkerrors.Wrap(types.ErrValidatorAlreadyExists, errMsg)
+		if existingValidator.Name == validator.Name {
+			return errorsmod.Wrapf(types.ErrValidatorAlreadyExists, "Validator name (%s) already exists on Host Zone (%s)", validator.Name, chainId)
 		}
 		// Store the min weight to assign to new validator added through governance (ignore zero-weight validators)
-		if validator.Weight < minWeight && validator.Weight > 0 {
-			minWeight = validator.Weight
+		if existingValidator.Weight < minWeight && existingValidator.Weight > 0 {
+			minWeight = existingValidator.Weight
 		}
 	}
 
 	// If the validator was added via governance, set the weight to the min validator weight of the host zone
-	valWeight := msg.Weight
+	valWeight := validator.Weight
 	if fromGovernance {
 		valWeight = minWeight
 	}
 
 	// Finally, add the validator to the host
 	hostZone.Validators = append(hostZone.Validators, &types.Validator{
-		Name:           msg.Name,
-		Address:        msg.Address,
-		Status:         types.Validator_ACTIVE,
-		CommissionRate: msg.Commission,
-		DelegationAmt:  sdkmath.ZeroInt(),
-		Weight:         valWeight,
+		Name:          validator.Name,
+		Address:       validator.Address,
+		Weight:        valWeight,
+		DelegationAmt: sdkmath.ZeroInt(),
 	})
 
 	k.SetHostZone(ctx, hostZone)
@@ -161,7 +173,7 @@ func (k Keeper) RemoveValidatorFromHostZone(ctx sdk.Context, chainId string, val
 	if !found {
 		errMsg := fmt.Sprintf("HostZone (%s) not found", chainId)
 		k.Logger(ctx).Error(errMsg)
-		return sdkerrors.Wrapf(types.ErrHostZoneNotFound, errMsg)
+		return errorsmod.Wrapf(types.ErrHostZoneNotFound, errMsg)
 	}
 	for i, val := range hostZone.Validators {
 		if val.GetAddress() == validatorAddress {
@@ -177,7 +189,7 @@ func (k Keeper) RemoveValidatorFromHostZone(ctx sdk.Context, chainId string, val
 	}
 	errMsg := fmt.Sprintf("Validator address (%s) not found on host zone (%s)", validatorAddress, chainId)
 	k.Logger(ctx).Error(errMsg)
-	return sdkerrors.Wrapf(types.ErrValidatorNotFound, errMsg)
+	return errorsmod.Wrapf(types.ErrValidatorNotFound, errMsg)
 }
 
 // Get a validator and its index from a list of validators, by address
@@ -203,7 +215,17 @@ func (k Keeper) GetHostZoneFromIBCDenom(ctx sdk.Context, denom string) (*types.H
 	if matchZone.ChainId != "" {
 		return &matchZone, nil
 	}
-	return nil, sdkerrors.Wrapf(sdkerrors.ErrUnknownRequest, "No HostZone for %s found", denom)
+	return nil, errorsmod.Wrapf(sdkerrors.ErrUnknownRequest, "No HostZone for %s found", denom)
+}
+
+// Validate whether a denom is a supported liquid staking token
+func (k Keeper) CheckIsStToken(ctx sdk.Context, denom string) bool {
+	for _, hostZone := range k.GetAllHostZone(ctx) {
+		if types.StAssetDenomFromHostZoneDenom(hostZone.HostDenom) == denom {
+			return true
+		}
+	}
+	return false
 }
 
 // IterateHostZones iterates zones

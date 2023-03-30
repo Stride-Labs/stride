@@ -7,9 +7,9 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	_ "github.com/stretchr/testify/suite"
 
-	epochtypes "github.com/Stride-Labs/stride/v5/x/epochs/types"
-	recordtypes "github.com/Stride-Labs/stride/v5/x/records/types"
-	stakeibctypes "github.com/Stride-Labs/stride/v5/x/stakeibc/types"
+	epochtypes "github.com/Stride-Labs/stride/v8/x/epochs/types"
+	recordtypes "github.com/Stride-Labs/stride/v8/x/records/types"
+	stakeibctypes "github.com/Stride-Labs/stride/v8/x/stakeibc/types"
 )
 
 type RedeemStakeState struct {
@@ -285,4 +285,16 @@ func (s *KeeperTestSuite) TestRedeemStake_InvalidHostAddress() {
 
 	_, err := s.GetMsgServer().RedeemStake(sdk.WrapSDKContext(s.Ctx), &tc.validMsg)
 	s.Require().EqualError(err, "could not bech32 decode address cosmosXXX of zone with id: GAIA")
+}
+
+func (s *KeeperTestSuite) TestRedeemStake_HaltedZone() {
+	tc := s.SetupRedeemStake()
+
+	// Update hostzone with halted
+	haltedHostZone, _ := s.App.StakeibcKeeper.GetHostZone(s.Ctx, tc.validMsg.HostZone)
+	haltedHostZone.Halted = true
+	s.App.StakeibcKeeper.SetHostZone(s.Ctx, haltedHostZone)
+
+	_, err := s.GetMsgServer().RedeemStake(sdk.WrapSDKContext(s.Ctx), &tc.validMsg)
+	s.Require().EqualError(err, "halted host zone found for zone (GAIA): Halted host zone found")
 }

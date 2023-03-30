@@ -3,16 +3,14 @@ package v2
 import (
 	sdkmath "cosmossdk.io/math"
 
-	oldstakeibctypes "github.com/Stride-Labs/stride/v5/x/stakeibc/migrations/v2/types"
-	stakeibctypes "github.com/Stride-Labs/stride/v5/x/stakeibc/types"
+	oldstakeibctypes "github.com/Stride-Labs/stride/v8/x/stakeibc/migrations/v2/types"
+	stakeibctypes "github.com/Stride-Labs/stride/v8/x/stakeibc/types"
 )
 
 func convertToNewValidator(oldValidator oldstakeibctypes.Validator) stakeibctypes.Validator {
 	return stakeibctypes.Validator{
 		Name:                 oldValidator.Name,
 		Address:              oldValidator.Address,
-		Status:               stakeibctypes.Validator_ValidatorStatus(oldValidator.Status),
-		CommissionRate:       oldValidator.CommissionRate,
 		DelegationAmt:        sdkmath.NewIntFromUint64(oldValidator.DelegationAmt),
 		Weight:               oldValidator.Weight,
 		InternalExchangeRate: (*stakeibctypes.ValidatorExchangeRate)(oldValidator.InternalExchangeRate),

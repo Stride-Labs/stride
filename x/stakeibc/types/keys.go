@@ -24,6 +24,8 @@ const (
 
 	// fee account - F1
 	FeeAccount = "stride1czvrk3jkvtj8m27kqsqu2yrkhw3h3ykwj3rxh6"
+
+	RewardCollectorName = "reward_collector"
 )
 
 // PortKey defines the key to store the port ID in store

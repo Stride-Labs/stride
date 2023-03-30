@@ -3,14 +3,20 @@ package keeper
 import (
 	"fmt"
 
-	"github.com/Stride-Labs/stride/v5/utils"
-	epochtypes "github.com/Stride-Labs/stride/v5/x/epochs/types"
-	icacallbackstypes "github.com/Stride-Labs/stride/v5/x/icacallbacks/types"
-	recordstypes "github.com/Stride-Labs/stride/v5/x/records/types"
-	"github.com/Stride-Labs/stride/v5/x/stakeibc/types"
-
-	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/types/bech32"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+
+	icqtypes "github.com/Stride-Labs/stride/v8/x/interchainquery/types"
+
+	"github.com/Stride-Labs/stride/v8/utils"
+	epochtypes "github.com/Stride-Labs/stride/v8/x/epochs/types"
+	icacallbackstypes "github.com/Stride-Labs/stride/v8/x/icacallbacks/types"
+	recordstypes "github.com/Stride-Labs/stride/v8/x/records/types"
+	"github.com/Stride-Labs/stride/v8/x/stakeibc/types"
+
+	errorsmod "cosmossdk.io/errors"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	channeltypes "github.com/cosmos/ibc-go/v5/modules/core/04-channel/types"
 	"github.com/golang/protobuf/proto" //nolint:staticcheck
 )
@@ -38,16 +44,23 @@ func (k Keeper) UnmarshalReinvestCallbackArgs(ctx sdk.Context, reinvestCallback 
 // ICA Callback after reinvestment
 //   If successful:
 //      * Creates a new DepositRecord with the reinvestment amount
+//      * Issues an ICQ to query the rewards balance
 //   If timeout/failure:
 //      * Does nothing
 func ReinvestCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ackResponse *icacallbackstypes.AcknowledgementResponse, args []byte) error {
 	// Fetch callback args
 	reinvestCallback, err := k.UnmarshalReinvestCallbackArgs(ctx, args)
 	if err != nil {
-		return sdkerrors.Wrapf(types.ErrUnmarshalFailure, fmt.Sprintf("Unable to unmarshal reinvest callback args: %s", err.Error()))
+		return errorsmod.Wrapf(types.ErrUnmarshalFailure, fmt.Sprintf("Unable to unmarshal reinvest callback args: %s", err.Error()))
 	}
 	chainId := reinvestCallback.HostZoneId
 	k.Logger(ctx).Info(utils.LogICACallbackWithHostZone(chainId, ICACallbackID_Reinvest, "Starting reinvest callback"))
+
+	// Grab the associated host zone
+	hostZone, found := k.GetHostZone(ctx, chainId)
+	if !found {
+		return errorsmod.Wrapf(types.ErrHostZoneNotFound, "host zone %s not found", chainId)
+	}
 
 	// Check for timeout (ack nil)
 	// No action is necessary on a timeout
@@ -72,7 +85,7 @@ func ReinvestCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ack
 	strideEpochTracker, found := k.GetEpochTracker(ctx, epochtypes.STRIDE_EPOCH)
 	if !found {
 		k.Logger(ctx).Error("failed to find epoch")
-		return sdkerrors.Wrapf(types.ErrInvalidLengthEpochTracker, "no number for epoch (%s)", epochtypes.STRIDE_EPOCH)
+		return errorsmod.Wrapf(types.ErrInvalidLengthEpochTracker, "no number for epoch (%s)", epochtypes.STRIDE_EPOCH)
 	}
 
 	// Create a new deposit record so that rewards are reinvested
@@ -86,5 +99,34 @@ func ReinvestCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ack
 	}
 	k.RecordsKeeper.AppendDepositRecord(ctx, record)
 
-	return nil
+	// Encode the fee account address for the query request
+	// The query request consists of the fee account address and denom
+	feeAccount := hostZone.FeeAccount
+	if feeAccount == nil || feeAccount.Address == "" {
+		return errorsmod.Wrapf(types.ErrICAAccountNotFound, "no fee account found for %s", chainId)
+	}
+	_, feeAddressBz, err := bech32.DecodeAndConvert(feeAccount.Address)
+	if err != nil {
+		return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "invalid fee account address, could not decode (%s)", err.Error())
+	}
+	queryData := append(banktypes.CreateAccountBalancesPrefix(feeAddressBz), []byte(hostZone.HostDenom)...)
+
+	// The query should timeout before the next epoch
+	timeout, err := k.GetICATimeoutNanos(ctx, epochtypes.STRIDE_EPOCH)
+	if err != nil {
+		return errorsmod.Wrapf(err, "Failed to get ICATimeout from %s epoch", epochtypes.STRIDE_EPOCH)
+	}
+
+	// Submit an ICQ for the rewards balance in the fee account
+	k.Logger(ctx).Info(utils.LogICACallbackWithHostZone(chainId, ICACallbackID_Reinvest, "Submitting ICQ for fee account balance"))
+	return k.InterchainQueryKeeper.MakeRequest(
+		ctx,
+		types.ModuleName,
+		ICQCallbackID_FeeBalance,
+		chainId,
+		hostZone.ConnectionId,
+		icqtypes.BANK_STORE_QUERY_WITH_PROOF,
+		queryData,
+		timeout,
+	)
 }

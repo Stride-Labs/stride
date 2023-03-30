@@ -10,7 +10,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/version"
 	"github.com/spf13/cobra"
 
-	"github.com/Stride-Labs/stride/v5/x/claim/types"
+	"github.com/Stride-Labs/stride/v8/x/claim/types"
 )
 
 // GetQueryCmd returns the cli query commands for this module
@@ -30,6 +30,8 @@ func GetQueryCmd(queryRoute string) *cobra.Command {
 		GetCmdQueryClaimableForAction(),
 		GetCmdQueryTotalClaimable(),
 		GetCmdQueryUserVestings(),
+		GetCmdClaimStatus(),
+		GetCmdQueryClaimMetadata(),
 	)
 
 	return claimQueryCmd
@@ -237,6 +239,69 @@ $ %s query claim user-vestings stride1h4astdfzjhcwahtfrh24qtvndzzh49xvqtfftk
 			res, err := queryClient.UserVestings(context.Background(), &types.QueryUserVestingsRequest{
 				Address: args[0],
 			})
+			if err != nil {
+				return err
+			}
+			return clientCtx.PrintObjectLegacy(res)
+		},
+	}
+	flags.AddQueryFlagsToCmd(cmd)
+	return cmd
+}
+
+// GetCmdClaimStatus implements the query user vestings command.
+func GetCmdClaimStatus() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "claim-status [address]",
+		Args:  cobra.ExactArgs(1),
+		Short: "Query claim status for an address, across all claims.",
+		Long: strings.TrimSpace(
+			fmt.Sprintf(`Query claim status for an address, across all claims.
+Example:
+$ %s query claim claim-status stride1h4astdfzjhcwahtfrh24qtvndzzh49xvqtfftk
+`,
+				version.AppName,
+			),
+		),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, err := client.GetClientQueryContext(cmd)
+			if err != nil {
+				return err
+			}
+			queryClient := types.NewQueryClient(clientCtx)
+			// Query store
+			res, err := queryClient.ClaimStatus(context.Background(), &types.QueryClaimStatusRequest{
+				Address: args[0],
+			})
+			if err != nil {
+				return err
+			}
+			return clientCtx.PrintObjectLegacy(res)
+		},
+	}
+	flags.AddQueryFlagsToCmd(cmd)
+	return cmd
+}
+
+// GetCmdQueryClaimMetadata implements the query user vestings command.
+func GetCmdQueryClaimMetadata() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "claim-metadata",
+		Args:  cobra.ExactArgs(0),
+		Short: "Query claim metadata.",
+		Long: strings.TrimSpace(
+			fmt.Sprintf(`Query claim-metadata. Returns the current round, start and end time for claims. %s`,
+				version.AppName,
+			),
+		),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, err := client.GetClientQueryContext(cmd)
+			if err != nil {
+				return err
+			}
+			queryClient := types.NewQueryClient(clientCtx)
+			// Query store
+			res, err := queryClient.ClaimMetadata(context.Background(), &types.QueryClaimMetadataRequest{})
 			if err != nil {
 				return err
 			}

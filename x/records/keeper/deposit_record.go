@@ -6,7 +6,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/Stride-Labs/stride/v5/x/records/types"
+	"github.com/Stride-Labs/stride/v8/x/records/types"
 )
 
 // GetDepositRecordCount get the total number of depositRecord
@@ -101,10 +101,12 @@ func GetDepositRecordIDBytes(id uint64) []byte {
 	return bz
 }
 
-func (k Keeper) GetDepositRecordByEpochAndChain(ctx sdk.Context, epochNumber uint64, chainId string) (val *types.DepositRecord, found bool) {
+func (k Keeper) GetTransferDepositRecordByEpochAndChain(ctx sdk.Context, epochNumber uint64, chainId string) (val *types.DepositRecord, found bool) {
 	records := k.GetAllDepositRecord(ctx)
 	for _, depositRecord := range records {
-		if depositRecord.DepositEpochNumber == epochNumber && depositRecord.HostZoneId == chainId {
+		if depositRecord.DepositEpochNumber == epochNumber &&
+			depositRecord.HostZoneId == chainId &&
+			depositRecord.Status == types.DepositRecord_TRANSFER_QUEUE {
 			return &depositRecord, true
 		}
 	}

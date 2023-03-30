@@ -8,8 +8,8 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	oldstakeibctypes "github.com/Stride-Labs/stride/v5/x/stakeibc/migrations/v2/types"
-	stakeibctypes "github.com/Stride-Labs/stride/v5/x/stakeibc/types"
+	oldstakeibctypes "github.com/Stride-Labs/stride/v8/x/stakeibc/migrations/v2/types"
+	stakeibctypes "github.com/Stride-Labs/stride/v8/x/stakeibc/types"
 )
 
 func TestConvertToNewValidator(t *testing.T) {
@@ -34,12 +34,10 @@ func TestConvertToNewValidator(t *testing.T) {
 		},
 	}
 	expectedNewValidator := stakeibctypes.Validator{
-		Name:           name,
-		Address:        address,
-		Status:         stakeibctypes.Validator_ACTIVE,
-		CommissionRate: commmissionRate,
-		DelegationAmt:  sdkmath.NewInt(1),
-		Weight:         weight,
+		Name:          name,
+		Address:       address,
+		DelegationAmt: sdkmath.NewInt(1),
+		Weight:        weight,
 		InternalExchangeRate: &stakeibctypes.ValidatorExchangeRate{
 			InternalTokensToSharesRate: tokensToShares,
 			EpochNumber:                epochNumber,

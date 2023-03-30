@@ -6,21 +6,22 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+
+	errorsmod "cosmossdk.io/errors"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	authz "github.com/cosmos/cosmos-sdk/x/authz"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 
-	claimmigration "github.com/Stride-Labs/stride/v5/x/claim/migrations/v2"
-	claimtypes "github.com/Stride-Labs/stride/v5/x/claim/types"
-	icacallbacksmigration "github.com/Stride-Labs/stride/v5/x/icacallbacks/migrations/v2"
-	icacallbacktypes "github.com/Stride-Labs/stride/v5/x/icacallbacks/types"
-	interchainquerykeeper "github.com/Stride-Labs/stride/v5/x/interchainquery/keeper"
-	recordsmigration "github.com/Stride-Labs/stride/v5/x/records/migrations/v2"
-	recordtypes "github.com/Stride-Labs/stride/v5/x/records/types"
-	stakeibckeeper "github.com/Stride-Labs/stride/v5/x/stakeibc/keeper"
-	stakeibcmigration "github.com/Stride-Labs/stride/v5/x/stakeibc/migrations/v2"
-	stakeibctypes "github.com/Stride-Labs/stride/v5/x/stakeibc/types"
+	claimmigration "github.com/Stride-Labs/stride/v8/x/claim/migrations/v2"
+	claimtypes "github.com/Stride-Labs/stride/v8/x/claim/types"
+	icacallbacksmigration "github.com/Stride-Labs/stride/v8/x/icacallbacks/migrations/v2"
+	icacallbacktypes "github.com/Stride-Labs/stride/v8/x/icacallbacks/types"
+	interchainquerykeeper "github.com/Stride-Labs/stride/v8/x/interchainquery/keeper"
+	recordsmigration "github.com/Stride-Labs/stride/v8/x/records/migrations/v2"
+	recordtypes "github.com/Stride-Labs/stride/v8/x/records/types"
+	stakeibckeeper "github.com/Stride-Labs/stride/v8/x/stakeibc/keeper"
+	stakeibcmigration "github.com/Stride-Labs/stride/v8/x/stakeibc/migrations/v2"
+	stakeibctypes "github.com/Stride-Labs/stride/v8/x/stakeibc/types"
 )
 
 // Note: ensure these values are properly set before running upgrade
@@ -71,22 +72,22 @@ func CreateUpgradeHandler(
 		//    - stakeibc
 		logModuleMigration(ctx, currentVersions, claimtypes.ModuleName)
 		if err := claimmigration.MigrateStore(ctx, claimStoreKey, cdc); err != nil {
-			return vm, sdkerrors.Wrapf(err, "unable to migrate claim store")
+			return vm, errorsmod.Wrapf(err, "unable to migrate claim store")
 		}
 
 		logModuleMigration(ctx, currentVersions, icacallbacktypes.ModuleName)
 		if err := icacallbacksmigration.MigrateStore(ctx, icacallbackStorekey, cdc); err != nil {
-			return vm, sdkerrors.Wrapf(err, "unable to migrate icacallbacks store")
+			return vm, errorsmod.Wrapf(err, "unable to migrate icacallbacks store")
 		}
 
 		logModuleMigration(ctx, currentVersions, recordtypes.ModuleName)
 		if err := recordsmigration.MigrateStore(ctx, recordStoreKey, cdc); err != nil {
-			return vm, sdkerrors.Wrapf(err, "unable to migrate records store")
+			return vm, errorsmod.Wrapf(err, "unable to migrate records store")
 		}
 
 		logModuleMigration(ctx, currentVersions, stakeibctypes.ModuleName)
 		if err := stakeibcmigration.MigrateStore(ctx, stakeibcStoreKey, cdc); err != nil {
-			return vm, sdkerrors.Wrapf(err, "unable to migrate stakeibc store")
+			return vm, errorsmod.Wrapf(err, "unable to migrate stakeibc store")
 		}
 
 		// `RunMigrations` (below) checks the old consensus version of each module (found in

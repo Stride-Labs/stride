@@ -3,8 +3,7 @@
 	path = deps/hermes
 	url = https://github.com/informalsystems/ibc-rs.git
 [submodule "deps/relayer"]
-	# Commit: 7f78a4d608329b2ae07a6512381bbadffee66be6
-	# Branch: andrew/client_icq
+	# Commit: 2d9fe1acf9081ec7bdcefd8c212a21d28febaba7
 	path = deps/relayer
 	url = https://github.com/cosmos/relayer.git
 [submodule "deps/gaia"]

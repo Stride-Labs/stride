@@ -9,10 +9,10 @@ import (
 
 	sdkmath "cosmossdk.io/math"
 
-	keepertest "github.com/Stride-Labs/stride/v5/testutil/keeper"
-	"github.com/Stride-Labs/stride/v5/testutil/nullify"
-	"github.com/Stride-Labs/stride/v5/x/records/keeper"
-	"github.com/Stride-Labs/stride/v5/x/records/types"
+	keepertest "github.com/Stride-Labs/stride/v8/testutil/keeper"
+	"github.com/Stride-Labs/stride/v8/testutil/nullify"
+	"github.com/Stride-Labs/stride/v8/x/records/keeper"
+	"github.com/Stride-Labs/stride/v8/x/records/types"
 )
 
 func createNUserRedemptionRecord(keeper *keeper.Keeper, ctx sdk.Context, n int) []types.UserRedemptionRecord {

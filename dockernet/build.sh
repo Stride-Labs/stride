@@ -7,6 +7,7 @@ source ${SCRIPT_DIR}/config.sh
 BUILDDIR="$2"
 mkdir -p $BUILDDIR
 
+
 build_local_and_docker() {
    module="$1"
    folder="$2"
@@ -15,9 +16,10 @@ build_local_and_docker() {
    printf '%s' "Building $title Locally...  "
    cwd=$PWD
    cd $folder
-   GOBIN=$BUILDDIR go install -mod=readonly -trimpath ./... 2>&1 | grep -v -E "deprecated|keychain" | true
+   GOBIN=$BUILDDIR go install -mod=readonly -trimpath ./... | grep -v -E "deprecated|keychain" | true
    local_build_succeeded=${PIPESTATUS[0]}
    cd $cwd
+   
 
    if [[ "$local_build_succeeded" == "0" ]]; then
       echo "Done" 
@@ -44,6 +46,7 @@ build_local_and_docker() {
    return $docker_build_succeeded
 }
 
+
 ADMINS_FILE=${DOCKERNET_HOME}/../utils/admins.go
 ADMINS_FILE_BACKUP=${DOCKERNET_HOME}/../utils/admins.go.main
 
@@ -56,6 +59,7 @@ revert_admin_address() {
    mv $ADMINS_FILE_BACKUP $ADMINS_FILE
    rm -f ${ADMINS_FILE}-E
 }
+
 
 # build docker images and local binaries
 while getopts sgojthrn flag; do

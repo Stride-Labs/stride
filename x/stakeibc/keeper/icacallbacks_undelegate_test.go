@@ -11,11 +11,11 @@ import (
 
 	sdkmath "cosmossdk.io/math"
 
-	icacallbacktypes "github.com/Stride-Labs/stride/v5/x/icacallbacks/types"
-	recordtypes "github.com/Stride-Labs/stride/v5/x/records/types"
-	stakeibckeeper "github.com/Stride-Labs/stride/v5/x/stakeibc/keeper"
-	"github.com/Stride-Labs/stride/v5/x/stakeibc/types"
-	stakeibc "github.com/Stride-Labs/stride/v5/x/stakeibc/types"
+	icacallbacktypes "github.com/Stride-Labs/stride/v8/x/icacallbacks/types"
+	recordtypes "github.com/Stride-Labs/stride/v8/x/records/types"
+	stakeibckeeper "github.com/Stride-Labs/stride/v8/x/stakeibc/keeper"
+	"github.com/Stride-Labs/stride/v8/x/stakeibc/types"
+	stakeibc "github.com/Stride-Labs/stride/v8/x/stakeibc/types"
 )
 
 type UndelegateCallbackState struct {
@@ -361,7 +361,6 @@ func (s *KeeperTestSuite) TestUpdateHostZoneUnbondings_Success() {
 	s.Require().True(found)
 
 	hzu1 := epochUnbondingRecord1.HostZoneUnbondings[0]
-	s.Require().Equal(recordtypes.HostZoneUnbonding_EXIT_TRANSFER_QUEUE, hzu1.Status, "hzu1 status is EXIT_TRANSFER_QUEUE")
 	s.Require().Equal(completionTime.UnixNano(), int64(hzu1.UnbondingTime), "hzu1 completion time is set")
 
 	hzu2 := epochUnbondingRecord1.HostZoneUnbondings[1]
@@ -369,7 +368,6 @@ func (s *KeeperTestSuite) TestUpdateHostZoneUnbondings_Success() {
 	s.Require().Equal(int64(0), int64(hzu2.UnbondingTime), "hzu2 completion time is NOT set")
 
 	hzu3 := epochUnbondingRecord2.HostZoneUnbondings[0]
-	s.Require().Equal(recordtypes.HostZoneUnbonding_EXIT_TRANSFER_QUEUE, hzu3.Status, "hzu3 status is EXIT_TRANSFER_QUEUE")
 	s.Require().Equal(completionTime.UnixNano(), int64(hzu3.UnbondingTime), "hzu3 completion time is set")
 }
 
