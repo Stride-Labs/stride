@@ -116,9 +116,10 @@ MEMO='{"autopilot": {"receiver": "stride1qlly03ar5ll85ww4usvkv09832vv5tkhtnnaep"
 # $EVMOS_MAIN_CMD tx ibc-transfer transfer transfer channel-0 stride1qlly03ar5ll85ww4usvkv09832vv5tkhtnnaep 1aevmos --note "$MEMO" --from airdrop-recipient-1 -y | TRIM_TX
 # echo ">>> Waiting for 15 seconds to allow the IBC transfer to complete..."
 # sleep 5
-$EVMOS_MAIN_CMD tx ibc-transfer transfer transfer channel-0 stride1qlly03ar5ll85ww4usvkv09832vv5tkhtnnaep 1aevmos --memo "$MEMO" --from airdrop-recipient-1 -y | TRIM_TX
+$EVMOS_MAIN_CMD tx ibc-transfer transfer transfer channel-0 "$MEMO" 1aevmos --from airdrop-recipient-1 -y | TRIM_TX
+# $EVMOS_MAIN_CMD tx ibc-transfer transfer transfer channel-0 stride1qlly03ar5ll85ww4usvkv09832vv5tkhtnnaep 1aevmos --memo "$MEMO" --from airdrop-recipient-1 -y | TRIM_TX
 echo ">>> Waiting for 15 seconds to allow the IBC transfer to complete..."
-sleep 15
+sleep 150
 
 echo ">>> Querying the claims module to verify that the new address is eligible"
 $STRIDE_MAIN_CMD q claim total-claimable $AIRDROP_NAME $AIRDROP_RECIPIENT_1_STRIDE true
