@@ -7,7 +7,8 @@ import (
 	channeltypes "github.com/cosmos/ibc-go/v5/modules/core/04-channel/types"
 )
 
-const TRANSFER = "transfer"
+const IBCCallbacksID_NativeTransfer = "transfer"
+const IBCCallbacksID_LSMTransfer = "lsm-transfer"
 
 // ICACallbacks wrapper struct for stakeibc keeper
 type ICACallback func(Keeper, sdk.Context, channeltypes.Packet, *icacallbackstypes.AcknowledgementResponse, []byte) error
@@ -38,6 +39,8 @@ func (c ICACallbacks) AddICACallback(id string, fn interface{}) icacallbackstype
 }
 
 func (c ICACallbacks) RegisterICACallbacks() icacallbackstypes.ICACallbackHandler {
-	a := c.AddICACallback(TRANSFER, ICACallback(TransferCallback))
+	a := c.
+		AddICACallback(IBCCallbacksID_NativeTransfer, ICACallback(TransferCallback)).
+		AddICACallback(IBCCallbacksID_LSMTransfer, ICACallback(LSMTransferCallback))
 	return a.(ICACallbacks)
 }

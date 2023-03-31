@@ -98,7 +98,7 @@ func (k Keeper) Transfer(ctx sdk.Context, msg *ibctypes.MsgTransfer, depositReco
 		PortId:       msg.SourcePort,
 		ChannelId:    msg.SourceChannel,
 		Sequence:     sequence,
-		CallbackId:   TRANSFER,
+		CallbackId:   IBCCallbacksID_NativeTransfer,
 		CallbackArgs: marshalledCallbackArgs,
 	}
 	k.Logger(ctx).Info(utils.LogWithHostZone(depositRecord.HostZoneId, "Storing callback data: %+v", callback))

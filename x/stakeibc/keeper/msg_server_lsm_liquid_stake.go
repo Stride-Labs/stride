@@ -15,3 +15,8 @@ func (k msgServer) LSMLiquidStake(goCtx context.Context, msg *types.MsgLSMLiquid
 
 	return &types.MsgLSMLiquidStakeResponse{}, nil
 }
+
+func (k Keeper) MintAndSendLSMTokens(ctx sdk.Context, lsmLiquidStake types.LSMLiquidStake) error {
+	// TODO [LSM]
+	return nil
+}
