@@ -112,10 +112,10 @@ echo "\n Overwrite airdrop elibibility for recipient 4. They should no longer be
 # stride address (stride1nmwp5uh5a3g08668c5eynes0hyfaw94dgervt7), then reset it to the true stride address (stride1qlly03ar5ll85ww4usvkv09832vv5tkhtnnaep)
 MEMO='{"autopilot": {"receiver": "stride1qlly03ar5ll85ww4usvkv09832vv5tkhtnnaep","claim": { "stride_address": "stride1qlly03ar5ll85ww4usvkv09832vv5tkhtnnaep", "airdrop_id": "evmos" } }}'
 # $EVMOS_MAIN_CMD tx ibc-transfer transfer transfer channel-0 "$MEMO" 1aevmos --from airdrop-recipient-1 -y | TRIM_TX
-echo "tx ibc-transfer transfer transfer channel-0 stride1qlly03ar5ll85ww4usvkv09832vv5tkhtnnaep 1aevmos --note "$MEMO" --from airdrop-recipient-1 -y | TRIM_TX"
-$EVMOS_MAIN_CMD tx ibc-transfer transfer transfer channel-0 stride1qlly03ar5ll85ww4usvkv09832vv5tkhtnnaep 1aevmos --note "$MEMO" --from airdrop-recipient-1 -y | TRIM_TX
-echo ">>> Waiting for 15 seconds to allow the IBC transfer to complete..."
-sleep 5
+# echo "tx ibc-transfer transfer transfer channel-0 stride1qlly03ar5ll85ww4usvkv09832vv5tkhtnnaep 1aevmos --note "$MEMO" --from airdrop-recipient-1 -y | TRIM_TX"
+# $EVMOS_MAIN_CMD tx ibc-transfer transfer transfer channel-0 stride1qlly03ar5ll85ww4usvkv09832vv5tkhtnnaep 1aevmos --note "$MEMO" --from airdrop-recipient-1 -y | TRIM_TX
+# echo ">>> Waiting for 15 seconds to allow the IBC transfer to complete..."
+# sleep 5
 $EVMOS_MAIN_CMD tx ibc-transfer transfer transfer channel-0 stride1qlly03ar5ll85ww4usvkv09832vv5tkhtnnaep 1aevmos --memo "$MEMO" --from airdrop-recipient-1 -y | TRIM_TX
 echo ">>> Waiting for 15 seconds to allow the IBC transfer to complete..."
 sleep 15
