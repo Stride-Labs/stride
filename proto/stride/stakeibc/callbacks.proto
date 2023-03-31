@@ -64,7 +64,7 @@ message TransferLSMTokenCallback { LSMTokenDeposit deposit = 1; }
 
 message DetokenizeSharesCallback { LSMTokenDeposit deposit = 1; }
 
-message RebalanceTokenizedSharesCallback {
+message RebalanceTokenizedDepositsCallback {
   string chain_id = 1;
   repeated SplitDelegation split_delegations = 2;
 }
