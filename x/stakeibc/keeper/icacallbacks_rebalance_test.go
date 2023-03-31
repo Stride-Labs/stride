@@ -75,11 +75,11 @@ func (s *KeeperTestSuite) TestRebalanceCallback_Successful() {
 	validators := hz.GetValidators()
 	s.Require().Len(validators, 5, "host zone has 5 validators")
 
-	s.Require().Equal(sdkmath.NewInt(217), validators[0].DelegationAmt, "validator 1 stake")
-	s.Require().Equal(sdkmath.NewInt(500), validators[1].DelegationAmt, "validator 2 stake")
-	s.Require().Equal(sdkmath.NewInt(96), validators[2].DelegationAmt, "validator 3 stake")
-	s.Require().Equal(sdkmath.NewInt(387), validators[3].DelegationAmt, "validator 4 stake")
-	s.Require().Equal(sdkmath.NewInt(400), validators[4].DelegationAmt, "validator 5 stake")
+	s.Require().Equal(sdkmath.NewInt(217), validators[0].BalancedDelegation, "validator 1 stake")
+	s.Require().Equal(sdkmath.NewInt(500), validators[1].BalancedDelegation, "validator 2 stake")
+	s.Require().Equal(sdkmath.NewInt(96), validators[2].BalancedDelegation, "validator 3 stake")
+	s.Require().Equal(sdkmath.NewInt(387), validators[3].BalancedDelegation, "validator 4 stake")
+	s.Require().Equal(sdkmath.NewInt(400), validators[4].BalancedDelegation, "validator 5 stake")
 }
 
 func (s *KeeperTestSuite) checkDelegationStateIfCallbackFailed() {
@@ -89,11 +89,11 @@ func (s *KeeperTestSuite) checkDelegationStateIfCallbackFailed() {
 	validators := hz.GetValidators()
 	s.Require().Len(validators, 5, "host zone has 5 validators")
 
-	s.Require().Equal(sdkmath.NewInt(100), validators[0].DelegationAmt, "validator 1 stake")
-	s.Require().Equal(sdkmath.NewInt(500), validators[1].DelegationAmt, "validator 2 stake")
-	s.Require().Equal(sdkmath.NewInt(200), validators[2].DelegationAmt, "validator 3 stake")
-	s.Require().Equal(sdkmath.NewInt(400), validators[3].DelegationAmt, "validator 4 stake")
-	s.Require().Equal(sdkmath.NewInt(400), validators[4].DelegationAmt, "validator 5 stake")
+	s.Require().Equal(sdkmath.NewInt(100), validators[0].BalancedDelegation, "validator 1 stake")
+	s.Require().Equal(sdkmath.NewInt(500), validators[1].BalancedDelegation, "validator 2 stake")
+	s.Require().Equal(sdkmath.NewInt(200), validators[2].BalancedDelegation, "validator 3 stake")
+	s.Require().Equal(sdkmath.NewInt(400), validators[3].BalancedDelegation, "validator 4 stake")
+	s.Require().Equal(sdkmath.NewInt(400), validators[4].BalancedDelegation, "validator 5 stake")
 }
 
 func (s *KeeperTestSuite) TestRebalanceCallback_Timeout() {

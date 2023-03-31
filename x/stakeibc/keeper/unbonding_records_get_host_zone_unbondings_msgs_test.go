@@ -42,29 +42,29 @@ func (s *KeeperTestSuite) SetupGetHostZoneUnbondingMsgs() GetHostZoneUnbondingMs
 	unbondingTime := uint64(1660348276)
 	lightClientTime := unbondingTime + 1
 
-	//  define the host zone with stakedBal and validators with staked amounts
+	//  define the host zone with total delegation and validators with staked amounts
 	validators := []*stakeibc.Validator{
 		{
-			Address:       hostVal1Addr,
-			DelegationAmt: amtVal1,
-			Weight:        wgtVal1,
+			Address:            hostVal1Addr,
+			BalancedDelegation: amtVal1,
+			Weight:             wgtVal1,
 		},
 		{
-			Address:       hostVal2Addr,
-			DelegationAmt: amtVal2,
-			Weight:        wgtVal2,
+			Address:            hostVal2Addr,
+			BalancedDelegation: amtVal2,
+			Weight:             wgtVal2,
 		},
 		{
 			Address: hostVal3Addr,
-			// DelegationAmt and Weight are the same as Val2, to test tie breaking
-			DelegationAmt: amtVal2,
-			Weight:        wgtVal2,
+			// BalancedDelegation and Weight are the same as Val2, to test tie breaking
+			BalancedDelegation: amtVal2,
+			Weight:             wgtVal2,
 		},
 		{
 			Address: hostVal4Addr,
 			// Zero weight validator
-			DelegationAmt: sdkmath.NewInt(0),
-			Weight:        0,
+			BalancedDelegation: sdkmath.NewInt(0),
+			Weight:             0,
 		},
 	}
 
@@ -197,7 +197,7 @@ func (s *KeeperTestSuite) TestGetHostZoneUnbondingMsgs_UnbondingTooMuch() {
 
 	// iterate the validators and set all their delegated amounts to 0
 	for i := range tc.hostZone.Validators {
-		tc.hostZone.Validators[i].DelegationAmt = sdkmath.ZeroInt()
+		tc.hostZone.Validators[i].BalancedDelegation = sdkmath.ZeroInt()
 	}
 	// write the host zone with zero-delegation validators back to the store
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, tc.hostZone)

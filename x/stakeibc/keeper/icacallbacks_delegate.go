@@ -91,7 +91,7 @@ func DelegateCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ack
 
 	// Update delegations on the host zone
 	for _, splitDelegation := range delegateCallback.SplitDelegations {
-		hostZone.StakedBal = hostZone.StakedBal.Add(splitDelegation.Amount)
+		hostZone.TotalBalancedDelegations = hostZone.TotalBalancedDelegations.Add(splitDelegation.Amount)
 		success := k.AddDelegationToValidator(ctx, hostZone, splitDelegation.Validator, splitDelegation.Amount, ICACallbackID_Delegate)
 		if !success {
 			return errorsmod.Wrapf(types.ErrValidatorDelegationChg, "Failed to add delegation to validator")

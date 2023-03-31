@@ -21,7 +21,7 @@ type UpdateRedemptionRatesTestCase struct {
 }
 
 func (s *KeeperTestSuite) SetupUpdateRedemptionRates(
-	stakedBal sdkmath.Int,
+	balancedDelegation sdkmath.Int,
 	undelegatedBal sdkmath.Int,
 	justDepositedBal sdkmath.Int,
 	stSupply sdkmath.Int,
@@ -54,10 +54,10 @@ func (s *KeeperTestSuite) SetupUpdateRedemptionRates(
 
 	// set the staked balance on the host zone
 	hostZone := stakeibctypes.HostZone{
-		ChainId:        "GAIA",
-		HostDenom:      "uatom",
-		StakedBal:      stakedBal,
-		RedemptionRate: initialRedemptionRate,
+		ChainId:                  "GAIA",
+		HostDenom:                "uatom",
+		TotalBalancedDelegations: balancedDelegation,
+		RedemptionRate:           initialRedemptionRate,
 	}
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
 
@@ -68,13 +68,13 @@ func (s *KeeperTestSuite) SetupUpdateRedemptionRates(
 }
 
 func (s *KeeperTestSuite) TestUpdateRedemptionRatesSuccessful() {
-	stakedBal := sdkmath.NewInt(5)
+	balancedDelegation := sdkmath.NewInt(5)
 	undelegatedBal := sdkmath.NewInt(3)
 	justDepositedBal := sdkmath.NewInt(3)
 	stSupply := sdkmath.NewInt(10)
 
 	initialRedemptionRate := sdk.NewDec(1)
-	tc := s.SetupUpdateRedemptionRates(stakedBal, undelegatedBal, justDepositedBal, stSupply, initialRedemptionRate)
+	tc := s.SetupUpdateRedemptionRates(balancedDelegation, undelegatedBal, justDepositedBal, stSupply, initialRedemptionRate)
 
 	// sanity check on inputs (check redemptionRate at genesis is 1)
 	s.Require().Equal(initialRedemptionRate, sdk.NewDec(1), "t0 rr")
@@ -94,14 +94,13 @@ func (s *KeeperTestSuite) TestUpdateRedemptionRatesRandomized() {
 	// run N tests, each with random inputs
 
 	MAX := "1_000_000_000"
-	stakedBal, _ := sdk.NewIntFromString(MAX)
+	balancedDelegation, _ := sdk.NewIntFromString(MAX)
 	undelegatedBal, _ := sdk.NewIntFromString(MAX)
 	justDepositedBal, _ := sdk.NewIntFromString(MAX)
 	stSupply, _ := sdk.NewIntFromString(MAX)
 
-	// s.Require().ElementsMatch([]int{0, 0, 0, 0}, []int{int(stakedBal), int(undelegatedBal), int(justDepositedBal), int(stSupply)}) //
 	initialRedemptionRate := sdk.NewDec(1)
-	tc := s.SetupUpdateRedemptionRates(stakedBal, undelegatedBal, justDepositedBal, stSupply, initialRedemptionRate)
+	tc := s.SetupUpdateRedemptionRates(balancedDelegation, undelegatedBal, justDepositedBal, stSupply, initialRedemptionRate)
 
 	// sanity check on inputs (check redemptionRate at genesis is 1)
 	s.Require().Equal(initialRedemptionRate, sdk.NewDec(1), "t0 rr")
@@ -113,13 +112,13 @@ func (s *KeeperTestSuite) TestUpdateRedemptionRatesRandomized() {
 	s.Require().True(found, "hz found")
 	rrNew := hz.RedemptionRate
 
-	numerator := stakedBal.Add(undelegatedBal).Add(justDepositedBal)
+	numerator := balancedDelegation.Add(undelegatedBal).Add(justDepositedBal)
 	denominator := stSupply
 	expectedNewRate := sdk.NewDecFromInt(numerator.Quo(denominator))
 
 	componentDescription := fmt.Sprintf(
-		"Components - StakedBal: %v, UndelegateBalance: %v, JustDepositedBalance: %v, stSupply: %v, InitialRedemptionRate: %v",
-		stakedBal, undelegatedBal, justDepositedBal, stSupply, initialRedemptionRate)
+		"Components - BalancedDelegation: %v, UndelegateBalance: %v, JustDepositedBalance: %v, stSupply: %v, InitialRedemptionRate: %v",
+		balancedDelegation, undelegatedBal, justDepositedBal, stSupply, initialRedemptionRate)
 
 	s.Require().Equal(rrNew, expectedNewRate,
 		"ExpectedRedemptionRate: %v, ActualRedemptionRate: %v; %s", expectedNewRate, rrNew, componentDescription)
@@ -134,13 +133,13 @@ func (s *KeeperTestSuite) TestUpdateRedemptionRatesRandomized_MultipleRuns() {
 }
 
 func (s *KeeperTestSuite) TestUpdateRedemptionRateZeroStAssets() {
-	stakedBal := sdkmath.NewInt(5)
+	balancedDelegation := sdkmath.NewInt(5)
 	undelegatedBal := sdkmath.NewInt(3)
 	justDepositedBal := sdkmath.NewInt(3)
 	stSupply := sdkmath.NewInt(0)
 
 	initialRedemptionRate := sdk.NewDec(1)
-	tc := s.SetupUpdateRedemptionRates(stakedBal, undelegatedBal, justDepositedBal, stSupply, initialRedemptionRate)
+	tc := s.SetupUpdateRedemptionRates(balancedDelegation, undelegatedBal, justDepositedBal, stSupply, initialRedemptionRate)
 
 	// sanity check on inputs (check redemptionRate at genesis is 1)
 	s.Require().Equal(initialRedemptionRate, sdk.NewDec(1), "t0 rr")
@@ -157,13 +156,13 @@ func (s *KeeperTestSuite) TestUpdateRedemptionRateZeroStAssets() {
 }
 
 func (s *KeeperTestSuite) TestUpdateRedemptionRateZeroNativeAssets() {
-	stakedBal := sdkmath.NewInt(0)
+	balancedDelegation := sdkmath.NewInt(0)
 	undelegatedBal := sdkmath.NewInt(0)
 	justDepositedBal := sdkmath.NewInt(0)
 	stSupply := sdkmath.NewInt(10)
 
 	initialRedemptionRate := sdk.NewDec(1)
-	tc := s.SetupUpdateRedemptionRates(stakedBal, undelegatedBal, justDepositedBal, stSupply, initialRedemptionRate)
+	tc := s.SetupUpdateRedemptionRates(balancedDelegation, undelegatedBal, justDepositedBal, stSupply, initialRedemptionRate)
 
 	// sanity check on inputs (check redemptionRate at genesis is 1)
 	s.Require().Equal(initialRedemptionRate, sdk.NewDec(1), "t0 rr")
@@ -180,13 +179,13 @@ func (s *KeeperTestSuite) TestUpdateRedemptionRateZeroNativeAssets() {
 }
 
 func (s *KeeperTestSuite) TestUpdateRedemptionRateNoModuleAccountRecords() {
-	stakedBal := sdkmath.NewInt(5)
+	balancedDelegation := sdkmath.NewInt(5)
 	undelegatedBal := sdkmath.NewInt(3)
 	justDepositedBal := sdkmath.NewInt(3)
 	stSupply := sdkmath.NewInt(10)
 	initialRedemptionRate := sdk.NewDec(1)
 
-	tc := s.SetupUpdateRedemptionRates(stakedBal, undelegatedBal, justDepositedBal, stSupply, initialRedemptionRate)
+	tc := s.SetupUpdateRedemptionRates(balancedDelegation, undelegatedBal, justDepositedBal, stSupply, initialRedemptionRate)
 
 	// sanity check on inputs (check redemptionRate at genesis is 1)
 	s.Require().Equal(initialRedemptionRate, sdk.NewDec(1), "t0 rr")
@@ -204,13 +203,13 @@ func (s *KeeperTestSuite) TestUpdateRedemptionRateNoModuleAccountRecords() {
 }
 
 func (s *KeeperTestSuite) TestUpdateRedemptionRateNoStakeDepositRecords() {
-	stakedBal := sdkmath.NewInt(5)
+	balancedDelegation := sdkmath.NewInt(5)
 	undelegatedBal := sdkmath.NewInt(3)
 	justDepositedBal := sdkmath.NewInt(3)
 	stSupply := sdkmath.NewInt(10)
 	initialRedemptionRate := sdk.NewDec(1)
 
-	tc := s.SetupUpdateRedemptionRates(stakedBal, undelegatedBal, justDepositedBal, stSupply, initialRedemptionRate)
+	tc := s.SetupUpdateRedemptionRates(balancedDelegation, undelegatedBal, justDepositedBal, stSupply, initialRedemptionRate)
 
 	// sanity check on inputs (check redemptionRate at genesis is 1)
 	s.Require().Equal(initialRedemptionRate, sdk.NewDec(1), "t0 rr")
@@ -223,13 +222,13 @@ func (s *KeeperTestSuite) TestUpdateRedemptionRateNoStakeDepositRecords() {
 	s.Require().True(found, "hz found")
 	rrNew := hz.RedemptionRate
 
-	numerator := stakedBal.Add(justDepositedBal)
+	numerator := balancedDelegation.Add(justDepositedBal)
 	denominator := stSupply
 	expectedNewRate := sdk.NewDecFromInt(numerator).Quo(sdk.NewDecFromInt(denominator))
 	s.Require().Equal(rrNew, expectedNewRate, "rr as expected")
 }
 
-func (s *KeeperTestSuite) TestUpdateRedemptionRateNoStakedBal() {
+func (s *KeeperTestSuite) TestUpdateRedemptionRateNoBalancedDelegation() {
 	undelegatedBal := sdkmath.NewInt(3)
 	justDepositedBal := sdkmath.NewInt(3)
 	stSupply := sdkmath.NewInt(10)
@@ -253,7 +252,7 @@ func (s *KeeperTestSuite) TestUpdateRedemptionRateNoStakedBal() {
 }
 
 func (s *KeeperTestSuite) TestUpdateRedemptionRateRandominitialRedemptionRate() {
-	stakedBal := sdkmath.NewInt(5)
+	balancedDelegation := sdkmath.NewInt(5)
 	undelegatedBal := sdkmath.NewInt(3)
 	justDepositedBal := sdkmath.NewInt(3)
 	stSupply := sdkmath.NewInt(10)
@@ -269,7 +268,7 @@ func (s *KeeperTestSuite) TestUpdateRedemptionRateRandominitialRedemptionRate() 
 	initialRedemptionRate := sdk.NewDec(genRandUintBelowMax(MAX)).Quo(sdk.NewDec(genRandUintBelowMax(MAX / 2)))
 
 	// SET HZ STAKED BAL TO 0
-	tc := s.SetupUpdateRedemptionRates(stakedBal, undelegatedBal, justDepositedBal, stSupply, initialRedemptionRate)
+	tc := s.SetupUpdateRedemptionRates(balancedDelegation, undelegatedBal, justDepositedBal, stSupply, initialRedemptionRate)
 
 	records := tc.allRecords
 	s.App.StakeibcKeeper.UpdateRedemptionRates(s.Ctx, records)
