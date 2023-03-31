@@ -23,6 +23,9 @@
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 source ${SCRIPT_DIR}/../../config.sh
 
+$STRIDE_MAIN_CMD keys delete airdrop-recipient-1 -y &> /dev/null || true 
+$EVMOS_MAIN_CMD keys delete airdrop-recipient-1 -y &> /dev/null || true 
+
 AIRDROP_NAME="evmos"
 
 # airdrop recipient 1 key
@@ -41,6 +44,10 @@ AIRDROP_RECIPIENT_2="stride17kht2x2ped6qytr2kklevtvmxpw7wq9rmuc3ca"
 AIRDROP_RECIPIENT_3="stride1nnurja9zt97huqvsfuartetyjx63tc5zq8s6fv"
 AIRDROP_RECIPIENT_4_TO_BE_REPLACED="stride16lmf7t0jhaatan6vnxlgv47h2wf0k5ln58y9qm"
 AIRDROP_DISTRIBUTOR_1="stride1qs6c3jgk7fcazrz328sqxqdv9d5lu5qqqgqsvj"
+
+
+echo ">>> Querying the claims module to verify that the new address is eligible"
+$STRIDE_MAIN_CMD q claim total-claimable $AIRDROP_NAME $AIRDROP_RECIPIENT_1_STRIDE true
 
 # cleanup: clear out and re-fund accounts
 $STRIDE_MAIN_CMD keys delete d1 -y &> /dev/null || true 
@@ -88,7 +95,7 @@ $STRIDE_MAIN_CMD q claim total-claimable $AIRDROP_NAME $AIRDROP_RECIPIENT_3 true
 $STRIDE_MAIN_CMD q claim total-claimable $AIRDROP_NAME $AIRDROP_RECIPIENT_4_TO_BE_REPLACED true
 
 echo "Sleeping 2 minutes before linking the evmos address to its stride address..."
-sleep 120
+sleep 10
 echo "\n Overwrite airdrop elibibility for recipient 4. They should no longer be eligible." 
 #         b. ibc-transfer from Osmo to Stride to change the airdrop account to stride1qlly03ar5ll85ww4usvkv09832vv5tkhtnnaep
 #              Memo: {
@@ -104,7 +111,12 @@ echo "\n Overwrite airdrop elibibility for recipient 4. They should no longer be
 # Note: autopilot will look at the sender of the packet (evmos1nmwp5uh5a3g08668c5eynes0hyfaw94dfnj796) and convert this address to the mechanical
 # stride address (stride1nmwp5uh5a3g08668c5eynes0hyfaw94dgervt7), then reset it to the true stride address (stride1qlly03ar5ll85ww4usvkv09832vv5tkhtnnaep)
 MEMO='{"autopilot": {"receiver": "stride1qlly03ar5ll85ww4usvkv09832vv5tkhtnnaep","claim": { "stride_address": "stride1qlly03ar5ll85ww4usvkv09832vv5tkhtnnaep", "airdrop_id": "evmos" } }}'
-$EVMOS_MAIN_CMD tx ibc-transfer transfer transfer channel-0 "$MEMO" 1aevmos --from airdrop-recipient-1 -y | TRIM_TX
+# $EVMOS_MAIN_CMD tx ibc-transfer transfer transfer channel-0 "$MEMO" 1aevmos --from airdrop-recipient-1 -y | TRIM_TX
+echo "tx ibc-transfer transfer transfer channel-0 stride1qlly03ar5ll85ww4usvkv09832vv5tkhtnnaep 1aevmos --note "$MEMO" --from airdrop-recipient-1 -y | TRIM_TX"
+$EVMOS_MAIN_CMD tx ibc-transfer transfer transfer channel-0 stride1qlly03ar5ll85ww4usvkv09832vv5tkhtnnaep 1aevmos --note "$MEMO" --from airdrop-recipient-1 -y | TRIM_TX
+echo ">>> Waiting for 15 seconds to allow the IBC transfer to complete..."
+sleep 5
+$EVMOS_MAIN_CMD tx ibc-transfer transfer transfer channel-0 stride1qlly03ar5ll85ww4usvkv09832vv5tkhtnnaep 1aevmos --memo "$MEMO" --from airdrop-recipient-1 -y | TRIM_TX
 echo ">>> Waiting for 15 seconds to allow the IBC transfer to complete..."
 sleep 15
 
