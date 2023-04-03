@@ -7,7 +7,8 @@ import (
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
-	ibctesting "github.com/cosmos/ibc-go/v5/testing"
+	proto "github.com/cosmos/gogoproto/proto"
+	ibctesting "github.com/cosmos/ibc-go/v7/testing"
 	_ "github.com/stretchr/testify/suite"
 
 	epochtypes "github.com/Stride-Labs/stride/v8/x/epochs/types"
@@ -95,7 +96,7 @@ func (s *KeeperTestSuite) SetupClaimUndelegatedTokens() ClaimUndelegatedTestCase
 			redemptionRecord:   redemptionRecord,
 		},
 		expectedIcaMsg: stakeibckeeper.IcaTx{
-			Msgs: []sdk.Msg{&banktypes.MsgSend{
+			Msgs: []proto.Message{&banktypes.MsgSend{
 				FromAddress: redemptionAccount.Address,
 				ToAddress:   receiverAddr,
 				Amount:      redemptionAmount,

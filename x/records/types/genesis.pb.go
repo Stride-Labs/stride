@@ -8,8 +8,8 @@ import (
 	fmt "fmt"
 	github_com_cosmos_cosmos_sdk_types "github.com/cosmos/cosmos-sdk/types"
 	_ "github.com/cosmos/gogoproto/gogoproto"
-	grpc1 "github.com/gogo/protobuf/grpc"
-	proto "github.com/gogo/protobuf/proto"
+	grpc1 "github.com/cosmos/gogoproto/grpc"
+	proto "github.com/cosmos/gogoproto/proto"
 	grpc "google.golang.org/grpc"
 	io "io"
 	math "math"
@@ -255,6 +255,7 @@ var xxx_messageInfo_Params proto.InternalMessageInfo
 
 type RecordsPacketData struct {
 	// Types that are valid to be assigned to Packet:
+	//
 	//	*RecordsPacketData_NoData
 	Packet isRecordsPacketData_Packet `protobuf_oneof:"packet"`
 }

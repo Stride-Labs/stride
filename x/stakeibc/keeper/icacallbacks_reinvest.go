@@ -17,7 +17,7 @@ import (
 
 	errorsmod "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	channeltypes "github.com/cosmos/ibc-go/v5/modules/core/04-channel/types"
+	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
 	"github.com/golang/protobuf/proto" //nolint:staticcheck
 )
 
@@ -42,11 +42,12 @@ func (k Keeper) UnmarshalReinvestCallbackArgs(ctx sdk.Context, reinvestCallback 
 }
 
 // ICA Callback after reinvestment
-//   If successful:
-//      * Creates a new DepositRecord with the reinvestment amount
-//      * Issues an ICQ to query the rewards balance
-//   If timeout/failure:
-//      * Does nothing
+//
+//	If successful:
+//	   * Creates a new DepositRecord with the reinvestment amount
+//	   * Issues an ICQ to query the rewards balance
+//	If timeout/failure:
+//	   * Does nothing
 func ReinvestCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ackResponse *icacallbackstypes.AcknowledgementResponse, args []byte) error {
 	// Fetch callback args
 	reinvestCallback, err := k.UnmarshalReinvestCallbackArgs(ctx, args)
