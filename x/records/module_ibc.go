@@ -58,7 +58,7 @@ func (im IBCModule) OnChanOpenInit(
 	// doCustomLogic()
 	if channelCap == nil {
 		path := host.ChannelCapabilityPath(portID, channelID)
-		chanCap, _ := im.keeper.IBCScopperKeeper.GetCapability(ctx, path)
+		chanCap, _ := im.keeper.IBCScopedKeeper.GetCapability(ctx, path)
 
 		channelCap = chanCap
 	}

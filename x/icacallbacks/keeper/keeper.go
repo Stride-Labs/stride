@@ -35,7 +35,7 @@ type (
 		memKey              storetypes.StoreKey
 		paramstore          paramtypes.Subspace
 		scopedKeeper        capabilitykeeper.ScopedKeeper
-		IBCScopperKeeper    capabilitykeeper.ScopedKeeper
+		IBCScopedKeeper     capabilitykeeper.ScopedKeeper
 		icacallbacks        map[string]types.ICACallbackHandler
 		IBCKeeper           ibckeeper.Keeper
 		ICAControllerKeeper icacontrollerkeeper.Keeper
@@ -49,7 +49,7 @@ func NewKeeper(
 	memKey storetypes.StoreKey,
 	ps paramtypes.Subspace,
 	scopedKeeper capabilitykeeper.ScopedKeeper,
-	IBCScopperKeeper capabilitykeeper.ScopedKeeper,
+	IBCScopedKeeper capabilitykeeper.ScopedKeeper,
 	ibcKeeper ibckeeper.Keeper,
 	icacontrollerkeeper icacontrollerkeeper.Keeper,
 ) *Keeper {
@@ -64,7 +64,7 @@ func NewKeeper(
 		memKey:              memKey,
 		paramstore:          ps,
 		scopedKeeper:        scopedKeeper,
-		IBCScopperKeeper:    IBCScopperKeeper,
+		IBCScopedKeeper:     IBCScopedKeeper,
 		icacallbacks:        make(map[string]types.ICACallbackHandler),
 		IBCKeeper:           ibcKeeper,
 		ICAControllerKeeper: icacontrollerkeeper,
