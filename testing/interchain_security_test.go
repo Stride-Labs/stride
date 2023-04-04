@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 	"testing"
 
-	"github.com/cosmos/cosmos-sdk/simapp"
-	ibctesting "github.com/cosmos/ibc-go/v3/testing"
+	"cosmossdk.io/simapp"
+	ibctesting "github.com/cosmos/ibc-go/v7/testing"
 	appProvider "github.com/cosmos/interchain-security/app/provider"
 	"github.com/cosmos/interchain-security/tests/e2e"
 	e2etestutil "github.com/cosmos/interchain-security/testutil/e2e"
@@ -14,7 +14,7 @@ import (
 	"github.com/tendermint/tendermint/libs/log"
 	dbm "github.com/tendermint/tm-db"
 
-	appConsumer "github.com/Stride-Labs/stride/v3/app"
+	appConsumer "github.com/Stride-Labs/stride/v8/app"
 )
 
 // Executes the standard group of ccv tests against a consumer and provider app.go implementation.

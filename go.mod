@@ -184,6 +184,7 @@ replace (
 	// dragonberry replkace line per: https://github.com/cosmos/cosmos-sdk/releases/tag/v0.45.9
 	github.com/confio/ics23/go => github.com/cosmos/cosmos-sdk/ics23/go v0.8.0
 
+	github.com/cosmos/interchain-security => github.com/Stride-Labs/interchain-security v1.0.1
 	// github.com/cosmos/ibc-go/v7 => github.com/strangelove-ventures/ibc-go/v7 v7.0.0-20230127004203-d0c9da369466
 
 	// use cosmos-flavored protobufs

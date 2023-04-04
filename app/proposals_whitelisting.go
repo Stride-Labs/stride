@@ -6,14 +6,14 @@ import (
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	"github.com/cosmos/cosmos-sdk/x/params/types/proposal"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
-	ibctransfertypes "github.com/cosmos/ibc-go/v3/modules/apps/transfer/types"
+	ibctransfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
 
-	icahosttypes "github.com/cosmos/ibc-go/v3/modules/apps/27-interchain-accounts/host/types"
+	icahosttypes "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/host/types"
 
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 
-	minttypes "github.com/Stride-Labs/stride/v3/x/mint/types"
-	stakeibctypes "github.com/Stride-Labs/stride/v3/x/stakeibc/types"
+	minttypes "github.com/Stride-Labs/stride/v8/x/mint/types"
+	stakeibctypes "github.com/Stride-Labs/stride/v8/x/stakeibc/types"
 )
 
 func IsProposalWhitelisted(content govtypes.Content) bool {

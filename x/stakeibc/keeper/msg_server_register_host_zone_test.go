@@ -13,7 +13,7 @@ import (
 
 	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
 
-	"github.com/Stride-Labs/stride/v3/app"
+	"github.com/Stride-Labs/stride/v8/app"
 	epochtypes "github.com/Stride-Labs/stride/v8/x/epochs/types"
 	recordstypes "github.com/Stride-Labs/stride/v8/x/records/types"
 	recordtypes "github.com/Stride-Labs/stride/v8/x/records/types"

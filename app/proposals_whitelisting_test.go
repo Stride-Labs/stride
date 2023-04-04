@@ -4,14 +4,14 @@ import (
 	"encoding/json"
 	"testing"
 
-	"github.com/cosmos/cosmos-sdk/simapp"
-	ibctesting "github.com/cosmos/ibc-go/v3/testing"
+	"cosmossdk.io/simapp"
+	ibctesting "github.com/cosmos/ibc-go/v7/testing"
 	icssimapp "github.com/cosmos/interchain-security/testutil/simapp"
 	"github.com/stretchr/testify/require"
 	"github.com/tendermint/tendermint/libs/log"
 	dbm "github.com/tendermint/tm-db"
 
-	"github.com/Stride-Labs/stride/v3/app"
+	"github.com/Stride-Labs/stride/v8/app"
 )
 
 func TestConsumerWhitelistingKeys(t *testing.T) {
