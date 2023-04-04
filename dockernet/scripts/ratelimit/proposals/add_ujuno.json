@@ -1,0 +1,10 @@
+{
+    "title": "Add Rate Limit to ujuno",
+    "description": "Proposal to enable rate limiting on ujuno for Stride <> Juno",
+    "denom": "ibc/EFF323CC632EC4F747C61BCE238A758EFDB7699C3226565F7C20DA06509D59A5",
+    "channel_id": "channel-1",
+    "max_percent_send": "10",
+    "max_percent_recv": "10",
+    "duration_hours": "1",
+    "deposit": "10000000ustrd"
+}

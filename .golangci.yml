@@ -1,6 +1,7 @@
 run:
-  timeout: 5m
+  timeout: 20m
   disable-all: true
+  tests: true
   enable:
     - asasalint
     - asciicheck

@@ -1,28 +1,30 @@
 package keeper
 
-import (
-	"github.com/cosmos/cosmos-sdk/codec"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+// import (
+// 	"github.com/cosmos/cosmos-sdk/codec"
+// 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/Stride-Labs/stride/v3/x/claim/types"
+// 	errorsmod "cosmossdk.io/errors"
+// 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
-	abci "github.com/tendermint/tendermint/abci/types"
-)
+// 	"github.com/Stride-Labs/stride/v8/x/claim/types"
 
-// NewQuerier returns legacy querier endpoint
-func NewQuerier(k Keeper, legacyQuerierCdc *codec.LegacyAmino) sdk.Querier {
-	return func(ctx sdk.Context, path []string, req abci.RequestQuery) ([]byte, error) {
-		var (
-			res []byte
-			err error
-		)
+// 	abci "github.com/cometbft/cometbft/abci/types"
+// )
 
-		switch path[0] {
-		default:
-			err = sdkerrors.Wrapf(sdkerrors.ErrUnknownRequest, "unknown %s query endpoint: %s", types.ModuleName, path[0])
-		}
+// // NewQuerier returns legacy querier endpoint
+// func NewQuerier(k Keeper, legacyQuerierCdc *codec.LegacyAmino) sdk.Querier {
+// 	return func(ctx sdk.Context, path []string, req abci.RequestQuery) ([]byte, error) {
+// 		var (
+// 			res []byte
+// 			err error
+// 		)
 
-		return res, err
-	}
-}
+// 		switch path[0] {
+// 		default:
+// 			err = errorsmod.Wrapf(sdkerrors.ErrUnknownRequest, "unknown %s query endpoint: %s", types.ModuleName, path[0])
+// 		}
+
+// 		return res, err
+// 	}
+// }

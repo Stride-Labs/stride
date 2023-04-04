@@ -6,10 +6,13 @@ import (
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/tx"
-	"github.com/spf13/cast"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	errorsmod "cosmossdk.io/errors"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/spf13/cobra"
 
-	"github.com/Stride-Labs/stride/v3/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v8/x/stakeibc/types"
 )
 
 var _ = strconv.Itoa(0)
@@ -20,9 +23,9 @@ func CmdRedeemStake() *cobra.Command {
 		Short: "Broadcast message redeem-stake",
 		Args:  cobra.ExactArgs(3),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			argAmount, err := cast.ToUint64E(args[0])
-			if err != nil {
-				return err
+			argAmount, found := sdk.NewIntFromString(args[0])
+			if !found {
+				return errorsmod.Wrap(sdkerrors.ErrInvalidType, "can not convert string to int")
 			}
 			hostZoneID := args[1]
 

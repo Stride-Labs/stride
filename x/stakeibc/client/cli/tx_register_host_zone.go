@@ -6,9 +6,15 @@ import (
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/tx"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/spf13/cobra"
 
-	"github.com/Stride-Labs/stride/v3/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v8/x/stakeibc/types"
+)
+
+const (
+	FlagMinRedemptionRate = "min-redemption-rate"
+	FlagMaxRedemptionRate = "max-redemption-rate"
 )
 
 var _ = strconv.Itoa(0)
@@ -34,6 +40,31 @@ func CmdRegisterHostZone() *cobra.Command {
 			if err != nil {
 				return err
 			}
+
+			minRedemptionRateStr, err := cmd.Flags().GetString(FlagMinRedemptionRate)
+			if err != nil {
+				return err
+			}
+			minRedemptionRate := sdk.ZeroDec()
+			if minRedemptionRateStr != "" {
+				minRedemptionRate, err = sdk.NewDecFromStr(minRedemptionRateStr)
+				if err != nil {
+					return err
+				}
+			}
+
+			maxRedemptionRateStr, err := cmd.Flags().GetString(FlagMaxRedemptionRate)
+			if err != nil {
+				return err
+			}
+			maxRedemptionRate := sdk.ZeroDec()
+			if maxRedemptionRateStr != "" {
+				maxRedemptionRate, err = sdk.NewDecFromStr(maxRedemptionRateStr)
+				if err != nil {
+					return err
+				}
+			}
+
 			msg := types.NewMsgRegisterHostZone(
 				clientCtx.GetFromAddress().String(),
 				connectionId,
@@ -42,6 +73,8 @@ func CmdRegisterHostZone() *cobra.Command {
 				ibcDenom,
 				channelId,
 				unbondingFrequency,
+				minRedemptionRate,
+				maxRedemptionRate,
 			)
 
 			if err := msg.ValidateBasic(); err != nil {
@@ -53,6 +86,8 @@ func CmdRegisterHostZone() *cobra.Command {
 	}
 
 	flags.AddTxFlagsToCmd(cmd)
+	cmd.Flags().String(FlagMinRedemptionRate, "", "minimum redemption rate")
+	cmd.Flags().String(FlagMaxRedemptionRate, "", "maximum redemption rate")
 
 	return cmd
 }

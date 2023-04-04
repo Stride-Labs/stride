@@ -5,15 +5,15 @@ import (
 	"strconv"
 	"testing"
 
+	tmcli "github.com/cometbft/cometbft/libs/cli"
 	clitestutil "github.com/cosmos/cosmos-sdk/testutil/cli"
 	"github.com/stretchr/testify/require"
-	tmcli "github.com/tendermint/tendermint/libs/cli"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	"github.com/Stride-Labs/stride/v3/testutil/network"
-	"github.com/Stride-Labs/stride/v3/x/stakeibc/client/cli"
-	"github.com/Stride-Labs/stride/v3/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v8/testutil/network"
+	"github.com/Stride-Labs/stride/v8/x/stakeibc/client/cli"
+	"github.com/Stride-Labs/stride/v8/x/stakeibc/types"
 )
 
 // Prevent strconv unused error
@@ -92,6 +92,7 @@ func TestListEpochTracker(t *testing.T) {
 
 	expected := []types.EpochTracker{
 		{EpochIdentifier: "day", EpochNumber: 1},
+		{EpochIdentifier: "hour", EpochNumber: 1},
 		{EpochIdentifier: "mint", EpochNumber: 1},
 		{EpochIdentifier: "stride_epoch", EpochNumber: 1},
 		{EpochIdentifier: "week", EpochNumber: 1},
@@ -102,7 +103,7 @@ func TestListEpochTracker(t *testing.T) {
 	require.NoError(t, net.Config.Codec.UnmarshalJSON(out.Bytes(), &actual))
 
 	require.NotNil(t, actual.EpochTracker)
-	require.Len(t, actual.EpochTracker, 4)
+	require.Len(t, actual.EpochTracker, len(expected))
 
 	actualTrim := []types.EpochTracker{}
 	for _, epochTracker := range actual.EpochTracker {

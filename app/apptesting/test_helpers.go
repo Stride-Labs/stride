@@ -3,30 +3,41 @@ package apptesting
 import (
 	"bytes"
 	"strings"
+	"testing"
 	"time"
 
-	ibctransfertypes "github.com/cosmos/ibc-go/v3/modules/apps/transfer/types"
+	abci "github.com/cometbft/cometbft/abci/types"
+	ibctransfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
 
+	icacontrollerkeeper "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/controller/keeper"
+	icacontrollertypes "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/controller/types"
+
+	"github.com/cometbft/cometbft/crypto/ed25519"
+	tmtypes "github.com/cometbft/cometbft/proto/tendermint/types"
 	"github.com/cosmos/cosmos-sdk/baseapp"
+	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
-	icatypes "github.com/cosmos/ibc-go/v3/modules/apps/27-interchain-accounts/types"
-	transfertypes "github.com/cosmos/ibc-go/v3/modules/apps/transfer/types"
-	clienttypes "github.com/cosmos/ibc-go/v3/modules/core/02-client/types"
-	channeltypes "github.com/cosmos/ibc-go/v3/modules/core/04-channel/types"
-	ibctesting "github.com/cosmos/ibc-go/v3/testing"
-	"github.com/cosmos/ibc-go/v3/testing/simapp"
+	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
+	icatypes "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/types"
+	transfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
+	clienttypes "github.com/cosmos/ibc-go/v7/modules/core/02-client/types"
+	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
+	ibctesting "github.com/cosmos/ibc-go/v7/testing"
+	"github.com/cosmos/ibc-go/v7/testing/simapp"
 	appProvider "github.com/cosmos/interchain-security/app/provider"
 	e2e "github.com/cosmos/interchain-security/testutil/e2e"
 	icssimapp "github.com/cosmos/interchain-security/testutil/simapp"
 	"github.com/cosmos/interchain-security/x/ccv/utils"
 	"github.com/gogo/protobuf/proto"
+	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 	"github.com/tendermint/tendermint/crypto/ed25519"
 	tmtypesproto "github.com/tendermint/tendermint/proto/tendermint/types"
 	tmtypes "github.com/tendermint/tendermint/types"
 
-	"github.com/Stride-Labs/stride/v3/app"
+	"github.com/Stride-Labs/stride/v8/app"
+	"github.com/Stride-Labs/stride/v8/utils"
 )
 
 var (
@@ -41,6 +52,11 @@ var (
 		TxType:                 icatypes.TxTypeSDKMultiMsg,
 	}))
 )
+
+type SuitelessAppTestHelper struct {
+	App *app.StrideApp
+	Ctx sdk.Context
+}
 
 type AppTestHelper struct {
 	suite.Suite
@@ -59,14 +75,16 @@ type AppTestHelper struct {
 	QueryHelper  *baseapp.QueryServiceTestHelper
 	TestAccs     []sdk.AccAddress
 	IcaAddresses map[string]string
+	Ctx          sdk.Context
 }
 
 // AppTestHelper Constructor
 func (s *AppTestHelper) Setup() {
 	s.App = app.InitStrideTestApp(true)
+	s.Ctx = s.App.BaseApp.NewContext(false, tmtypes.Header{Height: 1, ChainID: StrideChainID})
 	s.QueryHelper = &baseapp.QueryServiceTestHelper{
 		GRPCQueryRouter: s.App.GRPCQueryRouter(),
-		Ctx:             s.Ctx(),
+		Ctx:             s.Ctx,
 	}
 	s.TestAccs = CreateRandomAccounts(3)
 	s.IbcEnabled = false
@@ -92,18 +110,31 @@ func (s *AppTestHelper) HostCtx() sdk.Context {
 	return s.HostChain.GetContext()
 }
 
+// Instantiates an TestHelper without the test suite
+// This is for testing scenarios where we simply need the setup function to run,
+// and need access to the TestHelper attributes and keepers (e.g. genesis tests)
+func SetupSuitelessTestHelper() SuitelessAppTestHelper {
+	s := SuitelessAppTestHelper{}
+	s.App = app.InitStrideTestApp(true)
+	s.Ctx = s.App.BaseApp.NewContext(false, tmtypes.Header{Height: 1, ChainID: StrideChainID})
+	return s
+}
+
 // Mints coins directly to a module account
 func (s *AppTestHelper) FundModuleAccount(moduleName string, amount sdk.Coin) {
-	err := s.App.BankKeeper.MintCoins(s.Ctx(), moduleName, sdk.NewCoins(amount))
+	amountCoins := sdk.NewCoins(amount)
+	err := s.App.BankKeeper.MintCoins(s.Ctx, minttypes.ModuleName, amountCoins)
+	s.Require().NoError(err)
+	err = s.App.BankKeeper.SendCoinsFromModuleToModule(s.Ctx, minttypes.ModuleName, moduleName, amountCoins)
 	s.Require().NoError(err)
 }
 
 // Mints and sends coins to a user account
 func (s *AppTestHelper) FundAccount(acc sdk.AccAddress, amount sdk.Coin) {
 	amountCoins := sdk.NewCoins(amount)
-	err := s.App.BankKeeper.MintCoins(s.Ctx(), minttypes.ModuleName, amountCoins)
+	err := s.App.BankKeeper.MintCoins(s.Ctx, minttypes.ModuleName, amountCoins)
 	s.Require().NoError(err)
-	err = s.App.BankKeeper.SendCoinsFromModuleToAccount(s.Ctx(), minttypes.ModuleName, acc, amountCoins)
+	err = s.App.BankKeeper.SendCoinsFromModuleToAccount(s.Ctx, minttypes.ModuleName, acc, amountCoins)
 	s.Require().NoError(err)
 }
 
@@ -200,6 +231,7 @@ func (s *AppTestHelper) CreateTransferChannel(hostChainID string) {
 	// Replace stride and host apps with those from TestingApp
 	s.App = s.StrideChain.App.(*app.StrideApp)
 	s.HostApp = s.HostChain.GetSimApp()
+	s.Ctx = s.StrideChain.GetContext()
 
 	// Finally confirm the channel was setup properly
 	s.Require().Equal("07-tendermint-1", s.TransferPath.EndpointA.ClientID, "stride clientID")
@@ -215,7 +247,7 @@ func (s *AppTestHelper) CreateTransferChannel(hostChainID string) {
 // Also creates a transfer channel is if hasn't been done yet
 func (s *AppTestHelper) CreateICAChannel(owner string) string {
 	// If we have yet to create a client/connection (through creating a transfer channel), do that here
-	_, transferChannelExists := s.App.IBCKeeper.ChannelKeeper.GetChannel(s.Ctx(), ibctesting.TransferPort, ibctesting.FirstChannelID)
+	_, transferChannelExists := s.App.IBCKeeper.ChannelKeeper.GetChannel(s.Ctx, ibctesting.TransferPort, ibctesting.FirstChannelID)
 	if !transferChannelExists {
 		ownerSplit := strings.Split(owner, ".")
 		s.Require().Equal(2, len(ownerSplit), "owner should be of the form: {HostZone}.{AccountName}")
@@ -240,19 +272,21 @@ func (s *AppTestHelper) CreateICAChannel(owner string) string {
 	err = icaPath.EndpointB.ChanOpenConfirm()
 	s.Require().NoError(err, "ChanOpenConfirm error")
 
+	s.Ctx = s.StrideChain.GetContext()
+
 	// Confirm the ICA channel was created properly
 	portID := icaPath.EndpointA.ChannelConfig.PortID
 	channelID := icaPath.EndpointA.ChannelID
-	_, found := s.App.IBCKeeper.ChannelKeeper.GetChannel(s.Ctx(), portID, channelID)
+	_, found := s.App.IBCKeeper.ChannelKeeper.GetChannel(s.Ctx, portID, channelID)
 	s.Require().True(found, "Channel not found after creation, PortID: %s, ChannelID: %s", portID, channelID)
 
 	// Store the account address
-	icaAddress, found := s.App.ICAControllerKeeper.GetInterchainAccountAddress(s.Ctx(), ibctesting.FirstConnectionID, portID)
+	icaAddress, found := s.App.ICAControllerKeeper.GetInterchainAccountAddress(s.Ctx, ibctesting.FirstConnectionID, portID)
 	s.Require().True(found, "can't get ICA address")
 	s.IcaAddresses[owner] = icaAddress
 
 	// Finally set the active channel
-	s.App.ICAControllerKeeper.SetActiveChannelID(s.Ctx(), ibctesting.FirstConnectionID, portID, channelID)
+	s.App.ICAControllerKeeper.SetActiveChannelID(s.Ctx, ibctesting.FirstConnectionID, portID, channelID)
 
 	return channelID
 }
@@ -265,9 +299,12 @@ func (s *AppTestHelper) RegisterInterchainAccount(endpoint *ibctesting.Endpoint,
 	s.Require().NoError(err, "owner to portID error")
 
 	// Get the next channel available and register the ICA
-	channelSequence := s.App.IBCKeeper.ChannelKeeper.GetNextChannelSequence(s.Ctx())
+	channelSequence := s.App.IBCKeeper.ChannelKeeper.GetNextChannelSequence(s.Ctx)
 
-	err = s.App.ICAControllerKeeper.RegisterInterchainAccount(s.Ctx(), endpoint.ConnectionID, owner)
+	msgServer := icacontrollerkeeper.NewMsgServerImpl(&s.App.ICAControllerKeeper)
+	msgRegisterInterchainAccount := icacontrollertypes.NewMsgRegisterInterchainAccount(endpoint.ConnectionID, owner, TestIcaVersion)
+
+	_, err = msgServer.RegisterInterchainAccount(endpoint.Chain.GetContext(), msgRegisterInterchainAccount)
 	s.Require().NoError(err, "register interchain account error")
 
 	// Commit the state
@@ -299,8 +336,8 @@ func NewTransferPath(chainA *ibctesting.TestChain, chainB *ibctesting.TestChain,
 // Creates an ICA channel between two chains
 func NewIcaPath(chainA *ibctesting.TestChain, chainB *ibctesting.TestChain, providerChain *ibctesting.TestChain) *ibctesting.Path {
 	path := ibctesting.NewPath(chainA, chainB)
-	path.EndpointA.ChannelConfig.PortID = icatypes.PortID
-	path.EndpointB.ChannelConfig.PortID = icatypes.PortID
+	path.EndpointA.ChannelConfig.PortID = icatypes.HostPortID
+	path.EndpointB.ChannelConfig.PortID = icatypes.HostPortID
 	path.EndpointA.ChannelConfig.Order = channeltypes.ORDERED
 	path.EndpointB.ChannelConfig.Order = channeltypes.ORDERED
 	path.EndpointA.ChannelConfig.Version = TestIcaVersion
@@ -329,28 +366,50 @@ func CopyConnectionAndClientToPath(path *ibctesting.Path, pathToCopy *ibctesting
 	return path
 }
 
-func (s *AppTestHelper) ICAPacketAcknowledgement(msgs []sdk.Msg, msgResponse *proto.Message) channeltypes.Acknowledgement {
+// Constructs an ICA Packet Acknowledgement compatible with ibc-go v5+
+func ICAPacketAcknowledgement(t *testing.T, msgType string, msgResponses []proto.Message) channeltypes.Acknowledgement {
 	txMsgData := &sdk.TxMsgData{
-		Data: make([]*sdk.MsgData, len(msgs)),
+		MsgResponses: make([]*codectypes.Any, len(msgResponses)),
 	}
-	for i, msg := range msgs {
+	for i, msgResponse := range msgResponses {
+		var value []byte
+		var err error
+		if msgResponse != nil {
+			value, err = proto.Marshal(msgResponse)
+			require.NoError(t, err, "marshal error")
+		}
+
+		txMsgData.MsgResponses[i] = &codectypes.Any{
+			TypeUrl: msgType,
+			Value:   value,
+		}
+	}
+	marshalledTxMsgData, err := proto.Marshal(txMsgData)
+	require.NoError(t, err)
+	ack := channeltypes.NewResultAcknowledgement(marshalledTxMsgData)
+	return ack
+}
+
+// Constructs an legacy ICA Packet Acknowledgement compatible with ibc-go version v4 and lower
+func ICAPacketAcknowledgementLegacy(t *testing.T, msgType string, msgResponses []proto.Message) channeltypes.Acknowledgement {
+	txMsgData := &sdk.TxMsgData{
+		Data: make([]*sdk.MsgData, len(msgResponses)), //nolint:staticcheck
+	}
+	for i, msgResponse := range msgResponses {
 		var data []byte
 		var err error
 		if msgResponse != nil {
-			// see: https://github.com/cosmos/cosmos-sdk/blob/1dee068932d32ba2a87ba67fc399ae96203ec76d/types/result.go#L246
-			data, err = proto.Marshal(*msgResponse)
-			s.Require().NoError(err, "marshal error")
-		} else {
-			data = []byte("msg_response")
-		}
-		txMsgData.Data[i] = &sdk.MsgData{
-			MsgType: sdk.MsgTypeURL(msg),
-			Data:    data,
+			data, err = proto.Marshal(msgResponse)
+			require.NoError(t, err, "marshal error")
 		}
 
+		txMsgData.Data[i] = &sdk.MsgData{ //nolint:staticcheck
+			MsgType: msgType,
+			Data:    data,
+		}
 	}
 	marshalledTxMsgData, err := proto.Marshal(txMsgData)
-	s.Require().NoError(err)
+	require.NoError(t, err)
 	ack := channeltypes.NewResultAcknowledgement(marshalledTxMsgData)
 	return ack
 }
@@ -369,8 +428,38 @@ func (s *AppTestHelper) MarshalledICS20PacketData() sdk.AccAddress {
 	return data.GetBytes()
 }
 
-func (s *AppTestHelper) ICS20PacketAcknowledgement() channeltypes.Acknowledgement {
-	// see: https://github.com/cosmos/ibc-go/blob/8de555db76d0320842dacaa32e5500e1fd55e667/modules/apps/transfer/keeper/relay.go#L151
-	ack := channeltypes.NewResultAcknowledgement(s.MarshalledICS20PacketData())
-	return ack
+func (s *AppTestHelper) ConfirmUpgradeSucceededs(upgradeName string, upgradeHeight int64) {
+	s.Ctx = s.Ctx.WithBlockHeight(upgradeHeight - 1)
+	plan := upgradetypes.Plan{Name: upgradeName, Height: upgradeHeight}
+	err := s.App.UpgradeKeeper.ScheduleUpgrade(s.Ctx, plan)
+	s.Require().NoError(err)
+	_, exists := s.App.UpgradeKeeper.GetUpgradePlan(s.Ctx)
+	s.Require().True(exists)
+
+	s.Ctx = s.Ctx.WithBlockHeight(upgradeHeight)
+	s.Require().NotPanics(func() {
+		beginBlockRequest := abci.RequestBeginBlock{}
+		s.App.BeginBlocker(s.Ctx, beginBlockRequest)
+	})
+}
+
+// Generates a valid and invalid test address (used for non-keeper tests)
+func GenerateTestAddrs() (string, string) {
+	pk1 := ed25519.GenPrivKey().PubKey()
+	validAddr := sdk.AccAddress(pk1.Address()).String()
+	invalidAddr := sdk.AccAddress("invalid").String()
+	return validAddr, invalidAddr
+}
+
+// Grabs an admin address to test validate basic on admin txs
+func GetAdminAddress() (address string, ok bool) {
+	for address := range utils.Admins {
+		return address, true
+	}
+	return "", false
+}
+
+// Modifies sdk config to have stride address prefixes (used for non-keeper tests)
+func SetupConfig() {
+	app.SetupConfig()
 }

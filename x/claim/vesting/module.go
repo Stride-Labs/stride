@@ -3,10 +3,10 @@ package vesting
 import (
 	"encoding/json"
 
+	abci "github.com/cometbft/cometbft/abci/types"
 	"github.com/gorilla/mux"
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 	"github.com/spf13/cobra"
-	abci "github.com/tendermint/tendermint/abci/types"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -15,8 +15,8 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/module"
 	"github.com/cosmos/cosmos-sdk/x/auth/keeper"
 
-	"github.com/Stride-Labs/stride/v3/x/claim/vesting/client/cli"
-	"github.com/Stride-Labs/stride/v3/x/claim/vesting/types"
+	"github.com/Stride-Labs/stride/v8/x/claim/vesting/client/cli"
+	"github.com/Stride-Labs/stride/v8/x/claim/vesting/types"
 )
 
 var (
@@ -93,9 +93,9 @@ func NewAppModule(ak keeper.AccountKeeper, bk types.BankKeeper) AppModule {
 func (AppModule) RegisterInvariants(_ sdk.InvariantRegistry) {}
 
 // Route returns the module's message router and handler.
-func (am AppModule) Route() sdk.Route {
-	return sdk.NewRoute(types.RouterKey, NewHandler(am.accountKeeper, am.bankKeeper))
-}
+// func (am AppModule) Route() sdk.Route {
+// 	return sdk.NewRoute(types.RouterKey, NewHandler(am.accountKeeper, am.bankKeeper))
+// }
 
 // QuerierRoute returns an empty string as the module contains no query
 // functionality.
@@ -107,9 +107,9 @@ func (am AppModule) RegisterServices(cfg module.Configurator) {
 }
 
 // LegacyQuerierHandler performs a no-op.
-func (am AppModule) LegacyQuerierHandler(_ *codec.LegacyAmino) sdk.Querier {
-	return nil
-}
+// func (am AppModule) LegacyQuerierHandler(_ *codec.LegacyAmino) sdk.Querier {
+// 	return nil
+// }
 
 // InitGenesis performs a no-op.
 func (am AppModule) InitGenesis(_ sdk.Context, _ codec.JSONCodec, _ json.RawMessage) []abci.ValidatorUpdate {

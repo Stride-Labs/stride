@@ -6,14 +6,16 @@ import (
 	"testing"
 	"time"
 
+	cometbftdb "github.com/cometbft/cometbft-db"
+	cometbftrand "github.com/cometbft/cometbft/libs/rand"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
 	"github.com/cosmos/cosmos-sdk/crypto/hd"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 	servertypes "github.com/cosmos/cosmos-sdk/server/types"
-	"github.com/cosmos/cosmos-sdk/simapp"
-	storetypes "github.com/cosmos/cosmos-sdk/store/types"
+	pruningtypes "github.com/cosmos/cosmos-sdk/store/pruning/types"
 	"github.com/cosmos/cosmos-sdk/testutil/network"
+	simtestutil "github.com/cosmos/cosmos-sdk/testutil/sims"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
@@ -25,13 +27,14 @@ import (
 	tmtypes "github.com/tendermint/tendermint/types"
 	tmdb "github.com/tendermint/tm-db"
 
-	"github.com/Stride-Labs/stride/v3/app"
-	testutil "github.com/Stride-Labs/stride/v3/testutil"
+	"github.com/Stride-Labs/stride/v8/app"
+	testutil "github.com/Stride-Labs/stride/v8/testutil"
 )
 
 type (
-	Network = network.Network
-	Config  = network.Config
+	Network   = network.Network
+	Config    = network.Config
+	Validator = network.Validator
 )
 
 // New creates instance with fully configured cosmos network.
@@ -46,7 +49,7 @@ func New(t *testing.T, configs ...network.Config) *network.Network {
 	} else {
 		cfg = configs[0]
 	}
-	net := network.New(t, cfg)
+	net, _ := network.New(t, t.TempDir(), cfg)
 	t.Cleanup(net.Cleanup)
 	return net
 }
@@ -57,37 +60,37 @@ func DefaultConfig() network.Config {
 	// app doesn't have this module anymore, but we need them for test setup, which uses gentx
 	app.ModuleBasics[genutiltypes.ModuleName] = genutil.AppModuleBasic{}
 	encoding := app.MakeEncodingConfig()
+	chainId := "stride-" + cometbftrand.NewRand().Str(6)
 	return network.Config{
 		Codec:             encoding.Marshaler,
 		TxConfig:          encoding.TxConfig,
 		LegacyAmino:       encoding.Amino,
 		InterfaceRegistry: encoding.InterfaceRegistry,
 		AccountRetriever:  authtypes.AccountRetriever{},
-		AppConstructor: func(val network.Validator) servertypes.Application {
+		AppConstructor: func(val network.ValidatorI) servertypes.Application {
 			err := modifyConsumerGenesis(val)
 			if err != nil {
 				panic(err)
 			}
 			return app.NewStrideApp(
-				val.Ctx.Logger, tmdb.NewMemDB(), nil, true, map[int64]bool{}, val.Ctx.Config.RootDir, 0,
+				val.GetCtx().Logger, cometbftdb.NewMemDB(), nil, true, map[int64]bool{}, val.GetCtx().Config.RootDir, 0,
 				encoding,
-				simapp.EmptyAppOptions{},
-				baseapp.SetPruning(storetypes.NewPruningOptionsFromString(val.AppConfig.Pruning)),
-				baseapp.SetMinGasPrices(val.AppConfig.MinGasPrices),
+				simtestutil.EmptyAppOptions{},
+				baseapp.SetPruning(pruningtypes.NewPruningOptionsFromString(val.GetAppConfig().Pruning)),
+				baseapp.SetMinGasPrices(val.GetAppConfig().MinGasPrices),
+				baseapp.SetChainID(chainId),
 			)
 		},
-		GenesisState:  app.ModuleBasics.DefaultGenesis(encoding.Marshaler),
-		TimeoutCommit: 2 * time.Second,
-		ChainID:       "stride-" + tmrand.NewRand().Str(6),
-		// Some changes are introduced to make the tests run as if Stride is a standalone chain.
-		// This will only work if NumValidators is set to 1.
+		GenesisState:    app.ModuleBasics.DefaultGenesis(encoding.Marshaler),
+		TimeoutCommit:   2 * time.Second,
+		ChainID:         chainId,
 		NumValidators:   1,
 		BondDenom:       sdk.DefaultBondDenom,
 		MinGasPrices:    fmt.Sprintf("0.000006%s", sdk.DefaultBondDenom),
 		AccountTokens:   sdk.TokensFromConsensusPower(1000, sdk.DefaultPowerReduction),
 		StakingTokens:   sdk.TokensFromConsensusPower(500, sdk.DefaultPowerReduction),
 		BondedTokens:    sdk.TokensFromConsensusPower(100, sdk.DefaultPowerReduction),
-		PruningStrategy: storetypes.PruningOptionNothing,
+		PruningStrategy: pruningtypes.PruningOptionNothing,
 		CleanupDir:      true,
 		SigningAlgo:     string(hd.Secp256k1Type),
 		KeyringOptions:  []keyring.Option{},

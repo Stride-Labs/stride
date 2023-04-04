@@ -6,6 +6,11 @@ cache=false
 COMMIT := $(shell git log -1 --format='%H')
 DOCKER := $(shell which docker)
 DOCKER_BUF := $(DOCKER) run --rm -v $(CURDIR):/workspace --workdir /workspace bufbuild/buf:1.7.0
+DOCKERNET_HOME=./dockernet
+DOCKERNET_COMPOSE_FILE=$(DOCKERNET_HOME)/docker-compose.yml
+LOCALSTRIDE_HOME=./testutil/localstride
+LOCALNET_COMPOSE_FILE=$(LOCALSTRIDE_HOME)/localnet/docker-compose.yml
+STATE_EXPORT_COMPOSE_FILE=$(LOCALSTRIDE_HOME)/state-export/docker-compose.yml
 
 # process build tags
 
@@ -63,8 +68,6 @@ BUILD_FLAGS := -tags "$(build_tags)" -ldflags '$(ldflags)'
 
 .PHONY: build
 
-all: lint check-dependencies build-local
-
 ###############################################################################
 ###                            Build & Clean                                ###
 ###############################################################################
@@ -74,19 +77,14 @@ build:
 	go build -mod=readonly -ldflags '$(ldflags)' -trimpath -o $(BUILDDIR) ./...;
 
 install: go.sum
-		go install $(BUILD_FLAGS) ./cmd/strided
+	go install $(BUILD_FLAGS) ./cmd/strided
 
-clean: 
-	rm -rf $(BUILDDIR)/* 
-
-clean-state:
-	rm -rf scripts-local/state
+clean:
+	rm -rf $(BUILDDIR)/*
 
 ###############################################################################
 ###                                CI                                       ###
 ###############################################################################
-
-ci: lint check-dependencies test-unit gosec build-local
 
 gosec:
 	gosec -exclude-dir=deps -severity=high ./...
@@ -99,37 +97,48 @@ lint:
 ###############################################################################
 
 test-unit:
-	@go test -mod=readonly ./x/$(module)/...
+	@go test -mod=readonly ./x/... ./app/...
+
+test-unit-path:
+	@go test -mod=readonly ./x/$(path)/...
 
 test-cover:
-	@go test -mod=readonly -race -coverprofile=coverage.out -covermode=atomic ./x/$(module)/...
-
-test-integration-local:
-	bash scripts-local/tests/run_all_tests.sh
+	@go test -mod=readonly -race -coverprofile=coverage.out -covermode=atomic ./x/$(path)/...
 
 test-integration-docker:
-	bash scripts/tests/run_all_tests.sh
+	bash $(DOCKERNET_HOME)/tests/run_all_tests.sh
 
 ###############################################################################
 ###                                DockerNet                                ###
 ###############################################################################
 
-build-docker: 
-	@bash scripts/build.sh -${build} ${BUILDDIR}
-	
-start-docker: build-docker
-	@bash scripts/start_network.sh 
+build-docker:
+	@bash $(DOCKERNET_HOME)/build.sh -${build} ${BUILDDIR}
 
-clean-docker: 
-	@docker-compose stop
-	@docker-compose down
-	rm -rf scripts/state
+start-docker: build-docker
+	@bash $(DOCKERNET_HOME)/start_network.sh
+
+start-docker-all: build-docker
+	@ALL_HOST_CHAINS=true bash $(DOCKERNET_HOME)/start_network.sh
+
+clean-docker:
+	@docker-compose -f $(DOCKERNET_COMPOSE_FILE) stop
+	@docker-compose -f $(DOCKERNET_COMPOSE_FILE) down
+	rm -rf $(DOCKERNET_HOME)/state
 	docker image prune -a
-	
+
 stop-docker:
-	@-pkill -f "docker-compose logs" 
-	@-pkill -f "/bin/bash.*create_logs.sh" 
-	docker-compose down
+	@bash $(DOCKERNET_HOME)/pkill.sh
+	docker-compose -f $(DOCKERNET_COMPOSE_FILE) down
+
+upgrade-init:
+	PART=1 bash $(DOCKERNET_HOME)/tests/run_tests_upgrade.sh
+
+upgrade-submit:
+	UPGRADE_HEIGHT=400 bash $(DOCKERNET_HOME)/upgrades/submit_upgrade.sh
+
+upgrade-validate:
+	PART=2 bash $(DOCKERNET_HOME)/tests/run_tests_upgrade.sh
 
 ###############################################################################
 ###                                Protobuf                                 ###
@@ -145,7 +154,7 @@ proto-all: proto-format proto-lint proto-gen
 
 proto-gen:
 	@echo "Generating Protobuf files"
-	$(DOCKER) run --rm -v $(CURDIR):/workspace --workdir /workspace tendermintdev/sdk-proto-gen sh ./scripts/protocgen.sh
+	$(DOCKER) run --rm -v $(CURDIR):/workspace --workdir /workspace ghcr.io/cosmos/proto-builder sh ./scripts/protocgen.sh
 
 proto-format:
 	@echo "Formatting Protobuf files"
@@ -156,3 +165,47 @@ proto-lint:
 	@$(DOCKER_BUF) lint --error-format=json
 
 .PHONY: proto-all proto-gen proto-format proto-lint
+
+
+###############################################################################
+###                             LocalStride                                 ###
+###############################################################################
+
+localnet-keys:
+	. $(LOCALSTRIDE_HOME)/localnet/add_keys.sh
+
+localnet-init: localnet-clean localnet-build
+
+localnet-clean:
+	@rm -rfI $(HOME)/.stride/
+
+localnet-build:
+	@docker-compose -f $(LOCALNET_COMPOSE_FILE) build
+
+localnet-start:
+	@docker-compose -f $(LOCALNET_COMPOSE_FILE) up
+
+localnet-startd:
+	@docker-compose -f $(LOCALNET_COMPOSE_FILE) up -d
+
+localnet-stop:
+	@docker-compose -f $(LOCALNET_COMPOSE_FILE) down
+
+localnet-state-export-init: localnet-state-export-clean localnet-state-export-build
+
+localnet-state-export-build:
+	@DOCKER_BUILDKIT=1 COMPOSE_DOCKER_CLI_BUILD=1 docker-compose -f $(STATE_EXPORT_COMPOSE_FILE) build
+
+localnet-state-export-start:
+	@docker-compose -f $(STATE_EXPORT_COMPOSE_FILE) up
+
+localnet-state-export-startd:
+	@docker-compose -f $(STATE_EXPORT_COMPOSE_FILE) up -d
+
+localnet-state-export-upgrade:
+	bash $(LOCALSTRIDE_HOME)/state-export/scripts/submit_upgrade.sh
+
+localnet-state-export-stop:
+	@docker-compose -f $(STATE_EXPORT_COMPOSE_FILE) down
+
+localnet-state-export-clean: localnet-clean

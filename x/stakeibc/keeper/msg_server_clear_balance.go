@@ -4,12 +4,13 @@ import (
 	"context"
 	"fmt"
 
+	errorsmod "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	ibctransfertypes "github.com/cosmos/ibc-go/v3/modules/apps/transfer/types"
+	proto "github.com/cosmos/gogoproto/proto"
+	ibctransfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
 	"github.com/spf13/cast"
 
-	"github.com/Stride-Labs/stride/v3/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v8/x/stakeibc/types"
 )
 
 func (k msgServer) ClearBalance(goCtx context.Context, msg *types.MsgClearBalance) (*types.MsgClearBalanceResponse, error) {
@@ -17,11 +18,11 @@ func (k msgServer) ClearBalance(goCtx context.Context, msg *types.MsgClearBalanc
 
 	zone, found := k.GetHostZone(ctx, msg.ChainId)
 	if !found {
-		return nil, sdkerrors.Wrapf(types.ErrInvalidHostZone, "chainId: %s", msg.ChainId)
+		return nil, errorsmod.Wrapf(types.ErrInvalidHostZone, "chainId: %s", msg.ChainId)
 	}
 	feeAccount := zone.GetFeeAccount()
 	if feeAccount == nil {
-		return nil, sdkerrors.Wrapf(types.ErrFeeAccountNotRegistered, "chainId: %s", msg.ChainId)
+		return nil, errorsmod.Wrapf(types.ErrFeeAccountNotRegistered, "chainId: %s", msg.ChainId)
 	}
 
 	sourcePort := ibctransfertypes.PortID
@@ -32,13 +33,13 @@ func (k msgServer) ClearBalance(goCtx context.Context, msg *types.MsgClearBalanc
 	tokens, err := sdk.ParseCoinNormalized(coinString)
 	if err != nil {
 		k.Logger(ctx).Error(fmt.Sprintf("failed to parse coin (%s)", coinString))
-		return nil, sdkerrors.Wrapf(err, "failed to parse coin (%s)", coinString)
+		return nil, errorsmod.Wrapf(err, "failed to parse coin (%s)", coinString)
 	}
 	sender := feeAccount.GetAddress()
 	// KeyICATimeoutNanos are for our Stride ICA calls, KeyFeeTransferTimeoutNanos is for the IBC transfer
 	feeTransferTimeoutNanos := k.GetParam(ctx, types.KeyFeeTransferTimeoutNanos)
 	timeoutTimestamp := cast.ToUint64(ctx.BlockTime().UnixNano()) + feeTransferTimeoutNanos
-	msgs := []sdk.Msg{
+	msgs := []proto.Message{
 		&ibctransfertypes.MsgTransfer{
 			SourcePort:       sourcePort,
 			SourceChannel:    sourceChannel,
@@ -56,7 +57,7 @@ func (k msgServer) ClearBalance(goCtx context.Context, msg *types.MsgClearBalanc
 
 	_, err = k.SubmitTxs(ctx, connectionId, msgs, *feeAccount, icaTimeoutNanos, "", nil)
 	if err != nil {
-		return nil, sdkerrors.Wrapf(err, "failed to submit txs")
+		return nil, errorsmod.Wrapf(err, "failed to submit txs")
 	}
 	return &types.MsgClearBalanceResponse{}, nil
 }

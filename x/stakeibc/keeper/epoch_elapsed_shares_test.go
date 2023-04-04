@@ -6,8 +6,8 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	epochtypes "github.com/Stride-Labs/stride/v3/x/epochs/types"
-	stakeibctypes "github.com/Stride-Labs/stride/v3/x/stakeibc/types"
+	epochtypes "github.com/Stride-Labs/stride/v8/x/epochs/types"
+	stakeibctypes "github.com/Stride-Labs/stride/v8/x/stakeibc/types"
 )
 
 // These are used to indicate that the value does not matter for the sake of the test
@@ -27,14 +27,14 @@ func (s *KeeperTestSuite) SetupEpochElapsedShares(epochDurationSeconds float64, 
 		Duration:           uint64(epochDurationSeconds * ToNanoSeconds),
 		NextEpochStartTime: uint64(float64(s.Coordinator.CurrentTime.UnixNano()) + (nextStartTimeSeconds * ToNanoSeconds)),
 	}
-	s.App.StakeibcKeeper.SetEpochTracker(s.Ctx(), strideEpochTracker)
+	s.App.StakeibcKeeper.SetEpochTracker(s.Ctx, strideEpochTracker)
 }
 
 // Helper function to create an epoch tracker and check that the elapsed share matches expectations
 func (s *KeeperTestSuite) checkEpochElapsedShare(epochDurationSeconds float64, nextStartTimeSeconds float64, expectedShare sdk.Dec) {
 	s.SetupEpochElapsedShares(epochDurationSeconds, nextStartTimeSeconds)
 
-	actualShare, err := s.App.StakeibcKeeper.GetStrideEpochElapsedShare(s.Ctx())
+	actualShare, err := s.App.StakeibcKeeper.GetStrideEpochElapsedShare(s.Ctx)
 	s.Require().NoError(err)
 	s.Require().Equal(expectedShare, actualShare, "epoch elapsed share")
 }
@@ -71,7 +71,7 @@ func (s *KeeperTestSuite) TestEpochElapsedShare_Successful_EndOfEpoch() {
 
 func (s *KeeperTestSuite) TestEpochElapsedShare_Failed_EpochNotFound() {
 	// We skip the setup step her so an epoch tracker is never created
-	_, err := s.App.StakeibcKeeper.GetStrideEpochElapsedShare(s.Ctx())
+	_, err := s.App.StakeibcKeeper.GetStrideEpochElapsedShare(s.Ctx)
 	s.Require().EqualError(err, "Failed to get epoch tracker for stride_epoch: not found")
 }
 
@@ -80,7 +80,7 @@ func (s *KeeperTestSuite) TestEpochElapsedShare_Failed_DurationOverflow() {
 	maxDurationSeconds := float64(math.MaxUint64 / ToNanoSeconds)
 	s.SetupEpochElapsedShares(maxDurationSeconds, DefaultNextStartTimeSeconds)
 
-	_, err := s.App.StakeibcKeeper.GetStrideEpochElapsedShare(s.Ctx())
+	_, err := s.App.StakeibcKeeper.GetStrideEpochElapsedShare(s.Ctx)
 
 	expectedErrMsg := `unable to convert epoch duration to int64, err: overflow: `
 	expectedErrMsg += `unable to cast \d+ of type uint64 to int64: unable to cast to safe cast int`
@@ -92,7 +92,7 @@ func (s *KeeperTestSuite) TestEpochElapsedShare_Failed_NextStartTimeOverflow() {
 	maxNextStartTimeSeconds := float64(math.MaxUint64 / ToNanoSeconds)
 	s.SetupEpochElapsedShares(DefaultEpochDurationSeconds, maxNextStartTimeSeconds)
 
-	_, err := s.App.StakeibcKeeper.GetStrideEpochElapsedShare(s.Ctx())
+	_, err := s.App.StakeibcKeeper.GetStrideEpochElapsedShare(s.Ctx)
 	expectedErrMsg := `unable to convert next epoch start time to int64, err: overflow: `
 	expectedErrMsg += `unable to cast \d+ of type uint64 to int64: unable to cast to safe cast int`
 	s.Require().Regexp(regexp.MustCompile(expectedErrMsg), err.Error())
@@ -103,7 +103,7 @@ func (s *KeeperTestSuite) TestEpochElapsedShare_Failed_CurrentBlockTimeOverflow(
 	maxNextStartTimeSeconds := float64(math.MaxUint64 / ToNanoSeconds)
 	s.SetupEpochElapsedShares(DefaultEpochDurationSeconds, maxNextStartTimeSeconds)
 
-	_, err := s.App.StakeibcKeeper.GetStrideEpochElapsedShare(s.Ctx())
+	_, err := s.App.StakeibcKeeper.GetStrideEpochElapsedShare(s.Ctx)
 	expectedErrMsg := `unable to convert next epoch start time to int64, err: overflow: `
 	expectedErrMsg += `unable to cast \d+ of type uint64 to int64: unable to cast to safe cast int`
 	s.Require().Regexp(regexp.MustCompile(expectedErrMsg), err.Error())
@@ -115,7 +115,7 @@ func (s *KeeperTestSuite) TestEpochElapsedShare_Failed_BlockTimeOutsideEpoch() {
 	invalidDuration := 0.0
 	s.SetupEpochElapsedShares(invalidDuration, DefaultNextStartTimeSeconds)
 
-	_, err := s.App.StakeibcKeeper.GetStrideEpochElapsedShare(s.Ctx())
-	expectedErrMsg := "current block time 1577923355000000000 is not within current epoch (ending at 1577923365000000000): invalid epoch tracker"
+	_, err := s.App.StakeibcKeeper.GetStrideEpochElapsedShare(s.Ctx)
+	expectedErrMsg := "current block time 1577923350000000000 is not within current epoch (ending at 1577923360000000000): invalid epoch tracker"
 	s.Require().EqualError(err, expectedErrMsg)
 }

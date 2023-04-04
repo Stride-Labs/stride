@@ -5,9 +5,10 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
+	errorsmod "cosmossdk.io/errors"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
-	"github.com/Stride-Labs/stride/v3/x/claim/types"
+	"github.com/Stride-Labs/stride/v8/x/claim/types"
 )
 
 type msgServer struct {
@@ -41,7 +42,7 @@ func (server msgServer) SetAirdropAllocations(goCtx context.Context, msg *types.
 	}
 
 	if !addr.Equals(airdropDistributor) {
-		return nil, sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid distributor address")
+		return nil, errorsmod.Wrapf(sdkerrors.ErrInvalidAddress, "invalid distributor address")
 	}
 
 	users, weights := server.keeper.GetUnallocatedUsers(ctx, msg.AirdropIdentifier, msg.Users, msg.Weights)
@@ -117,7 +118,7 @@ func (server msgServer) DeleteAirdrop(goCtx context.Context, msg *types.MsgDelet
 	}
 
 	if !addr.Equals(distributor) {
-		return nil, sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid distributor address")
+		return nil, errorsmod.Wrapf(sdkerrors.ErrInvalidAddress, "invalid distributor address")
 	}
 
 	err = server.keeper.DeleteAirdropAndEpoch(ctx, msg.Identifier)

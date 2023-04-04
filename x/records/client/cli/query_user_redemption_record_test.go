@@ -5,17 +5,19 @@ import (
 	"strconv"
 	"testing"
 
+	tmcli "github.com/cometbft/cometbft/libs/cli"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	clitestutil "github.com/cosmos/cosmos-sdk/testutil/cli"
 	"github.com/stretchr/testify/require"
-	tmcli "github.com/tendermint/tendermint/libs/cli"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	"github.com/Stride-Labs/stride/v3/testutil/network"
-	"github.com/Stride-Labs/stride/v3/testutil/nullify"
-	"github.com/Stride-Labs/stride/v3/x/records/client/cli"
-	"github.com/Stride-Labs/stride/v3/x/records/types"
+	sdkmath "cosmossdk.io/math"
+
+	"github.com/Stride-Labs/stride/v8/testutil/network"
+	"github.com/Stride-Labs/stride/v8/testutil/nullify"
+	"github.com/Stride-Labs/stride/v8/x/records/client/cli"
+	"github.com/Stride-Labs/stride/v8/x/records/types"
 )
 
 func networkWithUserRedemptionRecordObjects(t *testing.T, n int) (*network.Network, []types.UserRedemptionRecord) {
@@ -26,7 +28,8 @@ func networkWithUserRedemptionRecordObjects(t *testing.T, n int) (*network.Netwo
 
 	for i := 0; i < n; i++ {
 		userRedemptionRecord := types.UserRedemptionRecord{
-			Id: strconv.Itoa(i),
+			Id:     strconv.Itoa(i),
+			Amount: sdkmath.NewInt(int64(i)),
 		}
 		nullify.Fill(&userRedemptionRecord)
 		state.UserRedemptionRecordList = append(state.UserRedemptionRecordList, userRedemptionRecord)

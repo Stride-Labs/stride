@@ -9,7 +9,7 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/client"
 
-	"github.com/Stride-Labs/stride/v3/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v8/x/stakeibc/types"
 )
 
 var DefaultRelativePacketTimeoutTimestamp = cast.ToUint64((time.Duration(10) * time.Minute).Nanoseconds())
@@ -29,13 +29,12 @@ func GetTxCmd() *cobra.Command {
 	cmd.AddCommand(CmdRedeemStake())
 	cmd.AddCommand(CmdClaimUndelegatedTokens())
 	cmd.AddCommand(CmdRebalanceValidators())
-	cmd.AddCommand(CmdAddValidator())
+	cmd.AddCommand(CmdAddValidators())
 	cmd.AddCommand(CmdChangeValidatorWeight())
 	cmd.AddCommand(CmdDeleteValidator())
 	cmd.AddCommand(CmdRestoreInterchainAccount())
 	cmd.AddCommand(CmdUpdateValidatorSharesExchRate())
 	cmd.AddCommand(CmdClearBalance())
-	// this line is used by starport scaffolding # 1
 
 	return cmd
 }
