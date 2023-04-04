@@ -6,6 +6,8 @@ import (
 	"path/filepath"
 
 	authsims "github.com/cosmos/cosmos-sdk/x/auth/simulation"
+	"github.com/cosmos/cosmos-sdk/x/genutil"
+	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
 	porttypes "github.com/cosmos/ibc-go/v7/modules/core/05-port/types"
 	tendermint "github.com/cosmos/ibc-go/v7/modules/light-clients/07-tendermint"
 
@@ -40,7 +42,6 @@ import (
 	crisiskeeper "github.com/cosmos/cosmos-sdk/x/crisis/keeper"
 	crisistypes "github.com/cosmos/cosmos-sdk/x/crisis/types"
 
-	distr "github.com/cosmos/cosmos-sdk/x/distribution"
 	distrkeeper "github.com/cosmos/cosmos-sdk/x/distribution/keeper"
 	distrtypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
 	"github.com/cosmos/cosmos-sdk/x/evidence"
@@ -92,18 +93,10 @@ import (
 	ibcclient "github.com/cosmos/ibc-go/v7/modules/core/02-client"
 	ibcclientclient "github.com/cosmos/ibc-go/v7/modules/core/02-client/client"
 	ibcclienttypes "github.com/cosmos/ibc-go/v7/modules/core/02-client/types"
-	ibcporttypes "github.com/cosmos/ibc-go/v7/modules/core/05-port/types"
 	ibchost "github.com/cosmos/ibc-go/v7/modules/core/exported"
 	ibckeeper "github.com/cosmos/ibc-go/v7/modules/core/keeper"
 	ibctesting "github.com/cosmos/ibc-go/v7/testing"
 	ccvstaking "github.com/cosmos/interchain-security/x/ccv/democracy/staking"
-	"github.com/spf13/cast"
-	abci "github.com/tendermint/tendermint/abci/types"
-	tmjson "github.com/tendermint/tendermint/libs/json"
-	"github.com/tendermint/tendermint/libs/log"
-	tmos "github.com/tendermint/tendermint/libs/os"
-	dbm "github.com/tendermint/tm-db"
-
 	"github.com/spf13/cast"
 
 	ica "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts"
@@ -150,28 +143,13 @@ import (
 	stakeibcmodulekeeper "github.com/Stride-Labs/stride/v8/x/stakeibc/keeper"
 	stakeibcmoduletypes "github.com/Stride-Labs/stride/v8/x/stakeibc/types"
 
-	"github.com/Stride-Labs/stride/v8/x/claim"
-	claimkeeper "github.com/Stride-Labs/stride/v8/x/claim/keeper"
-	claimtypes "github.com/Stride-Labs/stride/v8/x/claim/types"
-	icacallbacksmodule "github.com/Stride-Labs/stride/v8/x/icacallbacks"
-	icacallbacksmodulekeeper "github.com/Stride-Labs/stride/v8/x/icacallbacks/keeper"
-	icacallbacksmoduletypes "github.com/Stride-Labs/stride/v8/x/icacallbacks/types"
-	recordsmodule "github.com/Stride-Labs/stride/v8/x/records"
-	recordsmodulekeeper "github.com/Stride-Labs/stride/v8/x/records/keeper"
-	recordsmoduletypes "github.com/Stride-Labs/stride/v8/x/records/types"
-	stakeibcmodule "github.com/Stride-Labs/stride/v8/x/stakeibc"
-	stakeibcclient "github.com/Stride-Labs/stride/v8/x/stakeibc/client"
-	stakeibcmodulekeeper "github.com/Stride-Labs/stride/v8/x/stakeibc/keeper"
-	stakeibcmoduletypes "github.com/Stride-Labs/stride/v8/x/stakeibc/types"
-
 	// this line is used by starport scaffolding # stargate/app/moduleImport
 
-	ccvstakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	ccvconsumer "github.com/cosmos/interchain-security/x/ccv/consumer"
 	ccvconsumerkeeper "github.com/cosmos/interchain-security/x/ccv/consumer/keeper"
 	ccvconsumertypes "github.com/cosmos/interchain-security/x/ccv/consumer/types"
 
-	"github.com/cosmos/interchain-security/testutil/e2e"
+	// "github.com/cosmos/interchain-security/testutil/e2e"
 	// this line is used by starport scaffolding # stargate/app/moduleImport
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	ibctestingtypes "github.com/cosmos/ibc-go/v7/testing/types"
@@ -216,7 +194,6 @@ var (
 	// and genesis verification.
 	ModuleBasics = module.NewBasicManager(
 		auth.AppModuleBasic{},
-		authzmodule.AppModuleBasic{},
 		genutil.NewAppModuleBasic(genutiltypes.DefaultMessageValidator),
 		bank.AppModuleBasic{},
 		capability.AppModuleBasic{},
@@ -305,7 +282,7 @@ type StrideApp struct {
 	AccountKeeper    authkeeper.AccountKeeper
 	BankKeeper       bankkeeper.Keeper
 	CapabilityKeeper *capabilitykeeper.Keeper
-	StakingKeeper    stakingkeeper.Keeper
+	StakingKeeper    *stakingkeeper.Keeper
 	SlashingKeeper   slashingkeeper.Keeper
 	MintKeeper       mintkeeper.Keeper
 	DistrKeeper      distrkeeper.Keeper
@@ -431,7 +408,7 @@ func NewStrideApp(
 	app.BankKeeper = bankkeeper.NewBaseKeeper(
 		appCodec, keys[banktypes.StoreKey], app.AccountKeeper, app.BlacklistedModuleAccountAddrs(), authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
-	app.StakingKeeper = *stakingkeeper.NewKeeper(
+	app.StakingKeeper = stakingkeeper.NewKeeper(
 		appCodec, keys[stakingtypes.StoreKey], app.AccountKeeper, app.BankKeeper, authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
 	epochsKeeper := epochsmodulekeeper.NewKeeper(appCodec, keys[epochsmoduletypes.StoreKey])
@@ -516,6 +493,7 @@ func NewStrideApp(
 		&app.IBCKeeper.PortKeeper,
 		app.IBCKeeper.ConnectionKeeper,
 		app.IBCKeeper.ClientKeeper,
+		app.StakingKeeper,
 		app.SlashingKeeper,
 		app.BankKeeper,
 		app.AccountKeeper,
@@ -526,7 +504,7 @@ func NewStrideApp(
 
 	// register slashing module StakingHooks to the consumer keeper
 	app.ConsumerKeeper = *app.ConsumerKeeper.SetHooks(app.SlashingKeeper.Hooks())
-	consumerModule := ccvconsumer.NewAppModule(app.ConsumerKeeper)
+	consumerModule := ccvconsumer.NewAppModule(app.ConsumerKeeper, app.StakingKeeper)
 
 	// TODO(TEST-20): look for all lines that include 'monitoring' in this file! there are a few places this
 	// is commented out
@@ -755,8 +733,8 @@ func NewStrideApp(
 		ccvgov.NewAppModule(appCodec, &app.GovKeeper, app.AccountKeeper, app.BankKeeper, app.GetSubspace(govtypes.ModuleName)),
 		mint.NewAppModule(appCodec, app.MintKeeper, app.AccountKeeper, app.BankKeeper),
 		slashing.NewAppModule(appCodec, app.SlashingKeeper, app.AccountKeeper, app.BankKeeper, app.ConsumerKeeper, app.GetSubspace(slashingtypes.ModuleName)),
-		ccvdistr.NewAppModule(appCodec, app.DistrKeeper, app.AccountKeeper, app.BankKeeper, app.StakingKeeper, app.GetSubspace(distrtypes.ModuleName)),
-		ccvstaking.NewAppModule(appCodec, &app.StakingKeeper, app.AccountKeeper, app.BankKeeper, app.GetSubspace(stakingtypes.ModuleName)),
+		ccvdistr.NewAppModule(appCodec, app.DistrKeeper, app.AccountKeeper, app.BankKeeper, app.StakingKeeper, app.GetSubspace(distrtypes.ModuleName), authtypes.FeeCollectorName),
+		ccvstaking.NewAppModule(appCodec, app.StakingKeeper, app.AccountKeeper, app.BankKeeper, app.ConsumerKeeper, app.GetSubspace(stakingtypes.ModuleName)),
 		upgrade.NewAppModule(app.UpgradeKeeper),
 		evidence.NewAppModule(app.EvidenceKeeper),
 		ibc.NewAppModule(app.IBCKeeper),
@@ -771,7 +749,6 @@ func NewStrideApp(
 		recordsModule,
 		ratelimitModule,
 		icacallbacksModule,
-		authzmodule.NewAppModule(appCodec, app.AuthzKeeper, app.AccountKeeper, app.BankKeeper, app.interfaceRegistry),
 		consumerModule,
 		autopilotModule,
 		// this line is used by starport scaffolding # stargate/app/appModule
@@ -808,7 +785,6 @@ func NewStrideApp(
 		ratelimitmoduletypes.ModuleName,
 		icacallbacksmoduletypes.ModuleName,
 		claimtypes.ModuleName,
-		authz.ModuleName,
 		ccvconsumertypes.ModuleName,
 		autopilottypes.ModuleName,
 		// this line is used by starport scaffolding # stargate/app/beginBlockers
@@ -841,7 +817,6 @@ func NewStrideApp(
 		ratelimitmoduletypes.ModuleName,
 		icacallbacksmoduletypes.ModuleName,
 		claimtypes.ModuleName,
-		authz.ModuleName,
 		ccvconsumertypes.ModuleName,
 		autopilottypes.ModuleName,
 		// this line is used by starport scaffolding # stargate/app/endBlockers
@@ -879,7 +854,6 @@ func NewStrideApp(
 		ratelimitmoduletypes.ModuleName,
 		icacallbacksmoduletypes.ModuleName,
 		claimtypes.ModuleName,
-		authz.ModuleName,
 		ccvconsumertypes.ModuleName,
 		autopilottypes.ModuleName,
 		// this line is used by starport scaffolding # stargate/app/initGenesis
@@ -1169,33 +1143,27 @@ func (app *StrideApp) SimulationManager() *module.SimulationManager {
 }
 
 // ConsumerApp interface implementations for e2e tests
-
-// GetStakingKeeper implements the TestingApp interface.
-func (app *StrideApp) GetStakingKeeper() ibcclienttypes.StakingKeeper {
-	return app.ConsumerKeeper
-}
-
 // GetConsumerKeeper implements the ConsumerApp interface.
 func (app *StrideApp) GetConsumerKeeper() ccvconsumerkeeper.Keeper {
 	return app.ConsumerKeeper
 }
 
-// GetE2eBankKeeper implements the ConsumerApp interface.
-func (app *StrideApp) GetE2eBankKeeper() e2e.E2eBankKeeper {
-	return app.BankKeeper
-}
+// // GetE2eBankKeeper implements the ConsumerApp interface.
+// func (app *StrideApp) GetE2eBankKeeper() e2e.E2eBankKeeper {
+// 	return app.BankKeeper
+// }
 
-// GetE2eAccountKeeper implements the ConsumerApp interface.
-func (app *StrideApp) GetE2eAccountKeeper() e2e.E2eAccountKeeper {
-	return app.AccountKeeper
-}
+// // GetE2eAccountKeeper implements the ConsumerApp interface.
+// func (app *StrideApp) GetE2eAccountKeeper() e2e.E2eAccountKeeper {
+// 	return app.AccountKeeper
+// }
 
-// GetE2eSlashingKeeper implements the ConsumerApp interface.
-func (app *StrideApp) GetE2eSlashingKeeper() e2e.E2eSlashingKeeper {
-	return app.SlashingKeeper
-}
+// // GetE2eSlashingKeeper implements the ConsumerApp interface.
+// func (app *StrideApp) GetE2eSlashingKeeper() e2e.E2eSlashingKeeper {
+// 	return app.SlashingKeeper
+// }
 
-// GetE2eEvidenceKeeper implements the ConsumerApp interface.
-func (app *StrideApp) GetE2eEvidenceKeeper() e2e.E2eEvidenceKeeper {
-	return app.EvidenceKeeper
-}
+// // GetE2eEvidenceKeeper implements the ConsumerApp interface.
+// func (app *StrideApp) GetE2eEvidenceKeeper() e2e.E2eEvidenceKeeper {
+// 	return app.EvidenceKeeper
+// }

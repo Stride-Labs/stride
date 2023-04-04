@@ -7,7 +7,9 @@ import (
 	"time"
 
 	cometbftdb "github.com/cometbft/cometbft-db"
+	types1 "github.com/cometbft/cometbft/abci/types"
 	cometbftrand "github.com/cometbft/cometbft/libs/rand"
+	tmtypes "github.com/cometbft/cometbft/types"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
 	"github.com/cosmos/cosmos-sdk/crypto/hd"
@@ -22,10 +24,6 @@ import (
 	genutil "github.com/cosmos/cosmos-sdk/x/genutil"
 	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
 	ccvconsumertypes "github.com/cosmos/interchain-security/x/ccv/consumer/types"
-	types1 "github.com/tendermint/tendermint/abci/types"
-	tmrand "github.com/tendermint/tendermint/libs/rand"
-	tmtypes "github.com/tendermint/tendermint/types"
-	tmdb "github.com/tendermint/tm-db"
 
 	"github.com/Stride-Labs/stride/v8/app"
 	testutil "github.com/Stride-Labs/stride/v8/testutil"

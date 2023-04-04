@@ -7,7 +7,7 @@ import (
 	"github.com/cosmos/ibc-go/v7/modules/core/23-commitment/types"
 	ibctmtypes "github.com/cosmos/ibc-go/v7/modules/light-clients/07-tendermint"
 	ccvconsumertypes "github.com/cosmos/interchain-security/x/ccv/consumer/types"
-	ccvprovidertypes "github.com/cosmos/interchain-security/x/ccv/provider/types"
+	// ccvprovidertypes "github.com/cosmos/interchain-security/x/ccv/provider/types"
 )
 
 // This function creates consumer module genesis state that is used as starting point for modifications
@@ -17,12 +17,12 @@ func CreateMinimalConsumerTestGenesis() *ccvconsumertypes.GenesisState {
 	genesisState := ccvconsumertypes.DefaultGenesisState()
 	genesisState.Params.Enabled = true
 	genesisState.NewChain = true
-	genesisState.ProviderClientState = ccvprovidertypes.DefaultParams().TemplateClient
+	// genesisState.ProviderClientState = ccvprovidertypes.DefaultParams().TemplateClient
 	genesisState.ProviderClientState.ChainId = "stride"
 	genesisState.ProviderClientState.LatestHeight = ibctypes.Height{RevisionNumber: 0, RevisionHeight: 1}
-	genesisState.ProviderClientState.TrustingPeriod = genesisState.Params.UnbondingPeriod / ccvprovidertypes.DefaultTrustingPeriodFraction
+	// genesisState.ProviderClientState.TrustingPeriod = genesisState.Params.UnbondingPeriod / ccvprovidertypes.DefaultTrustingPeriodFraction
 	genesisState.ProviderClientState.UnbondingPeriod = genesisState.Params.UnbondingPeriod
-	genesisState.ProviderClientState.MaxClockDrift = ccvprovidertypes.DefaultMaxClockDrift
+	// genesisState.ProviderClientState.MaxClockDrift = ccvprovidertypes.DefaultMaxClockDrift
 	genesisState.ProviderConsensusState = &ibctmtypes.ConsensusState{
 		Timestamp: time.Now().UTC(),
 		Root:      types.MerkleRoot{Hash: []byte("dummy")},
