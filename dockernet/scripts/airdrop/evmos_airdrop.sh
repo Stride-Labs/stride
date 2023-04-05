@@ -23,6 +23,7 @@
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 source ${SCRIPT_DIR}/../../config.sh
 
+
 $STRIDE_MAIN_CMD keys delete airdrop-recipient-1 -y &> /dev/null || true 
 $EVMOS_MAIN_CMD keys delete airdrop-recipient-1 -y &> /dev/null || true 
 
@@ -64,10 +65,16 @@ sleep 5
 $STRIDE_MAIN_CMD q bank balances $AIRDROP_DISTRIBUTOR_1
 
 # fund the evmos account
-$EVMOS_MAIN_CMD tx bank send nval1 evmos1nmwp5uh5a3g08668c5eynes0hyfaw94dfnj796 1000aevmos --from val1 -y
+$EVMOS_MAIN_CMD tx bank send nval1 evmos1nmwp5uh5a3g08668c5eynes0hyfaw94dfnj796 1000000000000000000aevmos --from val1 -y
 sleep 5
 # query the balance of the airdrop-recipient-1 account to make sure it was funded
 $EVMOS_MAIN_CMD q bank balances $AIRDROP_RECIPIENT_1_EVMOS
+
+# Fund the airdrop-recipient-1 account
+$STRIDE_MAIN_CMD tx bank send val1 $AIRDROP_RECIPIENT_1_STRIDE 1000000ustrd --from val1 -y | TRIM_TX
+sleep 5
+# query the balance of the airdrop-recipient-1 account to make sure it was funded
+$STRIDE_MAIN_CMD q bank balances $AIRDROP_RECIPIENT_1_STRIDE
 
 
 
@@ -93,6 +100,13 @@ $STRIDE_MAIN_CMD q claim total-claimable $AIRDROP_NAME $AIRDROP_RECIPIENT_1_MECH
 $STRIDE_MAIN_CMD q claim total-claimable $AIRDROP_NAME $AIRDROP_RECIPIENT_2 true
 $STRIDE_MAIN_CMD q claim total-claimable $AIRDROP_NAME $AIRDROP_RECIPIENT_3 true
 $STRIDE_MAIN_CMD q claim total-claimable $AIRDROP_NAME $AIRDROP_RECIPIENT_4_TO_BE_REPLACED true
+
+echo "Do you want to link the addresses? (y/n)"
+read user_input
+if [ "$user_input" != "y" ]; then
+    echo "Exiting the script..."
+    exit 0
+fi
 
 echo "Sleeping 2 minutes before linking the evmos address to its stride address..."
 sleep 10
