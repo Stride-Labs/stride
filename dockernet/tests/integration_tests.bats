@@ -159,7 +159,6 @@ setup_file() {
 }
 
 @test "[INTEGRATION-BASIC-$CHAIN_NAME] packet forwarding automatically liquid stakes" {
-  skip "DefaultActive set to false, skip test"
   memo='{ "autopilot": { "receiver": "'"$(STRIDE_ADDRESS)"'",  "stakeibc": { "stride_address": "'"$(STRIDE_ADDRESS)"'", "action": "LiquidStake" } } }'
 
   # get initial balances
