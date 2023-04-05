@@ -14,10 +14,10 @@ import (
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	"github.com/gogo/protobuf/proto"
 
-	"github.com/Stride-Labs/stride/v7/utils"
-	"github.com/Stride-Labs/stride/v7/x/claim/types"
-	vestingtypes "github.com/Stride-Labs/stride/v7/x/claim/vesting/types"
-	epochstypes "github.com/Stride-Labs/stride/v7/x/epochs/types"
+	"github.com/Stride-Labs/stride/v8/utils"
+	"github.com/Stride-Labs/stride/v8/x/claim/types"
+	vestingtypes "github.com/Stride-Labs/stride/v8/x/claim/vesting/types"
+	epochstypes "github.com/Stride-Labs/stride/v8/x/epochs/types"
 )
 
 func (k Keeper) LoadAllocationData(ctx sdk.Context, allocationData string) bool {
@@ -146,6 +146,23 @@ func (k Keeper) GetAirdropByIdentifier(ctx sdk.Context, airdropIdentifier string
 	return nil
 }
 
+func (k Keeper) GetAirdropIds(ctx sdk.Context) []string {
+	params, err := k.GetParams(ctx)
+	if err != nil {
+		panic(err)
+	}
+
+	// init airdrop ids
+	airdropIds := []string{}
+
+	for _, airdrop := range params.Airdrops {
+		// append airdrop to airdrop ids
+		airdropIds = append(airdropIds, airdrop.AirdropIdentifier)
+	}
+
+	return airdropIds
+}
+
 // GetDistributorAccountBalance gets the airdrop coin balance of module account
 func (k Keeper) GetDistributorAccountBalance(ctx sdk.Context, airdropIdentifier string) (sdk.Coin, error) {
 	airdrop := k.GetAirdropByIdentifier(ctx, airdropIdentifier)
@@ -202,7 +219,7 @@ func (k Keeper) ResetClaimStatus(ctx sdk.Context, airdropIdentifier string) erro
 		}
 		// then, reset the airdrop ClaimedSoFar
 		k.Logger(ctx).Info("[CLAIM] ResetClaimedSoFar...")
-		if err := k.ResetClaimedSoFar(ctx); err != nil {
+		if err := k.ResetClaimedSoFar(ctx, airdropIdentifier); err != nil {
 			k.Logger(ctx).Info(fmt.Sprintf("[CLAIM] ResetClaimedSoFar %v", err.Error()))
 			return err
 		}
@@ -339,6 +356,15 @@ func (k Keeper) SetClaimRecord(ctx sdk.Context, claimRecord types.ClaimRecord) e
 	return nil
 }
 
+func (k Keeper) DeleteClaimRecord(ctx sdk.Context, addr sdk.AccAddress, airdropId string) error {
+	store := ctx.KVStore(k.storeKey)
+	prefixStore := prefix.NewStore(store, append([]byte(types.ClaimRecordsStorePrefix), []byte(airdropId)...))
+
+	prefixStore.Delete(addr)
+
+	return nil
+}
+
 // Get airdrop distributor address
 func (k Keeper) GetAirdropDistributor(ctx sdk.Context, airdropIdentifier string) (sdk.AccAddress, error) {
 	airdrop := k.GetAirdropByIdentifier(ctx, airdropIdentifier)
@@ -420,6 +446,107 @@ func (k Keeper) GetUserVestings(ctx sdk.Context, addr sdk.AccAddress) (vestingty
 	} else {
 		return strideVestingAcc.VestingPeriods, strideVestingAcc.GetVestedCoins(ctx.BlockTime())
 	}
+}
+
+func AreAllTrue(bools []bool) bool {
+	for _, b := range bools {
+		if !b {
+			return false
+		}
+	}
+	return true
+}
+
+// GetClaimStatus returns all claim status associated with the user account
+func (k Keeper) GetClaimStatus(ctx sdk.Context, addr sdk.AccAddress) ([]types.ClaimStatus, error) {
+	// Get all airdrop identifiers
+	airdropIdentifiers := k.GetAirdropIds(ctx)
+	var claimStatusList []types.ClaimStatus
+	for _, airdropId := range airdropIdentifiers {
+
+		// Get the claim record for a user, airdrop pair
+		claimRecord, err := k.GetClaimRecord(ctx, addr, airdropId)
+		if err != nil {
+			return nil, err
+		}
+		if claimRecord.Address == "" {
+			// if there's no claim record, the user is not eligible
+			// for this airdrop, so skip it
+			continue
+		}
+
+		// If all actions are completed, the user has claimed
+		claimed := AreAllTrue(claimRecord.ActionCompleted)
+		claimStatus := types.ClaimStatus{
+			AirdropIdentifier: airdropId,
+			Claimed:           claimed,
+		}
+		claimStatusList = append(claimStatusList, claimStatus)
+	}
+
+	return claimStatusList, nil
+}
+
+func CurrentAirdropRound(start time.Time) int {
+	// Define constants for 90 days and 30 days
+	const initialRoundDuration = 90 * 24 * time.Hour
+	const subsequentRoundDuration = 30 * 24 * time.Hour
+
+	// Calculate the time passed since the start
+	timePassed := time.Since(start)
+
+	// Check if the initial round is still ongoing
+	if timePassed < initialRoundDuration {
+		return 1
+	}
+
+	// Calculate the time passed after the initial round
+	timePassedAfterInitialRound := timePassed - initialRoundDuration
+
+	// Calculate the number of subsequent rounds passed
+	subsequentRoundsPassed := timePassedAfterInitialRound / subsequentRoundDuration
+
+	// Add 1 for the initial round and 1 for the current round
+	return 1 + 1 + int(subsequentRoundsPassed)
+}
+
+// GetClaimMetadata returns all claim status associated with the user account
+func (k Keeper) GetClaimMetadata(ctx sdk.Context) []types.ClaimMetadata {
+	var claimMetadataList []types.ClaimMetadata
+
+	airdropIdentifiers := k.GetAirdropIds(ctx)
+	epochs := k.epochsKeeper.AllEpochInfos(ctx)
+
+	for _, airdropId := range airdropIdentifiers {
+		// loop over epochs to match epochs to airdrop identifier
+		var currentRoundStart time.Time
+		var currentRoundEnd time.Time
+		var absoluteStartTime time.Time
+		var duration time.Duration
+		for _, epoch := range epochs {
+			epochIdentifier := strings.TrimPrefix(epoch.Identifier, "airdrop-")
+			if epochIdentifier == airdropId {
+				// found the epoch for this airdrop
+				currentRoundStart = epoch.CurrentEpochStartTime
+				absoluteStartTime = epoch.StartTime
+				duration = epoch.Duration
+			}
+		}
+
+		currentRoundEnd = currentRoundStart.Add(duration)
+		currentRound := strconv.Itoa(CurrentAirdropRound(absoluteStartTime))
+
+		claimMetadata := types.ClaimMetadata{
+			AirdropIdentifier: airdropId,
+			CurrentRound:      currentRound,
+			CurrentRoundStart: currentRoundStart,
+			CurrentRoundEnd:   currentRoundEnd,
+		}
+
+		claimMetadataList = append(claimMetadataList, claimMetadata)
+	}
+
+	return claimMetadataList
 }
 
 // GetClaimable returns claimable amount for a specific action done by an address
@@ -651,7 +778,7 @@ func (k Keeper) IncrementClaimedSoFar(ctx sdk.Context, identifier string, amount
 }
 
 // ResetClaimedSoFar resets ClaimedSoFar for a all airdrops
-func (k Keeper) ResetClaimedSoFar(ctx sdk.Context) error {
+func (k Keeper) ResetClaimedSoFar(ctx sdk.Context, airdropIdentifier string) error {
 	params, err := k.GetParams(ctx)
 	k.Logger(ctx).Info(fmt.Sprintf("[CLAIM] params.Airdrops %v", params.Airdrops))
 	if err != nil {
@@ -660,7 +787,10 @@ func (k Keeper) ResetClaimedSoFar(ctx sdk.Context) error {
 
 	newAirdrops := []*types.Airdrop{}
 	for _, airdrop := range params.Airdrops {
-		airdrop.ClaimedSoFar = sdkmath.ZeroInt()
+		if airdrop.AirdropIdentifier == airdropIdentifier {
+			airdrop.ClaimedSoFar = sdkmath.ZeroInt()
+			k.Logger(ctx).Info(fmt.Sprintf("[CLAIM] resetting claimSoFar for %s", airdropIdentifier))
+		}
 		newAirdrops = append(newAirdrops, airdrop)
 	}
 	params.Airdrops = newAirdrops
@@ -684,4 +814,48 @@ func (k Keeper) DeleteAirdropAndEpoch(ctx sdk.Context, identifier string) error 
 	params.Airdrops = newAirdrops
 	k.epochsKeeper.DeleteEpochInfo(ctx, fmt.Sprintf("airdrop-%s", identifier))
 	return k.SetParams(ctx, params)
+}
+
+func (k Keeper) UpdateAirdropAddress(ctx sdk.Context, existingStrideAddress string, newStrideAddress string, airdropId string) error {
+	airdrop := k.GetAirdropByIdentifier(ctx, airdropId)
+	if airdrop == nil {
+		return errorsmod.Wrapf(types.ErrAirdropNotFound, fmt.Sprintf("airdrop not found for identifier %s", airdropId))
+	}
+
+	// verify that the strideAddress is valid
+	_, err := sdk.AccAddressFromBech32(newStrideAddress)
+	if err != nil {
+		return errorsmod.Wrapf(sdkerrors.ErrInvalidAddress, fmt.Sprintf("invalid stride address %s", newStrideAddress))
+	}
+
+	// note: existingAccAddress will be a STRIDE address with the same coin type as existingAddress
+	// when new airdrops are ingested, we call utils.ConvertAddressToStrideAddress to convert
+	// the host zone (e.g. Evmos) address to a Stride address. The same conversion must be done
+	// if you're attempting to access a claim record for a non-Stride-address.
+	existingAccAddress, err := sdk.AccAddressFromBech32(existingStrideAddress)
+	if err != nil {
+		return errorsmod.Wrapf(types.ErrClaimNotFound,
+			fmt.Sprintf("error getting claim record for address %s on airdrop %s", existingStrideAddress, airdropId))
+	}
+	claimRecord, err := k.GetClaimRecord(ctx, existingAccAddress, airdrop.AirdropIdentifier)
+	if (err != nil) || (claimRecord.Address == "") {
+		return errorsmod.Wrapf(types.ErrClaimNotFound,
+			fmt.Sprintf("error getting claim record for address %s on airdrop %s", existingStrideAddress, airdropId))
+	}
+
+	claimRecord.Address = newStrideAddress
+	err = k.SetClaimRecord(ctx, claimRecord) // this does NOT delete the old record, because claims are indexed by address
+	if err != nil {
+		return errorsmod.Wrapf(types.ErrModifyingClaimRecord,
+			fmt.Sprintf("error setting claim record from address %s to address %s on airdrop %s", existingStrideAddress, newStrideAddress, airdropId))
+	}
+
+	// this deletes the old record
+	err = k.DeleteClaimRecord(ctx, existingAccAddress, airdrop.AirdropIdentifier)
+	if err != nil {
+		return errorsmod.Wrapf(types.ErrModifyingClaimRecord,
+			fmt.Sprintf("error deleting claim record for address %s on airdrop %s", existingStrideAddress, airdropId))
+	}
+
+	return nil
 }

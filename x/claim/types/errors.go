@@ -22,4 +22,10 @@ var (
 		"cannot claim negative tokens")
 	ErrInvalidAccount = errorsmod.Register(ModuleName, 1109,
 		"only BaseAccount and StridePeriodicVestingAccount can claim")
+	ErrAirdropNotFound = errorsmod.Register(ModuleName, 1110,
+		"the airdrop was not found")
+	ErrClaimNotFound = errorsmod.Register(ModuleName, 1111,
+		"the claim record was not found")
+	ErrModifyingClaimRecord = errorsmod.Register(ModuleName, 1112,
+		"failed to modify claim record")
 )

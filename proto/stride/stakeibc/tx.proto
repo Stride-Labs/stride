@@ -2,9 +2,9 @@ syntax = "proto3";
 package stride.stakeibc;
 
 import "stride/stakeibc/ica_account.proto";
-// this line is used by starport scaffolding # proto/tx/import
+import "stride/stakeibc/validator.proto";
 
-option go_package = "github.com/Stride-Labs/stride/v7/x/stakeibc/types";
+option go_package = "github.com/Stride-Labs/stride/v8/x/stakeibc/types";
 import "gogoproto/gogo.proto";
 import "cosmos_proto/cosmos.proto";
 
@@ -18,7 +18,7 @@ service Msg {
       returns (MsgClaimUndelegatedTokensResponse);
   rpc RebalanceValidators(MsgRebalanceValidators)
       returns (MsgRebalanceValidatorsResponse);
-  rpc AddValidator(MsgAddValidator) returns (MsgAddValidatorResponse);
+  rpc AddValidators(MsgAddValidators) returns (MsgAddValidatorsResponse);
   rpc ChangeValidatorWeight(MsgChangeValidatorWeight)
       returns (MsgChangeValidatorWeightResponse);
   rpc DeleteValidator(MsgDeleteValidator) returns (MsgDeleteValidatorResponse);
@@ -109,15 +109,12 @@ message MsgRebalanceValidators {
 }
 message MsgRebalanceValidatorsResponse {}
 
-message MsgAddValidator {
+message MsgAddValidators {
   string creator = 1;
   string host_zone = 2;
-  string name = 3;
-  string address = 4 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
-  uint64 commission = 5;
-  uint64 weight = 6;
+  repeated Validator validators = 3;
 }
-message MsgAddValidatorResponse {}
+message MsgAddValidatorsResponse {}
 
 message MsgChangeValidatorWeight {
   string creator = 1;
