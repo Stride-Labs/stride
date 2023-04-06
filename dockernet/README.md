@@ -57,9 +57,6 @@ while getopts sgojhir{n} flag; do
 {CHAIN}_DENOM="{min_denom}"
 ST{CHAIN}_DENOM="st{min_denom}"
 
-# if the network uses a new coin type, add it to the top and reference it below
-# most chains will use either the cosmos coin type (118) or eth coin type (60)
-
 # add in the new chain's config section
 {CHAIN}_CHAIN_ID={NEW-HOST-ZONE}
 {CHAIN}_NODE_PREFIX={new-host-zone}
@@ -69,7 +66,6 @@ ST{CHAIN}_DENOM="st{min_denom}"
 {CHAIN}_ADDRESS_PREFIX=stars
 {CHAIN}_REV_ACCT={n}rev1
 {CHAIN}_DENOM=${CHAIN}_DENOM
-{CHAIN}_COIN_TYPE=${TYPE}_COIN_TYPE
 {CHAIN}_RPC_PORT={the one included in the docker-compose above}
 {CHAIN}_MAIN_CMD="${CHAIN}_CMD --home $DOCKERNET_HOME/state/${${CHAIN}_NODE_PREFIX}1"
 {CHAIN}_RECEIVER_ADDRESS={any random address on the chain}
@@ -96,7 +92,7 @@ ${CHAIN_ID}_ADDRESS() {
 
 ```
 * Add the IBC denom's for the host zone across each channel to `dockernet/config.sh` (e.g. `IBC_{HOST}_CHANNEL_{N}_DENOM)`). You can generate the variables by uncommenting `x/stakeibc/keeper/get_denom_traces_test.go`, specifying the ChainID and denom, and running `make test-unit`. Add the output to `dockernet/config.sh`. Note: You have to run the test using the "run test" button in VSCode, or pass in the `-v` flag and run the tests using `go test -mod=readonly ./x/stakeibc/...`, for the output to show up.
-* Add a section to the `dockernet/config/relayer_config.yaml`
+* Add a section to the `dockernet/config/relayer_config.yaml`. Most chains will use either the cosmos coin type (118) or eth coin type (60). If a new coin type is used, add it to the top of `config.sh` for future reference.
 ```
 chains:
   ...
