@@ -1,6 +1,7 @@
 package types
 
 import (
+	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
@@ -8,7 +9,7 @@ const TypeMsgLSMLiquidStake = "lsm_liquid_stake"
 
 var _ sdk.Msg = &MsgLSMLiquidStake{}
 
-func NewMsgLSMLiquidStake(creator string, amount sdk.Int, lsmTokenDenom string) *MsgLSMLiquidStake {
+func NewMsgLSMLiquidStake(creator string, amount sdkmath.Int, lsmTokenDenom string) *MsgLSMLiquidStake {
 	return &MsgLSMLiquidStake{
 		Creator:       creator,
 		Amount:        amount,
