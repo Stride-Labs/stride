@@ -59,6 +59,8 @@ func (s *KeeperTestSuite) SetupRegisterHostZone() RegisterHostZoneTestCase {
 		IbcDenom:           IbcAtom,
 		TransferChannelId:  ibctesting.FirstChannelID,
 		UnbondingFrequency: unbondingFrequency,
+		MinRedemptionRate:  sdk.NewDec(0),
+		MaxRedemptionRate:  sdk.NewDec(0),
 	}
 
 	return RegisterHostZoneTestCase{
@@ -120,6 +122,10 @@ func (s *KeeperTestSuite) TestRegisterHostZone_Success() {
 	s.Require().True(found, "host zone found")
 	s.Require().Equal(tc.defaultRedemptionRate, hostZone.RedemptionRate, "redemption rate set to default: 1")
 	s.Require().Equal(tc.defaultRedemptionRate, hostZone.LastRedemptionRate, "last redemption rate set to default: 1")
+	defaultMinThreshold := sdk.NewDec(int64(stakeibctypes.DefaultMinRedemptionRateThreshold)).Quo(sdk.NewDec(100))
+	defaultMaxThreshold := sdk.NewDec(int64(stakeibctypes.DefaultMaxRedemptionRateThreshold)).Quo(sdk.NewDec(100))
+	s.Require().Equal(defaultMinThreshold, hostZone.MinRedemptionRate, "min redemption rate set to default")
+	s.Require().Equal(defaultMaxThreshold, hostZone.MaxRedemptionRate, "max redemption rate set to default")
 	s.Require().Equal(tc.unbondingFrequency, hostZone.UnbondingFrequency, "unbonding frequency set to default: 3")
 
 	// Confirm host zone unbonding record was created
