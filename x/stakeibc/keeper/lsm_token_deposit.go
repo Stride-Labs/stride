@@ -10,11 +10,11 @@ func (k Keeper) SetLSMTokenDeposit(ctx sdk.Context, deposit types.LSMTokenDeposi
 	// TODO [LSM]
 }
 
-func (k Keeper) RemoveLSMTokenDeposit(ctx sdk.Context, denom string) {
+func (k Keeper) RemoveLSMTokenDeposit(ctx sdk.Context, depositKey []byte) {
 	// TODO [LSM]
 }
 
-func (k Keeper) GetLSMTokenDeposit(ctx sdk.Context, denom string) (deposit types.LSMTokenDeposit, found bool) {
+func (k Keeper) GetLSMTokenDeposit(ctx sdk.Context, depositKey []byte) (deposit types.LSMTokenDeposit, found bool) {
 	// TODO [LSM]
 	return
 }

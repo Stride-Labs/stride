@@ -47,6 +47,11 @@ func EpochTrackerKey(epochIdentifier string) []byte {
 	return key
 }
 
+// Returns teh store key to retrieve an LSM token deposit
+func LSMTokenDepositKey(chainId, validatorAddress, denom string) []byte {
+	return append(append(append([]byte(chainId), []byte(validatorAddress)...), []byte(denom)...))
+}
+
 const (
 	// Host zone keys prefix the HostZone structs
 	HostZoneKey = "HostZone-value-"
