@@ -138,7 +138,7 @@ func (s *KeeperTestSuite) TestQueryValidatorExchangeRate_MissingConnectionId() {
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, tc.hostZone)
 
 	resp, err := s.App.StakeibcKeeper.QueryValidatorExchangeRate(s.Ctx, &tc.msg)
-	s.Require().ErrorContains(err, "connection id cannot be empty")
+	s.Require().ErrorContains(err, "connection-id cannot be empty")
 	s.Require().Nil(resp, "response should be nil")
 }
 
@@ -256,5 +256,5 @@ func (s *KeeperTestSuite) TestQueryDelegationsIcq_MissingConnectionId() {
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, tc.hostZone)
 
 	err := s.App.StakeibcKeeper.QueryDelegationsIcq(s.Ctx, tc.hostZone, tc.valoperAddr)
-	s.Require().ErrorContains(err, "connection id cannot be empty")
+	s.Require().ErrorContains(err, "connection-id cannot be empty")
 }

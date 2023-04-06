@@ -232,5 +232,5 @@ func (s *KeeperTestSuite) TestReinvestCallback_FailedToSubmitQuery() {
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, badHostZone)
 
 	err := stakeibckeeper.ReinvestCallback(s.App.StakeibcKeeper, s.Ctx, invalidArgs.packet, invalidArgs.ackResponse, invalidArgs.args)
-	s.Require().EqualError(err, "[ICQ Validation Check] Failed! connection id cannot be empty: invalid request")
+	s.Require().EqualError(err, "connection-id cannot be empty: invalid interchain query request")
 }

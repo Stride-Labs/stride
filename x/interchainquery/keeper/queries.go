@@ -28,7 +28,7 @@ func (k Keeper) GetQueryId(ctx sdk.Context, query types.Query, forceUnique bool)
 
 	// If forceUnique is true, grab and append the unique query UID
 	if forceUnique {
-		queryUID := k.GetQueryUID(ctx)
+		queryUID := k.GetQueryUniqueSuffix(ctx)
 		queryKey = append(queryKey, queryUID...)
 	}
 	return fmt.Sprintf("%x", crypto.Sha256(queryKey))
@@ -36,32 +36,32 @@ func (k Keeper) GetQueryId(ctx sdk.Context, query types.Query, forceUnique bool)
 
 // ValidateQuery validates that all the required attributes of a query are supplied when submitting an ICQ
 func (k Keeper) ValidateQuery(ctx sdk.Context, query types.Query) error {
+	if query.ChainId == "" {
+		return errorsmod.Wrapf(types.ErrInvalidICQRequest, "chain-id cannot be empty")
+	}
 	if query.ConnectionId == "" {
 		return errorsmod.Wrapf(types.ErrInvalidICQRequest, "connection-id cannot be empty")
 	}
 	if !strings.HasPrefix(query.ConnectionId, connectiontypes.ConnectionPrefix) {
-		return errorsmod.Wrapf(types.ErrInvalidICQRequest, "invalid connection ID (%s)", query.ConnectionId)
-	}
-	if query.ChainId == "" {
-		return errorsmod.Wrapf(types.ErrInvalidICQRequest, "chain ID cannot be empty")
-	}
-	if query.CallbackModule == "" {
-		return errorsmod.Wrapf(types.ErrInvalidICQRequest, "module must be specified")
-	}
-	if query.CallbackId == "" {
-		return errorsmod.Wrapf(types.ErrInvalidICQRequest, "callback ID cannot be empty")
+		return errorsmod.Wrapf(types.ErrInvalidICQRequest, "invalid connection-id (%s)", query.ConnectionId)
 	}
 	if query.QueryType == "" {
 		return errorsmod.Wrapf(types.ErrInvalidICQRequest, "query type cannot be empty")
 	}
+	if query.CallbackModule == "" {
+		return errorsmod.Wrapf(types.ErrInvalidICQRequest, "callback module must be specified")
+	}
+	if query.CallbackId == "" {
+		return errorsmod.Wrapf(types.ErrInvalidICQRequest, "callback-id cannot be empty")
+	}
 	if query.Timeout == 0 {
-		return errorsmod.Wrapf(types.ErrInvalidICQRequest, "TTL must be specified and non-zero")
+		return errorsmod.Wrapf(types.ErrInvalidICQRequest, "timeout must be specified and non-zero")
 	}
 	if _, exists := k.callbacks[query.CallbackModule]; !exists {
-		return errorsmod.Wrapf(types.ErrInvalidICQRequest, "no callback handler registered for module %s", query.CallbackModule)
+		return errorsmod.Wrapf(types.ErrInvalidICQRequest, "no callback handler registered for module (%s)", query.CallbackModule)
 	}
 	if exists := k.callbacks[query.CallbackModule].HasICQCallback(query.CallbackId); !exists {
-		return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "callback %s is not registered for module %s", query.CallbackId, query.CallbackModule)
+		return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "callback-id (%s) is not registered for module (%s)", query.CallbackId, query.CallbackModule)
 	}
 
 	return nil
@@ -93,28 +93,34 @@ func (k Keeper) DeleteQuery(ctx sdk.Context, id string) {
 }
 
 // To optionally force queries to be unique, a UID suffix can be supplied to the query Id
-// This is implemented by a counter that increments every time a UID is retrieved
-// Return the uid as a byte array since it is used in the serialized query key
-func (k Keeper) GetQueryUID(ctx sdk.Context) []byte {
+// This is implemented using a counter that increments every time a UID is retrieved
+// The uid is returned as a byte array since it's appended to the serialized query key
+func (k Keeper) GetQueryUniqueSuffix(ctx sdk.Context) []byte {
 	store := ctx.KVStore(k.storeKey)
-	uidBz := store.Get(types.KeyQueryUID)
+	uidBz := store.Get(types.KeyQueryCounter)
 
-	// Initialize the UID if there is nothing in the store yet, otherwise deserialize it
-	uid := uint64(1)
-	if len(uidBz) > 0 {
-		uid = binary.BigEndian.Uint64(uidBz)
+	// Initialize the UID if there is nothing in the store yet
+	if len(uidBz) == 0 {
+		uidBz = make([]byte, 8)
+		binary.BigEndian.PutUint64(uidBz, 1)
 	}
 
-	// Reset the uid after 1M
-	// In practice, this is not necessary, but in theory, we could have int overflow
-	if uid > 1_000_000 {
+	uid := binary.BigEndian.Uint64(uidBz)
+
+	// Reset the uid after 1B
+	// In practice, this is not necessary as we'll never hit the limit, but in theory, we could have int overflow
+	if uid > 1_000_000_000 {
 		uid = 1
+		uidBz = make([]byte, 8)
+		binary.BigEndian.PutUint64(uidBz, uid)
 	}
 
-	// Increment the UID
+	// Increment and store the next UID
 	nextUidBz := make([]byte, 8)
 	binary.BigEndian.PutUint64(nextUidBz, uid+1)
+	store.Set(types.KeyQueryCounter, nextUidBz)
 
+	// Return the serialized uid
 	return uidBz
 }
 
