@@ -39,7 +39,7 @@ The `interchainquery` module keeps `Query` objects and modifies the information 
 3. `chain_id`: id of the queried chain.
 4. `query_type`: type of interchain query (e.g. bank store query)
 5. `request_data`: serialized request information (e.g. the address with which to query)
-6. `module`: name of the module that will handle the callback
+6. `callback_module`: name of the module that will handle the callback
 7. `callback_id`: ID for the function that will be called after the response is returned
 8. `callback_data`: optional serialized data associated with the callback
 9. `timeout`: time at which the query expires (in unix nano)
