@@ -13,7 +13,7 @@ type NewQueryTestCase struct {
 	connectionId string
 	queryType    string
 	request      []byte
-	ttl          uint64
+	timeout      uint64
 }
 
 func (suite *KeeperTestSuite) SetupNewQuery() NewQueryTestCase {
@@ -32,8 +32,8 @@ func (suite *KeeperTestSuite) SetupNewQuery() NewQueryTestCase {
 	// request is a byte array that points to the entry in the target store you'd like to query on the host zone
 	//	 e.g. for querying a validator, `data := stakingtypes.GetValidatorKey(valAddr)`
 	request := []byte{0x01, 0x02, 0x03}
-	// ttl is the expiry time of the query, in absolute units of time, unix nanos
-	ttl := uint64(0) // ttl
+	// timeout is the expiry time of the query, in absolute units of time, unix nanos
+	timeout := uint64(0) // timeout
 
 	return NewQueryTestCase{
 		module:       module,
@@ -42,7 +42,7 @@ func (suite *KeeperTestSuite) SetupNewQuery() NewQueryTestCase {
 		connectionId: connectionId,
 		queryType:    queryType,
 		request:      request,
-		ttl:          ttl,
+		timeout:      timeout,
 	}
 }
 
@@ -57,7 +57,7 @@ func (s *KeeperTestSuite) TestNewQuerySuccessful() {
 		tc.connectionId,
 		tc.queryType,
 		tc.request,
-		tc.ttl,
+		tc.timeout,
 	)
 
 	// this hash is testing `GenerateQueryHash`.
@@ -76,5 +76,5 @@ func (s *KeeperTestSuite) TestNewQuerySuccessful() {
 	s.Require().Equal(tc.queryType, actualQuery.QueryType)
 	s.Require().Equal(tc.request, actualQuery.Request)
 	s.Require().Equal(tc.callbackId, actualQuery.CallbackId)
-	s.Require().Equal(tc.ttl, actualQuery.Ttl)
+	s.Require().Equal(tc.timeout, actualQuery.Timeout)
 }

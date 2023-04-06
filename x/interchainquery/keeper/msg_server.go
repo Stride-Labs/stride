@@ -69,7 +69,7 @@ func (k Keeper) VerifyKeyProof(ctx sdk.Context, msg *types.MsgSubmitQueryRespons
 	}
 
 	// Get the merkle path and merkle proof
-	path := commitmenttypes.NewMerklePath([]string{pathParts[1], url.PathEscape(string(query.Request))}...)
+	path := commitmenttypes.NewMerklePath([]string{pathParts[1], url.PathEscape(string(query.RequestData))}...)
 	merkleProof, err := commitmenttypes.ConvertProofs(msg.ProofOps)
 	if err != nil {
 		return errorsmod.Wrapf(types.ErrInvalidICQProof, "Error converting proofs: %s", err.Error())
@@ -158,9 +158,9 @@ func (k msgServer) SubmitQueryResponse(goCtx context.Context, msg *types.MsgSubm
 	if err != nil {
 		return nil, err
 	}
-	if query.Ttl < currBlockTime {
+	if query.Timeout < currBlockTime {
 		k.Logger(ctx).Error(utils.LogICQCallbackWithHostZone(query.ChainId, query.CallbackId,
-			"QUERY TIMEOUT - QueryId: %s, TTL: %d, BlockTime: %d", query.Id, query.Ttl, ctx.BlockHeader().Time.UnixNano()))
+			"QUERY TIMEOUT - QueryId: %s, TTL: %d, BlockTime: %d", query.Id, query.Timeout, ctx.BlockHeader().Time.UnixNano()))
 		return &types.MsgSubmitQueryResponseResponse{}, nil
 	}
 
@@ -176,7 +176,7 @@ func (k msgServer) SubmitQueryResponse(goCtx context.Context, msg *types.MsgSubm
 	if err != nil {
 		k.Logger(ctx).Error(utils.LogICQCallbackWithHostZone(query.ChainId, query.CallbackId,
 			"Error invoking ICQ callback, error: %s, QueryId: %s, QueryType: %s, ConnectionId: %s, QueryRequest: %v, QueryReponse: %v",
-			err.Error(), msg.QueryId, query.QueryType, query.ConnectionId, query.Request, msg.Result))
+			err.Error(), msg.QueryId, query.QueryType, query.ConnectionId, query.RequestData, msg.Result))
 		return nil, err
 	}
 

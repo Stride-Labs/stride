@@ -133,7 +133,7 @@ func (s *KeeperTestSuite) TestReinvestCallback_Successful() {
 	s.Require().Equal(HostChainId, query.ChainId, "query chain ID")
 	s.Require().Equal(ibctesting.FirstConnectionID, query.ConnectionId, "query connection ID")
 	s.Require().Equal(icqtypes.BANK_STORE_QUERY_WITH_PROOF, query.QueryType, "query type")
-	s.Require().Equal(tc.initialState.icaTimeoutTime, int64(query.Ttl), "query timeout")
+	s.Require().Equal(tc.initialState.icaTimeoutTime, int64(query.Timeout), "query timeout")
 }
 
 func (s *KeeperTestSuite) checkReinvestStateIfCallbackFailed(tc ReinvestCallbackTestCase) {
