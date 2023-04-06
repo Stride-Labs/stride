@@ -1,0 +1,36 @@
+syntax = "proto3";
+package stride.stakeibc;
+
+import "cosmos/base/v1beta1/coin.proto";
+import "gogoproto/gogo.proto";
+
+option go_package = "github.com/Stride-Labs/stride/v8/x/stakeibc/types";
+
+enum LSMDepositStatus {
+  option (gogoproto.goproto_enum_prefix) = false;
+
+  TRANSFER_IN_PROGRESS = 0;
+  TRANSFER_FAILED = 1;
+  DETOKENIZATION_QUEUE = 2;
+  DETOKENIZATION_IN_PROGRESS = 3;
+  DETOKENIZATION_FAILED = 4;
+}
+
+message LSMTokenDeposit {
+  string denom = 1;
+  string chain_id = 2;
+  string validator_address = 3;
+  string amount = 4 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable) = false
+  ];
+  LSMDepositStatus status = 5;
+}
+
+message LSMLiquidStake {
+  string staker = 1;
+  cosmos.base.v1beta1.Coin lsm_token = 2 [
+    (gogoproto.nullable) = false,
+    (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coin"
+  ];
+}

@@ -11,6 +11,7 @@ import "cosmos_proto/cosmos.proto";
 // Msg defines the Msg service.
 service Msg {
   rpc LiquidStake(MsgLiquidStake) returns (MsgLiquidStakeResponse);
+  rpc LSMLiquidStake(MsgLSMLiquidStake) returns (MsgLSMLiquidStakeResponse);
   rpc RedeemStake(MsgRedeemStake) returns (MsgRedeemStakeResponse);
   rpc RegisterHostZone(MsgRegisterHostZone)
       returns (MsgRegisterHostZoneResponse);
@@ -37,8 +38,17 @@ message MsgLiquidStake {
   ];
   string host_denom = 3;
 }
-
 message MsgLiquidStakeResponse {}
+
+message MsgLSMLiquidStake {
+  string creator = 1;
+  string amount = 2 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable) = false
+  ];
+  string lsm_token_denom = 3;
+}
+message MsgLSMLiquidStakeResponse { bool transaction_complete = 1; }
 
 message MsgClearBalance {
   string creator = 1;
@@ -49,7 +59,6 @@ message MsgClearBalance {
   ];
   string channel = 4;
 }
-
 message MsgClearBalanceResponse {}
 
 message MsgRedeemStake {
@@ -61,7 +70,6 @@ message MsgRedeemStake {
   string host_zone = 3;
   string receiver = 4;
 }
-
 message MsgRedeemStakeResponse {}
 
 // next: 15
@@ -89,7 +97,6 @@ message MsgRegisterHostZone {
     (gogoproto.nullable) = false
   ];
 }
-
 message MsgRegisterHostZoneResponse {}
 
 message MsgClaimUndelegatedTokens {
@@ -99,7 +106,6 @@ message MsgClaimUndelegatedTokens {
   uint64 epoch = 3;
   string sender = 4;
 }
-
 message MsgClaimUndelegatedTokensResponse {}
 
 message MsgRebalanceValidators {

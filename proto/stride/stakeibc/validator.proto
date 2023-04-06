@@ -16,7 +16,15 @@ message ValidatorExchangeRate {
 message Validator {
   string name = 1;
   string address = 2 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
-  string delegation_amt = 5 [
+  string balanced_delegation = 5 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable) = false
+  ];
+  string unbalanced_delegation = 8 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable) = false
+  ];
+  string progress_towards_exchange_rate_query = 9 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
     (gogoproto.nullable) = false
   ];

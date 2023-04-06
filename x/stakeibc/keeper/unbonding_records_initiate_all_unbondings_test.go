@@ -22,17 +22,17 @@ func (s *KeeperTestSuite) SetupInitiateAllHostZoneUnbondings() InitiateAllHostZo
 	osmoValAddr := "osmo_VALIDATOR"
 	gaiaDelegationAddr := "cosmos_DELEGATION"
 	osmoDelegationAddr := "osmo_DELEGATION"
-	//  define the host zone with stakedBal and validators with staked amounts
+	//  define the host zone with balanced delegation and validators with staked amounts
 	gaiaValidators := []*stakeibc.Validator{
 		{
-			Address:       gaiaValAddr,
-			DelegationAmt: sdkmath.NewInt(5_000_000),
-			Weight:        uint64(10),
+			Address:            gaiaValAddr,
+			BalancedDelegation: sdkmath.NewInt(5_000_000),
+			Weight:             uint64(10),
 		},
 		{
-			Address:       gaiaValAddr + "2",
-			DelegationAmt: sdkmath.NewInt(3_000_000),
-			Weight:        uint64(6),
+			Address:            gaiaValAddr + "2",
+			BalancedDelegation: sdkmath.NewInt(3_000_000),
+			Weight:             uint64(6),
 		},
 	}
 	gaiaDelegationAccount := stakeibc.ICAAccount{
@@ -41,9 +41,9 @@ func (s *KeeperTestSuite) SetupInitiateAllHostZoneUnbondings() InitiateAllHostZo
 	}
 	osmoValidators := []*stakeibc.Validator{
 		{
-			Address:       osmoValAddr,
-			DelegationAmt: sdkmath.NewInt(5_000_000),
-			Weight:        uint64(10),
+			Address:            osmoValAddr,
+			BalancedDelegation: sdkmath.NewInt(5_000_000),
+			Weight:             uint64(10),
 		},
 	}
 	osmoDelegationAccount := stakeibc.ICAAccount{
@@ -52,24 +52,24 @@ func (s *KeeperTestSuite) SetupInitiateAllHostZoneUnbondings() InitiateAllHostZo
 	}
 	hostZones := []stakeibc.HostZone{
 		{
-			ChainId:            HostChainId,
-			HostDenom:          Atom,
-			Bech32Prefix:       GaiaPrefix,
-			UnbondingFrequency: 3,
-			Validators:         gaiaValidators,
-			DelegationAccount:  &gaiaDelegationAccount,
-			StakedBal:          sdkmath.NewInt(5_000_000),
-			ConnectionId:       ibctesting.FirstConnectionID,
+			ChainId:                  HostChainId,
+			HostDenom:                Atom,
+			Bech32Prefix:             GaiaPrefix,
+			UnbondingFrequency:       3,
+			Validators:               gaiaValidators,
+			DelegationAccount:        &gaiaDelegationAccount,
+			TotalBalancedDelegations: sdkmath.NewInt(5_000_000),
+			ConnectionId:             ibctesting.FirstConnectionID,
 		},
 		{
-			ChainId:            OsmoChainId,
-			HostDenom:          Osmo,
-			Bech32Prefix:       OsmoPrefix,
-			UnbondingFrequency: 4,
-			Validators:         osmoValidators,
-			DelegationAccount:  &osmoDelegationAccount,
-			StakedBal:          sdkmath.NewInt(5_000_000),
-			ConnectionId:       ibctesting.FirstConnectionID,
+			ChainId:                  OsmoChainId,
+			HostDenom:                Osmo,
+			Bech32Prefix:             OsmoPrefix,
+			UnbondingFrequency:       4,
+			Validators:               osmoValidators,
+			DelegationAccount:        &osmoDelegationAccount,
+			TotalBalancedDelegations: sdkmath.NewInt(5_000_000),
+			ConnectionId:             ibctesting.FirstConnectionID,
 		},
 	}
 	// list of epoch unbonding records
@@ -161,9 +161,9 @@ func (s *KeeperTestSuite) TestInitiateAllHostZoneUnbondings_Failed() {
 	hostZone, _ := s.App.StakeibcKeeper.GetHostZone(s.Ctx, HostChainId)
 	hostZone.Validators = []*stakeibc.Validator{
 		{
-			Address:       "cosmos_VALIDATOR",
-			DelegationAmt: sdkmath.NewInt(1_000_000),
-			Weight:        uint64(10),
+			Address:            "cosmos_VALIDATOR",
+			BalancedDelegation: sdkmath.NewInt(1_000_000),
+			Weight:             uint64(10),
 		},
 	}
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)

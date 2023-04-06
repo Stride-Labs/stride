@@ -24,6 +24,7 @@ import (
 	recordtypes "github.com/Stride-Labs/stride/v8/x/records/types"
 	stakeibckeeper "github.com/Stride-Labs/stride/v8/x/stakeibc/keeper"
 	oldstakeibctypes "github.com/Stride-Labs/stride/v8/x/stakeibc/migrations/v2/types"
+	newstakeibctypes "github.com/Stride-Labs/stride/v8/x/stakeibc/migrations/v3/types"
 	stakeibctypes "github.com/Stride-Labs/stride/v8/x/stakeibc/types"
 )
 
@@ -371,15 +372,17 @@ func (s *UpgradeTestSuite) SetupOldStakeibcStore(codec codec.Codec) func() {
 
 	// Callback to check stakeibc store after migration
 	return func() {
-		hostZone, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx, hostZoneId)
-		s.Require().True(found, "host zone found")
+		hostZoneBz := hostzoneStore.Get([]byte(hostZone.ChainId))
+		var hostZone newstakeibctypes.HostZone
+		codec.MustUnmarshal(hostZoneBz, &hostZone)
+
 		s.Require().Equal(hostZone.ChainId, hostZoneId, "host zone chain id")
 
 		s.Require().Equal(hostZone.DelegationAccount.Address, delegationAddress, "delegation address")
 		s.Require().Equal(hostZone.RedemptionAccount.Address, redemptionAddress, "redemption address")
 
-		s.Require().Equal(hostZone.DelegationAccount.Target, stakeibctypes.ICAAccountType_DELEGATION, "delegation target")
-		s.Require().Equal(hostZone.RedemptionAccount.Target, stakeibctypes.ICAAccountType_REDEMPTION, "redemption target")
+		s.Require().Equal(hostZone.DelegationAccount.Target, newstakeibctypes.ICAAccountType_DELEGATION, "delegation target")
+		s.Require().Equal(hostZone.RedemptionAccount.Target, newstakeibctypes.ICAAccountType_REDEMPTION, "redemption target")
 
 		s.Require().Nil(hostZone.FeeAccount, "fee account")
 		s.Require().Nil(hostZone.WithdrawalAccount, "withdrawal account")

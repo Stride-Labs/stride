@@ -1,4 +1,4 @@
-package stakeibc
+package keeper
 
 import (
 	"fmt"
@@ -6,14 +6,13 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/telemetry"
 
-	"github.com/Stride-Labs/stride/v8/x/stakeibc/keeper"
 	"github.com/Stride-Labs/stride/v8/x/stakeibc/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 // BeginBlocker of stakeibc module
-func BeginBlocker(ctx sdk.Context, k keeper.Keeper, bk types.BankKeeper, ak types.AccountKeeper) {
+func (k Keeper) BeginBlocker(ctx sdk.Context) {
 	defer telemetry.ModuleMeasureSince(types.ModuleName, time.Now(), telemetry.MetricKeyBeginBlocker)
 
 	// Iterate over all host zones and verify redemption rate
@@ -37,4 +36,8 @@ func BeginBlocker(ctx sdk.Context, k keeper.Keeper, bk types.BankKeeper, ak type
 			)
 		}
 	}
+}
+
+func (k Keeper) EndBlocker(ctx sdk.Context) {
+	// TODO [LSM]
 }

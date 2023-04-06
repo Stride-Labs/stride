@@ -95,18 +95,18 @@ func (k Keeper) AddDelegationToValidator(ctx sdk.Context, hostZone types.HostZon
 	for _, validator := range hostZone.Validators {
 		if validator.Address == validatorAddress {
 			k.Logger(ctx).Info(utils.LogICACallbackWithHostZone(hostZone.ChainId, callbackId,
-				"  Validator %s, Current Delegation: %v, Delegation Change: %v", validator.Address, validator.DelegationAmt, amount))
+				"  Validator %s, Current Delegation: %v, Delegation Change: %v", validator.Address, validator.BalancedDelegation, amount))
 
 			if amount.GTE(sdkmath.ZeroInt()) {
-				validator.DelegationAmt = validator.DelegationAmt.Add(amount)
+				validator.BalancedDelegation = validator.BalancedDelegation.Add(amount)
 				return true
 			}
 			absAmt := amount.Abs()
-			if absAmt.GT(validator.DelegationAmt) {
-				k.Logger(ctx).Error(fmt.Sprintf("Delegation amount %v is greater than validator %s delegation amount %v", absAmt, validatorAddress, validator.DelegationAmt))
+			if absAmt.GT(validator.BalancedDelegation) {
+				k.Logger(ctx).Error(fmt.Sprintf("Delegation amount %v is greater than validator %s delegation amount %v", absAmt, validatorAddress, validator.BalancedDelegation))
 				return false
 			}
-			validator.DelegationAmt = validator.DelegationAmt.Sub(absAmt)
+			validator.BalancedDelegation = validator.BalancedDelegation.Sub(absAmt)
 			return true
 		}
 	}
@@ -155,10 +155,10 @@ func (k Keeper) AddValidatorToHostZone(ctx sdk.Context, chainId string, validato
 
 	// Finally, add the validator to the host
 	hostZone.Validators = append(hostZone.Validators, &types.Validator{
-		Name:          validator.Name,
-		Address:       validator.Address,
-		Weight:        valWeight,
-		DelegationAmt: sdkmath.ZeroInt(),
+		Name:               validator.Name,
+		Address:            validator.Address,
+		Weight:             valWeight,
+		BalancedDelegation: sdkmath.ZeroInt(),
 	})
 
 	k.SetHostZone(ctx, hostZone)
@@ -177,12 +177,12 @@ func (k Keeper) RemoveValidatorFromHostZone(ctx sdk.Context, chainId string, val
 	}
 	for i, val := range hostZone.Validators {
 		if val.GetAddress() == validatorAddress {
-			if val.DelegationAmt.IsZero() && val.Weight == 0 {
+			if val.BalancedDelegation.IsZero() && val.Weight == 0 {
 				hostZone.Validators = append(hostZone.Validators[:i], hostZone.Validators[i+1:]...)
 				k.SetHostZone(ctx, hostZone)
 				return nil
 			}
-			errMsg := fmt.Sprintf("Validator (%s) has non-zero delegation (%v) or weight (%d)", validatorAddress, val.DelegationAmt, val.Weight)
+			errMsg := fmt.Sprintf("Validator (%s) has non-zero delegation (%v) or weight (%d)", validatorAddress, val.BalancedDelegation, val.Weight)
 			k.Logger(ctx).Error(errMsg)
 			return errors.New(errMsg)
 		}

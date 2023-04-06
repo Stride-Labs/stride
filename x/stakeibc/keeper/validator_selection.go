@@ -15,7 +15,7 @@ import (
 //
 //   positive implies extra tokens need to be given,
 //   negative impleis tokens need to be taken away
-func (k Keeper) GetValidatorDelegationAmtDifferences(ctx sdk.Context, hostZone types.HostZone) (map[string]sdkmath.Int, error) {
+func (k Keeper) GetValidatorBalancedDelegationDifferences(ctx sdk.Context, hostZone types.HostZone) (map[string]sdkmath.Int, error) {
 	validators := hostZone.GetValidators()
 	delegationDelta := make(map[string]sdkmath.Int)
 	totalDelegatedAmt := k.GetTotalValidatorDelegations(hostZone)
@@ -26,7 +26,7 @@ func (k Keeper) GetValidatorDelegationAmtDifferences(ctx sdk.Context, hostZone t
 	}
 	for _, validator := range validators {
 		targetDelForVal := targetDelegation[validator.GetAddress()]
-		delegationDelta[validator.GetAddress()] = targetDelForVal.Sub(validator.DelegationAmt)
+		delegationDelta[validator.GetAddress()] = targetDelForVal.Sub(validator.BalancedDelegation)
 	}
 	return delegationDelta, nil
 }
@@ -81,7 +81,7 @@ func (k Keeper) GetTotalValidatorDelegations(hostZone types.HostZone) sdkmath.In
 	validators := hostZone.GetValidators()
 	total_delegation := sdkmath.ZeroInt()
 	for _, validator := range validators {
-		total_delegation = total_delegation.Add(validator.DelegationAmt)
+		total_delegation = total_delegation.Add(validator.BalancedDelegation)
 	}
 	return total_delegation
 }

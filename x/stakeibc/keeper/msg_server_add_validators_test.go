@@ -33,9 +33,14 @@ func (s *KeeperTestSuite) SetupAddValidators() AddValidatorsTestCase {
 	}
 
 	expectedValidators := []*types.Validator{
-		{Name: "val1", Address: "stride_VAL1", Weight: 1, DelegationAmt: sdkmath.ZeroInt()},
-		{Name: "val2", Address: "stride_VAL2", Weight: 2, DelegationAmt: sdkmath.ZeroInt()},
-		{Name: "val3", Address: "stride_VAL3", Weight: 3, DelegationAmt: sdkmath.ZeroInt()},
+		{Name: "val1", Address: "stride_VAL1", Weight: 1},
+		{Name: "val2", Address: "stride_VAL2", Weight: 2},
+		{Name: "val3", Address: "stride_VAL3", Weight: 3},
+	}
+	for _, validator := range expectedValidators {
+		validator.BalancedDelegation = sdkmath.ZeroInt()
+		validator.UnbalancedDelegation = sdkmath.ZeroInt()
+		validator.ProgressTowardsExchangeRateQuery = sdkmath.ZeroInt()
 	}
 
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)

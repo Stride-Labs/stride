@@ -8,12 +8,14 @@ import (
 )
 
 const (
-	ICACallbackID_Delegate   = "delegate"
-	ICACallbackID_Claim      = "claim"
-	ICACallbackID_Undelegate = "undelegate"
-	ICACallbackID_Reinvest   = "reinvest"
-	ICACallbackID_Redemption = "redemption"
-	ICACallbackID_Rebalance  = "rebalance"
+	ICACallbackID_Delegate     = "delegate"
+	ICACallbackID_Claim        = "claim"
+	ICACallbackID_Undelegate   = "undelegate"
+	ICACallbackID_Reinvest     = "reinvest"
+	ICACallbackID_Redemption   = "redemption"
+	ICACallbackID_Rebalance    = "rebalance"
+	ICACallbackID_Detokenize   = "detokenize"
+	ICACallbackID_LSMRebalance = "lsm-rebalance"
 )
 
 // ICACallbacks wrapper struct for stakeibc keeper
@@ -51,6 +53,8 @@ func (c ICACallbacks) RegisterICACallbacks() icacallbackstypes.ICACallbackHandle
 		AddICACallback(ICACallbackID_Undelegate, ICACallback(UndelegateCallback)).
 		AddICACallback(ICACallbackID_Reinvest, ICACallback(ReinvestCallback)).
 		AddICACallback(ICACallbackID_Redemption, ICACallback(RedemptionCallback)).
-		AddICACallback(ICACallbackID_Rebalance, ICACallback(RebalanceCallback))
+		AddICACallback(ICACallbackID_Rebalance, ICACallback(RebalanceCallback)).
+		AddICACallback(ICACallbackID_Detokenize, ICACallback(DetokenizeCallback)).
+		AddICACallback(ICACallbackID_LSMRebalance, ICACallback(RebalanceTokenizedDepositsCallback))
 	return a.(ICACallbacks)
 }

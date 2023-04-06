@@ -52,7 +52,6 @@ func (msg *MsgRegisterHostZone) GetSignBytes() []byte {
 	return sdk.MustSortJSON(bz)
 }
 
-// TODO(TEST-112) add validation on bech32prefix upon zone creation
 func (msg *MsgRegisterHostZone) ValidateBasic() error {
 	_, err := sdk.AccAddressFromBech32(msg.Creator)
 	if err != nil {

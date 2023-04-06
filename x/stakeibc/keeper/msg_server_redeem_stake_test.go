@@ -45,14 +45,14 @@ func (s *KeeperTestSuite) SetupRedeemStake() RedeemStakeTestCase {
 	s.FundAccount(zoneAccount.acc, zoneAccount.atomBalance)
 	s.FundAccount(zoneAccount.acc, zoneAccount.stAtomBalance)
 
-	// TODO define the host zone with stakedBal and validators with staked amounts
+	// TODO define the host zone with total delegation and validators with staked amounts
 	hostZone := stakeibctypes.HostZone{
-		ChainId:        HostChainId,
-		HostDenom:      "uatom",
-		Bech32Prefix:   "cosmos",
-		RedemptionRate: sdk.NewDec(1.0),
-		StakedBal:      sdkmath.NewInt(1234567890),
-		Address:        zoneAddress.String(),
+		ChainId:                  HostChainId,
+		HostDenom:                "uatom",
+		Bech32Prefix:             "cosmos",
+		RedemptionRate:           sdk.NewDec(1.0),
+		TotalBalancedDelegations: sdkmath.NewInt(1234567890),
+		Address:                  zoneAddress.String(),
 	}
 
 	epochTrackerDay := stakeibctypes.EpochTracker{
