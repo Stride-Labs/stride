@@ -24,8 +24,7 @@ message LSMTokenDeposit {
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
     (gogoproto.nullable) = false
   ];
-  uint64 record_id = 5;
-  LSMDepositStatus status = 6;
+  LSMDepositStatus status = 5;
 }
 
 message LSMLiquidStake {
