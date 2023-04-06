@@ -40,7 +40,7 @@ func (s *KeeperTestSuite) SetupAddValidators() AddValidatorsTestCase {
 	for _, validator := range expectedValidators {
 		validator.BalancedDelegation = sdkmath.ZeroInt()
 		validator.UnbalancedDelegation = sdkmath.ZeroInt()
-		validator.CumulativeLsmIntake = sdkmath.ZeroInt()
+		validator.ProgressTowardsExchangeRateQuery = sdkmath.ZeroInt()
 	}
 
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
