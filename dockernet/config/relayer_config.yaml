@@ -14,6 +14,7 @@ chains:
       keyring-backend: test
       gas-adjustment: 1.2
       gas-prices: 0.01ustrd
+      coin-type: 118
       debug: false
       timeout: 20s
       output-format: json
@@ -28,6 +29,7 @@ chains:
       keyring-backend: test
       gas-adjustment: 1.2
       gas-prices: 0.01uatom
+      coin-type: 118
       debug: false
       timeout: 20s
       output-format: json
@@ -42,6 +44,7 @@ chains:
       keyring-backend: test
       gas-adjustment: 1.2
       gas-prices: 0.01ujuno
+      coin-type: 118
       debug: false
       timeout: 20s
       output-format: json
@@ -56,6 +59,7 @@ chains:
       keyring-backend: test
       gas-adjustment: 1.2
       gas-prices: 0.01uosmo
+      coin-type: 118
       debug: false
       timeout: 20s
       output-format: json
@@ -70,6 +74,7 @@ chains:
       keyring-backend: test
       gas-adjustment: 1.2
       gas-prices: 0.01ustars
+      coin-type: 118
       debug: false
       timeout: 20s
       output-format: json
@@ -84,6 +89,7 @@ chains:
       keyring-backend: test
       gas-adjustment: 1.2
       gas-prices: 0.01uwalk
+      coin-type: 118
       debug: false
       timeout: 20s
       output-format: json
@@ -98,6 +104,7 @@ chains:
   #     keyring-backend: test
   #     gas-adjustment: 1.2
   #     gas-prices: 0.01{minimal_denom}
+  #     coin-type: {coin-type}
   #     debug: false
   #     timeout: 20s
   #     output-format: json
