@@ -17,8 +17,8 @@ enum LSMDepositStatus {
 }
 
 message LSMTokenDeposit {
-  string denom = 1;
-  string chain_id = 2;
+  string chain_id = 1;
+  string denom = 2;
   string validator_address = 3;
   string amount = 4 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
