@@ -57,16 +57,6 @@ func CreateUpgradeHandler(
 		// Add min/max redemption rate threshold and a `Halted`` boolean to each host zone
 		AddRedemptionRateSafetyChecks(ctx, stakeibcKeeper)
 
-		// Change the juno unbonding frequency to 5
-		if err := ModifyJunoUnbondingFrequency(ctx, stakeibcKeeper); err != nil {
-			return vm, errorsmod.Wrapf(err, "unable to modify juno unbonding frequency")
-		}
-
-		// Incentive diversification
-		if err := ExecuteProp153(ctx, bankKeeper); err != nil {
-			return vm, errorsmod.Wrapf(err, "unable to send ustrd tokens for prop #153 (incentive diversification)")
-		}
-
 		// Create reward collector module account
 		if err := CreateRewardCollectorModuleAccount(ctx, accountKeeper); err != nil {
 			return vm, errorsmod.Wrapf(err, "unable create reward collector module account")

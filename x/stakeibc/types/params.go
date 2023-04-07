@@ -22,7 +22,7 @@ var (
 	DefaultIbcTimeoutBlocks           uint64 = 300           // 300 blocks ~= 30 minutes
 	DefaultFeeTransferTimeoutNanos    uint64 = 1800000000000 // 30 minutes
 	DefaultMinRedemptionRateThreshold uint64 = 90            // divide by 100, so 90 = 0.9
-	DefaultMaxRedemptionRateThreshold uint64 = 150           // divide by 100, so 150 = 1.5
+	DefaultMaxRedemptionRateThreshold uint64 = 10000         // divide by 100, so 150 = 1.5
 	DefaultMaxStakeICACallsPerEpoch   uint64 = 100
 	DefaultIBCTransferTimeoutNanos    uint64 = 1800000000000 // 30 minutes
 	DefaultSafetyNumValidators        uint64 = 35
@@ -163,7 +163,7 @@ func validMaxRedemptionRateThreshold(i interface{}) error {
 		return fmt.Errorf("parameter not accepted: %T", i)
 	}
 
-	maxVal := uint64(1000) // divide by 100, so 1000 => 10
+	maxVal := uint64(10001) // divide by 100, so 10000 => 100
 
 	if ival > maxVal {
 		return fmt.Errorf("parameter must be l.t. 1000: %d", ival)
