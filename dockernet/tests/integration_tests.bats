@@ -136,8 +136,8 @@ setup_file() {
   # liquid stake
   $STRIDE_MAIN_CMD tx stakeibc liquid-stake $STAKE_AMOUNT $HOST_DENOM --from $STRIDE_VAL -y 
 
-  # sleep two block for the tx to settle on stride
-  WAIT_FOR_BLOCK $STRIDE_LOGS 2
+  # wait for the stTokens to get minted 
+  WAIT_FOR_BALANCE_CHANGE STRIDE $(STRIDE_ADDRESS) st$HOST_DENOM 
 
   # make sure IBC_DENOM went down
   token_balance_end=$($STRIDE_MAIN_CMD q bank balances $(STRIDE_ADDRESS) --denom $HOST_IBC_DENOM | GETBAL)
