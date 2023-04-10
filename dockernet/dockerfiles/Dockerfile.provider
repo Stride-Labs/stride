@@ -1,0 +1,25 @@
+FROM golang:1.18-alpine3.15 AS builder
+
+WORKDIR /opt
+
+RUN apk add --update curl make git libc-dev bash gcc linux-headers eudev-dev python3
+
+ENV COMMIT_HASH=558516f90cf7f111ebf8bfa1fadafaa99c50e502
+
+RUN git clone https://github.com/Stride-Labs/interchain-security.git ics \
+    && cd ics \
+    && git checkout ${COMMIT_HASH} \
+    && CGO_ENABLED=0 make install
+
+FROM alpine:3.15
+COPY --from=builder /go/bin/interchain-security-pd /usr/local/bin/
+RUN apk add bash vim \
+    && addgroup -g 1000 provider \
+    && adduser -S -h /home/provider -D provider -u 1000 -G provider
+
+USER 1000
+WORKDIR /home/provider
+
+EXPOSE 26657 26656 1317 9090
+
+CMD ["interchain-security-pd", "start"]
