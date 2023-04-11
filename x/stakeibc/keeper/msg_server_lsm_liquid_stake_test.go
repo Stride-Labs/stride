@@ -2,6 +2,7 @@ package keeper_test
 
 import (
 	"encoding/json"
+	"fmt"
 	"time"
 
 	sdkmath "cosmossdk.io/math"
@@ -188,7 +189,34 @@ func (s *KeeperTestSuite) TestLSMLiquidStake_Successful_WithExchangeRateQuery() 
 	s.Require().Equal(ValAddress, actualCallbackData.Validator.Address, "callback data - validator")
 
 	s.Require().Equal(expectedLSMTokenDeposit, actualCallbackData.Deposit, "callback data - deposit")
+}
 
+func (s *KeeperTestSuite) TestLSMLiquidStake_DifferentRedemptionRates() {
+	tc := s.SetupTestLSMLiquidStake()
+	tc.validMsg.Amount = sdk.NewInt(1000) // reduce the stake amount to prevent insufficient balance
+
+	// Loop over exchange rates: {0.92, 0.94, ..., 1.2}
+	for i := -8; i <= 10; i += 2 {
+		redemptionDelta := sdk.NewDecWithPrec(1.0, 1).Quo(sdk.NewDec(10)).Mul(sdk.NewDec(int64(i))) // i = 2 => delta = 0.02
+		newRedemptionRate := sdk.NewDec(1.0).Add(redemptionDelta)
+		redemptionRateFloat := newRedemptionRate
+
+		// Update rate in host zone
+		hz := tc.hostZone
+		hz.RedemptionRate = newRedemptionRate
+		s.App.StakeibcKeeper.SetHostZone(s.Ctx, hz)
+
+		// Liquid stake for each balance and confirm stAtom minted
+		startingStAtomBalance := s.App.BankKeeper.GetBalance(s.Ctx, tc.liquidStakerAddress, StAtom).Amount
+		_, err := s.GetMsgServer().LSMLiquidStake(sdk.WrapSDKContext(s.Ctx), tc.validMsg)
+		s.Require().NoError(err)
+		endingStAtomBalance := s.App.BankKeeper.GetBalance(s.Ctx, tc.liquidStakerAddress, StAtom).Amount
+		actualStAtomMinted := endingStAtomBalance.Sub(startingStAtomBalance)
+
+		expectedStAtomMinted := sdk.NewDecFromInt(tc.validMsg.Amount).Quo(redemptionRateFloat).TruncateInt()
+		testDescription := fmt.Sprintf("st atom balance for redemption rate: %v", redemptionRateFloat)
+		s.Require().Equal(expectedStAtomMinted, actualStAtomMinted, testDescription)
+	}
 }
 
 func (s *KeeperTestSuite) TestLSMLiquidStakeFailed_NotIBCDenom() {
