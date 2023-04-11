@@ -3,6 +3,7 @@ package keeper_test
 import (
 	"encoding/binary"
 	"testing"
+	"time"
 
 	sdkmath "cosmossdk.io/math"
 
@@ -43,7 +44,7 @@ func (s *KeeperTestSuite) TestGetQueryId() {
 	//  note: the queryID is a has of (module, callbackId, chainId, connectionId, queryType, and request)
 	// .    meaning for a given query type, the ID will be identical across each epoch
 	expectedQueryId := "e97f7bdad3c4c521165321f78a8329c54f35db23ee9cec7bddf5c60703ac9ba7"
-	expectedUniqueQueryId := "1b7823abdc2e2d165e48fd3d6c722e2d889d75f649c3538336a8416c04018f9b"
+	expectedUniqueQueryId := "cd2662154e6d76b2b2b92e70c0cac3ccf534f9b74eb5b89819ec509083d00a50"
 
 	query := types.Query{
 		ChainId:        chainId,
@@ -67,6 +68,8 @@ func (s *KeeperTestSuite) TestValidateQuery() {
 	validConnectionId := "connection-0"
 	validQueryType := "store/key/query"
 	validTimeout := uint64(10)
+
+	s.Ctx = s.Ctx.WithBlockTime(time.Unix(0, 0)) // unix 0
 
 	// We'll borrow a callback from stakeibc since it's should be already registered in the App
 	validCallbackModule := stakeibctypes.ModuleName
@@ -161,16 +164,16 @@ func (s *KeeperTestSuite) TestValidateQuery() {
 			expectedError: "callback-id cannot be empty",
 		},
 		{
-			name: "missing timeout",
+			name: "timeout in past",
 			query: types.Query{
 				ChainId:        validChainId,
 				ConnectionId:   validConnectionId,
 				QueryType:      validQueryType,
 				CallbackModule: validCallbackModule,
 				CallbackId:     validCallbackId,
-				Timeout:        uint64(0),
+				Timeout:        uint64(s.Ctx.BlockTime().UnixNano()),
 			},
-			expectedError: "timeout must be specified and non-zero",
+			expectedError: "timeout must be in the future",
 		},
 		{
 			name: "module not registered",
@@ -210,10 +213,10 @@ func (s *KeeperTestSuite) TestValidateQuery() {
 	}
 }
 
-func (s *KeeperTestSuite) TestGetQueryUniqueSuffix() {
+func (s *KeeperTestSuite) GetQueryUID() {
 	// Helper function to get the next uid
 	getUniqueSuffix := func() int {
-		return int(binary.BigEndian.Uint64(s.App.InterchainqueryKeeper.GetQueryUniqueSuffix(s.Ctx)))
+		return int(binary.BigEndian.Uint64(s.App.InterchainqueryKeeper.GetQueryUID(s.Ctx)))
 	}
 
 	// Grabbing the uid for the first time should return 1
