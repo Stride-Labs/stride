@@ -46,8 +46,8 @@ func (s *KeeperTestSuite) SetupMsgSubmitQueryResponse() MsgSubmitQueryResponseTe
 		ChainId:      HostChainId,
 		ConnectionId: s.TransferPath.EndpointA.ConnectionID,
 		QueryType:    types.BANK_STORE_QUERY_WITH_PROOF,
-		Request:      append(data, []byte(HostChainId)...),
-		Ttl:          uint64(12545592938) * uint64(1000000000), // set ttl to August 2050, mult by nano conversion factor
+		RequestData:  append(data, []byte(HostChainId)...),
+		Timeout:      uint64(12545592938) * uint64(1000000000), // set timeout to August 2050, mult by nano conversion factor
 	}
 
 	return MsgSubmitQueryResponseTestCase{
@@ -96,8 +96,8 @@ func (s *KeeperTestSuite) TestMsgSubmitQueryResponse_ExceededTtl() {
 	// Remove key from the query type so to bypass the VerifyKeyProof function
 	tc.query.QueryType = strings.ReplaceAll(tc.query.QueryType, "key", "")
 
-	// set ttl to be expired
-	tc.query.Ttl = uint64(1)
+	// set timeout to be expired
+	tc.query.Timeout = uint64(1)
 	s.App.InterchainqueryKeeper.SetQuery(s.Ctx, tc.query)
 
 	resp, err := s.GetMsgServer().SubmitQueryResponse(tc.goCtx, &tc.validMsg)

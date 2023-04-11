@@ -133,7 +133,7 @@ func (s *KeeperTestSuite) TestReinvestCallback_Successful() {
 	s.Require().Equal(HostChainId, query.ChainId, "query chain ID")
 	s.Require().Equal(ibctesting.FirstConnectionID, query.ConnectionId, "query connection ID")
 	s.Require().Equal(icqtypes.BANK_STORE_QUERY_WITH_PROOF, query.QueryType, "query type")
-	s.Require().Equal(tc.initialState.icaTimeoutTime, int64(query.Ttl), "query timeout")
+	s.Require().Equal(tc.initialState.icaTimeoutTime, int64(query.Timeout), "query timeout")
 }
 
 func (s *KeeperTestSuite) checkReinvestStateIfCallbackFailed(tc ReinvestCallbackTestCase) {
@@ -232,5 +232,5 @@ func (s *KeeperTestSuite) TestReinvestCallback_FailedToSubmitQuery() {
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, badHostZone)
 
 	err := stakeibckeeper.ReinvestCallback(s.App.StakeibcKeeper, s.Ctx, invalidArgs.packet, invalidArgs.ackResponse, invalidArgs.args)
-	s.Require().EqualError(err, "[ICQ Validation Check] Failed! connection id cannot be empty: invalid request")
+	s.Require().EqualError(err, "connection-id cannot be empty: invalid interchain query request")
 }

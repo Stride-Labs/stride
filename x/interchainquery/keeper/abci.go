@@ -30,7 +30,7 @@ func (k Keeper) EndBlocker(ctx sdk.Context) {
 				sdk.NewAttribute(types.AttributeKeyConnectionId, query.ConnectionId),
 				sdk.NewAttribute(types.AttributeKeyType, query.QueryType),
 				sdk.NewAttribute(types.AttributeKeyHeight, "0"),
-				sdk.NewAttribute(types.AttributeKeyRequest, hex.EncodeToString(query.Request)),
+				sdk.NewAttribute(types.AttributeKeyRequest, hex.EncodeToString(query.RequestData)),
 			)
 			events = append(events, event)
 

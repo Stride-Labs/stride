@@ -160,23 +160,23 @@ func (k Keeper) UpdateWithdrawalBalance(ctx sdk.Context, hostZone types.HostZone
 	queryData := append(bankTypes.CreateAccountBalancesPrefix(withdrawalAddressBz), []byte(hostZone.HostDenom)...)
 
 	// The query should timeout at the end of the ICA buffer window
-	ttl, err := k.GetICATimeoutNanos(ctx, epochstypes.STRIDE_EPOCH)
+	timeout, err := k.GetICATimeoutNanos(ctx, epochstypes.STRIDE_EPOCH)
 	if err != nil {
 		return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest,
 			"Failed to get ICA timeout nanos for epochType %s using param, error: %s", epochstypes.STRIDE_EPOCH, err.Error())
 	}
 
 	// Submit the ICQ for the withdrawal account balance
-	if err := k.InterchainQueryKeeper.MakeRequest(
-		ctx,
-		types.ModuleName,
-		ICQCallbackID_WithdrawalBalance,
-		hostZone.ChainId,
-		hostZone.ConnectionId,
-		icqtypes.BANK_STORE_QUERY_WITH_PROOF,
-		queryData,
-		ttl,
-	); err != nil {
+	query := icqtypes.Query{
+		ChainId:        hostZone.ChainId,
+		ConnectionId:   hostZone.ConnectionId,
+		QueryType:      icqtypes.BANK_STORE_QUERY_WITH_PROOF,
+		RequestData:    queryData,
+		CallbackModule: types.ModuleName,
+		CallbackId:     ICQCallbackID_WithdrawalBalance,
+		Timeout:        timeout,
+	}
+	if err := k.InterchainQueryKeeper.SubmitICQRequest(ctx, query, false); err != nil {
 		k.Logger(ctx).Error(fmt.Sprintf("Error querying for withdrawal balance, error: %s", err.Error()))
 		return err
 	}
@@ -387,22 +387,22 @@ func (k Keeper) QueryValidatorExchangeRate(ctx sdk.Context, msg *types.MsgUpdate
 	queryData := stakingtypes.GetValidatorKey(validatorAddressBz)
 
 	// The query should timeout at the start of the next epoch
-	ttl, err := k.GetStartTimeNextEpoch(ctx, epochstypes.STRIDE_EPOCH)
+	timeout, err := k.GetStartTimeNextEpoch(ctx, epochstypes.STRIDE_EPOCH)
 	if err != nil {
 		return nil, errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "could not get start time for next epoch: %s", err.Error())
 	}
 
 	// Submit validator exchange rate ICQ
-	if err := k.InterchainQueryKeeper.MakeRequest(
-		ctx,
-		types.ModuleName,
-		ICQCallbackID_Validator,
-		hostZone.ChainId,
-		hostZone.ConnectionId,
-		icqtypes.STAKING_STORE_QUERY_WITH_PROOF,
-		queryData,
-		ttl,
-	); err != nil {
+	query := icqtypes.Query{
+		ChainId:        hostZone.ChainId,
+		ConnectionId:   hostZone.ConnectionId,
+		QueryType:      icqtypes.STAKING_STORE_QUERY_WITH_PROOF,
+		RequestData:    queryData,
+		CallbackModule: types.ModuleName,
+		CallbackId:     ICQCallbackID_Validator,
+		Timeout:        timeout,
+	}
+	if err := k.InterchainQueryKeeper.SubmitICQRequest(ctx, query, false); err != nil {
 		k.Logger(ctx).Error(fmt.Sprintf("Error submitting ICQ for validator exchange rate, error %s", err.Error()))
 		return nil, err
 	}
@@ -438,22 +438,22 @@ func (k Keeper) QueryDelegationsIcq(ctx sdk.Context, hostZone types.HostZone, va
 	queryData := stakingtypes.GetDelegationKey(delegatorAddressBz, validatorAddressBz)
 
 	// The query should timeout at the start of the next epoch
-	ttl, err := k.GetStartTimeNextEpoch(ctx, epochstypes.STRIDE_EPOCH)
+	timeout, err := k.GetStartTimeNextEpoch(ctx, epochstypes.STRIDE_EPOCH)
 	if err != nil {
 		return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "could not get start time for next epoch: %s", err.Error())
 	}
 
 	// Submit delegator shares ICQ
-	if err := k.InterchainQueryKeeper.MakeRequest(
-		ctx,
-		types.ModuleName,
-		ICQCallbackID_Delegation,
-		hostZone.ChainId,
-		hostZone.ConnectionId,
-		icqtypes.STAKING_STORE_QUERY_WITH_PROOF,
-		queryData,
-		ttl,
-	); err != nil {
+	query := icqtypes.Query{
+		ChainId:        hostZone.ChainId,
+		ConnectionId:   hostZone.ConnectionId,
+		QueryType:      icqtypes.STAKING_STORE_QUERY_WITH_PROOF,
+		RequestData:    queryData,
+		CallbackModule: types.ModuleName,
+		CallbackId:     ICQCallbackID_Delegation,
+		Timeout:        timeout,
+	}
+	if err := k.InterchainQueryKeeper.SubmitICQRequest(ctx, query, false); err != nil {
 		k.Logger(ctx).Error(fmt.Sprintf("Error submitting ICQ for delegation, error : %s", err.Error()))
 		return err
 	}
