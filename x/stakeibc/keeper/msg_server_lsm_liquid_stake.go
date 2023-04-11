@@ -2,17 +2,12 @@ package keeper
 
 import (
 	"context"
-	"errors"
-	"fmt"
-	"regexp"
-	"strings"
 	"time"
 
 	errorsmod "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	transfertypes "github.com/cosmos/ibc-go/v5/modules/apps/transfer/types"
-	channeltypes "github.com/cosmos/ibc-go/v5/modules/core/04-channel/types"
 	"github.com/golang/protobuf/proto" //nolint:staticcheck
 
 	icacallbackstypes "github.com/Stride-Labs/stride/v8/x/icacallbacks/types"
@@ -21,89 +16,102 @@ import (
 	"github.com/Stride-Labs/stride/v8/x/stakeibc/types"
 )
 
-var (
-	// QUESTION: Is this too restrictive? Would we ever want to accept a LSM token from more than 1 hop away?
-	// A valid IBC path for the LSM token must only consist of 1 channel hop along a transfer channel
-	// (e.g. "transfer/channel-0")
-	IsValidIBCPath = regexp.MustCompile(fmt.Sprintf(`^%s/(%s[0-9]{1,20})$`, transfertypes.PortID, channeltypes.ChannelPrefix)).MatchString
-)
+// Maintains the context and progress of an LSM Liquid Stake in the event
+// that the transaction finishes asynchonously after the validator exchange rate query
+type LSMLiquidStake struct {
+	Staker    sdk.AccAddress
+	LSMToken  sdk.Coin
+	StToken   sdk.Coin
+	HostZone  types.HostZone
+	Validator types.Validator
+	Deposit   types.LSMTokenDeposit
+}
 
+// Exchanges a user's LSM tokenized shares for stTokens using the current redemption rate
+// The LSM tokens must live on Stride with an IBC denomination before this function is called
+// The typical flow:
+//   - A user tokenizes their delegation on the host zone
+//   - The user IBC transfers their tokenized shares to Stride
+//   - They then call LSMLiquidStake
+//   - The user's LSM Token is sent to the Stride module account
+//   - The user recieves stTokens
+//
+// As a safety measure, at period checkpoints, the validator's exchange rate is queried and the transaction
+// is not settled until the query returns
+// As a result, this transaction has been split up into a (1) Start and (2) Finish function
+//   If no query is needed, (2) is called immediately after (1)
+//   If a query is needed, (2) is called in the query callback
+//
+// The transaction response indicates if the query occurred by returning an attribute `TransactionComplete` set to false
 func (k msgServer) LSMLiquidStake(goCtx context.Context, msg *types.MsgLSMLiquidStake) (*types.MsgLSMLiquidStakeResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
+	lsmLiquidStake, err := k.StartLSMLiquidStake(ctx, msg)
+	if err != nil {
+		return nil, err
+	}
+
+	if k.ShouldQueryValidatorExchangeRate(ctx, lsmLiquidStake.Validator, msg.Amount) {
+		// TODO: Submit query
+		return &types.MsgLSMLiquidStakeResponse{TransactionComplete: false}, nil
+	}
+
+	if err := k.FinishLSMLiquidStake(ctx, lsmLiquidStake); err != nil {
+		return nil, err
+	}
+
+	return &types.MsgLSMLiquidStakeResponse{TransactionComplete: true}, nil
+}
+
+// StartLSMLiquidStake runs the transactional logic that occurs before the optional query
+// This includes validation on the LSM Token, and the escrowing of tokens
+func (k Keeper) StartLSMLiquidStake(ctx sdk.Context, msg *types.MsgLSMLiquidStake) (LSMLiquidStake, error) {
 	// Get the denom trace from the IBC hash - this includes the full path and base denom
 	denomTrace, err := k.GetLSMTokenDenomTrace(ctx, msg.LsmTokenIbcDenom)
 	if err != nil {
-		return nil, err
+		return LSMLiquidStake{}, err
 	}
 
 	// Get the host zone and validator address from the path and base denom respectively
 	lsmTokenBaseDenom := denomTrace.BaseDenom
 	hostZone, err := k.GetHostZoneFromLSMTokenPath(ctx, denomTrace.Path)
 	if err != nil {
-		return nil, err
+		return LSMLiquidStake{}, err
 	}
 	validator, err := k.GetValidatorFromLSMTokenDenom(lsmTokenBaseDenom, hostZone.Validators)
 	if err != nil {
-		return nil, err
+		return LSMLiquidStake{}, err
 	}
 
 	// Get the user address and the host zone module account address that will custody the tokens
 	liquidStakerAddress := sdk.MustAccAddressFromBech32(msg.Creator)
 	hostZoneAddress, err := sdk.AccAddressFromBech32(hostZone.Address)
 	if err != nil {
-		return nil, errorsmod.Wrapf(err, "host zone address is invalid")
-	}
-	delegationAccount := hostZone.DelegationAccount
-	if delegationAccount == nil || delegationAccount.Address == "" {
-		return nil, errorsmod.Wrapf(types.ErrICAAccountNotFound, "no delegation address found for %s", hostZone.ChainId)
+		return LSMLiquidStake{}, errorsmod.Wrapf(err, "host zone address is invalid")
 	}
 
 	// Confirm the user has a sufficient balance to execute the liquid stake
 	stakeAmount := msg.Amount
 	balance := k.bankKeeper.GetBalance(ctx, liquidStakerAddress, msg.LsmTokenIbcDenom).Amount
 	if balance.LT(stakeAmount) {
-		return nil, errorsmod.Wrapf(sdkerrors.ErrInsufficientFunds,
+		return LSMLiquidStake{}, errorsmod.Wrapf(sdkerrors.ErrInsufficientFunds,
 			"balance is lower than staking amount. staking amount: %v, balance: %v", stakeAmount, balance)
 	}
 
 	// Transfer the LSM token to the host zone module account
 	lsmTokenCoin := sdk.NewCoin(msg.LsmTokenIbcDenom, msg.Amount)
 	if err := k.bankKeeper.SendCoins(ctx, liquidStakerAddress, hostZoneAddress, sdk.NewCoins(lsmTokenCoin)); err != nil {
-		return nil, errorsmod.Wrap(err, "failed to send tokens from Account to Module")
+		return LSMLiquidStake{}, errorsmod.Wrap(err, "failed to send tokens from Account to Module")
 	}
 
 	// Determine the amount of stTokens to mint using the redemption rate
 	stDenom := types.StAssetDenomFromHostZoneDenom(hostZone.HostDenom)
 	stAmount := (sdk.NewDecFromInt(msg.Amount).Quo(hostZone.RedemptionRate)).TruncateInt()
 	if stAmount.IsZero() {
-		return nil, errorsmod.Wrapf(types.ErrInsufficientLiquidStake,
+		return LSMLiquidStake{}, errorsmod.Wrapf(types.ErrInsufficientLiquidStake,
 			"Liquid stake of %s%s would return 0 stTokens", msg.Amount.String(), hostZone.HostDenom)
 	}
-
-	// Check if we need to issue an ICQ to check if a validator was slashed
-	params := k.GetParams(ctx)
-	queryInterval := sdk.NewIntFromUint64(params.ValidatorExchangeRateQueryInterval)
-	if queryInterval.IsZero() {
-		return nil, errors.New("Invalid validator exchange rate query interval - must be non-zero")
-	}
-
-	oldProgress := validator.ProgressTowardsExchangeRateQuery
-	newProgress := validator.ProgressTowardsExchangeRateQuery.Add(msg.Amount)
-
-	if oldProgress.Quo(queryInterval).LT(newProgress.Quo(queryInterval)) {
-		// TODO: Submit query
-		return &types.MsgLSMLiquidStakeResponse{TransactionComplete: false}, nil
-	}
-
-	// Mint stToken and send to the user
 	stCoin := sdk.NewCoin(stDenom, stAmount)
-	if err := k.bankKeeper.MintCoins(ctx, types.ModuleName, sdk.NewCoins(stCoin)); err != nil {
-		return nil, errorsmod.Wrapf(err, "Failed to mint stTokens")
-	}
-	if err := k.bankKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, liquidStakerAddress, sdk.NewCoins(stCoin)); err != nil {
-		return nil, errorsmod.Wrapf(err, "Failed to send %s from module to account", stCoin.String())
-	}
 
 	// Store a record for the LSM token
 	lsmTokenDeposit := types.LSMTokenDeposit{
@@ -111,31 +119,64 @@ func (k msgServer) LSMLiquidStake(goCtx context.Context, msg *types.MsgLSMLiquid
 		Denom:            lsmTokenBaseDenom,
 		ValidatorAddress: validator.Address,
 		Amount:           msg.Amount,
-		Status:           types.TRANSFER_IN_PROGRESS,
+		Status:           types.DEPOSIT_PENDING,
 	}
 	k.AddLSMTokenDeposit(ctx, lsmTokenDeposit)
 
-	// Send LSM Token to host zone in IBC transfer
+	return LSMLiquidStake{
+		Staker:    liquidStakerAddress,
+		LSMToken:  lsmTokenCoin,
+		StToken:   stCoin,
+		HostZone:  hostZone,
+		Validator: validator,
+		Deposit:   lsmTokenDeposit,
+	}, nil
+}
+
+// FinishLSMLiquidStake finishes the liquid staking flow by sending a user an stToken and
+// IBC transfering the LSM Token to the host zone
+//
+// If the validator exchange rate query interrupted the transaction, this function is called
+// asynchronously upon the query callback
+// If no validator exchange rate query was needed, this is called synchronously after StartLSMLiquidStake
+func (k Keeper) FinishLSMLiquidStake(ctx sdk.Context, lsmLiquidStake LSMLiquidStake) error {
+	// Mint stToken and send to the user
+	stToken := sdk.NewCoins(lsmLiquidStake.StToken)
+	if err := k.bankKeeper.MintCoins(ctx, types.ModuleName, stToken); err != nil {
+		return errorsmod.Wrapf(err, "Failed to mint stTokens")
+	}
+	if err := k.bankKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, lsmLiquidStake.Staker, stToken); err != nil {
+		return errorsmod.Wrapf(err, "Failed to send %s from module to account", lsmLiquidStake.StToken.String())
+	}
+
+	// Get delegation account address as the destination for the LSM Token
+	hostZone := lsmLiquidStake.HostZone
+	delegationAccount := hostZone.DelegationAccount
+	if delegationAccount == nil || delegationAccount.Address == "" {
+		return errorsmod.Wrapf(types.ErrICAAccountNotFound, "no delegation address found for %s", hostZone.ChainId)
+	}
+
+	// Send LSM Token to host zone with IBC transfer
 	timeout := uint64(ctx.BlockTime().UnixNano() + (time.Hour * 24).Nanoseconds()) // 1 day
 	msgTransferResponse, err := k.RecordsKeeper.TransferKeeper.Transfer(sdk.WrapSDKContext(ctx), &transfertypes.MsgTransfer{
 		SourcePort:       transfertypes.PortID,
 		SourceChannel:    hostZone.TransferChannelId,
-		Token:            lsmTokenCoin,
-		Sender:           hostZoneAddress.String(),
+		Token:            lsmLiquidStake.LSMToken,
+		Sender:           hostZone.Address,
 		Receiver:         delegationAccount.Address,
 		TimeoutTimestamp: timeout,
 	})
 	if err != nil {
-		return nil, errorsmod.Wrapf(err, "Failed to submit IBC transfer of LSM token")
+		return errorsmod.Wrapf(err, "Failed to submit IBC transfer of LSM token")
 	}
 
 	// Store transfer callback data
 	callbackArgs := types.TransferLSMTokenCallback{
-		Deposit: &lsmTokenDeposit,
+		Deposit: &lsmLiquidStake.Deposit,
 	}
 	callbackArgsBz, err := proto.Marshal(&callbackArgs)
 	if err != nil {
-		return nil, errorsmod.Wrapf(err, "Unable to marshal transfer callback data for %+v", callbackArgs)
+		return errorsmod.Wrapf(err, "Unable to marshal transfer callback data for %+v", callbackArgs)
 	}
 
 	k.RecordsKeeper.ICACallbacksKeeper.SetCallbackData(ctx, icacallbackstypes.CallbackData{
@@ -147,73 +188,8 @@ func (k msgServer) LSMLiquidStake(goCtx context.Context, msg *types.MsgLSMLiquid
 		CallbackArgs: callbackArgsBz,
 	})
 
-	return &types.MsgLSMLiquidStakeResponse{TransactionComplete: true}, nil
-}
+	// Update the deposit status
+	k.UpdateLSMTokenDepositStatus(ctx, lsmLiquidStake.Deposit, types.TRANSFER_IN_PROGRESS)
 
-// Parse the LSM Token's IBC denom has into a DenomTrace object that contains the path and base denom
-func (k Keeper) GetLSMTokenDenomTrace(ctx sdk.Context, denom string) (transfertypes.DenomTrace, error) {
-	ibcPrefix := transfertypes.DenomPrefix + "/"
-
-	// Confirm the LSM Token is a valid IBC token (has "ibc/" prefix)
-	if !strings.HasPrefix(denom, ibcPrefix) {
-		return transfertypes.DenomTrace{}, errorsmod.Wrapf(types.ErrInvalidLSMToken, "lsm token is not an IBC token (%s)", denom)
-	}
-
-	// Parse the hex hash string into hex bytes
-	hexHash := denom[len(ibcPrefix):]
-	hash, err := transfertypes.ParseHexHash(hexHash)
-	if err != nil {
-		return transfertypes.DenomTrace{}, errorsmod.Wrapf(err, "unable to get ibc hex hash from denom %s", denom)
-	}
-
-	// Lookup the trace from the hash
-	denomTrace, found := k.RecordsKeeper.TransferKeeper.GetDenomTrace(ctx, hash)
-	if !found {
-		return transfertypes.DenomTrace{}, errorsmod.Wrapf(types.ErrInvalidLSMToken, "denom trace not found for %s", denom)
-	}
-
-	return denomTrace, nil
-}
-
-// Parses the LSM token's IBC path (e.g. transfer/channel-0) and confirms the channel ID matches
-// the transfer channel of a supported host zone
-func (k Keeper) GetHostZoneFromLSMTokenPath(ctx sdk.Context, path string) (types.HostZone, error) {
-	if !IsValidIBCPath(path) {
-		return types.HostZone{}, errorsmod.Wrapf(types.ErrInvalidLSMToken, "ibc path of LSM token (%s) cannot be more than 1 hop away", path)
-	}
-
-	// Remove the "transfer/" prefix
-	channelId := strings.ReplaceAll(path, transfertypes.PortID+"/", "")
-
-	// Confirm the channel is from one of Stride's supported host zones
-	for _, hostZone := range k.GetAllHostZone(ctx) {
-		if hostZone.TransferChannelId == channelId {
-			return hostZone, nil
-		}
-	}
-
-	return types.HostZone{}, errorsmod.Wrapf(types.ErrInvalidLSMToken,
-		"transfer channel-id from LSM token (%s) does not match any registered host zone", channelId)
-}
-
-// Parses the LSM token's denom (of the form {validatorAddress}/{recordId}) and confirms that the validator
-// is in the Stride validator set
-func (k Keeper) GetValidatorFromLSMTokenDenom(denom string, validators []*types.Validator) (types.Validator, error) {
-	// Denom is of the form {validatorAddress}/{recordId}
-	split := strings.Split(denom, "/")
-	if len(split) != 2 {
-		return types.Validator{}, errorsmod.Wrapf(types.ErrInvalidLSMToken,
-			"lsm token base denom is not of the format {val-address}/{record-id} (%s)", denom)
-	}
-	validatorAddress := split[0]
-
-	// Confirm validator is in Stride's validator set
-	for _, validator := range validators {
-		if validator.Address == validatorAddress {
-			return *validator, nil
-		}
-	}
-
-	return types.Validator{}, errorsmod.Wrapf(types.ErrInvalidLSMToken,
-		"validator (%s) is not registered in the Stride validator set", validatorAddress)
+	return nil
 }
