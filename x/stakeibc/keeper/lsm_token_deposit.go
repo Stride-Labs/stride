@@ -48,19 +48,40 @@ func (k Keeper) GetAllLSMTokenDeposit(ctx sdk.Context) []types.LSMTokenDeposit {
 }
 
 func (k Keeper) AddLSMTokenDeposit(ctx sdk.Context, deposit types.LSMTokenDeposit) {
-	// TODO [LSM]
-	// See if a deposit already exists for this denom
-	// If so, increment the amount
-	// otherwise, create a new deposit
+	original, found := k.GetLSMTokenDeposit(ctx, deposit.ChainId, deposit.Denom)
+	if found {
+		deposit.Amount = original.Amount.Add(deposit.Amount)
+	}
+	k.SetLSMTokenDeposit(ctx, deposit)
 }
 
-func (k Keeper) UpdateLSMTokenDepositStatus(ctx sdk.Context, deposit types.LSMTokenDeposit, status types.LSMDepositStatus) {
-	// TODO [LSM]
+func (k Keeper) UpdateLSMTokenDepositStatus(
+	ctx sdk.Context,
+	deposit types.LSMTokenDeposit,
+	status types.LSMDepositStatus,
+) {
+	deposit.Status = status
+	k.SetLSMTokenDeposit(ctx, deposit)
 }
 
-func (k Keeper) GetLSMDepositsForHostZone(ctx sdk.Context, deposit types.LSMTokenDeposit, chainId string) []types.LSMTokenDeposit {
-	// TODO [LSM]
-	return []types.LSMTokenDeposit{}
+func (k Keeper) GetLSMDepositsForHostZone(
+	ctx sdk.Context,
+	deposit types.LSMTokenDeposit,
+	chainId string,
+) []types.LSMTokenDeposit {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefix(types.LSMTokenDepositKey))
+	iterator := sdk.KVStorePrefixIterator(store, types.KeyPrefix(chainId))
+	hostZoneLSMTokenDeposits := []types.LSMTokenDeposit{}
+
+	defer iterator.Close()
+
+	for ; iterator.Valid(); iterator.Next() {
+		var deposit types.LSMTokenDeposit
+		k.cdc.MustUnmarshal(iterator.Value(), &deposit)
+		hostZoneLSMTokenDeposits = append(hostZoneLSMTokenDeposits, deposit)
+	}
+
+	return hostZoneLSMTokenDeposits
 }
 
 func (k Keeper) GetLSMDepositsForHostZoneWithStatus(
@@ -69,6 +90,12 @@ func (k Keeper) GetLSMDepositsForHostZoneWithStatus(
 	chainId string,
 	status types.LSMDepositStatus,
 ) []types.LSMTokenDeposit {
-	// TODO [LSM]
-	return []types.LSMTokenDeposit{}
+	filtered := []types.LSMTokenDeposit{}
+	hostZoneLSMTokenDeposits := k.GetLSMDepositsForHostZone(ctx, deposit, chainId)
+	for _, deposit := range hostZoneLSMTokenDeposits {
+		if deposit.Status == status {
+			filtered = append(filtered, deposit)
+		}
+	}
+	return filtered
 }
