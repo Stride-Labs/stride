@@ -11,9 +11,11 @@ message Query {
   string connection_id = 2;
   string chain_id = 3;
   string query_type = 4;
-  bytes request = 5;
+  bytes request_data = 5;
+  string callback_module = 13;
   string callback_id = 8;
-  uint64 ttl = 9;
+  bytes callback_data = 12;
+  uint64 timeout = 9;
   bool request_sent = 11;
 }
 

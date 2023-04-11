@@ -1,11 +1,14 @@
 package keeper
 
 import (
+	"encoding/binary"
 	"fmt"
+	"strings"
 
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	connectiontypes "github.com/cosmos/ibc-go/v5/modules/core/03-connection/types"
 
 	errorsmod "cosmossdk.io/errors"
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -15,21 +18,52 @@ import (
 	"github.com/Stride-Labs/stride/v8/x/interchainquery/types"
 )
 
-func GenerateQueryHash(connectionId string, chainId string, queryType string, request []byte, module string, callbackId string) string {
-	return fmt.Sprintf("%x", crypto.Sha256(append([]byte(module+connectionId+chainId+queryType+callbackId), request...)))
+// Generates a query ID based on the request information
+// If forceUnique is false, queries of the same request type will have the same query ID
+//  (e.g. "query the ATOM balance of address X", will always have the same query ID)
+// If forceUnique is true, a unique ID will be used for the query
+func (k Keeper) GetQueryId(ctx sdk.Context, query types.Query, forceUnique bool) string {
+	// If forceUnique is true, grab and append the unique query UID
+	var queryKey []byte
+	if forceUnique {
+		queryKey = k.GetQueryUID(ctx)
+	} else {
+		queryKey = append([]byte(query.CallbackModule+query.ConnectionId+query.ChainId+query.QueryType+query.CallbackId), query.RequestData...)
+	}
+	return fmt.Sprintf("%x", crypto.Sha256(queryKey))
 }
 
-func (k Keeper) NewQuery(ctx sdk.Context, module string, callbackId string, chainId string, connectionId string, queryType string, request []byte, ttl uint64) *types.Query {
-	return &types.Query{
-		Id:           GenerateQueryHash(connectionId, chainId, queryType, request, module, callbackId),
-		ConnectionId: connectionId,
-		ChainId:      chainId,
-		QueryType:    queryType,
-		Request:      request,
-		CallbackId:   callbackId,
-		Ttl:          ttl,
-		RequestSent:  false,
+// ValidateQuery validates that all the required attributes of a query are supplied when submitting an ICQ
+func (k Keeper) ValidateQuery(ctx sdk.Context, query types.Query) error {
+	if query.ChainId == "" {
+		return errorsmod.Wrapf(types.ErrInvalidICQRequest, "chain-id cannot be empty")
 	}
+	if query.ConnectionId == "" {
+		return errorsmod.Wrapf(types.ErrInvalidICQRequest, "connection-id cannot be empty")
+	}
+	if !strings.HasPrefix(query.ConnectionId, connectiontypes.ConnectionPrefix) {
+		return errorsmod.Wrapf(types.ErrInvalidICQRequest, "invalid connection-id (%s)", query.ConnectionId)
+	}
+	if query.QueryType == "" {
+		return errorsmod.Wrapf(types.ErrInvalidICQRequest, "query type cannot be empty")
+	}
+	if query.CallbackModule == "" {
+		return errorsmod.Wrapf(types.ErrInvalidICQRequest, "callback module must be specified")
+	}
+	if query.CallbackId == "" {
+		return errorsmod.Wrapf(types.ErrInvalidICQRequest, "callback-id cannot be empty")
+	}
+	if query.Timeout <= uint64(ctx.BlockTime().Nanosecond()) {
+		return errorsmod.Wrapf(types.ErrInvalidICQRequest, "timeout must be in the future - timeout: %d, block time: %d", query.Timeout, ctx.BlockTime().UnixNano())
+	}
+	if _, exists := k.callbacks[query.CallbackModule]; !exists {
+		return errorsmod.Wrapf(types.ErrInvalidICQRequest, "no callback handler registered for module (%s)", query.CallbackModule)
+	}
+	if exists := k.callbacks[query.CallbackModule].HasICQCallback(query.CallbackId); !exists {
+		return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "callback-id (%s) is not registered for module (%s)", query.CallbackId, query.CallbackModule)
+	}
+
+	return nil
 }
 
 // GetQuery returns query
@@ -55,6 +89,38 @@ func (k Keeper) SetQuery(ctx sdk.Context, query types.Query) {
 func (k Keeper) DeleteQuery(ctx sdk.Context, id string) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefixQuery)
 	store.Delete([]byte(id))
+}
+
+// To optionally force queries to be unique, a UID can be supplied when building the query Id
+// This is implemented using a counter that increments every time a UID is retrieved
+// The uid is returned as a byte array since it's appended to the serialized query key
+func (k Keeper) GetQueryUID(ctx sdk.Context) []byte {
+	store := ctx.KVStore(k.storeKey)
+	uidBz := store.Get(types.KeyQueryCounter)
+
+	// Initialize the UID if there is nothing in the store yet
+	if len(uidBz) == 0 {
+		uidBz = make([]byte, 8)
+		binary.BigEndian.PutUint64(uidBz, 1)
+	}
+
+	uid := binary.BigEndian.Uint64(uidBz)
+
+	// Reset the uid after 1B
+	// In practice, this is not necessary as we'll never hit the limit, but in theory, we could have int overflow
+	if uid > 1_000_000_000 {
+		uid = 1
+		uidBz = make([]byte, 8)
+		binary.BigEndian.PutUint64(uidBz, uid)
+	}
+
+	// Increment and store the next UID
+	nextUidBz := make([]byte, 8)
+	binary.BigEndian.PutUint64(nextUidBz, uid+1)
+	store.Set(types.KeyQueryCounter, nextUidBz)
+
+	// Return the serialized uid
+	return uidBz
 }
 
 // IterateQueries iterate through queries

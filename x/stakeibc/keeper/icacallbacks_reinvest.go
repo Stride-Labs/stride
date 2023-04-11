@@ -119,14 +119,20 @@ func ReinvestCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ack
 
 	// Submit an ICQ for the rewards balance in the fee account
 	k.Logger(ctx).Info(utils.LogICACallbackWithHostZone(chainId, ICACallbackID_Reinvest, "Submitting ICQ for fee account balance"))
-	return k.InterchainQueryKeeper.MakeRequest(
-		ctx,
-		types.ModuleName,
-		ICQCallbackID_FeeBalance,
-		chainId,
-		hostZone.ConnectionId,
-		icqtypes.BANK_STORE_QUERY_WITH_PROOF,
-		queryData,
-		timeout,
-	)
+
+	query := icqtypes.Query{
+		ChainId:        chainId,
+		ConnectionId:   hostZone.ConnectionId,
+		QueryType:      icqtypes.BANK_STORE_QUERY_WITH_PROOF,
+		RequestData:    queryData,
+		CallbackModule: types.ModuleName,
+		CallbackId:     ICQCallbackID_FeeBalance,
+		Timeout:        timeout,
+	}
+	if err := k.InterchainQueryKeeper.SubmitICQRequest(ctx, query, false); err != nil {
+		k.Logger(ctx).Error(fmt.Sprintf("Error submitting ICQ for fee balance, error %s", err.Error()))
+		return err
+	}
+
+	return nil
 }
