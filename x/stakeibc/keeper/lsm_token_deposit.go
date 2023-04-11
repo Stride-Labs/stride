@@ -11,20 +11,20 @@ func (k Keeper) SetLSMTokenDeposit(ctx sdk.Context, deposit types.LSMTokenDeposi
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefix(types.LSMTokenDepositKey))
 	depositKey := types.GetLSMTokenDepositKey(deposit.ChainId, deposit.Denom)
 	depositData := k.cdc.MustMarshal(&deposit)
-	store.Set([]byte(depositKey), depositData)
+	store.Set(depositKey, depositData)
 }
 
 func (k Keeper) RemoveLSMTokenDeposit(ctx sdk.Context, chainId, denom string) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefix(types.LSMTokenDepositKey))
 	depositKey := types.GetLSMTokenDepositKey(chainId, denom)
-	store.Delete([]byte(depositKey))
+	store.Delete(depositKey)
 }
 
 func (k Keeper) GetLSMTokenDeposit(ctx sdk.Context, chainId, denom string) (deposit types.LSMTokenDeposit, found bool) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefix(types.LSMTokenDepositKey))
 	depositKey := types.GetLSMTokenDepositKey(chainId, denom)
-	depositData := store.Get([]byte(depositKey))
-	if depositData == nil {
+	depositData := store.Get(depositKey)
+	if len(depositData) == 0 {
 		return deposit, false
 	}
 	k.cdc.MustUnmarshal(depositData, &deposit)
@@ -33,7 +33,7 @@ func (k Keeper) GetLSMTokenDeposit(ctx sdk.Context, chainId, denom string) (depo
 
 func (k Keeper) GetAllLSMTokenDeposit(ctx sdk.Context) []types.LSMTokenDeposit {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefix(types.LSMTokenDepositKey))
-	iterator := sdk.KVStorePrefixIterator(store, []byte(""))
+	iterator := store.Iterator(nil, nil)
 	allLSMTokenDeposits := []types.LSMTokenDeposit{}
 
 	defer iterator.Close()
