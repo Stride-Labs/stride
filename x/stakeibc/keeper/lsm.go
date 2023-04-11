@@ -95,7 +95,9 @@ func (k Keeper) ShouldQueryValidatorExchangeRate(ctx sdk.Context, validator type
 	queryInterval := sdk.NewIntFromUint64(params.ValidatorExchangeRateQueryInterval)
 
 	// If the query interval is disabled, do not submit a query
-	if !queryInterval.IsPositive() {
+	// This should not be possible with the current parameter validation
+	//  function which enforces that it's greater than 0
+	if queryInterval.IsZero() {
 		return false
 	}
 
