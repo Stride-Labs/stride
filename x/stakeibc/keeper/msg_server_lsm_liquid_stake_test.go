@@ -1,6 +1,9 @@
 package keeper_test
 
 import (
+	"encoding/json"
+	"time"
+
 	sdkmath "cosmossdk.io/math"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -10,6 +13,7 @@ import (
 
 	icqtypes "github.com/Stride-Labs/stride/v8/x/interchainquery/types"
 
+	"github.com/Stride-Labs/stride/v8/x/stakeibc/keeper"
 	"github.com/Stride-Labs/stride/v8/x/stakeibc/types"
 )
 
@@ -57,6 +61,7 @@ func (s *KeeperTestSuite) SetupTestLSMLiquidStake() LSMLiquidStakeTestCase {
 		RedemptionRate:    sdk.NewDec(1.0),
 		Address:           moduleAddress.String(),
 		TransferChannelId: ibctesting.FirstChannelID,
+		ConnectionId:      ibctesting.FirstConnectionID,
 		Validators: []*types.Validator{{
 			Address:                          ValAddress,
 			ProgressTowardsExchangeRateQuery: sdkmath.NewInt(8_000_000),
@@ -145,11 +150,45 @@ func (s *KeeperTestSuite) TestLSMLiquidStake_Successful_WithExchangeRateQuery() 
 	s.Require().True(userStTokenBalance.Amount.IsZero(), "user stToken balance")
 
 	// Confirm query was submitted
-	expectedQuery := icqtypes.Query{}
-	_ = expectedQuery
-	// allQueries := s.App.InterchainqueryKeeper.AllQueries(s.Ctx)
-	// s.Require().Len(allQueries, 1)
-	// s.Require().Equal(expectedQuery, allQueries[0], "ICQ")
+	allQueries := s.App.InterchainqueryKeeper.AllQueries(s.Ctx)
+	s.Require().Len(allQueries, 1)
+
+	// Confirm query metadata
+	actualQuery := allQueries[0]
+	s.Require().Equal(HostChainId, actualQuery.ChainId, "query chain-id")
+	s.Require().Equal(ibctesting.FirstConnectionID, actualQuery.ConnectionId, "query connection-id")
+	s.Require().Equal(icqtypes.STAKING_STORE_QUERY_WITH_PROOF, actualQuery.QueryType, "query types")
+
+	s.Require().Equal(types.ModuleName, actualQuery.CallbackModule, "callback module")
+	s.Require().Equal(keeper.ICQCallbackID_Validator, actualQuery.CallbackId, "callback-id")
+
+	expectedTimeout := uint64(s.Ctx.BlockTime().UnixNano() + (time.Minute * 15).Nanoseconds())
+	s.Require().Equal(expectedTimeout, actualQuery.Timeout, "callback module")
+
+	// Confirm query callback data
+	s.Require().True(len(actualQuery.CallbackData) > 0, "callback data exists")
+
+	expectedLSMTokenDeposit := types.LSMTokenDeposit{
+		ChainId:          HostChainId,
+		Denom:            LSMTokenBaseDenom,
+		ValidatorAddress: ValAddress,
+		Amount:           tc.validMsg.Amount,
+		Status:           types.DEPOSIT_PENDING,
+	}
+
+	var actualCallbackData keeper.LSMLiquidStake
+	err = json.Unmarshal(actualQuery.CallbackData, &actualCallbackData)
+	s.Require().NoError(err, "no error expected when unmarshalling query callback data")
+
+	s.Require().Equal(sdk.NewCoin(tc.lsmTokenIBCDenom, tc.validMsg.Amount), actualCallbackData.LSMIBCToken, "callback data - lsm token")
+	s.Require().Equal(sdk.NewCoin(StAtom, tc.validMsg.Amount), actualCallbackData.StToken, "callback data - stToken")
+
+	s.Require().Equal(tc.liquidStakerAddress, actualCallbackData.Staker, "callback data - staker")
+	s.Require().Equal(HostChainId, actualCallbackData.HostZone.ChainId, "callback data - host zone")
+	s.Require().Equal(ValAddress, actualCallbackData.Validator.Address, "callback data - validator")
+
+	s.Require().Equal(expectedLSMTokenDeposit, actualCallbackData.Deposit, "callback data - deposit")
+
 }
 
 func (s *KeeperTestSuite) TestLSMLiquidStakeFailed_NotIBCDenom() {
