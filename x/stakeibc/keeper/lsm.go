@@ -20,7 +20,7 @@ var (
 	IsValidIBCPath = regexp.MustCompile(fmt.Sprintf(`^%s/(%s[0-9]{1,20})$`, transfertypes.PortID, channeltypes.ChannelPrefix)).MatchString
 )
 
-// Parse the LSM Token's IBC denom has into a DenomTrace object that contains the path and base denom
+// Parse the LSM Token's IBC denom hash into a DenomTrace object that contains the path and base denom
 func (k Keeper) GetLSMTokenDenomTrace(ctx sdk.Context, denom string) (transfertypes.DenomTrace, error) {
 	ibcPrefix := transfertypes.DenomPrefix + "/"
 
@@ -29,7 +29,7 @@ func (k Keeper) GetLSMTokenDenomTrace(ctx sdk.Context, denom string) (transferty
 		return transfertypes.DenomTrace{}, errorsmod.Wrapf(types.ErrInvalidLSMToken, "lsm token is not an IBC token (%s)", denom)
 	}
 
-	// Parse the hex hash string into hex bytes
+	// Parse the hash string after the "ibc/" prefix into hex bytes
 	hexHash := denom[len(ibcPrefix):]
 	hash, err := transfertypes.ParseHexHash(hexHash)
 	if err != nil {
@@ -48,6 +48,7 @@ func (k Keeper) GetLSMTokenDenomTrace(ctx sdk.Context, denom string) (transferty
 // Parses the LSM token's IBC path (e.g. transfer/channel-0) and confirms the channel ID matches
 // the transfer channel of a supported host zone
 func (k Keeper) GetHostZoneFromLSMTokenPath(ctx sdk.Context, path string) (types.HostZone, error) {
+	// Validate path regex which confirms the token originated only one hop away (e.g. transfer/channel-0)
 	if !IsValidIBCPath(path) {
 		return types.HostZone{}, errorsmod.Wrapf(types.ErrInvalidLSMToken, "ibc path of LSM token (%s) cannot be more than 1 hop away", path)
 	}

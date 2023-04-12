@@ -177,7 +177,7 @@ func (s *KeeperTestSuite) TestLSMLiquidStake_Successful_WithExchangeRateQuery() 
 		Status:           types.DEPOSIT_PENDING,
 	}
 
-	var actualCallbackData keeper.LSMLiquidStake
+	var actualCallbackData types.LSMLiquidStake
 	err = json.Unmarshal(actualQuery.CallbackData, &actualCallbackData)
 	s.Require().NoError(err, "no error expected when unmarshalling query callback data")
 
