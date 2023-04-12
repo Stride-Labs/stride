@@ -109,7 +109,7 @@ func (k Keeper) ShouldQueryValidatorExchangeRate(ctx sdk.Context, validator type
 	return oldProgress.Quo(queryInterval).LT(newProgress.Quo(queryInterval))
 }
 
-// Helper function to Refund and LSM Token to the user if both:
+// Helper function to Refund an LSM Token to the user if both:
 //  a) the LSMLiquidStake transaction is interrupted with a validator exchange rate query, and
 //  b) the handling of the query callback fails
 func (k Keeper) RefundLSMToken(ctx sdk.Context, lsmLiquidStake types.LSMLiquidStake) error {
