@@ -101,11 +101,10 @@ func ReinvestCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ack
 
 	// Encode the fee account address for the query request
 	// The query request consists of the fee account address and denom
-	feeAccount := hostZone.FeeAccount
-	if feeAccount == nil || feeAccount.Address == "" {
+	if hostZone.FeeIcaAddress == "" {
 		return errorsmod.Wrapf(types.ErrICAAccountNotFound, "no fee account found for %s", chainId)
 	}
-	_, feeAddressBz, err := bech32.DecodeAndConvert(feeAccount.Address)
+	_, feeAddressBz, err := bech32.DecodeAndConvert(hostZone.FeeIcaAddress)
 	if err != nil {
 		return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "invalid fee account address, could not decode (%s)", err.Error())
 	}

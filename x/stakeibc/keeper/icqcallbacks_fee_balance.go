@@ -43,13 +43,12 @@ func FeeBalanceCallback(k Keeper, ctx sdk.Context, args []byte, query icqtypes.Q
 	// Confirm the balance is greater than zero
 	if feeBalanceAmount.LTE(sdkmath.ZeroInt()) {
 		k.Logger(ctx).Info(utils.LogICQCallbackWithHostZone(chainId, ICQCallbackID_FeeBalance,
-			"No balance to transfer for address: %v, balance: %v", hostZone.FeeAccount.GetAddress(), feeBalanceAmount))
+			"No balance to transfer for address: %s, balance: %v", hostZone.FeeIcaAddress, feeBalanceAmount))
 		return nil
 	}
 
 	// Confirm the fee account has been initiated
-	feeAccount := hostZone.FeeAccount
-	if feeAccount == nil || feeAccount.Address == "" {
+	if hostZone.FeeIcaAddress == "" {
 		return errorsmod.Wrapf(types.ErrICAAccountNotFound, "no fee account found for %s", chainId)
 	}
 
@@ -73,7 +72,7 @@ func FeeBalanceCallback(k Keeper, ctx sdk.Context, args []byte, query icqtypes.Q
 		transfertypes.PortID,
 		counterpartyChannelId,
 		rewardsCoin,
-		feeAccount.Address,
+		hostZone.FeeIcaAddress,
 		rewardsCollectorAddress.String(),
 		clienttypes.Height{},
 		timeout,
@@ -84,7 +83,7 @@ func FeeBalanceCallback(k Keeper, ctx sdk.Context, args []byte, query icqtypes.Q
 		"Preparing MsgTransfer of %v from the fee account to the rewards collector module account (for commission)", rewardsCoin.String()))
 
 	// Send the transaction through SubmitTx
-	if _, err := k.SubmitTxsStrideEpoch(ctx, hostZone.ConnectionId, msgs, *feeAccount, ICACallbackID_Reinvest, nil); err != nil {
+	if _, err := k.SubmitTxsStrideEpoch(ctx, hostZone.ConnectionId, msgs, hostZone.FeeIcaAddress, ICACallbackID_Reinvest, nil); err != nil {
 		return errorsmod.Wrapf(types.ErrICATxFailed, "Failed to SubmitTxs, Messages: %v, err: %s", msgs, err.Error())
 	}
 

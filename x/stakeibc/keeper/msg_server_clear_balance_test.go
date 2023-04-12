@@ -37,10 +37,7 @@ func (s *KeeperTestSuite) SetupClearBalance() ClearBalanceTestCase {
 		IbcDenom:       IbcAtom,
 		RedemptionRate: sdk.NewDec(1.0),
 		Address:        zoneAddress.String(),
-		FeeAccount: &stakeibctypes.ICAAccount{
-			Address: feeAddress,
-			Target:  stakeibctypes.ICAAccountType_FEE,
-		},
+		FeeIcaAddress:  feeAddress,
 	}
 
 	amount := sdkmath.NewInt(1_000_000)
@@ -99,7 +96,7 @@ func (s *KeeperTestSuite) TestClearBalance_HostChainMissing() {
 func (s *KeeperTestSuite) TestClearBalance_FeeAccountMissing() {
 	tc := s.SetupClearBalance()
 	// no fee account
-	tc.initialState.hz.FeeAccount = nil
+	tc.initialState.hz.FeeIcaAddress = ""
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, tc.initialState.hz)
 	_, err := s.GetMsgServer().ClearBalance(sdk.WrapSDKContext(s.Ctx), &tc.validMsg)
 	s.Require().EqualError(err, "chainId: GAIA: fee account is not registered")

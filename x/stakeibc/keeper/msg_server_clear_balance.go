@@ -19,9 +19,8 @@ func (k msgServer) ClearBalance(goCtx context.Context, msg *types.MsgClearBalanc
 	if !found {
 		return nil, errorsmod.Wrapf(types.ErrInvalidHostZone, "chainId: %s", msg.ChainId)
 	}
-	feeAccount := zone.GetFeeAccount()
-	if feeAccount == nil {
-		return nil, errorsmod.Wrapf(types.ErrFeeAccountNotRegistered, "chainId: %s", msg.ChainId)
+	if zone.FeeIcaAddress == "" {
+		return nil, errorsmod.Wrapf(types.ErrICAAccountNotFound, "fee acount not found for chainId: %s", msg.ChainId)
 	}
 
 	sourcePort := ibctransfertypes.PortID
@@ -34,7 +33,6 @@ func (k msgServer) ClearBalance(goCtx context.Context, msg *types.MsgClearBalanc
 		k.Logger(ctx).Error(fmt.Sprintf("failed to parse coin (%s)", coinString))
 		return nil, errorsmod.Wrapf(err, "failed to parse coin (%s)", coinString)
 	}
-	sender := feeAccount.GetAddress()
 	// KeyICATimeoutNanos are for our Stride ICA calls, KeyFeeTransferTimeoutNanos is for the IBC transfer
 	feeTransferTimeoutNanos := k.GetParam(ctx, types.KeyFeeTransferTimeoutNanos)
 	timeoutTimestamp := cast.ToUint64(ctx.BlockTime().UnixNano()) + feeTransferTimeoutNanos
@@ -43,8 +41,8 @@ func (k msgServer) ClearBalance(goCtx context.Context, msg *types.MsgClearBalanc
 			SourcePort:       sourcePort,
 			SourceChannel:    sourceChannel,
 			Token:            tokens,
-			Sender:           sender,
-			Receiver:         types.FeeAccount,
+			Sender:           zone.FeeIcaAddress, // fee account on the host zone
+			Receiver:         types.FeeAccount,   // fee account on stride
 			TimeoutTimestamp: timeoutTimestamp,
 		},
 	}
@@ -54,7 +52,7 @@ func (k msgServer) ClearBalance(goCtx context.Context, msg *types.MsgClearBalanc
 	icaTimeoutNanos := k.GetParam(ctx, types.KeyICATimeoutNanos)
 	icaTimeoutNanos = cast.ToUint64(ctx.BlockTime().UnixNano()) + icaTimeoutNanos
 
-	_, err = k.SubmitTxs(ctx, connectionId, msgs, *feeAccount, icaTimeoutNanos, "", nil)
+	_, err = k.SubmitTxs(ctx, connectionId, msgs, zone.FeeIcaAddress, icaTimeoutNanos, "", nil)
 	if err != nil {
 		return nil, errorsmod.Wrapf(err, "failed to submit txs")
 	}

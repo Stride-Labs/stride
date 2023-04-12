@@ -17,7 +17,8 @@ message HostZone {
   repeated Validator blacklisted_validators = 4;
   string withdrawal_ica_address = 23
       [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
-  ICAAccount fee_account = 6;
+  string fee_ica_address = 24
+      [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
   ICAAccount delegation_account = 7;
   ICAAccount redemption_account = 16;
   // ibc denom on stride
@@ -56,6 +57,6 @@ message HostZone {
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false
   ];
-  reserved 5, 15;
+  reserved 5, 6, 15;
   // next id: 24
 }
