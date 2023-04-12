@@ -45,13 +45,12 @@ func WithdrawalBalanceCallback(k Keeper, ctx sdk.Context, args []byte, query icq
 	// Confirm the balance is greater than zero
 	if withdrawalBalanceAmount.LTE(sdkmath.ZeroInt()) {
 		k.Logger(ctx).Info(utils.LogICQCallbackWithHostZone(chainId, ICQCallbackID_WithdrawalBalance,
-			"No balance to transfer for address: %v, balance: %v", hostZone.WithdrawalAccount.GetAddress(), withdrawalBalanceAmount))
+			"No balance to transfer for address: %s, balance: %v", hostZone.WithdrawalIcaAddress, withdrawalBalanceAmount))
 		return nil
 	}
 
 	// Get the host zone's ICA accounts
-	withdrawalAccount := hostZone.WithdrawalAccount
-	if withdrawalAccount == nil || withdrawalAccount.Address == "" {
+	if hostZone.WithdrawalIcaAddress == "" {
 		return errorsmod.Wrapf(types.ErrICAAccountNotFound, "no withdrawal account found for %s", chainId)
 	}
 	delegationAccount := hostZone.DelegationAccount
@@ -93,7 +92,7 @@ func WithdrawalBalanceCallback(k Keeper, ctx sdk.Context, args []byte, query icq
 	var msgs []sdk.Msg
 	if feeCoin.Amount.GT(sdk.ZeroInt()) {
 		msgs = append(msgs, &banktypes.MsgSend{
-			FromAddress: withdrawalAccount.Address,
+			FromAddress: hostZone.WithdrawalIcaAddress,
 			ToAddress:   feeAccount.Address,
 			Amount:      sdk.NewCoins(feeCoin),
 		})
@@ -102,7 +101,7 @@ func WithdrawalBalanceCallback(k Keeper, ctx sdk.Context, args []byte, query icq
 	}
 	if reinvestCoin.Amount.GT(sdk.ZeroInt()) {
 		msgs = append(msgs, &banktypes.MsgSend{
-			FromAddress: withdrawalAccount.Address,
+			FromAddress: hostZone.WithdrawalIcaAddress,
 			ToAddress:   delegationAccount.Address,
 			Amount:      sdk.NewCoins(reinvestCoin),
 		})
@@ -122,7 +121,7 @@ func WithdrawalBalanceCallback(k Keeper, ctx sdk.Context, args []byte, query icq
 	}
 
 	// Send the transaction through SubmitTx
-	_, err = k.SubmitTxsStrideEpoch(ctx, hostZone.ConnectionId, msgs, *withdrawalAccount, ICACallbackID_Reinvest, marshalledCallbackArgs)
+	_, err = k.SubmitTxsStrideEpoch(ctx, hostZone.ConnectionId, msgs, hostZone.WithdrawalIcaAddress, ICACallbackID_Reinvest, marshalledCallbackArgs)
 	if err != nil {
 		return errorsmod.Wrapf(types.ErrICATxFailed, "Failed to SubmitTxs, Messages: %v, err: %s", msgs, err.Error())
 	}

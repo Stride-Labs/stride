@@ -8,7 +8,6 @@ import "cosmos_proto/cosmos.proto";
 
 option go_package = "github.com/Stride-Labs/stride/v8/x/stakeibc/types";
 
-// next id: 23
 message HostZone {
   string chain_id = 1;
   string connection_id = 2;
@@ -16,7 +15,8 @@ message HostZone {
   string transfer_channel_id = 12;
   repeated Validator validators = 3;
   repeated Validator blacklisted_validators = 4;
-  ICAAccount withdrawal_account = 5;
+  string withdrawal_ica_address = 23
+      [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
   ICAAccount fee_account = 6;
   ICAAccount delegation_account = 7;
   ICAAccount redemption_account = 16;
@@ -56,5 +56,6 @@ message HostZone {
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false
   ];
-  reserved 15;
+  reserved 5, 15;
+  // next id: 24
 }

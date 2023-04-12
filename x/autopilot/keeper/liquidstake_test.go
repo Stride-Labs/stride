@@ -214,7 +214,6 @@ func (suite *KeeperTestSuite) TestLiquidStakeOnRecvPacket() {
 				TransferChannelId:     "channel-0",
 				Validators:            []*stakeibctypes.Validator{},
 				BlacklistedValidators: []*stakeibctypes.Validator{},
-				WithdrawalAccount:     nil,
 				FeeAccount:            nil,
 				DelegationAccount:     nil,
 				RedemptionAccount:     nil,

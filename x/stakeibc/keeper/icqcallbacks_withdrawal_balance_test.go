@@ -60,10 +60,7 @@ func (s *KeeperTestSuite) SetupWithdrawalBalanceCallbackTest() WithdrawalBalance
 			Address: delegationAddress,
 			Target:  stakeibctypes.ICAAccountType_DELEGATION,
 		},
-		WithdrawalAccount: &stakeibctypes.ICAAccount{
-			Address: withdrawalAddress,
-			Target:  stakeibctypes.ICAAccountType_WITHDRAWAL,
-		},
+		WithdrawalIcaAddress: withdrawalAddress,
 		FeeAccount: &stakeibctypes.ICAAccount{
 			Address: feeAddress,
 			Target:  stakeibctypes.ICAAccountType_FEE,
@@ -208,7 +205,7 @@ func (s *KeeperTestSuite) TestWithdrawalBalanceCallback_NoWithdrawalAccount() {
 
 	// Remove the withdrawal account
 	badHostZone := tc.initialState.hostZone
-	badHostZone.WithdrawalAccount = nil
+	badHostZone.WithdrawalIcaAddress = ""
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, badHostZone)
 
 	err := stakeibckeeper.WithdrawalBalanceCallback(s.App.StakeibcKeeper, s.Ctx, tc.validArgs.callbackArgs, tc.validArgs.query)

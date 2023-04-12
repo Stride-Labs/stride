@@ -118,19 +118,19 @@ func (k Keeper) SetWithdrawalAddressOnHost(ctx sdk.Context, hostZone types.HostZ
 		k.Logger(ctx).Error(fmt.Sprintf("Zone %s is missing a delegation address!", hostZone.ChainId))
 		return nil
 	}
-	withdrawalAccount := hostZone.WithdrawalAccount
-	if withdrawalAccount == nil || withdrawalAccount.Address == "" {
+
+	if hostZone.WithdrawalIcaAddress == "" {
 		k.Logger(ctx).Error(fmt.Sprintf("Zone %s is missing a withdrawal address!", hostZone.ChainId))
 		return nil
 	}
 	k.Logger(ctx).Info(utils.LogWithHostZone(hostZone.ChainId, "Withdrawal Address: %s, Delegator Address: %s",
-		withdrawalAccount.Address, delegationAccount.Address))
+		hostZone.WithdrawalIcaAddress, delegationAccount.Address))
 
 	// Construct the ICA message
 	msgs := []sdk.Msg{
 		&distributiontypes.MsgSetWithdrawAddress{
 			DelegatorAddress: delegationAccount.Address,
-			WithdrawAddress:  withdrawalAccount.Address,
+			WithdrawAddress:  hostZone.WithdrawalIcaAddress,
 		},
 	}
 	_, err = k.SubmitTxsStrideEpoch(ctx, connectionId, msgs, *delegationAccount, "", nil)
@@ -146,14 +146,13 @@ func (k Keeper) UpdateWithdrawalBalance(ctx sdk.Context, hostZone types.HostZone
 	k.Logger(ctx).Info(utils.LogWithHostZone(hostZone.ChainId, "Submitting ICQ for withdrawal account balance"))
 
 	// Get the withdrawal account address from the host zone
-	withdrawalAccount := hostZone.WithdrawalAccount
-	if withdrawalAccount == nil || withdrawalAccount.Address == "" {
+	if hostZone.WithdrawalIcaAddress == "" {
 		return errorsmod.Wrapf(types.ErrICAAccountNotFound, "no withdrawal account found for %s", hostZone.ChainId)
 	}
 
 	// Encode the withdrawal account address for the query request
 	// The query request consists of the withdrawal account address and denom
-	_, withdrawalAddressBz, err := bech32.DecodeAndConvert(withdrawalAccount.Address)
+	_, withdrawalAddressBz, err := bech32.DecodeAndConvert(hostZone.WithdrawalIcaAddress)
 	if err != nil {
 		return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "invalid withdrawal account address, could not decode (%s)", err.Error())
 	}

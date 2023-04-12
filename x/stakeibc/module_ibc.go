@@ -109,7 +109,7 @@ func (im IBCModule) OnChanOpenAck(
 	switch {
 	// withdrawal address
 	case portID == withdrawalAddress:
-		zoneInfo.WithdrawalAccount = &types.ICAAccount{Address: address, Target: types.ICAAccountType_WITHDRAWAL}
+		zoneInfo.WithdrawalIcaAddress = address
 	// fee address
 	case portID == feeAddress:
 		zoneInfo.FeeAccount = &types.ICAAccount{Address: address, Target: types.ICAAccountType_FEE}
