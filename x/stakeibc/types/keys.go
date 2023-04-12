@@ -36,6 +36,11 @@ func KeyPrefix(p string) []byte {
 	return []byte(p)
 }
 
+// Create the LSMTokenDeposit prefix as chainId + denom
+func GetLSMTokenDepositKey(chainId, denom string) []byte {
+	return append([]byte(chainId), []byte(denom)...)
+}
+
 // EpochTrackerKey returns the store key to retrieve a EpochTracker from the index fields
 func EpochTrackerKey(epochIdentifier string) []byte {
 	var key []byte
@@ -53,4 +58,7 @@ const (
 
 	// EpochTrackerKeyPrefix is the prefix to retrieve all EpochTracker
 	EpochTrackerKeyPrefix = "EpochTracker/value/"
+
+	// LSMTokenDepositKey is the prefix for Token Desposits
+	LSMTokenDepositKey = "lsm-token-deposits"
 )
