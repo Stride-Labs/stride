@@ -37,7 +37,7 @@ func (s *KeeperTestSuite) TestLSMTokenDepositGet() {
 	for _, expected := range deposits {
 		actual, found := s.App.StakeibcKeeper.GetLSMTokenDeposit(s.Ctx, expected.ChainId, expected.Denom)
 		s.Require().True(found, "deposit not found for chainID %s and denom %s", expected.ChainId, expected.Denom)
-		s.Require().Equal(expected, actual, "found deposit %+v did not match expected %+v", actual, expected)
+		s.Require().Equal(expected, actual, "found deposit did not match expected")
 	}
 }
 
@@ -55,7 +55,7 @@ func (s *KeeperTestSuite) TestLSMTokenDepositGetAll() {
 	actual := s.App.StakeibcKeeper.GetAllLSMTokenDeposit(s.Ctx)
 	s.Require().Equal(len(actual), len(expected),
 		"different number of deposits found %d than was expected %d", len(actual), len(expected))
-	s.Require().ElementsMatch(actual, expected, "actual %+v was not expected %+v", actual, expected)
+	s.Require().ElementsMatch(actual, expected, "actual list did not match expected list")
 }
 
 func (s *KeeperTestSuite) TestLSMTokenDepositAdd() {
