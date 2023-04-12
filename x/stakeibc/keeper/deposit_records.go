@@ -68,7 +68,7 @@ func (k Keeper) TransferExistingDepositsToHostZones(ctx sdk.Context, epochNumber
 			continue
 		}
 
-		hostZoneModuleAddress := hostZone.Address
+		hostZoneModuleAddress := hostZone.DepositAddress
 		delegateAccount := hostZone.DelegationAccount
 		if delegateAccount == nil || delegateAccount.Address == "" {
 			k.Logger(ctx).Error(fmt.Sprintf("[TransferExistingDepositsToHostZones] Zone %s is missing a delegation address!", hostZone.ChainId))

@@ -40,7 +40,7 @@ func (k msgServer) LiquidStake(goCtx context.Context, msg *types.MsgLiquidStake)
 	if err != nil {
 		return nil, errorsmod.Wrapf(err, "user's address is invalid")
 	}
-	hostZoneAddress, err := sdk.AccAddressFromBech32(hostZone.Address)
+	hostZoneDepositAddress, err := sdk.AccAddressFromBech32(hostZone.DepositAddress)
 	if err != nil {
 		return nil, errorsmod.Wrapf(err, "host zone address is invalid")
 	}
@@ -82,7 +82,7 @@ func (k msgServer) LiquidStake(goCtx context.Context, msg *types.MsgLiquidStake)
 	}
 
 	// Transfer the native tokens from the user to module account
-	if err := k.bankKeeper.SendCoins(ctx, liquidStakerAddress, hostZoneAddress, sdk.NewCoins(nativeCoin)); err != nil {
+	if err := k.bankKeeper.SendCoins(ctx, liquidStakerAddress, hostZoneDepositAddress, sdk.NewCoins(nativeCoin)); err != nil {
 		return nil, errorsmod.Wrap(err, "failed to send tokens from Account to Module")
 	}
 

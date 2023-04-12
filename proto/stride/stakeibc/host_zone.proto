@@ -44,7 +44,8 @@ message HostZone {
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
     (gogoproto.nullable) = false
   ];
-  string address = 18 [ (gogoproto.moretags) = "yaml:\"address\"" ];
+  string deposit_address = 18
+      [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
   bool halted = 19;
   string min_redemption_rate = 20 [
     (cosmos_proto.scalar) = "cosmos.Dec",
