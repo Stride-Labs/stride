@@ -169,3 +169,42 @@ func (s *KeeperTestSuite) TestShouldQueryValidatorExchangeRate() {
 		s.Require().Equal(tc.expectedShouldQuery, actualShouldQuery, tc.name)
 	}
 }
+
+func (s *KeeperTestSuite) TestRefundLSMToken() {
+	liquidStakerAddress := s.TestAccs[0]
+	hostZoneAddress := types.NewZoneAddress(HostChainId)
+
+	// Fund the module account with the LSM token
+	lsmTokenIBCDenom := "ibc/cosmosvalXXX"
+	stakeAmount := sdk.NewInt(1000)
+	lsmToken := sdk.NewCoin(lsmTokenIBCDenom, stakeAmount)
+	s.FundAccount(hostZoneAddress, lsmToken)
+
+	// Setup the liquid stake object that provides the context for the refund
+	liquidStake := types.LSMLiquidStake{
+		Staker: liquidStakerAddress,
+		HostZone: types.HostZone{
+			Address: hostZoneAddress.String(),
+		},
+		LSMIBCToken: lsmToken,
+	}
+
+	// Refund the token and check that it has been successfully transferred
+	err := s.App.StakeibcKeeper.RefundLSMToken(s.Ctx, liquidStake)
+	s.Require().NoError(err, "no error expected when refunding LSM token")
+
+	stakerBalance := s.App.BankKeeper.GetBalance(s.Ctx, liquidStakerAddress, lsmTokenIBCDenom)
+	s.CompareCoins(lsmToken, stakerBalance, "staker should have received their LSM token back")
+
+	moduleBalance := s.App.BankKeeper.GetBalance(s.Ctx, hostZoneAddress, lsmTokenIBCDenom)
+	s.True(moduleBalance.IsZero(), "module account should no longer have the LSM token")
+
+	// Attempt to refund again, it should fail from an insufficient balance
+	err = s.App.StakeibcKeeper.RefundLSMToken(s.Ctx, liquidStake)
+	s.Require().ErrorContains(err, "insufficient funds")
+
+	// Attempt to refund with an invalid host zone address, it should fail
+	liquidStake.HostZone.Address = ""
+	err = s.App.StakeibcKeeper.RefundLSMToken(s.Ctx, liquidStake)
+	s.Require().ErrorContains(err, "host zone address is invalid")
+}
