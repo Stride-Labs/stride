@@ -66,7 +66,6 @@ func (k Keeper) UpdateLSMTokenDepositStatus(
 
 func (k Keeper) GetLSMDepositsForHostZone(
 	ctx sdk.Context,
-	deposit types.LSMTokenDeposit,
 	chainId string,
 ) []types.LSMTokenDeposit {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefix(types.LSMTokenDepositKey))
@@ -86,12 +85,11 @@ func (k Keeper) GetLSMDepositsForHostZone(
 
 func (k Keeper) GetLSMDepositsForHostZoneWithStatus(
 	ctx sdk.Context,
-	deposit types.LSMTokenDeposit,
 	chainId string,
 	status types.LSMDepositStatus,
 ) []types.LSMTokenDeposit {
 	filtered := []types.LSMTokenDeposit{}
-	hostZoneLSMTokenDeposits := k.GetLSMDepositsForHostZone(ctx, deposit, chainId)
+	hostZoneLSMTokenDeposits := k.GetLSMDepositsForHostZone(ctx, chainId)
 	for _, deposit := range hostZoneLSMTokenDeposits {
 		if deposit.Status == status {
 			filtered = append(filtered, deposit)
