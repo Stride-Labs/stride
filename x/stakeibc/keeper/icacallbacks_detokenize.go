@@ -13,7 +13,7 @@ import (
 )
 
 // ICACallback after an LSM token is detokenized into native stake
-//   If successful: Remove the token deposit from the store
+//   If successful: Remove the token deposit from the store and unbalanced delegation
 //   If failure: flag the deposit as DETOKENIZATION_FAILED
 //   If timeout: do nothing
 //     - A timeout will force the channel closed, and once the channel is restored,
@@ -49,6 +49,9 @@ func DetokenizeCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, a
 	// If the ICA succeeded, remove the token deposit
 	deposit := detokenizeCallback.Deposit
 	k.RemoveLSMTokenDeposit(ctx, deposit.ChainId, deposit.Denom)
+
+	// Update unbalanced delegation on the host zone and validator
+	// TODO [LSM] - Use helper function
 
 	return nil
 }
