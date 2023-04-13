@@ -23,19 +23,16 @@ func (s *KeeperTestSuite) createNLSMTokenDeposit(n int) []types.LSMTokenDeposit 
 	return deposits
 }
 
-func (s *KeeperTestSuite) createSetNLSMTokenDeposit(n int) []types.LSMTokenDeposit {
-	newDeposits := s.createNLSMTokenDeposit(n)
-	for _, deposit := range newDeposits {
-		s.App.StakeibcKeeper.SetLSMTokenDeposit(s.Ctx, deposit)
-	}
-	return newDeposits
-}
-
-func (s *KeeperTestSuite) SetGivenLSMTokenDeposit(deposits []types.LSMTokenDeposit) []types.LSMTokenDeposit {
+func (s *KeeperTestSuite) setGivenLSMTokenDeposit(deposits []types.LSMTokenDeposit) []types.LSMTokenDeposit {
 	for _, deposit := range deposits {
 		s.App.StakeibcKeeper.SetLSMTokenDeposit(s.Ctx, deposit)
 	}
 	return deposits
+}
+
+func (s *KeeperTestSuite) createSetNLSMTokenDeposit(n int) []types.LSMTokenDeposit {
+	newDeposits := s.createNLSMTokenDeposit(n)
+	return s.setGivenLSMTokenDeposit(newDeposits)
 }
 
 func (s *KeeperTestSuite) TestLSMTokenDepositGet() {
@@ -132,7 +129,7 @@ func (s *KeeperTestSuite) TestLSMDepositsForHostZoneGet() {
 			idx++
 		}
 	}
-	s.SetGivenLSMTokenDeposit(deposits)
+	s.setGivenLSMTokenDeposit(deposits)
 
 	// Check there are i+1 deposits for chainid i, all deposits returned are from right chain
 	for i := 0; i < 5; i++ {
@@ -170,7 +167,7 @@ func (s *KeeperTestSuite) TestLSMDepositsForHostZoneWithStatusGet() {
 			s.Ctx.Logger().Info("combonum %d idx %d", numCombo, idx)
 		}
 	}
-	s.SetGivenLSMTokenDeposit(deposits)
+	s.setGivenLSMTokenDeposit(deposits)
 
 	for hzid := 0; hzid < 5; hzid++ {
 		for sid := 0; sid < len(statuses); sid++ {
