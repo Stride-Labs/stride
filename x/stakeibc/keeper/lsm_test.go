@@ -62,12 +62,14 @@ func (s *KeeperTestSuite) TestDetokenizeLSMDeposit() {
 	s.Require().Equal(initalDeposit, *callbackData.Deposit, "callback data LSM deposit")
 
 	// Remove connection ID and re-submit - should fail
-	hostZone.ConnectionId = ""
-	err = s.App.StakeibcKeeper.DetokenizeLSMDeposit(s.Ctx, hostZone, initalDeposit)
+	hostZoneWithoutConnectionId := hostZone
+	hostZoneWithoutConnectionId.ConnectionId = ""
+	err = s.App.StakeibcKeeper.DetokenizeLSMDeposit(s.Ctx, hostZoneWithoutConnectionId, initalDeposit)
 	s.Require().ErrorContains(err, "unable to submit detokenization ICA")
 
 	// Remove delegation account and re-submit - should also fail
-	hostZone.DelegationAccount.Address = ""
-	err = s.App.StakeibcKeeper.DetokenizeLSMDeposit(s.Ctx, hostZone, initalDeposit)
+	hostZoneWithoutDelegationAccount := hostZone
+	hostZoneWithoutDelegationAccount.DelegationAccount.Address = ""
+	err = s.App.StakeibcKeeper.DetokenizeLSMDeposit(s.Ctx, hostZoneWithoutDelegationAccount, initalDeposit)
 	s.Require().ErrorContains(err, "no delegation account found")
 }
