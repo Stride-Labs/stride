@@ -1,10 +1,12 @@
 package keeper
 
 import (
+	"fmt"
 	"time"
 
 	errorsmod "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	icatypes "github.com/cosmos/ibc-go/v5/modules/apps/27-interchain-accounts/types"
 
 	"github.com/golang/protobuf/proto" //nolint:staticcheck
 
@@ -52,4 +54,35 @@ func (k Keeper) DetokenizeLSMDeposit(ctx sdk.Context, hostZone types.HostZone, d
 	}
 
 	return nil
+}
+
+// Loops through all active host zones, grabs the queued LSMTokenDeposits for that host
+// that are in status DETOKENIZATION_QUEUE, and submits the detokenization ICA for each
+func (k Keeper) DetokenizeAllLSMDeposits(ctx sdk.Context) {
+	// Submit detokenization ICAs for each active host zone
+	for _, hostZone := range k.GetAllActiveHostZone(ctx) {
+		// Get the host zone's delegation ICA portID
+		delegationICAOwner := types.FormatICAAccountOwner(hostZone.ChainId, types.ICAAccountType_DELEGATION)
+		delegationICAPortID, err := icatypes.NewControllerPortID(delegationICAOwner)
+		if err != nil {
+			k.Logger(ctx).Error(fmt.Sprintf("Unable to get delegation port ID for %s: %s", hostZone.ChainId, err))
+		}
+
+		// If the delegation channel is not open, skip this host zone
+		_, isOpen := k.ICAControllerKeeper.GetOpenActiveChannel(ctx, hostZone.ConnectionId, delegationICAPortID)
+		if !isOpen {
+			k.Logger(ctx).Error(fmt.Sprintf("Skipping detokenization ICAs for %s - Delegation ICA channel is closed", hostZone.ChainId))
+			continue
+		}
+
+		// If the delegation channel is open, submit the detokenize ICA
+		for _, deposit := range k.GetLSMDepositsForHostZoneWithStatus(ctx, hostZone.ChainId, types.DETOKENIZATION_QUEUE) {
+			if err := k.DetokenizeLSMDeposit(ctx, hostZone, deposit); err != nil {
+				k.Logger(ctx).Error(fmt.Sprintf("Unable to submit detokenization ICAs for %v%s on %s: %s",
+					deposit.Amount, deposit.Denom, hostZone.ChainId, err.Error()))
+				continue
+			}
+			k.Logger(ctx).Info(fmt.Sprintf("Submitted detokenization ICA for deposit %v%s on %s", deposit.Amount, deposit.Denom, hostZone.ChainId))
+		}
+	}
 }

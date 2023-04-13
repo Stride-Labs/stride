@@ -58,14 +58,13 @@ func (k Keeper) UpdateLSMTokenDepositStatus(ctx sdk.Context, deposit types.LSMTo
 	// TODO [LSM]
 }
 
-func (k Keeper) GetLSMDepositsForHostZone(ctx sdk.Context, deposit types.LSMTokenDeposit, chainId string) []types.LSMTokenDeposit {
+func (k Keeper) GetLSMDepositsForHostZone(ctx sdk.Context, chainId string) []types.LSMTokenDeposit {
 	// TODO [LSM]
 	return []types.LSMTokenDeposit{}
 }
 
 func (k Keeper) GetLSMDepositsForHostZoneWithStatus(
 	ctx sdk.Context,
-	deposit types.LSMTokenDeposit,
 	chainId string,
 	status types.LSMDepositStatus,
 ) []types.LSMTokenDeposit {
