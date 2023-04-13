@@ -22,14 +22,15 @@ import (
 )
 
 // Exchanges a user's LSM tokenized shares for stTokens using the current redemption rate
-// The LSM tokens must live on Stride with an IBC denomination before this function is called
+// The LSM tokens must live on Stride as an IBC voucher (whose denomtrace we recognize)
+//   before this function is called
 //
 // The typical flow:
 //   - A staker tokenizes their delegation on the host zone
 //   - The staker IBC transfers their tokenized shares to Stride
 //   - They then call LSMLiquidStake
-//   - The staker's LSM Tokens are sent to the Stride module account
-//   - The staker recieves stTokens
+//     - The staker's LSM Tokens are sent to the Stride module account
+//     - The staker recieves stTokens
 //
 // As a safety measure, at period checkpoints, the validator's exchange rate is queried and the transaction
 // is not settled until the query returns
@@ -64,6 +65,8 @@ func (k msgServer) LSMLiquidStake(goCtx context.Context, msg *types.MsgLSMLiquid
 // This includes validation on the LSM Token, and the escrowing of tokens
 func (k Keeper) StartLSMLiquidStake(ctx sdk.Context, msg *types.MsgLSMLiquidStake) (types.LSMLiquidStake, error) {
 	// Get the denom trace from the IBC hash - this includes the full path and base denom
+	// Ex: LSMTokenIbcDenom of `ibc/XXX` might create a DenomTrace with:
+	//     BaseDenom: cosmosvaloperXXX/42, Path: transfer/channel-0
 	denomTrace, err := k.GetLSMTokenDenomTrace(ctx, msg.LsmTokenIbcDenom)
 	if err != nil {
 		return types.LSMLiquidStake{}, err

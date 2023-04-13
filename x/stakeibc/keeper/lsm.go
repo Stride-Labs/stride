@@ -14,7 +14,6 @@ import (
 )
 
 var (
-	// QUESTION: Is this too restrictive? Would we ever want to accept a LSM token from more than 1 hop away?
 	// A valid IBC path for the LSM token must only consist of 1 channel hop along a transfer channel
 	// (e.g. "transfer/channel-0")
 	IsValidIBCPath = regexp.MustCompile(fmt.Sprintf(`^%s/(%s[0-9]{1,20})$`, transfertypes.PortID, channeltypes.ChannelPrefix)).MatchString
@@ -106,5 +105,7 @@ func (k Keeper) ShouldQueryValidatorExchangeRate(ctx sdk.Context, validator type
 	newProgress := validator.ProgressTowardsExchangeRateQuery.Add(stakeAmount)
 
 	// Submit query if the query interval checkpoint has been breached
+	// Ex: Query Interval: 1000, Old Progress: 900, New Progress: 1100
+	//     => OldProgress/Interval: 0, NewProgress/Interval: 1
 	return oldProgress.Quo(queryInterval).LT(newProgress.Quo(queryInterval))
 }
