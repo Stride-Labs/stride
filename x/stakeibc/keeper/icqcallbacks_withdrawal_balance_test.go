@@ -53,13 +53,10 @@ func (s *KeeperTestSuite) SetupWithdrawalBalanceCallbackTest() WithdrawalBalance
 	feeAddress := "cosmos_FEE"
 
 	hostZone := stakeibctypes.HostZone{
-		ChainId:      HostChainId,
-		HostDenom:    Atom,
-		ConnectionId: ibctesting.FirstConnectionID,
-		DelegationAccount: &stakeibctypes.ICAAccount{
-			Address: delegationAddress,
-			Target:  stakeibctypes.ICAAccountType_DELEGATION,
-		},
+		ChainId:              HostChainId,
+		HostDenom:            Atom,
+		ConnectionId:         ibctesting.FirstConnectionID,
+		DelegationIcaAddress: delegationAddress,
 		WithdrawalIcaAddress: withdrawalAddress,
 		FeeIcaAddress:        feeAddress,
 	}
@@ -214,7 +211,7 @@ func (s *KeeperTestSuite) TestWithdrawalBalanceCallback_NoDelegationAccount() {
 
 	// Remove the delegation account
 	badHostZone := tc.initialState.hostZone
-	badHostZone.DelegationAccount = nil
+	badHostZone.DelegationIcaAddress = ""
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, badHostZone)
 
 	err := stakeibckeeper.WithdrawalBalanceCallback(s.App.StakeibcKeeper, s.Ctx, tc.validArgs.callbackArgs, tc.validArgs.query)

@@ -15,11 +15,12 @@ message HostZone {
   string transfer_channel_id = 12;
   repeated Validator validators = 3;
   repeated Validator blacklisted_validators = 4;
-  string withdrawal_ica_address = 23
+  string ica_withdrawal_address = 23
       [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
   string fee_ica_address = 24
       [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
-  ICAAccount delegation_account = 7;
+  string delegation_ica_address = 25
+      [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
   ICAAccount redemption_account = 16;
   // ibc denom on stride
   string ibc_denom = 8;
@@ -57,6 +58,6 @@ message HostZone {
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false
   ];
-  reserved 5, 6, 15;
-  // next id: 24
+  reserved 5, 6, 7, 15;
+  // next id: 26
 }

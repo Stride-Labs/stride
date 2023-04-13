@@ -167,14 +167,14 @@ func (s *KeeperTestSuite) SetupDepositRecords() DepositRecordsTestCase {
 	}
 
 	hostZone := stakeibctypes.HostZone{
-		ChainId:           HostChainId,
-		Address:           hostModuleAddress.String(),
-		DelegationAccount: &stakeibctypes.ICAAccount{Address: delegationAddress},
-		ConnectionId:      ibctesting.FirstConnectionID,
-		TransferChannelId: ibctesting.FirstChannelID,
-		HostDenom:         Atom,
-		IbcDenom:          ibcDenomTrace.IBCDenom(),
-		Validators:        validators,
+		ChainId:              HostChainId,
+		Address:              hostModuleAddress.String(),
+		DelegationIcaAddress: delegationAddress,
+		ConnectionId:         ibctesting.FirstConnectionID,
+		TransferChannelId:    ibctesting.FirstChannelID,
+		HostDenom:            Atom,
+		IbcDenom:             ibcDenomTrace.IBCDenom(),
+		Validators:           validators,
 	}
 
 	currentEpoch := uint64(2)
@@ -376,18 +376,7 @@ func (s *KeeperTestSuite) TestTransferDepositRecords_NoDelegationAccount() {
 	tc := s.SetupDepositRecords()
 	// Remove the delegation account from the host zone
 	badHostZone := tc.hostZone
-	badHostZone.DelegationAccount = nil
-	s.App.StakeibcKeeper.SetHostZone(s.Ctx, badHostZone)
-
-	numFailed := len(tc.initialDepositRecords.recordsToBeTransfered)
-	s.CheckStateAfterTransferringDepositRecords(tc, numFailed)
-}
-
-func (s *KeeperTestSuite) TestTransferDepositRecords_NoDelegationAddress() {
-	tc := s.SetupDepositRecords()
-	// Remove the delegation address from the host zone
-	badHostZone := tc.hostZone
-	badHostZone.DelegationAccount.Address = ""
+	badHostZone.DelegationIcaAddress = ""
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, badHostZone)
 
 	numFailed := len(tc.initialDepositRecords.recordsToBeTransfered)
@@ -493,18 +482,7 @@ func (s *KeeperTestSuite) TestStakeDepositRecords_NoDelegationAccount() {
 	tc := s.SetupDepositRecords()
 	// Remove the delegation account from the host zone
 	badHostZone := tc.hostZone
-	badHostZone.DelegationAccount = nil
-	s.App.StakeibcKeeper.SetHostZone(s.Ctx, badHostZone)
-
-	numFailed := len(tc.initialDepositRecords.recordsToBeStaked)
-	s.CheckStateAfterStakingDepositRecords(tc, numFailed)
-}
-
-func (s *KeeperTestSuite) TestStakeDepositRecords_NoDelegationAddress() {
-	tc := s.SetupDepositRecords()
-	// Remove the delegation address from the host zone
-	badHostZone := tc.hostZone
-	badHostZone.DelegationAccount.Address = ""
+	badHostZone.DelegationIcaAddress = ""
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, badHostZone)
 
 	numFailed := len(tc.initialDepositRecords.recordsToBeStaked)

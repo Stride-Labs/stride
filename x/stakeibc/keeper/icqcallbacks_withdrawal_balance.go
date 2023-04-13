@@ -53,8 +53,7 @@ func WithdrawalBalanceCallback(k Keeper, ctx sdk.Context, args []byte, query icq
 	if hostZone.WithdrawalIcaAddress == "" {
 		return errorsmod.Wrapf(types.ErrICAAccountNotFound, "no withdrawal account found for %s", chainId)
 	}
-	delegationAccount := hostZone.DelegationAccount
-	if delegationAccount == nil || delegationAccount.Address == "" {
+	if hostZone.DelegationIcaAddress == "" {
 		return errorsmod.Wrapf(types.ErrICAAccountNotFound, "no delegation account found for %s", chainId)
 	}
 	if hostZone.FeeIcaAddress == "" {

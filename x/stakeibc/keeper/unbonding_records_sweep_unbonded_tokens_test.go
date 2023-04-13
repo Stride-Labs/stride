@@ -27,10 +27,6 @@ func (s *KeeperTestSuite) SetupSweepUnbondedTokens() SweepUnbondedTokensTestCase
 			Weight:             uint64(10),
 		},
 	}
-	gaiaDelegationAccount := stakeibc.ICAAccount{
-		Address: "cosmos_DELEGATION",
-		Target:  stakeibc.ICAAccountType_DELEGATION,
-	}
 	gaiaRedemptionAccount := stakeibc.ICAAccount{
 		Address: "cosmos_REDEMPTION",
 		Target:  stakeibc.ICAAccountType_REDEMPTION,
@@ -41,10 +37,6 @@ func (s *KeeperTestSuite) SetupSweepUnbondedTokens() SweepUnbondedTokensTestCase
 			BalancedDelegation: sdkmath.NewInt(5_000_000),
 			Weight:             uint64(10),
 		},
-	}
-	osmoDelegationAccount := stakeibc.ICAAccount{
-		Address: "osmo_DELEGATION",
-		Target:  stakeibc.ICAAccountType_DELEGATION,
 	}
 	osmoRedemptionAccount := stakeibc.ICAAccount{
 		Address: "osmo_REDEMPTION",
@@ -57,7 +49,7 @@ func (s *KeeperTestSuite) SetupSweepUnbondedTokens() SweepUnbondedTokensTestCase
 			Bech32Prefix:             GaiaPrefix,
 			UnbondingFrequency:       3,
 			Validators:               gaiaValidators,
-			DelegationAccount:        &gaiaDelegationAccount,
+			DelegationIcaAddress:     "cosmos_DELEGATION",
 			RedemptionAccount:        &gaiaRedemptionAccount,
 			TotalBalancedDelegations: sdkmath.NewInt(5_000_000),
 			ConnectionId:             ibctesting.FirstConnectionID,
@@ -68,7 +60,7 @@ func (s *KeeperTestSuite) SetupSweepUnbondedTokens() SweepUnbondedTokensTestCase
 			Bech32Prefix:             OsmoPrefix,
 			UnbondingFrequency:       4,
 			Validators:               osmoValidators,
-			DelegationAccount:        &osmoDelegationAccount,
+			DelegationIcaAddress:     "osmo_DELEGATION",
 			RedemptionAccount:        &osmoRedemptionAccount,
 			TotalBalancedDelegations: sdkmath.NewInt(5_000_000),
 			ConnectionId:             ibctesting.FirstConnectionID,
@@ -197,7 +189,7 @@ func (s *KeeperTestSuite) TestSweepUnbondedTokens_RedemptionAccountMissing() {
 func (s *KeeperTestSuite) TestSweepUnbondedTokens_DelegationAccountAddressMissing() {
 	s.SetupSweepUnbondedTokens()
 	hostZone, _ := s.App.StakeibcKeeper.GetHostZone(s.Ctx, "OSMO")
-	hostZone.DelegationAccount.Address = ""
+	hostZone.DelegationIcaAddress = ""
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
 	success, successfulSweeps, sweepAmounts, failedSweeps := s.App.StakeibcKeeper.SweepAllUnbondedTokens(s.Ctx)
 	s.Require().False(success, "sweep all tokens failed if gaia missing")

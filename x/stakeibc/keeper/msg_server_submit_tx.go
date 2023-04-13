@@ -43,10 +43,8 @@ func (k Keeper) DelegateOnHost(ctx sdk.Context, hostZone types.HostZone, amt sdk
 	}
 
 	// Fetch the relevant ICA
-	delegationAccount := hostZone.DelegationAccount
-	if delegationAccount == nil || delegationAccount.Address == "" {
-		k.Logger(ctx).Error(fmt.Sprintf("Zone %s is missing a delegation address!", hostZone.ChainId))
-		return errorsmod.Wrapf(sdkerrors.ErrInvalidAddress, "Invalid delegation account")
+	if hostZone.DelegationIcaAddress == "" {
+		errorsmod.Wrapf(types.ErrICAAccountNotFound, "no delegation account found for %s", hostZone.ChainId)
 	}
 
 	// Construct the transaction
@@ -62,7 +60,7 @@ func (k Keeper) DelegateOnHost(ctx sdk.Context, hostZone types.HostZone, amt sdk
 		relativeAmount := sdk.NewCoin(amt.Denom, targetDelegatedAmts[validator.Address])
 		if relativeAmount.Amount.IsPositive() {
 			msgs = append(msgs, &stakingTypes.MsgDelegate{
-				DelegatorAddress: delegationAccount.Address,
+				DelegatorAddress: hostZone.DelegationIcaAddress,
 				ValidatorAddress: validator.Address,
 				Amount:           relativeAmount,
 			})
@@ -87,7 +85,7 @@ func (k Keeper) DelegateOnHost(ctx sdk.Context, hostZone types.HostZone, amt sdk
 	}
 
 	// Send the transaction through SubmitTx
-	_, err = k.SubmitTxsStrideEpoch(ctx, connectionId, msgs, *delegationAccount, ICACallbackID_Delegate, marshalledCallbackArgs)
+	_, err = k.SubmitTxsStrideEpoch(ctx, connectionId, msgs, hostZone.DelegationIcaAddress, ICACallbackID_Delegate, marshalledCallbackArgs)
 	if err != nil {
 		return errorsmod.Wrapf(err, "Failed to SubmitTxs for connectionId %s on %s. Messages: %s", connectionId, hostZone.ChainId, msgs)
 	}
@@ -113,8 +111,7 @@ func (k Keeper) SetWithdrawalAddressOnHost(ctx sdk.Context, hostZone types.HostZ
 	}
 
 	// Fetch the relevant ICA
-	delegationAccount := hostZone.DelegationAccount
-	if delegationAccount == nil || delegationAccount.Address == "" {
+	if hostZone.DelegationIcaAddress == "" {
 		k.Logger(ctx).Error(fmt.Sprintf("Zone %s is missing a delegation address!", hostZone.ChainId))
 		return nil
 	}
@@ -124,16 +121,16 @@ func (k Keeper) SetWithdrawalAddressOnHost(ctx sdk.Context, hostZone types.HostZ
 		return nil
 	}
 	k.Logger(ctx).Info(utils.LogWithHostZone(hostZone.ChainId, "Withdrawal Address: %s, Delegator Address: %s",
-		hostZone.WithdrawalIcaAddress, delegationAccount.Address))
+		hostZone.WithdrawalIcaAddress, hostZone.DelegationIcaAddress))
 
 	// Construct the ICA message
 	msgs := []sdk.Msg{
 		&distributiontypes.MsgSetWithdrawAddress{
-			DelegatorAddress: delegationAccount.Address,
+			DelegatorAddress: hostZone.DelegationIcaAddress,
 			WithdrawAddress:  hostZone.WithdrawalIcaAddress,
 		},
 	}
-	_, err = k.SubmitTxsStrideEpoch(ctx, connectionId, msgs, *delegationAccount, "", nil)
+	_, err = k.SubmitTxsStrideEpoch(ctx, connectionId, msgs, hostZone.DelegationIcaAddress, "", nil)
 	if err != nil {
 		return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "Failed to SubmitTxs for %s, %s, %s", connectionId, hostZone.ChainId, msgs)
 	}
@@ -422,15 +419,14 @@ func (k Keeper) QueryDelegationsIcq(ctx sdk.Context, hostZone types.HostZone, va
 	}
 
 	// Get the validator and delegator encoded addresses to form the query request
-	delegationAccount := hostZone.DelegationAccount
-	if delegationAccount == nil || delegationAccount.Address == "" {
+	if hostZone.DelegationIcaAddress == "" {
 		return errorsmod.Wrapf(types.ErrICAAccountNotFound, "no delegation address found for %s", hostZone.ChainId)
 	}
 	_, validatorAddressBz, err := bech32.DecodeAndConvert(valoper)
 	if err != nil {
 		return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "invalid validator address, could not decode (%s)", err.Error())
 	}
-	_, delegatorAddressBz, err := bech32.DecodeAndConvert(delegationAccount.Address)
+	_, delegatorAddressBz, err := bech32.DecodeAndConvert(hostZone.DelegationIcaAddress)
 	if err != nil {
 		return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "invalid delegator address, could not decode (%s)", err.Error())
 	}

@@ -60,13 +60,10 @@ func (k msgServer) RebalanceValidators(goCtx context.Context, msg *types.MsgReba
 	}
 
 	var msgs []sdk.Msg
-	delegationIca := hostZone.GetDelegationAccount()
-	if delegationIca == nil || delegationIca.GetAddress() == "" {
+	if hostZone.DelegationIcaAddress == "" {
 		k.Logger(ctx).Error(fmt.Sprintf("Zone %s is missing a delegation address!", hostZone.ChainId))
 		return nil, errorsmod.Wrapf(sdkerrors.ErrInvalidAddress, "Invalid delegation account")
 	}
-
-	delegatorAddress := delegationIca.GetAddress()
 
 	// start construction callback
 	rebalanceCallback := types.RebalanceCallback{
@@ -95,7 +92,7 @@ func (k msgServer) RebalanceValidators(goCtx context.Context, msg *types.MsgReba
 			overWeightIndex += 1
 			// issue an ICA call to the host zone to rebalance the validator
 			redelegateMsg = &stakingTypes.MsgBeginRedelegate{
-				DelegatorAddress:    delegatorAddress,
+				DelegatorAddress:    hostZone.DelegationIcaAddress,
 				ValidatorSrcAddress: overWeightElem.valAddr,
 				ValidatorDstAddress: underWeightElem.valAddr,
 				Amount:              sdk.NewCoin(hostZone.HostDenom, overWeightElemAbs)}
@@ -107,7 +104,7 @@ func (k msgServer) RebalanceValidators(goCtx context.Context, msg *types.MsgReba
 			underWeightIndex -= 1
 			// issue an ICA call to the host zone to rebalance the validator
 			redelegateMsg = &stakingTypes.MsgBeginRedelegate{
-				DelegatorAddress:    delegatorAddress,
+				DelegatorAddress:    hostZone.DelegationIcaAddress,
 				ValidatorSrcAddress: overWeightElem.valAddr,
 				ValidatorDstAddress: underWeightElem.valAddr,
 				Amount:              sdk.NewCoin(hostZone.HostDenom, underWeightElem.deltaAmt)}
@@ -119,7 +116,7 @@ func (k msgServer) RebalanceValidators(goCtx context.Context, msg *types.MsgReba
 			overWeightIndex += 1
 			// issue an ICA call to the host zone to rebalance the validator
 			redelegateMsg = &stakingTypes.MsgBeginRedelegate{
-				DelegatorAddress:    delegatorAddress,
+				DelegatorAddress:    hostZone.DelegationIcaAddress,
 				ValidatorSrcAddress: overWeightElem.valAddr,
 				ValidatorDstAddress: underWeightElem.valAddr,
 				Amount:              sdk.NewCoin(hostZone.HostDenom, underWeightElem.deltaAmt)}
@@ -144,7 +141,7 @@ func (k msgServer) RebalanceValidators(goCtx context.Context, msg *types.MsgReba
 	}
 
 	connectionId := hostZone.GetConnectionId()
-	_, err = k.SubmitTxsStrideEpoch(ctx, connectionId, msgs, *hostZone.GetDelegationAccount(), ICACallbackID_Rebalance, marshalledCallbackArgs)
+	_, err = k.SubmitTxsStrideEpoch(ctx, connectionId, msgs, hostZone.DelegationIcaAddress, ICACallbackID_Rebalance, marshalledCallbackArgs)
 	if err != nil {
 		return nil, errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "Failed to SubmitTxs for %s, %s, %s, %s", connectionId, hostZone.ChainId, msgs, err.Error())
 	}

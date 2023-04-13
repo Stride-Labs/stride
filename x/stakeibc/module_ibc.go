@@ -115,7 +115,7 @@ func (im IBCModule) OnChanOpenAck(
 		zoneInfo.FeeIcaAddress = address
 	// delegation address
 	case portID == delegationAddress:
-		zoneInfo.DelegationAccount = &types.ICAAccount{Address: address, Target: types.ICAAccountType_DELEGATION}
+		zoneInfo.DelegationIcaAddress = address
 	case portID == redemptionAddress:
 		zoneInfo.RedemptionAccount = &types.ICAAccount{Address: address, Target: types.ICAAccountType_REDEMPTION}
 	default:

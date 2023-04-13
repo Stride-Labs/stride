@@ -8,7 +8,6 @@ import (
 
 	epochtypes "github.com/Stride-Labs/stride/v8/x/epochs/types"
 	"github.com/Stride-Labs/stride/v8/x/stakeibc/types"
-	stakeibctypes "github.com/Stride-Labs/stride/v8/x/stakeibc/types"
 )
 
 // ================================ 1: QueryValidatorExchangeRate =============================================
@@ -163,12 +162,12 @@ func (s *KeeperTestSuite) SetupQueryDelegationsIcq() QueryDelegationsIcqTestCase
 	delegationAddress := s.IcaAddresses[delegationAccountOwner]
 
 	hostZone := types.HostZone{
-		ChainId:           HostChainId,
-		ConnectionId:      ibctesting.FirstConnectionID,
-		HostDenom:         Atom,
-		IbcDenom:          IbcAtom,
-		Bech32Prefix:      Bech32Prefix,
-		DelegationAccount: &stakeibctypes.ICAAccount{Address: delegationAddress},
+		ChainId:              HostChainId,
+		ConnectionId:         ibctesting.FirstConnectionID,
+		HostDenom:            Atom,
+		IbcDenom:             IbcAtom,
+		Bech32Prefix:         Bech32Prefix,
+		DelegationIcaAddress: delegationAddress,
 	}
 
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
@@ -242,7 +241,7 @@ func (s *KeeperTestSuite) TestQueryDelegationsIcq_BeforeBufferWindow() {
 func (s *KeeperTestSuite) TestQueryDelegationsIcq_MissingDelegationAddress() {
 	tc := s.SetupQueryDelegationsIcq()
 
-	tc.hostZone.DelegationAccount = nil
+	tc.hostZone.DelegationIcaAddress = ""
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, tc.hostZone)
 
 	err := s.App.StakeibcKeeper.QueryDelegationsIcq(s.Ctx, tc.hostZone, tc.valoperAddr)
