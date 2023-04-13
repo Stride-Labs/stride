@@ -158,7 +158,7 @@ paths:
     src-channel-filter:
       rule: ""
       channel-list: []
-  provider-sei:
+  stride-provider:
     src:
       chain-id: STRIDE
     dst:

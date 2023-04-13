@@ -23,8 +23,6 @@ require (
 	gopkg.in/yaml.v2 v2.4.0
 )
 
-require github.com/regen-network/cosmos-proto v0.3.1 // indirect
-
 require (
 	github.com/coinbase/rosetta-sdk-go/types v1.0.0 // indirect
 	github.com/cosmos/ics23/go v0.9.1-0.20221207100636-b1abd8678aab
@@ -189,7 +187,8 @@ replace (
 	// fork cast to add additional error checking
 	github.com/spf13/cast => github.com/Stride-Labs/cast v0.0.3
 
+	github.com/syndtr/goleveldb => github.com/syndtr/goleveldb v1.0.1-0.20210819022825-2ae1ddf74ef7
+
 	// use the version of grpc compatible with the regen networks protobufs.
 	google.golang.org/grpc => google.golang.org/grpc v1.50.1
-
 )

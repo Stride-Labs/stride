@@ -172,33 +172,33 @@ services:
       - ./state/host5:/home/stride/.stride
 
   # Fill in new host zone being tested here
-  prv1:
+  provider1:
     image: stridezone:provider
     volumes:
-      - ./state/prv1:/home/provider/.interchain-security-p
+      - ./state/provider1:/home/provider/.interchain-security-p
     ports:
       - "26057:26657"
       - "1257:1317"
       - "9030:9090"
-  prv2:
+  provider2:
     image: stridezone:provider
     volumes:
-      - ./state/prv2:/home/provider/.interchain-security-p
+      - ./state/provider2:/home/provider/.interchain-security-p
 
-  prv3:
+  provider3:
     image: stridezone:provider
     volumes:
-      - ./state/prv3:/home/provider/.interchain-security-p
+      - ./state/provider3:/home/provider/.interchain-security-p
 
-  prv4:
+  provider4:
     image: stridezone:provider
     volumes:
-      - ./state/prv4:/home/provider/.interchain-security-p
+      - ./state/provider4:/home/provider/.interchain-security-p
 
-  prv5:
+  provider5:
     image: stridezone:provider
     volumes:
-      - ./state/prv5:/home/provider/.interchain-security-p
+      - ./state/provider5:/home/provider/.interchain-security-p
 
   hermes:
     image: stridezone:hermes
