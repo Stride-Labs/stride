@@ -165,10 +165,10 @@ message QueryAddressUnbondingsResponse {
 
 message QueryLSMDepositsRequest {
   string chain_id = 1;
-  optional string status = 2;
+  optional LSMDepositStatus status = 2;
   optional string denom = 3;
 }
 
 message QueryLSMDepositsResponse {
-  repeated LSMTokenDeposit lsm_deposit = 1 [ (gogoproto.nullable) = false ];
+  repeated LSMTokenDeposit deposits = 1 [ (gogoproto.nullable) = false ];
 }

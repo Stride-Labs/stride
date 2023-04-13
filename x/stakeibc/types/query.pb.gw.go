@@ -533,6 +533,7 @@ func request_Query_LSMDeposits_1(ctx context.Context, marshaler runtime.Marshale
 
 	var (
 		val string
+		e   int32
 		ok  bool
 		err error
 		_   = err
@@ -554,16 +555,18 @@ func request_Query_LSMDeposits_1(ctx context.Context, marshaler runtime.Marshale
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "status")
 	}
 
+	e, err = runtime.Enum(val, LSMDepositStatus_value)
+
+	if err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "status", err)
+	}
+
 	if protoReq.XStatus == nil {
 		protoReq.XStatus = &QueryLSMDepositsRequest_Status{}
 	} else if _, ok := protoReq.XStatus.(*QueryLSMDepositsRequest_Status); !ok {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "expect type: *QueryLSMDepositsRequest_Status, but: %t\n", protoReq.XStatus)
 	}
-	protoReq.XStatus.(*QueryLSMDepositsRequest_Status).Status, err = runtime.String(val)
-
-	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "status", err)
-	}
+	protoReq.XStatus.(*QueryLSMDepositsRequest_Status).Status = LSMDepositStatus(e)
 
 	if err := req.ParseForm(); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
@@ -583,6 +586,7 @@ func local_request_Query_LSMDeposits_1(ctx context.Context, marshaler runtime.Ma
 
 	var (
 		val string
+		e   int32
 		ok  bool
 		err error
 		_   = err
@@ -604,16 +608,18 @@ func local_request_Query_LSMDeposits_1(ctx context.Context, marshaler runtime.Ma
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "status")
 	}
 
+	e, err = runtime.Enum(val, LSMDepositStatus_value)
+
+	if err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "status", err)
+	}
+
 	if protoReq.XStatus == nil {
 		protoReq.XStatus = &QueryLSMDepositsRequest_Status{}
 	} else if _, ok := protoReq.XStatus.(*QueryLSMDepositsRequest_Status); !ok {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "expect type: *QueryLSMDepositsRequest_Status, but: %t\n", protoReq.XStatus)
 	}
-	protoReq.XStatus.(*QueryLSMDepositsRequest_Status).Status, err = runtime.String(val)
-
-	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "status", err)
-	}
+	protoReq.XStatus.(*QueryLSMDepositsRequest_Status).Status = LSMDepositStatus(e)
 
 	if err := req.ParseForm(); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
