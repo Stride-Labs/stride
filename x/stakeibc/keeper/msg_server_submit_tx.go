@@ -85,7 +85,7 @@ func (k Keeper) DelegateOnHost(ctx sdk.Context, hostZone types.HostZone, amt sdk
 	}
 
 	// Send the transaction through SubmitTx
-	_, err = k.SubmitTxsStrideEpoch(ctx, connectionId, msgs, hostZone.DelegationIcaAddress, ICACallbackID_Delegate, marshalledCallbackArgs)
+	_, err = k.SubmitTxsStrideEpoch(ctx, connectionId, msgs, types.ICAAccountType_DELEGATION, ICACallbackID_Delegate, marshalledCallbackArgs)
 	if err != nil {
 		return errorsmod.Wrapf(err, "Failed to SubmitTxs for connectionId %s on %s. Messages: %s", connectionId, hostZone.ChainId, msgs)
 	}
@@ -130,7 +130,7 @@ func (k Keeper) SetWithdrawalAddressOnHost(ctx sdk.Context, hostZone types.HostZ
 			WithdrawAddress:  hostZone.WithdrawalIcaAddress,
 		},
 	}
-	_, err = k.SubmitTxsStrideEpoch(ctx, connectionId, msgs, hostZone.DelegationIcaAddress, "", nil)
+	_, err = k.SubmitTxsStrideEpoch(ctx, connectionId, msgs, types.ICAAccountType_DELEGATION, "", nil)
 	if err != nil {
 		return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "Failed to SubmitTxs for %s, %s, %s", connectionId, hostZone.ChainId, msgs)
 	}
@@ -194,11 +194,11 @@ func (k Keeper) SubmitTxsDayEpoch(
 	ctx sdk.Context,
 	connectionId string,
 	msgs []sdk.Msg,
-	account types.ICAAccount,
+	icaAccountType types.ICAAccountType,
 	callbackId string,
 	callbackArgs []byte,
 ) (uint64, error) {
-	sequence, err := k.SubmitTxsEpoch(ctx, connectionId, msgs, account, epochstypes.DAY_EPOCH, callbackId, callbackArgs)
+	sequence, err := k.SubmitTxsEpoch(ctx, connectionId, msgs, icaAccountType, epochstypes.DAY_EPOCH, callbackId, callbackArgs)
 	if err != nil {
 		return 0, err
 	}
@@ -209,11 +209,11 @@ func (k Keeper) SubmitTxsStrideEpoch(
 	ctx sdk.Context,
 	connectionId string,
 	msgs []sdk.Msg,
-	account types.ICAAccount,
+	icaAccountType types.ICAAccountType,
 	callbackId string,
 	callbackArgs []byte,
 ) (uint64, error) {
-	sequence, err := k.SubmitTxsEpoch(ctx, connectionId, msgs, account, epochstypes.STRIDE_EPOCH, callbackId, callbackArgs)
+	sequence, err := k.SubmitTxsEpoch(ctx, connectionId, msgs, icaAccountType, epochstypes.STRIDE_EPOCH, callbackId, callbackArgs)
 	if err != nil {
 		return 0, err
 	}
@@ -224,7 +224,7 @@ func (k Keeper) SubmitTxsEpoch(
 	ctx sdk.Context,
 	connectionId string,
 	msgs []sdk.Msg,
-	account types.ICAAccount,
+	icaAccountType types.ICAAccountType,
 	epochType string,
 	callbackId string,
 	callbackArgs []byte,
@@ -234,7 +234,7 @@ func (k Keeper) SubmitTxsEpoch(
 		k.Logger(ctx).Error(fmt.Sprintf("Failed to get ICA timeout nanos for epochType %s using param, error: %s", epochType, err.Error()))
 		return 0, errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "Failed to convert timeoutNanos to uint64, error: %s", err.Error())
 	}
-	sequence, err := k.SubmitTxs(ctx, connectionId, msgs, account, timeoutNanosUint64, callbackId, callbackArgs)
+	sequence, err := k.SubmitTxs(ctx, connectionId, msgs, icaAccountType, timeoutNanosUint64, callbackId, callbackArgs)
 	if err != nil {
 		return 0, err
 	}
@@ -246,7 +246,7 @@ func (k Keeper) SubmitTxs(
 	ctx sdk.Context,
 	connectionId string,
 	msgs []sdk.Msg,
-	account types.ICAAccount,
+	icaAccountType types.ICAAccountType,
 	timeoutTimestamp uint64,
 	callbackId string,
 	callbackArgs []byte,
@@ -255,7 +255,7 @@ func (k Keeper) SubmitTxs(
 	if err != nil {
 		return 0, err
 	}
-	owner := types.FormatICAAccountOwner(chainId, account.Target)
+	owner := types.FormatICAAccountOwner(chainId, icaAccountType)
 	portID, err := icatypes.NewControllerPortID(owner)
 	if err != nil {
 		return 0, err

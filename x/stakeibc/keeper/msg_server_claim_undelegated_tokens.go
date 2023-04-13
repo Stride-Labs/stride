@@ -15,11 +15,10 @@ import (
 )
 
 type IcaTx struct {
-	ConnectionId string
-	Msgs         []sdk.Msg
-	AccountType  types.ICAAccountType
-	ICAAddress   string
-	Timeout      uint64
+	ConnectionId   string
+	Msgs           []sdk.Msg
+	ICAAccountType types.ICAAccountType
+	Timeout        uint64
 }
 
 func (k msgServer) ClaimUndelegatedTokens(goCtx context.Context, msg *types.MsgClaimUndelegatedTokens) (*types.MsgClaimUndelegatedTokensResponse, error) {
@@ -57,7 +56,7 @@ func (k msgServer) ClaimUndelegatedTokens(goCtx context.Context, msg *types.MsgC
 	if err != nil {
 		return nil, errorsmod.Wrap(err, "unable to marshal claim callback args")
 	}
-	_, err = k.SubmitTxs(ctx, icaTx.ConnectionId, icaTx.Msgs, icaTx.Account, icaTx.Timeout, ICACallbackID_Claim, marshalledCallbackArgs)
+	_, err = k.SubmitTxs(ctx, icaTx.ConnectionId, icaTx.Msgs, icaTx.ICAAccountType, icaTx.Timeout, ICACallbackID_Claim, marshalledCallbackArgs)
 	if err != nil {
 		k.Logger(ctx).Error(fmt.Sprintf("Submit tx error: %s", err.Error()))
 		return nil, errorsmod.Wrap(err, "unable to submit ICA redemption tx")
@@ -132,11 +131,10 @@ func (k Keeper) GetRedemptionTransferMsg(ctx sdk.Context, userRedemptionRecord *
 	timeout := nextEpochStarttime + icaTimeOutNanos
 
 	icaTx := IcaTx{
-		ConnectionId: hostZone.GetConnectionId(),
-		Msgs:         msgs,
-		AccountType:  types.ICAAccountType_REDEMPTION,
-		ICAAddress:   hostZone.RedemptionIcaAddress,
-		Timeout:      timeout,
+		ConnectionId:   hostZone.GetConnectionId(),
+		Msgs:           msgs,
+		ICAAccountType: types.ICAAccountType_REDEMPTION,
+		Timeout:        timeout,
 	}
 
 	return &icaTx, nil
