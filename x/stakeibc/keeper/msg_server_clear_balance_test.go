@@ -99,7 +99,7 @@ func (s *KeeperTestSuite) TestClearBalance_FeeAccountMissing() {
 	tc.initialState.hz.FeeIcaAddress = ""
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, tc.initialState.hz)
 	_, err := s.GetMsgServer().ClearBalance(sdk.WrapSDKContext(s.Ctx), &tc.validMsg)
-	s.Require().EqualError(err, "chainId: GAIA: fee account is not registered")
+	s.Require().EqualError(err, "fee acount not found for chainId: GAIA: ICA acccount not found on host zone")
 }
 
 func (s *KeeperTestSuite) TestClearBalance_ParseCoinError() {

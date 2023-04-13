@@ -108,7 +108,7 @@ func (k Keeper) GetRedemptionTransferMsg(ctx sdk.Context, userRedemptionRecord *
 		return nil, errorsmod.Wrapf(types.ErrInvalidHostZone, "Host zone %s not found", hostZoneId)
 	}
 	if hostZone.RedemptionIcaAddress == "" {
-		return nil, errorsmod.Wrapf(types.ErrICAAccountNotFound, "redemption account not found for %s", hostZoneId)
+		return nil, errorsmod.Wrapf(types.ErrICAAccountNotFound, "Redemption account not found for host zone %s", hostZoneId)
 	}
 
 	var msgs []sdk.Msg

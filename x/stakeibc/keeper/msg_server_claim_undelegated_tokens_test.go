@@ -182,7 +182,7 @@ func (s *KeeperTestSuite) TestClaimUndelegatedTokens_NoRedemptionAccount() {
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
 
 	_, err := s.App.StakeibcKeeper.GetRedemptionTransferMsg(s.Ctx, &tc.initialState.redemptionRecord, tc.validMsg.HostZoneId)
-	s.Require().EqualError(err, "Redemption account not found for host zone GAIA: host zone not registered")
+	s.Require().EqualError(err, "Redemption account not found for host zone GAIA: ICA acccount not found on host zone")
 }
 
 func (s *KeeperTestSuite) TestClaimUndelegatedTokens_NoEpochTracker() {

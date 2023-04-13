@@ -91,7 +91,7 @@ func WithdrawalBalanceCallback(k Keeper, ctx sdk.Context, args []byte, query icq
 	if feeCoin.Amount.GT(sdk.ZeroInt()) {
 		msgs = append(msgs, &banktypes.MsgSend{
 			FromAddress: hostZone.WithdrawalIcaAddress,
-			ToAddress:   feeAccount.Address,
+			ToAddress:   hostZone.FeeIcaAddress,
 			Amount:      sdk.NewCoins(feeCoin),
 		})
 		k.Logger(ctx).Info(utils.LogICQCallbackWithHostZone(chainId, ICQCallbackID_WithdrawalBalance,
@@ -100,7 +100,7 @@ func WithdrawalBalanceCallback(k Keeper, ctx sdk.Context, args []byte, query icq
 	if reinvestCoin.Amount.GT(sdk.ZeroInt()) {
 		msgs = append(msgs, &banktypes.MsgSend{
 			FromAddress: hostZone.WithdrawalIcaAddress,
-			ToAddress:   delegationAccount.Address,
+			ToAddress:   hostZone.DelegationIcaAddress,
 			Amount:      sdk.NewCoins(reinvestCoin),
 		})
 		k.Logger(ctx).Info(utils.LogICQCallbackWithHostZone(chainId, ICQCallbackID_WithdrawalBalance,
