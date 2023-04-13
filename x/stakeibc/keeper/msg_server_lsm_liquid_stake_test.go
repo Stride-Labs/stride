@@ -284,3 +284,18 @@ func (s *KeeperTestSuite) TestLSMLiquidStakeFailed_InsufficientBalance() {
 	_, err := s.GetMsgServer().LSMLiquidStake(sdk.WrapSDKContext(s.Ctx), tc.validMsg)
 	s.Require().ErrorContains(err, "insufficient funds")
 }
+
+func (s *KeeperTestSuite) TestLSMLiquidStakeFailed_ZeroStTokens() {
+	tc := s.SetupTestLSMLiquidStake()
+
+	// Adjust redemption rate and liquid stake amount so that the number of stTokens would be zero
+	// stTokens = 1(amount) / 1.1(RR) = rounds down to 0
+	hostZone := tc.hostZone
+	hostZone.RedemptionRate = sdk.NewDecWithPrec(11, 1)
+	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
+	tc.validMsg.Amount = sdkmath.NewInt(1)
+
+	// The liquid stake should fail
+	_, err := s.GetMsgServer().LSMLiquidStake(sdk.WrapSDKContext(s.Ctx), tc.validMsg)
+	s.Require().EqualError(err, "Liquid stake of 1uatom would return 0 stTokens: Liquid staked amount is too small")
+}

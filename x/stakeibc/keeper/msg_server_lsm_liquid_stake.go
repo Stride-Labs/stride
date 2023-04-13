@@ -98,12 +98,6 @@ func (k Keeper) StartLSMLiquidStake(ctx sdk.Context, msg *types.MsgLSMLiquidStak
 			"balance is lower than staking amount. staking amount: %v, balance: %v", stakeAmount, balance)
 	}
 
-	// Transfer the LSM token to the host zone module account
-	lsmTokenCoin := sdk.NewCoin(msg.LsmTokenIbcDenom, msg.Amount)
-	if err := k.bankKeeper.SendCoins(ctx, liquidStakerAddress, hostZoneAddress, sdk.NewCoins(lsmTokenCoin)); err != nil {
-		return types.LSMLiquidStake{}, errorsmod.Wrap(err, "failed to send tokens from Account to Module")
-	}
-
 	// Determine the amount of stTokens to mint using the redemption rate
 	stDenom := types.StAssetDenomFromHostZoneDenom(hostZone.HostDenom)
 	stAmount := (sdk.NewDecFromInt(msg.Amount).Quo(hostZone.RedemptionRate)).TruncateInt()
@@ -112,6 +106,12 @@ func (k Keeper) StartLSMLiquidStake(ctx sdk.Context, msg *types.MsgLSMLiquidStak
 			"Liquid stake of %s%s would return 0 stTokens", msg.Amount.String(), hostZone.HostDenom)
 	}
 	stCoin := sdk.NewCoin(stDenom, stAmount)
+
+	// Transfer the LSM token to the host zone module account
+	lsmTokenCoin := sdk.NewCoin(msg.LsmTokenIbcDenom, msg.Amount)
+	if err := k.bankKeeper.SendCoins(ctx, liquidStakerAddress, hostZoneAddress, sdk.NewCoins(lsmTokenCoin)); err != nil {
+		return types.LSMLiquidStake{}, errorsmod.Wrap(err, "failed to send tokens from Account to Module")
+	}
 
 	// Store an deposit record for the LSM token
 	lsmTokenDeposit := types.LSMTokenDeposit{
@@ -154,7 +154,7 @@ func (k Keeper) SubmitValidatorExchangeRateQuery(ctx sdk.Context, lsmLiquidStake
 	}
 
 	// Use a short timeout for the query so that user's can get the tokens refunded quickly should the query get stuck
-	timeout := uint64(ctx.BlockTime().UnixNano() + (time.Minute * 15).Nanoseconds())
+	timeout := uint64(ctx.BlockTime().UnixNano() + (time.Minute * 5).Nanoseconds()) // 5 minutes
 	query := icqtypes.Query{
 		ChainId:        hostZone.ChainId,
 		ConnectionId:   hostZone.ConnectionId,
