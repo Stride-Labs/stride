@@ -27,20 +27,12 @@ func (s *KeeperTestSuite) SetupSweepUnbondedTokens() SweepUnbondedTokensTestCase
 			Weight:             uint64(10),
 		},
 	}
-	gaiaRedemptionAccount := stakeibc.ICAAccount{
-		Address: "cosmos_REDEMPTION",
-		Target:  stakeibc.ICAAccountType_REDEMPTION,
-	}
 	osmoValidators := []*stakeibc.Validator{
 		{
 			Address:            "osmo_VALIDATOR",
 			BalancedDelegation: sdkmath.NewInt(5_000_000),
 			Weight:             uint64(10),
 		},
-	}
-	osmoRedemptionAccount := stakeibc.ICAAccount{
-		Address: "osmo_REDEMPTION",
-		Target:  stakeibc.ICAAccountType_REDEMPTION,
 	}
 	hostZones := []stakeibc.HostZone{
 		{
@@ -50,7 +42,7 @@ func (s *KeeperTestSuite) SetupSweepUnbondedTokens() SweepUnbondedTokensTestCase
 			UnbondingFrequency:       3,
 			Validators:               gaiaValidators,
 			DelegationIcaAddress:     "cosmos_DELEGATION",
-			RedemptionAccount:        &gaiaRedemptionAccount,
+			RedemptionIcaAddress:     "cosmos_REDEMPTION",
 			TotalBalancedDelegations: sdkmath.NewInt(5_000_000),
 			ConnectionId:             ibctesting.FirstConnectionID,
 		},
@@ -61,7 +53,7 @@ func (s *KeeperTestSuite) SetupSweepUnbondedTokens() SweepUnbondedTokensTestCase
 			UnbondingFrequency:       4,
 			Validators:               osmoValidators,
 			DelegationIcaAddress:     "osmo_DELEGATION",
-			RedemptionAccount:        &osmoRedemptionAccount,
+			RedemptionIcaAddress:     "osmo_REDEMPTION",
 			TotalBalancedDelegations: sdkmath.NewInt(5_000_000),
 			ConnectionId:             ibctesting.FirstConnectionID,
 		},
@@ -174,7 +166,7 @@ func (s *KeeperTestSuite) TestSweepUnbondedTokens_HostZoneUnbondingMissing() {
 func (s *KeeperTestSuite) TestSweepUnbondedTokens_RedemptionAccountMissing() {
 	s.SetupSweepUnbondedTokens()
 	hostZone, _ := s.App.StakeibcKeeper.GetHostZone(s.Ctx, "GAIA")
-	hostZone.RedemptionAccount = nil
+	hostZone.RedemptionIcaAddress = ""
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
 	success, successfulSweeps, sweepAmounts, failedSweeps := s.App.StakeibcKeeper.SweepAllUnbondedTokens(s.Ctx)
 	s.Require().Equal(success, false, "sweep all tokens failed if osmo missing")

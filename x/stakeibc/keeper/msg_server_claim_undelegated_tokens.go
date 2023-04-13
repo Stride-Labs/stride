@@ -17,7 +17,8 @@ import (
 type IcaTx struct {
 	ConnectionId string
 	Msgs         []sdk.Msg
-	Account      types.ICAAccount
+	AccountType  types.ICAAccountType
+	ICAAddress   string
 	Timeout      uint64
 }
 
@@ -105,21 +106,16 @@ func (k Keeper) GetRedemptionTransferMsg(ctx sdk.Context, userRedemptionRecord *
 	// grab necessary fields to construct ICA call
 	hostZone, found := k.GetHostZone(ctx, hostZoneId)
 	if !found {
-		errMsg := fmt.Sprintf("Host zone %s not found", hostZoneId)
-		k.Logger(ctx).Error(errMsg)
-		return nil, errorsmod.Wrap(types.ErrInvalidHostZone, errMsg)
+		return nil, errorsmod.Wrapf(types.ErrInvalidHostZone, "Host zone %s not found", hostZoneId)
 	}
-	redemptionAccount, found := k.GetRedemptionAccount(ctx, hostZone)
-	if !found {
-		errMsg := fmt.Sprintf("Redemption account not found for host zone %s", hostZoneId)
-		k.Logger(ctx).Error(errMsg)
-		return nil, errorsmod.Wrap(types.ErrInvalidHostZone, errMsg)
+	if hostZone.RedemptionIcaAddress == "" {
+		return nil, errorsmod.Wrapf(types.ErrICAAccountNotFound, "redemption account not found for %s", hostZoneId)
 	}
 
 	var msgs []sdk.Msg
 	rrAmt := userRedemptionRecord.Amount
 	msgs = append(msgs, &bankTypes.MsgSend{
-		FromAddress: redemptionAccount.Address,
+		FromAddress: hostZone.RedemptionIcaAddress,
 		ToAddress:   userRedemptionRecord.Receiver,
 		Amount:      sdk.NewCoins(sdk.NewCoin(userRedemptionRecord.Denom, rrAmt)),
 	})
@@ -138,7 +134,8 @@ func (k Keeper) GetRedemptionTransferMsg(ctx sdk.Context, userRedemptionRecord *
 	icaTx := IcaTx{
 		ConnectionId: hostZone.GetConnectionId(),
 		Msgs:         msgs,
-		Account:      *redemptionAccount,
+		AccountType:  types.ICAAccountType_REDEMPTION,
+		ICAAddress:   hostZone.RedemptionIcaAddress,
 		Timeout:      timeout,
 	}
 

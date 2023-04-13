@@ -107,17 +107,14 @@ func (im IBCModule) OnChanOpenAck(
 
 	// Set ICA account addresses
 	switch {
-	// withdrawal address
 	case portID == withdrawalAddress:
 		zoneInfo.WithdrawalIcaAddress = address
-	// fee address
 	case portID == feeAddress:
 		zoneInfo.FeeIcaAddress = address
-	// delegation address
 	case portID == delegationAddress:
 		zoneInfo.DelegationIcaAddress = address
 	case portID == redemptionAddress:
-		zoneInfo.RedemptionAccount = &types.ICAAccount{Address: address, Target: types.ICAAccountType_REDEMPTION}
+		zoneInfo.RedemptionIcaAddress = address
 	default:
 		ctx.Logger().Error(fmt.Sprintf("Missing portId: %s", portID))
 	}

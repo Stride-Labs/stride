@@ -13,6 +13,7 @@ import (
 	epochtypes "github.com/Stride-Labs/stride/v8/x/epochs/types"
 	recordtypes "github.com/Stride-Labs/stride/v8/x/records/types"
 	stakeibckeeper "github.com/Stride-Labs/stride/v8/x/stakeibc/keeper"
+	"github.com/Stride-Labs/stride/v8/x/stakeibc/types"
 	stakeibctypes "github.com/Stride-Labs/stride/v8/x/stakeibc/types"
 )
 
@@ -38,14 +39,10 @@ func (s *KeeperTestSuite) SetupClaimUndelegatedTokens() ClaimUndelegatedTestCase
 	redemptionAddr := s.IcaAddresses[redemptionIcaOwner]
 	redemptionRecordId := fmt.Sprintf("%s.%d.%s", HostChainId, epochNumber, senderAddr)
 
-	redemptionAccount := stakeibctypes.ICAAccount{
-		Address: redemptionAddr,
-		Target:  stakeibctypes.ICAAccountType_REDEMPTION,
-	}
 	hostZone := stakeibctypes.HostZone{
-		ChainId:           HostChainId,
-		RedemptionAccount: &redemptionAccount,
-		ConnectionId:      ibctesting.FirstConnectionID,
+		ChainId:              HostChainId,
+		RedemptionIcaAddress: redemptionAddr,
+		ConnectionId:         ibctesting.FirstConnectionID,
 	}
 
 	redemptionRecord := recordtypes.UserRedemptionRecord{
@@ -96,12 +93,13 @@ func (s *KeeperTestSuite) SetupClaimUndelegatedTokens() ClaimUndelegatedTestCase
 		},
 		expectedIcaMsg: stakeibckeeper.IcaTx{
 			Msgs: []sdk.Msg{&banktypes.MsgSend{
-				FromAddress: redemptionAccount.Address,
+				FromAddress: redemptionAddr,
 				ToAddress:   receiverAddr,
 				Amount:      redemptionAmount,
 			}},
-			Account: redemptionAccount,
-			Timeout: uint64(stakeibctypes.DefaultICATimeoutNanos),
+			AccountType: types.ICAAccountType_REDEMPTION,
+			ICAAddress:  redemptionAddr,
+			Timeout:     uint64(stakeibctypes.DefaultICATimeoutNanos),
 		},
 	}
 }
@@ -181,7 +179,7 @@ func (s *KeeperTestSuite) TestClaimUndelegatedTokens_NoRedemptionAccount() {
 	tc := s.SetupClaimUndelegatedTokens()
 	// Remove redemption account from host zone
 	hostZone := tc.initialState.hostZone
-	hostZone.RedemptionAccount = nil
+	hostZone.RedemptionIcaAddress = ""
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
 
 	_, err := s.App.StakeibcKeeper.GetRedemptionTransferMsg(s.Ctx, &tc.initialState.redemptionRecord, tc.validMsg.HostZoneId)

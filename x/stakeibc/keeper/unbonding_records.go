@@ -356,8 +356,7 @@ func (k Keeper) SweepAllUnbondedTokensForHostZone(ctx sdk.Context, hostZone type
 		k.Logger(ctx).Error(fmt.Sprintf("Zone %s is missing a delegation address!", hostZone.ChainId))
 		return false, sdkmath.ZeroInt()
 	}
-	redemptionAccount := hostZone.RedemptionAccount
-	if redemptionAccount == nil || redemptionAccount.Address == "" {
+	if hostZone.RedemptionIcaAddress == "" {
 		k.Logger(ctx).Error(fmt.Sprintf("Zone %s is missing a redemption address!", hostZone.ChainId))
 		return false, sdkmath.ZeroInt()
 	}
@@ -367,7 +366,7 @@ func (k Keeper) SweepAllUnbondedTokensForHostZone(ctx sdk.Context, hostZone type
 	msgs := []sdk.Msg{
 		&banktypes.MsgSend{
 			FromAddress: hostZone.DelegationIcaAddress,
-			ToAddress:   redemptionAccount.Address,
+			ToAddress:   hostZone.RedemptionIcaAddress,
 			Amount:      sdk.NewCoins(sweepCoin),
 		},
 	}
