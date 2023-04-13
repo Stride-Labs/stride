@@ -55,19 +55,12 @@ func (k Keeper) AddLSMTokenDeposit(ctx sdk.Context, deposit types.LSMTokenDeposi
 	k.SetLSMTokenDeposit(ctx, deposit)
 }
 
-func (k Keeper) UpdateLSMTokenDepositStatus(
-	ctx sdk.Context,
-	deposit types.LSMTokenDeposit,
-	status types.LSMDepositStatus,
-) {
+func (k Keeper) UpdateLSMTokenDepositStatus(ctx sdk.Context, deposit types.LSMTokenDeposit, status types.LSMDepositStatus) {
 	deposit.Status = status
 	k.SetLSMTokenDeposit(ctx, deposit)
 }
 
-func (k Keeper) GetLSMDepositsForHostZone(
-	ctx sdk.Context,
-	chainId string,
-) []types.LSMTokenDeposit {
+func (k Keeper) GetLSMDepositsForHostZone(ctx sdk.Context, chainId string) []types.LSMTokenDeposit {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefix(types.LSMTokenDepositKey))
 	iterator := sdk.KVStorePrefixIterator(store, types.KeyPrefix(chainId))
 	hostZoneLSMTokenDeposits := []types.LSMTokenDeposit{}
@@ -83,10 +76,7 @@ func (k Keeper) GetLSMDepositsForHostZone(
 	return hostZoneLSMTokenDeposits
 }
 
-func (k Keeper) GetLSMDepositsForHostZoneWithStatus(
-	ctx sdk.Context,
-	chainId string,
-	status types.LSMDepositStatus,
+func (k Keeper) GetLSMDepositsForHostZoneWithStatus(ctx sdk.Context, chainId string, status types.LSMDepositStatus,
 ) []types.LSMTokenDeposit {
 	filtered := []types.LSMTokenDeposit{}
 	hostZoneLSMTokenDeposits := k.GetLSMDepositsForHostZone(ctx, chainId)

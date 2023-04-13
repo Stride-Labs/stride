@@ -35,7 +35,7 @@ func (s *KeeperTestSuite) createSetNLSMTokenDeposit(n int) []types.LSMTokenDepos
 	return s.setGivenLSMTokenDeposit(newDeposits)
 }
 
-func (s *KeeperTestSuite) TestLSMTokenDepositGet() {
+func (s *KeeperTestSuite) TestGetLSMTokenDeposit() {
 	deposits := s.createSetNLSMTokenDeposit(10)
 	for _, expected := range deposits {
 		actual, found := s.App.StakeibcKeeper.GetLSMTokenDeposit(s.Ctx, expected.ChainId, expected.Denom)
@@ -44,7 +44,7 @@ func (s *KeeperTestSuite) TestLSMTokenDepositGet() {
 	}
 }
 
-func (s *KeeperTestSuite) TestLSMTokenDepositRemove() {
+func (s *KeeperTestSuite) TestRemoveLSMTokenDeposit() {
 	deposits := s.createSetNLSMTokenDeposit(10)
 	for _, expected := range deposits {
 		s.App.StakeibcKeeper.RemoveLSMTokenDeposit(s.Ctx, expected.ChainId, expected.Denom)
@@ -53,15 +53,15 @@ func (s *KeeperTestSuite) TestLSMTokenDepositRemove() {
 	}
 }
 
-func (s *KeeperTestSuite) TestLSMTokenDepositGetAll() {
+func (s *KeeperTestSuite) TestGetAllLSMTokenDeposit() {
 	expected := s.createSetNLSMTokenDeposit(10)
 	actual := s.App.StakeibcKeeper.GetAllLSMTokenDeposit(s.Ctx)
-	s.Require().Equal(len(actual), len(expected),
+	s.Require().Equal(len(expected), len(actual),
 		"different number of deposits found %d than was expected %d", len(actual), len(expected))
 	s.Require().ElementsMatch(actual, expected, "actual list did not match expected list")
 }
 
-func (s *KeeperTestSuite) TestLSMTokenDepositAdd() {
+func (s *KeeperTestSuite) TestAddLSMTokenDeposit() {
 	// existing will have the same chainId, denoms, and recordIds as the first 5 in new
 	// they are deposits of the same "type" in each parallel index, last 5 in new are net new
 	existingDeposits := s.createSetNLSMTokenDeposit(5)
@@ -85,7 +85,7 @@ func (s *KeeperTestSuite) TestLSMTokenDepositAdd() {
 		new := newDeposits[i]
 		actual, found := s.App.StakeibcKeeper.GetLSMTokenDeposit(s.Ctx, new.ChainId, new.Denom)
 		s.Require().True(found, "deposit not found in store %+v", new)
-		s.Require().Equal(actual.Amount, sdkmath.Int.Add(existing.Amount, new.Amount),
+		s.Require().Equal(sdkmath.Int.Add(existing.Amount, new.Amount), actual.Amount,
 			"found amount %d did not match expected sum %d + %d = %d", actual.Amount,
 			existing.Amount, new.Amount, sdkmath.Int.Add(existing.Amount, new.Amount))
 	}
@@ -95,12 +95,12 @@ func (s *KeeperTestSuite) TestLSMTokenDepositAdd() {
 		new := newDeposits[i]
 		actual, found := s.App.StakeibcKeeper.GetLSMTokenDeposit(s.Ctx, new.ChainId, new.Denom)
 		s.Require().True(found, "deposit not found in store %+v", new)
-		s.Require().Equal(actual.Amount, new.Amount,
+		s.Require().Equal(new.Amount, actual.Amount,
 			"found amount %d did not match expected amount %d ", actual.Amount, new.Amount)
 	}
 }
 
-func (s *KeeperTestSuite) TestLSMTokenDepositStatusUpdate() {
+func (s *KeeperTestSuite) TestUpdateLSMTokenDepositStatus() {
 	statuses := []types.LSMDepositStatus{
 		types.TRANSFER_IN_PROGRESS,
 		types.TRANSFER_FAILED,
@@ -119,8 +119,9 @@ func (s *KeeperTestSuite) TestLSMTokenDepositStatusUpdate() {
 	}
 }
 
-func (s *KeeperTestSuite) TestLSMDepositsForHostZoneGet() {
+func (s *KeeperTestSuite) TestGetLSMDepositsForHostZone() {
 	// For HostZone with id i there will be i+1 deposits created, all denom unique
+	// i.e. {chain-0, chain-1, chain-1, chain-2, chain-2, chain-2, ...}
 	deposits := s.createNLSMTokenDeposit(15) // 15 = 1 + 2 + 3 + 4 + 5
 	idx := 0
 	for i := 0; i < 5; i++ {
@@ -135,18 +136,18 @@ func (s *KeeperTestSuite) TestLSMDepositsForHostZoneGet() {
 	for i := 0; i < 5; i++ {
 		hostChainId := strconv.Itoa(i)
 		chainDeposits := s.App.StakeibcKeeper.GetLSMDepositsForHostZone(s.Ctx, hostChainId)
-		s.Require().Equal(len(chainDeposits), i+1, "Unexpected number of deposits found for chainId %d", i)
+		s.Require().Equal(i+1, len(chainDeposits), "Unexpected number of deposits found for chainId %d", i)
 		for _, deposit := range chainDeposits {
-			s.Require().Equal(deposit.ChainId, hostChainId, "Got a deposit from the wrong chain!")
+			s.Require().Equal(hostChainId, deposit.ChainId, "Got a deposit from the wrong chain!")
 		}
 	}
 }
 
-func (s *KeeperTestSuite) TestLSMDepositsForHostZoneWithStatusGet() {
-	// Check that we get every deposit which matches hostzone and status
-	// Check that we only get deposits which match hostzone and status
-	// Need a predictable, different, non-zero number of deposits for each (zone,status) combo
-	// Deposit status is actually a 0 indexed int32 so make (hostzone+1)*(status+1) deposits
+func (s *KeeperTestSuite) TestGetLSMDepositsForHostZoneWithStatus() {
+	// Necessary to check that we get every deposit for a given hostzone and status
+	// Necessary to also check that we *only* get deposits which match hostzone and status
+	// Need a predictable, different, non-zero number of deposits for each (zone, status) combo
+	numHostZones := 5
 	statuses := []types.LSMDepositStatus{
 		types.TRANSFER_IN_PROGRESS,
 		types.TRANSFER_FAILED,
@@ -154,9 +155,21 @@ func (s *KeeperTestSuite) TestLSMDepositsForHostZoneWithStatusGet() {
 		types.DETOKENIZATION_IN_PROGRESS,
 		types.DETOKENIZATION_FAILED,
 	}
-	deposits := s.createNLSMTokenDeposit(225) // total number across all combos
+
+	// For each (zone, status) combo, create a different number of deposits
+	//  determined by numDeposits = (hostZone index + 1) * (status index + 1)
+
+	// For instance:
+	//    chain-0, status-0 => 1 deposit
+	//    chain-0, status-1 => 1 * 2 = 2 deposit
+	//    chain-1, status-1 => 2 * 2 = 4 deposits
+
+	deposits := s.createNLSMTokenDeposit(225) // 225 = 15 * 15 is total number across all combos
+	// Generally with nZones number of host zones and nStatuses number of statuses
+	//   there will be a totalDeposits = 1/4 * nZones * (nZones + 1) * nStatuses * (nStatuses + 1)
+
 	idx := 0
-	for hzid := 0; hzid < 5; hzid++ {
+	for hzid := 0; hzid < numHostZones; hzid++ {
 		for sid := 0; sid < len(statuses); sid++ {
 			numCombo := (hzid + 1) * (sid + 1)
 			for i := 0; i < numCombo; i++ {
@@ -164,23 +177,22 @@ func (s *KeeperTestSuite) TestLSMDepositsForHostZoneWithStatusGet() {
 				deposits[idx].Status = statuses[sid]
 				idx++
 			}
-			s.Ctx.Logger().Info("combonum %d idx %d", numCombo, idx)
 		}
 	}
 	s.setGivenLSMTokenDeposit(deposits)
 
-	for hzid := 0; hzid < 5; hzid++ {
+	for hzid := 0; hzid < numHostZones; hzid++ {
 		for sid := 0; sid < len(statuses); sid++ {
 			expectedLen := (hzid + 1) * (sid + 1)
 			chainId := strconv.Itoa(hzid)
 			status := statuses[sid]
 			actual := s.App.StakeibcKeeper.GetLSMDepositsForHostZoneWithStatus(s.Ctx, chainId, status)
 			// Check that we get every deposit which matches hostzone and status
-			s.Require().Equal(len(actual), expectedLen, "Unexpected number of deposits found for chainId %d", hzid)
+			s.Require().Equal(expectedLen, len(actual), "Unexpected number of deposits found for chainId %d", hzid)
 			// Check that we only get deposits which match hostzone and status
 			for _, deposit := range actual {
-				s.Require().Equal(deposit.ChainId, chainId, "Got back deposit from different chain!")
-				s.Require().Equal(deposit.Status, status, "Got back deposit with wrong status!")
+				s.Require().Equal(chainId, deposit.ChainId, "Got back deposit from different chain!")
+				s.Require().Equal(status, deposit.Status, "Got back deposit with wrong status!")
 			}
 		}
 	}
