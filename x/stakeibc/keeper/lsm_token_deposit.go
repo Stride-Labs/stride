@@ -76,8 +76,7 @@ func (k Keeper) GetLSMDepositsForHostZone(ctx sdk.Context, chainId string) []typ
 	return hostZoneLSMTokenDeposits
 }
 
-func (k Keeper) GetLSMDepositsForHostZoneWithStatus(ctx sdk.Context, chainId string, status types.LSMDepositStatus,
-) []types.LSMTokenDeposit {
+func (k Keeper) GetLSMDepositsForHostZoneWithStatus(ctx sdk.Context, chainId string, status types.LSMDepositStatus) []types.LSMTokenDeposit {
 	filtered := []types.LSMTokenDeposit{}
 	hostZoneLSMTokenDeposits := k.GetLSMDepositsForHostZone(ctx, chainId)
 	for _, deposit := range hostZoneLSMTokenDeposits {
