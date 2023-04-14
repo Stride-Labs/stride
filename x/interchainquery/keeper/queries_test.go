@@ -16,12 +16,6 @@ import (
 	stakeibctypes "github.com/Stride-Labs/stride/v8/x/stakeibc/types"
 )
 
-type MockICQCallback func(keeper.Keeper, sdk.Context, []byte, types.Query) error
-
-type MockICQCallbacks struct {
-	callbacks map[string]MockICQCallback
-}
-
 func (s *KeeperTestSuite) TestGetQueryId() {
 	// chain Id of the target chain you're querying
 	chainId := "GAIA"
