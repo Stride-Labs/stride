@@ -247,7 +247,7 @@ func (s *KeeperTestSuite) verifyHostZoneUnbondingStatus(expectedUnbondingRecords
 
 // Helper function to check that each LSMTokenDepoit's status was either left alone or reverted to it's prior status
 func (s *KeeperTestSuite) verifyLSMDepositStatus(expectedLSMDeposits []LSMTokenDepositStatusUpdate, revert bool) {
-	for _, expectedLSMDeposit := range expectedLSMDeposits {
+	for i, expectedLSMDeposit := range expectedLSMDeposits {
 		actualLSMDeposit, found := s.App.StakeibcKeeper.GetLSMTokenDeposit(s.Ctx, expectedLSMDeposit.chainId, expectedLSMDeposit.denom)
 		s.Require().True(found, "lsm deposit found")
 
@@ -256,7 +256,7 @@ func (s *KeeperTestSuite) verifyLSMDepositStatus(expectedLSMDeposits []LSMTokenD
 		if revert && actualLSMDeposit.ChainId == HostChainId {
 			expectedStatus = expectedLSMDeposit.revertedStatus
 		}
-		s.Require().Equal(expectedStatus.String(), actualLSMDeposit.Status.String(), "lsm deposit %d")
+		s.Require().Equal(expectedStatus.String(), actualLSMDeposit.Status.String(), "lsm deposit %d", i)
 	}
 }
 
