@@ -10,6 +10,8 @@ import (
 
 	"github.com/golang/protobuf/proto" //nolint:staticcheck
 
+	"github.com/golang/protobuf/proto" //nolint:staticcheck
+
 	"github.com/Stride-Labs/stride/v8/x/stakeibc/types"
 )
 
