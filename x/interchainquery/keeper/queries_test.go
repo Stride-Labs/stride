@@ -216,7 +216,7 @@ func (s *KeeperTestSuite) GetQueryUID() {
 	// Grabbing the uid for the first time should return 1
 	s.Require().Equal(1, getUniqueSuffix())
 
-	// Grabbing it a second time shoudl return 2
+	// Grabbing it a second time should return 2
 	s.Require().Equal(2, getUniqueSuffix())
 
 	// call it 1000 more times
@@ -225,16 +225,6 @@ func (s *KeeperTestSuite) GetQueryUID() {
 		suffix = getUniqueSuffix()
 	}
 	s.Require().Equal(1002, suffix)
-
-	// Set the counter to 1B
-	store := s.Ctx.KVStore(s.App.GetKey(types.StoreKey))
-	nextUidBz := make([]byte, 8)
-	binary.BigEndian.PutUint64(nextUidBz, 1_000_000_000)
-	store.Set(types.KeyQueryCounter, nextUidBz)
-	s.Require().Equal(1_000_000_000, getUniqueSuffix())
-
-	// It should have been reset to 1
-	s.Require().Equal(1, getUniqueSuffix())
 }
 
 func TestUnmarshalAmountFromBalanceQuery(t *testing.T) {

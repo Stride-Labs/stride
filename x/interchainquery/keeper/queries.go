@@ -103,16 +103,7 @@ func (k Keeper) GetQueryUID(ctx sdk.Context) []byte {
 		uidBz = make([]byte, 8)
 		binary.BigEndian.PutUint64(uidBz, 1)
 	}
-
 	uid := binary.BigEndian.Uint64(uidBz)
-
-	// Reset the uid after 1B
-	// In practice, this is not necessary as we'll never hit the limit, but in theory, we could have int overflow
-	if uid > 1_000_000_000 {
-		uid = 1
-		uidBz = make([]byte, 8)
-		binary.BigEndian.PutUint64(uidBz, uid)
-	}
 
 	// Increment and store the next UID
 	nextUidBz := make([]byte, 8)
