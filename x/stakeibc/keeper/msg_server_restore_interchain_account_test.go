@@ -1,8 +1,6 @@
 package keeper_test
 
 import (
-	"fmt"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	ibctesting "github.com/cosmos/ibc-go/v5/testing"
 	_ "github.com/stretchr/testify/suite"
@@ -28,6 +26,7 @@ type HostZoneUnbondingStatusUpdate struct {
 
 type LSMTokenDepositStatusUpdate struct {
 	chainId        string
+	denom          string
 	initialStatus  types.LSMDepositStatus
 	revertedStatus types.LSMDepositStatus
 }
@@ -37,10 +36,22 @@ type RestoreInterchainAccountTestCase struct {
 	depositRecordStatusUpdates  []DepositRecordStatusUpdate
 	unbondingRecordStatusUpdate []HostZoneUnbondingStatusUpdate
 	lsmTokenDepositStatusUpdate []LSMTokenDepositStatusUpdate
+	delegationChannelID         string
+	delegationPortID            string
 }
 
-func (s *KeeperTestSuite) SetupRestoreInterchainAccount() RestoreInterchainAccountTestCase {
+func (s *KeeperTestSuite) SetupRestoreInterchainAccount(createDelegationICAChannel bool) RestoreInterchainAccountTestCase {
 	s.CreateTransferChannel(HostChainId)
+
+	// We have to setup the ICA channel before the LSM Token is stored,
+	// otherwise when the EndBlocker runs in the channel setup, the LSM Token
+	// statuses will get updated
+	var channelID, portID string
+	if createDelegationICAChannel {
+		owner := "GAIA.DELEGATION"
+		channelID = s.CreateICAChannel(owner)
+		portID = icatypes.PortPrefix + owner
+	}
 
 	hostZone := stakeibc.HostZone{
 		ChainId:        HostChainId,
@@ -123,33 +134,37 @@ func (s *KeeperTestSuite) SetupRestoreInterchainAccount() RestoreInterchainAccou
 		{
 			// Status doesn't change
 			chainId:        HostChainId,
+			denom:          "denom-1",
 			initialStatus:  types.TRANSFER_IN_PROGRESS,
 			revertedStatus: types.TRANSFER_IN_PROGRESS,
 		},
 		{
 			// Status gets reverted from IN_PROGRESS to QUEUE
 			chainId:        HostChainId,
+			denom:          "denom-2",
 			initialStatus:  types.DETOKENIZATION_IN_PROGRESS,
 			revertedStatus: types.DETOKENIZATION_QUEUE,
 		},
 		{
 			// Status doesn't change
 			chainId:        HostChainId,
+			denom:          "denom-3",
 			initialStatus:  types.DETOKENIZATION_QUEUE,
 			revertedStatus: types.DETOKENIZATION_QUEUE,
 		},
 		{
 			// Status doesn't change (different host zone)
 			chainId:        "different_host_zone",
+			denom:          "denom-4",
 			initialStatus:  types.DETOKENIZATION_IN_PROGRESS,
 			revertedStatus: types.DETOKENIZATION_IN_PROGRESS,
 		},
 	}
-	for i, lsmTokenDeposit := range lsmTokenDeposits {
+	for _, lsmTokenDeposit := range lsmTokenDeposits {
 		s.App.StakeibcKeeper.SetLSMTokenDeposit(s.Ctx, types.LSMTokenDeposit{
 			ChainId: lsmTokenDeposit.chainId,
 			Status:  lsmTokenDeposit.initialStatus,
-			Denom:   fmt.Sprintf("%d", i),
+			Denom:   lsmTokenDeposit.denom,
 		})
 	}
 
@@ -164,6 +179,8 @@ func (s *KeeperTestSuite) SetupRestoreInterchainAccount() RestoreInterchainAccou
 		depositRecordStatusUpdates:  depositRecords,
 		unbondingRecordStatusUpdate: hostZoneUnbondingRecords,
 		lsmTokenDepositStatusUpdate: lsmTokenDeposits,
+		delegationChannelID:         channelID,
+		delegationPortID:            portID,
 	}
 }
 
@@ -218,8 +235,8 @@ func (s *KeeperTestSuite) VerifyHostZoneUnbondingStatus(expectedUnbondingRecords
 }
 
 func (s *KeeperTestSuite) VerifyLSMDepositStatus(expectedLSMDeposits []LSMTokenDepositStatusUpdate, revert bool) {
-	for i, expectedLSMDeposit := range expectedLSMDeposits {
-		actualLSMDeposit, found := s.App.StakeibcKeeper.GetLSMTokenDeposit(s.Ctx, HostChainId, fmt.Sprintf("%d", i))
+	for _, expectedLSMDeposit := range expectedLSMDeposits {
+		actualLSMDeposit, found := s.App.StakeibcKeeper.GetLSMTokenDeposit(s.Ctx, expectedLSMDeposit.chainId, expectedLSMDeposit.denom)
 		s.Require().True(found, "lsm deposit found")
 
 		// Only revert record if the revert option is passed and the host zone matches
@@ -232,23 +249,20 @@ func (s *KeeperTestSuite) VerifyLSMDepositStatus(expectedLSMDeposits []LSMTokenD
 }
 
 func (s *KeeperTestSuite) TestRestoreInterchainAccount_Success() {
-	tc := s.SetupRestoreInterchainAccount()
-	owner := "GAIA.DELEGATION"
-	channelID := s.CreateICAChannel(owner)
-	portID := icatypes.PortPrefix + owner
+	tc := s.SetupRestoreInterchainAccount(true)
 
 	// Confirm there are two channels originally
 	channels := s.App.IBCKeeper.ChannelKeeper.GetAllChannels(s.Ctx)
 	s.Require().Len(channels, 2, "there should be 2 channels initially (transfer + delegate)")
 
 	// Close the delegation channel
-	channel, found := s.App.IBCKeeper.ChannelKeeper.GetChannel(s.Ctx, portID, channelID)
+	channel, found := s.App.IBCKeeper.ChannelKeeper.GetChannel(s.Ctx, tc.delegationPortID, tc.delegationChannelID)
 	s.Require().True(found, "delegation channel found")
 	channel.State = channeltypes.CLOSED
-	s.App.IBCKeeper.ChannelKeeper.SetChannel(s.Ctx, portID, channelID, channel)
+	s.App.IBCKeeper.ChannelKeeper.SetChannel(s.Ctx, tc.delegationPortID, tc.delegationChannelID, channel)
 
 	// Confirm the new channel was created
-	s.RestoreChannelAndVerifySuccess(tc.validMsg, portID, channelID)
+	s.RestoreChannelAndVerifySuccess(tc.validMsg, tc.delegationPortID, tc.delegationChannelID)
 
 	// Verify the record status' were reverted
 	s.VerifyDepositRecordsStatus(tc.depositRecordStatusUpdates, true)
@@ -257,7 +271,7 @@ func (s *KeeperTestSuite) TestRestoreInterchainAccount_Success() {
 }
 
 func (s *KeeperTestSuite) TestRestoreInterchainAccount_InvalidConnectionId() {
-	tc := s.SetupRestoreInterchainAccount()
+	tc := s.SetupRestoreInterchainAccount(false)
 
 	// Update the connectionId on the host zone so that it doesn't exist
 	hostZone, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx, tc.validMsg.ChainId)
@@ -270,52 +284,28 @@ func (s *KeeperTestSuite) TestRestoreInterchainAccount_InvalidConnectionId() {
 }
 
 func (s *KeeperTestSuite) TestRestoreInterchainAccount_CannotRestoreNonExistentAcct() {
-	tc := s.SetupRestoreInterchainAccount()
+	tc := s.SetupRestoreInterchainAccount(false)
 	msg := tc.validMsg
 	msg.AccountType = stakeibc.ICAAccountType_WITHDRAWAL
 
 	_, err := s.GetMsgServer().RestoreInterchainAccount(sdk.WrapSDKContext(s.Ctx), &msg)
-	expectedErrMSg := fmt.Sprintf("ICA controller account address not found: %s.WITHDRAWAL: invalid interchain account address",
-		tc.validMsg.ChainId)
-	s.Require().EqualError(err, expectedErrMSg, "registered ica account successfully")
+	s.Require().EqualError(err, "ICA controller account address not found: GAIA.WITHDRAWAL")
 }
 
 func (s *KeeperTestSuite) TestRestoreInterchainAccount_FailsForIncorrectHostZone() {
-	tc := s.SetupRestoreInterchainAccount()
-	msg := tc.validMsg
-	msg.ChainId = "incorrectchainid"
+	tc := s.SetupRestoreInterchainAccount(false)
+	invalidMsg := tc.validMsg
+	invalidMsg.ChainId = "incorrectchainid"
 
-	_, err := s.GetMsgServer().RestoreInterchainAccount(sdk.WrapSDKContext(s.Ctx), &msg)
-	expectedErrMsg := "host zone not registered"
-	s.Require().EqualError(err, expectedErrMsg, "registered ica account fails for incorrect host zone")
-}
-
-func (s *KeeperTestSuite) TestRestoreInterchainAccount_FailsIfAccountExists() {
-	tc := s.SetupRestoreInterchainAccount()
-	s.CreateICAChannel("GAIA.DELEGATION")
-	msg := tc.validMsg
-
-	_, err := s.GetMsgServer().RestoreInterchainAccount(sdk.WrapSDKContext(s.Ctx), &msg)
-	expectedErrMsg := fmt.Sprintf("existing active channel channel-1 for portID icacontroller-%s.DELEGATION on connection %s for owner %s.DELEGATION: active channel already set for this owner",
-		tc.validMsg.ChainId,
-		s.TransferPath.EndpointB.ConnectionID,
-		tc.validMsg.ChainId,
-	)
-	s.Require().EqualError(err, expectedErrMsg, "registered ica account fails when account already exists")
+	_, err := s.GetMsgServer().RestoreInterchainAccount(sdk.WrapSDKContext(s.Ctx), &invalidMsg)
+	s.Require().ErrorContains(err, "host zone not registered")
 }
 
 func (s *KeeperTestSuite) TestRestoreInterchainAccount_RevertDepositRecords_Failure() {
-	tc := s.SetupRestoreInterchainAccount()
-	s.CreateICAChannel("GAIA.DELEGATION")
-	msg := tc.validMsg
+	tc := s.SetupRestoreInterchainAccount(true)
 
-	_, err := s.GetMsgServer().RestoreInterchainAccount(sdk.WrapSDKContext(s.Ctx), &msg)
-	expectedErrMsg := fmt.Sprintf("existing active channel channel-1 for portID icacontroller-%s.DELEGATION on connection %s for owner %s.DELEGATION: active channel already set for this owner",
-		tc.validMsg.ChainId,
-		s.TransferPath.EndpointB.ConnectionID,
-		tc.validMsg.ChainId,
-	)
-	s.Require().EqualError(err, expectedErrMsg, "registered ica account fails when account already exists")
+	_, err := s.GetMsgServer().RestoreInterchainAccount(sdk.WrapSDKContext(s.Ctx), &tc.validMsg)
+	s.Require().ErrorContains(err, "existing active channel channel-1 for portID icacontroller-GAIA.DELEGATION")
 
 	// Verify the record status' were NOT reverted
 	s.VerifyDepositRecordsStatus(tc.depositRecordStatusUpdates, false)
@@ -325,7 +315,7 @@ func (s *KeeperTestSuite) TestRestoreInterchainAccount_RevertDepositRecords_Fail
 
 func (s *KeeperTestSuite) TestRestoreInterchainAccount_NoRecordChange_Success() {
 	// Here, we're closing and restoring the withdrawal channel so records should not be reverted
-	tc := s.SetupRestoreInterchainAccount()
+	tc := s.SetupRestoreInterchainAccount(false)
 	owner := "GAIA.WITHDRAWAL"
 	channelID := s.CreateICAChannel(owner)
 	portID := icatypes.PortPrefix + owner
