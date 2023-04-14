@@ -11,6 +11,7 @@ import (
 	channeltypes "github.com/cosmos/ibc-go/v5/modules/core/04-channel/types"
 
 	recordtypes "github.com/Stride-Labs/stride/v8/x/records/types"
+	"github.com/Stride-Labs/stride/v8/x/stakeibc/types"
 	stakeibc "github.com/Stride-Labs/stride/v8/x/stakeibc/types"
 )
 
@@ -24,10 +25,18 @@ type HostZoneUnbondingStatusUpdate struct {
 	initialStatus  recordtypes.HostZoneUnbonding_Status
 	revertedStatus recordtypes.HostZoneUnbonding_Status
 }
+
+type LSMTokenDepositStatusUpdate struct {
+	chainId        string
+	initialStatus  types.LSMDepositStatus
+	revertedStatus types.LSMDepositStatus
+}
+
 type RestoreInterchainAccountTestCase struct {
 	validMsg                    stakeibc.MsgRestoreInterchainAccount
 	depositRecordStatusUpdates  []DepositRecordStatusUpdate
 	unbondingRecordStatusUpdate []HostZoneUnbondingStatusUpdate
+	lsmTokenDepositStatusUpdate []LSMTokenDepositStatusUpdate
 }
 
 func (s *KeeperTestSuite) SetupRestoreInterchainAccount() RestoreInterchainAccountTestCase {
@@ -109,6 +118,41 @@ func (s *KeeperTestSuite) SetupRestoreInterchainAccount() RestoreInterchainAccou
 		})
 	}
 
+	// Store LSM Token Deposits with some state pending
+	lsmTokenDeposits := []LSMTokenDepositStatusUpdate{
+		{
+			// Status doesn't change
+			chainId:        HostChainId,
+			initialStatus:  types.TRANSFER_IN_PROGRESS,
+			revertedStatus: types.TRANSFER_IN_PROGRESS,
+		},
+		{
+			// Status gets reverted from IN_PROGRESS to QUEUE
+			chainId:        HostChainId,
+			initialStatus:  types.DETOKENIZATION_IN_PROGRESS,
+			revertedStatus: types.DETOKENIZATION_QUEUE,
+		},
+		{
+			// Status doesn't change
+			chainId:        HostChainId,
+			initialStatus:  types.DETOKENIZATION_QUEUE,
+			revertedStatus: types.DETOKENIZATION_QUEUE,
+		},
+		{
+			// Status doesn't change (different host zone)
+			chainId:        "different_host_zone",
+			initialStatus:  types.DETOKENIZATION_IN_PROGRESS,
+			revertedStatus: types.DETOKENIZATION_IN_PROGRESS,
+		},
+	}
+	for i, lsmTokenDeposit := range lsmTokenDeposits {
+		s.App.StakeibcKeeper.SetLSMTokenDeposit(s.Ctx, types.LSMTokenDeposit{
+			ChainId: lsmTokenDeposit.chainId,
+			Status:  lsmTokenDeposit.initialStatus,
+			Denom:   fmt.Sprintf("%d", i),
+		})
+	}
+
 	defaultMsg := stakeibc.MsgRestoreInterchainAccount{
 		Creator:     "creatoraddress",
 		ChainId:     HostChainId,
@@ -119,6 +163,7 @@ func (s *KeeperTestSuite) SetupRestoreInterchainAccount() RestoreInterchainAccou
 		validMsg:                    defaultMsg,
 		depositRecordStatusUpdates:  depositRecords,
 		unbondingRecordStatusUpdate: hostZoneUnbondingRecords,
+		lsmTokenDepositStatusUpdate: lsmTokenDeposits,
 	}
 }
 
@@ -172,6 +217,20 @@ func (s *KeeperTestSuite) VerifyHostZoneUnbondingStatus(expectedUnbondingRecords
 	}
 }
 
+func (s *KeeperTestSuite) VerifyLSMDepositStatus(expectedLSMDeposits []LSMTokenDepositStatusUpdate, revert bool) {
+	for i, expectedLSMDeposit := range expectedLSMDeposits {
+		actualLSMDeposit, found := s.App.StakeibcKeeper.GetLSMTokenDeposit(s.Ctx, HostChainId, fmt.Sprintf("%d", i))
+		s.Require().True(found, "lsm deposit found")
+
+		// Only revert record if the revert option is passed and the host zone matches
+		expectedStatus := expectedLSMDeposit.initialStatus
+		if revert && actualLSMDeposit.ChainId == HostChainId {
+			expectedStatus = expectedLSMDeposit.revertedStatus
+		}
+		s.Require().Equal(expectedStatus.String(), actualLSMDeposit.Status.String(), "lsm deposit %d")
+	}
+}
+
 func (s *KeeperTestSuite) TestRestoreInterchainAccount_Success() {
 	tc := s.SetupRestoreInterchainAccount()
 	owner := "GAIA.DELEGATION"
@@ -194,6 +253,7 @@ func (s *KeeperTestSuite) TestRestoreInterchainAccount_Success() {
 	// Verify the record status' were reverted
 	s.VerifyDepositRecordsStatus(tc.depositRecordStatusUpdates, true)
 	s.VerifyHostZoneUnbondingStatus(tc.unbondingRecordStatusUpdate, true)
+	s.VerifyLSMDepositStatus(tc.lsmTokenDepositStatusUpdate, true)
 }
 
 func (s *KeeperTestSuite) TestRestoreInterchainAccount_InvalidConnectionId() {
@@ -260,6 +320,7 @@ func (s *KeeperTestSuite) TestRestoreInterchainAccount_RevertDepositRecords_Fail
 	// Verify the record status' were NOT reverted
 	s.VerifyDepositRecordsStatus(tc.depositRecordStatusUpdates, false)
 	s.VerifyHostZoneUnbondingStatus(tc.unbondingRecordStatusUpdate, false)
+	s.VerifyLSMDepositStatus(tc.lsmTokenDepositStatusUpdate, false)
 }
 
 func (s *KeeperTestSuite) TestRestoreInterchainAccount_NoRecordChange_Success() {
@@ -287,4 +348,5 @@ func (s *KeeperTestSuite) TestRestoreInterchainAccount_NoRecordChange_Success() 
 	// Verify the record status' were NOT reverted
 	s.VerifyDepositRecordsStatus(tc.depositRecordStatusUpdates, false)
 	s.VerifyHostZoneUnbondingStatus(tc.unbondingRecordStatusUpdate, false)
+	s.VerifyLSMDepositStatus(tc.lsmTokenDepositStatusUpdate, false)
 }
