@@ -1,7 +1,6 @@
 syntax = "proto3";
 package stride.records;
 
-import "stride/records/params.proto";
 import "gogoproto/gogo.proto";
 
 option go_package = "github.com/Stride-Labs/stride/v8/x/records/types";
@@ -79,19 +78,4 @@ message EpochUnbondingRecord {
   uint64 epoch_number = 1;
   repeated HostZoneUnbonding host_zone_unbondings = 3;
   reserved 2;
-}
-
-// GenesisState defines the records module's genesis state.
-// next id: 9
-message GenesisState {
-  Params params = 1 [ (gogoproto.nullable) = false ];
-  string port_id = 2;
-  repeated UserRedemptionRecord user_redemption_record_list = 3
-      [ (gogoproto.nullable) = false ];
-  uint64 user_redemption_record_count = 4;
-  repeated EpochUnbondingRecord epoch_unbonding_record_list = 5
-      [ (gogoproto.nullable) = false ];
-  repeated DepositRecord deposit_record_list = 7
-      [ (gogoproto.nullable) = false ];
-  uint64 deposit_record_count = 8;
 }

@@ -1,0 +1,9 @@
+syntax = "proto3";
+package stride.records;
+
+import "gogoproto/gogo.proto";
+
+option go_package = "github.com/Stride-Labs/stride/v8/x/records/types";
+
+// Params defines the parameters for the module.
+message Params { }
