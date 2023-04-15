@@ -7,6 +7,7 @@ import (
 	"time"
 
 	errorsmod "cosmossdk.io/errors"
+	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	icatypes "github.com/cosmos/ibc-go/v5/modules/apps/27-interchain-accounts/types"
 	transfertypes "github.com/cosmos/ibc-go/v5/modules/apps/transfer/types"
@@ -103,7 +104,7 @@ func (k Keeper) GetValidatorFromLSMTokenDenom(denom string, validators []*types.
 
 // Checks if we need to issue an ICQ to check if a validator was slashed
 // The query runs at periodic intervals defined by the ValidatorSlashQueryInterval
-func (k Keeper) ShouldCheckIfValidatorWasSlashed(ctx sdk.Context, validator types.Validator, stakeAmount sdk.Int) bool {
+func (k Keeper) ShouldCheckIfValidatorWasSlashed(ctx sdk.Context, validator types.Validator, stakeAmount sdkmath.Int) bool {
 	params := k.GetParams(ctx)
 	queryInterval := sdk.NewIntFromUint64(params.ValidatorSlashQueryInterval)
 

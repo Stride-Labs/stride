@@ -3,6 +3,7 @@ package keeper_test
 import (
 	"fmt"
 
+	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	icatypes "github.com/cosmos/ibc-go/v5/modules/apps/27-interchain-accounts/types"
 	transfertypes "github.com/cosmos/ibc-go/v5/modules/apps/transfer/types"
@@ -113,8 +114,8 @@ func (s *KeeperTestSuite) TestShouldCheckIfValidatorWasSlashed() {
 	testCases := []struct {
 		name                string
 		queryInterval       uint64
-		progress            sdk.Int
-		stakeAmount         sdk.Int
+		progress            sdkmath.Int
+		stakeAmount         sdkmath.Int
 		expectedShouldQuery bool
 	}{
 		{

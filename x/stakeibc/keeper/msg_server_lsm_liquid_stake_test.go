@@ -273,9 +273,10 @@ func (s *KeeperTestSuite) TestLSMLiquidStakeFailed_InsufficientBalance() {
 
 	// Send out all the user's coins so that they have an insufficient balance of LSM tokens
 	initialBalanceCoin := sdk.NewCoins(sdk.NewCoin(tc.lsmTokenIBCDenom, tc.initialBalance))
-	s.App.BankKeeper.SendCoins(s.Ctx, tc.liquidStakerAddress, s.TestAccs[1], initialBalanceCoin)
+	err := s.App.BankKeeper.SendCoins(s.Ctx, tc.liquidStakerAddress, s.TestAccs[1], initialBalanceCoin)
+	s.Require().NoError(err)
 
-	_, err := s.GetMsgServer().LSMLiquidStake(sdk.WrapSDKContext(s.Ctx), tc.validMsg)
+	_, err = s.GetMsgServer().LSMLiquidStake(sdk.WrapSDKContext(s.Ctx), tc.validMsg)
 	s.Require().ErrorContains(err, "insufficient funds")
 }
 
