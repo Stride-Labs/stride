@@ -76,18 +76,19 @@ service Query {
         "/Stride-Labs/stride/stakeibc/unbondings/{address}";
   }
 
-  // Queries the existing LSMTokenDeposits with different filters
+  // Queries the existing LSMTokenDeposits for one specific deposit
+  rpc LSMDeposit(QueryLSMDepositRequest)
+      returns (QueryLSMDepositResponse) {
+    option (google.api.http).get = 
+        "/Stride-Labs/stride/stakeibc/lsm_deposit/{chain_id}/{denom}";
+  }
+
+  // Queries the existing LSMTokenDeposits for all which match filters
+  //   intended use:  ...stakeibc/lsm_deposits?chain_id=X&validator_address=Y&status=Z
   rpc LSMDeposits(QueryLSMDepositsRequest)
       returns (QueryLSMDepositsResponse) {
-    option (google.api.http) = {
-        get: "/Stride-Labs/stride/stakeibc/lsm_deposits/{chain_id}"
-        additional_bindings {
-          get: "/Stride-Labs/stride/stakeibc/lsm_deposits/{chain_id}/status/{status}"
-        }
-        additional_bindings {
-          get: "/Stride-Labs/stride/stakeibc/lsm_deposits/{chain_id}/denom/{denom}"
-        }        
-    };
+    option (google.api.http).get = 
+        "/Stride-Labs/stride/stakeibc/lsm_deposits";
   }
 }
 
@@ -163,10 +164,19 @@ message QueryAddressUnbondingsResponse {
       [ (gogoproto.nullable) = false ];
 }
 
+message QueryLSMDepositRequest {
+  string chain_id = 1;
+  string denom = 3;
+}
+
+message QueryLSMDepositResponse {
+  LSMTokenDeposit deposit = 1 [ (gogoproto.nullable) = false ];
+}
+
 message QueryLSMDepositsRequest {
   string chain_id = 1;
-  optional LSMDepositStatus status = 2;
-  optional string denom = 3;
+  string validator_address = 2;
+  string status = 3;
 }
 
 message QueryLSMDepositsResponse {

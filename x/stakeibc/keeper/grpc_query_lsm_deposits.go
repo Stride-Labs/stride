@@ -11,43 +11,62 @@ import (
 	"github.com/Stride-Labs/stride/v8/x/stakeibc/types"
 )
 
+func (k Keeper) LSMDeposit(c context.Context, req *types.QueryLSMDepositRequest) (*types.QueryLSMDepositResponse, error) {
+	if req == nil || req.GetChainId() == "" || req.GetDenom() == "" {
+		return nil, status.Error(codes.InvalidArgument, "invalid request")
+	}
+
+	var foundDeposit types.LSMTokenDeposit
+	ctx := sdk.UnwrapSDKContext(c)
+
+	deposit, found := k.GetLSMTokenDeposit(ctx, req.GetChainId(), req.GetDenom())
+	if found {
+		foundDeposit = deposit
+	}
+
+	return &types.QueryLSMDepositResponse{Deposit: foundDeposit}, nil
+}
+
 func (k Keeper) LSMDeposits(c context.Context, req *types.QueryLSMDepositsRequest) (*types.QueryLSMDepositsResponse, error) {
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "invalid request")
 	}
 
-	var allDeposits []types.LSMTokenDeposit
+	var deposits []types.LSMTokenDeposit
 	ctx := sdk.UnwrapSDKContext(c)
 
-	// chainId must be included, but denom and status are optional felds
-
-	// Case 1: They are asking for a specific chainId + denom --> GetLSMTokenDeposit
-	// 	 if they included a status and a denom.... ignore the status and search for denom
-	if req.GetDenom() != "" {
-		deposit, found := k.GetLSMTokenDeposit(ctx, req.GetChainId(), req.GetDenom())
-		if found {
-			allDeposits = append(allDeposits, deposit)
-		}
+	// Case 1: no chain_id was given, so we should load all deposits across all chains
+	if req.GetChainId() == "" {
+		deposits = k.GetAllLSMTokenDeposit(ctx)
 	}
 
-	// Case 2: They are asking for all deposits with chainId + status --> Get
-	//   if they included a status and denom, already handled above, denom is missing for this branch
-	if req.GetXStatus() != nil && req.GetDenom() == "" {
-		deposits := k.GetLSMDepositsForHostZoneWithStatus(ctx, req.GetChainId(), req.GetStatus())
-		if len(deposits) > 0 {
-			allDeposits = append(allDeposits, deposits...)
-		}
+	// Case 2: chain_id is given, load all for that chain
+	if req.GetChainId() != "" {
+		deposits = k.GetLSMDepositsForHostZone(ctx, req.GetChainId())
 	}
 
-	// Case 3: They are looking for all deposits with chainId -->
-	//   both status and denom optional arguments have to be left out for this branch
-	if req.GetXStatus() == nil && req.GetDenom() == "" {
-		deposits := k.GetLSMDepositsForHostZone(ctx, req.GetChainId())
-		if len(deposits) > 0 {
-			allDeposits = append(allDeposits, deposits...)
+	// Filter for matches by hand if validator_address is given
+	filtered := []types.LSMTokenDeposit{}
+	if req.GetValidatorAddress() != "" {
+		for _, deposit := range deposits {
+			if deposit.ValidatorAddress == req.GetValidatorAddress() {
+				filtered = append(filtered, deposit)
+			}
 		}
+		deposits = filtered
+	}
+
+	// Filter for matches by hand if status is given
+	filtered = []types.LSMTokenDeposit{}
+	if req.GetStatus() != "" {
+		for _, deposit := range deposits {
+			if deposit.Status.String() == req.GetStatus() {
+				filtered = append(filtered, deposit)
+			}
+		}
+		deposits = filtered
 	}
 
 	// Be aware this could be an empty array, there might simply have been no matching deposits
-	return &types.QueryLSMDepositsResponse{Deposits: allDeposits}, nil
+	return &types.QueryLSMDepositsResponse{Deposits: deposits}, nil
 }
