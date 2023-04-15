@@ -9,11 +9,11 @@ const TypeMsgLSMLiquidStake = "lsm_liquid_stake"
 
 var _ sdk.Msg = &MsgLSMLiquidStake{}
 
-func NewMsgLSMLiquidStake(creator string, amount sdkmath.Int, lsmTokenDenom string) *MsgLSMLiquidStake {
+func NewMsgLSMLiquidStake(creator string, amount sdkmath.Int, lsmTokenIbcDenom string) *MsgLSMLiquidStake {
 	return &MsgLSMLiquidStake{
-		Creator:       creator,
-		Amount:        amount,
-		LsmTokenDenom: lsmTokenDenom,
+		Creator:          creator,
+		Amount:           amount,
+		LsmTokenIbcDenom: lsmTokenIbcDenom,
 	}
 }
 

@@ -16,17 +16,18 @@ var (
 	DefaultRewardsInterval        uint64 = 1
 	DefaultRedemptionRateInterval uint64 = 1
 	// you apparently cannot safely encode floats, so we make commission / 100
-	DefaultStrideCommission           uint64 = 10
-	DefaultICATimeoutNanos            uint64 = 600000000000
-	DefaultBufferSize                 uint64 = 5             // 1/5=20% of the epoch
-	DefaultIbcTimeoutBlocks           uint64 = 300           // 300 blocks ~= 30 minutes
-	DefaultFeeTransferTimeoutNanos    uint64 = 1800000000000 // 30 minutes
-	DefaultMinRedemptionRateThreshold uint64 = 90            // divide by 100, so 90 = 0.9
-	DefaultMaxRedemptionRateThreshold uint64 = 150           // divide by 100, so 150 = 1.5
-	DefaultMaxStakeICACallsPerEpoch   uint64 = 100
-	DefaultIBCTransferTimeoutNanos    uint64 = 1800000000000 // 30 minutes
-	DefaultSafetyNumValidators        uint64 = 35
-	DefaultSafetyMaxSlashPercent      uint64 = 10
+	DefaultStrideCommission            uint64 = 10
+	DefaultICATimeoutNanos             uint64 = 600000000000
+	DefaultBufferSize                  uint64 = 5             // 1/5=20% of the epoch
+	DefaultIbcTimeoutBlocks            uint64 = 300           // 300 blocks ~= 30 minutes
+	DefaultFeeTransferTimeoutNanos     uint64 = 1800000000000 // 30 minutes
+	DefaultMinRedemptionRateThreshold  uint64 = 90            // divide by 100, so 90 = 0.9
+	DefaultMaxRedemptionRateThreshold  uint64 = 150           // divide by 100, so 150 = 1.5
+	DefaultMaxStakeICACallsPerEpoch    uint64 = 100
+	DefaultIBCTransferTimeoutNanos     uint64 = 1800000000000 // 30 minutes
+	DefaultSafetyNumValidators         uint64 = 35
+	DefaultSafetyMaxSlashPercent       uint64 = 10
+	DefaultValidatorSlashQueryInterval uint64 = 100_000_000_000 // denominated in number of native tokens
 
 	// KeyDepositInterval is store's key for the DepositInterval option
 	KeyDepositInterval                   = []byte("DepositInterval")
@@ -47,6 +48,7 @@ var (
 	KeySafetyMaxSlashPercent             = []byte("SafetyMaxSlashPercent")
 	KeyMaxRedemptionRates                = []byte("MaxRedemptionRates")
 	KeyMinRedemptionRates                = []byte("MinRedemptionRates")
+	KeyValidatorSlashQueryInterval       = []byte("ValidatorSlashQueryInterval")
 )
 
 var _ paramtypes.ParamSet = (*Params)(nil)
@@ -74,6 +76,7 @@ func NewParams(
 	ibcTransferTimeoutNanos uint64,
 	safetyNumValidators uint64,
 	safetyMaxSlashPercent uint64,
+	validatorSlashQueryInterval uint64,
 ) Params {
 	return Params{
 		DepositInterval:                   depositInterval,
@@ -92,6 +95,7 @@ func NewParams(
 		IbcTransferTimeoutNanos:           ibcTransferTimeoutNanos,
 		SafetyNumValidators:               safetyNumValidators,
 		SafetyMaxSlashPercent:             safetyMaxSlashPercent,
+		ValidatorSlashQueryInterval:       validatorSlashQueryInterval,
 	}
 }
 
@@ -114,6 +118,7 @@ func DefaultParams() Params {
 		DefaultIBCTransferTimeoutNanos,
 		DefaultSafetyNumValidators,
 		DefaultSafetyMaxSlashPercent,
+		DefaultValidatorSlashQueryInterval,
 	)
 }
 
@@ -136,6 +141,7 @@ func (p *Params) ParamSetPairs() paramtypes.ParamSetPairs {
 		paramtypes.NewParamSetPair(KeyIBCTransferTimeoutNanos, &p.IbcTransferTimeoutNanos, validTimeoutNanos),
 		paramtypes.NewParamSetPair(KeySafetyNumValidators, &p.SafetyNumValidators, isPositive),
 		paramtypes.NewParamSetPair(KeySafetyMaxSlashPercent, &p.SafetyMaxSlashPercent, validSlashPercent),
+		paramtypes.NewParamSetPair(KeyValidatorSlashQueryInterval, &p.ValidatorSlashQueryInterval, isPositive),
 	}
 }
 
