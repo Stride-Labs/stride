@@ -3,7 +3,6 @@ package keeper_test
 import (
 	"encoding/json"
 	"fmt"
-	"time"
 
 	sdkmath "cosmossdk.io/math"
 
@@ -16,11 +15,6 @@ import (
 
 	"github.com/Stride-Labs/stride/v8/x/stakeibc/keeper"
 	"github.com/Stride-Labs/stride/v8/x/stakeibc/types"
-)
-
-var (
-	ValAddress        = "cosmosvaloper1uk4ze0x4nvh4fk0xm4jdud58eqn4yxhrdt795p"
-	LSMTokenBaseDenom = ValAddress + "/32"
 )
 
 type LSMLiquidStakeTestCase struct {
@@ -50,9 +44,9 @@ func (s *KeeperTestSuite) SetupTestLSMLiquidStake() LSMLiquidStakeTestCase {
 	// Fund the user's account with the LSM token
 	s.FundAccount(userAddress, sdk.NewCoin(lsmTokenIBCDenom, initialBalance))
 
-	// Add the query exchange rate interval
+	// Add the slash interval
 	params := types.DefaultParams()
-	params.ValidatorExchangeRateQueryInterval = 10_000_000
+	params.ValidatorSlashQueryInterval = 10_000_000
 	s.App.StakeibcKeeper.SetParams(s.Ctx, params)
 
 	// Add the host zone with a valid zone address as the LSM custodian
@@ -64,8 +58,8 @@ func (s *KeeperTestSuite) SetupTestLSMLiquidStake() LSMLiquidStakeTestCase {
 		TransferChannelId: ibctesting.FirstChannelID,
 		ConnectionId:      ibctesting.FirstConnectionID,
 		Validators: []*types.Validator{{
-			Address:                          ValAddress,
-			ProgressTowardsExchangeRateQuery: sdkmath.NewInt(8_000_000),
+			Address:                   ValAddress,
+			SlashQueryProgressTracker: sdkmath.NewInt(8_000_000),
 		}},
 		DelegationAccount: &types.ICAAccount{
 			Address: "cosmos_DELEGATION",
@@ -163,8 +157,8 @@ func (s *KeeperTestSuite) TestLSMLiquidStake_Successful_WithExchangeRateQuery() 
 	s.Require().Equal(types.ModuleName, actualQuery.CallbackModule, "callback module")
 	s.Require().Equal(keeper.ICQCallbackID_Validator, actualQuery.CallbackId, "callback-id")
 
-	expectedTimeout := uint64(s.Ctx.BlockTime().UnixNano() + (time.Minute * 15).Nanoseconds())
-	s.Require().Equal(expectedTimeout, actualQuery.Timeout, "callback module")
+	expectedTimeout := uint64(s.Ctx.BlockTime().UnixNano() + (keeper.SlashQueryTimeout).Nanoseconds())
+	s.Require().Equal(int64(expectedTimeout), int64(actualQuery.Timeout), "callback module")
 
 	// Confirm query callback data
 	s.Require().True(len(actualQuery.CallbackData) > 0, "callback data exists")

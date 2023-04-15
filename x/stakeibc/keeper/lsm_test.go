@@ -109,7 +109,7 @@ func (s *KeeperTestSuite) TestGetValidatorFromLSMTokenDenom() {
 	s.Require().ErrorContains(err, "validator (cosmosvaloperXXX) is not registered in the Stride validator set")
 }
 
-func (s *KeeperTestSuite) TestShouldQueryValidatorExchangeRate() {
+func (s *KeeperTestSuite) TestShouldCheckIfValidatorWasSlashed() {
 	testCases := []struct {
 		name                string
 		queryInterval       uint64
@@ -164,11 +164,11 @@ func (s *KeeperTestSuite) TestShouldQueryValidatorExchangeRate() {
 	for _, tc := range testCases {
 		// Store query interval param
 		params := types.DefaultParams()
-		params.ValidatorExchangeRateQueryInterval = tc.queryInterval
+		params.ValidatorSlashQueryInterval = tc.queryInterval
 		s.App.StakeibcKeeper.SetParams(s.Ctx, params)
 
-		validator := types.Validator{ProgressTowardsExchangeRateQuery: tc.progress}
-		actualShouldQuery := s.App.StakeibcKeeper.ShouldQueryValidatorExchangeRate(s.Ctx, validator, tc.stakeAmount)
+		validator := types.Validator{SlashQueryProgressTracker: tc.progress}
+		actualShouldQuery := s.App.StakeibcKeeper.ShouldCheckIfValidatorWasSlashed(s.Ctx, validator, tc.stakeAmount)
 		s.Require().Equal(tc.expectedShouldQuery, actualShouldQuery, tc.name)
 	}
 }

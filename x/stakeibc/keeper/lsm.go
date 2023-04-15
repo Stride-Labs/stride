@@ -21,6 +21,15 @@ var (
 	// A valid IBC path for the LSM token must only consist of 1 channel hop along a transfer channel
 	// (e.g. "transfer/channel-0")
 	IsValidIBCPath = regexp.MustCompile(fmt.Sprintf(`^%s/(%s[0-9]{1,20})$`, transfertypes.PortID, channeltypes.ChannelPrefix)).MatchString
+
+	// Timeout for the validator slash query that occurs at periodic deposit intervals
+	SlashQueryTimeout = time.Minute * 5 // 5 minutes
+
+	// Time for the IBC transfer of the LSM Token to the host zone
+	LSMDepositTransferTimeout = time.Hour * 24 // 1 day
+
+	// Time for the detokenization ICA
+	DetokenizationTimeout = time.Hour * 24 // 1 day
 )
 
 // Parse the LSM Token's IBC denom hash into a DenomTrace object that contains the path and base denom
@@ -93,10 +102,10 @@ func (k Keeper) GetValidatorFromLSMTokenDenom(denom string, validators []*types.
 }
 
 // Checks if we need to issue an ICQ to check if a validator was slashed
-// The query runs at periodic intervals defined by the ValidatorExchangeRateQueryInterval
-func (k Keeper) ShouldQueryValidatorExchangeRate(ctx sdk.Context, validator types.Validator, stakeAmount sdk.Int) bool {
+// The query runs at periodic intervals defined by the ValidatorSlashQueryInterval
+func (k Keeper) ShouldCheckIfValidatorWasSlashed(ctx sdk.Context, validator types.Validator, stakeAmount sdk.Int) bool {
 	params := k.GetParams(ctx)
-	queryInterval := sdk.NewIntFromUint64(params.ValidatorExchangeRateQueryInterval)
+	queryInterval := sdk.NewIntFromUint64(params.ValidatorSlashQueryInterval)
 
 	// If the query interval is disabled, do not submit a query
 	// This should not be possible with the current parameter validation
@@ -105,13 +114,32 @@ func (k Keeper) ShouldQueryValidatorExchangeRate(ctx sdk.Context, validator type
 		return false
 	}
 
-	oldProgress := validator.ProgressTowardsExchangeRateQuery
-	newProgress := validator.ProgressTowardsExchangeRateQuery.Add(stakeAmount)
+	oldProgress := validator.SlashQueryProgressTracker
+	newProgress := validator.SlashQueryProgressTracker.Add(stakeAmount)
 
 	// Submit query if the query interval checkpoint has been breached
 	// Ex: Query Interval: 1000, Old Progress: 900, New Progress: 1100
 	//     => OldProgress/Interval: 0, NewProgress/Interval: 1
 	return oldProgress.Quo(queryInterval).LT(newProgress.Quo(queryInterval))
+}
+
+// Helper function to Refund an LSM Token to the user if both:
+//  a) the LSMLiquidStake transaction is interrupted with a validator exchange rate query, and
+//  b) the handling of the query callback fails
+func (k Keeper) RefundLSMToken(ctx sdk.Context, lsmLiquidStake types.LSMLiquidStake) error {
+	liquidStakerAddress := lsmLiquidStake.Staker
+	hostZoneAddress, err := sdk.AccAddressFromBech32(lsmLiquidStake.HostZone.Address)
+	if err != nil {
+		return errorsmod.Wrapf(err, "host zone address is invalid")
+	}
+	refundToken := lsmLiquidStake.LSMIBCToken
+
+	if err := k.bankKeeper.SendCoins(ctx, hostZoneAddress, liquidStakerAddress, sdk.NewCoins(refundToken)); err != nil {
+		return errorsmod.Wrapf(err,
+			"failed to send tokens from Module Account (%s) to Staker (%s)", hostZoneAddress.String(), liquidStakerAddress.String())
+	}
+
+	return nil
 }
 
 // Submits an ICA to "Redeem" an LSM Token - meaning converting the token into native stake
@@ -149,7 +177,7 @@ func (k Keeper) DetokenizeLSMDeposit(ctx sdk.Context, hostZone types.HostZone, d
 	k.SetLSMTokenDeposit(ctx, deposit)
 
 	// Submit the ICA with a 24 hour timeout
-	timeout := uint64(ctx.BlockTime().UnixNano() + (time.Hour * 24).Nanoseconds()) // 1 day
+	timeout := uint64(ctx.BlockTime().UnixNano() + (DetokenizationTimeout).Nanoseconds()) // 1 day
 	if _, err := k.SubmitTxs(ctx, hostZone.ConnectionId, detokenizeMsg, *delegationAccount, timeout, ICACallbackID_Detokenize, callbackArgsBz); err != nil {
 		return errorsmod.Wrapf(err, "unable to submit detokenization ICA for %s", deposit.Denom)
 	}

@@ -27,7 +27,7 @@ message Params {
   uint64 ibc_transfer_timeout_nanos = 16;
   uint64 safety_num_validators = 17;
   uint64 safety_max_slash_percent = 18;
-  uint64 validator_exchange_rate_query_interval = 19;
+  uint64 validator_slash_query_interval = 19;
 
   reserved 8;
 }

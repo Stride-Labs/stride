@@ -3,7 +3,6 @@ package keeper
 import (
 	"context"
 	"encoding/json"
-	"time"
 
 	errorsmod "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -47,8 +46,8 @@ func (k msgServer) LSMLiquidStake(goCtx context.Context, msg *types.MsgLSMLiquid
 		return nil, err
 	}
 
-	if k.ShouldQueryValidatorExchangeRate(ctx, lsmLiquidStake.Validator, msg.Amount) {
-		if err := k.SubmitValidatorExchangeRateQuery(ctx, lsmLiquidStake); err != nil {
+	if k.ShouldCheckIfValidatorWasSlashed(ctx, lsmLiquidStake.Validator, msg.Amount) {
+		if err := k.SubmitValidatorSlashQuery(ctx, lsmLiquidStake); err != nil {
 			return nil, err
 		}
 		return &types.MsgLSMLiquidStakeResponse{TransactionComplete: false}, nil
@@ -133,10 +132,10 @@ func (k Keeper) StartLSMLiquidStake(ctx sdk.Context, msg *types.MsgLSMLiquidStak
 	}, nil
 }
 
-// SubmitValidatorExchangeRateQuery submits an interchain query for the validator's exchange rate
+// SubmitValidatorSlashQuery submits an interchain query for the validator's exchange rate
 // This is done periodically at checkpoints denominated in native tokens
 // (e.g. every 100k ATOM that's LSM liquid staked with validator X)
-func (k Keeper) SubmitValidatorExchangeRateQuery(ctx sdk.Context, lsmLiquidStake types.LSMLiquidStake) error {
+func (k Keeper) SubmitValidatorSlashQuery(ctx sdk.Context, lsmLiquidStake types.LSMLiquidStake) error {
 	hostZone := lsmLiquidStake.HostZone
 	validator := lsmLiquidStake.Validator
 
@@ -154,7 +153,7 @@ func (k Keeper) SubmitValidatorExchangeRateQuery(ctx sdk.Context, lsmLiquidStake
 	}
 
 	// Use a short timeout for the query so that user's can get the tokens refunded quickly should the query get stuck
-	timeout := uint64(ctx.BlockTime().UnixNano() + (time.Minute * 5).Nanoseconds()) // 5 minutes
+	timeout := uint64(ctx.BlockTime().UnixNano() + (SlashQueryTimeout).Nanoseconds())
 	query := icqtypes.Query{
 		ChainId:        hostZone.ChainId,
 		ConnectionId:   hostZone.ConnectionId,
@@ -196,7 +195,7 @@ func (k Keeper) FinishLSMLiquidStake(ctx sdk.Context, lsmLiquidStake types.LSMLi
 	}
 
 	// Send LSM Token to host zone via IBC transfer
-	timeout := uint64(ctx.BlockTime().UnixNano() + (time.Hour * 24).Nanoseconds()) // 1 day
+	timeout := uint64(ctx.BlockTime().UnixNano() + (LSMDepositTransferTimeout).Nanoseconds()) // 1 day
 	msgTransferResponse, err := k.RecordsKeeper.TransferKeeper.Transfer(sdk.WrapSDKContext(ctx), &transfertypes.MsgTransfer{
 		SourcePort:       transfertypes.PortID,
 		SourceChannel:    hostZone.TransferChannelId,
