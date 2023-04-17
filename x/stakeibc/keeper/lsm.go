@@ -217,3 +217,22 @@ func (k Keeper) DetokenizeAllLSMDeposits(ctx sdk.Context) {
 		}
 	}
 }
+
+// When receiving LSM Liquid Stakes, the distribution of stake from these tokens
+//   will be inconsistent with the host zone's validator set
+// This portion of stake is designated as the "Unbalanced Delegation"
+// This function rebalances the unbalanced portion according to the validator weights,
+//   and should not be confused with the main Rebalance function which rebalances
+//   the entire protocol-owned delegation
+// Note: this cannot be run more than once in a single unbonding period
+func (k Keeper) RebalanceTokenizedDeposits(ctx sdk.Context) {
+	for _, hostZone := range k.GetAllActiveHostZone(ctx) {
+		numRebalance := uint64(len(hostZone.Validators))
+
+		if err := k.RebalanceDelegations(ctx, hostZone.ChainId, types.UNBALANCED_DELEGATION, numRebalance); err != nil {
+			k.Logger(ctx).Error(fmt.Sprintf("Unable to rebalance delegations for %s: %s", hostZone.ChainId, err.Error()))
+			continue
+		}
+		k.Logger(ctx).Info(fmt.Sprintf("Successfully rebalanced UnbalancedDelegations for %s", hostZone.ChainId))
+	}
+}
