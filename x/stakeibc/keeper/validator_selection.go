@@ -14,57 +14,42 @@ import (
 	"github.com/Stride-Labs/stride/v8/x/stakeibc/types"
 )
 
+type validatorDelegationChange struct {
+	validatorAddress string
+	delta            sdkmath.Int
+}
+
 // Rebalance validators according to their validator weights
 // Specify whether to rebalance the balanced or unbalanced portion
 // The unbalanced portion represents delegations from LSM Tokens that are naturally
 //    misaligned with the validator. They must be rebalanced periodically
 // The balance portion represents either native delegations or LSM delegation that have
-//    already been rebalanced. This portion only requires a to be rebalanced if the validator weights change
-func (k Keeper) RebalanceDelegations(ctx sdk.Context, chainId string, delegationType types.DelegationType) error {
+//    already been rebalanced. This portion only requires a rebalancing if the validator weights change
+func (k Keeper) RebalanceDelegations(ctx sdk.Context, chainId string, delegationType types.DelegationType, numRebalance uint64) error {
 	hostZone, found := k.GetHostZone(ctx, chainId)
 	if !found {
 		return errorsmod.Wrap(types.ErrHostZoneNotFound, fmt.Sprintf("Host zone %s not found", chainId))
 	}
-	validatorDeltas, err := k.GetValidatorDelegationDifferences(ctx, hostZone, types.BALANCED_DELEGATION)
+
+	// Get the difference between the actual and expected validator delegations
+	valDeltaList, err := k.GetValidatorDelegationDifferences(ctx, hostZone, delegationType)
 	if err != nil {
 		return errorsmod.Wrapf(err, "unable to get validator deltas for host zone %s", chainId)
 	}
 
-	// we convert the above map into a list of tuples
-	type valPair struct {
-		deltaAmt sdkmath.Int
-		valAddr  string
-	}
-	valDeltaList := make([]valPair, 0)
-	for _, valAddr := range utils.StringMapKeys(validatorDeltas) { // DO NOT REMOVE: StringMapKeys fixes non-deterministic map iteration
-		deltaAmt := validatorDeltas[valAddr]
-		k.Logger(ctx).Info(fmt.Sprintf("Adding deltaAmt: %v to validator: %s", deltaAmt, valAddr))
-		valDeltaList = append(valDeltaList, valPair{deltaAmt, valAddr})
-	}
-	// now we sort that list
+	// now we sort that list by the size of the delegation change
 	lessFunc := func(i, j int) bool {
-		return valDeltaList[i].deltaAmt.LT(valDeltaList[j].deltaAmt)
+		return valDeltaList[i].delta.LT(valDeltaList[j].delta)
 	}
 	sort.SliceStable(valDeltaList, lessFunc)
-	// now varDeltaList is sorted by deltaAmt
-	overWeightIndex := 0
-	underWeightIndex := len(valDeltaList) - 1
-
-	// check if there is a large enough rebalance, if not, just exit
-	total_delegation := k.GetTotalValidatorDelegations(hostZone, types.BALANCED_DELEGATION)
-	if total_delegation.IsZero() {
-		return nil, errorsmod.Wrapf(sdkerrors.ErrInvalidRequest,
-			"no validator delegations found for Host Zone %s, cannot rebalance 0 delegations!", hostZone.ChainId)
-	}
 
 	var msgs []sdk.Msg
-	delegationIca := hostZone.GetDelegationAccount()
-	if delegationIca == nil || delegationIca.GetAddress() == "" {
-		k.Logger(ctx).Error(fmt.Sprintf("Zone %s is missing a delegation address!", hostZone.ChainId))
-		return nil, errorsmod.Wrapf(sdkerrors.ErrInvalidAddress, "Invalid delegation account")
+	delegationIca := hostZone.DelegationAccount
+	if delegationIca == nil || delegationIca.Address == "" {
+		return errorsmod.Wrapf(types.ErrICAAccountNotFound, "no delegation account found for %s", chainId)
 	}
 
-	delegatorAddress := delegationIca.GetAddress()
+	delegatorAddress := delegationIca.Address
 
 	// start construction callback
 	rebalanceCallback := types.RebalanceCallback{
@@ -72,45 +57,47 @@ func (k Keeper) RebalanceDelegations(ctx sdk.Context, chainId string, delegation
 		Rebalancings: []*types.Rebalancing{},
 	}
 
-	for i := uint64(1); i <= msg.NumRebalance; i++ {
+	overWeightIndex := 0
+	underWeightIndex := len(valDeltaList) - 1
+	for i := uint64(1); i <= numRebalance; i++ {
 		underWeightElem := valDeltaList[underWeightIndex]
 		overWeightElem := valDeltaList[overWeightIndex]
-		if underWeightElem.deltaAmt.LT(sdkmath.ZeroInt()) {
+		if underWeightElem.delta.LT(sdkmath.ZeroInt()) {
 			// if underWeightElem is negative, we're done rebalancing
 			break
 		}
-		if overWeightElem.deltaAmt.GT(sdkmath.ZeroInt()) {
+		if overWeightElem.delta.GT(sdkmath.ZeroInt()) {
 			// if overWeightElem is positive, we're done rebalancing
 			break
 		}
 		// underweight Elem is positive, overweight Elem is negative
-		overWeightElemAbs := overWeightElem.deltaAmt.Abs()
+		overWeightElemAbs := overWeightElem.delta.Abs()
 		var redelegateMsg *stakingtypes.MsgBeginRedelegate
-		if underWeightElem.deltaAmt.GT(overWeightElemAbs) {
+		if underWeightElem.delta.GT(overWeightElemAbs) {
 			// if the underweight element is more off than the overweight element
 			// we transfer stake from the underweight element to the overweight element
-			underWeightElem.deltaAmt = underWeightElem.deltaAmt.Sub(overWeightElemAbs)
+			underWeightElem.delta = underWeightElem.delta.Sub(overWeightElemAbs)
 			overWeightIndex += 1
 			// issue an ICA call to the host zone to rebalance the validator
 			redelegateMsg = &stakingtypes.MsgBeginRedelegate{
 				DelegatorAddress:    delegatorAddress,
-				ValidatorSrcAddress: overWeightElem.valAddr,
-				ValidatorDstAddress: underWeightElem.valAddr,
+				ValidatorSrcAddress: overWeightElem.validatorAddress,
+				ValidatorDstAddress: underWeightElem.validatorAddress,
 				Amount:              sdk.NewCoin(hostZone.HostDenom, overWeightElemAbs)}
 			msgs = append(msgs, redelegateMsg)
-			overWeightElem.deltaAmt = sdkmath.ZeroInt()
-		} else if underWeightElem.deltaAmt.LT(overWeightElemAbs) {
+			overWeightElem.delta = sdkmath.ZeroInt()
+		} else if underWeightElem.delta.LT(overWeightElemAbs) {
 			// if the overweight element is more overweight than the underweight element
-			overWeightElem.deltaAmt = overWeightElem.deltaAmt.Add(underWeightElem.deltaAmt)
+			overWeightElem.delta = overWeightElem.delta.Add(underWeightElem.delta)
 			underWeightIndex -= 1
 			// issue an ICA call to the host zone to rebalance the validator
 			redelegateMsg = &stakingtypes.MsgBeginRedelegate{
 				DelegatorAddress:    delegatorAddress,
-				ValidatorSrcAddress: overWeightElem.valAddr,
-				ValidatorDstAddress: underWeightElem.valAddr,
-				Amount:              sdk.NewCoin(hostZone.HostDenom, underWeightElem.deltaAmt)}
+				ValidatorSrcAddress: overWeightElem.validatorAddress,
+				ValidatorDstAddress: underWeightElem.validatorAddress,
+				Amount:              sdk.NewCoin(hostZone.HostDenom, underWeightElem.delta)}
 			msgs = append(msgs, redelegateMsg)
-			underWeightElem.deltaAmt = sdkmath.ZeroInt()
+			underWeightElem.delta = sdkmath.ZeroInt()
 		} else {
 			// if the two elements are equal, we increment both slices
 			underWeightIndex -= 1
@@ -118,12 +105,12 @@ func (k Keeper) RebalanceDelegations(ctx sdk.Context, chainId string, delegation
 			// issue an ICA call to the host zone to rebalance the validator
 			redelegateMsg = &stakingtypes.MsgBeginRedelegate{
 				DelegatorAddress:    delegatorAddress,
-				ValidatorSrcAddress: overWeightElem.valAddr,
-				ValidatorDstAddress: underWeightElem.valAddr,
-				Amount:              sdk.NewCoin(hostZone.HostDenom, underWeightElem.deltaAmt)}
+				ValidatorSrcAddress: overWeightElem.validatorAddress,
+				ValidatorDstAddress: underWeightElem.validatorAddress,
+				Amount:              sdk.NewCoin(hostZone.HostDenom, underWeightElem.delta)}
 			msgs = append(msgs, redelegateMsg)
-			overWeightElem.deltaAmt = sdkmath.ZeroInt()
-			underWeightElem.deltaAmt = sdkmath.ZeroInt()
+			overWeightElem.delta = sdkmath.ZeroInt()
+			underWeightElem.delta = sdkmath.ZeroInt()
 		}
 		// add the rebalancing to the callback
 		// lastMsg grabs rebalanceMsg from above (due to the type, it's hard to )
@@ -134,45 +121,64 @@ func (k Keeper) RebalanceDelegations(ctx sdk.Context, chainId string, delegation
 			Amt:          redelegateMsg.Amount.Amount,
 		})
 	}
+
 	// marshall the callback
 	marshalledCallbackArgs, err := k.MarshalRebalanceCallbackArgs(ctx, rebalanceCallback)
 	if err != nil {
-		k.Logger(ctx).Error(err.Error())
-		return nil, err
+		return errorsmod.Wrapf(err, "unable to marshal rebalance callback args")
 	}
 
-	connectionId := hostZone.GetConnectionId()
-	_, err = k.SubmitTxsStrideEpoch(ctx, connectionId, msgs, *hostZone.GetDelegationAccount(), ICACallbackID_Rebalance, marshalledCallbackArgs)
+	// Submit the rebalance ICA
+	_, err = k.SubmitTxsStrideEpoch(
+		ctx,
+		hostZone.ConnectionId,
+		msgs,
+		*hostZone.DelegationAccount,
+		ICACallbackID_Rebalance,
+		marshalledCallbackArgs,
+	)
 	if err != nil {
-		return nil, errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "Failed to SubmitTxs for %s, %s, %s, %s", connectionId, hostZone.ChainId, msgs, err.Error())
+		return errorsmod.Wrapf(err, "Failed to SubmitTxs for %s, %s, %s, %s", hostZone.ConnectionId, hostZone.ChainId, msgs)
 	}
 
+	return nil
 }
 
-// This function returns a map from Validator Address to how many extra tokens need to be given to that validator
+// This function returns a list with the number of extra tokens that needs to be sent to each validator
 //   positive implies extra tokens need to be given,
 //   negative implies tokens need to be taken away
 func (k Keeper) GetValidatorDelegationDifferences(
 	ctx sdk.Context,
 	hostZone types.HostZone,
-	delegationType types.DelegationType,
-) (map[string]sdkmath.Int, error) {
-	delegationDelta := make(map[string]sdkmath.Int)
+	delegationType types.DelegationType, // QUESTION: Is delegationType more clear as an enum or as a boolean?
+) ([]validatorDelegationChange, error) {
 	totalDelegatedAmt := k.GetTotalValidatorDelegations(hostZone, delegationType)
-	targetDelegation, err := k.GetTargetValAmtsForHostZone(ctx, hostZone, totalDelegatedAmt)
-	if err != nil {
-		k.Logger(ctx).Error(fmt.Sprintf("Error getting target val amts for host zone %s", hostZone.ChainId))
-		return nil, err
+	if totalDelegatedAmt.IsZero() {
+		return nil, errorsmod.Wrapf(sdkerrors.ErrInvalidRequest,
+			"no validator delegations found for Host Zone %s, cannot rebalance 0 delegations!", hostZone.ChainId)
 	}
 
-	for _, validator := range hostZone.Validators {
+	targetDelegation, err := k.GetTargetValAmtsForHostZone(ctx, hostZone, totalDelegatedAmt)
+	if err != nil {
+		return nil, errorsmod.Wrapf(err, "unable to get targe val amounts for host zone %s", hostZone.ChainId)
+	}
+
+	delegationDelta := make([]validatorDelegationChange, len(hostZone.Validators))
+	for i, validator := range hostZone.Validators {
 		targetDelForVal := targetDelegation[validator.Address]
 
+		var delegationChange sdkmath.Int
 		if delegationType == types.BALANCED_DELEGATION {
-			delegationDelta[validator.Address] = targetDelForVal.Sub(validator.BalancedDelegation)
+			delegationChange = targetDelForVal.Sub(validator.BalancedDelegation)
 		} else if delegationType == types.UNBALANCED_DELEGATION {
-			delegationDelta[validator.Address] = targetDelForVal.Sub(validator.UnbalancedDelegation)
+			delegationChange = targetDelForVal.Sub(validator.UnbalancedDelegation)
 		}
+
+		delegationDelta[i] = validatorDelegationChange{
+			validatorAddress: validator.Address,
+			delta:            delegationChange,
+		}
+		k.Logger(ctx).Info(fmt.Sprintf("Adding delegation: %v to validator: %s", delegationChange, validator.Address))
 	}
 
 	return delegationDelta, nil
