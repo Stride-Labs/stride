@@ -167,7 +167,7 @@ func (k Keeper) UpdateRedemptionRates(ctx sdk.Context, depositRecords []recordst
 
 		k.Logger(ctx).Info(utils.LogWithHostZone(hostZone.ChainId, "Redemption Rate Components - "+
 			"Deposit Account Balance: %v, Undelegated Balance: %v, LSM Delegated Balance: %v"+
-			"Native Balanced Delegations: %v, NativeUnbalancedDelegations: %v, stToken Supply: %v",
+			"Native Balanced Delegations: %v, Native Unbalanced Delegations: %v, stToken Supply: %v",
 			depositAccountBalance, undelegatedBalance, lsmDelegatedBalance,
 			hostZone.TotalUnbalancedDelegations, hostZone.TotalUnbalancedDelegations, stSupply))
 
