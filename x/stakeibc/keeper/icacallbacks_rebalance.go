@@ -84,20 +84,25 @@ func RebalanceCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ac
 		srcValidator := rebalancing.SrcValidator
 		dstValidator := rebalancing.DstValidator
 
-		// Decrement the total delegation from the source validator
-		if _, valFound := valAddrMap[srcValidator]; valFound {
-			valAddrMap[srcValidator].BalancedDelegation = valAddrMap[srcValidator].BalancedDelegation.Sub(rebalancing.Amt)
-		} else {
-			return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "validator not found %s", srcValidator)
+		if _, valFound := valAddrMap[srcValidator]; !valFound {
+			return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "source validator not found %s", srcValidator)
+		}
+		if _, valFound := valAddrMap[dstValidator]; !valFound {
+			return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "destination validator not found %s", dstValidator)
 		}
 
-		// Increment the total delegation for the destination validator
-		if _, valFound := valAddrMap[dstValidator]; valFound {
+		// Decrement the total delegation from the source validator and
+		// incremenet the total delegation for the destination validator
+		if rebalanceCallback.DelegationType == types.BALANCED_DELEGATION {
+			valAddrMap[srcValidator].BalancedDelegation = valAddrMap[srcValidator].BalancedDelegation.Sub(rebalancing.Amt)
 			valAddrMap[dstValidator].BalancedDelegation = valAddrMap[dstValidator].BalancedDelegation.Add(rebalancing.Amt)
-		} else {
-			return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "validator not found %s", dstValidator)
+
+		} else if rebalanceCallback.DelegationType == types.UNBALANCED_DELEGATION {
+			valAddrMap[srcValidator].UnbalancedDelegation = valAddrMap[srcValidator].UnbalancedDelegation.Sub(rebalancing.Amt)
+			valAddrMap[dstValidator].UnbalancedDelegation = valAddrMap[dstValidator].UnbalancedDelegation.Add(rebalancing.Amt)
 		}
 	}
+
 	k.SetHostZone(ctx, hostZone)
 
 	return nil

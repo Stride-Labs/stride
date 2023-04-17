@@ -3,6 +3,7 @@ package stride.stakeibc;
 
 import "gogoproto/gogo.proto";
 import "cosmos/base/v1beta1/coin.proto";
+import "stride/stakeibc/host_zone.proto";
 import "stride/stakeibc/lsm.proto";
 
 option go_package = "github.com/Stride-Labs/stride/v8/x/stakeibc/types";
@@ -58,6 +59,7 @@ message Rebalancing {
 message RebalanceCallback {
   string host_zone_id = 1;
   repeated Rebalancing rebalancings = 2;
+  DelegationType delegation_type = 3;
 }
 
 message TransferLSMTokenCallback { LSMTokenDeposit deposit = 1; }

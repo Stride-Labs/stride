@@ -53,8 +53,9 @@ func (k Keeper) RebalanceDelegations(ctx sdk.Context, chainId string, delegation
 
 	// start construction callback
 	rebalanceCallback := types.RebalanceCallback{
-		HostZoneId:   hostZone.ChainId,
-		Rebalancings: []*types.Rebalancing{},
+		HostZoneId:     hostZone.ChainId,
+		DelegationType: delegationType,
+		Rebalancings:   []*types.Rebalancing{},
 	}
 
 	overWeightIndex := 0
