@@ -39,7 +39,11 @@ func (k Keeper) RebalanceDelegations(ctx sdk.Context, chainId string, delegation
 
 	// now we sort that list by the size of the delegation change
 	lessFunc := func(i, j int) bool {
-		return valDeltaList[i].delta.LT(valDeltaList[j].delta)
+		if !valDeltaList[i].delta.Equal(valDeltaList[j].delta) {
+			return valDeltaList[i].delta.LT(valDeltaList[j].delta)
+		}
+		// use name for tie breaker if deltas are equal
+		return valDeltaList[i].validatorAddress < valDeltaList[j].validatorAddress
 	}
 	sort.SliceStable(valDeltaList, lessFunc)
 
@@ -139,7 +143,7 @@ func (k Keeper) RebalanceDelegations(ctx sdk.Context, chainId string, delegation
 		marshalledCallbackArgs,
 	)
 	if err != nil {
-		return errorsmod.Wrapf(err, "Failed to SubmitTxs for %s, %s, %s, %s", hostZone.ConnectionId, hostZone.ChainId, msgs)
+		return errorsmod.Wrapf(err, "Failed to SubmitTxs for %s, messages: %+v", hostZone.ChainId, msgs)
 	}
 
 	return nil
@@ -190,28 +194,32 @@ func (k Keeper) GetValidatorDelegationDifferences(
 // output key is ADDRESS not NAME
 func (k Keeper) GetTargetValAmtsForHostZone(ctx sdk.Context, hostZone types.HostZone, finalDelegation sdkmath.Int) (map[string]sdkmath.Int, error) {
 	// Confirm the expected delegation amount is greater than 0
-	if finalDelegation.Equal(sdkmath.ZeroInt()) {
-		k.Logger(ctx).Error(fmt.Sprintf("Cannot calculate target delegation if final amount is 0 %s", hostZone.ChainId))
-		return nil, types.ErrNoValidatorWeights
+	if finalDelegation.IsZero() {
+		return nil, errorsmod.Wrapf(sdkerrors.ErrInvalidRequest,
+			"Cannot calculate target delegation if final amount is 0 %s", hostZone.ChainId)
 	}
 
 	// Sum the total weight across all validators
 	totalWeight := k.GetTotalValidatorWeight(hostZone)
 	if totalWeight == 0 {
-		k.Logger(ctx).Error(fmt.Sprintf("No non-zero validators found for host zone %s", hostZone.ChainId))
-		return nil, types.ErrNoValidatorWeights
+		return nil, errorsmod.Wrapf(types.ErrNoValidatorWeights,
+			"No non-zero validators found for host zone %s", hostZone.ChainId)
 	}
 	k.Logger(ctx).Info(utils.LogWithHostZone(hostZone.ChainId, "Total Validator Weight: %d", totalWeight))
 
 	// sort validators by weight ascending, this is inplace sorting!
+	// QUESTION: Now that we're sorting by weight + name, should we remove this?
 	validators := hostZone.Validators
-
 	for i, j := 0, len(validators)-1; i < j; i, j = i+1, j-1 {
 		validators[i], validators[j] = validators[j], validators[i]
 	}
 
 	sort.SliceStable(validators, func(i, j int) bool { // Do not use `Slice` here, it is stochastic
-		return validators[i].Weight < validators[j].Weight
+		if validators[i].Weight != validators[j].Weight {
+			return validators[i].Weight < validators[j].Weight
+		}
+		// use name for tie breaker if weights are equal
+		return validators[i].Address < validators[j].Address
 	})
 
 	// Assign each validator their portion of the delegation (and give any overflow to the last validator)
@@ -235,23 +243,23 @@ func (k Keeper) GetTargetValAmtsForHostZone(ctx sdk.Context, hostZone types.Host
 // Must specify whether to sum the balanced or unbalanced delegation
 func (k Keeper) GetTotalValidatorDelegations(hostZone types.HostZone, delegationType types.DelegationType) sdkmath.Int {
 	validators := hostZone.GetValidators()
-	total_delegation := sdkmath.ZeroInt()
+	totalDelegation := sdkmath.ZeroInt()
 	for _, validator := range validators {
 		if delegationType == types.BALANCED_DELEGATION {
-			total_delegation = total_delegation.Add(validator.BalancedDelegation)
+			totalDelegation = totalDelegation.Add(validator.BalancedDelegation)
 		} else if delegationType == types.UNBALANCED_DELEGATION {
-			total_delegation = total_delegation.Add(validator.UnbalancedDelegation)
+			totalDelegation = totalDelegation.Add(validator.UnbalancedDelegation)
 		}
 	}
-	return total_delegation
+	return totalDelegation
 }
 
 // Sum the total weights across each validator for a host zone
 func (k Keeper) GetTotalValidatorWeight(hostZone types.HostZone) uint64 {
 	validators := hostZone.GetValidators()
-	total_weight := uint64(0)
+	totalWeight := uint64(0)
 	for _, validator := range validators {
-		total_weight += validator.Weight
+		totalWeight += validator.Weight
 	}
-	return total_weight
+	return totalWeight
 }

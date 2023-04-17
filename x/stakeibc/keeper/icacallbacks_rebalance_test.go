@@ -172,10 +172,10 @@ func (s *KeeperTestSuite) TestRebalanceCallback_WrongValidator() {
 	s.Require().NoError(err)
 
 	err = stakeibckeeper.RebalanceCallback(s.App.StakeibcKeeper, s.Ctx, tc.validArgs.packet, tc.validArgs.ackResponse, invalidArgsOne)
-	s.Require().EqualError(err, "validator not found stride_VAL4_WRONG: invalid request")
+	s.Require().ErrorContains(err, "source validator not found stride_VAL4_WRONG")
 	s.checkDelegationStateIfCallbackFailed()
 
 	err = stakeibckeeper.RebalanceCallback(s.App.StakeibcKeeper, s.Ctx, tc.validArgs.packet, tc.validArgs.ackResponse, invalidArgsTwo)
-	s.Require().EqualError(err, "validator not found stride_VAL1_WRONG: invalid request")
+	s.Require().ErrorContains(err, "validator not found stride_VAL1_WRONG: invalid request")
 	s.checkDelegationStateIfCallbackFailed()
 }

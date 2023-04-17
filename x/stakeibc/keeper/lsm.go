@@ -207,7 +207,6 @@ func (k Keeper) DetokenizeAllLSMDeposits(ctx sdk.Context) {
 
 		// If the delegation channel is open, submit the detokenize ICA
 		for _, deposit := range k.GetLSMDepositsForHostZoneWithStatus(ctx, hostZone.ChainId, types.DETOKENIZATION_QUEUE) {
-			fmt.Printf("deposit: %+v\n", deposit)
 			if err := k.DetokenizeLSMDeposit(ctx, hostZone, deposit); err != nil {
 				k.Logger(ctx).Error(fmt.Sprintf("Unable to submit detokenization ICAs for %v%s on %s: %s",
 					deposit.Amount, deposit.Denom, hostZone.ChainId, err.Error()))
