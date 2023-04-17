@@ -26,7 +26,8 @@ type UpdateRedemptionRateTestCase struct {
 	balancedDelegation    sdkmath.Int
 	unbalancedDelegation  sdkmath.Int
 	undelegatedBal        sdkmath.Int
-	justDepositedBal      sdkmath.Int
+	justDepositedNative   sdkmath.Int
+	justDepositedLSM      sdkmath.Int
 	stSupply              sdkmath.Int
 	initialRedemptionRate sdk.Dec
 }
@@ -49,13 +50,21 @@ func (s *KeeperTestSuite) SetupUpdateRedemptionRates(tc UpdateRedemptionRateTest
 	s.App.RecordsKeeper.AppendDepositRecord(s.Ctx, toBeStakedDepositRecord)
 
 	// add a balance to the stakeibc module account (via records)
-	//    to comprise the stakeibc module account balance i.e. "to be transferred"
+	//    to comprise the stakeibc deposit account balance i.e. "to be transferred"
 	toBeTransferedDepositRecord := recordtypes.DepositRecord{
 		HostZoneId: HostChainId,
-		Amount:     tc.justDepositedBal,
+		Amount:     tc.justDepositedNative,
 		Status:     recordtypes.DepositRecord_TRANSFER_QUEUE,
 	}
 	s.App.RecordsKeeper.AppendDepositRecord(s.Ctx, toBeTransferedDepositRecord)
+
+	// add an LSMTokenDeposit to represent an LSMLiquidStake that has not yet been detokenized
+	lsmTokenDeposit := stakeibctypes.LSMTokenDeposit{
+		ChainId: HostChainId,
+		Amount:  tc.justDepositedLSM,
+		Status:  stakeibctypes.TRANSFER_IN_PROGRESS,
+	}
+	s.App.StakeibcKeeper.SetLSMTokenDeposit(s.Ctx, lsmTokenDeposit)
 
 	// set the stSupply by minting
 	supply := sdk.NewCoins(sdk.NewCoin(StAtom, tc.stSupply))
@@ -63,10 +72,11 @@ func (s *KeeperTestSuite) SetupUpdateRedemptionRates(tc UpdateRedemptionRateTest
 
 	// set the staked balance on the host zone
 	hostZone := stakeibctypes.HostZone{
-		ChainId:                  HostChainId,
-		HostDenom:                Atom,
-		TotalBalancedDelegations: tc.balancedDelegation,
-		RedemptionRate:           tc.initialRedemptionRate,
+		ChainId:                    HostChainId,
+		HostDenom:                  Atom,
+		TotalBalancedDelegations:   tc.balancedDelegation,
+		TotalUnbalancedDelegations: tc.unbalancedDelegation,
+		RedemptionRate:             tc.initialRedemptionRate,
 	}
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
 
@@ -75,55 +85,29 @@ func (s *KeeperTestSuite) SetupUpdateRedemptionRates(tc UpdateRedemptionRateTest
 
 func (s *KeeperTestSuite) TestUpdateRedemptionRatesSuccessful() {
 	depositRecords := s.SetupUpdateRedemptionRates(UpdateRedemptionRateTestCase{
-		balancedDelegation:    sdkmath.NewInt(5),
-		unbalancedDelegation:  sdkmath.ZeroInt(),
+		balancedDelegation:    sdkmath.NewInt(1),
+		unbalancedDelegation:  sdkmath.NewInt(2),
 		undelegatedBal:        sdkmath.NewInt(3),
-		justDepositedBal:      sdkmath.NewInt(3),
+		justDepositedNative:   sdkmath.NewInt(4),
+		justDepositedLSM:      sdkmath.NewInt(5),
 		stSupply:              sdkmath.NewInt(10),
 		initialRedemptionRate: sdk.NewDec(1),
 	})
 
 	s.App.StakeibcKeeper.UpdateRedemptionRates(s.Ctx, depositRecords)
 
-	expectedNewRate := sdk.NewDec(5 + 3 + 3).Quo(sdk.NewDec(10))
+	// 1 + 2 + 3 + 4 + 5 / 10 = 15 / 10 = 1.5
+	expectedNewRate := sdk.MustNewDecFromStr("1.5")
 	s.checkRedemptionRateAfterUpdate(expectedNewRate)
 }
 
-func (s *KeeperTestSuite) TestUpdateRedemptionRatesRandomized() {
-	// run N tests, each with random inputs
-	max := int64(1_000_000_000)
-	tc := UpdateRedemptionRateTestCase{
-		balancedDelegation:    sdkmath.NewInt(max),
-		unbalancedDelegation:  sdkmath.ZeroInt(),
-		undelegatedBal:        sdkmath.NewInt(max),
-		justDepositedBal:      sdkmath.NewInt(max),
-		stSupply:              sdkmath.NewInt(max),
-		initialRedemptionRate: sdk.NewDec(1),
-	}
-	depositRecords := s.SetupUpdateRedemptionRates(tc)
-
-	s.App.StakeibcKeeper.UpdateRedemptionRates(s.Ctx, depositRecords)
-
-	numerator := tc.balancedDelegation.Add(tc.undelegatedBal).Add(tc.justDepositedBal)
-	denominator := tc.stSupply
-	expectedNewRate := sdk.NewDecFromInt(numerator.Quo(denominator))
-	s.checkRedemptionRateAfterUpdate(expectedNewRate)
-}
-
-func (s *KeeperTestSuite) TestUpdateRedemptionRatesRandomized_MultipleRuns() {
-	for i := 0; i < 100; i++ {
-		s.TestUpdateRedemptionRatesRandomized()
-		// reset the testing app between runs
-		s.Setup()
-	}
-}
-
-func (s *KeeperTestSuite) TestUpdateRedemptionRateZeroStAssets() {
+func (s *KeeperTestSuite) TestUpdateRedemptionRate_ZeroStAssets() {
 	depositRecords := s.SetupUpdateRedemptionRates(UpdateRedemptionRateTestCase{
-		balancedDelegation:    sdkmath.NewInt(5),
-		unbalancedDelegation:  sdkmath.ZeroInt(),
+		balancedDelegation:    sdkmath.NewInt(1),
+		unbalancedDelegation:  sdkmath.NewInt(2),
 		undelegatedBal:        sdkmath.NewInt(3),
-		justDepositedBal:      sdkmath.NewInt(3),
+		justDepositedNative:   sdkmath.NewInt(4),
+		justDepositedLSM:      sdkmath.NewInt(5),
 		stSupply:              sdkmath.ZeroInt(),
 		initialRedemptionRate: sdk.NewDec(1),
 	})
@@ -134,12 +118,13 @@ func (s *KeeperTestSuite) TestUpdateRedemptionRateZeroStAssets() {
 	s.checkRedemptionRateAfterUpdate(expectedRedemptionRate)
 }
 
-func (s *KeeperTestSuite) TestUpdateRedemptionRateZeroNativeAssets() {
+func (s *KeeperTestSuite) TestUpdateRedemptionRate_ZeroNativeAssets() {
 	depositRecords := s.SetupUpdateRedemptionRates(UpdateRedemptionRateTestCase{
-		balancedDelegation:    sdkmath.NewInt(0),
+		balancedDelegation:    sdkmath.ZeroInt(),
 		unbalancedDelegation:  sdkmath.ZeroInt(),
 		undelegatedBal:        sdkmath.ZeroInt(),
-		justDepositedBal:      sdkmath.ZeroInt(),
+		justDepositedNative:   sdkmath.ZeroInt(),
+		justDepositedLSM:      sdkmath.ZeroInt(),
 		stSupply:              sdkmath.NewInt(10),
 		initialRedemptionRate: sdk.NewDec(1),
 	})
@@ -150,62 +135,93 @@ func (s *KeeperTestSuite) TestUpdateRedemptionRateZeroNativeAssets() {
 	s.checkRedemptionRateAfterUpdate(expectedRedemptionRate)
 }
 
-func (s *KeeperTestSuite) TestUpdateRedemptionRateNoDepositAccountRecords() {
+func (s *KeeperTestSuite) TestUpdateRedemptionRate_NoDepositAccountRecords() {
 	depositRecords := s.SetupUpdateRedemptionRates(UpdateRedemptionRateTestCase{
-		balancedDelegation:    sdkmath.NewInt(5),
-		unbalancedDelegation:  sdkmath.ZeroInt(),
+		balancedDelegation:    sdkmath.NewInt(1),
+		unbalancedDelegation:  sdkmath.NewInt(2),
 		undelegatedBal:        sdkmath.NewInt(3),
-		justDepositedBal:      sdkmath.NewInt(3),
+		justDepositedNative:   sdkmath.NewInt(4), // should be ignored from filter below
+		justDepositedLSM:      sdkmath.NewInt(5),
 		stSupply:              sdkmath.NewInt(10),
 		initialRedemptionRate: sdk.NewDec(1),
 	})
 
 	// filter out the TRANSFER_QUEUE record from the records when updating the redemption rate
-	records := depositRecords[1:]
-	s.App.StakeibcKeeper.UpdateRedemptionRates(s.Ctx, records)
+	filteredRecords := []recordtypes.DepositRecord{}
+	for _, record := range depositRecords {
+		if record.Status != recordtypes.DepositRecord_TRANSFER_QUEUE {
+			filteredRecords = append(filteredRecords, record)
+		}
+	}
+	s.App.StakeibcKeeper.UpdateRedemptionRates(s.Ctx, filteredRecords)
 
-	expectedNewRate := sdk.NewDec(5 + 3).Quo(sdk.NewDec(10))
+	// 1 + 2 + 3 + 5 / 10 = 11 / 10 = 1.1
+	expectedNewRate := sdk.MustNewDecFromStr("1.1")
 	s.checkRedemptionRateAfterUpdate(expectedNewRate)
 }
 
-func (s *KeeperTestSuite) TestUpdateRedemptionRateNoStakeDepositRecords() {
-	tc := UpdateRedemptionRateTestCase{
-		balancedDelegation:    sdkmath.NewInt(5),
-		unbalancedDelegation:  sdkmath.ZeroInt(),
-		undelegatedBal:        sdkmath.NewInt(3),
-		justDepositedBal:      sdkmath.NewInt(3),
+func (s *KeeperTestSuite) TestUpdateRedemptionRate_NoStakeDepositRecords() {
+	depositRecords := s.SetupUpdateRedemptionRates(UpdateRedemptionRateTestCase{
+		balancedDelegation:    sdkmath.NewInt(1),
+		unbalancedDelegation:  sdkmath.NewInt(2),
+		undelegatedBal:        sdkmath.NewInt(3), // should be ignored from filter below
+		justDepositedNative:   sdkmath.NewInt(4),
+		justDepositedLSM:      sdkmath.NewInt(5),
 		stSupply:              sdkmath.NewInt(10),
 		initialRedemptionRate: sdk.NewDec(1),
-	}
-	depositRecords := s.SetupUpdateRedemptionRates(tc)
+	})
 
 	// filter out the DELEGATION_QUEUE record from the records when updating the redemption rate
-	records := depositRecords[:1]
-	s.App.StakeibcKeeper.UpdateRedemptionRates(s.Ctx, records)
+	filteredRecords := []recordtypes.DepositRecord{}
+	for _, record := range depositRecords {
+		if record.Status != recordtypes.DepositRecord_DELEGATION_QUEUE {
+			filteredRecords = append(filteredRecords, record)
+		}
+	}
+	s.App.StakeibcKeeper.UpdateRedemptionRates(s.Ctx, filteredRecords)
 
-	numerator := tc.balancedDelegation.Add(tc.justDepositedBal)
-	denominator := tc.stSupply
-	expectedNewRate := sdk.NewDecFromInt(numerator).Quo(sdk.NewDecFromInt(denominator))
+	// 1 + 2 + 4 + 5 / 10 = 12 / 10 = 1.2
+	expectedNewRate := sdk.MustNewDecFromStr("1.2")
 	s.checkRedemptionRateAfterUpdate(expectedNewRate)
 }
 
-func (s *KeeperTestSuite) TestUpdateRedemptionRateNoBalancedDelegation() {
+func (s *KeeperTestSuite) TestUpdateRedemptionRate_NoBalancedDelegation() {
 	depositRecords := s.SetupUpdateRedemptionRates(UpdateRedemptionRateTestCase{
 		balancedDelegation:    sdkmath.ZeroInt(),
-		unbalancedDelegation:  sdkmath.ZeroInt(),
+		unbalancedDelegation:  sdkmath.NewInt(2),
 		undelegatedBal:        sdkmath.NewInt(3),
-		justDepositedBal:      sdkmath.NewInt(3),
+		justDepositedNative:   sdkmath.NewInt(4),
+		justDepositedLSM:      sdkmath.NewInt(5),
 		stSupply:              sdkmath.NewInt(10),
 		initialRedemptionRate: sdk.NewDec(1),
 	})
 
 	s.App.StakeibcKeeper.UpdateRedemptionRates(s.Ctx, depositRecords)
 
-	expectedNewRate := sdk.NewDec(3 + 3).Quo(sdk.NewDec(10))
+	// 2 + 3 + 4 + 5 / 10 = 14 / 10 = 1.4
+	expectedNewRate := sdk.MustNewDecFromStr("1.4")
 	s.checkRedemptionRateAfterUpdate(expectedNewRate)
 }
 
-func (s *KeeperTestSuite) TestUpdateRedemptionRateRandomInitialRedemptionRate() {
+func (s *KeeperTestSuite) TestUpdateRedemptionRate_NoUnbalancedDelegation() {
+	depositRecords := s.SetupUpdateRedemptionRates(UpdateRedemptionRateTestCase{
+		balancedDelegation:    sdkmath.NewInt(1),
+		unbalancedDelegation:  sdkmath.ZeroInt(),
+		undelegatedBal:        sdkmath.NewInt(3),
+		justDepositedNative:   sdkmath.NewInt(4),
+		justDepositedLSM:      sdkmath.NewInt(5),
+		stSupply:              sdkmath.NewInt(10),
+		initialRedemptionRate: sdk.NewDec(1),
+	})
+
+	s.App.StakeibcKeeper.UpdateRedemptionRates(s.Ctx, depositRecords)
+
+	// 1 + 3 + 4 + 5 / 10 = 13 / 10 = 1.3
+	expectedNewRate := sdk.MustNewDecFromStr("1.3")
+	s.checkRedemptionRateAfterUpdate(expectedNewRate)
+}
+
+func (s *KeeperTestSuite) TestUpdateRedemptionRate_RandomInitialRedemptionRate() {
 	genRandUintBelowMax := func(max int) int64 {
 		min := int(1)
 		n := 1 + rand.Intn(max-min+1)
@@ -217,16 +233,18 @@ func (s *KeeperTestSuite) TestUpdateRedemptionRateRandomInitialRedemptionRate() 
 	initialRedemptionRate := sdk.NewDec(genRandUintBelowMax(max)).Quo(sdk.NewDec(genRandUintBelowMax(max / 2)))
 
 	depositRecords := s.SetupUpdateRedemptionRates(UpdateRedemptionRateTestCase{
-		balancedDelegation:    sdkmath.NewInt(5),
-		unbalancedDelegation:  sdkmath.ZeroInt(),
+		balancedDelegation:    sdkmath.NewInt(1),
+		unbalancedDelegation:  sdkmath.NewInt(2),
 		undelegatedBal:        sdkmath.NewInt(3),
-		justDepositedBal:      sdkmath.NewInt(3),
+		justDepositedNative:   sdkmath.NewInt(4),
+		justDepositedLSM:      sdkmath.NewInt(5),
 		stSupply:              sdkmath.NewInt(10),
 		initialRedemptionRate: initialRedemptionRate,
 	})
 
 	s.App.StakeibcKeeper.UpdateRedemptionRates(s.Ctx, depositRecords)
 
-	expectedNewRate := sdk.NewDec(3 + 3 + 5).Quo(sdk.NewDec(10))
+	// 1 + 2 + 3 + 4 + 5 / 10 = 15 / 10 = 1.5
+	expectedNewRate := sdk.MustNewDecFromStr("1.5")
 	s.checkRedemptionRateAfterUpdate(expectedNewRate)
 }
