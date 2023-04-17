@@ -36,8 +36,7 @@ message HostZone {
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false
   ];
-  // stores how many days we should wait before issuing unbondings
-  uint64 unbonding_frequency = 14;
+  uint64 unbonding_period = 27;
   string total_balanced_delegations = 13 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
     (gogoproto.nullable) = false
@@ -58,6 +57,6 @@ message HostZone {
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false
   ];
-  reserved 5, 6, 7, 15, 16;
-  // next id: 27
+  reserved 5, 6, 7, 14, 15, 16;
+  // next id: 28
 }

@@ -228,9 +228,11 @@ func (k Keeper) InitiateAllHostZoneUnbondings(ctx sdk.Context, dayNumber uint64)
 	for _, hostZone := range k.GetAllActiveHostZone(ctx) {
 
 		// Confirm the unbonding is supposed to be triggered this epoch
-		if dayNumber%hostZone.UnbondingFrequency != 0 {
+		unbondingFrequency := hostZone.GetUnbondingFrequency()
+		if dayNumber%unbondingFrequency != 0 {
 			k.Logger(ctx).Info(utils.LogWithHostZone(hostZone.ChainId,
-				"Host does not unbond this epoch (Unbonding Frequency: %d, Epoch: %d)", hostZone.UnbondingFrequency, dayNumber))
+				"Host does not unbond this epoch (Unbonding Period: %d, Unbonding Frequency: %d, Epoch: %d)",
+				hostZone.UnbondingPeriod, unbondingFrequency, dayNumber))
 			continue
 		}
 
