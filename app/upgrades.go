@@ -8,6 +8,9 @@ import (
 
 	authz "github.com/cosmos/cosmos-sdk/x/authz"
 
+	consumertypes "github.com/cosmos/interchain-security/x/ccv/consumer/types"
+
+	v9 "github.com/Stride-Labs/stride/v8/app/upgrades/v07-Theta"
 	v2 "github.com/Stride-Labs/stride/v8/app/upgrades/v2"
 	v3 "github.com/Stride-Labs/stride/v8/app/upgrades/v3"
 	v4 "github.com/Stride-Labs/stride/v8/app/upgrades/v4"
@@ -97,6 +100,18 @@ func (app *StrideApp) setupUpgradeHandlers() {
 		),
 	)
 
+	// v9 upgrade handler
+	app.UpgradeKeeper.SetUpgradeHandler(
+		v9.UpgradeName,
+		v9.CreateUpgradeHandler(
+			app.mm,
+			app.configurator,
+			app.appCodec,
+			*app.IBCKeeper,
+			app.ConsumerKeeper,
+		),
+	)
+
 	upgradeInfo, err := app.UpgradeKeeper.ReadUpgradeInfoFromDisk()
 	if err != nil {
 		panic(fmt.Errorf("Failed to read upgrade info from disk: %w", err))
@@ -120,6 +135,10 @@ func (app *StrideApp) setupUpgradeHandlers() {
 	case "v7":
 		storeUpgrades = &storetypes.StoreUpgrades{
 			Added: []string{ratelimittypes.StoreKey, autopilottypes.StoreKey},
+		}
+	case "v07-Theta":
+		storeUpgrades = &storetypes.StoreUpgrades{
+			Added: []string{consumertypes.ModuleName},
 		}
 	}
 

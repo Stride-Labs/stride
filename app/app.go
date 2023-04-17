@@ -58,6 +58,7 @@ import (
 	govtypesv1beta1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
 	ccvdistr "github.com/cosmos/interchain-security/x/ccv/democracy/distribution"
 	ccvgov "github.com/cosmos/interchain-security/x/ccv/democracy/governance"
+	ccvslashing "github.com/cosmos/interchain-security/x/ccv/democracy/slashing"
 
 	claimvesting "github.com/Stride-Labs/stride/v8/x/claim/vesting"
 	claimvestingtypes "github.com/Stride-Labs/stride/v8/x/claim/vesting/types"
@@ -445,7 +446,12 @@ func NewStrideApp(
 
 	// Create IBC Keeper
 	app.IBCKeeper = ibckeeper.NewKeeper(
-		appCodec, keys[ibchost.StoreKey], app.GetSubspace(ibchost.ModuleName), &app.ConsumerKeeper, app.UpgradeKeeper, scopedIBCKeeper,
+		appCodec,
+		keys[ibchost.StoreKey],
+		app.GetSubspace(ibchost.ModuleName),
+		app.StakingKeeper,
+		app.UpgradeKeeper,
+		scopedIBCKeeper,
 	)
 
 	// Create Ratelimit Keeper
@@ -609,10 +615,12 @@ func NewStrideApp(
 		AddRoute(stakeibcmoduletypes.RouterKey, stakeibcmodule.NewStakeibcProposalHandler(app.StakeibcKeeper)).
 		AddRoute(ratelimitmoduletypes.RouterKey, ratelimitmodule.NewRateLimitProposalHandler(app.RatelimitKeeper, app.IBCKeeper.ChannelKeeper))
 
-	app.GovKeeper = *govkeeper.NewKeeper(
+	govKeeper := govkeeper.NewKeeper(
 		appCodec, keys[govtypes.StoreKey], app.AccountKeeper, app.BankKeeper,
 		app.StakingKeeper, app.MsgServiceRouter(), govtypes.DefaultConfig(), authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
+	govKeeper.SetLegacyRouter(govRouter)
+	app.GovKeeper = *govKeeper
 
 	// Register ICQ callbacks
 	err := app.InterchainqueryKeeper.SetCallbackHandler(stakeibcmoduletypes.ModuleName, app.StakeibcKeeper.ICQCallbackHandler())
@@ -732,7 +740,7 @@ func NewStrideApp(
 		crisis.NewAppModule(app.CrisisKeeper, skipGenesisInvariants, app.GetSubspace(crisistypes.ModuleName)),
 		ccvgov.NewAppModule(appCodec, &app.GovKeeper, app.AccountKeeper, app.BankKeeper, app.GetSubspace(govtypes.ModuleName)),
 		mint.NewAppModule(appCodec, app.MintKeeper, app.AccountKeeper, app.BankKeeper),
-		slashing.NewAppModule(appCodec, app.SlashingKeeper, app.AccountKeeper, app.BankKeeper, app.ConsumerKeeper, app.GetSubspace(slashingtypes.ModuleName)),
+		ccvslashing.NewAppModule(appCodec, app.SlashingKeeper, app.AccountKeeper, app.BankKeeper, app.ConsumerKeeper, app.GetSubspace(slashingtypes.ModuleName)),
 		ccvdistr.NewAppModule(appCodec, app.DistrKeeper, app.AccountKeeper, app.BankKeeper, app.StakingKeeper, app.GetSubspace(distrtypes.ModuleName), authtypes.FeeCollectorName),
 		ccvstaking.NewAppModule(appCodec, app.StakingKeeper, app.AccountKeeper, app.BankKeeper, app.ConsumerKeeper, app.GetSubspace(stakingtypes.ModuleName)),
 		upgrade.NewAppModule(app.UpgradeKeeper),
@@ -774,6 +782,7 @@ func NewStrideApp(
 		banktypes.ModuleName,
 		govtypes.ModuleName,
 		crisistypes.ModuleName,
+		genutiltypes.ModuleName,
 		feegrant.ModuleName,
 		paramstypes.ModuleName,
 		// monitoringptypes.ModuleName,
@@ -792,6 +801,7 @@ func NewStrideApp(
 
 	app.mm.SetOrderEndBlockers(
 		crisistypes.ModuleName,
+		genutiltypes.ModuleName,
 		govtypes.ModuleName,
 		stakingtypes.ModuleName,
 		capabilitytypes.ModuleName,
@@ -839,6 +849,7 @@ func NewStrideApp(
 		govtypes.ModuleName,
 		minttypes.ModuleName,
 		crisistypes.ModuleName,
+		genutiltypes.ModuleName,
 		ibchost.ModuleName,
 		evidencetypes.ModuleName,
 		paramstypes.ModuleName,
