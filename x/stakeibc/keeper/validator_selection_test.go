@@ -15,7 +15,67 @@ func (s *KeeperTestSuite) TestGetValidatorDelegationDifferences() {
 }
 
 func (s *KeeperTestSuite) TestGetTargetValAmtsForHostZone() {
+	initialValidators := []*types.Validator{
+		{Address: "val1", Weight: 20},
+		{Address: "val2", Weight: 40},
+		{Address: "val3", Weight: 30},
+		{Address: "val4", Weight: 5},
+		{Address: "val5", Weight: 0},
+		{Address: "val6", Weight: 5},
+	}
+	expectedValidators := []*types.Validator{ // sorted by weight and name
+		{Address: "val5", Weight: 0},
+		{Address: "val4", Weight: 5},
+		{Address: "val6", Weight: 5},
+		{Address: "val1", Weight: 20},
+		{Address: "val3", Weight: 30},
+		{Address: "val2", Weight: 40},
+	}
 
+	// Get targets with an even 100 total delegated
+	totalDelegation := sdkmath.NewInt(100)
+	hostZone := types.HostZone{ChainId: HostChainId, Validators: initialValidators}
+	actualTargets, err := s.App.StakeibcKeeper.GetTargetValAmtsForHostZone(s.Ctx, hostZone, totalDelegation)
+	s.Require().NoError(err, "no error expected when getting target weights for total delegation of 100")
+
+	// Confirm new validator ordering (we check the original host zone because the re-ordering is in place)
+	for i := 0; i < len(hostZone.Validators); i++ {
+		s.Require().Equal(expectedValidators[i].Address, hostZone.Validators[i].Address,
+			"validator %d weight", i)
+	}
+
+	// Confirm target - should equal the validator's weight
+	for _, expectedValidators := range expectedValidators {
+		s.Require().Equal(int64(expectedValidators.Weight), actualTargets[expectedValidators.Address].Int64(),
+			"validator %s target for total delegation of 100", expectedValidators.Address)
+	}
+
+	// Get targets with an uneven amount delegated - 77
+	totalDelegation = sdkmath.NewInt(77)
+	expectedTargets := map[string]int64{
+		"val5": 0,  // 0%  of 77 = 0
+		"val4": 3,  // 5%  of 77 = 3.85 -> 3
+		"val6": 3,  // 5%  of 77 = 3.85 -> 3
+		"val1": 15, // 20% of 77 = 15.4 -> 15
+		"val3": 23, // 30% of 77 = 23.1 -> 23
+		"val2": 33, // Gets all overflow: 77 - 3 - 3 - 15 - 23 = 33
+	}
+	actualTargets, err = s.App.StakeibcKeeper.GetTargetValAmtsForHostZone(s.Ctx, hostZone, totalDelegation)
+	s.Require().NoError(err, "no error expected when getting target weights for total delegation of 77")
+
+	// Confirm target amounts again
+	for validatorAddress, expectedTarget := range expectedTargets {
+		s.Require().Equal(expectedTarget, actualTargets[validatorAddress].Int64(),
+			"validator %s target for total delegation of 77", validatorAddress)
+	}
+
+	// Check zero delegations throws an error
+	_, err = s.App.StakeibcKeeper.GetTargetValAmtsForHostZone(s.Ctx, hostZone, sdkmath.ZeroInt())
+	s.Require().ErrorContains(err, "Cannot calculate target delegation if final amount is 0")
+
+	// Check zero weights throws an error
+	_, err = s.App.StakeibcKeeper.GetTargetValAmtsForHostZone(s.Ctx, types.HostZone{}, sdkmath.NewInt(1))
+	s.Require().ErrorContains(err, "No non-zero validators found for host zone")
 }
 
 func (s *KeeperTestSuite) TestGetTotalValidatorDelegations() {
