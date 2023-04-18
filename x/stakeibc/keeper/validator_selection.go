@@ -26,9 +26,14 @@ type validatorDelegationChange struct {
 // The balance portion represents either native delegations or LSM delegation that have
 //    already been rebalanced. This portion only requires a rebalancing if the validator weights change
 func (k Keeper) RebalanceDelegations(ctx sdk.Context, chainId string, delegationType types.DelegationType, numRebalance uint64) error {
+	// Get the host zone and confirm the delegation account is initialized
 	hostZone, found := k.GetHostZone(ctx, chainId)
 	if !found {
 		return errorsmod.Wrap(types.ErrHostZoneNotFound, fmt.Sprintf("Host zone %s not found", chainId))
+	}
+	delegationIca := hostZone.DelegationAccount
+	if delegationIca == nil || delegationIca.Address == "" {
+		return errorsmod.Wrapf(types.ErrICAAccountNotFound, "no delegation account found for %s", chainId)
 	}
 
 	// Get the difference between the actual and expected validator delegations
@@ -37,95 +42,7 @@ func (k Keeper) RebalanceDelegations(ctx sdk.Context, chainId string, delegation
 		return errorsmod.Wrapf(err, "unable to get validator deltas for host zone %s", chainId)
 	}
 
-	// now we sort that list by the size of the delegation change
-	lessFunc := func(i, j int) bool {
-		if !valDeltaList[i].delta.Equal(valDeltaList[j].delta) {
-			return valDeltaList[i].delta.LT(valDeltaList[j].delta)
-		}
-		// use name for tie breaker if deltas are equal
-		return valDeltaList[i].validatorAddress < valDeltaList[j].validatorAddress
-	}
-	sort.SliceStable(valDeltaList, lessFunc)
-
-	var msgs []sdk.Msg
-	delegationIca := hostZone.DelegationAccount
-	if delegationIca == nil || delegationIca.Address == "" {
-		return errorsmod.Wrapf(types.ErrICAAccountNotFound, "no delegation account found for %s", chainId)
-	}
-
-	delegatorAddress := delegationIca.Address
-
-	// start construction callback
-	rebalanceCallback := types.RebalanceCallback{
-		HostZoneId:     hostZone.ChainId,
-		DelegationType: delegationType,
-		Rebalancings:   []*types.Rebalancing{},
-	}
-
-	overWeightIndex := 0
-	underWeightIndex := len(valDeltaList) - 1
-	for i := uint64(1); i <= numRebalance; i++ {
-		underWeightElem := valDeltaList[underWeightIndex]
-		overWeightElem := valDeltaList[overWeightIndex]
-		if underWeightElem.delta.LT(sdkmath.ZeroInt()) {
-			// if underWeightElem is negative, we're done rebalancing
-			break
-		}
-		if overWeightElem.delta.GT(sdkmath.ZeroInt()) {
-			// if overWeightElem is positive, we're done rebalancing
-			break
-		}
-		// underweight Elem is positive, overweight Elem is negative
-		overWeightElemAbs := overWeightElem.delta.Abs()
-		var redelegateMsg *stakingtypes.MsgBeginRedelegate
-		if underWeightElem.delta.GT(overWeightElemAbs) {
-			// if the underweight element is more off than the overweight element
-			// we transfer stake from the underweight element to the overweight element
-			underWeightElem.delta = underWeightElem.delta.Sub(overWeightElemAbs)
-			overWeightIndex += 1
-			// issue an ICA call to the host zone to rebalance the validator
-			redelegateMsg = &stakingtypes.MsgBeginRedelegate{
-				DelegatorAddress:    delegatorAddress,
-				ValidatorSrcAddress: overWeightElem.validatorAddress,
-				ValidatorDstAddress: underWeightElem.validatorAddress,
-				Amount:              sdk.NewCoin(hostZone.HostDenom, overWeightElemAbs)}
-			msgs = append(msgs, redelegateMsg)
-			overWeightElem.delta = sdkmath.ZeroInt()
-		} else if underWeightElem.delta.LT(overWeightElemAbs) {
-			// if the overweight element is more overweight than the underweight element
-			overWeightElem.delta = overWeightElem.delta.Add(underWeightElem.delta)
-			underWeightIndex -= 1
-			// issue an ICA call to the host zone to rebalance the validator
-			redelegateMsg = &stakingtypes.MsgBeginRedelegate{
-				DelegatorAddress:    delegatorAddress,
-				ValidatorSrcAddress: overWeightElem.validatorAddress,
-				ValidatorDstAddress: underWeightElem.validatorAddress,
-				Amount:              sdk.NewCoin(hostZone.HostDenom, underWeightElem.delta)}
-			msgs = append(msgs, redelegateMsg)
-			underWeightElem.delta = sdkmath.ZeroInt()
-		} else {
-			// if the two elements are equal, we increment both slices
-			underWeightIndex -= 1
-			overWeightIndex += 1
-			// issue an ICA call to the host zone to rebalance the validator
-			redelegateMsg = &stakingtypes.MsgBeginRedelegate{
-				DelegatorAddress:    delegatorAddress,
-				ValidatorSrcAddress: overWeightElem.validatorAddress,
-				ValidatorDstAddress: underWeightElem.validatorAddress,
-				Amount:              sdk.NewCoin(hostZone.HostDenom, underWeightElem.delta)}
-			msgs = append(msgs, redelegateMsg)
-			overWeightElem.delta = sdkmath.ZeroInt()
-			underWeightElem.delta = sdkmath.ZeroInt()
-		}
-		// add the rebalancing to the callback
-		// lastMsg grabs rebalanceMsg from above (due to the type, it's hard to )
-		// lastMsg := (msgs[len(msgs)-1]).(*stakingTypes.MsgBeginRedelegate)
-		rebalanceCallback.Rebalancings = append(rebalanceCallback.Rebalancings, &types.Rebalancing{
-			SrcValidator: redelegateMsg.ValidatorSrcAddress,
-			DstValidator: redelegateMsg.ValidatorDstAddress,
-			Amt:          redelegateMsg.Amount.Amount,
-		})
-	}
+	msgs, rebalanceCallback := k.GetRebalanceICAMessages(hostZone, valDeltaList, delegationType, numRebalance)
 
 	// marshall the callback
 	marshalledCallbackArgs, err := k.MarshalRebalanceCallbackArgs(ctx, rebalanceCallback)
@@ -147,6 +64,101 @@ func (k Keeper) RebalanceDelegations(ctx sdk.Context, chainId string, delegation
 	}
 
 	return nil
+}
+
+// Given a list of target delegation changes, builds the individual re-delegation messages by redelegating
+// from overweight validators to undersweight validators
+// Also returns the callback data for the ICA
+func (k Keeper) GetRebalanceICAMessages(
+	hostZone types.HostZone,
+	validatorDeltas []validatorDelegationChange,
+	delegationType types.DelegationType,
+	numRebalance uint64,
+) (messages []sdk.Msg, callback types.RebalanceCallback) {
+	// now we sort that list by the size of the delegation change
+	lessFunc := func(i, j int) bool {
+		if !validatorDeltas[i].delta.Equal(validatorDeltas[j].delta) {
+			return validatorDeltas[i].delta.LT(validatorDeltas[j].delta)
+		}
+		// use name as a tie breaker if deltas are equal
+		return validatorDeltas[i].validatorAddress < validatorDeltas[j].validatorAddress
+	}
+	sort.SliceStable(validatorDeltas, lessFunc)
+
+	// start construction callback
+	rebalanceCallback := types.RebalanceCallback{
+		HostZoneId:     hostZone.ChainId,
+		DelegationType: delegationType,
+		Rebalancings:   []*types.Rebalancing{},
+	}
+
+	var msgs []sdk.Msg
+	overWeightIndex := 0
+	underWeightIndex := len(validatorDeltas) - 1
+	for i := uint64(1); i <= numRebalance; i++ {
+		underWeightElem := validatorDeltas[underWeightIndex]
+		overWeightElem := validatorDeltas[overWeightIndex]
+		if underWeightElem.delta.LT(sdkmath.ZeroInt()) {
+			// if underWeightElem is negative, we're done rebalancing
+			break
+		}
+		if overWeightElem.delta.GT(sdkmath.ZeroInt()) {
+			// if overWeightElem is positive, we're done rebalancing
+			break
+		}
+		// underweight Elem is positive, overweight Elem is negative
+		overWeightElemAbs := overWeightElem.delta.Abs()
+		var redelegateMsg *stakingtypes.MsgBeginRedelegate
+		if underWeightElem.delta.GT(overWeightElemAbs) {
+			// if the underweight element is more off than the overweight element
+			// we transfer stake from the underweight element to the overweight element
+			underWeightElem.delta = underWeightElem.delta.Sub(overWeightElemAbs)
+			overWeightIndex += 1
+			// issue an ICA call to the host zone to rebalance the validator
+			redelegateMsg = &stakingtypes.MsgBeginRedelegate{
+				DelegatorAddress:    hostZone.DelegationAccount.Address,
+				ValidatorSrcAddress: overWeightElem.validatorAddress,
+				ValidatorDstAddress: underWeightElem.validatorAddress,
+				Amount:              sdk.NewCoin(hostZone.HostDenom, overWeightElemAbs)}
+			msgs = append(msgs, redelegateMsg)
+			overWeightElem.delta = sdkmath.ZeroInt()
+		} else if underWeightElem.delta.LT(overWeightElemAbs) {
+			// if the overweight element is more overweight than the underweight element
+			overWeightElem.delta = overWeightElem.delta.Add(underWeightElem.delta)
+			underWeightIndex -= 1
+			// issue an ICA call to the host zone to rebalance the validator
+			redelegateMsg = &stakingtypes.MsgBeginRedelegate{
+				DelegatorAddress:    hostZone.DelegationAccount.Address,
+				ValidatorSrcAddress: overWeightElem.validatorAddress,
+				ValidatorDstAddress: underWeightElem.validatorAddress,
+				Amount:              sdk.NewCoin(hostZone.HostDenom, underWeightElem.delta)}
+			msgs = append(msgs, redelegateMsg)
+			underWeightElem.delta = sdkmath.ZeroInt()
+		} else {
+			// if the two elements are equal, we increment both slices
+			underWeightIndex -= 1
+			overWeightIndex += 1
+			// issue an ICA call to the host zone to rebalance the validator
+			redelegateMsg = &stakingtypes.MsgBeginRedelegate{
+				DelegatorAddress:    hostZone.DelegationAccount.Address,
+				ValidatorSrcAddress: overWeightElem.validatorAddress,
+				ValidatorDstAddress: underWeightElem.validatorAddress,
+				Amount:              sdk.NewCoin(hostZone.HostDenom, underWeightElem.delta)}
+			msgs = append(msgs, redelegateMsg)
+			overWeightElem.delta = sdkmath.ZeroInt()
+			underWeightElem.delta = sdkmath.ZeroInt()
+		}
+		// add the rebalancing to the callback
+		// lastMsg grabs rebalanceMsg from above (due to the type, it's hard to )
+		// lastMsg := (msgs[len(msgs)-1]).(*stakingTypes.MsgBeginRedelegate)
+		rebalanceCallback.Rebalancings = append(rebalanceCallback.Rebalancings, &types.Rebalancing{
+			SrcValidator: redelegateMsg.ValidatorSrcAddress,
+			DstValidator: redelegateMsg.ValidatorDstAddress,
+			Amt:          redelegateMsg.Amount.Amount,
+		})
+	}
+
+	return msgs, rebalanceCallback
 }
 
 // This function returns a list with the number of extra tokens that needs to be sent to each validator
