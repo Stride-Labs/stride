@@ -254,7 +254,7 @@ func (k Keeper) GetTargetValAmtsForHostZone(ctx sdk.Context, hostZone types.Host
 // Sum the total delegation across each validator for a host zone
 // Must specify whether to sum the balanced or unbalanced delegation
 func (k Keeper) GetTotalValidatorDelegations(hostZone types.HostZone, delegationType types.DelegationType) sdkmath.Int {
-	validators := hostZone.GetValidators()
+	validators := hostZone.Validators
 	totalDelegation := sdkmath.ZeroInt()
 	for _, validator := range validators {
 		if delegationType == types.DelegationType_BALANCED {
@@ -268,7 +268,7 @@ func (k Keeper) GetTotalValidatorDelegations(hostZone types.HostZone, delegation
 
 // Sum the total weights across each validator for a host zone
 func (k Keeper) GetTotalValidatorWeight(hostZone types.HostZone) uint64 {
-	validators := hostZone.GetValidators()
+	validators := hostZone.Validators
 	totalWeight := uint64(0)
 	for _, validator := range validators {
 		totalWeight += validator.Weight
