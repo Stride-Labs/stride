@@ -9,10 +9,8 @@ import "cosmos_proto/cosmos.proto";
 option go_package = "github.com/Stride-Labs/stride/v8/x/stakeibc/types";
 
 enum DelegationType {
-  option (gogoproto.goproto_enum_prefix) = false;
-
-  BALANCED_DELEGATION = 0;
-  UNBALANCED_DELEGATION = 1;
+  BALANCED = 0;
+  UNBALANCED = 1;
 }
 
 // next id: 23

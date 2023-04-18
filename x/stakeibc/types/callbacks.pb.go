@@ -464,7 +464,7 @@ func (m *RebalanceCallback) GetDelegationType() DelegationType {
 	if m != nil {
 		return m.DelegationType
 	}
-	return BALANCED_DELEGATION
+	return DelegationType_BALANCED
 }
 
 type TransferLSMTokenCallback struct {

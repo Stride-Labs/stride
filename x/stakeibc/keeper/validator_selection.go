@@ -173,9 +173,9 @@ func (k Keeper) GetValidatorDelegationDifferences(
 		targetDelForVal := targetDelegation[validator.Address]
 
 		var delegationChange sdkmath.Int
-		if delegationType == types.BALANCED_DELEGATION {
+		if delegationType == types.DelegationType_BALANCED {
 			delegationChange = targetDelForVal.Sub(validator.BalancedDelegation)
-		} else if delegationType == types.UNBALANCED_DELEGATION {
+		} else if delegationType == types.DelegationType_UNBALANCED {
 			delegationChange = targetDelForVal.Sub(validator.UnbalancedDelegation)
 		}
 
@@ -245,9 +245,9 @@ func (k Keeper) GetTotalValidatorDelegations(hostZone types.HostZone, delegation
 	validators := hostZone.GetValidators()
 	totalDelegation := sdkmath.ZeroInt()
 	for _, validator := range validators {
-		if delegationType == types.BALANCED_DELEGATION {
+		if delegationType == types.DelegationType_BALANCED {
 			totalDelegation = totalDelegation.Add(validator.BalancedDelegation)
-		} else if delegationType == types.UNBALANCED_DELEGATION {
+		} else if delegationType == types.DelegationType_UNBALANCED {
 			totalDelegation = totalDelegation.Add(validator.UnbalancedDelegation)
 		}
 	}

@@ -228,7 +228,7 @@ func (k Keeper) RebalanceTokenizedDeposits(ctx sdk.Context) {
 	for _, hostZone := range k.GetAllActiveHostZone(ctx) {
 		numRebalance := uint64(len(hostZone.Validators))
 
-		if err := k.RebalanceDelegations(ctx, hostZone.ChainId, types.UNBALANCED_DELEGATION, numRebalance); err != nil {
+		if err := k.RebalanceDelegations(ctx, hostZone.ChainId, types.DelegationType_UNBALANCED, numRebalance); err != nil {
 			k.Logger(ctx).Error(fmt.Sprintf("Unable to rebalance delegations for %s: %s", hostZone.ChainId, err.Error()))
 			continue
 		}
