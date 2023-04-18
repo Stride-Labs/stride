@@ -6,8 +6,6 @@ import (
 	"github.com/Stride-Labs/stride/v8/x/stakeibc/types"
 )
 
-// Setup LSM deposits in keeper
-
 func (s *KeeperTestSuite) TestLSMDeposit() {
 	// setup expected deposit in stakeibckeeper
 	initToken := types.LSMTokenDeposit{ChainId: "1", Denom: "validator70027"}
@@ -19,8 +17,10 @@ func (s *KeeperTestSuite) TestLSMDeposit() {
 	noDenomInput := types.QueryLSMDepositRequest{ChainId: "42", Denom: ""}
 	invalidInputs = append(invalidInputs, nil, &noChainInput, &noDenomInput)
 
-	_, err1 := s.App.StakeibcKeeper.LSMDeposit(s.Ctx, &noChainInput)
-	s.Require().ErrorContains(err1, "invalid request")
+	for _, invalidInput := range invalidInputs {
+		_, err1 := s.App.StakeibcKeeper.LSMDeposit(s.Ctx, invalidInput)
+		s.Require().ErrorContains(err1, "invalid request")
+	}
 
 	// no matching deposit found --> error not found
 	missingInput := types.QueryLSMDepositRequest{ChainId: "2", Denom: "validator9374999"}
@@ -61,44 +61,46 @@ func (s *KeeperTestSuite) TestLSMDeposits() {
 	validators = append(validators, "", "missing_validator")
 	statuses = append(statuses, "", "missing_status")
 	for _, chainId := range chainIds {
-		chainMatchNum := 1
-		if chainId == "" {
+		chainMatchNum := 1 // case: chain-id is a specific value with matching deposits
+		if chainId == "" { // case: chain-id filter not applied, all len-2 chain-ids match
 			chainMatchNum = len(chainIds) - 2
 		}
-		if chainId == "missing_chain" {
+		if chainId == "missing_chain" { // case: chain-id is specific value matching 0 deposits
 			chainMatchNum = 0
 		}
 		for _, validator := range validators {
-			validatorMatchNum := 1
-			if validator == "" {
+			validatorMatchNum := 1 // case: validator is a specific value with matching deposits
+			if validator == "" {   // case: validator filter not applied, all len-2 validators match
 				validatorMatchNum = len(validators) - 2
 			}
-			if validator == "missing_validator" {
+			if validator == "missing_validator" { // case: validator is specific value matching 0 deposits
 				validatorMatchNum = 0
 			}
 			for _, status := range statuses {
-				statusMatchNum := 1
-				if status == "" {
+				statusMatchNum := 1 // case: status is a specific value with matching deposits
+				if status == "" {   // case: status filter not applied, all len-2 statuses match
 					statusMatchNum = len(statuses) - 2
 				}
-				if status == "missing_status" {
+				if status == "missing_status" { // case: status is specific value matching 0 deposits
 					statusMatchNum = 0
 				}
 
 				expectedNumDeposits := chainMatchNum * validatorMatchNum * statusMatchNum
 				params := types.QueryLSMDepositsRequest{ChainId: chainId, ValidatorAddress: validator, Status: status}
 				response, err := s.App.StakeibcKeeper.LSMDeposits(s.Ctx, &params)
+				// Verify no errors in general, it can b empty but should be no errors
 				s.Require().NoError(err)
+				// Verify that all the deposits expected were found by matching the number set in the keeper
 				actualDeposits := response.Deposits
 				s.Require().Equal(expectedNumDeposits, len(actualDeposits), "unexpected number of deposits returned")
 				for _, actualDeposit := range actualDeposits {
-					if chainId != "" {
+					if chainId != "" { // Check that every returned deposit matches, if given specific chain-id value
 						s.Require().Equal(chainId, actualDeposit.ChainId)
 					}
-					if validator != "" {
+					if validator != "" { // Check that every returned deposit matches, if given specific validator value
 						s.Require().Equal(validator, actualDeposit.ValidatorAddress)
 					}
-					if status != "" {
+					if status != "" { // Check that every returned deposit matches, if given specific status value
 						s.Require().Equal(status, actualDeposit.Status.String())
 					}
 				}
