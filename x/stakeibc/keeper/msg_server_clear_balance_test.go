@@ -29,14 +29,14 @@ func (s *KeeperTestSuite) SetupClearBalance() ClearBalanceTestCase {
 	feeChannelID := s.CreateICAChannel(feeAccountOwner)
 	feeAddress := s.IcaAddresses[feeAccountOwner]
 	// hz
-	zoneAddress := types.NewZoneAddress(HostChainId)
+	depositAddress := types.NewHostZoneDepositAddress(HostChainId)
 	hostZone := stakeibctypes.HostZone{
 		ChainId:        HostChainId,
 		ConnectionId:   ibctesting.FirstConnectionID,
 		HostDenom:      Atom,
 		IbcDenom:       IbcAtom,
 		RedemptionRate: sdk.NewDec(1.0),
-		Address:        zoneAddress.String(),
+		DepositAddress: depositAddress.String(),
 		FeeAccount: &stakeibctypes.ICAAccount{
 			Address: feeAddress,
 			Target:  stakeibctypes.ICAAccountType_FEE,
