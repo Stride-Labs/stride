@@ -42,10 +42,15 @@ func (k Keeper) RebalanceDelegations(ctx sdk.Context, chainId string, delegation
 		return errorsmod.Wrapf(err, "unable to get validator deltas for host zone %s", chainId)
 	}
 
-	msgs, rebalanceCallback := k.GetRebalanceICAMessages(hostZone, valDeltaList, delegationType, numRebalance)
+	msgs, rebalacings := k.GetRebalanceICAMessages(hostZone, valDeltaList, numRebalance)
 
 	// marshall the callback
-	marshalledCallbackArgs, err := k.MarshalRebalanceCallbackArgs(ctx, rebalanceCallback)
+	rebalanceCallback := types.RebalanceCallback{
+		HostZoneId:     hostZone.ChainId,
+		DelegationType: delegationType,
+		Rebalancings:   rebalacings,
+	}
+	rebalanceCallbackBz, err := k.MarshalRebalanceCallbackArgs(ctx, rebalanceCallback)
 	if err != nil {
 		return errorsmod.Wrapf(err, "unable to marshal rebalance callback args")
 	}
@@ -57,7 +62,7 @@ func (k Keeper) RebalanceDelegations(ctx sdk.Context, chainId string, delegation
 		msgs,
 		*hostZone.DelegationAccount,
 		ICACallbackID_Rebalance,
-		marshalledCallbackArgs,
+		rebalanceCallbackBz,
 	)
 	if err != nil {
 		return errorsmod.Wrapf(err, "Failed to SubmitTxs for %s, messages: %+v", hostZone.ChainId, msgs)
@@ -72,9 +77,8 @@ func (k Keeper) RebalanceDelegations(ctx sdk.Context, chainId string, delegation
 func (k Keeper) GetRebalanceICAMessages(
 	hostZone types.HostZone,
 	validatorDeltas []RebalanceValidatorDelegationChange,
-	delegationType types.DelegationType,
 	numRebalance uint64,
-) (messages []sdk.Msg, callback types.RebalanceCallback) {
+) (msgs []sdk.Msg, rebalancings []*types.Rebalancing) {
 	// Sort the list of delegation changes by the size of the change
 	lessFunc := func(i, j int) bool {
 		if !validatorDeltas[i].Delta.Equal(validatorDeltas[j].Delta) {
@@ -85,14 +89,8 @@ func (k Keeper) GetRebalanceICAMessages(
 	}
 	sort.SliceStable(validatorDeltas, lessFunc)
 
-	// start construction callback
-	rebalanceCallback := types.RebalanceCallback{
-		HostZoneId:     hostZone.ChainId,
-		DelegationType: delegationType,
-		Rebalancings:   []*types.Rebalancing{},
-	}
-
-	var msgs []sdk.Msg
+	// Pair overweight and underweight validators, with a redelegation from the overweight
+	// validator to the underweight one
 	overWeightIndex := 0
 	underWeightIndex := len(validatorDeltas) - 1
 	for i := uint64(1); i <= numRebalance; i++ {
@@ -151,14 +149,14 @@ func (k Keeper) GetRebalanceICAMessages(
 		// add the rebalancing to the callback
 		// lastMsg grabs rebalanceMsg from above (due to the type, it's hard to )
 		// lastMsg := (msgs[len(msgs)-1]).(*stakingTypes.MsgBeginRedelegate)
-		rebalanceCallback.Rebalancings = append(rebalanceCallback.Rebalancings, &types.Rebalancing{
+		rebalancings = append(rebalancings, &types.Rebalancing{
 			SrcValidator: redelegateMsg.ValidatorSrcAddress,
 			DstValidator: redelegateMsg.ValidatorDstAddress,
 			Amt:          redelegateMsg.Amount.Amount,
 		})
 	}
 
-	return msgs, rebalanceCallback
+	return msgs, rebalancings
 }
 
 // This function returns a list with the number of extra tokens that needs to be sent to each validator

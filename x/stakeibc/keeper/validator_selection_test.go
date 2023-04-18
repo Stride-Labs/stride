@@ -3,6 +3,10 @@ package keeper_test
 import (
 	sdkmath "cosmossdk.io/math"
 
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+
+	"github.com/Stride-Labs/stride/v8/x/stakeibc/keeper"
 	"github.com/Stride-Labs/stride/v8/x/stakeibc/types"
 )
 
@@ -12,7 +16,89 @@ type rebalanceExpectedValidatorDeltas struct {
 	unbalancedDelta int64
 }
 
-func (s *KeeperTestSuite) TestGetRebalanceICAMessages() {
+func (s *KeeperTestSuite) TestGetRebalanceICAMessages_EvenNumberValidators() {
+	// Build up deltas for each validator, i.e. how much each validator needs to change by
+	validatorDeltas := []keeper.RebalanceValidatorDelegationChange{
+		{ValidatorAddress: "val1", Delta: sdkmath.NewInt(-21)}, // 15 to val12, 6 to val11
+		{ValidatorAddress: "val2", Delta: sdkmath.NewInt(-19)}, // 6 to val11, 10 to val10, 3 to val9
+		{ValidatorAddress: "val3", Delta: sdkmath.NewInt(-13)}, // 3 to val9, 5 to val8, 4 to val7, 1 to val6
+
+		{ValidatorAddress: "val4", Delta: sdkmath.NewInt(0)}, // no change
+		{ValidatorAddress: "val5", Delta: sdkmath.NewInt(0)}, // no change
+
+		{ValidatorAddress: "val6", Delta: sdkmath.NewInt(1)},   // 1 from val3
+		{ValidatorAddress: "val7", Delta: sdkmath.NewInt(4)},   // 4 from val3
+		{ValidatorAddress: "val8", Delta: sdkmath.NewInt(5)},   // 5 from val3
+		{ValidatorAddress: "val9", Delta: sdkmath.NewInt(6)},   // 3 from val2, 3 from val3
+		{ValidatorAddress: "val10", Delta: sdkmath.NewInt(10)}, // 10 from val2
+		{ValidatorAddress: "val11", Delta: sdkmath.NewInt(12)}, // 6 from val1, 6 from val2
+		{ValidatorAddress: "val12", Delta: sdkmath.NewInt(15)}, // 15 from val1
+	}
+
+	// Build up the expected messages, moving across the list above
+	expectedRebalancings := []types.Rebalancing{
+		{SrcValidator: "val1", DstValidator: "val12", Amt: sdkmath.NewInt(15)}, // 15 from val1 to val12
+		{SrcValidator: "val1", DstValidator: "val11", Amt: sdkmath.NewInt(6)},  //  6 from val1 to val11
+
+		{SrcValidator: "val2", DstValidator: "val11", Amt: sdkmath.NewInt(6)},  //  6 from val2 to val11
+		{SrcValidator: "val2", DstValidator: "val10", Amt: sdkmath.NewInt(10)}, // 10 from val2 to val10
+		{SrcValidator: "val2", DstValidator: "val9", Amt: sdkmath.NewInt(3)},   //  3 from val2 to val9
+
+		{SrcValidator: "val3", DstValidator: "val9", Amt: sdkmath.NewInt(3)}, // 3 from val3 to val9
+		{SrcValidator: "val3", DstValidator: "val8", Amt: sdkmath.NewInt(5)}, // 5 from val3 to val8
+		{SrcValidator: "val3", DstValidator: "val7", Amt: sdkmath.NewInt(4)}, // 4 from val3 to val7
+		{SrcValidator: "val3", DstValidator: "val6", Amt: sdkmath.NewInt(1)}, // 1 from val3 to val6
+	}
+
+	// Build the expected ICA messages from the list of rebalancings above
+	delegationAddress := "cosmos_DELEGATION"
+	expectedMsgs := []sdk.Msg{}
+	for _, rebalancing := range expectedRebalancings {
+		expectedMsgs = append(expectedMsgs, &stakingtypes.MsgBeginRedelegate{
+			DelegatorAddress:    delegationAddress,
+			ValidatorSrcAddress: rebalancing.SrcValidator,
+			ValidatorDstAddress: rebalancing.DstValidator,
+			Amount:              sdk.NewCoin(Atom, rebalancing.Amt),
+		})
+	}
+
+	// Only the validator address is needed in the host zone validator array
+	validators := []*types.Validator{}
+	for _, rebalance := range validatorDeltas {
+		validators = append(validators, &types.Validator{Address: rebalance.ValidatorAddress})
+	}
+	hostZone := types.HostZone{
+		Validators: validators,
+		HostDenom:  Atom,
+		DelegationAccount: &types.ICAAccount{
+			Address: delegationAddress, // used as ICA message sender
+		},
+	}
+
+	// Get the rebalancing messages
+	actualMsgs, actualRabalancings := s.App.StakeibcKeeper.GetRebalanceICAMessages(hostZone, validatorDeltas, uint64(len(validators)))
+
+	// Confirm the rebalancing list used for the callback
+	s.Require().Len(actualRabalancings, len(expectedRebalancings), "length of rebalancings")
+	for i, expected := range expectedRebalancings {
+		s.Require().Equal(expected.SrcValidator, actualRabalancings[i].SrcValidator, "rebalancing src validator, index %d", i)
+		s.Require().Equal(expected.DstValidator, actualRabalancings[i].DstValidator, "rebalancing dst validator, index %d", i)
+		s.Require().Equal(expected.Amt.Int64(), actualRabalancings[i].Amt.Int64(),
+			"rebalancing amount, src: %s, dst: %s, index: %d", expected.SrcValidator, expected.DstValidator, i)
+	}
+
+	// Confirm the ICA messages list
+	s.Require().Len(actualMsgs, len(expectedMsgs), "length of messages")
+	for i, expectedMsg := range expectedMsgs {
+		actual := actualMsgs[i].(*stakingtypes.MsgBeginRedelegate)
+		expected := expectedMsg.(*stakingtypes.MsgBeginRedelegate)
+		s.Require().Equal(delegationAddress, actual.DelegatorAddress, "message delegator address, index %d", i)
+		s.Require().Equal(expected.ValidatorSrcAddress, actual.ValidatorSrcAddress, "message src validator, index %d", i)
+		s.Require().Equal(expected.ValidatorDstAddress, actual.ValidatorDstAddress, "message dst validator, index %d", i)
+	}
+}
+
+func (s *KeeperTestSuite) TestGetRebalanceICAMessages_OddNumberValidators() {
 
 }
 
@@ -72,7 +158,7 @@ func (s *KeeperTestSuite) TestGetTargetValAmtsForHostZone() {
 		{Address: "val2", Weight: 40},
 	}
 
-	// Get targets with an even 100 total delegated
+	// Get targets with an even 100 total delegated - no overflow to last validator
 	totalDelegation := sdkmath.NewInt(100)
 	hostZone := types.HostZone{ChainId: HostChainId, Validators: initialValidators}
 	actualTargets, err := s.App.StakeibcKeeper.GetTargetValAmtsForHostZone(s.Ctx, hostZone, totalDelegation)
@@ -90,7 +176,7 @@ func (s *KeeperTestSuite) TestGetTargetValAmtsForHostZone() {
 			"validator %s target for total delegation of 100", expectedValidators.Address)
 	}
 
-	// Get targets with an uneven amount delegated - 77
+	// Get targets with an uneven amount delegated - 77 - over flow to last validator
 	totalDelegation = sdkmath.NewInt(77)
 	expectedTargets := map[string]int64{
 		"val5": 0,  // 0%  of 77 = 0
