@@ -4,6 +4,7 @@ import (
 	// "fmt"
 
 	"math/rand"
+	"strconv"
 
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -247,4 +248,100 @@ func (s *KeeperTestSuite) TestUpdateRedemptionRate_RandomInitialRedemptionRate()
 	// 1 + 2 + 3 + 4 + 5 / 10 = 15 / 10 = 1.5
 	expectedNewRate := sdk.MustNewDecFromStr("1.5")
 	s.checkRedemptionRateAfterUpdate(expectedNewRate)
+}
+
+// Tests GetDepositAccountBalance and GetUndelegatedBalance
+func (s *KeeperTestSuite) TestGetRedemptionRate_DepositRecords() {
+	// Build combinations of transfer deposit records
+	toBeTransferedDepositRecords := []recordtypes.DepositRecord{
+		// TRANSFER_QUEUE Total: 1 + 2 + 3 = 6
+		{HostZoneId: HostChainId, Status: recordtypes.DepositRecord_TRANSFER_QUEUE, Amount: sdk.NewInt(1)},
+		{HostZoneId: HostChainId, Status: recordtypes.DepositRecord_TRANSFER_QUEUE, Amount: sdk.NewInt(2)},
+		{HostZoneId: HostChainId, Status: recordtypes.DepositRecord_TRANSFER_QUEUE, Amount: sdk.NewInt(3)},
+
+		// TRANSFER_IN_PROGRESS Total: 4 + 5 + 6 = 15
+		{HostZoneId: HostChainId, Status: recordtypes.DepositRecord_TRANSFER_IN_PROGRESS, Amount: sdk.NewInt(4)},
+		{HostZoneId: HostChainId, Status: recordtypes.DepositRecord_TRANSFER_IN_PROGRESS, Amount: sdk.NewInt(5)},
+		{HostZoneId: HostChainId, Status: recordtypes.DepositRecord_TRANSFER_IN_PROGRESS, Amount: sdk.NewInt(6)},
+
+		// Different host zone ID - should be ignored
+		{HostZoneId: "different", Status: recordtypes.DepositRecord_TRANSFER_QUEUE, Amount: sdk.NewInt(1)},
+		{HostZoneId: "different", Status: recordtypes.DepositRecord_TRANSFER_QUEUE, Amount: sdk.NewInt(2)},
+		{HostZoneId: "different", Status: recordtypes.DepositRecord_TRANSFER_IN_PROGRESS, Amount: sdk.NewInt(4)},
+		{HostZoneId: "different", Status: recordtypes.DepositRecord_TRANSFER_IN_PROGRESS, Amount: sdk.NewInt(5)},
+	}
+	expectedJustDepositedBalance := int64(1 + 2 + 3 + 4 + 5 + 6) // 6 + 15 = 21
+
+	// Build combinations of delegation deposit records
+	toBeStakedDepositRecords := []recordtypes.DepositRecord{
+		// DELEGATION_QUEUE Total: 7 + 8 + 9 = 24
+		{HostZoneId: HostChainId, Status: recordtypes.DepositRecord_DELEGATION_QUEUE, Amount: sdk.NewInt(7)},
+		{HostZoneId: HostChainId, Status: recordtypes.DepositRecord_DELEGATION_QUEUE, Amount: sdk.NewInt(8)},
+		{HostZoneId: HostChainId, Status: recordtypes.DepositRecord_DELEGATION_QUEUE, Amount: sdk.NewInt(9)},
+
+		// DELEGATION_IN_PROGRESS Total: 10 + 11 + 12 = 33
+		{HostZoneId: HostChainId, Status: recordtypes.DepositRecord_DELEGATION_IN_PROGRESS, Amount: sdk.NewInt(10)},
+		{HostZoneId: HostChainId, Status: recordtypes.DepositRecord_DELEGATION_IN_PROGRESS, Amount: sdk.NewInt(11)},
+		{HostZoneId: HostChainId, Status: recordtypes.DepositRecord_DELEGATION_IN_PROGRESS, Amount: sdk.NewInt(12)},
+
+		// Different host zone ID - should be ignored
+		{HostZoneId: "different", Status: recordtypes.DepositRecord_DELEGATION_QUEUE, Amount: sdk.NewInt(7)},
+		{HostZoneId: "different", Status: recordtypes.DepositRecord_DELEGATION_QUEUE, Amount: sdk.NewInt(8)},
+		{HostZoneId: "different", Status: recordtypes.DepositRecord_DELEGATION_IN_PROGRESS, Amount: sdk.NewInt(10)},
+		{HostZoneId: "different", Status: recordtypes.DepositRecord_DELEGATION_IN_PROGRESS, Amount: sdk.NewInt(11)},
+	}
+	expectedUndelegatedBalance := int64(7 + 8 + 9 + 10 + 11 + 12) // 24 + 33 = 57
+
+	// Use concatenation of all deposit records when running tests
+	allDepositRecords := append(toBeTransferedDepositRecords, toBeStakedDepositRecords...)
+
+	// Check the transfer records
+	actualJustDepositedBalance := s.App.StakeibcKeeper.GetDepositAccountBalance(HostChainId, allDepositRecords)
+	s.Require().Equal(expectedJustDepositedBalance, actualJustDepositedBalance.TruncateInt64(), "deposit account balance")
+
+	// Check the delegation records
+	actualUndelegatedBalance := s.App.StakeibcKeeper.GetUndelegatedBalance(HostChainId, allDepositRecords)
+	s.Require().Equal(expectedUndelegatedBalance, actualUndelegatedBalance.TruncateInt64(), "undelegated balance")
+}
+
+func (s *KeeperTestSuite) TestGetTokenizedDelegation() {
+	lsmDeposits := []stakeibctypes.LSMTokenDeposit{
+		// Total: 1 + 2 + 3 + 4 + 5 + 6 + 7 + 8 + 9 + 10 = 65
+		{ChainId: HostChainId, Status: stakeibctypes.TRANSFER_IN_PROGRESS, Amount: sdk.NewInt(1)},
+		{ChainId: HostChainId, Status: stakeibctypes.TRANSFER_IN_PROGRESS, Amount: sdk.NewInt(2)},
+
+		{ChainId: HostChainId, Status: stakeibctypes.DETOKENIZATION_QUEUE, Amount: sdk.NewInt(3)},
+		{ChainId: HostChainId, Status: stakeibctypes.DETOKENIZATION_QUEUE, Amount: sdk.NewInt(4)},
+
+		{ChainId: HostChainId, Status: stakeibctypes.DETOKENIZATION_IN_PROGRESS, Amount: sdk.NewInt(5)},
+		{ChainId: HostChainId, Status: stakeibctypes.DETOKENIZATION_IN_PROGRESS, Amount: sdk.NewInt(6)},
+
+		{ChainId: HostChainId, Status: stakeibctypes.TRANSFER_FAILED, Amount: sdk.NewInt(7)},
+		{ChainId: HostChainId, Status: stakeibctypes.TRANSFER_FAILED, Amount: sdk.NewInt(8)},
+
+		{ChainId: HostChainId, Status: stakeibctypes.DETOKENIZATION_FAILED, Amount: sdk.NewInt(9)},
+		{ChainId: HostChainId, Status: stakeibctypes.DETOKENIZATION_FAILED, Amount: sdk.NewInt(10)},
+
+		// Status DEPOSIT_PENDING - should be ignored
+		{ChainId: HostChainId, Status: stakeibctypes.DEPOSIT_PENDING, Amount: sdk.NewInt(11)},
+		{ChainId: HostChainId, Status: stakeibctypes.DEPOSIT_PENDING, Amount: sdk.NewInt(12)},
+
+		// Different chain ID - should be ignored
+		{ChainId: "different", Status: stakeibctypes.TRANSFER_IN_PROGRESS, Amount: sdk.NewInt(1)},
+		{ChainId: "different", Status: stakeibctypes.DETOKENIZATION_QUEUE, Amount: sdk.NewInt(3)},
+		{ChainId: "different", Status: stakeibctypes.DETOKENIZATION_IN_PROGRESS, Amount: sdk.NewInt(5)},
+		{ChainId: "different", Status: stakeibctypes.TRANSFER_FAILED, Amount: sdk.NewInt(7)},
+		{ChainId: "different", Status: stakeibctypes.DETOKENIZATION_FAILED, Amount: sdk.NewInt(9)},
+	}
+	expectedTokenizedDelegation := int64(1 + 2 + 3 + 4 + 5 + 6 + 7 + 8 + 9 + 10)
+
+	// Store deposits
+	for i, deposit := range lsmDeposits {
+		deposit.Denom = strconv.Itoa(i)
+		s.App.StakeibcKeeper.SetLSMTokenDeposit(s.Ctx, deposit)
+	}
+
+	// Check the total delegation from LSM Tokens
+	actualTokenizedDelegation := s.App.StakeibcKeeper.GetTokenizedDelegation(s.Ctx, HostChainId)
+	s.Require().Equal(expectedTokenizedDelegation, actualTokenizedDelegation.TruncateInt64())
 }
