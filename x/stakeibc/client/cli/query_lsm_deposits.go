@@ -11,15 +11,15 @@ import (
 )
 
 const (
-	FlagChainId          = "host-zone"
+	FlagChainId          = "chain-id"
 	FlagValidatorAddress = "validator"
 	FlagStatus           = "status"
 )
 
 func CmdLSMDeposit() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "show-lsm-deposit [chain-id] [denom]",
-		Short: "shows either 0 or 1 deposits which match given denom on chain-id",
+		Use:   "lsm-deposit [chain-id] [denom]",
+		Short: "shows an LSM deposit matching given denom and chain-id",
 		Args:  cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx := client.GetClientContextFromCmd(cmd)
@@ -46,9 +46,16 @@ func CmdLSMDeposit() *cobra.Command {
 
 func CmdLSMDeposits() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "show-lsm-deposits --host-zone=[chain_id] --validator=[validator_address] --status=[status]",
-		Short: "shows all lsm-deposits filtered by optional flags chain-id validate-address and status",
-		Args:  cobra.ExactArgs(0),
+		Use:   "lsm-deposits",
+		Short: "shows all lsm-deposits matching optional filters",
+		Long: `Shows all LSM deposits with optional filters
+Examples:
+  $ lsm-deposits
+  $ lsm-deposits --chain-id=[chain-id]
+  $ lsm-deposits --chain-id=[chain-id] validator=[validator-address]
+  $ lsm-deposits --chain-id=[chain-id] --status=[status]
+`,
+		Args: cobra.ExactArgs(0),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			chainId, err := cmd.Flags().GetString(FlagChainId)
 			if err != nil {

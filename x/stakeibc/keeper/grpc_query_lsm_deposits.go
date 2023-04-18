@@ -16,15 +16,14 @@ func (k Keeper) LSMDeposit(c context.Context, req *types.QueryLSMDepositRequest)
 		return nil, status.Error(codes.InvalidArgument, "invalid request")
 	}
 
-	var foundDeposit types.LSMTokenDeposit
 	ctx := sdk.UnwrapSDKContext(c)
 
 	deposit, found := k.GetLSMTokenDeposit(ctx, req.GetChainId(), req.GetDenom())
-	if found {
-		foundDeposit = deposit
+	if !found {
+		return nil, status.Error(codes.NotFound, "LSM deposit not found")
 	}
 
-	return &types.QueryLSMDepositResponse{Deposit: foundDeposit}, nil
+	return &types.QueryLSMDepositResponse{Deposit: deposit}, nil
 }
 
 func (k Keeper) LSMDeposits(c context.Context, req *types.QueryLSMDepositsRequest) (*types.QueryLSMDepositsResponse, error) {
@@ -45,28 +44,19 @@ func (k Keeper) LSMDeposits(c context.Context, req *types.QueryLSMDepositsReques
 		deposits = k.GetLSMDepositsForHostZone(ctx, req.GetChainId())
 	}
 
-	// Filter for matches by hand if validator_address is given
+	// Filter for matches by hand if validator_address or status optional filters are given
 	filtered := []types.LSMTokenDeposit{}
-	if req.GetValidatorAddress() != "" {
-		for _, deposit := range deposits {
-			if deposit.ValidatorAddress == req.GetValidatorAddress() {
-				filtered = append(filtered, deposit)
-			}
+	filterByValidator := req.GetValidatorAddress() != ""
+	filterByStatus := req.GetStatus() != ""
+	for _, deposit := range deposits {
+		validatorMatch := !filterByValidator || (deposit.ValidatorAddress == req.GetValidatorAddress())
+		statusMatch := !filterByStatus || (deposit.Status.String() == req.GetStatus())
+		if validatorMatch && statusMatch {
+			filtered = append(filtered, deposit)
 		}
-		deposits = filtered
 	}
+	deposits = filtered
 
-	// Filter for matches by hand if status is given
-	filtered = []types.LSMTokenDeposit{}
-	if req.GetStatus() != "" {
-		for _, deposit := range deposits {
-			if deposit.Status.String() == req.GetStatus() {
-				filtered = append(filtered, deposit)
-			}
-		}
-		deposits = filtered
-	}
-
-	// Be aware this could be an empty array, there might simply have been no matching deposits
+	// Be aware this could be an empty array, there may have been no deposits matching given filters
 	return &types.QueryLSMDepositsResponse{Deposits: deposits}, nil
 }

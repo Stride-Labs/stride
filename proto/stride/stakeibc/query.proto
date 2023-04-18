@@ -166,7 +166,7 @@ message QueryAddressUnbondingsResponse {
 
 message QueryLSMDepositRequest {
   string chain_id = 1;
-  string denom = 3;
+  string denom = 2;
 }
 
 message QueryLSMDepositResponse {
