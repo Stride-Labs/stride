@@ -61,10 +61,10 @@ func (s *KeeperTestSuite) SetupUndelegateCallback() UndelegateCallbackTestCase {
 		Address:            "val2_address",
 		BalancedDelegation: val2Bal,
 	}
-	zoneAddress := types.NewZoneAddress(HostChainId)
+	depositAddress := types.NewHostZoneDepositAddress(HostChainId)
 	zoneAccountBalance := balanceToUnstake.Add(sdkmath.NewInt(10))
 	zoneAccount := Account{
-		acc:           zoneAddress,
+		acc:           depositAddress,
 		stAtomBalance: sdk.NewCoin(StAtom, zoneAccountBalance), // Add a few extra tokens to make the test more robust
 	}
 	hostZone := stakeibc.HostZone{
@@ -74,7 +74,7 @@ func (s *KeeperTestSuite) SetupUndelegateCallback() UndelegateCallbackTestCase {
 		RedemptionRate:           sdk.NewDec(1.0),
 		Validators:               []*types.Validator{&val1, &val2},
 		TotalBalancedDelegations: balancedDelegations,
-		Address:                  zoneAddress.String(),
+		DepositAddress:           depositAddress.String(),
 	}
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
 
@@ -171,7 +171,7 @@ func (s *KeeperTestSuite) TestUndelegateCallback_Successful() {
 	hzu := epochUnbondingRecord.HostZoneUnbondings[0]
 	s.Require().Equal(int64(hzu.UnbondingTime), initialState.completionTime.UnixNano(), "completion time is set on the hzu")
 	s.Require().Equal(hzu.Status, recordtypes.HostZoneUnbonding_EXIT_TRANSFER_QUEUE, "hzu status is set to EXIT_TRANSFER_QUEUE")
-	zoneAccount, err := sdk.AccAddressFromBech32(hostZone.Address)
+	zoneAccount, err := sdk.AccAddressFromBech32(hostZone.DepositAddress)
 	s.Require().NoError(err, "zone account address is valid")
 	s.Require().Equal(tc.balanceToUnstake, initialState.zoneAccountBalance.Sub(s.App.BankKeeper.GetBalance(s.Ctx, zoneAccount, StAtom).Amount), "tokens are burned")
 }
@@ -198,7 +198,7 @@ func (s *KeeperTestSuite) checkStateIfUndelegateCallbackFailed(tc UndelegateCall
 	hzu := epochUnbondingRecord.HostZoneUnbondings[0]
 	s.Require().Equal(int64(hzu.UnbondingTime), int64(0), "completion time is NOT set on the hzu")
 	s.Require().Equal(hzu.Status, recordtypes.HostZoneUnbonding_UNBONDING_QUEUE, "hzu status is set to UNBONDING_QUEUE")
-	zoneAccount, err := sdk.AccAddressFromBech32(hostZone.Address)
+	zoneAccount, err := sdk.AccAddressFromBech32(hostZone.DepositAddress)
 	s.Require().NoError(err, "zone account address is valid")
 	s.Require().Equal(initialState.zoneAccountBalance, s.App.BankKeeper.GetBalance(s.Ctx, zoneAccount, StAtom).Amount, "tokens are NOT burned")
 }
@@ -404,7 +404,7 @@ func (s *KeeperTestSuite) TestBurnTokens_Success() {
 	hostZone, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx, HostChainId)
 	s.Require().True(found, "host zone found")
 
-	zoneAccount, err := sdk.AccAddressFromBech32(hostZone.Address)
+	zoneAccount, err := sdk.AccAddressFromBech32(hostZone.DepositAddress)
 	s.Require().NoError(err, "zoneAccount is valid")
 	s.Require().Equal(tc.initialState.zoneAccountBalance, s.App.BankKeeper.GetBalance(s.Ctx, zoneAccount, StAtom).Amount, "initial token balance is 300_010")
 
@@ -434,7 +434,7 @@ func (s *KeeperTestSuite) TestBurnTokens_CouldNotParseAddress() {
 
 	hostZone, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx, HostChainId)
 	s.Require().True(found, "host zone found")
-	hostZone.Address = "invalid"
+	hostZone.DepositAddress = "invalid"
 
 	err := s.App.StakeibcKeeper.BurnTokens(s.Ctx, hostZone, sdkmath.NewInt(123456))
 	s.Require().EqualError(err, "could not bech32 decode address invalid of zone with id: GAIA")
