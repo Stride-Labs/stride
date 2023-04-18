@@ -2,28 +2,41 @@ syntax = "proto3";
 package stride.stakeibc;
 
 import "stride/stakeibc/validator.proto";
-import "stride/stakeibc/ica_account.proto";
 import "gogoproto/gogo.proto";
 import "cosmos_proto/cosmos.proto";
 
 option go_package = "github.com/Stride-Labs/stride/v8/x/stakeibc/types";
 
-// next id: 23
 message HostZone {
   string chain_id = 1;
-  string connection_id = 2;
   string bech32prefix = 17;
+  string connection_id = 2;
   string transfer_channel_id = 12;
-  repeated Validator validators = 3;
-  repeated Validator blacklisted_validators = 4;
-  ICAAccount withdrawal_account = 5;
-  ICAAccount fee_account = 6;
-  ICAAccount delegation_account = 7;
-  ICAAccount redemption_account = 16;
   // ibc denom on stride
   string ibc_denom = 8;
   // native denom on host zone
   string host_denom = 9;
+  // stores how many days we should wait before issuing unbondings
+  uint64 unbonding_frequency = 14;
+  repeated Validator validators = 3;
+  string deposit_address = 18
+      [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+  string withdrawal_ica_address = 23
+      [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+  string fee_ica_address = 24
+      [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+  string delegation_ica_address = 25
+      [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+  string redemption_ica_address = 26
+      [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+  string total_balanced_delegations = 13 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable) = false
+  ];
+  string total_unbalanced_delegations = 22 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable) = false
+  ];
   string last_redemption_rate = 10 [
     (cosmos_proto.scalar) = "cosmos.Dec",
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
@@ -34,19 +47,6 @@ message HostZone {
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false
   ];
-  // stores how many days we should wait before issuing unbondings
-  uint64 unbonding_frequency = 14;
-  string total_balanced_delegations = 13 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
-    (gogoproto.nullable) = false
-  ];
-  string total_unbalanced_delegations = 22 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
-    (gogoproto.nullable) = false
-  ];
-  string deposit_address = 18
-      [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
-  bool halted = 19;
   string min_redemption_rate = 20 [
     (cosmos_proto.scalar) = "cosmos.Dec",
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
@@ -57,5 +57,7 @@ message HostZone {
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false
   ];
-  reserved 15;
+  bool halted = 19;
+  reserved 4, 5, 6, 7, 15, 16;
+  // next id: 27
 }

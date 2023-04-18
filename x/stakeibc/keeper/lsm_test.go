@@ -176,19 +176,19 @@ func (s *KeeperTestSuite) TestShouldCheckIfValidatorWasSlashed() {
 
 func (s *KeeperTestSuite) TestRefundLSMToken() {
 	liquidStakerAddress := s.TestAccs[0]
-	hostZoneAddress := types.NewZoneAddress(HostChainId)
+	despositAddress := types.NewHostZoneDepositAddress(HostChainId)
 
 	// Fund the module account with the LSM token
 	lsmTokenIBCDenom := "ibc/cosmosvalXXX"
 	stakeAmount := sdk.NewInt(1000)
 	lsmToken := sdk.NewCoin(lsmTokenIBCDenom, stakeAmount)
-	s.FundAccount(hostZoneAddress, lsmToken)
+	s.FundAccount(despositAddress, lsmToken)
 
 	// Setup the liquid stake object that provides the context for the refund
 	liquidStake := types.LSMLiquidStake{
 		Staker: liquidStakerAddress,
 		HostZone: types.HostZone{
-			Address: hostZoneAddress.String(),
+			DepositAddress: despositAddress.String(),
 		},
 		LSMIBCToken: lsmToken,
 	}
@@ -200,7 +200,7 @@ func (s *KeeperTestSuite) TestRefundLSMToken() {
 	stakerBalance := s.App.BankKeeper.GetBalance(s.Ctx, liquidStakerAddress, lsmTokenIBCDenom)
 	s.CompareCoins(lsmToken, stakerBalance, "staker should have received their LSM token back")
 
-	moduleBalance := s.App.BankKeeper.GetBalance(s.Ctx, hostZoneAddress, lsmTokenIBCDenom)
+	moduleBalance := s.App.BankKeeper.GetBalance(s.Ctx, despositAddress, lsmTokenIBCDenom)
 	s.True(moduleBalance.IsZero(), "module account should no longer have the LSM token")
 
 	// Attempt to refund again, it should fail from an insufficient balance
@@ -208,7 +208,7 @@ func (s *KeeperTestSuite) TestRefundLSMToken() {
 	s.Require().ErrorContains(err, "insufficient funds")
 
 	// Attempt to refund with an invalid host zone address, it should fail
-	liquidStake.HostZone.Address = ""
+	liquidStake.HostZone.DepositAddress = ""
 	err = s.App.StakeibcKeeper.RefundLSMToken(s.Ctx, liquidStake)
 	s.Require().ErrorContains(err, "host zone address is invalid")
 }
@@ -227,11 +227,9 @@ func (s *KeeperTestSuite) TestDetokenizeLSMDeposit() {
 
 	// Build the host zone and deposit (which are arguments to detokenize)
 	hostZone := types.HostZone{
-		ChainId: HostChainId,
-		DelegationAccount: &types.ICAAccount{
-			Address: delegationICAAddress,
-		},
-		ConnectionId: ibctesting.FirstConnectionID,
+		ChainId:              HostChainId,
+		DelegationIcaAddress: delegationICAAddress,
+		ConnectionId:         ibctesting.FirstConnectionID,
 	}
 
 	denom := "cosmosvalXXX/42"
@@ -270,7 +268,7 @@ func (s *KeeperTestSuite) TestDetokenizeLSMDeposit() {
 
 	// Remove delegation account and re-submit - should also fail
 	hostZoneWithoutDelegationAccount := hostZone
-	hostZoneWithoutDelegationAccount.DelegationAccount.Address = ""
+	hostZoneWithoutDelegationAccount.DelegationIcaAddress = ""
 	err = s.App.StakeibcKeeper.DetokenizeLSMDeposit(s.Ctx, hostZoneWithoutDelegationAccount, initalDeposit)
 	s.Require().ErrorContains(err, "no delegation account found")
 }
@@ -289,11 +287,9 @@ func (s *KeeperTestSuite) TestDetokenizeAllLSMDeposits() {
 
 	// Store two host zones - one with an open Delegation channel, and one without
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, types.HostZone{
-		ChainId:      HostChainId,
-		ConnectionId: ibctesting.FirstConnectionID,
-		DelegationAccount: &types.ICAAccount{
-			Address: delegationICAAddress,
-		},
+		ChainId:              HostChainId,
+		ConnectionId:         ibctesting.FirstConnectionID,
+		DelegationIcaAddress: delegationICAAddress,
 	})
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, types.HostZone{
 		ChainId:      OsmoChainId,

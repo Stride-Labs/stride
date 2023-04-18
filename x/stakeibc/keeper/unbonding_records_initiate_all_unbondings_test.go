@@ -35,20 +35,12 @@ func (s *KeeperTestSuite) SetupInitiateAllHostZoneUnbondings() InitiateAllHostZo
 			Weight:             uint64(6),
 		},
 	}
-	gaiaDelegationAccount := stakeibc.ICAAccount{
-		Address: gaiaDelegationAddr,
-		Target:  stakeibc.ICAAccountType_DELEGATION,
-	}
 	osmoValidators := []*stakeibc.Validator{
 		{
 			Address:            osmoValAddr,
 			BalancedDelegation: sdkmath.NewInt(5_000_000),
 			Weight:             uint64(10),
 		},
-	}
-	osmoDelegationAccount := stakeibc.ICAAccount{
-		Address: osmoDelegationAddr,
-		Target:  stakeibc.ICAAccountType_DELEGATION,
 	}
 	hostZones := []stakeibc.HostZone{
 		{
@@ -57,7 +49,7 @@ func (s *KeeperTestSuite) SetupInitiateAllHostZoneUnbondings() InitiateAllHostZo
 			Bech32Prefix:             GaiaPrefix,
 			UnbondingFrequency:       3,
 			Validators:               gaiaValidators,
-			DelegationAccount:        &gaiaDelegationAccount,
+			DelegationIcaAddress:     gaiaDelegationAddr,
 			TotalBalancedDelegations: sdkmath.NewInt(5_000_000),
 			ConnectionId:             ibctesting.FirstConnectionID,
 		},
@@ -67,7 +59,7 @@ func (s *KeeperTestSuite) SetupInitiateAllHostZoneUnbondings() InitiateAllHostZo
 			Bech32Prefix:             OsmoPrefix,
 			UnbondingFrequency:       4,
 			Validators:               osmoValidators,
-			DelegationAccount:        &osmoDelegationAccount,
+			DelegationIcaAddress:     osmoDelegationAddr,
 			TotalBalancedDelegations: sdkmath.NewInt(5_000_000),
 			ConnectionId:             ibctesting.FirstConnectionID,
 		},

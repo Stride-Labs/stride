@@ -20,7 +20,7 @@ import (
 type LSMLiquidStakeTestCase struct {
 	hostZone            types.HostZone
 	liquidStakerAddress sdk.AccAddress
-	moduleAddress       sdk.AccAddress
+	depositAddress      sdk.AccAddress
 	initialBalance      sdkmath.Int
 	lsmTokenIBCDenom    string
 	validMsg            *types.MsgLSMLiquidStake
@@ -32,7 +32,7 @@ func (s *KeeperTestSuite) SetupTestLSMLiquidStake() LSMLiquidStakeTestCase {
 	initialBalance := sdkmath.NewInt(3_000_000)
 	stakeAmount := sdkmath.NewInt(1_000_000)
 	userAddress := s.TestAccs[0]
-	moduleAddress := types.NewZoneAddress(HostChainId)
+	depositAddress := types.NewHostZoneDepositAddress(HostChainId)
 
 	// Need valid IBC denom here to test parsing
 	sourcePrefix := transfertypes.GetDenomPrefix(transfertypes.PortID, ibctesting.FirstChannelID)
@@ -54,23 +54,21 @@ func (s *KeeperTestSuite) SetupTestLSMLiquidStake() LSMLiquidStakeTestCase {
 		ChainId:           HostChainId,
 		HostDenom:         Atom,
 		RedemptionRate:    sdk.NewDec(1.0),
-		Address:           moduleAddress.String(),
+		DepositAddress:    depositAddress.String(),
 		TransferChannelId: ibctesting.FirstChannelID,
 		ConnectionId:      ibctesting.FirstConnectionID,
 		Validators: []*types.Validator{{
 			Address:                   ValAddress,
 			SlashQueryProgressTracker: sdkmath.NewInt(8_000_000),
 		}},
-		DelegationAccount: &types.ICAAccount{
-			Address: "cosmos_DELEGATION",
-		},
+		DelegationIcaAddress: "cosmos_DELEGATION",
 	}
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
 
 	return LSMLiquidStakeTestCase{
 		hostZone:            hostZone,
 		liquidStakerAddress: userAddress,
-		moduleAddress:       moduleAddress,
+		depositAddress:      depositAddress,
 		initialBalance:      initialBalance,
 		lsmTokenIBCDenom:    lsmTokenIBCDenom,
 		validMsg: &types.MsgLSMLiquidStake{
@@ -136,7 +134,7 @@ func (s *KeeperTestSuite) TestLSMLiquidStake_Successful_WithExchangeRateQuery() 
 	s.Require().Equal(tc.initialBalance.Sub(tc.validMsg.Amount).Int64(), userLsmBalance.Amount.Int64(),
 		"lsm token balance of user account")
 
-	moduleLsmBalance := s.App.BankKeeper.GetBalance(s.Ctx, tc.moduleAddress, tc.lsmTokenIBCDenom)
+	moduleLsmBalance := s.App.BankKeeper.GetBalance(s.Ctx, tc.depositAddress, tc.lsmTokenIBCDenom)
 	s.Require().Equal(tc.validMsg.Amount.Int64(), moduleLsmBalance.Amount.Int64(),
 		"lsm token balance of module account")
 
@@ -256,12 +254,12 @@ func (s *KeeperTestSuite) TestLSMLiquidStakeFailed_ValidatorNotFound() {
 	s.Require().ErrorContains(err, "validator (cosmosvaloperXXX) is not registered in the Stride validator set")
 }
 
-func (s *KeeperTestSuite) TestLSMLiquidStakeFailed_InvalidHostZoneAddress() {
+func (s *KeeperTestSuite) TestLSMLiquidStakeFailed_InvalidDepositAddress() {
 	tc := s.SetupTestLSMLiquidStake()
 
 	// Remove the host zones address from the store
 	invalidHostZone := tc.hostZone
-	invalidHostZone.Address = ""
+	invalidHostZone.DepositAddress = ""
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, invalidHostZone)
 
 	_, err := s.GetMsgServer().LSMLiquidStake(sdk.WrapSDKContext(s.Ctx), tc.validMsg)

@@ -84,7 +84,7 @@ func (k Keeper) StartLSMLiquidStake(ctx sdk.Context, msg *types.MsgLSMLiquidStak
 
 	// Get the staker's address and the host zone module account address that will custody the tokens
 	liquidStakerAddress := sdk.MustAccAddressFromBech32(msg.Creator)
-	hostZoneAddress, err := sdk.AccAddressFromBech32(hostZone.Address)
+	hostZoneAddress, err := sdk.AccAddressFromBech32(hostZone.DepositAddress)
 	if err != nil {
 		return types.LSMLiquidStake{}, errorsmod.Wrapf(err, "host zone address is invalid")
 	}
@@ -189,8 +189,7 @@ func (k Keeper) FinishLSMLiquidStake(ctx sdk.Context, lsmLiquidStake types.LSMLi
 
 	// Get delegation account address as the destination for the LSM Token
 	hostZone := lsmLiquidStake.HostZone
-	delegationAccount := hostZone.DelegationAccount
-	if delegationAccount == nil || delegationAccount.Address == "" {
+	if hostZone.DelegationIcaAddress == "" {
 		return errorsmod.Wrapf(types.ErrICAAccountNotFound, "no delegation address found for %s", hostZone.ChainId)
 	}
 
@@ -200,8 +199,8 @@ func (k Keeper) FinishLSMLiquidStake(ctx sdk.Context, lsmLiquidStake types.LSMLi
 		SourcePort:       transfertypes.PortID,
 		SourceChannel:    hostZone.TransferChannelId,
 		Token:            lsmLiquidStake.LSMIBCToken,
-		Sender:           hostZone.Address,
-		Receiver:         delegationAccount.Address,
+		Sender:           hostZone.DepositAddress,
+		Receiver:         hostZone.DelegationIcaAddress,
 		TimeoutTimestamp: timeout,
 	})
 	if err != nil {

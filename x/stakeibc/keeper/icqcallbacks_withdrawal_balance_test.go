@@ -53,21 +53,12 @@ func (s *KeeperTestSuite) SetupWithdrawalBalanceCallbackTest() WithdrawalBalance
 	feeAddress := "cosmos_FEE"
 
 	hostZone := stakeibctypes.HostZone{
-		ChainId:      HostChainId,
-		HostDenom:    Atom,
-		ConnectionId: ibctesting.FirstConnectionID,
-		DelegationAccount: &stakeibctypes.ICAAccount{
-			Address: delegationAddress,
-			Target:  stakeibctypes.ICAAccountType_DELEGATION,
-		},
-		WithdrawalAccount: &stakeibctypes.ICAAccount{
-			Address: withdrawalAddress,
-			Target:  stakeibctypes.ICAAccountType_WITHDRAWAL,
-		},
-		FeeAccount: &stakeibctypes.ICAAccount{
-			Address: feeAddress,
-			Target:  stakeibctypes.ICAAccountType_FEE,
-		},
+		ChainId:              HostChainId,
+		HostDenom:            Atom,
+		ConnectionId:         ibctesting.FirstConnectionID,
+		DelegationIcaAddress: delegationAddress,
+		WithdrawalIcaAddress: withdrawalAddress,
+		FeeIcaAddress:        feeAddress,
 	}
 
 	strideEpochTracker := stakeibctypes.EpochTracker{
@@ -208,7 +199,7 @@ func (s *KeeperTestSuite) TestWithdrawalBalanceCallback_NoWithdrawalAccount() {
 
 	// Remove the withdrawal account
 	badHostZone := tc.initialState.hostZone
-	badHostZone.WithdrawalAccount = nil
+	badHostZone.WithdrawalIcaAddress = ""
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, badHostZone)
 
 	err := stakeibckeeper.WithdrawalBalanceCallback(s.App.StakeibcKeeper, s.Ctx, tc.validArgs.callbackArgs, tc.validArgs.query)
@@ -220,7 +211,7 @@ func (s *KeeperTestSuite) TestWithdrawalBalanceCallback_NoDelegationAccount() {
 
 	// Remove the delegation account
 	badHostZone := tc.initialState.hostZone
-	badHostZone.DelegationAccount = nil
+	badHostZone.DelegationIcaAddress = ""
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, badHostZone)
 
 	err := stakeibckeeper.WithdrawalBalanceCallback(s.App.StakeibcKeeper, s.Ctx, tc.validArgs.callbackArgs, tc.validArgs.query)
@@ -232,7 +223,7 @@ func (s *KeeperTestSuite) TestWithdrawalBalanceCallback_NoFeeAccount() {
 
 	// Remove the fee account
 	badHostZone := tc.initialState.hostZone
-	badHostZone.FeeAccount = nil
+	badHostZone.FeeIcaAddress = ""
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, badHostZone)
 
 	err := stakeibckeeper.WithdrawalBalanceCallback(s.App.StakeibcKeeper, s.Ctx, tc.validArgs.callbackArgs, tc.validArgs.query)

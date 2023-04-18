@@ -75,11 +75,8 @@ func (s *KeeperTestSuite) SetupRebalanceValidators() RebalanceValidatorsTestCase
 		Validators:               initialValidators,
 		TotalBalancedDelegations: sdkmath.NewInt(1000),
 		ConnectionId:             ibctesting.FirstConnectionID,
-		DelegationAccount: &stakeibctypes.ICAAccount{
-			Address: delegationAddr,
-			Target:  stakeibctypes.ICAAccountType_DELEGATION,
-		},
-		HostDenom: "uatom",
+		DelegationIcaAddress:     delegationAddr,
+		HostDenom:                "uatom",
 	}
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
 

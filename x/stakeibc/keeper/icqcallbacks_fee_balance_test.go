@@ -37,13 +37,10 @@ func (s *KeeperTestSuite) SetupFeeBalanceCallbackTest() FeeBalanceICQCallbackTes
 	feeAddress := s.IcaAddresses[feeAccountOwner]
 
 	hostZone := stakeibctypes.HostZone{
-		ChainId:      HostChainId,
-		HostDenom:    Atom,
-		ConnectionId: ibctesting.FirstConnectionID,
-		FeeAccount: &stakeibctypes.ICAAccount{
-			Address: feeAddress,
-			Target:  stakeibctypes.ICAAccountType_FEE,
-		},
+		ChainId:           HostChainId,
+		HostDenom:         Atom,
+		ConnectionId:      ibctesting.FirstConnectionID,
+		FeeIcaAddress:     feeAddress,
 		TransferChannelId: ibctesting.FirstChannelID,
 	}
 
@@ -183,7 +180,7 @@ func (s *KeeperTestSuite) TestFeeBalanceCallback_NoFeeAccount() {
 
 	// Remove the fee account
 	badHostZone := tc.initialState.hostZone
-	badHostZone.FeeAccount = nil
+	badHostZone.FeeIcaAddress = ""
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, badHostZone)
 
 	err := stakeibckeeper.FeeBalanceCallback(s.App.StakeibcKeeper, s.Ctx, tc.validArgs.callbackArgs, tc.validArgs.query)
