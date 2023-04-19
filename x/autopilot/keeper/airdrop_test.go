@@ -8,6 +8,7 @@ import (
 	transfertypes "github.com/cosmos/ibc-go/v5/modules/apps/transfer/types"
 	clienttypes "github.com/cosmos/ibc-go/v5/modules/core/02-client/types"
 	channeltypes "github.com/cosmos/ibc-go/v5/modules/core/04-channel/types"
+	ibctesting "github.com/cosmos/ibc-go/v5/testing"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
@@ -15,6 +16,7 @@ import (
 	"github.com/Stride-Labs/stride/v8/x/autopilot"
 	"github.com/Stride-Labs/stride/v8/x/autopilot/types"
 	claimtypes "github.com/Stride-Labs/stride/v8/x/claim/types"
+	stakeibctypes "github.com/Stride-Labs/stride/v8/x/stakeibc/types"
 )
 
 // TODO: Separate out tests cases that are not necessarily Claim or Stakeibc related,
@@ -51,10 +53,10 @@ func (s *KeeperTestSuite) TestAirdropOnRecvPacket() {
 	// Build the template for the transfer packet (the data and channel fields will get updated from each unit test)
 	packetTemplate := channeltypes.Packet{
 		Sequence:           1,
-		SourcePort:         "transfer",
-		SourceChannel:      "channel-0",
-		DestinationPort:    "transfer",
-		DestinationChannel: "channel-0",
+		SourcePort:         transfertypes.PortID,
+		SourceChannel:      ibctesting.FirstChannelID,
+		DestinationPort:    transfertypes.PortID,
+		DestinationChannel: ibctesting.FirstChannelID,
 		Data:               []byte{},
 		TimeoutHeight:      clienttypes.Height{},
 		TimeoutTimestamp:   0,
@@ -65,7 +67,7 @@ func (s *KeeperTestSuite) TestAirdropOnRecvPacket() {
 		Sender: evmosAddress,
 	}
 
-	prefixedDenom := transfertypes.GetPrefixedDenom(packetTemplate.GetSourcePort(), packetTemplate.GetSourceChannel(), evmosDenom)
+	prefixedDenom := transfertypes.GetPrefixedDenom(packetTemplate.GetDestPort(), packetTemplate.GetDestChannel(), evmosDenom)
 	evmosIbcDenom := transfertypes.ParseDenomTrace(prefixedDenom).IBCDenom()
 
 	testCases := []struct {
@@ -230,6 +232,12 @@ func (s *KeeperTestSuite) TestAirdropOnRecvPacket() {
 			}
 			err := s.App.ClaimKeeper.SetParams(s.Ctx, airdrops)
 			s.Require().NoError(err, "no error expected when setting airdrop params")
+
+			// Store the host zone so that we can verify the channel
+			s.App.StakeibcKeeper.SetHostZone(s.Ctx, stakeibctypes.HostZone{
+				ChainId:           "evmos",
+				TransferChannelId: ibctesting.FirstChannelID,
+			})
 
 			// Set claim records using key'd address
 			oldClaimRecord := claimtypes.ClaimRecord{
