@@ -70,19 +70,41 @@ func (suite *KeeperTestSuite) SetupTest() {
 
 	// Stride airdrop
 	airdropStartTime := time.Now()
-	err = suite.app.ClaimKeeper.CreateAirdropAndEpoch(suite.ctx, addr1.String(), sdk.DefaultBondDenom, uint64(airdropStartTime.Unix()), uint64(types.DefaultAirdropDuration.Seconds()), types.DefaultAirdropIdentifier)
+	err = suite.app.ClaimKeeper.CreateAirdropAndEpoch(suite.ctx, types.MsgCreateAirdrop{
+		Distributor:      addr1.String(),
+		Identifier:       types.DefaultAirdropIdentifier,
+		ChainId:          "stride-1",
+		Denom:            sdk.DefaultBondDenom,
+		StartTime:        uint64(airdropStartTime.Unix()),
+		Duration:         uint64(types.DefaultAirdropDuration.Seconds()),
+		AutopilotEnabled: false,
+	})
 	if err != nil {
 		panic(err)
 	}
 
 	// Juno airdrop
-	err = suite.app.ClaimKeeper.CreateAirdropAndEpoch(suite.ctx, addr2.String(), sdk.DefaultBondDenom, uint64(airdropStartTime.Add(time.Hour).Unix()), uint64(types.DefaultAirdropDuration.Seconds()), "juno")
+	err = suite.app.ClaimKeeper.CreateAirdropAndEpoch(suite.ctx, types.MsgCreateAirdrop{
+		Distributor: addr2.String(),
+		Identifier:  "juno",
+		ChainId:     "juno-1",
+		Denom:       sdk.DefaultBondDenom,
+		StartTime:   uint64(airdropStartTime.Add(time.Hour).Unix()),
+		Duration:    uint64(types.DefaultAirdropDuration.Seconds()),
+	})
 	if err != nil {
 		panic(err)
 	}
 
 	// Osmosis airdrop
-	err = suite.app.ClaimKeeper.CreateAirdropAndEpoch(suite.ctx, addr3.String(), sdk.DefaultBondDenom, uint64(airdropStartTime.Unix()), uint64(types.DefaultAirdropDuration.Seconds()), "osmosis")
+	err = suite.app.ClaimKeeper.CreateAirdropAndEpoch(suite.ctx, types.MsgCreateAirdrop{
+		Distributor: addr3.String(),
+		Identifier:  "osmosis",
+		ChainId:     "osmosis-1",
+		Denom:       sdk.DefaultBondDenom,
+		StartTime:   uint64(airdropStartTime.Unix()),
+		Duration:    uint64(types.DefaultAirdropDuration.Seconds()),
+	})
 	if err != nil {
 		panic(err)
 	}

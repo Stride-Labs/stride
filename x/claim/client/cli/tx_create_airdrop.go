@@ -15,7 +15,7 @@ func CmdCreateAirdrop() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "create-airdrop [identifier] [chain-id] [denom] [start] [duration] [autopilot-enabled]",
 		Short: "Broadcast message create-airdrop",
-		Args:  cobra.ExactArgs(5),
+		Args:  cobra.ExactArgs(6),
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
 			identifier := args[0]
 			chainId := args[1]

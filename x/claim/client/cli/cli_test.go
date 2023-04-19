@@ -106,14 +106,19 @@ func (s *IntegrationTestSuite) SetupSuite() {
 	cmd := cli.CmdCreateAirdrop()
 	clientCtx := val.ClientCtx
 
+	strideChainId := "stride-1"
+	autopilotEnabled := "false"
+
 	_, err = clitestutil.ExecTestCLICmd(clientCtx, cmd, []string{
 		claimtypes.DefaultAirdropIdentifier,
+		strideChainId,
+		s.cfg.BondDenom,
 		strconv.Itoa(int(time.Now().Unix())),
 		strconv.Itoa(int(claimtypes.DefaultAirdropDuration.Seconds())),
-		s.cfg.BondDenom,
+		autopilotEnabled,
+		// common args
 		fmt.Sprintf("--%s=json", tmcli.OutputFlag),
 		fmt.Sprintf("--%s=%s", flags.FlagFrom, distributorAddrs[0]),
-		// common args
 		fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
 		fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastBlock),
 		strideclitestutil.DefaultFeeString(s.cfg),
@@ -249,11 +254,13 @@ func (s *IntegrationTestSuite) TestCmdTxCreateAirdrop() {
 	val := s.network.Validators[0]
 
 	airdrop := claimtypes.Airdrop{
-		AirdropIdentifier:  "stride-1",
+		AirdropIdentifier:  "evmos",
+		ChainId:            "evmos-1",
 		AirdropStartTime:   time.Now(),
 		AirdropDuration:    claimtypes.DefaultAirdropDuration,
 		DistributorAddress: distributorAddrs[1],
 		ClaimDenom:         claimtypes.DefaultClaimDenom,
+		AutopilotEnabled:   true,
 	}
 
 	testCases := []struct {
@@ -264,13 +271,15 @@ func (s *IntegrationTestSuite) TestCmdTxCreateAirdrop() {
 		{
 			"create-airdrop tx",
 			[]string{
-				"stride-1",
-				strconv.Itoa(int(time.Now().Unix())),
-				strconv.Itoa(int(claimtypes.DefaultAirdropDuration.Seconds())),
-				s.cfg.BondDenom,
+				airdrop.AirdropIdentifier,
+				airdrop.ChainId,
+				airdrop.ClaimDenom,
+				strconv.Itoa(int(time.Now().Unix())), // start time
+				strconv.Itoa(int(claimtypes.DefaultAirdropDuration.Seconds())), // duration
+				fmt.Sprintf("%v", airdrop.AutopilotEnabled),
+				// common args
 				fmt.Sprintf("--%s=json", tmcli.OutputFlag),
 				fmt.Sprintf("--%s=%s", flags.FlagFrom, distributorAddrs[1]),
-				// common args
 				fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
 				fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastBlock),
 				strideclitestutil.DefaultFeeString(s.cfg),

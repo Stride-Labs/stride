@@ -728,6 +728,11 @@ func (k Keeper) CreateAirdropAndEpoch(ctx sdk.Context, msg types.MsgCreateAirdro
 		panic(err)
 	}
 
+	// re-run validate basic in case this function is called directly from an upgrade handler
+	if err := msg.ValidateBasic(); err != nil {
+		return err
+	}
+
 	for _, airdrop := range params.Airdrops {
 		if airdrop.AirdropIdentifier == msg.Identifier {
 			return types.ErrAirdropAlreadyExists
