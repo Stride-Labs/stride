@@ -23,14 +23,16 @@ import (
 // but more just test the parsing that occurs in OnRecvPacket
 // Move them to a different test file
 
-func getClaimPacketMetadata(address, airdropId string) string {
+var EvmosChainId = "evmos-1"
+
+func getClaimPacketMetadata(address string) string {
 	return fmt.Sprintf(`
 		{
 			"autopilot": {
 				"receiver": "%[1]s",
-				"claim": { "stride_address": "%[1]s", "airdrop_id": "%[2]s" } 
+				"claim": { "stride_address": "%[1]s" } 
 			}
-		}`, address, airdropId)
+		}`, address)
 }
 
 func (s *KeeperTestSuite) TestAirdropOnRecvPacket() {
@@ -81,7 +83,7 @@ func (s *KeeperTestSuite) TestAirdropOnRecvPacket() {
 			destinationChannelID: ibctesting.FirstChannelID,
 			destinationPortID:    transfertypes.PortID,
 			packetData: transfertypes.FungibleTokenPacketData{
-				Receiver: getClaimPacketMetadata(strideAddress, evmosAirdropId),
+				Receiver: getClaimPacketMetadata(strideAddress),
 				Memo:     "",
 			},
 			transferShouldSucceed: true,
@@ -94,7 +96,7 @@ func (s *KeeperTestSuite) TestAirdropOnRecvPacket() {
 			destinationPortID:    transfertypes.PortID,
 			packetData: transfertypes.FungibleTokenPacketData{
 				Receiver: strideAddress,
-				Memo:     getClaimPacketMetadata(strideAddress, evmosAirdropId),
+				Memo:     getClaimPacketMetadata(strideAddress),
 			},
 			transferShouldSucceed: true,
 			airdropShouldUpdate:   true,
@@ -106,7 +108,7 @@ func (s *KeeperTestSuite) TestAirdropOnRecvPacket() {
 			destinationPortID:    transfertypes.PortID,
 			packetData: transfertypes.FungibleTokenPacketData{
 				Receiver: "address-will-get-overriden",
-				Memo:     getClaimPacketMetadata(strideAddress, evmosAirdropId),
+				Memo:     getClaimPacketMetadata(strideAddress),
 			},
 			transferShouldSucceed: true,
 			airdropShouldUpdate:   true,
@@ -117,7 +119,7 @@ func (s *KeeperTestSuite) TestAirdropOnRecvPacket() {
 			destinationChannelID: ibctesting.FirstChannelID,
 			destinationPortID:    transfertypes.PortID,
 			packetData: transfertypes.FungibleTokenPacketData{
-				Receiver: getClaimPacketMetadata(strideAddress, evmosAirdropId),
+				Receiver: getClaimPacketMetadata(strideAddress),
 				Memo:     "",
 			},
 			transferShouldSucceed: false,
@@ -129,20 +131,8 @@ func (s *KeeperTestSuite) TestAirdropOnRecvPacket() {
 			destinationChannelID: ibctesting.FirstChannelID,
 			destinationPortID:    transfertypes.PortID,
 			packetData: transfertypes.FungibleTokenPacketData{
-				Receiver: getClaimPacketMetadata(strideAddress, evmosAirdropId),
+				Receiver: getClaimPacketMetadata(strideAddress),
 				Memo:     "",
-			},
-			transferShouldSucceed: false,
-			airdropShouldUpdate:   false,
-		},
-		{
-			name:                 "airdrop does not exist",
-			forwardingActive:     true,
-			destinationChannelID: ibctesting.FirstChannelID,
-			destinationPortID:    transfertypes.PortID,
-			packetData: transfertypes.FungibleTokenPacketData{
-				Receiver: strideAddress,
-				Memo:     getClaimPacketMetadata(strideAddress, "fake_airdrop"),
 			},
 			transferShouldSucceed: false,
 			airdropShouldUpdate:   false,
@@ -154,7 +144,7 @@ func (s *KeeperTestSuite) TestAirdropOnRecvPacket() {
 			destinationPortID:    transfertypes.PortID,
 			packetData: transfertypes.FungibleTokenPacketData{
 				Receiver: strideAddress,
-				Memo:     getClaimPacketMetadata("invalid_address", evmosAirdropId),
+				Memo:     getClaimPacketMetadata("invalid_address"),
 			},
 			transferShouldSucceed: false,
 			airdropShouldUpdate:   false,
@@ -249,7 +239,7 @@ func (s *KeeperTestSuite) TestAirdropOnRecvPacket() {
 			destinationChannelID: ibctesting.FirstChannelID,
 			destinationPortID:    "invalid_port",
 			packetData: transfertypes.FungibleTokenPacketData{
-				Receiver: getClaimPacketMetadata(strideAddress, evmosAirdropId),
+				Receiver: getClaimPacketMetadata(strideAddress),
 				Memo:     "",
 			},
 			transferShouldSucceed: false,
@@ -261,7 +251,7 @@ func (s *KeeperTestSuite) TestAirdropOnRecvPacket() {
 			destinationChannelID: "channel-XXX",
 			destinationPortID:    transfertypes.PortID,
 			packetData: transfertypes.FungibleTokenPacketData{
-				Receiver: getClaimPacketMetadata(strideAddress, evmosAirdropId),
+				Receiver: getClaimPacketMetadata(strideAddress),
 				Memo:     "",
 			},
 			transferShouldSucceed: false,
@@ -278,14 +268,17 @@ func (s *KeeperTestSuite) TestAirdropOnRecvPacket() {
 
 			// Set evmos airdrop
 			airdrops := claimtypes.Params{
-				Airdrops: []*claimtypes.Airdrop{{AirdropIdentifier: evmosAirdropId}},
+				Airdrops: []*claimtypes.Airdrop{{
+					AirdropIdentifier: evmosAirdropId,
+					ChainId:           EvmosChainId,
+				}},
 			}
 			err := s.App.ClaimKeeper.SetParams(s.Ctx, airdrops)
 			s.Require().NoError(err, "no error expected when setting airdrop params")
 
 			// Store the host zone so that we can verify the channel
 			s.App.StakeibcKeeper.SetHostZone(s.Ctx, stakeibctypes.HostZone{
-				ChainId:           "evmos",
+				ChainId:           EvmosChainId,
 				TransferChannelId: ibctesting.FirstChannelID,
 			})
 
