@@ -722,29 +722,32 @@ func (k Keeper) ClaimCoinsForAction(ctx sdk.Context, addr sdk.AccAddress, action
 }
 
 // CreateAirdropAndEpoch creates a new airdrop and epoch for that.
-func (k Keeper) CreateAirdropAndEpoch(ctx sdk.Context, distributor string, denom string, startTime uint64, duration uint64, identifier string) error {
+func (k Keeper) CreateAirdropAndEpoch(ctx sdk.Context, msg types.MsgCreateAirdrop) error {
 	params, err := k.GetParams(ctx)
 	if err != nil {
 		panic(err)
 	}
 
 	for _, airdrop := range params.Airdrops {
-		if airdrop.AirdropIdentifier == identifier {
+		if airdrop.AirdropIdentifier == msg.Identifier {
 			return types.ErrAirdropAlreadyExists
+		}
+		if airdrop.ChainId == msg.ChainId {
+			return types.ErrAirdropChainIdAlreadyExists
 		}
 	}
 
 	airdrop := types.Airdrop{
-		AirdropIdentifier:  identifier,
-		AirdropDuration:    time.Duration(duration * uint64(time.Second)),
-		ClaimDenom:         denom,
-		DistributorAddress: distributor,
-		AirdropStartTime:   time.Unix(int64(startTime), 0),
+		AirdropIdentifier:  msg.Identifier,
+		AirdropDuration:    time.Duration(msg.Duration * uint64(time.Second)),
+		ClaimDenom:         msg.Denom,
+		DistributorAddress: msg.Distributor,
+		AirdropStartTime:   time.Unix(int64(msg.StartTime), 0),
 	}
 
 	params.Airdrops = append(params.Airdrops, &airdrop)
 	k.epochsKeeper.SetEpochInfo(ctx, epochstypes.EpochInfo{
-		Identifier:              fmt.Sprintf("airdrop-%s", identifier),
+		Identifier:              fmt.Sprintf("airdrop-%s", msg.Identifier),
 		StartTime:               airdrop.AirdropStartTime.Add(time.Minute),
 		Duration:                time.Hour * 24 * 30,
 		CurrentEpoch:            0,
