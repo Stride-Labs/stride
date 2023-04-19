@@ -98,15 +98,15 @@ func (s *KeeperTestSuite) TestLSMDeposits() {
 				testCaseMsg := fmt.Sprintf(" Test Case ChainId: %s, Validator: %s, Status: %s", chainId, validator, status)
 				for _, actualDeposit := range actualDeposits {
 					if chainId != "" { // Check that every returned deposit matches, if given specific chain-id value
-						errMsg := "chain-id on returned deposit does not match requested chain-id filter!"
+						errMsg := "chain-id on returned deposit does not match requested chain-id filter! %s"
 						s.Require().Equal(chainId, actualDeposit.ChainId, errMsg, testCaseMsg)
 					}
 					if validator != "" { // Check that every returned deposit matches, if given specific validator value
-						errMsg := "validator on returned deposit does not match requested validator filter!"
+						errMsg := "validator on returned deposit does not match requested validator filter! %s"
 						s.Require().Equal(validator, actualDeposit.ValidatorAddress, errMsg, testCaseMsg)
 					}
 					if status != "" { // Check that every returned deposit matches, if given specific status value
-						errMsg := "status on returned deposit does not match requested status filter!"
+						errMsg := "status on returned deposit does not match requested status filter! %s"
 						s.Require().Equal(status, actualDeposit.Status.String(), errMsg, testCaseMsg)
 					}
 				}
