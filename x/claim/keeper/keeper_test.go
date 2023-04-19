@@ -50,6 +50,12 @@ func (suite *KeeperTestSuite) SetupTest() {
 	suite.app.AccountKeeper.SetAccount(suite.ctx, authtypes.NewBaseAccount(addr3, nil, 0, 0))
 	distributors["osmosis"] = addr3
 
+	// Initiate a distributor account for evmos user airdrop
+	pub4 := secp256k1.GenPrivKey().PubKey()
+	addr4 := sdk.AccAddress(pub4.Address())
+	suite.app.AccountKeeper.SetAccount(suite.ctx, authtypes.NewBaseAccount(addr4, nil, 0, 0))
+	distributors["evmos"] = addr4
+
 	// Mint coins to airdrop module
 	err := suite.app.BankKeeper.MintCoins(suite.ctx, minttypes.ModuleName, sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, sdkmath.NewInt(300000000))))
 	if err != nil {

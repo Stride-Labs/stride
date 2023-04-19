@@ -744,10 +744,12 @@ func (k Keeper) CreateAirdropAndEpoch(ctx sdk.Context, msg types.MsgCreateAirdro
 
 	airdrop := types.Airdrop{
 		AirdropIdentifier:  msg.Identifier,
+		ChainId:            msg.ChainId,
 		AirdropDuration:    time.Duration(msg.Duration * uint64(time.Second)),
 		ClaimDenom:         msg.Denom,
 		DistributorAddress: msg.Distributor,
 		AirdropStartTime:   time.Unix(int64(msg.StartTime), 0),
+		AutopilotEnabled:   msg.AutopilotEnabled,
 	}
 
 	params.Airdrops = append(params.Airdrops, &airdrop)
