@@ -138,8 +138,7 @@ func (k Keeper) GetHostZoneUnbondingMsgs(ctx sdk.Context, hostZone types.HostZon
 	}
 
 	// Get the delegation account
-	delegationAccount := hostZone.DelegationAccount
-	if delegationAccount == nil || delegationAccount.Address == "" {
+	if hostZone.DelegationIcaAddress == "" {
 		errMsg := fmt.Sprintf("Zone %s is missing a delegation address!", hostZone.ChainId)
 		k.Logger(ctx).Error(errMsg)
 		return nil, sdkmath.ZeroInt(), nil, nil, errorsmod.Wrap(types.ErrHostZoneICAAccountNotFound, errMsg)
@@ -157,7 +156,7 @@ func (k Keeper) GetHostZoneUnbondingMsgs(ctx sdk.Context, hostZone types.HostZon
 
 		// Store the ICA transactions
 		msgs = append(msgs, &stakingtypes.MsgUndelegate{
-			DelegatorAddress: delegationAccount.Address,
+			DelegatorAddress: hostZone.DelegationIcaAddress,
 			ValidatorAddress: validatorAddress,
 			Amount:           undelegationAmount,
 		})
@@ -192,14 +191,12 @@ func (k Keeper) GetHostZoneUnbondingMsgs(ctx sdk.Context, hostZone types.HostZon
 
 // Submit MsgUndelegate ICA transactions across validators
 func (k Keeper) SubmitHostZoneUnbondingMsg(ctx sdk.Context, msgs []sdk.Msg, totalAmtToUnbond sdkmath.Int, marshalledCallbackArgs []byte, hostZone types.HostZone) error {
-	delegationAccount := hostZone.GetDelegationAccount()
-
 	// safety check: if msgs is nil, error
 	if msgs == nil {
 		return errorsmod.Wrap(sdkerrors.ErrInvalidRequest, "no msgs to submit for host zone unbondings")
 	}
 
-	_, err := k.SubmitTxsDayEpoch(ctx, hostZone.GetConnectionId(), msgs, *delegationAccount, ICACallbackID_Undelegate, marshalledCallbackArgs)
+	_, err := k.SubmitTxsDayEpoch(ctx, hostZone.GetConnectionId(), msgs, types.ICAAccountType_DELEGATION, ICACallbackID_Undelegate, marshalledCallbackArgs)
 	if err != nil {
 		errMsg := fmt.Sprintf("Error submitting unbonding tx: %s", err)
 		k.Logger(ctx).Error(errMsg)
@@ -355,13 +352,11 @@ func (k Keeper) SweepAllUnbondedTokensForHostZone(ctx sdk.Context, hostZone type
 	k.Logger(ctx).Info(utils.LogWithHostZone(hostZone.ChainId, "Batch transferring %v to host zone", totalAmtTransferToRedemptionAcct))
 
 	// Get the delegation account and redemption account
-	delegationAccount := hostZone.DelegationAccount
-	if delegationAccount == nil || delegationAccount.Address == "" {
+	if hostZone.DelegationIcaAddress == "" {
 		k.Logger(ctx).Error(fmt.Sprintf("Zone %s is missing a delegation address!", hostZone.ChainId))
 		return false, sdkmath.ZeroInt()
 	}
-	redemptionAccount := hostZone.RedemptionAccount
-	if redemptionAccount == nil || redemptionAccount.Address == "" {
+	if hostZone.RedemptionIcaAddress == "" {
 		k.Logger(ctx).Error(fmt.Sprintf("Zone %s is missing a redemption address!", hostZone.ChainId))
 		return false, sdkmath.ZeroInt()
 	}
@@ -370,8 +365,8 @@ func (k Keeper) SweepAllUnbondedTokensForHostZone(ctx sdk.Context, hostZone type
 	sweepCoin := sdk.NewCoin(hostZone.HostDenom, totalAmtTransferToRedemptionAcct)
 	msgs := []sdk.Msg{
 		&banktypes.MsgSend{
-			FromAddress: delegationAccount.Address,
-			ToAddress:   redemptionAccount.Address,
+			FromAddress: hostZone.DelegationIcaAddress,
+			ToAddress:   hostZone.RedemptionIcaAddress,
 			Amount:      sdk.NewCoins(sweepCoin),
 		},
 	}
@@ -389,7 +384,7 @@ func (k Keeper) SweepAllUnbondedTokensForHostZone(ctx sdk.Context, hostZone type
 	}
 
 	// Send the transfer ICA
-	_, err = k.SubmitTxsDayEpoch(ctx, hostZone.ConnectionId, msgs, *delegationAccount, ICACallbackID_Redemption, marshalledCallbackArgs)
+	_, err = k.SubmitTxsDayEpoch(ctx, hostZone.ConnectionId, msgs, types.ICAAccountType_DELEGATION, ICACallbackID_Redemption, marshalledCallbackArgs)
 	if err != nil {
 		k.Logger(ctx).Error(fmt.Sprintf("Failed to SubmitTxs, transfer to redemption account on %s", hostZone.ChainId))
 		return false, sdkmath.ZeroInt()

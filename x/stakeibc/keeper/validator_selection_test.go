@@ -35,11 +35,9 @@ func (s *KeeperTestSuite) checkRebalanceICAMessages(
 		validators = append(validators, &types.Validator{Address: rebalance.ValidatorAddress})
 	}
 	hostZone := types.HostZone{
-		Validators: validators,
-		HostDenom:  Atom,
-		DelegationAccount: &types.ICAAccount{
-			Address: delegationAddress, // used as ICA message sender
-		},
+		Validators:           validators,
+		HostDenom:            Atom,
+		DelegationIcaAddress: delegationAddress, // used as ICA message sender
 	}
 
 	// Get the rebalancing messages

@@ -60,12 +60,9 @@ func (s *KeeperTestSuite) SetupValidatorICQCallback() ValidatorICQCallbackTestCa
 
 	currentEpoch := uint64(2)
 	hostZone := stakeibctypes.HostZone{
-		ChainId:      HostChainId,
-		ConnectionId: ibctesting.FirstConnectionID,
-		DelegationAccount: &stakeibctypes.ICAAccount{
-			Address: delegatorAddress,
-			Target:  stakeibctypes.ICAAccountType_DELEGATION,
-		},
+		ChainId:              HostChainId,
+		ConnectionId:         ibctesting.FirstConnectionID,
+		DelegationIcaAddress: delegatorAddress,
 		Validators: []*stakeibctypes.Validator{
 			{
 				Name:    "val1",
@@ -227,7 +224,7 @@ func (s *KeeperTestSuite) TestValidatorExchangeRateCallback_DelegationQueryFaile
 
 	// Remove host zone delegation address so delegation query fails
 	badHostZone := tc.initialState.hostZone
-	badHostZone.DelegationAccount = nil
+	badHostZone.DelegationIcaAddress = ""
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, badHostZone)
 
 	err := stakeibckeeper.ValidatorExchangeRateCallback(s.App.StakeibcKeeper, s.Ctx, tc.validArgs.callbackArgs, tc.validArgs.query)

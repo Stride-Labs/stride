@@ -68,17 +68,12 @@ func (s *KeeperTestSuite) SetupGetHostZoneUnbondingMsgs() GetHostZoneUnbondingMs
 		},
 	}
 
-	delegationAccount := stakeibc.ICAAccount{
-		Address: delegationAddr,
-		Target:  stakeibc.ICAAccountType_DELEGATION,
-	}
-
 	hostZone := stakeibc.HostZone{
-		ChainId:           "GAIA",
-		HostDenom:         "uatom",
-		Bech32Prefix:      "cosmos",
-		Validators:        validators,
-		DelegationAccount: &delegationAccount,
+		ChainId:              "GAIA",
+		HostDenom:            "uatom",
+		Bech32Prefix:         "cosmos",
+		Validators:           validators,
+		DelegationIcaAddress: delegationAddr,
 	}
 
 	// list of epoch unbonding records

@@ -129,7 +129,7 @@ func (k Keeper) ShouldCheckIfValidatorWasSlashed(ctx sdk.Context, validator type
 //  b) the handling of the query callback fails
 func (k Keeper) RefundLSMToken(ctx sdk.Context, lsmLiquidStake types.LSMLiquidStake) error {
 	liquidStakerAddress := lsmLiquidStake.Staker
-	hostZoneAddress, err := sdk.AccAddressFromBech32(lsmLiquidStake.HostZone.Address)
+	hostZoneAddress, err := sdk.AccAddressFromBech32(lsmLiquidStake.HostZone.DepositAddress)
 	if err != nil {
 		return errorsmod.Wrapf(err, "host zone address is invalid")
 	}
@@ -152,15 +152,14 @@ func (k Keeper) RefundLSMToken(ctx sdk.Context, lsmLiquidStake types.LSMLiquidSt
 //   deposit status will get reset, and the ICA will be attempted again.
 func (k Keeper) DetokenizeLSMDeposit(ctx sdk.Context, hostZone types.HostZone, deposit types.LSMTokenDeposit) error {
 	// Get the delegation account (which owns the LSM token)
-	delegationAccount := hostZone.DelegationAccount
-	if delegationAccount == nil || delegationAccount.Address == "" {
+	if hostZone.DelegationIcaAddress == "" {
 		return errorsmod.Wrapf(types.ErrICAAccountNotFound, "no delegation account found for %s", hostZone.ChainId)
 	}
 
 	// Build the detokenization ICA message
 	token := sdk.NewCoin(deposit.Denom, deposit.Amount)
 	detokenizeMsg := []sdk.Msg{&types.MsgRedeemTokensforShares{
-		DelegatorAddress: delegationAccount.Address,
+		DelegatorAddress: hostZone.DelegationIcaAddress,
 		Amount:           token,
 	}}
 
@@ -179,7 +178,7 @@ func (k Keeper) DetokenizeLSMDeposit(ctx sdk.Context, hostZone types.HostZone, d
 
 	// Submit the ICA with a 24 hour timeout
 	timeout := uint64(ctx.BlockTime().UnixNano() + (DetokenizationTimeout).Nanoseconds()) // 1 day
-	if _, err := k.SubmitTxs(ctx, hostZone.ConnectionId, detokenizeMsg, *delegationAccount, timeout, ICACallbackID_Detokenize, callbackArgsBz); err != nil {
+	if _, err := k.SubmitTxs(ctx, hostZone.ConnectionId, detokenizeMsg, types.ICAAccountType_DELEGATION, timeout, ICACallbackID_Detokenize, callbackArgsBz); err != nil {
 		return errorsmod.Wrapf(err, "unable to submit detokenization ICA for %s", deposit.Denom)
 	}
 

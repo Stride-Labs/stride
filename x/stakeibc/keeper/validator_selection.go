@@ -31,8 +31,7 @@ func (k Keeper) RebalanceDelegations(ctx sdk.Context, chainId string, delegation
 	if !found {
 		return errorsmod.Wrap(types.ErrHostZoneNotFound, fmt.Sprintf("Host zone %s not found", chainId))
 	}
-	delegationIca := hostZone.DelegationAccount
-	if delegationIca == nil || delegationIca.Address == "" {
+	if hostZone.DelegationIcaAddress == "" {
 		return errorsmod.Wrapf(types.ErrICAAccountNotFound, "no delegation account found for %s", chainId)
 	}
 
@@ -60,7 +59,7 @@ func (k Keeper) RebalanceDelegations(ctx sdk.Context, chainId string, delegation
 		ctx,
 		hostZone.ConnectionId,
 		msgs,
-		*hostZone.DelegationAccount,
+		types.ICAAccountType_DELEGATION,
 		ICACallbackID_Rebalance,
 		rebalanceCallbackBz,
 	)
@@ -152,7 +151,7 @@ func (k Keeper) GetRebalanceICAMessages(
 		dstValidator := underWeightValidator.ValidatorAddress
 
 		msgs = append(msgs, &stakingtypes.MsgBeginRedelegate{
-			DelegatorAddress:    hostZone.DelegationAccount.Address,
+			DelegatorAddress:    hostZone.DelegationIcaAddress,
 			ValidatorSrcAddress: srcValidator,
 			ValidatorDstAddress: dstValidator,
 			Amount:              sdk.NewCoin(hostZone.HostDenom, redelegationAmount),

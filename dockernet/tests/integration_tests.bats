@@ -80,10 +80,10 @@ setup_file() {
   assert_line "  host_denom: $HOST_DENOM"
   assert_line "  chain_id: $HOST_CHAIN_ID"
   assert_line "  transfer_channel_id: channel-$TRANSFER_CHANNEL_NUMBER"
-  refute_line '  delegation_account: null'
-  refute_line '  fee_account: null'
-  refute_line '  redemption_account: null'
-  refute_line '  withdrawal_account: null'
+  refute_line '  delegation_ica_address: ""'
+  refute_line '  fee_ica_address: ""'
+  refute_line '  redemption_ica_address: "'
+  refute_line '  withdrawal_ica_address: ""'
   assert_line '  unbonding_frequency: "1"'
 }
 

@@ -113,11 +113,11 @@ func (k msgServer) RedeemStake(goCtx context.Context, msg *types.MsgRedeemStake)
 
 	// Escrow user's balance
 	redeemCoin := sdk.NewCoins(sdk.NewCoin(stDenom, msg.Amount))
-	bech32ZoneAddress, err := sdk.AccAddressFromBech32(hostZone.Address)
+	depositAddress, err := sdk.AccAddressFromBech32(hostZone.DepositAddress)
 	if err != nil {
-		return nil, fmt.Errorf("could not bech32 decode address %s of zone with id: %s", hostZone.Address, hostZone.ChainId)
+		return nil, fmt.Errorf("could not bech32 decode address %s of zone with id: %s", hostZone.DepositAddress, hostZone.ChainId)
 	}
-	err = k.bankKeeper.SendCoins(ctx, sender, bech32ZoneAddress, redeemCoin)
+	err = k.bankKeeper.SendCoins(ctx, sender, depositAddress, redeemCoin)
 	if err != nil {
 		k.Logger(ctx).Error("Failed to send sdk.NewCoins(inCoins) from account to module")
 		return nil, errorsmod.Wrapf(types.ErrInsufficientFunds, "couldn't send %v derivative %s tokens to module account. err: %s", msg.Amount, hostZone.HostDenom, err.Error())

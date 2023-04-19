@@ -207,8 +207,7 @@ func (k Keeper) ReinvestRewards(ctx sdk.Context) {
 
 	for _, hostZone := range k.GetAllActiveHostZone(ctx) {
 		// only process host zones once withdrawal accounts are registered
-		withdrawalAccount := hostZone.WithdrawalAccount
-		if withdrawalAccount == nil || withdrawalAccount.Address == "" {
+		if hostZone.WithdrawalIcaAddress == "" {
 			k.Logger(ctx).Info(utils.LogWithHostZone(hostZone.ChainId, "Withdrawal account not registered for host zone"))
 			continue
 		}

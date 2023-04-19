@@ -140,7 +140,7 @@ func (s *KeeperTestSuite) TestRegisterHostZone_Success() {
 	s.Require().Equal(recordstypes.HostZoneUnbonding_UNBONDING_QUEUE, hostZoneUnbonding.Status, "host zone unbonding set to bonded")
 
 	// Confirm a module account was created
-	hostZoneModuleAccount, err := sdk.AccAddressFromBech32(hostZone.Address)
+	hostZoneModuleAccount, err := sdk.AccAddressFromBech32(hostZone.DepositAddress)
 	s.Require().NoError(err, "converting module address to account")
 	acc := s.App.AccountKeeper.GetAccount(s.Ctx, hostZoneModuleAccount)
 	s.Require().NotNil(acc, "host zone module account found in account keeper")

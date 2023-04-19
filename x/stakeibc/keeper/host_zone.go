@@ -250,10 +250,3 @@ func (k Keeper) IterateHostZones(ctx sdk.Context, fn func(ctx sdk.Context, index
 		i++
 	}
 }
-
-func (k Keeper) GetRedemptionAccount(ctx sdk.Context, hostZone types.HostZone) (*types.ICAAccount, bool) {
-	if hostZone.RedemptionAccount == nil {
-		return nil, false
-	}
-	return hostZone.RedemptionAccount, true
-}
