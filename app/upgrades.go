@@ -15,6 +15,7 @@ import (
 	v6 "github.com/Stride-Labs/stride/v8/app/upgrades/v6"
 	v7 "github.com/Stride-Labs/stride/v8/app/upgrades/v7"
 	v8 "github.com/Stride-Labs/stride/v8/app/upgrades/v8"
+	v9 "github.com/Stride-Labs/stride/v8/app/upgrades/v9"
 	autopilottypes "github.com/Stride-Labs/stride/v8/x/autopilot/types"
 	claimtypes "github.com/Stride-Labs/stride/v8/x/claim/types"
 	icacallbacktypes "github.com/Stride-Labs/stride/v8/x/icacallbacks/types"
@@ -95,6 +96,12 @@ func (app *StrideApp) setupUpgradeHandlers() {
 			app.ClaimKeeper,
 			app.AutopilotKeeper,
 		),
+	)
+
+	// v9 upgrade handler
+	app.UpgradeKeeper.SetUpgradeHandler(
+		v9.UpgradeName,
+		v9.CreateUpgradeHandler(app.mm, app.configurator),
 	)
 
 	upgradeInfo, err := app.UpgradeKeeper.ReadUpgradeInfoFromDisk()
