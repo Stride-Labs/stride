@@ -69,19 +69,21 @@ func (s *KeeperTestSuite) TestAirdropOnRecvPacket() {
 	}
 
 	testCases := []struct {
-		name                  string
-		forwardingActive      bool
-		packetData            transfertypes.FungibleTokenPacketData
-		destinationChannelID  string
-		destinationPortID     string
-		transferShouldSucceed bool
-		airdropShouldUpdate   bool
+		name                         string
+		autopilotClaimActive         bool
+		autopilotClaimEnabledForHost bool
+		packetData                   transfertypes.FungibleTokenPacketData
+		destinationChannelID         string
+		destinationPortID            string
+		transferShouldSucceed        bool
+		airdropShouldUpdate          bool
 	}{
 		{
-			name:                 "successful airdrop update from receiver",
-			forwardingActive:     true,
-			destinationChannelID: ibctesting.FirstChannelID,
-			destinationPortID:    transfertypes.PortID,
+			name:                         "successful airdrop update from receiver",
+			autopilotClaimActive:         true,
+			autopilotClaimEnabledForHost: true,
+			destinationChannelID:         ibctesting.FirstChannelID,
+			destinationPortID:            transfertypes.PortID,
 			packetData: transfertypes.FungibleTokenPacketData{
 				Receiver: getClaimPacketMetadata(strideAddress),
 				Memo:     "",
@@ -90,10 +92,11 @@ func (s *KeeperTestSuite) TestAirdropOnRecvPacket() {
 			airdropShouldUpdate:   true,
 		},
 		{
-			name:                 "successful airdrop update from memo",
-			forwardingActive:     true,
-			destinationChannelID: ibctesting.FirstChannelID,
-			destinationPortID:    transfertypes.PortID,
+			name:                         "successful airdrop update from memo",
+			autopilotClaimActive:         true,
+			autopilotClaimEnabledForHost: true,
+			destinationChannelID:         ibctesting.FirstChannelID,
+			destinationPortID:            transfertypes.PortID,
 			packetData: transfertypes.FungibleTokenPacketData{
 				Receiver: strideAddress,
 				Memo:     getClaimPacketMetadata(strideAddress),
@@ -102,10 +105,11 @@ func (s *KeeperTestSuite) TestAirdropOnRecvPacket() {
 			airdropShouldUpdate:   true,
 		},
 		{
-			name:                 "memo receiver overrides original receiver field",
-			forwardingActive:     true,
-			destinationChannelID: ibctesting.FirstChannelID,
-			destinationPortID:    transfertypes.PortID,
+			name:                         "memo receiver overrides original receiver field",
+			autopilotClaimActive:         true,
+			autopilotClaimEnabledForHost: true,
+			destinationChannelID:         ibctesting.FirstChannelID,
+			destinationPortID:            transfertypes.PortID,
 			packetData: transfertypes.FungibleTokenPacketData{
 				Receiver: "address-will-get-overriden",
 				Memo:     getClaimPacketMetadata(strideAddress),
@@ -114,10 +118,11 @@ func (s *KeeperTestSuite) TestAirdropOnRecvPacket() {
 			airdropShouldUpdate:   true,
 		},
 		{
-			name:                 "valid receiver routing schema, but routing inactive",
-			forwardingActive:     false,
-			destinationChannelID: ibctesting.FirstChannelID,
-			destinationPortID:    transfertypes.PortID,
+			name:                         "valid receiver routing schema, but routing inactive",
+			autopilotClaimActive:         false,
+			autopilotClaimEnabledForHost: true,
+			destinationChannelID:         ibctesting.FirstChannelID,
+			destinationPortID:            transfertypes.PortID,
 			packetData: transfertypes.FungibleTokenPacketData{
 				Receiver: getClaimPacketMetadata(strideAddress),
 				Memo:     "",
@@ -126,10 +131,11 @@ func (s *KeeperTestSuite) TestAirdropOnRecvPacket() {
 			airdropShouldUpdate:   false,
 		},
 		{
-			name:                 "valid memo routing schema, but routing inactive",
-			forwardingActive:     false,
-			destinationChannelID: ibctesting.FirstChannelID,
-			destinationPortID:    transfertypes.PortID,
+			name:                         "valid receiver routing schema, but routing inactive for airdrop",
+			autopilotClaimActive:         true,
+			autopilotClaimEnabledForHost: false,
+			destinationChannelID:         ibctesting.FirstChannelID,
+			destinationPortID:            transfertypes.PortID,
 			packetData: transfertypes.FungibleTokenPacketData{
 				Receiver: getClaimPacketMetadata(strideAddress),
 				Memo:     "",
@@ -138,10 +144,24 @@ func (s *KeeperTestSuite) TestAirdropOnRecvPacket() {
 			airdropShouldUpdate:   false,
 		},
 		{
-			name:                 "invalid stride address",
-			forwardingActive:     true,
-			destinationChannelID: ibctesting.FirstChannelID,
-			destinationPortID:    transfertypes.PortID,
+			name:                         "valid memo routing schema, but routing inactive",
+			autopilotClaimActive:         false,
+			autopilotClaimEnabledForHost: true,
+			destinationChannelID:         ibctesting.FirstChannelID,
+			destinationPortID:            transfertypes.PortID,
+			packetData: transfertypes.FungibleTokenPacketData{
+				Receiver: getClaimPacketMetadata(strideAddress),
+				Memo:     "",
+			},
+			transferShouldSucceed: false,
+			airdropShouldUpdate:   false,
+		},
+		{
+			name:                         "invalid stride address",
+			autopilotClaimActive:         true,
+			autopilotClaimEnabledForHost: true,
+			destinationChannelID:         ibctesting.FirstChannelID,
+			destinationPortID:            transfertypes.PortID,
 			packetData: transfertypes.FungibleTokenPacketData{
 				Receiver: strideAddress,
 				Memo:     getClaimPacketMetadata("invalid_address"),
@@ -150,10 +170,11 @@ func (s *KeeperTestSuite) TestAirdropOnRecvPacket() {
 			airdropShouldUpdate:   false,
 		},
 		{
-			name:                 "normal transfer packet - no memo",
-			forwardingActive:     true,
-			destinationChannelID: ibctesting.FirstChannelID,
-			destinationPortID:    transfertypes.PortID,
+			name:                         "normal transfer packet - no memo",
+			autopilotClaimActive:         true,
+			autopilotClaimEnabledForHost: true,
+			destinationChannelID:         ibctesting.FirstChannelID,
+			destinationPortID:            transfertypes.PortID,
 			packetData: transfertypes.FungibleTokenPacketData{
 				Receiver: strideAddress,
 				Memo:     "",
@@ -162,10 +183,11 @@ func (s *KeeperTestSuite) TestAirdropOnRecvPacket() {
 			airdropShouldUpdate:   false,
 		},
 		{
-			name:                 "normal transfer packet - empty JSON memo",
-			forwardingActive:     true,
-			destinationChannelID: ibctesting.FirstChannelID,
-			destinationPortID:    transfertypes.PortID,
+			name:                         "normal transfer packet - empty JSON memo",
+			autopilotClaimActive:         true,
+			autopilotClaimEnabledForHost: true,
+			destinationChannelID:         ibctesting.FirstChannelID,
+			destinationPortID:            transfertypes.PortID,
 			packetData: transfertypes.FungibleTokenPacketData{
 				Receiver: strideAddress,
 				Memo:     "{}",
@@ -174,10 +196,11 @@ func (s *KeeperTestSuite) TestAirdropOnRecvPacket() {
 			airdropShouldUpdate:   false,
 		},
 		{
-			name:                 "normal transfer packet - different middleware",
-			forwardingActive:     true,
-			destinationChannelID: ibctesting.FirstChannelID,
-			destinationPortID:    transfertypes.PortID,
+			name:                         "normal transfer packet - different middleware",
+			autopilotClaimActive:         true,
+			autopilotClaimEnabledForHost: true,
+			destinationChannelID:         ibctesting.FirstChannelID,
+			destinationPortID:            transfertypes.PortID,
 			packetData: transfertypes.FungibleTokenPacketData{
 				Receiver: strideAddress,
 				Memo:     `{ "other_module": { } }`,
@@ -186,10 +209,11 @@ func (s *KeeperTestSuite) TestAirdropOnRecvPacket() {
 			airdropShouldUpdate:   false,
 		},
 		{
-			name:                 "invalid autopilot JSON - no receiver",
-			forwardingActive:     true,
-			destinationChannelID: ibctesting.FirstChannelID,
-			destinationPortID:    transfertypes.PortID,
+			name:                         "invalid autopilot JSON - no receiver",
+			autopilotClaimActive:         true,
+			autopilotClaimEnabledForHost: true,
+			destinationChannelID:         ibctesting.FirstChannelID,
+			destinationPortID:            transfertypes.PortID,
 			packetData: transfertypes.FungibleTokenPacketData{
 				Receiver: strideAddress,
 				Memo:     `{ "autopilot": {} }`,
@@ -198,10 +222,11 @@ func (s *KeeperTestSuite) TestAirdropOnRecvPacket() {
 			airdropShouldUpdate:   false,
 		},
 		{
-			name:                 "invalid autopilot JSON - no routing module",
-			forwardingActive:     true,
-			destinationChannelID: ibctesting.FirstChannelID,
-			destinationPortID:    transfertypes.PortID,
+			name:                         "invalid autopilot JSON - no routing module",
+			autopilotClaimActive:         true,
+			autopilotClaimEnabledForHost: true,
+			destinationChannelID:         ibctesting.FirstChannelID,
+			destinationPortID:            transfertypes.PortID,
 			packetData: transfertypes.FungibleTokenPacketData{
 				Receiver: strideAddress,
 				Memo:     fmt.Sprintf(`{ "autopilot": { "receiver": "%s" } }`, strideAddress),
@@ -210,10 +235,11 @@ func (s *KeeperTestSuite) TestAirdropOnRecvPacket() {
 			airdropShouldUpdate:   false,
 		},
 		{
-			name:                 "memo too long",
-			forwardingActive:     true,
-			destinationChannelID: ibctesting.FirstChannelID,
-			destinationPortID:    transfertypes.PortID,
+			name:                         "memo too long",
+			autopilotClaimActive:         true,
+			autopilotClaimEnabledForHost: true,
+			destinationChannelID:         ibctesting.FirstChannelID,
+			destinationPortID:            transfertypes.PortID,
 			packetData: transfertypes.FungibleTokenPacketData{
 				Receiver: strideAddress,
 				Memo:     strings.Repeat("X", 300),
@@ -222,10 +248,11 @@ func (s *KeeperTestSuite) TestAirdropOnRecvPacket() {
 			airdropShouldUpdate:   false,
 		},
 		{
-			name:                 "receiver too long",
-			forwardingActive:     true,
-			destinationChannelID: ibctesting.FirstChannelID,
-			destinationPortID:    transfertypes.PortID,
+			name:                         "receiver too long",
+			autopilotClaimActive:         true,
+			autopilotClaimEnabledForHost: true,
+			destinationChannelID:         ibctesting.FirstChannelID,
+			destinationPortID:            transfertypes.PortID,
 			packetData: transfertypes.FungibleTokenPacketData{
 				Receiver: strings.Repeat("X", 300),
 				Memo:     "",
@@ -234,10 +261,11 @@ func (s *KeeperTestSuite) TestAirdropOnRecvPacket() {
 			airdropShouldUpdate:   false,
 		},
 		{
-			name:                 "not transfer channel",
-			forwardingActive:     true,
-			destinationChannelID: ibctesting.FirstChannelID,
-			destinationPortID:    "invalid_port",
+			name:                         "not transfer channel",
+			autopilotClaimActive:         true,
+			autopilotClaimEnabledForHost: true,
+			destinationChannelID:         ibctesting.FirstChannelID,
+			destinationPortID:            "invalid_port",
 			packetData: transfertypes.FungibleTokenPacketData{
 				Receiver: getClaimPacketMetadata(strideAddress),
 				Memo:     "",
@@ -246,10 +274,11 @@ func (s *KeeperTestSuite) TestAirdropOnRecvPacket() {
 			airdropShouldUpdate:   false,
 		},
 		{
-			name:                 "invalid channel-id",
-			forwardingActive:     true,
-			destinationChannelID: "channel-XXX",
-			destinationPortID:    transfertypes.PortID,
+			name:                         "invalid channel-id",
+			autopilotClaimActive:         true,
+			autopilotClaimEnabledForHost: true,
+			destinationChannelID:         "channel-XXX",
+			destinationPortID:            transfertypes.PortID,
 			packetData: transfertypes.FungibleTokenPacketData{
 				Receiver: getClaimPacketMetadata(strideAddress),
 				Memo:     "",
@@ -264,13 +293,16 @@ func (s *KeeperTestSuite) TestAirdropOnRecvPacket() {
 			s.SetupTest()
 
 			// Update the autopilot active flag
-			s.App.AutopilotKeeper.SetParams(s.Ctx, types.Params{ClaimActive: tc.forwardingActive})
+			s.App.AutopilotKeeper.SetParams(s.Ctx, types.Params{
+				ClaimActive: tc.autopilotClaimActive,
+			})
 
 			// Set evmos airdrop
 			airdrops := claimtypes.Params{
 				Airdrops: []*claimtypes.Airdrop{{
 					AirdropIdentifier: evmosAirdropId,
 					ChainId:           EvmosChainId,
+					AutopilotEnabled:  tc.autopilotClaimEnabledForHost,
 				}},
 			}
 			err := s.App.ClaimKeeper.SetParams(s.Ctx, airdrops)

@@ -50,6 +50,9 @@ func (k Keeper) TryUpdateAirdropClaim(
 	if !found {
 		return errorsmod.Wrapf(claimtypes.ErrAirdropNotFound, "airdrop not found for chain-id %s", hostZone.ChainId)
 	}
+	if !airdrop.AutopilotEnabled {
+		return fmt.Errorf("autopilot claiming is not enabled for host zone %s", hostZone.ChainId)
+	}
 
 	airdropId := airdrop.AirdropIdentifier
 	k.Logger(ctx).Info(fmt.Sprintf("updating airdrop address %s (orig %s) to %s for airdrop %s",
