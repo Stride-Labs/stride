@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"math"
+	"strings"
 
 	sdkmath "cosmossdk.io/math"
 
@@ -91,28 +92,49 @@ func (k Keeper) GetAllActiveHostZone(ctx sdk.Context) (list []types.HostZone) {
 	return
 }
 
-func (k Keeper) AddDelegationToValidator(ctx sdk.Context, hostZone types.HostZone, validatorAddress string, amount sdkmath.Int, callbackId string) (success bool) {
+// Updates a validator's individual delegation, and the corresponding total delegation on the host zone
+func (k Keeper) UpdateValidatorDelegation(
+	ctx sdk.Context,
+	hostZone types.HostZone,
+	validatorAddress string,
+	amount sdkmath.Int,
+	callbackId string,
+	delegationType types.DelegationType,
+) error {
 	for _, validator := range hostZone.Validators {
-		if validator.Address == validatorAddress {
-			k.Logger(ctx).Info(utils.LogICACallbackWithHostZone(hostZone.ChainId, callbackId,
-				"  Validator %s, Current Delegation: %v, Delegation Change: %v", validator.Address, validator.BalancedDelegation, amount))
-
-			if amount.GTE(sdkmath.ZeroInt()) {
-				validator.BalancedDelegation = validator.BalancedDelegation.Add(amount)
-				return true
-			}
-			absAmt := amount.Abs()
-			if absAmt.GT(validator.BalancedDelegation) {
-				k.Logger(ctx).Error(fmt.Sprintf("Delegation amount %v is greater than validator %s delegation amount %v", absAmt, validatorAddress, validator.BalancedDelegation))
-				return false
-			}
-			validator.BalancedDelegation = validator.BalancedDelegation.Sub(absAmt)
-			return true
+		if validator.Address != validatorAddress {
+			continue
 		}
+
+		var delegation sdkmath.Int
+		if delegationType == types.DelegationType_BALANCED {
+			delegation = validator.BalancedDelegation
+		} else {
+			delegation = validator.UnbalancedDelegation
+		}
+
+		k.Logger(ctx).Info(utils.LogICACallbackWithHostZone(hostZone.ChainId, callbackId,
+			"  Validator %s, Current %s Delegation: %v, Delegation Change: %v",
+			validator.Address, strings.ToLower(strings.Title(delegationType.String())), delegation, amount))
+
+		// If the delegation change is negative, make sure it wont cause the total delegation to fall below zero
+		if amount.IsNegative() && amount.Abs().GT(delegation) {
+			return errorsmod.Wrapf(types.ErrValidatorDelegationChg,
+				"Delegation amount %v is greater than validator %s delegation amount %v",
+				amount.Abs(), validatorAddress, delegation)
+		}
+
+		if delegationType == types.DelegationType_BALANCED {
+			validator.BalancedDelegation = validator.BalancedDelegation.Add(amount)
+		} else {
+			validator.UnbalancedDelegation = validator.UnbalancedDelegation.Add(amount)
+		}
+
+		return nil
 	}
 
-	k.Logger(ctx).Error(fmt.Sprintf("Could not find validator %s on host zone %s", validatorAddress, hostZone.ChainId))
-	return false
+	return errorsmod.Wrapf(types.ErrValidatorNotFound,
+		"Could not find validator %s on host zone %s", validatorAddress, hostZone.ChainId)
 }
 
 // Appends a validator to host zone (if the host zone is not already at capacity)
