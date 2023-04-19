@@ -31,6 +31,8 @@ func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochInfo epochstypes.EpochInf
 		k.CleanupEpochUnbondingRecords(ctx, epochNumber)
 		// Create an empty unbonding record for this epoch
 		k.CreateEpochUnbondingRecord(ctx, epochNumber)
+		// Rebalance stake from LSM tokens
+		k.RebalanceTokenizedDeposits(ctx, epochNumber)
 	}
 
 	// Stride Epoch - Process Deposits and Delegations
