@@ -13,6 +13,7 @@ import (
 
 	"github.com/Stride-Labs/stride/v8/utils"
 	"github.com/Stride-Labs/stride/v8/x/autopilot/types"
+	claimtypes "github.com/Stride-Labs/stride/v8/x/claim/types"
 	stakeibctypes "github.com/Stride-Labs/stride/v8/x/stakeibc/types"
 )
 
@@ -31,7 +32,8 @@ func (k Keeper) TryUpdateAirdropClaim(
 	if packet.GetDestPort() != transfertypes.PortID {
 		return errors.New("packet should ")
 	}
-	if _, found := k.stakeibcKeeper.GetHostZoneFromTransferChannelID(ctx, packet.GetDestChannel()); !found {
+	hostZone, found := k.stakeibcKeeper.GetHostZoneFromTransferChannelID(ctx, packet.GetDestChannel())
+	if !found {
 		return errorsmod.Wrapf(stakeibctypes.ErrHostZoneNotFound,
 			"host zone not found for transfer channel %s", packet.GetDestChannel())
 	}
@@ -43,8 +45,13 @@ func (k Keeper) TryUpdateAirdropClaim(
 	}
 	newStrideAddress := packetMetadata.StrideAddress
 
-	// update the airdrop
-	airdropId := packetMetadata.AirdropId
+	// find the airdrop for this host chain ID
+	airdrop, found := k.claimKeeper.GetAirdropByChainId(ctx, hostZone.ChainId)
+	if !found {
+		return errorsmod.Wrapf(claimtypes.ErrAirdropNotFound, "airdrop not found for chain-id %s", hostZone.ChainId)
+	}
+
+	airdropId := airdrop.AirdropIdentifier
 	k.Logger(ctx).Info(fmt.Sprintf("updating airdrop address %s (orig %s) to %s for airdrop %s",
 		senderStrideAddress, data.Sender, newStrideAddress, airdropId))
 

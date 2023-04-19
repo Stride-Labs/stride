@@ -146,6 +146,26 @@ func (k Keeper) GetAirdropByIdentifier(ctx sdk.Context, airdropIdentifier string
 	return nil
 }
 
+// Get airdrop by chain id
+func (k Keeper) GetAirdropByChainId(ctx sdk.Context, chainId string) (airdrop *types.Airdrop, found bool) {
+	params, err := k.GetParams(ctx)
+	if err != nil {
+		panic(err)
+	}
+
+	if chainId == "" {
+		return airdrop, false
+	}
+
+	for _, airdrop := range params.Airdrops {
+		if airdrop.ChainId == chainId {
+			return airdrop, true
+		}
+	}
+
+	return airdrop, false
+}
+
 func (k Keeper) GetAirdropIds(ctx sdk.Context) []string {
 	params, err := k.GetParams(ctx)
 	if err != nil {
