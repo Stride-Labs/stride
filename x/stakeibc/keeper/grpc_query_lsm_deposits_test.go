@@ -1,6 +1,8 @@
 package keeper_test
 
 import (
+	"fmt"
+
 	_ "github.com/stretchr/testify/suite"
 
 	"github.com/Stride-Labs/stride/v8/x/stakeibc/types"
@@ -93,18 +95,19 @@ func (s *KeeperTestSuite) TestLSMDeposits() {
 				// Verify that all the deposits expected were found by matching the number set in the keeper
 				actualDeposits := response.Deposits
 				s.Require().Equal(expectedNumDeposits, len(actualDeposits), "unexpected number of deposits returned")
+				testCaseMsg := fmt.Sprintf(" Test Case ChainId: %s, Validator: %s, Status: %s", chainId, validator, status)
 				for _, actualDeposit := range actualDeposits {
 					if chainId != "" { // Check that every returned deposit matches, if given specific chain-id value
 						errMsg := "chain-id on returned deposit does not match requested chain-id filter!"
-						s.Require().Equal(chainId, actualDeposit.ChainId, errMsg)
+						s.Require().Equal(chainId, actualDeposit.ChainId, errMsg, testCaseMsg)
 					}
 					if validator != "" { // Check that every returned deposit matches, if given specific validator value
 						errMsg := "validator on returned deposit does not match requested validator filter!"
-						s.Require().Equal(validator, actualDeposit.ValidatorAddress, errMsg)
+						s.Require().Equal(validator, actualDeposit.ValidatorAddress, errMsg, testCaseMsg)
 					}
 					if status != "" { // Check that every returned deposit matches, if given specific status value
 						errMsg := "status on returned deposit does not match requested status filter!"
-						s.Require().Equal(status, actualDeposit.Status.String(), errMsg)
+						s.Require().Equal(status, actualDeposit.Status.String(), errMsg, testCaseMsg)
 					}
 				}
 			}
