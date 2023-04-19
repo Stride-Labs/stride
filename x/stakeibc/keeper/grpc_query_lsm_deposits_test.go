@@ -95,13 +95,16 @@ func (s *KeeperTestSuite) TestLSMDeposits() {
 				s.Require().Equal(expectedNumDeposits, len(actualDeposits), "unexpected number of deposits returned")
 				for _, actualDeposit := range actualDeposits {
 					if chainId != "" { // Check that every returned deposit matches, if given specific chain-id value
-						s.Require().Equal(chainId, actualDeposit.ChainId)
+						errMsg := "chain-id on returned deposit does not match requested chain-id filter!"
+						s.Require().Equal(chainId, actualDeposit.ChainId, errMsg)
 					}
 					if validator != "" { // Check that every returned deposit matches, if given specific validator value
-						s.Require().Equal(validator, actualDeposit.ValidatorAddress)
+						errMsg := "validator on returned deposit does not match requested validator filter!"
+						s.Require().Equal(validator, actualDeposit.ValidatorAddress, errMsg)
 					}
 					if status != "" { // Check that every returned deposit matches, if given specific status value
-						s.Require().Equal(status, actualDeposit.Status.String())
+						errMsg := "status on returned deposit does not match requested status filter!"
+						s.Require().Equal(status, actualDeposit.Status.String(), errMsg)
 					}
 				}
 			}
