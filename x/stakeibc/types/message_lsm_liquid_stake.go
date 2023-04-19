@@ -55,9 +55,9 @@ func (msg *MsgLSMLiquidStake) ValidateBasic() error {
 	if msg.LsmTokenDenom == "" {
 		return errorsmod.Wrapf(ErrRequiredFieldEmpty, "LSM token denom cannot be empty")
 	}
-	// host denom must be a valid asset denom
+	// lsm token denom must be a valid asset denom matching regex
 	if err := sdk.ValidateDenom(msg.LsmTokenDenom); err != nil {
-		return err
+		return errorsmod.Wrapf(err, "invalid LSM token denom")
 	}
 	return nil
 }
