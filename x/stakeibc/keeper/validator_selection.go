@@ -110,7 +110,7 @@ func (k Keeper) GetRebalanceICAMessages(
 		if underWeightElem.Delta.GT(overWeightElemAbs) {
 			// if the underweight element is more off than the overweight element
 			// we transfer stake from the underweight element to the overweight element
-			underWeightElem.Delta = underWeightElem.Delta.Sub(overWeightElemAbs)
+			validatorDeltas[underWeightIndex].Delta = underWeightElem.Delta.Sub(overWeightElemAbs)
 			overWeightIndex += 1
 			// issue an ICA call to the host zone to rebalance the validator
 			redelegateMsg = &stakingtypes.MsgBeginRedelegate{
@@ -122,7 +122,7 @@ func (k Keeper) GetRebalanceICAMessages(
 			overWeightElem.Delta = sdkmath.ZeroInt()
 		} else if underWeightElem.Delta.LT(overWeightElemAbs) {
 			// if the overweight element is more overweight than the underweight element
-			overWeightElem.Delta = overWeightElem.Delta.Add(underWeightElem.Delta)
+			validatorDeltas[overWeightIndex].Delta = overWeightElem.Delta.Add(underWeightElem.Delta)
 			underWeightIndex -= 1
 			// issue an ICA call to the host zone to rebalance the validator
 			redelegateMsg = &stakingtypes.MsgBeginRedelegate{
