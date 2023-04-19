@@ -134,6 +134,9 @@ func (k Keeper) GetRebalanceICAMessages(
 			underWeightElem.Delta = sdkmath.ZeroInt()
 		} else {
 			// if the two elements are equal, we increment both slices
+			validatorDeltas[overWeightIndex].Delta = sdkmath.ZeroInt()
+			validatorDeltas[underWeightIndex].Delta = sdkmath.ZeroInt()
+
 			underWeightIndex -= 1
 			overWeightIndex += 1
 			// issue an ICA call to the host zone to rebalance the validator
@@ -143,8 +146,6 @@ func (k Keeper) GetRebalanceICAMessages(
 				ValidatorDstAddress: underWeightElem.ValidatorAddress,
 				Amount:              sdk.NewCoin(hostZone.HostDenom, underWeightElem.Delta)}
 			msgs = append(msgs, redelegateMsg)
-			overWeightElem.Delta = sdkmath.ZeroInt()
-			underWeightElem.Delta = sdkmath.ZeroInt()
 		}
 		// add the rebalancing to the callback
 		// lastMsg grabs rebalanceMsg from above (due to the type, it's hard to )
