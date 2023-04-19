@@ -26,7 +26,7 @@ sleep 5
 $STRIDE_MAIN_CMD tx bank send val1 stride1z835j3j65nqr6ng257q0xkkc9gta72gf48txwl 600000ustrd --from val1 -y | TRIM_TX
 sleep 5
 # Create the airdrop, so that the airdrop account can claim tokens
-$STRIDE_MAIN_CMD tx claim create-airdrop stride 1666792900 40000000 ustrd --from distributor-test -y | TRIM_TX
+$STRIDE_MAIN_CMD tx claim create-airdrop stride STRIDE ustrd 1666792900 40000000 true --from distributor-test -y | TRIM_TX
 sleep 5
 
 ## Test airdrop flow for chains who have non-standard coin types (not type 118). 
@@ -64,7 +64,7 @@ $STRIDE_MAIN_CMD q claim claim-record stride stride16lmf7t0jhaatan6vnxlgv47h2wf0
 #                    },
 #                }
 #               Receiver: "xxx"
-memo='{"autopilot": {"receiver": "stride1jrmtt5c6z8h5yrrwml488qnm7p3vxrrml2kgvl","claim": { "stride_address": "stride1jrmtt5c6z8h5yrrwml488qnm7p3vxrrml2kgvl", "airdrop_id": "stride" } }}'
+memo='{"autopilot": {"receiver": "stride1jrmtt5c6z8h5yrrwml488qnm7p3vxrrml2kgvl","claim": { "stride_address": "stride1jrmtt5c6z8h5yrrwml488qnm7p3vxrrml2kgvl" } }}'
 $GAIA_MAIN_CMD tx ibc-transfer transfer transfer channel-0 "$memo" 1uatom --from rly2 -y | TRIM_TX
 echo ">>> Waiting for 15 seconds to allow the IBC transfer to complete..."
 sleep 15

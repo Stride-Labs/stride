@@ -36,7 +36,7 @@ sleep 5
 #  airdrop1 is ustrd; airdrop2 is ibc/ATOM. this simplifies telling them apart after testing a reset of airdrop1 before airdrop 2 has a chance to reset.
 
 # create airdrop 1 with a 60 day start window, 60 sec reset, claim, sleep 35
-$STRIDE_MAIN_CMD tx claim create-airdrop airdrop1 $(date +%s) 60 ustrd --from distributor-test3 -y | TRIM_TX
+$STRIDE_MAIN_CMD tx claim create-airdrop airdrop1 GAIA ustrd $(date +%s) 60 false --from distributor-test3 -y | TRIM_TX
 sleep 5
 $STRIDE_MAIN_CMD tx claim set-airdrop-allocations airdrop1 stride1kwll0uet4mkj867s4q8dgskp03txgjnswc2u4z 1 --from distributor-test3 -y | TRIM_TX
 sleep 5
@@ -45,7 +45,7 @@ echo "...Sleeping 35 more sec to wait for reset to complete..."
 sleep 35
 
 # create airdrop 2 with a 60 day start window, 60 sec reset, claim, sleep 35
-$STRIDE_MAIN_CMD tx claim create-airdrop airdrop1 $(date +%s) 60 $ATOM_DENOM --from distributor-test4 -y | TRIM_TX
+$STRIDE_MAIN_CMD tx claim create-airdrop airdrop1 GAIA2 $ATOM_DENOM $(date +%s) 60 false --from distributor-test4 -y | TRIM_TX
 sleep 5
 $STRIDE_MAIN_CMD tx claim set-airdrop-allocations airdrop1 stride1kwll0uet4mkj867s4q8dgskp03txgjnswc2u4z 1 --from distributor-test4 -y | TRIM_TX
 sleep 5

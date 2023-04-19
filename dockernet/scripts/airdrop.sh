@@ -101,7 +101,7 @@ $STRIDE_MAIN_CMD q claim claim-record stride stride16lmf7t0jhaatan6vnxlgv47h2wf0
 #                    },
 #                }
 #               Receiver: "xxx"
-memo='{"autopilot": {"receiver": "stride1qz677nj82mszxjuh4mzy52zv5md5qrgg60pxpc","claim": { "stride_address": "stride1qz677nj82mszxjuh4mzy52zv5md5qrgg60pxpc", "airdrop_id": "stride" } }}'
+memo='{"autopilot": {"receiver": "stride1qz677nj82mszxjuh4mzy52zv5md5qrgg60pxpc","claim": { "stride_address": "stride1qz677nj82mszxjuh4mzy52zv5md5qrgg60pxpc" } }}'
 $GAIA_MAIN_CMD tx ibc-transfer transfer transfer channel-0 "$memo" 1uatom --from rly2 -y 
 
 #         c. query the claims module 

@@ -44,7 +44,7 @@ sleep 5
 
 # Create the airdrop, so that the airdrop account can claim tokens
 echo ">>> Testing multiple airdrop reset and claims flow..."
-$STRIDE_MAIN_CMD tx claim create-airdrop stride2 $(date +%s) 30 ustrd --from distributor-test3 -y | TRIM_TX
+$STRIDE_MAIN_CMD tx claim create-airdrop stride2 STRIDE ustrd $(date +%s) 30 true --from distributor-test3 -y | TRIM_TX
 sleep 5
 # # Set airdrop allocations
 $STRIDE_MAIN_CMD tx claim set-airdrop-allocations stride2 stride1kwll0uet4mkj867s4q8dgskp03txgjnswc2u4z 1 --from distributor-test3 -y | TRIM_TX
@@ -91,7 +91,7 @@ $STRIDE_MAIN_CMD q claim user-vestings stride1jrmtt5c6z8h5yrrwml488qnm7p3vxrrml2
 # ### Test staggered airdrops
 
 # # create airdrop 1 with a 60 day start window, 60 sec reset, claim, sleep 35
-# # $STRIDE_MAIN_CMD tx claim create-airdrop airdrop1 $(date +%s) 60 ustrd --from distributor-test3 -y
+# # $STRIDE_MAIN_CMD tx claim create-airdrop airdrop1 GAIA ustrd $(date +%s) 60 false --from distributor-test3 -y
 # # sleep 5
 # # $STRIDE_MAIN_CMD tx claim set-airdrop-allocations airdrop1 stride1kwll0uet4mkj867s4q8dgskp03txgjnswc2u4z 1 --from distributor-test3 -y
 # # sleep 5
@@ -99,7 +99,7 @@ $STRIDE_MAIN_CMD q claim user-vestings stride1jrmtt5c6z8h5yrrwml488qnm7p3vxrrml2
 # # sleep 35
 
 # # # create airdrop 2 with a 60 day start window, 60 sec reset, claim, sleep 35
-# # $STRIDE_MAIN_CMD tx claim create-airdrop airdrop1 $(date +%s) 60 stuatom --from distributor-test3 -y
+# # $STRIDE_MAIN_CMD tx claim create-airdrop airdrop1 GAIA2 stuatom $(date +%s) 60 false --from distributor-test3 -y
 # # sleep 5
 # # $STRIDE_MAIN_CMD tx claim set-airdrop-allocations airdrop1 stride1kwll0uet4mkj867s4q8dgskp03txgjnswc2u4z 1 --from distributor-test3 -y
 # # sleep 5
