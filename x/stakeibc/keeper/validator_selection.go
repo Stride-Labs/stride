@@ -89,71 +89,78 @@ func (k Keeper) GetRebalanceICAMessages(
 	}
 	sort.SliceStable(validatorDeltas, lessFunc)
 
+	// QUESTION: Does anyone have a preference on the naming convention here? A couple options:
+	//  * Overweight/Underweight (current)
+	//  * Surplus/Deficit
+	//  * Source/Destination
+	//  * Giver/Receiver
+	// etc.
+
 	// Pair overweight and underweight validators, with a redelegation from the overweight
 	// validator to the underweight one
+	// The list is sorted with the overweight validators (who should lose stake) at index 0
+	//   and the underweight validators (who should gain stake) at index N-1
+	// The overweight validator's have a negative delta and the underweight validators have a positive delta
 	overWeightIndex := 0
 	underWeightIndex := len(validatorDeltas) - 1
 	for i := uint64(1); i <= numRebalance; i++ {
-		underWeightElem := validatorDeltas[underWeightIndex]
-		overWeightElem := validatorDeltas[overWeightIndex]
-		if underWeightElem.Delta.LT(sdkmath.ZeroInt()) {
-			// if underWeightElem is negative, we're done rebalancing
-			break
-		}
-		if overWeightElem.Delta.GT(sdkmath.ZeroInt()) {
-			// if overWeightElem is positive, we're done rebalancing
-			break
-		}
 		// underweight Elem is positive, overweight Elem is negative
-		overWeightElemAbs := overWeightElem.Delta.Abs()
-		var redelegateMsg *stakingtypes.MsgBeginRedelegate
-		if underWeightElem.Delta.GT(overWeightElemAbs) {
-			// if the underweight element is more off than the overweight element
-			// we transfer stake from the underweight element to the overweight element
-			validatorDeltas[underWeightIndex].Delta = underWeightElem.Delta.Sub(overWeightElemAbs)
+		underWeightValidator := validatorDeltas[underWeightIndex]
+		overWeightValidator := validatorDeltas[overWeightIndex]
+
+		// If either delta is 0, we're done rebalancing
+		if underWeightValidator.Delta.IsZero() || overWeightValidator.Delta.IsZero() {
+			break
+		}
+
+		var redelegationAmount sdkmath.Int
+		if underWeightValidator.Delta.Abs().GT(overWeightValidator.Delta.Abs()) {
+			// If the underweight validator is more underweight than the overweight validator,
+			// transfer all the overweight validator's surplus to the underweight validator
+			redelegationAmount = overWeightValidator.Delta.Abs()
+
+			// Update the underweight validator, and zero out the overweight validator
+			validatorDeltas[underWeightIndex].Delta = underWeightValidator.Delta.Sub(redelegationAmount)
+			validatorDeltas[overWeightIndex].Delta = sdkmath.ZeroInt()
 			overWeightIndex += 1
-			// issue an ICA call to the host zone to rebalance the validator
-			redelegateMsg = &stakingtypes.MsgBeginRedelegate{
-				DelegatorAddress:    hostZone.DelegationAccount.Address,
-				ValidatorSrcAddress: overWeightElem.ValidatorAddress,
-				ValidatorDstAddress: underWeightElem.ValidatorAddress,
-				Amount:              sdk.NewCoin(hostZone.HostDenom, overWeightElemAbs)}
-			msgs = append(msgs, redelegateMsg)
-			overWeightElem.Delta = sdkmath.ZeroInt()
-		} else if underWeightElem.Delta.LT(overWeightElemAbs) {
-			// if the overweight element is more overweight than the underweight element
-			validatorDeltas[overWeightIndex].Delta = overWeightElem.Delta.Add(underWeightElem.Delta)
+
+		} else if overWeightValidator.Delta.Abs().GT(underWeightValidator.Delta.Abs()) {
+			// If the overweight validator is more overweight than the underweight validator,
+			// transfer only up to an an amount equal to the underweight validator's deficit
+			redelegationAmount = underWeightValidator.Delta
+
+			// Update the overweight validator, and zero out the underweight validator
+			validatorDeltas[overWeightIndex].Delta = overWeightValidator.Delta.Add(redelegationAmount)
+			validatorDeltas[underWeightIndex].Delta = sdkmath.ZeroInt()
 			underWeightIndex -= 1
-			// issue an ICA call to the host zone to rebalance the validator
-			redelegateMsg = &stakingtypes.MsgBeginRedelegate{
-				DelegatorAddress:    hostZone.DelegationAccount.Address,
-				ValidatorSrcAddress: overWeightElem.ValidatorAddress,
-				ValidatorDstAddress: underWeightElem.ValidatorAddress,
-				Amount:              sdk.NewCoin(hostZone.HostDenom, underWeightElem.Delta)}
-			msgs = append(msgs, redelegateMsg)
-			underWeightElem.Delta = sdkmath.ZeroInt()
+
 		} else {
-			// if the two elements are equal, we increment both slices
+			// if the overweight validator's surplus is equal to the underweight validator's deficit,
+			// we'll transfer that amount and both validators will now be balanced
+			redelegationAmount = underWeightValidator.Delta
+
 			validatorDeltas[overWeightIndex].Delta = sdkmath.ZeroInt()
 			validatorDeltas[underWeightIndex].Delta = sdkmath.ZeroInt()
 
-			underWeightIndex -= 1
 			overWeightIndex += 1
-			// issue an ICA call to the host zone to rebalance the validator
-			redelegateMsg = &stakingtypes.MsgBeginRedelegate{
-				DelegatorAddress:    hostZone.DelegationAccount.Address,
-				ValidatorSrcAddress: overWeightElem.ValidatorAddress,
-				ValidatorDstAddress: underWeightElem.ValidatorAddress,
-				Amount:              sdk.NewCoin(hostZone.HostDenom, underWeightElem.Delta)}
-			msgs = append(msgs, redelegateMsg)
+			underWeightIndex -= 1
 		}
-		// add the rebalancing to the callback
-		// lastMsg grabs rebalanceMsg from above (due to the type, it's hard to )
-		// lastMsg := (msgs[len(msgs)-1]).(*stakingTypes.MsgBeginRedelegate)
+
+		// Append the new Redelegation message and Rebalancing struct for the callback
+		// We always send from the overweight validator to the underweight validator
+		srcValidator := overWeightValidator.ValidatorAddress
+		dstValidator := underWeightValidator.ValidatorAddress
+
+		msgs = append(msgs, &stakingtypes.MsgBeginRedelegate{
+			DelegatorAddress:    hostZone.DelegationAccount.Address,
+			ValidatorSrcAddress: srcValidator,
+			ValidatorDstAddress: dstValidator,
+			Amount:              sdk.NewCoin(hostZone.HostDenom, redelegationAmount),
+		})
 		rebalancings = append(rebalancings, &types.Rebalancing{
-			SrcValidator: redelegateMsg.ValidatorSrcAddress,
-			DstValidator: redelegateMsg.ValidatorDstAddress,
-			Amt:          redelegateMsg.Amount.Amount,
+			SrcValidator: srcValidator,
+			DstValidator: dstValidator,
+			Amt:          redelegationAmount,
 		})
 	}
 
