@@ -167,16 +167,20 @@ func (k Keeper) GetValidatorDelegationDifferences(
 	hostZone types.HostZone,
 	delegationType types.DelegationType, // QUESTION: Is delegationType more clear as an enum or as a boolean?
 ) ([]RebalanceValidatorDelegationChange, error) {
+	// Get the target delegation amount for each validator
 	totalDelegatedAmt := k.GetTotalValidatorDelegations(hostZone, delegationType)
 	targetDelegation, err := k.GetTargetValAmtsForHostZone(ctx, hostZone, totalDelegatedAmt)
 	if err != nil {
 		return nil, errorsmod.Wrapf(err, "unable to get target val amounts for host zone %s", hostZone.ChainId)
 	}
 
-	delegationDelta := make([]RebalanceValidatorDelegationChange, len(hostZone.Validators))
-	for i, validator := range hostZone.Validators {
+	// For each validator, store the amount that their delegation should change
+	delegationDeltas := []RebalanceValidatorDelegationChange{}
+	totalDelegationChange := sdkmath.ZeroInt()
+	for _, validator := range hostZone.Validators {
 		targetDelForVal := targetDelegation[validator.Address]
 
+		// Compare the target with either the respective delegation type (either Balanced or Unbalanced)
 		var delegationChange sdkmath.Int
 		if delegationType == types.DelegationType_BALANCED {
 			delegationChange = targetDelForVal.Sub(validator.BalancedDelegation)
@@ -184,14 +188,25 @@ func (k Keeper) GetValidatorDelegationDifferences(
 			delegationChange = targetDelForVal.Sub(validator.UnbalancedDelegation)
 		}
 
-		delegationDelta[i] = RebalanceValidatorDelegationChange{
-			ValidatorAddress: validator.Address,
-			Delta:            delegationChange,
+		// Only include validators who's delegation should change
+		if !delegationChange.IsZero() {
+			delegationDeltas = append(delegationDeltas, RebalanceValidatorDelegationChange{
+				ValidatorAddress: validator.Address,
+				Delta:            delegationChange,
+			})
+			totalDelegationChange = totalDelegationChange.Add(delegationChange)
 		}
 		k.Logger(ctx).Info(fmt.Sprintf("Adding delegation: %v to validator: %s", delegationChange, validator.Address))
 	}
 
-	return delegationDelta, nil
+	// Sanity check that the sum of all the delegation change's is equal to 0
+	// (meaning the total delegation across ALL validators has not changed)
+	if !totalDelegationChange.IsZero() {
+		return nil, errorsmod.Wrapf(sdkerrors.ErrInvalidRequest,
+			"non-zero net delegation change (%v) across validators during rebalancing", totalDelegationChange)
+	}
+
+	return delegationDeltas, nil
 }
 
 // This will get the target validator delegation for the given hostZone

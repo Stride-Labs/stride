@@ -168,7 +168,7 @@ func (s *KeeperTestSuite) TestRebalanceValidators_InvalidNoValidators() {
 		NumRebalance: 2,
 	}
 	_, err := s.GetMsgServer().RebalanceValidators(sdk.WrapSDKContext(s.Ctx), &badMsg_noValidators)
-	s.Require().ErrorContains(err, "no validator delegations found for Host Zone GAIA")
+	s.Require().ErrorContains(err, "Cannot calculate target delegation if final amount is 0 GAIA")
 }
 
 func (s *KeeperTestSuite) TestRebalanceValidators_InvalidAllValidatorsNoWeight() {

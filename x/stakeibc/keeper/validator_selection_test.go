@@ -10,46 +10,13 @@ import (
 	"github.com/Stride-Labs/stride/v8/x/stakeibc/types"
 )
 
-type rebalanceExpectedValidatorDeltas struct {
-	address         string
-	balancedDelta   int64
-	unbalancedDelta int64
-}
-
-func (s *KeeperTestSuite) TestGetRebalanceICAMessages_EvenNumberValidators() {
-	// Build up deltas for each validator, i.e. how much each validator needs to change by
-	validatorDeltas := []keeper.RebalanceValidatorDelegationChange{
-		{ValidatorAddress: "val1", Delta: sdkmath.NewInt(-21)}, // 15 to val12, 6 to val11
-		{ValidatorAddress: "val2", Delta: sdkmath.NewInt(-19)}, // 6 to val11, 10 to val10, 3 to val9
-		{ValidatorAddress: "val3", Delta: sdkmath.NewInt(-13)}, // 3 to val9, 5 to val8, 4 to val7, 1 to val6
-
-		{ValidatorAddress: "val4", Delta: sdkmath.NewInt(0)}, // no change
-		{ValidatorAddress: "val5", Delta: sdkmath.NewInt(0)}, // no change
-
-		{ValidatorAddress: "val6", Delta: sdkmath.NewInt(1)},   // 1 from val3
-		{ValidatorAddress: "val7", Delta: sdkmath.NewInt(4)},   // 4 from val3
-		{ValidatorAddress: "val8", Delta: sdkmath.NewInt(5)},   // 5 from val3
-		{ValidatorAddress: "val9", Delta: sdkmath.NewInt(6)},   // 3 from val2, 3 from val3
-		{ValidatorAddress: "val10", Delta: sdkmath.NewInt(10)}, // 10 from val2
-		{ValidatorAddress: "val11", Delta: sdkmath.NewInt(12)}, // 6 from val1, 6 from val2
-		{ValidatorAddress: "val12", Delta: sdkmath.NewInt(15)}, // 15 from val1
-	}
-
-	// Build up the expected messages, moving across the list above
-	expectedRebalancings := []types.Rebalancing{
-		{SrcValidator: "val1", DstValidator: "val12", Amt: sdkmath.NewInt(15)}, // 15 from val1 to val12
-		{SrcValidator: "val1", DstValidator: "val11", Amt: sdkmath.NewInt(6)},  //  6 from val1 to val11
-
-		{SrcValidator: "val2", DstValidator: "val11", Amt: sdkmath.NewInt(6)},  //  6 from val2 to val11
-		{SrcValidator: "val2", DstValidator: "val10", Amt: sdkmath.NewInt(10)}, // 10 from val2 to val10
-		{SrcValidator: "val2", DstValidator: "val9", Amt: sdkmath.NewInt(3)},   //  3 from val2 to val9
-
-		{SrcValidator: "val3", DstValidator: "val9", Amt: sdkmath.NewInt(3)}, // 3 from val3 to val9
-		{SrcValidator: "val3", DstValidator: "val8", Amt: sdkmath.NewInt(5)}, // 5 from val3 to val8
-		{SrcValidator: "val3", DstValidator: "val7", Amt: sdkmath.NewInt(4)}, // 4 from val3 to val7
-		{SrcValidator: "val3", DstValidator: "val6", Amt: sdkmath.NewInt(1)}, // 1 from val3 to val6
-	}
-
+// Given a set of validator deltas (containing the expected change in delegation for each validator)
+// and a set of expected rebalancings (containing the individual rebalance messages), calls
+// RebalanceICAMessages and checks that the corresponding ICA messages match the expected rebalancings
+func (s *KeeperTestSuite) checkRebalanceICAMessages(
+	validatorDeltas []keeper.RebalanceValidatorDelegationChange,
+	expectedRebalancings []types.Rebalancing,
+) {
 	// Build the expected ICA messages from the list of rebalancings above
 	delegationAddress := "cosmos_DELEGATION"
 	expectedMsgs := []sdk.Msg{}
@@ -98,8 +65,75 @@ func (s *KeeperTestSuite) TestGetRebalanceICAMessages_EvenNumberValidators() {
 	}
 }
 
-func (s *KeeperTestSuite) TestGetRebalanceICAMessages_OddNumberValidators() {
+func (s *KeeperTestSuite) TestGetRebalanceICAMessages_EvenNumberValidators() {
+	// Build up deltas for each validator, i.e. how much each validator needs to change by
+	validatorDeltas := []keeper.RebalanceValidatorDelegationChange{
+		// Overweight validators - they should lose some of their stake
+		{ValidatorAddress: "val1", Delta: sdkmath.NewInt(-21)}, // 15 to val10, 6 to val9
+		{ValidatorAddress: "val2", Delta: sdkmath.NewInt(-19)}, // 6 to val9, 10 to val8, 3 to val7
+		{ValidatorAddress: "val3", Delta: sdkmath.NewInt(-13)}, // 3 to val7, 5 to val6, 4 to val5, 1 to val4
 
+		// Underweight validators - they should gain stake
+		{ValidatorAddress: "val4", Delta: sdkmath.NewInt(1)},   // 1 from val3
+		{ValidatorAddress: "val5", Delta: sdkmath.NewInt(4)},   // 4 from val3
+		{ValidatorAddress: "val6", Delta: sdkmath.NewInt(5)},   // 5 from val3
+		{ValidatorAddress: "val7", Delta: sdkmath.NewInt(6)},   // 3 from val2, 3 from val3
+		{ValidatorAddress: "val8", Delta: sdkmath.NewInt(10)},  // 10 from val2
+		{ValidatorAddress: "val9", Delta: sdkmath.NewInt(12)},  // 6 from val1, 6 from val2
+		{ValidatorAddress: "val10", Delta: sdkmath.NewInt(15)}, // 15 from val1
+	}
+
+	// Build up the expected messages, moving across the list above
+	expectedRebalancings := []types.Rebalancing{
+		{SrcValidator: "val1", DstValidator: "val10", Amt: sdkmath.NewInt(15)}, // 15 from val1 to val10
+		{SrcValidator: "val1", DstValidator: "val9", Amt: sdkmath.NewInt(6)},   //  6 from val1 to val9
+
+		{SrcValidator: "val2", DstValidator: "val9", Amt: sdkmath.NewInt(6)},  //  6 from val2 to val9
+		{SrcValidator: "val2", DstValidator: "val8", Amt: sdkmath.NewInt(10)}, // 10 from val2 to val8
+		{SrcValidator: "val2", DstValidator: "val7", Amt: sdkmath.NewInt(3)},  //  3 from val2 to val7
+
+		{SrcValidator: "val3", DstValidator: "val7", Amt: sdkmath.NewInt(3)}, // 3 from val3 to val7
+		{SrcValidator: "val3", DstValidator: "val6", Amt: sdkmath.NewInt(5)}, // 5 from val3 to val6
+		{SrcValidator: "val3", DstValidator: "val5", Amt: sdkmath.NewInt(4)}, // 4 from val3 to val5
+		{SrcValidator: "val3", DstValidator: "val4", Amt: sdkmath.NewInt(1)}, // 1 from val3 to val4
+	}
+
+	s.checkRebalanceICAMessages(validatorDeltas, expectedRebalancings)
+}
+
+func (s *KeeperTestSuite) TestGetRebalanceICAMessages_OddNumberValidators() {
+	// Build up deltas for each validator, i.e. how much each validator needs to change by
+	validatorDeltas := []keeper.RebalanceValidatorDelegationChange{
+		// Overweight validators - they should lose some of their stake
+		{ValidatorAddress: "val1", Delta: sdkmath.NewInt(-15)}, // 15 to val9
+		{ValidatorAddress: "val2", Delta: sdkmath.NewInt(-12)}, // 6 to val9, 6 to val8
+		{ValidatorAddress: "val3", Delta: sdkmath.NewInt(-9)},  // 9 to val8
+		{ValidatorAddress: "val4", Delta: sdkmath.NewInt(-7)},  // 5 to val7, 2 to val6
+		{ValidatorAddress: "val5", Delta: sdkmath.NewInt(-2)},  // 2 to val6
+
+		// Underweight validators - they should gain stake
+		{ValidatorAddress: "val6", Delta: sdkmath.NewInt(4)},  // 2 from val4, 2 from val5
+		{ValidatorAddress: "val7", Delta: sdkmath.NewInt(5)},  // 5 from val4
+		{ValidatorAddress: "val8", Delta: sdkmath.NewInt(15)}, // 6 from val2, 9 from val3
+		{ValidatorAddress: "val9", Delta: sdkmath.NewInt(21)}, // 15 from val1, 6 from val2
+	}
+
+	// Build up the expected messages, moving across the list above
+	expectedRebalancings := []types.Rebalancing{
+		{SrcValidator: "val1", DstValidator: "val9", Amt: sdkmath.NewInt(15)}, // 15 from val1 to val9
+
+		{SrcValidator: "val2", DstValidator: "val9", Amt: sdkmath.NewInt(6)}, // 6 from val2 to val9
+		{SrcValidator: "val2", DstValidator: "val8", Amt: sdkmath.NewInt(6)}, // 6 from val2 to val8
+
+		{SrcValidator: "val3", DstValidator: "val8", Amt: sdkmath.NewInt(9)}, // 9 from val3 to val8
+
+		{SrcValidator: "val4", DstValidator: "val7", Amt: sdkmath.NewInt(5)}, // 5 from val4 to val7
+		{SrcValidator: "val4", DstValidator: "val6", Amt: sdkmath.NewInt(2)}, // 2 from val4 to val6
+
+		{SrcValidator: "val5", DstValidator: "val6", Amt: sdkmath.NewInt(2)}, // 2 from val5 to val6
+	}
+
+	s.checkRebalanceICAMessages(validatorDeltas, expectedRebalancings)
 }
 
 func (s *KeeperTestSuite) TestGetValidatorDelegationDifferences() {
@@ -113,26 +147,35 @@ func (s *KeeperTestSuite) TestGetValidatorDelegationDifferences() {
 
 	// Expected Balance is determined by the total delegation * weight
 	// Delta = Expected - Current
-	expectedValidatorDeltas := []rebalanceExpectedValidatorDeltas{
-		{address: "val1", balancedDelta: 10 - 70, unbalancedDelta: 20 - 20},  // Expected Balanced: 10, Expected Unbalanced: 20
-		{address: "val2", balancedDelta: 20 - 20, unbalancedDelta: 40 - 140}, // Expected Balanced: 20, Expected Unbalanced: 40
-		{address: "val3", balancedDelta: 70 - 10, unbalancedDelta: 140 - 40}, // Expected Balanced: 70, Expected Unbalanced: 140
+	expectedBalancedDeltas := []keeper.RebalanceValidatorDelegationChange{
+		{ValidatorAddress: "val1", Delta: sdkmath.NewInt(10 - 70)}, // Expected Delegation: 10, Current Delegation: 70
+		// val2 is excluded because it's Expected Delegation is equal to the Current Delegation (20)
+		{ValidatorAddress: "val3", Delta: sdkmath.NewInt(70 - 10)}, // Expected Delegation: 70, Current Delegation: 10
+	}
+	expectedUnbalancedDeltas := []keeper.RebalanceValidatorDelegationChange{
+		// val1 is excluded because it's Expected Delegation is equal to the Current Delegation (20)
+		{ValidatorAddress: "val2", Delta: sdkmath.NewInt(40 - 140)}, // Expected Delegation: 40, Current Delegation: 140
+		{ValidatorAddress: "val3", Delta: sdkmath.NewInt(140 - 40)}, // Expected Delegation: 140, Current Delegation: 40
 	}
 
 	// Check delegation changes for the balanced portion
 	actualBalancedDeltas, err := s.App.StakeibcKeeper.GetValidatorDelegationDifferences(s.Ctx, hostZone, types.DelegationType_BALANCED)
 	s.Require().NoError(err, "no error expected when calculated balanced delegation differences")
-	for i, expected := range expectedValidatorDeltas {
-		s.Require().Equal(expected.address, actualBalancedDeltas[i].ValidatorAddress, "address for balanced delegation %d", i)
-		s.Require().Equal(expected.balancedDelta, actualBalancedDeltas[i].Delta.Int64(), "delta for balanced delegation %d", i)
+	s.Require().Len(actualBalancedDeltas, len(expectedBalancedDeltas), "number of balanced redelegations")
+
+	for i, expected := range expectedBalancedDeltas {
+		s.Require().Equal(expected.ValidatorAddress, actualBalancedDeltas[i].ValidatorAddress, "address for balanced delegation %d", i)
+		s.Require().Equal(expected.Delta.Int64(), actualBalancedDeltas[i].Delta.Int64(), "delta for balanced delegation %d", i)
 	}
 
 	// Check delegation changes for the unbalanced portion
 	actualUnbalancedDeltas, err := s.App.StakeibcKeeper.GetValidatorDelegationDifferences(s.Ctx, hostZone, types.DelegationType_UNBALANCED)
 	s.Require().NoError(err, "no error expected when calculated unbalanced delegation differences")
-	for i, expected := range expectedValidatorDeltas {
-		s.Require().Equal(expected.address, actualUnbalancedDeltas[i].ValidatorAddress, "address for unbalanced delegation %d", i)
-		s.Require().Equal(expected.unbalancedDelta, actualUnbalancedDeltas[i].Delta.Int64(), "delta for unbalanced delegation %d", i)
+	s.Require().Len(actualUnbalancedDeltas, len(expectedUnbalancedDeltas), "number of unbalanced redelegations")
+
+	for i, expected := range expectedUnbalancedDeltas {
+		s.Require().Equal(expected.ValidatorAddress, actualUnbalancedDeltas[i].ValidatorAddress, "address for unbalanced delegation %d", i)
+		s.Require().Equal(expected.Delta.Int64(), actualUnbalancedDeltas[i].Delta.Int64(), "delta for unbalanced delegation %d", i)
 	}
 
 	// Check the error case when there are no delegations
