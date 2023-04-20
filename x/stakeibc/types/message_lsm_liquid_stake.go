@@ -52,11 +52,11 @@ func (msg *MsgLSMLiquidStake) ValidateBasic() error {
 		return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "invalid amount (%v)", msg.Amount)
 	}
 	// validate host denom is not empty
-	if msg.LsmTokenDenom == "" {
+	if msg.LsmTokenIbcDenom == "" {
 		return errorsmod.Wrapf(ErrRequiredFieldEmpty, "LSM token denom cannot be empty")
 	}
 	// lsm token denom must be a valid asset denom matching regex
-	if err := sdk.ValidateDenom(msg.LsmTokenDenom); err != nil {
+	if err := sdk.ValidateDenom(msg.LsmTokenIbcDenom); err != nil {
 		return errorsmod.Wrapf(err, "invalid LSM token denom")
 	}
 	return nil
