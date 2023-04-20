@@ -1,6 +1,6 @@
 package keeper_test
 
-// // Note: this is for dockernet
+// Note: this is for dockernet
 
 // import (
 // 	"fmt"
@@ -9,8 +9,8 @@ package keeper_test
 // )
 
 // func (s *KeeperTestSuite) TestIBCDenom() {
-// 	chainId := "EVMOS"
-// 	denom := "aevmos"
+// 	chainId := "{CHAIN_ID}"
+// 	denom := "{minimal_denom}"
 // 	for i := 0; i < 4; i++ {
 // 		sourcePrefix := transfertypes.GetDenomPrefix("transfer", fmt.Sprintf("channel-%d", i))
 // 		prefixedDenom := sourcePrefix + denom
