@@ -2,16 +2,22 @@
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 source ${SCRIPT_DIR}/../../config.sh
 
+### AIRDROP TESTING FLOW Pt 2
+
+# This script tests airdrop claiming via autopilot
+# The claim is initiated by sending an IBC transfer with the stride address in the memo
+
+# First, start the network with `make start-docker`
+# Then, run this script with `bash dockernet/scripts/airdrop/airdrop2.sh`
+
 # CLEANUP if running tests twice, clear out and re-fund accounts
 $STRIDE_MAIN_CMD keys delete distributor-test -y &> /dev/null || true 
 $GAIA_MAIN_CMD keys delete hosttest -y &> /dev/null || true 
 $STRIDE_MAIN_CMD keys delete airdrop-test -y &> /dev/null || true 
 $OSMO_MAIN_CMD keys delete host-address-test -y &> /dev/null || true 
 
-# First, start the network with `make start-docker`
-# Then, run this script with `bash dockernet/scripts/airdrop.sh`
-
 # NOTE: First, store the keys using the following mnemonics
+echo "Registering accounts..."
 # distributor address: stride1z835j3j65nqr6ng257q0xkkc9gta72gf48txwl
 # distributor mnemonic: barrel salmon half click confirm crunch sense defy salute process cart fiscal sport clump weasel render private manage picture spell wreck hill frozen before
 echo "barrel salmon half click confirm crunch sense defy salute process cart fiscal sport clump weasel render private manage picture spell wreck hill frozen before" | \
@@ -26,7 +32,7 @@ sleep 5
 $STRIDE_MAIN_CMD tx bank send val1 stride1z835j3j65nqr6ng257q0xkkc9gta72gf48txwl 600000ustrd --from val1 -y | TRIM_TX
 sleep 5
 # Create the airdrop, so that the airdrop account can claim tokens
-$STRIDE_MAIN_CMD tx claim create-airdrop stride STRIDE ustrd 1666792900 40000000 true --from distributor-test -y | TRIM_TX
+$STRIDE_MAIN_CMD tx claim create-airdrop stride GAIA ustrd 1666792900 40000000 true --from distributor-test -y | TRIM_TX
 sleep 5
 
 ## Test airdrop flow for chains who have non-standard coin types (not type 118). 
@@ -39,8 +45,7 @@ sleep 5
 #            to test, we don't need to use evmos, just an address from a different mnemonic (can come from a coin_type 118 chain) 
 #            here we choose to use an osmosis address with a new menmonic since we don't have an Evmos binary set up
 
-echo ">>>Testing airdrop for coin types != 118..."
-echo ">>>Testing for ibc-go version 3"
+echo -e "\n>>> Testing airdrop for coin types != 118, ibc-go version 3..."
 # Transfer uatom from gaia to stride, so that we can liquid stake later
 $GAIA_MAIN_CMD tx bank send cosmos1uk4ze0x4nvh4fk0xm4jdud58eqn4yxhrgl2scj cosmos16lmf7t0jhaatan6vnxlgv47h2wf0k5lnhvye5h 1uatom --from ${GAIA_VAL_PREFIX}1 -y | TRIM_TX
 
@@ -51,42 +56,42 @@ sleep 5
 
 #     1. Overwrite incorrectly-derived stride address associated with an airdrop account with the proper Stride address (e.g. stride1abc...xyz)
 #         a. query the claims module to verify that the airdrop-eligible address is as expected
+echo "> initial claim record:"
 $STRIDE_MAIN_CMD q claim claim-record stride stride16lmf7t0jhaatan6vnxlgv47h2wf0k5ln58y9qm
 
 #         b. ibc-transfer from Osmo to Stride to change the airdrop account to stride1jrmtt5c6z8h5yrrwml488qnm7p3vxrrml2kgvl
 #              Memo: {
 #                "autopilot": {
-#                     "stakeibc": {
-#                       "stride_address": "stride1jrmtt5c6z8h5yrrwml488qnm7p3vxrrml2kgvl",
-#                       },
-#                         "claim": {
-#                         }
-#                    },
-#                }
-#               Receiver: "xxx"
+#                     "claim": {
+#                         "stride_address": "stride1jrmtt5c6z8h5yrrwml488qnm7p3vxrrml2kgvl",
+#                      },
+#                 },
+#              }
+#              Receiver: "xxx"
 memo='{"autopilot": {"receiver": "stride1jrmtt5c6z8h5yrrwml488qnm7p3vxrrml2kgvl","claim": { "stride_address": "stride1jrmtt5c6z8h5yrrwml488qnm7p3vxrrml2kgvl" } }}'
 $GAIA_MAIN_CMD tx ibc-transfer transfer transfer channel-0 "$memo" 1uatom --from rly2 -y | TRIM_TX
-echo ">>> Waiting for 15 seconds to allow the IBC transfer to complete..."
+echo -e "\n>>> Waiting for 15 seconds to allow the IBC transfer to complete..."
 sleep 15
 #         c. query the claims module 
 #           - to verify nothing is eligible from the old address anymore stride16lmf7t0jhaatan6vnxlgv47h2wf0k5ln58y9qm
 #           - to get the updated airdrop-eligible address's eligible amount from stride1jrmtt5c6z8h5yrrwml488qnm7p3vxrrml2kgvl
 echo ">>> Querying the claims module to verify that the airdrop-eligible address is as expected"
-echo "> previously eligible account, now should have 0:"
+echo "> previously eligible account, should no longer return any records:"
 $STRIDE_MAIN_CMD q claim claim-record stride stride16lmf7t0jhaatan6vnxlgv47h2wf0k5ln58y9qm
-echo "> new eligible account, now should have 1:"
+echo "> new eligible account, should show 1 record:"
 $STRIDE_MAIN_CMD q claim claim-record stride stride1jrmtt5c6z8h5yrrwml488qnm7p3vxrrml2kgvl
 
         # liquid stake as a task to increase eligibility, re-check eligibliity 
+echo -e "\n>>> Liquid staking..."
 $STRIDE_MAIN_CMD tx stakeibc liquid-stake 1 $ATOM_DENOM --from rly3 -y | TRIM_TX
 sleep 5
-echo "> after liquid staking eligiblity should be higher"
+echo "> after liquid staking there should be one action complete"
 $STRIDE_MAIN_CMD q claim claim-record stride stride1jrmtt5c6z8h5yrrwml488qnm7p3vxrrml2kgvl
 
         # d. claim the airdrop from this address
-echo "> Claiming the airdrop from the new address"
+echo -e "\n>>> Claiming the airdrop from the new address"
 $STRIDE_MAIN_CMD tx claim claim-free-amount --from rly3 -y | TRIM_TX
 sleep 5
         # e. verify funds are vesting
-echo "> Verifying funds are vesting, should be 1."
+echo "> Verifying funds are vesting, action_type should be 1 (i.e. ACTION_LIQUID_STAKE)."
 $STRIDE_MAIN_CMD q claim user-vestings stride1jrmtt5c6z8h5yrrwml488qnm7p3vxrrml2kgvl

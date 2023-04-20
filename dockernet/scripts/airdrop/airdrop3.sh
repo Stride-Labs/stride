@@ -2,16 +2,21 @@
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 source ${SCRIPT_DIR}/../../config.sh
 
+### AIRDROP TESTING FLOW Pt 3
+
+# This script tests that the the airdrop resets properly
+
+# First, start the network with `make start-docker`
+# Then, run this script with `bash dockernet/scripts/airdrop/airdrop3.sh`
+
 # CLEANUP if running tests twice, clear out and re-fund accounts
 $STRIDE_MAIN_CMD keys delete distributor-test3 -y &> /dev/null || true 
 $GAIA_MAIN_CMD keys delete hosttest -y &> /dev/null || true 
 $STRIDE_MAIN_CMD keys delete airdrop-test -y &> /dev/null || true 
 $OSMO_MAIN_CMD keys delete host-address-test -y &> /dev/null || true 
 
-# First, start the network with `make start-docker`
-# Then, run this script with `bash dockernet/scripts/airdrop.sh`
-
 # NOTE: First, store the keys using the following mnemonics
+echo "Registering accounts..."
 # distributor address: stride12lw3587g97lgrwr2fjtr8gg5q6sku33e5yq9wl
 # distributor mnemonic: barrel salmon half click confirm crunch sense defy salute process cart fiscal sport clump weasel render private manage picture spell wreck hill frozen before
 echo "person pelican purchase boring theme eagle jaguar screen frame attract mad link ribbon ball poverty valley cross cradle real idea payment ramp nature anchor" | \
@@ -43,8 +48,8 @@ sleep 5
     # 2. Set the airdrop allocations
 
 # Create the airdrop, so that the airdrop account can claim tokens
-echo ">>> Testing multiple airdrop reset and claims flow..."
-$STRIDE_MAIN_CMD tx claim create-airdrop stride2 STRIDE ustrd $(date +%s) 30 true --from distributor-test3 -y | TRIM_TX
+echo -e "\n>>> Testing multiple airdrop reset and claims flow..."
+$STRIDE_MAIN_CMD tx claim create-airdrop stride2 GAIA ustrd $(date +%s) 30 true --from distributor-test3 -y | TRIM_TX
 sleep 5
 # # Set airdrop allocations
 $STRIDE_MAIN_CMD tx claim set-airdrop-allocations stride2 stride1kwll0uet4mkj867s4q8dgskp03txgjnswc2u4z 1 --from distributor-test3 -y | TRIM_TX
@@ -59,15 +64,16 @@ $STRIDE_MAIN_CMD tx claim claim-free-amount --from stride1kwll0uet4mkj867s4q8dgs
 sleep 5
 
 #     # 5. Query to check airdrop vesting account was created (w/ correct amount)
-echo "Verifying funds are vesting, should be 1."
+echo "> Verifying funds are vesting, action_type should be 1 (i.e. ACTION_LIQUID_STAKE)."
 $STRIDE_MAIN_CMD q claim user-vestings stride1jrmtt5c6z8h5yrrwml488qnm7p3vxrrml2kgvl
 
 
     # BATCH 2
     # 6. Wait 30 seconds
-echo "> Waiting 30 seconds for next batch..."
+echo -e "\n>>> Waiting 30 seconds for next batch..."
 sleep 30
     # 7. Claim the airdrop
+echo -e "\n>>> Claim airdrop"
 $STRIDE_MAIN_CMD tx claim claim-free-amount --from stride1kwll0uet4mkj867s4q8dgskp03txgjnswc2u4z -y | TRIM_TX
 
 #     # 8. Query to check airdrop vesting account was created (w/ correct amount)
@@ -85,29 +91,4 @@ $STRIDE_MAIN_CMD tx claim claim-free-amount --from stride1kwll0uet4mkj867s4q8dgs
 echo "> Verifying more funds are vesting, should be 3."
 $STRIDE_MAIN_CMD q claim user-vestings stride1jrmtt5c6z8h5yrrwml488qnm7p3vxrrml2kgvl
 
-
-
-
-# ### Test staggered airdrops
-
-# # create airdrop 1 with a 60 day start window, 60 sec reset, claim, sleep 35
-# # $STRIDE_MAIN_CMD tx claim create-airdrop airdrop1 GAIA ustrd $(date +%s) 60 false --from distributor-test3 -y
-# # sleep 5
-# # $STRIDE_MAIN_CMD tx claim set-airdrop-allocations airdrop1 stride1kwll0uet4mkj867s4q8dgskp03txgjnswc2u4z 1 --from distributor-test3 -y
-# # sleep 5
-# # $STRIDE_MAIN_CMD tx claim claim-free-amount --from stride1kwll0uet4mkj867s4q8dgskp03txgjnswc2u4z
-# # sleep 35
-
-# # # create airdrop 2 with a 60 day start window, 60 sec reset, claim, sleep 35
-# # $STRIDE_MAIN_CMD tx claim create-airdrop airdrop1 GAIA2 stuatom $(date +%s) 60 false --from distributor-test3 -y
-# # sleep 5
-# # $STRIDE_MAIN_CMD tx claim set-airdrop-allocations airdrop1 stride1kwll0uet4mkj867s4q8dgskp03txgjnswc2u4z 1 --from distributor-test3 -y
-# # sleep 5
-# # $STRIDE_MAIN_CMD tx claim claim-free-amount --from stride1kwll0uet4mkj867s4q8dgskp03txgjnswc2u4z
-# # sleep 35
-
-# # # airdrop 1 resets
-# # $STRIDE_MAIN_CMD q bank balances stride1kwll0uet4mkj867s4q8dgskp03txgjnswc2u4z
-# # $STRIDE_MAIN_CMD tx claim claim-free-amount --from stride1kwll0uet4mkj867s4q8dgskp03txgjnswc2u4z
-# # $STRIDE_MAIN_CMD q bank balances stride1kwll0uet4mkj867s4q8dgskp03txgjnswc2u4z
 
