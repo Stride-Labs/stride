@@ -145,8 +145,6 @@ for (( i=1; i <= $NUM_NODES; i++ )); do
         cp ${DOCKERNET_HOME}/src/app.toml ${STATE}/evmos1/config/app.toml
     fi
 
-    
-
     if [ $i -eq $MAIN_ID ]; then
         MAIN_NODE_NAME=$node_name
         MAIN_NODE_ID=$node_id
@@ -161,7 +159,6 @@ for (( i=1; i <= $NUM_NODES; i++ )); do
         echo "$val_mnemonic" | $MAIN_CMD keys add $val_acct --recover --keyring-backend=test &> /dev/null
     fi
 done
-
 
 if [ "$CHAIN" == "STRIDE" ]; then 
     # add the stride admin account
@@ -191,7 +188,6 @@ else
     RELAYER_ADDRESS=$($MAIN_CMD keys show $RELAYER_ACCT --keyring-backend test -a | tr -cd '[:alnum:]._-')
     $MAIN_CMD add-genesis-account ${RELAYER_ADDRESS} ${VAL_TOKENS}${DENOM}
 fi
-
 
 # now we process gentx txs on the main node
 $MAIN_CMD collect-gentxs &> /dev/null

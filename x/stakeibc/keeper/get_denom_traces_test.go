@@ -1,20 +1,20 @@
 package keeper_test
 
-// Note: this is for dockernet
+// // Note: this is for dockernet
 
-import (
-	"fmt"
+// import (
+// 	"fmt"
 
-	transfertypes "github.com/cosmos/ibc-go/v5/modules/apps/transfer/types"
-)
+// 	transfertypes "github.com/cosmos/ibc-go/v5/modules/apps/transfer/types"
+// )
 
-func (s *KeeperTestSuite) TestIBCDenom() {
-	chainId := "EVMOS"
-	denom := "aevmos"
-	for i := 0; i < 4; i++ {
-		sourcePrefix := transfertypes.GetDenomPrefix("transfer", fmt.Sprintf("channel-%d", i))
-		prefixedDenom := sourcePrefix + denom
+// func (s *KeeperTestSuite) TestIBCDenom() {
+// 	chainId := "EVMOS"
+// 	denom := "aevmos"
+// 	for i := 0; i < 4; i++ {
+// 		sourcePrefix := transfertypes.GetDenomPrefix("transfer", fmt.Sprintf("channel-%d", i))
+// 		prefixedDenom := sourcePrefix + denom
 
-		fmt.Printf("IBC_%s_CHANNEL_%d_DENOM='%s'\n", chainId, i, transfertypes.ParseDenomTrace(prefixedDenom).IBCDenom())
-	}
-}
+// 		fmt.Printf("IBC_%s_CHANNEL_%d_DENOM='%s'\n", chainId, i, transfertypes.ParseDenomTrace(prefixedDenom).IBCDenom())
+// 	}
+// }

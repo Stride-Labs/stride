@@ -16,7 +16,7 @@ TX_LOGS=$DOCKERNET_HOME/logs/tx.log
 KEYS_LOGS=$DOCKERNET_HOME/logs/keys.log
 
 # List of hosts enabled
-HOST_CHAINS=(EVMOS) 
+HOST_CHAINS=() 
 
 # If no host zones are specified above:
 #  `start-docker` defaults to just GAIA if HOST_CHAINS is empty
@@ -26,11 +26,12 @@ HOST_CHAINS=(EVMOS)
 #  - JUNO
 #  - OSMO
 #  - STARS
+#  - EVMOS
 #  - HOST (Stride chain enabled as a host zone)
 if [[ "${ALL_HOST_CHAINS:-false}" == "true" ]]; then 
-  HOST_CHAINS=(GAIA OSMO HOST)
+  HOST_CHAINS=(GAIA EVMOS HOST)
 elif [[ "${#HOST_CHAINS[@]}" == "0" ]]; then 
-  HOST_CHAINS=(GAIA EVMOS)
+  HOST_CHAINS=(GAIA)
 fi
 
 # Sets up upgrade if {UPGRADE_NAME} is non-empty
@@ -234,10 +235,9 @@ EVMOS_VAL_PREFIX=nval
 EVMOS_ADDRESS_PREFIX=evmos
 EVMOS_REV_ACCT=nrev1
 EVMOS_DENOM=$EVMOS_DENOM
-EVMOS_RPC_PORT=26157
+EVMOS_RPC_PORT=26057
 EVMOS_COIN_TYPE=$ETH_COIN_TYPE
 EVMOS_MAIN_CMD="$EVMOS_BINARY --home $DOCKERNET_HOME/state/${EVMOS_NODE_PREFIX}1"
-# TODO: update README
 EVMOS_RECEIVER_ADDRESS='evmos123z469cfejeusvk87ufrs5520wmdxmmlc7qzuw'
 
 # RELAYER

@@ -22,6 +22,10 @@
 	# Commit: b0bea28fc695a2a5c567e56a37b289a5b75830cc
 	path = deps/stargaze
 	url = https://github.com/public-awesome/stargaze.git
+[submodule "deps/evmos"]
+	# Commit: ec337e0357ae6b6727ad9092ac0ce3667df91319
+	path = deps/evmos
+	url = https://github.com/evmos/evmos
 # bats
 [submodule "dockernet/tests/bats/bats-core"]
 	path = dockernet/tests/bats/bats-core
@@ -32,9 +36,3 @@
 [submodule "dockernet/tests/bats/bats-support"]
 	path = dockernet/tests/bats/bats-support
 	url = https://github.com/bats-core/bats-support.git
-
-# evmos
-[submodule "deps/evmos"]
-	# Commit: ec337e0357ae6b6727ad9092ac0ce3667df91319
-	path = deps/evmos
-	url = https://github.com/evmos/evmos
