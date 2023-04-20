@@ -746,7 +746,7 @@ func (k Keeper) CreateAirdropAndEpoch(ctx sdk.Context, distributor string, denom
 	k.epochsKeeper.SetEpochInfo(ctx, epochstypes.EpochInfo{
 		Identifier:              fmt.Sprintf("airdrop-%s", identifier),
 		StartTime:               airdrop.AirdropStartTime.Add(time.Minute),
-		Duration:                time.Second * 60, // 1 minute airdrop epochs
+		Duration:                time.Hour * 24 * 30,
 		CurrentEpoch:            0,
 		CurrentEpochStartHeight: 0,
 		CurrentEpochStartTime:   time.Time{},
