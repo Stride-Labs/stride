@@ -215,7 +215,7 @@ func (suite *KeeperTestSuite) TestLiquidStakeOnRecvPacket() {
 				IbcDenom:          atomIbcDenom,
 				HostDenom:         atomHostDenom,
 				RedemptionRate:    sdk.NewDec(1),
-				Address:           addr1.String(),
+				DepositAddress:    addr1.String(),
 			})
 
 			// mint coins to be spent on liquid staking

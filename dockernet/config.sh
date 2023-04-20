@@ -318,7 +318,7 @@ GET_ICA_ADDR() {
   chain_id="$1"
   ica_type="$2" #delegation, fee, redemption, or withdrawal
 
-  $STRIDE_MAIN_CMD q stakeibc show-host-zone $chain_id | grep ${ica_type}_account -A 1 | grep address | awk '{print $2}'
+  $STRIDE_MAIN_CMD q stakeibc show-host-zone $chain_id | grep ${ica_type}_ica_address | awk '{print $2}'
 }
 
 TRIM_TX() {

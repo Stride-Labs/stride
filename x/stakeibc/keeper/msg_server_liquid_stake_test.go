@@ -40,10 +40,10 @@ func (s *KeeperTestSuite) SetupLiquidStake() LiquidStakeTestCase {
 	}
 	s.FundAccount(user.acc, user.atomBalance)
 
-	zoneAddress := stakeibctypes.NewZoneAddress(HostChainId)
+	depositAddress := stakeibctypes.NewHostZoneDepositAddress(HostChainId)
 
 	zoneAccount := Account{
-		acc:           zoneAddress,
+		acc:           depositAddress,
 		atomBalance:   sdk.NewInt64Coin(IbcAtom, 10_000_000),
 		stAtomBalance: sdk.NewInt64Coin(StAtom, 10_000_000),
 	}
@@ -55,7 +55,7 @@ func (s *KeeperTestSuite) SetupLiquidStake() LiquidStakeTestCase {
 		HostDenom:      Atom,
 		IbcDenom:       IbcAtom,
 		RedemptionRate: sdk.NewDec(1.0),
-		Address:        zoneAddress.String(),
+		DepositAddress: depositAddress.String(),
 	}
 
 	epochTracker := stakeibctypes.EpochTracker{
@@ -195,7 +195,7 @@ func (s *KeeperTestSuite) TestLiquidStake_InvalidHostAddress() {
 
 	// Update hostzone with invalid address
 	badHostZone := tc.initialState.hostZone
-	badHostZone.Address = "cosmosXXX"
+	badHostZone.DepositAddress = "cosmosXXX"
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, badHostZone)
 
 	_, err := s.GetMsgServer().LiquidStake(sdk.WrapSDKContext(s.Ctx), &tc.validMsg)

@@ -45,7 +45,7 @@ type DepositRecordsTestCase struct {
 	initialDepositRecords       TestDepositRecords
 	initialModuleAccountBalance sdk.Coin
 	hostZone                    stakeibctypes.HostZone
-	hostModuleAddress           sdk.AccAddress
+	hostZoneDepositAddress      sdk.AccAddress
 	epochNumber                 uint64
 	TransferChannel             Channel
 	DelegationChannel           Channel
@@ -147,11 +147,11 @@ func (s *KeeperTestSuite) SetupDepositRecords() DepositRecordsTestCase {
 	delegationAddress := s.IcaAddresses[delegationAccountOwner]
 
 	ibcDenomTrace := s.GetIBCDenomTrace(Atom) // we need a true IBC denom here
-	hostModuleAddress := stakeibctypes.NewZoneAddress(HostChainId)
+	depositAddress := stakeibctypes.NewHostZoneDepositAddress(HostChainId)
 	s.App.TransferKeeper.SetDenomTrace(s.Ctx, ibcDenomTrace)
 
 	initialModuleAccountBalance := sdk.NewCoin(ibcDenomTrace.IBCDenom(), sdkmath.NewInt(15_000))
-	s.FundAccount(hostModuleAddress, initialModuleAccountBalance)
+	s.FundAccount(depositAddress, initialModuleAccountBalance)
 
 	validators := []*stakeibctypes.Validator{
 		{
@@ -168,7 +168,7 @@ func (s *KeeperTestSuite) SetupDepositRecords() DepositRecordsTestCase {
 
 	hostZone := stakeibctypes.HostZone{
 		ChainId:              HostChainId,
-		Address:              hostModuleAddress.String(),
+		DepositAddress:       depositAddress.String(),
 		DelegationIcaAddress: delegationAddress,
 		ConnectionId:         ibctesting.FirstConnectionID,
 		TransferChannelId:    ibctesting.FirstChannelID,
@@ -196,7 +196,7 @@ func (s *KeeperTestSuite) SetupDepositRecords() DepositRecordsTestCase {
 		initialDepositRecords:       initialDepositRecords,
 		initialModuleAccountBalance: initialModuleAccountBalance,
 		hostZone:                    hostZone,
-		hostModuleAddress:           hostModuleAddress,
+		hostZoneDepositAddress:      depositAddress,
 		epochNumber:                 currentEpoch,
 		TransferChannel: Channel{
 			PortID:    ibctesting.TransferPort,
@@ -336,7 +336,7 @@ func (s *KeeperTestSuite) CheckStateAfterTransferringDepositRecords(tc DepositRe
 		expectedTransferAmount = expectedTransferAmount.Add(depositRecord.Amount)
 	}
 	expectedModuleBalance := tc.initialModuleAccountBalance.SubAmount(expectedTransferAmount)
-	actualModuleBalance := s.App.BankKeeper.GetBalance(s.Ctx, tc.hostModuleAddress, tc.hostZone.IbcDenom)
+	actualModuleBalance := s.App.BankKeeper.GetBalance(s.Ctx, tc.hostZoneDepositAddress, tc.hostZone.IbcDenom)
 	s.CompareCoins(expectedModuleBalance, actualModuleBalance, "host module balance")
 
 	// Confirm deposit records with 0 amount were removed

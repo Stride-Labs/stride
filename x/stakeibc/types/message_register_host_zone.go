@@ -133,7 +133,7 @@ func (msg *MsgRegisterHostZone) ValidateBasic() error {
 	return nil
 }
 
-func NewZoneAddress(chainId string) sdk.AccAddress {
+func NewHostZoneDepositAddress(chainId string) sdk.AccAddress {
 	key := append([]byte("zone"), []byte(chainId)...)
 	return address.Module(ModuleName, key)
 }

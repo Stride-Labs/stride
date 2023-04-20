@@ -17,7 +17,6 @@ import (
 
 	bankTypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	distributiontypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
-	stakingTypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
@@ -44,7 +43,7 @@ func (k Keeper) DelegateOnHost(ctx sdk.Context, hostZone types.HostZone, amt sdk
 
 	// Fetch the relevant ICA
 	if hostZone.DelegationIcaAddress == "" {
-		errorsmod.Wrapf(types.ErrICAAccountNotFound, "no delegation account found for %s", hostZone.ChainId)
+		return errorsmod.Wrapf(types.ErrICAAccountNotFound, "no delegation account found for %s", hostZone.ChainId)
 	}
 
 	// Construct the transaction
@@ -59,7 +58,7 @@ func (k Keeper) DelegateOnHost(ctx sdk.Context, hostZone types.HostZone, amt sdk
 	for _, validator := range hostZone.Validators {
 		relativeAmount := sdk.NewCoin(amt.Denom, targetDelegatedAmts[validator.Address])
 		if relativeAmount.Amount.IsPositive() {
-			msgs = append(msgs, &stakingTypes.MsgDelegate{
+			msgs = append(msgs, &stakingtypes.MsgDelegate{
 				DelegatorAddress: hostZone.DelegationIcaAddress,
 				ValidatorAddress: validator.Address,
 				Amount:           relativeAmount,

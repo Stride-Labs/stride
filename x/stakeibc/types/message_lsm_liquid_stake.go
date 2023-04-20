@@ -3,17 +3,20 @@ package types
 import (
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	errorsmod "cosmossdk.io/errors"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
 
 const TypeMsgLSMLiquidStake = "lsm_liquid_stake"
 
 var _ sdk.Msg = &MsgLSMLiquidStake{}
 
-func NewMsgLSMLiquidStake(creator string, amount sdkmath.Int, lsmTokenDenom string) *MsgLSMLiquidStake {
+func NewMsgLSMLiquidStake(creator string, amount sdkmath.Int, lsmTokenIbcDenom string) *MsgLSMLiquidStake {
 	return &MsgLSMLiquidStake{
-		Creator:       creator,
-		Amount:        amount,
-		LsmTokenDenom: lsmTokenDenom,
+		Creator:          creator,
+		Amount:           amount,
+		LsmTokenIbcDenom: lsmTokenIbcDenom,
 	}
 }
 
@@ -39,6 +42,22 @@ func (msg *MsgLSMLiquidStake) GetSignBytes() []byte {
 }
 
 func (msg *MsgLSMLiquidStake) ValidateBasic() error {
-	// TODO [LSM]
+	// check valid creator address
+	_, err := sdk.AccAddressFromBech32(msg.Creator)
+	if err != nil {
+		return errorsmod.Wrapf(sdkerrors.ErrInvalidAddress, "invalid creator address (%s)", err)
+	}
+	// ensure amount is a nonzero positive integer
+	if msg.Amount.LTE(sdkmath.ZeroInt()) {
+		return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "invalid amount (%v)", msg.Amount)
+	}
+	// validate host denom is not empty
+	if msg.LsmTokenDenom == "" {
+		return errorsmod.Wrapf(ErrRequiredFieldEmpty, "LSM token denom cannot be empty")
+	}
+	// lsm token denom must be a valid asset denom matching regex
+	if err := sdk.ValidateDenom(msg.LsmTokenDenom); err != nil {
+		return errorsmod.Wrapf(err, "invalid LSM token denom")
+	}
 	return nil
 }
