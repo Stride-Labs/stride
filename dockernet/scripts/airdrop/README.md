@@ -5,9 +5,13 @@ Each airdrop testing script (1 through 4) tests differnet aspects of the airdrop
 * **Part 1**: Tests basic airdrop claims and actions
 * **Part 2**: Tests claiming through autopilot (ibc-go v3)
 * **Part 3**: Tests that the airdrop resets properly at the epoch
-* **Part 4**:
+    * **NOTE**: You must update the airdrop timing params before running this test
+* **Part 4**: Tests two airdrops running side by side and staggered
 
 ### Instructions
+* If running Part 3: Before building stride, you must update the following airdrop timing parameters in `x/claim/types/params.go`:
+    * `DefaultEpochDuration` to `time.Second * 60`
+    * `DefaultVestingInitialPeriod` to `time.Second * 120`
 * Only the GAIA host zone is required. Start dockernet with:
 ```bash
 make start-docker build=sgr

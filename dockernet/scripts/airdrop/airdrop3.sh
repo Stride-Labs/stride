@@ -9,35 +9,29 @@ source ${SCRIPT_DIR}/../../config.sh
 # First, start the network with `make start-docker`
 # Then, run this script with `bash dockernet/scripts/airdrop/airdrop3.sh`
 
-# CLEANUP if running tests twice, clear out and re-fund accounts
-$STRIDE_MAIN_CMD keys delete distributor-test3 -y &> /dev/null || true 
-$GAIA_MAIN_CMD keys delete hosttest -y &> /dev/null || true 
-$STRIDE_MAIN_CMD keys delete airdrop-test -y &> /dev/null || true 
-$OSMO_MAIN_CMD keys delete host-address-test -y &> /dev/null || true 
-
 # NOTE: First, store the keys using the following mnemonics
-echo "Registering accounts..."
+echo "Registering distributor account..."
 # distributor address: stride12lw3587g97lgrwr2fjtr8gg5q6sku33e5yq9wl
 # distributor mnemonic: barrel salmon half click confirm crunch sense defy salute process cart fiscal sport clump weasel render private manage picture spell wreck hill frozen before
 echo "person pelican purchase boring theme eagle jaguar screen frame attract mad link ribbon ball poverty valley cross cradle real idea payment ramp nature anchor" | \
-    $STRIDE_MAIN_CMD keys add distributor-test3 --recover
-
-# airdrop-test address: stride1nf6v2paty9m22l3ecm7dpakq2c92ueyununayr
-# airdrop claimer mnemonic: royal auction state december october hip monster hotel south help bulk supreme history give deliver pigeon license gold carpet rabbit raw wool fatigue donate
-echo "royal auction state december october hip monster hotel south help bulk supreme history give deliver pigeon license gold carpet rabbit raw wool fatigue donate" | \
-    $STRIDE_MAIN_CMD keys add airdrop-test --recover
+    $STRIDE_MAIN_CMD keys add distributor-test --recover
 
 ## AIRDROP SETUP
 echo "Funding accounts..."
 # Transfer uatom from gaia to stride, so that we can liquid stake later
 $GAIA_MAIN_CMD tx ibc-transfer transfer transfer channel-0 stride1nf6v2paty9m22l3ecm7dpakq2c92ueyununayr 1000000uatom --from ${GAIA_VAL_PREFIX}1 -y | TRIM_TX
-sleep 5
+sleep 15
 # Fund the distributor account
-$STRIDE_MAIN_CMD tx bank send val1 stride12lw3587g97lgrwr2fjtr8gg5q6sku33e5yq9wl 600000ustrd --from val1 -y | TRIM_TX
+$STRIDE_MAIN_CMD tx bank send val1 stride12lw3587g97lgrwr2fjtr8gg5q6sku33e5yq9wl 100ustrd --from val1 -y | TRIM_TX
 sleep 5
-# Fund the airdrop account
-$STRIDE_MAIN_CMD tx bank send val1 stride1nf6v2paty9m22l3ecm7dpakq2c92ueyununayr 1000000000ustrd --from val1 -y | TRIM_TX
-sleep 5
+
+# Confirm initial balance setup
+echo -e "\n>>> Initial Balances:"
+echo "> Distributor Account [100ustrd expected]:"
+$STRIDE_MAIN_CMD q bank balances stride12lw3587g97lgrwr2fjtr8gg5q6sku33e5yq9wl --denom ustrd 
+
+echo "> Claim Account [5000000000000ustrd expected]:"
+$STRIDE_MAIN_CMD q bank balances stride1kwll0uet4mkj867s4q8dgskp03txgjnswc2u4z --denom ustrd
 
 ### Test airdrop reset and multiple claims flow
     #   The Stride airdrop occurs in batches. We need to test three batches. 
@@ -48,47 +42,81 @@ sleep 5
     # 2. Set the airdrop allocations
 
 # Create the airdrop, so that the airdrop account can claim tokens
-echo -e "\n>>> Testing multiple airdrop reset and claims flow..."
-$STRIDE_MAIN_CMD tx claim create-airdrop stride2 GAIA ustrd $(date +%s) 30 true --from distributor-test3 -y | TRIM_TX
+echo -e "\n>>> Creating airdrop and setting allocations..."
+$STRIDE_MAIN_CMD tx claim create-airdrop gaia GAIA ustrd $(date +%s) 240 false --from distributor-test -y | TRIM_TX
 sleep 5
-# # Set airdrop allocations
-$STRIDE_MAIN_CMD tx claim set-airdrop-allocations stride2 stride1kwll0uet4mkj867s4q8dgskp03txgjnswc2u4z 1 --from distributor-test3 -y | TRIM_TX
+# Set airdrop allocations
+$STRIDE_MAIN_CMD tx claim set-airdrop-allocations gaia stride1kwll0uet4mkj867s4q8dgskp03txgjnswc2u4z 1 --from distributor-test -y | TRIM_TX
 sleep 5
+# Check eligibility
+echo "> Checking claim elibility, should return 1 claim record:"
+$STRIDE_MAIN_CMD q claim claim-record gaia stride1kwll0uet4mkj867s4q8dgskp03txgjnswc2u4z
 
 #     # BATCH 1
 #     # 3. Check eligibility and claim the airdrop
-echo "> Checking claim record elibility"
-$STRIDE_MAIN_CMD q claim claim-record stride stride1kwll0uet4mkj867s4q8dgskp03txgjnswc2u4z
-echo "> Claiming airdrop"
+echo -e "\n>>> Claiming airdrop"
 $STRIDE_MAIN_CMD tx claim claim-free-amount --from stride1kwll0uet4mkj867s4q8dgskp03txgjnswc2u4z -y | TRIM_TX
 sleep 5
 
 #     # 5. Query to check airdrop vesting account was created (w/ correct amount)
-echo "> Verifying funds are vesting, action_type should be 1 (i.e. ACTION_LIQUID_STAKE)."
-$STRIDE_MAIN_CMD q claim user-vestings stride1jrmtt5c6z8h5yrrwml488qnm7p3vxrrml2kgvl
+echo -e "\n>>> Claim verification..."
+# Check actions
+echo "> Checking claim record actions [expected: 1 action complete]:"
+$STRIDE_MAIN_CMD q claim claim-record gaia stride1kwll0uet4mkj867s4q8dgskp03txgjnswc2u4z | grep claim_record -A 4
+# Check vesting
+echo -e "\n> Verifying funds are vesting [expected: 1 vesting record]:"
+$STRIDE_MAIN_CMD q claim user-vestings stride1kwll0uet4mkj867s4q8dgskp03txgjnswc2u4z
+# Check balance
+echo -e "\n> Verifying balance [5000000000020 expected]:"
+$STRIDE_MAIN_CMD q bank balances stride1kwll0uet4mkj867s4q8dgskp03txgjnswc2u4z --denom ustrd
 
 
-    # BATCH 2
-    # 6. Wait 30 seconds
-echo -e "\n>>> Waiting 30 seconds for next batch..."
-sleep 30
+#    # BATCH 2
+#    # 6. Wait 120 seconds
+echo -e "\n>>> Waiting 120 seconds for next batch..."
+sleep 120
+echo -e "\n>>> Verify claim was reset [expected: no actions complete]:"
+$STRIDE_MAIN_CMD q claim claim-record gaia stride1kwll0uet4mkj867s4q8dgskp03txgjnswc2u4z | grep claim_record -A 4
+
     # 7. Claim the airdrop
 echo -e "\n>>> Claim airdrop"
 $STRIDE_MAIN_CMD tx claim claim-free-amount --from stride1kwll0uet4mkj867s4q8dgskp03txgjnswc2u4z -y | TRIM_TX
+sleep 5
 
 #     # 8. Query to check airdrop vesting account was created (w/ correct amount)
-echo "> Verifying more funds are vesting, should be 2."
-$STRIDE_MAIN_CMD q claim user-vestings stride1jrmtt5c6z8h5yrrwml488qnm7p3vxrrml2kgvl
+echo -e "\n>>> Claim verification..."
+# Check actions
+echo "> Checking claim record actions [expected: 1 action complete]:"
+$STRIDE_MAIN_CMD q claim claim-record gaia stride1kwll0uet4mkj867s4q8dgskp03txgjnswc2u4z  | grep claim_record -A 4
+# Check vesting
+echo -e "\n> Verifying funds are vesting [expected: 2 vesting records]:"
+$STRIDE_MAIN_CMD q claim user-vestings stride1kwll0uet4mkj867s4q8dgskp03txgjnswc2u4z
+# Check balance
+echo -e "\n> Verifying balance [XXX expected]:"
+$STRIDE_MAIN_CMD q bank balances stride1kwll0uet4mkj867s4q8dgskp03txgjnswc2u4z --denom ustrd
 
 #     # BATCH 3
-#     # 10. Wait 30 seconds
-echo "> Waiting 30 seconds for next batch..."
-sleep 30
+#     # 10. Wait 65 seconds
+echo "> Waiting 65 seconds for next batch..."
+sleep 65
+echo -e "\n>>> Verify claim was reset [expected: no actions complete]:"
+$STRIDE_MAIN_CMD q claim claim-record gaia stride1kwll0uet4mkj867s4q8dgskp03txgjnswc2u4z | grep claim_record -A 4
+
 #     # 11. Claim the airdrop
+echo -e "\n>>> Claim airdrop"
 $STRIDE_MAIN_CMD tx claim claim-free-amount --from stride1kwll0uet4mkj867s4q8dgskp03txgjnswc2u4z -y | TRIM_TX
+sleep 5
 
 #     # 12. Query to check airdrop vesting account was created (w/ correct amount)
-echo "> Verifying more funds are vesting, should be 3."
-$STRIDE_MAIN_CMD q claim user-vestings stride1jrmtt5c6z8h5yrrwml488qnm7p3vxrrml2kgvl
+echo -e "\n>>> Claim verification..."
+# Check actions
+echo "> Checking claim record actions [expected: 1 action complete]:"
+$STRIDE_MAIN_CMD q claim claim-record gaia stride1kwll0uet4mkj867s4q8dgskp03txgjnswc2u4z  | grep claim_record -A 4
+# Check vesting
+echo -e "\n> Verifying funds are vesting [expected: 3 vesting records]:"
+$STRIDE_MAIN_CMD q claim user-vestings stride1kwll0uet4mkj867s4q8dgskp03txgjnswc2u4z
+# Check balance
+echo -e "\n> Verifying balance [XXX expected]:"
+$STRIDE_MAIN_CMD q bank balances stride1kwll0uet4mkj867s4q8dgskp03txgjnswc2u4z --denom ustrd
 
 

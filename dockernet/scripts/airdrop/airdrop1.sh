@@ -11,11 +11,6 @@ source ${SCRIPT_DIR}/../../config.sh
 # First, start the network with `make start-docker`
 # Then, run this script with `bash dockernet/scripts/airdrop/airdrop1.sh`
 
-# CLEANUP if running tests twice, clear out and re-fund accounts
-$STRIDE_MAIN_CMD keys delete airdrop-test -y &> /dev/null || true 
-$STRIDE_MAIN_CMD keys delete distributor-test -y &> /dev/null || true 
-$OSMO_MAIN_CMD keys delete host-address-test -y &> /dev/null || true 
-
 # NOTE: First, store the keys using the following mnemonics
 echo "Registering accounts..."
 # distributor address: stride1z835j3j65nqr6ng257q0xkkc9gta72gf48txwl
@@ -40,10 +35,10 @@ sleep 5
 $STRIDE_MAIN_CMD tx bank send val1 stride1nf6v2paty9m22l3ecm7dpakq2c92ueyununayr 1000000000ustrd --from val1 -y | TRIM_TX
 sleep 5
 # Create the airdrop, so that the airdrop account can claim tokens
-$STRIDE_MAIN_CMD tx claim create-airdrop stride GAIA ustrd 1679715340 40000000 true --from distributor-test -y | TRIM_TX
+$STRIDE_MAIN_CMD tx claim create-airdrop gaia GAIA ustrd 1679715340 40000000 false --from distributor-test -y | TRIM_TX
 sleep 5
 # Set airdrop allocations
-$STRIDE_MAIN_CMD tx claim set-airdrop-allocations stride stride1nf6v2paty9m22l3ecm7dpakq2c92ueyununayr 1 --from distributor-test -y | TRIM_TX
+$STRIDE_MAIN_CMD tx claim set-airdrop-allocations gaia stride1nf6v2paty9m22l3ecm7dpakq2c92ueyununayr 1 --from distributor-test -y | TRIM_TX
 sleep 5
 
 # AIRDROP CLAIMS
