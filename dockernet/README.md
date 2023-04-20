@@ -70,6 +70,11 @@ ST{CHAIN}_DENOM="st{min_denom}"
 {CHAIN}_MAIN_CMD="${CHAIN}_CMD --home $DOCKERNET_HOME/state/${${CHAIN}_NODE_PREFIX}1"
 {CHAIN}_RECEIVER_ADDRESS={any random address on the chain}
 
+# Optionally, if the chain has a micro-denom granularity beyond 6 digits, 
+# specify the extra digits as 0's in the following:
+# e.g. evmos uses 18 digits, so 12 zero's should be included in the variable
+{CHAIN}_EXTRA_MICRO_DENOM_UNITS=000000000000
+
 # Add *below* the RELAYER section!
 RELAYER_{CHAIN}_EXEC="docker-compose run --rm relayer-{new-host-zone}"
 RELAYER_{CHAIN}_ACCT=rly{add one since the account from the last host zone}

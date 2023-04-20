@@ -17,6 +17,17 @@ NUM_NODES=$(GET_VAR_VALUE   ${CHAIN}_NUM_NODES)
 NODE_PREFIX=$(GET_VAR_VALUE ${CHAIN}_NODE_PREFIX)
 VAL_PREFIX=$(GET_VAR_VALUE  ${CHAIN}_VAL_PREFIX)
 
+# THe host zone can optionally specify additional micro-denom granularity
+# If no they don't specify the ${CHAIN}_EXTRA_MICRO_DENOM_UNITS variable,
+# EXTRA_MICRO_DENOM_UNITS will be an empty string and
+# {VAL/STAKE/ADMIN}_TOKENS will not be
+EXTRA_VAR_NAME=${CHAIN}_EXTRA_MICRO_DENOM_UNITS
+EXTRA_MICRO_DENOM_UNITS="${!EXTRA_VAR_NAME:-}"
+
+VAL_TOKENS=${VAL_TOKENS}${EXTRA_MICRO_DENOM_UNITS}
+STAKE_TOKENS=${STAKE_TOKENS}${EXTRA_MICRO_DENOM_UNITS}
+ADMIN_TOKENS=${ADMIN_TOKENS}${EXTRA_MICRO_DENOM_UNITS}
+
 set_stride_genesis() {
     genesis_config=$1
 
@@ -28,6 +39,11 @@ set_stride_genesis() {
     jq '.app_state.staking.params.unbonding_time = $newVal' --arg newVal "$UNBONDING_TIME" $genesis_config > json.tmp && mv json.tmp $genesis_config
     jq '.app_state.gov.deposit_params.max_deposit_period = $newVal' --arg newVal "$MAX_DEPOSIT_PERIOD" $genesis_config > json.tmp && mv json.tmp $genesis_config
     jq '.app_state.gov.voting_params.voting_period = $newVal' --arg newVal "$VOTING_PERIOD" $genesis_config > json.tmp && mv json.tmp $genesis_config
+
+    # enable stride as an interchain accounts controller
+    jq "del(.app_state.interchain_accounts)" $genesis_config > json.tmp && mv json.tmp $genesis_config
+    interchain_accts=$(cat $DOCKERNET_HOME/config/ica_controller.json)
+    jq ".app_state += $interchain_accts" $genesis_config > json.tmp && mv json.tmp $genesis_config
 }
 
 set_host_genesis() {
@@ -44,7 +60,6 @@ set_host_genesis() {
     jq '.app_state.evm.params.evm_denom = $newVal' --arg newVal "aevmos" $genesis_config > json.tmp && mv json.tmp $genesis_config
     jq '.app_state.inflation.params.mint_denom = $newVal' --arg newVal "aevmos" $genesis_config > json.tmp && mv json.tmp $genesis_config
 
-
     # Set the mint start time to the genesis time if the chain configures inflation at the block level (e.g. stars)
     # also reduce the number of initial annual provisions so the inflation rate is not too high
     genesis_time=$(jq .genesis_time $genesis_config | tr -d '"')
@@ -53,11 +68,7 @@ set_host_genesis() {
 
     # Add interchain accounts to the genesis set
     jq "del(.app_state.interchain_accounts)" $genesis_config > json.tmp && mv json.tmp $genesis_config
-    if [ "$CHAIN" = "EVMOS" ]; then
-        interchain_accts=$(cat $DOCKERNET_HOME/config/evmos_ica.json)
-    else
-        interchain_accts=$(cat $DOCKERNET_HOME/config/ica.json)
-    fi
+    interchain_accts=$(cat $DOCKERNET_HOME/config/ica_host.json)
     jq ".app_state += $interchain_accts" $genesis_config > json.tmp && mv json.tmp $genesis_config
 
     # Slightly harshen slashing parameters (if 5 blocks are missed, the validator will be slashed)
@@ -73,11 +84,6 @@ MAIN_NODE_ID=""
 MAIN_CONFIG=""
 MAIN_GENESIS=""
 echo "Initializing $CHAIN chain..."
-if [ "$CHAIN" = "EVMOS" ]; then
-    VAL_TOKENS=${VAL_TOKENS}000000000000000000
-    STAKE_TOKENS=${STAKE_TOKENS}000000000000000000
-    ADMIN_TOKENS=${ADMIN_TOKENS}000000000000000000
-fi
 for (( i=1; i <= $NUM_NODES; i++ )); do
     # Node names will be of the form: "stride1"
     node_name="${NODE_PREFIX}${i}"
