@@ -56,10 +56,6 @@ set_host_genesis() {
     jq '(.app_state.epochs.epochs[]? | select(.identifier=="mint") ).duration = $epochLen' --arg epochLen $HOST_MINT_EPOCH_DURATION $genesis_config > json.tmp && mv json.tmp $genesis_config
     jq '.app_state.staking.params.unbonding_time = $newVal' --arg newVal "$UNBONDING_TIME" $genesis_config > json.tmp && mv json.tmp $genesis_config
 
-    # change bond denom for evmos
-    jq '.app_state.evm.params.evm_denom = $newVal' --arg newVal "aevmos" $genesis_config > json.tmp && mv json.tmp $genesis_config
-    jq '.app_state.inflation.params.mint_denom = $newVal' --arg newVal "aevmos" $genesis_config > json.tmp && mv json.tmp $genesis_config
-
     # Set the mint start time to the genesis time if the chain configures inflation at the block level (e.g. stars)
     # also reduce the number of initial annual provisions so the inflation rate is not too high
     genesis_time=$(jq .genesis_time $genesis_config | tr -d '"')
@@ -125,7 +121,8 @@ for (( i=1; i <= $NUM_NODES; i++ )); do
     sed -i -E "s|keyring-backend = \"os\"|keyring-backend = \"test\"|g" $client_toml
     sed -i -E "s|node = \".*\"|node = \"tcp://localhost:$RPC_PORT\"|g" $client_toml
 
-    sed -i -E "s|\"stake\"|\"${DENOM}\"|g" $genesis_json
+    sed -i -E "s|\"stake\"|\"${DENOM}\"|g" $genesis_json 
+    sed -i -E "s|\"aphoton\"|\"${DENOM}\"|g" $genesis_json # ethermint default
 
     # Get the endpoint and node ID
     node_id=$($cmd tendermint show-node-id)@$node_name:$PEER_PORT
