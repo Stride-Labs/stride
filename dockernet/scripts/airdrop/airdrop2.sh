@@ -26,7 +26,7 @@ sleep 5
 $STRIDE_MAIN_CMD tx bank send val1 stride1z835j3j65nqr6ng257q0xkkc9gta72gf48txwl 600000ustrd --from val1 -y | TRIM_TX
 sleep 5
 # Create the airdrop, so that the airdrop account can claim tokens
-$STRIDE_MAIN_CMD tx claim create-airdrop gaia GAIA ustrd 1666792900 40000000 true --from distributor-test -y | TRIM_TX
+$STRIDE_MAIN_CMD tx claim create-airdrop gaia GAIA ustrd $(date +%s) 40000000 true --from distributor-test -y | TRIM_TX
 sleep 5
 
 ## Test airdrop flow for chains who have non-standard coin types (not type 118). 
@@ -86,6 +86,10 @@ $STRIDE_MAIN_CMD q claim claim-record gaia stride1jrmtt5c6z8h5yrrwml488qnm7p3vxr
 echo -e "\n>>> Claiming the airdrop from the new address"
 $STRIDE_MAIN_CMD tx claim claim-free-amount --from rly3 -y | TRIM_TX
 sleep 5
+
+echo "> After claiming, there should be two action complete"
+$STRIDE_MAIN_CMD q claim claim-record gaia stride1jrmtt5c6z8h5yrrwml488qnm7p3vxrrml2kgvl | grep claim_record -A 4
+
         # e. verify funds are vesting
-echo "> Verifying funds are vesting [1 vesting record expected]:"
-$STRIDE_MAIN_CMD q claim user-vestings stride1jrmtt5c6z8h5yrrwml488qnm7p3vxrrml2kgvl
+echo "> Verifying vesting record [expected: 120000ustrd]:"
+$STRIDE_MAIN_CMD q claim user-vestings stride1jrmtt5c6z8h5yrrwml488qnm7p3vxrrml2kgvl | grep spendable_coins -A 2

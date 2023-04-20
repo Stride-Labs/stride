@@ -43,7 +43,7 @@ $STRIDE_MAIN_CMD q bank balances stride1kwll0uet4mkj867s4q8dgskp03txgjnswc2u4z -
 
 # Create the airdrop, so that the airdrop account can claim tokens
 echo -e "\n>>> Creating airdrop and setting allocations..."
-$STRIDE_MAIN_CMD tx claim create-airdrop gaia GAIA ustrd $(date +%s) 240 false --from distributor-test -y | TRIM_TX
+$STRIDE_MAIN_CMD tx claim create-airdrop gaia GAIA ustrd $(date +%s) 40000000 false --from distributor-test -y | TRIM_TX
 sleep 5
 # Set airdrop allocations
 $STRIDE_MAIN_CMD tx claim set-airdrop-allocations gaia stride1kwll0uet4mkj867s4q8dgskp03txgjnswc2u4z 1 --from distributor-test -y | TRIM_TX
@@ -64,10 +64,10 @@ echo -e "\n>>> Claim verification..."
 echo "> Checking claim record actions [expected: 1 action complete]:"
 $STRIDE_MAIN_CMD q claim claim-record gaia stride1kwll0uet4mkj867s4q8dgskp03txgjnswc2u4z | grep claim_record -A 4
 # Check vesting
-echo -e "\n> Verifying funds are vesting [expected: 1 vesting record]:"
-$STRIDE_MAIN_CMD q claim user-vestings stride1kwll0uet4mkj867s4q8dgskp03txgjnswc2u4z
+echo -e "\n> Verifying funds are vesting [expected: 20ustrd]:"
+$STRIDE_MAIN_CMD q claim user-vestings stride1kwll0uet4mkj867s4q8dgskp03txgjnswc2u4z | grep spendable_coins -A 2
 # Check balance
-echo -e "\n> Verifying balance [5000000000020 expected]:"
+echo -e "\n> Verifying balance [expected: 5000000000020ustrd]:"
 $STRIDE_MAIN_CMD q bank balances stride1kwll0uet4mkj867s4q8dgskp03txgjnswc2u4z --denom ustrd
 
 
@@ -89,15 +89,15 @@ echo -e "\n>>> Claim verification..."
 echo "> Checking claim record actions [expected: 1 action complete]:"
 $STRIDE_MAIN_CMD q claim claim-record gaia stride1kwll0uet4mkj867s4q8dgskp03txgjnswc2u4z  | grep claim_record -A 4
 # Check vesting
-echo -e "\n> Verifying funds are vesting [expected: 2 vesting records]:"
-$STRIDE_MAIN_CMD q claim user-vestings stride1kwll0uet4mkj867s4q8dgskp03txgjnswc2u4z
+echo -e "\n> Verifying the vesting tokens have not changed [expected: 20ustrd]:"
+$STRIDE_MAIN_CMD q claim user-vestings stride1kwll0uet4mkj867s4q8dgskp03txgjnswc2u4z | grep spendable_coins -A 2
 # Check balance
-echo -e "\n> Verifying balance [XXX expected]:"
+echo -e "\n> Verifying balance [expected: 5000000000036ustrd]:"
 $STRIDE_MAIN_CMD q bank balances stride1kwll0uet4mkj867s4q8dgskp03txgjnswc2u4z --denom ustrd
 
 #     # BATCH 3
 #     # 10. Wait 65 seconds
-echo "> Waiting 65 seconds for next batch..."
+echo -e ">>> Waiting 65 seconds for next batch..."
 sleep 65
 echo -e "\n>>> Verify claim was reset [expected: no actions complete]:"
 $STRIDE_MAIN_CMD q claim claim-record gaia stride1kwll0uet4mkj867s4q8dgskp03txgjnswc2u4z | grep claim_record -A 4
@@ -113,10 +113,10 @@ echo -e "\n>>> Claim verification..."
 echo "> Checking claim record actions [expected: 1 action complete]:"
 $STRIDE_MAIN_CMD q claim claim-record gaia stride1kwll0uet4mkj867s4q8dgskp03txgjnswc2u4z  | grep claim_record -A 4
 # Check vesting
-echo -e "\n> Verifying funds are vesting [expected: 3 vesting records]:"
-$STRIDE_MAIN_CMD q claim user-vestings stride1kwll0uet4mkj867s4q8dgskp03txgjnswc2u4z
+echo -e "\n> Verifying the vesting tokens have not changed [expected: 20ustrd]:"
+$STRIDE_MAIN_CMD q claim user-vestings stride1kwll0uet4mkj867s4q8dgskp03txgjnswc2u4z | grep spendable_coins -A 2
 # Check balance
-echo -e "\n> Verifying balance [XXX expected]:"
+echo -e "\n> Verifying balance [expected: 5000000000049ustrd]:"
 $STRIDE_MAIN_CMD q bank balances stride1kwll0uet4mkj867s4q8dgskp03txgjnswc2u4z --denom ustrd
 
 

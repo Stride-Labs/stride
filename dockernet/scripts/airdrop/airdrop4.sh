@@ -42,34 +42,36 @@ $STRIDE_MAIN_CMD q bank balances stride1kwll0uet4mkj867s4q8dgskp03txgjnswc2u4z -
 
 # create airdrop 1 for ustrd
 echo -e "\n>>> Creating airdrop1 and allocations..."
-$STRIDE_MAIN_CMD tx claim create-airdrop airdrop1 GAIA ustrd $(date +%s) 240 false --from distributor-test1 -y | TRIM_TX
+$STRIDE_MAIN_CMD tx claim create-airdrop airdrop1 GAIA ustrd $(date +%s) 40000000 false --from distributor-test1 -y | TRIM_TX
 sleep 5
 $STRIDE_MAIN_CMD tx claim set-airdrop-allocations airdrop1 stride1kwll0uet4mkj867s4q8dgskp03txgjnswc2u4z 1 --from distributor-test1 -y | TRIM_TX
 sleep 5
 
 # claim airdrop
-echo -e "\n>>> Claiming airdrop1"
+echo -e "\n>>> Claiming airdrop1..."
 $STRIDE_MAIN_CMD tx claim claim-free-amount --from stride1kwll0uet4mkj867s4q8dgskp03txgjnswc2u4z -y | TRIM_TX
+sleep 5
 # verify claim record
-echo "> Checking claim eligibility for airdrop1, should return 1 claim-record:"
+echo "> Checking claim eligibility for airdrop1, should return 1 claim-record:" 
 $STRIDE_MAIN_CMD q claim claim-record airdrop1 stride1kwll0uet4mkj867s4q8dgskp03txgjnswc2u4z
 # verify total claimable
 echo "> Checking total claimable for airdrop1 [expected: 100ustrd]:"
 $STRIDE_MAIN_CMD q claim total-claimable airdrop1 stride1kwll0uet4mkj867s4q8dgskp03txgjnswc2u4z true
 
-echo -e "\n...Sleeping 60 before creating airdrop2..."
-sleep 60
+echo -e "\n...Sleeping 30 before creating airdrop2..."
+sleep 30
 
 # create airdrop 2 
-echo -e "\n>>> Creating airdrop2 and setting allocations"
-$STRIDE_MAIN_CMD tx claim create-airdrop airdrop2 GAIA2 ustrd $(date +%s) 60 false --from distributor-test2 -y | TRIM_TX
+echo -e "\n>>> Creating airdrop2 and setting allocations..."
+$STRIDE_MAIN_CMD tx claim create-airdrop airdrop2 GAIA2 ustrd $(date +%s) 40000000 false --from distributor-test2 -y | TRIM_TX
 sleep 5
 $STRIDE_MAIN_CMD tx claim set-airdrop-allocations airdrop2 stride1kwll0uet4mkj867s4q8dgskp03txgjnswc2u4z 1 --from distributor-test2 -y | TRIM_TX
 sleep 5
 
 # claim airdrop
-echo -e "\n>>> Claiming airdrop2"
+echo -e "\n>>> Claiming airdrop2..."
 $STRIDE_MAIN_CMD tx claim claim-free-amount --from stride1kwll0uet4mkj867s4q8dgskp03txgjnswc2u4z -y | TRIM_TX
+sleep 5
 # verify claim record
 echo "> Checking claim eligibility for airdrop2, should return 1 claim-record:"
 $STRIDE_MAIN_CMD q claim claim-record airdrop2 stride1kwll0uet4mkj867s4q8dgskp03txgjnswc2u4z
@@ -78,52 +80,44 @@ echo "> Checking total claimable for airdrop2 [expected: 100ustrd]:"
 $STRIDE_MAIN_CMD q claim total-claimable airdrop2 stride1kwll0uet4mkj867s4q8dgskp03txgjnswc2u4z true
 
 echo -e "\n...Sleeping 60 more sec to wait for airdrop1 to reset..."
-sleep 35
+sleep 60
 
 ### airdrop 1 resets - check state before claim
 echo -e "\n>>> Airdrop1 Reset <<<"
-echo -e "\n>>> Verifying the vesting funds and balance for airdrop1. AFTER the reset, but BEFORE season2 claim"
-# Check vesting
-echo "> AIRDROP 1 - Vesting funds AFTER reset, but BEFORE claim [expected: XXX]:"
-$STRIDE_MAIN_CMD q claim user-vestings stride1kwll0uet4mkj867s4q8dgskp03txgjnswc2u4z
-# Check balance
-echo "> AIRDROP 1 - Balance AFTER reset, but BEFORE claim [XXX expected]:"
-$STRIDE_MAIN_CMD q bank balances stride1kwll0uet4mkj867s4q8dgskp03txgjnswc2u4z --denom ustrd
+echo -e "\n>>> Verify claim for airdrop1 was reset [expected: no actions complete]:"
+$STRIDE_MAIN_CMD q claim claim-record airdrop1 stride1kwll0uet4mkj867s4q8dgskp03txgjnswc2u4z | grep claim_record -A 4
 
 # Claim again after reset
-echo -e "\n>>> Claiming airdrop1"
+echo -e "\n>>> Claiming airdrop1 again..."
 $STRIDE_MAIN_CMD tx claim claim-free-amount --from stride1kwll0uet4mkj867s4q8dgskp03txgjnswc2u4z -y | TRIM_TX
+sleep 5
 
-# check state after claim
-echo -e "\n>>> Verifying the vesting funds and balance for airdrop1. AFTER the reset, and AFTER season2 claim"
-# Check vesting
-echo "> AIRDROP 1 - Vesting funds AFTER reset, and AFTER claim [expected: XXX]:"
-$STRIDE_MAIN_CMD q claim user-vestings stride1kwll0uet4mkj867s4q8dgskp03txgjnswc2u4z
+echo -e "\n>>> Claim verification for airdrop1..."
+# Check actions
+echo "> Checking claim record actions [expected: 1 action complete]:"
+$STRIDE_MAIN_CMD q claim claim-record airdrop1 stride1kwll0uet4mkj867s4q8dgskp03txgjnswc2u4z  | grep claim_record -A 4
 # Check balance
-echo "> AIRDROP 1 - Balance AFTER reset, and AFTER claim [XXX expected]:"
+echo -e "\n> Verifying balance [expected: 5000000000056ustrd]:"
 $STRIDE_MAIN_CMD q bank balances stride1kwll0uet4mkj867s4q8dgskp03txgjnswc2u4z --denom ustrd
 
-echo -e "\n...Sleeping 60 more sec to wait for airdrop2 to reset..."
+echo -e "\n...Sleeping 45 more sec to wait for airdrop2 to reset..."
+sleep 45
 
 ### airdrop 2 resets before airdrop 1 has a chance to reset again
 echo -e "\n>>> Airdrop2 Reset <<<"
-echo -e "\n>>> Verifying the vesting funds and balance for airdrop2. AFTER the reset, but BEFORE season2 claim"
-# Check vesting
-echo "> AIRDROP 2 - Vesting AFTER reset, but BEFORE claim [expected: XXX]:"
-$STRIDE_MAIN_CMD q claim user-vestings stride1kwll0uet4mkj867s4q8dgskp03txgjnswc2u4z
-# Check balance
-echo "> AIRDROP 2 - Balance AFTER reset, but BEFORE claim [expected: XXX]:"
-$STRIDE_MAIN_CMD q bank balances stride1kwll0uet4mkj867s4q8dgskp03txgjnswc2u4z --denom ustrd
+echo -e "\n>>> Verify claim for airdrop2 was reset [expected: no actions complete]:"
+$STRIDE_MAIN_CMD q claim claim-record airdrop2 stride1kwll0uet4mkj867s4q8dgskp03txgjnswc2u4z | grep claim_record -A 4
 
 # Claim again after reset
-echo -e "\n>>> Claiming airdrop2 after reset"
+echo -e "\n>>> Claiming airdrop2 again..."
 $STRIDE_MAIN_CMD tx claim claim-free-amount --from stride1kwll0uet4mkj867s4q8dgskp03txgjnswc2u4z -y | TRIM_TX
+sleep 5
 
-# check state after claim
-echo -e "\n>>> Verifying the vesting funds and balance for airdrop2. AFTER the reset, and AFTER season2 claim"
-# Check vesting
-echo "> AIRDROP 2 - Vesting funds AFTER reset, and AFTER claim [expected: XXX]:"
-$STRIDE_MAIN_CMD q claim user-vestings stride1kwll0uet4mkj867s4q8dgskp03txgjnswc2u4z
+echo -e "\n>>> Claim verification for airdrop2..."
+# Check actions
+echo "> Checking claim record actions [expected: 1 action complete]:"
+$STRIDE_MAIN_CMD q claim claim-record airdrop2 stride1kwll0uet4mkj867s4q8dgskp03txgjnswc2u4z  | grep claim_record -A 4
 # Check balance
-echo "> AIRDROP 2 - Balance AFTER reset, and AFTER claim [XXX expected]:"
+echo -e "\n> Verifying balance [expected: 5000000000072ustrd]:"
 $STRIDE_MAIN_CMD q bank balances stride1kwll0uet4mkj867s4q8dgskp03txgjnswc2u4z --denom ustrd
+
