@@ -70,22 +70,22 @@ sleep 15
 #           - to verify nothing is eligible from the old address anymore stride16lmf7t0jhaatan6vnxlgv47h2wf0k5ln58y9qm
 #           - to get the updated airdrop-eligible address's eligible amount from stride1jrmtt5c6z8h5yrrwml488qnm7p3vxrrml2kgvl
 echo -e "\n>>> Querying the claims module to verify that the airdrop-eligible address is as expected"
-echo "> previously eligible account, should no longer return any records:"
+echo "> Previously eligible account, should no longer return any records:"
 $STRIDE_MAIN_CMD q claim claim-record gaia stride16lmf7t0jhaatan6vnxlgv47h2wf0k5ln58y9qm
-echo "> new eligible account, should show 1 record:"
+echo "> New eligible account, should show 1 record:"
 $STRIDE_MAIN_CMD q claim claim-record gaia stride1jrmtt5c6z8h5yrrwml488qnm7p3vxrrml2kgvl
 
         # liquid stake as a task to increase eligibility, re-check eligibliity 
 echo -e "\n>>> Liquid staking..."
 $STRIDE_MAIN_CMD tx stakeibc liquid-stake 1 $ATOM_DENOM --from rly3 -y | TRIM_TX
 sleep 5
-echo "> after liquid staking there should be one action complete"
-$STRIDE_MAIN_CMD q claim claim-record gaia stride1jrmtt5c6z8h5yrrwml488qnm7p3vxrrml2kgvl
+echo "> After liquid staking there should be one action complete"
+$STRIDE_MAIN_CMD q claim claim-record gaia stride1jrmtt5c6z8h5yrrwml488qnm7p3vxrrml2kgvl | grep claim_record -A 4
 
         # d. claim the airdrop from this address
 echo -e "\n>>> Claiming the airdrop from the new address"
 $STRIDE_MAIN_CMD tx claim claim-free-amount --from rly3 -y | TRIM_TX
 sleep 5
         # e. verify funds are vesting
-echo "> Verifying funds are vesting, action_type should be 1 (i.e. ACTION_LIQUID_STAKE)."
+echo "> Verifying funds are vesting [1 vesting record expected]:"
 $STRIDE_MAIN_CMD q claim user-vestings stride1jrmtt5c6z8h5yrrwml488qnm7p3vxrrml2kgvl
