@@ -126,7 +126,7 @@ func (s *KeeperTestSuite) TestRegisterHostZone_Success() {
 	defaultMaxThreshold := sdk.NewDec(int64(stakeibctypes.DefaultMaxRedemptionRateThreshold)).Quo(sdk.NewDec(100))
 	s.Require().Equal(defaultMinThreshold, hostZone.MinRedemptionRate, "min redemption rate set to default")
 	s.Require().Equal(defaultMaxThreshold, hostZone.MaxRedemptionRate, "max redemption rate set to default")
-	s.Require().Equal(tc.unbondingPeriod, hostZone.UnbondingPeriod, "unbonding period set to default: 3")
+	s.Require().Equal(tc.unbondingPeriod, hostZone.UnbondingPeriod, "unbonding period")
 
 	// Confirm host zone unbonding record was created
 	epochUnbondingRecord, found := s.App.RecordsKeeper.GetEpochUnbondingRecord(s.Ctx, tc.epochUnbondingRecordNumber)
