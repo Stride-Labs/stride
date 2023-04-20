@@ -146,11 +146,6 @@ for (( i=1; i <= $NUM_NODES; i++ )); do
     rm -rf ${genesis_json}-E
     rm -rf ${app_toml}-E
 
-    # overwrite the app.toml if evmos
-    if [ "$CHAIN" = "EVMOS" ]; then
-        cp ${DOCKERNET_HOME}/src/app.toml ${STATE}/evmos1/config/app.toml
-    fi
-
     if [ $i -eq $MAIN_ID ]; then
         MAIN_NODE_NAME=$node_name
         MAIN_NODE_ID=$node_id
