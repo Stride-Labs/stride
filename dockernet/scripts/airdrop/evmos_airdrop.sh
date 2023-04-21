@@ -1,24 +1,14 @@
-### AIRDROP SETUP SCRIPT
-#
-#  Instructions: 
-#   1. First, start the network with `make start-docker`
-#   2. Then, run this script with `bash dockernet/scripts/airdrop/evmos_airdrop.sh`
-#   3. If the final stdout print lines from the script match what's below, the airdrop is live!
-#    
-#      \n Querying airdrop eligibilities
-#         coins:
-#         - amount: "22222255"
-#         denom: ustrd
-#         coins:
-#         - amount: "44444511"
-#         denom: ustrd
-#         coins:
-#         - amount: "111111279"
-#         denom: ustrd
-#         coins:
-#         - amount: "222222555"
-#         denom: ustrd
-#
+### AIRDROP TESTING FLOW
+SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+source ${SCRIPT_DIR}/../../config.sh
+
+### AIRDROP TESTING FLOW Pt 5 (Evmos)
+
+# This script tests claiming an evmos airdrop via autopilot with ibc-go v5+
+# The claim is initiated by sending an IBC transfer with the stride address in the memo
+
+# First, start the network with `make start-docker`
+# Then, run this script with `bash dockernet/scripts/airdrop/airdrop5_evmos.sh`
 
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 source ${SCRIPT_DIR}/../../config.sh
@@ -126,3 +116,10 @@ $STRIDE_MAIN_CMD q claim total-claimable $AIRDROP_NAME $AIRDROP_RECIPIENT_1_STRI
 
 echo -e "\n>>> Verify the old mechanical address is no longer eligible [empty array expected]:"
 $STRIDE_MAIN_CMD q claim total-claimable $AIRDROP_NAME $AIRDROP_RECIPIENT_1_MECHANICAL true
+
+echo -e "\n>>> Claiming the airdrop from the new stride address"
+$STRIDE_MAIN_CMD tx claim claim-free-amount --from airdrop-recipient-1 -y | TRIM_TX
+sleep 5
+
+echo "\n> After claiming, check that an action was complete"
+$STRIDE_MAIN_CMD q claim claim-record $AIRDROP_NAME $AIRDROP_RECIPIENT_1_STRIDE | grep claim_record -A 4
