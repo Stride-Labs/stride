@@ -70,7 +70,7 @@ func (s *UpgradeTestSuite) CheckAirdropsAfterUpgrade() {
 	for i, identifier := range utils.StringMapKeys(v9.AirdropChainIds) {
 		expectedChainId := v9.AirdropChainIds[identifier]
 		expectedDenom := fmt.Sprintf("denom-%d", i)
-		expectedAutopilotEnabled := identifier == "evmos"
+		expectedAutopilotEnabled := identifier == EvmosAirdropId
 
 		actual := claimParams.Airdrops[i]
 		s.Require().Equal(identifier, actual.AirdropIdentifier, "identifier after migration")
