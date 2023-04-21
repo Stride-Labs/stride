@@ -50,6 +50,12 @@ func (suite *KeeperTestSuite) SetupTest() {
 	suite.app.AccountKeeper.SetAccount(suite.ctx, authtypes.NewBaseAccount(addr3, nil, 0, 0))
 	distributors["osmosis"] = addr3
 
+	// Initiate a distributor account for evmos user airdrop
+	pub4 := secp256k1.GenPrivKey().PubKey()
+	addr4 := sdk.AccAddress(pub4.Address())
+	suite.app.AccountKeeper.SetAccount(suite.ctx, authtypes.NewBaseAccount(addr4, nil, 0, 0))
+	distributors["evmos"] = addr4
+
 	// Mint coins to airdrop module
 	err := suite.app.BankKeeper.MintCoins(suite.ctx, minttypes.ModuleName, sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, sdkmath.NewInt(300000000))))
 	if err != nil {
@@ -70,19 +76,41 @@ func (suite *KeeperTestSuite) SetupTest() {
 
 	// Stride airdrop
 	airdropStartTime := time.Now()
-	err = suite.app.ClaimKeeper.CreateAirdropAndEpoch(suite.ctx, addr1.String(), sdk.DefaultBondDenom, uint64(airdropStartTime.Unix()), uint64(types.DefaultAirdropDuration.Seconds()), types.DefaultAirdropIdentifier)
+	err = suite.app.ClaimKeeper.CreateAirdropAndEpoch(suite.ctx, types.MsgCreateAirdrop{
+		Distributor:      addr1.String(),
+		Identifier:       types.DefaultAirdropIdentifier,
+		ChainId:          "stride-1",
+		Denom:            sdk.DefaultBondDenom,
+		StartTime:        uint64(airdropStartTime.Unix()),
+		Duration:         uint64(types.DefaultAirdropDuration.Seconds()),
+		AutopilotEnabled: false,
+	})
 	if err != nil {
 		panic(err)
 	}
 
 	// Juno airdrop
-	err = suite.app.ClaimKeeper.CreateAirdropAndEpoch(suite.ctx, addr2.String(), sdk.DefaultBondDenom, uint64(airdropStartTime.Add(time.Hour).Unix()), uint64(types.DefaultAirdropDuration.Seconds()), "juno")
+	err = suite.app.ClaimKeeper.CreateAirdropAndEpoch(suite.ctx, types.MsgCreateAirdrop{
+		Distributor: addr2.String(),
+		Identifier:  "juno",
+		ChainId:     "juno-1",
+		Denom:       sdk.DefaultBondDenom,
+		StartTime:   uint64(airdropStartTime.Add(time.Hour).Unix()),
+		Duration:    uint64(types.DefaultAirdropDuration.Seconds()),
+	})
 	if err != nil {
 		panic(err)
 	}
 
 	// Osmosis airdrop
-	err = suite.app.ClaimKeeper.CreateAirdropAndEpoch(suite.ctx, addr3.String(), sdk.DefaultBondDenom, uint64(airdropStartTime.Unix()), uint64(types.DefaultAirdropDuration.Seconds()), "osmosis")
+	err = suite.app.ClaimKeeper.CreateAirdropAndEpoch(suite.ctx, types.MsgCreateAirdrop{
+		Distributor: addr3.String(),
+		Identifier:  "osmosis",
+		ChainId:     "osmosis-1",
+		Denom:       sdk.DefaultBondDenom,
+		StartTime:   uint64(airdropStartTime.Unix()),
+		Duration:    uint64(types.DefaultAirdropDuration.Seconds()),
+	})
 	if err != nil {
 		panic(err)
 	}

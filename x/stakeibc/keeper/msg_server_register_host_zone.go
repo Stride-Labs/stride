@@ -57,6 +57,11 @@ func (k msgServer) RegisterHostZone(goCtx context.Context, msg *types.MsgRegiste
 			k.Logger(ctx).Error(errMsg)
 			return nil, errorsmod.Wrapf(types.ErrFailedToRegisterHostZone, errMsg)
 		}
+		if hostZone.TransferChannelId == msg.TransferChannelId {
+			errMsg := fmt.Sprintf("transfer channel %s already registered", msg.TransferChannelId)
+			k.Logger(ctx).Error(errMsg)
+			return nil, errorsmod.Wrapf(types.ErrFailedToRegisterHostZone, errMsg)
+		}
 		if hostZone.Bech32Prefix == msg.Bech32Prefix {
 			errMsg := fmt.Sprintf("bech32prefix %s already registered", msg.Bech32Prefix)
 			k.Logger(ctx).Error(errMsg)

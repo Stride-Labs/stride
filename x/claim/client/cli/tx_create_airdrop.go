@@ -13,16 +13,22 @@ import (
 
 func CmdCreateAirdrop() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "create-airdrop [identifier] [start] [duration] [denom]",
+		Use:   "create-airdrop [identifier] [chain-id] [denom] [start] [duration] [autopilot-enabled]",
 		Short: "Broadcast message create-airdrop",
-		Args:  cobra.ExactArgs(4),
+		Args:  cobra.ExactArgs(6),
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
-			argStartTime, err := strconv.Atoi(args[1])
+			identifier := args[0]
+			chainId := args[1]
+			denom := args[2]
+			argStartTime, err := strconv.Atoi(args[3])
 			if err != nil {
 				return err
 			}
-
-			argDuration, err := strconv.Atoi(args[2])
+			argDuration, err := strconv.Atoi(args[4])
+			if err != nil {
+				return err
+			}
+			autopilotEnabled, err := strconv.ParseBool(args[5])
 			if err != nil {
 				return err
 			}
@@ -31,12 +37,15 @@ func CmdCreateAirdrop() *cobra.Command {
 			if err != nil {
 				return err
 			}
+			distributor := clientCtx.GetFromAddress().String()
 			msg := types.NewMsgCreateAirdrop(
-				clientCtx.GetFromAddress().String(),
-				args[0],
+				distributor,
+				identifier,
+				chainId,
+				denom,
 				uint64(argStartTime),
 				uint64(argDuration),
-				args[3],
+				autopilotEnabled,
 			)
 
 			if err := msg.ValidateBasic(); err != nil {
