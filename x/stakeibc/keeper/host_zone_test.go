@@ -148,3 +148,34 @@ func TestGetValidatorFromAddress(t *testing.T) {
 	_, _, found := keeper.GetValidatorFromAddress(validators, "fake_validator")
 	require.False(t, found)
 }
+
+func (s *KeeperTestSuite) TestGetHostZoneFromTransferChannelID() {
+	// Store 5 host zones
+	expectedHostZones := map[string]types.HostZone{}
+	for i := 0; i < 5; i++ {
+		chainId := fmt.Sprintf("chain-%d", i)
+		channelId := fmt.Sprintf("channel-%d", i)
+
+		hostZone := types.HostZone{
+			ChainId:           chainId,
+			TransferChannelId: channelId,
+		}
+		s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
+		expectedHostZones[channelId] = hostZone
+	}
+
+	// Look up each host zone by the channel ID
+	for i := 0; i < 5; i++ {
+		channelId := fmt.Sprintf("channel-%d", i)
+
+		expectedHostZone := expectedHostZones[channelId]
+		actualHostZone, found := s.App.StakeibcKeeper.GetHostZoneFromTransferChannelID(s.Ctx, channelId)
+
+		s.Require().True(found, "found host zone %d", i)
+		s.Require().Equal(expectedHostZone.ChainId, actualHostZone.ChainId, "host zone %d chain-id", i)
+	}
+
+	// Lookup a non-existent host zone - should not be found
+	_, found := s.App.StakeibcKeeper.GetHostZoneFromTransferChannelID(s.Ctx, "fake_channel")
+	s.Require().False(found, "fake channel should not be found")
+}

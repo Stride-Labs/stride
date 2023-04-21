@@ -41,9 +41,11 @@ message MsgClaimFreeAmountResponse {
 message MsgCreateAirdrop {
   string distributor = 1;
   string identifier = 2;
+  string chain_id = 6;
+  string denom = 5;
   uint64 start_time = 3;
   uint64 duration = 4;
-  string denom = 5;
+  bool autopilot_enabled = 7;
 }
 
 message MsgCreateAirdropResponse {}

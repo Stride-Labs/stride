@@ -1,16 +1,19 @@
-### AIRDROP TESTING FLOW
+#!/bin/bash
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 source ${SCRIPT_DIR}/../../config.sh
 
-# CLEANUP if running tests twice, clear out and re-fund accounts
-$STRIDE_MAIN_CMD keys delete airdrop-test -y &> /dev/null || true 
-$STRIDE_MAIN_CMD keys delete distributor-test -y &> /dev/null || true 
-$OSMO_MAIN_CMD keys delete host-address-test -y &> /dev/null || true 
+### AIRDROP TESTING FLOW Pt 1 (STANDARD)
 
-# First, start the network with `make start-docker`
-# Then, run this script with `bash dockernet/scripts/airdrop.sh`
+# This script tests airdrop claiming directly on Stride
+# This covers the case where the host zone has a coin type of 118 
+# and autopilot is disabled for the claim
+
+# To run:
+#   1. Start the network with `make start-docker`
+#   2. Run this script with `bash dockernet/scripts/airdrop/airdrop1_standard.sh`
 
 # NOTE: First, store the keys using the following mnemonics
+echo "Registering accounts..."
 # distributor address: stride1z835j3j65nqr6ng257q0xkkc9gta72gf48txwl
 # distributor mnemonic: barrel salmon half click confirm crunch sense defy salute process cart fiscal sport clump weasel render private manage picture spell wreck hill frozen before
 echo "barrel salmon half click confirm crunch sense defy salute process cart fiscal sport clump weasel render private manage picture spell wreck hill frozen before" | \
@@ -33,32 +36,32 @@ sleep 5
 $STRIDE_MAIN_CMD tx bank send val1 stride1nf6v2paty9m22l3ecm7dpakq2c92ueyununayr 1000000000ustrd --from val1 -y | TRIM_TX
 sleep 5
 # Create the airdrop, so that the airdrop account can claim tokens
-$STRIDE_MAIN_CMD tx claim create-airdrop stride 1679715340 40000000 ustrd --from distributor-test -y | TRIM_TX
+$STRIDE_MAIN_CMD tx claim create-airdrop gaia GAIA ustrd 1679715340 40000000 false --from distributor-test -y | TRIM_TX
 sleep 5
 # Set airdrop allocations
-$STRIDE_MAIN_CMD tx claim set-airdrop-allocations stride stride1nf6v2paty9m22l3ecm7dpakq2c92ueyununayr 1 --from distributor-test -y | TRIM_TX
+$STRIDE_MAIN_CMD tx claim set-airdrop-allocations gaia stride1nf6v2paty9m22l3ecm7dpakq2c92ueyununayr 1 --from distributor-test -y | TRIM_TX
 sleep 5
 
 # AIRDROP CLAIMS
 # Check balances before claims
-echo "Initial balance before claim:"
-$STRIDE_MAIN_CMD query bank balances stride1nf6v2paty9m22l3ecm7dpakq2c92ueyununayr
+echo -e "\nInitial balance before claim [1000000000ustrd expected]:"
+$STRIDE_MAIN_CMD query bank balances stride1nf6v2paty9m22l3ecm7dpakq2c92ueyununayr --denom ustrd
 # NOTE: You can claim here using the CLI, or from the frontend!
 # Claim 20% of the free tokens
-echo "Claiming fee amount..."
+echo -e "\nClaiming free amount..."
 $STRIDE_MAIN_CMD tx claim claim-free-amount --from airdrop-test --gas 400000 -y | TRIM_TX
 sleep 5
-echo "Balance after claim:" 
-$STRIDE_MAIN_CMD query bank balances stride1nf6v2paty9m22l3ecm7dpakq2c92ueyununayr
+echo -e "\nBalance after claim [1000120000ustrd expected]:" 
+$STRIDE_MAIN_CMD query bank balances stride1nf6v2paty9m22l3ecm7dpakq2c92ueyununayr --denom ustrd
 # Stake, to claim another 20%
-echo "Staking..."
+echo -e "\nStaking..."
 $STRIDE_MAIN_CMD tx staking delegate stridevaloper1nnurja9zt97huqvsfuartetyjx63tc5zrj5x9f 100ustrd --from airdrop-test --gas 400000 -y | TRIM_TX
 sleep 5
-echo "Balance after stake:" 
-$STRIDE_MAIN_CMD query bank balances stride1nf6v2paty9m22l3ecm7dpakq2c92ueyununayr
+echo -e "\nBalance after stake [1000239900ustrd expected]:" 
+$STRIDE_MAIN_CMD query bank balances stride1nf6v2paty9m22l3ecm7dpakq2c92ueyununayr --denom ustrd
 # Liquid stake, to claim the final 60% of tokens
-echo "Liquid staking..."
+echo -e "\nLiquid staking..."
 $STRIDE_MAIN_CMD tx stakeibc liquid-stake 1000 uatom --from airdrop-test --gas 400000 -y | TRIM_TX
 sleep 5
-echo "Balance after liquid stake:" 
-$STRIDE_MAIN_CMD query bank balances stride1nf6v2paty9m22l3ecm7dpakq2c92ueyununayr
+echo -e "\nBalance after liquid stake [1000599900ustrd expected]:" 
+$STRIDE_MAIN_CMD query bank balances stride1nf6v2paty9m22l3ecm7dpakq2c92ueyununayr --denom ustrd

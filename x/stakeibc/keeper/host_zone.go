@@ -51,6 +51,16 @@ func (k Keeper) GetHostZoneFromHostDenom(ctx sdk.Context, denom string) (*types.
 	return nil, errorsmod.Wrapf(sdkerrors.ErrUnknownRequest, "No HostZone for %s found", denom)
 }
 
+// GetHostZoneFromTransferChannelID returns a HostZone from a transfer channel ID
+func (k Keeper) GetHostZoneFromTransferChannelID(ctx sdk.Context, channelID string) (hostZone types.HostZone, found bool) {
+	for _, hostZone := range k.GetAllActiveHostZone(ctx) {
+		if hostZone.TransferChannelId == channelID {
+			return hostZone, true
+		}
+	}
+	return types.HostZone{}, false
+}
+
 // RemoveHostZone removes a hostZone from the store
 func (k Keeper) RemoveHostZone(ctx sdk.Context, chain_id string) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefix(types.HostZoneKey))

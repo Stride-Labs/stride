@@ -8,6 +8,7 @@ import (
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 
 	claimkeeper "github.com/Stride-Labs/stride/v8/x/claim/keeper"
+	"github.com/Stride-Labs/stride/v8/x/claim/types"
 	claimtypes "github.com/Stride-Labs/stride/v8/x/claim/types"
 )
 
@@ -22,6 +23,7 @@ var (
 		"stride12pum4adk5dhp32d90f8g8gfwujm0gwxqnrdlum",
 	}
 	airdropIdentifiers = []string{"stride", "gaia", "osmosis", "juno", "stars"}
+	airdropChainIds    = []string{"stride-1", "cosmoshub-4", "osmosis-1", "juno-1", "stargaze-1"}
 	airdropDuration    = time.Hour * 24 * 30 * 12 * 3 // 3 years
 )
 
@@ -40,7 +42,14 @@ func CreateUpgradeHandler(
 		// total number of airdrop distributors must be equal to identifiers
 		if len(airdropDistributors) == len(airdropIdentifiers) {
 			for idx, airdropDistributor := range airdropDistributors {
-				err = ck.CreateAirdropAndEpoch(ctx, airdropDistributor, claimtypes.DefaultClaimDenom, uint64(ctx.BlockTime().Unix()), uint64(airdropDuration.Seconds()), airdropIdentifiers[idx])
+				err = ck.CreateAirdropAndEpoch(ctx, types.MsgCreateAirdrop{
+					Distributor: airdropDistributor,
+					Identifier:  airdropIdentifiers[idx],
+					ChainId:     airdropChainIds[idx],
+					Denom:       claimtypes.DefaultClaimDenom,
+					StartTime:   uint64(ctx.BlockTime().Unix()),
+					Duration:    uint64(airdropDuration.Seconds()),
+				})
 				if err != nil {
 					return newVm, err
 				}
