@@ -342,6 +342,6 @@ func (s *KeeperTestSuite) TestGetTokenizedDelegation() {
 	}
 
 	// Check the total delegation from LSM Tokens
-	actualTokenizedDelegation := s.App.StakeibcKeeper.GetTokenizedDelegation(s.Ctx, HostChainId)
+	actualTokenizedDelegation := s.App.StakeibcKeeper.GetTotalTokenizedDelegations(s.Ctx, HostChainId)
 	s.Require().Equal(expectedTokenizedDelegation, actualTokenizedDelegation.TruncateInt64())
 }
