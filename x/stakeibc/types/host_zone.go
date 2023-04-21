@@ -4,10 +4,6 @@ const (
 	MaxUnbondingEntries = 7
 )
 
-func (h HostZone) GetTotalDelegations() {
-	// TODO [LSM]
-}
-
 // Per an SDK constraint, we can issue no more than 7 undelegation messages
 //   in a given unbonding period
 // The unbonding period dictates the cadence (in number of days) with which we submit
