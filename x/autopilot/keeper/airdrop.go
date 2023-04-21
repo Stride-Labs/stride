@@ -30,7 +30,7 @@ func (k Keeper) TryUpdateAirdropClaim(
 
 	// verify packet originated on a registered host zone
 	if packet.GetDestPort() != transfertypes.PortID {
-		return errors.New("packet should ")
+		return errors.New("airdrop claim packet should be sent along a transfer channel")
 	}
 	hostZone, found := k.stakeibcKeeper.GetHostZoneFromTransferChannelID(ctx, packet.GetDestChannel())
 	if !found {

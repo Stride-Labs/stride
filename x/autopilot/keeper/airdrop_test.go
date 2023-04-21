@@ -68,6 +68,9 @@ func (s *KeeperTestSuite) TestAirdropOnRecvPacket() {
 		Sender: evmosAddress,
 	}
 
+	// To test the case where the packet has a valid channel but for a host zone without an airdrop
+	channelIdForDifferentHostZone := "channel-1"
+
 	testCases := []struct {
 		name                         string
 		autopilotClaimActive         bool
@@ -274,7 +277,20 @@ func (s *KeeperTestSuite) TestAirdropOnRecvPacket() {
 			airdropShouldUpdate:   false,
 		},
 		{
-			name:                         "invalid channel-id",
+			name:                         "transfer channel from a different host zone",
+			autopilotClaimActive:         true,
+			autopilotClaimEnabledForHost: true,
+			destinationChannelID:         channelIdForDifferentHostZone,
+			destinationPortID:            transfertypes.PortID,
+			packetData: transfertypes.FungibleTokenPacketData{
+				Receiver: getClaimPacketMetadata(strideAddress),
+				Memo:     "",
+			},
+			transferShouldSucceed: false,
+			airdropShouldUpdate:   false,
+		},
+		{
+			name:                         "transfer channel does not exist",
 			autopilotClaimActive:         true,
 			autopilotClaimEnabledForHost: true,
 			destinationChannelID:         "channel-XXX",
@@ -312,6 +328,12 @@ func (s *KeeperTestSuite) TestAirdropOnRecvPacket() {
 			s.App.StakeibcKeeper.SetHostZone(s.Ctx, stakeibctypes.HostZone{
 				ChainId:           EvmosChainId,
 				TransferChannelId: ibctesting.FirstChannelID,
+			})
+
+			// Store a second host zone that does not have an airdrop
+			s.App.StakeibcKeeper.SetHostZone(s.Ctx, stakeibctypes.HostZone{
+				ChainId:           "differnet_host_zone",
+				TransferChannelId: channelIdForDifferentHostZone,
 			})
 
 			// Set claim records using key'd address
