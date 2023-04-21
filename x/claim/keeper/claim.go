@@ -154,7 +154,7 @@ func (k Keeper) GetAirdropByChainId(ctx sdk.Context, chainId string) (airdrop *t
 	}
 
 	if chainId == "" {
-		return airdrop, false
+		return nil, false
 	}
 
 	for _, airdrop := range params.Airdrops {
@@ -163,7 +163,7 @@ func (k Keeper) GetAirdropByChainId(ctx sdk.Context, chainId string) (airdrop *t
 		}
 	}
 
-	return airdrop, false
+	return nil, false
 }
 
 func (k Keeper) GetAirdropIds(ctx sdk.Context) []string {

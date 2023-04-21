@@ -1,5 +1,5 @@
 ## Airdrop Integration Tests
-Each airdrop testing script (1 through 4) tests differnet aspects of the airdrop. 
+Each airdrop testing script (1 through 4) tests different aspects of the airdrop. 
 
 ### Overview 
 **NOTE**: You must update the airdrop timing params before running parts 3 and 4 (see next section)

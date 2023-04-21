@@ -43,7 +43,6 @@ sleep 5
 
 # AIRDROP CLAIMS
 # Check balances before claims
-# QUESTION: I assume these tests cannot be run back to back - but if they can then I can change the expectations below to be deltas
 echo -e "\nInitial balance before claim [1000000000ustrd expected]:"
 $STRIDE_MAIN_CMD query bank balances stride1nf6v2paty9m22l3ecm7dpakq2c92ueyununayr --denom ustrd
 # NOTE: You can claim here using the CLI, or from the frontend!
