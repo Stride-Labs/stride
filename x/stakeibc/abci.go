@@ -1,6 +1,7 @@
 package stakeibc
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/cosmos/cosmos-sdk/telemetry"
@@ -15,26 +16,25 @@ import (
 func BeginBlocker(ctx sdk.Context, k keeper.Keeper, bk types.BankKeeper, ak types.AccountKeeper) {
 	defer telemetry.ModuleMeasureSince(types.ModuleName, time.Now(), telemetry.MetricKeyBeginBlocker)
 
-	// Inflation is very high so this is triggered - comment to test
 	// Iterate over all host zones and verify redemption rate
-	// for _, hz := range k.GetAllHostZone(ctx) {
-	// 	rrSafe, err := k.IsRedemptionRateWithinSafetyBounds(ctx, hz)
-	// 	if !rrSafe {
-	// 		hz.Halted = true
-	// 		k.SetHostZone(ctx, hz)
+	for _, hz := range k.GetAllHostZone(ctx) {
+		rrSafe, err := k.IsRedemptionRateWithinSafetyBounds(ctx, hz)
+		if !rrSafe {
+			hz.Halted = true
+			k.SetHostZone(ctx, hz)
 
-	// 		// set rate limit on stAsset
-	// 		stDenom := types.StAssetDenomFromHostZoneDenom(hz.HostDenom)
-	// 		k.RatelimitKeeper.AddDenomToBlacklist(ctx, stDenom)
+			// set rate limit on stAsset
+			stDenom := types.StAssetDenomFromHostZoneDenom(hz.HostDenom)
+			k.RatelimitKeeper.AddDenomToBlacklist(ctx, stDenom)
 
-	// 		k.Logger(ctx).Error(fmt.Sprintf("[INVARIANT BROKEN!!!] %s's RR is %s. ERR: %v", hz.GetChainId(), hz.RedemptionRate.String(), err.Error()))
-	// 		ctx.EventManager().EmitEvent(
-	// 			sdk.NewEvent(
-	// 				types.EventTypeHostZoneHalt,
-	// 				sdk.NewAttribute(types.AttributeKeyHostZone, hz.ChainId),
-	// 				sdk.NewAttribute(types.AttributeKeyRedemptionRate, hz.RedemptionRate.String()),
-	// 			),
-	// 		)
-	// 	}
-	// }
+			k.Logger(ctx).Error(fmt.Sprintf("[INVARIANT BROKEN!!!] %s's RR is %s. ERR: %v", hz.GetChainId(), hz.RedemptionRate.String(), err.Error()))
+			ctx.EventManager().EmitEvent(
+				sdk.NewEvent(
+					types.EventTypeHostZoneHalt,
+					sdk.NewAttribute(types.AttributeKeyHostZone, hz.ChainId),
+					sdk.NewAttribute(types.AttributeKeyRedemptionRate, hz.RedemptionRate.String()),
+				),
+			)
+		}
+	}
 }

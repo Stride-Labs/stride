@@ -45,22 +45,22 @@ func (k msgServer) RedeemStake(goCtx context.Context, msg *types.MsgRedeemStake)
 	if found {
 		return nil, errorsmod.Wrapf(recordstypes.ErrRedemptionAlreadyExists, "user already redeemed this epoch: %s", redemptionId)
 	}
-	
+
 	// ensure the recipient address is a valid bech32 address on the hostZone
 	// TODO(TEST-112) do we need to check the hostZone before this check? Would need access to keeper
 	_, err = utils.AccAddressFromBech32(msg.Receiver, hostZone.Bech32Prefix)
 	if err != nil {
 		return nil, errorsmod.Wrapf(sdkerrors.ErrInvalidAddress, "invalid receiver address (%s)", err)
 	}
-	
+
 	// construct desired unstaking amount from host zone
 	stDenom := types.StAssetDenomFromHostZoneDenom(hostZone.HostDenom)
 	nativeAmount := sdk.NewDecFromInt(msg.Amount).Mul(hostZone.RedemptionRate).RoundInt()
-	
+
 	if nativeAmount.GT(hostZone.StakedBal) {
 		return nil, errorsmod.Wrapf(types.ErrInvalidAmount, "cannot unstake an amount g.t. staked balance on host zone: %v", msg.Amount)
 	}
-	
+
 	// safety check: redemption rate must be within safety bounds
 	rateIsSafe, err := k.IsRedemptionRateWithinSafetyBounds(ctx, hostZone)
 	if !rateIsSafe || (err != nil) {
