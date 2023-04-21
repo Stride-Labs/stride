@@ -50,7 +50,7 @@ func (im IBCModule) OnChanOpenInit(
 
 		channelCap = chanCap
 	}
-	im.keeper.Logger(ctx).Info(fmt.Sprintf("OnChanOpenAck: portID %s, channelID %s", portID, channelID))
+	im.keeper.Logger(ctx).Info(fmt.Sprintf("OnChanOpenInit: portID %s, channelID %s", portID, channelID))
 	// Note: The channel capability must be claimed by the authentication module in OnChanOpenInit otherwise the
 	// authentication module will not be able to send packets on the channel created for the associated interchain account.
 	if err := im.keeper.ClaimCapability(ctx, channelCap, host.ChannelCapabilityPath(portID, channelID)); err != nil {

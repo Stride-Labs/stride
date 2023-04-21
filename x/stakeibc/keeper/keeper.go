@@ -335,6 +335,8 @@ func (k msgServer) RegisterInterchainAccount(ctx sdk.Context, connectionId strin
 	if err != nil {
 		return err
 	}
+
+	// Enable middleware to make ICA Ack middleware callback to be called
 	k.ICAControllerKeeper.SetMiddlewareEnabled(ctx, portID, connectionId)
 	return nil
 }
