@@ -11,10 +11,10 @@ import (
 	channeltypes "github.com/cosmos/ibc-go/v5/modules/core/04-channel/types"
 	porttypes "github.com/cosmos/ibc-go/v5/modules/core/05-port/types"
 
-	icacallbacks "github.com/Stride-Labs/stride/v8/x/icacallbacks"
-	icacallbacktypes "github.com/Stride-Labs/stride/v8/x/icacallbacks/types"
+	icacallbacks "github.com/Stride-Labs/stride/v9/x/icacallbacks"
+	icacallbacktypes "github.com/Stride-Labs/stride/v9/x/icacallbacks/types"
 
-	"github.com/Stride-Labs/stride/v8/x/records/keeper"
+	"github.com/Stride-Labs/stride/v9/x/records/keeper"
 
 	// "google.golang.org/protobuf/proto" <-- this breaks tx parsing
 

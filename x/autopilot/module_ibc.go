@@ -12,8 +12,8 @@ import (
 	channeltypes "github.com/cosmos/ibc-go/v5/modules/core/04-channel/types"
 	porttypes "github.com/cosmos/ibc-go/v5/modules/core/05-port/types"
 
-	"github.com/Stride-Labs/stride/v8/x/autopilot/keeper"
-	"github.com/Stride-Labs/stride/v8/x/autopilot/types"
+	"github.com/Stride-Labs/stride/v9/x/autopilot/keeper"
+	"github.com/Stride-Labs/stride/v9/x/autopilot/types"
 
 	ibcexported "github.com/cosmos/ibc-go/v5/modules/core/exported"
 )
@@ -212,7 +212,7 @@ func (im IBCModule) OnRecvPacket(
 		}
 		im.keeper.Logger(ctx).Info(fmt.Sprintf("Forwaring packet from %s to claim", newData.Sender))
 
-		if err := im.keeper.TryUpdateAirdropClaim(ctx, newData, routingInfo); err != nil {
+		if err := im.keeper.TryUpdateAirdropClaim(ctx, packet, newData, routingInfo); err != nil {
 			im.keeper.Logger(ctx).Error(fmt.Sprintf("Error updating airdrop claim from autopilot for %s: %s", newData.Sender, err.Error()))
 			return channeltypes.NewErrorAcknowledgement(err)
 		}

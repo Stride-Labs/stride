@@ -12,10 +12,10 @@ import (
 
 	channeltypes "github.com/cosmos/ibc-go/v5/modules/core/04-channel/types"
 
-	epochtypes "github.com/Stride-Labs/stride/v8/x/epochs/types"
-	recordstypes "github.com/Stride-Labs/stride/v8/x/records/types"
-	recordtypes "github.com/Stride-Labs/stride/v8/x/records/types"
-	stakeibctypes "github.com/Stride-Labs/stride/v8/x/stakeibc/types"
+	epochtypes "github.com/Stride-Labs/stride/v9/x/epochs/types"
+	recordstypes "github.com/Stride-Labs/stride/v9/x/records/types"
+	recordtypes "github.com/Stride-Labs/stride/v9/x/records/types"
+	stakeibctypes "github.com/Stride-Labs/stride/v9/x/stakeibc/types"
 )
 
 type RegisterHostZoneTestCase struct {
@@ -234,6 +234,27 @@ func (s *KeeperTestSuite) TestRegisterHostZone_DuplicateHostDenom() {
 
 	_, err = s.GetMsgServer().RegisterHostZone(sdk.WrapSDKContext(s.Ctx), &invalidMsg)
 	expectedErrMsg := "host denom uatom already registered: failed to register host zone"
+	s.Require().EqualError(err, expectedErrMsg, "registering host zone with duplicate host denom should fail")
+}
+
+func (s *KeeperTestSuite) TestRegisterHostZone_DuplicateTransferChannel() {
+	// tests for a failure if we register the same host zone twice (with a duplicate transfer)
+	tc := s.SetupRegisterHostZone()
+
+	// Register host zones successfully
+	_, err := s.GetMsgServer().RegisterHostZone(sdk.WrapSDKContext(s.Ctx), &tc.validMsg)
+	s.Require().NoError(err, "able to successfully register host zone once")
+
+	// Create the message for a brand new host zone
+	// (without modifications, you would expect this to be successful)
+	newHostZoneMsg := s.createNewHostZoneMessage("OSMO", "osmo", "osmo")
+
+	// Try to register with a duplicate transfer channel - it should fail
+	invalidMsg := newHostZoneMsg
+	invalidMsg.TransferChannelId = tc.validMsg.TransferChannelId
+
+	_, err = s.GetMsgServer().RegisterHostZone(sdk.WrapSDKContext(s.Ctx), &invalidMsg)
+	expectedErrMsg := "transfer channel channel-0 already registered: failed to register host zone"
 	s.Require().EqualError(err, expectedErrMsg, "registering host zone with duplicate host denom should fail")
 }
 

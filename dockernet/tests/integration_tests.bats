@@ -33,10 +33,10 @@ setup_file() {
   STRIDE_TRANFER_CHANNEL="channel-${TRANSFER_CHANNEL_NUMBER}"
   HOST_TRANSFER_CHANNEL="channel-0"
 
-  TRANSFER_AMOUNT=500000
-  STAKE_AMOUNT=100000
-  REDEEM_AMOUNT=1000
-  PACKET_FORWARD_STAKE_AMOUNT=3000
+  TRANSFER_AMOUNT=5000000
+  STAKE_AMOUNT=1000000
+  REDEEM_AMOUNT=10000
+  PACKET_FORWARD_STAKE_AMOUNT=30000
 
   GETBAL() {
     head -n 1 | grep -o -E '[0-9]+' || "0"
@@ -191,7 +191,7 @@ setup_file() {
 @test "[INTEGRATION-BASIC-$CHAIN_NAME] tokens on $CHAIN_NAME were staked" {
   # wait for another epoch to pass so that tokens are staked
   WAIT_FOR_STRING $STRIDE_LOGS "\[DELEGATION\] success on $HOST_CHAIN_ID"
-  WAIT_FOR_BLOCK $STRIDE_LOGS 2
+  WAIT_FOR_BLOCK $STRIDE_LOGS 4
 
   # check staked tokens
   NEW_STAKE=$($HOST_MAIN_CMD q staking delegation $(GET_ICA_ADDR $HOST_CHAIN_ID delegation) $(GET_VAL_ADDR $CHAIN_NAME 1) | GETSTAKE)
