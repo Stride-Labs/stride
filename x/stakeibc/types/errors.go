@@ -31,7 +31,6 @@ var (
 	ErrMarshalFailure                    = errorsmod.Register(ModuleName, 1523, "unable to marshal data structure")
 	ErrInvalidPacketCompletionTime       = errorsmod.Register(ModuleName, 1524, "invalid packet completion time")
 	ErrIntCast                           = errorsmod.Register(ModuleName, 1525, "unable to cast to safe cast int")
-	ErrFeeAccountNotRegistered           = errorsmod.Register(ModuleName, 1526, "fee account is not registered")
 	ErrRedemptionRateOutsideSafetyBounds = errorsmod.Register(ModuleName, 1527, "redemption rate outside safety bounds")
 	ErrTxMsgDataInvalid                  = errorsmod.Register(ModuleName, 1528, "TxMsgData invalid")
 	ErrFailedToRegisterHostZone          = errorsmod.Register(ModuleName, 1529, "failed to register host zone")

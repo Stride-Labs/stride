@@ -52,9 +52,7 @@ func (s *KeeperTestSuite) SetupReinvestCallback() ReinvestCallbackTestCase {
 		IbcDenom:       IbcAtom,
 		RedemptionRate: sdk.NewDec(1.0),
 		ConnectionId:   ibctesting.FirstConnectionID,
-		FeeAccount: &stakeibctypes.ICAAccount{
-			Address: feeAddress,
-		},
+		FeeIcaAddress:  feeAddress,
 	}
 	expectedNewDepositRecord := recordtypes.DepositRecord{
 		Id:                 0,
@@ -192,7 +190,7 @@ func (s *KeeperTestSuite) TestReinvestCallback_NoFeeAccount() {
 
 	// Remove the fee account
 	badHostZone := tc.initialState.hostZone
-	badHostZone.FeeAccount = nil
+	badHostZone.FeeIcaAddress = ""
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, badHostZone)
 
 	err := stakeibckeeper.ReinvestCallback(s.App.StakeibcKeeper, s.Ctx, tc.validArgs.packet, tc.validArgs.ackResponse, tc.validArgs.args)
@@ -204,7 +202,7 @@ func (s *KeeperTestSuite) TestReinvestCallback_InvalidFeeAccountAddress() {
 
 	// Remove the fee account
 	badHostZone := tc.initialState.hostZone
-	badHostZone.FeeAccount.Address = "invalid_fee_account"
+	badHostZone.FeeIcaAddress = "invalid_fee_account"
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, badHostZone)
 
 	err := stakeibckeeper.ReinvestCallback(s.App.StakeibcKeeper, s.Ctx, tc.validArgs.packet, tc.validArgs.ackResponse, tc.validArgs.args)

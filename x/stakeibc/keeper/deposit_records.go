@@ -68,13 +68,10 @@ func (k Keeper) TransferExistingDepositsToHostZones(ctx sdk.Context, epochNumber
 			continue
 		}
 
-		hostZoneModuleAddress := hostZone.Address
-		delegateAccount := hostZone.DelegationAccount
-		if delegateAccount == nil || delegateAccount.Address == "" {
+		if hostZone.DelegationIcaAddress == "" {
 			k.Logger(ctx).Error(fmt.Sprintf("[TransferExistingDepositsToHostZones] Zone %s is missing a delegation address!", hostZone.ChainId))
 			continue
 		}
-		delegateAddress := delegateAccount.Address
 
 		k.Logger(ctx).Info(utils.LogWithHostZone(depositRecord.HostZoneId, "Transferring %v%s", depositRecord.Amount, hostZone.HostDenom))
 		transferCoin := sdk.NewCoin(hostZone.IbcDenom, depositRecord.Amount)
@@ -85,14 +82,22 @@ func (k Keeper) TransferExistingDepositsToHostZones(ctx sdk.Context, epochNumber
 		// calculate the timeout
 		// https://github.com/tendermint/tendermint/blob/v0.34.x/spec/consensus/bft-time.md
 		timeoutTimestamp := uint64(ctx.BlockTime().UnixNano()) + ibcTransferTimeoutNanos
-		msg := ibctypes.NewMsgTransfer(ibctransfertypes.PortID, hostZone.TransferChannelId, transferCoin, hostZoneModuleAddress, delegateAddress, clienttypes.Height{}, timeoutTimestamp)
+		msg := ibctypes.NewMsgTransfer(
+			ibctransfertypes.PortID,
+			hostZone.TransferChannelId,
+			transferCoin,
+			hostZone.DepositAddress,
+			hostZone.DelegationIcaAddress,
+			clienttypes.Height{},
+			timeoutTimestamp,
+		)
 		k.Logger(ctx).Info(utils.LogWithHostZone(depositRecord.HostZoneId, "Transfer Msg: %+v", msg))
 
 		// transfer the deposit record and update its status to TRANSFER_IN_PROGRESS
 		err := k.RecordsKeeper.Transfer(ctx, msg, depositRecord)
 		if err != nil {
 			k.Logger(ctx).Error(fmt.Sprintf("[TransferExistingDepositsToHostZones] Failed to initiate IBC transfer to host zone, HostZone: %v, Channel: %v, Amount: %v, ModuleAddress: %v, DelegateAddress: %v, Timeout: %v",
-				hostZone.ChainId, hostZone.TransferChannelId, transferCoin, hostZoneModuleAddress, delegateAddress, timeoutTimestamp))
+				hostZone.ChainId, hostZone.TransferChannelId, transferCoin, hostZone.DepositAddress, hostZone.DelegationIcaAddress, timeoutTimestamp))
 			k.Logger(ctx).Error(fmt.Sprintf("[TransferExistingDepositsToHostZones] err {%s}", err.Error()))
 			continue
 		}
@@ -137,8 +142,7 @@ func (k Keeper) StakeExistingDepositsOnHostZones(ctx sdk.Context, epochNumber ui
 			continue
 		}
 
-		delegateAccount := hostZone.DelegationAccount
-		if delegateAccount == nil || delegateAccount.Address == "" {
+		if hostZone.DelegationIcaAddress == "" {
 			k.Logger(ctx).Error(fmt.Sprintf("[StakeExistingDepositsOnHostZones] Zone %s is missing a delegation address!", hostZone.ChainId))
 			continue
 		}

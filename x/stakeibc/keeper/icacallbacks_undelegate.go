@@ -225,13 +225,13 @@ func (k Keeper) BurnTokens(ctx sdk.Context, hostZone types.HostZone, stTokenBurn
 	}
 
 	// Send the stTokens from the host zone module account to the stakeibc module account
-	bech32ZoneAddress, err := sdk.AccAddressFromBech32(hostZone.Address)
+	depositAddress, err := sdk.AccAddressFromBech32(hostZone.DepositAddress)
 	if err != nil {
-		return fmt.Errorf("could not bech32 decode address %s of zone with id: %s", hostZone.Address, hostZone.ChainId)
+		return fmt.Errorf("could not bech32 decode address %s of zone with id: %s", hostZone.DepositAddress, hostZone.ChainId)
 	}
-	err = k.bankKeeper.SendCoinsFromAccountToModule(ctx, bech32ZoneAddress, types.ModuleName, sdk.NewCoins(stCoin))
+	err = k.bankKeeper.SendCoinsFromAccountToModule(ctx, depositAddress, types.ModuleName, sdk.NewCoins(stCoin))
 	if err != nil {
-		return fmt.Errorf("could not send coins from account %s to module %s. err: %s", hostZone.Address, types.ModuleName, err.Error())
+		return fmt.Errorf("could not send coins from account %s to module %s. err: %s", hostZone.DepositAddress, types.ModuleName, err.Error())
 	}
 
 	// Finally burn the stTokens

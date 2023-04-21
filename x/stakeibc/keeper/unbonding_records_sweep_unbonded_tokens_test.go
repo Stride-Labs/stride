@@ -27,14 +27,6 @@ func (s *KeeperTestSuite) SetupSweepUnbondedTokens() SweepUnbondedTokensTestCase
 			Weight:             uint64(10),
 		},
 	}
-	gaiaDelegationAccount := stakeibc.ICAAccount{
-		Address: "cosmos_DELEGATION",
-		Target:  stakeibc.ICAAccountType_DELEGATION,
-	}
-	gaiaRedemptionAccount := stakeibc.ICAAccount{
-		Address: "cosmos_REDEMPTION",
-		Target:  stakeibc.ICAAccountType_REDEMPTION,
-	}
 	osmoValidators := []*stakeibc.Validator{
 		{
 			Address:            "osmo_VALIDATOR",
@@ -42,23 +34,15 @@ func (s *KeeperTestSuite) SetupSweepUnbondedTokens() SweepUnbondedTokensTestCase
 			Weight:             uint64(10),
 		},
 	}
-	osmoDelegationAccount := stakeibc.ICAAccount{
-		Address: "osmo_DELEGATION",
-		Target:  stakeibc.ICAAccountType_DELEGATION,
-	}
-	osmoRedemptionAccount := stakeibc.ICAAccount{
-		Address: "osmo_REDEMPTION",
-		Target:  stakeibc.ICAAccountType_REDEMPTION,
-	}
 	hostZones := []stakeibc.HostZone{
 		{
 			ChainId:                  HostChainId,
 			HostDenom:                Atom,
 			Bech32Prefix:             GaiaPrefix,
-			UnbondingFrequency:       3,
+			UnbondingPeriod:          14,
 			Validators:               gaiaValidators,
-			DelegationAccount:        &gaiaDelegationAccount,
-			RedemptionAccount:        &gaiaRedemptionAccount,
+			DelegationIcaAddress:     "cosmos_DELEGATION",
+			RedemptionIcaAddress:     "cosmos_REDEMPTION",
 			TotalBalancedDelegations: sdkmath.NewInt(5_000_000),
 			ConnectionId:             ibctesting.FirstConnectionID,
 		},
@@ -66,10 +50,10 @@ func (s *KeeperTestSuite) SetupSweepUnbondedTokens() SweepUnbondedTokensTestCase
 			ChainId:                  OsmoChainId,
 			HostDenom:                Osmo,
 			Bech32Prefix:             OsmoPrefix,
-			UnbondingFrequency:       4,
+			UnbondingPeriod:          21,
 			Validators:               osmoValidators,
-			DelegationAccount:        &osmoDelegationAccount,
-			RedemptionAccount:        &osmoRedemptionAccount,
+			DelegationIcaAddress:     "osmo_DELEGATION",
+			RedemptionIcaAddress:     "osmo_REDEMPTION",
 			TotalBalancedDelegations: sdkmath.NewInt(5_000_000),
 			ConnectionId:             ibctesting.FirstConnectionID,
 		},
@@ -182,7 +166,7 @@ func (s *KeeperTestSuite) TestSweepUnbondedTokens_HostZoneUnbondingMissing() {
 func (s *KeeperTestSuite) TestSweepUnbondedTokens_RedemptionAccountMissing() {
 	s.SetupSweepUnbondedTokens()
 	hostZone, _ := s.App.StakeibcKeeper.GetHostZone(s.Ctx, "GAIA")
-	hostZone.RedemptionAccount = nil
+	hostZone.RedemptionIcaAddress = ""
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
 	success, successfulSweeps, sweepAmounts, failedSweeps := s.App.StakeibcKeeper.SweepAllUnbondedTokens(s.Ctx)
 	s.Require().Equal(success, false, "sweep all tokens failed if osmo missing")
@@ -197,7 +181,7 @@ func (s *KeeperTestSuite) TestSweepUnbondedTokens_RedemptionAccountMissing() {
 func (s *KeeperTestSuite) TestSweepUnbondedTokens_DelegationAccountAddressMissing() {
 	s.SetupSweepUnbondedTokens()
 	hostZone, _ := s.App.StakeibcKeeper.GetHostZone(s.Ctx, "OSMO")
-	hostZone.DelegationAccount.Address = ""
+	hostZone.DelegationIcaAddress = ""
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
 	success, successfulSweeps, sweepAmounts, failedSweeps := s.App.StakeibcKeeper.SweepAllUnbondedTokens(s.Ctx)
 	s.Require().False(success, "sweep all tokens failed if gaia missing")
