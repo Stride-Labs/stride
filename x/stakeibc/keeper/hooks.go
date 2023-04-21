@@ -136,16 +136,19 @@ func (k Keeper) SetWithdrawalAddress(ctx sdk.Context) {
 }
 
 // Updates the redemption rate for each host zone
-// At a high level, the redemption rate is equal to the amount of native tokens locked divided by the stTokens exchanged.
+// At a high level, the redemption rate is equal to the amount of native tokens locked divided by the stTokens in existence.
 // The equation is broken down further into the following sub-components:
 //     Native Tokens Locked:
 //       1. Deposit Account Balance: native tokens deposited from liquid stakes, that are still living on Stride
 //       2. Undelegated Balance:     native tokens that have been transferred to the host zone, but have not been delegated yet
-//       3. LSM Delegated Balance:   LSM Tokens from LSM Liquid Stakes that have not yet been converted to native stake
-//       4. Unbalanced Delegations:  Delegations from LSM Tokens that have not yet been balanced
+//       3. Tokenized Delegations:   Delegations inherent in LSM Tokens that have not yet been converted to native stake
+//       4. Unbalanced Delegations:  Delegations that have been converted from LSM Tokens to native stake, but have not yet been balanced
 //       5. Balanced Delegations:    Delegations either from native tokens, or LSM Tokens that have undergone rebalancing
 //    StToken Amount:
 //       1. Total Supply of the stToken
+//
+//  Redemption Rate =
+//  (Deposit Account Balance + Undelegated Balance + Tokenized Delegation + Unbalanced Delegation + Balanced Delegation) / (stToken Supply)
 func (k Keeper) UpdateRedemptionRates(ctx sdk.Context, depositRecords []recordstypes.DepositRecord) {
 	k.Logger(ctx).Info("Updating Redemption Rates...")
 
@@ -162,18 +165,24 @@ func (k Keeper) UpdateRedemptionRates(ctx sdk.Context, depositRecords []recordst
 
 		depositAccountBalance := k.GetDepositAccountBalance(hostZone, depositRecords)
 		undelegatedBalance := k.GetUndelegatedBalance(hostZone, depositRecords)
-		lsmDelegatedBalance := k.GetLSMDelegations(ctx, hostZone.ChainId)
-		nativeDelegatedBalance := sdk.NewDecFromInt(hostZone.TotalBalancedDelegations.Add(hostZone.TotalUnbalancedDelegations))
+		tokenizedDelegation := k.GetTokenizedDelegations(ctx, hostZone.ChainId)
+		balancedDelegation := sdk.NewDecFromInt(hostZone.TotalBalancedDelegations)
+		unbalancedDelegation := sdk.NewDecFromInt(hostZone.TotalUnbalancedDelegations)
 
 		k.Logger(ctx).Info(utils.LogWithHostZone(hostZone.ChainId, "Redemption Rate Components - "+
 			"Deposit Account Balance: %v, Undelegated Balance: %v, LSM Delegated Balance: %v"+
 			"Native Balanced Delegations: %v, Native Unbalanced Delegations: %v, stToken Supply: %v",
-			depositAccountBalance, undelegatedBalance, lsmDelegatedBalance,
-			hostZone.TotalUnbalancedDelegations, hostZone.TotalUnbalancedDelegations, stSupply))
+			depositAccountBalance, undelegatedBalance, tokenizedDelegation,
+			balancedDelegation, unbalancedDelegation, stSupply))
 
 		// Calculate the redemption rate
-		nativeTokenAmount := (depositAccountBalance.Add(undelegatedBalance).Add(lsmDelegatedBalance).Add(nativeDelegatedBalance))
-		redemptionRate := nativeTokenAmount.Quo(sdk.NewDecFromInt(stSupply))
+		nativeTokensLocked := depositAccountBalance.
+			Add(undelegatedBalance).
+			Add(tokenizedDelegation).
+			Add(balancedDelegation).
+			Add(unbalancedDelegation)
+		redemptionRate := nativeTokensLocked.Quo(sdk.NewDecFromInt(stSupply))
+
 		k.Logger(ctx).Info(utils.LogWithHostZone(hostZone.ChainId,
 			"New Redemption Rate: %v (vs Prev Rate: %v)", redemptionRate, hostZone.RedemptionRate))
 
@@ -223,7 +232,7 @@ func (k Keeper) GetDepositAccountBalance(hostZone types.HostZone, depositRecords
 
 // Returns the total delegated balance that's stored in LSM tokens
 // These are identified by any status besides "DEPOSIT_PENDING"
-func (k Keeper) GetLSMDelegations(ctx sdk.Context, chainId string) sdk.Dec {
+func (k Keeper) GetTokenizedDelegations(ctx sdk.Context, chainId string) sdk.Dec {
 	total := sdkmath.ZeroInt()
 	for _, deposit := range k.GetLSMDepositsForHostZone(ctx, chainId) {
 		if deposit.Status != types.DEPOSIT_PENDING {
