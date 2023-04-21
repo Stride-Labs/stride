@@ -16,6 +16,7 @@ import (
 	// This isn't the exact type host zone schema as the one that's will be in the store
 	// before the upgrade, but the only thing that matters, for the sake of the test,
 	// is that it doesn't have min/max redemption rate as attributes
+	"github.com/Stride-Labs/stride/v8/x/claim/migrations/v2/types"
 	oldclaimtypes "github.com/Stride-Labs/stride/v8/x/claim/migrations/v2/types"
 )
 
@@ -51,6 +52,11 @@ func (s *UpgradeTestSuite) SetupAirdropsBeforeUpgrade() {
 		})
 	}
 
+	// Add in another airdrop that's not in the map
+	airdrops = append(airdrops, &types.Airdrop{
+		AirdropIdentifier: "different_airdrop",
+	})
+
 	// Store the airdrops using the old schema
 	codec := app.MakeEncodingConfig().Marshaler
 	claimStore := s.Ctx.KVStore(s.App.GetKey(claimtypes.StoreKey))
@@ -64,7 +70,7 @@ func (s *UpgradeTestSuite) CheckAirdropsAfterUpgrade() {
 	// Read in the airdrops using the new schema - which should include chainId and AirdropEnabled
 	claimParams, err := s.App.ClaimKeeper.GetParams(s.Ctx)
 	s.Require().NoError(err, "no error expected when getting claims params")
-	s.Require().Len(claimParams.Airdrops, len(v9.AirdropChainIds), "number of airdrops after migration")
+	s.Require().Len(claimParams.Airdrops, len(v9.AirdropChainIds)+1, "number of airdrops after migration")
 
 	// Confirm the new fields were added and the old fields (e.g. ChainDenom) remain the same
 	for i, identifier := range utils.StringMapKeys(v9.AirdropChainIds) {
@@ -78,6 +84,11 @@ func (s *UpgradeTestSuite) CheckAirdropsAfterUpgrade() {
 		s.Require().Equal(expectedDenom, actual.ClaimDenom, "denom after migration")
 		s.Require().Equal(expectedAutopilotEnabled, actual.AutopilotEnabled, "autopilot enabled after migration")
 	}
+
+	// Confirm the airdrop that was not in the map
+	airdropWithoutChainId := claimParams.Airdrops[len(v9.AirdropChainIds)]
+	s.Require().Equal("different_airdrop", airdropWithoutChainId.AirdropIdentifier, "airdrop id for outsider")
+	s.Require().Equal("", airdropWithoutChainId.AirdropIdentifier, "chain-id for outsider")
 }
 
 func (s *UpgradeTestSuite) TestAddFieldsToAirdropType() {
