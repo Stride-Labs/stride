@@ -2,13 +2,15 @@
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 source ${SCRIPT_DIR}/../../config.sh
 
-### AIRDROP TESTING FLOW Pt 2
+### AIRDROP TESTING FLOW Pt 2 (AUTOPILOT)
 
 # This script tests airdrop claiming via autopilot
 # The claim is initiated by sending an IBC transfer with the stride address in the memo
+# Gaia is used for this test with ibc v3 - and the memo is included in the receiver field of the transfer
 
-# First, start the network with `make start-docker`
-# Then, run this script with `bash dockernet/scripts/airdrop/airdrop2.sh`
+# To run:
+#   1. Start the network with `make start-docker`
+#   2. Run this script with `bash dockernet/scripts/airdrop/airdrop2_autopilot.sh`
 
 # NOTE: First, store the keys using the following mnemonics
 echo "Registering accounts..."

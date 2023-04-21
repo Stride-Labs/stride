@@ -2,13 +2,15 @@
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 source ${SCRIPT_DIR}/../../config.sh
 
-### AIRDROP TESTING FLOW Pt 5 (Evmos)
+### AIRDROP TESTING FLOW Pt 3 (EVMOS)
 
 # This script tests claiming an evmos airdrop via autopilot with ibc-go v5+
 # The claim is initiated by sending an IBC transfer with the stride address in the memo
 
-# First, start the network with `make start-docker`
-# Then, run this script with `bash dockernet/scripts/airdrop/airdrop5_evmos.sh`
+# To run:
+# 1. Enable EVMOS as the only dockernet host chain
+# 2. Start the network with `make start-docker`
+# 3. Run this script with `bash dockernet/scripts/airdrop/airdrop3_evmos.sh`
 
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 source ${SCRIPT_DIR}/../../config.sh

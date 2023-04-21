@@ -2,14 +2,15 @@
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 source ${SCRIPT_DIR}/../../config.sh
 
-### AIRDROP TESTING FLOW Pt 1
+### AIRDROP TESTING FLOW Pt 1 (STANDARD)
 
 # This script tests airdrop claiming directly on Stride
 # This covers the case where the host zone has a coin type of 118 
 # and autopilot is disabled for the claim
 
-# First, start the network with `make start-docker`
-# Then, run this script with `bash dockernet/scripts/airdrop/airdrop1.sh`
+# To run:
+#   1. Start the network with `make start-docker`
+#   2. Run this script with `bash dockernet/scripts/airdrop/airdrop1_standard.sh`
 
 # NOTE: First, store the keys using the following mnemonics
 echo "Registering accounts..."

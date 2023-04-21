@@ -2,12 +2,16 @@
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 source ${SCRIPT_DIR}/../../config.sh
 
-### AIRDROP TESTING FLOW Pt 3
+### AIRDROP TESTING FLOW Pt 4 (RESETS)
 
 # This script tests that the the airdrop resets properly
 
-# First, start the network with `make start-docker`
-# Then, run this script with `bash dockernet/scripts/airdrop/airdrop3.sh`
+# To run:
+#   1. Update the following in `x/claim/types/params.go`
+#      * `DefaultEpochDuration` to `time.Second * 60`
+#      * `DefaultVestingInitialPeriod` to `time.Second * 120`
+#   2. Start the network with `make start-docker`
+#   3. Run this script with `bash dockernet/scripts/airdrop/airdrop4_resets.sh`
 
 # NOTE: First, store the keys using the following mnemonics
 echo "Registering distributor account..."

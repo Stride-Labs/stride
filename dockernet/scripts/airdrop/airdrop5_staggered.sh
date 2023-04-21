@@ -2,12 +2,16 @@
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 source ${SCRIPT_DIR}/../../config.sh
 
-### AIRDROP TESTING FLOW Pt 4
+### AIRDROP TESTING FLOW Pt 5 (STAGGERED)
 
 # This script tests multiple staggered airdrops live in tandem
 
-# First, start the network with `make start-docker`
-# Then, run this script with `bash dockernet/scripts/airdrop/airdrop4.sh`
+# To run:
+#   1. Update the following in `x/claim/types/params.go`
+#      * `DefaultEpochDuration` to `time.Second * 60`
+#      * `DefaultVestingInitialPeriod` to `time.Second * 120`
+#   2. Start the network with `make start-docker`
+#   3. Run this script with `bash dockernet/scripts/airdrop/airdrop5_staggered.sh`
 
 echo "Registering accounts..."
 # distributor address: stride12lw3587g97lgrwr2fjtr8gg5q6sku33e5yq9wl
