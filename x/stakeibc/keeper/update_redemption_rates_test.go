@@ -17,12 +17,6 @@ import (
 	stakeibctypes "github.com/Stride-Labs/stride/v8/x/stakeibc/types"
 )
 
-// TODO: Use array-of-test-cases setup for this redemption rate test
-// TODO [LSM]: Fix randomized test
-// TODO [LSM]: Add balanced/unbalanced delegation test cases
-// TODO [LSM]: Add test cases with multiple deposit records
-// TODO [LSM]: Add unit tests for sub-functions
-
 type UpdateRedemptionRateTestCase struct {
 	balancedDelegation    sdkmath.Int
 	unbalancedDelegation  sdkmath.Int
@@ -69,7 +63,8 @@ func (s *KeeperTestSuite) SetupUpdateRedemptionRates(tc UpdateRedemptionRateTest
 
 	// set the stSupply by minting
 	supply := sdk.NewCoins(sdk.NewCoin(StAtom, tc.stSupply))
-	s.App.BankKeeper.MintCoins(s.Ctx, minttypes.ModuleName, supply)
+	err := s.App.BankKeeper.MintCoins(s.Ctx, minttypes.ModuleName, supply)
+	s.Require().NoError(err)
 
 	// set the staked balance on the host zone
 	hostZone := stakeibctypes.HostZone{
