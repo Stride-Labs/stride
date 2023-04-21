@@ -101,7 +101,7 @@ func (app *StrideApp) setupUpgradeHandlers() {
 	// v9 upgrade handler
 	app.UpgradeKeeper.SetUpgradeHandler(
 		v9.UpgradeName,
-		v9.CreateUpgradeHandler(app.mm, app.configurator),
+		v9.CreateUpgradeHandler(app.mm, app.configurator, app.ClaimKeeper),
 	)
 
 	upgradeInfo, err := app.UpgradeKeeper.ReadUpgradeInfoFromDisk()

@@ -76,7 +76,7 @@ func (s *UpgradeTestSuite) CheckAirdropsAfterUpgrade() {
 	for i, identifier := range utils.StringMapKeys(v9.AirdropChainIds) {
 		expectedChainId := v9.AirdropChainIds[identifier]
 		expectedDenom := fmt.Sprintf("denom-%d", i)
-		expectedAutopilotEnabled := identifier == EvmosAirdropId
+		expectedAutopilotEnabled := identifier == v9.EvmosAirdropId
 
 		actual := claimParams.Airdrops[i]
 		s.Require().Equal(identifier, actual.AirdropIdentifier, "identifier after migration")
@@ -88,7 +88,7 @@ func (s *UpgradeTestSuite) CheckAirdropsAfterUpgrade() {
 	// Confirm the airdrop that was not in the map
 	airdropWithoutChainId := claimParams.Airdrops[len(v9.AirdropChainIds)]
 	s.Require().Equal("different_airdrop", airdropWithoutChainId.AirdropIdentifier, "airdrop id for outsider")
-	s.Require().Equal("", airdropWithoutChainId.AirdropIdentifier, "chain-id for outsider")
+	s.Require().Equal("", airdropWithoutChainId.ChainId, "chain-id for outsider")
 }
 
 func (s *UpgradeTestSuite) TestAddFieldsToAirdropType() {
