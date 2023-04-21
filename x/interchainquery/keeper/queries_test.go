@@ -8,8 +8,8 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 
-	"github.com/Stride-Labs/stride/v8/x/interchainquery/keeper"
-	"github.com/Stride-Labs/stride/v8/x/interchainquery/types"
+	"github.com/Stride-Labs/stride/v9/x/interchainquery/keeper"
+	"github.com/Stride-Labs/stride/v9/x/interchainquery/types"
 )
 
 func TestUnmarshalAmountFromBalanceQuery(t *testing.T) {
