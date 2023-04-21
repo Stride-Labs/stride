@@ -16,7 +16,7 @@ TX_LOGS=$DOCKERNET_HOME/logs/tx.log
 KEYS_LOGS=$DOCKERNET_HOME/logs/keys.log
 
 # List of hosts enabled
-HOST_CHAINS=() 
+HOST_CHAINS=(EVMOS) 
 
 # If no host zones are specified above:
 #  `start-docker` defaults to just GAIA if HOST_CHAINS is empty
@@ -228,9 +228,9 @@ EVMOS_CHAIN_ID=evmos_9001-2
 EVMOS_NODE_PREFIX=evmos
 EVMOS_NUM_NODES=1
 EVMOS_BINARY="$DOCKERNET_HOME/../build/evmosd"
-EVMOS_VAL_PREFIX=nval
+EVMOS_VAL_PREFIX=eval
 EVMOS_ADDRESS_PREFIX=evmos
-EVMOS_REV_ACCT=nrev1
+EVMOS_REV_ACCT=erev1
 EVMOS_DENOM=$EVMOS_DENOM
 EVMOS_RPC_PORT=26057
 EVMOS_MAIN_CMD="$EVMOS_BINARY --home $DOCKERNET_HOME/state/${EVMOS_NODE_PREFIX}1"
