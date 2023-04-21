@@ -1284,7 +1284,8 @@ type QueryClient interface {
 	// Queries the existing LSMTokenDeposits for one specific deposit
 	LSMDeposit(ctx context.Context, in *QueryLSMDepositRequest, opts ...grpc.CallOption) (*QueryLSMDepositResponse, error)
 	// Queries the existing LSMTokenDeposits for all which match filters
-	//   intended use:  ...stakeibc/lsm_deposits?chain_id=X&validator_address=Y&status=Z
+	//   intended use:
+	//   ...stakeibc/lsm_deposits?chain_id=X&validator_address=Y&status=Z
 	LSMDeposits(ctx context.Context, in *QueryLSMDepositsRequest, opts ...grpc.CallOption) (*QueryLSMDepositsResponse, error)
 }
 
@@ -1430,7 +1431,8 @@ type QueryServer interface {
 	// Queries the existing LSMTokenDeposits for one specific deposit
 	LSMDeposit(context.Context, *QueryLSMDepositRequest) (*QueryLSMDepositResponse, error)
 	// Queries the existing LSMTokenDeposits for all which match filters
-	//   intended use:  ...stakeibc/lsm_deposits?chain_id=X&validator_address=Y&status=Z
+	//   intended use:
+	//   ...stakeibc/lsm_deposits?chain_id=X&validator_address=Y&status=Z
 	LSMDeposits(context.Context, *QueryLSMDepositsRequest) (*QueryLSMDepositsResponse, error)
 }
 

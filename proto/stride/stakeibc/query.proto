@@ -77,18 +77,16 @@ service Query {
   }
 
   // Queries the existing LSMTokenDeposits for one specific deposit
-  rpc LSMDeposit(QueryLSMDepositRequest)
-      returns (QueryLSMDepositResponse) {
-    option (google.api.http).get = 
+  rpc LSMDeposit(QueryLSMDepositRequest) returns (QueryLSMDepositResponse) {
+    option (google.api.http).get =
         "/Stride-Labs/stride/stakeibc/lsm_deposit/{chain_id}/{denom}";
   }
 
   // Queries the existing LSMTokenDeposits for all which match filters
-  //   intended use:  ...stakeibc/lsm_deposits?chain_id=X&validator_address=Y&status=Z
-  rpc LSMDeposits(QueryLSMDepositsRequest)
-      returns (QueryLSMDepositsResponse) {
-    option (google.api.http).get = 
-        "/Stride-Labs/stride/stakeibc/lsm_deposits";
+  //   intended use:
+  //   ...stakeibc/lsm_deposits?chain_id=X&validator_address=Y&status=Z
+  rpc LSMDeposits(QueryLSMDepositsRequest) returns (QueryLSMDepositsResponse) {
+    option (google.api.http).get = "/Stride-Labs/stride/stakeibc/lsm_deposits";
   }
 }
 

@@ -84,8 +84,8 @@ message MsgRegisterHostZone {
   string creator = 6;
   string transfer_channel_id = 10
       [ (gogoproto.moretags) = "yaml:\"transfer_channel_id\"" ];
-  uint64 unbonding_frequency = 11
-      [ (gogoproto.moretags) = "yaml:\"unbonding_frequency\"" ];
+  uint64 unbonding_period = 11
+      [ (gogoproto.moretags) = "yaml:\"unbonding_period\"" ];
   string min_redemption_rate = 13 [
     (cosmos_proto.scalar) = "cosmos.Dec",
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
