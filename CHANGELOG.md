@@ -51,7 +51,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Off-Chain Changes
 These changes do not affect any on-chain functionality, but have been implemented since `v8.0.0`.
-1. Update dockernet go relayer and integration test timing ([edeffb3](https://github.com/Stride-Labs/stride/commit/edeffb320bc93c3cc6f3cabc5d2ce18448bebae0))
+1. Add evmos to dockernet ([3323949](https://github.com/Stride-Labs/stride/commit/332394936f57b87ad0b2987572eaa1cade5ce68b))
+2. Update dockernet go relayer and integration test timing ([edeffb3](https://github.com/Stride-Labs/stride/commit/edeffb320bc93c3cc6f3cabc5d2ce18448bebae0))
 
 ## [v8.0.0](https://github.com/Stride-Labs/stride/releases/tag/v8.0.0) - 2023-03-23
 ### On-Chain changes
