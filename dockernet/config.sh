@@ -311,7 +311,7 @@ GET_VAR_VALUE() {
 WAIT_FOR_BLOCK() {
   num_blocks="${2:-1}"
   for i in $(seq $num_blocks); do
-    ( tail -f -n0 $1 & ) | grep -q "INF executed block height="
+    ( tail -f -n0 $1 & ) | grep -q "executed block                               module=state height="
   done
 }
 
