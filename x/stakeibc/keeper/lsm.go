@@ -221,7 +221,7 @@ func (k Keeper) DetokenizeAllLSMDeposits(ctx sdk.Context) {
 // This portion of stake is designated as the "Unbalanced Delegation"
 // This function rebalances the unbalanced portion according to the validator weights,
 //   and should not be confused with the main Rebalance function which rebalances
-//   the entire protocol-owned delegation
+//   the "Balanced Delegation"
 // Note: this cannot be run more than once in a single unbonding period
 func (k Keeper) RebalanceTokenizedDeposits(ctx sdk.Context, dayNumber uint64) {
 	for _, hostZone := range k.GetAllActiveHostZone(ctx) {
