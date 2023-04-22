@@ -12,7 +12,6 @@ enum DelegationType {
   UNBALANCED = 1;
 }
 
-// next id: 23
 message HostZone {
   string chain_id = 1;
   string bech32prefix = 17;

@@ -1,6 +1,8 @@
 package keeper_test
 
 import (
+	"math/rand"
+
 	sdkmath "cosmossdk.io/math"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -30,18 +32,18 @@ func (s *KeeperTestSuite) checkRebalanceICAMessages(
 	}
 
 	// Only the validator address is needed in the host zone validator array
-	validators := []*types.Validator{}
-	for _, rebalance := range validatorDeltas {
-		validators = append(validators, &types.Validator{Address: rebalance.ValidatorAddress})
-	}
 	hostZone := types.HostZone{
-		Validators:           validators,
 		HostDenom:            Atom,
 		DelegationIcaAddress: delegationAddress, // used as ICA message sender
 	}
 
+	// Shuffle the validatorDeltas to ensure the sorting worked
+	rand.Shuffle(len(validatorDeltas), func(i, j int) {
+		validatorDeltas[i], validatorDeltas[j] = validatorDeltas[j], validatorDeltas[i]
+	})
+
 	// Get the rebalancing messages
-	actualMsgs, actualRabalancings := s.App.StakeibcKeeper.GetRebalanceICAMessages(hostZone, validatorDeltas, uint64(len(validators)))
+	actualMsgs, actualRabalancings := s.App.StakeibcKeeper.GetRebalanceICAMessages(hostZone, validatorDeltas, uint64(len(validatorDeltas)))
 
 	// Confirm the rebalancing list used for the callback
 	s.Require().Len(actualRabalancings, len(expectedRebalancings), "length of rebalancings")
@@ -141,6 +143,11 @@ func (s *KeeperTestSuite) TestGetValidatorDelegationDifferences() {
 		{Address: "val2", Weight: 20, BalancedDelegation: sdkmath.NewInt(20), UnbalancedDelegation: sdkmath.NewInt(140)},
 		{Address: "val3", Weight: 70, BalancedDelegation: sdkmath.NewInt(10), UnbalancedDelegation: sdkmath.NewInt(40)},
 	}
+
+	// Shuffle the validators to ensure the sorting worked
+	rand.Shuffle(len(validators), func(i, j int) {
+		validators[i], validators[j] = validators[j], validators[i]
+	})
 	hostZone := types.HostZone{ChainId: HostChainId, Validators: validators}
 
 	// Expected Balance is determined by the total delegation * weight
@@ -186,9 +193,9 @@ func (s *KeeperTestSuite) TestGetTargetValAmtsForHostZone() {
 		{Address: "val1", Weight: 20},
 		{Address: "val2", Weight: 40},
 		{Address: "val3", Weight: 30},
-		{Address: "val4", Weight: 5},
-		{Address: "val5", Weight: 0},
 		{Address: "val6", Weight: 5},
+		{Address: "val5", Weight: 0},
+		{Address: "val4", Weight: 5},
 	}
 	expectedValidators := []*types.Validator{ // sorted by weight and name
 		{Address: "val5", Weight: 0},
