@@ -27,9 +27,6 @@ var (
 	// Timeout for the validator slash query that occurs at periodic deposit intervals
 	SlashQueryTimeout = time.Minute * 5 // 5 minutes
 
-	// Time for the IBC transfer of the LSM Token to the host zone
-	LSMDepositTransferTimeout = time.Hour * 24 // 1 day
-
 	// Time for the detokenization ICA
 	DetokenizationTimeout = time.Hour * 24 // 1 day
 )

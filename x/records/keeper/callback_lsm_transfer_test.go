@@ -1,32 +1,49 @@
 package keeper_test
 
 import (
+	"fmt"
+
 	_ "github.com/stretchr/testify/suite"
 
 	"github.com/golang/protobuf/proto" //nolint:staticcheck
 
+	transfertypes "github.com/cosmos/ibc-go/v5/modules/apps/transfer/types"
 	channeltypes "github.com/cosmos/ibc-go/v5/modules/core/04-channel/types"
+	ibctesting "github.com/cosmos/ibc-go/v5/testing"
 
 	icacallbackstypes "github.com/Stride-Labs/stride/v9/x/icacallbacks/types"
 	recordskeeper "github.com/Stride-Labs/stride/v9/x/records/keeper"
 	"github.com/Stride-Labs/stride/v9/x/records/types"
-	recordtypes "github.com/Stride-Labs/stride/v9/x/records/types"
 )
 
 var (
-	LSMTokenDenom = "cosmosXXX/42"
+	LSMTokenDenom = "cosmosvaloperxxx/42"
 )
 
 func (s *KeeperTestSuite) SetupLSMTransferCallback() []byte {
-	deposit := recordtypes.LSMTokenDeposit{
-		ChainId: HostChainId,
-		Denom:   LSMTokenDenom,
-		Status:  recordtypes.LSMTokenDeposit_TRANSFER_IN_PROGRESS,
+	delegationAccountOwner := fmt.Sprintf("%s.%s", HostChainId, "DELEGATION")
+	s.CreateICAChannel(delegationAccountOwner)
+	delegationAddress := s.IcaAddresses[delegationAccountOwner]
+
+	// we need a valid ibc denom here or the transfer will fail
+	prefixedDenom := transfertypes.GetPrefixedDenom(transfertypes.PortID, ibctesting.FirstChannelID, LSMTokenDenom)
+	denomTrace := transfertypes.ParseDenomTrace(prefixedDenom)
+	ibcDenom := denomTrace.IBCDenom()
+	s.App.TransferKeeper.SetDenomTrace(s.Ctx, denomTrace)
+
+	deposit := types.LSMTokenDeposit{
+		ChainId:  HostChainId,
+		Denom:    LSMTokenDenom,
+		IbcDenom: ibcDenom,
+		Status:   types.LSMTokenDeposit_TRANSFER_IN_PROGRESS,
 	}
 	s.App.RecordsKeeper.SetLSMTokenDeposit(s.Ctx, deposit)
 
 	callbackArgs := types.TransferLSMTokenCallback{
-		Deposit: &deposit,
+		Deposit:                      &deposit,
+		TransferChannelId:            ibctesting.FirstChannelID,
+		HostZoneDepositAddress:       s.TestAccs[0].String(),
+		HostZoneDelegationIcaAddress: delegationAddress,
 	}
 	callbackArgsBz, err := proto.Marshal(&callbackArgs)
 	s.Require().NoError(err, "no error expected when marshalling callback args")
@@ -47,7 +64,7 @@ func (s *KeeperTestSuite) TestLSMTransferCallback_Successful() {
 	// Confirm deposit has been updated to DETOKENIZATION_QUEUE
 	record, found := s.App.RecordsKeeper.GetLSMTokenDeposit(s.Ctx, HostChainId, LSMTokenDenom)
 	s.Require().True(found, "deposit found")
-	s.Require().Equal(recordtypes.LSMTokenDeposit_DETOKENIZATION_QUEUE.String(), record.Status.String(), "deposit status")
+	s.Require().Equal(types.LSMTokenDeposit_DETOKENIZATION_QUEUE.String(), record.Status.String(), "deposit status")
 }
 
 func (s *KeeperTestSuite) TestLSMTransferCallback_InvalidCallbackArgs() {
@@ -72,7 +89,10 @@ func (s *KeeperTestSuite) TestLSMTransferCallback_AckTimeout() {
 	err := recordskeeper.LSMTransferCallback(s.App.RecordsKeeper, s.Ctx, channeltypes.Packet{}, ackTimeout, callbackArgsBz)
 	s.Require().NoError(err, "no error expected when executing callback")
 
-	// TODO [LSM] : Confirm new transfer was submitted
+	// Confirm deposit has been updated to TRANSFER_IN_PROGRESS (since the transfer gets resubmitted on a timeout)
+	record, found := s.App.RecordsKeeper.GetLSMTokenDeposit(s.Ctx, HostChainId, LSMTokenDenom)
+	s.Require().True(found, "deposit found")
+	s.Require().Equal(types.DepositRecord_TRANSFER_IN_PROGRESS.String(), record.Status.String(), "deposit status")
 }
 
 func (s *KeeperTestSuite) TestLSMTransferCallback_AckFailed() {
@@ -88,5 +108,5 @@ func (s *KeeperTestSuite) TestLSMTransferCallback_AckFailed() {
 	// Confirm deposit has been updated to status FAILED
 	record, found := s.App.RecordsKeeper.GetLSMTokenDeposit(s.Ctx, HostChainId, LSMTokenDenom)
 	s.Require().True(found, "deposit found")
-	s.Require().Equal(recordtypes.LSMTokenDeposit_TRANSFER_FAILED.String(), record.Status.String(), "deposit status")
+	s.Require().Equal(types.LSMTokenDeposit_TRANSFER_FAILED.String(), record.Status.String(), "deposit status")
 }

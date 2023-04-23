@@ -1,8 +1,12 @@
 package keeper
 
 import (
+	"time"
+
+	errorsmod "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	ibctypes "github.com/cosmos/ibc-go/v5/modules/apps/transfer/types"
+	transfertypes "github.com/cosmos/ibc-go/v5/modules/apps/transfer/types"
+	"github.com/golang/protobuf/proto"
 
 	"github.com/Stride-Labs/stride/v9/utils"
 	icacallbackstypes "github.com/Stride-Labs/stride/v9/x/icacallbacks/types"
@@ -10,13 +14,16 @@ import (
 	"github.com/Stride-Labs/stride/v9/x/records/types"
 )
 
+var (
+	// Timeout for the IBC transfer of the LSM Token to the host zone
+	LSMDepositTransferTimeout = time.Hour * 24 // 1 day
+)
+
 // Transfers native tokens, accumulated from normal liquid stakes, to the host zone
 // This is invoked epochly
-func (k Keeper) IBCTransferNativeTokens(ctx sdk.Context, msg *ibctypes.MsgTransfer, depositRecord types.DepositRecord) error {
-	goCtx := sdk.WrapSDKContext(ctx)
-
+func (k Keeper) IBCTransferNativeTokens(ctx sdk.Context, msg *transfertypes.MsgTransfer, depositRecord types.DepositRecord) error {
 	// Submit IBC transfer
-	msgTransferResponse, err := k.TransferKeeper.Transfer(goCtx, msg)
+	msgTransferResponse, err := k.TransferKeeper.Transfer(sdk.WrapSDKContext(ctx), msg)
 	if err != nil {
 		return err
 	}
@@ -47,6 +54,60 @@ func (k Keeper) IBCTransferNativeTokens(ctx sdk.Context, msg *ibctypes.MsgTransf
 	// update the record state to TRANSFER_IN_PROGRESS
 	depositRecord.Status = types.DepositRecord_TRANSFER_IN_PROGRESS
 	k.SetDepositRecord(ctx, depositRecord)
+
+	return nil
+}
+
+// Transfer's LSM Tokens to the host from LSMLiquidStakes
+// This is invoked immediately after the LSMLiquidStake
+func (k Keeper) IBCTransferLSMToken(
+	ctx sdk.Context,
+	lsmTokenDeposit types.LSMTokenDeposit,
+	transferChannelID string,
+	hostZoneDepositAddress string,
+	hostZoneDelegationICAAddress string,
+) error {
+	// Update deposit status
+	k.UpdateLSMTokenDepositStatus(ctx, lsmTokenDeposit, types.LSMTokenDeposit_TRANSFER_IN_PROGRESS)
+
+	// Build transfer message with a conservative timeout
+	timeout := uint64(ctx.BlockTime().UnixNano() + (LSMDepositTransferTimeout).Nanoseconds())
+	ibcToken := sdk.NewCoin(lsmTokenDeposit.IbcDenom, lsmTokenDeposit.Amount)
+	transferMsg := transfertypes.MsgTransfer{
+		SourcePort:       transfertypes.PortID,
+		SourceChannel:    transferChannelID,
+		Token:            ibcToken,
+		Sender:           hostZoneDepositAddress,
+		Receiver:         hostZoneDelegationICAAddress,
+		TimeoutTimestamp: timeout,
+	}
+
+	// Send LSM Token to host zone via IBC transfer
+	msgTransferResponse, err := k.TransferKeeper.Transfer(sdk.WrapSDKContext(ctx), &transferMsg)
+	if err != nil {
+		return err
+	}
+
+	// Store transfer callback data
+	callbackArgs := types.TransferLSMTokenCallback{
+		Deposit:                      &lsmTokenDeposit,
+		TransferChannelId:            transferChannelID,
+		HostZoneDepositAddress:       hostZoneDepositAddress,
+		HostZoneDelegationIcaAddress: hostZoneDelegationICAAddress,
+	}
+	callbackArgsBz, err := proto.Marshal(&callbackArgs)
+	if err != nil {
+		return errorsmod.Wrapf(err, "Unable to marshal transfer callback data for %+v", callbackArgs)
+	}
+
+	k.ICACallbacksKeeper.SetCallbackData(ctx, icacallbackstypes.CallbackData{
+		CallbackKey:  icacallbackstypes.PacketID(transferMsg.SourcePort, transferMsg.SourceChannel, msgTransferResponse.Sequence),
+		PortId:       transferMsg.SourcePort,
+		ChannelId:    transferMsg.SourceChannel,
+		Sequence:     msgTransferResponse.Sequence,
+		CallbackId:   IBCCallbacksID_LSMTransfer,
+		CallbackArgs: callbackArgsBz,
+	})
 
 	return nil
 }

@@ -21,14 +21,26 @@ func LSMTransferCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, 
 	if err := proto.Unmarshal(args, &transferCallback); err != nil {
 		return errorsmod.Wrapf(types.ErrUnmarshalFailure, "unable to unmarshal LSM transfer callback: %s", err.Error())
 	}
-	chainId := transferCallback.Deposit.ChainId
+	deposit := *transferCallback.Deposit
+	chainId := deposit.ChainId
 	k.Logger(ctx).Info(utils.LogICACallbackWithHostZone(chainId, IBCCallbacksID_LSMTransfer, "Starting LSM transfer callback"))
 
 	// If timeout, retry the transfer
 	if ackResponse.Status == icacallbackstypes.AckResponseStatus_TIMEOUT {
 		k.Logger(ctx).Error(utils.LogICACallbackStatusWithHostZone(chainId, IBCCallbacksID_LSMTransfer,
 			icacallbackstypes.AckResponseStatus_TIMEOUT, packet))
-		// TODO [LSM]
+
+		// TODO [LSM] : Consider queuing this transfer and then submitting it in the end blocker
+		// to prevent a failure here from invalidating the Ack Submission
+		if err := k.IBCTransferLSMToken(
+			ctx,
+			deposit,
+			transferCallback.TransferChannelId,
+			transferCallback.HostZoneDepositAddress,
+			transferCallback.HostZoneDepositAddress,
+		); err != nil {
+			return errorsmod.Wrapf(err, "Failed to submit IBC transfer of LSM token")
+		}
 		return nil
 	}
 
@@ -37,7 +49,7 @@ func LSMTransferCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, 
 		k.Logger(ctx).Error(utils.LogICACallbackStatusWithHostZone(chainId, IBCCallbacksID_LSMTransfer,
 			icacallbackstypes.AckResponseStatus_FAILURE, packet))
 
-		k.UpdateLSMTokenDepositStatus(ctx, *transferCallback.Deposit, types.LSMTokenDeposit_TRANSFER_FAILED)
+		k.UpdateLSMTokenDepositStatus(ctx, deposit, types.LSMTokenDeposit_TRANSFER_FAILED)
 		return nil
 	}
 
@@ -45,7 +57,7 @@ func LSMTransferCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, 
 	k.Logger(ctx).Info(utils.LogICACallbackStatusWithHostZone(chainId, IBCCallbacksID_LSMTransfer,
 		icacallbackstypes.AckResponseStatus_SUCCESS, packet))
 
-	k.UpdateLSMTokenDepositStatus(ctx, *transferCallback.Deposit, types.LSMTokenDeposit_DETOKENIZATION_QUEUE)
+	k.UpdateLSMTokenDepositStatus(ctx, deposit, types.LSMTokenDeposit_DETOKENIZATION_QUEUE)
 
 	return nil
 }
