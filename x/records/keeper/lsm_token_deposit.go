@@ -4,13 +4,13 @@ import (
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/Stride-Labs/stride/v9/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v9/x/records/types"
 )
 
 func (k Keeper) SetLSMTokenDeposit(ctx sdk.Context, deposit types.LSMTokenDeposit) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefix(types.LSMTokenDepositKey))
 	depositKey := types.GetLSMTokenDepositKey(deposit.ChainId, deposit.Denom)
-	depositData := k.cdc.MustMarshal(&deposit)
+	depositData := k.Cdc.MustMarshal(&deposit)
 	store.Set(depositKey, depositData)
 }
 
@@ -27,7 +27,7 @@ func (k Keeper) GetLSMTokenDeposit(ctx sdk.Context, chainId, denom string) (depo
 	if len(depositData) == 0 {
 		return deposit, false
 	}
-	k.cdc.MustUnmarshal(depositData, &deposit)
+	k.Cdc.MustUnmarshal(depositData, &deposit)
 	return deposit, true
 }
 
@@ -40,7 +40,7 @@ func (k Keeper) GetAllLSMTokenDeposit(ctx sdk.Context) []types.LSMTokenDeposit {
 
 	for ; iterator.Valid(); iterator.Next() {
 		var deposit types.LSMTokenDeposit
-		k.cdc.MustUnmarshal(iterator.Value(), &deposit)
+		k.Cdc.MustUnmarshal(iterator.Value(), &deposit)
 		allLSMTokenDeposits = append(allLSMTokenDeposits, deposit)
 	}
 
@@ -55,7 +55,7 @@ func (k Keeper) AddLSMTokenDeposit(ctx sdk.Context, deposit types.LSMTokenDeposi
 	k.SetLSMTokenDeposit(ctx, deposit)
 }
 
-func (k Keeper) UpdateLSMTokenDepositStatus(ctx sdk.Context, deposit types.LSMTokenDeposit, status types.LSMDepositStatus) {
+func (k Keeper) UpdateLSMTokenDepositStatus(ctx sdk.Context, deposit types.LSMTokenDeposit, status types.LSMTokenDeposit_Status) {
 	deposit.Status = status
 	k.SetLSMTokenDeposit(ctx, deposit)
 }
@@ -69,14 +69,14 @@ func (k Keeper) GetLSMDepositsForHostZone(ctx sdk.Context, chainId string) []typ
 
 	for ; iterator.Valid(); iterator.Next() {
 		var deposit types.LSMTokenDeposit
-		k.cdc.MustUnmarshal(iterator.Value(), &deposit)
+		k.Cdc.MustUnmarshal(iterator.Value(), &deposit)
 		hostZoneLSMTokenDeposits = append(hostZoneLSMTokenDeposits, deposit)
 	}
 
 	return hostZoneLSMTokenDeposits
 }
 
-func (k Keeper) GetLSMDepositsForHostZoneWithStatus(ctx sdk.Context, chainId string, status types.LSMDepositStatus) []types.LSMTokenDeposit {
+func (k Keeper) GetLSMDepositsForHostZoneWithStatus(ctx sdk.Context, chainId string, status types.LSMTokenDeposit_Status) []types.LSMTokenDeposit {
 	filtered := []types.LSMTokenDeposit{}
 	hostZoneLSMTokenDeposits := k.GetLSMDepositsForHostZone(ctx, chainId)
 	for _, deposit := range hostZoneLSMTokenDeposits {

@@ -320,7 +320,7 @@ func (s *KeeperTestSuite) TestDetokenizeAllLSMDeposits() {
 				// host chain with the open delegation channel
 				expectedStatus := startingStatus
 				if chainId == HostChainId && startingStatus == recordstypes.LSMTokenDeposit_DETOKENIZATION_QUEUE {
-					expectedStatus = recordstypes.LSMTokenDeposit_TRANSFER_IN_PROGRESS
+					expectedStatus = recordstypes.LSMTokenDeposit_DETOKENIZATION_IN_PROGRESS
 				}
 				expectedDepositStatus[depositKey] = expectedStatus
 			}
