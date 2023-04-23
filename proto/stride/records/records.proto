@@ -92,10 +92,11 @@ message LSMTokenDeposit {
 
   string chain_id = 1;
   string denom = 2;
-  string validator_address = 3;
-  string amount = 4 [
+  string ibc_denom = 3;
+  string validator_address = 4;
+  string amount = 5 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
     (gogoproto.nullable) = false
   ];
-  Status status = 5;
+  Status status = 6;
 }
