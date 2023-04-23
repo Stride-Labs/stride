@@ -3,7 +3,7 @@ package stride.stakeibc;
 
 import "gogoproto/gogo.proto";
 import "cosmos/base/v1beta1/coin.proto";
-import "stride/stakeibc/lsm.proto";
+import "stride/records/records.proto";
 
 option go_package = "github.com/Stride-Labs/stride/v9/x/stakeibc/types";
 
@@ -60,9 +60,7 @@ message RebalanceCallback {
   repeated Rebalancing rebalancings = 2;
 }
 
-message TransferLSMTokenCallback { LSMTokenDeposit deposit = 1; }
-
-message DetokenizeSharesCallback { LSMTokenDeposit deposit = 1; }
+message DetokenizeSharesCallback { records.LSMTokenDeposit deposit = 1; }
 
 message RebalanceTokenizedDepositsCallback {
   string chain_id = 1;

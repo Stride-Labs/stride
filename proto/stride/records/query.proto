@@ -71,6 +71,19 @@ service Query {
     option (google.api.http).get = "/Stride-Labs/stride/records/"
                                    "deposit_record_by_host_zone/{host_zone_id}";
   }
+
+  // Queries the existing LSMTokenDeposits for one specific deposit
+  rpc LSMDeposit(QueryLSMDepositRequest) returns (QueryLSMDepositResponse) {
+    option (google.api.http).get =
+        "/Stride-Labs/stride/stakeibc/lsm_deposit/{chain_id}/{denom}";
+  }
+
+  // Queries the existing LSMTokenDeposits for all which match filters
+  //   intended use:
+  //   ...stakeibc/lsm_deposits?chain_id=X&validator_address=Y&status=Z
+  rpc LSMDeposits(QueryLSMDepositsRequest) returns (QueryLSMDepositsResponse) {
+    option (google.api.http).get = "/Stride-Labs/stride/stakeibc/lsm_deposits";
+  }
 }
 
 // QueryParamsRequest is request type for the Query/Params RPC method.
@@ -150,4 +163,23 @@ message QueryAllEpochUnbondingRecordResponse {
   repeated EpochUnbondingRecord epoch_unbonding_record = 1
       [ (gogoproto.nullable) = false ];
   cosmos.base.query.v1beta1.PageResponse pagination = 2;
+}
+
+message QueryLSMDepositRequest {
+  string chain_id = 1;
+  string denom = 2;
+}
+
+message QueryLSMDepositResponse {
+  LSMTokenDeposit deposit = 1 [ (gogoproto.nullable) = false ];
+}
+
+message QueryLSMDepositsRequest {
+  string chain_id = 1;
+  string validator_address = 2;
+  string status = 3;
+}
+
+message QueryLSMDepositsResponse {
+  repeated LSMTokenDeposit deposits = 1 [ (gogoproto.nullable) = false ];
 }
