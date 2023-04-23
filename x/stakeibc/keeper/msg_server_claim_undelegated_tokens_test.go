@@ -10,21 +10,20 @@ import (
 	ibctesting "github.com/cosmos/ibc-go/v5/testing"
 	_ "github.com/stretchr/testify/suite"
 
-	epochtypes "github.com/Stride-Labs/stride/v8/x/epochs/types"
-	recordtypes "github.com/Stride-Labs/stride/v8/x/records/types"
-	stakeibckeeper "github.com/Stride-Labs/stride/v8/x/stakeibc/keeper"
-	"github.com/Stride-Labs/stride/v8/x/stakeibc/types"
-	stakeibctypes "github.com/Stride-Labs/stride/v8/x/stakeibc/types"
+	epochtypes "github.com/Stride-Labs/stride/v9/x/epochs/types"
+	recordtypes "github.com/Stride-Labs/stride/v9/x/records/types"
+	stakeibckeeper "github.com/Stride-Labs/stride/v9/x/stakeibc/keeper"
+	"github.com/Stride-Labs/stride/v9/x/stakeibc/types"
 )
 
 type ClaimUndelegatedState struct {
-	hostZone           stakeibctypes.HostZone
+	hostZone           types.HostZone
 	redemptionRecordId string
 	redemptionRecord   recordtypes.UserRedemptionRecord
 }
 
 type ClaimUndelegatedTestCase struct {
-	validMsg       stakeibctypes.MsgClaimUndelegatedTokens
+	validMsg       types.MsgClaimUndelegatedTokens
 	initialState   ClaimUndelegatedState
 	expectedIcaMsg stakeibckeeper.IcaTx
 }
@@ -39,7 +38,7 @@ func (s *KeeperTestSuite) SetupClaimUndelegatedTokens() ClaimUndelegatedTestCase
 	redemptionAddr := s.IcaAddresses[redemptionIcaOwner]
 	redemptionRecordId := fmt.Sprintf("%s.%d.%s", HostChainId, epochNumber, senderAddr)
 
-	hostZone := stakeibctypes.HostZone{
+	hostZone := types.HostZone{
 		ChainId:              HostChainId,
 		RedemptionIcaAddress: redemptionAddr,
 		ConnectionId:         ibctesting.FirstConnectionID,
@@ -57,7 +56,7 @@ func (s *KeeperTestSuite) SetupClaimUndelegatedTokens() ClaimUndelegatedTestCase
 	}
 	redemptionAmount := sdk.NewCoins(sdk.NewCoin(redemptionRecord.Denom, sdkmath.NewInt(1000)))
 
-	epochTracker := stakeibctypes.EpochTracker{
+	epochTracker := types.EpochTracker{
 		EpochIdentifier:    epochtypes.STRIDE_EPOCH,
 		EpochNumber:        epochNumber,
 		NextEpochStartTime: uint64(s.Coordinator.CurrentTime.UnixNano() + 30_000_000_000), // dictates timeouts
@@ -80,7 +79,7 @@ func (s *KeeperTestSuite) SetupClaimUndelegatedTokens() ClaimUndelegatedTestCase
 	s.App.RecordsKeeper.SetUserRedemptionRecord(s.Ctx, redemptionRecord)
 
 	return ClaimUndelegatedTestCase{
-		validMsg: stakeibctypes.MsgClaimUndelegatedTokens{
+		validMsg: types.MsgClaimUndelegatedTokens{
 			Creator:    senderAddr,
 			HostZoneId: HostChainId,
 			Epoch:      epochNumber,
@@ -98,7 +97,7 @@ func (s *KeeperTestSuite) SetupClaimUndelegatedTokens() ClaimUndelegatedTestCase
 				Amount:      redemptionAmount,
 			}},
 			ICAAccountType: types.ICAAccountType_REDEMPTION,
-			Timeout:        uint64(stakeibctypes.DefaultICATimeoutNanos),
+			Timeout:        uint64(types.DefaultICATimeoutNanos),
 		},
 	}
 }

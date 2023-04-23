@@ -2,7 +2,6 @@ package types
 
 import (
 	"encoding/json"
-	"strings"
 
 	errorsmod "cosmossdk.io/errors"
 
@@ -34,7 +33,6 @@ type StakeibcPacketMetadata struct {
 
 // Packet metadata info specific to Claim (e.g. airdrops for non-118 coins)
 type ClaimPacketMetadata struct {
-	AirdropId     string `json:"airdrop_id"`
 	StrideAddress string `json:"stride_address"`
 }
 
@@ -52,15 +50,11 @@ func (m StakeibcPacketMetadata) Validate() error {
 	return nil
 }
 
-// Validate claim packet metadata fields including the
-// stride address and Airdrop type
+// Validate claim packet metadata includes the stride address
 func (m ClaimPacketMetadata) Validate() error {
 	_, err := sdk.AccAddressFromBech32(m.StrideAddress)
 	if err != nil {
 		return err
-	}
-	if len(strings.TrimSpace(m.AirdropId)) == 0 {
-		return ErrInvalidClaimAirdropId
 	}
 
 	return nil

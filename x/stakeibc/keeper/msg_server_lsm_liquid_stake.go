@@ -13,11 +13,11 @@ import (
 
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
-	icacallbackstypes "github.com/Stride-Labs/stride/v8/x/icacallbacks/types"
-	icqtypes "github.com/Stride-Labs/stride/v8/x/interchainquery/types"
+	icacallbackstypes "github.com/Stride-Labs/stride/v9/x/icacallbacks/types"
+	icqtypes "github.com/Stride-Labs/stride/v9/x/interchainquery/types"
 
-	recordskeeper "github.com/Stride-Labs/stride/v8/x/records/keeper"
-	"github.com/Stride-Labs/stride/v8/x/stakeibc/types"
+	recordskeeper "github.com/Stride-Labs/stride/v9/x/records/keeper"
+	"github.com/Stride-Labs/stride/v9/x/stakeibc/types"
 )
 
 // Exchanges a user's LSM tokenized shares for stTokens using the current redemption rate

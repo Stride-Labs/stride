@@ -3,7 +3,7 @@ package stride.stakeibc;
 
 import "gogoproto/gogo.proto";
 
-option go_package = "github.com/Stride-Labs/stride/v8/x/stakeibc/types";
+option go_package = "github.com/Stride-Labs/stride/v9/x/stakeibc/types";
 
 enum LSMDepositStatus {
   option (gogoproto.goproto_enum_prefix) = false;
