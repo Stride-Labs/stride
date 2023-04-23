@@ -82,8 +82,6 @@ message EpochUnbondingRecord {
 
 message LSMTokenDeposit {
   enum Status {
-    option (gogoproto.goproto_enum_prefix) = false;
-
     DEPOSIT_PENDING = 0;
     TRANSFER_IN_PROGRESS = 1;
     TRANSFER_FAILED = 2;

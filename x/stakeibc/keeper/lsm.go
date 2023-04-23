@@ -15,6 +15,7 @@ import (
 
 	"github.com/golang/protobuf/proto" //nolint:staticcheck
 
+	recordstypes "github.com/Stride-Labs/stride/v9/x/records/types"
 	"github.com/Stride-Labs/stride/v9/x/stakeibc/types"
 )
 
@@ -150,7 +151,7 @@ func (k Keeper) RefundLSMToken(ctx sdk.Context, lsmLiquidStake types.LSMLiquidSt
 //   if the ICA fails to send. This is because a failure is likely caused by a closed ICA channel, and the status
 //   update will prevent the ICA from being continuously re-submitted. When the ICA channel is restored, the
 //   deposit status will get reset, and the ICA will be attempted again.
-func (k Keeper) DetokenizeLSMDeposit(ctx sdk.Context, hostZone types.HostZone, deposit types.LSMTokenDeposit) error {
+func (k Keeper) DetokenizeLSMDeposit(ctx sdk.Context, hostZone types.HostZone, deposit recordstypes.LSMTokenDeposit) error {
 	// Get the delegation account (which owns the LSM token)
 	if hostZone.DelegationIcaAddress == "" {
 		return errorsmod.Wrapf(types.ErrICAAccountNotFound, "no delegation account found for %s", hostZone.ChainId)
@@ -173,8 +174,7 @@ func (k Keeper) DetokenizeLSMDeposit(ctx sdk.Context, hostZone types.HostZone, d
 	}
 
 	// Mark the deposit as IN_PROGRESS
-	deposit.Status = types.DETOKENIZATION_IN_PROGRESS
-	k.SetLSMTokenDeposit(ctx, deposit)
+	k.RecordsKeeper.UpdateLSMTokenDepositStatus(ctx, deposit, recordstypes.LSMTokenDeposit_DETOKENIZATION_IN_PROGRESS)
 
 	// Submit the ICA with a 24 hour timeout
 	timeout := uint64(ctx.BlockTime().UnixNano() + (DetokenizationTimeout).Nanoseconds()) // 1 day
@@ -205,8 +205,12 @@ func (k Keeper) DetokenizeAllLSMDeposits(ctx sdk.Context) {
 		}
 
 		// If the delegation channel is open, submit the detokenize ICA
-		for _, deposit := range k.GetLSMDepositsForHostZoneWithStatus(ctx, hostZone.ChainId, types.DETOKENIZATION_QUEUE) {
-			fmt.Printf("deposit: %+v\n", deposit)
+		queuedDeposits := k.RecordsKeeper.GetLSMDepositsForHostZoneWithStatus(
+			ctx,
+			hostZone.ChainId,
+			recordstypes.LSMTokenDeposit_DETOKENIZATION_QUEUE,
+		)
+		for _, deposit := range queuedDeposits {
 			if err := k.DetokenizeLSMDeposit(ctx, hostZone, deposit); err != nil {
 				k.Logger(ctx).Error(fmt.Sprintf("Unable to submit detokenization ICAs for %v%s on %s: %s",
 					deposit.Amount, deposit.Denom, hostZone.ChainId, err.Error()))

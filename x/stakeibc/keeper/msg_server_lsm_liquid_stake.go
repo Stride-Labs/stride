@@ -17,6 +17,7 @@ import (
 	icqtypes "github.com/Stride-Labs/stride/v9/x/interchainquery/types"
 
 	recordskeeper "github.com/Stride-Labs/stride/v9/x/records/keeper"
+	recordstypes "github.com/Stride-Labs/stride/v9/x/records/types"
 	"github.com/Stride-Labs/stride/v9/x/stakeibc/types"
 )
 
@@ -113,14 +114,14 @@ func (k Keeper) StartLSMLiquidStake(ctx sdk.Context, msg *types.MsgLSMLiquidStak
 	}
 
 	// Store an deposit record for the LSM token
-	lsmTokenDeposit := types.LSMTokenDeposit{
+	lsmTokenDeposit := recordstypes.LSMTokenDeposit{
 		ChainId:          hostZone.ChainId,
 		Denom:            lsmTokenBaseDenom,
 		ValidatorAddress: validator.Address,
 		Amount:           msg.Amount,
-		Status:           types.DEPOSIT_PENDING,
+		Status:           recordstypes.LSMTokenDeposit_DEPOSIT_PENDING,
 	}
-	k.AddLSMTokenDeposit(ctx, lsmTokenDeposit)
+	k.RecordsKeeper.AddLSMTokenDeposit(ctx, lsmTokenDeposit)
 
 	return types.LSMLiquidStake{
 		Staker:      liquidStakerAddress,
@@ -208,7 +209,7 @@ func (k Keeper) FinishLSMLiquidStake(ctx sdk.Context, lsmLiquidStake types.LSMLi
 	}
 
 	// Store transfer callback data
-	callbackArgs := types.TransferLSMTokenCallback{
+	callbackArgs := recordstypes.TransferLSMTokenCallback{
 		Deposit: &lsmLiquidStake.Deposit,
 	}
 	callbackArgsBz, err := proto.Marshal(&callbackArgs)
@@ -226,7 +227,7 @@ func (k Keeper) FinishLSMLiquidStake(ctx sdk.Context, lsmLiquidStake types.LSMLi
 	})
 
 	// Update the deposit status
-	k.UpdateLSMTokenDepositStatus(ctx, lsmLiquidStake.Deposit, types.TRANSFER_IN_PROGRESS)
+	k.RecordsKeeper.UpdateLSMTokenDepositStatus(ctx, lsmLiquidStake.Deposit, recordstypes.LSMTokenDeposit_TRANSFER_IN_PROGRESS)
 
 	return nil
 }

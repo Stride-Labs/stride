@@ -26,8 +26,8 @@ type HostZoneUnbondingStatusUpdate struct {
 type LSMTokenDepositStatusUpdate struct {
 	chainId        string
 	denom          string
-	initialStatus  types.LSMDepositStatus
-	revertedStatus types.LSMDepositStatus
+	initialStatus  recordtypes.LSMTokenDeposit_Status
+	revertedStatus recordtypes.LSMTokenDeposit_Status
 }
 
 type RestoreInterchainAccountTestCase struct {
@@ -134,33 +134,33 @@ func (s *KeeperTestSuite) SetupRestoreInterchainAccount(createDelegationICAChann
 			// Status doesn't change
 			chainId:        HostChainId,
 			denom:          "denom-1",
-			initialStatus:  types.TRANSFER_IN_PROGRESS,
-			revertedStatus: types.TRANSFER_IN_PROGRESS,
+			initialStatus:  recordtypes.LSMTokenDeposit_TRANSFER_IN_PROGRESS,
+			revertedStatus: recordtypes.LSMTokenDeposit_TRANSFER_IN_PROGRESS,
 		},
 		{
 			// Status gets reverted from IN_PROGRESS to QUEUE
 			chainId:        HostChainId,
 			denom:          "denom-2",
-			initialStatus:  types.DETOKENIZATION_IN_PROGRESS,
-			revertedStatus: types.DETOKENIZATION_QUEUE,
+			initialStatus:  recordtypes.LSMTokenDeposit_DETOKENIZATION_IN_PROGRESS,
+			revertedStatus: recordtypes.LSMTokenDeposit_DETOKENIZATION_QUEUE,
 		},
 		{
 			// Status doesn't change
 			chainId:        HostChainId,
 			denom:          "denom-3",
-			initialStatus:  types.DETOKENIZATION_QUEUE,
-			revertedStatus: types.DETOKENIZATION_QUEUE,
+			initialStatus:  recordtypes.LSMTokenDeposit_DETOKENIZATION_QUEUE,
+			revertedStatus: recordtypes.LSMTokenDeposit_DETOKENIZATION_QUEUE,
 		},
 		{
 			// Status doesn't change (different host zone)
 			chainId:        "different_host_zone",
 			denom:          "denom-4",
-			initialStatus:  types.DETOKENIZATION_IN_PROGRESS,
-			revertedStatus: types.DETOKENIZATION_IN_PROGRESS,
+			initialStatus:  recordtypes.LSMTokenDeposit_DETOKENIZATION_IN_PROGRESS,
+			revertedStatus: recordtypes.LSMTokenDeposit_DETOKENIZATION_IN_PROGRESS,
 		},
 	}
 	for _, lsmTokenDeposit := range lsmTokenDeposits {
-		s.App.StakeibcKeeper.SetLSMTokenDeposit(s.Ctx, types.LSMTokenDeposit{
+		s.App.RecordsKeeper.SetLSMTokenDeposit(s.Ctx, recordtypes.LSMTokenDeposit{
 			ChainId: lsmTokenDeposit.chainId,
 			Status:  lsmTokenDeposit.initialStatus,
 			Denom:   lsmTokenDeposit.denom,
@@ -247,7 +247,7 @@ func (s *KeeperTestSuite) verifyHostZoneUnbondingStatus(expectedUnbondingRecords
 // Helper function to check that each LSMTokenDepoit's status was either left alone or reverted to it's prior status
 func (s *KeeperTestSuite) verifyLSMDepositStatus(expectedLSMDeposits []LSMTokenDepositStatusUpdate, revert bool) {
 	for i, expectedLSMDeposit := range expectedLSMDeposits {
-		actualLSMDeposit, found := s.App.StakeibcKeeper.GetLSMTokenDeposit(s.Ctx, expectedLSMDeposit.chainId, expectedLSMDeposit.denom)
+		actualLSMDeposit, found := s.App.RecordsKeeper.GetLSMTokenDeposit(s.Ctx, expectedLSMDeposit.chainId, expectedLSMDeposit.denom)
 		s.Require().True(found, "lsm deposit found")
 
 		// Only revert record if the revert option is passed and the host zone matches

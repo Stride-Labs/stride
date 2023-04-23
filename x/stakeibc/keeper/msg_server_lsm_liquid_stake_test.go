@@ -13,6 +13,7 @@ import (
 
 	icqtypes "github.com/Stride-Labs/stride/v9/x/interchainquery/types"
 
+	recordstypes "github.com/Stride-Labs/stride/v9/x/records/types"
 	"github.com/Stride-Labs/stride/v9/x/stakeibc/keeper"
 	"github.com/Stride-Labs/stride/v9/x/stakeibc/types"
 )
@@ -101,14 +102,14 @@ func (s *KeeperTestSuite) TestLSMLiquidStake_Successful_NoExchangeRateQuery() {
 	s.Require().Equal(tc.validMsg.Amount.Int64(), userStTokenBalance.Amount.Int64(), "user stToken balance")
 
 	// Confirm an LSMDeposit was created
-	expectedDeposit := types.LSMTokenDeposit{
+	expectedDeposit := recordstypes.LSMTokenDeposit{
 		ChainId:          HostChainId,
 		Denom:            LSMTokenBaseDenom,
 		ValidatorAddress: ValAddress,
 		Amount:           tc.validMsg.Amount,
-		Status:           types.TRANSFER_IN_PROGRESS,
+		Status:           recordstypes.LSMTokenDeposit_TRANSFER_IN_PROGRESS,
 	}
-	actualDeposit, found := s.App.StakeibcKeeper.GetLSMTokenDeposit(s.Ctx, HostChainId, LSMTokenBaseDenom)
+	actualDeposit, found := s.App.RecordsKeeper.GetLSMTokenDeposit(s.Ctx, HostChainId, LSMTokenBaseDenom)
 	s.Require().True(found, "lsm token deposit should have been found after LSM liquid stake")
 	s.Require().Equal(expectedDeposit, actualDeposit)
 
@@ -161,12 +162,12 @@ func (s *KeeperTestSuite) TestLSMLiquidStake_Successful_WithExchangeRateQuery() 
 	// Confirm query callback data
 	s.Require().True(len(actualQuery.CallbackData) > 0, "callback data exists")
 
-	expectedLSMTokenDeposit := types.LSMTokenDeposit{
+	expectedLSMTokenDeposit := recordstypes.LSMTokenDeposit{
 		ChainId:          HostChainId,
 		Denom:            LSMTokenBaseDenom,
 		ValidatorAddress: ValAddress,
 		Amount:           tc.validMsg.Amount,
-		Status:           types.DEPOSIT_PENDING,
+		Status:           recordstypes.LSMTokenDeposit_DEPOSIT_PENDING,
 	}
 
 	var actualCallbackData types.LSMLiquidStake

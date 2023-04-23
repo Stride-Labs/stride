@@ -230,8 +230,8 @@ func (k Keeper) GetUndelegatedBalance(chainId string, depositRecords []recordsty
 // These are identified by any status besides "DEPOSIT_PENDING"
 func (k Keeper) GetTotalTokenizedDelegations(ctx sdk.Context, chainId string) sdk.Dec {
 	total := sdkmath.ZeroInt()
-	for _, deposit := range k.GetLSMDepositsForHostZone(ctx, chainId) {
-		if deposit.Status != types.DEPOSIT_PENDING {
+	for _, deposit := range k.RecordsKeeper.GetLSMDepositsForHostZone(ctx, chainId) {
+		if deposit.Status != recordstypes.LSMTokenDeposit_DEPOSIT_PENDING {
 			total = total.Add(deposit.Amount)
 		}
 	}
