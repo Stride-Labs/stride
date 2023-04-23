@@ -84,7 +84,7 @@ setup_file() {
   refute_line '  fee_ica_address: ""'
   refute_line '  redemption_ica_address: "'
   refute_line '  withdrawal_ica_address: ""'
-  assert_line '  unbonding_frequency: "1"'
+  assert_line '  unbonding_period: "1"'
 }
 
 ##############################################################################################
