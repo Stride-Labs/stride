@@ -63,7 +63,7 @@ func (s *KeeperTestSuite) TestLSMTransferCallback_Successful() {
 
 	// Confirm deposit has been updated to DETOKENIZATION_QUEUE
 	record, found := s.App.RecordsKeeper.GetLSMTokenDeposit(s.Ctx, HostChainId, LSMTokenDenom)
-	s.Require().True(found, "deposit found")
+	s.Require().True(found, "deposit should have been found but was not")
 	s.Require().Equal(types.LSMTokenDeposit_DETOKENIZATION_QUEUE.String(), record.Status.String(), "deposit status")
 }
 
@@ -91,7 +91,7 @@ func (s *KeeperTestSuite) TestLSMTransferCallback_AckTimeout() {
 
 	// Confirm deposit has been updated to TRANSFER_IN_PROGRESS (since the transfer gets resubmitted on a timeout)
 	record, found := s.App.RecordsKeeper.GetLSMTokenDeposit(s.Ctx, HostChainId, LSMTokenDenom)
-	s.Require().True(found, "deposit found")
+	s.Require().True(found, "deposit should have been found but was not")
 	s.Require().Equal(types.DepositRecord_TRANSFER_IN_PROGRESS.String(), record.Status.String(), "deposit status")
 }
 
@@ -107,6 +107,6 @@ func (s *KeeperTestSuite) TestLSMTransferCallback_AckFailed() {
 
 	// Confirm deposit has been updated to status FAILED
 	record, found := s.App.RecordsKeeper.GetLSMTokenDeposit(s.Ctx, HostChainId, LSMTokenDenom)
-	s.Require().True(found, "deposit found")
+	s.Require().True(found, "deposit should have been found but was not")
 	s.Require().Equal(types.LSMTokenDeposit_TRANSFER_FAILED.String(), record.Status.String(), "deposit status")
 }
