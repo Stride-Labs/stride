@@ -74,9 +74,16 @@ func (k Keeper) VerifyKeyProof(ctx sdk.Context, msg *types.MsgSubmitQueryRespons
 	case exported.Tendermint:
 		tendermintConsensusState, ok := consensusState.(*tendermint.ConsensusState)
 		if !ok {
-			return errorsmod.Wrapf(types.ErrInvalidConsensusState, "Error casting consensus state: %s", err.Error())
+			return errorsmod.Wrapf(types.ErrInvalidConsensusState, "Error casting consensus state")
 		}
+
+		tendermintClientState, ok := clientState.(*tendermint.ClientState)
+		if !ok {
+			return errorsmod.Wrapf(types.ErrInvalidConsensusState, "Client state is not tendermint")
+		}
+
 		stateRoot = tendermintConsensusState.GetRoot()
+		clientStateProof = tendermintClientState.ProofSpecs
 	// case exported.Wasm:
 	// 	wasmConsensusState, ok := consensusState.(*wasm.ConsensusState)
 	// 	if !ok {

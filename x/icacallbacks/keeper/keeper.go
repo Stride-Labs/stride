@@ -18,6 +18,7 @@ import (
 
 	"github.com/Stride-Labs/stride/v8/x/icacallbacks/types"
 	recordstypes "github.com/Stride-Labs/stride/v8/x/records/types"
+	stakeibctypes "github.com/Stride-Labs/stride/v8/x/stakeibc/types"
 
 	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
 
@@ -114,11 +115,15 @@ func (k Keeper) GetICACallbackHandlerFromPacket(ctx sdk.Context, modulePacket ch
 		k.Logger(ctx).Error(fmt.Sprintf("error LookupModuleByChannel for portID: %s, channelID: %s, sequence: %d", modulePacket.GetSourcePort(), modulePacket.GetSourceChannel(), modulePacket.Sequence))
 		return nil, err
 	}
-	// redirect transfer callbacks to the records module
+	// redirect transfer callbacks to the records module, and icacontroller callbacks to the stakeibc module
 	// is there a better way to do this?
 	if module == "transfer" {
 		module = recordstypes.ModuleName
 	}
+	if module == "icacontroller" {
+		module = stakeibctypes.ModuleName
+	}
+
 	// fetch the callback function
 	callbackHandler, err := k.GetICACallbackHandler(module)
 	if err != nil {
