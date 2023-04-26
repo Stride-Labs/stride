@@ -19,10 +19,10 @@ type RebalanceValidatorDelegationChange struct {
 	Delta            sdkmath.Int
 }
 
-// Iterate each active host zone and issues redelegations messages to rebalance each
-//   validators stake according to their weights
+// Iterate each active host zone and issues redelegation messages to rebalance each
+//   validator's stake according to their weights
 // This is required when accepting LSM LiquidStakes as the distribution of stake
-//  from the LSM Tokens will be inconsistend with the host zone's validator set
+//   from the LSM Tokens will be inconsistend with the host zone's validator set
 // Note: this cannot be run more than once in a single unbonding period
 func (k Keeper) RebalanceAllHostZones(ctx sdk.Context, dayNumber uint64) {
 	for _, hostZone := range k.GetAllActiveHostZone(ctx) {
@@ -42,7 +42,7 @@ func (k Keeper) RebalanceAllHostZones(ctx sdk.Context, dayNumber uint64) {
 	}
 }
 
-// Rebalance validators according to their validator weights
+// Rebalance validators according to their validator weights for a specific host zone
 func (k Keeper) RebalanceDelegationsForHostZone(ctx sdk.Context, chainId string, numRebalance uint64) error {
 	// Get the host zone and confirm the delegation account is initialized
 	hostZone, found := k.GetHostZone(ctx, chainId)
@@ -88,8 +88,8 @@ func (k Keeper) RebalanceDelegationsForHostZone(ctx sdk.Context, chainId string,
 }
 
 // Given a list of target delegation changes, builds the individual re-delegation messages by redelegating
-// from overweight validators to undersweight validators
-// Also returns the callback data for the ICA
+// from overweight validators to underweight validators
+// Returns the list of messages and the callback data for the ICA
 func (k Keeper) GetRebalanceICAMessages(
 	hostZone types.HostZone,
 	validatorDeltas []RebalanceValidatorDelegationChange,
@@ -183,9 +183,9 @@ func (k Keeper) GetRebalanceICAMessages(
 	return msgs, rebalancings
 }
 
-// This function returns a list with the number of extra tokens that needs to be sent to each validator
-//   positive implies extra tokens need to be given,
-//   negative implies tokens need to be taken away
+// This function returns a list with the number of extra tokens that should be sent to each validator
+//   - Positive delta implies extra tokens need to be given
+//   - Negative delta implies tokens should be taken away
 func (k Keeper) GetValidatorDelegationDifferences(ctx sdk.Context, hostZone types.HostZone) ([]RebalanceValidatorDelegationChange, error) {
 	// Get the target delegation amount for each validator
 	totalDelegatedAmt := k.GetTotalValidatorDelegations(hostZone)
