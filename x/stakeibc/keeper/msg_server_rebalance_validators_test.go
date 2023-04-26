@@ -38,50 +38,45 @@ func (s *KeeperTestSuite) SetupRebalanceValidators() RebalanceValidatorsTestCase
 	// define validators for host zone
 	initialValidators := []*stakeibctypes.Validator{
 		{
-			Name:                 "val1",
-			Address:              "stride_VAL1",
-			Weight:               100,
-			BalancedDelegation:   sdkmath.NewInt(100),
-			UnbalancedDelegation: sdkmath.NewInt(200),
+			Name:       "val1",
+			Address:    "stride_VAL1",
+			Weight:     100,
+			Delegation: sdkmath.NewInt(100),
 		},
 		{
-			Name:                 "val2",
-			Address:              "stride_VAL2",
-			Weight:               500,
-			BalancedDelegation:   sdkmath.NewInt(500),
-			UnbalancedDelegation: sdkmath.NewInt(1000),
+			Name:       "val2",
+			Address:    "stride_VAL2",
+			Weight:     500,
+			Delegation: sdkmath.NewInt(500),
 		},
 		{
-			Name:                 "val3",
-			Address:              "stride_VAL3",
-			Weight:               200,
-			BalancedDelegation:   sdkmath.NewInt(200),
-			UnbalancedDelegation: sdkmath.NewInt(400),
+			Name:       "val3",
+			Address:    "stride_VAL3",
+			Weight:     200,
+			Delegation: sdkmath.NewInt(200),
 		},
 		{
-			Name:                 "val4",
-			Address:              "stride_VAL4",
-			Weight:               400,
-			BalancedDelegation:   sdkmath.NewInt(400),
-			UnbalancedDelegation: sdkmath.NewInt(800),
+			Name:       "val4",
+			Address:    "stride_VAL4",
+			Weight:     400,
+			Delegation: sdkmath.NewInt(400),
 		},
 		{
-			Name:                 "val5",
-			Address:              "stride_VAL5",
-			Weight:               400,
-			BalancedDelegation:   sdkmath.NewInt(400),
-			UnbalancedDelegation: sdkmath.NewInt(800),
+			Name:       "val5",
+			Address:    "stride_VAL5",
+			Weight:     400,
+			Delegation: sdkmath.NewInt(400),
 		},
 	}
 
 	// setup host zone
 	hostZone := stakeibctypes.HostZone{
-		ChainId:                  "GAIA",
-		Validators:               initialValidators,
-		TotalBalancedDelegations: sdkmath.NewInt(1000),
-		ConnectionId:             ibctesting.FirstConnectionID,
-		DelegationIcaAddress:     delegationAddr,
-		HostDenom:                "uatom",
+		ChainId:              "GAIA",
+		Validators:           initialValidators,
+		TotalDelegations:     sdkmath.NewInt(1000),
+		ConnectionId:         ibctesting.FirstConnectionID,
+		DelegationIcaAddress: delegationAddr,
+		HostDenom:            "uatom",
 	}
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
 

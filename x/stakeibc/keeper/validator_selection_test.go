@@ -138,10 +138,10 @@ func (s *KeeperTestSuite) TestGetRebalanceICAMessages_OddNumberValidators() {
 
 func (s *KeeperTestSuite) TestGetValidatorDelegationDifferences() {
 	validators := []*types.Validator{
-		// Total Weight: 100, Total Balance Delegation: 100, Total Unbalanced Delegation: 200
-		{Address: "val1", Weight: 10, BalancedDelegation: sdkmath.NewInt(70), UnbalancedDelegation: sdkmath.NewInt(20)},
-		{Address: "val2", Weight: 20, BalancedDelegation: sdkmath.NewInt(20), UnbalancedDelegation: sdkmath.NewInt(140)},
-		{Address: "val3", Weight: 70, BalancedDelegation: sdkmath.NewInt(10), UnbalancedDelegation: sdkmath.NewInt(40)},
+		// Total Weight: 100, Total Delegation: 200
+		{Address: "val1", Weight: 10, Delegation: sdkmath.NewInt(20)},
+		{Address: "val2", Weight: 20, Delegation: sdkmath.NewInt(140)},
+		{Address: "val3", Weight: 70, Delegation: sdkmath.NewInt(40)},
 	}
 
 	// Shuffle the validators to ensure the sorting worked
@@ -150,41 +150,26 @@ func (s *KeeperTestSuite) TestGetValidatorDelegationDifferences() {
 	})
 	hostZone := types.HostZone{ChainId: HostChainId, Validators: validators}
 
-	// Expected Balance is determined by the total delegation * weight
+	// Expected delegation is determined by the total delegation * weight
 	// Delta = Expected - Current
-	expectedBalancedDeltas := []keeper.RebalanceValidatorDelegationChange{
-		{ValidatorAddress: "val1", Delta: sdkmath.NewInt(10 - 70)}, // Expected Delegation: 10, Current Delegation: 70
-		// val2 is excluded because it's Expected Delegation is equal to the Current Delegation (20)
-		{ValidatorAddress: "val3", Delta: sdkmath.NewInt(70 - 10)}, // Expected Delegation: 70, Current Delegation: 10
-	}
-	expectedUnbalancedDeltas := []keeper.RebalanceValidatorDelegationChange{
+	expectedDeltas := []keeper.RebalanceValidatorDelegationChange{
 		// val1 is excluded because it's Expected Delegation is equal to the Current Delegation (20)
 		{ValidatorAddress: "val2", Delta: sdkmath.NewInt(40 - 140)}, // Expected Delegation: 40, Current Delegation: 140
 		{ValidatorAddress: "val3", Delta: sdkmath.NewInt(140 - 40)}, // Expected Delegation: 140, Current Delegation: 40
 	}
 
-	// Check delegation changes for the balanced portion
-	actualBalancedDeltas, err := s.App.StakeibcKeeper.GetValidatorDelegationDifferences(s.Ctx, hostZone, types.DelegationType_BALANCED)
-	s.Require().NoError(err, "no error expected when calculated balanced delegation differences")
-	s.Require().Len(actualBalancedDeltas, len(expectedBalancedDeltas), "number of balanced redelegations")
+	// Check delegation changes
+	actualBalancedDeltas, err := s.App.StakeibcKeeper.GetValidatorDelegationDifferences(s.Ctx, hostZone)
+	s.Require().NoError(err, "no error expected when calculating delegation differences")
+	s.Require().Len(actualBalancedDeltas, len(expectedDeltas), "number of redelegations")
 
-	for i, expected := range expectedBalancedDeltas {
-		s.Require().Equal(expected.ValidatorAddress, actualBalancedDeltas[i].ValidatorAddress, "address for balanced delegation %d", i)
-		s.Require().Equal(expected.Delta.Int64(), actualBalancedDeltas[i].Delta.Int64(), "delta for balanced delegation %d", i)
-	}
-
-	// Check delegation changes for the unbalanced portion
-	actualUnbalancedDeltas, err := s.App.StakeibcKeeper.GetValidatorDelegationDifferences(s.Ctx, hostZone, types.DelegationType_UNBALANCED)
-	s.Require().NoError(err, "no error expected when calculated unbalanced delegation differences")
-	s.Require().Len(actualUnbalancedDeltas, len(expectedUnbalancedDeltas), "number of unbalanced redelegations")
-
-	for i, expected := range expectedUnbalancedDeltas {
-		s.Require().Equal(expected.ValidatorAddress, actualUnbalancedDeltas[i].ValidatorAddress, "address for unbalanced delegation %d", i)
-		s.Require().Equal(expected.Delta.Int64(), actualUnbalancedDeltas[i].Delta.Int64(), "delta for unbalanced delegation %d", i)
+	for i, expected := range expectedDeltas {
+		s.Require().Equal(expected.ValidatorAddress, actualBalancedDeltas[i].ValidatorAddress, "address for delegation %d", i)
+		s.Require().Equal(expected.Delta.Int64(), actualBalancedDeltas[i].Delta.Int64(), "delta for delegation %d", i)
 	}
 
 	// Check the error case when there are no delegations
-	_, err = s.App.StakeibcKeeper.GetValidatorDelegationDifferences(s.Ctx, types.HostZone{}, types.DelegationType_BALANCED)
+	_, err = s.App.StakeibcKeeper.GetValidatorDelegationDifferences(s.Ctx, types.HostZone{})
 	s.Require().ErrorContains(err, "unable to get target val amounts for host zone")
 }
 
@@ -254,21 +239,18 @@ func (s *KeeperTestSuite) TestGetTargetValAmtsForHostZone() {
 
 func (s *KeeperTestSuite) TestGetTotalValidatorDelegations() {
 	validators := []*types.Validator{
-		{Address: "val1", BalancedDelegation: sdkmath.NewInt(1), UnbalancedDelegation: sdkmath.NewInt(6)},
-		{Address: "val2", BalancedDelegation: sdkmath.NewInt(2), UnbalancedDelegation: sdkmath.NewInt(7)},
-		{Address: "val3", BalancedDelegation: sdkmath.NewInt(3), UnbalancedDelegation: sdkmath.NewInt(8)},
-		{Address: "val4", BalancedDelegation: sdkmath.NewInt(4), UnbalancedDelegation: sdkmath.NewInt(9)},
-		{Address: "val5", BalancedDelegation: sdkmath.NewInt(5), UnbalancedDelegation: sdkmath.NewInt(10)},
+		{Address: "val1", Delegation: sdkmath.NewInt(1)},
+		{Address: "val2", Delegation: sdkmath.NewInt(2)},
+		{Address: "val3", Delegation: sdkmath.NewInt(3)},
+		{Address: "val4", Delegation: sdkmath.NewInt(4)},
+		{Address: "val5", Delegation: sdkmath.NewInt(5)},
 	}
-	expectedBalancedDelegation := int64(1 + 2 + 3 + 4 + 5)
-	expectedUnbalancedDelegation := int64(6 + 7 + 8 + 9 + 10)
+	expectedDelegation := int64(1 + 2 + 3 + 4 + 5)
 
 	hostZone := types.HostZone{Validators: validators}
-	actualBalancedDelegations := s.App.StakeibcKeeper.GetTotalValidatorDelegations(hostZone, types.DelegationType_BALANCED)
-	actualUnbalancedDelegations := s.App.StakeibcKeeper.GetTotalValidatorDelegations(hostZone, types.DelegationType_UNBALANCED)
+	actualDelegations := s.App.StakeibcKeeper.GetTotalValidatorDelegations(hostZone)
 
-	s.Require().Equal(expectedBalancedDelegation, actualBalancedDelegations.Int64(), "balanced delegations")
-	s.Require().Equal(expectedUnbalancedDelegation, actualUnbalancedDelegations.Int64(), "unbalanced delegations")
+	s.Require().Equal(expectedDelegation, actualDelegations.Int64(), "balanced delegations")
 }
 
 func (s *KeeperTestSuite) TestGetTotalValidatorWeight() {

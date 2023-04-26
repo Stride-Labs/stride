@@ -12,11 +12,8 @@ import (
 	capabilitytypes "github.com/cosmos/cosmos-sdk/x/capability/types"
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
 	ibctransferkeeper "github.com/cosmos/ibc-go/v5/modules/apps/transfer/keeper"
-	ibctypes "github.com/cosmos/ibc-go/v5/modules/apps/transfer/types"
 
-	"github.com/Stride-Labs/stride/v9/utils"
 	icacallbackskeeper "github.com/Stride-Labs/stride/v9/x/icacallbacks/keeper"
-	icacallbackstypes "github.com/Stride-Labs/stride/v9/x/icacallbacks/types"
 
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 
@@ -74,39 +71,4 @@ func (k Keeper) Logger(ctx sdk.Context) log.Logger {
 // ClaimCapability claims the channel capability passed via the OnOpenChanInit callback
 func (k *Keeper) ClaimCapability(ctx sdk.Context, cap *capabilitytypes.Capability, name string) error {
 	return k.scopedKeeper.ClaimCapability(ctx, cap, name)
-}
-
-func (k Keeper) Transfer(ctx sdk.Context, msg *ibctypes.MsgTransfer, depositRecord types.DepositRecord) error {
-	goCtx := sdk.WrapSDKContext(ctx)
-	msgTransferResponse, err := k.TransferKeeper.Transfer(goCtx, msg)
-	if err != nil {
-		return err
-	}
-	sequence := msgTransferResponse.Sequence
-	// add callback data
-	transferCallback := types.TransferCallback{
-		DepositRecordId: depositRecord.Id,
-	}
-	k.Logger(ctx).Info(utils.LogWithHostZone(depositRecord.HostZoneId, "Marshalling TransferCallback args: %+v", transferCallback))
-	marshalledCallbackArgs, err := k.MarshalTransferCallbackArgs(ctx, transferCallback)
-	if err != nil {
-		return err
-	}
-	// Store the callback data
-	callback := icacallbackstypes.CallbackData{
-		CallbackKey:  icacallbackstypes.PacketID(msg.SourcePort, msg.SourceChannel, sequence),
-		PortId:       msg.SourcePort,
-		ChannelId:    msg.SourceChannel,
-		Sequence:     sequence,
-		CallbackId:   IBCCallbacksID_NativeTransfer,
-		CallbackArgs: marshalledCallbackArgs,
-	}
-	k.Logger(ctx).Info(utils.LogWithHostZone(depositRecord.HostZoneId, "Storing callback data: %+v", callback))
-	k.ICACallbacksKeeper.SetCallbackData(ctx, callback)
-
-	// update the record state to TRANSFER_IN_PROGRESS
-	depositRecord.Status = types.DepositRecord_TRANSFER_IN_PROGRESS
-	k.SetDepositRecord(ctx, depositRecord)
-
-	return nil
 }

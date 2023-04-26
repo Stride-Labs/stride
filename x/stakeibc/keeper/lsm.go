@@ -15,6 +15,7 @@ import (
 
 	"github.com/golang/protobuf/proto" //nolint:staticcheck
 
+	"github.com/Stride-Labs/stride/v9/utils"
 	recordstypes "github.com/Stride-Labs/stride/v9/x/records/types"
 	"github.com/Stride-Labs/stride/v9/x/stakeibc/types"
 )
@@ -26,9 +27,6 @@ var (
 
 	// Timeout for the validator slash query that occurs at periodic deposit intervals
 	SlashQueryTimeout = time.Minute * 5 // 5 minutes
-
-	// Time for the IBC transfer of the LSM Token to the host zone
-	LSMDepositTransferTimeout = time.Hour * 24 // 1 day
 
 	// Time for the detokenization ICA
 	DetokenizationTimeout = time.Hour * 24 // 1 day
@@ -232,14 +230,13 @@ func (k Keeper) RebalanceTokenizedDeposits(ctx sdk.Context, dayNumber uint64) {
 	for _, hostZone := range k.GetAllActiveHostZone(ctx) {
 		numRebalance := uint64(len(hostZone.Validators))
 
-		// TODO [LSM]: Uncomment once UnbondingPeriod is added to the host zone
-		// if dayNumber%hostZone.UnbondingPeriod != 0 {
-		// 	k.Logger(ctx).Info(utils.LogWithHostZone(hostZone.ChainId,
-		// 		"Host does not rebalance this epoch (Unbonding Period: %d, Epoch: %d)", hostZone.UnbondingPeriod, dayNumber))
-		// 	continue
-		// }
+		if dayNumber%hostZone.UnbondingPeriod != 0 {
+			k.Logger(ctx).Info(utils.LogWithHostZone(hostZone.ChainId,
+				"Host does not rebalance this epoch (Unbonding Period: %d, Epoch: %d)", hostZone.UnbondingPeriod, dayNumber))
+			continue
+		}
 
-		if err := k.RebalanceDelegations(ctx, hostZone.ChainId, types.DelegationType_UNBALANCED, numRebalance); err != nil {
+		if err := k.RebalanceDelegations(ctx, hostZone.ChainId, numRebalance); err != nil {
 			k.Logger(ctx).Error(fmt.Sprintf("Unable to rebalance delegations for %s: %s", hostZone.ChainId, err.Error()))
 			continue
 		}

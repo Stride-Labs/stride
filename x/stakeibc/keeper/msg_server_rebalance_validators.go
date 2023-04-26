@@ -13,7 +13,7 @@ func (k msgServer) RebalanceValidators(goCtx context.Context, msg *types.MsgReba
 	ctx := sdk.UnwrapSDKContext(goCtx)
 	k.Logger(ctx).Info(fmt.Sprintf("RebalanceValidators executing %v", msg))
 
-	if err := k.RebalanceDelegations(ctx, msg.HostZone, types.DelegationType_BALANCED, msg.NumRebalance); err != nil {
+	if err := k.RebalanceDelegations(ctx, msg.HostZone, msg.NumRebalance); err != nil {
 		return nil, err
 	}
 	return &types.MsgRebalanceValidatorsResponse{}, nil

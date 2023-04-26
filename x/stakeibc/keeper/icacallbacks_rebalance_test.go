@@ -26,7 +26,7 @@ type RebalanceCallbackTestCase struct {
 	validArgs    RebalanceCallbackArgs
 }
 
-func (s *KeeperTestSuite) SetupRebalanceCallback(delegationType types.DelegationType) RebalanceCallbackTestCase {
+func (s *KeeperTestSuite) SetupRebalanceCallback() RebalanceCallbackTestCase {
 	rebalanceValidatorsTestCase := s.SetupRebalanceValidators()
 
 	packet := channeltypes.Packet{}
@@ -45,7 +45,6 @@ func (s *KeeperTestSuite) SetupRebalanceCallback(delegationType types.Delegation
 				Amt:          sdkmath.NewInt(13),
 			},
 		},
-		DelegationType: delegationType,
 	}
 	args, err := s.App.StakeibcKeeper.MarshalRebalanceCallbackArgs(s.Ctx, callbackArgs)
 	s.Require().NoError(err)
@@ -63,8 +62,8 @@ func (s *KeeperTestSuite) SetupRebalanceCallback(delegationType types.Delegation
 	}
 }
 
-func (s *KeeperTestSuite) TestRebalanceCallback_Balanced_Successful() {
-	tc := s.SetupRebalanceCallback(types.DelegationType_BALANCED)
+func (s *KeeperTestSuite) TestRebalanceCallback_Successful() {
+	tc := s.SetupRebalanceCallback()
 
 	err := stakeibckeeper.RebalanceCallback(s.App.StakeibcKeeper, s.Ctx, tc.validArgs.packet, tc.validArgs.ackResponse, tc.validArgs.args)
 	s.Require().NoError(err, "rebalance callback succeeded")
@@ -77,30 +76,11 @@ func (s *KeeperTestSuite) TestRebalanceCallback_Balanced_Successful() {
 
 	// TODO: Improve these tests
 	// These expected values are hard coded - and you have to reference a separate file to see where they come from
-	s.Require().Equal(int64(217), validators[0].BalancedDelegation.Int64(), "validator 1 stake")
-	s.Require().Equal(int64(500), validators[1].BalancedDelegation.Int64(), "validator 2 stake")
-	s.Require().Equal(int64(96), validators[2].BalancedDelegation.Int64(), "validator 3 stake")
-	s.Require().Equal(int64(387), validators[3].BalancedDelegation.Int64(), "validator 4 stake")
-	s.Require().Equal(int64(400), validators[4].BalancedDelegation.Int64(), "validator 5 stake")
-}
-
-func (s *KeeperTestSuite) TestRebalanceCallback_Unbalanced_Successful() {
-	tc := s.SetupRebalanceCallback(types.DelegationType_UNBALANCED)
-
-	err := stakeibckeeper.RebalanceCallback(s.App.StakeibcKeeper, s.Ctx, tc.validArgs.packet, tc.validArgs.ackResponse, tc.validArgs.args)
-	s.Require().NoError(err, "rebalance callback succeeded")
-
-	hz, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx, "GAIA")
-	s.Require().True(found, "host zone found")
-
-	validators := hz.GetValidators()
-	s.Require().Len(validators, 5, "host zone has 5 validators")
-
-	s.Require().Equal(int64(317), validators[0].UnbalancedDelegation.Int64(), "validator 1 stake")
-	s.Require().Equal(int64(1000), validators[1].UnbalancedDelegation.Int64(), "validator 2 stake")
-	s.Require().Equal(int64(296), validators[2].UnbalancedDelegation.Int64(), "validator 3 stake")
-	s.Require().Equal(int64(787), validators[3].UnbalancedDelegation.Int64(), "validator 4 stake")
-	s.Require().Equal(int64(800), validators[4].UnbalancedDelegation.Int64(), "validator 5 stake")
+	s.Require().Equal(int64(217), validators[0].Delegation.Int64(), "validator 1 stake")
+	s.Require().Equal(int64(500), validators[1].Delegation.Int64(), "validator 2 stake")
+	s.Require().Equal(int64(96), validators[2].Delegation.Int64(), "validator 3 stake")
+	s.Require().Equal(int64(387), validators[3].Delegation.Int64(), "validator 4 stake")
+	s.Require().Equal(int64(400), validators[4].Delegation.Int64(), "validator 5 stake")
 }
 
 func (s *KeeperTestSuite) checkDelegationStateIfCallbackFailed() {
@@ -110,21 +90,15 @@ func (s *KeeperTestSuite) checkDelegationStateIfCallbackFailed() {
 	validators := hz.GetValidators()
 	s.Require().Len(validators, 5, "host zone has 5 validators")
 
-	s.Require().Equal(int64(100), validators[0].BalancedDelegation.Int64(), "validator 1 balanced stake")
-	s.Require().Equal(int64(500), validators[1].BalancedDelegation.Int64(), "validator 2 balanced stake")
-	s.Require().Equal(int64(200), validators[2].BalancedDelegation.Int64(), "validator 3 balanced stake")
-	s.Require().Equal(int64(400), validators[3].BalancedDelegation.Int64(), "validator 4 balanced stake")
-	s.Require().Equal(int64(400), validators[4].BalancedDelegation.Int64(), "validator 5 balanced stake")
-
-	s.Require().Equal(int64(200), validators[0].UnbalancedDelegation.Int64(), "validator 1 unbalanced stake")
-	s.Require().Equal(int64(1000), validators[1].UnbalancedDelegation.Int64(), "validator 2 unbalanced stake")
-	s.Require().Equal(int64(400), validators[2].UnbalancedDelegation.Int64(), "validator 3 unbalanced stake")
-	s.Require().Equal(int64(800), validators[3].UnbalancedDelegation.Int64(), "validator 4 unbalanced stake")
-	s.Require().Equal(int64(800), validators[4].UnbalancedDelegation.Int64(), "validator 5 unbalanced stake")
+	s.Require().Equal(int64(100), validators[0].Delegation.Int64(), "validator 1 stake")
+	s.Require().Equal(int64(500), validators[1].Delegation.Int64(), "validator 2 stake")
+	s.Require().Equal(int64(200), validators[2].Delegation.Int64(), "validator 3 stake")
+	s.Require().Equal(int64(400), validators[3].Delegation.Int64(), "validator 4 stake")
+	s.Require().Equal(int64(400), validators[4].Delegation.Int64(), "validator 5 stake")
 }
 
 func (s *KeeperTestSuite) TestRebalanceCallback_Timeout() {
-	tc := s.SetupRebalanceCallback(types.DelegationType_BALANCED)
+	tc := s.SetupRebalanceCallback()
 
 	// Update the ack response to indicate a timeout
 	invalidArgs := tc.validArgs
@@ -136,7 +110,7 @@ func (s *KeeperTestSuite) TestRebalanceCallback_Timeout() {
 }
 
 func (s *KeeperTestSuite) TestRebalanceCallback_ErrorOnHost() {
-	tc := s.SetupRebalanceCallback(types.DelegationType_BALANCED)
+	tc := s.SetupRebalanceCallback()
 
 	// an error ack means the tx failed on the host
 	invalidArgs := tc.validArgs
@@ -148,7 +122,7 @@ func (s *KeeperTestSuite) TestRebalanceCallback_ErrorOnHost() {
 }
 
 func (s *KeeperTestSuite) TestRebalanceCallback_WrongCallbackArgs() {
-	tc := s.SetupRebalanceCallback(types.DelegationType_BALANCED)
+	tc := s.SetupRebalanceCallback()
 	invalidArgs := tc.validArgs
 
 	// random args should cause the callback to fail
@@ -160,7 +134,7 @@ func (s *KeeperTestSuite) TestRebalanceCallback_WrongCallbackArgs() {
 }
 
 func (s *KeeperTestSuite) TestRebalanceCallback_WrongValidator() {
-	tc := s.SetupRebalanceCallback(types.DelegationType_BALANCED)
+	tc := s.SetupRebalanceCallback()
 
 	callbackArgs := types.RebalanceCallback{
 		HostZoneId: HostChainId,

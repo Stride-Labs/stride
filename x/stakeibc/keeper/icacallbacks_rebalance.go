@@ -91,16 +91,10 @@ func RebalanceCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ac
 			return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "destination validator not found %s", dstValidator)
 		}
 
-		// Decrement the total delegation from the source validator and
-		// incremenet the total delegation for the destination validator
-		if rebalanceCallback.DelegationType == types.DelegationType_BALANCED {
-			valAddrMap[srcValidator].BalancedDelegation = valAddrMap[srcValidator].BalancedDelegation.Sub(rebalancing.Amt)
-			valAddrMap[dstValidator].BalancedDelegation = valAddrMap[dstValidator].BalancedDelegation.Add(rebalancing.Amt)
-
-		} else if rebalanceCallback.DelegationType == types.DelegationType_UNBALANCED {
-			valAddrMap[srcValidator].UnbalancedDelegation = valAddrMap[srcValidator].UnbalancedDelegation.Sub(rebalancing.Amt)
-			valAddrMap[dstValidator].UnbalancedDelegation = valAddrMap[dstValidator].UnbalancedDelegation.Add(rebalancing.Amt)
-		}
+		// Decrement the delegation from the source validator and increment the delegation
+		// for the destination validator
+		valAddrMap[srcValidator].Delegation = valAddrMap[srcValidator].Delegation.Sub(rebalancing.Amt)
+		valAddrMap[dstValidator].Delegation = valAddrMap[dstValidator].Delegation.Add(rebalancing.Amt)
 	}
 
 	k.SetHostZone(ctx, hostZone)

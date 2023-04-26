@@ -25,7 +25,7 @@ type RebalanceValidatorDelegationChange struct {
 //    misaligned with the validator. They must be rebalanced periodically
 // The balance portion represents either native delegations or LSM delegation that have
 //    already been rebalanced. This portion only requires a rebalancing if the validator weights change
-func (k Keeper) RebalanceDelegations(ctx sdk.Context, chainId string, delegationType types.DelegationType, numRebalance uint64) error {
+func (k Keeper) RebalanceDelegations(ctx sdk.Context, chainId string, numRebalance uint64) error {
 	// Get the host zone and confirm the delegation account is initialized
 	hostZone, found := k.GetHostZone(ctx, chainId)
 	if !found {
@@ -36,7 +36,7 @@ func (k Keeper) RebalanceDelegations(ctx sdk.Context, chainId string, delegation
 	}
 
 	// Get the difference between the actual and expected validator delegations
-	valDeltaList, err := k.GetValidatorDelegationDifferences(ctx, hostZone, delegationType)
+	valDeltaList, err := k.GetValidatorDelegationDifferences(ctx, hostZone)
 	if err != nil {
 		return errorsmod.Wrapf(err, "unable to get validator deltas for host zone %s", chainId)
 	}
@@ -45,9 +45,8 @@ func (k Keeper) RebalanceDelegations(ctx sdk.Context, chainId string, delegation
 
 	// marshall the callback
 	rebalanceCallback := types.RebalanceCallback{
-		HostZoneId:     hostZone.ChainId,
-		DelegationType: delegationType,
-		Rebalancings:   rebalacings,
+		HostZoneId:   hostZone.ChainId,
+		Rebalancings: rebalacings,
 	}
 	rebalanceCallbackBz, err := k.MarshalRebalanceCallbackArgs(ctx, rebalanceCallback)
 	if err != nil {
@@ -169,13 +168,9 @@ func (k Keeper) GetRebalanceICAMessages(
 // This function returns a list with the number of extra tokens that needs to be sent to each validator
 //   positive implies extra tokens need to be given,
 //   negative implies tokens need to be taken away
-func (k Keeper) GetValidatorDelegationDifferences(
-	ctx sdk.Context,
-	hostZone types.HostZone,
-	delegationType types.DelegationType, // QUESTION: Is delegationType more clear as an enum or as a boolean?
-) ([]RebalanceValidatorDelegationChange, error) {
+func (k Keeper) GetValidatorDelegationDifferences(ctx sdk.Context, hostZone types.HostZone) ([]RebalanceValidatorDelegationChange, error) {
 	// Get the target delegation amount for each validator
-	totalDelegatedAmt := k.GetTotalValidatorDelegations(hostZone, delegationType)
+	totalDelegatedAmt := k.GetTotalValidatorDelegations(hostZone)
 	targetDelegation, err := k.GetTargetValAmtsForHostZone(ctx, hostZone, totalDelegatedAmt)
 	if err != nil {
 		return nil, errorsmod.Wrapf(err, "unable to get target val amounts for host zone %s", hostZone.ChainId)
@@ -185,15 +180,8 @@ func (k Keeper) GetValidatorDelegationDifferences(
 	delegationDeltas := []RebalanceValidatorDelegationChange{}
 	totalDelegationChange := sdkmath.ZeroInt()
 	for _, validator := range hostZone.Validators {
-		targetDelForVal := targetDelegation[validator.Address]
-
-		// Compare the target with either the respective delegation type (either Balanced or Unbalanced)
-		var delegationChange sdkmath.Int
-		if delegationType == types.DelegationType_BALANCED {
-			delegationChange = targetDelForVal.Sub(validator.BalancedDelegation)
-		} else if delegationType == types.DelegationType_UNBALANCED {
-			delegationChange = targetDelForVal.Sub(validator.UnbalancedDelegation)
-		}
+		// Compare the target with either the current delegation
+		delegationChange := targetDelegation[validator.Address].Sub(validator.Delegation)
 
 		// Only include validators who's delegation should change
 		if !delegationChange.IsZero() {
@@ -268,15 +256,11 @@ func (k Keeper) GetTargetValAmtsForHostZone(ctx sdk.Context, hostZone types.Host
 
 // Sum the total delegation across each validator for a host zone
 // Must specify whether to sum the balanced or unbalanced delegation
-func (k Keeper) GetTotalValidatorDelegations(hostZone types.HostZone, delegationType types.DelegationType) sdkmath.Int {
+func (k Keeper) GetTotalValidatorDelegations(hostZone types.HostZone) sdkmath.Int {
 	validators := hostZone.Validators
 	totalDelegation := sdkmath.ZeroInt()
 	for _, validator := range validators {
-		if delegationType == types.DelegationType_BALANCED {
-			totalDelegation = totalDelegation.Add(validator.BalancedDelegation)
-		} else if delegationType == types.DelegationType_UNBALANCED {
-			totalDelegation = totalDelegation.Add(validator.UnbalancedDelegation)
-		}
+		totalDelegation = totalDelegation.Add(validator.Delegation)
 	}
 	return totalDelegation
 }

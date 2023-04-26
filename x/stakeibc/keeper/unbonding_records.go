@@ -92,12 +92,12 @@ func (k Keeper) GetHostZoneUnbondingMsgs(ctx sdk.Context, hostZone types.HostZon
 
 		targetUnbondAmount := targetUnbondingsByValidator[validator.Address]
 		k.Logger(ctx).Info(utils.LogWithHostZone(hostZone.ChainId,
-			"  Validator %s - Weight: %d, Target Unbond Amount: %v, Current Delegations: %v", validator.Address, validator.Weight, targetUnbondAmount, validator.BalancedDelegation))
+			"  Validator %s - Weight: %d, Target Unbond Amount: %v, Current Delegations: %v", validator.Address, validator.Weight, targetUnbondAmount, validator.Delegation))
 
 		// If they don't have enough to cover the unbondings, set their target unbond amount to their current delegations and increment the overflow
-		if targetUnbondAmount.GT(validator.BalancedDelegation) {
-			overflowAmount = overflowAmount.Add(targetUnbondAmount).Sub(validator.BalancedDelegation)
-			targetUnbondAmount = validator.BalancedDelegation
+		if targetUnbondAmount.GT(validator.Delegation) {
+			overflowAmount = overflowAmount.Add(targetUnbondAmount).Sub(validator.Delegation)
+			targetUnbondAmount = validator.Delegation
 		}
 		finalUnbondingsByValidator[validator.Address] = targetUnbondAmount
 	}
@@ -112,7 +112,7 @@ func (k Keeper) GetHostZoneUnbondingMsgs(ctx sdk.Context, hostZone types.HostZon
 			targetUnbondAmount := finalUnbondingsByValidator[validator.Address]
 
 			// Check if we can unbond more from this validator
-			validatorUnbondExtraCapacity := validator.BalancedDelegation.Sub(targetUnbondAmount)
+			validatorUnbondExtraCapacity := validator.Delegation.Sub(targetUnbondAmount)
 			if validatorUnbondExtraCapacity.GT(sdkmath.ZeroInt()) {
 
 				// If we can fully cover the unbonding, do so with this validator
