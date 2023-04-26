@@ -4,9 +4,10 @@ import (
 	channeltypes "github.com/cosmos/ibc-go/v5/modules/core/04-channel/types"
 	"github.com/golang/protobuf/proto" //nolint:staticcheck
 
-	icacallbackstypes "github.com/Stride-Labs/stride/v8/x/icacallbacks/types"
-	"github.com/Stride-Labs/stride/v8/x/stakeibc/keeper"
-	"github.com/Stride-Labs/stride/v8/x/stakeibc/types"
+	icacallbackstypes "github.com/Stride-Labs/stride/v9/x/icacallbacks/types"
+	recordstypes "github.com/Stride-Labs/stride/v9/x/records/types"
+	"github.com/Stride-Labs/stride/v9/x/stakeibc/keeper"
+	"github.com/Stride-Labs/stride/v9/x/stakeibc/types"
 )
 
 // Helper function to setup the detokenize ICA callback test
@@ -14,12 +15,12 @@ import (
 // to the callback
 func (s *KeeperTestSuite) SetupTestDetokenizeCallback() []byte {
 	// Store the LSMDeposit record with status DETOKENIZATION_IN_PROGRESS
-	deposit := types.LSMTokenDeposit{
+	deposit := recordstypes.LSMTokenDeposit{
 		ChainId: HostChainId,
 		Denom:   LSMTokenBaseDenom,
-		Status:  types.DETOKENIZATION_IN_PROGRESS,
+		Status:  recordstypes.LSMTokenDeposit_DETOKENIZATION_IN_PROGRESS,
 	}
-	s.App.StakeibcKeeper.SetLSMTokenDeposit(s.Ctx, deposit)
+	s.App.RecordsKeeper.SetLSMTokenDeposit(s.Ctx, deposit)
 
 	// Return the deposit as callback args
 	callbackBz, err := proto.Marshal(&types.DetokenizeSharesCallback{
@@ -41,7 +42,7 @@ func (s *KeeperTestSuite) TestDetokenizeCallback_Successful() {
 	s.Require().NoError(err, "no error expected during callback")
 
 	// Check that the deposit was removed
-	_, found := s.App.StakeibcKeeper.GetLSMTokenDeposit(s.Ctx, HostChainId, LSMTokenBaseDenom)
+	_, found := s.App.RecordsKeeper.GetLSMTokenDeposit(s.Ctx, HostChainId, LSMTokenBaseDenom)
 	s.Require().False(found, "deposit should have been removed")
 }
 
@@ -68,9 +69,9 @@ func (s *KeeperTestSuite) TestDetokenizeCallback_AckTimeout() {
 	s.Require().NoError(err, "no error expected during callback")
 
 	// The deposit should still be there in status IN_PROGRESS
-	deposit, found := s.App.StakeibcKeeper.GetLSMTokenDeposit(s.Ctx, HostChainId, LSMTokenBaseDenom)
+	deposit, found := s.App.RecordsKeeper.GetLSMTokenDeposit(s.Ctx, HostChainId, LSMTokenBaseDenom)
 	s.Require().True(found, "deposit should not have been removed")
-	s.Require().Equal(types.DETOKENIZATION_IN_PROGRESS.String(), deposit.Status.String(), "deposit status")
+	s.Require().Equal(recordstypes.LSMTokenDeposit_DETOKENIZATION_IN_PROGRESS.String(), deposit.Status.String(), "deposit status")
 }
 
 func (s *KeeperTestSuite) TestDetokenizeCallback_AckFailure() {
@@ -84,7 +85,7 @@ func (s *KeeperTestSuite) TestDetokenizeCallback_AckFailure() {
 	s.Require().NoError(err, "no error expected during callback")
 
 	// The deposit status should be FAILED
-	deposit, found := s.App.StakeibcKeeper.GetLSMTokenDeposit(s.Ctx, HostChainId, LSMTokenBaseDenom)
+	deposit, found := s.App.RecordsKeeper.GetLSMTokenDeposit(s.Ctx, HostChainId, LSMTokenBaseDenom)
 	s.Require().True(found, "deposit should not have been removed")
-	s.Require().Equal(types.DETOKENIZATION_FAILED.String(), deposit.Status.String(), "deposit status")
+	s.Require().Equal(recordstypes.LSMTokenDeposit_DETOKENIZATION_FAILED.String(), deposit.Status.String(), "deposit status")
 }

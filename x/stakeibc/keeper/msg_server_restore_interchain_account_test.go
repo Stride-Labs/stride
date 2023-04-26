@@ -8,9 +8,8 @@ import (
 	icatypes "github.com/cosmos/ibc-go/v5/modules/apps/27-interchain-accounts/types"
 	channeltypes "github.com/cosmos/ibc-go/v5/modules/core/04-channel/types"
 
-	recordtypes "github.com/Stride-Labs/stride/v8/x/records/types"
-	"github.com/Stride-Labs/stride/v8/x/stakeibc/types"
-	stakeibc "github.com/Stride-Labs/stride/v8/x/stakeibc/types"
+	recordtypes "github.com/Stride-Labs/stride/v9/x/records/types"
+	types "github.com/Stride-Labs/stride/v9/x/stakeibc/types"
 )
 
 type DepositRecordStatusUpdate struct {
@@ -27,12 +26,12 @@ type HostZoneUnbondingStatusUpdate struct {
 type LSMTokenDepositStatusUpdate struct {
 	chainId        string
 	denom          string
-	initialStatus  types.LSMDepositStatus
-	revertedStatus types.LSMDepositStatus
+	initialStatus  recordtypes.LSMTokenDeposit_Status
+	revertedStatus recordtypes.LSMTokenDeposit_Status
 }
 
 type RestoreInterchainAccountTestCase struct {
-	validMsg                    stakeibc.MsgRestoreInterchainAccount
+	validMsg                    types.MsgRestoreInterchainAccount
 	depositRecordStatusUpdates  []DepositRecordStatusUpdate
 	unbondingRecordStatusUpdate []HostZoneUnbondingStatusUpdate
 	lsmTokenDepositStatusUpdate []LSMTokenDepositStatusUpdate
@@ -53,7 +52,7 @@ func (s *KeeperTestSuite) SetupRestoreInterchainAccount(createDelegationICAChann
 		portID = icatypes.PortPrefix + owner
 	}
 
-	hostZone := stakeibc.HostZone{
+	hostZone := types.HostZone{
 		ChainId:        HostChainId,
 		ConnectionId:   ibctesting.FirstConnectionID,
 		RedemptionRate: sdk.OneDec(), // if not yet, the beginblocker invariant panics
@@ -135,43 +134,43 @@ func (s *KeeperTestSuite) SetupRestoreInterchainAccount(createDelegationICAChann
 			// Status doesn't change
 			chainId:        HostChainId,
 			denom:          "denom-1",
-			initialStatus:  types.TRANSFER_IN_PROGRESS,
-			revertedStatus: types.TRANSFER_IN_PROGRESS,
+			initialStatus:  recordtypes.LSMTokenDeposit_TRANSFER_IN_PROGRESS,
+			revertedStatus: recordtypes.LSMTokenDeposit_TRANSFER_IN_PROGRESS,
 		},
 		{
 			// Status gets reverted from IN_PROGRESS to QUEUE
 			chainId:        HostChainId,
 			denom:          "denom-2",
-			initialStatus:  types.DETOKENIZATION_IN_PROGRESS,
-			revertedStatus: types.DETOKENIZATION_QUEUE,
+			initialStatus:  recordtypes.LSMTokenDeposit_DETOKENIZATION_IN_PROGRESS,
+			revertedStatus: recordtypes.LSMTokenDeposit_DETOKENIZATION_QUEUE,
 		},
 		{
 			// Status doesn't change
 			chainId:        HostChainId,
 			denom:          "denom-3",
-			initialStatus:  types.DETOKENIZATION_QUEUE,
-			revertedStatus: types.DETOKENIZATION_QUEUE,
+			initialStatus:  recordtypes.LSMTokenDeposit_DETOKENIZATION_QUEUE,
+			revertedStatus: recordtypes.LSMTokenDeposit_DETOKENIZATION_QUEUE,
 		},
 		{
 			// Status doesn't change (different host zone)
 			chainId:        "different_host_zone",
 			denom:          "denom-4",
-			initialStatus:  types.DETOKENIZATION_IN_PROGRESS,
-			revertedStatus: types.DETOKENIZATION_IN_PROGRESS,
+			initialStatus:  recordtypes.LSMTokenDeposit_DETOKENIZATION_IN_PROGRESS,
+			revertedStatus: recordtypes.LSMTokenDeposit_DETOKENIZATION_IN_PROGRESS,
 		},
 	}
 	for _, lsmTokenDeposit := range lsmTokenDeposits {
-		s.App.StakeibcKeeper.SetLSMTokenDeposit(s.Ctx, types.LSMTokenDeposit{
+		s.App.RecordsKeeper.SetLSMTokenDeposit(s.Ctx, recordtypes.LSMTokenDeposit{
 			ChainId: lsmTokenDeposit.chainId,
 			Status:  lsmTokenDeposit.initialStatus,
 			Denom:   lsmTokenDeposit.denom,
 		})
 	}
 
-	defaultMsg := stakeibc.MsgRestoreInterchainAccount{
+	defaultMsg := types.MsgRestoreInterchainAccount{
 		Creator:     "creatoraddress",
 		ChainId:     HostChainId,
-		AccountType: stakeibc.ICAAccountType_DELEGATION,
+		AccountType: types.ICAAccountType_DELEGATION,
 	}
 
 	return RestoreInterchainAccountTestCase{
@@ -193,7 +192,7 @@ func (s *KeeperTestSuite) closeICAChannel(portId, channelID string) {
 }
 
 // Helper function to call RestoreChannel and check that a new channel was created and opened
-func (s *KeeperTestSuite) restoreChannelAndVerifySuccess(msg stakeibc.MsgRestoreInterchainAccount, portID string, channelID string) {
+func (s *KeeperTestSuite) restoreChannelAndVerifySuccess(msg types.MsgRestoreInterchainAccount, portID string, channelID string) {
 	// Restore the channel
 	_, err := s.GetMsgServer().RestoreInterchainAccount(sdk.WrapSDKContext(s.Ctx), &msg)
 	s.Require().NoError(err, "registered ica account successfully")
@@ -248,7 +247,7 @@ func (s *KeeperTestSuite) verifyHostZoneUnbondingStatus(expectedUnbondingRecords
 // Helper function to check that each LSMTokenDepoit's status was either left alone or reverted to it's prior status
 func (s *KeeperTestSuite) verifyLSMDepositStatus(expectedLSMDeposits []LSMTokenDepositStatusUpdate, revert bool) {
 	for i, expectedLSMDeposit := range expectedLSMDeposits {
-		actualLSMDeposit, found := s.App.StakeibcKeeper.GetLSMTokenDeposit(s.Ctx, expectedLSMDeposit.chainId, expectedLSMDeposit.denom)
+		actualLSMDeposit, found := s.App.RecordsKeeper.GetLSMTokenDeposit(s.Ctx, expectedLSMDeposit.chainId, expectedLSMDeposit.denom)
 		s.Require().True(found, "lsm deposit found")
 
 		// Only revert record if the revert option is passed and the host zone matches
@@ -295,7 +294,7 @@ func (s *KeeperTestSuite) TestRestoreInterchainAccount_InvalidConnectionId() {
 func (s *KeeperTestSuite) TestRestoreInterchainAccount_CannotRestoreNonExistentAcct() {
 	tc := s.SetupRestoreInterchainAccount(false)
 	msg := tc.validMsg
-	msg.AccountType = stakeibc.ICAAccountType_WITHDRAWAL
+	msg.AccountType = types.ICAAccountType_WITHDRAWAL
 
 	_, err := s.GetMsgServer().RestoreInterchainAccount(sdk.WrapSDKContext(s.Ctx), &msg)
 	s.Require().ErrorContains(err, "ICA controller account address not found: GAIA.WITHDRAWAL")
@@ -338,7 +337,7 @@ func (s *KeeperTestSuite) TestRestoreInterchainAccount_NoRecordChange_Success() 
 
 	// Restore the channel
 	msg := tc.validMsg
-	msg.AccountType = stakeibc.ICAAccountType_WITHDRAWAL
+	msg.AccountType = types.ICAAccountType_WITHDRAWAL
 	s.restoreChannelAndVerifySuccess(msg, portID, channelID)
 
 	// Verify the record status' were NOT reverted

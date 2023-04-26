@@ -6,8 +6,8 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/Stride-Labs/stride/v8/app/apptesting"
-	"github.com/Stride-Labs/stride/v8/x/autopilot/types"
+	"github.com/Stride-Labs/stride/v9/app/apptesting"
+	"github.com/Stride-Labs/stride/v9/x/autopilot/types"
 )
 
 func init() {
@@ -24,25 +24,25 @@ func getStakeibcMemo(address, action string) string {
 		}`, address, action)
 }
 
-func getClaimMemo(address, airdropId string) string {
+func getClaimMemo(address string) string {
 	return fmt.Sprintf(`
 		{
 			"autopilot": {
 				"receiver": "%[1]s",
-				"claim": { "stride_address": "%[1]s", "airdrop_id": "%[2]s" } 
+				"claim": { "stride_address": "%[1]s" } 
 			}
-		}`, address, airdropId)
+		}`, address)
 }
 
-func getClaimAndStakeibcMemo(address, action, airdropId string) string {
+func getClaimAndStakeibcMemo(address, action string) string {
 	return fmt.Sprintf(`
 	    {
 			"autopilot": {
 				"receiver": "%[1]s",
 				"stakeibc": { "stride_address": "%[1]s", "action": "%[2]s" },
-				"claim": { "stride_address": "%[1]s", "airdrop_id": "%[3]s" } 
+				"claim": { "stride_address": "%[1]s" } 
 			}
-		}`, address, action, airdropId)
+		}`, address, action)
 }
 
 // Helper function to check the routingInfo with a switch statement
@@ -62,7 +62,6 @@ func checkModuleRoutingInfoType(routingInfo types.ModuleRoutingInfo, expectedTyp
 func TestParsePacketMetadata(t *testing.T) {
 	validAddress, invalidAddress := apptesting.GenerateTestAddrs()
 	validStakeibcAction := "LiquidStake"
-	validAirdropId := "gaia"
 
 	validParsedStakeibcPacketMetadata := types.StakeibcPacketMetadata{
 		StrideAddress: validAddress,
@@ -71,7 +70,6 @@ func TestParsePacketMetadata(t *testing.T) {
 
 	validParsedClaimPacketMetadata := types.ClaimPacketMetadata{
 		StrideAddress: validAddress,
-		AirdropId:     validAirdropId,
 	}
 
 	testCases := []struct {
@@ -89,7 +87,7 @@ func TestParsePacketMetadata(t *testing.T) {
 		},
 		{
 			name:        "valid claim memo",
-			metadata:    getClaimMemo(validAddress, validAirdropId),
+			metadata:    getClaimMemo(validAddress),
 			parsedClaim: &validParsedClaimPacketMetadata,
 		},
 		{
@@ -134,17 +132,12 @@ func TestParsePacketMetadata(t *testing.T) {
 		},
 		{
 			name:        "invalid claim address",
-			metadata:    getClaimMemo(invalidAddress, validAirdropId),
+			metadata:    getClaimMemo(invalidAddress),
 			expectedErr: "receiver address must be specified when using autopilot",
 		},
 		{
-			name:        "invalid claim airdrop",
-			metadata:    getClaimMemo(validAddress, ""),
-			expectedErr: "invalid claim airdrop ID",
-		},
-		{
 			name:        "both claim and stakeibc memo set",
-			metadata:    getClaimAndStakeibcMemo(validAddress, validStakeibcAction, validAirdropId),
+			metadata:    getClaimAndStakeibcMemo(validAddress, validStakeibcAction),
 			expectedErr: "invalid number of module routes",
 		},
 	}
@@ -226,7 +219,6 @@ func TestValidateStakeibcPacketMetadata(t *testing.T) {
 
 func TestValidateClaimPacketMetadata(t *testing.T) {
 	validAddress, _ := apptesting.GenerateTestAddrs()
-	validAirdropId := "gaia"
 
 	testCases := []struct {
 		name        string
@@ -237,24 +229,14 @@ func TestValidateClaimPacketMetadata(t *testing.T) {
 			name: "valid metadata",
 			metadata: &types.ClaimPacketMetadata{
 				StrideAddress: validAddress,
-				AirdropId:     validAirdropId,
 			},
 		},
 		{
 			name: "invalid address",
 			metadata: &types.ClaimPacketMetadata{
 				StrideAddress: "bad_address",
-				AirdropId:     validAirdropId,
 			},
 			expectedErr: "decoding bech32 failed",
-		},
-		{
-			name: "invalid airdrop-id",
-			metadata: &types.ClaimPacketMetadata{
-				StrideAddress: validAddress,
-				AirdropId:     "",
-			},
-			expectedErr: "invalid claim airdrop ID",
 		},
 	}
 

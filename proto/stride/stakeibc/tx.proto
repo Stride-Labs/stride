@@ -4,7 +4,7 @@ package stride.stakeibc;
 import "stride/stakeibc/ica_account.proto";
 import "stride/stakeibc/validator.proto";
 
-option go_package = "github.com/Stride-Labs/stride/v8/x/stakeibc/types";
+option go_package = "github.com/Stride-Labs/stride/v9/x/stakeibc/types";
 import "gogoproto/gogo.proto";
 import "cosmos_proto/cosmos.proto";
 
@@ -84,8 +84,8 @@ message MsgRegisterHostZone {
   string creator = 6;
   string transfer_channel_id = 10
       [ (gogoproto.moretags) = "yaml:\"transfer_channel_id\"" ];
-  uint64 unbonding_frequency = 11
-      [ (gogoproto.moretags) = "yaml:\"unbonding_frequency\"" ];
+  uint64 unbonding_period = 11
+      [ (gogoproto.moretags) = "yaml:\"unbonding_period\"" ];
   string min_redemption_rate = 13 [
     (cosmos_proto.scalar) = "cosmos.Dec",
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",

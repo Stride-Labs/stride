@@ -12,9 +12,9 @@ import (
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/spf13/cast"
 
-	"github.com/Stride-Labs/stride/v8/utils"
-	recordstypes "github.com/Stride-Labs/stride/v8/x/records/types"
-	"github.com/Stride-Labs/stride/v8/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v9/utils"
+	recordstypes "github.com/Stride-Labs/stride/v9/x/records/types"
+	"github.com/Stride-Labs/stride/v9/x/stakeibc/types"
 )
 
 func (k Keeper) CreateEpochUnbondingRecord(ctx sdk.Context, epochNumber uint64) bool {
@@ -228,9 +228,11 @@ func (k Keeper) InitiateAllHostZoneUnbondings(ctx sdk.Context, dayNumber uint64)
 	for _, hostZone := range k.GetAllActiveHostZone(ctx) {
 
 		// Confirm the unbonding is supposed to be triggered this epoch
-		if dayNumber%hostZone.UnbondingFrequency != 0 {
+		unbondingFrequency := hostZone.GetUnbondingFrequency()
+		if dayNumber%unbondingFrequency != 0 {
 			k.Logger(ctx).Info(utils.LogWithHostZone(hostZone.ChainId,
-				"Host does not unbond this epoch (Unbonding Frequency: %d, Epoch: %d)", hostZone.UnbondingFrequency, dayNumber))
+				"Host does not unbond this epoch (Unbonding Period: %d, Unbonding Frequency: %d, Epoch: %d)",
+				hostZone.UnbondingPeriod, unbondingFrequency, dayNumber))
 			continue
 		}
 

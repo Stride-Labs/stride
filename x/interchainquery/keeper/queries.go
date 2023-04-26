@@ -15,7 +15,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	"github.com/tendermint/tendermint/crypto"
 
-	"github.com/Stride-Labs/stride/v8/x/interchainquery/types"
+	"github.com/Stride-Labs/stride/v9/x/interchainquery/types"
 )
 
 // Generates a query ID based on the request information

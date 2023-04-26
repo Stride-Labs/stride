@@ -14,10 +14,10 @@ import (
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	"github.com/gogo/protobuf/proto"
 
-	"github.com/Stride-Labs/stride/v8/utils"
-	"github.com/Stride-Labs/stride/v8/x/claim/types"
-	vestingtypes "github.com/Stride-Labs/stride/v8/x/claim/vesting/types"
-	epochstypes "github.com/Stride-Labs/stride/v8/x/epochs/types"
+	"github.com/Stride-Labs/stride/v9/utils"
+	"github.com/Stride-Labs/stride/v9/x/claim/types"
+	vestingtypes "github.com/Stride-Labs/stride/v9/x/claim/vesting/types"
+	epochstypes "github.com/Stride-Labs/stride/v9/x/epochs/types"
 )
 
 func (k Keeper) LoadAllocationData(ctx sdk.Context, allocationData string) bool {
@@ -144,6 +144,26 @@ func (k Keeper) GetAirdropByIdentifier(ctx sdk.Context, airdropIdentifier string
 	}
 
 	return nil
+}
+
+// Get airdrop by chain id
+func (k Keeper) GetAirdropByChainId(ctx sdk.Context, chainId string) (airdrop *types.Airdrop, found bool) {
+	params, err := k.GetParams(ctx)
+	if err != nil {
+		panic(err)
+	}
+
+	if chainId == "" {
+		return nil, false
+	}
+
+	for _, airdrop := range params.Airdrops {
+		if airdrop.ChainId == chainId {
+			return airdrop, true
+		}
+	}
+
+	return nil, false
 }
 
 func (k Keeper) GetAirdropIds(ctx sdk.Context) []string {
@@ -722,31 +742,41 @@ func (k Keeper) ClaimCoinsForAction(ctx sdk.Context, addr sdk.AccAddress, action
 }
 
 // CreateAirdropAndEpoch creates a new airdrop and epoch for that.
-func (k Keeper) CreateAirdropAndEpoch(ctx sdk.Context, distributor string, denom string, startTime uint64, duration uint64, identifier string) error {
+func (k Keeper) CreateAirdropAndEpoch(ctx sdk.Context, msg types.MsgCreateAirdrop) error {
 	params, err := k.GetParams(ctx)
 	if err != nil {
 		panic(err)
 	}
 
+	// re-run validate basic in case this function is called directly from an upgrade handler
+	if err := msg.ValidateBasic(); err != nil {
+		return err
+	}
+
 	for _, airdrop := range params.Airdrops {
-		if airdrop.AirdropIdentifier == identifier {
+		if airdrop.AirdropIdentifier == msg.Identifier {
 			return types.ErrAirdropAlreadyExists
+		}
+		if airdrop.ChainId == msg.ChainId {
+			return types.ErrAirdropChainIdAlreadyExists
 		}
 	}
 
 	airdrop := types.Airdrop{
-		AirdropIdentifier:  identifier,
-		AirdropDuration:    time.Duration(duration * uint64(time.Second)),
-		ClaimDenom:         denom,
-		DistributorAddress: distributor,
-		AirdropStartTime:   time.Unix(int64(startTime), 0),
+		AirdropIdentifier:  msg.Identifier,
+		ChainId:            msg.ChainId,
+		AirdropDuration:    time.Duration(msg.Duration * uint64(time.Second)),
+		ClaimDenom:         msg.Denom,
+		DistributorAddress: msg.Distributor,
+		AirdropStartTime:   time.Unix(int64(msg.StartTime), 0),
+		AutopilotEnabled:   msg.AutopilotEnabled,
 	}
 
 	params.Airdrops = append(params.Airdrops, &airdrop)
 	k.epochsKeeper.SetEpochInfo(ctx, epochstypes.EpochInfo{
-		Identifier:              fmt.Sprintf("airdrop-%s", identifier),
+		Identifier:              fmt.Sprintf("airdrop-%s", msg.Identifier),
 		StartTime:               airdrop.AirdropStartTime.Add(time.Minute),
-		Duration:                time.Hour * 24 * 30,
+		Duration:                types.DefaultEpochDuration,
 		CurrentEpoch:            0,
 		CurrentEpochStartHeight: 0,
 		CurrentEpochStartTime:   time.Time{},

@@ -5,9 +5,9 @@ import (
 	ibctesting "github.com/cosmos/ibc-go/v5/testing"
 	_ "github.com/stretchr/testify/suite"
 
-	recordtypes "github.com/Stride-Labs/stride/v8/x/records/types"
+	recordtypes "github.com/Stride-Labs/stride/v9/x/records/types"
 
-	stakeibc "github.com/Stride-Labs/stride/v8/x/stakeibc/types"
+	stakeibc "github.com/Stride-Labs/stride/v9/x/stakeibc/types"
 )
 
 type InitiateAllHostZoneUnbondingsTestCase struct {
@@ -47,7 +47,7 @@ func (s *KeeperTestSuite) SetupInitiateAllHostZoneUnbondings() InitiateAllHostZo
 			ChainId:                  HostChainId,
 			HostDenom:                Atom,
 			Bech32Prefix:             GaiaPrefix,
-			UnbondingFrequency:       3,
+			UnbondingPeriod:          14,
 			Validators:               gaiaValidators,
 			DelegationIcaAddress:     gaiaDelegationAddr,
 			TotalBalancedDelegations: sdkmath.NewInt(5_000_000),
@@ -57,7 +57,7 @@ func (s *KeeperTestSuite) SetupInitiateAllHostZoneUnbondings() InitiateAllHostZo
 			ChainId:                  OsmoChainId,
 			HostDenom:                Osmo,
 			Bech32Prefix:             OsmoPrefix,
-			UnbondingFrequency:       4,
+			UnbondingPeriod:          21,
 			Validators:               osmoValidators,
 			DelegationIcaAddress:     osmoDelegationAddr,
 			TotalBalancedDelegations: sdkmath.NewInt(5_000_000),

@@ -5,7 +5,7 @@ import "stride/stakeibc/validator.proto";
 import "gogoproto/gogo.proto";
 import "cosmos_proto/cosmos.proto";
 
-option go_package = "github.com/Stride-Labs/stride/v8/x/stakeibc/types";
+option go_package = "github.com/Stride-Labs/stride/v9/x/stakeibc/types";
 
 enum DelegationType {
   BALANCED = 0;
@@ -21,8 +21,7 @@ message HostZone {
   string ibc_denom = 8;
   // native denom on host zone
   string host_denom = 9;
-  // stores how many days we should wait before issuing unbondings
-  uint64 unbonding_frequency = 14;
+  uint64 unbonding_period = 27;
   repeated Validator validators = 3;
   string deposit_address = 18
       [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
@@ -63,6 +62,6 @@ message HostZone {
     (gogoproto.nullable) = false
   ];
   bool halted = 19;
-  reserved 4, 5, 6, 7, 15, 16;
-  // next id: 27
+  reserved 4, 5, 6, 7, 14, 15, 16;
+  // next id: 28
 }

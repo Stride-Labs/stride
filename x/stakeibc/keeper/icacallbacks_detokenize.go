@@ -1,15 +1,15 @@
 package keeper
 
 import (
-	"github.com/Stride-Labs/stride/v8/utils"
-	"github.com/Stride-Labs/stride/v8/x/stakeibc/types"
-
-	icacallbackstypes "github.com/Stride-Labs/stride/v8/x/icacallbacks/types"
-
 	errorsmod "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	channeltypes "github.com/cosmos/ibc-go/v5/modules/core/04-channel/types"
 	"github.com/golang/protobuf/proto" //nolint:staticcheck
+
+	"github.com/Stride-Labs/stride/v9/utils"
+	icacallbackstypes "github.com/Stride-Labs/stride/v9/x/icacallbacks/types"
+	recordstypes "github.com/Stride-Labs/stride/v9/x/records/types"
+	"github.com/Stride-Labs/stride/v9/x/stakeibc/types"
 )
 
 // ICACallback after an LSM token is detokenized into native stake
@@ -34,12 +34,12 @@ func DetokenizeCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, a
 		return nil
 	}
 
-	// If the iCA failed, update the deposit status
+	// If the ICA failed, update the deposit status
 	if ackResponse.Status == icacallbackstypes.AckResponseStatus_FAILURE {
 		k.Logger(ctx).Error(utils.LogICACallbackStatusWithHostZone(chainId, ICACallbackID_Detokenize,
 			icacallbackstypes.AckResponseStatus_FAILURE, packet))
 
-		k.UpdateLSMTokenDepositStatus(ctx, *detokenizeCallback.Deposit, types.DETOKENIZATION_FAILED)
+		k.RecordsKeeper.UpdateLSMTokenDepositStatus(ctx, *detokenizeCallback.Deposit, recordstypes.LSMTokenDeposit_DETOKENIZATION_FAILED)
 		return nil
 	}
 
@@ -48,7 +48,7 @@ func DetokenizeCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, a
 
 	// If the ICA succeeded, remove the token deposit
 	deposit := detokenizeCallback.Deposit
-	k.RemoveLSMTokenDeposit(ctx, deposit.ChainId, deposit.Denom)
+	k.RecordsKeeper.RemoveLSMTokenDeposit(ctx, deposit.ChainId, deposit.Denom)
 
 	// Update unbalanced delegation on the host zone and validator
 	// TODO [LSM] - Use helper function
