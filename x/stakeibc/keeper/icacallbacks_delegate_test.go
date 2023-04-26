@@ -217,6 +217,6 @@ func (s *KeeperTestSuite) TestDelegateCallback_MissingValidator() {
 	s.Require().NoError(err)
 
 	err = stakeibckeeper.DelegateCallback(s.App.StakeibcKeeper, s.Ctx, tc.validArgs.packet, tc.validArgs.ackResponse, invalidCallbackArgs)
-	s.Require().EqualError(err, "Failed to add delegation to validator: can't change delegation on validator")
+	s.Require().ErrorContains(err, "unable to update validator (address_dne) delegation by 1234")
 	s.checkDelegateStateIfCallbackFailed(tc)
 }
