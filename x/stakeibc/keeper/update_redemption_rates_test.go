@@ -52,12 +52,12 @@ func (s *KeeperTestSuite) SetupUpdateRedemptionRates(tc UpdateRedemptionRateTest
 	s.App.RecordsKeeper.AppendDepositRecord(s.Ctx, toBeTransferedDepositRecord)
 
 	// add an LSMTokenDeposit to represent an LSMLiquidStake that has not yet been detokenized
-	lsmTokenDeposit := stakeibctypes.LSMTokenDeposit{
+	lsmTokenDeposit := recordtypes.LSMTokenDeposit{
 		ChainId: HostChainId,
 		Amount:  tc.justDepositedLSM,
-		Status:  stakeibctypes.TRANSFER_IN_PROGRESS,
+		Status:  recordtypes.LSMTokenDeposit_TRANSFER_IN_PROGRESS,
 	}
-	s.App.StakeibcKeeper.SetLSMTokenDeposit(s.Ctx, lsmTokenDeposit)
+	s.App.RecordsKeeper.SetLSMTokenDeposit(s.Ctx, lsmTokenDeposit)
 
 	// set the stSupply by minting
 	supply := sdk.NewCoins(sdk.NewCoin(StAtom, tc.stSupply))
@@ -298,40 +298,40 @@ func (s *KeeperTestSuite) TestGetRedemptionRate_DepositRecords() {
 }
 
 func (s *KeeperTestSuite) TestGetTokenizedDelegation() {
-	lsmDeposits := []stakeibctypes.LSMTokenDeposit{
+	lsmDeposits := []recordtypes.LSMTokenDeposit{
 		// Total: 1 + 2 + 3 + 4 + 5 + 6 + 7 + 8 + 9 + 10 = 65
-		{ChainId: HostChainId, Status: stakeibctypes.TRANSFER_IN_PROGRESS, Amount: sdk.NewInt(1)},
-		{ChainId: HostChainId, Status: stakeibctypes.TRANSFER_IN_PROGRESS, Amount: sdk.NewInt(2)},
+		{ChainId: HostChainId, Status: recordtypes.LSMTokenDeposit_TRANSFER_IN_PROGRESS, Amount: sdk.NewInt(1)},
+		{ChainId: HostChainId, Status: recordtypes.LSMTokenDeposit_TRANSFER_IN_PROGRESS, Amount: sdk.NewInt(2)},
 
-		{ChainId: HostChainId, Status: stakeibctypes.DETOKENIZATION_QUEUE, Amount: sdk.NewInt(3)},
-		{ChainId: HostChainId, Status: stakeibctypes.DETOKENIZATION_QUEUE, Amount: sdk.NewInt(4)},
+		{ChainId: HostChainId, Status: recordtypes.LSMTokenDeposit_DETOKENIZATION_QUEUE, Amount: sdk.NewInt(3)},
+		{ChainId: HostChainId, Status: recordtypes.LSMTokenDeposit_DETOKENIZATION_QUEUE, Amount: sdk.NewInt(4)},
 
-		{ChainId: HostChainId, Status: stakeibctypes.DETOKENIZATION_IN_PROGRESS, Amount: sdk.NewInt(5)},
-		{ChainId: HostChainId, Status: stakeibctypes.DETOKENIZATION_IN_PROGRESS, Amount: sdk.NewInt(6)},
+		{ChainId: HostChainId, Status: recordtypes.LSMTokenDeposit_DETOKENIZATION_IN_PROGRESS, Amount: sdk.NewInt(5)},
+		{ChainId: HostChainId, Status: recordtypes.LSMTokenDeposit_DETOKENIZATION_IN_PROGRESS, Amount: sdk.NewInt(6)},
 
-		{ChainId: HostChainId, Status: stakeibctypes.TRANSFER_FAILED, Amount: sdk.NewInt(7)},
-		{ChainId: HostChainId, Status: stakeibctypes.TRANSFER_FAILED, Amount: sdk.NewInt(8)},
+		{ChainId: HostChainId, Status: recordtypes.LSMTokenDeposit_TRANSFER_FAILED, Amount: sdk.NewInt(7)},
+		{ChainId: HostChainId, Status: recordtypes.LSMTokenDeposit_TRANSFER_FAILED, Amount: sdk.NewInt(8)},
 
-		{ChainId: HostChainId, Status: stakeibctypes.DETOKENIZATION_FAILED, Amount: sdk.NewInt(9)},
-		{ChainId: HostChainId, Status: stakeibctypes.DETOKENIZATION_FAILED, Amount: sdk.NewInt(10)},
+		{ChainId: HostChainId, Status: recordtypes.LSMTokenDeposit_DETOKENIZATION_FAILED, Amount: sdk.NewInt(9)},
+		{ChainId: HostChainId, Status: recordtypes.LSMTokenDeposit_DETOKENIZATION_FAILED, Amount: sdk.NewInt(10)},
 
 		// Status DEPOSIT_PENDING - should be ignored
-		{ChainId: HostChainId, Status: stakeibctypes.DEPOSIT_PENDING, Amount: sdk.NewInt(11)},
-		{ChainId: HostChainId, Status: stakeibctypes.DEPOSIT_PENDING, Amount: sdk.NewInt(12)},
+		{ChainId: HostChainId, Status: recordtypes.LSMTokenDeposit_DEPOSIT_PENDING, Amount: sdk.NewInt(11)},
+		{ChainId: HostChainId, Status: recordtypes.LSMTokenDeposit_DEPOSIT_PENDING, Amount: sdk.NewInt(12)},
 
 		// Different chain ID - should be ignored
-		{ChainId: "different", Status: stakeibctypes.TRANSFER_IN_PROGRESS, Amount: sdk.NewInt(1)},
-		{ChainId: "different", Status: stakeibctypes.DETOKENIZATION_QUEUE, Amount: sdk.NewInt(3)},
-		{ChainId: "different", Status: stakeibctypes.DETOKENIZATION_IN_PROGRESS, Amount: sdk.NewInt(5)},
-		{ChainId: "different", Status: stakeibctypes.TRANSFER_FAILED, Amount: sdk.NewInt(7)},
-		{ChainId: "different", Status: stakeibctypes.DETOKENIZATION_FAILED, Amount: sdk.NewInt(9)},
+		{ChainId: "different", Status: recordtypes.LSMTokenDeposit_TRANSFER_IN_PROGRESS, Amount: sdk.NewInt(1)},
+		{ChainId: "different", Status: recordtypes.LSMTokenDeposit_DETOKENIZATION_QUEUE, Amount: sdk.NewInt(3)},
+		{ChainId: "different", Status: recordtypes.LSMTokenDeposit_DETOKENIZATION_IN_PROGRESS, Amount: sdk.NewInt(5)},
+		{ChainId: "different", Status: recordtypes.LSMTokenDeposit_TRANSFER_FAILED, Amount: sdk.NewInt(7)},
+		{ChainId: "different", Status: recordtypes.LSMTokenDeposit_DETOKENIZATION_FAILED, Amount: sdk.NewInt(9)},
 	}
 	expectedTokenizedDelegation := int64(1 + 2 + 3 + 4 + 5 + 6 + 7 + 8 + 9 + 10)
 
 	// Store deposits
 	for i, deposit := range lsmDeposits {
 		deposit.Denom = strconv.Itoa(i)
-		s.App.StakeibcKeeper.SetLSMTokenDeposit(s.Ctx, deposit)
+		s.App.RecordsKeeper.SetLSMTokenDeposit(s.Ctx, deposit)
 	}
 
 	// Check the total delegation from LSM Tokens

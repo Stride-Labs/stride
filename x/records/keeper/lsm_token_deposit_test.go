@@ -5,7 +5,7 @@ import (
 
 	sdkmath "cosmossdk.io/math"
 
-	"github.com/Stride-Labs/stride/v9/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v9/x/records/types"
 )
 
 func (s *KeeperTestSuite) createNLSMTokenDeposit(n int) []types.LSMTokenDeposit {
@@ -18,14 +18,14 @@ func (s *KeeperTestSuite) createNLSMTokenDeposit(n int) []types.LSMTokenDeposit 
 		deposits[i].ValidatorAddress = validatorAddr
 		deposits[i].ChainId = strconv.Itoa(i)
 		deposits[i].Amount = sdkmath.NewIntFromUint64(1000)
-		deposits[i].Status = types.TRANSFER_IN_PROGRESS
+		deposits[i].Status = types.LSMTokenDeposit_TRANSFER_IN_PROGRESS
 	}
 	return deposits
 }
 
 func (s *KeeperTestSuite) setGivenLSMTokenDeposit(deposits []types.LSMTokenDeposit) []types.LSMTokenDeposit {
 	for _, deposit := range deposits {
-		s.App.StakeibcKeeper.SetLSMTokenDeposit(s.Ctx, deposit)
+		s.App.RecordsKeeper.SetLSMTokenDeposit(s.Ctx, deposit)
 	}
 	return deposits
 }
@@ -38,7 +38,7 @@ func (s *KeeperTestSuite) createSetNLSMTokenDeposit(n int) []types.LSMTokenDepos
 func (s *KeeperTestSuite) TestGetLSMTokenDeposit() {
 	deposits := s.createSetNLSMTokenDeposit(10)
 	for _, expected := range deposits {
-		actual, found := s.App.StakeibcKeeper.GetLSMTokenDeposit(s.Ctx, expected.ChainId, expected.Denom)
+		actual, found := s.App.RecordsKeeper.GetLSMTokenDeposit(s.Ctx, expected.ChainId, expected.Denom)
 		s.Require().True(found, "deposit not found for chainID %s and denom %s", expected.ChainId, expected.Denom)
 		s.Require().Equal(expected, actual, "found deposit did not match expected")
 	}
@@ -47,15 +47,15 @@ func (s *KeeperTestSuite) TestGetLSMTokenDeposit() {
 func (s *KeeperTestSuite) TestRemoveLSMTokenDeposit() {
 	deposits := s.createSetNLSMTokenDeposit(10)
 	for _, expected := range deposits {
-		s.App.StakeibcKeeper.RemoveLSMTokenDeposit(s.Ctx, expected.ChainId, expected.Denom)
-		_, found := s.App.StakeibcKeeper.GetLSMTokenDeposit(s.Ctx, expected.ChainId, expected.Denom)
+		s.App.RecordsKeeper.RemoveLSMTokenDeposit(s.Ctx, expected.ChainId, expected.Denom)
+		_, found := s.App.RecordsKeeper.GetLSMTokenDeposit(s.Ctx, expected.ChainId, expected.Denom)
 		s.Require().False(found, "deposit was still found after removal %+v", expected)
 	}
 }
 
 func (s *KeeperTestSuite) TestGetAllLSMTokenDeposit() {
 	expected := s.createSetNLSMTokenDeposit(10)
-	actual := s.App.StakeibcKeeper.GetAllLSMTokenDeposit(s.Ctx)
+	actual := s.App.RecordsKeeper.GetAllLSMTokenDeposit(s.Ctx)
 	s.Require().Equal(len(expected), len(actual),
 		"different number of deposits found %d than was expected %d", len(actual), len(expected))
 	s.Require().ElementsMatch(actual, expected, "actual list did not match expected list")
@@ -70,20 +70,20 @@ func (s *KeeperTestSuite) TestAddLSMTokenDeposit() {
 	// verify non-overlapping half of the newDeposits do not yet exist in the store
 	for i := 5; i < 10; i++ {
 		new := newDeposits[i]
-		_, found := s.App.StakeibcKeeper.GetLSMTokenDeposit(s.Ctx, new.ChainId, new.Denom)
+		_, found := s.App.RecordsKeeper.GetLSMTokenDeposit(s.Ctx, new.ChainId, new.Denom)
 		s.Require().False(found, "deposit was unexpectedly found in store already %+v", new)
 	}
 
 	// call Add on all newDeposits so they are in store one way or another
 	for _, deposit := range newDeposits {
-		s.App.StakeibcKeeper.AddLSMTokenDeposit(s.Ctx, deposit)
+		s.App.RecordsKeeper.AddLSMTokenDeposit(s.Ctx, deposit)
 	}
 
 	// verify that for previously existing deposits the amounts add
 	for i := 0; i < 5; i++ {
 		existing := existingDeposits[i]
 		new := newDeposits[i]
-		actual, found := s.App.StakeibcKeeper.GetLSMTokenDeposit(s.Ctx, new.ChainId, new.Denom)
+		actual, found := s.App.RecordsKeeper.GetLSMTokenDeposit(s.Ctx, new.ChainId, new.Denom)
 		s.Require().True(found, "deposit not found in store %+v", new)
 		s.Require().Equal(sdkmath.Int.Add(existing.Amount, new.Amount), actual.Amount,
 			"found amount %d did not match expected sum %d + %d = %d", actual.Amount,
@@ -93,7 +93,7 @@ func (s *KeeperTestSuite) TestAddLSMTokenDeposit() {
 	// verify that for previously non-existing deposits the amounts set
 	for i := 5; i < 10; i++ {
 		new := newDeposits[i]
-		actual, found := s.App.StakeibcKeeper.GetLSMTokenDeposit(s.Ctx, new.ChainId, new.Denom)
+		actual, found := s.App.RecordsKeeper.GetLSMTokenDeposit(s.Ctx, new.ChainId, new.Denom)
 		s.Require().True(found, "deposit not found in store %+v", new)
 		s.Require().Equal(new.Amount, actual.Amount,
 			"found amount %d did not match expected amount %d ", actual.Amount, new.Amount)
@@ -101,20 +101,20 @@ func (s *KeeperTestSuite) TestAddLSMTokenDeposit() {
 }
 
 func (s *KeeperTestSuite) TestUpdateLSMTokenDepositStatus() {
-	statuses := []types.LSMDepositStatus{
-		types.TRANSFER_IN_PROGRESS,
-		types.TRANSFER_FAILED,
-		types.DETOKENIZATION_QUEUE,
-		types.DETOKENIZATION_IN_PROGRESS,
-		types.DETOKENIZATION_FAILED,
+	statuses := []types.LSMTokenDeposit_Status{
+		types.LSMTokenDeposit_TRANSFER_IN_PROGRESS,
+		types.LSMTokenDeposit_TRANSFER_FAILED,
+		types.LSMTokenDeposit_DETOKENIZATION_QUEUE,
+		types.LSMTokenDeposit_DETOKENIZATION_IN_PROGRESS,
+		types.LSMTokenDeposit_DETOKENIZATION_FAILED,
 	}
 	deposits := s.createSetNLSMTokenDeposit(5)
 	for i, status := range statuses {
-		s.App.StakeibcKeeper.UpdateLSMTokenDepositStatus(s.Ctx, deposits[i], status)
+		s.App.RecordsKeeper.UpdateLSMTokenDepositStatus(s.Ctx, deposits[i], status)
 	}
 
 	for i, deposit := range deposits {
-		actual, _ := s.App.StakeibcKeeper.GetLSMTokenDeposit(s.Ctx, deposit.ChainId, deposit.Denom)
+		actual, _ := s.App.RecordsKeeper.GetLSMTokenDeposit(s.Ctx, deposit.ChainId, deposit.Denom)
 		s.Require().Equal(actual.Status, statuses[i], "status did not update for example %d", i)
 	}
 }
@@ -135,7 +135,7 @@ func (s *KeeperTestSuite) TestGetLSMDepositsForHostZone() {
 	// Check there are i+1 deposits for chainid i, all deposits returned are from right chain
 	for i := 0; i < 5; i++ {
 		hostChainId := strconv.Itoa(i)
-		chainDeposits := s.App.StakeibcKeeper.GetLSMDepositsForHostZone(s.Ctx, hostChainId)
+		chainDeposits := s.App.RecordsKeeper.GetLSMDepositsForHostZone(s.Ctx, hostChainId)
 		s.Require().Equal(i+1, len(chainDeposits), "Unexpected number of deposits found for chainId %d", i)
 		for _, deposit := range chainDeposits {
 			s.Require().Equal(hostChainId, deposit.ChainId, "Got a deposit from the wrong chain!")
@@ -148,12 +148,12 @@ func (s *KeeperTestSuite) TestGetLSMDepositsForHostZoneWithStatus() {
 	// Necessary to also check that we *only* get deposits which match hostzone and status
 	// Need a predictable, different, non-zero number of deposits for each (zone, status) combo
 	numHostZones := 5
-	statuses := []types.LSMDepositStatus{
-		types.TRANSFER_IN_PROGRESS,
-		types.TRANSFER_FAILED,
-		types.DETOKENIZATION_QUEUE,
-		types.DETOKENIZATION_IN_PROGRESS,
-		types.DETOKENIZATION_FAILED,
+	statuses := []types.LSMTokenDeposit_Status{
+		types.LSMTokenDeposit_TRANSFER_IN_PROGRESS,
+		types.LSMTokenDeposit_TRANSFER_FAILED,
+		types.LSMTokenDeposit_DETOKENIZATION_QUEUE,
+		types.LSMTokenDeposit_DETOKENIZATION_IN_PROGRESS,
+		types.LSMTokenDeposit_DETOKENIZATION_FAILED,
 	}
 
 	// For each (zone, status) combo, create a different number of deposits
@@ -186,7 +186,7 @@ func (s *KeeperTestSuite) TestGetLSMDepositsForHostZoneWithStatus() {
 			expectedLen := (hzid + 1) * (sid + 1)
 			chainId := strconv.Itoa(hzid)
 			status := statuses[sid]
-			actual := s.App.StakeibcKeeper.GetLSMDepositsForHostZoneWithStatus(s.Ctx, chainId, status)
+			actual := s.App.RecordsKeeper.GetLSMDepositsForHostZoneWithStatus(s.Ctx, chainId, status)
 			// Check that we get every deposit which matches hostzone and status
 			s.Require().Equal(expectedLen, len(actual), "Unexpected number of deposits found for chainId %d", hzid)
 			// Check that we only get deposits which match hostzone and status

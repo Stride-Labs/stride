@@ -9,6 +9,7 @@ import (
 	transfertypes "github.com/cosmos/ibc-go/v5/modules/apps/transfer/types"
 	ibctesting "github.com/cosmos/ibc-go/v5/testing"
 
+	recordstypes "github.com/Stride-Labs/stride/v9/x/records/types"
 	"github.com/Stride-Labs/stride/v9/x/stakeibc/keeper"
 	"github.com/Stride-Labs/stride/v9/x/stakeibc/types"
 
@@ -233,22 +234,22 @@ func (s *KeeperTestSuite) TestDetokenizeLSMDeposit() {
 	}
 
 	denom := "cosmosvalXXX/42"
-	initalDeposit := types.LSMTokenDeposit{
+	initalDeposit := recordstypes.LSMTokenDeposit{
 		ChainId: HostChainId,
 		Denom:   denom,
 		Amount:  sdk.NewInt(1000),
-		Status:  types.DETOKENIZATION_QUEUE,
+		Status:  recordstypes.LSMTokenDeposit_DETOKENIZATION_QUEUE,
 	}
-	s.App.StakeibcKeeper.SetLSMTokenDeposit(s.Ctx, initalDeposit)
+	s.App.RecordsKeeper.SetLSMTokenDeposit(s.Ctx, initalDeposit)
 
 	// Successfully Detokenize
 	err = s.App.StakeibcKeeper.DetokenizeLSMDeposit(s.Ctx, hostZone, initalDeposit)
 	s.Require().NoError(err, "no error expected when detokenizing")
 
 	// Confirm deposit status was updated
-	finalDeposit, found := s.App.StakeibcKeeper.GetLSMTokenDeposit(s.Ctx, HostChainId, denom)
+	finalDeposit, found := s.App.RecordsKeeper.GetLSMTokenDeposit(s.Ctx, HostChainId, denom)
 	s.Require().True(found, "deposit should have been found")
-	s.Require().Equal(types.DETOKENIZATION_IN_PROGRESS.String(), finalDeposit.Status.String(), "deposit status")
+	s.Require().Equal(recordstypes.LSMTokenDeposit_DETOKENIZATION_IN_PROGRESS.String(), finalDeposit.Status.String(), "deposit status")
 
 	// Check callback data was stored
 	allCallbackData := s.App.IcacallbacksKeeper.GetAllCallbackData(s.Ctx)
@@ -298,25 +299,28 @@ func (s *KeeperTestSuite) TestDetokenizeAllLSMDeposits() {
 
 	// For each host chain store 4 deposits
 	// 2 of which are ready to be detokenized, and 2 of which are not
-	expectedDepositStatus := map[string]types.LSMDepositStatus{}
+	expectedDepositStatus := map[string]recordstypes.LSMTokenDeposit_Status{}
 	for _, chainId := range []string{HostChainId, OsmoChainId} {
-		for _, startingStatus := range []types.LSMDepositStatus{types.DETOKENIZATION_QUEUE, types.TRANSFER_IN_PROGRESS} {
+		for _, startingStatus := range []recordstypes.LSMTokenDeposit_Status{
+			recordstypes.LSMTokenDeposit_DETOKENIZATION_QUEUE,
+			recordstypes.LSMTokenDeposit_TRANSFER_IN_PROGRESS,
+		} {
 
 			for i := 0; i < 2; i++ {
 				denom := fmt.Sprintf("denom-starting-in-status-%s-%d", startingStatus.String(), i)
 				depositKey := fmt.Sprintf("%s-%s", chainId, denom)
-				deposit := types.LSMTokenDeposit{
+				deposit := recordstypes.LSMTokenDeposit{
 					ChainId: chainId,
 					Denom:   denom,
 					Status:  startingStatus,
 				}
-				s.App.StakeibcKeeper.SetLSMTokenDeposit(s.Ctx, deposit)
+				s.App.RecordsKeeper.SetLSMTokenDeposit(s.Ctx, deposit)
 
 				// The status is only expected to change for the QUEUED records on the
 				// host chain with the open delegation channel
 				expectedStatus := startingStatus
-				if chainId == HostChainId && startingStatus == types.DETOKENIZATION_QUEUE {
-					expectedStatus = types.DETOKENIZATION_IN_PROGRESS
+				if chainId == HostChainId && startingStatus == recordstypes.LSMTokenDeposit_DETOKENIZATION_QUEUE {
+					expectedStatus = recordstypes.LSMTokenDeposit_DETOKENIZATION_IN_PROGRESS
 				}
 				expectedDepositStatus[depositKey] = expectedStatus
 			}
@@ -327,7 +331,7 @@ func (s *KeeperTestSuite) TestDetokenizeAllLSMDeposits() {
 	s.App.StakeibcKeeper.DetokenizeAllLSMDeposits(s.Ctx)
 
 	// Check that the status of the relevant records was updated
-	allDeposits := s.App.StakeibcKeeper.GetAllLSMTokenDeposit(s.Ctx)
+	allDeposits := s.App.RecordsKeeper.GetAllLSMTokenDeposit(s.Ctx)
 	s.Require().Len(allDeposits, 8) // 2 host zones, 2 statuses, 2 deposits = 2 * 2 * 2 = 8
 
 	for _, deposit := range allDeposits {

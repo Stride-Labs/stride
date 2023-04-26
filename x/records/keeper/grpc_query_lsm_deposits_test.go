@@ -5,13 +5,13 @@ import (
 
 	_ "github.com/stretchr/testify/suite"
 
-	"github.com/Stride-Labs/stride/v9/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v9/x/records/types"
 )
 
 func (s *KeeperTestSuite) TestLSMDeposit() {
 	// setup expected deposit in stakeibckeeper
 	initToken := types.LSMTokenDeposit{ChainId: "1", Denom: "validator70027"}
-	s.App.StakeibcKeeper.SetLSMTokenDeposit(s.Ctx, initToken)
+	s.App.RecordsKeeper.SetLSMTokenDeposit(s.Ctx, initToken)
 
 	// input nil, no chain-id, no denom --> error invalid input
 	invalidInputs := []*types.QueryLSMDepositRequest{}
@@ -20,18 +20,18 @@ func (s *KeeperTestSuite) TestLSMDeposit() {
 	invalidInputs = append(invalidInputs, nil, &noChainInput, &noDenomInput)
 
 	for _, invalidInput := range invalidInputs {
-		_, err1 := s.App.StakeibcKeeper.LSMDeposit(s.Ctx, invalidInput)
+		_, err1 := s.App.RecordsKeeper.LSMDeposit(s.Ctx, invalidInput)
 		s.Require().ErrorContains(err1, "invalid request")
 	}
 
 	// no matching deposit found --> error not found
 	missingInput := types.QueryLSMDepositRequest{ChainId: "2", Denom: "validator9374999"}
-	_, err2 := s.App.StakeibcKeeper.LSMDeposit(s.Ctx, &missingInput)
+	_, err2 := s.App.RecordsKeeper.LSMDeposit(s.Ctx, &missingInput)
 	s.Require().ErrorContains(err2, "LSM deposit not found")
 
 	// found the deposit --> no error, deposit returned with matching chain-id and denom
 	expectedInput := types.QueryLSMDepositRequest{ChainId: "1", Denom: "validator70027"}
-	response, err3 := s.App.StakeibcKeeper.LSMDeposit(s.Ctx, &expectedInput)
+	response, err3 := s.App.RecordsKeeper.LSMDeposit(s.Ctx, &expectedInput)
 	s.Require().NoError(err3)
 	s.Require().Equal("1", response.Deposit.ChainId)
 	s.Require().Equal("validator70027", response.Deposit.Denom)
@@ -46,15 +46,15 @@ func (s *KeeperTestSuite) TestLSMDeposits() {
 		for _, validator := range validators {
 			for _, statusStr := range statuses {
 				denom := chainId + validator + statusStr // has to be present and unique for each token
-				status := types.LSMDepositStatus(types.LSMDepositStatus_value[statusStr])
+				status := types.LSMTokenDeposit_Status(types.LSMTokenDeposit_Status_value[statusStr])
 				initToken := types.LSMTokenDeposit{ChainId: chainId, ValidatorAddress: validator, Status: status, Denom: denom}
-				s.App.StakeibcKeeper.SetLSMTokenDeposit(s.Ctx, initToken)
+				s.App.RecordsKeeper.SetLSMTokenDeposit(s.Ctx, initToken)
 			}
 		}
 	}
 
 	// input nil --> error invalid input
-	_, err1 := s.App.StakeibcKeeper.LSMDeposit(s.Ctx, nil)
+	_, err1 := s.App.RecordsKeeper.LSMDeposit(s.Ctx, nil)
 	s.Require().ErrorContains(err1, "invalid request")
 
 	// Adding case where string is empty "" meaning match all
@@ -89,7 +89,7 @@ func (s *KeeperTestSuite) TestLSMDeposits() {
 
 				expectedNumDeposits := chainMatchNum * validatorMatchNum * statusMatchNum
 				params := types.QueryLSMDepositsRequest{ChainId: chainId, ValidatorAddress: validator, Status: status}
-				response, err := s.App.StakeibcKeeper.LSMDeposits(s.Ctx, &params)
+				response, err := s.App.RecordsKeeper.LSMDeposits(s.Ctx, &params)
 				// Verify no errors in general, it can b empty but should be no errors
 				s.Require().NoError(err)
 				// Verify that all the deposits expected were found by matching the number set in the keeper
