@@ -122,25 +122,6 @@ func (k Keeper) ShouldCheckIfValidatorWasSlashed(ctx sdk.Context, validator type
 	return oldProgress.Quo(queryInterval).LT(newProgress.Quo(queryInterval))
 }
 
-// Helper function to Refund an LSM Token to the user if both:
-//  a) the LSMLiquidStake transaction is interrupted with a validator exchange rate query, and
-//  b) the handling of the query callback fails
-func (k Keeper) RefundLSMToken(ctx sdk.Context, lsmLiquidStake types.LSMLiquidStake) error {
-	liquidStakerAddress := lsmLiquidStake.Staker
-	hostZoneAddress, err := sdk.AccAddressFromBech32(lsmLiquidStake.HostZone.DepositAddress)
-	if err != nil {
-		return errorsmod.Wrapf(err, "host zone address is invalid")
-	}
-	refundToken := lsmLiquidStake.LSMIBCToken
-
-	if err := k.bankKeeper.SendCoins(ctx, hostZoneAddress, liquidStakerAddress, sdk.NewCoins(refundToken)); err != nil {
-		return errorsmod.Wrapf(err,
-			"failed to send tokens from Module Account (%s) to Staker (%s)", hostZoneAddress.String(), liquidStakerAddress.String())
-	}
-
-	return nil
-}
-
 // Submits an ICA to "Redeem" an LSM Token - meaning converting the token into native stake
 // This function is called in the EndBlocker which means if the ICA submission fails,
 //   any modified state is not reverted
