@@ -19,13 +19,13 @@ import (
 )
 
 type UndelegateCallbackState struct {
-	balancedDelegations sdkmath.Int
-	val1Bal             sdkmath.Int
-	val2Bal             sdkmath.Int
-	epochNumber         uint64
-	completionTime      time.Time
-	callbackArgs        types.UndelegateCallback
-	zoneAccountBalance  sdkmath.Int
+	totalDelegations   sdkmath.Int
+	val1Bal            sdkmath.Int
+	val2Bal            sdkmath.Int
+	epochNumber        uint64
+	completionTime     time.Time
+	callbackArgs       types.UndelegateCallback
+	zoneAccountBalance sdkmath.Int
 }
 
 type UndelegateCallbackArgs struct {
@@ -44,9 +44,9 @@ type UndelegateCallbackTestCase struct {
 
 func (s *KeeperTestSuite) SetupUndelegateCallback() UndelegateCallbackTestCase {
 	// Set up host zone and validator state
-	balancedDelegations := sdkmath.NewInt(1_000_000)
+	totalDelegations := sdkmath.NewInt(1_000_000)
 	val1Bal := sdkmath.NewInt(400_000)
-	val2Bal := balancedDelegations.Sub(val1Bal)
+	val2Bal := totalDelegations.Sub(val1Bal)
 	balanceToUnstake := sdkmath.NewInt(300_000)
 	val1UndelegationAmount := sdkmath.NewInt(120_000)
 	val2UndelegationAmount := balanceToUnstake.Sub(val1UndelegationAmount)
@@ -73,7 +73,7 @@ func (s *KeeperTestSuite) SetupUndelegateCallback() UndelegateCallbackTestCase {
 		IbcDenom:         IbcAtom,
 		RedemptionRate:   sdk.NewDec(1.0),
 		Validators:       []*types.Validator{&val1, &val2},
-		TotalDelegations: balancedDelegations,
+		TotalDelegations: totalDelegations,
 		DepositAddress:   depositAddress.String(),
 	}
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
@@ -127,13 +127,13 @@ func (s *KeeperTestSuite) SetupUndelegateCallback() UndelegateCallbackTestCase {
 		val2UndelegationAmount: val2UndelegationAmount,
 		balanceToUnstake:       balanceToUnstake,
 		initialState: UndelegateCallbackState{
-			callbackArgs:        callbackArgs,
-			balancedDelegations: balancedDelegations,
-			val1Bal:             val1Bal,
-			val2Bal:             val2Bal,
-			epochNumber:         epochNumber,
-			completionTime:      completionTime,
-			zoneAccountBalance:  zoneAccountBalance,
+			callbackArgs:       callbackArgs,
+			totalDelegations:   totalDelegations,
+			val1Bal:            val1Bal,
+			val2Bal:            val2Bal,
+			epochNumber:        epochNumber,
+			completionTime:     completionTime,
+			zoneAccountBalance: zoneAccountBalance,
 		},
 		validArgs: UndelegateCallbackArgs{
 			packet:      packet,
@@ -152,10 +152,10 @@ func (s *KeeperTestSuite) TestUndelegateCallback_Successful() {
 	err := stakeibckeeper.UndelegateCallback(s.App.StakeibcKeeper, s.Ctx, validArgs.packet, validArgs.ackResponse, validArgs.args)
 	s.Require().NoError(err, "undelegate callback succeeds")
 
-	// Check that balanced delegation has decreased on the host zone
+	// Check that total delegation has decreased on the host zone
 	hostZone, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx, HostChainId)
 	s.Require().True(found)
-	s.Require().Equal(hostZone.TotalDelegations, initialState.balancedDelegations.Sub(tc.balanceToUnstake), "balanced delegation has decreased on the host zone")
+	s.Require().Equal(hostZone.TotalDelegations, initialState.totalDelegations.Sub(tc.balanceToUnstake), "total delegation has decreased on the host zone")
 
 	// Check that Delegations on validators have decreased
 	s.Require().True(len(hostZone.Validators) == 2, "Expected 2 validators")
@@ -179,10 +179,10 @@ func (s *KeeperTestSuite) TestUndelegateCallback_Successful() {
 func (s *KeeperTestSuite) checkStateIfUndelegateCallbackFailed(tc UndelegateCallbackTestCase) {
 	initialState := tc.initialState
 
-	// Check that balanced delegation has NOT decreased on the host zone
+	// Check that total delegation has NOT decreased on the host zone
 	hostZone, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx, HostChainId)
 	s.Require().True(found, "host zone found")
-	s.Require().Equal(hostZone.TotalDelegations, initialState.balancedDelegations, "balanced delegation has NOT decreased on the host zone")
+	s.Require().Equal(hostZone.TotalDelegations, initialState.totalDelegations, "total delegation has NOT decreased on the host zone")
 
 	// Check that Delegations on validators have NOT decreased
 	s.Require().True(len(hostZone.Validators) == 2, "Expected 2 validators")
@@ -251,7 +251,7 @@ func (s *KeeperTestSuite) TestUndelegateCallback_HostNotFound() {
 // UpdateDelegationBalances tests
 func (s *KeeperTestSuite) TestUpdateDelegationBalances_Success() {
 	tc := s.SetupUndelegateCallback()
-	// Check that balanced delegation has NOT decreased on the host zone
+	// Check that total delegation has NOT decreased on the host zone
 	hostZone, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx, HostChainId)
 	s.Require().True(found, "host zone found")
 	err := s.App.StakeibcKeeper.UpdateDelegationBalances(s.Ctx, hostZone, tc.initialState.callbackArgs)

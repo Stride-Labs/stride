@@ -65,7 +65,7 @@ func (s *KeeperTestSuite) SetupDelegatorSharesICQCallback() DelegatorSharesICQCa
 	slashPercentage := sdk.MustNewDecFromStr("0.05")
 	weightBeforeSlash := uint64(20)
 	expectedWeightAfterSlash := uint64(19)
-	balancedDelegation := sdkmath.NewInt(10_000)
+	totalDelegation := sdkmath.NewInt(10_000)
 
 	s.Require().Equal(numShares, sdk.NewDecFromInt(expectedTokensAfterSlash.Mul(sdkmath.NewInt(2))), "tokens, shares, and exchange rate aligned")
 	s.Require().Equal(slashPercentage, sdk.NewDecFromInt(expectedSlashAmount).Quo(sdk.NewDecFromInt(tokensBeforeSlash)), "expected slash percentage")
@@ -74,7 +74,7 @@ func (s *KeeperTestSuite) SetupDelegatorSharesICQCallback() DelegatorSharesICQCa
 	currentEpoch := uint64(1)
 	hostZone := stakeibctypes.HostZone{
 		ChainId:          HostChainId,
-		TotalDelegations: balancedDelegation,
+		TotalDelegations: totalDelegation,
 		Validators: []*stakeibctypes.Validator{
 			// This validator isn't being queried
 			{

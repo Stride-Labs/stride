@@ -22,7 +22,7 @@ func (s *KeeperTestSuite) SetupInitiateAllHostZoneUnbondings() InitiateAllHostZo
 	osmoValAddr := "osmo_VALIDATOR"
 	gaiaDelegationAddr := "cosmos_DELEGATION"
 	osmoDelegationAddr := "osmo_DELEGATION"
-	//  define the host zone with balanced delegation and validators with staked amounts
+	//  define the host zone with total delegation and validators with staked amounts
 	gaiaValidators := []*stakeibc.Validator{
 		{
 			Address:    gaiaValAddr,

@@ -108,7 +108,7 @@ func DelegatorSharesCallback(k Keeper, ctx sdk.Context, args []byte, query icqty
 	}
 
 	// TODO(TESTS-171) add some safety checks here (e.g. we could query the slashing module to confirm the decr in tokens was due to slash)
-	// update our records of the total balanced delegation and of the validator's balanced delegation
+	// update our records of the total delegation and of the validator's delegation
 	// NOTE:  we assume any decrease in delegation amt that's not tracked via records is a slash
 
 	// Get slash percentage

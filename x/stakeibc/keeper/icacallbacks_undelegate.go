@@ -123,7 +123,7 @@ func UndelegateCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, a
 	return nil
 }
 
-// Decrement the balanced delegation field on the host zone and each validator's delegations after a successful unbonding ICA
+// Decrement the delegation field on the host zone and each validator's delegations after a successful unbonding ICA
 func (k Keeper) UpdateDelegationBalances(ctx sdk.Context, zone types.HostZone, undelegateCallback types.UndelegateCallback) error {
 	// Undelegate from each validator and update host zone staked balance, if successful
 	for _, undelegation := range undelegateCallback.SplitDelegations {

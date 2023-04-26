@@ -15,14 +15,14 @@ import (
 )
 
 type DelegateCallbackState struct {
-	balancedDelegation sdkmath.Int
-	val1Bal            sdkmath.Int
-	val2Bal            sdkmath.Int
-	val1RelAmt         sdkmath.Int
-	val2RelAmt         sdkmath.Int
-	balanceToStake     sdkmath.Int
-	depositRecord      recordtypes.DepositRecord
-	callbackArgs       types.DelegateCallback
+	totalDelegation sdkmath.Int
+	val1Bal         sdkmath.Int
+	val2Bal         sdkmath.Int
+	val1RelAmt      sdkmath.Int
+	val2RelAmt      sdkmath.Int
+	balanceToStake  sdkmath.Int
+	depositRecord   recordtypes.DepositRecord
+	callbackArgs    types.DelegateCallback
 }
 
 type DelegateCallbackArgs struct {
@@ -37,9 +37,9 @@ type DelegateCallbackTestCase struct {
 }
 
 func (s *KeeperTestSuite) SetupDelegateCallback() DelegateCallbackTestCase {
-	balancedDelegation := sdkmath.NewInt(1_000_000)
+	totalDelegation := sdkmath.NewInt(1_000_000)
 	val1Bal := sdkmath.NewInt(400_000)
-	val2Bal := balancedDelegation.Sub(val1Bal)
+	val2Bal := totalDelegation.Sub(val1Bal)
 	balanceToStake := sdkmath.NewInt(300_000)
 	val1RelAmt := sdkmath.NewInt(120_000)
 	val2RelAmt := sdkmath.NewInt(180_000)
@@ -60,7 +60,7 @@ func (s *KeeperTestSuite) SetupDelegateCallback() DelegateCallbackTestCase {
 		IbcDenom:         IbcAtom,
 		RedemptionRate:   sdk.NewDec(1.0),
 		Validators:       []*types.Validator{&val1, &val2},
-		TotalDelegations: balancedDelegation,
+		TotalDelegations: totalDelegation,
 	}
 	depositRecord := recordtypes.DepositRecord{
 		Id:                 1,
@@ -95,14 +95,14 @@ func (s *KeeperTestSuite) SetupDelegateCallback() DelegateCallbackTestCase {
 
 	return DelegateCallbackTestCase{
 		initialState: DelegateCallbackState{
-			balancedDelegation: balancedDelegation,
-			balanceToStake:     balanceToStake,
-			depositRecord:      depositRecord,
-			callbackArgs:       callbackArgs,
-			val1Bal:            val1Bal,
-			val2Bal:            val2Bal,
-			val1RelAmt:         val1RelAmt,
-			val2RelAmt:         val2RelAmt,
+			totalDelegation: totalDelegation,
+			balanceToStake:  balanceToStake,
+			depositRecord:   depositRecord,
+			callbackArgs:    callbackArgs,
+			val1Bal:         val1Bal,
+			val2Bal:         val2Bal,
+			val1RelAmt:      val1RelAmt,
+			val2RelAmt:      val2RelAmt,
 		},
 		validArgs: DelegateCallbackArgs{
 			packet:      packet,
@@ -120,10 +120,10 @@ func (s *KeeperTestSuite) TestDelegateCallback_Successful() {
 	err := stakeibckeeper.DelegateCallback(s.App.StakeibcKeeper, s.Ctx, validArgs.packet, validArgs.ackResponse, validArgs.args)
 	s.Require().NoError(err)
 
-	// Confirm balanced delegation has increased
+	// Confirm total delegation has increased
 	hostZone, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx, HostChainId)
 	s.Require().True(found)
-	s.Require().Equal(initialState.balancedDelegation.Add(initialState.balanceToStake), hostZone.TotalDelegations, "balanced delegation should have increased")
+	s.Require().Equal(initialState.totalDelegation.Add(initialState.balanceToStake), hostZone.TotalDelegations, "total delegation should have increased")
 
 	// Confirm delegations have been added to validators
 	val1 := hostZone.Validators[0]
@@ -137,10 +137,10 @@ func (s *KeeperTestSuite) TestDelegateCallback_Successful() {
 }
 
 func (s *KeeperTestSuite) checkDelegateStateIfCallbackFailed(tc DelegateCallbackTestCase) {
-	// Confirm balanced delegation has not increased
+	// Confirm total delegation has not increased
 	hostZone, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx, HostChainId)
 	s.Require().True(found)
-	s.Require().Equal(tc.initialState.balancedDelegation, hostZone.TotalDelegations, "balanced delegation should not have increased")
+	s.Require().Equal(tc.initialState.totalDelegation, hostZone.TotalDelegations, "total delegation should not have increased")
 
 	// Confirm deposit record has NOT been removed
 	records := s.App.RecordsKeeper.GetAllDepositRecord(s.Ctx)
