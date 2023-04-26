@@ -91,14 +91,13 @@ func DelegateCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ack
 
 	// Update delegations on the host zone
 	for _, splitDelegation := range delegateCallback.SplitDelegations {
-		hostZone.TotalDelegations = hostZone.TotalDelegations.Add(splitDelegation.Amount)
-		err := k.UpdateValidatorDelegation(ctx, hostZone, splitDelegation.Validator, splitDelegation.Amount, ICACallbackID_Delegate)
+		hostZone, err = k.UpdateValidatorDelegation(ctx, hostZone, splitDelegation.Validator, splitDelegation.Amount, ICACallbackID_Delegate)
 		if err != nil {
 			return errorsmod.Wrapf(err, "unable to update validator (%s) delegation by %v",
 				splitDelegation.Validator, splitDelegation.Amount)
 		}
-		k.SetHostZone(ctx, hostZone)
 	}
+	k.SetHostZone(ctx, hostZone)
 
 	k.RecordsKeeper.RemoveDepositRecord(ctx, cast.ToUint64(recordId))
 	k.Logger(ctx).Info(fmt.Sprintf("[DELEGATION] success on %s", chainId))

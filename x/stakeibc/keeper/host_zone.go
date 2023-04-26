@@ -102,13 +102,16 @@ func (k Keeper) GetAllActiveHostZone(ctx sdk.Context) (list []types.HostZone) {
 }
 
 // Updates a validator's individual delegation, and the corresponding total delegation on the host zone
+// Note: The host zone must be Set after this function returns! This intentionally does not set the host zone
+// since this is mainly used in epochs where want to push state changes to the end of the epochly flow
+// since they don't get reverted when there's an error
 func (k Keeper) UpdateValidatorDelegation(
 	ctx sdk.Context,
 	hostZone types.HostZone,
 	validatorAddress string,
 	amount sdkmath.Int,
 	callbackId string,
-) error {
+) (types.HostZone, error) {
 	for _, validator := range hostZone.Validators {
 		if validator.Address != validatorAddress {
 			continue
@@ -118,18 +121,26 @@ func (k Keeper) UpdateValidatorDelegation(
 			"  Validator %s, Current Delegation: %v, Delegation Change: %v", validator.Address, validator.Delegation, amount))
 
 		// If the delegation change is negative, make sure it wont cause the total delegation to fall below zero
-		if amount.IsNegative() && amount.Abs().GT(validator.Delegation) {
-			return errorsmod.Wrapf(types.ErrValidatorDelegationChg,
-				"Delegation amount %v is greater than validator %s delegation amount %v",
-				amount.Abs(), validatorAddress, validator.Delegation)
+		if amount.IsNegative() {
+			if amount.Abs().GT(validator.Delegation) {
+				return hostZone, errorsmod.Wrapf(types.ErrValidatorDelegationChg,
+					"Delegation change (%v) is greater than validator (%s) delegation %v",
+					amount.Abs(), validatorAddress, validator.Delegation)
+			}
+			if amount.Abs().GT(hostZone.TotalDelegations) {
+				return hostZone, errorsmod.Wrapf(types.ErrValidatorDelegationChg,
+					"Delegation change (%v) is greater than total delegation amount on host %s (%v)",
+					amount.Abs(), hostZone.ChainId, hostZone.TotalDelegations)
+			}
 		}
 
 		validator.Delegation = validator.Delegation.Add(amount)
+		hostZone.TotalDelegations = hostZone.TotalDelegations.Add(amount)
 
-		return nil
+		return hostZone, nil
 	}
 
-	return errorsmod.Wrapf(types.ErrValidatorNotFound,
+	return hostZone, errorsmod.Wrapf(types.ErrValidatorNotFound,
 		"Could not find validator %s on host zone %s", validatorAddress, hostZone.ChainId)
 }
 
