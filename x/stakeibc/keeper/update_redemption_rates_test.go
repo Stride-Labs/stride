@@ -143,8 +143,8 @@ func (s *KeeperTestSuite) TestUpdateRedemptionRate_NoDepositAccountRecords() {
 	}
 	s.App.StakeibcKeeper.UpdateRedemptionRates(s.Ctx, filteredRecords)
 
-	// 3 + 4 + 5 / 10 = 12 / 10 = 1.2
-	expectedNewRate := sdk.MustNewDecFromStr("1.2")
+	// 3 + 4 + 6 / 10 = 13 / 10 = 1.3
+	expectedNewRate := sdk.MustNewDecFromStr("1.3")
 	s.checkRedemptionRateAfterUpdate(expectedNewRate)
 }
 
