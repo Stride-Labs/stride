@@ -39,7 +39,6 @@ func (s *KeeperTestSuite) SetupAddValidators() AddValidatorsTestCase {
 	}
 	for _, validator := range expectedValidators {
 		validator.Delegation = sdkmath.ZeroInt()
-		validator.UnbalancedDelegation = sdkmath.ZeroInt()
 		validator.SlashQueryProgressTracker = sdkmath.ZeroInt()
 	}
 
