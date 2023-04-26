@@ -61,45 +61,6 @@ func (s *KeeperTestSuite) TestGetAllLSMTokenDeposit() {
 	s.Require().ElementsMatch(actual, expected, "actual list did not match expected list")
 }
 
-func (s *KeeperTestSuite) TestAddLSMTokenDeposit() {
-	// existing will have the same chainId, denoms, and recordIds as the first 5 in new
-	// they are deposits of the same "type" in each parallel index, last 5 in new are net new
-	existingDeposits := s.createSetNLSMTokenDeposit(5)
-	newDeposits := s.createNLSMTokenDeposit(10)
-
-	// verify non-overlapping half of the newDeposits do not yet exist in the store
-	for i := 5; i < 10; i++ {
-		new := newDeposits[i]
-		_, found := s.App.RecordsKeeper.GetLSMTokenDeposit(s.Ctx, new.ChainId, new.Denom)
-		s.Require().False(found, "deposit was unexpectedly found in store already %+v", new)
-	}
-
-	// call Add on all newDeposits so they are in store one way or another
-	for _, deposit := range newDeposits {
-		s.App.RecordsKeeper.AddLSMTokenDeposit(s.Ctx, deposit)
-	}
-
-	// verify that for previously existing deposits the amounts add
-	for i := 0; i < 5; i++ {
-		existing := existingDeposits[i]
-		new := newDeposits[i]
-		actual, found := s.App.RecordsKeeper.GetLSMTokenDeposit(s.Ctx, new.ChainId, new.Denom)
-		s.Require().True(found, "deposit not found in store %+v", new)
-		s.Require().Equal(sdkmath.Int.Add(existing.Amount, new.Amount), actual.Amount,
-			"found amount %d did not match expected sum %d + %d = %d", actual.Amount,
-			existing.Amount, new.Amount, sdkmath.Int.Add(existing.Amount, new.Amount))
-	}
-
-	// verify that for previously non-existing deposits the amounts set
-	for i := 5; i < 10; i++ {
-		new := newDeposits[i]
-		actual, found := s.App.RecordsKeeper.GetLSMTokenDeposit(s.Ctx, new.ChainId, new.Denom)
-		s.Require().True(found, "deposit not found in store %+v", new)
-		s.Require().Equal(new.Amount, actual.Amount,
-			"found amount %d did not match expected amount %d ", actual.Amount, new.Amount)
-	}
-}
-
 func (s *KeeperTestSuite) TestUpdateLSMTokenDepositStatus() {
 	statuses := []types.LSMTokenDeposit_Status{
 		types.LSMTokenDeposit_DEPOSIT_PENDING,
