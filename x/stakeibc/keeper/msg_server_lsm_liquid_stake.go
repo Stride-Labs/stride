@@ -66,7 +66,6 @@ func (k Keeper) StartLSMLiquidStake(ctx sdk.Context, msg types.MsgLSMLiquidStake
 		return types.LSMLiquidStake{}, err
 	}
 	hostZone := lsmLiquidStake.HostZone
-	lsmTokenDeposit := lsmLiquidStake.Deposit
 
 	// Determine the amount of stTokens to mint using the redemption rate
 	stDenom := types.StAssetDenomFromHostZoneDenom(hostZone.HostDenom)
@@ -78,8 +77,8 @@ func (k Keeper) StartLSMLiquidStake(ctx sdk.Context, msg types.MsgLSMLiquidStake
 	stCoin := sdk.NewCoin(stDenom, stAmount)
 
 	// Add the stToken to this deposit record
-	lsmTokenDeposit.StToken = stCoin
-	k.RecordsKeeper.AddLSMTokenDeposit(ctx, lsmTokenDeposit)
+	lsmLiquidStake.Deposit.StToken = stCoin
+	k.RecordsKeeper.AddLSMTokenDeposit(ctx, lsmLiquidStake.Deposit)
 
 	return lsmLiquidStake, nil
 }

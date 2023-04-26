@@ -5,6 +5,8 @@ import (
 
 	sdkmath "cosmossdk.io/math"
 
+	sdk "github.com/cosmos/cosmos-sdk/types"
+
 	"github.com/Stride-Labs/stride/v9/x/records/types"
 )
 
@@ -15,10 +17,12 @@ func (s *KeeperTestSuite) createNLSMTokenDeposit(n int) []types.LSMTokenDeposit 
 		tokenRecordId := strconv.Itoa(i)
 
 		deposits[i].Denom = validatorAddr + tokenRecordId
+		deposits[i].IbcDenom = "ibc/" + validatorAddr + tokenRecordId
 		deposits[i].ValidatorAddress = validatorAddr
 		deposits[i].ChainId = strconv.Itoa(i)
 		deposits[i].Amount = sdkmath.NewIntFromUint64(1000)
 		deposits[i].Status = types.LSMTokenDeposit_DEPOSIT_PENDING
+		deposits[i].StToken = sdk.NewCoin("sttoken", sdk.NewInt(int64(i)))
 	}
 	return deposits
 }
