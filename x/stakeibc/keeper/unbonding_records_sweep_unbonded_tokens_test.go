@@ -19,43 +19,43 @@ type SweepUnbondedTokensTestCase struct {
 
 func (s *KeeperTestSuite) SetupSweepUnbondedTokens() SweepUnbondedTokensTestCase {
 	s.CreateICAChannel("GAIA.DELEGATION")
-	//  define the host zone with TotalBalancedDelegations and validators with staked amounts
+	//  define the host zone with TotalDelegations and validators with staked amounts
 	gaiaValidators := []*stakeibc.Validator{
 		{
-			Address:            "cosmos_VALIDATOR",
-			BalancedDelegation: sdkmath.NewInt(5_000_000),
-			Weight:             uint64(10),
+			Address:    "cosmos_VALIDATOR",
+			Delegation: sdkmath.NewInt(5_000_000),
+			Weight:     uint64(10),
 		},
 	}
 	osmoValidators := []*stakeibc.Validator{
 		{
-			Address:            "osmo_VALIDATOR",
-			BalancedDelegation: sdkmath.NewInt(5_000_000),
-			Weight:             uint64(10),
+			Address:    "osmo_VALIDATOR",
+			Delegation: sdkmath.NewInt(5_000_000),
+			Weight:     uint64(10),
 		},
 	}
 	hostZones := []stakeibc.HostZone{
 		{
-			ChainId:                  HostChainId,
-			HostDenom:                Atom,
-			Bech32Prefix:             GaiaPrefix,
-			UnbondingPeriod:          14,
-			Validators:               gaiaValidators,
-			DelegationIcaAddress:     "cosmos_DELEGATION",
-			RedemptionIcaAddress:     "cosmos_REDEMPTION",
-			TotalBalancedDelegations: sdkmath.NewInt(5_000_000),
-			ConnectionId:             ibctesting.FirstConnectionID,
+			ChainId:              HostChainId,
+			HostDenom:            Atom,
+			Bech32Prefix:         GaiaPrefix,
+			UnbondingPeriod:      14,
+			Validators:           gaiaValidators,
+			DelegationIcaAddress: "cosmos_DELEGATION",
+			RedemptionIcaAddress: "cosmos_REDEMPTION",
+			TotalDelegations:     sdkmath.NewInt(5_000_000),
+			ConnectionId:         ibctesting.FirstConnectionID,
 		},
 		{
-			ChainId:                  OsmoChainId,
-			HostDenom:                Osmo,
-			Bech32Prefix:             OsmoPrefix,
-			UnbondingPeriod:          21,
-			Validators:               osmoValidators,
-			DelegationIcaAddress:     "osmo_DELEGATION",
-			RedemptionIcaAddress:     "osmo_REDEMPTION",
-			TotalBalancedDelegations: sdkmath.NewInt(5_000_000),
-			ConnectionId:             ibctesting.FirstConnectionID,
+			ChainId:              OsmoChainId,
+			HostDenom:            Osmo,
+			Bech32Prefix:         OsmoPrefix,
+			UnbondingPeriod:      21,
+			Validators:           osmoValidators,
+			DelegationIcaAddress: "osmo_DELEGATION",
+			RedemptionIcaAddress: "osmo_REDEMPTION",
+			TotalDelegations:     sdkmath.NewInt(5_000_000),
+			ConnectionId:         ibctesting.FirstConnectionID,
 		},
 	}
 	dayEpochTracker := stakeibc.EpochTracker{

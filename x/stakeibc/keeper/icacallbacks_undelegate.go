@@ -123,18 +123,18 @@ func UndelegateCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, a
 	return nil
 }
 
-// Decrement the balanced delegation field on the host zone and each validator's delegations after a successful unbonding ICA
+// Decrement the delegation field on the host zone and each validator's delegations after a successful unbonding ICA
 func (k Keeper) UpdateDelegationBalances(ctx sdk.Context, zone types.HostZone, undelegateCallback types.UndelegateCallback) error {
 	// Undelegate from each validator and update host zone staked balance, if successful
 	for _, undelegation := range undelegateCallback.SplitDelegations {
-		if undelegation.Amount.GT(zone.TotalBalancedDelegations) {
+		if undelegation.Amount.GT(zone.TotalDelegations) {
 			// handle incoming underflow
 			// Once we add a killswitch, we should also stop liquid staking on the zone here
 			return errorsmod.Wrapf(types.ErrUndelegationAmount,
-				"undelegation.Amount > zone.TotalBalancedDelegations, undelegation.Amount: %v, zone.TotalBalancedDelegations %v",
-				undelegation.Amount, zone.TotalBalancedDelegations)
+				"undelegation.Amount > zone.TotalDelegations, undelegation.Amount: %v, zone.TotalDelegations %v",
+				undelegation.Amount, zone.TotalDelegations)
 		} else {
-			zone.TotalBalancedDelegations = zone.TotalBalancedDelegations.Sub(undelegation.Amount)
+			zone.TotalDelegations = zone.TotalDelegations.Sub(undelegation.Amount)
 		}
 
 		success := k.AddDelegationToValidator(ctx, zone, undelegation.Validator, undelegation.Amount.Neg(), ICACallbackID_Undelegate)

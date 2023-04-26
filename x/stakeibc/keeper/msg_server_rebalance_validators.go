@@ -26,7 +26,7 @@ func (k msgServer) RebalanceValidators(goCtx context.Context, msg *types.MsgReba
 		return nil, types.ErrInvalidHostZone
 	}
 
-	validatorDeltas, err := k.GetValidatorBalancedDelegationDifferences(ctx, hostZone)
+	validatorDeltas, err := k.GetValidatorDelegationDifferences(ctx, hostZone)
 	if err != nil {
 		k.Logger(ctx).Error(fmt.Sprintf("Error getting validator deltas for Host Zone %s: %s", hostZone.ChainId, err))
 		return nil, err
