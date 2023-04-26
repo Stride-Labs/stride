@@ -311,7 +311,7 @@ func (s *KeeperTestSuite) TestRegisterHostZone_CannotFindEpochUnbondingRecord() 
 	msg := tc.validMsg
 
 	// delete the epoch unbonding record
-	s.App.StakeibcKeeper.RecordsKeeper.RemoveEpochUnbondingRecord(s.Ctx, tc.epochUnbondingRecordNumber)
+	s.App.RecordsKeeper.RemoveEpochUnbondingRecord(s.Ctx, tc.epochUnbondingRecordNumber)
 
 	_, err := s.GetMsgServer().RegisterHostZone(sdk.WrapSDKContext(s.Ctx), &msg)
 	expectedErrMsg := "unable to find latest epoch unbonding record: epoch unbonding record not found"
