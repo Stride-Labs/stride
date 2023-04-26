@@ -20,20 +20,22 @@ import (
 
 // Exchanges a user's LSM tokenized shares for stTokens using the current redemption rate
 // The LSM tokens must live on Stride as an IBC voucher (whose denomtrace we recognize)
-//   before this function is called
+//
+//	before this function is called
 //
 // The typical flow:
 //   - A staker tokenizes their delegation on the host zone
 //   - The staker IBC transfers their tokenized shares to Stride
 //   - They then call LSMLiquidStake
-//     - The staker's LSM Tokens are sent to the Stride module account
-//     - The staker recieves stTokens
+//   - The staker's LSM Tokens are sent to the Stride module account
+//   - The staker recieves stTokens
 //
 // As a safety measure, at period checkpoints, the validator's exchange rate is queried and the transaction
 // is not settled until the query returns
 // As a result, this transaction has been split up into a (1) Start and (2) Finish function
-//   If no query is needed, (2) is called immediately after (1)
-//   If a query is needed, (2) is called in the query callback
+//
+//	If no query is needed, (2) is called immediately after (1)
+//	If a query is needed, (2) is called in the query callback
 //
 // The transaction response indicates if the query occurred by returning an attribute `TransactionComplete` set to false
 func (k msgServer) LSMLiquidStake(goCtx context.Context, msg *types.MsgLSMLiquidStake) (*types.MsgLSMLiquidStakeResponse, error) {
@@ -80,6 +82,13 @@ func (k Keeper) StartLSMLiquidStake(ctx sdk.Context, msg *types.MsgLSMLiquidStak
 		return types.LSMLiquidStake{}, err
 	}
 
+	// Check if we already have tokens with this denom in records
+	_, found := k.RecordsKeeper.GetLSMTokenDeposit(ctx, hostZone.ChainId, lsmTokenBaseDenom)
+	if found {
+		return types.LSMLiquidStake{}, errorsmod.Wrapf(sdkerrors.ErrInvalidRequest,
+			"there is already a previous record with this denom being processed: %s", lsmTokenBaseDenom)
+	}
+
 	// Get the staker's address and the host zone module account address that will custody the tokens
 	liquidStakerAddress := sdk.MustAccAddressFromBech32(msg.Creator)
 	hostZoneAddress, err := sdk.AccAddressFromBech32(hostZone.DepositAddress)
@@ -110,7 +119,7 @@ func (k Keeper) StartLSMLiquidStake(ctx sdk.Context, msg *types.MsgLSMLiquidStak
 		return types.LSMLiquidStake{}, errorsmod.Wrap(err, "failed to send tokens from Account to Module")
 	}
 
-	// Store an deposit record for the LSM token
+	// Store an deposit record for the LSM token if there are no other current records with this denom
 	lsmTokenDeposit := recordstypes.LSMTokenDeposit{
 		ChainId:          hostZone.ChainId,
 		Denom:            lsmTokenBaseDenom,
@@ -119,7 +128,7 @@ func (k Keeper) StartLSMLiquidStake(ctx sdk.Context, msg *types.MsgLSMLiquidStak
 		Amount:           msg.Amount,
 		Status:           recordstypes.LSMTokenDeposit_DEPOSIT_PENDING,
 	}
-	k.RecordsKeeper.AddLSMTokenDeposit(ctx, lsmTokenDeposit)
+	k.RecordsKeeper.SetLSMTokenDeposit(ctx, lsmTokenDeposit)
 
 	return types.LSMLiquidStake{
 		Staker:      liquidStakerAddress,
