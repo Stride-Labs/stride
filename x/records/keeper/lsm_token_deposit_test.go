@@ -18,7 +18,7 @@ func (s *KeeperTestSuite) createNLSMTokenDeposit(n int) []types.LSMTokenDeposit 
 		deposits[i].ValidatorAddress = validatorAddr
 		deposits[i].ChainId = strconv.Itoa(i)
 		deposits[i].Amount = sdkmath.NewIntFromUint64(1000)
-		deposits[i].Status = types.LSMTokenDeposit_TRANSFER_IN_PROGRESS
+		deposits[i].Status = types.LSMTokenDeposit_DEPOSIT_PENDING
 	}
 	return deposits
 }
@@ -102,13 +102,14 @@ func (s *KeeperTestSuite) TestAddLSMTokenDeposit() {
 
 func (s *KeeperTestSuite) TestUpdateLSMTokenDepositStatus() {
 	statuses := []types.LSMTokenDeposit_Status{
+		types.LSMTokenDeposit_DEPOSIT_PENDING,
 		types.LSMTokenDeposit_TRANSFER_IN_PROGRESS,
 		types.LSMTokenDeposit_TRANSFER_FAILED,
 		types.LSMTokenDeposit_DETOKENIZATION_QUEUE,
 		types.LSMTokenDeposit_DETOKENIZATION_IN_PROGRESS,
 		types.LSMTokenDeposit_DETOKENIZATION_FAILED,
 	}
-	deposits := s.createSetNLSMTokenDeposit(5)
+	deposits := s.createSetNLSMTokenDeposit(len(statuses))
 	for i, status := range statuses {
 		s.App.RecordsKeeper.UpdateLSMTokenDepositStatus(s.Ctx, deposits[i], status)
 	}
@@ -149,6 +150,7 @@ func (s *KeeperTestSuite) TestGetLSMDepositsForHostZoneWithStatus() {
 	// Need a predictable, different, non-zero number of deposits for each (zone, status) combo
 	numHostZones := 5
 	statuses := []types.LSMTokenDeposit_Status{
+		types.LSMTokenDeposit_DEPOSIT_PENDING,
 		types.LSMTokenDeposit_TRANSFER_IN_PROGRESS,
 		types.LSMTokenDeposit_TRANSFER_FAILED,
 		types.LSMTokenDeposit_DETOKENIZATION_QUEUE,
@@ -164,7 +166,8 @@ func (s *KeeperTestSuite) TestGetLSMDepositsForHostZoneWithStatus() {
 	//    chain-0, status-1 => 1 * 2 = 2 deposit
 	//    chain-1, status-1 => 2 * 2 = 4 deposits
 
-	deposits := s.createNLSMTokenDeposit(225) // 225 = 15 * 15 is total number across all combos
+	deposits := s.createNLSMTokenDeposit(315) // 315 = 15 * 21 is total number across all combos
+	// nZones = 5 --> 15 = 1 + 2 + 3 + 4 + 5      nStatuses = 6 -->  21 = 1 + 2 + 3 + 4 + 5 + 6
 	// Generally with nZones number of host zones and nStatuses number of statuses
 	//   there will be a totalDeposits = 1/4 * nZones * (nZones + 1) * nStatuses * (nStatuses + 1)
 
