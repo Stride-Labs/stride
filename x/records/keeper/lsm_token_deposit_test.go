@@ -167,7 +167,7 @@ func (s *KeeperTestSuite) TestGetLSMDepositsForHostZoneWithStatus() {
 	//    chain-1, status-1 => 2 * 2 = 4 deposits
 
 	deposits := s.createNLSMTokenDeposit(315) // 315 = 15 * 21 is total number across all combos
-	// nZones = 5 --> 15 = 1 + 2 + 3 + 4 + 4      nStatuses = 6 -->  21 = 1 + 2 + 3 + 4 + 5 + 6
+	// nZones = 5 --> 15 = 1 + 2 + 3 + 4 + 5      nStatuses = 6 -->  21 = 1 + 2 + 3 + 4 + 5 + 6
 	// Generally with nZones number of host zones and nStatuses number of statuses
 	//   there will be a totalDeposits = 1/4 * nZones * (nZones + 1) * nStatuses * (nStatuses + 1)
 
