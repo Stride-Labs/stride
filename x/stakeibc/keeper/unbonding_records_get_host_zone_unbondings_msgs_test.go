@@ -45,26 +45,26 @@ func (s *KeeperTestSuite) SetupGetHostZoneUnbondingMsgs() GetHostZoneUnbondingMs
 	//  define the host zone with total delegation and validators with staked amounts
 	validators := []*stakeibc.Validator{
 		{
-			Address:            hostVal1Addr,
-			BalancedDelegation: amtVal1,
-			Weight:             wgtVal1,
+			Address:    hostVal1Addr,
+			Delegation: amtVal1,
+			Weight:     wgtVal1,
 		},
 		{
-			Address:            hostVal2Addr,
-			BalancedDelegation: amtVal2,
-			Weight:             wgtVal2,
+			Address:    hostVal2Addr,
+			Delegation: amtVal2,
+			Weight:     wgtVal2,
 		},
 		{
 			Address: hostVal3Addr,
-			// BalancedDelegation and Weight are the same as Val2, to test tie breaking
-			BalancedDelegation: amtVal2,
-			Weight:             wgtVal2,
+			// Delegation and Weight are the same as Val2, to test tie breaking
+			Delegation: amtVal2,
+			Weight:     wgtVal2,
 		},
 		{
 			Address: hostVal4Addr,
 			// Zero weight validator
-			BalancedDelegation: sdkmath.NewInt(0),
-			Weight:             0,
+			Delegation: sdkmath.NewInt(0),
+			Weight:     0,
 		},
 	}
 

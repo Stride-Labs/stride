@@ -73,15 +73,15 @@ func (s *KeeperTestSuite) SetupDelegatorSharesICQCallback() DelegatorSharesICQCa
 
 	currentEpoch := uint64(1)
 	hostZone := stakeibctypes.HostZone{
-		ChainId:                  HostChainId,
-		TotalBalancedDelegations: balancedDelegation,
+		ChainId:          HostChainId,
+		TotalDelegations: balancedDelegation,
 		Validators: []*stakeibctypes.Validator{
 			// This validator isn't being queried
 			{
-				Name:               "val1",
-				Address:            "valoper1",
-				Weight:             1,
-				BalancedDelegation: sdkmath.ZeroInt(),
+				Name:       "val1",
+				Address:    "valoper1",
+				Weight:     1,
+				Delegation: sdkmath.ZeroInt(),
 			},
 			// This is the validator in question
 			{
@@ -91,8 +91,8 @@ func (s *KeeperTestSuite) SetupDelegatorSharesICQCallback() DelegatorSharesICQCa
 					InternalTokensToSharesRate: internalExchangeRate,
 					EpochNumber:                currentEpoch,
 				},
-				BalancedDelegation: tokensBeforeSlash,
-				Weight:             weightBeforeSlash,
+				Delegation: tokensBeforeSlash,
+				Weight:     weightBeforeSlash,
 			},
 		},
 	}
@@ -265,7 +265,7 @@ func (s *KeeperTestSuite) TestDelegatorSharesCallback_InvalidNumTokens() {
 	badCallbackArgs := s.CreateDelegatorSharesQueryResponse(valAddress, numShares)
 	err := stakeibckeeper.DelegatorSharesCallback(s.App.StakeibcKeeper, s.Ctx, badCallbackArgs, tc.validArgs.query)
 
-	expectedErrMsg := "Validator (valoper2) tokens returned from query is greater than the BalancedDelegation: invalid request"
+	expectedErrMsg := "Validator (valoper2) tokens returned from query is greater than the Delegation: invalid request"
 	s.Require().EqualError(err, expectedErrMsg)
 }
 

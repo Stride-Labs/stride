@@ -45,22 +45,22 @@ func (s *KeeperTestSuite) SetupDelegateCallback() DelegateCallbackTestCase {
 	val2RelAmt := sdkmath.NewInt(180_000)
 
 	val1 := types.Validator{
-		Name:               "val1",
-		Address:            "val1_address",
-		BalancedDelegation: val1Bal,
+		Name:       "val1",
+		Address:    "val1_address",
+		Delegation: val1Bal,
 	}
 	val2 := types.Validator{
-		Name:               "val2",
-		Address:            "val2_address",
-		BalancedDelegation: val2Bal,
+		Name:       "val2",
+		Address:    "val2_address",
+		Delegation: val2Bal,
 	}
 	hostZone := stakeibc.HostZone{
-		ChainId:                  HostChainId,
-		HostDenom:                Atom,
-		IbcDenom:                 IbcAtom,
-		RedemptionRate:           sdk.NewDec(1.0),
-		Validators:               []*types.Validator{&val1, &val2},
-		TotalBalancedDelegations: balancedDelegation,
+		ChainId:          HostChainId,
+		HostDenom:        Atom,
+		IbcDenom:         IbcAtom,
+		RedemptionRate:   sdk.NewDec(1.0),
+		Validators:       []*types.Validator{&val1, &val2},
+		TotalDelegations: balancedDelegation,
 	}
 	depositRecord := recordtypes.DepositRecord{
 		Id:                 1,

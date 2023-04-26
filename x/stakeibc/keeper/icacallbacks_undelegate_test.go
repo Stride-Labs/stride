@@ -52,14 +52,14 @@ func (s *KeeperTestSuite) SetupUndelegateCallback() UndelegateCallbackTestCase {
 	val2UndelegationAmount := balanceToUnstake.Sub(val1UndelegationAmount)
 	epochNumber := uint64(1)
 	val1 := types.Validator{
-		Name:               "val1",
-		Address:            "val1_address",
-		BalancedDelegation: val1Bal,
+		Name:       "val1",
+		Address:    "val1_address",
+		Delegation: val1Bal,
 	}
 	val2 := types.Validator{
-		Name:               "val2",
-		Address:            "val2_address",
-		BalancedDelegation: val2Bal,
+		Name:       "val2",
+		Address:    "val2_address",
+		Delegation: val2Bal,
 	}
 	depositAddress := types.NewHostZoneDepositAddress(HostChainId)
 	zoneAccountBalance := balanceToUnstake.Add(sdkmath.NewInt(10))
@@ -68,13 +68,13 @@ func (s *KeeperTestSuite) SetupUndelegateCallback() UndelegateCallbackTestCase {
 		stAtomBalance: sdk.NewCoin(StAtom, zoneAccountBalance), // Add a few extra tokens to make the test more robust
 	}
 	hostZone := stakeibc.HostZone{
-		ChainId:                  HostChainId,
-		HostDenom:                Atom,
-		IbcDenom:                 IbcAtom,
-		RedemptionRate:           sdk.NewDec(1.0),
-		Validators:               []*types.Validator{&val1, &val2},
-		TotalBalancedDelegations: balancedDelegations,
-		DepositAddress:           depositAddress.String(),
+		ChainId:          HostChainId,
+		HostDenom:        Atom,
+		IbcDenom:         IbcAtom,
+		RedemptionRate:   sdk.NewDec(1.0),
+		Validators:       []*types.Validator{&val1, &val2},
+		TotalDelegations: balancedDelegations,
+		DepositAddress:   depositAddress.String(),
 	}
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
 

@@ -66,11 +66,10 @@ func (s *KeeperTestSuite) SetupUpdateRedemptionRates(tc UpdateRedemptionRateTest
 
 	// set the staked balance on the host zone
 	hostZone := stakeibctypes.HostZone{
-		ChainId:                    HostChainId,
-		HostDenom:                  Atom,
-		TotalBalancedDelegations:   tc.balancedDelegation,
-		TotalUnbalancedDelegations: tc.unbalancedDelegation,
-		RedemptionRate:             tc.initialRedemptionRate,
+		ChainId:          HostChainId,
+		HostDenom:        Atom,
+		TotalDelegations: tc.balancedDelegation,
+		RedemptionRate:   tc.initialRedemptionRate,
 	}
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
 

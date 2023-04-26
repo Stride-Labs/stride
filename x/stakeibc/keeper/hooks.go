@@ -147,7 +147,7 @@ func (k Keeper) SetWithdrawalAddress(ctx sdk.Context) {
 //       1. Total Supply of the stToken
 //
 //  Redemption Rate =
-//  (Deposit Account Balance + Undelegated Balance + Tokenized Delegation + Balanced Delegation) / (stToken Supply)
+//  (Deposit Account Balance + Undelegated Balance + Tokenized Delegation + Native Delegation) / (stToken Supply)
 func (k Keeper) UpdateRedemptionRates(ctx sdk.Context, depositRecords []recordstypes.DepositRecord) {
 	k.Logger(ctx).Info("Updating Redemption Rates...")
 
