@@ -76,10 +76,10 @@ func DelegatorSharesCallback(k Keeper, ctx sdk.Context, args []byte, query icqty
 	// note: truncateInt per https://github.com/cosmos/cosmos-sdk/blob/cb31043d35bad90c4daa923bb109f38fd092feda/x/staking/types/validator.go#L431
 	delegatedTokens := queriedDelgation.Shares.Mul(validator.InternalExchangeRate.InternalTokensToSharesRate).TruncateInt()
 	k.Logger(ctx).Info(utils.LogICQCallbackWithHostZone(chainId, ICQCallbackID_Delegation,
-		"Previous Delegation: %v, Current Delegation: %v", validator.BalancedDelegation, delegatedTokens))
+		"Previous Delegation: %v, Current Delegation: %v", validator.Delegation, delegatedTokens))
 
 	// Confirm the validator has actually been slashed
-	if delegatedTokens.Equal(validator.BalancedDelegation) {
+	if delegatedTokens.Equal(validator.Delegation) {
 		k.Logger(ctx).Info(utils.LogICQCallbackWithHostZone(chainId, ICQCallbackID_Delegation, "Validator was not slashed"))
 		return nil
 	}
@@ -87,24 +87,24 @@ func DelegatorSharesCallback(k Keeper, ctx sdk.Context, args []byte, query icqty
 	// If the true delegation is slightly higher than our record keeping, this could be due to float imprecision
 	// Correct record keeping accordingly
 	precisionErrorThreshold := sdkmath.NewInt(25)
-	precisionError := delegatedTokens.Sub(validator.BalancedDelegation)
+	precisionError := delegatedTokens.Sub(validator.Delegation)
 	if precisionError.IsPositive() && precisionError.LTE(precisionErrorThreshold) {
 		// Update the validator on the host zone
-		validator.BalancedDelegation = validator.BalancedDelegation.Add(precisionError)
-		hostZone.TotalBalancedDelegations = hostZone.TotalBalancedDelegations.Add(precisionError)
+		validator.Delegation = validator.Delegation.Add(precisionError)
+		hostZone.TotalDelegations = hostZone.TotalDelegations.Add(precisionError)
 
 		hostZone.Validators[valIndex] = &validator
 		k.SetHostZone(ctx, hostZone)
 
 		k.Logger(ctx).Info(utils.LogICQCallbackWithHostZone(chainId, ICQCallbackID_Delegation,
-			"Delegation updated to %v", validator.BalancedDelegation))
+			"Delegation updated to %v", validator.Delegation))
 
 		return nil
 	}
 
 	// If the delegation returned from the query is much higher than our record keeping, exit with an error
-	if delegatedTokens.GT(validator.BalancedDelegation) {
-		return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "Validator (%s) tokens returned from query is greater than the BalancedDelegation", validator.Address)
+	if delegatedTokens.GT(validator.Delegation) {
+		return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "Validator (%s) tokens returned from query is greater than the Delegation", validator.Address)
 	}
 
 	// TODO(TESTS-171) add some safety checks here (e.g. we could query the slashing module to confirm the decr in tokens was due to slash)
@@ -112,11 +112,11 @@ func DelegatorSharesCallback(k Keeper, ctx sdk.Context, args []byte, query icqty
 	// NOTE:  we assume any decrease in delegation amt that's not tracked via records is a slash
 
 	// Get slash percentage
-	slashAmount := validator.BalancedDelegation.Sub(delegatedTokens)
-	slashPct := sdk.NewDecFromInt(slashAmount).Quo(sdk.NewDecFromInt(validator.BalancedDelegation))
+	slashAmount := validator.Delegation.Sub(delegatedTokens)
+	slashPct := sdk.NewDecFromInt(slashAmount).Quo(sdk.NewDecFromInt(validator.Delegation))
 	k.Logger(ctx).Info(utils.LogICQCallbackWithHostZone(chainId, ICQCallbackID_Delegation,
 		"Validator was slashed! Validator: %s, Delegator: %s, Delegation in State: %v, Delegation from ICQ %v, Slash Amount: %v, Slash Pct: %v",
-		validator.Address, queriedDelgation.DelegatorAddress, validator.BalancedDelegation, delegatedTokens, slashAmount, slashPct))
+		validator.Address, queriedDelgation.DelegatorAddress, validator.Delegation, delegatedTokens, slashAmount, slashPct))
 
 	// Abort if the slash was greater than the safety threshold
 	slashThreshold, err := cast.ToInt64E(k.GetParam(ctx, types.KeySafetyMaxSlashPercent))
@@ -134,18 +134,18 @@ func DelegatorSharesCallback(k Keeper, ctx sdk.Context, args []byte, query icqty
 	if err != nil {
 		return errorsmod.Wrapf(types.ErrIntCast, "unable to convert validator weight to int64, err: %s", err.Error())
 	}
-	weightAdjustment := sdk.NewDecFromInt(delegatedTokens).Quo(sdk.NewDecFromInt(validator.BalancedDelegation))
+	weightAdjustment := sdk.NewDecFromInt(delegatedTokens).Quo(sdk.NewDecFromInt(validator.Delegation))
 
 	validator.Weight = sdk.NewDec(weight).Mul(weightAdjustment).TruncateInt().Uint64()
-	validator.BalancedDelegation = validator.BalancedDelegation.Sub(slashAmount)
+	validator.Delegation = validator.Delegation.Sub(slashAmount)
 
 	// Update the validator on the host zone
-	hostZone.TotalBalancedDelegations = hostZone.TotalBalancedDelegations.Sub(slashAmount)
+	hostZone.TotalDelegations = hostZone.TotalDelegations.Sub(slashAmount)
 	hostZone.Validators[valIndex] = &validator
 	k.SetHostZone(ctx, hostZone)
 
 	k.Logger(ctx).Info(utils.LogICQCallbackWithHostZone(chainId, ICQCallbackID_Delegation,
-		"Delegation updated to: %v, Weight updated to: %v", validator.BalancedDelegation, validator.Weight))
+		"Delegation updated to: %v, Weight updated to: %v", validator.Delegation, validator.Weight))
 
 	return nil
 }

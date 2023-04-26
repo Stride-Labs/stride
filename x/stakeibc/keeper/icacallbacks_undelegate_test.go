@@ -155,15 +155,15 @@ func (s *KeeperTestSuite) TestUndelegateCallback_Successful() {
 	// Check that balanced delegation has decreased on the host zone
 	hostZone, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx, HostChainId)
 	s.Require().True(found)
-	s.Require().Equal(hostZone.TotalBalancedDelegations, initialState.balancedDelegations.Sub(tc.balanceToUnstake), "balanced delegation has decreased on the host zone")
+	s.Require().Equal(hostZone.TotalDelegations, initialState.balancedDelegations.Sub(tc.balanceToUnstake), "balanced delegation has decreased on the host zone")
 
 	// Check that Delegations on validators have decreased
 	s.Require().True(len(hostZone.Validators) == 2, "Expected 2 validators")
 	val1 := hostZone.Validators[0]
-	s.Require().Equal(val1.BalancedDelegation, initialState.val1Bal.Sub(tc.val1UndelegationAmount), "val1 delegation has decreased")
+	s.Require().Equal(val1.Delegation, initialState.val1Bal.Sub(tc.val1UndelegationAmount), "val1 delegation has decreased")
 	val2 := hostZone.Validators[1]
 	// Check that the host zone unbonding records have been updated
-	s.Require().Equal(val2.BalancedDelegation, initialState.val2Bal.Sub(tc.val2UndelegationAmount), "val2 delegation has decreased")
+	s.Require().Equal(val2.Delegation, initialState.val2Bal.Sub(tc.val2UndelegationAmount), "val2 delegation has decreased")
 
 	epochUnbondingRecord, found := s.App.RecordsKeeper.GetEpochUnbondingRecord(s.Ctx, initialState.epochNumber)
 	s.Require().True(found, "epoch unbonding record found")
@@ -182,15 +182,15 @@ func (s *KeeperTestSuite) checkStateIfUndelegateCallbackFailed(tc UndelegateCall
 	// Check that balanced delegation has NOT decreased on the host zone
 	hostZone, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx, HostChainId)
 	s.Require().True(found, "host zone found")
-	s.Require().Equal(hostZone.TotalBalancedDelegations, initialState.balancedDelegations, "balanced delegation has NOT decreased on the host zone")
+	s.Require().Equal(hostZone.TotalDelegations, initialState.balancedDelegations, "balanced delegation has NOT decreased on the host zone")
 
 	// Check that Delegations on validators have NOT decreased
 	s.Require().True(len(hostZone.Validators) == 2, "Expected 2 validators")
 	val1 := hostZone.Validators[0]
-	s.Require().Equal(val1.BalancedDelegation, initialState.val1Bal, "val1 delegation has NOT decreased")
+	s.Require().Equal(val1.Delegation, initialState.val1Bal, "val1 delegation has NOT decreased")
 	val2 := hostZone.Validators[1]
 	// Check that the host zone unbonding records have not been updated
-	s.Require().Equal(val2.BalancedDelegation, initialState.val2Bal, "val2 delegation has NOT decreased")
+	s.Require().Equal(val2.Delegation, initialState.val2Bal, "val2 delegation has NOT decreased")
 
 	epochUnbondingRecord, found := s.App.RecordsKeeper.GetEpochUnbondingRecord(s.Ctx, initialState.epochNumber)
 	s.Require().True(found, "epoch unbonding record found")
@@ -263,9 +263,9 @@ func (s *KeeperTestSuite) TestUpdateDelegationBalances_Success() {
 	// Check that Delegations on validators have decreased
 	s.Require().True(len(updatedHostZone.Validators) == 2, "Expected 2 validators")
 	val1 := updatedHostZone.Validators[0]
-	s.Require().Equal(val1.BalancedDelegation, tc.initialState.val1Bal.Sub(tc.val1UndelegationAmount), "val1 delegation has decreased")
+	s.Require().Equal(val1.Delegation, tc.initialState.val1Bal.Sub(tc.val1UndelegationAmount), "val1 delegation has decreased")
 	val2 := updatedHostZone.Validators[1]
-	s.Require().Equal(val2.BalancedDelegation, tc.initialState.val2Bal.Sub(tc.val2UndelegationAmount), "val2 delegation has decreased")
+	s.Require().Equal(val2.Delegation, tc.initialState.val2Bal.Sub(tc.val2UndelegationAmount), "val2 delegation has decreased")
 }
 
 // GetLatestCompletionTime tests

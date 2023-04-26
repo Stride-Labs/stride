@@ -86,14 +86,14 @@ func RebalanceCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ac
 
 		// Decrement the total delegation from the source validator
 		if _, valFound := valAddrMap[srcValidator]; valFound {
-			valAddrMap[srcValidator].BalancedDelegation = valAddrMap[srcValidator].BalancedDelegation.Sub(rebalancing.Amt)
+			valAddrMap[srcValidator].Delegation = valAddrMap[srcValidator].Delegation.Sub(rebalancing.Amt)
 		} else {
 			return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "validator not found %s", srcValidator)
 		}
 
 		// Increment the total delegation for the destination validator
 		if _, valFound := valAddrMap[dstValidator]; valFound {
-			valAddrMap[dstValidator].BalancedDelegation = valAddrMap[dstValidator].BalancedDelegation.Add(rebalancing.Amt)
+			valAddrMap[dstValidator].Delegation = valAddrMap[dstValidator].Delegation.Add(rebalancing.Amt)
 		} else {
 			return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "validator not found %s", dstValidator)
 		}

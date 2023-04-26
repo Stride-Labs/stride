@@ -123,13 +123,13 @@ func (s *KeeperTestSuite) TestDelegateCallback_Successful() {
 	// Confirm balanced delegation has increased
 	hostZone, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx, HostChainId)
 	s.Require().True(found)
-	s.Require().Equal(initialState.balancedDelegation.Add(initialState.balanceToStake), hostZone.TotalBalancedDelegations, "balanced delegation should have increased")
+	s.Require().Equal(initialState.balancedDelegation.Add(initialState.balanceToStake), hostZone.TotalDelegations, "balanced delegation should have increased")
 
 	// Confirm delegations have been added to validators
 	val1 := hostZone.Validators[0]
 	val2 := hostZone.Validators[1]
-	s.Require().Equal(initialState.val1Bal.Add(initialState.val1RelAmt), val1.BalancedDelegation, "val1 balance should have increased")
-	s.Require().Equal(initialState.val2Bal.Add(initialState.val2RelAmt), val2.BalancedDelegation, "val2 balance should have increased")
+	s.Require().Equal(initialState.val1Bal.Add(initialState.val1RelAmt), val1.Delegation, "val1 balance should have increased")
+	s.Require().Equal(initialState.val2Bal.Add(initialState.val2RelAmt), val2.Delegation, "val2 balance should have increased")
 
 	// Confirm deposit record has been removed
 	records := s.App.RecordsKeeper.GetAllDepositRecord(s.Ctx)
@@ -140,7 +140,7 @@ func (s *KeeperTestSuite) checkDelegateStateIfCallbackFailed(tc DelegateCallback
 	// Confirm balanced delegation has not increased
 	hostZone, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx, HostChainId)
 	s.Require().True(found)
-	s.Require().Equal(tc.initialState.balancedDelegation, hostZone.TotalBalancedDelegations, "balanced delegation should not have increased")
+	s.Require().Equal(tc.initialState.balancedDelegation, hostZone.TotalDelegations, "balanced delegation should not have increased")
 
 	// Confirm deposit record has NOT been removed
 	records := s.App.RecordsKeeper.GetAllDepositRecord(s.Ctx)

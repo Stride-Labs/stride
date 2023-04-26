@@ -192,7 +192,7 @@ func (s *KeeperTestSuite) TestGetHostZoneUnbondingMsgs_UnbondingTooMuch() {
 
 	// iterate the validators and set all their delegated amounts to 0
 	for i := range tc.hostZone.Validators {
-		tc.hostZone.Validators[i].BalancedDelegation = sdkmath.ZeroInt()
+		tc.hostZone.Validators[i].Delegation = sdkmath.ZeroInt()
 	}
 	// write the host zone with zero-delegation validators back to the store
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, tc.hostZone)

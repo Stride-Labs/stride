@@ -23,7 +23,7 @@ func createNHostZone(keeper *keeper.Keeper, ctx sdk.Context, n int) []types.Host
 		items[i].LastRedemptionRate = sdk.NewDec(1)
 		items[i].MinRedemptionRate = sdk.NewDecWithPrec(5, 1)
 		items[i].MaxRedemptionRate = sdk.NewDecWithPrec(15, 1)
-		items[i].TotalBalancedDelegations = sdkmath.ZeroInt()
+		items[i].TotalDelegations = sdkmath.ZeroInt()
 		items[i].TotalUnbalancedDelegations = sdkmath.ZeroInt()
 		keeper.SetHostZone(ctx, items[i])
 	}

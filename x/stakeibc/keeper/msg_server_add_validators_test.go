@@ -38,7 +38,7 @@ func (s *KeeperTestSuite) SetupAddValidators() AddValidatorsTestCase {
 		{Name: "val3", Address: "stride_VAL3", Weight: 3},
 	}
 	for _, validator := range expectedValidators {
-		validator.BalancedDelegation = sdkmath.ZeroInt()
+		validator.Delegation = sdkmath.ZeroInt()
 		validator.UnbalancedDelegation = sdkmath.ZeroInt()
 		validator.SlashQueryProgressTracker = sdkmath.ZeroInt()
 	}

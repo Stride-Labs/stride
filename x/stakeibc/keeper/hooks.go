@@ -166,7 +166,7 @@ func (k Keeper) UpdateRedemptionRates(ctx sdk.Context, depositRecords []recordst
 		depositAccountBalance := k.GetDepositAccountBalance(hostZone.ChainId, depositRecords)
 		undelegatedBalance := k.GetUndelegatedBalance(hostZone.ChainId, depositRecords)
 		tokenizedDelegation := k.GetTotalTokenizedDelegations(ctx, hostZone.ChainId)
-		balancedDelegation := sdk.NewDecFromInt(hostZone.TotalBalancedDelegations)
+		balancedDelegation := sdk.NewDecFromInt(hostZone.TotalDelegations)
 		unbalancedDelegation := sdk.NewDecFromInt(hostZone.TotalUnbalancedDelegations)
 
 		k.Logger(ctx).Info(utils.LogWithHostZone(hostZone.ChainId, "Redemption Rate Components - "+
