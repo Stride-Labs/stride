@@ -15,7 +15,6 @@ import (
 
 	"github.com/golang/protobuf/proto" //nolint:staticcheck
 
-	"github.com/Stride-Labs/stride/v9/utils"
 	recordstypes "github.com/Stride-Labs/stride/v9/x/records/types"
 	"github.com/Stride-Labs/stride/v9/x/stakeibc/types"
 )
@@ -216,30 +215,5 @@ func (k Keeper) DetokenizeAllLSMDeposits(ctx sdk.Context) {
 			}
 			k.Logger(ctx).Info(fmt.Sprintf("Submitted detokenization ICA for deposit %v%s on %s", deposit.Amount, deposit.Denom, hostZone.ChainId))
 		}
-	}
-}
-
-// When receiving LSM Liquid Stakes, the distribution of stake from these tokens
-//   will be inconsistent with the host zone's validator set
-// This portion of stake is designated as the "Unbalanced Delegation"
-// This function rebalances the unbalanced portion according to the validator weights,
-//   and should not be confused with the main Rebalance function which rebalances
-//   the "Balanced Delegation"
-// Note: this cannot be run more than once in a single unbonding period
-func (k Keeper) RebalanceTokenizedDeposits(ctx sdk.Context, dayNumber uint64) {
-	for _, hostZone := range k.GetAllActiveHostZone(ctx) {
-		numRebalance := uint64(len(hostZone.Validators))
-
-		if dayNumber%hostZone.UnbondingPeriod != 0 {
-			k.Logger(ctx).Info(utils.LogWithHostZone(hostZone.ChainId,
-				"Host does not rebalance this epoch (Unbonding Period: %d, Epoch: %d)", hostZone.UnbondingPeriod, dayNumber))
-			continue
-		}
-
-		if err := k.RebalanceDelegations(ctx, hostZone.ChainId, numRebalance); err != nil {
-			k.Logger(ctx).Error(fmt.Sprintf("Unable to rebalance delegations for %s: %s", hostZone.ChainId, err.Error()))
-			continue
-		}
-		k.Logger(ctx).Info(fmt.Sprintf("Successfully rebalanced UnbalancedDelegations for %s", hostZone.ChainId))
 	}
 }

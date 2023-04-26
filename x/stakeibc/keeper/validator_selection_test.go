@@ -159,13 +159,13 @@ func (s *KeeperTestSuite) TestGetValidatorDelegationDifferences() {
 	}
 
 	// Check delegation changes
-	actualBalancedDeltas, err := s.App.StakeibcKeeper.GetValidatorDelegationDifferences(s.Ctx, hostZone)
+	actualDeltas, err := s.App.StakeibcKeeper.GetValidatorDelegationDifferences(s.Ctx, hostZone)
 	s.Require().NoError(err, "no error expected when calculating delegation differences")
-	s.Require().Len(actualBalancedDeltas, len(expectedDeltas), "number of redelegations")
+	s.Require().Len(actualDeltas, len(expectedDeltas), "number of redelegations")
 
 	for i, expected := range expectedDeltas {
-		s.Require().Equal(expected.ValidatorAddress, actualBalancedDeltas[i].ValidatorAddress, "address for delegation %d", i)
-		s.Require().Equal(expected.Delta.Int64(), actualBalancedDeltas[i].Delta.Int64(), "delta for delegation %d", i)
+		s.Require().Equal(expected.ValidatorAddress, actualDeltas[i].ValidatorAddress, "address for delegation %d", i)
+		s.Require().Equal(expected.Delta.Int64(), actualDeltas[i].Delta.Int64(), "delta for delegation %d", i)
 	}
 
 	// Check the error case when there are no delegations
@@ -250,7 +250,7 @@ func (s *KeeperTestSuite) TestGetTotalValidatorDelegations() {
 	hostZone := types.HostZone{Validators: validators}
 	actualDelegations := s.App.StakeibcKeeper.GetTotalValidatorDelegations(hostZone)
 
-	s.Require().Equal(expectedDelegation, actualDelegations.Int64(), "balanced delegations")
+	s.Require().Equal(expectedDelegation, actualDelegations.Int64(), "delegations")
 }
 
 func (s *KeeperTestSuite) TestGetTotalValidatorWeight() {

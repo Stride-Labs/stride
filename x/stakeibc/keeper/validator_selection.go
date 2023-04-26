@@ -19,13 +19,31 @@ type RebalanceValidatorDelegationChange struct {
 	Delta            sdkmath.Int
 }
 
+// Iterate each active host zone and issues redelegations messages to rebalance each
+//   validators stake according to their weights
+// This is required when accepting LSM LiquidStakes as the distribution of stake
+//  from the LSM Tokens will be inconsistend with the host zone's validator set
+// Note: this cannot be run more than once in a single unbonding period
+func (k Keeper) RebalanceAllHostZones(ctx sdk.Context, dayNumber uint64) {
+	for _, hostZone := range k.GetAllActiveHostZone(ctx) {
+		numRebalance := uint64(len(hostZone.Validators))
+
+		if dayNumber%hostZone.UnbondingPeriod != 0 {
+			k.Logger(ctx).Info(utils.LogWithHostZone(hostZone.ChainId,
+				"Host does not rebalance this epoch (Unbonding Period: %d, Epoch: %d)", hostZone.UnbondingPeriod, dayNumber))
+			continue
+		}
+
+		if err := k.RebalanceDelegationsForHostZone(ctx, hostZone.ChainId, numRebalance); err != nil {
+			k.Logger(ctx).Error(fmt.Sprintf("Unable to rebalance delegations for %s: %s", hostZone.ChainId, err.Error()))
+			continue
+		}
+		k.Logger(ctx).Info(utils.LogWithHostZone(hostZone.ChainId, "Successfully rebalanced delegations"))
+	}
+}
+
 // Rebalance validators according to their validator weights
-// Specify whether to rebalance the balanced or unbalanced portion
-// The unbalanced portion represents delegations from LSM Tokens that are naturally
-//    misaligned with the validator. They must be rebalanced periodically
-// The balance portion represents either native delegations or LSM delegation that have
-//    already been rebalanced. This portion only requires a rebalancing if the validator weights change
-func (k Keeper) RebalanceDelegations(ctx sdk.Context, chainId string, numRebalance uint64) error {
+func (k Keeper) RebalanceDelegationsForHostZone(ctx sdk.Context, chainId string, numRebalance uint64) error {
 	// Get the host zone and confirm the delegation account is initialized
 	hostZone, found := k.GetHostZone(ctx, chainId)
 	if !found {
@@ -255,7 +273,6 @@ func (k Keeper) GetTargetValAmtsForHostZone(ctx sdk.Context, hostZone types.Host
 }
 
 // Sum the total delegation across each validator for a host zone
-// Must specify whether to sum the balanced or unbalanced delegation
 func (k Keeper) GetTotalValidatorDelegations(hostZone types.HostZone) sdkmath.Int {
 	validators := hostZone.Validators
 	totalDelegation := sdkmath.ZeroInt()
