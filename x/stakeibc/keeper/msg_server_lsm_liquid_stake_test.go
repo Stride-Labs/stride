@@ -105,6 +105,7 @@ func (s *KeeperTestSuite) TestLSMLiquidStake_Successful_NoExchangeRateQuery() {
 	expectedDeposit := recordstypes.LSMTokenDeposit{
 		ChainId:          HostChainId,
 		Denom:            LSMTokenBaseDenom,
+		IbcDenom:         tc.lsmTokenIBCDenom,
 		ValidatorAddress: ValAddress,
 		Amount:           tc.validMsg.Amount,
 		Status:           recordstypes.LSMTokenDeposit_TRANSFER_IN_PROGRESS,
@@ -165,6 +166,7 @@ func (s *KeeperTestSuite) TestLSMLiquidStake_Successful_WithExchangeRateQuery() 
 	expectedLSMTokenDeposit := recordstypes.LSMTokenDeposit{
 		ChainId:          HostChainId,
 		Denom:            LSMTokenBaseDenom,
+		IbcDenom:         tc.lsmTokenIBCDenom,
 		ValidatorAddress: ValAddress,
 		Amount:           tc.validMsg.Amount,
 		Status:           recordstypes.LSMTokenDeposit_DEPOSIT_PENDING,

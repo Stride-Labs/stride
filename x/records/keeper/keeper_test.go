@@ -8,6 +8,10 @@ import (
 	"github.com/Stride-Labs/stride/v9/app/apptesting"
 )
 
+const (
+	HostChainId = "GAIA"
+)
+
 type KeeperTestSuite struct {
 	apptesting.AppTestHelper
 }

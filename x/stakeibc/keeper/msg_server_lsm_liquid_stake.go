@@ -8,15 +8,12 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/bech32"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	transfertypes "github.com/cosmos/ibc-go/v5/modules/apps/transfer/types"
-	"github.com/golang/protobuf/proto" //nolint:staticcheck
 
+	//nolint:staticcheck
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
-	icacallbackstypes "github.com/Stride-Labs/stride/v9/x/icacallbacks/types"
 	icqtypes "github.com/Stride-Labs/stride/v9/x/interchainquery/types"
 
-	recordskeeper "github.com/Stride-Labs/stride/v9/x/records/keeper"
 	recordstypes "github.com/Stride-Labs/stride/v9/x/records/types"
 	"github.com/Stride-Labs/stride/v9/x/stakeibc/types"
 )
@@ -117,6 +114,7 @@ func (k Keeper) StartLSMLiquidStake(ctx sdk.Context, msg *types.MsgLSMLiquidStak
 	lsmTokenDeposit := recordstypes.LSMTokenDeposit{
 		ChainId:          hostZone.ChainId,
 		Denom:            lsmTokenBaseDenom,
+		IbcDenom:         msg.LsmTokenIbcDenom,
 		ValidatorAddress: validator.Address,
 		Amount:           msg.Amount,
 		Status:           recordstypes.LSMTokenDeposit_DEPOSIT_PENDING,
@@ -194,37 +192,16 @@ func (k Keeper) FinishLSMLiquidStake(ctx sdk.Context, lsmLiquidStake types.LSMLi
 		return errorsmod.Wrapf(types.ErrICAAccountNotFound, "no delegation address found for %s", hostZone.ChainId)
 	}
 
-	// Send LSM Token to host zone via IBC transfer
-	timeout := uint64(ctx.BlockTime().UnixNano() + (LSMDepositTransferTimeout).Nanoseconds()) // 1 day
-	msgTransferResponse, err := k.RecordsKeeper.TransferKeeper.Transfer(sdk.WrapSDKContext(ctx), &transfertypes.MsgTransfer{
-		SourcePort:       transfertypes.PortID,
-		SourceChannel:    hostZone.TransferChannelId,
-		Token:            lsmLiquidStake.LSMIBCToken,
-		Sender:           hostZone.DepositAddress,
-		Receiver:         hostZone.DelegationIcaAddress,
-		TimeoutTimestamp: timeout,
-	})
-	if err != nil {
+	// Send LSM Token via IBC transfer
+	if err := k.RecordsKeeper.IBCTransferLSMToken(
+		ctx,
+		lsmLiquidStake.Deposit,
+		hostZone.TransferChannelId,
+		hostZone.DepositAddress,
+		hostZone.DelegationIcaAddress,
+	); err != nil {
 		return errorsmod.Wrapf(err, "Failed to submit IBC transfer of LSM token")
 	}
-
-	// Store transfer callback data
-	callbackArgs := recordstypes.TransferLSMTokenCallback{
-		Deposit: &lsmLiquidStake.Deposit,
-	}
-	callbackArgsBz, err := proto.Marshal(&callbackArgs)
-	if err != nil {
-		return errorsmod.Wrapf(err, "Unable to marshal transfer callback data for %+v", callbackArgs)
-	}
-
-	k.RecordsKeeper.ICACallbacksKeeper.SetCallbackData(ctx, icacallbackstypes.CallbackData{
-		CallbackKey:  icacallbackstypes.PacketID(transfertypes.PortID, hostZone.TransferChannelId, msgTransferResponse.Sequence),
-		PortId:       transfertypes.PortID,
-		ChannelId:    hostZone.TransferChannelId,
-		Sequence:     msgTransferResponse.Sequence,
-		CallbackId:   recordskeeper.IBCCallbacksID_LSMTransfer,
-		CallbackArgs: callbackArgsBz,
-	})
 
 	// Update the deposit status
 	k.RecordsKeeper.UpdateLSMTokenDepositStatus(ctx, lsmLiquidStake.Deposit, recordstypes.LSMTokenDeposit_TRANSFER_IN_PROGRESS)
