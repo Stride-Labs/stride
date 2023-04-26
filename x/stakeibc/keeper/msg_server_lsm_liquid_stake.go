@@ -20,8 +20,7 @@ import (
 
 // Exchanges a user's LSM tokenized shares for stTokens using the current redemption rate
 // The LSM tokens must live on Stride as an IBC voucher (whose denomtrace we recognize)
-//
-//	before this function is called
+// before this function is called
 //
 // The typical flow:
 //   - A staker tokenizes their delegation on the host zone
@@ -34,8 +33,8 @@ import (
 // is not settled until the query returns
 // As a result, this transaction has been split up into a (1) Start and (2) Finish function
 //
-//	If no query is needed, (2) is called immediately after (1)
-//	If a query is needed, (2) is called in the query callback
+// If no query is needed, (2) is called immediately after (1)
+// If a query is needed, (2) is called in the query callback
 //
 // The transaction response indicates if the query occurred by returning an attribute `TransactionComplete` set to false
 func (k msgServer) LSMLiquidStake(goCtx context.Context, msg *types.MsgLSMLiquidStake) (*types.MsgLSMLiquidStakeResponse, error) {
