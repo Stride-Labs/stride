@@ -7,7 +7,6 @@ import (
 	errorsmod "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/bech32"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
 	//nolint:staticcheck
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
@@ -78,7 +77,7 @@ func (k Keeper) StartLSMLiquidStake(ctx sdk.Context, msg types.MsgLSMLiquidStake
 	}
 	stCoin := sdk.NewCoin(stDenom, stAmount)
 
-	// Store the deposit record for this stake
+	// Add the stToken to this deposit record
 	lsmTokenDeposit.StToken = stCoin
 	k.RecordsKeeper.AddLSMTokenDeposit(ctx, lsmTokenDeposit)
 
@@ -188,57 +187,4 @@ func (k Keeper) FinishLSMLiquidStake(ctx sdk.Context, lsmLiquidStake types.LSMLi
 	k.RecordsKeeper.UpdateLSMTokenDepositStatus(ctx, lsmTokenDeposit, recordstypes.LSMTokenDeposit_TRANSFER_IN_PROGRESS)
 
 	return nil
-}
-
-// Validates the parameters supplied with this LSMLiquidStake, including that the denom
-//   corresponds with a valid LSM Token and that the user has sufficient balance
-// This is called once at the beginning of the liquid stake, and is, potentially, called
-//   again at the end (if the transaction was asynchronous due to an intermediate slash query)
-// This function returns the associated host zone and validator along with the initial deposit record
-func (k Keeper) ValidateLSMLiquidStake(ctx sdk.Context, msg types.MsgLSMLiquidStake) (types.LSMLiquidStake, error) {
-	// Get the denom trace from the IBC hash - this includes the full path and base denom
-	// Ex: LSMTokenIbcDenom of `ibc/XXX` might create a DenomTrace with:
-	//     BaseDenom: cosmosvaloperXXX/42, Path: transfer/channel-0
-	denomTrace, err := k.GetLSMTokenDenomTrace(ctx, msg.LsmTokenIbcDenom)
-	if err != nil {
-		return types.LSMLiquidStake{}, err
-	}
-
-	// Get the host zone and validator address from the path and base denom respectively
-	lsmTokenBaseDenom := denomTrace.BaseDenom
-	hostZone, err := k.GetHostZoneFromLSMTokenPath(ctx, denomTrace.Path)
-	if err != nil {
-		return types.LSMLiquidStake{}, err
-	}
-	validator, err := k.GetValidatorFromLSMTokenDenom(lsmTokenBaseDenom, hostZone.Validators)
-	if err != nil {
-		return types.LSMLiquidStake{}, err
-	}
-
-	// Confirm the staker has a sufficient balance to execute the liquid stake
-	liquidStakerAddress := sdk.MustAccAddressFromBech32(msg.Creator)
-	balance := k.bankKeeper.GetBalance(ctx, liquidStakerAddress, msg.LsmTokenIbcDenom).Amount
-	if balance.LT(msg.Amount) {
-		return types.LSMLiquidStake{}, errorsmod.Wrapf(sdkerrors.ErrInsufficientFunds,
-			"balance is lower than staking amount. staking amount: %v, balance: %v", msg.Amount, balance)
-	}
-
-	// Build the LSMTokenDeposit record
-	// The stToken will be added outside of this function
-	lsmTokenDeposit := recordstypes.LSMTokenDeposit{
-		ChainId:          hostZone.ChainId,
-		Denom:            lsmTokenBaseDenom,
-		IbcDenom:         msg.LsmTokenIbcDenom,
-		StakerAddress:    msg.Creator,
-		ValidatorAddress: validator.Address,
-		Amount:           msg.Amount,
-		Status:           recordstypes.LSMTokenDeposit_DEPOSIT_PENDING,
-	}
-
-	// Return the wrapped deposit object with additional context (host zone and validator)
-	return types.LSMLiquidStake{
-		Deposit:   lsmTokenDeposit,
-		HostZone:  hostZone,
-		Validator: validator,
-	}, nil
 }
