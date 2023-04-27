@@ -106,7 +106,7 @@ func (k Keeper) SubmitValidatorSlashQuery(ctx sdk.Context, lsmLiquidStake types.
 	}
 
 	// Use a short timeout for the query so that user's can get the tokens refunded quickly should the query get stuck
-	timeout := uint64(ctx.BlockTime().UnixNano() + (SlashQueryTimeout).Nanoseconds())
+	timeout := uint64(ctx.BlockTime().UnixNano() + (LSMSlashQueryTimeout).Nanoseconds())
 	query := icqtypes.Query{
 		ChainId:        hostZone.ChainId,
 		ConnectionId:   hostZone.ConnectionId,
@@ -187,5 +187,9 @@ func (k Keeper) FinishLSMLiquidStake(ctx sdk.Context, lsmLiquidStake types.LSMLi
 	// Update the deposit status
 	k.RecordsKeeper.UpdateLSMTokenDepositStatus(ctx, lsmTokenDeposit, recordstypes.LSMTokenDeposit_TRANSFER_IN_PROGRESS)
 
+	// Emit an LSM liquid stake event
+	EmitSuccessfulLSMLiquidStakeEvent(ctx, *hostZone, lsmTokenDeposit)
+
+	k.hooks.AfterLiquidStake(ctx, liquidStakerAddress)
 	return nil
 }

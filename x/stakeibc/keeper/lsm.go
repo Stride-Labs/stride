@@ -26,7 +26,7 @@ var (
 	IsValidIBCPath = regexp.MustCompile(fmt.Sprintf(`^%s/(%s[0-9]{1,20})$`, transfertypes.PortID, channeltypes.ChannelPrefix)).MatchString
 
 	// Timeout for the validator slash query that occurs at periodic deposit intervals
-	SlashQueryTimeout = time.Minute * 5 // 5 minutes
+	LSMSlashQueryTimeout = time.Minute * 5 // 5 minutes
 
 	// Time for the detokenization ICA
 	DetokenizationTimeout = time.Hour * 24 // 1 day
