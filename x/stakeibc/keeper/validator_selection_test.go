@@ -70,7 +70,7 @@ func (s *KeeperTestSuite) TestGetRebalanceICAMessages_EvenNumberValidators() {
 	validatorDeltas := []keeper.RebalanceValidatorDelegationChange{
 		// Overweight validators - they should lose some of their stake
 		{ValidatorAddress: "val1", Delta: sdkmath.NewInt(-21)}, // 15 to val10, 6 to val9
-		{ValidatorAddress: "val2", Delta: sdkmath.NewInt(-19)}, // 6 to val9, 10 to val8, 3 to val7
+		{ValidatorAddress: "val2", Delta: sdkmath.NewInt(-19)}, // 5 to val9, 11 to val8, 3 to val7
 		{ValidatorAddress: "val3", Delta: sdkmath.NewInt(-13)}, // 3 to val7, 5 to val6, 4 to val5, 1 to val4
 
 		// Underweight validators - they should gain stake
@@ -78,8 +78,8 @@ func (s *KeeperTestSuite) TestGetRebalanceICAMessages_EvenNumberValidators() {
 		{ValidatorAddress: "val5", Delta: sdkmath.NewInt(4)},   // 4 from val3
 		{ValidatorAddress: "val6", Delta: sdkmath.NewInt(5)},   // 5 from val3
 		{ValidatorAddress: "val7", Delta: sdkmath.NewInt(6)},   // 3 from val2, 3 from val3
-		{ValidatorAddress: "val8", Delta: sdkmath.NewInt(10)},  // 10 from val2
-		{ValidatorAddress: "val9", Delta: sdkmath.NewInt(12)},  // 6 from val1, 6 from val2
+		{ValidatorAddress: "val8", Delta: sdkmath.NewInt(11)},  // 11 from val2
+		{ValidatorAddress: "val9", Delta: sdkmath.NewInt(11)},  // 6 from val1, 5 from val2
 		{ValidatorAddress: "val10", Delta: sdkmath.NewInt(15)}, // 15 from val1
 	}
 
@@ -88,8 +88,8 @@ func (s *KeeperTestSuite) TestGetRebalanceICAMessages_EvenNumberValidators() {
 		{SrcValidator: "val1", DstValidator: "val10", Amt: sdkmath.NewInt(15)}, // 15 from val1 to val10
 		{SrcValidator: "val1", DstValidator: "val9", Amt: sdkmath.NewInt(6)},   //  6 from val1 to val9
 
-		{SrcValidator: "val2", DstValidator: "val9", Amt: sdkmath.NewInt(6)},  //  6 from val2 to val9
-		{SrcValidator: "val2", DstValidator: "val8", Amt: sdkmath.NewInt(10)}, // 10 from val2 to val8
+		{SrcValidator: "val2", DstValidator: "val9", Amt: sdkmath.NewInt(5)},  //  6 from val2 to val9
+		{SrcValidator: "val2", DstValidator: "val8", Amt: sdkmath.NewInt(11)}, // 10 from val2 to val8
 		{SrcValidator: "val2", DstValidator: "val7", Amt: sdkmath.NewInt(3)},  //  3 from val2 to val7
 
 		{SrcValidator: "val3", DstValidator: "val7", Amt: sdkmath.NewInt(3)}, // 3 from val3 to val7
@@ -105,32 +105,36 @@ func (s *KeeperTestSuite) TestGetRebalanceICAMessages_OddNumberValidators() {
 	// Build up deltas for each validator, i.e. how much each validator needs to change by
 	validatorDeltas := []keeper.RebalanceValidatorDelegationChange{
 		// Overweight validators - they should lose some of their stake
-		{ValidatorAddress: "val1", Delta: sdkmath.NewInt(-15)}, // 15 to val9
-		{ValidatorAddress: "val2", Delta: sdkmath.NewInt(-12)}, // 6 to val9, 6 to val8
-		{ValidatorAddress: "val3", Delta: sdkmath.NewInt(-9)},  // 9 to val8
-		{ValidatorAddress: "val4", Delta: sdkmath.NewInt(-7)},  // 5 to val7, 2 to val6
-		{ValidatorAddress: "val5", Delta: sdkmath.NewInt(-2)},  // 2 to val6
+		{ValidatorAddress: "val1", Delta: sdkmath.NewInt(-15)}, // 15 to val11
+		{ValidatorAddress: "val2", Delta: sdkmath.NewInt(-12)}, // 6 to val11, 6 to val10
+		{ValidatorAddress: "val3", Delta: sdkmath.NewInt(-9)},  // 9 to val10
+		{ValidatorAddress: "val4", Delta: sdkmath.NewInt(-7)},  // 5 to val9, 2 to val8
+		{ValidatorAddress: "val5", Delta: sdkmath.NewInt(-2)},  // 2 to val8
+		{ValidatorAddress: "val6", Delta: sdkmath.NewInt(-2)},  // 2 to val7
 
 		// Underweight validators - they should gain stake
-		{ValidatorAddress: "val6", Delta: sdkmath.NewInt(4)},  // 2 from val4, 2 from val5
-		{ValidatorAddress: "val7", Delta: sdkmath.NewInt(5)},  // 5 from val4
-		{ValidatorAddress: "val8", Delta: sdkmath.NewInt(15)}, // 6 from val2, 9 from val3
-		{ValidatorAddress: "val9", Delta: sdkmath.NewInt(21)}, // 15 from val1, 6 from val2
+		{ValidatorAddress: "val7", Delta: sdkmath.NewInt(2)},   // 2 from val6
+		{ValidatorAddress: "val8", Delta: sdkmath.NewInt(4)},   // 2 from val4, 2 from val5
+		{ValidatorAddress: "val9", Delta: sdkmath.NewInt(5)},   // 5 from val4
+		{ValidatorAddress: "val10", Delta: sdkmath.NewInt(15)}, // 6 from val2, 9 from val3
+		{ValidatorAddress: "val11", Delta: sdkmath.NewInt(21)}, // 15 from val1, 6 from val2
 	}
 
 	// Build up the expected messages, moving across the list above
 	expectedRebalancings := []types.Rebalancing{
-		{SrcValidator: "val1", DstValidator: "val9", Amt: sdkmath.NewInt(15)}, // 15 from val1 to val9
+		{SrcValidator: "val1", DstValidator: "val11", Amt: sdkmath.NewInt(15)}, // 15 from val1 to val11
 
-		{SrcValidator: "val2", DstValidator: "val9", Amt: sdkmath.NewInt(6)}, // 6 from val2 to val9
-		{SrcValidator: "val2", DstValidator: "val8", Amt: sdkmath.NewInt(6)}, // 6 from val2 to val8
+		{SrcValidator: "val2", DstValidator: "val11", Amt: sdkmath.NewInt(6)}, // 6 from val2 to val11
+		{SrcValidator: "val2", DstValidator: "val10", Amt: sdkmath.NewInt(6)}, // 6 from val2 to val10
 
-		{SrcValidator: "val3", DstValidator: "val8", Amt: sdkmath.NewInt(9)}, // 9 from val3 to val8
+		{SrcValidator: "val3", DstValidator: "val10", Amt: sdkmath.NewInt(9)}, // 9 from val3 to val10
 
-		{SrcValidator: "val4", DstValidator: "val7", Amt: sdkmath.NewInt(5)}, // 5 from val4 to val7
-		{SrcValidator: "val4", DstValidator: "val6", Amt: sdkmath.NewInt(2)}, // 2 from val4 to val6
+		{SrcValidator: "val4", DstValidator: "val9", Amt: sdkmath.NewInt(5)}, // 5 from val4 to val9
+		{SrcValidator: "val4", DstValidator: "val8", Amt: sdkmath.NewInt(2)}, // 2 from val4 to val8
 
-		{SrcValidator: "val5", DstValidator: "val6", Amt: sdkmath.NewInt(2)}, // 2 from val5 to val6
+		{SrcValidator: "val5", DstValidator: "val8", Amt: sdkmath.NewInt(2)}, // 2 from val5 to val8
+
+		{SrcValidator: "val6", DstValidator: "val7", Amt: sdkmath.NewInt(2)}, // 2 from val6 to val7
 	}
 
 	s.checkRebalanceICAMessages(validatorDeltas, expectedRebalancings)
