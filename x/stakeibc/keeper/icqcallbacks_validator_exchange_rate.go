@@ -1,6 +1,8 @@
 package keeper
 
 import (
+	"time"
+
 	errorsmod "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -87,7 +89,9 @@ func ValidatorExchangeRateCallback(k Keeper, ctx sdk.Context, args []byte, query
 		validator.InternalExchangeRate.InternalTokensToSharesRate))
 
 	// Armed with the exch rate, we can now query the (validator,delegator) delegation
-	if err := k.QueryDelegationsIcq(ctx, hostZone, queriedValidator.OperatorAddress); err != nil {
+	// TODO [LSM]: Set flexibly depending on whether this is from LSM or manual
+	timeout := uint64(ctx.BlockTime().UnixNano() + (time.Hour).Nanoseconds()) // 1 hour
+	if err := k.QueryDelegationsIcq(ctx, hostZone, queriedValidator.OperatorAddress, timeout); err != nil {
 		return errorsmod.Wrapf(types.ErrICQFailed, "Failed to query delegations, err: %s", err.Error())
 	}
 
