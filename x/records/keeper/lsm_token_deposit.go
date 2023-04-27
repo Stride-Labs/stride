@@ -47,14 +47,6 @@ func (k Keeper) GetAllLSMTokenDeposit(ctx sdk.Context) []types.LSMTokenDeposit {
 	return allLSMTokenDeposits
 }
 
-func (k Keeper) AddLSMTokenDeposit(ctx sdk.Context, deposit types.LSMTokenDeposit) {
-	original, found := k.GetLSMTokenDeposit(ctx, deposit.ChainId, deposit.Denom)
-	if found {
-		deposit.Amount = original.Amount.Add(deposit.Amount)
-	}
-	k.SetLSMTokenDeposit(ctx, deposit)
-}
-
 func (k Keeper) UpdateLSMTokenDepositStatus(ctx sdk.Context, deposit types.LSMTokenDeposit, status types.LSMTokenDeposit_Status) {
 	deposit.Status = status
 	k.SetLSMTokenDeposit(ctx, deposit)

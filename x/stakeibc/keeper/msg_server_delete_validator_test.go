@@ -18,16 +18,16 @@ type DeleteValidatorTestCase struct {
 func (s *KeeperTestSuite) SetupDeleteValidator() DeleteValidatorTestCase {
 	initialValidators := []*stakeibctypes.Validator{
 		{
-			Name:               "val1",
-			Address:            "stride_VAL1",
-			Weight:             0,
-			BalancedDelegation: sdkmath.ZeroInt(),
+			Name:       "val1",
+			Address:    "stride_VAL1",
+			Weight:     0,
+			Delegation: sdkmath.ZeroInt(),
 		},
 		{
-			Name:               "val2",
-			Address:            "stride_VAL2",
-			Weight:             0,
-			BalancedDelegation: sdkmath.ZeroInt(),
+			Name:       "val2",
+			Address:    "stride_VAL2",
+			Weight:     0,
+			Delegation: sdkmath.ZeroInt(),
 		},
 	}
 
@@ -109,7 +109,7 @@ func (s *KeeperTestSuite) TestDeleteValidator_NonZeroDelegation() {
 
 	// Update val1 to have a non-zero delegation
 	hostZone := tc.hostZone
-	hostZone.Validators[0].BalancedDelegation = sdkmath.NewInt(1)
+	hostZone.Validators[0].Delegation = sdkmath.NewInt(1)
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
 
 	_, err := s.GetMsgServer().DeleteValidator(sdk.WrapSDKContext(s.Ctx), &tc.validMsgs[0])

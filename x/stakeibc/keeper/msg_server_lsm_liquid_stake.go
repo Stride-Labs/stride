@@ -6,6 +6,7 @@ import (
 	errorsmod "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/bech32"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/gogo/protobuf/proto" //nolint:staticcheck
@@ -18,7 +19,7 @@ import (
 
 // Exchanges a user's LSM tokenized shares for stTokens using the current redemption rate
 // The LSM tokens must live on Stride as an IBC voucher (whose denomtrace we recognize)
-//   before this function is called
+//	 before this function is called
 //
 // The typical flow:
 //   - A staker tokenizes their delegation on the host zone
@@ -66,6 +67,13 @@ func (k Keeper) StartLSMLiquidStake(ctx sdk.Context, msg types.MsgLSMLiquidStake
 	}
 	hostZone := lsmLiquidStake.HostZone
 
+	// Check if we already have tokens with this denom in records
+	_, found := k.RecordsKeeper.GetLSMTokenDeposit(ctx, hostZone.ChainId, lsmLiquidStake.Deposit.Denom)
+	if found {
+		return types.LSMLiquidStake{}, errorsmod.Wrapf(sdkerrors.ErrInvalidRequest,
+			"there is already a previous record with this denom being processed: %s", lsmLiquidStake.Deposit.Denom)
+	}
+
 	// Determine the amount of stTokens to mint using the redemption rate
 	stDenom := types.StAssetDenomFromHostZoneDenom(hostZone.HostDenom)
 	stAmount := (sdk.NewDecFromInt(msg.Amount).Quo(hostZone.RedemptionRate)).TruncateInt()
@@ -77,7 +85,7 @@ func (k Keeper) StartLSMLiquidStake(ctx sdk.Context, msg types.MsgLSMLiquidStake
 
 	// Add the stToken to this deposit record
 	lsmLiquidStake.Deposit.StToken = stCoin
-	k.RecordsKeeper.AddLSMTokenDeposit(ctx, *lsmLiquidStake.Deposit)
+	k.RecordsKeeper.SetLSMTokenDeposit(ctx, *lsmLiquidStake.Deposit)
 
 	return lsmLiquidStake, nil
 }

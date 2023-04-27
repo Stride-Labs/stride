@@ -38,45 +38,45 @@ func (s *KeeperTestSuite) SetupRebalanceValidators() RebalanceValidatorsTestCase
 	// define validators for host zone
 	initialValidators := []*stakeibctypes.Validator{
 		{
-			Name:               "val1",
-			Address:            "stride_VAL1",
-			Weight:             100,
-			BalancedDelegation: sdkmath.NewInt(100),
+			Name:       "val1",
+			Address:    "stride_VAL1",
+			Weight:     100,
+			Delegation: sdkmath.NewInt(100),
 		},
 		{
-			Name:               "val2",
-			Address:            "stride_VAL2",
-			Weight:             500,
-			BalancedDelegation: sdkmath.NewInt(500),
+			Name:       "val2",
+			Address:    "stride_VAL2",
+			Weight:     500,
+			Delegation: sdkmath.NewInt(500),
 		},
 		{
-			Name:               "val3",
-			Address:            "stride_VAL3",
-			Weight:             200,
-			BalancedDelegation: sdkmath.NewInt(200),
+			Name:       "val3",
+			Address:    "stride_VAL3",
+			Weight:     200,
+			Delegation: sdkmath.NewInt(200),
 		},
 		{
-			Name:               "val4",
-			Address:            "stride_VAL4",
-			Weight:             400,
-			BalancedDelegation: sdkmath.NewInt(400),
+			Name:       "val4",
+			Address:    "stride_VAL4",
+			Weight:     400,
+			Delegation: sdkmath.NewInt(400),
 		},
 		{
-			Name:               "val5",
-			Address:            "stride_VAL5",
-			Weight:             400,
-			BalancedDelegation: sdkmath.NewInt(400),
+			Name:       "val5",
+			Address:    "stride_VAL5",
+			Weight:     400,
+			Delegation: sdkmath.NewInt(400),
 		},
 	}
 
 	// setup host zone
 	hostZone := stakeibctypes.HostZone{
-		ChainId:                  "GAIA",
-		Validators:               initialValidators,
-		TotalBalancedDelegations: sdkmath.NewInt(1000),
-		ConnectionId:             ibctesting.FirstConnectionID,
-		DelegationIcaAddress:     delegationAddr,
-		HostDenom:                "uatom",
+		ChainId:              "GAIA",
+		Validators:           initialValidators,
+		TotalDelegations:     sdkmath.NewInt(1000),
+		ConnectionId:         ibctesting.FirstConnectionID,
+		DelegationIcaAddress: delegationAddr,
+		HostDenom:            "uatom",
 	}
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
 
@@ -109,6 +109,7 @@ func (s *KeeperTestSuite) TestRebalanceValidators_Successful() {
 	s.Require().True(found, "host zone should exist")
 	validators := hz.GetValidators()
 	s.Require().Equal(5, len(validators), "host zone should have 5 validators")
+
 	// modify weight to 25
 	validators[0].Weight = 250
 	validators[2].Weight = 100
@@ -164,8 +165,7 @@ func (s *KeeperTestSuite) TestRebalanceValidators_InvalidNoValidators() {
 		NumRebalance: 2,
 	}
 	_, err := s.GetMsgServer().RebalanceValidators(sdk.WrapSDKContext(s.Ctx), &badMsg_noValidators)
-	expectedErrMsg := "no non-zero validator weights"
-	s.Require().EqualError(err, expectedErrMsg, "rebalancing with no validators should fail")
+	s.Require().ErrorContains(err, "Cannot calculate target delegation if final amount is 0 GAIA")
 }
 
 func (s *KeeperTestSuite) TestRebalanceValidators_InvalidAllValidatorsNoWeight() {
@@ -186,6 +186,5 @@ func (s *KeeperTestSuite) TestRebalanceValidators_InvalidAllValidatorsNoWeight()
 		NumRebalance: 2,
 	}
 	_, err := s.GetMsgServer().RebalanceValidators(sdk.WrapSDKContext(s.Ctx), &badMsg_noValidators)
-	expectedErrMsg := "no non-zero validator weights"
-	s.Require().EqualError(err, expectedErrMsg, "rebalancing with no validators should fail")
+	s.Require().ErrorContains(err, "no non-zero validator weights")
 }
