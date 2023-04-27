@@ -118,8 +118,8 @@ func (k Keeper) GetRebalanceICAMessages(
 		deficitValidator := validatorDeltas[deficitIndex]
 		surplusValidator := validatorDeltas[surplusIndex]
 
-		// If either delta is 0, we're done rebalancing
-		if deficitValidator.Delta.IsZero() || surplusValidator.Delta.IsZero() {
+		// If the indicies flipped, or either delta is 0, we're done rebalancing
+		if surplusIndex > deficitIndex || deficitValidator.Delta.IsZero() || surplusValidator.Delta.IsZero() {
 			break
 		}
 
