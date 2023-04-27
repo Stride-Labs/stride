@@ -109,6 +109,7 @@ func (s *KeeperTestSuite) TestRebalanceValidators_Successful() {
 	s.Require().True(found, "host zone should exist")
 	validators := hz.GetValidators()
 	s.Require().Equal(5, len(validators), "host zone should have 5 validators")
+
 	// modify weight to 25
 	validators[0].Weight = 250
 	validators[2].Weight = 100
@@ -164,8 +165,7 @@ func (s *KeeperTestSuite) TestRebalanceValidators_InvalidNoValidators() {
 		NumRebalance: 2,
 	}
 	_, err := s.GetMsgServer().RebalanceValidators(sdk.WrapSDKContext(s.Ctx), &badMsg_noValidators)
-	expectedErrMsg := "no non-zero validator weights"
-	s.Require().EqualError(err, expectedErrMsg, "rebalancing with no validators should fail")
+	s.Require().ErrorContains(err, "Cannot calculate target delegation if final amount is 0 GAIA")
 }
 
 func (s *KeeperTestSuite) TestRebalanceValidators_InvalidAllValidatorsNoWeight() {
@@ -186,6 +186,5 @@ func (s *KeeperTestSuite) TestRebalanceValidators_InvalidAllValidatorsNoWeight()
 		NumRebalance: 2,
 	}
 	_, err := s.GetMsgServer().RebalanceValidators(sdk.WrapSDKContext(s.Ctx), &badMsg_noValidators)
-	expectedErrMsg := "no non-zero validator weights"
-	s.Require().EqualError(err, expectedErrMsg, "rebalancing with no validators should fail")
+	s.Require().ErrorContains(err, "no non-zero validator weights")
 }

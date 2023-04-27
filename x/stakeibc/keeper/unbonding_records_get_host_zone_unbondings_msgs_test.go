@@ -217,13 +217,10 @@ func (s *KeeperTestSuite) TestGetTargetValAmtsForHostZone_Success() {
 	}
 	s.Require().Equal(unbond, actualAmount, "total amount unbonded matches input")
 
-	// verify the order of the validators is expected
-	// GetTargetValAmtsForHostZone first reverses the list, then sorts by weight using SliceStable
-	// E.g. given A:1, B:2, C:2, D:0
-	// 1. D:0, C:2, B:2, A:1
-	// 2. D:0, A:1, C:2, B:2
+	// verify the order of the validators is expected - sorted by weight and then name
+	// E.g. given A:1, B:2, C:2, D:0 -> D:0, A:1, B:2, C:2
 	s.Require().Equal(tc.valNames[3], tc.hostZone.Validators[0].Address)
 	s.Require().Equal(tc.valNames[0], tc.hostZone.Validators[1].Address)
-	s.Require().Equal(tc.valNames[2], tc.hostZone.Validators[2].Address)
-	s.Require().Equal(tc.valNames[1], tc.hostZone.Validators[3].Address)
+	s.Require().Equal(tc.valNames[1], tc.hostZone.Validators[2].Address)
+	s.Require().Equal(tc.valNames[2], tc.hostZone.Validators[3].Address)
 }

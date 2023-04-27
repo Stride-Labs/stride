@@ -8,12 +8,11 @@ import (
 	icacallbacktypes "github.com/Stride-Labs/stride/v9/x/icacallbacks/types"
 	stakeibckeeper "github.com/Stride-Labs/stride/v9/x/stakeibc/keeper"
 	"github.com/Stride-Labs/stride/v9/x/stakeibc/types"
-	stakeibctypes "github.com/Stride-Labs/stride/v9/x/stakeibc/types"
 )
 
 type RebalanceCallbackState struct {
-	hostZone          stakeibctypes.HostZone
-	initialValidators []*stakeibctypes.Validator
+	hostZone          types.HostZone
+	initialValidators []*types.Validator
 }
 
 type RebalanceCallbackArgs struct {
@@ -75,11 +74,13 @@ func (s *KeeperTestSuite) TestRebalanceCallback_Successful() {
 	validators := hz.GetValidators()
 	s.Require().Len(validators, 5, "host zone has 5 validators")
 
-	s.Require().Equal(sdkmath.NewInt(217), validators[0].Delegation, "validator 1 stake")
-	s.Require().Equal(sdkmath.NewInt(500), validators[1].Delegation, "validator 2 stake")
-	s.Require().Equal(sdkmath.NewInt(96), validators[2].Delegation, "validator 3 stake")
-	s.Require().Equal(sdkmath.NewInt(387), validators[3].Delegation, "validator 4 stake")
-	s.Require().Equal(sdkmath.NewInt(400), validators[4].Delegation, "validator 5 stake")
+	// TODO: Improve these tests
+	// These expected values are hard coded - and you have to reference a separate file to see where they come from
+	s.Require().Equal(int64(217), validators[0].Delegation.Int64(), "validator 1 stake")
+	s.Require().Equal(int64(500), validators[1].Delegation.Int64(), "validator 2 stake")
+	s.Require().Equal(int64(96), validators[2].Delegation.Int64(), "validator 3 stake")
+	s.Require().Equal(int64(387), validators[3].Delegation.Int64(), "validator 4 stake")
+	s.Require().Equal(int64(400), validators[4].Delegation.Int64(), "validator 5 stake")
 }
 
 func (s *KeeperTestSuite) checkDelegationStateIfCallbackFailed() {
@@ -89,11 +90,11 @@ func (s *KeeperTestSuite) checkDelegationStateIfCallbackFailed() {
 	validators := hz.GetValidators()
 	s.Require().Len(validators, 5, "host zone has 5 validators")
 
-	s.Require().Equal(sdkmath.NewInt(100), validators[0].Delegation, "validator 1 stake")
-	s.Require().Equal(sdkmath.NewInt(500), validators[1].Delegation, "validator 2 stake")
-	s.Require().Equal(sdkmath.NewInt(200), validators[2].Delegation, "validator 3 stake")
-	s.Require().Equal(sdkmath.NewInt(400), validators[3].Delegation, "validator 4 stake")
-	s.Require().Equal(sdkmath.NewInt(400), validators[4].Delegation, "validator 5 stake")
+	s.Require().Equal(int64(100), validators[0].Delegation.Int64(), "validator 1 stake")
+	s.Require().Equal(int64(500), validators[1].Delegation.Int64(), "validator 2 stake")
+	s.Require().Equal(int64(200), validators[2].Delegation.Int64(), "validator 3 stake")
+	s.Require().Equal(int64(400), validators[3].Delegation.Int64(), "validator 4 stake")
+	s.Require().Equal(int64(400), validators[4].Delegation.Int64(), "validator 5 stake")
 }
 
 func (s *KeeperTestSuite) TestRebalanceCallback_Timeout() {
@@ -172,10 +173,10 @@ func (s *KeeperTestSuite) TestRebalanceCallback_WrongValidator() {
 	s.Require().NoError(err)
 
 	err = stakeibckeeper.RebalanceCallback(s.App.StakeibcKeeper, s.Ctx, tc.validArgs.packet, tc.validArgs.ackResponse, invalidArgsOne)
-	s.Require().EqualError(err, "validator not found stride_VAL4_WRONG: invalid request")
+	s.Require().ErrorContains(err, "source validator not found stride_VAL4_WRONG")
 	s.checkDelegationStateIfCallbackFailed()
 
 	err = stakeibckeeper.RebalanceCallback(s.App.StakeibcKeeper, s.Ctx, tc.validArgs.packet, tc.validArgs.ackResponse, invalidArgsTwo)
-	s.Require().EqualError(err, "validator not found stride_VAL1_WRONG: invalid request")
+	s.Require().ErrorContains(err, "validator not found stride_VAL1_WRONG: invalid request")
 	s.checkDelegationStateIfCallbackFailed()
 }

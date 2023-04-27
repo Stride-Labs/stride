@@ -84,20 +84,19 @@ func RebalanceCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ac
 		srcValidator := rebalancing.SrcValidator
 		dstValidator := rebalancing.DstValidator
 
-		// Decrement the total delegation from the source validator
-		if _, valFound := valAddrMap[srcValidator]; valFound {
-			valAddrMap[srcValidator].Delegation = valAddrMap[srcValidator].Delegation.Sub(rebalancing.Amt)
-		} else {
-			return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "validator not found %s", srcValidator)
+		if _, valFound := valAddrMap[srcValidator]; !valFound {
+			return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "source validator not found %s", srcValidator)
+		}
+		if _, valFound := valAddrMap[dstValidator]; !valFound {
+			return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "destination validator not found %s", dstValidator)
 		}
 
-		// Increment the total delegation for the destination validator
-		if _, valFound := valAddrMap[dstValidator]; valFound {
-			valAddrMap[dstValidator].Delegation = valAddrMap[dstValidator].Delegation.Add(rebalancing.Amt)
-		} else {
-			return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "validator not found %s", dstValidator)
-		}
+		// Decrement the delegation from the source validator and increment the delegation
+		// for the destination validator
+		valAddrMap[srcValidator].Delegation = valAddrMap[srcValidator].Delegation.Sub(rebalancing.Amt)
+		valAddrMap[dstValidator].Delegation = valAddrMap[dstValidator].Delegation.Add(rebalancing.Amt)
 	}
+
 	k.SetHostZone(ctx, hostZone)
 
 	return nil

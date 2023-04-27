@@ -128,6 +128,9 @@ func (k Keeper) StakeExistingDepositsOnHostZones(ctx sdk.Context, epochNumber ui
 	}
 
 	for _, depositRecord := range stakeDepositRecords[:maxDepositRecordsToStake] {
+		if depositRecord.Amount.IsZero() {
+			continue
+		}
 		k.Logger(ctx).Info(utils.LogWithHostZone(depositRecord.HostZoneId,
 			"Processing deposit record %d: %v%s", depositRecord.Id, depositRecord.Amount, depositRecord.Denom))
 
