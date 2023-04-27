@@ -31,6 +31,8 @@ func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochInfo epochstypes.EpochInf
 		k.CleanupEpochUnbondingRecords(ctx, epochNumber)
 		// Create an empty unbonding record for this epoch
 		k.CreateEpochUnbondingRecord(ctx, epochNumber)
+		// Rebalance stake according to validator weights
+		k.RebalanceAllHostZones(ctx, epochNumber)
 	}
 
 	// Stride Epoch - Process Deposits and Delegations
@@ -142,13 +144,12 @@ func (k Keeper) SetWithdrawalAddress(ctx sdk.Context) {
 //       1. Deposit Account Balance: native tokens deposited from liquid stakes, that are still living on Stride
 //       2. Undelegated Balance:     native tokens that have been transferred to the host zone, but have not been delegated yet
 //       3. Tokenized Delegations:   Delegations inherent in LSM Tokens that have not yet been converted to native stake
-//       4. Unbalanced Delegations:  Delegations that have been converted from LSM Tokens to native stake, but have not yet been balanced
-//       5. Balanced Delegations:    Delegations either from native tokens, or LSM Tokens that have undergone rebalancing
+//       4. Native Delegations:      Delegations either from native tokens, or LSM Tokens that have been detokenized
 //    StToken Amount:
 //       1. Total Supply of the stToken
 //
 //  Redemption Rate =
-//  (Deposit Account Balance + Undelegated Balance + Tokenized Delegation + Unbalanced Delegation + Balanced Delegation) / (stToken Supply)
+//  (Deposit Account Balance + Undelegated Balance + Tokenized Delegation + Native Delegation) / (stToken Supply)
 func (k Keeper) UpdateRedemptionRates(ctx sdk.Context, depositRecords []recordstypes.DepositRecord) {
 	k.Logger(ctx).Info("Updating Redemption Rates...")
 
@@ -166,21 +167,16 @@ func (k Keeper) UpdateRedemptionRates(ctx sdk.Context, depositRecords []recordst
 		depositAccountBalance := k.GetDepositAccountBalance(hostZone.ChainId, depositRecords)
 		undelegatedBalance := k.GetUndelegatedBalance(hostZone.ChainId, depositRecords)
 		tokenizedDelegation := k.GetTotalTokenizedDelegations(ctx, hostZone.ChainId)
-		balancedDelegation := sdk.NewDecFromInt(hostZone.TotalBalancedDelegations)
-		unbalancedDelegation := sdk.NewDecFromInt(hostZone.TotalUnbalancedDelegations)
+		nativeDelegation := sdk.NewDecFromInt(hostZone.TotalDelegations)
 
-		k.Logger(ctx).Info(utils.LogWithHostZone(hostZone.ChainId, "Redemption Rate Components - "+
-			"Deposit Account Balance: %v, Undelegated Balance: %v, LSM Delegated Balance: %v"+
-			"Native Balanced Delegations: %v, Native Unbalanced Delegations: %v, stToken Supply: %v",
+		k.Logger(ctx).Info(utils.LogWithHostZone(hostZone.ChainId,
+			"Redemption Rate Components - Deposit Account Balance: %v, Undelegated Balance: %v, "+
+				"LSM Delegated Balance: %v, Native Delegations: %v, stToken Supply: %v",
 			depositAccountBalance, undelegatedBalance, tokenizedDelegation,
-			balancedDelegation, unbalancedDelegation, stSupply))
+			nativeDelegation, stSupply))
 
 		// Calculate the redemption rate
-		nativeTokensLocked := depositAccountBalance.
-			Add(undelegatedBalance).
-			Add(tokenizedDelegation).
-			Add(balancedDelegation).
-			Add(unbalancedDelegation)
+		nativeTokensLocked := depositAccountBalance.Add(undelegatedBalance).Add(tokenizedDelegation).Add(nativeDelegation)
 		redemptionRate := nativeTokensLocked.Quo(sdk.NewDecFromInt(stSupply))
 
 		k.Logger(ctx).Info(utils.LogWithHostZone(hostZone.ChainId,

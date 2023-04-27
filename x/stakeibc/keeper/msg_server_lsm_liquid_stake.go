@@ -19,7 +19,7 @@ import (
 
 // Exchanges a user's LSM tokenized shares for stTokens using the current redemption rate
 // The LSM tokens must live on Stride as an IBC voucher (whose denomtrace we recognize)
-//   before this function is called
+//	 before this function is called
 //
 // The typical flow:
 //   - A staker tokenizes their delegation on the host zone
@@ -78,7 +78,7 @@ func (k Keeper) StartLSMLiquidStake(ctx sdk.Context, msg types.MsgLSMLiquidStake
 
 	// Add the stToken to this deposit record
 	lsmLiquidStake.Deposit.StToken = stCoin
-	k.RecordsKeeper.AddLSMTokenDeposit(ctx, lsmLiquidStake.Deposit)
+	k.RecordsKeeper.SetLSMTokenDeposit(ctx, lsmLiquidStake.Deposit)
 
 	return lsmLiquidStake, nil
 }
