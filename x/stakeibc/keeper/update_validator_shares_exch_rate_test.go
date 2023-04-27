@@ -13,15 +13,11 @@ import (
 // ================================ 1: QueryValidatorExchangeRate =============================================
 
 type QueryValidatorExchangeRateTestCase struct {
-	msg                types.MsgUpdateValidatorSharesExchRate
-	currentEpoch       uint64
-	hostZone           types.HostZone
-	strideEpochTracker types.EpochTracker
-	dayEpochTracker    types.EpochTracker
+	msg      types.MsgUpdateValidatorSharesExchRate
+	hostZone types.HostZone
 }
 
 func (s *KeeperTestSuite) SetupQueryValidatorExchangeRate() QueryValidatorExchangeRateTestCase {
-	currentEpoch := uint64(1)
 	valoperAddr := "cosmosvaloper133lfs9gcpxqj6er3kx605e3v9lqp2pg5syhvsz"
 
 	// set up IBC
@@ -37,34 +33,13 @@ func (s *KeeperTestSuite) SetupQueryValidatorExchangeRate() QueryValidatorExchan
 
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
 
-	// This will make the current time 90% through the epoch
-	strideEpochTracker := types.EpochTracker{
-		EpochIdentifier:    epochtypes.STRIDE_EPOCH,
-		EpochNumber:        currentEpoch,
-		Duration:           10_000_000_000,                                               // 10 second epochs
-		NextEpochStartTime: uint64(s.Coordinator.CurrentTime.UnixNano() + 1_000_000_000), // epoch ends in 1 second
-	}
-	s.App.StakeibcKeeper.SetEpochTracker(s.Ctx, strideEpochTracker)
-
-	// This will make the current time 50% through the day
-	dayEpochTracker := types.EpochTracker{
-		EpochIdentifier:    epochtypes.DAY_EPOCH,
-		EpochNumber:        currentEpoch,
-		Duration:           40_000_000_000,                                                // 40 second epochs
-		NextEpochStartTime: uint64(s.Coordinator.CurrentTime.UnixNano() + 20_000_000_000), // day ends in 20 second
-	}
-	s.App.StakeibcKeeper.SetEpochTracker(s.Ctx, dayEpochTracker)
-
 	return QueryValidatorExchangeRateTestCase{
 		msg: types.MsgUpdateValidatorSharesExchRate{
 			Creator: s.TestAccs[0].String(),
 			ChainId: HostChainId,
 			Valoper: valoperAddr,
 		},
-		currentEpoch:       currentEpoch,
-		hostZone:           hostZone,
-		strideEpochTracker: strideEpochTracker,
-		dayEpochTracker:    dayEpochTracker,
+		hostZone: hostZone,
 	}
 }
 
@@ -78,19 +53,6 @@ func (s *KeeperTestSuite) TestQueryValidatorExchangeRate_Successful() {
 	// check a query was created (a simple test; details about queries are covered in makeRequest's test)
 	queries := s.App.InterchainqueryKeeper.AllQueries(s.Ctx)
 	s.Require().Len(queries, 1, "one query should have been created")
-}
-
-func (s *KeeperTestSuite) TestQueryValidatorExchangeRate_BeforeBufferWindow() {
-	tc := s.SetupQueryValidatorExchangeRate()
-
-	// set the time to be 50% through the stride_epoch
-	strideEpochTracker := tc.strideEpochTracker
-	strideEpochTracker.NextEpochStartTime = uint64(s.Coordinator.CurrentTime.UnixNano() + int64(strideEpochTracker.Duration)/2) // 50% through the epoch
-	s.App.StakeibcKeeper.SetEpochTracker(s.Ctx, strideEpochTracker)
-
-	resp, err := s.App.StakeibcKeeper.QueryValidatorExchangeRate(s.Ctx, &tc.msg)
-	s.Require().ErrorContains(err, "outside the buffer time during which ICQs are allowed")
-	s.Require().Nil(resp, "response should be nil")
 }
 
 func (s *KeeperTestSuite) TestQueryValidatorExchangeRate_NoHostZone() {

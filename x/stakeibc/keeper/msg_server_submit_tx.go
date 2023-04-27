@@ -3,6 +3,7 @@ package keeper
 import (
 	"fmt"
 	"strings"
+	"time"
 
 	errorsmod "cosmossdk.io/errors"
 	"github.com/cosmos/cosmos-sdk/types/bech32"
@@ -355,14 +356,6 @@ func (k Keeper) GetLightClientTimeSafely(ctx sdk.Context, connectionID string) (
 func (k Keeper) QueryValidatorExchangeRate(ctx sdk.Context, msg *types.MsgUpdateValidatorSharesExchRate) (*types.MsgUpdateValidatorSharesExchRateResponse, error) {
 	k.Logger(ctx).Info(utils.LogWithHostZone(msg.ChainId, "Submitting ICQ for validator exchange rate to %s", msg.Valoper))
 
-	// Ensure ICQ can be issued now! else fail the callback
-	withinBufferWindow, err := k.IsWithinBufferWindow(ctx)
-	if err != nil {
-		return nil, errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "unable to determine if ICQ callback is inside buffer window, err: %s", err.Error())
-	} else if !withinBufferWindow {
-		return nil, errorsmod.Wrapf(types.ErrOutsideIcqWindow, "outside the buffer time during which ICQs are allowed (%s)", msg.ChainId)
-	}
-
 	// Confirm the host zone exists
 	hostZone, found := k.GetHostZone(ctx, msg.ChainId)
 	if !found {
@@ -381,13 +374,9 @@ func (k Keeper) QueryValidatorExchangeRate(ctx sdk.Context, msg *types.MsgUpdate
 	}
 	queryData := stakingtypes.GetValidatorKey(validatorAddressBz)
 
-	// The query should timeout at the start of the next epoch
-	timeout, err := k.GetStartTimeNextEpoch(ctx, epochstypes.STRIDE_EPOCH)
-	if err != nil {
-		return nil, errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "could not get start time for next epoch: %s", err.Error())
-	}
-
 	// Submit validator exchange rate ICQ
+	// Considering this query is executed manually, we can be agressive with the timeout
+	timeout := uint64(ctx.BlockTime().UnixNano() + (time.Hour).Nanoseconds()) // 1 hour
 	query := icqtypes.Query{
 		ChainId:        hostZone.ChainId,
 		ConnectionId:   hostZone.ConnectionId,
