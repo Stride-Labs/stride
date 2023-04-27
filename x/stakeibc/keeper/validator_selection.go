@@ -88,7 +88,7 @@ func (k Keeper) RebalanceDelegationsForHostZone(ctx sdk.Context, chainId string,
 }
 
 // Given a list of target delegation changes, builds the individual re-delegation messages by redelegating
-// from overweight validators to underweight validators
+// from surplus validators to deficit validators
 // Returns the list of messages and the callback data for the ICA
 func (k Keeper) GetRebalanceICAMessages(
 	hostZone types.HostZone,
@@ -105,67 +105,60 @@ func (k Keeper) GetRebalanceICAMessages(
 	}
 	sort.SliceStable(validatorDeltas, lessFunc)
 
-	// QUESTION: Does anyone have a preference on the naming convention here? A couple options:
-	//  * Overweight/Underweight (current)
-	//  * Surplus/Deficit
-	//  * Source/Destination
-	//  * Giver/Receiver
-	// etc.
-
-	// Pair overweight and underweight validators, with a redelegation from the overweight
-	// validator to the underweight one
-	// The list is sorted with the overweight validators (who should lose stake) at index 0
-	//   and the underweight validators (who should gain stake) at index N-1
-	// The overweight validator's have a negative delta and the underweight validators have a positive delta
-	overWeightIndex := 0
-	underWeightIndex := len(validatorDeltas) - 1
+	// Pair surplus and deficit validators, with a redelegation from the surplus
+	// validator to the deficit one
+	// The list is sorted with the surplus validators (who should lose stake) at index 0
+	//   and the deficit validators (who should gain stake) at index N-1
+	// The surplus validator's have a negative delta and the deficit validators have a positive delta
+	surplusIndex := 0
+	deficitIndex := len(validatorDeltas) - 1
 	for i := uint64(1); i <= numRebalance; i++ {
-		// underweight Elem is positive, overweight Elem is negative
-		underWeightValidator := validatorDeltas[underWeightIndex]
-		overWeightValidator := validatorDeltas[overWeightIndex]
+		// surplus validator is negative, deficit validator is positive
+		deficitValidator := validatorDeltas[deficitIndex]
+		surplusValidator := validatorDeltas[surplusIndex]
 
 		// If either delta is 0, we're done rebalancing
-		if underWeightValidator.Delta.IsZero() || overWeightValidator.Delta.IsZero() {
+		if deficitValidator.Delta.IsZero() || surplusValidator.Delta.IsZero() {
 			break
 		}
 
 		var redelegationAmount sdkmath.Int
-		if underWeightValidator.Delta.Abs().GT(overWeightValidator.Delta.Abs()) {
-			// If the underweight validator is more underweight than the overweight validator,
-			// transfer all the overweight validator's surplus to the underweight validator
-			redelegationAmount = overWeightValidator.Delta.Abs()
+		if deficitValidator.Delta.Abs().GT(surplusValidator.Delta.Abs()) {
+			// If the deficit validator needs more stake than the surplus validator has to give,
+			// transfer the full surplus to deficit validator
+			redelegationAmount = surplusValidator.Delta.Abs()
 
-			// Update the underweight validator, and zero out the overweight validator
-			validatorDeltas[underWeightIndex].Delta = underWeightValidator.Delta.Sub(redelegationAmount)
-			validatorDeltas[overWeightIndex].Delta = sdkmath.ZeroInt()
-			overWeightIndex += 1
+			// Update the deficit validator, and zero out the surplus validator
+			validatorDeltas[deficitIndex].Delta = deficitValidator.Delta.Sub(redelegationAmount)
+			validatorDeltas[surplusIndex].Delta = sdkmath.ZeroInt()
+			surplusIndex += 1
 
-		} else if overWeightValidator.Delta.Abs().GT(underWeightValidator.Delta.Abs()) {
-			// If the overweight validator is more overweight than the underweight validator,
-			// transfer only up to an an amount equal to the underweight validator's deficit
-			redelegationAmount = underWeightValidator.Delta
+		} else if surplusValidator.Delta.Abs().GT(deficitValidator.Delta.Abs()) {
+			// If one validator's deficit is less than the other validator's surplus,
+			// move only enough of the surplus to cover the shortage
+			redelegationAmount = deficitValidator.Delta
 
-			// Update the overweight validator, and zero out the underweight validator
-			validatorDeltas[overWeightIndex].Delta = overWeightValidator.Delta.Add(redelegationAmount)
-			validatorDeltas[underWeightIndex].Delta = sdkmath.ZeroInt()
-			underWeightIndex -= 1
+			// Update the surplus validator, and zero out the deficit validator
+			validatorDeltas[surplusIndex].Delta = surplusValidator.Delta.Add(redelegationAmount)
+			validatorDeltas[deficitIndex].Delta = sdkmath.ZeroInt()
+			deficitIndex -= 1
 
 		} else {
-			// if the overweight validator's surplus is equal to the underweight validator's deficit,
+			// if one validator's surplus is equal to the other validator's deficit,
 			// we'll transfer that amount and both validators will now be balanced
-			redelegationAmount = underWeightValidator.Delta
+			redelegationAmount = deficitValidator.Delta
 
-			validatorDeltas[overWeightIndex].Delta = sdkmath.ZeroInt()
-			validatorDeltas[underWeightIndex].Delta = sdkmath.ZeroInt()
+			validatorDeltas[surplusIndex].Delta = sdkmath.ZeroInt()
+			validatorDeltas[deficitIndex].Delta = sdkmath.ZeroInt()
 
-			overWeightIndex += 1
-			underWeightIndex -= 1
+			surplusIndex += 1
+			deficitIndex -= 1
 		}
 
 		// Append the new Redelegation message and Rebalancing struct for the callback
-		// We always send from the overweight validator to the underweight validator
-		srcValidator := overWeightValidator.ValidatorAddress
-		dstValidator := underWeightValidator.ValidatorAddress
+		// We always send from the surplus validator to the deficit validator
+		srcValidator := surplusValidator.ValidatorAddress
+		dstValidator := deficitValidator.ValidatorAddress
 
 		msgs = append(msgs, &stakingtypes.MsgBeginRedelegate{
 			DelegatorAddress:    hostZone.DelegationIcaAddress,
