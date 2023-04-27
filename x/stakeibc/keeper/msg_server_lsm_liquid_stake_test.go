@@ -203,6 +203,9 @@ func (s *KeeperTestSuite) TestLSMLiquidStake_DifferentRedemptionRates() {
 		expectedStAtomMinted := sdk.NewDecFromInt(tc.validMsg.Amount).Quo(redemptionRateFloat).TruncateInt()
 		testDescription := fmt.Sprintf("st atom balance for redemption rate: %v", redemptionRateFloat)
 		s.Require().Equal(expectedStAtomMinted, actualStAtomMinted, testDescription)
+
+		// Cleanup the LSMTokenDeposit record to prevent an error on the next run
+		s.App.RecordsKeeper.RemoveLSMTokenDeposit(s.Ctx, HostChainId, LSMTokenBaseDenom)
 	}
 }
 
@@ -247,6 +250,19 @@ func (s *KeeperTestSuite) TestLSMLiquidStakeFailed_ValidatorNotFound() {
 
 	_, err := s.GetMsgServer().LSMLiquidStake(sdk.WrapSDKContext(s.Ctx), invalidMsg)
 	s.Require().ErrorContains(err, "validator (cosmosvaloperXXX) is not registered in the Stride validator set")
+}
+
+func (s *KeeperTestSuite) TestLSMLiquidStakeFailed_DepositAlreadyExists() {
+	tc := s.SetupTestLSMLiquidStake()
+
+	// Set a deposit with the same chainID and denom in the store
+	s.App.RecordsKeeper.SetLSMTokenDeposit(s.Ctx, recordstypes.LSMTokenDeposit{
+		ChainId: HostChainId,
+		Denom:   LSMTokenBaseDenom,
+	})
+
+	_, err := s.GetMsgServer().LSMLiquidStake(sdk.WrapSDKContext(s.Ctx), tc.validMsg)
+	s.Require().ErrorContains(err, "there is already a previous record with this denom being processed")
 }
 
 func (s *KeeperTestSuite) TestLSMLiquidStakeFailed_InvalidDepositAddress() {
