@@ -68,7 +68,7 @@ func (s *KeeperTestSuite) TestValidateLSMLiquidStake() {
 
 	s.Require().Equal(HostChainId, lsmLiquidStake.HostZone.ChainId, "host zone after valid message")
 	s.Require().Equal(ValAddress, lsmLiquidStake.Validator.Address, "validator after valid message")
-	s.Require().Equal(expectedLSMTokenDeposit, lsmLiquidStake.Deposit, "deposit after valid message")
+	s.Require().Equal(expectedLSMTokenDeposit, *lsmLiquidStake.Deposit, "deposit after valid message")
 
 	// Try with an ibc denom that's not registered - it should fail
 	invalidMsg := validMsg

@@ -43,7 +43,7 @@ func (k msgServer) LSMLiquidStake(goCtx context.Context, msg *types.MsgLSMLiquid
 		return nil, err
 	}
 
-	if k.ShouldCheckIfValidatorWasSlashed(ctx, lsmLiquidStake.Validator, msg.Amount) {
+	if k.ShouldCheckIfValidatorWasSlashed(ctx, *lsmLiquidStake.Validator, msg.Amount) {
 		if err := k.SubmitValidatorSlashQuery(ctx, lsmLiquidStake); err != nil {
 			return nil, err
 		}
@@ -78,7 +78,7 @@ func (k Keeper) StartLSMLiquidStake(ctx sdk.Context, msg types.MsgLSMLiquidStake
 
 	// Add the stToken to this deposit record
 	lsmLiquidStake.Deposit.StToken = stCoin
-	k.RecordsKeeper.AddLSMTokenDeposit(ctx, lsmLiquidStake.Deposit)
+	k.RecordsKeeper.AddLSMTokenDeposit(ctx, *lsmLiquidStake.Deposit)
 
 	return lsmLiquidStake, nil
 }
@@ -130,7 +130,7 @@ func (k Keeper) SubmitValidatorSlashQuery(ctx sdk.Context, lsmLiquidStake types.
 // If no slash query was needed, this is called synchronously after StartLSMLiquidStake
 func (k Keeper) FinishLSMLiquidStake(ctx sdk.Context, lsmLiquidStake types.LSMLiquidStake) error {
 	hostZone := lsmLiquidStake.HostZone
-	lsmTokenDeposit := lsmLiquidStake.Deposit
+	lsmTokenDeposit := *lsmLiquidStake.Deposit
 
 	// Validate the LSM liquid stake message parameters again, in the event that the transaction
 	// was interrupted by the slash query.

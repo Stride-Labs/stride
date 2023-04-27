@@ -79,9 +79,9 @@ func (k Keeper) ValidateLSMLiquidStake(ctx sdk.Context, msg types.MsgLSMLiquidSt
 
 	// Return the wrapped deposit object with additional context (host zone and validator)
 	return types.LSMLiquidStake{
-		Deposit:   lsmTokenDeposit,
-		HostZone:  hostZone,
-		Validator: validator,
+		Deposit:   &lsmTokenDeposit,
+		HostZone:  &hostZone,
+		Validator: &validator,
 	}, nil
 }
 

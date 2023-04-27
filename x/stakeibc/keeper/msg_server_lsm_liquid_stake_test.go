@@ -5,14 +5,11 @@ import (
 	"fmt"
 
 	sdkmath "cosmossdk.io/math"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
-
 	transfertypes "github.com/cosmos/ibc-go/v5/modules/apps/transfer/types"
 	ibctesting "github.com/cosmos/ibc-go/v5/testing"
 
 	icqtypes "github.com/Stride-Labs/stride/v9/x/interchainquery/types"
-
 	recordstypes "github.com/Stride-Labs/stride/v9/x/records/types"
 	"github.com/Stride-Labs/stride/v9/x/stakeibc/keeper"
 	"github.com/Stride-Labs/stride/v9/x/stakeibc/types"
@@ -175,7 +172,7 @@ func (s *KeeperTestSuite) TestLSMLiquidStake_Successful_WithExchangeRateQuery() 
 	s.Require().Equal(HostChainId, actualCallbackData.HostZone.ChainId, "callback data - host zone")
 	s.Require().Equal(ValAddress, actualCallbackData.Validator.Address, "callback data - validator")
 
-	s.Require().Equal(expectedLSMTokenDeposit, actualCallbackData.Deposit, "callback data - deposit")
+	s.Require().Equal(expectedLSMTokenDeposit, *actualCallbackData.Deposit, "callback data - deposit")
 }
 
 func (s *KeeperTestSuite) TestLSMLiquidStake_DifferentRedemptionRates() {
