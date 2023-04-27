@@ -19,6 +19,7 @@ import (
 	"github.com/spf13/pflag"
 
 	tmcfg "github.com/cometbft/cometbft/config"
+	tmtypes "github.com/cometbft/cometbft/types"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/client"
 	config "github.com/cosmos/cosmos-sdk/client/config"
