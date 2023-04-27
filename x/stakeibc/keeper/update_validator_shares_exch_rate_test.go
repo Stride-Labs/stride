@@ -3,7 +3,9 @@ package keeper_test
 import (
 	"fmt"
 
+	sdkmath "cosmossdk.io/math"
 	ibctesting "github.com/cosmos/ibc-go/v5/testing"
+	"github.com/gogo/protobuf/proto" //nolint:staticcheck
 	_ "github.com/stretchr/testify/suite"
 
 	"github.com/Stride-Labs/stride/v9/x/stakeibc/types"
@@ -104,7 +106,7 @@ func (s *KeeperTestSuite) TestQueryValidatorExchangeRate_MissingConnectionId() {
 
 // ================================== 2: QueryDelegationsIcq ==========================================
 
-func (s *KeeperTestSuite) SetupQueryDelegationsIcq() types.HostZone {
+func (s *KeeperTestSuite) SetupQueryDelegationsIcq() (types.HostZone, types.Validator) {
 	// set up IBC
 	s.CreateTransferChannel(HostChainId)
 
@@ -120,24 +122,31 @@ func (s *KeeperTestSuite) SetupQueryDelegationsIcq() types.HostZone {
 		Bech32Prefix:         Bech32Prefix,
 		DelegationIcaAddress: delegationAddress,
 	}
+	validator := types.Validator{Address: ValAddress, BalancedDelegation: sdkmath.NewInt(100)}
 
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
 
-	return hostZone
+	return hostZone, validator
 }
 
 func (s *KeeperTestSuite) TestQueryDelegationsIcq_Successful() {
-	hostZone := s.SetupQueryDelegationsIcq()
+	hostZone, validator := s.SetupQueryDelegationsIcq()
 
-	err := s.App.StakeibcKeeper.QueryDelegationsIcq(s.Ctx, hostZone, ValAddress, uint64(1))
+	err := s.App.StakeibcKeeper.QueryDelegationsIcq(s.Ctx, hostZone, validator, uint64(1))
 	s.Require().NoError(err, "no error expected")
 
 	// check a query was created (a simple test; details about queries are covered in makeRequest's test)
 	queries := s.App.InterchainqueryKeeper.AllQueries(s.Ctx)
 	s.Require().Len(queries, 1, "one query should have been created")
 
+	// confirm callback data from query
+	var callbackData types.DelegatorSharesQueryCallback
+	err = proto.Unmarshal(queries[0].CallbackData, &callbackData)
+	s.Require().NoError(err, "no error expected when unmarshalling callback data")
+	s.Require().Equal(validator.BalancedDelegation, callbackData.InitialValidatorDelegation, "query callback data delegation")
+
 	// querying twice with the same query should only create one query
-	err = s.App.StakeibcKeeper.QueryDelegationsIcq(s.Ctx, hostZone, ValAddress, uint64(1))
+	err = s.App.StakeibcKeeper.QueryDelegationsIcq(s.Ctx, hostZone, validator, uint64(1))
 	s.Require().NoError(err, "no error expected")
 
 	// check a query was created (a simple test; details about queries are covered in makeRequest's test)
@@ -145,7 +154,9 @@ func (s *KeeperTestSuite) TestQueryDelegationsIcq_Successful() {
 	s.Require().Len(queries, 1, "querying twice with the same query should only create one query")
 
 	// querying with a different query should create a second query
-	differentValidator := "cosmosvaloper1pcag0cj4ttxg8l7pcg0q4ksuglswuuedadj7ne"
+	differentValidator := types.Validator{
+		Address: "cosmosvaloper1pcag0cj4ttxg8l7pcg0q4ksuglswuuedadj7ne",
+	}
 	err = s.App.StakeibcKeeper.QueryDelegationsIcq(s.Ctx, hostZone, differentValidator, uint64(1))
 	s.Require().NoError(err, "no error expected")
 
@@ -155,21 +166,21 @@ func (s *KeeperTestSuite) TestQueryDelegationsIcq_Successful() {
 }
 
 func (s *KeeperTestSuite) TestQueryDelegationsIcq_MissingDelegationAddress() {
-	hostZone := s.SetupQueryDelegationsIcq()
+	hostZone, validator := s.SetupQueryDelegationsIcq()
 
 	hostZone.DelegationIcaAddress = ""
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
 
-	err := s.App.StakeibcKeeper.QueryDelegationsIcq(s.Ctx, hostZone, ValAddress, uint64(1))
+	err := s.App.StakeibcKeeper.QueryDelegationsIcq(s.Ctx, hostZone, validator, uint64(1))
 	s.Require().ErrorContains(err, "no delegation address found for")
 }
 
 func (s *KeeperTestSuite) TestQueryDelegationsIcq_MissingConnectionId() {
-	hostZone := s.SetupQueryDelegationsIcq()
+	hostZone, validator := s.SetupQueryDelegationsIcq()
 
 	hostZone.ConnectionId = ""
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
 
-	err := s.App.StakeibcKeeper.QueryDelegationsIcq(s.Ctx, hostZone, ValAddress, uint64(1))
+	err := s.App.StakeibcKeeper.QueryDelegationsIcq(s.Ctx, hostZone, validator, uint64(1))
 	s.Require().ErrorContains(err, "connection-id cannot be empty")
 }

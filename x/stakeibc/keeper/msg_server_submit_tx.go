@@ -8,6 +8,7 @@ import (
 	errorsmod "cosmossdk.io/errors"
 	"github.com/cosmos/cosmos-sdk/types/bech32"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	"github.com/gogo/protobuf/proto" //nolint:staticcheck
 	"github.com/spf13/cast"
 
 	"github.com/Stride-Labs/stride/v9/utils"
@@ -395,14 +396,14 @@ func (k Keeper) QueryValidatorExchangeRate(ctx sdk.Context, msg *types.MsgUpdate
 
 // Submits an ICQ to get a validator's delegations
 // This is called after the validator's exchange rate is determined
-func (k Keeper) QueryDelegationsIcq(ctx sdk.Context, hostZone types.HostZone, valoper string, timeout uint64) error {
-	k.Logger(ctx).Info(utils.LogWithHostZone(hostZone.ChainId, "Submitting ICQ for delegations to %s", valoper))
+func (k Keeper) QueryDelegationsIcq(ctx sdk.Context, hostZone types.HostZone, validator types.Validator, timeout uint64) error {
+	k.Logger(ctx).Info(utils.LogWithHostZone(hostZone.ChainId, "Submitting ICQ for delegations to %s", validator.Address))
 
 	// Get the validator and delegator encoded addresses to form the query request
 	if hostZone.DelegationIcaAddress == "" {
 		return errorsmod.Wrapf(types.ErrICAAccountNotFound, "no delegation address found for %s", hostZone.ChainId)
 	}
-	_, validatorAddressBz, err := bech32.DecodeAndConvert(valoper)
+	_, validatorAddressBz, err := bech32.DecodeAndConvert(validator.Address)
 	if err != nil {
 		return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "invalid validator address, could not decode (%s)", err.Error())
 	}
@@ -412,6 +413,16 @@ func (k Keeper) QueryDelegationsIcq(ctx sdk.Context, hostZone types.HostZone, va
 	}
 	queryData := stakingtypes.GetDelegationKey(delegatorAddressBz, validatorAddressBz)
 
+	// Store the current validator's delegation in the callback data so we can determine if it changed
+	// while the query was in flight
+	callbackData := types.DelegatorSharesQueryCallback{
+		InitialValidatorDelegation: validator.BalancedDelegation,
+	}
+	callbackDataBz, err := proto.Marshal(&callbackData)
+	if err != nil {
+		return errorsmod.Wrapf(err, "unable to marshal delegator shares callback data")
+	}
+
 	// Submit delegator shares ICQ
 	query := icqtypes.Query{
 		ChainId:        hostZone.ChainId,
@@ -420,6 +431,7 @@ func (k Keeper) QueryDelegationsIcq(ctx sdk.Context, hostZone types.HostZone, va
 		RequestData:    queryData,
 		CallbackModule: types.ModuleName,
 		CallbackId:     ICQCallbackID_Delegation,
+		CallbackData:   callbackDataBz,
 		Timeout:        timeout,
 	}
 	if err := k.InterchainQueryKeeper.SubmitICQRequest(ctx, query, false); err != nil {

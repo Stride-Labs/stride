@@ -2,14 +2,13 @@ package keeper
 
 import (
 	"context"
-	"encoding/json"
 
 	errorsmod "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/bech32"
 
-	//nolint:staticcheck
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+	"github.com/gogo/protobuf/proto" //nolint:staticcheck
 
 	icqtypes "github.com/Stride-Labs/stride/v9/x/interchainquery/types"
 
@@ -98,7 +97,10 @@ func (k Keeper) SubmitValidatorSlashQuery(ctx sdk.Context, lsmLiquidStake types.
 	queryData := stakingtypes.GetValidatorKey(validatorAddressBz)
 
 	// Build and serialize the callback data required to complete the LSM Liquid stake upon query callback
-	callbackData, err := json.Marshal(lsmLiquidStake)
+	callbackData := types.ValidatorExchangeRateQueryCallback{
+		LsmLiquidStake: &lsmLiquidStake,
+	}
+	callbackDataBz, err := proto.Marshal(&callbackData)
 	if err != nil {
 		return errorsmod.Wrapf(err, "unable to serialize LSMLiquidStake struct for validator exchange rate query callback")
 	}
@@ -112,7 +114,7 @@ func (k Keeper) SubmitValidatorSlashQuery(ctx sdk.Context, lsmLiquidStake types.
 		RequestData:    queryData,
 		CallbackModule: types.ModuleName,
 		CallbackId:     ICQCallbackID_Validator,
-		CallbackData:   callbackData,
+		CallbackData:   callbackDataBz,
 		Timeout:        timeout,
 	}
 	if err := k.InterchainQueryKeeper.SubmitICQRequest(ctx, query, false); err != nil {

@@ -1,8 +1,9 @@
 package keeper_test
 
 import (
-	"encoding/json"
 	"fmt"
+
+	"github.com/gogo/protobuf/proto" //nolint:staticcheck
 
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -165,14 +166,15 @@ func (s *KeeperTestSuite) TestLSMLiquidStake_Successful_WithExchangeRateQuery() 
 		Status:           recordstypes.LSMTokenDeposit_DEPOSIT_PENDING,
 	}
 
-	var actualCallbackData types.LSMLiquidStake
-	err = json.Unmarshal(actualQuery.CallbackData, &actualCallbackData)
+	var actualCallbackData types.ValidatorExchangeRateQueryCallback
+	err = proto.Unmarshal(actualQuery.CallbackData, &actualCallbackData)
 	s.Require().NoError(err, "no error expected when unmarshalling query callback data")
 
-	s.Require().Equal(HostChainId, actualCallbackData.HostZone.ChainId, "callback data - host zone")
-	s.Require().Equal(ValAddress, actualCallbackData.Validator.Address, "callback data - validator")
+	lsmLiquidStake := actualCallbackData.LsmLiquidStake
+	s.Require().Equal(HostChainId, lsmLiquidStake.HostZone.ChainId, "callback data - host zone")
+	s.Require().Equal(ValAddress, lsmLiquidStake.Validator.Address, "callback data - validator")
 
-	s.Require().Equal(expectedLSMTokenDeposit, *actualCallbackData.Deposit, "callback data - deposit")
+	s.Require().Equal(expectedLSMTokenDeposit, *lsmLiquidStake.Deposit, "callback data - deposit")
 }
 
 func (s *KeeperTestSuite) TestLSMLiquidStake_DifferentRedemptionRates() {

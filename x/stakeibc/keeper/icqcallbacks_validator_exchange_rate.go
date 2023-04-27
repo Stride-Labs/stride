@@ -91,7 +91,7 @@ func ValidatorExchangeRateCallback(k Keeper, ctx sdk.Context, args []byte, query
 	// Armed with the exch rate, we can now query the (validator,delegator) delegation
 	// TODO [LSM]: Set flexibly depending on whether this is from LSM or manual
 	timeout := uint64(ctx.BlockTime().UnixNano() + (time.Hour).Nanoseconds()) // 1 hour
-	if err := k.QueryDelegationsIcq(ctx, hostZone, queriedValidator.OperatorAddress, timeout); err != nil {
+	if err := k.QueryDelegationsIcq(ctx, hostZone, validator, timeout); err != nil {
 		return errorsmod.Wrapf(types.ErrICQFailed, "Failed to query delegations, err: %s", err.Error())
 	}
 
