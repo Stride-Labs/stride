@@ -133,6 +133,12 @@ setup_file() {
   delegation_address=$(GET_ICA_ADDR $HOST_CHAIN_ID delegation)
   delegation_ica_balance_start=$($HOST_MAIN_CMD q bank balances $delegation_address --denom $HOST_DENOM | GETBAL)
 
+  # make sure we're not on the boundary of an epoch, otherwise the redemption rate could change mid-test
+  WAIT_UNTIL_MIDDLE_OF_EPOCH
+
+  # get redemption rate
+  redemption_rate=$(GET_REDEMPTION_RATE $HOST_CHAIN_ID)
+
   # liquid stake
   $STRIDE_MAIN_CMD tx stakeibc liquid-stake $STAKE_AMOUNT $HOST_DENOM --from $STRIDE_VAL -y 
 
@@ -144,18 +150,21 @@ setup_file() {
   token_balance_diff=$(($token_balance_start - $token_balance_end))
   assert_equal "$token_balance_diff" $STAKE_AMOUNT
 
-  # make sure stToken went up
+  # make sure stToken went up 
+  expected_sttoken_amount=$(echo "scale=0; $STAKE_AMOUNT / $redemption_rate" | bc -l)
   sttoken_balance_end=$($STRIDE_MAIN_CMD q bank balances $(STRIDE_ADDRESS) --denom st$HOST_DENOM | GETBAL)
   sttoken_balance_diff=$(($sttoken_balance_end-$sttoken_balance_start))
-  assert_equal "$sttoken_balance_diff" $STAKE_AMOUNT
+  assert_equal "$sttoken_balance_diff" "$expected_sttoken_amount"
 
-  # Wait for the transfer to complete
-  WAIT_FOR_BALANCE_CHANGE $CHAIN_NAME $delegation_address $HOST_DENOM 
+  # Wait for the transfer to complete 
+  # The transfer must be at least as large as the stake
+  WAIT_FOR_BALANCE_CHANGE $CHAIN_NAME $delegation_address $HOST_DENOM $STAKE_AMOUNT
 
-  # get the new delegation ICA balance
+  # Check that the delegation ICA balance went up by **at least** the stake amount
+  # It could have increased by more than the stake amount due to reinvestment
   delegation_ica_balance_end=$($HOST_MAIN_CMD q bank balances $delegation_address --denom $HOST_DENOM | GETBAL)
-  diff=$(($delegation_ica_balance_end - $delegation_ica_balance_start))
-  assert_equal "$diff" $STAKE_AMOUNT
+  delegation_balance_diff=$(($delegation_ica_balance_end - $delegation_ica_balance_start))
+  assert_equal "$(echo "$delegation_balance_diff - $STAKE_AMOUNT >= 0" | bc -l)" "1"
 }
 
 @test "[INTEGRATION-BASIC-$CHAIN_NAME] packet forwarding automatically liquid stakes" {
@@ -164,6 +173,12 @@ setup_file() {
 
   # get initial balances
   sttoken_balance_start=$($STRIDE_MAIN_CMD q bank balances $(STRIDE_ADDRESS) --denom st$HOST_DENOM | GETBAL)
+
+  # make sure we're not on the boundary of an epoch, otherwise the redemption rate could change mid-test
+  WAIT_UNTIL_MIDDLE_OF_EPOCH
+  
+  # get redemption rate
+  redemption_rate=$(GET_REDEMPTION_RATE $HOST_CHAIN_ID)
 
   # Send the IBC transfer with the JSON memo
   transfer_msg_prefix="$HOST_MAIN_CMD tx ibc-transfer transfer transfer $HOST_TRANSFER_CHANNEL"
@@ -181,10 +196,11 @@ setup_file() {
   # Wait for the transfer to complete
   WAIT_FOR_BALANCE_CHANGE STRIDE $(STRIDE_ADDRESS) st$HOST_DENOM
 
-  # make sure stATOM balance increased
+  # make sure stToken went up (relax precision in case the redemption rate changed)
+  expected_sttoken_amount=$(echo "$redemption_rate * $STAKE_AMOUNT / 1" | bc)
   sttoken_balance_end=$($STRIDE_MAIN_CMD q bank balances $(STRIDE_ADDRESS) --denom st$HOST_DENOM | GETBAL)
   sttoken_balance_diff=$(($sttoken_balance_end-$sttoken_balance_start))
-  assert_equal "$sttoken_balance_diff" "$PACKET_FORWARD_STAKE_AMOUNT"
+  assert_equal $(COMPARE_WITH_PRECISION $sttoken_balance_diff $expected_sttoken_amount) 
 }
 
 # check that tokens on the host are staked
@@ -221,11 +237,12 @@ setup_file() {
   # get balance before claim
   start_balance=$($HOST_MAIN_CMD q bank balances $HOST_RECEIVER_ADDRESS --denom $HOST_DENOM | GETBAL)
 
-  # grab the epoch number for the first deposit record in the list od DRs
-  EPOCH=$($STRIDE_MAIN_CMD q records list-user-redemption-record  | grep -Fiw 'epoch_number' | head -n 1 | grep -o -E '[0-9]+')
+  # grab the epoch number from the latest epoch unbonding record (determined by sorting by epoch number)
+  epoch=$($STRIDE_MAIN_CMD q records list-user-redemption-record \
+    | grep epoch_number | awk '{print $2}' | tr -cd '[:digit:]\n' | sort -n | tail -n 1 | grep -o -E '[0-9]+')
 
   # claim the record (send to stride address)
-  $STRIDE_MAIN_CMD tx stakeibc claim-undelegated-tokens $HOST_CHAIN_ID $EPOCH $(STRIDE_ADDRESS) \
+  $STRIDE_MAIN_CMD tx stakeibc claim-undelegated-tokens $HOST_CHAIN_ID $epoch $(STRIDE_ADDRESS) \
     --from $STRIDE_VAL --keyring-backend test --chain-id $STRIDE_CHAIN_ID -y
 
   WAIT_FOR_STRING $STRIDE_LOGS "\[CLAIM\] success on $HOST_CHAIN_ID"
@@ -241,22 +258,29 @@ setup_file() {
 
 # check that a second liquid staking call kicks off reinvestment
 @test "[INTEGRATION-BASIC-$CHAIN_NAME] rewards are being reinvested, exchange rate updating" {
+  # TODO: Store the redemption rate from a prior test
+  # store the initial redemption rate
+  redemption_rate_start=$(GET_REDEMPTION_RATE $HOST_CHAIN_ID)
+
+  # sleep 1 epoch
+  sleep "${STRIDE_EPOCH_EPOCH_DURATION%s}" # remove "s" from end of timestamp
+
   # check that the exchange rate has increased (i.e. redemption rate is greater than 1)
-  MULT=1000000
-  redemption_rate=$($STRIDE_MAIN_CMD q stakeibc show-host-zone $HOST_CHAIN_ID | grep -Fiw 'redemption_rate' | grep -Eo '[+-]?[0-9]+([.][0-9]+)?')
-  redemption_rate_increased=$(( $(FLOOR $(DECMUL $redemption_rate $MULT)) > $(FLOOR $(DECMUL 1.00000000000000000 $MULT))))
-  assert_equal "$redemption_rate_increased" "1"
+  redemption_rate_end=$(GET_REDEMPTION_RATE $HOST_CHAIN_ID)
+  assert_equal "$(echo "$redemption_rate_end > $redemption_rate_start" | bc -l)" "1"
 }
 
 # rewards have been collected and distributed to strd stakers
 @test "[INTEGRATION-BASIC-$CHAIN_NAME] rewards are being distributed to stakers" {
-  # collect the 2nd validator's outstanding rewards
+  # get initial sttoken balance of the 2nd validator
   val_address=$($STRIDE_MAIN_CMD keys show ${STRIDE_VAL_PREFIX}2 --keyring-backend test -a)
+  sttoken_balance_start=$($STRIDE_MAIN_CMD q bank balances $val_address --denom st$HOST_DENOM | GETBAL)
+
+  # collect the validator's outstanding rewards
   $STRIDE_MAIN_CMD tx distribution withdraw-all-rewards --from ${STRIDE_VAL_PREFIX}2 -y 
   WAIT_FOR_BLOCK $STRIDE_LOGS 2
 
   # confirm they've recieved stTokens
-  sttoken_balance=$($STRIDE_MAIN_CMD q bank balances $val_address --denom st$HOST_DENOM | GETBAL)
-  rewards_accumulated=$(($sttoken_balance > 0))
-  assert_equal "$rewards_accumulated" "1"
+  sttoken_balance_end=$($STRIDE_MAIN_CMD q bank balances $val_address --denom st$HOST_DENOM | GETBAL)
+  assert_equal "$(echo "$sttoken_balance_end > $sttoken_balance_start" | bc -l)" "1"
 }

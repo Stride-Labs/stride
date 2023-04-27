@@ -16,7 +16,7 @@ TX_LOGS=$DOCKERNET_HOME/logs/tx.log
 KEYS_LOGS=$DOCKERNET_HOME/logs/keys.log
 
 # List of hosts enabled
-HOST_CHAINS=(EVMOS) 
+HOST_CHAINS=() 
 
 # If no host zones are specified above:
 #  `start-docker` defaults to just GAIA if HOST_CHAINS is empty
@@ -100,8 +100,8 @@ IBC_STARS_DENOM=$IBC_STARS_CHANNEL_3_DENOM
 # CHAIN PARAMS
 BLOCK_TIME='1s'
 STRIDE_HOUR_EPOCH_DURATION="90s"
-STRIDE_DAY_EPOCH_DURATION="100s"
-STRIDE_EPOCH_EPOCH_DURATION="40s"
+STRIDE_DAY_EPOCH_DURATION="60s"
+STRIDE_EPOCH_EPOCH_DURATION="30s"
 STRIDE_MINT_EPOCH_DURATION="20s"
 HOST_DAY_EPOCH_DURATION="60s"
 HOST_HOUR_EPOCH_DURATION="60s"
@@ -318,24 +318,42 @@ WAIT_FOR_STRING() {
   ( tail -f -n0 $1 & ) | grep -q "$2"
 }
 
+# Sleep until the balance has changed
+# Optionally provide a minimum amount it must change by
 WAIT_FOR_BALANCE_CHANGE() {
   chain=$1
   address=$2
   denom=$3
+  minimum_change=${4:-1} # defaults to 1
 
   max_blocks=30
 
   main_cmd=$(GET_VAR_VALUE ${chain}_MAIN_CMD)
-  initial_balance=$($main_cmd q bank balances $address --denom $denom | grep amount)
+  initial_balance=$($main_cmd q bank balances $address --denom $denom | grep amount | tr -cd '[:digit:]')
   for i in $(seq $max_blocks); do
-    new_balance=$($main_cmd q bank balances $address --denom $denom | grep amount)
+    new_balance=$($main_cmd q bank balances $address --denom $denom | grep amount | tr -cd '[:digit:]')
+    balance_change=$(echo "$new_balance - $initial_balance" | bc)
 
-    if [[ "$new_balance" != "$initial_balance" ]]; then
+    if [[ "$(echo "$balance_change >= $minimum_change" | bc -l)" == "1" ]]; then
       break
     fi
 
     WAIT_FOR_BLOCK $STRIDE_LOGS 1
   done
+}
+
+# Helper function to sleep until we're away from the epoch boundary 
+# (to assure there are no unexpected state changes)
+WAIT_UNTIL_MIDDLE_OF_EPOCH() {
+  epoch_duration=${STRIDE_EPOCH_EPOCH_DURATION%s} # remove the "s" at the end 
+  seconds_remaining_in_epoch=$($STRIDE_MAIN_CMD q epochs seconds-remaining stride_epoch)
+
+  # Wait until we're in a window from 10 seconds after the epoch start, to 5 seconds before the epoch end
+  at_beginning_of_epoch=$(echo "$seconds_remaining_in_epoch > ($epoch_duration - 10)" | bc -l)
+  at_end_of_epoch=$(echo "$seconds_remaining_in_epoch < 5" | bc -l)
+  if [[ "$at_beginning_of_epoch" == "1" || "$at_end_of_epoch" == "1" ]]; then
+    sleep 15
+  fi
 }
 
 GET_VAL_ADDR() {
@@ -353,6 +371,24 @@ GET_ICA_ADDR() {
   $STRIDE_MAIN_CMD q stakeibc show-host-zone $chain_id | grep ${ica_type}_account -A 1 | grep address | awk '{print $2}'
 }
 
+GET_REDEMPTION_RATE() {
+  chain_id="$1"
+  $STRIDE_MAIN_CMD q stakeibc show-host-zone $chain_id | grep -Fiw 'redemption_rate' | grep -Eo '[+-]?[0-9]+([.][0-9]+)?'
+}
+
 TRIM_TX() {
   grep -E "code:|txhash:" | sed 's/^/  /'
+}
+
+# Used when comparing token amounts determined by a redemption rate
+# compares them with relaxed precision error in case the redemption rate changed 
+COMPARE_WITH_PRECISION() {
+  num1=$1
+  num2=$2
+  precision=${3:-5} # defaults to 5
+
+  delta=$(echo "$num1 - $num2" | bc)
+  delta_abs=$(echo "if ($delta < 0) -1*$delta else $delta" | bc -l)
+  result=$(echo "$delta_abs <= $precision" | bc -l)
+  echo $result
 }
