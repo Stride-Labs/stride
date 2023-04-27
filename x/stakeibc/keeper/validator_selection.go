@@ -96,9 +96,10 @@ func (k Keeper) GetRebalanceICAMessages(
 	numRebalance uint64,
 ) (msgs []sdk.Msg, rebalancings []*types.Rebalancing) {
 	// Sort the list of delegation changes by the size of the change
+	// Sort descending so the surplus validators appear first
 	lessFunc := func(i, j int) bool {
 		if !validatorDeltas[i].Delta.Equal(validatorDeltas[j].Delta) {
-			return validatorDeltas[i].Delta.LT(validatorDeltas[j].Delta)
+			return validatorDeltas[i].Delta.GT(validatorDeltas[j].Delta)
 		}
 		// use name as a tie breaker if deltas are equal
 		return validatorDeltas[i].ValidatorAddress < validatorDeltas[j].ValidatorAddress
@@ -109,11 +110,11 @@ func (k Keeper) GetRebalanceICAMessages(
 	// validator to the deficit one
 	// The list is sorted with the surplus validators (who should lose stake) at index 0
 	//   and the deficit validators (who should gain stake) at index N-1
-	// The surplus validator's have a negative delta and the deficit validators have a positive delta
+	// The surplus validator's have a positive delta and the deficit validators have a negative delta
 	surplusIndex := 0
 	deficitIndex := len(validatorDeltas) - 1
 	for i := uint64(1); i <= numRebalance; i++ {
-		// surplus validator is negative, deficit validator is positive
+		// surplus validator is positive, deficit validator is negative
 		deficitValidator := validatorDeltas[deficitIndex]
 		surplusValidator := validatorDeltas[surplusIndex]
 
@@ -129,24 +130,24 @@ func (k Keeper) GetRebalanceICAMessages(
 			redelegationAmount = surplusValidator.Delta.Abs()
 
 			// Update the deficit validator, and zero out the surplus validator
-			validatorDeltas[deficitIndex].Delta = deficitValidator.Delta.Sub(redelegationAmount)
+			validatorDeltas[deficitIndex].Delta = deficitValidator.Delta.Add(redelegationAmount)
 			validatorDeltas[surplusIndex].Delta = sdkmath.ZeroInt()
 			surplusIndex += 1
 
 		} else if surplusValidator.Delta.Abs().GT(deficitValidator.Delta.Abs()) {
 			// If one validator's deficit is less than the other validator's surplus,
 			// move only enough of the surplus to cover the shortage
-			redelegationAmount = deficitValidator.Delta
+			redelegationAmount = deficitValidator.Delta.Abs()
 
 			// Update the surplus validator, and zero out the deficit validator
-			validatorDeltas[surplusIndex].Delta = surplusValidator.Delta.Add(redelegationAmount)
+			validatorDeltas[surplusIndex].Delta = surplusValidator.Delta.Sub(redelegationAmount)
 			validatorDeltas[deficitIndex].Delta = sdkmath.ZeroInt()
 			deficitIndex -= 1
 
 		} else {
 			// if one validator's surplus is equal to the other validator's deficit,
 			// we'll transfer that amount and both validators will now be balanced
-			redelegationAmount = deficitValidator.Delta
+			redelegationAmount = deficitValidator.Delta.Abs()
 
 			validatorDeltas[surplusIndex].Delta = sdkmath.ZeroInt()
 			validatorDeltas[deficitIndex].Delta = sdkmath.ZeroInt()
@@ -177,8 +178,8 @@ func (k Keeper) GetRebalanceICAMessages(
 }
 
 // This function returns a list with the number of extra tokens that should be sent to each validator
-//   - Positive delta implies extra tokens need to be given
-//   - Negative delta implies tokens should be taken away
+//   - Positive delta implies the validator has a surplus (and should give lose stake)
+//   - Negative delta implies the validator has a deficit (and should gain stake)
 func (k Keeper) GetValidatorDelegationDifferences(ctx sdk.Context, hostZone types.HostZone) ([]RebalanceValidatorDelegationChange, error) {
 	// Get the target delegation amount for each validator
 	totalDelegatedAmt := k.GetTotalValidatorDelegations(hostZone)
@@ -192,7 +193,7 @@ func (k Keeper) GetValidatorDelegationDifferences(ctx sdk.Context, hostZone type
 	totalDelegationChange := sdkmath.ZeroInt()
 	for _, validator := range hostZone.Validators {
 		// Compare the target with either the current delegation
-		delegationChange := targetDelegation[validator.Address].Sub(validator.Delegation)
+		delegationChange := validator.Delegation.Sub(targetDelegation[validator.Address])
 
 		// Only include validators who's delegation should change
 		if !delegationChange.IsZero() {

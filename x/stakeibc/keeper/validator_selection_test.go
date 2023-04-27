@@ -69,18 +69,18 @@ func (s *KeeperTestSuite) TestGetRebalanceICAMessages_EvenNumberValidators() {
 	// Build up deltas for each validator, i.e. how much each validator needs to change by
 	validatorDeltas := []keeper.RebalanceValidatorDelegationChange{
 		// Overweight validators - they should lose some of their stake
-		{ValidatorAddress: "val1", Delta: sdkmath.NewInt(-21)}, // 15 to val10, 6 to val9
-		{ValidatorAddress: "val2", Delta: sdkmath.NewInt(-19)}, // 5 to val9, 11 to val8, 3 to val7
-		{ValidatorAddress: "val3", Delta: sdkmath.NewInt(-13)}, // 3 to val7, 5 to val6, 4 to val5, 1 to val4
+		{ValidatorAddress: "val1", Delta: sdkmath.NewInt(21)}, // 15 to val10, 6 to val9
+		{ValidatorAddress: "val2", Delta: sdkmath.NewInt(19)}, // 5 to val9, 11 to val8, 3 to val7
+		{ValidatorAddress: "val3", Delta: sdkmath.NewInt(13)}, // 3 to val7, 5 to val6, 4 to val5, 1 to val4
 
 		// Underweight validators - they should gain stake
-		{ValidatorAddress: "val4", Delta: sdkmath.NewInt(1)},   // 1 from val3
-		{ValidatorAddress: "val5", Delta: sdkmath.NewInt(4)},   // 4 from val3
-		{ValidatorAddress: "val6", Delta: sdkmath.NewInt(5)},   // 5 from val3
-		{ValidatorAddress: "val7", Delta: sdkmath.NewInt(6)},   // 3 from val2, 3 from val3
-		{ValidatorAddress: "val8", Delta: sdkmath.NewInt(11)},  // 11 from val2
-		{ValidatorAddress: "val9", Delta: sdkmath.NewInt(11)},  // 6 from val1, 5 from val2
-		{ValidatorAddress: "val10", Delta: sdkmath.NewInt(15)}, // 15 from val1
+		{ValidatorAddress: "val4", Delta: sdkmath.NewInt(-1)},   // 1 from val3
+		{ValidatorAddress: "val5", Delta: sdkmath.NewInt(-4)},   // 4 from val3
+		{ValidatorAddress: "val6", Delta: sdkmath.NewInt(-5)},   // 5 from val3
+		{ValidatorAddress: "val7", Delta: sdkmath.NewInt(-6)},   // 3 from val2, 3 from val3
+		{ValidatorAddress: "val8", Delta: sdkmath.NewInt(-11)},  // 11 from val2
+		{ValidatorAddress: "val9", Delta: sdkmath.NewInt(-11)},  // 6 from val1, 5 from val2
+		{ValidatorAddress: "val10", Delta: sdkmath.NewInt(-15)}, // 15 from val1
 	}
 
 	// Build up the expected messages, moving across the list above
@@ -105,19 +105,19 @@ func (s *KeeperTestSuite) TestGetRebalanceICAMessages_OddNumberValidators() {
 	// Build up deltas for each validator, i.e. how much each validator needs to change by
 	validatorDeltas := []keeper.RebalanceValidatorDelegationChange{
 		// Overweight validators - they should lose some of their stake
-		{ValidatorAddress: "val1", Delta: sdkmath.NewInt(-15)}, // 15 to val11
-		{ValidatorAddress: "val2", Delta: sdkmath.NewInt(-12)}, // 6 to val11, 6 to val10
-		{ValidatorAddress: "val3", Delta: sdkmath.NewInt(-9)},  // 9 to val10
-		{ValidatorAddress: "val4", Delta: sdkmath.NewInt(-7)},  // 5 to val9, 2 to val8
-		{ValidatorAddress: "val5", Delta: sdkmath.NewInt(-2)},  // 2 to val8
-		{ValidatorAddress: "val6", Delta: sdkmath.NewInt(-2)},  // 2 to val7
+		{ValidatorAddress: "val1", Delta: sdkmath.NewInt(15)}, // 15 to val11
+		{ValidatorAddress: "val2", Delta: sdkmath.NewInt(12)}, // 6 to val11, 6 to val10
+		{ValidatorAddress: "val3", Delta: sdkmath.NewInt(9)},  // 9 to val10
+		{ValidatorAddress: "val4", Delta: sdkmath.NewInt(7)},  // 5 to val9, 2 to val8
+		{ValidatorAddress: "val5", Delta: sdkmath.NewInt(2)},  // 2 to val8
+		{ValidatorAddress: "val6", Delta: sdkmath.NewInt(2)},  // 2 to val7
 
 		// Underweight validators - they should gain stake
-		{ValidatorAddress: "val7", Delta: sdkmath.NewInt(2)},   // 2 from val6
-		{ValidatorAddress: "val8", Delta: sdkmath.NewInt(4)},   // 2 from val4, 2 from val5
-		{ValidatorAddress: "val9", Delta: sdkmath.NewInt(5)},   // 5 from val4
-		{ValidatorAddress: "val10", Delta: sdkmath.NewInt(15)}, // 6 from val2, 9 from val3
-		{ValidatorAddress: "val11", Delta: sdkmath.NewInt(21)}, // 15 from val1, 6 from val2
+		{ValidatorAddress: "val7", Delta: sdkmath.NewInt(-2)},   // 2 from val6
+		{ValidatorAddress: "val8", Delta: sdkmath.NewInt(-4)},   // 2 from val4, 2 from val5
+		{ValidatorAddress: "val9", Delta: sdkmath.NewInt(-5)},   // 5 from val4
+		{ValidatorAddress: "val10", Delta: sdkmath.NewInt(-15)}, // 6 from val2, 9 from val3
+		{ValidatorAddress: "val11", Delta: sdkmath.NewInt(-21)}, // 15 from val1, 6 from val2
 	}
 
 	// Build up the expected messages, moving across the list above
@@ -154,12 +154,12 @@ func (s *KeeperTestSuite) TestGetValidatorDelegationDifferences() {
 	})
 	hostZone := types.HostZone{ChainId: HostChainId, Validators: validators}
 
-	// Expected delegation is determined by the total delegation * weight
-	// Delta = Expected - Current
+	// Target delegation is determined by the total delegation * weight
+	// Delta = Current - Target
 	expectedDeltas := []keeper.RebalanceValidatorDelegationChange{
-		// val1 is excluded because it's Expected Delegation is equal to the Current Delegation (20)
-		{ValidatorAddress: "val2", Delta: sdkmath.NewInt(40 - 140)}, // Expected Delegation: 40, Current Delegation: 140
-		{ValidatorAddress: "val3", Delta: sdkmath.NewInt(140 - 40)}, // Expected Delegation: 140, Current Delegation: 40
+		// val1 is excluded because it's Target Delegation is equal to the Current Delegation (20)
+		{ValidatorAddress: "val2", Delta: sdkmath.NewInt(140 - 40)}, // Current Delegation: 140, Target Delegation: 40
+		{ValidatorAddress: "val3", Delta: sdkmath.NewInt(40 - 140)}, // Current Delegation: 40,  Target Delegation: 140
 	}
 
 	// Check delegation changes
