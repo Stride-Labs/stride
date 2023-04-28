@@ -57,6 +57,12 @@ func (k Keeper) ValidateLSMLiquidStake(ctx sdk.Context, msg types.MsgLSMLiquidSt
 		return types.LSMLiquidStake{}, err
 	}
 
+	// If there's currently a slash query in progress for the validator, reject the tx
+	if validator.SlashQueryPending {
+		return types.LSMLiquidStake{}, errorsmod.Wrapf(types.ErrValidatorWasSlashed,
+			"validator %s for slashed, liquid stakes to this validator are temporarily unavailable", validator.Address)
+	}
+
 	// Confirm the staker has a sufficient balance to execute the liquid stake
 	liquidStakerAddress := sdk.MustAccAddressFromBech32(msg.Creator)
 	balance := k.bankKeeper.GetBalance(ctx, liquidStakerAddress, msg.LsmTokenIbcDenom).Amount

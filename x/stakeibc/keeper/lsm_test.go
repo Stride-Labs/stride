@@ -37,7 +37,9 @@ func (s *KeeperTestSuite) TestValidateLSMLiquidStake() {
 	hostZone := types.HostZone{
 		ChainId:           HostChainId,
 		TransferChannelId: ibctesting.FirstChannelID,
-		Validators:        []*types.Validator{{Address: ValAddress}},
+		Validators: []*types.Validator{
+			{Address: ValAddress, SlashQueryPending: false},
+		},
 	}
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
 
@@ -85,6 +87,12 @@ func (s *KeeperTestSuite) TestValidateLSMLiquidStake() {
 	// Try with with a different transfer channel - it should fail
 	invalidMsg = validMsg
 	invalidMsg.LsmTokenIbcDenom = transfertypes.ParseDenomTrace(fmt.Sprintf("%s/%s", invalidPath, LSMTokenBaseDenom)).IBCDenom()
+	_, err = s.App.StakeibcKeeper.ValidateLSMLiquidStake(s.Ctx, invalidMsg)
+	s.Require().ErrorContains(err, "transfer channel-id from LSM token (channel-100) does not match any registered host zone")
+
+	// Flag the validator as slashed - it should fail
+	hostZone.Validators[0].SlashQueryPending = true
+	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
 	_, err = s.App.StakeibcKeeper.ValidateLSMLiquidStake(s.Ctx, invalidMsg)
 	s.Require().ErrorContains(err, "transfer channel-id from LSM token (channel-100) does not match any registered host zone")
 
