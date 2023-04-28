@@ -75,6 +75,11 @@ func DelegatorSharesCallback(k Keeper, ctx sdk.Context, args []byte, query icqty
 		return nil
 	}
 
+	// Update the validator to say that the query is no longer in progress (which will unblock LSM liquid stakes)
+	validator.SlashQueryPending = false
+	hostZone.Validators[valIndex] = &validator
+	k.SetHostZone(ctx, hostZone)
+
 	// Calculate the number of tokens delegated (using the internal exchange rate)
 	// note: truncateInt per https://github.com/cosmos/cosmos-sdk/blob/cb31043d35bad90c4daa923bb109f38fd092feda/x/staking/types/validator.go#L431
 	delegatedTokens := queriedDelgation.Shares.Mul(validator.InternalShareToTokensRate).TruncateInt()

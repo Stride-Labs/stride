@@ -397,14 +397,18 @@ func (k Keeper) QueryValidatorExchangeRate(ctx sdk.Context, msg *types.MsgUpdate
 // Submits an ICQ to get a validator's delegations
 // This is called after the validator's exchange rate is determined
 // The timeoutDuration parameter represents the length of the timeout (not to be confused with an actual timestamp)
-func (k Keeper) QueryDelegationsIcq(ctx sdk.Context, hostZone types.HostZone, validator types.Validator, timeoutDuration time.Duration) error {
-	k.Logger(ctx).Info(utils.LogWithHostZone(hostZone.ChainId, "Submitting ICQ for delegations to %s", validator.Address))
+func (k Keeper) QueryDelegationsIcq(ctx sdk.Context, hostZone types.HostZone, validatorAddress string, timeoutDuration time.Duration) error {
+	k.Logger(ctx).Info(utils.LogWithHostZone(hostZone.ChainId, "Submitting ICQ for delegations to %s", validatorAddress))
 
 	// Get the validator and delegator encoded addresses to form the query request
 	if hostZone.DelegationIcaAddress == "" {
 		return errorsmod.Wrapf(types.ErrICAAccountNotFound, "no delegation address found for %s", hostZone.ChainId)
 	}
-	_, validatorAddressBz, err := bech32.DecodeAndConvert(validator.Address)
+	validator, valIndex, found := GetValidatorFromAddress(hostZone.Validators, validatorAddress)
+	if !found {
+		return errorsmod.Wrapf(types.ErrValidatorNotFound, "no registered validator for address (%s)", validatorAddress)
+	}
+	_, validatorAddressBz, err := bech32.DecodeAndConvert(validatorAddress)
 	if err != nil {
 		return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "invalid validator address, could not decode (%s)", err.Error())
 	}
@@ -424,6 +428,11 @@ func (k Keeper) QueryDelegationsIcq(ctx sdk.Context, hostZone types.HostZone, va
 	if err != nil {
 		return errorsmod.Wrapf(err, "unable to marshal delegator shares callback data")
 	}
+
+	// Update the validator to indicate that the slash query is in progress
+	validator.SlashQueryPending = true
+	hostZone.Validators[valIndex] = &validator
+	k.SetHostZone(ctx, hostZone)
 
 	// Submit delegator shares ICQ
 	timeout := uint64(ctx.BlockTime().UnixNano() + (timeoutDuration).Nanoseconds())

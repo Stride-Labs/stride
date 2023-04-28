@@ -148,7 +148,7 @@ func ValidatorExchangeRateCallback(k Keeper, ctx sdk.Context, args []byte, query
 
 	// Now that we're armed with the exchange rate, we can query for the delegator shares and calculated the
 	// current delegated tokens
-	if err := k.QueryDelegationsIcq(ctx, hostZone, validator, timeoutDuration); err != nil {
+	if err := k.QueryDelegationsIcq(ctx, hostZone, validator.Address, timeoutDuration); err != nil {
 		return errorsmod.Wrapf(types.ErrICQFailed, "Failed to query delegations, err: %s", err.Error())
 	}
 
