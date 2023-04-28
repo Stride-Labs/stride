@@ -14,7 +14,6 @@ import (
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
 	"github.com/Stride-Labs/stride/v9/utils"
-	epochtypes "github.com/Stride-Labs/stride/v9/x/epochs/types"
 	icqtypes "github.com/Stride-Labs/stride/v9/x/interchainquery/types"
 	"github.com/Stride-Labs/stride/v9/x/stakeibc/types"
 )
@@ -76,19 +75,9 @@ func DelegatorSharesCallback(k Keeper, ctx sdk.Context, args []byte, query icqty
 		return nil
 	}
 
-	// Get the validator's internal exchange rate, aborting if it hasn't been updated this epoch
-	strideEpochTracker, found := k.GetEpochTracker(ctx, epochtypes.STRIDE_EPOCH)
-	if !found {
-		return errorsmod.Wrapf(sdkerrors.ErrNotFound, "unable to get epoch tracker for epoch (%s)", epochtypes.STRIDE_EPOCH)
-	}
-	if validator.InternalExchangeRate.EpochNumber != strideEpochTracker.EpochNumber {
-		return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest,
-			"validator (%s) internal exchange rate has not been updated this epoch (epoch #%d)", validator.Address, strideEpochTracker.EpochNumber)
-	}
-
 	// Calculate the number of tokens delegated (using the internal exchange rate)
 	// note: truncateInt per https://github.com/cosmos/cosmos-sdk/blob/cb31043d35bad90c4daa923bb109f38fd092feda/x/staking/types/validator.go#L431
-	delegatedTokens := queriedDelgation.Shares.Mul(validator.InternalExchangeRate.InternalTokensToSharesRate).TruncateInt()
+	delegatedTokens := queriedDelgation.Shares.Mul(validator.InternalShareToTokensRate).TruncateInt()
 	k.Logger(ctx).Info(utils.LogICQCallbackWithHostZone(chainId, ICQCallbackID_Delegation,
 		"Previous Delegation: %v, Current Delegation: %v", validator.Delegation, delegatedTokens))
 

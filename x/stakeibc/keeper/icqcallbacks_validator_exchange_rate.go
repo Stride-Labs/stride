@@ -6,13 +6,11 @@ import (
 
 	errorsmod "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/gogo/protobuf/proto" //nolint:staticcheck
 
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
 	"github.com/Stride-Labs/stride/v9/utils"
-	epochtypes "github.com/Stride-Labs/stride/v9/x/epochs/types"
 	icqtypes "github.com/Stride-Labs/stride/v9/x/interchainquery/types"
 	recordstypes "github.com/Stride-Labs/stride/v9/x/records/types"
 	"github.com/Stride-Labs/stride/v9/x/stakeibc/types"
@@ -27,6 +25,7 @@ import (
 //     num_tokens = exchange_rate * num_shares
 //
 // This is the callback from query #1
+// We only issue query #2 if the validator exchange rate from #1 has changed (indicating a slash)
 func ValidatorExchangeRateCallback(k Keeper, ctx sdk.Context, args []byte, query icqtypes.Query) error {
 	k.Logger(ctx).Info(utils.LogICQCallbackWithHostZone(query.ChainId, ICQCallbackID_Validator,
 		"Starting validator exchange rate balance callback, QueryId: %vs, QueryType: %s, Connection: %s", query.Id, query.QueryType, query.ConnectionId))
@@ -52,14 +51,7 @@ func ValidatorExchangeRateCallback(k Keeper, ctx sdk.Context, args []byte, query
 	if !found {
 		return errorsmod.Wrapf(types.ErrValidatorNotFound, "no registered validator for address (%s)", queriedValidator.OperatorAddress)
 	}
-	previousExchangeRate := validator.InternalExchangeRate
-
-	// Get the stride epoch number
-	strideEpochTracker, found := k.GetEpochTracker(ctx, epochtypes.STRIDE_EPOCH)
-	if !found {
-		k.Logger(ctx).Error("failed to find stride epoch")
-		return errorsmod.Wrapf(sdkerrors.ErrNotFound, "no epoch number for epoch (%s)", epochtypes.STRIDE_EPOCH)
-	}
+	previousSharesToTokensRate := validator.InternalShareToTokensRate
 
 	// If the validator's delegation shares is 0, we'll get a division by zero error when trying to get the exchange rate
 	//  because `validator.TokensFromShares` uses delegation shares in the denominator
@@ -73,29 +65,24 @@ func ValidatorExchangeRateCallback(k Keeper, ctx sdk.Context, args []byte, query
 	//     exchange_rate = num_tokens / num_shares
 	//  We can use `validator.TokensFromShares`, plug in 1.0 for the number of shares,
 	//    and the returned number of tokens will be equal to the internal exchange rate
-	currTokensToSharesRate := queriedValidator.TokensFromShares(sdk.NewDec(1.0))
-	validator.InternalExchangeRate = &types.ValidatorExchangeRate{
-		InternalTokensToSharesRate: currTokensToSharesRate,
-		EpochNumber:                strideEpochTracker.EpochNumber,
-	}
+	currentSharesToTokensRate := queriedValidator.TokensFromShares(sdk.NewDec(1.0))
+	validator.InternalShareToTokensRate = currentSharesToTokensRate
 	hostZone.Validators[valIndex] = &validator
 	k.SetHostZone(ctx, hostZone)
 
 	// Check if the validator was slashed by comparing the exchange rate from the query
 	// with the preivously stored exchange rate
-	var prevTokensToSharesRate sdk.Dec
 	validatorWasSlashed := false
-	if previousExchangeRate == nil || previousExchangeRate.InternalTokensToSharesRate.IsNil() {
+	if previousSharesToTokensRate.IsNil() || previousSharesToTokensRate.IsZero() {
 		k.Logger(ctx).Info(utils.LogICQCallbackWithHostZone(chainId, ICQCallbackID_Validator,
 			"Previous Validator Exchange Rate Unknown"))
 
 	} else {
-		prevTokensToSharesRate = previousExchangeRate.InternalTokensToSharesRate
-		validatorWasSlashed = !prevTokensToSharesRate.Equal(currTokensToSharesRate)
+		validatorWasSlashed = !previousSharesToTokensRate.Equal(currentSharesToTokensRate)
 
 		k.Logger(ctx).Info(utils.LogICQCallbackWithHostZone(chainId, ICQCallbackID_Validator,
 			"Previous Validator Exchange Rate: %v, Current Validator Exchange Rate: %v",
-			prevTokensToSharesRate, currTokensToSharesRate))
+			previousSharesToTokensRate, currentSharesToTokensRate))
 	}
 
 	// Determine if we're in a callback for the LSMLiquidStake by checking if the callback data is non-empty
@@ -142,7 +129,7 @@ func ValidatorExchangeRateCallback(k Keeper, ctx sdk.Context, args []byte, query
 	if inLSMLiquidStakeCallback {
 		// The transaction is "rejected", by emitting an event
 		errorMessage := fmt.Sprintf("validator was slashed - previous exchange rate: %s, current exchange rate: %s",
-			prevTokensToSharesRate, currTokensToSharesRate)
+			previousSharesToTokensRate, currentSharesToTokensRate)
 
 		EmitFailedLSMLiquidStakeEvent(ctx, hostZone, lsmTokenDeposit, errorMessage)
 		k.Logger(ctx).Error(errorMessage)

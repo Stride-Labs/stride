@@ -13,7 +13,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/bech32"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
-	epochtypes "github.com/Stride-Labs/stride/v9/x/epochs/types"
 	icqtypes "github.com/Stride-Labs/stride/v9/x/interchainquery/types"
 	recordstypes "github.com/Stride-Labs/stride/v9/x/records/types"
 	"github.com/Stride-Labs/stride/v9/x/stakeibc/keeper"
@@ -56,7 +55,6 @@ func (s *KeeperTestSuite) SetupValidatorICQCallback(validatorSlashed, liquidStak
 	// These must be valid delegation account address, otherwise the bech decoding will fail
 	delegatorAddress := "cosmos1sy63lffevueudvvlvh2lf6s387xh9xq72n3fsy6n2gr5hm6u2szs2v0ujm"
 	depositAddress := types.NewHostZoneDepositAddress(HostChainId).String()
-	currentEpoch := uint64(2)
 
 	// In this example, the validator has 2000 shares, originally had 2000 tokens,
 	// and now has 1000 tokens (after being slashed)
@@ -66,12 +64,9 @@ func (s *KeeperTestSuite) SetupValidatorICQCallback(validatorSlashed, liquidStak
 
 	// The validator we'll query the exchange rate for
 	queriedValidator := types.Validator{
-		Name:    "val1",
-		Address: ValAddress,
-		InternalExchangeRate: &types.ValidatorExchangeRate{
-			InternalTokensToSharesRate: initialExchangeRate,
-			EpochNumber:                currentEpoch,
-		},
+		Name:                      "val1",
+		Address:                   ValAddress,
+		InternalShareToTokensRate: initialExchangeRate,
 	}
 
 	// Mocked state is required for (optional) delegator shares ICQ submission
@@ -89,13 +84,6 @@ func (s *KeeperTestSuite) SetupValidatorICQCallback(validatorSlashed, liquidStak
 		},
 	}
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
-
-	// Epoch number is required for the internal exchange rate
-	strideEpochTracker := types.EpochTracker{
-		EpochIdentifier: epochtypes.STRIDE_EPOCH,
-		EpochNumber:     currentEpoch,
-	}
-	s.App.StakeibcKeeper.SetEpochTracker(s.Ctx, strideEpochTracker)
 
 	// Mock out the query response (which will be a validator object)
 	// If we're testing that a slash occurred, cut the number tokens in half (to represent the slash)
@@ -161,7 +149,7 @@ func (s *KeeperTestSuite) SetupValidatorICQCallback(validatorSlashed, liquidStak
 func (s *KeeperTestSuite) checkValidatorExchangeRate(expectedExchangeRate sdk.Dec, tc ValidatorICQCallbackTestCase) {
 	hostZone, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx, HostChainId)
 	s.Require().True(found, "host zone found")
-	s.Require().Equal(expectedExchangeRate.String(), hostZone.Validators[0].InternalExchangeRate.InternalTokensToSharesRate.String(),
+	s.Require().Equal(expectedExchangeRate.String(), hostZone.Validators[0].InternalShareToTokensRate.String(),
 		"validator exchange rate should not have updated")
 }
 
@@ -259,7 +247,7 @@ func (s *KeeperTestSuite) TestValidatorExchangeRateCallback_Successful_NoSlash_N
 	s.Require().NoError(err, "validator exchange rate callback error")
 
 	// Confirm validator's exchange rate DID NOT update
-	expectedExchangeRate := tc.initialState.validator.InternalExchangeRate.InternalTokensToSharesRate
+	expectedExchangeRate := tc.initialState.validator.InternalShareToTokensRate
 	s.checkValidatorExchangeRate(expectedExchangeRate, tc)
 
 	// Confirm the delegator shares query WAS NOT submitted
@@ -301,7 +289,7 @@ func (s *KeeperTestSuite) TestValidatorExchangeRateCallback_Successful_NoSlash_L
 	s.Require().NoError(err, "validator exchange rate callback error")
 
 	// Confirm validator's exchange rate DID NOT update
-	expectedExchangeRate := tc.initialState.validator.InternalExchangeRate.InternalTokensToSharesRate
+	expectedExchangeRate := tc.initialState.validator.InternalShareToTokensRate
 	s.checkValidatorExchangeRate(expectedExchangeRate, tc)
 
 	// Confirm the delegator shares query WAS NOT submitted
@@ -338,11 +326,11 @@ func (s *KeeperTestSuite) TestValidatorExchangeRateCallback_Successful_NoPreviou
 	tc := s.SetupValidatorICQCallback(validatorSlashed, false)
 
 	// The exchange rate should update to the initial exchange rate from the test setup
-	expectedExchangeRate := tc.initialState.validator.InternalExchangeRate.InternalTokensToSharesRate
+	expectedExchangeRate := tc.initialState.validator.InternalShareToTokensRate
 
-	// Remove the exchange rate from the validator struct
+	// Set the exchange rate to zero
 	hostZone := tc.initialState.hostZone
-	hostZone.Validators[0].InternalExchangeRate = nil
+	hostZone.Validators[0].InternalShareToTokensRate = sdk.ZeroDec()
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
 
 	err := stakeibckeeper.ValidatorExchangeRateCallback(s.App.StakeibcKeeper, s.Ctx, tc.validArgs.callbackArgs, tc.validArgs.query)
@@ -373,7 +361,7 @@ func (s *KeeperTestSuite) TestValidatorExchangeRateCallback_NoSlash_LiqudStakeFa
 	s.Require().NoError(err, "validator exchange rate callback error")
 
 	// Confirm validator's exchange rate DID update
-	expectedExchangeRate := tc.initialState.validator.InternalExchangeRate.InternalTokensToSharesRate
+	expectedExchangeRate := tc.initialState.validator.InternalShareToTokensRate
 	s.checkValidatorExchangeRate(expectedExchangeRate, tc)
 
 	// Confirm delegator shares query WAS NOT submitted
