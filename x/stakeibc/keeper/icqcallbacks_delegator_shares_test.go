@@ -2,15 +2,20 @@ package keeper_test
 
 import (
 	"math"
+	"time"
 
 	sdkmath "cosmossdk.io/math"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+	ibctesting "github.com/cosmos/ibc-go/v5/testing"
+	"github.com/gogo/protobuf/proto" //nolint:staticcheck
 
 	epochtypes "github.com/Stride-Labs/stride/v9/x/epochs/types"
 	icqtypes "github.com/Stride-Labs/stride/v9/x/interchainquery/types"
+	"github.com/Stride-Labs/stride/v9/x/stakeibc/keeper"
 	stakeibckeeper "github.com/Stride-Labs/stride/v9/x/stakeibc/keeper"
+	"github.com/Stride-Labs/stride/v9/x/stakeibc/types"
 	stakeibctypes "github.com/Stride-Labs/stride/v9/x/stakeibc/types"
 )
 
@@ -34,6 +39,7 @@ type DelegatorSharesICQCallbackTestCase struct {
 	expectedSlashAmount      sdkmath.Int
 	expectedWeight           uint64
 	exchangeRate             sdk.Dec
+	retryTimeoutDuration     time.Duration
 }
 
 // Mocks the query response that's returned from an ICQ for the number of shares for a given validator/delegator pair
@@ -110,6 +116,14 @@ func (s *KeeperTestSuite) SetupDelegatorSharesICQCallback() DelegatorSharesICQCa
 
 	queryResponse := s.CreateDelegatorSharesQueryResponse(valAddress, numShares)
 
+	// Create callback data
+	timeoutDuration := time.Hour
+	callbackDataBz, err := proto.Marshal(&types.DelegatorSharesQueryCallback{
+		InitialValidatorDelegation: tokensBeforeSlash,
+		TimeoutDuration:            timeoutDuration,
+	})
+	s.Require().NoError(err, "no error expected when marshalling callback data")
+
 	return DelegatorSharesICQCallbackTestCase{
 		valIndexQueried: valIndexQueried,
 		initialState: DelegatorSharesICQCallbackState{
@@ -118,7 +132,12 @@ func (s *KeeperTestSuite) SetupDelegatorSharesICQCallback() DelegatorSharesICQCa
 		},
 		validArgs: DelegatorSharesICQCallbackArgs{
 			query: icqtypes.Query{
-				ChainId: HostChainId,
+				ChainId:        HostChainId,
+				ConnectionId:   ibctesting.FirstConnectionID,
+				QueryType:      icqtypes.STAKING_STORE_QUERY_WITH_PROOF,
+				CallbackData:   callbackDataBz,
+				CallbackId:     keeper.ICQCallbackID_Delegation,
+				CallbackModule: types.ModuleName,
 			},
 			callbackArgs: queryResponse,
 		},
@@ -128,6 +147,7 @@ func (s *KeeperTestSuite) SetupDelegatorSharesICQCallback() DelegatorSharesICQCa
 		expectedSlashAmount:      expectedSlashAmount,
 		expectedWeight:           expectedWeightAfterSlash,
 		exchangeRate:             internalExchangeRate,
+		retryTimeoutDuration:     timeoutDuration,
 	}
 }
 
@@ -147,6 +167,63 @@ func (s *KeeperTestSuite) TestDelegatorSharesCallback_Successful() {
 	validator := hostZone.Validators[tc.valIndexQueried]
 	s.Require().Equal(tc.expectedWeight, validator.Weight, "validator weight")
 	s.Require().Equal(tc.expectedDelegationAmount.Int64(), validator.Delegation.Int64(), "validator delegation amount")
+}
+
+func (s *KeeperTestSuite) TestDelegatorSharesCallback_Retry() {
+	tc := s.SetupDelegatorSharesICQCallback()
+
+	// Change the validator's delegation in the internal record keeping
+	// to make it look as if a delegation ICA landed while the query was in flight
+	hostZone := tc.initialState.hostZone
+	initialDelegation := hostZone.Validators[tc.valIndexQueried].Delegation.Add(sdk.NewInt(100))
+	hostZone.Validators[tc.valIndexQueried].Delegation = initialDelegation
+	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
+
+	// Callback
+	err := stakeibckeeper.DelegatorSharesCallback(s.App.StakeibcKeeper, s.Ctx, tc.validArgs.callbackArgs, tc.validArgs.query)
+	s.Require().NoError(err, "no error expected during delegator shares callback")
+
+	// Confirm the validator's delegation was not modified
+	hostZone, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx, tc.initialState.hostZone.ChainId)
+	s.Require().True(found, "host zone found")
+	s.Require().Equal(initialDelegation.Int64(), hostZone.Validators[tc.valIndexQueried].Delegation.Int64(), "validator delegation")
+
+	// Confirm the query was resubmitted
+	queries := s.App.InterchainqueryKeeper.AllQueries(s.Ctx)
+	s.Require().Len(queries, 1, "one query expected after re-submission")
+
+	actualQuery := queries[0]
+	expectedQuery := tc.validArgs.query
+
+	s.Require().Equal(HostChainId, actualQuery.ChainId, "query chain id")
+	s.Require().Equal(ibctesting.FirstConnectionID, actualQuery.ConnectionId, "query connection-id")
+	s.Require().Equal(icqtypes.STAKING_STORE_QUERY_WITH_PROOF, actualQuery.QueryType, "query type")
+
+	s.Require().Equal(expectedQuery.CallbackModule, actualQuery.CallbackModule, "query callback module")
+	s.Require().Equal(expectedQuery.CallbackId, actualQuery.CallbackId, "query callback id")
+	s.Require().Equal(expectedQuery.CallbackData, actualQuery.CallbackData, "query callback data")
+
+	expectedTimeout := s.Ctx.BlockTime().UnixNano() + (tc.retryTimeoutDuration.Nanoseconds())
+	s.Require().Equal(expectedTimeout, int64(actualQuery.Timeout), "query callback data")
+}
+
+func (s *KeeperTestSuite) TestDelegatorSharesCallback_RetryFailure() {
+	tc := s.SetupDelegatorSharesICQCallback()
+
+	// Change the validator's delegation in the internal record keeping
+	// to make it look as if a delegation ICA landed while the query was in flight
+	hostZone := tc.initialState.hostZone
+	initialDelegation := hostZone.Validators[tc.valIndexQueried].Delegation.Add(sdk.NewInt(100))
+	hostZone.Validators[tc.valIndexQueried].Delegation = initialDelegation
+	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
+
+	// Remove the query connection ID so the retry attempt fails
+	invalidQuery := tc.validArgs.query
+	invalidQuery.ConnectionId = ""
+
+	// Trigger the callback - this should attempt to retry the query
+	err := stakeibckeeper.DelegatorSharesCallback(s.App.StakeibcKeeper, s.Ctx, tc.validArgs.callbackArgs, invalidQuery)
+	s.Require().ErrorContains(err, "unable to resubmit delegator shares query: connection-id cannot be empty")
 }
 
 func (s *KeeperTestSuite) checkStateIfValidatorNotSlashed(tc DelegatorSharesICQCallbackTestCase) {
@@ -177,43 +254,7 @@ func (s *KeeperTestSuite) TestDelegatorSharesCallback_InvalidCallbackArgs() {
 	// Submit callback with invalid callback args (so that it can't unmarshal into a validator)
 	invalidArgs := []byte("random bytes")
 	err := stakeibckeeper.DelegatorSharesCallback(s.App.StakeibcKeeper, s.Ctx, invalidArgs, tc.validArgs.query)
-
-	expectedErrMsg := "unable to unmarshal query response into Delegation type, "
-	expectedErrMsg += "err: unexpected EOF: unable to marshal data structure"
-	s.Require().EqualError(err, expectedErrMsg)
-}
-
-func (s *KeeperTestSuite) TestDelegatorSharesCallback_BufferWindowError() {
-	tc := s.SetupDelegatorSharesICQCallback()
-
-	// update epoch tracker so that we're in the middle of an epoch
-	epochTracker := tc.initialState.strideEpochTracker
-	epochTracker.Duration = 0 // duration of 0 will make the epoch start time equal to the epoch end time
-
-	s.App.StakeibcKeeper.SetEpochTracker(s.Ctx, epochTracker)
-
-	err := stakeibckeeper.DelegatorSharesCallback(s.App.StakeibcKeeper, s.Ctx, tc.validArgs.callbackArgs, tc.validArgs.query)
-
-	s.Require().ErrorContains(err, "unable to determine if ICQ callback is inside buffer window")
-	s.Require().ErrorContains(err, "current block time")
-	s.Require().ErrorContains(err, "not within current epoch")
-}
-
-func (s *KeeperTestSuite) TestDelegatorSharesCallback_OutsideBufferWindow() {
-	tc := s.SetupDelegatorSharesICQCallback()
-
-	// update epoch tracker so that we're in the middle of an epoch
-	epochTracker := tc.initialState.strideEpochTracker
-	epochTracker.Duration = 10_000_000_000                                                         // 10 second epochs
-	epochTracker.NextEpochStartTime = uint64(s.Coordinator.CurrentTime.UnixNano() + 5_000_000_000) // epoch ends in 5 second
-
-	s.App.StakeibcKeeper.SetEpochTracker(s.Ctx, epochTracker)
-
-	// In this case, we should return success instead of error, but we should exit early before updating the validator's state
-	err := stakeibckeeper.DelegatorSharesCallback(s.App.StakeibcKeeper, s.Ctx, tc.validArgs.callbackArgs, tc.validArgs.query)
-	s.Require().ErrorContains(err, "callback is outside ICQ window")
-
-	s.checkStateIfValidatorNotSlashed(tc)
+	s.Require().ErrorContains(err, "unable to unmarshal delegator shares query response into Delegation type")
 }
 
 func (s *KeeperTestSuite) TestDelegatorSharesCallback_ValidatorNotFound() {
