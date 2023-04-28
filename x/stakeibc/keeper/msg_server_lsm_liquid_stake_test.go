@@ -25,6 +25,17 @@ type LSMLiquidStakeTestCase struct {
 	validMsg            *types.MsgLSMLiquidStake
 }
 
+// Helper function to add the port and channel onto the LSMTokenBaseDenom,
+// hash it, and then store the trace in the IBC store
+// Returns the ibc hash
+func (s *KeeperTestSuite) getLSMTokenIBCDenom() string {
+	sourcePrefix := transfertypes.GetDenomPrefix(transfertypes.PortID, ibctesting.FirstChannelID)
+	prefixedDenom := sourcePrefix + LSMTokenBaseDenom
+	lsmTokenDenomTrace := transfertypes.ParseDenomTrace(prefixedDenom)
+	s.App.TransferKeeper.SetDenomTrace(s.Ctx, lsmTokenDenomTrace)
+	return lsmTokenDenomTrace.IBCDenom()
+}
+
 func (s *KeeperTestSuite) SetupTestLSMLiquidStake() LSMLiquidStakeTestCase {
 	s.CreateTransferChannel(HostChainId)
 
@@ -34,11 +45,7 @@ func (s *KeeperTestSuite) SetupTestLSMLiquidStake() LSMLiquidStakeTestCase {
 	depositAddress := types.NewHostZoneDepositAddress(HostChainId)
 
 	// Need valid IBC denom here to test parsing
-	sourcePrefix := transfertypes.GetDenomPrefix(transfertypes.PortID, ibctesting.FirstChannelID)
-	prefixedDenom := sourcePrefix + LSMTokenBaseDenom
-	lsmTokenDenomTrace := transfertypes.ParseDenomTrace(prefixedDenom)
-	s.App.TransferKeeper.SetDenomTrace(s.Ctx, lsmTokenDenomTrace)
-	lsmTokenIBCDenom := lsmTokenDenomTrace.IBCDenom()
+	lsmTokenIBCDenom := s.getLSMTokenIBCDenom()
 
 	// Fund the user's account with the LSM token
 	s.FundAccount(userAddress, sdk.NewCoin(lsmTokenIBCDenom, initialBalance))

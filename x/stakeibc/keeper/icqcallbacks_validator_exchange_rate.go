@@ -42,7 +42,7 @@ func ValidatorExchangeRateCallback(k Keeper, ctx sdk.Context, args []byte, query
 	queriedValidator := stakingtypes.Validator{}
 	err := k.cdc.Unmarshal(args, &queriedValidator)
 	if err != nil {
-		return errorsmod.Wrapf(types.ErrMarshalFailure, "unable to unmarshal query response into Validator type, err: %s", err.Error())
+		return errorsmod.Wrapf(err, "unable to unmarshal query response into Validator type")
 	}
 	k.Logger(ctx).Info(utils.LogICQCallbackWithHostZone(chainId, ICQCallbackID_Validator, "Query response - Validator: %s, Jailed: %v, Tokens: %v, Shares: %v",
 		queriedValidator.OperatorAddress, queriedValidator.Jailed, queriedValidator.Tokens, queriedValidator.DelegatorShares))
@@ -91,7 +91,7 @@ func ValidatorExchangeRateCallback(k Keeper, ctx sdk.Context, args []byte, query
 
 	} else {
 		prevTokensToSharesRate = previousExchangeRate.InternalTokensToSharesRate
-		validatorWasSlashed = prevTokensToSharesRate.Equal(currTokensToSharesRate)
+		validatorWasSlashed = !prevTokensToSharesRate.Equal(currTokensToSharesRate)
 
 		k.Logger(ctx).Info(utils.LogICQCallbackWithHostZone(chainId, ICQCallbackID_Validator,
 			"Previous Validator Exchange Rate: %v, Current Validator Exchange Rate: %v",
@@ -101,6 +101,14 @@ func ValidatorExchangeRateCallback(k Keeper, ctx sdk.Context, args []byte, query
 	// Determine if we're in a callback for the LSMLiquidStake by checking if the callback data is non-empty
 	// If this query was triggered manually, the callback data will be empty
 	inLSMLiquidStakeCallback := len(query.CallbackData) != 0
+
+	// If the validator was not slashed, and we're NOT in the callback of an LSM Liquid stake,
+	// we can stop here - there's no need to query for the delegator shares
+	if !validatorWasSlashed && !inLSMLiquidStakeCallback {
+		k.Logger(ctx).Info(utils.LogICQCallbackWithHostZone(chainId, ICQCallbackID_Validator,
+			"Validator was not slashed"))
+		return nil
+	}
 
 	// If we are in an LSMLiquidStake callback, unmarshal the callback data
 	var lsmLiquidStake types.LSMLiquidStake
@@ -112,14 +120,6 @@ func ValidatorExchangeRateCallback(k Keeper, ctx sdk.Context, args []byte, query
 		}
 		lsmLiquidStake = *callbackData.LsmLiquidStake
 		lsmTokenDeposit = *lsmLiquidStake.Deposit
-	}
-
-	// If the validator was not slashed, and we're NOT in the callback of an LSM Liquid stake,
-	// we can stop here - there's no need to query for the delegator shares
-	if !validatorWasSlashed && !inLSMLiquidStakeCallback {
-		k.Logger(ctx).Info(utils.LogICQCallbackWithHostZone(chainId, ICQCallbackID_Validator,
-			"Validator was not slashed"))
-		return nil
 	}
 
 	// If the validator was not slashed, and we're in the callback of an LSM liquid stake,
