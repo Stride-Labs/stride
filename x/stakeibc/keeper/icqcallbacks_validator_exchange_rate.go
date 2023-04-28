@@ -52,7 +52,7 @@ func ValidatorExchangeRateCallback(k Keeper, ctx sdk.Context, args []byte, query
 	if !found {
 		return errorsmod.Wrapf(types.ErrValidatorNotFound, "no registered validator for address (%s)", queriedValidator.OperatorAddress)
 	}
-	prevTokensToSharesRate := validator.InternalExchangeRate.InternalTokensToSharesRate
+	previousExchangeRate := validator.InternalExchangeRate
 
 	// Get the stride epoch number
 	strideEpochTracker, found := k.GetEpochTracker(ctx, epochtypes.STRIDE_EPOCH)
@@ -81,12 +81,22 @@ func ValidatorExchangeRateCallback(k Keeper, ctx sdk.Context, args []byte, query
 	hostZone.Validators[valIndex] = &validator
 	k.SetHostZone(ctx, hostZone)
 
-	k.Logger(ctx).Info(utils.LogICQCallbackWithHostZone(chainId, ICQCallbackID_Validator,
-		"Previous Validator Exchange Rate: %v, Current Validator Exchange Rate: %v",
-		prevTokensToSharesRate, currTokensToSharesRate))
+	// Check if the validator was slashed by comparing the exchange rate from the query
+	// with the preivously stored exchange rate
+	var prevTokensToSharesRate sdk.Dec
+	validatorWasSlashed := false
+	if previousExchangeRate == nil || previousExchangeRate.InternalTokensToSharesRate.IsNil() {
+		k.Logger(ctx).Info(utils.LogICQCallbackWithHostZone(chainId, ICQCallbackID_Validator,
+			"Previous Validator Exchange Rate Unknown"))
 
-	// Check if the validator was slashed by comparing the exchange rates
-	validatorWasSlashed := !prevTokensToSharesRate.IsNil() && prevTokensToSharesRate.Equal(currTokensToSharesRate)
+	} else {
+		prevTokensToSharesRate = previousExchangeRate.InternalTokensToSharesRate
+		validatorWasSlashed = prevTokensToSharesRate.Equal(currTokensToSharesRate)
+
+		k.Logger(ctx).Info(utils.LogICQCallbackWithHostZone(chainId, ICQCallbackID_Validator,
+			"Previous Validator Exchange Rate: %v, Current Validator Exchange Rate: %v",
+			prevTokensToSharesRate, currTokensToSharesRate))
+	}
 
 	// Determine if we're in a callback for the LSMLiquidStake by checking if the callback data is non-empty
 	// If this query was triggered manually, the callback data will be empty
@@ -144,14 +154,14 @@ func ValidatorExchangeRateCallback(k Keeper, ctx sdk.Context, args []byte, query
 	//   use a relaxed timeout on this query
 	// If this is from an LSM Liquid Stake callback, use an aggressive timeout for the query since
 	//   this will block new users from LSM liquid staking
-	timeout := uint64(ctx.BlockTime().UnixNano() + (time.Hour).Nanoseconds())
+	timeoutDuration := time.Hour
 	if inLSMLiquidStakeCallback {
-		timeout = uint64(ctx.BlockTime().UnixNano() + (LSMSlashQueryTimeout).Nanoseconds())
+		timeoutDuration = LSMSlashQueryTimeout
 	}
 
 	// Now that we're armed with the exchange rate, we can query for the delegator shares and calculated the
 	// current delegated tokens
-	if err := k.QueryDelegationsIcq(ctx, hostZone, validator, timeout); err != nil {
+	if err := k.QueryDelegationsIcq(ctx, hostZone, validator, timeoutDuration); err != nil {
 		return errorsmod.Wrapf(types.ErrICQFailed, "Failed to query delegations, err: %s", err.Error())
 	}
 

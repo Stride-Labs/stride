@@ -396,7 +396,8 @@ func (k Keeper) QueryValidatorExchangeRate(ctx sdk.Context, msg *types.MsgUpdate
 
 // Submits an ICQ to get a validator's delegations
 // This is called after the validator's exchange rate is determined
-func (k Keeper) QueryDelegationsIcq(ctx sdk.Context, hostZone types.HostZone, validator types.Validator, timeout uint64) error {
+// The timeoutDuration parameter represents the length of the timeout (not to be confused with an actual timestamp)
+func (k Keeper) QueryDelegationsIcq(ctx sdk.Context, hostZone types.HostZone, validator types.Validator, timeoutDuration time.Duration) error {
 	k.Logger(ctx).Info(utils.LogWithHostZone(hostZone.ChainId, "Submitting ICQ for delegations to %s", validator.Address))
 
 	// Get the validator and delegator encoded addresses to form the query request
@@ -416,7 +417,8 @@ func (k Keeper) QueryDelegationsIcq(ctx sdk.Context, hostZone types.HostZone, va
 	// Store the current validator's delegation in the callback data so we can determine if it changed
 	// while the query was in flight
 	callbackData := types.DelegatorSharesQueryCallback{
-		InitialValidatorDelegation: validator.BalancedDelegation,
+		InitialValidatorDelegation: validator.Delegation,
+		TimeoutDuration:            timeoutDuration,
 	}
 	callbackDataBz, err := proto.Marshal(&callbackData)
 	if err != nil {
@@ -424,6 +426,7 @@ func (k Keeper) QueryDelegationsIcq(ctx sdk.Context, hostZone types.HostZone, va
 	}
 
 	// Submit delegator shares ICQ
+	timeout := uint64(ctx.BlockTime().UnixNano() + (timeoutDuration).Nanoseconds())
 	query := icqtypes.Query{
 		ChainId:        hostZone.ChainId,
 		ConnectionId:   hostZone.ConnectionId,

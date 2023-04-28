@@ -2,6 +2,7 @@ package keeper_test
 
 import (
 	"fmt"
+	"time"
 
 	sdkmath "cosmossdk.io/math"
 	ibctesting "github.com/cosmos/ibc-go/v5/testing"
@@ -122,7 +123,7 @@ func (s *KeeperTestSuite) SetupQueryDelegationsIcq() (types.HostZone, types.Vali
 		Bech32Prefix:         Bech32Prefix,
 		DelegationIcaAddress: delegationAddress,
 	}
-	validator := types.Validator{Address: ValAddress, BalancedDelegation: sdkmath.NewInt(100)}
+	validator := types.Validator{Address: ValAddress, Delegation: sdkmath.NewInt(100)}
 
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
 
@@ -132,7 +133,7 @@ func (s *KeeperTestSuite) SetupQueryDelegationsIcq() (types.HostZone, types.Vali
 func (s *KeeperTestSuite) TestQueryDelegationsIcq_Successful() {
 	hostZone, validator := s.SetupQueryDelegationsIcq()
 
-	err := s.App.StakeibcKeeper.QueryDelegationsIcq(s.Ctx, hostZone, validator, uint64(1))
+	err := s.App.StakeibcKeeper.QueryDelegationsIcq(s.Ctx, hostZone, validator, time.Duration(1))
 	s.Require().NoError(err, "no error expected")
 
 	// check a query was created (a simple test; details about queries are covered in makeRequest's test)
@@ -143,10 +144,10 @@ func (s *KeeperTestSuite) TestQueryDelegationsIcq_Successful() {
 	var callbackData types.DelegatorSharesQueryCallback
 	err = proto.Unmarshal(queries[0].CallbackData, &callbackData)
 	s.Require().NoError(err, "no error expected when unmarshalling callback data")
-	s.Require().Equal(validator.BalancedDelegation, callbackData.InitialValidatorDelegation, "query callback data delegation")
+	s.Require().Equal(validator.Delegation, callbackData.InitialValidatorDelegation, "query callback data delegation")
 
 	// querying twice with the same query should only create one query
-	err = s.App.StakeibcKeeper.QueryDelegationsIcq(s.Ctx, hostZone, validator, uint64(1))
+	err = s.App.StakeibcKeeper.QueryDelegationsIcq(s.Ctx, hostZone, validator, time.Duration(1))
 	s.Require().NoError(err, "no error expected")
 
 	// check a query was created (a simple test; details about queries are covered in makeRequest's test)
@@ -157,7 +158,7 @@ func (s *KeeperTestSuite) TestQueryDelegationsIcq_Successful() {
 	differentValidator := types.Validator{
 		Address: "cosmosvaloper1pcag0cj4ttxg8l7pcg0q4ksuglswuuedadj7ne",
 	}
-	err = s.App.StakeibcKeeper.QueryDelegationsIcq(s.Ctx, hostZone, differentValidator, uint64(1))
+	err = s.App.StakeibcKeeper.QueryDelegationsIcq(s.Ctx, hostZone, differentValidator, time.Duration(1))
 	s.Require().NoError(err, "no error expected")
 
 	// check a query was created (a simple test; details about queries are covered in makeRequest's test)
@@ -171,7 +172,7 @@ func (s *KeeperTestSuite) TestQueryDelegationsIcq_MissingDelegationAddress() {
 	hostZone.DelegationIcaAddress = ""
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
 
-	err := s.App.StakeibcKeeper.QueryDelegationsIcq(s.Ctx, hostZone, validator, uint64(1))
+	err := s.App.StakeibcKeeper.QueryDelegationsIcq(s.Ctx, hostZone, validator, time.Duration(1))
 	s.Require().ErrorContains(err, "no delegation address found for")
 }
 
@@ -181,6 +182,6 @@ func (s *KeeperTestSuite) TestQueryDelegationsIcq_MissingConnectionId() {
 	hostZone.ConnectionId = ""
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
 
-	err := s.App.StakeibcKeeper.QueryDelegationsIcq(s.Ctx, hostZone, validator, uint64(1))
+	err := s.App.StakeibcKeeper.QueryDelegationsIcq(s.Ctx, hostZone, validator, time.Duration(1))
 	s.Require().ErrorContains(err, "connection-id cannot be empty")
 }

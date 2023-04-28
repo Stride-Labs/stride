@@ -2,6 +2,7 @@ syntax = "proto3";
 package stride.stakeibc;
 
 import "gogoproto/gogo.proto";
+import "google/protobuf/duration.proto";
 import "cosmos/base/v1beta1/coin.proto";
 import "stride/records/records.proto";
 import "stride/stakeibc/host_zone.proto";
@@ -85,4 +86,8 @@ message DelegatorSharesQueryCallback {
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
     (gogoproto.nullable) = false
   ];
+  // Timeout as measured from the current block time
+  // (used to re-submit the query with the same timeout)
+  google.protobuf.Duration timeout_duration = 2
+      [ (gogoproto.nullable) = false, (gogoproto.stdduration) = true ];
 }

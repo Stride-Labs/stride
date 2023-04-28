@@ -1,11 +1,14 @@
 package keeper
 
 import (
+	"fmt"
+
 	sdkmath "cosmossdk.io/math"
 
 	errorsmod "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	"github.com/gogo/protobuf/proto" //nolint:staticcheck
 	"github.com/spf13/cast"
 
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
@@ -42,24 +45,35 @@ func DelegatorSharesCallback(k Keeper, ctx sdk.Context, args []byte, query icqty
 	queriedDelgation := stakingtypes.Delegation{}
 	err := k.cdc.Unmarshal(args, &queriedDelgation)
 	if err != nil {
-		return errorsmod.Wrapf(types.ErrMarshalFailure, "unable to unmarshal query response into Delegation type, err: %s", err.Error())
+		return errorsmod.Wrapf(err, "unable to unmarshal delegator shares query response into Delegation type")
 	}
 	k.Logger(ctx).Info(utils.LogICQCallbackWithHostZone(chainId, ICQCallbackID_Delegation, "Query response - Delegator: %s, Validator: %s, Shares: %v",
 		queriedDelgation.DelegatorAddress, queriedDelgation.ValidatorAddress, queriedDelgation.Shares))
 
-	// Ensure ICQ can be issued now, else fail the callback
-	withinBufferWindow, err := k.IsWithinBufferWindow(ctx)
-	if err != nil {
-		return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "unable to determine if ICQ callback is inside buffer window, err: %s", err.Error())
-	}
-	if !withinBufferWindow {
-		return errorsmod.Wrapf(types.ErrOutsideIcqWindow, "callback is outside ICQ window")
+	// Unmarshal the callback data containing the previous delegation to the validator (from the time the query was submitted)
+	var callbackData types.DelegatorSharesQueryCallback
+	if err := proto.Unmarshal(query.CallbackData, &callbackData); err != nil {
+		return errorsmod.Wrapf(err, "unable to unmarshal delegator shares callback data")
 	}
 
 	// Grab the validator object from the hostZone using the address returned from the query
 	validator, valIndex, found := GetValidatorFromAddress(hostZone.Validators, queriedDelgation.ValidatorAddress)
 	if !found {
 		return errorsmod.Wrapf(types.ErrValidatorNotFound, "no registered validator for address (%s)", queriedDelgation.ValidatorAddress)
+	}
+
+	// Confirm the delegation total in the internal record keeping has not changed while the query was inflight
+	// If it has changed, exit this callback (to prevent any accounting errors) and resubmit the query
+	if !validator.Delegation.Equal(callbackData.InitialValidatorDelegation) {
+		k.Logger(ctx).Error(fmt.Sprintf("Validator (%s) delegation changed while delegator shares query was in flight. Resubmitting query", chainId))
+
+		// Reset the query timeout and resubmit
+		query.Timeout = uint64(ctx.BlockTime().UnixNano() + (callbackData.TimeoutDuration).Nanoseconds())
+		if err := k.InterchainQueryKeeper.SubmitICQRequest(ctx, query, true); err != nil {
+			return errorsmod.Wrapf(err, "unable to resubmit delegator shares query")
+		}
+
+		return nil
 	}
 
 	// Get the validator's internal exchange rate, aborting if it hasn't been updated this epoch
