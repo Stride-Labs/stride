@@ -178,7 +178,7 @@ func (k Keeper) GetRebalanceICAMessages(
 }
 
 // This function returns a list with the number of extra tokens that should be sent to each validator
-//   - Positive delta implies the validator has a surplus (and should give lose stake)
+//   - Positive delta implies the validator has a surplus (and should lose stake)
 //   - Negative delta implies the validator has a deficit (and should gain stake)
 func (k Keeper) GetValidatorDelegationDifferences(ctx sdk.Context, hostZone types.HostZone) ([]RebalanceValidatorDelegationChange, error) {
 	// Get the target delegation amount for each validator
