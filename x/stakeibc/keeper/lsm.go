@@ -57,12 +57,6 @@ func (k Keeper) ValidateLSMLiquidStake(ctx sdk.Context, msg types.MsgLSMLiquidSt
 		return types.LSMLiquidStake{}, err
 	}
 
-	// If there's currently a slash query in progress for the validator, reject the tx
-	if validator.SlashQueryPending {
-		return types.LSMLiquidStake{}, errorsmod.Wrapf(types.ErrValidatorWasSlashed,
-			"validator %s for slashed, liquid stakes to this validator are temporarily unavailable", validator.Address)
-	}
-
 	// Confirm the staker has a sufficient balance to execute the liquid stake
 	liquidStakerAddress := sdk.MustAccAddressFromBech32(msg.Creator)
 	balance := k.bankKeeper.GetBalance(ctx, liquidStakerAddress, msg.LsmTokenIbcDenom).Amount
@@ -139,7 +133,7 @@ func (k Keeper) GetHostZoneFromLSMTokenPath(ctx sdk.Context, path string) (types
 }
 
 // Parses the LSM token's denom (of the form {validatorAddress}/{recordId}) and confirms that the validator
-// is in the Stride validator set
+// is in the Stride validator set and does not have an active slash query
 func (k Keeper) GetValidatorFromLSMTokenDenom(denom string, validators []*types.Validator) (types.Validator, error) {
 	// Denom is of the form {validatorAddress}/{recordId}
 	split := strings.Split(denom, "/")
@@ -149,9 +143,13 @@ func (k Keeper) GetValidatorFromLSMTokenDenom(denom string, validators []*types.
 	}
 	validatorAddress := split[0]
 
-	// Confirm validator is in Stride's validator set
+	// Confirm validator is in Stride's validator set and does not have an active slash query in flight
 	for _, validator := range validators {
 		if validator.Address == validatorAddress {
+			if validator.SlashQueryPending {
+				return types.Validator{}, errorsmod.Wrapf(types.ErrValidatorWasSlashed,
+					"validator %s was slashed, liquid stakes from this validator are temporarily unavailable", validator.Address)
+			}
 			return *validator, nil
 		}
 	}

@@ -179,7 +179,7 @@ func (s *KeeperTestSuite) TestGetHostZoneFromLSMTokenPath() {
 func (s *KeeperTestSuite) TestGetValidatorFromLSMTokenDenom() {
 	valAddress := "cosmosvaloperXXX"
 	denom := valAddress + "/42" // add record ID
-	validators := []*types.Validator{{Address: valAddress}}
+	validators := []*types.Validator{{Address: valAddress, SlashQueryPending: false}}
 
 	// Successful lookup
 	validator, err := s.App.StakeibcKeeper.GetValidatorFromLSMTokenDenom(denom, validators)
@@ -196,6 +196,11 @@ func (s *KeeperTestSuite) TestGetValidatorFromLSMTokenDenom() {
 	// Validator does not exist - should fail
 	_, err = s.App.StakeibcKeeper.GetValidatorFromLSMTokenDenom(denom, []*types.Validator{})
 	s.Require().ErrorContains(err, "validator (cosmosvaloperXXX) is not registered in the Stride validator set")
+
+	// Pass in a validator that has a slash query in flight - it should fail
+	validatorsWithPendingQuery := []*types.Validator{{Address: valAddress, SlashQueryPending: true}}
+	_, err = s.App.StakeibcKeeper.GetValidatorFromLSMTokenDenom(denom, validatorsWithPendingQuery)
+	s.Require().ErrorContains(err, "validator cosmosvaloperXXX was slashed")
 }
 
 func (s *KeeperTestSuite) TestShouldCheckIfValidatorWasSlashed() {
