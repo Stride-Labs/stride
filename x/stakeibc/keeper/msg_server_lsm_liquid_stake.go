@@ -50,7 +50,8 @@ func (k msgServer) LSMLiquidStake(goCtx context.Context, msg *types.MsgLSMLiquid
 		return &types.MsgLSMLiquidStakeResponse{TransactionComplete: false}, nil
 	}
 
-	if err := k.FinishLSMLiquidStake(ctx, lsmLiquidStake); err != nil {
+	async := false
+	if err := k.FinishLSMLiquidStake(ctx, lsmLiquidStake, async); err != nil {
 		return nil, err
 	}
 
@@ -138,20 +139,22 @@ func (k Keeper) SubmitValidatorSlashQuery(ctx sdk.Context, lsmLiquidStake types.
 // If the slash query interrupted the transaction, this function is called
 //   asynchronously after the query callback
 // If no slash query was needed, this is called synchronously after StartLSMLiquidStake
-func (k Keeper) FinishLSMLiquidStake(ctx sdk.Context, lsmLiquidStake types.LSMLiquidStake) error {
+func (k Keeper) FinishLSMLiquidStake(ctx sdk.Context, lsmLiquidStake types.LSMLiquidStake, async bool) error {
 	hostZone := lsmLiquidStake.HostZone
 	lsmTokenDeposit := *lsmLiquidStake.Deposit
 
-	// Validate the LSM liquid stake message parameters again, in the event that the transaction
-	// was interrupted by the slash query.
+	// If the transaction was interrupted by the slash query,
+	//  validate the LSM Liquid stake message parameters again
 	// The most significant check here is that the user still has sufficient balance for this LSM liquid stake
-	lsmLiquidStakeMsg := types.MsgLSMLiquidStake{
-		Creator:          lsmTokenDeposit.StakerAddress,
-		LsmTokenIbcDenom: lsmTokenDeposit.IbcDenom,
-		Amount:           lsmTokenDeposit.Amount,
-	}
-	if _, err := k.ValidateLSMLiquidStake(ctx, lsmLiquidStakeMsg); err != nil {
-		return err
+	if async {
+		lsmLiquidStakeMsg := types.MsgLSMLiquidStake{
+			Creator:          lsmTokenDeposit.StakerAddress,
+			LsmTokenIbcDenom: lsmTokenDeposit.IbcDenom,
+			Amount:           lsmTokenDeposit.Amount,
+		}
+		if _, err := k.ValidateLSMLiquidStake(ctx, lsmLiquidStakeMsg); err != nil {
+			return err
+		}
 	}
 
 	// Get the staker's address and the host zone's deposit account address (which will custody the tokens)
