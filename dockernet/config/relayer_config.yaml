@@ -111,6 +111,20 @@ chains:
       sign-mode: direct
       extra-codecs:
         - ethermint
+  umee:
+    type: cosmos
+    value:
+      key: rly8
+      chain-id: UMEE
+      rpc-addr: http://umee1:26657
+      account-prefix: umee
+      keyring-backend: test
+      gas-adjustment: 1.2
+      gas-prices: 0.01uumee
+      debug: false
+      timeout: 20s
+      output-format: json
+      sign-mode: direct
   # {new-host-zone}:
   #   type: cosmos
   #   value:
@@ -173,6 +187,14 @@ paths:
       chain-id: STRIDE
     dst:
       chain-id: evmos_9001-2
+    src-channel-filter:
+      rule: ""
+      channel-list: []
+  stride-umee:
+    src:
+      chain-id: STRIDE
+    dst:
+      chain-id: UMEE
     src-channel-filter:
       rule: ""
       channel-list: []

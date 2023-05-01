@@ -16,10 +16,15 @@ build_local_and_docker() {
    printf '%s' "Building $title Locally...  "
    cwd=$PWD
    cd $folder
-   GOBIN=$BUILDDIR go install -mod=readonly -trimpath ./... | grep -v -E "deprecated|keychain" | true
+   if [[ "$module" == "umee" ]]; then
+      make build
+      cp build/umeed $BUILDDIR/
+   else
+      GOBIN=$BUILDDIR go install -mod=readonly -trimpath ./... 2>&1 | grep -v -E "deprecated|keychain" | true
+   fi
+   
    local_build_succeeded=${PIPESTATUS[0]}
    cd $cwd
-   
 
    if [[ "$local_build_succeeded" == "0" ]]; then
       echo "Done" 
@@ -62,7 +67,7 @@ revert_admin_address() {
 
 
 # build docker images and local binaries
-while getopts sgojtehrn flag; do
+while getopts sgojtehrnu flag; do
    case "${flag}" in
       # For stride, we need to update the admin address to one that we have the seed phrase for
       s) replace_admin_address
@@ -78,6 +83,7 @@ while getopts sgojtehrn flag; do
       o) build_local_and_docker osmo deps/osmosis ;;
       t) build_local_and_docker stars deps/stargaze ;;
       e) build_local_and_docker evmos deps/evmos ;;
+      u) build_local_and_docker umee deps/umee ;;
       n) continue ;; # build_local_and_docker {new-host-zone} deps/{new-host-zone} ;;
       r) build_local_and_docker relayer deps/relayer ;;  
       h) echo "Building Hermes Docker... ";

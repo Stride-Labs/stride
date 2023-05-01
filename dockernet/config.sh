@@ -16,7 +16,7 @@ TX_LOGS=$DOCKERNET_HOME/logs/tx.log
 KEYS_LOGS=$DOCKERNET_HOME/logs/keys.log
 
 # List of hosts enabled
-HOST_CHAINS=(EVMOS) 
+HOST_CHAINS=(UMEE) 
 
 # If no host zones are specified above:
 #  `start-docker` defaults to just GAIA if HOST_CHAINS is empty
@@ -52,6 +52,8 @@ STSTARS_DENOM="stustars"
 EVMOS_DENOM="aevmos"
 STEVMOS_DENOM="staevmos"
 STWALK_DENOM="stuwalk"
+UMEE_DENOM="uumee"
+STUMEE_DENOM="stuumee"
 
 IBC_STRD_DENOM='ibc/FF6C2E86490C1C4FBBD24F55032831D2415B9D7882F85C3CC9C2401D79362BEA'  
 
@@ -84,6 +86,11 @@ IBC_HOST_CHANNEL_0_DENOM='ibc/82DBA832457B89E1A344DA51761D92305F7581B7EA6C18D850
 IBC_HOST_CHANNEL_1_DENOM='ibc/FB7E2520A1ED6890E1632904A4ACA1B3D2883388F8E2B88F2D6A54AA15E4B49E'
 IBC_HOST_CHANNEL_2_DENOM='ibc/D664DC1D38648FC4C697D9E9CF2D26369318DFE668B31F81809383A8A88CFCF4'
 IBC_HOST_CHANNEL_3_DENOM='ibc/FD7AA7EB2C1D5D97A8693CCD71FFE3F5AFF12DB6756066E11E69873DE91A33EA'
+
+IBC_UMEE_CHANNEL_0_DENOM='ibc/9F53D255F5320A4BE124FF20C29D46406E126CE8A09B00CA8D3CFF7905119728'
+IBC_UMEE_CHANNEL_1_DENOM='ibc/C0737D24596F82E8BD5471426ED00BDB5DA34FF13BE2DC0B23F7B35EA992B5CD'
+IBC_UMEE_CHANNEL_2_DENOM='ibc/B3B1B44387FEB81D79B49D2F215BBE3C345A173393822B38AE8BF301A24935ED'
+IBC_UMEE_CHANNEL_3_DENOM='ibc/4613C3AD572205E8EB0992EADEE9C65AF6A4CB7245BAAA62A664D9F89378C3A1'
 
 # COIN TYPES
 # Coin types can be found at https://github.com/satoshilabs/slips/blob/master/slip-0044.md
@@ -237,6 +244,19 @@ EVMOS_MAIN_CMD="$EVMOS_BINARY --home $DOCKERNET_HOME/state/${EVMOS_NODE_PREFIX}1
 EVMOS_RECEIVER_ADDRESS='evmos123z469cfejeusvk87ufrs5520wmdxmmlc7qzuw'
 EVMOS_MICRO_DENOM_UNITS="000000000000000000000000"
 
+# UMEE
+UMEE_CHAIN_ID=UMEE
+UMEE_NODE_PREFIX=umee
+UMEE_NUM_NODES=1
+UMEE_BINARY="$DOCKERNET_HOME/../build/umeed"
+UMEE_VAL_PREFIX=uval
+UMEE_ADDRESS_PREFIX=umee
+UMEE_REV_ACCT=urev1
+UMEE_DENOM=$UMEE_DENOM
+UMEE_RPC_PORT=26057
+UMEE_MAIN_CMD="$UMEE_BINARY --home $DOCKERNET_HOME/state/${UMEE_NODE_PREFIX}1"
+UMEE_RECEIVER_ADDRESS='umee1s84d29zk3k20xk9f0hvczkax90l9t94g72n6wm'
+
 # RELAYER
 RELAYER_CMD="$DOCKERNET_HOME/../build/relayer --home $STATE/relayer"
 RELAYER_GAIA_EXEC="$DOCKER_COMPOSE run --rm relayer-gaia"
@@ -245,6 +265,7 @@ RELAYER_OSMO_EXEC="$DOCKER_COMPOSE run --rm relayer-osmo"
 RELAYER_STARS_EXEC="$DOCKER_COMPOSE run --rm relayer-stars"
 RELAYER_EVMOS_EXEC="$DOCKER_COMPOSE run --rm relayer-evmos"
 RELAYER_HOST_EXEC="$DOCKER_COMPOSE run --rm relayer-host"
+RELAYER_UMEE_EXEC="$DOCKER_COMPOSE run --rm relayer-umee"
 
 RELAYER_STRIDE_ACCT=rly1
 RELAYER_GAIA_ACCT=rly2
@@ -253,7 +274,8 @@ RELAYER_OSMO_ACCT=rly4
 RELAYER_STARS_ACCT=rly5
 RELAYER_HOST_ACCT=rly6
 RELAYER_EVMOS_ACCT=rly7
-RELAYER_ACCTS=($RELAYER_GAIA_ACCT $RELAYER_JUNO_ACCT $RELAYER_OSMO_ACCT $RELAYER_STARS_ACCT $RELAYER_HOST_ACCT $RELAYER_EVMOS_ACCT)
+RELAYER_UMEE_ACCT=rly8
+RELAYER_ACCTS=($RELAYER_GAIA_ACCT $RELAYER_JUNO_ACCT $RELAYER_OSMO_ACCT $RELAYER_STARS_ACCT $RELAYER_HOST_ACCT $RELAYER_EVMOS_ACCT $RELAYER_UMEE_ACCT)
 
 RELAYER_EVMOS_MNEMONIC="science depart where tell bus ski laptop follow child bronze rebel recall brief plug razor ship degree labor human series today embody fury harvest"
 RELAYER_GAIA_MNEMONIC="fiction perfect rapid steel bundle giant blade grain eagle wing cannon fever must humble dance kitchen lazy episode museum faith off notable rate flavor"
@@ -261,6 +283,7 @@ RELAYER_JUNO_MNEMONIC="kiwi betray topple van vapor flag decorate cement crystal
 RELAYER_OSMO_MNEMONIC="unaware wine ramp february bring trust leaf beyond fever inside option dilemma save know captain endless salute radio humble chicken property culture foil taxi"
 RELAYER_STARS_MNEMONIC="deposit dawn erosion talent old broom flip recipe pill hammer animal hill nice ten target metal gas shoe visual nephew soda harbor child simple"
 RELAYER_HOST_MNEMONIC="renew umbrella teach spoon have razor knee sock divert inner nut between immense library inhale dog truly return run remain dune virus diamond clinic"
+RELAYER_UMEE_MNEMONIC="whip situate rule else issue pause just cruel change tiger curve latin accuse tumble sea host tree drop require interest board toward supply catch"
 RELAYER_MNEMONICS=(
   "$RELAYER_GAIA_MNEMONIC"
   "$RELAYER_JUNO_MNEMONIC"
@@ -268,6 +291,7 @@ RELAYER_MNEMONICS=(
   "$RELAYER_STARS_MNEMONIC"
   "$RELAYER_HOST_MNEMONIC"
   "$RELAYER_EVMOS_MNEMONIC"
+  "$RELAYER_UMEE_MNEMONIC"
 )
 
 STRIDE_ADDRESS() { 
@@ -290,7 +314,9 @@ STARS_ADDRESS() {
 EVMOS_ADDRESS() { 
   $EVMOS_MAIN_CMD keys show ${EVMOS_VAL_PREFIX}1 --keyring-backend test -a 
 }
-
+UMEE_ADDRESS() { 
+  $UMEE_MAIN_CMD keys show ${UMEE_VAL_PREFIX}1 --keyring-backend test -a 
+}
 HOST_ADDRESS() { 
   $HOST_MAIN_CMD keys show ${HOST_VAL_PREFIX}1 --keyring-backend test -a 
 }
