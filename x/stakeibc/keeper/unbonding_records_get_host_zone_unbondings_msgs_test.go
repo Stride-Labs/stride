@@ -199,7 +199,9 @@ func (s *KeeperTestSuite) TestGetHostZoneUnbondingMsgs_UnbondingTooMuch() {
 
 	// TODO: check epoch unbonding record ids here
 	_, _, _, _, err := s.App.StakeibcKeeper.GetHostZoneUnbondingMsgs(s.Ctx, tc.hostZone)
-	s.Require().EqualError(err, fmt.Sprintf("Could not unbond %v on Host Zone %s, unable to balance the unbond amount across validators: not found", tc.amtToUnbond.Mul(sdkmath.NewInt(int64(len(tc.epochUnbondingRecords)))), tc.hostZone.ChainId))
+	s.Require().EqualError(err,
+		fmt.Sprintf("Could not unbond %v on Host Zone %s, unable to balance the unbond amount across validators",
+			tc.amtToUnbond.Mul(sdkmath.NewInt(int64(len(tc.epochUnbondingRecords)))), tc.hostZone.ChainId))
 }
 
 func (s *KeeperTestSuite) TestGetTargetValAmtsForHostZone_Success() {
