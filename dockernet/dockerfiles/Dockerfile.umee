@@ -4,7 +4,7 @@ WORKDIR /opt
 
 RUN apk add --update ca-certificates build-base git
 
-ENV COMMIT_HASH=v4.3.0
+ENV COMMIT_HASH=release/v4.3-no-gb
 
 RUN git clone https://github.com/umee-network/umee.git \
     && cd umee \
