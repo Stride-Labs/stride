@@ -18,6 +18,7 @@ build_local_and_docker() {
    cd $folder
    if [[ "$module" == "umee" ]]; then
       make build
+      rm -f $BUILDDIR/umeed
       cp build/umeed $BUILDDIR/
    else
       GOBIN=$BUILDDIR go install -mod=readonly -trimpath ./... 2>&1 | grep -v -E "deprecated|keychain" | true

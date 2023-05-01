@@ -27,7 +27,7 @@
 	path = deps/evmos
 	url = https://github.com/evmos/evmos
 [submodule "deps/umee"]
-	# Commit: d50edeea01c34ac342b6d3f505e29836ccd3a381
+	# Commit: v4.3.0
 	path = deps/umee
 	url = https://github.com/umee-network/umee.git
 # bats
