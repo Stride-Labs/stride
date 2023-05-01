@@ -111,39 +111,39 @@ func (s *KeeperTestSuite) SetupInitiateAllHostZoneUnbondings() InitiateAllHostZo
 func (s *KeeperTestSuite) TestInitiateAllHostZoneUnbondings_Successful() {
 	// tests that we can successful initiate a host zone unbonding for ATOM and OSMO
 	s.SetupInitiateAllHostZoneUnbondings()
-	success, successful_unbondings, failed_unbondings := s.App.StakeibcKeeper.InitiateAllHostZoneUnbondings(s.Ctx, 12)
+	success, successfulUnbondings, failedUnbondings := s.App.StakeibcKeeper.InitiateAllHostZoneUnbondings(s.Ctx, 12)
 	s.Require().True(success, "initiating unbondings returns true")
-	s.Require().Len(successful_unbondings, 2, "initiating unbondings returns 2 successful unbondings")
-	s.Require().Len(failed_unbondings, 0, "initiating unbondings returns 0 failed unbondings")
+	s.Require().Len(successfulUnbondings, 2, "initiating unbondings returns 2 successful unbondings")
+	s.Require().Len(failedUnbondings, 0, "initiating unbondings returns 0 failed unbondings")
 }
 
 func (s *KeeperTestSuite) TestInitiateAllHostZoneUnbondings_GaiaSuccessful() {
 	// Tests that if we initiate unbondings a day where only Gaia is supposed to unbond, it succeeds and Osmo is ignored
 	s.SetupInitiateAllHostZoneUnbondings()
-	success, successful_unbondings, failed_unbondings := s.App.StakeibcKeeper.InitiateAllHostZoneUnbondings(s.Ctx, 9)
+	success, successfulUnbondings, failedUnbondings := s.App.StakeibcKeeper.InitiateAllHostZoneUnbondings(s.Ctx, 9)
 	s.Require().True(success, "initiating gaia unbondings returns true")
-	s.Require().Len(successful_unbondings, 1, "initiating gaia unbondings returns 1 successful unbondings")
-	s.Require().Len(failed_unbondings, 0, "initiating gaia unbondings returns 0 failed unbondings")
-	s.Require().Equal("GAIA", successful_unbondings[0], "initiating gaia unbondings returns gaia")
+	s.Require().Len(successfulUnbondings, 1, "initiating gaia unbondings returns 1 successful unbondings")
+	s.Require().Len(failedUnbondings, 0, "initiating gaia unbondings returns 0 failed unbondings")
+	s.Require().Equal("GAIA", successfulUnbondings[0], "initiating gaia unbondings returns gaia")
 }
 
 func (s *KeeperTestSuite) TestInitiateAllHostZoneUnbondings_OsmoSuccessful() {
 	// Tests that if we initiate unbondings a day where only Osmo is supposed to unbond, it succeeds and Gaia is ignored
 	s.SetupInitiateAllHostZoneUnbondings()
-	success, successful_unbondings, failed_unbondings := s.App.StakeibcKeeper.InitiateAllHostZoneUnbondings(s.Ctx, 8)
+	success, successfulUnbondings, failedUnbondings := s.App.StakeibcKeeper.InitiateAllHostZoneUnbondings(s.Ctx, 8)
 	s.Require().True(success, "initiating osmo unbondings returns true")
-	s.Require().Len(successful_unbondings, 1, "initiating osmo unbondings returns 1 successful unbondings")
-	s.Require().Len(failed_unbondings, 0, "initiating osmo unbondings returns 0 failed unbondings")
-	s.Require().Equal("OSMO", successful_unbondings[0], "initiating osmo unbondings returns gaia")
+	s.Require().Len(successfulUnbondings, 1, "initiating osmo unbondings returns 1 successful unbondings")
+	s.Require().Len(failedUnbondings, 0, "initiating osmo unbondings returns 0 failed unbondings")
+	s.Require().Equal("OSMO", successfulUnbondings[0], "initiating osmo unbondings returns gaia")
 }
 
 func (s *KeeperTestSuite) TestInitiateAllHostZoneUnbondings_NoneSuccessful() {
 	// Tests that if we initiate unbondings a day where none are supposed to unbond, it works successfully
 	s.SetupInitiateAllHostZoneUnbondings()
-	success, successful_unbondings, failed_unbondings := s.App.StakeibcKeeper.InitiateAllHostZoneUnbondings(s.Ctx, 10)
+	success, successfulUnbondings, failedUnbondings := s.App.StakeibcKeeper.InitiateAllHostZoneUnbondings(s.Ctx, 10)
 	s.Require().True(success, "initiating no unbondings returns true")
-	s.Require().Len(successful_unbondings, 0, "initiating no unbondings returns 0 successful unbondings")
-	s.Require().Len(failed_unbondings, 0, "initiating no unbondings returns 0 failed unbondings")
+	s.Require().Len(successfulUnbondings, 0, "initiating no unbondings returns 0 successful unbondings")
+	s.Require().Len(failedUnbondings, 0, "initiating no unbondings returns 0 failed unbondings")
 }
 
 func (s *KeeperTestSuite) TestInitiateAllHostZoneUnbondings_Failed() {
@@ -160,12 +160,12 @@ func (s *KeeperTestSuite) TestInitiateAllHostZoneUnbondings_Failed() {
 	}
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
 	hostZone, _ = s.App.StakeibcKeeper.GetHostZone(s.Ctx, HostChainId)
-	success, successful_unbondings, failed_unbondings := s.App.StakeibcKeeper.InitiateAllHostZoneUnbondings(s.Ctx, 12)
+	success, successfulUnbondings, failedUnbondings := s.App.StakeibcKeeper.InitiateAllHostZoneUnbondings(s.Ctx, 12)
 	s.Require().False(success, "initiating bad unbondings returns false")
-	s.Require().Len(successful_unbondings, 1, "initiating bad unbondings has 1 success")
-	s.Require().Len(failed_unbondings, 1, "initiating bad unbondings has 1 failure")
-	s.Require().Equal("OSMO", successful_unbondings[0], "initiating bad unbondings succeeds on osmo")
-	s.Require().Equal("GAIA", failed_unbondings[0], "initiating bad unbondings fails on gaia")
+	s.Require().Len(successfulUnbondings, 1, "initiating bad unbondings has 1 success")
+	s.Require().Len(failedUnbondings, 1, "initiating bad unbondings has 1 failure")
+	s.Require().Equal("OSMO", successfulUnbondings[0], "initiating bad unbondings succeeds on osmo")
+	s.Require().Equal("GAIA", failedUnbondings[0], "initiating bad unbondings fails on gaia")
 }
 
 func (s *KeeperTestSuite) TestGetTotalUnbondAmountAndRecordsIds() {
