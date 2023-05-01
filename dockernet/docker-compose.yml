@@ -176,7 +176,7 @@ services:
   umee1:
     image: stridezone:umee
     volumes:
-      - ./dockernet/state/umee1:/home/umee/.umeed
+      - ./dockernet/state/umee1:/home/umee/.umee
     ports:
       - "26057:26657"
       - "1257:1317"
@@ -185,22 +185,22 @@ services:
   umee2:
     image: stridezone:umee
     volumes:
-      - ./dockernet/state/umee2:/home/umee/.umeed
+      - ./dockernet/state/umee2:/home/umee/.umee
 
   umee3:
     image: stridezone:umee
     volumes:
-      - ./dockernet/state/umee3:/home/umee/.umeed
+      - ./dockernet/state/umee3:/home/umee/.umee
 
   umee4:
     image: stridezone:umee
     volumes:
-      - ./dockernet/state/umee4:/home/umee/.umeed
+      - ./dockernet/state/umee4:/home/umee/.umee
 
   umee5:
     image: stridezone:umee
     volumes:
-      - ./dockernet/state/umee5:/home/umee/.umeed
+      - ./dockernet/state/umee5:/home/umee/.umee
 
   relayer-umee:
     image: stridezone:relayer
