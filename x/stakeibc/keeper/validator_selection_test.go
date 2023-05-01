@@ -43,7 +43,7 @@ func (s *KeeperTestSuite) checkRebalanceICAMessages(
 	})
 
 	// Get the rebalancing messages
-	actualMsgs, actualRabalancings := s.App.StakeibcKeeper.GetRebalanceICAMessages(hostZone, validatorDeltas, uint64(len(validatorDeltas)))
+	actualMsgs, actualRabalancings := s.App.StakeibcKeeper.GetRebalanceICAMessages(hostZone, validatorDeltas)
 
 	// Confirm the rebalancing list used for the callback
 	s.Require().Len(actualRabalancings, len(expectedRebalancings), "length of rebalancings")
