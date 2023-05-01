@@ -26,7 +26,7 @@ type ClearBalanceTestCase struct {
 func (s *KeeperTestSuite) SetupClearBalance() ClearBalanceTestCase {
 	// fee account
 	feeAccountOwner := fmt.Sprintf("%s.%s", HostChainId, "FEE")
-	feeChannelID := s.CreateICAChannel(feeAccountOwner)
+	feeChannelID, _ := s.CreateICAChannel(feeAccountOwner)
 	feeAddress := s.IcaAddresses[feeAccountOwner]
 	// hz
 	depositAddress := types.NewHostZoneDepositAddress(HostChainId)

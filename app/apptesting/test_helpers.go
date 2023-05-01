@@ -169,7 +169,7 @@ func (s *AppTestHelper) CreateTransferChannel(hostChainID string) {
 
 // Creates an ICA channel through ibctesting
 // Also creates a transfer channel is if hasn't been done yet
-func (s *AppTestHelper) CreateICAChannel(owner string) string {
+func (s *AppTestHelper) CreateICAChannel(owner string) (channelID, portID string) {
 	// If we have yet to create a client/connection (through creating a transfer channel), do that here
 	_, transferChannelExists := s.App.IBCKeeper.ChannelKeeper.GetChannel(s.Ctx, ibctesting.TransferPort, ibctesting.FirstChannelID)
 	if !transferChannelExists {
@@ -199,8 +199,8 @@ func (s *AppTestHelper) CreateICAChannel(owner string) string {
 	s.Ctx = s.StrideChain.GetContext()
 
 	// Confirm the ICA channel was created properly
-	portID := icaPath.EndpointA.ChannelConfig.PortID
-	channelID := icaPath.EndpointA.ChannelID
+	portID = icaPath.EndpointA.ChannelConfig.PortID
+	channelID = icaPath.EndpointA.ChannelID
 	_, found := s.App.IBCKeeper.ChannelKeeper.GetChannel(s.Ctx, portID, channelID)
 	s.Require().True(found, "Channel not found after creation, PortID: %s, ChannelID: %s", portID, channelID)
 
@@ -212,7 +212,7 @@ func (s *AppTestHelper) CreateICAChannel(owner string) string {
 	// Finally set the active channel
 	s.App.ICAControllerKeeper.SetActiveChannelID(s.Ctx, ibctesting.FirstConnectionID, portID, channelID)
 
-	return channelID
+	return channelID, portID
 }
 
 // Register's a new ICA account on the next channel available

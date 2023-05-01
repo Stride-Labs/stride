@@ -23,7 +23,7 @@ type RebalanceValidatorsTestCase struct {
 func (s *KeeperTestSuite) SetupRebalanceValidators() RebalanceValidatorsTestCase {
 	// Setup IBC
 	delegationIcaOwner := "GAIA.DELEGATION"
-	delegationChannelId := s.CreateICAChannel(delegationIcaOwner)
+	delegationChannelId, _ := s.CreateICAChannel(delegationIcaOwner)
 	delegationAddr := s.IcaAddresses[delegationIcaOwner]
 
 	// setup epochs
