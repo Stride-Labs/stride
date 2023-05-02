@@ -122,6 +122,9 @@ func ValidatorExchangeRateCallback(k Keeper, ctx sdk.Context, args []byte, query
 			errorMessage := fmt.Sprintf("lsm liquid stake callback failed after slash query: %s", err.Error())
 			EmitFailedLSMLiquidStakeEvent(ctx, hostZone, lsmTokenDeposit, errorMessage)
 			k.Logger(ctx).Error(errorMessage)
+
+			// Remove the LSMTokenDeposit
+			k.RecordsKeeper.RemoveLSMTokenDeposit(ctx, lsmLiquidStake.Deposit.ChainId, lsmLiquidStake.Deposit.Denom)
 		}
 		return nil
 	}
