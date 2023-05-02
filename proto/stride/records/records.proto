@@ -1,6 +1,7 @@
 syntax = "proto3";
 package stride.records;
 
+import "cosmos/base/v1beta1/coin.proto";
 import "gogoproto/gogo.proto";
 
 option go_package = "github.com/Stride-Labs/stride/v9/x/records/types";
@@ -93,10 +94,12 @@ message LSMTokenDeposit {
   string chain_id = 1;
   string denom = 2;
   string ibc_denom = 3;
-  string validator_address = 4;
-  string amount = 5 [
+  string staker_address = 4;
+  string validator_address = 5;
+  string amount = 6 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
     (gogoproto.nullable) = false
   ];
-  Status status = 6;
+  cosmos.base.v1beta1.Coin st_token = 7 [ (gogoproto.nullable) = false ];
+  Status status = 8;
 }

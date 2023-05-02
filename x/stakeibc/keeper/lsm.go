@@ -9,6 +9,7 @@ import (
 	errorsmod "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	icatypes "github.com/cosmos/ibc-go/v5/modules/apps/27-interchain-accounts/types"
 	transfertypes "github.com/cosmos/ibc-go/v5/modules/apps/transfer/types"
 	channeltypes "github.com/cosmos/ibc-go/v5/modules/core/04-channel/types"
@@ -30,6 +31,59 @@ var (
 	// Time for the detokenization ICA
 	DetokenizationTimeout = time.Hour * 24 // 1 day
 )
+
+// Validates the parameters supplied with this LSMLiquidStake, including that the denom
+//   corresponds with a valid LSM Token and that the user has sufficient balance
+// This is called once at the beginning of the liquid stake, and is, potentially, called
+//   again at the end (if the transaction was asynchronous due to an intermediate slash query)
+// This function returns the associated host zone and validator along with the initial deposit record
+func (k Keeper) ValidateLSMLiquidStake(ctx sdk.Context, msg types.MsgLSMLiquidStake) (types.LSMLiquidStake, error) {
+	// Get the denom trace from the IBC hash - this includes the full path and base denom
+	// Ex: LSMTokenIbcDenom of `ibc/XXX` might create a DenomTrace with:
+	//     BaseDenom: cosmosvaloperXXX/42, Path: transfer/channel-0
+	denomTrace, err := k.GetLSMTokenDenomTrace(ctx, msg.LsmTokenIbcDenom)
+	if err != nil {
+		return types.LSMLiquidStake{}, err
+	}
+
+	// Get the host zone and validator address from the path and base denom respectively
+	lsmTokenBaseDenom := denomTrace.BaseDenom
+	hostZone, err := k.GetHostZoneFromLSMTokenPath(ctx, denomTrace.Path)
+	if err != nil {
+		return types.LSMLiquidStake{}, err
+	}
+	validator, err := k.GetValidatorFromLSMTokenDenom(lsmTokenBaseDenom, hostZone.Validators)
+	if err != nil {
+		return types.LSMLiquidStake{}, err
+	}
+
+	// Confirm the staker has a sufficient balance to execute the liquid stake
+	liquidStakerAddress := sdk.MustAccAddressFromBech32(msg.Creator)
+	balance := k.bankKeeper.GetBalance(ctx, liquidStakerAddress, msg.LsmTokenIbcDenom).Amount
+	if balance.LT(msg.Amount) {
+		return types.LSMLiquidStake{}, errorsmod.Wrapf(sdkerrors.ErrInsufficientFunds,
+			"balance is lower than staking amount. staking amount: %v, balance: %v", msg.Amount, balance)
+	}
+
+	// Build the LSMTokenDeposit record
+	// The stToken will be added outside of this function
+	lsmTokenDeposit := recordstypes.LSMTokenDeposit{
+		ChainId:          hostZone.ChainId,
+		Denom:            lsmTokenBaseDenom,
+		IbcDenom:         msg.LsmTokenIbcDenom,
+		StakerAddress:    msg.Creator,
+		ValidatorAddress: validator.Address,
+		Amount:           msg.Amount,
+		Status:           recordstypes.LSMTokenDeposit_DEPOSIT_PENDING,
+	}
+
+	// Return the wrapped deposit object with additional context (host zone and validator)
+	return types.LSMLiquidStake{
+		Deposit:   lsmTokenDeposit,
+		HostZone:  hostZone,
+		Validator: validator,
+	}, nil
+}
 
 // Parse the LSM Token's IBC denom hash into a DenomTrace object that contains the path and base denom
 func (k Keeper) GetLSMTokenDenomTrace(ctx sdk.Context, denom string) (transfertypes.DenomTrace, error) {
@@ -120,25 +174,6 @@ func (k Keeper) ShouldCheckIfValidatorWasSlashed(ctx sdk.Context, validator type
 	// Ex: Query Interval: 1000, Old Progress: 900, New Progress: 1100
 	//     => OldProgress/Interval: 0, NewProgress/Interval: 1
 	return oldProgress.Quo(queryInterval).LT(newProgress.Quo(queryInterval))
-}
-
-// Helper function to Refund an LSM Token to the user if both:
-//  a) the LSMLiquidStake transaction is interrupted with a validator exchange rate query, and
-//  b) the handling of the query callback fails
-func (k Keeper) RefundLSMToken(ctx sdk.Context, lsmLiquidStake types.LSMLiquidStake) error {
-	liquidStakerAddress := lsmLiquidStake.Staker
-	hostZoneAddress, err := sdk.AccAddressFromBech32(lsmLiquidStake.HostZone.DepositAddress)
-	if err != nil {
-		return errorsmod.Wrapf(err, "host zone address is invalid")
-	}
-	refundToken := lsmLiquidStake.LSMIBCToken
-
-	if err := k.bankKeeper.SendCoins(ctx, hostZoneAddress, liquidStakerAddress, sdk.NewCoins(refundToken)); err != nil {
-		return errorsmod.Wrapf(err,
-			"failed to send tokens from Module Account (%s) to Staker (%s)", hostZoneAddress.String(), liquidStakerAddress.String())
-	}
-
-	return nil
 }
 
 // Submits an ICA to "Redeem" an LSM Token - meaning converting the token into native stake

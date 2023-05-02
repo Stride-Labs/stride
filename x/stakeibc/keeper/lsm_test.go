@@ -16,6 +16,85 @@ import (
 	"github.com/gogo/protobuf/proto" //nolint:staticcheck
 )
 
+func (s *KeeperTestSuite) TestValidateLSMLiquidStake() {
+	// Create and store a valid denom trace so we can succesfully parse the LSM Token
+	path := "transfer/channel-0"
+	ibcDenom := transfertypes.ParseDenomTrace(fmt.Sprintf("%s/%s", path, LSMTokenBaseDenom)).IBCDenom()
+	expectedDenomTrace := transfertypes.DenomTrace{
+		BaseDenom: LSMTokenBaseDenom,
+		Path:      path,
+	}
+	s.App.TransferKeeper.SetDenomTrace(s.Ctx, expectedDenomTrace)
+
+	// Store a second valid denom trace that will not be registered with the host zone
+	invalidPath := "transfer/channel-100"
+	s.App.TransferKeeper.SetDenomTrace(s.Ctx, transfertypes.DenomTrace{
+		BaseDenom: LSMTokenBaseDenom,
+		Path:      invalidPath,
+	})
+
+	// Store the corresponding validator in the host zone
+	hostZone := types.HostZone{
+		ChainId:           HostChainId,
+		TransferChannelId: ibctesting.FirstChannelID,
+		Validators:        []*types.Validator{{Address: ValAddress}},
+	}
+	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
+
+	// Fund the user so they have sufficient balance
+	liquidStaker := s.TestAccs[0]
+	stakeAmount := sdk.NewInt(1_000_000)
+	s.FundAccount(liquidStaker, sdk.NewCoin(ibcDenom, stakeAmount))
+
+	// Prepare a valid message and the expected associated response
+	validMsg := types.MsgLSMLiquidStake{
+		Creator:          liquidStaker.String(),
+		Amount:           stakeAmount,
+		LsmTokenIbcDenom: ibcDenom,
+	}
+	expectedLSMTokenDeposit := recordstypes.LSMTokenDeposit{
+		ChainId:          HostChainId,
+		Denom:            LSMTokenBaseDenom,
+		IbcDenom:         ibcDenom,
+		StakerAddress:    liquidStaker.String(),
+		ValidatorAddress: ValAddress,
+		Amount:           stakeAmount,
+		Status:           recordstypes.LSMTokenDeposit_DEPOSIT_PENDING,
+	}
+
+	// Confirm response matches after a valid message
+	lsmLiquidStake, err := s.App.StakeibcKeeper.ValidateLSMLiquidStake(s.Ctx, validMsg)
+	s.Require().NoError(err, "no error expected when validating valid message")
+
+	s.Require().Equal(HostChainId, lsmLiquidStake.HostZone.ChainId, "host zone after valid message")
+	s.Require().Equal(ValAddress, lsmLiquidStake.Validator.Address, "validator after valid message")
+	s.Require().Equal(expectedLSMTokenDeposit, lsmLiquidStake.Deposit, "deposit after valid message")
+
+	// Try with an ibc denom that's not registered - it should fail
+	invalidMsg := validMsg
+	invalidMsg.LsmTokenIbcDenom = transfertypes.ParseDenomTrace(fmt.Sprintf("%s/%s", path, "fake_denom")).IBCDenom()
+	_, err = s.App.StakeibcKeeper.ValidateLSMLiquidStake(s.Ctx, invalidMsg)
+	s.Require().ErrorContains(err, fmt.Sprintf("denom trace not found for %s", invalidMsg.LsmTokenIbcDenom))
+
+	// Try with a user that has insufficient balance - it should fail
+	invalidMsg = validMsg
+	invalidMsg.Creator = s.TestAccs[1].String()
+	_, err = s.App.StakeibcKeeper.ValidateLSMLiquidStake(s.Ctx, invalidMsg)
+	s.Require().ErrorContains(err, "insufficient funds")
+
+	// Try with with a different transfer channel - it should fail
+	invalidMsg = validMsg
+	invalidMsg.LsmTokenIbcDenom = transfertypes.ParseDenomTrace(fmt.Sprintf("%s/%s", invalidPath, LSMTokenBaseDenom)).IBCDenom()
+	_, err = s.App.StakeibcKeeper.ValidateLSMLiquidStake(s.Ctx, invalidMsg)
+	s.Require().ErrorContains(err, "transfer channel-id from LSM token (channel-100) does not match any registered host zone")
+
+	// Remove the validator and try again - it should fail
+	hostZone.Validators = []*types.Validator{}
+	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
+	_, err = s.App.StakeibcKeeper.ValidateLSMLiquidStake(s.Ctx, validMsg)
+	s.Require().ErrorContains(err, fmt.Sprintf("validator (%s) is not registered in the Stride validator set", ValAddress))
+}
+
 func (s *KeeperTestSuite) TestGetLSMTokenDenomTrace() {
 	baseDenom := "cosmosvaloper1uk4ze0x4nvh4fk0xm4jdud58eqn4yxhrdt795p/48"
 	path := "transfer/channel-0"
@@ -175,45 +254,6 @@ func (s *KeeperTestSuite) TestShouldCheckIfValidatorWasSlashed() {
 	}
 }
 
-func (s *KeeperTestSuite) TestRefundLSMToken() {
-	liquidStakerAddress := s.TestAccs[0]
-	despositAddress := types.NewHostZoneDepositAddress(HostChainId)
-
-	// Fund the module account with the LSM token
-	lsmTokenIBCDenom := "ibc/cosmosvalXXX"
-	stakeAmount := sdk.NewInt(1000)
-	lsmToken := sdk.NewCoin(lsmTokenIBCDenom, stakeAmount)
-	s.FundAccount(despositAddress, lsmToken)
-
-	// Setup the liquid stake object that provides the context for the refund
-	liquidStake := types.LSMLiquidStake{
-		Staker: liquidStakerAddress,
-		HostZone: types.HostZone{
-			DepositAddress: despositAddress.String(),
-		},
-		LSMIBCToken: lsmToken,
-	}
-
-	// Refund the token and check that it has been successfully transferred
-	err := s.App.StakeibcKeeper.RefundLSMToken(s.Ctx, liquidStake)
-	s.Require().NoError(err, "no error expected when refunding LSM token")
-
-	stakerBalance := s.App.BankKeeper.GetBalance(s.Ctx, liquidStakerAddress, lsmTokenIBCDenom)
-	s.CompareCoins(lsmToken, stakerBalance, "staker should have received their LSM token back")
-
-	moduleBalance := s.App.BankKeeper.GetBalance(s.Ctx, despositAddress, lsmTokenIBCDenom)
-	s.True(moduleBalance.IsZero(), "module account should no longer have the LSM token")
-
-	// Attempt to refund again, it should fail from an insufficient balance
-	err = s.App.StakeibcKeeper.RefundLSMToken(s.Ctx, liquidStake)
-	s.Require().ErrorContains(err, "insufficient funds")
-
-	// Attempt to refund with an invalid host zone address, it should fail
-	liquidStake.HostZone.DepositAddress = ""
-	err = s.App.StakeibcKeeper.RefundLSMToken(s.Ctx, liquidStake)
-	s.Require().ErrorContains(err, "host zone address is invalid")
-}
-
 func (s *KeeperTestSuite) TestDetokenizeLSMDeposit() {
 	// Create the delegation ICA
 	owner := types.FormatICAAccountOwner(HostChainId, types.ICAAccountType_DELEGATION)
@@ -239,6 +279,7 @@ func (s *KeeperTestSuite) TestDetokenizeLSMDeposit() {
 		Denom:   denom,
 		Amount:  sdk.NewInt(1000),
 		Status:  recordstypes.LSMTokenDeposit_DETOKENIZATION_QUEUE,
+		StToken: sdk.NewCoin(StAtom, sdk.OneInt()),
 	}
 	s.App.RecordsKeeper.SetLSMTokenDeposit(s.Ctx, initalDeposit)
 
