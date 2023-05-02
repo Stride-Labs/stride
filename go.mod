@@ -19,16 +19,12 @@ require (
 	github.com/spf13/cobra v1.6.1
 	github.com/spf13/pflag v1.0.5
 	github.com/stretchr/testify v1.8.2
-	github.com/tendermint/tm-db v0.6.7
 	google.golang.org/genproto v0.0.0-20230216225411-c8e22ba71e44
 	google.golang.org/grpc v1.53.0
 	gopkg.in/yaml.v2 v2.4.0
 )
 
-require (
-	github.com/cosmos/gorocksdb v1.2.0 // indirect
-	github.com/regen-network/cosmos-proto v0.3.1 // indirect
-)
+require github.com/regen-network/cosmos-proto v0.3.1 // indirect
 
 require (
 	github.com/coinbase/rosetta-sdk-go/types v1.0.0 // indirect
@@ -183,10 +179,10 @@ replace (
 
 	// dragonberry replkace line per: https://github.com/cosmos/cosmos-sdk/releases/tag/v0.45.9
 	github.com/confio/ics23/go => github.com/cosmos/cosmos-sdk/ics23/go v0.8.0
+	github.com/cosmos/cosmos-sdk => github.com/Stride-Labs/cosmos-sdk v0.47.1
+	github.com/cosmos/ibc-go/v7 => github.com/Stride-Labs/ibc-go/v7 v7.0.0
 
 	github.com/cosmos/interchain-security => ./interchain-security
-	github.com/cosmos/ibc-go/v7 => github.com/Stride-Labs/ibc-go/v7 v7.0.0
-	github.com/cosmos/cosmos-sdk => github.com/Stride-Labs/cosmos-sdk v0.47.1
 
 	// use cosmos-flavored protobufs
 	github.com/gogo/protobuf => github.com/regen-network/protobuf v1.3.3-alpha.regen.1
@@ -197,8 +193,8 @@ replace (
 	// fork cast to add additional error checking
 	github.com/spf13/cast => github.com/Stride-Labs/cast v0.0.3
 
+	github.com/syndtr/goleveldb => github.com/syndtr/goleveldb v1.0.1-0.20210819022825-2ae1ddf74ef7
+
 	// use the version of grpc compatible with the regen networks protobufs.
 	google.golang.org/grpc => google.golang.org/grpc v1.50.1
-
-	github.com/syndtr/goleveldb => github.com/syndtr/goleveldb v1.0.1-0.20210819022825-2ae1ddf74ef7
 )

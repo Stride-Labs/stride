@@ -6,6 +6,7 @@ source ${SCRIPT_DIR}/../config.sh
 
 PROVIDER_HOME="$DOCKERNET_HOME/state/${GAIA_NODE_PREFIX}1"
 CONSUMER_HOME="$DOCKERNET_HOME/state/${STRIDE_NODE_PREFIX}1"
+SOVEREIGN_HOME="$DOCKERNET_HOME/state/sovereign"
 PROVIDER_BINARY=$GAIA_BINARY
 PROVIDER_CHAIN_ID=$GAIA_CHAIN_ID
 PROVIDER_RPC_ADDR="localhost:$GAIA_RPC_PORT"
@@ -13,8 +14,7 @@ VALIDATOR="${GAIA_VAL_PREFIX}1"
 DENOM=$ATOM_DENOM
 PROVIDER_MAIN_CMD="$PROVIDER_BINARY --home $PROVIDER_HOME"
 SOVEREIGN_CHAIN_ID=$STRIDE_CHAIN_ID
-SOVEREIGN_HOME="$HOME/.sovereign"
-REVISION_HEIGHT=1003
+REVISION_HEIGHT=203
 
 # Build consumer chain proposal file - unbonding period 21 days
 tee $PROVIDER_HOME/consumer-proposal.json<<EOF
@@ -92,4 +92,20 @@ jq -s '.[0].app_state.ccvconsumer = .[1] | .[0]' "$SOVEREIGN_HOME"/config/genesi
 jq ".app_state.ccvconsumer.params.blocks_per_distribution_transmission = \"70\" | .app_state.tokenfactory.paused = { \"paused\": false }" \
   $SOVEREIGN_HOME/config/genesis.json > \
    $SOVEREIGN_HOME/edited_genesis.json && mv $SOVEREIGN_HOME/edited_genesis.json $SOVEREIGN_HOME/config/genesis.json
-sleep 1
+sleep 10
+
+# Create new connections and channels for sharing voting power between two chains
+relayer_logs=${LOGS}/relayer-gaia-ics.log
+relayer_exec=$(GET_VAR_VALUE RELAYER_GAIA_EXEC)
+
+printf "STRIDE <> GAIA - Creating new connections..." | tee -a $relayer_logs
+$relayer_exec rly transact connection stride-gaia-ics >> $relayer_logs 2>&1
+echo "Done."
+sleep 10
+
+printf "STRIDE <> GAIA - Creating new channels..." | tee -a $relayer_logs
+$relayer_exec rly transact channel stride-gaia-ics --src-port consumer --dst-port provider --order ordered --version 1 >> $relayer_logs 2>&1
+echo "Done."
+
+$DOCKER_COMPOSE up -d relayer-gaia
+$DOCKER_COMPOSE logs -f relayer-gaia | sed -r -u "s/\x1B\[([0-9]{1,3}(;[0-9]{1,2})?)?[mGK]//g" >> $relayer_logs 2>&1 &
