@@ -5,8 +5,8 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/Stride-Labs/stride/v8/app/apptesting"
-	"github.com/Stride-Labs/stride/v8/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v9/app/apptesting"
+	"github.com/Stride-Labs/stride/v9/x/stakeibc/types"
 )
 
 func TestMsgAddValidators_ValidateBasic(t *testing.T) {
