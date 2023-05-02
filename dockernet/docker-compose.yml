@@ -188,12 +188,12 @@ services:
   evmos3:
     image: stridezone:evmos
     volumes:
-      - ./state/evmos2:/home/evmos/.evmosd
+      - ./state/evmos3:/home/evmos/.evmosd
 
   evmos4:
     image: stridezone:evmos
     volumes:
-      - ./state/evmos2:/home/evmos/.evmosd
+      - ./state/evmos4:/home/evmos/.evmosd
 
   evmos5:
     image: stridezone:evmos
@@ -217,12 +217,12 @@ services:
   umee3:
     image: stridezone:umee
     volumes:
-      - ./state/umee2:/home/umee/.umee
+      - ./state/umee3:/home/umee/.umee
 
   umee4:
     image: stridezone:umee
     volumes:
-      - ./state/umee2:/home/umee/.umee
+      - ./state/umee4:/home/umee/.umee
 
   umee5:
     image: stridezone:umee
