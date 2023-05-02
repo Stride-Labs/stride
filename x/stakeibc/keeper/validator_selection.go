@@ -192,7 +192,7 @@ func (k Keeper) GetValidatorDelegationDifferences(ctx sdk.Context, hostZone type
 	delegationDeltas := []RebalanceValidatorDelegationChange{}
 	totalDelegationChange := sdkmath.ZeroInt()
 	for _, validator := range hostZone.Validators {
-		// Compare the target with either the current delegation
+		// Compare the target with the current delegation
 		delegationChange := validator.Delegation.Sub(targetDelegation[validator.Address])
 
 		// Only include validators who's delegation should change
@@ -202,8 +202,8 @@ func (k Keeper) GetValidatorDelegationDifferences(ctx sdk.Context, hostZone type
 				Delta:            delegationChange,
 			})
 			totalDelegationChange = totalDelegationChange.Add(delegationChange)
+			k.Logger(ctx).Info(fmt.Sprintf("Adding delegation: %v to validator: %s", delegationChange, validator.Address))
 		}
-		k.Logger(ctx).Info(fmt.Sprintf("Adding delegation: %v to validator: %s", delegationChange, validator.Address))
 	}
 
 	// Sanity check that the sum of all the delegation change's is equal to 0
