@@ -28,13 +28,15 @@ type RebalanceValidatorDelegationChange struct {
 // Note: this cannot be run more than once in a single unbonding period
 func (k Keeper) RebalanceAllHostZones(ctx sdk.Context, dayNumber uint64) {
 	for _, hostZone := range k.GetAllActiveHostZone(ctx) {
+		numRebalance := uint64(len(hostZone.Validators))
+
 		if dayNumber%hostZone.UnbondingPeriod != 0 {
 			k.Logger(ctx).Info(utils.LogWithHostZone(hostZone.ChainId,
 				"Host does not rebalance this epoch (Unbonding Period: %d, Epoch: %d)", hostZone.UnbondingPeriod, dayNumber))
 			continue
 		}
 
-		if err := k.RebalanceDelegationsForHostZone(ctx, hostZone.ChainId); err != nil {
+		if err := k.RebalanceDelegationsForHostZone(ctx, hostZone.ChainId, numRebalance); err != nil {
 			k.Logger(ctx).Error(fmt.Sprintf("Unable to rebalance delegations for %s: %s", hostZone.ChainId, err.Error()))
 			continue
 		}
@@ -43,7 +45,7 @@ func (k Keeper) RebalanceAllHostZones(ctx sdk.Context, dayNumber uint64) {
 }
 
 // Rebalance validators according to their validator weights for a specific host zone
-func (k Keeper) RebalanceDelegationsForHostZone(ctx sdk.Context, chainId string) error {
+func (k Keeper) RebalanceDelegationsForHostZone(ctx sdk.Context, chainId string, numRebalance uint64) error {
 	// Get the host zone and confirm the delegation account is initialized
 	hostZone, found := k.GetHostZone(ctx, chainId)
 	if !found {
@@ -59,7 +61,7 @@ func (k Keeper) RebalanceDelegationsForHostZone(ctx sdk.Context, chainId string)
 		return errorsmod.Wrapf(err, "unable to get validator deltas for host zone %s", chainId)
 	}
 
-	msgs, rebalancings := k.GetRebalanceICAMessages(hostZone, valDeltaList)
+	msgs, rebalancings := k.GetRebalanceICAMessages(hostZone, valDeltaList, numRebalance)
 
 	for start := 0; start < len(msgs); start += IcaBatchSize {
 		end := start + IcaBatchSize
@@ -103,6 +105,7 @@ func (k Keeper) RebalanceDelegationsForHostZone(ctx sdk.Context, chainId string)
 func (k Keeper) GetRebalanceICAMessages(
 	hostZone types.HostZone,
 	validatorDeltas []RebalanceValidatorDelegationChange,
+	numRebalance uint64,
 ) (msgs []sdk.Msg, rebalancings []*types.Rebalancing) {
 	// Sort the list of delegation changes by the size of the change
 	// Sort descending so the surplus validators appear first
@@ -122,7 +125,7 @@ func (k Keeper) GetRebalanceICAMessages(
 	// The surplus validator's have a positive delta and the deficit validators have a negative delta
 	surplusIndex := 0
 	deficitIndex := len(validatorDeltas) - 1
-	for surplusIndex <= deficitIndex {
+	for i := uint64(1); i <= numRebalance; i++ {
 		// surplus validator delta is positive, deficit validator delta is negative
 		deficitValidator := validatorDeltas[deficitIndex]
 		surplusValidator := validatorDeltas[surplusIndex]
