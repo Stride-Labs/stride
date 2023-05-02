@@ -70,7 +70,11 @@ func (s *KeeperTestSuite) TestValidateLSMLiquidStake() {
 
 	s.Require().Equal(HostChainId, lsmLiquidStake.HostZone.ChainId, "host zone after valid message")
 	s.Require().Equal(ValAddress, lsmLiquidStake.Validator.Address, "validator after valid message")
+<<<<<<< HEAD
 	s.Require().Equal(expectedLSMTokenDeposit, *lsmLiquidStake.Deposit, "deposit after valid message")
+=======
+	s.Require().Equal(expectedLSMTokenDeposit, lsmLiquidStake.Deposit, "deposit after valid message")
+>>>>>>> lsm
 
 	// Try with an ibc denom that's not registered - it should fail
 	invalidMsg := validMsg
@@ -90,12 +94,15 @@ func (s *KeeperTestSuite) TestValidateLSMLiquidStake() {
 	_, err = s.App.StakeibcKeeper.ValidateLSMLiquidStake(s.Ctx, invalidMsg)
 	s.Require().ErrorContains(err, "transfer channel-id from LSM token (channel-100) does not match any registered host zone")
 
+<<<<<<< HEAD
 	// Flag the validator as slashed - it should fail
 	hostZone.Validators[0].SlashQueryPending = true
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
 	_, err = s.App.StakeibcKeeper.ValidateLSMLiquidStake(s.Ctx, invalidMsg)
 	s.Require().ErrorContains(err, "transfer channel-id from LSM token (channel-100) does not match any registered host zone")
 
+=======
+>>>>>>> lsm
 	// Remove the validator and try again - it should fail
 	hostZone.Validators = []*types.Validator{}
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)

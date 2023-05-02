@@ -139,6 +139,7 @@ func (k Keeper) SubmitValidatorSlashQuery(ctx sdk.Context, lsmLiquidStake types.
 // If the slash query interrupted the transaction, this function is called
 //   asynchronously after the query callback
 // If no slash query was needed, this is called synchronously after StartLSMLiquidStake
+// If this is run asynchronously, we need to re-validate the transaction info (e.g. staker's balance)
 func (k Keeper) FinishLSMLiquidStake(ctx sdk.Context, lsmLiquidStake types.LSMLiquidStake, async bool) error {
 	hostZone := lsmLiquidStake.HostZone
 	lsmTokenDeposit := *lsmLiquidStake.Deposit
