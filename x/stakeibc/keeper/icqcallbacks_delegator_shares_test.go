@@ -83,12 +83,12 @@ func (s *KeeperTestSuite) SetupDelegatorSharesICQCallback() DelegatorSharesICQCa
 			},
 			// This is the validator in question
 			{
-				Name:                      "val2",
-				Address:                   valAddress,
-				InternalShareToTokensRate: internalExchangeRate,
-				Delegation:                tokensBeforeSlash,
-				Weight:                    weightBeforeSlash,
-				SlashQueryPending:         true,
+				Name:                       "val2",
+				Address:                    valAddress,
+				InternalSharesToTokensRate: internalExchangeRate,
+				Delegation:                 tokensBeforeSlash,
+				Weight:                     weightBeforeSlash,
+				SlashQueryPending:          true,
 			},
 		},
 	}

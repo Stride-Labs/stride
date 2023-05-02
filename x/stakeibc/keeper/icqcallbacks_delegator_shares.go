@@ -82,7 +82,7 @@ func DelegatorSharesCallback(k Keeper, ctx sdk.Context, args []byte, query icqty
 
 	// Calculate the number of tokens delegated (using the internal exchange rate)
 	// note: truncateInt per https://github.com/cosmos/cosmos-sdk/blob/cb31043d35bad90c4daa923bb109f38fd092feda/x/staking/types/validator.go#L431
-	delegatedTokens := queriedDelgation.Shares.Mul(validator.InternalShareToTokensRate).TruncateInt()
+	delegatedTokens := queriedDelgation.Shares.Mul(validator.InternalSharesToTokensRate).TruncateInt()
 	k.Logger(ctx).Info(utils.LogICQCallbackWithHostZone(chainId, ICQCallbackID_Delegation,
 		"Previous Delegation: %v, Current Delegation: %v", validator.Delegation, delegatedTokens))
 
