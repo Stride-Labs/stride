@@ -165,7 +165,7 @@ func (s *KeeperTestSuite) TestRebalanceValidators_InvalidNoValidators() {
 		NumRebalance: 2,
 	}
 	_, err := s.GetMsgServer().RebalanceValidators(sdk.WrapSDKContext(s.Ctx), &badMsg_noValidators)
-	s.Require().ErrorContains(err, "Cannot calculate target delegation if final amount is 0 GAIA")
+	s.Require().ErrorContains(err, "Cannot calculate target delegation if final amount is less than or equal to zero")
 }
 
 func (s *KeeperTestSuite) TestRebalanceValidators_InvalidAllValidatorsNoWeight() {

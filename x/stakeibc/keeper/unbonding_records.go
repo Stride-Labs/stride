@@ -317,15 +317,9 @@ func (k Keeper) UnbondFromHostZone(ctx sdk.Context, hostZone types.HostZone) err
 
 // this function iterates each host zone, and if it's the right time to
 // initiate an unbonding, it attempts to unbond all outstanding records
-// returns (1) did all chains succeed
-//		   (2) list of strings of successful unbondings
-//		   (3) list of strings of failed unbondings
-func (k Keeper) InitiateAllHostZoneUnbondings(ctx sdk.Context, dayNumber uint64) (success bool, successfulUnbondings []string, failedUnbondings []string) {
+func (k Keeper) InitiateAllHostZoneUnbondings(ctx sdk.Context, dayNumber uint64) {
 	k.Logger(ctx).Info(fmt.Sprintf("Initiating all host zone unbondings for epoch %d...", dayNumber))
 
-	success = true
-	successfulUnbondings = []string{}
-	failedUnbondings = []string{}
 	for _, hostZone := range k.GetAllActiveHostZone(ctx) {
 
 		// Confirm the unbonding is supposed to be triggered this epoch
@@ -340,15 +334,9 @@ func (k Keeper) InitiateAllHostZoneUnbondings(ctx sdk.Context, dayNumber uint64)
 		// Get host zone unbonding message by summing up the unbonding records
 		if err := k.UnbondFromHostZone(ctx, hostZone); err != nil {
 			k.Logger(ctx).Error(fmt.Sprintf("Error initiating host zone unbondings for host zone %s: %s", hostZone.ChainId, err.Error()))
-			success = false
-			failedUnbondings = append(failedUnbondings, hostZone.ChainId)
 			continue
 		}
-
-		successfulUnbondings = append(successfulUnbondings, hostZone.ChainId)
 	}
-
-	return success, successfulUnbondings, failedUnbondings
 }
 
 // Deletes any epoch unbonding records that have had all unbondings claimed
