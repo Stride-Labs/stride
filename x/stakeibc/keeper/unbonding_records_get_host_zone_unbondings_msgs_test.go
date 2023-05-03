@@ -1,8 +1,6 @@
 package keeper_test
 
 import (
-	"fmt"
-
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
@@ -24,231 +22,16 @@ type ValidatorUnbonding struct {
 }
 
 type UnbondingTestCase struct {
-	totalUnbondAmount          sdkmath.Int
-	epochUnbondingRecords      []recordtypes.EpochUnbondingRecord
 	hostZone                   types.HostZone
-	lightClientTime            uint64
-	totalWgt                   uint64
-	expectedUnbondings         map[string]int64
-	valNames                   []string
+	totalUnbondAmount          sdkmath.Int
 	delegationChannelID        string
 	delegationPortID           string
 	channelStartSequence       uint64
 	expectedUnbondingRecordIds []uint64
 }
 
-func (s *KeeperTestSuite) SetupUnbonding() UnbondingTestCase {
-	delegationAccountOwner := types.FormatICAAccountOwner(HostChainId, types.ICAAccountType_DELEGATION)
-	delegationChannelID, delegationPortID := s.CreateICAChannel(delegationAccountOwner)
-
-	hostVal1Addr := "cosmos_VALIDATOR_1"
-	hostVal2Addr := "cosmos_VALIDATOR_2"
-	hostVal3Addr := "cosmos_VALIDATOR_3"
-	hostVal4Addr := "cosmos_VALIDATOR_4"
-	valNames := []string{hostVal1Addr, hostVal2Addr, hostVal3Addr, hostVal4Addr}
-
-	totalUnbondAmount := sdkmath.NewInt(1_000_000)
-	amtVal1 := sdkmath.NewInt(1_000_000)
-	amtVal2 := sdkmath.NewInt(2_000_000)
-	wgtVal1 := uint64(1)
-	wgtVal2 := uint64(2)
-	totalWgt := uint64(5)
-
-	expectedUnbondings := map[string]int64{
-		hostVal1Addr: 200_000,
-		hostVal2Addr: 400_000,
-		hostVal3Addr: 400_000,
-		hostVal4Addr: 0,
-	}
-
-	// 2022-08-12T19:51, a random time in the past
-	unbondingTime := uint64(1660348276)
-	lightClientTime := unbondingTime + 1
-
-	//  define the host zone with total delegation and validators with staked amounts
-	validators := []*types.Validator{
-		{
-			Address:    hostVal1Addr,
-			Delegation: amtVal1,
-			Weight:     wgtVal1,
-		},
-		{
-			Address:    hostVal2Addr,
-			Delegation: amtVal2,
-			Weight:     wgtVal2,
-		},
-		{
-			Address: hostVal3Addr,
-			// Delegation and Weight are the same as Val2, to test tie breaking
-			Delegation: amtVal2,
-			Weight:     wgtVal2,
-		},
-		{
-			Address: hostVal4Addr,
-			// Zero weight validator
-			Delegation: sdkmath.NewInt(0),
-			Weight:     0,
-		},
-	}
-
-	hostZone := types.HostZone{
-		ChainId:              HostChainId,
-		HostDenom:            Atom,
-		Bech32Prefix:         "cosmos",
-		Validators:           validators,
-		DelegationIcaAddress: "cosmos_DELEGATION",
-		ConnectionId:         ibctesting.FirstConnectionID,
-	}
-
-	// list of epoch unbonding records
-	epochUnbondingRecords := []recordtypes.EpochUnbondingRecord{
-		{
-			EpochNumber:        0,
-			HostZoneUnbondings: []*recordtypes.HostZoneUnbonding{},
-		},
-		{
-			EpochNumber:        1,
-			HostZoneUnbondings: []*recordtypes.HostZoneUnbonding{},
-		},
-	}
-
-	// for each epoch unbonding record, add a host zone unbonding record and append the record
-	for _, epochUnbondingRecord := range epochUnbondingRecords {
-		hostZoneUnbonding := &recordtypes.HostZoneUnbonding{
-			NativeTokenAmount: totalUnbondAmount.Quo(sdkmath.NewInt(2)),
-			Denom:             "uatom",
-			HostZoneId:        "GAIA",
-			UnbondingTime:     unbondingTime, // 2022-08-12T19:52
-			Status:            recordtypes.HostZoneUnbonding_UNBONDING_QUEUE,
-		}
-		epochUnbondingRecord.HostZoneUnbondings = append(epochUnbondingRecord.HostZoneUnbondings, hostZoneUnbonding)
-		s.App.RecordsKeeper.SetEpochUnbondingRecord(s.Ctx, epochUnbondingRecord)
-	}
-
-	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
-
-	// This will make the current time 90% through the epoch
-	strideEpochTracker := types.EpochTracker{
-		EpochIdentifier:    epochstypes.DAY_EPOCH,
-		Duration:           10_000_000_000,                                                // 10 second epochs
-		NextEpochStartTime: uint64(s.Coordinator.CurrentTime.UnixNano() + 30_000_000_000), // dictates timeout
-	}
-	s.App.StakeibcKeeper.SetEpochTracker(s.Ctx, strideEpochTracker)
-
-	// Get tx seq number before the ICA was submitted to check whether an ICA was submitted
-	startSequence, found := s.App.IBCKeeper.ChannelKeeper.GetNextSequenceSend(s.Ctx, delegationPortID, delegationChannelID)
-	s.Require().True(found, "sequence number not found before ica")
-
-	return UnbondingTestCase{
-		totalUnbondAmount:     totalUnbondAmount,
-		hostZone:              hostZone,
-		epochUnbondingRecords: epochUnbondingRecords,
-		lightClientTime:       lightClientTime, // 2022-08-12T19:51.000001, 1ns after the unbonding time
-		totalWgt:              totalWgt,
-		valNames:              valNames,
-		expectedUnbondings:    expectedUnbondings,
-		delegationChannelID:   delegationChannelID,
-		delegationPortID:      delegationPortID,
-		channelStartSequence:  startSequence,
-	}
-}
-
-func (s *KeeperTestSuite) TestUnbondFromHostZone_Successful() {
-	tc := s.SetupUnbonding()
-
-	// Submit unbonding
-	err := s.App.StakeibcKeeper.UnbondFromHostZone(s.Ctx, tc.hostZone)
-	s.Require().NoError(err)
-
-	// verify the callback attributes are as expected
-	callbackData := s.App.IcacallbacksKeeper.GetAllCallbackData(s.Ctx)
-	s.Require().Len(callbackData, 1, "there should only be one callback data stored")
-
-	var actualCallbackResult types.UndelegateCallback
-	err = proto.Unmarshal(callbackData[0].CallbackArgs, &actualCallbackResult)
-	s.Require().NoError(err, "no error expected when unmarshalling callback args")
-
-	// The zero weight validator should not be included in the message
-	// Confirm the callback data
-	expectedNumMessages := len(tc.hostZone.Validators) - 1
-	s.Require().Equal(tc.hostZone.ChainId, actualCallbackResult.HostZoneId, "host zone id in success unbonding case")
-	s.Require().Len(actualCallbackResult.SplitDelegations, expectedNumMessages, "number of split delegations in success unbonding case")
-
-	// Confirm unbonding amounts
-	actualUnbondings := make(map[string]int64)
-	for _, split := range actualCallbackResult.SplitDelegations {
-		actualUnbondings[split.Validator] = split.Amount.Int64()
-	}
-	actualUnbondings[tc.valNames[3]] = 0 // zero-weight val
-
-	for _, valAddress := range tc.valNames {
-		s.Require().Equal(tc.expectedUnbondings[valAddress], actualUnbondings[valAddress], "val %s address", valAddress)
-	}
-
-	// Confirm the channel sequence number incremented with the ICA send
-	endSequence, found := s.App.IBCKeeper.ChannelKeeper.GetNextSequenceSend(s.Ctx, tc.delegationPortID, tc.delegationChannelID)
-	s.Require().True(found, "sequence number not found after ica")
-	s.Require().Equal(tc.channelStartSequence+1, endSequence, "sequence number should have incremented")
-
-	// TODO [LSM] Check that event was emitted with proper unbond amount
-	// expectedUnbondAmount := tc.amtToUnbond.Mul(sdkmath.NewInt(int64(len(tc.epochUnbondingRecords))))
-}
-
-func (s *KeeperTestSuite) TestUnbondFromHostZone_WrongChainId() {
-	tc := s.SetupUnbonding()
-
-	// Change the chainId so that it is not found in the store
-	tc.hostZone.ChainId = "nonExistentChainId"
-
-	// Call unbond - we do NOT raise an error on a non-existent chain id, we simply do not send any messages
-	err := s.App.StakeibcKeeper.UnbondFromHostZone(s.Ctx, tc.hostZone)
-	s.Require().Nil(err, "unbond should not have thrown an error - it should have simply ignored the host zone")
-
-	// Confirm no ICAs were sent
-	endSequence, found := s.App.IBCKeeper.ChannelKeeper.GetNextSequenceSend(s.Ctx, tc.delegationPortID, tc.delegationChannelID)
-	s.Require().True(found, "sequence number not found after ica")
-	s.Require().Equal(tc.channelStartSequence, endSequence, "sequence number should stay the same since no messages were sent")
-}
-
-func (s *KeeperTestSuite) TestUnbondFromHostZone_NoEpochUnbondingRecords() {
-	tc := s.SetupUnbonding()
-
-	// Delete all the epoch unbonding records
-	for i := range tc.epochUnbondingRecords {
-		s.App.RecordsKeeper.RemoveEpochUnbondingRecord(s.Ctx, uint64(i))
-	}
-
-	// Confirm they were deleted
-	epochUnbondingRecords := s.App.RecordsKeeper.GetAllEpochUnbondingRecord(s.Ctx)
-	s.Require().Empty(epochUnbondingRecords, "number of epoch unbonding records should be 0 after deletion")
-
-	// Call unbond - we do NOT raise an error on a non-existent chain id, we simply do not send any messages
-	err := s.App.StakeibcKeeper.UnbondFromHostZone(s.Ctx, tc.hostZone)
-	s.Require().Nil(err, "unbond should not have thrown an error - it should have simply ignored the host zone")
-
-	// Confirm no ICAs were sent
-	endSequence, found := s.App.IBCKeeper.ChannelKeeper.GetNextSequenceSend(s.Ctx, tc.delegationPortID, tc.delegationChannelID)
-	s.Require().True(found, "sequence number not found after ica")
-	s.Require().Equal(tc.channelStartSequence, endSequence, "sequence number should stay the same since no messages were sent")
-}
-
-func (s *KeeperTestSuite) TestUnbondFromHostZone_UnbondingTooMuch() {
-	tc := s.SetupUnbonding()
-
-	// iterate the validators and set all their delegated amounts to 0
-	for i := range tc.hostZone.Validators {
-		tc.hostZone.Validators[i].Delegation = sdkmath.ZeroInt()
-	}
-	s.App.StakeibcKeeper.SetHostZone(s.Ctx, tc.hostZone)
-
-	// Call unbond - it should fail from insufficient delegation
-	err := s.App.StakeibcKeeper.UnbondFromHostZone(s.Ctx, tc.hostZone)
-	s.Require().EqualError(err,
-		fmt.Sprintf("Could not unbond %v on Host Zone %s, unable to balance the unbond amount across validators",
-			tc.totalUnbondAmount, tc.hostZone.ChainId))
-}
-
-func (s *KeeperTestSuite) setupTestUnbondFromHostZone(
+func (s *KeeperTestSuite) SetupTestUnbondFromHostZone(
+	totalWeight int64,
 	totalStake sdkmath.Int,
 	unbondAmount sdkmath.Int,
 	validators []*types.Validator,
@@ -266,7 +49,7 @@ func (s *KeeperTestSuite) setupTestUnbondFromHostZone(
 		actualTotalWeights += validator.Weight
 	}
 	s.Require().Equal(totalStake.Int64(), actualTotalStake.Int64(), "test setup failed - total stake does not match")
-	s.Require().Equal(int64(100), int64(actualTotalWeights), "test setup failed - total weight does not match")
+	s.Require().Equal(totalWeight, int64(actualTotalWeights), "test setup failed - total weight does not match")
 
 	// Store the validators on the host zone
 	hostZone := types.HostZone{
@@ -307,6 +90,7 @@ func (s *KeeperTestSuite) setupTestUnbondFromHostZone(
 
 	return UnbondingTestCase{
 		hostZone:                   hostZone,
+		totalUnbondAmount:          unbondAmount,
 		delegationChannelID:        delegationChannelID,
 		delegationPortID:           delegationPortID,
 		channelStartSequence:       startSequence,
@@ -314,7 +98,9 @@ func (s *KeeperTestSuite) setupTestUnbondFromHostZone(
 	}
 }
 
-func (s *KeeperTestSuite) checkUnbondingMessages(tc UnbondingTestCase, expectedUnbondings []ValidatorUnbonding) {
+// Helper function to check that an undelegation ICA was submitted and that the callback data
+// holds the expected unbondings for each validator
+func (s *KeeperTestSuite) CheckUnbondingMessages(tc UnbondingTestCase, expectedUnbondings []ValidatorUnbonding) {
 	// Trigger unbonding
 	err := s.App.StakeibcKeeper.UnbondFromHostZone(s.Ctx, tc.hostZone)
 	s.Require().NoError(err, "no error expected when calling unbond from host")
@@ -343,6 +129,9 @@ func (s *KeeperTestSuite) checkUnbondingMessages(tc UnbondingTestCase, expectedU
 		s.Require().Equal(expected.Validator, actualSplit.Validator, "callback message validator - index %d", i)
 		s.Require().Equal(expected.UnbondAmount.Int64(), actualSplit.Amount.Int64(), "callback message amount - index %d", i)
 	}
+
+	// Check that the unbond event was emitted with the proper unbond amount
+	s.CheckEventValueEmitted(types.EventTypeUndelegation, types.AttributeKeyTotalUnbondAmount, tc.totalUnbondAmount.String())
 }
 
 func (s *KeeperTestSuite) TestUnbondFromHostZone_Successful_UnbondOnlyZeroWeightVals() {
@@ -354,6 +143,7 @@ func (s *KeeperTestSuite) TestUnbondFromHostZone_Successful_UnbondOnlyZeroWeight
 	// Stake After Unbond: 1200
 	totalUnbondAmount := sdkmath.NewInt(50)
 	totalStake := sdkmath.NewInt(1250)
+	totalWeight := int64(100)
 
 	validators := []*types.Validator{
 		// Current: 100, Weight: 10%, Balanced: 10% * 1200 = 120, Capacity: 100-120 = -20 -> 0
@@ -387,8 +177,8 @@ func (s *KeeperTestSuite) TestUnbondFromHostZone_Successful_UnbondOnlyZeroWeight
 		{Validator: "valE", UnbondAmount: sdkmath.NewInt(10)},
 	}
 
-	tc := s.setupTestUnbondFromHostZone(totalStake, totalUnbondAmount, validators)
-	s.checkUnbondingMessages(tc, expectedUnbondings)
+	tc := s.SetupTestUnbondFromHostZone(totalWeight, totalStake, totalUnbondAmount, validators)
+	s.CheckUnbondingMessages(tc, expectedUnbondings)
 }
 
 func (s *KeeperTestSuite) TestUnbondFromHostZone_Successful_UnbondTotalLessThanTotalLSM() {
@@ -400,6 +190,7 @@ func (s *KeeperTestSuite) TestUnbondFromHostZone_Successful_UnbondTotalLessThanT
 	// Stake After Unbond: 1100
 	totalUnbondAmount := sdkmath.NewInt(150)
 	totalStake := sdkmath.NewInt(1250)
+	totalWeight := int64(100)
 
 	validators := []*types.Validator{
 		// Current: 100, Weight: 10%, Balanced: 10% * 1100 = 110, Capacity: 100-110 = -10 -> 0
@@ -436,8 +227,8 @@ func (s *KeeperTestSuite) TestUnbondFromHostZone_Successful_UnbondTotalLessThanT
 		{Validator: "valF", UnbondAmount: sdkmath.NewInt(80)},
 	}
 
-	tc := s.setupTestUnbondFromHostZone(totalStake, totalUnbondAmount, validators)
-	s.checkUnbondingMessages(tc, expectedUnbondings)
+	tc := s.SetupTestUnbondFromHostZone(totalWeight, totalStake, totalUnbondAmount, validators)
+	s.CheckUnbondingMessages(tc, expectedUnbondings)
 }
 
 func (s *KeeperTestSuite) TestUnbondFromHostZone_Successful_UnbondTotalGreaterThanTotalLSM() {
@@ -449,6 +240,7 @@ func (s *KeeperTestSuite) TestUnbondFromHostZone_Successful_UnbondTotalGreaterTh
 	// Stake After Unbond: 900
 	totalUnbondAmount := sdkmath.NewInt(350)
 	totalStake := sdkmath.NewInt(1250)
+	totalWeight := int64(100)
 
 	validators := []*types.Validator{
 		// Current: 100, Weight: 10%, Balanced: 10% * 900 = 90, Capacity: 100-90 = 10
@@ -497,8 +289,84 @@ func (s *KeeperTestSuite) TestUnbondFromHostZone_Successful_UnbondTotalGreaterTh
 		{Validator: "valA", UnbondAmount: sdkmath.NewInt(10)},
 	}
 
-	tc := s.setupTestUnbondFromHostZone(totalStake, totalUnbondAmount, validators)
-	s.checkUnbondingMessages(tc, expectedUnbondings)
+	tc := s.SetupTestUnbondFromHostZone(totalWeight, totalStake, totalUnbondAmount, validators)
+	s.CheckUnbondingMessages(tc, expectedUnbondings)
+}
+
+func (s *KeeperTestSuite) TestUnbondFromHostZone_NoDelegationAccount() {
+	// Call unbond on a host zone without a delegation account - it should error
+	invalidHostZone := types.HostZone{
+		ChainId:              HostChainId,
+		DelegationIcaAddress: "",
+	}
+	err := s.App.StakeibcKeeper.UnbondFromHostZone(s.Ctx, invalidHostZone)
+	s.Require().ErrorContains(err, "no delegation account found for GAIA: ICA acccount not found on host zone")
+}
+
+func (s *KeeperTestSuite) TestUnbondFromHostZone_ZeroUnbondAmount() {
+	totalWeight := int64(0)
+	totalStake := sdkmath.ZeroInt()
+	totalUnbondAmount := sdkmath.ZeroInt()
+	tc := s.SetupTestUnbondFromHostZone(totalWeight, totalStake, totalUnbondAmount, []*types.Validator{})
+
+	// Call unbond - it should NOT error since the unbond amount was 0 - but it should short circuit
+	err := s.App.StakeibcKeeper.UnbondFromHostZone(s.Ctx, tc.hostZone)
+	s.Require().Nil(err, "unbond should not have thrown an error - it should have simply ignored the host zone")
+
+	// Confirm no ICAs were sent
+	endSequence, found := s.App.IBCKeeper.ChannelKeeper.GetNextSequenceSend(s.Ctx, tc.delegationPortID, tc.delegationChannelID)
+	s.Require().True(found, "sequence number not found after ica")
+	s.Require().Equal(tc.channelStartSequence, endSequence, "sequence number should stay the same since no messages were sent")
+}
+
+func (s *KeeperTestSuite) TestUnbondFromHostZone_ZeroValidatorWeights() {
+	// Setup the test with all zero-weight validators
+	totalWeight := int64(0)
+	totalStake := sdkmath.NewInt(100)
+	totalUnbondAmount := sdkmath.NewInt(10)
+	validators := []*types.Validator{
+		{Address: "valA", Weight: 0, Delegation: sdkmath.NewInt(25)},
+		{Address: "valB", Weight: 0, Delegation: sdkmath.NewInt(50)},
+		{Address: "valC", Weight: 0, Delegation: sdkmath.NewInt(25)},
+	}
+	tc := s.SetupTestUnbondFromHostZone(totalWeight, totalStake, totalUnbondAmount, validators)
+
+	// Call unbond - it should fail
+	err := s.App.StakeibcKeeper.UnbondFromHostZone(s.Ctx, tc.hostZone)
+	s.Require().ErrorContains(err, "No non-zero validators found for host zone")
+}
+
+func (s *KeeperTestSuite) TestUnbondFromHostZone_InsufficientDelegations() {
+	// Setup the test where the total unbond amount is greater than the current delegations
+	totalWeight := int64(100)
+	totalStake := sdkmath.NewInt(100)
+	totalUnbondAmount := sdkmath.NewInt(200)
+	validators := []*types.Validator{
+		{Address: "valA", Weight: 25, Delegation: sdkmath.NewInt(25)},
+		{Address: "valB", Weight: 50, Delegation: sdkmath.NewInt(50)},
+		{Address: "valC", Weight: 25, Delegation: sdkmath.NewInt(25)},
+	}
+	tc := s.SetupTestUnbondFromHostZone(totalWeight, totalStake, totalUnbondAmount, validators)
+
+	// Call unbond - it should fail
+	err := s.App.StakeibcKeeper.UnbondFromHostZone(s.Ctx, tc.hostZone)
+	s.Require().ErrorContains(err, "Cannot calculate target delegation if final amount is less than or equal to zero")
+}
+
+func (s *KeeperTestSuite) TestUnbondFromHostZone_ICAFailed() {
+	// Validator setup here is arbitrary as long as the totals match
+	totalWeight := int64(100)
+	totalStake := sdkmath.NewInt(100)
+	totalUnbondAmount := sdkmath.NewInt(10)
+	validators := []*types.Validator{{Address: "valA", Weight: 100, Delegation: sdkmath.NewInt(100)}}
+	tc := s.SetupTestUnbondFromHostZone(totalWeight, totalStake, totalUnbondAmount, validators)
+
+	// Remove the connection ID from the host zone so that the ICA fails
+	invalidHostZone := tc.hostZone
+	invalidHostZone.ConnectionId = ""
+
+	err := s.App.StakeibcKeeper.UnbondFromHostZone(s.Ctx, invalidHostZone)
+	s.Require().ErrorContains(err, "unable to submit unbonding ICA for GAIA")
 }
 
 func (s *KeeperTestSuite) TestGetUnbalanceRatio() {

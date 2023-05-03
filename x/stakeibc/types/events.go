@@ -15,6 +15,7 @@ const (
 	EventTypeRedemptionRequest  = "request_redemption"
 	EventTypeLiquidStakeRequest = "liquid_stake"
 	EventTypeHostZoneHalt       = "halt_zone"
+	EventTypeUndelegation       = "undelegation"
 
 	AttributeKeyHostZone         = "host_zone"
 	AttributeKeyConnectionId     = "connection_id"
@@ -26,11 +27,12 @@ const (
 
 	AttributeKeyRedemptionRate = "redemption_rate"
 
-	AttributeKeyLiquidStaker    = "liquid_staker"
-	AttributeKeyNativeBaseDenom = "native_base_denom"
-	AttributeKeyNativeIBCDenom  = "native_ibc_denom"
-	AttributeKeyNativeAmount    = "native_amount"
-	AttributeKeyStTokenAmount   = "sttoken_amount"
+	AttributeKeyLiquidStaker      = "liquid_staker"
+	AttributeKeyNativeBaseDenom   = "native_base_denom"
+	AttributeKeyNativeIBCDenom    = "native_ibc_denom"
+	AttributeKeyNativeAmount      = "native_amount"
+	AttributeKeyStTokenAmount     = "sttoken_amount"
+	AttributeKeyTotalUnbondAmount = "total_unbond_amount"
 
 	AttributeValueCategory = ModuleName
 )

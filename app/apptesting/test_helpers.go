@@ -372,3 +372,46 @@ func GetAdminAddress() (address string, ok bool) {
 func SetupConfig() {
 	app.SetupConfig()
 }
+
+// Searches for an event using the current context
+func (s *AppTestHelper) getEventFromEventType(eventType string) (event sdk.Event, found bool) {
+	for _, event := range s.Ctx.EventManager().Events() {
+		if event.Type == eventType {
+			return event, true
+		}
+	}
+	return event, false
+}
+
+// Searches for an event attribute, given an event
+// Returns the value if found
+func (s *AppTestHelper) getEventValueFromAttribute(event sdk.Event, attributeKey string) (value string, found bool) {
+	for _, attribute := range event.Attributes {
+		if string(attribute.Key) == attributeKey {
+			return string(attribute.Value), true
+		}
+	}
+	return value, false
+}
+
+// Checks if an event was emitted
+func (s *AppTestHelper) CheckEventEmitted(eventType string) {
+	_, found := s.getEventFromEventType(eventType)
+	s.Require().True(found, "%s event should have been emitted", eventType)
+}
+
+// Checks that an event was not emitted
+func (s *AppTestHelper) CheckEventNotEmitted(eventType string) {
+	_, found := s.getEventFromEventType(eventType)
+	s.Require().False(found, "%s event should not have been emitted", eventType)
+}
+
+// Checks that an event was emitted and that the value matches expectations
+func (s *AppTestHelper) CheckEventValueEmitted(eventType, attributeKey, expectedValue string) {
+	event, found := s.getEventFromEventType(eventType)
+	s.Require().True(found, "%s event should have been emitted", eventType)
+
+	actualValue, found := s.getEventValueFromAttribute(event, attributeKey)
+	s.Require().True(found, "attribute %s should have been found in event %s", attributeKey, eventType)
+	s.Require().Equal(expectedValue, actualValue, "event value emitted for event %s and key %s", eventType, attributeKey)
+}

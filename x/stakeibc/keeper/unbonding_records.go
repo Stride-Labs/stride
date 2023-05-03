@@ -306,9 +306,9 @@ func (k Keeper) UnbondFromHostZone(ctx sdk.Context, hostZone types.HostZone) err
 	// TODO [LSM]: Move to events.go
 	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(
-			sdk.EventTypeMessage,
-			sdk.NewAttribute("hostZone", hostZone.ChainId),
-			sdk.NewAttribute("newAmountUnbonding", totalAmountToUnbond.String()),
+			types.EventTypeUndelegation,
+			sdk.NewAttribute(types.AttributeKeyHostZone, hostZone.ChainId),
+			sdk.NewAttribute(types.AttributeKeyTotalUnbondAmount, totalAmountToUnbond.String()),
 		),
 	)
 
