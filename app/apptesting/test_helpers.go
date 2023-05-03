@@ -374,44 +374,80 @@ func SetupConfig() {
 }
 
 // Searches for an event using the current context
-func (s *AppTestHelper) getEventFromEventType(eventType string) (event sdk.Event, found bool) {
+func (s *AppTestHelper) getEventsFromEventType(eventType string) (events []sdk.Event) {
 	for _, event := range s.Ctx.EventManager().Events() {
 		if event.Type == eventType {
-			return event, true
+			events = append(events, event)
 		}
 	}
-	return event, false
+	return events
 }
 
 // Searches for an event attribute, given an event
 // Returns the value if found
-func (s *AppTestHelper) getEventValueFromAttribute(event sdk.Event, attributeKey string) (value string, found bool) {
+func (s *AppTestHelper) getEventValuesFromAttribute(event sdk.Event, attributeKey string) (values []string) {
 	for _, attribute := range event.Attributes {
 		if string(attribute.Key) == attributeKey {
-			return string(attribute.Value), true
+			values = append(values, string(attribute.Value))
 		}
 	}
-	return value, false
+	return values
+}
+
+// Searches for an event that has an attribute value matching the expected value
+// Returns whether there was a match, as well as a list for all the values found
+// for that attribute (for the error message)
+func (s *AppTestHelper) checkEventAttributeValueMatch(
+	events []sdk.Event,
+	attributeKey,
+	expectedValue string,
+) (allValues []string, found bool) {
+	for _, event := range events {
+		allValues = append(allValues, s.getEventValuesFromAttribute(event, attributeKey)...)
+		for _, actualValue := range allValues {
+			if actualValue == expectedValue {
+				found = true
+			}
+		}
+	}
+	return allValues, found
 }
 
 // Checks if an event was emitted
-func (s *AppTestHelper) CheckEventEmitted(eventType string) {
-	_, found := s.getEventFromEventType(eventType)
-	s.Require().True(found, "%s event should have been emitted", eventType)
+func (s *AppTestHelper) CheckEventTypeEmitted(eventType string) []sdk.Event {
+	events := s.getEventsFromEventType(eventType)
+	eventEmitted := len(events) > 0
+	s.Require().True(eventEmitted, "%s event should have been emitted", eventType)
+	return events
 }
 
 // Checks that an event was not emitted
-func (s *AppTestHelper) CheckEventNotEmitted(eventType string) {
-	_, found := s.getEventFromEventType(eventType)
-	s.Require().False(found, "%s event should not have been emitted", eventType)
+func (s *AppTestHelper) CheckEventTypeNotEmitted(eventType string) {
+	events := s.getEventsFromEventType(eventType)
+	eventNotEmitted := len(events) == 0
+	s.Require().True(eventNotEmitted, "%s event should not have been emitted", eventType)
 }
 
 // Checks that an event was emitted and that the value matches expectations
 func (s *AppTestHelper) CheckEventValueEmitted(eventType, attributeKey, expectedValue string) {
-	event, found := s.getEventFromEventType(eventType)
-	s.Require().True(found, "%s event should have been emitted", eventType)
+	events := s.CheckEventTypeEmitted(eventType)
 
-	actualValue, found := s.getEventValueFromAttribute(event, attributeKey)
-	s.Require().True(found, "attribute %s should have been found in event %s", attributeKey, eventType)
-	s.Require().Equal(expectedValue, actualValue, "event value emitted for event %s and key %s", eventType, attributeKey)
+	// Check all events and attributes for a match
+	allValues, valueFound := s.checkEventAttributeValueMatch(events, attributeKey, expectedValue)
+	s.Require().True(valueFound, "attribute %s with value %s should have been found in event %s. Values emitted for attribute: %+v",
+		attributeKey, expectedValue, eventType, allValues)
+}
+
+// Checks that there was no event emitted that matches the event type, attribute, and value
+func (s *AppTestHelper) CheckEventValueNotEmitted(eventType, attributeKey, expectedValue string) {
+	// Check that either the event or attribute were not emitted
+	events := s.getEventsFromEventType(eventType)
+	if len(events) == 0 {
+		return
+	}
+
+	// Check all events and attributes to make sure there's no match
+	allValues, valueFound := s.checkEventAttributeValueMatch(events, attributeKey, expectedValue)
+	s.Require().False(valueFound, "attribute %s with value %s should not have been found in event %s. Values emitted for attribute: %+v",
+		attributeKey, expectedValue, eventType, allValues)
 }
