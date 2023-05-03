@@ -20,7 +20,7 @@ for chain in ${HOST_CHAINS[@]}; do
     cp ${DOCKERNET_HOME}/config/relayer_config.yaml $relayer_config/config.yaml
 
     printf "STRIDE <> $chain - Adding relayer keys..."
-    $relayer_exec rly keys restore stride $RELAYER_STRIDE_ACCT "$mnemonic" >> $relayer_logs 2>&1
+    $relayer_exec rly keys restore stride $RELAYER_STRIDE_ACCT "$mnemonic" --coin-type $coin_type >> $relayer_logs 2>&1
     $relayer_exec rly keys restore $chain_name $account_name "$mnemonic" --coin-type $coin_type >> $relayer_logs 2>&1
     echo "Done restoring relayer keys"
 

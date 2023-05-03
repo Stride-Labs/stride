@@ -10,13 +10,13 @@ RUN apk add --no-cache make git gcc musl-dev openssl-dev linux-headers
 
 COPY go.mod .
 COPY go.sum .
+COPY . .
 
 RUN --mount=type=cache,target=/root/.cache/go-build \
     --mount=type=cache,target=/root/go/pkg/mod \
     go mod download
 
 # Copy the remaining files
-COPY . .
 
 RUN LINK_STATICALLY=true make build
 
