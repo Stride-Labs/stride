@@ -182,7 +182,7 @@ replace (
 	github.com/cosmos/cosmos-sdk => github.com/Stride-Labs/cosmos-sdk v0.47.1
 	github.com/cosmos/ibc-go/v7 => github.com/Stride-Labs/ibc-go/v7 v7.0.0
 
-	github.com/cosmos/interchain-security => ./interchain-security
+	github.com/cosmos/interchain-security => github.com/Stride-Labs/interchain-security v1.0.2-0.20230413135554-360c883d50ba
 
 	// use cosmos-flavored protobufs
 	github.com/gogo/protobuf => github.com/regen-network/protobuf v1.3.3-alpha.regen.1

@@ -221,6 +221,8 @@ github.com/Stride-Labs/cosmos-sdk v0.47.1 h1:hK/Dthox5N6Gh6elETTXfkbSSIW57hGxOtf
 github.com/Stride-Labs/cosmos-sdk v0.47.1/go.mod h1:14tO5KQaTrl2q3OxBnDRfue7TRN9zkXS0cLutrSqkOo=
 github.com/Stride-Labs/ibc-go/v7 v7.0.0 h1:jyDRCvsnfgBAVocfOluc1QA9++Edw/xoIDW80Ij15Fk=
 github.com/Stride-Labs/ibc-go/v7 v7.0.0/go.mod h1:BFh8nKWjr5zeR2OZfhkzdgDzj1+KjRn3aJLpwapStj8=
+github.com/Stride-Labs/interchain-security v1.0.2-0.20230413135554-360c883d50ba h1:kYSquTO0oydYm8buScR0TxDAQMW6pg2bcjtA+fgCR3k=
+github.com/Stride-Labs/interchain-security v1.0.2-0.20230413135554-360c883d50ba/go.mod h1:OI7OcfE9NFiV5d8cOQ1yxi6eUTMALqitkgwW2/VXEFk=
 github.com/VividCortex/gohistogram v1.0.0 h1:6+hBz+qvs0JOrrNhhmR7lFxo5sINxBCGXrdtl/UvroE=
 github.com/VividCortex/gohistogram v1.0.0/go.mod h1:Pf5mBqqDxYaXu3hDrrU+w6nw50o/4+TcAqDqk/vUH7g=
 github.com/adlio/schema v1.3.3 h1:oBJn8I02PyTB466pZO1UZEn1TV5XLlifBSyMrmHl/1I=
