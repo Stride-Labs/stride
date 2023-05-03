@@ -369,7 +369,7 @@ func (s *KeeperTestSuite) TestUnbondFromHostZone_ICAFailed() {
 	s.Require().ErrorContains(err, "unable to submit unbonding ICA for GAIA")
 }
 
-func (s *KeeperTestSuite) TestGetUnbalanceRatio() {
+func (s *KeeperTestSuite) TestGetBalanceRatio() {
 	testCases := []struct {
 		unbondCapacity keeper.ValidatorUnbondCapacity
 		expectedRatio  sdk.Dec
@@ -404,7 +404,7 @@ func (s *KeeperTestSuite) TestGetUnbalanceRatio() {
 		},
 	}
 	for _, tc := range testCases {
-		s.Require().Equal(tc.expectedRatio.String(), tc.unbondCapacity.GetUnbalanceRatio().String())
+		s.Require().Equal(tc.expectedRatio.String(), tc.unbondCapacity.GetBalanceRatio().String())
 	}
 }
 

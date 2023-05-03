@@ -34,7 +34,7 @@ type ValidatorUnbondCapacity struct {
 // This represents how proportionally unbalanced each validator is
 // The smaller number means their current delegation is much larger
 // then their fair portion of the current total stake
-func (c *ValidatorUnbondCapacity) GetUnbalanceRatio() sdk.Dec {
+func (c *ValidatorUnbondCapacity) GetBalanceRatio() sdk.Dec {
 	return sdk.NewDecFromInt(c.BalancedDelegation).Quo(sdk.NewDecFromInt(c.CurrentDelegation))
 }
 
@@ -136,9 +136,9 @@ func SortUnbondingCapacityByPriority(validatorUnbondCapacity []ValidatorUnbondCa
 		validatorA := validatorUnbondCapacity[i]
 		validatorB := validatorUnbondCapacity[j]
 
-		// Sort by ratio first - in ascending order - so the more unbalanced validators appear first
-		if !validatorA.GetUnbalanceRatio().Equal(validatorB.GetUnbalanceRatio()) {
-			return validatorA.GetUnbalanceRatio().LT(validatorB.GetUnbalanceRatio())
+		// Sort by the balance ratio first - in ascending order - so the more unbalanced validators appear first
+		if !validatorA.GetBalanceRatio().Equal(validatorB.GetBalanceRatio()) {
+			return validatorA.GetBalanceRatio().LT(validatorB.GetBalanceRatio())
 		}
 
 		// If the ratio's are equal, use the capacity as a tie breaker
