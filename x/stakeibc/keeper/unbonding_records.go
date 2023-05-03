@@ -34,8 +34,8 @@ type ValidatorUnbondCapacity struct {
 // This represents how proportionally unbalanced each validator is
 // The smaller number means their current delegation is much larger
 // then their fair portion of the current total stake
-func (c *ValidatorUnbondCapacity) GetUnbalanceRatio() sdkmath.Int {
-	return c.Capacity.Quo(c.CurrentDelegation)
+func (c *ValidatorUnbondCapacity) GetUnbalanceRatio() sdk.Dec {
+	return sdk.NewDecFromInt(c.BalancedDelegation).Quo(sdk.NewDecFromInt(c.CurrentDelegation))
 }
 
 // Creates a new epoch unbonding record for the epoch
@@ -104,12 +104,14 @@ func (k Keeper) GetValidatorUnbondCapacity(
 		// the balanced delegation
 		// If the capacity is negative, that means the validator has less than their
 		// balanced portion. Ignore this case so they don't unbond anything
-		capacity := validator.Delegation.Sub(balancedDelegation[validator.Address])
+		balancedDelegation := balancedDelegation[validator.Address]
+		capacity := validator.Delegation.Sub(balancedDelegation)
 		if capacity.IsPositive() {
 			validatorCapacities = append(validatorCapacities, ValidatorUnbondCapacity{
-				ValidatorAddress:  validator.Address,
-				Capacity:          capacity,
-				CurrentDelegation: validator.Delegation,
+				ValidatorAddress:   validator.Address,
+				Capacity:           capacity,
+				CurrentDelegation:  validator.Delegation,
+				BalancedDelegation: balancedDelegation,
 			})
 		}
 	}
@@ -160,13 +162,8 @@ func SortUnbondingCapacityByPriority(validatorUnbondCapacity []ValidatorUnbondCa
 func (k Keeper) GetUnbondingICAMessages(
 	hostZone types.HostZone,
 	totalUnbondAmount sdkmath.Int,
-	validatorUnbondCapacity []ValidatorUnbondCapacity,
+	prioritizedUnbondCapacity []ValidatorUnbondCapacity,
 ) (msgs []sdk.Msg, unbondings []*types.SplitDelegation, err error) {
-	// Sort the unbonding capacity by priority
-	// Priority is determined by checking the how proportionally unbalanced each validator is
-	// Zero weight validators will come first in the list
-	prioritizedUnbondCapacity := SortUnbondingCapacityByPriority(validatorUnbondCapacity)
-
 	// Loop through each validator and unbond as much as possible
 	remainingUnbondAmount := totalUnbondAmount
 	for _, validatorCapacity := range prioritizedUnbondCapacity {
@@ -257,8 +254,13 @@ func (k Keeper) UnbondFromHostZone(ctx sdk.Context, hostZone types.HostZone) err
 		return fmt.Errorf("there are no validators on %s with sufficient unbond capacity", hostZone.ChainId)
 	}
 
+	// Sort the unbonding capacity by priority
+	// Priority is determined by checking the how proportionally unbalanced each validator is
+	// Zero weight validators will come first in the list
+	prioritizedUnbondCapacity := SortUnbondingCapacityByPriority(validatorUnbondCapacity)
+
 	// Get the undelegation ICA messages and split delegations for the callback
-	msgs, unbondings, err := k.GetUnbondingICAMessages(hostZone, totalAmountToUnbond, validatorUnbondCapacity)
+	msgs, unbondings, err := k.GetUnbondingICAMessages(hostZone, totalAmountToUnbond, prioritizedUnbondCapacity)
 	if err != nil {
 		return err
 	}

@@ -7,12 +7,12 @@ import (
 
 	recordtypes "github.com/Stride-Labs/stride/v9/x/records/types"
 
-	stakeibc "github.com/Stride-Labs/stride/v9/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v9/x/stakeibc/types"
 )
 
 type InitiateAllHostZoneUnbondingsTestCase struct {
 	epochUnbondingRecords []recordtypes.EpochUnbondingRecord
-	hostZones             []stakeibc.HostZone
+	hostZones             []types.HostZone
 }
 
 func (s *KeeperTestSuite) SetupInitiateAllHostZoneUnbondings() InitiateAllHostZoneUnbondingsTestCase {
@@ -23,7 +23,7 @@ func (s *KeeperTestSuite) SetupInitiateAllHostZoneUnbondings() InitiateAllHostZo
 	gaiaDelegationAddr := "cosmos_DELEGATION"
 	osmoDelegationAddr := "osmo_DELEGATION"
 	//  define the host zone with total delegation and validators with staked amounts
-	gaiaValidators := []*stakeibc.Validator{
+	gaiaValidators := []*types.Validator{
 		{
 			Address:    gaiaValAddr,
 			Delegation: sdkmath.NewInt(5_000_000),
@@ -35,14 +35,14 @@ func (s *KeeperTestSuite) SetupInitiateAllHostZoneUnbondings() InitiateAllHostZo
 			Weight:     uint64(6),
 		},
 	}
-	osmoValidators := []*stakeibc.Validator{
+	osmoValidators := []*types.Validator{
 		{
 			Address:    osmoValAddr,
 			Delegation: sdkmath.NewInt(5_000_000),
 			Weight:     uint64(10),
 		},
 	}
-	hostZones := []stakeibc.HostZone{
+	hostZones := []types.HostZone{
 		{
 			ChainId:              HostChainId,
 			HostDenom:            Atom,
@@ -95,7 +95,7 @@ func (s *KeeperTestSuite) SetupInitiateAllHostZoneUnbondings() InitiateAllHostZo
 		s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
 	}
 
-	s.App.StakeibcKeeper.SetEpochTracker(s.Ctx, stakeibc.EpochTracker{
+	s.App.StakeibcKeeper.SetEpochTracker(s.Ctx, types.EpochTracker{
 		EpochIdentifier:    "day",
 		EpochNumber:        12,
 		NextEpochStartTime: uint64(2661750006000000000), // arbitrary time in the future, year 2056 I believe
@@ -151,7 +151,7 @@ func (s *KeeperTestSuite) TestInitiateAllHostZoneUnbondings_Failed() {
 	// but Osmo does and is successful
 	s.SetupInitiateAllHostZoneUnbondings()
 	hostZone, _ := s.App.StakeibcKeeper.GetHostZone(s.Ctx, HostChainId)
-	hostZone.Validators = []*stakeibc.Validator{
+	hostZone.Validators = []*types.Validator{
 		{
 			Address:    "cosmos_VALIDATOR",
 			Delegation: sdkmath.NewInt(1_000_000),
@@ -166,88 +166,4 @@ func (s *KeeperTestSuite) TestInitiateAllHostZoneUnbondings_Failed() {
 	s.Require().Len(failedUnbondings, 1, "initiating bad unbondings has 1 failure")
 	s.Require().Equal("OSMO", successfulUnbondings[0], "initiating bad unbondings succeeds on osmo")
 	s.Require().Equal("GAIA", failedUnbondings[0], "initiating bad unbondings fails on gaia")
-}
-
-func (s *KeeperTestSuite) TestGetTotalUnbondAmountAndRecordsIds() {
-	epochUnbondingRecords := []recordtypes.EpochUnbondingRecord{
-		{
-			EpochNumber: uint64(1),
-			HostZoneUnbondings: []*recordtypes.HostZoneUnbonding{
-				{
-					// Summed
-					HostZoneId:        HostChainId,
-					NativeTokenAmount: sdkmath.NewInt(1),
-					Status:            recordtypes.HostZoneUnbonding_UNBONDING_QUEUE,
-				},
-				{
-					// Different host zone
-					HostZoneId:        OsmoChainId,
-					NativeTokenAmount: sdkmath.NewInt(2),
-					Status:            recordtypes.HostZoneUnbonding_UNBONDING_QUEUE,
-				},
-			},
-		},
-		{
-			EpochNumber: uint64(2),
-			HostZoneUnbondings: []*recordtypes.HostZoneUnbonding{
-				{
-					// Summed
-					HostZoneId:        HostChainId,
-					NativeTokenAmount: sdkmath.NewInt(3),
-					Status:            recordtypes.HostZoneUnbonding_UNBONDING_QUEUE,
-				},
-				{
-					// Different host zone
-					HostZoneId:        OsmoChainId,
-					NativeTokenAmount: sdkmath.NewInt(4),
-					Status:            recordtypes.HostZoneUnbonding_UNBONDING_QUEUE,
-				},
-			},
-		},
-		{
-			EpochNumber: uint64(3),
-			HostZoneUnbondings: []*recordtypes.HostZoneUnbonding{
-				{
-					// Different Status
-					HostZoneId:        HostChainId,
-					NativeTokenAmount: sdkmath.NewInt(5),
-					Status:            recordtypes.HostZoneUnbonding_UNBONDING_IN_PROGRESS,
-				},
-				{
-					// Different Status
-					HostZoneId:        OsmoChainId,
-					NativeTokenAmount: sdkmath.NewInt(6),
-					Status:            recordtypes.HostZoneUnbonding_UNBONDING_IN_PROGRESS,
-				},
-			},
-		},
-		{
-			EpochNumber: uint64(4),
-			HostZoneUnbondings: []*recordtypes.HostZoneUnbonding{
-				{
-					// Different Host and Status
-					HostZoneId:        OsmoChainId,
-					NativeTokenAmount: sdkmath.NewInt(7),
-					Status:            recordtypes.HostZoneUnbonding_CLAIMABLE,
-				},
-				{
-					// Summed
-					HostZoneId:        HostChainId,
-					NativeTokenAmount: sdkmath.NewInt(8),
-					Status:            recordtypes.HostZoneUnbonding_UNBONDING_QUEUE,
-				},
-			},
-		},
-	}
-
-	for _, epochUnbondingRecord := range epochUnbondingRecords {
-		s.App.RecordsKeeper.SetEpochUnbondingRecord(s.Ctx, epochUnbondingRecord)
-	}
-
-	expectedUnbondAmount := int64(1 + 3 + 8)
-	expectedRecordIds := []uint64{1, 2, 4}
-
-	actualUnbondAmount, actualRecordIds := s.App.StakeibcKeeper.GetTotalUnbondAmountAndRecordsIds(s.Ctx, HostChainId)
-	s.Require().Equal(expectedUnbondAmount, actualUnbondAmount.Int64(), "unbonded amount")
-	s.Require().Equal(expectedRecordIds, actualRecordIds, "epoch unbonding record IDs")
 }
