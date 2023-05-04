@@ -60,3 +60,46 @@ func EmitFailedLSMLiquidStakeEvent(ctx sdk.Context, hostZone types.HostZone, lsm
 		),
 	)
 }
+
+// Emits an event if a validator's exchange rate changed
+func EmitValidatorExchangeRateChangeEvent(
+	ctx sdk.Context,
+	chainId string,
+	validatorAddress string,
+	previousExchangeRate,
+	currentExchangeRate sdk.Dec,
+) {
+	ctx.EventManager().EmitEvent(
+		sdk.NewEvent(
+			types.EventTypeValidatorExchangeRate,
+			sdk.NewAttribute(sdk.AttributeKeyModule, types.ModuleName),
+			sdk.NewAttribute(types.AttributeKeyHostZone, chainId),
+			sdk.NewAttribute(types.AttributeKeyValidator, validatorAddress),
+			sdk.NewAttribute(types.AttributeKeyPreviousExchangeRate, previousExchangeRate.String()),
+			sdk.NewAttribute(types.AttributeKeyCurrentExchangeRate, currentExchangeRate.String()),
+		),
+	)
+}
+
+// Emits an event if a validator was slashed
+func EmitValidatorSlashEvent(
+	ctx sdk.Context,
+	hostZone types.HostZone,
+	validatorAddress string,
+	slashPercent sdk.Dec,
+	slashAmount sdkmath.Int,
+	currentDelegation sdkmath.Int,
+) {
+	ctx.EventManager().EmitEvent(
+		sdk.NewEvent(
+			types.EventTypeValidatorSlash,
+			sdk.NewAttribute(sdk.AttributeKeyModule, types.ModuleName),
+			sdk.NewAttribute(types.AttributeKeyHostZone, hostZone.ChainId),
+			sdk.NewAttribute(types.AttributeKeyNativeBaseDenom, hostZone.HostDenom),
+			sdk.NewAttribute(types.AttributeKeyValidator, validatorAddress),
+			sdk.NewAttribute(types.AttributeKeySlashPercent, slashPercent.String()),
+			sdk.NewAttribute(types.AttributeKeySlashAmount, slashAmount.String()),
+			sdk.NewAttribute(types.AttributeKeyCurrentDelegation, currentDelegation.String()),
+		),
+	)
+}

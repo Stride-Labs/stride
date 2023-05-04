@@ -17,6 +17,8 @@ const (
 	EventTypeLSMLiquidStakeRequest = "lsm_liquid_stake"
 	EventTypeLSMLiquidStakeFailed  = "lsm_liquid_stake_failed"
 	EventTypeHostZoneHalt          = "halt_zone"
+	EventTypeValidatorExchangeRate = "validator_exchange_rate"
+	EventTypeValidatorSlash        = "validator_slash"
 
 	AttributeKeyHostZone         = "host_zone"
 	AttributeKeyConnectionId     = "connection_id"
@@ -35,6 +37,12 @@ const (
 	AttributeKeyNativeAmount      = "native_amount"
 	AttributeKeyStTokenAmount     = "sttoken_amount"
 	AttributeKeyValidator         = "validator"
+
+	AttributeKeyPreviousExchangeRate = "previous_exchange_rate"
+	AttributeKeyCurrentExchangeRate  = "current_exchange_rate"
+	AttributeKeySlashPercent         = "slash_percent"
+	AttributeKeySlashAmount          = "slash_amount"
+	AttributeKeyCurrentDelegation    = "current_delegation"
 
 	AttributeKeyError = "error"
 
