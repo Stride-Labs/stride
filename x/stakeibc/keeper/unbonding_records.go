@@ -9,7 +9,7 @@ import (
 	errorsmod "cosmossdk.io/errors"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
-	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+	lsmstakingtypes "github.com/iqlusioninc/liquidity-staking-module/x/staking/types"
 	"github.com/spf13/cast"
 
 	"github.com/Stride-Labs/stride/v9/utils"
@@ -156,7 +156,7 @@ func (k Keeper) GetHostZoneUnbondingMsgs(ctx sdk.Context, hostZone types.HostZon
 		}
 
 		// Store the ICA transactions
-		msgs = append(msgs, &stakingtypes.MsgUndelegate{
+		msgs = append(msgs, &lsmstakingtypes.MsgUndelegate{
 			DelegatorAddress: delegationAccount.Address,
 			ValidatorAddress: validatorAddress,
 			Amount:           undelegationAmount,

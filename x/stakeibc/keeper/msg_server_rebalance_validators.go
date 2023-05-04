@@ -10,7 +10,7 @@ import (
 
 	errorsmod "cosmossdk.io/errors"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	stakingTypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+	lsmstakingtypes "github.com/iqlusioninc/liquidity-staking-module/x/staking/types"
 
 	"github.com/Stride-Labs/stride/v9/utils"
 	"github.com/Stride-Labs/stride/v9/x/stakeibc/types"
@@ -87,14 +87,14 @@ func (k msgServer) RebalanceValidators(goCtx context.Context, msg *types.MsgReba
 		}
 		// underweight Elem is positive, overweight Elem is negative
 		overWeightElemAbs := overWeightElem.deltaAmt.Abs()
-		var redelegateMsg *stakingTypes.MsgBeginRedelegate
+		var redelegateMsg *lsmstakingtypes.MsgBeginRedelegate
 		if underWeightElem.deltaAmt.GT(overWeightElemAbs) {
 			// if the underweight element is more off than the overweight element
 			// we transfer stake from the underweight element to the overweight element
 			underWeightElem.deltaAmt = underWeightElem.deltaAmt.Sub(overWeightElemAbs)
 			overWeightIndex += 1
 			// issue an ICA call to the host zone to rebalance the validator
-			redelegateMsg = &stakingTypes.MsgBeginRedelegate{
+			redelegateMsg = &lsmstakingtypes.MsgBeginRedelegate{
 				DelegatorAddress:    delegatorAddress,
 				ValidatorSrcAddress: overWeightElem.valAddr,
 				ValidatorDstAddress: underWeightElem.valAddr,
@@ -106,7 +106,7 @@ func (k msgServer) RebalanceValidators(goCtx context.Context, msg *types.MsgReba
 			overWeightElem.deltaAmt = overWeightElem.deltaAmt.Add(underWeightElem.deltaAmt)
 			underWeightIndex -= 1
 			// issue an ICA call to the host zone to rebalance the validator
-			redelegateMsg = &stakingTypes.MsgBeginRedelegate{
+			redelegateMsg = &lsmstakingtypes.MsgBeginRedelegate{
 				DelegatorAddress:    delegatorAddress,
 				ValidatorSrcAddress: overWeightElem.valAddr,
 				ValidatorDstAddress: underWeightElem.valAddr,
@@ -118,7 +118,7 @@ func (k msgServer) RebalanceValidators(goCtx context.Context, msg *types.MsgReba
 			underWeightIndex -= 1
 			overWeightIndex += 1
 			// issue an ICA call to the host zone to rebalance the validator
-			redelegateMsg = &stakingTypes.MsgBeginRedelegate{
+			redelegateMsg = &lsmstakingtypes.MsgBeginRedelegate{
 				DelegatorAddress:    delegatorAddress,
 				ValidatorSrcAddress: overWeightElem.valAddr,
 				ValidatorDstAddress: underWeightElem.valAddr,
@@ -129,7 +129,7 @@ func (k msgServer) RebalanceValidators(goCtx context.Context, msg *types.MsgReba
 		}
 		// add the rebalancing to the callback
 		// lastMsg grabs rebalanceMsg from above (due to the type, it's hard to )
-		// lastMsg := (msgs[len(msgs)-1]).(*stakingTypes.MsgBeginRedelegate)
+		// lastMsg := (msgs[len(msgs)-1]).(*lsmstakingtypes.MsgBeginRedelegate)
 		rebalanceCallback.Rebalancings = append(rebalanceCallback.Rebalancings, &types.Rebalancing{
 			SrcValidator: redelegateMsg.ValidatorSrcAddress,
 			DstValidator: redelegateMsg.ValidatorDstAddress,

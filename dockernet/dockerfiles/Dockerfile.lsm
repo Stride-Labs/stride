@@ -4,7 +4,7 @@ WORKDIR /opt
 
 RUN apk add --update curl make git libc-dev bash gcc linux-headers eudev-dev python3
 
-ENV COMMIT_HASH=57afbf08875f49c654f093fcfe286b4e97a558b3
+ENV COMMIT_HASH=b765b3675a102dc1071e74ff673f2450590f4115
 
 RUN git clone https://github.com/iqlusioninc/liquidity-staking-module.git \
     && cd liquidity-staking-module \

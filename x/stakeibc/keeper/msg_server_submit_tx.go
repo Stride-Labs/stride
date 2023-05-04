@@ -16,10 +16,10 @@ import (
 	"github.com/Stride-Labs/stride/v9/x/stakeibc/types"
 
 	bankTypes "github.com/cosmos/cosmos-sdk/x/bank/types"
-	distributiontypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
-	stakingTypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+	lsmdistributiontypes "github.com/iqlusioninc/liquidity-staking-module/x/distribution/types"
+	lsmstakingtypes "github.com/iqlusioninc/liquidity-staking-module/x/staking/types"
 
 	epochstypes "github.com/Stride-Labs/stride/v9/x/epochs/types"
 	icqtypes "github.com/Stride-Labs/stride/v9/x/interchainquery/types"
@@ -61,7 +61,7 @@ func (k Keeper) DelegateOnHost(ctx sdk.Context, hostZone types.HostZone, amt sdk
 	for _, validator := range hostZone.Validators {
 		relativeAmount := sdk.NewCoin(amt.Denom, targetDelegatedAmts[validator.Address])
 		if relativeAmount.Amount.IsPositive() {
-			msgs = append(msgs, &stakingTypes.MsgDelegate{
+			msgs = append(msgs, &lsmstakingtypes.MsgDelegate{
 				DelegatorAddress: delegationAccount.Address,
 				ValidatorAddress: validator.Address,
 				Amount:           relativeAmount,
@@ -128,7 +128,7 @@ func (k Keeper) SetWithdrawalAddressOnHost(ctx sdk.Context, hostZone types.HostZ
 
 	// Construct the ICA message
 	msgs := []sdk.Msg{
-		&distributiontypes.MsgSetWithdrawAddress{
+		&lsmdistributiontypes.MsgSetWithdrawAddress{
 			DelegatorAddress: delegationAccount.Address,
 			WithdrawAddress:  withdrawalAccount.Address,
 		},
