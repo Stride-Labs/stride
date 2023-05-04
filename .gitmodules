@@ -26,10 +26,6 @@
 	# Commit: ec337e0357ae6b6727ad9092ac0ce3667df91319
 	path = deps/evmos
 	url = https://github.com/evmos/evmos
-[submodule "deps/lsm"]
-	# Commit: 057d68c6a5226358ff404843f3a11d72ae61b0bf
-	path = deps/lsm
-	url = https://github.com/Stride-Labs/liquidity-staking-module.git
 # bats
 [submodule "dockernet/tests/bats/bats-core"]
 	path = dockernet/tests/bats/bats-core
