@@ -16,7 +16,7 @@ TX_LOGS=$DOCKERNET_HOME/logs/tx.log
 KEYS_LOGS=$DOCKERNET_HOME/logs/keys.log
 
 # List of hosts enabled
-HOST_CHAINS=(EVMOS) 
+HOST_CHAINS=(LSM) 
 
 # If no host zones are specified above:
 #  `start-docker` defaults to just GAIA if HOST_CHAINS is empty
@@ -39,19 +39,21 @@ UPGRADE_NAME=""
 UPGRADE_OLD_COMMIT_HASH=""
 
 # DENOMS
+STRD_DENOM="ustrd"
 ATOM_DENOM="uatom"
 JUNO_DENOM="ujuno"
 OSMO_DENOM="uosmo"
-STRD_DENOM="ustrd"
 STARS_DENOM="ustars"
 WALK_DENOM="uwalk"
+EVMOS_DENOM="aevmos"
+LSM_DENOM="stake"
 STATOM_DENOM="stuatom"
 STJUNO_DENOM="stujuno"
 STOSMO_DENOM="stuosmo"
 STSTARS_DENOM="stustars"
-EVMOS_DENOM="aevmos"
-STEVMOS_DENOM="staevmos"
 STWALK_DENOM="stuwalk"
+STEVMOS_DENOM="staevmos"
+STLSM_DENOM="ststake"
 
 IBC_STRD_DENOM='ibc/FF6C2E86490C1C4FBBD24F55032831D2415B9D7882F85C3CC9C2401D79362BEA'  
 
@@ -84,6 +86,11 @@ IBC_HOST_CHANNEL_0_DENOM='ibc/82DBA832457B89E1A344DA51761D92305F7581B7EA6C18D850
 IBC_HOST_CHANNEL_1_DENOM='ibc/FB7E2520A1ED6890E1632904A4ACA1B3D2883388F8E2B88F2D6A54AA15E4B49E'
 IBC_HOST_CHANNEL_2_DENOM='ibc/D664DC1D38648FC4C697D9E9CF2D26369318DFE668B31F81809383A8A88CFCF4'
 IBC_HOST_CHANNEL_3_DENOM='ibc/FD7AA7EB2C1D5D97A8693CCD71FFE3F5AFF12DB6756066E11E69873DE91A33EA'
+
+IBC_LSM_CHANNEL_0_DENOM='ibc/C053D637CCA2A2BA030E2C5EE1B28A16F71CCB0E45E8BE52766DC1B241B77878'
+IBC_LSM_CHANNEL_1_DENOM='ibc/3C3D7B3BE4ECC85A0E5B52A3AEC3B7DFC2AA9CA47C37821E57020D6807043BE9'
+IBC_LSM_CHANNEL_2_DENOM='ibc/D549749C93524DA1831A4B3C850DFC1BA9060261BEDFB224B3B0B4744CD77A70'
+IBC_LSM_CHANNEL_3_DENOM='ibc/4D74FBE09BED153381B75FF0D0B030A839E68AE17761F3945A8AF5671B915928'
 
 # COIN TYPES
 # Coin types can be found at https://github.com/satoshilabs/slips/blob/master/slip-0044.md
@@ -237,14 +244,29 @@ EVMOS_MAIN_CMD="$EVMOS_BINARY --home $DOCKERNET_HOME/state/${EVMOS_NODE_PREFIX}1
 EVMOS_RECEIVER_ADDRESS='evmos123z469cfejeusvk87ufrs5520wmdxmmlc7qzuw'
 EVMOS_MICRO_DENOM_UNITS="000000000000000000000000"
 
+# LSM (Simapp with LSM)
+LSM_CHAIN_ID=LSM
+LSM_NODE_PREFIX=lsm
+LSM_NUM_NODES=1
+LSM_BINARY="$DOCKERNET_HOME/../build/liquidstakingd"
+LSM_VAL_PREFIX=lsval
+LSM_ADDRESS_PREFIX=cosmos
+LSM_REV_ACCT=lsrev1
+LSM_DENOM=$LSM_DENOM
+LSM_COIN_TYPE=118
+LSM_RPC_PORT=29957
+LSM_MAIN_CMD="$LSM_BINARY --home $DOCKERNET_HOME/state/${LSM_NODE_PREFIX}1"
+LSM_RECEIVER_ADDRESS=cosmos1nnmx9qq85tqherfmr0pj40yve44zrslzeftqdm
+
 # RELAYER
 RELAYER_CMD="$DOCKERNET_HOME/../build/relayer --home $STATE/relayer"
 RELAYER_GAIA_EXEC="$DOCKER_COMPOSE run --rm relayer-gaia"
 RELAYER_JUNO_EXEC="$DOCKER_COMPOSE run --rm relayer-juno"
 RELAYER_OSMO_EXEC="$DOCKER_COMPOSE run --rm relayer-osmo"
 RELAYER_STARS_EXEC="$DOCKER_COMPOSE run --rm relayer-stars"
-RELAYER_EVMOS_EXEC="$DOCKER_COMPOSE run --rm relayer-evmos"
 RELAYER_HOST_EXEC="$DOCKER_COMPOSE run --rm relayer-host"
+RELAYER_EVMOS_EXEC="$DOCKER_COMPOSE run --rm relayer-evmos"
+RELAYER_LSM_EXEC="$DOCKER_COMPOSE run --rm relayer-lsm"
 
 RELAYER_STRIDE_ACCT=rly1
 RELAYER_GAIA_ACCT=rly2
@@ -253,7 +275,16 @@ RELAYER_OSMO_ACCT=rly4
 RELAYER_STARS_ACCT=rly5
 RELAYER_HOST_ACCT=rly6
 RELAYER_EVMOS_ACCT=rly7
-RELAYER_ACCTS=($RELAYER_GAIA_ACCT $RELAYER_JUNO_ACCT $RELAYER_OSMO_ACCT $RELAYER_STARS_ACCT $RELAYER_HOST_ACCT $RELAYER_EVMOS_ACCT)
+RELAYER_LSM_ACCT=rly8
+RELAYER_ACCTS=(
+  $RELAYER_GAIA_ACCT 
+  $RELAYER_JUNO_ACCT 
+  $RELAYER_OSMO_ACCT 
+  $RELAYER_STARS_ACCT 
+  $RELAYER_HOST_ACCT 
+  $RELAYER_EVMOS_ACCT
+  $RELAYER_LSM_ACCT
+)
 
 RELAYER_EVMOS_MNEMONIC="science depart where tell bus ski laptop follow child bronze rebel recall brief plug razor ship degree labor human series today embody fury harvest"
 RELAYER_GAIA_MNEMONIC="fiction perfect rapid steel bundle giant blade grain eagle wing cannon fever must humble dance kitchen lazy episode museum faith off notable rate flavor"
@@ -261,6 +292,8 @@ RELAYER_JUNO_MNEMONIC="kiwi betray topple van vapor flag decorate cement crystal
 RELAYER_OSMO_MNEMONIC="unaware wine ramp february bring trust leaf beyond fever inside option dilemma save know captain endless salute radio humble chicken property culture foil taxi"
 RELAYER_STARS_MNEMONIC="deposit dawn erosion talent old broom flip recipe pill hammer animal hill nice ten target metal gas shoe visual nephew soda harbor child simple"
 RELAYER_HOST_MNEMONIC="renew umbrella teach spoon have razor knee sock divert inner nut between immense library inhale dog truly return run remain dune virus diamond clinic"
+RELAYER_EVMOS_MNEMONIC="science depart where tell bus ski laptop follow child bronze rebel recall brief plug razor ship degree labor human series today embody fury harvest"
+RELAYER_LSM_MNEMONIC="soap body good churn hire trim noodle define income into core web bar pond chase brand timber audit chest force armed bonus impose pudding"
 RELAYER_MNEMONICS=(
   "$RELAYER_GAIA_MNEMONIC"
   "$RELAYER_JUNO_MNEMONIC"
@@ -268,6 +301,7 @@ RELAYER_MNEMONICS=(
   "$RELAYER_STARS_MNEMONIC"
   "$RELAYER_HOST_MNEMONIC"
   "$RELAYER_EVMOS_MNEMONIC"
+  "$RELAYER_LSM_MNEMONIC"
 )
 
 STRIDE_ADDRESS() { 
@@ -287,12 +321,14 @@ OSMO_ADDRESS() {
 STARS_ADDRESS() { 
   $STARS_MAIN_CMD keys show ${STARS_VAL_PREFIX}1 --keyring-backend test -a 
 }
+HOST_ADDRESS() { 
+  $HOST_MAIN_CMD keys show ${HOST_VAL_PREFIX}1 --keyring-backend test -a 
+}
 EVMOS_ADDRESS() { 
   $EVMOS_MAIN_CMD keys show ${EVMOS_VAL_PREFIX}1 --keyring-backend test -a 
 }
-
-HOST_ADDRESS() { 
-  $HOST_MAIN_CMD keys show ${HOST_VAL_PREFIX}1 --keyring-backend test -a 
+LSM_ADDRESS() { 
+  $LSM_MAIN_CMD keys show ${LSM_VAL_PREFIX}1 --keyring-backend test -a 
 }
 
 CSLEEP() {
