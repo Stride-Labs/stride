@@ -12,7 +12,7 @@ echo $mnemonic | $LSM_MAIN_CMD keys add hot --recover --keyring-backend test
 sleep 5
 
 echo ">>> Adding new staking account"
-$LSM_MAIN_CMD tx bank send $($LSM_MAIN_CMD keys show rly7 -a) $liquid_staked_address 10000000stake --from rly7 -y | TRIM_TX 
+$LSM_MAIN_CMD tx bank send $($LSM_MAIN_CMD keys show rly8 -a) $liquid_staked_address 10000000stake --from rly8 -y | TRIM_TX 
 sleep 5 && echo ""
 
 echo "Bank balance:"

@@ -14,7 +14,7 @@ stride_address="stride1uk4ze0x4nvh4fk0xm4jdud58eqn4yxhrt52vv7"
 # sleep 5
 
 # echo "Tokenize to liquid staker:"
-# $LSM_MAIN_CMD tx staking tokenize-share $validator_address 1000000stake $liquid_staked_address --from hot -y --gas auto | TRIM_TX && echo ""
+# $LSM_MAIN_CMD tx staking tokenize-share $validator_address 3000000stake $liquid_staked_address --from hot -y --gas auto | TRIM_TX && echo ""
 # sleep 5
 
 # echo "Tokenize to delegation account:"
@@ -38,7 +38,7 @@ stride_address="stride1uk4ze0x4nvh4fk0xm4jdud58eqn4yxhrt52vv7"
 # sleep 5
 
 # echo "IBC Transfer:"
-# $LSM_MAIN_CMD tx ibc-transfer transfer transfer channel-0 $stride_address 3000000cosmosvaloper1uk4ze0x4nvh4fk0xm4jdud58eqn4yxhrdt795p/2 --from hot -y | TRIM_TX
+# $LSM_MAIN_CMD tx ibc-transfer transfer transfer channel-0 $stride_address 3000000cosmosvaloper1uk4ze0x4nvh4fk0xm4jdud58eqn4yxhrdt795p/1 --from hot -y | TRIM_TX
 # sleep 5
 
 # echo "Transfer Rewards:"
