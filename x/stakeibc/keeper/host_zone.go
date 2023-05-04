@@ -25,9 +25,9 @@ func (k Keeper) SetHostZone(ctx sdk.Context, hostZone types.HostZone) {
 }
 
 // GetHostZone returns a hostZone from its id
-func (k Keeper) GetHostZone(ctx sdk.Context, chain_id string) (val types.HostZone, found bool) {
+func (k Keeper) GetHostZone(ctx sdk.Context, chainId string) (val types.HostZone, found bool) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefix(types.HostZoneKey))
-	b := store.Get([]byte(chain_id))
+	b := store.Get([]byte(chainId))
 	if b == nil {
 		return val, false
 	}
@@ -123,6 +123,30 @@ func (k Keeper) AddDelegationToValidator(ctx sdk.Context, hostZone types.HostZon
 
 	k.Logger(ctx).Error(fmt.Sprintf("Could not find validator %s on host zone %s", validatorAddress, hostZone.ChainId))
 	return false
+}
+
+// Increments the validators slash query progress tracker
+func (k Keeper) IncrementValidatorSlashQueryProgress(
+	ctx sdk.Context,
+	chainId string,
+	validatorAddress string,
+	amount sdkmath.Int,
+) error {
+	hostZone, found := k.GetHostZone(ctx, chainId)
+	if !found {
+		return types.ErrHostZoneNotFound
+	}
+
+	validator, valIndex, found := GetValidatorFromAddress(hostZone.Validators, validatorAddress)
+	if !found {
+		return types.ErrValidatorNotFound
+	}
+
+	validator.SlashQueryProgressTracker = validator.SlashQueryProgressTracker.Add(amount)
+	hostZone.Validators[valIndex] = &validator
+	k.SetHostZone(ctx, hostZone)
+
+	return nil
 }
 
 // Appends a validator to host zone (if the host zone is not already at capacity)
