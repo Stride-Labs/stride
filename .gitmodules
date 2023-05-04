@@ -3,9 +3,9 @@
 	path = deps/hermes
 	url = https://github.com/informalsystems/ibc-rs.git
 [submodule "deps/relayer"]
-	# Commit: v2.3.1
+	# Commit: sam/lsm-poc
 	path = deps/relayer
-	url = https://github.com/cosmos/relayer.git
+	url = https://github.com/Stride-Labs/relayer.git
 [submodule "deps/gaia"]
 	# Commit: 5db8fcc9a229730f5115bed82d0f85b6db7184b4
 	path = deps/gaia
