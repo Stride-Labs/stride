@@ -16,7 +16,7 @@ TX_LOGS=$DOCKERNET_HOME/logs/tx.log
 KEYS_LOGS=$DOCKERNET_HOME/logs/keys.log
 
 # List of hosts enabled
-HOST_CHAINS=(EVMOS) 
+HOST_CHAINS=(LSM) 
 
 # If no host zones are specified above:
 #  `start-docker` defaults to just GAIA if HOST_CHAINS is empty
@@ -31,7 +31,7 @@ HOST_CHAINS=(EVMOS)
 if [[ "${ALL_HOST_CHAINS:-false}" == "true" ]]; then 
   HOST_CHAINS=(GAIA EVMOS HOST)
 elif [[ "${#HOST_CHAINS[@]}" == "0" ]]; then 
-  HOST_CHAINS=(LSM)
+  HOST_CHAINS=(GAIA)
 fi
 
 # Sets up upgrade if {UPGRADE_NAME} is non-empty
@@ -45,14 +45,15 @@ OSMO_DENOM="uosmo"
 STRD_DENOM="ustrd"
 STARS_DENOM="ustars"
 WALK_DENOM="uwalk"
+EVMOS_DENOM="aevmos"
 LSM_DENOM="stake"
 STATOM_DENOM="stuatom"
 STJUNO_DENOM="stujuno"
 STOSMO_DENOM="stuosmo"
 STSTARS_DENOM="stustars"
 EVMOS_DENOM="aevmos"
-STEVMOS_DENOM="staevmos"
 STWALK_DENOM="stuwalk"
+STEVMOS_DENOM="staevmos"
 STLSM_DENOM="ststake"
 
 IBC_STRD_DENOM='ibc/FF6C2E86490C1C4FBBD24F55032831D2415B9D7882F85C3CC9C2401D79362BEA'  
@@ -254,7 +255,7 @@ LSM_ADDRESS_PREFIX=cosmos
 LSM_REV_ACCT=lsrev1
 LSM_DENOM=$LSM_DENOM
 LSM_COIN_TYPE=118
-LSM_RPC_PORT=26057
+LSM_RPC_PORT=29957
 LSM_MAIN_CMD="$LSM_BINARY --home $DOCKERNET_HOME/state/${LSM_NODE_PREFIX}1"
 LSM_RECEIVER_ADDRESS=cosmos1nnmx9qq85tqherfmr0pj40yve44zrslzeftqdm
 
