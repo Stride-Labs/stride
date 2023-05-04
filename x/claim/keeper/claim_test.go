@@ -1,6 +1,7 @@
 package keeper_test
 
 import (
+	"fmt"
 	"strings"
 	"time"
 
@@ -10,12 +11,12 @@ import (
 
 	vestingtypes "github.com/cosmos/cosmos-sdk/x/auth/vesting/types"
 
-	"github.com/Stride-Labs/stride/v8/app/apptesting"
-	"github.com/Stride-Labs/stride/v8/utils"
-	claimkeeper "github.com/Stride-Labs/stride/v8/x/claim/keeper"
+	"github.com/Stride-Labs/stride/v9/app/apptesting"
+	"github.com/Stride-Labs/stride/v9/utils"
+	claimkeeper "github.com/Stride-Labs/stride/v9/x/claim/keeper"
 
-	"github.com/Stride-Labs/stride/v8/x/claim/types"
-	stridevestingtypes "github.com/Stride-Labs/stride/v8/x/claim/vesting/types"
+	"github.com/Stride-Labs/stride/v9/x/claim/types"
+	stridevestingtypes "github.com/Stride-Labs/stride/v9/x/claim/vesting/types"
 )
 
 // Test functionality for loading allocation data(csv)
@@ -820,4 +821,31 @@ func (suite *KeeperTestSuite) TestUpdateAirdropAddress_HostAddressIncorrect() {
 	randomStrideAddress := "stride16qv5wnkwwvd2qj5ttwznmngc09cet8l9zhm2ru"
 	err = suite.app.ClaimKeeper.UpdateAirdropAddress(suite.ctx, randomStrideAddress, tc.strideAddress, tc.airdropId)
 	suite.Require().Error(err, "airdrop address update should fail with not present host address")
+}
+
+func (suite *KeeperTestSuite) TestGetAirdropByChainId() {
+	// Store 5 airdrops
+	airdrops := []*types.Airdrop{}
+	for i := 0; i < 5; i++ {
+		airdropId := fmt.Sprintf("airdrop-%d", i)
+		chainId := fmt.Sprintf("chain-%d", i)
+
+		airdrops = append(airdrops, &types.Airdrop{
+			AirdropIdentifier: airdropId,
+			ChainId:           chainId,
+		})
+	}
+	err := suite.app.ClaimKeeper.SetParams(suite.ctx, types.Params{Airdrops: airdrops})
+	suite.Require().NoError(err, "no error expected when setting airdrops")
+
+	// Lookup each airdrop by chain-id
+	for i, expected := range airdrops {
+		actual, found := suite.app.ClaimKeeper.GetAirdropByChainId(suite.ctx, expected.ChainId)
+		suite.Require().True(found, "should have found airdrop %d", i)
+		suite.Require().Equal(expected.AirdropIdentifier, actual.AirdropIdentifier, "airdrop identifier for %d", i)
+	}
+
+	// Lookup a non-existent airdrop - it should not be found
+	_, found := suite.app.ClaimKeeper.GetAirdropByChainId(suite.ctx, "fake_chain_id")
+	suite.Require().False(found, "fake_chain_id should not have been found")
 }

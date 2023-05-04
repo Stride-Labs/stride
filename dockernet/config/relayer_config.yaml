@@ -14,6 +14,7 @@ chains:
       keyring-backend: test
       gas-adjustment: 1.2
       gas-prices: 0.01ustrd
+      coin-type: 118
       debug: false
       timeout: 20s
       output-format: json
@@ -28,6 +29,7 @@ chains:
       keyring-backend: test
       gas-adjustment: 1.2
       gas-prices: 0.01uatom
+      coin-type: 118
       debug: false
       timeout: 20s
       output-format: json
@@ -42,6 +44,7 @@ chains:
       keyring-backend: test
       gas-adjustment: 1.2
       gas-prices: 0.01ujuno
+      coin-type: 118
       debug: false
       timeout: 20s
       output-format: json
@@ -56,6 +59,7 @@ chains:
       keyring-backend: test
       gas-adjustment: 1.2
       gas-prices: 0.01uosmo
+      coin-type: 118
       debug: false
       timeout: 20s
       output-format: json
@@ -70,6 +74,7 @@ chains:
       keyring-backend: test
       gas-adjustment: 1.2
       gas-prices: 0.01ustars
+      coin-type: 118
       debug: false
       timeout: 20s
       output-format: json
@@ -84,20 +89,39 @@ chains:
       keyring-backend: test
       gas-adjustment: 1.2
       gas-prices: 0.01uwalk
+      coin-type: 118
       debug: false
       timeout: 20s
       output-format: json
       sign-mode: direct
-  lsm:
+  evmos:
     type: cosmos
     value:
       key: rly7
+      chain-id: evmos_9001-2
+      rpc-addr: http://evmos1:26657
+      account-prefix: evmos
+      keyring-backend: test
+      gas-adjustment: 1.2
+      gas-prices: 0.01aevmos
+      coin-type: 60
+      debug: false
+      timeout: 20s
+      output-format: json
+      sign-mode: direct
+      extra-codecs:
+        - ethermint
+  lsm:
+    type: cosmos
+    value:
+      key: rly8
       chain-id: LSM
       rpc-addr: http://lsm1:26657
       account-prefix: cosmos
       keyring-backend: test
       gas-adjustment: 1.2
       gas-prices: 0.01stake
+      coin-type: 118
       debug: false
       timeout: 20s
       output-format: json
@@ -112,6 +136,7 @@ chains:
   #     keyring-backend: test
   #     gas-adjustment: 1.2
   #     gas-prices: 0.01{minimal_denom}
+  #     coin-type: {coin-type}
   #     debug: false
   #     timeout: 20s
   #     output-format: json
@@ -155,6 +180,14 @@ paths:
       chain-id: STRIDE
     dst:
       chain-id: HOST
+    src-channel-filter:
+      rule: ""
+      channel-list: []
+  stride-evmos:
+    src:
+      chain-id: STRIDE
+    dst:
+      chain-id: evmos_9001-2
     src-channel-filter:
       rule: ""
       channel-list: []

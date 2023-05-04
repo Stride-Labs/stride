@@ -171,14 +171,43 @@ services:
     volumes:
       - ./state/host5:/home/stride/.stride
 
+  evmos1:
+    image: stridezone:evmos
+    volumes:
+      - ./state/evmos1:/home/evmos/.evmosd
+    ports:
+      - "26057:26657"
+      - "1257:1317"
+      - "9030:9090"
+
+  evmos2:
+    image: stridezone:evmos
+    volumes:
+      - ./state/evmos2:/home/evmos/.evmosd
+
+  evmos3:
+    image: stridezone:evmos
+    volumes:
+      - ./state/evmos2:/home/evmos/.evmosd
+
+  evmos4:
+    image: stridezone:evmos
+    volumes:
+      - ./state/evmos2:/home/evmos/.evmosd
+
+  evmos5:
+    image: stridezone:evmos
+    volumes:
+      - ./state/evmos5:/home/evmos/.evmosd
+
   lsm1:
     image: stridezone:lsm
     volumes:
       - ./state/lsm1:/home/lsm/.simapp
     ports:
-      - "26057:26657"
-      - "1257:1317"
-      - "9030:9090"
+      - "29957:26657"
+      - "1247:1317"
+      - "9020:9090"
 
   lsm2:
     image: stridezone:lsm
@@ -233,6 +262,13 @@ services:
       - ./state/relayer-host:/home/relayer/.relayer
     restart: always
     command: [ "bash", "start.sh", "stride-host" ]
+
+  relayer-evmos:
+    image: stridezone:relayer
+    volumes:
+      - ./state/relayer-evmos:/home/relayer/.relayer
+    restart: always
+    command: [ "bash", "start.sh", "stride-evmos" ]
 
   relayer-lsm:
     image: stridezone:relayer
