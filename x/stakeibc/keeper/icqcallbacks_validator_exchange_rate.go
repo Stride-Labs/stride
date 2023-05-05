@@ -144,7 +144,7 @@ func ValidatorExchangeRateCallback(k Keeper, ctx sdk.Context, args []byte, query
 	// If this query was done manually (instead of through an LSM liquid stake)
 	//   use a relaxed timeout on this query
 	// If this is from an LSM Liquid Stake callback, use an aggressive timeout for the query since
-	//   this will block new users from LSM liquid staking
+	//   this will block new users from LSM liquid staking to this validator
 	timeoutDuration := time.Hour
 	if inLSMLiquidStakeCallback {
 		timeoutDuration = LSMSlashQueryTimeout

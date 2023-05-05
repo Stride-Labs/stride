@@ -170,7 +170,7 @@ func (k Keeper) CheckDelegationChangeWhileQueryInFlight(
 	}
 
 	// Update the validator to say that the query is no longer in progress (which will unblock LSM liquid stakes)
-	validator.SlashQueryPending = false
+	validator.SlashQueryInProgress = false
 	hostZone.Validators[valIndex] = validator
 	k.SetHostZone(ctx, hostZone)
 

@@ -146,7 +146,7 @@ func (k Keeper) GetValidatorFromLSMTokenDenom(denom string, validators []*types.
 	// Confirm validator is in Stride's validator set and does not have an active slash query in flight
 	for _, validator := range validators {
 		if validator.Address == validatorAddress {
-			if validator.SlashQueryPending {
+			if validator.SlashQueryInProgress {
 				return types.Validator{}, errorsmod.Wrapf(types.ErrValidatorWasSlashed,
 					"validator %s was slashed, liquid stakes from this validator are temporarily unavailable", validator.Address)
 			}

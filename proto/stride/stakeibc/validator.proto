@@ -22,9 +22,6 @@ message Validator {
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false
   ];
-  // QUESTION: I was going to name this "slash_query_in_progress"
-  // but thought it might be confused with the above parameter
-  // "slash_query_progress_tracker" What do y'all think?
-  bool slash_query_pending = 11;
+  bool slash_query_in_progress = 11;
   reserved 3, 4, 7, 8;
 }

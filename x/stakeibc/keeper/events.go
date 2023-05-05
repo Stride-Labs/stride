@@ -71,7 +71,7 @@ func EmitValidatorExchangeRateChangeEvent(
 ) {
 	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(
-			types.EventTypeValidatorExchangeRate,
+			types.EventTypeValidatorExchangeRateChange,
 			sdk.NewAttribute(sdk.AttributeKeyModule, types.ModuleName),
 			sdk.NewAttribute(types.AttributeKeyHostZone, chainId),
 			sdk.NewAttribute(types.AttributeKeyValidator, validatorAddress),

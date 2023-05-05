@@ -430,7 +430,7 @@ func (k Keeper) QueryDelegationsIcq(ctx sdk.Context, hostZone types.HostZone, va
 	}
 
 	// Update the validator to indicate that the slash query is in progress
-	validator.SlashQueryPending = true
+	validator.SlashQueryInProgress = true
 	hostZone.Validators[valIndex] = &validator
 	k.SetHostZone(ctx, hostZone)
 

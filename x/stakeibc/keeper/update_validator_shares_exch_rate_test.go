@@ -116,14 +116,14 @@ func (s *KeeperTestSuite) SetupQueryDelegationsIcq() (types.HostZone, types.Vali
 	delegationAddress := s.IcaAddresses[delegationAccountOwner]
 
 	queriedValidator := types.Validator{
-		Address:           ValAddress,
-		Delegation:        sdkmath.NewInt(100),
-		SlashQueryPending: false,
+		Address:              ValAddress,
+		Delegation:           sdkmath.NewInt(100),
+		SlashQueryInProgress: false,
 	}
 	otherValidator := types.Validator{
-		Address:           "cosmosvaloper1pcag0cj4ttxg8l7pcg0q4ksuglswuuedadj7ne",
-		Delegation:        sdkmath.NewInt(100),
-		SlashQueryPending: false,
+		Address:              "cosmosvaloper1pcag0cj4ttxg8l7pcg0q4ksuglswuuedadj7ne",
+		Delegation:           sdkmath.NewInt(100),
+		SlashQueryInProgress: false,
 	}
 	hostZone := types.HostZone{
 		ChainId:              HostChainId,

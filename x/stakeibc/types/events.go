@@ -11,14 +11,14 @@ const (
 )
 
 const (
-	EventTypeRegisterZone          = "register_zone"
-	EventTypeRedemptionRequest     = "request_redemption"
-	EventTypeLiquidStakeRequest    = "liquid_stake"
-	EventTypeLSMLiquidStakeRequest = "lsm_liquid_stake"
-	EventTypeLSMLiquidStakeFailed  = "lsm_liquid_stake_failed"
-	EventTypeHostZoneHalt          = "halt_zone"
-	EventTypeValidatorExchangeRate = "validator_exchange_rate"
-	EventTypeValidatorSlash        = "validator_slash"
+	EventTypeRegisterZone                = "register_zone"
+	EventTypeRedemptionRequest           = "request_redemption"
+	EventTypeLiquidStakeRequest          = "liquid_stake"
+	EventTypeLSMLiquidStakeRequest       = "lsm_liquid_stake"
+	EventTypeLSMLiquidStakeFailed        = "lsm_liquid_stake_failed"
+	EventTypeHostZoneHalt                = "halt_zone"
+	EventTypeValidatorExchangeRateChange = "validator_exchange_rate_change"
+	EventTypeValidatorSlash              = "validator_slash"
 
 	AttributeKeyHostZone         = "host_zone"
 	AttributeKeyConnectionId     = "connection_id"

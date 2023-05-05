@@ -88,7 +88,7 @@ func (s *KeeperTestSuite) SetupDelegatorSharesICQCallback() DelegatorSharesICQCa
 				InternalSharesToTokensRate: internalExchangeRate,
 				Delegation:                 tokensBeforeSlash,
 				Weight:                     weightBeforeSlash,
-				SlashQueryPending:          true,
+				SlashQueryInProgress:       true,
 			},
 		},
 	}
@@ -146,7 +146,7 @@ func (s *KeeperTestSuite) TestDelegatorSharesCallback_Successful() {
 	s.Require().Equal(tc.expectedDelegationAmount.Int64(), validator.Delegation.Int64(), "validator delegation amount")
 
 	// Confirm the validator query is no longer in progress
-	s.Require().False(validator.SlashQueryPending, "slash query pending")
+	s.Require().False(validator.SlashQueryInProgress, "slash query in progress")
 }
 
 func (s *KeeperTestSuite) TestDelegatorSharesCallback_Retry() {
@@ -188,7 +188,7 @@ func (s *KeeperTestSuite) TestDelegatorSharesCallback_Retry() {
 
 	// Confirm the validator still has a query flagged as in progress
 	validator := hostZone.Validators[tc.valIndexQueried]
-	s.Require().True(validator.SlashQueryPending, "slash query pending")
+	s.Require().True(validator.SlashQueryInProgress, "slash query is progress")
 }
 
 func (s *KeeperTestSuite) TestDelegatorSharesCallback_RetryFailure() {
