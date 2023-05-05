@@ -40,6 +40,7 @@ func (k Keeper) EndBlocker(ctx sdk.Context) {
 
 			query.RequestSent = true
 			k.SetQuery(ctx, query)
+			return false
 		}
 		// Re-queue timed-out queries
 		if query.TimeoutTimestamp < uint64(ctx.BlockTime().UnixNano()) {
