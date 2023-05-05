@@ -4,6 +4,8 @@ set -eu
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 source ${SCRIPT_DIR}/../config.sh
 
+WAIT_FOR_STRING $STRIDE_LOGS "module=txindex height=201"
+
 # Create new connections and channels for sharing voting power between two chains
 relayer_logs=${LOGS}/relayer-gaia-ics.log
 relayer_exec=$(GET_VAR_VALUE RELAYER_GAIA_EXEC)
