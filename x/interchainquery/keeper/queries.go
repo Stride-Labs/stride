@@ -4,6 +4,7 @@ import (
 	"encoding/binary"
 	"fmt"
 	"strings"
+	"time"
 
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -53,8 +54,8 @@ func (k Keeper) ValidateQuery(ctx sdk.Context, query types.Query) error {
 	if query.CallbackId == "" {
 		return errorsmod.Wrapf(types.ErrInvalidICQRequest, "callback-id cannot be empty")
 	}
-	if query.Timeout <= uint64(ctx.BlockTime().Nanosecond()) {
-		return errorsmod.Wrapf(types.ErrInvalidICQRequest, "timeout must be in the future - timeout: %d, block time: %d", query.Timeout, ctx.BlockTime().UnixNano())
+	if query.TimeoutDuration == time.Duration(0) {
+		return errorsmod.Wrapf(types.ErrInvalidICQRequest, "timeout duration must be set")
 	}
 	if _, exists := k.callbacks[query.CallbackModule]; !exists {
 		return errorsmod.Wrapf(types.ErrInvalidICQRequest, "no callback handler registered for module (%s)", query.CallbackModule)

@@ -3,6 +3,7 @@ package keeper_test
 import (
 	"context"
 	"strings"
+	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/bech32"
@@ -41,13 +42,13 @@ func (s *KeeperTestSuite) SetupMsgSubmitQueryResponse() MsgSubmitQueryResponseTe
 	data := banktypes.CreateAccountBalancesPrefix(addr)
 	// save the query to Stride state, so it can be retrieved in the response
 	query := types.Query{
-		Id:           expectedId,
-		CallbackId:   "withdrawalbalance",
-		ChainId:      HostChainId,
-		ConnectionId: s.TransferPath.EndpointA.ConnectionID,
-		QueryType:    types.BANK_STORE_QUERY_WITH_PROOF,
-		RequestData:  append(data, []byte(HostChainId)...),
-		Timeout:      uint64(12545592938) * uint64(1000000000), // set timeout to August 2050, mult by nano conversion factor
+		Id:              expectedId,
+		CallbackId:      "withdrawalbalance",
+		ChainId:         HostChainId,
+		ConnectionId:    s.TransferPath.EndpointA.ConnectionID,
+		QueryType:       types.BANK_STORE_QUERY_WITH_PROOF,
+		RequestData:     append(data, []byte(HostChainId)...),
+		TimeoutDuration: time.Duration(1_000_000_000),
 	}
 
 	return MsgSubmitQueryResponseTestCase{
@@ -97,16 +98,16 @@ func (s *KeeperTestSuite) TestMsgSubmitQueryResponse_ExceededTtl() {
 	tc.query.QueryType = strings.ReplaceAll(tc.query.QueryType, "key", "")
 
 	// set timeout to be expired
-	tc.query.Timeout = uint64(1)
+	tc.query.TimeoutTimestamp = uint64(1)
 	s.App.InterchainqueryKeeper.SetQuery(s.Ctx, tc.query)
 
 	resp, err := s.GetMsgServer().SubmitQueryResponse(tc.goCtx, &tc.validMsg)
 	s.Require().NoError(err)
 	s.Require().NotNil(resp)
 
-	// check that the query was deleted (since the query timed out)
+	// check that the query was not deleted (since the query timed out)
 	_, found := s.App.InterchainqueryKeeper.GetQuery(s.Ctx, tc.query.Id)
-	s.Require().False(found)
+	s.Require().True(found)
 }
 
 func (s *KeeperTestSuite) TestMsgSubmitQueryResponse_FindAndInvokeCallback_WrongHostZone() {
