@@ -2,10 +2,16 @@
 	# Commit: fd92eb6d17342bc83003f2067d6a9cd8261f2884
 	path = deps/hermes
 	url = https://github.com/informalsystems/ibc-rs.git
+# TODO [LSM]: Revert
+# [submodule "deps/relayer"]
+# 	# Commit: v2.3.1
+# 	path = deps/relayer
+# 	url = https://github.com/cosmos/relayer.git
 [submodule "deps/relayer"]
-	# Commit: v2.3.1
+	# Branch: sam/lsm-poc
+	# Commit: f71dd8229bca3e5dbfc43e6688d095eeef632e79
 	path = deps/relayer
-	url = https://github.com/cosmos/relayer.git
+	url = https://github.com/Stride-Labs/relayer.git
 [submodule "deps/gaia"]
 	# Commit: 5db8fcc9a229730f5115bed82d0f85b6db7184b4
 	path = deps/gaia
@@ -36,3 +42,6 @@
 [submodule "dockernet/tests/bats/bats-support"]
 	path = dockernet/tests/bats/bats-support
 	url = https://github.com/bats-core/bats-support.git
+[submodule "deps/lsm"]
+	path = deps/lsm
+	url = https://github.com/iqlusioninc/liquidity-staking-module.git
