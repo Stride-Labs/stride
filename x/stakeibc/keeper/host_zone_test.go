@@ -216,3 +216,32 @@ func (s *KeeperTestSuite) TestIncrementValidatorSlashQueryProgress() {
 	err = s.App.StakeibcKeeper.IncrementValidatorSlashQueryProgress(s.Ctx, HostChainId, "fake_val", stakeAmount)
 	s.Require().ErrorContains(err, "validator not found")
 }
+
+func (s *KeeperTestSuite) TestAddDelegationToValidator() {
+	hostZone := types.HostZone{
+		Validators: []*types.Validator{
+			{Address: "other_val", Delegation: sdkmath.NewInt(1000)},
+			{Address: ValAddress, Delegation: sdkmath.NewInt(3000)},
+			{Address: "other_val2", Delegation: sdkmath.NewInt(3000)},
+		},
+	}
+	updatedIndex := 1
+
+	// Add 500 to the validator
+	err := s.App.StakeibcKeeper.AddDelegationToValidator(s.Ctx, hostZone, ValAddress, sdkmath.NewInt(500), "")
+	s.Require().NoError(err, "no error expected when adding delegation to validator")
+	s.Require().Equal(int64(3500), hostZone.Validators[updatedIndex].Delegation.Int64(), "delegation after addition")
+
+	// Subtract 250 from the validator
+	err = s.App.StakeibcKeeper.AddDelegationToValidator(s.Ctx, hostZone, ValAddress, sdkmath.NewInt(-250), "")
+	s.Require().NoError(err, "no error expected when subtracting delegation from validator")
+	s.Require().Equal(int64(3250), hostZone.Validators[updatedIndex].Delegation.Int64(), "delegation after subtraction")
+
+	// Attempt to subtract more than the validator has - it should fail
+	err = s.App.StakeibcKeeper.AddDelegationToValidator(s.Ctx, hostZone, ValAddress, sdkmath.NewInt(-4000), "")
+	s.Require().ErrorContains(err, "Delegation change (4000) is greater than validator")
+
+	// Attempt to modify a validator that doesn't exist - it should fail
+	err = s.App.StakeibcKeeper.AddDelegationToValidator(s.Ctx, hostZone, "does_not_exist", sdkmath.NewInt(-4000), "")
+	s.Require().ErrorContains(err, "validator not found")
+}
