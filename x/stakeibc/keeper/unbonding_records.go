@@ -20,6 +20,10 @@ import (
 	"github.com/Stride-Labs/stride/v9/x/stakeibc/types"
 )
 
+const (
+	UndelegateICABatchSize = 30
+)
+
 // QUESTION: Should I move this and the rebalance structs to types?
 // That feels like the proper location, but since it's only really used by this file
 // if feels a bit more hidden in types
@@ -270,27 +274,38 @@ func (k Keeper) UnbondFromHostZone(ctx sdk.Context, hostZone types.HostZone) err
 		return errorsmod.Wrap(sdkerrors.ErrInvalidRequest, "Target unbonded amount was 0 for each validator")
 	}
 
-	// Store the callback data
-	undelegateCallback := types.UndelegateCallback{
-		HostZoneId:              hostZone.ChainId,
-		SplitDelegations:        unbondings,
-		EpochUnbondingRecordIds: epochUnbondingRecordIds,
-	}
-	callbackArgsBz, err := proto.Marshal(&undelegateCallback)
-	if err != nil {
-		return errorsmod.Wrap(err, "unable to marshal undelegate callback args")
-	}
+	// Send the messages in batches so the gas limit isn't exceedeed
+	for start := 0; start < len(msgs); start += UndelegateICABatchSize {
+		end := start + UndelegateICABatchSize
+		if end > len(msgs) {
+			end = len(msgs)
+		}
 
-	// Submit the undelegation ICA
-	if _, err := k.SubmitTxsDayEpoch(
-		ctx,
-		hostZone.ConnectionId,
-		msgs,
-		types.ICAAccountType_DELEGATION,
-		ICACallbackID_Undelegate,
-		callbackArgsBz,
-	); err != nil {
-		return errorsmod.Wrapf(err, "unable to submit unbonding ICA for %s", hostZone.ChainId)
+		msgsBatch := msgs[start:end]
+		unbondingsBatch := unbondings[start:end]
+
+		// Store the callback data
+		undelegateCallback := types.UndelegateCallback{
+			HostZoneId:              hostZone.ChainId,
+			SplitDelegations:        unbondingsBatch,
+			EpochUnbondingRecordIds: epochUnbondingRecordIds,
+		}
+		callbackArgsBz, err := proto.Marshal(&undelegateCallback)
+		if err != nil {
+			return errorsmod.Wrap(err, "unable to marshal undelegate callback args")
+		}
+
+		// Submit the undelegation ICA
+		if _, err := k.SubmitTxsDayEpoch(
+			ctx,
+			hostZone.ConnectionId,
+			msgsBatch,
+			types.ICAAccountType_DELEGATION,
+			ICACallbackID_Undelegate,
+			callbackArgsBz,
+		); err != nil {
+			return errorsmod.Wrapf(err, "unable to submit unbonding ICA for %s", hostZone.ChainId)
+		}
 	}
 
 	// Update the epoch unbonding record status
