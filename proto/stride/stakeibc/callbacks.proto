@@ -61,8 +61,3 @@ message RebalanceCallback {
 }
 
 message DetokenizeSharesCallback { records.LSMTokenDeposit deposit = 1; }
-
-message RebalanceTokenizedDepositsCallback {
-  string chain_id = 1;
-  repeated SplitDelegation split_delegations = 2;
-}

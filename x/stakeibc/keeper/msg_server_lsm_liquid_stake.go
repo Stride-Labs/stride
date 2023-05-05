@@ -193,5 +193,15 @@ func (k Keeper) FinishLSMLiquidStake(ctx sdk.Context, lsmLiquidStake types.LSMLi
 	// Update the deposit status
 	k.RecordsKeeper.UpdateLSMTokenDepositStatus(ctx, lsmTokenDeposit, recordstypes.LSMTokenDeposit_TRANSFER_IN_PROGRESS)
 
+	// Update the slash query progress on the validator
+	if err := k.IncrementValidatorSlashQueryProgress(
+		ctx,
+		hostZone.ChainId,
+		lsmTokenDeposit.ValidatorAddress,
+		lsmTokenDeposit.Amount,
+	); err != nil {
+		return err
+	}
+
 	return nil
 }
