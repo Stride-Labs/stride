@@ -101,28 +101,34 @@ func (k Keeper) GetAllActiveHostZone(ctx sdk.Context) (list []types.HostZone) {
 	return
 }
 
-func (k Keeper) AddDelegationToValidator(ctx sdk.Context, hostZone types.HostZone, validatorAddress string, amount sdkmath.Int, callbackId string) (success bool) {
+// Updates a validator's delegation
+// Note: This updates modifies the original validator struct
+func (k Keeper) AddDelegationToValidator(
+	ctx sdk.Context,
+	hostZone types.HostZone,
+	validatorAddress string,
+	amount sdkmath.Int,
+	callbackId string,
+) error {
 	for _, validator := range hostZone.Validators {
 		if validator.Address == validatorAddress {
 			k.Logger(ctx).Info(utils.LogICACallbackWithHostZone(hostZone.ChainId, callbackId,
 				"  Validator %s, Current Delegation: %v, Delegation Change: %v", validator.Address, validator.Delegation, amount))
 
-			if amount.GTE(sdkmath.ZeroInt()) {
-				validator.Delegation = validator.Delegation.Add(amount)
-				return true
+			// If the delegation change is negative, make sure it wont cause the delegation to fall below zero
+			if amount.IsNegative() && amount.Abs().GT(validator.Delegation) {
+				return errorsmod.Wrapf(types.ErrValidatorDelegationChg,
+					"Delegation change (%v) is greater than validator (%s) delegation %v",
+					amount.Abs(), validatorAddress, validator.Delegation)
 			}
-			absAmt := amount.Abs()
-			if absAmt.GT(validator.Delegation) {
-				k.Logger(ctx).Error(fmt.Sprintf("Delegation amount %v is greater than validator %s delegation amount %v", absAmt, validatorAddress, validator.Delegation))
-				return false
-			}
-			validator.Delegation = validator.Delegation.Sub(absAmt)
-			return true
+
+			validator.Delegation = validator.Delegation.Add(amount)
+			return nil
 		}
 	}
 
-	k.Logger(ctx).Error(fmt.Sprintf("Could not find validator %s on host zone %s", validatorAddress, hostZone.ChainId))
-	return false
+	return errorsmod.Wrapf(types.ErrValidatorNotFound,
+		"Could not find validator %s on host zone %s", validatorAddress, hostZone.ChainId)
 }
 
 // Increments the validators slash query progress tracker
