@@ -6,7 +6,7 @@ import (
 	sdkmath "cosmossdk.io/math"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+	lsmstakingtypes "github.com/iqlusioninc/liquidity-staking-module/x/staking/types"
 
 	"github.com/Stride-Labs/stride/v9/x/stakeibc/keeper"
 	"github.com/Stride-Labs/stride/v9/x/stakeibc/types"
@@ -23,7 +23,7 @@ func (s *KeeperTestSuite) checkRebalanceICAMessages(
 	delegationAddress := "cosmos_DELEGATION"
 	expectedMsgs := []sdk.Msg{}
 	for _, rebalancing := range expectedRebalancings {
-		expectedMsgs = append(expectedMsgs, &stakingtypes.MsgBeginRedelegate{
+		expectedMsgs = append(expectedMsgs, &lsmstakingtypes.MsgBeginRedelegate{
 			DelegatorAddress:    delegationAddress,
 			ValidatorSrcAddress: rebalancing.SrcValidator,
 			ValidatorDstAddress: rebalancing.DstValidator,
@@ -57,8 +57,8 @@ func (s *KeeperTestSuite) checkRebalanceICAMessages(
 	// Confirm the ICA messages list
 	s.Require().Len(actualMsgs, len(expectedMsgs), "length of messages")
 	for i, expectedMsg := range expectedMsgs {
-		actual := actualMsgs[i].(*stakingtypes.MsgBeginRedelegate)
-		expected := expectedMsg.(*stakingtypes.MsgBeginRedelegate)
+		actual := actualMsgs[i].(*lsmstakingtypes.MsgBeginRedelegate)
+		expected := expectedMsg.(*lsmstakingtypes.MsgBeginRedelegate)
 		s.Require().Equal(delegationAddress, actual.DelegatorAddress, "message delegator address, index %d", i)
 		s.Require().Equal(expected.ValidatorSrcAddress, actual.ValidatorSrcAddress, "message src validator, index %d", i)
 		s.Require().Equal(expected.ValidatorDstAddress, actual.ValidatorDstAddress, "message dst validator, index %d", i)
