@@ -17,6 +17,7 @@ import (
 
 	bankTypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 
+	// TODO [LSM]: Revert type
 	lsmdistributiontypes "github.com/iqlusioninc/liquidity-staking-module/x/distribution/types"
 	lsmstakingtypes "github.com/iqlusioninc/liquidity-staking-module/x/staking/types"
 

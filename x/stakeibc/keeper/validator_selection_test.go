@@ -6,6 +6,7 @@ import (
 	sdkmath "cosmossdk.io/math"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	// TODO [LSM]: Revert type
 	lsmstakingtypes "github.com/iqlusioninc/liquidity-staking-module/x/staking/types"
 
 	"github.com/Stride-Labs/stride/v9/x/stakeibc/keeper"
