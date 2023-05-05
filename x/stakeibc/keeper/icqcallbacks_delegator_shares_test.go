@@ -32,7 +32,6 @@ type DelegatorSharesICQCallbackTestCase struct {
 	expectedSlashAmount      sdkmath.Int
 	expectedWeight           uint64
 	exchangeRate             sdk.Dec
-	retryTimeoutDuration     time.Duration
 }
 
 // Mocks the query response that's returned from an ICQ for the number of shares for a given validator/delegator pair
@@ -97,24 +96,37 @@ func (s *KeeperTestSuite) SetupDelegatorSharesICQCallback() DelegatorSharesICQCa
 	queryResponse := s.CreateDelegatorSharesQueryResponse(valAddress, numShares)
 
 	// Create callback data
-	timeoutDuration := time.Hour
 	callbackDataBz, err := proto.Marshal(&types.DelegatorSharesQueryCallback{
 		InitialValidatorDelegation: tokensBeforeSlash,
-		TimeoutDuration:            timeoutDuration,
 	})
 	s.Require().NoError(err, "no error expected when marshalling callback data")
+
+	// Set the timeout timestamp to be 1 minute after the block time, and
+	// the timeout duration to be 5 minutes
+	blockTime := time.Date(2023, 1, 1, 0, 0, 0, 0, time.UTC)
+	s.Ctx = s.Ctx.WithBlockTime(blockTime)
+	timeoutTimestamp := uint64(blockTime.Add(time.Minute).UnixNano())
+	timeoutDuration := time.Minute * 5
+
+	// Create the query that represents the ICQ in flight
+	query := icqtypes.Query{
+		Id:               "query-1",
+		ChainId:          HostChainId,
+		ConnectionId:     ibctesting.FirstConnectionID,
+		QueryType:        icqtypes.STAKING_STORE_QUERY_WITH_PROOF,
+		CallbackData:     callbackDataBz,
+		CallbackId:       keeper.ICQCallbackID_Delegation,
+		CallbackModule:   types.ModuleName,
+		TimeoutDuration:  timeoutDuration,
+		TimeoutTimestamp: timeoutTimestamp,
+		RequestSent:      true,
+	}
+	s.App.InterchainqueryKeeper.SetQuery(s.Ctx, query)
 
 	return DelegatorSharesICQCallbackTestCase{
 		valIndexQueried: valIndexQueried,
 		validArgs: DelegatorSharesICQCallbackArgs{
-			query: icqtypes.Query{
-				ChainId:        HostChainId,
-				ConnectionId:   ibctesting.FirstConnectionID,
-				QueryType:      icqtypes.STAKING_STORE_QUERY_WITH_PROOF,
-				CallbackData:   callbackDataBz,
-				CallbackId:     keeper.ICQCallbackID_Delegation,
-				CallbackModule: types.ModuleName,
-			},
+			query:        query,
 			callbackArgs: queryResponse,
 		},
 		hostZone:                 hostZone,
@@ -124,7 +136,6 @@ func (s *KeeperTestSuite) SetupDelegatorSharesICQCallback() DelegatorSharesICQCa
 		expectedSlashAmount:      expectedSlashAmount,
 		expectedWeight:           expectedWeightAfterSlash,
 		exchangeRate:             internalExchangeRate,
-		retryTimeoutDuration:     timeoutDuration,
 	}
 }
 
@@ -175,6 +186,8 @@ func (s *KeeperTestSuite) TestDelegatorSharesCallback_Retry() {
 	actualQuery := queries[0]
 	expectedQuery := tc.validArgs.query
 
+	s.Require().False(actualQuery.RequestSent, "query request sent should have been reset to false")
+
 	s.Require().Equal(HostChainId, actualQuery.ChainId, "query chain id")
 	s.Require().Equal(ibctesting.FirstConnectionID, actualQuery.ConnectionId, "query connection-id")
 	s.Require().Equal(icqtypes.STAKING_STORE_QUERY_WITH_PROOF, actualQuery.QueryType, "query type")
@@ -183,8 +196,10 @@ func (s *KeeperTestSuite) TestDelegatorSharesCallback_Retry() {
 	s.Require().Equal(expectedQuery.CallbackId, actualQuery.CallbackId, "query callback id")
 	s.Require().Equal(expectedQuery.CallbackData, actualQuery.CallbackData, "query callback data")
 
-	expectedTimeout := s.Ctx.BlockTime().UnixNano() + (tc.retryTimeoutDuration.Nanoseconds())
-	s.Require().Equal(expectedTimeout, int64(actualQuery.Timeout), "query callback data")
+	timeoutDuration := tc.validArgs.query.TimeoutDuration
+	expectedTimeout := s.Ctx.BlockTime().UnixNano() + (timeoutDuration.Nanoseconds())
+	s.Require().Equal(timeoutDuration, actualQuery.TimeoutDuration, "query timeout duration")
+	s.Require().Equal(expectedTimeout, int64(actualQuery.TimeoutTimestamp), "query timeout timestamp")
 
 	// Confirm the validator still has a query flagged as in progress
 	validator := hostZone.Validators[tc.valIndexQueried]

@@ -217,7 +217,8 @@ func (s *KeeperTestSuite) checkDelegatorSharesQuerySubmitted(liquidStakeCallback
 		timeoutDuration = keeper.LSMSlashQueryTimeout
 	}
 	expectedTimeout := s.Ctx.BlockTime().UnixNano() + (timeoutDuration).Nanoseconds()
-	s.Require().Equal(expectedTimeout, int64(query.Timeout), "query timeout")
+	s.Require().Equal(timeoutDuration, query.TimeoutDuration, "query timeout duration")
+	s.Require().Equal(expectedTimeout, int64(query.TimeoutTimestamp), "query timeout timestamp")
 
 	// Confirm query callback data
 	var callbackData types.DelegatorSharesQueryCallback
@@ -227,7 +228,6 @@ func (s *KeeperTestSuite) checkDelegatorSharesQuerySubmitted(liquidStakeCallback
 	expectedInitialDelegation := tc.initialState.validator.Delegation
 	s.Require().Equal(expectedInitialDelegation.Int64(), callbackData.InitialValidatorDelegation.Int64(),
 		"query callback-data initial delegation")
-	s.Require().Equal(timeoutDuration, callbackData.TimeoutDuration, "query callback-data timeout duration")
 
 	// Confirm the validator's flagged as having a query in progress
 	hostZone, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx, HostChainId)

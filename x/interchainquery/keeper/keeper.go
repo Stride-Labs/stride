@@ -73,7 +73,11 @@ func (k *Keeper) SubmitICQRequest(ctx sdk.Context, query types.Query, forceUniqu
 }
 
 // Re-submit an ICQ, generally used after a timeout
-func (k *Keeper) RetryICQRequest(ctx sdk.Context, query types.Query) {
+func (k *Keeper) RetryICQRequest(ctx sdk.Context, query types.Query) error {
+	if err := k.ValidateQuery(ctx, query); err != nil {
+		return err
+	}
+
 	// Update the timeout
 	timeoutTimestamp := uint64(ctx.BlockTime().UnixNano() + query.TimeoutDuration.Nanoseconds())
 	query.TimeoutTimestamp = timeoutTimestamp
@@ -81,4 +85,6 @@ func (k *Keeper) RetryICQRequest(ctx sdk.Context, query types.Query) {
 	// Flag the query as "not sent" so it gets emitted the next block
 	query.RequestSent = false
 	k.SetQuery(ctx, query)
+
+	return nil
 }

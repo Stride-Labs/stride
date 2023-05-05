@@ -43,7 +43,9 @@ func (k Keeper) EndBlocker(ctx sdk.Context) {
 		}
 		// Re-queue timed-out queries
 		if query.TimeoutTimestamp < uint64(ctx.BlockTime().UnixNano()) {
-			k.RetryICQRequest(ctx, query)
+			if err := k.RetryICQRequest(ctx, query); err != nil {
+				k.Logger(ctx).Error(fmt.Sprintf("Unable to retry query: %+v", query))
+			}
 		}
 		return false
 	})

@@ -156,7 +156,8 @@ func (s *KeeperTestSuite) TestLSMLiquidStake_Successful_WithExchangeRateQuery() 
 	s.Require().Equal(keeper.ICQCallbackID_Validator, actualQuery.CallbackId, "callback-id")
 
 	expectedTimeout := uint64(s.Ctx.BlockTime().UnixNano() + (keeper.LSMSlashQueryTimeout).Nanoseconds())
-	s.Require().Equal(int64(expectedTimeout), int64(actualQuery.Timeout), "callback module")
+	s.Require().Equal(keeper.LSMSlashQueryTimeout, actualQuery.TimeoutDuration, "timeout duration")
+	s.Require().Equal(int64(expectedTimeout), int64(actualQuery.TimeoutTimestamp), "timeout timestamp")
 
 	// Confirm query callback data
 	s.Require().True(len(actualQuery.CallbackData) > 0, "callback data exists")
