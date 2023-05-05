@@ -137,9 +137,9 @@ func (k Keeper) UpdateDelegationBalances(ctx sdk.Context, zone types.HostZone, u
 			zone.TotalDelegations = zone.TotalDelegations.Sub(undelegation.Amount)
 		}
 
-		success := k.AddDelegationToValidator(ctx, zone, undelegation.Validator, undelegation.Amount.Neg(), ICACallbackID_Undelegate)
-		if !success {
-			return errorsmod.Wrapf(types.ErrValidatorDelegationChg, "Failed to remove delegation to validator")
+		err := k.AddDelegationToValidator(ctx, zone, undelegation.Validator, undelegation.Amount.Neg(), ICACallbackID_Undelegate)
+		if err != nil {
+			return errorsmod.Wrapf(err, "Failed to remove delegation to validator")
 		}
 	}
 	k.SetHostZone(ctx, zone)
