@@ -3,8 +3,10 @@ package keeper_test
 import (
 	sdkmath "cosmossdk.io/math"
 	channeltypes "github.com/cosmos/ibc-go/v5/modules/core/04-channel/types"
+	ibctesting "github.com/cosmos/ibc-go/v5/testing"
 	_ "github.com/stretchr/testify/suite"
 
+	epochtypes "github.com/Stride-Labs/stride/v9/x/epochs/types"
 	icacallbacktypes "github.com/Stride-Labs/stride/v9/x/icacallbacks/types"
 	stakeibckeeper "github.com/Stride-Labs/stride/v9/x/stakeibc/keeper"
 	"github.com/Stride-Labs/stride/v9/x/stakeibc/types"
@@ -27,7 +29,64 @@ type RebalanceCallbackTestCase struct {
 }
 
 func (s *KeeperTestSuite) SetupRebalanceCallback() RebalanceCallbackTestCase {
-	rebalanceValidatorsTestCase := s.SetupRebalanceValidators()
+	// Setup IBC
+	delegationIcaOwner := "GAIA.DELEGATION"
+	s.CreateICAChannel(delegationIcaOwner)
+	delegationAddr := s.IcaAddresses[delegationIcaOwner]
+
+	// setup epochs
+	epochNumber := uint64(1)
+	epochTracker := types.EpochTracker{
+		EpochIdentifier:    epochtypes.STRIDE_EPOCH,
+		EpochNumber:        epochNumber,
+		NextEpochStartTime: uint64(s.Coordinator.CurrentTime.UnixNano() + 30_000_000_000), // dictates timeouts
+	}
+	s.App.StakeibcKeeper.SetEpochTracker(s.Ctx, epochTracker)
+
+	// define validators for host zone
+	initialValidators := []*types.Validator{
+		{
+			Name:       "val1",
+			Address:    "stride_VAL1",
+			Weight:     100,
+			Delegation: sdkmath.NewInt(100),
+		},
+		{
+			Name:       "val2",
+			Address:    "stride_VAL2",
+			Weight:     500,
+			Delegation: sdkmath.NewInt(500),
+		},
+		{
+			Name:       "val3",
+			Address:    "stride_VAL3",
+			Weight:     200,
+			Delegation: sdkmath.NewInt(200),
+		},
+		{
+			Name:       "val4",
+			Address:    "stride_VAL4",
+			Weight:     400,
+			Delegation: sdkmath.NewInt(400),
+		},
+		{
+			Name:       "val5",
+			Address:    "stride_VAL5",
+			Weight:     400,
+			Delegation: sdkmath.NewInt(400),
+		},
+	}
+
+	// setup host zone
+	hostZone := types.HostZone{
+		ChainId:              "GAIA",
+		Validators:           initialValidators,
+		TotalDelegations:     sdkmath.NewInt(1000),
+		ConnectionId:         ibctesting.FirstConnectionID,
+		DelegationIcaAddress: delegationAddr,
+		HostDenom:            "uatom",
+	}
+	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
 
 	packet := channeltypes.Packet{}
 	ackResponse := icacallbacktypes.AcknowledgementResponse{Status: icacallbacktypes.AckResponseStatus_SUCCESS}
@@ -51,8 +110,8 @@ func (s *KeeperTestSuite) SetupRebalanceCallback() RebalanceCallbackTestCase {
 
 	return RebalanceCallbackTestCase{
 		initialState: RebalanceCallbackState{
-			hostZone:          rebalanceValidatorsTestCase.hostZone,
-			initialValidators: rebalanceValidatorsTestCase.initialValidators,
+			hostZone:          hostZone,
+			initialValidators: initialValidators,
 		},
 		validArgs: RebalanceCallbackArgs{
 			packet:      packet,
