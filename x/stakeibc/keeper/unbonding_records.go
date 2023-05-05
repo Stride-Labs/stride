@@ -91,8 +91,8 @@ func (k Keeper) GetTotalUnbondAmountAndRecordsIds(ctx sdk.Context, chainId strin
 	return totalUnbonded, unbondingRecordIds
 }
 
-// Determine the unbonding "slack" that each validator has
-// The slack is determined by the difference between their current delegation
+// Determine the unbonding capacity that each validator has
+// The capacity is determined by the difference between their current delegation
 //  and their fair portion of the total stake based on their weights
 //  (i.e. their balanced delegation)
 // Validators with a balanced delegation less than their current delegation
@@ -213,8 +213,9 @@ func (k Keeper) GetUnbondingICAMessages(
 
 // Submits undelegation ICA messages for a given host zone
 //
-// The total unbond amount is determined from the epoch unbonding records
-// The unbond amount is then distributed amongst validators proportional to how unbalanced they are.
+// First, the total unbond amount is determined from the epoch unbonding records
+// Then that unbond amount is distributed amongst validators by first targeting validators
+//   who have a proportionally larger delegation than they're entitled to (due LSM liquid stake imbalance)
 // As a result, unbondings lead to a more balanced distribution of stake across validators
 //
 // Context:
