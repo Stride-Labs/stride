@@ -11,7 +11,7 @@ import (
 )
 
 const (
-	FlagChainId          = "chain-id"
+	FlagHostChainId      = "host-chain-id"
 	FlagValidatorAddress = "validator"
 	FlagStatus           = "status"
 )
@@ -51,13 +51,13 @@ func CmdLSMDeposits() *cobra.Command {
 		Long: `Shows all LSM deposits with optional filters
 Examples:
   $ lsm-deposits
-  $ lsm-deposits --chain-id=[chain-id]
-  $ lsm-deposits --chain-id=[chain-id] validator=[validator-address]
-  $ lsm-deposits --chain-id=[chain-id] --status=[status]
+  $ lsm-deposits --host-chain-id=[chain-id]
+  $ lsm-deposits --host-chain-id=[chain-id] validator=[validator-address]
+  $ lsm-deposits --host-chain-id=[chain-id] --status=[status]
 `,
 		Args: cobra.ExactArgs(0),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			chainId, err := cmd.Flags().GetString(FlagChainId)
+			chainId, err := cmd.Flags().GetString(FlagHostChainId)
 			if err != nil {
 				return err
 			}
@@ -84,7 +84,7 @@ Examples:
 		},
 	}
 
-	cmd.Flags().String(FlagChainId, "", "The chainId for host zone")
+	cmd.Flags().String(FlagHostChainId, "", "The chainId for host zone")
 	cmd.Flags().String(FlagValidatorAddress, "", "The validator address")
 	cmd.Flags().String(FlagStatus, "", "The status")
 	flags.AddQueryFlagsToCmd(cmd)

@@ -13,6 +13,7 @@ import (
 	icatypes "github.com/cosmos/ibc-go/v5/modules/apps/27-interchain-accounts/types"
 	transfertypes "github.com/cosmos/ibc-go/v5/modules/apps/transfer/types"
 	channeltypes "github.com/cosmos/ibc-go/v5/modules/core/04-channel/types"
+	lsmstakingtypes "github.com/iqlusioninc/liquidity-staking-module/x/staking/types"
 
 	"github.com/golang/protobuf/proto" //nolint:staticcheck
 
@@ -191,7 +192,7 @@ func (k Keeper) DetokenizeLSMDeposit(ctx sdk.Context, hostZone types.HostZone, d
 
 	// Build the detokenization ICA message
 	token := sdk.NewCoin(deposit.Denom, deposit.Amount)
-	detokenizeMsg := []sdk.Msg{&types.MsgRedeemTokensforShares{
+	detokenizeMsg := []sdk.Msg{&lsmstakingtypes.MsgRedeemTokensforShares{
 		DelegatorAddress: hostZone.DelegationIcaAddress,
 		Amount:           token,
 	}}
