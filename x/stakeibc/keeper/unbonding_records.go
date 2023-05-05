@@ -214,8 +214,9 @@ func (k Keeper) GetUnbondingICAMessages(
 // Submits undelegation ICA messages for a given host zone
 //
 // First, the total unbond amount is determined from the epoch unbonding records
-// Then that unbond amount is distributed amongst validators by first targeting validators
-//   who have a proportionally larger delegation than they're entitled to (due LSM liquid stake imbalance)
+// Then that unbond amount is allowed to cascade across the validators in order of how proportionally
+//   different their current delegations are from the weight implied target delegation,
+//   until their capacities have consumed the full amount
 // As a result, unbondings lead to a more balanced distribution of stake across validators
 //
 // Context:
