@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/cosmos/cosmos-sdk/types/bech32"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -110,23 +111,17 @@ func ReinvestCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ack
 	}
 	queryData := append(banktypes.CreateAccountBalancesPrefix(feeAddressBz), []byte(hostZone.HostDenom)...)
 
-	// The query should timeout before the next epoch
-	timeout, err := k.GetICATimeoutNanos(ctx, epochtypes.STRIDE_EPOCH)
-	if err != nil {
-		return errorsmod.Wrapf(err, "Failed to get ICATimeout from %s epoch", epochtypes.STRIDE_EPOCH)
-	}
-
 	// Submit an ICQ for the rewards balance in the fee account
 	k.Logger(ctx).Info(utils.LogICACallbackWithHostZone(chainId, ICACallbackID_Reinvest, "Submitting ICQ for fee account balance"))
 
 	query := icqtypes.Query{
-		ChainId:        chainId,
-		ConnectionId:   hostZone.ConnectionId,
-		QueryType:      icqtypes.BANK_STORE_QUERY_WITH_PROOF,
-		RequestData:    queryData,
-		CallbackModule: types.ModuleName,
-		CallbackId:     ICQCallbackID_FeeBalance,
-		Timeout:        timeout,
+		ChainId:         chainId,
+		ConnectionId:    hostZone.ConnectionId,
+		QueryType:       icqtypes.BANK_STORE_QUERY_WITH_PROOF,
+		RequestData:     queryData,
+		CallbackModule:  types.ModuleName,
+		CallbackId:      ICQCallbackID_FeeBalance,
+		TimeoutDuration: time.Hour,
 	}
 	if err := k.InterchainQueryKeeper.SubmitICQRequest(ctx, query, false); err != nil {
 		k.Logger(ctx).Error(fmt.Sprintf("Error submitting ICQ for fee balance, error %s", err.Error()))

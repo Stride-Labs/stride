@@ -161,10 +161,7 @@ func (k Keeper) CheckDelegationChangeWhileQueryInFlight(
 			"Validator (%s) delegation changed while delegator shares query was in flight. Resubmitting query", chainId))
 
 		// Reset the query timeout and resubmit
-		query.Timeout = uint64(ctx.BlockTime().UnixNano() + (callbackData.TimeoutDuration).Nanoseconds())
-		if err := k.InterchainQueryKeeper.SubmitICQRequest(ctx, query, true); err != nil {
-			return true, errorsmod.Wrapf(err, "unable to resubmit delegator shares query")
-		}
+		k.InterchainQueryKeeper.RetryICQRequest(ctx, query)
 
 		return true, nil
 	}
