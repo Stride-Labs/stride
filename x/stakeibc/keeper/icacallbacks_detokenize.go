@@ -57,11 +57,10 @@ func DetokenizeCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, a
 	k.RecordsKeeper.RemoveLSMTokenDeposit(ctx, deposit.ChainId, deposit.Denom)
 
 	// Update delegation on the host zone and validator
-	err := k.AddDelegationToValidator(ctx, hostZone, deposit.ValidatorAddress, deposit.Amount, ICACallbackID_Detokenize)
+	err := k.AddDelegationToValidator(ctx, &hostZone, deposit.ValidatorAddress, deposit.Amount, ICACallbackID_Detokenize)
 	if err != nil {
 		return err
 	}
-	hostZone.TotalDelegations = hostZone.TotalDelegations.Add(deposit.Amount)
 	k.SetHostZone(ctx, hostZone)
 
 	return nil
