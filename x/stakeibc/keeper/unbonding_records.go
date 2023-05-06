@@ -234,12 +234,12 @@ func (k Keeper) UnbondFromHostZone(ctx sdk.Context, hostZone types.HostZone) err
 	}
 
 	// Iterate through every unbonding record and sum the total amount to unbond for the given host zone
-	totalAmountToUnbond, epochUnbondingRecordIds := k.GetTotalUnbondAmountAndRecordsIds(ctx, hostZone.ChainId)
+	totalUnbondAmount, epochUnbondingRecordIds := k.GetTotalUnbondAmountAndRecordsIds(ctx, hostZone.ChainId)
 	k.Logger(ctx).Info(utils.LogWithHostZone(hostZone.ChainId,
-		"Total unbonded amount: %v%s", totalAmountToUnbond, hostZone.HostDenom))
+		"Total unbonded amount: %v%s", totalUnbondAmount, hostZone.HostDenom))
 
 	// If there's nothing to unbond, return and move on to the next host zone
-	if totalAmountToUnbond.IsZero() {
+	if totalUnbondAmount.IsZero() {
 		return nil
 	}
 
@@ -247,7 +247,7 @@ func (k Keeper) UnbondFromHostZone(ctx sdk.Context, hostZone types.HostZone) err
 	//   (as if we were to unbond and then rebalance)
 	// This will serve as the starting point for determining how much to unbond each validator
 	currentTotalDelegation := k.GetTotalValidatorDelegations(hostZone)
-	delegationAfterUnbonding := currentTotalDelegation.Sub(totalAmountToUnbond)
+	delegationAfterUnbonding := currentTotalDelegation.Sub(totalUnbondAmount)
 	balancedDelegationsAfterUnbonding, err := k.GetTargetValAmtsForHostZone(ctx, hostZone, delegationAfterUnbonding)
 	if err != nil {
 		return errorsmod.Wrapf(err, "unable to get target val amounts for host zone %s", hostZone.ChainId)
@@ -268,7 +268,7 @@ func (k Keeper) UnbondFromHostZone(ctx sdk.Context, hostZone types.HostZone) err
 	prioritizedUnbondCapacity := SortUnbondingCapacityByPriority(validatorUnbondCapacity)
 
 	// Get the undelegation ICA messages and split delegations for the callback
-	msgs, unbondings, err := k.GetUnbondingICAMessages(hostZone, totalAmountToUnbond, prioritizedUnbondCapacity)
+	msgs, unbondings, err := k.GetUnbondingICAMessages(hostZone, totalUnbondAmount, prioritizedUnbondCapacity)
 	if err != nil {
 		return err
 	}
@@ -322,14 +322,7 @@ func (k Keeper) UnbondFromHostZone(ctx sdk.Context, hostZone types.HostZone) err
 		return err
 	}
 
-	// TODO [LSM]: Move to events.go
-	ctx.EventManager().EmitEvent(
-		sdk.NewEvent(
-			types.EventTypeUndelegation,
-			sdk.NewAttribute(types.AttributeKeyHostZone, hostZone.ChainId),
-			sdk.NewAttribute(types.AttributeKeyTotalUnbondAmount, totalAmountToUnbond.String()),
-		),
-	)
+	EmitUndelegationEvent(ctx, hostZone, totalUnbondAmount)
 
 	return nil
 }

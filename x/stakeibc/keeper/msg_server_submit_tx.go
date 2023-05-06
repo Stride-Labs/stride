@@ -159,22 +159,15 @@ func (k Keeper) UpdateWithdrawalBalance(ctx sdk.Context, hostZone types.HostZone
 	}
 	queryData := append(bankTypes.CreateAccountBalancesPrefix(withdrawalAddressBz), []byte(hostZone.HostDenom)...)
 
-	// The query should timeout at the end of the ICA buffer window
-	timeout, err := k.GetICATimeoutNanos(ctx, epochstypes.STRIDE_EPOCH)
-	if err != nil {
-		return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest,
-			"Failed to get ICA timeout nanos for epochType %s using param, error: %s", epochstypes.STRIDE_EPOCH, err.Error())
-	}
-
 	// Submit the ICQ for the withdrawal account balance
 	query := icqtypes.Query{
-		ChainId:        hostZone.ChainId,
-		ConnectionId:   hostZone.ConnectionId,
-		QueryType:      icqtypes.BANK_STORE_QUERY_WITH_PROOF,
-		RequestData:    queryData,
-		CallbackModule: types.ModuleName,
-		CallbackId:     ICQCallbackID_WithdrawalBalance,
-		Timeout:        timeout,
+		ChainId:         hostZone.ChainId,
+		ConnectionId:    hostZone.ConnectionId,
+		QueryType:       icqtypes.BANK_STORE_QUERY_WITH_PROOF,
+		RequestData:     queryData,
+		CallbackModule:  types.ModuleName,
+		CallbackId:      ICQCallbackID_WithdrawalBalance,
+		TimeoutDuration: time.Hour,
 	}
 	if err := k.InterchainQueryKeeper.SubmitICQRequest(ctx, query, false); err != nil {
 		k.Logger(ctx).Error(fmt.Sprintf("Error querying for withdrawal balance, error: %s", err.Error()))
@@ -379,16 +372,15 @@ func (k Keeper) QueryValidatorExchangeRate(ctx sdk.Context, msg *types.MsgUpdate
 	queryData := stakingtypes.GetValidatorKey(validatorAddressBz)
 
 	// Submit validator exchange rate ICQ
-	// Considering this query is executed manually, we can be agressive with the timeout
-	timeout := uint64(ctx.BlockTime().UnixNano() + (time.Hour).Nanoseconds()) // 1 hour
+	// Considering this query is executed manually, we can be conservative with the timeout
 	query := icqtypes.Query{
-		ChainId:        hostZone.ChainId,
-		ConnectionId:   hostZone.ConnectionId,
-		QueryType:      icqtypes.STAKING_STORE_QUERY_WITH_PROOF,
-		RequestData:    queryData,
-		CallbackModule: types.ModuleName,
-		CallbackId:     ICQCallbackID_Validator,
-		Timeout:        timeout,
+		ChainId:         hostZone.ChainId,
+		ConnectionId:    hostZone.ConnectionId,
+		QueryType:       icqtypes.STAKING_STORE_QUERY_WITH_PROOF,
+		RequestData:     queryData,
+		CallbackModule:  types.ModuleName,
+		CallbackId:      ICQCallbackID_Validator,
+		TimeoutDuration: time.Hour,
 	}
 	if err := k.InterchainQueryKeeper.SubmitICQRequest(ctx, query, false); err != nil {
 		k.Logger(ctx).Error(fmt.Sprintf("Error submitting ICQ for validator exchange rate, error %s", err.Error()))
@@ -425,7 +417,6 @@ func (k Keeper) QueryDelegationsIcq(ctx sdk.Context, hostZone types.HostZone, va
 	// while the query was in flight
 	callbackData := types.DelegatorSharesQueryCallback{
 		InitialValidatorDelegation: validator.Delegation,
-		TimeoutDuration:            timeoutDuration,
 	}
 	callbackDataBz, err := proto.Marshal(&callbackData)
 	if err != nil {
@@ -438,16 +429,15 @@ func (k Keeper) QueryDelegationsIcq(ctx sdk.Context, hostZone types.HostZone, va
 	k.SetHostZone(ctx, hostZone)
 
 	// Submit delegator shares ICQ
-	timeout := uint64(ctx.BlockTime().UnixNano() + (timeoutDuration).Nanoseconds())
 	query := icqtypes.Query{
-		ChainId:        hostZone.ChainId,
-		ConnectionId:   hostZone.ConnectionId,
-		QueryType:      icqtypes.STAKING_STORE_QUERY_WITH_PROOF,
-		RequestData:    queryData,
-		CallbackModule: types.ModuleName,
-		CallbackId:     ICQCallbackID_Delegation,
-		CallbackData:   callbackDataBz,
-		Timeout:        timeout,
+		ChainId:         hostZone.ChainId,
+		ConnectionId:    hostZone.ConnectionId,
+		QueryType:       icqtypes.STAKING_STORE_QUERY_WITH_PROOF,
+		RequestData:     queryData,
+		CallbackModule:  types.ModuleName,
+		CallbackId:      ICQCallbackID_Delegation,
+		CallbackData:    callbackDataBz,
+		TimeoutDuration: timeoutDuration,
 	}
 	if err := k.InterchainQueryKeeper.SubmitICQRequest(ctx, query, false); err != nil {
 		k.Logger(ctx).Error(fmt.Sprintf("Error submitting ICQ for delegation, error : %s", err.Error()))

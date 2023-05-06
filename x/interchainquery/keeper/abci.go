@@ -18,6 +18,7 @@ func (k Keeper) EndBlocker(ctx sdk.Context) {
 	events := sdk.Events{}
 	// emit events for periodic queries
 	k.IterateQueries(ctx, func(_ int64, query types.Query) (stop bool) {
+		// Submit new queries
 		if !query.RequestSent {
 			k.Logger(ctx).Info(fmt.Sprintf("Interchainquery event emitted %s", query.Id))
 			// QUESTION: Do we need to emit this event twice?
@@ -39,6 +40,13 @@ func (k Keeper) EndBlocker(ctx sdk.Context) {
 
 			query.RequestSent = true
 			k.SetQuery(ctx, query)
+			return false
+		}
+		// Re-queue timed-out queries
+		if query.TimeoutTimestamp < uint64(ctx.BlockTime().UnixNano()) {
+			if err := k.RetryICQRequest(ctx, query); err != nil {
+				k.Logger(ctx).Error(fmt.Sprintf("Unable to retry query: %+v", query))
+			}
 		}
 		return false
 	})

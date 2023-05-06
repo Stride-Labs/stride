@@ -1,6 +1,8 @@
 package keeper_test
 
 import (
+	"time"
+
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	channeltypes "github.com/cosmos/ibc-go/v5/modules/core/04-channel/types"
@@ -42,10 +44,6 @@ func (s *KeeperTestSuite) SetupReinvestCallback() ReinvestCallbackTestCase {
 	reinvestAmt := sdkmath.NewInt(1_000)
 	feeAddress := apptesting.CreateRandomAccounts(1)[0].String() // must be valid bech32 address
 
-	epochEndTime := uint64(100)
-	buffer := uint64(10)
-	icaTimeoutTime := int64(90)
-
 	hostZone := stakeibctypes.HostZone{
 		ChainId:        HostChainId,
 		HostDenom:      Atom,
@@ -63,17 +61,11 @@ func (s *KeeperTestSuite) SetupReinvestCallback() ReinvestCallbackTestCase {
 		Source:             recordtypes.DepositRecord_WITHDRAWAL_ICA,
 	}
 	epochTracker := stakeibctypes.EpochTracker{
-		EpochIdentifier:    epochtypes.STRIDE_EPOCH,
-		EpochNumber:        1,
-		NextEpochStartTime: epochEndTime,
-		Duration:           epochEndTime,
+		EpochIdentifier: epochtypes.STRIDE_EPOCH,
+		EpochNumber:     1,
 	}
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
 	s.App.StakeibcKeeper.SetEpochTracker(s.Ctx, epochTracker)
-
-	params := s.App.StakeibcKeeper.GetParams(s.Ctx)
-	params.BufferSize = buffer
-	s.App.StakeibcKeeper.SetParams(s.Ctx, params)
 
 	packet := channeltypes.Packet{}
 	ackResponse := icacallbacktypes.AcknowledgementResponse{Status: icacallbacktypes.AckResponseStatus_SUCCESS}
@@ -86,11 +78,10 @@ func (s *KeeperTestSuite) SetupReinvestCallback() ReinvestCallbackTestCase {
 
 	return ReinvestCallbackTestCase{
 		initialState: ReinvestCallbackState{
-			hostZone:       hostZone,
-			reinvestAmt:    reinvestAmt,
-			callbackArgs:   callbackArgs,
-			depositRecord:  expectedNewDepositRecord,
-			icaTimeoutTime: icaTimeoutTime,
+			hostZone:      hostZone,
+			reinvestAmt:   reinvestAmt,
+			callbackArgs:  callbackArgs,
+			depositRecord: expectedNewDepositRecord,
 		},
 		validArgs: ReinvestCallbackArgs{
 			packet:      packet,
@@ -131,7 +122,7 @@ func (s *KeeperTestSuite) TestReinvestCallback_Successful() {
 	s.Require().Equal(HostChainId, query.ChainId, "query chain ID")
 	s.Require().Equal(ibctesting.FirstConnectionID, query.ConnectionId, "query connection ID")
 	s.Require().Equal(icqtypes.BANK_STORE_QUERY_WITH_PROOF, query.QueryType, "query type")
-	s.Require().Equal(tc.initialState.icaTimeoutTime, int64(query.Timeout), "query timeout")
+	s.Require().Equal(time.Hour, query.TimeoutDuration, "query timeout duration")
 }
 
 func (s *KeeperTestSuite) checkReinvestStateIfCallbackFailed(tc ReinvestCallbackTestCase) {

@@ -26,12 +26,11 @@ var _ = math.Inf
 const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 
 type Validator struct {
-	Name                      string                                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
-	Address                   string                                 `protobuf:"bytes,2,opt,name=address,proto3" json:"address,omitempty"`
-	Delegation                github_com_cosmos_cosmos_sdk_types.Int `protobuf:"bytes,5,opt,name=delegation,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Int" json:"delegation"`
-	SlashQueryProgressTracker github_com_cosmos_cosmos_sdk_types.Int `protobuf:"bytes,9,opt,name=slash_query_progress_tracker,json=slashQueryProgressTracker,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Int" json:"slash_query_progress_tracker"`
-	Weight                    uint64                                 `protobuf:"varint,6,opt,name=weight,proto3" json:"weight,omitempty"`
-	// QUESTION: Should we call this "shares_to_tokens" or "exchange_rate" ?
+	Name                       string                                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	Address                    string                                 `protobuf:"bytes,2,opt,name=address,proto3" json:"address,omitempty"`
+	Delegation                 github_com_cosmos_cosmos_sdk_types.Int `protobuf:"bytes,5,opt,name=delegation,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Int" json:"delegation"`
+	SlashQueryProgressTracker  github_com_cosmos_cosmos_sdk_types.Int `protobuf:"bytes,9,opt,name=slash_query_progress_tracker,json=slashQueryProgressTracker,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Int" json:"slash_query_progress_tracker"`
+	Weight                     uint64                                 `protobuf:"varint,6,opt,name=weight,proto3" json:"weight,omitempty"`
 	InternalSharesToTokensRate github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,10,opt,name=internal_shares_to_tokens_rate,json=internalSharesToTokensRate,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"internal_shares_to_tokens_rate"`
 	SlashQueryInProgress       bool                                   `protobuf:"varint,11,opt,name=slash_query_in_progress,json=slashQueryInProgress,proto3" json:"slash_query_in_progress,omitempty"`
 }

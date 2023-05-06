@@ -72,9 +72,7 @@ func DelegatorSharesCallback(k Keeper, ctx sdk.Context, args []byte, query icqty
 
 	if icaOverlappedIcq {
 		// If the ICA/ICQ overlapped, submit a new query
-		// TODO [LSM] Replace with Retry query once it's merged
-		query.Timeout = uint64(ctx.BlockTime().UnixNano() + (callbackData.TimeoutDuration).Nanoseconds())
-		if err := k.InterchainQueryKeeper.SubmitICQRequest(ctx, query, true); err != nil {
+		if err := k.InterchainQueryKeeper.RetryICQRequest(ctx, query); err != nil {
 			return errorsmod.Wrapf(err, "unable to resubmit delegator shares query")
 		}
 		return nil

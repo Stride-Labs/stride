@@ -98,12 +98,32 @@ func (s *KeeperTestSuite) SetupDelegatorSharesICQCallback() DelegatorSharesICQCa
 	queryResponse := s.CreateDelegatorSharesQueryResponse(valAddress, numShares)
 
 	// Create callback data
-	timeoutDuration := time.Hour
 	callbackDataBz, err := proto.Marshal(&types.DelegatorSharesQueryCallback{
 		InitialValidatorDelegation: tokensBeforeSlash,
-		TimeoutDuration:            timeoutDuration,
 	})
 	s.Require().NoError(err, "no error expected when marshalling callback data")
+
+	// Set the timeout timestamp to be 1 minute after the block time, and
+	// the timeout duration to be 5 minutes
+	blockTime := time.Date(2023, 1, 1, 0, 0, 0, 0, time.UTC)
+	s.Ctx = s.Ctx.WithBlockTime(blockTime)
+	timeoutTimestamp := uint64(blockTime.Add(time.Minute).UnixNano())
+	timeoutDuration := time.Minute * 5
+
+	// Create the query that represents the ICQ in flight
+	query := icqtypes.Query{
+		Id:               "query-1",
+		ChainId:          HostChainId,
+		ConnectionId:     ibctesting.FirstConnectionID,
+		QueryType:        icqtypes.STAKING_STORE_QUERY_WITH_PROOF,
+		CallbackData:     callbackDataBz,
+		CallbackId:       keeper.ICQCallbackID_Delegation,
+		CallbackModule:   types.ModuleName,
+		TimeoutDuration:  timeoutDuration,
+		TimeoutTimestamp: timeoutTimestamp,
+		RequestSent:      true,
+	}
+	s.App.InterchainqueryKeeper.SetQuery(s.Ctx, query)
 
 	// Add some dummy deposit and epoch unbonding records that are NOT in state IN_PROGRESS
 	// This is to confirm that they're not accidentally interpretted as having
@@ -134,14 +154,7 @@ func (s *KeeperTestSuite) SetupDelegatorSharesICQCallback() DelegatorSharesICQCa
 	return DelegatorSharesICQCallbackTestCase{
 		valIndexQueried: valIndexQueried,
 		validArgs: DelegatorSharesICQCallbackArgs{
-			query: icqtypes.Query{
-				ChainId:        HostChainId,
-				ConnectionId:   ibctesting.FirstConnectionID,
-				QueryType:      icqtypes.STAKING_STORE_QUERY_WITH_PROOF,
-				CallbackData:   callbackDataBz,
-				CallbackId:     keeper.ICQCallbackID_Delegation,
-				CallbackModule: types.ModuleName,
-			},
+			query:        query,
 			callbackArgs: queryResponse,
 		},
 		hostZone:                 hostZone,
@@ -172,7 +185,7 @@ func (s *KeeperTestSuite) CheckQueryWasResubmitted(tc DelegatorSharesICQCallback
 	s.Require().Equal(expectedQuery.CallbackData, actualQuery.CallbackData, "query callback data")
 
 	expectedTimeout := s.Ctx.BlockTime().UnixNano() + (tc.retryTimeoutDuration.Nanoseconds())
-	s.Require().Equal(expectedTimeout, int64(actualQuery.Timeout), "query callback data")
+	s.Require().Equal(expectedTimeout, int64(actualQuery.TimeoutTimestamp), "query callback data")
 
 	// Confirm the validator still has a query flagged as in progress
 	validator := hostZone.Validators[tc.valIndexQueried]

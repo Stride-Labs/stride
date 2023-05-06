@@ -103,3 +103,16 @@ func EmitValidatorSlashEvent(
 		),
 	)
 }
+
+// Emits an event if an undelegation ICA was submitted for a host zone
+func EmitUndelegationEvent(ctx sdk.Context, hostZone types.HostZone, totalUnbondAmount sdkmath.Int) {
+	ctx.EventManager().EmitEvent(
+		sdk.NewEvent(
+			types.EventTypeUndelegation,
+			sdk.NewAttribute(sdk.AttributeKeyModule, types.ModuleName),
+			sdk.NewAttribute(types.AttributeKeyHostZone, hostZone.ChainId),
+			sdk.NewAttribute(types.AttributeKeyNativeBaseDenom, hostZone.HostDenom),
+			sdk.NewAttribute(types.AttributeKeyTotalUnbondAmount, totalUnbondAmount.String()),
+		),
+	)
+}

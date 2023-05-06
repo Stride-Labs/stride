@@ -49,12 +49,16 @@ func (k Keeper) Logger(ctx sdk.Context) log.Logger {
 
 func (k *Keeper) SubmitICQRequest(ctx sdk.Context, query types.Query, forceUnique bool) error {
 	k.Logger(ctx).Info(utils.LogWithHostZone(query.ChainId,
-		"Submitting ICQ Request - module=%s, callbackId=%s, connectionId=%s, queryType=%s, timeout=%d",
-		query.CallbackModule, query.CallbackId, query.ConnectionId, query.QueryType, query.Timeout))
+		"Submitting ICQ Request - module=%s, callbackId=%s, connectionId=%s, queryType=%s, timeout_duration=%d",
+		query.CallbackModule, query.CallbackId, query.ConnectionId, query.QueryType, query.TimeoutDuration))
 
 	if err := k.ValidateQuery(ctx, query); err != nil {
 		return err
 	}
+
+	// Set the timeout using the block time and timeout duration
+	timeoutTimestamp := uint64(ctx.BlockTime().UnixNano() + query.TimeoutDuration.Nanoseconds())
+	query.TimeoutTimestamp = timeoutTimestamp
 
 	// Generate and set the query ID - optionally force it to be unique
 	query.Id = k.GetQueryId(ctx, query, forceUnique)
@@ -63,6 +67,23 @@ func (k *Keeper) SubmitICQRequest(ctx sdk.Context, query types.Query, forceUniqu
 	// Save the query to the store
 	// If the same query is re-requested, it will get replace in the store with an updated TTL
 	//  and the RequestSent bool reset to false
+	k.SetQuery(ctx, query)
+
+	return nil
+}
+
+// Re-submit an ICQ, generally used after a timeout
+func (k *Keeper) RetryICQRequest(ctx sdk.Context, query types.Query) error {
+	if err := k.ValidateQuery(ctx, query); err != nil {
+		return err
+	}
+
+	// Update the timeout
+	timeoutTimestamp := uint64(ctx.BlockTime().UnixNano() + query.TimeoutDuration.Nanoseconds())
+	query.TimeoutTimestamp = timeoutTimestamp
+
+	// Flag the query as "not sent" so it gets emitted the next block
+	query.RequestSent = false
 	k.SetQuery(ctx, query)
 
 	return nil

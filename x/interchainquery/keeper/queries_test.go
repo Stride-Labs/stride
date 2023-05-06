@@ -33,7 +33,7 @@ func (s *KeeperTestSuite) TestGetQueryId() {
 	// callbackId is a string that is used to identify the callback you'd like to execute upon receiving the result of the query
 	callbackId := "validator"
 	// timeout is the expiry time of the query, in absolute units of time, unix nanos
-	timeout := uint64(100) // timeout
+	timeoutTimestamp := uint64(100) // timeout
 
 	//  note: the queryID is a has of (module, callbackId, chainId, connectionId, queryType, and request)
 	// .    meaning for a given query type, the ID will be identical across each epoch
@@ -41,13 +41,13 @@ func (s *KeeperTestSuite) TestGetQueryId() {
 	expectedUniqueQueryId := "cd2662154e6d76b2b2b92e70c0cac3ccf534f9b74eb5b89819ec509083d00a50"
 
 	query := types.Query{
-		ChainId:        chainId,
-		ConnectionId:   connectionId,
-		QueryType:      queryType,
-		RequestData:    requestData,
-		CallbackModule: module,
-		CallbackId:     callbackId,
-		Timeout:        timeout,
+		ChainId:          chainId,
+		ConnectionId:     connectionId,
+		QueryType:        queryType,
+		RequestData:      requestData,
+		CallbackModule:   module,
+		CallbackId:       callbackId,
+		TimeoutTimestamp: timeoutTimestamp,
 	}
 
 	queryId := s.App.InterchainqueryKeeper.GetQueryId(s.Ctx, query, false)
@@ -61,7 +61,7 @@ func (s *KeeperTestSuite) TestValidateQuery() {
 	validChainId := "chain-0"
 	validConnectionId := "connection-0"
 	validQueryType := "store/key/query"
-	validTimeout := uint64(10)
+	validTimeout := time.Duration(10)
 
 	s.Ctx = s.Ctx.WithBlockTime(time.Unix(0, 0)) // unix 0
 
@@ -77,119 +77,119 @@ func (s *KeeperTestSuite) TestValidateQuery() {
 		{
 			name: "valid query",
 			query: types.Query{
-				ChainId:        validChainId,
-				ConnectionId:   validConnectionId,
-				QueryType:      validQueryType,
-				CallbackModule: validCallbackModule,
-				CallbackId:     validCallbackId,
-				Timeout:        validTimeout,
+				ChainId:         validChainId,
+				ConnectionId:    validConnectionId,
+				QueryType:       validQueryType,
+				CallbackModule:  validCallbackModule,
+				CallbackId:      validCallbackId,
+				TimeoutDuration: validTimeout,
 			},
 		},
 		{
 			name: "missing chain id",
 			query: types.Query{
-				ChainId:        "",
-				ConnectionId:   validConnectionId,
-				QueryType:      validQueryType,
-				CallbackModule: validCallbackModule,
-				CallbackId:     validCallbackId,
-				Timeout:        validTimeout,
+				ChainId:         "",
+				ConnectionId:    validConnectionId,
+				QueryType:       validQueryType,
+				CallbackModule:  validCallbackModule,
+				CallbackId:      validCallbackId,
+				TimeoutDuration: validTimeout,
 			},
 			expectedError: "chain-id cannot be empty",
 		},
 		{
 			name: "missing connection id",
 			query: types.Query{
-				ChainId:        validChainId,
-				ConnectionId:   "",
-				QueryType:      validQueryType,
-				CallbackModule: validCallbackModule,
-				CallbackId:     validCallbackId,
-				Timeout:        validTimeout,
+				ChainId:         validChainId,
+				ConnectionId:    "",
+				QueryType:       validQueryType,
+				CallbackModule:  validCallbackModule,
+				CallbackId:      validCallbackId,
+				TimeoutDuration: validTimeout,
 			},
 			expectedError: "connection-id cannot be empty",
 		},
 		{
 			name: "invalid connection id",
 			query: types.Query{
-				ChainId:        validChainId,
-				ConnectionId:   "connection",
-				QueryType:      validQueryType,
-				CallbackModule: validCallbackModule,
-				CallbackId:     validCallbackId,
-				Timeout:        validTimeout,
+				ChainId:         validChainId,
+				ConnectionId:    "connection",
+				QueryType:       validQueryType,
+				CallbackModule:  validCallbackModule,
+				CallbackId:      validCallbackId,
+				TimeoutDuration: validTimeout,
 			},
 			expectedError: "invalid connection-id (connection)",
 		},
 		{
 			name: "invalid query type",
 			query: types.Query{
-				ChainId:        validChainId,
-				ConnectionId:   validConnectionId,
-				QueryType:      "",
-				CallbackModule: validCallbackModule,
-				CallbackId:     validCallbackId,
-				Timeout:        validTimeout,
+				ChainId:         validChainId,
+				ConnectionId:    validConnectionId,
+				QueryType:       "",
+				CallbackModule:  validCallbackModule,
+				CallbackId:      validCallbackId,
+				TimeoutDuration: validTimeout,
 			},
 			expectedError: "query type cannot be empty",
 		},
 		{
 			name: "missing callback module",
 			query: types.Query{
-				ChainId:        validChainId,
-				ConnectionId:   validConnectionId,
-				QueryType:      validQueryType,
-				CallbackModule: "",
-				CallbackId:     validCallbackId,
-				Timeout:        validTimeout,
+				ChainId:         validChainId,
+				ConnectionId:    validConnectionId,
+				QueryType:       validQueryType,
+				CallbackModule:  "",
+				CallbackId:      validCallbackId,
+				TimeoutDuration: validTimeout,
 			},
 			expectedError: "callback module must be specified",
 		},
 		{
 			name: "missing callback-id",
 			query: types.Query{
-				ChainId:        validChainId,
-				ConnectionId:   validConnectionId,
-				QueryType:      validQueryType,
-				CallbackModule: validCallbackModule,
-				CallbackId:     "",
-				Timeout:        validTimeout,
+				ChainId:         validChainId,
+				ConnectionId:    validConnectionId,
+				QueryType:       validQueryType,
+				CallbackModule:  validCallbackModule,
+				CallbackId:      "",
+				TimeoutDuration: validTimeout,
 			},
 			expectedError: "callback-id cannot be empty",
 		},
 		{
-			name: "timeout in past",
+			name: "invalid timeout duration",
 			query: types.Query{
-				ChainId:        validChainId,
-				ConnectionId:   validConnectionId,
-				QueryType:      validQueryType,
-				CallbackModule: validCallbackModule,
-				CallbackId:     validCallbackId,
-				Timeout:        uint64(s.Ctx.BlockTime().UnixNano()),
+				ChainId:         validChainId,
+				ConnectionId:    validConnectionId,
+				QueryType:       validQueryType,
+				CallbackModule:  validCallbackModule,
+				CallbackId:      validCallbackId,
+				TimeoutDuration: time.Duration(0),
 			},
-			expectedError: "timeout must be in the future",
+			expectedError: "timeout duration must be set",
 		},
 		{
 			name: "module not registered",
 			query: types.Query{
-				ChainId:        validChainId,
-				ConnectionId:   validConnectionId,
-				QueryType:      validQueryType,
-				CallbackModule: "fake-module",
-				CallbackId:     validCallbackId,
-				Timeout:        validTimeout,
+				ChainId:         validChainId,
+				ConnectionId:    validConnectionId,
+				QueryType:       validQueryType,
+				CallbackModule:  "fake-module",
+				CallbackId:      validCallbackId,
+				TimeoutDuration: validTimeout,
 			},
 			expectedError: "no callback handler registered for module (fake-module)",
 		},
 		{
 			name: "callback not registered",
 			query: types.Query{
-				ChainId:        validChainId,
-				ConnectionId:   validConnectionId,
-				QueryType:      validQueryType,
-				CallbackModule: validCallbackModule,
-				CallbackId:     "fake-callback",
-				Timeout:        validTimeout,
+				ChainId:         validChainId,
+				ConnectionId:    validConnectionId,
+				QueryType:       validQueryType,
+				CallbackModule:  validCallbackModule,
+				CallbackId:      "fake-callback",
+				TimeoutDuration: validTimeout,
 			},
 			expectedError: "callback-id (fake-callback) is not registered for module (stakeibc)",
 		},

@@ -115,16 +115,15 @@ func (k Keeper) SubmitValidatorSlashQuery(ctx sdk.Context, lsmLiquidStake types.
 	}
 
 	// Use a short timeout for the query so that user's can get the tokens refunded quickly should the query get stuck
-	timeout := uint64(ctx.BlockTime().UnixNano() + (LSMSlashQueryTimeout).Nanoseconds())
 	query := icqtypes.Query{
-		ChainId:        hostZone.ChainId,
-		ConnectionId:   hostZone.ConnectionId,
-		QueryType:      icqtypes.STAKING_STORE_QUERY_WITH_PROOF,
-		RequestData:    queryData,
-		CallbackModule: types.ModuleName,
-		CallbackId:     ICQCallbackID_Validator,
-		CallbackData:   callbackDataBz,
-		Timeout:        timeout,
+		ChainId:         hostZone.ChainId,
+		ConnectionId:    hostZone.ConnectionId,
+		QueryType:       icqtypes.STAKING_STORE_QUERY_WITH_PROOF,
+		RequestData:     queryData,
+		CallbackModule:  types.ModuleName,
+		CallbackId:      ICQCallbackID_Validator,
+		CallbackData:    callbackDataBz,
+		TimeoutDuration: LSMSlashQueryTimeout,
 	}
 	if err := k.InterchainQueryKeeper.SubmitICQRequest(ctx, query, false); err != nil {
 		return errorsmod.Wrapf(err, "Unable to submit validator exchange rate query")

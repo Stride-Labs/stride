@@ -16,7 +16,6 @@ message Validator {
     (gogoproto.nullable) = false
   ];
   uint64 weight = 6;
-  // QUESTION: Should we call this "shares_to_tokens" or "exchange_rate" ?
   string internal_shares_to_tokens_rate = 10 [
     (cosmos_proto.scalar) = "cosmos.Dec",
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
