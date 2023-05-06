@@ -1,18 +1,21 @@
 package keeper
 
 import (
+	"fmt"
+
 	sdkmath "cosmossdk.io/math"
 
 	errorsmod "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	"github.com/gogo/protobuf/proto" //nolint:staticcheck
 	"github.com/spf13/cast"
 
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
 	"github.com/Stride-Labs/stride/v9/utils"
-	epochtypes "github.com/Stride-Labs/stride/v9/x/epochs/types"
 	icqtypes "github.com/Stride-Labs/stride/v9/x/interchainquery/types"
+	recordstypes "github.com/Stride-Labs/stride/v9/x/records/types"
 	"github.com/Stride-Labs/stride/v9/x/stakeibc/types"
 )
 
@@ -39,49 +42,147 @@ func DelegatorSharesCallback(k Keeper, ctx sdk.Context, args []byte, query icqty
 	}
 
 	// Unmarshal the query response which returns a delegation object for the delegator/validator pair
-	queriedDelgation := stakingtypes.Delegation{}
-	err := k.cdc.Unmarshal(args, &queriedDelgation)
+	queriedDelegation := stakingtypes.Delegation{}
+	err := k.cdc.Unmarshal(args, &queriedDelegation)
 	if err != nil {
-		return errorsmod.Wrapf(types.ErrMarshalFailure, "unable to unmarshal query response into Delegation type, err: %s", err.Error())
+		return errorsmod.Wrapf(err, "unable to unmarshal delegator shares query response into Delegation type")
 	}
 	k.Logger(ctx).Info(utils.LogICQCallbackWithHostZone(chainId, ICQCallbackID_Delegation, "Query response - Delegator: %s, Validator: %s, Shares: %v",
-		queriedDelgation.DelegatorAddress, queriedDelgation.ValidatorAddress, queriedDelgation.Shares))
+		queriedDelegation.DelegatorAddress, queriedDelegation.ValidatorAddress, queriedDelegation.Shares))
 
-	// Ensure ICQ can be issued now, else fail the callback
-	withinBufferWindow, err := k.IsWithinBufferWindow(ctx)
-	if err != nil {
-		return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "unable to determine if ICQ callback is inside buffer window, err: %s", err.Error())
-	}
-	if !withinBufferWindow {
-		return errorsmod.Wrapf(types.ErrOutsideIcqWindow, "callback is outside ICQ window")
+	// Unmarshal the callback data containing the previous delegation to the validator (from the time the query was submitted)
+	var callbackData types.DelegatorSharesQueryCallback
+	if err := proto.Unmarshal(query.CallbackData, &callbackData); err != nil {
+		return errorsmod.Wrapf(err, "unable to unmarshal delegator shares callback data")
 	}
 
 	// Grab the validator object from the hostZone using the address returned from the query
-	validator, valIndex, found := GetValidatorFromAddress(hostZone.Validators, queriedDelgation.ValidatorAddress)
+	validator, valIndex, found := GetValidatorFromAddress(hostZone.Validators, queriedDelegation.ValidatorAddress)
 	if !found {
-		return errorsmod.Wrapf(types.ErrValidatorNotFound, "no registered validator for address (%s)", queriedDelgation.ValidatorAddress)
+		return errorsmod.Wrapf(types.ErrValidatorNotFound, "no registered validator for address (%s)", queriedDelegation.ValidatorAddress)
 	}
 
-	// Get the validator's internal exchange rate, aborting if it hasn't been updated this epoch
-	strideEpochTracker, found := k.GetEpochTracker(ctx, epochtypes.STRIDE_EPOCH)
-	if !found {
-		return errorsmod.Wrapf(sdkerrors.ErrNotFound, "unable to get epoch tracker for epoch (%s)", epochtypes.STRIDE_EPOCH)
+	// Check if the ICQ overlapped a delegation or undelegation ICA that would have modfied the number of delegated tokens
+	prevInternalDelegation := callbackData.InitialValidatorDelegation
+	currInternalDelegation := validator.Delegation
+	icaOverlappedIcq, err := k.CheckDelegationChangedDuringQuery(ctx, chainId, prevInternalDelegation, currInternalDelegation)
+	if err != nil {
+		return err
 	}
-	if validator.InternalExchangeRate.EpochNumber != strideEpochTracker.EpochNumber {
-		return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest,
-			"validator (%s) internal exchange rate has not been updated this epoch (epoch #%d)", validator.Address, strideEpochTracker.EpochNumber)
+
+	if icaOverlappedIcq {
+		// If the ICA/ICQ overlapped, submit a new query
+		// TODO [LSM] Replace with Retry query once it's merged
+		query.Timeout = uint64(ctx.BlockTime().UnixNano() + (callbackData.TimeoutDuration).Nanoseconds())
+		if err := k.InterchainQueryKeeper.SubmitICQRequest(ctx, query, true); err != nil {
+			return errorsmod.Wrapf(err, "unable to resubmit delegator shares query")
+		}
+		return nil
+	} else {
+		// If there was no ICA/ICQ overlap, update the validator to indicate that the query
+		//  is no longer in progress (which will unblock LSM liquid stakes to that validator)
+		validator.SlashQueryInProgress = false
+		hostZone.Validators[valIndex] = &validator
+		k.SetHostZone(ctx, hostZone)
 	}
+
+	// Confirm the validator was slashed by looking at the number of tokens associated with the delegation
+	validatorWasSlashed, delegatedTokens, err := k.CheckForSlash(ctx, hostZone, valIndex, queriedDelegation)
+	if err != nil {
+		return err
+	}
+	// If the validator was not slashed, exit now
+	if !validatorWasSlashed {
+		return nil
+	}
+
+	// If the validator was slashed and the query did not overlap any ICAs, update the internal record keeping
+	if err := k.SlashValidatorOnHostZone(ctx, hostZone, valIndex, delegatedTokens); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// The number of tokens returned from the query must be consistent with the tokens
+//   stored in our internal record keeping during this callback, otherwise the comparision
+//   between the two is invalidated
+// As a result, we must avoid a race condition between the ICQ and an delegate or undelegate ICA
+//
+// More specifically, we must avoid the following cases:
+//  Case 1)
+//           ICQ Lands on Host                                          ICQ Ack on Stride
+//                               ICA Lands on Host    ICA Ack on Stride
+//  Case 2)
+//           ICA Lands on Host                                          ICA Ack on Stride
+//                               ICQ Lands on Host    ICQ Ack on Stride
+//
+// We can prevent Case #1 by checking if the delegation total on the validator has changed
+//   while the query was in flight
+// We can prevent Case #2 by checking if there are any delegation or unbonding records
+//   in state IN_PROGRESS (meaning an ICA is in flight)
+func (k Keeper) CheckDelegationChangedDuringQuery(
+	ctx sdk.Context,
+	chainId string,
+	previousInternalDelegation sdkmath.Int,
+	currentInternalDelegation sdkmath.Int,
+) (overlapped bool, err error) {
+	// Confirm the delegation total in the internal record keeping has not changed while the query was inflight
+	// If it has changed, exit this callback (to prevent any accounting errors) and resubmit the query
+	if !currentInternalDelegation.Equal(previousInternalDelegation) {
+		k.Logger(ctx).Error(fmt.Sprintf(
+			"Validator (%s) delegation changed while delegator shares query was in flight. Resubmitting query", chainId))
+		return true, nil
+	}
+
+	// Check that there are no deposit records in state IN_PROGRESS - indicative of a Delegation ICA
+	for _, depositRecord := range k.RecordsKeeper.GetAllDepositRecord(ctx) {
+		if depositRecord.HostZoneId == chainId &&
+			depositRecord.Status == recordstypes.DepositRecord_DELEGATION_IN_PROGRESS {
+			k.Logger(ctx).Error("Delegation ICA is currently in progress. Rejecting query callback and resubmitting query")
+			return true, nil
+		}
+	}
+
+	// Check that there are no epoch unbonding records in state IN_PROGRESS - indicative of an Undelegation ICA
+	// TODO: This is expensive, we should store these more efficiently
+	for _, epochUnbondingRecord := range k.RecordsKeeper.GetAllEpochUnbondingRecord(ctx) {
+		for _, hostUnbondingRecord := range epochUnbondingRecord.HostZoneUnbondings {
+			if hostUnbondingRecord.HostZoneId == chainId &&
+				hostUnbondingRecord.Status == recordstypes.HostZoneUnbonding_UNBONDING_IN_PROGRESS {
+				k.Logger(ctx).Error("Undelegation ICA is currently in progress. Rejecting query callback and resubmitting query")
+				return true, nil
+			}
+		}
+	}
+
+	return false, nil
+}
+
+// Check if a slash occured by comparing the validator's exchange rate  and delegator shares
+//   from the query responses (tokens = exchange rate * shares)
+// If the change in delegation only differs by a small precision error, it was likely
+//   due to an decimal -> int truncation that occurs during unbonding. In this case, still update the validator
+// If the change in delegation was an increase, the response can't be trusted so an error is thrown
+func (k Keeper) CheckForSlash(
+	ctx sdk.Context,
+	hostZone types.HostZone,
+	valIndex int64,
+	queriedDelegation stakingtypes.Delegation,
+) (validatorWasSlashed bool, delegatedTokens sdkmath.Int, err error) {
+	chainId := hostZone.ChainId
+	validator := hostZone.Validators[valIndex]
 
 	// Calculate the number of tokens delegated (using the internal exchange rate)
 	// note: truncateInt per https://github.com/cosmos/cosmos-sdk/blob/cb31043d35bad90c4daa923bb109f38fd092feda/x/staking/types/validator.go#L431
-	delegatedTokens := queriedDelgation.Shares.Mul(validator.InternalExchangeRate.InternalTokensToSharesRate).TruncateInt()
+	delegatedTokens = queriedDelegation.Shares.Mul(validator.InternalSharesToTokensRate).TruncateInt()
 	k.Logger(ctx).Info(utils.LogICQCallbackWithHostZone(chainId, ICQCallbackID_Delegation,
 		"Previous Delegation: %v, Current Delegation: %v", validator.Delegation, delegatedTokens))
 
 	// Confirm the validator has actually been slashed
 	if delegatedTokens.Equal(validator.Delegation) {
 		k.Logger(ctx).Info(utils.LogICQCallbackWithHostZone(chainId, ICQCallbackID_Delegation, "Validator was not slashed"))
-		return nil
+		return false, delegatedTokens, nil
 	}
 
 	// If the true delegation is slightly higher than our record keeping, this could be due to float imprecision
@@ -93,30 +194,36 @@ func DelegatorSharesCallback(k Keeper, ctx sdk.Context, args []byte, query icqty
 		validator.Delegation = validator.Delegation.Add(precisionError)
 		hostZone.TotalDelegations = hostZone.TotalDelegations.Add(precisionError)
 
-		hostZone.Validators[valIndex] = &validator
+		hostZone.Validators[valIndex] = validator
 		k.SetHostZone(ctx, hostZone)
 
 		k.Logger(ctx).Info(utils.LogICQCallbackWithHostZone(chainId, ICQCallbackID_Delegation,
 			"Delegation updated to %v", validator.Delegation))
 
-		return nil
+		return false, delegatedTokens, nil
 	}
 
 	// If the delegation returned from the query is much higher than our record keeping, exit with an error
 	if delegatedTokens.GT(validator.Delegation) {
-		return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "Validator (%s) tokens returned from query is greater than the Delegation", validator.Address)
+		return false, delegatedTokens, errorsmod.Wrapf(sdkerrors.ErrInvalidRequest,
+			"Validator (%s) tokens returned from query is greater than the Delegation", validator.Address)
 	}
 
-	// TODO(TESTS-171) add some safety checks here (e.g. we could query the slashing module to confirm the decr in tokens was due to slash)
-	// update our records of the total delegation and of the validator's delegation
-	// NOTE:  we assume any decrease in delegation amt that's not tracked via records is a slash
+	return true, delegatedTokens, nil
+}
+
+// Update the accounting on the host zone and validator to record the slash
+// NOTE: we assume any decrease in delegation amt that's not tracked via records is a slash
+func (k Keeper) SlashValidatorOnHostZone(ctx sdk.Context, hostZone types.HostZone, valIndex int64, delegatedTokens sdkmath.Int) error {
+	chainId := hostZone.ChainId
+	validator := hostZone.Validators[valIndex]
 
 	// Get slash percentage
 	slashAmount := validator.Delegation.Sub(delegatedTokens)
 	slashPct := sdk.NewDecFromInt(slashAmount).Quo(sdk.NewDecFromInt(validator.Delegation))
 	k.Logger(ctx).Info(utils.LogICQCallbackWithHostZone(chainId, ICQCallbackID_Delegation,
 		"Validator was slashed! Validator: %s, Delegator: %s, Delegation in State: %v, Delegation from ICQ %v, Slash Amount: %v, Slash Pct: %v",
-		validator.Address, queriedDelgation.DelegatorAddress, validator.Delegation, delegatedTokens, slashAmount, slashPct))
+		validator.Address, hostZone.DelegationIcaAddress, validator.Delegation, delegatedTokens, slashAmount, slashPct))
 
 	// Abort if the slash was greater than the safety threshold
 	slashThreshold, err := cast.ToInt64E(k.GetParam(ctx, types.KeySafetyMaxSlashPercent))
@@ -141,7 +248,7 @@ func DelegatorSharesCallback(k Keeper, ctx sdk.Context, args []byte, query icqty
 
 	// Update the validator on the host zone
 	hostZone.TotalDelegations = hostZone.TotalDelegations.Sub(slashAmount)
-	hostZone.Validators[valIndex] = &validator
+	hostZone.Validators[valIndex] = validator
 	k.SetHostZone(ctx, hostZone)
 
 	k.Logger(ctx).Info(utils.LogICQCallbackWithHostZone(chainId, ICQCallbackID_Delegation,

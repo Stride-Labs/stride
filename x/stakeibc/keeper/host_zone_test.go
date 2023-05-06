@@ -179,3 +179,40 @@ func (s *KeeperTestSuite) TestGetHostZoneFromTransferChannelID() {
 	_, found := s.App.StakeibcKeeper.GetHostZoneFromTransferChannelID(s.Ctx, "fake_channel")
 	s.Require().False(found, "fake channel should not be found")
 }
+
+func (s *KeeperTestSuite) TestIncrementValidatorSlashQueryProgress() {
+	// Store a host zone with 3 validators
+	incrementedValidator := "valB"
+	initialHostZone := types.HostZone{
+		ChainId: HostChainId,
+		Validators: []*types.Validator{
+			{Address: "valA", SlashQueryProgressTracker: sdkmath.NewInt(10)},
+			{Address: incrementedValidator, SlashQueryProgressTracker: sdkmath.NewInt(20)},
+			{Address: "valC", SlashQueryProgressTracker: sdkmath.NewInt(30)},
+		},
+	}
+	s.App.StakeibcKeeper.SetHostZone(s.Ctx, initialHostZone)
+
+	// Increment the progress for valB
+	stakeAmount := sdkmath.NewInt(3)
+	expectedProgress := sdkmath.NewInt(23)
+	err := s.App.StakeibcKeeper.IncrementValidatorSlashQueryProgress(s.Ctx, HostChainId, incrementedValidator, stakeAmount)
+	s.Require().NoError(err, "no error expected when incrementing slash query progress")
+
+	// Check progress was updated
+	actualHostZone, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx, HostChainId)
+	s.Require().True(found, "host zone should have been found")
+	s.Require().Len(actualHostZone.Validators, 3, "host zone should still have 3 validators")
+
+	actualValidator := actualHostZone.Validators[1]
+	s.Require().Equal(incrementedValidator, actualValidator.Address, "validator address")
+	s.Require().Equal(expectedProgress.Int64(), actualValidator.SlashQueryProgressTracker.Int64(), "slash query progress")
+
+	// Try to increment from a non-existed host chain - it should fail
+	err = s.App.StakeibcKeeper.IncrementValidatorSlashQueryProgress(s.Ctx, "fake_host", incrementedValidator, stakeAmount)
+	s.Require().ErrorContains(err, "host zone not found")
+
+	// Try to increment from a non-existed validator - it should fail
+	err = s.App.StakeibcKeeper.IncrementValidatorSlashQueryProgress(s.Ctx, HostChainId, "fake_val", stakeAmount)
+	s.Require().ErrorContains(err, "validator not found")
+}

@@ -49,4 +49,5 @@ var (
 	ErrHaltedHostZone                    = errorsmod.Register(ModuleName, 1542, "Halted host zone found")
 	ErrInsufficientLiquidStake           = errorsmod.Register(ModuleName, 1543, "Liquid staked amount is too small")
 	ErrInvalidLSMToken                   = errorsmod.Register(ModuleName, 1544, "Invalid LSM token")
+	ErrValidatorWasSlashed               = errorsmod.Register(ModuleName, 1545, "Validator was slash")
 )

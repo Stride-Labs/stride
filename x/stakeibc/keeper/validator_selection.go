@@ -8,11 +8,13 @@ import (
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+	lsmstakingtypes "github.com/iqlusioninc/liquidity-staking-module/x/staking/types"
 
 	"github.com/Stride-Labs/stride/v9/utils"
 	"github.com/Stride-Labs/stride/v9/x/stakeibc/types"
 )
+
+const RebalanceIcaBatchSize = 5
 
 type RebalanceValidatorDelegationChange struct {
 	ValidatorAddress string
@@ -26,15 +28,13 @@ type RebalanceValidatorDelegationChange struct {
 // Note: this cannot be run more than once in a single unbonding period
 func (k Keeper) RebalanceAllHostZones(ctx sdk.Context, dayNumber uint64) {
 	for _, hostZone := range k.GetAllActiveHostZone(ctx) {
-		numRebalance := uint64(len(hostZone.Validators))
-
 		if dayNumber%hostZone.UnbondingPeriod != 0 {
 			k.Logger(ctx).Info(utils.LogWithHostZone(hostZone.ChainId,
 				"Host does not rebalance this epoch (Unbonding Period: %d, Epoch: %d)", hostZone.UnbondingPeriod, dayNumber))
 			continue
 		}
 
-		if err := k.RebalanceDelegationsForHostZone(ctx, hostZone.ChainId, numRebalance); err != nil {
+		if err := k.RebalanceDelegationsForHostZone(ctx, hostZone.ChainId); err != nil {
 			k.Logger(ctx).Error(fmt.Sprintf("Unable to rebalance delegations for %s: %s", hostZone.ChainId, err.Error()))
 			continue
 		}
@@ -43,7 +43,7 @@ func (k Keeper) RebalanceAllHostZones(ctx sdk.Context, dayNumber uint64) {
 }
 
 // Rebalance validators according to their validator weights for a specific host zone
-func (k Keeper) RebalanceDelegationsForHostZone(ctx sdk.Context, chainId string, numRebalance uint64) error {
+func (k Keeper) RebalanceDelegationsForHostZone(ctx sdk.Context, chainId string) error {
 	// Get the host zone and confirm the delegation account is initialized
 	hostZone, found := k.GetHostZone(ctx, chainId)
 	if !found {
@@ -59,29 +59,39 @@ func (k Keeper) RebalanceDelegationsForHostZone(ctx sdk.Context, chainId string,
 		return errorsmod.Wrapf(err, "unable to get validator deltas for host zone %s", chainId)
 	}
 
-	msgs, rebalacings := k.GetRebalanceICAMessages(hostZone, valDeltaList, numRebalance)
+	msgs, rebalancings := k.GetRebalanceICAMessages(hostZone, valDeltaList)
 
-	// marshall the callback
-	rebalanceCallback := types.RebalanceCallback{
-		HostZoneId:   hostZone.ChainId,
-		Rebalancings: rebalacings,
-	}
-	rebalanceCallbackBz, err := k.MarshalRebalanceCallbackArgs(ctx, rebalanceCallback)
-	if err != nil {
-		return errorsmod.Wrapf(err, "unable to marshal rebalance callback args")
-	}
+	for start := 0; start < len(msgs); start += RebalanceIcaBatchSize {
+		end := start + RebalanceIcaBatchSize
+		if end > len(msgs) {
+			end = len(msgs)
+		}
 
-	// Submit the rebalance ICA
-	_, err = k.SubmitTxsStrideEpoch(
-		ctx,
-		hostZone.ConnectionId,
-		msgs,
-		types.ICAAccountType_DELEGATION,
-		ICACallbackID_Rebalance,
-		rebalanceCallbackBz,
-	)
-	if err != nil {
-		return errorsmod.Wrapf(err, "Failed to SubmitTxs for %s, messages: %+v", hostZone.ChainId, msgs)
+		msgsBatch := msgs[start:end]
+		rebalancingsBatch := rebalancings[start:end]
+
+		// marshall the callback
+		rebalanceCallback := types.RebalanceCallback{
+			HostZoneId:   hostZone.ChainId,
+			Rebalancings: rebalancingsBatch,
+		}
+		rebalanceCallbackBz, err := k.MarshalRebalanceCallbackArgs(ctx, rebalanceCallback)
+		if err != nil {
+			return errorsmod.Wrapf(err, "unable to marshal rebalance callback args")
+		}
+
+		// Submit the rebalance ICA
+		_, err = k.SubmitTxsStrideEpoch(
+			ctx,
+			hostZone.ConnectionId,
+			msgsBatch,
+			types.ICAAccountType_DELEGATION,
+			ICACallbackID_Rebalance,
+			rebalanceCallbackBz,
+		)
+		if err != nil {
+			return errorsmod.Wrapf(err, "Failed to SubmitTxs for %s, messages: %+v", hostZone.ChainId, msgs)
+		}
 	}
 
 	return nil
@@ -93,7 +103,6 @@ func (k Keeper) RebalanceDelegationsForHostZone(ctx sdk.Context, chainId string,
 func (k Keeper) GetRebalanceICAMessages(
 	hostZone types.HostZone,
 	validatorDeltas []RebalanceValidatorDelegationChange,
-	numRebalance uint64,
 ) (msgs []sdk.Msg, rebalancings []*types.Rebalancing) {
 	// Sort the list of delegation changes by the size of the change
 	// Sort descending so the surplus validators appear first
@@ -113,8 +122,8 @@ func (k Keeper) GetRebalanceICAMessages(
 	// The surplus validator's have a positive delta and the deficit validators have a negative delta
 	surplusIndex := 0
 	deficitIndex := len(validatorDeltas) - 1
-	for i := uint64(1); i <= numRebalance; i++ {
-		// surplus validator is positive, deficit validator is negative
+	for surplusIndex <= deficitIndex {
+		// surplus validator delta is positive, deficit validator delta is negative
 		deficitValidator := validatorDeltas[deficitIndex]
 		surplusValidator := validatorDeltas[surplusIndex]
 
@@ -161,7 +170,8 @@ func (k Keeper) GetRebalanceICAMessages(
 		srcValidator := surplusValidator.ValidatorAddress
 		dstValidator := deficitValidator.ValidatorAddress
 
-		msgs = append(msgs, &stakingtypes.MsgBeginRedelegate{
+		// TODO [LSM]: Revert type
+		msgs = append(msgs, &lsmstakingtypes.MsgBeginRedelegate{
 			DelegatorAddress:    hostZone.DelegationIcaAddress,
 			ValidatorSrcAddress: srcValidator,
 			ValidatorDstAddress: dstValidator,
@@ -178,7 +188,7 @@ func (k Keeper) GetRebalanceICAMessages(
 }
 
 // This function returns a list with the number of extra tokens that should be sent to each validator
-//   - Positive delta implies the validator has a surplus (and should give lose stake)
+//   - Positive delta implies the validator has a surplus (and should lose stake)
 //   - Negative delta implies the validator has a deficit (and should gain stake)
 func (k Keeper) GetValidatorDelegationDifferences(ctx sdk.Context, hostZone types.HostZone) ([]RebalanceValidatorDelegationChange, error) {
 	// Get the target delegation amount for each validator

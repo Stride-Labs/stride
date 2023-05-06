@@ -2,8 +2,11 @@ syntax = "proto3";
 package stride.stakeibc;
 
 import "gogoproto/gogo.proto";
+import "google/protobuf/duration.proto";
 import "cosmos/base/v1beta1/coin.proto";
 import "stride/records/records.proto";
+import "stride/stakeibc/host_zone.proto";
+import "stride/stakeibc/validator.proto";
 
 option go_package = "github.com/Stride-Labs/stride/v9/x/stakeibc/types";
 
@@ -62,7 +65,24 @@ message RebalanceCallback {
 
 message DetokenizeSharesCallback { records.LSMTokenDeposit deposit = 1; }
 
-message RebalanceTokenizedDepositsCallback {
-  string chain_id = 1;
-  repeated SplitDelegation split_delegations = 2;
+message LSMLiquidStake {
+  records.LSMTokenDeposit deposit = 1;
+  HostZone host_zone = 2;
+  Validator validator = 3;
+}
+
+message ValidatorExchangeRateQueryCallback {
+  LSMLiquidStake lsm_liquid_stake = 1;
+}
+
+message DelegatorSharesQueryCallback {
+  // Validator delegation at the time the query is submitted
+  string initial_validator_delegation = 1 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable) = false
+  ];
+  // Timeout as measured from the current block time
+  // (used to re-submit the query with the same timeout)
+  google.protobuf.Duration timeout_duration = 2
+      [ (gogoproto.nullable) = false, (gogoproto.stdduration) = true ];
 }

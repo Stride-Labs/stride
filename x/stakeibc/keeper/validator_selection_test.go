@@ -6,7 +6,8 @@ import (
 	sdkmath "cosmossdk.io/math"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+	// TODO [LSM]: Revert type
+	lsmstakingtypes "github.com/iqlusioninc/liquidity-staking-module/x/staking/types"
 
 	"github.com/Stride-Labs/stride/v9/x/stakeibc/keeper"
 	"github.com/Stride-Labs/stride/v9/x/stakeibc/types"
@@ -23,7 +24,7 @@ func (s *KeeperTestSuite) checkRebalanceICAMessages(
 	delegationAddress := "cosmos_DELEGATION"
 	expectedMsgs := []sdk.Msg{}
 	for _, rebalancing := range expectedRebalancings {
-		expectedMsgs = append(expectedMsgs, &stakingtypes.MsgBeginRedelegate{
+		expectedMsgs = append(expectedMsgs, &lsmstakingtypes.MsgBeginRedelegate{
 			DelegatorAddress:    delegationAddress,
 			ValidatorSrcAddress: rebalancing.SrcValidator,
 			ValidatorDstAddress: rebalancing.DstValidator,
@@ -43,22 +44,22 @@ func (s *KeeperTestSuite) checkRebalanceICAMessages(
 	})
 
 	// Get the rebalancing messages
-	actualMsgs, actualRabalancings := s.App.StakeibcKeeper.GetRebalanceICAMessages(hostZone, validatorDeltas, uint64(len(validatorDeltas)))
+	actualMsgs, actualRebalancings := s.App.StakeibcKeeper.GetRebalanceICAMessages(hostZone, validatorDeltas)
 
 	// Confirm the rebalancing list used for the callback
-	s.Require().Len(actualRabalancings, len(expectedRebalancings), "length of rebalancings")
+	s.Require().Len(actualRebalancings, len(expectedRebalancings), "length of rebalancings")
 	for i, expected := range expectedRebalancings {
-		s.Require().Equal(expected.SrcValidator, actualRabalancings[i].SrcValidator, "rebalancing src validator, index %d", i)
-		s.Require().Equal(expected.DstValidator, actualRabalancings[i].DstValidator, "rebalancing dst validator, index %d", i)
-		s.Require().Equal(expected.Amt.Int64(), actualRabalancings[i].Amt.Int64(),
+		s.Require().Equal(expected.SrcValidator, actualRebalancings[i].SrcValidator, "rebalancing src validator, index %d", i)
+		s.Require().Equal(expected.DstValidator, actualRebalancings[i].DstValidator, "rebalancing dst validator, index %d", i)
+		s.Require().Equal(expected.Amt.Int64(), actualRebalancings[i].Amt.Int64(),
 			"rebalancing amount, src: %s, dst: %s, index: %d", expected.SrcValidator, expected.DstValidator, i)
 	}
 
 	// Confirm the ICA messages list
 	s.Require().Len(actualMsgs, len(expectedMsgs), "length of messages")
 	for i, expectedMsg := range expectedMsgs {
-		actual := actualMsgs[i].(*stakingtypes.MsgBeginRedelegate)
-		expected := expectedMsg.(*stakingtypes.MsgBeginRedelegate)
+		actual := actualMsgs[i].(*lsmstakingtypes.MsgBeginRedelegate)
+		expected := expectedMsg.(*lsmstakingtypes.MsgBeginRedelegate)
 		s.Require().Equal(delegationAddress, actual.DelegatorAddress, "message delegator address, index %d", i)
 		s.Require().Equal(expected.ValidatorSrcAddress, actual.ValidatorSrcAddress, "message src validator, index %d", i)
 		s.Require().Equal(expected.ValidatorDstAddress, actual.ValidatorDstAddress, "message dst validator, index %d", i)
