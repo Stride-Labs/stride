@@ -14,7 +14,7 @@ import (
 	"github.com/Stride-Labs/stride/v9/x/stakeibc/types"
 )
 
-const IcaBatchSize = 5
+const RebalanceIcaBatchSize = 5
 
 type RebalanceValidatorDelegationChange struct {
 	ValidatorAddress string
@@ -61,8 +61,8 @@ func (k Keeper) RebalanceDelegationsForHostZone(ctx sdk.Context, chainId string)
 
 	msgs, rebalancings := k.GetRebalanceICAMessages(hostZone, valDeltaList)
 
-	for start := 0; start < len(msgs); start += IcaBatchSize {
-		end := start + IcaBatchSize
+	for start := 0; start < len(msgs); start += RebalanceIcaBatchSize {
+		end := start + RebalanceIcaBatchSize
 		if end > len(msgs) {
 			end = len(msgs)
 		}

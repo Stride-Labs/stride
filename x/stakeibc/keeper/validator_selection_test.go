@@ -110,6 +110,38 @@ func (s *KeeperTestSuite) TestRebalanceDelegationsForHostZone_Successful() {
 	}
 }
 
+func (s *KeeperTestSuite) TestRebalanceDelegationsForHostZone_SuccessfulBatchSend() {
+	tc := s.SetupTestRebalanceDelegationsForHostZone()
+
+	// Create 5 batches of redelegation messages
+	// For each batch create the RebalanceIcaBatchSize number of validator pairs
+	//  where the rebalance is going from one validator to the next
+	// This will result in 5 ICA messages submitted
+	numBatches := 5
+	validators := []*types.Validator{}
+	for batch := 1; batch <= numBatches; batch++ {
+		for msg := 1; msg <= keeper.RebalanceIcaBatchSize; msg++ {
+			validators = append(validators, []*types.Validator{
+				{Address: fmt.Sprintf("src_val_%d_%d", batch, msg), Weight: 1, Delegation: sdkmath.NewInt(2)},
+				{Address: fmt.Sprintf("dst_val_%d_%d", batch, msg), Weight: 1, Delegation: sdkmath.NewInt(0)},
+			}...)
+		}
+	}
+	hostZone := tc.hostZone
+	hostZone.Validators = validators
+	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
+
+	// Call rebalance
+	err := s.App.StakeibcKeeper.RebalanceDelegationsForHostZone(s.Ctx, HostChainId)
+	s.Require().NoError(err, "no error expected with successful rebalancing")
+
+	// Check that the ICA was sent by confirming the sequence number incremented
+	endSequence, found := s.App.IBCKeeper.ChannelKeeper.GetNextSequenceSend(s.Ctx, tc.delegationPortID, tc.delegationChannelID)
+	s.Require().True(found, "sequence number not found after ICA")
+	s.Require().Equal(int(tc.channelStartSequence)+numBatches, int(endSequence),
+		"sequence number should have been incremented multiple times from ICA submissions")
+}
+
 func (s *KeeperTestSuite) TestRebalanceDelegationsForHostZone_HostNotFound() {
 	s.SetupTestRebalanceDelegationsForHostZone()
 
