@@ -1,18 +1,16 @@
 package keeper_test
 
 import (
-	"encoding/json"
 	"fmt"
 
+	"github.com/gogo/protobuf/proto" //nolint:staticcheck
+
 	sdkmath "cosmossdk.io/math"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
-
 	transfertypes "github.com/cosmos/ibc-go/v5/modules/apps/transfer/types"
 	ibctesting "github.com/cosmos/ibc-go/v5/testing"
 
 	icqtypes "github.com/Stride-Labs/stride/v9/x/interchainquery/types"
-
 	recordstypes "github.com/Stride-Labs/stride/v9/x/records/types"
 	"github.com/Stride-Labs/stride/v9/x/stakeibc/keeper"
 	"github.com/Stride-Labs/stride/v9/x/stakeibc/types"
@@ -27,6 +25,17 @@ type LSMLiquidStakeTestCase struct {
 	validMsg            *types.MsgLSMLiquidStake
 }
 
+// Helper function to add the port and channel onto the LSMTokenBaseDenom,
+// hash it, and then store the trace in the IBC store
+// Returns the ibc hash
+func (s *KeeperTestSuite) getLSMTokenIBCDenom() string {
+	sourcePrefix := transfertypes.GetDenomPrefix(transfertypes.PortID, ibctesting.FirstChannelID)
+	prefixedDenom := sourcePrefix + LSMTokenBaseDenom
+	lsmTokenDenomTrace := transfertypes.ParseDenomTrace(prefixedDenom)
+	s.App.TransferKeeper.SetDenomTrace(s.Ctx, lsmTokenDenomTrace)
+	return lsmTokenDenomTrace.IBCDenom()
+}
+
 func (s *KeeperTestSuite) SetupTestLSMLiquidStake() LSMLiquidStakeTestCase {
 	s.CreateTransferChannel(HostChainId)
 
@@ -36,11 +45,7 @@ func (s *KeeperTestSuite) SetupTestLSMLiquidStake() LSMLiquidStakeTestCase {
 	depositAddress := types.NewHostZoneDepositAddress(HostChainId)
 
 	// Need valid IBC denom here to test parsing
-	sourcePrefix := transfertypes.GetDenomPrefix(transfertypes.PortID, ibctesting.FirstChannelID)
-	prefixedDenom := sourcePrefix + LSMTokenBaseDenom
-	lsmTokenDenomTrace := transfertypes.ParseDenomTrace(prefixedDenom)
-	s.App.TransferKeeper.SetDenomTrace(s.Ctx, lsmTokenDenomTrace)
-	lsmTokenIBCDenom := lsmTokenDenomTrace.IBCDenom()
+	lsmTokenIBCDenom := s.getLSMTokenIBCDenom()
 
 	// Fund the user's account with the LSM token
 	s.FundAccount(userAddress, sdk.NewCoin(lsmTokenIBCDenom, initialBalance))
@@ -155,7 +160,7 @@ func (s *KeeperTestSuite) TestLSMLiquidStake_Successful_WithExchangeRateQuery() 
 	s.Require().Equal(types.ModuleName, actualQuery.CallbackModule, "callback module")
 	s.Require().Equal(keeper.ICQCallbackID_Validator, actualQuery.CallbackId, "callback-id")
 
-	expectedTimeout := uint64(s.Ctx.BlockTime().UnixNano() + (keeper.SlashQueryTimeout).Nanoseconds())
+	expectedTimeout := uint64(s.Ctx.BlockTime().UnixNano() + (keeper.LSMSlashQueryTimeout).Nanoseconds())
 	s.Require().Equal(int64(expectedTimeout), int64(actualQuery.Timeout), "callback module")
 
 	// Confirm query callback data
@@ -173,14 +178,15 @@ func (s *KeeperTestSuite) TestLSMLiquidStake_Successful_WithExchangeRateQuery() 
 		Status:           recordstypes.LSMTokenDeposit_DEPOSIT_PENDING,
 	}
 
-	var actualCallbackData types.LSMLiquidStake
-	err = json.Unmarshal(actualQuery.CallbackData, &actualCallbackData)
+	var actualCallbackData types.ValidatorExchangeRateQueryCallback
+	err = proto.Unmarshal(actualQuery.CallbackData, &actualCallbackData)
 	s.Require().NoError(err, "no error expected when unmarshalling query callback data")
 
-	s.Require().Equal(HostChainId, actualCallbackData.HostZone.ChainId, "callback data - host zone")
-	s.Require().Equal(ValAddress, actualCallbackData.Validator.Address, "callback data - validator")
+	lsmLiquidStake := actualCallbackData.LsmLiquidStake
+	s.Require().Equal(HostChainId, lsmLiquidStake.HostZone.ChainId, "callback data - host zone")
+	s.Require().Equal(ValAddress, lsmLiquidStake.Validator.Address, "callback data - validator")
 
-	s.Require().Equal(expectedLSMTokenDeposit, actualCallbackData.Deposit, "callback data - deposit")
+	s.Require().Equal(expectedLSMTokenDeposit, *lsmLiquidStake.Deposit, "callback data - deposit")
 }
 
 func (s *KeeperTestSuite) TestLSMLiquidStake_DifferentRedemptionRates() {

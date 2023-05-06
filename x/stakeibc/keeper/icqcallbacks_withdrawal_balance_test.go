@@ -7,8 +7,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	ibctesting "github.com/cosmos/ibc-go/v5/testing"
 
-	icatypes "github.com/cosmos/ibc-go/v5/modules/apps/27-interchain-accounts/types"
-
 	epochtypes "github.com/Stride-Labs/stride/v9/x/epochs/types"
 	icacallbackstypes "github.com/Stride-Labs/stride/v9/x/icacallbacks/types"
 	icqtypes "github.com/Stride-Labs/stride/v9/x/interchainquery/types"
@@ -47,7 +45,7 @@ func (s *KeeperTestSuite) SetupWithdrawalBalanceCallbackTest() WithdrawalBalance
 	delegationAddress := s.IcaAddresses[delegationAccountOwner]
 
 	withdrawalAccountOwner := fmt.Sprintf("%s.%s", HostChainId, "WITHDRAWAL")
-	withdrawalChannelId := s.CreateICAChannel(withdrawalAccountOwner)
+	withdrawalChannelId, withdrawalPortId := s.CreateICAChannel(withdrawalAccountOwner)
 	withdrawalAddress := s.IcaAddresses[withdrawalAccountOwner]
 
 	feeAddress := "cosmos_FEE"
@@ -83,7 +81,7 @@ func (s *KeeperTestSuite) SetupWithdrawalBalanceCallbackTest() WithdrawalBalance
 		initialState: WithdrawalBalanceICQCallbackState{
 			hostZone: hostZone,
 			withdrawalChannel: Channel{
-				PortID:    icatypes.PortPrefix + withdrawalAccountOwner,
+				PortID:    withdrawalPortId,
 				ChannelID: withdrawalChannelId,
 			},
 			withdrawalBalance: withdrawalBalance,

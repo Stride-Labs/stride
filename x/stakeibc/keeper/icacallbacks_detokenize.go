@@ -46,12 +46,22 @@ func DetokenizeCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, a
 	k.Logger(ctx).Info(utils.LogICACallbackStatusWithHostZone(chainId, ICACallbackID_Detokenize,
 		icacallbackstypes.AckResponseStatus_SUCCESS, packet))
 
+	// Confirm host zone exists
+	hostZone, found := k.GetHostZone(ctx, chainId)
+	if !found {
+		return errorsmod.Wrapf(types.ErrHostZoneNotFound, "Host zone not found: %s", chainId)
+	}
+
 	// If the ICA succeeded, remove the token deposit
 	deposit := detokenizeCallback.Deposit
 	k.RecordsKeeper.RemoveLSMTokenDeposit(ctx, deposit.ChainId, deposit.Denom)
 
 	// Update delegation on the host zone and validator
-	// TODO [LSM] - Use helper function
+	err := k.AddDelegationToValidator(ctx, &hostZone, deposit.ValidatorAddress, deposit.Amount, ICACallbackID_Detokenize)
+	if err != nil {
+		return err
+	}
+	k.SetHostZone(ctx, hostZone)
 
 	return nil
 }

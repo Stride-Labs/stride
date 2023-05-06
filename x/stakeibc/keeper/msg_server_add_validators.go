@@ -15,6 +15,7 @@ func (k msgServer) AddValidators(goCtx context.Context, msg *types.MsgAddValidat
 		if err := k.AddValidatorToHostZone(ctx, msg.HostZone, *validator, false); err != nil {
 			return nil, err
 		}
+		// TODO [LSM]: Submit ICQ for validator exchange rate
 	}
 
 	return &types.MsgAddValidatorsResponse{}, nil
