@@ -20,26 +20,6 @@ import (
 	"github.com/golang/protobuf/proto" //nolint:staticcheck
 )
 
-// Marshal undelegate callback args
-func (k Keeper) MarshalUndelegateCallbackArgs(ctx sdk.Context, undelegateCallback types.UndelegateCallback) ([]byte, error) {
-	out, err := proto.Marshal(&undelegateCallback)
-	if err != nil {
-		k.Logger(ctx).Error(fmt.Sprintf("MarshalUndelegateCallbackArgs | %s", err.Error()))
-		return nil, err
-	}
-	return out, nil
-}
-
-// Unmarshalls undelegate callback arguments into a UndelegateCallback struct
-func (k Keeper) UnmarshalUndelegateCallbackArgs(ctx sdk.Context, undelegateCallback []byte) (types.UndelegateCallback, error) {
-	unmarshalledUndelegateCallback := types.UndelegateCallback{}
-	if err := proto.Unmarshal(undelegateCallback, &unmarshalledUndelegateCallback); err != nil {
-		k.Logger(ctx).Error(fmt.Sprintf("UnmarshalUndelegateCallbackArgs | %s", err.Error()))
-		return unmarshalledUndelegateCallback, err
-	}
-	return unmarshalledUndelegateCallback, nil
-}
-
 // ICA Callback after undelegating
 //   If successful:
 //      * Updates epoch unbonding record status
@@ -51,8 +31,8 @@ func (k Keeper) UnmarshalUndelegateCallbackArgs(ctx sdk.Context, undelegateCallb
 //		* Reverts epoch unbonding record status
 func UndelegateCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ackResponse *icacallbackstypes.AcknowledgementResponse, args []byte) error {
 	// Fetch callback args
-	undelegateCallback, err := k.UnmarshalUndelegateCallbackArgs(ctx, args)
-	if err != nil {
+	var undelegateCallback types.UndelegateCallback
+	if err := proto.Unmarshal(args, &undelegateCallback); err != nil {
 		return errorsmod.Wrapf(types.ErrUnmarshalFailure, fmt.Sprintf("Unable to unmarshal undelegate callback args: %s", err.Error()))
 	}
 	chainId := undelegateCallback.HostZoneId
@@ -74,8 +54,12 @@ func UndelegateCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, a
 			icacallbackstypes.AckResponseStatus_FAILURE, packet))
 
 		// Reset unbondings record status
-		err = k.RecordsKeeper.SetHostZoneUnbondings(ctx, chainId, undelegateCallback.EpochUnbondingRecordIds, recordstypes.HostZoneUnbonding_UNBONDING_QUEUE)
-		if err != nil {
+		if err := k.RecordsKeeper.SetHostZoneUnbondings(
+			ctx,
+			chainId,
+			undelegateCallback.EpochUnbondingRecordIds,
+			recordstypes.HostZoneUnbonding_UNBONDING_QUEUE,
+		); err != nil {
 			return err
 		}
 		return nil
@@ -89,7 +73,7 @@ func UndelegateCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, a
 	if !found {
 		return errorsmod.Wrapf(sdkerrors.ErrKeyNotFound, "Host zone not found: %s", undelegateCallback.HostZoneId)
 	}
-	err = k.UpdateDelegationBalances(ctx, hostZone, undelegateCallback)
+	err := k.UpdateDelegationBalances(ctx, hostZone, undelegateCallback)
 	if err != nil {
 		k.Logger(ctx).Error(fmt.Sprintf("UndelegateCallback | %s", err.Error()))
 		return err

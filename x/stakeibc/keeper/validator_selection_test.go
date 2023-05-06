@@ -235,7 +235,7 @@ func (s *KeeperTestSuite) TestGetTargetValAmtsForHostZone() {
 
 	// Check zero delegations throws an error
 	_, err = s.App.StakeibcKeeper.GetTargetValAmtsForHostZone(s.Ctx, hostZone, sdkmath.ZeroInt())
-	s.Require().ErrorContains(err, "Cannot calculate target delegation if final amount is 0")
+	s.Require().ErrorContains(err, "Cannot calculate target delegation if final amount is less than or equal to zero")
 
 	// Check zero weights throws an error
 	_, err = s.App.StakeibcKeeper.GetTargetValAmtsForHostZone(s.Ctx, types.HostZone{}, sdkmath.NewInt(1))

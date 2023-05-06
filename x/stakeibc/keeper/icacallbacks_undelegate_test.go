@@ -6,7 +6,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	stakingTypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	channeltypes "github.com/cosmos/ibc-go/v5/modules/core/04-channel/types"
-	"github.com/gogo/protobuf/proto"
+	"github.com/gogo/protobuf/proto" //nolint:staticcheck
 	_ "github.com/stretchr/testify/suite"
 
 	sdkmath "cosmossdk.io/math"
@@ -119,7 +119,7 @@ func (s *KeeperTestSuite) SetupUndelegateCallback() UndelegateCallbackTestCase {
 		SplitDelegations:        []*types.SplitDelegation{&val1SplitDelegation, &val2SplitDelegation},
 		EpochUnbondingRecordIds: []uint64{epochNumber},
 	}
-	callbackArgsBz, err := s.App.StakeibcKeeper.MarshalUndelegateCallbackArgs(s.Ctx, callbackArgs)
+	callbackArgsBz, err := proto.Marshal(&callbackArgs)
 	s.Require().NoError(err, "callback args unmarshalled")
 
 	return UndelegateCallbackTestCase{
