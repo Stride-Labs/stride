@@ -9,6 +9,9 @@ import (
 
 	"github.com/golang/protobuf/proto" //nolint:staticcheck
 
+	// TODO [LSM]: Revert type
+	lsmstakingtypes "github.com/iqlusioninc/liquidity-staking-module/x/staking/types"
+
 	errorsmod "cosmossdk.io/errors"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
@@ -188,7 +191,7 @@ func (k Keeper) GetUnbondingICAMessages(
 		unbondToken := sdk.NewCoin(hostZone.HostDenom, unbondAmount)
 
 		// Build the undelegate ICA messages
-		msgs = append(msgs, &stakingtypes.MsgUndelegate{
+		msgs = append(msgs, &lsmstakingtypes.MsgUndelegate{
 			DelegatorAddress: hostZone.DelegationIcaAddress,
 			ValidatorAddress: validatorCapacity.ValidatorAddress,
 			Amount:           unbondToken,
