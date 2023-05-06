@@ -15,6 +15,7 @@ import (
 
 	"github.com/Stride-Labs/stride/v9/utils"
 	icqtypes "github.com/Stride-Labs/stride/v9/x/interchainquery/types"
+	recordstypes "github.com/Stride-Labs/stride/v9/x/records/types"
 	"github.com/Stride-Labs/stride/v9/x/stakeibc/types"
 )
 
@@ -56,9 +57,31 @@ func DelegatorSharesCallback(k Keeper, ctx sdk.Context, args []byte, query icqty
 	}
 
 	// Grab the validator object from the hostZone using the address returned from the query
-	_, valIndex, found := GetValidatorFromAddress(hostZone.Validators, queriedDelegation.ValidatorAddress)
+	validator, valIndex, found := GetValidatorFromAddress(hostZone.Validators, queriedDelegation.ValidatorAddress)
 	if !found {
 		return errorsmod.Wrapf(types.ErrValidatorNotFound, "no registered validator for address (%s)", queriedDelegation.ValidatorAddress)
+	}
+
+	// Check if the ICQ overlapped a delegation or undelegation ICA that would have modfied the number of delegated tokens
+	prevInternalDelegation := callbackData.InitialValidatorDelegation
+	currInternalDelegation := validator.Delegation
+	icaOverlappedIcq, err := k.CheckDelegationChangedDuringQuery(ctx, chainId, prevInternalDelegation, currInternalDelegation)
+	if err != nil {
+		return err
+	}
+
+	if icaOverlappedIcq {
+		// If the ICA/ICQ overlapped, submit a new query
+		if err := k.InterchainQueryKeeper.RetryICQRequest(ctx, query); err != nil {
+			return errorsmod.Wrapf(err, "unable to resubmit delegator shares query")
+		}
+		return nil
+	} else {
+		// If there was no ICA/ICQ overlap, update the validator to indicate that the query
+		//  is no longer in progress (which will unblock LSM liquid stakes to that validator)
+		validator.SlashQueryInProgress = false
+		hostZone.Validators[valIndex] = &validator
+		k.SetHostZone(ctx, hostZone)
 	}
 
 	// Confirm the validator was slashed by looking at the number of tokens associated with the delegation
@@ -71,22 +94,67 @@ func DelegatorSharesCallback(k Keeper, ctx sdk.Context, args []byte, query icqty
 		return nil
 	}
 
-	// Check if the ICQ overlapped a delegation or undelegation ICA that would have modfied the number of delegated tokens
-	icaOverlappedIcq, err := k.CheckDelegationChangeWhileQueryInFlight(ctx, hostZone, valIndex, query, callbackData)
-	if err != nil {
-		return err
-	}
-	// If the ICA/ICQ overlapped, a new query will be submitted, exit now
-	if icaOverlappedIcq {
-		return nil
-	}
-
 	// If the validator was slashed and the query did not overlap any ICAs, update the internal record keeping
 	if err := k.SlashValidatorOnHostZone(ctx, hostZone, valIndex, delegatedTokens); err != nil {
 		return err
 	}
 
 	return nil
+}
+
+// The number of tokens returned from the query must be consistent with the tokens
+//   stored in our internal record keeping during this callback, otherwise the comparision
+//   between the two is invalidated
+// As a result, we must avoid a race condition between the ICQ and an delegate or undelegate ICA
+//
+// More specifically, we must avoid the following cases:
+//  Case 1)
+//           ICQ Lands on Host                                          ICQ Ack on Stride
+//                               ICA Lands on Host    ICA Ack on Stride
+//  Case 2)
+//           ICA Lands on Host                                          ICA Ack on Stride
+//                               ICQ Lands on Host    ICQ Ack on Stride
+//
+// We can prevent Case #1 by checking if the delegation total on the validator has changed
+//   while the query was in flight
+// We can prevent Case #2 by checking if there are any delegation or unbonding records
+//   in state IN_PROGRESS (meaning an ICA is in flight)
+func (k Keeper) CheckDelegationChangedDuringQuery(
+	ctx sdk.Context,
+	chainId string,
+	previousInternalDelegation sdkmath.Int,
+	currentInternalDelegation sdkmath.Int,
+) (overlapped bool, err error) {
+	// Confirm the delegation total in the internal record keeping has not changed while the query was inflight
+	// If it has changed, exit this callback (to prevent any accounting errors) and resubmit the query
+	if !currentInternalDelegation.Equal(previousInternalDelegation) {
+		k.Logger(ctx).Error(fmt.Sprintf(
+			"Validator (%s) delegation changed while delegator shares query was in flight. Resubmitting query", chainId))
+		return true, nil
+	}
+
+	// Check that there are no deposit records in state IN_PROGRESS - indicative of a Delegation ICA
+	for _, depositRecord := range k.RecordsKeeper.GetAllDepositRecord(ctx) {
+		if depositRecord.HostZoneId == chainId &&
+			depositRecord.Status == recordstypes.DepositRecord_DELEGATION_IN_PROGRESS {
+			k.Logger(ctx).Error("Delegation ICA is currently in progress. Rejecting query callback and resubmitting query")
+			return true, nil
+		}
+	}
+
+	// Check that there are no epoch unbonding records in state IN_PROGRESS - indicative of an Undelegation ICA
+	// TODO: This is expensive, we should store these more efficiently
+	for _, epochUnbondingRecord := range k.RecordsKeeper.GetAllEpochUnbondingRecord(ctx) {
+		for _, hostUnbondingRecord := range epochUnbondingRecord.HostZoneUnbondings {
+			if hostUnbondingRecord.HostZoneId == chainId &&
+				hostUnbondingRecord.Status == recordstypes.HostZoneUnbonding_UNBONDING_IN_PROGRESS {
+				k.Logger(ctx).Error("Undelegation ICA is currently in progress. Rejecting query callback and resubmitting query")
+				return true, nil
+			}
+		}
+	}
+
+	return false, nil
 }
 
 // Check if a slash occured by comparing the validator's exchange rate  and delegator shares
@@ -135,45 +203,11 @@ func (k Keeper) CheckForSlash(
 
 	// If the delegation returned from the query is much higher than our record keeping, exit with an error
 	if delegatedTokens.GT(validator.Delegation) {
-		return false, delegatedTokens, errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "Validator (%s) tokens returned from query is greater than the Delegation", validator.Address)
+		return false, delegatedTokens, errorsmod.Wrapf(sdkerrors.ErrInvalidRequest,
+			"Validator (%s) tokens returned from query is greater than the Delegation", validator.Address)
 	}
 
 	return true, delegatedTokens, nil
-}
-
-// Check if this ICQ overlapped with an ICA by checking if the host zone's delegation changed
-// while the query was in flight
-// If an ICA landed while this query was in flight, the results cannot be trusted
-func (k Keeper) CheckDelegationChangeWhileQueryInFlight(
-	ctx sdk.Context,
-	hostZone types.HostZone,
-	valIndex int64,
-	query icqtypes.Query,
-	callbackData types.DelegatorSharesQueryCallback,
-) (overlapped bool, err error) {
-	chainId := hostZone.ChainId
-	validator := hostZone.Validators[valIndex]
-
-	// Confirm the delegation total in the internal record keeping has not changed while the query was inflight
-	// If it has changed, exit this callback (to prevent any accounting errors) and resubmit the query
-	if !validator.Delegation.Equal(callbackData.InitialValidatorDelegation) {
-		k.Logger(ctx).Error(fmt.Sprintf(
-			"Validator (%s) delegation changed while delegator shares query was in flight. Resubmitting query", chainId))
-
-		// Reset the query timeout and resubmit
-		if err := k.InterchainQueryKeeper.RetryICQRequest(ctx, query); err != nil {
-			return true, errorsmod.Wrapf(err, "unable to resubmit delegator shares query")
-		}
-
-		return true, nil
-	}
-
-	// Update the validator to say that the query is no longer in progress (which will unblock LSM liquid stakes)
-	validator.SlashQueryPending = false
-	hostZone.Validators[valIndex] = validator
-	k.SetHostZone(ctx, hostZone)
-
-	return false, nil
 }
 
 // Update the accounting on the host zone and validator to record the slash

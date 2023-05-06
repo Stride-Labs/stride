@@ -1,16 +1,188 @@
 package keeper_test
 
 import (
+	"fmt"
 	"math/rand"
 
 	sdkmath "cosmossdk.io/math"
+	"github.com/gogo/protobuf/proto" //nolint:staticcheck
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+	ibctesting "github.com/cosmos/ibc-go/v5/testing"
 
+	// TODO [LSM]: Revert type
+	lsmstakingtypes "github.com/iqlusioninc/liquidity-staking-module/x/staking/types"
+
+	epochtypes "github.com/Stride-Labs/stride/v9/x/epochs/types"
 	"github.com/Stride-Labs/stride/v9/x/stakeibc/keeper"
 	"github.com/Stride-Labs/stride/v9/x/stakeibc/types"
 )
+
+type RebalanceDelegationsForHostZoneTestCase struct {
+	expectedRebalancings []types.Rebalancing
+	channelStartSequence uint64
+	hostZone             types.HostZone
+	delegationChannelID  string
+	delegationPortID     string
+}
+
+func (s *KeeperTestSuite) SetupTestRebalanceDelegationsForHostZone() RebalanceDelegationsForHostZoneTestCase {
+	// TODO [LSM]: Fix after merge
+	delegationAccountOwner := fmt.Sprintf("%s.%s", HostChainId, "DELEGATION")
+	delegationChannelID, delegationPortID := s.CreateICAChannel(delegationAccountOwner)
+
+	// Add host zone and validators
+	delegationAddress := "cosmos_DELEGATION"
+	hostZone := types.HostZone{
+		ChainId:              HostChainId,
+		HostDenom:            Atom,
+		DelegationIcaAddress: delegationAddress,
+		ConnectionId:         ibctesting.FirstConnectionID,
+		Validators: []*types.Validator{
+			// Total delegation: 10000
+			{Address: "val1", Weight: 25, Delegation: sdkmath.NewInt(3500)}, // Expected: 2500
+			{Address: "val2", Weight: 50, Delegation: sdkmath.NewInt(2000)}, // Expected: 5000
+			{Address: "val3", Weight: 25, Delegation: sdkmath.NewInt(4500)}, // Expected: 2500
+		},
+	}
+	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
+
+	// Add the stride epoch to determine the ICA timeout
+	strideEpochTracker := types.EpochTracker{
+		EpochIdentifier:    epochtypes.STRIDE_EPOCH,
+		EpochNumber:        1,
+		NextEpochStartTime: uint64(s.Coordinator.CurrentTime.UnixNano() + 30_000_000_000), // dictates timeouts
+	}
+
+	s.App.StakeibcKeeper.SetEpochTracker(s.Ctx, strideEpochTracker)
+
+	// Build expected redelegation messages
+	expectedRebalancings := []types.Rebalancing{
+		{SrcValidator: "val3", DstValidator: "val2", Amt: sdkmath.NewInt(2000)}, // 2000 from val3 to val2
+		{SrcValidator: "val1", DstValidator: "val2", Amt: sdkmath.NewInt(1000)}, // 1000 from val1 to val2
+	}
+
+	// Get the next sequence number to confirm if an ICA was sent
+	startSequence, found := s.App.IBCKeeper.ChannelKeeper.GetNextSequenceSend(s.Ctx, delegationPortID, delegationChannelID)
+	s.Require().True(found, "sequence number not found before ICA")
+
+	return RebalanceDelegationsForHostZoneTestCase{
+		expectedRebalancings: expectedRebalancings,
+		channelStartSequence: startSequence,
+		hostZone:             hostZone,
+		delegationChannelID:  delegationChannelID,
+		delegationPortID:     delegationPortID,
+	}
+}
+
+func (s *KeeperTestSuite) TestRebalanceDelegationsForHostZone_Successful() {
+	tc := s.SetupTestRebalanceDelegationsForHostZone()
+
+	// Call rebalance
+	err := s.App.StakeibcKeeper.RebalanceDelegationsForHostZone(s.Ctx, HostChainId)
+	s.Require().NoError(err, "no error expected with successful rebalancing")
+
+	// Check that the ICA was sent by confirming the sequence number incremented
+	endSequence, found := s.App.IBCKeeper.ChannelKeeper.GetNextSequenceSend(s.Ctx, tc.delegationPortID, tc.delegationChannelID)
+	s.Require().True(found, "sequence number not found after ICA")
+	s.Require().Equal(tc.channelStartSequence+1, endSequence, "sequence number should have been incremented from ICA submission")
+
+	// Check callback data
+	allCallbackData := s.App.IcacallbacksKeeper.GetAllCallbackData(s.Ctx)
+	s.Require().Len(allCallbackData, 1, "length of callback data")
+
+	var callbackData types.RebalanceCallback
+	err = proto.Unmarshal(allCallbackData[0].CallbackArgs, &callbackData)
+	s.Require().NoError(err, "no error expected when unmarshalling callback data")
+	s.Require().Equal(HostChainId, callbackData.HostZoneId, "callback data chain-id")
+
+	// Check splits from callback data
+	actualRebalancings := callbackData.Rebalancings
+	s.Require().Len(actualRebalancings, len(tc.expectedRebalancings), "number of rebalancings from callback data")
+
+	for i, expected := range tc.expectedRebalancings {
+		actual := actualRebalancings[i]
+		s.Require().Equal(expected.SrcValidator, actual.SrcValidator, "rebalancing %d source validator")
+		s.Require().Equal(expected.DstValidator, actual.DstValidator, "rebalancing %d destination validator")
+		s.Require().Equal(expected.Amt.Int64(), actual.Amt.Int64(), "rebalancing %d amount")
+	}
+}
+
+func (s *KeeperTestSuite) TestRebalanceDelegationsForHostZone_SuccessfulBatchSend() {
+	tc := s.SetupTestRebalanceDelegationsForHostZone()
+
+	// Create 5 batches of redelegation messages
+	// For each batch create the RebalanceIcaBatchSize number of validator pairs
+	//  where the rebalance is going from one validator to the next
+	// This will result in 5 ICA messages submitted
+	numBatches := 5
+	validators := []*types.Validator{}
+	for batch := 1; batch <= numBatches; batch++ {
+		for msg := 1; msg <= keeper.RebalanceIcaBatchSize; msg++ {
+			validators = append(validators, []*types.Validator{
+				{Address: fmt.Sprintf("src_val_%d_%d", batch, msg), Weight: 1, Delegation: sdkmath.NewInt(2)},
+				{Address: fmt.Sprintf("dst_val_%d_%d", batch, msg), Weight: 1, Delegation: sdkmath.NewInt(0)},
+			}...)
+		}
+	}
+	hostZone := tc.hostZone
+	hostZone.Validators = validators
+	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
+
+	// Call rebalance
+	err := s.App.StakeibcKeeper.RebalanceDelegationsForHostZone(s.Ctx, HostChainId)
+	s.Require().NoError(err, "no error expected with successful rebalancing")
+
+	// Check that the ICA was sent by confirming the sequence number incremented
+	endSequence, found := s.App.IBCKeeper.ChannelKeeper.GetNextSequenceSend(s.Ctx, tc.delegationPortID, tc.delegationChannelID)
+	s.Require().True(found, "sequence number not found after ICA")
+	s.Require().Equal(int(tc.channelStartSequence)+numBatches, int(endSequence),
+		"sequence number should have been incremented multiple times from ICA submissions")
+}
+
+func (s *KeeperTestSuite) TestRebalanceDelegationsForHostZone_HostNotFound() {
+	s.SetupTestRebalanceDelegationsForHostZone()
+
+	// Attempt to rebalance with a host zone that does not exist - it should error
+	err := s.App.StakeibcKeeper.RebalanceDelegationsForHostZone(s.Ctx, "fake_host_zone")
+	s.Require().ErrorContains(err, "Host zone fake_host_zone not found")
+}
+
+func (s *KeeperTestSuite) TestRebalanceDelegationsForHostZone_MissingDelegationAddress() {
+	tc := s.SetupTestRebalanceDelegationsForHostZone()
+
+	// Remove the delegation address from the host and then call rebalance - it should fail
+	invalidHostZone := tc.hostZone
+	invalidHostZone.DelegationIcaAddress = ""
+	s.App.StakeibcKeeper.SetHostZone(s.Ctx, invalidHostZone)
+
+	err := s.App.StakeibcKeeper.RebalanceDelegationsForHostZone(s.Ctx, HostChainId)
+	s.Require().ErrorContains(err, "no delegation account found for GAIA")
+}
+
+func (s *KeeperTestSuite) TestRebalanceDelegationsForHostZone_ZeroWeightValidators() {
+	tc := s.SetupTestRebalanceDelegationsForHostZone()
+
+	// Update the host zone validators so there are only 0 weight validators - rebalance should fail
+	invalidHostZone := tc.hostZone
+	invalidHostZone.Validators = []*types.Validator{{Address: "val1", Weight: 0}}
+	s.App.StakeibcKeeper.SetHostZone(s.Ctx, invalidHostZone)
+
+	err := s.App.StakeibcKeeper.RebalanceDelegationsForHostZone(s.Ctx, HostChainId)
+	s.Require().ErrorContains(err, "Cannot calculate target delegation if final amount is less than or equal to zero (0)")
+}
+
+func (s *KeeperTestSuite) TestRebalanceDelegationsForHostZone_FailedToSubmitICA() {
+	tc := s.SetupTestRebalanceDelegationsForHostZone()
+
+	// Remove the connection ID from the host zone so the ICA fails
+	invalidHostZone := tc.hostZone
+	invalidHostZone.ConnectionId = ""
+	s.App.StakeibcKeeper.SetHostZone(s.Ctx, invalidHostZone)
+
+	err := s.App.StakeibcKeeper.RebalanceDelegationsForHostZone(s.Ctx, HostChainId)
+	s.Require().ErrorContains(err, "Failed to SubmitTxs for GAIA")
+}
 
 // Given a set of validator deltas (containing the expected change in delegation for each validator)
 // and a set of expected rebalancings (containing the individual rebalance messages), calls
@@ -23,7 +195,7 @@ func (s *KeeperTestSuite) checkRebalanceICAMessages(
 	delegationAddress := "cosmos_DELEGATION"
 	expectedMsgs := []sdk.Msg{}
 	for _, rebalancing := range expectedRebalancings {
-		expectedMsgs = append(expectedMsgs, &stakingtypes.MsgBeginRedelegate{
+		expectedMsgs = append(expectedMsgs, &lsmstakingtypes.MsgBeginRedelegate{
 			DelegatorAddress:    delegationAddress,
 			ValidatorSrcAddress: rebalancing.SrcValidator,
 			ValidatorDstAddress: rebalancing.DstValidator,
@@ -57,8 +229,8 @@ func (s *KeeperTestSuite) checkRebalanceICAMessages(
 	// Confirm the ICA messages list
 	s.Require().Len(actualMsgs, len(expectedMsgs), "length of messages")
 	for i, expectedMsg := range expectedMsgs {
-		actual := actualMsgs[i].(*stakingtypes.MsgBeginRedelegate)
-		expected := expectedMsg.(*stakingtypes.MsgBeginRedelegate)
+		actual := actualMsgs[i].(*lsmstakingtypes.MsgBeginRedelegate)
+		expected := expectedMsg.(*lsmstakingtypes.MsgBeginRedelegate)
 		s.Require().Equal(delegationAddress, actual.DelegatorAddress, "message delegator address, index %d", i)
 		s.Require().Equal(expected.ValidatorSrcAddress, actual.ValidatorSrcAddress, "message src validator, index %d", i)
 		s.Require().Equal(expected.ValidatorDstAddress, actual.ValidatorDstAddress, "message dst validator, index %d", i)
@@ -234,7 +406,7 @@ func (s *KeeperTestSuite) TestGetTargetValAmtsForHostZone() {
 
 	// Check zero delegations throws an error
 	_, err = s.App.StakeibcKeeper.GetTargetValAmtsForHostZone(s.Ctx, hostZone, sdkmath.ZeroInt())
-	s.Require().ErrorContains(err, "Cannot calculate target delegation if final amount is 0")
+	s.Require().ErrorContains(err, "Cannot calculate target delegation if final amount is less than or equal to zero")
 
 	// Check zero weights throws an error
 	_, err = s.App.StakeibcKeeper.GetTargetValAmtsForHostZone(s.Ctx, types.HostZone{}, sdkmath.NewInt(1))

@@ -12,6 +12,7 @@ import (
 	"github.com/gogo/protobuf/proto" //nolint:staticcheck
 
 	icqtypes "github.com/Stride-Labs/stride/v9/x/interchainquery/types"
+	recordstypes "github.com/Stride-Labs/stride/v9/x/records/types"
 	"github.com/Stride-Labs/stride/v9/x/stakeibc/keeper"
 	stakeibckeeper "github.com/Stride-Labs/stride/v9/x/stakeibc/keeper"
 	"github.com/Stride-Labs/stride/v9/x/stakeibc/types"
@@ -32,6 +33,7 @@ type DelegatorSharesICQCallbackTestCase struct {
 	expectedSlashAmount      sdkmath.Int
 	expectedWeight           uint64
 	exchangeRate             sdk.Dec
+	retryTimeoutDuration     time.Duration
 }
 
 // Mocks the query response that's returned from an ICQ for the number of shares for a given validator/delegator pair
@@ -87,7 +89,7 @@ func (s *KeeperTestSuite) SetupDelegatorSharesICQCallback() DelegatorSharesICQCa
 				InternalSharesToTokensRate: internalExchangeRate,
 				Delegation:                 tokensBeforeSlash,
 				Weight:                     weightBeforeSlash,
-				SlashQueryPending:          true,
+				SlashQueryInProgress:       true,
 			},
 		},
 	}
@@ -123,6 +125,32 @@ func (s *KeeperTestSuite) SetupDelegatorSharesICQCallback() DelegatorSharesICQCa
 	}
 	s.App.InterchainqueryKeeper.SetQuery(s.Ctx, query)
 
+	// Add some dummy deposit and epoch unbonding records that are NOT in state IN_PROGRESS
+	// This is to confirm that they're not accidentally interpretted as having
+	// a delegation/undelegation in progress
+	depositRecords := []recordstypes.DepositRecord{
+		// Different status
+		{Id: 1, HostZoneId: HostChainId, Status: recordstypes.DepositRecord_DELEGATION_QUEUE},
+		// Different chain
+		{Id: 1, HostZoneId: "different_chain", Status: recordstypes.DepositRecord_DELEGATION_IN_PROGRESS},
+	}
+	for _, depositRecord := range depositRecords {
+		s.App.RecordsKeeper.SetDepositRecord(s.Ctx, depositRecord)
+	}
+
+	hostZoneUnbondingRecords := []*recordstypes.HostZoneUnbonding{
+		// Different status
+		{HostZoneId: HostChainId, Status: recordstypes.HostZoneUnbonding_UNBONDING_QUEUE},
+		// Different chain
+		{HostZoneId: "different_chain", Status: recordstypes.HostZoneUnbonding_UNBONDING_IN_PROGRESS},
+	}
+	for epoch := uint64(1); epoch <= 3; epoch++ {
+		s.App.RecordsKeeper.SetEpochUnbondingRecord(s.Ctx, recordstypes.EpochUnbondingRecord{
+			EpochNumber:        epoch,
+			HostZoneUnbondings: hostZoneUnbondingRecords,
+		})
+	}
+
 	return DelegatorSharesICQCallbackTestCase{
 		valIndexQueried: valIndexQueried,
 		validArgs: DelegatorSharesICQCallbackArgs{
@@ -136,7 +164,32 @@ func (s *KeeperTestSuite) SetupDelegatorSharesICQCallback() DelegatorSharesICQCa
 		expectedSlashAmount:      expectedSlashAmount,
 		expectedWeight:           expectedWeightAfterSlash,
 		exchangeRate:             internalExchangeRate,
+		retryTimeoutDuration:     timeoutDuration,
 	}
+}
+
+// Helper function to check if the query was resubmitted in the event that it overlapped an ICA
+func (s *KeeperTestSuite) CheckQueryWasResubmitted(tc DelegatorSharesICQCallbackTestCase, hostZone types.HostZone) {
+	queries := s.App.InterchainqueryKeeper.AllQueries(s.Ctx)
+	s.Require().Len(queries, 1, "one query expected after re-submission")
+
+	actualQuery := queries[0]
+	expectedQuery := tc.validArgs.query
+
+	s.Require().Equal(HostChainId, actualQuery.ChainId, "query chain id")
+	s.Require().Equal(ibctesting.FirstConnectionID, actualQuery.ConnectionId, "query connection-id")
+	s.Require().Equal(icqtypes.STAKING_STORE_QUERY_WITH_PROOF, actualQuery.QueryType, "query type")
+
+	s.Require().Equal(expectedQuery.CallbackModule, actualQuery.CallbackModule, "query callback module")
+	s.Require().Equal(expectedQuery.CallbackId, actualQuery.CallbackId, "query callback id")
+	s.Require().Equal(expectedQuery.CallbackData, actualQuery.CallbackData, "query callback data")
+
+	expectedTimeout := s.Ctx.BlockTime().UnixNano() + (tc.retryTimeoutDuration.Nanoseconds())
+	s.Require().Equal(expectedTimeout, int64(actualQuery.TimeoutTimestamp), "query callback data")
+
+	// Confirm the validator still has a query flagged as in progress
+	validator := hostZone.Validators[tc.valIndexQueried]
+	s.Require().True(validator.SlashQueryInProgress, "slash query is progress")
 }
 
 func (s *KeeperTestSuite) TestDelegatorSharesCallback_Successful() {
@@ -157,10 +210,10 @@ func (s *KeeperTestSuite) TestDelegatorSharesCallback_Successful() {
 	s.Require().Equal(tc.expectedDelegationAmount.Int64(), validator.Delegation.Int64(), "validator delegation amount")
 
 	// Confirm the validator query is no longer in progress
-	s.Require().False(validator.SlashQueryPending, "slash query pending")
+	s.Require().False(validator.SlashQueryInProgress, "slash query in progress")
 }
 
-func (s *KeeperTestSuite) TestDelegatorSharesCallback_Retry() {
+func (s *KeeperTestSuite) TestDelegatorSharesCallback_Retry_DelegationChange() {
 	tc := s.SetupDelegatorSharesICQCallback()
 
 	// Change the validator's delegation in the internal record keeping
@@ -180,30 +233,59 @@ func (s *KeeperTestSuite) TestDelegatorSharesCallback_Retry() {
 	s.Require().Equal(initialDelegation.Int64(), hostZone.Validators[tc.valIndexQueried].Delegation.Int64(), "validator delegation")
 
 	// Confirm the query was resubmitted
-	queries := s.App.InterchainqueryKeeper.AllQueries(s.Ctx)
-	s.Require().Len(queries, 1, "one query expected after re-submission")
+	s.CheckQueryWasResubmitted(tc, hostZone)
+}
 
-	actualQuery := queries[0]
-	expectedQuery := tc.validArgs.query
+func (s *KeeperTestSuite) TestDelegatorSharesCallback_Retry_DelegationICAInProgress() {
+	tc := s.SetupDelegatorSharesICQCallback()
 
-	s.Require().False(actualQuery.RequestSent, "query request sent should have been reset to false")
+	// Add a deposit record that makes it appear as if a delegation ICA is in progress
+	s.App.RecordsKeeper.SetDepositRecord(s.Ctx, recordstypes.DepositRecord{
+		Id:         100,
+		HostZoneId: HostChainId,
+		Status:     recordstypes.DepositRecord_DELEGATION_IN_PROGRESS,
+	})
 
-	s.Require().Equal(HostChainId, actualQuery.ChainId, "query chain id")
-	s.Require().Equal(ibctesting.FirstConnectionID, actualQuery.ConnectionId, "query connection-id")
-	s.Require().Equal(icqtypes.STAKING_STORE_QUERY_WITH_PROOF, actualQuery.QueryType, "query type")
+	// Callback
+	err := stakeibckeeper.DelegatorSharesCallback(s.App.StakeibcKeeper, s.Ctx, tc.validArgs.callbackArgs, tc.validArgs.query)
+	s.Require().NoError(err, "no error expected during delegator shares callback")
 
-	s.Require().Equal(expectedQuery.CallbackModule, actualQuery.CallbackModule, "query callback module")
-	s.Require().Equal(expectedQuery.CallbackId, actualQuery.CallbackId, "query callback id")
-	s.Require().Equal(expectedQuery.CallbackData, actualQuery.CallbackData, "query callback data")
+	// Confirm the validator's delegation was not modified
+	hostZone, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx, tc.hostZone.ChainId)
+	s.Require().True(found, "host zone found")
 
-	timeoutDuration := tc.validArgs.query.TimeoutDuration
-	expectedTimeout := s.Ctx.BlockTime().UnixNano() + (timeoutDuration.Nanoseconds())
-	s.Require().Equal(timeoutDuration, actualQuery.TimeoutDuration, "query timeout duration")
-	s.Require().Equal(expectedTimeout, int64(actualQuery.TimeoutTimestamp), "query timeout timestamp")
+	initialDelegation := hostZone.Validators[tc.valIndexQueried].Delegation
+	s.Require().Equal(initialDelegation.Int64(), hostZone.Validators[tc.valIndexQueried].Delegation.Int64(), "validator delegation")
 
-	// Confirm the validator still has a query flagged as in progress
-	validator := hostZone.Validators[tc.valIndexQueried]
-	s.Require().True(validator.SlashQueryPending, "slash query pending")
+	// Confirm the query was resubmitted
+	s.CheckQueryWasResubmitted(tc, hostZone)
+}
+
+func (s *KeeperTestSuite) TestDelegatorSharesCallback_Retry_UndelegationICAInProgress() {
+	tc := s.SetupDelegatorSharesICQCallback()
+
+	// Add a deposit record that makes it appear as if a delegation ICA is in progress
+	s.App.RecordsKeeper.SetEpochUnbondingRecord(s.Ctx, recordstypes.EpochUnbondingRecord{
+		EpochNumber: uint64(1),
+		HostZoneUnbondings: []*recordstypes.HostZoneUnbonding{{
+			HostZoneId: HostChainId,
+			Status:     recordstypes.HostZoneUnbonding_UNBONDING_IN_PROGRESS,
+		}},
+	})
+
+	// Callback
+	err := stakeibckeeper.DelegatorSharesCallback(s.App.StakeibcKeeper, s.Ctx, tc.validArgs.callbackArgs, tc.validArgs.query)
+	s.Require().NoError(err, "no error expected during delegator shares callback")
+
+	// Confirm the validator's delegation was not modified
+	hostZone, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx, tc.hostZone.ChainId)
+	s.Require().True(found, "host zone found")
+
+	initialDelegation := hostZone.Validators[tc.valIndexQueried].Delegation
+	s.Require().Equal(initialDelegation.Int64(), hostZone.Validators[tc.valIndexQueried].Delegation.Int64(), "validator delegation")
+
+	// Confirm the query was resubmitted
+	s.CheckQueryWasResubmitted(tc, hostZone)
 }
 
 func (s *KeeperTestSuite) TestDelegatorSharesCallback_RetryFailure() {

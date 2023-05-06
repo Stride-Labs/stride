@@ -25,9 +25,9 @@ func (k Keeper) SetHostZone(ctx sdk.Context, hostZone types.HostZone) {
 }
 
 // GetHostZone returns a hostZone from its id
-func (k Keeper) GetHostZone(ctx sdk.Context, chain_id string) (val types.HostZone, found bool) {
+func (k Keeper) GetHostZone(ctx sdk.Context, chainId string) (val types.HostZone, found bool) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefix(types.HostZoneKey))
-	b := store.Get([]byte(chain_id))
+	b := store.Get([]byte(chainId))
 	if b == nil {
 		return val, false
 	}
@@ -101,28 +101,68 @@ func (k Keeper) GetAllActiveHostZone(ctx sdk.Context) (list []types.HostZone) {
 	return
 }
 
-func (k Keeper) AddDelegationToValidator(ctx sdk.Context, hostZone types.HostZone, validatorAddress string, amount sdkmath.Int, callbackId string) (success bool) {
+// Updates a validator's individual delegation, and the corresponding total delegation on the host zone
+// Note: This modifies the original host zone struct. The calling function must Set this host zone
+// for changes to persist
+func (k Keeper) AddDelegationToValidator(
+	ctx sdk.Context,
+	hostZone *types.HostZone,
+	validatorAddress string,
+	amount sdkmath.Int,
+	callbackId string,
+) error {
 	for _, validator := range hostZone.Validators {
 		if validator.Address == validatorAddress {
 			k.Logger(ctx).Info(utils.LogICACallbackWithHostZone(hostZone.ChainId, callbackId,
 				"  Validator %s, Current Delegation: %v, Delegation Change: %v", validator.Address, validator.Delegation, amount))
 
-			if amount.GTE(sdkmath.ZeroInt()) {
-				validator.Delegation = validator.Delegation.Add(amount)
-				return true
+			// If the delegation change is negative, make sure it wont cause the delegation to fall below zero
+			if amount.IsNegative() {
+				if amount.Abs().GT(validator.Delegation) {
+					return errorsmod.Wrapf(types.ErrValidatorDelegationChg,
+						"Delegation change (%v) is greater than validator (%s) delegation %v",
+						amount.Abs(), validatorAddress, validator.Delegation)
+				}
+				if amount.Abs().GT(hostZone.TotalDelegations) {
+					return errorsmod.Wrapf(types.ErrValidatorDelegationChg,
+						"Delegation change (%v) is greater than total delegation amount on host %s (%v)",
+						amount.Abs(), hostZone.ChainId, hostZone.TotalDelegations)
+				}
 			}
-			absAmt := amount.Abs()
-			if absAmt.GT(validator.Delegation) {
-				k.Logger(ctx).Error(fmt.Sprintf("Delegation amount %v is greater than validator %s delegation amount %v", absAmt, validatorAddress, validator.Delegation))
-				return false
-			}
-			validator.Delegation = validator.Delegation.Sub(absAmt)
-			return true
+
+			validator.Delegation = validator.Delegation.Add(amount)
+			hostZone.TotalDelegations = hostZone.TotalDelegations.Add(amount)
+
+			return nil
 		}
 	}
 
-	k.Logger(ctx).Error(fmt.Sprintf("Could not find validator %s on host zone %s", validatorAddress, hostZone.ChainId))
-	return false
+	return errorsmod.Wrapf(types.ErrValidatorNotFound,
+		"Could not find validator %s on host zone %s", validatorAddress, hostZone.ChainId)
+}
+
+// Increments the validators slash query progress tracker
+func (k Keeper) IncrementValidatorSlashQueryProgress(
+	ctx sdk.Context,
+	chainId string,
+	validatorAddress string,
+	amount sdkmath.Int,
+) error {
+	hostZone, found := k.GetHostZone(ctx, chainId)
+	if !found {
+		return types.ErrHostZoneNotFound
+	}
+
+	validator, valIndex, found := GetValidatorFromAddress(hostZone.Validators, validatorAddress)
+	if !found {
+		return types.ErrValidatorNotFound
+	}
+
+	validator.SlashQueryProgressTracker = validator.SlashQueryProgressTracker.Add(amount)
+	hostZone.Validators[valIndex] = &validator
+	k.SetHostZone(ctx, hostZone)
+
+	return nil
 }
 
 // Appends a validator to host zone (if the host zone is not already at capacity)

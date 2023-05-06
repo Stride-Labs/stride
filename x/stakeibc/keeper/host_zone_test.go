@@ -179,3 +179,83 @@ func (s *KeeperTestSuite) TestGetHostZoneFromTransferChannelID() {
 	_, found := s.App.StakeibcKeeper.GetHostZoneFromTransferChannelID(s.Ctx, "fake_channel")
 	s.Require().False(found, "fake channel should not be found")
 }
+
+func (s *KeeperTestSuite) TestIncrementValidatorSlashQueryProgress() {
+	// Store a host zone with 3 validators
+	incrementedValidator := "valB"
+	initialHostZone := types.HostZone{
+		ChainId: HostChainId,
+		Validators: []*types.Validator{
+			{Address: "valA", SlashQueryProgressTracker: sdkmath.NewInt(10)},
+			{Address: incrementedValidator, SlashQueryProgressTracker: sdkmath.NewInt(20)},
+			{Address: "valC", SlashQueryProgressTracker: sdkmath.NewInt(30)},
+		},
+	}
+	s.App.StakeibcKeeper.SetHostZone(s.Ctx, initialHostZone)
+
+	// Increment the progress for valB
+	stakeAmount := sdkmath.NewInt(3)
+	expectedProgress := sdkmath.NewInt(23)
+	err := s.App.StakeibcKeeper.IncrementValidatorSlashQueryProgress(s.Ctx, HostChainId, incrementedValidator, stakeAmount)
+	s.Require().NoError(err, "no error expected when incrementing slash query progress")
+
+	// Check progress was updated
+	actualHostZone, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx, HostChainId)
+	s.Require().True(found, "host zone should have been found")
+	s.Require().Len(actualHostZone.Validators, 3, "host zone should still have 3 validators")
+
+	actualValidator := actualHostZone.Validators[1]
+	s.Require().Equal(incrementedValidator, actualValidator.Address, "validator address")
+	s.Require().Equal(expectedProgress.Int64(), actualValidator.SlashQueryProgressTracker.Int64(), "slash query progress")
+
+	// Try to increment from a non-existed host chain - it should fail
+	err = s.App.StakeibcKeeper.IncrementValidatorSlashQueryProgress(s.Ctx, "fake_host", incrementedValidator, stakeAmount)
+	s.Require().ErrorContains(err, "host zone not found")
+
+	// Try to increment from a non-existed validator - it should fail
+	err = s.App.StakeibcKeeper.IncrementValidatorSlashQueryProgress(s.Ctx, HostChainId, "fake_val", stakeAmount)
+	s.Require().ErrorContains(err, "validator not found")
+}
+
+func (s *KeeperTestSuite) TestAddDelegationToValidator() {
+	hostZone := &types.HostZone{
+		Validators: []*types.Validator{
+			{Address: "other_val1", Delegation: sdkmath.NewInt(1000)},
+			{Address: ValAddress, Delegation: sdkmath.NewInt(2000)},
+			{Address: "other_val2", Delegation: sdkmath.NewInt(3000)},
+		},
+		TotalDelegations: sdkmath.NewInt(6000),
+	}
+	updatedIndex := 1
+
+	// Add 500 to the validator
+	err := s.App.StakeibcKeeper.AddDelegationToValidator(s.Ctx, hostZone, ValAddress, sdkmath.NewInt(500), "")
+	s.Require().NoError(err, "no error expected when adding delegation to validator")
+	s.Require().Equal(int64(2500), hostZone.Validators[updatedIndex].Delegation.Int64(), "delegation after addition")
+	s.Require().Equal(int64(6500), hostZone.TotalDelegations.Int64(), "total delegations after addition")
+
+	// Subtract 250 from the validator
+	err = s.App.StakeibcKeeper.AddDelegationToValidator(s.Ctx, hostZone, ValAddress, sdkmath.NewInt(-250), "")
+	s.Require().NoError(err, "no error expected when subtracting delegation from validator")
+	s.Require().Equal(int64(2250), hostZone.Validators[updatedIndex].Delegation.Int64(), "delegation after subtraction")
+	s.Require().Equal(int64(6250), hostZone.TotalDelegations.Int64(), "total delegations after subtraction")
+
+	// Confirm other validators were not modified
+	s.Require().Equal(int64(1000), hostZone.Validators[0].Delegation.Int64(), "validator at index 0 should not have changed")
+	s.Require().Equal(int64(3000), hostZone.Validators[2].Delegation.Int64(), "validator at index 2 should not have changed")
+
+	// Attempt to subtract more than the validator has - it should fail
+	err = s.App.StakeibcKeeper.AddDelegationToValidator(s.Ctx, hostZone, ValAddress, sdkmath.NewInt(-3000), "")
+	s.Require().ErrorContains(err, "Delegation change (3000) is greater than validator")
+
+	// Attempt to modify a validator that doesn't exist - it should fail
+	err = s.App.StakeibcKeeper.AddDelegationToValidator(s.Ctx, hostZone, "does_not_exist", sdkmath.NewInt(1000), "")
+	s.Require().ErrorContains(err, "validator not found")
+
+	// Attempt to subtract more than the total delegations on the host - it should fail
+	// Here, w set the validator's delegation to be much higher than the TotalDelegation
+	//   (which should not be possible in practice)
+	hostZone.Validators[updatedIndex].Delegation = sdkmath.NewInt(10000)
+	err = s.App.StakeibcKeeper.AddDelegationToValidator(s.Ctx, hostZone, ValAddress, sdkmath.NewInt(-7000), "")
+	s.Require().ErrorContains(err, "Delegation change (7000) is greater than total delegation amount on host")
+}

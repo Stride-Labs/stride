@@ -11,14 +11,15 @@ const (
 )
 
 const (
-	EventTypeRegisterZone          = "register_zone"
-	EventTypeRedemptionRequest     = "request_redemption"
-	EventTypeLiquidStakeRequest    = "liquid_stake"
-	EventTypeLSMLiquidStakeRequest = "lsm_liquid_stake"
-	EventTypeLSMLiquidStakeFailed  = "lsm_liquid_stake_failed"
-	EventTypeHostZoneHalt          = "halt_zone"
-	EventTypeValidatorExchangeRate = "validator_exchange_rate"
-	EventTypeValidatorSlash        = "validator_slash"
+	EventTypeRegisterZone                = "register_zone"
+	EventTypeRedemptionRequest           = "request_redemption"
+	EventTypeLiquidStakeRequest          = "liquid_stake"
+	EventTypeLSMLiquidStakeRequest       = "lsm_liquid_stake"
+	EventTypeLSMLiquidStakeFailed        = "lsm_liquid_stake_failed"
+	EventTypeHostZoneHalt                = "halt_zone"
+	EventTypeValidatorExchangeRateChange = "validator_exchange_rate_change"
+	EventTypeValidatorSlash              = "validator_slash"
+	EventTypeUndelegation                = "undelegation"
 
 	AttributeKeyHostZone         = "host_zone"
 	AttributeKeyConnectionId     = "connection_id"
@@ -33,6 +34,7 @@ const (
 	AttributeKeyLiquidStaker      = "liquid_staker"
 	AttributeKeyNativeBaseDenom   = "native_base_denom"
 	AttributeKeyNativeIBCDenom    = "native_ibc_denom"
+	AttributeKeyTotalUnbondAmount = "total_unbond_amount"
 	AttributeKeyLSMTokenBaseDenom = "lsm_token_base_denom"
 	AttributeKeyNativeAmount      = "native_amount"
 	AttributeKeyStTokenAmount     = "sttoken_amount"

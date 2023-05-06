@@ -8,13 +8,13 @@ import (
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+	lsmstakingtypes "github.com/iqlusioninc/liquidity-staking-module/x/staking/types"
 
 	"github.com/Stride-Labs/stride/v9/utils"
 	"github.com/Stride-Labs/stride/v9/x/stakeibc/types"
 )
 
-const IcaBatchSize = 5
+const RebalanceIcaBatchSize = 5
 
 type RebalanceValidatorDelegationChange struct {
 	ValidatorAddress string
@@ -61,8 +61,8 @@ func (k Keeper) RebalanceDelegationsForHostZone(ctx sdk.Context, chainId string)
 
 	msgs, rebalancings := k.GetRebalanceICAMessages(hostZone, valDeltaList)
 
-	for start := 0; start < len(msgs); start += IcaBatchSize {
-		end := start + IcaBatchSize
+	for start := 0; start < len(msgs); start += RebalanceIcaBatchSize {
+		end := start + RebalanceIcaBatchSize
 		if end > len(msgs) {
 			end = len(msgs)
 		}
@@ -91,7 +91,7 @@ func (k Keeper) RebalanceDelegationsForHostZone(ctx sdk.Context, chainId string)
 		)
 		if err != nil {
 			return errorsmod.Wrapf(err, "Failed to SubmitTxs for %s, messages: %+v", hostZone.ChainId, msgs)
-		}		
+		}
 	}
 
 	return nil
@@ -170,7 +170,8 @@ func (k Keeper) GetRebalanceICAMessages(
 		srcValidator := surplusValidator.ValidatorAddress
 		dstValidator := deficitValidator.ValidatorAddress
 
-		msgs = append(msgs, &stakingtypes.MsgBeginRedelegate{
+		// TODO [LSM]: Revert type
+		msgs = append(msgs, &lsmstakingtypes.MsgBeginRedelegate{
 			DelegatorAddress:    hostZone.DelegationIcaAddress,
 			ValidatorSrcAddress: srcValidator,
 			ValidatorDstAddress: dstValidator,
@@ -201,7 +202,7 @@ func (k Keeper) GetValidatorDelegationDifferences(ctx sdk.Context, hostZone type
 	delegationDeltas := []RebalanceValidatorDelegationChange{}
 	totalDelegationChange := sdkmath.ZeroInt()
 	for _, validator := range hostZone.Validators {
-		// Compare the target with either the current delegation
+		// Compare the target with the current delegation
 		delegationChange := validator.Delegation.Sub(targetDelegation[validator.Address])
 
 		// Only include validators who's delegation should change
@@ -211,8 +212,8 @@ func (k Keeper) GetValidatorDelegationDifferences(ctx sdk.Context, hostZone type
 				Delta:            delegationChange,
 			})
 			totalDelegationChange = totalDelegationChange.Add(delegationChange)
+			k.Logger(ctx).Info(fmt.Sprintf("Adding delegation: %v to validator: %s", delegationChange, validator.Address))
 		}
-		k.Logger(ctx).Info(fmt.Sprintf("Adding delegation: %v to validator: %s", delegationChange, validator.Address))
 	}
 
 	// Sanity check that the sum of all the delegation change's is equal to 0
@@ -230,9 +231,9 @@ func (k Keeper) GetValidatorDelegationDifferences(ctx sdk.Context, hostZone type
 // output key is ADDRESS not NAME
 func (k Keeper) GetTargetValAmtsForHostZone(ctx sdk.Context, hostZone types.HostZone, finalDelegation sdkmath.Int) (map[string]sdkmath.Int, error) {
 	// Confirm the expected delegation amount is greater than 0
-	if finalDelegation.IsZero() {
+	if !finalDelegation.IsPositive() {
 		return nil, errorsmod.Wrapf(sdkerrors.ErrInvalidRequest,
-			"Cannot calculate target delegation if final amount is 0 %s", hostZone.ChainId)
+			"Cannot calculate target delegation if final amount is less than or equal to zero (%v)", finalDelegation)
 	}
 
 	// Sum the total weight across all validators

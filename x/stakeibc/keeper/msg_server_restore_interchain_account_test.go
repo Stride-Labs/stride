@@ -5,7 +5,6 @@ import (
 	ibctesting "github.com/cosmos/ibc-go/v5/testing"
 	_ "github.com/stretchr/testify/suite"
 
-	icatypes "github.com/cosmos/ibc-go/v5/modules/apps/27-interchain-accounts/types"
 	channeltypes "github.com/cosmos/ibc-go/v5/modules/core/04-channel/types"
 
 	recordtypes "github.com/Stride-Labs/stride/v9/x/records/types"
@@ -48,8 +47,7 @@ func (s *KeeperTestSuite) SetupRestoreInterchainAccount(createDelegationICAChann
 	var channelID, portID string
 	if createDelegationICAChannel {
 		owner := "GAIA.DELEGATION"
-		channelID = s.CreateICAChannel(owner)
-		portID = icatypes.PortPrefix + owner
+		channelID, portID = s.CreateICAChannel(owner)
 	}
 
 	hostZone := types.HostZone{
@@ -325,8 +323,7 @@ func (s *KeeperTestSuite) TestRestoreInterchainAccount_NoRecordChange_Success() 
 	// Here, we're closing and restoring the withdrawal channel so records should not be reverted
 	tc := s.SetupRestoreInterchainAccount(false)
 	owner := "GAIA.WITHDRAWAL"
-	channelID := s.CreateICAChannel(owner)
-	portID := icatypes.PortPrefix + owner
+	channelID, portID := s.CreateICAChannel(owner)
 
 	// Confirm there are two channels originally
 	channels := s.App.IBCKeeper.ChannelKeeper.GetAllChannels(s.Ctx)

@@ -71,7 +71,7 @@ func EmitValidatorExchangeRateChangeEvent(
 ) {
 	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(
-			types.EventTypeValidatorExchangeRate,
+			types.EventTypeValidatorExchangeRateChange,
 			sdk.NewAttribute(sdk.AttributeKeyModule, types.ModuleName),
 			sdk.NewAttribute(types.AttributeKeyHostZone, chainId),
 			sdk.NewAttribute(types.AttributeKeyValidator, validatorAddress),
@@ -100,6 +100,19 @@ func EmitValidatorSlashEvent(
 			sdk.NewAttribute(types.AttributeKeySlashPercent, slashPercent.String()),
 			sdk.NewAttribute(types.AttributeKeySlashAmount, slashAmount.String()),
 			sdk.NewAttribute(types.AttributeKeyCurrentDelegation, currentDelegation.String()),
+		),
+	)
+}
+
+// Emits an event if an undelegation ICA was submitted for a host zone
+func EmitUndelegationEvent(ctx sdk.Context, hostZone types.HostZone, totalUnbondAmount sdkmath.Int) {
+	ctx.EventManager().EmitEvent(
+		sdk.NewEvent(
+			types.EventTypeUndelegation,
+			sdk.NewAttribute(sdk.AttributeKeyModule, types.ModuleName),
+			sdk.NewAttribute(types.AttributeKeyHostZone, hostZone.ChainId),
+			sdk.NewAttribute(types.AttributeKeyNativeBaseDenom, hostZone.HostDenom),
+			sdk.NewAttribute(types.AttributeKeyTotalUnbondAmount, totalUnbondAmount.String()),
 		),
 	)
 }

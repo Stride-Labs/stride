@@ -125,6 +125,11 @@ func (s *KeeperTestSuite) TestLSMLiquidStake_Successful_NoExchangeRateQuery() {
 	endSequence, found := s.App.IBCKeeper.ChannelKeeper.GetNextSequenceSend(s.Ctx, transfertypes.PortID, ibctesting.FirstChannelID)
 	s.Require().True(found, "sequence number not found after lsm liquid stake")
 	s.Require().Equal(startSequence+1, endSequence, "sequence number after IBC transfer")
+
+	// Confirm slash query progress was incremented
+	hostZone, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx, HostChainId)
+	s.Require().True(found, "host zone should have been found")
+	s.Require().Equal(int64(9_000_000), hostZone.Validators[0].SlashQueryProgressTracker.Int64(), "slash query progress")
 }
 
 func (s *KeeperTestSuite) TestLSMLiquidStake_Successful_WithExchangeRateQuery() {

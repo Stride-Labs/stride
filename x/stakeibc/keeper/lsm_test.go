@@ -38,7 +38,7 @@ func (s *KeeperTestSuite) TestValidateLSMLiquidStake() {
 		ChainId:           HostChainId,
 		TransferChannelId: ibctesting.FirstChannelID,
 		Validators: []*types.Validator{
-			{Address: ValAddress, SlashQueryPending: false},
+			{Address: ValAddress, SlashQueryInProgress: false},
 		},
 	}
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
@@ -91,7 +91,7 @@ func (s *KeeperTestSuite) TestValidateLSMLiquidStake() {
 	s.Require().ErrorContains(err, "transfer channel-id from LSM token (channel-100) does not match any registered host zone")
 
 	// Flag the validator as slashed - it should fail
-	hostZone.Validators[0].SlashQueryPending = true
+	hostZone.Validators[0].SlashQueryInProgress = true
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
 	_, err = s.App.StakeibcKeeper.ValidateLSMLiquidStake(s.Ctx, invalidMsg)
 	s.Require().ErrorContains(err, "transfer channel-id from LSM token (channel-100) does not match any registered host zone")
@@ -179,7 +179,7 @@ func (s *KeeperTestSuite) TestGetHostZoneFromLSMTokenPath() {
 func (s *KeeperTestSuite) TestGetValidatorFromLSMTokenDenom() {
 	valAddress := "cosmosvaloperXXX"
 	denom := valAddress + "/42" // add record ID
-	validators := []*types.Validator{{Address: valAddress, SlashQueryPending: false}}
+	validators := []*types.Validator{{Address: valAddress, SlashQueryInProgress: false}}
 
 	// Successful lookup
 	validator, err := s.App.StakeibcKeeper.GetValidatorFromLSMTokenDenom(denom, validators)
@@ -198,7 +198,7 @@ func (s *KeeperTestSuite) TestGetValidatorFromLSMTokenDenom() {
 	s.Require().ErrorContains(err, "validator (cosmosvaloperXXX) is not registered in the Stride validator set")
 
 	// Pass in a validator that has a slash query in flight - it should fail
-	validatorsWithPendingQuery := []*types.Validator{{Address: valAddress, SlashQueryPending: true}}
+	validatorsWithPendingQuery := []*types.Validator{{Address: valAddress, SlashQueryInProgress: true}}
 	_, err = s.App.StakeibcKeeper.GetValidatorFromLSMTokenDenom(denom, validatorsWithPendingQuery)
 	s.Require().ErrorContains(err, "validator cosmosvaloperXXX was slashed")
 }

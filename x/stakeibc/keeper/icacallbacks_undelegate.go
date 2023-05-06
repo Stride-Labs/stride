@@ -20,26 +20,6 @@ import (
 	"github.com/golang/protobuf/proto" //nolint:staticcheck
 )
 
-// Marshal undelegate callback args
-func (k Keeper) MarshalUndelegateCallbackArgs(ctx sdk.Context, undelegateCallback types.UndelegateCallback) ([]byte, error) {
-	out, err := proto.Marshal(&undelegateCallback)
-	if err != nil {
-		k.Logger(ctx).Error(fmt.Sprintf("MarshalUndelegateCallbackArgs | %s", err.Error()))
-		return nil, err
-	}
-	return out, nil
-}
-
-// Unmarshalls undelegate callback arguments into a UndelegateCallback struct
-func (k Keeper) UnmarshalUndelegateCallbackArgs(ctx sdk.Context, undelegateCallback []byte) (types.UndelegateCallback, error) {
-	unmarshalledUndelegateCallback := types.UndelegateCallback{}
-	if err := proto.Unmarshal(undelegateCallback, &unmarshalledUndelegateCallback); err != nil {
-		k.Logger(ctx).Error(fmt.Sprintf("UnmarshalUndelegateCallbackArgs | %s", err.Error()))
-		return unmarshalledUndelegateCallback, err
-	}
-	return unmarshalledUndelegateCallback, nil
-}
-
 // ICA Callback after undelegating
 //   If successful:
 //      * Updates epoch unbonding record status
@@ -51,8 +31,8 @@ func (k Keeper) UnmarshalUndelegateCallbackArgs(ctx sdk.Context, undelegateCallb
 //		* Reverts epoch unbonding record status
 func UndelegateCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ackResponse *icacallbackstypes.AcknowledgementResponse, args []byte) error {
 	// Fetch callback args
-	undelegateCallback, err := k.UnmarshalUndelegateCallbackArgs(ctx, args)
-	if err != nil {
+	var undelegateCallback types.UndelegateCallback
+	if err := proto.Unmarshal(args, &undelegateCallback); err != nil {
 		return errorsmod.Wrapf(types.ErrUnmarshalFailure, fmt.Sprintf("Unable to unmarshal undelegate callback args: %s", err.Error()))
 	}
 	chainId := undelegateCallback.HostZoneId
@@ -74,8 +54,12 @@ func UndelegateCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, a
 			icacallbackstypes.AckResponseStatus_FAILURE, packet))
 
 		// Reset unbondings record status
-		err = k.RecordsKeeper.SetHostZoneUnbondings(ctx, chainId, undelegateCallback.EpochUnbondingRecordIds, recordstypes.HostZoneUnbonding_UNBONDING_QUEUE)
-		if err != nil {
+		if err := k.RecordsKeeper.SetHostZoneUnbondings(
+			ctx,
+			chainId,
+			undelegateCallback.EpochUnbondingRecordIds,
+			recordstypes.HostZoneUnbonding_UNBONDING_QUEUE,
+		); err != nil {
 			return err
 		}
 		return nil
@@ -89,7 +73,7 @@ func UndelegateCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, a
 	if !found {
 		return errorsmod.Wrapf(sdkerrors.ErrKeyNotFound, "Host zone not found: %s", undelegateCallback.HostZoneId)
 	}
-	err = k.UpdateDelegationBalances(ctx, hostZone, undelegateCallback)
+	err := k.UpdateDelegationBalances(ctx, hostZone, undelegateCallback)
 	if err != nil {
 		k.Logger(ctx).Error(fmt.Sprintf("UndelegateCallback | %s", err.Error()))
 		return err
@@ -124,25 +108,15 @@ func UndelegateCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, a
 }
 
 // Decrement the delegation field on the host zone and each validator's delegations after a successful unbonding ICA
-func (k Keeper) UpdateDelegationBalances(ctx sdk.Context, zone types.HostZone, undelegateCallback types.UndelegateCallback) error {
+func (k Keeper) UpdateDelegationBalances(ctx sdk.Context, hostZone types.HostZone, undelegateCallback types.UndelegateCallback) error {
 	// Undelegate from each validator and update host zone staked balance, if successful
 	for _, undelegation := range undelegateCallback.SplitDelegations {
-		if undelegation.Amount.GT(zone.TotalDelegations) {
-			// handle incoming underflow
-			// Once we add a killswitch, we should also stop liquid staking on the zone here
-			return errorsmod.Wrapf(types.ErrUndelegationAmount,
-				"undelegation.Amount > zone.TotalDelegations, undelegation.Amount: %v, zone.TotalDelegations %v",
-				undelegation.Amount, zone.TotalDelegations)
-		} else {
-			zone.TotalDelegations = zone.TotalDelegations.Sub(undelegation.Amount)
-		}
-
-		success := k.AddDelegationToValidator(ctx, zone, undelegation.Validator, undelegation.Amount.Neg(), ICACallbackID_Undelegate)
-		if !success {
-			return errorsmod.Wrapf(types.ErrValidatorDelegationChg, "Failed to remove delegation to validator")
+		err := k.AddDelegationToValidator(ctx, &hostZone, undelegation.Validator, undelegation.Amount.Neg(), ICACallbackID_Undelegate)
+		if err != nil {
+			return err
 		}
 	}
-	k.SetHostZone(ctx, zone)
+	k.SetHostZone(ctx, hostZone)
 	return nil
 }
 

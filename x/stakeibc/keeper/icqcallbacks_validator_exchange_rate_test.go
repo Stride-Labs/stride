@@ -232,7 +232,7 @@ func (s *KeeperTestSuite) checkDelegatorSharesQuerySubmitted(liquidStakeCallback
 	// Confirm the validator's flagged as having a query in progress
 	hostZone, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx, HostChainId)
 	s.Require().True(found, "host zone should have been found")
-	s.Require().True(hostZone.Validators[0].SlashQueryPending, "slash query in progress")
+	s.Require().True(hostZone.Validators[0].SlashQueryInProgress, "slash query in progress")
 }
 
 // Helper function to check that the delegator shares query was not submitted
