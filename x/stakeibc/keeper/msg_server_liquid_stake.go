@@ -101,18 +101,7 @@ func (k msgServer) LiquidStake(goCtx context.Context, msg *types.MsgLiquidStake)
 	k.RecordsKeeper.SetDepositRecord(ctx, *depositRecord)
 
 	// Emit liquid stake event
-	ctx.EventManager().EmitEvent(
-		sdk.NewEvent(
-			types.EventTypeLiquidStakeRequest,
-			sdk.NewAttribute(sdk.AttributeKeyModule, types.ModuleName),
-			sdk.NewAttribute(types.AttributeKeyLiquidStaker, msg.Creator),
-			sdk.NewAttribute(types.AttributeKeyHostZone, hostZone.ChainId),
-			sdk.NewAttribute(types.AttributeKeyNativeBaseDenom, msg.HostDenom),
-			sdk.NewAttribute(types.AttributeKeyNativeIBCDenom, hostZone.IbcDenom),
-			sdk.NewAttribute(types.AttributeKeyNativeAmount, msg.Amount.String()),
-			sdk.NewAttribute(types.AttributeKeyStTokenAmount, stAmount.String()),
-		),
-	)
+	EmitSuccessfulLiquidStakeEvent(ctx, msg, *hostZone, stAmount)
 
 	k.hooks.AfterLiquidStake(ctx, liquidStakerAddress)
 	return &types.MsgLiquidStakeResponse{}, nil

@@ -37,7 +37,9 @@ func (s *KeeperTestSuite) TestValidateLSMLiquidStake() {
 	hostZone := types.HostZone{
 		ChainId:           HostChainId,
 		TransferChannelId: ibctesting.FirstChannelID,
-		Validators:        []*types.Validator{{Address: ValAddress}},
+		Validators: []*types.Validator{
+			{Address: ValAddress, SlashQueryInProgress: false},
+		},
 	}
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
 
@@ -68,7 +70,7 @@ func (s *KeeperTestSuite) TestValidateLSMLiquidStake() {
 
 	s.Require().Equal(HostChainId, lsmLiquidStake.HostZone.ChainId, "host zone after valid message")
 	s.Require().Equal(ValAddress, lsmLiquidStake.Validator.Address, "validator after valid message")
-	s.Require().Equal(expectedLSMTokenDeposit, lsmLiquidStake.Deposit, "deposit after valid message")
+	s.Require().Equal(expectedLSMTokenDeposit, *lsmLiquidStake.Deposit, "deposit after valid message")
 
 	// Try with an ibc denom that's not registered - it should fail
 	invalidMsg := validMsg
@@ -85,6 +87,12 @@ func (s *KeeperTestSuite) TestValidateLSMLiquidStake() {
 	// Try with with a different transfer channel - it should fail
 	invalidMsg = validMsg
 	invalidMsg.LsmTokenIbcDenom = transfertypes.ParseDenomTrace(fmt.Sprintf("%s/%s", invalidPath, LSMTokenBaseDenom)).IBCDenom()
+	_, err = s.App.StakeibcKeeper.ValidateLSMLiquidStake(s.Ctx, invalidMsg)
+	s.Require().ErrorContains(err, "transfer channel-id from LSM token (channel-100) does not match any registered host zone")
+
+	// Flag the validator as slashed - it should fail
+	hostZone.Validators[0].SlashQueryInProgress = true
+	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
 	_, err = s.App.StakeibcKeeper.ValidateLSMLiquidStake(s.Ctx, invalidMsg)
 	s.Require().ErrorContains(err, "transfer channel-id from LSM token (channel-100) does not match any registered host zone")
 
@@ -171,7 +179,7 @@ func (s *KeeperTestSuite) TestGetHostZoneFromLSMTokenPath() {
 func (s *KeeperTestSuite) TestGetValidatorFromLSMTokenDenom() {
 	valAddress := "cosmosvaloperXXX"
 	denom := valAddress + "/42" // add record ID
-	validators := []*types.Validator{{Address: valAddress}}
+	validators := []*types.Validator{{Address: valAddress, SlashQueryInProgress: false}}
 
 	// Successful lookup
 	validator, err := s.App.StakeibcKeeper.GetValidatorFromLSMTokenDenom(denom, validators)
@@ -188,6 +196,11 @@ func (s *KeeperTestSuite) TestGetValidatorFromLSMTokenDenom() {
 	// Validator does not exist - should fail
 	_, err = s.App.StakeibcKeeper.GetValidatorFromLSMTokenDenom(denom, []*types.Validator{})
 	s.Require().ErrorContains(err, "validator (cosmosvaloperXXX) is not registered in the Stride validator set")
+
+	// Pass in a validator that has a slash query in flight - it should fail
+	validatorsWithPendingQuery := []*types.Validator{{Address: valAddress, SlashQueryInProgress: true}}
+	_, err = s.App.StakeibcKeeper.GetValidatorFromLSMTokenDenom(denom, validatorsWithPendingQuery)
+	s.Require().ErrorContains(err, "validator cosmosvaloperXXX was slashed")
 }
 
 func (s *KeeperTestSuite) TestShouldCheckIfValidatorWasSlashed() {

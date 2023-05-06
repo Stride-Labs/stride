@@ -14,7 +14,7 @@ import (
 	"github.com/Stride-Labs/stride/v9/x/stakeibc/types"
 )
 
-const IcaBatchSize = 5
+const RebalanceIcaBatchSize = 5
 
 type RebalanceValidatorDelegationChange struct {
 	ValidatorAddress string
@@ -61,8 +61,8 @@ func (k Keeper) RebalanceDelegationsForHostZone(ctx sdk.Context, chainId string)
 
 	msgs, rebalancings := k.GetRebalanceICAMessages(hostZone, valDeltaList)
 
-	for start := 0; start < len(msgs); start += IcaBatchSize {
-		end := start + IcaBatchSize
+	for start := 0; start < len(msgs); start += RebalanceIcaBatchSize {
+		end := start + RebalanceIcaBatchSize
 		if end > len(msgs) {
 			end = len(msgs)
 		}
@@ -188,7 +188,7 @@ func (k Keeper) GetRebalanceICAMessages(
 }
 
 // This function returns a list with the number of extra tokens that should be sent to each validator
-//   - Positive delta implies the validator has a surplus (and should give lose stake)
+//   - Positive delta implies the validator has a surplus (and should lose stake)
 //   - Negative delta implies the validator has a deficit (and should gain stake)
 func (k Keeper) GetValidatorDelegationDifferences(ctx sdk.Context, hostZone types.HostZone) ([]RebalanceValidatorDelegationChange, error) {
 	// Get the target delegation amount for each validator

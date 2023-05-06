@@ -2,26 +2,24 @@ package keeper_test
 
 import (
 	"fmt"
+	"time"
 
+	sdkmath "cosmossdk.io/math"
 	ibctesting "github.com/cosmos/ibc-go/v5/testing"
+	"github.com/gogo/protobuf/proto" //nolint:staticcheck
 	_ "github.com/stretchr/testify/suite"
 
-	epochtypes "github.com/Stride-Labs/stride/v9/x/epochs/types"
 	"github.com/Stride-Labs/stride/v9/x/stakeibc/types"
 )
 
 // ================================ 1: QueryValidatorExchangeRate =============================================
 
 type QueryValidatorExchangeRateTestCase struct {
-	msg                types.MsgUpdateValidatorSharesExchRate
-	currentEpoch       uint64
-	hostZone           types.HostZone
-	strideEpochTracker types.EpochTracker
-	dayEpochTracker    types.EpochTracker
+	msg      types.MsgUpdateValidatorSharesExchRate
+	hostZone types.HostZone
 }
 
 func (s *KeeperTestSuite) SetupQueryValidatorExchangeRate() QueryValidatorExchangeRateTestCase {
-	currentEpoch := uint64(1)
 	valoperAddr := "cosmosvaloper133lfs9gcpxqj6er3kx605e3v9lqp2pg5syhvsz"
 
 	// set up IBC
@@ -37,34 +35,13 @@ func (s *KeeperTestSuite) SetupQueryValidatorExchangeRate() QueryValidatorExchan
 
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
 
-	// This will make the current time 90% through the epoch
-	strideEpochTracker := types.EpochTracker{
-		EpochIdentifier:    epochtypes.STRIDE_EPOCH,
-		EpochNumber:        currentEpoch,
-		Duration:           10_000_000_000,                                               // 10 second epochs
-		NextEpochStartTime: uint64(s.Coordinator.CurrentTime.UnixNano() + 1_000_000_000), // epoch ends in 1 second
-	}
-	s.App.StakeibcKeeper.SetEpochTracker(s.Ctx, strideEpochTracker)
-
-	// This will make the current time 50% through the day
-	dayEpochTracker := types.EpochTracker{
-		EpochIdentifier:    epochtypes.DAY_EPOCH,
-		EpochNumber:        currentEpoch,
-		Duration:           40_000_000_000,                                                // 40 second epochs
-		NextEpochStartTime: uint64(s.Coordinator.CurrentTime.UnixNano() + 20_000_000_000), // day ends in 20 second
-	}
-	s.App.StakeibcKeeper.SetEpochTracker(s.Ctx, dayEpochTracker)
-
 	return QueryValidatorExchangeRateTestCase{
 		msg: types.MsgUpdateValidatorSharesExchRate{
 			Creator: s.TestAccs[0].String(),
 			ChainId: HostChainId,
 			Valoper: valoperAddr,
 		},
-		currentEpoch:       currentEpoch,
-		hostZone:           hostZone,
-		strideEpochTracker: strideEpochTracker,
-		dayEpochTracker:    dayEpochTracker,
+		hostZone: hostZone,
 	}
 }
 
@@ -78,19 +55,6 @@ func (s *KeeperTestSuite) TestQueryValidatorExchangeRate_Successful() {
 	// check a query was created (a simple test; details about queries are covered in makeRequest's test)
 	queries := s.App.InterchainqueryKeeper.AllQueries(s.Ctx)
 	s.Require().Len(queries, 1, "one query should have been created")
-}
-
-func (s *KeeperTestSuite) TestQueryValidatorExchangeRate_BeforeBufferWindow() {
-	tc := s.SetupQueryValidatorExchangeRate()
-
-	// set the time to be 50% through the stride_epoch
-	strideEpochTracker := tc.strideEpochTracker
-	strideEpochTracker.NextEpochStartTime = uint64(s.Coordinator.CurrentTime.UnixNano() + int64(strideEpochTracker.Duration)/2) // 50% through the epoch
-	s.App.StakeibcKeeper.SetEpochTracker(s.Ctx, strideEpochTracker)
-
-	resp, err := s.App.StakeibcKeeper.QueryValidatorExchangeRate(s.Ctx, &tc.msg)
-	s.Require().ErrorContains(err, "outside the buffer time during which ICQs are allowed")
-	s.Require().Nil(resp, "response should be nil")
 }
 
 func (s *KeeperTestSuite) TestQueryValidatorExchangeRate_NoHostZone() {
@@ -143,17 +107,7 @@ func (s *KeeperTestSuite) TestQueryValidatorExchangeRate_MissingConnectionId() {
 
 // ================================== 2: QueryDelegationsIcq ==========================================
 
-type QueryDelegationsIcqTestCase struct {
-	hostZone           types.HostZone
-	valoperAddr        string
-	strideEpochTracker types.EpochTracker
-	dayEpochTracker    types.EpochTracker
-}
-
-func (s *KeeperTestSuite) SetupQueryDelegationsIcq() QueryDelegationsIcqTestCase {
-	currentEpoch := uint64(1)
-	valoperAddr := "cosmosvaloper133lfs9gcpxqj6er3kx605e3v9lqp2pg5syhvsz"
-
+func (s *KeeperTestSuite) SetupQueryDelegationsIcq() (types.HostZone, types.Validator) {
 	// set up IBC
 	s.CreateTransferChannel(HostChainId)
 
@@ -161,6 +115,16 @@ func (s *KeeperTestSuite) SetupQueryDelegationsIcq() QueryDelegationsIcqTestCase
 	s.CreateICAChannel(delegationAccountOwner)
 	delegationAddress := s.IcaAddresses[delegationAccountOwner]
 
+	queriedValidator := types.Validator{
+		Address:              ValAddress,
+		Delegation:           sdkmath.NewInt(100),
+		SlashQueryInProgress: false,
+	}
+	otherValidator := types.Validator{
+		Address:              "cosmosvaloper1pcag0cj4ttxg8l7pcg0q4ksuglswuuedadj7ne",
+		Delegation:           sdkmath.NewInt(100),
+		SlashQueryInProgress: false,
+	}
 	hostZone := types.HostZone{
 		ChainId:              HostChainId,
 		ConnectionId:         ibctesting.FirstConnectionID,
@@ -168,48 +132,32 @@ func (s *KeeperTestSuite) SetupQueryDelegationsIcq() QueryDelegationsIcqTestCase
 		IbcDenom:             IbcAtom,
 		Bech32Prefix:         Bech32Prefix,
 		DelegationIcaAddress: delegationAddress,
+		Validators:           []*types.Validator{&queriedValidator, &otherValidator},
 	}
 
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
 
-	// This will make the current time 90% through the epoch
-	strideEpochTracker := types.EpochTracker{
-		EpochIdentifier:    epochtypes.STRIDE_EPOCH,
-		EpochNumber:        currentEpoch,
-		Duration:           10_000_000_000,                                               // 10 second epochs
-		NextEpochStartTime: uint64(s.Coordinator.CurrentTime.UnixNano() + 1_000_000_000), // epoch ends in 1 second
-	}
-	s.App.StakeibcKeeper.SetEpochTracker(s.Ctx, strideEpochTracker)
-
-	// This will make the current time 50% through the day
-	dayEpochTracker := types.EpochTracker{
-		EpochIdentifier:    epochtypes.DAY_EPOCH,
-		EpochNumber:        currentEpoch,
-		Duration:           40_000_000_000,                                                // 40 second epochs
-		NextEpochStartTime: uint64(s.Coordinator.CurrentTime.UnixNano() + 20_000_000_000), // day ends in 20 second
-	}
-	s.App.StakeibcKeeper.SetEpochTracker(s.Ctx, dayEpochTracker)
-
-	return QueryDelegationsIcqTestCase{
-		hostZone:           hostZone,
-		valoperAddr:        valoperAddr,
-		strideEpochTracker: strideEpochTracker,
-		dayEpochTracker:    dayEpochTracker,
-	}
+	return hostZone, queriedValidator
 }
 
 func (s *KeeperTestSuite) TestQueryDelegationsIcq_Successful() {
-	tc := s.SetupQueryDelegationsIcq()
+	hostZone, validator := s.SetupQueryDelegationsIcq()
 
-	err := s.App.StakeibcKeeper.QueryDelegationsIcq(s.Ctx, tc.hostZone, tc.valoperAddr)
+	err := s.App.StakeibcKeeper.QueryDelegationsIcq(s.Ctx, hostZone, ValAddress, time.Duration(1))
 	s.Require().NoError(err, "no error expected")
 
 	// check a query was created (a simple test; details about queries are covered in makeRequest's test)
 	queries := s.App.InterchainqueryKeeper.AllQueries(s.Ctx)
 	s.Require().Len(queries, 1, "one query should have been created")
 
+	// confirm callback data from query
+	var callbackData types.DelegatorSharesQueryCallback
+	err = proto.Unmarshal(queries[0].CallbackData, &callbackData)
+	s.Require().NoError(err, "no error expected when unmarshalling callback data")
+	s.Require().Equal(validator.Delegation, callbackData.InitialValidatorDelegation, "query callback data delegation")
+
 	// querying twice with the same query should only create one query
-	err = s.App.StakeibcKeeper.QueryDelegationsIcq(s.Ctx, tc.hostZone, tc.valoperAddr)
+	err = s.App.StakeibcKeeper.QueryDelegationsIcq(s.Ctx, hostZone, ValAddress, time.Duration(1))
 	s.Require().NoError(err, "no error expected")
 
 	// check a query was created (a simple test; details about queries are covered in makeRequest's test)
@@ -217,8 +165,8 @@ func (s *KeeperTestSuite) TestQueryDelegationsIcq_Successful() {
 	s.Require().Len(queries, 1, "querying twice with the same query should only create one query")
 
 	// querying with a different query should create a second query
-	tc.valoperAddr = "cosmosvaloper1pcag0cj4ttxg8l7pcg0q4ksuglswuuedadj7ne"
-	err = s.App.StakeibcKeeper.QueryDelegationsIcq(s.Ctx, tc.hostZone, tc.valoperAddr)
+	differentValidator := hostZone.Validators[1].Address
+	err = s.App.StakeibcKeeper.QueryDelegationsIcq(s.Ctx, hostZone, differentValidator, time.Duration(1))
 	s.Require().NoError(err, "no error expected")
 
 	// check a query was created (a simple test; details about queries are covered in makeRequest's test)
@@ -226,34 +174,22 @@ func (s *KeeperTestSuite) TestQueryDelegationsIcq_Successful() {
 	s.Require().Len(queries, 2, "querying with a different query should create a second query")
 }
 
-func (s *KeeperTestSuite) TestQueryDelegationsIcq_BeforeBufferWindow() {
-	tc := s.SetupQueryDelegationsIcq()
-
-	// set the time to be 50% through the stride_epoch
-	strideEpochTracker := tc.strideEpochTracker
-	strideEpochTracker.NextEpochStartTime = uint64(s.Coordinator.CurrentTime.UnixNano() + int64(strideEpochTracker.Duration)/2) // 50% through the epoch
-	s.App.StakeibcKeeper.SetEpochTracker(s.Ctx, strideEpochTracker)
-
-	err := s.App.StakeibcKeeper.QueryDelegationsIcq(s.Ctx, tc.hostZone, tc.valoperAddr)
-	s.Require().ErrorContains(err, "outside the buffer time during which ICQs are allowed")
-}
-
 func (s *KeeperTestSuite) TestQueryDelegationsIcq_MissingDelegationAddress() {
-	tc := s.SetupQueryDelegationsIcq()
+	hostZone, _ := s.SetupQueryDelegationsIcq()
 
-	tc.hostZone.DelegationIcaAddress = ""
-	s.App.StakeibcKeeper.SetHostZone(s.Ctx, tc.hostZone)
+	hostZone.DelegationIcaAddress = ""
+	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
 
-	err := s.App.StakeibcKeeper.QueryDelegationsIcq(s.Ctx, tc.hostZone, tc.valoperAddr)
+	err := s.App.StakeibcKeeper.QueryDelegationsIcq(s.Ctx, hostZone, ValAddress, time.Duration(1))
 	s.Require().ErrorContains(err, "no delegation address found for")
 }
 
 func (s *KeeperTestSuite) TestQueryDelegationsIcq_MissingConnectionId() {
-	tc := s.SetupQueryDelegationsIcq()
+	hostZone, _ := s.SetupQueryDelegationsIcq()
 
-	tc.hostZone.ConnectionId = ""
-	s.App.StakeibcKeeper.SetHostZone(s.Ctx, tc.hostZone)
+	hostZone.ConnectionId = ""
+	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
 
-	err := s.App.StakeibcKeeper.QueryDelegationsIcq(s.Ctx, tc.hostZone, tc.valoperAddr)
+	err := s.App.StakeibcKeeper.QueryDelegationsIcq(s.Ctx, hostZone, ValAddress, time.Duration(1))
 	s.Require().ErrorContains(err, "connection-id cannot be empty")
 }
