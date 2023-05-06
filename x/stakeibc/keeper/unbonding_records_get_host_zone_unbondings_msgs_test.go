@@ -3,10 +3,12 @@ package keeper_test
 import (
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	ibctesting "github.com/cosmos/ibc-go/v5/testing"
 	"github.com/golang/protobuf/proto" //nolint:staticcheck
 	_ "github.com/stretchr/testify/suite"
+
+	// TODO [LSM]: Revert type
+	lsmstakingtypes "github.com/iqlusioninc/liquidity-staking-module/x/staking/types"
 
 	recordstypes "github.com/Stride-Labs/stride/v9/x/records/types"
 	recordtypes "github.com/Stride-Labs/stride/v9/x/records/types"
@@ -794,7 +796,7 @@ func (s *KeeperTestSuite) TestGetUnbondingICAMessages() {
 			// Check each unbonding
 			for i, expected := range tc.expectedUnbondings {
 				valAddress := expected.Validator
-				actualMsg := actualMessages[i].(*stakingtypes.MsgUndelegate)
+				actualMsg := actualMessages[i].(*lsmstakingtypes.MsgUndelegate)
 				actualSplit := actualSplits[i]
 
 				// Check the ICA message

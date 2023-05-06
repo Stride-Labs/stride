@@ -28,10 +28,8 @@ type RebalanceDelegationsForHostZoneTestCase struct {
 
 func (s *KeeperTestSuite) SetupTestRebalanceDelegationsForHostZone() RebalanceDelegationsForHostZoneTestCase {
 	// TODO [LSM]: Fix after merge
-	// delegationChannelID, delegationPortID := s.CreateICAChannel("cosmos.DELEGATION")
-	delegationPortID := "icacontroller-GAIA.DELEGATION"
 	delegationAccountOwner := fmt.Sprintf("%s.%s", HostChainId, "DELEGATION")
-	delegationChannelID := s.CreateICAChannel(delegationAccountOwner)
+	delegationChannelID, delegationPortID := s.CreateICAChannel(delegationAccountOwner)
 
 	// Add host zone and validators
 	delegationAddress := "cosmos_DELEGATION"
@@ -171,7 +169,7 @@ func (s *KeeperTestSuite) TestRebalanceDelegationsForHostZone_ZeroWeightValidato
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, invalidHostZone)
 
 	err := s.App.StakeibcKeeper.RebalanceDelegationsForHostZone(s.Ctx, HostChainId)
-	s.Require().ErrorContains(err, "Cannot calculate target delegation if final amount is 0")
+	s.Require().ErrorContains(err, "Cannot calculate target delegation if final amount is less than or equal to zero (0)")
 }
 
 func (s *KeeperTestSuite) TestRebalanceDelegationsForHostZone_FailedToSubmitICA() {
