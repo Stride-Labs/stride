@@ -3,10 +3,12 @@ FROM golang:1.19-alpine3.15 AS builder
 
 WORKDIR /src/
 
-ENV COMMIT_HASH=v2.3.1
+# TODO [LSM]: Revert
+# ENV COMMIT_HASH=v2.3.1
+ENV COMMIT_HASH=f71dd8229bca3e5dbfc43e6688d095eeef632e79
 
 RUN apk add --update git make gcc linux-headers libc-dev eudev-dev 
-RUN git clone https://github.com/cosmos/relayer.git \
+RUN git clone https://github.com/Stride-Labs/relayer.git \
     && cd relayer \
     && git checkout $COMMIT_HASH \
     && make install

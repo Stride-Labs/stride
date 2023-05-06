@@ -8,13 +8,13 @@ import (
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+	lsmstakingtypes "github.com/iqlusioninc/liquidity-staking-module/x/staking/types"
 
 	"github.com/Stride-Labs/stride/v9/utils"
 	"github.com/Stride-Labs/stride/v9/x/stakeibc/types"
 )
 
-const IcaBatchSize = 5
+const RebalanceIcaBatchSize = 5
 
 type RebalanceValidatorDelegationChange struct {
 	ValidatorAddress string
@@ -61,8 +61,8 @@ func (k Keeper) RebalanceDelegationsForHostZone(ctx sdk.Context, chainId string)
 
 	msgs, rebalancings := k.GetRebalanceICAMessages(hostZone, valDeltaList)
 
-	for start := 0; start < len(msgs); start += IcaBatchSize {
-		end := start + IcaBatchSize
+	for start := 0; start < len(msgs); start += RebalanceIcaBatchSize {
+		end := start + RebalanceIcaBatchSize
 		if end > len(msgs) {
 			end = len(msgs)
 		}
@@ -91,7 +91,7 @@ func (k Keeper) RebalanceDelegationsForHostZone(ctx sdk.Context, chainId string)
 		)
 		if err != nil {
 			return errorsmod.Wrapf(err, "Failed to SubmitTxs for %s, messages: %+v", hostZone.ChainId, msgs)
-		}		
+		}
 	}
 
 	return nil
@@ -170,7 +170,8 @@ func (k Keeper) GetRebalanceICAMessages(
 		srcValidator := surplusValidator.ValidatorAddress
 		dstValidator := deficitValidator.ValidatorAddress
 
-		msgs = append(msgs, &stakingtypes.MsgBeginRedelegate{
+		// TODO [LSM]: Revert type
+		msgs = append(msgs, &lsmstakingtypes.MsgBeginRedelegate{
 			DelegatorAddress:    hostZone.DelegationIcaAddress,
 			ValidatorSrcAddress: srcValidator,
 			ValidatorDstAddress: dstValidator,
