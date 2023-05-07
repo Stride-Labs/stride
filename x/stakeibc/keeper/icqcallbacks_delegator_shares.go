@@ -164,9 +164,10 @@ func (k Keeper) CheckDelegationChangedDuringQuery(
 	}
 
 	// Check that there are no LSMTokenDeposits in state IN_PROGRESS - indictive of an Detokenization ICA
-	for _, lsmTokenDeposit := range k.RecordsKeeper.GetLSMDepositsForHostZone(ctx, chainId) {
-		if lsmTokenDeposit.ValidatorAddress == validatorAddress &&
-			lsmTokenDeposit.Status == recordstypes.LSMTokenDeposit_DETOKENIZATION_IN_PROGRESS {
+	detokenizationInProgress := recordstypes.LSMTokenDeposit_DETOKENIZATION_IN_PROGRESS
+	detokenizationInProgressRecords := k.RecordsKeeper.GetLSMDepositsForHostZoneWithStatus(ctx, chainId, detokenizationInProgress)
+	for _, lsmTokenDeposit := range detokenizationInProgressRecords {
+		if lsmTokenDeposit.ValidatorAddress == validatorAddress {
 			k.Logger(ctx).Error("Detokenization ICA is currently in progress. Rejecting query callback and resubmitting query")
 			return true, nil
 		}
