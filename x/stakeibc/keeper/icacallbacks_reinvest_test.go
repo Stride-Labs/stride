@@ -22,11 +22,10 @@ import (
 )
 
 type ReinvestCallbackState struct {
-	hostZone       stakeibctypes.HostZone
-	reinvestAmt    sdkmath.Int
-	callbackArgs   types.ReinvestCallback
-	depositRecord  recordtypes.DepositRecord
-	icaTimeoutTime int64
+	hostZone      stakeibctypes.HostZone
+	reinvestAmt   sdkmath.Int
+	callbackArgs  types.ReinvestCallback
+	depositRecord recordtypes.DepositRecord
 }
 
 type ReinvestCallbackArgs struct {

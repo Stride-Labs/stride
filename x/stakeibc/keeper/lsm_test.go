@@ -293,6 +293,15 @@ func (s *KeeperTestSuite) TestShouldCheckIfValidatorWasSlashed() {
 			stakeAmount:         sdk.NewInt(135),  // 4,135
 			expectedShouldQuery: true,
 		},
+		{
+			// Total stake of 0 - should not issue query
+			name:                "interval of 0",
+			queryInterval:       1,
+			totalStake:          sdkmath.NewInt(0),
+			progress:            sdk.NewInt(900),
+			stakeAmount:         sdk.NewInt(1000),
+			expectedShouldQuery: false,
+		},
 	}
 
 	for _, tc := range testCases {

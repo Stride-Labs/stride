@@ -172,10 +172,10 @@ func (k Keeper) ShouldCheckIfValidatorWasSlashed(
 	queryInterval := sdk.NewDecWithPrec(int64(params.ValidatorSlashQueryInterval), 2) // percentage
 	checkpoint := queryInterval.Mul(sdk.NewDecFromInt(totalHostZoneStake)).TruncateInt()
 
-	// If the query interval is disabled, do not submit a query
-	// This should not be possible with the current parameter validation
-	//  function which enforces that it's greater than 0
-	if queryInterval.IsZero() {
+	// If the checkpoint is zero - that means either the interval parameter is 0
+	// (which should not be possible), or that the total host zone stake is 0
+	// In either case, do not submit the query
+	if checkpoint.IsZero() {
 		return false
 	}
 
