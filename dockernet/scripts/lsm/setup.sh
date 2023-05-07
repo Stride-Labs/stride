@@ -36,7 +36,7 @@ $LSM_MAIN_CMD q staking delegations $staker_lsm_address && echo ""
 sleep 2
 
 echo ">>> Tokenize to liquid staker:"
-$LSM_MAIN_CMD tx staking tokenize-share $validator_address 1000000stake $staker_lsm_address --from staker -y --gas auto | TRIM_TX && echo ""
+$LSM_MAIN_CMD tx staking tokenize-share $validator_address 10000000stake $staker_lsm_address --from staker -y --gas auto | TRIM_TX && echo ""
 sleep 5
 
 echo "Balance on LSM:"
@@ -48,7 +48,7 @@ $LSM_MAIN_CMD q distribution tokenize-share-record-rewards $staker_lsm_address &
 sleep 2
 
 echo ">>> Transfer to Stride:"
-$LSM_MAIN_CMD tx ibc-transfer transfer transfer channel-0 $staker_stride_address 1000000${validator_address}/1 --from staker -y | TRIM_TX && echo ""
+$LSM_MAIN_CMD tx ibc-transfer transfer transfer channel-0 $staker_stride_address 10000000${validator_address}/1 --from staker -y | TRIM_TX && echo ""
 sleep 5
 
 echo "Balance on STRIDE:"

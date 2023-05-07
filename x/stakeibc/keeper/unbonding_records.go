@@ -15,7 +15,6 @@ import (
 	errorsmod "cosmossdk.io/errors"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
-	lsmstakingtypes "github.com/iqlusioninc/liquidity-staking-module/x/staking/types"
 	"github.com/spf13/cast"
 
 	"github.com/Stride-Labs/stride/v9/utils"
