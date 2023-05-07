@@ -51,7 +51,6 @@ func (s *KeeperTestSuite) SetupDelegatorSharesICQCallback() DelegatorSharesICQCa
 	// Setting this up to initialize the coordinator for the block time
 	s.CreateTransferChannel(HostChainId)
 
-	valAddress := "valoper2"
 	valIndexQueried := 1
 	tokensBeforeSlash := sdkmath.NewInt(1000)
 	internalExchangeRate := sdk.NewDec(1).Quo(sdk.NewDec(2)) // 0.5
@@ -85,7 +84,7 @@ func (s *KeeperTestSuite) SetupDelegatorSharesICQCallback() DelegatorSharesICQCa
 			// This is the validator in question
 			{
 				Name:                       "val2",
-				Address:                    valAddress,
+				Address:                    ValAddress,
 				InternalSharesToTokensRate: internalExchangeRate,
 				Delegation:                 tokensBeforeSlash,
 				Weight:                     weightBeforeSlash,
@@ -95,7 +94,7 @@ func (s *KeeperTestSuite) SetupDelegatorSharesICQCallback() DelegatorSharesICQCa
 	}
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
 
-	queryResponse := s.CreateDelegatorSharesQueryResponse(valAddress, numShares)
+	queryResponse := s.CreateDelegatorSharesQueryResponse(ValAddress, numShares)
 
 	// Create callback data
 	callbackDataBz, err := proto.Marshal(&types.DelegatorSharesQueryCallback{
@@ -127,7 +126,7 @@ func (s *KeeperTestSuite) SetupDelegatorSharesICQCallback() DelegatorSharesICQCa
 
 	// Add some dummy deposit and epoch unbonding records that are NOT in state IN_PROGRESS
 	// This is to confirm that they're not accidentally interpretted as having
-	// a delegation/undelegation in progress
+	// a delegation/undelegation/detokenization in progress
 	depositRecords := []recordstypes.DepositRecord{
 		// Different status
 		{Id: 1, HostZoneId: HostChainId, Status: recordstypes.DepositRecord_DELEGATION_QUEUE},
@@ -149,6 +148,33 @@ func (s *KeeperTestSuite) SetupDelegatorSharesICQCallback() DelegatorSharesICQCa
 			EpochNumber:        epoch,
 			HostZoneUnbondings: hostZoneUnbondingRecords,
 		})
+	}
+
+	tokenizedDepositRecords := []recordstypes.LSMTokenDeposit{
+		{
+			// Different status
+			ChainId:          HostChainId,
+			Denom:            LSMTokenBaseDenom,
+			Status:           recordstypes.LSMTokenDeposit_TRANSFER_IN_PROGRESS,
+			ValidatorAddress: ValAddress,
+		},
+		{
+			// Different chainId
+			ChainId:          "different_chain",
+			Denom:            LSMTokenBaseDenom,
+			Status:           recordstypes.LSMTokenDeposit_DETOKENIZATION_IN_PROGRESS,
+			ValidatorAddress: ValAddress,
+		},
+		{
+			// Different validator
+			ChainId:          HostChainId,
+			Denom:            LSMTokenBaseDenom,
+			Status:           recordstypes.LSMTokenDeposit_DETOKENIZATION_IN_PROGRESS,
+			ValidatorAddress: "different_validator",
+		},
+	}
+	for _, tokenizedRecord := range tokenizedDepositRecords {
+		s.App.RecordsKeeper.SetLSMTokenDeposit(s.Ctx, tokenizedRecord)
 	}
 
 	return DelegatorSharesICQCallbackTestCase{
@@ -264,13 +290,39 @@ func (s *KeeperTestSuite) TestDelegatorSharesCallback_Retry_DelegationICAInProgr
 func (s *KeeperTestSuite) TestDelegatorSharesCallback_Retry_UndelegationICAInProgress() {
 	tc := s.SetupDelegatorSharesICQCallback()
 
-	// Add a deposit record that makes it appear as if a delegation ICA is in progress
+	// Add a deposit record that makes it appear as if a undelegation ICA is in progress
 	s.App.RecordsKeeper.SetEpochUnbondingRecord(s.Ctx, recordstypes.EpochUnbondingRecord{
 		EpochNumber: uint64(1),
 		HostZoneUnbondings: []*recordstypes.HostZoneUnbonding{{
 			HostZoneId: HostChainId,
 			Status:     recordstypes.HostZoneUnbonding_UNBONDING_IN_PROGRESS,
 		}},
+	})
+
+	// Callback
+	err := stakeibckeeper.DelegatorSharesCallback(s.App.StakeibcKeeper, s.Ctx, tc.validArgs.callbackArgs, tc.validArgs.query)
+	s.Require().NoError(err, "no error expected during delegator shares callback")
+
+	// Confirm the validator's delegation was not modified
+	hostZone, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx, tc.hostZone.ChainId)
+	s.Require().True(found, "host zone found")
+
+	initialDelegation := hostZone.Validators[tc.valIndexQueried].Delegation
+	s.Require().Equal(initialDelegation.Int64(), hostZone.Validators[tc.valIndexQueried].Delegation.Int64(), "validator delegation")
+
+	// Confirm the query was resubmitted
+	s.CheckQueryWasResubmitted(tc, hostZone)
+}
+
+func (s *KeeperTestSuite) TestDelegatorSharesCallback_Retry_DetokenizationICAInProgress() {
+	tc := s.SetupDelegatorSharesICQCallback()
+
+	// Add an LSMTokenDeposit record that makes it appear as if a detokenization ICA is in progress
+	s.App.RecordsKeeper.SetLSMTokenDeposit(s.Ctx, recordstypes.LSMTokenDeposit{
+		ChainId:          HostChainId,
+		Denom:            LSMTokenBaseDenom,
+		Status:           recordstypes.LSMTokenDeposit_DETOKENIZATION_IN_PROGRESS,
+		ValidatorAddress: ValAddress,
 	})
 
 	// Callback

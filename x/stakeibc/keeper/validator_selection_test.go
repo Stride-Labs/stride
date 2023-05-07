@@ -27,7 +27,6 @@ type RebalanceDelegationsForHostZoneTestCase struct {
 }
 
 func (s *KeeperTestSuite) SetupTestRebalanceDelegationsForHostZone() RebalanceDelegationsForHostZoneTestCase {
-	// TODO [LSM]: Fix after merge
 	delegationAccountOwner := fmt.Sprintf("%s.%s", HostChainId, "DELEGATION")
 	delegationChannelID, delegationPortID := s.CreateICAChannel(delegationAccountOwner)
 
