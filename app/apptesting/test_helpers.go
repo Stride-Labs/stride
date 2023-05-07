@@ -169,7 +169,7 @@ func (s *AppTestHelper) CreateTransferChannel(hostChainID string) {
 
 // Creates an ICA channel through ibctesting
 // Also creates a transfer channel is if hasn't been done yet
-func (s *AppTestHelper) CreateICAChannel(owner string) string {
+func (s *AppTestHelper) CreateICAChannel(owner string) (channelID, portID string) {
 	// If we have yet to create a client/connection (through creating a transfer channel), do that here
 	_, transferChannelExists := s.App.IBCKeeper.ChannelKeeper.GetChannel(s.Ctx, ibctesting.TransferPort, ibctesting.FirstChannelID)
 	if !transferChannelExists {
@@ -199,8 +199,8 @@ func (s *AppTestHelper) CreateICAChannel(owner string) string {
 	s.Ctx = s.StrideChain.GetContext()
 
 	// Confirm the ICA channel was created properly
-	portID := icaPath.EndpointA.ChannelConfig.PortID
-	channelID := icaPath.EndpointA.ChannelID
+	portID = icaPath.EndpointA.ChannelConfig.PortID
+	channelID = icaPath.EndpointA.ChannelID
 	_, found := s.App.IBCKeeper.ChannelKeeper.GetChannel(s.Ctx, portID, channelID)
 	s.Require().True(found, "Channel not found after creation, PortID: %s, ChannelID: %s", portID, channelID)
 
@@ -212,7 +212,7 @@ func (s *AppTestHelper) CreateICAChannel(owner string) string {
 	// Finally set the active channel
 	s.App.ICAControllerKeeper.SetActiveChannelID(s.Ctx, ibctesting.FirstConnectionID, portID, channelID)
 
-	return channelID
+	return channelID, portID
 }
 
 // Register's a new ICA account on the next channel available
@@ -371,4 +371,83 @@ func GetAdminAddress() (address string, ok bool) {
 // Modifies sdk config to have stride address prefixes (used for non-keeper tests)
 func SetupConfig() {
 	app.SetupConfig()
+}
+
+// Searches for an event using the current context
+func (s *AppTestHelper) getEventsFromEventType(eventType string) (events []sdk.Event) {
+	for _, event := range s.Ctx.EventManager().Events() {
+		if event.Type == eventType {
+			events = append(events, event)
+		}
+	}
+	return events
+}
+
+// Searches for an event attribute, given an event
+// Returns the value if found
+func (s *AppTestHelper) getEventValuesFromAttribute(event sdk.Event, attributeKey string) (values []string) {
+	for _, attribute := range event.Attributes {
+		if string(attribute.Key) == attributeKey {
+			values = append(values, string(attribute.Value))
+		}
+	}
+	return values
+}
+
+// Searches for an event that has an attribute value matching the expected value
+// Returns whether there was a match, as well as a list for all the values found
+// for that attribute (for the error message)
+func (s *AppTestHelper) checkEventAttributeValueMatch(
+	events []sdk.Event,
+	attributeKey,
+	expectedValue string,
+) (allValues []string, found bool) {
+	for _, event := range events {
+		allValues = append(allValues, s.getEventValuesFromAttribute(event, attributeKey)...)
+		for _, actualValue := range allValues {
+			if actualValue == expectedValue {
+				found = true
+			}
+		}
+	}
+	return allValues, found
+}
+
+// Checks if an event was emitted
+func (s *AppTestHelper) CheckEventTypeEmitted(eventType string) []sdk.Event {
+	events := s.getEventsFromEventType(eventType)
+	eventEmitted := len(events) > 0
+	s.Require().True(eventEmitted, "%s event should have been emitted", eventType)
+	return events
+}
+
+// Checks that an event was not emitted
+func (s *AppTestHelper) CheckEventTypeNotEmitted(eventType string) {
+	events := s.getEventsFromEventType(eventType)
+	eventNotEmitted := len(events) == 0
+	s.Require().True(eventNotEmitted, "%s event should not have been emitted", eventType)
+}
+
+// Checks that an event was emitted and that the value matches expectations
+func (s *AppTestHelper) CheckEventValueEmitted(eventType, attributeKey, expectedValue string) {
+	events := s.CheckEventTypeEmitted(eventType)
+
+	// Check all events and attributes for a match
+	allValues, valueFound := s.checkEventAttributeValueMatch(events, attributeKey, expectedValue)
+	s.Require().True(valueFound, "attribute %s with value %s should have been found in event %s. Values emitted for attribute: %+v",
+		attributeKey, expectedValue, eventType, allValues)
+}
+
+// Checks that there was no event emitted that matches the event type, attribute, and value
+func (s *AppTestHelper) CheckEventValueNotEmitted(eventType, attributeKey, expectedValue string) {
+	// Check that either the event or attribute were not emitted
+	events := s.getEventsFromEventType(eventType)
+	if len(events) == 0 {
+		return
+	}
+
+	// Check all events and attributes to make sure there's no match
+	allValues, valueFound := s.checkEventAttributeValueMatch(events, attributeKey, expectedValue)
+	s.Require().False(valueFound, "attribute %s with value %s should not have been found in event %s. Values emitted for attribute: %+v",
+		attributeKey, expectedValue, eventType, allValues)
 }

@@ -2,6 +2,7 @@ syntax = "proto3";
 package stride.interchainquery.v1;
 
 import "gogoproto/gogo.proto";
+import "google/protobuf/duration.proto";
 import "cosmos_proto/cosmos.proto";
 
 option go_package = "github.com/Stride-Labs/stride/v9/x/interchainquery/types";
@@ -15,7 +16,9 @@ message Query {
   string callback_module = 13;
   string callback_id = 8;
   bytes callback_data = 12;
-  uint64 timeout = 9;
+  google.protobuf.Duration timeout_duration = 14
+      [ (gogoproto.nullable) = false, (gogoproto.stdduration) = true ];
+  uint64 timeout_timestamp = 9;
   bool request_sent = 11;
 }
 

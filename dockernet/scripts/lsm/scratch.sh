@@ -26,11 +26,11 @@ stride_address="stride1uk4ze0x4nvh4fk0xm4jdud58eqn4yxhrt52vv7"
 # sleep 5
 
 # echo "Redeem Tokens from User:"
-# $LSM_MAIN_CMD tx staking redeem-tokens 1000000cosmosvaloper1uk4ze0x4nvh4fk0xm4jdud58eqn4yxhrdt795p/3 --from staker -y --gas auto | TRIM_TX
+# $LSM_MAIN_CMD tx staking redeem-tokens 1000000cosmosvaloper1uk4ze0x4nvh4fk0xm4jdud58eqn4yxhrdt795p/1 --from staker -y --gas auto | TRIM_TX
 # sleep 5
 
 # echo "Redeem Tokens from Delegation Account:"
-# $LSM_MAIN_CMD tx staking redeem-tokens 1000000cosmosvaloper1uk4ze0x4nvh4fk0xm4jdud58eqn4yxhrdt795p/2 --from lsrev1 -y --gas auto | TRIM_TX
+# $LSM_MAIN_CMD tx staking redeem-tokens 1000000cosmosvaloper1uk4ze0x4nvh4fk0xm4jdud58eqn4yxhrdt795p/1 --from lsrev1 -y --gas auto | TRIM_TX
 # sleep 5
 
 # echo "Send Token:"

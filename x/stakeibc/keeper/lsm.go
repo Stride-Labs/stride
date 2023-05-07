@@ -27,7 +27,7 @@ var (
 	IsValidIBCPath = regexp.MustCompile(fmt.Sprintf(`^%s/(%s[0-9]{1,20})$`, transfertypes.PortID, channeltypes.ChannelPrefix)).MatchString
 
 	// Timeout for the validator slash query that occurs at periodic deposit intervals
-	SlashQueryTimeout = time.Minute * 5 // 5 minutes
+	LSMSlashQueryTimeout = time.Minute * 5 // 5 minutes
 
 	// Time for the detokenization ICA
 	DetokenizationTimeout = time.Hour * 24 // 1 day
@@ -80,9 +80,9 @@ func (k Keeper) ValidateLSMLiquidStake(ctx sdk.Context, msg types.MsgLSMLiquidSt
 
 	// Return the wrapped deposit object with additional context (host zone and validator)
 	return types.LSMLiquidStake{
-		Deposit:   lsmTokenDeposit,
-		HostZone:  hostZone,
-		Validator: validator,
+		Deposit:   &lsmTokenDeposit,
+		HostZone:  &hostZone,
+		Validator: &validator,
 	}, nil
 }
 
@@ -134,7 +134,7 @@ func (k Keeper) GetHostZoneFromLSMTokenPath(ctx sdk.Context, path string) (types
 }
 
 // Parses the LSM token's denom (of the form {validatorAddress}/{recordId}) and confirms that the validator
-// is in the Stride validator set
+// is in the Stride validator set and does not have an active slash query
 func (k Keeper) GetValidatorFromLSMTokenDenom(denom string, validators []*types.Validator) (types.Validator, error) {
 	// Denom is of the form {validatorAddress}/{recordId}
 	split := strings.Split(denom, "/")
@@ -144,9 +144,13 @@ func (k Keeper) GetValidatorFromLSMTokenDenom(denom string, validators []*types.
 	}
 	validatorAddress := split[0]
 
-	// Confirm validator is in Stride's validator set
+	// Confirm validator is in Stride's validator set and does not have an active slash query in flight
 	for _, validator := range validators {
 		if validator.Address == validatorAddress {
+			if validator.SlashQueryInProgress {
+				return types.Validator{}, errorsmod.Wrapf(types.ErrValidatorWasSlashed,
+					"validator %s was slashed, liquid stakes from this validator are temporarily unavailable", validator.Address)
+			}
 			return *validator, nil
 		}
 	}

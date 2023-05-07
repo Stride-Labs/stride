@@ -40,6 +40,7 @@ func (s *KeeperTestSuite) SetupAddValidators() AddValidatorsTestCase {
 	for _, validator := range expectedValidators {
 		validator.Delegation = sdkmath.ZeroInt()
 		validator.SlashQueryProgressTracker = sdkmath.ZeroInt()
+		validator.InternalSharesToTokensRate = sdk.ZeroDec()
 	}
 
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)

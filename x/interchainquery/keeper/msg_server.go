@@ -150,19 +150,20 @@ func (k msgServer) SubmitQueryResponse(goCtx context.Context, msg *types.MsgSubm
 		return nil, err
 	}
 
-	// Immediately delete the query so it cannot process again
-	k.DeleteQuery(ctx, query.Id)
-
 	// Verify the query hasn't expired (if the block time is greater than the TTL timestamp, the query is expired)
 	currBlockTime, err := cast.ToUint64E(ctx.BlockTime().UnixNano())
 	if err != nil {
 		return nil, err
 	}
-	if query.Timeout < currBlockTime {
+	if query.TimeoutTimestamp < currBlockTime {
 		k.Logger(ctx).Error(utils.LogICQCallbackWithHostZone(query.ChainId, query.CallbackId,
-			"QUERY TIMEOUT - QueryId: %s, TTL: %d, BlockTime: %d", query.Id, query.Timeout, ctx.BlockHeader().Time.UnixNano()))
+			"QUERY TIMEOUT - QueryId: %s, TTL: %d, BlockTime: %d", query.Id, query.TimeoutTimestamp, ctx.BlockHeader().Time.UnixNano()))
 		return &types.MsgSubmitQueryResponseResponse{}, nil
 	}
+
+	// Immediately delete the query so it cannot process again
+	// We don't want to delete timed-out queries because they'll be retried
+	k.DeleteQuery(ctx, query.Id)
 
 	// If the query is contentless, end
 	if len(msg.Result) == 0 {

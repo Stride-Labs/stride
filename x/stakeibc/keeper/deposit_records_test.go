@@ -8,8 +8,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	ibctesting "github.com/cosmos/ibc-go/v5/testing"
 
-	icatypes "github.com/cosmos/ibc-go/v5/modules/apps/27-interchain-accounts/types"
-
 	sdkmath "cosmossdk.io/math"
 
 	epochtypes "github.com/Stride-Labs/stride/v9/x/epochs/types"
@@ -143,7 +141,7 @@ func (s *KeeperTestSuite) GetInitialDepositRecords(currentEpoch uint64) TestDepo
 
 func (s *KeeperTestSuite) SetupDepositRecords() DepositRecordsTestCase {
 	delegationAccountOwner := fmt.Sprintf("%s.%s", HostChainId, "DELEGATION")
-	delegationChannelID := s.CreateICAChannel(delegationAccountOwner)
+	delegationChannelID, delegationPortID := s.CreateICAChannel(delegationAccountOwner)
 	delegationAddress := s.IcaAddresses[delegationAccountOwner]
 
 	ibcDenomTrace := s.GetIBCDenomTrace(Atom) // we need a true IBC denom here
@@ -203,7 +201,7 @@ func (s *KeeperTestSuite) SetupDepositRecords() DepositRecordsTestCase {
 			ChannelID: ibctesting.FirstChannelID,
 		},
 		DelegationChannel: Channel{
-			PortID:    icatypes.PortPrefix + delegationAccountOwner,
+			PortID:    delegationPortID,
 			ChannelID: delegationChannelID,
 		},
 	}

@@ -217,6 +217,6 @@ func (s *KeeperTestSuite) TestDelegateCallback_MissingValidator() {
 	s.Require().NoError(err)
 
 	err = stakeibckeeper.DelegateCallback(s.App.StakeibcKeeper, s.Ctx, tc.validArgs.packet, tc.validArgs.ackResponse, invalidCallbackArgs)
-	s.Require().EqualError(err, "Failed to add delegation to validator: can't change delegation on validator")
+	s.Require().ErrorContains(err, "Could not find validator address_dne on host zone GAIA: validator not found")
 	s.checkDelegateStateIfCallbackFailed(tc)
 }

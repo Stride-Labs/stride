@@ -14,7 +14,7 @@ import (
 	"github.com/Stride-Labs/stride/v9/x/stakeibc/types"
 )
 
-const IcaBatchSize = 5
+const RebalanceIcaBatchSize = 5
 
 type RebalanceValidatorDelegationChange struct {
 	ValidatorAddress string
@@ -61,8 +61,8 @@ func (k Keeper) RebalanceDelegationsForHostZone(ctx sdk.Context, chainId string)
 
 	msgs, rebalancings := k.GetRebalanceICAMessages(hostZone, valDeltaList)
 
-	for start := 0; start < len(msgs); start += IcaBatchSize {
-		end := start + IcaBatchSize
+	for start := 0; start < len(msgs); start += RebalanceIcaBatchSize {
+		end := start + RebalanceIcaBatchSize
 		if end > len(msgs) {
 			end = len(msgs)
 		}
@@ -188,7 +188,7 @@ func (k Keeper) GetRebalanceICAMessages(
 }
 
 // This function returns a list with the number of extra tokens that should be sent to each validator
-//   - Positive delta implies the validator has a surplus (and should give lose stake)
+//   - Positive delta implies the validator has a surplus (and should lose stake)
 //   - Negative delta implies the validator has a deficit (and should gain stake)
 func (k Keeper) GetValidatorDelegationDifferences(ctx sdk.Context, hostZone types.HostZone) ([]RebalanceValidatorDelegationChange, error) {
 	// Get the target delegation amount for each validator
@@ -202,7 +202,7 @@ func (k Keeper) GetValidatorDelegationDifferences(ctx sdk.Context, hostZone type
 	delegationDeltas := []RebalanceValidatorDelegationChange{}
 	totalDelegationChange := sdkmath.ZeroInt()
 	for _, validator := range hostZone.Validators {
-		// Compare the target with either the current delegation
+		// Compare the target with the current delegation
 		delegationChange := validator.Delegation.Sub(targetDelegation[validator.Address])
 
 		// Only include validators who's delegation should change
@@ -212,8 +212,8 @@ func (k Keeper) GetValidatorDelegationDifferences(ctx sdk.Context, hostZone type
 				Delta:            delegationChange,
 			})
 			totalDelegationChange = totalDelegationChange.Add(delegationChange)
+			k.Logger(ctx).Info(fmt.Sprintf("Adding delegation: %v to validator: %s", delegationChange, validator.Address))
 		}
-		k.Logger(ctx).Info(fmt.Sprintf("Adding delegation: %v to validator: %s", delegationChange, validator.Address))
 	}
 
 	// Sanity check that the sum of all the delegation change's is equal to 0
@@ -231,9 +231,9 @@ func (k Keeper) GetValidatorDelegationDifferences(ctx sdk.Context, hostZone type
 // output key is ADDRESS not NAME
 func (k Keeper) GetTargetValAmtsForHostZone(ctx sdk.Context, hostZone types.HostZone, finalDelegation sdkmath.Int) (map[string]sdkmath.Int, error) {
 	// Confirm the expected delegation amount is greater than 0
-	if finalDelegation.IsZero() {
+	if !finalDelegation.IsPositive() {
 		return nil, errorsmod.Wrapf(sdkerrors.ErrInvalidRequest,
-			"Cannot calculate target delegation if final amount is 0 %s", hostZone.ChainId)
+			"Cannot calculate target delegation if final amount is less than or equal to zero (%v)", finalDelegation)
 	}
 
 	// Sum the total weight across all validators
