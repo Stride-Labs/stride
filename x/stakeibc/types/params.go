@@ -27,7 +27,7 @@ var (
 	DefaultIBCTransferTimeoutNanos     uint64 = 1800000000000 // 30 minutes
 	DefaultSafetyNumValidators         uint64 = 35
 	DefaultSafetyMaxSlashPercent       uint64 = 10
-	DefaultValidatorSlashQueryInterval uint64 = 1 // denominated in percentage of TVL (1 => 5%)
+	DefaultValidatorSlashQueryInterval uint64 = 1 // denominated in percentage of TVL (1 => 1%)
 
 	// KeyDepositInterval is store's key for the DepositInterval option
 	KeyDepositInterval                   = []byte("DepositInterval")

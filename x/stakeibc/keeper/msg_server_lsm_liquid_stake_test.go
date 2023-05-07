@@ -153,7 +153,8 @@ func (s *KeeperTestSuite) TestLSMLiquidStake_Successful_WithExchangeRateQuery() 
 	tc := s.SetupTestLSMLiquidStake()
 
 	// Increase the liquid stake size so that it breaks the query checkpoint
-	queryProgressSlack := tc.queryCheckpoint.Sub(tc.initialQueryProgress) // largest stake amount before query
+	// queryProgressSlack is the remaining amount that can be staked in one message before a slash query is issued
+	queryProgressSlack := tc.queryCheckpoint.Sub(tc.initialQueryProgress)
 	tc.validMsg.Amount = queryProgressSlack.Add(sdk.NewInt(1000))
 
 	// Call LSM Liquid stake
