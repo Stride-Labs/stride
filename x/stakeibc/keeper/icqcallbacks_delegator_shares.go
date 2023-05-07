@@ -112,7 +112,8 @@ func DelegatorSharesCallback(k Keeper, ctx sdk.Context, args []byte, query icqty
 // The number of tokens returned from the query must be consistent with the tokens
 //   stored in our internal record keeping during this callback, otherwise the comparision
 //   between the two is invalidated
-// As a result, we must avoid a race condition between the ICQ and an delegate or undelegate ICA
+// As a result, we must avoid a race condition between the ICQ and a delegate, undelegate,
+//   or detokenization ICA
 //
 // More specifically, we must avoid the following cases:
 //  Case 1)
@@ -163,7 +164,6 @@ func (k Keeper) CheckDelegationChangedDuringQuery(
 	}
 
 	// Check that there are no LSMTokenDeposits in state IN_PROGRESS - indictive of an Detokenization ICA
-	// We also check for transfer in progress or detokenizaiotn
 	for _, lsmTokenDeposit := range k.RecordsKeeper.GetLSMDepositsForHostZone(ctx, chainId) {
 		if lsmTokenDeposit.ValidatorAddress == validatorAddress &&
 			lsmTokenDeposit.Status == recordstypes.LSMTokenDeposit_DETOKENIZATION_IN_PROGRESS {

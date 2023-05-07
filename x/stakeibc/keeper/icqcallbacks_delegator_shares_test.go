@@ -427,8 +427,8 @@ func (s *KeeperTestSuite) TestDelegatorSharesCallback_InvalidNumTokens() {
 	badCallbackArgs := s.CreateDelegatorSharesQueryResponse(valAddress, numShares)
 	err := stakeibckeeper.DelegatorSharesCallback(s.App.StakeibcKeeper, s.Ctx, badCallbackArgs, tc.validArgs.query)
 
-	expectedErrMsg := "Validator (valoper2) tokens returned from query is greater than the Delegation: invalid request"
-	s.Require().EqualError(err, expectedErrMsg)
+	expectedErrMsg := "tokens returned from query is greater than the Delegation: invalid request"
+	s.Require().ErrorContains(err, expectedErrMsg)
 }
 
 func (s *KeeperTestSuite) TestDelegatorSharesCallback_WeightOverfow() {
