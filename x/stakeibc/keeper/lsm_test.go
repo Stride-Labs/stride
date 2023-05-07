@@ -207,48 +207,88 @@ func (s *KeeperTestSuite) TestShouldCheckIfValidatorWasSlashed() {
 	testCases := []struct {
 		name                string
 		queryInterval       uint64
+		totalStake          sdkmath.Int
 		progress            sdkmath.Int
 		stakeAmount         sdkmath.Int
 		expectedShouldQuery bool
 	}{
 		{
-			name:                "interval 1 - short of checkpoint",
-			queryInterval:       1000,
+			// Checkpoint: 1% of 100k = 1K
+			name:                "interval #1 - short of checkpoint",
+			queryInterval:       1,
+			totalStake:          sdkmath.NewInt(100_000),
 			progress:            sdk.NewInt(900),
 			stakeAmount:         sdk.NewInt(99),
 			expectedShouldQuery: false,
 		},
 		{
-			name:                "interval 1 - at checkpoint",
-			queryInterval:       1000,
+			// Checkpoint: 1% of 100k = 1K
+			name:                "interval #1 - at checkpoint",
+			queryInterval:       1,
+			totalStake:          sdkmath.NewInt(100_000),
 			progress:            sdk.NewInt(900),
 			stakeAmount:         sdk.NewInt(100),
 			expectedShouldQuery: true,
 		},
 		{
-			name:                "interval 1 - past checkpoint",
-			queryInterval:       1000,
+			// Checkpoint: 1% of 100k = 1K
+			name:                "interval #1 - past checkpoint",
+			queryInterval:       1,
+			totalStake:          sdkmath.NewInt(100_000),
 			progress:            sdk.NewInt(900),
 			stakeAmount:         sdk.NewInt(101),
 			expectedShouldQuery: true,
 		},
 		{
-			name:                "interval 2 - short of checkpoint",
-			queryInterval:       689,
+			// Checkpoint: 5% of 100k = 5K
+			name:                "interval #2 - short of checkpoint",
+			queryInterval:       5,
+			totalStake:          sdkmath.NewInt(100_000),
+			progress:            sdk.NewInt(4000),
+			stakeAmount:         sdk.NewInt(999),
+			expectedShouldQuery: false,
+		},
+		{
+			// Checkpoint: 5% of 100k = 5K
+			name:                "interval #2 - at checkpoint",
+			queryInterval:       5,
+			totalStake:          sdkmath.NewInt(100_000),
+			progress:            sdk.NewInt(4000),
+			stakeAmount:         sdk.NewInt(1000),
+			expectedShouldQuery: true,
+		},
+		{
+			// Checkpoint: 5% of 100k = 5K
+			name:                "interval #2 - past checkpoint",
+			queryInterval:       5,
+			totalStake:          sdkmath.NewInt(100_000),
+			progress:            sdk.NewInt(4000),
+			stakeAmount:         sdk.NewInt(1001),
+			expectedShouldQuery: true,
+		},
+		{
+			// Checkpoint: 13% of 31,800 = 689
+			name:                "interval #3 - short of checkpoint",
+			queryInterval:       13,
+			totalStake:          sdkmath.NewInt(31_800),
 			progress:            sdk.NewInt(4000), // 4,134 is checkpoint (689 * 5)
 			stakeAmount:         sdk.NewInt(133),  // 4,133
 			expectedShouldQuery: false,
 		},
 		{
-			name:                "interval 2 - at checkpoint",
-			queryInterval:       689,
+			// Checkpoint: 13% of 31,800 = 689
+			name:                "interval #3 - at checkpoint",
+			queryInterval:       13,
+			totalStake:          sdkmath.NewInt(31_800),
 			progress:            sdk.NewInt(4000), // 4,134 is checkpoint (689 * 5)
 			stakeAmount:         sdk.NewInt(134),  // 4,134
 			expectedShouldQuery: true,
 		},
 		{
-			name:                "interval 2 - past checkpoint",
-			queryInterval:       689,
+			// Checkpoint: 13% of 31,800 = 689
+			name:                "interval #3 - past checkpoint",
+			queryInterval:       13,
+			totalStake:          sdkmath.NewInt(31_800),
 			progress:            sdk.NewInt(4000), // 4,134 is checkpoint (689 * 5)
 			stakeAmount:         sdk.NewInt(135),  // 4,135
 			expectedShouldQuery: true,
@@ -262,7 +302,12 @@ func (s *KeeperTestSuite) TestShouldCheckIfValidatorWasSlashed() {
 		s.App.StakeibcKeeper.SetParams(s.Ctx, params)
 
 		validator := types.Validator{SlashQueryProgressTracker: tc.progress}
-		actualShouldQuery := s.App.StakeibcKeeper.ShouldCheckIfValidatorWasSlashed(s.Ctx, validator, tc.stakeAmount)
+		actualShouldQuery := s.App.StakeibcKeeper.ShouldCheckIfValidatorWasSlashed(
+			s.Ctx,
+			validator,
+			tc.totalStake,
+			tc.stakeAmount,
+		)
 		s.Require().Equal(tc.expectedShouldQuery, actualShouldQuery, tc.name)
 	}
 }

@@ -160,9 +160,17 @@ func (k Keeper) GetValidatorFromLSMTokenDenom(denom string, validators []*types.
 
 // Checks if we need to issue an ICQ to check if a validator was slashed
 // The query runs at periodic intervals defined by the ValidatorSlashQueryInterval
-func (k Keeper) ShouldCheckIfValidatorWasSlashed(ctx sdk.Context, validator types.Validator, stakeAmount sdkmath.Int) bool {
+// The interval is represented as percent of TVL
+// (e.g. 1% means every LS that causes the progress to breach 1% of TVL triggers the query)
+func (k Keeper) ShouldCheckIfValidatorWasSlashed(
+	ctx sdk.Context,
+	validator types.Validator,
+	totalHostZoneStake sdkmath.Int,
+	transactionStakeAmount sdkmath.Int,
+) bool {
 	params := k.GetParams(ctx)
-	queryInterval := sdk.NewIntFromUint64(params.ValidatorSlashQueryInterval)
+	queryInterval := sdk.NewDecWithPrec(int64(params.ValidatorSlashQueryInterval), 2) // percentage
+	checkpoint := queryInterval.Mul(sdk.NewDecFromInt(totalHostZoneStake)).TruncateInt()
 
 	// If the query interval is disabled, do not submit a query
 	// This should not be possible with the current parameter validation
@@ -172,12 +180,12 @@ func (k Keeper) ShouldCheckIfValidatorWasSlashed(ctx sdk.Context, validator type
 	}
 
 	oldProgress := validator.SlashQueryProgressTracker
-	newProgress := validator.SlashQueryProgressTracker.Add(stakeAmount)
+	newProgress := validator.SlashQueryProgressTracker.Add(transactionStakeAmount)
 
 	// Submit query if the query interval checkpoint has been breached
 	// Ex: Query Interval: 1000, Old Progress: 900, New Progress: 1100
 	//     => OldProgress/Interval: 0, NewProgress/Interval: 1
-	return oldProgress.Quo(queryInterval).LT(newProgress.Quo(queryInterval))
+	return oldProgress.Quo(checkpoint).LT(newProgress.Quo(checkpoint))
 }
 
 // Submits an ICA to "Redeem" an LSM Token - meaning converting the token into native stake
