@@ -15,7 +15,11 @@ func (k msgServer) AddValidators(goCtx context.Context, msg *types.MsgAddValidat
 		if err := k.AddValidatorToHostZone(ctx, msg.HostZone, *validator, false); err != nil {
 			return nil, err
 		}
-		// TODO [LSM]: Submit ICQ for validator exchange rate
+
+		// Query and store the validator's exchange rate
+		if err := k.QueryValidatorExchangeRate(ctx, msg.HostZone, validator.Address); err != nil {
+			return nil, err
+		}
 	}
 
 	return &types.MsgAddValidatorsResponse{}, nil

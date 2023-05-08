@@ -350,24 +350,24 @@ func (k Keeper) GetLightClientTimeSafely(ctx sdk.Context, connectionID string) (
 }
 
 // Submits an ICQ to get a validator's exchange rate
-func (k Keeper) QueryValidatorExchangeRate(ctx sdk.Context, msg *types.MsgUpdateValidatorSharesExchRate) (*types.MsgUpdateValidatorSharesExchRateResponse, error) {
-	k.Logger(ctx).Info(utils.LogWithHostZone(msg.ChainId, "Submitting ICQ for validator exchange rate to %s", msg.Valoper))
+func (k Keeper) QueryValidatorExchangeRate(ctx sdk.Context, chainId, validatorAddress string) error {
+	k.Logger(ctx).Info(utils.LogWithHostZone(chainId, "Submitting ICQ for validator exchange rate to %s", validatorAddress))
 
 	// Confirm the host zone exists
-	hostZone, found := k.GetHostZone(ctx, msg.ChainId)
+	hostZone, found := k.GetHostZone(ctx, chainId)
 	if !found {
-		return nil, errorsmod.Wrapf(types.ErrInvalidHostZone, "Host zone not found (%s)", msg.ChainId)
+		return errorsmod.Wrapf(types.ErrInvalidHostZone, "Host zone not found (%s)", chainId)
 	}
 
 	// check that the validator address matches the bech32 prefix of the hz
-	if !strings.Contains(msg.Valoper, hostZone.Bech32Prefix) {
-		return nil, errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "validator operator address must match the host zone bech32 prefix")
+	if !strings.Contains(validatorAddress, hostZone.Bech32Prefix) {
+		return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "validator operator address must match the host zone bech32 prefix")
 	}
 
 	// Encode the validator address to form the query request
-	_, validatorAddressBz, err := bech32.DecodeAndConvert(msg.Valoper)
+	_, validatorAddressBz, err := bech32.DecodeAndConvert(validatorAddress)
 	if err != nil {
-		return nil, errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "invalid validator operator address, could not decode (%s)", err.Error())
+		return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "invalid validator operator address, could not decode (%s)", err.Error())
 	}
 	queryData := stakingtypes.GetValidatorKey(validatorAddressBz)
 
@@ -384,9 +384,9 @@ func (k Keeper) QueryValidatorExchangeRate(ctx sdk.Context, msg *types.MsgUpdate
 	}
 	if err := k.InterchainQueryKeeper.SubmitICQRequest(ctx, query, false); err != nil {
 		k.Logger(ctx).Error(fmt.Sprintf("Error submitting ICQ for validator exchange rate, error %s", err.Error()))
-		return nil, err
+		return err
 	}
-	return &types.MsgUpdateValidatorSharesExchRateResponse{}, nil
+	return nil
 }
 
 // Submits an ICQ to get a validator's delegations
