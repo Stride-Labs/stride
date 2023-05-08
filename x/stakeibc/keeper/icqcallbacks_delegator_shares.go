@@ -62,27 +62,34 @@ func DelegatorSharesCallback(k Keeper, ctx sdk.Context, args []byte, query icqty
 		return errorsmod.Wrapf(types.ErrValidatorNotFound, "no registered validator for address (%s)", queriedDelegation.ValidatorAddress)
 	}
 
-	// Check if the ICQ overlapped a delegation or undelegation ICA that would have modfied the number of delegated tokens
+	// Check if the ICQ overlapped a delegation, undelegation, or detokenization ICA
+	// that would have modfied the number of delegated tokens
 	prevInternalDelegation := callbackData.InitialValidatorDelegation
 	currInternalDelegation := validator.Delegation
-	icaOverlappedIcq, err := k.CheckDelegationChangedDuringQuery(ctx, chainId, prevInternalDelegation, currInternalDelegation)
+	icaOverlappedIcq, err := k.CheckDelegationChangedDuringQuery(
+		ctx,
+		chainId,
+		validator.Address,
+		prevInternalDelegation,
+		currInternalDelegation,
+	)
 	if err != nil {
 		return err
 	}
 
+	// If the ICA/ICQ overlapped, submit a new query
 	if icaOverlappedIcq {
-		// If the ICA/ICQ overlapped, submit a new query
 		if err := k.InterchainQueryKeeper.RetryICQRequest(ctx, query); err != nil {
 			return errorsmod.Wrapf(err, "unable to resubmit delegator shares query")
 		}
 		return nil
-	} else {
-		// If there was no ICA/ICQ overlap, update the validator to indicate that the query
-		//  is no longer in progress (which will unblock LSM liquid stakes to that validator)
-		validator.SlashQueryInProgress = false
-		hostZone.Validators[valIndex] = &validator
-		k.SetHostZone(ctx, hostZone)
 	}
+
+	// If there was no ICA/ICQ overlap, update the validator to indicate that the query
+	//  is no longer in progress (which will unblock LSM liquid stakes to that validator)
+	validator.SlashQueryInProgress = false
+	hostZone.Validators[valIndex] = &validator
+	k.SetHostZone(ctx, hostZone)
 
 	// Confirm the validator was slashed by looking at the number of tokens associated with the delegation
 	validatorWasSlashed, delegatedTokens, err := k.CheckForSlash(ctx, hostZone, valIndex, queriedDelegation)
@@ -105,7 +112,8 @@ func DelegatorSharesCallback(k Keeper, ctx sdk.Context, args []byte, query icqty
 // The number of tokens returned from the query must be consistent with the tokens
 //   stored in our internal record keeping during this callback, otherwise the comparision
 //   between the two is invalidated
-// As a result, we must avoid a race condition between the ICQ and an delegate or undelegate ICA
+// As a result, we must avoid a race condition between the ICQ and a delegate, undelegate,
+//   or detokenization ICA
 //
 // More specifically, we must avoid the following cases:
 //  Case 1)
@@ -117,11 +125,12 @@ func DelegatorSharesCallback(k Keeper, ctx sdk.Context, args []byte, query icqty
 //
 // We can prevent Case #1 by checking if the delegation total on the validator has changed
 //   while the query was in flight
-// We can prevent Case #2 by checking if there are any delegation or unbonding records
+// We can prevent Case #2 by checking if there are any delegation unbonding records
 //   in state IN_PROGRESS (meaning an ICA is in flight)
 func (k Keeper) CheckDelegationChangedDuringQuery(
 	ctx sdk.Context,
 	chainId string,
+	validatorAddress string,
 	previousInternalDelegation sdkmath.Int,
 	currentInternalDelegation sdkmath.Int,
 ) (overlapped bool, err error) {
@@ -151,6 +160,16 @@ func (k Keeper) CheckDelegationChangedDuringQuery(
 				k.Logger(ctx).Error("Undelegation ICA is currently in progress. Rejecting query callback and resubmitting query")
 				return true, nil
 			}
+		}
+	}
+
+	// Check that there are no LSMTokenDeposits in state IN_PROGRESS - indictive of an Detokenization ICA
+	detokenizationInProgress := recordstypes.LSMTokenDeposit_DETOKENIZATION_IN_PROGRESS
+	detokenizationInProgressRecords := k.RecordsKeeper.GetLSMDepositsForHostZoneWithStatus(ctx, chainId, detokenizationInProgress)
+	for _, lsmTokenDeposit := range detokenizationInProgressRecords {
+		if lsmTokenDeposit.ValidatorAddress == validatorAddress {
+			k.Logger(ctx).Error("Detokenization ICA is currently in progress. Rejecting query callback and resubmitting query")
+			return true, nil
 		}
 	}
 

@@ -26,9 +26,6 @@ const (
 	UndelegateICABatchSize = 30
 )
 
-// QUESTION: Should I move this and the rebalance structs to types?
-// That feels like the proper location, but since it's only really used by this file
-// if feels a bit more hidden in types
 type ValidatorUnbondCapacity struct {
 	ValidatorAddress   string
 	CurrentDelegation  sdkmath.Int
