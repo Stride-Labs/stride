@@ -15,13 +15,10 @@ import (
 // ================================ 1: QueryValidatorExchangeRate =============================================
 
 type QueryValidatorExchangeRateTestCase struct {
-	msg      types.MsgUpdateValidatorSharesExchRate
 	hostZone types.HostZone
 }
 
 func (s *KeeperTestSuite) SetupQueryValidatorExchangeRate() QueryValidatorExchangeRateTestCase {
-	valoperAddr := "cosmosvaloper133lfs9gcpxqj6er3kx605e3v9lqp2pg5syhvsz"
-
 	// set up IBC
 	s.CreateTransferChannel(HostChainId)
 
@@ -36,21 +33,15 @@ func (s *KeeperTestSuite) SetupQueryValidatorExchangeRate() QueryValidatorExchan
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
 
 	return QueryValidatorExchangeRateTestCase{
-		msg: types.MsgUpdateValidatorSharesExchRate{
-			Creator: s.TestAccs[0].String(),
-			ChainId: HostChainId,
-			Valoper: valoperAddr,
-		},
 		hostZone: hostZone,
 	}
 }
 
 func (s *KeeperTestSuite) TestQueryValidatorExchangeRate_Successful() {
-	tc := s.SetupQueryValidatorExchangeRate()
+	s.SetupQueryValidatorExchangeRate()
 
-	resp, err := s.App.StakeibcKeeper.QueryValidatorExchangeRate(s.Ctx, &tc.msg)
-	s.Require().NoError(err, "no error expected")
-	s.Require().NotNil(resp, "response should not be nil")
+	err := s.App.StakeibcKeeper.QueryValidatorExchangeRate(s.Ctx, HostChainId, ValAddress)
+	s.Require().NoError(err, "no error expected when querying validator exchange rate")
 
 	// check a query was created (a simple test; details about queries are covered in makeRequest's test)
 	queries := s.App.InterchainqueryKeeper.AllQueries(s.Ctx)
@@ -58,40 +49,29 @@ func (s *KeeperTestSuite) TestQueryValidatorExchangeRate_Successful() {
 }
 
 func (s *KeeperTestSuite) TestQueryValidatorExchangeRate_NoHostZone() {
-	tc := s.SetupQueryValidatorExchangeRate()
+	s.SetupQueryValidatorExchangeRate()
 
 	// remove the host zone
-	s.App.StakeibcKeeper.RemoveHostZone(s.Ctx, tc.hostZone.ChainId)
+	s.App.StakeibcKeeper.RemoveHostZone(s.Ctx, HostChainId)
 
-	resp, err := s.App.StakeibcKeeper.QueryValidatorExchangeRate(s.Ctx, &tc.msg)
+	err := s.App.StakeibcKeeper.QueryValidatorExchangeRate(s.Ctx, HostChainId, ValAddress)
 	s.Require().ErrorContains(err, "Host zone not found")
-	s.Require().Nil(resp, "response should be nil")
 
 	// submit a bad chain id
-	tc.msg.ChainId = "NOT_GAIA"
-	resp, err = s.App.StakeibcKeeper.QueryValidatorExchangeRate(s.Ctx, &tc.msg)
+	err = s.App.StakeibcKeeper.QueryValidatorExchangeRate(s.Ctx, "NOT_GAIA", ValAddress)
 	s.Require().ErrorContains(err, "Host zone not found")
-	s.Require().Nil(resp, "response should be nil")
 }
 
-func (s *KeeperTestSuite) TestQueryValidatorExchangeRate_ValoperDoesNotMatchBech32Prefix() {
-	tc := s.SetupQueryValidatorExchangeRate()
+func (s *KeeperTestSuite) TestQueryValidatorExchangeRate_InvalidValidator() {
+	s.SetupQueryValidatorExchangeRate()
 
-	tc.msg.Valoper = "BADPREFIX_123"
-
-	resp, err := s.App.StakeibcKeeper.QueryValidatorExchangeRate(s.Ctx, &tc.msg)
+	// Pass a validator with an invalid prefix - it should fail
+	err := s.App.StakeibcKeeper.QueryValidatorExchangeRate(s.Ctx, HostChainId, "BADPREFIX_123")
 	s.Require().ErrorContains(err, "validator operator address must match the host zone bech32 prefix")
-	s.Require().Nil(resp, "response should be nil")
-}
 
-func (s *KeeperTestSuite) TestQueryValidatorExchangeRate_BadValoperAddress() {
-	tc := s.SetupQueryValidatorExchangeRate()
-
-	tc.msg.Valoper = "cosmos_BADADDRESS"
-
-	resp, err := s.App.StakeibcKeeper.QueryValidatorExchangeRate(s.Ctx, &tc.msg)
+	// Pass a validator with a valid prefix but an invalid address - it should fail
+	err = s.App.StakeibcKeeper.QueryValidatorExchangeRate(s.Ctx, HostChainId, "cosmos_BADADDRESS")
 	s.Require().ErrorContains(err, "invalid validator operator address, could not decode")
-	s.Require().Nil(resp, "response should be nil")
 }
 
 func (s *KeeperTestSuite) TestQueryValidatorExchangeRate_MissingConnectionId() {
@@ -100,9 +80,8 @@ func (s *KeeperTestSuite) TestQueryValidatorExchangeRate_MissingConnectionId() {
 	tc.hostZone.ConnectionId = ""
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, tc.hostZone)
 
-	resp, err := s.App.StakeibcKeeper.QueryValidatorExchangeRate(s.Ctx, &tc.msg)
+	err := s.App.StakeibcKeeper.QueryValidatorExchangeRate(s.Ctx, HostChainId, ValAddress)
 	s.Require().ErrorContains(err, "connection-id cannot be empty")
-	s.Require().Nil(resp, "response should be nil")
 }
 
 // ================================== 2: QueryDelegationsIcq ==========================================

@@ -16,5 +16,8 @@ import (
 // 4. DelegatorSharesCallback (CALLBACK)
 func (k msgServer) UpdateValidatorSharesExchRate(goCtx context.Context, msg *types.MsgUpdateValidatorSharesExchRate) (*types.MsgUpdateValidatorSharesExchRateResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
-	return k.QueryValidatorExchangeRate(ctx, msg)
+	if err := k.QueryValidatorExchangeRate(ctx, msg.ChainId, msg.Valoper); err != nil {
+		return nil, err
+	}
+	return &types.MsgUpdateValidatorSharesExchRateResponse{}, nil
 }
