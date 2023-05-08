@@ -10,7 +10,7 @@ import (
 
 	errorsmod "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	channeltypes "github.com/cosmos/ibc-go/v5/modules/core/04-channel/types"
+	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
 	"github.com/golang/protobuf/proto" //nolint:staticcheck
 )
 
@@ -35,10 +35,11 @@ func (k Keeper) UnmarshalClaimCallbackArgs(ctx sdk.Context, claimCallback []byte
 }
 
 // ICA Callback after claiming unbonded tokens
-//   If successful:
-//      * Removes the user redemption record
-//   If timeout/failure:
-//      * Reverts pending flag in the user redemption record so the claim can be re-tried
+//
+//	If successful:
+//	   * Removes the user redemption record
+//	If timeout/failure:
+//	   * Reverts pending flag in the user redemption record so the claim can be re-tried
 func ClaimCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ackResponse *icacallbackstypes.AcknowledgementResponse, args []byte) error {
 	// Fetch callback args
 	claimCallback, err := k.UnmarshalClaimCallbackArgs(ctx, args)

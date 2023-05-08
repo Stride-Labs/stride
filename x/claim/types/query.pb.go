@@ -10,10 +10,10 @@ import (
 	github_com_cosmos_cosmos_sdk_types "github.com/cosmos/cosmos-sdk/types"
 	types1 "github.com/cosmos/cosmos-sdk/types"
 	_ "github.com/cosmos/gogoproto/gogoproto"
-	grpc1 "github.com/gogo/protobuf/grpc"
-	proto "github.com/gogo/protobuf/proto"
+	grpc1 "github.com/cosmos/gogoproto/grpc"
+	proto "github.com/cosmos/gogoproto/proto"
+	github_com_cosmos_gogoproto_types "github.com/cosmos/gogoproto/types"
 	_ "github.com/gogo/protobuf/types"
-	github_com_gogo_protobuf_types "github.com/gogo/protobuf/types"
 	_ "google.golang.org/genproto/googleapis/api/annotations"
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
@@ -1463,7 +1463,7 @@ func (m *ClaimMetadata) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	_ = i
 	var l int
 	_ = l
-	n1, err1 := github_com_gogo_protobuf_types.StdTimeMarshalTo(m.CurrentRoundEnd, dAtA[i-github_com_gogo_protobuf_types.SizeOfStdTime(m.CurrentRoundEnd):])
+	n1, err1 := github_com_cosmos_gogoproto_types.StdTimeMarshalTo(m.CurrentRoundEnd, dAtA[i-github_com_cosmos_gogoproto_types.SizeOfStdTime(m.CurrentRoundEnd):])
 	if err1 != nil {
 		return 0, err1
 	}
@@ -1471,7 +1471,7 @@ func (m *ClaimMetadata) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i = encodeVarintQuery(dAtA, i, uint64(n1))
 	i--
 	dAtA[i] = 0x22
-	n2, err2 := github_com_gogo_protobuf_types.StdTimeMarshalTo(m.CurrentRoundStart, dAtA[i-github_com_gogo_protobuf_types.SizeOfStdTime(m.CurrentRoundStart):])
+	n2, err2 := github_com_cosmos_gogoproto_types.StdTimeMarshalTo(m.CurrentRoundStart, dAtA[i-github_com_cosmos_gogoproto_types.SizeOfStdTime(m.CurrentRoundStart):])
 	if err2 != nil {
 		return 0, err2
 	}
@@ -2062,9 +2062,9 @@ func (m *ClaimMetadata) Size() (n int) {
 	if l > 0 {
 		n += 1 + l + sovQuery(uint64(l))
 	}
-	l = github_com_gogo_protobuf_types.SizeOfStdTime(m.CurrentRoundStart)
+	l = github_com_cosmos_gogoproto_types.SizeOfStdTime(m.CurrentRoundStart)
 	n += 1 + l + sovQuery(uint64(l))
-	l = github_com_gogo_protobuf_types.SizeOfStdTime(m.CurrentRoundEnd)
+	l = github_com_cosmos_gogoproto_types.SizeOfStdTime(m.CurrentRoundEnd)
 	n += 1 + l + sovQuery(uint64(l))
 	return n
 }
@@ -2669,7 +2669,7 @@ func (m *ClaimMetadata) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			if err := github_com_gogo_protobuf_types.StdTimeUnmarshal(&m.CurrentRoundStart, dAtA[iNdEx:postIndex]); err != nil {
+			if err := github_com_cosmos_gogoproto_types.StdTimeUnmarshal(&m.CurrentRoundStart, dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex
@@ -2702,7 +2702,7 @@ func (m *ClaimMetadata) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			if err := github_com_gogo_protobuf_types.StdTimeUnmarshal(&m.CurrentRoundEnd, dAtA[iNdEx:postIndex]); err != nil {
+			if err := github_com_cosmos_gogoproto_types.StdTimeUnmarshal(&m.CurrentRoundEnd, dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex
