@@ -80,7 +80,7 @@ func (s *KeeperTestSuite) SetupTestLSMLiquidStake() LSMLiquidStakeTestCase {
 		Validators: []*types.Validator{{
 			Address:                   ValAddress,
 			SlashQueryProgressTracker: progressTowardsQuery,
-			SlashQueryInterval:        sdkmath.ZeroInt(),
+			SlashQueryCheckpoint:      queryCheckpoint,
 		}},
 		DelegationIcaAddress: "cosmos_DELEGATION",
 	}

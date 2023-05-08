@@ -165,22 +165,17 @@ func (k Keeper) GetValidatorFromLSMTokenDenom(denom string, validators []*types.
 func (k Keeper) ShouldCheckIfValidatorWasSlashed(
 	ctx sdk.Context,
 	validator types.Validator,
-	totalHostZoneStake sdkmath.Int,
 	transactionStakeAmount sdkmath.Int,
 ) bool {
-	params := k.GetParams(ctx)
-	queryThreshold := sdk.NewDecWithPrec(int64(params.ValidatorSlashQueryThreshold), 2) // percentage
-	checkpoint := queryThreshold.Mul(sdk.NewDecFromInt(totalHostZoneStake)).TruncateInt()
-
 	// If the checkpoint is zero - that means either the threshold parameter is 0
 	// (which should not be possible), or that the total host zone stake is 0
 	// In either case, do not submit the query
-	if checkpoint.IsZero() {
+	if validator.SlashQueryCheckpoint.IsZero() {
 		return false
 	}
 
-	oldInterval := validator.SlashQueryInterval
-	newInterval := validator.SlashQueryProgressTracker.Add(transactionStakeAmount).Quo(checkpoint)
+	oldInterval := validator.SlashQueryProgressTracker.Quo(validator.SlashQueryCheckpoint)
+	newInterval := validator.SlashQueryProgressTracker.Add(transactionStakeAmount).Quo(validator.SlashQueryCheckpoint)
 
 	// Submit query if the query interval checkpoint has been breached
 	// Ex: Query Threshold: 1%, TVL: 100k => 1k Checkpoint

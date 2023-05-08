@@ -43,7 +43,7 @@ func (k msgServer) LSMLiquidStake(goCtx context.Context, msg *types.MsgLSMLiquid
 		return nil, err
 	}
 
-	if k.ShouldCheckIfValidatorWasSlashed(ctx, *lsmLiquidStake.Validator, lsmLiquidStake.HostZone.TotalDelegations, msg.Amount) {
+	if k.ShouldCheckIfValidatorWasSlashed(ctx, *lsmLiquidStake.Validator, msg.Amount) {
 		if err := k.SubmitValidatorSlashQuery(ctx, lsmLiquidStake); err != nil {
 			return nil, err
 		}

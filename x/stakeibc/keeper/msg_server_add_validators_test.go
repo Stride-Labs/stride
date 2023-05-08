@@ -30,10 +30,19 @@ func (s *KeeperTestSuite) getExchangeRateQueryData(validatorAddress string) []by
 }
 
 func (s *KeeperTestSuite) SetupAddValidators() AddValidatorsTestCase {
+	slashThreshold := uint64(10)
+	params := types.DefaultParams()
+	params.ValidatorSlashQueryThreshold = slashThreshold
+	s.App.StakeibcKeeper.SetParams(s.Ctx, params)
+
+	totalDelegations := sdkmath.NewInt(100_000)
+	expectedSlashCheckpoint := sdkmath.NewInt(10_000)
+
 	hostZone := types.HostZone{
-		ChainId:      "GAIA",
-		ConnectionId: ibctesting.FirstConnectionID,
-		Validators:   []*types.Validator{},
+		ChainId:          "GAIA",
+		ConnectionId:     ibctesting.FirstConnectionID,
+		Validators:       []*types.Validator{},
+		TotalDelegations: totalDelegations,
 	}
 
 	validatorAddresses := map[string]string{
@@ -69,7 +78,7 @@ func (s *KeeperTestSuite) SetupAddValidators() AddValidatorsTestCase {
 		validator.Delegation = sdkmath.ZeroInt()
 		validator.SlashQueryProgressTracker = sdkmath.ZeroInt()
 		validator.InternalSharesToTokensRate = sdk.ZeroDec()
-		validator.SlashQueryInterval = sdk.ZeroInt()
+		validator.SlashQueryCheckpoint = expectedSlashCheckpoint
 	}
 
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
