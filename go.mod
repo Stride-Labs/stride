@@ -23,9 +23,8 @@ require (
 	gopkg.in/yaml.v2 v2.4.0
 )
 
-require github.com/linxGnu/grocksdb v1.7.16 // indirect
-
 require (
+	github.com/linxGnu/grocksdb v1.7.16 // indirect
 	github.com/coinbase/rosetta-sdk-go/types v1.0.0 // indirect
 	github.com/cosmos/ics23/go v0.9.1-0.20221207100636-b1abd8678aab
 	github.com/go-playground/universal-translator v0.18.0 // indirect
@@ -34,9 +33,6 @@ require (
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.2 // indirect
 	github.com/ugorji/go/codec v1.2.7 // indirect
-)
-
-require (
 	cloud.google.com/go v0.110.0 // indirect
 	cloud.google.com/go/compute v1.18.0 // indirect
 	cloud.google.com/go/compute/metadata v0.2.3 // indirect
