@@ -46,7 +46,7 @@ validator_json=$DOCKERNET_HOME/state/${NODE_PREFIX}1/validators.json
 echo "{\"validators\": [${validators[*]}]}" > $validator_json
 
 # Add host zone validators to Stride's host zone struct
-$STRIDE_MAIN_CMD tx stakeibc add-validators $CHAIN_ID $validator_json \
+$STRIDE_MAIN_CMD tx stakeibc add-validators $CHAIN_ID $validator_json --gas 1000000 \
     --from $STRIDE_ADMIN_ACCT -y | TRIM_TX
 sleep 5
 
