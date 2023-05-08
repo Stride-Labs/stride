@@ -160,24 +160,29 @@ func (k Keeper) GetValidatorFromLSMTokenDenom(denom string, validators []*types.
 
 // Checks if we need to issue an ICQ to check if a validator was slashed
 // The query runs at periodic intervals defined by the ValidatorSlashQueryInterval
-func (k Keeper) ShouldCheckIfValidatorWasSlashed(ctx sdk.Context, validator types.Validator, stakeAmount sdkmath.Int) bool {
-	params := k.GetParams(ctx)
-	queryInterval := sdk.NewIntFromUint64(params.ValidatorSlashQueryInterval)
-
-	// If the query interval is disabled, do not submit a query
-	// This should not be possible with the current parameter validation
-	//  function which enforces that it's greater than 0
-	if queryInterval.IsZero() {
+// The interval is represented as percent of TVL
+// (e.g. 1% means every LS that causes the progress to breach 1% of TVL triggers the query)
+func (k Keeper) ShouldCheckIfValidatorWasSlashed(
+	ctx sdk.Context,
+	validator types.Validator,
+	transactionStakeAmount sdkmath.Int,
+) bool {
+	// If the checkpoint is zero - that means either the threshold parameter is 0
+	// (which should not be possible), or that the total host zone stake is 0
+	// In either case, do not submit the query
+	if validator.SlashQueryCheckpoint.IsZero() {
 		return false
 	}
 
-	oldProgress := validator.SlashQueryProgressTracker
-	newProgress := validator.SlashQueryProgressTracker.Add(stakeAmount)
+	oldInterval := validator.SlashQueryProgressTracker.Quo(validator.SlashQueryCheckpoint)
+	newInterval := validator.SlashQueryProgressTracker.Add(transactionStakeAmount).Quo(validator.SlashQueryCheckpoint)
 
 	// Submit query if the query interval checkpoint has been breached
-	// Ex: Query Interval: 1000, Old Progress: 900, New Progress: 1100
-	//     => OldProgress/Interval: 0, NewProgress/Interval: 1
-	return oldProgress.Quo(queryInterval).LT(newProgress.Quo(queryInterval))
+	// Ex: Query Threshold: 1%, TVL: 100k => 1k Checkpoint
+	//     Old Interval: 0, Old Progress Tracker: 900
+	//     Stake: 200, New Progress Tracker: 1100, New Interval: 1100 / 1000 = 1.1 = 1
+	//     => OldInterval: 0, NewInterval: 1 => Issue Slash Query
+	return oldInterval.LT(newInterval)
 }
 
 // Submits an ICA to "Redeem" an LSM Token - meaning converting the token into native stake

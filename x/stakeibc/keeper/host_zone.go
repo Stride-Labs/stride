@@ -158,7 +158,31 @@ func (k Keeper) IncrementValidatorSlashQueryProgress(
 		return types.ErrValidatorNotFound
 	}
 
-	validator.SlashQueryProgressTracker = validator.SlashQueryProgressTracker.Add(amount)
+	// Increment the progress tracker
+	oldProgress := validator.SlashQueryProgressTracker
+	newProgress := validator.SlashQueryProgressTracker.Add(amount)
+	validator.SlashQueryProgressTracker = newProgress
+
+	// If the checkpoint is zero, it implies the TVL was 0 last time it was set, and we should
+	// update it here
+	// If the checkpoint is non-zero, only update it if it was just breached
+	shouldUpdateCheckpoint := true
+	if !validator.SlashQueryCheckpoint.IsZero() {
+		oldInterval := oldProgress.Quo(validator.SlashQueryCheckpoint)
+		newInterval := newProgress.Quo(validator.SlashQueryCheckpoint)
+		shouldUpdateCheckpoint = oldInterval.LT(newInterval)
+	}
+
+	// Optionally re-calculate the checkpoint
+	// Threshold of 1% means once 1% of TVL has been breached, the query is issued
+	if shouldUpdateCheckpoint {
+		params := k.GetParams(ctx)
+		queryThreshold := sdk.NewDecWithPrec(int64(params.ValidatorSlashQueryThreshold), 2) // percentage
+		checkpoint := queryThreshold.Mul(sdk.NewDecFromInt(hostZone.TotalDelegations)).TruncateInt()
+
+		validator.SlashQueryCheckpoint = checkpoint
+	}
+
 	hostZone.Validators[valIndex] = &validator
 	k.SetHostZone(ctx, hostZone)
 
@@ -203,12 +227,19 @@ func (k Keeper) AddValidatorToHostZone(ctx sdk.Context, chainId string, validato
 		valWeight = minWeight
 	}
 
+	// Determine the slash query checkpoint for LSM liquid stakes
+	params := k.GetParams(ctx)
+	queryThreshold := sdk.NewDecWithPrec(int64(params.ValidatorSlashQueryThreshold), 2) // percentage
+	checkpoint := queryThreshold.Mul(sdk.NewDecFromInt(hostZone.TotalDelegations)).TruncateInt()
+
 	// Finally, add the validator to the host
 	hostZone.Validators = append(hostZone.Validators, &types.Validator{
-		Name:       validator.Name,
-		Address:    validator.Address,
-		Weight:     valWeight,
-		Delegation: sdkmath.ZeroInt(),
+		Name:                      validator.Name,
+		Address:                   validator.Address,
+		Weight:                    valWeight,
+		Delegation:                sdkmath.ZeroInt(),
+		SlashQueryProgressTracker: sdkmath.ZeroInt(),
+		SlashQueryCheckpoint:      checkpoint,
 	})
 
 	k.SetHostZone(ctx, hostZone)

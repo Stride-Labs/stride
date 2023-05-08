@@ -206,62 +206,123 @@ func (s *KeeperTestSuite) TestGetValidatorFromLSMTokenDenom() {
 func (s *KeeperTestSuite) TestShouldCheckIfValidatorWasSlashed() {
 	testCases := []struct {
 		name                string
-		queryInterval       uint64
+		checkpoint          sdkmath.Int
 		progress            sdkmath.Int
 		stakeAmount         sdkmath.Int
 		expectedShouldQuery bool
 	}{
 		{
-			name:                "interval 1 - short of checkpoint",
-			queryInterval:       1000,
+			// Checkpoint: 1000, Stake: 99
+			// Old Progress: 900, New Progress: 900 + 99 = 999
+			// Old Interval: 900 / 1000 = Interval #0
+			// New Interval: 999 / 1000 = Interval #0 (no query)
+			name:                "case #1 - short of checkpoint",
+			checkpoint:          sdkmath.NewInt(1000),
 			progress:            sdk.NewInt(900),
 			stakeAmount:         sdk.NewInt(99),
 			expectedShouldQuery: false,
 		},
 		{
-			name:                "interval 1 - at checkpoint",
-			queryInterval:       1000,
+			// Checkpoint: 1000, Stake: 100
+			// Old Progress: 900, New Progress: 900 + 100 = 1000
+			// Old Interval: 900 / 1000 = Interval #0
+			// New Interval: 1000 / 1000 = Interval #1 (query)
+			name:                "case #1 - at checkpoint",
+			checkpoint:          sdkmath.NewInt(1000),
 			progress:            sdk.NewInt(900),
 			stakeAmount:         sdk.NewInt(100),
 			expectedShouldQuery: true,
 		},
 		{
-			name:                "interval 1 - past checkpoint",
-			queryInterval:       1000,
+			// Checkpoint: 1000, Stake: 101
+			// Old Progress: 900, New Progress: 900 + 101 = 1000
+			// Old Interval: 900 / 1000 = Interval #0
+			// New Interval: 1001 / 1000 = Interval #1 (query)
+			name:                "case #1 - past checkpoint",
+			checkpoint:          sdkmath.NewInt(1000),
 			progress:            sdk.NewInt(900),
 			stakeAmount:         sdk.NewInt(101),
 			expectedShouldQuery: true,
 		},
 		{
-			name:                "interval 2 - short of checkpoint",
-			queryInterval:       689,
-			progress:            sdk.NewInt(4000), // 4,134 is checkpoint (689 * 5)
-			stakeAmount:         sdk.NewInt(133),  // 4,133
+			// Checkpoint: 1000, Stake: 99
+			// Old Progress: 11,900, New Progress: 11,900 + 99 = 11,999
+			// Old Interval: 11,900 / 1000 = Interval #11
+			// New Interval: 11,999 / 1000 = Interval #11 (query)
+			name:                "case #2 - short of checkpoint",
+			checkpoint:          sdkmath.NewInt(1000),
+			progress:            sdk.NewInt(11_900),
+			stakeAmount:         sdk.NewInt(99),
 			expectedShouldQuery: false,
 		},
 		{
-			name:                "interval 2 - at checkpoint",
-			queryInterval:       689,
-			progress:            sdk.NewInt(4000), // 4,134 is checkpoint (689 * 5)
-			stakeAmount:         sdk.NewInt(134),  // 4,134
+			// Checkpoint: 1000, Stake: 100
+			// Old Progress: 11,900, New Progress: 11,900 + 100 = 12,000
+			// Old Interval: 11,900 / 1000 = Interval #11
+			// New Interval: 12,000 / 1000 = Interval #12 (query)
+			name:                "case #2 - at checkpoint",
+			checkpoint:          sdkmath.NewInt(1000),
+			progress:            sdk.NewInt(11_900),
+			stakeAmount:         sdk.NewInt(100),
 			expectedShouldQuery: true,
 		},
 		{
-			name:                "interval 2 - past checkpoint",
-			queryInterval:       689,
-			progress:            sdk.NewInt(4000), // 4,134 is checkpoint (689 * 5)
-			stakeAmount:         sdk.NewInt(135),  // 4,135
+			// Checkpoint: 1000, Stake: 101
+			// Old Progress: 11,900, New Progress: 11,900 + 101 = 12,001
+			// Old Interval: 11,900 / 1000 = Interval #11
+			// New Interval: 12,001 / 1000 = Interval #12 (query)
+			name:                "case #2 - past checkpoint",
+			checkpoint:          sdkmath.NewInt(1000),
+			progress:            sdk.NewInt(11_900),
+			stakeAmount:         sdk.NewInt(101),
 			expectedShouldQuery: true,
+		},
+		{
+			// Checkpoint: 6,890, Stake: 339
+			// Old Progress: 41,000, New Progress: 41,000 + 339 = 41,339
+			// Old Interval: 41,000 / 6,890 = Interval #5
+			// New Interval: 41,339 / 6,890 = Interval #5 (no query)
+			name:                "case #3 - short of checkpoint",
+			checkpoint:          sdkmath.NewInt(6890),
+			progress:            sdk.NewInt(41_000),
+			stakeAmount:         sdk.NewInt(101),
+			expectedShouldQuery: false,
+		},
+		{
+			// Checkpoint: 6,890, Stake: 340
+			// Old Progress: 41,000, New Progress: 41,000 + 440 = 41,440
+			// Old Interval: 41,000 / 6,890 = Interval #5
+			// New Interval: 41,440 / 6,890 = Interval #6 (query)
+			name:                "case #3 - at checkpoint",
+			checkpoint:          sdkmath.NewInt(6890),
+			progress:            sdk.NewInt(41_000),
+			stakeAmount:         sdk.NewInt(340),
+			expectedShouldQuery: true,
+		},
+		{
+			// Checkpoint: 6,890
+			// Old Progress: 41,000, New Progress: 41,000 + 441 = 41,440
+			// Old Interval: 41,000 / 6,890 = Interval #5
+			// New Interval: 41,441 / 6,890 = Interval #6 (query)
+			name:                "case #3 - past checkpoint",
+			checkpoint:          sdkmath.NewInt(6890),
+			progress:            sdk.NewInt(41_000),
+			stakeAmount:         sdk.NewInt(341),
+			expectedShouldQuery: true,
+		},
+		{
+			// Checkpoint of 0 - should not issue query
+			name:                "threshold of 0",
+			checkpoint:          sdkmath.ZeroInt(),
+			progress:            sdk.NewInt(41_000),
+			stakeAmount:         sdk.NewInt(340),
+			expectedShouldQuery: false,
 		},
 	}
 
 	for _, tc := range testCases {
 		// Store query interval param
-		params := types.DefaultParams()
-		params.ValidatorSlashQueryInterval = tc.queryInterval
-		s.App.StakeibcKeeper.SetParams(s.Ctx, params)
-
-		validator := types.Validator{SlashQueryProgressTracker: tc.progress}
+		validator := types.Validator{SlashQueryProgressTracker: tc.progress, SlashQueryCheckpoint: tc.checkpoint}
 		actualShouldQuery := s.App.StakeibcKeeper.ShouldCheckIfValidatorWasSlashed(s.Ctx, validator, tc.stakeAmount)
 		s.Require().Equal(tc.expectedShouldQuery, actualShouldQuery, tc.name)
 	}
