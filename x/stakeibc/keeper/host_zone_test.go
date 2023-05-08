@@ -180,40 +180,89 @@ func (s *KeeperTestSuite) TestGetHostZoneFromTransferChannelID() {
 	s.Require().False(found, "fake channel should not be found")
 }
 
-func (s *KeeperTestSuite) TestIncrementValidatorSlashQueryProgress() {
-	// Store a host zone with 3 validators
-	incrementedValidator := "valB"
-	initialHostZone := types.HostZone{
-		ChainId: HostChainId,
-		Validators: []*types.Validator{
-			{Address: "valA", SlashQueryProgressTracker: sdkmath.NewInt(10)},
-			{Address: incrementedValidator, SlashQueryProgressTracker: sdkmath.NewInt(20)},
-			{Address: "valC", SlashQueryProgressTracker: sdkmath.NewInt(30)},
-		},
-	}
-	s.App.StakeibcKeeper.SetHostZone(s.Ctx, initialHostZone)
-
-	// Increment the progress for valB
-	stakeAmount := sdkmath.NewInt(3)
-	expectedProgress := sdkmath.NewInt(23)
-	err := s.App.StakeibcKeeper.IncrementValidatorSlashQueryProgress(s.Ctx, HostChainId, incrementedValidator, stakeAmount)
-	s.Require().NoError(err, "no error expected when incrementing slash query progress")
-
-	// Check progress was updated
+// Helper function to check the validator's slash query progress and checkpoint after it was incremented
+func (s *KeeperTestSuite) checkValidatorSlashQueryProgress(address string, expectedProgress, expectedCheckpoint sdkmath.Int) {
 	actualHostZone, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx, HostChainId)
 	s.Require().True(found, "host zone should have been found")
 	s.Require().Len(actualHostZone.Validators, 3, "host zone should still have 3 validators")
 
-	actualValidator := actualHostZone.Validators[1]
-	s.Require().Equal(incrementedValidator, actualValidator.Address, "validator address")
+	actualValidator := types.Validator{}
+	for _, validator := range actualHostZone.Validators {
+		if validator.Address == address {
+			actualValidator = *validator
+		}
+	}
+	s.Require().NotEmpty(actualValidator.Address, "validator address not found")
 	s.Require().Equal(expectedProgress.Int64(), actualValidator.SlashQueryProgressTracker.Int64(), "slash query progress")
+	s.Require().Equal(expectedCheckpoint.Int64(), actualValidator.SlashQueryCheckpoint.Int64(), "slash query checkpoint")
+}
+
+func (s *KeeperTestSuite) TestIncrementValidatorSlashQueryProgress() {
+	// Slash query progress for validator B is as follows:
+	//  Initial Checkpoint: 1000 (from previous TVL)
+	//  Current TVL: 10k, Threshold: 11% => New Checkpoint of 1100
+	//  Old Progress: 7800 => Old Interval: 7800 / 1000 = Interval #7
+	//  New Stake #1: 180 => New Interval: 8001 / 1000 = Interval #8
+	incrementedValidator := "valB"
+	threshold := uint64(11)
+	totalStakeAmount := sdkmath.NewInt(10_000)
+
+	initialCheckpoint := sdkmath.NewInt(1000)
+	expectedCheckpoint := sdkmath.NewInt(1100)
+
+	initialProgress := sdkmath.NewInt(7800)
+	firstStakeAmount := sdkmath.NewInt(180)
+	progressAfterFirstStake := sdkmath.NewInt(7980)
+	secondStakeAmount := sdkmath.NewInt(100)
+	progressAfterSecondStake := sdkmath.NewInt(8080)
+
+	// Store a host zone with 3 validators and 1 in progress
+	initialHostZone := types.HostZone{
+		ChainId: HostChainId,
+		Validators: []*types.Validator{
+			{Address: "valA"},
+			{Address: incrementedValidator, SlashQueryProgressTracker: initialProgress, SlashQueryCheckpoint: initialCheckpoint},
+			{Address: "valC"},
+		},
+		TotalDelegations: totalStakeAmount,
+	}
+	s.App.StakeibcKeeper.SetHostZone(s.Ctx, initialHostZone)
+
+	// Set params with 10% threshold
+	params := types.DefaultParams()
+	params.ValidatorSlashQueryThreshold = threshold
+	s.App.StakeibcKeeper.SetParams(s.Ctx, params)
+
+	// Increment the progress for valB by an amount that falls short of the checkpoint
+	err := s.App.StakeibcKeeper.IncrementValidatorSlashQueryProgress(
+		s.Ctx,
+		HostChainId,
+		incrementedValidator,
+		firstStakeAmount,
+	)
+	s.Require().NoError(err, "no error expected when incrementing slash query progress")
+
+	// Check progress was updated and checkpoint was not
+	s.checkValidatorSlashQueryProgress(incrementedValidator, progressAfterFirstStake, initialCheckpoint)
+
+	// Increment the progress again - this time it should increment the checkpoint
+	err = s.App.StakeibcKeeper.IncrementValidatorSlashQueryProgress(
+		s.Ctx,
+		HostChainId,
+		incrementedValidator,
+		secondStakeAmount,
+	)
+	s.Require().NoError(err, "no error expected when incrementing slash query progress")
+
+	// Check progress and checkpoint were updated
+	s.checkValidatorSlashQueryProgress(incrementedValidator, progressAfterSecondStake, expectedCheckpoint)
 
 	// Try to increment from a non-existed host chain - it should fail
-	err = s.App.StakeibcKeeper.IncrementValidatorSlashQueryProgress(s.Ctx, "fake_host", incrementedValidator, stakeAmount)
+	err = s.App.StakeibcKeeper.IncrementValidatorSlashQueryProgress(s.Ctx, "fake_host", incrementedValidator, firstStakeAmount)
 	s.Require().ErrorContains(err, "host zone not found")
 
 	// Try to increment from a non-existed validator - it should fail
-	err = s.App.StakeibcKeeper.IncrementValidatorSlashQueryProgress(s.Ctx, HostChainId, "fake_val", stakeAmount)
+	err = s.App.StakeibcKeeper.IncrementValidatorSlashQueryProgress(s.Ctx, HostChainId, "fake_val", firstStakeAmount)
 	s.Require().ErrorContains(err, "validator not found")
 }
 

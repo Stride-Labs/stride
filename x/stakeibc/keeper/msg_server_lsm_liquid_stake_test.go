@@ -17,12 +17,14 @@ import (
 )
 
 type LSMLiquidStakeTestCase struct {
-	hostZone            types.HostZone
-	liquidStakerAddress sdk.AccAddress
-	depositAddress      sdk.AccAddress
-	initialBalance      sdkmath.Int
-	lsmTokenIBCDenom    string
-	validMsg            *types.MsgLSMLiquidStake
+	hostZone             types.HostZone
+	liquidStakerAddress  sdk.AccAddress
+	depositAddress       sdk.AccAddress
+	initialBalance       sdkmath.Int
+	initialQueryProgress sdkmath.Int
+	queryCheckpoint      sdkmath.Int
+	lsmTokenIBCDenom     string
+	validMsg             *types.MsgLSMLiquidStake
 }
 
 // Helper function to add the port and channel onto the LSMTokenBaseDenom,
@@ -39,8 +41,8 @@ func (s *KeeperTestSuite) getLSMTokenIBCDenom() string {
 func (s *KeeperTestSuite) SetupTestLSMLiquidStake() LSMLiquidStakeTestCase {
 	s.CreateTransferChannel(HostChainId)
 
-	initialBalance := sdkmath.NewInt(3_000_000)
-	stakeAmount := sdkmath.NewInt(1_000_000)
+	initialBalance := sdkmath.NewInt(3000)
+	stakeAmount := sdkmath.NewInt(1000)
 	userAddress := s.TestAccs[0]
 	depositAddress := types.NewHostZoneDepositAddress(HostChainId)
 
@@ -51,9 +53,20 @@ func (s *KeeperTestSuite) SetupTestLSMLiquidStake() LSMLiquidStakeTestCase {
 	s.FundAccount(userAddress, sdk.NewCoin(lsmTokenIBCDenom, initialBalance))
 
 	// Add the slash interval
+	// TVL: 100k, Checkpoint: 1% of 1M = 10k
+	// Progress towards query: 8000
+	// => Liquid Stake of 2k will trip query
+	totalHostZoneStake := sdkmath.NewInt(1_000_000)
+	queryCheckpoint := sdkmath.NewInt(10_000)
+	progressTowardsQuery := sdkmath.NewInt(8000)
 	params := types.DefaultParams()
-	params.ValidatorSlashQueryInterval = 10_000_000
+	params.ValidatorSlashQueryThreshold = 1 // 1 %
 	s.App.StakeibcKeeper.SetParams(s.Ctx, params)
+
+	// Sanity check
+	onePercent := sdk.MustNewDecFromStr("0.01")
+	s.Require().Equal(queryCheckpoint.Int64(), onePercent.Mul(sdk.NewDecFromInt(totalHostZoneStake)).TruncateInt64(),
+		"setup failed - query checkpoint must be 1% of total host zone stake")
 
 	// Add the host zone with a valid zone address as the LSM custodian
 	hostZone := types.HostZone{
@@ -63,20 +76,24 @@ func (s *KeeperTestSuite) SetupTestLSMLiquidStake() LSMLiquidStakeTestCase {
 		DepositAddress:    depositAddress.String(),
 		TransferChannelId: ibctesting.FirstChannelID,
 		ConnectionId:      ibctesting.FirstConnectionID,
+		TotalDelegations:  totalHostZoneStake,
 		Validators: []*types.Validator{{
 			Address:                   ValAddress,
-			SlashQueryProgressTracker: sdkmath.NewInt(8_000_000),
+			SlashQueryProgressTracker: progressTowardsQuery,
+			SlashQueryCheckpoint:      queryCheckpoint,
 		}},
 		DelegationIcaAddress: "cosmos_DELEGATION",
 	}
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
 
 	return LSMLiquidStakeTestCase{
-		hostZone:            hostZone,
-		liquidStakerAddress: userAddress,
-		depositAddress:      depositAddress,
-		initialBalance:      initialBalance,
-		lsmTokenIBCDenom:    lsmTokenIBCDenom,
+		hostZone:             hostZone,
+		liquidStakerAddress:  userAddress,
+		depositAddress:       depositAddress,
+		initialBalance:       initialBalance,
+		initialQueryProgress: progressTowardsQuery,
+		queryCheckpoint:      queryCheckpoint,
+		lsmTokenIBCDenom:     lsmTokenIBCDenom,
 		validMsg: &types.MsgLSMLiquidStake{
 			Creator:          userAddress.String(),
 			LsmTokenIbcDenom: lsmTokenIBCDenom,
@@ -128,15 +145,18 @@ func (s *KeeperTestSuite) TestLSMLiquidStake_Successful_NoExchangeRateQuery() {
 
 	// Confirm slash query progress was incremented
 	hostZone, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx, HostChainId)
+	expectedQueryProgress := tc.initialQueryProgress.Add(tc.validMsg.Amount)
 	s.Require().True(found, "host zone should have been found")
-	s.Require().Equal(int64(9_000_000), hostZone.Validators[0].SlashQueryProgressTracker.Int64(), "slash query progress")
+	s.Require().Equal(expectedQueryProgress.Int64(), hostZone.Validators[0].SlashQueryProgressTracker.Int64(), "slash query progress")
 }
 
 func (s *KeeperTestSuite) TestLSMLiquidStake_Successful_WithExchangeRateQuery() {
 	tc := s.SetupTestLSMLiquidStake()
 
 	// Increase the liquid stake size so that it breaks the query checkpoint
-	tc.validMsg.Amount = sdk.NewInt(3_000_000)
+	// queryProgressSlack is the remaining amount that can be staked in one message before a slash query is issued
+	queryProgressSlack := tc.queryCheckpoint.Sub(tc.initialQueryProgress)
+	tc.validMsg.Amount = queryProgressSlack.Add(sdk.NewInt(1000))
 
 	// Call LSM Liquid stake
 	msgResponse, err := s.GetMsgServer().LSMLiquidStake(sdk.WrapSDKContext(s.Ctx), tc.validMsg)
@@ -192,11 +212,12 @@ func (s *KeeperTestSuite) TestLSMLiquidStake_Successful_WithExchangeRateQuery() 
 
 func (s *KeeperTestSuite) TestLSMLiquidStake_DifferentRedemptionRates() {
 	tc := s.SetupTestLSMLiquidStake()
-	tc.validMsg.Amount = sdk.NewInt(1000) // reduce the stake amount to prevent insufficient balance
+	tc.validMsg.Amount = sdk.NewInt(100) // reduce the stake amount to prevent insufficient balance error
 
 	// Loop over exchange rates: {0.92, 0.94, ..., 1.2}
+	interval := sdk.MustNewDecFromStr("0.01")
 	for i := -8; i <= 10; i += 2 {
-		redemptionDelta := sdk.NewDecWithPrec(1.0, 1).Quo(sdk.NewDec(10)).Mul(sdk.NewDec(int64(i))) // i = 2 => delta = 0.02
+		redemptionDelta := interval.Mul(sdk.NewDec(int64(i))) // i = 2 => delta = 0.02
 		newRedemptionRate := sdk.NewDec(1.0).Add(redemptionDelta)
 		redemptionRateFloat := newRedemptionRate
 

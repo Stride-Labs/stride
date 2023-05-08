@@ -159,14 +159,14 @@ func (k Keeper) FinishLSMLiquidStake(ctx sdk.Context, lsmLiquidStake types.LSMLi
 
 	// Get the staker's address and the host zone's deposit account address (which will custody the tokens)
 	liquidStakerAddress := sdk.MustAccAddressFromBech32(lsmTokenDeposit.StakerAddress)
-	hostZoneAddress, err := sdk.AccAddressFromBech32(hostZone.DepositAddress)
+	hostZoneDepositAddress, err := sdk.AccAddressFromBech32(hostZone.DepositAddress)
 	if err != nil {
 		return errorsmod.Wrapf(err, "host zone address is invalid")
 	}
 
 	// Transfer the LSM token to the deposit account
 	lsmIBCToken := sdk.NewCoin(lsmTokenDeposit.IbcDenom, lsmTokenDeposit.Amount)
-	if err := k.bankKeeper.SendCoins(ctx, liquidStakerAddress, hostZoneAddress, sdk.NewCoins(lsmIBCToken)); err != nil {
+	if err := k.bankKeeper.SendCoins(ctx, liquidStakerAddress, hostZoneDepositAddress, sdk.NewCoins(lsmIBCToken)); err != nil {
 		return errorsmod.Wrap(err, "failed to send tokens from Account to Module")
 	}
 
