@@ -158,7 +158,19 @@ func (k Keeper) IncrementValidatorSlashQueryProgress(
 		return types.ErrValidatorNotFound
 	}
 
+	// Threshold of 1% means once 1% of TVL has been breached, the interval increments
+	params := k.GetParams(ctx)
+	queryThreshold := sdk.NewDecWithPrec(int64(params.ValidatorSlashQueryThreshold), 2) // percentage
+	checkpoint := queryThreshold.Mul(sdk.NewDecFromInt(hostZone.TotalDelegations)).TruncateInt()
+
+	// Prevent division by 0 error if either the threshold or TVL is 0
+	if checkpoint.IsZero() {
+		return nil
+	}
+
 	validator.SlashQueryProgressTracker = validator.SlashQueryProgressTracker.Add(amount)
+	validator.SlashQueryInterval = validator.SlashQueryProgressTracker.Quo(checkpoint)
+
 	hostZone.Validators[valIndex] = &validator
 	k.SetHostZone(ctx, hostZone)
 
@@ -205,10 +217,12 @@ func (k Keeper) AddValidatorToHostZone(ctx sdk.Context, chainId string, validato
 
 	// Finally, add the validator to the host
 	hostZone.Validators = append(hostZone.Validators, &types.Validator{
-		Name:       validator.Name,
-		Address:    validator.Address,
-		Weight:     valWeight,
-		Delegation: sdkmath.ZeroInt(),
+		Name:                      validator.Name,
+		Address:                   validator.Address,
+		Weight:                    valWeight,
+		Delegation:                sdkmath.ZeroInt(),
+		SlashQueryProgressTracker: sdkmath.ZeroInt(),
+		SlashQueryInterval:        sdkmath.ZeroInt(),
 	})
 
 	k.SetHostZone(ctx, hostZone)

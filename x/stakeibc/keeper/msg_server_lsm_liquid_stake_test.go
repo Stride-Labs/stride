@@ -60,7 +60,7 @@ func (s *KeeperTestSuite) SetupTestLSMLiquidStake() LSMLiquidStakeTestCase {
 	queryCheckpoint := sdkmath.NewInt(10_000)
 	progressTowardsQuery := sdkmath.NewInt(8000)
 	params := types.DefaultParams()
-	params.ValidatorSlashQueryInterval = 1 // 1 %
+	params.ValidatorSlashQueryThreshold = 1 // 1 %
 	s.App.StakeibcKeeper.SetParams(s.Ctx, params)
 
 	// Sanity check
@@ -80,6 +80,7 @@ func (s *KeeperTestSuite) SetupTestLSMLiquidStake() LSMLiquidStakeTestCase {
 		Validators: []*types.Validator{{
 			Address:                   ValAddress,
 			SlashQueryProgressTracker: progressTowardsQuery,
+			SlashQueryInterval:        sdkmath.ZeroInt(),
 		}},
 		DelegationIcaAddress: "cosmos_DELEGATION",
 	}

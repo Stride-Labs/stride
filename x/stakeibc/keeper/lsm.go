@@ -169,23 +169,25 @@ func (k Keeper) ShouldCheckIfValidatorWasSlashed(
 	transactionStakeAmount sdkmath.Int,
 ) bool {
 	params := k.GetParams(ctx)
-	queryInterval := sdk.NewDecWithPrec(int64(params.ValidatorSlashQueryInterval), 2) // percentage
-	checkpoint := queryInterval.Mul(sdk.NewDecFromInt(totalHostZoneStake)).TruncateInt()
+	queryThreshold := sdk.NewDecWithPrec(int64(params.ValidatorSlashQueryThreshold), 2) // percentage
+	checkpoint := queryThreshold.Mul(sdk.NewDecFromInt(totalHostZoneStake)).TruncateInt()
 
-	// If the checkpoint is zero - that means either the interval parameter is 0
+	// If the checkpoint is zero - that means either the threshold parameter is 0
 	// (which should not be possible), or that the total host zone stake is 0
 	// In either case, do not submit the query
 	if checkpoint.IsZero() {
 		return false
 	}
 
-	oldProgress := validator.SlashQueryProgressTracker
-	newProgress := validator.SlashQueryProgressTracker.Add(transactionStakeAmount)
+	oldInterval := validator.SlashQueryInterval
+	newInterval := validator.SlashQueryProgressTracker.Add(transactionStakeAmount).Quo(checkpoint)
 
 	// Submit query if the query interval checkpoint has been breached
-	// Ex: Query Interval: 1000, Old Progress: 900, New Progress: 1100
-	//     => OldProgress/Interval: 0, NewProgress/Interval: 1
-	return oldProgress.Quo(checkpoint).LT(newProgress.Quo(checkpoint))
+	// Ex: Query Threshold: 1%, TVL: 100k => 1k Checkpoint
+	//     Old Interval: 0, Old Progress Tracker: 900
+	//     Stake: 200, New Progress Tracker: 1100, New Interval: 1100 / 1000 = 1.1 = 1
+	//     => OldInterval: 0, NewInterval: 1 => Issue Slash Query
+	return oldInterval.LT(newInterval)
 }
 
 // Submits an ICA to "Redeem" an LSM Token - meaning converting the token into native stake
