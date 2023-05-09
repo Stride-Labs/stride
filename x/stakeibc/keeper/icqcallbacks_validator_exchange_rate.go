@@ -137,6 +137,9 @@ func ValidatorExchangeRateCallback(k Keeper, ctx sdk.Context, args []byte, query
 
 		EmitFailedLSMLiquidStakeEvent(ctx, hostZone, lsmTokenDeposit, errorMessage)
 		k.Logger(ctx).Error(errorMessage)
+
+		// Remove the LSMTokenDeposit
+		k.RecordsKeeper.RemoveLSMTokenDeposit(ctx, lsmLiquidStake.Deposit.ChainId, lsmLiquidStake.Deposit.Denom)
 	}
 
 	// If the validator was slashed, we'll have to issue a delegator shares query to determine

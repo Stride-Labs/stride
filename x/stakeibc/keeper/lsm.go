@@ -13,6 +13,7 @@ import (
 	icatypes "github.com/cosmos/ibc-go/v5/modules/apps/27-interchain-accounts/types"
 	transfertypes "github.com/cosmos/ibc-go/v5/modules/apps/transfer/types"
 	channeltypes "github.com/cosmos/ibc-go/v5/modules/core/04-channel/types"
+	lsmstakingtypes "github.com/iqlusioninc/liquidity-staking-module/x/staking/types"
 
 	"github.com/golang/protobuf/proto" //nolint:staticcheck
 
@@ -179,7 +180,7 @@ func (k Keeper) ShouldCheckIfValidatorWasSlashed(
 
 	// Submit query if the query interval checkpoint has been breached
 	// Ex: Query Threshold: 1%, TVL: 100k => 1k Checkpoint
-	//     Old Interval: 0, Old Progress Tracker: 900
+	//     Old Progress Tracker: 900, Old Interval: 900 / 1000 => Interval 0,
 	//     Stake: 200, New Progress Tracker: 1100, New Interval: 1100 / 1000 = 1.1 = 1
 	//     => OldInterval: 0, NewInterval: 1 => Issue Slash Query
 	return oldInterval.LT(newInterval)
@@ -200,7 +201,7 @@ func (k Keeper) DetokenizeLSMDeposit(ctx sdk.Context, hostZone types.HostZone, d
 
 	// Build the detokenization ICA message
 	token := sdk.NewCoin(deposit.Denom, deposit.Amount)
-	detokenizeMsg := []sdk.Msg{&types.MsgRedeemTokensforShares{
+	detokenizeMsg := []sdk.Msg{&lsmstakingtypes.MsgRedeemTokensforShares{
 		DelegatorAddress: hostZone.DelegationIcaAddress,
 		Amount:           token,
 	}}

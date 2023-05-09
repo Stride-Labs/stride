@@ -37,7 +37,7 @@ func LSMTransferCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, 
 			deposit,
 			transferCallback.TransferChannelId,
 			transferCallback.HostZoneDepositAddress,
-			transferCallback.HostZoneDepositAddress,
+			transferCallback.HostZoneDelegationIcaAddress,
 		); err != nil {
 			return errorsmod.Wrapf(err, "Failed to submit IBC transfer of LSM token")
 		}
