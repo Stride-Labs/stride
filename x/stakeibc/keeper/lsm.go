@@ -180,7 +180,7 @@ func (k Keeper) ShouldCheckIfValidatorWasSlashed(
 
 	// Submit query if the query interval checkpoint has been breached
 	// Ex: Query Threshold: 1%, TVL: 100k => 1k Checkpoint
-	//     Old Interval: 0, Old Progress Tracker: 900
+	//     Old Progress Tracker: 900, Old Interval: 900 / 1000 => Interval 0,
 	//     Stake: 200, New Progress Tracker: 1100, New Interval: 1100 / 1000 = 1.1 = 1
 	//     => OldInterval: 0, NewInterval: 1 => Issue Slash Query
 	return oldInterval.LT(newInterval)

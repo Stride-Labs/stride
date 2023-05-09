@@ -67,9 +67,6 @@ func (k Keeper) IBCTransferLSMToken(
 	hostZoneDepositAddress string,
 	hostZoneDelegationICAAddress string,
 ) error {
-	// Update deposit status
-	k.UpdateLSMTokenDepositStatus(ctx, lsmTokenDeposit, types.LSMTokenDeposit_TRANSFER_IN_PROGRESS)
-
 	// Build transfer message with a conservative timeout
 	timeout := uint64(ctx.BlockTime().UnixNano() + (LSMDepositTransferTimeout).Nanoseconds())
 	ibcToken := sdk.NewCoin(lsmTokenDeposit.IbcDenom, lsmTokenDeposit.Amount)
