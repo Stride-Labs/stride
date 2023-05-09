@@ -78,6 +78,9 @@ func (k *Keeper) RetryICQRequest(ctx sdk.Context, query types.Query) error {
 		return err
 	}
 
+	// TODO [LSM]: Investigate why we need to force a unique ID when retrying queries
+	query.Id = k.GetQueryId(ctx, query, true)
+
 	// Update the timeout
 	timeoutTimestamp := uint64(ctx.BlockTime().UnixNano() + query.TimeoutDuration.Nanoseconds())
 	query.TimeoutTimestamp = timeoutTimestamp

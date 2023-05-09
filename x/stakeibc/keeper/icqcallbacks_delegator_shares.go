@@ -79,6 +79,15 @@ func DelegatorSharesCallback(k Keeper, ctx sdk.Context, args []byte, query icqty
 
 	// If the ICA/ICQ overlapped, submit a new query
 	if icaOverlappedIcq {
+		// Store the updated validator delegation amount
+		callbackDataBz, err := proto.Marshal(&types.DelegatorSharesQueryCallback{
+			InitialValidatorDelegation: currInternalDelegation,
+		})
+		if err != nil {
+			return errorsmod.Wrapf(err, "unable to marshal delegator shares callback data")
+		}
+		query.CallbackData = callbackDataBz
+
 		if err := k.InterchainQueryKeeper.RetryICQRequest(ctx, query); err != nil {
 			return errorsmod.Wrapf(err, "unable to resubmit delegator shares query")
 		}
@@ -138,7 +147,7 @@ func (k Keeper) CheckDelegationChangedDuringQuery(
 	// If it has changed, exit this callback (to prevent any accounting errors) and resubmit the query
 	if !currentInternalDelegation.Equal(previousInternalDelegation) {
 		k.Logger(ctx).Error(fmt.Sprintf(
-			"Validator (%s) delegation changed while delegator shares query was in flight. Resubmitting query", chainId))
+			"Validator (%s) delegation changed while delegator shares query was in flight. Resubmitting query", validatorAddress))
 		return true, nil
 	}
 
@@ -270,6 +279,10 @@ func (k Keeper) SlashValidatorOnHostZone(ctx sdk.Context, hostZone types.HostZon
 
 	k.Logger(ctx).Info(utils.LogICQCallbackWithHostZone(chainId, ICQCallbackID_Delegation,
 		"Delegation updated to: %v, Weight updated to: %v", validator.Delegation, validator.Weight))
+
+	// Update the redemption rate
+	depositRecords := k.RecordsKeeper.GetAllDepositRecord(ctx)
+	k.UpdateRedemptionRateForHostZone(ctx, hostZone, depositRecords)
 
 	return nil
 }

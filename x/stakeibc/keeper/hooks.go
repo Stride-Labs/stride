@@ -155,38 +155,41 @@ func (k Keeper) UpdateRedemptionRates(ctx sdk.Context, depositRecords []recordst
 
 	// Update the redemption rate for each host zone
 	for _, hostZone := range k.GetAllActiveHostZone(ctx) {
-
-		// Gather redemption rate components
-		stSupply := k.bankKeeper.GetSupply(ctx, types.StAssetDenomFromHostZoneDenom(hostZone.HostDenom)).Amount
-		if stSupply.IsZero() {
-			k.Logger(ctx).Info(utils.LogWithHostZone(hostZone.ChainId,
-				"No st%s in circulation - redemption rate is unchanged", hostZone.HostDenom))
-			continue
-		}
-
-		depositAccountBalance := k.GetDepositAccountBalance(hostZone.ChainId, depositRecords)
-		undelegatedBalance := k.GetUndelegatedBalance(hostZone.ChainId, depositRecords)
-		tokenizedDelegation := k.GetTotalTokenizedDelegations(ctx, hostZone.ChainId)
-		nativeDelegation := sdk.NewDecFromInt(hostZone.TotalDelegations)
-
-		k.Logger(ctx).Info(utils.LogWithHostZone(hostZone.ChainId,
-			"Redemption Rate Components - Deposit Account Balance: %v, Undelegated Balance: %v, "+
-				"LSM Delegated Balance: %v, Native Delegations: %v, stToken Supply: %v",
-			depositAccountBalance, undelegatedBalance, tokenizedDelegation,
-			nativeDelegation, stSupply))
-
-		// Calculate the redemption rate
-		nativeTokensLocked := depositAccountBalance.Add(undelegatedBalance).Add(tokenizedDelegation).Add(nativeDelegation)
-		redemptionRate := nativeTokensLocked.Quo(sdk.NewDecFromInt(stSupply))
-
-		k.Logger(ctx).Info(utils.LogWithHostZone(hostZone.ChainId,
-			"New Redemption Rate: %v (vs Prev Rate: %v)", redemptionRate, hostZone.RedemptionRate))
-
-		// Update the host zone
-		hostZone.LastRedemptionRate = hostZone.RedemptionRate
-		hostZone.RedemptionRate = redemptionRate
-		k.SetHostZone(ctx, hostZone)
+		k.UpdateRedemptionRateForHostZone(ctx, hostZone, depositRecords)
 	}
+}
+
+func (k Keeper) UpdateRedemptionRateForHostZone(ctx sdk.Context, hostZone types.HostZone, depositRecords []recordstypes.DepositRecord) {
+	// Gather redemption rate components
+	stSupply := k.bankKeeper.GetSupply(ctx, types.StAssetDenomFromHostZoneDenom(hostZone.HostDenom)).Amount
+	if stSupply.IsZero() {
+		k.Logger(ctx).Info(utils.LogWithHostZone(hostZone.ChainId,
+			"No st%s in circulation - redemption rate is unchanged", hostZone.HostDenom))
+		return
+	}
+
+	depositAccountBalance := k.GetDepositAccountBalance(hostZone.ChainId, depositRecords)
+	undelegatedBalance := k.GetUndelegatedBalance(hostZone.ChainId, depositRecords)
+	tokenizedDelegation := k.GetTotalTokenizedDelegations(ctx, hostZone.ChainId)
+	nativeDelegation := sdk.NewDecFromInt(hostZone.TotalDelegations)
+
+	k.Logger(ctx).Info(utils.LogWithHostZone(hostZone.ChainId,
+		"Redemption Rate Components - Deposit Account Balance: %v, Undelegated Balance: %v, "+
+			"LSM Delegated Balance: %v, Native Delegations: %v, stToken Supply: %v",
+		depositAccountBalance, undelegatedBalance, tokenizedDelegation,
+		nativeDelegation, stSupply))
+
+	// Calculate the redemption rate
+	nativeTokensLocked := depositAccountBalance.Add(undelegatedBalance).Add(tokenizedDelegation).Add(nativeDelegation)
+	redemptionRate := nativeTokensLocked.Quo(sdk.NewDecFromInt(stSupply))
+
+	k.Logger(ctx).Info(utils.LogWithHostZone(hostZone.ChainId,
+		"New Redemption Rate: %v (vs Prev Rate: %v)", redemptionRate, hostZone.RedemptionRate))
+
+	// Update the host zone
+	hostZone.LastRedemptionRate = hostZone.RedemptionRate
+	hostZone.RedemptionRate = redemptionRate
+	k.SetHostZone(ctx, hostZone)
 }
 
 // Determine the deposit account balance, representing native tokens that have been deposited
