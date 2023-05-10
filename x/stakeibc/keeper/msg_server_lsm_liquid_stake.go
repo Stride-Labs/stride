@@ -184,19 +184,8 @@ func (k Keeper) FinishLSMLiquidStake(ctx sdk.Context, lsmLiquidStake types.LSMLi
 		return errorsmod.Wrapf(types.ErrICAAccountNotFound, "no delegation address found for %s", hostZone.ChainId)
 	}
 
-	// Send LSM Token via IBC transfer
-	if err := k.RecordsKeeper.IBCTransferLSMToken(
-		ctx,
-		lsmTokenDeposit,
-		hostZone.TransferChannelId,
-		hostZone.DepositAddress,
-		hostZone.DelegationIcaAddress,
-	); err != nil {
-		return errorsmod.Wrapf(err, "Failed to submit IBC transfer of LSM token")
-	}
-
 	// Update the deposit status
-	k.RecordsKeeper.UpdateLSMTokenDepositStatus(ctx, lsmTokenDeposit, recordstypes.LSMTokenDeposit_TRANSFER_IN_PROGRESS)
+	k.RecordsKeeper.UpdateLSMTokenDepositStatus(ctx, lsmTokenDeposit, recordstypes.LSMTokenDeposit_TRANSFER_QUEUE)
 
 	// Update the slash query progress on the validator
 	if err := k.IncrementValidatorSlashQueryProgress(

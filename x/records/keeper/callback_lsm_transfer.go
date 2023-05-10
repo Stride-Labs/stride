@@ -14,7 +14,7 @@ import (
 // Callback after an LSM token is IBC tranferred to the host zone
 //   If successful: mark the LSM Token status as DETOKENIZATION_QUEUE
 //   If failure: mark the LSM Token status as FAILED
-//   If timeout: re-submit the IBC transfer
+//   If timeout: revert the LSM Token status back to TRANSFER_QUEUE so it gets resubmitted
 func LSMTransferCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ackResponse *icacallbackstypes.AcknowledgementResponse, args []byte) error {
 	// Fetch callback args
 	transferCallback := types.TransferLSMTokenCallback{}
@@ -25,22 +25,12 @@ func LSMTransferCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, 
 	chainId := deposit.ChainId
 	k.Logger(ctx).Info(utils.LogICACallbackWithHostZone(chainId, IBCCallbacksID_LSMTransfer, "Starting LSM transfer callback"))
 
-	// If timeout, retry the transfer
+	// If timeout, update the status to TRANSFER_QUEUE so that it gets resubmitted
 	if ackResponse.Status == icacallbackstypes.AckResponseStatus_TIMEOUT {
 		k.Logger(ctx).Error(utils.LogICACallbackStatusWithHostZone(chainId, IBCCallbacksID_LSMTransfer,
 			icacallbackstypes.AckResponseStatus_TIMEOUT, packet))
 
-		// TODO [LSM] : Consider queuing this transfer and then submitting it in the end blocker
-		// to prevent a failure here from invalidating the Ack Submission
-		if err := k.IBCTransferLSMToken(
-			ctx,
-			deposit,
-			transferCallback.TransferChannelId,
-			transferCallback.HostZoneDepositAddress,
-			transferCallback.HostZoneDelegationIcaAddress,
-		); err != nil {
-			return errorsmod.Wrapf(err, "Failed to submit IBC transfer of LSM token")
-		}
+		k.UpdateLSMTokenDepositStatus(ctx, deposit, types.LSMTokenDeposit_TRANSFER_QUEUE)
 		return nil
 	}
 

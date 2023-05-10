@@ -186,6 +186,42 @@ func (k Keeper) ShouldCheckIfValidatorWasSlashed(
 	return oldInterval.LT(newInterval)
 }
 
+// Loops through all active host zones, grabs queued LSMTokenDeposits for that host
+// that are in status TRANSFER_QUEUE, and submits the IBC Transfer to the host
+func (k Keeper) TransferAllLSMDeposits(ctx sdk.Context) {
+	for _, hostZone := range k.GetAllActiveHostZone(ctx) {
+		// Ignore hosts that have not been successfully registered
+		if hostZone.DelegationIcaAddress == "" {
+			continue
+		}
+
+		// Submit an IBC transfer for all queued deposits
+		queuedDeposits := k.RecordsKeeper.GetLSMDepositsForHostZoneWithStatus(
+			ctx,
+			hostZone.ChainId,
+			recordstypes.LSMTokenDeposit_TRANSFER_QUEUE,
+		)
+		for _, deposit := range queuedDeposits {
+			k.RecordsKeeper.UpdateLSMTokenDepositStatus(ctx, deposit, recordstypes.LSMTokenDeposit_TRANSFER_IN_PROGRESS)
+
+			if err := k.RecordsKeeper.IBCTransferLSMToken(
+				ctx,
+				deposit,
+				hostZone.TransferChannelId,
+				hostZone.DepositAddress,
+				hostZone.DelegationIcaAddress,
+			); err != nil {
+				k.Logger(ctx).Error(fmt.Sprintf("Unable to submit IBC Transfer of LSMToken for %v%s on %s: %s",
+					deposit.Amount, deposit.Denom, hostZone.ChainId, err.Error()))
+				continue
+			}
+
+			k.Logger(ctx).Info(fmt.Sprintf("Submitted IBC Transfer for LSM deposit %v%s on %s",
+				deposit.Amount, deposit.Denom, hostZone.ChainId))
+		}
+	}
+}
+
 // Submits an ICA to "Redeem" an LSM Token - meaning converting the token into native stake
 // This function is called in the EndBlocker which means if the ICA submission fails,
 //   any modified state is not reverted
@@ -218,9 +254,17 @@ func (k Keeper) DetokenizeLSMDeposit(ctx sdk.Context, hostZone types.HostZone, d
 	// Mark the deposit as IN_PROGRESS
 	k.RecordsKeeper.UpdateLSMTokenDepositStatus(ctx, deposit, recordstypes.LSMTokenDeposit_DETOKENIZATION_IN_PROGRESS)
 
-	// Submit the ICA with a 24 hour timeout
-	timeout := uint64(ctx.BlockTime().UnixNano() + (DetokenizationTimeout).Nanoseconds()) // 1 day
-	if _, err := k.SubmitTxs(ctx, hostZone.ConnectionId, detokenizeMsg, types.ICAAccountType_DELEGATION, timeout, ICACallbackID_Detokenize, callbackArgsBz); err != nil {
+	// Submit the ICA with a coonservative timeout
+	timeout := uint64(ctx.BlockTime().UnixNano() + (DetokenizationTimeout).Nanoseconds())
+	if _, err := k.SubmitTxs(
+		ctx,
+		hostZone.ConnectionId,
+		detokenizeMsg,
+		types.ICAAccountType_DELEGATION,
+		timeout,
+		ICACallbackID_Detokenize,
+		callbackArgsBz,
+	); err != nil {
 		return errorsmod.Wrapf(err, "unable to submit detokenization ICA for %s", deposit.Denom)
 	}
 

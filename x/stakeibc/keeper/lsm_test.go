@@ -454,3 +454,72 @@ func (s *KeeperTestSuite) TestDetokenizeAllLSMDeposits() {
 		s.Require().Equal(expectedDepositStatus[depositKey].String(), deposit.Status.String(), "deposit status for %s", depositKey)
 	}
 }
+
+func (s *KeeperTestSuite) TestTransferAllLSMDeposits() {
+	// Store 2 host zones - one with a valid registration, and one without
+	delegationICAAddress := "cosmos_DELEGATION"
+	depositAddress := "stride_DEPOSIT"
+	transferChannel := ibctesting.FirstChannelID
+
+	hostZones := []types.HostZone{
+		{
+			// Valid host zone
+			ChainId:              HostChainId,
+			TransferChannelId:    transferChannel,
+			DepositAddress:       depositAddress,
+			DelegationIcaAddress: delegationICAAddress,
+		},
+		{
+			// Missing delegation ICA
+			ChainId:           "chain-2",
+			TransferChannelId: "channel-2",
+			DepositAddress:    "stride_DEPOSIT_2",
+		},
+	}
+	for _, hostZone := range hostZones {
+		s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
+	}
+
+	// For each host chain store 4 deposits
+	// 2 of which are ready to be transferred, and 2 of which are not
+	expectedDepositStatus := map[string]recordstypes.LSMTokenDeposit_Status{}
+	for _, chainId := range []string{HostChainId, OsmoChainId} {
+		for _, startingStatus := range []recordstypes.LSMTokenDeposit_Status{
+			recordstypes.LSMTokenDeposit_TRANSFER_QUEUE,
+			recordstypes.LSMTokenDeposit_TRANSFER_IN_PROGRESS,
+		} {
+
+			for i := 0; i < 2; i++ {
+				denom := fmt.Sprintf("denom-starting-in-status-%s-%d", startingStatus.String(), i)
+				depositKey := fmt.Sprintf("%s-%s", chainId, denom)
+				deposit := recordstypes.LSMTokenDeposit{
+					ChainId:  chainId,
+					Denom:    denom,
+					IbcDenom: "ibc/" + denom,
+					Status:   startingStatus,
+				}
+				s.App.RecordsKeeper.SetLSMTokenDeposit(s.Ctx, deposit)
+
+				// The status is only expected to change for the QUEUED records on the
+				// host chain with the open delegation channel
+				expectedStatus := startingStatus
+				if chainId == HostChainId && startingStatus == recordstypes.LSMTokenDeposit_TRANSFER_QUEUE {
+					expectedStatus = recordstypes.LSMTokenDeposit_TRANSFER_IN_PROGRESS
+				}
+				expectedDepositStatus[depositKey] = expectedStatus
+			}
+		}
+	}
+
+	// Call transfer across all hosts
+	s.App.StakeibcKeeper.TransferAllLSMDeposits(s.Ctx)
+
+	// Check that the status of the relevant records was updated
+	allDeposits := s.App.RecordsKeeper.GetAllLSMTokenDeposit(s.Ctx)
+	s.Require().Len(allDeposits, 8) // 4 host zones, 2 statuses, 2 deposits = 2 * 2 * 2 = 8
+
+	for _, deposit := range allDeposits {
+		depositKey := fmt.Sprintf("%s-%s", deposit.ChainId, deposit.Denom)
+		s.Require().Equal(expectedDepositStatus[depositKey].String(), deposit.Status.String(), "deposit status for %s", depositKey)
+	}
+}
