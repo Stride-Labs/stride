@@ -219,8 +219,16 @@ func (k Keeper) DetokenizeLSMDeposit(ctx sdk.Context, hostZone types.HostZone, d
 	k.RecordsKeeper.UpdateLSMTokenDepositStatus(ctx, deposit, recordstypes.LSMTokenDeposit_DETOKENIZATION_IN_PROGRESS)
 
 	// Submit the ICA with a 24 hour timeout
-	timeout := uint64(ctx.BlockTime().UnixNano() + (DetokenizationTimeout).Nanoseconds()) // 1 day
-	if _, err := k.SubmitTxs(ctx, hostZone.ConnectionId, detokenizeMsg, types.ICAAccountType_DELEGATION, timeout, ICACallbackID_Detokenize, callbackArgsBz); err != nil {
+	timeout := uint64(ctx.BlockTime().UnixNano() + (DetokenizationTimeout).Nanoseconds())
+	if _, err := k.SubmitTxs(
+		ctx,
+		hostZone.ConnectionId,
+		detokenizeMsg,
+		types.ICAAccountType_DELEGATION,
+		timeout,
+		ICACallbackID_Detokenize,
+		callbackArgsBz,
+	); err != nil {
 		return errorsmod.Wrapf(err, "unable to submit detokenization ICA for %s", deposit.Denom)
 	}
 
