@@ -6,16 +6,16 @@ source ${SCRIPT_DIR}/../../config.sh
 ## Create Accounts
 echo ">>> Registering Accounts:"
 mnemonic1="match blade slide sort seven width degree february garden hospital valve odor scan exhaust bird chuckle age ozone timber claim office hurdle dance roast"
-echo $mnemonic1 | $STRIDE_MAIN_CMD keys add staker1 --recover --keyring-backend test
-sleep 5
 echo $mnemonic1 | $LSM_MAIN_CMD keys add staker1 --recover --keyring-backend test
-sleep 5
+sleep 2
+echo $mnemonic1 | $STRIDE_MAIN_CMD keys add staker1 --recover --keyring-backend test
+sleep 2
 
 mnemonic2="supply follow sudden machine pledge primary maple head turkey young prefer virus output kind corn horse concert claw chronic pear repeat salad night caution"
-echo $mnemonic2 | $STRIDE_MAIN_CMD keys add staker2 --recover --keyring-backend test
-sleep 5
 echo $mnemonic2 | $LSM_MAIN_CMD keys add staker2 --recover --keyring-backend test
-sleep 5
+sleep 2
+echo $mnemonic2 | $STRIDE_MAIN_CMD keys add staker2 --recover --keyring-backend test
+sleep 2
 
 # Staker #1 Address on Stride: stride1x92tnm6pfkl3gsfy0rfaez5myq5zh99a6a2w0p
 # Staker #1 Address on LSM:    cosmos1x92tnm6pfkl3gsfy0rfaez5myq5zh99aek2jmd
