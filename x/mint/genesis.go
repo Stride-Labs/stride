@@ -3,13 +3,15 @@ package mint
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/Stride-Labs/stride/v8/x/mint/keeper"
-	"github.com/Stride-Labs/stride/v8/x/mint/types"
+	"github.com/Stride-Labs/stride/v9/x/mint/keeper"
+	"github.com/Stride-Labs/stride/v9/x/mint/types"
 )
 
 // InitGenesis new mint genesis.
 func InitGenesis(ctx sdk.Context, keeper keeper.Keeper, ak types.AccountKeeper, bk types.BankKeeper, data *types.GenesisState) {
-	data.Minter.EpochProvisions = data.Params.GenesisEpochProvisions
+	if data.Minter.EpochProvisions.IsZero() {
+		data.Minter.EpochProvisions = data.Params.GenesisEpochProvisions
+	}
 	keeper.SetMinter(ctx, data.Minter)
 	keeper.SetParams(ctx, data.Params)
 

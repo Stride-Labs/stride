@@ -7,10 +7,10 @@ import (
 	sdkmath "cosmossdk.io/math"
 	icatypes "github.com/cosmos/ibc-go/v5/modules/apps/27-interchain-accounts/types"
 
-	"github.com/Stride-Labs/stride/v8/utils"
-	epochtypes "github.com/Stride-Labs/stride/v8/x/epochs/types"
-	recordstypes "github.com/Stride-Labs/stride/v8/x/records/types"
-	"github.com/Stride-Labs/stride/v8/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v9/utils"
+	epochtypes "github.com/Stride-Labs/stride/v9/x/epochs/types"
+	recordstypes "github.com/Stride-Labs/stride/v9/x/records/types"
+	"github.com/Stride-Labs/stride/v9/x/stakeibc/types"
 
 	errorsmod "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -54,6 +54,11 @@ func (k msgServer) RegisterHostZone(goCtx context.Context, msg *types.MsgRegiste
 		}
 		if hostZone.ConnectionId == msg.ConnectionId {
 			errMsg := fmt.Sprintf("connectionId %s already registered", msg.ConnectionId)
+			k.Logger(ctx).Error(errMsg)
+			return nil, errorsmod.Wrapf(types.ErrFailedToRegisterHostZone, errMsg)
+		}
+		if hostZone.TransferChannelId == msg.TransferChannelId {
+			errMsg := fmt.Sprintf("transfer channel %s already registered", msg.TransferChannelId)
 			k.Logger(ctx).Error(errMsg)
 			return nil, errorsmod.Wrapf(types.ErrFailedToRegisterHostZone, errMsg)
 		}

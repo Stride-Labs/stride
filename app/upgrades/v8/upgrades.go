@@ -12,18 +12,19 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/module"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 
-	"github.com/Stride-Labs/stride/v8/utils"
-	autopilotkeeper "github.com/Stride-Labs/stride/v8/x/autopilot/keeper"
-	autopilottypes "github.com/Stride-Labs/stride/v8/x/autopilot/types"
-	claimkeeper "github.com/Stride-Labs/stride/v8/x/claim/keeper"
-	"github.com/Stride-Labs/stride/v8/x/claim/types"
-	claimtypes "github.com/Stride-Labs/stride/v8/x/claim/types"
+	"github.com/Stride-Labs/stride/v9/utils"
+	autopilotkeeper "github.com/Stride-Labs/stride/v9/x/autopilot/keeper"
+	autopilottypes "github.com/Stride-Labs/stride/v9/x/autopilot/types"
+	claimkeeper "github.com/Stride-Labs/stride/v9/x/claim/keeper"
+	"github.com/Stride-Labs/stride/v9/x/claim/types"
+	claimtypes "github.com/Stride-Labs/stride/v9/x/claim/types"
 )
 
 var (
 	UpgradeName             = "v8"
 	EvmosAirdropDistributor = "stride10dy5pmc2fq7fnmufjfschkfrxaqnpykl6ezy5j"
 	EvmosAirdropIdentifier  = "evmos"
+	EvmosChainId            = "evmos_9001-2"
 	AirdropDuration         = time.Hour * 24 * 30 * 12 * 3 // 3 years
 	ResetAirdropIdentifiers = []string{"stride", "gaia", "osmosis", "juno", "stars"}
 	AirdropStartTime        = time.Date(2023, 4, 3, 16, 0, 0, 0, time.UTC) // April 3, 2023 @ 16:00 UTC (12:00 EST)
@@ -71,7 +72,15 @@ func CreateUpgradeHandler(
 		// Add the evmos airdrop
 		ctx.Logger().Info("Adding evmos airdrop...")
 		duration := uint64(AirdropDuration.Seconds())
-		if err := claimKeeper.CreateAirdropAndEpoch(ctx, EvmosAirdropDistributor, claimtypes.DefaultClaimDenom, uint64(AirdropStartTime.Unix()), duration, EvmosAirdropIdentifier); err != nil {
+		if err := claimKeeper.CreateAirdropAndEpoch(ctx, types.MsgCreateAirdrop{
+			Distributor:      EvmosAirdropDistributor,
+			Identifier:       EvmosAirdropIdentifier,
+			ChainId:          EvmosChainId,
+			Denom:            claimtypes.DefaultClaimDenom,
+			StartTime:        uint64(AirdropStartTime.Unix()),
+			Duration:         duration,
+			AutopilotEnabled: true,
+		}); err != nil {
 			return vm, err
 		}
 

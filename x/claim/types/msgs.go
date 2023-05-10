@@ -5,7 +5,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
-	"github.com/Stride-Labs/stride/v8/utils"
+	"github.com/Stride-Labs/stride/v9/utils"
 )
 
 // Msg type for MsgSetAirdropAllocations
@@ -133,13 +133,15 @@ const TypeMsgCreateAirdrop = "create_airdrop"
 
 var _ sdk.Msg = &MsgCreateAirdrop{}
 
-func NewMsgCreateAirdrop(distributor string, identifier string, startTime uint64, duration uint64, denom string) *MsgCreateAirdrop {
+func NewMsgCreateAirdrop(distributor, identifier, chainId, denom string, startTime, duration uint64, autopilotEnabled bool) *MsgCreateAirdrop {
 	return &MsgCreateAirdrop{
-		Distributor: distributor,
-		Identifier:  identifier,
-		StartTime:   startTime,
-		Duration:    duration,
-		Denom:       denom,
+		Distributor:      distributor,
+		Identifier:       identifier,
+		ChainId:          chainId,
+		Denom:            denom,
+		StartTime:        startTime,
+		Duration:         duration,
+		AutopilotEnabled: autopilotEnabled,
 	}
 }
 
@@ -172,6 +174,14 @@ func (msg *MsgCreateAirdrop) ValidateBasic() error {
 
 	if msg.Identifier == "" {
 		return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "airdrop identifier not set")
+	}
+
+	if msg.ChainId == "" {
+		return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "airdrop chain-id not set")
+	}
+
+	if msg.Denom == "" {
+		return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "airdrop denom not set")
 	}
 
 	if msg.StartTime == 0 {
