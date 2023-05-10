@@ -8,7 +8,7 @@ import (
 	errorsmod "cosmossdk.io/errors"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
-	"github.com/Stride-Labs/stride/v8/x/claim/types"
+	"github.com/Stride-Labs/stride/v9/x/claim/types"
 )
 
 type msgServer struct {
@@ -96,7 +96,7 @@ func (server msgServer) CreateAirdrop(goCtx context.Context, msg *types.MsgCreat
 		return nil, types.ErrDistributorAlreadyExists
 	}
 
-	err = server.keeper.CreateAirdropAndEpoch(ctx, msg.Distributor, msg.Denom, msg.StartTime, msg.Duration, msg.Identifier)
+	err = server.keeper.CreateAirdropAndEpoch(ctx, *msg)
 	if err != nil {
 		return nil, err
 	}

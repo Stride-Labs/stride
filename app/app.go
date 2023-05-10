@@ -11,7 +11,7 @@ import (
 
 	nodeservice "github.com/cosmos/cosmos-sdk/client/grpc/node"
 
-	"github.com/Stride-Labs/stride/v8/utils"
+	"github.com/Stride-Labs/stride/v9/utils"
 
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/client"
@@ -36,6 +36,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/capability"
 	capabilitykeeper "github.com/cosmos/cosmos-sdk/x/capability/keeper"
 	capabilitytypes "github.com/cosmos/cosmos-sdk/x/capability/types"
+	consensusparamkeeper "github.com/cosmos/cosmos-sdk/x/consensus/keeper"
 	"github.com/cosmos/cosmos-sdk/x/crisis"
 	crisiskeeper "github.com/cosmos/cosmos-sdk/x/crisis/keeper"
 	crisistypes "github.com/cosmos/cosmos-sdk/x/crisis/types"
@@ -57,12 +58,12 @@ import (
 	govtypesv1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
 	govtypesv1beta1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
 
-	claimvesting "github.com/Stride-Labs/stride/v8/x/claim/vesting"
-	claimvestingtypes "github.com/Stride-Labs/stride/v8/x/claim/vesting/types"
+	claimvesting "github.com/Stride-Labs/stride/v9/x/claim/vesting"
+	claimvestingtypes "github.com/Stride-Labs/stride/v9/x/claim/vesting/types"
 
-	"github.com/Stride-Labs/stride/v8/x/mint"
-	mintkeeper "github.com/Stride-Labs/stride/v8/x/mint/keeper"
-	minttypes "github.com/Stride-Labs/stride/v8/x/mint/types"
+	"github.com/Stride-Labs/stride/v9/x/mint"
+	mintkeeper "github.com/Stride-Labs/stride/v9/x/mint/keeper"
+	minttypes "github.com/Stride-Labs/stride/v9/x/mint/types"
 
 	dbm "github.com/cometbft/cometbft-db"
 	abci "github.com/cometbft/cometbft/abci/types"
@@ -110,37 +111,35 @@ import (
 	// monitoringp "github.com/tendermint/spn/x/monitoringp"
 	// monitoringpkeeper "github.com/tendermint/spn/x/monitoringp/keeper"
 
-	epochsmodule "github.com/Stride-Labs/stride/v8/x/epochs"
-	epochsmodulekeeper "github.com/Stride-Labs/stride/v8/x/epochs/keeper"
-	epochsmoduletypes "github.com/Stride-Labs/stride/v8/x/epochs/types"
+	epochsmodule "github.com/Stride-Labs/stride/v9/x/epochs"
+	epochsmodulekeeper "github.com/Stride-Labs/stride/v9/x/epochs/keeper"
+	epochsmoduletypes "github.com/Stride-Labs/stride/v9/x/epochs/types"
 
-	"github.com/Stride-Labs/stride/v8/x/interchainquery"
-	interchainquerykeeper "github.com/Stride-Labs/stride/v8/x/interchainquery/keeper"
-	interchainquerytypes "github.com/Stride-Labs/stride/v8/x/interchainquery/types"
+	"github.com/Stride-Labs/stride/v9/x/interchainquery"
+	interchainquerykeeper "github.com/Stride-Labs/stride/v9/x/interchainquery/keeper"
+	interchainquerytypes "github.com/Stride-Labs/stride/v9/x/interchainquery/types"
 
-	"github.com/Stride-Labs/stride/v8/x/autopilot"
-	autopilotkeeper "github.com/Stride-Labs/stride/v8/x/autopilot/keeper"
-	autopilottypes "github.com/Stride-Labs/stride/v8/x/autopilot/types"
+	"github.com/Stride-Labs/stride/v9/x/autopilot"
+	autopilotkeeper "github.com/Stride-Labs/stride/v9/x/autopilot/keeper"
+	autopilottypes "github.com/Stride-Labs/stride/v9/x/autopilot/types"
 
-	consensusparamkeeper "github.com/cosmos/cosmos-sdk/x/consensus/keeper"
-
-	"github.com/Stride-Labs/stride/v8/x/claim"
-	claimkeeper "github.com/Stride-Labs/stride/v8/x/claim/keeper"
-	claimtypes "github.com/Stride-Labs/stride/v8/x/claim/types"
-	icacallbacksmodule "github.com/Stride-Labs/stride/v8/x/icacallbacks"
-	icacallbacksmodulekeeper "github.com/Stride-Labs/stride/v8/x/icacallbacks/keeper"
-	icacallbacksmoduletypes "github.com/Stride-Labs/stride/v8/x/icacallbacks/types"
-	ratelimitmodule "github.com/Stride-Labs/stride/v8/x/ratelimit"
-	ratelimitclient "github.com/Stride-Labs/stride/v8/x/ratelimit/client"
-	ratelimitmodulekeeper "github.com/Stride-Labs/stride/v8/x/ratelimit/keeper"
-	ratelimitmoduletypes "github.com/Stride-Labs/stride/v8/x/ratelimit/types"
-	recordsmodule "github.com/Stride-Labs/stride/v8/x/records"
-	recordsmodulekeeper "github.com/Stride-Labs/stride/v8/x/records/keeper"
-	recordsmoduletypes "github.com/Stride-Labs/stride/v8/x/records/types"
-	stakeibcmodule "github.com/Stride-Labs/stride/v8/x/stakeibc"
-	stakeibcclient "github.com/Stride-Labs/stride/v8/x/stakeibc/client"
-	stakeibcmodulekeeper "github.com/Stride-Labs/stride/v8/x/stakeibc/keeper"
-	stakeibcmoduletypes "github.com/Stride-Labs/stride/v8/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v9/x/claim"
+	claimkeeper "github.com/Stride-Labs/stride/v9/x/claim/keeper"
+	claimtypes "github.com/Stride-Labs/stride/v9/x/claim/types"
+	icacallbacksmodule "github.com/Stride-Labs/stride/v9/x/icacallbacks"
+	icacallbacksmodulekeeper "github.com/Stride-Labs/stride/v9/x/icacallbacks/keeper"
+	icacallbacksmoduletypes "github.com/Stride-Labs/stride/v9/x/icacallbacks/types"
+	ratelimitmodule "github.com/Stride-Labs/stride/v9/x/ratelimit"
+	ratelimitclient "github.com/Stride-Labs/stride/v9/x/ratelimit/client"
+	ratelimitmodulekeeper "github.com/Stride-Labs/stride/v9/x/ratelimit/keeper"
+	ratelimitmoduletypes "github.com/Stride-Labs/stride/v9/x/ratelimit/types"
+	recordsmodule "github.com/Stride-Labs/stride/v9/x/records"
+	recordsmodulekeeper "github.com/Stride-Labs/stride/v9/x/records/keeper"
+	recordsmoduletypes "github.com/Stride-Labs/stride/v9/x/records/types"
+	stakeibcmodule "github.com/Stride-Labs/stride/v9/x/stakeibc"
+	stakeibcclient "github.com/Stride-Labs/stride/v9/x/stakeibc/client"
+	stakeibcmodulekeeper "github.com/Stride-Labs/stride/v9/x/stakeibc/keeper"
+	stakeibcmoduletypes "github.com/Stride-Labs/stride/v9/x/stakeibc/types"
 
 	// this line is used by starport scaffolding # stargate/app/moduleImport
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
@@ -150,7 +149,7 @@ import (
 const (
 	AccountAddressPrefix = "stride"
 	Name                 = "stride"
-	Version              = "8.0.0"
+	Version              = "9.0.0"
 )
 
 // this line is used by starport scaffolding # stargate/wasm/app/enabledProposals

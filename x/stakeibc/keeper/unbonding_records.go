@@ -14,9 +14,9 @@ import (
 
 	proto "github.com/cosmos/gogoproto/proto"
 
-	"github.com/Stride-Labs/stride/v8/utils"
-	recordstypes "github.com/Stride-Labs/stride/v8/x/records/types"
-	"github.com/Stride-Labs/stride/v8/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v9/utils"
+	recordstypes "github.com/Stride-Labs/stride/v9/x/records/types"
+	"github.com/Stride-Labs/stride/v9/x/stakeibc/types"
 )
 
 func (k Keeper) CreateEpochUnbondingRecord(ctx sdk.Context, epochNumber uint64) bool {
@@ -119,7 +119,6 @@ func (k Keeper) GetHostZoneUnbondingMsgs(ctx sdk.Context, hostZone types.HostZon
 			// Check if we can unbond more from this validator
 			validatorUnbondExtraCapacity := validator.DelegationAmt.Sub(targetUnbondAmount)
 			if validatorUnbondExtraCapacity.GT(sdkmath.ZeroInt()) {
-
 				// If we can fully cover the unbonding, do so with this validator
 				if validatorUnbondExtraCapacity.GT(overflowAmount) {
 					finalUnbondingsByValidator[validator.Address] = finalUnbondingsByValidator[validator.Address].Add(overflowAmount)

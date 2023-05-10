@@ -28,4 +28,6 @@ var (
 		"the claim record was not found")
 	ErrModifyingClaimRecord = errorsmod.Register(ModuleName, 1112,
 		"failed to modify claim record")
+	ErrAirdropChainIdAlreadyExists = errorsmod.Register(ModuleName, 1113,
+		"airdrop with same chain-id already exists")
 )

@@ -11,11 +11,11 @@ import (
 	host "github.com/cosmos/ibc-go/v7/modules/core/24-host"
 	ibcexported "github.com/cosmos/ibc-go/v7/modules/core/exported"
 
-	"github.com/Stride-Labs/stride/v8/x/icacallbacks"
-	icacallbacktypes "github.com/Stride-Labs/stride/v8/x/icacallbacks/types"
+	"github.com/Stride-Labs/stride/v9/x/icacallbacks"
+	icacallbacktypes "github.com/Stride-Labs/stride/v9/x/icacallbacks/types"
 
-	"github.com/Stride-Labs/stride/v8/x/stakeibc/keeper"
-	"github.com/Stride-Labs/stride/v8/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v9/x/stakeibc/keeper"
+	"github.com/Stride-Labs/stride/v9/x/stakeibc/types"
 )
 
 // IBCModule implements the ICS26 interface for interchain accounts controller chains
