@@ -39,6 +39,7 @@ func (k Keeper) BeginBlocker(ctx sdk.Context) {
 }
 
 func (k Keeper) EndBlocker(ctx sdk.Context) {
-	// Submit detokenization ICA for all queued LSM Deposits across each host zone
+	// Submit an IBC transfer or detokenization ICA for all queued LSM Deposits across each host
+	k.TransferAllLSMDeposits(ctx)
 	k.DetokenizeAllLSMDeposits(ctx)
 }
