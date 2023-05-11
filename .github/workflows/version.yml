@@ -1,0 +1,61 @@
+name: Update Stride Version
+
+on:
+  workflow_dispatch:
+    inputs:
+      old_version:
+        description: "Specify the old version (e.g. 8.0.0)"
+      new_version:
+        description: "Specify the new version (e.g. 9.0.0)"
+
+jobs:
+  increment-stride-version:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Get versions
+        run: |
+          old_version=${{ github.event.inputs.old_version }}
+          new_version=${{ github.event.inputs.new_version }}
+          new_major_version=v$(echo $new_version | cut -d '.' -f 1)
+          branch_name=update-stride-version-${new_major_version}
+
+          echo "old_version=$old_version" >> $GITHUB_ENV
+          echo "new_version=$new_version" >> $GITHUB_ENV
+          echo "branch_name=$branch_name" >> $GITHUB_ENV
+
+      - name: Checkout main
+        uses: actions/checkout@v3
+        with:
+          ref: main
+
+      - name: Create branch
+        run: git checkout -b update-stride-version-${{ env.new_major_version }}
+
+      - name: Update versions in files
+        run: |
+          OLD_VERSION=${{ env.old_version }} NEW_VERSION=${{ env.new_version }} bash scripts/version.sh
+
+      - name: Push changes
+        uses: ad-m/github-push-action@v0.6.0
+        with:
+          branch: ${{ env.branch_name }}
+
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v3
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          branch: ${{ env.branch_name }}
+          base: main
+          title: Update Stride Version to ${{ env.new_version }}
+          body: |
+            This is an automatically generated pull request.
+            Please review and merge the changes.
+
+            ## Context
+            Increments Stride version for the ${{ env.new_major_version }} upgrade
+
+            ## Brief Changelog
+            * Increments Stride version in cmd/strided/config/config.go and app/app.go
+            * Updates module name to ${{ env.new_major_version }}
+            * Re-generates protos
