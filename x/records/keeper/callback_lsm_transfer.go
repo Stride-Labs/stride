@@ -29,6 +29,7 @@ func LSMTransferCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, 
 	if ackResponse.Status == icacallbackstypes.AckResponseStatus_TIMEOUT {
 		k.Logger(ctx).Error(utils.LogICACallbackStatusWithHostZone(chainId, IBCCallbacksID_LSMTransfer,
 			icacallbackstypes.AckResponseStatus_TIMEOUT, packet))
+		k.Logger(ctx).Error(utils.LogICACallbackWithHostZone(chainId, IBCCallbacksID_LSMTransfer, "Retrying transfer"))
 
 		k.UpdateLSMTokenDepositStatus(ctx, deposit, types.LSMTokenDeposit_TRANSFER_QUEUE)
 		return nil

@@ -131,7 +131,7 @@ func ValidatorExchangeRateCallback(k Keeper, ctx sdk.Context, args []byte, query
 
 	// If we're in the LSM liquid stake callback and there was a slash, reject the transaction by emitting an event
 	if inLSMLiquidStakeCallback {
-		// The transaction is "rejected", by emitting an event
+		// Emit an event to indicate that the transaction failed
 		errorMessage := fmt.Sprintf("validator was slashed - previous exchange rate: %s, current exchange rate: %s",
 			previousSharesToTokensRate, currentSharesToTokensRate)
 
