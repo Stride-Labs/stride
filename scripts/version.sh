@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -eu
+
 VERSION_REGEX='[0-9]{1,2}\.[0-9]{1}\.[0-9]{1}$'
 
 # Validate script parameters
