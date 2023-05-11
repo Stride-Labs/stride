@@ -1,8 +1,6 @@
 package keeper_test
 
 import (
-	"fmt"
-
 	_ "github.com/stretchr/testify/suite"
 
 	"github.com/golang/protobuf/proto" //nolint:staticcheck
@@ -21,9 +19,6 @@ var (
 )
 
 func (s *KeeperTestSuite) SetupLSMTransferCallback() []byte {
-	delegationAccountOwner := fmt.Sprintf("%s.%s", HostChainId, "DELEGATION")
-	s.CreateICAChannel(delegationAccountOwner)
-
 	// we need a valid ibc denom here or the transfer will fail
 	prefixedDenom := transfertypes.GetPrefixedDenom(transfertypes.PortID, ibctesting.FirstChannelID, LSMTokenDenom)
 	denomTrace := transfertypes.ParseDenomTrace(prefixedDenom)
@@ -85,10 +80,10 @@ func (s *KeeperTestSuite) TestLSMTransferCallback_AckTimeout() {
 	err := recordskeeper.LSMTransferCallback(s.App.RecordsKeeper, s.Ctx, channeltypes.Packet{}, ackTimeout, callbackArgsBz)
 	s.Require().NoError(err, "no error expected when executing callback")
 
-	// Confirm deposit has been updated to TRANSFER_IN_PROGRESS (since the transfer gets resubmitted on a timeout)
+	// Confirm deposit has been updated to status TRANSFER_QUEUE
 	record, found := s.App.RecordsKeeper.GetLSMTokenDeposit(s.Ctx, HostChainId, LSMTokenDenom)
 	s.Require().True(found, "deposit should have been found but was not")
-	s.Require().Equal(types.DepositRecord_TRANSFER_IN_PROGRESS.String(), record.Status.String(), "deposit status")
+	s.Require().Equal(types.LSMTokenDeposit_TRANSFER_QUEUE.String(), record.Status.String(), "deposit status")
 }
 
 func (s *KeeperTestSuite) TestLSMTransferCallback_AckFailed() {
