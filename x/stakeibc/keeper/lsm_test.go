@@ -19,12 +19,7 @@ import (
 func (s *KeeperTestSuite) TestValidateLSMLiquidStake() {
 	// Create and store a valid denom trace so we can succesfully parse the LSM Token
 	path := "transfer/channel-0"
-	ibcDenom := transfertypes.ParseDenomTrace(fmt.Sprintf("%s/%s", path, LSMTokenBaseDenom)).IBCDenom()
-	expectedDenomTrace := transfertypes.DenomTrace{
-		BaseDenom: LSMTokenBaseDenom,
-		Path:      path,
-	}
-	s.App.TransferKeeper.SetDenomTrace(s.Ctx, expectedDenomTrace)
+	ibcDenom := s.CreateAndStoreIBCDenom(LSMTokenBaseDenom)
 
 	// Store a second valid denom trace that will not be registered with the host zone
 	invalidPath := "transfer/channel-100"
@@ -456,18 +451,20 @@ func (s *KeeperTestSuite) TestDetokenizeAllLSMDeposits() {
 }
 
 func (s *KeeperTestSuite) TestTransferAllLSMDeposits() {
-	// Store 2 host zones - one with a valid registration, and one without
-	delegationICAAddress := "cosmos_DELEGATION"
-	depositAddress := "stride_DEPOSIT"
-	transferChannel := ibctesting.FirstChannelID
+	s.CreateTransferChannel(HostChainId)
 
+	// Create a valid IBC denom
+	ibcDenom := s.CreateAndStoreIBCDenom(LSMTokenBaseDenom)
+
+	// Store 2 host zones - one that was registered successfully,
+	// and one that's missing a delegation channel
 	hostZones := []types.HostZone{
 		{
 			// Valid host zone
 			ChainId:              HostChainId,
-			TransferChannelId:    transferChannel,
-			DepositAddress:       depositAddress,
-			DelegationIcaAddress: delegationICAAddress,
+			TransferChannelId:    ibctesting.FirstChannelID,
+			DepositAddress:       s.TestAccs[1].String(),
+			DelegationIcaAddress: DelegationICAAddress,
 		},
 		{
 			// Missing delegation ICA
@@ -480,8 +477,11 @@ func (s *KeeperTestSuite) TestTransferAllLSMDeposits() {
 		s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
 	}
 
-	// For each host chain store 4 deposits
-	// 2 of which are ready to be transferred, and 2 of which are not
+	// For each host chain store 4 deposits:
+	//   - One ready to be transferred with a valid IBC denom
+	//   - One ready to be transferred with an invalid IBC denom (should fail)
+	//   - One not ready to be transferred with a valid IBC denom
+	//   - One not ready to be transferred with an invalid IBC denom
 	expectedDepositStatus := map[string]recordstypes.LSMTokenDeposit_Status{}
 	for _, chainId := range []string{HostChainId, OsmoChainId} {
 		for _, startingStatus := range []recordstypes.LSMTokenDeposit_Status{
@@ -489,23 +489,35 @@ func (s *KeeperTestSuite) TestTransferAllLSMDeposits() {
 			recordstypes.LSMTokenDeposit_TRANSFER_IN_PROGRESS,
 		} {
 
-			for i := 0; i < 2; i++ {
+			for i, shouldSucceed := range []bool{true, false} {
 				denom := fmt.Sprintf("denom-starting-in-status-%s-%d", startingStatus.String(), i)
 				depositKey := fmt.Sprintf("%s-%s", chainId, denom)
+
+				if !shouldSucceed {
+					ibcDenom = "ibc/fake_denom"
+				}
 				deposit := recordstypes.LSMTokenDeposit{
 					ChainId:  chainId,
 					Denom:    denom,
-					IbcDenom: "ibc/" + denom,
+					IbcDenom: ibcDenom,
 					Status:   startingStatus,
 				}
 				s.App.RecordsKeeper.SetLSMTokenDeposit(s.Ctx, deposit)
 
-				// The status is only expected to change for the QUEUED records on the
-				// host chain with the open delegation channel
+				// The status should update to IN_PROGRESS if the record was queued for transfer, on the
+				//   valid host zone, with a valid IBC denom
+				// The status should update to FAILED if the record was queued for transfer, on the
+				//   valid host zone, with an invalid IBC denom
+				// The status should not change on the invalid host zone
 				expectedStatus := startingStatus
 				if chainId == HostChainId && startingStatus == recordstypes.LSMTokenDeposit_TRANSFER_QUEUE {
-					expectedStatus = recordstypes.LSMTokenDeposit_TRANSFER_IN_PROGRESS
+					if shouldSucceed {
+						expectedStatus = recordstypes.LSMTokenDeposit_TRANSFER_IN_PROGRESS
+					} else {
+						expectedStatus = recordstypes.LSMTokenDeposit_TRANSFER_FAILED
+					}
 				}
+
 				expectedDepositStatus[depositKey] = expectedStatus
 			}
 		}

@@ -202,8 +202,9 @@ func (k Keeper) TransferAllLSMDeposits(ctx sdk.Context) {
 			recordstypes.LSMTokenDeposit_TRANSFER_QUEUE,
 		)
 		for _, deposit := range queuedDeposits {
-			k.RecordsKeeper.UpdateLSMTokenDepositStatus(ctx, deposit, recordstypes.LSMTokenDeposit_TRANSFER_IN_PROGRESS)
 
+			// If the IBC transfer fails to get off the ground, flag the deposit as FAILED
+			// This is highly unlikely and would indicate a larger problem
 			if err := k.RecordsKeeper.IBCTransferLSMToken(
 				ctx,
 				deposit,
@@ -213,11 +214,14 @@ func (k Keeper) TransferAllLSMDeposits(ctx sdk.Context) {
 			); err != nil {
 				k.Logger(ctx).Error(fmt.Sprintf("Unable to submit IBC Transfer of LSMToken for %v%s on %s: %s",
 					deposit.Amount, deposit.Denom, hostZone.ChainId, err.Error()))
+				fmt.Println(err)
+				k.RecordsKeeper.UpdateLSMTokenDepositStatus(ctx, deposit, recordstypes.LSMTokenDeposit_TRANSFER_FAILED)
 				continue
 			}
-
 			k.Logger(ctx).Info(fmt.Sprintf("Submitted IBC Transfer for LSM deposit %v%s on %s",
 				deposit.Amount, deposit.Denom, hostZone.ChainId))
+
+			k.RecordsKeeper.UpdateLSMTokenDepositStatus(ctx, deposit, recordstypes.LSMTokenDeposit_TRANSFER_IN_PROGRESS)
 		}
 	}
 }
