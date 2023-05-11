@@ -2,7 +2,8 @@ package cli
 
 import (
 	"errors"
-	"strconv"
+	"fmt"
+	"strings"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
@@ -12,13 +13,18 @@ import (
 	"github.com/Stride-Labs/stride/v9/x/stakeibc/types"
 )
 
-var _ = strconv.Itoa(0)
-
 func CmdRestoreInterchainAccount() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "restore-interchain-account [chain-id] [account-type]",
 		Short: "Broadcast message restore-interchain-account",
-		Args:  cobra.ExactArgs(2),
+		Long: strings.TrimSpace(
+			fmt.Sprintf(`Restores a closed channel associated with an interchain account.
+Specify the interchain account type as either: %s, %s, %s, or %s`,
+				types.ICAAccountType_DELEGATION,
+				types.ICAAccountType_WITHDRAWAL,
+				types.ICAAccountType_REDEMPTION,
+				types.ICAAccountType_FEE)),
+		Args: cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
 			argChainId := args[0]
 			argAccountType := args[1]

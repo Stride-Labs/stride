@@ -24,7 +24,6 @@ echo "Generating gogo proto code"
 cd proto
 
 generate_protos "./stride"
-generate_protos "./liquidstaking"
 
 cd ..
 

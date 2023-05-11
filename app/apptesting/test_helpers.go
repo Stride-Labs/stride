@@ -332,6 +332,16 @@ func (s *AppTestHelper) GetIBCDenomTrace(denom string) transfertypes.DenomTrace 
 	return transfertypes.ParseDenomTrace(prefixedDenom)
 }
 
+// Creates and stores an IBC denom from a base denom on transfer channel-0
+// This is only required for tests that use the transfer keeper and require that the IBC
+//   denom is present in the store
+// Returns the IBC hash
+func (s *AppTestHelper) CreateAndStoreIBCDenom(baseDenom string) (ibcDenom string) {
+	denomTrace := s.GetIBCDenomTrace(baseDenom)
+	s.App.TransferKeeper.SetDenomTrace(s.Ctx, denomTrace)
+	return denomTrace.IBCDenom()
+}
+
 func (s *AppTestHelper) MarshalledICS20PacketData() sdk.AccAddress {
 	data := ibctransfertypes.FungibleTokenPacketData{}
 	return data.GetBytes()

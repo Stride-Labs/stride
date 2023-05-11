@@ -106,8 +106,8 @@ func (s *KeeperTestSuite) SetupDelegatorSharesICQCallback() DelegatorSharesICQCa
 	// the timeout duration to be 5 minutes
 	blockTime := time.Date(2023, 1, 1, 0, 0, 0, 0, time.UTC)
 	s.Ctx = s.Ctx.WithBlockTime(blockTime)
-	timeoutTimestamp := uint64(blockTime.Add(time.Minute).UnixNano())
-	timeoutDuration := time.Minute * 5
+	timeoutDuration := time.Minute
+	timeoutTimestamp := uint64(blockTime.Add(timeoutDuration).UnixNano())
 
 	// Create the query that represents the ICQ in flight
 	query := icqtypes.Query{
@@ -197,9 +197,9 @@ func (s *KeeperTestSuite) SetupDelegatorSharesICQCallback() DelegatorSharesICQCa
 // Helper function to check if the query was resubmitted in the event that it overlapped an ICA
 func (s *KeeperTestSuite) CheckQueryWasResubmitted(tc DelegatorSharesICQCallbackTestCase, hostZone types.HostZone) {
 	queries := s.App.InterchainqueryKeeper.AllQueries(s.Ctx)
-	s.Require().Len(queries, 1, "one query expected after re-submission")
+	s.Require().Len(queries, 2, "two queries expected after re-submission")
 
-	actualQuery := queries[0]
+	actualQuery := queries[1]
 	expectedQuery := tc.validArgs.query
 
 	s.Require().Equal(HostChainId, actualQuery.ChainId, "query chain id")

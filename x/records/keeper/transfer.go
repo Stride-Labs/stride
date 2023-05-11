@@ -87,10 +87,7 @@ func (k Keeper) IBCTransferLSMToken(
 
 	// Store transfer callback data
 	callbackArgs := types.TransferLSMTokenCallback{
-		Deposit:                      &lsmTokenDeposit,
-		TransferChannelId:            transferChannelID,
-		HostZoneDepositAddress:       hostZoneDepositAddress,
-		HostZoneDelegationIcaAddress: hostZoneDelegationICAAddress,
+		Deposit: &lsmTokenDeposit,
 	}
 	callbackArgsBz, err := proto.Marshal(&callbackArgs)
 	if err != nil {

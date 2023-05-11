@@ -19,12 +19,7 @@ import (
 func (s *KeeperTestSuite) TestValidateLSMLiquidStake() {
 	// Create and store a valid denom trace so we can succesfully parse the LSM Token
 	path := "transfer/channel-0"
-	ibcDenom := transfertypes.ParseDenomTrace(fmt.Sprintf("%s/%s", path, LSMTokenBaseDenom)).IBCDenom()
-	expectedDenomTrace := transfertypes.DenomTrace{
-		BaseDenom: LSMTokenBaseDenom,
-		Path:      path,
-	}
-	s.App.TransferKeeper.SetDenomTrace(s.Ctx, expectedDenomTrace)
+	ibcDenom := s.CreateAndStoreIBCDenom(LSMTokenBaseDenom)
 
 	// Store a second valid denom trace that will not be registered with the host zone
 	invalidPath := "transfer/channel-100"
@@ -448,6 +443,92 @@ func (s *KeeperTestSuite) TestDetokenizeAllLSMDeposits() {
 	// Check that the status of the relevant records was updated
 	allDeposits := s.App.RecordsKeeper.GetAllLSMTokenDeposit(s.Ctx)
 	s.Require().Len(allDeposits, 8) // 2 host zones, 2 statuses, 2 deposits = 2 * 2 * 2 = 8
+
+	for _, deposit := range allDeposits {
+		depositKey := fmt.Sprintf("%s-%s", deposit.ChainId, deposit.Denom)
+		s.Require().Equal(expectedDepositStatus[depositKey].String(), deposit.Status.String(), "deposit status for %s", depositKey)
+	}
+}
+
+func (s *KeeperTestSuite) TestTransferAllLSMDeposits() {
+	s.CreateTransferChannel(HostChainId)
+
+	// Create a valid IBC denom
+	ibcDenom := s.CreateAndStoreIBCDenom(LSMTokenBaseDenom)
+
+	// Store 2 host zones - one that was registered successfully,
+	// and one that's missing a delegation channel
+	hostZones := []types.HostZone{
+		{
+			// Valid host zone
+			ChainId:              HostChainId,
+			TransferChannelId:    ibctesting.FirstChannelID,
+			DepositAddress:       s.TestAccs[1].String(),
+			DelegationIcaAddress: DelegationICAAddress,
+		},
+		{
+			// Missing delegation ICA
+			ChainId:           "chain-2",
+			TransferChannelId: "channel-2",
+			DepositAddress:    "stride_DEPOSIT_2",
+		},
+	}
+	for _, hostZone := range hostZones {
+		s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
+	}
+
+	// For each host chain store 4 deposits:
+	//   - One ready to be transferred with a valid IBC denom
+	//   - One ready to be transferred with an invalid IBC denom (should fail)
+	//   - One not ready to be transferred with a valid IBC denom
+	//   - One not ready to be transferred with an invalid IBC denom
+	expectedDepositStatus := map[string]recordstypes.LSMTokenDeposit_Status{}
+	for _, chainId := range []string{HostChainId, OsmoChainId} {
+		for _, startingStatus := range []recordstypes.LSMTokenDeposit_Status{
+			recordstypes.LSMTokenDeposit_TRANSFER_QUEUE,
+			recordstypes.LSMTokenDeposit_TRANSFER_IN_PROGRESS,
+		} {
+
+			for i, shouldSucceed := range []bool{true, false} {
+				denom := fmt.Sprintf("denom-starting-in-status-%s-%d", startingStatus.String(), i)
+				depositKey := fmt.Sprintf("%s-%s", chainId, denom)
+
+				if !shouldSucceed {
+					ibcDenom = "ibc/fake_denom"
+				}
+				deposit := recordstypes.LSMTokenDeposit{
+					ChainId:  chainId,
+					Denom:    denom,
+					IbcDenom: ibcDenom,
+					Status:   startingStatus,
+				}
+				s.App.RecordsKeeper.SetLSMTokenDeposit(s.Ctx, deposit)
+
+				// The status should update to IN_PROGRESS if the record was queued for transfer, on the
+				//   valid host zone, with a valid IBC denom
+				// The status should update to FAILED if the record was queued for transfer, on the
+				//   valid host zone, with an invalid IBC denom
+				// The status should not change on the invalid host zone
+				expectedStatus := startingStatus
+				if chainId == HostChainId && startingStatus == recordstypes.LSMTokenDeposit_TRANSFER_QUEUE {
+					if shouldSucceed {
+						expectedStatus = recordstypes.LSMTokenDeposit_TRANSFER_IN_PROGRESS
+					} else {
+						expectedStatus = recordstypes.LSMTokenDeposit_TRANSFER_FAILED
+					}
+				}
+
+				expectedDepositStatus[depositKey] = expectedStatus
+			}
+		}
+	}
+
+	// Call transfer across all hosts
+	s.App.StakeibcKeeper.TransferAllLSMDeposits(s.Ctx)
+
+	// Check that the status of the relevant records was updated
+	allDeposits := s.App.RecordsKeeper.GetAllLSMTokenDeposit(s.Ctx)
+	s.Require().Len(allDeposits, 8) // 4 host zones, 2 statuses, 2 deposits = 2 * 2 * 2 = 8
 
 	for _, deposit := range allDeposits {
 		depositKey := fmt.Sprintf("%s-%s", deposit.ChainId, deposit.Denom)
