@@ -33,6 +33,9 @@ func (k Keeper) OnAcknowledgementPacket(ctx sdk.Context, packet channeltypes.Pac
 	return nil
 }
 
+// OnTimeoutPacket passes the ack timeout to the ICACallback
+// If there was no callback data associated with this packet,
+// there will be no additional ack logic in CallRegisteredICACallback
 func (k Keeper) OnTimeoutPacket(ctx sdk.Context, packet channeltypes.Packet) error {
 	ackResponse := icacallbacktypes.AcknowledgementResponse{Status: icacallbacktypes.AckResponseStatus_TIMEOUT}
 	if err := k.ICACallbacksKeeper.CallRegisteredICACallback(ctx, packet, &ackResponse); err != nil {
