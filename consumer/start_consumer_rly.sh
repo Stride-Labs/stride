@@ -148,6 +148,10 @@ $SOVEREIGN_BINARY start \
 sleep 10
 
 
+########## GO RELAYER ########
+RELAYER_DIR="./relayer"
+MNEMONIC_1="trip ten ability cabbage artefact side brass field domain doll ritual easily"
+MNEMONIC_2="guard lion kiss upper comic vital small bundle salon oxygen museum material enter idea high domain lend alert dish message federal egg upper coffee"
 
 # # send tokens to relayers
 $PROVIDER_BINARY tx bank send $PROVIDER_DELEGATOR cosmos1d35ujw5e509acpmfxf9tw859e4nkhq8qfs725a 1000000stake --chain-id=$PROVIDER_CHAIN_ID --keyring-backend=test -y --broadcast-mode=sync --node=http://$PROVIDER_RPC_LADDR --home=$PROVIDER_HOME
@@ -158,96 +162,17 @@ sleep 5
 # PROVIDER_CHAIN_ID="provider"
 # CONSUMER_CHAIN_ID="consumer"
 
-######################################HERMES################################### 
+killall rly 2> /dev/null || true
 
-# # Setup Hermes in packet relayer mode
-killall hermes 2> /dev/null || true
+# echo "Restoring accounts..."
+rly keys restore provider rly1 "$MNEMONIC_1" --home $RELAYER_DIR &
+rly keys restore consumer rly2 "$MNEMONIC_2" --home $RELAYER_DIR &
 
-tee ~/.hermes/config.toml<<EOF
-[global]
-log_level = "trace"
-[mode]
-[mode.clients]
-enabled = true
-refresh = true
-misbehaviour = true
-[mode.connections]
-enabled = true
-[mode.channels]
-enabled = true
-[mode.packets]
-enabled = true
-[[chains]]
-account_prefix = "stride"
-clock_drift = "5s"
-gas_multiplier = 1.1
-grpc_addr = "tcp://${CONSUMER_GRPC_ADDR}"
-id = "$CONSUMER_CHAIN_ID"
-key_name = "relayer"
-max_gas = 2000000
-rpc_addr = "http://${CONSUMER_RPC_LADDR}"
-rpc_timeout = "10s"
-store_prefix = "ibc"
-trusting_period = "599s"
-websocket_addr = "ws://${CONSUMER_RPC_LADDR}/websocket"
-[chains.gas_price]
-       denom = "stake"
-       price = 0.00
-[chains.trust_threshold]
-       denominator = "3"
-       numerator = "1"
-[[chains]]
-account_prefix = "cosmos"
-clock_drift = "5s"
-gas_multiplier = 1.1
-grpc_addr = "tcp://${PROVIDER_GRPC_ADDR}"
-id = "$PROVIDER_CHAIN_ID"
-key_name = "relayer"
-max_gas = 2000000
-rpc_addr = "http://${PROVIDER_RPC_LADDR}"
-rpc_timeout = "10s"
-store_prefix = "ibc"
-trusting_period = "599s"
-websocket_addr = "ws://${PROVIDER_RPC_LADDR}/websocket"
-[chains.gas_price]
-       denom = "stake"
-       price = 0.00
-[chains.trust_threshold]
-       denominator = "3"
-       numerator = "1"
-EOF
+sleep 3
 
-# # Delete all previous keys in relayer
-rm -rf $HOME/.hermes/keys/provider
-rm -rf $HOME/.hermes/keys/consumer
-
-# Restore keys to hermes relayer
-echo $(jq -r .mnemonic $SOVEREIGN_HOME/consumer_keypair.json) > $SOVEREIGN_HOME/consumer_keypair.txt
-hermes keys add --chain $CONSUMER_CHAIN_ID --mnemonic-file $SOVEREIGN_HOME/consumer_keypair.txt &
-# hermes keys restore --mnemonic "$(jq -r .mnemonic $SOVEREIGN_HOME/consumer_keypair.json)" $CONSUMER_CHAIN_ID
-# temp_start_provider.sh creates key pair and stores it in keypair.json
-echo $(jq -r .mnemonic $PROVIDER_HOME/keypair.json) > $PROVIDER_HOME/keypair.txt
-hermes keys add --chain $PROVIDER_CHAIN_ID --mnemonic-file $PROVIDER_HOME/keypair.txt &
-# hermes keys restore --mnemonic "$(jq -r .mnemonic $PROVIDER_HOME/keypair.json)" $PROVIDER_CHAIN_ID
-
-sleep 20
-
-hermes create client --host-chain consumer --reference-chain provider
-hermes create client --host-chain provider --reference-chain consumer
-
-# hermes query clients consumer
-# hermes query client consensus consumer 07-tendermint-0
-# hermes query clients provider
-
-# hermes create connection --a-chain $CONSUMER_CHAIN_ID --a-client 07-tendermint-0 --b-client 07-tendermint-0
-# hermes create connection $CONSUMER_CHAIN_ID --client-a 07-tendermint-0 --client-b 07-tendermint-0
-# hermes create connection --a-chain $CONSUMER_CHAIN_ID --b-chain $PROVIDER_CHAIN_ID
-hermes create channel --a-chain $CONSUMER_CHAIN_ID --b-chain $PROVIDER_CHAIN_ID --a-port transfer --b-port transfer --new-client-connection --yes
-# hermes create channel $CONSUMER_CHAIN_ID --port-a transfer --port-b transfer connection-0
-
-sleep 1
-
-hermes start &> ~/.hermes/logs &
+rly transact link consumer-provider --home $RELAYER_DIR
+sleep 2
+rly start --home $RELAYER_DIR &> $RELAYER_DIR/logs &
 
 # Build consumer chain proposal file - unbonding period 21 days
 tee $PROVIDER_HOME/consumer-proposal.json<<EOF
@@ -369,15 +294,8 @@ $CONSUMER_BINARY start \
 #        &> $CONSUMER_HOME1/logs &        
 sleep 30
 
-# # create channel between consumer and provider between provider port and consumer port
-# hermes query clients consumer
-# hermes query clients provider
-# hermes query client consensus consumer 07-tendermint-1
-# hermes query client consensus provider 07-tendermint-1
-hermes create connection --a-chain $CONSUMER_CHAIN_ID --a-client 07-tendermint-2 --b-client 07-tendermint-2
-# hermes create connection $CONSUMER_CHAIN_ID --client-a 07-tendermint-1 --client-b 07-tendermint-1
-hermes create channel --a-chain $CONSUMER_CHAIN_ID --a-port consumer --b-port provider --channel-version 1 --order ordered --a-connection connection-1 --yes
-# hermes create channel $CONSUMER_CHAIN_ID --port-a consumer --port-b provider -o ordered --channel-version 1 connection-1
+rly transact connection consumer-provider-ics --home $RELAYER_DIR
+rly transact channel consumer-provider-ics --src-port consumer --dst-port provider --order ordered --version 1 --home $RELAYER_DIR
 
 # ############################################################
 
