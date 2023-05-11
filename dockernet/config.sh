@@ -37,6 +37,9 @@ fi
 UPGRADE_NAME=""
 UPGRADE_OLD_COMMIT_HASH=""
 
+# UPGRADE_NAME="v07-Theta"
+# UPGRADE_OLD_COMMIT_HASH="ae28ebbce26c7ecffd8560af3d4245288cde9408"
+
 # DENOMS
 ATOM_DENOM="uatom"
 JUNO_DENOM="ujuno"
@@ -99,7 +102,7 @@ HOST_DAY_EPOCH_DURATION="60s"
 HOST_HOUR_EPOCH_DURATION="60s"
 HOST_WEEK_EPOCH_DURATION="60s"
 HOST_MINT_EPOCH_DURATION="60s"
-UNBONDING_TIME="120s"
+UNBONDING_TIME="600s"
 MAX_DEPOSIT_PERIOD="30s"
 VOTING_PERIOD="30s"
 
@@ -126,7 +129,7 @@ REV_MNEMONIC="tonight bonus finish chaos orchard plastic view nurse salad regret
 # STRIDE 
 STRIDE_CHAIN_ID=STRIDE
 STRIDE_NODE_PREFIX=stride
-STRIDE_NUM_NODES=3
+STRIDE_NUM_NODES=2
 STRIDE_VAL_PREFIX=val
 STRIDE_ADDRESS_PREFIX=stride
 STRIDE_DENOM=$STRD_DENOM
@@ -221,6 +224,7 @@ HOST_RECEIVER_ADDRESS='stride1trm75t8g83f26u4y8jfds7pms9l587a7q227k9'
 # RELAYER
 RELAYER_CMD="$DOCKERNET_HOME/../build/relayer --home $STATE/relayer"
 RELAYER_GAIA_EXEC="$DOCKER_COMPOSE run --rm relayer-gaia"
+RELAYER_GAIA_ICS_EXEC="$DOCKER_COMPOSE run --rm relayer-gaia-ics"
 RELAYER_JUNO_EXEC="$DOCKER_COMPOSE run --rm relayer-juno"
 RELAYER_OSMO_EXEC="$DOCKER_COMPOSE run --rm relayer-osmo"
 RELAYER_STARS_EXEC="$DOCKER_COMPOSE run --rm relayer-stars"
@@ -283,7 +287,7 @@ GET_VAR_VALUE() {
 WAIT_FOR_BLOCK() {
   num_blocks="${2:-1}"
   for i in $(seq $num_blocks); do
-    ( tail -f -n0 $1 & ) | grep -q "INF executed block height="
+    ( tail -f -n0 $1 & ) | grep -q "executed block                               module=state height="
   done
 }
 

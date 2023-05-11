@@ -3,11 +3,11 @@
 	path = deps/hermes
 	url = https://github.com/informalsystems/ibc-rs.git
 [submodule "deps/relayer"]
-	# Commit: 2d9fe1acf9081ec7bdcefd8c212a21d28febaba7
+	# Commit: 01039ea63d8e6fdd188ea47fc168a0b57e5fa660
 	path = deps/relayer
 	url = https://github.com/cosmos/relayer.git
 [submodule "deps/gaia"]
-	# Commit: 5db8fcc9a229730f5115bed82d0f85b6db7184b4
+	# Commit: 05b6b87d3c9121e933eab437772ea56f33ae268f
 	path = deps/gaia
 	url = https://github.com/cosmos/gaia.git
 [submodule "deps/juno"]

@@ -13,7 +13,7 @@ chains:
       account-prefix: stride
       keyring-backend: test
       gas-adjustment: 1.2
-      gas-prices: 0.01ustrd
+      gas-prices: 0ustrd
       debug: false
       timeout: 20s
       output-format: json
@@ -109,6 +109,16 @@ paths:
       chain-id: STRIDE
     dst:
       chain-id: GAIA
+    src-channel-filter:
+      rule: ""
+      channel-list: []
+  stride-gaia-ics:
+    src:
+      chain-id: STRIDE
+      client-id: 07-tendermint-1
+    dst:
+      chain-id: GAIA
+      client-id: 07-tendermint-1
     src-channel-filter:
       rule: ""
       channel-list: []

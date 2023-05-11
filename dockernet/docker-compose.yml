@@ -4,6 +4,7 @@ services:
     image: stridezone:stride
     volumes:
       - ./state/stride1:/home/stride/.stride
+      - ./state/sovereign:/home/stride/.sovereign
     ports:
       - "26657:26657"
       - "1317:1317"
@@ -13,11 +14,13 @@ services:
     image: stridezone:stride
     volumes:
       - ./state/stride2:/home/stride/.stride
+      - ./state/sovereign:/home/stride/.sovereign
 
   stride3:
     image: stridezone:stride
     volumes:
       - ./state/stride3:/home/stride/.stride
+      - ./state/sovereign:/home/stride/.sovereign
 
   gaia1:
     image: stridezone:gaia
@@ -186,6 +189,13 @@ services:
       - ./state/relayer-gaia:/home/relayer/.relayer
     restart: always
     command: [ "bash", "start.sh", "stride-gaia" ]
+
+  relayer-gaia-ics:
+    image: stridezone:relayer
+    volumes:
+      - ./state/relayer-gaia-ics:/home/relayer/.relayer
+    restart: always
+    command: [ "bash", "start.sh", "stride-gaia-ics" ]
 
   relayer-juno:
     image: stridezone:relayer
