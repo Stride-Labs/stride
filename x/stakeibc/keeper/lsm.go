@@ -214,7 +214,6 @@ func (k Keeper) TransferAllLSMDeposits(ctx sdk.Context) {
 			); err != nil {
 				k.Logger(ctx).Error(fmt.Sprintf("Unable to submit IBC Transfer of LSMToken for %v%s on %s: %s",
 					deposit.Amount, deposit.Denom, hostZone.ChainId, err.Error()))
-				fmt.Println(err)
 				k.RecordsKeeper.UpdateLSMTokenDepositStatus(ctx, deposit, recordstypes.LSMTokenDeposit_TRANSFER_FAILED)
 				continue
 			}
