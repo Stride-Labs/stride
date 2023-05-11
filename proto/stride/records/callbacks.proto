@@ -7,9 +7,4 @@ option go_package = "github.com/Stride-Labs/stride/v9/x/records/types";
 
 message TransferCallback { uint64 deposit_record_id = 1; }
 
-message TransferLSMTokenCallback {
-  LSMTokenDeposit deposit = 1;
-  string transfer_channel_id = 2;
-  string host_zone_deposit_address = 3;
-  string host_zone_delegation_ica_address = 4;
-}
+message TransferLSMTokenCallback { LSMTokenDeposit deposit = 1; }

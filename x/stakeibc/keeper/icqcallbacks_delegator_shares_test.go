@@ -197,7 +197,7 @@ func (s *KeeperTestSuite) SetupDelegatorSharesICQCallback() DelegatorSharesICQCa
 // Helper function to check if the query was resubmitted in the event that it overlapped an ICA
 func (s *KeeperTestSuite) CheckQueryWasResubmitted(tc DelegatorSharesICQCallbackTestCase, hostZone types.HostZone) {
 	queries := s.App.InterchainqueryKeeper.AllQueries(s.Ctx)
-	s.Require().Len(queries, 2, "one query expected after re-submission")
+	s.Require().Len(queries, 2, "two queries expected after re-submission")
 
 	actualQuery := queries[1]
 	expectedQuery := tc.validArgs.query

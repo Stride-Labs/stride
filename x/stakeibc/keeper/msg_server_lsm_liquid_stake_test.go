@@ -39,8 +39,6 @@ func (s *KeeperTestSuite) getLSMTokenIBCDenom() string {
 }
 
 func (s *KeeperTestSuite) SetupTestLSMLiquidStake() LSMLiquidStakeTestCase {
-	s.CreateTransferChannel(HostChainId)
-
 	initialBalance := sdkmath.NewInt(3000)
 	stakeAmount := sdkmath.NewInt(1000)
 	userAddress := s.TestAccs[0]
@@ -105,10 +103,6 @@ func (s *KeeperTestSuite) SetupTestLSMLiquidStake() LSMLiquidStakeTestCase {
 func (s *KeeperTestSuite) TestLSMLiquidStake_Successful_NoExchangeRateQuery() {
 	tc := s.SetupTestLSMLiquidStake()
 
-	// Get the sequence number before the IBC Transfer is submitted to confirm it incremented
-	startSequence, found := s.App.IBCKeeper.ChannelKeeper.GetNextSequenceSend(s.Ctx, transfertypes.PortID, ibctesting.FirstChannelID)
-	s.Require().True(found, "sequence number not found before lsm liquid stake")
-
 	// Call LSM Liquid stake with a valid message
 	msgResponse, err := s.GetMsgServer().LSMLiquidStake(sdk.WrapSDKContext(s.Ctx), tc.validMsg)
 	s.Require().NoError(err, "no error expected when calling lsm liquid stake")
@@ -131,17 +125,12 @@ func (s *KeeperTestSuite) TestLSMLiquidStake_Successful_NoExchangeRateQuery() {
 		IbcDenom:         tc.lsmTokenIBCDenom,
 		ValidatorAddress: ValAddress,
 		Amount:           tc.validMsg.Amount,
-		Status:           recordstypes.LSMTokenDeposit_TRANSFER_IN_PROGRESS,
+		Status:           recordstypes.LSMTokenDeposit_TRANSFER_QUEUE,
 		StToken:          sdk.NewCoin(StAtom, tc.validMsg.Amount),
 	}
 	actualDeposit, found := s.App.RecordsKeeper.GetLSMTokenDeposit(s.Ctx, HostChainId, LSMTokenBaseDenom)
 	s.Require().True(found, "lsm token deposit should have been found after LSM liquid stake")
 	s.Require().Equal(expectedDeposit, actualDeposit)
-
-	// Confirm IBC transfer was sent
-	endSequence, found := s.App.IBCKeeper.ChannelKeeper.GetNextSequenceSend(s.Ctx, transfertypes.PortID, ibctesting.FirstChannelID)
-	s.Require().True(found, "sequence number not found after lsm liquid stake")
-	s.Require().Equal(startSequence+1, endSequence, "sequence number after IBC transfer")
 
 	// Confirm slash query progress was incremented
 	hostZone, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx, HostChainId)
