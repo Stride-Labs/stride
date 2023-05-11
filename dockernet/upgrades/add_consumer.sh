@@ -35,7 +35,7 @@ tee $PROVIDER_HOME/consumer-proposal.json<<EOF
     "ccv_timeout_period": 2419200000000000,
     "transfer_timeout_period": 3600000000000,
     "historical_entries": 10000,
-    "unbonding_period": 1814400000000000
+    "unbonding_period": 600000000000
 }
 EOF
 
