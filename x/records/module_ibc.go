@@ -165,17 +165,16 @@ func (im IBCModule) OnAcknowledgementPacket(
 		fmt.Sprintf("OnAcknowledgementPacket (Records): Sequence %d, SourcePort %s, SourceChannel %s, DestinationPort %s, DestinationChannel %s",
 			packet.Sequence, packet.SourcePort, packet.SourceChannel, packet.DestinationPort, packet.DestinationChannel))
 
-	// If the records OnAckPacket callback failed, replace the inbound ack with an ack error
-	// (regardless of the original status), so that the token refund is handled properly
-	// in the transfer layer of the stack
+	// The error here is intentionally returned immediately instead of refunding tokens
+	// This only errors if either:
+	//   1) The ack can't be parsed, in which case we don't know whether to refund tokens, or
+	//   2) The callback errors, in which case, it's better to not refund tokens to keep the state
+	//      changes as consistent as possible between records and the bank module
+	// Transfer initiated from users will flow through this branch without an error, since the callbacks
+	//   are only prevelant for transfer's initated by stakeibc
 	if err := im.keeper.OnAcknowledgementPacket(ctx, packet, acknowledgement); err != nil {
 		im.keeper.Logger(ctx).Error(fmt.Sprintf("Records OnAcknowledgementPacket failed: %s", err.Error()))
-
-		ackError := channeltypes.NewErrorAcknowledgement(err)
-		acknowledgement, err = ibctransfertypes.ModuleCdc.MarshalJSON(&ackError)
-		if err != nil {
-			return errorsmod.Wrapf(err, "unable to marshal updated acknowledgement error after failed OnAckPacket callback")
-		}
+		return errorsmod.Wrapf(err, "OnAckPacket callback failed")
 	}
 
 	return im.app.OnAcknowledgementPacket(ctx, packet, acknowledgement, relayer)
@@ -191,10 +190,14 @@ func (im IBCModule) OnTimeoutPacket(
 		fmt.Sprintf("OnTimeoutPacket (Records): Sequence %d, SourcePort %s, SourceChannel %s, DestinationPort %s, DestinationChannel %s",
 			packet.Sequence, packet.SourcePort, packet.SourceChannel, packet.DestinationPort, packet.DestinationChannel))
 
-	// If a failure occurs while handling the timeout ack, do not throw an error,
-	// otherwise tokens will not be refunded
+	// The error here is intentionally returned immediately instead of refunding tokens
+	// This only errors if the callback fails, in which case, it's better to not refund tokens to keep the state
+	//   changes as consistent as possible between records and the bank module
+	// Transfer initiated from users will flow through this branch without an error, since the callbacks
+	//   are only prevelant for transfer's initated by stakeibc
 	if err := im.keeper.OnTimeoutPacket(ctx, packet); err != nil {
 		im.keeper.Logger(ctx).Error(fmt.Sprintf("Records OnTimeoutPacket failed: %s", err.Error()))
+		return errorsmod.Wrapf(err, "OnTimeoutPacket callback failed")
 	}
 
 	return im.app.OnTimeoutPacket(ctx, packet, relayer)
