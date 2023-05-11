@@ -23,7 +23,6 @@ var (
 func (s *KeeperTestSuite) SetupLSMTransferCallback() []byte {
 	delegationAccountOwner := fmt.Sprintf("%s.%s", HostChainId, "DELEGATION")
 	s.CreateICAChannel(delegationAccountOwner)
-	delegationAddress := s.IcaAddresses[delegationAccountOwner]
 
 	// we need a valid ibc denom here or the transfer will fail
 	prefixedDenom := transfertypes.GetPrefixedDenom(transfertypes.PortID, ibctesting.FirstChannelID, LSMTokenDenom)
@@ -40,10 +39,7 @@ func (s *KeeperTestSuite) SetupLSMTransferCallback() []byte {
 	s.App.RecordsKeeper.SetLSMTokenDeposit(s.Ctx, deposit)
 
 	callbackArgs := types.TransferLSMTokenCallback{
-		Deposit:                      &deposit,
-		TransferChannelId:            ibctesting.FirstChannelID,
-		HostZoneDepositAddress:       s.TestAccs[0].String(),
-		HostZoneDelegationIcaAddress: delegationAddress,
+		Deposit: &deposit,
 	}
 	callbackArgsBz, err := proto.Marshal(&callbackArgs)
 	s.Require().NoError(err, "no error expected when marshalling callback args")
