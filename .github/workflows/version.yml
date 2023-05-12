@@ -20,8 +20,8 @@ jobs:
           new_major_version=v$(echo $new_version | cut -d '.' -f 1)
           branch_name=update-stride-version-${new_major_version}
 
-          echo "old_version=$old_version" >> $GITHUB_ENV
-          echo "new_version=$new_version" >> $GITHUB_ENV
+          echo "OLD_VERSION=$old_version" >> $GITHUB_ENV
+          echo "NEW_VERSION=$new_version" >> $GITHUB_ENV
           echo "branch_name=$branch_name" >> $GITHUB_ENV
 
       - name: Checkout main
@@ -33,14 +33,7 @@ jobs:
         run: git checkout -b ${{ env.branch_name }}
 
       - name: Update versions in files
-        run: |
-          OLD_VERSION=9.0.0 
-          NEW_VERSION=10.0.0
-          CONFIG_FILE=cmd/strided/config/config.go
-          sed -i "s/$OLD_VERSION/$NEW_VERSION/g" $CONFIG_FILE
-
-        # run: |
-        #   OLD_VERSION=${{ env.old_version }} NEW_VERSION=${{ env.new_version }} bash scripts/version.sh
+        run: bash scripts/version.sh
 
       # - name: Push changes
       #   uses: ad-m/github-push-action@v0.6.0
