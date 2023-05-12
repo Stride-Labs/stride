@@ -50,4 +50,5 @@ var (
 	ErrInsufficientLiquidStake           = errorsmod.Register(ModuleName, 1543, "Liquid staked amount is too small")
 	ErrInvalidLSMToken                   = errorsmod.Register(ModuleName, 1544, "Invalid LSM token")
 	ErrValidatorWasSlashed               = errorsmod.Register(ModuleName, 1545, "Validator was slash")
+	ErrInvalidValidatorDelegationUpdates = errorsmod.Register(ModuleName, 1546, "Invalid validator delegation updates")
 )
