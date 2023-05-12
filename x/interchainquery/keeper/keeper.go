@@ -74,12 +74,12 @@ func (k *Keeper) SubmitICQRequest(ctx sdk.Context, query types.Query, forceUniqu
 
 // Re-submit an ICQ, generally used after a timeout
 func (k *Keeper) RetryICQRequest(ctx sdk.Context, query types.Query) error {
+	k.Logger(ctx).Info(utils.LogWithHostZone(query.ChainId,
+		"Queuing ICQ Retry - Query Type: %s, Query ID: %s", query.CallbackId, query.Id))
+
 	if err := k.ValidateQuery(ctx, query); err != nil {
 		return err
 	}
-
-	// TODO [LSM]: Investigate why we need to force a unique ID when retrying queries
-	query.Id = k.GetQueryId(ctx, query, true)
 
 	// Update the timeout
 	timeoutTimestamp := uint64(ctx.BlockTime().UnixNano() + query.TimeoutDuration.Nanoseconds())

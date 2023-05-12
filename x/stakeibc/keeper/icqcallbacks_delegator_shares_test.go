@@ -197,9 +197,9 @@ func (s *KeeperTestSuite) SetupDelegatorSharesICQCallback() DelegatorSharesICQCa
 // Helper function to check if the query was resubmitted in the event that it overlapped an ICA
 func (s *KeeperTestSuite) CheckQueryWasResubmitted(tc DelegatorSharesICQCallbackTestCase, hostZone types.HostZone) {
 	queries := s.App.InterchainqueryKeeper.AllQueries(s.Ctx)
-	s.Require().Len(queries, 2, "two queries expected after re-submission")
+	s.Require().Len(queries, 1, "one queries expected after re-submission")
 
-	actualQuery := queries[1]
+	actualQuery := queries[0]
 	expectedQuery := tc.validArgs.query
 
 	s.Require().Equal(HostChainId, actualQuery.ChainId, "query chain id")
@@ -211,7 +211,7 @@ func (s *KeeperTestSuite) CheckQueryWasResubmitted(tc DelegatorSharesICQCallback
 	s.Require().Equal(expectedQuery.CallbackData, actualQuery.CallbackData, "query callback data")
 
 	expectedTimeout := s.Ctx.BlockTime().UnixNano() + (tc.retryTimeoutDuration.Nanoseconds())
-	s.Require().Equal(expectedTimeout, int64(actualQuery.TimeoutTimestamp), "query callback data")
+	s.Require().Equal(expectedTimeout, int64(actualQuery.TimeoutTimestamp), "query timeout timestamp")
 
 	// Confirm the validator still has a query flagged as in progress
 	validator := hostZone.Validators[tc.valIndexQueried]
@@ -259,6 +259,13 @@ func (s *KeeperTestSuite) TestDelegatorSharesCallback_Retry_DelegationChange() {
 	s.Require().Equal(initialDelegation.Int64(), hostZone.Validators[tc.valIndexQueried].Delegation.Int64(), "validator delegation")
 
 	// Confirm the query was resubmitted
+	// The new delegation amount should be stored in the callback data
+	callbackDataBz, err := proto.Marshal(&types.DelegatorSharesQueryCallback{
+		InitialValidatorDelegation: initialDelegation,
+	})
+	s.Require().NoError(err, "no error expected when marshalling callback data")
+	tc.validArgs.query.CallbackData = callbackDataBz
+
 	s.CheckQueryWasResubmitted(tc, hostZone)
 }
 
