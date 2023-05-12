@@ -34,8 +34,8 @@ jobs:
 
       - name: Update versions in files
         run: |
-          ls -la cmd/strided/config
-          ls -la app
+          sed -i "s/9.0.0/10.0.0/g" cmd/strided/config/config.go
+
         # run: |
         #   OLD_VERSION=${{ env.old_version }} NEW_VERSION=${{ env.new_version }} bash scripts/version.sh
 
