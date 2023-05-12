@@ -38,7 +38,12 @@ message MsgLiquidStake {
   string host_denom = 3;
 }
 
-message MsgLiquidStakeResponse {}
+message MsgLiquidStakeResponse {
+  string st_asset = 1 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Coin",
+    (gogoproto.nullable) = false
+  ];
+}
 
 message MsgClearBalance {
   string creator = 1;

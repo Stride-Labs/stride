@@ -545,7 +545,8 @@ func NewStrideApp(
 		keys[autopilottypes.StoreKey],
 		app.GetSubspace(autopilottypes.ModuleName),
 		app.StakeibcKeeper,
-		app.ClaimKeeper)
+		app.ClaimKeeper,
+		app.TransferKeeper)
 	autopilotModule := autopilot.NewAppModule(appCodec, app.AutopilotKeeper)
 
 	// Register Gov (must be registerd after stakeibc)

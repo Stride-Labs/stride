@@ -194,12 +194,21 @@ func (im IBCModule) OnRecvPacket(
 			im.keeper.Logger(ctx).Error(fmt.Sprintf("Packet from %s had stakeibc routing info but autopilot stakeibc routing is disabled", newData.Sender))
 			return channeltypes.NewErrorAcknowledgement(types.ErrPacketForwardingInactive)
 		}
-		im.keeper.Logger(ctx).Info(fmt.Sprintf("Forwaring packet from %s to stakeibc", newData.Sender))
+		im.keeper.Logger(ctx).Info(fmt.Sprintf("Forwarding packet from %s to stakeibc", newData.Sender))
 
-		// Try to liquid stake - return an ack error if it fails, otherwise return the ack generated from the earlier packet propogation
-		if err := im.keeper.TryLiquidStaking(ctx, packet, newData, routingInfo); err != nil {
-			im.keeper.Logger(ctx).Error(fmt.Sprintf("Error liquid staking packet from autopilot for %s: %s", newData.Sender, err.Error()))
-			return channeltypes.NewErrorAcknowledgement(err)
+		switch routingInfo.Action {
+		case "LiquidStake":
+			// Try to liquid stake - return an ack error if it fails, otherwise return the ack generated from the earlier packet propogation
+			if err := im.keeper.TryLiquidStaking(ctx, packet, newData, routingInfo); err != nil {
+				im.keeper.Logger(ctx).Error(fmt.Sprintf("Error liquid staking packet from autopilot for %s: %s", newData.Sender, err.Error()))
+				return channeltypes.NewErrorAcknowledgement(err)
+			}
+		case "RedeemStake":
+			// Try to redeem stake - return an ack error if it fails, otherwise return the ack generated from the earlier packet propogation
+			if err := im.keeper.TryRedeemStake(ctx, packet, newData, routingInfo); err != nil {
+				im.keeper.Logger(ctx).Error(fmt.Sprintf("Error redeem staking packet from autopilot for %s: %s", newData.Sender, err.Error()))
+				return channeltypes.NewErrorAcknowledgement(err)
+			}
 		}
 
 		return ack

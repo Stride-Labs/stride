@@ -27,8 +27,10 @@ type ModuleRoutingInfo interface {
 
 // Packet metadata info specific to Stakeibc (e.g. 1-click liquid staking)
 type StakeibcPacketMetadata struct {
-	Action        string `json:"action"`
-	StrideAddress string `json:"stride_address"`
+	Action          string `json:"action"`
+	StrideAddress   string `json:"stride_address"`
+	IbcReceiver     string `json:"ibc_receiver,omitempty"`
+	TransferChannel string `json:"transfer_channel,omitempty"`
 }
 
 // Packet metadata info specific to Claim (e.g. airdrops for non-118 coins)
@@ -43,7 +45,10 @@ func (m StakeibcPacketMetadata) Validate() error {
 	if err != nil {
 		return err
 	}
-	if m.Action != "LiquidStake" {
+	switch m.Action {
+	case "LiquidStake":
+	case "RedeemStake":
+	default:
 		return errorsmod.Wrapf(ErrUnsupportedStakeibcAction, "action %s is not supported", m.Action)
 	}
 
