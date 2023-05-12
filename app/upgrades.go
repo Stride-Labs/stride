@@ -109,6 +109,7 @@ func (app *StrideApp) setupUpgradeHandlers() {
 			app.appCodec,
 			*app.IBCKeeper,
 			app.ConsumerKeeper,
+			*app.StakingKeeper,
 		),
 	)
 

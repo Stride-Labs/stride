@@ -16,6 +16,7 @@ import (
 	ibcconnectiontypes "github.com/cosmos/ibc-go/v7/modules/core/03-connection/types"
 	consumertypes "github.com/cosmos/interchain-security/x/ccv/consumer/types"
 
+	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 	ibckeeper "github.com/cosmos/ibc-go/v7/modules/core/keeper"
 	ccvconsumerkeeper "github.com/cosmos/interchain-security/x/ccv/consumer/keeper"
 )
@@ -36,6 +37,7 @@ func CreateUpgradeHandler(
 	cdc codec.Codec,
 	ibcKeeper ibckeeper.Keeper,
 	consumerKeeper ccvconsumerkeeper.Keeper,
+	stakingKeeper stakingkeeper.Keeper,
 ) upgradetypes.UpgradeHandler {
 	return func(ctx sdk.Context, _ upgradetypes.Plan, vm module.VersionMap) (module.VersionMap, error) {
 		ctx.Logger().Info("Starting upgrade v9...")
@@ -62,6 +64,8 @@ func CreateUpgradeHandler(
 		cdc.MustUnmarshalJSON(appState[consumertypes.ModuleName], &consumerGenesis)
 
 		consumerGenesis.PreCCV = true
+		consumerGenesis.Params.SoftOptOutThreshold = "0.05"
+		consumerKeeper.SetStandaloneStakingKeeper(stakingKeeper)
 		consumerKeeper.InitGenesis(ctx, &consumerGenesis)
 
 		ctx.Logger().Info("start to run module migrations...")
