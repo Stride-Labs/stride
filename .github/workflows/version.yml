@@ -30,7 +30,7 @@ jobs:
           ref: main
 
       - name: Create branch
-        run: git checkout -b update-stride-version-${{ env.new_major_version }}
+        run: git checkout -b ${{ env.branch_name }}
 
       - name: Update versions in files
         run: |

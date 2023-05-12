@@ -33,6 +33,9 @@ echo ">>> Updating version in app.go and config.go..."
 CONFIG_FILE=cmd/strided/config/config.go
 APP_FILE=app/app.go
 
+ls -la cmd/strided/config
+ls -la app
+
 sed -i "s/$OLD_VERSION/$NEW_VERSION/g" $CONFIG_FILE
 sed -i "s/$OLD_VERSION/$NEW_VERSION/g" $APP_FILE
 
