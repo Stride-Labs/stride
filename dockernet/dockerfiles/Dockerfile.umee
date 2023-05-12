@@ -1,10 +1,10 @@
-FROM golang:1.19-alpine3.15 AS builder
+FROM golang:1.20-alpine3.18 AS builder
 
 WORKDIR /opt
 
 RUN apk add --update ca-certificates build-base git
 
-ENV COMMIT_HASH=release/v4.3-no-gb-no-ibcquota
+ENV COMMIT_HASH=release/v4.4-no-gb
 
 RUN git clone https://github.com/umee-network/umee.git \
     && cd umee \
@@ -18,7 +18,7 @@ RUN cp /lib/libwasmvm_muslc.$(uname -m).a /lib/libwasmvm_muslc.a
 
 RUN LEDGER_ENABLED=false BUILD_TAGS=muslc LINK_STATICALLY=true make build
 
-FROM alpine:3.15
+FROM alpine:3.18
 COPY --from=builder /opt/umee/build/umeed /usr/local/bin/
 RUN apk add --update bash vim ca-certificates \
     && addgroup -g 1000 umee \
