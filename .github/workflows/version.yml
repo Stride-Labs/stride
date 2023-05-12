@@ -33,7 +33,7 @@ jobs:
         run: git checkout -b ${{ env.branch_name }}
 
       - name: Update versions in files
-        run: bash scripts/version.sh
+        run: ./scripts/version.sh
 
       # - name: Push changes
       #   uses: ad-m/github-push-action@v0.6.0
