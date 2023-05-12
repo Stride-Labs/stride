@@ -28,17 +28,23 @@ if [ "$(basename "$PWD")" != "stride" ]; then
 fi
 
 # Update version 
+echo ">>> Updating version in app.go and config.go..."
+
 CONFIG_FILE=cmd/strided/config/config.go
 APP_FILE=app/app.go
 
 sed -i '' "s/$OLD_VERSION/$NEW_VERSION/g" $CONFIG_FILE
 sed -i '' "s/$OLD_VERSION/$NEW_VERSION/g" $APP_FILE
 
+echo ">>> Committing changes..."
+
 git add $CONFIG_FILE $APP_FILE
 git commit -m "updated version from $OLD_VERSION to $NEW_VERSION"
 
 
 # Update package name
+echo ">>> Updating package name..."
+
 OLD_MAJOR_VERSION=v$(echo "$OLD_VERSION" | cut -d '.' -f 1)
 NEW_MAJOR_VERSION=v$(echo "$NEW_VERSION" | cut -d '.' -f 1)
 
@@ -54,10 +60,15 @@ sed -i '' "s|github.com/Stride-Labs/stride/$OLD_MAJOR_VERSION|github.com/Stride-
 git add .
 git commit -m "updated package from $OLD_MAJOR_VERSION -> $NEW_MAJOR_VERSION"
 
+echo ">>> Committing changes..."
+
 
 # Re-generate protos
+echo ">>> Rebuilding protos..."
+
 make proto-all
 
 git add .
 git commit -m 'generated protos'
 
+echo "Done"
