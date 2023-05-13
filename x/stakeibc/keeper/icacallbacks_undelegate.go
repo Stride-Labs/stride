@@ -39,6 +39,18 @@ func UndelegateCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, a
 	k.Logger(ctx).Info(utils.LogICACallbackWithHostZone(chainId, ICACallbackID_Undelegate,
 		"Starting undelegate callback for Epoch Unbonding Records: %+v", undelegateCallback.EpochUnbondingRecordIds))
 
+	// Regardless of failure/success/timeout, indicate that this ICA has completed
+	hostZone, found := k.GetHostZone(ctx, undelegateCallback.HostZoneId)
+	if !found {
+		return errorsmod.Wrapf(sdkerrors.ErrKeyNotFound, "Host zone not found: %s", undelegateCallback.HostZoneId)
+	}
+	for _, splitDelegation := range undelegateCallback.SplitDelegations {
+		if err := k.DecrementValidatorDelegationChangesInProgress(&hostZone, splitDelegation.Validator); err != nil {
+			return err
+		}
+	}
+	k.SetHostZone(ctx, hostZone)
+
 	// Check for timeout (ack nil)
 	// No need to reset the unbonding record status since it will get reverted when the channel is restored
 	if ackResponse.Status == icacallbackstypes.AckResponseStatus_TIMEOUT {
@@ -69,10 +81,6 @@ func UndelegateCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, a
 		icacallbackstypes.AckResponseStatus_SUCCESS, packet))
 
 	// Update delegation balances
-	hostZone, found := k.GetHostZone(ctx, undelegateCallback.HostZoneId)
-	if !found {
-		return errorsmod.Wrapf(sdkerrors.ErrKeyNotFound, "Host zone not found: %s", undelegateCallback.HostZoneId)
-	}
 	err := k.UpdateDelegationBalances(ctx, hostZone, undelegateCallback)
 	if err != nil {
 		k.Logger(ctx).Error(fmt.Sprintf("UndelegateCallback | %s", err.Error()))
