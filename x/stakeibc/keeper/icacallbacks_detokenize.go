@@ -25,7 +25,18 @@ func DetokenizeCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, a
 		return errorsmod.Wrapf(types.ErrUnmarshalFailure, "unable to unmarshal detokenize callback: %s", err.Error())
 	}
 	chainId := detokenizeCallback.Deposit.ChainId
+	deposit := detokenizeCallback.Deposit
 	k.Logger(ctx).Info(utils.LogICACallbackWithHostZone(chainId, ICACallbackID_Detokenize, "Starting detokenize callback"))
+
+	// Regardless of failure/success/timeout, indicate that this ICA has completed
+	hostZone, found := k.GetHostZone(ctx, chainId)
+	if !found {
+		return errorsmod.Wrapf(types.ErrHostZoneNotFound, "Host zone not found: %s", chainId)
+	}
+	if err := k.DecrementValidatorDelegationChangesInProgress(&hostZone, deposit.ValidatorAddress); err != nil {
+		return err
+	}
+	k.SetHostZone(ctx, hostZone)
 
 	// No action is necessary on a timeout
 	if ackResponse.Status == icacallbackstypes.AckResponseStatus_TIMEOUT {
@@ -39,21 +50,14 @@ func DetokenizeCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, a
 		k.Logger(ctx).Error(utils.LogICACallbackStatusWithHostZone(chainId, ICACallbackID_Detokenize,
 			icacallbackstypes.AckResponseStatus_FAILURE, packet))
 
-		k.RecordsKeeper.UpdateLSMTokenDepositStatus(ctx, *detokenizeCallback.Deposit, recordstypes.LSMTokenDeposit_DETOKENIZATION_FAILED)
+		k.RecordsKeeper.UpdateLSMTokenDepositStatus(ctx, *deposit, recordstypes.LSMTokenDeposit_DETOKENIZATION_FAILED)
 		return nil
 	}
 
 	k.Logger(ctx).Info(utils.LogICACallbackStatusWithHostZone(chainId, ICACallbackID_Detokenize,
 		icacallbackstypes.AckResponseStatus_SUCCESS, packet))
 
-	// Confirm host zone exists
-	hostZone, found := k.GetHostZone(ctx, chainId)
-	if !found {
-		return errorsmod.Wrapf(types.ErrHostZoneNotFound, "Host zone not found: %s", chainId)
-	}
-
 	// If the ICA succeeded, remove the token deposit
-	deposit := detokenizeCallback.Deposit
 	k.RecordsKeeper.RemoveLSMTokenDeposit(ctx, deposit.ChainId, deposit.Denom)
 
 	// Update delegation on the host zone and validator
