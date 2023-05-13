@@ -48,6 +48,21 @@ func RebalanceCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ac
 	chainId := rebalanceCallback.HostZoneId
 	k.Logger(ctx).Info(utils.LogICACallbackWithHostZone(chainId, ICACallbackID_Rebalance, "Starting rebalance callback"))
 
+	// Regardless of failure/success/timeout, indicate that this ICA has completed
+	hostZone, found := k.GetHostZone(ctx, rebalanceCallback.HostZoneId)
+	if !found {
+		return errorsmod.Wrapf(sdkerrors.ErrKeyNotFound, "Host zone not found: %s", rebalanceCallback.HostZoneId)
+	}
+	for _, rebalancing := range rebalanceCallback.Rebalancings {
+		if err := k.DecrementValidatorDelegationChangesInProgress(&hostZone, rebalancing.SrcValidator); err != nil {
+			return err
+		}
+		if err := k.DecrementValidatorDelegationChangesInProgress(&hostZone, rebalancing.DstValidator); err != nil {
+			return err
+		}
+	}
+	k.SetHostZone(ctx, hostZone)
+
 	// Check for timeout (ack nil)
 	// No action is necessary on a timeout
 	if ackResponse.Status == icacallbackstypes.AckResponseStatus_TIMEOUT {
@@ -66,12 +81,6 @@ func RebalanceCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ac
 
 	k.Logger(ctx).Info(utils.LogICACallbackStatusWithHostZone(chainId, ICACallbackID_Rebalance,
 		icacallbackstypes.AckResponseStatus_SUCCESS, packet))
-
-	// Confirm the host zone exists
-	hostZone, found := k.GetHostZone(ctx, chainId)
-	if !found {
-		return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "host zone not found %s", chainId)
-	}
 
 	// Assemble a map from validatorAddress -> validator
 	valAddrMap := make(map[string]*types.Validator)
