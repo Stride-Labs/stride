@@ -232,7 +232,7 @@ func (s *KeeperTestSuite) TestDelegatorSharesCallback_Retry_DelegationICAInProgr
 	actualHostZone, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx, HostChainId)
 	s.Require().True(found, "host zone found")
 
-	initialDelegation := actualHostZone.Validators[tc.valIndexQueried].Delegation
+	initialDelegation := initialHostZone.Validators[tc.valIndexQueried].Delegation
 	s.Require().Equal(initialDelegation.Int64(), actualHostZone.Validators[tc.valIndexQueried].Delegation.Int64(), "validator delegation")
 
 	// Confirm the query was resubmitted
