@@ -14,6 +14,7 @@ func (s *KeeperTestSuite) TestIBCDenom() {
 		"cosmosvaloper17kht2x2ped6qytr2kklevtvmxpw7wq9rarvcqz",
 		"cosmosvaloper1nnurja9zt97huqvsfuartetyjx63tc5zxcyn3n",
 		"cosmosvaloper1py0fvhdtq4au3d9l88rec6vyda3e0wttr0ks75",
+		"cosmosvaloper1c5jnf370kaxnv009yhc3jt27f549l5u3u8rtpy",
 	}
 	channels := []string{
 		"0",
@@ -21,11 +22,11 @@ func (s *KeeperTestSuite) TestIBCDenom() {
 		"2",
 	}
 	recordIds := []string{
-		"1", "2", "3", "4", "5",
+		"1", "2", "3", "4", "5", "6",
 	}
 	for _, channel := range channels {
 		fmt.Printf("## Channel-%s\n", channel)
-		for i := 0; i < 4; i++ {
+		for i := 0; i < len(validators); i++ {
 			validatorId := fmt.Sprintf("%d", i+1)
 			address := validators[i]
 
