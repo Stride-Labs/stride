@@ -174,4 +174,8 @@ replace (
 
 	// use the version of grpc compatible with the regen networks protobufs.
 	google.golang.org/grpc => google.golang.org/grpc v1.50.1
+	
+	// use new version of cosmos-ledger-go for nano s+ support
+	github.com/cosmos/ledger-cosmos-go v0.12.1 => github.com/cosmos/ledger-cosmos-go v0.12.2
+
 )
