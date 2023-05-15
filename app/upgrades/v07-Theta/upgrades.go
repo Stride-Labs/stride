@@ -36,7 +36,7 @@ func CreateUpgradeHandler(
 	configurator module.Configurator,
 	cdc codec.Codec,
 	ibcKeeper ibckeeper.Keeper,
-	consumerKeeper ccvconsumerkeeper.Keeper,
+	consumerKeeper *ccvconsumerkeeper.Keeper,
 	stakingKeeper stakingkeeper.Keeper,
 ) upgradetypes.UpgradeHandler {
 	return func(ctx sdk.Context, _ upgradetypes.Plan, vm module.VersionMap) (module.VersionMap, error) {
@@ -64,8 +64,8 @@ func CreateUpgradeHandler(
 		cdc.MustUnmarshalJSON(appState[consumertypes.ModuleName], &consumerGenesis)
 
 		consumerGenesis.PreCCV = true
+		// Temp fix
 		consumerGenesis.Params.SoftOptOutThreshold = "0.05"
-		consumerKeeper.SetStandaloneStakingKeeper(stakingKeeper)
 		consumerKeeper.InitGenesis(ctx, &consumerGenesis)
 
 		ctx.Logger().Info("start to run module migrations...")

@@ -505,6 +505,7 @@ func NewStrideApp(
 		app.IBCKeeper,
 		authtypes.FeeCollectorName,
 	)
+	app.ConsumerKeeper.SetStandaloneStakingKeeper(app.StakingKeeper)
 
 	// register slashing module StakingHooks to the consumer keeper
 	app.ConsumerKeeper = *app.ConsumerKeeper.SetHooks(app.SlashingKeeper.Hooks())
