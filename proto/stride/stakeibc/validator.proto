@@ -25,6 +25,7 @@ message Validator {
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false
   ];
-  bool slash_query_in_progress = 11;
+  int64 delegation_changes_in_progress = 11;
+  bool slash_query_in_progress = 13;
   reserved 3, 4, 7, 8;
 }

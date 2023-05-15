@@ -52,14 +52,16 @@ func (s *KeeperTestSuite) SetupUndelegateCallback() UndelegateCallbackTestCase {
 	val2UndelegationAmount := balanceToUnstake.Sub(val1UndelegationAmount)
 	epochNumber := uint64(1)
 	val1 := types.Validator{
-		Name:       "val1",
-		Address:    "val1_address",
-		Delegation: val1Bal,
+		Name:                        "val1",
+		Address:                     "val1_address",
+		Delegation:                  val1Bal,
+		DelegationChangesInProgress: 1,
 	}
 	val2 := types.Validator{
-		Name:       "val2",
-		Address:    "val2_address",
-		Delegation: val2Bal,
+		Name:                        "val2",
+		Address:                     "val2_address",
+		Delegation:                  val2Bal,
+		DelegationChangesInProgress: 1,
 	}
 	depositAddress := types.NewHostZoneDepositAddress(HostChainId)
 	zoneAccountBalance := balanceToUnstake.Add(sdkmath.NewInt(10))
@@ -160,11 +162,15 @@ func (s *KeeperTestSuite) TestUndelegateCallback_Successful() {
 	// Check that Delegations on validators have decreased
 	s.Require().True(len(hostZone.Validators) == 2, "Expected 2 validators")
 	val1 := hostZone.Validators[0]
-	s.Require().Equal(val1.Delegation, initialState.val1Bal.Sub(tc.val1UndelegationAmount), "val1 delegation has decreased")
 	val2 := hostZone.Validators[1]
-	// Check that the host zone unbonding records have been updated
-	s.Require().Equal(val2.Delegation, initialState.val2Bal.Sub(tc.val2UndelegationAmount), "val2 delegation has decreased")
+	s.Require().Equal(initialState.val1Bal.Sub(tc.val1UndelegationAmount), val1.Delegation, "val1 delegation has decreased")
+	s.Require().Equal(initialState.val2Bal.Sub(tc.val2UndelegationAmount), val2.Delegation, "val2 delegation has decreased")
 
+	// Check that the number of delegation changes in progress was reset to 0
+	s.Require().Equal(0, int(val1.DelegationChangesInProgress), "val1 delegation changes in progress")
+	s.Require().Equal(0, int(val2.DelegationChangesInProgress), "val2 delegation changes in progress")
+
+	// Check that the host zone unbonding records have been updated
 	epochUnbondingRecord, found := s.App.RecordsKeeper.GetEpochUnbondingRecord(s.Ctx, initialState.epochNumber)
 	s.Require().True(found, "epoch unbonding record found")
 	s.Require().Equal(len(epochUnbondingRecord.HostZoneUnbondings), 1, "1 host zone unbonding found")
@@ -182,16 +188,20 @@ func (s *KeeperTestSuite) checkStateIfUndelegateCallbackFailed(tc UndelegateCall
 	// Check that total delegation has NOT decreased on the host zone
 	hostZone, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx, HostChainId)
 	s.Require().True(found, "host zone found")
-	s.Require().Equal(hostZone.TotalDelegations, initialState.totalDelegations, "total delegation has NOT decreased on the host zone")
+	s.Require().Equal(initialState.totalDelegations, hostZone.TotalDelegations, "total delegation has NOT decreased on the host zone")
 
 	// Check that Delegations on validators have NOT decreased
 	s.Require().True(len(hostZone.Validators) == 2, "Expected 2 validators")
 	val1 := hostZone.Validators[0]
-	s.Require().Equal(val1.Delegation, initialState.val1Bal, "val1 delegation has NOT decreased")
 	val2 := hostZone.Validators[1]
-	// Check that the host zone unbonding records have not been updated
-	s.Require().Equal(val2.Delegation, initialState.val2Bal, "val2 delegation has NOT decreased")
+	s.Require().Equal(initialState.val1Bal, val1.Delegation, "val1 delegation has NOT decreased")
+	s.Require().Equal(initialState.val2Bal, val2.Delegation, "val2 delegation has NOT decreased")
 
+	// Check that the number of delegation changes in progress was reset
+	s.Require().Equal(0, int(val1.DelegationChangesInProgress), "val1 delegation changes in progress")
+	s.Require().Equal(0, int(val2.DelegationChangesInProgress), "val2 delegation changes in progress")
+
+	// Check that the host zone unbonding records have not been updated
 	epochUnbondingRecord, found := s.App.RecordsKeeper.GetEpochUnbondingRecord(s.Ctx, initialState.epochNumber)
 	s.Require().True(found, "epoch unbonding record found")
 	s.Require().Equal(len(epochUnbondingRecord.HostZoneUnbondings), 1, "1 host zone unbonding found")
@@ -235,7 +245,6 @@ func (s *KeeperTestSuite) TestUndelegateCallback_WrongCallbackArgs() {
 
 	err := stakeibckeeper.UndelegateCallback(s.App.StakeibcKeeper, s.Ctx, tc.validArgs.packet, tc.validArgs.ackResponse, invalidCallbackArgs)
 	s.Require().EqualError(err, "Unable to unmarshal undelegate callback args: unexpected EOF: unable to unmarshal data structure")
-	s.checkStateIfUndelegateCallbackFailed(tc)
 }
 
 func (s *KeeperTestSuite) TestUndelegateCallback_HostNotFound() {

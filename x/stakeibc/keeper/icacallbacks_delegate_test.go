@@ -45,14 +45,16 @@ func (s *KeeperTestSuite) SetupDelegateCallback() DelegateCallbackTestCase {
 	val2RelAmt := sdkmath.NewInt(180_000)
 
 	val1 := types.Validator{
-		Name:       "val1",
-		Address:    "val1_address",
-		Delegation: val1Bal,
+		Name:                        "val1",
+		Address:                     "val1_address",
+		Delegation:                  val1Bal,
+		DelegationChangesInProgress: 1,
 	}
 	val2 := types.Validator{
-		Name:       "val2",
-		Address:    "val2_address",
-		Delegation: val2Bal,
+		Name:                        "val2",
+		Address:                     "val2_address",
+		Delegation:                  val2Bal,
+		DelegationChangesInProgress: 1,
 	}
 	hostZone := stakeibc.HostZone{
 		ChainId:          HostChainId,
@@ -125,11 +127,15 @@ func (s *KeeperTestSuite) TestDelegateCallback_Successful() {
 	s.Require().True(found)
 	s.Require().Equal(initialState.totalDelegation.Add(initialState.balanceToStake), hostZone.TotalDelegations, "total delegation should have increased")
 
-	// Confirm delegations have been added to validators
+	// Confirm delegations have been added to validators and number delegation changes in progress was reduced
 	val1 := hostZone.Validators[0]
 	val2 := hostZone.Validators[1]
-	s.Require().Equal(initialState.val1Bal.Add(initialState.val1RelAmt), val1.Delegation, "val1 balance should have increased")
-	s.Require().Equal(initialState.val2Bal.Add(initialState.val2RelAmt), val2.Delegation, "val2 balance should have increased")
+	s.Require().Equal(val1.Delegation, initialState.val1Bal.Add(initialState.val1RelAmt), "val1 balance should have increased")
+	s.Require().Equal(val2.Delegation, initialState.val2Bal.Add(initialState.val2RelAmt), "val2 balance should have increased")
+
+	// Confirm the number of delegations in progress has decreased
+	s.Require().Equal(0, int(val1.DelegationChangesInProgress), "val1 delegation changes in progress")
+	s.Require().Equal(0, int(val2.DelegationChangesInProgress), "val2 delegation changes in progress")
 
 	// Confirm deposit record has been removed
 	records := s.App.RecordsKeeper.GetAllDepositRecord(s.Ctx)
@@ -141,6 +147,10 @@ func (s *KeeperTestSuite) checkDelegateStateIfCallbackFailed(tc DelegateCallback
 	hostZone, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx, HostChainId)
 	s.Require().True(found)
 	s.Require().Equal(tc.initialState.totalDelegation, hostZone.TotalDelegations, "total delegation should not have increased")
+
+	// Confirm the number of delegations in progress has decreased
+	s.Require().Equal(0, int(hostZone.Validators[0].DelegationChangesInProgress), "val1 delegation changes in progress")
+	s.Require().Equal(0, int(hostZone.Validators[1].DelegationChangesInProgress), "val2 delegation changes in progress")
 
 	// Confirm deposit record has NOT been removed
 	records := s.App.RecordsKeeper.GetAllDepositRecord(s.Ctx)
@@ -181,7 +191,6 @@ func (s *KeeperTestSuite) TestDelegateCallback_WrongCallbackArgs() {
 
 	err := stakeibckeeper.DelegateCallback(s.App.StakeibcKeeper, s.Ctx, tc.validArgs.packet, tc.validArgs.ackResponse, invalidCallbackArgs)
 	s.Require().EqualError(err, "Unable to unmarshal delegate callback args: unexpected EOF: unable to unmarshal data structure")
-	s.checkDelegateStateIfCallbackFailed(tc)
 }
 
 func (s *KeeperTestSuite) TestDelegateCallback_HostNotFound() {
@@ -192,12 +201,6 @@ func (s *KeeperTestSuite) TestDelegateCallback_HostNotFound() {
 
 	err := stakeibckeeper.DelegateCallback(s.App.StakeibcKeeper, s.Ctx, tc.validArgs.packet, tc.validArgs.ackResponse, tc.validArgs.args)
 	s.Require().EqualError(err, "host zone not found GAIA: invalid request")
-
-	// Confirm deposit record has NOT been removed
-	records := s.App.RecordsKeeper.GetAllDepositRecord(s.Ctx)
-	s.Require().Len(records, 1, "number of deposit records")
-	record := records[0]
-	s.Require().Equal(recordtypes.DepositRecord_DELEGATION_QUEUE, record.Status, "deposit record status should not have changed")
 }
 
 func (s *KeeperTestSuite) TestDelegateCallback_MissingValidator() {
@@ -217,6 +220,5 @@ func (s *KeeperTestSuite) TestDelegateCallback_MissingValidator() {
 	s.Require().NoError(err)
 
 	err = stakeibckeeper.DelegateCallback(s.App.StakeibcKeeper, s.Ctx, tc.validArgs.packet, tc.validArgs.ackResponse, invalidCallbackArgs)
-	s.Require().ErrorContains(err, "Could not find validator address_dne on host zone GAIA: validator not found")
-	s.checkDelegateStateIfCallbackFailed(tc)
+	s.Require().ErrorContains(err, "validator not found")
 }

@@ -92,6 +92,17 @@ func (k Keeper) RebalanceDelegationsForHostZone(ctx sdk.Context, chainId string)
 		if err != nil {
 			return errorsmod.Wrapf(err, "Failed to SubmitTxs for %s, messages: %+v", hostZone.ChainId, msgs)
 		}
+
+		// flag the delegation change in progress on each validator
+		for _, rebalancing := range rebalancingsBatch {
+			if err := k.IncrementValidatorDelegationChangesInProgress(&hostZone, rebalancing.SrcValidator); err != nil {
+				return err
+			}
+			if err := k.IncrementValidatorDelegationChangesInProgress(&hostZone, rebalancing.DstValidator); err != nil {
+				return err
+			}
+		}
+		k.SetHostZone(ctx, hostZone)
 	}
 
 	return nil

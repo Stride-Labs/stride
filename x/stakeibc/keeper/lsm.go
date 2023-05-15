@@ -254,9 +254,6 @@ func (k Keeper) DetokenizeLSMDeposit(ctx sdk.Context, hostZone types.HostZone, d
 		return err
 	}
 
-	// Mark the deposit as IN_PROGRESS
-	k.RecordsKeeper.UpdateLSMTokenDepositStatus(ctx, deposit, recordstypes.LSMTokenDeposit_DETOKENIZATION_IN_PROGRESS)
-
 	// Submit the ICA with a coonservative timeout
 	timeout := uint64(ctx.BlockTime().UnixNano() + (DetokenizationTimeout).Nanoseconds())
 	if _, err := k.SubmitTxs(
@@ -270,6 +267,15 @@ func (k Keeper) DetokenizeLSMDeposit(ctx sdk.Context, hostZone types.HostZone, d
 	); err != nil {
 		return errorsmod.Wrapf(err, "unable to submit detokenization ICA for %s", deposit.Denom)
 	}
+
+	// Mark the deposit as IN_PROGRESS
+	k.RecordsKeeper.UpdateLSMTokenDepositStatus(ctx, deposit, recordstypes.LSMTokenDeposit_DETOKENIZATION_IN_PROGRESS)
+
+	// Update the validator to say that it has a delegation change in progress
+	if err := k.IncrementValidatorDelegationChangesInProgress(&hostZone, deposit.ValidatorAddress); err != nil {
+		return err
+	}
+	k.SetHostZone(ctx, hostZone)
 
 	return nil
 }

@@ -132,6 +132,26 @@ func (s *KeeperTestSuite) CheckUnbondingMessages(tc UnbondingTestCase, expectedU
 		s.Require().Equal(expected.UnbondAmount.Int64(), actualSplit.Amount.Int64(), "callback message amount - index %d", i)
 	}
 
+	// Check the delegation change in progress was incremented from each that had an unbonding
+	actualHostZone, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx, HostChainId)
+	s.Require().True(found, "host zone should have been found")
+
+	for _, actualValidator := range actualHostZone.Validators {
+		validatorUnbonded := false
+		for _, unbondedVal := range expectedUnbondings {
+			if actualValidator.Address == unbondedVal.Validator {
+				validatorUnbonded = true
+			}
+		}
+
+		expectedDelegationChangesInProgress := 0
+		if validatorUnbonded {
+			expectedDelegationChangesInProgress = 1
+		}
+		s.Require().Equal(expectedDelegationChangesInProgress, int(actualValidator.DelegationChangesInProgress),
+			"validator %s delegation changes in progress", actualValidator.Address)
+	}
+
 	// Check that the unbond event was emitted with the proper unbond amount
 	s.CheckEventValueEmitted(types.EventTypeUndelegation, types.AttributeKeyTotalUnbondAmount, tc.totalUnbondAmount.String())
 }

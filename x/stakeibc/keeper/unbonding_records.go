@@ -307,6 +307,14 @@ func (k Keeper) UnbondFromHostZone(ctx sdk.Context, hostZone types.HostZone) err
 		); err != nil {
 			return errorsmod.Wrapf(err, "unable to submit unbonding ICA for %s", hostZone.ChainId)
 		}
+
+		// flag the delegation change in progress on each validator
+		for _, unbonding := range unbondingsBatch {
+			if err := k.IncrementValidatorDelegationChangesInProgress(&hostZone, unbonding.Validator); err != nil {
+				return err
+			}
+		}
+		k.SetHostZone(ctx, hostZone)
 	}
 
 	// Update the epoch unbonding record status

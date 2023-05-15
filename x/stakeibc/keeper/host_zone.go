@@ -189,6 +189,36 @@ func (k Keeper) IncrementValidatorSlashQueryProgress(
 	return nil
 }
 
+// Increments the number of validator delegation changes in progress by 1
+// Note: This modifies the original host zone struct. The calling function must Set this host zone
+// for changes to persist
+func (k Keeper) IncrementValidatorDelegationChangesInProgress(hostZone *types.HostZone, validatorAddress string) error {
+	validator, valIndex, found := GetValidatorFromAddress(hostZone.Validators, validatorAddress)
+	if !found {
+		return errorsmod.Wrapf(types.ErrValidatorNotFound, "validator %s not found", validatorAddress)
+	}
+	validator.DelegationChangesInProgress += 1
+	hostZone.Validators[valIndex] = &validator
+	return nil
+}
+
+// Decrements the number of validator delegation changes in progress by 1
+// Note: This modifies the original host zone struct. The calling function must Set this host zone
+// for changes to persist
+func (k Keeper) DecrementValidatorDelegationChangesInProgress(hostZone *types.HostZone, validatorAddress string) error {
+	validator, valIndex, found := GetValidatorFromAddress(hostZone.Validators, validatorAddress)
+	if !found {
+		return errorsmod.Wrapf(types.ErrValidatorNotFound, "validator %s not found", validatorAddress)
+	}
+	if validator.DelegationChangesInProgress == 0 {
+		return errorsmod.Wrapf(types.ErrInvalidValidatorDelegationUpdates,
+			"cannot decrement the number of delegation updates if the validator has 0 updates in progress")
+	}
+	validator.DelegationChangesInProgress -= 1
+	hostZone.Validators[valIndex] = &validator
+	return nil
+}
+
 // Appends a validator to host zone (if the host zone is not already at capacity)
 // If the validator is added through governance, the weight is equal to the minimum weight across the set
 // If the validator is added through an admin transactions, the weight is specified in the message
