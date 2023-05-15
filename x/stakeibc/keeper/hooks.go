@@ -31,8 +31,6 @@ func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochInfo epochstypes.EpochInf
 		k.CleanupEpochUnbondingRecords(ctx, epochNumber)
 		// Create an empty unbonding record for this epoch
 		k.CreateEpochUnbondingRecord(ctx, epochNumber)
-		// Rebalance stake according to validator weights
-		k.RebalanceAllHostZones(ctx, epochNumber)
 	}
 
 	// Stride Epoch - Process Deposits and Delegations
@@ -68,6 +66,13 @@ func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochInfo epochstypes.EpochInf
 		// Reinvest staking rewards
 		if epochNumber%reinvestInterval == 0 { // allow a few blocks from UpdateUndelegatedBal to avoid conflicts
 			k.ReinvestRewards(ctx)
+		}
+
+		// Rebalance stake according to validator weights
+		// This should only be run once per day, but it should not be run on a stride epoch that
+		//   overlaps the day epoch, otherwise the unbondings could cause a redelegation to fail
+		if epochNumber%4 == 1 {
+			k.RebalanceAllHostZones(ctx, epochNumber)
 		}
 	}
 	if epochInfo.Identifier == epochstypes.MINT_EPOCH {
