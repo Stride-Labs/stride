@@ -3,27 +3,27 @@
 ###   ANY CHANGES WILL BE OVERWRITTEN.   ###
 ############################################
 #### SETUP HOT WALLET (Only needs to be run once)
-echo "$HOT_WALLET_1_MNEMONIC" | build/gaiad keys add hot --recover --keyring-backend test 
+echo "$HOT_WALLET_1_MNEMONIC" | build/umeed keys add hot --recover --keyring-backend test 
 
 
 #### START RELAYER
 # NOTE: CREATING CONNECTIONS WITH THE GO RELAYER IS BROKEN, USE HERMES
 # Create connections and channels
-# docker-compose -f scripts/local-to-mainnet/docker-compose.yml run --rm relayer rly transact link stride-host 
+docker-compose -f scripts/local-to-mainnet/docker-compose.yml run --rm relayer rly transact link stride-host 
 
 # (OR) If the go relayer isn't working, use hermes (NOTE: you'll have to add the connections to the relayer config in `scripts/state/relayer/config/config.yaml`)
-docker-compose -f scripts/local-to-mainnet/docker-compose.yml run --rm hermes hermes create connection --a-chain cosmoshub-4 --b-chain local-test-1
-docker-compose -f scripts/local-to-mainnet/docker-compose.yml run --rm hermes hermes create channel --a-chain local-test-1 --a-connection connection-0 --a-port transfer --b-port transfer
+# docker-compose -f scripts/local-to-mainnet/docker-compose.yml run --rm hermes hermes create connection --a-chain umee-1 --b-chain stride-local-15
+# docker-compose -f scripts/local-to-mainnet/docker-compose.yml run --rm hermes hermes create channel --a-chain stride-local-15 --a-connection connection-0 --a-port transfer --b-port transfer
 
 # Ensure Relayer Config is updated (`scripts/local-to-mainnet/state/relayer/config/config.yaml`)
 #    paths:
 #     stride-host:
 #       src:
-#         chain-id: local-test-1
+#         chain-id: stride-local-15
 #         client-id: 07-tendermint-0
 #         connection-id: connection-0
 #       dst:
-#         chain-id: cosmoshub-4
+#         chain-id: umee-1
 #         client-id: {CLIENT-ID}
 #         connection-id: {CONNECTION-ID}
 
@@ -38,7 +38,7 @@ docker-compose -f scripts/local-to-mainnet/docker-compose.yml logs -f relayer | 
 
 #### REGISTER HOST
 # IBC Transfer from HOST to stride (from relayer account)
-build/gaiad tx ibc-transfer transfer transfer $transfer_channel stride1u20df3trc2c2zdhm8qvh2hdjx9ewh00sv6eyy8 4000000uatom --from hot --chain-id cosmoshub-4 -y --keyring-backend test --node http://gaia-fleet-direct.main.stridenet.co:26657
+build/umeed tx ibc-transfer transfer transfer $transfer_channel stride1u20df3trc2c2zdhm8qvh2hdjx9ewh00sv6eyy8 4000000uumee --from hot --chain-id umee-1 -y --keyring-backend test --node https://umee-rpc.polkachu.com:443 --fees 150000uumee
 
 # Confirm funds were recieved on stride and get IBC denom
 build/strided --home scripts/state/stride1 q bank balances stride1u20df3trc2c2zdhm8qvh2hdjx9ewh00sv6eyy8
@@ -46,11 +46,15 @@ build/strided --home scripts/state/stride1 q bank balances stride1u20df3trc2c2zd
 # Register host zone
 IBC_DENOM=$(build/strided --home scripts/state/stride1 q bank balances stride1u20df3trc2c2zdhm8qvh2hdjx9ewh00sv6eyy8 | grep ibc | awk '{print $2}' | tr -d '"') && echo $IBC_DENOM
 build/strided --home scripts/state/stride1 tx stakeibc register-host-zone \
-    connection-0 uatom cosmos $IBC_DENOM channel-0 1 \
+    connection-0 uumee umee $IBC_DENOM channel-0 1 \
     --from admin --gas 1000000 -y
 
 # Add validator
-build/strided --home scripts/state/stride1 tx stakeibc add-validator cosmoshub-4 imperator cosmosvaloper1vvwtk805lxehwle9l4yudmq6mn0g32px9xtkhc 10 5 --chain-id local-test-1 --keyring-backend test --from admin -y
+build/strided --home scripts/state/stride1 tx stakeibc add-validator umee-1 imperator umeevaloper1kvh5n7skften3fv2ry6yc5jkpaz0rwzrkyzeft 10 5 --chain-id stride-local-15 --keyring-backend test --from admin -y
+
+echo '{"validators": [{"name": "imperator", "address": "umeevaloper1kvh5n7skften3fv2ry6yc5jkpaz0rwzrkyzeft", "weight": 10}]}' > validator.json
+build/strided --home scripts/state/stride1 tx stakeibc add-validators umee-1 validator.json --gas 1000000 --chain-id stride-local-15 --keyring-backend test --from admin -y
+rm validator.json
 
 # Confirm ICA channels were registered
 build/strided --home scripts/state/stride1 q stakeibc list-host-zone
@@ -59,44 +63,38 @@ build/strided --home scripts/state/stride1 q stakeibc list-host-zone
 #### FLOW
 ## Go Through Flow
 # Liquid stake (then wait and LS again)
-build/strided --home scripts/state/stride1 tx stakeibc liquid-stake 1000000 uatom --keyring-backend test --from admin -y --chain-id local-test-1 -y
+build/strided --home scripts/state/stride1 tx stakeibc liquid-stake 1000000 uumee --keyring-backend test --from admin -y --chain-id stride-local-15 -y
 
 # Confirm stTokens, StakedBal, and Redemption Rate
 build/strided --home scripts/state/stride1 q bank balances stride1u20df3trc2c2zdhm8qvh2hdjx9ewh00sv6eyy8
 build/strided --home scripts/state/stride1 q stakeibc list-host-zone
 
 # Redeem
-build/strided --home scripts/state/stride1 tx stakeibc redeem-stake 1000 cosmoshub-4 cosmos1c37n9aywapx2v0s6vk2yedydkkhq65zzeupe92 --from admin --keyring-backend test --chain-id local-test-1 -y
+build/strided --home scripts/state/stride1 tx stakeibc redeem-stake 1000 umee-1 umee1qgrle8mfv7jrgfw57dlxtjzu0q9fa8zxdutcwk --from admin --keyring-backend test --chain-id stride-local-15 -y
 
 # Confirm stTokens and StakedBal
 build/strided --home scripts/state/stride1 q bank balances stride1u20df3trc2c2zdhm8qvh2hdjx9ewh00sv6eyy8
 build/strided --home scripts/state/stride1 q stakeibc list-host-zone
 
 # Add another validator
-build/strided --home scripts/state/stride1 tx stakeibc add-validator cosmoshub-4 notional cosmosvaloper1083svrca4t350mphfv9x45wq9asrs60cdmrflj 10 5 --chain-id local-test-1 --keyring-backend test --from admin -y
+echo '{"validators": [{"name": "notional", "address": "umeevaloper1dmahqt84r9je3sqvljzjrttjj78cmrf39k5zhs", "weight": 10}]}' > validator.json
+build/strided --home scripts/state/stride1 tx stakeibc add-validators umee-1 validator.json --gas 1000000 --chain-id stride-local-15 --keyring-backend test --from admin -y
+rm validator.json
 
 # Liquid stake and confirm the stake was split 50/50 between the validators
-build/strided --home scripts/state/stride1 tx stakeibc liquid-stake 1000000 uatom --keyring-backend test --from admin -y --chain-id local-test-1 -y
+build/strided --home scripts/state/stride1 tx stakeibc liquid-stake 1000000 uumee --keyring-backend test --from admin -y --chain-id stride-local-15 -y
 
 # Change validator weights
-build/strided --home scripts/state/stride1 tx stakeibc change-validator-weight cosmoshub-4 cosmosvaloper1vvwtk805lxehwle9l4yudmq6mn0g32px9xtkhc 1 --from admin -y
-build/strided --home scripts/state/stride1 tx stakeibc change-validator-weight cosmoshub-4 cosmosvaloper1083svrca4t350mphfv9x45wq9asrs60cdmrflj 49 --from admin -y
+build/strided --home scripts/state/stride1 tx stakeibc change-validator-weight umee-1 umeevaloper1kvh5n7skften3fv2ry6yc5jkpaz0rwzrkyzeft 1 --from admin -y
+build/strided --home scripts/state/stride1 tx stakeibc change-validator-weight umee-1 umeevaloper1dmahqt84r9je3sqvljzjrttjj78cmrf39k5zhs 49 --from admin -y
 
 # LS and confirm delegation aligned with new weights
-build/strided --home scripts/state/stride1 tx stakeibc liquid-stake 1000000 uatom --keyring-backend test --from admin -y --chain-id local-test-1 -y
-
-# Call rebalance to and confirm new delegations
-build/strided --home scripts/state/stride1 tx stakeibc rebalance-validators cosmoshub-4 5 --from admin
-
-# Clear balances
-fee_address=$(build/strided --home scripts/state/stride1 q stakeibc show-host-zone osmosis-1 | grep feeAccount -A 1 | grep address | awk '{print $2}') && echo $fee_address
-balance=$(build/osmosisd --home scripts/state/stride1 q bank balances $fee_address | grep amount | awk '{print $3}' | tr -d '"') && echo $balance
-build/strided --home scripts/state/stride1 tx stakeibc clear-balance cosmoshub-4 $balance $transfer_channel --from admin
+build/strided --home scripts/state/stride1 tx stakeibc liquid-stake 1000000 uumee --keyring-backend test --from admin -y --chain-id stride-local-15 -y
 
 # Update delegations (just submit this query and confirm the ICQ callback displays in the stride logs)
 # Must be submitted in ICQ window
-build/strided --home scripts/state/stride1 tx stakeibc update-delegation cosmoshub-4 cosmosvaloper1vvwtk805lxehwle9l4yudmq6mn0g32px9xtkhc --from admin -y
+build/strided --home scripts/state/stride1 tx stakeibc update-delegation umee-1 umeevaloper1kvh5n7skften3fv2ry6yc5jkpaz0rwzrkyzeft --from admin -y
 
 #### MISC 
 # If a channel closes, restore it with:
-build/strided --home scripts/state/stride1 tx stakeibc restore-interchain-account cosmoshub-4 {DELEGATION | WITHDRAWAL | FEE | REDEMPTION} --from admin
+build/strided --home scripts/state/stride1 tx stakeibc restore-interchain-account umee-1 {DELEGATION | WITHDRAWAL | FEE | REDEMPTION} --from admin

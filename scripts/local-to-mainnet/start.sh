@@ -3,29 +3,36 @@
 set -eu 
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 
-# DO NOT USE STRIDE MAINNET CHAIN ID!
-STRIDE_CHAIN_ID=local-test-1
-HOST_CHAIN_ID=cosmoshub-4
-HOST_ENDPOINT=gaia-fleet-direct.main.stridenet.co
-HOST_ACCOUNT_PREFIX=cosmos
-HOST_DENOM=uatom
-HOST_BINARY=build/gaiad
+### MODIFY VARIABLES BELOW HERE ###
+# kill docker containers between runs
+
+# Note: always use a new chain id (increment the suffix #) at each run
+# DO NOT USE STRIDE MAINNET CHAIN ID! 
+STRIDE_CHAIN_ID=stride-local-15 # increment this each run
+HOST_CHAIN_ID=umee-1 ## chain id on the host
+HOST_RPC=https://umee-rpc.polkachu.com:443 ### RPC on the host 
+HOST_ACCOUNT_PREFIX=umee
+HOST_DENOM=uumee
+HOST_BINARY=build/umeed
+HOST_COIN_TYPE=118
 HOST_VAL_NAME_1=imperator
-HOST_VAL_ADDRESS_1=cosmosvaloper1vvwtk805lxehwle9l4yudmq6mn0g32px9xtkhc
+HOST_VAL_ADDRESS_1=umeevaloper1kvh5n7skften3fv2ry6yc5jkpaz0rwzrkyzeft
 HOST_VAL_NAME_2=notional
-HOST_VAL_ADDRESS_2=cosmosvaloper1083svrca4t350mphfv9x45wq9asrs60cdmrflj
-HOT_WALLET_1_ADDRESS=cosmos1c37n9aywapx2v0s6vk2yedydkkhq65zzeupe92
+HOST_VAL_ADDRESS_2=umeevaloper1dmahqt84r9je3sqvljzjrttjj78cmrf39k5zhs
+HOT_WALLET_1_ADDRESS=umee1qgrle8mfv7jrgfw57dlxtjzu0q9fa8zxdutcwk
+
+### STOP MODIFYING VARIABLES BELOW HERE ###
+
+HERMES_STRIDE_MNEMONIC="alter old invest friend relief slot swear pioneer syrup economy vendor tray focus hedgehog artist legend antenna hair almost donkey spice protect sustain increase"
+RELAYER_STRIDE_MNEMONIC="pride narrow breeze fitness sign bounce dose smart squirrel spell length federal replace coral lunar thunder vital push nuclear crouch fun accident hood need"
 
 STATE=$SCRIPT_DIR/../state
 LOGS=$SCRIPT_DIR/../logs
 STRIDE_LOGS=$LOGS/stride.log
 DOCKER_COMPOSE="docker-compose -f $SCRIPT_DIR/docker-compose.yml"
 
-HERMES_STRIDE_MNEMONIC="alter old invest friend relief slot swear pioneer syrup economy vendor tray focus hedgehog artist legend antenna hair almost donkey spice protect sustain increase"
-RELAYER_STRIDE_MNEMONIC="pride narrow breeze fitness sign bounce dose smart squirrel spell length federal replace coral lunar thunder vital push nuclear crouch fun accident hood need"
-
 # cleanup any stale state
-make stop-docker
+make stop-local-to-main
 rm -rf $STATE $LOGS
 mkdir -p $STATE
 mkdir -p $LOGS
@@ -49,26 +56,27 @@ cp ${SCRIPT_DIR}/templates/hermes_config.toml $HERMES_CONFIG_FILE
 cp ${SCRIPT_DIR}/templates/relayer_config.yaml $RELAYER_CONFIG_FILE
 
 # Update relayer templates
-sed -i -E "s|STRIDE_CHAIN_ID|$STRIDE_CHAIN_ID|g" $HERMES_CONFIG_FILE
-sed -i -E "s|HOST_CHAIN_ID|$HOST_CHAIN_ID|g" $HERMES_CONFIG_FILE
-sed -i -E "s|HOST_ENDPOINT|$HOST_ENDPOINT|g" $HERMES_CONFIG_FILE
-sed -i -E "s|HOST_ACCOUNT_PREFIX|$HOST_ACCOUNT_PREFIX|g" $HERMES_CONFIG_FILE
-sed -i -E "s|HOST_DENOM|$HOST_DENOM|g" $HERMES_CONFIG_FILE
+# sed -i -E "s|STRIDE_CHAIN_ID|$STRIDE_CHAIN_ID|g" $HERMES_CONFIG_FILE
+# sed -i -E "s|HOST_CHAIN_ID|$HOST_CHAIN_ID|g" $HERMES_CONFIG_FILE
+# sed -i -E "s|HOST_ENDPOINT|$HOST_ENDPOINT|g" $HERMES_CONFIG_FILE
+# sed -i -E "s|HOST_ACCOUNT_PREFIX|$HOST_ACCOUNT_PREFIX|g" $HERMES_CONFIG_FILE
+# sed -i -E "s|HOST_DENOM|$HOST_DENOM|g" $HERMES_CONFIG_FILE
 
 sed -i -E "s|STRIDE_CHAIN_ID|$STRIDE_CHAIN_ID|g" $RELAYER_CONFIG_FILE
 sed -i -E "s|HOST_CHAIN_ID|$HOST_CHAIN_ID|g" $RELAYER_CONFIG_FILE
-sed -i -E "s|HOST_ENDPOINT|$HOST_ENDPOINT|g" $RELAYER_CONFIG_FILE
+sed -i -E "s|HOST_RPC|$HOST_RPC|g" $RELAYER_CONFIG_FILE
 sed -i -E "s|HOST_ACCOUNT_PREFIX|$HOST_ACCOUNT_PREFIX|g" $RELAYER_CONFIG_FILE
 sed -i -E "s|HOST_DENOM|$HOST_DENOM|g" $RELAYER_CONFIG_FILE
+sed -i -E "s|HOST_COIN_TYPE|$HOST_COIN_TYPE|g" $RELAYER_CONFIG_FILE
 
-echo "Adding Hermes keys"
-HERMES_CMD="$SCRIPT_DIR/../../build/hermes/release/hermes --config $STATE/hermes/config.toml"
-TMP_MNEMONICS=$STATE/mnemonic.txt 
-echo "$HERMES_STRIDE_MNEMONIC" > $TMP_MNEMONICS
-$HERMES_CMD keys add --key-name hrly1 --chain $STRIDE_CHAIN_ID --mnemonic-file $TMP_MNEMONICS --overwrite
-echo "$HOT_WALLET_2_MNEMONIC" > $TMP_MNEMONICS
-$HERMES_CMD keys add --key-name hrly2 --chain $HOST_CHAIN_ID --mnemonic-file $TMP_MNEMONICS --overwrite
-rm -f $TMP_MNEMONICS
+# echo "Adding Hermes keys"
+# HERMES_CMD="$SCRIPT_DIR/../../build/hermes/release/hermes --config $STATE/hermes/config.toml"
+# TMP_MNEMONICS=$STATE/mnemonic.txt 
+# echo "$HERMES_STRIDE_MNEMONIC" > $TMP_MNEMONICS
+# $HERMES_CMD keys add --key-name hrly1 --chain $STRIDE_CHAIN_ID --mnemonic-file $TMP_MNEMONICS --overwrite
+# echo "$HOT_WALLET_2_MNEMONIC" > $TMP_MNEMONICS
+# $HERMES_CMD keys add --key-name hrly2 --chain $HOST_CHAIN_ID --mnemonic-file $TMP_MNEMONICS --overwrite
+# rm -f $TMP_MNEMONICS
 
 echo "Adding Relayer keys"
 RELAYER_CMD="$SCRIPT_DIR/../../build/relayer --home $STATE/relayer"
@@ -93,7 +101,7 @@ sed -i -E "s|HOST_CHAIN_ID|$HOST_CHAIN_ID|g" $COMMANDS_FILE
 sed -i -E "s|HOST_BINARY|$HOST_BINARY|g" $COMMANDS_FILE
 sed -i -E "s|HOST_DENOM|$HOST_DENOM|g" $COMMANDS_FILE
 sed -i -E "s|HOST_ACCOUNT_PREFIX|$HOST_ACCOUNT_PREFIX|g" $COMMANDS_FILE
-sed -i -E "s|HOST_ENDPOINT|$HOST_ENDPOINT|g" $COMMANDS_FILE
+sed -i -E "s|HOST_RPC|$HOST_RPC|g" $COMMANDS_FILE
 sed -i -E "s|HOST_VAL_NAME_1|$HOST_VAL_NAME_1|g" $COMMANDS_FILE
 sed -i -E "s|HOST_VAL_NAME_2|$HOST_VAL_NAME_2|g" $COMMANDS_FILE
 sed -i -E "s|HOST_VAL_ADDRESS_1|$HOST_VAL_ADDRESS_1|g" $COMMANDS_FILE
