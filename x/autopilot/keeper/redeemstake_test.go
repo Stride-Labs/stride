@@ -23,6 +23,16 @@ import (
 	stakeibctypes "github.com/Stride-Labs/stride/v9/x/stakeibc/types"
 )
 
+func getRedeemStakeStakeibcPacketMetadata(address, ibcReceiver, transferChannel string) string {
+	return fmt.Sprintf(`
+		{
+			"autopilot": {
+				"receiver": "%[1]s",
+				"stakeibc": { "stride_address": "%[1]s", "action": "RedeemStake", "ibc_receiver": "%[2]s", "transfer_channel": "%[3]s" } 
+			}
+		}`, address, ibcReceiver, transferChannel)
+}
+
 func (suite *KeeperTestSuite) TestOnRecvPacket_RedeemStake() {
 	now := time.Now()
 
@@ -63,7 +73,7 @@ func (suite *KeeperTestSuite) TestOnRecvPacket_RedeemStake() {
 				Denom:    stAtomFullDenomPath,
 				Amount:   "1000000",
 				Sender:   "cosmos16plylpsgxechajltx9yeseqexzdzut9g8vla4k",
-				Receiver: fmt.Sprintf("%s|stakeibc/RedeemStake|cosmos16plylpsgxechajltx9yeseqexzdzut9g8vla4k", addr1.String()),
+				Receiver: getRedeemStakeStakeibcPacketMetadata(addr1.String(), "cosmos16plylpsgxechajltx9yeseqexzdzut9g8vla4k", ""),
 				Memo:     "",
 			},
 			recvDenom:      stAtomDenom,
@@ -76,7 +86,7 @@ func (suite *KeeperTestSuite) TestOnRecvPacket_RedeemStake() {
 				Denom:    strdIbcDenom,
 				Amount:   "1000000",
 				Sender:   "cosmos16plylpsgxechajltx9yeseqexzdzut9g8vla4k",
-				Receiver: fmt.Sprintf("%s|stakeibc/RedeemStake|cosmos16plylpsgxechajltx9yeseqexzdzut9g8vla4k", addr1.String()),
+				Receiver: getRedeemStakeStakeibcPacketMetadata(addr1.String(), "cosmos16plylpsgxechajltx9yeseqexzdzut9g8vla4k", ""),
 				Memo:     "",
 			},
 			recvDenom:      "ustrd",
@@ -89,7 +99,7 @@ func (suite *KeeperTestSuite) TestOnRecvPacket_RedeemStake() {
 				Denom:    stAtomFullDenomPath,
 				Amount:   "1000000",
 				Sender:   "cosmos16plylpsgxechajltx9yeseqexzdzut9g8vla4k",
-				Receiver: fmt.Sprintf("%s|stakeibc/RedeemStake|cosmos16plylpsgxechajltx9yeseqexzdzut9g8vla4k", addr1.String()),
+				Receiver: getRedeemStakeStakeibcPacketMetadata(addr1.String(), "cosmos16plylpsgxechajltx9yeseqexzdzut9g8vla4k", ""),
 				Memo:     "",
 			},
 			recvDenom:      stAtomDenom,
@@ -103,7 +113,7 @@ func (suite *KeeperTestSuite) TestOnRecvPacket_RedeemStake() {
 				Amount:   "1000000",
 				Sender:   "cosmos16plylpsgxechajltx9yeseqexzdzut9g8vla4k",
 				Receiver: fmt.Sprintf("%s", addr1.String()),
-				Memo:     "stakeibc/RedeemStake|cosmos16plylpsgxechajltx9yeseqexzdzut9g8vla4k",
+				Memo:     getRedeemStakeStakeibcPacketMetadata(addr1.String(), "cosmos16plylpsgxechajltx9yeseqexzdzut9g8vla4k", ""),
 			},
 			recvDenom:      stAtomDenom,
 			expSuccess:     true,
@@ -115,7 +125,7 @@ func (suite *KeeperTestSuite) TestOnRecvPacket_RedeemStake() {
 				Denom:    stAtomFullDenomPath,
 				Amount:   "1000000",
 				Sender:   "cosmos16plylpsgxechajltx9yeseqexzdzut9g8vla4k",
-				Receiver: "xxx|stakeibc/RedeemStake|cosmos16plylpsgxechajltx9yeseqexzdzut9g8vla4k",
+				Receiver: getRedeemStakeStakeibcPacketMetadata("xxx", "cosmos16plylpsgxechajltx9yeseqexzdzut9g8vla4k", ""),
 				Memo:     "",
 			},
 			recvDenom:      stAtomDenom,
@@ -128,7 +138,7 @@ func (suite *KeeperTestSuite) TestOnRecvPacket_RedeemStake() {
 				Denom:    stAtomFullDenomPath,
 				Amount:   "1000000",
 				Sender:   "cosmos16plylpsgxechajltx9yeseqexzdzut9g8vla4k",
-				Receiver: fmt.Sprintf("%s|stakeibc/RedeemStake|xxx", addr1.String()),
+				Receiver: getRedeemStakeStakeibcPacketMetadata(addr1.String(), "xxx", ""),
 				Memo:     "",
 			},
 			recvDenom:      stAtomDenom,

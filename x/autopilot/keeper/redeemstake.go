@@ -19,7 +19,7 @@ func (k Keeper) TryRedeemStake(
 	ctx sdk.Context,
 	packet channeltypes.Packet,
 	newData transfertypes.FungibleTokenPacketData,
-	packetMetadata *types.StakeibcPacketMetadata,
+	packetMetadata types.StakeibcPacketMetadata,
 ) error {
 	params := k.GetParams(ctx)
 	if !params.StakeibcActive {

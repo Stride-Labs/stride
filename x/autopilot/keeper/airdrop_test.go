@@ -245,7 +245,7 @@ func (s *KeeperTestSuite) TestAirdropOnRecvPacket() {
 			destinationPortID:            transfertypes.PortID,
 			packetData: transfertypes.FungibleTokenPacketData{
 				Receiver: strideAddress,
-				Memo:     strings.Repeat("X", 300),
+				Memo:     strings.Repeat("X", 600),
 			},
 			transferShouldSucceed: false,
 			airdropShouldUpdate:   false,
@@ -257,7 +257,7 @@ func (s *KeeperTestSuite) TestAirdropOnRecvPacket() {
 			destinationChannelID:         ibctesting.FirstChannelID,
 			destinationPortID:            transfertypes.PortID,
 			packetData: transfertypes.FungibleTokenPacketData{
-				Receiver: strings.Repeat("X", 300),
+				Receiver: strings.Repeat("X", 600),
 				Memo:     "",
 			},
 			transferShouldSucceed: false,
