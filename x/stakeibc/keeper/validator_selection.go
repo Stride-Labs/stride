@@ -27,7 +27,7 @@ type RebalanceValidatorDelegationChange struct {
 // This is required when accepting LSM LiquidStakes as the distribution of stake
 //   from the LSM Tokens will be inconsistend with the host zone's validator set
 // Note: this cannot be run more than once in a single unbonding period
-func (k Keeper) RebalanceAllHostZones(ctx sdk.Context, dayNumber uint64) {
+func (k Keeper) RebalanceAllHostZones(ctx sdk.Context) {
 	dayEpoch, found := k.GetEpochTracker(ctx, epochstypes.DAY_EPOCH)
 	if !found {
 		k.Logger(ctx).Error("Unable to get day epoch tracker")
@@ -37,7 +37,7 @@ func (k Keeper) RebalanceAllHostZones(ctx sdk.Context, dayNumber uint64) {
 	for _, hostZone := range k.GetAllActiveHostZone(ctx) {
 		if dayEpoch.EpochNumber%hostZone.UnbondingPeriod != 0 {
 			k.Logger(ctx).Info(utils.LogWithHostZone(hostZone.ChainId,
-				"Host does not rebalance this epoch (Unbonding Period: %d, Epoch: %d)", hostZone.UnbondingPeriod, dayNumber))
+				"Host does not rebalance this epoch (Unbonding Period: %d, Epoch: %d)", hostZone.UnbondingPeriod, dayEpoch.EpochNumber))
 			continue
 		}
 

@@ -71,10 +71,10 @@ func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochInfo epochstypes.EpochInf
 		// Rebalance stake according to validator weights
 		// This should only be run once per day, but it should not be run on a stride epoch that
 		//   overlaps the day epoch, otherwise the unbondings could cause a redelegation to fail
-		// On mainnet, the stride epoch overlaps the day epoch when `epochNumber % 4 == 1``,
+		// On mainnet, the stride epoch overlaps the day epoch when `epochNumber % 4 == 1`,
 		//   so this will trigger the epoch before the unbonding
 		if epochNumber%4 == 0 {
-			k.RebalanceAllHostZones(ctx, epochNumber)
+			k.RebalanceAllHostZones(ctx)
 		}
 	}
 	if epochInfo.Identifier == epochstypes.MINT_EPOCH {
