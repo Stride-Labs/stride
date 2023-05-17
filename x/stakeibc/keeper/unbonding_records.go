@@ -46,11 +46,10 @@ func (k Keeper) CreateEpochUnbondingRecord(ctx sdk.Context, epochNumber uint64) 
 }
 
 // Build the undelegation messages for each validator by summing the total amount to unbond across epoch unbonding record,
+// and then splitting the undelegation amount across validators
 //
-//	and then splitting the undelegation amount across validators
-//
-// returns (1) MsgUndelegate messages
-//
+// returns
+//  (1) MsgUndelegate messages
 //	(2) Total Amount to unbond across all validators
 //	(3) Marshalled Callback Args
 //	(4) Relevant EpochUnbondingRecords that contain HostZoneUnbondings that are ready for unbonding
@@ -412,8 +411,7 @@ func (k Keeper) SweepAllUnbondedTokensForHostZone(ctx sdk.Context, hostZone type
 }
 
 // Sends all unbonded tokens to the redemption account
-//
-//	returns:
+// returns:
 //	   * success indicator if all chains succeeded
 //	   * list of successful chains
 //	   * list of tokens swept

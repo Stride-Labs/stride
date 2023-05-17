@@ -85,7 +85,16 @@ func (k Keeper) TransferExistingDepositsToHostZones(ctx sdk.Context, epochNumber
 		// calculate the timeout
 		// https://github.com/cometbft/cometbft/blob/v0.34.x/spec/consensus/bft-time.md
 		timeoutTimestamp := uint64(ctx.BlockTime().UnixNano()) + ibcTransferTimeoutNanos
-		msg := ibctypes.NewMsgTransfer(ibctransfertypes.PortID, hostZone.TransferChannelId, transferCoin, hostZoneModuleAddress, delegateAddress, clienttypes.Height{}, timeoutTimestamp, "")
+		msg := ibctypes.NewMsgTransfer(
+			ibctransfertypes.PortID,
+			hostZone.TransferChannelId,
+			transferCoin,
+			hostZoneModuleAddress,
+			delegateAddress,
+			clienttypes.Height{},
+			timeoutTimestamp,
+			"",
+		)
 		k.Logger(ctx).Info(utils.LogWithHostZone(depositRecord.HostZoneId, "Transfer Msg: %+v", msg))
 
 		// transfer the deposit record and update its status to TRANSFER_IN_PROGRESS

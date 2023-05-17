@@ -92,11 +92,6 @@ func NewAppModule(ak keeper.AccountKeeper, bk types.BankKeeper) AppModule {
 // RegisterInvariants performs a no-op; there are no invariants to enforce.
 func (AppModule) RegisterInvariants(_ sdk.InvariantRegistry) {}
 
-// Route returns the module's message router and handler.
-// func (am AppModule) Route() sdk.Route {
-// 	return sdk.NewRoute(types.RouterKey, NewHandler(am.accountKeeper, am.bankKeeper))
-// }
-
 // QuerierRoute returns an empty string as the module contains no query
 // functionality.
 func (AppModule) QuerierRoute() string { return "" }
@@ -105,11 +100,6 @@ func (AppModule) QuerierRoute() string { return "" }
 func (am AppModule) RegisterServices(cfg module.Configurator) {
 	types.RegisterMsgServer(cfg.MsgServer(), NewMsgServerImpl(am.accountKeeper, am.bankKeeper))
 }
-
-// LegacyQuerierHandler performs a no-op.
-// func (am AppModule) LegacyQuerierHandler(_ *codec.LegacyAmino) sdk.Querier {
-// 	return nil
-// }
 
 // InitGenesis performs a no-op.
 func (am AppModule) InitGenesis(_ sdk.Context, _ codec.JSONCodec, _ json.RawMessage) []abci.ValidatorUpdate {
