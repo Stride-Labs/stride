@@ -78,7 +78,7 @@ func (k Keeper) RunRedeemStake(ctx sdk.Context, addr sdk.AccAddress, receiver st
 		msg,
 	)
 	if err != nil {
-		return sdkerrors.Wrapf(sdkerrors.ErrInsufficientFunds, err.Error())
+		return errorsmod.Wrapf(sdkerrors.ErrInsufficientFunds, err.Error())
 	}
 	return nil
 }
