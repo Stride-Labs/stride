@@ -13,6 +13,8 @@ import (
 	"github.com/Stride-Labs/stride/v9/x/stakeibc/types"
 )
 
+const StrideEpochsPerDayEpoch = uint64(4)
+
 func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochInfo epochstypes.EpochInfo) {
 	// Update the stakeibc epoch tracker
 	epochNumber, err := k.UpdateEpochTracker(ctx, epochInfo)
@@ -73,7 +75,7 @@ func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochInfo epochstypes.EpochInf
 		//   overlaps the day epoch, otherwise the unbondings could cause a redelegation to fail
 		// On mainnet, the stride epoch overlaps the day epoch when `epochNumber % 4 == 1`,
 		//   so this will trigger the epoch before the unbonding
-		if epochNumber%4 == 0 {
+		if epochNumber%StrideEpochsPerDayEpoch == 0 {
 			k.RebalanceAllHostZones(ctx)
 		}
 	}

@@ -36,6 +36,8 @@ func (k Keeper) BeginBlocker(ctx sdk.Context) {
 			)
 		}
 	}
+
+	k.AssertStrideAndDayEpochRelationship(ctx)
 }
 
 func (k Keeper) EndBlocker(ctx sdk.Context) {
