@@ -31,6 +31,7 @@ PROVIDER_HOME="$HOME/.provider"
 PROVIDER_HOME1="$HOME/.provider1"
 PROVIDER_NODE_ADDRESS="tcp://localhost:26658"
 PROVIDER_DELEGATOR=delegator
+PROVIDER_VALIDATOR="validator"
 
 
 # Clean start
@@ -76,6 +77,7 @@ cp $CONSUMER_HOME/config/gentx/* $SOVEREIGN_HOME/config/gentx
 #copy genesis
 $SOVEREIGN_BINARY collect-gentxs --home $SOVEREIGN_HOME
 sed -i '' 's/"voting_period": "172800s"/"voting_period": "20s"/g' $SOVEREIGN_HOME/config/genesis.json
+sed -i '' 's/"unbonding_time": "1814400s"/"unbonding_time": "600s"/g' $SOVEREIGN_HOME/config/genesis.json
 
 cp $SOVEREIGN_HOME/config/genesis.json $CONSUMER_HOME/config/genesis.json
 
@@ -193,7 +195,7 @@ tee $PROVIDER_HOME/consumer-proposal.json<<EOF
     "ccv_timeout_period": 2419200000000000,
     "transfer_timeout_period": 3600000000000,
     "historical_entries": 10000,
-    "unbonding_period": 1814400000000000
+    "unbonding_period": 600000000000
 }
 EOF
 
