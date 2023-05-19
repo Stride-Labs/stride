@@ -422,10 +422,11 @@ func (s *KeeperTestSuite) TestDetokenizeLSMDeposit() {
 	s.Require().NotEmpty(delegationICAAddress, "ICA Address should not be empty")
 
 	// Build the host zone and deposit (which are arguments to detokenize)
-	hostZone := types.HostZone{
+	initialHostZone := types.HostZone{
 		ChainId:              HostChainId,
 		DelegationIcaAddress: delegationICAAddress,
 		ConnectionId:         ibctesting.FirstConnectionID,
+		Validators:           []*types.Validator{{DelegationChangesInProgress: 0}},
 	}
 
 	denom := "cosmosvalXXX/42"
@@ -439,7 +440,7 @@ func (s *KeeperTestSuite) TestDetokenizeLSMDeposit() {
 	s.App.RecordsKeeper.SetLSMTokenDeposit(s.Ctx, initalDeposit)
 
 	// Successfully Detokenize
-	err = s.App.StakeibcKeeper.DetokenizeLSMDeposit(s.Ctx, hostZone, initalDeposit)
+	err = s.App.StakeibcKeeper.DetokenizeLSMDeposit(s.Ctx, initialHostZone, initalDeposit)
 	s.Require().NoError(err, "no error expected when detokenizing")
 
 	// Confirm deposit status was updated
@@ -457,14 +458,19 @@ func (s *KeeperTestSuite) TestDetokenizeLSMDeposit() {
 
 	s.Require().Equal(initalDeposit, *callbackData.Deposit, "callback data LSM deposit")
 
+	// Check the number of delegation changes was incremented
+	finalHostZone, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx, HostChainId)
+	s.Require().True(found, "host zone should have been found")
+	s.Require().Equal(1, int(finalHostZone.Validators[0].DelegationChangesInProgress), "delegation changes in progress")
+
 	// Remove connection ID and re-submit - should fail
-	hostZoneWithoutConnectionId := hostZone
+	hostZoneWithoutConnectionId := initialHostZone
 	hostZoneWithoutConnectionId.ConnectionId = ""
 	err = s.App.StakeibcKeeper.DetokenizeLSMDeposit(s.Ctx, hostZoneWithoutConnectionId, initalDeposit)
 	s.Require().ErrorContains(err, "unable to submit detokenization ICA")
 
 	// Remove delegation account and re-submit - should also fail
-	hostZoneWithoutDelegationAccount := hostZone
+	hostZoneWithoutDelegationAccount := initialHostZone
 	hostZoneWithoutDelegationAccount.DelegationIcaAddress = ""
 	err = s.App.StakeibcKeeper.DetokenizeLSMDeposit(s.Ctx, hostZoneWithoutDelegationAccount, initalDeposit)
 	s.Require().ErrorContains(err, "no delegation account found")

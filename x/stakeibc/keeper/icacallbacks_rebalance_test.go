@@ -46,34 +46,42 @@ func (s *KeeperTestSuite) SetupRebalanceCallback() RebalanceCallbackTestCase {
 	// define validators for host zone
 	initialValidators := []*types.Validator{
 		{
-			Name:       "val1",
-			Address:    "stride_VAL1",
-			Weight:     100,
-			Delegation: sdkmath.NewInt(100),
+			// Delegation changes in progress is 2 because it will receive 2 redelegations
+			Name:                        "val1",
+			Address:                     "stride_VAL1",
+			Weight:                      100,
+			Delegation:                  sdkmath.NewInt(100),
+			DelegationChangesInProgress: 2,
 		},
 		{
-			Name:       "val2",
-			Address:    "stride_VAL2",
-			Weight:     500,
-			Delegation: sdkmath.NewInt(500),
+			Name:                        "val2",
+			Address:                     "stride_VAL2",
+			Weight:                      500,
+			Delegation:                  sdkmath.NewInt(500),
+			DelegationChangesInProgress: 0,
 		},
 		{
-			Name:       "val3",
-			Address:    "stride_VAL3",
-			Weight:     200,
-			Delegation: sdkmath.NewInt(200),
+			// Delegation changes in progress is 2 because it will give 1 redelegation
+			Name:                        "val3",
+			Address:                     "stride_VAL3",
+			Weight:                      200,
+			Delegation:                  sdkmath.NewInt(200),
+			DelegationChangesInProgress: 1,
 		},
 		{
-			Name:       "val4",
-			Address:    "stride_VAL4",
-			Weight:     400,
-			Delegation: sdkmath.NewInt(400),
+			// Delegation changes in progress is 2 because it will give 1 redelegation
+			Name:                        "val4",
+			Address:                     "stride_VAL4",
+			Weight:                      400,
+			Delegation:                  sdkmath.NewInt(400),
+			DelegationChangesInProgress: 1,
 		},
 		{
-			Name:       "val5",
-			Address:    "stride_VAL5",
-			Weight:     400,
-			Delegation: sdkmath.NewInt(400),
+			Name:                        "val5",
+			Address:                     "stride_VAL5",
+			Weight:                      400,
+			Delegation:                  sdkmath.NewInt(400),
+			DelegationChangesInProgress: 0,
 		},
 	}
 
@@ -130,7 +138,7 @@ func (s *KeeperTestSuite) TestRebalanceCallback_Successful() {
 	hz, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx, "GAIA")
 	s.Require().True(found, "host zone found")
 
-	validators := hz.GetValidators()
+	validators := hz.Validators
 	s.Require().Len(validators, 5, "host zone has 5 validators")
 
 	// TODO: Improve these tests
@@ -140,13 +148,18 @@ func (s *KeeperTestSuite) TestRebalanceCallback_Successful() {
 	s.Require().Equal(int64(96), validators[2].Delegation.Int64(), "validator 3 stake")
 	s.Require().Equal(int64(387), validators[3].Delegation.Int64(), "validator 4 stake")
 	s.Require().Equal(int64(400), validators[4].Delegation.Int64(), "validator 5 stake")
+
+	// The delegation changes in progress should have reset to 0
+	for i, validator := range validators {
+		s.Require().Equal(0, int(validator.DelegationChangesInProgress), "validator %d delegation changes in progress", i+1)
+	}
 }
 
 func (s *KeeperTestSuite) checkDelegationStateIfCallbackFailed() {
 	hz, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx, "GAIA")
 	s.Require().True(found, "host zone found")
 
-	validators := hz.GetValidators()
+	validators := hz.Validators
 	s.Require().Len(validators, 5, "host zone has 5 validators")
 
 	s.Require().Equal(int64(100), validators[0].Delegation.Int64(), "validator 1 stake")
@@ -154,6 +167,11 @@ func (s *KeeperTestSuite) checkDelegationStateIfCallbackFailed() {
 	s.Require().Equal(int64(200), validators[2].Delegation.Int64(), "validator 3 stake")
 	s.Require().Equal(int64(400), validators[3].Delegation.Int64(), "validator 4 stake")
 	s.Require().Equal(int64(400), validators[4].Delegation.Int64(), "validator 5 stake")
+
+	// The delegation changes in progress should have reset to 0
+	for i, validator := range validators {
+		s.Require().Equal(0, int(validator.DelegationChangesInProgress), "validator %d delegation changes in progress", i+1)
+	}
 }
 
 func (s *KeeperTestSuite) TestRebalanceCallback_Timeout() {
@@ -189,7 +207,6 @@ func (s *KeeperTestSuite) TestRebalanceCallback_WrongCallbackArgs() {
 
 	err := stakeibckeeper.RebalanceCallback(s.App.StakeibcKeeper, s.Ctx, invalidArgs.packet, invalidArgs.ackResponse, invalidCallbackArgs)
 	s.Require().EqualError(err, "Unable to unmarshal rebalance callback args: unexpected EOF: unable to unmarshal data structure")
-	s.checkDelegationStateIfCallbackFailed()
 }
 
 func (s *KeeperTestSuite) TestRebalanceCallback_WrongValidator() {
@@ -232,10 +249,8 @@ func (s *KeeperTestSuite) TestRebalanceCallback_WrongValidator() {
 	s.Require().NoError(err)
 
 	err = stakeibckeeper.RebalanceCallback(s.App.StakeibcKeeper, s.Ctx, tc.validArgs.packet, tc.validArgs.ackResponse, invalidArgsOne)
-	s.Require().ErrorContains(err, "source validator not found stride_VAL4_WRONG")
-	s.checkDelegationStateIfCallbackFailed()
+	s.Require().ErrorContains(err, "validator not found")
 
 	err = stakeibckeeper.RebalanceCallback(s.App.StakeibcKeeper, s.Ctx, tc.validArgs.packet, tc.validArgs.ackResponse, invalidArgsTwo)
-	s.Require().ErrorContains(err, "validator not found stride_VAL1_WRONG: invalid request")
-	s.checkDelegationStateIfCallbackFailed()
+	s.Require().ErrorContains(err, "validator not found")
 }

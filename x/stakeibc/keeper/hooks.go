@@ -13,6 +13,8 @@ import (
 	"github.com/Stride-Labs/stride/v9/x/stakeibc/types"
 )
 
+const StrideEpochsPerDayEpoch = uint64(4)
+
 func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochInfo epochstypes.EpochInfo) {
 	// Update the stakeibc epoch tracker
 	epochNumber, err := k.UpdateEpochTracker(ctx, epochInfo)
@@ -31,8 +33,6 @@ func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochInfo epochstypes.EpochInf
 		k.CleanupEpochUnbondingRecords(ctx, epochNumber)
 		// Create an empty unbonding record for this epoch
 		k.CreateEpochUnbondingRecord(ctx, epochNumber)
-		// Rebalance stake according to validator weights
-		k.RebalanceAllHostZones(ctx, epochNumber)
 	}
 
 	// Stride Epoch - Process Deposits and Delegations
@@ -68,6 +68,15 @@ func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochInfo epochstypes.EpochInf
 		// Reinvest staking rewards
 		if epochNumber%reinvestInterval == 0 { // allow a few blocks from UpdateUndelegatedBal to avoid conflicts
 			k.ReinvestRewards(ctx)
+		}
+
+		// Rebalance stake according to validator weights
+		// This should only be run once per day, but it should not be run on a stride epoch that
+		//   overlaps the day epoch, otherwise the unbondings could cause a redelegation to fail
+		// On mainnet, the stride epoch overlaps the day epoch when `epochNumber % 4 == 1`,
+		//   so this will trigger the epoch before the unbonding
+		if epochNumber%StrideEpochsPerDayEpoch == 0 {
+			k.RebalanceAllHostZones(ctx)
 		}
 	}
 	if epochInfo.Identifier == epochstypes.MINT_EPOCH {

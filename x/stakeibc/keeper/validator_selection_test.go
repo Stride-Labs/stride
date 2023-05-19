@@ -99,11 +99,32 @@ func (s *KeeperTestSuite) TestRebalanceDelegationsForHostZone_Successful() {
 	actualRebalancings := callbackData.Rebalancings
 	s.Require().Len(actualRebalancings, len(tc.expectedRebalancings), "number of rebalancings from callback data")
 
+	expectedDelegationChanges := map[string]int{}
 	for i, expected := range tc.expectedRebalancings {
 		actual := actualRebalancings[i]
 		s.Require().Equal(expected.SrcValidator, actual.SrcValidator, "rebalancing %d source validator")
 		s.Require().Equal(expected.DstValidator, actual.DstValidator, "rebalancing %d destination validator")
 		s.Require().Equal(expected.Amt.Int64(), actual.Amt.Int64(), "rebalancing %d amount")
+
+		// Store the number of expected delegation changes for each validator
+		if _, ok := expectedDelegationChanges[expected.SrcValidator]; !ok {
+			expectedDelegationChanges[expected.SrcValidator] = 0
+		}
+		if _, ok := expectedDelegationChanges[expected.SrcValidator]; !ok {
+			expectedDelegationChanges[expected.DstValidator] = 0
+		}
+		expectedDelegationChanges[expected.SrcValidator] += 1
+		expectedDelegationChanges[expected.DstValidator] += 1
+	}
+
+	// Check the delegation change in progress was incremented from each redelegation
+	actualHostZone, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx, HostChainId)
+	s.Require().True(found, "host zone should have been found")
+
+	for _, actualValidator := range actualHostZone.Validators {
+		expectedDelegationChangesInProgress := expectedDelegationChanges[actualValidator.Address]
+		s.Require().Equal(expectedDelegationChangesInProgress, int(actualValidator.DelegationChangesInProgress),
+			"validator %s delegation changes in progress", actualValidator.Address)
 	}
 }
 

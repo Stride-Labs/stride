@@ -33,7 +33,9 @@ func (s *KeeperTestSuite) SetupTestDetokenizeCallback() DetokenizeCallbackTestCa
 		ChainId:          HostChainId,
 		TotalDelegations: initialTotalDelegation,
 		Validators: []*types.Validator{{
-			Address: ValAddress, Delegation: initialValidatorDelegation,
+			Address:                     ValAddress,
+			Delegation:                  initialValidatorDelegation,
+			DelegationChangesInProgress: 1,
 		}},
 	}
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
@@ -80,6 +82,9 @@ func (s *KeeperTestSuite) TestDetokenizeCallback_Successful() {
 	s.Require().True(found, "host zone should have been found")
 	s.Require().Equal(tc.expectedTotalDelegation, hostZone.TotalDelegations.Int64(), "host zone total delegation")
 	s.Require().Equal(tc.expectedValidatorDelegation, hostZone.Validators[0].Delegation.Int64(), "validator delegation")
+
+	// Check that the number of delegations in progress was decremented
+	s.Require().Equal(0, int(hostZone.Validators[0].DelegationChangesInProgress), "delegation change in progress")
 }
 
 func (s *KeeperTestSuite) TestDetokenizeCallback_InvalidCallbackArgs() {
@@ -126,6 +131,11 @@ func (s *KeeperTestSuite) TestDetokenizeCallback_AckTimeout() {
 	deposit, found := s.App.RecordsKeeper.GetLSMTokenDeposit(s.Ctx, HostChainId, LSMTokenBaseDenom)
 	s.Require().True(found, "deposit should not have been removed")
 	s.Require().Equal(recordstypes.LSMTokenDeposit_DETOKENIZATION_IN_PROGRESS.String(), deposit.Status.String(), "deposit status")
+
+	// Check that the number of delegations in progress was decremented
+	hostZone, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx, HostChainId)
+	s.Require().True(found, "host zone should have been found")
+	s.Require().Equal(0, int(hostZone.Validators[0].DelegationChangesInProgress), "delegation change in progress")
 }
 
 func (s *KeeperTestSuite) TestDetokenizeCallback_AckFailure() {
@@ -142,4 +152,9 @@ func (s *KeeperTestSuite) TestDetokenizeCallback_AckFailure() {
 	deposit, found := s.App.RecordsKeeper.GetLSMTokenDeposit(s.Ctx, HostChainId, LSMTokenBaseDenom)
 	s.Require().True(found, "deposit should not have been removed")
 	s.Require().Equal(recordstypes.LSMTokenDeposit_DETOKENIZATION_FAILED.String(), deposit.Status.String(), "deposit status")
+
+	// Check that the number of delegations in progress was decremented
+	hostZone, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx, HostChainId)
+	s.Require().True(found, "host zone should have been found")
+	s.Require().Equal(0, int(hostZone.Validators[0].DelegationChangesInProgress), "delegation change in progress")
 }

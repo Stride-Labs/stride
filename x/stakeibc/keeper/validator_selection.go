@@ -11,6 +11,7 @@ import (
 	lsmstakingtypes "github.com/iqlusioninc/liquidity-staking-module/x/staking/types"
 
 	"github.com/Stride-Labs/stride/v9/utils"
+	epochstypes "github.com/Stride-Labs/stride/v9/x/epochs/types"
 	"github.com/Stride-Labs/stride/v9/x/stakeibc/types"
 )
 
@@ -26,11 +27,17 @@ type RebalanceValidatorDelegationChange struct {
 // This is required when accepting LSM LiquidStakes as the distribution of stake
 //   from the LSM Tokens will be inconsistend with the host zone's validator set
 // Note: this cannot be run more than once in a single unbonding period
-func (k Keeper) RebalanceAllHostZones(ctx sdk.Context, dayNumber uint64) {
+func (k Keeper) RebalanceAllHostZones(ctx sdk.Context) {
+	dayEpoch, found := k.GetEpochTracker(ctx, epochstypes.DAY_EPOCH)
+	if !found {
+		k.Logger(ctx).Error("Unable to get day epoch tracker")
+		return
+	}
+
 	for _, hostZone := range k.GetAllActiveHostZone(ctx) {
-		if dayNumber%hostZone.UnbondingPeriod != 0 {
+		if dayEpoch.EpochNumber%hostZone.UnbondingPeriod != 0 {
 			k.Logger(ctx).Info(utils.LogWithHostZone(hostZone.ChainId,
-				"Host does not rebalance this epoch (Unbonding Period: %d, Epoch: %d)", hostZone.UnbondingPeriod, dayNumber))
+				"Host does not rebalance this epoch (Unbonding Period: %d, Epoch: %d)", hostZone.UnbondingPeriod, dayEpoch.EpochNumber))
 			continue
 		}
 
@@ -92,6 +99,17 @@ func (k Keeper) RebalanceDelegationsForHostZone(ctx sdk.Context, chainId string)
 		if err != nil {
 			return errorsmod.Wrapf(err, "Failed to SubmitTxs for %s, messages: %+v", hostZone.ChainId, msgs)
 		}
+
+		// flag the delegation change in progress on each validator
+		for _, rebalancing := range rebalancingsBatch {
+			if err := k.IncrementValidatorDelegationChangesInProgress(&hostZone, rebalancing.SrcValidator); err != nil {
+				return err
+			}
+			if err := k.IncrementValidatorDelegationChangesInProgress(&hostZone, rebalancing.DstValidator); err != nil {
+				return err
+			}
+		}
+		k.SetHostZone(ctx, hostZone)
 	}
 
 	return nil

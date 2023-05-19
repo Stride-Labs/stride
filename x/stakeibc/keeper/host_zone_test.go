@@ -266,6 +266,66 @@ func (s *KeeperTestSuite) TestIncrementValidatorSlashQueryProgress() {
 	s.Require().ErrorContains(err, "validator not found")
 }
 
+// Tests Increment/DecrementValidatorDelegationsChangesInProgress
+func (s *KeeperTestSuite) TestUpdateValidatorDelegationChangesInProgress() {
+	hostZone := &types.HostZone{
+		Validators: []*types.Validator{
+			{Address: "other_val1", DelegationChangesInProgress: 1},
+			{Address: ValAddress, DelegationChangesInProgress: 2},
+			{Address: "other_val3", DelegationChangesInProgress: 3},
+		},
+		TotalDelegations: sdkmath.NewInt(6000),
+	}
+	updatedIndex := 1
+	start := int(2)
+
+	// Increment once - should end at 3
+	err := s.App.StakeibcKeeper.IncrementValidatorDelegationChangesInProgress(hostZone, ValAddress)
+	s.Require().NoError(err, "no error expected when incremented ")
+	s.Require().Equal(start+1, int(hostZone.Validators[updatedIndex].DelegationChangesInProgress),
+		"delegation change after increment")
+
+	// Increment 10 more times - should end at 13
+	for i := 0; i < 10; i++ {
+		err := s.App.StakeibcKeeper.IncrementValidatorDelegationChangesInProgress(hostZone, ValAddress)
+		s.Require().NoError(err, "no error expected when incrementing loop %d", i)
+	}
+	s.Require().Equal(start+11, int(hostZone.Validators[updatedIndex].DelegationChangesInProgress),
+		"delegation change after increment loop")
+
+	// Confirm the other validators did not change
+	s.Require().Equal(1, int(hostZone.Validators[0].DelegationChangesInProgress),
+		"delegation change val1 after increment")
+	s.Require().Equal(3, int(hostZone.Validators[2].DelegationChangesInProgress),
+		"delegation change val3 after increment")
+
+	// Decrement - should end at 12
+	err = s.App.StakeibcKeeper.DecrementValidatorDelegationChangesInProgress(hostZone, ValAddress)
+	s.Require().NoError(err, "no error expected when decrementing")
+	s.Require().Equal(start+10, int(hostZone.Validators[updatedIndex].DelegationChangesInProgress),
+		"delegation change after decrement")
+
+	// Decrement 12 more times - it should end at 0
+	for i := 0; i < 12; i++ {
+		err := s.App.StakeibcKeeper.DecrementValidatorDelegationChangesInProgress(hostZone, ValAddress)
+		s.Require().NoError(err, "no error expected when decrementing loop %d", i)
+	}
+	s.Require().Equal(0, int(hostZone.Validators[updatedIndex].DelegationChangesInProgress),
+		"delegation change after decrement loop")
+
+	// Attempt to decrement again, it should fail
+	err = s.App.StakeibcKeeper.DecrementValidatorDelegationChangesInProgress(hostZone, ValAddress)
+	s.Require().ErrorContains(err, "cannot decrement the number of delegation updates")
+
+	// Attempt to increment a non-existent validator - it should fail
+	err = s.App.StakeibcKeeper.IncrementValidatorDelegationChangesInProgress(hostZone, "fake_val")
+	s.Require().ErrorContains(err, "validator not found")
+
+	// Attempt to decrement a non-existent validator - it should fail
+	err = s.App.StakeibcKeeper.DecrementValidatorDelegationChangesInProgress(hostZone, "fake_val")
+	s.Require().ErrorContains(err, "validator not found")
+}
+
 func (s *KeeperTestSuite) TestAddDelegationToValidator() {
 	hostZone := &types.HostZone{
 		Validators: []*types.Validator{

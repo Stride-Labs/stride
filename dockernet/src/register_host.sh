@@ -53,7 +53,7 @@ sleep 5
 # Confirm the ICA accounts have been registered before continuing
 timeout=100
 while true; do
-    if ! $STRIDE_MAIN_CMD q stakeibc show-host-zone $CHAIN_ID | grep Account | grep -q null; then
+    if ! $STRIDE_MAIN_CMD q stakeibc show-host-zone $CHAIN_ID | grep -q 'address: ""'; then
         break
     else
         if [[ "$timeout" == "0" ]]; then 

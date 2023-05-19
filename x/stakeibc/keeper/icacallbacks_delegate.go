@@ -66,6 +66,14 @@ func DelegateCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ack
 		return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "deposit record not found %d", recordId)
 	}
 
+	// Regardless of failure/success/timeout, indicate that this ICA has completed
+	for _, splitDelegation := range delegateCallback.SplitDelegations {
+		if err := k.DecrementValidatorDelegationChangesInProgress(&hostZone, splitDelegation.Validator); err != nil {
+			return err
+		}
+	}
+	k.SetHostZone(ctx, hostZone)
+
 	// Check for timeout (ack nil)
 	// No need to reset the deposit record status since it will get reverted when the channel is restored
 	if ackResponse.Status == icacallbackstypes.AckResponseStatus_TIMEOUT {
@@ -95,8 +103,8 @@ func DelegateCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ack
 		if err != nil {
 			return errorsmod.Wrapf(err, "Failed to add delegation to validator")
 		}
-		k.SetHostZone(ctx, hostZone)
 	}
+	k.SetHostZone(ctx, hostZone)
 
 	k.RecordsKeeper.RemoveDepositRecord(ctx, cast.ToUint64(recordId))
 	k.Logger(ctx).Info(fmt.Sprintf("[DELEGATION] success on %s", chainId))
