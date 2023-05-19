@@ -112,7 +112,7 @@ func (suite *KeeperTestSuite) TestOnRecvPacket_RedeemStake() {
 				Denom:    stAtomFullDenomPath,
 				Amount:   "1000000",
 				Sender:   "cosmos16plylpsgxechajltx9yeseqexzdzut9g8vla4k",
-				Receiver: fmt.Sprintf("%s", addr1.String()),
+				Receiver: addr1.String(),
 				Memo:     getRedeemStakeStakeibcPacketMetadata(addr1.String(), "cosmos16plylpsgxechajltx9yeseqexzdzut9g8vla4k", ""),
 			},
 			recvDenom:      stAtomDenom,
