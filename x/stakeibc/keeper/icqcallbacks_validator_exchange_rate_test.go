@@ -82,6 +82,7 @@ func (s *KeeperTestSuite) SetupValidatorICQCallback(validatorSlashed, liquidStak
 			&queriedValidator,
 			{Name: "val2"}, // This validator isn't being queried
 		},
+		LsmLiquidStakeEnabled: true,
 	}
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
 

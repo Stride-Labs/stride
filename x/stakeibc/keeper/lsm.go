@@ -116,7 +116,8 @@ func (k Keeper) GetLSMTokenDenomTrace(ctx sdk.Context, denom string) (transferty
 func (k Keeper) GetHostZoneFromLSMTokenPath(ctx sdk.Context, path string) (types.HostZone, error) {
 	// Validate path regex which confirms the token originated only one hop away (e.g. transfer/channel-0)
 	if !IsValidIBCPath(path) {
-		return types.HostZone{}, errorsmod.Wrapf(types.ErrInvalidLSMToken, "ibc path of LSM token (%s) cannot be more than 1 hop away", path)
+		return types.HostZone{}, errorsmod.Wrapf(types.ErrInvalidLSMToken,
+			"ibc path of LSM token (%s) cannot be more than 1 hop away", path)
 	}
 
 	// Remove the "transfer/" prefix
@@ -125,6 +126,10 @@ func (k Keeper) GetHostZoneFromLSMTokenPath(ctx sdk.Context, path string) (types
 	// Confirm the channel is from one of Stride's supported host zones
 	for _, hostZone := range k.GetAllHostZone(ctx) {
 		if hostZone.TransferChannelId == channelId {
+			if !hostZone.LsmLiquidStakeEnabled {
+				return hostZone, types.ErrLSMLiquidStakeDisabledForHostZone.Wrapf(
+					"LSM liquid stake disabled for %s", hostZone.ChainId)
+			}
 			return hostZone, nil
 		}
 	}

@@ -35,6 +35,7 @@ func (s *KeeperTestSuite) TestValidateLSMLiquidStake() {
 		Validators: []*types.Validator{
 			{Address: ValAddress, SlashQueryInProgress: false},
 		},
+		LsmLiquidStakeEnabled: true,
 	}
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
 
@@ -151,10 +152,12 @@ func (s *KeeperTestSuite) TestIsValidIBCPath() {
 
 func (s *KeeperTestSuite) TestGetHostZoneFromLSMTokenPath() {
 	// Set a host zone in the store with channel-0
-	s.App.StakeibcKeeper.SetHostZone(s.Ctx, types.HostZone{
-		ChainId:           HostChainId,
-		TransferChannelId: ibctesting.FirstChannelID,
-	})
+	hostZone := types.HostZone{
+		ChainId:               HostChainId,
+		TransferChannelId:     ibctesting.FirstChannelID,
+		LsmLiquidStakeEnabled: true,
+	}
+	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
 
 	// Successful lookup
 	validPath := fmt.Sprintf("%s/%s", transfertypes.PortID, ibctesting.FirstChannelID)
@@ -169,6 +172,12 @@ func (s *KeeperTestSuite) TestGetHostZoneFromLSMTokenPath() {
 	// Passing an unregistered channel-id should cause it to fail
 	_, err = s.App.StakeibcKeeper.GetHostZoneFromLSMTokenPath(s.Ctx, "transfer/channel-1")
 	s.Require().ErrorContains(err, "transfer channel-id from LSM token (channel-1) does not match any registered host zone")
+
+	// Disabling LSM for the host should cause it to fail
+	hostZone.LsmLiquidStakeEnabled = false
+	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
+	_, err = s.App.StakeibcKeeper.GetHostZoneFromLSMTokenPath(s.Ctx, validPath)
+	s.Require().ErrorContains(err, "LSM liquid stake disabled for GAIA")
 }
 
 func (s *KeeperTestSuite) TestGetValidatorFromLSMTokenDenom() {

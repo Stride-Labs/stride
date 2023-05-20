@@ -51,4 +51,5 @@ var (
 	ErrInvalidLSMToken                   = errorsmod.Register(ModuleName, 1544, "Invalid LSM token")
 	ErrValidatorWasSlashed               = errorsmod.Register(ModuleName, 1545, "Validator was slash")
 	ErrInvalidValidatorDelegationUpdates = errorsmod.Register(ModuleName, 1546, "Invalid validator delegation updates")
+	ErrLSMLiquidStakeDisabledForHostZone = errorsmod.Register(ModuleName, 1547, "LSM liquid stake is disabled for host zone")
 )
