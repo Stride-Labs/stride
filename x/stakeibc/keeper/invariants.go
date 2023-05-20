@@ -25,11 +25,11 @@ func AllInvariants(k Keeper) sdk.Invariant {
 // Confirm the number of stride epochs in 1 day epoch
 func (k Keeper) AssertStrideAndDayEpochRelationship(ctx sdk.Context) {
 	strideEpoch, found := k.GetEpochTracker(ctx, epochtypes.STRIDE_EPOCH)
-	if !found {
+	if !found || strideEpoch.Duration == 0 {
 		return
 	}
 	dayEpoch, found := k.GetEpochTracker(ctx, epochtypes.DAY_EPOCH)
-	if !found {
+	if !found || dayEpoch.Duration == 0 {
 		return
 	}
 	if dayEpoch.Duration/strideEpoch.Duration != StrideEpochsPerDayEpoch {
