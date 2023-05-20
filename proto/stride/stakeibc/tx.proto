@@ -96,6 +96,7 @@ message MsgRegisterHostZone {
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false
   ];
+  bool lsm_liquid_stake_enabled = 15;
 }
 message MsgRegisterHostZoneResponse {}
 

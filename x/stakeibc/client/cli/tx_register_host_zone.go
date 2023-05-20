@@ -21,9 +21,9 @@ var _ = strconv.Itoa(0)
 
 func CmdRegisterHostZone() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "register-host-zone [connection-id] [host-denom] [bech32prefix] [ibc-denom] [channel-id] [unbonding-period]",
+		Use:   "register-host-zone [connection-id] [host-denom] [bech32prefix] [ibc-denom] [channel-id] [unbonding-period] [lsm-enabled]",
 		Short: "Broadcast message register-host-zone",
-		Args:  cobra.ExactArgs(6),
+		Args:  cobra.ExactArgs(7),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx, err := client.GetClientTxContext(cmd)
 			if err != nil {
@@ -36,6 +36,10 @@ func CmdRegisterHostZone() *cobra.Command {
 			ibcDenom := args[3]
 			channelId := args[4]
 			unbondingPeriod, err := strconv.ParseUint(args[5], 10, 64)
+			if err != nil {
+				return err
+			}
+			lsmEnabled, err := strconv.ParseBool(args[6])
 			if err != nil {
 				return err
 			}
@@ -74,6 +78,7 @@ func CmdRegisterHostZone() *cobra.Command {
 				unbondingPeriod,
 				minRedemptionRate,
 				maxRedemptionRate,
+				lsmEnabled,
 			)
 
 			if err := msg.ValidateBasic(); err != nil {
