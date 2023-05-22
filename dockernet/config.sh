@@ -373,7 +373,7 @@ WAIT_FOR_BALANCE_CHANGE() {
     new_balance=$($main_cmd q bank balances $address --denom $denom | grep amount | NUMBERS_ONLY)
     balance_change=$(echo "$new_balance - $initial_balance" | bc)
 
-    if [[ "$new_balance" != "$initial_balance" ]]; then
+    if [[ "$balance_change" >= "$minimum_change" ]]; then
       break
     fi
 
@@ -389,13 +389,12 @@ WAIT_FOR_DELEGATION_CHANGE() {
 
   max_blocks=30
 
-  $STRIDE_MAIN_CMD q stakeibc show-host-zone $chain_id
   initial_delegation=$($STRIDE_MAIN_CMD q stakeibc show-host-zone $chain_id | grep "total_delegations" | NUMBERS_ONLY)
   for i in $(seq $max_blocks); do
     new_delegation=$($STRIDE_MAIN_CMD q stakeibc show-host-zone $chain_id | grep "total_delegations" | NUMBERS_ONLY)
     delegation_change=$(echo "$new_delegation - $initial_delegation" | bc)
 
-    if [[ "$new_delegation" != "$initial_delegation" ]]; then
+    if [[ "$delegation_change" >= "$minimum_change" ]]; then
       break
     fi
 

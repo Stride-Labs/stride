@@ -214,8 +214,9 @@ setup_file() {
   record_id=$($HOST_MAIN_CMD q staking last-tokenize-share-record-id | awk '{print $2}' | tr -d '"')
 
   # transfer LSM tokens to stride
+  lsm_token_denom=${validator_address}/${record_id}
   $HOST_MAIN_CMD tx ibc-transfer transfer transfer $HOST_TRANSFER_CHANNEL \
-    $staker_address_on_stride ${TRANSFER_AMOUNT}${validator_address}/${record_id} --from $USER_ACCT -y
+    $staker_address_on_stride ${TRANSFER_AMOUNT}${lsm_token_denom} --from $USER_ACCT -y
   
   WAIT_FOR_BLOCK $STRIDE_LOGS 8
 
@@ -229,15 +230,13 @@ setup_file() {
   $STRIDE_MAIN_CMD tx stakeibc lsm-liquid-stake $STAKE_AMOUNT $lsm_token_ibc_denom --from $USER_ACCT -y 
   WAIT_FOR_BLOCK $STRIDE_LOGS 2
 
-  # make sure IBC_DENOM went down
+  # make sure stToken went up
+  WAIT_FOR_BALANCE_CHANGE STRIDE $USER_ACCT st$HOST_DENOM
+
+  # make sure LSM IBC Token balance went down
   lsm_token_balance_end=$($STRIDE_MAIN_CMD q bank balances $staker_address_on_stride --denom $lsm_token_ibc_denom | GETBAL)
   lsm_token_balance_diff=$(($lsm_token_balance_start - $lsm_token_balance_end))
   assert_equal "$lsm_token_balance_diff" $STAKE_AMOUNT
-
-  # make sure stToken went up
-  sttoken_balance_end=$($STRIDE_MAIN_CMD q bank balances $staker_address_on_stride --denom st$HOST_DENOM | GETBAL)
-  sttoken_balance_diff=$(($sttoken_balance_end-$sttoken_balance_start))
-  assert_equal "$(echo "$sttoken_balance_diff >= 0" | bc -l)" "1"
 
   # wait for LSM token to get transferred and converted to native stake
   WAIT_FOR_DELEGATION_CHANGE $HOST_CHAIN_ID $STAKE_AMOUNT
