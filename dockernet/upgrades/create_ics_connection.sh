@@ -12,15 +12,15 @@ relayer_exec=$(GET_VAR_VALUE RELAYER_GAIA_ICS_EXEC)
 relayer_config=$STATE/relayer-gaia-ics/config
 mnemonic=$(GET_VAR_VALUE     RELAYER_GAIA_MNEMONIC)
 chain_name=gaia
-account_name=$(GET_VAR_VALUE RELAYER_GAIA_ACCT)
+account_name=$(GET_VAR_VALUE RELAYER_GAIA_ICS_ACCT)
 coin_type=$(GET_VAR_VALUE    GAIA_COIN_TYPE)
 
 mkdir -p $relayer_config
 chmod -R 777 $STATE/relayer-gaia-ics
-cp ${DOCKERNET_HOME}/config/relayer_config.yaml $relayer_config/config.yaml
+cp ${DOCKERNET_HOME}/config/relayer_config_ics.yaml $relayer_config/config.yaml
 
 printf "STRIDE <> GAIA(ICS) - Adding relayer keys..."
-$relayer_exec rly keys restore stride $RELAYER_STRIDE_ACCT "$mnemonic" >> $relayer_logs 2>&1
+$relayer_exec rly keys restore stride $RELAYER_STRIDE_ICS_ACCT "$mnemonic" >> $relayer_logs 2>&1
 $relayer_exec rly keys restore $chain_name $account_name "$mnemonic" --coin-type $coin_type >> $relayer_logs 2>&1
 echo "Done restoring relayer keys"
 

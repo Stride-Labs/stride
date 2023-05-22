@@ -84,6 +84,16 @@ then
        exit 1
 fi
 
+# This portion needs to be enabled for only gaia v9.1.0(321d15a574def0f338ceacc5c060159ebba95edc)
+# # Path to the JSON file
+# json_file="$SOVEREIGN_HOME"/consumer_section.json
+
+# # Use jq to remove the "field2" key from the JSON file
+# jq 'del(.params.reward_denoms, .params.provider_reward_denoms)' "$json_file" > "$json_file.tmp"
+
+# # Replace the original file with the modified version
+# mv "$json_file.tmp" "$json_file"
+
 cp $CONSUMER_HOME/config/genesis.json "$SOVEREIGN_HOME"/config/genesis.json
 jq -s '.[0].app_state.ccvconsumer = .[1] | .[0]' "$SOVEREIGN_HOME"/config/genesis.json "$SOVEREIGN_HOME"/consumer_section.json > "$SOVEREIGN_HOME"/genesis_consumer.json && \
 	mv "$SOVEREIGN_HOME"/genesis_consumer.json "$SOVEREIGN_HOME"/config/genesis.json

@@ -110,11 +110,7 @@ for (( i=1; i <= $NUM_NODES; i++ )); do
     sed -i -E "s|node = \".*\"|node = \"tcp://localhost:$RPC_PORT\"|g" $client_toml
 
     sed -i -E "s|\"stake\"|\"${DENOM}\"|g" $genesis_json
-
-    # Get the endpoint and node ID
-    node_id=$($cmd tendermint show-node-id)@$node_name:$PEER_PORT
-    echo "Node #$i ID: $node_id"
-
+    
     # add a validator account
     val_acct="${VAL_PREFIX}${i}"
     val_mnemonic="${VAL_MNEMONICS[((i-1))]}"
@@ -124,11 +120,15 @@ for (( i=1; i <= $NUM_NODES; i++ )); do
     $cmd add-genesis-account ${val_addr} ${VAL_TOKENS}${DENOM}
 
     if [[ $CHAIN != "STRIDE" ]]; then
-        cp $DOCKERNET_HOME/state/${STRIDE_NODE_PREFIX}1/config/priv_validator_key.json $DOCKERNET_HOME/state/${NODE_PREFIX}1/config/priv_validator_key.json
-        cp $DOCKERNET_HOME/state/${STRIDE_NODE_PREFIX}1/config/node_key.json $DOCKERNET_HOME/state/${NODE_PREFIX}1/config/node_key.json
+        cp $DOCKERNET_HOME/state/${STRIDE_NODE_PREFIX}${i}/config/priv_validator_key.json $DOCKERNET_HOME/state/${NODE_PREFIX}${i}/config/priv_validator_key.json
+        cp $DOCKERNET_HOME/state/${STRIDE_NODE_PREFIX}${i}/config/node_key.json $DOCKERNET_HOME/state/${NODE_PREFIX}${i}/config/node_key.json
     fi
     # actually set this account as a validator on the current node 
     $cmd gentx $val_acct ${STAKE_TOKENS}${DENOM} --chain-id $CHAIN_ID --keyring-backend test &> /dev/null
+    
+    # Get the endpoint and node ID
+    node_id=$($cmd tendermint show-node-id)@$node_name:$PEER_PORT
+    echo "Node #$i ID: $node_id"
 
     # Cleanup from seds
     rm -rf ${client_toml}-E
@@ -178,6 +178,12 @@ else
     echo "$RELAYER_MNEMONIC" | $MAIN_CMD keys add $RELAYER_ACCT --recover --keyring-backend=test >> $KEYS_LOGS 2>&1
     RELAYER_ADDRESS=$($MAIN_CMD keys show $RELAYER_ACCT --keyring-backend test -a | tr -cd '[:alnum:]._-')
     $MAIN_CMD add-genesis-account ${RELAYER_ADDRESS} ${VAL_TOKENS}${DENOM}
+
+    if [ "$CHAIN" == "GAIA" ]; then 
+        echo "$RELAYER_GAIA_ICS_MNEMONIC" | $MAIN_CMD keys add $RELAYER_GAIA_ICS_ACCT --recover --keyring-backend=test >> $KEYS_LOGS 2>&1
+        RELAYER_ADDRESS=$($MAIN_CMD keys show $RELAYER_GAIA_ICS_ACCT --keyring-backend test -a | tr -cd '[:alnum:]._-')
+        $MAIN_CMD add-genesis-account ${RELAYER_ADDRESS} ${VAL_TOKENS}${DENOM}
+    fi
 fi
 
 # now we process gentx txs on the main node
