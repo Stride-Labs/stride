@@ -10,7 +10,8 @@ SOVEREIGN_HOME="$DOCKERNET_HOME/state/sovereign"
 PROVIDER_BINARY=$GAIA_BINARY
 PROVIDER_CHAIN_ID=$GAIA_CHAIN_ID
 PROVIDER_RPC_ADDR="localhost:$GAIA_RPC_PORT"
-VALIDATOR="${GAIA_VAL_PREFIX}1"
+VALIDATOR1="${GAIA_VAL_PREFIX}1"
+VALIDATOR2="${GAIA_VAL_PREFIX}2"
 DENOM=$ATOM_DENOM
 PROVIDER_MAIN_CMD="$PROVIDER_BINARY --home $PROVIDER_HOME"
 SOVEREIGN_CHAIN_ID=$STRIDE_CHAIN_ID
@@ -44,13 +45,14 @@ PROPOSAL_ID=1
 printf "PROPOSAL\n"
 $PROVIDER_MAIN_CMD tx gov submit-proposal consumer-addition $PROVIDER_HOME/consumer-proposal.json \
 	--gas=100000000 --chain-id $PROVIDER_CHAIN_ID --node tcp://$PROVIDER_RPC_ADDR \
-  --from $VALIDATOR --home $PROVIDER_HOME --keyring-backend test -b block -y | TRIM_TX
+  --from $VALIDATOR1 --home $PROVIDER_HOME --keyring-backend test -b block -y | TRIM_TX
 
 sleep 5
 printf "\nVOTING\n"
 # Vote yes to proposal
 $PROVIDER_MAIN_CMD query gov proposals --node tcp://$PROVIDER_RPC_ADDR
-$PROVIDER_MAIN_CMD tx gov vote 1 yes --from $VALIDATOR --chain-id $PROVIDER_CHAIN_ID --node tcp://$PROVIDER_RPC_ADDR --home $PROVIDER_HOME -b block -y --keyring-backend test
+$PROVIDER_MAIN_CMD tx gov vote 1 yes --from $VALIDATOR1 --chain-id $PROVIDER_CHAIN_ID --node tcp://$PROVIDER_RPC_ADDR --home $PROVIDER_HOME -b block -y --keyring-backend test
+$PROVIDER_MAIN_CMD tx gov vote 1 yes --from $VALIDATOR2 --chain-id $PROVIDER_CHAIN_ID --node tcp://$PROVIDER_RPC_ADDR --home $PROVIDER_HOME -b block -y --keyring-backend test
 
 sleep 5
 printf "\nVOTE CONFIRMATION\n"
@@ -84,15 +86,15 @@ then
        exit 1
 fi
 
-# This portion needs to be enabled for only gaia v9.1.0(321d15a574def0f338ceacc5c060159ebba95edc)
-# # Path to the JSON file
-# json_file="$SOVEREIGN_HOME"/consumer_section.json
+# This portion needs to be enabled for only above gaia v9.1.0(321d15a574def0f338ceacc5c060159ebba95edc)
+# Path to the JSON file
+json_file="$SOVEREIGN_HOME"/consumer_section.json
 
-# # Use jq to remove the "field2" key from the JSON file
-# jq 'del(.params.reward_denoms, .params.provider_reward_denoms)' "$json_file" > "$json_file.tmp"
+# Use jq to remove the "field2" key from the JSON file
+jq 'del(.params.reward_denoms, .params.provider_reward_denoms)' "$json_file" > "$json_file.tmp"
 
-# # Replace the original file with the modified version
-# mv "$json_file.tmp" "$json_file"
+# Replace the original file with the modified version
+mv "$json_file.tmp" "$json_file"
 
 cp $CONSUMER_HOME/config/genesis.json "$SOVEREIGN_HOME"/config/genesis.json
 jq -s '.[0].app_state.ccvconsumer = .[1] | .[0]' "$SOVEREIGN_HOME"/config/genesis.json "$SOVEREIGN_HOME"/consumer_section.json > "$SOVEREIGN_HOME"/genesis_consumer.json && \
