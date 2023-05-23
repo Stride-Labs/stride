@@ -22,7 +22,7 @@ require (
 	gopkg.in/yaml.v2 v2.4.0
 )
 
-require github.com/gogo/protobuf v1.3.2
+require github.com/gogo/protobuf v1.3.2 // indirect
 
 require (
 	cloud.google.com/go v0.110.0 // indirect

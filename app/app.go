@@ -664,7 +664,6 @@ func NewStrideApp(
 		AddRoute(icahosttypes.SubModuleName, icaHostIBCModule).
 		// Stakeibc Stack
 		AddRoute(icacontrollertypes.SubModuleName, stakeibcStack).
-		AddRoute(stakeibcmoduletypes.ModuleName, stakeibcStack).
 		// Transfer stack
 		AddRoute(ibctransfertypes.ModuleName, transferStack)
 
