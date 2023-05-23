@@ -11,8 +11,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
-	capabilitykeeper "github.com/cosmos/cosmos-sdk/x/capability/keeper"
-	capabilitytypes "github.com/cosmos/cosmos-sdk/x/capability/types"
 
 	icqkeeper "github.com/Stride-Labs/stride/v9/x/interchainquery/keeper"
 	"github.com/Stride-Labs/stride/v9/x/stakeibc/types"
@@ -39,7 +37,6 @@ type (
 		paramstore            paramtypes.Subspace
 		ICAControllerKeeper   icacontrollerkeeper.Keeper
 		IBCKeeper             ibckeeper.Keeper
-		scopedKeeper          capabilitykeeper.ScopedKeeper
 		bankKeeper            bankkeeper.Keeper
 		InterchainQueryKeeper icqkeeper.Keeper
 		RecordsKeeper         recordsmodulekeeper.Keeper
@@ -60,7 +57,6 @@ func NewKeeper(
 	bankKeeper bankkeeper.Keeper,
 	icacontrollerkeeper icacontrollerkeeper.Keeper,
 	ibcKeeper ibckeeper.Keeper,
-	scopedKeeper capabilitykeeper.ScopedKeeper,
 	interchainQueryKeeper icqkeeper.Keeper,
 	RecordsKeeper recordsmodulekeeper.Keeper,
 	StakingKeeper stakingkeeper.Keeper,
@@ -81,7 +77,6 @@ func NewKeeper(
 		bankKeeper:            bankKeeper,
 		ICAControllerKeeper:   icacontrollerkeeper,
 		IBCKeeper:             ibcKeeper,
-		scopedKeeper:          scopedKeeper,
 		InterchainQueryKeeper: interchainQueryKeeper,
 		RecordsKeeper:         RecordsKeeper,
 		StakingKeeper:         StakingKeeper,
@@ -103,11 +98,6 @@ func (k *Keeper) SetHooks(gh types.StakeIBCHooks) *Keeper {
 	k.hooks = gh
 
 	return k
-}
-
-// ClaimCapability claims the channel capability passed via the OnOpenChanInit callback
-func (k *Keeper) ClaimCapability(ctx sdk.Context, cap *capabilitytypes.Capability, name string) error {
-	return k.scopedKeeper.ClaimCapability(ctx, cap, name)
 }
 
 func (k Keeper) GetChainID(ctx sdk.Context, connectionID string) (string, error) {

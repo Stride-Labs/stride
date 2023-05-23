@@ -506,14 +506,11 @@ func NewStrideApp(
 	app.InterchainqueryKeeper = interchainquerykeeper.NewKeeper(appCodec, keys[interchainquerytypes.StoreKey], app.IBCKeeper)
 	interchainQueryModule := interchainquery.NewAppModule(appCodec, app.InterchainqueryKeeper)
 
-	scopedRecordsKeeper := app.CapabilityKeeper.ScopeToModule(recordsmoduletypes.ModuleName)
-	app.ScopedRecordsKeeper = scopedRecordsKeeper
 	app.RecordsKeeper = *recordsmodulekeeper.NewKeeper(
 		appCodec,
 		keys[recordsmoduletypes.StoreKey],
 		keys[recordsmoduletypes.MemStoreKey],
 		app.GetSubspace(recordsmoduletypes.ModuleName),
-		scopedRecordsKeeper,
 		app.AccountKeeper,
 		app.TransferKeeper,
 		*app.IBCKeeper,
@@ -521,8 +518,6 @@ func NewStrideApp(
 	)
 	recordsModule := recordsmodule.NewAppModule(appCodec, app.RecordsKeeper, app.AccountKeeper, app.BankKeeper)
 
-	scopedStakeibcKeeper := app.CapabilityKeeper.ScopeToModule(stakeibcmoduletypes.ModuleName)
-	app.ScopedStakeibcKeeper = scopedStakeibcKeeper
 	stakeibcKeeper := stakeibcmodulekeeper.NewKeeper(
 		appCodec,
 		keys[stakeibcmoduletypes.StoreKey],
@@ -532,7 +527,6 @@ func NewStrideApp(
 		app.BankKeeper,
 		app.ICAControllerKeeper,
 		*app.IBCKeeper,
-		scopedStakeibcKeeper,
 		app.InterchainqueryKeeper,
 		app.RecordsKeeper,
 		app.StakingKeeper,
@@ -885,7 +879,6 @@ func NewStrideApp(
 	// app.ScopedMonitoringKeeper = scopedMonitoringKeeper
 	app.ScopedICAControllerKeeper = scopedICAControllerKeeper
 	app.ScopedICAHostKeeper = scopedICAHostKeeper
-	app.ScopedStakeibcKeeper = scopedStakeibcKeeper
 	// this line is used by starport scaffolding # stargate/app/beforeInitReturn
 
 	return app
