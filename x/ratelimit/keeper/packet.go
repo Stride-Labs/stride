@@ -179,7 +179,7 @@ func (k Keeper) SendPacket(
 		k.Logger(ctx).Error(fmt.Sprintf("ICS20 packet send was denied: %s", err.Error()))
 		return 0, err
 	}
-	sequence, err = k.ics4Wrapper.SendPacket(
+	return k.ics4Wrapper.SendPacket(
 		ctx,
 		channelCap,
 		sourcePort,
@@ -188,10 +188,6 @@ func (k Keeper) SendPacket(
 		timeoutTimestamp,
 		data,
 	)
-	if err != nil {
-		return 0, err
-	}
-	return sequence, nil
 }
 
 // WriteAcknowledgement wraps IBC ChannelKeeper's WriteAcknowledgement function
