@@ -15,3 +15,15 @@ func (k Keeper) AddValidatorsProposal(ctx sdk.Context, msg *types.AddValidatorsP
 
 	return nil
 }
+
+func (k Keeper) ToggleLSMProposal(ctx sdk.Context, msg *types.ToggleLSMProposal) error {
+	hostZone, found := k.GetHostZone(ctx, msg.HostZone)
+	if !found {
+		return types.ErrHostZoneNotFound.Wrap(msg.HostZone)
+	}
+
+	hostZone.LsmLiquidStakeEnabled = msg.Enabled
+	k.SetHostZone(ctx, hostZone)
+
+	return nil
+}
