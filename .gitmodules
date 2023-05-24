@@ -11,7 +11,7 @@
 	path = deps/gaia
 	url = https://github.com/cosmos/gaia.git
 [submodule "deps/juno"]
-	# Commit: 955892041359443fbb5addd34c0ab8b66bd8d75c
+	# Commit: v14.1.0
 	path = deps/juno
 	url = https://github.com/CosmosContracts/juno.git
 [submodule "deps/osmosis"]
