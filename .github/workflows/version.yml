@@ -22,6 +22,7 @@ jobs:
 
           echo "OLD_VERSION=$old_version" >> $GITHUB_ENV
           echo "NEW_VERSION=$new_version" >> $GITHUB_ENV
+          echo "NEW_MAJOR_VERSION=$new_major_version" >> $GITHUB_ENV
           echo "branch_name=$branch_name" >> $GITHUB_ENV
 
       - name: Checkout main
@@ -69,28 +70,17 @@ jobs:
           -H "Authorization: token ${{ secrets.GH_ACTIONS_PAT }}" \
           https://api.github.com/repos/${{ github.repository }}/pulls \
           -d '{
-          "title":"Update Stride Version to ${{ env.new_version }}",
-          "head":"${{ env.branch_name }}",
-          "base":"main",
-          "body":"This is an automatically generated pull request.\n\nPlease review and merge the changes.\n\n## Context\n\nIncrements Stride version for the ${{ env.new_major_version }} upgrade\n\n## Brief Changelog\n\n* Increments Stride version in cmd/strided/config/config.go and app/app.go\n* Updates module name to ${{ env.new_major_version }}\n* Re-generates protos",
-          "maintainer_can_modify": true
+            "title": "Update Stride Version to '"${{ env.NEW_VERSION }}"'",
+            "body": "This is an automatically generated pull request.
+              Please review and merge the changes.
+
+              ## Context
+              Increments Stride version for the '"${{ env.NEW_MAJOR_VERSION }}"' upgrade
+
+              ## Brief Changelog
+              * Increments Stride version in cmd/strided/config/config.go and app/app.go
+              * Updates module name to '"${{ env.NEW_MAJOR_VERSION }}"'
+              * Re-generates protos",
+            "head": "${{ env.branch_name }}",
+            "base": "main"
           }'
-
-      # - name: Create Pull Request
-      #   uses: peter-evans/create-pull-request@v5
-      #   with:
-      #     token: ${{ secrets.GH_ACTIONS_PAT }}
-      #     branch: ${{ env.branch_name }}
-      #     base: main
-      #     title: Update Stride Version to ${{ env.new_version }}
-      #     body: |
-      #       This is an automatically generated pull request.
-      #       Please review and merge the changes.
-
-      #       ## Context
-      #       Increments Stride version for the ${{ env.new_major_version }} upgrade
-
-      #       ## Brief Changelog
-      #       * Increments Stride version in cmd/strided/config/config.go and app/app.go
-      #       * Updates module name to ${{ env.new_major_version }}
-      #       * Re-generates protos
