@@ -1,4 +1,4 @@
-name: Update Changelog
+name: Changelog
 
 on:
   workflow_dispatch:
