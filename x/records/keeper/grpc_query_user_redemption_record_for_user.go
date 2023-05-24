@@ -9,7 +9,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	"github.com/Stride-Labs/stride/v9/x/records/types"
+	"github.com/Stride-Labs/stride/v10/x/records/types"
 )
 
 func (k Keeper) UserRedemptionRecordForUser(c context.Context, req *types.QueryAllUserRedemptionRecordForUserRequest) (*types.QueryAllUserRedemptionRecordForUserResponse, error) {

@@ -12,10 +12,10 @@ import (
 
 	channeltypes "github.com/cosmos/ibc-go/v5/modules/core/04-channel/types"
 
-	epochtypes "github.com/Stride-Labs/stride/v9/x/epochs/types"
-	recordstypes "github.com/Stride-Labs/stride/v9/x/records/types"
-	recordtypes "github.com/Stride-Labs/stride/v9/x/records/types"
-	stakeibctypes "github.com/Stride-Labs/stride/v9/x/stakeibc/types"
+	epochtypes "github.com/Stride-Labs/stride/v10/x/epochs/types"
+	recordstypes "github.com/Stride-Labs/stride/v10/x/records/types"
+	recordtypes "github.com/Stride-Labs/stride/v10/x/records/types"
+	stakeibctypes "github.com/Stride-Labs/stride/v10/x/stakeibc/types"
 )
 
 type RegisterHostZoneTestCase struct {

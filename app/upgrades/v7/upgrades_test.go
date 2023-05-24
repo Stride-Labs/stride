@@ -9,16 +9,16 @@ import (
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/Stride-Labs/stride/v9/app"
-	"github.com/Stride-Labs/stride/v9/app/apptesting"
-	v7 "github.com/Stride-Labs/stride/v9/app/upgrades/v7"
-	epochstypes "github.com/Stride-Labs/stride/v9/x/epochs/types"
-	stakeibctypes "github.com/Stride-Labs/stride/v9/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v10/app"
+	"github.com/Stride-Labs/stride/v10/app/apptesting"
+	v7 "github.com/Stride-Labs/stride/v10/app/upgrades/v7"
+	epochstypes "github.com/Stride-Labs/stride/v10/x/epochs/types"
+	stakeibctypes "github.com/Stride-Labs/stride/v10/x/stakeibc/types"
 
 	// This isn't the exact type host zone schema as the one that's will be in the store
 	// before the upgrade, but the only thing that matters, for the sake of the test,
 	// is that it doesn't have min/max redemption rate as attributes
-	oldstakeibctypes "github.com/Stride-Labs/stride/v9/x/stakeibc/migrations/v2/types"
+	oldstakeibctypes "github.com/Stride-Labs/stride/v10/x/stakeibc/migrations/v2/types"
 )
 
 var (
