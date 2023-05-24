@@ -27,12 +27,15 @@ jobs:
       - name: Checkout main
         uses: actions/checkout@v3
         with:
+          persist-credentials: false
+          fetch-depth: 0
           ref: sam/automated-version-increment-v2
+          # ref: main
 
       - name: Set Git Config
         run: |
-          git config --global user.name "GitHub Actions"
-          git config --global user.email "actions@github.com"
+          git config --global user.name "stride-dev"
+          git config --global user.email "dev@stridelabs.com"
 
       - name: Create branch
         run: git checkout -b ${{ env.branch_name }}
@@ -41,10 +44,18 @@ jobs:
         run: ./scripts/version.sh
 
       - name: Push changes
-        uses: ad-m/github-push-action@v0.6.0
-        with:
-          github_token: ${{ secrets.GH_ACTIONS_PAT }}
-          branch: ${{ env.branch_name }}
+        id: push
+        # continue-on-error: true
+        run: |
+          git push origin ${{ env.branch_name }}
+        env:
+          GH_TOKEN: ${{ secrets.GH_ACTIONS_PAT }}
+
+      - name: Check Push Success
+        if: ${{ steps.push.outcome == 'failure' }}
+        run: |
+          echo "Push failed. The token might be expired or have insufficient permissions. Please check your token."
+          exit 1
 
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@v3
