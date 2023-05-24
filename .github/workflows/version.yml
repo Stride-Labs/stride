@@ -32,6 +32,9 @@ jobs:
       - name: Create branch
         run: git checkout -b ${{ env.branch_name }}
 
+      - name: Set execute permissions for script
+        run: chmod +x ./scripts/version.sh
+
       - name: Update versions in files
         run: ./scripts/version.sh
 
