@@ -43,6 +43,10 @@ jobs:
       - name: Update changelogs
         run: ./scripts/changelog.sh
 
+      - name: Commit changes
+        run: git add .
+          git commit -m 'updated changelogs'
+
       - name: Push changes
         id: push
         continue-on-error: true
