@@ -4,7 +4,7 @@ WORKDIR /opt
 
 RUN apk add --update ca-certificates build-base git
 
-ENV COMMIT_HASH=b0bea28fc695a2a5c567e56a37b289a5b75830cc
+ENV COMMIT_HASH=v9.0.1
 
 RUN git clone https://github.com/public-awesome/stargaze \
     && cd stargaze \

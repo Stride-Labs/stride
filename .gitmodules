@@ -19,7 +19,7 @@
 	path = deps/osmosis
 	url = https://github.com/osmosis-labs/osmosis.git
 [submodule "deps/stargaze"]
-	# Commit: b0bea28fc695a2a5c567e56a37b289a5b75830cc
+	# Commit: v9.0.1
 	path = deps/stargaze
 	url = https://github.com/public-awesome/stargaze.git
 [submodule "deps/evmos"]
