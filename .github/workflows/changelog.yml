@@ -30,7 +30,8 @@ jobs:
         with:
           persist-credentials: false
           fetch-depth: 0
-          ref: main
+          # ref: main
+          ref: sam/automate-changelog-v2
 
       - name: Set Git Config
         run: |
