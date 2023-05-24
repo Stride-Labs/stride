@@ -57,6 +57,10 @@ jobs:
           echo "Push failed. The token might be expired or have insufficient permissions. Please check your token."
           exit 1
 
+      - name: Fetch
+        run: |
+          git fetch --all
+
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@v5
         with:
