@@ -228,7 +228,6 @@ setup_file() {
 
   # LSM-liquid stake
   $STRIDE_MAIN_CMD tx stakeibc lsm-liquid-stake $STAKE_AMOUNT $lsm_token_ibc_denom --from $USER_ACCT -y 
-  WAIT_FOR_BLOCK $STRIDE_LOGS 2
 
   # make sure stToken went up
   WAIT_FOR_BALANCE_CHANGE STRIDE $USER_ACCT st$HOST_DENOM
@@ -240,6 +239,20 @@ setup_file() {
 
   # wait for LSM token to get transferred and converted to native stake
   WAIT_FOR_DELEGATION_CHANGE $HOST_CHAIN_ID $STAKE_AMOUNT
+}
+
+@test "[INTEGRATION-BASIC-$CHAIN_NAME] LSM liquid stake with slash query" {
+  # get the LSM token denom
+  validator_address=$(GET_VAL_ADDR $CHAIN_NAME 1)
+  record_id=$($HOST_MAIN_CMD q staking last-tokenize-share-record-id | awk '{print $2}' | tr -d '"')
+  lsm_token_ibc_denom=$(GET_IBC_DENOM $STRIDE_TRANSFER_CHANNEL ${validator_address}/${record_id})
+
+  # LSM-liquid stake again, this time the slash query should be invoked
+  $STRIDE_MAIN_CMD tx stakeibc lsm-liquid-stake $STAKE_AMOUNT $lsm_token_ibc_denom --from $USER_ACCT -y 
+  WAIT_FOR_BLOCK $STRIDE_LOGS 2
+
+  # make sure stToken went up (after the slash query query callback)
+  WAIT_FOR_BALANCE_CHANGE STRIDE $USER_ACCT st$HOST_DENOM
 }
 
 # check that redemptions and claims work
