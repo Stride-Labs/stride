@@ -29,6 +29,11 @@ jobs:
         with:
           ref: sam/automated-version-increment-v2
 
+      - name: Set Git Config
+        run: |
+          git config --global user.name "GitHub Actions"
+          git config --global user.email "actions@github.com"
+
       - name: Create branch
         run: git checkout -b ${{ env.branch_name }}
 
