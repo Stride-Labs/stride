@@ -100,7 +100,6 @@ func (h Hooks) AfterEpochEnd(ctx sdk.Context, epochInfo epochstypes.EpochInfo) {
 }
 
 func (h Hooks) AfterUnbondingInitiated(ctx sdk.Context, id uint64) error {
-	// TODO: implement
 	return nil
 }
 
