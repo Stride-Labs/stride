@@ -23,7 +23,7 @@
 	path = deps/stargaze
 	url = https://github.com/public-awesome/stargaze.git
 [submodule "deps/evmos"]
-	# Commit: v12.1.2
+	# Commit: ec337e0357ae6b6727ad9092ac0ce3667df91319
 	path = deps/evmos
 	url = https://github.com/evmos/evmos
 # bats
