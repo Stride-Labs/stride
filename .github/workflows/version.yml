@@ -30,8 +30,7 @@ jobs:
         with:
           persist-credentials: false
           fetch-depth: 0
-          ref: sam/automated-version-increment-v2
-          # ref: main
+          ref: main
 
       - name: Set Git Config
         run: |
@@ -70,7 +69,7 @@ jobs:
           -H "Authorization: token ${{ secrets.GH_ACTIONS_PAT }}" \
           https://api.github.com/repos/${{ github.repository }}/pulls \
           -d '{
-          "title":"Update Stride Version to ${{ env.NEW_VERSION }}",
+          "title":"${{ env.NEW_MAJOR_VERSION }} Import Paths",
           "head":"${{ env.branch_name }}",
           "base":"main",
           "body":"This is an automatically generated pull request.\n\nPlease review and merge the changes.\n\n## Context\n\nIncrements Stride version for the ${{ env.NEW_MAJOR_VERSION }} upgrade\n\n## Brief Changelog\n\n* Increments Stride version in cmd/strided/config/config.go and app/app.go\n* Updates module name to ${{ env.NEW_MAJOR_VERSION }}\n* Re-generates protos",
