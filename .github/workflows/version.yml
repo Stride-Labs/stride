@@ -70,17 +70,9 @@ jobs:
           -H "Authorization: token ${{ secrets.GH_ACTIONS_PAT }}" \
           https://api.github.com/repos/${{ github.repository }}/pulls \
           -d '{
-            "title": "Update Stride Version to '"${{ env.NEW_VERSION }}"'",
-            "body": "This is an automatically generated pull request.
-              Please review and merge the changes.
-
-              ## Context
-              Increments Stride version for the '"${{ env.NEW_MAJOR_VERSION }}"' upgrade
-
-              ## Brief Changelog
-              * Increments Stride version in cmd/strided/config/config.go and app/app.go
-              * Updates module name to '"${{ env.NEW_MAJOR_VERSION }}"'
-              * Re-generates protos",
-            "head": "${{ env.branch_name }}",
-            "base": "main"
+          "title":"Update Stride Version to ${{ env.NEW_VERSION }}",
+          "head":"${{ env.branch_name }}",
+          "base":"main",
+          "body":"This is an automatically generated pull request.\n\nPlease review and merge the changes.\n\n## Context\n\nIncrements Stride version for the ${{ env.NEW_MAJOR_VERSION }} upgrade\n\n## Brief Changelog\n\n* Increments Stride version in cmd/strided/config/config.go and app/app.go\n* Updates module name to ${{ env.NEW_MAJOR_VERSION }}\n* Re-generates protos",
+          "maintainer_can_modify": true
           }'
