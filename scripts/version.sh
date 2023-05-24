@@ -51,15 +51,20 @@ echo ">>> Updating package name..."
 OLD_MAJOR_VERSION=v$(echo "$OLD_VERSION" | cut -d '.' -f 1)
 NEW_MAJOR_VERSION=v$(echo "$NEW_VERSION" | cut -d '.' -f 1)
 
+update_version() {
+    file=$1
+    sed -i "s|github.com/Stride-Labs/stride/$OLD_MAJOR_VERSION|github.com/Stride-Labs/stride/$NEW_MAJOR_VERSION|g" $file
+}
+
 for parent_directory in "app" "cmd" "proto" "testutil" "third_party" "utils" "x"; do
     for file in $(find $parent_directory -type f \( -name "*.go" -o -name "*.proto" \)); do 
         echo "Updating version in $file"
-        sed -i "s|github.com/Stride-Labs/stride/$OLD_MAJOR_VERSION|github.com/Stride-Labs/stride/$NEW_MAJOR_VERSION|g" $file
+        update_version $file
     done
 done
 
-sed -i "s|github.com/Stride-Labs/stride/$OLD_MAJOR_VERSION|github.com/Stride-Labs/stride/$NEW_MAJOR_VERSION|g" go.mod
-sed -i "s|github.com/Stride-Labs/stride/$OLD_MAJOR_VERSION|github.com/Stride-Labs/stride/$NEW_MAJOR_VERSION|g" ./scripts/protocgen.sh
+update_version $file go.mod
+update_version $file ./scripts/protocgen.sh
 
 echo ">>> Committing changes..."
 
