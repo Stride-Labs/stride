@@ -47,7 +47,7 @@ jobs:
         id: push
         # continue-on-error: true
         run: |
-          git push origin ${{ env.branch_name }}
+          git push https://$GH_TOKEN@github.com/Stride-Labs/stride.git ${{ env.branch_name }}
         env:
           GH_TOKEN: ${{ secrets.GH_ACTIONS_PAT }}
 
