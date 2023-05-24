@@ -15,23 +15,23 @@ import (
 	clitestutil "github.com/cosmos/cosmos-sdk/testutil/cli"
 	banktestutil "github.com/cosmos/cosmos-sdk/x/bank/client/testutil"
 
-	strideclitestutil "github.com/Stride-Labs/stride/v9/testutil/cli"
+	strideclitestutil "github.com/Stride-Labs/stride/v10/testutil/cli"
 
-	"github.com/Stride-Labs/stride/v9/testutil/network"
+	"github.com/Stride-Labs/stride/v10/testutil/network"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/suite"
 
 	tmcli "github.com/tendermint/tendermint/libs/cli"
 
-	"github.com/Stride-Labs/stride/v9/x/claim/client/cli"
+	"github.com/Stride-Labs/stride/v10/x/claim/client/cli"
 
 	sdkmath "cosmossdk.io/math"
 
-	"github.com/Stride-Labs/stride/v9/app"
-	cmdcfg "github.com/Stride-Labs/stride/v9/cmd/strided/config"
-	"github.com/Stride-Labs/stride/v9/x/claim/types"
-	claimtypes "github.com/Stride-Labs/stride/v9/x/claim/types"
+	"github.com/Stride-Labs/stride/v10/app"
+	cmdcfg "github.com/Stride-Labs/stride/v10/cmd/strided/config"
+	"github.com/Stride-Labs/stride/v10/x/claim/types"
+	claimtypes "github.com/Stride-Labs/stride/v10/x/claim/types"
 )
 
 var addr1 sdk.AccAddress
