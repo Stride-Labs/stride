@@ -66,11 +66,11 @@ jobs:
           echo ">>>>>>>>>>>>"
           git status
           echo ">>>>>>>>>>>>"
-          git log
+          git log | head -n 100
           echo ">>>>>>>>>>>>"
           git checkout main
           echo ">>>>>>>>>>>>"
-          git log
+          git log | head -n 100
 
       # - name: Create Pull Request
       #   uses: peter-evans/create-pull-request@v5
