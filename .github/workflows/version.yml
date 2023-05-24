@@ -18,7 +18,7 @@ jobs:
           old_version=${{ github.event.inputs.old_version }}
           new_version=${{ github.event.inputs.new_version }}
           new_major_version=v$(echo $new_version | cut -d '.' -f 1)
-          branch_name=update-stride-version-${new_major_version}
+          branch_name=actions/update-stride-version-${new_major_version}
 
           echo "OLD_VERSION=$old_version" >> $GITHUB_ENV
           echo "NEW_VERSION=$new_version" >> $GITHUB_ENV
@@ -45,20 +45,20 @@ jobs:
 
       - name: Push changes
         id: push
-        # continue-on-error: true
+        continue-on-error: true
         run: |
           git push https://$GH_TOKEN@github.com/Stride-Labs/stride.git ${{ env.branch_name }}
         env:
           GH_TOKEN: ${{ secrets.GH_ACTIONS_PAT }}
 
-      # - name: Check Push Success
-      #   if: ${{ steps.push.outcome == 'failure' }}
-      #   run: |
-      #     echo "Push failed. The token might be expired or have insufficient permissions. Please check your token."
-      #     exit 1
+      - name: Check Push Success
+        if: ${{ steps.push.outcome == 'failure' }}
+        run: |
+          echo "Push failed. The token might be expired or have insufficient permissions. Please check your token."
+          exit 1
 
       - name: Create Pull Request
-        uses: peter-evans/create-pull-request@v3
+        uses: peter-evans/create-pull-request@v5
         with:
           token: ${{ secrets.GH_ACTIONS_PAT }}
           branch: ${{ env.branch_name }}
