@@ -1,6 +1,6 @@
 #!/bin/bash
 
-set -euo pipefall
+set -euo pipefail
 
 VERSION_REGEX='[0-9]{1,2}\.[0-9]{1}\.[0-9]{1}$'
 
@@ -17,14 +17,17 @@ fi
 
 if ! echo $OLD_VERSION | grep -Eq $VERSION_REGEX; then 
     echo "OLD_VERSION must be of form {major}.{minor}.{patch} (e.g. 8.0.0). Exiting..."
+    exit 1
 fi 
 
 if ! echo $NEW_VERSION | grep -Eq $VERSION_REGEX; then 
     echo "NEW_VERSION must be of form {major}.{minor}.{patch} (e.g. 8.0.0). Exiting..."
+    exit 1
 fi 
 
 if [ "$(basename "$PWD")" != "stride" ]; then
     echo "The script must be run from the project home directory. Exiting..."
+    exit 1
 fi
 
 # Update version 
@@ -57,11 +60,10 @@ done
 
 sed -i "s|github.com/Stride-Labs/stride/$OLD_MAJOR_VERSION|github.com/Stride-Labs/stride/$NEW_MAJOR_VERSION|g" go.mod
 
-git add .
-git commit -m "updated package from $OLD_MAJOR_VERSION -> $NEW_MAJOR_VERSION"
-
 echo ">>> Committing changes..."
 
+git add .
+git commit -m "updated package from $OLD_MAJOR_VERSION -> $NEW_MAJOR_VERSION"
 
 # Re-generate protos
 echo ">>> Rebuilding protos..."
