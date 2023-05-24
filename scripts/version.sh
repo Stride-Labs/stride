@@ -59,6 +59,7 @@ for parent_directory in "app" "cmd" "proto" "testutil" "third_party" "utils" "x"
 done
 
 sed -i "s|github.com/Stride-Labs/stride/$OLD_MAJOR_VERSION|github.com/Stride-Labs/stride/$NEW_MAJOR_VERSION|g" go.mod
+sed -i "s|github.com/Stride-Labs/stride/$OLD_MAJOR_VERSION|github.com/Stride-Labs/stride/$NEW_MAJOR_VERSION|g" ./scripts/protocgen.sh
 
 echo ">>> Committing changes..."
 
