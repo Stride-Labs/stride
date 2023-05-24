@@ -31,6 +31,7 @@ jobs:
           persist-credentials: false
           fetch-depth: 0
           # ref: main
+          # REVERT BEFORE MERGING
           ref: sam/automate-changelog-v2
 
       - name: Set Git Config
