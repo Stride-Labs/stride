@@ -12,8 +12,8 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
-	epochtypes "github.com/Stride-Labs/stride/v9/x/epochs/types"
-	"github.com/Stride-Labs/stride/v9/x/stakeibc/types"
+	epochtypes "github.com/Stride-Labs/stride/v10/x/epochs/types"
+	"github.com/Stride-Labs/stride/v10/x/stakeibc/types"
 )
 
 const nanosecondsInDay = 86400000000000

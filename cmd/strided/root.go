@@ -9,7 +9,7 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/snapshots"
 
-	"github.com/Stride-Labs/stride/v9/utils"
+	"github.com/Stride-Labs/stride/v10/utils"
 
 	tmDb "github.com/tendermint/tm-db"
 
@@ -42,7 +42,7 @@ import (
 	genutilcli "github.com/cosmos/cosmos-sdk/x/genutil/client/cli"
 	tmcfg "github.com/tendermint/tendermint/config"
 
-	"github.com/Stride-Labs/stride/v9/app"
+	"github.com/Stride-Labs/stride/v10/app"
 )
 
 var ChainID string
