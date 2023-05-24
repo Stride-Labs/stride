@@ -28,8 +28,7 @@ jobs:
         with:
           persist-credentials: false
           fetch-depth: 0
-          # ref: main
-          ref: sam/automate-cli-version
+          ref: main
 
       - name: Set Git Config
         run: |
