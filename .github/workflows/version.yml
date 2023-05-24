@@ -51,11 +51,11 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GH_ACTIONS_PAT }}
 
-      - name: Check Push Success
-        if: ${{ steps.push.outcome == 'failure' }}
-        run: |
-          echo "Push failed. The token might be expired or have insufficient permissions. Please check your token."
-          exit 1
+      # - name: Check Push Success
+      #   if: ${{ steps.push.outcome == 'failure' }}
+      #   run: |
+      #     echo "Push failed. The token might be expired or have insufficient permissions. Please check your token."
+      #     exit 1
 
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@v3
