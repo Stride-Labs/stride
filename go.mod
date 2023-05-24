@@ -23,6 +23,8 @@ require (
 	gopkg.in/yaml.v2 v2.4.0
 )
 
+require github.com/99designs/go-keychain v0.0.0-20191008050251-8e49817e8af4 // indirect
+
 require (
 	cloud.google.com/go v0.110.0 // indirect
 	cloud.google.com/go/compute v1.18.0 // indirect
@@ -105,7 +107,6 @@ require (
 	github.com/jmespath/go-jmespath v0.4.0 // indirect
 	github.com/jmhodges/levigo v1.0.0 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
-	github.com/keybase/go-keychain v0.0.0-20190712205309-48d3d31d256d // indirect
 	github.com/klauspost/compress v1.16.3 // indirect
 	github.com/leodido/go-urn v1.2.1 // indirect
 	github.com/lib/pq v1.10.7 // indirect
@@ -168,12 +169,13 @@ require (
 
 replace (
 	// Use the keyring specified by the cosmos-sdk
-	github.com/99designs/keyring => github.com/cosmos/keyring v1.1.7-0.20210622111912-ef00f8ac3d76
+	github.com/99designs/keyring => github.com/cosmos/keyring v1.2.0
 
 	// use cosmos-flavored protobufs
 	// if we "do it right" then we should not need this replace.  But we need to check every dependency.
 	// TODO: do it right
 	github.com/gogo/protobuf v1.3.3 => github.com/regen-network/protobuf v1.3.3-alpha.regen.1
 
+	// lock the version of goleveldb because later versions crop up with non-determinsim
 	github.com/syndtr/goleveldb => github.com/syndtr/goleveldb v1.0.1-0.20210819022825-2ae1ddf74ef7
 )
