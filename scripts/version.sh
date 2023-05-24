@@ -1,6 +1,6 @@
 #!/bin/bash
 
-set -eu
+set -euo pipefall
 
 VERSION_REGEX='[0-9]{1,2}\.[0-9]{1}\.[0-9]{1}$'
 
