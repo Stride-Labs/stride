@@ -18,44 +18,60 @@ jobs:
           old_version=${{ github.event.inputs.old_version }}
           new_version=${{ github.event.inputs.new_version }}
           new_major_version=v$(echo $new_version | cut -d '.' -f 1)
-          branch_name=update-stride-version-${new_major_version}
+          branch_name=actions/update-stride-version-${new_major_version}
 
-          echo "old_version=$old_version" >> $GITHUB_ENV
-          echo "new_version=$new_version" >> $GITHUB_ENV
+          echo "OLD_VERSION=$old_version" >> $GITHUB_ENV
+          echo "NEW_VERSION=$new_version" >> $GITHUB_ENV
+          echo "NEW_MAJOR_VERSION=$new_major_version" >> $GITHUB_ENV
           echo "branch_name=$branch_name" >> $GITHUB_ENV
 
       - name: Checkout main
         uses: actions/checkout@v3
         with:
+          persist-credentials: false
+          fetch-depth: 0
           ref: main
 
+      - name: Set Git Config
+        run: |
+          git config --global user.name "stride-dev"
+          git config --global user.email "dev@stridelabs.com"
+
       - name: Create branch
-        run: git checkout -b update-stride-version-${{ env.new_major_version }}
+        run: git checkout -b ${{ env.branch_name }}
 
       - name: Update versions in files
-        run: |
-          OLD_VERSION=${{ env.old_version }} NEW_VERSION=${{ env.new_version }} bash scripts/version.sh
+        run: ./scripts/version.sh
 
       - name: Push changes
-        uses: ad-m/github-push-action@v0.6.0
-        with:
-          branch: ${{ env.branch_name }}
+        id: push
+        continue-on-error: true
+        run: |
+          git push https://$GH_TOKEN@github.com/Stride-Labs/stride.git ${{ env.branch_name }}
+        env:
+          GH_TOKEN: ${{ secrets.GH_ACTIONS_PAT }}
+
+      - name: Check Push Success
+        if: ${{ steps.push.outcome == 'failure' }}
+        run: |
+          echo "Push failed. The token might be expired or have insufficient permissions. Please check your token."
+          exit 1
+
+      - name: Fetch New Branch
+        run: |
+          git fetch --all
 
       - name: Create Pull Request
-        uses: peter-evans/create-pull-request@v3
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          branch: ${{ env.branch_name }}
-          base: main
-          title: Update Stride Version to ${{ env.new_version }}
-          body: |
-            This is an automatically generated pull request.
-            Please review and merge the changes.
-
-            ## Context
-            Increments Stride version for the ${{ env.new_major_version }} upgrade
-
-            ## Brief Changelog
-            * Increments Stride version in cmd/strided/config/config.go and app/app.go
-            * Updates module name to ${{ env.new_major_version }}
-            * Re-generates protos
+        run: |
+          curl \
+          -X POST \
+          -H "Accept: application/vnd.github.v3+json" \
+          -H "Authorization: token ${{ secrets.GH_ACTIONS_PAT }}" \
+          https://api.github.com/repos/${{ github.repository }}/pulls \
+          -d '{
+          "title":"${{ env.NEW_MAJOR_VERSION }} Import Paths",
+          "head":"${{ env.branch_name }}",
+          "base":"main",
+          "body":"This is an automatically generated pull request.\n\nPlease review and merge the changes.\n\n## Context\n\nIncrements Stride version for the `${{ env.NEW_MAJOR_VERSION }}` upgrade\n\n## Brief Changelog\n\n* Increments Stride version in `cmd/strided/config/config.go`` and `app/app.go`\n* Updates module name to `${{ env.NEW_MAJOR_VERSION }}`\n* Re-generates protos",
+          "maintainer_can_modify": true
+          }'
