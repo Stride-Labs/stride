@@ -7,10 +7,11 @@ SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 
 STRIDE_CHAIN_ID=local-test-1 # # DO NOT USE STRIDE MAINNET CHAIN ID! always use a new chain id by incrementing the suffix after each run
 HOST_CHAIN_ID=cosmoshub-4 # chain id on the host
-HOST_ENDPOINT=gaia-fleet-direct.main.stridenet.co # RPC on the host
+HOST_RPC=https://comsos-rpc.polkachu.com # RPC on the host
 HOST_ACCOUNT_PREFIX=cosmos
 HOST_DENOM=uatom
 HOST_BINARY=build/gaiad
+HOST_COIN_TYPE=118
 HOST_VAL_NAME_1=imperator
 HOST_VAL_ADDRESS_1=cosmosvaloper1vvwtk805lxehwle9l4yudmq6mn0g32px9xtkhc
 HOST_VAL_NAME_2=notional
@@ -63,6 +64,7 @@ sed -i -E "s|HOST_CHAIN_ID|$HOST_CHAIN_ID|g" $RELAYER_CONFIG_FILE
 sed -i -E "s|HOST_RPC|$HOST_RPC|g" $RELAYER_CONFIG_FILE
 sed -i -E "s|HOST_ACCOUNT_PREFIX|$HOST_ACCOUNT_PREFIX|g" $RELAYER_CONFIG_FILE
 sed -i -E "s|HOST_DENOM|$HOST_DENOM|g" $RELAYER_CONFIG_FILE
+sed -i -E "s|HOST_COIN_TYPE|$HOST_COIN_TYPE|g" $RELAYER_CONFIG_FILE
 
 # echo "Adding Hermes keys"
 # HERMES_CMD="$SCRIPT_DIR/../../build/hermes/release/hermes --config $STATE/hermes/config.toml"
