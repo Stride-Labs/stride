@@ -61,16 +61,20 @@ jobs:
         run: |
           git fetch --all
 
-      - name: Checks
+      - name: Create Pull Request
         run: |
-          echo ">>>>>>>>>>>>"
-          git status
-          echo ">>>>>>>>>>>>"
-          git log | head -n 100
-          echo ">>>>>>>>>>>>"
-          git checkout main
-          echo ">>>>>>>>>>>>"
-          git log | head -n 100
+          curl \
+          -X POST \
+          -H "Accept: application/vnd.github.v3+json" \
+          -H "Authorization: token ${{ secrets.GH_ACTIONS_PAT }}" \
+          https://api.github.com/repos/${{ github.repository }}/pulls \
+          -d '{
+          "title":"Update Stride Version to ${{ env.new_version }}",
+          "head":"${{ env.branch_name }}",
+          "base":"main",
+          "body":"This is an automatically generated pull request.\n\nPlease review and merge the changes.\n\n## Context\n\nIncrements Stride version for the ${{ env.new_major_version }} upgrade\n\n## Brief Changelog\n\n* Increments Stride version in cmd/strided/config/config.go and app/app.go\n* Updates module name to ${{ env.new_major_version }}\n* Re-generates protos",
+          "maintainer_can_modify": true
+          }'
 
       # - name: Create Pull Request
       #   uses: peter-evans/create-pull-request@v5
