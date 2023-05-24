@@ -1044,7 +1044,6 @@ func (app *StrideApp) RegisterTendermintService(clientCtx client.Context) {
 
 // RegisterNodeService registers the node gRPC Query service.
 func (app *StrideApp) RegisterNodeService(clientCtx client.Context) {
-	// TODO: implement!
 	nodeservice.RegisterNodeService(clientCtx, app.GRPCQueryRouter())
 }
 
