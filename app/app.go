@@ -140,6 +140,10 @@ import (
 	ibcfeekeeper "github.com/cosmos/ibc-go/v5/modules/apps/29-fee/keeper"
 	ibcfeetypes "github.com/cosmos/ibc-go/v5/modules/apps/29-fee/types"
 	ibctestingtypes "github.com/cosmos/ibc-go/v5/testing/types"
+
+	"github.com/strangelove-ventures/packet-forward-middleware/v5/router"
+	routerkeeper "github.com/strangelove-ventures/packet-forward-middleware/v5/router/keeper"
+	routertypes "github.com/strangelove-ventures/packet-forward-middleware/v5/router/types"
 )
 
 const (
@@ -208,6 +212,7 @@ var (
 		icacallbacksmodule.AppModuleBasic{},
 		claim.AppModuleBasic{},
 		autopilot.AppModuleBasic{},
+		router.AppModuleBasic{},
 		// this line is used by starport scaffolding # stargate/app/moduleBasic
 	)
 
@@ -301,6 +306,7 @@ type StrideApp struct {
 	ScopedratelimitKeeper    capabilitykeeper.ScopedKeeper
 	RatelimitKeeper          ratelimitmodulekeeper.Keeper
 	ClaimKeeper              claimkeeper.Keeper
+	RouterKeeper             *routerkeeper.Keeper
 	// this line is used by starport scaffolding # stargate/app/keeperDeclaration
 
 	mm           *module.Manager
@@ -345,6 +351,7 @@ func NewStrideApp(
 		ratelimitmoduletypes.StoreKey,
 		icacallbacksmoduletypes.StoreKey,
 		claimtypes.StoreKey,
+		routertypes.StoreKey,
 		// this line is used by starport scaffolding # stargate/app/storeKey
 	)
 	tkeys := sdk.NewTransientStoreKeys(paramstypes.TStoreKey)
@@ -449,6 +456,18 @@ func NewStrideApp(
 		app.BankKeeper,
 		scopedTransferKeeper,
 	)
+	app.RouterKeeper = routerkeeper.NewKeeper(
+		appCodec,
+		app.keys[routertypes.StoreKey],
+		app.GetSubspace(routertypes.ModuleName),
+		app.TransferKeeper,
+		app.IBCKeeper.ChannelKeeper,
+		app.DistrKeeper,
+		app.BankKeeper,
+		app.IBCKeeper.ChannelKeeper,
+	)
+	routerModule := router.NewAppModule(app.RouterKeeper)
+
 	transferModule := transfer.NewAppModule(app.TransferKeeper)
 	transferIBCModule := transfer.NewIBCModule(app.TransferKeeper)
 
@@ -635,6 +654,13 @@ func NewStrideApp(
 	transferStack = recordsmodule.NewIBCModule(app.RecordsKeeper, transferStack)
 	transferStack = autopilot.NewIBCModule(app.AutopilotKeeper, transferStack)
 
+	transferStack = router.NewIBCMiddleware(
+		transferStack,
+		app.RouterKeeper,
+		0,
+		routerkeeper.DefaultForwardTransferPacketTimeoutTimestamp,
+		routerkeeper.DefaultRefundTransferPacketTimeoutTimestamp,
+	)
 	// Create static IBC router, add transfer route, then set and seal it
 	// Two routes are included for the ICAController because of the following procedure when registering an ICA
 	//     1. RegisterInterchainAccount binds the new portId to the icacontroller module and initiates a channel opening
@@ -698,6 +724,7 @@ func NewStrideApp(
 		ratelimitModule,
 		icacallbacksModule,
 		autopilotModule,
+		routerModule,
 		// this line is used by starport scaffolding # stargate/app/appModule
 	)
 
@@ -734,6 +761,7 @@ func NewStrideApp(
 		icacallbacksmoduletypes.ModuleName,
 		claimtypes.ModuleName,
 		autopilottypes.ModuleName,
+		routertypes.ModuleName,
 		// this line is used by starport scaffolding # stargate/app/beginBlockers
 	)
 
@@ -766,6 +794,7 @@ func NewStrideApp(
 		icacallbacksmoduletypes.ModuleName,
 		claimtypes.ModuleName,
 		autopilottypes.ModuleName,
+		routertypes.ModuleName,
 		// this line is used by starport scaffolding # stargate/app/endBlockers
 	)
 
@@ -803,6 +832,7 @@ func NewStrideApp(
 		icacallbacksmoduletypes.ModuleName,
 		claimtypes.ModuleName,
 		autopilottypes.ModuleName,
+		routertypes.ModuleName,
 		// this line is used by starport scaffolding # stargate/app/initGenesis
 	)
 
@@ -1067,6 +1097,7 @@ func initParamsKeeper(appCodec codec.BinaryCodec, legacyAmino *codec.LegacyAmino
 	paramsKeeper.Subspace(ratelimitmoduletypes.ModuleName)
 	paramsKeeper.Subspace(icacallbacksmoduletypes.ModuleName)
 	paramsKeeper.Subspace(autopilottypes.ModuleName)
+	paramsKeeper.Subspace(routertypes.ModuleName).WithKeyTable(routertypes.ParamKeyTable())
 	// this line is used by starport scaffolding # stargate/app/paramSubspace
 
 	paramsKeeper.Subspace(claimtypes.ModuleName)
