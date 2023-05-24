@@ -1,5 +1,5 @@
 #!/usr/bin/make -f
-
+VERSION := $(shell echo $(shell git describe --tags))
 BUILDDIR ?= $(CURDIR)/build
 build=s
 cache=false
@@ -14,7 +14,6 @@ STATE_EXPORT_COMPOSE_FILE=$(LOCALSTRIDE_HOME)/state-export/docker-compose.yml
 LOCAL_TO_MAIN_COMPOSE_FILE=./scripts/local-to-mainnet/docker-compose.yml
 
 # process build tags
-
 LEDGER_ENABLED ?= true
 build_tags = netgo
 ifeq ($(LEDGER_ENABLED),true)
@@ -52,12 +51,11 @@ comma := ,
 build_tags_comma_sep := $(subst $(whitespace),$(comma),$(build_tags))
 
 # process linker flags
-
 ldflags = -X github.com/cosmos/cosmos-sdk/version.Name=stride \
 		  -X github.com/cosmos/cosmos-sdk/version.AppName=strided \
 		  -X github.com/cosmos/cosmos-sdk/version.Version=$(VERSION) \
 		  -X github.com/cosmos/cosmos-sdk/version.Commit=$(COMMIT) \
-		  -X "github.com/cosmos/cosmos-sdk/version.BuildTags=$(build_tags_comma_sep)"
+		  -X "github.com/cosmos/cosmos-sdk/version.BuildTags=$(build_tags_comma_sep)" 
 
 ifeq ($(LINK_STATICALLY),true)
 	ldflags += -linkmode=external -extldflags "-Wl,-z,muldefs -static"
@@ -75,7 +73,7 @@ BUILD_FLAGS := -tags "$(build_tags)" -ldflags '$(ldflags)'
 
 build:
 	mkdir -p $(BUILDDIR)/
-	go build -mod=readonly -ldflags '$(ldflags)' -trimpath -o $(BUILDDIR) ./...;
+	go build -mod=readonly $(BUILD_FLAGS) -trimpath -o $(BUILDDIR) ./...;
 
 install: go.sum
 	go install $(BUILD_FLAGS) ./cmd/strided
