@@ -63,8 +63,8 @@ for parent_directory in "app" "cmd" "proto" "testutil" "third_party" "utils" "x"
     done
 done
 
-update_version $file go.mod
-update_version $file ./scripts/protocgen.sh
+update_version go.mod
+update_version ./scripts/protocgen.sh
 
 echo ">>> Committing changes..."
 
