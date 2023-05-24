@@ -11,6 +11,7 @@ DOCKERNET_COMPOSE_FILE=$(DOCKERNET_HOME)/docker-compose.yml
 LOCALSTRIDE_HOME=./testutil/localstride
 LOCALNET_COMPOSE_FILE=$(LOCALSTRIDE_HOME)/localnet/docker-compose.yml
 STATE_EXPORT_COMPOSE_FILE=$(LOCALSTRIDE_HOME)/state-export/docker-compose.yml
+LOCAL_TO_MAIN_COMPOSE_FILE=./scripts/local-to-mainnet/docker-compose.yml
 
 # process build tags
 
@@ -139,6 +140,16 @@ upgrade-submit:
 
 upgrade-validate:
 	PART=2 bash $(DOCKERNET_HOME)/tests/run_tests_upgrade.sh
+
+
+###############################################################################
+###                           Local to Mainnet                              ###
+###############################################################################
+start-local-to-main:
+	bash scripts/local-to-mainnet/start.sh
+
+stop-local-to-main:
+	docker-compose -f $(LOCAL_TO_MAIN_COMPOSE_FILE) down
 
 ###############################################################################
 ###                                Protobuf                                 ###
