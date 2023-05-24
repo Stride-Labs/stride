@@ -11,9 +11,6 @@ import (
 	channeltypes "github.com/cosmos/ibc-go/v5/modules/core/04-channel/types"
 	porttypes "github.com/cosmos/ibc-go/v5/modules/core/05-port/types"
 
-	icacallbacks "github.com/Stride-Labs/stride/v9/x/icacallbacks"
-	icacallbacktypes "github.com/Stride-Labs/stride/v9/x/icacallbacks/types"
-
 	"github.com/Stride-Labs/stride/v9/x/records/keeper"
 
 	// "google.golang.org/protobuf/proto" <-- this breaks tx parsing
@@ -164,24 +161,20 @@ func (im IBCModule) OnAcknowledgementPacket(
 	acknowledgement []byte,
 	relayer sdk.AccAddress,
 ) error {
-	im.keeper.Logger(ctx).Info(fmt.Sprintf("OnAcknowledgementPacket (Records) - packet: %+v, relayer: %v", packet, relayer))
+	im.keeper.Logger(ctx).Info(
+		fmt.Sprintf("OnAcknowledgementPacket (Records): Sequence %d, SourcePort %s, SourceChannel %s, DestinationPort %s, DestinationChannel %s",
+			packet.Sequence, packet.SourcePort, packet.SourceChannel, packet.DestinationPort, packet.DestinationChannel))
 
-	ackResponse, err := icacallbacks.UnpackAcknowledgementResponse(ctx, im.keeper.Logger(ctx), acknowledgement, false)
-	if err != nil {
-		errMsg := fmt.Sprintf("Unable to unpack message data from acknowledgement, Sequence %d, from %s %s, to %s %s: %s",
-			packet.Sequence, packet.SourceChannel, packet.SourcePort, packet.DestinationChannel, packet.DestinationPort, err.Error())
-		im.keeper.Logger(ctx).Error(errMsg)
-		return errorsmod.Wrapf(icacallbacktypes.ErrInvalidAcknowledgement, errMsg)
-	}
-
-	// Custom ack logic only applies to ibc transfers initiated from the `stakeibc` module account
-	// NOTE: if the `stakeibc` module account IBC transfers tokens for some other reason in the future,
-	// this will need to be updated
-	if err := im.keeper.ICACallbacksKeeper.CallRegisteredICACallback(ctx, packet, ackResponse); err != nil {
-		errMsg := fmt.Sprintf("Unable to call registered callback from records OnAcknowledgePacket | Sequence %d, from %s %s, to %s %s | Error %s",
-			packet.Sequence, packet.SourceChannel, packet.SourcePort, packet.DestinationChannel, packet.DestinationPort, err.Error())
-		im.keeper.Logger(ctx).Error(errMsg)
-		return errorsmod.Wrapf(icacallbacktypes.ErrCallbackFailed, errMsg)
+	// The error here is intentionally returned immediately instead of refunding tokens
+	// This only errors if either:
+	//   1) The ack can't be parsed, in which case we don't know whether to refund tokens, or
+	//   2) The callback errors, in which case, it's better to not refund tokens to keep the state
+	//      changes as consistent as possible between records and the bank module
+	// Transfer initiated from users will flow through this branch without an error, since the callbacks
+	//   are only prevelant for transfer's initated by stakeibc
+	if err := im.keeper.OnAcknowledgementPacket(ctx, packet, acknowledgement); err != nil {
+		im.keeper.Logger(ctx).Error(fmt.Sprintf("Records OnAcknowledgementPacket failed: %s", err.Error()))
+		return errorsmod.Wrapf(err, "OnAckPacket callback failed")
 	}
 
 	return im.app.OnAcknowledgementPacket(ctx, packet, acknowledgement, relayer)
@@ -193,13 +186,20 @@ func (im IBCModule) OnTimeoutPacket(
 	packet channeltypes.Packet,
 	relayer sdk.AccAddress,
 ) error {
-	// doCustomLogic(packet)
-	im.keeper.Logger(ctx).Error(fmt.Sprintf("[IBC-TRANSFER] OnTimeoutPacket  %v", packet))
-	ackResponse := icacallbacktypes.AcknowledgementResponse{Status: icacallbacktypes.AckResponseStatus_TIMEOUT}
-	err := im.keeper.ICACallbacksKeeper.CallRegisteredICACallback(ctx, packet, &ackResponse)
-	if err != nil {
-		return err
+	im.keeper.Logger(ctx).Error(
+		fmt.Sprintf("OnTimeoutPacket (Records): Sequence %d, SourcePort %s, SourceChannel %s, DestinationPort %s, DestinationChannel %s",
+			packet.Sequence, packet.SourcePort, packet.SourceChannel, packet.DestinationPort, packet.DestinationChannel))
+
+	// The error here is intentionally returned immediately instead of refunding tokens
+	// This only errors if the callback fails, in which case, it's better to not refund tokens to keep the state
+	//   changes as consistent as possible between records and the bank module
+	// Transfer initiated from users will flow through this branch without an error, since the callbacks
+	//   are only prevelant for transfer's initated by stakeibc
+	if err := im.keeper.OnTimeoutPacket(ctx, packet); err != nil {
+		im.keeper.Logger(ctx).Error(fmt.Sprintf("Records OnTimeoutPacket failed: %s", err.Error()))
+		return errorsmod.Wrapf(err, "OnTimeoutPacket callback failed")
 	}
+
 	return im.app.OnTimeoutPacket(ctx, packet, relayer)
 }
 
