@@ -57,40 +57,28 @@ func (k Keeper) VerifyKeyProof(ctx sdk.Context, msg *types.MsgSubmitQueryRespons
 	if !found {
 		return errorsmod.Wrapf(types.ErrInvalidICQProof, "ConnectionId %s does not exist", query.ConnectionId)
 	}
-
+	consensusState, found := k.IBCKeeper.ClientKeeper.GetClientConsensusState(ctx, connection.ClientId, height)
+	if !found {
+		return errorsmod.Wrapf(types.ErrInvalidICQProof, "Consensus state not found for client %s and height %d", connection.ClientId, height)
+	}
 	clientState, found := k.IBCKeeper.ClientKeeper.GetClientState(ctx, connection.ClientId)
 	if !found {
 		return errorsmod.Wrapf(types.ErrInvalidICQProof, "Unable to fetch client state for client %s", connection.ClientId)
 	}
 
-	consensusState, found := k.IBCKeeper.ClientKeeper.GetClientConsensusState(ctx, connection.ClientId, height)
-	if !found {
-		return errorsmod.Wrapf(types.ErrInvalidICQProof, "Consensus state not found for client %s and height %d", connection.ClientId, height)
+	// Cast the client and consensus state to tendermint type
+	tendermintConsensusState, ok := consensusState.(*tendermint.ConsensusState)
+	if !ok {
+		return errorsmod.Wrapf(types.ErrInvalidICQProof,
+			"Only tendermint consensus state is supported (%s provided)", consensusState.ClientType())
 	}
-	var stateRoot exported.Root
-	var clientStateProof []*ics23.ProofSpec
-
-	switch clientState.ClientType() {
-	case exported.Tendermint:
-		tendermintConsensusState, ok := consensusState.(*tendermint.ConsensusState)
-		if !ok {
-			return errorsmod.Wrapf(types.ErrInvalidConsensusState, "Error casting consensus state: %s", err.Error())
-		}
-		stateRoot = tendermintConsensusState.GetRoot()
-	// case exported.Wasm:
-	// 	wasmConsensusState, ok := consensusState.(*wasm.ConsensusState)
-	// 	if !ok {
-	// 		return errorsmod.Wrapf(types.ErrInvalidConsensusState, "Error casting consensus state: %s", err.Error())
-	// 	}
-	// 	tmClientState, ok := clientState.(*tmclienttypes.ClientState)
-	// 	if !ok {
-	// 		return errorsmod.Wrapf(types.ErrInvalidICQProof, "Client state is not tendermint")
-	// 	}
-	// 	clientStateProof = tmClientState.ProofSpecs
-	// 	stateRoot = wasmConsensusState.GetRoot()
-	default:
-		panic("not implemented")
+	tendermintClientState, ok := clientState.(*tendermint.ClientState)
+	if !ok {
+		return errorsmod.Wrapf(types.ErrInvalidICQProof,
+			"Only tendermint client state is supported (%s provided)", clientState.ClientType())
 	}
+	var stateRoot exported.Root = tendermintConsensusState.Root
+	var clientStateProof []*ics23.ProofSpec = tendermintClientState.ProofSpecs
 
 	// Get the merkle path and merkle proof
 	path := commitmenttypes.NewMerklePath([]string{pathParts[1], url.PathEscape(string(query.Request))}...)

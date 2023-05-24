@@ -37,7 +37,7 @@ $DOCKER_COMPOSE up -d stride1
 $DOCKER_COMPOSE logs -f stride1 | sed -r -u "s/\x1B\[([0-9]{1,3}(;[0-9]{1,2})?)?[mGK]//g" > $STRIDE_LOGS 2>&1 &
 
 printf "Waiting for Stride to start..."
-( tail -f -n0 $STRIDE_LOGS & ) | grep -q "finalizing commit of block"
+( tail -f -n0 $STRIDE_LOGS & ) | grep -q "executed block.*height="
 echo "Done"
 
 # Setup relayers

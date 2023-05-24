@@ -11,8 +11,6 @@ import (
 	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
 	porttypes "github.com/cosmos/ibc-go/v7/modules/core/05-port/types"
 
-	host "github.com/cosmos/ibc-go/v7/modules/core/24-host"
-
 	icacallbacks "github.com/Stride-Labs/stride/v9/x/icacallbacks"
 	icacallbacktypes "github.com/Stride-Labs/stride/v9/x/icacallbacks/types"
 
@@ -49,20 +47,7 @@ func (im IBCModule) OnChanOpenInit(
 	counterparty channeltypes.Counterparty,
 	version string,
 ) (string, error) {
-	// Note: The channel capability must be claimed by the authentication module in OnChanOpenInit otherwise the
-	// authentication module will not be able to send packets on the channel created for the associated interchain account.
-	// NOTE: unsure if we have to claim this here! CHECK ME
-	// if err := im.keeper.ClaimCapability(ctx, channelCap, host.ChannelCapabilityPath(portID, channelID)); err != nil {
-	// 	return err
-	// }
-	// doCustomLogic()
-	if channelCap == nil {
-		path := host.ChannelCapabilityPath(portID, channelID)
-		chanCap, _ := im.keeper.IBCScopedKeeper.GetCapability(ctx, path)
-
-		channelCap = chanCap
-	}
-	version, err := im.app.OnChanOpenInit(
+	return im.app.OnChanOpenInit(
 		ctx,
 		order,
 		connectionHops,
@@ -72,7 +57,6 @@ func (im IBCModule) OnChanOpenInit(
 		counterparty,
 		version,
 	)
-	return version, err
 }
 
 // OnChanOpenTry implements the IBCModule interface.

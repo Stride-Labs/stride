@@ -11,8 +11,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
-	capabilitykeeper "github.com/cosmos/cosmos-sdk/x/capability/keeper"
-	capabilitytypes "github.com/cosmos/cosmos-sdk/x/capability/types"
 
 	icqkeeper "github.com/Stride-Labs/stride/v9/x/interchainquery/keeper"
 	"github.com/Stride-Labs/stride/v9/x/stakeibc/types"
@@ -20,7 +18,6 @@ import (
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
 	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 	icacontrollerkeeper "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/controller/keeper"
-	icacontrollertypes "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/controller/types"
 	ibckeeper "github.com/cosmos/ibc-go/v7/modules/core/keeper"
 	ibctmtypes "github.com/cosmos/ibc-go/v7/modules/light-clients/07-tendermint"
 
@@ -40,8 +37,6 @@ type (
 		paramstore            paramtypes.Subspace
 		ICAControllerKeeper   icacontrollerkeeper.Keeper
 		IBCKeeper             ibckeeper.Keeper
-		scopedKeeper          capabilitykeeper.ScopedKeeper
-		IBCScopedKeeper       capabilitykeeper.ScopedKeeper
 		bankKeeper            bankkeeper.Keeper
 		InterchainQueryKeeper icqkeeper.Keeper
 		RecordsKeeper         recordsmodulekeeper.Keeper
@@ -58,15 +53,10 @@ func NewKeeper(
 	storeKey,
 	memKey storetypes.StoreKey,
 	ps paramtypes.Subspace,
-	// channelKeeper cosmosibckeeper.ChannelKeeper,
-	// portKeeper cosmosibckeeper.PortKeeper,
-	// scopedKeeper cosmosibckeeper.ScopedKeeper,
 	accountKeeper types.AccountKeeper,
 	bankKeeper bankkeeper.Keeper,
 	icacontrollerkeeper icacontrollerkeeper.Keeper,
 	ibcKeeper ibckeeper.Keeper,
-	scopedKeeper capabilitykeeper.ScopedKeeper,
-	ibcScopedKeeper capabilitykeeper.ScopedKeeper,
 	interchainQueryKeeper icqkeeper.Keeper,
 	RecordsKeeper recordsmodulekeeper.Keeper,
 	StakingKeeper stakingkeeper.Keeper,
@@ -87,8 +77,6 @@ func NewKeeper(
 		bankKeeper:            bankKeeper,
 		ICAControllerKeeper:   icacontrollerkeeper,
 		IBCKeeper:             ibcKeeper,
-		scopedKeeper:          scopedKeeper,
-		IBCScopedKeeper:       ibcScopedKeeper,
 		InterchainQueryKeeper: interchainQueryKeeper,
 		RecordsKeeper:         RecordsKeeper,
 		StakingKeeper:         StakingKeeper,
@@ -110,11 +98,6 @@ func (k *Keeper) SetHooks(gh types.StakeIBCHooks) *Keeper {
 	k.hooks = gh
 
 	return k
-}
-
-// ClaimCapability claims the channel capability passed via the OnOpenChanInit callback
-func (k *Keeper) ClaimCapability(ctx sdk.Context, cap *capabilitytypes.Capability, name string) error {
-	return k.scopedKeeper.ClaimCapability(ctx, cap, name)
 }
 
 func (k Keeper) GetChainID(ctx sdk.Context, connectionID string) (string, error) {
@@ -318,16 +301,5 @@ func (k Keeper) ConfirmValSetHasSpace(ctx sdk.Context, validators []*types.Valid
 		return errorsmod.Wrap(types.ErrMaxNumValidators, errMsg)
 	}
 
-	return nil
-}
-
-func (k msgServer) RegisterInterchainAccount(ctx sdk.Context, connectionId string, owner string, appVersion string) error {
-	msgServer := icacontrollerkeeper.NewMsgServerImpl(&k.ICAControllerKeeper)
-	msgRegisterInterchainAccount := icacontrollertypes.NewMsgRegisterInterchainAccount(connectionId, owner, appVersion)
-
-	_, err := msgServer.RegisterInterchainAccount(ctx, msgRegisterInterchainAccount)
-	if err != nil {
-		return err
-	}
 	return nil
 }
