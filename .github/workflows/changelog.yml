@@ -45,8 +45,9 @@ jobs:
         run: ./scripts/changelog.sh
 
       - name: Commit changes
-        run: git add .
-          git commit -m 'updated changelogs'
+        run: |
+          git add .
+          git commit -m 'updated changelog'
 
       - name: Push changes
         id: push
