@@ -1,0 +1,81 @@
+name: Changelog
+
+on:
+  workflow_dispatch:
+    inputs:
+      old_version:
+        description: "Specify the old version (e.g. v8.0.0)"
+      new_version:
+        description: "Specify the new version (e.g. v9.0.0)"
+
+jobs:
+  increment-stride-version:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Get versions
+        run: |
+          old_version=${{ github.event.inputs.old_version }}
+          new_version=${{ github.event.inputs.new_version }}
+          new_major_version=v$(echo $new_version | cut -d '.' -f 1)
+          branch_name=actions/changelog-version-${new_major_version}
+
+          echo "OLD_VERSION=$old_version" >> $GITHUB_ENV
+          echo "NEW_VERSION=$new_version" >> $GITHUB_ENV
+          echo "NEW_MAJOR_VERSION=$new_major_version" >> $GITHUB_ENV
+          echo "branch_name=$branch_name" >> $GITHUB_ENV
+
+      - name: Checkout main
+        uses: actions/checkout@v3
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+          ref: main
+
+      - name: Set Git Config
+        run: |
+          git config --global user.name "stride-dev"
+          git config --global user.email "dev@stridelabs.com"
+
+      - name: Create branch
+        run: git checkout -b ${{ env.branch_name }}
+
+      - name: Update changelogs
+        run: ./scripts/changelog.sh
+
+      - name: Commit changes
+        run: git add .
+          git commit -m 'updated changelogs'
+
+      - name: Push changes
+        id: push
+        continue-on-error: true
+        run: |
+          git push https://$GH_TOKEN@github.com/Stride-Labs/stride.git ${{ env.branch_name }}
+        env:
+          GH_TOKEN: ${{ secrets.GH_ACTIONS_PAT }}
+
+      - name: Check Push Success
+        if: ${{ steps.push.outcome == 'failure' }}
+        run: |
+          echo "Push failed. The token might be expired or have insufficient permissions. Please check your token."
+          exit 1
+
+      - name: Fetch New Branch
+        run: |
+          git fetch --all
+
+      - name: Create Pull Request
+        run: |
+          curl \
+          -X POST \
+          -H "Accept: application/vnd.github.v3+json" \
+          -H "Authorization: token ${{ secrets.GH_ACTIONS_PAT }}" \
+          https://api.github.com/repos/${{ github.repository }}/pulls \
+          -d '{
+          "title":"${{ env.NEW_VERSION }} Changelog",
+          "head":"${{ env.branch_name }}",
+          "base":"main",
+          "body":"This is an automatically generated pull request.\n\nPlease review and merge the changes. **Remember to split the On-Chain vs Off-Chain commits!**\n\n## Context\n\nUpdates changelog for ${{ env.NEW_MAJOR_VERSION }} release\n\n## Brief Changelog\n\n* Updates main changelog with on-chain and off-chain changes\n* Updates upgrade-specific changelog with on-chain changes only\n",
+          "maintainer_can_modify": true
+          }'
