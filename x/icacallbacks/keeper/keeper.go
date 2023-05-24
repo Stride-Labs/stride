@@ -9,7 +9,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	errorsmod "cosmossdk.io/errors"
-	capabilitykeeper "github.com/cosmos/cosmos-sdk/x/capability/keeper"
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
 
 	ibckeeper "github.com/cosmos/ibc-go/v7/modules/core/keeper"
@@ -19,7 +18,6 @@ import (
 	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
 
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
-	porttypes "github.com/cosmos/ibc-go/v7/modules/core/05-port/types"
 )
 
 type (
@@ -28,10 +26,8 @@ type (
 		storeKey     storetypes.StoreKey
 		memKey       storetypes.StoreKey
 		paramstore   paramtypes.Subspace
-		scopedKeeper capabilitykeeper.ScopedKeeper
 		icacallbacks map[string]types.ICACallbackHandler
 		IBCKeeper    ibckeeper.Keeper
-		ics4Wrapper  porttypes.ICS4Wrapper
 	}
 )
 
@@ -40,7 +36,6 @@ func NewKeeper(
 	storeKey,
 	memKey storetypes.StoreKey,
 	ps paramtypes.Subspace,
-	scopedKeeper capabilitykeeper.ScopedKeeper,
 	ibcKeeper ibckeeper.Keeper,
 ) *Keeper {
 	// set KeyTable if it has not already been set
@@ -53,7 +48,6 @@ func NewKeeper(
 		storeKey:     storeKey,
 		memKey:       memKey,
 		paramstore:   ps,
-		scopedKeeper: scopedKeeper,
 		icacallbacks: make(map[string]types.ICACallbackHandler),
 		IBCKeeper:    ibcKeeper,
 	}

@@ -297,16 +297,15 @@ type StrideApp struct {
 	ScopedStakeibcKeeper capabilitykeeper.ScopedKeeper
 	StakeibcKeeper       stakeibcmodulekeeper.Keeper
 
-	EpochsKeeper             epochsmodulekeeper.Keeper
-	InterchainqueryKeeper    interchainquerykeeper.Keeper
-	ScopedRecordsKeeper      capabilitykeeper.ScopedKeeper
-	RecordsKeeper            recordsmodulekeeper.Keeper
-	ScopedIcacallbacksKeeper capabilitykeeper.ScopedKeeper
-	IcacallbacksKeeper       icacallbacksmodulekeeper.Keeper
-	ScopedratelimitKeeper    capabilitykeeper.ScopedKeeper
-	RatelimitKeeper          ratelimitmodulekeeper.Keeper
-	ClaimKeeper              claimkeeper.Keeper
-	ConsensusParamsKeeper    consensusparamkeeper.Keeper
+	EpochsKeeper          epochsmodulekeeper.Keeper
+	InterchainqueryKeeper interchainquerykeeper.Keeper
+	ScopedRecordsKeeper   capabilitykeeper.ScopedKeeper
+	RecordsKeeper         recordsmodulekeeper.Keeper
+	IcacallbacksKeeper    icacallbacksmodulekeeper.Keeper
+	ScopedratelimitKeeper capabilitykeeper.ScopedKeeper
+	RatelimitKeeper       ratelimitmodulekeeper.Keeper
+	ClaimKeeper           claimkeeper.Keeper
+	ConsensusParamsKeeper consensusparamkeeper.Keeper
 	// this line is used by starport scaffolding # stargate/app/keeperDeclaration
 
 	mm           *module.Manager
@@ -492,14 +491,11 @@ func NewStrideApp(
 		scopedICAControllerKeeper, app.MsgServiceRouter(),
 	)
 
-	scopedIcacallbacksKeeper := app.CapabilityKeeper.ScopeToModule(icacallbacksmoduletypes.ModuleName)
-	app.ScopedIcacallbacksKeeper = scopedIcacallbacksKeeper
 	app.IcacallbacksKeeper = *icacallbacksmodulekeeper.NewKeeper(
 		appCodec,
 		keys[icacallbacksmoduletypes.StoreKey],
 		keys[icacallbacksmoduletypes.MemStoreKey],
 		app.GetSubspace(icacallbacksmoduletypes.ModuleName),
-		scopedIcacallbacksKeeper,
 		*app.IBCKeeper,
 	)
 
