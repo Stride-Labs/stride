@@ -18,7 +18,7 @@ make build-docker build=srh{n} # where n is the new host zone that was just adde
 ```
 * Start a local stride instance and setup all the commands needed to test the flow
 ```
-bash scripts/local-to-mainnet/start.sh
+make start-local-to-main
 ```
 
 ## Walk through Flow
