@@ -43,13 +43,13 @@ jobs:
       - name: Push changes
         uses: ad-m/github-push-action@v0.6.0
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
+          github_token: ${{ secrets.GH_ACTIONS_PAT }}
           branch: ${{ env.branch_name }}
 
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@v3
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.GH_ACTIONS_PAT }}
           branch: ${{ env.branch_name }}
           base: main
           title: Update Stride Version to ${{ env.new_version }}
