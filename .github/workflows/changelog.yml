@@ -43,7 +43,7 @@ jobs:
         run: git checkout -b ${{ env.branch_name }}
 
       - name: git log
-        run: git log v9.0.0..main
+        run: git log v9.0.0..HEAD
 
       # - name: Update changelogs
       #   run: ./scripts/changelog.sh
