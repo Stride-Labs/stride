@@ -42,8 +42,11 @@ jobs:
       - name: Create branch
         run: git checkout -b ${{ env.branch_name }}
 
+      - name: Fetch main
+        run: git fetch origin main:main
+
       - name: git log
-        run: git log v9.0.0..HEAD
+        run: git log v9.0.0..main
 
       # - name: Update changelogs
       #   run: ./scripts/changelog.sh
