@@ -32,7 +32,4 @@
 [submodule "dockernet/tests/bats/bats-support"]
 	path = dockernet/tests/bats/bats-support
 	url = https://github.com/bats-core/bats-support.git
-[submodule "deps/ics"]
-	# Commit: 558516f90cf7f111ebf8bfa1fadafaa99c50e502
-	path = deps/ics
-	url = https://github.com/Stride-Labs/interchain-security.git
+
