@@ -9,6 +9,7 @@ import (
 	errorsmod "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	bankTypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+	proto "github.com/cosmos/gogoproto/proto"
 
 	epochstypes "github.com/Stride-Labs/stride/v9/x/epochs/types"
 	"github.com/Stride-Labs/stride/v9/x/stakeibc/types"
@@ -16,7 +17,7 @@ import (
 
 type IcaTx struct {
 	ConnectionId string
-	Msgs         []sdk.Msg
+	Msgs         []proto.Message
 	Account      types.ICAAccount
 	Timeout      uint64
 }
@@ -116,7 +117,7 @@ func (k Keeper) GetRedemptionTransferMsg(ctx sdk.Context, userRedemptionRecord *
 		return nil, errorsmod.Wrap(types.ErrInvalidHostZone, errMsg)
 	}
 
-	var msgs []sdk.Msg
+	var msgs []proto.Message
 	rrAmt := userRedemptionRecord.Amount
 	msgs = append(msgs, &bankTypes.MsgSend{
 		FromAddress: redemptionAccount.Address,
