@@ -9,7 +9,7 @@ on:
         description: "Specify the new version (e.g. 9.0.0)"
 
 jobs:
-  increment-stride-version:
+  version:
     runs-on: ubuntu-latest
 
     steps:
