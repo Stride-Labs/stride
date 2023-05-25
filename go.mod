@@ -17,13 +17,17 @@ require (
 	github.com/spf13/cast v1.5.0
 	github.com/spf13/cobra v1.6.1
 	github.com/spf13/pflag v1.0.5
+	github.com/strangelove-ventures/packet-forward-middleware/v7 v7.0.0-20230523193151-73dea436e53f
 	github.com/stretchr/testify v1.8.2
 	google.golang.org/genproto v0.0.0-20230216225411-c8e22ba71e44
 	google.golang.org/grpc v1.54.0
 	gopkg.in/yaml.v2 v2.4.0
 )
 
-require github.com/gogo/protobuf v1.3.2 // indirect
+require (
+	github.com/gogo/protobuf v1.3.2 // indirect
+	github.com/iancoleman/orderedmap v0.2.0 // indirect
+)
 
 require (
 	cloud.google.com/go v0.110.0 // indirect
@@ -56,7 +60,7 @@ require (
 	github.com/cosmos/go-bip39 v1.0.0 // indirect
 	github.com/cosmos/gogogateway v1.2.0 // indirect
 	github.com/cosmos/iavl v0.20.0 // indirect
-	github.com/cosmos/ledger-cosmos-go v0.12.1 // indirect
+	github.com/cosmos/ledger-cosmos-go v0.12.2 // indirect
 	github.com/cosmos/rosetta-sdk-go v0.10.0 // indirect
 	github.com/creachadair/taskgroup v0.4.2 // indirect
 	github.com/danieljoos/wincred v1.1.2 // indirect
