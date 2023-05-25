@@ -46,8 +46,6 @@ func TestKeeperTestSuite(t *testing.T) {
 }
 
 func (s *UpgradeTestSuite) TestUpgrade() {
-	s.Setup()
-
 	s.SetupStoreBeforeUpgrade()
 	s.ConfirmUpgradeSucceededs("v8", dummyUpgradeHeight)
 	s.CheckStoreAfterUpgrade()

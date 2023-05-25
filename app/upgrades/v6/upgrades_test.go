@@ -33,8 +33,6 @@ func TestKeeperTestSuite(t *testing.T) {
 }
 
 func (s *UpgradeTestSuite) TestUpgrade() {
-	s.Setup()
-
 	// Setup stores for migrated modules
 	codec := app.MakeEncodingConfig().Marshaler
 	checkClaimStoreAfterMigration := s.SetupClaimStore(codec)
