@@ -228,9 +228,12 @@ setup_file() {
 
   # LSM-liquid stake
   $STRIDE_MAIN_CMD tx stakeibc lsm-liquid-stake $STAKE_AMOUNT $lsm_token_ibc_denom --from $USER_ACCT -y 
+  WAIT_FOR_BALANCE_CHANGE STRIDE $staker_address_on_stride st$HOST_DENOM
 
   # make sure stToken went up
-  WAIT_FOR_BALANCE_CHANGE STRIDE $USER_ACCT st$HOST_DENOM
+  sttoken_balance_end=$($STRIDE_MAIN_CMD q bank balances $(STRIDE_ADDRESS) --denom st$HOST_DENOM | GETBAL)
+  sttoken_balance_diff=$(($sttoken_balance_end-$sttoken_balance_start))
+  assert_equal "$sttoken_balance_diff" "$STAKE_AMOUNT"
 
   # make sure LSM IBC Token balance went down
   lsm_token_balance_end=$($STRIDE_MAIN_CMD q bank balances $staker_address_on_stride --denom $lsm_token_ibc_denom | GETBAL)
@@ -238,21 +241,35 @@ setup_file() {
   assert_equal "$lsm_token_balance_diff" $STAKE_AMOUNT
 
   # wait for LSM token to get transferred and converted to native stake
+  delegation_start=$($STRIDE_MAIN_CMD q stakeibc show-host-zone $HOST_CHAIN_ID | grep "total_delegations" | NUMBERS_ONLY)
   WAIT_FOR_DELEGATION_CHANGE $HOST_CHAIN_ID $STAKE_AMOUNT
+
+  # confirm delegation increased
+  delegation_end=$($STRIDE_MAIN_CMD q stakeibc show-host-zone $HOST_CHAIN_ID | grep "total_delegations" | NUMBERS_ONLY)
+  delegation_diff=$(($delegation_end - $delegation_start))
+  assert_equal $(echo "$delegation_diff >= $STAKE_AMOUNT" | bc -l) "1"
 }
 
 @test "[INTEGRATION-BASIC-$CHAIN_NAME] LSM liquid stake with slash query" {
-  # get the LSM token denom
+  # get staker and validator addresses
   validator_address=$(GET_VAL_ADDR $CHAIN_NAME 1)
+  staker_address_on_stride=$($STRIDE_MAIN_CMD keys show $USER_ACCT -a)
+
+  # get the LSM token denom
   record_id=$($HOST_MAIN_CMD q staking last-tokenize-share-record-id | awk '{print $2}' | tr -d '"')
   lsm_token_ibc_denom=$(GET_IBC_DENOM $STRIDE_TRANSFER_CHANNEL ${validator_address}/${record_id})
 
+  # get the stToken balance before the liquid stake
+  sttoken_balance_start=$($STRIDE_MAIN_CMD q bank balances $staker_address_on_stride --denom st$HOST_DENOM | GETBAL)
+
   # LSM-liquid stake again, this time the slash query should be invoked
   $STRIDE_MAIN_CMD tx stakeibc lsm-liquid-stake $STAKE_AMOUNT $lsm_token_ibc_denom --from $USER_ACCT -y 
-  WAIT_FOR_BLOCK $STRIDE_LOGS 2
+  WAIT_FOR_BALANCE_CHANGE STRIDE $staker_address_on_stride st$HOST_DENOM
 
   # make sure stToken went up (after the slash query query callback)
-  WAIT_FOR_BALANCE_CHANGE STRIDE $USER_ACCT st$HOST_DENOM
+  sttoken_balance_end=$($STRIDE_MAIN_CMD q bank balances $staker_address_on_stride --denom st$HOST_DENOM | GETBAL)
+  sttoken_balance_diff=$(($sttoken_balance_end-$sttoken_balance_start))
+  assert_equal "$sttoken_balance_diff" "$STAKE_AMOUNT"
 }
 
 # check that redemptions and claims work
