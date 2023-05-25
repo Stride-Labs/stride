@@ -41,6 +41,30 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 <!-- GH ACTIONS TEMPLATE - INSERT NEW VERSION HERE -->
+### Changelog
+## [v10.0.0](https://github.com/Stride-Labs/stride/releases/tag/v10.0.0) - 2023-05-25
+!!!ACTION ITEM: Move the following to the On-Chain vs Off-chain sections!!!
+1. debugging ([5842534a](https://github.com/Stride-Labs/stride/commit/5842534ad1d93369fde6495967f92af7553f3f66))
+2. debugging ([76668258](https://github.com/Stride-Labs/stride/commit/76668258b699b454e5cf531466a07c82b32beab5))
+3. debugging ([9231d73a](https://github.com/Stride-Labs/stride/commit/9231d73a97f7d7a31821d5ff7ed1ca6d931d2a0d))
+4. debugging ([a7cc18ef](https://github.com/Stride-Labs/stride/commit/a7cc18effc447f2592b3f9f56f3a51c10f79fd26))
+5. debugging ([5dcceda6](https://github.com/Stride-Labs/stride/commit/5dcceda600aed9d7fdb91f4d5090fdde6baf702a))
+6. debugging ([9a651f96](https://github.com/Stride-Labs/stride/commit/9a651f96defe4ecf76710e4f706198835f440ad4))
+7. cleaned up PR description message ([718d35a5](https://github.com/Stride-Labs/stride/commit/718d35a5be65821388bfa2c8bbe2fc5947832a90))
+8. debugging ([1e00e162](https://github.com/Stride-Labs/stride/commit/1e00e162d6f32059e8f48107cf6629927fffa567))
+9. debugging ([fc01ffd7](https://github.com/Stride-Labs/stride/commit/fc01ffd72096fae1a51187c2caf88e6961bb5fdc))
+10. updated changelog script permissions ([ad06029a](https://github.com/Stride-Labs/stride/commit/ad06029ad3d18a0146e9c54504ac61eebaee37e0))
+11. Automated changelog [Part 1] (#788) ([c6c05e52](https://github.com/Stride-Labs/stride/commit/c6c05e5294074ccb2aea486110a45a103bb61a99))
+12. Automated version increment [Part 2] (#786) ([3b968fef](https://github.com/Stride-Labs/stride/commit/3b968fef62e2d886117f0b70fb94984c44b2be80))
+13. Remove third party protos (#782) ([2172b238](https://github.com/Stride-Labs/stride/commit/2172b238c4ca2a1f8daf9bf88a430695943edc3d))
+14. Changes required to get local to mainnet testing working with Umee (#776) ([936c33fa](https://github.com/Stride-Labs/stride/commit/936c33fa39350c6fe2aeba8813057a1a03575595))
+15. Automated version increment [Part 1] (#770) ([778ed925](https://github.com/Stride-Labs/stride/commit/778ed925150730902a40c4cbf749a51ddacfa52e))
+16. fixed dockernet typos (#754) ([2c406549](https://github.com/Stride-Labs/stride/commit/2c406549d8c91ebd483896e0973cb37d025fff05))
+
+### On-Chain changes
+
+### Off-Chain changes
+These changes do not affect any on-chain functionality, but have been implemented since `v9.0.0`
 
 ## [v9.0.0](https://github.com/Stride-Labs/stride/releases/tag/v9.0.0) - 2023-04-19
 
