@@ -41,6 +41,21 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 <!-- GH ACTIONS TEMPLATE - INSERT NEW VERSION HERE -->
+### Changelog
+## [v9.0.0](https://github.com/Stride-Labs/stride/releases/tag/v9.0.0) - 2023-05-25
+!!!ACTION ITEM: Move the following to the On-Chain vs Off-chain sections!!!
+1. v9 Changelog ([#730](https://github.com/org/repo/pull/730)) ([6df1ba57](https://github.com/Stride-Labs/stride/commit/6df1ba5787d52a34b45daef45a5a65ea8d847d8e))
+2. V9 Import Paths ([#735](https://github.com/org/repo/pull/735)) ([c88b52e3](https://github.com/Stride-Labs/stride/commit/c88b52e34a484fe1e055b58abfce86bc19932990))
+3. V9 Upgrade Handler ([#729](https://github.com/org/repo/pull/729)) ([b8d51526](https://github.com/Stride-Labs/stride/commit/b8d51526d30e947a9b17a74b93d551380632b79c))
+4. Autopilot Channel Verification ([#728](https://github.com/org/repo/pull/728)) ([62295e38](https://github.com/Stride-Labs/stride/commit/62295e3818de10c13295855d8fc8a224aff3bc70))
+5. Add Evmos to Dockernet ([#572](https://github.com/org/repo/pull/572)) ([33239493](https://github.com/Stride-Labs/stride/commit/332394936f57b87ad0b2987572eaa1cade5ce68b))
+6. Add Unit Test to Check Host Zone Min/Max RR ([#699](https://github.com/org/repo/pull/699)) ([3a5c7bfc](https://github.com/Stride-Labs/stride/commit/3a5c7bfcc3b8c5e7dd870f01bebeb9d949492203))
+7. Update go relayer & integration test timing ([#668](https://github.com/org/repo/pull/668)) ([edeffb32](https://github.com/Stride-Labs/stride/commit/edeffb320bc93c3cc6f3cabc5d2ce18448bebae0))
+
+### On-Chain changes
+
+### Off-Chain changes
+These changes do not affect any on-chain functionality, but have been implemented since `v8.0.0`
 
 ## [v9.0.0](https://github.com/Stride-Labs/stride/releases/tag/v9.0.0) - 2023-04-19
 
