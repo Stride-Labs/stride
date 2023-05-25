@@ -50,7 +50,7 @@ git log --pretty=format:"%h %H %s" ${OLD_VERSION}..${NEW_VERSION} | while read L
   LONG_COMMIT_HASH=$(echo $LINE | cut -d' ' -f2)
   COMMIT_TITLE=$(echo $LINE | cut -d' ' -f3-)
   PR_NUMBER=$(echo $COMMIT_TITLE | grep -oP '#\K\w+')
-  COMMIT_DESCRIPTION=$(echo $COMMIT_TITLE | sed "s/#$PR_NUMBER/([#$PR_NUMBER]($GITHUB_PR_URL\/$PR_NUMBER))/")
+  COMMIT_DESCRIPTION=$(echo $COMMIT_TITLE | sed "s|#$PR_NUMBER|([#$PR_NUMBER]($GITHUB_PR_URL/$PR_NUMBER))|")
   echo "$i. $COMMIT_DESCRIPTION ([${SHORT_COMMIT_HASH}]($GITHUB_COMMIT_URL/${LONG_COMMIT_HASH}))" >> $TEMP_CHANGELOG
   i=$((i+1))
 done
@@ -72,7 +72,7 @@ git log --pretty=format:"%h %H %s" ${OLD_VERSION}..${NEW_VERSION} -- "x/**/*.go"
   LONG_COMMIT_HASH=$(echo $LINE | cut -d' ' -f2)
   COMMIT_TITLE=$(echo $LINE | cut -d' ' -f3-)
   PR_NUMBER=$(echo $COMMIT_TITLE | grep -oP '#\K\w+')
-  COMMIT_DESCRIPTION=$(echo $COMMIT_TITLE | sed "s/#$PR_NUMBER/([#$PR_NUMBER]($GITHUB_PR_URL\/$PR_NUMBER))/")
+  COMMIT_DESCRIPTION=$(echo $COMMIT_TITLE | sed "s|#$PR_NUMBER|([#$PR_NUMBER]($GITHUB_PR_URL/$PR_NUMBER))|")
   echo "$i. $COMMIT_DESCRIPTION ([${SHORT_COMMIT_HASH}]($GITHUB_COMMIT_URL/${LONG_COMMIT_HASH}))" >> $UPGRADE_CHANGELOG
   i=$((i+1))
 done
