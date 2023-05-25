@@ -45,13 +45,13 @@ echo "## [$NEW_VERSION](https://github.com/Stride-Labs/stride/releases/tag/$NEW_
 echo "!!!ACTION ITEM: Move the following to the On-Chain vs Off-chain sections!!!" >> $TEMP_CHANGELOG
 
 i=1
-git log --pretty=format:"%h %H %s" ${OLD_VERSION}..${NEW_VERSION} | while read LINE; do
+git log --pretty=format:"%h %H %s" ${OLD_VERSION}..main | while read LINE; do
   SHORT_COMMIT_HASH=$(echo $LINE | cut -d' ' -f1)
   LONG_COMMIT_HASH=$(echo $LINE | cut -d' ' -f2)
   COMMIT_TITLE=$(echo $LINE | cut -d' ' -f3-)
   PR_NUMBER=$(echo $COMMIT_TITLE | grep -oP '#\K\w+')
   COMMIT_DESCRIPTION=$(echo $COMMIT_TITLE | sed "s|#$PR_NUMBER|[#$PR_NUMBER]($GITHUB_PR_URL/$PR_NUMBER)|")
-  echo "$i. $COMMIT_DESCRIPTION ([${SHORT_COMMIT_HASH}]($GITHUB_COMMIT_URL/${LONG_COMMIT_HASH}))" >> $TEMP_CHANGELOG
+  echo "$i. $COMMIT_DESCRIPTION [[${SHORT_COMMIT_HASH}]($GITHUB_COMMIT_URL/${LONG_COMMIT_HASH})]" >> $TEMP_CHANGELOG
   i=$((i+1))
 done
 
@@ -64,7 +64,7 @@ rm $TEMP_CHANGELOG
 
 # Next write all the on chain changes to the upgrade changelog
 i=1
-git log --pretty=format:"%h %H %s" ${OLD_VERSION}..${NEW_VERSION} -- "x/**/*.go" "app/**/*.go" ":(exclude)**/*_test.go" | while read LINE; do
+git log --pretty=format:"%h %H %s" ${OLD_VERSION}..main -- "x/**/*.go" "app/**/*.go" ":(exclude)**/*_test.go" | while read LINE; do
   if [[ "$i" == "1" ]]; then
     echo "# Upgrade $NEW_MAJOR_VERSION Changelog" > $UPGRADE_CHANGELOG
   fi
@@ -73,6 +73,6 @@ git log --pretty=format:"%h %H %s" ${OLD_VERSION}..${NEW_VERSION} -- "x/**/*.go"
   COMMIT_TITLE=$(echo $LINE | cut -d' ' -f3-)
   PR_NUMBER=$(echo $COMMIT_TITLE | grep -oP '#\K\w+')
   COMMIT_DESCRIPTION=$(echo $COMMIT_TITLE | sed "s|#$PR_NUMBER|[#$PR_NUMBER]($GITHUB_PR_URL/$PR_NUMBER)|")
-  echo "$i. $COMMIT_DESCRIPTION ([${SHORT_COMMIT_HASH}]($GITHUB_COMMIT_URL/${LONG_COMMIT_HASH}))" >> $UPGRADE_CHANGELOG
+  echo "$i. $COMMIT_DESCRIPTION [[${SHORT_COMMIT_HASH}]($GITHUB_COMMIT_URL/${LONG_COMMIT_HASH})]" >> $UPGRADE_CHANGELOG
   i=$((i+1))
 done
