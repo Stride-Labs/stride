@@ -3,21 +3,19 @@ package keeper
 import (
 	"fmt"
 
-	"github.com/tendermint/tendermint/libs/log"
+	"github.com/cometbft/cometbft/libs/log"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	errorsmod "cosmossdk.io/errors"
-	capabilitykeeper "github.com/cosmos/cosmos-sdk/x/capability/keeper"
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
 
-	ibckeeper "github.com/cosmos/ibc-go/v5/modules/core/keeper"
+	ibckeeper "github.com/cosmos/ibc-go/v7/modules/core/keeper"
 
 	"github.com/Stride-Labs/stride/v9/x/icacallbacks/types"
-	recordstypes "github.com/Stride-Labs/stride/v9/x/records/types"
 
-	channeltypes "github.com/cosmos/ibc-go/v5/modules/core/04-channel/types"
+	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
 
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 )
@@ -28,7 +26,6 @@ type (
 		storeKey     storetypes.StoreKey
 		memKey       storetypes.StoreKey
 		paramstore   paramtypes.Subspace
-		scopedKeeper capabilitykeeper.ScopedKeeper
 		icacallbacks map[string]types.ICACallbackHandler
 		IBCKeeper    ibckeeper.Keeper
 	}
@@ -39,7 +36,6 @@ func NewKeeper(
 	storeKey,
 	memKey storetypes.StoreKey,
 	ps paramtypes.Subspace,
-	scopedKeeper capabilitykeeper.ScopedKeeper,
 	ibcKeeper ibckeeper.Keeper,
 ) *Keeper {
 	// set KeyTable if it has not already been set
@@ -52,7 +48,6 @@ func NewKeeper(
 		storeKey:     storeKey,
 		memKey:       memKey,
 		paramstore:   ps,
-		scopedKeeper: scopedKeeper,
 		icacallbacks: make(map[string]types.ICACallbackHandler),
 		IBCKeeper:    ibcKeeper,
 	}
@@ -100,11 +95,6 @@ func (k Keeper) GetICACallbackHandlerFromPacket(ctx sdk.Context, modulePacket ch
 	if err != nil {
 		k.Logger(ctx).Error(fmt.Sprintf("error LookupModuleByChannel for portID: %s, channelID: %s, sequence: %d", modulePacket.GetSourcePort(), modulePacket.GetSourceChannel(), modulePacket.Sequence))
 		return nil, err
-	}
-	// redirect transfer callbacks to the records module
-	// is there a better way to do this?
-	if module == "transfer" {
-		module = recordstypes.ModuleName
 	}
 	// fetch the callback function
 	callbackHandler, err := k.GetICACallbackHandler(module)

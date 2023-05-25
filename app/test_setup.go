@@ -5,20 +5,20 @@ import (
 	"time"
 
 	sdkmath "cosmossdk.io/math"
+	cometbftdb "github.com/cometbft/cometbft-db"
+	abci "github.com/cometbft/cometbft/abci/types"
+	"github.com/cometbft/cometbft/crypto/secp256k1"
+	"github.com/cometbft/cometbft/libs/log"
+	tmtypes "github.com/cometbft/cometbft/types"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
-	"github.com/cosmos/cosmos-sdk/simapp"
 	"github.com/cosmos/cosmos-sdk/testutil/mock"
+	simtestutil "github.com/cosmos/cosmos-sdk/testutil/sims"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
-	ibctesting "github.com/cosmos/ibc-go/v5/testing"
-	abci "github.com/tendermint/tendermint/abci/types"
-	"github.com/tendermint/tendermint/crypto/secp256k1"
-	"github.com/tendermint/tendermint/libs/log"
-	tmtypes "github.com/tendermint/tendermint/types"
-	dbm "github.com/tendermint/tm-db"
+	ibctesting "github.com/cosmos/ibc-go/v7/testing"
 
 	cmdcfg "github.com/Stride-Labs/stride/v9/cmd/strided/config"
 )
@@ -40,7 +40,7 @@ func SetupConfig() {
 
 // Initializes a new StrideApp without IBC functionality
 func InitStrideTestApp(initChain bool) *StrideApp {
-	db := dbm.NewMemDB()
+	db := cometbftdb.NewMemDB()
 	app := NewStrideApp(
 		log.NewNopLogger(),
 		db,
@@ -50,7 +50,7 @@ func InitStrideTestApp(initChain bool) *StrideApp {
 		DefaultNodeHome,
 		5,
 		MakeEncodingConfig(),
-		simapp.EmptyAppOptions{},
+		simtestutil.EmptyAppOptions{},
 	)
 	if initChain {
 		genesisState := GenesisStateWithValSet(app)
@@ -62,7 +62,7 @@ func InitStrideTestApp(initChain bool) *StrideApp {
 		app.InitChain(
 			abci.RequestInitChain{
 				Validators:      []abci.ValidatorUpdate{},
-				ConsensusParams: simapp.DefaultConsensusParams,
+				ConsensusParams: simtestutil.DefaultConsensusParams,
 				AppStateBytes:   stateBytes,
 			},
 		)
@@ -140,7 +140,13 @@ func GenesisStateWithValSet(app *StrideApp) GenesisState {
 	})
 
 	// update total supply
-	bankGenesis := banktypes.NewGenesisState(banktypes.DefaultGenesisState().Params, balances, totalSupply, []banktypes.Metadata{})
+	bankGenesis := banktypes.NewGenesisState(
+		banktypes.DefaultGenesisState().Params,
+		balances,
+		totalSupply,
+		[]banktypes.Metadata{},
+		[]banktypes.SendEnabled{},
+	)
 	genesisState[banktypes.ModuleName] = app.AppCodec().MustMarshalJSON(bankGenesis)
 	return genesisState
 }

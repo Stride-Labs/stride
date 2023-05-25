@@ -12,7 +12,7 @@ chains:
       rpc-addr: http://stride1:26657
       account-prefix: stride
       keyring-backend: test
-      gas-adjustment: 1.2
+      gas-adjustment: 1.3
       gas-prices: 0.01ustrd
       debug: false
       timeout: 20s
@@ -23,11 +23,12 @@ chains:
     value:
       key: rly2
       chain-id: HOST_CHAIN_ID
-      rpc-addr: http://HOST_ENDPOINT:26657
+      rpc-addr: HOST_RPC
       account-prefix: HOST_ACCOUNT_PREFIX
       keyring-backend: test
       gas-adjustment: 1.2
-      gas-prices: 0.01HOST_DENOM
+      gas-prices: 0.1HOST_DENOM
+      coin-type: HOST_COIN_TYPE
       debug: false
       timeout: 20s
       output-format: json

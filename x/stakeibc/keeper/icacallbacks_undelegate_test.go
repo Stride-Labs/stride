@@ -5,8 +5,8 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	stakingTypes "github.com/cosmos/cosmos-sdk/x/staking/types"
-	channeltypes "github.com/cosmos/ibc-go/v5/modules/core/04-channel/types"
-	"github.com/gogo/protobuf/proto"
+	"github.com/cosmos/gogoproto/proto"
+	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
 	_ "github.com/stretchr/testify/suite"
 
 	sdkmath "cosmossdk.io/math"
@@ -449,5 +449,5 @@ func (s *KeeperTestSuite) TestBurnTokens_CouldNotSendCoinsFromAccountToModule() 
 	hostZone.HostDenom = "coinDNE"
 
 	err := s.App.StakeibcKeeper.BurnTokens(s.Ctx, hostZone, sdkmath.NewInt(123456))
-	s.Require().EqualError(err, "could not send coins from account stride1755g4dkhpw73gz9h9nwhlcefc6sdf8kcmvcwrk4rxfrz8xpxxjms7savm8 to module stakeibc. err: 0stcoinDNE is smaller than 123456stcoinDNE: insufficient funds")
+	s.Require().EqualError(err, "could not send coins from account stride1755g4dkhpw73gz9h9nwhlcefc6sdf8kcmvcwrk4rxfrz8xpxxjms7savm8 to module stakeibc. err: spendable balance  is smaller than 123456stcoinDNE: insufficient funds")
 }
