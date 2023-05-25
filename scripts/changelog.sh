@@ -15,6 +15,16 @@ if [ -z "$NEW_VERSION" ]; then
     exit 1
 fi
 
+if ! echo $OLD_VERSION | grep -Eq $VERSION_REGEX; then 
+    echo "OLD_VERSION must be of form {major}.{minor}.{patch} (e.g. 8.0.0). Exiting..."
+    exit 1
+fi 
+
+if ! echo $NEW_VERSION | grep -Eq $VERSION_REGEX; then 
+    echo "NEW_VERSION must be of form {major}.{minor}.{patch} (e.g. 8.0.0). Exiting..."
+    exit 1
+fi 
+
 GITHUB_URL="https://github.com/Stride-Labs/stride/commit"
 ON_CHAIN_FILES='"x/**/*.go" "app/**/*.go" ":(exclude)**/*_test.go"'
 CURRENT_DATE=$(date +'%Y-%m-%d')
@@ -34,7 +44,7 @@ echo "## [$NEW_VERSION](https://github.com/Stride-Labs/stride/releases/tag/$NEW_
 echo "!!!ACTION ITEM: Move the following to the On-Chain vs Off-chain sections!!!" >> $TEMP_CHANGELOG
 
 i=1
-git log --pretty=format:"%h %H %s" ${OLD_VERSION}..main | while read LINE; do
+git log --pretty=format:"%h %H %s" ${OLD_VERSION}..HEAD | while read LINE; do
   SHORT_COMMIT_HASH=$(echo $LINE | cut -d' ' -f1)
   LONG_COMMIT_HASH=$(echo $LINE | cut -d' ' -f2)
   COMMIT_DESCRIPTION=$(echo $LINE | cut -d' ' -f3-)
@@ -51,7 +61,7 @@ rm $TEMP_CHANGELOG
 
 # Next write all the on chain changes to the upgrade changelog
 i=1
-git log --pretty=format:"%h %H %s" ${OLD_VERSION}..main -- "x/**/*.go" "app/**/*.go" ":(exclude)**/*_test.go" | while read LINE; do
+git log --pretty=format:"%h %H %s" ${OLD_VERSION}..HEAD -- "x/**/*.go" "app/**/*.go" ":(exclude)**/*_test.go" | while read LINE; do
   if [[ "$i" == "1" ]]; then
     echo "# Upgrade $NEW_MAJOR_VERSION Changelog" > $UPGRADE_CHANGELOG
   fi
