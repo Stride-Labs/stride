@@ -7,6 +7,7 @@ import (
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 
 	authz "github.com/cosmos/cosmos-sdk/x/authz"
+	routertypes "github.com/strangelove-ventures/packet-forward-middleware/v7/router/types"
 
 	v2 "github.com/Stride-Labs/stride/v9/app/upgrades/v2"
 	v3 "github.com/Stride-Labs/stride/v9/app/upgrades/v3"
@@ -127,6 +128,10 @@ func (app *StrideApp) setupUpgradeHandlers() {
 	case "v7":
 		storeUpgrades = &storetypes.StoreUpgrades{
 			Added: []string{ratelimittypes.StoreKey, autopilottypes.StoreKey},
+		}
+	case "v10":
+		storeUpgrades = &storetypes.StoreUpgrades{
+			Added: []string{routertypes.StoreKey},
 		}
 	}
 
