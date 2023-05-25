@@ -25,7 +25,8 @@ if ! echo $NEW_VERSION | grep -Eq $VERSION_REGEX; then
     exit 1
 fi 
 
-GITHUB_URL="https://github.com/Stride-Labs/stride/commit"
+GITHUB_COMMIT_URL="https://github.com/Stride-Labs/stride/commit"
+GITHUB_PR_URL="https://github.com/org/repo/pull"
 ON_CHAIN_FILES='"x/**/*.go" "app/**/*.go" ":(exclude)**/*_test.go"'
 CURRENT_DATE=$(date +'%Y-%m-%d')
 NEW_MAJOR_VERSION=$(echo "$NEW_VERSION" | cut -d '.' -f 1)
@@ -47,8 +48,10 @@ i=1
 git log --pretty=format:"%h %H %s" ${OLD_VERSION}..${NEW_VERSION} | while read LINE; do
   SHORT_COMMIT_HASH=$(echo $LINE | cut -d' ' -f1)
   LONG_COMMIT_HASH=$(echo $LINE | cut -d' ' -f2)
-  COMMIT_DESCRIPTION=$(echo $LINE | cut -d' ' -f3-)
-  echo "$i. $COMMIT_DESCRIPTION ([${SHORT_COMMIT_HASH}]($GITHUB_URL/${LONG_COMMIT_HASH}))" >> $TEMP_CHANGELOG
+  COMMIT_TITLE=$(echo $LINE | cut -d' ' -f3-)
+  PR_NUMBER=$(echo $COMMIT_TITLE | grep -oP '#\K\w+')
+  COMMIT_DESCRIPTION=$(echo $COMMIT_DESCRIPTION | sed "s/#$PR_NUMBER/([#$PR_NUMBER]($GITHUB_PR_URL\/$PR_NUMBER))/")
+  echo "$i. $COMMIT_DESCRIPTION ([${SHORT_COMMIT_HASH}]($GITHUB_COMMIT_URL/${LONG_COMMIT_HASH}))" >> $TEMP_CHANGELOG
   i=$((i+1))
 done
 
@@ -67,7 +70,9 @@ git log --pretty=format:"%h %H %s" ${OLD_VERSION}..${NEW_VERSION} -- "x/**/*.go"
   fi
   SHORT_COMMIT_HASH=$(echo $LINE | cut -d' ' -f1)
   LONG_COMMIT_HASH=$(echo $LINE | cut -d' ' -f2)
-  COMMIT_DESCRIPTION=$(echo $LINE | cut -d' ' -f3-)
-  echo "$i. $COMMIT_DESCRIPTION ([${SHORT_COMMIT_HASH}]($GITHUB_URL/${LONG_COMMIT_HASH}))" >> $UPGRADE_CHANGELOG
+  COMMIT_TITLE=$(echo $LINE | cut -d' ' -f3-)
+  PR_NUMBER=$(echo $COMMIT_TITLE | grep -oP '#\K\w+')
+  COMMIT_DESCRIPTION=$(echo $COMMIT_DESCRIPTION | sed "s/#$PR_NUMBER/([#$PR_NUMBER]($GITHUB_PR_URL\/$PR_NUMBER))/")
+  echo "$i. $COMMIT_DESCRIPTION ([${SHORT_COMMIT_HASH}]($GITHUB_COMMIT_URL/${LONG_COMMIT_HASH}))" >> $UPGRADE_CHANGELOG
   i=$((i+1))
 done
