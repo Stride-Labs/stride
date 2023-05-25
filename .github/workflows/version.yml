@@ -1,12 +1,12 @@
-name: Update Stride Version
+name: Version
 
 on:
   workflow_dispatch:
     inputs:
       old_version:
-        description: "Specify the old version (e.g. 8.0.0)"
+        description: "Specify the old version (e.g. v8)"
       new_version:
-        description: "Specify the new version (e.g. 9.0.0)"
+        description: "Specify the new version (e.g. v9)"
 
 jobs:
   version:
@@ -17,12 +17,10 @@ jobs:
         run: |
           old_version=${{ github.event.inputs.old_version }}
           new_version=${{ github.event.inputs.new_version }}
-          new_major_version=v$(echo $new_version | cut -d '.' -f 1)
           branch_name=actions/update-stride-version-${new_major_version}
 
           echo "OLD_VERSION=$old_version" >> $GITHUB_ENV
           echo "NEW_VERSION=$new_version" >> $GITHUB_ENV
-          echo "NEW_MAJOR_VERSION=$new_major_version" >> $GITHUB_ENV
           echo "branch_name=$branch_name" >> $GITHUB_ENV
 
       - name: Checkout main
@@ -69,9 +67,9 @@ jobs:
           -H "Authorization: token ${{ secrets.GH_ACTIONS_PAT }}" \
           https://api.github.com/repos/${{ github.repository }}/pulls \
           -d '{
-          "title":"${{ env.NEW_MAJOR_VERSION }} Import Paths",
+          "title":"${{ env.NEW_VERSION }} Import Paths",
           "head":"${{ env.branch_name }}",
           "base":"main",
-          "body":"This is an automatically generated pull request.\n\nPlease review and merge the changes.\n\n## Context\n\nIncrements Stride version for the `${{ env.NEW_MAJOR_VERSION }}` upgrade\n\n## Brief Changelog\n\n* Increments Stride version in `cmd/strided/config/config.go`` and `app/app.go`\n* Updates module name to `${{ env.NEW_MAJOR_VERSION }}`\n* Re-generates protos",
+          "body":"This is an automatically generated pull request.\n\nPlease review and merge the changes.\n\n## Context\n\n* Updates package name to `github.com/Stride-Labs/stride/${{ env.NEW_VERSION }}`\n* Re-generates protos",
           "maintainer_can_modify": true
           }'
