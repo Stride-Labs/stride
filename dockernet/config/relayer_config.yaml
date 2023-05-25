@@ -13,7 +13,7 @@ chains:
       account-prefix: stride
       keyring-backend: test
       gas-adjustment: 1.2
-      gas-prices: 0.01ustrd
+      gas-prices: 0.00ustrd
       debug: false
       timeout: 20s
       output-format: json

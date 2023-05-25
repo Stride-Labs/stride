@@ -15,6 +15,9 @@ RUN --mount=type=cache,target=/root/.cache/go-build \
     --mount=type=cache,target=/root/go/pkg/mod \
     go mod download
 
+ENV GOBIN /opt/build
+RUN go install github.com/fullstorydev/grpcurl/cmd/grpcurl@latest
+
 # Copy the remaining files
 COPY . .
 
@@ -24,6 +27,8 @@ RUN LINK_STATICALLY=true make build
 FROM ${RUNNER_IMAGE}
 
 COPY --from=builder /opt/build/strided /usr/local/bin/strided
+COPY --from=builder /opt/build/grpcurl /usr/local/bin/grpcurl
+
 RUN apk add bash vim sudo dasel \
     && addgroup -g 1000 stride \
     && adduser -S -h /home/stride -D stride -u 1000 -G stride 
