@@ -92,12 +92,13 @@ func (k msgServer) RegisterHostZone(goCtx context.Context, msg *types.MsgRegiste
 		HostDenom:         msg.HostDenom,
 		TransferChannelId: msg.TransferChannelId,
 		// Start exchange rate at 1 upon registration
-		RedemptionRate:     sdk.NewDec(1),
-		LastRedemptionRate: sdk.NewDec(1),
-		UnbondingPeriod:    msg.UnbondingPeriod,
-		DepositAddress:     depositAddress.String(),
-		MinRedemptionRate:  msg.MinRedemptionRate,
-		MaxRedemptionRate:  msg.MaxRedemptionRate,
+		RedemptionRate:        sdk.NewDec(1),
+		LastRedemptionRate:    sdk.NewDec(1),
+		UnbondingPeriod:       msg.UnbondingPeriod,
+		DepositAddress:        depositAddress.String(),
+		MinRedemptionRate:     msg.MinRedemptionRate,
+		MaxRedemptionRate:     msg.MaxRedemptionRate,
+		LsmLiquidStakeEnabled: msg.LsmLiquidStakeEnabled,
 	}
 	// write the zone back to the store
 	k.SetHostZone(ctx, zone)

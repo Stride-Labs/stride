@@ -80,7 +80,8 @@ func (s *KeeperTestSuite) SetupTestLSMLiquidStake() LSMLiquidStakeTestCase {
 			SlashQueryProgressTracker: progressTowardsQuery,
 			SlashQueryCheckpoint:      queryCheckpoint,
 		}},
-		DelegationIcaAddress: "cosmos_DELEGATION",
+		DelegationIcaAddress:  "cosmos_DELEGATION",
+		LsmLiquidStakeEnabled: true,
 	}
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
 
