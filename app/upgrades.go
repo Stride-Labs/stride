@@ -9,9 +9,7 @@ import (
 
 	authz "github.com/cosmos/cosmos-sdk/x/authz"
 
-	"github.com/cosmos/cosmos-sdk/baseapp"
 	capabilitytypes "github.com/cosmos/cosmos-sdk/x/capability/types"
-	paramstypes "github.com/cosmos/cosmos-sdk/x/params/types"
 
 	v10 "github.com/Stride-Labs/stride/v9/app/upgrades/v10"
 	v2 "github.com/Stride-Labs/stride/v9/app/upgrades/v2"
@@ -111,20 +109,19 @@ func (app *StrideApp) setupUpgradeHandlers() {
 	)
 
 	// v10 upgrade handler
-	legacyParamSubspace := app.ParamsKeeper.Subspace(baseapp.Paramspace).WithKeyTable(paramstypes.ConsensusParamsKeyTable())
 	app.UpgradeKeeper.SetUpgradeHandler(
 		v10.UpgradeName,
 		v10.CreateUpgradeHandler(
 			app.mm,
 			app.configurator,
 			app.appCodec,
-			legacyParamSubspace,
 			app.keys[capabilitytypes.ModuleName],
 			app.CapabilityKeeper,
 			app.IBCKeeper.ClientKeeper,
 			app.ConsensusParamsKeeper,
 			app.GovKeeper,
 			app.MintKeeper,
+			app.ParamsKeeper,
 		),
 	)
 

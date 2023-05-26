@@ -12,8 +12,10 @@ import (
 	capabilitykeeper "github.com/cosmos/cosmos-sdk/x/capability/keeper"
 	consensusparamkeeper "github.com/cosmos/cosmos-sdk/x/consensus/keeper"
 	govkeeper "github.com/cosmos/cosmos-sdk/x/gov/keeper"
+	paramskeeper "github.com/cosmos/cosmos-sdk/x/params/keeper"
 	paramstypes "github.com/cosmos/cosmos-sdk/x/params/types"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
+
 	icacontrollermigrations "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/controller/migrations/v6"
 	clientkeeper "github.com/cosmos/ibc-go/v7/modules/core/02-client/keeper"
 	ibctmmigrations "github.com/cosmos/ibc-go/v7/modules/light-clients/07-tendermint/migrations"
@@ -40,18 +42,19 @@ func CreateUpgradeHandler(
 	mm *module.Manager,
 	configurator module.Configurator,
 	cdc codec.Codec,
-	legacyParamSubspace paramstypes.Subspace,
 	capabilityStoreKey *storetypes.KVStoreKey,
 	capabilityKeeper *capabilitykeeper.Keeper,
 	clientKeeper clientkeeper.Keeper,
 	consensusParamsKeeper consensusparamkeeper.Keeper,
 	govKeeper govkeeper.Keeper,
 	mintKeeper mintkeeper.Keeper,
+	paramsKeeper paramskeeper.Keeper,
 ) upgradetypes.UpgradeHandler {
 	return func(ctx sdk.Context, _ upgradetypes.Plan, vm module.VersionMap) (module.VersionMap, error) {
 		ctx.Logger().Info("Starting upgrade v10...")
 
 		ctx.Logger().Info("Migrating tendermint consensus params from x/params to x/consensus...")
+		legacyParamSubspace := paramsKeeper.Subspace(baseapp.Paramspace).WithKeyTable(paramstypes.ConsensusParamsKeyTable())
 		baseapp.MigrateParams(ctx, legacyParamSubspace, &consensusParamsKeeper)
 
 		ctx.Logger().Info("Migrating ICA channel capabilities...")
@@ -79,7 +82,11 @@ func CreateUpgradeHandler(
 		vm, err := mm.RunMigrations(ctx, configurator, vm)
 
 		ctx.Logger().Info("Setting MinInitialDepositRatio...")
-		SetMinInitialDepositRatio(ctx, govKeeper)
+		if err := SetMinInitialDepositRatio(ctx, govKeeper); err != nil {
+			return nil, errorsmod.Wrapf(err, "unable to set MinInitialDepositRatio")
+		}
+
+		ctx.Logger().Info("v10 Upgrade Complete")
 
 		return vm, err
 	}
@@ -121,8 +128,8 @@ func ReduceSTRDStakingRewards(ctx sdk.Context, k mintkeeper.Keeper) error {
 }
 
 // Set the initial deposit ratio to 25%
-func SetMinInitialDepositRatio(ctx sdk.Context, k govkeeper.Keeper) {
+func SetMinInitialDepositRatio(ctx sdk.Context, k govkeeper.Keeper) error {
 	params := k.GetParams(ctx)
 	params.MinInitialDepositRatio = MinInitialDepositRatio
-	k.SetParams(ctx, params)
+	return k.SetParams(ctx, params)
 }
