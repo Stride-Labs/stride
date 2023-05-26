@@ -146,7 +146,7 @@ start-upgrade-integration-tests:
 finish-upgrade-integration-tests:
 	PART=2 bash $(DOCKERNET_HOME)/tests/run_tests_upgrade.sh
 
-upgrade-integration-tests-part-1: start-docker-all integration-test-before-upgrade submit-upgrade-after-tests
+upgrade-integration-tests-part-1: start-docker-all start-upgrade-integration-tests submit-upgrade-after-tests
 
 ###############################################################################
 ###                           Local to Mainnet                              ###
