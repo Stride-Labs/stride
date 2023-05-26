@@ -2,8 +2,8 @@
 ## Run Instructions
 * Before working on the upgrade logic, you'll need to compile the original binary that represent the code before the upgrade takes place. This is done by the following command, where the `old_version` is the version you're upgrading *from*:
 ``` bash
-# e.g. make OLD_VERSION=v8.0.0 upgrade-build-old-binary
-make OLD_VERSION={VERSION} upgrade-build-old-binary
+# e.g. make UPGRADE_OLD_VERSION=v8.0.0 upgrade-build-old-binary
+make UPGRADE_OLD_VERSION={VERSION} upgrade-build-old-binary
 ```
 * Then startup the chain, but specify the old tag or commit hash, as well as the upgrade name
 ```bash
@@ -24,10 +24,10 @@ make UPGRADE_NAME={NAME} submit-upgrade-immediately
 
 ## Testing Upgrades with Integration Tests
 * **WARNING**: The integration tests may change between versions - the following only works if there were not breaking changes. If there are breaking changes, you can replace the GAIA and EVMOS integration test files with those from the old version.
-* Start the network, run the integration tests on the old binary, and then propose and vote on the upgrade:
+* Run the following to start the network, run the integration tests on the old binary, and then propose and vote on the upgrade:
 ```bash
-# e.g. make UPGRADE_NAME=v10 upgrade-integration-tests-part-1
-make UPGRADE_NAME={NAME} upgrade-integration-tests-part-1
+# e.g. make UPGRADE_OLD_VERSION=v8.0.0 UPGRADE_NAME=v10 upgrade-integration-tests-part-1
+make UPGRADE_OLD_VERSION={VERSION} UPGRADE_NAME={NAME} upgrade-integration-tests-part-1
 ```
 * Once the integration tests pass and the upgrade has been proposed, wait for the upgrade to occur at block 400. Check the stride logs to confirm the upgrade passes successfully
 * Finally, run the remaining integration tests 
