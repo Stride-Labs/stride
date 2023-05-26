@@ -9,7 +9,7 @@ on:
         description: "Specify the new version (e.g. v9.0.0)"
 
 jobs:
-  increment-stride-version:
+  changelog:
     runs-on: ubuntu-latest
 
     steps:
@@ -17,7 +17,7 @@ jobs:
         run: |
           old_version=${{ github.event.inputs.old_version }}
           new_version=${{ github.event.inputs.new_version }}
-          new_major_version=v$(echo $new_version | cut -d '.' -f 1)
+          new_major_version=$(echo $new_version | cut -d '.' -f 1)
           branch_name=actions/changelog-version-${new_major_version}
 
           echo "OLD_VERSION=$old_version" >> $GITHUB_ENV
@@ -40,12 +40,16 @@ jobs:
       - name: Create branch
         run: git checkout -b ${{ env.branch_name }}
 
+      - name: Fetch main
+        run: git fetch origin main:main
+
       - name: Update changelogs
         run: ./scripts/changelog.sh
 
       - name: Commit changes
-        run: git add .
-          git commit -m 'updated changelogs'
+        run: |
+          git add .
+          git commit -m 'updated changelog'
 
       - name: Push changes
         id: push
@@ -73,9 +77,9 @@ jobs:
           -H "Authorization: token ${{ secrets.GH_ACTIONS_PAT }}" \
           https://api.github.com/repos/${{ github.repository }}/pulls \
           -d '{
-          "title":"${{ env.NEW_VERSION }} Changelog",
+          "title":"${{ env.NEW_MAJOR_VERSION }} Changelog",
           "head":"${{ env.branch_name }}",
           "base":"main",
-          "body":"This is an automatically generated pull request.\n\nPlease review and merge the changes. **Remember to split the On-Chain vs Off-Chain commits!**\n\n## Context\n\nUpdates changelog for ${{ env.NEW_MAJOR_VERSION }} release\n\n## Brief Changelog\n\n* Updates main changelog with on-chain and off-chain changes\n* Updates upgrade-specific changelog with on-chain changes only\n",
+          "body":"This is an automatically generated pull request.\n\nPlease review and merge the changes. **Remember to split the On-Chain vs Off-Chain commits!**\n\n## Context\n\nUpdated changelog for ${{ env.NEW_MAJOR_VERSION }} release\n\n## Brief Changelog\n\n* Updated main changelog with on-chain and off-chain changes\n* Updated upgrade-specific changelog with on-chain changes only\n",
           "maintainer_can_modify": true
           }'
