@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
+	crisistypes "github.com/cosmos/cosmos-sdk/x/crisis/types"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 
 	authz "github.com/cosmos/cosmos-sdk/x/authz"
@@ -150,6 +151,10 @@ func (app *StrideApp) setupUpgradeHandlers() {
 	case "v7":
 		storeUpgrades = &storetypes.StoreUpgrades{
 			Added: []string{ratelimittypes.StoreKey, autopilottypes.StoreKey},
+		}
+	case "v10":
+		storeUpgrades = &storetypes.StoreUpgrades{
+			Added: []string{crisistypes.StoreKey},
 		}
 	}
 
