@@ -26,6 +26,7 @@ MICRO_DENOM_UNITS="${!MICRO_DENOM_UNITS_VAR_NAME:-000000}"
 VAL_TOKENS=${VAL_TOKENS}${MICRO_DENOM_UNITS}
 STAKE_TOKENS=${STAKE_TOKENS}${MICRO_DENOM_UNITS}
 ADMIN_TOKENS=${ADMIN_TOKENS}${MICRO_DENOM_UNITS}
+USER_TOKENS=${USER_TOKENS}${MICRO_DENOM_UNITS}
 
 set_stride_genesis() {
     genesis_config=$1
@@ -162,6 +163,7 @@ if [ "$CHAIN" == "STRIDE" ]; then
     echo "$STRIDE_ADMIN_MNEMONIC" | $MAIN_CMD keys add $STRIDE_ADMIN_ACCT --recover --keyring-backend=test >> $KEYS_LOGS 2>&1
     STRIDE_ADMIN_ADDRESS=$($MAIN_CMD keys show $STRIDE_ADMIN_ACCT --keyring-backend test -a)
     $MAIN_CMD add-genesis-account ${STRIDE_ADMIN_ADDRESS} ${ADMIN_TOKENS}${DENOM}
+
     # add relayer accounts
     for i in "${!RELAYER_ACCTS[@]}"; do
         RELAYER_ACCT="${RELAYER_ACCTS[i]}"
@@ -185,6 +187,12 @@ else
     RELAYER_ADDRESS=$($MAIN_CMD keys show $RELAYER_ACCT --keyring-backend test -a | tr -cd '[:alnum:]._-')
     $MAIN_CMD add-genesis-account ${RELAYER_ADDRESS} ${VAL_TOKENS}${DENOM}
 fi
+
+# add a staker account for integration tests
+# the account should live on both stride and the host chain
+echo "$USER_MNEMONIC" | $MAIN_CMD keys add $USER_ACCT --recover --keyring-backend=test >> $KEYS_LOGS 2>&1
+USER_ADDRESS=$($MAIN_CMD keys show $USER_ACCT --keyring-backend test -a)
+$MAIN_CMD add-genesis-account ${USER_ADDRESS} ${USER_TOKENS}${DENOM}
 
 # now we process gentx txs on the main node
 $MAIN_CMD collect-gentxs &> /dev/null
