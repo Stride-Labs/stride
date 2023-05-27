@@ -4,9 +4,9 @@ import (
 	"fmt"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	ibctesting "github.com/cosmos/ibc-go/v5/testing"
+	ibctesting "github.com/cosmos/ibc-go/v7/testing"
 
-	icatypes "github.com/cosmos/ibc-go/v5/modules/apps/27-interchain-accounts/types"
+	icatypes "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/types"
 
 	epochtypes "github.com/Stride-Labs/stride/v9/x/epochs/types"
 	icqtypes "github.com/Stride-Labs/stride/v9/x/interchainquery/types"
@@ -57,7 +57,7 @@ func (s *KeeperTestSuite) SetupFeeBalanceCallbackTest() FeeBalanceICQCallbackTes
 	s.App.StakeibcKeeper.SetEpochTracker(s.Ctx, strideEpochTracker)
 
 	// Get the next sequence number to confirm if an ICA was sent
-	feePortId := icatypes.PortPrefix + feeAccountOwner
+	feePortId := icatypes.ControllerPortPrefix + feeAccountOwner
 	startSequence, found := s.App.IBCKeeper.ChannelKeeper.GetNextSequenceSend(s.Ctx, feePortId, feeChannelId)
 	s.Require().True(found, "sequence number not found before ICA")
 
