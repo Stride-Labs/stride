@@ -41,15 +41,16 @@ func (k Keeper) UnmarshalUndelegateCallbackArgs(ctx sdk.Context, undelegateCallb
 }
 
 // ICA Callback after undelegating
-//   If successful:
-//     * Updates epoch unbonding record status
-//     * Records delegation changes on the host zone and validators,
-//     * Burns stTokens
-//   If timeout:
-//     * Does nothing
-//   If failure:
-//     * Reverts epoch unbonding record status
-func UndelegateCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ackResponse *icacallbackstypes.AcknowledgementResponse, args []byte) error {
+//
+//	If successful:
+//	  * Updates epoch unbonding record status
+//	  * Records delegation changes on the host zone and validators,
+//	  * Burns stTokens
+//	If timeout:
+//	  * Does nothing
+//	If failure:
+//	  * Reverts epoch unbonding record status
+func (k Keeper) UndelegateCallback(ctx sdk.Context, packet channeltypes.Packet, ackResponse *icacallbackstypes.AcknowledgementResponse, args []byte) error {
 	// Fetch callback args
 	undelegateCallback, err := k.UnmarshalUndelegateCallbackArgs(ctx, args)
 	if err != nil {

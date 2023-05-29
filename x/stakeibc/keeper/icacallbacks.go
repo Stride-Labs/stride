@@ -1,10 +1,8 @@
 package keeper
 
 import (
+	"github.com/Stride-Labs/stride/v9/x/icacallbacks/types"
 	icacallbackstypes "github.com/Stride-Labs/stride/v9/x/icacallbacks/types"
-
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
 )
 
 const (
@@ -16,41 +14,13 @@ const (
 	ICACallbackID_Rebalance  = "rebalance"
 )
 
-// ICACallbacks wrapper struct for stakeibc keeper
-type ICACallback func(Keeper, sdk.Context, channeltypes.Packet, *icacallbackstypes.AcknowledgementResponse, []byte) error
-
-type ICACallbacks struct {
-	k            Keeper
-	icacallbacks map[string]ICACallback
-}
-
-var _ icacallbackstypes.ICACallbackHandler = ICACallbacks{}
-
-func (k Keeper) ICACallbackHandler() ICACallbacks {
-	return ICACallbacks{k, make(map[string]ICACallback)}
-}
-
-func (c ICACallbacks) CallICACallback(ctx sdk.Context, id string, packet channeltypes.Packet, ackResponse *icacallbackstypes.AcknowledgementResponse, args []byte) error {
-	return c.icacallbacks[id](c.k, ctx, packet, ackResponse, args)
-}
-
-func (c ICACallbacks) HasICACallback(id string) bool {
-	_, found := c.icacallbacks[id]
-	return found
-}
-
-func (c ICACallbacks) AddICACallback(id string, fn interface{}) icacallbackstypes.ICACallbackHandler {
-	c.icacallbacks[id] = fn.(ICACallback)
-	return c
-}
-
-func (c ICACallbacks) RegisterICACallbacks() icacallbackstypes.ICACallbackHandler {
-	a := c.
-		AddICACallback(ICACallbackID_Delegate, ICACallback(DelegateCallback)).
-		AddICACallback(ICACallbackID_Claim, ICACallback(ClaimCallback)).
-		AddICACallback(ICACallbackID_Undelegate, ICACallback(UndelegateCallback)).
-		AddICACallback(ICACallbackID_Reinvest, ICACallback(ReinvestCallback)).
-		AddICACallback(ICACallbackID_Redemption, ICACallback(RedemptionCallback)).
-		AddICACallback(ICACallbackID_Rebalance, ICACallback(RebalanceCallback))
-	return a.(ICACallbacks)
+func (k Keeper) RegisterICACallbacks() icacallbackstypes.ModuleCallbacks {
+	return []types.ICACallback{
+		{CallbackId: ICACallbackID_Delegate, CallbackFunc: types.ICACallbackFunction(k.DelegateCallback)},
+		{CallbackId: ICACallbackID_Claim, CallbackFunc: types.ICACallbackFunction(k.ClaimCallback)},
+		{CallbackId: ICACallbackID_Undelegate, CallbackFunc: types.ICACallbackFunction(k.UndelegateCallback)},
+		{CallbackId: ICACallbackID_Reinvest, CallbackFunc: types.ICACallbackFunction(k.ReinvestCallback)},
+		{CallbackId: ICACallbackID_Redemption, CallbackFunc: types.ICACallbackFunction(k.RedemptionCallback)},
+		{CallbackId: ICACallbackID_Rebalance, CallbackFunc: types.ICACallbackFunction(k.RebalanceCallback)},
+	}
 }

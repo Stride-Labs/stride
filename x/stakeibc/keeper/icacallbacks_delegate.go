@@ -39,13 +39,10 @@ func (k Keeper) UnmarshalDelegateCallbackArgs(ctx sdk.Context, delegateCallback 
 }
 
 // ICA Callback after delegating deposit records
-//   If successful:
-//     * Updates deposit record status and records delegation changes on the host zone and validators
-//   If timeout:
-//     * Does nothing
-//   If failure:
-//     * Reverts deposit record status
-func DelegateCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ackResponse *icacallbackstypes.AcknowledgementResponse, args []byte) error {
+// * If successful: Updates deposit record status and records delegation changes on the host zone and validators
+// * If timeout:    Does nothing
+// * If failure:    Reverts deposit record status
+func (k Keeper) DelegateCallback(ctx sdk.Context, packet channeltypes.Packet, ackResponse *icacallbackstypes.AcknowledgementResponse, args []byte) error {
 	// Deserialize the callback args
 	delegateCallback, err := k.UnmarshalDelegateCallbackArgs(ctx, args)
 	if err != nil {
