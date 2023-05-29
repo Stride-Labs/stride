@@ -14,7 +14,7 @@ const (
 	ICACallbackID_Rebalance  = "rebalance"
 )
 
-func (k Keeper) RegisterICACallbacks() icacallbackstypes.ModuleCallbacks {
+func (k Keeper) Callbacks() icacallbackstypes.ModuleCallbacks {
 	return []types.ICACallback{
 		{CallbackId: ICACallbackID_Delegate, CallbackFunc: types.ICACallbackFunction(k.DelegateCallback)},
 		{CallbackId: ICACallbackID_Claim, CallbackFunc: types.ICACallbackFunction(k.ClaimCallback)},

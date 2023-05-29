@@ -6,7 +6,7 @@ import (
 
 const TRANSFER = "transfer"
 
-func (k Keeper) RegisterICACallbacks() icacallbackstypes.ModuleCallbacks {
+func (k Keeper) Callbacks() icacallbackstypes.ModuleCallbacks {
 	return []icacallbackstypes.ICACallback{
 		{CallbackId: TRANSFER, CallbackFunc: icacallbackstypes.ICACallbackFunction(k.TransferCallback)},
 	}

@@ -568,18 +568,11 @@ func NewStrideApp(
 
 	icacallbacksModule := icacallbacksmodule.NewAppModule(appCodec, app.IcacallbacksKeeper, app.AccountKeeper, app.BankKeeper)
 
-	// Register ICA calllbacks
-	// NOTE: The icacallbacks struct implemented below provides a mapping from ICA channel owner to ICACallback handler,
-	// where the callback handler stores and routes to the various callback functions for a particular module.
-	// However, as of ibc-go v6, the icacontroller module owns the ICA channel. A consequence of this is that there can
-	// be no more than one module that implements ICA callbacks. Should we add an new module with ICA support in the future,
-	// we'll need to refactor this
-	err = app.IcacallbacksKeeper.SetICACallbackHandler(icacontrollertypes.SubModuleName, app.StakeibcKeeper.ICACallbackHandler())
-	if err != nil {
-		return nil
-	}
-	err = app.IcacallbacksKeeper.SetICACallbackHandler(ibctransfertypes.ModuleName, app.RecordsKeeper.ICACallbackHandler())
-	if err != nil {
+	// Register IBC calllbacks
+	if err := app.IcacallbacksKeeper.SetICACallbacks(
+		app.StakeibcKeeper.Callbacks(),
+		app.RecordsKeeper.Callbacks(),
+	); err != nil {
 		return nil
 	}
 
