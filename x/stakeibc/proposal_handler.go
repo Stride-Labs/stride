@@ -16,7 +16,8 @@ func NewStakeibcProposalHandler(k keeper.Keeper) govtypes.Handler {
 		switch c := content.(type) {
 		case *types.AddValidatorsProposal:
 			return k.AddValidatorsProposal(ctx, c)
-
+		case *types.RegisterHostZoneProposal:
+			return k.RegisterHostZoneProposal(ctx, c)
 		default:
 			return errorsmod.Wrapf(sdkerrors.ErrUnknownRequest, "unrecognized stakeibc proposal content type: %T", c)
 		}

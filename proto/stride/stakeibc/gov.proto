@@ -2,6 +2,9 @@ syntax = "proto3";
 package stride.stakeibc;
 import "gogoproto/gogo.proto";
 import "stride/stakeibc/validator.proto";
+import "stride/stakeibc/ica_account.proto";
+import "cosmos_proto/cosmos.proto";
+
 option go_package = "github.com/Stride-Labs/stride/v9/x/stakeibc/types";
 
 message AddValidatorsProposal {
@@ -14,4 +17,31 @@ message AddValidatorsProposal {
   string host_zone = 3;
   repeated Validator validators = 4;
   string deposit = 6 [ (gogoproto.moretags) = "yaml:\"deposit\"" ];
+}
+
+message RegisterHostZoneProposal {
+  option (gogoproto.equal) = true;
+  option (gogoproto.goproto_getters) = false;
+
+  string title = 1;
+  string description = 2;
+  string connection_id = 3 [ (gogoproto.moretags) = "yaml:\"connection_id\"" ];
+  string bech32prefix = 4;
+  string host_denom = 5 [ (gogoproto.moretags) = "yaml:\"host_denom\"" ];
+  string ibc_denom = 6 [ (gogoproto.moretags) = "yaml:\"ibc_denom\"" ];
+  string transfer_channel_id = 7
+      [ (gogoproto.moretags) = "yaml:\"transfer_channel_id\"" ];
+  uint64 unbonding_frequency = 8
+      [ (gogoproto.moretags) = "yaml:\"unbonding_frequency\"" ];
+  string min_redemption_rate = 9 [
+    (cosmos_proto.scalar) = "cosmos.Dec",
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
+  string max_redemption_rate = 10 [
+    (cosmos_proto.scalar) = "cosmos.Dec",
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
+  string deposit = 11 [ (gogoproto.moretags) = "yaml:\"deposit\"" ];
 }

@@ -15,3 +15,17 @@ func (k Keeper) AddValidatorsProposal(ctx sdk.Context, msg *types.AddValidatorsP
 
 	return nil
 }
+
+func (k Keeper) RegisterHostZoneProposal(ctx sdk.Context, proposal *types.RegisterHostZoneProposal) error {
+	return k.RegisterHostZone(
+		ctx,
+		proposal.ConnectionId,
+		proposal.HostDenom,
+		proposal.TransferChannelId,
+		proposal.Bech32Prefix,
+		proposal.IbcDenom,
+		proposal.UnbondingFrequency,
+		proposal.MinRedemptionRate,
+		proposal.MaxRedemptionRate,
+	)
+}
