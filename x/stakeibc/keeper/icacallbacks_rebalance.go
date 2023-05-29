@@ -35,7 +35,7 @@ func (k Keeper) UnmarshalRebalanceCallbackArgs(ctx sdk.Context, rebalanceCallbac
 }
 
 // ICA Callback after rebalance validators on a host zone
-// * If successful: Updates relevant validator delegations on the host zone struct
+// * If successful:      Updates relevant validator delegations on the host zone struct
 // * If timeout/failure: Does nothing
 func (k Keeper) RebalanceCallback(ctx sdk.Context, packet channeltypes.Packet, ackResponse *icacallbackstypes.AcknowledgementResponse, args []byte) error {
 	// Fetch callback args

@@ -80,7 +80,6 @@ func (k Keeper) CallRegisteredICACallback(ctx sdk.Context, packet channeltypes.P
 	}
 
 	// If there's an associated callback function, execute it
-	fmt.Printf("CALLBACKS: %+v\n", k.icacallbacks)
 	callback, found := k.icacallbacks[callbackData.CallbackId]
 	if !found {
 		k.Logger(ctx).Info(fmt.Sprintf("No associated callback with callback data %v", callbackData))
