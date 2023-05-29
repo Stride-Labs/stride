@@ -27,7 +27,7 @@ import (
 
 var (
 	UpgradeName     = "v10"
-	EpochProvisions = sdk.NewDec(940_469_178)
+	EpochProvisions = sdk.NewDec(929_681_506)
 
 	StakingProportion                     = "0.1605"
 	CommunityPoolGrowthProportion         = "0.2158"
@@ -92,8 +92,8 @@ func CreateUpgradeHandler(
 	}
 }
 
-// Cut STRD staking rewards in half from 27.64% to 13.82%
-// Reduce epoch provisions by 13.82% from 1,078,767,123 to 940,469,178
+// Cut STRD staking rewards in half
+// Reduce epoch provisions by 13.82% from 1,078,767,123 to 929,681,506
 func ReduceSTRDStakingRewards(ctx sdk.Context, k mintkeeper.Keeper) error {
 	minter := minttypes.NewMinter(EpochProvisions)
 	k.SetMinter(ctx, minter)
@@ -110,7 +110,7 @@ func ReduceSTRDStakingRewards(ctx sdk.Context, k mintkeeper.Keeper) error {
 		Add(communityPoolSecurityBudgetProportion)
 
 	if !totalProportions.Equal(sdk.OneDec()) {
-		return fmt.Errorf("distribution proprotions do not sum to 1 (%v)", totalProportions)
+		return fmt.Errorf("distribution proportions do not sum to 1 (%v)", totalProportions)
 	}
 
 	distributionProperties := minttypes.DistributionProportions{
