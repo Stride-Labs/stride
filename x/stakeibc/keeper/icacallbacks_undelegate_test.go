@@ -13,7 +13,6 @@ import (
 
 	icacallbacktypes "github.com/Stride-Labs/stride/v9/x/icacallbacks/types"
 	recordtypes "github.com/Stride-Labs/stride/v9/x/records/types"
-	stakeibckeeper "github.com/Stride-Labs/stride/v9/x/stakeibc/keeper"
 	"github.com/Stride-Labs/stride/v9/x/stakeibc/types"
 	stakeibc "github.com/Stride-Labs/stride/v9/x/stakeibc/types"
 )
@@ -149,7 +148,7 @@ func (s *KeeperTestSuite) TestUndelegateCallback_Successful() {
 	validArgs := tc.validArgs
 
 	// Callback
-	err := stakeibckeeper.UndelegateCallback(s.App.StakeibcKeeper, s.Ctx, validArgs.packet, validArgs.ackResponse, validArgs.args)
+	err := s.App.StakeibcKeeper.UndelegateCallback(s.Ctx, validArgs.packet, validArgs.ackResponse, validArgs.args)
 	s.Require().NoError(err, "undelegate callback succeeds")
 
 	// Check that stakedBal has decreased on the host zone
@@ -210,7 +209,7 @@ func (s *KeeperTestSuite) TestUndelegateCallback_UndelegateCallbackTimeout() {
 	invalidArgs := tc.validArgs
 	invalidArgs.ackResponse.Status = icacallbacktypes.AckResponseStatus_TIMEOUT
 
-	err := stakeibckeeper.UndelegateCallback(s.App.StakeibcKeeper, s.Ctx, invalidArgs.packet, invalidArgs.ackResponse, invalidArgs.args)
+	err := s.App.StakeibcKeeper.UndelegateCallback(s.Ctx, invalidArgs.packet, invalidArgs.ackResponse, invalidArgs.args)
 	s.Require().NoError(err, "undelegate callback succeeds on timeout")
 	s.checkStateIfUndelegateCallbackFailed(tc)
 }
@@ -222,7 +221,7 @@ func (s *KeeperTestSuite) TestUndelegateCallback_UndelegateCallbackErrorOnHost()
 	invalidArgs := tc.validArgs
 	invalidArgs.ackResponse.Status = icacallbacktypes.AckResponseStatus_FAILURE
 
-	err := stakeibckeeper.UndelegateCallback(s.App.StakeibcKeeper, s.Ctx, invalidArgs.packet, invalidArgs.ackResponse, invalidArgs.args)
+	err := s.App.StakeibcKeeper.UndelegateCallback(s.Ctx, invalidArgs.packet, invalidArgs.ackResponse, invalidArgs.args)
 	s.Require().NoError(err, "undelegate callback succeeds with error on host")
 	s.checkStateIfUndelegateCallbackFailed(tc)
 }
@@ -233,7 +232,7 @@ func (s *KeeperTestSuite) TestUndelegateCallback_WrongCallbackArgs() {
 	// random args should cause the callback to fail
 	invalidCallbackArgs := []byte("random bytes")
 
-	err := stakeibckeeper.UndelegateCallback(s.App.StakeibcKeeper, s.Ctx, tc.validArgs.packet, tc.validArgs.ackResponse, invalidCallbackArgs)
+	err := s.App.StakeibcKeeper.UndelegateCallback(s.Ctx, tc.validArgs.packet, tc.validArgs.ackResponse, invalidCallbackArgs)
 	s.Require().EqualError(err, "Unable to unmarshal undelegate callback args: unexpected EOF: unable to unmarshal data structure")
 	s.checkStateIfUndelegateCallbackFailed(tc)
 }
@@ -244,7 +243,7 @@ func (s *KeeperTestSuite) TestUndelegateCallback_HostNotFound() {
 	// remove the host zone from the store to trigger a host not found error
 	s.App.StakeibcKeeper.RemoveHostZone(s.Ctx, HostChainId)
 
-	err := stakeibckeeper.UndelegateCallback(s.App.StakeibcKeeper, s.Ctx, tc.validArgs.packet, tc.validArgs.ackResponse, tc.validArgs.args)
+	err := s.App.StakeibcKeeper.UndelegateCallback(s.Ctx, tc.validArgs.packet, tc.validArgs.ackResponse, tc.validArgs.args)
 	s.Require().EqualError(err, "Host zone not found: GAIA: key not found")
 }
 

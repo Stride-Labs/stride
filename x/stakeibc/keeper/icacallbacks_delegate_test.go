@@ -9,7 +9,6 @@ import (
 	icacallbacktypes "github.com/Stride-Labs/stride/v9/x/icacallbacks/types"
 
 	recordtypes "github.com/Stride-Labs/stride/v9/x/records/types"
-	stakeibckeeper "github.com/Stride-Labs/stride/v9/x/stakeibc/keeper"
 	"github.com/Stride-Labs/stride/v9/x/stakeibc/types"
 	stakeibc "github.com/Stride-Labs/stride/v9/x/stakeibc/types"
 )
@@ -117,7 +116,7 @@ func (s *KeeperTestSuite) TestDelegateCallback_Successful() {
 	initialState := tc.initialState
 	validArgs := tc.validArgs
 
-	err := stakeibckeeper.DelegateCallback(s.App.StakeibcKeeper, s.Ctx, validArgs.packet, validArgs.ackResponse, validArgs.args)
+	err := s.App.StakeibcKeeper.DelegateCallback(s.Ctx, validArgs.packet, validArgs.ackResponse, validArgs.args)
 	s.Require().NoError(err)
 
 	// Confirm stakedBal has increased
@@ -156,7 +155,7 @@ func (s *KeeperTestSuite) TestDelegateCallback_DelegateCallbackTimeout() {
 	invalidArgs := tc.validArgs
 	invalidArgs.ackResponse.Status = icacallbacktypes.AckResponseStatus_TIMEOUT
 
-	err := stakeibckeeper.DelegateCallback(s.App.StakeibcKeeper, s.Ctx, invalidArgs.packet, invalidArgs.ackResponse, invalidArgs.args)
+	err := s.App.StakeibcKeeper.DelegateCallback(s.Ctx, invalidArgs.packet, invalidArgs.ackResponse, invalidArgs.args)
 	s.Require().NoError(err)
 	s.checkDelegateStateIfCallbackFailed(tc)
 }
@@ -168,7 +167,7 @@ func (s *KeeperTestSuite) TestDelegateCallback_DelegateCallbackErrorOnHost() {
 	invalidArgs := tc.validArgs
 	invalidArgs.ackResponse.Status = icacallbacktypes.AckResponseStatus_FAILURE
 
-	err := stakeibckeeper.DelegateCallback(s.App.StakeibcKeeper, s.Ctx, invalidArgs.packet, invalidArgs.ackResponse, invalidArgs.args)
+	err := s.App.StakeibcKeeper.DelegateCallback(s.Ctx, invalidArgs.packet, invalidArgs.ackResponse, invalidArgs.args)
 	s.Require().NoError(err)
 	s.checkDelegateStateIfCallbackFailed(tc)
 }
@@ -179,7 +178,7 @@ func (s *KeeperTestSuite) TestDelegateCallback_WrongCallbackArgs() {
 	// random args should cause the callback to fail
 	invalidCallbackArgs := []byte("random bytes")
 
-	err := stakeibckeeper.DelegateCallback(s.App.StakeibcKeeper, s.Ctx, tc.validArgs.packet, tc.validArgs.ackResponse, invalidCallbackArgs)
+	err := s.App.StakeibcKeeper.DelegateCallback(s.Ctx, tc.validArgs.packet, tc.validArgs.ackResponse, invalidCallbackArgs)
 	s.Require().EqualError(err, "Unable to unmarshal delegate callback args: unexpected EOF: unable to unmarshal data structure")
 	s.checkDelegateStateIfCallbackFailed(tc)
 }
@@ -190,7 +189,7 @@ func (s *KeeperTestSuite) TestDelegateCallback_HostNotFound() {
 	// Remove the host zone
 	s.App.StakeibcKeeper.RemoveHostZone(s.Ctx, HostChainId)
 
-	err := stakeibckeeper.DelegateCallback(s.App.StakeibcKeeper, s.Ctx, tc.validArgs.packet, tc.validArgs.ackResponse, tc.validArgs.args)
+	err := s.App.StakeibcKeeper.DelegateCallback(s.Ctx, tc.validArgs.packet, tc.validArgs.ackResponse, tc.validArgs.args)
 	s.Require().EqualError(err, "host zone not found GAIA: invalid request")
 
 	// Confirm deposit record has NOT been removed
@@ -216,7 +215,7 @@ func (s *KeeperTestSuite) TestDelegateCallback_MissingValidator() {
 	invalidCallbackArgs, err := s.App.StakeibcKeeper.MarshalDelegateCallbackArgs(s.Ctx, callbackArgs)
 	s.Require().NoError(err)
 
-	err = stakeibckeeper.DelegateCallback(s.App.StakeibcKeeper, s.Ctx, tc.validArgs.packet, tc.validArgs.ackResponse, invalidCallbackArgs)
+	err = s.App.StakeibcKeeper.DelegateCallback(s.Ctx, tc.validArgs.packet, tc.validArgs.ackResponse, invalidCallbackArgs)
 	s.Require().EqualError(err, "Failed to add delegation to validator: can't change delegation on validator")
 	s.checkDelegateStateIfCallbackFailed(tc)
 }

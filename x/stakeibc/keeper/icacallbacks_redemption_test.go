@@ -9,7 +9,6 @@ import (
 
 	icacallbacktypes "github.com/Stride-Labs/stride/v9/x/icacallbacks/types"
 	recordtypes "github.com/Stride-Labs/stride/v9/x/records/types"
-	stakeibckeeper "github.com/Stride-Labs/stride/v9/x/stakeibc/keeper"
 
 	"github.com/Stride-Labs/stride/v9/x/stakeibc/types"
 	stakeibc "github.com/Stride-Labs/stride/v9/x/stakeibc/types"
@@ -96,7 +95,7 @@ func (s *KeeperTestSuite) TestRedemptionCallback_Successful() {
 	initialState := tc.initialState
 	validArgs := tc.validArgs
 
-	err := stakeibckeeper.RedemptionCallback(s.App.StakeibcKeeper, s.Ctx, validArgs.packet, validArgs.ackResponse, validArgs.args)
+	err := s.App.StakeibcKeeper.RedemptionCallback(s.Ctx, validArgs.packet, validArgs.ackResponse, validArgs.args)
 	s.Require().NoError(err, "redemption callback succeeded")
 
 	for _, epochNumber := range initialState.epochUnbondingNumbers {
@@ -132,7 +131,7 @@ func (s *KeeperTestSuite) TestRedemptionCallback_RedemptionCallbackTimeout() {
 	invalidArgs := tc.validArgs
 	invalidArgs.ackResponse.Status = icacallbacktypes.AckResponseStatus_TIMEOUT
 
-	err := stakeibckeeper.RedemptionCallback(s.App.StakeibcKeeper, s.Ctx, invalidArgs.packet, invalidArgs.ackResponse, invalidArgs.args)
+	err := s.App.StakeibcKeeper.RedemptionCallback(s.Ctx, invalidArgs.packet, invalidArgs.ackResponse, invalidArgs.args)
 	s.Require().NoError(err)
 	s.checkRedemptionStateIfCallbackFailed(tc)
 }
@@ -144,7 +143,7 @@ func (s *KeeperTestSuite) TestRedemptionCallback_RedemptionCallbackErrorOnHost()
 	invalidArgs := tc.validArgs
 	invalidArgs.ackResponse.Status = icacallbacktypes.AckResponseStatus_FAILURE
 
-	err := stakeibckeeper.RedemptionCallback(s.App.StakeibcKeeper, s.Ctx, invalidArgs.packet, invalidArgs.ackResponse, invalidArgs.args)
+	err := s.App.StakeibcKeeper.RedemptionCallback(s.Ctx, invalidArgs.packet, invalidArgs.ackResponse, invalidArgs.args)
 	s.Require().NoError(err)
 	s.checkRedemptionStateIfCallbackFailed(tc)
 }
@@ -156,7 +155,7 @@ func (s *KeeperTestSuite) TestRedemptionCallback_WrongCallbackArgs() {
 	// random args should cause the callback to fail
 	invalidCallbackArgs := []byte("random bytes")
 
-	err := stakeibckeeper.RedemptionCallback(s.App.StakeibcKeeper, s.Ctx, invalidArgs.packet, invalidArgs.ackResponse, invalidCallbackArgs)
+	err := s.App.StakeibcKeeper.RedemptionCallback(s.Ctx, invalidArgs.packet, invalidArgs.ackResponse, invalidCallbackArgs)
 	s.Require().EqualError(err, "Unable to unmarshal redemption callback args: unexpected EOF: unable to unmarshal data structure")
 	s.checkRedemptionStateIfCallbackFailed(tc)
 }
@@ -173,7 +172,7 @@ func (s *KeeperTestSuite) TestRedemptionCallback_EpochUnbondingRecordNotFound() 
 	invalidCallbackArgs, err := s.App.StakeibcKeeper.MarshalRedemptionCallbackArgs(s.Ctx, callbackArgs)
 	s.Require().NoError(err)
 
-	err = stakeibckeeper.RedemptionCallback(s.App.StakeibcKeeper, s.Ctx, tc.validArgs.packet, tc.validArgs.ackResponse, invalidCallbackArgs)
+	err = s.App.StakeibcKeeper.RedemptionCallback(s.Ctx, tc.validArgs.packet, tc.validArgs.ackResponse, invalidCallbackArgs)
 	expectedErr := fmt.Sprintf("Error fetching host zone unbonding record for epoch: %d, host zone: GAIA: host zone not found", tc.initialState.epochNumber+1)
 	s.Require().EqualError(err, expectedErr)
 	s.checkRedemptionStateIfCallbackFailed(tc)
@@ -188,7 +187,7 @@ func (s *KeeperTestSuite) TestRedemptionCallback_HostZoneUnbondingNotFound() {
 	epochUnbondingRecord.HostZoneUnbondings = []*recordtypes.HostZoneUnbonding{}
 	s.App.RecordsKeeper.SetEpochUnbondingRecord(s.Ctx, epochUnbondingRecord)
 
-	err := stakeibckeeper.RedemptionCallback(s.App.StakeibcKeeper, s.Ctx, tc.validArgs.packet, tc.validArgs.ackResponse, tc.validArgs.args)
+	err := s.App.StakeibcKeeper.RedemptionCallback(s.Ctx, tc.validArgs.packet, tc.validArgs.ackResponse, tc.validArgs.args)
 	s.Require().EqualError(err, fmt.Sprintf("Error fetching host zone unbonding record for epoch: %d, host zone: GAIA: host zone not found", tc.initialState.epochNumber))
 	s.checkRedemptionStateIfCallbackFailed(tc)
 }
