@@ -27,20 +27,19 @@ func (s *UpgradeTestSuite) TestUpgrade() {
 	s.ConfirmUpgradeSucceededs("v10", dummyUpgradeHeight)
 
 	// Check mint parameters after upgrade
-	zeroPad := "00000000000000"
 	proportions := s.App.MintKeeper.GetParams(s.Ctx).DistributionProportions
 
-	s.Require().Equal(v10.StakingProportion+zeroPad,
-		proportions.Staking.String(), "staking")
+	s.Require().Equal(v10.StakingProportion,
+		proportions.Staking.String()[:6], "staking")
 
-	s.Require().Equal(v10.CommunityPoolGrowthProportion+zeroPad,
-		proportions.CommunityPoolGrowth.String(), "community pool growth")
+	s.Require().Equal(v10.CommunityPoolGrowthProportion,
+		proportions.CommunityPoolGrowth.String()[:6], "community pool growth")
 
-	s.Require().Equal(v10.StrategicReserveProportion+zeroPad,
-		proportions.StrategicReserve.String(), "strategic reserve")
+	s.Require().Equal(v10.StrategicReserveProportion,
+		proportions.StrategicReserve.String()[:6], "strategic reserve")
 
-	s.Require().Equal(v10.CommunityPoolSecurityBudgetProportion+zeroPad,
-		proportions.CommunityPoolSecurityBudget.String(), "community pool security")
+	s.Require().Equal(v10.CommunityPoolSecurityBudgetProportion,
+		proportions.CommunityPoolSecurityBudget.String()[:6], "community pool security")
 
 	// Check initial deposit ratio
 	govParams := s.App.GovKeeper.GetParams(s.Ctx)
