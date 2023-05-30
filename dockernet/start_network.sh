@@ -5,7 +5,6 @@ SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 source ${SCRIPT_DIR}/config.sh
 
 # cleanup any stale state
-make stop-docker
 rm -rf $STATE $LOGS 
 mkdir -p $STATE
 mkdir -p $LOGS
