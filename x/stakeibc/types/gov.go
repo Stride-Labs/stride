@@ -116,6 +116,48 @@ func (p *DeleteValidatorsProposal) ValidateBasic() error {
 }
 
 var (
+	_ govtypes.Content = &ChangeValidatorWeightsProposal{}
+)
+
+func NewChangeValidatorWeightsProposal(title, description, hostZone string, valAddrs []string) govtypes.Content {
+	return &ChangeValidatorWeightsProposal{
+		Title:       title,
+		Description: description,
+		HostZone:    hostZone,
+		ValAddrs:    valAddrs,
+	}
+}
+
+func (p *ChangeValidatorWeightsProposal) ProposalRoute() string { return RouterKey }
+
+func (p *ChangeValidatorWeightsProposal) ProposalType() string {
+	return ProposalTypeDeleteValidators
+}
+
+func (p *ChangeValidatorWeightsProposal) ValidateBasic() error {
+	err := govtypes.ValidateAbstract(p)
+	if err != nil {
+		return err
+	}
+
+	if len(p.ValAddrs) == 0 {
+		return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "at least one validator must be provided")
+	}
+
+	if len(p.ValAddrs) != len(p.Weights) {
+		return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "number of weights and number of validators should be equal")
+	}
+
+	for i, valAddr := range p.ValAddrs {
+		if len(strings.TrimSpace(valAddr)) == 0 {
+			return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "validator address is required (index %d)", i)
+		}
+	}
+
+	return nil
+}
+
+var (
 	_ govtypes.Content = &RegisterHostZoneProposal{}
 )
 

@@ -21,7 +21,7 @@ import (
 	"github.com/Stride-Labs/stride/v9/x/stakeibc/types"
 )
 
-func parseDeleteValidatorsProposalFile(cdc codec.JSONCodec, proposalFile string) (proposal types.DeleteValidatorsProposal, err error) {
+func parseChangeValidatorWeightsProposalFile(cdc codec.JSONCodec, proposalFile string) (proposal types.ChangeValidatorWeightsProposal, err error) {
 	contents, err := os.ReadFile(proposalFile)
 	if err != nil {
 		return proposal, err
@@ -36,22 +36,23 @@ func parseDeleteValidatorsProposalFile(cdc codec.JSONCodec, proposalFile string)
 	return proposal, nil
 }
 
-func CmdDeleteValidatorsProposal() *cobra.Command {
+func CmdChangeValidatorWeightsProposal() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "delete-validators [proposal-file]",
-		Short: "Submit an delete-validators proposal",
+		Use:   "change-validator-weights [proposal-file]",
+		Short: "Submit an change-validator-weights proposal",
 		Long: strings.TrimSpace(
-			fmt.Sprintf(`Submit an delete-validators proposal along with an initial deposit.
+			fmt.Sprintf(`Submit an change-validator-weights proposal along with an initial deposit.
 The proposal details must be supplied via a JSON file.
 
 Example:
-$ %s tx gov submit-legacy-proposal delete-validators <path/to/proposal.json> --from=<key_or_address>
+$ %s tx gov submit-legacy-proposal change-validator-weights <path/to/proposal.json> --from=<key_or_address>
 
 Where proposal.json contains:
 {
     "description": "Proposal to remove bad validators for some reasons!",
     "host_zone": "GAIA",
 	"val_addrs": ["cosmosvaloper1v5y0tg0jllvxf5c3afml8s3awue0ymju89frut"],
+	"weights": [10],
     "deposit": "64000000ustrd"
 }
 `, version.AppName),
@@ -63,7 +64,7 @@ Where proposal.json contains:
 				return err
 			}
 
-			proposal, err := parseDeleteValidatorsProposalFile(clientCtx.Codec, args[0])
+			proposal, err := parseChangeValidatorWeightsProposalFile(clientCtx.Codec, args[0])
 			if err != nil {
 				return err
 			}

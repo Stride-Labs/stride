@@ -18,6 +18,8 @@ func NewStakeibcProposalHandler(k keeper.Keeper) govtypes.Handler {
 			return k.AddValidatorsProposal(ctx, c)
 		case *types.DeleteValidatorsProposal:
 			return k.DeleteValidatorsProposal(ctx, c)
+		case *types.ChangeValidatorWeightsProposal:
+			return k.ChangeValidatorWeightsProposal(ctx, c)
 		case *types.RegisterHostZoneProposal:
 			return k.RegisterHostZoneProposal(ctx, c)
 		default:

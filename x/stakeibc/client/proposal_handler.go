@@ -7,7 +7,8 @@ import (
 )
 
 var (
-	AddValidatorsProposalHandler    = govclient.NewProposalHandler(cli.CmdAddValidatorsProposal)
-	DeleteValidatorsProposalHandler = govclient.NewProposalHandler(cli.CmdDeleteValidatorsProposal)
-	RegisterHostZoneProposalHandler = govclient.NewProposalHandler(cli.CmdRegisterHostZoneProposal)
+	AddValidatorsProposalHandler          = govclient.NewProposalHandler(cli.CmdAddValidatorsProposal)
+	DeleteValidatorsProposalHandler       = govclient.NewProposalHandler(cli.CmdDeleteValidatorsProposal)
+	ChangeValidatorWeightsProposalHandler = govclient.NewProposalHandler(cli.CmdChangeValidatorWeightsProposal)
+	RegisterHostZoneProposalHandler       = govclient.NewProposalHandler(cli.CmdRegisterHostZoneProposal)
 )

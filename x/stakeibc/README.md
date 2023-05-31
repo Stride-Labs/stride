@@ -87,6 +87,7 @@ Governance
 
 - `AddValidatorsProposal`
 - `DeleteValidatorsProposal`
+- `ChangeValidatorWeightsProposal`
 - `RegisterHostZoneProposal`
 
 ## Queries
