@@ -12,11 +12,15 @@ import (
 )
 
 const (
-	ProposalTypeAddValidators = "AddValidators"
+	ProposalTypeAddValidators    = "AddValidators"
+	ProposalTypeDeleteValidators = "DeleteValidators"
+	ProposalTypeRegisterHostZone = "RegisterHostZone"
 )
 
 func init() {
 	govtypes.RegisterProposalType(ProposalTypeAddValidators)
+	govtypes.RegisterProposalType(ProposalTypeDeleteValidators)
+	govtypes.RegisterProposalType(ProposalTypeRegisterHostZone)
 }
 
 var (
@@ -74,6 +78,44 @@ func (p AddValidatorsProposal) String() string {
 }
 
 var (
+	_ govtypes.Content = &DeleteValidatorsProposal{}
+)
+
+func NewDeleteValidatorsProposal(title, description, hostZone string, valAddrs []string) govtypes.Content {
+	return &DeleteValidatorsProposal{
+		Title:       title,
+		Description: description,
+		HostZone:    hostZone,
+		ValAddrs:    valAddrs,
+	}
+}
+
+func (p *DeleteValidatorsProposal) ProposalRoute() string { return RouterKey }
+
+func (p *DeleteValidatorsProposal) ProposalType() string {
+	return ProposalTypeDeleteValidators
+}
+
+func (p *DeleteValidatorsProposal) ValidateBasic() error {
+	err := govtypes.ValidateAbstract(p)
+	if err != nil {
+		return err
+	}
+
+	if len(p.ValAddrs) == 0 {
+		return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "at least one validator must be provided")
+	}
+
+	for i, valAddr := range p.ValAddrs {
+		if len(strings.TrimSpace(valAddr)) == 0 {
+			return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "validator address is required (index %d)", i)
+		}
+	}
+
+	return nil
+}
+
+var (
 	_ govtypes.Content = &RegisterHostZoneProposal{}
 )
 
@@ -111,7 +153,7 @@ func (p *RegisterHostZoneProposal) GetDescription() string { return p.Descriptio
 func (p *RegisterHostZoneProposal) ProposalRoute() string { return RouterKey }
 
 func (p *RegisterHostZoneProposal) ProposalType() string {
-	return ProposalTypeAddValidators
+	return ProposalTypeRegisterHostZone
 }
 
 func (p *RegisterHostZoneProposal) ValidateBasic() error {

@@ -19,6 +19,7 @@ func RegisterCodec(cdc *codec.LegacyAmino) {
 	cdc.RegisterConcrete(&MsgChangeValidatorWeight{}, "stakeibc/ChangeValidatorWeight", nil)
 	cdc.RegisterConcrete(&MsgDeleteValidator{}, "stakeibc/DeleteValidator", nil)
 	cdc.RegisterConcrete(&AddValidatorsProposal{}, "stakeibc/AddValidatorsProposal", nil)
+	cdc.RegisterConcrete(&DeleteValidatorsProposal{}, "stakeibc/DeleteValidatorsProposal", nil)
 	cdc.RegisterConcrete(&RegisterHostZoneProposal{}, "stakeibc/RegisterHostZoneProposal", nil)
 	cdc.RegisterConcrete(&MsgRestoreInterchainAccount{}, "stakeibc/RestoreInterchainAccount", nil)
 	cdc.RegisterConcrete(&MsgUpdateValidatorSharesExchRate{}, "stakeibc/UpdateValidatorSharesExchRate", nil)
@@ -41,6 +42,7 @@ func RegisterInterfaces(registry cdctypes.InterfaceRegistry) {
 
 	registry.RegisterImplementations((*govtypes.Content)(nil),
 		&AddValidatorsProposal{},
+		&DeleteValidatorsProposal{},
 		&RegisterHostZoneProposal{},
 	)
 

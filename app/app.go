@@ -161,6 +161,7 @@ func getGovProposalHandlers() []govclient.ProposalHandler {
 		ibcclientclient.UpdateClientProposalHandler,
 		ibcclientclient.UpgradeProposalHandler,
 		stakeibcclient.AddValidatorsProposalHandler,
+		stakeibcclient.DeleteValidatorsProposalHandler,
 		stakeibcclient.RegisterHostZoneProposalHandler,
 		ratelimitclient.AddRateLimitProposalHandler,
 		ratelimitclient.UpdateRateLimitProposalHandler,

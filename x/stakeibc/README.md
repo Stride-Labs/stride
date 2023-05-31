@@ -86,6 +86,7 @@ Misc
 Governance
 
 - `AddValidatorsProposal`
+- `DeleteValidatorsProposal`
 - `RegisterHostZoneProposal`
 
 ## Queries

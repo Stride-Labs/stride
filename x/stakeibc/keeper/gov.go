@@ -16,6 +16,16 @@ func (k Keeper) AddValidatorsProposal(ctx sdk.Context, msg *types.AddValidatorsP
 	return nil
 }
 
+func (k Keeper) DeleteValidatorsProposal(ctx sdk.Context, msg *types.DeleteValidatorsProposal) error {
+	for _, valAddr := range msg.ValAddrs {
+		if err := k.RemoveValidatorFromHostZone(ctx, msg.HostZone, valAddr); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
 func (k Keeper) RegisterHostZoneProposal(ctx sdk.Context, proposal *types.RegisterHostZoneProposal) error {
 	return k.RegisterHostZone(
 		ctx,
