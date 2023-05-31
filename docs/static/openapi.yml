@@ -54701,8 +54701,6 @@ definitions:
     type: object
   Stridelabs.stride.stakeibc.MsgClaimUndelegatedTokensResponse:
     type: object
-  Stridelabs.stride.stakeibc.MsgClearBalanceResponse:
-    type: object
   Stridelabs.stride.stakeibc.MsgDeleteValidatorResponse:
     type: object
   Stridelabs.stride.stakeibc.MsgLiquidStakeResponse:

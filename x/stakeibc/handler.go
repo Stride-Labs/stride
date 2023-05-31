@@ -23,9 +23,6 @@ func NewHandler(k keeper.Keeper) sdk.Handler {
 		case *types.MsgLiquidStake:
 			res, err := msgServer.LiquidStake(sdk.WrapSDKContext(ctx), msg)
 			return sdk.WrapServiceResult(ctx, res, err)
-		case *types.MsgClearBalance:
-			res, err := msgServer.ClearBalance(sdk.WrapSDKContext(ctx), msg)
-			return sdk.WrapServiceResult(ctx, res, err)
 		case *types.MsgRegisterHostZone:
 			res, err := msgServer.RegisterHostZone(sdk.WrapSDKContext(ctx), msg)
 			return sdk.WrapServiceResult(ctx, res, err)

@@ -26,7 +26,6 @@ service Msg {
       returns (MsgRestoreInterchainAccountResponse);
   rpc UpdateValidatorSharesExchRate(MsgUpdateValidatorSharesExchRate)
       returns (MsgUpdateValidatorSharesExchRateResponse);
-  rpc ClearBalance(MsgClearBalance) returns (MsgClearBalanceResponse);
 }
 
 message MsgLiquidStake {
@@ -39,18 +38,6 @@ message MsgLiquidStake {
 }
 
 message MsgLiquidStakeResponse {}
-
-message MsgClearBalance {
-  string creator = 1;
-  string chain_id = 2;
-  string amount = 3 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
-    (gogoproto.nullable) = false
-  ];
-  string channel = 4;
-}
-
-message MsgClearBalanceResponse {}
 
 message MsgRedeemStake {
   string creator = 1;

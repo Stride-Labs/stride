@@ -50,7 +50,6 @@ SafetyNumValidators (default uint64 = 35)
 - `ChangeValidatorWeight()`
 - `DeleteValidator()`
 - `RegisterHostZone()`
-- `ClearBalance()`
 - `RestoreInterchainAccount()`
 - `UpdateValidatorSharesExchRate()`
 
