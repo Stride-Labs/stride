@@ -12,14 +12,16 @@ import (
 )
 
 const (
-	ProposalTypeAddValidators    = "AddValidators"
-	ProposalTypeDeleteValidators = "DeleteValidators"
-	ProposalTypeRegisterHostZone = "RegisterHostZone"
+	ProposalTypeAddValidators          = "AddValidators"
+	ProposalTypeDeleteValidators       = "DeleteValidators"
+	ProposalTypeChangeValidatorWeights = "ChangeValidatorWeights"
+	ProposalTypeRegisterHostZone       = "RegisterHostZone"
 )
 
 func init() {
 	govtypes.RegisterProposalType(ProposalTypeAddValidators)
 	govtypes.RegisterProposalType(ProposalTypeDeleteValidators)
+	govtypes.RegisterProposalType(ProposalTypeChangeValidatorWeights)
 	govtypes.RegisterProposalType(ProposalTypeRegisterHostZone)
 }
 
@@ -131,7 +133,7 @@ func NewChangeValidatorWeightsProposal(title, description, hostZone string, valA
 func (p *ChangeValidatorWeightsProposal) ProposalRoute() string { return RouterKey }
 
 func (p *ChangeValidatorWeightsProposal) ProposalType() string {
-	return ProposalTypeDeleteValidators
+	return ProposalTypeChangeValidatorWeights
 }
 
 func (p *ChangeValidatorWeightsProposal) ValidateBasic() error {
