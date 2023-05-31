@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
+	consensustypes "github.com/cosmos/cosmos-sdk/x/consensus/types"
 	crisistypes "github.com/cosmos/cosmos-sdk/x/crisis/types"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 
@@ -151,7 +152,7 @@ func (app *StrideApp) setupUpgradeHandlers() {
 		}
 	case "v10":
 		storeUpgrades = &storetypes.StoreUpgrades{
-			Added: []string{crisistypes.StoreKey},
+			Added: []string{crisistypes.StoreKey, consensustypes.StoreKey},
 		}
 	}
 
