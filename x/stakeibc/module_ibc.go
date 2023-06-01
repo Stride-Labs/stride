@@ -6,30 +6,30 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	capabilitytypes "github.com/cosmos/cosmos-sdk/x/capability/types"
 	icatypes "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/types"
+	clienttypes "github.com/cosmos/ibc-go/v7/modules/core/02-client/types"
 	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
+	porttypes "github.com/cosmos/ibc-go/v7/modules/core/05-port/types"
 	ibcexported "github.com/cosmos/ibc-go/v7/modules/core/exported"
 
 	"github.com/Stride-Labs/stride/v9/x/stakeibc/keeper"
 	"github.com/Stride-Labs/stride/v9/x/stakeibc/types"
 )
 
-// IBCModule implements the ICS26 interface for interchain accounts controller chains
-type IBCModule struct {
+var _ porttypes.Middleware = &IBCMiddleware{}
+
+type IBCMiddleware struct {
+	app    porttypes.IBCModule
 	keeper keeper.Keeper
 }
 
-// NewIBCModule creates a new IBCModule given the keeper
-func NewIBCModule(k keeper.Keeper) IBCModule {
-	return IBCModule{
+func NewIBCMiddleware(k keeper.Keeper) IBCMiddleware {
+	return IBCMiddleware{
 		keeper: k,
 	}
 }
 
-func (im IBCModule) Hooks() keeper.Hooks {
-	return im.keeper.Hooks()
-}
-
-func (im IBCModule) OnChanOpenInit(
+// OnChanOpenInit simply passes down the to next middleware stack
+func (im IBCMiddleware) OnChanOpenInit(
 	ctx sdk.Context,
 	order channeltypes.Order,
 	connectionHops []string,
@@ -39,11 +39,25 @@ func (im IBCModule) OnChanOpenInit(
 	counterparty channeltypes.Counterparty,
 	version string,
 ) (string, error) {
-	return version, nil
+	return im.app.OnChanOpenInit(ctx, order, connectionHops, portID, channelID, channelCap, counterparty, version)
 }
 
-// OnChanOpenAck implements the IBCModule interface
-func (im IBCModule) OnChanOpenAck(
+// OnChanOpenTry simply passes down the to next middleware stack
+func (im IBCMiddleware) OnChanOpenTry(
+	ctx sdk.Context,
+	order channeltypes.Order,
+	connectionHops []string,
+	portID,
+	channelID string,
+	chanCap *capabilitytypes.Capability,
+	counterparty channeltypes.Counterparty,
+	counterpartyVersion string,
+) (string, error) {
+	return im.app.OnChanOpenTry(ctx, order, connectionHops, portID, channelID, chanCap, counterparty, counterpartyVersion)
+}
+
+// OnChanOpenAck stores the new ICA acccount addresses on the host zone and then passes to the next middleware stack
+func (im IBCMiddleware) OnChanOpenAck(
 	ctx sdk.Context,
 	portID,
 	channelID string,
@@ -111,99 +125,95 @@ func (im IBCModule) OnChanOpenAck(
 	}
 
 	im.keeper.SetHostZone(ctx, zoneInfo)
-	return nil
+
+	// call underlying app's OnChanOpenAck
+	return im.app.OnChanOpenAck(ctx, portID, channelID, counterpartyChannelID, counterpartyVersion)
 }
 
-// OnAcknowledgementPacket implements the IBCModule interface
-func (im IBCModule) OnAcknowledgementPacket(
+// OnChanCloseConfirm simply passes down the to next middleware stack
+func (im IBCMiddleware) OnChanCloseConfirm(
 	ctx sdk.Context,
-	modulePacket channeltypes.Packet,
+	portID,
+	channelID string,
+) error {
+	return im.app.OnChanCloseConfirm(ctx, portID, channelID)
+}
+
+// OnChanCloseInit simply passes down the to next middleware stack
+func (im IBCMiddleware) OnChanCloseInit(
+	ctx sdk.Context,
+	portID,
+	channelID string,
+) error {
+	return im.app.OnChanCloseInit(ctx, portID, channelID)
+}
+
+// OnChanOpenConfirm simply passes down the to next middleware stack
+func (im IBCMiddleware) OnChanOpenConfirm(
+	ctx sdk.Context,
+	portID,
+	channelID string,
+) error {
+	return im.app.OnChanOpenConfirm(ctx, portID, channelID)
+}
+
+// OnAcknowledgementPacket simply passes down the to next middleware stack
+// The Ack handling and routing is managed by icacallbacks
+func (im IBCMiddleware) OnAcknowledgementPacket(
+	ctx sdk.Context,
+	packet channeltypes.Packet,
 	acknowledgement []byte,
 	relayer sdk.AccAddress,
 ) error {
-	return nil
+	return im.app.OnAcknowledgementPacket(ctx, packet, acknowledgement, relayer)
 }
 
-// OnTimeoutPacket implements the IBCModule interface
-func (im IBCModule) OnTimeoutPacket(
+// OnTimeoutPacket simply passes down the to next middleware stack
+// The Ack handling and routing is managed by icacallbacks
+func (im IBCMiddleware) OnTimeoutPacket(
 	ctx sdk.Context,
-	modulePacket channeltypes.Packet,
+	packet channeltypes.Packet,
 	relayer sdk.AccAddress,
 ) error {
-	return nil
+	return im.app.OnTimeoutPacket(ctx, packet, relayer)
 }
 
-// OnChanCloseConfirm implements the IBCModule interface
-func (im IBCModule) OnChanCloseConfirm(
+// OnRecvPacket simply passes down the to next middleware stack
+func (im IBCMiddleware) OnRecvPacket(
 	ctx sdk.Context,
-	portID,
-	channelID string,
-) error {
-
-	// WARNING: For some reason, in IBCv3 the ICA controller module does not call the underlying OnChanCloseConfirm (this function)
-	// So, we need to put logic that _should_ execute upon channel closure in the OnTimeoutPacket function
-	// This works because ORDERED channels are always closed when a timeout occurs, but if we migrate to using ORDERED channels that don't
-	// close on timeout, we will need to move this logic to the OnChanCloseConfirm function
-	// relevant IBCv3 code: https://github.com/cosmos/ibc-go/blob/5c0bf8b8a0f79643e36be98fb9883ea163d2d93a/modules/apps/27-interchain-accounts/controller/ibc_module.go#L123
-	return nil
-}
-
-// ###################################################################################
-// 	Helper functions
-// ###################################################################################
-
-func (im IBCModule) NegotiateAppVersion(
-	ctx sdk.Context,
-	order channeltypes.Order,
-	connectionID string,
-	portID string,
-	counterparty channeltypes.Counterparty,
-	proposedVersion string,
-) (version string, err error) {
-	return proposedVersion, nil
-}
-
-// ###################################################################################
-// 	Required functions to satisfy interface but not implemented for ICA auth modules
-// ###################################################################################
-
-// OnChanOpenTry implements the IBCModule interface
-func (im IBCModule) OnChanOpenTry(
-	ctx sdk.Context,
-	order channeltypes.Order,
-	connectionHops []string,
-	portID,
-	channelID string,
-	chanCap *capabilitytypes.Capability,
-	counterparty channeltypes.Counterparty,
-	counterpartyVersion string,
-) (string, error) {
-	panic("UNIMPLEMENTED")
-}
-
-// OnChanOpenConfirm implements the IBCModule interface
-func (im IBCModule) OnChanOpenConfirm(
-	ctx sdk.Context,
-	portID,
-	channelID string,
-) error {
-	panic("UNIMPLEMENTED")
-}
-
-// OnChanCloseInit implements the IBCModule interface
-func (im IBCModule) OnChanCloseInit(
-	ctx sdk.Context,
-	portID,
-	channelID string,
-) error {
-	panic("UNIMPLEMENTED")
-}
-
-// OnRecvPacket implements the IBCModule interface
-func (im IBCModule) OnRecvPacket(
-	ctx sdk.Context,
-	modulePacket channeltypes.Packet,
+	packet channeltypes.Packet,
 	relayer sdk.AccAddress,
 ) ibcexported.Acknowledgement {
+	return im.app.OnRecvPacket(ctx, packet, relayer)
+}
+
+// SendPacket implements the ICS4 Wrapper interface but is not utilized in the ICA stack
+// but is not utilized in the bottom of ICA stack
+func (im IBCMiddleware) SendPacket(
+	ctx sdk.Context,
+	chanCap *capabilitytypes.Capability,
+	sourcePort string,
+	sourceChannel string,
+	timeoutHeight clienttypes.Height,
+	timeoutTimestamp uint64,
+	data []byte,
+) (sequence uint64, err error) {
+	panic("UNIMPLEMENTED")
+}
+
+// WriteAcknowledgement implements the ICS4 Wrapper interface
+// but is not utilized in the bottom of ICA stack
+func (im IBCMiddleware) WriteAcknowledgement(
+	ctx sdk.Context,
+	chanCap *capabilitytypes.Capability,
+	packet ibcexported.PacketI,
+	ack ibcexported.Acknowledgement,
+) error {
+	panic("UNIMPLEMENTED")
+}
+
+// GetAppVersion implements the ICS4 Wrapper interface
+// but is not utilized in the bottom of ICA stack
+func (im IBCMiddleware) GetAppVersion(ctx sdk.Context, portID, channelID string) (string, bool) {
 	panic("UNIMPLEMENTED")
 }
