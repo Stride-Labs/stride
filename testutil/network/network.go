@@ -66,10 +66,10 @@ func DefaultConfig() network.Config {
 		InterfaceRegistry: encoding.InterfaceRegistry,
 		AccountRetriever:  authtypes.AccountRetriever{},
 		AppConstructor: func(val network.ValidatorI) servertypes.Application {
-			err := modifyConsumerGenesis(val)
-			if err != nil {
-				panic(err)
-			}
+			// err := modifyConsumerGenesis(val)
+			// if err != nil {
+			// 	panic(err)
+			// }
 			return app.NewStrideApp(
 				val.GetCtx().Logger, cometbftdb.NewMemDB(), nil, true, map[int64]bool{}, val.GetCtx().Config.RootDir, 0,
 				encoding,
