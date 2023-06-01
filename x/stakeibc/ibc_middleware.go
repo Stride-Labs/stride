@@ -22,8 +22,9 @@ type IBCMiddleware struct {
 	keeper keeper.Keeper
 }
 
-func NewIBCMiddleware(k keeper.Keeper) IBCMiddleware {
+func NewIBCMiddleware(app porttypes.IBCModule, k keeper.Keeper) IBCMiddleware {
 	return IBCMiddleware{
+		app:    app,
 		keeper: k,
 	}
 }
