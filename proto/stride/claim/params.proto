@@ -5,7 +5,7 @@ import "gogoproto/gogo.proto";
 import "google/protobuf/duration.proto";
 import "google/protobuf/timestamp.proto";
 
-option go_package = "github.com/Stride-Labs/stride/v6/x/claim/types";
+option go_package = "github.com/Stride-Labs/stride/v9/x/claim/types";
 
 // Params defines the claim module's parameters.
 message Params { repeated Airdrop airdrops = 1; }
@@ -13,6 +13,7 @@ message Params { repeated Airdrop airdrops = 1; }
 message Airdrop {
   string airdrop_identifier = 1
       [ (gogoproto.moretags) = "yaml:\"airdrop_identifier\"" ];
+  string chain_id = 7;
   // seconds
   google.protobuf.Timestamp airdrop_start_time = 2 [
     (gogoproto.stdtime) = true,
@@ -35,4 +36,6 @@ message Airdrop {
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
     (gogoproto.nullable) = false
   ];
+  // indicates the airdrop should be claimed via autopilot
+  bool autopilot_enabled = 8;
 }

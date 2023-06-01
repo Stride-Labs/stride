@@ -8,15 +8,20 @@ import (
 
 	authz "github.com/cosmos/cosmos-sdk/x/authz"
 
-	v2 "github.com/Stride-Labs/stride/v6/app/upgrades/v2"
-	v3 "github.com/Stride-Labs/stride/v6/app/upgrades/v3"
-	v4 "github.com/Stride-Labs/stride/v6/app/upgrades/v4"
-	v5 "github.com/Stride-Labs/stride/v6/app/upgrades/v5"
-	v6 "github.com/Stride-Labs/stride/v6/app/upgrades/v6"
-	claimtypes "github.com/Stride-Labs/stride/v6/x/claim/types"
-	icacallbacktypes "github.com/Stride-Labs/stride/v6/x/icacallbacks/types"
-	recordtypes "github.com/Stride-Labs/stride/v6/x/records/types"
-	stakeibctypes "github.com/Stride-Labs/stride/v6/x/stakeibc/types"
+	v2 "github.com/Stride-Labs/stride/v9/app/upgrades/v2"
+	v3 "github.com/Stride-Labs/stride/v9/app/upgrades/v3"
+	v4 "github.com/Stride-Labs/stride/v9/app/upgrades/v4"
+	v5 "github.com/Stride-Labs/stride/v9/app/upgrades/v5"
+	v6 "github.com/Stride-Labs/stride/v9/app/upgrades/v6"
+	v7 "github.com/Stride-Labs/stride/v9/app/upgrades/v7"
+	v8 "github.com/Stride-Labs/stride/v9/app/upgrades/v8"
+	v9 "github.com/Stride-Labs/stride/v9/app/upgrades/v9"
+	autopilottypes "github.com/Stride-Labs/stride/v9/x/autopilot/types"
+	claimtypes "github.com/Stride-Labs/stride/v9/x/claim/types"
+	icacallbacktypes "github.com/Stride-Labs/stride/v9/x/icacallbacks/types"
+	ratelimittypes "github.com/Stride-Labs/stride/v9/x/ratelimit/types"
+	recordtypes "github.com/Stride-Labs/stride/v9/x/records/types"
+	stakeibctypes "github.com/Stride-Labs/stride/v9/x/stakeibc/types"
 )
 
 func (app *StrideApp) setupUpgradeHandlers() {
@@ -65,6 +70,40 @@ func (app *StrideApp) setupUpgradeHandlers() {
 		),
 	)
 
+	// v7 upgrade handler
+	app.UpgradeKeeper.SetUpgradeHandler(
+		v7.UpgradeName,
+		v7.CreateUpgradeHandler(
+			app.mm,
+			app.configurator,
+			app.appCodec,
+			app.AccountKeeper,
+			app.BankKeeper,
+			app.EpochsKeeper,
+			app.ICAHostKeeper,
+			app.MintKeeper,
+			app.StakeibcKeeper,
+		),
+	)
+
+	// v8 upgrade handler
+	app.UpgradeKeeper.SetUpgradeHandler(
+		v8.UpgradeName,
+		v8.CreateUpgradeHandler(
+			app.mm,
+			app.configurator,
+			app.appCodec,
+			app.ClaimKeeper,
+			app.AutopilotKeeper,
+		),
+	)
+
+	// v9 upgrade handler
+	app.UpgradeKeeper.SetUpgradeHandler(
+		v9.UpgradeName,
+		v9.CreateUpgradeHandler(app.mm, app.configurator, app.ClaimKeeper),
+	)
+
 	upgradeInfo, err := app.UpgradeKeeper.ReadUpgradeInfoFromDisk()
 	if err != nil {
 		panic(fmt.Errorf("Failed to read upgrade info from disk: %w", err))
@@ -85,15 +124,11 @@ func (app *StrideApp) setupUpgradeHandlers() {
 		storeUpgrades = &storetypes.StoreUpgrades{
 			Deleted: []string{authz.ModuleName},
 		}
+	case "v7":
+		storeUpgrades = &storetypes.StoreUpgrades{
+			Added: []string{ratelimittypes.StoreKey, autopilottypes.StoreKey},
+		}
 	}
-	// TODO: RATE LIMIT UPGRADE
-	//  1. Add ratelimit store key when module is added
-	//     storeUpgrades = &storetypes.StoreUpgrades{
-	// 	     Added: []string{ratelimittypes.StoreKey},
-	//     }
-	//
-	// 2. Add hour epoch to store
-	// 3. Add rate limits for existing denoms
 
 	if storeUpgrades != nil {
 		app.SetStoreLoader(upgradetypes.UpgradeStoreLoader(upgradeInfo.Height, storeUpgrades))

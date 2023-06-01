@@ -11,7 +11,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	"github.com/Stride-Labs/stride/v6/x/records/types"
+	"github.com/Stride-Labs/stride/v9/x/records/types"
 )
 
 func (k Keeper) DepositRecordAll(c context.Context, req *types.QueryAllDepositRecordRequest) (*types.QueryAllDepositRecordResponse, error) {
@@ -53,4 +53,21 @@ func (k Keeper) DepositRecord(c context.Context, req *types.QueryGetDepositRecor
 	}
 
 	return &types.QueryGetDepositRecordResponse{DepositRecord: depositRecord}, nil
+}
+
+func (k Keeper) DepositRecordByHost(c context.Context, req *types.QueryDepositRecordByHostRequest) (*types.QueryDepositRecordByHostResponse, error) {
+	ctx := sdk.UnwrapSDKContext(c)
+
+	if req == nil {
+		return nil, status.Error(codes.InvalidArgument, "invalid request")
+	}
+
+	var depositRecordsForHost []types.DepositRecord
+	for _, depositRecord := range k.GetAllDepositRecord(ctx) {
+		if depositRecord.HostZoneId == req.HostZoneId {
+			depositRecordsForHost = append(depositRecordsForHost, depositRecord)
+		}
+	}
+
+	return &types.QueryDepositRecordByHostResponse{DepositRecord: depositRecordsForHost}, nil
 }

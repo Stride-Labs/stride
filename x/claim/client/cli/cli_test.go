@@ -13,25 +13,24 @@ import (
 	"github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
 
 	clitestutil "github.com/cosmos/cosmos-sdk/testutil/cli"
-	banktestutil "github.com/cosmos/cosmos-sdk/x/bank/client/testutil"
 
-	strideclitestutil "github.com/Stride-Labs/stride/v6/testutil/cli"
+	strideclitestutil "github.com/Stride-Labs/stride/v9/testutil/cli"
 
-	"github.com/Stride-Labs/stride/v6/testutil/network"
+	"github.com/Stride-Labs/stride/v9/testutil/network"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/suite"
 
-	tmcli "github.com/tendermint/tendermint/libs/cli"
+	tmcli "github.com/cometbft/cometbft/libs/cli"
 
-	"github.com/Stride-Labs/stride/v6/x/claim/client/cli"
+	"github.com/Stride-Labs/stride/v9/x/claim/client/cli"
 
 	sdkmath "cosmossdk.io/math"
 
-	"github.com/Stride-Labs/stride/v6/app"
-	cmdcfg "github.com/Stride-Labs/stride/v6/cmd/strided/config"
-	"github.com/Stride-Labs/stride/v6/x/claim/types"
-	claimtypes "github.com/Stride-Labs/stride/v6/x/claim/types"
+	"github.com/Stride-Labs/stride/v9/app"
+	cmdcfg "github.com/Stride-Labs/stride/v9/cmd/strided/config"
+	"github.com/Stride-Labs/stride/v9/x/claim/types"
+	claimtypes "github.com/Stride-Labs/stride/v9/x/claim/types"
 )
 
 var addr1 sdk.AccAddress
@@ -91,31 +90,37 @@ func (s *IntegrationTestSuite) SetupSuite() {
 		info, _ := val.ClientCtx.Keyring.NewAccount("distributor"+strconv.Itoa(idx), distributorMnemonics[idx], keyring.DefaultBIP39Passphrase, sdk.FullFundraiserPath, hd.Secp256k1)
 		pubkey, _ := info.GetPubKey()
 		distributorAddr := sdk.AccAddress(pubkey.Address())
-		_, err = banktestutil.MsgSendExec(
+		_, err = clitestutil.MsgSendExec(
 			val.ClientCtx,
 			val.Address,
 			distributorAddr,
 			sdk.NewCoins(sdk.NewInt64Coin(s.cfg.BondDenom, 1020)), fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
-			fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastBlock),
+			fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastSync),
 			strideclitestutil.DefaultFeeString(s.cfg),
 		)
 		s.Require().NoError(err)
+		s.Require().NoError(s.network.WaitForNextBlock())
 	}
 
 	// Create a new airdrop
 	cmd := cli.CmdCreateAirdrop()
 	clientCtx := val.ClientCtx
 
+	strideChainId := "stride-1"
+	autopilotEnabled := "false"
+
 	_, err = clitestutil.ExecTestCLICmd(clientCtx, cmd, []string{
 		claimtypes.DefaultAirdropIdentifier,
+		strideChainId,
+		s.cfg.BondDenom,
 		strconv.Itoa(int(time.Now().Unix())),
 		strconv.Itoa(int(claimtypes.DefaultAirdropDuration.Seconds())),
-		s.cfg.BondDenom,
+		autopilotEnabled,
+		// common args
 		fmt.Sprintf("--%s=json", tmcli.OutputFlag),
 		fmt.Sprintf("--%s=%s", flags.FlagFrom, distributorAddrs[0]),
-		// common args
 		fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
-		fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastBlock),
+		fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastSync),
 		strideclitestutil.DefaultFeeString(s.cfg),
 	})
 
@@ -193,7 +198,7 @@ func (s *IntegrationTestSuite) TestCmdTxSetAirdropAllocations() {
 				fmt.Sprintf("--%s=%s", flags.FlagFrom, distributorAddrs[0]),
 				// common args
 				fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
-				fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastBlock),
+				fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastSync),
 				strideclitestutil.DefaultFeeString(s.cfg),
 			},
 			[]sdk.Coins{
@@ -206,12 +211,15 @@ func (s *IntegrationTestSuite) TestCmdTxSetAirdropAllocations() {
 	for _, tc := range testCases {
 		tc := tc
 
+		s.Require().NoError(s.network.WaitForNextBlock())
+
 		s.Run(tc.name, func() {
 			cmd := cli.CmdSetAirdropAllocations()
 			clientCtx := val.ClientCtx
 
 			_, err := clitestutil.ExecTestCLICmd(clientCtx, cmd, tc.args)
 			s.Require().NoError(err)
+			s.Require().NoError(s.network.WaitForNextBlock())
 
 			// Check if claim record is properly set
 			cmd = cli.GetCmdQueryClaimRecord()
@@ -249,11 +257,13 @@ func (s *IntegrationTestSuite) TestCmdTxCreateAirdrop() {
 	val := s.network.Validators[0]
 
 	airdrop := claimtypes.Airdrop{
-		AirdropIdentifier:  "stride-1",
+		AirdropIdentifier:  "evmos",
+		ChainId:            "evmos-1",
 		AirdropStartTime:   time.Now(),
 		AirdropDuration:    claimtypes.DefaultAirdropDuration,
 		DistributorAddress: distributorAddrs[1],
 		ClaimDenom:         claimtypes.DefaultClaimDenom,
+		AutopilotEnabled:   true,
 	}
 
 	testCases := []struct {
@@ -264,15 +274,17 @@ func (s *IntegrationTestSuite) TestCmdTxCreateAirdrop() {
 		{
 			"create-airdrop tx",
 			[]string{
-				"stride-1",
-				strconv.Itoa(int(time.Now().Unix())),
-				strconv.Itoa(int(claimtypes.DefaultAirdropDuration.Seconds())),
-				s.cfg.BondDenom,
+				airdrop.AirdropIdentifier,
+				airdrop.ChainId,
+				airdrop.ClaimDenom,
+				strconv.Itoa(int(time.Now().Unix())), // start time
+				strconv.Itoa(int(claimtypes.DefaultAirdropDuration.Seconds())), // duration
+				fmt.Sprintf("%v", airdrop.AutopilotEnabled),
+				// common args
 				fmt.Sprintf("--%s=json", tmcli.OutputFlag),
 				fmt.Sprintf("--%s=%s", flags.FlagFrom, distributorAddrs[1]),
-				// common args
 				fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
-				fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastBlock),
+				fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastSync),
 				strideclitestutil.DefaultFeeString(s.cfg),
 			},
 			airdrop,
@@ -282,12 +294,15 @@ func (s *IntegrationTestSuite) TestCmdTxCreateAirdrop() {
 	for _, tc := range testCases {
 		tc := tc
 
+		s.Require().NoError(s.network.WaitForNextBlock())
+
 		s.Run(tc.name, func() {
 			cmd := cli.CmdCreateAirdrop()
 			clientCtx := val.ClientCtx
 
 			_, err := clitestutil.ExecTestCLICmd(clientCtx, cmd, tc.args)
 			s.Require().NoError(err)
+			s.Require().NoError(s.network.WaitForNextBlock())
 
 			// Check if airdrop was created properly
 			cmd = cli.GetCmdQueryParams()

@@ -8,13 +8,15 @@ import (
 
 	errorsmod "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	clienttypes "github.com/cosmos/ibc-go/v5/modules/core/02-client/types"
-	commitmenttypes "github.com/cosmos/ibc-go/v5/modules/core/23-commitment/types"
-	tmclienttypes "github.com/cosmos/ibc-go/v5/modules/light-clients/07-tendermint/types"
+	clienttypes "github.com/cosmos/ibc-go/v7/modules/core/02-client/types"
+	commitmenttypes "github.com/cosmos/ibc-go/v7/modules/core/23-commitment/types"
+	"github.com/cosmos/ibc-go/v7/modules/core/exported"
+	tendermint "github.com/cosmos/ibc-go/v7/modules/light-clients/07-tendermint"
+	ics23 "github.com/cosmos/ics23/go"
 	"github.com/spf13/cast"
 
-	"github.com/Stride-Labs/stride/v6/utils"
-	"github.com/Stride-Labs/stride/v6/x/interchainquery/types"
+	"github.com/Stride-Labs/stride/v9/utils"
+	"github.com/Stride-Labs/stride/v9/x/interchainquery/types"
 )
 
 type msgServer struct {
@@ -63,10 +65,20 @@ func (k Keeper) VerifyKeyProof(ctx sdk.Context, msg *types.MsgSubmitQueryRespons
 	if !found {
 		return errorsmod.Wrapf(types.ErrInvalidICQProof, "Unable to fetch client state for client %s", connection.ClientId)
 	}
-	tmClientState, ok := clientState.(*tmclienttypes.ClientState)
+
+	// Cast the client and consensus state to tendermint type
+	tendermintConsensusState, ok := consensusState.(*tendermint.ConsensusState)
 	if !ok {
-		return errorsmod.Wrapf(types.ErrInvalidICQProof, "Client state is not tendermint")
+		return errorsmod.Wrapf(types.ErrInvalidICQProof,
+			"Only tendermint consensus state is supported (%s provided)", consensusState.ClientType())
 	}
+	tendermintClientState, ok := clientState.(*tendermint.ClientState)
+	if !ok {
+		return errorsmod.Wrapf(types.ErrInvalidICQProof,
+			"Only tendermint client state is supported (%s provided)", clientState.ClientType())
+	}
+	var stateRoot exported.Root = tendermintConsensusState.Root
+	var clientStateProof []*ics23.ProofSpec = tendermintClientState.ProofSpecs
 
 	// Get the merkle path and merkle proof
 	path := commitmenttypes.NewMerklePath([]string{pathParts[1], url.PathEscape(string(query.Request))}...)
@@ -77,14 +89,14 @@ func (k Keeper) VerifyKeyProof(ctx sdk.Context, msg *types.MsgSubmitQueryRespons
 
 	// If we got a non-nil response, verify inclusion proof
 	if len(msg.Result) != 0 {
-		if err := merkleProof.VerifyMembership(tmClientState.ProofSpecs, consensusState.GetRoot(), path, msg.Result); err != nil {
+		if err := merkleProof.VerifyMembership(clientStateProof, stateRoot, path, msg.Result); err != nil {
 			return errorsmod.Wrapf(types.ErrInvalidICQProof, "Unable to verify membership proof: %s", err.Error())
 		}
 		k.Logger(ctx).Info(utils.LogICQCallbackWithHostZone(query.ChainId, query.CallbackId, "Inclusion proof validated - QueryId %s", query.Id))
 
 	} else {
 		// if we got a nil query response, verify non inclusion proof.
-		if err := merkleProof.VerifyNonMembership(tmClientState.ProofSpecs, consensusState.GetRoot(), path); err != nil {
+		if err := merkleProof.VerifyNonMembership(clientStateProof, stateRoot, path); err != nil {
 			return errorsmod.Wrapf(types.ErrInvalidICQProof, "Unable to verify non-membership proof: %s", err.Error())
 		}
 		k.Logger(ctx).Info(utils.LogICQCallbackWithHostZone(query.ChainId, query.CallbackId, "Non-inclusion proof validated - QueryId %s", query.Id))

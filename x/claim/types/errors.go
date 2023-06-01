@@ -20,4 +20,14 @@ var (
 		"airdrop with same distributor already exists")
 	ErrInvalidAmount = errorsmod.Register(ModuleName, 1108,
 		"cannot claim negative tokens")
+	ErrInvalidAccount = errorsmod.Register(ModuleName, 1109,
+		"only BaseAccount and StridePeriodicVestingAccount can claim")
+	ErrAirdropNotFound = errorsmod.Register(ModuleName, 1110,
+		"the airdrop was not found")
+	ErrClaimNotFound = errorsmod.Register(ModuleName, 1111,
+		"the claim record was not found")
+	ErrModifyingClaimRecord = errorsmod.Register(ModuleName, 1112,
+		"failed to modify claim record")
+	ErrAirdropChainIdAlreadyExists = errorsmod.Register(ModuleName, 1113,
+		"airdrop with same chain-id already exists")
 )

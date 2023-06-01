@@ -5,17 +5,17 @@ import (
 
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	ibctesting "github.com/cosmos/ibc-go/v5/testing"
+	ibctesting "github.com/cosmos/ibc-go/v7/testing"
 	_ "github.com/stretchr/testify/suite"
 
-	icatypes "github.com/cosmos/ibc-go/v5/modules/apps/27-interchain-accounts/types"
+	icatypes "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/types"
 
-	channeltypes "github.com/cosmos/ibc-go/v5/modules/core/04-channel/types"
+	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
 
-	epochtypes "github.com/Stride-Labs/stride/v6/x/epochs/types"
-	recordstypes "github.com/Stride-Labs/stride/v6/x/records/types"
-	recordtypes "github.com/Stride-Labs/stride/v6/x/records/types"
-	stakeibctypes "github.com/Stride-Labs/stride/v6/x/stakeibc/types"
+	epochtypes "github.com/Stride-Labs/stride/v9/x/epochs/types"
+	recordstypes "github.com/Stride-Labs/stride/v9/x/records/types"
+	recordtypes "github.com/Stride-Labs/stride/v9/x/records/types"
+	stakeibctypes "github.com/Stride-Labs/stride/v9/x/stakeibc/types"
 )
 
 type RegisterHostZoneTestCase struct {
@@ -59,6 +59,8 @@ func (s *KeeperTestSuite) SetupRegisterHostZone() RegisterHostZoneTestCase {
 		IbcDenom:           IbcAtom,
 		TransferChannelId:  ibctesting.FirstChannelID,
 		UnbondingFrequency: unbondingFrequency,
+		MinRedemptionRate:  sdk.NewDec(0),
+		MaxRedemptionRate:  sdk.NewDec(0),
 	}
 
 	return RegisterHostZoneTestCase{
@@ -99,7 +101,7 @@ func (s *KeeperTestSuite) createNewHostZoneMessage(chainID string, denom string,
 //
 //	so that the registration fails
 func (s *KeeperTestSuite) createActiveChannelOnICAPort(accountName string, channelID string) {
-	portID := fmt.Sprintf("%s%s.%s", icatypes.PortPrefix, HostChainId, accountName)
+	portID := fmt.Sprintf("%s%s.%s", icatypes.ControllerPortPrefix, HostChainId, accountName)
 	openChannel := channeltypes.Channel{State: channeltypes.OPEN}
 
 	// The channel ID doesn't matter here - all that matters is that theres an open channel on the port
@@ -120,6 +122,10 @@ func (s *KeeperTestSuite) TestRegisterHostZone_Success() {
 	s.Require().True(found, "host zone found")
 	s.Require().Equal(tc.defaultRedemptionRate, hostZone.RedemptionRate, "redemption rate set to default: 1")
 	s.Require().Equal(tc.defaultRedemptionRate, hostZone.LastRedemptionRate, "last redemption rate set to default: 1")
+	defaultMinThreshold := sdk.NewDec(int64(stakeibctypes.DefaultMinRedemptionRateThreshold)).Quo(sdk.NewDec(100))
+	defaultMaxThreshold := sdk.NewDec(int64(stakeibctypes.DefaultMaxRedemptionRateThreshold)).Quo(sdk.NewDec(100))
+	s.Require().Equal(defaultMinThreshold, hostZone.MinRedemptionRate, "min redemption rate set to default")
+	s.Require().Equal(defaultMaxThreshold, hostZone.MaxRedemptionRate, "max redemption rate set to default")
 	s.Require().Equal(tc.unbondingFrequency, hostZone.UnbondingFrequency, "unbonding frequency set to default: 3")
 
 	// Confirm host zone unbonding record was created
@@ -231,6 +237,27 @@ func (s *KeeperTestSuite) TestRegisterHostZone_DuplicateHostDenom() {
 	s.Require().EqualError(err, expectedErrMsg, "registering host zone with duplicate host denom should fail")
 }
 
+func (s *KeeperTestSuite) TestRegisterHostZone_DuplicateTransferChannel() {
+	// tests for a failure if we register the same host zone twice (with a duplicate transfer)
+	tc := s.SetupRegisterHostZone()
+
+	// Register host zones successfully
+	_, err := s.GetMsgServer().RegisterHostZone(sdk.WrapSDKContext(s.Ctx), &tc.validMsg)
+	s.Require().NoError(err, "able to successfully register host zone once")
+
+	// Create the message for a brand new host zone
+	// (without modifications, you would expect this to be successful)
+	newHostZoneMsg := s.createNewHostZoneMessage("OSMO", "osmo", "osmo")
+
+	// Try to register with a duplicate transfer channel - it should fail
+	invalidMsg := newHostZoneMsg
+	invalidMsg.TransferChannelId = tc.validMsg.TransferChannelId
+
+	_, err = s.GetMsgServer().RegisterHostZone(sdk.WrapSDKContext(s.Ctx), &invalidMsg)
+	expectedErrMsg := "transfer channel channel-0 already registered: failed to register host zone"
+	s.Require().EqualError(err, expectedErrMsg, "registering host zone with duplicate host denom should fail")
+}
+
 func (s *KeeperTestSuite) TestRegisterHostZone_DuplicateBech32Prefix() {
 	// tests for a failure if we register the same host zone twice (with a duplicate bech32 prefix)
 	tc := s.SetupRegisterHostZone()
@@ -300,7 +327,7 @@ func (s *KeeperTestSuite) TestRegisterHostZone_CannotRegisterDelegationAccount()
 
 	_, err := s.GetMsgServer().RegisterHostZone(sdk.WrapSDKContext(s.Ctx), &tc.validMsg)
 	expectedErrMsg := "unable to register delegation account, err: existing active channel channel-1 for portID icacontroller-GAIA.DELEGATION "
-	expectedErrMsg += "on connection connection-0 for owner GAIA.DELEGATION: active channel already set for this owner: "
+	expectedErrMsg += "on connection connection-0: active channel already set for this owner: "
 	expectedErrMsg += "failed to register host zone"
 	s.Require().EqualError(err, expectedErrMsg, "can't register delegation account")
 }
@@ -314,7 +341,7 @@ func (s *KeeperTestSuite) TestRegisterHostZone_CannotRegisterFeeAccount() {
 
 	_, err := s.GetMsgServer().RegisterHostZone(sdk.WrapSDKContext(s.Ctx), &tc.validMsg)
 	expectedErrMsg := "unable to register fee account, err: existing active channel channel-1 for portID icacontroller-GAIA.FEE "
-	expectedErrMsg += "on connection connection-0 for owner GAIA.FEE: active channel already set for this owner: "
+	expectedErrMsg += "on connection connection-0: active channel already set for this owner: "
 	expectedErrMsg += "failed to register host zone"
 	s.Require().EqualError(err, expectedErrMsg, "can't register redemption account")
 }
@@ -328,7 +355,7 @@ func (s *KeeperTestSuite) TestRegisterHostZone_CannotRegisterWithdrawalAccount()
 
 	_, err := s.GetMsgServer().RegisterHostZone(sdk.WrapSDKContext(s.Ctx), &tc.validMsg)
 	expectedErrMsg := "unable to register withdrawal account, err: existing active channel channel-1 for portID icacontroller-GAIA.WITHDRAWAL "
-	expectedErrMsg += "on connection connection-0 for owner GAIA.WITHDRAWAL: active channel already set for this owner: "
+	expectedErrMsg += "on connection connection-0: active channel already set for this owner: "
 	expectedErrMsg += "failed to register host zone"
 	s.Require().EqualError(err, expectedErrMsg, "can't register redemption account")
 }
@@ -342,7 +369,7 @@ func (s *KeeperTestSuite) TestRegisterHostZone_CannotRegisterRedemptionAccount()
 
 	_, err := s.GetMsgServer().RegisterHostZone(sdk.WrapSDKContext(s.Ctx), &tc.validMsg)
 	expectedErrMsg := "unable to register redemption account, err: existing active channel channel-1 for portID icacontroller-GAIA.REDEMPTION "
-	expectedErrMsg += "on connection connection-0 for owner GAIA.REDEMPTION: active channel already set for this owner: "
+	expectedErrMsg += "on connection connection-0: active channel already set for this owner: "
 	expectedErrMsg += "failed to register host zone"
 	s.Require().EqualError(err, expectedErrMsg, "can't register redemption account")
 }

@@ -11,9 +11,9 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	keepertest "github.com/Stride-Labs/stride/v6/testutil/keeper"
-	"github.com/Stride-Labs/stride/v6/testutil/nullify"
-	"github.com/Stride-Labs/stride/v6/x/stakeibc/types"
+	keepertest "github.com/Stride-Labs/stride/v9/testutil/keeper"
+	"github.com/Stride-Labs/stride/v9/testutil/nullify"
+	"github.com/Stride-Labs/stride/v9/x/stakeibc/types"
 )
 
 func TestHostZoneQuerySingle(t *testing.T) {

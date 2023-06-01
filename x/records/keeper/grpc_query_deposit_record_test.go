@@ -10,13 +10,13 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	keepertest "github.com/Stride-Labs/stride/v6/testutil/keeper"
-	"github.com/Stride-Labs/stride/v6/testutil/nullify"
+	keepertest "github.com/Stride-Labs/stride/v9/testutil/keeper"
+	"github.com/Stride-Labs/stride/v9/testutil/nullify"
 
 	sdkmath "cosmossdk.io/math"
 
-	"github.com/Stride-Labs/stride/v6/x/records/keeper"
-	"github.com/Stride-Labs/stride/v6/x/records/types"
+	"github.com/Stride-Labs/stride/v9/x/records/keeper"
+	"github.com/Stride-Labs/stride/v9/x/records/types"
 )
 
 func createNDepositRecord(keeper *keeper.Keeper, ctx sdk.Context, n int) []types.DepositRecord {
@@ -128,4 +128,47 @@ func TestDepositRecordQueryPaginated(t *testing.T) {
 		_, err := keeper.DepositRecordAll(wctx, nil)
 		require.ErrorIs(t, err, status.Error(codes.InvalidArgument, "invalid request"))
 	})
+}
+
+func (s *KeeperTestSuite) TestQueryDepositRecordByHost() {
+	wctx := sdk.WrapSDKContext(s.Ctx)
+
+	// Store deposit records across two hosts
+	hostChain1 := "chain-1"
+	hostChain2 := "chain-2"
+
+	hostDepositRecords1 := []types.DepositRecord{
+		{HostZoneId: hostChain1, Id: 1, Amount: sdk.NewInt(1)},
+		{HostZoneId: hostChain1, Id: 2, Amount: sdk.NewInt(2)},
+		{HostZoneId: hostChain1, Id: 3, Amount: sdk.NewInt(3)},
+	}
+	hostDepositRecords2 := []types.DepositRecord{
+		{HostZoneId: hostChain2, Id: 4, Amount: sdk.NewInt(4)},
+		{HostZoneId: hostChain2, Id: 5, Amount: sdk.NewInt(5)},
+		{HostZoneId: hostChain2, Id: 6, Amount: sdk.NewInt(6)},
+	}
+
+	for _, depositRecord := range append(hostDepositRecords1, hostDepositRecords2...) {
+		s.App.RecordsKeeper.SetDepositRecord(s.Ctx, depositRecord)
+	}
+
+	// Fetch each list through a host zone id query
+	actualHostDepositRecords1, err := s.App.RecordsKeeper.DepositRecordByHost(wctx, &types.QueryDepositRecordByHostRequest{
+		HostZoneId: hostChain1,
+	})
+	s.Require().NoError(err, "no error expected when querying by host %s", hostChain1)
+	s.Require().ElementsMatch(hostDepositRecords1, actualHostDepositRecords1.DepositRecord, "deposit records for %s", hostChain1)
+
+	actualHostDepositRecords2, err := s.App.RecordsKeeper.DepositRecordByHost(wctx, &types.QueryDepositRecordByHostRequest{
+		HostZoneId: hostChain2,
+	})
+	s.Require().NoError(err, "no error expected when querying by host %s", hostChain2)
+	s.Require().ElementsMatch(hostDepositRecords2, actualHostDepositRecords2.DepositRecord, "deposit records for %s", hostChain2)
+
+	// Finally, fetch a non-existent chain-id and it should return an empty list
+	fakeHostDepositRecords, err := s.App.RecordsKeeper.DepositRecordByHost(wctx, &types.QueryDepositRecordByHostRequest{
+		HostZoneId: "fake_host",
+	})
+	s.Require().NoError(err, "no error expected when querying by host %s", hostChain1)
+	s.Require().Len(fakeHostDepositRecords.DepositRecord, 0)
 }

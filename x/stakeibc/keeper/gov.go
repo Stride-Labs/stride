@@ -3,15 +3,15 @@ package keeper
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/Stride-Labs/stride/v6/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v9/x/stakeibc/types"
 )
 
-func (k Keeper) AddValidatorProposal(ctx sdk.Context, msg *types.AddValidatorProposal) error {
-	addValMsg := &types.MsgAddValidator{
-		HostZone:   msg.HostZone,
-		Name:       msg.ValidatorName,
-		Address:    msg.ValidatorAddress,
-		Commission: 0, // TODO: Remove commission field from validator
+func (k Keeper) AddValidatorsProposal(ctx sdk.Context, msg *types.AddValidatorsProposal) error {
+	for _, validator := range msg.Validators {
+		if err := k.AddValidatorToHostZone(ctx, msg.HostZone, *validator, true); err != nil {
+			return err
+		}
 	}
-	return k.AddValidatorToHostZone(ctx, addValMsg, true)
+
+	return nil
 }

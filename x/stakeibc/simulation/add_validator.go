@@ -7,8 +7,8 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
 
-	"github.com/Stride-Labs/stride/v6/x/stakeibc/keeper"
-	"github.com/Stride-Labs/stride/v6/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v9/x/stakeibc/keeper"
+	"github.com/Stride-Labs/stride/v9/x/stakeibc/types"
 )
 
 func SimulateMsgAddValidator(
@@ -19,7 +19,7 @@ func SimulateMsgAddValidator(
 	return func(r *rand.Rand, app *baseapp.BaseApp, ctx sdk.Context, accs []simtypes.Account, chainID string,
 	) (simtypes.OperationMsg, []simtypes.FutureOperation, error) {
 		simAccount, _ := simtypes.RandomAcc(r, accs)
-		msg := &types.MsgAddValidator{
+		msg := &types.MsgAddValidators{
 			Creator: simAccount.Address.String(),
 		}
 

@@ -5,7 +5,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/Stride-Labs/stride/v6/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v9/x/stakeibc/types"
 )
 
 func TestGenesisState_Validate(t *testing.T) {
@@ -31,6 +31,7 @@ func TestGenesisState_Validate(t *testing.T) {
 						ChainId: "1",
 					},
 				},
+				Params: types.DefaultParams(),
 			},
 			valid: true,
 		},

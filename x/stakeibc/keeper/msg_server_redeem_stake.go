@@ -4,14 +4,14 @@ import (
 	"context"
 	"fmt"
 
-	recordstypes "github.com/Stride-Labs/stride/v6/x/records/types"
-	"github.com/Stride-Labs/stride/v6/x/stakeibc/types"
+	recordstypes "github.com/Stride-Labs/stride/v9/x/records/types"
+	"github.com/Stride-Labs/stride/v9/x/stakeibc/types"
 
 	errorsmod "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
-	"github.com/Stride-Labs/stride/v6/utils"
+	"github.com/Stride-Labs/stride/v9/utils"
 )
 
 func (k msgServer) RedeemStake(goCtx context.Context, msg *types.MsgRedeemStake) (*types.MsgRedeemStakeResponse, error) {
@@ -28,6 +28,12 @@ func (k msgServer) RedeemStake(goCtx context.Context, msg *types.MsgRedeemStake)
 	if !found {
 		return nil, errorsmod.Wrapf(types.ErrInvalidHostZone, "host zone is invalid: %s", msg.HostZone)
 	}
+
+	if hostZone.Halted {
+		k.Logger(ctx).Error(fmt.Sprintf("Host Zone halted for zone (%s)", msg.HostZone))
+		return nil, errorsmod.Wrapf(types.ErrHaltedHostZone, "halted host zone found for zone (%s)", msg.HostZone)
+	}
+
 	// first construct a user redemption record
 	epochTracker, found := k.GetEpochTracker(ctx, "day")
 	if !found {

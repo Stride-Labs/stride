@@ -3,15 +3,15 @@ package keeper
 import (
 	"fmt"
 
-	ibctransfertypes "github.com/cosmos/ibc-go/v5/modules/apps/transfer/types"
+	ibctransfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
 
-	icacallbackstypes "github.com/Stride-Labs/stride/v6/x/icacallbacks/types"
-	"github.com/Stride-Labs/stride/v6/x/records/types"
+	icacallbackstypes "github.com/Stride-Labs/stride/v9/x/icacallbacks/types"
+	"github.com/Stride-Labs/stride/v9/x/records/types"
 
 	errorsmod "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	channeltypes "github.com/cosmos/ibc-go/v5/modules/core/04-channel/types"
+	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
 	"github.com/golang/protobuf/proto" //nolint:staticcheck
 )
 

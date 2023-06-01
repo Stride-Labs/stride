@@ -4,23 +4,23 @@ import (
 	"fmt"
 
 	sdkmath "cosmossdk.io/math"
-	ibctransfertypes "github.com/cosmos/ibc-go/v5/modules/apps/transfer/types"
+	ibctransfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	ibctypes "github.com/cosmos/ibc-go/v5/modules/apps/transfer/types"
-	clienttypes "github.com/cosmos/ibc-go/v5/modules/core/02-client/types"
+	ibctypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
+	clienttypes "github.com/cosmos/ibc-go/v7/modules/core/02-client/types"
 	"github.com/spf13/cast"
 
-	"github.com/Stride-Labs/stride/v6/utils"
-	recordstypes "github.com/Stride-Labs/stride/v6/x/records/types"
-	"github.com/Stride-Labs/stride/v6/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v9/utils"
+	recordstypes "github.com/Stride-Labs/stride/v9/x/records/types"
+	"github.com/Stride-Labs/stride/v9/x/stakeibc/types"
 )
 
 // Create a new deposit record for each host zone for the given epoch
 func (k Keeper) CreateDepositRecordsForEpoch(ctx sdk.Context, epochNumber uint64) {
 	k.Logger(ctx).Info(fmt.Sprintf("Creating Deposit Records for Epoch %d", epochNumber))
 
-	for _, hostZone := range k.GetAllHostZone(ctx) {
+	for _, hostZone := range k.GetAllActiveHostZone(ctx) {
 		k.Logger(ctx).Info(utils.LogWithHostZone(hostZone.ChainId, "Creating Deposit Record"))
 
 		depositRecord := recordstypes.DepositRecord{
@@ -63,6 +63,11 @@ func (k Keeper) TransferExistingDepositsToHostZones(ctx sdk.Context, epochNumber
 			continue
 		}
 
+		if hostZone.Halted {
+			k.Logger(ctx).Error(fmt.Sprintf("[TransferExistingDepositsToHostZones] Host zone halted for deposit record id %d", depositRecord.Id))
+			continue
+		}
+
 		hostZoneModuleAddress := hostZone.Address
 		delegateAccount := hostZone.DelegationAccount
 		if delegateAccount == nil || delegateAccount.Address == "" {
@@ -78,9 +83,18 @@ func (k Keeper) TransferExistingDepositsToHostZones(ctx sdk.Context, epochNumber
 		// NOTE: this assumes no clock drift between chains, which tendermint guarantees
 		// if we onboard non-tendermint chains, we need to use the time on the host chain to
 		// calculate the timeout
-		// https://github.com/tendermint/tendermint/blob/v0.34.x/spec/consensus/bft-time.md
+		// https://github.com/cometbft/cometbft/blob/v0.34.x/spec/consensus/bft-time.md
 		timeoutTimestamp := uint64(ctx.BlockTime().UnixNano()) + ibcTransferTimeoutNanos
-		msg := ibctypes.NewMsgTransfer(ibctransfertypes.PortID, hostZone.TransferChannelId, transferCoin, hostZoneModuleAddress, delegateAddress, clienttypes.Height{}, timeoutTimestamp)
+		msg := ibctypes.NewMsgTransfer(
+			ibctransfertypes.PortID,
+			hostZone.TransferChannelId,
+			transferCoin,
+			hostZoneModuleAddress,
+			delegateAddress,
+			clienttypes.Height{},
+			timeoutTimestamp,
+			"",
+		)
 		k.Logger(ctx).Info(utils.LogWithHostZone(depositRecord.HostZoneId, "Transfer Msg: %+v", msg))
 
 		// transfer the deposit record and update its status to TRANSFER_IN_PROGRESS
@@ -124,6 +138,11 @@ func (k Keeper) StakeExistingDepositsOnHostZones(ctx sdk.Context, epochNumber ui
 		hostZone, hostZoneFound := k.GetHostZone(ctx, depositRecord.HostZoneId)
 		if !hostZoneFound {
 			k.Logger(ctx).Error(fmt.Sprintf("[StakeExistingDepositsOnHostZones] Host zone not found for deposit record {%d}", depositRecord.Id))
+			continue
+		}
+
+		if hostZone.Halted {
+			k.Logger(ctx).Error(fmt.Sprintf("[StakeExistingDepositsOnHostZones] Host zone halted for deposit record {%d}", depositRecord.Id))
 			continue
 		}
 

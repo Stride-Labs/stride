@@ -7,13 +7,14 @@ import (
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
-	ibctesting "github.com/cosmos/ibc-go/v5/testing"
+	proto "github.com/cosmos/gogoproto/proto"
+	ibctesting "github.com/cosmos/ibc-go/v7/testing"
 	_ "github.com/stretchr/testify/suite"
 
-	epochtypes "github.com/Stride-Labs/stride/v6/x/epochs/types"
-	recordtypes "github.com/Stride-Labs/stride/v6/x/records/types"
-	stakeibckeeper "github.com/Stride-Labs/stride/v6/x/stakeibc/keeper"
-	stakeibctypes "github.com/Stride-Labs/stride/v6/x/stakeibc/types"
+	epochtypes "github.com/Stride-Labs/stride/v9/x/epochs/types"
+	recordtypes "github.com/Stride-Labs/stride/v9/x/records/types"
+	stakeibckeeper "github.com/Stride-Labs/stride/v9/x/stakeibc/keeper"
+	stakeibctypes "github.com/Stride-Labs/stride/v9/x/stakeibc/types"
 )
 
 type ClaimUndelegatedState struct {
@@ -95,7 +96,7 @@ func (s *KeeperTestSuite) SetupClaimUndelegatedTokens() ClaimUndelegatedTestCase
 			redemptionRecord:   redemptionRecord,
 		},
 		expectedIcaMsg: stakeibckeeper.IcaTx{
-			Msgs: []sdk.Msg{&banktypes.MsgSend{
+			Msgs: []proto.Message{&banktypes.MsgSend{
 				FromAddress: redemptionAccount.Address,
 				ToAddress:   receiverAddr,
 				Amount:      redemptionAmount,

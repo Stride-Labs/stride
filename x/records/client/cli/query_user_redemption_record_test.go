@@ -5,19 +5,19 @@ import (
 	"strconv"
 	"testing"
 
+	tmcli "github.com/cometbft/cometbft/libs/cli"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	clitestutil "github.com/cosmos/cosmos-sdk/testutil/cli"
 	"github.com/stretchr/testify/require"
-	tmcli "github.com/tendermint/tendermint/libs/cli"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
 	sdkmath "cosmossdk.io/math"
 
-	"github.com/Stride-Labs/stride/v6/testutil/network"
-	"github.com/Stride-Labs/stride/v6/testutil/nullify"
-	"github.com/Stride-Labs/stride/v6/x/records/client/cli"
-	"github.com/Stride-Labs/stride/v6/x/records/types"
+	"github.com/Stride-Labs/stride/v9/testutil/network"
+	"github.com/Stride-Labs/stride/v9/testutil/nullify"
+	"github.com/Stride-Labs/stride/v9/x/records/client/cli"
+	"github.com/Stride-Labs/stride/v9/x/records/types"
 )
 
 func networkWithUserRedemptionRecordObjects(t *testing.T, n int) (*network.Network, []types.UserRedemptionRecord) {

@@ -6,16 +6,16 @@ import (
 	_ "github.com/stretchr/testify/suite"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	ibctesting "github.com/cosmos/ibc-go/v5/testing"
+	ibctesting "github.com/cosmos/ibc-go/v7/testing"
 
-	icatypes "github.com/cosmos/ibc-go/v5/modules/apps/27-interchain-accounts/types"
+	icatypes "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/types"
 
 	sdkmath "cosmossdk.io/math"
 
-	epochtypes "github.com/Stride-Labs/stride/v6/x/epochs/types"
-	icacallbackstypes "github.com/Stride-Labs/stride/v6/x/icacallbacks/types"
-	recordstypes "github.com/Stride-Labs/stride/v6/x/records/types"
-	stakeibctypes "github.com/Stride-Labs/stride/v6/x/stakeibc/types"
+	epochtypes "github.com/Stride-Labs/stride/v9/x/epochs/types"
+	icacallbackstypes "github.com/Stride-Labs/stride/v9/x/icacallbacks/types"
+	recordstypes "github.com/Stride-Labs/stride/v9/x/records/types"
+	stakeibctypes "github.com/Stride-Labs/stride/v9/x/stakeibc/types"
 )
 
 type TestDepositRecords struct {
@@ -203,7 +203,7 @@ func (s *KeeperTestSuite) SetupDepositRecords() DepositRecordsTestCase {
 			ChannelID: ibctesting.FirstChannelID,
 		},
 		DelegationChannel: Channel{
-			PortID:    icatypes.PortPrefix + delegationAccountOwner,
+			PortID:    icatypes.ControllerPortPrefix + delegationAccountOwner,
 			ChannelID: delegationChannelID,
 		},
 	}
