@@ -59,6 +59,8 @@ make localnet-clean
 A few things to note before getting started. The below method will only work if you are using the same version as mainnet. In other words,
 if mainnet is on v8.0.0 and you try to do this on a v9.0.0 tag or on main, you will run into an error when initializing the genesis. What you can do though is run localstride on the mainnet version, then go through the upgrade process to ensure the upgrade with mainnet state goes smoothly.
 
+**Note**: Running localstride with mainnet state is very memory intensive. It is recommended to allocate at least 15GB of memory to docker, otherwise, the node will crash before it can start up.
+
 ### Create a mainnet state export
 
 1. Set up a node on mainnet
