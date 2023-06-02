@@ -229,12 +229,6 @@ func (k Keeper) AddValidatorToHostZone(ctx sdk.Context, chainId string, validato
 		return errorsmod.Wrapf(types.ErrHostZoneNotFound, "Host Zone (%s) not found", chainId)
 	}
 
-	// Get max number of validators and confirm we won't exceed it
-	err := k.ConfirmValSetHasSpace(ctx, hostZone.Validators)
-	if err != nil {
-		return errorsmod.Wrap(types.ErrMaxNumValidators, "cannot add validator on host zone")
-	}
-
 	// Check that we don't already have this validator
 	// Grab the minimum weight in the process (to assign to validator's added through governance)
 	var minWeight uint64 = math.MaxUint64
