@@ -37,7 +37,6 @@ DefaultMinRedemptionRateThreshold (default uint64 = 90)
 DefaultMaxRedemptionRateThreshold (default uint64 = 150)
 MaxStakeICACallsPerEpoch (default uint64 = 100)
 IBCTransferTimeoutNanos (default uint64 = 1800000000000)
-SafetyNumValidators (default uint64 = 35)
 ```
 
 ## Keeper functions

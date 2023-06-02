@@ -25,7 +25,6 @@ var (
 	DefaultMaxRedemptionRateThreshold   uint64 = 150           // divide by 100, so 150 = 1.5
 	DefaultMaxStakeICACallsPerEpoch     uint64 = 100
 	DefaultIBCTransferTimeoutNanos      uint64 = 1800000000000 // 30 minutes
-	DefaultSafetyNumValidators          uint64 = 35
 	DefaultSafetyMaxSlashPercent        uint64 = 10
 	DefaultValidatorSlashQueryThreshold uint64 = 1 // denominated in percentage of TVL (1 => 1%)
 
@@ -44,7 +43,6 @@ var (
 	KeyDefaultMaxRedemptionRateThreshold = []byte("DefaultMaxRedemptionRateThreshold")
 	KeyMaxStakeICACallsPerEpoch          = []byte("MaxStakeICACallsPerEpoch")
 	KeyIBCTransferTimeoutNanos           = []byte("IBCTransferTimeoutNanos")
-	KeySafetyNumValidators               = []byte("SafetyNumValidators")
 	KeySafetyMaxSlashPercent             = []byte("SafetyMaxSlashPercent")
 	KeyMaxRedemptionRates                = []byte("MaxRedemptionRates")
 	KeyMinRedemptionRates                = []byte("MinRedemptionRates")
@@ -74,7 +72,6 @@ func NewParams(
 	defaultMinRedemptionRateThreshold uint64,
 	defaultMaxRedemptionRateThreshold uint64,
 	ibcTransferTimeoutNanos uint64,
-	safetyNumValidators uint64,
 	safetyMaxSlashPercent uint64,
 	validatorSlashQueryInterval uint64,
 ) Params {
@@ -93,7 +90,6 @@ func NewParams(
 		DefaultMinRedemptionRateThreshold: defaultMinRedemptionRateThreshold,
 		DefaultMaxRedemptionRateThreshold: defaultMaxRedemptionRateThreshold,
 		IbcTransferTimeoutNanos:           ibcTransferTimeoutNanos,
-		SafetyNumValidators:               safetyNumValidators,
 		SafetyMaxSlashPercent:             safetyMaxSlashPercent,
 		ValidatorSlashQueryThreshold:      validatorSlashQueryInterval,
 	}
@@ -116,7 +112,6 @@ func DefaultParams() Params {
 		DefaultMinRedemptionRateThreshold,
 		DefaultMaxRedemptionRateThreshold,
 		DefaultIBCTransferTimeoutNanos,
-		DefaultSafetyNumValidators,
 		DefaultSafetyMaxSlashPercent,
 		DefaultValidatorSlashQueryThreshold,
 	)
@@ -139,7 +134,6 @@ func (p *Params) ParamSetPairs() paramtypes.ParamSetPairs {
 		paramtypes.NewParamSetPair(KeyDefaultMinRedemptionRateThreshold, &p.DefaultMinRedemptionRateThreshold, validMinRedemptionRateThreshold),
 		paramtypes.NewParamSetPair(KeyDefaultMaxRedemptionRateThreshold, &p.DefaultMaxRedemptionRateThreshold, validMaxRedemptionRateThreshold),
 		paramtypes.NewParamSetPair(KeyIBCTransferTimeoutNanos, &p.IbcTransferTimeoutNanos, validTimeoutNanos),
-		paramtypes.NewParamSetPair(KeySafetyNumValidators, &p.SafetyNumValidators, isPositive),
 		paramtypes.NewParamSetPair(KeySafetyMaxSlashPercent, &p.SafetyMaxSlashPercent, validSlashPercent),
 		paramtypes.NewParamSetPair(KeyValidatorSlashQueryThreshold, &p.ValidatorSlashQueryThreshold, isPositive),
 	}
@@ -271,9 +265,6 @@ func (p Params) Validate() error {
 		return err
 	}
 	if err := validTimeoutNanos(p.IbcTransferTimeoutNanos); err != nil {
-		return err
-	}
-	if err := isPositive(p.SafetyNumValidators); err != nil {
 		return err
 	}
 	if err := validSlashPercent(p.SafetyMaxSlashPercent); err != nil {
