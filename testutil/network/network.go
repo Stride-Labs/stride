@@ -66,7 +66,7 @@ func DefaultConfig() network.Config {
 		InterfaceRegistry: encoding.InterfaceRegistry,
 		AccountRetriever:  authtypes.AccountRetriever{},
 		AppConstructor: func(val network.ValidatorI) servertypes.Application {
-			err := modifyConsumerGenesis(val)
+			err := modifyConsumerGenesis(val.(network.Validator))
 			if err != nil {
 				panic(err)
 			}
