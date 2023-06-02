@@ -115,17 +115,22 @@ func ValidatorExchangeRateCallback(k Keeper, ctx sdk.Context, args []byte, query
 		k.Logger(ctx).Info(utils.LogICQCallbackWithHostZone(chainId, ICQCallbackID_Validator,
 			"Validator was not slashed, finishing LSM liquid stake"))
 
-		async := true
-		if err := k.FinishLSMLiquidStake(ctx, lsmLiquidStake, async); err != nil {
-			// If finishing the transaction failed, emit an event, but swallow the error so
-			// the query object still gets deleted
+		// Finish the LSMLiquidStake with a temporary context so that the state changes can
+		// be discarded if it errors
+		err := utils.ApplyFuncIfNoError(ctx, func(ctx sdk.Context) error {
+			async := true
+			return k.FinishLSMLiquidStake(ctx, lsmLiquidStake, async)
+		})
+
+		// If finishing the transaction failed, emit an event and remove the LSMTokenDeposit
+		if err != nil {
 			errorMessage := fmt.Sprintf("lsm liquid stake callback failed after slash query: %s", err.Error())
 			EmitFailedLSMLiquidStakeEvent(ctx, hostZone, lsmTokenDeposit, errorMessage)
 			k.Logger(ctx).Error(errorMessage)
 
-			// Remove the LSMTokenDeposit
 			k.RecordsKeeper.RemoveLSMTokenDeposit(ctx, lsmLiquidStake.Deposit.ChainId, lsmLiquidStake.Deposit.Denom)
 		}
+
 		return nil
 	}
 

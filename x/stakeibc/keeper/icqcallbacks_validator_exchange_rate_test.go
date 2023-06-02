@@ -25,6 +25,7 @@ type ValidatorICQCallbackState struct {
 	validator        types.Validator
 	delegator        string
 	lsmTokenIBCDenom string
+	stakerBalance    sdkmath.Int
 }
 
 type ValidatorICQCallbackArgs struct {
@@ -99,13 +100,13 @@ func (s *KeeperTestSuite) SetupValidatorICQCallback(validatorSlashed, liquidStak
 	var err error
 	lsmTokenIBCDenom := ""
 	callbackDataBz := []byte{}
+	stakeAmount := sdkmath.NewInt(1_000_000)
 	if liquidStakeCallback {
 		// Need valid IBC denom here to test parsing
 		lsmTokenIBCDenom = s.getLSMTokenIBCDenom()
 
 		// Fund the user's account with the LSM token
 		liquidStaker := s.TestAccs[0]
-		stakeAmount := sdkmath.NewInt(1_000_000)
 		s.FundAccount(liquidStaker, sdk.NewCoin(lsmTokenIBCDenom, stakeAmount))
 
 		// The callback data consists of the LSMTokenDeposit wrapped in additional state context
@@ -134,6 +135,7 @@ func (s *KeeperTestSuite) SetupValidatorICQCallback(validatorSlashed, liquidStak
 			validator:        queriedValidator,
 			delegator:        delegatorAddress,
 			lsmTokenIBCDenom: lsmTokenIBCDenom,
+			stakerBalance:    stakeAmount,
 		},
 		exchangeRateIfSlashed: exchangeRateIfSlashed,
 		validArgs: ValidatorICQCallbackArgs{
@@ -303,6 +305,53 @@ func (s *KeeperTestSuite) TestValidatorExchangeRateCallback_Successful_NoSlash_L
 
 	// Confirm the liquid stake was a success
 	s.checkLSMLiquidStakeSuccess()
+}
+
+// Test case where the callback was successful and this query was from a liquid stake,
+// but the finishing of the liquid stake failed
+// Any state changes from the finish liquid stake should be discarded, including
+// the transfer of LSM tokens to the deposit account
+func (s *KeeperTestSuite) TestValidatorExchangeRateCallback_Successful_NoSlash_LiquidStakeFailed() {
+	validatorSlashed := false
+	lsmCallback := true
+	tc := s.SetupValidatorICQCallback(validatorSlashed, lsmCallback)
+
+	// Remove the host zone's delegation account - this should cause the finishing of the LSM liquid stake to fail
+	var callbackData types.ValidatorExchangeRateQueryCallback
+	err := proto.Unmarshal(tc.validArgs.query.CallbackData, &callbackData)
+	s.Require().NoError(err, "no error expected when unmarshaling query args")
+
+	callbackData.LsmLiquidStake.HostZone.DelegationIcaAddress = ""
+	invalidCallbackData, err := proto.Marshal(&callbackData)
+	s.Require().NoError(err, "no error expected when marshaling query args")
+
+	invalidQuery := tc.validArgs.query
+	invalidQuery.CallbackData = invalidCallbackData
+
+	// When the callback runs, the finishing of the LSM liquid stake should make partial state changes, including
+	// the sending of LSM tokens to the module account
+	// However, that change should be discarded since the liquid stake failed
+	err = stakeibckeeper.ValidatorExchangeRateCallback(s.App.StakeibcKeeper, s.Ctx, tc.validArgs.callbackArgs, invalidQuery)
+	s.Require().NoError(err, "validator exchange rate callback error")
+
+	// Confirm validator's exchange rate DID NOT update
+	expectedExchangeRate := tc.initialState.validator.InternalSharesToTokensRate
+	s.checkValidatorExchangeRate(expectedExchangeRate, tc)
+
+	// Confirm delegator shares query WAS NOT submitted
+	s.checkDelegatorSharesQueryNotSubmitted()
+
+	// Confirm the liquid stake failed
+	// We'll check both that the failed event was emitted, and the success event was not emitted
+	// (to confirm short circuiting)
+	s.checkLSMLiquidStakeFailed()
+	successEmitted := s.checkLSMLiquidStakeEventEmitted(types.EventTypeLSMLiquidStakeRequest)
+	s.Require().False(successEmitted, "expected to not see a successful LSM liquid stake event")
+
+	// Confirm the tokens were not sent to the module account since the state changes were discarded
+	stakerBalance := s.App.BankKeeper.GetBalance(s.Ctx, s.TestAccs[0], tc.initialState.lsmTokenIBCDenom)
+	s.Require().Equal(tc.initialState.stakerBalance.Int64(), stakerBalance.Amount.Int64(),
+		"staker balance after failed liquid stake")
 }
 
 // Test case where the callback was successful, there was a slash, and this query was from a liquid stake
