@@ -6,7 +6,7 @@ import (
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/stretchr/testify/require"
 
-	"github.com/Stride-Labs/stride/v8/testutil/sample"
+	"github.com/Stride-Labs/stride/v9/testutil/sample"
 )
 
 func TestMsgChangeValidatorWeight_ValidateBasic(t *testing.T) {

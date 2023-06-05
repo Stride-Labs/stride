@@ -10,11 +10,11 @@ import (
 	proto "github.com/cosmos/gogoproto/proto"
 	"github.com/spf13/cast"
 
-	"github.com/Stride-Labs/stride/v8/utils"
-	icacallbackstypes "github.com/Stride-Labs/stride/v8/x/icacallbacks/types"
+	"github.com/Stride-Labs/stride/v9/utils"
+	icacallbackstypes "github.com/Stride-Labs/stride/v9/x/icacallbacks/types"
 
-	recordstypes "github.com/Stride-Labs/stride/v8/x/records/types"
-	"github.com/Stride-Labs/stride/v8/x/stakeibc/types"
+	recordstypes "github.com/Stride-Labs/stride/v9/x/records/types"
+	"github.com/Stride-Labs/stride/v9/x/stakeibc/types"
 
 	bankTypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	distributiontypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
@@ -22,15 +22,13 @@ import (
 
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
-	epochstypes "github.com/Stride-Labs/stride/v8/x/epochs/types"
-	icqtypes "github.com/Stride-Labs/stride/v8/x/interchainquery/types"
+	epochstypes "github.com/Stride-Labs/stride/v9/x/epochs/types"
+	icqtypes "github.com/Stride-Labs/stride/v9/x/interchainquery/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	icacontrollerkeeper "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/controller/keeper"
 	icacontrollertypes "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/controller/types"
 	icatypes "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/types"
-	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
-	host "github.com/cosmos/ibc-go/v7/modules/core/24-host"
 )
 
 func (k Keeper) DelegateOnHost(ctx sdk.Context, hostZone types.HostZone, amt sdk.Coin, depositRecord recordstypes.DepositRecord) error {
@@ -278,11 +276,6 @@ func (k Keeper) SubmitTxs(
 	channelID, found := k.ICAControllerKeeper.GetActiveChannelID(ctx, connectionId, portID)
 	if !found {
 		return 0, errorsmod.Wrapf(icatypes.ErrActiveChannelNotFound, "failed to retrieve active channel for port %s", portID)
-	}
-
-	_, found = k.IBCScopperKeeper.GetCapability(ctx, host.ChannelCapabilityPath(portID, channelID))
-	if !found {
-		return 0, errorsmod.Wrap(channeltypes.ErrChannelCapabilityNotFound, "module does not own channel capability")
 	}
 
 	data, err := icatypes.SerializeCosmosTx(k.cdc, protoMsgs)

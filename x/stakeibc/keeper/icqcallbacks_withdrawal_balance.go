@@ -12,18 +12,17 @@ import (
 	proto "github.com/cosmos/gogoproto/proto"
 	"github.com/spf13/cast"
 
-	icqkeeper "github.com/Stride-Labs/stride/v8/x/interchainquery/keeper"
+	icqkeeper "github.com/Stride-Labs/stride/v9/x/interchainquery/keeper"
 
-	"github.com/Stride-Labs/stride/v8/utils"
-	icqtypes "github.com/Stride-Labs/stride/v8/x/interchainquery/types"
-	"github.com/Stride-Labs/stride/v8/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v9/utils"
+	icqtypes "github.com/Stride-Labs/stride/v9/x/interchainquery/types"
+	"github.com/Stride-Labs/stride/v9/x/stakeibc/types"
 )
 
 // WithdrawalBalanceCallback is a callback handler for WithdrawalBalance queries.
 // The query response will return the withdrawal account balance
 // If the balance is non-zero, ICA MsgSends are submitted to transfer from the withdrawal account
-//
-//	to the delegation account (for reinvestment) and fee account (for commission)
+// to the delegation account (for reinvestment) and fee account (for commission)
 //
 // Note: for now, to get proofs in your ICQs, you need to query the entire store on the host zone! e.g. "store/bank/key"
 func WithdrawalBalanceCallback(k Keeper, ctx sdk.Context, args []byte, query icqtypes.Query) error {

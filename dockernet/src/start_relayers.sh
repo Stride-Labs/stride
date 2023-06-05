@@ -23,7 +23,6 @@ for chain in ${HOST_CHAINS[@]}; do
     chain_name=$(printf "$chain" | awk '{ print tolower($0) }')
     account_name=$(GET_VAR_VALUE RELAYER_${chain}_ACCT)
     mnemonic=$(GET_VAR_VALUE     RELAYER_${chain}_MNEMONIC)
-    coin_type=$(GET_VAR_VALUE    ${chain}_COIN_TYPE)
 
     relayer_logs=${LOGS}/relayer-${chain_name}.log
     relayer_config=$STATE/relayer-${chain_name}/config
@@ -36,14 +35,14 @@ for chain in ${HOST_CHAINS[@]}; do
     sudo chmod -R 777 /home/stride/stride/dockernet/state
     $relayer_exec rly keys restore stride $RELAYER_STRIDE_ACCT "$mnemonic" >> $relayer_logs 2>&1
     sudo chmod -R 777 /home/stride/stride/dockernet/state
-    $relayer_exec rly keys restore $chain_name $account_name "$mnemonic" --coin-type $coin_type >> $relayer_logs 2>&1
-    echo "Done restoring relayer keys"
+    $relayer_exec rly keys restore $chain_name $account_name "$mnemonic" >> $relayer_logs 2>&1
+    echo "Done"
 
     printf "STRIDE <> $chain - Creating client, connection, and transfer channel..." | tee -a $relayer_logs
     sudo rm -f /home/stride/stride/dockernet/state/relayer-gaia/config/config.lock
     sudo chmod -R 777 /home/stride/stride/dockernet/state
     $relayer_exec rly transact link stride-${chain_name} >> $relayer_logs 2>&1
-    echo "Done."
+    echo "Done"
 
     printf "STRIDE <> $chain - Adding hermes host key..."
     echo "$mnemonic" > $TMP_MNEMONICS

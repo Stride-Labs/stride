@@ -1,4 +1,4 @@
-package v9
+package v10
 
 import (
 	"fmt"
@@ -30,7 +30,7 @@ var (
 	AirdropStartTime        = time.Date(2023, 4, 3, 16, 0, 0, 0, time.UTC) // April 3, 2023 @ 16:00 UTC (12:00 EST)
 )
 
-// CreateUpgradeHandler creates an SDK upgrade handler for v8
+// CreateUpgradeHandler creates an SDK upgrade handler for v10
 func CreateUpgradeHandler(
 	mm *module.Manager,
 	configurator module.Configurator,

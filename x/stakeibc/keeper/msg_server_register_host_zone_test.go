@@ -2,7 +2,6 @@ package keeper_test
 
 // import (
 // 	"fmt"
-// 	"time"
 
 // 	sdkmath "cosmossdk.io/math"
 // 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -13,12 +12,10 @@ package keeper_test
 
 // 	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
 
-// 	"github.com/Stride-Labs/stride/v8/app"
-// 	epochtypes "github.com/Stride-Labs/stride/v8/x/epochs/types"
-// 	recordstypes "github.com/Stride-Labs/stride/v8/x/records/types"
-// 	recordtypes "github.com/Stride-Labs/stride/v8/x/records/types"
-// 	stakeibctypes "github.com/Stride-Labs/stride/v8/x/stakeibc/types"
-// 	appProvider "github.com/cosmos/interchain-security/app/provider"
+// 	epochtypes "github.com/Stride-Labs/stride/v9/x/epochs/types"
+// 	recordstypes "github.com/Stride-Labs/stride/v9/x/records/types"
+// 	recordtypes "github.com/Stride-Labs/stride/v9/x/records/types"
+// 	stakeibctypes "github.com/Stride-Labs/stride/v9/x/stakeibc/types"
 // )
 
 // type RegisterHostZoneTestCase struct {
@@ -62,6 +59,8 @@ package keeper_test
 // 		IbcDenom:           IbcAtom,
 // 		TransferChannelId:  ibctesting.FirstChannelID,
 // 		UnbondingFrequency: unbondingFrequency,
+// 		MinRedemptionRate:  sdk.NewDec(0),
+// 		MaxRedemptionRate:  sdk.NewDec(0),
 // 	}
 
 // 	return RegisterHostZoneTestCase{
@@ -83,13 +82,8 @@ package keeper_test
 // // This function 1) creates a new host zone and 2) returns what would be a successful register message
 // func (s *KeeperTestSuite) createNewHostZoneMessage(chainID string, denom string, prefix string) stakeibctypes.MsgRegisterHostZone {
 // 	// Create a new test chain and connection ID
-// 	osmoChain := ibctesting.NewTestChain(s.T(), s.Coordinator, ibctesting.DefaultTestingAppInit, chainID)
+// 	osmoChain := ibctesting.NewTestChain(s.T(), s.Coordinator, chainID)
 // 	path := ibctesting.NewPath(s.StrideChain, osmoChain)
-// 	trustingPeriodFraction := s.ProviderChain.App.(*appProvider.App).GetProviderKeeper().GetTrustingPeriodFraction(s.ProviderChain.GetContext())
-// 	consumerUnbondingPeriod := s.StrideChain.App.(*app.StrideApp).GetConsumerKeeper().GetUnbondingPeriod(path.EndpointA.Chain.GetContext())
-// 	path.EndpointB.ClientConfig.(*ibctesting.TendermintConfig).UnbondingPeriod = consumerUnbondingPeriod
-// 	path.EndpointB.ClientConfig.(*ibctesting.TendermintConfig).TrustingPeriod = consumerUnbondingPeriod / time.Duration(trustingPeriodFraction)
-
 // 	s.Coordinator.SetupConnections(path)
 // 	connectionId := path.EndpointA.ConnectionID
 
@@ -128,6 +122,10 @@ package keeper_test
 // 	s.Require().True(found, "host zone found")
 // 	s.Require().Equal(tc.defaultRedemptionRate, hostZone.RedemptionRate, "redemption rate set to default: 1")
 // 	s.Require().Equal(tc.defaultRedemptionRate, hostZone.LastRedemptionRate, "last redemption rate set to default: 1")
+// 	defaultMinThreshold := sdk.NewDec(int64(stakeibctypes.DefaultMinRedemptionRateThreshold)).Quo(sdk.NewDec(100))
+// 	defaultMaxThreshold := sdk.NewDec(int64(stakeibctypes.DefaultMaxRedemptionRateThreshold)).Quo(sdk.NewDec(100))
+// 	s.Require().Equal(defaultMinThreshold, hostZone.MinRedemptionRate, "min redemption rate set to default")
+// 	s.Require().Equal(defaultMaxThreshold, hostZone.MaxRedemptionRate, "max redemption rate set to default")
 // 	s.Require().Equal(tc.unbondingFrequency, hostZone.UnbondingFrequency, "unbonding frequency set to default: 3")
 
 // 	// Confirm host zone unbonding record was created
@@ -236,6 +234,27 @@ package keeper_test
 
 // 	_, err = s.GetMsgServer().RegisterHostZone(sdk.WrapSDKContext(s.Ctx), &invalidMsg)
 // 	expectedErrMsg := "host denom uatom already registered: failed to register host zone"
+// 	s.Require().EqualError(err, expectedErrMsg, "registering host zone with duplicate host denom should fail")
+// }
+
+// func (s *KeeperTestSuite) TestRegisterHostZone_DuplicateTransferChannel() {
+// 	// tests for a failure if we register the same host zone twice (with a duplicate transfer)
+// 	tc := s.SetupRegisterHostZone()
+
+// 	// Register host zones successfully
+// 	_, err := s.GetMsgServer().RegisterHostZone(sdk.WrapSDKContext(s.Ctx), &tc.validMsg)
+// 	s.Require().NoError(err, "able to successfully register host zone once")
+
+// 	// Create the message for a brand new host zone
+// 	// (without modifications, you would expect this to be successful)
+// 	newHostZoneMsg := s.createNewHostZoneMessage("OSMO", "osmo", "osmo")
+
+// 	// Try to register with a duplicate transfer channel - it should fail
+// 	invalidMsg := newHostZoneMsg
+// 	invalidMsg.TransferChannelId = tc.validMsg.TransferChannelId
+
+// 	_, err = s.GetMsgServer().RegisterHostZone(sdk.WrapSDKContext(s.Ctx), &invalidMsg)
+// 	expectedErrMsg := "transfer channel channel-0 already registered: failed to register host zone"
 // 	s.Require().EqualError(err, expectedErrMsg, "registering host zone with duplicate host denom should fail")
 // }
 

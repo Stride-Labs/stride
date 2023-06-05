@@ -25,8 +25,8 @@ import (
 	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
 	ccvconsumertypes "github.com/cosmos/interchain-security/x/ccv/consumer/types"
 
-	"github.com/Stride-Labs/stride/v8/app"
-	testutil "github.com/Stride-Labs/stride/v8/testutil"
+	"github.com/Stride-Labs/stride/v9/app"
+	testutil "github.com/Stride-Labs/stride/v9/testutil"
 )
 
 type (
@@ -66,10 +66,10 @@ func DefaultConfig() network.Config {
 		InterfaceRegistry: encoding.InterfaceRegistry,
 		AccountRetriever:  authtypes.AccountRetriever{},
 		AppConstructor: func(val network.ValidatorI) servertypes.Application {
-			// err := modifyConsumerGenesis(val)
-			// if err != nil {
-			// 	panic(err)
-			// }
+			err := modifyConsumerGenesis(val.(network.Validator))
+			if err != nil {
+				panic(err)
+			}
 			return app.NewStrideApp(
 				val.GetCtx().Logger, cometbftdb.NewMemDB(), nil, true, map[int64]bool{}, val.GetCtx().Config.RootDir, 0,
 				encoding,

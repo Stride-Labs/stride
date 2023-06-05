@@ -5,7 +5,8 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/Stride-Labs/stride/v8/x/records/keeper"
+	strideapp "github.com/Stride-Labs/stride/v9/app"
+	"github.com/Stride-Labs/stride/v9/x/records/keeper"
 )
 
 func RecordsKeeper(t testing.TB) (*keeper.Keeper, sdk.Context) {

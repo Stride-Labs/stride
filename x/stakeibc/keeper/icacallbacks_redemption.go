@@ -3,10 +3,10 @@ package keeper
 import (
 	"fmt"
 
-	"github.com/Stride-Labs/stride/v8/utils"
-	icacallbackstypes "github.com/Stride-Labs/stride/v8/x/icacallbacks/types"
-	recordstypes "github.com/Stride-Labs/stride/v8/x/records/types"
-	"github.com/Stride-Labs/stride/v8/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v9/utils"
+	icacallbackstypes "github.com/Stride-Labs/stride/v9/x/icacallbacks/types"
+	recordstypes "github.com/Stride-Labs/stride/v9/x/records/types"
+	"github.com/Stride-Labs/stride/v9/x/stakeibc/types"
 
 	errorsmod "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -36,13 +36,12 @@ func (k Keeper) UnmarshalRedemptionCallbackArgs(ctx sdk.Context, redemptionCallb
 }
 
 // ICA Callback after undelegating
-//
-//	  If successful:
-//	     * Updates epoch unbonding record status
-//	  If timeout:
-//	     * Does nothing
-//	  If failure:
-//			* Reverts epoch unbonding record status
+//   If successful:
+//     * Updates epoch unbonding record status
+//   If timeout:
+//     * Does nothing
+//   If failure:
+//     * Reverts epoch unbonding record status
 func RedemptionCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ackResponse *icacallbackstypes.AcknowledgementResponse, args []byte) error {
 	// Fetch callback args
 	redemptionCallback, err := k.UnmarshalRedemptionCallbackArgs(ctx, args)

@@ -12,10 +12,10 @@ package keeper_test
 
 // 	sdkmath "cosmossdk.io/math"
 
-// 	"github.com/Stride-Labs/stride/v8/app"
-// 	"github.com/Stride-Labs/stride/v8/x/claim/types"
-// 	minttypes "github.com/Stride-Labs/stride/v8/x/mint/types"
-// )
+//  "github.com/Stride-Labs/stride/v9/app"
+//  "github.com/Stride-Labs/stride/v9/x/claim/types"
+//  minttypes "github.com/Stride-Labs/stride/v9/x/mint/types"
+)
 
 // type KeeperTestSuite struct {
 // 	suite.Suite
@@ -50,42 +50,70 @@ package keeper_test
 // 	suite.app.AccountKeeper.SetAccount(suite.ctx, authtypes.NewBaseAccount(addr3, nil, 0, 0))
 // 	distributors["osmosis"] = addr3
 
-// 	// Mint coins to airdrop module
-// 	err := suite.app.BankKeeper.MintCoins(suite.ctx, minttypes.ModuleName, sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, sdkmath.NewInt(300000000))))
-// 	if err != nil {
-// 		panic(err)
-// 	}
-// 	err = suite.app.BankKeeper.SendCoinsFromModuleToAccount(suite.ctx, minttypes.ModuleName, addr1, sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, sdkmath.NewInt(100000000))))
-// 	if err != nil {
-// 		panic(err)
-// 	}
-// 	err = suite.app.BankKeeper.SendCoinsFromModuleToAccount(suite.ctx, minttypes.ModuleName, addr2, sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, sdkmath.NewInt(100000000))))
-// 	if err != nil {
-// 		panic(err)
-// 	}
-// 	err = suite.app.BankKeeper.SendCoinsFromModuleToAccount(suite.ctx, minttypes.ModuleName, addr3, sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, sdkmath.NewInt(100000000))))
-// 	if err != nil {
-// 		panic(err)
-// 	}
+	// // Initiate a distributor account for evmos user airdrop
+	// pub4 := secp256k1.GenPrivKey().PubKey()
+	// addr4 := sdk.AccAddress(pub4.Address())
+	// suite.app.AccountKeeper.SetAccount(suite.ctx, authtypes.NewBaseAccount(addr4, nil, 0, 0))
+	// distributors["evmos"] = addr4
 
-// 	// Stride airdrop
-// 	airdropStartTime := time.Now()
-// 	err = suite.app.ClaimKeeper.CreateAirdropAndEpoch(suite.ctx, addr1.String(), sdk.DefaultBondDenom, uint64(airdropStartTime.Unix()), uint64(types.DefaultAirdropDuration.Seconds()), types.DefaultAirdropIdentifier)
-// 	if err != nil {
-// 		panic(err)
-// 	}
+	// // Mint coins to airdrop module
+	// err := suite.app.BankKeeper.MintCoins(suite.ctx, minttypes.ModuleName, sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, sdkmath.NewInt(300000000))))
+	// if err != nil {
+	// 	panic(err)
+	// }
+	// err = suite.app.BankKeeper.SendCoinsFromModuleToAccount(suite.ctx, minttypes.ModuleName, addr1, sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, sdkmath.NewInt(100000000))))
+	// if err != nil {
+	// 	panic(err)
+	// }
+	// err = suite.app.BankKeeper.SendCoinsFromModuleToAccount(suite.ctx, minttypes.ModuleName, addr2, sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, sdkmath.NewInt(100000000))))
+	// if err != nil {
+	// 	panic(err)
+	// }
+	// err = suite.app.BankKeeper.SendCoinsFromModuleToAccount(suite.ctx, minttypes.ModuleName, addr3, sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, sdkmath.NewInt(100000000))))
+	// if err != nil {
+	// 	panic(err)
+	// }
 
-// 	// Juno airdrop
-// 	err = suite.app.ClaimKeeper.CreateAirdropAndEpoch(suite.ctx, addr2.String(), sdk.DefaultBondDenom, uint64(airdropStartTime.Add(time.Hour).Unix()), uint64(types.DefaultAirdropDuration.Seconds()), "juno")
-// 	if err != nil {
-// 		panic(err)
-// 	}
+	// // Stride airdrop
+	// airdropStartTime := time.Now()
+	// err = suite.app.ClaimKeeper.CreateAirdropAndEpoch(suite.ctx, types.MsgCreateAirdrop{
+	// 	Distributor:      addr1.String(),
+	// 	Identifier:       types.DefaultAirdropIdentifier,
+	// 	ChainId:          "stride-1",
+	// 	Denom:            sdk.DefaultBondDenom,
+	// 	StartTime:        uint64(airdropStartTime.Unix()),
+	// 	Duration:         uint64(types.DefaultAirdropDuration.Seconds()),
+	// 	AutopilotEnabled: false,
+	// })
+	// if err != nil {
+	// 	panic(err)
+	// }
 
-// 	// Osmosis airdrop
-// 	err = suite.app.ClaimKeeper.CreateAirdropAndEpoch(suite.ctx, addr3.String(), sdk.DefaultBondDenom, uint64(airdropStartTime.Unix()), uint64(types.DefaultAirdropDuration.Seconds()), "osmosis")
-// 	if err != nil {
-// 		panic(err)
-// 	}
+	// // Juno airdrop
+	// err = suite.app.ClaimKeeper.CreateAirdropAndEpoch(suite.ctx, types.MsgCreateAirdrop{
+	// 	Distributor: addr2.String(),
+	// 	Identifier:  "juno",
+	// 	ChainId:     "juno-1",
+	// 	Denom:       sdk.DefaultBondDenom,
+	// 	StartTime:   uint64(airdropStartTime.Add(time.Hour).Unix()),
+	// 	Duration:    uint64(types.DefaultAirdropDuration.Seconds()),
+	// })
+	// if err != nil {
+	// 	panic(err)
+	// }
+
+	// // Osmosis airdrop
+	// err = suite.app.ClaimKeeper.CreateAirdropAndEpoch(suite.ctx, types.MsgCreateAirdrop{
+	// 	Distributor: addr3.String(),
+	// 	Identifier:  "osmosis",
+	// 	ChainId:     "osmosis-1",
+	// 	Denom:       sdk.DefaultBondDenom,
+	// 	StartTime:   uint64(airdropStartTime.Unix()),
+	// 	Duration:    uint64(types.DefaultAirdropDuration.Seconds()),
+	// })
+	// if err != nil {
+	// 	panic(err)
+	// }
 
 // 	suite.ctx = suite.ctx.WithBlockTime(airdropStartTime)
 // }

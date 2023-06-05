@@ -5,7 +5,8 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/Stride-Labs/stride/v8/x/claim/keeper"
+	strideapp "github.com/Stride-Labs/stride/v9/app"
+	"github.com/Stride-Labs/stride/v9/x/claim/keeper"
 )
 
 func ClaimKeeper(t testing.TB) (*keeper.Keeper, sdk.Context) {

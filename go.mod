@@ -1,4 +1,4 @@
-module github.com/Stride-Labs/stride/v8
+module github.com/Stride-Labs/stride/v9
 
 go 1.19
 
@@ -10,8 +10,8 @@ require (
 	github.com/cosmos/cosmos-sdk v0.47.2
 	github.com/cosmos/gogoproto v1.4.8
 	github.com/cosmos/ibc-go/v7 v7.0.0
+	github.com/cosmos/ics23/go v0.10.0
 	github.com/cosmos/interchain-security v1.0.1-0.20230515162040-f91fbcd5b55c
-	github.com/gogo/protobuf v1.3.3
 	github.com/golang/protobuf v1.5.3
 	github.com/gorilla/mux v1.8.0
 	github.com/grpc-ecosystem/grpc-gateway v1.16.0
@@ -31,11 +31,12 @@ require (
 
 require (
 	github.com/coinbase/rosetta-sdk-go/types v1.0.0 // indirect
-	github.com/cosmos/ics23/go v0.10.0
 	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.2 // indirect
 )
+
+require github.com/gogo/protobuf v1.3.2 // indirect
 
 require (
 	cloud.google.com/go v0.110.0 // indirect
@@ -176,22 +177,8 @@ replace (
 	github.com/99designs/keyring => github.com/cosmos/keyring v1.1.7-0.20210622111912-ef00f8ac3d76
 	github.com/btcsuite/btcd => github.com/btcsuite/btcd v0.22.2 //indirect
 
-	// dragonberry replkace line per: https://github.com/cosmos/cosmos-sdk/releases/tag/v0.45.9
-	github.com/confio/ics23/go => github.com/cosmos/cosmos-sdk/ics23/go v0.8.0
-	github.com/cosmos/cosmos-sdk => github.com/Stride-Labs/cosmos-sdk v0.47.1
-	github.com/cosmos/ibc-go/v7 => github.com/Stride-Labs/ibc-go/v7 v7.0.0
-
-	// use cosmos-flavored protobufs
-	github.com/gogo/protobuf => github.com/regen-network/protobuf v1.3.3-alpha.regen.1
-
-	// Use a specific version of ignite cli
-	github.com/ignite-hq/cli => github.com/ignite-hq/cli v0.21.0
-
 	// fork cast to add additional error checking
 	github.com/spf13/cast => github.com/Stride-Labs/cast v0.0.3
 
 	github.com/syndtr/goleveldb => github.com/syndtr/goleveldb v1.0.1-0.20210819022825-2ae1ddf74ef7
-
-	// use the version of grpc compatible with the regen networks protobufs.
-	google.golang.org/grpc => google.golang.org/grpc v1.50.1
 )

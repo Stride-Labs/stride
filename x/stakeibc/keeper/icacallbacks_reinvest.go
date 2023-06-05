@@ -7,13 +7,13 @@ import (
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 
-	icqtypes "github.com/Stride-Labs/stride/v8/x/interchainquery/types"
+	icqtypes "github.com/Stride-Labs/stride/v9/x/interchainquery/types"
 
-	"github.com/Stride-Labs/stride/v8/utils"
-	epochtypes "github.com/Stride-Labs/stride/v8/x/epochs/types"
-	icacallbackstypes "github.com/Stride-Labs/stride/v8/x/icacallbacks/types"
-	recordstypes "github.com/Stride-Labs/stride/v8/x/records/types"
-	"github.com/Stride-Labs/stride/v8/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v9/utils"
+	epochtypes "github.com/Stride-Labs/stride/v9/x/epochs/types"
+	icacallbackstypes "github.com/Stride-Labs/stride/v9/x/icacallbacks/types"
+	recordstypes "github.com/Stride-Labs/stride/v9/x/records/types"
+	"github.com/Stride-Labs/stride/v9/x/stakeibc/types"
 
 	errorsmod "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -42,12 +42,11 @@ func (k Keeper) UnmarshalReinvestCallbackArgs(ctx sdk.Context, reinvestCallback 
 }
 
 // ICA Callback after reinvestment
-//
-//	If successful:
-//	   * Creates a new DepositRecord with the reinvestment amount
-//	   * Issues an ICQ to query the rewards balance
-//	If timeout/failure:
-//	   * Does nothing
+//   If successful:
+//     * Creates a new DepositRecord with the reinvestment amount
+//     * Issues an ICQ to query the rewards balance
+//   If timeout/failure:
+//     * Does nothing
 func ReinvestCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ackResponse *icacallbackstypes.AcknowledgementResponse, args []byte) error {
 	// Fetch callback args
 	reinvestCallback, err := k.UnmarshalReinvestCallbackArgs(ctx, args)

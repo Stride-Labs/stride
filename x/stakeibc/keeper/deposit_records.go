@@ -11,9 +11,9 @@ import (
 	clienttypes "github.com/cosmos/ibc-go/v7/modules/core/02-client/types"
 	"github.com/spf13/cast"
 
-	"github.com/Stride-Labs/stride/v8/utils"
-	recordstypes "github.com/Stride-Labs/stride/v8/x/records/types"
-	"github.com/Stride-Labs/stride/v8/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v9/utils"
+	recordstypes "github.com/Stride-Labs/stride/v9/x/records/types"
+	"github.com/Stride-Labs/stride/v9/x/stakeibc/types"
 )
 
 // Create a new deposit record for each host zone for the given epoch
@@ -85,7 +85,16 @@ func (k Keeper) TransferExistingDepositsToHostZones(ctx sdk.Context, epochNumber
 		// calculate the timeout
 		// https://github.com/cometbft/cometbft/blob/v0.34.x/spec/consensus/bft-time.md
 		timeoutTimestamp := uint64(ctx.BlockTime().UnixNano()) + ibcTransferTimeoutNanos
-		msg := ibctypes.NewMsgTransfer(ibctransfertypes.PortID, hostZone.TransferChannelId, transferCoin, hostZoneModuleAddress, delegateAddress, clienttypes.Height{}, timeoutTimestamp, "")
+		msg := ibctypes.NewMsgTransfer(
+			ibctransfertypes.PortID,
+			hostZone.TransferChannelId,
+			transferCoin,
+			hostZoneModuleAddress,
+			delegateAddress,
+			clienttypes.Height{},
+			timeoutTimestamp,
+			"",
+		)
 		k.Logger(ctx).Info(utils.LogWithHostZone(depositRecord.HostZoneId, "Transfer Msg: %+v", msg))
 
 		// transfer the deposit record and update its status to TRANSFER_IN_PROGRESS

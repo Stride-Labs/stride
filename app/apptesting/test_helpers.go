@@ -27,6 +27,7 @@ package apptesting
 // 	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
 // 	ibctesting "github.com/cosmos/ibc-go/v7/testing"
 // 	"github.com/cosmos/ibc-go/v7/testing/simapp"
+//  "github.com/cosmos/gogoproto/proto"
 // 	appProvider "github.com/cosmos/interchain-security/app/provider"
 // 	e2e "github.com/cosmos/interchain-security/testutil/e2e"
 // 	icssimapp "github.com/cosmos/interchain-security/testutil/simapp"
@@ -35,8 +36,8 @@ package apptesting
 // 	"github.com/stretchr/testify/require"
 // 	"github.com/stretchr/testify/suite"
 
-// 	"github.com/Stride-Labs/stride/v8/app"
-// 	"github.com/Stride-Labs/stride/v8/utils"
+// 	"github.com/Stride-Labs/stride/v9/app"
+// 	"github.com/Stride-Labs/stride/v9/utils"
 // )
 
 // var (
@@ -267,6 +268,9 @@ package apptesting
 
 // 	err = icaPath.EndpointA.ChanOpenAck()
 // 	s.Require().NoError(err, "ChanOpenAck error")
+
+//  err = s.App.ICAControllerKeeper.RegisterInterchainAccount(s.Ctx, endpoint.ConnectionID, owner, TestIcaVersion)
+//  s.Require().NoError(err, "register interchain account error")
 
 // 	err = icaPath.EndpointB.ChanOpenConfirm()
 // 	s.Require().NoError(err, "ChanOpenConfirm error")

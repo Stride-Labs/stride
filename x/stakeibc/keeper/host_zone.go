@@ -13,8 +13,8 @@ import (
 	errorsmod "cosmossdk.io/errors"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
-	"github.com/Stride-Labs/stride/v8/utils"
-	"github.com/Stride-Labs/stride/v8/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v9/utils"
+	"github.com/Stride-Labs/stride/v9/x/stakeibc/types"
 )
 
 // SetHostZone set a specific hostZone in the store
@@ -49,6 +49,16 @@ func (k Keeper) GetHostZoneFromHostDenom(ctx sdk.Context, denom string) (*types.
 		return &matchZone, nil
 	}
 	return nil, errorsmod.Wrapf(sdkerrors.ErrUnknownRequest, "No HostZone for %s found", denom)
+}
+
+// GetHostZoneFromTransferChannelID returns a HostZone from a transfer channel ID
+func (k Keeper) GetHostZoneFromTransferChannelID(ctx sdk.Context, channelID string) (hostZone types.HostZone, found bool) {
+	for _, hostZone := range k.GetAllActiveHostZone(ctx) {
+		if hostZone.TransferChannelId == channelID {
+			return hostZone, true
+		}
+	}
+	return types.HostZone{}, false
 }
 
 // RemoveHostZone removes a hostZone from the store

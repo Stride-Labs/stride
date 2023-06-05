@@ -8,17 +8,17 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/snapshots"
 
-	"github.com/Stride-Labs/stride/v8/utils"
+	"github.com/Stride-Labs/stride/v9/utils"
 
 	cometbftdb "github.com/cometbft/cometbft-db"
 	tmcli "github.com/cometbft/cometbft/libs/cli"
 	"github.com/cometbft/cometbft/libs/log"
-	tmtypes "github.com/cometbft/cometbft/types"
 	"github.com/spf13/cast"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 
 	tmcfg "github.com/cometbft/cometbft/config"
+	tmtypes "github.com/cometbft/cometbft/types"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/client"
 	config "github.com/cosmos/cosmos-sdk/client/config"
@@ -41,8 +41,8 @@ import (
 	genutilcli "github.com/cosmos/cosmos-sdk/x/genutil/client/cli"
 	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
 
-	"github.com/Stride-Labs/stride/v8/app"
-	// "github.com/Stride-Labs/stride/v8/app/params"
+	"github.com/Stride-Labs/stride/v9/app"
+	// "github.com/Stride-Labs/stride/v9/app/params"
 	// this line is used by starport scaffolding # stargate/root/import
 )
 

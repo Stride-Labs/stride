@@ -11,7 +11,7 @@ VALIDATOR="validator"
 VALIDATOR1="validator1"
 KEYRING="--keyring-backend test"
 TX_FLAGS="--gas-adjustment 100 --gas auto"
-PROVIDER_BINARY="gaiad"
+PROVIDER_BINARY="interchain-security-pd"
 SOVEREIGN_BINARY="strided-sd"
 CONSUMER_BINARY="strided-cdd"
 NODE_IP="localhost"
@@ -44,40 +44,31 @@ rm -rf $SOVEREIGN_HOME
 $SOVEREIGN_BINARY init --chain-id $CONSUMER_CHAIN_ID $MONIKER --home $SOVEREIGN_HOME
 sleep 1
 
-# Build genesis file and node directory structure
-$SOVEREIGN_BINARY init --chain-id $CONSUMER_CHAIN_ID $MONIKER --home $CONSUMER_HOME
-sleep 1
-
-
 # Create user account keypair
 $SOVEREIGN_BINARY keys add $CONSUMER_USER $KEYRING --home $SOVEREIGN_HOME --output json > $SOVEREIGN_HOME/consumer_keypair.json 2>&1
 $SOVEREIGN_BINARY keys add $SOVEREIGN_VALIDATOR $KEYRING --home $SOVEREIGN_HOME --output json > $SOVEREIGN_HOME/sovereign_validator_keypair.json 2>&1
-$SOVEREIGN_BINARY keys add $PROVIDER_VALIDATOR $KEYRING --home $CONSUMER_HOME --output json > $CONSUMER_HOME/consumer_validator_keypair.json 2>&1
 
 # Add account in genesis (required by Hermes)
 $SOVEREIGN_BINARY add-genesis-account $(jq -r .address $SOVEREIGN_HOME/consumer_keypair.json) 1000000000stake --home $SOVEREIGN_HOME
 $SOVEREIGN_BINARY add-genesis-account $(jq -r .address $SOVEREIGN_HOME/sovereign_validator_keypair.json) 1000000000000stake --home $SOVEREIGN_HOME
-$SOVEREIGN_BINARY add-genesis-account $(jq -r .address $CONSUMER_HOME/consumer_validator_keypair.json) 1000000000000stake --home $SOVEREIGN_HOME
 
 # generate genesis for sovereign chain
 $SOVEREIGN_BINARY gentx $SOVEREIGN_VALIDATOR 11000000000stake $KEYRING --chain-id=$CONSUMER_CHAIN_ID --home $SOVEREIGN_HOME
+$SOVEREIGN_BINARY collect-gentxs --home $SOVEREIGN_HOME
+sed -i '' 's/"voting_period": "172800s"/"voting_period": "20s"/g' $SOVEREIGN_HOME/config/genesis.json
 
 ################CONSUMER############################
+
+# Build genesis file and node directory structure
+$SOVEREIGN_BINARY init --chain-id $CONSUMER_CHAIN_ID $MONIKER --home $CONSUMER_HOME
+sleep 1
+
+#copy genesis
+cp $SOVEREIGN_HOME/config/genesis.json $CONSUMER_HOME/config/genesis.json
 
 # Copy validator key files
 cp $PROVIDER_HOME/config/priv_validator_key.json $CONSUMER_HOME/config/priv_validator_key.json
 cp $PROVIDER_HOME/config/node_key.json $CONSUMER_HOME/config/node_key.json
-
-$SOVEREIGN_BINARY add-genesis-account $(jq -r .address $CONSUMER_HOME/consumer_validator_keypair.json) 1000000000000stake --home $CONSUMER_HOME
-$SOVEREIGN_BINARY gentx $PROVIDER_VALIDATOR 12000000000stake $KEYRING --chain-id=$CONSUMER_CHAIN_ID --home $CONSUMER_HOME
-
-cp $CONSUMER_HOME/config/gentx/* $SOVEREIGN_HOME/config/gentx
-
-#copy genesis
-$SOVEREIGN_BINARY collect-gentxs --home $SOVEREIGN_HOME
-sed -i '' 's/"voting_period": "172800s"/"voting_period": "20s"/g' $SOVEREIGN_HOME/config/genesis.json
-
-cp $SOVEREIGN_HOME/config/genesis.json $CONSUMER_HOME/config/genesis.json
 
 #######CHAIN2#######
 $SOVEREIGN_BINARY init --chain-id $CONSUMER_CHAIN_ID $MONIKER --home $CONSUMER_HOME1
@@ -134,7 +125,7 @@ $SOVEREIGN_BINARY start \
        --log_level debug \
        --trace \
        &> $CONSUMER_HOME/logs &
-
+  
 # $SOVEREIGN_BINARY start \
 #        --home $CONSUMER_HOME1 \
 #        --rpc.laddr tcp://${CONSUMER_RPC_LADDR1} \
@@ -148,16 +139,27 @@ $SOVEREIGN_BINARY start \
 sleep 10
 
 
+########## GO RELAYER ########
+# RELAYER_DIR="./tests/relayer"
+# MNEMONIC_1="trip ten ability cabbage artefact side brass field domain doll ritual easily"
+# MNEMONIC_2="guard lion kiss upper comic vital small bundle salon oxygen museum material enter idea high domain lend alert dish message federal egg upper coffee"
 
 # # send tokens to relayers
-$PROVIDER_BINARY tx bank send $PROVIDER_DELEGATOR cosmos1d35ujw5e509acpmfxf9tw859e4nkhq8qfs725a 1000000stake --chain-id=$PROVIDER_CHAIN_ID --keyring-backend=test -y --broadcast-mode=sync --node=http://$PROVIDER_RPC_LADDR --home=$PROVIDER_HOME
-sleep 5
-$SOVEREIGN_BINARY tx bank send $SOVEREIGN_VALIDATOR stride1qwhddffw7ljzmgn9cxcd76t40aq0e65p5fwafv 1000000stake --keyring-backend=test --chain-id=$CONSUMER_CHAIN_ID -y --broadcast-mode=sync --node=http://$SOVEREIGN_RPC_LADDR --home=$SOVEREIGN_HOME
-sleep 5
+# $PROVIDER_BINARY tx bank send $PROVIDER_DELEGATOR cosmos1d35ujw5e509acpmfxf9tw859e4nkhq8qfs725a 1000000stake --chain-id=$PROVIDER_CHAIN_ID --keyring-backend=test -y --broadcast-mode=sync --node=http://$PROVIDER_RPC_LADDR --home=$PROVIDER_HOME
+# sleep 5
+# $SOVEREIGN_BINARY tx bank send $SOVEREIGN_VALIDATOR cosmos1qwhddffw7ljzmgn9cxcd76t40aq0e65phzwpaq 1000000stake --keyring-backend=test --chain-id=$CONSUMER_CHAIN_ID -y --broadcast-mode=sync --node=http://$SOVEREIGN_RPC_LADDR --home=$SOVEREIGN_HOME
+# sleep 5
 
 # PROVIDER_CHAIN_ID="provider"
 # CONSUMER_CHAIN_ID="consumer"
 
+# # echo "Restoring accounts..."
+# rly keys restore provider rly1 "$MNEMONIC_1" --home $RELAYER_DIR &
+# rly keys restore consumer rly2 "$MNEMONIC_2" --home $RELAYER_DIR &
+
+# sleep 3
+
+# rly transact link-then-start consumer-provider --home $RELAYER_DIR
 ######################################HERMES################################### 
 
 # # Setup Hermes in packet relayer mode
@@ -245,7 +247,7 @@ hermes create client --host-chain provider --reference-chain consumer
 hermes create channel --a-chain $CONSUMER_CHAIN_ID --b-chain $PROVIDER_CHAIN_ID --a-port transfer --b-port transfer --new-client-connection --yes
 # hermes create channel $CONSUMER_CHAIN_ID --port-a transfer --port-b transfer connection-0
 
-sleep 1
+sleep 10
 
 hermes start &> ~/.hermes/logs &
 
@@ -283,27 +285,15 @@ sleep 5
 
 # ###########################UPGRADE TO SOVEREIGN CHAIN##########################
 
-# $SOVEREIGN_BINARY tx gov submit-legacy-proposal software-upgrade "v07-Theta" --upgrade-height=36  \
-# --upgrade-info="upgrade for consumer chain" \
-# --title="upgrade to consumer chain" --description="upgrade to consumer chain description" \
-# --from=$SOVEREIGN_VALIDATOR $KEYRING --chain-id=$CONSUMER_CHAIN_ID \
-# --home=$SOVEREIGN_HOME --yes -b sync --deposit="100000000stake"
-
 $SOVEREIGN_BINARY tx gov submit-legacy-proposal software-upgrade "v07-Theta" \
 --upgrade-height=36 \
---upgrade-info="file:///Users/admin/Documents/j121/stride/interchain-security/upgrade-info.json?checksum=sha256:66a0bd2ce260927747e2f26522b937d773d13b79c7e5b07e2f5efa483d6fabe0" \
+--upgrade-info="file:///Users/admin/Documents/j121/stride/interchain-security/upgrade-info.json?checksum=sha256:8f204d72e0bbd1a193aee002cf78d17b90e73fdd404403df226e5f3d6a6cba17" \
 --title="upgrade to consumer chain" --description="upgrade to consumer chain description" \
 --from=$SOVEREIGN_VALIDATOR $KEYRING --chain-id=$CONSUMER_CHAIN_ID --home=$SOVEREIGN_HOME --yes -b sync --deposit="100000000stake"
 
 sleep 5
 
-# $SOVEREIGN_BINARY query tx 1BA75A3E36276AFC530171A29D0D080A39834B85AA340B5EC18002C4608FBE7F --home=$SOVEREIGN_HOME
-# $SOVEREIGN_BINARY tx gov submit-legacy-proposal software-upgrade "v07-Theta" \
-# --upgrade-height=36 \
-# --upgrade-info="file:///Users/admin/Documents/j121/stride/interchain-security/upgrade-info1.json?checksum=sha256:3f0309a1179afb7d7eb9090a13ce9fdca0ce46b39ac6908b415d901b822f046a" \
-# --title="upgrade to consumer chain" --description="upgrade to consumer chain description" \
-# --from=$SOVEREIGN_VALIDATOR $KEYRING --chain-id=$CONSUMER_CHAIN_ID --home=$SOVEREIGN_HOME --yes -b sync --deposit="100000000stake"
-
+# $SOVEREIGN_BINARY query tx EB57472EEF84929F60C9324ED694D5A7FF8739878DD15CADD6D470465DAEC918 --home=$SOVEREIGN_HOME
 
 # Vote yes to proposal
 $SOVEREIGN_BINARY tx gov vote 1 yes --from $SOVEREIGN_VALIDATOR --chain-id $CONSUMER_CHAIN_ID --node tcp://$SOVEREIGN_RPC_LADDR \
@@ -356,7 +346,7 @@ $CONSUMER_BINARY start \
        --log_level debug \
        --trace \
        &> $CONSUMER_HOME/logs &
-
+  
 # $CONSUMER_BINARY start \
 #        --home $CONSUMER_HOME1 \
 #        --rpc.laddr tcp://${CONSUMER_RPC_LADDR1} \
@@ -369,7 +359,7 @@ $CONSUMER_BINARY start \
 #        &> $CONSUMER_HOME1/logs &        
 sleep 30
 
-# # create channel between consumer and provider between provider port and consumer port
+# create channel between consumer and provider between provider port and consumer port
 # hermes query clients consumer
 # hermes query clients provider
 # hermes query client consensus consumer 07-tendermint-1

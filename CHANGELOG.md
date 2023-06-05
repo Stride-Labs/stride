@@ -40,10 +40,25 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+<!-- GH ACTIONS TEMPLATE - INSERT NEW VERSION HERE -->
+
+## [v9.0.0](https://github.com/Stride-Labs/stride/releases/tag/v9.0.0) - 2023-04-19
+
+### On-Chain changes
+1. Autopilot Channel Verification ([62295e3](https://github.com/Stride-Labs/stride/commit/62295e3818de10c13295855d8fc8a224aff3bc70))
+2. Set epoch provisions in mint init genesis ([16dee3e](https://github.com/Stride-Labs/stride/commit/16dee3e4e3645f3118aa30a45159801873cd8bd4))
+3. Add Unit Test to Check Host Zone Min/Max RR ([3a5c7bf](https://github.com/Stride-Labs/stride/commit/3a5c7bfcc3b8c5e7dd870f01bebeb9d949492203))
+4. v9 Upgrade Handler ([b8d5152](https://github.com/Stride-Labs/stride/commit/b8d51526d30e947a9b17a74b93d551380632b79c))
+5. v9 Import Paths ([c88b52e](https://github.com/Stride-Labs/stride/commit/c88b52e34a484fe1e055b58abfce86bc19932990))
+
+### Off-Chain Changes
+These changes do not affect any on-chain functionality, but have been implemented since `v8.0.0`.
+1. Add evmos to dockernet ([3323949](https://github.com/Stride-Labs/stride/commit/332394936f57b87ad0b2987572eaa1cade5ce68b))
+2. Update dockernet go relayer and integration test timing ([edeffb3](https://github.com/Stride-Labs/stride/commit/edeffb320bc93c3cc6f3cabc5d2ce18448bebae0))
 
 ## [v8.0.0](https://github.com/Stride-Labs/stride/releases/tag/v8.0.0) - 2023-03-23
 ### On-Chain changes
-1. Add Multiple Validators in One Transaction ([4ce1317](https://github.com/Stride-Labs/stride/commit/4ce1317073f4119a891229530677603c10e5700c)))
+1. Add Multiple Validators in One Transaction ([4ce1317](https://github.com/Stride-Labs/stride/commit/4ce1317073f4119a891229530677603c10e5700c))
 2. Add new claim queries ([7e7335a](https://github.com/Stride-Labs/stride/commit/7e7335a6466abc13fd51aed1f7c76d621fb3d524))
 3. Autopilot JSON Memo ([d16d7f2](https://github.com/Stride-Labs/stride/commit/d16d7f2676dc6182dd0fd655530136ff3e5780ad))
 4. Enable Delegator Shares Query to Correct DelegationAmt ([5868b82](https://github.com/Stride-Labs/stride/commit/5868b82b60e8548f8e791f1d90dfa9c05031127f))

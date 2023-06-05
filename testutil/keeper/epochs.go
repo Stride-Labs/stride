@@ -5,7 +5,8 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/Stride-Labs/stride/v8/x/epochs/keeper"
+	strideapp "github.com/Stride-Labs/stride/v9/app"
+	"github.com/Stride-Labs/stride/v9/x/epochs/keeper"
 )
 
 func EpochsKeeper(t testing.TB) (*keeper.Keeper, sdk.Context) {
