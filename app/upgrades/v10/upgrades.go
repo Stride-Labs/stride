@@ -20,9 +20,16 @@ import (
 	clientkeeper "github.com/cosmos/ibc-go/v7/modules/core/02-client/keeper"
 	ibctmmigrations "github.com/cosmos/ibc-go/v7/modules/light-clients/07-tendermint/migrations"
 
+	icacallbackskeeper "github.com/Stride-Labs/stride/v9/x/icacallbacks/keeper"
 	mintkeeper "github.com/Stride-Labs/stride/v9/x/mint/keeper"
 	minttypes "github.com/Stride-Labs/stride/v9/x/mint/types"
+	recordskeeper "github.com/Stride-Labs/stride/v9/x/records/keeper"
+	recordstypes "github.com/Stride-Labs/stride/v9/x/records/types"
+	stakeibckeeper "github.com/Stride-Labs/stride/v9/x/stakeibc/keeper"
 	stakeibctypes "github.com/Stride-Labs/stride/v9/x/stakeibc/types"
+
+	cosmosproto "github.com/cosmos/gogoproto/proto"
+	deprecatedproto "github.com/golang/protobuf/proto" //nolint:staticcheck
 )
 
 var (
@@ -47,6 +54,7 @@ func CreateUpgradeHandler(
 	clientKeeper clientkeeper.Keeper,
 	consensusParamsKeeper consensusparamkeeper.Keeper,
 	govKeeper govkeeper.Keeper,
+	icacallbacksKeeper icacallbackskeeper.Keeper,
 	mintKeeper mintkeeper.Keeper,
 	paramsKeeper paramskeeper.Keeper,
 ) upgradetypes.UpgradeHandler {
@@ -76,6 +84,11 @@ func CreateUpgradeHandler(
 		ctx.Logger().Info("Reducing STRD staking rewards...")
 		if err := ReduceSTRDStakingRewards(ctx, mintKeeper); err != nil {
 			return nil, errorsmod.Wrapf(err, "unable to reduce STRD staking rewards")
+		}
+
+		ctx.Logger().Info("Migrating callback data...")
+		if err := MigrateCallbackData(ctx, icacallbacksKeeper); err != nil {
+			return nil, errorsmod.Wrapf(err, "unable to migrate callback data")
 		}
 
 		ctx.Logger().Info("Running module migrations...")
@@ -132,4 +145,53 @@ func SetMinInitialDepositRatio(ctx sdk.Context, k govkeeper.Keeper) error {
 	params := k.GetParams(ctx)
 	params.MinInitialDepositRatio = MinInitialDepositRatio
 	return k.SetParams(ctx, params)
+}
+
+// This likely isn't necessary, but since migrating from google proto to
+// cosmos gogoproto has the potential for serialization differences,
+// this reserializes all the callbacks with cosmos proto
+func MigrateCallbackData(ctx sdk.Context, k icacallbackskeeper.Keeper) error {
+	for _, oldCallbackData := range k.GetAllCallbackData(ctx) {
+		oldCallbackArgsBz := oldCallbackData.CallbackArgs
+
+		var newCallbackArgsBz []byte
+		var err error
+
+		switch oldCallbackData.CallbackId {
+		case stakeibckeeper.ICACallbackID_Claim:
+			newCallbackArgsBz, err = reserializeCallback(oldCallbackArgsBz, &stakeibctypes.ClaimCallback{})
+		case stakeibckeeper.ICACallbackID_Delegate:
+			newCallbackArgsBz, err = reserializeCallback(oldCallbackArgsBz, &stakeibctypes.DelegateCallback{})
+		case stakeibckeeper.ICACallbackID_Rebalance:
+			newCallbackArgsBz, err = reserializeCallback(oldCallbackArgsBz, &stakeibctypes.RebalanceCallback{})
+		case stakeibckeeper.ICACallbackID_Redemption:
+			newCallbackArgsBz, err = reserializeCallback(oldCallbackArgsBz, &stakeibctypes.RedemptionCallback{})
+		case stakeibckeeper.ICACallbackID_Reinvest:
+			newCallbackArgsBz, err = reserializeCallback(oldCallbackArgsBz, &stakeibctypes.ReinvestCallback{})
+		case stakeibckeeper.ICACallbackID_Undelegate:
+			newCallbackArgsBz, err = reserializeCallback(oldCallbackArgsBz, &stakeibctypes.UndelegateCallback{})
+		case recordskeeper.TRANSFER:
+			newCallbackArgsBz, err = reserializeCallback(oldCallbackArgsBz, &recordstypes.TransferCallback{})
+		}
+		if err != nil {
+			return err
+		}
+
+		newCallbackData := oldCallbackData
+		newCallbackData.CallbackArgs = newCallbackArgsBz
+		k.SetCallbackData(ctx, newCallbackData)
+	}
+	return nil
+}
+
+// Helper function to deserialize using the deprecated proto types and reserialize using the new proto types
+func reserializeCallback(oldCallbackArgsBz []byte, callback deprecatedproto.Message) ([]byte, error) {
+	if err := deprecatedproto.Unmarshal(oldCallbackArgsBz, callback); err != nil {
+		return nil, err
+	}
+	newCallbackArgs, err := cosmosproto.Marshal(callback)
+	if err != nil {
+		return nil, err
+	}
+	return newCallbackArgs, nil
 }

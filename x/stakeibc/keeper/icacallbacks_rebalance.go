@@ -10,8 +10,8 @@ import (
 	errorsmod "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	"github.com/cosmos/gogoproto/proto"
 	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
-	"github.com/golang/protobuf/proto" //nolint:staticcheck
 )
 
 // Marshalls rebalance callback arguments
@@ -35,10 +35,11 @@ func (k Keeper) UnmarshalRebalanceCallbackArgs(ctx sdk.Context, rebalanceCallbac
 }
 
 // ICA Callback after rebalance validators on a host zone
-//   If successful:
-//     * Updates relevant validator delegations on the host zone struct
-//   If timeout/failure:
-//     * Does nothing
+//
+//	If successful:
+//	  * Updates relevant validator delegations on the host zone struct
+//	If timeout/failure:
+//	  * Does nothing
 func RebalanceCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ackResponse *icacallbackstypes.AcknowledgementResponse, args []byte) error {
 	// Fetch callback args
 	rebalanceCallback, err := k.UnmarshalRebalanceCallbackArgs(ctx, args)
