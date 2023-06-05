@@ -11,11 +11,11 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	grpctypes "github.com/cosmos/cosmos-sdk/types/grpc"
 
-	"github.com/gogo/protobuf/proto"
+	"github.com/cosmos/gogoproto/proto"
 	"github.com/stretchr/testify/suite"
 
-	"github.com/Stride-Labs/stride/v8/app"
-	minttypes "github.com/Stride-Labs/stride/v8/x/mint/types"
+	"github.com/Stride-Labs/stride/v9/app"
+	minttypes "github.com/Stride-Labs/stride/v9/x/mint/types"
 
 	"github.com/cosmos/cosmos-sdk/testutil/network"
 )

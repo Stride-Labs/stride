@@ -13,18 +13,16 @@ import (
 	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
 	ibcexported "github.com/cosmos/ibc-go/v7/modules/core/exported"
 
-	"github.com/Stride-Labs/stride/v8/x/ratelimit/types"
+	"github.com/Stride-Labs/stride/v9/x/ratelimit/types"
 )
 
 // Parse the denom from the Send Packet that will be used by the rate limit module
 // The denom that the rate limiter will use for a SEND packet depends on whether
-//
-//	it was a NATIVE token (e.g. ustrd, stuatom, etc.) or NON-NATIVE token (e.g. ibc/...)...
+// it was a NATIVE token (e.g. ustrd, stuatom, etc.) or NON-NATIVE token (e.g. ibc/...)...
 //
 // We can identify if the token is native or not by parsing the trace denom from the packet
 // If the token is NATIVE, it will not have a prefix (e.g. ustrd),
-//
-//	and if it is NON-NATIVE, it will have a prefix (e.g. transfer/channel-2/uosmo)
+// and if it is NON-NATIVE, it will have a prefix (e.g. transfer/channel-2/uosmo)
 //
 // For NATIVE denoms, return as is (e.g. ustrd)
 // For NON-NATIVE denoms, take the ibc hash (e.g. hash "transfer/channel-2/usoms" into "ibc/...")
@@ -48,13 +46,13 @@ func ParseDenomFromSendPacket(packet transfertypes.FungibleTokenPacketData) (den
 //
 //	     Sink:   The token moves forward, to a chain different than its previous hop
 //	             The new port and channel are APPENDED to the denom trace.
-//	             (e.g. A -> B, B is a sink) (e.g. A -> B -> C, C is a sink)
-//			Source: The token moves backwards (i.e. revisits the last chain it was sent from)
-//					The port and channel are REMOVED from the denom trace - undoing the last hop.
+//               (e.g. A -> B, B is a sink) (e.g. A -> B -> C, C is a sink)
+//       Source: The token moves backwards (i.e. revisits the last chain it was sent from)
+//               The port and channel are REMOVED from the denom trace - undoing the last hop.
 //	             (e.g. A -> B -> A, A is a source) (e.g. A -> B -> C -> B, B is a source)
 //
 //	     If the chain is acting as a SINK:
-//	     	We add on the Stride port and channel and hash it
+//	       We add on the Stride port and channel and hash it
 //	         Ex1: uosmo sent from Osmosis to Stride
 //	             Packet Denom:   uosmo
 //	              -> Add Prefix: transfer/channel-X/uosmo
@@ -66,7 +64,7 @@ func ParseDenomFromSendPacket(packet transfertypes.FungibleTokenPacketData) (den
 //	              -> Hash:       ibc/...
 //
 //	     If the chain is acting as a SOURCE:
-//	     	First, remove the prefix. Then if there is still a denom trace, hash it
+//	       First, remove the prefix. Then if there is still a denom trace, hash it
 //	         Ex1: ustrd sent back to Stride from Osmosis
 //	             Packet Denom:      transfer/channel-X/ustrd
 //	              -> Remove Prefix: ustrd
@@ -181,7 +179,7 @@ func (k Keeper) SendPacket(
 		k.Logger(ctx).Error(fmt.Sprintf("ICS20 packet send was denied: %s", err.Error()))
 		return 0, err
 	}
-	sequence, err = k.ics4Wrapper.SendPacket(
+	return k.ics4Wrapper.SendPacket(
 		ctx,
 		channelCap,
 		sourcePort,
@@ -190,10 +188,6 @@ func (k Keeper) SendPacket(
 		timeoutTimestamp,
 		data,
 	)
-	if err != nil {
-		return 0, err
-	}
-	return sequence, nil
 }
 
 // WriteAcknowledgement wraps IBC ChannelKeeper's WriteAcknowledgement function

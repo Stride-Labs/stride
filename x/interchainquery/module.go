@@ -19,10 +19,10 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 
-	"github.com/Stride-Labs/stride/v8/x/interchainquery/keeper"
+	"github.com/Stride-Labs/stride/v9/x/interchainquery/keeper"
 
-	"github.com/Stride-Labs/stride/v8/x/interchainquery/client/cli"
-	"github.com/Stride-Labs/stride/v8/x/interchainquery/types"
+	"github.com/Stride-Labs/stride/v9/x/interchainquery/client/cli"
+	"github.com/Stride-Labs/stride/v9/x/interchainquery/types"
 )
 
 var (
@@ -119,18 +119,8 @@ func (am AppModule) Name() string {
 	return am.AppModuleBasic.Name()
 }
 
-// Route returns the capability module's message routing key.
-// func (am AppModule) Route() sdk.Route {
-// 	return sdk.NewRoute(types.RouterKey, NewHandler(am.keeper))
-// }
-
 // QuerierRoute returns the capability module's query routing key.
 func (AppModule) QuerierRoute() string { return types.QuerierRoute }
-
-// LegacyQuerierHandler returns the capability module's Querier.
-// func (am AppModule) LegacyQuerierHandler(legacyQuerierCdc *codec.LegacyAmino) sdk.Querier {
-// 	return nil
-// }
 
 // RegisterServices registers a GRPC query service to respond to the
 // module-specific GRPC queries.

@@ -14,9 +14,9 @@ import (
 
 	proto "github.com/cosmos/gogoproto/proto"
 
-	"github.com/Stride-Labs/stride/v8/utils"
-	recordstypes "github.com/Stride-Labs/stride/v8/x/records/types"
-	"github.com/Stride-Labs/stride/v8/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v9/utils"
+	recordstypes "github.com/Stride-Labs/stride/v9/x/records/types"
+	"github.com/Stride-Labs/stride/v9/x/stakeibc/types"
 )
 
 func (k Keeper) CreateEpochUnbondingRecord(ctx sdk.Context, epochNumber uint64) bool {
@@ -46,11 +46,10 @@ func (k Keeper) CreateEpochUnbondingRecord(ctx sdk.Context, epochNumber uint64) 
 }
 
 // Build the undelegation messages for each validator by summing the total amount to unbond across epoch unbonding record,
+// and then splitting the undelegation amount across validators
 //
-//	and then splitting the undelegation amount across validators
-//
-// returns (1) MsgUndelegate messages
-//
+// returns
+//  (1) MsgUndelegate messages
 //	(2) Total Amount to unbond across all validators
 //	(3) Marshalled Callback Args
 //	(4) Relevant EpochUnbondingRecords that contain HostZoneUnbondings that are ready for unbonding
@@ -119,7 +118,6 @@ func (k Keeper) GetHostZoneUnbondingMsgs(ctx sdk.Context, hostZone types.HostZon
 			// Check if we can unbond more from this validator
 			validatorUnbondExtraCapacity := validator.DelegationAmt.Sub(targetUnbondAmount)
 			if validatorUnbondExtraCapacity.GT(sdkmath.ZeroInt()) {
-
 				// If we can fully cover the unbonding, do so with this validator
 				if validatorUnbondExtraCapacity.GT(overflowAmount) {
 					finalUnbondingsByValidator[validator.Address] = finalUnbondingsByValidator[validator.Address].Add(overflowAmount)
@@ -413,8 +411,7 @@ func (k Keeper) SweepAllUnbondedTokensForHostZone(ctx sdk.Context, hostZone type
 }
 
 // Sends all unbonded tokens to the redemption account
-//
-//	returns:
+// returns:
 //	   * success indicator if all chains succeeded
 //	   * list of successful chains
 //	   * list of tokens swept

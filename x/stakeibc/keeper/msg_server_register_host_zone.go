@@ -7,10 +7,10 @@ import (
 	sdkmath "cosmossdk.io/math"
 	icatypes "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/types"
 
-	"github.com/Stride-Labs/stride/v8/utils"
-	epochtypes "github.com/Stride-Labs/stride/v8/x/epochs/types"
-	recordstypes "github.com/Stride-Labs/stride/v8/x/records/types"
-	"github.com/Stride-Labs/stride/v8/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v9/utils"
+	epochtypes "github.com/Stride-Labs/stride/v9/x/epochs/types"
+	recordstypes "github.com/Stride-Labs/stride/v9/x/records/types"
+	"github.com/Stride-Labs/stride/v9/x/stakeibc/types"
 
 	errorsmod "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -54,6 +54,11 @@ func (k msgServer) RegisterHostZone(goCtx context.Context, msg *types.MsgRegiste
 		}
 		if hostZone.ConnectionId == msg.ConnectionId {
 			errMsg := fmt.Sprintf("connectionId %s already registered", msg.ConnectionId)
+			k.Logger(ctx).Error(errMsg)
+			return nil, errorsmod.Wrapf(types.ErrFailedToRegisterHostZone, errMsg)
+		}
+		if hostZone.TransferChannelId == msg.TransferChannelId {
+			errMsg := fmt.Sprintf("transfer channel %s already registered", msg.TransferChannelId)
 			k.Logger(ctx).Error(errMsg)
 			return nil, errorsmod.Wrapf(types.ErrFailedToRegisterHostZone, errMsg)
 		}
@@ -108,7 +113,7 @@ func (k msgServer) RegisterHostZone(goCtx context.Context, msg *types.MsgRegiste
 	// generate delegate account
 	// NOTE: in the future, if we implement proxy governance, we'll need many more delegate accounts
 	delegateAccount := types.FormatICAAccountOwner(chainId, types.ICAAccountType_DELEGATION)
-	if err := k.RegisterInterchainAccount(ctx, zone.ConnectionId, delegateAccount, appVersion); err != nil {
+	if err := k.ICAControllerKeeper.RegisterInterchainAccount(ctx, zone.ConnectionId, delegateAccount, appVersion); err != nil {
 		errMsg := fmt.Sprintf("unable to register delegation account, err: %s", err.Error())
 		k.Logger(ctx).Error(errMsg)
 		return nil, errorsmod.Wrapf(types.ErrFailedToRegisterHostZone, errMsg)
@@ -116,7 +121,7 @@ func (k msgServer) RegisterHostZone(goCtx context.Context, msg *types.MsgRegiste
 
 	// generate fee account
 	feeAccount := types.FormatICAAccountOwner(chainId, types.ICAAccountType_FEE)
-	if err := k.RegisterInterchainAccount(ctx, zone.ConnectionId, feeAccount, appVersion); err != nil {
+	if err := k.ICAControllerKeeper.RegisterInterchainAccount(ctx, zone.ConnectionId, feeAccount, appVersion); err != nil {
 		errMsg := fmt.Sprintf("unable to register fee account, err: %s", err.Error())
 		k.Logger(ctx).Error(errMsg)
 		return nil, errorsmod.Wrapf(types.ErrFailedToRegisterHostZone, errMsg)
@@ -124,7 +129,7 @@ func (k msgServer) RegisterHostZone(goCtx context.Context, msg *types.MsgRegiste
 
 	// generate withdrawal account
 	withdrawalAccount := types.FormatICAAccountOwner(chainId, types.ICAAccountType_WITHDRAWAL)
-	if err := k.RegisterInterchainAccount(ctx, zone.ConnectionId, withdrawalAccount, appVersion); err != nil {
+	if err := k.ICAControllerKeeper.RegisterInterchainAccount(ctx, zone.ConnectionId, withdrawalAccount, appVersion); err != nil {
 		errMsg := fmt.Sprintf("unable to register withdrawal account, err: %s", err.Error())
 		k.Logger(ctx).Error(errMsg)
 		return nil, errorsmod.Wrapf(types.ErrFailedToRegisterHostZone, errMsg)
@@ -132,7 +137,7 @@ func (k msgServer) RegisterHostZone(goCtx context.Context, msg *types.MsgRegiste
 
 	// generate redemption account
 	redemptionAccount := types.FormatICAAccountOwner(chainId, types.ICAAccountType_REDEMPTION)
-	if err := k.RegisterInterchainAccount(ctx, zone.ConnectionId, redemptionAccount, appVersion); err != nil {
+	if err := k.ICAControllerKeeper.RegisterInterchainAccount(ctx, zone.ConnectionId, redemptionAccount, appVersion); err != nil {
 		errMsg := fmt.Sprintf("unable to register redemption account, err: %s", err.Error())
 		k.Logger(ctx).Error(errMsg)
 		return nil, errorsmod.Wrapf(types.ErrFailedToRegisterHostZone, errMsg)

@@ -3,10 +3,10 @@ package keeper
 import (
 	"fmt"
 
-	"github.com/Stride-Labs/stride/v8/utils"
-	icacallbackstypes "github.com/Stride-Labs/stride/v8/x/icacallbacks/types"
-	recordstypes "github.com/Stride-Labs/stride/v8/x/records/types"
-	"github.com/Stride-Labs/stride/v8/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v9/utils"
+	icacallbackstypes "github.com/Stride-Labs/stride/v9/x/icacallbacks/types"
+	recordstypes "github.com/Stride-Labs/stride/v9/x/records/types"
+	"github.com/Stride-Labs/stride/v9/x/stakeibc/types"
 
 	errorsmod "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -35,11 +35,10 @@ func (k Keeper) UnmarshalClaimCallbackArgs(ctx sdk.Context, claimCallback []byte
 }
 
 // ICA Callback after claiming unbonded tokens
-//
-//	If successful:
-//	   * Removes the user redemption record
-//	If timeout/failure:
-//	   * Reverts pending flag in the user redemption record so the claim can be re-tried
+//   If successful:
+//     * Removes the user redemption record
+//   If timeout/failure:
+//     * Reverts pending flag in the user redemption record so the claim can be re-tried
 func ClaimCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ackResponse *icacallbackstypes.AcknowledgementResponse, args []byte) error {
 	// Fetch callback args
 	claimCallback, err := k.UnmarshalClaimCallbackArgs(ctx, args)

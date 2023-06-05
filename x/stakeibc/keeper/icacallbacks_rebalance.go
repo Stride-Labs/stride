@@ -3,9 +3,9 @@ package keeper
 import (
 	"fmt"
 
-	"github.com/Stride-Labs/stride/v8/utils"
-	icacallbackstypes "github.com/Stride-Labs/stride/v8/x/icacallbacks/types"
-	"github.com/Stride-Labs/stride/v8/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v9/utils"
+	icacallbackstypes "github.com/Stride-Labs/stride/v9/x/icacallbacks/types"
+	"github.com/Stride-Labs/stride/v9/x/stakeibc/types"
 
 	errorsmod "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -35,11 +35,10 @@ func (k Keeper) UnmarshalRebalanceCallbackArgs(ctx sdk.Context, rebalanceCallbac
 }
 
 // ICA Callback after rebalance validators on a host zone
-//
-//	If successful:
-//	   * Updates relevant validator delegations on the host zone struct
-//	If timeout/failure:
-//	   * Does nothing
+//   If successful:
+//     * Updates relevant validator delegations on the host zone struct
+//   If timeout/failure:
+//     * Does nothing
 func RebalanceCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ackResponse *icacallbackstypes.AcknowledgementResponse, args []byte) error {
 	// Fetch callback args
 	rebalanceCallback, err := k.UnmarshalRebalanceCallbackArgs(ctx, args)

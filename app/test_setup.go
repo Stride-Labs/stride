@@ -20,7 +20,7 @@ import (
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	ibctesting "github.com/cosmos/ibc-go/v7/testing"
 
-	cmdcfg "github.com/Stride-Labs/stride/v8/cmd/strided/config"
+	cmdcfg "github.com/Stride-Labs/stride/v9/cmd/strided/config"
 )
 
 const Bech32Prefix = "stride"
@@ -140,7 +140,13 @@ func GenesisStateWithValSet(app *StrideApp) GenesisState {
 	})
 
 	// update total supply
-	bankGenesis := banktypes.NewGenesisState(banktypes.DefaultGenesisState().Params, balances, totalSupply, []banktypes.Metadata{}, []banktypes.SendEnabled{})
+	bankGenesis := banktypes.NewGenesisState(
+		banktypes.DefaultGenesisState().Params,
+		balances,
+		totalSupply,
+		[]banktypes.Metadata{},
+		[]banktypes.SendEnabled{},
+	)
 	genesisState[banktypes.ModuleName] = app.AppCodec().MustMarshalJSON(bankGenesis)
 	return genesisState
 }
