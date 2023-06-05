@@ -48,6 +48,10 @@ done
 
 # Start the chain and create the transfer channels
 bash $SRC/start_chain.sh 
+
+sudo chmod -R 777 /home/stride/stride/dockernet/state
+sudo chmod -R 777 /home/stride/stride/dockernet/logs
+
 bash $SRC/start_relayers.sh 
 
 # Register all host zones 

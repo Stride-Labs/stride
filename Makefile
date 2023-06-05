@@ -122,14 +122,14 @@ start-docker-all: build-docker
 	@ALL_HOST_CHAINS=true bash $(DOCKERNET_HOME)/start_network.sh
 
 clean-docker:
-	@docker-compose -f $(DOCKERNET_COMPOSE_FILE) stop
-	@docker-compose -f $(DOCKERNET_COMPOSE_FILE) down
+	@docker compose -f $(DOCKERNET_COMPOSE_FILE) stop
+	@docker compose -f $(DOCKERNET_COMPOSE_FILE) down
 	rm -rf $(DOCKERNET_HOME)/state
 	docker image prune -a
 
 stop-docker:
 	@bash $(DOCKERNET_HOME)/pkill.sh
-	docker-compose -f $(DOCKERNET_COMPOSE_FILE) down
+	docker compose -f $(DOCKERNET_COMPOSE_FILE) down
 
 upgrade-init:
 	PART=1 bash $(DOCKERNET_HOME)/tests/run_tests_upgrade.sh
@@ -180,32 +180,32 @@ localnet-clean:
 	@rm -rfI $(HOME)/.stride/
 
 localnet-build:
-	@docker-compose -f $(LOCALNET_COMPOSE_FILE) build
+	@docker compose -f $(LOCALNET_COMPOSE_FILE) build
 
 localnet-start:
-	@docker-compose -f $(LOCALNET_COMPOSE_FILE) up
+	@docker compose -f $(LOCALNET_COMPOSE_FILE) up
 
 localnet-startd:
-	@docker-compose -f $(LOCALNET_COMPOSE_FILE) up -d
+	@docker compose -f $(LOCALNET_COMPOSE_FILE) up -d
 
 localnet-stop:
-	@docker-compose -f $(LOCALNET_COMPOSE_FILE) down
+	@docker compose -f $(LOCALNET_COMPOSE_FILE) down
 
 localnet-state-export-init: localnet-state-export-clean localnet-state-export-build
 
 localnet-state-export-build:
-	@DOCKER_BUILDKIT=1 COMPOSE_DOCKER_CLI_BUILD=1 docker-compose -f $(STATE_EXPORT_COMPOSE_FILE) build
+	@DOCKER_BUILDKIT=1 COMPOSE_DOCKER_CLI_BUILD=1 docker compose -f $(STATE_EXPORT_COMPOSE_FILE) build
 
 localnet-state-export-start:
-	@docker-compose -f $(STATE_EXPORT_COMPOSE_FILE) up
+	@docker compose -f $(STATE_EXPORT_COMPOSE_FILE) up
 
 localnet-state-export-startd:
-	@docker-compose -f $(STATE_EXPORT_COMPOSE_FILE) up -d
+	@docker compose -f $(STATE_EXPORT_COMPOSE_FILE) up -d
 
 localnet-state-export-upgrade:
 	bash $(LOCALSTRIDE_HOME)/state-export/scripts/submit_upgrade.sh
 
 localnet-state-export-stop:
-	@docker-compose -f $(STATE_EXPORT_COMPOSE_FILE) down
+	@docker compose -f $(STATE_EXPORT_COMPOSE_FILE) down
 
 localnet-state-export-clean: localnet-clean

@@ -29,12 +29,13 @@ echo "$CHAIN - Registering validators..."
 # {"name": "...", "address": "...", "weight": "..."}
 validators=()
 weights=(5 10 5 10 5) # alternate weights across vals
-for (( i=1; i <= $NUM_VALS; i++ )); do
+MAX_VALS=5
+for (( i=1; i <= $MAX_VALS; i++ )); do
     delegate_val=$(GET_VAL_ADDR $CHAIN $i)
     weight=${weights[$((i-1))]}
 
     validator="{\"name\":\"${VAL_PREFIX}${i}\",\"address\":\"$delegate_val\",\"weight\":$weight}"
-    if [[ "$i" != $NUM_VALS ]]; then
+    if [[ "$i" != $MAX_VALS ]]; then
         validator="${validator},"
     fi
     validators+=("$validator")
@@ -43,6 +44,8 @@ done
 # Write validators list to json file  of the form:
 # {"validators": [{"name": "...", "address": "...", "weight": "..."}, {"name": ... }] }
 validator_json=$DOCKERNET_HOME/state/${NODE_PREFIX}1/validators.json
+echo $validator_json
+echo "{\"validators\": [${validators[*]}]}"
 echo "{\"validators\": [${validators[*]}]}" > $validator_json
 
 # Add host zone validators to Stride's host zone struct

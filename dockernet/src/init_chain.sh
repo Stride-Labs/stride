@@ -73,7 +73,6 @@ for (( i=1; i <= $NUM_NODES; i++ )); do
     node_name="${NODE_PREFIX}${i}"
     # Moniker is of the form: STRIDE_1
     moniker=$(printf "${NODE_PREFIX}_${i}" | awk '{ print toupper($0) }')
-
     # Create a state directory for the current node and initialize the chain
     mkdir -p $STATE/$node_name
     

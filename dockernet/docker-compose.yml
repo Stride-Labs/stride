@@ -22,6 +22,588 @@ services:
       - ./state/stride3:/home/stride/.stride
       - ./state/sovereign:/home/stride/.sovereign
 
+  stride4:
+    image: stridezone:stride
+    volumes:
+      - ./state/stride4:/home/stride/.stride
+      - ./state/sovereign:/home/stride/.sovereign
+
+  stride5:
+    image: stridezone:stride
+    volumes:
+      - ./state/stride5:/home/stride/.stride
+      - ./state/sovereign:/home/stride/.sovereign
+
+  stride6:
+    image: stridezone:stride
+    volumes:
+      - ./state/stride6:/home/stride/.stride
+      - ./state/sovereign:/home/stride/.sovereign
+
+  stride7:
+    image: stridezone:stride
+    volumes:
+      - ./state/stride7:/home/stride/.stride
+      - ./state/sovereign:/home/stride/.sovereign
+
+  stride8:
+    image: stridezone:stride
+    volumes:
+      - ./state/stride8:/home/stride/.stride
+      - ./state/sovereign:/home/stride/.sovereign
+
+  stride9:
+    image: stridezone:stride
+    volumes:
+      - ./state/stride9:/home/stride/.stride
+      - ./state/sovereign:/home/stride/.sovereign
+
+  stride10:
+    image: stridezone:stride
+    volumes:
+      - ./state/stride10:/home/stride/.stride
+      - ./state/sovereign:/home/stride/.sovereign
+
+  stride11:
+    image: stridezone:stride
+    volumes:
+      - ./state/stride11:/home/stride/.stride
+      - ./state/sovereign:/home/stride/.sovereign
+
+  stride12:
+    image: stridezone:stride
+    volumes:
+      - ./state/stride12:/home/stride/.stride
+      - ./state/sovereign:/home/stride/.sovereign
+
+  stride13:
+    image: stridezone:stride
+    volumes:
+      - ./state/stride13:/home/stride/.stride
+      - ./state/sovereign:/home/stride/.sovereign
+
+  stride14:
+    image: stridezone:stride
+    volumes:
+      - ./state/stride14:/home/stride/.stride
+      - ./state/sovereign:/home/stride/.sovereign
+
+  stride15:
+    image: stridezone:stride
+    volumes:
+      - ./state/stride15:/home/stride/.stride
+      - ./state/sovereign:/home/stride/.sovereign
+
+  stride16:
+    image: stridezone:stride
+    volumes:
+      - ./state/stride16:/home/stride/.stride
+      - ./state/sovereign:/home/stride/.sovereign
+
+  stride17:
+    image: stridezone:stride
+    volumes:
+      - ./state/stride17:/home/stride/.stride
+      - ./state/sovereign:/home/stride/.sovereign
+
+  stride18:
+    image: stridezone:stride
+    volumes:
+      - ./state/stride18:/home/stride/.stride
+      - ./state/sovereign:/home/stride/.sovereign
+
+  stride19:
+    image: stridezone:stride
+    volumes:
+      - ./state/stride19:/home/stride/.stride
+      - ./state/sovereign:/home/stride/.sovereign
+
+  stride20:
+    image: stridezone:stride
+    volumes:
+      - ./state/stride20:/home/stride/.stride
+      - ./state/sovereign:/home/stride/.sovereign
+
+  stride21:
+    image: stridezone:stride
+    volumes:
+      - ./state/stride21:/home/stride/.stride
+      - ./state/sovereign:/home/stride/.sovereign
+
+  stride22:
+    image: stridezone:stride
+    volumes:
+      - ./state/stride22:/home/stride/.stride
+      - ./state/sovereign:/home/stride/.sovereign
+
+  stride23:
+    image: stridezone:stride
+    volumes:
+      - ./state/stride23:/home/stride/.stride
+      - ./state/sovereign:/home/stride/.sovereign
+
+  stride24:
+    image: stridezone:stride
+    volumes:
+      - ./state/stride24:/home/stride/.stride
+      - ./state/sovereign:/home/stride/.sovereign
+
+  stride25:
+    image: stridezone:stride
+    volumes:
+      - ./state/stride25:/home/stride/.stride
+      - ./state/sovereign:/home/stride/.sovereign
+
+  stride26:
+    image: stridezone:stride
+    volumes:
+      - ./state/stride26:/home/stride/.stride
+      - ./state/sovereign:/home/stride/.sovereign
+
+  stride27:
+    image: stridezone:stride
+    volumes:
+      - ./state/stride27:/home/stride/.stride
+      - ./state/sovereign:/home/stride/.sovereign
+
+  stride28:
+    image: stridezone:stride
+    volumes:
+      - ./state/stride28:/home/stride/.stride
+      - ./state/sovereign:/home/stride/.sovereign
+
+  stride29:
+    image: stridezone:stride
+    volumes:
+      - ./state/stride29:/home/stride/.stride
+      - ./state/sovereign:/home/stride/.sovereign
+
+  stride30:
+    image: stridezone:stride
+    volumes:
+      - ./state/stride30:/home/stride/.stride
+      - ./state/sovereign:/home/stride/.sovereign
+
+  stride31:
+    image: stridezone:stride
+    volumes:
+      - ./state/stride31:/home/stride/.stride
+      - ./state/sovereign:/home/stride/.sovereign
+
+  stride32:
+    image: stridezone:stride
+    volumes:
+      - ./state/stride32:/home/stride/.stride
+      - ./state/sovereign:/home/stride/.sovereign
+
+  stride33:
+    image: stridezone:stride
+    volumes:
+      - ./state/stride33:/home/stride/.stride
+      - ./state/sovereign:/home/stride/.sovereign
+
+  stride34:
+    image: stridezone:stride
+    volumes:
+      - ./state/stride34:/home/stride/.stride
+      - ./state/sovereign:/home/stride/.sovereign
+
+  stride35:
+    image: stridezone:stride
+    volumes:
+      - ./state/stride35:/home/stride/.stride
+      - ./state/sovereign:/home/stride/.sovereign
+
+  stride36:
+    image: stridezone:stride
+    volumes:
+      - ./state/stride36:/home/stride/.stride
+      - ./state/sovereign:/home/stride/.sovereign
+
+  stride37:
+    image: stridezone:stride
+    volumes:
+      - ./state/stride37:/home/stride/.stride
+      - ./state/sovereign:/home/stride/.sovereign
+
+  stride38:
+    image: stridezone:stride
+    volumes:
+      - ./state/stride38:/home/stride/.stride
+      - ./state/sovereign:/home/stride/.sovereign
+
+  stride39:
+    image: stridezone:stride
+    volumes:
+      - ./state/stride39:/home/stride/.stride
+      - ./state/sovereign:/home/stride/.sovereign
+
+  stride40:
+    image: stridezone:stride
+    volumes:
+      - ./state/stride40:/home/stride/.stride
+      - ./state/sovereign:/home/stride/.sovereign
+
+  stride41:
+    image: stridezone:stride
+    volumes:
+      - ./state/stride41:/home/stride/.stride
+      - ./state/sovereign:/home/stride/.sovereign
+
+  stride42:
+    image: stridezone:stride
+    volumes:
+      - ./state/stride42:/home/stride/.stride
+      - ./state/sovereign:/home/stride/.sovereign
+
+  stride43:
+    image: stridezone:stride
+    volumes:
+      - ./state/stride43:/home/stride/.stride
+      - ./state/sovereign:/home/stride/.sovereign
+
+  stride44:
+    image: stridezone:stride
+    volumes:
+      - ./state/stride44:/home/stride/.stride
+      - ./state/sovereign:/home/stride/.sovereign
+
+  stride45:
+    image: stridezone:stride
+    volumes:
+      - ./state/stride45:/home/stride/.stride
+      - ./state/sovereign:/home/stride/.sovereign
+
+  stride46:
+    image: stridezone:stride
+    volumes:
+      - ./state/stride46:/home/stride/.stride
+      - ./state/sovereign:/home/stride/.sovereign
+
+  stride47:
+    image: stridezone:stride
+    volumes:
+      - ./state/stride47:/home/stride/.stride
+      - ./state/sovereign:/home/stride/.sovereign
+
+  stride48:
+    image: stridezone:stride
+    volumes:
+      - ./state/stride48:/home/stride/.stride
+      - ./state/sovereign:/home/stride/.sovereign
+
+  stride49:
+    image: stridezone:stride
+    volumes:
+      - ./state/stride49:/home/stride/.stride
+      - ./state/sovereign:/home/stride/.sovereign
+
+  stride50:
+    image: stridezone:stride
+    volumes:
+      - ./state/stride50:/home/stride/.stride
+      - ./state/sovereign:/home/stride/.sovereign
+
+  stride51:
+    image: stridezone:stride
+    volumes:
+      - ./state/stride51:/home/stride/.stride
+      - ./state/sovereign:/home/stride/.sovereign
+
+  stride52:
+    image: stridezone:stride
+    volumes:
+      - ./state/stride52:/home/stride/.stride
+      - ./state/sovereign:/home/stride/.sovereign
+
+  stride53:
+    image: stridezone:stride
+    volumes:
+      - ./state/stride53:/home/stride/.stride
+      - ./state/sovereign:/home/stride/.sovereign
+
+  stride54:
+    image: stridezone:stride
+    volumes:
+      - ./state/stride54:/home/stride/.stride
+      - ./state/sovereign:/home/stride/.sovereign
+
+  stride55:
+    image: stridezone:stride
+    volumes:
+      - ./state/stride55:/home/stride/.stride
+      - ./state/sovereign:/home/stride/.sovereign
+
+  stride56:
+    image: stridezone:stride
+    volumes:
+      - ./state/stride56:/home/stride/.stride
+      - ./state/sovereign:/home/stride/.sovereign
+
+  stride57:
+    image: stridezone:stride
+    volumes:
+      - ./state/stride57:/home/stride/.stride
+      - ./state/sovereign:/home/stride/.sovereign
+
+  stride58:
+    image: stridezone:stride
+    volumes:
+      - ./state/stride58:/home/stride/.stride
+      - ./state/sovereign:/home/stride/.sovereign
+
+  stride59:
+    image: stridezone:stride
+    volumes:
+      - ./state/stride59:/home/stride/.stride
+      - ./state/sovereign:/home/stride/.sovereign
+
+  stride60:
+    image: stridezone:stride
+    volumes:
+      - ./state/stride60:/home/stride/.stride
+      - ./state/sovereign:/home/stride/.sovereign
+
+  stride61:
+    image: stridezone:stride
+    volumes:
+      - ./state/stride61:/home/stride/.stride
+      - ./state/sovereign:/home/stride/.sovereign
+
+  stride62:
+    image: stridezone:stride
+    volumes:
+      - ./state/stride62:/home/stride/.stride
+      - ./state/sovereign:/home/stride/.sovereign
+
+  stride63:
+    image: stridezone:stride
+    volumes:
+      - ./state/stride63:/home/stride/.stride
+      - ./state/sovereign:/home/stride/.sovereign
+
+  stride64:
+    image: stridezone:stride
+    volumes:
+      - ./state/stride64:/home/stride/.stride
+      - ./state/sovereign:/home/stride/.sovereign
+
+  stride65:
+    image: stridezone:stride
+    volumes:
+      - ./state/stride65:/home/stride/.stride
+      - ./state/sovereign:/home/stride/.sovereign
+
+  stride66:
+    image: stridezone:stride
+    volumes:
+      - ./state/stride66:/home/stride/.stride
+      - ./state/sovereign:/home/stride/.sovereign
+
+  stride67:
+    image: stridezone:stride
+    volumes:
+      - ./state/stride67:/home/stride/.stride
+      - ./state/sovereign:/home/stride/.sovereign
+
+  stride68:
+    image: stridezone:stride
+    volumes:
+      - ./state/stride68:/home/stride/.stride
+      - ./state/sovereign:/home/stride/.sovereign
+
+  stride69:
+    image: stridezone:stride
+    volumes:
+      - ./state/stride69:/home/stride/.stride
+      - ./state/sovereign:/home/stride/.sovereign
+
+  stride70:
+    image: stridezone:stride
+    volumes:
+      - ./state/stride70:/home/stride/.stride
+      - ./state/sovereign:/home/stride/.sovereign
+
+  stride71:
+    image: stridezone:stride
+    volumes:
+      - ./state/stride71:/home/stride/.stride
+      - ./state/sovereign:/home/stride/.sovereign
+
+  stride72:
+    image: stridezone:stride
+    volumes:
+      - ./state/stride72:/home/stride/.stride
+      - ./state/sovereign:/home/stride/.sovereign
+
+  stride73:
+    image: stridezone:stride
+    volumes:
+      - ./state/stride73:/home/stride/.stride
+      - ./state/sovereign:/home/stride/.sovereign
+
+  stride74:
+    image: stridezone:stride
+    volumes:
+      - ./state/stride74:/home/stride/.stride
+      - ./state/sovereign:/home/stride/.sovereign
+
+  stride75:
+    image: stridezone:stride
+    volumes:
+      - ./state/stride75:/home/stride/.stride
+      - ./state/sovereign:/home/stride/.sovereign
+
+  stride76:
+    image: stridezone:stride
+    volumes:
+      - ./state/stride76:/home/stride/.stride
+      - ./state/sovereign:/home/stride/.sovereign
+
+  stride77:
+    image: stridezone:stride
+    volumes:
+      - ./state/stride77:/home/stride/.stride
+      - ./state/sovereign:/home/stride/.sovereign
+
+  stride78:
+    image: stridezone:stride
+    volumes:
+      - ./state/stride78:/home/stride/.stride
+      - ./state/sovereign:/home/stride/.sovereign
+
+  stride79:
+    image: stridezone:stride
+    volumes:
+      - ./state/stride79:/home/stride/.stride
+      - ./state/sovereign:/home/stride/.sovereign
+
+  stride80:
+    image: stridezone:stride
+    volumes:
+      - ./state/stride80:/home/stride/.stride
+      - ./state/sovereign:/home/stride/.sovereign
+
+  stride81:
+    image: stridezone:stride
+    volumes:
+      - ./state/stride81:/home/stride/.stride
+      - ./state/sovereign:/home/stride/.sovereign
+
+  stride82:
+    image: stridezone:stride
+    volumes:
+      - ./state/stride82:/home/stride/.stride
+      - ./state/sovereign:/home/stride/.sovereign
+
+  stride83:
+    image: stridezone:stride
+    volumes:
+      - ./state/stride83:/home/stride/.stride
+      - ./state/sovereign:/home/stride/.sovereign
+
+  stride84:
+    image: stridezone:stride
+    volumes:
+      - ./state/stride84:/home/stride/.stride
+      - ./state/sovereign:/home/stride/.sovereign
+
+  stride85:
+    image: stridezone:stride
+    volumes:
+      - ./state/stride85:/home/stride/.stride
+      - ./state/sovereign:/home/stride/.sovereign
+
+  stride86:
+    image: stridezone:stride
+    volumes:
+      - ./state/stride86:/home/stride/.stride
+      - ./state/sovereign:/home/stride/.sovereign
+
+  stride87:
+    image: stridezone:stride
+    volumes:
+      - ./state/stride87:/home/stride/.stride
+      - ./state/sovereign:/home/stride/.sovereign
+
+  stride88:
+    image: stridezone:stride
+    volumes:
+      - ./state/stride88:/home/stride/.stride
+      - ./state/sovereign:/home/stride/.sovereign
+
+  stride89:
+    image: stridezone:stride
+    volumes:
+      - ./state/stride89:/home/stride/.stride
+      - ./state/sovereign:/home/stride/.sovereign
+
+  stride90:
+    image: stridezone:stride
+    volumes:
+      - ./state/stride90:/home/stride/.stride
+      - ./state/sovereign:/home/stride/.sovereign
+
+  stride91:
+    image: stridezone:stride
+    volumes:
+      - ./state/stride91:/home/stride/.stride
+      - ./state/sovereign:/home/stride/.sovereign
+
+  stride92:
+    image: stridezone:stride
+    volumes:
+      - ./state/stride92:/home/stride/.stride
+      - ./state/sovereign:/home/stride/.sovereign
+
+  stride93:
+    image: stridezone:stride
+    volumes:
+      - ./state/stride93:/home/stride/.stride
+      - ./state/sovereign:/home/stride/.sovereign
+
+  stride94:
+    image: stridezone:stride
+    volumes:
+      - ./state/stride94:/home/stride/.stride
+      - ./state/sovereign:/home/stride/.sovereign
+
+  stride95:
+    image: stridezone:stride
+    volumes:
+      - ./state/stride95:/home/stride/.stride
+      - ./state/sovereign:/home/stride/.sovereign
+
+  stride96:
+    image: stridezone:stride
+    volumes:
+      - ./state/stride96:/home/stride/.stride
+      - ./state/sovereign:/home/stride/.sovereign
+
+  stride97:
+    image: stridezone:stride
+    volumes:
+      - ./state/stride97:/home/stride/.stride
+      - ./state/sovereign:/home/stride/.sovereign
+
+  stride98:
+    image: stridezone:stride
+    volumes:
+      - ./state/stride98:/home/stride/.stride
+      - ./state/sovereign:/home/stride/.sovereign
+
+  stride99:
+    image: stridezone:stride
+    volumes:
+      - ./state/stride99:/home/stride/.stride
+      - ./state/sovereign:/home/stride/.sovereign
+
+  stride100:
+    image: stridezone:stride
+    volumes:
+      - ./state/stride100:/home/stride/.stride
+      - ./state/sovereign:/home/stride/.sovereign
+
   gaia1:
     image: stridezone:gaia
     volumes:
@@ -50,6 +632,481 @@ services:
     image: stridezone:gaia
     volumes:
       - ./state/gaia5:/home/gaia/.gaia
+
+  gaia6:
+    image: stridezone:gaia
+    volumes:
+      - ./state/gaia6:/home/gaia/.gaia
+
+  gaia7:
+    image: stridezone:gaia
+    volumes:
+      - ./state/gaia7:/home/gaia/.gaia
+
+  gaia8:
+    image: stridezone:gaia
+    volumes:
+      - ./state/gaia8:/home/gaia/.gaia
+
+  gaia9:
+    image: stridezone:gaia
+    volumes:
+      - ./state/gaia9:/home/gaia/.gaia
+
+  gaia10:
+    image: stridezone:gaia
+    volumes:
+      - ./state/gaia10:/home/gaia/.gaia
+
+  gaia11:
+    image: stridezone:gaia
+    volumes:
+      - ./state/gaia11:/home/gaia/.gaia
+
+  gaia12:
+    image: stridezone:gaia
+    volumes:
+      - ./state/gaia12:/home/gaia/.gaia
+
+  gaia13:
+    image: stridezone:gaia
+    volumes:
+      - ./state/gaia13:/home/gaia/.gaia
+
+  gaia14:
+    image: stridezone:gaia
+    volumes:
+      - ./state/gaia14:/home/gaia/.gaia
+
+  gaia15:
+    image: stridezone:gaia
+    volumes:
+      - ./state/gaia15:/home/gaia/.gaia
+
+  gaia16:
+    image: stridezone:gaia
+    volumes:
+      - ./state/gaia16:/home/gaia/.gaia
+
+  gaia17:
+    image: stridezone:gaia
+    volumes:
+      - ./state/gaia17:/home/gaia/.gaia
+
+  gaia18:
+    image: stridezone:gaia
+    volumes:
+      - ./state/gaia18:/home/gaia/.gaia
+
+  gaia19:
+    image: stridezone:gaia
+    volumes:
+      - ./state/gaia19:/home/gaia/.gaia
+
+  gaia20:
+    image: stridezone:gaia
+    volumes:
+      - ./state/gaia20:/home/gaia/.gaia
+
+  gaia21:
+    image: stridezone:gaia
+    volumes:
+      - ./state/gaia21:/home/gaia/.gaia
+
+  gaia22:
+    image: stridezone:gaia
+    volumes:
+      - ./state/gaia22:/home/gaia/.gaia
+
+  gaia23:
+    image: stridezone:gaia
+    volumes:
+      - ./state/gaia23:/home/gaia/.gaia
+
+  gaia24:
+    image: stridezone:gaia
+    volumes:
+      - ./state/gaia24:/home/gaia/.gaia
+
+  gaia25:
+    image: stridezone:gaia
+    volumes:
+      - ./state/gaia25:/home/gaia/.gaia
+
+  gaia26:
+    image: stridezone:gaia
+    volumes:
+      - ./state/gaia26:/home/gaia/.gaia
+
+  gaia27:
+    image: stridezone:gaia
+    volumes:
+      - ./state/gaia27:/home/gaia/.gaia
+
+  gaia28:
+    image: stridezone:gaia
+    volumes:
+      - ./state/gaia28:/home/gaia/.gaia
+
+  gaia29:
+    image: stridezone:gaia
+    volumes:
+      - ./state/gaia29:/home/gaia/.gaia
+
+  gaia30:
+    image: stridezone:gaia
+    volumes:
+      - ./state/gaia30:/home/gaia/.gaia
+
+  gaia31:
+    image: stridezone:gaia
+    volumes:
+      - ./state/gaia31:/home/gaia/.gaia
+
+  gaia32:
+    image: stridezone:gaia
+    volumes:
+      - ./state/gaia32:/home/gaia/.gaia
+
+  gaia33:
+    image: stridezone:gaia
+    volumes:
+      - ./state/gaia33:/home/gaia/.gaia
+
+  gaia34:
+    image: stridezone:gaia
+    volumes:
+      - ./state/gaia34:/home/gaia/.gaia
+
+  gaia35:
+    image: stridezone:gaia
+    volumes:
+      - ./state/gaia35:/home/gaia/.gaia
+
+  gaia36:
+    image: stridezone:gaia
+    volumes:
+      - ./state/gaia36:/home/gaia/.gaia
+
+  gaia37:
+    image: stridezone:gaia
+    volumes:
+      - ./state/gaia37:/home/gaia/.gaia
+
+  gaia38:
+    image: stridezone:gaia
+    volumes:
+      - ./state/gaia38:/home/gaia/.gaia
+
+  gaia39:
+    image: stridezone:gaia
+    volumes:
+      - ./state/gaia39:/home/gaia/.gaia
+
+  gaia40:
+    image: stridezone:gaia
+    volumes:
+      - ./state/gaia40:/home/gaia/.gaia
+
+  gaia41:
+    image: stridezone:gaia
+    volumes:
+      - ./state/gaia41:/home/gaia/.gaia
+
+  gaia42:
+    image: stridezone:gaia
+    volumes:
+      - ./state/gaia42:/home/gaia/.gaia
+
+  gaia43:
+    image: stridezone:gaia
+    volumes:
+      - ./state/gaia43:/home/gaia/.gaia
+
+  gaia44:
+    image: stridezone:gaia
+    volumes:
+      - ./state/gaia44:/home/gaia/.gaia
+
+  gaia45:
+    image: stridezone:gaia
+    volumes:
+      - ./state/gaia45:/home/gaia/.gaia
+
+  gaia46:
+    image: stridezone:gaia
+    volumes:
+      - ./state/gaia46:/home/gaia/.gaia
+
+  gaia47:
+    image: stridezone:gaia
+    volumes:
+      - ./state/gaia47:/home/gaia/.gaia
+
+  gaia48:
+    image: stridezone:gaia
+    volumes:
+      - ./state/gaia48:/home/gaia/.gaia
+
+  gaia49:
+    image: stridezone:gaia
+    volumes:
+      - ./state/gaia49:/home/gaia/.gaia
+
+  gaia50:
+    image: stridezone:gaia
+    volumes:
+      - ./state/gaia50:/home/gaia/.gaia
+
+  gaia51:
+    image: stridezone:gaia
+    volumes:
+      - ./state/gaia51:/home/gaia/.gaia
+
+  gaia52:
+    image: stridezone:gaia
+    volumes:
+      - ./state/gaia52:/home/gaia/.gaia
+
+  gaia53:
+    image: stridezone:gaia
+    volumes:
+      - ./state/gaia53:/home/gaia/.gaia
+
+  gaia54:
+    image: stridezone:gaia
+    volumes:
+      - ./state/gaia54:/home/gaia/.gaia
+
+  gaia55:
+    image: stridezone:gaia
+    volumes:
+      - ./state/gaia55:/home/gaia/.gaia
+
+  gaia56:
+    image: stridezone:gaia
+    volumes:
+      - ./state/gaia56:/home/gaia/.gaia
+
+  gaia57:
+    image: stridezone:gaia
+    volumes:
+      - ./state/gaia57:/home/gaia/.gaia
+
+  gaia58:
+    image: stridezone:gaia
+    volumes:
+      - ./state/gaia58:/home/gaia/.gaia
+
+  gaia59:
+    image: stridezone:gaia
+    volumes:
+      - ./state/gaia59:/home/gaia/.gaia
+
+  gaia60:
+    image: stridezone:gaia
+    volumes:
+      - ./state/gaia60:/home/gaia/.gaia
+
+  gaia61:
+    image: stridezone:gaia
+    volumes:
+      - ./state/gaia61:/home/gaia/.gaia
+
+  gaia62:
+    image: stridezone:gaia
+    volumes:
+      - ./state/gaia62:/home/gaia/.gaia
+
+  gaia63:
+    image: stridezone:gaia
+    volumes:
+      - ./state/gaia63:/home/gaia/.gaia
+
+  gaia64:
+    image: stridezone:gaia
+    volumes:
+      - ./state/gaia64:/home/gaia/.gaia
+
+  gaia65:
+    image: stridezone:gaia
+    volumes:
+      - ./state/gaia65:/home/gaia/.gaia
+
+  gaia66:
+    image: stridezone:gaia
+    volumes:
+      - ./state/gaia66:/home/gaia/.gaia
+
+  gaia67:
+    image: stridezone:gaia
+    volumes:
+      - ./state/gaia67:/home/gaia/.gaia
+
+  gaia68:
+    image: stridezone:gaia
+    volumes:
+      - ./state/gaia68:/home/gaia/.gaia
+
+  gaia69:
+    image: stridezone:gaia
+    volumes:
+      - ./state/gaia69:/home/gaia/.gaia
+
+  gaia70:
+    image: stridezone:gaia
+    volumes:
+      - ./state/gaia70:/home/gaia/.gaia
+
+  gaia71:
+    image: stridezone:gaia
+    volumes:
+      - ./state/gaia71:/home/gaia/.gaia
+
+  gaia72:
+    image: stridezone:gaia
+    volumes:
+      - ./state/gaia72:/home/gaia/.gaia
+
+  gaia73:
+    image: stridezone:gaia
+    volumes:
+      - ./state/gaia73:/home/gaia/.gaia
+
+  gaia74:
+    image: stridezone:gaia
+    volumes:
+      - ./state/gaia74:/home/gaia/.gaia
+
+  gaia75:
+    image: stridezone:gaia
+    volumes:
+      - ./state/gaia75:/home/gaia/.gaia
+
+  gaia76:
+    image: stridezone:gaia
+    volumes:
+      - ./state/gaia76:/home/gaia/.gaia
+
+  gaia77:
+    image: stridezone:gaia
+    volumes:
+      - ./state/gaia77:/home/gaia/.gaia
+
+  gaia78:
+    image: stridezone:gaia
+    volumes:
+      - ./state/gaia78:/home/gaia/.gaia
+
+  gaia79:
+    image: stridezone:gaia
+    volumes:
+      - ./state/gaia79:/home/gaia/.gaia
+
+  gaia80:
+    image: stridezone:gaia
+    volumes:
+      - ./state/gaia80:/home/gaia/.gaia
+
+  gaia81:
+    image: stridezone:gaia
+    volumes:
+      - ./state/gaia81:/home/gaia/.gaia
+
+  gaia82:
+    image: stridezone:gaia
+    volumes:
+      - ./state/gaia82:/home/gaia/.gaia
+
+  gaia83:
+    image: stridezone:gaia
+    volumes:
+      - ./state/gaia83:/home/gaia/.gaia
+
+  gaia84:
+    image: stridezone:gaia
+    volumes:
+      - ./state/gaia84:/home/gaia/.gaia
+
+  gaia85:
+    image: stridezone:gaia
+    volumes:
+      - ./state/gaia85:/home/gaia/.gaia
+
+  gaia86:
+    image: stridezone:gaia
+    volumes:
+      - ./state/gaia86:/home/gaia/.gaia
+
+  gaia87:
+    image: stridezone:gaia
+    volumes:
+      - ./state/gaia87:/home/gaia/.gaia
+
+  gaia88:
+    image: stridezone:gaia
+    volumes:
+      - ./state/gaia88:/home/gaia/.gaia
+
+  gaia89:
+    image: stridezone:gaia
+    volumes:
+      - ./state/gaia89:/home/gaia/.gaia
+
+  gaia90:
+    image: stridezone:gaia
+    volumes:
+      - ./state/gaia90:/home/gaia/.gaia
+
+  gaia91:
+    image: stridezone:gaia
+    volumes:
+      - ./state/gaia91:/home/gaia/.gaia
+
+  gaia92:
+    image: stridezone:gaia
+    volumes:
+      - ./state/gaia92:/home/gaia/.gaia
+
+  gaia93:
+    image: stridezone:gaia
+    volumes:
+      - ./state/gaia93:/home/gaia/.gaia
+
+  gaia94:
+    image: stridezone:gaia
+    volumes:
+      - ./state/gaia94:/home/gaia/.gaia
+
+  gaia95:
+    image: stridezone:gaia
+    volumes:
+      - ./state/gaia95:/home/gaia/.gaia
+
+  gaia96:
+    image: stridezone:gaia
+    volumes:
+      - ./state/gaia96:/home/gaia/.gaia
+
+  gaia97:
+    image: stridezone:gaia
+    volumes:
+      - ./state/gaia97:/home/gaia/.gaia
+
+  gaia98:
+    image: stridezone:gaia
+    volumes:
+      - ./state/gaia98:/home/gaia/.gaia
+
+  gaia99:
+    image: stridezone:gaia
+    volumes:
+      - ./state/gaia99:/home/gaia/.gaia
+
+  gaia100:
+    image: stridezone:gaia
+    volumes:
+      - ./state/gaia100:/home/gaia/.gaia    
 
   juno1:
     image: stridezone:juno
