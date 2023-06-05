@@ -82,7 +82,7 @@ chains:
   comdex:
     type: cosmos
     value:
-      key: rly7
+      key: rly8
       chain-id: COMDEX
       rpc-addr: http://comdex1:26657
       account-prefix: COMDEX

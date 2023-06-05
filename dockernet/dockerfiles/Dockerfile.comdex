@@ -4,7 +4,7 @@ WORKDIR /opt/
 
 RUN set -eux; apk add --no-cache ca-certificates build-base; apk add git linux-headers
 
-ENV COMMIT_HASH=757febdadffc0977d4ea7c69ea67613867294408
+ENV COMMIT_HASH=98b3e5731cc224f2ee805d5722be4b6e6ec64c45
 
 RUN git clone https://github.com/comdex-official/comdex.git \
     && cd comdex \
