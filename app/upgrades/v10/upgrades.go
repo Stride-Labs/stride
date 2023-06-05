@@ -20,6 +20,8 @@ import (
 	clientkeeper "github.com/cosmos/ibc-go/v7/modules/core/02-client/keeper"
 	ibctmmigrations "github.com/cosmos/ibc-go/v7/modules/light-clients/07-tendermint/migrations"
 
+	"github.com/cosmos/ibc-go/v7/modules/core/exported"
+
 	icacallbackskeeper "github.com/Stride-Labs/stride/v9/x/icacallbacks/keeper"
 	mintkeeper "github.com/Stride-Labs/stride/v9/x/mint/keeper"
 	minttypes "github.com/Stride-Labs/stride/v9/x/mint/types"
@@ -99,8 +101,10 @@ func CreateUpgradeHandler(
 			return nil, errorsmod.Wrapf(err, "unable to set MinInitialDepositRatio")
 		}
 
-		ctx.Logger().Info("v10 Upgrade Complete")
+		ctx.Logger().Info("Adding localhost IBC client...")
+		AddLocalhostIBCClient(ctx, clientKeeper)
 
+		ctx.Logger().Info("v10 Upgrade Complete")
 		return vm, err
 	}
 }
@@ -194,4 +198,11 @@ func reserializeCallback(oldCallbackArgsBz []byte, callback deprecatedproto.Mess
 		return nil, err
 	}
 	return newCallbackArgs, nil
+}
+
+// Explicitly update the IBC 02-client params, adding the localhost client type
+func AddLocalhostIBCClient(ctx sdk.Context, k clientkeeper.Keeper) {
+	params := k.GetParams(ctx)
+	params.AllowedClients = append(params.AllowedClients, exported.Localhost)
+	k.SetParams(ctx, params)
 }
