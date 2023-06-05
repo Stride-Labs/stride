@@ -11,13 +11,9 @@ import (
 
 func RegisterCodec(cdc *codec.LegacyAmino) {
 	cdc.RegisterConcrete(&MsgLiquidStake{}, "stakeibc/LiquidStake", nil)
-	cdc.RegisterConcrete(&MsgRegisterHostZone{}, "stakeibc/RegisterHostZone", nil)
 	cdc.RegisterConcrete(&MsgRedeemStake{}, "stakeibc/RedeemStake", nil)
 	cdc.RegisterConcrete(&MsgClaimUndelegatedTokens{}, "stakeibc/ClaimUndelegatedTokens", nil)
 	cdc.RegisterConcrete(&MsgRebalanceValidators{}, "stakeibc/RebalanceValidators", nil)
-	cdc.RegisterConcrete(&MsgAddValidators{}, "stakeibc/AddValidators", nil)
-	cdc.RegisterConcrete(&MsgChangeValidatorWeight{}, "stakeibc/ChangeValidatorWeight", nil)
-	cdc.RegisterConcrete(&MsgDeleteValidator{}, "stakeibc/DeleteValidator", nil)
 	cdc.RegisterConcrete(&AddValidatorsProposal{}, "stakeibc/AddValidatorsProposal", nil)
 	cdc.RegisterConcrete(&DeleteValidatorsProposal{}, "stakeibc/DeleteValidatorsProposal", nil)
 	cdc.RegisterConcrete(&ChangeValidatorWeightsProposal{}, "stakeibc/ChangeValidatorWeightsProposal", nil)
@@ -30,13 +26,9 @@ func RegisterCodec(cdc *codec.LegacyAmino) {
 func RegisterInterfaces(registry cdctypes.InterfaceRegistry) {
 	registry.RegisterImplementations((*sdk.Msg)(nil),
 		&MsgLiquidStake{},
-		&MsgRegisterHostZone{},
 		&MsgRedeemStake{},
 		&MsgClaimUndelegatedTokens{},
 		&MsgRebalanceValidators{},
-		&MsgAddValidators{},
-		&MsgChangeValidatorWeight{},
-		&MsgDeleteValidator{},
 		&MsgRestoreInterchainAccount{},
 		&MsgUpdateValidatorSharesExchRate{},
 	)

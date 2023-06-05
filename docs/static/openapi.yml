@@ -54695,13 +54695,7 @@ definitions:
       - WITHDRAWAL
       - REDEMPTION
     default: DELEGATION
-  Stridelabs.stride.stakeibc.MsgAddValidatorResponse:
-    type: object
-  Stridelabs.stride.stakeibc.MsgChangeValidatorWeightResponse:
-    type: object
   Stridelabs.stride.stakeibc.MsgClaimUndelegatedTokensResponse:
-    type: object
-  Stridelabs.stride.stakeibc.MsgDeleteValidatorResponse:
     type: object
   Stridelabs.stride.stakeibc.MsgLiquidStakeResponse:
     type: object
@@ -54709,11 +54703,6 @@ definitions:
     type: object
   Stridelabs.stride.stakeibc.MsgRedeemStakeResponse:
     type: object
-  Stridelabs.stride.stakeibc.MsgRegisterHostZoneResponse:
-    type: object
-    title: >-
-      TODO(TEST-53): Remove this pre-launch (no need for clients to create /
-      interact with ICAs)
   Stridelabs.stride.stakeibc.MsgRestoreInterchainAccountResponse:
     type: object
   Stridelabs.stride.stakeibc.MsgUpdateValidatorSharesExchRateResponse:

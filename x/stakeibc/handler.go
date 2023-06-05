@@ -23,9 +23,6 @@ func NewHandler(k keeper.Keeper) sdk.Handler {
 		case *types.MsgLiquidStake:
 			res, err := msgServer.LiquidStake(sdk.WrapSDKContext(ctx), msg)
 			return sdk.WrapServiceResult(ctx, res, err)
-		case *types.MsgRegisterHostZone:
-			res, err := msgServer.RegisterHostZone(sdk.WrapSDKContext(ctx), msg)
-			return sdk.WrapServiceResult(ctx, res, err)
 		case *types.MsgRedeemStake:
 			res, err := msgServer.RedeemStake(sdk.WrapSDKContext(ctx), msg)
 			return sdk.WrapServiceResult(ctx, res, err)
@@ -34,15 +31,6 @@ func NewHandler(k keeper.Keeper) sdk.Handler {
 			return sdk.WrapServiceResult(ctx, res, err)
 		case *types.MsgRebalanceValidators:
 			res, err := msgServer.RebalanceValidators(sdk.WrapSDKContext(ctx), msg)
-			return sdk.WrapServiceResult(ctx, res, err)
-		case *types.MsgAddValidators:
-			res, err := msgServer.AddValidators(sdk.WrapSDKContext(ctx), msg)
-			return sdk.WrapServiceResult(ctx, res, err)
-		case *types.MsgChangeValidatorWeight:
-			res, err := msgServer.ChangeValidatorWeight(sdk.WrapSDKContext(ctx), msg)
-			return sdk.WrapServiceResult(ctx, res, err)
-		case *types.MsgDeleteValidator:
-			res, err := msgServer.DeleteValidator(sdk.WrapSDKContext(ctx), msg)
 			return sdk.WrapServiceResult(ctx, res, err)
 		case *types.MsgRestoreInterchainAccount:
 			res, err := msgServer.RestoreInterchainAccount(sdk.WrapSDKContext(ctx), msg)
