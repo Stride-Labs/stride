@@ -189,16 +189,6 @@ func (k Keeper) SetPendingSendPacket(ctx sdk.Context, channelId string, sequence
 	store.Set(key, []byte{1})
 }
 
-// Checks whether the packet sequence number is in the store - indicating that it was
-// sent this quota
-func (k Keeper) CheckPacketSentDuringCurrentQuota(ctx sdk.Context, channelId string, sequence uint64) bool {
-	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.PendingSendPacketPrefix)
-	key := types.GetPendingSendPacketKey(channelId, sequence)
-	valueBz := store.Get(key)
-	found := len(valueBz) != 0
-	return found
-}
-
 // Remove a pending packet sequence number from the store
 // Used after the ack or timeout for a packet has been received
 func (k Keeper) RemovePendingSendPacket(ctx sdk.Context, channelId string, sequence uint64) {
@@ -207,8 +197,18 @@ func (k Keeper) RemovePendingSendPacket(ctx sdk.Context, channelId string, seque
 	store.Delete(key)
 }
 
+// Checks whether the packet sequence number is in the store - indicating that it was
+// sent during the current quota
+func (k Keeper) CheckPacketSentDuringCurrentQuota(ctx sdk.Context, channelId string, sequence uint64) bool {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.PendingSendPacketPrefix)
+	key := types.GetPendingSendPacketKey(channelId, sequence)
+	valueBz := store.Get(key)
+	found := len(valueBz) != 0
+	return found
+}
+
 // Remove all pending sequence numbers from the store
-// This is done when the quota resets
+// This is executed when the quota resets
 func (k Keeper) RemoveAllChannelPendingSendPackets(ctx sdk.Context, channelId string) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.PendingSendPacketPrefix)
 
@@ -234,7 +234,7 @@ func (k Keeper) RemoveDenomFromBlacklist(ctx sdk.Context, denom string) {
 	store.Delete(key)
 }
 
-// Check if a denom is currently blacklistec
+// Check if a denom is currently blacklisted
 func (k Keeper) IsDenomBlacklisted(ctx sdk.Context, denom string) bool {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.DenomBlacklistKeyPrefix)
 
@@ -260,14 +260,15 @@ func (k Keeper) GetAllBlacklistedDenoms(ctx sdk.Context) []string {
 	return allBlacklistedDenoms
 }
 
-// Adds an address to a whitelist to allow all IBC transfers from the address
+// Adds an address to a whitelist to allow all IBC transfers to/from the address,
+// and skip all flow calculations
 func (k Keeper) AddAddressToWhitelist(ctx sdk.Context, address string) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.AddressWhitelistKeyPrefix)
 	key := types.KeyPrefix(address)
 	store.Set(key, []byte{1})
 }
 
-// Removes an address from a whitelist to so that it's transfers are included in the quota
+// Removes an address from a whitelist so that it's transfers are counted in the quota
 func (k Keeper) RemoveAddressFromWhitelist(ctx sdk.Context, address string) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.AddressWhitelistKeyPrefix)
 	key := types.KeyPrefix(address)
