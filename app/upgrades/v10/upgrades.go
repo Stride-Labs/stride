@@ -78,6 +78,9 @@ func CreateUpgradeHandler(
 			return nil, errorsmod.Wrapf(err, "unable to migrate ICA channel capabilities")
 		}
 
+		ctx.Logger().Info("Adding localhost IBC client...")
+		AddLocalhostIBCClient(ctx, clientKeeper)
+
 		ctx.Logger().Info("Pruning expired tendermint consensus states...")
 		if _, err := ibctmmigrations.PruneExpiredConsensusStates(ctx, cdc, clientKeeper); err != nil {
 			return nil, errorsmod.Wrapf(err, "unable to prune expired consensus states")
@@ -100,9 +103,6 @@ func CreateUpgradeHandler(
 		if err := SetMinInitialDepositRatio(ctx, govKeeper); err != nil {
 			return nil, errorsmod.Wrapf(err, "unable to set MinInitialDepositRatio")
 		}
-
-		ctx.Logger().Info("Adding localhost IBC client...")
-		AddLocalhostIBCClient(ctx, clientKeeper)
 
 		ctx.Logger().Info("v10 Upgrade Complete")
 		return vm, err

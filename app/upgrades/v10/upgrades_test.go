@@ -38,6 +38,11 @@ func TestKeeperTestSuite(t *testing.T) {
 func (s *UpgradeTestSuite) TestUpgrade() {
 	dummyUpgradeHeight := int64(5)
 
+	// Remove localhost client from client keeper
+	clientParams := s.App.IBCKeeper.ClientKeeper.GetParams(s.Ctx)
+	clientParams.AllowedClients = []string{}
+	s.App.IBCKeeper.ClientKeeper.SetParams(s.Ctx, clientParams)
+
 	s.ConfirmUpgradeSucceededs("v10", dummyUpgradeHeight)
 
 	// Check mint parameters after upgrade
@@ -58,6 +63,10 @@ func (s *UpgradeTestSuite) TestUpgrade() {
 	// Check initial deposit ratio
 	govParams := s.App.GovKeeper.GetParams(s.Ctx)
 	s.Require().Equal(v10.MinInitialDepositRatio, govParams.MinInitialDepositRatio, "min initial deposit ratio")
+
+	// Check localhost client was added
+	clientParams = s.App.IBCKeeper.ClientKeeper.GetParams(s.Ctx)
+	s.Require().Contains(clientParams.AllowedClients, "09-localhost")
 }
 
 func (s *UpgradeTestSuite) createCallbackData(id string, callback deprecatedproto.Message) icacallbackstypes.CallbackData {
