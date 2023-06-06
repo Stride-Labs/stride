@@ -21,7 +21,7 @@ build_local_and_docker() {
    cd $folder
 
    # Clear any previously build binaries, otherwise the binary can get corrupted
-   if [[ "$module" == "comdex" ]]; then
+   if [[ "$module" == "stride" ]]; then
       rm -f build/strided
    else
       rm -f build/*
