@@ -20,10 +20,11 @@ func KeyPrefix(p string) []byte {
 }
 
 var (
-	PathKeyPrefix           = KeyPrefix("path")
-	RateLimitKeyPrefix      = KeyPrefix("rate-limit")
-	PendingSendPacketPrefix = KeyPrefix("pending-send-packet")
-	BlacklistKeyPrefix      = KeyPrefix("blacklist")
+	PathKeyPrefix             = KeyPrefix("path")
+	RateLimitKeyPrefix        = KeyPrefix("rate-limit")
+	PendingSendPacketPrefix   = KeyPrefix("pending-send-packet")
+	DenomBlacklistKeyPrefix   = KeyPrefix("denom-blacklist")
+	AddressWhitelistKeyPrefix = KeyPrefix("address-blacklist")
 )
 
 func GetPendingSendPacketKey(channelId string, sequenceNumber uint64) []byte {

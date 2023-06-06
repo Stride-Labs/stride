@@ -185,7 +185,8 @@ func (k Keeper) CheckPacketSentDuringCurrentQuota(ctx sdk.Context, channelId str
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.PendingSendPacketPrefix)
 	key := types.GetPendingSendPacketKey(channelId, sequence)
 	valueBz := store.Get(key)
-	return len(valueBz) != 0
+	found := len(valueBz) != 0
+	return found
 }
 
 // Remove a pending packet sequence number from the store
@@ -211,39 +212,32 @@ func (k Keeper) RemoveAllChannelPendingSendPackets(ctx sdk.Context, channelId st
 
 // Adds a denom to a blacklist to prevent all IBC transfers with this denom
 func (k Keeper) AddDenomToBlacklist(ctx sdk.Context, denom string) {
-	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.BlacklistKeyPrefix)
-
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.DenomBlacklistKeyPrefix)
 	key := types.KeyPrefix(denom)
-	value := key // The denom will act as both the key and value
-
-	store.Set(key, value)
+	store.Set(key, []byte{1})
 }
 
 // Removes a denom from a blacklist to re-enable IBC transfers for that denom
 func (k Keeper) RemoveDenomFromBlacklist(ctx sdk.Context, denom string) {
-	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.BlacklistKeyPrefix)
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.DenomBlacklistKeyPrefix)
 	key := types.KeyPrefix(denom)
 	store.Delete(key)
 }
 
 // Check if a denom is currently blacklistec
 func (k Keeper) IsDenomBlacklisted(ctx sdk.Context, denom string) bool {
-	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.BlacklistKeyPrefix)
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.DenomBlacklistKeyPrefix)
 
 	key := types.KeyPrefix(denom)
 	value := store.Get(key)
+	found := len(value) != 0
 
-	if len(value) == 0 {
-		return false
-	}
-	denomFromStore := string(value)
-
-	return denom == denomFromStore
+	return found
 }
 
 // Get all the blacklisted denoms
 func (k Keeper) GetAllBlacklistedDenoms(ctx sdk.Context) []string {
-	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.BlacklistKeyPrefix)
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.DenomBlacklistKeyPrefix)
 
 	iterator := store.Iterator(nil, nil)
 	defer iterator.Close()
@@ -254,4 +248,44 @@ func (k Keeper) GetAllBlacklistedDenoms(ctx sdk.Context) []string {
 	}
 
 	return allBlacklistedDenoms
+}
+
+// Adds an address to a whitelist to allow all IBC transfers from the address
+func (k Keeper) AddAddressToWhitelist(ctx sdk.Context, address string) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.AddressWhitelistKeyPrefix)
+	key := types.KeyPrefix(address)
+	store.Set(key, []byte{1})
+}
+
+// Removes an address from a whitelist to so that it's transfers are included in the quota
+func (k Keeper) RemoveAddressFromWhitelist(ctx sdk.Context, address string) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.AddressWhitelistKeyPrefix)
+	key := types.KeyPrefix(address)
+	store.Delete(key)
+}
+
+// Check if an address is currently whitelisted
+func (k Keeper) IsAddressWhitelisted(ctx sdk.Context, address string) bool {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.AddressWhitelistKeyPrefix)
+
+	key := types.KeyPrefix(address)
+	value := store.Get(key)
+	found := len(value) != 0
+
+	return found
+}
+
+// Get all the whitelisted addresses
+func (k Keeper) GetAllWhitelistedAddresses(ctx sdk.Context) []string {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.AddressWhitelistKeyPrefix)
+
+	iterator := store.Iterator(nil, nil)
+	defer iterator.Close()
+
+	allWhitelistedAddresses := []string{}
+	for ; iterator.Valid(); iterator.Next() {
+		allWhitelistedAddresses = append(allWhitelistedAddresses, string(iterator.Key()))
+	}
+
+	return allWhitelistedAddresses
 }

@@ -188,6 +188,50 @@ func (s *KeeperTestSuite) TestDenomBlacklist() {
 	}
 }
 
+func (s *KeeperTestSuite) TestAddressWhitelist() {
+	allAddresses := []string{"address1", "address2", "address3", "address4"}
+	addressesToWhitelist := []string{"address1", "address3"}
+
+	// No address are currently whitelisted
+	for _, address := range allAddresses {
+		isWhitelisted := s.App.RatelimitKeeper.IsAddressWhitelisted(s.Ctx, address)
+		s.Require().False(isWhitelisted, "%s should not be whitelisted yet", address)
+	}
+
+	// Whitelist two addresses
+	for _, address := range addressesToWhitelist {
+		s.App.RatelimitKeeper.AddAddressToWhitelist(s.Ctx, address)
+	}
+
+	// Confirm half the list was whitelisted and the others were not
+	for _, address := range allAddresses {
+		isWhitelisted := s.App.RatelimitKeeper.IsAddressWhitelisted(s.Ctx, address)
+
+		if isInArray(address, addressesToWhitelist) {
+			s.Require().True(isWhitelisted, "%s should have been whiteilsted", address)
+		} else {
+			s.Require().False(isWhitelisted, "%s should not have been whiteilsted", address)
+		}
+	}
+	actualWhitelistedAddresses := s.App.RatelimitKeeper.GetAllWhitelistedAddresses(s.Ctx)
+	s.Require().Len(actualWhitelistedAddresses, len(addressesToWhitelist), "number of whiteilsted addresss")
+	s.Require().ElementsMatch(addressesToWhitelist, actualWhitelistedAddresses, "list of whiteilsted addresss")
+
+	// Finally, remove addresses from whitelist and confirm they were removed
+	for _, address := range addressesToWhitelist {
+		s.App.RatelimitKeeper.RemoveAddressFromWhitelist(s.Ctx, address)
+	}
+	for _, address := range allAddresses {
+		isWhitelisted := s.App.RatelimitKeeper.IsAddressWhitelisted(s.Ctx, address)
+
+		if isInArray(address, addressesToWhitelist) {
+			s.Require().False(isWhitelisted, "%s should have been removed from the whitelist", address)
+		} else {
+			s.Require().False(isWhitelisted, "%s should never have been whiteilsted", address)
+		}
+	}
+}
+
 // Adds a rate limit object to the store in preparation for the check rate limit tests
 func (s *KeeperTestSuite) SetupCheckRateLimitAndUpdateFlowTest() {
 	channelValue := sdkmath.NewInt(100)
