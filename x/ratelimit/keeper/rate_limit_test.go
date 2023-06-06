@@ -7,12 +7,15 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	minttypes "github.com/Stride-Labs/stride/v9/x/mint/types"
+	"github.com/Stride-Labs/stride/v9/x/ratelimit/keeper"
 	"github.com/Stride-Labs/stride/v9/x/ratelimit/types"
 )
 
 const (
 	denom     = "denom"
 	channelId = "channel-0"
+	sender    = "sender"
+	receiver  = "receiver"
 )
 
 type action struct {
@@ -20,12 +23,15 @@ type action struct {
 	amount              int64
 	addToBlacklist      bool
 	removeFromBlacklist bool
+	addToWhitelist      string
+	removeFromWhitelist string
+	skipFlowUpdate      bool
+	expectedError       string
 }
 
 type checkRateLimitTestCase struct {
-	name          string
-	actions       []action
-	expectedError string
+	name    string
+	actions []action
 }
 
 // Helper function to check if an element is in an array
@@ -256,6 +262,8 @@ func (s *KeeperTestSuite) SetupCheckRateLimitAndUpdateFlowTest() {
 	})
 
 	s.App.RatelimitKeeper.RemoveDenomFromBlacklist(s.Ctx, denom)
+	s.App.RatelimitKeeper.RemoveAddressFromWhitelist(s.Ctx, sender)
+	s.App.RatelimitKeeper.RemoveAddressFromWhitelist(s.Ctx, receiver)
 }
 
 // Helper function to check the rate limit across a series of transfers
@@ -273,29 +281,44 @@ func (s *KeeperTestSuite) processCheckRateLimitAndUpdateFlowTestCase(tc checkRat
 			continue
 		}
 
+		if action.addToWhitelist != "" {
+			s.App.RatelimitKeeper.AddAddressToWhitelist(s.Ctx, action.addToWhitelist)
+			continue
+		} else if action.removeFromWhitelist != "" {
+			s.App.RatelimitKeeper.RemoveAddressFromWhitelist(s.Ctx, action.removeFromWhitelist)
+			continue
+		}
+
 		amount := sdkmath.NewInt(action.amount)
-		err := s.App.RatelimitKeeper.CheckRateLimitAndUpdateFlow(s.Ctx, action.direction, denom, channelId, amount)
+		packetInfo := keeper.RateLimitedPacketInfo{
+			ChannelID: channelId,
+			Denom:     denom,
+			Amount:    amount,
+			Sender:    sender,
+			Receiver:  receiver,
+		}
+		err := s.App.RatelimitKeeper.CheckRateLimitAndUpdateFlow(s.Ctx, action.direction, packetInfo)
 
-		// Only check the error on the last action
-		if i == len(tc.actions)-1 && tc.expectedError != "" {
-			s.Require().ErrorContains(err, tc.expectedError, tc.name+"- action: #%d - error", i)
+		// Each action optionally errors or skips a flow update
+		if action.expectedError != "" {
+			s.Require().ErrorContains(err, action.expectedError, tc.name+" - action: #%d - error", i)
 		} else {
-			// All but the last action should succeed
-			s.Require().NoError(err, tc.name+"- action: #%d - no error", i)
+			s.Require().NoError(err, tc.name+" - action: #%d - no error", i)
 
-			// Update expected flow
-			if action.direction == types.PACKET_RECV {
-				expectedInflow = expectedInflow.Add(amount)
-			} else {
-				expectedOutflow = expectedOutflow.Add(amount)
+			if !action.skipFlowUpdate {
+				if action.direction == types.PACKET_RECV {
+					expectedInflow = expectedInflow.Add(amount)
+				} else {
+					expectedOutflow = expectedOutflow.Add(amount)
+				}
 			}
 		}
 
 		// Confirm flow is updated properly (or left as is if the theshold was exceeded)
 		rateLimit, found := s.App.RatelimitKeeper.GetRateLimit(s.Ctx, denom, channelId)
 		s.Require().True(found)
-		s.Require().Equal(expectedInflow, rateLimit.Flow.Inflow, tc.name+"- action: #%d - inflow", i)
-		s.Require().Equal(expectedOutflow, rateLimit.Flow.Outflow, tc.name+"- action: #%d - outflow", i)
+		s.Require().Equal(expectedInflow.Int64(), rateLimit.Flow.Inflow.Int64(), tc.name+" - action: #%d - inflow", i)
+		s.Require().Equal(expectedOutflow.Int64(), rateLimit.Flow.Outflow.Int64(), tc.name+" - action: #%d - outflow", i)
 	}
 }
 
@@ -312,9 +335,9 @@ func (s *KeeperTestSuite) TestCheckRateLimitAndUpdateFlow_UnidirectionalFlow() {
 			name: "send_over_threshold",
 			actions: []action{
 				{direction: types.PACKET_SEND, amount: 5},
-				{direction: types.PACKET_SEND, amount: 6},
+				{direction: types.PACKET_SEND, amount: 6,
+					expectedError: "Outflow exceeds quota"},
 			},
-			expectedError: "Outflow exceeds quota",
 		},
 		{
 			name: "recv_under_threshold",
@@ -327,9 +350,9 @@ func (s *KeeperTestSuite) TestCheckRateLimitAndUpdateFlow_UnidirectionalFlow() {
 			name: "recv_over_threshold",
 			actions: []action{
 				{direction: types.PACKET_RECV, amount: 5},
-				{direction: types.PACKET_RECV, amount: 6},
+				{direction: types.PACKET_RECV, amount: 6,
+					expectedError: "Inflow exceeds quota"},
 			},
-			expectedError: "Inflow exceeds quota",
 		},
 	}
 
@@ -368,9 +391,9 @@ func (s *KeeperTestSuite) TestCheckRateLimitAndUpdatedFlow_BidirectionalFlow() {
 				{direction: types.PACKET_SEND, amount: 2}, //   -2, Net: +2
 				{direction: types.PACKET_RECV, amount: 6}, //   +6, Net: +8
 				{direction: types.PACKET_SEND, amount: 2}, //   -2, Net: +6
-				{direction: types.PACKET_RECV, amount: 6}, //   +6, Net: +12 (exceeds threshold)
+				{direction: types.PACKET_RECV, amount: 6, //    +6, Net: +12 (exceeds threshold)
+					expectedError: "Inflow exceeds quota"},
 			},
-			expectedError: "Inflow exceeds quota",
 		},
 		{
 			name: "send_then_recv_over_outflow",
@@ -379,9 +402,9 @@ func (s *KeeperTestSuite) TestCheckRateLimitAndUpdatedFlow_BidirectionalFlow() {
 				{direction: types.PACKET_RECV, amount: 2}, //   +2, Net: -4
 				{direction: types.PACKET_SEND, amount: 6}, //   -6, Net: -10
 				{direction: types.PACKET_RECV, amount: 2}, //   +2, Net: -8
-				{direction: types.PACKET_SEND, amount: 6}, //   -6, Net: -14 (exceeds threshold)
+				{direction: types.PACKET_SEND, amount: 6, //    -6, Net: -14 (exceeds threshold)
+					expectedError: "Outflow exceeds quota"},
 			},
-			expectedError: "Outflow exceeds quota",
 		},
 		{
 			name: "recv_then_send_over_inflow",
@@ -390,21 +413,21 @@ func (s *KeeperTestSuite) TestCheckRateLimitAndUpdatedFlow_BidirectionalFlow() {
 				{direction: types.PACKET_SEND, amount: 2}, //   -2, Net: +4
 				{direction: types.PACKET_RECV, amount: 6}, //   +6, Net: +10
 				{direction: types.PACKET_SEND, amount: 2}, //   -2, Net: +8
-				{direction: types.PACKET_RECV, amount: 6}, //   +6, Net: +14 (exceeds threshold)
+				{direction: types.PACKET_RECV, amount: 6, //    +6, Net: +14 (exceeds threshold)
+					expectedError: "Inflow exceeds quota"},
 			},
-			expectedError: "Inflow exceeds quota",
 		},
 		{
 			name: "recv_then_send_over_outflow",
 			actions: []action{
-				{direction: types.PACKET_RECV, amount: 2},  //  +2, Net: +2
-				{direction: types.PACKET_SEND, amount: 6},  //  -6, Net: -4
-				{direction: types.PACKET_RECV, amount: 2},  //  +2, Net: -2
-				{direction: types.PACKET_SEND, amount: 6},  //  -6, Net: -8
-				{direction: types.PACKET_RECV, amount: 2},  //  +2, Net: -6
-				{direction: types.PACKET_SEND, amount: 10}, //  +6, Net: -12 (exceeds threshold)
+				{direction: types.PACKET_RECV, amount: 2}, //  +2, Net: +2
+				{direction: types.PACKET_SEND, amount: 6}, //  -6, Net: -4
+				{direction: types.PACKET_RECV, amount: 2}, //  +2, Net: -2
+				{direction: types.PACKET_SEND, amount: 6}, //  -6, Net: -8
+				{direction: types.PACKET_RECV, amount: 2}, //  +2, Net: -6
+				{direction: types.PACKET_SEND, amount: 10, //  +6, Net: -12 (exceeds threshold)
+					expectedError: "Outflow exceeds quota"},
 			},
-			expectedError: "Outflow exceeds quota",
 		},
 	}
 
@@ -415,7 +438,7 @@ func (s *KeeperTestSuite) TestCheckRateLimitAndUpdatedFlow_BidirectionalFlow() {
 	}
 }
 
-func (s *KeeperTestSuite) TestCheckRateLimitAndUpdatedFlow_Blacklist() {
+func (s *KeeperTestSuite) TestCheckRateLimitAndUpdatedFlow_DenomBlacklist() {
 	testCases := []checkRateLimitTestCase{
 		{
 			name: "add_then_remove_from_blacklist", // should succeed
@@ -434,9 +457,9 @@ func (s *KeeperTestSuite) TestCheckRateLimitAndUpdatedFlow_Blacklist() {
 				{direction: types.PACKET_SEND, amount: 6},
 				{direction: types.PACKET_RECV, amount: 6},
 				{addToBlacklist: true},
-				{direction: types.PACKET_SEND, amount: 6},
+				{direction: types.PACKET_SEND, amount: 6,
+					expectedError: types.ErrDenomIsBlacklisted.Error()},
 			},
-			expectedError: types.ErrDenomIsBlacklisted.Error(),
 		},
 		{
 			name: "send_recv_blacklist_recv",
@@ -444,9 +467,9 @@ func (s *KeeperTestSuite) TestCheckRateLimitAndUpdatedFlow_Blacklist() {
 				{direction: types.PACKET_SEND, amount: 6},
 				{direction: types.PACKET_RECV, amount: 6},
 				{addToBlacklist: true},
-				{direction: types.PACKET_RECV, amount: 6},
+				{direction: types.PACKET_RECV, amount: 6,
+					expectedError: types.ErrDenomIsBlacklisted.Error()},
 			},
-			expectedError: types.ErrDenomIsBlacklisted.Error(),
 		},
 		{
 			name: "recv_send_blacklist_send",
@@ -454,9 +477,9 @@ func (s *KeeperTestSuite) TestCheckRateLimitAndUpdatedFlow_Blacklist() {
 				{direction: types.PACKET_RECV, amount: 6},
 				{direction: types.PACKET_SEND, amount: 6},
 				{addToBlacklist: true},
-				{direction: types.PACKET_SEND, amount: 6},
+				{direction: types.PACKET_SEND, amount: 6,
+					expectedError: types.ErrDenomIsBlacklisted.Error()},
 			},
-			expectedError: types.ErrDenomIsBlacklisted.Error(),
 		},
 		{
 			name: "recv_send_blacklist_recv",
@@ -464,9 +487,112 @@ func (s *KeeperTestSuite) TestCheckRateLimitAndUpdatedFlow_Blacklist() {
 				{direction: types.PACKET_RECV, amount: 6},
 				{direction: types.PACKET_SEND, amount: 6},
 				{addToBlacklist: true},
-				{direction: types.PACKET_RECV, amount: 6},
+				{direction: types.PACKET_RECV, amount: 6,
+					expectedError: types.ErrDenomIsBlacklisted.Error()},
 			},
-			expectedError: types.ErrDenomIsBlacklisted.Error(),
+		},
+	}
+
+	for _, tc := range testCases {
+		s.Run(tc.name, func() {
+			s.processCheckRateLimitAndUpdateFlowTestCase(tc)
+		})
+	}
+}
+
+func (s *KeeperTestSuite) TestCheckRateLimitAndUpdatedFlow_AddressWhitelist() {
+	testCases := []checkRateLimitTestCase{
+		{
+			name: "send_whitelist_send", // should succeed
+			actions: []action{
+				{direction: types.PACKET_SEND, amount: 6},
+				{addToWhitelist: sender},
+				{direction: types.PACKET_SEND, amount: 6, skipFlowUpdate: true},
+			},
+		},
+		{
+			name: "recv_whitelist_recv", // should succeed
+			actions: []action{
+				{direction: types.PACKET_RECV, amount: 6},
+				{addToWhitelist: sender},
+				{direction: types.PACKET_RECV, amount: 6, skipFlowUpdate: true},
+			},
+		},
+		{
+			name: "send_send_whitelist_send", // should succeed
+			actions: []action{
+				{direction: types.PACKET_SEND, amount: 6},
+				{direction: types.PACKET_SEND, amount: 6, expectedError: "Outflow exceeds quota"}, // fails
+				{addToWhitelist: receiver},
+				{direction: types.PACKET_SEND, amount: 6, skipFlowUpdate: true}, // succeeds
+			},
+		},
+		{
+			name: "recv_recv_whitelist_recv", // should succeed
+			actions: []action{
+				{direction: types.PACKET_RECV, amount: 6},
+				{direction: types.PACKET_RECV, amount: 6, expectedError: "Inflow exceeds quota"}, // fails
+				{addToWhitelist: receiver},
+				{direction: types.PACKET_RECV, amount: 6, skipFlowUpdate: true}, // succeeds
+			},
+		},
+		{
+			name: "send_recv_send_whitelist_send", // should succeed
+			actions: []action{
+				{direction: types.PACKET_SEND, amount: 6},
+				{direction: types.PACKET_RECV, amount: 6},
+				{direction: types.PACKET_SEND, amount: 6},
+				{addToWhitelist: sender},
+				{direction: types.PACKET_SEND, amount: 6, skipFlowUpdate: true},
+			},
+		},
+		{
+			name: "recv_send_recv_whitelist_recv", // should succeed
+			actions: []action{
+				{direction: types.PACKET_RECV, amount: 6},
+				{direction: types.PACKET_SEND, amount: 6},
+				{direction: types.PACKET_RECV, amount: 6},
+				{addToWhitelist: receiver},
+				{direction: types.PACKET_RECV, amount: 6, skipFlowUpdate: true},
+			},
+		},
+		{
+			name: "add_sender_then_remove_receiver_from_whitelist", // should succeed
+			actions: []action{
+				{direction: types.PACKET_RECV, amount: 6},
+				{addToWhitelist: sender},
+				{removeFromWhitelist: receiver},
+				{direction: types.PACKET_RECV, amount: 6, skipFlowUpdate: true},
+			},
+		},
+		{
+			name: "add_receiver_then_remove_sender_from_whitelist", // should succeed
+			actions: []action{
+				{direction: types.PACKET_RECV, amount: 6},
+				{addToWhitelist: receiver},
+				{removeFromWhitelist: sender},
+				{direction: types.PACKET_RECV, amount: 6, skipFlowUpdate: true},
+			},
+		},
+		{
+			name: "add_then_remove_sender_from_whitelist_send",
+			actions: []action{
+				{direction: types.PACKET_SEND, amount: 6},
+				{addToWhitelist: sender},
+				{removeFromWhitelist: sender},
+				{direction: types.PACKET_SEND, amount: 6,
+					expectedError: types.ErrQuotaExceeded.Error()},
+			},
+		},
+		{
+			name: "add_then_remove_receiver_from_whitelist_recv",
+			actions: []action{
+				{direction: types.PACKET_RECV, amount: 6},
+				{addToWhitelist: receiver},
+				{removeFromWhitelist: receiver},
+				{direction: types.PACKET_RECV, amount: 6,
+					expectedError: types.ErrQuotaExceeded.Error()},
+			},
 		},
 	}
 

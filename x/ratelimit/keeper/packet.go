@@ -23,6 +23,8 @@ type RateLimitedPacketInfo struct {
 	ChannelID string
 	Denom     string
 	Amount    sdkmath.Int
+	Sender    string
+	Receiver  string
 }
 
 // Parse the denom from the Send Packet that will be used by the rate limit module
@@ -110,7 +112,8 @@ func ParseDenomFromRecvPacket(packet channeltypes.Packet, packetData transfertyp
 	return denom
 }
 
-// Parses the channelId and denom for the corresponding RateLimit object, as well as the transfer amount
+// Parses the sender and channelId and denom for the corresponding RateLimit object, and
+// the sender/receiver/transfer amount
 //
 // The Stride channelID should always be used as the key for the RateLimit object (not the counterparty channelID)
 // For a SEND packet, the Stride channelID is the SOURCE channel
@@ -146,6 +149,8 @@ func ParsePacketInfo(packet channeltypes.Packet, direction types.PacketDirection
 		ChannelID: channelID,
 		Denom:     denom,
 		Amount:    amount,
+		Sender:    packetData.Sender,
+		Receiver:  packetData.Receiver,
 	}
 
 	return packetInfo, nil
@@ -159,11 +164,17 @@ func (k Keeper) SendRateLimitedPacket(ctx sdk.Context, packet channeltypes.Packe
 		return err
 	}
 
+	// Check if the packet would exceed the outflow rate limit
+	err = k.CheckRateLimitAndUpdateFlow(ctx, types.PACKET_SEND, packetInfo)
+	if err != nil {
+		return err
+	}
+
 	// Store the sequence number of the packet so that if the transfer fails,
 	// we can identify if it was sent during this quota and can revert the outflow
 	k.SetPendingSendPacket(ctx, packetInfo.ChannelID, packet.Sequence)
 
-	return k.CheckRateLimitAndUpdateFlow(ctx, types.PACKET_SEND, packetInfo.Denom, packetInfo.ChannelID, packetInfo.Amount)
+	return nil
 }
 
 // Middleware implementation for RecvPacket with rate limiting
@@ -174,7 +185,7 @@ func (k Keeper) ReceiveRateLimitedPacket(ctx sdk.Context, packet channeltypes.Pa
 		return err
 	}
 
-	return k.CheckRateLimitAndUpdateFlow(ctx, types.PACKET_RECV, packetInfo.Denom, packetInfo.ChannelID, packetInfo.Amount)
+	return k.CheckRateLimitAndUpdateFlow(ctx, types.PACKET_RECV, packetInfo)
 }
 
 // Middleware implementation for OnAckPacket with rate limiting

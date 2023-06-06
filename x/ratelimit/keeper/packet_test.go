@@ -154,8 +154,15 @@ func (s *KeeperTestSuite) TestParsePacketInfo() {
 	denom := "denom"
 	amountString := "100"
 	amountInt := sdkmath.NewInt(100)
+	sender := "sender"
+	receiver := "receiver"
 
-	packetData, err := json.Marshal(transfertypes.FungibleTokenPacketData{Denom: denom, Amount: amountString})
+	packetData, err := json.Marshal(transfertypes.FungibleTokenPacketData{
+		Denom:    denom,
+		Amount:   amountString,
+		Sender:   sender,
+		Receiver: receiver,
+	})
 	s.Require().NoError(err)
 
 	packet := channeltypes.Packet{
@@ -172,6 +179,8 @@ func (s *KeeperTestSuite) TestParsePacketInfo() {
 		ChannelID: sourceChannel,
 		Denom:     denom,
 		Amount:    amountInt,
+		Sender:    sender,
+		Receiver:  receiver,
 	}
 	actualSendPacketInfo, err := keeper.ParsePacketInfo(packet, types.PACKET_SEND)
 	s.Require().NoError(err, "no error expected when parsing send packet")
@@ -183,6 +192,8 @@ func (s *KeeperTestSuite) TestParsePacketInfo() {
 		ChannelID: destinationChannel,
 		Denom:     hashDenomTrace(fmt.Sprintf("transfer/%s/%s", destinationChannel, denom)),
 		Amount:    amountInt,
+		Sender:    sender,
+		Receiver:  receiver,
 	}
 	actualRecvPacketInfo, err := keeper.ParsePacketInfo(packet, types.PACKET_RECV)
 	s.Require().NoError(err, "no error expected when parsing recv packet")
