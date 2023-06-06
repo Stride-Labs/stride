@@ -11,7 +11,8 @@ PROVIDER_BINARY=$GAIA_BINARY
 PROVIDER_CHAIN_ID=$GAIA_CHAIN_ID
 PROVIDER_RPC_ADDR="localhost:$GAIA_RPC_PORT"
 VALIDATOR1="${GAIA_VAL_PREFIX}1"
-# VALIDATOR2="${GAIA_VAL_PREFIX}2"
+VALIDATOR2="${GAIA_VAL_PREFIX}2"
+VALIDATOR3="${GAIA_VAL_PREFIX}3"
 DENOM=$ATOM_DENOM
 PROVIDER_MAIN_CMD="$PROVIDER_BINARY --home $PROVIDER_HOME"
 SOVEREIGN_CHAIN_ID=$STRIDE_CHAIN_ID
@@ -52,7 +53,8 @@ printf "\nVOTING\n"
 # Vote yes to proposal
 $PROVIDER_MAIN_CMD query gov proposals --node tcp://$PROVIDER_RPC_ADDR
 $PROVIDER_MAIN_CMD tx gov vote 1 yes --from $VALIDATOR1 --chain-id $PROVIDER_CHAIN_ID --node tcp://$PROVIDER_RPC_ADDR --home $PROVIDER_HOME -b block -y --keyring-backend test
-# $PROVIDER_MAIN_CMD tx gov vote 1 yes --from $VALIDATOR2 --chain-id $PROVIDER_CHAIN_ID --node tcp://$PROVIDER_RPC_ADDR --home $PROVIDER_HOME -b block -y --keyring-backend test
+$PROVIDER_MAIN_CMD tx gov vote 1 yes --from $VALIDATOR2 --chain-id $PROVIDER_CHAIN_ID --node tcp://$PROVIDER_RPC_ADDR --home $PROVIDER_HOME -b block -y --keyring-backend test
+$PROVIDER_MAIN_CMD tx gov vote 1 yes --from $VALIDATOR3 --chain-id $PROVIDER_CHAIN_ID --node tcp://$PROVIDER_RPC_ADDR --home $PROVIDER_HOME -b block -y --keyring-backend test
 
 sleep 5
 printf "\nVOTE CONFIRMATION\n"

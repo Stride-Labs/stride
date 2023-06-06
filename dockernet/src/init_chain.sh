@@ -140,8 +140,11 @@ for (( i=1; i <= $NUM_NODES; i++ )); do
         cp $DOCKERNET_HOME/state/${STRIDE_NODE_PREFIX}${i}/config/priv_validator_key.json $DOCKERNET_HOME/state/${NODE_PREFIX}${i}/config/priv_validator_key.json
         cp $DOCKERNET_HOME/state/${STRIDE_NODE_PREFIX}${i}/config/node_key.json $DOCKERNET_HOME/state/${NODE_PREFIX}${i}/config/node_key.json
     fi
-    # actually set this account as a validator on the current node 
-    $cmd gentx $val_acct ${STAKE_TOKENS}${DENOM} --chain-id $CHAIN_ID --keyring-backend test &> /dev/null
+
+    if [[ ($CHAIN == "STRIDE" && $i == 1) || $CHAIN != "STRIDE" ]]; then
+        # actually set this account as a validator on the current node 
+        $cmd gentx $val_acct ${STAKE_TOKENS}${DENOM} --chain-id $CHAIN_ID --keyring-backend test &> /dev/null
+    fi
     
     # Get the endpoint and node ID
     node_id=$($cmd tendermint show-node-id)@$node_name:$PEER_PORT
@@ -160,7 +163,9 @@ for (( i=1; i <= $NUM_NODES; i++ )); do
     else
         # also add this account and it's genesis tx to the main node
         $MAIN_CMD add-genesis-account ${val_addr} ${VAL_TOKENS}${DENOM}
-        cp ${STATE}/${node_name}/config/gentx/*.json ${STATE}/${MAIN_NODE_NAME}/config/gentx/
+        if [ -d "${STATE}/${node_name}/config/gentx" ]; then
+            cp ${STATE}/${node_name}/config/gentx/*.json ${STATE}/${MAIN_NODE_NAME}/config/gentx/
+        fi
 
         # and add each validator's keys to the first state directory
         echo "$val_mnemonic" | $MAIN_CMD keys add $val_acct --recover --keyring-backend=test &> /dev/null

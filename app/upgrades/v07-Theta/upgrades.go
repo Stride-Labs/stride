@@ -67,6 +67,7 @@ func CreateUpgradeHandler(
 		// Temp fix
 		consumerGenesis.Params.SoftOptOutThreshold = "0.05"
 		consumerKeeper.InitGenesis(ctx, &consumerGenesis)
+		consumerKeeper.SetStandaloneTransferChannelID(ctx, "channel-0")
 
 		ctx.Logger().Info("start to run module migrations...")
 
