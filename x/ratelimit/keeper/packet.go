@@ -159,6 +159,10 @@ func (k Keeper) SendRateLimitedPacket(ctx sdk.Context, packet channeltypes.Packe
 		return err
 	}
 
+	// Store the sequence number of the packet so that if the transfer fails,
+	// we can identify if it was sent during this quota and can revert the outflow
+	k.SetPendingSendPacket(ctx, packetInfo.ChannelID, packet.Sequence)
+
 	return k.CheckRateLimitAndUpdateFlow(ctx, types.PACKET_SEND, packetInfo.Denom, packetInfo.ChannelID, packetInfo.Amount)
 }
 
@@ -183,18 +187,20 @@ func (k Keeper) AcknowledgeRateLimitedPacket(ctx sdk.Context, packet channeltype
 		return err
 	}
 
-	// If the ack was successful, no other action is necessary
-	if ackResponse.Status == icacallbacktypes.AckResponseStatus_SUCCESS {
-		return nil
-	}
-
-	// If the ack failed, undo the change to the rate limit Outflow
+	// Parse the denom, channelId, and amount from the packet
 	packetInfo, err := ParsePacketInfo(packet, types.PACKET_SEND)
 	if err != nil {
 		return err
 	}
 
-	return k.UndoSendPacket(ctx, packetInfo.Denom, packetInfo.ChannelID, packetInfo.Amount)
+	// If the ack was successful, remove the pending packet
+	if ackResponse.Status == icacallbacktypes.AckResponseStatus_SUCCESS {
+		k.RemovePendingSendPacket(ctx, packetInfo.ChannelID, packet.Sequence)
+		return nil
+	}
+
+	// If the ack failed, undo the change to the rate limit Outflow
+	return k.UndoSendPacket(ctx, packetInfo.ChannelID, packet.Sequence, packetInfo.Denom, packetInfo.Amount)
 }
 
 // Middleware implementation for OnAckPacket with rate limiting
@@ -205,7 +211,7 @@ func (k Keeper) TimeoutRateLimitedPacket(ctx sdk.Context, packet channeltypes.Pa
 		return err
 	}
 
-	return k.UndoSendPacket(ctx, packetInfo.Denom, packetInfo.ChannelID, packetInfo.Amount)
+	return k.UndoSendPacket(ctx, packetInfo.ChannelID, packet.Sequence, packetInfo.Denom, packetInfo.Amount)
 }
 
 // SendPacket wraps IBC ChannelKeeper's SendPacket function

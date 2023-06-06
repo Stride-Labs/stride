@@ -433,29 +433,50 @@ func (s *KeeperTestSuite) TestCheckRateLimitAndUpdatedFlow_Blacklist() {
 	}
 }
 
-func (s *KeeperTestSuite) TestSendPacket() {
+func (s *KeeperTestSuite) TestUndoSendPacket() {
+	// Helper function to check the rate limit outflow amount
+	checkOutflow := func(channelId, denom string, expectedAmount sdkmath.Int) {
+		rateLimit, found := s.App.RatelimitKeeper.GetRateLimit(s.Ctx, denom, channelId)
+		s.Require().True(found, "rate limit should have been found")
+		s.Require().Equal(expectedAmount.Int64(), rateLimit.Flow.Outflow.Int64(),
+			"outflow - channel: %s, denom: %s", channelId, denom)
+	}
+
 	// Create two rate limits
+	initialOutflow := sdkmath.NewInt(100)
+	packetSendAmount := sdkmath.NewInt(10)
 	rateLimit1 := types.RateLimit{
 		Path: &types.Path{Denom: denom, ChannelId: channelId},
-		Flow: &types.Flow{Outflow: sdkmath.NewInt(100)},
+		Flow: &types.Flow{Outflow: initialOutflow},
 	}
 	rateLimit2 := types.RateLimit{
 		Path: &types.Path{Denom: "different-denom", ChannelId: "different-channel"},
-		Flow: &types.Flow{Outflow: sdkmath.NewInt(100)},
+		Flow: &types.Flow{Outflow: initialOutflow},
 	}
 	s.App.RatelimitKeeper.SetRateLimit(s.Ctx, rateLimit1)
 	s.App.RatelimitKeeper.SetRateLimit(s.Ctx, rateLimit2)
 
-	// Undo a send of 10 from the first one
-	err := s.App.RatelimitKeeper.UndoSendPacket(s.Ctx, denom, channelId, sdkmath.NewInt(10))
-	s.Require().NoError(err, "no error expected when undoing send packet")
+	// Store a pending packet sequence number of 2 for the first rate limit
+	s.App.RatelimitKeeper.SetPendingSendPacket(s.Ctx, channelId, 2)
 
-	// Check outflow has decreased on the first rate limit object, but not the second one
-	rateLimit, found := s.App.RatelimitKeeper.GetRateLimit(s.Ctx, denom, channelId)
-	s.Require().True(found, "rate limit should have been found")
-	s.Require().Equal(int64(90), rateLimit.Flow.Outflow.Int64(), "outflow should have been decremented")
+	// Undo a send of 10 from the first rate limit, with sequence 1
+	// If should NOT modify the outflow since sequence 1 was not sent in the current quota
+	err := s.App.RatelimitKeeper.UndoSendPacket(s.Ctx, channelId, 1, denom, packetSendAmount)
+	s.Require().NoError(err, "no error expected when undoing send packet sequence 1")
 
-	rateLimit, found = s.App.RatelimitKeeper.GetRateLimit(s.Ctx, "different-denom", "different-channel")
-	s.Require().True(found, "rate limit should have been found")
-	s.Require().Equal(int64(100), rateLimit.Flow.Outflow.Int64(), "outflow should not have changed")
+	checkOutflow(channelId, denom, initialOutflow)
+
+	// Now undo a send from the same rate limit with sequence 2
+	// If should decrement the outflow since 2 is in the current quota
+	err = s.App.RatelimitKeeper.UndoSendPacket(s.Ctx, channelId, 2, denom, packetSendAmount)
+	s.Require().NoError(err, "no error expected when undoing send packet sequence 2")
+
+	checkOutflow(channelId, denom, initialOutflow.Sub(packetSendAmount))
+
+	// Confirm the outflow of the second rate limit has not been touched
+	checkOutflow("different-channel", "different-denom", initialOutflow)
+
+	// Confirm sequence number was removed
+	found := s.App.RatelimitKeeper.CheckPacketSentDuringCurrentQuota(s.Ctx, channelId, 2)
+	s.Require().False(found, "packet sequence number should have been removed")
 }

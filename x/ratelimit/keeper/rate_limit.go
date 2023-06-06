@@ -83,19 +83,27 @@ func (k Keeper) CheckRateLimitAndUpdateFlow(ctx sdk.Context, direction types.Pac
 }
 
 // If a SendPacket fails or times out, undo the outflow increment that happened during the send
-func (k Keeper) UndoSendPacket(ctx sdk.Context, denom, channelId string, amount sdkmath.Int) error {
+func (k Keeper) UndoSendPacket(ctx sdk.Context, channelId string, sequence uint64, denom string, amount sdkmath.Int) error {
 	rateLimit, found := k.GetRateLimit(ctx, denom, channelId)
 	if !found {
 		return nil
 	}
 
-	rateLimit.Flow.Outflow = rateLimit.Flow.Outflow.Sub(amount)
-	k.SetRateLimit(ctx, rateLimit)
+	// If the packet was sent during this quota, decrement the outflow
+	// Otherwise, it can be ignored
+	if k.CheckPacketSentDuringCurrentQuota(ctx, channelId, sequence) {
+		rateLimit.Flow.Outflow = rateLimit.Flow.Outflow.Sub(amount)
+		k.SetRateLimit(ctx, rateLimit)
+
+		k.RemovePendingSendPacket(ctx, channelId, sequence)
+	}
+
 	return nil
 }
 
 // Reset the rate limit after expiration
-// The inflow and outflow should get reset to 1 and the channelValue should be updated
+// The inflow and outflow should get reset to 0, the channelValue should be updated,
+// and all pending send packet sequence numbers should be removed
 func (k Keeper) ResetRateLimit(ctx sdk.Context, denom string, channelId string) error {
 	rateLimit, found := k.GetRateLimit(ctx, denom, channelId)
 	if !found {
@@ -110,6 +118,7 @@ func (k Keeper) ResetRateLimit(ctx sdk.Context, denom string, channelId string) 
 	rateLimit.Flow = &flow
 
 	k.SetRateLimit(ctx, rateLimit)
+	k.RemoveAllChannelPendingSendPackets(ctx, channelId)
 	return nil
 }
 
