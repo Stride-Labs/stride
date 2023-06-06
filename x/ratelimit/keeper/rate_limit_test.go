@@ -401,3 +401,30 @@ func (s *KeeperTestSuite) TestCheckRateLimitAndUpdatedFlow_Blacklist() {
 		})
 	}
 }
+
+func (s *KeeperTestSuite) TestSendPacket() {
+	// Create two rate limits
+	rateLimit1 := types.RateLimit{
+		Path: &types.Path{Denom: denom, ChannelId: channelId},
+		Flow: &types.Flow{Outflow: sdkmath.NewInt(100)},
+	}
+	rateLimit2 := types.RateLimit{
+		Path: &types.Path{Denom: "different-denom", ChannelId: "different-channel"},
+		Flow: &types.Flow{Outflow: sdkmath.NewInt(100)},
+	}
+	s.App.RatelimitKeeper.SetRateLimit(s.Ctx, rateLimit1)
+	s.App.RatelimitKeeper.SetRateLimit(s.Ctx, rateLimit2)
+
+	// Undo a send of 10 from the first one
+	err := s.App.RatelimitKeeper.UndoSendPacket(s.Ctx, denom, channelId, sdkmath.NewInt(10))
+	s.Require().NoError(err, "no error expected when undoing send packet")
+
+	// Check outflow has decreased on the first rate limit object, but not the second one
+	rateLimit, found := s.App.RatelimitKeeper.GetRateLimit(s.Ctx, denom, channelId)
+	s.Require().True(found, "rate limit should have been found")
+	s.Require().Equal(int64(90), rateLimit.Flow.Outflow.Int64(), "outflow should have been decremented")
+
+	rateLimit, found = s.App.RatelimitKeeper.GetRateLimit(s.Ctx, "different-denom", "different-channel")
+	s.Require().True(found, "rate limit should have been found")
+	s.Require().Equal(int64(100), rateLimit.Flow.Outflow.Int64(), "outflow should not have changed")
+}

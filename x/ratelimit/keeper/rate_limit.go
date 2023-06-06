@@ -54,7 +54,7 @@ func (k Keeper) UpdateFlow(rateLimit types.RateLimit, direction types.PacketDire
 
 // Checks whether the given packet will exceed the rate limit
 // Called by OnRecvPacket and OnSendPacket
-func (k Keeper) CheckRateLimitAndUpdateFlow(ctx sdk.Context, direction types.PacketDirection, denom string, channelId string, amount sdkmath.Int) error {
+func (k Keeper) CheckRateLimitAndUpdateFlow(ctx sdk.Context, direction types.PacketDirection, denom, channelId string, amount sdkmath.Int) error {
 	// First check if the denom is blacklisted
 	if k.IsDenomBlacklisted(ctx, denom) {
 		err := errorsmod.Wrapf(types.ErrDenomIsBlacklisted, "denom %s is blacklisted", denom)
@@ -79,6 +79,18 @@ func (k Keeper) CheckRateLimitAndUpdateFlow(ctx sdk.Context, direction types.Pac
 	// If there's no quota error, update the rate limit object in the store with the new flow
 	k.SetRateLimit(ctx, rateLimit)
 
+	return nil
+}
+
+// If a SendPacket fails or times out, undo the outflow increment that happened during the send
+func (k Keeper) UndoSendPacket(ctx sdk.Context, denom, channelId string, amount sdkmath.Int) error {
+	rateLimit, found := k.GetRateLimit(ctx, denom, channelId)
+	if !found {
+		return nil
+	}
+
+	rateLimit.Flow.Outflow = rateLimit.Flow.Outflow.Sub(amount)
+	k.SetRateLimit(ctx, rateLimit)
 	return nil
 }
 

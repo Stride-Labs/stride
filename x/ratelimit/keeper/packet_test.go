@@ -148,6 +148,47 @@ func TestParseDenomFromRecvPacket(t *testing.T) {
 	}
 }
 
+func (s *KeeperTestSuite) TestParsePacketInfo() {
+	sourceChannel := "channel-100"
+	destinationChannel := "channel-200"
+	denom := "denom"
+	amountString := "100"
+	amountInt := sdkmath.NewInt(100)
+
+	packetData, err := json.Marshal(transfertypes.FungibleTokenPacketData{Denom: denom, Amount: amountString})
+	s.Require().NoError(err)
+
+	packet := channeltypes.Packet{
+		SourcePort:         transferPort,
+		SourceChannel:      sourceChannel,
+		DestinationPort:    transferPort,
+		DestinationChannel: destinationChannel,
+		Data:               packetData,
+	}
+
+	// Send 'denom' from channel-100 (stride) -> channel-200
+	// Since the 'denom' is native, it's kept as is for the rate limit object
+	expectedSendPacketInfo := keeper.RateLimitedPacketInfo{
+		ChannelID: sourceChannel,
+		Denom:     denom,
+		Amount:    amountInt,
+	}
+	actualSendPacketInfo, err := keeper.ParsePacketInfo(packet, types.PACKET_SEND)
+	s.Require().NoError(err, "no error expected when parsing send packet")
+	s.Require().Equal(expectedSendPacketInfo, actualSendPacketInfo, "send packet")
+
+	// Receive 'denom' from channel-100 -> channel-200 (stride)
+	// The stride channel (channel-200) should be tacked onto the end and the denom should be hashed
+	expectedRecvPacketInfo := keeper.RateLimitedPacketInfo{
+		ChannelID: destinationChannel,
+		Denom:     hashDenomTrace(fmt.Sprintf("transfer/%s/%s", destinationChannel, denom)),
+		Amount:    amountInt,
+	}
+	actualRecvPacketInfo, err := keeper.ParsePacketInfo(packet, types.PACKET_RECV)
+	s.Require().NoError(err, "no error expected when parsing recv packet")
+	s.Require().Equal(expectedRecvPacketInfo, actualRecvPacketInfo, "recv packet")
+}
+
 func (s *KeeperTestSuite) createRateLimitCloseToQuota(denom string, channelId string, direction types.PacketDirection) {
 	channelValue := sdkmath.NewInt(100)
 	threshold := sdkmath.NewInt(10)
@@ -202,7 +243,7 @@ func (s *KeeperTestSuite) TestSendRateLimitedPacket() {
 
 	// We check for a quota error because it doesn't appear until the end of the function
 	// We're avoiding checking for a success here because we can get a false positive if the rate limit doesn't exist
-	err = s.App.RatelimitKeeper.SendRateLimitedPacket(s.Ctx, packet.SourceChannel, packet.Data)
+	err = s.App.RatelimitKeeper.SendRateLimitedPacket(s.Ctx, packet)
 	s.Require().ErrorIs(err, types.ErrQuotaExceeded, "error type")
 	s.Require().ErrorContains(err, "Outflow exceeds quota", "error text")
 }
