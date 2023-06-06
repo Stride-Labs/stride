@@ -13,7 +13,7 @@ HOST_DENOM=ucmdx
 HOST_BINARY=build/comdexd
 HOST_COIN_TYPE=118
 HOST_VAL_NAME_1=imperator
-HOST_VAL_ADDRESS_1=comdex1pskxu4sh3sz0ep86l7t66yht26hx6ry2j3a83a
+HOST_VAL_ADDRESS_1=ccomdex1pskxu4sh3sz0ep86l7t66yht26hx6ry2j3a83a
 HOST_VAL_NAME_2=notional
 HOST_VAL_ADDRESS_2=comdex1cqhczky8j403n55rx9ff3w2zuj3p9dzmv2qkxg
 HOT_WALLET_1_ADDRESS=comdex1h8mx0pn53ngyfguh7veex0q88rmh9fqu45ldcn
@@ -76,7 +76,7 @@ sed -i -E "s|HOST_COIN_TYPE|$HOST_COIN_TYPE|g" $RELAYER_CONFIG_FILE
 # rm -f $TMP_MNEMONICS
 
 echo "Adding Relayer keys"
-RELAYER_CMD="$SCRIPT_DIR/../../build/rly --home $STATE/rly"
+RELAYER_CMD="$SCRIPT_DIR/../../build/relayer --home $STATE/relayer"
 $RELAYER_CMD keys restore stride rly1 "$RELAYER_STRIDE_MNEMONIC" 
 $RELAYER_CMD keys restore host rly2 "$HOT_WALLET_3_MNEMONIC" 
 
