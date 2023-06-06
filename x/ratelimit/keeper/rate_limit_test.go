@@ -113,6 +113,37 @@ func (s *KeeperTestSuite) TestGetAllRateLimits() {
 	s.Require().ElementsMatch(expectedRateLimits, actualRateLimits, "all rate limits")
 }
 
+func (s *KeeperTestSuite) TestPendingSendPacketPrefix() {
+	// Store 5 packets across two channels
+	for _, channelId := range []string{"channel-0", "channel-1"} {
+		for sequence := uint64(0); sequence < 5; sequence++ {
+			s.App.RatelimitKeeper.SetPendingSendPacket(s.Ctx, channelId, sequence)
+		}
+	}
+
+	// Check that they each sequence number is found
+	for _, channelId := range []string{"channel-0", "channel-1"} {
+		for sequence := uint64(0); sequence < 5; sequence++ {
+			found := s.App.RatelimitKeeper.CheckPacketSentDuringCurrentQuota(s.Ctx, channelId, sequence)
+			s.Require().True(found, "send packet should have been found - channel %s, sequence: %d", channelId, sequence)
+		}
+	}
+
+	// Remove 0 sequence numbers and all sequence numbers from channel-0
+	s.App.RatelimitKeeper.RemovePendingSendPacket(s.Ctx, "channel-0", 0)
+	s.App.RatelimitKeeper.RemovePendingSendPacket(s.Ctx, "channel-1", 0)
+	s.App.RatelimitKeeper.RemoveAllChannelPendingSendPackets(s.Ctx, "channel-0")
+
+	// Check that only the remaining sequences are found
+	for _, channelId := range []string{"channel-0", "channel-1"} {
+		for sequence := uint64(0); sequence < 5; sequence++ {
+			expected := (channelId == "channel-1") && (sequence != 0)
+			actual := s.App.RatelimitKeeper.CheckPacketSentDuringCurrentQuota(s.Ctx, channelId, sequence)
+			s.Require().Equal(expected, actual, "send packet after removal - channel: %s, sequence: %d", channelId, sequence)
+		}
+	}
+}
+
 func (s *KeeperTestSuite) TestDenomBlacklist() {
 	allDenoms := []string{"denom1", "denom2", "denom3", "denom4"}
 	denomsToBlacklist := []string{"denom1", "denom3"}

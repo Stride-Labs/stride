@@ -163,6 +163,43 @@ func (k Keeper) GetAllRateLimits(ctx sdk.Context) []types.RateLimit {
 	return allRateLimits
 }
 
+// Sets the sequence number of a packet that was just sent
+func (k Keeper) SetPendingSendPacket(ctx sdk.Context, channelId string, sequence uint64) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.PendingSendPacketPrefix)
+	key := types.GetPendingSendPacketKey(channelId, sequence)
+	store.Set(key, []byte{1})
+}
+
+// Checks whether the packet sequence number is in the store - indicating that it was
+// sent this quota
+func (k Keeper) CheckPacketSentDuringCurrentQuota(ctx sdk.Context, channelId string, sequence uint64) bool {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.PendingSendPacketPrefix)
+	key := types.GetPendingSendPacketKey(channelId, sequence)
+	valueBz := store.Get(key)
+	return len(valueBz) != 0
+}
+
+// Remove a pending packet sequence number from the store
+// Used after the ack or timeout for a packet has been received
+func (k Keeper) RemovePendingSendPacket(ctx sdk.Context, channelId string, sequence uint64) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.PendingSendPacketPrefix)
+	key := types.GetPendingSendPacketKey(channelId, sequence)
+	store.Delete(key)
+}
+
+// Remove all pending sequence numbers from the store
+// This is done when the quota resets
+func (k Keeper) RemoveAllChannelPendingSendPackets(ctx sdk.Context, channelId string) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.PendingSendPacketPrefix)
+
+	iterator := sdk.KVStorePrefixIterator(store, types.KeyPrefix(channelId))
+	defer iterator.Close()
+
+	for ; iterator.Valid(); iterator.Next() {
+		store.Delete(iterator.Key())
+	}
+}
+
 // Adds a denom to a blacklist to prevent all IBC transfers with this denom
 func (k Keeper) AddDenomToBlacklist(ctx sdk.Context, denom string) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.BlacklistKeyPrefix)
