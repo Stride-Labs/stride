@@ -13,7 +13,7 @@ relayer_config=$STATE/relayer-gaia-ics/config
 mnemonic=$(GET_VAR_VALUE     RELAYER_GAIA_MNEMONIC)
 chain_name=gaia
 account_name=$(GET_VAR_VALUE RELAYER_GAIA_ICS_ACCT)
-coin_type=$(GET_VAR_VALUE    GAIA_COIN_TYPE)
+coin_type=$(GET_VAR_VALUE    COSMOS_COIN_TYPE)
 
 mkdir -p $relayer_config
 chmod -R 777 $STATE/relayer-gaia-ics

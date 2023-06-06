@@ -176,6 +176,7 @@ replace (
 	// Use the keyring specified by the cosmos-sdk
 	github.com/99designs/keyring => github.com/cosmos/keyring v1.1.7-0.20210622111912-ef00f8ac3d76
 	github.com/btcsuite/btcd => github.com/btcsuite/btcd v0.22.2 //indirect
+	github.com/cosmos/ibc-go/v7 => github.com/Stride-Labs/ibc-go/v7 v7.0.0
 
 	// fork cast to add additional error checking
 	github.com/spf13/cast => github.com/Stride-Labs/cast v0.0.3

@@ -592,9 +592,6 @@ func NewStrideApp(
 	govKeeper.SetLegacyRouter(govRouter)
 	app.GovKeeper = *govKeeper
 
-	govKeeper.SetLegacyRouter(govRouter)
-	app.GovKeeper = *govKeeper
-
 	// Register ICQ callbacks
 	err := app.InterchainqueryKeeper.SetCallbackHandler(stakeibcmoduletypes.ModuleName, app.StakeibcKeeper.ICQCallbackHandler())
 	if err != nil {
