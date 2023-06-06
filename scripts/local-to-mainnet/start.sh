@@ -13,10 +13,10 @@ HOST_DENOM=ucmdx
 HOST_BINARY=build/comdexd
 HOST_COIN_TYPE=118
 HOST_VAL_NAME_1=imperator
-HOST_VAL_ADDRESS_1=comdex1pskxu4sh3sz0ep86l7t66yht26hx6ry2j3a83a
+HOST_VAL_ADDRESS_1=cosmosvaloper1vvwtk805lxehwle9l4yudmq6mn0g32px9xtkhc
 HOST_VAL_NAME_2=notional
-HOST_VAL_ADDRESS_2=comdex1cqhczky8j403n55rx9ff3w2zuj3p9dzmv2qkxg
-HOT_WALLET_1_ADDRESS=comdex1h8mx0pn53ngyfguh7veex0q88rmh9fqu45ldcn
+HOST_VAL_ADDRESS_2=cosmosvaloper1083svrca4t350mphfv9x45wq9asrs60cdmrflj
+HOT_WALLET_1_ADDRESS=cosmos1c37n9aywapx2v0s6vk2yedydkkhq65zzeupe92
 
 ### ^^^ SETTING VARIABLES FOR LOCAL TO MAINNET ABOVE ONLY ^^^ 
 
