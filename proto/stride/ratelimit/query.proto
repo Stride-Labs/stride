@@ -27,6 +27,16 @@ service Query {
     option (google.api.http).get =
         "/Stride-Labs/stride/ratelimit/ratelimits/{channel_id}";
   }
+  rpc AllBlacklistedDenoms(QueryAllBlacklistedDenomsRequest)
+      returns (QueryAllBlacklistedDenomsResponse) {
+    option (google.api.http).get =
+        "/Stride-Labs/stride/ratelimit/blacklisted_denoms";
+  }
+  rpc AllWhitelistedAddresses(QueryAllWhitelistedAddressesRequest)
+      returns (QueryAllWhitelistedAddressesResponse) {
+    option (google.api.http).get =
+        "/Stride-Labs/stride/ratelimit/whitelisted_addresses";
+  }
 }
 
 message QueryAllRateLimitsRequest {}
@@ -49,3 +59,9 @@ message QueryRateLimitsByChannelIdRequest { string channel_id = 1; }
 message QueryRateLimitsByChannelIdResponse {
   repeated RateLimit rate_limits = 1 [ (gogoproto.nullable) = false ];
 }
+
+message QueryAllBlacklistedDenomsRequest {}
+message QueryAllBlacklistedDenomsResponse { repeated string denoms = 1; }
+
+message QueryAllWhitelistedAddressesRequest {}
+message QueryAllWhitelistedAddressesResponse { repeated string addresses = 1; }

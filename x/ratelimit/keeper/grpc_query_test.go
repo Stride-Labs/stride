@@ -90,3 +90,21 @@ func (s *KeeperTestSuite) TestQueryRateLimitsByChannelId() {
 		s.Require().Equal(expectedRateLimit, queryResponse.RateLimits[0])
 	}
 }
+
+func (s *KeeperTestSuite) TestQueryAllBlacklistedDenoms() {
+	s.App.RatelimitKeeper.AddDenomToBlacklist(s.Ctx, "denom-A")
+	s.App.RatelimitKeeper.AddDenomToBlacklist(s.Ctx, "denom-B")
+
+	queryResponse, err := s.QueryClient.AllBlacklistedDenoms(context.Background(), &types.QueryAllBlacklistedDenomsRequest{})
+	s.Require().NoError(err, "no error expected when querying blacklisted denoms")
+	s.Require().Equal([]string{"denom-A", "denom-B"}, queryResponse.Denoms)
+}
+
+func (s *KeeperTestSuite) TestQueryAllWhitelistedAddresses() {
+	s.App.RatelimitKeeper.AddAddressToWhitelist(s.Ctx, "address-A")
+	s.App.RatelimitKeeper.AddAddressToWhitelist(s.Ctx, "address-B")
+
+	queryResponse, err := s.QueryClient.AllWhitelistedAddresses(context.Background(), &types.QueryAllWhitelistedAddressesRequest{})
+	s.Require().NoError(err, "no error expected when querying whitelisted addresses")
+	s.Require().Equal([]string{"address-A", "address-B"}, queryResponse.Addresses)
+}
