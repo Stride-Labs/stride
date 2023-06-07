@@ -11,12 +11,12 @@ package keeper_test
 
 // 	vestingtypes "github.com/cosmos/cosmos-sdk/x/auth/vesting/types"
 
-// 	"github.com/Stride-Labs/stride/v9/app/apptesting"
-// 	"github.com/Stride-Labs/stride/v9/utils"
-// 	claimkeeper "github.com/Stride-Labs/stride/v9/x/claim/keeper"
+// 	"github.com/Stride-Labs/stride/v10/app/apptesting"
+// 	"github.com/Stride-Labs/stride/v10/utils"
+// 	claimkeeper "github.com/Stride-Labs/stride/v10/x/claim/keeper"
 
-// 	"github.com/Stride-Labs/stride/v9/x/claim/types"
-// 	stridevestingtypes "github.com/Stride-Labs/stride/v9/x/claim/vesting/types"
+// 	"github.com/Stride-Labs/stride/v10/x/claim/types"
+// 	stridevestingtypes "github.com/Stride-Labs/stride/v10/x/claim/vesting/types"
 // )
 
 // // Test functionality for loading allocation data(csv)

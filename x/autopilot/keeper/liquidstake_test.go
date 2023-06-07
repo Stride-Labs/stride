@@ -10,16 +10,16 @@ import (
 	clienttypes "github.com/cosmos/ibc-go/v7/modules/core/02-client/types"
 	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
 
-	recordsmodule "github.com/Stride-Labs/stride/v9/x/records"
+	recordsmodule "github.com/Stride-Labs/stride/v10/x/records"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/Stride-Labs/stride/v9/x/autopilot"
-	"github.com/Stride-Labs/stride/v9/x/autopilot/types"
-	epochtypes "github.com/Stride-Labs/stride/v9/x/epochs/types"
-	minttypes "github.com/Stride-Labs/stride/v9/x/mint/types"
-	recordstypes "github.com/Stride-Labs/stride/v9/x/records/types"
-	stakeibctypes "github.com/Stride-Labs/stride/v9/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v10/x/autopilot"
+	"github.com/Stride-Labs/stride/v10/x/autopilot/types"
+	epochtypes "github.com/Stride-Labs/stride/v10/x/epochs/types"
+	minttypes "github.com/Stride-Labs/stride/v10/x/mint/types"
+	recordstypes "github.com/Stride-Labs/stride/v10/x/records/types"
+	stakeibctypes "github.com/Stride-Labs/stride/v10/x/stakeibc/types"
 )
 
 func getStakeibcPacketMetadata(address, action string) string {

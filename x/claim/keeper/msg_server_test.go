@@ -4,8 +4,8 @@ package keeper_test
 // 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 // 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-// 	"github.com/Stride-Labs/stride/v9/x/claim/keeper"
-// 	"github.com/Stride-Labs/stride/v9/x/claim/types"
+// 	"github.com/Stride-Labs/stride/v10/x/claim/keeper"
+// 	"github.com/Stride-Labs/stride/v10/x/claim/types"
 // )
 
 // func (suite *KeeperTestSuite) TestSetAirdropAllocationsForMultiAirdrops() {

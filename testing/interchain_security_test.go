@@ -14,7 +14,7 @@ package ics_test
 // 	"github.com/stretchr/testify/suite"
 // 	dbm "github.com/tendermint/tm-db"
 
-// 	appConsumer "github.com/Stride-Labs/stride/v9/app"
+// 	appConsumer "github.com/Stride-Labs/stride/v10/app"
 // )
 
 // // Executes the standard group of ccv tests against a consumer and provider app.go implementation.

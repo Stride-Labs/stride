@@ -14,8 +14,8 @@ import (
 
 	ccvgov "github.com/cosmos/interchain-security/x/ccv/democracy/governance"
 
-	minttypes "github.com/Stride-Labs/stride/v9/x/mint/types"
-	stakeibctypes "github.com/Stride-Labs/stride/v9/x/stakeibc/types"
+	minttypes "github.com/Stride-Labs/stride/v10/x/mint/types"
+	stakeibctypes "github.com/Stride-Labs/stride/v10/x/stakeibc/types"
 )
 
 func IsProposalWhitelisted(content govv1beta1.Content) bool {

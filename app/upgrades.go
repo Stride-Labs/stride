@@ -10,21 +10,21 @@ import (
 
 	consumertypes "github.com/cosmos/interchain-security/x/ccv/consumer/types"
 
-	v10 "github.com/Stride-Labs/stride/v9/app/upgrades/v07-Theta"
-	v2 "github.com/Stride-Labs/stride/v9/app/upgrades/v2"
-	v3 "github.com/Stride-Labs/stride/v9/app/upgrades/v3"
-	v4 "github.com/Stride-Labs/stride/v9/app/upgrades/v4"
-	v5 "github.com/Stride-Labs/stride/v9/app/upgrades/v5"
-	v6 "github.com/Stride-Labs/stride/v9/app/upgrades/v6"
-	v7 "github.com/Stride-Labs/stride/v9/app/upgrades/v7"
-	v8 "github.com/Stride-Labs/stride/v9/app/upgrades/v8"
-	v9 "github.com/Stride-Labs/stride/v9/app/upgrades/v9"
-	autopilottypes "github.com/Stride-Labs/stride/v9/x/autopilot/types"
-	claimtypes "github.com/Stride-Labs/stride/v9/x/claim/types"
-	icacallbacktypes "github.com/Stride-Labs/stride/v9/x/icacallbacks/types"
-	ratelimittypes "github.com/Stride-Labs/stride/v9/x/ratelimit/types"
-	recordtypes "github.com/Stride-Labs/stride/v9/x/records/types"
-	stakeibctypes "github.com/Stride-Labs/stride/v9/x/stakeibc/types"
+	v10 "github.com/Stride-Labs/stride/v10/app/upgrades/v10"
+	v2 "github.com/Stride-Labs/stride/v10/app/upgrades/v2"
+	v3 "github.com/Stride-Labs/stride/v10/app/upgrades/v3"
+	v4 "github.com/Stride-Labs/stride/v10/app/upgrades/v4"
+	v5 "github.com/Stride-Labs/stride/v10/app/upgrades/v5"
+	v6 "github.com/Stride-Labs/stride/v10/app/upgrades/v6"
+	v7 "github.com/Stride-Labs/stride/v10/app/upgrades/v7"
+	v8 "github.com/Stride-Labs/stride/v10/app/upgrades/v8"
+	v9 "github.com/Stride-Labs/stride/v10/app/upgrades/v9"
+	autopilottypes "github.com/Stride-Labs/stride/v10/x/autopilot/types"
+	claimtypes "github.com/Stride-Labs/stride/v10/x/claim/types"
+	icacallbacktypes "github.com/Stride-Labs/stride/v10/x/icacallbacks/types"
+	ratelimittypes "github.com/Stride-Labs/stride/v10/x/ratelimit/types"
+	recordtypes "github.com/Stride-Labs/stride/v10/x/records/types"
+	stakeibctypes "github.com/Stride-Labs/stride/v10/x/stakeibc/types"
 )
 
 func (app *StrideApp) setupUpgradeHandlers() {
@@ -144,7 +144,7 @@ func (app *StrideApp) setupUpgradeHandlers() {
 		storeUpgrades = &storetypes.StoreUpgrades{
 			Added: []string{ratelimittypes.StoreKey, autopilottypes.StoreKey},
 		}
-	case "v07-Theta":
+	case "v10":
 		storeUpgrades = &storetypes.StoreUpgrades{
 			Added: []string{consumertypes.ModuleName},
 		}

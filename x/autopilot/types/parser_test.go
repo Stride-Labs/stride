@@ -6,8 +6,8 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/Stride-Labs/stride/v9/app/apptesting"
-	"github.com/Stride-Labs/stride/v9/x/autopilot/types"
+	"github.com/Stride-Labs/stride/v10/app/apptesting"
+	"github.com/Stride-Labs/stride/v10/x/autopilot/types"
 )
 
 func init() {
@@ -47,7 +47,8 @@ func getClaimAndStakeibcMemo(address, action string) string {
 
 // Helper function to check the routingInfo with a switch statement
 // This isn't the most efficient way to check the type  (require.TypeOf could be used instead)
-//  but it better aligns with how the routing info is checked in module_ibc
+//
+//	but it better aligns with how the routing info is checked in module_ibc
 func checkModuleRoutingInfoType(routingInfo types.ModuleRoutingInfo, expectedType string) bool {
 	switch routingInfo.(type) {
 	case types.StakeibcPacketMetadata:

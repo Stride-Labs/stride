@@ -14,9 +14,9 @@ import (
 
 	proto "github.com/cosmos/gogoproto/proto"
 
-	"github.com/Stride-Labs/stride/v9/utils"
-	recordstypes "github.com/Stride-Labs/stride/v9/x/records/types"
-	"github.com/Stride-Labs/stride/v9/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v10/utils"
+	recordstypes "github.com/Stride-Labs/stride/v10/x/records/types"
+	"github.com/Stride-Labs/stride/v10/x/stakeibc/types"
 )
 
 func (k Keeper) CreateEpochUnbondingRecord(ctx sdk.Context, epochNumber uint64) bool {
@@ -49,10 +49,11 @@ func (k Keeper) CreateEpochUnbondingRecord(ctx sdk.Context, epochNumber uint64) 
 // and then splitting the undelegation amount across validators
 //
 // returns
-//  (1) MsgUndelegate messages
-//	(2) Total Amount to unbond across all validators
-//	(3) Marshalled Callback Args
-//	(4) Relevant EpochUnbondingRecords that contain HostZoneUnbondings that are ready for unbonding
+//
+//	 (1) MsgUndelegate messages
+//		(2) Total Amount to unbond across all validators
+//		(3) Marshalled Callback Args
+//		(4) Relevant EpochUnbondingRecords that contain HostZoneUnbondings that are ready for unbonding
 func (k Keeper) GetHostZoneUnbondingMsgs(ctx sdk.Context, hostZone types.HostZone) (msgs []proto.Message, totalAmountToUnbond sdkmath.Int, marshalledCallbackArgs []byte, epochUnbondingRecordIds []uint64, err error) {
 	k.Logger(ctx).Info(utils.LogWithHostZone(hostZone.ChainId, "Preparing MsgUndelegates from the delegation account to each validator"))
 
@@ -412,10 +413,10 @@ func (k Keeper) SweepAllUnbondedTokensForHostZone(ctx sdk.Context, hostZone type
 
 // Sends all unbonded tokens to the redemption account
 // returns:
-//	   * success indicator if all chains succeeded
-//	   * list of successful chains
-//	   * list of tokens swept
-//	   * list of failed chains
+//   - success indicator if all chains succeeded
+//   - list of successful chains
+//   - list of tokens swept
+//   - list of failed chains
 func (k Keeper) SweepAllUnbondedTokens(ctx sdk.Context) (success bool, successfulSweeps []string, sweepAmounts []sdkmath.Int, failedSweeps []string) {
 	// this function returns true if all chains succeeded, false otherwise
 	// it also returns a list of successful chains (arg 2), tokens swept (arg 3), and failed chains (arg 4)
