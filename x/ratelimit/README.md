@@ -225,7 +225,7 @@ GetAllWhitelistedAddresses() []string
 // Checks whether a packet will exceed a rate limit quota
 // If it does not exceed the quota, it updates the `Inflow` or `Outflow`
 // If it exceeds the quota, it returns an error
-CheckRateLimitAndUpdateFlow(direction types.PacketDirection, packetInfo RateLimitedPacketInfo)
+CheckRateLimitAndUpdateFlow(direction types.PacketDirection, packetInfo RateLimitedPacketInfo) (updated bool)
 
 // Reverts the change in outflow from a SendPacket if it fails or times out
 UndoSendPacket(channelId string, sequence uint64, denom string, amount sdkmath.Int) 

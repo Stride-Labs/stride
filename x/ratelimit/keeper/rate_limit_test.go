@@ -297,7 +297,7 @@ func (s *KeeperTestSuite) processCheckRateLimitAndUpdateFlowTestCase(tc checkRat
 			Sender:    sender,
 			Receiver:  receiver,
 		}
-		err := s.App.RatelimitKeeper.CheckRateLimitAndUpdateFlow(s.Ctx, action.direction, packetInfo)
+		updatedFlow, err := s.App.RatelimitKeeper.CheckRateLimitAndUpdateFlow(s.Ctx, action.direction, packetInfo)
 
 		// Each action optionally errors or skips a flow update
 		if action.expectedError != "" {
@@ -305,7 +305,10 @@ func (s *KeeperTestSuite) processCheckRateLimitAndUpdateFlowTestCase(tc checkRat
 		} else {
 			s.Require().NoError(err, tc.name+" - action: #%d - no error", i)
 
-			if !action.skipFlowUpdate {
+			expectedUpdateFlow := !action.skipFlowUpdate
+			s.Require().Equal(expectedUpdateFlow, updatedFlow, tc.name+" - action: #%d - updated flow", i)
+
+			if expectedUpdateFlow {
 				if action.direction == types.PACKET_RECV {
 					expectedInflow = expectedInflow.Add(amount)
 				} else {

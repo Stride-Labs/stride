@@ -54,7 +54,11 @@ func (k Keeper) UpdateFlow(rateLimit types.RateLimit, direction types.PacketDire
 
 // Checks whether the given packet will exceed the rate limit
 // Called by OnRecvPacket and OnSendPacket
-func (k Keeper) CheckRateLimitAndUpdateFlow(ctx sdk.Context, direction types.PacketDirection, packetInfo RateLimitedPacketInfo) error {
+func (k Keeper) CheckRateLimitAndUpdateFlow(
+	ctx sdk.Context,
+	direction types.PacketDirection,
+	packetInfo RateLimitedPacketInfo,
+) (updatedFlow bool, err error) {
 	denom := packetInfo.Denom
 	channelId := packetInfo.ChannelID
 	amount := packetInfo.Amount
@@ -63,33 +67,32 @@ func (k Keeper) CheckRateLimitAndUpdateFlow(ctx sdk.Context, direction types.Pac
 	if k.IsDenomBlacklisted(ctx, denom) {
 		err := errorsmod.Wrapf(types.ErrDenomIsBlacklisted, "denom %s is blacklisted", denom)
 		EmitTransferDeniedEvent(ctx, types.EventBlacklistedDenom, denom, channelId, direction, amount, err)
-		return err
+		return false, err
 	}
 
 	// If there's no rate limit yet for this denom, no action is necessary
 	rateLimit, found := k.GetRateLimit(ctx, denom, channelId)
 	if !found {
-		return nil
+		return false, nil
 	}
 
 	// Check if the sender or receiver are white listed
 	// If so, return a success without modifying the quota
 	if k.IsAddressWhitelisted(ctx, packetInfo.Sender) || k.IsAddressWhitelisted(ctx, packetInfo.Receiver) {
-		return nil
+		return false, nil
 	}
 
 	// Update the flow object with the change in amount
-	err := k.UpdateFlow(rateLimit, direction, amount)
-	if err != nil {
+	if err := k.UpdateFlow(rateLimit, direction, amount); err != nil {
 		// If the rate limit was exceeded, emit an event
 		EmitTransferDeniedEvent(ctx, types.EventRateLimitExceeded, denom, channelId, direction, amount, err)
-		return err
+		return false, err
 	}
 
 	// If there's no quota error, update the rate limit object in the store with the new flow
 	k.SetRateLimit(ctx, rateLimit)
 
-	return nil
+	return true, nil
 }
 
 // If a SendPacket fails or times out, undo the outflow increment that happened during the send

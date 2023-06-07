@@ -165,14 +165,16 @@ func (k Keeper) SendRateLimitedPacket(ctx sdk.Context, packet channeltypes.Packe
 	}
 
 	// Check if the packet would exceed the outflow rate limit
-	err = k.CheckRateLimitAndUpdateFlow(ctx, types.PACKET_SEND, packetInfo)
+	updatedFlow, err := k.CheckRateLimitAndUpdateFlow(ctx, types.PACKET_SEND, packetInfo)
 	if err != nil {
 		return err
 	}
 
 	// Store the sequence number of the packet so that if the transfer fails,
 	// we can identify if it was sent during this quota and can revert the outflow
-	k.SetPendingSendPacket(ctx, packetInfo.ChannelID, packet.Sequence)
+	if updatedFlow {
+		k.SetPendingSendPacket(ctx, packetInfo.ChannelID, packet.Sequence)
+	}
 
 	return nil
 }
@@ -185,7 +187,8 @@ func (k Keeper) ReceiveRateLimitedPacket(ctx sdk.Context, packet channeltypes.Pa
 		return err
 	}
 
-	return k.CheckRateLimitAndUpdateFlow(ctx, types.PACKET_RECV, packetInfo)
+	_, err = k.CheckRateLimitAndUpdateFlow(ctx, types.PACKET_RECV, packetInfo)
+	return err
 }
 
 // Middleware implementation for OnAckPacket with rate limiting
