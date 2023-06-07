@@ -4,7 +4,6 @@ import (
 	"fmt"
 	stdlog "log"
 	"os"
-	"time"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -22,12 +21,7 @@ import (
 )
 
 var (
-	UpgradeName             = "v10"
-	EvmosAirdropDistributor = "stride10dy5pmc2fq7fnmufjfschkfrxaqnpykl6ezy5j"
-	EvmosAirdropIdentifier  = "evmos"
-	AirdropDuration         = time.Hour * 24 * 30 * 12 * 3 // 3 years
-	ResetAirdropIdentifiers = []string{"stride", "gaia", "osmosis", "juno", "stars"}
-	AirdropStartTime        = time.Date(2023, 4, 3, 16, 0, 0, 0, time.UTC) // April 3, 2023 @ 16:00 UTC (12:00 EST)
+	UpgradeName = "v10"
 )
 
 // CreateUpgradeHandler creates an SDK upgrade handler for v10
@@ -40,7 +34,7 @@ func CreateUpgradeHandler(
 	stakingKeeper stakingkeeper.Keeper,
 ) upgradetypes.UpgradeHandler {
 	return func(ctx sdk.Context, _ upgradetypes.Plan, vm module.VersionMap) (module.VersionMap, error) {
-		ctx.Logger().Info("Starting upgrade v9...")
+		ctx.Logger().Info("Starting upgrade v10...")
 		ibcKeeper.ConnectionKeeper.SetParams(ctx, ibcconnectiontypes.DefaultParams())
 
 		fromVM := make(map[string]uint64)
