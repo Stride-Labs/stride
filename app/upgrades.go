@@ -129,6 +129,8 @@ func (app *StrideApp) setupUpgradeHandlers() {
 			Added: []string{ratelimittypes.StoreKey, autopilottypes.StoreKey},
 		}
 	}
+	// TODO: v10 UPGRADE HANDLER
+	// Add module and ICA accounts for each host zone to the rate limit whitelist
 
 	if storeUpgrades != nil {
 		app.SetStoreLoader(upgradetypes.UpgradeStoreLoader(upgradeInfo.Height, storeUpgrades))
