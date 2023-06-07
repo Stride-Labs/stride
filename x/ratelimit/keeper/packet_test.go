@@ -260,6 +260,13 @@ func (s *KeeperTestSuite) TestSendRateLimitedPacket() {
 	s.Require().ErrorIs(err, types.ErrQuotaExceeded, "error type")
 	s.Require().ErrorContains(err, "Outflow exceeds quota", "error text")
 
+	// Reset the rate limit and try again
+	err = s.App.RatelimitKeeper.ResetRateLimit(s.Ctx, denom, channelId)
+	s.Require().NoError(err, "no error expected when resetting rate limit")
+
+	err = s.App.RatelimitKeeper.SendRateLimitedPacket(s.Ctx, packet)
+	s.Require().NoError(err, "no error expected when sending packet after reset")
+
 	// Check that the pending packet was stored
 	found := s.App.RatelimitKeeper.CheckPacketSentDuringCurrentQuota(s.Ctx, sourceChannel, sequence)
 	s.Require().True(found, "pending send packet")
