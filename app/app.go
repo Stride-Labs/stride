@@ -156,7 +156,7 @@ import (
 const (
 	AccountAddressPrefix = "stride"
 	Name                 = "stride"
-	Version              = "9.0.0"
+	Version              = "10.0.0"
 )
 
 func getGovProposalHandlers() []govclient.ProposalHandler {
