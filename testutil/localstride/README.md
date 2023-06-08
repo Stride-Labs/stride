@@ -179,6 +179,12 @@ make localnet-state-export-build
 make localnet-state-export-start
 ```
 * Check the localstride logs and confirm the upgrade succeeded
+* If the upgrade passes, but then the chain hangs without producing blocks, you may need to add a second "kicker" node to jump start the network. To do this:
+  * Copy the `~/.stride/data` directory over to another machine
+  * Get the node ID of each machine by running `strided tendermint show-node-id`
+  * Add each node as a persistent peer of the other by adding `persistent_peers = "{NODE_ID}@{IP}:26656"` to `~/.stride/config/config.toml`
+  * Start both nodes until they start committing blocks
+  * Once they're rolling, you can shut the second node off
 
 ## LocalStride Accounts
 
