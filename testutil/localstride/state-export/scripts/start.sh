@@ -48,7 +48,8 @@ then
     echo "MNEMONIC: $MNEMONIC"
     echo "STRIDE_HOME: $STRIDE_HOME"
 
-    echo $MNEMONIC | strided init localstride -o --chain-id=$CHAIN_ID --home $STRIDE_HOME
+    strided init localstride -o --chain-id=$CHAIN_ID --home $STRIDE_HOME
+    
     echo $MNEMONIC | strided keys add val --recover --keyring-backend test
 
     ACCOUNT_PUBKEY=$(strided keys show --keyring-backend test val --pubkey | dasel -r json '.key' --plain)
