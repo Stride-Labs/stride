@@ -25,11 +25,16 @@ var (
 	PendingSendPacketPrefix   = KeyPrefix("pending-send-packet")
 	DenomBlacklistKeyPrefix   = KeyPrefix("denom-blacklist")
 	AddressWhitelistKeyPrefix = KeyPrefix("address-blacklist")
+
+	PendingSendPacketChannelLength int = 16
 )
 
 func GetPendingSendPacketKey(channelId string, sequenceNumber uint64) []byte {
-	channelIdBz := []byte(channelId)
+	channelIdBz := make([]byte, PendingSendPacketChannelLength)
+	copy(channelIdBz[:], channelId)
+
 	sequenceNumberBz := make([]byte, 8)
 	binary.BigEndian.PutUint64(sequenceNumberBz, sequenceNumber)
+
 	return append(channelIdBz, sequenceNumberBz...)
 }

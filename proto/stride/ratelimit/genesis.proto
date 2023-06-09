@@ -9,15 +9,17 @@ option go_package = "github.com/Stride-Labs/stride/v9/x/ratelimit/types";
 
 // GenesisState defines the ratelimit module's genesis state.
 message GenesisState {
-  // params defines all the parameters of the module.
   Params params = 1 [
     (gogoproto.moretags) = "yaml:\"params\"",
     (gogoproto.nullable) = false
   ];
 
-  // list of rate limits
   repeated RateLimit rate_limits = 2 [
     (gogoproto.moretags) = "yaml:\"rate_limits\"",
     (gogoproto.nullable) = false
   ];
+
+  repeated string blacklisted_denoms = 3;
+  repeated string whitelisted_addresses = 4;
+  repeated string pending_send_packet_sequence_numbers = 5;
 }

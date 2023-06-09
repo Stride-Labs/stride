@@ -1,6 +1,8 @@
 package keeper
 
 import (
+	"encoding/binary"
+	"fmt"
 	"strings"
 
 	errorsmod "cosmossdk.io/errors"
@@ -208,6 +210,29 @@ func (k Keeper) CheckPacketSentDuringCurrentQuota(ctx sdk.Context, channelId str
 	valueBz := store.Get(key)
 	found := len(valueBz) != 0
 	return found
+}
+
+// Get all pending packet sequence numbers
+func (k Keeper) GetAllPendingSendPackets(ctx sdk.Context) []string {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.PendingSendPacketPrefix)
+
+	iterator := store.Iterator(nil, nil)
+	defer iterator.Close()
+
+	pendingPackets := []string{}
+	for ; iterator.Valid(); iterator.Next() {
+		key := iterator.Key()
+
+		channelId := string(key[:types.PendingSendPacketChannelLength])
+		channelId = strings.TrimRight(channelId, "\x00") // removes null bytes from suffix
+		sequence := binary.BigEndian.Uint64(key[types.PendingSendPacketChannelLength:])
+
+		packetId := fmt.Sprintf("%s/%d", channelId, sequence)
+		fmt.Println(packetId)
+		pendingPackets = append(pendingPackets, packetId)
+	}
+
+	return pendingPackets
 }
 
 // Remove all pending sequence numbers from the store
