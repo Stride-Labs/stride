@@ -16,7 +16,7 @@ TX_LOGS=$DOCKERNET_HOME/logs/tx.log
 KEYS_LOGS=$DOCKERNET_HOME/logs/keys.log
 
 # List of hosts enabled
-HOST_CHAINS=() 
+HOST_CHAINS=(GAIA JUNO OSMO) 
 
 # If no host zones are specified above:
 #  `start-docker` defaults to just GAIA if HOST_CHAINS is empty
@@ -196,6 +196,7 @@ OSMO_DENOM=$OSMO_DENOM
 OSMO_RPC_PORT=26357
 OSMO_MAIN_CMD="$OSMO_BINARY --home $DOCKERNET_HOME/state/${OSMO_NODE_PREFIX}1"
 OSMO_RECEIVER_ADDRESS='osmo1w6wdc2684g9h3xl8nhgwr282tcxx4kl06n4sjl'
+OSMO_FEES="--fees 10000uosmo"
 
 # STARS
 STARS_CHAIN_ID=STARS
