@@ -176,6 +176,14 @@ paths:
     src-channel-filter:
       rule: ""
       channel-list: []
+  stride-stride:
+    src:
+      chain-id: STRIDE
+    dst:
+      chain-id: STRIDE
+    src-channel-filter:
+      rule: ""
+      channel-list: []
   # stride-{new-host-zone}:
   #   src:
   #     chain-id: STRIDE

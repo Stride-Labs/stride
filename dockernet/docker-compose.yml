@@ -250,6 +250,13 @@ services:
       - ./state/relayer-evmos:/home/relayer/.relayer
     restart: always
     command: [ "bash", "start.sh", "stride-evmos" ]
+  
+  relayer-localhost:
+    image: stridezone:relayer
+    volumes:
+      - ./state/relayer-localhost:/home/relayer/.relayer
+    restart: always
+    command: [ "bash", "start.sh", "stride-stride" ]
 
   relayer-juno-osmo:
     image: stridezone:relayer
