@@ -239,15 +239,8 @@ func (k Keeper) SendPacket(
 	timeoutTimestamp uint64,
 	data []byte,
 ) (sequence uint64, err error) {
-	packet := channeltypes.Packet{
-		SourceChannel: sourceChannel,
-		Data:          data,
-	}
-	if err := k.SendRateLimitedPacket(ctx, packet); err != nil {
-		k.Logger(ctx).Error(fmt.Sprintf("ICS20 packet send was denied: %s", err.Error()))
-		return 0, err
-	}
-	return k.ics4Wrapper.SendPacket(
+	// The packet must first be sent up the stack to get the sequence number from the channel keeper
+	sequence, err = k.ics4Wrapper.SendPacket(
 		ctx,
 		channelCap,
 		sourcePort,
@@ -256,6 +249,23 @@ func (k Keeper) SendPacket(
 		timeoutTimestamp,
 		data,
 	)
+	if err != nil {
+		return sequence, err
+	}
+
+	err = k.SendRateLimitedPacket(ctx, channeltypes.Packet{
+		Sequence:         sequence,
+		SourceChannel:    sourceChannel,
+		SourcePort:       sourcePort,
+		TimeoutHeight:    timeoutHeight,
+		TimeoutTimestamp: timeoutTimestamp,
+		Data:             data,
+	})
+	if err != nil {
+		k.Logger(ctx).Error(fmt.Sprintf("ICS20 packet send was denied: %s", err.Error()))
+		return 0, err
+	}
+	return sequence, err
 }
 
 // WriteAcknowledgement wraps IBC ChannelKeeper's WriteAcknowledgement function
