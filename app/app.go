@@ -641,9 +641,6 @@ func NewStrideApp(
 	// - transfer
 	// - base app
 	var transferStack porttypes.IBCModule = transferIBCModule
-	transferStack = ratelimitmodule.NewIBCMiddleware(app.RatelimitKeeper, transferStack)
-	transferStack = recordsmodule.NewIBCModule(app.RecordsKeeper, transferStack)
-	transferStack = autopilot.NewIBCModule(app.AutopilotKeeper, transferStack)
 	transferStack = router.NewIBCMiddleware(
 		transferStack,
 		app.RouterKeeper,
@@ -651,6 +648,10 @@ func NewStrideApp(
 		routerkeeper.DefaultForwardTransferPacketTimeoutTimestamp,
 		routerkeeper.DefaultRefundTransferPacketTimeoutTimestamp,
 	)
+	transferStack = ratelimitmodule.NewIBCMiddleware(app.RatelimitKeeper, transferStack)
+	transferStack = recordsmodule.NewIBCModule(app.RecordsKeeper, transferStack)
+	transferStack = autopilot.NewIBCModule(app.AutopilotKeeper, transferStack)
+
 	// Create static IBC router, add transfer route, then set and seal it
 	// Two routes are included for the ICAController because of the following procedure when registering an ICA
 	//     1. RegisterInterchainAccount binds the new portId to the icacontroller module and initiates a channel opening
