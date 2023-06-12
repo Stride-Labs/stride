@@ -56,12 +56,12 @@ var (
 		"evmos":   "stride10dy5pmc2fq7fnmufjfschkfrxaqnpykl6ezy5j",
 	}
 	NewDistributorAddresses = map[string]string{
-		"stride":  "stride1cpvl8yf848karqauyhr5jzw6d9n9lnuuu974ev",
-		"gaia":    "stride1fmh0ysk5nt9y2cj8hddms5ffj2dhys55xkkjwz",
-		"osmosis": "stride1zlu2l3lx5tqvzspvjwsw9u0e907kelhqae3yhk",
-		"juno":    "stride14k9g9zpgaycpey9840nnpa66l4nd6lu7g7t74c",
-		"stars":   "stride12pum4adk5dhp32d90f8g8gfwujm0gwxqnrdlum",
-		"evmos":   "stride10dy5pmc2fq7fnmufjfschkfrxaqnpykl6ezy5j",
+		"stride":  "stride1w02dg74j8s38gqn6mvlr87hkvyv5rgp3cqe9se",
+		"gaia":    "stride1w0w0gr6u796y2mjl9fuqt66jqvk3j59jq3jtpg",
+		"osmosis": "stride1mfg5ck02tlyzdtdpaj70ngtgjs2vuawtkfz7xd",
+		"juno":    "stride1ral4dsqk0nzyqlwtuyxgavfvx8hegml7u0rzx3",
+		"stars":   "stride1rm9nxc5pw3k5r5s6lm85k73mfp734nhnxq570g",
+		"evmos":   "stride1ej4e7x2hanmy6vrzrjh06g6dnfq5kxm73dmgsw",
 	}
 )
 
@@ -78,7 +78,7 @@ func CreateUpgradeHandler(
 	icacallbacksKeeper icacallbackskeeper.Keeper,
 	mintKeeper mintkeeper.Keeper,
 	paramsKeeper paramskeeper.Keeper,
-	claimKeeper claimKeeper.Keeper,
+	claimKeeper claimkeeper.Keeper,
 ) upgradetypes.UpgradeHandler {
 	return func(ctx sdk.Context, _ upgradetypes.Plan, vm module.VersionMap) (module.VersionMap, error) {
 		ctx.Logger().Info("Starting upgrade v10...")
