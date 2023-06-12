@@ -9,6 +9,7 @@ import (
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
+	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
 	capabilitykeeper "github.com/cosmos/cosmos-sdk/x/capability/keeper"
 	consensusparamkeeper "github.com/cosmos/cosmos-sdk/x/consensus/keeper"
 	govkeeper "github.com/cosmos/cosmos-sdk/x/gov/keeper"
@@ -43,6 +44,11 @@ var (
 	StrategicReserveProportion            = "0.4879"
 	CommunityPoolSecurityBudgetProportion = "0.1358"
 
+	CommunityPoolGrowthAddress = "stride1lj0m72d70qerts9ksrsphy9nmsd4h0s88ll9gfphmhemh8ewet5qj44jc9"
+	BadKidsCustodian           = "stride17z6yy8vfgklgej9m848jm7rkp270gd9pgaw8zu"
+	BadKidsTransferAmount      = sdk.NewInt(15_000_000_000)
+	Ustrd                      = "ustrd"
+
 	MinInitialDepositRatio = "0.25"
 )
 
@@ -52,6 +58,7 @@ func CreateUpgradeHandler(
 	configurator module.Configurator,
 	cdc codec.Codec,
 	capabilityStoreKey *storetypes.KVStoreKey,
+	bankKeeper bankkeeper.Keeper,
 	capabilityKeeper *capabilitykeeper.Keeper,
 	clientKeeper clientkeeper.Keeper,
 	consensusParamsKeeper consensusparamkeeper.Keeper,
@@ -102,6 +109,11 @@ func CreateUpgradeHandler(
 		ctx.Logger().Info("Setting MinInitialDepositRatio...")
 		if err := SetMinInitialDepositRatio(ctx, govKeeper); err != nil {
 			return nil, errorsmod.Wrapf(err, "unable to set MinInitialDepositRatio")
+		}
+
+		ctx.Logger().Info("Executing Prop #205...")
+		if err := ExecuteProp205(ctx, bankKeeper); err != nil {
+			return nil, errorsmod.Wrapf(err, "unable to submit transfer for Prop #205")
 		}
 
 		ctx.Logger().Info("v10 Upgrade Complete")
@@ -205,4 +217,13 @@ func AddLocalhostIBCClient(ctx sdk.Context, k clientkeeper.Keeper) {
 	params := k.GetParams(ctx)
 	params.AllowedClients = append(params.AllowedClients, exported.Localhost)
 	k.SetParams(ctx, params)
+}
+
+// Execute Prop #205 - Signaling proposal to acquire Bad Kids
+// Sends 15,000 STRD from "Community Pool - Growth" to the bad kids custodian account
+func ExecuteProp205(ctx sdk.Context, k bankkeeper.Keeper) error {
+	communityPoolGrowthAddress := sdk.MustAccAddressFromBech32(CommunityPoolGrowthAddress)
+	badKidsCustodianAddress := sdk.MustAccAddressFromBech32(BadKidsCustodian)
+	transferCoin := sdk.NewCoin(Ustrd, BadKidsTransferAmount)
+	return k.SendCoins(ctx, communityPoolGrowthAddress, badKidsCustodianAddress, sdk.NewCoins(transferCoin))
 }
