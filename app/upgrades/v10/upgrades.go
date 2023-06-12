@@ -22,6 +22,8 @@ import (
 
 	"github.com/cosmos/ibc-go/v7/modules/core/exported"
 
+	claimkeeper "github.com/Stride-Labs/stride/v9/x/claim/keeper"
+	claimtypes "github.com/Stride-Labs/stride/v9/x/claim/types"
 	icacallbackskeeper "github.com/Stride-Labs/stride/v9/x/icacallbacks/keeper"
 	mintkeeper "github.com/Stride-Labs/stride/v9/x/mint/keeper"
 	minttypes "github.com/Stride-Labs/stride/v9/x/mint/types"
@@ -44,6 +46,23 @@ var (
 	CommunityPoolSecurityBudgetProportion = "0.1358"
 
 	MinInitialDepositRatio = "0.25"
+	// airdrop distributor addresses
+	DistributorAddresses = map[string]string{
+		"stride":  "stride1cpvl8yf848karqauyhr5jzw6d9n9lnuuu974ev",
+		"gaia":    "stride1fmh0ysk5nt9y2cj8hddms5ffj2dhys55xkkjwz",
+		"osmosis": "stride1zlu2l3lx5tqvzspvjwsw9u0e907kelhqae3yhk",
+		"juno":    "stride14k9g9zpgaycpey9840nnpa66l4nd6lu7g7t74c",
+		"stars":   "stride12pum4adk5dhp32d90f8g8gfwujm0gwxqnrdlum",
+		"evmos":   "stride10dy5pmc2fq7fnmufjfschkfrxaqnpykl6ezy5j",
+	}
+	NewDistributorAddresses = map[string]string{
+		"stride":  "stride1cpvl8yf848karqauyhr5jzw6d9n9lnuuu974ev",
+		"gaia":    "stride1fmh0ysk5nt9y2cj8hddms5ffj2dhys55xkkjwz",
+		"osmosis": "stride1zlu2l3lx5tqvzspvjwsw9u0e907kelhqae3yhk",
+		"juno":    "stride14k9g9zpgaycpey9840nnpa66l4nd6lu7g7t74c",
+		"stars":   "stride12pum4adk5dhp32d90f8g8gfwujm0gwxqnrdlum",
+		"evmos":   "stride10dy5pmc2fq7fnmufjfschkfrxaqnpykl6ezy5j",
+	}
 )
 
 // CreateUpgradeHandler creates an SDK upgrade handler for v10
@@ -59,6 +78,7 @@ func CreateUpgradeHandler(
 	icacallbacksKeeper icacallbackskeeper.Keeper,
 	mintKeeper mintkeeper.Keeper,
 	paramsKeeper paramskeeper.Keeper,
+	claimKeeper claimKeeper.Keeper,
 ) upgradetypes.UpgradeHandler {
 	return func(ctx sdk.Context, _ upgradetypes.Plan, vm module.VersionMap) (module.VersionMap, error) {
 		ctx.Logger().Info("Starting upgrade v10...")
@@ -102,6 +122,11 @@ func CreateUpgradeHandler(
 		ctx.Logger().Info("Setting MinInitialDepositRatio...")
 		if err := SetMinInitialDepositRatio(ctx, govKeeper); err != nil {
 			return nil, errorsmod.Wrapf(err, "unable to set MinInitialDepositRatio")
+		}
+
+		ctx.Logger().Info("Migrating claim distributor addresses...")
+		if err := MigrateClaimDistributorAddress(ctx, claimKeeper); err != nil {
+			return nil, errorsmod.Wrapf(err, "unable to MigrateClaimDistributorAddress")
 		}
 
 		ctx.Logger().Info("v10 Upgrade Complete")
@@ -184,6 +209,21 @@ func MigrateCallbackData(ctx sdk.Context, k icacallbackskeeper.Keeper) error {
 		newCallbackData := oldCallbackData
 		newCallbackData.CallbackArgs = newCallbackArgsBz
 		k.SetCallbackData(ctx, newCallbackData)
+	}
+	return nil
+}
+
+// Migrate the claim distributor address, change nothing else about the airdrop params
+func MigrateClaimDistributorAddress(ctx sdk.Context, k claimkeeper.Keeper) error {
+	claimParams, err := k.GetParams(ctx)
+	if err != nil {
+		return errorsmod.Wrapf(err, "unable to get claim parameters")
+	}
+
+	updatedAirdrops := []*claimtypes.Airdrop{}
+	for _, airdrop := range claimParams.Airdrops {
+		airdrop.DistributorAddress = NewDistributorAddresses[airdrop.AirdropIdentifier]
+		updatedAirdrops = append(updatedAirdrops, airdrop)
 	}
 	return nil
 }
