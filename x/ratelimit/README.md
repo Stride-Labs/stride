@@ -57,7 +57,7 @@ The module also contains a blacklist to completely halt all IBC transfers for a 
 
 ## Address Whitelist
 
-There is also a whitelist to exclude module account's and ICAs. Stride periodically bundles liquid staking deposits and transfers in a single transaction at the top of the epoch. Without a whitelist, this transfer would trip the rate limit. 
+There is also a whitelist to exclude module account's and ICAs. Stride periodically bundles liquid staking deposits and transfers in a single transaction at the top of the epoch. Without a whitelist, this transfer would make the rate limit more likely to trigger a false positive. 
 
 ## Denoms
 

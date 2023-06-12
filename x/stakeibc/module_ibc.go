@@ -98,23 +98,21 @@ func (im IBCModule) OnChanOpenAck(
 	}
 
 	// Set ICA account addresses
-	icaAddressAdded := true
 	switch {
 	case portID == withdrawalAddress:
 		zoneInfo.WithdrawalAccount = &types.ICAAccount{Address: address, Target: types.ICAAccountType_WITHDRAWAL}
+		im.keeper.RatelimitKeeper.AddAddressToWhitelist(ctx, address)
 	case portID == feeAddress:
 		zoneInfo.FeeAccount = &types.ICAAccount{Address: address, Target: types.ICAAccountType_FEE}
+		im.keeper.RatelimitKeeper.AddAddressToWhitelist(ctx, address)
 	case portID == delegationAddress:
 		zoneInfo.DelegationAccount = &types.ICAAccount{Address: address, Target: types.ICAAccountType_DELEGATION}
+		im.keeper.RatelimitKeeper.AddAddressToWhitelist(ctx, address)
 	case portID == redemptionAddress:
 		zoneInfo.RedemptionAccount = &types.ICAAccount{Address: address, Target: types.ICAAccountType_REDEMPTION}
-	default:
-		icaAddressAdded = false
-		ctx.Logger().Error(fmt.Sprintf("Missing portId: %s", portID))
-	}
-
-	if icaAddressAdded {
 		im.keeper.RatelimitKeeper.AddAddressToWhitelist(ctx, address)
+	default:
+		ctx.Logger().Error(fmt.Sprintf("Missing portId: %s", portID))
 	}
 
 	im.keeper.SetHostZone(ctx, zoneInfo)
