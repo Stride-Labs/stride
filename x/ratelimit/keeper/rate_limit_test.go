@@ -203,13 +203,13 @@ func (s *KeeperTestSuite) TestDenomBlacklist() {
 
 func (s *KeeperTestSuite) TestAddressWhitelist() {
 	// Store addresses in whitelist
-	expectedWhitelist := []types.AddressWhitelist{
+	expectedWhitelist := []types.WhitelistedAddressPair{
 		{Sender: "sender-1", Receiver: "receiver-1"},
 		{Sender: "sender-2", Receiver: "receiver-2"},
 		{Sender: "sender-3", Receiver: "receiver-3"},
 	}
 	for _, addressPair := range expectedWhitelist {
-		s.App.RatelimitKeeper.SetAddressWhitelist(s.Ctx, addressPair)
+		s.App.RatelimitKeeper.SetWhitelistedAddressPair(s.Ctx, addressPair)
 	}
 
 	// Confirm that each was found
@@ -231,16 +231,16 @@ func (s *KeeperTestSuite) TestAddressWhitelist() {
 	}
 
 	// Check GetAll
-	actualWhitelist := s.App.RatelimitKeeper.GetAllWhitelistedAddresses(s.Ctx)
+	actualWhitelist := s.App.RatelimitKeeper.GetAllWhitelistedAddressPairs(s.Ctx)
 	s.Require().Equal(expectedWhitelist, actualWhitelist, "whitelist get all")
 
 	// Finally, remove each from whitelist
 	for _, addressPair := range expectedWhitelist {
-		s.App.RatelimitKeeper.RemoveAddressWhitelist(s.Ctx, addressPair.Sender, addressPair.Receiver)
+		s.App.RatelimitKeeper.RemoveWhitelistedAddressPair(s.Ctx, addressPair.Sender, addressPair.Receiver)
 	}
 
 	// Confirm there are no longer any whitelisted pairs
-	actualWhitelist = s.App.RatelimitKeeper.GetAllWhitelistedAddresses(s.Ctx)
+	actualWhitelist = s.App.RatelimitKeeper.GetAllWhitelistedAddressPairs(s.Ctx)
 	s.Require().Empty(actualWhitelist, "whitelist should have been cleared")
 
 	for _, addressPair := range expectedWhitelist {
@@ -274,7 +274,7 @@ func (s *KeeperTestSuite) SetupCheckRateLimitAndUpdateFlowTest() {
 	})
 
 	s.App.RatelimitKeeper.RemoveDenomFromBlacklist(s.Ctx, denom)
-	s.App.RatelimitKeeper.RemoveAddressWhitelist(s.Ctx, sender, receiver)
+	s.App.RatelimitKeeper.RemoveWhitelistedAddressPair(s.Ctx, sender, receiver)
 }
 
 // Helper function to check the rate limit across a series of transfers
@@ -293,13 +293,13 @@ func (s *KeeperTestSuite) processCheckRateLimitAndUpdateFlowTestCase(tc checkRat
 		}
 
 		if action.addToWhitelist {
-			s.App.RatelimitKeeper.SetAddressWhitelist(s.Ctx, types.AddressWhitelist{
+			s.App.RatelimitKeeper.SetWhitelistedAddressPair(s.Ctx, types.WhitelistedAddressPair{
 				Sender:   sender,
 				Receiver: receiver,
 			})
 			continue
 		} else if action.removeFromWhitelist {
-			s.App.RatelimitKeeper.RemoveAddressWhitelist(s.Ctx, sender, receiver)
+			s.App.RatelimitKeeper.RemoveWhitelistedAddressPair(s.Ctx, sender, receiver)
 			continue
 		}
 

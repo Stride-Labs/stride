@@ -289,7 +289,7 @@ func (k Keeper) GetAllBlacklistedDenoms(ctx sdk.Context) []string {
 
 // Adds an pair of sender and receiver addresses to the whitelist to allow all
 // IBC transfers between those addresses to skip all flow calculations
-func (k Keeper) SetAddressWhitelist(ctx sdk.Context, whitelist types.AddressWhitelist) {
+func (k Keeper) SetWhitelistedAddressPair(ctx sdk.Context, whitelist types.WhitelistedAddressPair) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.AddressWhitelistKeyPrefix)
 	key := types.GetAddressWhitelistKey(whitelist.Sender, whitelist.Receiver)
 	value := k.cdc.MustMarshal(&whitelist)
@@ -297,7 +297,7 @@ func (k Keeper) SetAddressWhitelist(ctx sdk.Context, whitelist types.AddressWhit
 }
 
 // Removes a whitelisted address pair so that it's transfers are counted in the quota
-func (k Keeper) RemoveAddressWhitelist(ctx sdk.Context, sender, receiver string) {
+func (k Keeper) RemoveWhitelistedAddressPair(ctx sdk.Context, sender, receiver string) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.AddressWhitelistKeyPrefix)
 	key := types.GetAddressWhitelistKey(sender, receiver)
 	store.Delete(key)
@@ -315,15 +315,15 @@ func (k Keeper) IsAddressPairWhitelisted(ctx sdk.Context, sender, receiver strin
 }
 
 // Get all the whitelisted addresses
-func (k Keeper) GetAllWhitelistedAddresses(ctx sdk.Context) []types.AddressWhitelist {
+func (k Keeper) GetAllWhitelistedAddressPairs(ctx sdk.Context) []types.WhitelistedAddressPair {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.AddressWhitelistKeyPrefix)
 
 	iterator := store.Iterator(nil, nil)
 	defer iterator.Close()
 
-	allWhitelistedAddresses := []types.AddressWhitelist{}
+	allWhitelistedAddresses := []types.WhitelistedAddressPair{}
 	for ; iterator.Valid(); iterator.Next() {
-		whitelist := types.AddressWhitelist{}
+		whitelist := types.WhitelistedAddressPair{}
 		k.cdc.MustUnmarshal(iterator.Value(), &whitelist)
 		allWhitelistedAddresses = append(allWhitelistedAddresses, whitelist)
 	}

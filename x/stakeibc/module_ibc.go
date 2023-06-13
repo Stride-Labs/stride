@@ -106,14 +106,14 @@ func (im IBCModule) OnChanOpenAck(
 	case portID == feeAddress:
 		zoneInfo.FeeAccount = &types.ICAAccount{Address: address, Target: types.ICAAccountType_FEE}
 		rewardCollectorAddress := im.keeper.AccountKeeper.GetModuleAccount(ctx, types.RewardCollectorName).GetAddress()
-		im.keeper.RatelimitKeeper.SetAddressWhitelist(ctx, ratelimittypes.AddressWhitelist{
+		im.keeper.RatelimitKeeper.SetWhitelistedAddressPair(ctx, ratelimittypes.WhitelistedAddressPair{
 			Sender:   address,
 			Receiver: rewardCollectorAddress.String(),
 		})
 
 	case portID == delegationAddress:
 		zoneInfo.DelegationAccount = &types.ICAAccount{Address: address, Target: types.ICAAccountType_DELEGATION}
-		im.keeper.RatelimitKeeper.SetAddressWhitelist(ctx, ratelimittypes.AddressWhitelist{
+		im.keeper.RatelimitKeeper.SetWhitelistedAddressPair(ctx, ratelimittypes.WhitelistedAddressPair{
 			Sender:   zoneInfo.Address,
 			Receiver: address,
 		})

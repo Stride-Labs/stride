@@ -42,5 +42,5 @@ type StakeIBCHooks interface {
 type RatelimitKeeper interface {
 	AddDenomToBlacklist(ctx sdk.Context, denom string)
 	RemoveDenomFromBlacklist(ctx sdk.Context, denom string)
-	SetAddressWhitelist(ctx sdk.Context, whitelist ratelimittypes.AddressWhitelist)
+	SetWhitelistedAddressPair(ctx sdk.Context, whitelist ratelimittypes.WhitelistedAddressPair)
 }

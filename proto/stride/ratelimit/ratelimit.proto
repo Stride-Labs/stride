@@ -50,7 +50,7 @@ message RateLimit {
   Flow flow = 3;
 }
 
-message AddressWhitelist {
+message WhitelistedAddressPair {
   string sender = 1;
   string receiver = 2;
 }

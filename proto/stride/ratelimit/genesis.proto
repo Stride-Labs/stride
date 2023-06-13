@@ -19,7 +19,7 @@ message GenesisState {
     (gogoproto.nullable) = false
   ];
 
-  repeated AddressWhitelist whitelisted_address_pairs = 3 [
+  repeated WhitelistedAddressPair whitelisted_address_pairs = 3 [
     (gogoproto.moretags) = "yaml:\"whitelisted_address_pairs\"",
     (gogoproto.nullable) = false
   ];
