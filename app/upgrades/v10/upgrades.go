@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	errorsmod "cosmossdk.io/errors"
+	sdkmath "cosmossdk.io/math"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/codec"
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
@@ -19,13 +20,16 @@ import (
 
 	icacontrollermigrations "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/controller/migrations/v6"
 	clientkeeper "github.com/cosmos/ibc-go/v7/modules/core/02-client/keeper"
-	ibctmmigrations "github.com/cosmos/ibc-go/v7/modules/light-clients/07-tendermint/migrations"
-
+	channelkeeper "github.com/cosmos/ibc-go/v7/modules/core/04-channel/keeper"
 	"github.com/cosmos/ibc-go/v7/modules/core/exported"
+	ibctmmigrations "github.com/cosmos/ibc-go/v7/modules/light-clients/07-tendermint/migrations"
 
 	icacallbackskeeper "github.com/Stride-Labs/stride/v9/x/icacallbacks/keeper"
 	mintkeeper "github.com/Stride-Labs/stride/v9/x/mint/keeper"
 	minttypes "github.com/Stride-Labs/stride/v9/x/mint/types"
+	ratelimitkeeper "github.com/Stride-Labs/stride/v9/x/ratelimit/keeper"
+	ratelimitgov "github.com/Stride-Labs/stride/v9/x/ratelimit/keeper/gov"
+	ratelimittypes "github.com/Stride-Labs/stride/v9/x/ratelimit/types"
 	recordskeeper "github.com/Stride-Labs/stride/v9/x/records/keeper"
 	recordstypes "github.com/Stride-Labs/stride/v9/x/records/types"
 	stakeibckeeper "github.com/Stride-Labs/stride/v9/x/stakeibc/keeper"
@@ -50,6 +54,19 @@ var (
 	Ustrd                      = "ustrd"
 
 	MinInitialDepositRatio = "0.25"
+
+	RateLimitDurationHours = uint64(24)
+	NewRateLimits          = map[string]sdkmath.Int{
+		"cosmoshub-4":  sdkmath.NewInt(25),
+		"osmosis-1":    sdkmath.NewInt(25),
+		"injective-1":  sdkmath.NewInt(25),
+		"evmos_9001-2": sdkmath.NewInt(25),
+		"juno-1":       sdkmath.NewInt(75),
+		"stargaze-1":   sdkmath.NewInt(75),
+		"phoenix-1":    sdkmath.NewInt(75),
+		"umee-1":       sdkmath.NewInt(75),
+		"comdex-1":     sdkmath.NewInt(75),
+	}
 )
 
 // CreateUpgradeHandler creates an SDK upgrade handler for v10
@@ -60,12 +77,15 @@ func CreateUpgradeHandler(
 	capabilityStoreKey *storetypes.KVStoreKey,
 	bankKeeper bankkeeper.Keeper,
 	capabilityKeeper *capabilitykeeper.Keeper,
+	channelKeeper channelkeeper.Keeper,
 	clientKeeper clientkeeper.Keeper,
 	consensusParamsKeeper consensusparamkeeper.Keeper,
 	govKeeper govkeeper.Keeper,
 	icacallbacksKeeper icacallbackskeeper.Keeper,
 	mintKeeper mintkeeper.Keeper,
 	paramsKeeper paramskeeper.Keeper,
+	ratelimitKeeper ratelimitkeeper.Keeper,
+	stakeibcKeeper stakeibckeeper.Keeper,
 ) upgradetypes.UpgradeHandler {
 	return func(ctx sdk.Context, _ upgradetypes.Plan, vm module.VersionMap) (module.VersionMap, error) {
 		ctx.Logger().Info("Starting upgrade v10...")
@@ -114,6 +134,11 @@ func CreateUpgradeHandler(
 		ctx.Logger().Info("Executing Prop #205...")
 		if err := ExecuteProp205(ctx, bankKeeper); err != nil {
 			return nil, errorsmod.Wrapf(err, "unable to submit transfer for Prop #205")
+		}
+
+		ctx.Logger().Info("Enabling rate limits...")
+		if err := EnableRateLimits(ctx, ratelimitKeeper, channelKeeper, stakeibcKeeper); err != nil {
+			return nil, errorsmod.Wrapf(err, "unable to enable rate limits")
 		}
 
 		ctx.Logger().Info("v10 Upgrade Complete")
@@ -226,4 +251,45 @@ func ExecuteProp205(ctx sdk.Context, k bankkeeper.Keeper) error {
 	badKidsCustodianAddress := sdk.MustAccAddressFromBech32(BadKidsCustodian)
 	transferCoin := sdk.NewCoin(Ustrd, BadKidsTransferAmount)
 	return k.SendCoins(ctx, communityPoolGrowthAddress, badKidsCustodianAddress, sdk.NewCoins(transferCoin))
+}
+
+// Enable the following rate limits:
+//
+//	ATOM:  25%
+//	OSMO:  25%
+//	INJ:   25%
+//	EVMOS: 25%
+//	JUNO:  75%
+//	STARS: 75%
+//	LUNA:  75%
+//	UMEE:  75%
+//	CMDX:  75%
+func EnableRateLimits(
+	ctx sdk.Context,
+	ratelimitKeeper ratelimitkeeper.Keeper,
+	channelKeeper channelkeeper.Keeper,
+	stakeibcKeeper stakeibckeeper.Keeper,
+) error {
+	for _, hostZone := range stakeibcKeeper.GetAllHostZone(ctx) {
+		threshold, shouldAddRateLimit := NewRateLimits[hostZone.ChainId]
+		if !shouldAddRateLimit {
+			continue
+		}
+
+		denom := stakeibctypes.StAssetDenomFromHostZoneDenom(hostZone.HostDenom)
+		channelId := hostZone.TransferChannelId
+
+		addRateLimit := &ratelimittypes.AddRateLimitProposal{
+			Denom:          denom,
+			ChannelId:      channelId,
+			MaxPercentSend: threshold,
+			MaxPercentRecv: threshold,
+			DurationHours:  RateLimitDurationHours,
+		}
+
+		if err := ratelimitgov.AddRateLimit(ctx, ratelimitKeeper, channelKeeper, addRateLimit); err != nil {
+			return errorsmod.Wrapf(err, "unable to add rate limit for %s", denom)
+		}
+	}
+	return nil
 }

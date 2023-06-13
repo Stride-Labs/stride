@@ -117,13 +117,17 @@ func (app *StrideApp) setupUpgradeHandlers() {
 			app.configurator,
 			app.appCodec,
 			app.keys[capabilitytypes.ModuleName],
+			app.BankKeeper,
 			app.CapabilityKeeper,
+			app.IBCKeeper.ChannelKeeper,
 			app.IBCKeeper.ClientKeeper,
 			app.ConsensusParamsKeeper,
 			app.GovKeeper,
 			app.IcacallbacksKeeper,
 			app.MintKeeper,
 			app.ParamsKeeper,
+			app.RatelimitKeeper,
+			app.StakeibcKeeper,
 		),
 	)
 
