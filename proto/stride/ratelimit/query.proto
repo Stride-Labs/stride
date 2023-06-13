@@ -64,4 +64,6 @@ message QueryAllBlacklistedDenomsRequest {}
 message QueryAllBlacklistedDenomsResponse { repeated string denoms = 1; }
 
 message QueryAllWhitelistedAddressesRequest {}
-message QueryAllWhitelistedAddressesResponse { repeated string addresses = 1; }
+message QueryAllWhitelistedAddressesResponse {
+  repeated AddressWhitelist address_pairs = 1 [ (gogoproto.nullable) = false ];
+}

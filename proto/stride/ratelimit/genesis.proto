@@ -19,7 +19,11 @@ message GenesisState {
     (gogoproto.nullable) = false
   ];
 
-  repeated string blacklisted_denoms = 3;
-  repeated string whitelisted_addresses = 4;
+  repeated AddressWhitelist whitelisted_address_pairs = 3 [
+    (gogoproto.moretags) = "yaml:\"whitelisted_address_pairs\"",
+    (gogoproto.nullable) = false
+  ];
+
+  repeated string blacklisted_denoms = 4;
   repeated string pending_send_packet_sequence_numbers = 5;
 }
