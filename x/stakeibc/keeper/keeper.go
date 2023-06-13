@@ -43,7 +43,7 @@ type (
 		StakingKeeper         stakingkeeper.Keeper
 		ICACallbacksKeeper    icacallbackskeeper.Keeper
 		hooks                 types.StakeIBCHooks
-		accountKeeper         types.AccountKeeper
+		AccountKeeper         types.AccountKeeper
 		RatelimitKeeper       types.RatelimitKeeper
 	}
 )
@@ -73,7 +73,7 @@ func NewKeeper(
 		storeKey:              storeKey,
 		memKey:                memKey,
 		paramstore:            ps,
-		accountKeeper:         accountKeeper,
+		AccountKeeper:         accountKeeper,
 		bankKeeper:            bankKeeper,
 		ICAControllerKeeper:   icacontrollerkeeper,
 		IBCKeeper:             ibcKeeper,

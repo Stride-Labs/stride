@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	errorsmod "cosmossdk.io/errors"
+	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	capabilitytypes "github.com/cosmos/cosmos-sdk/x/capability/types"
@@ -13,8 +14,18 @@ import (
 	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
 	ibcexported "github.com/cosmos/ibc-go/v7/modules/core/exported"
 
+	"github.com/Stride-Labs/stride/v9/x/icacallbacks"
+	icacallbacktypes "github.com/Stride-Labs/stride/v9/x/icacallbacks/types"
 	"github.com/Stride-Labs/stride/v9/x/ratelimit/types"
 )
+
+type RateLimitedPacketInfo struct {
+	ChannelID string
+	Denom     string
+	Amount    sdkmath.Int
+	Sender    string
+	Receiver  string
+}
 
 // Parse the denom from the Send Packet that will be used by the rate limit module
 // The denom that the rate limiter will use for a SEND packet depends on whether
@@ -44,36 +55,35 @@ func ParseDenomFromSendPacket(packet transfertypes.FungibleTokenPacketData) (den
 // Parse the denom from the Recv Packet that will be used by the rate limit module
 // The denom that the rate limiter will use for a RECEIVE packet depends on whether it was a source or sink
 //
-//	     Sink:   The token moves forward, to a chain different than its previous hop
-//	             The new port and channel are APPENDED to the denom trace.
-//               (e.g. A -> B, B is a sink) (e.g. A -> B -> C, C is a sink)
-//       Source: The token moves backwards (i.e. revisits the last chain it was sent from)
-//               The port and channel are REMOVED from the denom trace - undoing the last hop.
-//	             (e.g. A -> B -> A, A is a source) (e.g. A -> B -> C -> B, B is a source)
+//	Sink:   The token moves forward, to a chain different than its previous hop
+//	        The new port and channel are APPENDED to the denom trace.
+//	        (e.g. A -> B, B is a sink) (e.g. A -> B -> C, C is a sink)
 //
-//	     If the chain is acting as a SINK:
-//	       We add on the Stride port and channel and hash it
-//	         Ex1: uosmo sent from Osmosis to Stride
-//	             Packet Denom:   uosmo
-//	              -> Add Prefix: transfer/channel-X/uosmo
-//	              -> Hash:       ibc/...
+//	Source: The token moves backwards (i.e. revisits the last chain it was sent from)
+//	        The port and channel are REMOVED from the denom trace - undoing the last hop.
+//	        (e.g. A -> B -> A, A is a source) (e.g. A -> B -> C -> B, B is a source)
 //
-//	         Ex2: ujuno sent from Osmosis to Stride
-//	             PacketDenom:    transfer/channel-Y/ujuno  (channel-Y is the Juno <> Osmosis channel)
-//	              -> Add Prefix: transfer/channel-X/transfer/channel-Y/ujuno
-//	              -> Hash:       ibc/...
+//	If the chain is acting as a SINK: We add on the Stride port and channel and hash it
+//	  Ex1: uosmo sent from Osmosis to Stride
+//	       Packet Denom:   uosmo
+//	        -> Add Prefix: transfer/channel-X/uosmo
+//	        -> Hash:       ibc/...
 //
-//	     If the chain is acting as a SOURCE:
-//	       First, remove the prefix. Then if there is still a denom trace, hash it
-//	         Ex1: ustrd sent back to Stride from Osmosis
-//	             Packet Denom:      transfer/channel-X/ustrd
-//	              -> Remove Prefix: ustrd
-//	              -> Leave as is:   ustrd
+//	  Ex2: ujuno sent from Osmosis to Stride
+//	       PacketDenom:    transfer/channel-Y/ujuno  (channel-Y is the Juno <> Osmosis channel)
+//	        -> Add Prefix: transfer/channel-X/transfer/channel-Y/ujuno
+//	        -> Hash:       ibc/...
 //
-//				Ex2: juno was sent to Stride, then to Osmosis, then back to Stride
-//	             Packet Denom:      transfer/channel-X/transfer/channel-Z/ujuno
-//	              -> Remove Prefix: transfer/channel-Z/ujuno
-//	              -> Hash:          ibc/...
+//	If the chain is acting as a SOURCE: First, remove the prefix. Then if there is still a denom trace, hash it
+//	  Ex1: ustrd sent back to Stride from Osmosis
+//	       Packet Denom:      transfer/channel-X/ustrd
+//	        -> Remove Prefix: ustrd
+//	        -> Leave as is:   ustrd
+//
+//	  Ex2: juno was sent to Stride, then to Osmosis, then back to Stride
+//	       Packet Denom:      transfer/channel-X/transfer/channel-Z/ujuno
+//	        -> Remove Prefix: transfer/channel-Z/ujuno
+//	        -> Hash:          ibc/...
 func ParseDenomFromRecvPacket(packet channeltypes.Packet, packetData transfertypes.FungibleTokenPacketData) (denom string) {
 	// To determine the denom, first check whether Stride is acting as source
 	if transfertypes.ReceiverChainIsSource(packet.GetSourcePort(), packet.GetSourceChannel(), packetData.Denom) {
@@ -102,65 +112,120 @@ func ParseDenomFromRecvPacket(packet channeltypes.Packet, packetData transfertyp
 	return denom
 }
 
-// Middleware implementation for SendPacket with rate limiting
-func (k Keeper) SendRateLimitedPacket(ctx sdk.Context, sourceChannel string, data []byte) error {
-	// The Stride channelID should always be used as the key for the RateLimit object (not the counterparty channelID)
-	// For a SEND packet, the Stride channelID is the SOURCE channel
-	// This is because the Source and Desination are defined from the perspective of a packet recipient
-	// Meaning, when this packet lands on a the host chain, the "Source" will be the Stride Channel,
-	//   and the "Destination" will be the Host Channel
-	channelId := sourceChannel
-
-	// Parse the packet data
+// Parses the sender and channelId and denom for the corresponding RateLimit object, and
+// the sender/receiver/transfer amount
+//
+// The Stride channelID should always be used as the key for the RateLimit object (not the counterparty channelID)
+// For a SEND packet, the Stride channelID is the SOURCE channel
+// For a RECEIVE packet, the Stride channelID is the DESTINATION channel
+//
+// The Source and Desination are defined from the perspective of a packet recipient
+// Meaning, when a send packet lands on a the host chain, the "Source" will be the Stride Channel,
+// and the "Destination" will be the Host Channel
+// And, when a receive packet lands on a Stride, the "Source" will be the host zone's channel,
+// and the "Destination" will be the Stride Channel
+func ParsePacketInfo(packet channeltypes.Packet, direction types.PacketDirection) (RateLimitedPacketInfo, error) {
 	var packetData transfertypes.FungibleTokenPacketData
-	if err := json.Unmarshal(data, &packetData); err != nil {
-		return err
+	if err := json.Unmarshal(packet.GetData(), &packetData); err != nil {
+		return RateLimitedPacketInfo{}, err
+	}
+
+	var channelID, denom string
+	if direction == types.PACKET_SEND {
+		channelID = packet.GetSourceChannel()
+		denom = ParseDenomFromSendPacket(packetData)
+	} else {
+		channelID = packet.GetDestChannel()
+		denom = ParseDenomFromRecvPacket(packet, packetData)
 	}
 
 	amount, ok := sdk.NewIntFromString(packetData.Amount)
 	if !ok {
-		return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "Unable to cast packet amount to sdkmath.Int")
+		return RateLimitedPacketInfo{},
+			errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "Unable to cast packet amount '%s' to sdkmath.Int", packetData.Amount)
 	}
 
-	denom := ParseDenomFromSendPacket(packetData)
+	packetInfo := RateLimitedPacketInfo{
+		ChannelID: channelID,
+		Denom:     denom,
+		Amount:    amount,
+		Sender:    packetData.Sender,
+		Receiver:  packetData.Receiver,
+	}
 
-	err := k.CheckRateLimitAndUpdateFlow(ctx, types.PACKET_SEND, denom, channelId, amount)
+	return packetInfo, nil
+}
+
+// Middleware implementation for SendPacket with rate limiting
+// Checks whether the rate limit has been exceeded - and if it hasn't, sends the packet
+func (k Keeper) SendRateLimitedPacket(ctx sdk.Context, packet channeltypes.Packet) error {
+	packetInfo, err := ParsePacketInfo(packet, types.PACKET_SEND)
 	if err != nil {
 		return err
+	}
+
+	// Check if the packet would exceed the outflow rate limit
+	updatedFlow, err := k.CheckRateLimitAndUpdateFlow(ctx, types.PACKET_SEND, packetInfo)
+	if err != nil {
+		return err
+	}
+
+	// Store the sequence number of the packet so that if the transfer fails,
+	// we can identify if it was sent during this quota and can revert the outflow
+	if updatedFlow {
+		k.SetPendingSendPacket(ctx, packetInfo.ChannelID, packet.Sequence)
 	}
 
 	return nil
 }
 
 // Middleware implementation for RecvPacket with rate limiting
+// Checks whether the rate limit has been exceeded - and if it hasn't, allows the packet
 func (k Keeper) ReceiveRateLimitedPacket(ctx sdk.Context, packet channeltypes.Packet) error {
-	// The Stride channelID should always be used as the key for the RateLimit object (not the counterparty channelID)
-	// For a RECEIVE packet, the Stride channelID is the DESTINATION channel
-	// This is because the Source and Desination are defined from the perspective of a packet recipient
-	// Meaning, when this packet lands on a Stride, the "Source" will be the host zone's channel,
-	//  and the "Destination" will be the Stride Channel
-	channelId := packet.GetDestChannel()
-
-	// Parse the amount and denom from the packet
-	var packetData transfertypes.FungibleTokenPacketData
-	if err := json.Unmarshal(packet.GetData(), &packetData); err != nil {
-		return err
-	}
-
-	amount, ok := sdk.NewIntFromString(packetData.Amount)
-	if !ok {
-		return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "Unable to cast packet amount to sdkmath.Int")
-	}
-
-	denom := ParseDenomFromRecvPacket(packet, packetData)
-
-	// Check whether the rate limit has been exceeded - and if it hasn't, send the packet
-	err := k.CheckRateLimitAndUpdateFlow(ctx, types.PACKET_RECV, denom, channelId, amount)
+	packetInfo, err := ParsePacketInfo(packet, types.PACKET_RECV)
 	if err != nil {
 		return err
 	}
 
-	return nil
+	_, err = k.CheckRateLimitAndUpdateFlow(ctx, types.PACKET_RECV, packetInfo)
+	return err
+}
+
+// Middleware implementation for OnAckPacket with rate limiting
+// If the packet failed, we should decrement the Outflow
+func (k Keeper) AcknowledgeRateLimitedPacket(ctx sdk.Context, packet channeltypes.Packet, acknowledgement []byte) error {
+	// Check whether the ack was a success or error
+	isICA := false
+	ackResponse, err := icacallbacks.UnpackAcknowledgementResponse(ctx, k.Logger(ctx), acknowledgement, isICA)
+	if err != nil {
+		return err
+	}
+
+	// Parse the denom, channelId, and amount from the packet
+	packetInfo, err := ParsePacketInfo(packet, types.PACKET_SEND)
+	if err != nil {
+		return err
+	}
+
+	// If the ack was successful, remove the pending packet
+	if ackResponse.Status == icacallbacktypes.AckResponseStatus_SUCCESS {
+		k.RemovePendingSendPacket(ctx, packetInfo.ChannelID, packet.Sequence)
+		return nil
+	}
+
+	// If the ack failed, undo the change to the rate limit Outflow
+	return k.UndoSendPacket(ctx, packetInfo.ChannelID, packet.Sequence, packetInfo.Denom, packetInfo.Amount)
+}
+
+// Middleware implementation for OnAckPacket with rate limiting
+// The Outflow should be decremented from the failed packet
+func (k Keeper) TimeoutRateLimitedPacket(ctx sdk.Context, packet channeltypes.Packet) error {
+	packetInfo, err := ParsePacketInfo(packet, types.PACKET_SEND)
+	if err != nil {
+		return err
+	}
+
+	return k.UndoSendPacket(ctx, packetInfo.ChannelID, packet.Sequence, packetInfo.Denom, packetInfo.Amount)
 }
 
 // SendPacket wraps IBC ChannelKeeper's SendPacket function
@@ -174,12 +239,8 @@ func (k Keeper) SendPacket(
 	timeoutTimestamp uint64,
 	data []byte,
 ) (sequence uint64, err error) {
-
-	if err := k.SendRateLimitedPacket(ctx, sourceChannel, data); err != nil {
-		k.Logger(ctx).Error(fmt.Sprintf("ICS20 packet send was denied: %s", err.Error()))
-		return 0, err
-	}
-	return k.ics4Wrapper.SendPacket(
+	// The packet must first be sent up the stack to get the sequence number from the channel keeper
+	sequence, err = k.ics4Wrapper.SendPacket(
 		ctx,
 		channelCap,
 		sourcePort,
@@ -188,6 +249,23 @@ func (k Keeper) SendPacket(
 		timeoutTimestamp,
 		data,
 	)
+	if err != nil {
+		return sequence, err
+	}
+
+	err = k.SendRateLimitedPacket(ctx, channeltypes.Packet{
+		Sequence:         sequence,
+		SourceChannel:    sourceChannel,
+		SourcePort:       sourcePort,
+		TimeoutHeight:    timeoutHeight,
+		TimeoutTimestamp: timeoutTimestamp,
+		Data:             data,
+	})
+	if err != nil {
+		k.Logger(ctx).Error(fmt.Sprintf("ICS20 packet send was denied: %s", err.Error()))
+		return 0, err
+	}
+	return sequence, err
 }
 
 // WriteAcknowledgement wraps IBC ChannelKeeper's WriteAcknowledgement function
