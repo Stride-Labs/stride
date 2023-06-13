@@ -49,3 +49,8 @@ message RateLimit {
   Quota quota = 2;
   Flow flow = 3;
 }
+
+message WhitelistedAddressPair {
+  string sender = 1;
+  string receiver = 2;
+}

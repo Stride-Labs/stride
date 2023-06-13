@@ -90,3 +90,31 @@ func (s *KeeperTestSuite) TestQueryRateLimitsByChannelId() {
 		s.Require().Equal(expectedRateLimit, queryResponse.RateLimits[0])
 	}
 }
+
+func (s *KeeperTestSuite) TestQueryAllBlacklistedDenoms() {
+	s.App.RatelimitKeeper.AddDenomToBlacklist(s.Ctx, "denom-A")
+	s.App.RatelimitKeeper.AddDenomToBlacklist(s.Ctx, "denom-B")
+
+	queryResponse, err := s.QueryClient.AllBlacklistedDenoms(context.Background(), &types.QueryAllBlacklistedDenomsRequest{})
+	s.Require().NoError(err, "no error expected when querying blacklisted denoms")
+	s.Require().Equal([]string{"denom-A", "denom-B"}, queryResponse.Denoms)
+}
+
+func (s *KeeperTestSuite) TestQueryAllWhitelistedAddresses() {
+	s.App.RatelimitKeeper.SetWhitelistedAddressPair(s.Ctx, types.WhitelistedAddressPair{
+		Sender:   "address-A",
+		Receiver: "address-B",
+	})
+	s.App.RatelimitKeeper.SetWhitelistedAddressPair(s.Ctx, types.WhitelistedAddressPair{
+		Sender:   "address-C",
+		Receiver: "address-D",
+	})
+	queryResponse, err := s.QueryClient.AllWhitelistedAddresses(context.Background(), &types.QueryAllWhitelistedAddressesRequest{})
+	s.Require().NoError(err, "no error expected when querying whitelisted addresses")
+
+	expectedWhitelist := []types.WhitelistedAddressPair{
+		{Sender: "address-A", Receiver: "address-B"},
+		{Sender: "address-C", Receiver: "address-D"},
+	}
+	s.Require().Equal(expectedWhitelist, queryResponse.AddressPairs)
+}
