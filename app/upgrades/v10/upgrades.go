@@ -225,7 +225,8 @@ func MigrateClaimDistributorAddress(ctx sdk.Context, k claimkeeper.Keeper) error
 		airdrop.DistributorAddress = NewDistributorAddresses[airdrop.AirdropIdentifier]
 		updatedAirdrops = append(updatedAirdrops, airdrop)
 	}
-	return nil
+	claimParams.Airdrops = updatedAirdrops
+	return k.SetParams(ctx, claimParams)
 }
 
 // Helper function to deserialize using the deprecated proto types and reserialize using the new proto types
