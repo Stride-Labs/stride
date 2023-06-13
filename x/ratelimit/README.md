@@ -205,18 +205,18 @@ GetAllBlacklistedDenoms() []string
 
 ### AddressWhitelist
 ```go
-// Adds an address to a whitelist to allow all IBC transfers to/from the address,
-// and skip all flow calculations
-AddAddressToWhitelist(address string) 
+// Adds an pair of sender and receiver addresses to the whitelist to allow all
+// IBC transfers between those addresses to skip all flow calculations
+SetWhitelistedAddressPair(whitelist types.WhitelistedAddressPair)
 
-// Removes an address from a whitelist so that it's transfers are counted in the quota
-RemoveAddressFromWhitelist(address string) 
+// Removes a whitelisted address pair so that it's transfers are counted in the quota
+RemoveWhitelistedAddressPair(sender, receiver string) 
 
-// Check if an address is currently whitelisted
-IsAddressWhitelisted(address string) bool
+// Check if a sender/receiver address pair is currently whitelisted
+IsAddressPairWhitelisted(sender, receiver string) bool 
 
 // Get all the whitelisted addresses
-GetAllWhitelistedAddresses() []string 
+GetAllWhitelistedAddressPairs() []types.WhitelistedAddressPair
 ```
 
 

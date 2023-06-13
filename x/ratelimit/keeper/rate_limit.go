@@ -303,7 +303,7 @@ func (k Keeper) RemoveWhitelistedAddressPair(ctx sdk.Context, sender, receiver s
 	store.Delete(key)
 }
 
-// Check if an address pair is currently whitelisted
+// Check if a sender/receiver address pair is currently whitelisted
 func (k Keeper) IsAddressPairWhitelisted(ctx sdk.Context, sender, receiver string) bool {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.AddressWhitelistKeyPrefix)
 
