@@ -69,7 +69,7 @@ func FeeBalanceCallback(k Keeper, ctx sdk.Context, args []byte, query icqtypes.Q
 
 	// Prepare a MsgTransfer from the fee account to the rewards collector account
 	rewardsCoin := sdk.NewCoin(hostZone.HostDenom, feeBalanceAmount)
-	rewardsCollectorAddress := k.accountKeeper.GetModuleAccount(ctx, types.RewardCollectorName).GetAddress()
+	rewardsCollectorAddress := k.AccountKeeper.GetModuleAccount(ctx, types.RewardCollectorName).GetAddress()
 	transferMsg := ibctypes.NewMsgTransfer(
 		transfertypes.PortID,
 		counterpartyChannelId,

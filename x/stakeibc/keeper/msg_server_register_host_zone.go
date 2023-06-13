@@ -71,10 +71,9 @@ func (k msgServer) RegisterHostZone(goCtx context.Context, msg *types.MsgRegiste
 
 	// create and save the zones's module account
 	zoneAddress := types.NewZoneAddress(chainId)
-	if err := utils.CreateModuleAccount(ctx, k.accountKeeper, zoneAddress); err != nil {
+	if err := utils.CreateModuleAccount(ctx, k.AccountKeeper, zoneAddress); err != nil {
 		return nil, errorsmod.Wrapf(err, "unable to create module account for host zone %s", chainId)
 	}
-	k.RatelimitKeeper.AddAddressToWhitelist(ctx, zoneAddress.String())
 
 	params := k.GetParams(ctx)
 	if msg.MinRedemptionRate.IsNil() || msg.MinRedemptionRate.IsZero() {
