@@ -54,6 +54,8 @@ sleep 5
 echo -e "\nBalance after claim [1000120000ustrd expected]:" 
 $STRIDE_MAIN_CMD query bank balances stride1nf6v2paty9m22l3ecm7dpakq2c92ueyununayr --denom ustrd
 
+# bank send to the new gaia address before the upgrade
+$STRIDE_MAIN_CMD tx bank send stride1z835j3j65nqr6ng257q0xkkc9gta72gf48txwl stride1w0w0gr6u796y2mjl9fuqt66jqvk3j59jq3jtpg 480000ustrd --from distributor-test -y | TRIM_TX
 WAIT_FOR_STRING $STRIDE_LOGS "v10 Upgrade Complete"
 sleep 15
 

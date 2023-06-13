@@ -135,7 +135,7 @@ upgrade-build-old-binary:
 	@DOCKERNET_HOME=$(DOCKERNET_HOME) BUILDDIR=$(BUILDDIR) bash $(DOCKERNET_HOME)/upgrades/build_old_binary.sh
 
 submit-upgrade-immediately:
-	UPGRADE_HEIGHT=100 bash $(DOCKERNET_HOME)/upgrades/submit_upgrade.sh
+	UPGRADE_HEIGHT=150 bash $(DOCKERNET_HOME)/upgrades/submit_upgrade.sh
 
 submit-upgrade-after-tests:
 	UPGRADE_HEIGHT=400 bash $(DOCKERNET_HOME)/upgrades/submit_upgrade.sh
