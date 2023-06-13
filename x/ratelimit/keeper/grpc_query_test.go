@@ -101,10 +101,20 @@ func (s *KeeperTestSuite) TestQueryAllBlacklistedDenoms() {
 }
 
 func (s *KeeperTestSuite) TestQueryAllWhitelistedAddresses() {
-	s.App.RatelimitKeeper.AddAddressToWhitelist(s.Ctx, "address-A")
-	s.App.RatelimitKeeper.AddAddressToWhitelist(s.Ctx, "address-B")
-
+	s.App.RatelimitKeeper.SetAddressWhitelist(s.Ctx, types.AddressWhitelist{
+		Sender:   "address-A",
+		Receiver: "address-B",
+	})
+	s.App.RatelimitKeeper.SetAddressWhitelist(s.Ctx, types.AddressWhitelist{
+		Sender:   "address-C",
+		Receiver: "address-D",
+	})
 	queryResponse, err := s.QueryClient.AllWhitelistedAddresses(context.Background(), &types.QueryAllWhitelistedAddressesRequest{})
 	s.Require().NoError(err, "no error expected when querying whitelisted addresses")
-	s.Require().Equal([]string{"address-A", "address-B"}, queryResponse.Addresses)
+
+	expectedWhitelist := []types.AddressWhitelist{
+		{Sender: "address-A", Receiver: "address-B"},
+		{Sender: "address-C", Receiver: "address-D"},
+	}
+	s.Require().Equal(expectedWhitelist, queryResponse.AddressPairs)
 }

@@ -20,8 +20,8 @@ func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState types.GenesisState) 
 	for _, denom := range genState.BlacklistedDenoms {
 		k.AddDenomToBlacklist(ctx, denom)
 	}
-	for _, address := range genState.WhitelistedAddresses {
-		k.AddAddressToWhitelist(ctx, address)
+	for _, addressPair := range genState.WhitelistedAddressPairs {
+		k.SetAddressWhitelist(ctx, addressPair)
 	}
 	for _, pendingPacketId := range genState.PendingSendPacketSequenceNumbers {
 		splits := strings.Split(pendingPacketId, "/")
@@ -44,7 +44,7 @@ func ExportGenesis(ctx sdk.Context, k keeper.Keeper) *types.GenesisState {
 	genesis.Params = k.GetParams(ctx)
 	genesis.RateLimits = k.GetAllRateLimits(ctx)
 	genesis.BlacklistedDenoms = k.GetAllBlacklistedDenoms(ctx)
-	genesis.WhitelistedAddresses = k.GetAllWhitelistedAddresses(ctx)
+	genesis.WhitelistedAddressPairs = k.GetAllWhitelistedAddresses(ctx)
 	genesis.PendingSendPacketSequenceNumbers = k.GetAllPendingSendPackets(ctx)
 
 	return genesis

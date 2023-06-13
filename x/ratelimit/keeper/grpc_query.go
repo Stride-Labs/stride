@@ -83,5 +83,5 @@ func (k Keeper) AllBlacklistedDenoms(c context.Context, req *types.QueryAllBlack
 func (k Keeper) AllWhitelistedAddresses(c context.Context, req *types.QueryAllWhitelistedAddressesRequest) (*types.QueryAllWhitelistedAddressesResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
 	whitelistedAddresses := k.GetAllWhitelistedAddresses(ctx)
-	return &types.QueryAllWhitelistedAddressesResponse{Addresses: whitelistedAddresses}, nil
+	return &types.QueryAllWhitelistedAddressesResponse{AddressPairs: whitelistedAddresses}, nil
 }
