@@ -44,6 +44,7 @@ var (
 	CommunityPoolGrowthProportion         = "0.2158"
 	StrategicReserveProportion            = "0.4879"
 	CommunityPoolSecurityBudgetProportion = "0.1358"
+	StrdDenom                             = "ustrd"
 
 	MinInitialDepositRatio = "0.25"
 	// airdrop distributor addresses
@@ -214,8 +215,9 @@ func MigrateCallbackData(ctx sdk.Context, k icacallbackskeeper.Keeper) error {
 }
 
 // Migrate the claim distributor address, change nothing else about the airdrop params
-func MigrateClaimDistributorAddress(ctx sdk.Context, k claimkeeper.Keeper) error {
-	claimParams, err := k.GetParams(ctx)
+func MigrateClaimDistributorAddress(ctx sdk.Context, ck claimkeeper.Keeper) error {
+	// Migrate claim params
+	claimParams, err := ck.GetParams(ctx)
 	if err != nil {
 		return errorsmod.Wrapf(err, "unable to get claim parameters")
 	}
@@ -226,7 +228,7 @@ func MigrateClaimDistributorAddress(ctx sdk.Context, k claimkeeper.Keeper) error
 		updatedAirdrops = append(updatedAirdrops, airdrop)
 	}
 	claimParams.Airdrops = updatedAirdrops
-	return k.SetParams(ctx, claimParams)
+	return ck.SetParams(ctx, claimParams)
 }
 
 // Helper function to deserialize using the deprecated proto types and reserialize using the new proto types
