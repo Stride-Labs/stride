@@ -78,9 +78,9 @@ func (k Keeper) CheckRateLimitAndUpdateFlow(
 		return false, nil
 	}
 
-	// Check if the sender or receiver are white listed
+	// Check if the sender/receiver pair is whitelisted
 	// If so, return a success without modifying the quota
-	if k.IsAddressWhitelisted(ctx, packetInfo.Sender) || k.IsAddressWhitelisted(ctx, packetInfo.Receiver) {
+	if k.IsAddressPairWhitelisted(ctx, packetInfo.Sender, packetInfo.Receiver) {
 		return false, nil
 	}
 
@@ -228,7 +228,6 @@ func (k Keeper) GetAllPendingSendPackets(ctx sdk.Context) []string {
 		sequence := binary.BigEndian.Uint64(key[types.PendingSendPacketChannelLength:])
 
 		packetId := fmt.Sprintf("%s/%d", channelId, sequence)
-		fmt.Println(packetId)
 		pendingPackets = append(pendingPackets, packetId)
 	}
 
@@ -288,26 +287,27 @@ func (k Keeper) GetAllBlacklistedDenoms(ctx sdk.Context) []string {
 	return allBlacklistedDenoms
 }
 
-// Adds an address to a whitelist to allow all IBC transfers to/from the address,
-// and skip all flow calculations
-func (k Keeper) AddAddressToWhitelist(ctx sdk.Context, address string) {
+// Adds an pair of sender and receiver addresses to the whitelist to allow all
+// IBC transfers between those addresses to skip all flow calculations
+func (k Keeper) SetAddressWhitelist(ctx sdk.Context, whitelist types.AddressWhitelist) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.AddressWhitelistKeyPrefix)
-	key := types.KeyPrefix(address)
-	store.Set(key, []byte{1})
+	key := types.GetAddressWhitelistKey(whitelist.Sender, whitelist.Receiver)
+	value := k.cdc.MustMarshal(&whitelist)
+	store.Set(key, value)
 }
 
-// Removes an address from a whitelist so that it's transfers are counted in the quota
-func (k Keeper) RemoveAddressFromWhitelist(ctx sdk.Context, address string) {
+// Removes a whitelisted address pair so that it's transfers are counted in the quota
+func (k Keeper) RemoveAddressWhitelist(ctx sdk.Context, sender, receiver string) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.AddressWhitelistKeyPrefix)
-	key := types.KeyPrefix(address)
+	key := types.GetAddressWhitelistKey(sender, receiver)
 	store.Delete(key)
 }
 
-// Check if an address is currently whitelisted
-func (k Keeper) IsAddressWhitelisted(ctx sdk.Context, address string) bool {
+// Check if an address pair is currently whitelisted
+func (k Keeper) IsAddressPairWhitelisted(ctx sdk.Context, sender, receiver string) bool {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.AddressWhitelistKeyPrefix)
 
-	key := types.KeyPrefix(address)
+	key := types.GetAddressWhitelistKey(sender, receiver)
 	value := store.Get(key)
 	found := len(value) != 0
 
@@ -315,15 +315,17 @@ func (k Keeper) IsAddressWhitelisted(ctx sdk.Context, address string) bool {
 }
 
 // Get all the whitelisted addresses
-func (k Keeper) GetAllWhitelistedAddresses(ctx sdk.Context) []string {
+func (k Keeper) GetAllWhitelistedAddresses(ctx sdk.Context) []types.AddressWhitelist {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.AddressWhitelistKeyPrefix)
 
 	iterator := store.Iterator(nil, nil)
 	defer iterator.Close()
 
-	allWhitelistedAddresses := []string{}
+	allWhitelistedAddresses := []types.AddressWhitelist{}
 	for ; iterator.Valid(); iterator.Next() {
-		allWhitelistedAddresses = append(allWhitelistedAddresses, string(iterator.Key()))
+		whitelist := types.AddressWhitelist{}
+		k.cdc.MustUnmarshal(iterator.Value(), &whitelist)
+		allWhitelistedAddresses = append(allWhitelistedAddresses, whitelist)
 	}
 
 	return allWhitelistedAddresses

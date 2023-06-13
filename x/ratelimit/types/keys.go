@@ -38,3 +38,7 @@ func GetPendingSendPacketKey(channelId string, sequenceNumber uint64) []byte {
 
 	return append(channelIdBz, sequenceNumberBz...)
 }
+
+func GetAddressWhitelistKey(sender, receiver string) []byte {
+	return append(KeyPrefix(sender), KeyPrefix(receiver)...)
+}

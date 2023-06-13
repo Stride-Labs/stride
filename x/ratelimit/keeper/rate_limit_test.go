@@ -24,8 +24,8 @@ type action struct {
 	amount              int64
 	addToBlacklist      bool
 	removeFromBlacklist bool
-	addToWhitelist      string
-	removeFromWhitelist string
+	addToWhitelist      bool
+	removeFromWhitelist bool
 	skipFlowUpdate      bool
 	expectedError       string
 }
@@ -202,46 +202,51 @@ func (s *KeeperTestSuite) TestDenomBlacklist() {
 }
 
 func (s *KeeperTestSuite) TestAddressWhitelist() {
-	allAddresses := []string{"address1", "address2", "address3", "address4"}
-	addressesToWhitelist := []string{"address1", "address3"}
-
-	// No address are currently whitelisted
-	for _, address := range allAddresses {
-		isWhitelisted := s.App.RatelimitKeeper.IsAddressWhitelisted(s.Ctx, address)
-		s.Require().False(isWhitelisted, "%s should not be whitelisted yet", address)
+	// Store addresses in whitelist
+	expectedWhitelist := []types.AddressWhitelist{
+		{Sender: "sender-1", Receiver: "receiver-1"},
+		{Sender: "sender-2", Receiver: "receiver-2"},
+		{Sender: "sender-3", Receiver: "receiver-3"},
+	}
+	for _, addressPair := range expectedWhitelist {
+		s.App.RatelimitKeeper.SetAddressWhitelist(s.Ctx, addressPair)
 	}
 
-	// Whitelist two addresses
-	for _, address := range addressesToWhitelist {
-		s.App.RatelimitKeeper.AddAddressToWhitelist(s.Ctx, address)
+	// Confirm that each was found
+	for _, addressPair := range expectedWhitelist {
+		found := s.App.RatelimitKeeper.IsAddressPairWhitelisted(s.Ctx, addressPair.Sender, addressPair.Receiver)
+		s.Require().True(found, "address pair should have been whitelisted (%s/%s)",
+			addressPair.Sender, addressPair.Receiver)
 	}
 
-	// Confirm half the list was whitelisted and the others were not
-	for _, address := range allAddresses {
-		isWhitelisted := s.App.RatelimitKeeper.IsAddressWhitelisted(s.Ctx, address)
+	// Confirm that looking both the sender and receiver must match for the pair to be whitelisted
+	for _, addressPair := range expectedWhitelist {
+		found := s.App.RatelimitKeeper.IsAddressPairWhitelisted(s.Ctx, addressPair.Sender, "fake-receiver")
+		s.Require().False(found, "address pair should not have been whitelisted (%s/%s)",
+			addressPair.Sender, "fake-receiver")
 
-		if isInArray(address, addressesToWhitelist) {
-			s.Require().True(isWhitelisted, "%s should have been whiteilsted", address)
-		} else {
-			s.Require().False(isWhitelisted, "%s should not have been whiteilsted", address)
-		}
+		found = s.App.RatelimitKeeper.IsAddressPairWhitelisted(s.Ctx, "fake-sender", addressPair.Receiver)
+		s.Require().False(found, "address pair should not have been whitelisted (%s/%s)",
+			"fake-sender", addressPair.Receiver)
 	}
-	actualWhitelistedAddresses := s.App.RatelimitKeeper.GetAllWhitelistedAddresses(s.Ctx)
-	s.Require().Len(actualWhitelistedAddresses, len(addressesToWhitelist), "number of whiteilsted addresss")
-	s.Require().ElementsMatch(addressesToWhitelist, actualWhitelistedAddresses, "list of whiteilsted addresss")
 
-	// Finally, remove addresses from whitelist and confirm they were removed
-	for _, address := range addressesToWhitelist {
-		s.App.RatelimitKeeper.RemoveAddressFromWhitelist(s.Ctx, address)
+	// Check GetAll
+	actualWhitelist := s.App.RatelimitKeeper.GetAllWhitelistedAddresses(s.Ctx)
+	s.Require().Equal(expectedWhitelist, actualWhitelist, "whitelist get all")
+
+	// Finally, remove each from whitelist
+	for _, addressPair := range expectedWhitelist {
+		s.App.RatelimitKeeper.RemoveAddressWhitelist(s.Ctx, addressPair.Sender, addressPair.Receiver)
 	}
-	for _, address := range allAddresses {
-		isWhitelisted := s.App.RatelimitKeeper.IsAddressWhitelisted(s.Ctx, address)
 
-		if isInArray(address, addressesToWhitelist) {
-			s.Require().False(isWhitelisted, "%s should have been removed from the whitelist", address)
-		} else {
-			s.Require().False(isWhitelisted, "%s should never have been whiteilsted", address)
-		}
+	// Confirm there are no longer any whitelisted pairs
+	actualWhitelist = s.App.RatelimitKeeper.GetAllWhitelistedAddresses(s.Ctx)
+	s.Require().Empty(actualWhitelist, "whitelist should have been cleared")
+
+	for _, addressPair := range expectedWhitelist {
+		found := s.App.RatelimitKeeper.IsAddressPairWhitelisted(s.Ctx, addressPair.Sender, addressPair.Receiver)
+		s.Require().False(found, "address pair should no longer be whitelisted (%s/%s)",
+			addressPair.Sender, addressPair.Receiver)
 	}
 }
 
@@ -269,8 +274,7 @@ func (s *KeeperTestSuite) SetupCheckRateLimitAndUpdateFlowTest() {
 	})
 
 	s.App.RatelimitKeeper.RemoveDenomFromBlacklist(s.Ctx, denom)
-	s.App.RatelimitKeeper.RemoveAddressFromWhitelist(s.Ctx, sender)
-	s.App.RatelimitKeeper.RemoveAddressFromWhitelist(s.Ctx, receiver)
+	s.App.RatelimitKeeper.RemoveAddressWhitelist(s.Ctx, sender, receiver)
 }
 
 // Helper function to check the rate limit across a series of transfers
@@ -288,11 +292,14 @@ func (s *KeeperTestSuite) processCheckRateLimitAndUpdateFlowTestCase(tc checkRat
 			continue
 		}
 
-		if action.addToWhitelist != "" {
-			s.App.RatelimitKeeper.AddAddressToWhitelist(s.Ctx, action.addToWhitelist)
+		if action.addToWhitelist {
+			s.App.RatelimitKeeper.SetAddressWhitelist(s.Ctx, types.AddressWhitelist{
+				Sender:   sender,
+				Receiver: receiver,
+			})
 			continue
-		} else if action.removeFromWhitelist != "" {
-			s.App.RatelimitKeeper.RemoveAddressFromWhitelist(s.Ctx, action.removeFromWhitelist)
+		} else if action.removeFromWhitelist {
+			s.App.RatelimitKeeper.RemoveAddressWhitelist(s.Ctx, sender, receiver)
 			continue
 		}
 
@@ -516,7 +523,7 @@ func (s *KeeperTestSuite) TestCheckRateLimitAndUpdatedFlow_AddressWhitelist() {
 			name: "send_whitelist_send", // should succeed
 			actions: []action{
 				{direction: types.PACKET_SEND, amount: 6},
-				{addToWhitelist: sender},
+				{addToWhitelist: true},
 				{direction: types.PACKET_SEND, amount: 6, skipFlowUpdate: true},
 			},
 		},
@@ -524,7 +531,7 @@ func (s *KeeperTestSuite) TestCheckRateLimitAndUpdatedFlow_AddressWhitelist() {
 			name: "recv_whitelist_recv", // should succeed
 			actions: []action{
 				{direction: types.PACKET_RECV, amount: 6},
-				{addToWhitelist: sender},
+				{addToWhitelist: true},
 				{direction: types.PACKET_RECV, amount: 6, skipFlowUpdate: true},
 			},
 		},
@@ -533,7 +540,7 @@ func (s *KeeperTestSuite) TestCheckRateLimitAndUpdatedFlow_AddressWhitelist() {
 			actions: []action{
 				{direction: types.PACKET_SEND, amount: 6},
 				{direction: types.PACKET_SEND, amount: 6, expectedError: "Outflow exceeds quota"}, // fails
-				{addToWhitelist: receiver},
+				{addToWhitelist: true},
 				{direction: types.PACKET_SEND, amount: 6, skipFlowUpdate: true}, // succeeds
 			},
 		},
@@ -542,7 +549,7 @@ func (s *KeeperTestSuite) TestCheckRateLimitAndUpdatedFlow_AddressWhitelist() {
 			actions: []action{
 				{direction: types.PACKET_RECV, amount: 6},
 				{direction: types.PACKET_RECV, amount: 6, expectedError: "Inflow exceeds quota"}, // fails
-				{addToWhitelist: receiver},
+				{addToWhitelist: true},
 				{direction: types.PACKET_RECV, amount: 6, skipFlowUpdate: true}, // succeeds
 			},
 		},
@@ -552,7 +559,7 @@ func (s *KeeperTestSuite) TestCheckRateLimitAndUpdatedFlow_AddressWhitelist() {
 				{direction: types.PACKET_SEND, amount: 6},
 				{direction: types.PACKET_RECV, amount: 6},
 				{direction: types.PACKET_SEND, amount: 6},
-				{addToWhitelist: sender},
+				{addToWhitelist: true},
 				{direction: types.PACKET_SEND, amount: 6, skipFlowUpdate: true},
 			},
 		},
@@ -562,46 +569,26 @@ func (s *KeeperTestSuite) TestCheckRateLimitAndUpdatedFlow_AddressWhitelist() {
 				{direction: types.PACKET_RECV, amount: 6},
 				{direction: types.PACKET_SEND, amount: 6},
 				{direction: types.PACKET_RECV, amount: 6},
-				{addToWhitelist: receiver},
+				{addToWhitelist: true},
 				{direction: types.PACKET_RECV, amount: 6, skipFlowUpdate: true},
 			},
 		},
 		{
-			name: "add_sender_then_remove_receiver_from_whitelist", // should succeed
+			name: "add_then_remove_whitelist_recv",
 			actions: []action{
 				{direction: types.PACKET_RECV, amount: 6},
-				{addToWhitelist: sender},
-				{removeFromWhitelist: receiver},
-				{direction: types.PACKET_RECV, amount: 6, skipFlowUpdate: true},
+				{addToWhitelist: true},
+				{removeFromWhitelist: true},
+				{direction: types.PACKET_RECV, amount: 6, expectedError: "Inflow exceeds quota"},
 			},
 		},
 		{
-			name: "add_receiver_then_remove_sender_from_whitelist", // should succeed
-			actions: []action{
-				{direction: types.PACKET_RECV, amount: 6},
-				{addToWhitelist: receiver},
-				{removeFromWhitelist: sender},
-				{direction: types.PACKET_RECV, amount: 6, skipFlowUpdate: true},
-			},
-		},
-		{
-			name: "add_then_remove_sender_from_whitelist_send",
+			name: "add_then_remove_whitelist_send",
 			actions: []action{
 				{direction: types.PACKET_SEND, amount: 6},
-				{addToWhitelist: sender},
-				{removeFromWhitelist: sender},
-				{direction: types.PACKET_SEND, amount: 6,
-					expectedError: types.ErrQuotaExceeded.Error()},
-			},
-		},
-		{
-			name: "add_then_remove_receiver_from_whitelist_recv",
-			actions: []action{
-				{direction: types.PACKET_RECV, amount: 6},
-				{addToWhitelist: receiver},
-				{removeFromWhitelist: receiver},
-				{direction: types.PACKET_RECV, amount: 6,
-					expectedError: types.ErrQuotaExceeded.Error()},
+				{addToWhitelist: true},
+				{removeFromWhitelist: true},
+				{direction: types.PACKET_SEND, amount: 6, expectedError: "Outflow exceeds quota"},
 			},
 		},
 	}
