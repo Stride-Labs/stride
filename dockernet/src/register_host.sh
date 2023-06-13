@@ -19,10 +19,36 @@ ADDRESS_PREFIX=$(GET_VAR_VALUE ${CHAIN}_ADDRESS_PREFIX)
 NUM_VALS=$(GET_VAR_VALUE       ${CHAIN}_NUM_NODES)
 
 echo "$CHAIN - Registering host zone..."
-$STRIDE_MAIN_CMD tx stakeibc register-host-zone \
-    $CONNECTION $HOST_DENOM $ADDRESS_PREFIX $IBC_DENOM $CHANNEL 1 \
-    --gas 1000000 --from $STRIDE_ADMIN_ACCT --home $DOCKERNET_HOME/state/stride1 -y | TRIM_TX
-sleep 10
+
+register_proposal_json=$DOCKERNET_HOME/state/${NODE_PREFIX}1/register_proposal.json
+tee $register_proposal_json<<EOF
+{
+	"title": "Register gaia as a host zone",
+    "description": "Proposal to register gaia as host zone.",
+	"connection_id": "$CONNECTION",
+	"bech32prefix": "$ADDRESS_PREFIX",
+	"host_denom": "$HOST_DENOM",
+	"ibc_denom": "$IBC_DENOM",
+	"transfer_channel_id": "$CHANNEL",
+	"unbonding_frequency": 1,
+	"min_redemption_rate": "0.0",
+	"max_redemption_rate": "0.0",
+    "deposit": "10000001ustrd"
+}
+EOF
+
+$STRIDE_MAIN_CMD tx gov submit-legacy-proposal register-host-zone $register_proposal_json \
+  --gas 1000000 --from val1 --home $DOCKERNET_HOME/state/stride1 -y | TRIM_TX
+
+sleep 5
+
+proposal_id=$($STRIDE_MAIN_CMD q gov proposals | grep 'id: "' | tail -1 | awk '{printf $2}' | tr -d '"')
+
+echo "VOTING $proposal_id"
+$STRIDE_MAIN_CMD tx gov vote $proposal_id Yes --gas 1000000 --from val1 -y | TRIM_TX
+$STRIDE_MAIN_CMD tx gov vote $proposal_id Yes --gas 1000000 --from val2 -y | TRIM_TX
+$STRIDE_MAIN_CMD tx gov vote $proposal_id Yes --gas 1000000 --from val3 -y | TRIM_TX
+sleep 35
 
 echo "$CHAIN - Registering validators..."
 # Build array of validators of the form:
@@ -45,10 +71,17 @@ done
 validator_json=$DOCKERNET_HOME/state/${NODE_PREFIX}1/validators.json
 echo "{\"validators\": [${validators[*]}]}" > $validator_json
 
-# Add host zone validators to Stride's host zone struct
-$STRIDE_MAIN_CMD tx stakeibc add-validators $CHAIN_ID $validator_json \
-    --from $STRIDE_ADMIN_ACCT -y | TRIM_TX
+add_val_proposal_json=$DOCKERNET_HOME/state/${NODE_PREFIX}1/add_validators_proposal.json
+echo "{\"description\":\"Register $CHAIN_ID\", \"hostZone\":\"$CHAIN_ID\",\"validators\": [${validators[*]}],\"deposit\": \"10000001ustrd\"}" > $add_val_proposal_json
+$STRIDE_MAIN_CMD tx gov submit-legacy-proposal add-validators $add_val_proposal_json --from val1 -y | TRIM_TX
+
 sleep 5
+proposal_id=$($STRIDE_MAIN_CMD q gov proposals | grep 'id: "' | tail -1 | awk '{printf $2}' | tr -d '"')
+echo "VOTING $proposal_id"
+$STRIDE_MAIN_CMD tx gov vote $proposal_id Yes --gas 1000000 --from val1 -y | TRIM_TX
+$STRIDE_MAIN_CMD tx gov vote $proposal_id Yes --gas 1000000 --from val2 -y | TRIM_TX
+$STRIDE_MAIN_CMD tx gov vote $proposal_id Yes --gas 1000000 --from val3 -y | TRIM_TX
+sleep 35
 
 # Confirm the ICA accounts have been registered before continuing
 timeout=100
