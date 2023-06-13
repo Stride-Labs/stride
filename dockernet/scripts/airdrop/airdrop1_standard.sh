@@ -42,8 +42,6 @@ sleep 5
 $STRIDE_MAIN_CMD tx claim set-airdrop-allocations gaia stride1nf6v2paty9m22l3ecm7dpakq2c92ueyununayr 1 --from distributor-test -y | TRIM_TX
 sleep 5
 
-WAIT_FOR_STRING $STRIDE_LOGS "v10 Upgrade Complete"
-
 # AIRDROP CLAIMS
 # Check balances before claims
 echo -e "\nInitial balance before claim [1000000000ustrd expected]:"
@@ -55,6 +53,9 @@ $STRIDE_MAIN_CMD tx claim claim-free-amount --from airdrop-test --gas 400000 -y 
 sleep 5
 echo -e "\nBalance after claim [1000120000ustrd expected]:" 
 $STRIDE_MAIN_CMD query bank balances stride1nf6v2paty9m22l3ecm7dpakq2c92ueyununayr --denom ustrd
+
+WAIT_FOR_STRING $STRIDE_LOGS "v10 Upgrade Complete"
+
 # Stake, to claim another 20%
 echo -e "\nStaking..."
 $STRIDE_MAIN_CMD tx staking delegate stridevaloper1nnurja9zt97huqvsfuartetyjx63tc5zrj5x9f 100ustrd --from airdrop-test --gas 400000 -y | TRIM_TX
