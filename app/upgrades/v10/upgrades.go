@@ -156,15 +156,15 @@ func CreateUpgradeHandler(
 			return nil, errorsmod.Wrapf(err, "unable to MigrateClaimDistributorAddress")
 		}
 
-		ctx.Logger().Info("Executing Prop #205...")
-		if err := ExecuteProp205(ctx, bankKeeper); err != nil {
-			return nil, errorsmod.Wrapf(err, "unable to submit transfer for Prop #205")
-		}
+		// ctx.Logger().Info("Executing Prop #205...")
+		// if err := ExecuteProp205(ctx, bankKeeper); err != nil {
+		// 	return nil, errorsmod.Wrapf(err, "unable to submit transfer for Prop #205")
+		// }
 
-		ctx.Logger().Info("Enabling rate limits...")
-		if err := EnableRateLimits(ctx, ratelimitKeeper, channelKeeper, stakeibcKeeper); err != nil {
-			return nil, errorsmod.Wrapf(err, "unable to enable rate limits")
-		}
+		// ctx.Logger().Info("Enabling rate limits...")
+		// if err := EnableRateLimits(ctx, ratelimitKeeper, channelKeeper, stakeibcKeeper); err != nil {
+		// 	return nil, errorsmod.Wrapf(err, "unable to enable rate limits")
+		// }
 
 		ctx.Logger().Info("v10 Upgrade Complete")
 		return vm, err
