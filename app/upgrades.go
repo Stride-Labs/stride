@@ -126,6 +126,7 @@ func (app *StrideApp) setupUpgradeHandlers() {
 			app.IcacallbacksKeeper,
 			app.MintKeeper,
 			app.ParamsKeeper,
+			app.ClaimKeeper,
 			app.RatelimitKeeper,
 			app.StakeibcKeeper,
 		),

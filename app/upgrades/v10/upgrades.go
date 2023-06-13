@@ -24,6 +24,8 @@ import (
 	"github.com/cosmos/ibc-go/v7/modules/core/exported"
 	ibctmmigrations "github.com/cosmos/ibc-go/v7/modules/light-clients/07-tendermint/migrations"
 
+	claimkeeper "github.com/Stride-Labs/stride/v9/x/claim/keeper"
+	claimtypes "github.com/Stride-Labs/stride/v9/x/claim/types"
 	icacallbackskeeper "github.com/Stride-Labs/stride/v9/x/icacallbacks/keeper"
 	mintkeeper "github.com/Stride-Labs/stride/v9/x/mint/keeper"
 	minttypes "github.com/Stride-Labs/stride/v9/x/mint/types"
@@ -54,6 +56,23 @@ var (
 	Ustrd                      = "ustrd"
 
 	MinInitialDepositRatio = "0.25"
+	// airdrop distributor addresses
+	DistributorAddresses = map[string]string{
+		"stride":  "stride1cpvl8yf848karqauyhr5jzw6d9n9lnuuu974ev",
+		"gaia":    "stride1fmh0ysk5nt9y2cj8hddms5ffj2dhys55xkkjwz",
+		"osmosis": "stride1zlu2l3lx5tqvzspvjwsw9u0e907kelhqae3yhk",
+		"juno":    "stride14k9g9zpgaycpey9840nnpa66l4nd6lu7g7t74c",
+		"stars":   "stride12pum4adk5dhp32d90f8g8gfwujm0gwxqnrdlum",
+		"evmos":   "stride10dy5pmc2fq7fnmufjfschkfrxaqnpykl6ezy5j",
+	}
+	NewDistributorAddresses = map[string]string{
+		"stride":  "stride1w02dg74j8s38gqn6mvlr87hkvyv5rgp3cqe9se",
+		"gaia":    "stride1w0w0gr6u796y2mjl9fuqt66jqvk3j59jq3jtpg",
+		"osmosis": "stride1mfg5ck02tlyzdtdpaj70ngtgjs2vuawtkfz7xd",
+		"juno":    "stride1ral4dsqk0nzyqlwtuyxgavfvx8hegml7u0rzx3",
+		"stars":   "stride1rm9nxc5pw3k5r5s6lm85k73mfp734nhnxq570g",
+		"evmos":   "stride1ej4e7x2hanmy6vrzrjh06g6dnfq5kxm73dmgsw",
+	}
 
 	RateLimitDurationHours = uint64(24)
 	NewRateLimits          = map[string]sdkmath.Int{
@@ -84,6 +103,7 @@ func CreateUpgradeHandler(
 	icacallbacksKeeper icacallbackskeeper.Keeper,
 	mintKeeper mintkeeper.Keeper,
 	paramsKeeper paramskeeper.Keeper,
+	claimKeeper claimkeeper.Keeper,
 	ratelimitKeeper ratelimitkeeper.Keeper,
 	stakeibcKeeper stakeibckeeper.Keeper,
 ) upgradetypes.UpgradeHandler {
@@ -129,6 +149,11 @@ func CreateUpgradeHandler(
 		ctx.Logger().Info("Setting MinInitialDepositRatio...")
 		if err := SetMinInitialDepositRatio(ctx, govKeeper); err != nil {
 			return nil, errorsmod.Wrapf(err, "unable to set MinInitialDepositRatio")
+		}
+
+		ctx.Logger().Info("Migrating claim distributor addresses...")
+		if err := MigrateClaimDistributorAddress(ctx, claimKeeper); err != nil {
+			return nil, errorsmod.Wrapf(err, "unable to MigrateClaimDistributorAddress")
 		}
 
 		ctx.Logger().Info("Executing Prop #205...")
@@ -223,6 +248,23 @@ func MigrateCallbackData(ctx sdk.Context, k icacallbackskeeper.Keeper) error {
 		k.SetCallbackData(ctx, newCallbackData)
 	}
 	return nil
+}
+
+// Migrate the claim distributor address, change nothing else about the airdrop params
+func MigrateClaimDistributorAddress(ctx sdk.Context, ck claimkeeper.Keeper) error {
+	// Migrate claim params
+	claimParams, err := ck.GetParams(ctx)
+	if err != nil {
+		return errorsmod.Wrapf(err, "unable to get claim parameters")
+	}
+
+	updatedAirdrops := []*claimtypes.Airdrop{}
+	for _, airdrop := range claimParams.Airdrops {
+		airdrop.DistributorAddress = NewDistributorAddresses[airdrop.AirdropIdentifier]
+		updatedAirdrops = append(updatedAirdrops, airdrop)
+	}
+	claimParams.Airdrops = updatedAirdrops
+	return ck.SetParams(ctx, claimParams)
 }
 
 // Helper function to deserialize using the deprecated proto types and reserialize using the new proto types
