@@ -42,6 +42,8 @@ sleep 5
 $STRIDE_MAIN_CMD tx claim set-airdrop-allocations gaia stride1nf6v2paty9m22l3ecm7dpakq2c92ueyununayr 1 --from distributor-test -y | TRIM_TX
 sleep 5
 
+WAIT_FOR_STRING $STRIDE_LOGS "v10 Upgrade Complete"
+
 # AIRDROP CLAIMS
 # Check balances before claims
 echo -e "\nInitial balance before claim [1000000000ustrd expected]:"
@@ -65,3 +67,4 @@ $STRIDE_MAIN_CMD tx stakeibc liquid-stake 1000 uatom --from airdrop-test --gas 4
 sleep 5
 echo -e "\nBalance after liquid stake [1000599900ustrd expected]:" 
 $STRIDE_MAIN_CMD query bank balances stride1nf6v2paty9m22l3ecm7dpakq2c92ueyununayr --denom ustrd
+
