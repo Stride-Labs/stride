@@ -49,7 +49,6 @@ var (
 	CommunityPoolGrowthProportion         = "0.2158"
 	StrategicReserveProportion            = "0.4879"
 	CommunityPoolSecurityBudgetProportion = "0.1358"
-	StrdDenom                             = "ustrd"
 
 	CommunityPoolGrowthAddress = "stride1lj0m72d70qerts9ksrsphy9nmsd4h0s88ll9gfphmhemh8ewet5qj44jc9"
 	BadKidsCustodian           = "stride17z6yy8vfgklgej9m848jm7rkp270gd9pgaw8zu"

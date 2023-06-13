@@ -319,12 +319,12 @@ func (s *UpgradeTestSuite) TestMigrateDistributorAddress() {
 	// Iterate allAirdrops and make sure the updated airdrops are equivalent, except for the distributor address
 	for _, airdrop := range claimParams.Airdrops {
 		airdropToCompare := ck.GetAirdropByIdentifier(s.Ctx, airdrop.AirdropIdentifier)
-		s.Require().Equal(airdropToCompare.AirdropIdentifier, airdrop.AirdropIdentifier, "airdrop identifier")
-		s.Require().Equal(airdropToCompare.AirdropStartTime, airdrop.AirdropStartTime, "airdrop start time")
-		s.Require().Equal(airdropToCompare.AutopilotEnabled, airdrop.AutopilotEnabled, "airdrop autopilot enabled")
-		s.Require().Equal(airdropToCompare.ChainId, airdrop.ChainId, "airdrop chain id")
-		s.Require().Equal(airdropToCompare.ClaimDenom, airdrop.ClaimDenom, "airdrop claim denom")
-		s.Require().Equal(airdropToCompare.ClaimedSoFar, airdrop.ClaimedSoFar, "airdrop claimed so far")
+		s.Require().Equal(airdrop.AirdropIdentifier, airdropToCompare.AirdropIdentifier, "airdrop identifier")
+		s.Require().Equal(airdrop.AirdropStartTime, airdropToCompare.AirdropStartTime, "airdrop start time")
+		s.Require().Equal(airdrop.AutopilotEnabled, airdropToCompare.AutopilotEnabled, "airdrop autopilot enabled")
+		s.Require().Equal(airdrop.ChainId, airdropToCompare.ChainId, "airdrop chain id")
+		s.Require().Equal(airdrop.ClaimDenom, airdropToCompare.ClaimDenom, "airdrop claim denom")
+		s.Require().Equal(airdrop.ClaimedSoFar, airdropToCompare.ClaimedSoFar, "airdrop claimed so far")
 
 		newDistributorAddress := v10.NewDistributorAddresses[airdrop.AirdropIdentifier]
 		s.Require().Equal(newDistributorAddress, airdropToCompare.DistributorAddress, "airdrop distributor address updated")

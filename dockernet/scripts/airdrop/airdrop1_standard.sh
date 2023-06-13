@@ -55,6 +55,7 @@ echo -e "\nBalance after claim [1000120000ustrd expected]:"
 $STRIDE_MAIN_CMD query bank balances stride1nf6v2paty9m22l3ecm7dpakq2c92ueyununayr --denom ustrd
 
 WAIT_FOR_STRING $STRIDE_LOGS "v10 Upgrade Complete"
+sleep 15
 
 # Stake, to claim another 20%
 echo -e "\nStaking..."
