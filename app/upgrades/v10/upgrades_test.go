@@ -3,6 +3,7 @@ package v10_test
 import (
 	"fmt"
 	"testing"
+	"time"
 
 	sdkmath "cosmossdk.io/math"
 	"github.com/stretchr/testify/suite"
@@ -21,6 +22,8 @@ import (
 
 	cosmosproto "github.com/cosmos/gogoproto/proto"
 	deprecatedproto "github.com/golang/protobuf/proto" //nolint:staticcheck
+
+	claimtypes "github.com/Stride-Labs/stride/v9/x/claim/types"
 )
 
 type UpgradeTestSuite struct {
@@ -202,4 +205,96 @@ func (s *UpgradeTestSuite) TestMigrateCallbackData() {
 			s.Require().Equal(initialTransferCallbackArgs, finalCallbackArgs, "transfer callback")
 		}
 	}
+}
+
+func (s *UpgradeTestSuite) TestMigrateDistributorAddress() {
+	ck := s.App.ClaimKeeper
+
+	// Airdrops
+	strideAirdrop := claimtypes.Airdrop{
+		AirdropIdentifier:  "stride",
+		AirdropStartTime:   time.Date(2022, 11, 22, 14, 53, 52, 0, time.UTC),
+		AutopilotEnabled:   false,
+		ChainId:            "stride-1",
+		ClaimDenom:         "ustrd",
+		ClaimedSoFar:       sdk.NewInt(4143585840),
+		DistributorAddress: "stride1cpvl8yf848karqauyhr5jzw6d9n9lnuuu974ev",
+	}
+
+	gaiaAirdrop := claimtypes.Airdrop{
+		AirdropIdentifier:  "gaia",
+		AirdropStartTime:   time.Date(2022, 11, 22, 14, 53, 52, 0, time.UTC),
+		AutopilotEnabled:   false,
+		ChainId:            "cosmoshub-4",
+		ClaimDenom:         "ustrd",
+		ClaimedSoFar:       sdk.NewInt(191138794312),
+		DistributorAddress: "stride1fmh0ysk5nt9y2cj8hddms5ffj2dhys55xkkjwz",
+	}
+
+	osmosisAirdrop := claimtypes.Airdrop{
+		AirdropIdentifier:  "osmosis",
+		AirdropStartTime:   time.Date(2022, 11, 22, 14, 53, 52, 0, time.UTC),
+		AutopilotEnabled:   false,
+		ChainId:            "osmosis-1",
+		ClaimDenom:         "ustrd",
+		ClaimedSoFar:       sdk.NewInt(72895369704),
+		DistributorAddress: "stride1zlu2l3lx5tqvzspvjwsw9u0e907kelhqae3yhk",
+	}
+
+	junoAirdrop := claimtypes.Airdrop{
+		AirdropIdentifier:  "juno",
+		AirdropStartTime:   time.Date(2022, 11, 22, 14, 53, 52, 0, time.UTC),
+		AutopilotEnabled:   false,
+		ChainId:            "juno-1",
+		ClaimDenom:         "ustrd",
+		ClaimedSoFar:       sdk.NewInt(10967183382),
+		DistributorAddress: "stride14k9g9zpgaycpey9840nnpa66l4nd6lu7g7t74c",
+	}
+
+	starsAirdrop := claimtypes.Airdrop{
+		AirdropIdentifier:  "stars",
+		AirdropStartTime:   time.Date(2022, 11, 22, 14, 53, 52, 0, time.UTC),
+		AutopilotEnabled:   false,
+		ChainId:            "stargaze-1",
+		ClaimDenom:         "ustrd",
+		ClaimedSoFar:       sdk.NewInt(1013798205),
+		DistributorAddress: "stride12pum4adk5dhp32d90f8g8gfwujm0gwxqnrdlum",
+	}
+
+	evmosAirdrop := claimtypes.Airdrop{
+		AirdropIdentifier:  "evmos",
+		AirdropStartTime:   time.Date(2023, 4, 3, 16, 0, 0, 0, time.UTC),
+		AutopilotEnabled:   true,
+		ChainId:            "evmos_9001-2",
+		ClaimDenom:         "ustrd",
+		ClaimedSoFar:       sdk.NewInt(13491005333),
+		DistributorAddress: "stride10dy5pmc2fq7fnmufjfschkfrxaqnpykl6ezy5j",
+	}
+
+	claimParams, err := ck.GetParams(s.Ctx)
+	s.Require().NoError(err, "no error expected when getting claim params")
+
+	// Set the airdrops on the claim params
+	claimParams.Airdrops = []*claimtypes.Airdrop{&strideAirdrop, &gaiaAirdrop, &osmosisAirdrop, &junoAirdrop, &starsAirdrop, &evmosAirdrop}
+	err = ck.SetParams(s.Ctx, claimParams)
+	s.Require().NoError(err, "no error expected when setting claim params")
+
+	// Migrate the airdrop distributor addresses
+	err = v10.MigrateClaimDistributorAddress(s.Ctx, ck)
+	s.Require().NoError(err, "no error expected when migrating distributor addresses")
+
+	// Iterate allAirdrops and make sure the updated airdrops are equivalent, except for the distributor address
+	for _, airdrop := range claimParams.Airdrops {
+		airdropToCompare := ck.GetAirdropByIdentifier(s.Ctx, airdrop.AirdropIdentifier)
+		s.Require().Equal(airdropToCompare.AirdropIdentifier, airdrop.AirdropIdentifier, "airdrop identifier")
+		s.Require().Equal(airdropToCompare.AirdropStartTime, airdrop.AirdropStartTime, "airdrop start time")
+		s.Require().Equal(airdropToCompare.AutopilotEnabled, airdrop.AutopilotEnabled, "airdrop autopilot enabled")
+		s.Require().Equal(airdropToCompare.ChainId, airdrop.ChainId, "airdrop chain id")
+		s.Require().Equal(airdropToCompare.ClaimDenom, airdrop.ClaimDenom, "airdrop claim denom")
+		s.Require().Equal(airdropToCompare.ClaimedSoFar, airdrop.ClaimedSoFar, "airdrop claimed so far")
+
+		newDistributorAddress := v10.NewDistributorAddresses[airdrop.AirdropIdentifier]
+		s.Require().Equal(newDistributorAddress, airdropToCompare.DistributorAddress, "airdrop distributor address updated")
+	}
+
 }
