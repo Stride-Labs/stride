@@ -5,11 +5,11 @@ import (
 
 	"github.com/spf13/cast"
 
-	"github.com/Stride-Labs/stride/v9/utils"
-	recordstypes "github.com/Stride-Labs/stride/v9/x/records/types"
-	"github.com/Stride-Labs/stride/v9/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v10/utils"
+	recordstypes "github.com/Stride-Labs/stride/v10/x/records/types"
+	"github.com/Stride-Labs/stride/v10/x/stakeibc/types"
 
-	icacallbackstypes "github.com/Stride-Labs/stride/v9/x/icacallbacks/types"
+	icacallbackstypes "github.com/Stride-Labs/stride/v10/x/icacallbacks/types"
 
 	errorsmod "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"

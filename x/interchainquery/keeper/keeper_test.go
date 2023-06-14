@@ -5,9 +5,9 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
-	"github.com/Stride-Labs/stride/v9/app/apptesting"
-	"github.com/Stride-Labs/stride/v9/x/interchainquery/keeper"
-	"github.com/Stride-Labs/stride/v9/x/interchainquery/types"
+	"github.com/Stride-Labs/stride/v10/app/apptesting"
+	"github.com/Stride-Labs/stride/v10/x/interchainquery/keeper"
+	"github.com/Stride-Labs/stride/v10/x/interchainquery/types"
 )
 
 type KeeperTestSuite struct {
