@@ -27,7 +27,7 @@ func getStakeibcPacketMetadata(address, action string) string {
 		{
 			"autopilot": {
 				"receiver": "%[1]s",
-				"stakeibc": { "stride_address": "%[1]s", "action": "%[2]s" } 
+				"stakeibc": { "action": "%[2]s" } 
 			}
 		}`, address, action)
 }
