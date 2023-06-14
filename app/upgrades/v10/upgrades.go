@@ -10,6 +10,7 @@ import (
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
+	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
 	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
 	capabilitykeeper "github.com/cosmos/cosmos-sdk/x/capability/keeper"
 	consensusparamkeeper "github.com/cosmos/cosmos-sdk/x/consensus/keeper"
@@ -56,6 +57,7 @@ var (
 	Ustrd                      = "ustrd"
 
 	MinInitialDepositRatio = "0.25"
+
 	// airdrop distributor addresses
 	DistributorAddresses = map[string]string{
 		"stride":  "stride1cpvl8yf848karqauyhr5jzw6d9n9lnuuu974ev",
@@ -94,16 +96,17 @@ func CreateUpgradeHandler(
 	configurator module.Configurator,
 	cdc codec.Codec,
 	capabilityStoreKey *storetypes.KVStoreKey,
+	accountKeeper authkeeper.AccountKeeper,
 	bankKeeper bankkeeper.Keeper,
 	capabilityKeeper *capabilitykeeper.Keeper,
 	channelKeeper channelkeeper.Keeper,
+	claimKeeper claimkeeper.Keeper,
 	clientKeeper clientkeeper.Keeper,
 	consensusParamsKeeper consensusparamkeeper.Keeper,
 	govKeeper govkeeper.Keeper,
 	icacallbacksKeeper icacallbackskeeper.Keeper,
 	mintKeeper mintkeeper.Keeper,
 	paramsKeeper paramskeeper.Keeper,
-	claimKeeper claimkeeper.Keeper,
 	ratelimitKeeper ratelimitkeeper.Keeper,
 	stakeibcKeeper stakeibckeeper.Keeper,
 ) upgradetypes.UpgradeHandler {
@@ -162,7 +165,7 @@ func CreateUpgradeHandler(
 		}
 
 		ctx.Logger().Info("Enabling rate limits...")
-		if err := EnableRateLimits(ctx, ratelimitKeeper, channelKeeper, stakeibcKeeper); err != nil {
+		if err := EnableRateLimits(ctx, accountKeeper, channelKeeper, ratelimitKeeper, stakeibcKeeper); err != nil {
 			return nil, errorsmod.Wrapf(err, "unable to enable rate limits")
 		}
 
@@ -308,8 +311,9 @@ func ExecuteProp205(ctx sdk.Context, k bankkeeper.Keeper) error {
 //	CMDX:  75%
 func EnableRateLimits(
 	ctx sdk.Context,
-	ratelimitKeeper ratelimitkeeper.Keeper,
+	accountKeeper authkeeper.AccountKeeper,
 	channelKeeper channelkeeper.Keeper,
+	ratelimitKeeper ratelimitkeeper.Keeper,
 	stakeibcKeeper stakeibckeeper.Keeper,
 ) error {
 	for _, hostZone := range stakeibcKeeper.GetAllHostZone(ctx) {
@@ -332,6 +336,24 @@ func EnableRateLimits(
 		if err := ratelimitgov.AddRateLimit(ctx, ratelimitKeeper, channelKeeper, addRateLimit); err != nil {
 			return errorsmod.Wrapf(err, "unable to add rate limit for %s", denom)
 		}
+
+		if hostZone.DelegationAccount == nil || hostZone.DelegationAccount.Address == "" {
+			return stakeibctypes.ErrICAAccountNotFound
+		}
+		if hostZone.FeeAccount == nil || hostZone.FeeAccount.Address == "" {
+			return stakeibctypes.ErrICAAccountNotFound
+		}
+
+		ratelimitKeeper.SetWhitelistedAddressPair(ctx, ratelimittypes.WhitelistedAddressPair{
+			Sender:   hostZone.Address,
+			Receiver: hostZone.DelegationAccount.Address,
+		})
+
+		rewardCollectorAddress := accountKeeper.GetModuleAccount(ctx, stakeibctypes.RewardCollectorName).GetAddress()
+		ratelimitKeeper.SetWhitelistedAddressPair(ctx, ratelimittypes.WhitelistedAddressPair{
+			Sender:   hostZone.FeeAccount.Address,
+			Receiver: rewardCollectorAddress.String(),
+		})
 	}
 	return nil
 }

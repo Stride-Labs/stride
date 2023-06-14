@@ -10,6 +10,7 @@ import (
 	"github.com/stretchr/testify/suite"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/types/address"
 	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
 
 	transfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
@@ -60,10 +61,14 @@ func (s *UpgradeTestSuite) TestUpgrade() {
 	s.FundAccount(communityGrowthAddress, sdk.NewCoin(v10.Ustrd, v10.BadKidsTransferAmount))
 
 	// Add cosmoshub to check that a rate limit is added
+	gaiaChainId := "cosmoshub-4"
 	atom := "uatom"
 	stAtom := "st" + atom
 	transferChannelId := "channel-0"
-	s.setupRateLimitedHostZone("cosmoshub-4", stAtom, transferChannelId)
+	s.setupRateLimitedHostZone(gaiaChainId, stAtom, transferChannelId)
+
+	// Create reward collector account for rate limit whitelist
+	rewardCollectorAddress := s.createRewardCollectorModuleAccount()
 
 	// Submit upgrade
 	s.ConfirmUpgradeSucceededs("v10", dummyUpgradeHeight)
@@ -102,7 +107,8 @@ func (s *UpgradeTestSuite) TestUpgrade() {
 	// Check that the rate limit was added
 	rateLimits := s.App.RatelimitKeeper.GetAllRateLimits(s.Ctx)
 	s.Require().Len(rateLimits, 1, "one rate limit should have been added")
-	s.validateRateLimit(rateLimits[0], "cosmoshub-4", stAtom, transferChannelId)
+	s.validateRateLimit(rateLimits[0], gaiaChainId, stAtom, transferChannelId)
+	s.validateWhitelists(gaiaChainId, rewardCollectorAddress)
 }
 
 func (s *UpgradeTestSuite) createCallbackData(id string, callback deprecatedproto.Message) icacallbackstypes.CallbackData {
@@ -331,12 +337,28 @@ func (s *UpgradeTestSuite) TestMigrateDistributorAddress() {
 	}
 }
 
+func (s *UpgradeTestSuite) createRewardCollectorModuleAccount() string {
+	rewardCollectorAddress := address.Module(stakeibctypes.RewardCollectorName, []byte(stakeibctypes.RewardCollectorName))
+	err := utils.CreateModuleAccount(s.Ctx, s.App.AccountKeeper, rewardCollectorAddress)
+	s.Require().NoError(err, "no error expected when creating reward collector module account")
+
+	rewardCollector := s.App.AccountKeeper.GetModuleAccount(s.Ctx, stakeibctypes.RewardCollectorName)
+	return rewardCollector.GetAddress().String()
+}
+
 func (s *UpgradeTestSuite) setupRateLimitedHostZone(chainId, stDenom, channelId string) {
 	// Store host zone in stakeibc
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, stakeibctypes.HostZone{
 		ChainId:           chainId,
 		HostDenom:         strings.ReplaceAll(stDenom, "st", ""),
 		TransferChannelId: channelId,
+		Address:           chainId + ".STAKEIBC",
+		FeeAccount: &stakeibctypes.ICAAccount{
+			Address: chainId + ".FEE",
+		},
+		DelegationAccount: &stakeibctypes.ICAAccount{
+			Address: chainId + ".DELEGATION",
+		},
 	})
 
 	// Create the transfer channel
@@ -366,7 +388,21 @@ func (s *UpgradeTestSuite) validateRateLimit(rateLimit ratelimittypes.RateLimit,
 		"%s - rate limit channel value", description)
 }
 
+func (s *UpgradeTestSuite) validateWhitelists(chainId, rewardCollectorAddress string) {
+	stakeibcModuleAccount := chainId + ".STAKEIBC"
+	delegationAddress := chainId + ".DELEGATION"
+	feeAddress := chainId + ".FEE"
+
+	isWhitelisted := s.App.RatelimitKeeper.IsAddressPairWhitelisted(s.Ctx, stakeibcModuleAccount, delegationAddress)
+	s.Require().True(isWhitelisted, "%d - stakeibc module account -> delegation ICA whitelisted", chainId)
+
+	isWhitelisted = s.App.RatelimitKeeper.IsAddressPairWhitelisted(s.Ctx, feeAddress, rewardCollectorAddress)
+	s.Require().True(isWhitelisted, "%d - fee account -> reward collector", chainId)
+}
+
 func (s *UpgradeTestSuite) TestEnableRateLimits() {
+	rewardCollectorAddress := s.createRewardCollectorModuleAccount()
+
 	// Create a host zone for each new rate limited host
 	rateLimitedHosts := utils.StringMapKeys(v10.NewRateLimits)
 	for i, chainId := range rateLimitedHosts {
@@ -381,7 +417,7 @@ func (s *UpgradeTestSuite) TestEnableRateLimits() {
 	})
 
 	// Enable the rate limits
-	err := v10.EnableRateLimits(s.Ctx, s.App.RatelimitKeeper, s.App.IBCKeeper.ChannelKeeper, s.App.StakeibcKeeper)
+	err := v10.EnableRateLimits(s.Ctx, s.App.AccountKeeper, s.App.IBCKeeper.ChannelKeeper, s.App.RatelimitKeeper, s.App.StakeibcKeeper)
 	s.Require().NoError(err, "no error expected when enabling new rate limits")
 
 	// Confirm correct number of new rate limits
@@ -396,5 +432,13 @@ func (s *UpgradeTestSuite) TestEnableRateLimits() {
 		rateLimit, found := s.App.RatelimitKeeper.GetRateLimit(s.Ctx, denom, channelId)
 		s.Require().True(found, "rate limit for %s and %s should have been found", denom, channelId)
 		s.validateRateLimit(rateLimit, chainId, denom, channelId)
+	}
+
+	// Verify each whitelist pair
+	whitelistedPairs := s.App.RatelimitKeeper.GetAllWhitelistedAddressPairs(s.Ctx)
+	s.Require().Equal(len(rateLimitedHosts)*2, len(whitelistedPairs), "two whitelisted address pairs per host")
+
+	for _, chainId := range rateLimitedHosts {
+		s.validateWhitelists(chainId, rewardCollectorAddress)
 	}
 }
