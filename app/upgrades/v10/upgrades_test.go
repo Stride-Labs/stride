@@ -77,16 +77,16 @@ func (s *UpgradeTestSuite) TestUpgrade() {
 	proportions := s.App.MintKeeper.GetParams(s.Ctx).DistributionProportions
 
 	s.Require().Equal(v10.StakingProportion,
-		proportions.Staking.String()[:6], "staking")
+		proportions.Staking.String()[:9], "staking")
 
 	s.Require().Equal(v10.CommunityPoolGrowthProportion,
-		proportions.CommunityPoolGrowth.String()[:6], "community pool growth")
+		proportions.CommunityPoolGrowth.String()[:9], "community pool growth")
 
 	s.Require().Equal(v10.StrategicReserveProportion,
-		proportions.StrategicReserve.String()[:6], "strategic reserve")
+		proportions.StrategicReserve.String()[:9], "strategic reserve")
 
 	s.Require().Equal(v10.CommunityPoolSecurityBudgetProportion,
-		proportions.CommunityPoolSecurityBudget.String()[:6], "community pool security")
+		proportions.CommunityPoolSecurityBudget.String()[:9], "community pool security")
 
 	// Check initial deposit ratio
 	govParams := s.App.GovKeeper.GetParams(s.Ctx)
