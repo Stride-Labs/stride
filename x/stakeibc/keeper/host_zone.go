@@ -3,7 +3,6 @@ package keeper
 import (
 	"errors"
 	"fmt"
-	"math"
 
 	sdkmath "cosmossdk.io/math"
 
@@ -321,7 +320,7 @@ func (k Keeper) AddDelegationToValidator(ctx sdk.Context, hostZone types.HostZon
 // Appends a validator to host zone (if the host zone is not already at capacity)
 // If the validator is added through governance, the weight is equal to the minimum weight across the set
 // If the validator is added through an admin transactions, the weight is specified in the message
-func (k Keeper) AddValidatorToHostZone(ctx sdk.Context, chainId string, validator types.Validator, fromGovernance bool) error {
+func (k Keeper) AddValidatorToHostZone(ctx sdk.Context, chainId string, validator types.Validator) error {
 	// Get the corresponding host zone
 	hostZone, found := k.GetHostZone(ctx, chainId)
 	if !found {
@@ -336,7 +335,6 @@ func (k Keeper) AddValidatorToHostZone(ctx sdk.Context, chainId string, validato
 
 	// Check that we don't already have this validator
 	// Grab the minimum weight in the process (to assign to validator's added through governance)
-	var minWeight uint64 = math.MaxUint64
 	for _, existingValidator := range hostZone.Validators {
 		if existingValidator.Address == validator.Address {
 			return errorsmod.Wrapf(types.ErrValidatorAlreadyExists, "Validator address (%s) already exists on Host Zone (%s)", validator.Address, chainId)
@@ -344,17 +342,10 @@ func (k Keeper) AddValidatorToHostZone(ctx sdk.Context, chainId string, validato
 		if existingValidator.Name == validator.Name {
 			return errorsmod.Wrapf(types.ErrValidatorAlreadyExists, "Validator name (%s) already exists on Host Zone (%s)", validator.Name, chainId)
 		}
-		// Store the min weight to assign to new validator added through governance (ignore zero-weight validators)
-		if existingValidator.Weight < minWeight && existingValidator.Weight > 0 {
-			minWeight = existingValidator.Weight
-		}
 	}
 
 	// If the validator was added via governance, set the weight to the min validator weight of the host zone
 	valWeight := validator.Weight
-	if fromGovernance {
-		valWeight = minWeight
-	}
 
 	// Finally, add the validator to the host
 	hostZone.Validators = append(hostZone.Validators, &types.Validator{
