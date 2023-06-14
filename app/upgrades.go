@@ -117,9 +117,11 @@ func (app *StrideApp) setupUpgradeHandlers() {
 			app.configurator,
 			app.appCodec,
 			app.keys[capabilitytypes.ModuleName],
+			app.AccountKeeper,
 			app.BankKeeper,
 			app.CapabilityKeeper,
 			app.IBCKeeper.ChannelKeeper,
+			app.ClaimKeeper,
 			app.IBCKeeper.ClientKeeper,
 			app.ConsensusParamsKeeper,
 			app.GovKeeper,
@@ -160,6 +162,8 @@ func (app *StrideApp) setupUpgradeHandlers() {
 			Added: []string{crisistypes.StoreKey, consensustypes.StoreKey},
 		}
 	}
+	// TODO: v10 UPGRADE HANDLER
+	// Add module and ICA accounts for each host zone to the rate limit whitelist
 
 	if storeUpgrades != nil {
 		app.SetStoreLoader(upgradetypes.UpgradeStoreLoader(upgradeInfo.Height, storeUpgrades))

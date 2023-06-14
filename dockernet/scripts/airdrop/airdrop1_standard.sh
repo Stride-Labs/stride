@@ -53,6 +53,7 @@ $STRIDE_MAIN_CMD tx claim claim-free-amount --from airdrop-test --gas 400000 -y 
 sleep 5
 echo -e "\nBalance after claim [1000120000ustrd expected]:" 
 $STRIDE_MAIN_CMD query bank balances stride1nf6v2paty9m22l3ecm7dpakq2c92ueyununayr --denom ustrd
+
 # Stake, to claim another 20%
 echo -e "\nStaking..."
 $STRIDE_MAIN_CMD tx staking delegate stridevaloper1nnurja9zt97huqvsfuartetyjx63tc5zrj5x9f 100ustrd --from airdrop-test --gas 400000 -y | TRIM_TX
@@ -65,3 +66,4 @@ $STRIDE_MAIN_CMD tx stakeibc liquid-stake 1000 uatom --from airdrop-test --gas 4
 sleep 5
 echo -e "\nBalance after liquid stake [1000599900ustrd expected]:" 
 $STRIDE_MAIN_CMD query bank balances stride1nf6v2paty9m22l3ecm7dpakq2c92ueyununayr --denom ustrd
+

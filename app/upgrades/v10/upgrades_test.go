@@ -4,11 +4,13 @@ import (
 	"fmt"
 	"strings"
 	"testing"
+	"time"
 
 	sdkmath "cosmossdk.io/math"
 	"github.com/stretchr/testify/suite"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/types/address"
 	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
 
 	transfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
@@ -28,6 +30,8 @@ import (
 
 	cosmosproto "github.com/cosmos/gogoproto/proto"
 	deprecatedproto "github.com/golang/protobuf/proto" //nolint:staticcheck
+
+	claimtypes "github.com/Stride-Labs/stride/v9/x/claim/types"
 )
 
 var initialRateLimitChannelValue = sdk.NewInt(1_000_000)
@@ -57,10 +61,14 @@ func (s *UpgradeTestSuite) TestUpgrade() {
 	s.FundAccount(communityGrowthAddress, sdk.NewCoin(v10.Ustrd, v10.BadKidsTransferAmount))
 
 	// Add cosmoshub to check that a rate limit is added
+	gaiaChainId := "cosmoshub-4"
 	atom := "uatom"
 	stAtom := "st" + atom
 	transferChannelId := "channel-0"
-	s.setupRateLimitedHostZone("cosmoshub-4", stAtom, transferChannelId)
+	s.setupRateLimitedHostZone(gaiaChainId, stAtom, transferChannelId)
+
+	// Create reward collector account for rate limit whitelist
+	rewardCollectorAddress := s.createRewardCollectorModuleAccount()
 
 	// Submit upgrade
 	s.ConfirmUpgradeSucceededs("v10", dummyUpgradeHeight)
@@ -69,16 +77,16 @@ func (s *UpgradeTestSuite) TestUpgrade() {
 	proportions := s.App.MintKeeper.GetParams(s.Ctx).DistributionProportions
 
 	s.Require().Equal(v10.StakingProportion,
-		proportions.Staking.String()[:6], "staking")
+		proportions.Staking.String()[:9], "staking")
 
 	s.Require().Equal(v10.CommunityPoolGrowthProportion,
-		proportions.CommunityPoolGrowth.String()[:6], "community pool growth")
+		proportions.CommunityPoolGrowth.String()[:9], "community pool growth")
 
 	s.Require().Equal(v10.StrategicReserveProportion,
-		proportions.StrategicReserve.String()[:6], "strategic reserve")
+		proportions.StrategicReserve.String()[:9], "strategic reserve")
 
 	s.Require().Equal(v10.CommunityPoolSecurityBudgetProportion,
-		proportions.CommunityPoolSecurityBudget.String()[:6], "community pool security")
+		proportions.CommunityPoolSecurityBudget.String()[:9], "community pool security")
 
 	// Check initial deposit ratio
 	govParams := s.App.GovKeeper.GetParams(s.Ctx)
@@ -99,7 +107,8 @@ func (s *UpgradeTestSuite) TestUpgrade() {
 	// Check that the rate limit was added
 	rateLimits := s.App.RatelimitKeeper.GetAllRateLimits(s.Ctx)
 	s.Require().Len(rateLimits, 1, "one rate limit should have been added")
-	s.validateRateLimit(rateLimits[0], "cosmoshub-4", stAtom, transferChannelId)
+	s.validateRateLimit(rateLimits[0], gaiaChainId, stAtom, transferChannelId)
+	s.validateWhitelists(gaiaChainId, rewardCollectorAddress)
 }
 
 func (s *UpgradeTestSuite) createCallbackData(id string, callback deprecatedproto.Message) icacallbackstypes.CallbackData {
@@ -237,12 +246,119 @@ func (s *UpgradeTestSuite) TestMigrateCallbackData() {
 	}
 }
 
+func (s *UpgradeTestSuite) TestMigrateDistributorAddress() {
+	ck := s.App.ClaimKeeper
+
+	// Airdrops
+	strideAirdrop := claimtypes.Airdrop{
+		AirdropIdentifier:  "stride",
+		AirdropStartTime:   time.Date(2022, 11, 22, 14, 53, 52, 0, time.UTC),
+		AutopilotEnabled:   false,
+		ChainId:            "stride-1",
+		ClaimDenom:         "ustrd",
+		ClaimedSoFar:       sdk.NewInt(4143585840),
+		DistributorAddress: "stride1cpvl8yf848karqauyhr5jzw6d9n9lnuuu974ev",
+	}
+
+	gaiaAirdrop := claimtypes.Airdrop{
+		AirdropIdentifier:  "gaia",
+		AirdropStartTime:   time.Date(2022, 11, 22, 14, 53, 52, 0, time.UTC),
+		AutopilotEnabled:   false,
+		ChainId:            "cosmoshub-4",
+		ClaimDenom:         "ustrd",
+		ClaimedSoFar:       sdk.NewInt(191138794312),
+		DistributorAddress: "stride1fmh0ysk5nt9y2cj8hddms5ffj2dhys55xkkjwz",
+	}
+
+	osmosisAirdrop := claimtypes.Airdrop{
+		AirdropIdentifier:  "osmosis",
+		AirdropStartTime:   time.Date(2022, 11, 22, 14, 53, 52, 0, time.UTC),
+		AutopilotEnabled:   false,
+		ChainId:            "osmosis-1",
+		ClaimDenom:         "ustrd",
+		ClaimedSoFar:       sdk.NewInt(72895369704),
+		DistributorAddress: "stride1zlu2l3lx5tqvzspvjwsw9u0e907kelhqae3yhk",
+	}
+
+	junoAirdrop := claimtypes.Airdrop{
+		AirdropIdentifier:  "juno",
+		AirdropStartTime:   time.Date(2022, 11, 22, 14, 53, 52, 0, time.UTC),
+		AutopilotEnabled:   false,
+		ChainId:            "juno-1",
+		ClaimDenom:         "ustrd",
+		ClaimedSoFar:       sdk.NewInt(10967183382),
+		DistributorAddress: "stride14k9g9zpgaycpey9840nnpa66l4nd6lu7g7t74c",
+	}
+
+	starsAirdrop := claimtypes.Airdrop{
+		AirdropIdentifier:  "stars",
+		AirdropStartTime:   time.Date(2022, 11, 22, 14, 53, 52, 0, time.UTC),
+		AutopilotEnabled:   false,
+		ChainId:            "stargaze-1",
+		ClaimDenom:         "ustrd",
+		ClaimedSoFar:       sdk.NewInt(1013798205),
+		DistributorAddress: "stride12pum4adk5dhp32d90f8g8gfwujm0gwxqnrdlum",
+	}
+
+	evmosAirdrop := claimtypes.Airdrop{
+		AirdropIdentifier:  "evmos",
+		AirdropStartTime:   time.Date(2023, 4, 3, 16, 0, 0, 0, time.UTC),
+		AutopilotEnabled:   true,
+		ChainId:            "evmos_9001-2",
+		ClaimDenom:         "ustrd",
+		ClaimedSoFar:       sdk.NewInt(13491005333),
+		DistributorAddress: "stride10dy5pmc2fq7fnmufjfschkfrxaqnpykl6ezy5j",
+	}
+
+	claimParams, err := ck.GetParams(s.Ctx)
+	s.Require().NoError(err, "no error expected when getting claim params")
+
+	// Set the airdrops on the claim params
+	claimParams.Airdrops = []*claimtypes.Airdrop{&strideAirdrop, &gaiaAirdrop, &osmosisAirdrop, &junoAirdrop, &starsAirdrop, &evmosAirdrop}
+	err = ck.SetParams(s.Ctx, claimParams)
+	s.Require().NoError(err, "no error expected when setting claim params")
+
+	// Migrate the airdrop distributor addresses
+	err = v10.MigrateClaimDistributorAddress(s.Ctx, ck)
+	s.Require().NoError(err, "no error expected when migrating distributor addresses")
+
+	// Iterate allAirdrops and make sure the updated airdrops are equivalent, except for the distributor address
+	for _, airdrop := range claimParams.Airdrops {
+		airdropToCompare := ck.GetAirdropByIdentifier(s.Ctx, airdrop.AirdropIdentifier)
+		s.Require().Equal(airdrop.AirdropIdentifier, airdropToCompare.AirdropIdentifier, "airdrop identifier")
+		s.Require().Equal(airdrop.AirdropStartTime, airdropToCompare.AirdropStartTime, "airdrop start time")
+		s.Require().Equal(airdrop.AutopilotEnabled, airdropToCompare.AutopilotEnabled, "airdrop autopilot enabled")
+		s.Require().Equal(airdrop.ChainId, airdropToCompare.ChainId, "airdrop chain id")
+		s.Require().Equal(airdrop.ClaimDenom, airdropToCompare.ClaimDenom, "airdrop claim denom")
+		s.Require().Equal(airdrop.ClaimedSoFar, airdropToCompare.ClaimedSoFar, "airdrop claimed so far")
+
+		newDistributorAddress := v10.NewDistributorAddresses[airdrop.AirdropIdentifier]
+		s.Require().Equal(newDistributorAddress, airdropToCompare.DistributorAddress, "airdrop distributor address updated")
+	}
+}
+
+func (s *UpgradeTestSuite) createRewardCollectorModuleAccount() string {
+	rewardCollectorAddress := address.Module(stakeibctypes.RewardCollectorName, []byte(stakeibctypes.RewardCollectorName))
+	err := utils.CreateModuleAccount(s.Ctx, s.App.AccountKeeper, rewardCollectorAddress)
+	s.Require().NoError(err, "no error expected when creating reward collector module account")
+
+	rewardCollector := s.App.AccountKeeper.GetModuleAccount(s.Ctx, stakeibctypes.RewardCollectorName)
+	return rewardCollector.GetAddress().String()
+}
+
 func (s *UpgradeTestSuite) setupRateLimitedHostZone(chainId, stDenom, channelId string) {
 	// Store host zone in stakeibc
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, stakeibctypes.HostZone{
 		ChainId:           chainId,
 		HostDenom:         strings.ReplaceAll(stDenom, "st", ""),
 		TransferChannelId: channelId,
+		Address:           chainId + ".STAKEIBC",
+		FeeAccount: &stakeibctypes.ICAAccount{
+			Address: chainId + ".FEE",
+		},
+		DelegationAccount: &stakeibctypes.ICAAccount{
+			Address: chainId + ".DELEGATION",
+		},
 	})
 
 	// Create the transfer channel
@@ -272,7 +388,21 @@ func (s *UpgradeTestSuite) validateRateLimit(rateLimit ratelimittypes.RateLimit,
 		"%s - rate limit channel value", description)
 }
 
+func (s *UpgradeTestSuite) validateWhitelists(chainId, rewardCollectorAddress string) {
+	stakeibcModuleAccount := chainId + ".STAKEIBC"
+	delegationAddress := chainId + ".DELEGATION"
+	feeAddress := chainId + ".FEE"
+
+	isWhitelisted := s.App.RatelimitKeeper.IsAddressPairWhitelisted(s.Ctx, stakeibcModuleAccount, delegationAddress)
+	s.Require().True(isWhitelisted, "%d - stakeibc module account -> delegation ICA whitelisted", chainId)
+
+	isWhitelisted = s.App.RatelimitKeeper.IsAddressPairWhitelisted(s.Ctx, feeAddress, rewardCollectorAddress)
+	s.Require().True(isWhitelisted, "%d - fee account -> reward collector", chainId)
+}
+
 func (s *UpgradeTestSuite) TestEnableRateLimits() {
+	rewardCollectorAddress := s.createRewardCollectorModuleAccount()
+
 	// Create a host zone for each new rate limited host
 	rateLimitedHosts := utils.StringMapKeys(v10.NewRateLimits)
 	for i, chainId := range rateLimitedHosts {
@@ -287,7 +417,7 @@ func (s *UpgradeTestSuite) TestEnableRateLimits() {
 	})
 
 	// Enable the rate limits
-	err := v10.EnableRateLimits(s.Ctx, s.App.RatelimitKeeper, s.App.IBCKeeper.ChannelKeeper, s.App.StakeibcKeeper)
+	err := v10.EnableRateLimits(s.Ctx, s.App.AccountKeeper, s.App.IBCKeeper.ChannelKeeper, s.App.RatelimitKeeper, s.App.StakeibcKeeper)
 	s.Require().NoError(err, "no error expected when enabling new rate limits")
 
 	// Confirm correct number of new rate limits
@@ -302,5 +432,13 @@ func (s *UpgradeTestSuite) TestEnableRateLimits() {
 		rateLimit, found := s.App.RatelimitKeeper.GetRateLimit(s.Ctx, denom, channelId)
 		s.Require().True(found, "rate limit for %s and %s should have been found", denom, channelId)
 		s.validateRateLimit(rateLimit, chainId, denom, channelId)
+	}
+
+	// Verify each whitelist pair
+	whitelistedPairs := s.App.RatelimitKeeper.GetAllWhitelistedAddressPairs(s.Ctx)
+	s.Require().Equal(len(rateLimitedHosts)*2, len(whitelistedPairs), "two whitelisted address pairs per host")
+
+	for _, chainId := range rateLimitedHosts {
+		s.validateWhitelists(chainId, rewardCollectorAddress)
 	}
 }

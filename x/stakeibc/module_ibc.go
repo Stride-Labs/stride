@@ -13,6 +13,7 @@ import (
 	"github.com/Stride-Labs/stride/v9/x/icacallbacks"
 	icacallbacktypes "github.com/Stride-Labs/stride/v9/x/icacallbacks/types"
 
+	ratelimittypes "github.com/Stride-Labs/stride/v9/x/ratelimit/types"
 	"github.com/Stride-Labs/stride/v9/x/stakeibc/keeper"
 	"github.com/Stride-Labs/stride/v9/x/stakeibc/types"
 )
@@ -99,17 +100,27 @@ func (im IBCModule) OnChanOpenAck(
 
 	// Set ICA account addresses
 	switch {
-	// withdrawal address
 	case portID == withdrawalAddress:
 		zoneInfo.WithdrawalAccount = &types.ICAAccount{Address: address, Target: types.ICAAccountType_WITHDRAWAL}
-	// fee address
+
 	case portID == feeAddress:
 		zoneInfo.FeeAccount = &types.ICAAccount{Address: address, Target: types.ICAAccountType_FEE}
-	// delegation address
+		rewardCollectorAddress := im.keeper.AccountKeeper.GetModuleAccount(ctx, types.RewardCollectorName).GetAddress()
+		im.keeper.RatelimitKeeper.SetWhitelistedAddressPair(ctx, ratelimittypes.WhitelistedAddressPair{
+			Sender:   address,
+			Receiver: rewardCollectorAddress.String(),
+		})
+
 	case portID == delegationAddress:
 		zoneInfo.DelegationAccount = &types.ICAAccount{Address: address, Target: types.ICAAccountType_DELEGATION}
+		im.keeper.RatelimitKeeper.SetWhitelistedAddressPair(ctx, ratelimittypes.WhitelistedAddressPair{
+			Sender:   zoneInfo.Address,
+			Receiver: address,
+		})
+
 	case portID == redemptionAddress:
 		zoneInfo.RedemptionAccount = &types.ICAAccount{Address: address, Target: types.ICAAccountType_REDEMPTION}
+
 	default:
 		ctx.Logger().Error(fmt.Sprintf("Missing portId: %s", portID))
 	}

@@ -10,6 +10,7 @@ import (
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
+	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
 	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
 	capabilitykeeper "github.com/cosmos/cosmos-sdk/x/capability/keeper"
 	consensusparamkeeper "github.com/cosmos/cosmos-sdk/x/consensus/keeper"
@@ -24,6 +25,8 @@ import (
 	"github.com/cosmos/ibc-go/v7/modules/core/exported"
 	ibctmmigrations "github.com/cosmos/ibc-go/v7/modules/light-clients/07-tendermint/migrations"
 
+	claimkeeper "github.com/Stride-Labs/stride/v9/x/claim/keeper"
+	claimtypes "github.com/Stride-Labs/stride/v9/x/claim/types"
 	icacallbackskeeper "github.com/Stride-Labs/stride/v9/x/icacallbacks/keeper"
 	mintkeeper "github.com/Stride-Labs/stride/v9/x/mint/keeper"
 	minttypes "github.com/Stride-Labs/stride/v9/x/mint/types"
@@ -43,17 +46,35 @@ var (
 	UpgradeName     = "v10"
 	EpochProvisions = sdk.NewDec(929_681_506)
 
-	StakingProportion                     = "0.1605"
-	CommunityPoolGrowthProportion         = "0.2158"
-	StrategicReserveProportion            = "0.4879"
-	CommunityPoolSecurityBudgetProportion = "0.1358"
+	StakingProportion                     = "0.1603620"
+	CommunityPoolGrowthProportion         = "0.2158275"
+	StrategicReserveProportion            = "0.4879320"
+	CommunityPoolSecurityBudgetProportion = "0.1358785"
 
 	CommunityPoolGrowthAddress = "stride1lj0m72d70qerts9ksrsphy9nmsd4h0s88ll9gfphmhemh8ewet5qj44jc9"
 	BadKidsCustodian           = "stride17z6yy8vfgklgej9m848jm7rkp270gd9pgaw8zu"
 	BadKidsTransferAmount      = sdk.NewInt(15_000_000_000)
 	Ustrd                      = "ustrd"
 
-	MinInitialDepositRatio = "0.25"
+	MinInitialDepositRatio = "0.50"
+
+	// airdrop distributor addresses
+	DistributorAddresses = map[string]string{
+		"stride":  "stride1cpvl8yf848karqauyhr5jzw6d9n9lnuuu974ev",
+		"gaia":    "stride1fmh0ysk5nt9y2cj8hddms5ffj2dhys55xkkjwz",
+		"osmosis": "stride1zlu2l3lx5tqvzspvjwsw9u0e907kelhqae3yhk",
+		"juno":    "stride14k9g9zpgaycpey9840nnpa66l4nd6lu7g7t74c",
+		"stars":   "stride12pum4adk5dhp32d90f8g8gfwujm0gwxqnrdlum",
+		"evmos":   "stride10dy5pmc2fq7fnmufjfschkfrxaqnpykl6ezy5j",
+	}
+	NewDistributorAddresses = map[string]string{
+		"stride":  "stride1w02dg74j8s38gqn6mvlr87hkvyv5rgp3cqe9se",
+		"gaia":    "stride1w0w0gr6u796y2mjl9fuqt66jqvk3j59jq3jtpg",
+		"osmosis": "stride1mfg5ck02tlyzdtdpaj70ngtgjs2vuawtkfz7xd",
+		"juno":    "stride1ral4dsqk0nzyqlwtuyxgavfvx8hegml7u0rzx3",
+		"stars":   "stride1rm9nxc5pw3k5r5s6lm85k73mfp734nhnxq570g",
+		"evmos":   "stride1ej4e7x2hanmy6vrzrjh06g6dnfq5kxm73dmgsw",
+	}
 
 	RateLimitDurationHours = uint64(24)
 	NewRateLimits          = map[string]sdkmath.Int{
@@ -70,14 +91,23 @@ var (
 )
 
 // CreateUpgradeHandler creates an SDK upgrade handler for v10
+// This upgrade:
+// - Upgrades the SDK from v0.46 to v0.47
+// - Upgrades ibc-go from v5 to v7.1
+// - Reduces STRD staking rewards
+// - Executes Prop #205
+// - Enables rate limits
+// - Migrates the airdrop distributor address
 func CreateUpgradeHandler(
 	mm *module.Manager,
 	configurator module.Configurator,
 	cdc codec.Codec,
 	capabilityStoreKey *storetypes.KVStoreKey,
+	accountKeeper authkeeper.AccountKeeper,
 	bankKeeper bankkeeper.Keeper,
 	capabilityKeeper *capabilitykeeper.Keeper,
 	channelKeeper channelkeeper.Keeper,
+	claimKeeper claimkeeper.Keeper,
 	clientKeeper clientkeeper.Keeper,
 	consensusParamsKeeper consensusparamkeeper.Keeper,
 	govKeeper govkeeper.Keeper,
@@ -94,7 +124,7 @@ func CreateUpgradeHandler(
 		legacyParamSubspace := paramsKeeper.Subspace(baseapp.Paramspace).WithKeyTable(paramstypes.ConsensusParamsKeyTable())
 		baseapp.MigrateParams(ctx, legacyParamSubspace, &consensusParamsKeeper)
 
-		ctx.Logger().Info("Migrating ICA channel capabilities...")
+		ctx.Logger().Info("Migrating ICA channel capabilities for ibc-go v5 to v6 migration...")
 		if err := icacontrollermigrations.MigrateICS27ChannelCapability(
 			ctx,
 			cdc,
@@ -105,7 +135,7 @@ func CreateUpgradeHandler(
 			return nil, errorsmod.Wrapf(err, "unable to migrate ICA channel capabilities")
 		}
 
-		ctx.Logger().Info("Adding localhost IBC client...")
+		ctx.Logger().Info("Adding localhost IBC client for ibc-go v7.0 to v7.1 migration...")
 		AddLocalhostIBCClient(ctx, clientKeeper)
 
 		ctx.Logger().Info("Pruning expired tendermint consensus states...")
@@ -131,13 +161,18 @@ func CreateUpgradeHandler(
 			return nil, errorsmod.Wrapf(err, "unable to set MinInitialDepositRatio")
 		}
 
+		ctx.Logger().Info("Migrating claim distributor addresses...")
+		if err := MigrateClaimDistributorAddress(ctx, claimKeeper); err != nil {
+			return nil, errorsmod.Wrapf(err, "unable to MigrateClaimDistributorAddress")
+		}
+
 		ctx.Logger().Info("Executing Prop #205...")
 		if err := ExecuteProp205(ctx, bankKeeper); err != nil {
 			return nil, errorsmod.Wrapf(err, "unable to submit transfer for Prop #205")
 		}
 
 		ctx.Logger().Info("Enabling rate limits...")
-		if err := EnableRateLimits(ctx, ratelimitKeeper, channelKeeper, stakeibcKeeper); err != nil {
+		if err := EnableRateLimits(ctx, accountKeeper, channelKeeper, ratelimitKeeper, stakeibcKeeper); err != nil {
 			return nil, errorsmod.Wrapf(err, "unable to enable rate limits")
 		}
 
@@ -146,7 +181,7 @@ func CreateUpgradeHandler(
 	}
 }
 
-// Cut STRD staking rewards in half
+// Cut STRD staking rewards in half (staking rewards make up 27.64% of total provisions)
 // Reduce epoch provisions by 13.82% from 1,078,767,123 to 929,681,506
 func ReduceSTRDStakingRewards(ctx sdk.Context, k mintkeeper.Keeper) error {
 	minter := minttypes.NewMinter(EpochProvisions)
@@ -225,6 +260,23 @@ func MigrateCallbackData(ctx sdk.Context, k icacallbackskeeper.Keeper) error {
 	return nil
 }
 
+// Migrate the claim distributor address, change nothing else about the airdrop params
+func MigrateClaimDistributorAddress(ctx sdk.Context, ck claimkeeper.Keeper) error {
+	// Migrate claim params
+	claimParams, err := ck.GetParams(ctx)
+	if err != nil {
+		return errorsmod.Wrapf(err, "unable to get claim parameters")
+	}
+
+	updatedAirdrops := []*claimtypes.Airdrop{}
+	for _, airdrop := range claimParams.Airdrops {
+		airdrop.DistributorAddress = NewDistributorAddresses[airdrop.AirdropIdentifier]
+		updatedAirdrops = append(updatedAirdrops, airdrop)
+	}
+	claimParams.Airdrops = updatedAirdrops
+	return ck.SetParams(ctx, claimParams)
+}
+
 // Helper function to deserialize using the deprecated proto types and reserialize using the new proto types
 func reserializeCallback(oldCallbackArgsBz []byte, callback deprecatedproto.Message) ([]byte, error) {
 	if err := deprecatedproto.Unmarshal(oldCallbackArgsBz, callback); err != nil {
@@ -266,8 +318,9 @@ func ExecuteProp205(ctx sdk.Context, k bankkeeper.Keeper) error {
 //	CMDX:  75%
 func EnableRateLimits(
 	ctx sdk.Context,
-	ratelimitKeeper ratelimitkeeper.Keeper,
+	accountKeeper authkeeper.AccountKeeper,
 	channelKeeper channelkeeper.Keeper,
+	ratelimitKeeper ratelimitkeeper.Keeper,
 	stakeibcKeeper stakeibckeeper.Keeper,
 ) error {
 	for _, hostZone := range stakeibcKeeper.GetAllHostZone(ctx) {
@@ -290,6 +343,24 @@ func EnableRateLimits(
 		if err := ratelimitgov.AddRateLimit(ctx, ratelimitKeeper, channelKeeper, addRateLimit); err != nil {
 			return errorsmod.Wrapf(err, "unable to add rate limit for %s", denom)
 		}
+
+		if hostZone.DelegationAccount == nil || hostZone.DelegationAccount.Address == "" {
+			return stakeibctypes.ErrICAAccountNotFound
+		}
+		if hostZone.FeeAccount == nil || hostZone.FeeAccount.Address == "" {
+			return stakeibctypes.ErrICAAccountNotFound
+		}
+
+		ratelimitKeeper.SetWhitelistedAddressPair(ctx, ratelimittypes.WhitelistedAddressPair{
+			Sender:   hostZone.Address,
+			Receiver: hostZone.DelegationAccount.Address,
+		})
+
+		rewardCollectorAddress := accountKeeper.GetModuleAccount(ctx, stakeibctypes.RewardCollectorName).GetAddress()
+		ratelimitKeeper.SetWhitelistedAddressPair(ctx, ratelimittypes.WhitelistedAddressPair{
+			Sender:   hostZone.FeeAccount.Address,
+			Receiver: rewardCollectorAddress.String(),
+		})
 	}
 	return nil
 }
