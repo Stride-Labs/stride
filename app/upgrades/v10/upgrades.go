@@ -124,7 +124,7 @@ func CreateUpgradeHandler(
 		legacyParamSubspace := paramsKeeper.Subspace(baseapp.Paramspace).WithKeyTable(paramstypes.ConsensusParamsKeyTable())
 		baseapp.MigrateParams(ctx, legacyParamSubspace, &consensusParamsKeeper)
 
-		ctx.Logger().Info("Migrating ICA channel capabilities...")
+		ctx.Logger().Info("Migrating ICA channel capabilities for ibc-go v5 to v6 migration...")
 		if err := icacontrollermigrations.MigrateICS27ChannelCapability(
 			ctx,
 			cdc,
@@ -135,7 +135,7 @@ func CreateUpgradeHandler(
 			return nil, errorsmod.Wrapf(err, "unable to migrate ICA channel capabilities")
 		}
 
-		ctx.Logger().Info("Adding localhost IBC client...")
+		ctx.Logger().Info("Adding localhost IBC client for ibc-go v7.0 to v7.1 migration...")
 		AddLocalhostIBCClient(ctx, clientKeeper)
 
 		ctx.Logger().Info("Pruning expired tendermint consensus states...")
