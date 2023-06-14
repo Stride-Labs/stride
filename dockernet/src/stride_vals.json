@@ -1,0 +1,9 @@
+{
+    "validators": [
+        {
+            "name": "val",
+            "address": "stridevaloper1nnurja9zt97huqvsfuartetyjx63tc5zrj5x9f",
+            "weight": 100
+        }
+    ]
+}

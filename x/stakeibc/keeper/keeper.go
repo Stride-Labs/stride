@@ -20,6 +20,7 @@ import (
 	icacontrollerkeeper "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/controller/keeper"
 	ibckeeper "github.com/cosmos/ibc-go/v7/modules/core/keeper"
 	ibctmtypes "github.com/cosmos/ibc-go/v7/modules/light-clients/07-tendermint"
+	ibclocalhosttypes "github.com/cosmos/ibc-go/v7/modules/light-clients/09-localhost"
 
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 
@@ -113,14 +114,25 @@ func (k Keeper) GetChainID(ctx sdk.Context, connectionID string) (string, error)
 		k.Logger(ctx).Error(errMsg)
 		return "", fmt.Errorf(errMsg)
 	}
-	client, ok := clientState.(*ibctmtypes.ClientState)
-	if !ok {
+	// Determine which type of client state we have
+	chainId := ""
+	switch cs := clientState.(type) {
+	case *ibctmtypes.ClientState:
+		infoMsg := fmt.Sprintf("localhost client %s on connection %s", conn.ClientId, connectionID)
+		k.Logger(ctx).Info(infoMsg)
+		chainId = cs.ChainId
+	case *ibclocalhosttypes.ClientState:
+		infoMsg := fmt.Sprintf("localhost client %s on connection %s", conn.ClientId, connectionID)
+		k.Logger(ctx).Info(infoMsg)
+		// TODO: this should be in a config file
+		chainId = "stride-1"
+	default:
 		errMsg := fmt.Sprintf("invalid client state for client %s on connection %s", conn.ClientId, connectionID)
 		k.Logger(ctx).Error(errMsg)
 		return "", fmt.Errorf(errMsg)
 	}
 
-	return client.ChainId, nil
+	return chainId, nil
 }
 
 func (k Keeper) GetCounterpartyChainId(ctx sdk.Context, connectionID string) (string, error) {
