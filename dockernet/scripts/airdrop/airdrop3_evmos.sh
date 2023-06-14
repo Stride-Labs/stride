@@ -100,16 +100,14 @@ echo -e "\n\n>>> Overwriting airdrop elibibility for recipient 1 (i.e. overridin
 #         b. ibc-transfer from Osmo to Stride to change the airdrop account to stride1qlly03ar5ll85ww4usvkv09832vv5tkhtnnaep
 #              Memo: {
 #                "autopilot": {
-#                     "claim": {
-#                       "stride_address": "stride1qlly03ar5ll85ww4usvkv09832vv5tkhtnnaep",
-#                      },
+#                     "claim": { },
 #                 },
 #              }
 #              Receiver: "xxx"
 # Note: autopilot will look at the sender of the packet (evmos1nmwp5uh5a3g08668c5eynes0hyfaw94dfnj796) and convert this address to the mechanical
 # stride address (stride1nmwp5uh5a3g08668c5eynes0hyfaw94dgervt7) which will act as the key to lookup the claim record.
 # Then the record will get set to the true stride address (stride1qlly03ar5ll85ww4usvkv09832vv5tkhtnnaep) 
-MEMO='{ "autopilot": { "receiver": "'"$AIRDROP_RECIPIENT_1_STRIDE"'",  "claim": { "stride_address": "'"$AIRDROP_RECIPIENT_1_STRIDE"'" } } }'
+MEMO='{ "autopilot": { "receiver": "'"$AIRDROP_RECIPIENT_1_STRIDE"'",  "claim": { } } }'
 $EVMOS_MAIN_CMD tx ibc-transfer transfer transfer channel-0 $AIRDROP_RECIPIENT_1_STRIDE 1aevmos --memo "$MEMO" --from airdrop-recipient-1 -y | TRIM_TX
 sleep 15
 
