@@ -2,20 +2,6 @@
 
 Inspired by LocalOsmosis, LocalStride is a complete Stride testnet containerized with Docker and orchestrated with a simple docker-compose file. LocalStride comes pre-configured with opinionated, sensible defaults for a standard testing environment.
 
-## Prerequisites
-
-Ensure you have docker and docker-compose installed:
-
-```sh
-# Docker
-sudo apt-get remove docker docker-engine docker.io
-sudo apt-get update
-sudo apt install docker.io -y
-
-# Docker compose
-sudo apt install docker-compose -y
-```
-
 ## 1. LocalStride - No Initial State
 
 The following commands must be executed from the root folder of the Stride repository.
@@ -73,6 +59,8 @@ make localnet-clean
 A few things to note before getting started. The below method will only work if you are using the same version as mainnet. In other words,
 if mainnet is on v8.0.0 and you try to do this on a v9.0.0 tag or on main, you will run into an error when initializing the genesis. What you can do though is run localstride on the mainnet version, then go through the upgrade process to ensure the upgrade with mainnet state goes smoothly.
 
+**Note**: Running localstride with mainnet state is very memory intensive. It is recommended to allocate at least 15GB of memory to docker, otherwise, the node will crash before it can start up.
+
 ### Create a mainnet state export
 
 1. Set up a node on mainnet
@@ -94,22 +82,10 @@ This will create a file called `state_export.json` which is a snapshot of the cu
 5. Copy the `state_export.json` to the `localstride/state_export` folder within the stride repo
 
 ```sh
-cp $HOME/state_export.json $HOME/stride/testutil/localstride/state_export/
+cp state_export.json stride/testutil/localstride/state_export/
 ```
 
-6. Ensure you have docker and docker-compose installed:
-
-```sh
-# Docker
-sudo apt-get remove docker docker-engine docker.io
-sudo apt-get update
-sudo apt install docker.io -y
-
-# Docker compose
-sudo apt install docker-compose -y
-```
-
-7. Build the `local:stride` docker image (select yes if prompted to recursively remove):
+6. Build the `local:stride` docker image (select yes if prompted to recursively remove):
 
 ```bash
 make localnet-state-export-init
@@ -120,7 +96,7 @@ The command:
 - Builds a local docker image with the latest changes
 - Cleans the `$HOME/.stride` folder
 
-8. Start LocalStride:
+7. Start LocalStride:
 
 ```bash
 make localnet-state-export-start
@@ -186,8 +162,8 @@ If you are only running the validator for a short time (< 24 hours) you will not
 * Once localstride starts churning blocks, you are ready to test the upgrade. Run the following to submit and vote on the upgrade:
 ```bash 
 # Check the localstride logs to determine the current block and propose the upgrade at a height at least 75 blocks in the future
-make localnet-state-export-upgrade upgrade_name={upgrade_name} upgrade_height={upgrade_height}
 #  Ex: make localnet-state-export-upgrade upgrade_name=v5 upgrade_height=1956500
+make localnet-state-export-upgrade upgrade_name={upgrade_name} upgrade_height={upgrade_height}
 ```
 * Wait for the upgrade height and confirm the node crashed. Run the following to take down the container:
 ```
@@ -195,7 +171,7 @@ make localnet-state-export-stop
 ```
 * Switch the repo back to the version we're upgrading to and re-build the stride image **without clearing the state**:
 ```bash
-git checkout main
+git checkout {latest_branch}
 make localnet-state-export-build
 ```
 * Finally, start the node back up with the updated binary
@@ -203,6 +179,12 @@ make localnet-state-export-build
 make localnet-state-export-start
 ```
 * Check the localstride logs and confirm the upgrade succeeded
+* If the upgrade passes, but then the chain hangs without producing blocks, you may need to add a second "kicker" node to jump start the network. To do this:
+  * Copy the `~/.stride/data` directory over to another machine
+  * Get the node ID of each machine by running `strided tendermint show-node-id`
+  * Add each node as a persistent peer of the other by adding `persistent_peers = "{NODE_ID}@{IP}:26656"` to `~/.stride/config/config.toml`
+  * Start both nodes until they start committing blocks
+  * Once they're rolling, you can shut the second node off
 
 ## LocalStride Accounts
 

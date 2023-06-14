@@ -31,7 +31,6 @@ Note: This will support more functions that can reduce number of users' operatio
     "autopilot": {
           "receiver": "strideXXX", 
           "stakeibc": {
-               "stride_address": "strideXXX",
                "action": "LiquidStake",
           }
     }
@@ -42,10 +41,7 @@ Note: This will support more functions that can reduce number of users' operatio
 { 
     "autopilot": {
           "receiver": "strideXXX", 
-          "claim": {
-               "stride_address": "strideXXX",
-               "airdrop_id": "evmos",
-          }
+          "claim": {}
     }
 }
 ```

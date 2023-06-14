@@ -9,7 +9,7 @@ import (
 
 const (
 	// Default active value for each autopilot supported module
-	DefaultStakeibcActive = false
+	DefaultStakeibcActive = true
 	DefaultClaimActive    = true
 )
 

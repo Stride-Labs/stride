@@ -46,8 +46,6 @@ func TestKeeperTestSuite(t *testing.T) {
 }
 
 func (s *UpgradeTestSuite) TestUpgrade() {
-	s.Setup()
-
 	s.SetupStoreBeforeUpgrade()
 	s.ConfirmUpgradeSucceededs("v8", dummyUpgradeHeight)
 	s.CheckStoreAfterUpgrade()
@@ -137,10 +135,7 @@ func (s *UpgradeTestSuite) CheckStoreAfterUpgrade() {
 	}
 
 	// Check autopilot params
-	expectedAutoPilotParams := autopilottypes.Params{
-		StakeibcActive: false,
-		ClaimActive:    true,
-	}
+	expectedAutoPilotParams := autopilottypes.DefaultParams()
 	actualAutopilotParams := s.App.AutopilotKeeper.GetParams(s.Ctx)
 	s.Require().Equal(expectedAutoPilotParams, actualAutopilotParams, "autopilot params")
 }

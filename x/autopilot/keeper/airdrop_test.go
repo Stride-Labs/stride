@@ -30,7 +30,7 @@ func getClaimPacketMetadata(address string) string {
 		{
 			"autopilot": {
 				"receiver": "%[1]s",
-				"claim": { "stride_address": "%[1]s" } 
+				"claim": { } 
 			}
 		}`, address)
 }

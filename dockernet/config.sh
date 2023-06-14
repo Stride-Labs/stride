@@ -34,10 +34,6 @@ elif [[ "${#HOST_CHAINS[@]}" == "0" ]]; then
   HOST_CHAINS=(GAIA)
 fi
 
-# Sets up upgrade if {UPGRADE_NAME} is non-empty
-UPGRADE_NAME=""
-UPGRADE_OLD_COMMIT_HASH=""
-
 # DENOMS
 STRD_DENOM="ustrd"
 ATOM_DENOM="uatom"
@@ -147,7 +143,7 @@ STRIDE_ADMIN_MNEMONIC="tone cause tribe this switch near host damage idle fragil
 STRIDE_FEE_ADDRESS=stride1czvrk3jkvtj8m27kqsqu2yrkhw3h3ykwj3rxh6
 
 # Binaries are contigent on whether we're doing an upgrade or not
-if [[ "$UPGRADE_NAME" == "" ]]; then 
+if [[ "${UPGRADE_NAME:-}" == "" ]]; then 
   STRIDE_BINARY="$DOCKERNET_HOME/../build/strided"
 else
   if [[ "${NEW_BINARY:-false}" == "false" ]]; then
