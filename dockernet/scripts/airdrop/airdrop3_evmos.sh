@@ -121,5 +121,5 @@ echo -e "\n>>> Claiming the airdrop from the new stride address"
 $STRIDE_MAIN_CMD tx claim claim-free-amount --from airdrop-recipient-1 -y | TRIM_TX
 sleep 5
 
-echo "\n> After claiming, check that an action was complete"
+echo -e "\n> After claiming, check that an action was complete"
 $STRIDE_MAIN_CMD q claim claim-record $AIRDROP_NAME $AIRDROP_RECIPIENT_1_STRIDE | grep claim_record -A 4
