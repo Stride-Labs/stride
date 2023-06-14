@@ -5,9 +5,9 @@ import (
 	ibctesting "github.com/cosmos/ibc-go/v7/testing"
 	_ "github.com/stretchr/testify/suite"
 
-	recordtypes "github.com/Stride-Labs/stride/v9/x/records/types"
+	recordtypes "github.com/Stride-Labs/stride/v10/x/records/types"
 
-	stakeibc "github.com/Stride-Labs/stride/v9/x/stakeibc/types"
+	stakeibc "github.com/Stride-Labs/stride/v10/x/stakeibc/types"
 )
 
 type InitiateAllHostZoneUnbondingsTestCase struct {

@@ -24,6 +24,11 @@ make UPGRADE_NAME={NAME} submit-upgrade-immediately
 
 ## Testing Upgrades with Integration Tests
 * **WARNING**: The integration tests may change between versions - the following only works if there were not breaking changes. If there are breaking changes, you can replace the GAIA and EVMOS integration test files with those from the old version.
+* Compile the old binary
+``` bash
+# e.g. make UPGRADE_OLD_VERSION=v8.0.0 upgrade-build-old-binary
+make UPGRADE_OLD_VERSION={VERSION} upgrade-build-old-binary
+```
 * Run the following to start the network, run the integration tests on the old binary, and then propose and vote on the upgrade:
 ```bash
 # e.g. make UPGRADE_OLD_VERSION=v8.0.0 UPGRADE_NAME=v10 upgrade-integration-tests-part-1
