@@ -91,6 +91,13 @@ var (
 )
 
 // CreateUpgradeHandler creates an SDK upgrade handler for v10
+// This upgrade:
+// - Upgrades the SDK from v0.46 to v0.47
+// - Upgrades ibc-go from v5 to v7.1
+// - Reduces STRD staking rewards
+// - Executes Prop #205
+// - Enables rate limits
+// - Migrates the airdrop distributor address
 func CreateUpgradeHandler(
 	mm *module.Manager,
 	configurator module.Configurator,
@@ -174,7 +181,7 @@ func CreateUpgradeHandler(
 	}
 }
 
-// Cut STRD staking rewards in half
+// Cut STRD staking rewards in half (staking rewards make up 27.64% of total provisions)
 // Reduce epoch provisions by 13.82% from 1,078,767,123 to 929,681,506
 func ReduceSTRDStakingRewards(ctx sdk.Context, k mintkeeper.Keeper) error {
 	minter := minttypes.NewMinter(EpochProvisions)
