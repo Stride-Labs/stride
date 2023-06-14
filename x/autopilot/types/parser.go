@@ -28,12 +28,12 @@ type ModuleRoutingInfo interface {
 // Packet metadata info specific to Stakeibc (e.g. 1-click liquid staking)
 type StakeibcPacketMetadata struct {
 	Action        string `json:"action"`
-	StrideAddress string `json:"stride_address"`
+	StrideAddress string
 }
 
 // Packet metadata info specific to Claim (e.g. airdrops for non-118 coins)
 type ClaimPacketMetadata struct {
-	StrideAddress string `json:"stride_address"`
+	StrideAddress string
 }
 
 // Validate stakeibc packet metadata fields
@@ -88,10 +88,14 @@ func ParsePacketMetadata(metadata string) (*PacketForwardMetadata, error) {
 	moduleCount := 0
 	var routingInfo ModuleRoutingInfo
 	if raw.Autopilot.Stakeibc != nil {
+		// override the stride address with the receiver address
+		raw.Autopilot.Stakeibc.StrideAddress = raw.Autopilot.Receiver
 		moduleCount++
 		routingInfo = *raw.Autopilot.Stakeibc
 	}
 	if raw.Autopilot.Claim != nil {
+		// override the stride address with the receiver address
+		raw.Autopilot.Claim.StrideAddress = raw.Autopilot.Receiver
 		moduleCount++
 		routingInfo = *raw.Autopilot.Claim
 	}
