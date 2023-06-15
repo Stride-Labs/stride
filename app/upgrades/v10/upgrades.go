@@ -86,7 +86,6 @@ var (
 		"stargaze-1":   sdkmath.NewInt(75),
 		"phoenix-1":    sdkmath.NewInt(75),
 		"umee-1":       sdkmath.NewInt(75),
-		"comdex-1":     sdkmath.NewInt(75),
 	}
 )
 
@@ -315,7 +314,6 @@ func ExecuteProp205(ctx sdk.Context, k bankkeeper.Keeper) error {
 //	STARS: 75%
 //	LUNA:  75%
 //	UMEE:  75%
-//	CMDX:  75%
 func EnableRateLimits(
 	ctx sdk.Context,
 	accountKeeper authkeeper.AccountKeeper,
