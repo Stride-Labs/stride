@@ -142,11 +142,6 @@ func CreateUpgradeHandler(
 			return nil, errorsmod.Wrapf(err, "unable to prune expired consensus states")
 		}
 
-		ctx.Logger().Info("Reducing STRD staking rewards...")
-		if err := ReduceSTRDStakingRewards(ctx, mintKeeper); err != nil {
-			return nil, errorsmod.Wrapf(err, "unable to reduce STRD staking rewards")
-		}
-
 		ctx.Logger().Info("Migrating callback data...")
 		if err := MigrateCallbackData(ctx, icacallbacksKeeper); err != nil {
 			return nil, errorsmod.Wrapf(err, "unable to migrate callback data")
@@ -158,21 +153,6 @@ func CreateUpgradeHandler(
 		ctx.Logger().Info("Setting MinInitialDepositRatio...")
 		if err := SetMinInitialDepositRatio(ctx, govKeeper); err != nil {
 			return nil, errorsmod.Wrapf(err, "unable to set MinInitialDepositRatio")
-		}
-
-		ctx.Logger().Info("Migrating claim distributor addresses...")
-		if err := MigrateClaimDistributorAddress(ctx, claimKeeper); err != nil {
-			return nil, errorsmod.Wrapf(err, "unable to MigrateClaimDistributorAddress")
-		}
-
-		ctx.Logger().Info("Executing Prop #205...")
-		if err := ExecuteProp205(ctx, bankKeeper); err != nil {
-			return nil, errorsmod.Wrapf(err, "unable to submit transfer for Prop #205")
-		}
-
-		ctx.Logger().Info("Enabling rate limits...")
-		if err := EnableRateLimits(ctx, accountKeeper, channelKeeper, ratelimitKeeper, stakeibcKeeper); err != nil {
-			return nil, errorsmod.Wrapf(err, "unable to enable rate limits")
 		}
 
 		ctx.Logger().Info("v10 Upgrade Complete")
