@@ -11,7 +11,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/version"
 
-	"github.com/Stride-Labs/stride/v9/x/ratelimit/types"
+	"github.com/Stride-Labs/stride/v10/x/ratelimit/types"
 )
 
 const (
@@ -60,10 +60,7 @@ Example:
 				return err
 			}
 
-			clientCtx, err := client.GetClientQueryContext(cmd)
-			if err != nil {
-				return err
-			}
+			clientCtx := client.GetClientContextFromCmd(cmd)
 			queryClient := types.NewQueryClient(clientCtx)
 
 			if denom == "" {
@@ -105,20 +102,16 @@ func GetCmdQueryAllRateLimits() *cobra.Command {
 		Short: "Query all rate limits",
 		Args:  cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			clientCtx, err := client.GetClientQueryContext(cmd)
-			if err != nil {
-				return err
-			}
+			clientCtx := client.GetClientContextFromCmd(cmd)
 			queryClient := types.NewQueryClient(clientCtx)
 
 			req := &types.QueryAllRateLimitsRequest{}
 			res, err := queryClient.AllRateLimits(context.Background(), req)
-
 			if err != nil {
 				return err
 			}
 
-			return clientCtx.PrintObjectLegacy(res.RateLimits)
+			return clientCtx.PrintProto(res)
 		},
 	}
 
@@ -137,10 +130,7 @@ func GetCmdQueryRateLimitsByChainId() *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			chainId := args[0]
 
-			clientCtx, err := client.GetClientQueryContext(cmd)
-			if err != nil {
-				return err
-			}
+			clientCtx := client.GetClientContextFromCmd(cmd)
 			queryClient := types.NewQueryClient(clientCtx)
 
 			req := &types.QueryRateLimitsByChainIdRequest{
@@ -152,7 +142,7 @@ func GetCmdQueryRateLimitsByChainId() *cobra.Command {
 				return err
 			}
 
-			return clientCtx.PrintObjectLegacy(res.RateLimits)
+			return clientCtx.PrintProto(res)
 		},
 	}
 

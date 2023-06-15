@@ -1,19 +1,5 @@
 # Upgrades
 
-## Increment Version 
-```go
-// cmd/strided/config/config.go
-...
-version.Version = "{newVersion}"
-
-// app/app.go
-...
-Version = "{newVersion}"
-
-// go.mod (will need to update all imports after)
-module github.com/Stride-Labs/stride/{newVersion}
-```
-
 ## Create Upgrade Handler
 ```go
 // app/upgrades/{upgradeVersion}/upgrades.go

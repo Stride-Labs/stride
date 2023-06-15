@@ -1,5 +1,7 @@
 package types
 
+import "encoding/binary"
+
 const (
 	ModuleName = "ratelimit"
 
@@ -18,7 +20,25 @@ func KeyPrefix(p string) []byte {
 }
 
 var (
-	PathKeyPrefix      = KeyPrefix("path")
-	RateLimitKeyPrefix = KeyPrefix("rate-limit")
-	BlacklistKeyPrefix = KeyPrefix("blacklist")
+	PathKeyPrefix             = KeyPrefix("path")
+	RateLimitKeyPrefix        = KeyPrefix("rate-limit")
+	PendingSendPacketPrefix   = KeyPrefix("pending-send-packet")
+	DenomBlacklistKeyPrefix   = KeyPrefix("denom-blacklist")
+	AddressWhitelistKeyPrefix = KeyPrefix("address-blacklist")
+
+	PendingSendPacketChannelLength int = 16
 )
+
+func GetPendingSendPacketKey(channelId string, sequenceNumber uint64) []byte {
+	channelIdBz := make([]byte, PendingSendPacketChannelLength)
+	copy(channelIdBz[:], channelId)
+
+	sequenceNumberBz := make([]byte, 8)
+	binary.BigEndian.PutUint64(sequenceNumberBz, sequenceNumber)
+
+	return append(channelIdBz, sequenceNumberBz...)
+}
+
+func GetAddressWhitelistKey(sender, receiver string) []byte {
+	return append(KeyPrefix(sender), KeyPrefix(receiver)...)
+}

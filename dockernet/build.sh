@@ -38,6 +38,7 @@ build_local_and_docker() {
    # Some projects have a hard coded build directory, while others allow the passing of BUILDDIR
    # In the event that they have it hard coded, this will copy it into our build directory
    mv $folder/build/* $BUILDDIR/ > /dev/null 2>&1
+   mv $folder/bin/* $BUILDDIR/ > /dev/null 2>&1
 
    if [[ "$local_build_succeeded" == "0" ]]; then
       echo "Done" 

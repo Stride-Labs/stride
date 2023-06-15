@@ -17,7 +17,7 @@ jobs:
         run: |
           old_version=${{ github.event.inputs.old_version }}
           new_version=${{ github.event.inputs.new_version }}
-          branch_name=actions/update-stride-version-${new_major_version}
+          branch_name=actions/update-stride-version-${new_version}
 
           echo "OLD_VERSION=$old_version" >> $GITHUB_ENV
           echo "NEW_VERSION=$new_version" >> $GITHUB_ENV

@@ -5,17 +5,17 @@ import (
 
 	"github.com/spf13/cast"
 
-	"github.com/Stride-Labs/stride/v9/utils"
-	recordstypes "github.com/Stride-Labs/stride/v9/x/records/types"
-	"github.com/Stride-Labs/stride/v9/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v10/utils"
+	recordstypes "github.com/Stride-Labs/stride/v10/x/records/types"
+	"github.com/Stride-Labs/stride/v10/x/stakeibc/types"
 
-	icacallbackstypes "github.com/Stride-Labs/stride/v9/x/icacallbacks/types"
+	icacallbackstypes "github.com/Stride-Labs/stride/v10/x/icacallbacks/types"
 
 	errorsmod "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	"github.com/cosmos/gogoproto/proto"
 	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
-	"github.com/golang/protobuf/proto" //nolint:staticcheck
 )
 
 // Marshalls delegate callback arguments
@@ -39,12 +39,13 @@ func (k Keeper) UnmarshalDelegateCallbackArgs(ctx sdk.Context, delegateCallback 
 }
 
 // ICA Callback after delegating deposit records
-//   If successful:
-//     * Updates deposit record status and records delegation changes on the host zone and validators
-//   If timeout:
-//     * Does nothing
-//   If failure:
-//     * Reverts deposit record status
+//
+//	If successful:
+//	  * Updates deposit record status and records delegation changes on the host zone and validators
+//	If timeout:
+//	  * Does nothing
+//	If failure:
+//	  * Reverts deposit record status
 func DelegateCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ackResponse *icacallbackstypes.AcknowledgementResponse, args []byte) error {
 	// Deserialize the callback args
 	delegateCallback, err := k.UnmarshalDelegateCallbackArgs(ctx, args)

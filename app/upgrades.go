@@ -4,24 +4,29 @@ import (
 	"fmt"
 
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
+	consensustypes "github.com/cosmos/cosmos-sdk/x/consensus/types"
+	crisistypes "github.com/cosmos/cosmos-sdk/x/crisis/types"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 
 	authz "github.com/cosmos/cosmos-sdk/x/authz"
 
-	v2 "github.com/Stride-Labs/stride/v9/app/upgrades/v2"
-	v3 "github.com/Stride-Labs/stride/v9/app/upgrades/v3"
-	v4 "github.com/Stride-Labs/stride/v9/app/upgrades/v4"
-	v5 "github.com/Stride-Labs/stride/v9/app/upgrades/v5"
-	v6 "github.com/Stride-Labs/stride/v9/app/upgrades/v6"
-	v7 "github.com/Stride-Labs/stride/v9/app/upgrades/v7"
-	v8 "github.com/Stride-Labs/stride/v9/app/upgrades/v8"
-	v9 "github.com/Stride-Labs/stride/v9/app/upgrades/v9"
-	autopilottypes "github.com/Stride-Labs/stride/v9/x/autopilot/types"
-	claimtypes "github.com/Stride-Labs/stride/v9/x/claim/types"
-	icacallbacktypes "github.com/Stride-Labs/stride/v9/x/icacallbacks/types"
-	ratelimittypes "github.com/Stride-Labs/stride/v9/x/ratelimit/types"
-	recordtypes "github.com/Stride-Labs/stride/v9/x/records/types"
-	stakeibctypes "github.com/Stride-Labs/stride/v9/x/stakeibc/types"
+	capabilitytypes "github.com/cosmos/cosmos-sdk/x/capability/types"
+
+	v10 "github.com/Stride-Labs/stride/v10/app/upgrades/v10"
+	v2 "github.com/Stride-Labs/stride/v10/app/upgrades/v2"
+	v3 "github.com/Stride-Labs/stride/v10/app/upgrades/v3"
+	v4 "github.com/Stride-Labs/stride/v10/app/upgrades/v4"
+	v5 "github.com/Stride-Labs/stride/v10/app/upgrades/v5"
+	v6 "github.com/Stride-Labs/stride/v10/app/upgrades/v6"
+	v7 "github.com/Stride-Labs/stride/v10/app/upgrades/v7"
+	v8 "github.com/Stride-Labs/stride/v10/app/upgrades/v8"
+	v9 "github.com/Stride-Labs/stride/v10/app/upgrades/v9"
+	autopilottypes "github.com/Stride-Labs/stride/v10/x/autopilot/types"
+	claimtypes "github.com/Stride-Labs/stride/v10/x/claim/types"
+	icacallbacktypes "github.com/Stride-Labs/stride/v10/x/icacallbacks/types"
+	ratelimittypes "github.com/Stride-Labs/stride/v10/x/ratelimit/types"
+	recordtypes "github.com/Stride-Labs/stride/v10/x/records/types"
+	stakeibctypes "github.com/Stride-Labs/stride/v10/x/stakeibc/types"
 )
 
 func (app *StrideApp) setupUpgradeHandlers() {
@@ -104,6 +109,30 @@ func (app *StrideApp) setupUpgradeHandlers() {
 		v9.CreateUpgradeHandler(app.mm, app.configurator, app.ClaimKeeper),
 	)
 
+	// v10 upgrade handler
+	app.UpgradeKeeper.SetUpgradeHandler(
+		v10.UpgradeName,
+		v10.CreateUpgradeHandler(
+			app.mm,
+			app.configurator,
+			app.appCodec,
+			app.keys[capabilitytypes.ModuleName],
+			app.AccountKeeper,
+			app.BankKeeper,
+			app.CapabilityKeeper,
+			app.IBCKeeper.ChannelKeeper,
+			app.ClaimKeeper,
+			app.IBCKeeper.ClientKeeper,
+			app.ConsensusParamsKeeper,
+			app.GovKeeper,
+			app.IcacallbacksKeeper,
+			app.MintKeeper,
+			app.ParamsKeeper,
+			app.RatelimitKeeper,
+			app.StakeibcKeeper,
+		),
+	)
+
 	upgradeInfo, err := app.UpgradeKeeper.ReadUpgradeInfoFromDisk()
 	if err != nil {
 		panic(fmt.Errorf("Failed to read upgrade info from disk: %w", err))
@@ -128,7 +157,13 @@ func (app *StrideApp) setupUpgradeHandlers() {
 		storeUpgrades = &storetypes.StoreUpgrades{
 			Added: []string{ratelimittypes.StoreKey, autopilottypes.StoreKey},
 		}
+	case "v10":
+		storeUpgrades = &storetypes.StoreUpgrades{
+			Added: []string{crisistypes.StoreKey, consensustypes.StoreKey},
+		}
 	}
+	// TODO: v10 UPGRADE HANDLER
+	// Add module and ICA accounts for each host zone to the rate limit whitelist
 
 	if storeUpgrades != nil {
 		app.SetStoreLoader(upgradetypes.UpgradeStoreLoader(upgradeInfo.Height, storeUpgrades))

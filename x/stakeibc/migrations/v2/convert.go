@@ -3,8 +3,8 @@ package v2
 import (
 	sdkmath "cosmossdk.io/math"
 
-	oldstakeibctypes "github.com/Stride-Labs/stride/v9/x/stakeibc/migrations/v2/types"
-	stakeibctypes "github.com/Stride-Labs/stride/v9/x/stakeibc/types"
+	oldstakeibctypes "github.com/Stride-Labs/stride/v10/x/stakeibc/migrations/v2/types"
+	stakeibctypes "github.com/Stride-Labs/stride/v10/x/stakeibc/types"
 )
 
 func convertToNewValidator(oldValidator oldstakeibctypes.Validator) stakeibctypes.Validator {
