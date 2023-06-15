@@ -6,11 +6,11 @@ SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 ### SETTING VARIABLES FOR LOCAL TO MAINNET BELOW ONLY
 
 STRIDE_CHAIN_ID=local-test-1 # # DO NOT USE STRIDE MAINNET CHAIN ID! always use a new chain id by incrementing the suffix after each run
-HOST_CHAIN_ID=comdex-1 # chain id on the host
-HOST_RPC=https://comdex-rpc.polkachu.com # RPC on the host
-HOST_ACCOUNT_PREFIX=comdex
-HOST_DENOM=ucmdx
-HOST_BINARY=build/comdexd
+HOST_CHAIN_ID=cosmoshub-4 # chain id on the host
+HOST_RPC=https://comsos-rpc.polkachu.com # RPC on the host
+HOST_ACCOUNT_PREFIX=cosmos
+HOST_DENOM=uatom
+HOST_BINARY=build/gaiad
 HOST_COIN_TYPE=118
 HOST_VAL_NAME_1=imperator
 HOST_VAL_ADDRESS_1=cosmosvaloper1vvwtk805lxehwle9l4yudmq6mn0g32px9xtkhc
