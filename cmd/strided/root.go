@@ -265,7 +265,7 @@ func txCommand() *cobra.Command {
 
 func versionCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:     "version",
+		Use:     "ver",
 		Aliases: []string{"v"},
 		Short:   "Print the Stride version info",
 		Args:    cobra.ExactArgs(0),
