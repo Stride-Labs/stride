@@ -168,6 +168,18 @@ func (k Keeper) GetValidatorFromLSMTokenDenom(denom string, validators []*types.
 		"validator (%s) is not registered in the Stride validator set", validatorAddress)
 }
 
+// Determines the new slash query checkpoint, by mulitplying the query threshold percent by the current TVL
+// Ensure the checkpoint is greater than 0 so that when there is no TVL, we still issue a slash query
+func (k Keeper) GetUpdatedSlashQueryCheckpoint(ctx sdk.Context, totalDelegations sdkmath.Int) sdkmath.Int {
+	params := k.GetParams(ctx)
+	queryThreshold := sdk.NewDecWithPrec(int64(params.ValidatorSlashQueryThreshold), 2) // percentage
+
+	checkpoint := queryThreshold.Mul(sdk.NewDecFromInt(totalDelegations)).TruncateInt()
+	checkpoint = sdkmath.MaxInt(checkpoint, sdkmath.OneInt())
+
+	return checkpoint
+}
+
 // Checks if we need to issue an ICQ to check if a validator was slashed
 // The query runs at periodic intervals defined by the ValidatorSlashQueryInterval
 // The interval is represented as percent of TVL
@@ -193,18 +205,6 @@ func (k Keeper) ShouldCheckIfValidatorWasSlashed(
 	//     Stake: 200, New Progress Tracker: 1100, New Interval: 1100 / 1000 = 1.1 = 1
 	//     => OldInterval: 0, NewInterval: 1 => Issue Slash Query
 	return oldInterval.LT(newInterval)
-}
-
-// Determines the new slash query checkpoint, by mulitplying the query threshold percent by the current TVL
-// Ensure the checkpoint is greater than 0 so that when there is no TVL, we still issue a slash query
-func (k Keeper) GetUpdatedSlashQueryCheckpoint(ctx sdk.Context, totalDelegations sdkmath.Int) sdkmath.Int {
-	params := k.GetParams(ctx)
-	queryThreshold := sdk.NewDecWithPrec(int64(params.ValidatorSlashQueryThreshold), 2) // percentage
-
-	checkpoint := queryThreshold.Mul(sdk.NewDecFromInt(totalDelegations)).TruncateInt()
-	checkpoint = sdkmath.MaxInt(checkpoint, totalDelegations)
-
-	return checkpoint
 }
 
 // Loops through all active host zones, grabs queued LSMTokenDeposits for that host

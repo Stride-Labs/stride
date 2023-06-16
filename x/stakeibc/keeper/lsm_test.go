@@ -332,6 +332,53 @@ func (s *KeeperTestSuite) TestShouldCheckIfValidatorWasSlashed() {
 	}
 }
 
+func (s *KeeperTestSuite) TestGetUpdatedSlashQueryCheckpoint() {
+	testCases := []struct {
+		name               string
+		threshold          uint64
+		totalDelegations   sdkmath.Int
+		expectedCheckpoint sdkmath.Int
+	}{
+		{
+			name:               "10%",
+			threshold:          10,
+			totalDelegations:   sdkmath.NewInt(1_000_000),
+			expectedCheckpoint: sdkmath.NewInt(100_000),
+		},
+		{
+			name:               "25%",
+			threshold:          25,
+			totalDelegations:   sdkmath.NewInt(1_000_000),
+			expectedCheckpoint: sdkmath.NewInt(250_000),
+		},
+		{
+			name:               "75%",
+			threshold:          75,
+			totalDelegations:   sdkmath.NewInt(1_000_000),
+			expectedCheckpoint: sdkmath.NewInt(750_000),
+		},
+		{
+			name:               "0-TVL",
+			threshold:          10,
+			totalDelegations:   sdkmath.ZeroInt(),
+			expectedCheckpoint: sdkmath.NewInt(1), // can't be zero
+		},
+	}
+
+	for _, tc := range testCases {
+		s.Run(tc.name, func() {
+			// Set the slash query threshold
+			params := s.App.StakeibcKeeper.GetParams(s.Ctx)
+			params.ValidatorSlashQueryThreshold = tc.threshold
+			s.App.StakeibcKeeper.SetParams(s.Ctx, params)
+
+			// Check the new checkpoint
+			actualCheckpoint := s.App.StakeibcKeeper.GetUpdatedSlashQueryCheckpoint(s.Ctx, tc.totalDelegations)
+			s.Require().Equal(tc.expectedCheckpoint.Int64(), actualCheckpoint.Int64(), "checkpoint")
+		})
+	}
+}
+
 func (s *KeeperTestSuite) TestTransferAllLSMDeposits() {
 	s.CreateTransferChannel(HostChainId)
 
