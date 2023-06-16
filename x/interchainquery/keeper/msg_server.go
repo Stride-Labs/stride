@@ -94,7 +94,13 @@ func (k Keeper) VerifyKeyProof(ctx sdk.Context, msg *types.MsgSubmitQueryRespons
 }
 
 // call the query's associated callback function
-func (k Keeper) InvokeCallback(ctx sdk.Context, msg *types.MsgSubmitQueryResponse, query types.Query) error {
+func (k Keeper) InvokeCallback(ctx sdk.Context, msg *types.MsgSubmitQueryResponse, query types.Query, timeout bool) error {
+	// If the query timed out and is set to retry on timeout, re-submit the query
+	if timeout && query.RetryOnTimeout {
+		k.Logger(ctx).Info(utils.LogICQCallbackWithHostZone(query.ChainId, query.CallbackId, "Retrying query..."))
+		return k.RetryICQRequest(ctx, query)
+	}
+
 	// get all the callback handlers and sort them for determinism
 	// (each module has their own callback handler)
 	moduleNames := []string{}
@@ -109,7 +115,7 @@ func (k Keeper) InvokeCallback(ctx sdk.Context, msg *types.MsgSubmitQueryRespons
 
 		// Once the callback is found, invoke the function
 		if moduleCallbackHandler.HasICQCallback(query.CallbackId) {
-			return moduleCallbackHandler.CallICQCallback(ctx, query.CallbackId, msg.Result, query)
+			return moduleCallbackHandler.CallICQCallback(ctx, query.CallbackId, msg.Result, query, timeout)
 		}
 	}
 
@@ -150,19 +156,7 @@ func (k msgServer) SubmitQueryResponse(goCtx context.Context, msg *types.MsgSubm
 		return nil, err
 	}
 
-	// Verify the query hasn't expired (if the block time is greater than the TTL timestamp, the query is expired)
-	currBlockTime, err := cast.ToUint64E(ctx.BlockTime().UnixNano())
-	if err != nil {
-		return nil, err
-	}
-	if query.TimeoutTimestamp < currBlockTime {
-		k.Logger(ctx).Error(utils.LogICQCallbackWithHostZone(query.ChainId, query.CallbackId,
-			"QUERY TIMEOUT - QueryId: %s, TTL: %d, BlockTime: %d", query.Id, query.TimeoutTimestamp, ctx.BlockHeader().Time.UnixNano()))
-		return &types.MsgSubmitQueryResponseResponse{}, nil
-	}
-
 	// Immediately delete the query so it cannot process again
-	// We don't want to delete timed-out queries because they'll be retried
 	k.DeleteQuery(ctx, query.Id)
 
 	// If the query is contentless, end
@@ -172,8 +166,15 @@ func (k msgServer) SubmitQueryResponse(goCtx context.Context, msg *types.MsgSubm
 		return &types.MsgSubmitQueryResponseResponse{}, nil
 	}
 
+	// Check if the query has expired (if the block time is greater than the TTL timestamp, the query has expired)
+	queryTimeout := query.TimeoutTimestamp < uint64(ctx.BlockTime().UnixNano())
+	if queryTimeout {
+		k.Logger(ctx).Error(utils.LogICQCallbackWithHostZone(query.ChainId, query.CallbackId,
+			"QUERY TIMEOUT - QueryId: %s, TTL: %d, BlockTime: %d", query.Id, query.TimeoutTimestamp, ctx.BlockHeader().Time.UnixNano()))
+	}
+
 	// Call the query's associated callback function
-	err = k.InvokeCallback(ctx, msg, query)
+	err = k.InvokeCallback(ctx, msg, query, queryTimeout)
 	if err != nil {
 		k.Logger(ctx).Error(utils.LogICQCallbackWithHostZone(query.ChainId, query.CallbackId,
 			"Error invoking ICQ callback, error: %s, QueryId: %s, QueryType: %s, ConnectionId: %s, QueryRequest: %v, QueryReponse: %v",
