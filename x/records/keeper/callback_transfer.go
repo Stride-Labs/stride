@@ -5,14 +5,14 @@ import (
 
 	ibctransfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
 
-	icacallbackstypes "github.com/Stride-Labs/stride/v9/x/icacallbacks/types"
-	"github.com/Stride-Labs/stride/v9/x/records/types"
+	icacallbackstypes "github.com/Stride-Labs/stride/v10/x/icacallbacks/types"
+	"github.com/Stride-Labs/stride/v10/x/records/types"
 
 	errorsmod "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	"github.com/cosmos/gogoproto/proto"
 	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
-	"github.com/golang/protobuf/proto" //nolint:staticcheck
 )
 
 func (k Keeper) MarshalTransferCallbackArgs(ctx sdk.Context, delegateCallback types.TransferCallback) ([]byte, error) {

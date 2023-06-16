@@ -137,7 +137,8 @@ submit_proposal_and_vote() {
     proposal_file=$2
 
     echo ">>> Submitting proposal for: $proposal_file"
-    $STRIDE_MAIN_CMD tx gov submit-legacy-proposal $proposal_type ${CURRENT_DIR}/proposals/${proposal_file} --from ${STRIDE_VAL_PREFIX}1 -y | TRIM_TX
+    $STRIDE_MAIN_CMD tx gov submit-legacy-proposal $proposal_type ${CURRENT_DIR}/proposals/${proposal_file} \
+        --from ${STRIDE_VAL_PREFIX}1 -y --gas 1000000 | TRIM_TX
     sleep 3
 
     proposal_id=$(get_last_proposal_id)

@@ -4,6 +4,18 @@ set -eu
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 source ${SCRIPT_DIR}/config.sh
 
+# Confirm binaries are present
+for chain in STRIDE ${HOST_CHAINS[@]}; do
+    binary_path=$(GET_VAR_VALUE ${chain}_BINARY)
+    binary_path=$(realpath "$binary_path")
+    if [[ ! -e "$binary_path" ]]; then
+        echo "ERROR: Binary for $chain does not exist"
+        echo "It should be present at $binary_path"
+        echo "To build the binary, ensure submodules are updated and pass the host chain flag as a build argument (e.g. 'make start-docker build=g')"
+        exit 1
+    fi
+done
+
 # cleanup any stale state
 rm -rf $STATE $LOGS 
 mkdir -p $STATE
@@ -11,7 +23,7 @@ mkdir -p $LOGS
 
 
 # If we're testing an upgrade, setup cosmovisor
-if [[ "$UPGRADE_NAME" != "" ]]; then
+if [[ "${UPGRADE_NAME:-}" != "" ]]; then
     printf "\n>>> UPGRADE ENABLED! ($UPGRADE_NAME)\n\n"
     
     # Update binary #2 with the binary that was just compiled
@@ -25,7 +37,7 @@ if [[ "$UPGRADE_NAME" != "" ]]; then
     echo "Building Cosmovisor..."
     docker build \
         -t stridezone:cosmovisor \
-        --build-arg old_commit_hash=$UPGRADE_OLD_COMMIT_HASH \
+        --build-arg old_commit_hash=$UPGRADE_OLD_VERSION \
         --build-arg stride_admin_address=$STRIDE_ADMIN_ADDRESS \
         -f $UPGRADES/Dockerfile.cosmovisor .
 

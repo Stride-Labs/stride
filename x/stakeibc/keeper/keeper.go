@@ -12,8 +12,8 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
 
-	icqkeeper "github.com/Stride-Labs/stride/v9/x/interchainquery/keeper"
-	"github.com/Stride-Labs/stride/v9/x/stakeibc/types"
+	icqkeeper "github.com/Stride-Labs/stride/v10/x/interchainquery/keeper"
+	"github.com/Stride-Labs/stride/v10/x/stakeibc/types"
 
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
 	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
@@ -23,9 +23,9 @@ import (
 
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 
-	epochstypes "github.com/Stride-Labs/stride/v9/x/epochs/types"
-	icacallbackskeeper "github.com/Stride-Labs/stride/v9/x/icacallbacks/keeper"
-	recordsmodulekeeper "github.com/Stride-Labs/stride/v9/x/records/keeper"
+	epochstypes "github.com/Stride-Labs/stride/v10/x/epochs/types"
+	icacallbackskeeper "github.com/Stride-Labs/stride/v10/x/icacallbacks/keeper"
+	recordsmodulekeeper "github.com/Stride-Labs/stride/v10/x/records/keeper"
 )
 
 type (
@@ -43,7 +43,7 @@ type (
 		StakingKeeper         stakingkeeper.Keeper
 		ICACallbacksKeeper    icacallbackskeeper.Keeper
 		hooks                 types.StakeIBCHooks
-		accountKeeper         types.AccountKeeper
+		AccountKeeper         types.AccountKeeper
 		RatelimitKeeper       types.RatelimitKeeper
 	}
 )
@@ -73,7 +73,7 @@ func NewKeeper(
 		storeKey:              storeKey,
 		memKey:                memKey,
 		paramstore:            ps,
-		accountKeeper:         accountKeeper,
+		AccountKeeper:         accountKeeper,
 		bankKeeper:            bankKeeper,
 		ICAControllerKeeper:   icacontrollerkeeper,
 		IBCKeeper:             ibcKeeper,

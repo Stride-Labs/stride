@@ -7,7 +7,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	"github.com/Stride-Labs/stride/v9/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v10/x/stakeibc/types"
 )
 
 func (k Keeper) ModuleAddress(goCtx context.Context, req *types.QueryModuleAddressRequest) (*types.QueryModuleAddressResponse, error) {
@@ -17,7 +17,7 @@ func (k Keeper) ModuleAddress(goCtx context.Context, req *types.QueryModuleAddre
 
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	addr := k.accountKeeper.GetModuleAccount(ctx, req.Name).GetAddress().String()
+	addr := k.AccountKeeper.GetModuleAccount(ctx, req.Name).GetAddress().String()
 
 	return &types.QueryModuleAddressResponse{Addr: addr}, nil
 }

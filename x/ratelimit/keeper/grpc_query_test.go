@@ -11,7 +11,7 @@ import (
 	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
 	ibctmtypes "github.com/cosmos/ibc-go/v7/modules/light-clients/07-tendermint"
 
-	"github.com/Stride-Labs/stride/v9/x/ratelimit/types"
+	"github.com/Stride-Labs/stride/v10/x/ratelimit/types"
 )
 
 // Add three rate limits on different channels
@@ -89,4 +89,32 @@ func (s *KeeperTestSuite) TestQueryRateLimitsByChannelId() {
 		s.Require().Len(queryResponse.RateLimits, 1)
 		s.Require().Equal(expectedRateLimit, queryResponse.RateLimits[0])
 	}
+}
+
+func (s *KeeperTestSuite) TestQueryAllBlacklistedDenoms() {
+	s.App.RatelimitKeeper.AddDenomToBlacklist(s.Ctx, "denom-A")
+	s.App.RatelimitKeeper.AddDenomToBlacklist(s.Ctx, "denom-B")
+
+	queryResponse, err := s.QueryClient.AllBlacklistedDenoms(context.Background(), &types.QueryAllBlacklistedDenomsRequest{})
+	s.Require().NoError(err, "no error expected when querying blacklisted denoms")
+	s.Require().Equal([]string{"denom-A", "denom-B"}, queryResponse.Denoms)
+}
+
+func (s *KeeperTestSuite) TestQueryAllWhitelistedAddresses() {
+	s.App.RatelimitKeeper.SetWhitelistedAddressPair(s.Ctx, types.WhitelistedAddressPair{
+		Sender:   "address-A",
+		Receiver: "address-B",
+	})
+	s.App.RatelimitKeeper.SetWhitelistedAddressPair(s.Ctx, types.WhitelistedAddressPair{
+		Sender:   "address-C",
+		Receiver: "address-D",
+	})
+	queryResponse, err := s.QueryClient.AllWhitelistedAddresses(context.Background(), &types.QueryAllWhitelistedAddressesRequest{})
+	s.Require().NoError(err, "no error expected when querying whitelisted addresses")
+
+	expectedWhitelist := []types.WhitelistedAddressPair{
+		{Sender: "address-A", Receiver: "address-B"},
+		{Sender: "address-C", Receiver: "address-D"},
+	}
+	s.Require().Equal(expectedWhitelist, queryResponse.AddressPairs)
 }

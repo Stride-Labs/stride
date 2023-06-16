@@ -35,7 +35,7 @@ fi
 echo ">>> Updating package name..."
 update_version() {
     file=$1
-    sed -i "s|$PACKAGE_PREFIX/$OLD_VERSION|$PACKAGE_PREFIX/$NEW_VERSION|g" $file
+    sed -i.bak "s|$PACKAGE_PREFIX/$OLD_VERSION|$PACKAGE_PREFIX/$NEW_VERSION|g" $file && rm $file.bak
 }
 
 for parent_directory in "app" "cmd" "proto" "testutil" "third_party" "utils" "x"; do

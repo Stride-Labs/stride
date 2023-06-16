@@ -11,7 +11,7 @@ import (
 
 	nodeservice "github.com/cosmos/cosmos-sdk/client/grpc/node"
 
-	"github.com/Stride-Labs/stride/v9/utils"
+	"github.com/Stride-Labs/stride/v10/utils"
 
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/client"
@@ -37,7 +37,9 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/capability"
 	capabilitykeeper "github.com/cosmos/cosmos-sdk/x/capability/keeper"
 	capabilitytypes "github.com/cosmos/cosmos-sdk/x/capability/types"
+	consensus "github.com/cosmos/cosmos-sdk/x/consensus"
 	consensusparamkeeper "github.com/cosmos/cosmos-sdk/x/consensus/keeper"
+	consensusparamtypes "github.com/cosmos/cosmos-sdk/x/consensus/types"
 	"github.com/cosmos/cosmos-sdk/x/crisis"
 	crisiskeeper "github.com/cosmos/cosmos-sdk/x/crisis/keeper"
 	crisistypes "github.com/cosmos/cosmos-sdk/x/crisis/types"
@@ -59,12 +61,12 @@ import (
 	govtypesv1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
 	govtypesv1beta1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
 
-	claimvesting "github.com/Stride-Labs/stride/v9/x/claim/vesting"
-	claimvestingtypes "github.com/Stride-Labs/stride/v9/x/claim/vesting/types"
+	claimvesting "github.com/Stride-Labs/stride/v10/x/claim/vesting"
+	claimvestingtypes "github.com/Stride-Labs/stride/v10/x/claim/vesting/types"
 
-	"github.com/Stride-Labs/stride/v9/x/mint"
-	mintkeeper "github.com/Stride-Labs/stride/v9/x/mint/keeper"
-	minttypes "github.com/Stride-Labs/stride/v9/x/mint/types"
+	"github.com/Stride-Labs/stride/v10/x/mint"
+	mintkeeper "github.com/Stride-Labs/stride/v10/x/mint/keeper"
+	minttypes "github.com/Stride-Labs/stride/v10/x/mint/types"
 
 	dbm "github.com/cometbft/cometbft-db"
 	abci "github.com/cometbft/cometbft/abci/types"
@@ -112,35 +114,35 @@ import (
 	// monitoringp "github.com/tendermint/spn/x/monitoringp"
 	// monitoringpkeeper "github.com/tendermint/spn/x/monitoringp/keeper"
 
-	epochsmodule "github.com/Stride-Labs/stride/v9/x/epochs"
-	epochsmodulekeeper "github.com/Stride-Labs/stride/v9/x/epochs/keeper"
-	epochsmoduletypes "github.com/Stride-Labs/stride/v9/x/epochs/types"
+	epochsmodule "github.com/Stride-Labs/stride/v10/x/epochs"
+	epochsmodulekeeper "github.com/Stride-Labs/stride/v10/x/epochs/keeper"
+	epochsmoduletypes "github.com/Stride-Labs/stride/v10/x/epochs/types"
 
-	"github.com/Stride-Labs/stride/v9/x/interchainquery"
-	interchainquerykeeper "github.com/Stride-Labs/stride/v9/x/interchainquery/keeper"
-	interchainquerytypes "github.com/Stride-Labs/stride/v9/x/interchainquery/types"
+	"github.com/Stride-Labs/stride/v10/x/interchainquery"
+	interchainquerykeeper "github.com/Stride-Labs/stride/v10/x/interchainquery/keeper"
+	interchainquerytypes "github.com/Stride-Labs/stride/v10/x/interchainquery/types"
 
-	"github.com/Stride-Labs/stride/v9/x/autopilot"
-	autopilotkeeper "github.com/Stride-Labs/stride/v9/x/autopilot/keeper"
-	autopilottypes "github.com/Stride-Labs/stride/v9/x/autopilot/types"
+	"github.com/Stride-Labs/stride/v10/x/autopilot"
+	autopilotkeeper "github.com/Stride-Labs/stride/v10/x/autopilot/keeper"
+	autopilottypes "github.com/Stride-Labs/stride/v10/x/autopilot/types"
 
-	"github.com/Stride-Labs/stride/v9/x/claim"
-	claimkeeper "github.com/Stride-Labs/stride/v9/x/claim/keeper"
-	claimtypes "github.com/Stride-Labs/stride/v9/x/claim/types"
-	icacallbacksmodule "github.com/Stride-Labs/stride/v9/x/icacallbacks"
-	icacallbacksmodulekeeper "github.com/Stride-Labs/stride/v9/x/icacallbacks/keeper"
-	icacallbacksmoduletypes "github.com/Stride-Labs/stride/v9/x/icacallbacks/types"
-	ratelimitmodule "github.com/Stride-Labs/stride/v9/x/ratelimit"
-	ratelimitclient "github.com/Stride-Labs/stride/v9/x/ratelimit/client"
-	ratelimitmodulekeeper "github.com/Stride-Labs/stride/v9/x/ratelimit/keeper"
-	ratelimitmoduletypes "github.com/Stride-Labs/stride/v9/x/ratelimit/types"
-	recordsmodule "github.com/Stride-Labs/stride/v9/x/records"
-	recordsmodulekeeper "github.com/Stride-Labs/stride/v9/x/records/keeper"
-	recordsmoduletypes "github.com/Stride-Labs/stride/v9/x/records/types"
-	stakeibcmodule "github.com/Stride-Labs/stride/v9/x/stakeibc"
-	stakeibcclient "github.com/Stride-Labs/stride/v9/x/stakeibc/client"
-	stakeibcmodulekeeper "github.com/Stride-Labs/stride/v9/x/stakeibc/keeper"
-	stakeibcmoduletypes "github.com/Stride-Labs/stride/v9/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v10/x/claim"
+	claimkeeper "github.com/Stride-Labs/stride/v10/x/claim/keeper"
+	claimtypes "github.com/Stride-Labs/stride/v10/x/claim/types"
+	icacallbacksmodule "github.com/Stride-Labs/stride/v10/x/icacallbacks"
+	icacallbacksmodulekeeper "github.com/Stride-Labs/stride/v10/x/icacallbacks/keeper"
+	icacallbacksmoduletypes "github.com/Stride-Labs/stride/v10/x/icacallbacks/types"
+	ratelimitmodule "github.com/Stride-Labs/stride/v10/x/ratelimit"
+	ratelimitclient "github.com/Stride-Labs/stride/v10/x/ratelimit/client"
+	ratelimitmodulekeeper "github.com/Stride-Labs/stride/v10/x/ratelimit/keeper"
+	ratelimitmoduletypes "github.com/Stride-Labs/stride/v10/x/ratelimit/types"
+	recordsmodule "github.com/Stride-Labs/stride/v10/x/records"
+	recordsmodulekeeper "github.com/Stride-Labs/stride/v10/x/records/keeper"
+	recordsmoduletypes "github.com/Stride-Labs/stride/v10/x/records/types"
+	stakeibcmodule "github.com/Stride-Labs/stride/v10/x/stakeibc"
+	stakeibcclient "github.com/Stride-Labs/stride/v10/x/stakeibc/client"
+	stakeibcmodulekeeper "github.com/Stride-Labs/stride/v10/x/stakeibc/keeper"
+	stakeibcmoduletypes "github.com/Stride-Labs/stride/v10/x/stakeibc/types"
 
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	ibctestingtypes "github.com/cosmos/ibc-go/v7/testing/types"
@@ -194,6 +196,7 @@ var (
 		upgrade.AppModuleBasic{},
 		evidence.AppModuleBasic{},
 		transfer.AppModuleBasic{},
+		consensus.AppModuleBasic{},
 		vesting.AppModuleBasic{},
 		claimvesting.AppModuleBasic{},
 		// monitoringp.AppModuleBasic{},
@@ -259,21 +262,22 @@ type StrideApp struct {
 	memKeys map[string]*storetypes.MemoryStoreKey
 
 	// keepers
-	AccountKeeper    authkeeper.AccountKeeper
-	BankKeeper       bankkeeper.Keeper
-	CapabilityKeeper *capabilitykeeper.Keeper
-	StakingKeeper    stakingkeeper.Keeper
-	SlashingKeeper   slashingkeeper.Keeper
-	MintKeeper       mintkeeper.Keeper
-	DistrKeeper      distrkeeper.Keeper
-	GovKeeper        govkeeper.Keeper
-	CrisisKeeper     *crisiskeeper.Keeper
-	UpgradeKeeper    *upgradekeeper.Keeper
-	ParamsKeeper     paramskeeper.Keeper
-	IBCKeeper        *ibckeeper.Keeper // IBC Keeper must be a pointer in the app, so we can SetRouter on it correctly
-	EvidenceKeeper   evidencekeeper.Keeper
-	TransferKeeper   ibctransferkeeper.Keeper
-	FeeGrantKeeper   feegrantkeeper.Keeper
+	AccountKeeper         authkeeper.AccountKeeper
+	BankKeeper            bankkeeper.Keeper
+	CapabilityKeeper      *capabilitykeeper.Keeper
+	StakingKeeper         stakingkeeper.Keeper
+	SlashingKeeper        slashingkeeper.Keeper
+	MintKeeper            mintkeeper.Keeper
+	DistrKeeper           distrkeeper.Keeper
+	GovKeeper             govkeeper.Keeper
+	ConsensusParamsKeeper consensusparamkeeper.Keeper
+	CrisisKeeper          *crisiskeeper.Keeper
+	UpgradeKeeper         *upgradekeeper.Keeper
+	ParamsKeeper          paramskeeper.Keeper
+	IBCKeeper             *ibckeeper.Keeper // IBC Keeper must be a pointer in the app, so we can SetRouter on it correctly
+	EvidenceKeeper        evidencekeeper.Keeper
+	TransferKeeper        ibctransferkeeper.Keeper
+	FeeGrantKeeper        feegrantkeeper.Keeper
 	// MonitoringKeeper    monitoringpkeeper.Keeper
 	ICAControllerKeeper icacontrollerkeeper.Keeper
 	ICAHostKeeper       icahostkeeper.Keeper
@@ -297,7 +301,6 @@ type StrideApp struct {
 	ScopedratelimitKeeper capabilitykeeper.ScopedKeeper
 	RatelimitKeeper       ratelimitmodulekeeper.Keeper
 	ClaimKeeper           claimkeeper.Keeper
-	ConsensusParamsKeeper consensusparamkeeper.Keeper
 
 	mm           *module.Manager
 	sm           *module.SimulationManager
@@ -342,6 +345,7 @@ func NewStrideApp(
 		icacallbacksmoduletypes.StoreKey,
 		claimtypes.StoreKey,
 		crisistypes.StoreKey,
+		consensusparamtypes.StoreKey,
 	)
 	tkeys := sdk.NewTransientStoreKeys(paramstypes.TStoreKey)
 	memKeys := sdk.NewMemoryStoreKeys(capabilitytypes.MemStoreKey)
@@ -357,10 +361,15 @@ func NewStrideApp(
 		memKeys:           memKeys,
 	}
 
+	// TODO: Remove ParamsKeeper after v10 upgrade
 	app.ParamsKeeper = initParamsKeeper(appCodec, cdc, keys[paramstypes.StoreKey], tkeys[paramstypes.TStoreKey])
 
 	// set the BaseApp's parameter store
-	app.ConsensusParamsKeeper = consensusparamkeeper.NewKeeper(appCodec, keys[upgradetypes.StoreKey], authtypes.NewModuleAddress(govtypes.ModuleName).String())
+	app.ConsensusParamsKeeper = consensusparamkeeper.NewKeeper(
+		appCodec,
+		keys[consensusparamtypes.StoreKey],
+		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
+	)
 	bApp.SetParamStore(&app.ConsensusParamsKeeper)
 
 	// add capability keeper and ScopeToModule for ibc module
@@ -659,6 +668,7 @@ func NewStrideApp(
 		staking.NewAppModule(appCodec, &app.StakingKeeper, app.AccountKeeper, app.BankKeeper, app.GetSubspace(stakingtypes.ModuleName)),
 		upgrade.NewAppModule(app.UpgradeKeeper),
 		evidence.NewAppModule(app.EvidenceKeeper),
+		consensus.NewAppModule(appCodec, app.ConsensusParamsKeeper),
 		ibc.NewAppModule(app.IBCKeeper),
 		params.NewAppModule(app.ParamsKeeper),
 		claim.NewAppModule(appCodec, app.ClaimKeeper),
@@ -707,6 +717,7 @@ func NewStrideApp(
 		icacallbacksmoduletypes.ModuleName,
 		claimtypes.ModuleName,
 		autopilottypes.ModuleName,
+		consensusparamtypes.ModuleName,
 	)
 
 	app.mm.SetOrderEndBlockers(
@@ -738,6 +749,7 @@ func NewStrideApp(
 		icacallbacksmoduletypes.ModuleName,
 		claimtypes.ModuleName,
 		autopilottypes.ModuleName,
+		consensusparamtypes.ModuleName,
 	)
 
 	// NOTE: The genutils module must occur after staking so that pools are
@@ -774,6 +786,7 @@ func NewStrideApp(
 		icacallbacksmoduletypes.ModuleName,
 		claimtypes.ModuleName,
 		autopilottypes.ModuleName,
+		consensusparamtypes.ModuleName,
 	)
 
 	app.mm.RegisterInvariants(app.CrisisKeeper)
@@ -988,6 +1001,7 @@ func (app *StrideApp) RegisterAPIRoutes(apiSvr *api.Server, apiConfig config.API
 	tmservice.RegisterGRPCGatewayRoutes(clientCtx, apiSvr.GRPCGatewayRouter)
 
 	ModuleBasics.RegisterGRPCGatewayRoutes(clientCtx, apiSvr.GRPCGatewayRouter)
+	nodeservice.RegisterGRPCGatewayRoutes(clientCtx, apiSvr.GRPCGatewayRouter)
 }
 
 // RegisterTxService implements the Application.RegisterTxService method.
@@ -1015,17 +1029,18 @@ func GetMaccPerms() map[string][]string {
 }
 
 // initParamsKeeper init params keeper and its subspaces
+// TODO: Remove ParamsKeeper after v10 upgrade
 func initParamsKeeper(appCodec codec.BinaryCodec, legacyAmino *codec.LegacyAmino, key, tkey storetypes.StoreKey) paramskeeper.Keeper {
 	paramsKeeper := paramskeeper.NewKeeper(appCodec, legacyAmino, key, tkey)
 
-	paramsKeeper.Subspace(authtypes.ModuleName)
-	paramsKeeper.Subspace(banktypes.ModuleName)
-	paramsKeeper.Subspace(stakingtypes.ModuleName)
-	paramsKeeper.Subspace(minttypes.ModuleName)
-	paramsKeeper.Subspace(distrtypes.ModuleName)
-	paramsKeeper.Subspace(slashingtypes.ModuleName)
-	paramsKeeper.Subspace(govtypes.ModuleName).WithKeyTable(govtypesv1.ParamKeyTable()) //nolint:staticcheck
-	paramsKeeper.Subspace(crisistypes.ModuleName)
+	paramsKeeper.Subspace(authtypes.ModuleName).WithKeyTable(authtypes.ParamKeyTable())         //nolint:staticcheck
+	paramsKeeper.Subspace(banktypes.ModuleName).WithKeyTable(banktypes.ParamKeyTable())         //nolint:staticcheck
+	paramsKeeper.Subspace(stakingtypes.ModuleName).WithKeyTable(stakingtypes.ParamKeyTable())   //nolint:staticcheck
+	paramsKeeper.Subspace(minttypes.ModuleName).WithKeyTable(minttypes.ParamKeyTable())         //nolint:staticcheck
+	paramsKeeper.Subspace(distrtypes.ModuleName).WithKeyTable(distrtypes.ParamKeyTable())       //nolint:staticcheck
+	paramsKeeper.Subspace(slashingtypes.ModuleName).WithKeyTable(slashingtypes.ParamKeyTable()) //nolint:staticcheck
+	paramsKeeper.Subspace(govtypes.ModuleName).WithKeyTable(govtypesv1.ParamKeyTable())         //nolint:staticcheck
+	paramsKeeper.Subspace(crisistypes.ModuleName).WithKeyTable(crisistypes.ParamKeyTable())     //nolint:staticcheck
 	paramsKeeper.Subspace(ibctransfertypes.ModuleName)
 	paramsKeeper.Subspace(ibchost.ModuleName)
 	// paramsKeeper.Subspace(monitoringptypes.ModuleName)
