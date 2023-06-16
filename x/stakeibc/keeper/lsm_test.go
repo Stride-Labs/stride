@@ -361,7 +361,7 @@ func (s *KeeperTestSuite) TestGetUpdatedSlashQueryCheckpoint() {
 			name:               "0-TVL",
 			threshold:          10,
 			totalDelegations:   sdkmath.ZeroInt(),
-			expectedCheckpoint: sdkmath.NewInt(1), // can't be zero
+			expectedCheckpoint: sdkmath.ZeroInt(),
 		},
 	}
 

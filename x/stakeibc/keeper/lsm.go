@@ -169,14 +169,10 @@ func (k Keeper) GetValidatorFromLSMTokenDenom(denom string, validators []*types.
 }
 
 // Determines the new slash query checkpoint, by mulitplying the query threshold percent by the current TVL
-// Ensure the checkpoint is greater than 0 so that when there is no TVL, we still issue a slash query
 func (k Keeper) GetUpdatedSlashQueryCheckpoint(ctx sdk.Context, totalDelegations sdkmath.Int) sdkmath.Int {
 	params := k.GetParams(ctx)
 	queryThreshold := sdk.NewDecWithPrec(int64(params.ValidatorSlashQueryThreshold), 2) // percentage
-
 	checkpoint := queryThreshold.Mul(sdk.NewDecFromInt(totalDelegations)).TruncateInt()
-	checkpoint = sdkmath.MaxInt(checkpoint, sdkmath.OneInt())
-
 	return checkpoint
 }
 
