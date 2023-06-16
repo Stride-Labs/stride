@@ -17,7 +17,9 @@ func (k msgServer) AddValidators(goCtx context.Context, msg *types.MsgAddValidat
 		}
 
 		// Query and store the validator's exchange rate
-		if err := k.QueryValidatorExchangeRate(ctx, msg.HostZone, validator.Address); err != nil {
+		callbackData := []byte{}
+		aggressiveTimeout := false
+		if err := k.QueryValidatorExchangeRate(ctx, msg.HostZone, validator.Address, callbackData, aggressiveTimeout); err != nil {
 			return nil, err
 		}
 	}

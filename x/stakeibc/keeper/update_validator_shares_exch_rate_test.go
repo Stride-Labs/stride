@@ -40,7 +40,7 @@ func (s *KeeperTestSuite) SetupQueryValidatorExchangeRate() QueryValidatorExchan
 func (s *KeeperTestSuite) TestQueryValidatorExchangeRate_Successful() {
 	s.SetupQueryValidatorExchangeRate()
 
-	err := s.App.StakeibcKeeper.QueryValidatorExchangeRate(s.Ctx, HostChainId, ValAddress)
+	err := s.App.StakeibcKeeper.QueryValidatorExchangeRate(s.Ctx, HostChainId, ValAddress, []byte{}, false)
 	s.Require().NoError(err, "no error expected when querying validator exchange rate")
 
 	// check a query was created (a simple test; details about queries are covered in makeRequest's test)
@@ -54,11 +54,11 @@ func (s *KeeperTestSuite) TestQueryValidatorExchangeRate_NoHostZone() {
 	// remove the host zone
 	s.App.StakeibcKeeper.RemoveHostZone(s.Ctx, HostChainId)
 
-	err := s.App.StakeibcKeeper.QueryValidatorExchangeRate(s.Ctx, HostChainId, ValAddress)
+	err := s.App.StakeibcKeeper.QueryValidatorExchangeRate(s.Ctx, HostChainId, ValAddress, []byte{}, false)
 	s.Require().ErrorContains(err, "Host zone not found")
 
 	// submit a bad chain id
-	err = s.App.StakeibcKeeper.QueryValidatorExchangeRate(s.Ctx, "NOT_GAIA", ValAddress)
+	err = s.App.StakeibcKeeper.QueryValidatorExchangeRate(s.Ctx, "NOT_GAIA", ValAddress, []byte{}, false)
 	s.Require().ErrorContains(err, "Host zone not found")
 }
 
@@ -66,11 +66,11 @@ func (s *KeeperTestSuite) TestQueryValidatorExchangeRate_InvalidValidator() {
 	s.SetupQueryValidatorExchangeRate()
 
 	// Pass a validator with an invalid prefix - it should fail
-	err := s.App.StakeibcKeeper.QueryValidatorExchangeRate(s.Ctx, HostChainId, "BADPREFIX_123")
+	err := s.App.StakeibcKeeper.QueryValidatorExchangeRate(s.Ctx, HostChainId, "BADPREFIX_123", []byte{}, false)
 	s.Require().ErrorContains(err, "validator operator address must match the host zone bech32 prefix")
 
 	// Pass a validator with a valid prefix but an invalid address - it should fail
-	err = s.App.StakeibcKeeper.QueryValidatorExchangeRate(s.Ctx, HostChainId, "cosmos_BADADDRESS")
+	err = s.App.StakeibcKeeper.QueryValidatorExchangeRate(s.Ctx, HostChainId, "cosmos_BADADDRESS", []byte{}, false)
 	s.Require().ErrorContains(err, "invalid validator operator address, could not decode")
 }
 
@@ -80,7 +80,7 @@ func (s *KeeperTestSuite) TestQueryValidatorExchangeRate_MissingConnectionId() {
 	tc.hostZone.ConnectionId = ""
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, tc.hostZone)
 
-	err := s.App.StakeibcKeeper.QueryValidatorExchangeRate(s.Ctx, HostChainId, ValAddress)
+	err := s.App.StakeibcKeeper.QueryValidatorExchangeRate(s.Ctx, HostChainId, ValAddress, []byte{}, false)
 	s.Require().ErrorContains(err, "connection-id cannot be empty")
 }
 

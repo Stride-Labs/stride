@@ -176,6 +176,7 @@ func (k Keeper) UpdateWithdrawalBalance(ctx sdk.Context, hostZone types.HostZone
 		CallbackModule:  types.ModuleName,
 		CallbackId:      ICQCallbackID_WithdrawalBalance,
 		TimeoutDuration: time.Hour,
+		TimeoutPolicy:   icqtypes.TimeoutPolicy_RETRY_QUERY_REQUEST,
 	}
 	if err := k.InterchainQueryKeeper.SubmitICQRequest(ctx, query, false); err != nil {
 		k.Logger(ctx).Error(fmt.Sprintf("Error querying for withdrawal balance, error: %s", err.Error()))
@@ -358,8 +359,27 @@ func (k Keeper) GetLightClientTimeSafely(ctx sdk.Context, connectionID string) (
 }
 
 // Submits an ICQ to get a validator's exchange rate
-func (k Keeper) QueryValidatorExchangeRate(ctx sdk.Context, chainId, validatorAddress string) error {
+func (k Keeper) QueryValidatorExchangeRate(
+	ctx sdk.Context,
+	chainId string,
+	validatorAddress string,
+	callbackDataBz []byte,
+	aggressiveTimeout bool,
+) error {
 	k.Logger(ctx).Info(utils.LogWithHostZone(chainId, "Submitting ICQ for validator exchange rate to %s", validatorAddress))
+
+	// If this query is executed from LSM, there should be a more aggressive timeout since it's UX blocking,
+	// and, in the event of a timeout, we should still enter the callback so we can alert the user that the query failed
+	// If this query is not for an LSM liquid stake, we can have a more relaxed timeout
+	var timeoutDuration time.Duration
+	var timeoutPolicy icqtypes.TimeoutPolicy
+	if aggressiveTimeout {
+		timeoutDuration = LSMSlashQueryTimeout
+		timeoutPolicy = icqtypes.TimeoutPolicy_EXECUTE_QUERY_CALLBACK
+	} else {
+		timeoutDuration = time.Hour
+		timeoutPolicy = icqtypes.TimeoutPolicy_RETRY_QUERY_REQUEST
+	}
 
 	// Confirm the host zone exists
 	hostZone, found := k.GetHostZone(ctx, chainId)
@@ -388,7 +408,9 @@ func (k Keeper) QueryValidatorExchangeRate(ctx sdk.Context, chainId, validatorAd
 		RequestData:     queryData,
 		CallbackModule:  types.ModuleName,
 		CallbackId:      ICQCallbackID_Validator,
-		TimeoutDuration: time.Hour,
+		CallbackData:    callbackDataBz,
+		TimeoutDuration: timeoutDuration,
+		TimeoutPolicy:   timeoutPolicy,
 	}
 	if err := k.InterchainQueryKeeper.SubmitICQRequest(ctx, query, false); err != nil {
 		k.Logger(ctx).Error(fmt.Sprintf("Error submitting ICQ for validator exchange rate, error %s", err.Error()))
@@ -446,6 +468,7 @@ func (k Keeper) QueryDelegationsIcq(ctx sdk.Context, hostZone types.HostZone, va
 		CallbackId:      ICQCallbackID_Delegation,
 		CallbackData:    callbackDataBz,
 		TimeoutDuration: timeoutDuration,
+		TimeoutPolicy:   icqtypes.TimeoutPolicy_RETRY_QUERY_REQUEST,
 	}
 	if err := k.InterchainQueryKeeper.SubmitICQRequest(ctx, query, false); err != nil {
 		k.Logger(ctx).Error(fmt.Sprintf("Error submitting ICQ for delegation, error : %s", err.Error()))
