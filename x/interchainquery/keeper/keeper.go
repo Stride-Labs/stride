@@ -3,6 +3,7 @@ package keeper
 import (
 	"fmt"
 
+	errorsmod "cosmossdk.io/errors"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
@@ -77,17 +78,9 @@ func (k *Keeper) RetryICQRequest(ctx sdk.Context, query types.Query) error {
 	k.Logger(ctx).Info(utils.LogWithHostZone(query.ChainId,
 		"Queuing ICQ Retry - Query Type: %s, Query ID: %s", query.CallbackId, query.Id))
 
-	if err := k.ValidateQuery(ctx, query); err != nil {
-		return err
+	if err := k.SubmitICQRequest(ctx, query, true); err != nil {
+		return errorsmod.Wrapf(err, types.ErrFailedToRetryQuery.Error())
 	}
-
-	// Update the timeout
-	timeoutTimestamp := uint64(ctx.BlockTime().UnixNano() + query.TimeoutDuration.Nanoseconds())
-	query.TimeoutTimestamp = timeoutTimestamp
-
-	// Flag the query as "not sent" so it gets emitted the next block
-	query.RequestSent = false
-	k.SetQuery(ctx, query)
 
 	return nil
 }
