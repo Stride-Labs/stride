@@ -34,12 +34,10 @@ var (
 )
 
 // Validates the parameters supplied with this LSMLiquidStake, including that the denom
-//
-//	corresponds with a valid LSM Token and that the user has sufficient balance
+// corresponds with a valid LSM Token and that the user has sufficient balance
 //
 // This is called once at the beginning of the liquid stake, and is, potentially, called
-//
-//	again at the end (if the transaction was asynchronous due to an intermediate slash query)
+// again at the end (if the transaction was asynchronous due to an intermediate slash query)
 //
 // This function returns the associated host zone and validator along with the initial deposit record
 func (k Keeper) ValidateLSMLiquidStake(ctx sdk.Context, msg types.MsgLSMLiquidStake) (types.LSMLiquidStake, error) {
@@ -244,14 +242,12 @@ func (k Keeper) TransferAllLSMDeposits(ctx sdk.Context) {
 
 // Submits an ICA to "Redeem" an LSM Token - meaning converting the token into native stake
 // This function is called in the EndBlocker which means if the ICA submission fails,
-//
-//	any modified state is not reverted
+// any modified state is not reverted
 //
 // The deposit Status is intentionally updated before the ICA is submitted even though it will NOT be reverted
-//
-//	if the ICA fails to send. This is because a failure is likely caused by a closed ICA channel, and the status
-//	update will prevent the ICA from being continuously re-submitted. When the ICA channel is restored, the
-//	deposit status will get reset, and the ICA will be attempted again.
+// if the ICA fails to send. This is because a failure is likely caused by a closed ICA channel, and the status
+// update will prevent the ICA from being continuously re-submitted. When the ICA channel is restored, the
+// deposit status will get reset, and the ICA will be attempted again.
 func (k Keeper) DetokenizeLSMDeposit(ctx sdk.Context, hostZone types.HostZone, deposit recordstypes.LSMTokenDeposit) error {
 	// Get the delegation account (which owns the LSM token)
 	if hostZone.DelegationIcaAddress == "" {
