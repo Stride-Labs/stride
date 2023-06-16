@@ -2,7 +2,6 @@ package keeper_test
 
 import (
 	"context"
-	"strings"
 	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -40,15 +39,18 @@ func (s *KeeperTestSuite) SetupMsgSubmitQueryResponse() MsgSubmitQueryResponseTe
 
 	_, addr, _ := bech32.DecodeAndConvert(s.TestAccs[0].String())
 	data := banktypes.CreateAccountBalancesPrefix(addr)
-	// save the query to Stride state, so it can be retrieved in the response
+
+	timeoutDuration := time.Minute
 	query := types.Query{
-		Id:              expectedId,
-		CallbackId:      "withdrawalbalance",
-		ChainId:         HostChainId,
-		ConnectionId:    s.TransferPath.EndpointA.ConnectionID,
-		QueryType:       types.BANK_STORE_QUERY_WITH_PROOF,
-		RequestData:     append(data, []byte(HostChainId)...),
-		TimeoutDuration: time.Duration(1_000_000_000),
+		Id:               expectedId,
+		CallbackId:       "withdrawalbalance",
+		CallbackModule:   "stakeibc",
+		ChainId:          HostChainId,
+		ConnectionId:     s.TransferPath.EndpointA.ConnectionID,
+		QueryType:        "store/bank", // intentionally leave off key to skip proof
+		RequestData:      append(data, []byte(HostChainId)...),
+		TimeoutDuration:  timeoutDuration,
+		TimeoutTimestamp: uint64(s.Ctx.BlockTime().Add(timeoutDuration).UnixNano()),
 	}
 
 	return MsgSubmitQueryResponseTestCase{
@@ -68,6 +70,7 @@ func (s *KeeperTestSuite) SetupMsgSubmitQueryResponse() MsgSubmitQueryResponseTe
 func (s *KeeperTestSuite) TestMsgSubmitQueryResponse_WrongProof() {
 	tc := s.SetupMsgSubmitQueryResponse()
 
+	tc.query.QueryType = types.BANK_STORE_QUERY_WITH_PROOF
 	s.App.InterchainqueryKeeper.SetQuery(s.Ctx, tc.query)
 
 	resp, err := s.GetMsgServer().SubmitQueryResponse(tc.goCtx, &tc.validMsg)
@@ -91,33 +94,64 @@ func (s *KeeperTestSuite) TestMsgSubmitQueryResponse_UnknownId() {
 	s.Require().True(found)
 }
 
-func (s *KeeperTestSuite) TestMsgSubmitQueryResponse_ExceededTtl() {
+func (s *KeeperTestSuite) TestMsgSubmitQueryResponse_Timeout_RejectQuery() {
 	tc := s.SetupMsgSubmitQueryResponse()
 
-	// Remove key from the query type so to bypass the VerifyKeyProof function
-	tc.query.QueryType = strings.ReplaceAll(tc.query.QueryType, "key", "")
-
-	// set timeout to be expired
+	// set timeout to be expired and set the policy to reject
 	tc.query.TimeoutTimestamp = uint64(1)
+	tc.query.TimeoutPolicy = types.TimeoutPolicy_REJECT_QUERY_RESPONSE
 	s.App.InterchainqueryKeeper.SetQuery(s.Ctx, tc.query)
 
-	resp, err := s.GetMsgServer().SubmitQueryResponse(tc.goCtx, &tc.validMsg)
+	_, err := s.GetMsgServer().SubmitQueryResponse(tc.goCtx, &tc.validMsg)
 	s.Require().NoError(err)
-	s.Require().NotNil(resp)
 
-	// check that the query was not deleted (since the query timed out)
+	// check that the query original query was deleted,
 	_, found := s.App.InterchainqueryKeeper.GetQuery(s.Ctx, tc.query.Id)
-	s.Require().True(found)
+	s.Require().False(found, "original query should be removed")
 }
 
-func (s *KeeperTestSuite) TestMsgSubmitQueryResponse_FindAndInvokeCallback_WrongHostZone() {
+func (s *KeeperTestSuite) TestMsgSubmitQueryResponse_Timeout_RetryQuery() {
 	tc := s.SetupMsgSubmitQueryResponse()
 
+	// set timeout to be expired and set the policy to retry
+	tc.query.TimeoutTimestamp = uint64(1)
+	tc.query.TimeoutPolicy = types.TimeoutPolicy_RETRY_QUERY_REQUEST
+	s.App.InterchainqueryKeeper.SetQuery(s.Ctx, tc.query)
+
+	_, err := s.GetMsgServer().SubmitQueryResponse(tc.goCtx, &tc.validMsg)
+	s.Require().NoError(err)
+
+	// check that the query original query was deleted,
+	// but that a new one was created for the retry
+	_, found := s.App.InterchainqueryKeeper.GetQuery(s.Ctx, tc.query.Id)
+	s.Require().False(found, "original query should be removed")
+	s.Require().Len(s.App.InterchainqueryKeeper.AllQueries(s.Ctx), 1, "there should be one new query")
+}
+
+func (s *KeeperTestSuite) TestMsgSubmitQueryResponse_Timeout_ExecuteCallback() {
+	tc := s.SetupMsgSubmitQueryResponse()
+
+	// set timeout to be expired and set the policy to retry
+	tc.query.TimeoutTimestamp = uint64(1)
+	tc.query.TimeoutPolicy = types.TimeoutPolicy_EXECUTE_QUERY_CALLBACK
 	s.App.InterchainqueryKeeper.SetQuery(s.Ctx, tc.query)
 
 	// rather than testing by executing the callback in its entirety,
 	//   check by invoking it without a registered host zone and catching the appropriate error
-	err := s.App.InterchainqueryKeeper.InvokeCallback(s.Ctx, &tc.validMsg, tc.query)
+	_, err := s.GetMsgServer().SubmitQueryResponse(tc.goCtx, &tc.validMsg)
+	s.Require().ErrorContains(err, "no registered zone for queried chain ID", "callback was invoked")
+}
+
+func (s *KeeperTestSuite) TestMsgSubmitQueryResponse_FindAndInvokeCallback() {
+	tc := s.SetupMsgSubmitQueryResponse()
+
+	s.App.InterchainqueryKeeper.SetQuery(s.Ctx, tc.query)
+
+	// The withdrawal balance test is already covered in it's respective module
+	// For this test, we just want to check that the callback function as invoked
+	// To do this, we can just ignore the appropriate withdrawal balance callback
+	//   mocked state, and catch the expected error
+	_, err := s.GetMsgServer().SubmitQueryResponse(tc.goCtx, &tc.validMsg)
 	s.Require().ErrorContains(err, "no registered zone for queried chain ID", "callback was invoked")
 }
 
