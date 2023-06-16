@@ -20,6 +20,7 @@ message Query {
       [ (gogoproto.nullable) = false, (gogoproto.stdduration) = true ];
   uint64 timeout_timestamp = 9;
   bool request_sent = 11;
+  bool retry_on_timeout = 15;
 }
 
 message DataPoint {
