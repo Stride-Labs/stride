@@ -43,9 +43,6 @@ endif
 build_tags += $(BUILD_TAGS)
 build_tags := $(strip $(build_tags))
 
-build_tags += $(BUILD_TAGS)
-build_tags := $(strip $(build_tags))
-
 whitespace :=
 whitespace += $(whitespace)
 comma := ,
