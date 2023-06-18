@@ -6,6 +6,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/cosmos/gogoproto/proto"
+
 	errorsmod "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
 
@@ -13,8 +15,6 @@ import (
 	"github.com/Stride-Labs/stride/v10/x/claim/types"
 	vestingtypes "github.com/Stride-Labs/stride/v10/x/claim/vesting/types"
 	epochstypes "github.com/Stride-Labs/stride/v10/x/epochs/types"
-
-	"github.com/cosmos/gogoproto/proto"
 
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -302,6 +302,7 @@ func (k Keeper) GetClaimRecords(ctx sdk.Context, airdropIdentifier string) []typ
 
 	claimRecords := []types.ClaimRecord{}
 	for ; iterator.Valid(); iterator.Next() {
+
 		claimRecord := types.ClaimRecord{}
 
 		err := proto.Unmarshal(iterator.Value(), &claimRecord)
@@ -484,6 +485,7 @@ func (k Keeper) GetClaimStatus(ctx sdk.Context, addr sdk.AccAddress) ([]types.Cl
 	airdropIdentifiers := k.GetAirdropIds(ctx)
 	var claimStatusList []types.ClaimStatus
 	for _, airdropId := range airdropIdentifiers {
+
 		// Get the claim record for a user, airdrop pair
 		claimRecord, err := k.GetClaimRecord(ctx, addr, airdropId)
 		if err != nil {

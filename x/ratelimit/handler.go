@@ -9,11 +9,11 @@ import (
 	"github.com/Stride-Labs/stride/v10/x/ratelimit/keeper/gov"
 	"github.com/Stride-Labs/stride/v10/x/ratelimit/types"
 
-	channelkeeper "github.com/cosmos/ibc-go/v7/modules/core/04-channel/keeper"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
+
+	channelkeeper "github.com/cosmos/ibc-go/v7/modules/core/04-channel/keeper"
 )
 
 // NewMessageHandler returns ratelimit module messages

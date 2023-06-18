@@ -4,58 +4,11 @@ run:
   tests: true
 
 linters:
+  disable-all: true
   enable:
-    - asasalint
-    - asciicheck
-    - bidichk
-    - bodyclose
-    - decorder
-    - dogsled
-    - dupl
-    - durationcheck
-    - errcheck
-    - errchkjson
-    - errname
-    - errorlint
-    - execinquery
-    - exportloopref
-    - forcetypeassert
     - gci
-    - goconst
-    - gocritic
     - gofumpt
-    - goprintffuncname
-    - gosec
-    - gosimple
-    - govet
-    - ineffassign
-    - interfacebloat
-    - loggercheck
-    - maintidx
-    - makezero
     - misspell
-    - nakedret
-    - nestif
-    - nilerr
-    - nilnil
-    - nolintlint
-    - nosprintfhostport
-    - predeclared
-    - promlinter
-    - reassign
-    - revive
-    - sqlclosecheck
-    - staticcheck
-    - stylecheck
-    - tenv
-    - testableexamples
-    - thelper
-    - typecheck
-    - unconvert
-    - unparam
-    - unused
-    - usestdlibvars
-    - whitespace
 
 issues:
   max-same-issues: 0
@@ -68,8 +21,9 @@ linters-settings:
       - blank # blank imports
       - dot # dot imports
       - prefix(github.com/cometbft/cometbft) # comet
-      - prefix(github.com/cosmos) # cosmos
-      - prefix(cosmossdk.io) #cosmossdk.io
-      - prefix(github.com/cosmos/cosmos-sdk) #cosmos-sdk
-      - prefix(github.com/Stride-Labs) # stride
+      - prefix(cosmossdk.io) # cosmossdk.io
+      - prefix(github.com/cosmos/cosmos-sdk) # cosmos-sdk & cosmos org libs
+      - prefix(github.com/cosmos/interchain-security) # interchain-security
+      - prefix(github.com/cosmos/ibc-go) # ibc
+      - prefix(github.com/Stride-Labs/stride) # stride
 

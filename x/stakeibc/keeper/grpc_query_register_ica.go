@@ -8,9 +8,9 @@ import (
 
 	"github.com/Stride-Labs/stride/v10/x/stakeibc/types"
 
-	icatypes "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/types"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	icatypes "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/types"
 )
 
 // InterchainAccountFromAddress implements the Query/InterchainAccountFromAddress gRPC method

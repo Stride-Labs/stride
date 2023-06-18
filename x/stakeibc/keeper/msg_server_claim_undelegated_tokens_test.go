@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"strings"
 
+	proto "github.com/cosmos/gogoproto/proto"
+
 	sdkmath "cosmossdk.io/math"
 
 	epochtypes "github.com/Stride-Labs/stride/v10/x/epochs/types"
@@ -11,11 +13,10 @@ import (
 	stakeibckeeper "github.com/Stride-Labs/stride/v10/x/stakeibc/keeper"
 	stakeibctypes "github.com/Stride-Labs/stride/v10/x/stakeibc/types"
 
-	proto "github.com/cosmos/gogoproto/proto"
-	ibctesting "github.com/cosmos/ibc-go/v7/testing"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+
+	ibctesting "github.com/cosmos/ibc-go/v7/testing"
 
 	_ "github.com/stretchr/testify/suite"
 )

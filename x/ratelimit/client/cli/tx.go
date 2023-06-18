@@ -5,13 +5,12 @@ import (
 	"os"
 	"strings"
 
+	"github.com/cosmos/gogoproto/proto"
 	"github.com/spf13/cobra"
 
 	errorsmod "cosmossdk.io/errors"
 
 	"github.com/Stride-Labs/stride/v10/x/ratelimit/types"
-
-	"github.com/cosmos/gogoproto/proto"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/tx"

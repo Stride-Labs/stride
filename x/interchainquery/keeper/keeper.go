@@ -11,12 +11,12 @@ import (
 
 	"github.com/cometbft/cometbft/libs/log"
 
-	ibckeeper "github.com/cosmos/ibc-go/v7/modules/core/keeper"
-
 	"github.com/cosmos/cosmos-sdk/codec"
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+
+	ibckeeper "github.com/cosmos/ibc-go/v7/modules/core/keeper"
 )
 
 // Keeper of this module maintains collections of registered zones.

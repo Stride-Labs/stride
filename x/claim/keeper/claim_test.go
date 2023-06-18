@@ -477,7 +477,7 @@ func (suite *KeeperTestSuite) TestMultiChainAirdropFlow() {
 	records = suite.app.ClaimKeeper.GetClaimRecords(suite.ctx, "osmosis")
 	suite.Require().Equal(0, len(records))
 
-	// *********************** End of Stride, Osmosis airdrop *************************
+	//*********************** End of Stride, Osmosis airdrop *************************
 
 	// claim airdrops for juno users after ending stride airdrop
 	// get rewards amount for stake (juno user)
@@ -527,7 +527,7 @@ func (suite *KeeperTestSuite) TestMultiChainAirdropFlow() {
 
 	records = suite.app.ClaimKeeper.GetClaimRecords(suite.ctx, types.DefaultAirdropIdentifier)
 	suite.Require().Equal(0, len(records))
-	// *********************** End of Juno airdrop *************************
+	//*********************** End of Juno airdrop *************************
 }
 
 func (suite *KeeperTestSuite) TestAreAllTrue() {

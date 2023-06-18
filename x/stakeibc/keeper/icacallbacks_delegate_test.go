@@ -9,9 +9,9 @@ import (
 	"github.com/Stride-Labs/stride/v10/x/stakeibc/types"
 	stakeibc "github.com/Stride-Labs/stride/v10/x/stakeibc/types"
 
-	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
 
 	_ "github.com/stretchr/testify/suite"
 )

@@ -3,6 +3,7 @@ package keeper
 import (
 	"fmt"
 
+	proto "github.com/cosmos/gogoproto/proto"
 	"github.com/spf13/cast"
 
 	errorsmod "cosmossdk.io/errors"
@@ -12,8 +13,6 @@ import (
 	icqkeeper "github.com/Stride-Labs/stride/v10/x/interchainquery/keeper"
 	icqtypes "github.com/Stride-Labs/stride/v10/x/interchainquery/types"
 	"github.com/Stride-Labs/stride/v10/x/stakeibc/types"
-
-	proto "github.com/cosmos/gogoproto/proto"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"

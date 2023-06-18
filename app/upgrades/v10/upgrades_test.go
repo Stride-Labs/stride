@@ -6,6 +6,7 @@ import (
 	"testing"
 	"time"
 
+	cosmosproto "github.com/cosmos/gogoproto/proto"
 	deprecatedproto "github.com/golang/protobuf/proto" //nolint:staticcheck
 	"github.com/stretchr/testify/suite"
 
@@ -23,13 +24,12 @@ import (
 	"github.com/Stride-Labs/stride/v10/x/stakeibc/types"
 	stakeibctypes "github.com/Stride-Labs/stride/v10/x/stakeibc/types"
 
-	cosmosproto "github.com/cosmos/gogoproto/proto"
-	transfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
-	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/address"
 	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
+
+	transfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
+	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
 )
 
 var initialRateLimitChannelValue = sdk.NewInt(1_000_000)

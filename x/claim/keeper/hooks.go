@@ -49,6 +49,7 @@ func (k Keeper) AfterEpochEnd(ctx sdk.Context, epochInfo epochstypes.EpochInfo) 
 	// check if epochInfo.Identifier starts with "airdrop"
 	k.Logger(ctx).Info(fmt.Sprintf("[CLAIM] checking if epoch %s is an airdrop epoch", epochInfo.Identifier))
 	if strings.HasPrefix(epochInfo.Identifier, "airdrop-") {
+
 		airdropIdentifier := strings.TrimPrefix(epochInfo.Identifier, "airdrop-")
 		k.Logger(ctx).Info(fmt.Sprintf("[CLAIM] trimmed airdrop identifier: %s", airdropIdentifier))
 

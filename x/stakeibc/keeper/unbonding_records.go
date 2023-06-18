@@ -3,6 +3,7 @@ package keeper
 import (
 	"fmt"
 
+	proto "github.com/cosmos/gogoproto/proto"
 	"github.com/spf13/cast"
 
 	errorsmod "cosmossdk.io/errors"
@@ -11,8 +12,6 @@ import (
 	"github.com/Stride-Labs/stride/v10/utils"
 	recordstypes "github.com/Stride-Labs/stride/v10/x/records/types"
 	"github.com/Stride-Labs/stride/v10/x/stakeibc/types"
-
-	proto "github.com/cosmos/gogoproto/proto"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"

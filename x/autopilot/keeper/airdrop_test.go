@@ -10,13 +10,13 @@ import (
 	claimtypes "github.com/Stride-Labs/stride/v10/x/claim/types"
 	stakeibctypes "github.com/Stride-Labs/stride/v10/x/stakeibc/types"
 
+	sdk "github.com/cosmos/cosmos-sdk/types"
+
 	"github.com/cosmos/ibc-go/v7/modules/apps/transfer"
 	transfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
 	clienttypes "github.com/cosmos/ibc-go/v7/modules/core/02-client/types"
 	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
 	ibctesting "github.com/cosmos/ibc-go/v7/testing"
-
-	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 // TODO: Separate out tests cases that are not necessarily Claim or Stakeibc related,

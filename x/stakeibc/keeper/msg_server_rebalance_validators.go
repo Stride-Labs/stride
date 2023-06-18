@@ -5,13 +5,13 @@ import (
 	"fmt"
 	"sort"
 
+	proto "github.com/cosmos/gogoproto/proto"
+
 	errorsmod "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
 
 	"github.com/Stride-Labs/stride/v10/utils"
 	"github.com/Stride-Labs/stride/v10/x/stakeibc/types"
-
-	proto "github.com/cosmos/gogoproto/proto"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"

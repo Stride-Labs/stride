@@ -10,10 +10,10 @@ import (
 	recordstypes "github.com/Stride-Labs/stride/v10/x/records/types"
 	stakeibctypes "github.com/Stride-Labs/stride/v10/x/stakeibc/types"
 
+	sdk "github.com/cosmos/cosmos-sdk/types"
+
 	icatypes "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/types"
 	ibctesting "github.com/cosmos/ibc-go/v7/testing"
-
-	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	_ "github.com/stretchr/testify/suite"
 )

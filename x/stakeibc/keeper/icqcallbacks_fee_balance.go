@@ -1,6 +1,8 @@
 package keeper
 
 import (
+	proto "github.com/cosmos/gogoproto/proto"
+
 	errorsmod "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
 
@@ -10,13 +12,12 @@ import (
 	icqtypes "github.com/Stride-Labs/stride/v10/x/interchainquery/types"
 	"github.com/Stride-Labs/stride/v10/x/stakeibc/types"
 
-	proto "github.com/cosmos/gogoproto/proto"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+
 	ibctypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
 	transfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
 	clienttypes "github.com/cosmos/ibc-go/v7/modules/core/02-client/types"
 	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
-
-	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 // FeeBalanceCallback is a callback handler for FeeBalnce queries.
