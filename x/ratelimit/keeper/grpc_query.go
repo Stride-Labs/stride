@@ -16,7 +16,7 @@ import (
 var _ types.QueryServer = Keeper{}
 
 // Query all rate limits
-func (k Keeper) AllRateLimits(c context.Context, req *types.QueryAllRateLimitsRequest) (*types.QueryAllRateLimitsResponse, error) {
+func (k Keeper) AllRateLimits(c context.Context, _ *types.QueryAllRateLimitsRequest) (*types.QueryAllRateLimitsResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
 	rateLimits := k.GetAllRateLimits(ctx)
 	return &types.QueryAllRateLimitsResponse{RateLimits: rateLimits}, nil
@@ -73,14 +73,14 @@ func (k Keeper) RateLimitsByChannelId(c context.Context, req *types.QueryRateLim
 }
 
 // Query all blacklisted denoms
-func (k Keeper) AllBlacklistedDenoms(c context.Context, req *types.QueryAllBlacklistedDenomsRequest) (*types.QueryAllBlacklistedDenomsResponse, error) {
+func (k Keeper) AllBlacklistedDenoms(c context.Context, _ *types.QueryAllBlacklistedDenomsRequest) (*types.QueryAllBlacklistedDenomsResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
 	blacklistedDenoms := k.GetAllBlacklistedDenoms(ctx)
 	return &types.QueryAllBlacklistedDenomsResponse{Denoms: blacklistedDenoms}, nil
 }
 
 // Query all whitelisted addresses
-func (k Keeper) AllWhitelistedAddresses(c context.Context, req *types.QueryAllWhitelistedAddressesRequest) (*types.QueryAllWhitelistedAddressesResponse, error) {
+func (k Keeper) AllWhitelistedAddresses(c context.Context, _ *types.QueryAllWhitelistedAddressesRequest) (*types.QueryAllWhitelistedAddressesResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
 	whitelistedAddresses := k.GetAllWhitelistedAddressPairs(ctx)
 	return &types.QueryAllWhitelistedAddressesResponse{AddressPairs: whitelistedAddresses}, nil

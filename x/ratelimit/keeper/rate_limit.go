@@ -16,8 +16,8 @@ import (
 )
 
 // Get the rate limit byte key built from the denom and channelId
-func GetRateLimitItemKey(denom string, channelId string) []byte {
-	return append(types.KeyPrefix(denom), types.KeyPrefix(channelId)...)
+func GetRateLimitItemKey(denom string, channelID string) []byte {
+	return append(types.KeyPrefix(denom), types.KeyPrefix(channelID)...)
 }
 
 // The total value on a given path (aka, the denominator in the percentage calculation)
@@ -222,11 +222,11 @@ func (k Keeper) GetAllPendingSendPackets(ctx sdk.Context) []string {
 	for ; iterator.Valid(); iterator.Next() {
 		key := iterator.Key()
 
-		channelId := string(key[:types.PendingSendPacketChannelLength])
-		channelId = strings.TrimRight(channelId, "\x00") // removes null bytes from suffix
+		channelID := string(key[:types.PendingSendPacketChannelLength])
+		channelID = strings.TrimRight(channelID, "\x00") // removes null bytes from suffix
 		sequence := binary.BigEndian.Uint64(key[types.PendingSendPacketChannelLength:])
 
-		packetId := fmt.Sprintf("%s/%d", channelId, sequence)
+		packetId := fmt.Sprintf("%s/%d", channelID, sequence)
 		pendingPackets = append(pendingPackets, packetId)
 	}
 

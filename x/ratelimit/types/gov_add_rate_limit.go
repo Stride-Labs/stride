@@ -21,12 +21,12 @@ func init() {
 
 var _ govtypes.Content = &AddRateLimitProposal{}
 
-func NewAddRateLimitProposal(title, description, denom, channelId string, maxPercentSend sdkmath.Int, maxPercentRecv sdkmath.Int, durationHours uint64) govtypes.Content {
+func NewAddRateLimitProposal(title, description, denom, channelID string, maxPercentSend sdkmath.Int, maxPercentRecv sdkmath.Int, durationHours uint64) govtypes.Content {
 	return &AddRateLimitProposal{
 		Title:          title,
 		Description:    description,
 		Denom:          denom,
-		ChannelId:      channelId,
+		ChannelId:      channelID,
 		MaxPercentSend: maxPercentSend,
 		MaxPercentRecv: maxPercentRecv,
 		DurationHours:  durationHours,

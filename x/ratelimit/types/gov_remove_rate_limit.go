@@ -20,12 +20,12 @@ func init() {
 
 var _ govtypes.Content = &RemoveRateLimitProposal{}
 
-func NewRemoveRateLimitProposal(title, description, denom, channelId string) govtypes.Content {
+func NewRemoveRateLimitProposal(title, description, denom, channelID string) govtypes.Content {
 	return &RemoveRateLimitProposal{
 		Title:       title,
 		Description: description,
 		Denom:       denom,
-		ChannelId:   channelId,
+		ChannelId:   channelID,
 	}
 }
 

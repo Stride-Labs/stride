@@ -64,12 +64,12 @@ var (
 )
 
 // Helper function to create a channel and prevent a channel not exists error
-func (s *KeeperTestSuite) createChannel(channelId string) {
-	s.App.IBCKeeper.ChannelKeeper.SetChannel(s.Ctx, transfertypes.PortID, channelId, channeltypes.Channel{})
+func (s *KeeperTestSuite) createChannel(channelID string) {
+	s.App.IBCKeeper.ChannelKeeper.SetChannel(s.Ctx, transfertypes.PortID, channelID, channeltypes.Channel{})
 }
 
 // Helper function to mint tokens and create channel value to prevent a zero channel value error
-func (s *KeeperTestSuite) createChannelValue(denom string, channelValue sdkmath.Int) {
+func (s *KeeperTestSuite) createChannelValue(channelValue sdkmath.Int) {
 	err := s.App.BankKeeper.MintCoins(s.Ctx, minttypes.ModuleName, sdk.NewCoins(sdk.NewCoin(addRateLimitMsg.Denom, channelValue)))
 	s.Require().NoError(err)
 }
@@ -102,21 +102,20 @@ func (s *KeeperTestSuite) addRateLimitWithError(expectedErr *errorsmod.Error) {
 }
 
 func (s *KeeperTestSuite) TestMsgServer_AddRateLimit() {
-	denom := addRateLimitMsg.Denom
-	channelId := addRateLimitMsg.ChannelId
+	channelID := addRateLimitMsg.ChannelId
 	channelValue := sdkmath.NewInt(100)
 
 	// First try to add a rate limit when there's no channel value, it will fail
 	s.addRateLimitWithError(types.ErrZeroChannelValue)
 
 	// Create channel value
-	s.createChannelValue(denom, channelValue)
+	s.createChannelValue(channelValue)
 
 	// Then try to add a rate limit before the channel has been created, it will also fail
 	s.addRateLimitWithError(types.ErrChannelNotFound)
 
 	// Create the channel
-	s.createChannel(channelId)
+	s.createChannel(channelID)
 
 	// Now add a rate limit successfully
 	s.addRateLimitSuccessful()
@@ -127,12 +126,12 @@ func (s *KeeperTestSuite) TestMsgServer_AddRateLimit() {
 
 func (s *KeeperTestSuite) TestMsgServer_UpdateRateLimit() {
 	denom := updateRateLimitMsg.Denom
-	channelId := updateRateLimitMsg.ChannelId
+	channelID := updateRateLimitMsg.ChannelId
 	channelValue := sdkmath.NewInt(100)
 
 	// Create channel and channel value
-	s.createChannel(channelId)
-	s.createChannelValue(denom, channelValue)
+	s.createChannel(channelID)
+	s.createChannelValue(channelValue)
 
 	// Attempt to update a rate limit that does not exist
 	err := gov.UpdateRateLimit(s.Ctx, s.App.RatelimitKeeper, &updateRateLimitMsg)
@@ -146,7 +145,7 @@ func (s *KeeperTestSuite) TestMsgServer_UpdateRateLimit() {
 	s.Require().NoError(err)
 
 	// Check ratelimit quota is updated correctly
-	updatedRateLimit, found := s.App.RatelimitKeeper.GetRateLimit(s.Ctx, denom, channelId)
+	updatedRateLimit, found := s.App.RatelimitKeeper.GetRateLimit(s.Ctx, denom, channelID)
 	s.Require().True(found)
 	s.Require().Equal(updatedRateLimit.Quota, &types.Quota{
 		MaxPercentSend: updateRateLimitMsg.MaxPercentSend,
@@ -157,11 +156,11 @@ func (s *KeeperTestSuite) TestMsgServer_UpdateRateLimit() {
 
 func (s *KeeperTestSuite) TestMsgServer_RemoveRateLimit() {
 	denom := removeRateLimitMsg.Denom
-	channelId := removeRateLimitMsg.ChannelId
+	channelID := removeRateLimitMsg.ChannelId
 	channelValue := sdkmath.NewInt(100)
 
-	s.createChannel(channelId)
-	s.createChannelValue(denom, channelValue)
+	s.createChannel(channelID)
+	s.createChannelValue(channelValue)
 
 	// Attempt to remove a rate limit that does not exist
 	err := gov.RemoveRateLimit(s.Ctx, s.App.RatelimitKeeper, &removeRateLimitMsg)
@@ -175,17 +174,17 @@ func (s *KeeperTestSuite) TestMsgServer_RemoveRateLimit() {
 	s.Require().NoError(err)
 
 	// Confirm it was removed
-	_, found := s.App.RatelimitKeeper.GetRateLimit(s.Ctx, denom, channelId)
+	_, found := s.App.RatelimitKeeper.GetRateLimit(s.Ctx, denom, channelID)
 	s.Require().False(found)
 }
 
 func (s *KeeperTestSuite) TestMsgServer_ResetRateLimit() {
 	denom := resetRateLimitMsg.Denom
-	channelId := resetRateLimitMsg.ChannelId
+	channelID := resetRateLimitMsg.ChannelId
 	channelValue := sdkmath.NewInt(100)
 
-	s.createChannel(channelId)
-	s.createChannelValue(denom, channelValue)
+	s.createChannel(channelID)
+	s.createChannelValue(channelValue)
 
 	// Attempt to reset a rate limit that does not exist
 	err := gov.ResetRateLimit(s.Ctx, s.App.RatelimitKeeper, &resetRateLimitMsg)
@@ -199,7 +198,7 @@ func (s *KeeperTestSuite) TestMsgServer_ResetRateLimit() {
 	s.Require().NoError(err)
 
 	// Check ratelimit quota is flow correctly
-	resetRateLimit, found := s.App.RatelimitKeeper.GetRateLimit(s.Ctx, denom, channelId)
+	resetRateLimit, found := s.App.RatelimitKeeper.GetRateLimit(s.Ctx, denom, channelID)
 	s.Require().True(found)
 	s.Require().Equal(resetRateLimit.Flow, &types.Flow{
 		Inflow:       sdkmath.ZeroInt(),

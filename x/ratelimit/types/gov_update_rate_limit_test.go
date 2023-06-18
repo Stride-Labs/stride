@@ -17,7 +17,7 @@ func TestGovUpdateRateLimit(t *testing.T) {
 	validTitle := "UpdateRateLimit"
 	validDescription := "Updating a rate limit"
 	validDenom := "denom"
-	validChannelId := "channel-0"
+	validChannelID := "channel-0"
 	validMaxPercentSend := sdkmath.NewInt(10)
 	validMaxPercentRecv := sdkmath.NewInt(10)
 	validDurationHours := uint64(60)
@@ -33,7 +33,7 @@ func TestGovUpdateRateLimit(t *testing.T) {
 				Title:          validTitle,
 				Description:    validDescription,
 				Denom:          validDenom,
-				ChannelId:      validChannelId,
+				ChannelId:      validChannelID,
 				MaxPercentSend: validMaxPercentSend,
 				MaxPercentRecv: validMaxPercentRecv,
 				DurationHours:  validDurationHours,
@@ -45,7 +45,7 @@ func TestGovUpdateRateLimit(t *testing.T) {
 				Title:          "",
 				Description:    validDescription,
 				Denom:          validDenom,
-				ChannelId:      validChannelId,
+				ChannelId:      validChannelID,
 				MaxPercentSend: validMaxPercentSend,
 				MaxPercentRecv: validMaxPercentRecv,
 				DurationHours:  validDurationHours,
@@ -58,7 +58,7 @@ func TestGovUpdateRateLimit(t *testing.T) {
 				Title:          validDescription,
 				Description:    "",
 				Denom:          validDenom,
-				ChannelId:      validChannelId,
+				ChannelId:      validChannelID,
 				MaxPercentSend: validMaxPercentSend,
 				MaxPercentRecv: validMaxPercentRecv,
 				DurationHours:  validDurationHours,
@@ -71,7 +71,7 @@ func TestGovUpdateRateLimit(t *testing.T) {
 				Title:          validTitle,
 				Description:    validDescription,
 				Denom:          "",
-				ChannelId:      validChannelId,
+				ChannelId:      validChannelID,
 				MaxPercentSend: validMaxPercentSend,
 				MaxPercentRecv: validMaxPercentRecv,
 				DurationHours:  validDurationHours,
@@ -97,7 +97,7 @@ func TestGovUpdateRateLimit(t *testing.T) {
 				Title:          validTitle,
 				Description:    validDescription,
 				Denom:          validDenom,
-				ChannelId:      validChannelId,
+				ChannelId:      validChannelID,
 				MaxPercentSend: sdkmath.NewInt(-1),
 				MaxPercentRecv: validMaxPercentRecv,
 				DurationHours:  validDurationHours,
@@ -110,7 +110,7 @@ func TestGovUpdateRateLimit(t *testing.T) {
 				Title:          validTitle,
 				Description:    validDescription,
 				Denom:          validDenom,
-				ChannelId:      validChannelId,
+				ChannelId:      validChannelID,
 				MaxPercentSend: sdkmath.NewInt(101),
 				MaxPercentRecv: validMaxPercentRecv,
 				DurationHours:  validDurationHours,
@@ -123,7 +123,7 @@ func TestGovUpdateRateLimit(t *testing.T) {
 				Title:          validTitle,
 				Description:    validDescription,
 				Denom:          validDenom,
-				ChannelId:      validChannelId,
+				ChannelId:      validChannelID,
 				MaxPercentSend: validMaxPercentSend,
 				MaxPercentRecv: sdkmath.NewInt(-1),
 				DurationHours:  validDurationHours,
@@ -136,7 +136,7 @@ func TestGovUpdateRateLimit(t *testing.T) {
 				Title:          validTitle,
 				Description:    validDescription,
 				Denom:          validDenom,
-				ChannelId:      validChannelId,
+				ChannelId:      validChannelID,
 				MaxPercentSend: validMaxPercentSend,
 				MaxPercentRecv: sdkmath.NewInt(101),
 				DurationHours:  validDurationHours,
@@ -149,7 +149,7 @@ func TestGovUpdateRateLimit(t *testing.T) {
 				Title:          validTitle,
 				Description:    validDescription,
 				Denom:          validDenom,
-				ChannelId:      validChannelId,
+				ChannelId:      validChannelID,
 				MaxPercentSend: sdkmath.ZeroInt(),
 				MaxPercentRecv: sdkmath.ZeroInt(),
 				DurationHours:  validDurationHours,
@@ -162,7 +162,7 @@ func TestGovUpdateRateLimit(t *testing.T) {
 				Title:          validTitle,
 				Description:    validDescription,
 				Denom:          validDenom,
-				ChannelId:      validChannelId,
+				ChannelId:      validChannelID,
 				MaxPercentSend: validMaxPercentSend,
 				MaxPercentRecv: validMaxPercentRecv,
 				DurationHours:  0,
@@ -176,7 +176,7 @@ func TestGovUpdateRateLimit(t *testing.T) {
 			if test.err == "" {
 				require.NoError(t, test.proposal.ValidateBasic(), "test: %v", test.name)
 				require.Equal(t, test.proposal.Denom, validDenom, "denom")
-				require.Equal(t, test.proposal.ChannelId, validChannelId, "channelId")
+				require.Equal(t, test.proposal.ChannelId, validChannelID, "channelId")
 				require.Equal(t, test.proposal.MaxPercentSend, validMaxPercentSend, "maxPercentSend")
 				require.Equal(t, test.proposal.MaxPercentRecv, validMaxPercentRecv, "maxPercentRecv")
 				require.Equal(t, test.proposal.DurationHours, validDurationHours, "durationHours")

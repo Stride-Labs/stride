@@ -29,14 +29,14 @@ var (
 	PendingSendPacketChannelLength = 16
 )
 
-func GetPendingSendPacketKey(channelId string, sequenceNumber uint64) []byte {
-	channelIdBz := make([]byte, PendingSendPacketChannelLength)
-	copy(channelIdBz, channelId)
+func GetPendingSendPacketKey(channelID string, sequenceNumber uint64) []byte {
+	channelIDBz := make([]byte, PendingSendPacketChannelLength)
+	copy(channelIDBz, channelID)
 
 	sequenceNumberBz := make([]byte, 8)
 	binary.BigEndian.PutUint64(sequenceNumberBz, sequenceNumber)
 
-	return append(channelIdBz, sequenceNumberBz...)
+	return append(channelIDBz, sequenceNumberBz...)
 }
 
 func GetAddressWhitelistKey(sender, receiver string) []byte {

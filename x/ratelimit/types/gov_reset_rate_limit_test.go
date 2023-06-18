@@ -15,7 +15,7 @@ func TestGovResetRateLimit(t *testing.T) {
 	validTitle := "ResetRateLimit"
 	validDescription := "Resetting a rate limit"
 	validDenom := "denom"
-	validChannelId := "channel-0"
+	validChannelID := "channel-0"
 
 	tests := []struct {
 		name     string
@@ -28,7 +28,7 @@ func TestGovResetRateLimit(t *testing.T) {
 				Title:       validTitle,
 				Description: validDescription,
 				Denom:       validDenom,
-				ChannelId:   validChannelId,
+				ChannelId:   validChannelID,
 			},
 		},
 		{
@@ -37,7 +37,7 @@ func TestGovResetRateLimit(t *testing.T) {
 				Title:       "",
 				Description: validDescription,
 				Denom:       validDenom,
-				ChannelId:   validChannelId,
+				ChannelId:   validChannelID,
 			},
 			err: "title cannot be blank",
 		},
@@ -47,7 +47,7 @@ func TestGovResetRateLimit(t *testing.T) {
 				Title:       validTitle,
 				Description: "",
 				Denom:       validDenom,
-				ChannelId:   validChannelId,
+				ChannelId:   validChannelID,
 			},
 			err: "description cannot be blank",
 		},
@@ -57,7 +57,7 @@ func TestGovResetRateLimit(t *testing.T) {
 				Title:       validTitle,
 				Description: validDescription,
 				Denom:       "",
-				ChannelId:   validChannelId,
+				ChannelId:   validChannelID,
 			},
 			err: "invalid denom",
 		},
@@ -78,7 +78,7 @@ func TestGovResetRateLimit(t *testing.T) {
 			if test.err == "" {
 				require.NoError(t, test.proposal.ValidateBasic(), "test: %v", test.name)
 				require.Equal(t, test.proposal.Denom, validDenom, "denom")
-				require.Equal(t, test.proposal.ChannelId, validChannelId, "channelId")
+				require.Equal(t, test.proposal.ChannelId, validChannelID, "channelId")
 			} else {
 				require.ErrorContains(t, test.proposal.ValidateBasic(), test.err, "test: %v", test.name)
 			}

@@ -26,7 +26,7 @@ func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochInfo epochstypes.EpochInf
 	}
 }
 
-func (k Keeper) AfterEpochEnd(ctx sdk.Context, epochInfo epochstypes.EpochInfo) {}
+func (k Keeper) AfterEpochEnd(_ sdk.Context, _ epochstypes.EpochInfo) {}
 
 type Hooks struct {
 	k Keeper

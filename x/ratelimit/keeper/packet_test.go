@@ -438,7 +438,7 @@ func (s *KeeperTestSuite) TestTimeoutRateLimitedPacket() {
 	// Call OnTimeoutPacket again with a different sequence number
 	// (to simulate a timeout that arrived in a different quota window from where the send occurred)
 	// The outflow should not change
-	packet.Sequence -= 1
+	packet.Sequence--
 	err = s.App.RatelimitKeeper.TimeoutRateLimitedPacket(s.Ctx, packet)
 	s.Require().NoError(err, "no error expected when calling timeout packet again")
 
