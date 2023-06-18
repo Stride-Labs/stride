@@ -1,21 +1,22 @@
 package keeper
 
 import (
-	sdkmath "cosmossdk.io/math"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	proto "github.com/cosmos/gogoproto/proto"
-
 	errorsmod "cosmossdk.io/errors"
-	ibctypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
-	transfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
-	clienttypes "github.com/cosmos/ibc-go/v7/modules/core/02-client/types"
-	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
+	sdkmath "cosmossdk.io/math"
 
 	"github.com/Stride-Labs/stride/v10/utils"
 	epochtypes "github.com/Stride-Labs/stride/v10/x/epochs/types"
 	icqkeeper "github.com/Stride-Labs/stride/v10/x/interchainquery/keeper"
 	icqtypes "github.com/Stride-Labs/stride/v10/x/interchainquery/types"
 	"github.com/Stride-Labs/stride/v10/x/stakeibc/types"
+
+	proto "github.com/cosmos/gogoproto/proto"
+	ibctypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
+	transfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
+	clienttypes "github.com/cosmos/ibc-go/v7/modules/core/02-client/types"
+	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 // FeeBalanceCallback is a callback handler for FeeBalnce queries.

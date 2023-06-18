@@ -5,14 +5,16 @@ import (
 	"strconv"
 	"testing"
 
-	sdkmath "cosmossdk.io/math"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
+
+	sdkmath "cosmossdk.io/math"
 
 	keepertest "github.com/Stride-Labs/stride/v10/testutil/keeper"
 	"github.com/Stride-Labs/stride/v10/testutil/nullify"
 	"github.com/Stride-Labs/stride/v10/x/stakeibc/keeper"
 	"github.com/Stride-Labs/stride/v10/x/stakeibc/types"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 func createNHostZone(keeper *keeper.Keeper, ctx sdk.Context, n int) []types.HostZone {

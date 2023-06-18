@@ -6,17 +6,20 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/spf13/cast"
+
 	errorsmod "cosmossdk.io/errors"
-	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	"github.com/Stride-Labs/stride/v10/utils"
+	"github.com/Stride-Labs/stride/v10/x/interchainquery/types"
+
 	clienttypes "github.com/cosmos/ibc-go/v7/modules/core/02-client/types"
 	commitmenttypes "github.com/cosmos/ibc-go/v7/modules/core/23-commitment/types"
 	"github.com/cosmos/ibc-go/v7/modules/core/exported"
 	tendermint "github.com/cosmos/ibc-go/v7/modules/light-clients/07-tendermint"
 	ics23 "github.com/cosmos/ics23/go"
-	"github.com/spf13/cast"
 
-	"github.com/Stride-Labs/stride/v10/utils"
-	"github.com/Stride-Labs/stride/v10/x/interchainquery/types"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 type msgServer struct {
@@ -93,7 +96,6 @@ func (k Keeper) VerifyKeyProof(ctx sdk.Context, msg *types.MsgSubmitQueryRespons
 			return errorsmod.Wrapf(types.ErrInvalidICQProof, "Unable to verify membership proof: %s", err.Error())
 		}
 		k.Logger(ctx).Info(utils.LogICQCallbackWithHostZone(query.ChainId, query.CallbackId, "Inclusion proof validated - QueryId %s", query.Id))
-
 	} else {
 		// if we got a nil query response, verify non inclusion proof.
 		if err := merkleProof.VerifyNonMembership(clientStateProof, stateRoot, path); err != nil {

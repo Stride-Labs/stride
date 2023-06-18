@@ -3,20 +3,21 @@ package keeper
 import (
 	"fmt"
 
-	sdkmath "cosmossdk.io/math"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-
-	errorsmod "cosmossdk.io/errors"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
-	proto "github.com/cosmos/gogoproto/proto"
 	"github.com/spf13/cast"
 
-	icqkeeper "github.com/Stride-Labs/stride/v10/x/interchainquery/keeper"
+	errorsmod "cosmossdk.io/errors"
+	sdkmath "cosmossdk.io/math"
 
 	"github.com/Stride-Labs/stride/v10/utils"
+	icqkeeper "github.com/Stride-Labs/stride/v10/x/interchainquery/keeper"
 	icqtypes "github.com/Stride-Labs/stride/v10/x/interchainquery/types"
 	"github.com/Stride-Labs/stride/v10/x/stakeibc/types"
+
+	proto "github.com/cosmos/gogoproto/proto"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 )
 
 // WithdrawalBalanceCallback is a callback handler for WithdrawalBalance queries.

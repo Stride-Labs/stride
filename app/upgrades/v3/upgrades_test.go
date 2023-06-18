@@ -8,9 +8,7 @@ import (
 	"github.com/Stride-Labs/stride/v10/app/apptesting"
 )
 
-var (
-	airdropIdentifiers = []string{"stride", "gaia", "osmosis", "juno", "stars"}
-)
+var airdropIdentifiers = []string{"stride", "gaia", "osmosis", "juno", "stars"}
 
 const dummyUpgradeHeight = 5
 

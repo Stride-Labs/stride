@@ -3,13 +3,14 @@ package cli
 import (
 	"strconv"
 
+	"github.com/spf13/cobra"
+
+	"github.com/Stride-Labs/stride/v10/x/stakeibc/types"
+
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/tx"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/spf13/cobra"
-
-	"github.com/Stride-Labs/stride/v10/x/stakeibc/types"
 )
 
 const (

@@ -4,8 +4,6 @@ import (
 	"strconv"
 	"testing"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/types/query"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -13,6 +11,9 @@ import (
 	keepertest "github.com/Stride-Labs/stride/v10/testutil/keeper"
 	"github.com/Stride-Labs/stride/v10/testutil/nullify"
 	"github.com/Stride-Labs/stride/v10/x/icacallbacks/types"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/types/query"
 )
 
 // Prevent strconv unused error

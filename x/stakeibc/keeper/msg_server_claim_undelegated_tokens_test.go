@@ -5,16 +5,19 @@ import (
 	"strings"
 
 	sdkmath "cosmossdk.io/math"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
-	proto "github.com/cosmos/gogoproto/proto"
-	ibctesting "github.com/cosmos/ibc-go/v7/testing"
-	_ "github.com/stretchr/testify/suite"
 
 	epochtypes "github.com/Stride-Labs/stride/v10/x/epochs/types"
 	recordtypes "github.com/Stride-Labs/stride/v10/x/records/types"
 	stakeibckeeper "github.com/Stride-Labs/stride/v10/x/stakeibc/keeper"
 	stakeibctypes "github.com/Stride-Labs/stride/v10/x/stakeibc/types"
+
+	proto "github.com/cosmos/gogoproto/proto"
+	ibctesting "github.com/cosmos/ibc-go/v7/testing"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+
+	_ "github.com/stretchr/testify/suite"
 )
 
 type ClaimUndelegatedState struct {

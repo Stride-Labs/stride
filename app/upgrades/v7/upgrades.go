@@ -5,22 +5,6 @@ import (
 
 	errorsmod "cosmossdk.io/errors"
 
-	"github.com/cosmos/cosmos-sdk/codec"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/types/address"
-	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
-	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
-	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
-
-	"github.com/cosmos/cosmos-sdk/types/module"
-	distrtypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
-	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
-	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
-	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
-	icahostkeeper "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/host/keeper"
-	icahosttypes "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/host/types"
-	transfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
-
 	"github.com/Stride-Labs/stride/v10/utils"
 	epochskeeper "github.com/Stride-Labs/stride/v10/x/epochs/keeper"
 	epochstypes "github.com/Stride-Labs/stride/v10/x/epochs/types"
@@ -28,6 +12,22 @@ import (
 	minttypes "github.com/Stride-Labs/stride/v10/x/mint/types"
 	stakeibckeeper "github.com/Stride-Labs/stride/v10/x/stakeibc/keeper"
 	stakeibctypes "github.com/Stride-Labs/stride/v10/x/stakeibc/types"
+
+	icahostkeeper "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/host/keeper"
+	icahosttypes "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/host/types"
+	transfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
+
+	"github.com/cosmos/cosmos-sdk/codec"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/types/address"
+	"github.com/cosmos/cosmos-sdk/types/module"
+	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
+	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
+	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+	distrtypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
+	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
+	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 )
 
 // CreateUpgradeHandler creates an SDK upgrade handler for v7
@@ -148,7 +148,6 @@ func AddRedemptionRateSafetyChecks(ctx sdk.Context, k stakeibckeeper.Keeper) {
 	defaultMaxRedemptionRate := sdk.NewDecWithPrec(int64(params.DefaultMaxRedemptionRateThreshold), 2)
 
 	for _, hostZone := range k.GetAllHostZone(ctx) {
-
 		hostZone.MinRedemptionRate = defaultMinRedemptionRate
 		hostZone.MaxRedemptionRate = defaultMaxRedemptionRate
 		hostZone.Halted = false

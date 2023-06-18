@@ -1,18 +1,17 @@
 package keeper_test
 
 import (
-	// "fmt"
-
 	"fmt"
 	"math/rand"
 
 	sdkmath "cosmossdk.io/math"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	_ "github.com/stretchr/testify/suite"
 
 	recordtypes "github.com/Stride-Labs/stride/v10/x/records/types"
-
 	stakeibctypes "github.com/Stride-Labs/stride/v10/x/stakeibc/types"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	_ "github.com/stretchr/testify/suite"
 )
 
 type UpdateRedemptionRatesTestCase struct {

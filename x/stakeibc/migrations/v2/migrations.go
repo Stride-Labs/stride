@@ -1,15 +1,15 @@
 package v2
 
 import (
-	"github.com/cosmos/cosmos-sdk/codec"
-	"github.com/cosmos/cosmos-sdk/store/prefix"
-	storetypes "github.com/cosmos/cosmos-sdk/store/types"
-
 	errorsmod "cosmossdk.io/errors"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	oldstakeibctypes "github.com/Stride-Labs/stride/v10/x/stakeibc/migrations/v2/types"
 	stakeibctypes "github.com/Stride-Labs/stride/v10/x/stakeibc/types"
+
+	"github.com/cosmos/cosmos-sdk/codec"
+	"github.com/cosmos/cosmos-sdk/store/prefix"
+	storetypes "github.com/cosmos/cosmos-sdk/store/types"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 func migrateHostZone(store sdk.KVStore, cdc codec.BinaryCodec) error {

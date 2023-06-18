@@ -1,14 +1,14 @@
 package v2
 
 import (
-	"github.com/cosmos/cosmos-sdk/codec"
-	storetypes "github.com/cosmos/cosmos-sdk/store/types"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-
 	errorsmod "cosmossdk.io/errors"
 
 	oldclaimtypes "github.com/Stride-Labs/stride/v10/x/claim/migrations/v2/types"
 	claimtypes "github.com/Stride-Labs/stride/v10/x/claim/types"
+
+	"github.com/cosmos/cosmos-sdk/codec"
+	storetypes "github.com/cosmos/cosmos-sdk/store/types"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 func migrateClaimParams(store sdk.KVStore, cdc codec.Codec) error {

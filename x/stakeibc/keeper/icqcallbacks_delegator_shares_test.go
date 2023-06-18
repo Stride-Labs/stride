@@ -5,13 +5,13 @@ import (
 
 	sdkmath "cosmossdk.io/math"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
-
 	epochtypes "github.com/Stride-Labs/stride/v10/x/epochs/types"
 	icqtypes "github.com/Stride-Labs/stride/v10/x/interchainquery/types"
 	stakeibckeeper "github.com/Stride-Labs/stride/v10/x/stakeibc/keeper"
 	stakeibctypes "github.com/Stride-Labs/stride/v10/x/stakeibc/types"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 )
 
 type DelegatorSharesICQCallbackState struct {
@@ -220,7 +220,7 @@ func (s *KeeperTestSuite) TestDelegatorSharesCallback_ValidatorNotFound() {
 	tc := s.SetupDelegatorSharesICQCallback()
 
 	// Update the callback args to contain a validator address that doesn't exist
-	badCallbackArgs := s.CreateDelegatorSharesQueryResponse("fake_val", sdk.NewDec(1000)) // 1000 is aribtrary
+	badCallbackArgs := s.CreateDelegatorSharesQueryResponse("fake_val", sdk.NewDec(1000)) // 1000 is arbitrary
 	err := stakeibckeeper.DelegatorSharesCallback(s.App.StakeibcKeeper, s.Ctx, badCallbackArgs, tc.validArgs.query)
 	s.Require().EqualError(err, "no registered validator for address (fake_val): validator not found")
 }

@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	errorsmod "cosmossdk.io/errors"
+
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
 )
@@ -17,9 +18,7 @@ func init() {
 	govtypes.RegisterProposalType(ProposalTypeAddValidators)
 }
 
-var (
-	_ govtypes.Content = &AddValidatorsProposal{}
-)
+var _ govtypes.Content = &AddValidatorsProposal{}
 
 func NewAddValidatorsProposal(title, description, hostZone string, validators []*Validator) govtypes.Content {
 	return &AddValidatorsProposal{

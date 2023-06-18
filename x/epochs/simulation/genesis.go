@@ -7,9 +7,9 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/cosmos/cosmos-sdk/types/module"
-
 	"github.com/Stride-Labs/stride/v10/x/epochs/types"
+
+	"github.com/cosmos/cosmos-sdk/types/module"
 )
 
 // RandomizedGenState generates a random GenesisState for mint

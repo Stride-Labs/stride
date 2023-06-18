@@ -2,13 +2,15 @@ package keeper_test
 
 import (
 	sdkmath "cosmossdk.io/math"
-	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
-	_ "github.com/stretchr/testify/suite"
 
 	icacallbacktypes "github.com/Stride-Labs/stride/v10/x/icacallbacks/types"
 	stakeibckeeper "github.com/Stride-Labs/stride/v10/x/stakeibc/keeper"
 	"github.com/Stride-Labs/stride/v10/x/stakeibc/types"
 	stakeibctypes "github.com/Stride-Labs/stride/v10/x/stakeibc/types"
+
+	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
+
+	_ "github.com/stretchr/testify/suite"
 )
 
 type RebalanceCallbackState struct {

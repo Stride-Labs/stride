@@ -4,6 +4,12 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/Stride-Labs/stride/v10/utils"
+	"github.com/Stride-Labs/stride/v10/x/autopilot"
+	"github.com/Stride-Labs/stride/v10/x/autopilot/types"
+	claimtypes "github.com/Stride-Labs/stride/v10/x/claim/types"
+	stakeibctypes "github.com/Stride-Labs/stride/v10/x/stakeibc/types"
+
 	"github.com/cosmos/ibc-go/v7/modules/apps/transfer"
 	transfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
 	clienttypes "github.com/cosmos/ibc-go/v7/modules/core/02-client/types"
@@ -11,12 +17,6 @@ import (
 	ibctesting "github.com/cosmos/ibc-go/v7/testing"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-
-	"github.com/Stride-Labs/stride/v10/utils"
-	"github.com/Stride-Labs/stride/v10/x/autopilot"
-	"github.com/Stride-Labs/stride/v10/x/autopilot/types"
-	claimtypes "github.com/Stride-Labs/stride/v10/x/claim/types"
-	stakeibctypes "github.com/Stride-Labs/stride/v10/x/stakeibc/types"
 )
 
 // TODO: Separate out tests cases that are not necessarily Claim or Stakeibc related,
@@ -114,7 +114,7 @@ func (s *KeeperTestSuite) TestAirdropOnRecvPacket() {
 			destinationChannelID:         ibctesting.FirstChannelID,
 			destinationPortID:            transfertypes.PortID,
 			packetData: transfertypes.FungibleTokenPacketData{
-				Receiver: "address-will-get-overriden",
+				Receiver: "address-will-get-overridden",
 				Memo:     getClaimPacketMetadata(strideAddress),
 			},
 			transferShouldSucceed: true,

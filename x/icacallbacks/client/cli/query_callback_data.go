@@ -3,11 +3,12 @@ package cli
 import (
 	"context"
 
-	"github.com/cosmos/cosmos-sdk/client"
-	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/spf13/cobra"
 
 	"github.com/Stride-Labs/stride/v10/x/icacallbacks/types"
+
+	"github.com/cosmos/cosmos-sdk/client"
+	"github.com/cosmos/cosmos-sdk/client/flags"
 )
 
 func CmdListCallbackData() *cobra.Command {

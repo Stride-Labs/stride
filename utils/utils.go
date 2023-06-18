@@ -7,18 +7,18 @@ import (
 	"strconv"
 	"strings"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/types/address"
-	"github.com/cosmos/cosmos-sdk/types/bech32"
-
 	errorsmod "cosmossdk.io/errors"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-
-	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
 
 	config "github.com/Stride-Labs/stride/v10/cmd/strided/config"
 	icacallbacktypes "github.com/Stride-Labs/stride/v10/x/icacallbacks/types"
 	recordstypes "github.com/Stride-Labs/stride/v10/x/records/types"
+
+	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/types/address"
+	"github.com/cosmos/cosmos-sdk/types/bech32"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
 
 func FilterDepositRecords(arr []recordstypes.DepositRecord, condition func(recordstypes.DepositRecord) bool) (ret []recordstypes.DepositRecord) {
@@ -66,7 +66,7 @@ func Int32MapKeys[V any](m map[int32]V) []int32 {
 	return keys
 }
 
-//==============================  ADDRESS VERIFICATION UTILS  ================================
+// ==============================  ADDRESS VERIFICATION UTILS  ================================
 // ref: https://github.com/cosmos/cosmos-sdk/blob/b75c2ebcfab1a6b535723f1ac2889a2fc2509520/types/address.go#L177
 
 var errBech32EmptyAddress = errors.New("decoding Bech32 address failed: must provide a non empty address")

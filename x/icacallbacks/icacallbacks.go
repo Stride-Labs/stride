@@ -4,14 +4,17 @@ import (
 	"fmt"
 
 	errorsmod "cosmossdk.io/errors"
+
+	"github.com/Stride-Labs/stride/v10/x/icacallbacks/types"
+
 	"github.com/cometbft/cometbft/libs/log"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+
 	"github.com/cosmos/gogoproto/proto"
 	ibctransfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
 	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
 
-	"github.com/Stride-Labs/stride/v10/x/icacallbacks/types"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
 
 // Parses ICA tx responses and returns a list of each serialized response
@@ -35,7 +38,7 @@ func ParseTxMsgData(acknowledgementResult []byte) ([][]byte, error) {
 		return msgResponses, nil
 	default:
 		// for SDK 0.45 and below
-		var msgResponses = make([][]byte, len(txMsgData.Data))
+		msgResponses := make([][]byte, len(txMsgData.Data))
 		for i, msgData := range txMsgData.Data {
 			msgResponses[i] = msgData.Data
 		}

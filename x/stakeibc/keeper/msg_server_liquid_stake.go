@@ -3,24 +3,26 @@ package keeper
 import (
 	"context"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
-
 	errorsmod "cosmossdk.io/errors"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
 	epochtypes "github.com/Stride-Labs/stride/v10/x/epochs/types"
 	"github.com/Stride-Labs/stride/v10/x/stakeibc/types"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
 
 // Exchanges a user's native tokens for stTokens using the current redemption rate
 // The native tokens must live on Stride with an IBC denomination before this function is called
 // The typical flow consists, first, of a transfer of native tokens from the host zone to Stride,
-//    and then the invocation of this LiquidStake function
+//
+//	and then the invocation of this LiquidStake function
 //
 // WARNING: This function is invoked from the begin/end blocker in a way that does not revert partial state when
-//    an error is thrown (i.e. the execution is non-atomic).
-//    As a result, it is important that the validation steps are positioned at the top of the function,
-//    and logic that creates state changes (e.g. bank sends, mint) appear towards the end of the function
+//
+//	an error is thrown (i.e. the execution is non-atomic).
+//	As a result, it is important that the validation steps are positioned at the top of the function,
+//	and logic that creates state changes (e.g. bank sends, mint) appear towards the end of the function
 func (k msgServer) LiquidStake(goCtx context.Context, msg *types.MsgLiquidStake) (*types.MsgLiquidStakeResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 

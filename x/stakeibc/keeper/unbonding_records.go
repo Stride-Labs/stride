@@ -3,20 +3,21 @@ package keeper
 import (
 	"fmt"
 
-	sdkmath "cosmossdk.io/math"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-
-	errorsmod "cosmossdk.io/errors"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
-	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/spf13/cast"
 
-	proto "github.com/cosmos/gogoproto/proto"
+	errorsmod "cosmossdk.io/errors"
+	sdkmath "cosmossdk.io/math"
 
 	"github.com/Stride-Labs/stride/v10/utils"
 	recordstypes "github.com/Stride-Labs/stride/v10/x/records/types"
 	"github.com/Stride-Labs/stride/v10/x/stakeibc/types"
+
+	proto "github.com/cosmos/gogoproto/proto"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 )
 
 func (k Keeper) CreateEpochUnbondingRecord(ctx sdk.Context, epochNumber uint64) bool {
@@ -49,10 +50,11 @@ func (k Keeper) CreateEpochUnbondingRecord(ctx sdk.Context, epochNumber uint64) 
 // and then splitting the undelegation amount across validators
 //
 // returns
-//  (1) MsgUndelegate messages
-//	(2) Total Amount to unbond across all validators
-//	(3) Marshalled Callback Args
-//	(4) Relevant EpochUnbondingRecords that contain HostZoneUnbondings that are ready for unbonding
+//
+//	 (1) MsgUndelegate messages
+//		(2) Total Amount to unbond across all validators
+//		(3) Marshalled Callback Args
+//		(4) Relevant EpochUnbondingRecords that contain HostZoneUnbondings that are ready for unbonding
 func (k Keeper) GetHostZoneUnbondingMsgs(ctx sdk.Context, hostZone types.HostZone) (msgs []proto.Message, totalAmountToUnbond sdkmath.Int, marshalledCallbackArgs []byte, epochUnbondingRecordIds []uint64, err error) {
 	k.Logger(ctx).Info(utils.LogWithHostZone(hostZone.ChainId, "Preparing MsgUndelegates from the delegation account to each validator"))
 
@@ -93,7 +95,6 @@ func (k Keeper) GetHostZoneUnbondingMsgs(ctx sdk.Context, hostZone types.HostZon
 	finalUnbondingsByValidator := make(map[string]sdkmath.Int)
 	overflowAmount := sdkmath.ZeroInt()
 	for _, validator := range hostZone.Validators {
-
 		targetUnbondAmount := targetUnbondingsByValidator[validator.Address]
 		k.Logger(ctx).Info(utils.LogWithHostZone(hostZone.ChainId,
 			"  Validator %s - Weight: %d, Target Unbond Amount: %v, Current Delegations: %v", validator.Address, validator.Weight, targetUnbondAmount, validator.DelegationAmt))
@@ -233,7 +234,6 @@ func (k Keeper) InitiateAllHostZoneUnbondings(ctx sdk.Context, dayNumber uint64)
 	successfulUnbondings = []string{}
 	failedUnbondings = []string{}
 	for _, hostZone := range k.GetAllActiveHostZone(ctx) {
-
 		// Confirm the unbonding is supposed to be triggered this epoch
 		if dayNumber%hostZone.UnbondingFrequency != 0 {
 			k.Logger(ctx).Info(utils.LogWithHostZone(hostZone.ChainId,
@@ -313,7 +313,6 @@ func (k Keeper) SweepAllUnbondedTokensForHostZone(ctx sdk.Context, hostZone type
 	totalAmtTransferToRedemptionAcct := sdkmath.ZeroInt()
 	epochUnbondingRecordIds := []uint64{}
 	for _, epochUnbondingRecord := range epochUnbondingRecords {
-
 		// Get all the unbondings associated with the epoch + host zone pair
 		hostZoneUnbonding, found := k.RecordsKeeper.GetHostZoneUnbondingByChainId(ctx, epochUnbondingRecord.EpochNumber, hostZone.ChainId)
 		if !found {
@@ -412,10 +411,10 @@ func (k Keeper) SweepAllUnbondedTokensForHostZone(ctx sdk.Context, hostZone type
 
 // Sends all unbonded tokens to the redemption account
 // returns:
-//	   * success indicator if all chains succeeded
-//	   * list of successful chains
-//	   * list of tokens swept
-//	   * list of failed chains
+//   - success indicator if all chains succeeded
+//   - list of successful chains
+//   - list of tokens swept
+//   - list of failed chains
 func (k Keeper) SweepAllUnbondedTokens(ctx sdk.Context) (success bool, successfulSweeps []string, sweepAmounts []sdkmath.Int, failedSweeps []string) {
 	// this function returns true if all chains succeeded, false otherwise
 	// it also returns a list of successful chains (arg 2), tokens swept (arg 3), and failed chains (arg 4)

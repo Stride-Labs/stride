@@ -1,9 +1,10 @@
 package v2
 
 import (
+	"github.com/golang/protobuf/proto" //nolint:staticcheck
+
 	errorsmod "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
-	"github.com/golang/protobuf/proto" //nolint:staticcheck
 
 	icacallbacktypes "github.com/Stride-Labs/stride/v10/x/icacallbacks/types"
 	oldstakeibctypes "github.com/Stride-Labs/stride/v10/x/stakeibc/migrations/v2/types"

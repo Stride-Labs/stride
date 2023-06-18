@@ -3,17 +3,19 @@ package keeper
 import (
 	"fmt"
 
-	sdkmath "cosmossdk.io/math"
-	ibctransfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
-
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	ibctypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
-	clienttypes "github.com/cosmos/ibc-go/v7/modules/core/02-client/types"
 	"github.com/spf13/cast"
+
+	sdkmath "cosmossdk.io/math"
 
 	"github.com/Stride-Labs/stride/v10/utils"
 	recordstypes "github.com/Stride-Labs/stride/v10/x/records/types"
 	"github.com/Stride-Labs/stride/v10/x/stakeibc/types"
+
+	ibctransfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
+	ibctypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
+	clienttypes "github.com/cosmos/ibc-go/v7/modules/core/02-client/types"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 // Create a new deposit record for each host zone for the given epoch
@@ -36,7 +38,7 @@ func (k Keeper) CreateDepositRecordsForEpoch(ctx sdk.Context, epochNumber uint64
 
 // Iterate each deposit record marked TRANSFER_QUEUE and IBC transfer tokens from the Stride controller account to the delegation ICAs on each host zone
 func (k Keeper) TransferExistingDepositsToHostZones(ctx sdk.Context, epochNumber uint64, depositRecords []recordstypes.DepositRecord) {
-	k.Logger(ctx).Info("Transfering deposit records...")
+	k.Logger(ctx).Info("Transferring deposit records...")
 
 	transferDepositRecords := utils.FilterDepositRecords(depositRecords, func(record recordstypes.DepositRecord) (condition bool) {
 		isTransferRecord := record.Status == recordstypes.DepositRecord_TRANSFER_QUEUE

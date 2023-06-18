@@ -31,7 +31,7 @@ var (
 
 func GetPendingSendPacketKey(channelId string, sequenceNumber uint64) []byte {
 	channelIdBz := make([]byte, PendingSendPacketChannelLength)
-	copy(channelIdBz[:], channelId)
+	copy(channelIdBz, channelId)
 
 	sequenceNumberBz := make([]byte, 8)
 	binary.BigEndian.PutUint64(sequenceNumberBz, sequenceNumber)

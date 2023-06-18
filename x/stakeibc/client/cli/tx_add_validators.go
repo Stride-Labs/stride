@@ -4,12 +4,13 @@ import (
 	"encoding/json"
 	"os"
 
-	"github.com/cosmos/cosmos-sdk/client"
-	"github.com/cosmos/cosmos-sdk/client/flags"
-	"github.com/cosmos/cosmos-sdk/client/tx"
 	"github.com/spf13/cobra"
 
 	"github.com/Stride-Labs/stride/v10/x/stakeibc/types"
+
+	"github.com/cosmos/cosmos-sdk/client"
+	"github.com/cosmos/cosmos-sdk/client/flags"
+	"github.com/cosmos/cosmos-sdk/client/tx"
 )
 
 type ValidatorsList struct {
@@ -17,12 +18,13 @@ type ValidatorsList struct {
 }
 
 // Parse a JSON with a list of validators in the format
-// {
-//	  "validators": [
-//	     {"name": "val1", "address": "cosmosXXX", "weight": 1},
-//		 {"name": "val2", "address": "cosmosXXX", "weight": 2}
-//    ]
-// }
+//
+//	{
+//		  "validators": [
+//		     {"name": "val1", "address": "cosmosXXX", "weight": 1},
+//			 {"name": "val2", "address": "cosmosXXX", "weight": 2}
+//	   ]
+//	}
 func parseAddValidatorsFile(validatorsFile string) (validators ValidatorsList, err error) {
 	fileContents, err := os.ReadFile(validatorsFile)
 	if err != nil {

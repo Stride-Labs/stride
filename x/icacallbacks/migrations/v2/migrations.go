@@ -1,14 +1,14 @@
 package v2
 
 import (
+	errorsmod "cosmossdk.io/errors"
+
+	icacallbacktypes "github.com/Stride-Labs/stride/v10/x/icacallbacks/types"
+
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-
-	errorsmod "cosmossdk.io/errors"
-
-	icacallbacktypes "github.com/Stride-Labs/stride/v10/x/icacallbacks/types"
 )
 
 func migrateCallbacks(store sdk.KVStore, cdc codec.BinaryCodec) error {
@@ -18,7 +18,6 @@ func migrateCallbacks(store sdk.KVStore, cdc codec.BinaryCodec) error {
 	defer iter.Close()
 
 	for ; iter.Valid(); iter.Next() {
-
 		// Deserialize the callback data
 		var oldCallbackData icacallbacktypes.CallbackData
 		err := cdc.Unmarshal(iter.Value(), &oldCallbackData)

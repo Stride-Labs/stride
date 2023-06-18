@@ -3,15 +3,16 @@ package keeper_test
 import (
 	"fmt"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	ibctesting "github.com/cosmos/ibc-go/v7/testing"
-	_ "github.com/stretchr/testify/suite"
+	recordtypes "github.com/Stride-Labs/stride/v10/x/records/types"
+	stakeibc "github.com/Stride-Labs/stride/v10/x/stakeibc/types"
 
 	icatypes "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/types"
 	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
+	ibctesting "github.com/cosmos/ibc-go/v7/testing"
 
-	recordtypes "github.com/Stride-Labs/stride/v10/x/records/types"
-	stakeibc "github.com/Stride-Labs/stride/v10/x/stakeibc/types"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	_ "github.com/stretchr/testify/suite"
 )
 
 type DepositRecordStatusUpdate struct {

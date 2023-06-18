@@ -2,11 +2,12 @@ package keeper_test
 
 import (
 	sdkmath "cosmossdk.io/math"
-	_ "github.com/stretchr/testify/suite"
+
+	stakeibctypes "github.com/Stride-Labs/stride/v10/x/stakeibc/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	stakeibctypes "github.com/Stride-Labs/stride/v10/x/stakeibc/types"
+	_ "github.com/stretchr/testify/suite"
 )
 
 type DeleteValidatorTestCase struct {

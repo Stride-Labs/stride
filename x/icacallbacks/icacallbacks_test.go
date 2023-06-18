@@ -7,19 +7,21 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cometbft/cometbft/libs/log"
-	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
-	"github.com/cosmos/gogoproto/proto"
-	ibctransfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
-	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
-
 	"github.com/stretchr/testify/require"
 
 	"github.com/Stride-Labs/stride/v10/app/apptesting"
 	"github.com/Stride-Labs/stride/v10/x/icacallbacks"
 	icacallbacktypes "github.com/Stride-Labs/stride/v10/x/icacallbacks/types"
+
+	"github.com/cometbft/cometbft/libs/log"
+
+	"github.com/cosmos/gogoproto/proto"
+	ibctransfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
+	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
+
+	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 )
 
 func TestParseTxMsgDataCurrent(t *testing.T) {
@@ -49,11 +51,11 @@ func TestParseTxMsgDataLegacy(t *testing.T) {
 	expectedMessages := [][]byte{{1}, {2, 2}, {3, 3}}
 
 	msgData := &sdk.TxMsgData{
-		Data: make([]*sdk.MsgData, len(expectedMessages)), //nolint:staticcheck
+		Data: make([]*sdk.MsgData, len(expectedMessages)), 
 	}
 	for i, msgBytes := range expectedMessages {
 		typeUrl := "type" + strconv.Itoa(i)
-		msgData.Data[i] = &sdk.MsgData{ //nolint:staticcheck
+		msgData.Data[i] = &sdk.MsgData{ 
 			MsgType: typeUrl,
 			Data:    msgBytes,
 		}
@@ -179,7 +181,7 @@ func TestUnwrapAcknowledgement(t *testing.T) {
 			// Call unpack ack response and check error
 			ackResponse, err := icacallbacks.UnpackAcknowledgementResponse(sdk.Context{}, log.NewNopLogger(), ackBz, tc.isICA)
 			if tc.functionError != "" {
-				require.ErrorContains(t, err, tc.functionError, "unpacking acknowledgement reponse should have resulted in a function error")
+				require.ErrorContains(t, err, tc.functionError, "unpacking acknowledgement response should have resulted in a function error")
 				return
 			}
 			require.NoError(t, err, "no error expected when unpacking ack")

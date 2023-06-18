@@ -4,11 +4,12 @@ import (
 	"testing"
 	"time"
 
-	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-
 	strideapp "github.com/Stride-Labs/stride/v10/app"
 	"github.com/Stride-Labs/stride/v10/x/claim/keeper"
+
+	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 func ClaimKeeper(t testing.TB) (*keeper.Keeper, sdk.Context) {

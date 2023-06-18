@@ -3,11 +3,12 @@ package keeper_test
 import (
 	"testing"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 
 	testkeeper "github.com/Stride-Labs/stride/v10/testutil/keeper"
 	"github.com/Stride-Labs/stride/v10/x/records/types"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 func TestParamsQuery(t *testing.T) {

@@ -5,17 +5,17 @@ import (
 
 	errorsmod "cosmossdk.io/errors"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	capabilitytypes "github.com/cosmos/cosmos-sdk/x/capability/types"
+	"github.com/Stride-Labs/stride/v10/x/autopilot/keeper"
+	"github.com/Stride-Labs/stride/v10/x/autopilot/types"
+
 	ibctransfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
 	transfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
 	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
 	porttypes "github.com/cosmos/ibc-go/v7/modules/core/05-port/types"
-
-	"github.com/Stride-Labs/stride/v10/x/autopilot/keeper"
-	"github.com/Stride-Labs/stride/v10/x/autopilot/types"
-
 	ibcexported "github.com/cosmos/ibc-go/v7/modules/core/exported"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	capabilitytypes "github.com/cosmos/cosmos-sdk/x/capability/types"
 )
 
 const MaxMemoCharLength = 256
@@ -196,7 +196,7 @@ func (im IBCModule) OnRecvPacket(
 		}
 		im.keeper.Logger(ctx).Info(fmt.Sprintf("Forwaring packet from %s to stakeibc", newData.Sender))
 
-		// Try to liquid stake - return an ack error if it fails, otherwise return the ack generated from the earlier packet propogation
+		// Try to liquid stake - return an ack error if it fails, otherwise return the ack generated from the earlier packet propagation
 		if err := im.keeper.TryLiquidStaking(ctx, packet, newData, routingInfo); err != nil {
 			im.keeper.Logger(ctx).Error(fmt.Sprintf("Error liquid staking packet from autopilot for %s: %s", newData.Sender, err.Error()))
 			return channeltypes.NewErrorAcknowledgement(err)

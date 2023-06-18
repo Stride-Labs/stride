@@ -3,7 +3,6 @@ package keeper_test
 import (
 	"testing"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 
 	sdkmath "cosmossdk.io/math"
@@ -12,6 +11,8 @@ import (
 	"github.com/Stride-Labs/stride/v10/testutil/nullify"
 	"github.com/Stride-Labs/stride/v10/x/records/keeper"
 	"github.com/Stride-Labs/stride/v10/x/records/types"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 func createNEpochUnbondingRecord(keeper *keeper.Keeper, ctx sdk.Context, n int) ([]types.EpochUnbondingRecord, map[string]types.HostZoneUnbonding) {

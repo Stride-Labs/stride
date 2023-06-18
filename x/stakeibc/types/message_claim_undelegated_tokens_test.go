@@ -4,10 +4,11 @@ import (
 	"math"
 	"testing"
 
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/stretchr/testify/require"
 
 	"github.com/Stride-Labs/stride/v10/testutil/sample"
+
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
 
 func TestMsgClaimUndelegatedTokens_ValidateBasic(t *testing.T) {

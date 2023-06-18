@@ -4,12 +4,14 @@ import (
 	"fmt"
 
 	sdkmath "cosmossdk.io/math"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	_ "github.com/stretchr/testify/suite"
 
 	epochtypes "github.com/Stride-Labs/stride/v10/x/epochs/types"
 	recordtypes "github.com/Stride-Labs/stride/v10/x/records/types"
 	stakeibctypes "github.com/Stride-Labs/stride/v10/x/stakeibc/types"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	_ "github.com/stretchr/testify/suite"
 )
 
 type RedeemStakeState struct {

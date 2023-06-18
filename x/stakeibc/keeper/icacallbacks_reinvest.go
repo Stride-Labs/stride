@@ -3,22 +3,22 @@ package keeper
 import (
 	"fmt"
 
-	"github.com/cosmos/cosmos-sdk/types/bech32"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
-
-	icqtypes "github.com/Stride-Labs/stride/v10/x/interchainquery/types"
+	errorsmod "cosmossdk.io/errors"
 
 	"github.com/Stride-Labs/stride/v10/utils"
 	epochtypes "github.com/Stride-Labs/stride/v10/x/epochs/types"
 	icacallbackstypes "github.com/Stride-Labs/stride/v10/x/icacallbacks/types"
+	icqtypes "github.com/Stride-Labs/stride/v10/x/interchainquery/types"
 	recordstypes "github.com/Stride-Labs/stride/v10/x/records/types"
 	"github.com/Stride-Labs/stride/v10/x/stakeibc/types"
 
-	errorsmod "cosmossdk.io/errors"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/gogoproto/proto"
 	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/types/bech32"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 )
 
 // Marshalls reinvest callback arguments

@@ -5,16 +5,15 @@ import (
 	"fmt"
 	"math"
 
-	sdkmath "cosmossdk.io/math"
-
-	"github.com/cosmos/cosmos-sdk/store/prefix"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-
 	errorsmod "cosmossdk.io/errors"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	sdkmath "cosmossdk.io/math"
 
 	"github.com/Stride-Labs/stride/v10/utils"
 	"github.com/Stride-Labs/stride/v10/x/stakeibc/types"
+
+	"github.com/cosmos/cosmos-sdk/store/prefix"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
 
 // SetHostZone set a specific hostZone in the store

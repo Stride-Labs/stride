@@ -3,7 +3,6 @@ package keeper_test
 import (
 	"testing"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -11,6 +10,8 @@ import (
 	keepertest "github.com/Stride-Labs/stride/v10/testutil/keeper"
 	"github.com/Stride-Labs/stride/v10/testutil/nullify"
 	"github.com/Stride-Labs/stride/v10/x/stakeibc/types"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 func TestValidatorQuery(t *testing.T) {

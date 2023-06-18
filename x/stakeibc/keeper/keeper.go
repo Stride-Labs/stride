@@ -3,29 +3,29 @@ package keeper
 import (
 	"fmt"
 
-	errorsmod "cosmossdk.io/errors"
-	"github.com/cometbft/cometbft/libs/log"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/spf13/cast"
 
-	"github.com/cosmos/cosmos-sdk/codec"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
+	errorsmod "cosmossdk.io/errors"
 
+	epochstypes "github.com/Stride-Labs/stride/v10/x/epochs/types"
+	icacallbackskeeper "github.com/Stride-Labs/stride/v10/x/icacallbacks/keeper"
 	icqkeeper "github.com/Stride-Labs/stride/v10/x/interchainquery/keeper"
+	recordsmodulekeeper "github.com/Stride-Labs/stride/v10/x/records/keeper"
 	"github.com/Stride-Labs/stride/v10/x/stakeibc/types"
 
-	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
-	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
+	"github.com/cometbft/cometbft/libs/log"
+
 	icacontrollerkeeper "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/controller/keeper"
 	ibckeeper "github.com/cosmos/ibc-go/v7/modules/core/keeper"
 	ibctmtypes "github.com/cosmos/ibc-go/v7/modules/light-clients/07-tendermint"
 
+	"github.com/cosmos/cosmos-sdk/codec"
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
-
-	epochstypes "github.com/Stride-Labs/stride/v10/x/epochs/types"
-	icacallbackskeeper "github.com/Stride-Labs/stride/v10/x/icacallbacks/keeper"
-	recordsmodulekeeper "github.com/Stride-Labs/stride/v10/x/records/keeper"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
+	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
+	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 )
 
 type (
@@ -277,7 +277,6 @@ func (k Keeper) IsRedemptionRateWithinSafetyBounds(ctx sdk.Context, zone types.H
 //   - change a weight from zero to non-zero
 //   - add a new validator with non-zero weight
 func (k Keeper) ConfirmValSetHasSpace(ctx sdk.Context, validators []*types.Validator) error {
-
 	// get max val parameter
 	maxNumVals, err := cast.ToIntE(k.GetParam(ctx, types.KeySafetyNumValidators))
 	if err != nil {

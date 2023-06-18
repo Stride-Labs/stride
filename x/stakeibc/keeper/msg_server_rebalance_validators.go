@@ -5,16 +5,17 @@ import (
 	"fmt"
 	"sort"
 
-	sdkmath "cosmossdk.io/math"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	proto "github.com/cosmos/gogoproto/proto"
-
 	errorsmod "cosmossdk.io/errors"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	stakingTypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+	sdkmath "cosmossdk.io/math"
 
 	"github.com/Stride-Labs/stride/v10/utils"
 	"github.com/Stride-Labs/stride/v10/x/stakeibc/types"
+
+	proto "github.com/cosmos/gogoproto/proto"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	stakingTypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 )
 
 func (k msgServer) RebalanceValidators(goCtx context.Context, msg *types.MsgRebalanceValidators) (*types.MsgRebalanceValidatorsResponse, error) {
@@ -99,7 +100,8 @@ func (k msgServer) RebalanceValidators(goCtx context.Context, msg *types.MsgReba
 				DelegatorAddress:    delegatorAddress,
 				ValidatorSrcAddress: overWeightElem.valAddr,
 				ValidatorDstAddress: underWeightElem.valAddr,
-				Amount:              sdk.NewCoin(hostZone.HostDenom, overWeightElemAbs)}
+				Amount:              sdk.NewCoin(hostZone.HostDenom, overWeightElemAbs),
+			}
 			msgs = append(msgs, redelegateMsg)
 			overWeightElem.deltaAmt = sdkmath.ZeroInt()
 		} else if underWeightElem.deltaAmt.LT(overWeightElemAbs) {
@@ -111,7 +113,8 @@ func (k msgServer) RebalanceValidators(goCtx context.Context, msg *types.MsgReba
 				DelegatorAddress:    delegatorAddress,
 				ValidatorSrcAddress: overWeightElem.valAddr,
 				ValidatorDstAddress: underWeightElem.valAddr,
-				Amount:              sdk.NewCoin(hostZone.HostDenom, underWeightElem.deltaAmt)}
+				Amount:              sdk.NewCoin(hostZone.HostDenom, underWeightElem.deltaAmt),
+			}
 			msgs = append(msgs, redelegateMsg)
 			underWeightElem.deltaAmt = sdkmath.ZeroInt()
 		} else {
@@ -123,7 +126,8 @@ func (k msgServer) RebalanceValidators(goCtx context.Context, msg *types.MsgReba
 				DelegatorAddress:    delegatorAddress,
 				ValidatorSrcAddress: overWeightElem.valAddr,
 				ValidatorDstAddress: underWeightElem.valAddr,
-				Amount:              sdk.NewCoin(hostZone.HostDenom, underWeightElem.deltaAmt)}
+				Amount:              sdk.NewCoin(hostZone.HostDenom, underWeightElem.deltaAmt),
+			}
 			msgs = append(msgs, redelegateMsg)
 			overWeightElem.deltaAmt = sdkmath.ZeroInt()
 			underWeightElem.deltaAmt = sdkmath.ZeroInt()

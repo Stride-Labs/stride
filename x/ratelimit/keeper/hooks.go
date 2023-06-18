@@ -3,13 +3,14 @@ package keeper
 import (
 	"fmt"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
-
 	epochstypes "github.com/Stride-Labs/stride/v10/x/epochs/types"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 // Before each hour epoch, check if any of the rate limits have expired,
-//  and reset them if they have
+//
+//	and reset them if they have
 func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochInfo epochstypes.EpochInfo) {
 	if epochInfo.Identifier == epochstypes.HOUR_EPOCH {
 		epochHour := uint64(epochInfo.CurrentEpoch)

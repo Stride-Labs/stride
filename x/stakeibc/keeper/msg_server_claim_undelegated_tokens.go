@@ -4,15 +4,16 @@ import (
 	"context"
 	"fmt"
 
-	recordstypes "github.com/Stride-Labs/stride/v10/x/records/types"
-
 	errorsmod "cosmossdk.io/errors"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	bankTypes "github.com/cosmos/cosmos-sdk/x/bank/types"
-	proto "github.com/cosmos/gogoproto/proto"
 
 	epochstypes "github.com/Stride-Labs/stride/v10/x/epochs/types"
+	recordstypes "github.com/Stride-Labs/stride/v10/x/records/types"
 	"github.com/Stride-Labs/stride/v10/x/stakeibc/types"
+
+	proto "github.com/cosmos/gogoproto/proto"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	bankTypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 )
 
 type IcaTx struct {

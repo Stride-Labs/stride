@@ -2,17 +2,14 @@ run:
   timeout: 20m
   disable-all: true
   tests: true
+
+linters:
   enable:
     - asasalint
     - asciicheck
     - bidichk
     - bodyclose
-    - containedctx
-    - contextcheck
-    - cyclop
-    - deadcode
     - decorder
-    - depguard
     - dogsled
     - dupl
     - durationcheck
@@ -21,26 +18,14 @@ run:
     - errname
     - errorlint
     - execinquery
-    - exhaustive
-    - exhaustivestruct
-    - exhaustruct
     - exportloopref
     - forbidigo
     - forcetypeassert
-    - funlen
     - gci
-    - gochecknoglobals
-    - gochecknoinits
-    - gocognit
     - goconst
     - gocritic
-    - gocyclo
-    - godot
-    - godox
-    - goerr113
     - gofumpt
     - goheader
-    - golint
     - gomnd
     - gomoddirectives
     - gomodguard
@@ -49,57 +34,52 @@ run:
     - gosimple
     - govet
     - grouper
-    - ifshort
     - importas
     - ineffassign
     - interfacebloat
-    - interfacer
     - ireturn
     - lll
     - loggercheck
     - maintidx
     - makezero
-    - maligned
     - misspell
     - nakedret
     - nestif
     - nilerr
     - nilnil
-    - nlreturn
-    - noctx
     - nolintlint
-    - nonamedreturns
-    - nosnakecase
     - nosprintfhostport
-    - paralleltest
-    - prealloc
     - predeclared
     - promlinter
     - reassign
     - revive
-    - rowserrcheck
-    - scopelint
     - sqlclosecheck
     - staticcheck
-    - structcheck
     - stylecheck
-    - tagliatelle
     - tenv
     - testableexamples
-    - testpackage
     - thelper
-    - tparallel
     - typecheck
     - unconvert
     - unparam
     - unused
     - usestdlibvars
-    - varcheck
-    - varnamelen
-    - wastedassign
     - whitespace
-    - wrapcheck
     - wsl
 
 issues:
   max-same-issues: 0
+
+linters-settings:
+  gci:
+    sections:
+      - standard # Standard section: captures all standard packages.
+      - default # Default section: contains all imports that could not be matched to another section type.
+      - blank # blank imports
+      - dot # dot imports
+      - prefix(github.com/cometbft/cometbft) # comet
+      - prefix(github.com/cosmos) # cosmos
+      - prefix(cosmossdk.io) #cosmossdk.io
+      - prefix(github.com/cosmos/cosmos-sdk) #cosmos-sdk
+      - prefix(github.com/Stride-Labs) # stride
+

@@ -4,11 +4,10 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/cosmos/cosmos-sdk/telemetry"
-
 	"github.com/Stride-Labs/stride/v10/x/stakeibc/keeper"
 	"github.com/Stride-Labs/stride/v10/x/stakeibc/types"
 
+	"github.com/cosmos/cosmos-sdk/telemetry"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 

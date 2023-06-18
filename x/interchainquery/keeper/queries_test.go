@@ -3,13 +3,14 @@ package keeper_test
 import (
 	"testing"
 
-	sdkmath "cosmossdk.io/math"
-
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
+
+	sdkmath "cosmossdk.io/math"
 
 	"github.com/Stride-Labs/stride/v10/x/interchainquery/keeper"
 	"github.com/Stride-Labs/stride/v10/x/interchainquery/types"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 func TestUnmarshalAmountFromBalanceQuery(t *testing.T) {

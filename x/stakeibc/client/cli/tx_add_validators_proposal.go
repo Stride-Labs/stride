@@ -5,20 +5,20 @@ import (
 	"os"
 	"strings"
 
-	"github.com/cosmos/cosmos-sdk/codec"
+	"github.com/spf13/cobra"
+
+	errorsmod "cosmossdk.io/errors"
+
+	"github.com/Stride-Labs/stride/v10/x/stakeibc/types"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/tx"
+	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-
-	errorsmod "cosmossdk.io/errors"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/version"
 	govcli "github.com/cosmos/cosmos-sdk/x/gov/client/cli"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
-	"github.com/spf13/cobra"
-
-	"github.com/Stride-Labs/stride/v10/x/stakeibc/types"
 )
 
 func parseAddValidatorsProposalFile(cdc codec.JSONCodec, proposalFile string) (proposal types.AddValidatorsProposal, err error) {

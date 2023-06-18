@@ -4,11 +4,12 @@ import (
 	"fmt"
 
 	errorsmod "cosmossdk.io/errors"
+
+	claimkeeper "github.com/Stride-Labs/stride/v10/x/claim/keeper"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
-
-	claimkeeper "github.com/Stride-Labs/stride/v10/x/claim/keeper"
 )
 
 // CreateUpgradeHandler creates an SDK upgrade handler for v29

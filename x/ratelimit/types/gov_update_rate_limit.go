@@ -2,11 +2,11 @@ package types
 
 import (
 	"fmt"
-
 	"regexp"
 
 	errorsmod "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
+
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
 )
@@ -19,9 +19,7 @@ func init() {
 	govtypes.RegisterProposalType(ProposalTypeUpdateRateLimit)
 }
 
-var (
-	_ govtypes.Content = &UpdateRateLimitProposal{}
-)
+var _ govtypes.Content = &UpdateRateLimitProposal{}
 
 func NewUpdateRateLimitProposal(title, description, denom, channelId string, maxPercentSend sdkmath.Int, maxPercentRecv sdkmath.Int, durationHours uint64) govtypes.Content {
 	return &UpdateRateLimitProposal{

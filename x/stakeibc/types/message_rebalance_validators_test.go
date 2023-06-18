@@ -3,11 +3,12 @@ package types_test
 import (
 	"testing"
 
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/stretchr/testify/require"
 
 	"github.com/Stride-Labs/stride/v10/app/apptesting"
 	"github.com/Stride-Labs/stride/v10/x/stakeibc/types"
+
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
 
 func TestMsgRebalanceValidators_ValidateBasic(t *testing.T) {

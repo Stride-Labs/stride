@@ -4,9 +4,6 @@ import (
 	"fmt"
 	"testing"
 
-	tmcli "github.com/cometbft/cometbft/libs/cli"
-	"github.com/cosmos/cosmos-sdk/client/flags"
-	clitestutil "github.com/cosmos/cosmos-sdk/testutil/cli"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -15,6 +12,11 @@ import (
 	"github.com/Stride-Labs/stride/v10/testutil/nullify"
 	"github.com/Stride-Labs/stride/v10/x/records/client/cli"
 	"github.com/Stride-Labs/stride/v10/x/records/types"
+
+	tmcli "github.com/cometbft/cometbft/libs/cli"
+
+	"github.com/cosmos/cosmos-sdk/client/flags"
+	clitestutil "github.com/cosmos/cosmos-sdk/testutil/cli"
 )
 
 func networkWithDepositRecordObjects(t *testing.T, n int) (*network.Network, []types.DepositRecord) {

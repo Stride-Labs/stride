@@ -3,22 +3,21 @@ package keeper
 import (
 	"fmt"
 
-	"github.com/cometbft/cometbft/libs/log"
-	ibckeeper "github.com/cosmos/ibc-go/v7/modules/core/keeper"
-
-	"github.com/cosmos/cosmos-sdk/codec"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
-	ibctransferkeeper "github.com/cosmos/ibc-go/v7/modules/apps/transfer/keeper"
-	ibctypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
-
 	"github.com/Stride-Labs/stride/v10/utils"
 	icacallbackskeeper "github.com/Stride-Labs/stride/v10/x/icacallbacks/keeper"
 	icacallbackstypes "github.com/Stride-Labs/stride/v10/x/icacallbacks/types"
-
-	storetypes "github.com/cosmos/cosmos-sdk/store/types"
-
 	"github.com/Stride-Labs/stride/v10/x/records/types"
+
+	"github.com/cometbft/cometbft/libs/log"
+
+	ibctransferkeeper "github.com/cosmos/ibc-go/v7/modules/apps/transfer/keeper"
+	ibctypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
+	ibckeeper "github.com/cosmos/ibc-go/v7/modules/core/keeper"
+
+	"github.com/cosmos/cosmos-sdk/codec"
+	storetypes "github.com/cosmos/cosmos-sdk/store/types"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
 )
 
 type (

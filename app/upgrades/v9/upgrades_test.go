@@ -10,14 +10,12 @@ import (
 	"github.com/Stride-Labs/stride/v10/app/apptesting"
 	v9 "github.com/Stride-Labs/stride/v10/app/upgrades/v9"
 	"github.com/Stride-Labs/stride/v10/utils"
-
-	claimtypes "github.com/Stride-Labs/stride/v10/x/claim/types"
-
 	// This isn't the exact type host zone schema as the one that's will be in the store
 	// before the upgrade, but the only thing that matters, for the sake of the test,
 	// is that it doesn't have min/max redemption rate as attributes
 	"github.com/Stride-Labs/stride/v10/x/claim/migrations/v2/types"
 	oldclaimtypes "github.com/Stride-Labs/stride/v10/x/claim/migrations/v2/types"
+	claimtypes "github.com/Stride-Labs/stride/v10/x/claim/types"
 )
 
 type UpgradeTestSuite struct {

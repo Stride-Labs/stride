@@ -3,13 +3,14 @@ package v2
 import (
 	"testing"
 
-	sdkmath "cosmossdk.io/math"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-
 	"github.com/stretchr/testify/require"
+
+	sdkmath "cosmossdk.io/math"
 
 	oldstakeibctypes "github.com/Stride-Labs/stride/v10/x/stakeibc/migrations/v2/types"
 	stakeibctypes "github.com/Stride-Labs/stride/v10/x/stakeibc/types"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 func TestConvertToNewValidator(t *testing.T) {

@@ -3,16 +3,17 @@ package keeper
 import (
 	"fmt"
 
-	sdkmath "cosmossdk.io/math"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-
 	errorsmod "cosmossdk.io/errors"
-	"github.com/cometbft/cometbft/crypto"
-	"github.com/cosmos/cosmos-sdk/codec"
-	"github.com/cosmos/cosmos-sdk/store/prefix"
+	sdkmath "cosmossdk.io/math"
 
 	"github.com/Stride-Labs/stride/v10/x/interchainquery/types"
+
+	"github.com/cometbft/cometbft/crypto"
+
+	"github.com/cosmos/cosmos-sdk/codec"
+	"github.com/cosmos/cosmos-sdk/store/prefix"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
 
 func GenerateQueryHash(connectionId string, chainId string, queryType string, request []byte, module string, callbackId string) string {
@@ -95,7 +96,7 @@ func UnmarshalAmountFromBalanceQuery(cdc codec.BinaryCodec, queryResponseBz []by
 		return sdkmath.Int{}, errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "query response is nil")
 	}
 
-	// If the query response is empty, that means the account was never registed (and thus has a 0 balance)
+	// If the query response is empty, that means the account was never registered (and thus has a 0 balance)
 	if len(queryResponseBz) == 0 {
 		return sdkmath.ZeroInt(), nil
 	}

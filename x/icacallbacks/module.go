@@ -9,6 +9,10 @@ import (
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 	"github.com/spf13/cobra"
 
+	"github.com/Stride-Labs/stride/v10/x/icacallbacks/client/cli"
+	"github.com/Stride-Labs/stride/v10/x/icacallbacks/keeper"
+	"github.com/Stride-Labs/stride/v10/x/icacallbacks/types"
+
 	abci "github.com/cometbft/cometbft/abci/types"
 
 	"github.com/cosmos/cosmos-sdk/client"
@@ -16,10 +20,6 @@ import (
 	cdctypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
-
-	"github.com/Stride-Labs/stride/v10/x/icacallbacks/client/cli"
-	"github.com/Stride-Labs/stride/v10/x/icacallbacks/keeper"
-	"github.com/Stride-Labs/stride/v10/x/icacallbacks/types"
 )
 
 var (

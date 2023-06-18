@@ -6,18 +6,17 @@ import (
 
 	errorsmod "cosmossdk.io/errors"
 
-	"github.com/cosmos/cosmos-sdk/codec"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-
-	"github.com/cosmos/cosmos-sdk/types/module"
-	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
-
 	"github.com/Stride-Labs/stride/v10/utils"
 	autopilotkeeper "github.com/Stride-Labs/stride/v10/x/autopilot/keeper"
 	autopilottypes "github.com/Stride-Labs/stride/v10/x/autopilot/types"
 	claimkeeper "github.com/Stride-Labs/stride/v10/x/claim/keeper"
 	"github.com/Stride-Labs/stride/v10/x/claim/types"
 	claimtypes "github.com/Stride-Labs/stride/v10/x/claim/types"
+
+	"github.com/cosmos/cosmos-sdk/codec"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/types/module"
+	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 )
 
 var (

@@ -5,11 +5,12 @@ import (
 	"strconv"
 
 	sdkmath "cosmossdk.io/math"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	minttypes "github.com/Stride-Labs/stride/v10/x/mint/types"
 	"github.com/Stride-Labs/stride/v10/x/ratelimit/keeper"
 	"github.com/Stride-Labs/stride/v10/x/ratelimit/types"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 const (
@@ -352,8 +353,10 @@ func (s *KeeperTestSuite) TestCheckRateLimitAndUpdateFlow_UnidirectionalFlow() {
 			name: "send_over_threshold",
 			actions: []action{
 				{direction: types.PACKET_SEND, amount: 5},
-				{direction: types.PACKET_SEND, amount: 6,
-					expectedError: "Outflow exceeds quota"},
+				{
+					direction: types.PACKET_SEND, amount: 6,
+					expectedError: "Outflow exceeds quota",
+				},
 			},
 		},
 		{
@@ -367,8 +370,10 @@ func (s *KeeperTestSuite) TestCheckRateLimitAndUpdateFlow_UnidirectionalFlow() {
 			name: "recv_over_threshold",
 			actions: []action{
 				{direction: types.PACKET_RECV, amount: 5},
-				{direction: types.PACKET_RECV, amount: 6,
-					expectedError: "Inflow exceeds quota"},
+				{
+					direction: types.PACKET_RECV, amount: 6,
+					expectedError: "Inflow exceeds quota",
+				},
 			},
 		},
 	}
@@ -474,8 +479,10 @@ func (s *KeeperTestSuite) TestCheckRateLimitAndUpdatedFlow_DenomBlacklist() {
 				{direction: types.PACKET_SEND, amount: 6},
 				{direction: types.PACKET_RECV, amount: 6},
 				{addToBlacklist: true},
-				{direction: types.PACKET_SEND, amount: 6,
-					expectedError: types.ErrDenomIsBlacklisted.Error()},
+				{
+					direction: types.PACKET_SEND, amount: 6,
+					expectedError: types.ErrDenomIsBlacklisted.Error(),
+				},
 			},
 		},
 		{
@@ -484,8 +491,10 @@ func (s *KeeperTestSuite) TestCheckRateLimitAndUpdatedFlow_DenomBlacklist() {
 				{direction: types.PACKET_SEND, amount: 6},
 				{direction: types.PACKET_RECV, amount: 6},
 				{addToBlacklist: true},
-				{direction: types.PACKET_RECV, amount: 6,
-					expectedError: types.ErrDenomIsBlacklisted.Error()},
+				{
+					direction: types.PACKET_RECV, amount: 6,
+					expectedError: types.ErrDenomIsBlacklisted.Error(),
+				},
 			},
 		},
 		{
@@ -494,8 +503,10 @@ func (s *KeeperTestSuite) TestCheckRateLimitAndUpdatedFlow_DenomBlacklist() {
 				{direction: types.PACKET_RECV, amount: 6},
 				{direction: types.PACKET_SEND, amount: 6},
 				{addToBlacklist: true},
-				{direction: types.PACKET_SEND, amount: 6,
-					expectedError: types.ErrDenomIsBlacklisted.Error()},
+				{
+					direction: types.PACKET_SEND, amount: 6,
+					expectedError: types.ErrDenomIsBlacklisted.Error(),
+				},
 			},
 		},
 		{
@@ -504,8 +515,10 @@ func (s *KeeperTestSuite) TestCheckRateLimitAndUpdatedFlow_DenomBlacklist() {
 				{direction: types.PACKET_RECV, amount: 6},
 				{direction: types.PACKET_SEND, amount: 6},
 				{addToBlacklist: true},
-				{direction: types.PACKET_RECV, amount: 6,
-					expectedError: types.ErrDenomIsBlacklisted.Error()},
+				{
+					direction: types.PACKET_RECV, amount: 6,
+					expectedError: types.ErrDenomIsBlacklisted.Error(),
+				},
 			},
 		},
 	}

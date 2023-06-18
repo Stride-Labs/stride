@@ -5,9 +5,10 @@ import (
 	"fmt"
 
 	errorsmod "cosmossdk.io/errors"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/Stride-Labs/stride/v10/x/stakeibc/types"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 func (k msgServer) ChangeValidatorWeight(goCtx context.Context, msg *types.MsgChangeValidatorWeight) (*types.MsgChangeValidatorWeightResponse, error) {
@@ -22,7 +23,6 @@ func (k msgServer) ChangeValidatorWeight(goCtx context.Context, msg *types.MsgCh
 	validators := hostZone.Validators
 	for _, validator := range validators {
 		if validator.GetAddress() == msg.ValAddr {
-
 			// when changing a weight from 0 to non-zero, make sure we have space in the val set for this new validator
 			if validator.Weight == 0 && msg.Weight > 0 {
 				err := k.ConfirmValSetHasSpace(ctx, validators)
@@ -33,7 +33,6 @@ func (k msgServer) ChangeValidatorWeight(goCtx context.Context, msg *types.MsgCh
 			validator.Weight = msg.Weight
 			k.SetHostZone(ctx, hostZone)
 			return &types.MsgChangeValidatorWeightResponse{}, nil
-
 		}
 	}
 

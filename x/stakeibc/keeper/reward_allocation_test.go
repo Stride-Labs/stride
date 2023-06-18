@@ -5,19 +5,19 @@ import (
 
 	sdkmath "cosmossdk.io/math"
 
-	abci "github.com/cometbft/cometbft/abci/types"
-	simtestutil "github.com/cosmos/cosmos-sdk/testutil/sims"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
-
-	teststaking "github.com/cosmos/cosmos-sdk/x/staking/testutil"
-
-	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
-	_ "github.com/stretchr/testify/suite"
-
 	epochtypes "github.com/Stride-Labs/stride/v10/x/epochs/types"
 	recordtypes "github.com/Stride-Labs/stride/v10/x/records/types"
 	stakeibctypes "github.com/Stride-Labs/stride/v10/x/stakeibc/types"
+
+	abci "github.com/cometbft/cometbft/abci/types"
+
+	simtestutil "github.com/cosmos/cosmos-sdk/testutil/sims"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+	teststaking "github.com/cosmos/cosmos-sdk/x/staking/testutil"
+	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+
+	_ "github.com/stretchr/testify/suite"
 )
 
 func (s *KeeperTestSuite) SetupTestRewardAllocation() {
@@ -108,7 +108,7 @@ func (s *KeeperTestSuite) TestLiquidStakeRewardCollectorBalance_BalanceDoesNotBe
 	s.SetupTestRewardAllocation()
 	amount := sdkmath.NewInt(1000)
 
-	// Fund the reward collector with ibc/atom and a denom that is not registerd to a host zone
+	// Fund the reward collector with ibc/atom and a denom that is not registered to a host zone
 	s.FundModuleAccount(stakeibctypes.RewardCollectorName, sdk.NewCoin(IbcAtom, amount))
 	s.FundModuleAccount(stakeibctypes.RewardCollectorName, sdk.NewCoin("fake_denom", amount))
 

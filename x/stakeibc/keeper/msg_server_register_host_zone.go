@@ -4,15 +4,16 @@ import (
 	"context"
 	"fmt"
 
+	errorsmod "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
-	icatypes "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/types"
 
 	"github.com/Stride-Labs/stride/v10/utils"
 	epochtypes "github.com/Stride-Labs/stride/v10/x/epochs/types"
 	recordstypes "github.com/Stride-Labs/stride/v10/x/records/types"
 	"github.com/Stride-Labs/stride/v10/x/stakeibc/types"
 
-	errorsmod "cosmossdk.io/errors"
+	icatypes "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/types"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 

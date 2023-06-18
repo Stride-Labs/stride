@@ -1,9 +1,9 @@
 package keeper
 
 import (
-	sdk "github.com/cosmos/cosmos-sdk/types"
-
 	icqtypes "github.com/Stride-Labs/stride/v10/x/interchainquery/types"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 const (

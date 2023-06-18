@@ -3,10 +3,14 @@ package vesting
 import (
 	"encoding/json"
 
-	abci "github.com/cometbft/cometbft/abci/types"
 	"github.com/gorilla/mux"
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 	"github.com/spf13/cobra"
+
+	"github.com/Stride-Labs/stride/v10/x/claim/vesting/client/cli"
+	"github.com/Stride-Labs/stride/v10/x/claim/vesting/types"
+
+	abci "github.com/cometbft/cometbft/abci/types"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -14,9 +18,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	"github.com/cosmos/cosmos-sdk/x/auth/keeper"
-
-	"github.com/Stride-Labs/stride/v10/x/claim/vesting/client/cli"
-	"github.com/Stride-Labs/stride/v10/x/claim/vesting/types"
 )
 
 var (

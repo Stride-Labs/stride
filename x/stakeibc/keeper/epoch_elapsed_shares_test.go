@@ -4,10 +4,10 @@ import (
 	"math"
 	"regexp"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
-
 	epochtypes "github.com/Stride-Labs/stride/v10/x/epochs/types"
 	stakeibctypes "github.com/Stride-Labs/stride/v10/x/stakeibc/types"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 // These are used to indicate that the value does not matter for the sake of the test

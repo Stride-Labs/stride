@@ -2,21 +2,22 @@ package keeper_test
 
 import (
 	sdkmath "cosmossdk.io/math"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
-	ibctesting "github.com/cosmos/ibc-go/v7/testing"
-	_ "github.com/stretchr/testify/suite"
 
 	"github.com/Stride-Labs/stride/v10/app/apptesting"
 	epochtypes "github.com/Stride-Labs/stride/v10/x/epochs/types"
-	icqtypes "github.com/Stride-Labs/stride/v10/x/interchainquery/types"
-
 	icacallbacktypes "github.com/Stride-Labs/stride/v10/x/icacallbacks/types"
+	icqtypes "github.com/Stride-Labs/stride/v10/x/interchainquery/types"
 	recordtypes "github.com/Stride-Labs/stride/v10/x/records/types"
 	stakeibckeeper "github.com/Stride-Labs/stride/v10/x/stakeibc/keeper"
-
 	"github.com/Stride-Labs/stride/v10/x/stakeibc/types"
 	stakeibctypes "github.com/Stride-Labs/stride/v10/x/stakeibc/types"
+
+	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
+	ibctesting "github.com/cosmos/ibc-go/v7/testing"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	_ "github.com/stretchr/testify/suite"
 )
 
 type ReinvestCallbackState struct {

@@ -4,29 +4,27 @@ import (
 	"fmt"
 	"strings"
 
-	errorsmod "cosmossdk.io/errors"
-	"github.com/cosmos/cosmos-sdk/types/bech32"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	proto "github.com/cosmos/gogoproto/proto"
 	"github.com/spf13/cast"
 
-	"github.com/Stride-Labs/stride/v10/utils"
-	icacallbackstypes "github.com/Stride-Labs/stride/v10/x/icacallbacks/types"
+	errorsmod "cosmossdk.io/errors"
 
+	"github.com/Stride-Labs/stride/v10/utils"
+	epochstypes "github.com/Stride-Labs/stride/v10/x/epochs/types"
+	icacallbackstypes "github.com/Stride-Labs/stride/v10/x/icacallbacks/types"
+	icqtypes "github.com/Stride-Labs/stride/v10/x/interchainquery/types"
 	recordstypes "github.com/Stride-Labs/stride/v10/x/records/types"
 	"github.com/Stride-Labs/stride/v10/x/stakeibc/types"
 
+	proto "github.com/cosmos/gogoproto/proto"
+	icatypes "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/types"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/types/bech32"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	bankTypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	distributiontypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
 	stakingTypes "github.com/cosmos/cosmos-sdk/x/staking/types"
-
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
-
-	epochstypes "github.com/Stride-Labs/stride/v10/x/epochs/types"
-	icqtypes "github.com/Stride-Labs/stride/v10/x/interchainquery/types"
-
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	icatypes "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/types"
 )
 
 func (k Keeper) DelegateOnHost(ctx sdk.Context, hostZone types.HostZone, amt sdk.Coin, depositRecord recordstypes.DepositRecord) error {
@@ -289,7 +287,7 @@ func (k Keeper) SubmitTxs(
 	// TODO: SendTx is deprecated and MsgServer should used going forward
 	// IMPORTANT: When updating to MsgServer, the timestamp passed to NewMsgSendTx is the relative timeout offset,
 	// not the unix time (e.g. "30 minutes in nanoseconds" instead "current unix nano + 30 minutes in nanoseconds")
-	sequence, err := k.ICAControllerKeeper.SendTx(ctx, nil, connectionId, portID, packetData, timeoutTimestamp) // nolint:staticcheck
+	sequence, err := k.ICAControllerKeeper.SendTx(ctx, nil, connectionId, portID, packetData, timeoutTimestamp) //nolint:staticcheck
 	if err != nil {
 		return 0, err
 	}

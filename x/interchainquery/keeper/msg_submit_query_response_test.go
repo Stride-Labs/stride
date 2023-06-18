@@ -4,13 +4,15 @@ import (
 	"context"
 	"strings"
 
+	"github.com/Stride-Labs/stride/v10/x/interchainquery/types"
+
 	"github.com/cometbft/cometbft/proto/tendermint/crypto"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/bech32"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
-	_ "github.com/stretchr/testify/suite"
 
-	"github.com/Stride-Labs/stride/v10/x/interchainquery/types"
+	_ "github.com/stretchr/testify/suite"
 )
 
 const (

@@ -5,28 +5,86 @@ import (
 	"os"
 	"path/filepath"
 
-	authsims "github.com/cosmos/cosmos-sdk/x/auth/simulation"
-	porttypes "github.com/cosmos/ibc-go/v7/modules/core/05-port/types"
-	tendermint "github.com/cosmos/ibc-go/v7/modules/light-clients/07-tendermint"
-
-	nodeservice "github.com/cosmos/cosmos-sdk/client/grpc/node"
+	"github.com/spf13/cast"
 
 	"github.com/Stride-Labs/stride/v10/utils"
+	"github.com/Stride-Labs/stride/v10/x/autopilot"
+	autopilotkeeper "github.com/Stride-Labs/stride/v10/x/autopilot/keeper"
+	autopilottypes "github.com/Stride-Labs/stride/v10/x/autopilot/types"
+	"github.com/Stride-Labs/stride/v10/x/claim"
+	claimkeeper "github.com/Stride-Labs/stride/v10/x/claim/keeper"
+	claimtypes "github.com/Stride-Labs/stride/v10/x/claim/types"
+	claimvesting "github.com/Stride-Labs/stride/v10/x/claim/vesting"
+	claimvestingtypes "github.com/Stride-Labs/stride/v10/x/claim/vesting/types"
+	epochsmodule "github.com/Stride-Labs/stride/v10/x/epochs"
+	epochsmodulekeeper "github.com/Stride-Labs/stride/v10/x/epochs/keeper"
+	epochsmoduletypes "github.com/Stride-Labs/stride/v10/x/epochs/types"
+	icacallbacksmodule "github.com/Stride-Labs/stride/v10/x/icacallbacks"
+	icacallbacksmodulekeeper "github.com/Stride-Labs/stride/v10/x/icacallbacks/keeper"
+	icacallbacksmoduletypes "github.com/Stride-Labs/stride/v10/x/icacallbacks/types"
+	"github.com/Stride-Labs/stride/v10/x/interchainquery"
+	interchainquerykeeper "github.com/Stride-Labs/stride/v10/x/interchainquery/keeper"
+	interchainquerytypes "github.com/Stride-Labs/stride/v10/x/interchainquery/types"
+	"github.com/Stride-Labs/stride/v10/x/mint"
+	mintkeeper "github.com/Stride-Labs/stride/v10/x/mint/keeper"
+	minttypes "github.com/Stride-Labs/stride/v10/x/mint/types"
+	ratelimitmodule "github.com/Stride-Labs/stride/v10/x/ratelimit"
+	ratelimitclient "github.com/Stride-Labs/stride/v10/x/ratelimit/client"
+	ratelimitmodulekeeper "github.com/Stride-Labs/stride/v10/x/ratelimit/keeper"
+	ratelimitmoduletypes "github.com/Stride-Labs/stride/v10/x/ratelimit/types"
+	recordsmodule "github.com/Stride-Labs/stride/v10/x/records"
+	recordsmodulekeeper "github.com/Stride-Labs/stride/v10/x/records/keeper"
+	recordsmoduletypes "github.com/Stride-Labs/stride/v10/x/records/types"
+	stakeibcmodule "github.com/Stride-Labs/stride/v10/x/stakeibc"
+	stakeibcclient "github.com/Stride-Labs/stride/v10/x/stakeibc/client"
+	stakeibcmodulekeeper "github.com/Stride-Labs/stride/v10/x/stakeibc/keeper"
+	stakeibcmoduletypes "github.com/Stride-Labs/stride/v10/x/stakeibc/types"
+
+	dbm "github.com/cometbft/cometbft-db"
+	abci "github.com/cometbft/cometbft/abci/types"
+	tmjson "github.com/cometbft/cometbft/libs/json"
+	"github.com/cometbft/cometbft/libs/log"
+	tmos "github.com/cometbft/cometbft/libs/os"
+
+	ica "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts"
+	icacontroller "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/controller"
+	icacontrollerkeeper "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/controller/keeper"
+	icacontrollertypes "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/controller/types"
+	icahost "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/host"
+	icahostkeeper "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/host/keeper"
+	icahosttypes "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/host/types"
+	icatypes "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/types"
+	"github.com/cosmos/ibc-go/v7/modules/apps/transfer"
+	ibctransferkeeper "github.com/cosmos/ibc-go/v7/modules/apps/transfer/keeper"
+	ibctransfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
+	ibc "github.com/cosmos/ibc-go/v7/modules/core"
+	ibcclient "github.com/cosmos/ibc-go/v7/modules/core/02-client"
+	ibcclientclient "github.com/cosmos/ibc-go/v7/modules/core/02-client/client"
+	ibcclienttypes "github.com/cosmos/ibc-go/v7/modules/core/02-client/types"
+	porttypes "github.com/cosmos/ibc-go/v7/modules/core/05-port/types"
+	ibchost "github.com/cosmos/ibc-go/v7/modules/core/exported"
+	ibckeeper "github.com/cosmos/ibc-go/v7/modules/core/keeper"
+	tendermint "github.com/cosmos/ibc-go/v7/modules/light-clients/07-tendermint"
+	ibctesting "github.com/cosmos/ibc-go/v7/testing"
+	ibctestingtypes "github.com/cosmos/ibc-go/v7/testing/types"
 
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/client"
+	nodeservice "github.com/cosmos/cosmos-sdk/client/grpc/node"
 	"github.com/cosmos/cosmos-sdk/client/grpc/tmservice"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/cosmos/cosmos-sdk/server/api"
 	"github.com/cosmos/cosmos-sdk/server/config"
 	servertypes "github.com/cosmos/cosmos-sdk/server/types"
+	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	"github.com/cosmos/cosmos-sdk/version"
 	"github.com/cosmos/cosmos-sdk/x/auth"
 	"github.com/cosmos/cosmos-sdk/x/auth/ante"
 	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
+	authsims "github.com/cosmos/cosmos-sdk/x/auth/simulation"
 	authtx "github.com/cosmos/cosmos-sdk/x/auth/tx"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	"github.com/cosmos/cosmos-sdk/x/auth/vesting"
@@ -60,19 +118,6 @@ import (
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	govtypesv1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
 	govtypesv1beta1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
-
-	claimvesting "github.com/Stride-Labs/stride/v10/x/claim/vesting"
-	claimvestingtypes "github.com/Stride-Labs/stride/v10/x/claim/vesting/types"
-
-	"github.com/Stride-Labs/stride/v10/x/mint"
-	mintkeeper "github.com/Stride-Labs/stride/v10/x/mint/keeper"
-	minttypes "github.com/Stride-Labs/stride/v10/x/mint/types"
-
-	dbm "github.com/cometbft/cometbft-db"
-	abci "github.com/cometbft/cometbft/abci/types"
-	tmjson "github.com/cometbft/cometbft/libs/json"
-	"github.com/cometbft/cometbft/libs/log"
-	tmos "github.com/cometbft/cometbft/libs/os"
 	"github.com/cosmos/cosmos-sdk/x/params"
 	distrclient "github.com/cosmos/cosmos-sdk/x/params/client"
 	paramsclient "github.com/cosmos/cosmos-sdk/x/params/client"
@@ -89,63 +134,6 @@ import (
 	upgradeclient "github.com/cosmos/cosmos-sdk/x/upgrade/client"
 	upgradekeeper "github.com/cosmos/cosmos-sdk/x/upgrade/keeper"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
-	"github.com/cosmos/ibc-go/v7/modules/apps/transfer"
-	ibctransferkeeper "github.com/cosmos/ibc-go/v7/modules/apps/transfer/keeper"
-	ibctransfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
-	ibc "github.com/cosmos/ibc-go/v7/modules/core"
-	ibcclient "github.com/cosmos/ibc-go/v7/modules/core/02-client"
-	ibcclientclient "github.com/cosmos/ibc-go/v7/modules/core/02-client/client"
-	ibcclienttypes "github.com/cosmos/ibc-go/v7/modules/core/02-client/types"
-	ibchost "github.com/cosmos/ibc-go/v7/modules/core/exported"
-	ibckeeper "github.com/cosmos/ibc-go/v7/modules/core/keeper"
-	ibctesting "github.com/cosmos/ibc-go/v7/testing"
-
-	"github.com/spf13/cast"
-
-	ica "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts"
-	icacontroller "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/controller"
-	icacontrollerkeeper "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/controller/keeper"
-	icacontrollertypes "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/controller/types"
-	icahost "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/host"
-	icahostkeeper "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/host/keeper"
-	icahosttypes "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/host/types"
-	icatypes "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/types"
-
-	// monitoringp "github.com/tendermint/spn/x/monitoringp"
-	// monitoringpkeeper "github.com/tendermint/spn/x/monitoringp/keeper"
-
-	epochsmodule "github.com/Stride-Labs/stride/v10/x/epochs"
-	epochsmodulekeeper "github.com/Stride-Labs/stride/v10/x/epochs/keeper"
-	epochsmoduletypes "github.com/Stride-Labs/stride/v10/x/epochs/types"
-
-	"github.com/Stride-Labs/stride/v10/x/interchainquery"
-	interchainquerykeeper "github.com/Stride-Labs/stride/v10/x/interchainquery/keeper"
-	interchainquerytypes "github.com/Stride-Labs/stride/v10/x/interchainquery/types"
-
-	"github.com/Stride-Labs/stride/v10/x/autopilot"
-	autopilotkeeper "github.com/Stride-Labs/stride/v10/x/autopilot/keeper"
-	autopilottypes "github.com/Stride-Labs/stride/v10/x/autopilot/types"
-
-	"github.com/Stride-Labs/stride/v10/x/claim"
-	claimkeeper "github.com/Stride-Labs/stride/v10/x/claim/keeper"
-	claimtypes "github.com/Stride-Labs/stride/v10/x/claim/types"
-	icacallbacksmodule "github.com/Stride-Labs/stride/v10/x/icacallbacks"
-	icacallbacksmodulekeeper "github.com/Stride-Labs/stride/v10/x/icacallbacks/keeper"
-	icacallbacksmoduletypes "github.com/Stride-Labs/stride/v10/x/icacallbacks/types"
-	ratelimitmodule "github.com/Stride-Labs/stride/v10/x/ratelimit"
-	ratelimitclient "github.com/Stride-Labs/stride/v10/x/ratelimit/client"
-	ratelimitmodulekeeper "github.com/Stride-Labs/stride/v10/x/ratelimit/keeper"
-	ratelimitmoduletypes "github.com/Stride-Labs/stride/v10/x/ratelimit/types"
-	recordsmodule "github.com/Stride-Labs/stride/v10/x/records"
-	recordsmodulekeeper "github.com/Stride-Labs/stride/v10/x/records/keeper"
-	recordsmoduletypes "github.com/Stride-Labs/stride/v10/x/records/types"
-	stakeibcmodule "github.com/Stride-Labs/stride/v10/x/stakeibc"
-	stakeibcclient "github.com/Stride-Labs/stride/v10/x/stakeibc/client"
-	stakeibcmodulekeeper "github.com/Stride-Labs/stride/v10/x/stakeibc/keeper"
-	stakeibcmoduletypes "github.com/Stride-Labs/stride/v10/x/stakeibc/types"
-
-	storetypes "github.com/cosmos/cosmos-sdk/store/types"
-	ibctestingtypes "github.com/cosmos/ibc-go/v7/testing/types"
 )
 
 const (
@@ -542,7 +530,7 @@ func NewStrideApp(
 		app.ClaimKeeper)
 	autopilotModule := autopilot.NewAppModule(appCodec, app.AutopilotKeeper)
 
-	// Register Gov (must be registerd after stakeibc)
+	// Register Gov (must be registered after stakeibc)
 	govRouter := govtypesv1beta1.NewRouter()
 	govRouter.AddRoute(govtypes.RouterKey, govtypesv1beta1.ProposalHandler).
 		AddRoute(paramproposal.RouterKey, params.NewParamChangeProposalHandler(app.ParamsKeeper)).
@@ -1045,14 +1033,14 @@ func GetMaccPerms() map[string][]string {
 func initParamsKeeper(appCodec codec.BinaryCodec, legacyAmino *codec.LegacyAmino, key, tkey storetypes.StoreKey) paramskeeper.Keeper {
 	paramsKeeper := paramskeeper.NewKeeper(appCodec, legacyAmino, key, tkey)
 
-	paramsKeeper.Subspace(authtypes.ModuleName).WithKeyTable(authtypes.ParamKeyTable())         //nolint:staticcheck
-	paramsKeeper.Subspace(banktypes.ModuleName).WithKeyTable(banktypes.ParamKeyTable())         //nolint:staticcheck
-	paramsKeeper.Subspace(stakingtypes.ModuleName).WithKeyTable(stakingtypes.ParamKeyTable())   //nolint:staticcheck
-	paramsKeeper.Subspace(minttypes.ModuleName).WithKeyTable(minttypes.ParamKeyTable())         //nolint:staticcheck
-	paramsKeeper.Subspace(distrtypes.ModuleName).WithKeyTable(distrtypes.ParamKeyTable())       //nolint:staticcheck
-	paramsKeeper.Subspace(slashingtypes.ModuleName).WithKeyTable(slashingtypes.ParamKeyTable()) //nolint:staticcheck
-	paramsKeeper.Subspace(govtypes.ModuleName).WithKeyTable(govtypesv1.ParamKeyTable())         //nolint:staticcheck
-	paramsKeeper.Subspace(crisistypes.ModuleName).WithKeyTable(crisistypes.ParamKeyTable())     //nolint:staticcheck
+	paramsKeeper.Subspace(authtypes.ModuleName).WithKeyTable(authtypes.ParamKeyTable())         
+	paramsKeeper.Subspace(banktypes.ModuleName).WithKeyTable(banktypes.ParamKeyTable())         
+	paramsKeeper.Subspace(stakingtypes.ModuleName).WithKeyTable(stakingtypes.ParamKeyTable())   
+	paramsKeeper.Subspace(minttypes.ModuleName).WithKeyTable(minttypes.ParamKeyTable())         
+	paramsKeeper.Subspace(distrtypes.ModuleName).WithKeyTable(distrtypes.ParamKeyTable())       
+	paramsKeeper.Subspace(slashingtypes.ModuleName).WithKeyTable(slashingtypes.ParamKeyTable()) 
+	paramsKeeper.Subspace(govtypes.ModuleName).WithKeyTable(govtypesv1.ParamKeyTable())         
+	paramsKeeper.Subspace(crisistypes.ModuleName).WithKeyTable(crisistypes.ParamKeyTable())     
 	paramsKeeper.Subspace(ibctransfertypes.ModuleName)
 	paramsKeeper.Subspace(ibchost.ModuleName)
 	// paramsKeeper.Subspace(monitoringptypes.ModuleName)

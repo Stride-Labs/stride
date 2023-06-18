@@ -3,21 +3,19 @@ package keeper
 import (
 	"fmt"
 
-	"github.com/cometbft/cometbft/libs/log"
-
-	"github.com/cosmos/cosmos-sdk/codec"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-
 	errorsmod "cosmossdk.io/errors"
-	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
-
-	ibckeeper "github.com/cosmos/ibc-go/v7/modules/core/keeper"
 
 	"github.com/Stride-Labs/stride/v10/x/icacallbacks/types"
 
-	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
+	"github.com/cometbft/cometbft/libs/log"
 
+	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
+	ibckeeper "github.com/cosmos/ibc-go/v7/modules/core/keeper"
+
+	"github.com/cosmos/cosmos-sdk/codec"
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
 )
 
 type (
@@ -122,7 +120,7 @@ func (k Keeper) CallRegisteredICACallback(ctx sdk.Context, modulePacket channelt
 		// if acknowledgement is empty, then it is a timeout
 		err := (*callbackHandler).CallICACallback(ctx, callbackData.CallbackId, modulePacket, ackResponse, callbackData.CallbackArgs)
 		if err != nil {
-			errMsg := fmt.Sprintf("Error occured while calling ICACallback (%s) | err: %s", callbackData.CallbackId, err.Error())
+			errMsg := fmt.Sprintf("Error occurred while calling ICACallback (%s) | err: %s", callbackData.CallbackId, err.Error())
 			k.Logger(ctx).Error(errMsg)
 			return errorsmod.Wrapf(types.ErrCallbackFailed, errMsg)
 		}

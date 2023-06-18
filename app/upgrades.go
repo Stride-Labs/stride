@@ -3,15 +3,6 @@ package app
 import (
 	"fmt"
 
-	storetypes "github.com/cosmos/cosmos-sdk/store/types"
-	consensustypes "github.com/cosmos/cosmos-sdk/x/consensus/types"
-	crisistypes "github.com/cosmos/cosmos-sdk/x/crisis/types"
-	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
-
-	authz "github.com/cosmos/cosmos-sdk/x/authz"
-
-	capabilitytypes "github.com/cosmos/cosmos-sdk/x/capability/types"
-
 	v10 "github.com/Stride-Labs/stride/v10/app/upgrades/v10"
 	v2 "github.com/Stride-Labs/stride/v10/app/upgrades/v2"
 	v3 "github.com/Stride-Labs/stride/v10/app/upgrades/v3"
@@ -27,6 +18,13 @@ import (
 	ratelimittypes "github.com/Stride-Labs/stride/v10/x/ratelimit/types"
 	recordtypes "github.com/Stride-Labs/stride/v10/x/records/types"
 	stakeibctypes "github.com/Stride-Labs/stride/v10/x/stakeibc/types"
+
+	storetypes "github.com/cosmos/cosmos-sdk/store/types"
+	authz "github.com/cosmos/cosmos-sdk/x/authz"
+	capabilitytypes "github.com/cosmos/cosmos-sdk/x/capability/types"
+	consensustypes "github.com/cosmos/cosmos-sdk/x/consensus/types"
+	crisistypes "github.com/cosmos/cosmos-sdk/x/crisis/types"
+	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 )
 
 func (app *StrideApp) setupUpgradeHandlers() {

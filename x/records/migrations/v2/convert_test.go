@@ -3,9 +3,9 @@ package v2
 import (
 	"testing"
 
-	sdkmath "cosmossdk.io/math"
-
 	"github.com/stretchr/testify/require"
+
+	sdkmath "cosmossdk.io/math"
 
 	oldrecordstypes "github.com/Stride-Labs/stride/v10/x/records/migrations/v2/types"
 	recordstypes "github.com/Stride-Labs/stride/v10/x/records/types"

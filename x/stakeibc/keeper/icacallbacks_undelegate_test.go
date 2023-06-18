@@ -3,12 +3,6 @@ package keeper_test
 import (
 	"time"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	stakingTypes "github.com/cosmos/cosmos-sdk/x/staking/types"
-	"github.com/cosmos/gogoproto/proto"
-	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
-	_ "github.com/stretchr/testify/suite"
-
 	sdkmath "cosmossdk.io/math"
 
 	icacallbacktypes "github.com/Stride-Labs/stride/v10/x/icacallbacks/types"
@@ -16,6 +10,14 @@ import (
 	stakeibckeeper "github.com/Stride-Labs/stride/v10/x/stakeibc/keeper"
 	"github.com/Stride-Labs/stride/v10/x/stakeibc/types"
 	stakeibc "github.com/Stride-Labs/stride/v10/x/stakeibc/types"
+
+	"github.com/cosmos/gogoproto/proto"
+	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	stakingTypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+
+	_ "github.com/stretchr/testify/suite"
 )
 
 type UndelegateCallbackState struct {

@@ -3,16 +3,16 @@ package stakeibc
 import (
 	"math/rand"
 
+	"github.com/Stride-Labs/stride/v10/testutil/sample"
+	stakeibcsimulation "github.com/Stride-Labs/stride/v10/x/stakeibc/simulation"
+	"github.com/Stride-Labs/stride/v10/x/stakeibc/types"
+
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	simappparams "github.com/cosmos/cosmos-sdk/testutil/sims"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
 	"github.com/cosmos/cosmos-sdk/x/simulation"
-
-	"github.com/Stride-Labs/stride/v10/testutil/sample"
-	stakeibcsimulation "github.com/Stride-Labs/stride/v10/x/stakeibc/simulation"
-	"github.com/Stride-Labs/stride/v10/x/stakeibc/types"
 )
 
 // avoid unused import issue

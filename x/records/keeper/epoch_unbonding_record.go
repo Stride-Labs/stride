@@ -4,14 +4,13 @@ import (
 	"encoding/binary"
 	"fmt"
 
-	"github.com/cosmos/cosmos-sdk/store/prefix"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-
 	errorsmod "cosmossdk.io/errors"
 
+	"github.com/Stride-Labs/stride/v10/x/records/types"
 	stakeibctypes "github.com/Stride-Labs/stride/v10/x/stakeibc/types"
 
-	"github.com/Stride-Labs/stride/v10/x/records/types"
+	"github.com/cosmos/cosmos-sdk/store/prefix"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 // SetEpochUnbondingRecord set a specific epochUnbondingRecord in the store

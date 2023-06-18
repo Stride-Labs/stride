@@ -5,10 +5,16 @@ import (
 	"encoding/json"
 	"fmt"
 
-	abci "github.com/cometbft/cometbft/abci/types"
 	"github.com/gorilla/mux"
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 	"github.com/spf13/cobra"
+
+	"github.com/Stride-Labs/stride/v10/x/mint/client/cli"
+	"github.com/Stride-Labs/stride/v10/x/mint/keeper"
+	// "github.com/Stride-Labs/stride/v10/x/mint/simulation"
+	"github.com/Stride-Labs/stride/v10/x/mint/types"
+
+	abci "github.com/cometbft/cometbft/abci/types"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -16,18 +22,12 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
-
-	"github.com/Stride-Labs/stride/v10/x/mint/client/cli"
-	"github.com/Stride-Labs/stride/v10/x/mint/keeper"
-
-	//"github.com/Stride-Labs/stride/v10/x/mint/simulation"
-	"github.com/Stride-Labs/stride/v10/x/mint/types"
 )
 
 var (
 	_ module.AppModule      = AppModule{}
 	_ module.AppModuleBasic = AppModuleBasic{}
-	//_ module.AppModuleSimulation = AppModule{}
+	// _ module.AppModuleSimulation = AppModule{}
 )
 
 // AppModuleBasic defines the basic application module used by the mint module.

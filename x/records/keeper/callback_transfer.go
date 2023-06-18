@@ -3,16 +3,17 @@ package keeper
 import (
 	"fmt"
 
-	ibctransfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
+	errorsmod "cosmossdk.io/errors"
 
 	icacallbackstypes "github.com/Stride-Labs/stride/v10/x/icacallbacks/types"
 	"github.com/Stride-Labs/stride/v10/x/records/types"
 
-	errorsmod "cosmossdk.io/errors"
+	"github.com/cosmos/gogoproto/proto"
+	ibctransfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
+	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	"github.com/cosmos/gogoproto/proto"
-	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
 )
 
 func (k Keeper) MarshalTransferCallbackArgs(ctx sdk.Context, delegateCallback types.TransferCallback) ([]byte, error) {

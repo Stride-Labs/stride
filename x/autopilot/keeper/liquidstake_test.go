@@ -4,22 +4,22 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/Stride-Labs/stride/v10/x/autopilot"
+	"github.com/Stride-Labs/stride/v10/x/autopilot/types"
+	epochtypes "github.com/Stride-Labs/stride/v10/x/epochs/types"
+	minttypes "github.com/Stride-Labs/stride/v10/x/mint/types"
+	recordsmodule "github.com/Stride-Labs/stride/v10/x/records"
+	recordstypes "github.com/Stride-Labs/stride/v10/x/records/types"
+	stakeibctypes "github.com/Stride-Labs/stride/v10/x/stakeibc/types"
+
 	"github.com/cometbft/cometbft/crypto/ed25519"
+
 	"github.com/cosmos/ibc-go/v7/modules/apps/transfer"
 	transfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
 	clienttypes "github.com/cosmos/ibc-go/v7/modules/core/02-client/types"
 	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
 
-	recordsmodule "github.com/Stride-Labs/stride/v10/x/records"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
-
-	"github.com/Stride-Labs/stride/v10/x/autopilot"
-	"github.com/Stride-Labs/stride/v10/x/autopilot/types"
-	epochtypes "github.com/Stride-Labs/stride/v10/x/epochs/types"
-	minttypes "github.com/Stride-Labs/stride/v10/x/mint/types"
-	recordstypes "github.com/Stride-Labs/stride/v10/x/records/types"
-	stakeibctypes "github.com/Stride-Labs/stride/v10/x/stakeibc/types"
 )
 
 func getStakeibcPacketMetadata(address, action string) string {

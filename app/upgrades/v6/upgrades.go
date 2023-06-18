@@ -4,12 +4,13 @@ import (
 	"fmt"
 
 	errorsmod "cosmossdk.io/errors"
+
+	claimkeeper "github.com/Stride-Labs/stride/v10/x/claim/keeper"
+
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
-
-	claimkeeper "github.com/Stride-Labs/stride/v10/x/claim/keeper"
 )
 
 // Note: ensure these values are properly set before running upgrade

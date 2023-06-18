@@ -4,12 +4,13 @@ import (
 	"context"
 
 	errorsmod "cosmossdk.io/errors"
-	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	"github.com/Stride-Labs/stride/v10/x/ratelimit/types"
 
 	transfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
 	ibctmtypes "github.com/cosmos/ibc-go/v7/modules/light-clients/07-tendermint"
 
-	"github.com/Stride-Labs/stride/v10/x/ratelimit/types"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 var _ types.QueryServer = Keeper{}
@@ -37,7 +38,6 @@ func (k Keeper) RateLimitsByChainId(c context.Context, req *types.QueryRateLimit
 
 	rateLimits := []types.RateLimit{}
 	for _, rateLimit := range k.GetAllRateLimits(ctx) {
-
 		// Determine the client state from the channel Id
 		_, clientState, err := k.channelKeeper.GetChannelClientState(ctx, transfertypes.PortID, rateLimit.Path.ChannelId)
 		if err != nil {
