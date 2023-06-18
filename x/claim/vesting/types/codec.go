@@ -1,12 +1,12 @@
 package types
 
 import (
-	"github.com/Stride-Labs/stride/v10/x/claim/vesting/exported"
-
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/cosmos/cosmos-sdk/types/msgservice"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+
+	"github.com/Stride-Labs/stride/v10/x/claim/vesting/exported"
 )
 
 // RegisterLegacyAminoCodec registers the vesting interfaces and concrete types on the

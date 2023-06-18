@@ -6,14 +6,14 @@ import (
 
 	yaml "gopkg.in/yaml.v2"
 
+	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+
 	sdkmath "cosmossdk.io/math"
 
 	"github.com/Stride-Labs/stride/v10/utils"
 	vestexported "github.com/Stride-Labs/stride/v10/x/claim/vesting/exported"
-
-	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 )
 
 // Compile-time type assertions
@@ -195,10 +195,8 @@ func (bva BaseVestingAccount) MarshalYAML() (interface{}, error) {
 
 // Periodic Vesting Account (only for stride)
 // This vesting account works differently from the core periodic vesting account.
-var (
-	_ vestexported.VestingAccount = (*StridePeriodicVestingAccount)(nil)
-	_ authtypes.GenesisAccount    = (*StridePeriodicVestingAccount)(nil)
-)
+var _ vestexported.VestingAccount = (*StridePeriodicVestingAccount)(nil)
+var _ authtypes.GenesisAccount = (*StridePeriodicVestingAccount)(nil)
 
 // NewStridePeriodicVestingAccountRaw creates a new StridePeriodicVestingAccount object from BaseVestingAccount
 func NewStridePeriodicVestingAccountRaw(bva *BaseVestingAccount, startTime int64, periods Periods) *StridePeriodicVestingAccount {

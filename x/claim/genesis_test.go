@@ -4,15 +4,14 @@ import (
 	"testing"
 	"time"
 
+	"github.com/cometbft/cometbft/crypto/secp256k1"
 	"github.com/stretchr/testify/require"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	keepertest "github.com/Stride-Labs/stride/v10/testutil/keeper"
 	"github.com/Stride-Labs/stride/v10/testutil/nullify"
 	"github.com/Stride-Labs/stride/v10/x/claim/types"
-
-	"github.com/cometbft/cometbft/crypto/secp256k1"
-
-	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 func TestGenesis(t *testing.T) {

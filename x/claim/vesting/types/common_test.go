@@ -4,4 +4,6 @@ import (
 	strideApp "github.com/Stride-Labs/stride/v10/app"
 )
 
-var app = strideApp.InitStrideTestApp(true)
+var (
+	app = strideApp.InitStrideTestApp(true)
+)

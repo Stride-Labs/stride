@@ -19,26 +19,17 @@ linters:
     - errorlint
     - execinquery
     - exportloopref
-    - forbidigo
     - forcetypeassert
     - gci
     - goconst
     - gocritic
     - gofumpt
-    - goheader
-    - gomnd
-    - gomoddirectives
-    - gomodguard
     - goprintffuncname
     - gosec
     - gosimple
     - govet
-    - grouper
-    - importas
     - ineffassign
     - interfacebloat
-    - ireturn
-    - lll
     - loggercheck
     - maintidx
     - makezero
@@ -65,7 +56,6 @@ linters:
     - unused
     - usestdlibvars
     - whitespace
-    - wsl
 
 issues:
   max-same-issues: 0

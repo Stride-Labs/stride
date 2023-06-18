@@ -158,7 +158,7 @@ stop-local-to-main:
 ###                                Protobuf                                 ###
 ###############################################################################
 
-containerProtoVer=0.13.0
+containerProtoVer=0.13.2
 containerProtoImage=ghcr.io/cosmos/proto-builder:$(containerProtoVer)
 
 proto-all: proto-format proto-lint proto-gen

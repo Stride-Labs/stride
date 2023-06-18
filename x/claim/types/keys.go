@@ -32,7 +32,7 @@ const (
 
 var (
 	// Percentages for actions
-
-	PercentageForStake       = sdk.NewDecWithPrec(20, 2) // 20%
-	PercentageForLiquidStake = sdk.NewDecWithPrec(60, 2) // 60%
+	PercentageForFree        = sdk.NewDecWithPrec(20, 2) //20%
+	PercentageForStake       = sdk.NewDecWithPrec(20, 2) //20%
+	PercentageForLiquidStake = sdk.NewDecWithPrec(60, 2) //60%
 )

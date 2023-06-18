@@ -2,11 +2,10 @@ package types
 
 import (
 	errorsmod "cosmossdk.io/errors"
-
-	"github.com/Stride-Labs/stride/v10/utils"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+
+	"github.com/Stride-Labs/stride/v10/utils"
 )
 
 // Msg type for MsgSetAirdropAllocations
@@ -120,6 +119,7 @@ func (msg *MsgClaimFreeAmount) GetSignBytes() []byte {
 }
 
 func (msg *MsgClaimFreeAmount) ValidateBasic() error {
+
 	_, err := sdk.AccAddressFromBech32(msg.User)
 	if err != nil {
 		return errorsmod.Wrapf(sdkerrors.ErrInvalidAddress, "invalid user address (%s)", err)

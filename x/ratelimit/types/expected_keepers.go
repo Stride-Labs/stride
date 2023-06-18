@@ -3,7 +3,6 @@ package types
 import (
 	clienttypes "github.com/cosmos/ibc-go/v7/modules/core/02-client/types"
 	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
-	"github.com/cosmos/ibc-go/v7/modules/core/exported"
 	ibcexported "github.com/cosmos/ibc-go/v7/modules/core/exported"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -20,7 +19,7 @@ type BankKeeper interface {
 // creating a x/ratelimit keeper.
 type ChannelKeeper interface {
 	GetChannel(ctx sdk.Context, portID string, channelID string) (channeltypes.Channel, bool)
-	GetChannelClientState(ctx sdk.Context, portID string, channelID string) (string, exported.ClientState, error)
+	GetChannelClientState(ctx sdk.Context, portID string, channelID string) (string, ibcexported.ClientState, error)
 }
 
 // ICS4Wrapper defines the expected ICS4Wrapper for middleware

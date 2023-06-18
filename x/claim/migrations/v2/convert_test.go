@@ -5,14 +5,13 @@ import (
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/require"
-
 	sdkmath "cosmossdk.io/math"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/stretchr/testify/require"
 
 	oldclaimtypes "github.com/Stride-Labs/stride/v10/x/claim/migrations/v2/types"
 	claimtypes "github.com/Stride-Labs/stride/v10/x/claim/types"
-
-	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 func TestConvertToNewAirdrop(t *testing.T) {
