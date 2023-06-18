@@ -760,7 +760,7 @@ func (k Keeper) CreateAirdropAndEpoch(ctx sdk.Context, msg types.MsgCreateAirdro
 			return types.ErrAirdropAlreadyExists
 		}
 		if airdrop.ChainId == msg.ChainId {
-			return types.ErrAirdropChainIdAlreadyExists
+			return types.ErrAirdropChainIDAlreadyExists
 		}
 	}
 

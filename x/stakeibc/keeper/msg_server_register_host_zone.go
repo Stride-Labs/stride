@@ -30,7 +30,7 @@ func (k msgServer) RegisterHostZone(goCtx context.Context, msg *types.MsgRegiste
 	counterpartyConnection := connectionEnd.Counterparty
 
 	// Get chain id from connection
-	chainId, err := k.GetChainID(ctx, msg.ConnectionId)
+	chainID, err := k.GetChainID(ctx, msg.ConnectionId)
 	if err != nil {
 		errMsg := fmt.Sprintf("unable to obtain chain id from connection %s, err: %s", msg.ConnectionId, err.Error())
 		k.Logger(ctx).Error(errMsg)
@@ -38,9 +38,9 @@ func (k msgServer) RegisterHostZone(goCtx context.Context, msg *types.MsgRegiste
 	}
 
 	// get zone
-	_, found = k.GetHostZone(ctx, chainId)
+	_, found = k.GetHostZone(ctx, chainID)
 	if found {
-		errMsg := fmt.Sprintf("invalid chain id, zone for %s already registered", chainId)
+		errMsg := fmt.Sprintf("invalid chain id, zone for %s already registered", chainID)
 		k.Logger(ctx).Error(errMsg)
 		return nil, errorsmod.Wrapf(types.ErrFailedToRegisterHostZone, errMsg)
 	}
@@ -71,9 +71,9 @@ func (k msgServer) RegisterHostZone(goCtx context.Context, msg *types.MsgRegiste
 	}
 
 	// create and save the zones's module account
-	zoneAddress := types.NewZoneAddress(chainId)
+	zoneAddress := types.NewZoneAddress(chainID)
 	if err := utils.CreateModuleAccount(ctx, k.AccountKeeper, zoneAddress); err != nil {
-		return nil, errorsmod.Wrapf(err, "unable to create module account for host zone %s", chainId)
+		return nil, errorsmod.Wrapf(err, "unable to create module account for host zone %s", chainID)
 	}
 
 	params := k.GetParams(ctx)
@@ -86,7 +86,7 @@ func (k msgServer) RegisterHostZone(goCtx context.Context, msg *types.MsgRegiste
 
 	// set the zone
 	zone := types.HostZone{
-		ChainId:           chainId,
+		ChainId:           chainID,
 		ConnectionId:      msg.ConnectionId,
 		Bech32Prefix:      msg.Bech32Prefix,
 		IbcDenom:          msg.IbcDenom,
@@ -113,7 +113,7 @@ func (k msgServer) RegisterHostZone(goCtx context.Context, msg *types.MsgRegiste
 
 	// generate delegate account
 	// NOTE: in the future, if we implement proxy governance, we'll need many more delegate accounts
-	delegateAccount := types.FormatICAAccountOwner(chainId, types.ICAAccountType_DELEGATION)
+	delegateAccount := types.FormatICAAccountOwner(chainID, types.ICAAccountType_DELEGATION)
 	if err := k.ICAControllerKeeper.RegisterInterchainAccount(ctx, zone.ConnectionId, delegateAccount, appVersion); err != nil {
 		errMsg := fmt.Sprintf("unable to register delegation account, err: %s", err.Error())
 		k.Logger(ctx).Error(errMsg)
@@ -121,7 +121,7 @@ func (k msgServer) RegisterHostZone(goCtx context.Context, msg *types.MsgRegiste
 	}
 
 	// generate fee account
-	feeAccount := types.FormatICAAccountOwner(chainId, types.ICAAccountType_FEE)
+	feeAccount := types.FormatICAAccountOwner(chainID, types.ICAAccountType_FEE)
 	if err := k.ICAControllerKeeper.RegisterInterchainAccount(ctx, zone.ConnectionId, feeAccount, appVersion); err != nil {
 		errMsg := fmt.Sprintf("unable to register fee account, err: %s", err.Error())
 		k.Logger(ctx).Error(errMsg)
@@ -129,7 +129,7 @@ func (k msgServer) RegisterHostZone(goCtx context.Context, msg *types.MsgRegiste
 	}
 
 	// generate withdrawal account
-	withdrawalAccount := types.FormatICAAccountOwner(chainId, types.ICAAccountType_WITHDRAWAL)
+	withdrawalAccount := types.FormatICAAccountOwner(chainID, types.ICAAccountType_WITHDRAWAL)
 	if err := k.ICAControllerKeeper.RegisterInterchainAccount(ctx, zone.ConnectionId, withdrawalAccount, appVersion); err != nil {
 		errMsg := fmt.Sprintf("unable to register withdrawal account, err: %s", err.Error())
 		k.Logger(ctx).Error(errMsg)
@@ -137,7 +137,7 @@ func (k msgServer) RegisterHostZone(goCtx context.Context, msg *types.MsgRegiste
 	}
 
 	// generate redemption account
-	redemptionAccount := types.FormatICAAccountOwner(chainId, types.ICAAccountType_REDEMPTION)
+	redemptionAccount := types.FormatICAAccountOwner(chainID, types.ICAAccountType_REDEMPTION)
 	if err := k.ICAControllerKeeper.RegisterInterchainAccount(ctx, zone.ConnectionId, redemptionAccount, appVersion); err != nil {
 		errMsg := fmt.Sprintf("unable to register redemption account, err: %s", err.Error())
 		k.Logger(ctx).Error(errMsg)
@@ -163,10 +163,10 @@ func (k msgServer) RegisterHostZone(goCtx context.Context, msg *types.MsgRegiste
 		HostZoneId:        zone.ChainId,
 		Status:            recordstypes.HostZoneUnbonding_UNBONDING_QUEUE,
 	}
-	updatedEpochUnbondingRecord, success := k.RecordsKeeper.AddHostZoneToEpochUnbondingRecord(ctx, epochUnbondingRecord.EpochNumber, chainId, hostZoneUnbonding)
+	updatedEpochUnbondingRecord, success := k.RecordsKeeper.AddHostZoneToEpochUnbondingRecord(ctx, epochUnbondingRecord.EpochNumber, chainID, hostZoneUnbonding)
 	if !success {
 		errMsg := fmt.Sprintf("Failed to set host zone epoch unbonding record: epochNumber %d, chainId %s, hostZoneUnbonding %v. Err: %s",
-			epochUnbondingRecord.EpochNumber, chainId, hostZoneUnbonding, err.Error())
+			epochUnbondingRecord.EpochNumber, chainID, hostZoneUnbonding, err.Error())
 		k.Logger(ctx).Error(errMsg)
 		return nil, errorsmod.Wrapf(types.ErrEpochNotFound, errMsg)
 	}
@@ -198,7 +198,7 @@ func (k msgServer) RegisterHostZone(goCtx context.Context, msg *types.MsgRegiste
 		sdk.NewEvent(
 			types.EventTypeRegisterZone,
 			sdk.NewAttribute(types.AttributeKeyConnectionId, msg.ConnectionId),
-			sdk.NewAttribute(types.AttributeKeyRecipientChain, chainId),
+			sdk.NewAttribute(types.AttributeKeyRecipientChain, chainID),
 		),
 	)
 

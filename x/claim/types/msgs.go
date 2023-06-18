@@ -133,11 +133,11 @@ const TypeMsgCreateAirdrop = "create_airdrop"
 
 var _ sdk.Msg = &MsgCreateAirdrop{}
 
-func NewMsgCreateAirdrop(distributor, identifier, chainId, denom string, startTime, duration uint64, autopilotEnabled bool) *MsgCreateAirdrop {
+func NewMsgCreateAirdrop(distributor, identifier, chainID, denom string, startTime, duration uint64, autopilotEnabled bool) *MsgCreateAirdrop {
 	return &MsgCreateAirdrop{
 		Distributor:      distributor,
 		Identifier:       identifier,
-		ChainId:          chainId,
+		ChainId:          chainID,
 		Denom:            denom,
 		StartTime:        startTime,
 		Duration:         duration,

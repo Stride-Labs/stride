@@ -57,20 +57,20 @@ func (im IBCModule) OnChanOpenAck(
 	counterpartyVersion string,
 ) error {
 	im.keeper.Logger(ctx).Info(fmt.Sprintf("OnChanOpenAck: portID %s, channelID %s, counterpartyChannelID %s, counterpartyVersion %s", portID, channelID, counterpartyChannelID, counterpartyVersion))
-	controllerConnectionId, err := im.keeper.GetConnectionId(ctx, portID)
+	controllerConnectionID, err := im.keeper.GetConnectionId(ctx, portID)
 	if err != nil {
 		ctx.Logger().Error(fmt.Sprintf("Unable to get connection for port: %s", portID))
 	}
-	address, found := im.keeper.ICAControllerKeeper.GetInterchainAccountAddress(ctx, controllerConnectionId, portID)
+	address, found := im.keeper.ICAControllerKeeper.GetInterchainAccountAddress(ctx, controllerConnectionID, portID)
 	if !found {
-		ctx.Logger().Error(fmt.Sprintf("Expected to find an address for %s/%s", controllerConnectionId, portID))
+		ctx.Logger().Error(fmt.Sprintf("Expected to find an address for %s/%s", controllerConnectionID, portID))
 		return nil
 	}
 	// get host chain id from connection
 	// fetch counterparty connection
-	hostChainID, err := im.keeper.GetChainID(ctx, controllerConnectionId)
+	hostChainID, err := im.keeper.GetChainID(ctx, controllerConnectionID)
 	if err != nil {
-		ctx.Logger().Error(fmt.Sprintf("Unable to obtain counterparty chain for connection: %s, port: %s, err: %s", controllerConnectionId, portID, err.Error()))
+		ctx.Logger().Error(fmt.Sprintf("Unable to obtain counterparty chain for connection: %s, port: %s, err: %s", controllerConnectionID, portID, err.Error()))
 		return nil
 	}
 	//  get zone info

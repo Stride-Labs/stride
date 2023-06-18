@@ -82,9 +82,9 @@ func (k Keeper) GetCallbackDataFromPacket(ctx sdk.Context, modulePacket channelt
 	if !found {
 		k.Logger(ctx).Info(fmt.Sprintf("callback data not found for portID: %s, channelID: %s, sequence: %d", portID, channelID, modulePacket.Sequence))
 		return nil, false
-	} else {
-		k.Logger(ctx).Info(fmt.Sprintf("callback data found for portID: %s, channelID: %s, sequence: %d", portID, channelID, modulePacket.Sequence))
 	}
+	k.Logger(ctx).Info(fmt.Sprintf("callback data found for portID: %s, channelID: %s, sequence: %d", portID, channelID, modulePacket.Sequence))
+
 	return &callbackData, true
 }
 
