@@ -3,9 +3,9 @@ package cli
 import (
 	"github.com/spf13/cobra"
 
-	"github.com/cosmos/cosmos-sdk/client"
-
 	"github.com/Stride-Labs/stride/v10/x/claim/vesting/types"
+
+	"github.com/cosmos/cosmos-sdk/client"
 )
 
 // GetTxCmd returns stride vesting module's transaction commands.

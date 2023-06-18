@@ -1,9 +1,9 @@
 package vesting
 
 import (
-	"github.com/cosmos/cosmos-sdk/x/auth/keeper"
-
 	"github.com/Stride-Labs/stride/v10/x/claim/vesting/types"
+
+	"github.com/cosmos/cosmos-sdk/x/auth/keeper"
 )
 
 type msgServer struct {

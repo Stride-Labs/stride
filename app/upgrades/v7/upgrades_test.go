@@ -41,6 +41,7 @@ var (
 		CurrentEpochStartTime: EpochStartTime,
 	}
 )
+
 var (
 	ExpectedJunoUnbondingFrequency = uint64(5)
 	ExpectedEpochProvisions        = sdk.NewDec(1_078_767_123)

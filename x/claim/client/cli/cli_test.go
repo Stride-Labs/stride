@@ -7,36 +7,34 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cosmos/cosmos-sdk/client/flags"
-	"github.com/cosmos/cosmos-sdk/crypto/hd"
-	"github.com/cosmos/cosmos-sdk/crypto/keyring"
-	"github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
-
-	clitestutil "github.com/cosmos/cosmos-sdk/testutil/cli"
-
-	strideclitestutil "github.com/Stride-Labs/stride/v10/testutil/cli"
-
-	"github.com/Stride-Labs/stride/v10/testutil/network"
-
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/suite"
-
-	tmcli "github.com/cometbft/cometbft/libs/cli"
-
-	"github.com/Stride-Labs/stride/v10/x/claim/client/cli"
 
 	sdkmath "cosmossdk.io/math"
 
 	"github.com/Stride-Labs/stride/v10/app"
 	cmdcfg "github.com/Stride-Labs/stride/v10/cmd/strided/config"
+	strideclitestutil "github.com/Stride-Labs/stride/v10/testutil/cli"
+	"github.com/Stride-Labs/stride/v10/testutil/network"
+	"github.com/Stride-Labs/stride/v10/x/claim/client/cli"
 	"github.com/Stride-Labs/stride/v10/x/claim/types"
 	claimtypes "github.com/Stride-Labs/stride/v10/x/claim/types"
+
+	tmcli "github.com/cometbft/cometbft/libs/cli"
+
+	"github.com/cosmos/cosmos-sdk/client/flags"
+	"github.com/cosmos/cosmos-sdk/crypto/hd"
+	"github.com/cosmos/cosmos-sdk/crypto/keyring"
+	"github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
+	clitestutil "github.com/cosmos/cosmos-sdk/testutil/cli"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-var addr1 sdk.AccAddress
-var addr2 sdk.AccAddress
-var distributorMnemonics []string
-var distributorAddrs []string
+var (
+	addr1                sdk.AccAddress
+	addr2                sdk.AccAddress
+	distributorMnemonics []string
+	distributorAddrs     []string
+)
 
 func init() {
 	cmdcfg.SetupConfig()

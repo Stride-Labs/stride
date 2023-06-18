@@ -3,14 +3,14 @@ package cli
 import (
 	"strings"
 
+	"github.com/spf13/cobra"
+
+	"github.com/Stride-Labs/stride/v10/x/claim/types"
+
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/tx"
-	"github.com/spf13/cobra"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
-
-	"github.com/Stride-Labs/stride/v10/x/claim/types"
 )
 
 func CmdSetAirdropAllocations() *cobra.Command {

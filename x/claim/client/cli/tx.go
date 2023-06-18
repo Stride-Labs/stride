@@ -3,10 +3,11 @@ package cli
 import (
 	"fmt"
 
-	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/spf13/cobra"
 
 	"github.com/Stride-Labs/stride/v10/x/claim/types"
+
+	"github.com/cosmos/cosmos-sdk/client"
 )
 
 // GetTxCmd returns the transaction commands for this module

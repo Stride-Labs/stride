@@ -4,13 +4,12 @@ import (
 	"fmt"
 	"strings"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
-
+	"github.com/Stride-Labs/stride/v10/x/claim/types"
 	epochstypes "github.com/Stride-Labs/stride/v10/x/epochs/types"
 	stakingibctypes "github.com/Stride-Labs/stride/v10/x/stakeibc/types"
 
-	"github.com/Stride-Labs/stride/v10/x/claim/types"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 )
 
 func (k Keeper) AfterDelegationModified(ctx sdk.Context, delAddr sdk.AccAddress, valAddr sdk.ValAddress) error {
@@ -50,7 +49,6 @@ func (k Keeper) AfterEpochEnd(ctx sdk.Context, epochInfo epochstypes.EpochInfo) 
 	// check if epochInfo.Identifier starts with "airdrop"
 	k.Logger(ctx).Info(fmt.Sprintf("[CLAIM] checking if epoch %s is an airdrop epoch", epochInfo.Identifier))
 	if strings.HasPrefix(epochInfo.Identifier, "airdrop-") {
-
 		airdropIdentifier := strings.TrimPrefix(epochInfo.Identifier, "airdrop-")
 		k.Logger(ctx).Info(fmt.Sprintf("[CLAIM] trimmed airdrop identifier: %s", airdropIdentifier))
 
@@ -76,9 +74,11 @@ type Hooks struct {
 	k Keeper
 }
 
-var _ stakingtypes.StakingHooks = Hooks{}
-var _ stakingibctypes.StakeIBCHooks = Hooks{}
-var _ epochstypes.EpochHooks = Hooks{}
+var (
+	_ stakingtypes.StakingHooks     = Hooks{}
+	_ stakingibctypes.StakeIBCHooks = Hooks{}
+	_ epochstypes.EpochHooks        = Hooks{}
+)
 
 // Return the wrapper struct
 func (k Keeper) Hooks() Hooks {
@@ -107,39 +107,51 @@ func (h Hooks) AfterUnbondingInitiated(ctx sdk.Context, id uint64) error {
 func (h Hooks) AfterValidatorCreated(ctx sdk.Context, valAddr sdk.ValAddress) error {
 	return nil
 }
+
 func (h Hooks) BeforeValidatorModified(ctx sdk.Context, valAddr sdk.ValAddress) error {
 	return nil
 }
+
 func (h Hooks) AfterValidatorRemoved(ctx sdk.Context, consAddr sdk.ConsAddress, valAddr sdk.ValAddress) error {
 	return nil
 }
+
 func (h Hooks) AfterValidatorBonded(ctx sdk.Context, consAddr sdk.ConsAddress, valAddr sdk.ValAddress) error {
 	return nil
 }
+
 func (h Hooks) AfterValidatorBeginUnbonding(ctx sdk.Context, consAddr sdk.ConsAddress, valAddr sdk.ValAddress) error {
 	return nil
 }
+
 func (h Hooks) BeforeDelegationCreated(ctx sdk.Context, delAddr sdk.AccAddress, valAddr sdk.ValAddress) error {
 	return nil
 }
+
 func (h Hooks) BeforeDelegationSharesModified(ctx sdk.Context, delAddr sdk.AccAddress, valAddr sdk.ValAddress) error {
 	return nil
 }
+
 func (h Hooks) BeforeDelegationRemoved(ctx sdk.Context, delAddr sdk.AccAddress, valAddr sdk.ValAddress) error {
 	return nil
 }
+
 func (h Hooks) AfterDelegationModified(ctx sdk.Context, delAddr sdk.AccAddress, valAddr sdk.ValAddress) error {
 	return h.k.AfterDelegationModified(ctx, delAddr, valAddr)
 }
+
 func (h Hooks) BeforeValidatorSlashed(ctx sdk.Context, valAddr sdk.ValAddress, fraction sdk.Dec) error {
 	return nil
 }
+
 func (h Hooks) BeforeSlashingUnbondingDelegation(ctx sdk.Context, unbondingDelegation stakingtypes.UnbondingDelegation,
-	infractionHeight int64, slashFactor sdk.Dec) error {
+	infractionHeight int64, slashFactor sdk.Dec,
+) error {
 	return nil
 }
 
 func (h Hooks) BeforeSlashingRedelegation(ctx sdk.Context, srcValidator stakingtypes.Validator, redelegation stakingtypes.Redelegation,
-	infractionHeight int64, slashFactor sdk.Dec) error {
+	infractionHeight int64, slashFactor sdk.Dec,
+) error {
 	return nil
 }

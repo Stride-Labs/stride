@@ -1,10 +1,10 @@
 package types
 
 import (
+	epochstypes "github.com/Stride-Labs/stride/v10/x/epochs/types"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
-
-	epochstypes "github.com/Stride-Labs/stride/v10/x/epochs/types"
 )
 
 // BankKeeper defines the banking contract that must be fulfilled when

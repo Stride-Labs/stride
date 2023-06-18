@@ -5,24 +5,22 @@ import (
 	"strings"
 	"time"
 
-	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
-
-	vestingtypes "github.com/cosmos/cosmos-sdk/x/auth/vesting/types"
-
 	"github.com/Stride-Labs/stride/v10/app/apptesting"
 	"github.com/Stride-Labs/stride/v10/utils"
 	claimkeeper "github.com/Stride-Labs/stride/v10/x/claim/keeper"
-
 	"github.com/Stride-Labs/stride/v10/x/claim/types"
 	stridevestingtypes "github.com/Stride-Labs/stride/v10/x/claim/vesting/types"
+
+	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+	vestingtypes "github.com/cosmos/cosmos-sdk/x/auth/vesting/types"
 )
 
 // Test functionality for loading allocation data(csv)
 func (suite *KeeperTestSuite) TestLoadAllocationData() {
 	suite.SetupTest()
-	var allocations = `identifier,address,weight
+	allocations := `identifier,address,weight
 osmosis,osmo1g7yxhuppp5x3yqkah5mw29eqq5s4sv2fp6e2eg,0.5
 osmosis,osmo1h4astdfzjhcwahtfrh24qtvndzzh49xvtm69fg,0.3
 stride,stride1av5lwh0msnafn04xkhdyk6mrykxthrawy7uf3d,0.7
@@ -479,7 +477,7 @@ func (suite *KeeperTestSuite) TestMultiChainAirdropFlow() {
 	records = suite.app.ClaimKeeper.GetClaimRecords(suite.ctx, "osmosis")
 	suite.Require().Equal(0, len(records))
 
-	//*********************** End of Stride, Osmosis airdrop *************************
+	// *********************** End of Stride, Osmosis airdrop *************************
 
 	// claim airdrops for juno users after ending stride airdrop
 	// get rewards amount for stake (juno user)
@@ -529,7 +527,7 @@ func (suite *KeeperTestSuite) TestMultiChainAirdropFlow() {
 
 	records = suite.app.ClaimKeeper.GetClaimRecords(suite.ctx, types.DefaultAirdropIdentifier)
 	suite.Require().Equal(0, len(records))
-	//*********************** End of Juno airdrop *************************
+	// *********************** End of Juno airdrop *************************
 }
 
 func (suite *KeeperTestSuite) TestAreAllTrue() {
@@ -616,7 +614,6 @@ func (suite *KeeperTestSuite) TestGetClaimStatus() {
 		suite.Require().Equal(expectedClaimStatus[i].AirdropIdentifier, status[i].AirdropIdentifier, "airdrop ID for %d", i)
 		suite.Require().Equal(expectedClaimStatus[i].AirdropIdentifier, status[i].AirdropIdentifier, "airdrop claimed for %i", i)
 	}
-
 }
 
 func (suite *KeeperTestSuite) TestGetClaimMetadata() {
