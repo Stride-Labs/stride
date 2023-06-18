@@ -392,16 +392,16 @@ func (s *UpgradeTestSuite) SetupOldStakeibcStore(codec codec.Codec) func() {
 // that it was successfully removed after the upgrade
 func (s *UpgradeTestSuite) SetupRemoveStaleQuery() func() {
 	// Add the stale query
-	s.App.InterchainqueryKeeper.SetQuery(s.Ctx, icqtypes.Query{Id: upgradev5.StaleQueryId})
-	query, found := s.App.InterchainqueryKeeper.GetQuery(s.Ctx, upgradev5.StaleQueryId)
+	s.App.InterchainqueryKeeper.SetQuery(s.Ctx, icqtypes.Query{Id: upgradev5.StaleQueryID})
+	query, found := s.App.InterchainqueryKeeper.GetQuery(s.Ctx, upgradev5.StaleQueryID)
 
 	// Confirm it was added successfully
 	s.Require().True(found, "stale query successfully added to store")
-	s.Require().Equal(upgradev5.StaleQueryId, query.Id, "query id")
+	s.Require().Equal(upgradev5.StaleQueryID, query.Id, "query id")
 
 	// Callback to check that the query was successfully removed
 	return func() {
-		_, found := s.App.InterchainqueryKeeper.GetQuery(s.Ctx, upgradev5.StaleQueryId)
+		_, found := s.App.InterchainqueryKeeper.GetQuery(s.Ctx, upgradev5.StaleQueryID)
 		s.Require().False(found)
 	}
 }

@@ -41,7 +41,7 @@ func (s *UpgradeTestSuite) TestUpgrade() {
 func (s *UpgradeTestSuite) SetupAirdropsBeforeUpgrade() {
 	// Create a list of airdrops of the old data type
 	airdrops := []*oldclaimtypes.Airdrop{}
-	for i, identifier := range utils.StringMapKeys(v9.AirdropChainIds) {
+	for i, identifier := range utils.StringMapKeys(v9.AirdropChainIDs) {
 		airdrops = append(airdrops, &oldclaimtypes.Airdrop{
 			AirdropIdentifier: identifier,
 			ClaimDenom:        fmt.Sprintf("denom-%d", i),
@@ -66,13 +66,13 @@ func (s *UpgradeTestSuite) CheckAirdropsAfterUpgrade() {
 	// Read in the airdrops using the new schema - which should include chainId and AirdropEnabled
 	claimParams, err := s.App.ClaimKeeper.GetParams(s.Ctx)
 	s.Require().NoError(err, "no error expected when getting claims params")
-	s.Require().Len(claimParams.Airdrops, len(v9.AirdropChainIds)+1, "number of airdrops after migration")
+	s.Require().Len(claimParams.Airdrops, len(v9.AirdropChainIDs)+1, "number of airdrops after migration")
 
 	// Confirm the new fields were added and the old fields (e.g. ChainDenom) remain the same
-	for i, identifier := range utils.StringMapKeys(v9.AirdropChainIds) {
-		expectedChainId := v9.AirdropChainIds[identifier]
+	for i, identifier := range utils.StringMapKeys(v9.AirdropChainIDs) {
+		expectedChainId := v9.AirdropChainIDs[identifier]
 		expectedDenom := fmt.Sprintf("denom-%d", i)
-		expectedAutopilotEnabled := identifier == v9.EvmosAirdropId
+		expectedAutopilotEnabled := identifier == v9.EvmosAirdropID
 
 		actual := claimParams.Airdrops[i]
 		s.Require().Equal(identifier, actual.AirdropIdentifier, "identifier after migration")
@@ -82,7 +82,7 @@ func (s *UpgradeTestSuite) CheckAirdropsAfterUpgrade() {
 	}
 
 	// Confirm the airdrop that was not in the map
-	airdropWithoutChainId := claimParams.Airdrops[len(v9.AirdropChainIds)]
+	airdropWithoutChainId := claimParams.Airdrops[len(v9.AirdropChainIDs)]
 	s.Require().Equal("different_airdrop", airdropWithoutChainId.AirdropIdentifier, "airdrop id for outsider")
 	s.Require().Equal("", airdropWithoutChainId.ChainId, "chain-id for outsider")
 }

@@ -29,7 +29,7 @@ func CmdClearBalance() *cobra.Command {
 			if !found {
 				return errorsmod.Wrap(sdkerrors.ErrInvalidType, "can not convert string to int")
 			}
-			argChannelId := args[2]
+			argChannelID := args[2]
 
 			clientCtx, err := client.GetClientTxContext(cmd)
 			if err != nil {
@@ -40,7 +40,7 @@ func CmdClearBalance() *cobra.Command {
 				clientCtx.GetFromAddress().String(),
 				argChainId,
 				argAmount,
-				argChannelId,
+				argChannelID,
 			)
 			if err := msg.ValidateBasic(); err != nil {
 				return err

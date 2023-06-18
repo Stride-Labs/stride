@@ -231,8 +231,8 @@ func logCallbackWithHostZone(chainId string, callbackId string, callbackType str
 // Ex:
 //
 //	| COSMOSHUB-4   |  DELEGATE ICACALLBACK  |  string
-func LogICACallbackWithHostZone(chainId string, callbackId string, s string, a ...any) string {
-	return logCallbackWithHostZone(chainId, callbackId, "ICACALLBACK", s, a...)
+func LogICACallbackWithHostZone(chainID string, callbackID string, s string, a ...any) string {
+	return logCallbackWithHostZone(chainID, callbackID, "ICACALLBACK", s, a...)
 }
 
 // Returns a log string with a chain Id and icacallback as a prefix, and status of the callback

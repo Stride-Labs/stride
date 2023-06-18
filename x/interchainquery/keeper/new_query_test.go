@@ -20,11 +20,11 @@ func (suite *KeeperTestSuite) SetupNewQuery() NewQueryTestCase {
 	// module is the name of the module invoking the query, used to find the callback upon response
 	module := "stakeibc"
 	// callbackId is a string that is used to identify the callback you'd like to execute upon receiving the result of the query
-	callbackId := "validator"
+	callbackID := "validator"
 	// chain Id of the target chain you're querying
-	chainId := "GAIA"
+	chainID := "GAIA"
 	// connectionId of the target chain you're querying
-	connectionId := "connection-0"
+	connectionID := "connection-0"
 	// QueryType is a string that is used to identify the store you'd like to query, as well as whether you'd like a proof returned alongside the result
 	// use "staking" store to access validator which lives in the staking module
 	// use "key" suffix to retrieve a proof alongside the query result
@@ -37,9 +37,9 @@ func (suite *KeeperTestSuite) SetupNewQuery() NewQueryTestCase {
 
 	return NewQueryTestCase{
 		module:       module,
-		callbackId:   callbackId,
-		chainId:      chainId,
-		connectionId: connectionId,
+		callbackId:   callbackID,
+		chainId:      chainID,
+		connectionId: connectionID,
 		queryType:    queryType,
 		request:      request,
 		ttl:          ttl,

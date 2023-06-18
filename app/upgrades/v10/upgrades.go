@@ -329,11 +329,11 @@ func EnableRateLimits(
 		}
 
 		denom := stakeibctypes.StAssetDenomFromHostZoneDenom(hostZone.HostDenom)
-		channelId := hostZone.TransferChannelId
+		channelID := hostZone.TransferChannelId
 
 		addRateLimit := &ratelimittypes.AddRateLimitProposal{
 			Denom:          denom,
-			ChannelId:      channelId,
+			ChannelId:      channelID,
 			MaxPercentSend: threshold,
 			MaxPercentRecv: threshold,
 			DurationHours:  RateLimitDurationHours,

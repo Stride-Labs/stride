@@ -68,33 +68,33 @@ func (im IBCModule) OnChanOpenAck(
 	}
 	// get host chain id from connection
 	// fetch counterparty connection
-	hostChainId, err := im.keeper.GetChainID(ctx, controllerConnectionId)
+	hostChainID, err := im.keeper.GetChainID(ctx, controllerConnectionId)
 	if err != nil {
 		ctx.Logger().Error(fmt.Sprintf("Unable to obtain counterparty chain for connection: %s, port: %s, err: %s", controllerConnectionId, portID, err.Error()))
 		return nil
 	}
 	//  get zone info
-	zoneInfo, found := im.keeper.GetHostZone(ctx, hostChainId)
+	zoneInfo, found := im.keeper.GetHostZone(ctx, hostChainID)
 	if !found {
-		ctx.Logger().Error(fmt.Sprintf("Expected to find zone info for %v", hostChainId))
+		ctx.Logger().Error(fmt.Sprintf("Expected to find zone info for %v", hostChainID))
 		return nil
 	}
 	ctx.Logger().Info(fmt.Sprintf("Found matching address for chain: %s, address %s, port %s", zoneInfo.ChainId, address, portID))
 
 	// addresses
-	withdrawalAddress, err := icatypes.NewControllerPortID(types.FormatICAAccountOwner(hostChainId, types.ICAAccountType_WITHDRAWAL))
+	withdrawalAddress, err := icatypes.NewControllerPortID(types.FormatICAAccountOwner(hostChainID, types.ICAAccountType_WITHDRAWAL))
 	if err != nil {
 		return err
 	}
-	feeAddress, err := icatypes.NewControllerPortID(types.FormatICAAccountOwner(hostChainId, types.ICAAccountType_FEE))
+	feeAddress, err := icatypes.NewControllerPortID(types.FormatICAAccountOwner(hostChainID, types.ICAAccountType_FEE))
 	if err != nil {
 		return err
 	}
-	delegationAddress, err := icatypes.NewControllerPortID(types.FormatICAAccountOwner(hostChainId, types.ICAAccountType_DELEGATION))
+	delegationAddress, err := icatypes.NewControllerPortID(types.FormatICAAccountOwner(hostChainID, types.ICAAccountType_DELEGATION))
 	if err != nil {
 		return err
 	}
-	redemptionAddress, err := icatypes.NewControllerPortID(types.FormatICAAccountOwner(hostChainId, types.ICAAccountType_REDEMPTION))
+	redemptionAddress, err := icatypes.NewControllerPortID(types.FormatICAAccountOwner(hostChainID, types.ICAAccountType_REDEMPTION))
 	if err != nil {
 		return err
 	}

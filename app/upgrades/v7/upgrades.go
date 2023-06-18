@@ -160,10 +160,10 @@ func AddRedemptionRateSafetyChecks(ctx sdk.Context, k stakeibckeeper.Keeper) {
 func ModifyJunoUnbondingFrequency(ctx sdk.Context, k stakeibckeeper.Keeper) error {
 	ctx.Logger().Info("Updating juno unbonding frequency")
 
-	junoChainId := "juno-1"
+	junoChainID := "juno-1"
 	unbondingFrequency := uint64(5)
 
-	junoHostZone, found := k.GetHostZone(ctx, junoChainId)
+	junoHostZone, found := k.GetHostZone(ctx, junoChainID)
 	if !found {
 		return stakeibctypes.ErrHostZoneNotFound
 	}
@@ -183,7 +183,7 @@ func ExecuteProp153(ctx sdk.Context, k bankkeeper.Keeper) error {
 	if err != nil {
 		return err
 	}
-	strideFoundationAddress, err := sdk.AccAddressFromBech32(StrideFoundationAddress_F4)
+	strideFoundationAddress, err := sdk.AccAddressFromBech32(StrideFoundationAddressF4)
 	if err != nil {
 		return err
 	}

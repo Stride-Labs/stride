@@ -49,13 +49,13 @@ func RebalanceCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ac
 	if err != nil {
 		return errorsmod.Wrapf(types.ErrUnmarshalFailure, fmt.Sprintf("Unable to unmarshal rebalance callback args: %s", err.Error()))
 	}
-	chainId := rebalanceCallback.HostZoneId
-	k.Logger(ctx).Info(utils.LogICACallbackWithHostZone(chainId, ICACallbackID_Rebalance, "Starting rebalance callback"))
+	chainID := rebalanceCallback.HostZoneId
+	k.Logger(ctx).Info(utils.LogICACallbackWithHostZone(chainID, ICACallbackID_Rebalance, "Starting rebalance callback"))
 
 	// Check for timeout (ack nil)
 	// No action is necessary on a timeout
 	if ackResponse.Status == icacallbackstypes.AckResponseStatus_TIMEOUT {
-		k.Logger(ctx).Error(utils.LogICACallbackStatusWithHostZone(chainId, ICACallbackID_Rebalance,
+		k.Logger(ctx).Error(utils.LogICACallbackStatusWithHostZone(chainID, ICACallbackID_Rebalance,
 			icacallbackstypes.AckResponseStatus_TIMEOUT, packet))
 		return nil
 	}
@@ -63,18 +63,18 @@ func RebalanceCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ac
 	// Check for a failed transaction (ack error)
 	// No action is necessary on a failure
 	if ackResponse.Status == icacallbackstypes.AckResponseStatus_FAILURE {
-		k.Logger(ctx).Error(utils.LogICACallbackStatusWithHostZone(chainId, ICACallbackID_Rebalance,
+		k.Logger(ctx).Error(utils.LogICACallbackStatusWithHostZone(chainID, ICACallbackID_Rebalance,
 			icacallbackstypes.AckResponseStatus_FAILURE, packet))
 		return nil
 	}
 
-	k.Logger(ctx).Info(utils.LogICACallbackStatusWithHostZone(chainId, ICACallbackID_Rebalance,
+	k.Logger(ctx).Info(utils.LogICACallbackStatusWithHostZone(chainID, ICACallbackID_Rebalance,
 		icacallbackstypes.AckResponseStatus_SUCCESS, packet))
 
 	// Confirm the host zone exists
-	hostZone, found := k.GetHostZone(ctx, chainId)
+	hostZone, found := k.GetHostZone(ctx, chainID)
 	if !found {
-		return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "host zone not found %s", chainId)
+		return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "host zone not found %s", chainID)
 	}
 
 	// Assemble a map from validatorAddress -> validator

@@ -34,9 +34,9 @@ func CreateUpgradeHandler(
 	ck claimkeeper.Keeper,
 ) upgradetypes.UpgradeHandler {
 	return func(ctx sdk.Context, _ upgradetypes.Plan, vm module.VersionMap) (module.VersionMap, error) {
-		newVm, err := mm.RunMigrations(ctx, configurator, vm)
+		newVM, err := mm.RunMigrations(ctx, configurator, vm)
 		if err != nil {
-			return newVm, err
+			return newVM, err
 		}
 
 		// total number of airdrop distributors must be equal to identifiers
@@ -51,11 +51,11 @@ func CreateUpgradeHandler(
 					Duration:    uint64(airdropDuration.Seconds()),
 				})
 				if err != nil {
-					return newVm, err
+					return newVM, err
 				}
 			}
 		}
 		ck.LoadAllocationData(ctx, allocations)
-		return newVm, nil
+		return newVM, nil
 	}
 }

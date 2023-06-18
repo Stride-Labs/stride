@@ -29,7 +29,7 @@ var (
 	UpgradeName = "v5"
 
 	// This query used an old query ID format and got stuck after the format was updated
-	StaleQueryId = "60b8e09dc7a65938cd6e6e5728b8aa0ca3726ffbe5511946a4f08ced316174ab"
+	StaleQueryID = "60b8e09dc7a65938cd6e6e5728b8aa0ca3726ffbe5511946a4f08ced316174ab"
 )
 
 // Helper function to log the migrated modules consensus versions
@@ -57,7 +57,7 @@ func CreateUpgradeHandler(
 		delete(vm, authz.ModuleName)
 
 		// Remove a stale query from the interchainquery store
-		interchainqueryKeeper.DeleteQuery(ctx, StaleQueryId)
+		interchainqueryKeeper.DeleteQuery(ctx, StaleQueryID)
 
 		// To add the SafetyMaxSlashPercent param to the stakeibc param store,
 		// we just re-initialize all the params with their default value

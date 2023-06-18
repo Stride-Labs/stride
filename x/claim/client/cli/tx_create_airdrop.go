@@ -19,7 +19,7 @@ func CmdCreateAirdrop() *cobra.Command {
 		Args:  cobra.ExactArgs(6),
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
 			identifier := args[0]
-			chainId := args[1]
+			chainID := args[1]
 			denom := args[2]
 			argStartTime, err := strconv.Atoi(args[3])
 			if err != nil {
@@ -42,7 +42,7 @@ func CmdCreateAirdrop() *cobra.Command {
 			msg := types.NewMsgCreateAirdrop(
 				distributor,
 				identifier,
-				chainId,
+				chainID,
 				denom,
 				uint64(argStartTime),
 				uint64(argDuration),

@@ -11,10 +11,10 @@ const TypeMsgRestoreInterchainAccount = "register_interchain_account"
 
 var _ sdk.Msg = &MsgRestoreInterchainAccount{}
 
-func NewMsgRestoreInterchainAccount(creator string, chainId string, accountType ICAAccountType) *MsgRestoreInterchainAccount {
+func NewMsgRestoreInterchainAccount(creator string, chainID string, accountType ICAAccountType) *MsgRestoreInterchainAccount {
 	return &MsgRestoreInterchainAccount{
 		Creator:     creator,
-		ChainId:     chainId,
+		ChainId:     chainID,
 		AccountType: accountType,
 	}
 }

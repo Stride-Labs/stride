@@ -53,12 +53,12 @@ func (k msgServer) ClearBalance(goCtx context.Context, msg *types.MsgClearBalanc
 		},
 	}
 
-	connectionId := zone.GetConnectionId()
+	connectionID := zone.GetConnectionId()
 
 	icaTimeoutNanos := k.GetParam(ctx, types.KeyICATimeoutNanos)
 	icaTimeoutNanos = cast.ToUint64(ctx.BlockTime().UnixNano()) + icaTimeoutNanos
 
-	_, err = k.SubmitTxs(ctx, connectionId, msgs, *feeAccount, icaTimeoutNanos, "", nil)
+	_, err = k.SubmitTxs(ctx, connectionID, msgs, *feeAccount, icaTimeoutNanos, "", nil)
 	if err != nil {
 		return nil, errorsmod.Wrapf(err, "failed to submit txs")
 	}

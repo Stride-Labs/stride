@@ -26,7 +26,7 @@ var (
 	DenomBlacklistKeyPrefix   = KeyPrefix("denom-blacklist")
 	AddressWhitelistKeyPrefix = KeyPrefix("address-blacklist")
 
-	PendingSendPacketChannelLength int = 16
+	PendingSendPacketChannelLength = 16
 )
 
 func GetPendingSendPacketKey(channelId string, sequenceNumber uint64) []byte {

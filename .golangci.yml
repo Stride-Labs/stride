@@ -8,6 +8,8 @@ linters:
   enable:
     - gci
     - gofumpt
+    - errcheck
+    - revive
     - misspell
 
 issues:

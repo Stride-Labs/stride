@@ -41,7 +41,7 @@ func AddFieldsToAirdropType(ctx sdk.Context, claimKeeper claimkeeper.Keeper) err
 
 	for _, airdrop := range claimParams.Airdrops {
 		// Add the chain ID to each airdrop
-		chainId, ok := AirdropChainIds[airdrop.AirdropIdentifier]
+		chainId, ok := AirdropChainIDs[airdrop.AirdropIdentifier]
 		if !ok {
 			ctx.Logger().Error(fmt.Sprintf("Chain ID not specified for %s airdrop", chainId))
 			continue
@@ -49,7 +49,7 @@ func AddFieldsToAirdropType(ctx sdk.Context, claimKeeper claimkeeper.Keeper) err
 		airdrop.ChainId = chainId
 
 		// Enable autopilot for evmos only
-		if airdrop.AirdropIdentifier == EvmosAirdropId {
+		if airdrop.AirdropIdentifier == EvmosAirdropID {
 			airdrop.AutopilotEnabled = true
 		} else {
 			airdrop.AutopilotEnabled = false
