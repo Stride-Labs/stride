@@ -3,13 +3,11 @@ package keeper_test
 import (
 	"strings"
 
-	sdkmath "cosmossdk.io/math"
-
-	epochtypes "github.com/Stride-Labs/stride/v10/x/epochs/types"
-	recordtypes "github.com/Stride-Labs/stride/v10/x/records/types"
-	stakeibctypes "github.com/Stride-Labs/stride/v10/x/stakeibc/types"
+	_ "github.com/stretchr/testify/suite"
 
 	abci "github.com/cometbft/cometbft/abci/types"
+
+	sdkmath "cosmossdk.io/math"
 
 	simtestutil "github.com/cosmos/cosmos-sdk/testutil/sims"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -17,7 +15,9 @@ import (
 	teststaking "github.com/cosmos/cosmos-sdk/x/staking/testutil"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
-	_ "github.com/stretchr/testify/suite"
+	epochtypes "github.com/Stride-Labs/stride/v10/x/epochs/types"
+	recordtypes "github.com/Stride-Labs/stride/v10/x/records/types"
+	stakeibctypes "github.com/Stride-Labs/stride/v10/x/stakeibc/types"
 )
 
 func (s *KeeperTestSuite) SetupTestRewardAllocation() {

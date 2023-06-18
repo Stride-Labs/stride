@@ -3,17 +3,17 @@ package keeper_test
 import (
 	"fmt"
 
-	sdkmath "cosmossdk.io/math"
+	_ "github.com/stretchr/testify/suite"
 
-	"github.com/Stride-Labs/stride/v10/x/stakeibc/types"
-	stakeibctypes "github.com/Stride-Labs/stride/v10/x/stakeibc/types"
+	sdkmath "cosmossdk.io/math"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	icatypes "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/types"
 	ibctesting "github.com/cosmos/ibc-go/v7/testing"
 
-	_ "github.com/stretchr/testify/suite"
+	"github.com/Stride-Labs/stride/v10/x/stakeibc/types"
+	stakeibctypes "github.com/Stride-Labs/stride/v10/x/stakeibc/types"
 )
 
 type ClearBalanceState struct {

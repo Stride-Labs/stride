@@ -3,16 +3,16 @@ package keeper_test
 import (
 	"fmt"
 
+	_ "github.com/stretchr/testify/suite"
+
 	sdkmath "cosmossdk.io/math"
+
+	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
 
 	icacallbacktypes "github.com/Stride-Labs/stride/v10/x/icacallbacks/types"
 	recordskeeper "github.com/Stride-Labs/stride/v10/x/records/keeper"
 	"github.com/Stride-Labs/stride/v10/x/records/types"
 	recordtypes "github.com/Stride-Labs/stride/v10/x/records/types"
-
-	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
-
-	_ "github.com/stretchr/testify/suite"
 )
 
 const chainId = "GAIA"

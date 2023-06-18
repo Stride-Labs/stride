@@ -7,10 +7,10 @@ import (
 
 	sdkmath "cosmossdk.io/math"
 
+	sdk "github.com/cosmos/cosmos-sdk/types"
+
 	"github.com/Stride-Labs/stride/v10/x/interchainquery/keeper"
 	"github.com/Stride-Labs/stride/v10/x/interchainquery/types"
-
-	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 func TestUnmarshalAmountFromBalanceQuery(t *testing.T) {

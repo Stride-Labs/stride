@@ -4,9 +4,9 @@ import (
 	gocontext "context"
 	"time"
 
-	"github.com/Stride-Labs/stride/v10/x/epochs/types"
-
 	_ "github.com/stretchr/testify/suite"
+
+	"github.com/Stride-Labs/stride/v10/x/epochs/types"
 )
 
 func (suite *KeeperTestSuite) TestQueryEpochInfos() {

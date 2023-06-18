@@ -11,9 +11,6 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 
-	"github.com/Stride-Labs/stride/v10/app"
-	"github.com/Stride-Labs/stride/v10/utils"
-
 	cometbftdb "github.com/cometbft/cometbft-db"
 	tmcfg "github.com/cometbft/cometbft/config"
 	tmcli "github.com/cometbft/cometbft/libs/cli"
@@ -43,6 +40,9 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/genutil"
 	genutilcli "github.com/cosmos/cosmos-sdk/x/genutil/client/cli"
 	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
+
+	"github.com/Stride-Labs/stride/v10/app"
+	"github.com/Stride-Labs/stride/v10/utils"
 )
 
 var ChainID string

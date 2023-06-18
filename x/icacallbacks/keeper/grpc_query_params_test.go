@@ -5,10 +5,10 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	sdk "github.com/cosmos/cosmos-sdk/types"
+
 	testkeeper "github.com/Stride-Labs/stride/v10/testutil/keeper"
 	"github.com/Stride-Labs/stride/v10/x/icacallbacks/types"
-
-	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 func TestParamsQuery(t *testing.T) {

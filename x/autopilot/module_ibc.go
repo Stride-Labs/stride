@@ -5,9 +5,6 @@ import (
 
 	errorsmod "cosmossdk.io/errors"
 
-	"github.com/Stride-Labs/stride/v10/x/autopilot/keeper"
-	"github.com/Stride-Labs/stride/v10/x/autopilot/types"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	capabilitytypes "github.com/cosmos/cosmos-sdk/x/capability/types"
 
@@ -16,6 +13,9 @@ import (
 	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
 	porttypes "github.com/cosmos/ibc-go/v7/modules/core/05-port/types"
 	ibcexported "github.com/cosmos/ibc-go/v7/modules/core/exported"
+
+	"github.com/Stride-Labs/stride/v10/x/autopilot/keeper"
+	"github.com/Stride-Labs/stride/v10/x/autopilot/types"
 )
 
 const MaxMemoCharLength = 256

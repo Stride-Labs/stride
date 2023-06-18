@@ -5,9 +5,9 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/Stride-Labs/stride/v10/x/records/types"
-
 	"github.com/cosmos/cosmos-sdk/client"
+
+	"github.com/Stride-Labs/stride/v10/x/records/types"
 )
 
 // GetQueryCmd returns the cli query commands for this module

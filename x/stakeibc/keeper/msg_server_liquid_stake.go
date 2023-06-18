@@ -5,11 +5,11 @@ import (
 
 	errorsmod "cosmossdk.io/errors"
 
-	epochtypes "github.com/Stride-Labs/stride/v10/x/epochs/types"
-	"github.com/Stride-Labs/stride/v10/x/stakeibc/types"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+
+	epochtypes "github.com/Stride-Labs/stride/v10/x/epochs/types"
+	"github.com/Stride-Labs/stride/v10/x/stakeibc/types"
 )
 
 // Exchanges a user's native tokens for stTokens using the current redemption rate

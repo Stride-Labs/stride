@@ -3,13 +3,13 @@ package v3
 import (
 	"time"
 
-	claimkeeper "github.com/Stride-Labs/stride/v10/x/claim/keeper"
-	"github.com/Stride-Labs/stride/v10/x/claim/types"
-	claimtypes "github.com/Stride-Labs/stride/v10/x/claim/types"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
+
+	claimkeeper "github.com/Stride-Labs/stride/v10/x/claim/keeper"
+	"github.com/Stride-Labs/stride/v10/x/claim/types"
+	claimtypes "github.com/Stride-Labs/stride/v10/x/claim/types"
 )
 
 // Note: ensure these values are properly set before running upgrade

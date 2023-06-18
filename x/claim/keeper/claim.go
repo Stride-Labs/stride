@@ -11,15 +11,15 @@ import (
 	errorsmod "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
 
-	"github.com/Stride-Labs/stride/v10/utils"
-	"github.com/Stride-Labs/stride/v10/x/claim/types"
-	vestingtypes "github.com/Stride-Labs/stride/v10/x/claim/vesting/types"
-	epochstypes "github.com/Stride-Labs/stride/v10/x/epochs/types"
-
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+
+	"github.com/Stride-Labs/stride/v10/utils"
+	"github.com/Stride-Labs/stride/v10/x/claim/types"
+	vestingtypes "github.com/Stride-Labs/stride/v10/x/claim/vesting/types"
+	epochstypes "github.com/Stride-Labs/stride/v10/x/epochs/types"
 )
 
 func (k Keeper) LoadAllocationData(ctx sdk.Context, allocationData string) bool {

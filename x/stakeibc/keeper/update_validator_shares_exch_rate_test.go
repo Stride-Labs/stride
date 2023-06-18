@@ -3,13 +3,13 @@ package keeper_test
 import (
 	"fmt"
 
-	epochtypes "github.com/Stride-Labs/stride/v10/x/epochs/types"
-	"github.com/Stride-Labs/stride/v10/x/stakeibc/types"
-	stakeibctypes "github.com/Stride-Labs/stride/v10/x/stakeibc/types"
+	_ "github.com/stretchr/testify/suite"
 
 	ibctesting "github.com/cosmos/ibc-go/v7/testing"
 
-	_ "github.com/stretchr/testify/suite"
+	epochtypes "github.com/Stride-Labs/stride/v10/x/epochs/types"
+	"github.com/Stride-Labs/stride/v10/x/stakeibc/types"
+	stakeibctypes "github.com/Stride-Labs/stride/v10/x/stakeibc/types"
 )
 
 // ================================ 1: QueryValidatorExchangeRate =============================================

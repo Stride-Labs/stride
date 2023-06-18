@@ -1,15 +1,15 @@
 package keeper_test
 
 import (
+	_ "github.com/stretchr/testify/suite"
+
 	sdkmath "cosmossdk.io/math"
+
+	ibctesting "github.com/cosmos/ibc-go/v7/testing"
 
 	epochtypes "github.com/Stride-Labs/stride/v10/x/epochs/types"
 	recordtypes "github.com/Stride-Labs/stride/v10/x/records/types"
 	stakeibc "github.com/Stride-Labs/stride/v10/x/stakeibc/types"
-
-	ibctesting "github.com/cosmos/ibc-go/v7/testing"
-
-	_ "github.com/stretchr/testify/suite"
 )
 
 type SweepUnbondedTokensTestCase struct {

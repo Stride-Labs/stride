@@ -4,15 +4,13 @@ import (
 	"encoding/json"
 	"time"
 
-	sdkmath "cosmossdk.io/math"
-
-	cmdcfg "github.com/Stride-Labs/stride/v10/cmd/strided/config"
-
 	cometbftdb "github.com/cometbft/cometbft-db"
 	abci "github.com/cometbft/cometbft/abci/types"
 	"github.com/cometbft/cometbft/crypto/secp256k1"
 	"github.com/cometbft/cometbft/libs/log"
 	tmtypes "github.com/cometbft/cometbft/types"
+
+	sdkmath "cosmossdk.io/math"
 
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
@@ -24,6 +22,8 @@ import (
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
 	ibctesting "github.com/cosmos/ibc-go/v7/testing"
+
+	cmdcfg "github.com/Stride-Labs/stride/v10/cmd/strided/config"
 )
 
 const Bech32Prefix = "stride"

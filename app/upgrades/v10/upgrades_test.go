@@ -12,6 +12,13 @@ import (
 
 	sdkmath "cosmossdk.io/math"
 
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/types/address"
+	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
+
+	transfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
+	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
+
 	"github.com/Stride-Labs/stride/v10/app/apptesting"
 	v10 "github.com/Stride-Labs/stride/v10/app/upgrades/v10"
 	"github.com/Stride-Labs/stride/v10/utils"
@@ -23,13 +30,6 @@ import (
 	stakeibckeeper "github.com/Stride-Labs/stride/v10/x/stakeibc/keeper"
 	"github.com/Stride-Labs/stride/v10/x/stakeibc/types"
 	stakeibctypes "github.com/Stride-Labs/stride/v10/x/stakeibc/types"
-
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/types/address"
-	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
-
-	transfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
-	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
 )
 
 var initialRateLimitChannelValue = sdk.NewInt(1_000_000)

@@ -5,11 +5,11 @@ import (
 
 	errorsmod "cosmossdk.io/errors"
 
-	"github.com/Stride-Labs/stride/v10/x/records/keeper"
-	"github.com/Stride-Labs/stride/v10/x/records/types"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+
+	"github.com/Stride-Labs/stride/v10/x/records/keeper"
+	"github.com/Stride-Labs/stride/v10/x/records/types"
 )
 
 // NewHandler ...

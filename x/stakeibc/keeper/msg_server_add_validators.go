@@ -3,9 +3,9 @@ package keeper
 import (
 	"context"
 
-	"github.com/Stride-Labs/stride/v10/x/stakeibc/types"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	"github.com/Stride-Labs/stride/v10/x/stakeibc/types"
 )
 
 func (k msgServer) AddValidators(goCtx context.Context, msg *types.MsgAddValidators) (*types.MsgAddValidatorsResponse, error) {

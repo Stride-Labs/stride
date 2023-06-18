@@ -10,10 +10,6 @@ import (
 	"github.com/cosmos/gogoproto/proto"
 	"github.com/stretchr/testify/require"
 
-	"github.com/Stride-Labs/stride/v10/app/apptesting"
-	"github.com/Stride-Labs/stride/v10/x/icacallbacks"
-	icacallbacktypes "github.com/Stride-Labs/stride/v10/x/icacallbacks/types"
-
 	"github.com/cometbft/cometbft/libs/log"
 
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
@@ -22,6 +18,10 @@ import (
 
 	ibctransfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
 	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
+
+	"github.com/Stride-Labs/stride/v10/app/apptesting"
+	"github.com/Stride-Labs/stride/v10/x/icacallbacks"
+	icacallbacktypes "github.com/Stride-Labs/stride/v10/x/icacallbacks/types"
 )
 
 func TestParseTxMsgDataCurrent(t *testing.T) {

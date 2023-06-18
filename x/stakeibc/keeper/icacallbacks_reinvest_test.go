@@ -1,7 +1,14 @@
 package keeper_test
 
 import (
+	_ "github.com/stretchr/testify/suite"
+
 	sdkmath "cosmossdk.io/math"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
+	ibctesting "github.com/cosmos/ibc-go/v7/testing"
 
 	"github.com/Stride-Labs/stride/v10/app/apptesting"
 	epochtypes "github.com/Stride-Labs/stride/v10/x/epochs/types"
@@ -11,13 +18,6 @@ import (
 	stakeibckeeper "github.com/Stride-Labs/stride/v10/x/stakeibc/keeper"
 	"github.com/Stride-Labs/stride/v10/x/stakeibc/types"
 	stakeibctypes "github.com/Stride-Labs/stride/v10/x/stakeibc/types"
-
-	sdk "github.com/cosmos/cosmos-sdk/types"
-
-	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
-	ibctesting "github.com/cosmos/ibc-go/v7/testing"
-
-	_ "github.com/stretchr/testify/suite"
 )
 
 type ReinvestCallbackState struct {

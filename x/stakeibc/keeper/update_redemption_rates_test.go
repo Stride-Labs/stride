@@ -4,14 +4,14 @@ import (
 	"fmt"
 	"math/rand"
 
-	sdkmath "cosmossdk.io/math"
+	_ "github.com/stretchr/testify/suite"
 
-	recordtypes "github.com/Stride-Labs/stride/v10/x/records/types"
-	stakeibctypes "github.com/Stride-Labs/stride/v10/x/stakeibc/types"
+	sdkmath "cosmossdk.io/math"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	_ "github.com/stretchr/testify/suite"
+	recordtypes "github.com/Stride-Labs/stride/v10/x/records/types"
+	stakeibctypes "github.com/Stride-Labs/stride/v10/x/stakeibc/types"
 )
 
 type UpdateRedemptionRatesTestCase struct {

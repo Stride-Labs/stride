@@ -6,12 +6,12 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	sdk "github.com/cosmos/cosmos-sdk/types"
+
 	keepertest "github.com/Stride-Labs/stride/v10/testutil/keeper"
 	"github.com/Stride-Labs/stride/v10/testutil/nullify"
 	"github.com/Stride-Labs/stride/v10/x/icacallbacks/keeper"
 	"github.com/Stride-Labs/stride/v10/x/icacallbacks/types"
-
-	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 // Prevent strconv unused error

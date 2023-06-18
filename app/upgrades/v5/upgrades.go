@@ -5,6 +5,13 @@ import (
 
 	errorsmod "cosmossdk.io/errors"
 
+	"github.com/cosmos/cosmos-sdk/codec"
+	storetypes "github.com/cosmos/cosmos-sdk/store/types"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/types/module"
+	authz "github.com/cosmos/cosmos-sdk/x/authz"
+	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
+
 	claimmigration "github.com/Stride-Labs/stride/v10/x/claim/migrations/v2"
 	claimtypes "github.com/Stride-Labs/stride/v10/x/claim/types"
 	icacallbacksmigration "github.com/Stride-Labs/stride/v10/x/icacallbacks/migrations/v2"
@@ -15,13 +22,6 @@ import (
 	stakeibckeeper "github.com/Stride-Labs/stride/v10/x/stakeibc/keeper"
 	stakeibcmigration "github.com/Stride-Labs/stride/v10/x/stakeibc/migrations/v2"
 	stakeibctypes "github.com/Stride-Labs/stride/v10/x/stakeibc/types"
-
-	"github.com/cosmos/cosmos-sdk/codec"
-	storetypes "github.com/cosmos/cosmos-sdk/store/types"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/types/module"
-	authz "github.com/cosmos/cosmos-sdk/x/authz"
-	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 )
 
 // Note: ensure these values are properly set before running upgrade

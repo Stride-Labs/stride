@@ -6,18 +6,18 @@ import (
 	errorsmod "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
 
-	"github.com/Stride-Labs/stride/v10/utils"
-	epochtypes "github.com/Stride-Labs/stride/v10/x/epochs/types"
-	icqkeeper "github.com/Stride-Labs/stride/v10/x/interchainquery/keeper"
-	icqtypes "github.com/Stride-Labs/stride/v10/x/interchainquery/types"
-	"github.com/Stride-Labs/stride/v10/x/stakeibc/types"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	ibctypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
 	transfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
 	clienttypes "github.com/cosmos/ibc-go/v7/modules/core/02-client/types"
 	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
+
+	"github.com/Stride-Labs/stride/v10/utils"
+	epochtypes "github.com/Stride-Labs/stride/v10/x/epochs/types"
+	icqkeeper "github.com/Stride-Labs/stride/v10/x/interchainquery/keeper"
+	icqtypes "github.com/Stride-Labs/stride/v10/x/interchainquery/types"
+	"github.com/Stride-Labs/stride/v10/x/stakeibc/types"
 )
 
 // FeeBalanceCallback is a callback handler for FeeBalnce queries.

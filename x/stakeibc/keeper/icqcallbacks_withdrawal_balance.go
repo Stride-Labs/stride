@@ -9,14 +9,14 @@ import (
 	errorsmod "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
 
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+
 	"github.com/Stride-Labs/stride/v10/utils"
 	icqkeeper "github.com/Stride-Labs/stride/v10/x/interchainquery/keeper"
 	icqtypes "github.com/Stride-Labs/stride/v10/x/interchainquery/types"
 	"github.com/Stride-Labs/stride/v10/x/stakeibc/types"
-
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 )
 
 // WithdrawalBalanceCallback is a callback handler for WithdrawalBalance queries.

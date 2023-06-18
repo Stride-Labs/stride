@@ -4,12 +4,12 @@ import (
 	"fmt"
 	"strings"
 
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+
 	"github.com/Stride-Labs/stride/v10/x/claim/types"
 	epochstypes "github.com/Stride-Labs/stride/v10/x/epochs/types"
 	stakingibctypes "github.com/Stride-Labs/stride/v10/x/stakeibc/types"
-
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 )
 
 func (k Keeper) AfterDelegationModified(ctx sdk.Context, delAddr sdk.AccAddress, valAddr sdk.ValAddress) error {

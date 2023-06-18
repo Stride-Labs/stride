@@ -5,14 +5,6 @@ import (
 
 	errorsmod "cosmossdk.io/errors"
 
-	"github.com/Stride-Labs/stride/v10/utils"
-	epochskeeper "github.com/Stride-Labs/stride/v10/x/epochs/keeper"
-	epochstypes "github.com/Stride-Labs/stride/v10/x/epochs/types"
-	mintkeeper "github.com/Stride-Labs/stride/v10/x/mint/keeper"
-	minttypes "github.com/Stride-Labs/stride/v10/x/mint/types"
-	stakeibckeeper "github.com/Stride-Labs/stride/v10/x/stakeibc/keeper"
-	stakeibctypes "github.com/Stride-Labs/stride/v10/x/stakeibc/types"
-
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/address"
@@ -28,6 +20,14 @@ import (
 	icahostkeeper "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/host/keeper"
 	icahosttypes "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/host/types"
 	transfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
+
+	"github.com/Stride-Labs/stride/v10/utils"
+	epochskeeper "github.com/Stride-Labs/stride/v10/x/epochs/keeper"
+	epochstypes "github.com/Stride-Labs/stride/v10/x/epochs/types"
+	mintkeeper "github.com/Stride-Labs/stride/v10/x/mint/keeper"
+	minttypes "github.com/Stride-Labs/stride/v10/x/mint/types"
+	stakeibckeeper "github.com/Stride-Labs/stride/v10/x/stakeibc/keeper"
+	stakeibctypes "github.com/Stride-Labs/stride/v10/x/stakeibc/types"
 )
 
 // CreateUpgradeHandler creates an SDK upgrade handler for v7

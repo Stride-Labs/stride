@@ -1,9 +1,9 @@
 package keeper
 
 import (
-	"github.com/Stride-Labs/stride/v10/x/icacallbacks/types"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	"github.com/Stride-Labs/stride/v10/x/icacallbacks/types"
 )
 
 // GetParams get all parameters as types.Params

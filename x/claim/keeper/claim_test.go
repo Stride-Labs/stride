@@ -5,16 +5,16 @@ import (
 	"strings"
 	"time"
 
+	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+	vestingtypes "github.com/cosmos/cosmos-sdk/x/auth/vesting/types"
+
 	"github.com/Stride-Labs/stride/v10/app/apptesting"
 	"github.com/Stride-Labs/stride/v10/utils"
 	claimkeeper "github.com/Stride-Labs/stride/v10/x/claim/keeper"
 	"github.com/Stride-Labs/stride/v10/x/claim/types"
 	stridevestingtypes "github.com/Stride-Labs/stride/v10/x/claim/vesting/types"
-
-	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
-	vestingtypes "github.com/cosmos/cosmos-sdk/x/auth/vesting/types"
 )
 
 // Test functionality for loading allocation data(csv)

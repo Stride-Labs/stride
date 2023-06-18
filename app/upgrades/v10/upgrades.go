@@ -9,19 +9,6 @@ import (
 	errorsmod "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
 
-	claimkeeper "github.com/Stride-Labs/stride/v10/x/claim/keeper"
-	claimtypes "github.com/Stride-Labs/stride/v10/x/claim/types"
-	icacallbackskeeper "github.com/Stride-Labs/stride/v10/x/icacallbacks/keeper"
-	mintkeeper "github.com/Stride-Labs/stride/v10/x/mint/keeper"
-	minttypes "github.com/Stride-Labs/stride/v10/x/mint/types"
-	ratelimitkeeper "github.com/Stride-Labs/stride/v10/x/ratelimit/keeper"
-	ratelimitgov "github.com/Stride-Labs/stride/v10/x/ratelimit/keeper/gov"
-	ratelimittypes "github.com/Stride-Labs/stride/v10/x/ratelimit/types"
-	recordskeeper "github.com/Stride-Labs/stride/v10/x/records/keeper"
-	recordstypes "github.com/Stride-Labs/stride/v10/x/records/types"
-	stakeibckeeper "github.com/Stride-Labs/stride/v10/x/stakeibc/keeper"
-	stakeibctypes "github.com/Stride-Labs/stride/v10/x/stakeibc/types"
-
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/codec"
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
@@ -41,6 +28,19 @@ import (
 	channelkeeper "github.com/cosmos/ibc-go/v7/modules/core/04-channel/keeper"
 	"github.com/cosmos/ibc-go/v7/modules/core/exported"
 	ibctmmigrations "github.com/cosmos/ibc-go/v7/modules/light-clients/07-tendermint/migrations"
+
+	claimkeeper "github.com/Stride-Labs/stride/v10/x/claim/keeper"
+	claimtypes "github.com/Stride-Labs/stride/v10/x/claim/types"
+	icacallbackskeeper "github.com/Stride-Labs/stride/v10/x/icacallbacks/keeper"
+	mintkeeper "github.com/Stride-Labs/stride/v10/x/mint/keeper"
+	minttypes "github.com/Stride-Labs/stride/v10/x/mint/types"
+	ratelimitkeeper "github.com/Stride-Labs/stride/v10/x/ratelimit/keeper"
+	ratelimitgov "github.com/Stride-Labs/stride/v10/x/ratelimit/keeper/gov"
+	ratelimittypes "github.com/Stride-Labs/stride/v10/x/ratelimit/types"
+	recordskeeper "github.com/Stride-Labs/stride/v10/x/records/keeper"
+	recordstypes "github.com/Stride-Labs/stride/v10/x/records/types"
+	stakeibckeeper "github.com/Stride-Labs/stride/v10/x/stakeibc/keeper"
+	stakeibctypes "github.com/Stride-Labs/stride/v10/x/stakeibc/types"
 )
 
 var (

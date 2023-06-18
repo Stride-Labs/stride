@@ -1,10 +1,10 @@
 package keeper
 
 import (
-	"github.com/Stride-Labs/stride/v10/x/icacallbacks/types"
-
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	"github.com/Stride-Labs/stride/v10/x/icacallbacks/types"
 )
 
 // SetCallbackData set a specific callbackData in the store from its index

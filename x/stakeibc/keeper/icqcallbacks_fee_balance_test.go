@@ -3,15 +3,15 @@ package keeper_test
 import (
 	"fmt"
 
-	epochtypes "github.com/Stride-Labs/stride/v10/x/epochs/types"
-	icqtypes "github.com/Stride-Labs/stride/v10/x/interchainquery/types"
-	stakeibckeeper "github.com/Stride-Labs/stride/v10/x/stakeibc/keeper"
-	stakeibctypes "github.com/Stride-Labs/stride/v10/x/stakeibc/types"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	icatypes "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/types"
 	ibctesting "github.com/cosmos/ibc-go/v7/testing"
+
+	epochtypes "github.com/Stride-Labs/stride/v10/x/epochs/types"
+	icqtypes "github.com/Stride-Labs/stride/v10/x/interchainquery/types"
+	stakeibckeeper "github.com/Stride-Labs/stride/v10/x/stakeibc/keeper"
+	stakeibctypes "github.com/Stride-Labs/stride/v10/x/stakeibc/types"
 )
 
 type FeeBalanceICQCallbackState struct {

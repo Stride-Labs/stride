@@ -1,12 +1,12 @@
 package keeper_test
 
 import (
+	_ "github.com/stretchr/testify/suite"
+
 	sdkmath "cosmossdk.io/math"
 
 	recordtypes "github.com/Stride-Labs/stride/v10/x/records/types"
 	stakeibc "github.com/Stride-Labs/stride/v10/x/stakeibc/types"
-
-	_ "github.com/stretchr/testify/suite"
 )
 
 type CleanupEpochUnbondingRecordsTestCase struct {

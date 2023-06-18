@@ -3,9 +3,9 @@ package keeper
 import (
 	"context"
 
-	"github.com/Stride-Labs/stride/v10/x/interchainquery/types"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	"github.com/Stride-Labs/stride/v10/x/interchainquery/types"
 )
 
 var _ types.QueryServiceServer = Keeper{}

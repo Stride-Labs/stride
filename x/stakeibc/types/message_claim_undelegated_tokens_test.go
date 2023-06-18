@@ -6,9 +6,9 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/Stride-Labs/stride/v10/testutil/sample"
-
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+
+	"github.com/Stride-Labs/stride/v10/testutil/sample"
 )
 
 func TestMsgClaimUndelegatedTokens_ValidateBasic(t *testing.T) {

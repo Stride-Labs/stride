@@ -3,17 +3,17 @@ package keeper
 import (
 	"fmt"
 
+	"github.com/cometbft/cometbft/crypto"
+
 	errorsmod "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
-
-	"github.com/Stride-Labs/stride/v10/x/interchainquery/types"
-
-	"github.com/cometbft/cometbft/crypto"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+
+	"github.com/Stride-Labs/stride/v10/x/interchainquery/types"
 )
 
 func GenerateQueryHash(connectionId string, chainId string, queryType string, request []byte, module string, callbackId string) string {

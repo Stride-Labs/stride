@@ -8,13 +8,13 @@ import (
 
 	sdkmath "cosmossdk.io/math"
 
+	sdk "github.com/cosmos/cosmos-sdk/types"
+
 	"github.com/Stride-Labs/stride/v10/app/apptesting"
 	v8 "github.com/Stride-Labs/stride/v10/app/upgrades/v8"
 	autopilottypes "github.com/Stride-Labs/stride/v10/x/autopilot/types"
 	"github.com/Stride-Labs/stride/v10/x/claim/types"
 	claimtypes "github.com/Stride-Labs/stride/v10/x/claim/types"
-
-	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 var (

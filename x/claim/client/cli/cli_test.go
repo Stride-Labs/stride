@@ -9,7 +9,16 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
+	tmcli "github.com/cometbft/cometbft/libs/cli"
+
 	sdkmath "cosmossdk.io/math"
+
+	"github.com/cosmos/cosmos-sdk/client/flags"
+	"github.com/cosmos/cosmos-sdk/crypto/hd"
+	"github.com/cosmos/cosmos-sdk/crypto/keyring"
+	"github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
+	clitestutil "github.com/cosmos/cosmos-sdk/testutil/cli"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/Stride-Labs/stride/v10/app"
 	cmdcfg "github.com/Stride-Labs/stride/v10/cmd/strided/config"
@@ -18,15 +27,6 @@ import (
 	"github.com/Stride-Labs/stride/v10/x/claim/client/cli"
 	"github.com/Stride-Labs/stride/v10/x/claim/types"
 	claimtypes "github.com/Stride-Labs/stride/v10/x/claim/types"
-
-	tmcli "github.com/cometbft/cometbft/libs/cli"
-
-	"github.com/cosmos/cosmos-sdk/client/flags"
-	"github.com/cosmos/cosmos-sdk/crypto/hd"
-	"github.com/cosmos/cosmos-sdk/crypto/keyring"
-	"github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
-	clitestutil "github.com/cosmos/cosmos-sdk/testutil/cli"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 var (

@@ -3,13 +3,13 @@ package v2
 import (
 	errorsmod "cosmossdk.io/errors"
 
-	oldrecordtypes "github.com/Stride-Labs/stride/v10/x/records/migrations/v2/types"
-	recordtypes "github.com/Stride-Labs/stride/v10/x/records/types"
-
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	oldrecordtypes "github.com/Stride-Labs/stride/v10/x/records/migrations/v2/types"
+	recordtypes "github.com/Stride-Labs/stride/v10/x/records/types"
 )
 
 func migrateDepositRecord(store sdk.KVStore, cdc codec.BinaryCodec) error {

@@ -6,6 +6,9 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
+	"github.com/cosmos/cosmos-sdk/store/prefix"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+
 	"github.com/Stride-Labs/stride/v10/app"
 	"github.com/Stride-Labs/stride/v10/app/apptesting"
 	v7 "github.com/Stride-Labs/stride/v10/app/upgrades/v7"
@@ -15,9 +18,6 @@ import (
 	// is that it doesn't have min/max redemption rate as attributes
 	oldstakeibctypes "github.com/Stride-Labs/stride/v10/x/stakeibc/migrations/v2/types"
 	stakeibctypes "github.com/Stride-Labs/stride/v10/x/stakeibc/types"
-
-	"github.com/cosmos/cosmos-sdk/store/prefix"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 var (

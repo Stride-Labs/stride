@@ -5,11 +5,9 @@ import (
 
 	"github.com/spf13/cast"
 
-	errorsmod "cosmossdk.io/errors"
-
-	"github.com/Stride-Labs/stride/v10/x/mint/types"
-
 	"github.com/cometbft/cometbft/libs/log"
+
+	errorsmod "cosmossdk.io/errors"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
@@ -18,6 +16,8 @@ import (
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
+
+	"github.com/Stride-Labs/stride/v10/x/mint/types"
 )
 
 // Keeper of the mint store.

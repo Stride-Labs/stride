@@ -8,15 +8,15 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	sdkmath "cosmossdk.io/math"
-
-	"github.com/Stride-Labs/stride/v10/x/ratelimit/keeper"
-	"github.com/Stride-Labs/stride/v10/x/ratelimit/types"
-
 	tmbytes "github.com/cometbft/cometbft/libs/bytes"
+
+	sdkmath "cosmossdk.io/math"
 
 	transfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
 	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
+
+	"github.com/Stride-Labs/stride/v10/x/ratelimit/keeper"
+	"github.com/Stride-Labs/stride/v10/x/ratelimit/types"
 )
 
 const (

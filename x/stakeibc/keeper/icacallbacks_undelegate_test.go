@@ -5,20 +5,20 @@ import (
 
 	"github.com/cosmos/gogoproto/proto"
 
-	sdkmath "cosmossdk.io/math"
+	_ "github.com/stretchr/testify/suite"
 
-	icacallbacktypes "github.com/Stride-Labs/stride/v10/x/icacallbacks/types"
-	recordtypes "github.com/Stride-Labs/stride/v10/x/records/types"
-	stakeibckeeper "github.com/Stride-Labs/stride/v10/x/stakeibc/keeper"
-	"github.com/Stride-Labs/stride/v10/x/stakeibc/types"
-	stakeibc "github.com/Stride-Labs/stride/v10/x/stakeibc/types"
+	sdkmath "cosmossdk.io/math"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	stakingTypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
 	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
 
-	_ "github.com/stretchr/testify/suite"
+	icacallbacktypes "github.com/Stride-Labs/stride/v10/x/icacallbacks/types"
+	recordtypes "github.com/Stride-Labs/stride/v10/x/records/types"
+	stakeibckeeper "github.com/Stride-Labs/stride/v10/x/stakeibc/keeper"
+	"github.com/Stride-Labs/stride/v10/x/stakeibc/types"
+	stakeibc "github.com/Stride-Labs/stride/v10/x/stakeibc/types"
 )
 
 type UndelegateCallbackState struct {

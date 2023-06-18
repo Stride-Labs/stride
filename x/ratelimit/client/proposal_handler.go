@@ -1,9 +1,9 @@
 package client
 
 import (
-	"github.com/Stride-Labs/stride/v10/x/ratelimit/client/cli"
-
 	govclient "github.com/cosmos/cosmos-sdk/x/gov/client"
+
+	"github.com/Stride-Labs/stride/v10/x/ratelimit/client/cli"
 )
 
 var (

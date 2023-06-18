@@ -3,10 +3,10 @@ package main
 import (
 	"os"
 
+	svrcmd "github.com/cosmos/cosmos-sdk/server/cmd"
+
 	"github.com/Stride-Labs/stride/v10/app"
 	cmdcfg "github.com/Stride-Labs/stride/v10/cmd/strided/config"
-
-	svrcmd "github.com/cosmos/cosmos-sdk/server/cmd"
 )
 
 func main() {

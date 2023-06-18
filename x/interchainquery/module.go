@@ -9,10 +9,6 @@ import (
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 	"github.com/spf13/cobra"
 
-	"github.com/Stride-Labs/stride/v10/x/interchainquery/client/cli"
-	"github.com/Stride-Labs/stride/v10/x/interchainquery/keeper"
-	"github.com/Stride-Labs/stride/v10/x/interchainquery/types"
-
 	abci "github.com/cometbft/cometbft/abci/types"
 
 	"github.com/cosmos/cosmos-sdk/client"
@@ -21,6 +17,10 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
+
+	"github.com/Stride-Labs/stride/v10/x/interchainquery/client/cli"
+	"github.com/Stride-Labs/stride/v10/x/interchainquery/keeper"
+	"github.com/Stride-Labs/stride/v10/x/interchainquery/types"
 )
 
 var (

@@ -1,11 +1,11 @@
 package keeper
 
 import (
-	icacallbackstypes "github.com/Stride-Labs/stride/v10/x/icacallbacks/types"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
+
+	icacallbackstypes "github.com/Stride-Labs/stride/v10/x/icacallbacks/types"
 )
 
 const TRANSFER = "transfer"

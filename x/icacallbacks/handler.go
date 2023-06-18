@@ -5,11 +5,11 @@ import (
 
 	errorsmod "cosmossdk.io/errors"
 
-	"github.com/Stride-Labs/stride/v10/x/icacallbacks/keeper"
-	"github.com/Stride-Labs/stride/v10/x/icacallbacks/types"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+
+	"github.com/Stride-Labs/stride/v10/x/icacallbacks/keeper"
+	"github.com/Stride-Labs/stride/v10/x/icacallbacks/types"
 )
 
 // NewHandler ...

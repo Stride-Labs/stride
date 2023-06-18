@@ -5,9 +5,9 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/Stride-Labs/stride/v10/x/icacallbacks/types"
-
 	"github.com/cosmos/cosmos-sdk/client"
+
+	"github.com/Stride-Labs/stride/v10/x/icacallbacks/types"
 )
 
 // GetQueryCmd returns the cli query commands for this module

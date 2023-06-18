@@ -3,12 +3,12 @@ package simulation
 import (
 	"math/rand"
 
-	"github.com/Stride-Labs/stride/v10/x/stakeibc/keeper"
-	"github.com/Stride-Labs/stride/v10/x/stakeibc/types"
-
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
+
+	"github.com/Stride-Labs/stride/v10/x/stakeibc/keeper"
+	"github.com/Stride-Labs/stride/v10/x/stakeibc/types"
 )
 
 func SimulateMsgDeleteValidator(

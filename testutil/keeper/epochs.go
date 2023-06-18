@@ -4,12 +4,12 @@ import (
 	"testing"
 	"time"
 
-	strideapp "github.com/Stride-Labs/stride/v10/app"
-	"github.com/Stride-Labs/stride/v10/x/epochs/keeper"
-
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	strideapp "github.com/Stride-Labs/stride/v10/app"
+	"github.com/Stride-Labs/stride/v10/x/epochs/keeper"
 )
 
 func EpochsKeeper(t testing.TB) (*keeper.Keeper, sdk.Context) {

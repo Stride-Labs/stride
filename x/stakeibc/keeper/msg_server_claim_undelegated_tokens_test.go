@@ -6,19 +6,19 @@ import (
 
 	proto "github.com/cosmos/gogoproto/proto"
 
-	sdkmath "cosmossdk.io/math"
+	_ "github.com/stretchr/testify/suite"
 
-	epochtypes "github.com/Stride-Labs/stride/v10/x/epochs/types"
-	recordtypes "github.com/Stride-Labs/stride/v10/x/records/types"
-	stakeibckeeper "github.com/Stride-Labs/stride/v10/x/stakeibc/keeper"
-	stakeibctypes "github.com/Stride-Labs/stride/v10/x/stakeibc/types"
+	sdkmath "cosmossdk.io/math"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 
 	ibctesting "github.com/cosmos/ibc-go/v7/testing"
 
-	_ "github.com/stretchr/testify/suite"
+	epochtypes "github.com/Stride-Labs/stride/v10/x/epochs/types"
+	recordtypes "github.com/Stride-Labs/stride/v10/x/records/types"
+	stakeibckeeper "github.com/Stride-Labs/stride/v10/x/stakeibc/keeper"
+	stakeibctypes "github.com/Stride-Labs/stride/v10/x/stakeibc/types"
 )
 
 type ClaimUndelegatedState struct {

@@ -1,9 +1,9 @@
 package keeper_test
 
 import (
-	"github.com/Stride-Labs/stride/v10/x/stakeibc/types"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	"github.com/Stride-Labs/stride/v10/x/stakeibc/types"
 )
 
 func (s *KeeperTestSuite) TestNextPacketSequenceQuery() {

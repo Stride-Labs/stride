@@ -5,10 +5,6 @@ import (
 
 	errorsmod "cosmossdk.io/errors"
 
-	icacallbacks "github.com/Stride-Labs/stride/v10/x/icacallbacks"
-	icacallbacktypes "github.com/Stride-Labs/stride/v10/x/icacallbacks/types"
-	"github.com/Stride-Labs/stride/v10/x/records/keeper"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	capabilitytypes "github.com/cosmos/cosmos-sdk/x/capability/types"
@@ -17,6 +13,10 @@ import (
 	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
 	porttypes "github.com/cosmos/ibc-go/v7/modules/core/05-port/types"
 	ibcexported "github.com/cosmos/ibc-go/v7/modules/core/exported"
+
+	icacallbacks "github.com/Stride-Labs/stride/v10/x/icacallbacks"
+	icacallbacktypes "github.com/Stride-Labs/stride/v10/x/icacallbacks/types"
+	"github.com/Stride-Labs/stride/v10/x/records/keeper"
 )
 
 // IBC MODULE IMPLEMENTATION

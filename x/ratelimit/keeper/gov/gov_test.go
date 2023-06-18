@@ -8,15 +8,15 @@ import (
 	errorsmod "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
 
-	"github.com/Stride-Labs/stride/v10/app/apptesting"
-	minttypes "github.com/Stride-Labs/stride/v10/x/mint/types"
-	"github.com/Stride-Labs/stride/v10/x/ratelimit/keeper/gov"
-	"github.com/Stride-Labs/stride/v10/x/ratelimit/types"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	transfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
 	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
+
+	"github.com/Stride-Labs/stride/v10/app/apptesting"
+	minttypes "github.com/Stride-Labs/stride/v10/x/mint/types"
+	"github.com/Stride-Labs/stride/v10/x/ratelimit/keeper/gov"
+	"github.com/Stride-Labs/stride/v10/x/ratelimit/types"
 )
 
 type KeeperTestSuite struct {

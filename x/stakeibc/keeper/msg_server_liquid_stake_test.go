@@ -3,15 +3,15 @@ package keeper_test
 import (
 	"fmt"
 
+	_ "github.com/stretchr/testify/suite"
+
 	sdkmath "cosmossdk.io/math"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	epochtypes "github.com/Stride-Labs/stride/v10/x/epochs/types"
 	recordtypes "github.com/Stride-Labs/stride/v10/x/records/types"
 	stakeibctypes "github.com/Stride-Labs/stride/v10/x/stakeibc/types"
-
-	sdk "github.com/cosmos/cosmos-sdk/types"
-
-	_ "github.com/stretchr/testify/suite"
 )
 
 type Account struct {

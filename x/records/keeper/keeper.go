@@ -3,11 +3,6 @@ package keeper
 import (
 	"fmt"
 
-	"github.com/Stride-Labs/stride/v10/utils"
-	icacallbackskeeper "github.com/Stride-Labs/stride/v10/x/icacallbacks/keeper"
-	icacallbackstypes "github.com/Stride-Labs/stride/v10/x/icacallbacks/types"
-	"github.com/Stride-Labs/stride/v10/x/records/types"
-
 	"github.com/cometbft/cometbft/libs/log"
 
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -18,6 +13,11 @@ import (
 	ibctransferkeeper "github.com/cosmos/ibc-go/v7/modules/apps/transfer/keeper"
 	ibctypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
 	ibckeeper "github.com/cosmos/ibc-go/v7/modules/core/keeper"
+
+	"github.com/Stride-Labs/stride/v10/utils"
+	icacallbackskeeper "github.com/Stride-Labs/stride/v10/x/icacallbacks/keeper"
+	icacallbackstypes "github.com/Stride-Labs/stride/v10/x/icacallbacks/types"
+	"github.com/Stride-Labs/stride/v10/x/records/types"
 )
 
 type (

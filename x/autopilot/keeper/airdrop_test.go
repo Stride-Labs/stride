@@ -4,12 +4,6 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/Stride-Labs/stride/v10/utils"
-	"github.com/Stride-Labs/stride/v10/x/autopilot"
-	"github.com/Stride-Labs/stride/v10/x/autopilot/types"
-	claimtypes "github.com/Stride-Labs/stride/v10/x/claim/types"
-	stakeibctypes "github.com/Stride-Labs/stride/v10/x/stakeibc/types"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/cosmos/ibc-go/v7/modules/apps/transfer"
@@ -17,6 +11,12 @@ import (
 	clienttypes "github.com/cosmos/ibc-go/v7/modules/core/02-client/types"
 	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
 	ibctesting "github.com/cosmos/ibc-go/v7/testing"
+
+	"github.com/Stride-Labs/stride/v10/utils"
+	"github.com/Stride-Labs/stride/v10/x/autopilot"
+	"github.com/Stride-Labs/stride/v10/x/autopilot/types"
+	claimtypes "github.com/Stride-Labs/stride/v10/x/claim/types"
+	stakeibctypes "github.com/Stride-Labs/stride/v10/x/stakeibc/types"
 )
 
 // TODO: Separate out tests cases that are not necessarily Claim or Stakeibc related,

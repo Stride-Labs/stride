@@ -4,14 +4,14 @@ import (
 	"fmt"
 	"strings"
 
-	sdkmath "cosmossdk.io/math"
+	_ "github.com/stretchr/testify/suite"
 
-	recordtypes "github.com/Stride-Labs/stride/v10/x/records/types"
-	stakeibc "github.com/Stride-Labs/stride/v10/x/stakeibc/types"
+	sdkmath "cosmossdk.io/math"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	_ "github.com/stretchr/testify/suite"
+	recordtypes "github.com/Stride-Labs/stride/v10/x/records/types"
+	stakeibc "github.com/Stride-Labs/stride/v10/x/stakeibc/types"
 )
 
 type GetHostZoneUnbondingMsgsTestCase struct {

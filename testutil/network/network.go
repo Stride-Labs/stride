@@ -5,8 +5,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/Stride-Labs/stride/v10/app"
-
 	cometbftdb "github.com/cometbft/cometbft-db"
 	cometbftrand "github.com/cometbft/cometbft/libs/rand"
 
@@ -19,6 +17,8 @@ import (
 	simtestutil "github.com/cosmos/cosmos-sdk/testutil/sims"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+
+	"github.com/Stride-Labs/stride/v10/app"
 )
 
 type (

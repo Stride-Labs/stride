@@ -5,15 +5,9 @@ import (
 
 	"github.com/spf13/cast"
 
-	errorsmod "cosmossdk.io/errors"
-
-	epochstypes "github.com/Stride-Labs/stride/v10/x/epochs/types"
-	icacallbackskeeper "github.com/Stride-Labs/stride/v10/x/icacallbacks/keeper"
-	icqkeeper "github.com/Stride-Labs/stride/v10/x/interchainquery/keeper"
-	recordsmodulekeeper "github.com/Stride-Labs/stride/v10/x/records/keeper"
-	"github.com/Stride-Labs/stride/v10/x/stakeibc/types"
-
 	"github.com/cometbft/cometbft/libs/log"
+
+	errorsmod "cosmossdk.io/errors"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
@@ -26,6 +20,12 @@ import (
 	icacontrollerkeeper "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/controller/keeper"
 	ibckeeper "github.com/cosmos/ibc-go/v7/modules/core/keeper"
 	ibctmtypes "github.com/cosmos/ibc-go/v7/modules/light-clients/07-tendermint"
+
+	epochstypes "github.com/Stride-Labs/stride/v10/x/epochs/types"
+	icacallbackskeeper "github.com/Stride-Labs/stride/v10/x/icacallbacks/keeper"
+	icqkeeper "github.com/Stride-Labs/stride/v10/x/interchainquery/keeper"
+	recordsmodulekeeper "github.com/Stride-Labs/stride/v10/x/records/keeper"
+	"github.com/Stride-Labs/stride/v10/x/stakeibc/types"
 )
 
 type (

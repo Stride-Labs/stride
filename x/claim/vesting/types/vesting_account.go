@@ -8,12 +8,12 @@ import (
 
 	sdkmath "cosmossdk.io/math"
 
-	"github.com/Stride-Labs/stride/v10/utils"
-	vestexported "github.com/Stride-Labs/stride/v10/x/claim/vesting/exported"
-
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+
+	"github.com/Stride-Labs/stride/v10/utils"
+	vestexported "github.com/Stride-Labs/stride/v10/x/claim/vesting/exported"
 )
 
 // Compile-time type assertions

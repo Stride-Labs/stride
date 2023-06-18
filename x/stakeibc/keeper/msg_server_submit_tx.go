@@ -9,13 +9,6 @@ import (
 
 	errorsmod "cosmossdk.io/errors"
 
-	"github.com/Stride-Labs/stride/v10/utils"
-	epochstypes "github.com/Stride-Labs/stride/v10/x/epochs/types"
-	icacallbackstypes "github.com/Stride-Labs/stride/v10/x/icacallbacks/types"
-	icqtypes "github.com/Stride-Labs/stride/v10/x/interchainquery/types"
-	recordstypes "github.com/Stride-Labs/stride/v10/x/records/types"
-	"github.com/Stride-Labs/stride/v10/x/stakeibc/types"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/bech32"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -24,6 +17,13 @@ import (
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
 	icatypes "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/types"
+
+	"github.com/Stride-Labs/stride/v10/utils"
+	epochstypes "github.com/Stride-Labs/stride/v10/x/epochs/types"
+	icacallbackstypes "github.com/Stride-Labs/stride/v10/x/icacallbacks/types"
+	icqtypes "github.com/Stride-Labs/stride/v10/x/interchainquery/types"
+	recordstypes "github.com/Stride-Labs/stride/v10/x/records/types"
+	"github.com/Stride-Labs/stride/v10/x/stakeibc/types"
 )
 
 func (k Keeper) DelegateOnHost(ctx sdk.Context, hostZone types.HostZone, amt sdk.Coin, depositRecord recordstypes.DepositRecord) error {

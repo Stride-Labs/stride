@@ -7,15 +7,15 @@ import (
 
 	sdkmath "cosmossdk.io/math"
 
-	"github.com/Stride-Labs/stride/v10/utils"
-	recordstypes "github.com/Stride-Labs/stride/v10/x/records/types"
-	"github.com/Stride-Labs/stride/v10/x/stakeibc/types"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	ibctransfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
 	ibctypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
 	clienttypes "github.com/cosmos/ibc-go/v7/modules/core/02-client/types"
+
+	"github.com/Stride-Labs/stride/v10/utils"
+	recordstypes "github.com/Stride-Labs/stride/v10/x/records/types"
+	"github.com/Stride-Labs/stride/v10/x/stakeibc/types"
 )
 
 // Create a new deposit record for each host zone for the given epoch
