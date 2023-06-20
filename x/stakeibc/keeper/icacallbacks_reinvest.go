@@ -123,7 +123,7 @@ func ReinvestCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ack
 		CallbackModule:  types.ModuleName,
 		CallbackId:      ICQCallbackID_FeeBalance,
 		TimeoutDuration: time.Hour,
-		TimeoutPolicy:   icqtypes.TimeoutPolicy_REJECT_QUERY_RESPONSE,
+		TimeoutPolicy:   icqtypes.TimeoutPolicy_RETRY_QUERY_REQUEST,
 	}
 	if err := k.InterchainQueryKeeper.SubmitICQRequest(ctx, query, false); err != nil {
 		k.Logger(ctx).Error(fmt.Sprintf("Error submitting ICQ for fee balance, error %s", err.Error()))
