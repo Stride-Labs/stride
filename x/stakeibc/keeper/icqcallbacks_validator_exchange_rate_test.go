@@ -216,9 +216,6 @@ func (s *KeeperTestSuite) checkDelegatorSharesQuerySubmitted(liquidStakeCallback
 
 	// Confirm timeout based on the type of query (LSM or manual)
 	timeoutDuration := time.Hour
-	if liquidStakeCallback {
-		timeoutDuration = keeper.LSMSlashQueryTimeout
-	}
 	expectedTimeout := s.Ctx.BlockTime().UnixNano() + (timeoutDuration).Nanoseconds()
 	s.Require().Equal(timeoutDuration, query.TimeoutDuration, "query timeout duration")
 	s.Require().Equal(expectedTimeout, int64(query.TimeoutTimestamp), "query timeout timestamp")
@@ -488,8 +485,5 @@ func (s *KeeperTestSuite) TestValidatorExchangeRateCallback_DelegationQueryFaile
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, badHostZone)
 
 	err := stakeibckeeper.ValidatorExchangeRateCallback(s.App.StakeibcKeeper, s.Ctx, tc.validArgs.callbackArgs, tc.validArgs.query)
-
-	expectedErr := "Failed to query delegations, err: no delegation address found for GAIA: "
-	expectedErr += "ICA acccount not found on host zone: failed to submit ICQ"
-	s.Require().EqualError(err, expectedErr)
+	s.Require().ErrorContains(err, "Failed to submit ICQ validator delegations")
 }
