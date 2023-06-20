@@ -422,7 +422,7 @@ func (k Keeper) QueryValidatorExchangeRate(
 // Submits an ICQ to get a validator's delegations
 // This is called after the validator's exchange rate is determined
 // The timeoutDuration parameter represents the length of the timeout (not to be confused with an actual timestamp)
-func (k Keeper) QueryDelegationsIcq(ctx sdk.Context, hostZone types.HostZone, validatorAddress string, timeoutDuration time.Duration) error {
+func (k Keeper) QueryDelegationsIcq(ctx sdk.Context, hostZone types.HostZone, validatorAddress string) error {
 	k.Logger(ctx).Info(utils.LogWithHostZone(hostZone.ChainId, "Submitting ICQ for delegations to %s", validatorAddress))
 
 	// Get the validator and delegator encoded addresses to form the query request
@@ -467,7 +467,7 @@ func (k Keeper) QueryDelegationsIcq(ctx sdk.Context, hostZone types.HostZone, va
 		CallbackModule:  types.ModuleName,
 		CallbackId:      ICQCallbackID_Delegation,
 		CallbackData:    callbackDataBz,
-		TimeoutDuration: timeoutDuration,
+		TimeoutDuration: time.Hour,
 		TimeoutPolicy:   icqtypes.TimeoutPolicy_RETRY_QUERY_REQUEST,
 	}
 	if err := k.InterchainQueryKeeper.SubmitICQRequest(ctx, query, false); err != nil {
