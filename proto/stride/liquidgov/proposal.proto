@@ -1,0 +1,22 @@
+syntax = "proto3";
+package stride.liquidgov;
+
+import "cosmos/gov/v1beta1/gov.proto";
+import "gogoproto/gogo.proto";
+import "cosmos_proto/cosmos.proto";
+
+option go_package = "github.com/Stride-Labs/stride/v10/x/liquidgov/types";
+//option (gogoproto.goproto_stringer_all) = false;
+//option (gogoproto.stringer_all)         = false;
+
+// Proposal defines the core field members of a liquid proposal.
+message Proposal {
+    // host_zone_chain_id defines the host zone of the proposal
+    string host_zone_id = 1;
+
+    // contains the human readable title and description 
+    cosmos.gov.v1beta1.TextProposal text_proposal = 2 [(gogoproto.nullable) = false];
+
+    // contains the id, current status, voting period times, and other core info
+    cosmos.gov.v1beta1.Proposal gov_proposal = 3 [(gogoproto.nullable) = false];
+}

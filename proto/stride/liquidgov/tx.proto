@@ -1,0 +1,17 @@
+syntax = "proto3";
+package stride.liquidgov;
+
+import "cosmos/gov/v1beta1/gov.proto";
+import "gogoproto/gogo.proto";
+import "cosmos_proto/cosmos.proto";
+import "cosmos/msg/v1/msg.proto";
+import "google/protobuf/timestamp.proto";
+
+option go_package = "github.com/Stride-Labs/stride/v10/x/liquidgov/types";
+
+// Msg defines the Msg service.
+service Msg {
+  //rpc LockupTokens(MsgLockupTokens) returns (MsgLockupTokensResponse);
+  //rpc UnlockTokens(MsgUnlockTokens) returns (MsgUnlockTokensResponse);
+  //rpc LiquidVote(MsgLiquidVote) returns (MsgLiquidVoteResponse);
+}
