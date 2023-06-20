@@ -140,8 +140,9 @@ func (s *KeeperTestSuite) SetupValidatorICQCallback(validatorSlashed, liquidStak
 		exchangeRateIfSlashed: exchangeRateIfSlashed,
 		validArgs: ValidatorICQCallbackArgs{
 			query: icqtypes.Query{
-				ChainId:      HostChainId,
-				CallbackData: callbackDataBz,
+				ChainId:          HostChainId,
+				CallbackData:     callbackDataBz,
+				TimeoutTimestamp: uint64(s.Ctx.BlockTime().Add(time.Minute).UnixNano()),
 			},
 			callbackArgs: queryResponse,
 		},
@@ -153,7 +154,7 @@ func (s *KeeperTestSuite) checkValidatorExchangeRate(expectedExchangeRate sdk.De
 	hostZone, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx, HostChainId)
 	s.Require().True(found, "host zone found")
 	s.Require().Equal(expectedExchangeRate.String(), hostZone.Validators[0].InternalSharesToTokensRate.String(),
-		"validator exchange rate should not have updated")
+		"validator exchange rate")
 }
 
 // Helper function to check that the event emitted from an LSM liquid stake
@@ -413,6 +414,47 @@ func (s *KeeperTestSuite) TestValidatorExchangeRateCallback_NoSlash_LiqudStakeFa
 	s.Require().NoError(err, "validator exchange rate callback error")
 
 	// Confirm validator's exchange rate DID update
+	expectedExchangeRate := tc.initialState.validator.InternalSharesToTokensRate
+	s.checkValidatorExchangeRate(expectedExchangeRate, tc)
+
+	// Confirm delegator shares query WAS NOT submitted
+	s.checkDelegatorSharesQueryNotSubmitted()
+
+	// Confirm the liquid stake failed
+	s.checkLSMLiquidStakeFailed()
+}
+
+func (s *KeeperTestSuite) TestValidatorExchangeRateCallback_NoLiquidStake_QueryTimeout() {
+	lsmCallback := false
+	tc := s.SetupValidatorICQCallback(false, lsmCallback)
+
+	// Update the query so that it timed out
+	badQuery := tc.validArgs.query
+	badQuery.TimeoutTimestamp = 0
+
+	err := stakeibckeeper.ValidatorExchangeRateCallback(s.App.StakeibcKeeper, s.Ctx, tc.validArgs.callbackArgs, badQuery)
+	s.Require().NoError(err, "validator exchange rate callback error")
+
+	// Confirm validator's exchange rate DID NOT update
+	expectedExchangeRate := tc.initialState.validator.InternalSharesToTokensRate
+	s.checkValidatorExchangeRate(expectedExchangeRate, tc)
+
+	// Confirm delegator shares query WAS NOT submitted
+	s.checkDelegatorSharesQueryNotSubmitted()
+}
+
+func (s *KeeperTestSuite) TestValidatorExchangeRateCallback_LiquidStake_QueryTimeout() {
+	lsmCallback := true
+	tc := s.SetupValidatorICQCallback(false, lsmCallback)
+
+	// Update the query so that it timed out
+	badQuery := tc.validArgs.query
+	badQuery.TimeoutTimestamp = 0
+
+	err := stakeibckeeper.ValidatorExchangeRateCallback(s.App.StakeibcKeeper, s.Ctx, tc.validArgs.callbackArgs, badQuery)
+	s.Require().NoError(err, "validator exchange rate callback error")
+
+	// Confirm validator's exchange rate DID NOT update
 	expectedExchangeRate := tc.initialState.validator.InternalSharesToTokensRate
 	s.checkValidatorExchangeRate(expectedExchangeRate, tc)
 

@@ -36,6 +36,18 @@ func ValidatorExchangeRateCallback(k Keeper, ctx sdk.Context, args []byte, query
 		return errorsmod.Wrapf(types.ErrHostZoneNotFound, "no registered zone for queried chain ID (%s)", chainId)
 	}
 
+	// Determine if we're in a callback for the LSMLiquidStake by checking if the callback data is non-empty
+	// If this query was triggered manually, the callback data will be empty
+	inLSMLiquidStakeCallback := len(query.CallbackData) != 0
+
+	// If the query timed out, either fail the LSM liquid stake or, if this query was submitted manually, do nothing
+	if query.HasTimedOut(ctx) {
+		if inLSMLiquidStakeCallback {
+			return k.LSMSlashQueryTimeout(ctx, hostZone, query)
+		}
+		return nil
+	}
+
 	// Unmarshal the query response args into a Validator struct
 	queriedValidator := stakingtypes.Validator{}
 	if err := k.cdc.Unmarshal(args, &queriedValidator); err != nil {
@@ -51,17 +63,9 @@ func ValidatorExchangeRateCallback(k Keeper, ctx sdk.Context, args []byte, query
 		return err
 	}
 
-	// Determine if we're in a callback for the LSMLiquidStake by checking if the callback data is non-empty
-	// If this query was triggered manually, the callback data will be empty
 	// If we are in the LSMLiquidStake callback, finish the transaction
-	inLSMLiquidStakeCallback := len(query.CallbackData) != 0
 	if inLSMLiquidStakeCallback {
-		var callbackData types.ValidatorExchangeRateQueryCallback
-		if err := proto.Unmarshal(query.CallbackData, &callbackData); err != nil {
-			return errorsmod.Wrapf(err, "unable to unmarshal validator exchange rate callback data")
-		}
-
-		if err := k.LSMSlashQueryCallback(ctx, *callbackData.LsmLiquidStake, hostZone, validatorWasSlashed); err != nil {
+		if err := k.LSMSlashQueryCallback(ctx, hostZone, query, validatorWasSlashed); err != nil {
 			return errorsmod.Wrapf(err, "unable to finish LSM liquid stake")
 		}
 	}
@@ -129,15 +133,33 @@ func (k Keeper) CheckIfValidatorWasSlashed(
 	return true, nil
 }
 
+// Fails the LSM Liquid Stake if the query timed out
+func (k Keeper) LSMSlashQueryTimeout(ctx sdk.Context, hostZone types.HostZone, query icqtypes.Query) error {
+	var callbackData types.ValidatorExchangeRateQueryCallback
+	if err := proto.Unmarshal(query.CallbackData, &callbackData); err != nil {
+		return errorsmod.Wrapf(err, "unable to unmarshal validator exchange rate callback data")
+	}
+	lsmLiquidStake := *callbackData.LsmLiquidStake
+
+	k.FailLSMLiquidStake(ctx, hostZone, lsmLiquidStake, "query timed out")
+	return nil
+}
+
 // Callback handler for if the slash query was initiated by an LSMLiquidStake transaction
 // If the validator was slashed, the LSMLiquidStake should be rejected
 // If the validator was not slashed, the LSMLiquidStake should finish to mint the user stTokens
 func (k Keeper) LSMSlashQueryCallback(
 	ctx sdk.Context,
-	lsmLiquidStake types.LSMLiquidStake,
 	hostZone types.HostZone,
+	query icqtypes.Query,
 	validatorWasSlashed bool,
 ) error {
+	var callbackData types.ValidatorExchangeRateQueryCallback
+	if err := proto.Unmarshal(query.CallbackData, &callbackData); err != nil {
+		return errorsmod.Wrapf(err, "unable to unmarshal validator exchange rate callback data")
+	}
+	lsmLiquidStake := *callbackData.LsmLiquidStake
+
 	// If the validator was slashed, fail the liquid stake
 	if validatorWasSlashed {
 		k.FailLSMLiquidStake(ctx, hostZone, lsmLiquidStake, "validator was slashed, failing LSMLiquidStake")
