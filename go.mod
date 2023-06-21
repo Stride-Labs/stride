@@ -36,7 +36,10 @@ require (
 	github.com/modern-go/reflect2 v1.0.2 // indirect
 )
 
-require github.com/gogo/protobuf v1.3.2 // indirect
+require (
+	github.com/gogo/protobuf v1.3.2 // indirect
+	github.com/oxyno-zeta/gomock-extra-matcher v1.1.0 // indirect
+)
 
 require (
 	cloud.google.com/go v0.110.0 // indirect

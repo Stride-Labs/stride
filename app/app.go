@@ -96,7 +96,7 @@ import (
 	ibcclienttypes "github.com/cosmos/ibc-go/v7/modules/core/02-client/types"
 	ibchost "github.com/cosmos/ibc-go/v7/modules/core/exported"
 	ibckeeper "github.com/cosmos/ibc-go/v7/modules/core/keeper"
-	ibctesting "github.com/cosmos/ibc-go/v7/testing"
+	ibctesting "github.com/cosmos/interchain-security/legacy_ibc_testing/testing"
 	ccvstaking "github.com/cosmos/interchain-security/x/ccv/democracy/staking"
 	"github.com/spf13/cast"
 
@@ -150,7 +150,7 @@ import (
 	// this line is used by starport scaffolding # stargate/app/moduleImport
 
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
-	ibctestingtypes "github.com/cosmos/ibc-go/v7/testing/types"
+	"github.com/cosmos/interchain-security/legacy_ibc_testing/core"
 )
 
 const (
@@ -425,7 +425,7 @@ func NewStrideApp(
 	// register the staking hooks
 	// NOTE: stakingKeeper above is passed by reference, so that it will contain these hooks
 	app.StakingKeeper.SetHooks(
-		stakingtypes.NewMultiStakingHooks(app.DistrKeeper.Hooks(), app.SlashingKeeper.Hooks(), app.ClaimKeeper.Hooks()),
+		stakingtypes.NewMultiStakingHooks(app.DistrKeeper.Hooks(), app.ClaimKeeper.Hooks()),
 	)
 
 	// ... other modules keepers
@@ -917,7 +917,7 @@ func (app *StrideApp) Name() string { return app.BaseApp.Name() }
 func (app *StrideApp) GetBaseApp() *baseapp.BaseApp { return app.BaseApp }
 
 // GetStakingKeeper implements the TestingApp interface.
-func (app *StrideApp) GetStakingKeeper() ibctestingtypes.StakingKeeper {
+func (app *StrideApp) GetStakingKeeper() core.StakingKeeper {
 	return app.StakingKeeper
 }
 
