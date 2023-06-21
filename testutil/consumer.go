@@ -6,9 +6,9 @@ import (
 	ibctypes "github.com/cosmos/ibc-go/v7/modules/core/02-client/types"
 	"github.com/cosmos/ibc-go/v7/modules/core/23-commitment/types"
 	ibctmtypes "github.com/cosmos/ibc-go/v7/modules/light-clients/07-tendermint"
-	ccvconsumertypes "github.com/cosmos/interchain-security/x/ccv/consumer/types"
-	ccvprovidertypes "github.com/cosmos/interchain-security/x/ccv/provider/types"
-	ccvtypes "github.com/cosmos/interchain-security/x/ccv/types"
+	ccvconsumertypes "github.com/cosmos/interchain-security/v3/x/ccv/consumer/types"
+	ccvprovidertypes "github.com/cosmos/interchain-security/v3/x/ccv/provider/types"
+	ccvtypes "github.com/cosmos/interchain-security/v3/x/ccv/types"
 )
 
 // This function creates consumer module genesis state that is used as starting point for modifications

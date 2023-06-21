@@ -23,7 +23,7 @@ import (
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	genutil "github.com/cosmos/cosmos-sdk/x/genutil"
 	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
-	ccvconsumertypes "github.com/cosmos/interchain-security/x/ccv/consumer/types"
+	ccvconsumertypes "github.com/cosmos/interchain-security/v3/x/ccv/consumer/types"
 
 	"github.com/Stride-Labs/stride/v10/app"
 	testutil "github.com/Stride-Labs/stride/v10/testutil"

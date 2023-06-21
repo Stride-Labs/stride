@@ -57,8 +57,8 @@ import (
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	govtypesv1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
 	govtypesv1beta1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
-	ccvdistr "github.com/cosmos/interchain-security/x/ccv/democracy/distribution"
-	ccvgov "github.com/cosmos/interchain-security/x/ccv/democracy/governance"
+	ccvdistr "github.com/cosmos/interchain-security/v3/x/ccv/democracy/distribution"
+	ccvgov "github.com/cosmos/interchain-security/v3/x/ccv/democracy/governance"
 
 	claimvesting "github.com/Stride-Labs/stride/v10/x/claim/vesting"
 	claimvestingtypes "github.com/Stride-Labs/stride/v10/x/claim/vesting/types"
@@ -96,8 +96,8 @@ import (
 	ibcclienttypes "github.com/cosmos/ibc-go/v7/modules/core/02-client/types"
 	ibchost "github.com/cosmos/ibc-go/v7/modules/core/exported"
 	ibckeeper "github.com/cosmos/ibc-go/v7/modules/core/keeper"
-	ibctesting "github.com/cosmos/interchain-security/legacy_ibc_testing/testing"
-	ccvstaking "github.com/cosmos/interchain-security/x/ccv/democracy/staking"
+	ibctesting "github.com/cosmos/interchain-security/v3/legacy_ibc_testing/testing"
+	ccvstaking "github.com/cosmos/interchain-security/v3/x/ccv/democracy/staking"
 	"github.com/spf13/cast"
 
 	ica "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts"
@@ -142,15 +142,15 @@ import (
 	stakeibcmodulekeeper "github.com/Stride-Labs/stride/v10/x/stakeibc/keeper"
 	stakeibcmoduletypes "github.com/Stride-Labs/stride/v10/x/stakeibc/types"
 
-	ccvconsumer "github.com/cosmos/interchain-security/x/ccv/consumer"
-	ccvconsumerkeeper "github.com/cosmos/interchain-security/x/ccv/consumer/keeper"
-	ccvconsumertypes "github.com/cosmos/interchain-security/x/ccv/consumer/types"
+	ccvconsumer "github.com/cosmos/interchain-security/v3/x/ccv/consumer"
+	ccvconsumerkeeper "github.com/cosmos/interchain-security/v3/x/ccv/consumer/keeper"
+	ccvconsumertypes "github.com/cosmos/interchain-security/v3/x/ccv/consumer/types"
 
-	// "github.com/cosmos/interchain-security/testutil/e2e"
+	// "github.com/cosmos/interchain-security/v3/testutil/e2e"
 	// this line is used by starport scaffolding # stargate/app/moduleImport
 
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
-	"github.com/cosmos/interchain-security/legacy_ibc_testing/core"
+	"github.com/cosmos/interchain-security/v3/legacy_ibc_testing/core"
 )
 
 const (
@@ -496,7 +496,7 @@ func NewStrideApp(
 
 	// register slashing module StakingHooks to the consumer keeper
 	app.ConsumerKeeper = *app.ConsumerKeeper.SetHooks(app.SlashingKeeper.Hooks())
-	consumerModule := ccvconsumer.NewAppModule(app.ConsumerKeeper)
+	consumerModule := ccvconsumer.NewAppModule(app.ConsumerKeeper, app.GetSubspace(ccvconsumertypes.ModuleName))
 
 	// TODO(TEST-20): look for all lines that include 'monitoring' in this file! there are a few places this
 	// is commented out

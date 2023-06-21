@@ -7,8 +7,8 @@ import (
 
 	abci "github.com/cometbft/cometbft/abci/types"
 	ibctransfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
-	ccvprovidertypes "github.com/cosmos/interchain-security/x/ccv/provider/types"
-	ccvtypes "github.com/cosmos/interchain-security/x/ccv/types"
+	ccvprovidertypes "github.com/cosmos/interchain-security/v3/x/ccv/provider/types"
+	ccvtypes "github.com/cosmos/interchain-security/v3/x/ccv/types"
 
 	icacontrollerkeeper "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/controller/keeper"
 	icacontrollertypes "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/controller/types"
@@ -28,10 +28,10 @@ import (
 	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
 
 	"github.com/cosmos/ibc-go/v7/testing/simapp"
-	appProvider "github.com/cosmos/interchain-security/app/provider"
-	ibctesting "github.com/cosmos/interchain-security/legacy_ibc_testing/testing"
-	icstestingutils "github.com/cosmos/interchain-security/testutil/ibc_testing"
-	e2e "github.com/cosmos/interchain-security/testutil/integration"
+	appProvider "github.com/cosmos/interchain-security/v3/app/provider"
+	ibctesting "github.com/cosmos/interchain-security/v3/legacy_ibc_testing/testing"
+	icstestingutils "github.com/cosmos/interchain-security/v3/testutil/ibc_testing"
+	e2e "github.com/cosmos/interchain-security/v3/testutil/integration"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
@@ -147,7 +147,8 @@ func (s *AppTestHelper) SetupIBCChains(hostChainID string) {
 		s.ProviderChain.Vals, s.ProviderChain.Signers)
 
 	// Initialize a host testing app using SimApp -> TestingApp
-	s.HostChain = ibctesting.NewTestChain(s.T(), s.Coordinator, ibctesting.SetupTestingApp, hostChainID)
+	s.HostChain = ibctesting.NewTestChain(s.T(), s.Coordinator, icstestingutils.DemocracyConsumerAppIniter, hostChainID)
+	// ibctesting.SetupTestingApp
 
 	// Update coordinator
 	s.Coordinator.Chains = map[string]*ibctesting.TestChain{

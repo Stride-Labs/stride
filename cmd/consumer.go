@@ -15,7 +15,7 @@ import (
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/x/genutil"
 	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
-	ccvconsumertypes "github.com/cosmos/interchain-security/x/ccv/consumer/types"
+	ccvconsumertypes "github.com/cosmos/interchain-security/v3/x/ccv/consumer/types"
 	"github.com/spf13/cobra"
 )
 

@@ -18,8 +18,8 @@ import (
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
-	ibctesting "github.com/cosmos/interchain-security/legacy_ibc_testing/testing"
-	consumertypes "github.com/cosmos/interchain-security/x/ccv/consumer/types"
+	ibctesting "github.com/cosmos/interchain-security/v3/legacy_ibc_testing/testing"
+	consumertypes "github.com/cosmos/interchain-security/v3/x/ccv/consumer/types"
 
 	testutil "github.com/Stride-Labs/stride/v10/testutil"
 

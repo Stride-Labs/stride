@@ -13,11 +13,11 @@ import (
 
 	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
 	ibcconnectiontypes "github.com/cosmos/ibc-go/v7/modules/core/03-connection/types"
-	consumertypes "github.com/cosmos/interchain-security/x/ccv/consumer/types"
+	consumertypes "github.com/cosmos/interchain-security/v3/x/ccv/consumer/types"
 
 	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 	ibckeeper "github.com/cosmos/ibc-go/v7/modules/core/keeper"
-	ccvconsumerkeeper "github.com/cosmos/interchain-security/x/ccv/consumer/keeper"
+	ccvconsumerkeeper "github.com/cosmos/interchain-security/v3/x/ccv/consumer/keeper"
 )
 
 var (
@@ -61,7 +61,7 @@ func CreateUpgradeHandler(
 		// Temp fix
 		consumerGenesis.Params.SoftOptOutThreshold = "0.05"
 		consumerKeeper.InitGenesis(ctx, &consumerGenesis)
-		consumerKeeper.SetStandaloneTransferChannelID(ctx, "channel-0")
+		// consumerKeeper.SetStandaloneTransferChannelID(ctx, "channel-0")
 
 		ctx.Logger().Info("start to run module migrations...")
 

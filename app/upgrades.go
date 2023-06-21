@@ -8,7 +8,7 @@ import (
 
 	authz "github.com/cosmos/cosmos-sdk/x/authz"
 
-	consumertypes "github.com/cosmos/interchain-security/x/ccv/consumer/types"
+	consumertypes "github.com/cosmos/interchain-security/v3/x/ccv/consumer/types"
 
 	v10 "github.com/Stride-Labs/stride/v10/app/upgrades/v10"
 	v2 "github.com/Stride-Labs/stride/v10/app/upgrades/v2"
