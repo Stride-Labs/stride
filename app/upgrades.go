@@ -3,6 +3,7 @@ package app
 import (
 	"fmt"
 
+	servertypes "github.com/cosmos/cosmos-sdk/server/types"
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 
@@ -27,7 +28,7 @@ import (
 	stakeibctypes "github.com/Stride-Labs/stride/v10/x/stakeibc/types"
 )
 
-func (app *StrideApp) setupUpgradeHandlers() {
+func (app *StrideApp) setupUpgradeHandlers(appOpts servertypes.AppOptions) {
 	// v2 upgrade handler
 	app.UpgradeKeeper.SetUpgradeHandler(
 		v2.UpgradeName,
@@ -114,6 +115,7 @@ func (app *StrideApp) setupUpgradeHandlers() {
 			app.mm,
 			app.configurator,
 			app.appCodec,
+			appOpts,
 			*app.IBCKeeper,
 			&app.ConsumerKeeper,
 			*app.StakingKeeper,

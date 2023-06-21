@@ -13,7 +13,7 @@ KEYRING="--keyring-backend test"
 TX_FLAGS="--gas-adjustment 100 --gas auto"
 PROVIDER_BINARY="gaiad"
 SOVEREIGN_BINARY="strided-sd"
-CONSUMER_BINARY="strided-cdd"
+CONSUMER_BINARY="strided-icdd"
 NODE_IP="localhost"
 PROVIDER_RPC_LADDR="$NODE_IP:26658"
 PROVIDER_GRPC_ADDR="$NODE_IP:9091"
@@ -27,6 +27,7 @@ CONSUMER_RPC_LADDR1="$NODE_IP:26628"
 CONSUMER_GRPC_ADDR1="$NODE_IP:9061"
 CONSUMER_USER="consumer"
 SOVEREIGN_VALIDATOR="sovereign_validator"
+PROVIDER_VALIDATOR="provider_validator"
 PROVIDER_HOME="$HOME/.provider"
 PROVIDER_HOME1="$HOME/.provider1"
 PROVIDER_NODE_ADDRESS="tcp://localhost:26658"
@@ -199,7 +200,7 @@ EOF
 
 $PROVIDER_BINARY tx gov submit-proposal consumer-addition $PROVIDER_HOME/consumer-proposal.json \
 	--gas=100000000 --chain-id $PROVIDER_CHAIN_ID --node tcp://$PROVIDER_RPC_LADDR --from $VALIDATOR --home $PROVIDER_HOME --keyring-backend test -b block -y
-sleep 1
+sleep 5
 
 # Vote yes to proposal
 $PROVIDER_BINARY query gov proposals --node tcp://$PROVIDER_RPC_LADDR
@@ -251,14 +252,15 @@ then
 fi
 
 jq -s '.[0].app_state.ccvconsumer = .[1] | .[0]' "$SOVEREIGN_HOME"/config/genesis.json "$SOVEREIGN_HOME"/consumer_section.json > "$SOVEREIGN_HOME"/genesis_consumer.json && \
-	mv "$SOVEREIGN_HOME"/genesis_consumer.json "$SOVEREIGN_HOME"/config/genesis.json
+	mv "$SOVEREIGN_HOME"/genesis_consumer.json "$SOVEREIGN_HOME"/config/consumer-genesis.json
 
 # Modify genesis params
 jq ".app_state.ccvconsumer.params.blocks_per_distribution_transmission = \"70\" | .app_state.tokenfactory.paused = { \"paused\": false }" \
-  $SOVEREIGN_HOME/config/genesis.json > \
-   $SOVEREIGN_HOME/edited_genesis.json && mv $SOVEREIGN_HOME/edited_genesis.json $SOVEREIGN_HOME/config/genesis.json
+  $SOVEREIGN_HOME/config/consumer-genesis.json > \
+   $SOVEREIGN_HOME/edited_genesis.json && mv $SOVEREIGN_HOME/edited_genesis.json $SOVEREIGN_HOME/config/consumer-genesis.json
 sleep 1
 
+cp $SOVEREIGN_HOME/config/consumer-genesis.json $CONSUMER_HOME/config/consumer-genesis.json
 
 $CONSUMER_BINARY start \
        --home $SOVEREIGN_HOME \

@@ -2,11 +2,11 @@ package v10
 
 import (
 	"fmt"
-	stdlog "log"
-	"os"
 
 	"github.com/cosmos/cosmos-sdk/codec"
+	servertypes "github.com/cosmos/cosmos-sdk/server/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/spf13/cast"
 
 	"github.com/cosmos/cosmos-sdk/types/module"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
@@ -15,6 +15,7 @@ import (
 	ibcconnectiontypes "github.com/cosmos/ibc-go/v7/modules/core/03-connection/types"
 	consumertypes "github.com/cosmos/interchain-security/x/ccv/consumer/types"
 
+	"github.com/cosmos/cosmos-sdk/client/flags"
 	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 	ibckeeper "github.com/cosmos/ibc-go/v7/modules/core/keeper"
 	ccvconsumerkeeper "github.com/cosmos/interchain-security/x/ccv/consumer/keeper"
@@ -29,11 +30,13 @@ func CreateUpgradeHandler(
 	mm *module.Manager,
 	configurator module.Configurator,
 	cdc codec.Codec,
+	appOpts servertypes.AppOptions,
 	ibcKeeper ibckeeper.Keeper,
 	consumerKeeper *ccvconsumerkeeper.Keeper,
 	stakingKeeper stakingkeeper.Keeper,
 ) upgradetypes.UpgradeHandler {
 	return func(ctx sdk.Context, _ upgradetypes.Plan, vm module.VersionMap) (module.VersionMap, error) {
+
 		ctx.Logger().Info("Starting upgrade v10...")
 		ibcKeeper.ConnectionKeeper.SetParams(ctx, ibcconnectiontypes.DefaultParams())
 
@@ -43,13 +46,9 @@ func CreateUpgradeHandler(
 		// 	fromVM[moduleName] = eachModule.ConsensusVersion()
 		// }
 
-		// TODO: should have a way to read from current node home
-		userHomeDir, err := os.UserHomeDir()
-		if err != nil {
-			stdlog.Println("Failed to get home dir %2", err)
-		}
-		nodeHome := userHomeDir + "/.sovereign/config/genesis.json"
-		appState, _, err := genutiltypes.GenesisStateFromGenFile(nodeHome)
+		nodeHome := cast.ToString(appOpts.Get(flags.FlagHome))
+		consumerUpgradeGenFile := nodeHome + "/config/consumer-genesis.json"
+		appState, _, err := genutiltypes.GenesisStateFromGenFile(consumerUpgradeGenFile)
 		if err != nil {
 			return fromVM, fmt.Errorf("failed to unmarshal genesis state: %w", err)
 		}
