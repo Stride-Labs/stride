@@ -4,11 +4,13 @@ import (
 	"fmt"
 
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
+	consensustypes "github.com/cosmos/cosmos-sdk/x/consensus/types"
+	crisistypes "github.com/cosmos/cosmos-sdk/x/crisis/types"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 
 	authz "github.com/cosmos/cosmos-sdk/x/authz"
 
-	consumertypes "github.com/cosmos/interchain-security/v3/x/ccv/consumer/types"
+	capabilitytypes "github.com/cosmos/cosmos-sdk/x/capability/types"
 
 	v10 "github.com/Stride-Labs/stride/v10/app/upgrades/v10"
 	v2 "github.com/Stride-Labs/stride/v10/app/upgrades/v2"
@@ -114,9 +116,20 @@ func (app *StrideApp) setupUpgradeHandlers() {
 			app.mm,
 			app.configurator,
 			app.appCodec,
-			*app.IBCKeeper,
-			&app.ConsumerKeeper,
-			*app.StakingKeeper,
+			app.keys[capabilitytypes.ModuleName],
+			app.AccountKeeper,
+			app.BankKeeper,
+			app.CapabilityKeeper,
+			app.IBCKeeper.ChannelKeeper,
+			app.ClaimKeeper,
+			app.IBCKeeper.ClientKeeper,
+			app.ConsensusParamsKeeper,
+			app.GovKeeper,
+			app.IcacallbacksKeeper,
+			app.MintKeeper,
+			app.ParamsKeeper,
+			app.RatelimitKeeper,
+			app.StakeibcKeeper,
 		),
 	)
 
@@ -146,9 +159,11 @@ func (app *StrideApp) setupUpgradeHandlers() {
 		}
 	case "v10":
 		storeUpgrades = &storetypes.StoreUpgrades{
-			Added: []string{consumertypes.ModuleName},
+			Added: []string{crisistypes.StoreKey, consensustypes.StoreKey},
 		}
 	}
+	// TODO: v10 UPGRADE HANDLER
+	// Add module and ICA accounts for each host zone to the rate limit whitelist
 
 	if storeUpgrades != nil {
 		app.SetStoreLoader(upgradetypes.UpgradeStoreLoader(upgradeInfo.Height, storeUpgrades))

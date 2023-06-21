@@ -6,7 +6,6 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/codec"
 
-	//nolint:staticcheck
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/suite"
@@ -33,8 +32,6 @@ func TestKeeperTestSuite(t *testing.T) {
 }
 
 func (s *UpgradeTestSuite) TestUpgrade() {
-	s.Setup()
-
 	// Setup stores for migrated modules
 	codec := app.MakeEncodingConfig().Marshaler
 	checkClaimStoreAfterMigration := s.SetupClaimStore(codec)

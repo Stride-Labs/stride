@@ -19,9 +19,19 @@ func getStakeibcMemo(address, action string) string {
 		{
 			"autopilot": {
 				"receiver": "%[1]s",
-				"stakeibc": { "stride_address": "%[1]s", "action": "%[2]s" } 
+				"stakeibc": { "action": "%[2]s" } 
 			}
 		}`, address, action)
+}
+
+func getStakeibcMemoWithStrideAddress(receiverAddress, action, strideAddress string) string {
+	return fmt.Sprintf(`
+		{
+			"autopilot": {
+				"receiver": "%[1]s",
+				"stakeibc": { "stride_address": "%[2]s", "action": "%[3]s" } 
+			}
+		}`, receiverAddress, strideAddress, action)
 }
 
 func getClaimMemo(address string) string {
@@ -29,9 +39,19 @@ func getClaimMemo(address string) string {
 		{
 			"autopilot": {
 				"receiver": "%[1]s",
-				"claim": { "stride_address": "%[1]s" } 
+				"claim": { } 
 			}
 		}`, address)
+}
+
+func getClaimMemoWithStrideAddress(receiverAddress, strideAddress string) string {
+	return fmt.Sprintf(`
+		{
+			"autopilot": {
+				"receiver": "%[1]s",
+				"claim": { "stride_address": "%[2]s" } 
+			}
+		}`, receiverAddress, strideAddress)
 }
 
 func getClaimAndStakeibcMemo(address, action string) string {
@@ -39,16 +59,15 @@ func getClaimAndStakeibcMemo(address, action string) string {
 	    {
 			"autopilot": {
 				"receiver": "%[1]s",
-				"stakeibc": { "stride_address": "%[1]s", "action": "%[2]s" },
-				"claim": { "stride_address": "%[1]s" } 
+				"stakeibc": { "action": "%[2]s" },
+				"claim": { } 
 			}
 		}`, address, action)
 }
 
 // Helper function to check the routingInfo with a switch statement
 // This isn't the most efficient way to check the type  (require.TypeOf could be used instead)
-//
-//	but it better aligns with how the routing info is checked in module_ibc
+// but it better aligns with how the routing info is checked in module_ibc
 func checkModuleRoutingInfoType(routingInfo types.ModuleRoutingInfo, expectedType string) bool {
 	switch routingInfo.(type) {
 	case types.StakeibcPacketMetadata:
@@ -89,6 +108,16 @@ func TestParsePacketMetadata(t *testing.T) {
 		{
 			name:        "valid claim memo",
 			metadata:    getClaimMemo(validAddress),
+			parsedClaim: &validParsedClaimPacketMetadata,
+		},
+		{
+			name:           "valid stakeibc memo with stride address override",
+			metadata:       getStakeibcMemoWithStrideAddress(validAddress, validStakeibcAction, "different_address"),
+			parsedStakeibc: &validParsedStakeibcPacketMetadata,
+		},
+		{
+			name:        "valid claim memo with stride address override",
+			metadata:    getClaimMemoWithStrideAddress(validAddress, "different_address"),
 			parsedClaim: &validParsedClaimPacketMetadata,
 		},
 		{

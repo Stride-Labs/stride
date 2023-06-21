@@ -15,4 +15,5 @@ message AddressUnbonding {
   ];
   string denom = 5;
   bool claim_is_pending = 8;
+  uint64 epoch_number = 9;
 }

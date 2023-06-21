@@ -179,7 +179,7 @@ func (s *KeeperTestSuite) TestClaimStakingRewardStTokens() {
 		s.FundAccount(acc, sdk.NewCoin(sdk.DefaultBondDenom, sdk.NewInt(1000000)))
 	}
 	valAddrs := simtestutil.ConvertAddrsToValAddrs(addrs)
-	tstaking := teststaking.NewHelper(s.T(), s.Ctx, s.App.StakingKeeper)
+	tstaking := teststaking.NewHelper(s.T(), s.Ctx, &s.App.StakingKeeper)
 
 	pubkeys := simtestutil.CreateTestPubKeys(2)
 	stakeAmount := sdk.NewInt(100)

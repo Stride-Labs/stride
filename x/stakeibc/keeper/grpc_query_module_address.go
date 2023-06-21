@@ -17,7 +17,7 @@ func (k Keeper) ModuleAddress(goCtx context.Context, req *types.QueryModuleAddre
 
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	addr := k.accountKeeper.GetModuleAccount(ctx, req.Name).GetAddress().String()
+	addr := k.AccountKeeper.GetModuleAccount(ctx, req.Name).GetAddress().String()
 
 	return &types.QueryModuleAddressResponse{Addr: addr}, nil
 }

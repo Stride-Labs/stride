@@ -17,8 +17,8 @@ import (
 
 	errorsmod "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/gogoproto/proto"
 	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
-	"github.com/golang/protobuf/proto" //nolint:staticcheck
 )
 
 // Marshalls reinvest callback arguments

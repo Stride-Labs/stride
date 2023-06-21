@@ -22,7 +22,6 @@ func TestKeeperTestSuite(t *testing.T) {
 	suite.Run(t, new(UpgradeTestSuite))
 }
 
-func (suite *UpgradeTestSuite) TestUpgrade() {
-	suite.Setup()
-	suite.ConfirmUpgradeSucceededs("v4", dummyUpgradeHeight)
+func (s *UpgradeTestSuite) TestUpgrade() {
+	s.ConfirmUpgradeSucceededs("v4", dummyUpgradeHeight)
 }

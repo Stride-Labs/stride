@@ -71,3 +71,17 @@ func (k Keeper) RateLimitsByChannelId(c context.Context, req *types.QueryRateLim
 
 	return &types.QueryRateLimitsByChannelIdResponse{RateLimits: rateLimits}, nil
 }
+
+// Query all blacklisted denoms
+func (k Keeper) AllBlacklistedDenoms(c context.Context, req *types.QueryAllBlacklistedDenomsRequest) (*types.QueryAllBlacklistedDenomsResponse, error) {
+	ctx := sdk.UnwrapSDKContext(c)
+	blacklistedDenoms := k.GetAllBlacklistedDenoms(ctx)
+	return &types.QueryAllBlacklistedDenomsResponse{Denoms: blacklistedDenoms}, nil
+}
+
+// Query all whitelisted addresses
+func (k Keeper) AllWhitelistedAddresses(c context.Context, req *types.QueryAllWhitelistedAddressesRequest) (*types.QueryAllWhitelistedAddressesResponse, error) {
+	ctx := sdk.UnwrapSDKContext(c)
+	whitelistedAddresses := k.GetAllWhitelistedAddressPairs(ctx)
+	return &types.QueryAllWhitelistedAddressesResponse{AddressPairs: whitelistedAddresses}, nil
+}

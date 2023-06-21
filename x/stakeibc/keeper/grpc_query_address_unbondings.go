@@ -75,6 +75,7 @@ func (k Keeper) AddressUnbondings(c context.Context, req *types.QueryAddressUnbo
 						Amount:                 userRedemptionRecord.Amount,
 						Denom:                  userRedemptionRecord.Denom,
 						ClaimIsPending:         userRedemptionRecord.ClaimIsPending,
+						EpochNumber:            userRedemptionRecord.EpochNumber,
 					}
 					addressUnbondings = append(addressUnbondings, addressUnbonding)
 				}
