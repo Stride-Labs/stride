@@ -7,11 +7,11 @@ package app_test
 // 	"cosmossdk.io/simapp"
 // 	"github.com/cometbft/cometbft/libs/log"
 // 	ibctesting "github.com/cosmos/ibc-go/v7/testing"
-// 	icssimapp "github.com/cosmos/interchain-security/testutil/simapp"
+// 	icssimapp "github.com/cosmos/interchain-security/v3/testutil/simapp"
 // 	"github.com/stretchr/testify/require"
 // 	dbm "github.com/tendermint/tm-db"
 
-// 	"github.com/Stride-Labs/stride/v10/app"
+// 	"github.com/Stride-Labs/stride/v11/app"
 // )
 
 // func TestConsumerWhitelistingKeys(t *testing.T) {

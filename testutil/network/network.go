@@ -23,10 +23,10 @@ import (
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	genutil "github.com/cosmos/cosmos-sdk/x/genutil"
 	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
-	ccvconsumertypes "github.com/cosmos/interchain-security/x/ccv/consumer/types"
+	ccvconsumertypes "github.com/cosmos/interchain-security/v3/x/ccv/consumer/types"
 
-	"github.com/Stride-Labs/stride/v10/app"
-	testutil "github.com/Stride-Labs/stride/v10/testutil"
+	"github.com/Stride-Labs/stride/v11/app"
+	testutil "github.com/Stride-Labs/stride/v11/testutil"
 )
 
 type (
@@ -70,6 +70,13 @@ func DefaultConfig() network.Config {
 			if err != nil {
 				panic(err)
 			}
+
+			// do NOT create validators using gentxs so that val sets are applied using only ccv genesis
+			err = modifyGenutilGenesis(val.(network.Validator))
+			if err != nil {
+				panic(err)
+			}
+
 			return app.NewStrideApp(
 				val.GetCtx().Logger, cometbftdb.NewMemDB(), nil, true, map[int64]bool{}, val.GetCtx().Config.RootDir, 0,
 				encoding,
@@ -95,6 +102,7 @@ func DefaultConfig() network.Config {
 	}
 }
 
+// add new val sets to consumer genesis before launching app
 func modifyConsumerGenesis(val network.Validator) error {
 	genFile := val.Ctx.Config.GenesisFile()
 	appState, genDoc, err := genutiltypes.GenesisStateFromGenFile(genFile)
@@ -127,6 +135,34 @@ func modifyConsumerGenesis(val network.Validator) error {
 	}
 
 	appState[ccvconsumertypes.ModuleName] = consumerGenStateBz
+	appStateJSON, err := json.Marshal(appState)
+	if err != nil {
+		return sdkerrors.Wrap(err, "failed to marshal application genesis state into JSON")
+	}
+
+	genDoc.AppState = appStateJSON
+	err = genutil.ExportGenesisFile(genDoc, genFile)
+	if err != nil {
+		return sdkerrors.Wrap(err, "failed to export genesis state")
+	}
+
+	return nil
+}
+
+// remove gentxs from genutil genesis
+func modifyGenutilGenesis(val network.Validator) error {
+	genFile := val.Ctx.Config.GenesisFile()
+	appState, genDoc, err := genutiltypes.GenesisStateFromGenFile(genFile)
+	if err != nil {
+		return sdkerrors.Wrap(err, "failed to read genesis from the file")
+	}
+
+	genutilGenesisState := genutiltypes.DefaultGenesisState()
+	genutilGenStateBz, err := val.ClientCtx.Codec.MarshalJSON(genutilGenesisState)
+	if err != nil {
+		return sdkerrors.Wrap(err, "failed to marshal consumer genesis state into JSON")
+	}
+	appState[genutiltypes.ModuleName] = genutilGenStateBz
 	appStateJSON, err := json.Marshal(appState)
 	if err != nil {
 		return sdkerrors.Wrap(err, "failed to marshal application genesis state into JSON")

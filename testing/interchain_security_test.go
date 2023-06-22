@@ -7,14 +7,14 @@ package ics_test
 // 	"cosmossdk.io/simapp"
 // 	"github.com/cometbft/cometbft/libs/log"
 // 	ibctesting "github.com/cosmos/ibc-go/v7/testing"
-// 	appProvider "github.com/cosmos/interchain-security/app/provider"
-// 	"github.com/cosmos/interchain-security/tests/e2e"
-// 	e2etestutil "github.com/cosmos/interchain-security/testutil/e2e"
-// 	icssimapp "github.com/cosmos/interchain-security/testutil/simapp"
+// 	appProvider "github.com/cosmos/interchain-security/v3/app/provider"
+// 	"github.com/cosmos/interchain-security/v3/tests/e2e"
+// 	e2etestutil "github.com/cosmos/interchain-security/v3/testutil/e2e"
+// 	icssimapp "github.com/cosmos/interchain-security/v3/testutil/simapp"
 // 	"github.com/stretchr/testify/suite"
 // 	dbm "github.com/tendermint/tm-db"
 
-// 	appConsumer "github.com/Stride-Labs/stride/v10/app"
+// 	appConsumer "github.com/Stride-Labs/stride/v11/app"
 // )
 
 // // Executes the standard group of ccv tests against a consumer and provider app.go implementation.

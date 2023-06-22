@@ -3,7 +3,7 @@ FROM golang:1.19-alpine3.15 AS builder
 
 WORKDIR /src/
 
-ENV COMMIT_HASH=v2.3.1
+ENV COMMIT_HASH=e95dd80608536c31d37354bdd7f7ec46a2172009
 
 RUN apk add --update git make gcc linux-headers libc-dev eudev-dev 
 RUN git clone https://github.com/cosmos/relayer.git \

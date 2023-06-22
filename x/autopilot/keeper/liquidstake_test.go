@@ -10,16 +10,16 @@ import (
 	clienttypes "github.com/cosmos/ibc-go/v7/modules/core/02-client/types"
 	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
 
-	recordsmodule "github.com/Stride-Labs/stride/v10/x/records"
+	recordsmodule "github.com/Stride-Labs/stride/v11/x/records"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/Stride-Labs/stride/v10/x/autopilot"
-	"github.com/Stride-Labs/stride/v10/x/autopilot/types"
-	epochtypes "github.com/Stride-Labs/stride/v10/x/epochs/types"
-	minttypes "github.com/Stride-Labs/stride/v10/x/mint/types"
-	recordstypes "github.com/Stride-Labs/stride/v10/x/records/types"
-	stakeibctypes "github.com/Stride-Labs/stride/v10/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v11/x/autopilot"
+	"github.com/Stride-Labs/stride/v11/x/autopilot/types"
+	epochtypes "github.com/Stride-Labs/stride/v11/x/epochs/types"
+	minttypes "github.com/Stride-Labs/stride/v11/x/mint/types"
+	recordstypes "github.com/Stride-Labs/stride/v11/x/records/types"
+	stakeibctypes "github.com/Stride-Labs/stride/v11/x/stakeibc/types"
 )
 
 func getStakeibcPacketMetadata(address, action string) string {
@@ -27,7 +27,7 @@ func getStakeibcPacketMetadata(address, action string) string {
 		{
 			"autopilot": {
 				"receiver": "%[1]s",
-				"stakeibc": { "stride_address": "%[1]s", "action": "%[2]s" } 
+				"stakeibc": { "action": "%[2]s" } 
 			}
 		}`, address, action)
 }

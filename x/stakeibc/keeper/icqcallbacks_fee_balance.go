@@ -11,11 +11,11 @@ import (
 	clienttypes "github.com/cosmos/ibc-go/v7/modules/core/02-client/types"
 	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
 
-	"github.com/Stride-Labs/stride/v10/utils"
-	epochtypes "github.com/Stride-Labs/stride/v10/x/epochs/types"
-	icqkeeper "github.com/Stride-Labs/stride/v10/x/interchainquery/keeper"
-	icqtypes "github.com/Stride-Labs/stride/v10/x/interchainquery/types"
-	"github.com/Stride-Labs/stride/v10/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v11/utils"
+	epochtypes "github.com/Stride-Labs/stride/v11/x/epochs/types"
+	icqkeeper "github.com/Stride-Labs/stride/v11/x/interchainquery/keeper"
+	icqtypes "github.com/Stride-Labs/stride/v11/x/interchainquery/types"
+	"github.com/Stride-Labs/stride/v11/x/stakeibc/types"
 )
 
 // FeeBalanceCallback is a callback handler for FeeBalnce queries.
@@ -69,7 +69,7 @@ func FeeBalanceCallback(k Keeper, ctx sdk.Context, args []byte, query icqtypes.Q
 
 	// Prepare a MsgTransfer from the fee account to the rewards collector account
 	rewardsCoin := sdk.NewCoin(hostZone.HostDenom, feeBalanceAmount)
-	rewardsCollectorAddress := k.accountKeeper.GetModuleAccount(ctx, types.RewardCollectorName).GetAddress()
+	rewardsCollectorAddress := k.AccountKeeper.GetModuleAccount(ctx, types.RewardCollectorName).GetAddress()
 	transferMsg := ibctypes.NewMsgTransfer(
 		transfertypes.PortID,
 		counterpartyChannelId,

@@ -1,11 +1,12 @@
 #!/usr/bin/make -f
-
+VERSION := $(shell echo $(shell git describe --tags))
 BUILDDIR ?= $(CURDIR)/build
 build=s
 cache=false
 COMMIT := $(shell git log -1 --format='%H')
 DOCKER := $(shell which docker)
 DOCKER_BUF := $(DOCKER) run --rm -v $(CURDIR):/workspace --workdir /workspace bufbuild/buf:1.7.0
+STRIDE_HOME=./
 DOCKERNET_HOME=./dockernet
 DOCKERNET_COMPOSE_FILE=$(DOCKERNET_HOME)/docker-compose.yml
 LOCALSTRIDE_HOME=./testutil/localstride
@@ -14,7 +15,6 @@ STATE_EXPORT_COMPOSE_FILE=$(LOCALSTRIDE_HOME)/state-export/docker-compose.yml
 LOCAL_TO_MAIN_COMPOSE_FILE=./scripts/local-to-mainnet/docker-compose.yml
 
 # process build tags
-
 LEDGER_ENABLED ?= true
 build_tags = netgo
 ifeq ($(LEDGER_ENABLED),true)
@@ -43,21 +43,17 @@ endif
 build_tags += $(BUILD_TAGS)
 build_tags := $(strip $(build_tags))
 
-build_tags += $(BUILD_TAGS)
-build_tags := $(strip $(build_tags))
-
 whitespace :=
 whitespace += $(whitespace)
 comma := ,
 build_tags_comma_sep := $(subst $(whitespace),$(comma),$(build_tags))
 
 # process linker flags
-
 ldflags = -X github.com/cosmos/cosmos-sdk/version.Name=stride \
 		  -X github.com/cosmos/cosmos-sdk/version.AppName=strided \
 		  -X github.com/cosmos/cosmos-sdk/version.Version=$(VERSION) \
 		  -X github.com/cosmos/cosmos-sdk/version.Commit=$(COMMIT) \
-		  -X "github.com/cosmos/cosmos-sdk/version.BuildTags=$(build_tags_comma_sep)"
+		  -X "github.com/cosmos/cosmos-sdk/version.BuildTags=$(build_tags_comma_sep)" 
 
 ifeq ($(LINK_STATICALLY),true)
 	ldflags += -linkmode=external -extldflags "-Wl,-z,muldefs -static"
@@ -75,7 +71,7 @@ BUILD_FLAGS := -tags "$(build_tags)" -ldflags '$(ldflags)'
 
 build:
 	mkdir -p $(BUILDDIR)/
-	go build -mod=readonly -ldflags '$(ldflags)' -trimpath -o $(BUILDDIR) ./...;
+	go build -mod=readonly $(BUILD_FLAGS) -trimpath -o $(BUILDDIR) ./...;
 
 install: go.sum
 	go install $(BUILD_FLAGS) ./cmd/strided
@@ -116,10 +112,10 @@ test-integration-docker:
 build-docker:
 	@bash $(DOCKERNET_HOME)/build.sh -${build} ${BUILDDIR}
 
-start-docker: build-docker
+start-docker: stop-docker build-docker
 	@bash $(DOCKERNET_HOME)/start_network.sh
 
-start-docker-all: build-docker
+start-docker-all: stop-docker build-docker
 	@ALL_HOST_CHAINS=true bash $(DOCKERNET_HOME)/start_network.sh
 
 clean-docker:
@@ -132,15 +128,22 @@ stop-docker:
 	@bash $(DOCKERNET_HOME)/pkill.sh
 	docker-compose -f $(DOCKERNET_COMPOSE_FILE) down
 
-upgrade-init:
-	PART=1 bash $(DOCKERNET_HOME)/tests/run_tests_upgrade.sh
+upgrade-build-old-binary:
+	@DOCKERNET_HOME=$(DOCKERNET_HOME) BUILDDIR=$(BUILDDIR) bash $(DOCKERNET_HOME)/upgrades/build_old_binary.sh
 
-upgrade-submit:
+submit-upgrade-immediately:
+	UPGRADE_HEIGHT=100 bash $(DOCKERNET_HOME)/upgrades/submit_upgrade.sh
+
+submit-upgrade-after-tests:
 	UPGRADE_HEIGHT=400 bash $(DOCKERNET_HOME)/upgrades/submit_upgrade.sh
 
-upgrade-validate:
+start-upgrade-integration-tests:
+	PART=1 bash $(DOCKERNET_HOME)/tests/run_tests_upgrade.sh
+
+finish-upgrade-integration-tests:
 	PART=2 bash $(DOCKERNET_HOME)/tests/run_tests_upgrade.sh
 
+upgrade-integration-tests-part-1: start-docker-all start-upgrade-integration-tests submit-upgrade-after-tests
 
 ###############################################################################
 ###                           Local to Mainnet                              ###

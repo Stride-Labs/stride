@@ -35,11 +35,11 @@ elif [[ "${#HOST_CHAINS[@]}" == "0" ]]; then
 fi
 
 # Sets up upgrade if {UPGRADE_NAME} is non-empty
-# UPGRADE_NAME=""
-# UPGRADE_OLD_COMMIT_HASH=""
+UPGRADE_NAME=""
+UPGRADE_OLD_COMMIT_HASH=""
 
-UPGRADE_NAME="v10"
-UPGRADE_OLD_COMMIT_HASH="sdk47"
+# UPGRADE_NAME="v11"
+# UPGRADE_OLD_VERSION="main"
 
 # DENOMS
 STRD_DENOM="ustrd"
@@ -150,7 +150,7 @@ STRIDE_ADMIN_MNEMONIC="tone cause tribe this switch near host damage idle fragil
 STRIDE_FEE_ADDRESS=stride1czvrk3jkvtj8m27kqsqu2yrkhw3h3ykwj3rxh6
 
 # Binaries are contigent on whether we're doing an upgrade or not
-if [[ "$UPGRADE_NAME" == "" ]]; then 
+if [[ "${UPGRADE_NAME:-}" == "" ]]; then 
   STRIDE_BINARY="$DOCKERNET_HOME/../build/strided"
 else
   if [[ "${NEW_BINARY:-false}" == "false" ]]; then
@@ -241,7 +241,6 @@ EVMOS_RECEIVER_ADDRESS='evmos123z469cfejeusvk87ufrs5520wmdxmmlc7qzuw'
 EVMOS_MICRO_DENOM_UNITS="000000000000000000000000"
 
 # RELAYER
-RELAYER_CMD="$DOCKERNET_HOME/../build/relayer --home $STATE/relayer"
 RELAYER_GAIA_EXEC="$DOCKER_COMPOSE run --rm relayer-gaia"
 RELAYER_GAIA_ICS_EXEC="$DOCKER_COMPOSE run --rm relayer-gaia-ics"
 RELAYER_JUNO_EXEC="$DOCKER_COMPOSE run --rm relayer-juno"

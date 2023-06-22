@@ -10,11 +10,12 @@ import (
 	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
 	ibcexported "github.com/cosmos/ibc-go/v7/modules/core/exported"
 
-	"github.com/Stride-Labs/stride/v10/x/icacallbacks"
-	icacallbacktypes "github.com/Stride-Labs/stride/v10/x/icacallbacks/types"
+	"github.com/Stride-Labs/stride/v11/x/icacallbacks"
+	icacallbacktypes "github.com/Stride-Labs/stride/v11/x/icacallbacks/types"
 
-	"github.com/Stride-Labs/stride/v10/x/stakeibc/keeper"
-	"github.com/Stride-Labs/stride/v10/x/stakeibc/types"
+	ratelimittypes "github.com/Stride-Labs/stride/v11/x/ratelimit/types"
+	"github.com/Stride-Labs/stride/v11/x/stakeibc/keeper"
+	"github.com/Stride-Labs/stride/v11/x/stakeibc/types"
 )
 
 // IBCModule implements the ICS26 interface for interchain accounts controller chains
@@ -99,17 +100,27 @@ func (im IBCModule) OnChanOpenAck(
 
 	// Set ICA account addresses
 	switch {
-	// withdrawal address
 	case portID == withdrawalAddress:
 		zoneInfo.WithdrawalAccount = &types.ICAAccount{Address: address, Target: types.ICAAccountType_WITHDRAWAL}
-	// fee address
+
 	case portID == feeAddress:
 		zoneInfo.FeeAccount = &types.ICAAccount{Address: address, Target: types.ICAAccountType_FEE}
-	// delegation address
+		rewardCollectorAddress := im.keeper.AccountKeeper.GetModuleAccount(ctx, types.RewardCollectorName).GetAddress()
+		im.keeper.RatelimitKeeper.SetWhitelistedAddressPair(ctx, ratelimittypes.WhitelistedAddressPair{
+			Sender:   address,
+			Receiver: rewardCollectorAddress.String(),
+		})
+
 	case portID == delegationAddress:
 		zoneInfo.DelegationAccount = &types.ICAAccount{Address: address, Target: types.ICAAccountType_DELEGATION}
+		im.keeper.RatelimitKeeper.SetWhitelistedAddressPair(ctx, ratelimittypes.WhitelistedAddressPair{
+			Sender:   zoneInfo.Address,
+			Receiver: address,
+		})
+
 	case portID == redemptionAddress:
 		zoneInfo.RedemptionAccount = &types.ICAAccount{Address: address, Target: types.ICAAccountType_REDEMPTION}
+
 	default:
 		ctx.Logger().Error(fmt.Sprintf("Missing portId: %s", portID))
 	}
