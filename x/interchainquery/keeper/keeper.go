@@ -14,8 +14,8 @@ import (
 
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 
-	"github.com/Stride-Labs/stride/v10/utils"
-	"github.com/Stride-Labs/stride/v10/x/interchainquery/types"
+	"github.com/Stride-Labs/stride/v11/utils"
+	"github.com/Stride-Labs/stride/v11/x/interchainquery/types"
 )
 
 // Keeper of this module maintains collections of registered zones.

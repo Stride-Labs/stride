@@ -7,10 +7,10 @@ import (
 	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
 	_ "github.com/stretchr/testify/suite"
 
-	icacallbacktypes "github.com/Stride-Labs/stride/v10/x/icacallbacks/types"
-	recordtypes "github.com/Stride-Labs/stride/v10/x/records/types"
-	stakeibckeeper "github.com/Stride-Labs/stride/v10/x/stakeibc/keeper"
-	"github.com/Stride-Labs/stride/v10/x/stakeibc/types"
+	icacallbacktypes "github.com/Stride-Labs/stride/v11/x/icacallbacks/types"
+	recordtypes "github.com/Stride-Labs/stride/v11/x/records/types"
+	stakeibckeeper "github.com/Stride-Labs/stride/v11/x/stakeibc/keeper"
+	"github.com/Stride-Labs/stride/v11/x/stakeibc/types"
 )
 
 type ClaimCallbackState struct {
