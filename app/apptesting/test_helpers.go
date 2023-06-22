@@ -147,8 +147,7 @@ func (s *AppTestHelper) SetupIBCChains(hostChainID string) {
 		s.ProviderChain.Vals, s.ProviderChain.Signers)
 
 	// Initialize a host testing app using SimApp -> TestingApp
-	s.HostChain = ibctesting.NewTestChain(s.T(), s.Coordinator, icstestingutils.DemocracyConsumerAppIniter, hostChainID)
-	// ibctesting.SetupTestingApp
+	s.HostChain = ibctesting.NewTestChain(s.T(), s.Coordinator, ibctesting.SetupTestingApp, hostChainID)
 
 	// Update coordinator
 	s.Coordinator.Chains = map[string]*ibctesting.TestChain{

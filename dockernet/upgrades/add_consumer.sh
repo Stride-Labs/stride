@@ -37,7 +37,7 @@ tee $PROVIDER_HOME/consumer-proposal.json<<EOF
     "ccv_timeout_period": 2419200000000000,
     "transfer_timeout_period": 3600000000000,
     "historical_entries": 10000,
-    "unbonding_period": 600000000000
+    "unbonding_period": 240000000000
 }
 EOF
 
@@ -100,9 +100,9 @@ mv "$json_file.tmp" "$json_file"
 
 cp $CONSUMER_HOME/config/genesis.json "$SOVEREIGN_HOME"/config/genesis.json
 jq -s '.[0].app_state.ccvconsumer = .[1] | .[0]' "$SOVEREIGN_HOME"/config/genesis.json "$SOVEREIGN_HOME"/consumer_section.json > "$SOVEREIGN_HOME"/genesis_consumer.json && \
-	mv "$SOVEREIGN_HOME"/genesis_consumer.json "$SOVEREIGN_HOME"/config/genesis.json
+	mv "$SOVEREIGN_HOME"/genesis_consumer.json "$CONSUMER_HOME"/config/consumer-genesis.json
 
 # Modify genesis params
 jq ".app_state.ccvconsumer.params.blocks_per_distribution_transmission = \"70\" | .app_state.tokenfactory.paused = { \"paused\": false }" \
-  $SOVEREIGN_HOME/config/genesis.json > \
-   $SOVEREIGN_HOME/edited_genesis.json && mv $SOVEREIGN_HOME/edited_genesis.json $SOVEREIGN_HOME/config/genesis.json
+  $CONSUMER_HOME/config/consumer-genesis.json > \
+   $SOVEREIGN_HOME/edited_genesis.json && mv $SOVEREIGN_HOME/edited_genesis.json $CONSUMER_HOME/config/consumer-genesis.json
