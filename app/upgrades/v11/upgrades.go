@@ -2,23 +2,21 @@ package v11
 
 import (
 	"fmt"
-	stdlog "log"
-	"os"
 	"time"
 
+	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/codec"
+	servertypes "github.com/cosmos/cosmos-sdk/server/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-
 	"github.com/cosmos/cosmos-sdk/types/module"
-	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
-
 	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
-	ibcconnectiontypes "github.com/cosmos/ibc-go/v7/modules/core/03-connection/types"
-	consumertypes "github.com/cosmos/interchain-security/v3/x/ccv/consumer/types"
-
 	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
+	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
+	ibcconnectiontypes "github.com/cosmos/ibc-go/v7/modules/core/03-connection/types"
 	ibckeeper "github.com/cosmos/ibc-go/v7/modules/core/keeper"
 	ccvconsumerkeeper "github.com/cosmos/interchain-security/v3/x/ccv/consumer/keeper"
+	consumertypes "github.com/cosmos/interchain-security/v3/x/ccv/consumer/types"
+	"github.com/spf13/cast"
 )
 
 var (
@@ -35,6 +33,7 @@ func CreateUpgradeHandler(
 	mm *module.Manager,
 	configurator module.Configurator,
 	cdc codec.Codec,
+	appOpts servertypes.AppOptions,
 	ibcKeeper ibckeeper.Keeper,
 	consumerKeeper *ccvconsumerkeeper.Keeper,
 	stakingKeeper stakingkeeper.Keeper,
@@ -49,13 +48,9 @@ func CreateUpgradeHandler(
 		// 	fromVM[moduleName] = eachModule.ConsensusVersion()
 		// }
 
-		// TODO: should have a way to read from current node home
-		userHomeDir, err := os.UserHomeDir()
-		if err != nil {
-			stdlog.Println("Failed to get home dir %2", err)
-		}
-		nodeHome := userHomeDir + "/.sovereign/config/genesis.json"
-		appState, _, err := genutiltypes.GenesisStateFromGenFile(nodeHome)
+		nodeHome := cast.ToString(appOpts.Get(flags.FlagHome))
+		consumerUpgradeGenFile := nodeHome + "/config/consumer-genesis.json"
+		appState, _, err := genutiltypes.GenesisStateFromGenFile(consumerUpgradeGenFile)
 		if err != nil {
 			return fromVM, fmt.Errorf("failed to unmarshal genesis state: %w", err)
 		}
