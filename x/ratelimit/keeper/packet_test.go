@@ -256,7 +256,7 @@ func (s *KeeperTestSuite) TestSendRateLimitedPacket() {
 
 	// We check for a quota error because it doesn't appear until the end of the function
 	// We're avoiding checking for a success here because we can get a false positive if the rate limit doesn't exist
-	err = s.App.RatelimitKeeper.SendRateLimitedPacket(s.Ctx, packet.SourceChannel, packet.Data)
+	err = s.App.RatelimitKeeper.SendRateLimitedPacket(s.Ctx, packet)
 	s.Require().ErrorIs(err, types.ErrQuotaExceeded, "error type")
 	s.Require().ErrorContains(err, "Outflow exceeds quota", "error text")
 
