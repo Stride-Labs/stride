@@ -5,7 +5,8 @@ SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 source ${SCRIPT_DIR}/../config.sh
 
 PROVIDER_HOME="$DOCKERNET_HOME/state/${GAIA_NODE_PREFIX}1"
-CONSUMER_HOME="$DOCKERNET_HOME/state/${STRIDE_NODE_PREFIX}1"
+CONSUMER_HOME_PREFIX="$DOCKERNET_HOME/state/${STRIDE_NODE_PREFIX}"
+CONSUMER_HOME="${CONSUMER_HOME_PREFIX}1"
 SOVEREIGN_HOME="$DOCKERNET_HOME/state/sovereign"
 PROVIDER_BINARY=$GAIA_BINARY
 PROVIDER_CHAIN_ID=$GAIA_CHAIN_ID
@@ -17,6 +18,7 @@ DENOM=$ATOM_DENOM
 PROVIDER_MAIN_CMD="$PROVIDER_BINARY --home $PROVIDER_HOME"
 SOVEREIGN_CHAIN_ID=$STRIDE_CHAIN_ID
 REVISION_HEIGHT=203
+NUM_NODES=$(GET_VAR_VALUE   STRIDE_NUM_NODES)
 
 # Build consumer chain proposal file - unbonding period 21 days
 tee $PROVIDER_HOME/consumer-proposal.json<<EOF
@@ -106,3 +108,7 @@ jq -s '.[0].app_state.ccvconsumer = .[1] | .[0]' "$SOVEREIGN_HOME"/config/genesi
 jq ".app_state.ccvconsumer.params.blocks_per_distribution_transmission = \"70\" | .app_state.tokenfactory.paused = { \"paused\": false }" \
   $CONSUMER_HOME/config/consumer-genesis.json > \
    $SOVEREIGN_HOME/edited_genesis.json && mv $SOVEREIGN_HOME/edited_genesis.json $CONSUMER_HOME/config/consumer-genesis.json
+
+for (( i=2; i <= $NUM_NODES; i++ )); do
+    cp $CONSUMER_HOME/config/consumer-genesis.json "${CONSUMER_HOME_PREFIX}${i}"/config/consumer-genesis.json
+done

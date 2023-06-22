@@ -4,7 +4,6 @@ services:
     image: stridezone:stride
     volumes:
       - ./state/stride1:/home/stride/.stride
-      - ./state/sovereign:/home/stride/.sovereign
     ports:
       - "26657:26657"
       - "1317:1317"
@@ -14,13 +13,11 @@ services:
     image: stridezone:stride
     volumes:
       - ./state/stride2:/home/stride/.stride
-      - ./state/sovereign:/home/stride/.sovereign
 
   stride3:
     image: stridezone:stride
     volumes:
       - ./state/stride3:/home/stride/.stride
-      - ./state/sovereign:/home/stride/.sovereign
 
   gaia1:
     image: stridezone:gaia
