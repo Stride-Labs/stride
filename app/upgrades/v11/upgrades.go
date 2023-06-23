@@ -17,6 +17,6 @@ func CreateUpgradeHandler(
 ) upgradetypes.UpgradeHandler {
 	return func(ctx sdk.Context, _ upgradetypes.Plan, vm module.VersionMap) (module.VersionMap, error) {
 		ctx.Logger().Info("Starting upgrade v11...")
-		return vm, nil
+		return mm.RunMigrations(ctx, configurator, vm)
 	}
 }
