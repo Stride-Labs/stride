@@ -13,6 +13,7 @@ import (
 	capabilitytypes "github.com/cosmos/cosmos-sdk/x/capability/types"
 
 	v10 "github.com/Stride-Labs/stride/v10/app/upgrades/v10"
+	v11 "github.com/Stride-Labs/stride/v10/app/upgrades/v11"
 	v2 "github.com/Stride-Labs/stride/v10/app/upgrades/v2"
 	v3 "github.com/Stride-Labs/stride/v10/app/upgrades/v3"
 	v4 "github.com/Stride-Labs/stride/v10/app/upgrades/v4"
@@ -133,6 +134,15 @@ func (app *StrideApp) setupUpgradeHandlers() {
 		),
 	)
 
+	// v11 upgrade handler
+	app.UpgradeKeeper.SetUpgradeHandler(
+		v11.UpgradeName,
+		v11.CreateUpgradeHandler(
+			app.mm,
+			app.configurator,
+		),
+	)
+
 	upgradeInfo, err := app.UpgradeKeeper.ReadUpgradeInfoFromDisk()
 	if err != nil {
 		panic(fmt.Errorf("Failed to read upgrade info from disk: %w", err))
@@ -162,8 +172,6 @@ func (app *StrideApp) setupUpgradeHandlers() {
 			Added: []string{crisistypes.StoreKey, consensustypes.StoreKey},
 		}
 	}
-	// TODO: v10 UPGRADE HANDLER
-	// Add module and ICA accounts for each host zone to the rate limit whitelist
 
 	if storeUpgrades != nil {
 		app.SetStoreLoader(upgradetypes.UpgradeStoreLoader(upgradeInfo.Height, storeUpgrades))
