@@ -10,9 +10,6 @@ import (
 	ccvprovidertypes "github.com/cosmos/interchain-security/v3/x/ccv/provider/types"
 	ccvtypes "github.com/cosmos/interchain-security/v3/x/ccv/types"
 
-	icacontrollerkeeper "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/controller/keeper"
-	icacontrollertypes "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/controller/types"
-
 	"github.com/cometbft/cometbft/crypto/ed25519"
 	tmtypesproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	tmtypes "github.com/cometbft/cometbft/types"
@@ -287,10 +284,7 @@ func (s *AppTestHelper) RegisterInterchainAccount(endpoint *ibctesting.Endpoint,
 	// Get the next channel available and register the ICA
 	channelSequence := s.App.IBCKeeper.ChannelKeeper.GetNextChannelSequence(s.Ctx)
 
-	msgServer := icacontrollerkeeper.NewMsgServerImpl(&s.App.ICAControllerKeeper)
-	msgRegisterInterchainAccount := icacontrollertypes.NewMsgRegisterInterchainAccount(endpoint.ConnectionID, owner, TestIcaVersion)
-
-	_, err = msgServer.RegisterInterchainAccount(endpoint.Chain.GetContext(), msgRegisterInterchainAccount)
+	err = s.App.ICAControllerKeeper.RegisterInterchainAccount(s.Ctx, endpoint.ConnectionID, owner, TestIcaVersion)
 	s.Require().NoError(err, "register interchain account error")
 
 	// Commit the state
