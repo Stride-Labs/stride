@@ -7,10 +7,10 @@ import (
 	sdkmath "cosmossdk.io/math"
 	"github.com/spf13/cast"
 
-	"github.com/Stride-Labs/stride/v10/utils"
-	icacallbackstypes "github.com/Stride-Labs/stride/v10/x/icacallbacks/types"
-	recordstypes "github.com/Stride-Labs/stride/v10/x/records/types"
-	"github.com/Stride-Labs/stride/v10/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v11/utils"
+	icacallbackstypes "github.com/Stride-Labs/stride/v11/x/icacallbacks/types"
+	recordstypes "github.com/Stride-Labs/stride/v11/x/records/types"
+	"github.com/Stride-Labs/stride/v11/x/stakeibc/types"
 
 	errorsmod "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"

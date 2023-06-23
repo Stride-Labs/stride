@@ -5,9 +5,9 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/Stride-Labs/stride/v10/app/apptesting"
-	"github.com/Stride-Labs/stride/v10/x/autopilot"
-	"github.com/Stride-Labs/stride/v10/x/autopilot/types"
+	"github.com/Stride-Labs/stride/v11/app/apptesting"
+	"github.com/Stride-Labs/stride/v11/x/autopilot"
+	"github.com/Stride-Labs/stride/v11/x/autopilot/types"
 )
 
 func TestGenesis(t *testing.T) {

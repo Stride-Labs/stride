@@ -12,7 +12,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 
-	"github.com/Stride-Labs/stride/v10/x/interchainquery/types"
+	"github.com/Stride-Labs/stride/v11/x/interchainquery/types"
 )
 
 func GenerateQueryHash(connectionId string, chainId string, queryType string, request []byte, module string, callbackId string) string {
