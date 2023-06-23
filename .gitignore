@@ -38,3 +38,5 @@ vue/*
 
 .vscode
 !.vscode/settings.json
+
+.ipynb_checkpoints/*

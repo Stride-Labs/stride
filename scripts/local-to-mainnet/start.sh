@@ -76,7 +76,7 @@ sed -i -E "s|HOST_COIN_TYPE|$HOST_COIN_TYPE|g" $RELAYER_CONFIG_FILE
 # rm -f $TMP_MNEMONICS
 
 echo "Adding Relayer keys"
-RELAYER_CMD="$SCRIPT_DIR/../../build/relayer --home $STATE/relayer"
+RELAYER_CMD="$SCRIPT_DIR/../../build/rly --home $STATE/rly"
 $RELAYER_CMD keys restore stride rly1 "$RELAYER_STRIDE_MNEMONIC" 
 $RELAYER_CMD keys restore host rly2 "$HOT_WALLET_3_MNEMONIC" 
 
