@@ -3,18 +3,19 @@ package keeper
 import (
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	proto "github.com/cosmos/gogoproto/proto"
 
 	errorsmod "cosmossdk.io/errors"
-	ibctypes "github.com/cosmos/ibc-go/v5/modules/apps/transfer/types"
-	transfertypes "github.com/cosmos/ibc-go/v5/modules/apps/transfer/types"
-	clienttypes "github.com/cosmos/ibc-go/v5/modules/core/02-client/types"
-	channeltypes "github.com/cosmos/ibc-go/v5/modules/core/04-channel/types"
+	ibctypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
+	transfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
+	clienttypes "github.com/cosmos/ibc-go/v7/modules/core/02-client/types"
+	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
 
-	"github.com/Stride-Labs/stride/v9/utils"
-	epochtypes "github.com/Stride-Labs/stride/v9/x/epochs/types"
-	icqkeeper "github.com/Stride-Labs/stride/v9/x/interchainquery/keeper"
-	icqtypes "github.com/Stride-Labs/stride/v9/x/interchainquery/types"
-	"github.com/Stride-Labs/stride/v9/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v11/utils"
+	epochtypes "github.com/Stride-Labs/stride/v11/x/epochs/types"
+	icqkeeper "github.com/Stride-Labs/stride/v11/x/interchainquery/keeper"
+	icqtypes "github.com/Stride-Labs/stride/v11/x/interchainquery/types"
+	"github.com/Stride-Labs/stride/v11/x/stakeibc/types"
 )
 
 // FeeBalanceCallback is a callback handler for FeeBalnce queries.
@@ -68,7 +69,7 @@ func FeeBalanceCallback(k Keeper, ctx sdk.Context, args []byte, query icqtypes.Q
 
 	// Prepare a MsgTransfer from the fee account to the rewards collector account
 	rewardsCoin := sdk.NewCoin(hostZone.HostDenom, feeBalanceAmount)
-	rewardsCollectorAddress := k.accountKeeper.GetModuleAccount(ctx, types.RewardCollectorName).GetAddress()
+	rewardsCollectorAddress := k.AccountKeeper.GetModuleAccount(ctx, types.RewardCollectorName).GetAddress()
 	transferMsg := ibctypes.NewMsgTransfer(
 		transfertypes.PortID,
 		counterpartyChannelId,
@@ -77,9 +78,10 @@ func FeeBalanceCallback(k Keeper, ctx sdk.Context, args []byte, query icqtypes.Q
 		rewardsCollectorAddress.String(),
 		clienttypes.Height{},
 		timeout,
+		"",
 	)
 
-	msgs := []sdk.Msg{transferMsg}
+	msgs := []proto.Message{transferMsg}
 	k.Logger(ctx).Info(utils.LogICQCallbackWithHostZone(chainId, ICQCallbackID_FeeBalance,
 		"Preparing MsgTransfer of %v from the fee account to the rewards collector module account (for commission)", rewardsCoin.String()))
 

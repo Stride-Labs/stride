@@ -3,24 +3,22 @@ package keeper
 import (
 	"fmt"
 
-	ibckeeper "github.com/cosmos/ibc-go/v5/modules/core/keeper"
-	"github.com/tendermint/tendermint/libs/log"
+	"github.com/cometbft/cometbft/libs/log"
+	ibckeeper "github.com/cosmos/ibc-go/v7/modules/core/keeper"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	capabilitykeeper "github.com/cosmos/cosmos-sdk/x/capability/keeper"
-	capabilitytypes "github.com/cosmos/cosmos-sdk/x/capability/types"
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
-	ibctransferkeeper "github.com/cosmos/ibc-go/v5/modules/apps/transfer/keeper"
-	ibctypes "github.com/cosmos/ibc-go/v5/modules/apps/transfer/types"
+	ibctransferkeeper "github.com/cosmos/ibc-go/v7/modules/apps/transfer/keeper"
+	ibctypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
 
-	"github.com/Stride-Labs/stride/v9/utils"
-	icacallbackskeeper "github.com/Stride-Labs/stride/v9/x/icacallbacks/keeper"
-	icacallbackstypes "github.com/Stride-Labs/stride/v9/x/icacallbacks/types"
+	"github.com/Stride-Labs/stride/v11/utils"
+	icacallbackskeeper "github.com/Stride-Labs/stride/v11/x/icacallbacks/keeper"
+	icacallbackstypes "github.com/Stride-Labs/stride/v11/x/icacallbacks/types"
 
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 
-	"github.com/Stride-Labs/stride/v9/x/records/types"
+	"github.com/Stride-Labs/stride/v11/x/records/types"
 )
 
 type (
@@ -30,7 +28,6 @@ type (
 		storeKey           storetypes.StoreKey
 		memKey             storetypes.StoreKey
 		paramstore         paramtypes.Subspace
-		scopedKeeper       capabilitykeeper.ScopedKeeper
 		AccountKeeper      types.AccountKeeper
 		TransferKeeper     ibctransferkeeper.Keeper
 		IBCKeeper          ibckeeper.Keeper
@@ -43,7 +40,6 @@ func NewKeeper(
 	storeKey,
 	memKey storetypes.StoreKey,
 	ps paramtypes.Subspace,
-	scopedKeeper capabilitykeeper.ScopedKeeper,
 	AccountKeeper types.AccountKeeper,
 	TransferKeeper ibctransferkeeper.Keeper,
 	ibcKeeper ibckeeper.Keeper,
@@ -59,7 +55,6 @@ func NewKeeper(
 		storeKey:           storeKey,
 		memKey:             memKey,
 		paramstore:         ps,
-		scopedKeeper:       scopedKeeper,
 		AccountKeeper:      AccountKeeper,
 		TransferKeeper:     TransferKeeper,
 		IBCKeeper:          ibcKeeper,
@@ -69,11 +64,6 @@ func NewKeeper(
 
 func (k Keeper) Logger(ctx sdk.Context) log.Logger {
 	return ctx.Logger().With("module", fmt.Sprintf("x/%s", types.ModuleName))
-}
-
-// ClaimCapability claims the channel capability passed via the OnOpenChanInit callback
-func (k *Keeper) ClaimCapability(ctx sdk.Context, cap *capabilitytypes.Capability, name string) error {
-	return k.scopedKeeper.ClaimCapability(ctx, cap, name)
 }
 
 func (k Keeper) Transfer(ctx sdk.Context, msg *ibctypes.MsgTransfer, depositRecord types.DepositRecord) error {

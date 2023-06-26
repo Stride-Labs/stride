@@ -8,13 +8,13 @@ import (
 
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 
-	"github.com/Stride-Labs/stride/v9/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v11/x/stakeibc/types"
 )
 
 // Liquid Stake Reward Collector Balance
 func (k Keeper) LiquidStakeRewardCollectorBalance(ctx sdk.Context, msgSvr types.MsgServer) bool {
 	k.Logger(ctx).Info("Liquid Staking reward collector balance")
-	rewardCollectorAddress := k.accountKeeper.GetModuleAccount(ctx, types.RewardCollectorName).GetAddress()
+	rewardCollectorAddress := k.AccountKeeper.GetModuleAccount(ctx, types.RewardCollectorName).GetAddress()
 	rewardedTokens := k.bankKeeper.GetAllBalances(ctx, rewardCollectorAddress)
 	if rewardedTokens.IsEqual(sdk.Coins{}) {
 		k.Logger(ctx).Info("No reward to allocate from RewardCollector")
@@ -50,7 +50,7 @@ func (k Keeper) LiquidStakeRewardCollectorBalance(ctx sdk.Context, msgSvr types.
 // Sweep stTokens from Reward Collector to Fee Collector
 func (k Keeper) SweepStTokensFromRewardCollToFeeColl(ctx sdk.Context) error {
 	// Send all stTokens to fee collector to distribute to delegator later
-	rewardCollectorAddress := k.accountKeeper.GetModuleAccount(ctx, types.RewardCollectorName).GetAddress()
+	rewardCollectorAddress := k.AccountKeeper.GetModuleAccount(ctx, types.RewardCollectorName).GetAddress()
 
 	rewardCollCoins := k.bankKeeper.GetAllBalances(ctx, rewardCollectorAddress)
 	k.Logger(ctx).Info(fmt.Sprintf("Reward collector has %s", rewardCollCoins.String()))

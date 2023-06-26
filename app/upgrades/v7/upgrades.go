@@ -17,17 +17,17 @@ import (
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
-	icahostkeeper "github.com/cosmos/ibc-go/v5/modules/apps/27-interchain-accounts/host/keeper"
-	icahosttypes "github.com/cosmos/ibc-go/v5/modules/apps/27-interchain-accounts/host/types"
-	transfertypes "github.com/cosmos/ibc-go/v5/modules/apps/transfer/types"
+	icahostkeeper "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/host/keeper"
+	icahosttypes "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/host/types"
+	transfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
 
-	"github.com/Stride-Labs/stride/v9/utils"
-	epochskeeper "github.com/Stride-Labs/stride/v9/x/epochs/keeper"
-	epochstypes "github.com/Stride-Labs/stride/v9/x/epochs/types"
-	mintkeeper "github.com/Stride-Labs/stride/v9/x/mint/keeper"
-	minttypes "github.com/Stride-Labs/stride/v9/x/mint/types"
-	stakeibckeeper "github.com/Stride-Labs/stride/v9/x/stakeibc/keeper"
-	stakeibctypes "github.com/Stride-Labs/stride/v9/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v11/utils"
+	epochskeeper "github.com/Stride-Labs/stride/v11/x/epochs/keeper"
+	epochstypes "github.com/Stride-Labs/stride/v11/x/epochs/types"
+	mintkeeper "github.com/Stride-Labs/stride/v11/x/mint/keeper"
+	minttypes "github.com/Stride-Labs/stride/v11/x/mint/types"
+	stakeibckeeper "github.com/Stride-Labs/stride/v11/x/stakeibc/keeper"
+	stakeibctypes "github.com/Stride-Labs/stride/v11/x/stakeibc/types"
 )
 
 // CreateUpgradeHandler creates an SDK upgrade handler for v7

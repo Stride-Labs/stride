@@ -2,12 +2,12 @@ package keeper_test
 
 import (
 	sdkmath "cosmossdk.io/math"
-	ibctesting "github.com/cosmos/ibc-go/v5/testing"
+	ibctesting "github.com/cosmos/ibc-go/v7/testing"
 	_ "github.com/stretchr/testify/suite"
 
-	recordtypes "github.com/Stride-Labs/stride/v9/x/records/types"
+	recordtypes "github.com/Stride-Labs/stride/v11/x/records/types"
 
-	stakeibc "github.com/Stride-Labs/stride/v9/x/stakeibc/types"
+	stakeibc "github.com/Stride-Labs/stride/v11/x/stakeibc/types"
 )
 
 type InitiateAllHostZoneUnbondingsTestCase struct {

@@ -4,17 +4,20 @@ import (
 	"strings"
 
 	sdkmath "cosmossdk.io/math"
-	"github.com/cosmos/cosmos-sdk/simapp"
+
+	abci "github.com/cometbft/cometbft/abci/types"
+	simtestutil "github.com/cosmos/cosmos-sdk/testutil/sims"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
-	"github.com/cosmos/cosmos-sdk/x/staking/teststaking"
+
+	teststaking "github.com/cosmos/cosmos-sdk/x/staking/testutil"
+
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	_ "github.com/stretchr/testify/suite"
-	abci "github.com/tendermint/tendermint/abci/types"
 
-	epochtypes "github.com/Stride-Labs/stride/v9/x/epochs/types"
-	recordtypes "github.com/Stride-Labs/stride/v9/x/records/types"
-	stakeibctypes "github.com/Stride-Labs/stride/v9/x/stakeibc/types"
+	epochtypes "github.com/Stride-Labs/stride/v11/x/epochs/types"
+	recordtypes "github.com/Stride-Labs/stride/v11/x/records/types"
+	stakeibctypes "github.com/Stride-Labs/stride/v11/x/stakeibc/types"
 )
 
 func (s *KeeperTestSuite) SetupTestRewardAllocation() {
@@ -175,10 +178,10 @@ func (s *KeeperTestSuite) TestClaimStakingRewardStTokens() {
 	for _, acc := range addrs {
 		s.FundAccount(acc, sdk.NewCoin(sdk.DefaultBondDenom, sdk.NewInt(1000000)))
 	}
-	valAddrs := simapp.ConvertAddrsToValAddrs(addrs)
-	tstaking := teststaking.NewHelper(s.T(), s.Ctx, s.App.StakingKeeper)
+	valAddrs := simtestutil.ConvertAddrsToValAddrs(addrs)
+	tstaking := teststaking.NewHelper(s.T(), s.Ctx, &s.App.StakingKeeper)
 
-	pubkeys := simapp.CreateTestPubKeys(2)
+	pubkeys := simtestutil.CreateTestPubKeys(2)
 	stakeAmount := sdk.NewInt(100)
 
 	// create validator with 50% commission
@@ -213,7 +216,7 @@ func (s *KeeperTestSuite) TestClaimStakingRewardStTokens() {
 			SignedLastBlock: true,
 		},
 	}
-	s.App.DistrKeeper.AllocateTokens(s.Ctx, 200, 200, sdk.ConsAddress(pubkeys[1].Address()), votes)
+	s.App.DistrKeeper.AllocateTokens(s.Ctx, 200, votes)
 
 	// Withdraw rewards
 	rewards1, err := s.App.DistrKeeper.WithdrawDelegationRewards(s.Ctx, sdk.AccAddress(valAddrs[0]), valAddrs[0])

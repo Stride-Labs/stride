@@ -4,19 +4,19 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/cosmos/ibc-go/v5/modules/apps/transfer"
-	transfertypes "github.com/cosmos/ibc-go/v5/modules/apps/transfer/types"
-	clienttypes "github.com/cosmos/ibc-go/v5/modules/core/02-client/types"
-	channeltypes "github.com/cosmos/ibc-go/v5/modules/core/04-channel/types"
-	ibctesting "github.com/cosmos/ibc-go/v5/testing"
+	"github.com/cosmos/ibc-go/v7/modules/apps/transfer"
+	transfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
+	clienttypes "github.com/cosmos/ibc-go/v7/modules/core/02-client/types"
+	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
+	ibctesting "github.com/cosmos/ibc-go/v7/testing"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/Stride-Labs/stride/v9/utils"
-	"github.com/Stride-Labs/stride/v9/x/autopilot"
-	"github.com/Stride-Labs/stride/v9/x/autopilot/types"
-	claimtypes "github.com/Stride-Labs/stride/v9/x/claim/types"
-	stakeibctypes "github.com/Stride-Labs/stride/v9/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v11/utils"
+	"github.com/Stride-Labs/stride/v11/x/autopilot"
+	"github.com/Stride-Labs/stride/v11/x/autopilot/types"
+	claimtypes "github.com/Stride-Labs/stride/v11/x/claim/types"
+	stakeibctypes "github.com/Stride-Labs/stride/v11/x/stakeibc/types"
 )
 
 // TODO: Separate out tests cases that are not necessarily Claim or Stakeibc related,
@@ -30,7 +30,7 @@ func getClaimPacketMetadata(address string) string {
 		{
 			"autopilot": {
 				"receiver": "%[1]s",
-				"claim": { "stride_address": "%[1]s" } 
+				"claim": { } 
 			}
 		}`, address)
 }

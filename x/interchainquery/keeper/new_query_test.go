@@ -3,7 +3,7 @@ package keeper_test
 import (
 	_ "github.com/stretchr/testify/suite"
 
-	icqtypes "github.com/Stride-Labs/stride/v9/x/interchainquery/types"
+	icqtypes "github.com/Stride-Labs/stride/v11/x/interchainquery/types"
 )
 
 type NewQueryTestCase struct {

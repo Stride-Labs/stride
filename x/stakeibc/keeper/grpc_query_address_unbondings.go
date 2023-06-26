@@ -12,8 +12,8 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
-	epochtypes "github.com/Stride-Labs/stride/v9/x/epochs/types"
-	"github.com/Stride-Labs/stride/v9/x/stakeibc/types"
+	epochtypes "github.com/Stride-Labs/stride/v11/x/epochs/types"
+	"github.com/Stride-Labs/stride/v11/x/stakeibc/types"
 )
 
 const nanosecondsInDay = 86400000000000
@@ -75,6 +75,7 @@ func (k Keeper) AddressUnbondings(c context.Context, req *types.QueryAddressUnbo
 						Amount:                 userRedemptionRecord.Amount,
 						Denom:                  userRedemptionRecord.Denom,
 						ClaimIsPending:         userRedemptionRecord.ClaimIsPending,
+						EpochNumber:            userRedemptionRecord.EpochNumber,
 					}
 					addressUnbondings = append(addressUnbondings, addressUnbonding)
 				}

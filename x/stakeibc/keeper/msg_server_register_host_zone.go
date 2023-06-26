@@ -5,12 +5,12 @@ import (
 	"fmt"
 
 	sdkmath "cosmossdk.io/math"
-	icatypes "github.com/cosmos/ibc-go/v5/modules/apps/27-interchain-accounts/types"
+	icatypes "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/types"
 
-	"github.com/Stride-Labs/stride/v9/utils"
-	epochtypes "github.com/Stride-Labs/stride/v9/x/epochs/types"
-	recordstypes "github.com/Stride-Labs/stride/v9/x/records/types"
-	"github.com/Stride-Labs/stride/v9/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v11/utils"
+	epochtypes "github.com/Stride-Labs/stride/v11/x/epochs/types"
+	recordstypes "github.com/Stride-Labs/stride/v11/x/records/types"
+	"github.com/Stride-Labs/stride/v11/x/stakeibc/types"
 
 	errorsmod "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -71,7 +71,7 @@ func (k msgServer) RegisterHostZone(goCtx context.Context, msg *types.MsgRegiste
 
 	// create and save the zones's module account
 	zoneAddress := types.NewZoneAddress(chainId)
-	if err := utils.CreateModuleAccount(ctx, k.accountKeeper, zoneAddress); err != nil {
+	if err := utils.CreateModuleAccount(ctx, k.AccountKeeper, zoneAddress); err != nil {
 		return nil, errorsmod.Wrapf(err, "unable to create module account for host zone %s", chainId)
 	}
 
