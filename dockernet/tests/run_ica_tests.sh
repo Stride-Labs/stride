@@ -4,7 +4,7 @@ CURRENT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 source ${CURRENT_DIR}/../config.sh
 
 # Note: For first time use, we need to create the wallet keys. Set the `DRY_RUN` flag `false` to actually create the keys.
-DRY_RUN=true
+DRY_RUN=false
 
 WALLET_MNEMONIC_1="banner spread envelope side kite person disagree path silver will brother under couch edit food venture squirrel civil budget number acquire point work mass"
 WALLET_MNEMONIC_2="veteran try aware erosion drink dance decade comic dawn museum release episode original list ability owner size tuition surface ceiling depth seminar capable only"
