@@ -4,23 +4,23 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/cosmos/ibc-go/v5/modules/apps/transfer"
-	transfertypes "github.com/cosmos/ibc-go/v5/modules/apps/transfer/types"
-	clienttypes "github.com/cosmos/ibc-go/v5/modules/core/02-client/types"
-	channeltypes "github.com/cosmos/ibc-go/v5/modules/core/04-channel/types"
-	"github.com/tendermint/tendermint/crypto/ed25519"
+	"github.com/cometbft/cometbft/crypto/ed25519"
+	"github.com/cosmos/ibc-go/v7/modules/apps/transfer"
+	transfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
+	clienttypes "github.com/cosmos/ibc-go/v7/modules/core/02-client/types"
+	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
 
-	recordsmodule "github.com/Stride-Labs/stride/v9/x/records"
+	recordsmodule "github.com/Stride-Labs/stride/v11/x/records"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	router "github.com/Stride-Labs/stride/v9/x/autopilot"
-	"github.com/Stride-Labs/stride/v9/x/autopilot/types"
-	epochtypes "github.com/Stride-Labs/stride/v9/x/epochs/types"
-	minttypes "github.com/Stride-Labs/stride/v9/x/mint/types"
-	recordstypes "github.com/Stride-Labs/stride/v9/x/records/types"
-	stakeibckeeper "github.com/Stride-Labs/stride/v9/x/stakeibc/keeper"
-	stakeibctypes "github.com/Stride-Labs/stride/v9/x/stakeibc/types"
+	router "github.com/Stride-Labs/stride/v11/x/autopilot"
+	"github.com/Stride-Labs/stride/v11/x/autopilot/types"
+	epochtypes "github.com/Stride-Labs/stride/v11/x/epochs/types"
+	minttypes "github.com/Stride-Labs/stride/v11/x/mint/types"
+	recordstypes "github.com/Stride-Labs/stride/v11/x/records/types"
+	stakeibckeeper "github.com/Stride-Labs/stride/v11/x/stakeibc/keeper"
+	stakeibctypes "github.com/Stride-Labs/stride/v11/x/stakeibc/types"
 )
 
 func getRedeemStakeStakeibcPacketMetadata(address, ibcReceiver, transferChannel string) string {
@@ -228,6 +228,7 @@ func (suite *KeeperTestSuite) TestOnRecvPacket_RedeemStake() {
 			escrowAddr := transfertypes.GetEscrowAddress(packet.DestinationPort, packet.DestinationChannel)
 			err = suite.App.BankKeeper.SendCoins(suite.Ctx, addr1, escrowAddr, sdk.Coins{sdk.NewInt64Coin(stAtomDenom, 1000000)})
 			suite.Require().NoError(err)
+			suite.App.TransferKeeper.SetTotalEscrowForDenom(suite.Ctx, sdk.NewInt64Coin(stAtomDenom, 1000000))
 
 			transferIBCModule := transfer.NewIBCModule(suite.App.TransferKeeper)
 			recordsStack := recordsmodule.NewIBCModule(suite.App.RecordsKeeper, transferIBCModule)

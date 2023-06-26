@@ -1,6 +1,7 @@
 # Upgrades
 
 ## Create Upgrade Handler
+
 ```go
 // app/upgrades/{upgradeVersion}/upgrades.go
 
@@ -28,6 +29,7 @@ func CreateUpgradeHandler(
 ```
 
 ## Register Upgrade Handler
+
 ```go
 // app/upgrades.go
 
@@ -64,26 +66,31 @@ func (app *StrideApp) setupUpgradeHandlers() {
 ```
 
 # Migrations (Only required if the state changed)
+
 ## Store Old Proto Types
+
 ```go
 // x/{moduleName}/migrations/{oldVersion}/types/{data_type}.pb.go
 ```
 
 ## Increment the Module's Consensus Version
-* The consensus version is different from the chain version - it is specific to each module and is incremented every time state is migrated
+
+- The consensus version is different from the chain version - it is specific to each module and is incremented every time state is migrated
+
 ```go
 // x/{moduleName}/module.go
 func (AppModule) ConsensusVersion() uint64 { return 2 }
 ```
 
 ## Define Migration Logic
+
 ```go
 // x/{moduleName}/migrations/{new-consensus-version}/migrations.go
 package {upgradeVersion}
 
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	{new-consensus-version} "github.com/Stride-Labs/stride/v9/x/records/migrations/{new-consensus-version}"
+	{new-consensus-version} "github.com/Stride-Labs/stride/v11/x/records/migrations/{new-consensus-version}"
 )
 
 // TODO: Add migration logic to deserialize with old protos and re-serialize with new ones
@@ -94,11 +101,12 @@ func MigrateStore(ctx sdk.Context) error {
 ```
 
 ## Specify the Migration in the Upgrade Handler
+
 ```go
 // app/upgrades/{upgradeVersion}/upgrades.go
 
 import (
-	{module}migration "github.com/Stride-Labs/stride/v9/x/{module}/migrations/{new-consensus-version}"
+	{module}migration "github.com/Stride-Labs/stride/v11/x/{module}/migrations/{new-consensus-version}"
 )
 
 // CreateUpgradeHandler creates an SDK upgrade handler for {upgradeVersion}
@@ -112,13 +120,14 @@ func CreateUpgradeHandler(
 		if err := {module}migration.MigrateStore(ctx, {module}StoreKey, cdc); err != nil {
 			return vm, errorsmod.Wrapf(err, "unable to migrate {module} store")
 		}
-		vm[{moduleName}] = mm.GetVersionMap()[{moduleName}] 
+		vm[{moduleName}] = mm.GetVersionMap()[{moduleName}]
 		return mm.RunMigrations(ctx, configurator, vm)
 	}
 }
 ```
 
-## Add Additional Parameters to `CreateUpgradeHandler` Invocation 
+## Add Additional Parameters to `CreateUpgradeHandler` Invocation
+
 ```go
 // app/upgrades.go
 	...
