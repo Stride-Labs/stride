@@ -38,7 +38,14 @@ func (k Keeper) TryLiquidStaking(
 	}
 
 	// Note: newData.denom is base denom e.g. uatom - not ibc/xxx
-	var token = sdk.NewCoin(newData.Denom, amount)
+	var token = sdk.Coin{
+		Denom:  newData.Denom,
+		Amount: amount,
+	}
+
+	if err := token.Validate(); err != nil {
+		return err
+	}
 
 	prefixedDenom := transfertypes.GetPrefixedDenom(packet.GetDestPort(), packet.GetDestChannel(), newData.Denom)
 	ibcDenom := transfertypes.ParseDenomTrace(prefixedDenom).IBCDenom()

@@ -45,7 +45,14 @@ func (k Keeper) TryRedeemStake(
 	}
 
 	// Note: newData.denom is ibc denom for st assets - e.g. ibc/xxx
-	var token = sdk.NewCoin(newData.Denom, amount)
+	var token = sdk.Coin{
+		Denom:  newData.Denom,
+		Amount: amount,
+	}
+
+	if err := token.Validate(); err != nil {
+		return err
+	}
 
 	strideAddress, err := sdk.AccAddressFromBech32(packetMetadata.StrideAddress)
 	if err != nil {
