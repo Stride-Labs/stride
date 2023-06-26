@@ -26,6 +26,8 @@ import (
 	icqtypes "github.com/Stride-Labs/stride/v11/x/interchainquery/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	icacontrollerkeeper "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/controller/keeper"
+	icacontrollertypes "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/controller/types"
 	icatypes "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/types"
 )
 
@@ -286,13 +288,15 @@ func (k Keeper) SubmitTxs(
 		Data: data,
 	}
 
-	// TODO: SendTx is deprecated and MsgServer should used going forward
-	// IMPORTANT: When updating to MsgServer, the timestamp passed to NewMsgSendTx is the relative timeout offset,
-	// not the unix time (e.g. "30 minutes in nanoseconds" instead "current unix nano + 30 minutes in nanoseconds")
-	sequence, err := k.ICAControllerKeeper.SendTx(ctx, nil, connectionId, portID, packetData, timeoutTimestamp) // nolint:staticcheck
+	// Submit ICA tx
+	msgServer := icacontrollerkeeper.NewMsgServerImpl(&k.ICAControllerKeeper)
+	relativeTimeoutOffset := timeoutTimestamp - uint64(ctx.BlockTime().UnixNano())
+	msgSendTx := icacontrollertypes.NewMsgSendTx(owner, connectionId, relativeTimeoutOffset, packetData)
+	res, err := msgServer.SendTx(ctx, msgSendTx)
 	if err != nil {
 		return 0, err
 	}
+	sequence := res.Sequence
 
 	// Store the callback data
 	if callbackId != "" && callbackArgs != nil {
