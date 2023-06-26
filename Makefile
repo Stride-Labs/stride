@@ -108,6 +108,9 @@ test-cover:
 test-integration-docker:
 	bash $(DOCKERNET_HOME)/tests/run_all_tests.sh
 
+test-ica-osmo:
+	bash $(DOCKERNET_HOME)/tests/ica_test.sh
+
 ###############################################################################
 ###                                DockerNet                                ###
 ###############################################################################
