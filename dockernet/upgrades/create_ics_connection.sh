@@ -10,7 +10,7 @@ WAIT_FOR_STRING $STRIDE_LOGS "height=220 module=txindex"
 relayer_logs=${LOGS}/relayer-gaia-ics.log
 relayer_exec=$(GET_VAR_VALUE RELAYER_GAIA_ICS_EXEC)
 relayer_config=$STATE/relayer-gaia-ics/config
-mnemonic=$(GET_VAR_VALUE     RELAYER_GAIA_MNEMONIC)
+mnemonic=$(GET_VAR_VALUE     RELAYER_GAIA_ICS_MNEMONIC)
 chain_name=gaia
 account_name=$(GET_VAR_VALUE RELAYER_GAIA_ICS_ACCT)
 coin_type=$(GET_VAR_VALUE    COSMOS_COIN_TYPE)
