@@ -2,7 +2,6 @@ package v11
 
 import (
 	"fmt"
-	"time"
 
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/codec"
