@@ -28,7 +28,7 @@ func getRedeemStakeStakeibcPacketMetadata(address, ibcReceiver, transferChannel 
 		{
 			"autopilot": {
 				"receiver": "%[1]s",
-				"stakeibc": { "stride_address": "%[1]s", "action": "RedeemStake", "ibc_receiver": "%[2]s", "transfer_channel": "%[3]s" } 
+				"stakeibc": { "action": "RedeemStake", "ibc_receiver": "%[2]s", "transfer_channel": "%[3]s" } 
 			}
 		}`, address, ibcReceiver, transferChannel)
 }

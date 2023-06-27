@@ -54,9 +54,9 @@ func (k Keeper) TryRedeemStake(
 		return err
 	}
 
-	strideAddress, err := sdk.AccAddressFromBech32(packetMetadata.StrideAddress)
+	strideAddress, err := sdk.AccAddressFromBech32(newData.Receiver)
 	if err != nil {
-		return errorsmod.Wrapf(sdkerrors.ErrInvalidAddress, "invalid stride_address (%s) in autopilot memo", strideAddress)
+		return errorsmod.Wrapf(sdkerrors.ErrInvalidAddress, "invalid receiver (%s) in autopilot memo", strideAddress)
 	}
 
 	return k.RunRedeemStake(ctx, strideAddress, packetMetadata.IbcReceiver, hostZoneDenom, token, []metrics.Label{})

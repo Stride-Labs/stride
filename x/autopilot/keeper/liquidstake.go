@@ -59,9 +59,9 @@ func (k Keeper) TryLiquidStaking(
 		return fmt.Errorf("ibc denom %s is not equal to host zone ibc denom %s", ibcDenom, hostZone.IbcDenom)
 	}
 
-	strideAddress, err := sdk.AccAddressFromBech32(packetMetadata.StrideAddress)
+	strideAddress, err := sdk.AccAddressFromBech32(newData.Receiver)
 	if err != nil {
-		return errorsmod.Wrapf(sdkerrors.ErrInvalidAddress, "invalid stride_address (%s) in autopilot memo", strideAddress)
+		return errorsmod.Wrapf(sdkerrors.ErrInvalidAddress, "invalid receiver (%s) in autopilot memo", strideAddress)
 	}
 
 	return k.RunLiquidStake(ctx, strideAddress, token, packetMetadata)

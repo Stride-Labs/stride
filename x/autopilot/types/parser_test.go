@@ -24,16 +24,6 @@ func getStakeibcMemo(address, action string) string {
 		}`, address, action)
 }
 
-func getStakeibcMemoWithStrideAddress(receiverAddress, action, strideAddress string) string {
-	return fmt.Sprintf(`
-		{
-			"autopilot": {
-				"receiver": "%[1]s",
-				"stakeibc": { "stride_address": "%[2]s", "action": "%[3]s" } 
-			}
-		}`, receiverAddress, strideAddress, action)
-}
-
 func getClaimMemo(address string) string {
 	return fmt.Sprintf(`
 		{
@@ -42,16 +32,6 @@ func getClaimMemo(address string) string {
 				"claim": { } 
 			}
 		}`, address)
-}
-
-func getClaimMemoWithStrideAddress(receiverAddress, strideAddress string) string {
-	return fmt.Sprintf(`
-		{
-			"autopilot": {
-				"receiver": "%[1]s",
-				"claim": { "stride_address": "%[2]s" } 
-			}
-		}`, receiverAddress, strideAddress)
 }
 
 func getClaimAndStakeibcMemo(address, action string) string {
@@ -84,13 +64,10 @@ func TestParsePacketMetadata(t *testing.T) {
 	validStakeibcAction := "LiquidStake"
 
 	validParsedStakeibcPacketMetadata := types.StakeibcPacketMetadata{
-		StrideAddress: validAddress,
-		Action:        validStakeibcAction,
+		Action: validStakeibcAction,
 	}
 
-	validParsedClaimPacketMetadata := types.ClaimPacketMetadata{
-		StrideAddress: validAddress,
-	}
+	validParsedClaimPacketMetadata := types.ClaimPacketMetadata{}
 
 	testCases := []struct {
 		name                string
@@ -108,16 +85,6 @@ func TestParsePacketMetadata(t *testing.T) {
 		{
 			name:        "valid claim memo",
 			metadata:    getClaimMemo(validAddress),
-			parsedClaim: &validParsedClaimPacketMetadata,
-		},
-		{
-			name:           "valid stakeibc memo with stride address override",
-			metadata:       getStakeibcMemoWithStrideAddress(validAddress, validStakeibcAction, "different_address"),
-			parsedStakeibc: &validParsedStakeibcPacketMetadata,
-		},
-		{
-			name:        "valid claim memo with stride address override",
-			metadata:    getClaimMemoWithStrideAddress(validAddress, "different_address"),
 			parsedClaim: &validParsedClaimPacketMetadata,
 		},
 		{
@@ -202,7 +169,6 @@ func TestParsePacketMetadata(t *testing.T) {
 }
 
 func TestValidateStakeibcPacketMetadata(t *testing.T) {
-	validAddress, _ := apptesting.GenerateTestAddrs()
 	validAction := "LiquidStake"
 
 	testCases := []struct {
@@ -213,23 +179,13 @@ func TestValidateStakeibcPacketMetadata(t *testing.T) {
 		{
 			name: "valid Metadata data",
 			metadata: &types.StakeibcPacketMetadata{
-				StrideAddress: validAddress,
-				Action:        validAction,
+				Action: validAction,
 			},
-		},
-		{
-			name: "invalid address",
-			metadata: &types.StakeibcPacketMetadata{
-				StrideAddress: "bad_address",
-				Action:        validAction,
-			},
-			expectedErr: "decoding bech32 failed",
 		},
 		{
 			name: "invalid action",
 			metadata: &types.StakeibcPacketMetadata{
-				StrideAddress: validAddress,
-				Action:        "bad_action",
+				Action: "bad_action",
 			},
 			expectedErr: "unsupported stakeibc action",
 		},
@@ -248,25 +204,14 @@ func TestValidateStakeibcPacketMetadata(t *testing.T) {
 }
 
 func TestValidateClaimPacketMetadata(t *testing.T) {
-	validAddress, _ := apptesting.GenerateTestAddrs()
-
 	testCases := []struct {
 		name        string
 		metadata    *types.ClaimPacketMetadata
 		expectedErr string
 	}{
 		{
-			name: "valid metadata",
-			metadata: &types.ClaimPacketMetadata{
-				StrideAddress: validAddress,
-			},
-		},
-		{
-			name: "invalid address",
-			metadata: &types.ClaimPacketMetadata{
-				StrideAddress: "bad_address",
-			},
-			expectedErr: "decoding bech32 failed",
+			name:     "valid metadata",
+			metadata: &types.ClaimPacketMetadata{},
 		},
 	}
 

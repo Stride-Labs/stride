@@ -43,7 +43,7 @@ func (k Keeper) TryUpdateAirdropClaim(
 	if senderStrideAddress == "" {
 		return errorsmod.Wrapf(sdkerrors.ErrInvalidAddress, fmt.Sprintf("invalid sender address (%s)", data.Sender))
 	}
-	newStrideAddress := packetMetadata.StrideAddress
+	newStrideAddress := data.Receiver
 
 	// find the airdrop for this host chain ID
 	airdrop, found := k.claimKeeper.GetAirdropByChainId(ctx, hostZone.ChainId)
