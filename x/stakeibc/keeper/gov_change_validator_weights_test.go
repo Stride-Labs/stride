@@ -1,7 +1,7 @@
 package keeper_test
 
 import (
-	stakeibctypes "github.com/Stride-Labs/stride/v9/x/stakeibc/types"
+	stakeibctypes "github.com/Stride-Labs/stride/v11/x/stakeibc/types"
 )
 
 func (s *KeeperTestSuite) TestChangeValidatorWeights() {

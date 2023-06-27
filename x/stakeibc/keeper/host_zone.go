@@ -121,7 +121,7 @@ func (k Keeper) RegisterHostZone(
 
 	// create and save the zones's module account
 	zoneAddress := types.NewZoneAddress(chainId)
-	if err := utils.CreateModuleAccount(ctx, k.accountKeeper, zoneAddress); err != nil {
+	if err := utils.CreateModuleAccount(ctx, k.AccountKeeper, zoneAddress); err != nil {
 		return errorsmod.Wrapf(err, "unable to create module account for host zone %s", chainId)
 	}
 
