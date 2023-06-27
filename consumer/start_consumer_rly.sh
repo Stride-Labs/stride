@@ -252,15 +252,15 @@ then
 fi
 
 jq -s '.[0].app_state.ccvconsumer = .[1] | .[0]' "$SOVEREIGN_HOME"/config/genesis.json "$SOVEREIGN_HOME"/consumer_section.json > "$SOVEREIGN_HOME"/genesis_consumer.json && \
-	mv "$SOVEREIGN_HOME"/genesis_consumer.json "$SOVEREIGN_HOME"/config/consumer-genesis.json
+	mv "$SOVEREIGN_HOME"/genesis_consumer.json "$SOVEREIGN_HOME"/config/ccv.json
 
 # Modify genesis params
 jq ".app_state.ccvconsumer.params.blocks_per_distribution_transmission = \"70\" | .app_state.tokenfactory.paused = { \"paused\": false }" \
-  $SOVEREIGN_HOME/config/consumer-genesis.json > \
-   $SOVEREIGN_HOME/edited_genesis.json && mv $SOVEREIGN_HOME/edited_genesis.json $SOVEREIGN_HOME/config/consumer-genesis.json
+  $SOVEREIGN_HOME/config/ccv.json > \
+   $SOVEREIGN_HOME/edited_genesis.json && mv $SOVEREIGN_HOME/edited_genesis.json $SOVEREIGN_HOME/config/ccv.json
 sleep 1
 
-cp $SOVEREIGN_HOME/config/consumer-genesis.json $CONSUMER_HOME/config/consumer-genesis.json
+cp $SOVEREIGN_HOME/config/ccv.json $CONSUMER_HOME/config/ccv.json
 
 $CONSUMER_BINARY start \
        --home $SOVEREIGN_HOME \

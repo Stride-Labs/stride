@@ -49,7 +49,7 @@ func CreateUpgradeHandler(
 		// }
 
 		nodeHome := cast.ToString(appOpts.Get(flags.FlagHome))
-		consumerUpgradeGenFile := nodeHome + "/config/consumer-genesis.json"
+		consumerUpgradeGenFile := nodeHome + "/config/ccv.json"
 		appState, _, err := genutiltypes.GenesisStateFromGenFile(consumerUpgradeGenFile)
 		if err != nil {
 			return fromVM, fmt.Errorf("failed to unmarshal genesis state: %w", err)

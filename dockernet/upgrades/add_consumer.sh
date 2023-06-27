@@ -102,13 +102,13 @@ mv "$json_file.tmp" "$json_file"
 
 cp $CONSUMER_HOME/config/genesis.json "$SOVEREIGN_HOME"/config/genesis.json
 jq -s '.[0].app_state.ccvconsumer = .[1] | .[0]' "$SOVEREIGN_HOME"/config/genesis.json "$SOVEREIGN_HOME"/consumer_section.json > "$SOVEREIGN_HOME"/genesis_consumer.json && \
-	mv "$SOVEREIGN_HOME"/genesis_consumer.json "$CONSUMER_HOME"/config/consumer-genesis.json
+	mv "$SOVEREIGN_HOME"/genesis_consumer.json "$CONSUMER_HOME"/config/ccv.json
 
 # Modify genesis params
 jq ".app_state.ccvconsumer.params.blocks_per_distribution_transmission = \"70\" | .app_state.tokenfactory.paused = { \"paused\": false }" \
-  $CONSUMER_HOME/config/consumer-genesis.json > \
-   $SOVEREIGN_HOME/edited_genesis.json && mv $SOVEREIGN_HOME/edited_genesis.json $CONSUMER_HOME/config/consumer-genesis.json
+  $CONSUMER_HOME/config/ccv.json > \
+   $SOVEREIGN_HOME/edited_genesis.json && mv $SOVEREIGN_HOME/edited_genesis.json $CONSUMER_HOME/config/ccv.json
 
 for (( i=2; i <= $NUM_NODES; i++ )); do
-    cp $CONSUMER_HOME/config/consumer-genesis.json "${CONSUMER_HOME_PREFIX}${i}"/config/consumer-genesis.json
+    cp $CONSUMER_HOME/config/ccv.json "${CONSUMER_HOME_PREFIX}${i}"/config/ccv.json
 done
