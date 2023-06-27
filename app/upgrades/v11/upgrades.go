@@ -20,15 +20,10 @@ import (
 )
 
 var (
-	UpgradeName             = "v11"
-	EvmosAirdropDistributor = "stride10dy5pmc2fq7fnmufjfschkfrxaqnpykl6ezy5j"
-	EvmosAirdropIdentifier  = "evmos"
-	AirdropDuration         = time.Hour * 24 * 30 * 12 * 3 // 3 years
-	ResetAirdropIdentifiers = []string{"stride", "gaia", "osmosis", "juno", "stars"}
-	AirdropStartTime        = time.Date(2023, 4, 3, 16, 0, 0, 0, time.UTC) // April 3, 2023 @ 16:00 UTC (12:00 EST)
+	UpgradeName = "v11"
 )
 
-// CreateUpgradeHandler creates an SDK upgrade handler for v10
+// CreateUpgradeHandler creates an SDK upgrade handler for v11
 func CreateUpgradeHandler(
 	mm *module.Manager,
 	configurator module.Configurator,

@@ -1,17 +1,21 @@
 package main
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/cosmos/cosmos-sdk/snapshots"
+	"gopkg.in/yaml.v2"
 
 	"github.com/Stride-Labs/stride/v11/utils"
 
 	cometbftdb "github.com/cometbft/cometbft-db"
+	"github.com/cometbft/cometbft/libs/cli"
 	tmcli "github.com/cometbft/cometbft/libs/cli"
 	"github.com/cometbft/cometbft/libs/log"
 	"github.com/spf13/cast"
@@ -47,6 +51,8 @@ import (
 )
 
 var ChainID string
+
+var flagLong = "long"
 
 // NewRootCmd creates a new root command for simd. It is called once in the
 // main function.
@@ -270,11 +276,38 @@ func versionCommand() *cobra.Command {
 		Short:   "Print the Stride version info",
 		Args:    cobra.ExactArgs(0),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			fmt.Println("version:", version.Version)
-			fmt.Println("commit:", version.Commit)
+			long, _ := cmd.Flags().GetBool(flagLong)
+			output, _ := cmd.Flags().GetString(cli.OutputFlag)
+
+			if !long {
+				fmt.Println("version:", version.Version)
+				fmt.Println("commit:", version.Commit)
+				return nil
+			}
+
+			verInfo := version.NewInfo()
+			var bz []byte
+			var err error
+
+			switch strings.ToLower(output) {
+			case "json":
+				bz, err = json.Marshal(verInfo)
+
+			default:
+				bz, err = yaml.Marshal(&verInfo)
+			}
+
+			if err != nil {
+				return err
+			}
+
+			cmd.Println(string(bz))
 			return nil
 		},
 	}
+
+	cmd.Flags().Bool(flagLong, false, "Print long version information")
+	cmd.Flags().StringP(cli.OutputFlag, "o", "text", "Output format (text|json)")
 
 	return cmd
 }
