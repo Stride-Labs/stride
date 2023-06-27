@@ -12,11 +12,11 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/Stride-Labs/stride/v9/utils"
-	"github.com/Stride-Labs/stride/v9/x/autopilot"
-	"github.com/Stride-Labs/stride/v9/x/autopilot/types"
-	claimtypes "github.com/Stride-Labs/stride/v9/x/claim/types"
-	stakeibctypes "github.com/Stride-Labs/stride/v9/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v11/utils"
+	"github.com/Stride-Labs/stride/v11/x/autopilot"
+	"github.com/Stride-Labs/stride/v11/x/autopilot/types"
+	claimtypes "github.com/Stride-Labs/stride/v11/x/claim/types"
+	stakeibctypes "github.com/Stride-Labs/stride/v11/x/stakeibc/types"
 )
 
 // TODO: Separate out tests cases that are not necessarily Claim or Stakeibc related,
@@ -30,7 +30,7 @@ func getClaimPacketMetadata(address string) string {
 		{
 			"autopilot": {
 				"receiver": "%[1]s",
-				"claim": { "stride_address": "%[1]s" } 
+				"claim": { } 
 			}
 		}`, address)
 }

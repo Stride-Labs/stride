@@ -7,17 +7,17 @@ import (
 	sdkmath "cosmossdk.io/math"
 	"github.com/spf13/cast"
 
-	"github.com/Stride-Labs/stride/v9/utils"
-	icacallbackstypes "github.com/Stride-Labs/stride/v9/x/icacallbacks/types"
-	recordstypes "github.com/Stride-Labs/stride/v9/x/records/types"
-	"github.com/Stride-Labs/stride/v9/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v11/utils"
+	icacallbackstypes "github.com/Stride-Labs/stride/v11/x/icacallbacks/types"
+	recordstypes "github.com/Stride-Labs/stride/v11/x/records/types"
+	"github.com/Stride-Labs/stride/v11/x/stakeibc/types"
 
 	errorsmod "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+	"github.com/cosmos/gogoproto/proto"
 	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
-	"github.com/golang/protobuf/proto" //nolint:staticcheck
 )
 
 // Marshal undelegate callback args
@@ -41,14 +41,15 @@ func (k Keeper) UnmarshalUndelegateCallbackArgs(ctx sdk.Context, undelegateCallb
 }
 
 // ICA Callback after undelegating
-//   If successful:
-//     * Updates epoch unbonding record status
-//     * Records delegation changes on the host zone and validators,
-//     * Burns stTokens
-//   If timeout:
-//     * Does nothing
-//   If failure:
-//     * Reverts epoch unbonding record status
+//
+//	If successful:
+//	  * Updates epoch unbonding record status
+//	  * Records delegation changes on the host zone and validators,
+//	  * Burns stTokens
+//	If timeout:
+//	  * Does nothing
+//	If failure:
+//	  * Reverts epoch unbonding record status
 func UndelegateCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ackResponse *icacallbackstypes.AcknowledgementResponse, args []byte) error {
 	// Fetch callback args
 	undelegateCallback, err := k.UnmarshalUndelegateCallbackArgs(ctx, args)

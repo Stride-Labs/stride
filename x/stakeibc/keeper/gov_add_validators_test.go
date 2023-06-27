@@ -4,8 +4,8 @@ import (
 	sdkmath "cosmossdk.io/math"
 	_ "github.com/stretchr/testify/suite"
 
-	"github.com/Stride-Labs/stride/v9/x/stakeibc/types"
-	stakeibctypes "github.com/Stride-Labs/stride/v9/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v11/x/stakeibc/types"
+	stakeibctypes "github.com/Stride-Labs/stride/v11/x/stakeibc/types"
 )
 
 type AddValidatorsTestCase struct {

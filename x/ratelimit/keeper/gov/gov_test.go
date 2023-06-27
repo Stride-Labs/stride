@@ -12,10 +12,10 @@ import (
 	transfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
 	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
 
-	"github.com/Stride-Labs/stride/v9/app/apptesting"
-	minttypes "github.com/Stride-Labs/stride/v9/x/mint/types"
-	"github.com/Stride-Labs/stride/v9/x/ratelimit/keeper/gov"
-	"github.com/Stride-Labs/stride/v9/x/ratelimit/types"
+	"github.com/Stride-Labs/stride/v11/app/apptesting"
+	minttypes "github.com/Stride-Labs/stride/v11/x/mint/types"
+	"github.com/Stride-Labs/stride/v11/x/ratelimit/keeper/gov"
+	"github.com/Stride-Labs/stride/v11/x/ratelimit/types"
 )
 
 type KeeperTestSuite struct {

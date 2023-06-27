@@ -7,12 +7,12 @@ import (
 	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
 	_ "github.com/stretchr/testify/suite"
 
-	icacallbacktypes "github.com/Stride-Labs/stride/v9/x/icacallbacks/types"
-	recordtypes "github.com/Stride-Labs/stride/v9/x/records/types"
-	stakeibckeeper "github.com/Stride-Labs/stride/v9/x/stakeibc/keeper"
+	icacallbacktypes "github.com/Stride-Labs/stride/v11/x/icacallbacks/types"
+	recordtypes "github.com/Stride-Labs/stride/v11/x/records/types"
+	stakeibckeeper "github.com/Stride-Labs/stride/v11/x/stakeibc/keeper"
 
-	"github.com/Stride-Labs/stride/v9/x/stakeibc/types"
-	stakeibc "github.com/Stride-Labs/stride/v9/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v11/x/stakeibc/types"
+	stakeibc "github.com/Stride-Labs/stride/v11/x/stakeibc/types"
 )
 
 type RedemptionCallbackState struct {

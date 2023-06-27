@@ -6,9 +6,9 @@ import (
 	ibctesting "github.com/cosmos/ibc-go/v7/testing"
 	_ "github.com/stretchr/testify/suite"
 
-	epochtypes "github.com/Stride-Labs/stride/v9/x/epochs/types"
-	"github.com/Stride-Labs/stride/v9/x/stakeibc/types"
-	stakeibctypes "github.com/Stride-Labs/stride/v9/x/stakeibc/types"
+	epochtypes "github.com/Stride-Labs/stride/v11/x/epochs/types"
+	"github.com/Stride-Labs/stride/v11/x/stakeibc/types"
+	stakeibctypes "github.com/Stride-Labs/stride/v11/x/stakeibc/types"
 )
 
 // ================================ 1: QueryValidatorExchangeRate =============================================

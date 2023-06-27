@@ -14,9 +14,9 @@ import (
 
 	proto "github.com/cosmos/gogoproto/proto"
 
-	"github.com/Stride-Labs/stride/v9/utils"
-	recordstypes "github.com/Stride-Labs/stride/v9/x/records/types"
-	"github.com/Stride-Labs/stride/v9/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v11/utils"
+	recordstypes "github.com/Stride-Labs/stride/v11/x/records/types"
+	"github.com/Stride-Labs/stride/v11/x/stakeibc/types"
 )
 
 func (k Keeper) CreateEpochUnbondingRecord(ctx sdk.Context, epochNumber uint64) bool {

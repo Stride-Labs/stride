@@ -6,16 +6,15 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/codec"
 
-	//nolint:staticcheck
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/suite"
 
-	"github.com/Stride-Labs/stride/v9/app"
+	"github.com/Stride-Labs/stride/v11/app"
 
-	"github.com/Stride-Labs/stride/v9/app/apptesting"
-	"github.com/Stride-Labs/stride/v9/x/claim/types"
-	claimtypes "github.com/Stride-Labs/stride/v9/x/claim/types"
+	"github.com/Stride-Labs/stride/v11/app/apptesting"
+	"github.com/Stride-Labs/stride/v11/x/claim/types"
+	claimtypes "github.com/Stride-Labs/stride/v11/x/claim/types"
 )
 
 const dummyUpgradeHeight = 5
@@ -33,8 +32,6 @@ func TestKeeperTestSuite(t *testing.T) {
 }
 
 func (s *UpgradeTestSuite) TestUpgrade() {
-	s.Setup()
-
 	// Setup stores for migrated modules
 	codec := app.MakeEncodingConfig().Marshaler
 	checkClaimStoreAfterMigration := s.SetupClaimStore(codec)

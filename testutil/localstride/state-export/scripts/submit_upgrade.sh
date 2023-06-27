@@ -30,7 +30,7 @@ $STRIDE_MAIN_CMD tx gov submit-legacy-proposal software-upgrade $upgrade_name \
 
 sleep 5
 printf "\nPROPOSAL CONFIRMATION\n"
-proposal_id=$($STRIDE_MAIN_CMD q gov proposals | grep proposal_id | tail -1 | awk '{printf $2}' | tr -d '"')
+proposal_id=$($STRIDE_MAIN_CMD q gov proposals | grep 'id:' | tail -1 | awk '{printf $2}' | tr -d '"')
 $STRIDE_MAIN_CMD query gov proposal $proposal_id
 
 sleep 5 

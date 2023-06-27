@@ -1,16 +1,20 @@
 package main
 
 import (
+	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/cosmos/cosmos-sdk/snapshots"
+	"gopkg.in/yaml.v2"
 
-	"github.com/Stride-Labs/stride/v9/utils"
-
+	"github.com/Stride-Labs/stride/v11/utils"
 	cometbftdb "github.com/cometbft/cometbft-db"
+	"github.com/cometbft/cometbft/libs/cli"
 	tmcli "github.com/cometbft/cometbft/libs/cli"
 	"github.com/cometbft/cometbft/libs/log"
 	"github.com/spf13/cast"
@@ -32,6 +36,7 @@ import (
 	snapshottypes "github.com/cosmos/cosmos-sdk/snapshots/types"
 	"github.com/cosmos/cosmos-sdk/store"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/version"
 	authcmd "github.com/cosmos/cosmos-sdk/x/auth/client/cli"
 	"github.com/cosmos/cosmos-sdk/x/auth/types"
 	vestingcli "github.com/cosmos/cosmos-sdk/x/auth/vesting/client/cli"
@@ -41,12 +46,12 @@ import (
 	genutilcli "github.com/cosmos/cosmos-sdk/x/genutil/client/cli"
 	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
 
-	"github.com/Stride-Labs/stride/v9/app"
-	// "github.com/Stride-Labs/stride/v9/app/params"
-	// this line is used by starport scaffolding # stargate/root/import
+	"github.com/Stride-Labs/stride/v11/app"
 )
 
 var ChainID string
+
+var flagLong = "long"
 
 // NewRootCmd creates a new root command for simd. It is called once in the
 // main function.
@@ -201,6 +206,7 @@ func initRootCmd(rootCmd *cobra.Command, encodingConfig app.EncodingConfig) {
 		rpc.StatusCommand(),
 		queryCommand(),
 		txCommand(),
+		versionCommand(),
 		keys.Commands(app.DefaultNodeHome),
 	)
 }
@@ -258,6 +264,49 @@ func txCommand() *cobra.Command {
 
 	app.ModuleBasics.AddTxCommands(cmd)
 	cmd.PersistentFlags().String(flags.FlagChainID, "", "The network chain ID")
+
+	return cmd
+}
+
+func versionCommand() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:     "version",
+		Aliases: []string{"v"},
+		Short:   "Print the Stride version info",
+		Args:    cobra.ExactArgs(0),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			long, _ := cmd.Flags().GetBool(flagLong)
+			output, _ := cmd.Flags().GetString(cli.OutputFlag)
+
+			if !long {
+				fmt.Println("version:", version.Version)
+				fmt.Println("commit:", version.Commit)
+				return nil
+			}
+
+			verInfo := version.NewInfo()
+			var bz []byte
+			var err error
+
+			switch strings.ToLower(output) {
+			case "json":
+				bz, err = json.Marshal(verInfo)
+
+			default:
+				bz, err = yaml.Marshal(&verInfo)
+			}
+
+			if err != nil {
+				return err
+			}
+
+			cmd.Println(string(bz))
+			return nil
+		},
+	}
+
+	cmd.Flags().Bool(flagLong, false, "Print long version information")
+	cmd.Flags().StringP(cli.OutputFlag, "o", "text", "Output format (text|json)")
 
 	return cmd
 }

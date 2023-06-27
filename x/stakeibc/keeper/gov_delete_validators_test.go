@@ -4,7 +4,7 @@ import (
 	sdkmath "cosmossdk.io/math"
 	_ "github.com/stretchr/testify/suite"
 
-	stakeibctypes "github.com/Stride-Labs/stride/v9/x/stakeibc/types"
+	stakeibctypes "github.com/Stride-Labs/stride/v11/x/stakeibc/types"
 )
 
 type DeleteValidatorTestCase struct {
