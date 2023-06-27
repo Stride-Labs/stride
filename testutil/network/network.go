@@ -25,8 +25,8 @@ import (
 	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
 	ccvconsumertypes "github.com/cosmos/interchain-security/v3/x/ccv/consumer/types"
 
-	"github.com/Stride-Labs/stride/v11/app"
-	testutil "github.com/Stride-Labs/stride/v11/testutil"
+	"github.com/Stride-Labs/stride/v12/app"
+	testutil "github.com/Stride-Labs/stride/v12/testutil"
 )
 
 type (

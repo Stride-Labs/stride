@@ -11,7 +11,7 @@ package app_test
 // 	"github.com/stretchr/testify/require"
 // 	dbm "github.com/tendermint/tm-db"
 
-// 	"github.com/Stride-Labs/stride/v11/app"
+// 	"github.com/Stride-Labs/stride/v12/app"
 // )
 
 // func TestConsumerWhitelistingKeys(t *testing.T) {

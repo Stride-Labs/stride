@@ -209,13 +209,13 @@ sleep 5
 
 # ###########################UPGRADE TO SOVEREIGN CHAIN##########################
 
-# $SOVEREIGN_BINARY tx gov submit-legacy-proposal software-upgrade "v11" --upgrade-height=36  \
+# $SOVEREIGN_BINARY tx gov submit-legacy-proposal software-upgrade "v12" --upgrade-height=36  \
 # --upgrade-info="upgrade for consumer chain" \
 # --title="upgrade to consumer chain" --description="upgrade to consumer chain description" \
 # --from=$SOVEREIGN_VALIDATOR $KEYRING --chain-id=$CONSUMER_CHAIN_ID \
 # --home=$SOVEREIGN_HOME --yes -b sync --deposit="100000000stake"
 
-$SOVEREIGN_BINARY tx gov submit-legacy-proposal software-upgrade "v11" \
+$SOVEREIGN_BINARY tx gov submit-legacy-proposal software-upgrade "v12" \
 --upgrade-height=36 \
 --upgrade-info="file:///Users/admin/Documents/j121/stride/interchain-security/upgrade-info.json?checksum=sha256:66a0bd2ce260927747e2f26522b937d773d13b79c7e5b07e2f5efa483d6fabe0" \
 --title="upgrade to consumer chain" --description="upgrade to consumer chain description" \
@@ -224,7 +224,7 @@ $SOVEREIGN_BINARY tx gov submit-legacy-proposal software-upgrade "v11" \
 sleep 5
 
 # $SOVEREIGN_BINARY query tx 1BA75A3E36276AFC530171A29D0D080A39834B85AA340B5EC18002C4608FBE7F --home=$SOVEREIGN_HOME
-# $SOVEREIGN_BINARY tx gov submit-legacy-proposal software-upgrade "v11" \
+# $SOVEREIGN_BINARY tx gov submit-legacy-proposal software-upgrade "v12" \
 # --upgrade-height=36 \
 # --upgrade-info="file:///Users/admin/Documents/j121/stride/interchain-security/upgrade-info1.json?checksum=sha256:3f0309a1179afb7d7eb9090a13ce9fdca0ce46b39ac6908b415d901b822f046a" \
 # --title="upgrade to consumer chain" --description="upgrade to consumer chain description" \

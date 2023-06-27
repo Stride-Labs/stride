@@ -9,8 +9,8 @@ import (
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	icatypes "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/types"
 
-	recordtypes "github.com/Stride-Labs/stride/v11/x/records/types"
-	"github.com/Stride-Labs/stride/v11/x/stakeibc/types"
+	recordtypes "github.com/Stride-Labs/stride/v12/x/records/types"
+	"github.com/Stride-Labs/stride/v12/x/stakeibc/types"
 )
 
 func (k msgServer) RestoreInterchainAccount(goCtx context.Context, msg *types.MsgRestoreInterchainAccount) (*types.MsgRestoreInterchainAccountResponse, error) {
