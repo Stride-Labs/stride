@@ -358,6 +358,12 @@ func (s *KeeperTestSuite) TestGetUpdatedSlashQueryCheckpoint() {
 			expectedCheckpoint: sdkmath.NewInt(750_000),
 		},
 		{
+			name:               "int truncation",
+			threshold:          10,
+			totalDelegations:   sdkmath.NewInt(39),
+			expectedCheckpoint: sdkmath.NewInt(3),
+		},
+		{
 			name:               "0-TVL",
 			threshold:          10,
 			totalDelegations:   sdkmath.ZeroInt(),
