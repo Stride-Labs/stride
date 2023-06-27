@@ -1,7 +1,9 @@
 syntax = "proto3";
 package stride.stakeibc;
 import "gogoproto/gogo.proto";
+import "cosmos_proto/cosmos.proto";
 import "stride/stakeibc/validator.proto";
+
 option go_package = "github.com/Stride-Labs/stride/v11/x/stakeibc/types";
 
 message AddValidatorsProposal {
