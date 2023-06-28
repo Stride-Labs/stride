@@ -2,14 +2,13 @@ package types
 
 import (
 	fmt "fmt"
-
-	sdk "github.com/cosmos/cosmos-sdk/types"
+	time "time"
 )
 
 // Check if a query has timed-out by checking whether the block time is after
 // the timeout timestamp
-func (q Query) HasTimedOut(ctx sdk.Context) bool {
-	return q.TimeoutTimestamp < uint64(ctx.BlockTime().UnixNano())
+func (q Query) HasTimedOut(currentBlockTime time.Time) bool {
+	return q.TimeoutTimestamp < uint64(currentBlockTime.UnixNano())
 }
 
 // Prints an abbreviated query description for logging purposes

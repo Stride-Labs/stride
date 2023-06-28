@@ -41,7 +41,7 @@ func ValidatorExchangeRateCallback(k Keeper, ctx sdk.Context, args []byte, query
 	inLSMLiquidStakeCallback := len(query.CallbackData) != 0
 
 	// If the query timed out, either fail the LSM liquid stake or, if this query was submitted manually, do nothing
-	if query.HasTimedOut(ctx) {
+	if query.HasTimedOut(ctx.BlockTime()) {
 		if inLSMLiquidStakeCallback {
 			return k.LSMSlashQueryTimeout(ctx, hostZone, query)
 		}

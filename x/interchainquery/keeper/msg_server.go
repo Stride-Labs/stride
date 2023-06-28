@@ -94,31 +94,26 @@ func (k Keeper) VerifyKeyProof(ctx sdk.Context, msg *types.MsgSubmitQueryRespons
 	return nil
 }
 
-// Checks if the query timed out, and if so, checks the timeout policy
-// Returns whether the callback should be executed (only occurs if explicitly indicated)
-func (k Keeper) CheckForQueryTimeout(ctx sdk.Context, query types.Query) (executeCallback bool, err error) {
-	if !query.HasTimedOut(ctx) {
-		return true, nil
-	}
-
+// Handles a query timeout based on the timeout policy
+func (k Keeper) HandleQueryTimeout(ctx sdk.Context, msg *types.MsgSubmitQueryResponse, query types.Query) error {
 	k.Logger(ctx).Error(utils.LogICQCallbackWithHostZone(query.ChainId, query.CallbackId,
 		"QUERY TIMEOUT - QueryId: %s, TTL: %d, BlockTime: %d", query.Id, query.TimeoutTimestamp, ctx.BlockHeader().Time.UnixNano()))
 
 	switch query.TimeoutPolicy {
 	case types.TimeoutPolicy_REJECT_QUERY_RESPONSE:
 		k.Logger(ctx).Info(utils.LogICQCallbackWithHostZone(query.ChainId, query.CallbackId, "Rejecting query"))
-		return false, nil
+		return nil
 
 	case types.TimeoutPolicy_RETRY_QUERY_REQUEST:
 		k.Logger(ctx).Info(utils.LogICQCallbackWithHostZone(query.ChainId, query.CallbackId, "Retrying query..."))
-		return false, k.RetryICQRequest(ctx, query)
+		return k.RetryICQRequest(ctx, query)
 
 	case types.TimeoutPolicy_EXECUTE_QUERY_CALLBACK:
 		k.Logger(ctx).Info(utils.LogICQCallbackWithHostZone(query.ChainId, query.CallbackId, "Executing callback..."))
-		return true, nil
+		return k.InvokeCallback(ctx, msg, query)
 
 	default:
-		return false, fmt.Errorf("Unsupported query timeout policy: %s", query.TimeoutPolicy.String())
+		return fmt.Errorf("Unsupported query timeout policy: %s", query.TimeoutPolicy.String())
 	}
 }
 
@@ -197,17 +192,15 @@ func (k msgServer) SubmitQueryResponse(goCtx context.Context, msg *types.MsgSubm
 	}
 
 	// Check if the query has expired (if the block time is greater than the TTL timestamp, the query has expired)
-	shouldInvokeCallback, err := k.CheckForQueryTimeout(ctx, query)
-	if err != nil {
-		return &types.MsgSubmitQueryResponseResponse{}, err
-	}
-	if !shouldInvokeCallback {
+	if query.HasTimedOut(ctx.BlockTime()) {
+		if err := k.HandleQueryTimeout(ctx, msg, query); err != nil {
+			return nil, err
+		}
 		return &types.MsgSubmitQueryResponseResponse{}, nil
 	}
 
-	// Call the query's associated callback function
-	err = k.InvokeCallback(ctx, msg, query)
-	if err != nil {
+	// Invoke the query callback (if the query has not timed out)
+	if err := k.InvokeCallback(ctx, msg, query); err != nil {
 		return nil, err
 	}
 
