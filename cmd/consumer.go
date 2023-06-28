@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 
+	errorsmod "cosmossdk.io/errors"
 	types1 "github.com/cometbft/cometbft/abci/types"
 	pvm "github.com/cometbft/cometbft/privval"
 	tmtypes "github.com/cometbft/cometbft/types"
@@ -11,7 +12,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
 	"github.com/cosmos/cosmos-sdk/server"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/x/genutil"
 	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
 	ccvconsumertypes "github.com/cosmos/interchain-security/v3/x/ccv/consumer/types"
@@ -51,7 +51,7 @@ func AddConsumerSectionCmd(defaultNodeHome string) *cobra.Command {
 				initialValset := []types1.ValidatorUpdate{{PubKey: tmProtoPublicKey, Power: 100}}
 				vals, err := tmtypes.PB2TM.ValidatorUpdates(initialValset)
 				if err != nil {
-					return sdkerrors.Wrap(err, "could not convert val updates to validator set")
+					return errorsmod.Wrap(err, "could not convert val updates to validator set")
 				}
 
 				genesisState.InitialValSet = initialValset
@@ -96,13 +96,13 @@ func (x DefaultGenesisIO) AlterConsumerModuleState(cmd *cobra.Command, callback 
 	clientCtx := client.GetClientContextFromCmd(cmd)
 	consumerGenStateBz, err := clientCtx.Codec.MarshalJSON(g.ConsumerModuleState)
 	if err != nil {
-		return sdkerrors.Wrap(err, "marshal consumer genesis state")
+		return errorsmod.Wrap(err, "marshal consumer genesis state")
 	}
 
 	g.AppState[ccvconsumertypes.ModuleName] = consumerGenStateBz
 	appStateJSON, err := json.Marshal(g.AppState)
 	if err != nil {
-		return sdkerrors.Wrap(err, "marshal application genesis state")
+		return errorsmod.Wrap(err, "marshal application genesis state")
 	}
 
 	g.GenDoc.AppState = appStateJSON

@@ -23,8 +23,8 @@ func IsProposalWhitelisted(content govv1beta1.Content) bool {
 	case *proposal.ParameterChangeProposal:
 		return isParamChangeWhitelisted(getParamChangesMapFromArray(c.Changes))
 	case *stakeibctypes.AddValidatorsProposal,
-		*upgradetypes.SoftwareUpgradeProposal,
-		*upgradetypes.CancelSoftwareUpgradeProposal:
+		*upgradetypes.SoftwareUpgradeProposal,       //nolint:staticcheck
+		*upgradetypes.CancelSoftwareUpgradeProposal: //nolint:staticcheck
 		return true
 
 	default:
