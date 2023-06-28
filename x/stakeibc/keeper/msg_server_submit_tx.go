@@ -358,28 +358,24 @@ func (k Keeper) GetLightClientTimeSafely(ctx sdk.Context, connectionID string) (
 	}
 }
 
+// Submit a validator exchange rate ICQ as triggered either manually or epochly with a conservative timeout
+func (k Keeper) QueryValidatorExchangeRate(ctx sdk.Context, chainId string, validatorAddress string) error {
+	timeoutDuration := time.Hour
+	timeoutPolicy := icqtypes.TimeoutPolicy_RETRY_QUERY_REQUEST
+	callbackData := []byte{}
+	return k.SubmitValidatorExchangeRateICQ(ctx, chainId, validatorAddress, callbackData, timeoutDuration, timeoutPolicy)
+}
+
 // Submits an ICQ to get a validator's exchange rate
-func (k Keeper) QueryValidatorExchangeRate(
+func (k Keeper) SubmitValidatorExchangeRateICQ(
 	ctx sdk.Context,
 	chainId string,
 	validatorAddress string,
 	callbackDataBz []byte,
-	aggressiveTimeout bool,
+	timeoutDuration time.Duration,
+	timeoutPolicy icqtypes.TimeoutPolicy,
 ) error {
 	k.Logger(ctx).Info(utils.LogWithHostZone(chainId, "Submitting ICQ for validator exchange rate to %s", validatorAddress))
-
-	// If this query is executed from LSM, there should be a more aggressive timeout since it's UX blocking,
-	// and, in the event of a timeout, we should still enter the callback so we can alert the user that the query failed
-	// If this query is not for an LSM liquid stake, we can have a more relaxed timeout
-	var timeoutDuration time.Duration
-	var timeoutPolicy icqtypes.TimeoutPolicy
-	if aggressiveTimeout {
-		timeoutDuration = LSMSlashQueryTimeout
-		timeoutPolicy = icqtypes.TimeoutPolicy_EXECUTE_QUERY_CALLBACK
-	} else {
-		timeoutDuration = time.Hour
-		timeoutPolicy = icqtypes.TimeoutPolicy_RETRY_QUERY_REQUEST
-	}
 
 	// Confirm the host zone exists
 	hostZone, found := k.GetHostZone(ctx, chainId)
@@ -422,7 +418,7 @@ func (k Keeper) QueryValidatorExchangeRate(
 // Submits an ICQ to get a validator's delegations
 // This is called after the validator's exchange rate is determined
 // The timeoutDuration parameter represents the length of the timeout (not to be confused with an actual timestamp)
-func (k Keeper) QueryDelegationsIcq(ctx sdk.Context, hostZone types.HostZone, validatorAddress string) error {
+func (k Keeper) SubmitDelegationICQ(ctx sdk.Context, hostZone types.HostZone, validatorAddress string) error {
 	k.Logger(ctx).Info(utils.LogWithHostZone(hostZone.ChainId, "Submitting ICQ for delegations to %s", validatorAddress))
 
 	// Get the validator and delegator encoded addresses to form the query request

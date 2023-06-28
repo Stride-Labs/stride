@@ -9,6 +9,7 @@ import (
 
 	"github.com/gogo/protobuf/proto" //nolint:staticcheck
 
+	icqtypes "github.com/Stride-Labs/stride/v9/x/interchainquery/types"
 	recordstypes "github.com/Stride-Labs/stride/v9/x/records/types"
 	"github.com/Stride-Labs/stride/v9/x/stakeibc/types"
 )
@@ -93,7 +94,8 @@ func (k Keeper) StartLSMLiquidStake(ctx sdk.Context, msg types.MsgLSMLiquidStake
 func (k Keeper) SubmitValidatorSlashQuery(ctx sdk.Context, lsmLiquidStake types.LSMLiquidStake) error {
 	chainId := lsmLiquidStake.HostZone.ChainId
 	validatorAddress := lsmLiquidStake.Validator.Address
-	aggressiveTimeout := true
+	timeoutDuration := LSMSlashQueryTimeout
+	timeoutPolicy := icqtypes.TimeoutPolicy_EXECUTE_QUERY_CALLBACK
 
 	// Build and serialize the callback data required to complete the LSM Liquid stake upon query callback
 	callbackData := types.ValidatorExchangeRateQueryCallback{
@@ -104,7 +106,7 @@ func (k Keeper) SubmitValidatorSlashQuery(ctx sdk.Context, lsmLiquidStake types.
 		return errorsmod.Wrapf(err, "unable to serialize LSMLiquidStake struct for validator exchange rate query callback")
 	}
 
-	return k.QueryValidatorExchangeRate(ctx, chainId, validatorAddress, callbackDataBz, aggressiveTimeout)
+	return k.SubmitValidatorExchangeRateICQ(ctx, chainId, validatorAddress, callbackDataBz, timeoutDuration, timeoutPolicy)
 }
 
 // FinishLSMLiquidStake finishes the liquid staking flow by escrowing the LSM token,

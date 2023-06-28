@@ -73,7 +73,7 @@ func ValidatorExchangeRateCallback(k Keeper, ctx sdk.Context, args []byte, query
 	// If the validator was slashed, we'll have to issue a delegator shares query to determine
 	// the magnitude of the slash
 	if validatorWasSlashed {
-		if err := k.QueryDelegationsIcq(ctx, hostZone, queriedValidator.OperatorAddress); err != nil {
+		if err := k.SubmitDelegationICQ(ctx, hostZone, queriedValidator.OperatorAddress); err != nil {
 			return errorsmod.Wrapf(err, "Failed to submit ICQ validator delegations")
 		}
 	}
