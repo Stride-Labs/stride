@@ -105,7 +105,7 @@ func (s *KeeperTestSuite) TestMsgSubmitQueryResponse_Timeout_RejectQuery() {
 	_, err := s.GetMsgServer().SubmitQueryResponse(tc.goCtx, &tc.validMsg)
 	s.Require().NoError(err)
 
-	// check that the query original query was deleted,
+	// check that the original query was deleted
 	_, found := s.App.InterchainqueryKeeper.GetQuery(s.Ctx, tc.query.Id)
 	s.Require().False(found, "original query should be removed")
 }
@@ -125,7 +125,24 @@ func (s *KeeperTestSuite) TestMsgSubmitQueryResponse_Timeout_RetryQuery() {
 	// but that a new one was created for the retry
 	_, found := s.App.InterchainqueryKeeper.GetQuery(s.Ctx, tc.query.Id)
 	s.Require().False(found, "original query should be removed")
-	s.Require().Len(s.App.InterchainqueryKeeper.AllQueries(s.Ctx), 1, "there should be one new query")
+
+	queries := s.App.InterchainqueryKeeper.AllQueries(s.Ctx)
+	s.Require().Len(queries, 1, "there should be one new query")
+
+	// Confirm original query attributes have not changed
+	actualQuery := queries[0]
+	s.Require().NotEqual(tc.query.Id, actualQuery.Id, "query ID")
+	s.Require().Equal(tc.query.QueryType, actualQuery.QueryType, "query type")
+	s.Require().Equal(tc.query.ConnectionId, actualQuery.ConnectionId, "query connection ID")
+	s.Require().Equal(tc.query.CallbackModule, actualQuery.CallbackModule, "query callback module")
+	s.Require().Equal(tc.query.CallbackData, actualQuery.CallbackData, "cquery allback data")
+	s.Require().Equal(tc.query.TimeoutPolicy, actualQuery.TimeoutPolicy, "query timeout policy")
+	s.Require().Equal(tc.query.TimeoutDuration, actualQuery.TimeoutDuration, "query timeout duration")
+
+	// Confirm timeout was reset
+	expectedTimeoutTimestamp := uint64(s.Ctx.BlockTime().Add(tc.query.TimeoutDuration).UnixNano())
+	s.Require().Equal(expectedTimeoutTimestamp, actualQuery.TimeoutTimestamp, "timeout timestamp")
+	s.Require().Equal(false, actualQuery.RequestSent, "request sent")
 }
 
 func (s *KeeperTestSuite) TestMsgSubmitQueryResponse_Timeout_ExecuteCallback() {
@@ -148,7 +165,7 @@ func (s *KeeperTestSuite) TestMsgSubmitQueryResponse_FindAndInvokeCallback() {
 	s.App.InterchainqueryKeeper.SetQuery(s.Ctx, tc.query)
 
 	// The withdrawal balance test is already covered in it's respective module
-	// For this test, we just want to check that the callback function as invoked
+	// For this test, we just want to check that the callback function is invoked
 	// To do this, we can just ignore the appropriate withdrawal balance callback
 	//   mocked state, and catch the expected error
 	_, err := s.GetMsgServer().SubmitQueryResponse(tc.goCtx, &tc.validMsg)

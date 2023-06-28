@@ -138,7 +138,14 @@ func (k Keeper) InvokeCallback(ctx sdk.Context, msg *types.MsgSubmitQueryRespons
 
 		// Once the callback is found, invoke the function
 		if moduleCallbackHandler.HasICQCallback(query.CallbackId) {
-			return moduleCallbackHandler.CallICQCallback(ctx, query.CallbackId, msg.Result, query)
+			if err := moduleCallbackHandler.CallICQCallback(ctx, query.CallbackId, msg.Result, query); err != nil {
+				k.Logger(ctx).Error(utils.LogICQCallbackWithHostZone(query.ChainId, query.CallbackId,
+					"Error invoking ICQ callback, error: %s, %s, Query Response: %s",
+					err.Error(), query.Description(), msg.Result))
+
+				return err
+			}
+			return nil
 		}
 	}
 
@@ -201,9 +208,6 @@ func (k msgServer) SubmitQueryResponse(goCtx context.Context, msg *types.MsgSubm
 	// Call the query's associated callback function
 	err = k.InvokeCallback(ctx, msg, query)
 	if err != nil {
-		k.Logger(ctx).Error(utils.LogICQCallbackWithHostZone(query.ChainId, query.CallbackId,
-			"Error invoking ICQ callback, error: %s, QueryId: %s, QueryType: %s, ConnectionId: %s, QueryRequest: %v, QueryReponse: %v",
-			err.Error(), msg.QueryId, query.QueryType, query.ConnectionId, query.RequestData, msg.Result))
 		return nil, err
 	}
 
