@@ -112,21 +112,24 @@ func DelegatorSharesCallback(k Keeper, ctx sdk.Context, args []byte, query icqty
 }
 
 // The number of tokens returned from the query must be consistent with the tokens
-//   stored in our internal record keeping during this callback, otherwise the comparision
-//   between the two is invalidated
+// stored in our internal record keeping during this callback, otherwise the comparision
+// between the two is invalidated
+//
 // As a result, we must avoid a race condition between the ICQ and a delegate, undelegate,
-//   or detokenization ICA
+// redelegate, or detokenization ICA
 //
 // More specifically, we must avoid the following cases:
-//  Case 1)
-//           ICQ Lands on Host                                          ICQ Ack on Stride
-//                               ICA Lands on Host    ICA Ack on Stride
-//  Case 2)
-//           ICA Lands on Host                                          ICA Ack on Stride
-//                               ICQ Lands on Host    ICQ Ack on Stride
+//
+//	Case 1)
+//	         ICQ Lands on Host                                          ICQ Ack on Stride
+//	                             ICA Lands on Host    ICA Ack on Stride
+//	Case 2)
+//	         ICA Lands on Host                                          ICA Ack on Stride
+//	                             ICQ Lands on Host    ICQ Ack on Stride
 //
 // We can prevent Case #1 by checking if the delegation total on the validator has changed
-//   while the query was in flight
+// while the query was in flight
+//
 // We can prevent Case #2 by checking if the validator has a delegation change in progress
 func (k Keeper) CheckDelegationChangedDuringQuery(
 	ctx sdk.Context,
@@ -154,9 +157,11 @@ func (k Keeper) CheckDelegationChangedDuringQuery(
 }
 
 // Check if a slash occured by comparing the validator's exchange rate  and delegator shares
-//   from the query responses (tokens = exchange rate * shares)
+// from the query responses (tokens = exchange rate * shares)
+//
 // If the change in delegation only differs by a small precision error, it was likely
-//   due to an decimal -> int truncation that occurs during unbonding. In this case, still update the validator
+// due to an decimal -> int truncation that occurs during unbonding. In this case, still update the validator
+//
 // If the change in delegation was an increase, the response can't be trusted so an error is thrown
 func (k Keeper) CheckForSlash(
 	ctx sdk.Context,
