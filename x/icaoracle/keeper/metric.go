@@ -7,27 +7,32 @@ import (
 	"github.com/Stride-Labs/stride/v5/x/icaoracle/types"
 )
 
-// --------------------------------------------------
-//       METRICS QUEUED FOR ICA SUBMISSION
-// --------------------------------------------------
+// Stores a metric in the main metric store and then either
+// adds the metric to the queue or removes it from the queue
+// depending on the status of the metric
+func (k Keeper) SetMetric(ctx sdk.Context, metric types.Metric) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.MetricKeyPrefix)
 
-// Adds a metric update to the queue (i.e. adds to the queue store)
-// The metrics are stored using the metric key, so if the same metric is already
-// in the store, it will get overridden
-func (k Keeper) QueueMetricUpdate(ctx sdk.Context, metric types.Metric) {
-	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.MetricQueueKeyPrefix)
-
-	metricKey := types.KeyPrefix(metric.Key)
+	metricKey := types.KeyPrefix(metric.GetMetricID())
 	metricValue := k.cdc.MustMarshal(&metric)
 
 	store.Set(metricKey, metricValue)
+
+	switch metric.Status {
+	case types.MetricStatus_METRIC_STATUS_QUEUED:
+		k.addMetricToQueue(ctx, metricKey)
+	case types.MetricStatus_METRIC_STATUS_IN_PROGRESS:
+		k.removeMetricFromQueue(ctx, metricKey)
+	default:
+		panic("metric status must be specified as QUEUED or IN_PROGRESS before storing")
+	}
 }
 
-// Gets a specifc metric from the queue
-func (k Keeper) GetMetricFromQueue(ctx sdk.Context, key string) (metric types.Metric, found bool) {
-	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.MetricQueueKeyPrefix)
+// Gets a specifc metric from the store
+func (k Keeper) GetMetric(ctx sdk.Context, metricId string) (metric types.Metric, found bool) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.MetricKeyPrefix)
 
-	metricKey := types.KeyPrefix(key)
+	metricKey := types.KeyPrefix(metricId)
 	metricBz := store.Get(metricKey)
 
 	if len(metricBz) == 0 {
@@ -38,109 +43,65 @@ func (k Keeper) GetMetricFromQueue(ctx sdk.Context, key string) (metric types.Me
 	return metric, true
 }
 
-// Gets all metrics from the queue
-func (k Keeper) GetAllMetricsFromQueue(ctx sdk.Context) []types.Metric {
-	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.MetricQueueKeyPrefix)
+// Returns all metrics from the store
+func (k Keeper) GetAllMetrics(ctx sdk.Context) (metrics []types.Metric) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.MetricKeyPrefix)
 
 	iterator := store.Iterator(nil, nil)
 	defer iterator.Close()
 
-	allQueuedMetrics := []types.Metric{}
 	for ; iterator.Valid(); iterator.Next() {
 
 		metric := types.Metric{}
 		k.cdc.MustUnmarshal(iterator.Value(), &metric)
-		allQueuedMetrics = append(allQueuedMetrics, metric)
+		metrics = append(metrics, metric)
 	}
 
-	return allQueuedMetrics
+	return metrics
 }
 
-// Removes a metric from the queue (i.e. removes from the queue store)
-func (k Keeper) RemoveMetricFromQueue(ctx sdk.Context, key string) {
+// Removes a metric from the store
+func (k Keeper) RemoveMetric(ctx sdk.Context, metricId string) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.MetricKeyPrefix)
+	store.Delete(types.KeyPrefix(metricId))
+}
+
+// Updates the status of a metric which will consequently move it either
+// in or out of the queue
+func (k Keeper) UpdateMetricStatus(ctx sdk.Context, metric types.Metric, status types.MetricStatus) {
+	metric.Status = status
+	k.SetMetric(ctx, metric)
+}
+
+// Adds a metric to the queue, which acts as an index for all metrics
+// that should be submitted to it's relevant oracle
+func (k Keeper) addMetricToQueue(ctx sdk.Context, metricKey []byte) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.MetricQueueKeyPrefix)
-	metricKey := types.KeyPrefix(key)
+	store.Set(metricKey, []byte{1})
+}
+
+// Removes a metric from the queue
+func (k Keeper) removeMetricFromQueue(ctx sdk.Context, metricKey []byte) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.MetricQueueKeyPrefix)
 	store.Delete(metricKey)
 }
 
-// --------------------------------------------------
-//          METRICS WITH ICA's IN PROGRESS
-// --------------------------------------------------
-
-// Marks a metric update as "in progress" which moves it to the pending store
-// The pending store has one record per ICA call, meaning the same metric
-// will be stored multiple times in the pending store if there are multiple oracles
-func (k Keeper) SetMetricUpdateInProgress(ctx sdk.Context, pendingMetric types.PendingMetricUpdate) {
-	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.MetricPendingKeyPrefix)
-	substoreKey := types.GetPendingMetricSubstoreKey(pendingMetric.Metric.Key, pendingMetric.OracleChainId)
-
-	pendingMetricKey := append(substoreKey, types.GetPendingMetricKey(pendingMetric.Metric.UpdateTime)...)
-	pendingMetricBz := k.cdc.MustMarshal(&pendingMetric)
-
-	store.Set(pendingMetricKey, pendingMetricBz)
-}
-
-// Gets a pending metric update from the pending store
-func (k Keeper) GetPendingMetricUpdate(ctx sdk.Context, metricKey string, oracleChainId string, updateTime uint64) (pendingMetric types.PendingMetricUpdate, found bool) {
-	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.MetricPendingKeyPrefix)
-	substoreKey := types.GetPendingMetricSubstoreKey(metricKey, oracleChainId)
-
-	pendingMetricKey := append(substoreKey, types.GetPendingMetricKey(updateTime)...)
-	pendingMetricBz := store.Get(pendingMetricKey)
-
-	if len(pendingMetricBz) == 0 {
-		return pendingMetric, false
-	}
-
-	k.cdc.MustUnmarshal(pendingMetricBz, &pendingMetric)
-	return pendingMetric, true
-}
-
-// Gets all pending metric updates from the pending store, across all metrics and oracles
-func (k Keeper) GetAllPendingMetricUpdates(ctx sdk.Context) []types.PendingMetricUpdate {
-	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.MetricPendingKeyPrefix)
+// Returns all metrics from the index queue
+func (k Keeper) GetAllQueuedMetrics(ctx sdk.Context) (metrics []types.Metric) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.MetricQueueKeyPrefix)
 
 	iterator := store.Iterator(nil, nil)
 	defer iterator.Close()
 
-	allPendingMetricUpdates := []types.PendingMetricUpdate{}
 	for ; iterator.Valid(); iterator.Next() {
 
-		pendingMetric := types.PendingMetricUpdate{}
-		k.cdc.MustUnmarshal(iterator.Value(), &pendingMetric)
-		allPendingMetricUpdates = append(allPendingMetricUpdates, pendingMetric)
+		metricId := string(iterator.Key())
+		metric, found := k.GetMetric(ctx, metricId)
+		if !found {
+			panic("metric in queue but not metric store")
+		}
+		metrics = append(metrics, metric)
 	}
 
-	return allPendingMetricUpdates
-}
-
-// Returns all pending metrics in the the metric + oracle substore
-// This will have more than 1 metric if multiple ICAs have been sent without a response
-// The resulting list will have the same metric key for each metric, but a different updateTime for each
-func (k Keeper) GetPendingMetrics(ctx sdk.Context, metricKey string, oracleChainId string) []types.Metric {
-	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.MetricPendingKeyPrefix)
-	substoreKey := types.GetPendingMetricSubstoreKey(metricKey, oracleChainId)
-
-	iterator := sdk.KVStorePrefixIterator(store, substoreKey)
-	defer iterator.Close()
-
-	allPendingMetrics := []types.Metric{}
-	for ; iterator.Valid(); iterator.Next() {
-
-		pendingMetricUpdate := types.PendingMetricUpdate{}
-		k.cdc.MustUnmarshal(iterator.Value(), &pendingMetricUpdate)
-		allPendingMetrics = append(allPendingMetrics, *pendingMetricUpdate.Metric)
-	}
-
-	return allPendingMetrics
-}
-
-// Marks a metric update as "complete", meaning it has been updated on the oracle
-// and the ack has been received. Indicated by removing it from the pending store
-func (k Keeper) SetMetricUpdateComplete(ctx sdk.Context, metricKey string, oracleChainId string, updateTime uint64) {
-	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.MetricPendingKeyPrefix)
-	substoreKey := types.GetPendingMetricSubstoreKey(metricKey, oracleChainId)
-
-	pendingMetricKey := append(substoreKey, types.GetPendingMetricKey(updateTime)...)
-	store.Delete(pendingMetricKey)
+	return metrics
 }
