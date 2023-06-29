@@ -7,145 +7,62 @@ import (
 )
 
 // Helper function to create 5 metric objects with various attributes
-// and add them to the queue
-func (s *KeeperTestSuite) addMetricsToQueue() []types.Metric {
+func (s *KeeperTestSuite) createMetrics() []types.Metric {
 	metrics := []types.Metric{}
 	for i := 1; i <= 5; i++ {
 		suffix := strconv.Itoa(i)
 		metric := types.Metric{
-			Key:   "key-" + suffix,
-			Value: "value-" + suffix,
+			Key:    "key-" + suffix,
+			Value:  "value-" + suffix,
+			Status: types.MetricStatus_METRIC_STATUS_QUEUED,
 		}
 
 		metrics = append(metrics, metric)
-		s.App.ICAOracleKeeper.QueueMetricUpdate(s.Ctx, metric)
+		s.App.ICAOracleKeeper.SetMetric(s.Ctx, metric)
 	}
 	return metrics
 }
 
-func (s *KeeperTestSuite) TestGetMetricFromQueue() {
-	metrics := s.addMetricsToQueue()
+func (s *KeeperTestSuite) TestGetMetric() {
+	metrics := s.createMetrics()
 
-	expectedMetric := metrics[1]
-	metricKey := expectedMetric.Key
+	for _, expected := range metrics {
+		metricId := expected.GetMetricID()
 
-	actualMetric, found := s.App.ICAOracleKeeper.GetMetricFromQueue(s.Ctx, metricKey)
-	s.Require().True(found, "metric should have been found, but was not")
-	s.Require().Equal(expectedMetric, actualMetric)
-
-	_, found = s.App.ICAOracleKeeper.GetMetricFromQueue(s.Ctx, "fake_key")
-	s.Require().False(found, "metric does not exist and should not have been found")
-}
-
-func (s *KeeperTestSuite) TestGetAllMetricsFromQueue() {
-	expectedMetrics := s.addMetricsToQueue()
-	actualMetrics := s.App.ICAOracleKeeper.GetAllMetricsFromQueue(s.Ctx)
-	s.Require().Len(actualMetrics, len(expectedMetrics), "number of metrics")
-	s.Require().ElementsMatch(expectedMetrics, actualMetrics, "contents of metrics")
-}
-
-func (s *KeeperTestSuite) TestRemoveMetricFromQueue() {
-	metrics := s.addMetricsToQueue()
-
-	metricToRemove := metrics[1]
-	metricKey := metricToRemove.Key
-
-	s.App.ICAOracleKeeper.RemoveMetricFromQueue(s.Ctx, metricKey)
-	_, found := s.App.ICAOracleKeeper.GetMetricFromQueue(s.Ctx, metricKey)
-	s.Require().False(found, "the removed metric should not have been found, but it was")
-}
-
-// Helper function to create 5 metric objects with various attributes
-// and add them to the pending store
-func (s *KeeperTestSuite) addPendingUpdates() []types.PendingMetricUpdate {
-	// Add 5 metrics each across 5 oracles
-	pendingMetrics := []types.PendingMetricUpdate{}
-	for i := 1; i <= 5; i++ {
-		suffix := strconv.Itoa(i)
-		metricUpdate := types.PendingMetricUpdate{
-			Metric: &types.Metric{
-				Key:        "key-" + suffix,
-				Value:      "value-" + suffix,
-				UpdateTime: uint64(i),
-			},
-			OracleChainId: "chain-" + suffix,
-		}
-
-		pendingMetrics = append(pendingMetrics, metricUpdate)
-
-		s.App.ICAOracleKeeper.SetMetricUpdateInProgress(s.Ctx, metricUpdate)
+		actual, found := s.App.ICAOracleKeeper.GetMetric(s.Ctx, metricId)
+		s.Require().True(found, "metric %s should have been found", metricId)
+		s.Require().Equal(expected, actual, "metric %s", metricId)
 	}
-	return pendingMetrics
 }
 
-// Helper function to create 5 metric objects with the same key and oracle, but various times
-// Returns the list of metrics (instead of metric updates)
-func (s *KeeperTestSuite) addPendingUpdatesWithSameKey() []types.Metric {
-	// Add 5 metrics each across 5 oracles
-	metrics := []types.Metric{}
-	for i := 1; i <= 5; i++ {
-		suffix := strconv.Itoa(i)
-		metric := types.Metric{
-			Key:        "key1",
-			Value:      "value-" + suffix,
-			UpdateTime: uint64(i),
-		}
-		metricUpdate := types.PendingMetricUpdate{
-			Metric:        &metric,
-			OracleChainId: HostChainId,
-		}
+func (s *KeeperTestSuite) TestGetAllMetrics() {
+	metrics := s.createMetrics()
 
-		metrics = append(metrics, metric)
+	actualMetrics := s.App.ICAOracleKeeper.GetAllMetrics(s.Ctx)
+	s.Require().Equal(actualMetrics, len(metrics), "number of metrics")
 
-		s.App.ICAOracleKeeper.SetMetricUpdateInProgress(s.Ctx, metricUpdate)
+	for i, expected := range metrics {
+		metricId := expected.GetMetricID()
+
+		actual := actualMetrics[i]
+		s.Require().Equal(expected, actual, "metrics %s", metricId)
 	}
-	return metrics
 }
 
-func (s *KeeperTestSuite) TestGetPendingMetricUpdate() {
-	pendingUpdates := s.addPendingUpdates()
+func (s *KeeperTestSuite) TestMetricQueue() {
+	metrics := s.createMetrics()
 
-	expectedPendingUpdates := pendingUpdates[1]
-	metricKey := expectedPendingUpdates.Metric.Key
-	oracleChainId := expectedPendingUpdates.OracleChainId
-	updateTime := expectedPendingUpdates.Metric.UpdateTime
+	actualQueuedMetrics := s.App.ICAOracleKeeper.GetAllQueuedMetrics(s.Ctx)
+	s.Require().Equal(actualQueuedMetrics, len(metrics), "number of queued metrics")
 
-	expectedPendingUpdates, found := s.App.ICAOracleKeeper.GetPendingMetricUpdate(s.Ctx, metricKey, oracleChainId, updateTime)
-	s.Require().True(found, "metric should have been found, but was not")
-	s.Require().Equal(expectedPendingUpdates, expectedPendingUpdates)
+	for i, metric := range metrics {
+		metricId := metric.GetMetricID()
 
-	_, found = s.App.ICAOracleKeeper.GetPendingMetricUpdate(s.Ctx, "fake_key", oracleChainId, updateTime)
-	s.Require().False(found, "metric does not exist and should not have been found")
-}
+		// set the metric to in progres which should remove it from the queue
+		s.App.ICAOracleKeeper.UpdateMetricStatus(s.Ctx, metric, types.MetricStatus_METRIC_STATUS_IN_PROGRESS)
 
-func (s *KeeperTestSuite) TestGetAllPendingMetricUpdates() {
-	expectedPendingUpdates := s.addPendingUpdates()
-	actualPendingUpdates := s.App.ICAOracleKeeper.GetAllPendingMetricUpdates(s.Ctx)
-	s.Require().Len(actualPendingUpdates, len(expectedPendingUpdates), "number of metrics")
-	s.Require().ElementsMatch(expectedPendingUpdates, actualPendingUpdates, "contents of metrics")
-}
-
-func (s *KeeperTestSuite) TestGetPendingMetrics() {
-	expectedMetrics := s.addPendingUpdatesWithSameKey()
-
-	// Add additional metrics with the same key
-	expectedMetric := expectedMetrics[0]
-	metricKey := expectedMetric.Key
-
-	actualMetrics := s.App.ICAOracleKeeper.GetPendingMetrics(s.Ctx, metricKey, HostChainId)
-	s.Require().Len(actualMetrics, len(expectedMetrics), "number of metrics")
-	s.Require().ElementsMatch(expectedMetrics, actualMetrics, "contents of metrics")
-}
-
-func (s *KeeperTestSuite) TestSetMetricUpdateComplete() {
-	pendingMetrics := s.addPendingUpdates()
-
-	expectedPendingMetric := pendingMetrics[1]
-	metricKey := expectedPendingMetric.Metric.Key
-	oracleChainId := expectedPendingMetric.OracleChainId
-	updateTime := expectedPendingMetric.Metric.UpdateTime
-
-	s.App.ICAOracleKeeper.SetMetricUpdateComplete(s.Ctx, metricKey, oracleChainId, updateTime)
-	_, found := s.App.ICAOracleKeeper.GetPendingMetricUpdate(s.Ctx, metricKey, oracleChainId, updateTime)
-	s.Require().False(found, "the removed metric should not have been found, but it was")
+		queuedMetrics := s.App.ICAOracleKeeper.GetAllQueuedMetrics(s.Ctx)
+		s.Require().Len(queuedMetrics, len(metrics)-1, "number of remaining queued metrics after updating %s", metricId)
+		s.Require().ElementsMatch(metrics[i:], queuedMetrics, "queued metric after setting %s to in progress", metricId)
+	}
 }
