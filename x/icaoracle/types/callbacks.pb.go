@@ -22,6 +22,7 @@ var _ = math.Inf
 // proto package needs to be updated.
 const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 
+// Callback data for instantiating an oracle
 type InstantiateOracleCallback struct {
 	OracleChainId string `protobuf:"bytes,1,opt,name=oracle_chain_id,json=oracleChainId,proto3" json:"oracle_chain_id,omitempty"`
 }
@@ -66,6 +67,7 @@ func (m *InstantiateOracleCallback) GetOracleChainId() string {
 	return ""
 }
 
+// Callback data for updating a value in the oracle
 type UpdateOracleCallback struct {
 	OracleChainId string  `protobuf:"bytes,1,opt,name=oracle_chain_id,json=oracleChainId,proto3" json:"oracle_chain_id,omitempty"`
 	Metric        *Metric `protobuf:"bytes,2,opt,name=metric,proto3" json:"metric,omitempty"`

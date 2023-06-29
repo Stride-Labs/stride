@@ -23,6 +23,7 @@ var _ = math.Inf
 // proto package needs to be updated.
 const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 
+// Toggle's whether an oracle is active and should receive metric updates
 type ToggleOracleProposal struct {
 	Title         string `protobuf:"bytes,1,opt,name=title,proto3" json:"title,omitempty"`
 	Description   string `protobuf:"bytes,2,opt,name=description,proto3" json:"description,omitempty"`
@@ -63,6 +64,7 @@ func (m *ToggleOracleProposal) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_ToggleOracleProposal proto.InternalMessageInfo
 
+// Removes an oracle completely
 type RemoveOracleProposal struct {
 	Title         string `protobuf:"bytes,1,opt,name=title,proto3" json:"title,omitempty"`
 	Description   string `protobuf:"bytes,2,opt,name=description,proto3" json:"description,omitempty"`

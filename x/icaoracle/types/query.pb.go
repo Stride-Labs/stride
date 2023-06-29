@@ -29,6 +29,7 @@ var _ = math.Inf
 // proto package needs to be updated.
 const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 
+// Query's a specific oracle
 type QueryOracleRequest struct {
 	ChainId string `protobuf:"bytes,1,opt,name=chain_id,json=chainId,proto3" json:"chain_id,omitempty"`
 }
@@ -117,6 +118,7 @@ func (m *QueryOracleResponse) GetOracle() *Oracle {
 	return nil
 }
 
+// Query's all oracle's
 type QueryAllOraclesRequest struct {
 }
 
@@ -197,6 +199,7 @@ func (m *QueryAllOraclesResponse) GetOracles() []Oracle {
 	return nil
 }
 
+// Query's all oracle with a filter for whether they're active
 type QueryActiveOraclesRequest struct {
 	Active bool `protobuf:"varint,1,opt,name=active,proto3" json:"active,omitempty"`
 }
@@ -285,21 +288,22 @@ func (m *QueryActiveOraclesResponse) GetOracles() []Oracle {
 	return nil
 }
 
-type QueryAllPendingMetricUpdatesRequest struct {
+// Query's all metric update's currently in flight
+type QueryAllPendingMetricsRequest struct {
 }
 
-func (m *QueryAllPendingMetricUpdatesRequest) Reset()         { *m = QueryAllPendingMetricUpdatesRequest{} }
-func (m *QueryAllPendingMetricUpdatesRequest) String() string { return proto.CompactTextString(m) }
-func (*QueryAllPendingMetricUpdatesRequest) ProtoMessage()    {}
-func (*QueryAllPendingMetricUpdatesRequest) Descriptor() ([]byte, []int) {
+func (m *QueryAllPendingMetricsRequest) Reset()         { *m = QueryAllPendingMetricsRequest{} }
+func (m *QueryAllPendingMetricsRequest) String() string { return proto.CompactTextString(m) }
+func (*QueryAllPendingMetricsRequest) ProtoMessage()    {}
+func (*QueryAllPendingMetricsRequest) Descriptor() ([]byte, []int) {
 	return fileDescriptor_d4d4563f64cd9510, []int{6}
 }
-func (m *QueryAllPendingMetricUpdatesRequest) XXX_Unmarshal(b []byte) error {
+func (m *QueryAllPendingMetricsRequest) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *QueryAllPendingMetricUpdatesRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *QueryAllPendingMetricsRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_QueryAllPendingMetricUpdatesRequest.Marshal(b, m, deterministic)
+		return xxx_messageInfo_QueryAllPendingMetricsRequest.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalToSizedBuffer(b)
@@ -309,34 +313,34 @@ func (m *QueryAllPendingMetricUpdatesRequest) XXX_Marshal(b []byte, deterministi
 		return b[:n], nil
 	}
 }
-func (m *QueryAllPendingMetricUpdatesRequest) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_QueryAllPendingMetricUpdatesRequest.Merge(m, src)
+func (m *QueryAllPendingMetricsRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryAllPendingMetricsRequest.Merge(m, src)
 }
-func (m *QueryAllPendingMetricUpdatesRequest) XXX_Size() int {
+func (m *QueryAllPendingMetricsRequest) XXX_Size() int {
 	return m.Size()
 }
-func (m *QueryAllPendingMetricUpdatesRequest) XXX_DiscardUnknown() {
-	xxx_messageInfo_QueryAllPendingMetricUpdatesRequest.DiscardUnknown(m)
+func (m *QueryAllPendingMetricsRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_QueryAllPendingMetricsRequest.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_QueryAllPendingMetricUpdatesRequest proto.InternalMessageInfo
+var xxx_messageInfo_QueryAllPendingMetricsRequest proto.InternalMessageInfo
 
-type QueryAllPendingMetricUpdatesResponse struct {
-	PendingUpdates []PendingMetricUpdate `protobuf:"bytes,1,rep,name=pending_updates,json=pendingUpdates,proto3" json:"pending_updates"`
+type QueryAllPendingMetricsResponse struct {
+	Metrics []Metric `protobuf:"bytes,1,rep,name=metrics,proto3" json:"metrics"`
 }
 
-func (m *QueryAllPendingMetricUpdatesResponse) Reset()         { *m = QueryAllPendingMetricUpdatesResponse{} }
-func (m *QueryAllPendingMetricUpdatesResponse) String() string { return proto.CompactTextString(m) }
-func (*QueryAllPendingMetricUpdatesResponse) ProtoMessage()    {}
-func (*QueryAllPendingMetricUpdatesResponse) Descriptor() ([]byte, []int) {
+func (m *QueryAllPendingMetricsResponse) Reset()         { *m = QueryAllPendingMetricsResponse{} }
+func (m *QueryAllPendingMetricsResponse) String() string { return proto.CompactTextString(m) }
+func (*QueryAllPendingMetricsResponse) ProtoMessage()    {}
+func (*QueryAllPendingMetricsResponse) Descriptor() ([]byte, []int) {
 	return fileDescriptor_d4d4563f64cd9510, []int{7}
 }
-func (m *QueryAllPendingMetricUpdatesResponse) XXX_Unmarshal(b []byte) error {
+func (m *QueryAllPendingMetricsResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *QueryAllPendingMetricUpdatesResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *QueryAllPendingMetricsResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_QueryAllPendingMetricUpdatesResponse.Marshal(b, m, deterministic)
+		return xxx_messageInfo_QueryAllPendingMetricsResponse.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalToSizedBuffer(b)
@@ -346,42 +350,43 @@ func (m *QueryAllPendingMetricUpdatesResponse) XXX_Marshal(b []byte, determinist
 		return b[:n], nil
 	}
 }
-func (m *QueryAllPendingMetricUpdatesResponse) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_QueryAllPendingMetricUpdatesResponse.Merge(m, src)
+func (m *QueryAllPendingMetricsResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryAllPendingMetricsResponse.Merge(m, src)
 }
-func (m *QueryAllPendingMetricUpdatesResponse) XXX_Size() int {
+func (m *QueryAllPendingMetricsResponse) XXX_Size() int {
 	return m.Size()
 }
-func (m *QueryAllPendingMetricUpdatesResponse) XXX_DiscardUnknown() {
-	xxx_messageInfo_QueryAllPendingMetricUpdatesResponse.DiscardUnknown(m)
+func (m *QueryAllPendingMetricsResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_QueryAllPendingMetricsResponse.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_QueryAllPendingMetricUpdatesResponse proto.InternalMessageInfo
+var xxx_messageInfo_QueryAllPendingMetricsResponse proto.InternalMessageInfo
 
-func (m *QueryAllPendingMetricUpdatesResponse) GetPendingUpdates() []PendingMetricUpdate {
+func (m *QueryAllPendingMetricsResponse) GetMetrics() []Metric {
 	if m != nil {
-		return m.PendingUpdates
+		return m.Metrics
 	}
 	return nil
 }
 
-type QueryPendingMetricUpdatesRequest struct {
+// Query's all metric update's currently in flight with optional filters
+type QueryPendingMetricsRequest struct {
 	MetricKey     string `protobuf:"bytes,1,opt,name=metric_key,json=metricKey,proto3" json:"metric_key,omitempty"`
 	OracleChainId string `protobuf:"bytes,2,opt,name=oracle_chain_id,json=oracleChainId,proto3" json:"oracle_chain_id,omitempty"`
 }
 
-func (m *QueryPendingMetricUpdatesRequest) Reset()         { *m = QueryPendingMetricUpdatesRequest{} }
-func (m *QueryPendingMetricUpdatesRequest) String() string { return proto.CompactTextString(m) }
-func (*QueryPendingMetricUpdatesRequest) ProtoMessage()    {}
-func (*QueryPendingMetricUpdatesRequest) Descriptor() ([]byte, []int) {
+func (m *QueryPendingMetricsRequest) Reset()         { *m = QueryPendingMetricsRequest{} }
+func (m *QueryPendingMetricsRequest) String() string { return proto.CompactTextString(m) }
+func (*QueryPendingMetricsRequest) ProtoMessage()    {}
+func (*QueryPendingMetricsRequest) Descriptor() ([]byte, []int) {
 	return fileDescriptor_d4d4563f64cd9510, []int{8}
 }
-func (m *QueryPendingMetricUpdatesRequest) XXX_Unmarshal(b []byte) error {
+func (m *QueryPendingMetricsRequest) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *QueryPendingMetricUpdatesRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *QueryPendingMetricsRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_QueryPendingMetricUpdatesRequest.Marshal(b, m, deterministic)
+		return xxx_messageInfo_QueryPendingMetricsRequest.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalToSizedBuffer(b)
@@ -391,48 +396,48 @@ func (m *QueryPendingMetricUpdatesRequest) XXX_Marshal(b []byte, deterministic b
 		return b[:n], nil
 	}
 }
-func (m *QueryPendingMetricUpdatesRequest) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_QueryPendingMetricUpdatesRequest.Merge(m, src)
+func (m *QueryPendingMetricsRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryPendingMetricsRequest.Merge(m, src)
 }
-func (m *QueryPendingMetricUpdatesRequest) XXX_Size() int {
+func (m *QueryPendingMetricsRequest) XXX_Size() int {
 	return m.Size()
 }
-func (m *QueryPendingMetricUpdatesRequest) XXX_DiscardUnknown() {
-	xxx_messageInfo_QueryPendingMetricUpdatesRequest.DiscardUnknown(m)
+func (m *QueryPendingMetricsRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_QueryPendingMetricsRequest.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_QueryPendingMetricUpdatesRequest proto.InternalMessageInfo
+var xxx_messageInfo_QueryPendingMetricsRequest proto.InternalMessageInfo
 
-func (m *QueryPendingMetricUpdatesRequest) GetMetricKey() string {
+func (m *QueryPendingMetricsRequest) GetMetricKey() string {
 	if m != nil {
 		return m.MetricKey
 	}
 	return ""
 }
 
-func (m *QueryPendingMetricUpdatesRequest) GetOracleChainId() string {
+func (m *QueryPendingMetricsRequest) GetOracleChainId() string {
 	if m != nil {
 		return m.OracleChainId
 	}
 	return ""
 }
 
-type QueryPendingMetricUpdatesResponse struct {
-	PendingUpdates []PendingMetricUpdate `protobuf:"bytes,1,rep,name=pending_updates,json=pendingUpdates,proto3" json:"pending_updates"`
+type QueryPendingMetricsResponse struct {
+	Metrics []Metric `protobuf:"bytes,1,rep,name=metrics,proto3" json:"metrics"`
 }
 
-func (m *QueryPendingMetricUpdatesResponse) Reset()         { *m = QueryPendingMetricUpdatesResponse{} }
-func (m *QueryPendingMetricUpdatesResponse) String() string { return proto.CompactTextString(m) }
-func (*QueryPendingMetricUpdatesResponse) ProtoMessage()    {}
-func (*QueryPendingMetricUpdatesResponse) Descriptor() ([]byte, []int) {
+func (m *QueryPendingMetricsResponse) Reset()         { *m = QueryPendingMetricsResponse{} }
+func (m *QueryPendingMetricsResponse) String() string { return proto.CompactTextString(m) }
+func (*QueryPendingMetricsResponse) ProtoMessage()    {}
+func (*QueryPendingMetricsResponse) Descriptor() ([]byte, []int) {
 	return fileDescriptor_d4d4563f64cd9510, []int{9}
 }
-func (m *QueryPendingMetricUpdatesResponse) XXX_Unmarshal(b []byte) error {
+func (m *QueryPendingMetricsResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *QueryPendingMetricUpdatesResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *QueryPendingMetricsResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_QueryPendingMetricUpdatesResponse.Marshal(b, m, deterministic)
+		return xxx_messageInfo_QueryPendingMetricsResponse.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalToSizedBuffer(b)
@@ -442,21 +447,21 @@ func (m *QueryPendingMetricUpdatesResponse) XXX_Marshal(b []byte, deterministic 
 		return b[:n], nil
 	}
 }
-func (m *QueryPendingMetricUpdatesResponse) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_QueryPendingMetricUpdatesResponse.Merge(m, src)
+func (m *QueryPendingMetricsResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryPendingMetricsResponse.Merge(m, src)
 }
-func (m *QueryPendingMetricUpdatesResponse) XXX_Size() int {
+func (m *QueryPendingMetricsResponse) XXX_Size() int {
 	return m.Size()
 }
-func (m *QueryPendingMetricUpdatesResponse) XXX_DiscardUnknown() {
-	xxx_messageInfo_QueryPendingMetricUpdatesResponse.DiscardUnknown(m)
+func (m *QueryPendingMetricsResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_QueryPendingMetricsResponse.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_QueryPendingMetricUpdatesResponse proto.InternalMessageInfo
+var xxx_messageInfo_QueryPendingMetricsResponse proto.InternalMessageInfo
 
-func (m *QueryPendingMetricUpdatesResponse) GetPendingUpdates() []PendingMetricUpdate {
+func (m *QueryPendingMetricsResponse) GetMetrics() []Metric {
 	if m != nil {
-		return m.PendingUpdates
+		return m.Metrics
 	}
 	return nil
 }
@@ -468,54 +473,53 @@ func init() {
 	proto.RegisterType((*QueryAllOraclesResponse)(nil), "stride.icaoracle.QueryAllOraclesResponse")
 	proto.RegisterType((*QueryActiveOraclesRequest)(nil), "stride.icaoracle.QueryActiveOraclesRequest")
 	proto.RegisterType((*QueryActiveOraclesResponse)(nil), "stride.icaoracle.QueryActiveOraclesResponse")
-	proto.RegisterType((*QueryAllPendingMetricUpdatesRequest)(nil), "stride.icaoracle.QueryAllPendingMetricUpdatesRequest")
-	proto.RegisterType((*QueryAllPendingMetricUpdatesResponse)(nil), "stride.icaoracle.QueryAllPendingMetricUpdatesResponse")
-	proto.RegisterType((*QueryPendingMetricUpdatesRequest)(nil), "stride.icaoracle.QueryPendingMetricUpdatesRequest")
-	proto.RegisterType((*QueryPendingMetricUpdatesResponse)(nil), "stride.icaoracle.QueryPendingMetricUpdatesResponse")
+	proto.RegisterType((*QueryAllPendingMetricsRequest)(nil), "stride.icaoracle.QueryAllPendingMetricsRequest")
+	proto.RegisterType((*QueryAllPendingMetricsResponse)(nil), "stride.icaoracle.QueryAllPendingMetricsResponse")
+	proto.RegisterType((*QueryPendingMetricsRequest)(nil), "stride.icaoracle.QueryPendingMetricsRequest")
+	proto.RegisterType((*QueryPendingMetricsResponse)(nil), "stride.icaoracle.QueryPendingMetricsResponse")
 }
 
 func init() { proto.RegisterFile("stride/icaoracle/query.proto", fileDescriptor_d4d4563f64cd9510) }
 
 var fileDescriptor_d4d4563f64cd9510 = []byte{
-	// 607 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xb4, 0x55, 0x4f, 0x4f, 0x13, 0x41,
-	0x14, 0xef, 0xa0, 0x16, 0x78, 0x06, 0x31, 0x23, 0x81, 0xb2, 0xc1, 0xb5, 0xae, 0x54, 0x31, 0x4a,
-	0x47, 0x5b, 0x41, 0x0f, 0x5e, 0xc4, 0x83, 0xff, 0x30, 0x62, 0x51, 0x0f, 0x5e, 0x36, 0xdb, 0xed,
-	0x64, 0x99, 0x58, 0x76, 0x96, 0x9d, 0x2d, 0x71, 0xa3, 0x5e, 0xfc, 0x00, 0x86, 0xc4, 0x8f, 0xe0,
-	0x77, 0x31, 0x1c, 0x31, 0x5e, 0x3c, 0x19, 0xd3, 0x7a, 0xf6, 0x33, 0x98, 0xce, 0x4c, 0x8b, 0x75,
-	0xdb, 0xb5, 0x60, 0x38, 0x75, 0xf6, 0xbd, 0xdf, 0x7b, 0xbf, 0xdf, 0x9b, 0x79, 0xbf, 0x14, 0xe6,
-	0x44, 0x14, 0xb2, 0x1a, 0x25, 0xcc, 0x75, 0x78, 0xe8, 0xb8, 0x75, 0x4a, 0xb6, 0x1a, 0x34, 0x8c,
-	0x8b, 0x41, 0xc8, 0x23, 0x8e, 0x4f, 0xab, 0x6c, 0xb1, 0x9b, 0x35, 0xf2, 0x09, 0x7c, 0xf7, 0xa4,
-	0x6a, 0x8c, 0x39, 0x8f, 0x73, 0xaf, 0x4e, 0x89, 0x13, 0x30, 0xe2, 0xf8, 0x3e, 0x8f, 0x9c, 0x88,
-	0x71, 0x5f, 0xe8, 0xec, 0x94, 0xc7, 0x3d, 0x2e, 0x8f, 0xa4, 0x7d, 0x52, 0x51, 0x8b, 0x00, 0x7e,
-	0xda, 0xa6, 0x7d, 0x22, 0x1b, 0x55, 0xe8, 0x56, 0x83, 0x8a, 0x08, 0xcf, 0xc2, 0x98, 0xbb, 0xe1,
-	0x30, 0xdf, 0x66, 0xb5, 0x1c, 0xca, 0xa3, 0x85, 0xf1, 0xca, 0xa8, 0xfc, 0x7e, 0x50, 0xb3, 0xee,
-	0xc1, 0x99, 0x9e, 0x02, 0x11, 0x70, 0x5f, 0x50, 0x7c, 0x0d, 0xb2, 0x4a, 0x8b, 0xc4, 0x9f, 0x2c,
-	0xe5, 0x8a, 0x7f, 0x0f, 0x50, 0xd4, 0x15, 0x1a, 0x67, 0xe5, 0x60, 0x5a, 0x36, 0xba, 0x53, 0xaf,
-	0xab, 0x8c, 0xd0, 0xec, 0xd6, 0x3a, 0xcc, 0x24, 0x32, 0x9a, 0xe6, 0x16, 0x8c, 0xaa, 0x72, 0x91,
-	0x43, 0xf9, 0x63, 0x69, 0x3c, 0x2b, 0xc7, 0x77, 0xbf, 0x9f, 0xcb, 0x54, 0x3a, 0x70, 0xab, 0x0c,
-	0xb3, 0xaa, 0xa9, 0x1b, 0xb1, 0x6d, 0xda, 0xcb, 0x88, 0xa7, 0x21, 0xeb, 0xc8, 0xb8, 0x54, 0x3f,
-	0x56, 0xd1, 0x5f, 0xd6, 0x0b, 0x30, 0xfa, 0x15, 0xfd, 0xb7, 0x98, 0x02, 0x5c, 0xe8, 0x4c, 0xb8,
-	0x46, 0xfd, 0x1a, 0xf3, 0xbd, 0xc7, 0x34, 0x0a, 0x99, 0xfb, 0x3c, 0xa8, 0x39, 0xd1, 0xfe, 0x45,
-	0xbc, 0x85, 0xf9, 0x74, 0x98, 0x16, 0xf2, 0x0c, 0x26, 0x03, 0x95, 0xb7, 0x1b, 0x2a, 0xa5, 0x05,
-	0x15, 0x92, 0x82, 0xfa, 0x34, 0xd2, 0xea, 0x4e, 0xe9, 0x1e, 0xba, 0xbb, 0xc5, 0x20, 0x2f, 0xd9,
-	0x53, 0x14, 0xe2, 0xb3, 0x00, 0x9b, 0x32, 0x6e, 0xbf, 0xa2, 0xb1, 0x5e, 0x95, 0x71, 0x15, 0x79,
-	0x44, 0x63, 0x7c, 0x11, 0x26, 0x15, 0xad, 0xdd, 0x5d, 0xa7, 0x11, 0x89, 0x99, 0x50, 0xe1, 0xbb,
-	0x7a, 0xa9, 0x62, 0x38, 0x9f, 0x42, 0x75, 0x94, 0x53, 0x96, 0x7e, 0x65, 0xe1, 0x84, 0xe4, 0xc6,
-	0x1f, 0x10, 0x64, 0xd5, 0x73, 0xe1, 0xf9, 0x64, 0xc7, 0xa4, 0x4b, 0x8c, 0xc2, 0x3f, 0x50, 0x4a,
-	0xb7, 0x75, 0xf3, 0xfd, 0xd7, 0x9f, 0x1f, 0x47, 0xae, 0x63, 0x42, 0xd6, 0x25, 0x7c, 0x71, 0xd5,
-	0xa9, 0x0a, 0x92, 0x70, 0xb3, 0xfe, 0x79, 0xd3, 0xb9, 0xa9, 0x77, 0x78, 0x07, 0x01, 0xec, 0x7b,
-	0x00, 0x2f, 0x0c, 0xa0, 0x4b, 0x18, 0xc8, 0xb8, 0x3c, 0x04, 0x52, 0x8b, 0x5b, 0x94, 0xe2, 0x2e,
-	0xe1, 0xc2, 0x30, 0xe2, 0x04, 0xfe, 0x84, 0x60, 0xa2, 0xc7, 0x0c, 0xf8, 0xca, 0x20, 0xae, 0x3e,
-	0x3e, 0x33, 0xae, 0x0e, 0x07, 0x3e, 0xcc, 0xc5, 0x09, 0x52, 0x8d, 0x6d, 0x65, 0x5b, 0xfc, 0x19,
-	0xc1, 0xcc, 0x00, 0xcf, 0xe0, 0xa5, 0xc1, 0x77, 0x93, 0xb2, 0xe8, 0xc6, 0xf2, 0x41, 0xcb, 0xf4,
-	0x0c, 0xb7, 0xe5, 0x0c, 0xcb, 0xf8, 0x46, 0xfa, 0x0c, 0x9d, 0xc5, 0xd6, 0x66, 0xd2, 0xfb, 0x8d,
-	0xbf, 0x20, 0x98, 0xea, 0x3b, 0x45, 0x69, 0x80, 0x9c, 0xb4, 0x11, 0xca, 0x07, 0xaa, 0xd1, 0xfa,
-	0xd7, 0xa4, 0xfe, 0x87, 0xf8, 0xfe, 0x61, 0xf4, 0xb7, 0x9f, 0x44, 0x47, 0x78, 0x68, 0x2b, 0xe8,
-	0xca, 0xea, 0x6e, 0xd3, 0x44, 0x7b, 0x4d, 0x13, 0xfd, 0x68, 0x9a, 0x68, 0xa7, 0x65, 0x66, 0xf6,
-	0x5a, 0x66, 0xe6, 0x5b, 0xcb, 0xcc, 0xbc, 0x2c, 0x79, 0x2c, 0xda, 0x68, 0x54, 0x8b, 0x2e, 0xdf,
-	0xec, 0xc7, 0xb6, 0xbd, 0x44, 0x5e, 0xff, 0x41, 0x19, 0xc5, 0x01, 0x15, 0xd5, 0xac, 0xfc, 0x1b,
-	0x2b, 0xff, 0x0e, 0x00, 0x00, 0xff, 0xff, 0x0c, 0xdd, 0xf9, 0x43, 0x4e, 0x07, 0x00, 0x00,
+	// 584 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xa4, 0x55, 0xcf, 0x4f, 0x13, 0x41,
+	0x14, 0xee, 0xa0, 0x16, 0x78, 0x06, 0x7f, 0x3c, 0x0d, 0x96, 0x15, 0x96, 0x66, 0x23, 0x8a, 0xd1,
+	0x76, 0xb0, 0x84, 0xe8, 0x15, 0x38, 0x18, 0x22, 0x46, 0x2d, 0x89, 0x26, 0x5c, 0x36, 0xdb, 0xed,
+	0x64, 0x99, 0x58, 0x76, 0xca, 0xce, 0x96, 0xd8, 0x18, 0x2f, 0xfe, 0x01, 0x86, 0xc4, 0x3f, 0xc1,
+	0xb3, 0x77, 0x0f, 0xfe, 0x01, 0x1c, 0x49, 0xbc, 0x78, 0x32, 0xa6, 0xf5, 0x0f, 0x31, 0x9d, 0x99,
+	0x16, 0xcb, 0xee, 0x62, 0x95, 0x13, 0xb3, 0xef, 0x7d, 0xdf, 0xfb, 0xbe, 0x79, 0x7c, 0x93, 0xc2,
+	0xac, 0x8c, 0x23, 0x5e, 0x67, 0x94, 0xfb, 0x9e, 0x88, 0x3c, 0xbf, 0xc1, 0xe8, 0x5e, 0x8b, 0x45,
+	0xed, 0x72, 0x33, 0x12, 0xb1, 0xc0, 0x2b, 0xba, 0x5b, 0x1e, 0x74, 0xad, 0x62, 0x02, 0x3f, 0x38,
+	0x69, 0x8e, 0x35, 0x1b, 0x08, 0x11, 0x34, 0x18, 0xf5, 0x9a, 0x9c, 0x7a, 0x61, 0x28, 0x62, 0x2f,
+	0xe6, 0x22, 0x94, 0xa6, 0x7b, 0x3d, 0x10, 0x81, 0x50, 0x47, 0xda, 0x3b, 0xe9, 0xaa, 0x43, 0x01,
+	0x5f, 0xf4, 0x64, 0x9f, 0xa9, 0x41, 0x55, 0xb6, 0xd7, 0x62, 0x32, 0xc6, 0x19, 0x98, 0xf0, 0x77,
+	0x3c, 0x1e, 0xba, 0xbc, 0x5e, 0x20, 0x45, 0xb2, 0x38, 0x59, 0x1d, 0x57, 0xdf, 0x1b, 0x75, 0xe7,
+	0x31, 0x5c, 0x1b, 0x22, 0xc8, 0xa6, 0x08, 0x25, 0xc3, 0x25, 0xc8, 0x6b, 0x2f, 0x0a, 0x7f, 0xb1,
+	0x52, 0x28, 0x9f, 0xbc, 0x40, 0xd9, 0x30, 0x0c, 0xce, 0x29, 0xc0, 0xb4, 0x1a, 0xb4, 0xda, 0x68,
+	0xe8, 0x8e, 0x34, 0xea, 0xce, 0x16, 0xdc, 0x48, 0x74, 0x8c, 0xcc, 0x23, 0x18, 0xd7, 0x74, 0x59,
+	0x20, 0xc5, 0x73, 0xa7, 0xe9, 0xac, 0x9d, 0x3f, 0xfc, 0x31, 0x9f, 0xab, 0xf6, 0xe1, 0xce, 0x32,
+	0xcc, 0xe8, 0xa1, 0x7e, 0xcc, 0xf7, 0xd9, 0xb0, 0x22, 0x4e, 0x43, 0xde, 0x53, 0x75, 0xe5, 0x7e,
+	0xa2, 0x6a, 0xbe, 0x9c, 0x97, 0x60, 0xa5, 0x91, 0xce, 0x6c, 0x66, 0x1e, 0xe6, 0xfa, 0x37, 0x7c,
+	0xce, 0xc2, 0x3a, 0x0f, 0x83, 0xa7, 0x2c, 0x8e, 0xb8, 0x3f, 0x58, 0xc1, 0x36, 0xd8, 0x59, 0x80,
+	0x63, 0xf1, 0x5d, 0x5d, 0xca, 0x16, 0xd7, 0x9c, 0xbe, 0xb8, 0x81, 0x3b, 0xbe, 0xb9, 0x54, 0xaa,
+	0x32, 0xce, 0x01, 0x68, 0xa0, 0xfb, 0x9a, 0xb5, 0xcd, 0x3f, 0x7f, 0x52, 0x57, 0x9e, 0xb0, 0x36,
+	0xde, 0x86, 0xcb, 0x7a, 0xb8, 0x3b, 0x08, 0xc8, 0x98, 0xc2, 0x4c, 0xe9, 0xf2, 0xba, 0x89, 0xc9,
+	0x2b, 0xb8, 0x99, 0x2a, 0x72, 0x56, 0xf7, 0x95, 0xaf, 0x79, 0xb8, 0xa0, 0x26, 0xe3, 0x07, 0x02,
+	0x79, 0xbd, 0x5e, 0xbc, 0x95, 0x64, 0x27, 0x53, 0x6d, 0x2d, 0xfc, 0x05, 0xa5, 0xbd, 0x39, 0x0f,
+	0xdf, 0x7f, 0xfb, 0xf5, 0x71, 0xec, 0x01, 0x52, 0xba, 0xa5, 0xe0, 0xa5, 0x4d, 0xaf, 0x26, 0x69,
+	0xe2, 0xf5, 0x99, 0x3f, 0x6f, 0xfb, 0x7b, 0x78, 0x87, 0x07, 0x04, 0xe0, 0x38, 0xb3, 0xb8, 0x98,
+	0x21, 0x97, 0x08, 0xbc, 0x75, 0x77, 0x04, 0xa4, 0x31, 0x57, 0x52, 0xe6, 0xee, 0xe0, 0xc2, 0x28,
+	0xe6, 0x24, 0x7e, 0x22, 0x30, 0x35, 0x14, 0x5e, 0xbc, 0x97, 0xa5, 0x95, 0xf2, 0x2e, 0xac, 0xfb,
+	0xa3, 0x81, 0xff, 0x67, 0x71, 0x92, 0xd6, 0xda, 0xae, 0x7e, 0x66, 0xf8, 0x99, 0xc0, 0xd5, 0x44,
+	0xd2, 0x91, 0x66, 0x6f, 0x25, 0x35, 0xba, 0xd6, 0xd2, 0xe8, 0x04, 0xe3, 0x78, 0x45, 0x39, 0xa6,
+	0x58, 0x3a, 0xdd, 0x71, 0x53, 0xb3, 0x5d, 0x93, 0x41, 0xfc, 0x42, 0xe0, 0xd2, 0x09, 0xb3, 0x59,
+	0x9b, 0x4a, 0x77, 0x5a, 0x1a, 0x11, 0x6d, 0x6c, 0x6e, 0x28, 0x9b, 0xeb, 0xb8, 0xfa, 0x4f, 0x36,
+	0x7b, 0x0b, 0x36, 0x4f, 0x59, 0x44, 0xae, 0xc6, 0xac, 0x6d, 0x1e, 0x76, 0x6c, 0x72, 0xd4, 0xb1,
+	0xc9, 0xcf, 0x8e, 0x4d, 0x0e, 0xba, 0x76, 0xee, 0xa8, 0x6b, 0xe7, 0xbe, 0x77, 0xed, 0xdc, 0x76,
+	0x25, 0xe0, 0xf1, 0x4e, 0xab, 0x56, 0xf6, 0xc5, 0x6e, 0x9a, 0xcc, 0xfe, 0x0a, 0x7d, 0xf3, 0x87,
+	0x56, 0xdc, 0x6e, 0x32, 0x59, 0xcb, 0xab, 0x1f, 0x91, 0xe5, 0xdf, 0x01, 0x00, 0x00, 0xff, 0xff,
+	0xb3, 0xd0, 0xe7, 0xba, 0xcc, 0x06, 0x00, 0x00,
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -539,13 +543,13 @@ type QueryClient interface {
 	// - /oracles/by_active?active=false
 	ActiveOracles(ctx context.Context, in *QueryActiveOraclesRequest, opts ...grpc.CallOption) (*QueryActiveOraclesResponse, error)
 	// Query all pending metrics
-	AllPendingMetricUpdates(ctx context.Context, in *QueryAllPendingMetricUpdatesRequest, opts ...grpc.CallOption) (*QueryAllPendingMetricUpdatesResponse, error)
+	AllPendingMetrics(ctx context.Context, in *QueryAllPendingMetricsRequest, opts ...grpc.CallOption) (*QueryAllPendingMetricsResponse, error)
 	// Query pending metrics with optional filters:
-	// - /pending_metric_updates/by_metric_or_oracle?metric_key=X
-	// - /pending_metric_updates/by_metric_or_oracle?oracle_chain_id=Y
+	// - /pending_metrics/by_metric_or_oracle?metric_key=X
+	// - /pending_metrics/by_metric_or_oracle?oracle_chain_id=Y
 	// -
-	// /pending_metric_updates/by_metric_or_oracle?metric_key=X&oracle_chain_id=Y
-	PendingMetricUpdates(ctx context.Context, in *QueryPendingMetricUpdatesRequest, opts ...grpc.CallOption) (*QueryPendingMetricUpdatesResponse, error)
+	// /pending_metrics/by_metric_or_oracle?metric_key=X&oracle_chain_id=Y
+	PendingMetrics(ctx context.Context, in *QueryPendingMetricsRequest, opts ...grpc.CallOption) (*QueryPendingMetricsResponse, error)
 }
 
 type queryClient struct {
@@ -583,18 +587,18 @@ func (c *queryClient) ActiveOracles(ctx context.Context, in *QueryActiveOraclesR
 	return out, nil
 }
 
-func (c *queryClient) AllPendingMetricUpdates(ctx context.Context, in *QueryAllPendingMetricUpdatesRequest, opts ...grpc.CallOption) (*QueryAllPendingMetricUpdatesResponse, error) {
-	out := new(QueryAllPendingMetricUpdatesResponse)
-	err := c.cc.Invoke(ctx, "/stride.icaoracle.Query/AllPendingMetricUpdates", in, out, opts...)
+func (c *queryClient) AllPendingMetrics(ctx context.Context, in *QueryAllPendingMetricsRequest, opts ...grpc.CallOption) (*QueryAllPendingMetricsResponse, error) {
+	out := new(QueryAllPendingMetricsResponse)
+	err := c.cc.Invoke(ctx, "/stride.icaoracle.Query/AllPendingMetrics", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *queryClient) PendingMetricUpdates(ctx context.Context, in *QueryPendingMetricUpdatesRequest, opts ...grpc.CallOption) (*QueryPendingMetricUpdatesResponse, error) {
-	out := new(QueryPendingMetricUpdatesResponse)
-	err := c.cc.Invoke(ctx, "/stride.icaoracle.Query/PendingMetricUpdates", in, out, opts...)
+func (c *queryClient) PendingMetrics(ctx context.Context, in *QueryPendingMetricsRequest, opts ...grpc.CallOption) (*QueryPendingMetricsResponse, error) {
+	out := new(QueryPendingMetricsResponse)
+	err := c.cc.Invoke(ctx, "/stride.icaoracle.Query/PendingMetrics", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -612,13 +616,13 @@ type QueryServer interface {
 	// - /oracles/by_active?active=false
 	ActiveOracles(context.Context, *QueryActiveOraclesRequest) (*QueryActiveOraclesResponse, error)
 	// Query all pending metrics
-	AllPendingMetricUpdates(context.Context, *QueryAllPendingMetricUpdatesRequest) (*QueryAllPendingMetricUpdatesResponse, error)
+	AllPendingMetrics(context.Context, *QueryAllPendingMetricsRequest) (*QueryAllPendingMetricsResponse, error)
 	// Query pending metrics with optional filters:
-	// - /pending_metric_updates/by_metric_or_oracle?metric_key=X
-	// - /pending_metric_updates/by_metric_or_oracle?oracle_chain_id=Y
+	// - /pending_metrics/by_metric_or_oracle?metric_key=X
+	// - /pending_metrics/by_metric_or_oracle?oracle_chain_id=Y
 	// -
-	// /pending_metric_updates/by_metric_or_oracle?metric_key=X&oracle_chain_id=Y
-	PendingMetricUpdates(context.Context, *QueryPendingMetricUpdatesRequest) (*QueryPendingMetricUpdatesResponse, error)
+	// /pending_metrics/by_metric_or_oracle?metric_key=X&oracle_chain_id=Y
+	PendingMetrics(context.Context, *QueryPendingMetricsRequest) (*QueryPendingMetricsResponse, error)
 }
 
 // UnimplementedQueryServer can be embedded to have forward compatible implementations.
@@ -634,11 +638,11 @@ func (*UnimplementedQueryServer) AllOracles(ctx context.Context, req *QueryAllOr
 func (*UnimplementedQueryServer) ActiveOracles(ctx context.Context, req *QueryActiveOraclesRequest) (*QueryActiveOraclesResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ActiveOracles not implemented")
 }
-func (*UnimplementedQueryServer) AllPendingMetricUpdates(ctx context.Context, req *QueryAllPendingMetricUpdatesRequest) (*QueryAllPendingMetricUpdatesResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method AllPendingMetricUpdates not implemented")
+func (*UnimplementedQueryServer) AllPendingMetrics(ctx context.Context, req *QueryAllPendingMetricsRequest) (*QueryAllPendingMetricsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method AllPendingMetrics not implemented")
 }
-func (*UnimplementedQueryServer) PendingMetricUpdates(ctx context.Context, req *QueryPendingMetricUpdatesRequest) (*QueryPendingMetricUpdatesResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method PendingMetricUpdates not implemented")
+func (*UnimplementedQueryServer) PendingMetrics(ctx context.Context, req *QueryPendingMetricsRequest) (*QueryPendingMetricsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method PendingMetrics not implemented")
 }
 
 func RegisterQueryServer(s grpc1.Server, srv QueryServer) {
@@ -699,38 +703,38 @@ func _Query_ActiveOracles_Handler(srv interface{}, ctx context.Context, dec func
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Query_AllPendingMetricUpdates_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(QueryAllPendingMetricUpdatesRequest)
+func _Query_AllPendingMetrics_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(QueryAllPendingMetricsRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(QueryServer).AllPendingMetricUpdates(ctx, in)
+		return srv.(QueryServer).AllPendingMetrics(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/stride.icaoracle.Query/AllPendingMetricUpdates",
+		FullMethod: "/stride.icaoracle.Query/AllPendingMetrics",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(QueryServer).AllPendingMetricUpdates(ctx, req.(*QueryAllPendingMetricUpdatesRequest))
+		return srv.(QueryServer).AllPendingMetrics(ctx, req.(*QueryAllPendingMetricsRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Query_PendingMetricUpdates_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(QueryPendingMetricUpdatesRequest)
+func _Query_PendingMetrics_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(QueryPendingMetricsRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(QueryServer).PendingMetricUpdates(ctx, in)
+		return srv.(QueryServer).PendingMetrics(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/stride.icaoracle.Query/PendingMetricUpdates",
+		FullMethod: "/stride.icaoracle.Query/PendingMetrics",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(QueryServer).PendingMetricUpdates(ctx, req.(*QueryPendingMetricUpdatesRequest))
+		return srv.(QueryServer).PendingMetrics(ctx, req.(*QueryPendingMetricsRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -752,12 +756,12 @@ var _Query_serviceDesc = grpc.ServiceDesc{
 			Handler:    _Query_ActiveOracles_Handler,
 		},
 		{
-			MethodName: "AllPendingMetricUpdates",
-			Handler:    _Query_AllPendingMetricUpdates_Handler,
+			MethodName: "AllPendingMetrics",
+			Handler:    _Query_AllPendingMetrics_Handler,
 		},
 		{
-			MethodName: "PendingMetricUpdates",
-			Handler:    _Query_PendingMetricUpdates_Handler,
+			MethodName: "PendingMetrics",
+			Handler:    _Query_PendingMetrics_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
@@ -959,7 +963,7 @@ func (m *QueryActiveOraclesResponse) MarshalToSizedBuffer(dAtA []byte) (int, err
 	return len(dAtA) - i, nil
 }
 
-func (m *QueryAllPendingMetricUpdatesRequest) Marshal() (dAtA []byte, err error) {
+func (m *QueryAllPendingMetricsRequest) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalToSizedBuffer(dAtA[:size])
@@ -969,12 +973,12 @@ func (m *QueryAllPendingMetricUpdatesRequest) Marshal() (dAtA []byte, err error)
 	return dAtA[:n], nil
 }
 
-func (m *QueryAllPendingMetricUpdatesRequest) MarshalTo(dAtA []byte) (int, error) {
+func (m *QueryAllPendingMetricsRequest) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
-func (m *QueryAllPendingMetricUpdatesRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+func (m *QueryAllPendingMetricsRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
@@ -982,7 +986,7 @@ func (m *QueryAllPendingMetricUpdatesRequest) MarshalToSizedBuffer(dAtA []byte) 
 	return len(dAtA) - i, nil
 }
 
-func (m *QueryAllPendingMetricUpdatesResponse) Marshal() (dAtA []byte, err error) {
+func (m *QueryAllPendingMetricsResponse) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalToSizedBuffer(dAtA[:size])
@@ -992,20 +996,20 @@ func (m *QueryAllPendingMetricUpdatesResponse) Marshal() (dAtA []byte, err error
 	return dAtA[:n], nil
 }
 
-func (m *QueryAllPendingMetricUpdatesResponse) MarshalTo(dAtA []byte) (int, error) {
+func (m *QueryAllPendingMetricsResponse) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
-func (m *QueryAllPendingMetricUpdatesResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+func (m *QueryAllPendingMetricsResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
 	_ = l
-	if len(m.PendingUpdates) > 0 {
-		for iNdEx := len(m.PendingUpdates) - 1; iNdEx >= 0; iNdEx-- {
+	if len(m.Metrics) > 0 {
+		for iNdEx := len(m.Metrics) - 1; iNdEx >= 0; iNdEx-- {
 			{
-				size, err := m.PendingUpdates[iNdEx].MarshalToSizedBuffer(dAtA[:i])
+				size, err := m.Metrics[iNdEx].MarshalToSizedBuffer(dAtA[:i])
 				if err != nil {
 					return 0, err
 				}
@@ -1019,7 +1023,7 @@ func (m *QueryAllPendingMetricUpdatesResponse) MarshalToSizedBuffer(dAtA []byte)
 	return len(dAtA) - i, nil
 }
 
-func (m *QueryPendingMetricUpdatesRequest) Marshal() (dAtA []byte, err error) {
+func (m *QueryPendingMetricsRequest) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalToSizedBuffer(dAtA[:size])
@@ -1029,12 +1033,12 @@ func (m *QueryPendingMetricUpdatesRequest) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *QueryPendingMetricUpdatesRequest) MarshalTo(dAtA []byte) (int, error) {
+func (m *QueryPendingMetricsRequest) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
-func (m *QueryPendingMetricUpdatesRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+func (m *QueryPendingMetricsRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
@@ -1056,7 +1060,7 @@ func (m *QueryPendingMetricUpdatesRequest) MarshalToSizedBuffer(dAtA []byte) (in
 	return len(dAtA) - i, nil
 }
 
-func (m *QueryPendingMetricUpdatesResponse) Marshal() (dAtA []byte, err error) {
+func (m *QueryPendingMetricsResponse) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalToSizedBuffer(dAtA[:size])
@@ -1066,20 +1070,20 @@ func (m *QueryPendingMetricUpdatesResponse) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *QueryPendingMetricUpdatesResponse) MarshalTo(dAtA []byte) (int, error) {
+func (m *QueryPendingMetricsResponse) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
-func (m *QueryPendingMetricUpdatesResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+func (m *QueryPendingMetricsResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
 	_ = l
-	if len(m.PendingUpdates) > 0 {
-		for iNdEx := len(m.PendingUpdates) - 1; iNdEx >= 0; iNdEx-- {
+	if len(m.Metrics) > 0 {
+		for iNdEx := len(m.Metrics) - 1; iNdEx >= 0; iNdEx-- {
 			{
-				size, err := m.PendingUpdates[iNdEx].MarshalToSizedBuffer(dAtA[:i])
+				size, err := m.Metrics[iNdEx].MarshalToSizedBuffer(dAtA[:i])
 				if err != nil {
 					return 0, err
 				}
@@ -1181,7 +1185,7 @@ func (m *QueryActiveOraclesResponse) Size() (n int) {
 	return n
 }
 
-func (m *QueryAllPendingMetricUpdatesRequest) Size() (n int) {
+func (m *QueryAllPendingMetricsRequest) Size() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -1190,14 +1194,14 @@ func (m *QueryAllPendingMetricUpdatesRequest) Size() (n int) {
 	return n
 }
 
-func (m *QueryAllPendingMetricUpdatesResponse) Size() (n int) {
+func (m *QueryAllPendingMetricsResponse) Size() (n int) {
 	if m == nil {
 		return 0
 	}
 	var l int
 	_ = l
-	if len(m.PendingUpdates) > 0 {
-		for _, e := range m.PendingUpdates {
+	if len(m.Metrics) > 0 {
+		for _, e := range m.Metrics {
 			l = e.Size()
 			n += 1 + l + sovQuery(uint64(l))
 		}
@@ -1205,7 +1209,7 @@ func (m *QueryAllPendingMetricUpdatesResponse) Size() (n int) {
 	return n
 }
 
-func (m *QueryPendingMetricUpdatesRequest) Size() (n int) {
+func (m *QueryPendingMetricsRequest) Size() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -1222,14 +1226,14 @@ func (m *QueryPendingMetricUpdatesRequest) Size() (n int) {
 	return n
 }
 
-func (m *QueryPendingMetricUpdatesResponse) Size() (n int) {
+func (m *QueryPendingMetricsResponse) Size() (n int) {
 	if m == nil {
 		return 0
 	}
 	var l int
 	_ = l
-	if len(m.PendingUpdates) > 0 {
-		for _, e := range m.PendingUpdates {
+	if len(m.Metrics) > 0 {
+		for _, e := range m.Metrics {
 			l = e.Size()
 			n += 1 + l + sovQuery(uint64(l))
 		}
@@ -1699,7 +1703,7 @@ func (m *QueryActiveOraclesResponse) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *QueryAllPendingMetricUpdatesRequest) Unmarshal(dAtA []byte) error {
+func (m *QueryAllPendingMetricsRequest) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -1722,10 +1726,10 @@ func (m *QueryAllPendingMetricUpdatesRequest) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: QueryAllPendingMetricUpdatesRequest: wiretype end group for non-group")
+			return fmt.Errorf("proto: QueryAllPendingMetricsRequest: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: QueryAllPendingMetricUpdatesRequest: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: QueryAllPendingMetricsRequest: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		default:
@@ -1749,7 +1753,7 @@ func (m *QueryAllPendingMetricUpdatesRequest) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *QueryAllPendingMetricUpdatesResponse) Unmarshal(dAtA []byte) error {
+func (m *QueryAllPendingMetricsResponse) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -1772,15 +1776,15 @@ func (m *QueryAllPendingMetricUpdatesResponse) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: QueryAllPendingMetricUpdatesResponse: wiretype end group for non-group")
+			return fmt.Errorf("proto: QueryAllPendingMetricsResponse: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: QueryAllPendingMetricUpdatesResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: QueryAllPendingMetricsResponse: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field PendingUpdates", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field Metrics", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -1807,8 +1811,8 @@ func (m *QueryAllPendingMetricUpdatesResponse) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.PendingUpdates = append(m.PendingUpdates, PendingMetricUpdate{})
-			if err := m.PendingUpdates[len(m.PendingUpdates)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+			m.Metrics = append(m.Metrics, Metric{})
+			if err := m.Metrics[len(m.Metrics)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex
@@ -1833,7 +1837,7 @@ func (m *QueryAllPendingMetricUpdatesResponse) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *QueryPendingMetricUpdatesRequest) Unmarshal(dAtA []byte) error {
+func (m *QueryPendingMetricsRequest) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -1856,10 +1860,10 @@ func (m *QueryPendingMetricUpdatesRequest) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: QueryPendingMetricUpdatesRequest: wiretype end group for non-group")
+			return fmt.Errorf("proto: QueryPendingMetricsRequest: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: QueryPendingMetricUpdatesRequest: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: QueryPendingMetricsRequest: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
@@ -1947,7 +1951,7 @@ func (m *QueryPendingMetricUpdatesRequest) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *QueryPendingMetricUpdatesResponse) Unmarshal(dAtA []byte) error {
+func (m *QueryPendingMetricsResponse) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -1970,15 +1974,15 @@ func (m *QueryPendingMetricUpdatesResponse) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: QueryPendingMetricUpdatesResponse: wiretype end group for non-group")
+			return fmt.Errorf("proto: QueryPendingMetricsResponse: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: QueryPendingMetricUpdatesResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: QueryPendingMetricsResponse: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field PendingUpdates", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field Metrics", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -2005,8 +2009,8 @@ func (m *QueryPendingMetricUpdatesResponse) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.PendingUpdates = append(m.PendingUpdates, PendingMetricUpdate{})
-			if err := m.PendingUpdates[len(m.PendingUpdates)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+			m.Metrics = append(m.Metrics, Metric{})
+			if err := m.Metrics[len(m.Metrics)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex

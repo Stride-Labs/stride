@@ -27,6 +27,7 @@ var _ = math.Inf
 // proto package needs to be updated.
 const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 
+// Adds a new oracle
 type MsgAddOracle struct {
 	Creator      string `protobuf:"bytes,1,opt,name=creator,proto3" json:"creator,omitempty"`
 	ConnectionId string `protobuf:"bytes,2,opt,name=connection_id,json=connectionId,proto3" json:"connection_id,omitempty"`
@@ -115,6 +116,7 @@ func (m *MsgAddOracleResponse) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_MsgAddOracleResponse proto.InternalMessageInfo
 
+// Instantiates the oracle's CW contract
 type MsgInstantiateOracle struct {
 	Creator        string `protobuf:"bytes,1,opt,name=creator,proto3" json:"creator,omitempty"`
 	OracleChainId  string `protobuf:"bytes,2,opt,name=oracle_chain_id,json=oracleChainId,proto3" json:"oracle_chain_id,omitempty"`
@@ -211,6 +213,7 @@ func (m *MsgInstantiateOracleResponse) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_MsgInstantiateOracleResponse proto.InternalMessageInfo
 
+// Restore's a closed ICA channel for a given oracle
 type MsgRestoreOracleICA struct {
 	Creator       string `protobuf:"bytes,1,opt,name=creator,proto3" json:"creator,omitempty"`
 	OracleChainId string `protobuf:"bytes,2,opt,name=oracle_chain_id,json=oracleChainId,proto3" json:"oracle_chain_id,omitempty"`

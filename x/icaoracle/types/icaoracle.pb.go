@@ -22,6 +22,36 @@ var _ = math.Inf
 // proto package needs to be updated.
 const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 
+// MetricStatus indicates whether the Metric update ICA has been sent
+type MetricStatus int32
+
+const (
+	MetricStatus_METRIC_STATUS_UNSPECIFIED MetricStatus = 0
+	MetricStatus_METRIC_STATUS_QUEUED      MetricStatus = 1
+	MetricStatus_METRIC_STATUS_IN_PROGRESS MetricStatus = 2
+)
+
+var MetricStatus_name = map[int32]string{
+	0: "METRIC_STATUS_UNSPECIFIED",
+	1: "METRIC_STATUS_QUEUED",
+	2: "METRIC_STATUS_IN_PROGRESS",
+}
+
+var MetricStatus_value = map[string]int32{
+	"METRIC_STATUS_UNSPECIFIED": 0,
+	"METRIC_STATUS_QUEUED":      1,
+	"METRIC_STATUS_IN_PROGRESS": 2,
+}
+
+func (x MetricStatus) String() string {
+	return proto.EnumName(MetricStatus_name, int32(x))
+}
+
+func (MetricStatus) EnumDescriptor() ([]byte, []int) {
+	return fileDescriptor_842e38c1f0da9e66, []int{0}
+}
+
+// Oracle structure stores context about the CW oracle sitting a different chain
 type Oracle struct {
 	ChainId             string `protobuf:"bytes,1,opt,name=chain_id,json=chainId,proto3" json:"chain_id,omitempty"`
 	ConnectionId        string `protobuf:"bytes,2,opt,name=connection_id,json=connectionId,proto3" json:"connection_id,omitempty"`
@@ -122,12 +152,17 @@ func (m *Oracle) GetFlushPendingMetrics() bool {
 	return false
 }
 
+// Metric structure stores a generic metric using a key value structure
+// along with additional context
 type Metric struct {
-	Key        string    `protobuf:"bytes,1,opt,name=key,proto3" json:"key,omitempty"`
-	Value      string    `protobuf:"bytes,2,opt,name=value,proto3" json:"value,omitempty"`
-	MetricType string    `protobuf:"bytes,3,opt,name=metric_type,json=metricType,proto3" json:"metric_type,omitempty"`
-	UpdateTime uint64    `protobuf:"varint,4,opt,name=update_time,json=updateTime,proto3" json:"update_time,omitempty"`
-	Metadata   *Metadata `protobuf:"bytes,5,opt,name=metadata,proto3" json:"metadata,omitempty"`
+	Key               string       `protobuf:"bytes,1,opt,name=key,proto3" json:"key,omitempty"`
+	Value             string       `protobuf:"bytes,2,opt,name=value,proto3" json:"value,omitempty"`
+	MetricType        string       `protobuf:"bytes,3,opt,name=metric_type,json=metricType,proto3" json:"metric_type,omitempty"`
+	UpdateTime        int64        `protobuf:"varint,4,opt,name=update_time,json=updateTime,proto3" json:"update_time,omitempty"`
+	BlockHeight       int64        `protobuf:"varint,5,opt,name=block_height,json=blockHeight,proto3" json:"block_height,omitempty"`
+	Attributes        string       `protobuf:"bytes,6,opt,name=attributes,proto3" json:"attributes,omitempty"`
+	DestinationOracle string       `protobuf:"bytes,7,opt,name=destination_oracle,json=destinationOracle,proto3" json:"destination_oracle,omitempty"`
+	Status            MetricStatus `protobuf:"varint,8,opt,name=status,proto3,enum=stride.icaoracle.MetricStatus" json:"status,omitempty"`
 }
 
 func (m *Metric) Reset()         { *m = Metric{} }
@@ -184,72 +219,42 @@ func (m *Metric) GetMetricType() string {
 	return ""
 }
 
-func (m *Metric) GetUpdateTime() uint64 {
+func (m *Metric) GetUpdateTime() int64 {
 	if m != nil {
 		return m.UpdateTime
 	}
 	return 0
 }
 
-func (m *Metric) GetMetadata() *Metadata {
-	if m != nil {
-		return m.Metadata
-	}
-	return nil
-}
-
-type Metadata struct {
-	BlockHeight int64  `protobuf:"varint,1,opt,name=block_height,json=blockHeight,proto3" json:"block_height,omitempty"`
-	Attributes  string `protobuf:"bytes,2,opt,name=attributes,proto3" json:"attributes,omitempty"`
-}
-
-func (m *Metadata) Reset()         { *m = Metadata{} }
-func (m *Metadata) String() string { return proto.CompactTextString(m) }
-func (*Metadata) ProtoMessage()    {}
-func (*Metadata) Descriptor() ([]byte, []int) {
-	return fileDescriptor_842e38c1f0da9e66, []int{2}
-}
-func (m *Metadata) XXX_Unmarshal(b []byte) error {
-	return m.Unmarshal(b)
-}
-func (m *Metadata) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	if deterministic {
-		return xxx_messageInfo_Metadata.Marshal(b, m, deterministic)
-	} else {
-		b = b[:cap(b)]
-		n, err := m.MarshalToSizedBuffer(b)
-		if err != nil {
-			return nil, err
-		}
-		return b[:n], nil
-	}
-}
-func (m *Metadata) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_Metadata.Merge(m, src)
-}
-func (m *Metadata) XXX_Size() int {
-	return m.Size()
-}
-func (m *Metadata) XXX_DiscardUnknown() {
-	xxx_messageInfo_Metadata.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_Metadata proto.InternalMessageInfo
-
-func (m *Metadata) GetBlockHeight() int64 {
+func (m *Metric) GetBlockHeight() int64 {
 	if m != nil {
 		return m.BlockHeight
 	}
 	return 0
 }
 
-func (m *Metadata) GetAttributes() string {
+func (m *Metric) GetAttributes() string {
 	if m != nil {
 		return m.Attributes
 	}
 	return ""
 }
 
+func (m *Metric) GetDestinationOracle() string {
+	if m != nil {
+		return m.DestinationOracle
+	}
+	return ""
+}
+
+func (m *Metric) GetStatus() MetricStatus {
+	if m != nil {
+		return m.Status
+	}
+	return MetricStatus_METRIC_STATUS_UNSPECIFIED
+}
+
+// Attributes associated with a RedemptionRate metric update
 type RedemptionRateAttributes struct {
 	Denom     string `protobuf:"bytes,1,opt,name=denom,proto3" json:"denom,omitempty"`
 	BaseDenom string `protobuf:"bytes,2,opt,name=base_denom,json=baseDenom,proto3" json:"base_denom,omitempty"`
@@ -259,7 +264,7 @@ func (m *RedemptionRateAttributes) Reset()         { *m = RedemptionRateAttribut
 func (m *RedemptionRateAttributes) String() string { return proto.CompactTextString(m) }
 func (*RedemptionRateAttributes) ProtoMessage()    {}
 func (*RedemptionRateAttributes) Descriptor() ([]byte, []int) {
-	return fileDescriptor_842e38c1f0da9e66, []int{3}
+	return fileDescriptor_842e38c1f0da9e66, []int{2}
 }
 func (m *RedemptionRateAttributes) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -302,103 +307,52 @@ func (m *RedemptionRateAttributes) GetBaseDenom() string {
 	return ""
 }
 
-type PendingMetricUpdate struct {
-	Metric        *Metric `protobuf:"bytes,1,opt,name=metric,proto3" json:"metric,omitempty"`
-	OracleChainId string  `protobuf:"bytes,2,opt,name=oracle_chain_id,json=oracleChainId,proto3" json:"oracle_chain_id,omitempty"`
-}
-
-func (m *PendingMetricUpdate) Reset()         { *m = PendingMetricUpdate{} }
-func (m *PendingMetricUpdate) String() string { return proto.CompactTextString(m) }
-func (*PendingMetricUpdate) ProtoMessage()    {}
-func (*PendingMetricUpdate) Descriptor() ([]byte, []int) {
-	return fileDescriptor_842e38c1f0da9e66, []int{4}
-}
-func (m *PendingMetricUpdate) XXX_Unmarshal(b []byte) error {
-	return m.Unmarshal(b)
-}
-func (m *PendingMetricUpdate) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	if deterministic {
-		return xxx_messageInfo_PendingMetricUpdate.Marshal(b, m, deterministic)
-	} else {
-		b = b[:cap(b)]
-		n, err := m.MarshalToSizedBuffer(b)
-		if err != nil {
-			return nil, err
-		}
-		return b[:n], nil
-	}
-}
-func (m *PendingMetricUpdate) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_PendingMetricUpdate.Merge(m, src)
-}
-func (m *PendingMetricUpdate) XXX_Size() int {
-	return m.Size()
-}
-func (m *PendingMetricUpdate) XXX_DiscardUnknown() {
-	xxx_messageInfo_PendingMetricUpdate.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_PendingMetricUpdate proto.InternalMessageInfo
-
-func (m *PendingMetricUpdate) GetMetric() *Metric {
-	if m != nil {
-		return m.Metric
-	}
-	return nil
-}
-
-func (m *PendingMetricUpdate) GetOracleChainId() string {
-	if m != nil {
-		return m.OracleChainId
-	}
-	return ""
-}
-
 func init() {
+	proto.RegisterEnum("stride.icaoracle.MetricStatus", MetricStatus_name, MetricStatus_value)
 	proto.RegisterType((*Oracle)(nil), "stride.icaoracle.Oracle")
 	proto.RegisterType((*Metric)(nil), "stride.icaoracle.Metric")
-	proto.RegisterType((*Metadata)(nil), "stride.icaoracle.Metadata")
 	proto.RegisterType((*RedemptionRateAttributes)(nil), "stride.icaoracle.RedemptionRateAttributes")
-	proto.RegisterType((*PendingMetricUpdate)(nil), "stride.icaoracle.PendingMetricUpdate")
 }
 
 func init() { proto.RegisterFile("stride/icaoracle/icaoracle.proto", fileDescriptor_842e38c1f0da9e66) }
 
 var fileDescriptor_842e38c1f0da9e66 = []byte{
-	// 515 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x6c, 0x93, 0xcf, 0x6e, 0xd3, 0x40,
-	0x10, 0xc6, 0xeb, 0xa6, 0x75, 0x92, 0x49, 0xab, 0x46, 0x5b, 0xfe, 0x18, 0x24, 0x4c, 0x08, 0x12,
-	0x2a, 0x07, 0x12, 0x14, 0x04, 0xf7, 0x02, 0x07, 0x22, 0x35, 0x2a, 0x32, 0xe5, 0xc2, 0xc5, 0x5a,
-	0xef, 0x0e, 0xf1, 0xaa, 0xb1, 0xd7, 0xb2, 0x37, 0x11, 0x79, 0x0b, 0x8e, 0x3c, 0x03, 0x4f, 0xc2,
-	0xb1, 0x47, 0x8e, 0x28, 0x79, 0x11, 0xb4, 0xb3, 0x4e, 0x08, 0x88, 0xdb, 0xcc, 0xef, 0xfb, 0xb4,
-	0xf6, 0x7c, 0xb3, 0x0b, 0xbd, 0xca, 0x94, 0x4a, 0xe2, 0x50, 0x09, 0xae, 0x4b, 0x2e, 0x66, 0x3b,
-	0xd5, 0xa0, 0x28, 0xb5, 0xd1, 0xac, 0xeb, 0x1c, 0x83, 0x2d, 0xef, 0x7f, 0xdb, 0x07, 0xff, 0x92,
-	0x4a, 0x76, 0x0f, 0x5a, 0x22, 0xe5, 0x2a, 0x8f, 0x95, 0x0c, 0xbc, 0x9e, 0x77, 0xd6, 0x8e, 0x9a,
-	0xd4, 0x8f, 0x25, 0x7b, 0x0c, 0xc7, 0x42, 0xe7, 0x39, 0x0a, 0xa3, 0x34, 0xe9, 0xfb, 0xa4, 0x1f,
-	0xfd, 0x81, 0x63, 0xc9, 0x1e, 0x00, 0x88, 0x94, 0xe7, 0x39, 0xce, 0xac, 0xa3, 0x41, 0x8e, 0x76,
-	0x4d, 0xc6, 0x92, 0xdd, 0x85, 0x66, 0xa1, 0x4b, 0x63, 0xb5, 0x03, 0xd2, 0x7c, 0xdb, 0x8e, 0x25,
-	0x7b, 0x08, 0x1d, 0x25, 0x78, 0xcc, 0xa5, 0x2c, 0xb1, 0xaa, 0x82, 0x43, 0x12, 0x41, 0x09, 0x7e,
-	0xee, 0x08, 0x7b, 0x0a, 0x5d, 0xa1, 0x73, 0x53, 0x72, 0x61, 0xb6, 0x2e, 0x9f, 0x5c, 0x27, 0x1b,
-	0xbe, 0xb1, 0xde, 0x01, 0x9f, 0x0b, 0xa3, 0x16, 0x18, 0x34, 0x7b, 0xde, 0x59, 0x2b, 0xaa, 0x3b,
-	0x36, 0x82, 0xdb, 0x9f, 0x67, 0xf3, 0x2a, 0x8d, 0x0b, 0xcc, 0xa5, 0xca, 0xa7, 0x71, 0x86, 0xa6,
-	0x54, 0xa2, 0x0a, 0x5a, 0x64, 0x3b, 0x25, 0xf1, 0xbd, 0xd3, 0x26, 0x4e, 0xea, 0x7f, 0xf7, 0xc0,
-	0x77, 0x35, 0xeb, 0x42, 0xe3, 0x1a, 0x97, 0x75, 0x2a, 0xb6, 0x64, 0xb7, 0xe0, 0x70, 0xc1, 0x67,
-	0x73, 0xac, 0x93, 0x70, 0x8d, 0x1d, 0xc5, 0x1d, 0x1c, 0x9b, 0x65, 0x81, 0x75, 0x06, 0xe0, 0xd0,
-	0xd5, 0xb2, 0x20, 0xc3, 0xbc, 0x90, 0xdc, 0x60, 0x6c, 0x54, 0x86, 0x14, 0xc4, 0x41, 0x04, 0x0e,
-	0x5d, 0xa9, 0x0c, 0xd9, 0x2b, 0x68, 0x65, 0x68, 0xb8, 0xe4, 0x86, 0x53, 0x12, 0x9d, 0xd1, 0xfd,
-	0xc1, 0xbf, 0x4b, 0x1b, 0x4c, 0x6a, 0x47, 0xb4, 0xf5, 0xf6, 0x27, 0xd0, 0xda, 0x50, 0xf6, 0x08,
-	0x8e, 0x92, 0x99, 0x16, 0xd7, 0x71, 0x8a, 0x6a, 0x9a, 0x1a, 0xfa, 0xed, 0x46, 0xd4, 0x21, 0xf6,
-	0x8e, 0x10, 0x0b, 0x01, 0xb8, 0x31, 0xa5, 0x4a, 0xe6, 0x06, 0xab, 0x7a, 0x86, 0x1d, 0xd2, 0xbf,
-	0x84, 0x20, 0x42, 0x89, 0x59, 0x61, 0x77, 0x1b, 0x71, 0x83, 0xe7, 0x5b, 0xcd, 0x8e, 0x2e, 0x31,
-	0xd7, 0x59, 0x1d, 0x87, 0x6b, 0xec, 0xf6, 0x13, 0x5e, 0x61, 0xec, 0x24, 0x77, 0x62, 0xdb, 0x92,
-	0xb7, 0x16, 0xf4, 0x35, 0x9c, 0xfe, 0x15, 0xef, 0x47, 0x1a, 0x99, 0x3d, 0x07, 0xdf, 0xa5, 0x43,
-	0x87, 0x75, 0x46, 0xc1, 0x7f, 0x87, 0x2d, 0x95, 0x88, 0x6a, 0x1f, 0x7b, 0x02, 0x27, 0x4e, 0x88,
-	0xb7, 0x97, 0xd5, 0x7d, 0xec, 0xd8, 0xe1, 0x37, 0xee, 0xca, 0xbe, 0xbe, 0xf8, 0xb1, 0x0a, 0xbd,
-	0x9b, 0x55, 0xe8, 0xfd, 0x5a, 0x85, 0xde, 0xd7, 0x75, 0xb8, 0x77, 0xb3, 0x0e, 0xf7, 0x7e, 0xae,
-	0xc3, 0xbd, 0x4f, 0xa3, 0xa9, 0x32, 0xe9, 0x3c, 0x19, 0x08, 0x9d, 0x0d, 0x3f, 0xd0, 0xd7, 0x9e,
-	0x5d, 0xf0, 0xa4, 0x1a, 0xd6, 0xaf, 0x67, 0xf1, 0x72, 0xf8, 0x65, 0xe7, 0x09, 0xd9, 0x45, 0x56,
-	0x89, 0x4f, 0xef, 0xe7, 0xc5, 0xef, 0x00, 0x00, 0x00, 0xff, 0xff, 0x53, 0xcb, 0x81, 0xa5, 0x63,
-	0x03, 0x00, 0x00,
+	// 549 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x64, 0x93, 0xcf, 0x6e, 0xd3, 0x40,
+	0x10, 0xc6, 0xe3, 0x84, 0xba, 0xcd, 0x34, 0x80, 0x59, 0x02, 0xb8, 0x87, 0x9a, 0x10, 0x2e, 0x05,
+	0xa9, 0x89, 0x14, 0x04, 0xf7, 0xd0, 0x18, 0xb0, 0xd4, 0x36, 0xc1, 0x4e, 0x2e, 0x5c, 0xac, 0xf5,
+	0xee, 0x36, 0x5e, 0x35, 0xfe, 0x23, 0x7b, 0x1d, 0x91, 0xb7, 0xe0, 0xc8, 0x81, 0x07, 0xe2, 0xd8,
+	0x23, 0x47, 0x94, 0xbc, 0x08, 0xf2, 0xae, 0xd3, 0x06, 0xb8, 0xcd, 0x7c, 0xdf, 0xe7, 0xb5, 0xfd,
+	0x9b, 0x1d, 0xe8, 0xe4, 0x22, 0xe3, 0x94, 0xf5, 0x39, 0xc1, 0x49, 0x86, 0xc9, 0x62, 0xa7, 0xea,
+	0xa5, 0x59, 0x22, 0x12, 0x64, 0xa8, 0x44, 0xef, 0x56, 0xef, 0x7e, 0xaf, 0x83, 0x3e, 0x96, 0x25,
+	0x3a, 0x82, 0x03, 0x12, 0x62, 0x1e, 0xfb, 0x9c, 0x9a, 0x5a, 0x47, 0x3b, 0x69, 0xba, 0xfb, 0xb2,
+	0x77, 0x28, 0x7a, 0x09, 0xf7, 0x49, 0x12, 0xc7, 0x8c, 0x08, 0x9e, 0x48, 0xbf, 0x2e, 0xfd, 0xd6,
+	0x9d, 0xe8, 0x50, 0x74, 0x0c, 0x40, 0x42, 0x1c, 0xc7, 0x6c, 0x51, 0x26, 0x1a, 0x32, 0xd1, 0xac,
+	0x14, 0x87, 0xa2, 0x67, 0xb0, 0x9f, 0x26, 0x99, 0x28, 0xbd, 0x7b, 0xd2, 0xd3, 0xcb, 0xd6, 0xa1,
+	0xe8, 0x39, 0x1c, 0x72, 0x82, 0x7d, 0x4c, 0x69, 0xc6, 0xf2, 0xdc, 0xdc, 0x93, 0x26, 0x70, 0x82,
+	0x87, 0x4a, 0x41, 0xaf, 0xc0, 0x20, 0x49, 0x2c, 0x32, 0x4c, 0xc4, 0x6d, 0x4a, 0x97, 0xa9, 0x87,
+	0x5b, 0x7d, 0x1b, 0x7d, 0x0a, 0x3a, 0x26, 0x82, 0x2f, 0x99, 0xb9, 0xdf, 0xd1, 0x4e, 0x0e, 0xdc,
+	0xaa, 0x43, 0x03, 0x78, 0x72, 0xb5, 0x28, 0xf2, 0xd0, 0x4f, 0x59, 0x4c, 0x79, 0x3c, 0xf7, 0x23,
+	0x26, 0x32, 0x4e, 0x72, 0xf3, 0x40, 0xc6, 0x1e, 0x4b, 0x73, 0xa2, 0xbc, 0x0b, 0x65, 0x75, 0x7f,
+	0xd4, 0x41, 0x57, 0x35, 0x32, 0xa0, 0x71, 0xcd, 0x56, 0x15, 0x95, 0xb2, 0x44, 0x6d, 0xd8, 0x5b,
+	0xe2, 0x45, 0xc1, 0x2a, 0x12, 0xaa, 0x29, 0x7f, 0x45, 0x1d, 0xec, 0x8b, 0x55, 0xca, 0x2a, 0x06,
+	0xa0, 0xa4, 0xe9, 0x2a, 0x95, 0x81, 0x22, 0xa5, 0x58, 0x30, 0x5f, 0xf0, 0x88, 0x49, 0x10, 0x0d,
+	0x17, 0x94, 0x34, 0xe5, 0x11, 0x43, 0x2f, 0xa0, 0x15, 0x2c, 0x12, 0x72, 0xed, 0x87, 0x8c, 0xcf,
+	0x43, 0x21, 0x69, 0x34, 0xdc, 0x43, 0xa9, 0x7d, 0x92, 0x12, 0xb2, 0x00, 0xb0, 0x10, 0x19, 0x0f,
+	0x0a, 0xc1, 0xb6, 0x20, 0x76, 0x14, 0x74, 0x0a, 0x88, 0xb2, 0x5c, 0xf0, 0x18, 0xcb, 0x69, 0xa9,
+	0x41, 0x4b, 0x1e, 0x4d, 0xf7, 0xd1, 0x8e, 0x53, 0x8d, 0xfd, 0x1d, 0xe8, 0xb9, 0xc0, 0xa2, 0x50,
+	0x2c, 0x1e, 0x0c, 0xac, 0xde, 0xbf, 0x97, 0xa4, 0xa7, 0x28, 0x78, 0x32, 0xe5, 0x56, 0xe9, 0xee,
+	0x18, 0x4c, 0x97, 0x51, 0x16, 0xa5, 0xe5, 0x59, 0x2e, 0x16, 0x6c, 0x78, 0xf7, 0x09, 0x6d, 0xd8,
+	0xa3, 0x2c, 0x4e, 0xa2, 0x8a, 0x98, 0x6a, 0xca, 0x0b, 0x12, 0xe0, 0x9c, 0xf9, 0xca, 0x52, 0xe0,
+	0x9a, 0xa5, 0x32, 0x2a, 0x85, 0xd7, 0x57, 0xd0, 0xda, 0x7d, 0x11, 0x3a, 0x86, 0xa3, 0x0b, 0x7b,
+	0xea, 0x3a, 0x67, 0xbe, 0x37, 0x1d, 0x4e, 0x67, 0x9e, 0x3f, 0xbb, 0xf4, 0x26, 0xf6, 0x99, 0xf3,
+	0xc1, 0xb1, 0x47, 0x46, 0x0d, 0x99, 0xd0, 0xfe, 0xdb, 0xfe, 0x3c, 0xb3, 0x67, 0xf6, 0xc8, 0xd0,
+	0xfe, 0x7f, 0xd0, 0xb9, 0xf4, 0x27, 0xee, 0xf8, 0xa3, 0x6b, 0x7b, 0x9e, 0x51, 0x7f, 0x7f, 0xfe,
+	0x73, 0x6d, 0x69, 0x37, 0x6b, 0x4b, 0xfb, 0xbd, 0xb6, 0xb4, 0x6f, 0x1b, 0xab, 0x76, 0xb3, 0xb1,
+	0x6a, 0xbf, 0x36, 0x56, 0xed, 0xcb, 0x60, 0xce, 0x45, 0x58, 0x04, 0x3d, 0x92, 0x44, 0x7d, 0x4f,
+	0x42, 0x38, 0x3d, 0xc7, 0x41, 0xde, 0xaf, 0xf6, 0x6a, 0xf9, 0xb6, 0xff, 0x75, 0x67, 0xb9, 0xca,
+	0x11, 0xe7, 0x81, 0x2e, 0x37, 0xeb, 0xcd, 0x9f, 0x00, 0x00, 0x00, 0xff, 0xff, 0x88, 0x24, 0x09,
+	0x84, 0x7d, 0x03, 0x00, 0x00,
 }
 
 func (m *Oracle) Marshal() (dAtA []byte, err error) {
@@ -506,17 +460,29 @@ func (m *Metric) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	_ = i
 	var l int
 	_ = l
-	if m.Metadata != nil {
-		{
-			size, err := m.Metadata.MarshalToSizedBuffer(dAtA[:i])
-			if err != nil {
-				return 0, err
-			}
-			i -= size
-			i = encodeVarintIcaoracle(dAtA, i, uint64(size))
-		}
+	if m.Status != 0 {
+		i = encodeVarintIcaoracle(dAtA, i, uint64(m.Status))
 		i--
-		dAtA[i] = 0x2a
+		dAtA[i] = 0x40
+	}
+	if len(m.DestinationOracle) > 0 {
+		i -= len(m.DestinationOracle)
+		copy(dAtA[i:], m.DestinationOracle)
+		i = encodeVarintIcaoracle(dAtA, i, uint64(len(m.DestinationOracle)))
+		i--
+		dAtA[i] = 0x3a
+	}
+	if len(m.Attributes) > 0 {
+		i -= len(m.Attributes)
+		copy(dAtA[i:], m.Attributes)
+		i = encodeVarintIcaoracle(dAtA, i, uint64(len(m.Attributes)))
+		i--
+		dAtA[i] = 0x32
+	}
+	if m.BlockHeight != 0 {
+		i = encodeVarintIcaoracle(dAtA, i, uint64(m.BlockHeight))
+		i--
+		dAtA[i] = 0x28
 	}
 	if m.UpdateTime != 0 {
 		i = encodeVarintIcaoracle(dAtA, i, uint64(m.UpdateTime))
@@ -543,41 +509,6 @@ func (m *Metric) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 		i = encodeVarintIcaoracle(dAtA, i, uint64(len(m.Key)))
 		i--
 		dAtA[i] = 0xa
-	}
-	return len(dAtA) - i, nil
-}
-
-func (m *Metadata) Marshal() (dAtA []byte, err error) {
-	size := m.Size()
-	dAtA = make([]byte, size)
-	n, err := m.MarshalToSizedBuffer(dAtA[:size])
-	if err != nil {
-		return nil, err
-	}
-	return dAtA[:n], nil
-}
-
-func (m *Metadata) MarshalTo(dAtA []byte) (int, error) {
-	size := m.Size()
-	return m.MarshalToSizedBuffer(dAtA[:size])
-}
-
-func (m *Metadata) MarshalToSizedBuffer(dAtA []byte) (int, error) {
-	i := len(dAtA)
-	_ = i
-	var l int
-	_ = l
-	if len(m.Attributes) > 0 {
-		i -= len(m.Attributes)
-		copy(dAtA[i:], m.Attributes)
-		i = encodeVarintIcaoracle(dAtA, i, uint64(len(m.Attributes)))
-		i--
-		dAtA[i] = 0x12
-	}
-	if m.BlockHeight != 0 {
-		i = encodeVarintIcaoracle(dAtA, i, uint64(m.BlockHeight))
-		i--
-		dAtA[i] = 0x8
 	}
 	return len(dAtA) - i, nil
 }
@@ -613,48 +544,6 @@ func (m *RedemptionRateAttributes) MarshalToSizedBuffer(dAtA []byte) (int, error
 		i -= len(m.Denom)
 		copy(dAtA[i:], m.Denom)
 		i = encodeVarintIcaoracle(dAtA, i, uint64(len(m.Denom)))
-		i--
-		dAtA[i] = 0xa
-	}
-	return len(dAtA) - i, nil
-}
-
-func (m *PendingMetricUpdate) Marshal() (dAtA []byte, err error) {
-	size := m.Size()
-	dAtA = make([]byte, size)
-	n, err := m.MarshalToSizedBuffer(dAtA[:size])
-	if err != nil {
-		return nil, err
-	}
-	return dAtA[:n], nil
-}
-
-func (m *PendingMetricUpdate) MarshalTo(dAtA []byte) (int, error) {
-	size := m.Size()
-	return m.MarshalToSizedBuffer(dAtA[:size])
-}
-
-func (m *PendingMetricUpdate) MarshalToSizedBuffer(dAtA []byte) (int, error) {
-	i := len(dAtA)
-	_ = i
-	var l int
-	_ = l
-	if len(m.OracleChainId) > 0 {
-		i -= len(m.OracleChainId)
-		copy(dAtA[i:], m.OracleChainId)
-		i = encodeVarintIcaoracle(dAtA, i, uint64(len(m.OracleChainId)))
-		i--
-		dAtA[i] = 0x12
-	}
-	if m.Metric != nil {
-		{
-			size, err := m.Metric.MarshalToSizedBuffer(dAtA[:i])
-			if err != nil {
-				return 0, err
-			}
-			i -= size
-			i = encodeVarintIcaoracle(dAtA, i, uint64(size))
-		}
 		i--
 		dAtA[i] = 0xa
 	}
@@ -732,25 +621,19 @@ func (m *Metric) Size() (n int) {
 	if m.UpdateTime != 0 {
 		n += 1 + sovIcaoracle(uint64(m.UpdateTime))
 	}
-	if m.Metadata != nil {
-		l = m.Metadata.Size()
-		n += 1 + l + sovIcaoracle(uint64(l))
-	}
-	return n
-}
-
-func (m *Metadata) Size() (n int) {
-	if m == nil {
-		return 0
-	}
-	var l int
-	_ = l
 	if m.BlockHeight != 0 {
 		n += 1 + sovIcaoracle(uint64(m.BlockHeight))
 	}
 	l = len(m.Attributes)
 	if l > 0 {
 		n += 1 + l + sovIcaoracle(uint64(l))
+	}
+	l = len(m.DestinationOracle)
+	if l > 0 {
+		n += 1 + l + sovIcaoracle(uint64(l))
+	}
+	if m.Status != 0 {
+		n += 1 + sovIcaoracle(uint64(m.Status))
 	}
 	return n
 }
@@ -766,23 +649,6 @@ func (m *RedemptionRateAttributes) Size() (n int) {
 		n += 1 + l + sovIcaoracle(uint64(l))
 	}
 	l = len(m.BaseDenom)
-	if l > 0 {
-		n += 1 + l + sovIcaoracle(uint64(l))
-	}
-	return n
-}
-
-func (m *PendingMetricUpdate) Size() (n int) {
-	if m == nil {
-		return 0
-	}
-	var l int
-	_ = l
-	if m.Metric != nil {
-		l = m.Metric.Size()
-		n += 1 + l + sovIcaoracle(uint64(l))
-	}
-	l = len(m.OracleChainId)
 	if l > 0 {
 		n += 1 + l + sovIcaoracle(uint64(l))
 	}
@@ -1216,98 +1082,12 @@ func (m *Metric) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				m.UpdateTime |= uint64(b&0x7F) << shift
+				m.UpdateTime |= int64(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}
 			}
 		case 5:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Metadata", wireType)
-			}
-			var msglen int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowIcaoracle
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				msglen |= int(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			if msglen < 0 {
-				return ErrInvalidLengthIcaoracle
-			}
-			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return ErrInvalidLengthIcaoracle
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			if m.Metadata == nil {
-				m.Metadata = &Metadata{}
-			}
-			if err := m.Metadata.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
-				return err
-			}
-			iNdEx = postIndex
-		default:
-			iNdEx = preIndex
-			skippy, err := skipIcaoracle(dAtA[iNdEx:])
-			if err != nil {
-				return err
-			}
-			if (skippy < 0) || (iNdEx+skippy) < 0 {
-				return ErrInvalidLengthIcaoracle
-			}
-			if (iNdEx + skippy) > l {
-				return io.ErrUnexpectedEOF
-			}
-			iNdEx += skippy
-		}
-	}
-
-	if iNdEx > l {
-		return io.ErrUnexpectedEOF
-	}
-	return nil
-}
-func (m *Metadata) Unmarshal(dAtA []byte) error {
-	l := len(dAtA)
-	iNdEx := 0
-	for iNdEx < l {
-		preIndex := iNdEx
-		var wire uint64
-		for shift := uint(0); ; shift += 7 {
-			if shift >= 64 {
-				return ErrIntOverflowIcaoracle
-			}
-			if iNdEx >= l {
-				return io.ErrUnexpectedEOF
-			}
-			b := dAtA[iNdEx]
-			iNdEx++
-			wire |= uint64(b&0x7F) << shift
-			if b < 0x80 {
-				break
-			}
-		}
-		fieldNum := int32(wire >> 3)
-		wireType := int(wire & 0x7)
-		if wireType == 4 {
-			return fmt.Errorf("proto: Metadata: wiretype end group for non-group")
-		}
-		if fieldNum <= 0 {
-			return fmt.Errorf("proto: Metadata: illegal tag %d (wire type %d)", fieldNum, wire)
-		}
-		switch fieldNum {
-		case 1:
 			if wireType != 0 {
 				return fmt.Errorf("proto: wrong wireType = %d for field BlockHeight", wireType)
 			}
@@ -1326,7 +1106,7 @@ func (m *Metadata) Unmarshal(dAtA []byte) error {
 					break
 				}
 			}
-		case 2:
+		case 6:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field Attributes", wireType)
 			}
@@ -1358,6 +1138,57 @@ func (m *Metadata) Unmarshal(dAtA []byte) error {
 			}
 			m.Attributes = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
+		case 7:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field DestinationOracle", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowIcaoracle
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthIcaoracle
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthIcaoracle
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.DestinationOracle = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 8:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Status", wireType)
+			}
+			m.Status = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowIcaoracle
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.Status |= MetricStatus(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
 		default:
 			iNdEx = preIndex
 			skippy, err := skipIcaoracle(dAtA[iNdEx:])
@@ -1471,124 +1302,6 @@ func (m *RedemptionRateAttributes) Unmarshal(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			m.BaseDenom = string(dAtA[iNdEx:postIndex])
-			iNdEx = postIndex
-		default:
-			iNdEx = preIndex
-			skippy, err := skipIcaoracle(dAtA[iNdEx:])
-			if err != nil {
-				return err
-			}
-			if (skippy < 0) || (iNdEx+skippy) < 0 {
-				return ErrInvalidLengthIcaoracle
-			}
-			if (iNdEx + skippy) > l {
-				return io.ErrUnexpectedEOF
-			}
-			iNdEx += skippy
-		}
-	}
-
-	if iNdEx > l {
-		return io.ErrUnexpectedEOF
-	}
-	return nil
-}
-func (m *PendingMetricUpdate) Unmarshal(dAtA []byte) error {
-	l := len(dAtA)
-	iNdEx := 0
-	for iNdEx < l {
-		preIndex := iNdEx
-		var wire uint64
-		for shift := uint(0); ; shift += 7 {
-			if shift >= 64 {
-				return ErrIntOverflowIcaoracle
-			}
-			if iNdEx >= l {
-				return io.ErrUnexpectedEOF
-			}
-			b := dAtA[iNdEx]
-			iNdEx++
-			wire |= uint64(b&0x7F) << shift
-			if b < 0x80 {
-				break
-			}
-		}
-		fieldNum := int32(wire >> 3)
-		wireType := int(wire & 0x7)
-		if wireType == 4 {
-			return fmt.Errorf("proto: PendingMetricUpdate: wiretype end group for non-group")
-		}
-		if fieldNum <= 0 {
-			return fmt.Errorf("proto: PendingMetricUpdate: illegal tag %d (wire type %d)", fieldNum, wire)
-		}
-		switch fieldNum {
-		case 1:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Metric", wireType)
-			}
-			var msglen int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowIcaoracle
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				msglen |= int(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			if msglen < 0 {
-				return ErrInvalidLengthIcaoracle
-			}
-			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return ErrInvalidLengthIcaoracle
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			if m.Metric == nil {
-				m.Metric = &Metric{}
-			}
-			if err := m.Metric.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
-				return err
-			}
-			iNdEx = postIndex
-		case 2:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field OracleChainId", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowIcaoracle
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthIcaoracle
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return ErrInvalidLengthIcaoracle
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.OracleChainId = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
 		default:
 			iNdEx = preIndex
