@@ -249,14 +249,14 @@ func (k Keeper) GetValidatorDelegationDifferences(ctx sdk.Context, hostZone type
 	return delegationDeltas, nil
 }
 
-// This will get the target validator delegation for the given hostZone
-// such that the total validator delegation is equal to the finalDelegation
-// output key is ADDRESS not NAME
-func (k Keeper) GetTargetValAmtsForHostZone(ctx sdk.Context, hostZone types.HostZone, finalDelegation sdkmath.Int) (map[string]sdkmath.Int, error) {
+// This will split a total delegation amount across validators, according to weights
+// It returns a map of each portion, key'd on validator address
+// Validator's with a slash query in progres are excluded
+func (k Keeper) GetTargetValAmtsForHostZone(ctx sdk.Context, hostZone types.HostZone, totalDelegation sdkmath.Int) (map[string]sdkmath.Int, error) {
 	// Confirm the expected delegation amount is greater than 0
-	if !finalDelegation.IsPositive() {
+	if !totalDelegation.IsPositive() {
 		return nil, errorsmod.Wrapf(sdkerrors.ErrInvalidRequest,
-			"Cannot calculate target delegation if final amount is less than or equal to zero (%v)", finalDelegation)
+			"Cannot calculate target delegation if final amount is less than or equal to zero (%v)", totalDelegation)
 	}
 
 	// Ignore any validators with a slash query in progress
@@ -290,9 +290,9 @@ func (k Keeper) GetTargetValAmtsForHostZone(ctx sdk.Context, hostZone types.Host
 	for i, validator := range validators {
 		// For the last element, we need to make sure that the totalAllocated is equal to the finalDelegation
 		if i == len(validators)-1 {
-			targetUnbondingsByValidator[validator.Address] = finalDelegation.Sub(totalAllocated)
+			targetUnbondingsByValidator[validator.Address] = totalDelegation.Sub(totalAllocated)
 		} else {
-			delegateAmt := sdkmath.NewIntFromUint64(validator.Weight).Mul(finalDelegation).Quo(sdkmath.NewIntFromUint64(totalWeight))
+			delegateAmt := sdkmath.NewIntFromUint64(validator.Weight).Mul(totalDelegation).Quo(sdkmath.NewIntFromUint64(totalWeight))
 			totalAllocated = totalAllocated.Add(delegateAmt)
 			targetUnbondingsByValidator[validator.Address] = delegateAmt
 		}
