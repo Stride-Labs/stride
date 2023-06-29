@@ -11,7 +11,15 @@ option go_package = "github.com/Stride-Labs/stride/v10/x/liquidgov/types";
 
 // Msg defines the Msg service.
 service Msg {
-  //rpc LockupTokens(MsgLockupTokens) returns (MsgLockupTokensResponse);
-  //rpc UnlockTokens(MsgUnlockTokens) returns (MsgUnlockTokensResponse);
-  //rpc LiquidVote(MsgLiquidVote) returns (MsgLiquidVoteResponse);
+  rpc UpdateProposal(MsgUpdateProposal) returns (MsgUpdateProposalResponse); 
 }
+
+message MsgUpdateProposal {
+  option (cosmos.msg.v1.signer) = "creator";
+
+  string creator = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+  string host_zone_id = 2;
+  uint64 proposal_id = 3;
+}
+
+message MsgUpdateProposalResponse {}

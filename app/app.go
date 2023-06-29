@@ -144,6 +144,11 @@ import (
 	stakeibcmodulekeeper "github.com/Stride-Labs/stride/v10/x/stakeibc/keeper"
 	stakeibcmoduletypes "github.com/Stride-Labs/stride/v10/x/stakeibc/types"
 
+	liquidgovmodule "github.com/Stride-Labs/stride/v10/x/liquidgov"
+	//stakeibcclient "github.com/Stride-Labs/stride/v10/x/stakeibc/client"
+	liquidgovmodulekeeper "github.com/Stride-Labs/stride/v10/x/liquidgov/keeper"
+	liquidgovmoduletypes "github.com/Stride-Labs/stride/v10/x/liquidgov/types"
+
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	ibctestingtypes "github.com/cosmos/ibc-go/v7/testing/types"
 )
@@ -201,6 +206,7 @@ var (
 		claimvesting.AppModuleBasic{},
 		// monitoringp.AppModuleBasic{},
 		stakeibcmodule.AppModuleBasic{},
+		liquidgovmodule.AppModuleBasic{},		
 		epochsmodule.AppModuleBasic{},
 		interchainquery.AppModuleBasic{},
 		ica.AppModuleBasic{},
@@ -223,6 +229,7 @@ var (
 		govtypes.ModuleName:                     {authtypes.Burner},
 		ibctransfertypes.ModuleName:             {authtypes.Minter, authtypes.Burner},
 		stakeibcmoduletypes.ModuleName:          {authtypes.Minter, authtypes.Burner, authtypes.Staking},
+		liquidgovmoduletypes.ModuleName:         nil,
 		claimtypes.ModuleName:                   nil,
 		interchainquerytypes.ModuleName:         nil,
 		icatypes.ModuleName:                     nil,
@@ -292,6 +299,7 @@ type StrideApp struct {
 
 	ScopedStakeibcKeeper capabilitykeeper.ScopedKeeper
 	StakeibcKeeper       stakeibcmodulekeeper.Keeper
+	LiquidgovKeeper      liquidgovmodulekeeper.Keeper
 
 	EpochsKeeper          epochsmodulekeeper.Keeper
 	InterchainqueryKeeper interchainquerykeeper.Keeper
@@ -336,6 +344,7 @@ func NewStrideApp(
 		govtypes.StoreKey, paramstypes.StoreKey, ibchost.StoreKey, upgradetypes.StoreKey, feegrant.StoreKey,
 		evidencetypes.StoreKey, ibctransfertypes.StoreKey, capabilitytypes.StoreKey, // monitoringptypes.StoreKey,
 		stakeibcmoduletypes.StoreKey,
+		liquidgovmoduletypes.StoreKey,
 		autopilottypes.StoreKey,
 		epochsmoduletypes.StoreKey,
 		interchainquerytypes.StoreKey,
@@ -559,11 +568,31 @@ func NewStrideApp(
 	govKeeper.SetLegacyRouter(govRouter)
 	app.GovKeeper = *govKeeper
 
+	app.LiquidgovKeeper = *liquidgovmodulekeeper.NewKeeper(
+		appCodec,
+		keys[liquidgovmoduletypes.StoreKey],
+		keys[liquidgovmoduletypes.MemStoreKey],
+		app.GetSubspace(liquidgovmoduletypes.ModuleName),
+
+		app.StakeibcKeeper,
+		app.AccountKeeper,
+		app.BankKeeper,
+		app.InterchainqueryKeeper,
+		app.IcacallbacksKeeper,
+	)
+	liquidgovModule := liquidgovmodule.NewAppModule(appCodec, app.LiquidgovKeeper, app.AccountKeeper, app.BankKeeper)
+
 	// Register ICQ callbacks
 	err := app.InterchainqueryKeeper.SetCallbackHandler(stakeibcmoduletypes.ModuleName, app.StakeibcKeeper.ICQCallbackHandler())
 	if err != nil {
 		return nil
 	}
+
+	err = app.InterchainqueryKeeper.SetCallbackHandler(liquidgovmoduletypes.ModuleName, app.LiquidgovKeeper.ICQCallbackHandler())
+	if err != nil {
+		return nil
+	}
+	
 
 	app.EpochsKeeper = *epochsKeeper.SetHooks(
 		epochsmoduletypes.NewMultiEpochHooks(
@@ -687,6 +716,7 @@ func NewStrideApp(
 		transferModule,
 		// monitoringModule,
 		stakeibcModule,
+		liquidgovModule,
 		epochsModule,
 		interchainQueryModule,
 		icaModule,
@@ -722,6 +752,7 @@ func NewStrideApp(
 		// monitoringptypes.ModuleName,
 		icatypes.ModuleName,
 		stakeibcmoduletypes.ModuleName,
+		liquidgovmoduletypes.ModuleName,
 		epochsmoduletypes.ModuleName,
 		interchainquerytypes.ModuleName,
 		recordsmoduletypes.ModuleName,
@@ -754,6 +785,7 @@ func NewStrideApp(
 		// monitoringptypes.ModuleName,
 		icatypes.ModuleName,
 		stakeibcmoduletypes.ModuleName,
+		liquidgovmoduletypes.ModuleName,
 		epochsmoduletypes.ModuleName,
 		interchainquerytypes.ModuleName,
 		recordsmoduletypes.ModuleName,
@@ -791,6 +823,7 @@ func NewStrideApp(
 		// monitoringptypes.ModuleName,
 		icatypes.ModuleName,
 		stakeibcmoduletypes.ModuleName,
+		liquidgovmoduletypes.ModuleName,
 		epochsmoduletypes.ModuleName,
 		interchainquerytypes.ModuleName,
 		recordsmoduletypes.ModuleName,

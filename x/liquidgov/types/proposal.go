@@ -12,3 +12,6 @@ func NewProposal(govProposal govtypesv1beta1.Proposal, hostZoneId string) (Propo
 
 	return p, nil
 }
+
+// Proposals is an array of proposal
+type Proposals []Proposal

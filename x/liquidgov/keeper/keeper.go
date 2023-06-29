@@ -11,6 +11,7 @@ import (
 
 	icacallbackskeeper "github.com/Stride-Labs/stride/v10/x/icacallbacks/keeper"
 	icqkeeper "github.com/Stride-Labs/stride/v10/x/interchainquery/keeper"
+	stakeibckeeper "github.com/Stride-Labs/stride/v10/x/stakeibc/keeper"
 
 	"github.com/Stride-Labs/stride/v10/x/liquidgov/types"
 )
@@ -22,7 +23,7 @@ type (
 		memKey     storetypes.StoreKey
 		paramstore paramtypes.Subspace
 
-		stakeibcKeeper        types.StakeibcKeeper
+		stakeibcKeeper        stakeibckeeper.Keeper
 		accountKeeper         types.AccountKeeper
 		bankKeeper            types.BankKeeper
 		InterchainQueryKeeper icqkeeper.Keeper
@@ -36,7 +37,7 @@ func NewKeeper(
 	memKey storetypes.StoreKey,
 	ps paramtypes.Subspace,
 
-	stakeibcKeeper types.StakeibcKeeper,
+	stakeibcKeeper stakeibckeeper.Keeper,
 	accountKeeper types.AccountKeeper,
 	bankKeeper types.BankKeeper,
 	interchainQueryKeeper icqkeeper.Keeper,
