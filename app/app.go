@@ -853,6 +853,7 @@ func NewStrideApp(
 	}
 
 	app.SetAnteHandler(anteHandler)
+	app.SetPostHandler(NewPostHandler(&app.StakeibcKeeper))
 	app.SetEndBlocker(app.EndBlocker)
 
 	if loadLatest {
