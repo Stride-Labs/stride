@@ -11,19 +11,14 @@ import (
 )
 
 func (s *KeeperTestSuite) SetupTestUpdateOracleCallback() types.Metric {
-	// Store pending metric update
+	// Store an IN_PROGRESS metric
 	metric := types.Metric{
-		Key:        "key1",
-		UpdateTime: 1,
+		Key:               "key1",
+		UpdateTime:        1,
+		DestinationOracle: HostChainId,
+		Status:            types.MetricStatus_METRIC_STATUS_IN_PROGRESS,
 	}
-	s.App.ICAOracleKeeper.SetMetricUpdateInProgress(s.Ctx, types.PendingMetricUpdate{
-		Metric:        &metric,
-		OracleChainId: HostChainId,
-	})
-
-	// Confirm update is stored
-	_, found := s.App.ICAOracleKeeper.GetPendingMetricUpdate(s.Ctx, metric.Key, HostChainId, metric.UpdateTime)
-	s.Require().True(found, "pending metric update should be in the store during setup")
+	s.App.ICAOracleKeeper.SetMetric(s.Ctx, metric)
 
 	return metric
 }
@@ -42,11 +37,13 @@ func (s *KeeperTestSuite) CallCallbackAndCheckState(ackStatus icacallbacktypes.A
 	ackResponse := icacallbacktypes.AcknowledgementResponse{
 		Status: ackStatus,
 	}
-	keeper.UpdateOracleCallback(s.App.ICAOracleKeeper, s.Ctx, channeltypes.Packet{}, &ackResponse, callbackBz)
+	err = keeper.UpdateOracleCallback(s.App.ICAOracleKeeper, s.Ctx, channeltypes.Packet{}, &ackResponse, callbackBz)
+	s.Require().NoError(err, "no error expected during callback")
 
-	// Confirm the pending update was removed
-	_, found := s.App.ICAOracleKeeper.GetPendingMetricUpdate(s.Ctx, metric.Key, HostChainId, metric.UpdateTime)
-	s.Require().True(found, "pending metric update should have been removed")
+	// Confirm the pending update was removed in the case of success/failure
+	expectedFound := ackStatus == icacallbacktypes.AckResponseStatus_TIMEOUT
+	_, actualFound := s.App.ICAOracleKeeper.GetMetric(s.Ctx, metric.GetMetricID())
+	s.Require().Equal(expectedFound, actualFound, "metric found")
 }
 
 func (s *KeeperTestSuite) TestUpdateOracleCallback_AckSuccess() {

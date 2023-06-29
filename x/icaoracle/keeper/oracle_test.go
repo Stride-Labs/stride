@@ -60,13 +60,17 @@ func (s *KeeperTestSuite) TestToggleOracle() {
 	oracleToToggle := oracles[1]
 
 	// Set the oracle to inactive
-	s.App.ICAOracleKeeper.ToggleOracle(s.Ctx, oracleToToggle.ChainId, false)
+	err := s.App.ICAOracleKeeper.ToggleOracle(s.Ctx, oracleToToggle.ChainId, false)
+	s.Require().NoError(err, "no error expected when toggling oracle")
+
 	oracle, found := s.App.ICAOracleKeeper.GetOracle(s.Ctx, oracleToToggle.ChainId)
 	s.Require().True(found, "oracle should have been found, but was not")
 	s.Require().False(oracle.Active, "oracle should have been marked inactive")
 
 	// Set it back to active
-	s.App.ICAOracleKeeper.ToggleOracle(s.Ctx, oracleToToggle.ChainId, true)
+	err = s.App.ICAOracleKeeper.ToggleOracle(s.Ctx, oracleToToggle.ChainId, true)
+	s.Require().NoError(err, "no error expected when toggling oracle")
+
 	oracle, found = s.App.ICAOracleKeeper.GetOracle(s.Ctx, oracleToToggle.ChainId)
 	s.Require().True(found, "oracle should have been found, but was not")
 	s.Require().True(oracle.Active, "oracle should have been marked as active")
@@ -82,7 +86,7 @@ func (s *KeeperTestSuite) TestGetOracleFromConnectionId() {
 	s.Require().Equal(expectedOracle, actualOracle)
 
 	// Attempt to get an oracle with a fake connectionId - should fail
-	actualOracle, found = s.App.ICAOracleKeeper.GetOracleFromConnectionId(s.Ctx, "fake-connection-id")
+	_, found = s.App.ICAOracleKeeper.GetOracleFromConnectionId(s.Ctx, "fake-connection-id")
 	s.Require().False(found, "oracle should not have been found, but it was")
 }
 

@@ -192,9 +192,12 @@ func (k msgServer) RestoreOracleICA(goCtx context.Context, msg *types.MsgRestore
 		return nil, errorsmod.Wrapf(err, "unable to register oracle interchain account")
 	}
 
-	// Enable the FlushPendingMetrics flag so any old metrics get resubmitted once the ICA channel opens back up
-	oracle.FlushPendingMetrics = true
-	k.SetOracle(ctx, oracle)
+	// Revert all pending metrics for this oracle back to status QUEUED
+	for _, metric := range k.GetAllMetrics(ctx) {
+		if metric.DestinationOracle == msg.OracleChainId && metric.Status == types.MetricStatus_METRIC_STATUS_IN_PROGRESS {
+			k.UpdateMetricStatus(ctx, metric, types.MetricStatus_METRIC_STATUS_QUEUED)
+		}
+	}
 
 	return &types.MsgRestoreOracleICAResponse{}, nil
 }

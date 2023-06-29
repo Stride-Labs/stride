@@ -14,8 +14,9 @@ import (
 )
 
 // Callback after an update oracle ICA
-//     If successful/failure: the metric is removed from the pending store
-//     If timeout: metric is left in pending store so it can be re-submitted
+//
+//	If successful/failure: the metric is removed from the pending store
+//	If timeout: metric is left in pending store so it can be re-submitted
 func UpdateOracleCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ackResponse *icacallbackstypes.AcknowledgementResponse, args []byte) error {
 	// Fetch callback args
 	updateOracleCallback := types.UpdateOracleCallback{}
@@ -36,8 +37,7 @@ func UpdateOracleCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet,
 	if ackResponse.Status == icacallbackstypes.AckResponseStatus_FAILURE {
 		k.Logger(ctx).Error(utils.LogICACallbackStatusWithHostZone(chainId, ICACallbackID_UpdateOracle, ackResponse.Status, packet))
 	} else {
-		k.Logger(ctx).Info(utils.LogICACallbackStatusWithHostZone(chainId, ICACallbackID_UpdateOracle,
-			icacallbackstypes.AckResponseStatus_SUCCESS, packet))
+		k.Logger(ctx).Info(utils.LogICACallbackStatusWithHostZone(chainId, ICACallbackID_UpdateOracle, ackResponse.Status, packet))
 	}
 
 	// Confirm the callback has a valid metric
@@ -45,10 +45,8 @@ func UpdateOracleCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet,
 		return errorsmod.Wrapf(types.ErrInvalidCallback, "metric is missing from callback: %+v", updateOracleCallback)
 	}
 
-	// Remove the metric from the pending store (aka mark update as complete)
-	metricKey := updateOracleCallback.Metric.Key
-	metricUpdateTime := updateOracleCallback.Metric.UpdateTime
-	k.SetMetricUpdateComplete(ctx, metricKey, updateOracleCallback.OracleChainId, metricUpdateTime)
+	// Remove the metric from the store (aka mark update as complete)
+	k.RemoveMetric(ctx, updateOracleCallback.Metric.GetMetricID())
 
 	return nil
 }

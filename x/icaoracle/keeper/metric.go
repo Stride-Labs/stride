@@ -63,7 +63,9 @@ func (k Keeper) GetAllMetrics(ctx sdk.Context) (metrics []types.Metric) {
 // Removes a metric from the store
 func (k Keeper) RemoveMetric(ctx sdk.Context, metricId string) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.MetricKeyPrefix)
-	store.Delete(types.KeyPrefix(metricId))
+	metricKey := types.KeyPrefix(metricId)
+	store.Delete(metricKey)
+	k.removeMetricFromQueue(ctx, metricKey)
 }
 
 // Updates the status of a metric which will consequently move it either
