@@ -14,8 +14,12 @@ func TestValidateGenesis(t *testing.T) {
 
 	validChainId := "chain"
 	validMetricKey := "key"
-	validUpdateTime := uint64(1)
-	validMetric := types.Metric{Key: validMetricKey, UpdateTime: validUpdateTime}
+	validUpdateTime := int64(1)
+	validMetric := types.Metric{
+		Key:               validMetricKey,
+		UpdateTime:        validUpdateTime,
+		DestinationOracle: validChainId,
+	}
 
 	tests := []struct {
 		name         string
@@ -28,11 +32,8 @@ func TestValidateGenesis(t *testing.T) {
 				Oracles: []types.Oracle{
 					{ChainId: validChainId},
 				},
-				QueuedMetrics: []types.Metric{
+				Metrics: []types.Metric{
 					validMetric,
-				},
-				PendingMetrics: []types.PendingMetricUpdate{
-					{Metric: &validMetric, OracleChainId: validChainId},
 				},
 			},
 			valid: true,
@@ -43,41 +44,20 @@ func TestValidateGenesis(t *testing.T) {
 				Oracles: []types.Oracle{
 					{ChainId: ""},
 				},
-				QueuedMetrics: []types.Metric{
+				Metrics: []types.Metric{
 					validMetric,
-				},
-				PendingMetrics: []types.PendingMetricUpdate{
-					{Metric: &validMetric, OracleChainId: validChainId},
 				},
 			},
 			valid: false,
 		},
 		{
-			name: "invalid queued metric",
+			name: "invalid metric",
 			genesisState: types.GenesisState{
 				Oracles: []types.Oracle{
 					{ChainId: validChainId},
 				},
-				QueuedMetrics: []types.Metric{
-					{Key: "", UpdateTime: validUpdateTime},
-				},
-				PendingMetrics: []types.PendingMetricUpdate{
-					{Metric: &validMetric, OracleChainId: validChainId},
-				},
-			},
-			valid: false,
-		},
-		{
-			name: "invalid pending metric",
-			genesisState: types.GenesisState{
-				Oracles: []types.Oracle{
-					{ChainId: validChainId},
-				},
-				QueuedMetrics: []types.Metric{
-					validMetric,
-				},
-				PendingMetrics: []types.PendingMetricUpdate{
-					{Metric: &validMetric, OracleChainId: ""},
+				Metrics: []types.Metric{
+					{Key: "", UpdateTime: validUpdateTime, DestinationOracle: validChainId},
 				},
 			},
 			valid: false,

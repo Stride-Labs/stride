@@ -7,10 +7,9 @@ import (
 // DefaultGenesis returns the default Capability genesis state
 func DefaultGenesis() *GenesisState {
 	return &GenesisState{
-		Params:         DefaultParams(),
-		Oracles:        []Oracle{},
-		QueuedMetrics:  []Metric{},
-		PendingMetrics: []PendingMetricUpdate{},
+		Params:  DefaultParams(),
+		Oracles: []Oracle{},
+		Metrics: []Metric{},
 	}
 }
 
@@ -25,14 +24,15 @@ func (gs GenesisState) Validate() error {
 			return errorsmod.Wrapf(ErrInvalidGenesisState, "oracle has empty chain ID")
 		}
 	}
-	for _, metric := range gs.QueuedMetrics {
-		if metric.Key == "" || metric.UpdateTime == 0 {
-			return errorsmod.Wrapf(ErrInvalidGenesisState, "metric has empty key or update time")
+	for _, metric := range gs.Metrics {
+		if metric.Key == "" {
+			return errorsmod.Wrapf(ErrInvalidGenesisState, "metric has missing key")
 		}
-	}
-	for _, pendingMetricUpdate := range gs.PendingMetrics {
-		if pendingMetricUpdate.Metric.Key == "" || pendingMetricUpdate.OracleChainId == "" || pendingMetricUpdate.Metric.UpdateTime == 0 {
-			return errorsmod.Wrapf(ErrInvalidGenesisState, "pending metric update has empty key, oracle chain ID, or update time")
+		if metric.UpdateTime == 0 {
+			return errorsmod.Wrapf(ErrInvalidGenesisState, "metric has missing time")
+		}
+		if metric.DestinationOracle == "" {
+			return errorsmod.Wrapf(ErrInvalidGenesisState, "metric has missing destination oracle chain ID")
 		}
 	}
 
