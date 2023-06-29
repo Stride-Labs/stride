@@ -433,24 +433,8 @@ func (s *KeeperTestSuite) TestGetTargetValAmtsForHostZone() {
 	s.Require().ErrorContains(err, "No non-zero validators found for host zone")
 }
 
-func (s *KeeperTestSuite) TestGetTotalValidatorDelegations() {
-	validators := []*types.Validator{
-		{Address: "val1", Delegation: sdkmath.NewInt(1)},
-		{Address: "val2", Delegation: sdkmath.NewInt(2)},
-		{Address: "val3", Delegation: sdkmath.NewInt(3)},
-		{Address: "val4", Delegation: sdkmath.NewInt(4)},
-		{Address: "val5", Delegation: sdkmath.NewInt(5)},
-	}
-	expectedDelegation := int64(1 + 2 + 3 + 4 + 5)
-
-	hostZone := types.HostZone{Validators: validators}
-	actualDelegations := s.App.StakeibcKeeper.GetTotalValidatorDelegations(hostZone)
-
-	s.Require().Equal(expectedDelegation, actualDelegations.Int64(), "delegations")
-}
-
 func (s *KeeperTestSuite) TestGetTotalValidatorWeight() {
-	validators := []*types.Validator{
+	validators := []types.Validator{
 		{Address: "val1", Weight: 1},
 		{Address: "val2", Weight: 2},
 		{Address: "val3", Weight: 3},
@@ -459,8 +443,7 @@ func (s *KeeperTestSuite) TestGetTotalValidatorWeight() {
 	}
 	expectedTotalWeights := int64(1 + 2 + 3 + 4 + 5)
 
-	hostZone := types.HostZone{Validators: validators}
-	actualTotalWeight := s.App.StakeibcKeeper.GetTotalValidatorWeight(hostZone)
+	actualTotalWeight := s.App.StakeibcKeeper.GetTotalValidatorWeight(validators)
 
 	s.Require().Equal(expectedTotalWeights, int64(actualTotalWeight))
 }

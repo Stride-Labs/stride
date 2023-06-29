@@ -23,9 +23,11 @@ type RebalanceValidatorDelegationChange struct {
 }
 
 // Iterate each active host zone and issues redelegation messages to rebalance each
-//   validator's stake according to their weights
+// validator's stake according to their weights
+//
 // This is required when accepting LSM LiquidStakes as the distribution of stake
-//   from the LSM Tokens will be inconsistend with the host zone's validator set
+// from the LSM Tokens will be inconsistend with the host zone's validator set
+//
 // Note: this cannot be run more than once in a single unbonding period
 func (k Keeper) RebalanceAllHostZones(ctx sdk.Context) {
 	dayEpoch, found := k.GetEpochTracker(ctx, epochstypes.DAY_EPOCH)
@@ -210,8 +212,7 @@ func (k Keeper) GetRebalanceICAMessages(
 //   - Negative delta implies the validator has a deficit (and should gain stake)
 func (k Keeper) GetValidatorDelegationDifferences(ctx sdk.Context, hostZone types.HostZone) ([]RebalanceValidatorDelegationChange, error) {
 	// Get the target delegation amount for each validator
-	totalDelegatedAmt := k.GetTotalValidatorDelegations(hostZone)
-	targetDelegation, err := k.GetTargetValAmtsForHostZone(ctx, hostZone, totalDelegatedAmt)
+	targetDelegations, err := k.GetTargetValAmtsForHostZone(ctx, hostZone, hostZone.TotalDelegations)
 	if err != nil {
 		return nil, errorsmod.Wrapf(err, "unable to get target val amounts for host zone %s", hostZone.ChainId)
 	}
@@ -221,7 +222,11 @@ func (k Keeper) GetValidatorDelegationDifferences(ctx sdk.Context, hostZone type
 	totalDelegationChange := sdkmath.ZeroInt()
 	for _, validator := range hostZone.Validators {
 		// Compare the target with the current delegation
-		delegationChange := validator.Delegation.Sub(targetDelegation[validator.Address])
+		targetDelegation, ok := targetDelegations[validator.Address]
+		if !ok {
+			continue
+		}
+		delegationChange := validator.Delegation.Sub(targetDelegation)
 
 		// Only include validators who's delegation should change
 		if !delegationChange.IsZero() {
@@ -254,8 +259,16 @@ func (k Keeper) GetTargetValAmtsForHostZone(ctx sdk.Context, hostZone types.Host
 			"Cannot calculate target delegation if final amount is less than or equal to zero (%v)", finalDelegation)
 	}
 
+	// Ignore any validators with a slash query in progress
+	validators := []types.Validator{}
+	for _, validator := range hostZone.Validators {
+		if !validator.SlashQueryInProgress {
+			validators = append(validators, *validator)
+		}
+	}
+
 	// Sum the total weight across all validators
-	totalWeight := k.GetTotalValidatorWeight(hostZone)
+	totalWeight := k.GetTotalValidatorWeight(validators)
 	if totalWeight == 0 {
 		return nil, errorsmod.Wrapf(types.ErrNoValidatorWeights,
 			"No non-zero validators found for host zone %s", hostZone.ChainId)
@@ -263,7 +276,6 @@ func (k Keeper) GetTargetValAmtsForHostZone(ctx sdk.Context, hostZone types.Host
 	k.Logger(ctx).Info(utils.LogWithHostZone(hostZone.ChainId, "Total Validator Weight: %d", totalWeight))
 
 	// sort validators by weight ascending, this is inplace sorting!
-	validators := hostZone.Validators
 	sort.SliceStable(validators, func(i, j int) bool { // Do not use `Slice` here, it is stochastic
 		if validators[i].Weight != validators[j].Weight {
 			return validators[i].Weight < validators[j].Weight
@@ -289,19 +301,8 @@ func (k Keeper) GetTargetValAmtsForHostZone(ctx sdk.Context, hostZone types.Host
 	return targetUnbondingsByValidator, nil
 }
 
-// Sum the total delegation across each validator for a host zone
-func (k Keeper) GetTotalValidatorDelegations(hostZone types.HostZone) sdkmath.Int {
-	validators := hostZone.Validators
-	totalDelegation := sdkmath.ZeroInt()
-	for _, validator := range validators {
-		totalDelegation = totalDelegation.Add(validator.Delegation)
-	}
-	return totalDelegation
-}
-
 // Sum the total weights across each validator for a host zone
-func (k Keeper) GetTotalValidatorWeight(hostZone types.HostZone) uint64 {
-	validators := hostZone.Validators
+func (k Keeper) GetTotalValidatorWeight(validators []types.Validator) uint64 {
 	totalWeight := uint64(0)
 	for _, validator := range validators {
 		totalWeight += validator.Weight

@@ -92,11 +92,12 @@ func (k Keeper) GetTotalUnbondAmountAndRecordsIds(ctx sdk.Context, chainId strin
 
 // Determine the unbonding capacity that each validator has
 // The capacity is determined by the difference between their current delegation
-//  and their fair portion of the total stake based on their weights
-//  (i.e. their balanced delegation)
+// and their fair portion of the total stake based on their weights
+// (i.e. their balanced delegation)
+//
 // Validators with a balanced delegation less than their current delegation
-//  are already at a deficit, are not included in the returned list,
-//  and thus, are will not incur any unbonding
+// are already at a deficit, are not included in the returned list,
+// and thus, are will not incur any unbonding
 func (k Keeper) GetValidatorUnbondCapacity(
 	ctx sdk.Context,
 	validators []*types.Validator,
@@ -107,7 +108,11 @@ func (k Keeper) GetValidatorUnbondCapacity(
 		// the balanced delegation
 		// If the capacity is negative, that means the validator has less than their
 		// balanced portion. Ignore this case so they don't unbond anything
-		balancedDelegation := balancedDelegation[validator.Address]
+		balancedDelegation, ok := balancedDelegation[validator.Address]
+		if !ok {
+			continue
+		}
+
 		capacity := validator.Delegation.Sub(balancedDelegation)
 		if capacity.IsPositive() {
 			validatorCapacities = append(validatorCapacities, ValidatorUnbondCapacity{
@@ -126,13 +131,15 @@ func (k Keeper) GetValidatorUnbondCapacity(
 // This will sort the validator's by how proportionally unbalanced they are
 //
 // Ex:
-//   Val1: Ideal Balanced Delegation 80,  Current Delegation 100 (surplus of 20), Ratio: 0.8
-//   Val2: Ideal Balanced Delegation 480, Current Delegation 500 (surplus of 20), Ratio: 0.96
+//
+//	Val1: Ideal Balanced Delegation 80,  Current Delegation 100 (surplus of 20), Ratio: 0.8
+//	Val2: Ideal Balanced Delegation 480, Current Delegation 500 (surplus of 20), Ratio: 0.96
+//
 // While both validators have the same net unbalanced delegation, Val2 is proportionally
-//    more balanced since the surplus is a smaller percentage of it's overall delegation
+// more balanced since the surplus is a smaller percentage of it's overall delegation
 //
 // This will also sort such that 0-weight validator's will come first as their
-//   ideal balanced delegation will always be 0, and thus their ratio will always be 0
+// ideal balanced delegation will always be 0, and thus their ratio will always be 0
 // If the ratio's are equal, the validator with the larger delegation/capacity will come first
 func SortUnbondingCapacityByPriority(validatorUnbondCapacity []ValidatorUnbondCapacity) []ValidatorUnbondCapacity {
 	lessFunc := func(i, j int) bool {
@@ -160,7 +167,8 @@ func SortUnbondingCapacityByPriority(validatorUnbondCapacity []ValidatorUnbondCa
 
 // Given a total unbond amount and list of unbond capacity for each validator, sorted by unbond priority
 // Iterates through the list and unbonds as much as possible from each validator until all the
-//   unbonding has been accounted for
+// unbonding has been accounted for
+//
 // Returns the list of messages and the callback data for the ICA
 func (k Keeper) GetUnbondingICAMessages(
 	hostZone types.HostZone,
@@ -214,13 +222,12 @@ func (k Keeper) GetUnbondingICAMessages(
 //
 // First, the total unbond amount is determined from the epoch unbonding records
 // Then that unbond amount is allowed to cascade across the validators in order of how proportionally
-//   different their current delegations are from the weight implied target delegation,
-//   until their capacities have consumed the full amount
+// different their current delegations are from the weight implied target delegation,
+// until their capacities have consumed the full amount
 // As a result, unbondings lead to a more balanced distribution of stake across validators
 //
-// Context:
-//   Over time, as LSM Liquid stakes are accepted, the total stake managed by the protocol becomes unbalanced
-//   as liquid stakes are not aligned with the validator weights. This is only rebalanced once per unbonding period
+// Context: Over time, as LSM Liquid stakes are accepted, the total stake managed by the protocol becomes unbalanced
+// as liquid stakes are not aligned with the validator weights. This is only rebalanced once per unbonding period
 func (k Keeper) UnbondFromHostZone(ctx sdk.Context, hostZone types.HostZone) error {
 	k.Logger(ctx).Info(utils.LogWithHostZone(hostZone.ChainId,
 		"Preparing MsgUndelegates from the delegation account to each validator"))
@@ -243,8 +250,7 @@ func (k Keeper) UnbondFromHostZone(ctx sdk.Context, hostZone types.HostZone) err
 	// Determine the ideal balanced delegation for each validator after the unbonding
 	//   (as if we were to unbond and then rebalance)
 	// This will serve as the starting point for determining how much to unbond each validator
-	currentTotalDelegation := k.GetTotalValidatorDelegations(hostZone)
-	delegationAfterUnbonding := currentTotalDelegation.Sub(totalUnbondAmount)
+	delegationAfterUnbonding := hostZone.TotalDelegations.Sub(totalUnbondAmount)
 	balancedDelegationsAfterUnbonding, err := k.GetTargetValAmtsForHostZone(ctx, hostZone, delegationAfterUnbonding)
 	if err != nil {
 		return errorsmod.Wrapf(err, "unable to get target val amounts for host zone %s", hostZone.ChainId)
@@ -487,11 +493,11 @@ func (k Keeper) SweepAllUnbondedTokensForHostZone(ctx sdk.Context, hostZone type
 }
 
 // Sends all unbonded tokens to the redemption account
-//    returns:
-//       * success indicator if all chains succeeded
-//       * list of successful chains
-//       * list of tokens swept
-//       * list of failed chains
+// returns:
+//   - success indicator if all chains succeeded
+//   - list of successful chains
+//   - list of tokens swept
+//   - list of failed chains
 func (k Keeper) SweepAllUnbondedTokens(ctx sdk.Context) (success bool, successfulSweeps []string, sweepAmounts []sdkmath.Int, failedSweeps []string) {
 	// this function returns true if all chains succeeded, false otherwise
 	// it also returns a list of successful chains (arg 2), tokens swept (arg 3), and failed chains (arg 4)
