@@ -5,6 +5,7 @@ import "gogoproto/gogo.proto";
 
 option go_package = "github.com/Stride-Labs/stride/v5/x/icaoracle/types";
 
+// Toggle's whether an oracle is active and should receive metric updates
 message ToggleOracleProposal {
   option (gogoproto.equal) = true;
   option (gogoproto.goproto_getters) = false;
@@ -18,6 +19,7 @@ message ToggleOracleProposal {
   bool active = 5;
 }
 
+// Removes an oracle completely
 message RemoveOracleProposal {
   option (gogoproto.equal) = true;
   option (gogoproto.goproto_getters) = false;

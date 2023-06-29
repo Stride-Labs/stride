@@ -15,12 +15,14 @@ service Msg {
       returns (MsgRestoreOracleICAResponse);
 }
 
+// Adds a new oracle
 message MsgAddOracle {
   string creator = 1;
   string connection_id = 2;
 }
 message MsgAddOracleResponse {}
 
+// Instantiates the oracle's CW contract
 message MsgInstantiateOracle {
   string creator = 1;
   string oracle_chain_id = 2;
@@ -28,6 +30,7 @@ message MsgInstantiateOracle {
 }
 message MsgInstantiateOracleResponse {}
 
+// Restore's a closed ICA channel for a given oracle
 message MsgRestoreOracleICA {
   string creator = 1;
   string oracle_chain_id = 2;

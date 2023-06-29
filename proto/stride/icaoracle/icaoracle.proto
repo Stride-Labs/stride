@@ -3,6 +3,7 @@ package stride.icaoracle;
 
 option go_package = "github.com/Stride-Labs/stride/v5/x/icaoracle/types";
 
+// Oracle structure stores context about the CW oracle sitting a different chain
 message Oracle {
   string chain_id = 1;
   string connection_id = 2;
@@ -14,25 +15,28 @@ message Oracle {
   bool flush_pending_metrics = 8;
 }
 
+// MetricStatus indicates whether the Metric update ICA has been sent
+enum MetricStatus {
+  METRIC_STATUS_UNSPECIFIED = 0;
+  METRIC_STATUS_QUEUED = 1;
+  METRIC_STATUS_IN_PROGRESS = 2;
+}
+
+// Metric structure stores a generic metric using a key value structure
+// along with additional context
 message Metric {
   string key = 1;
   string value = 2;
   string metric_type = 3;
-  uint64 update_time = 4;
-  Metadata metadata = 5;
+  int64 update_time = 4;
+  int64 block_height = 5;
+  string attributes = 6;
+  string destination_oracle = 7;
+  MetricStatus status = 8;
 }
 
-message Metadata {
-  int64 block_height = 1;
-  string attributes = 2;
-}
-
+// Attributes associated with a RedemptionRate metric update
 message RedemptionRateAttributes {
   string denom = 1;
   string base_denom = 2;
-}
-
-message PendingMetricUpdate {
-  Metric metric = 1;
-  string oracle_chain_id = 2;
 }

@@ -30,48 +30,51 @@ service Query {
   }
 
   // Query all pending metrics
-  rpc AllPendingMetricUpdates(QueryAllPendingMetricUpdatesRequest)
-      returns (QueryAllPendingMetricUpdatesResponse) {
+  rpc AllPendingMetrics(QueryAllPendingMetricsRequest)
+      returns (QueryAllPendingMetricsResponse) {
     option (google.api.http).get =
-        "/Stride-Labs/stride/icaoracle/pending_metric_updates";
+        "/Stride-Labs/stride/icaoracle/pending_metrics";
   }
 
   // Query pending metrics with optional filters:
-  // - /pending_metric_updates/by_metric_or_oracle?metric_key=X
-  // - /pending_metric_updates/by_metric_or_oracle?oracle_chain_id=Y
+  // - /pending_metrics/by_metric_or_oracle?metric_key=X
+  // - /pending_metrics/by_metric_or_oracle?oracle_chain_id=Y
   // -
-  // /pending_metric_updates/by_metric_or_oracle?metric_key=X&oracle_chain_id=Y
-  rpc PendingMetricUpdates(QueryPendingMetricUpdatesRequest)
-      returns (QueryPendingMetricUpdatesResponse) {
+  // /pending_metrics/by_metric_or_oracle?metric_key=X&oracle_chain_id=Y
+  rpc PendingMetrics(QueryPendingMetricsRequest)
+      returns (QueryPendingMetricsResponse) {
     option (google.api.http).get = "/Stride-Labs/stride/icaoracle/"
-                                   "pending_metric_updates/by_metric_or_oracle";
+                                   "pending_metrics/by_metric_or_oracle";
   }
 }
 
+// Query's a specific oracle
 message QueryOracleRequest { string chain_id = 1; }
 message QueryOracleResponse { Oracle oracle = 1; }
 
+// Query's all oracle's
 message QueryAllOraclesRequest {}
 message QueryAllOraclesResponse {
   repeated Oracle oracles = 1 [ (gogoproto.nullable) = false ];
 }
 
+// Query's all oracle with a filter for whether they're active
 message QueryActiveOraclesRequest { bool active = 1; }
 message QueryActiveOraclesResponse {
   repeated Oracle oracles = 1 [ (gogoproto.nullable) = false ];
 }
 
-message QueryAllPendingMetricUpdatesRequest {}
-message QueryAllPendingMetricUpdatesResponse {
-  repeated PendingMetricUpdate pending_updates = 1
-      [ (gogoproto.nullable) = false ];
+// Query's all metric update's currently in flight
+message QueryAllPendingMetricsRequest {}
+message QueryAllPendingMetricsResponse {
+  repeated Metric metrics = 1 [ (gogoproto.nullable) = false ];
 }
 
-message QueryPendingMetricUpdatesRequest {
+// Query's all metric update's currently in flight with optional filters
+message QueryPendingMetricsRequest {
   string metric_key = 1;
   string oracle_chain_id = 2;
 }
-message QueryPendingMetricUpdatesResponse {
-  repeated PendingMetricUpdate pending_updates = 1
-      [ (gogoproto.nullable) = false ];
+message QueryPendingMetricsResponse {
+  repeated Metric metrics = 1 [ (gogoproto.nullable) = false ];
 }
