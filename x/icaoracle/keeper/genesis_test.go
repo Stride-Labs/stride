@@ -12,6 +12,7 @@ func (s *KeeperTestSuite) TestGenesis() {
 		Key:               "key",
 		UpdateTime:        int64(1),
 		DestinationOracle: "chain",
+		Status:            types.MetricStatus_QUEUED,
 	}
 
 	genesisState := types.GenesisState{

@@ -21,5 +21,5 @@ func KeyPrefix(p string) []byte {
 var (
 	OracleKeyPrefix      = KeyPrefix("oracle")
 	MetricKeyPrefix      = KeyPrefix("metric")
-	MetricQueueKeyPrefix = KeyPrefix("metric-queue")
+	MetricQueueKeyPrefix = KeyPrefix("queue")
 )
