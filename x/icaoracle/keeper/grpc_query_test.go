@@ -56,73 +56,82 @@ func (s *KeeperTestSuite) TestQueryActiveOracles() {
 	s.Require().ElementsMatch(inActiveOracles, inActiveOraclesResponse.Oracles)
 }
 
-func (s *KeeperTestSuite) TestQueryAllPendingMetricUpdates() {
-	expectedPendingUpdates := s.addPendingUpdates()
-	queryResponse, err := s.QueryClient.AllPendingMetricUpdates(s.Ctx, &types.QueryAllPendingMetricUpdatesRequest{})
-	s.Require().NoError(err, "no error expected when querying pending metric updates")
-	s.Require().ElementsMatch(expectedPendingUpdates, queryResponse.PendingUpdates)
+func (s *KeeperTestSuite) TestQueryAllPendingMetrics() {
+	// Create queued metrics
+	metrics := s.createMetrics()
+
+	// Query pending metrics - should return 0 metrics
+	queryResponse, err := s.QueryClient.AllPendingMetrics(s.Ctx, &types.QueryAllPendingMetricsRequest{})
+	s.Require().NoError(err, "no error expected when querying pending metrics")
+	s.Require().Empty(queryResponse.Metrics, "no pending metrics at start")
+
+	// Update the first 3 metrics to in progress
+	expectedMetrics := []types.Metric{}
+	for _, metric := range metrics[:3] {
+		s.App.ICAOracleKeeper.UpdateMetricStatus(s.Ctx, metric, types.MetricStatus_METRIC_STATUS_IN_PROGRESS)
+		metric.Status = types.MetricStatus_METRIC_STATUS_IN_PROGRESS
+		expectedMetrics = append(expectedMetrics, metric)
+	}
+
+	// Query metrics again - should return the first 3 metrics
+	queryResponse, err = s.QueryClient.AllPendingMetrics(s.Ctx, &types.QueryAllPendingMetricsRequest{})
+	s.Require().NoError(err, "no error expected when querying pending metrics")
+	s.Require().ElementsMatch(expectedMetrics, queryResponse.Metrics)
 }
 
-func (s *KeeperTestSuite) TestQueryPendingMetricUpdates() {
+func (s *KeeperTestSuite) TestQueryPendingMetrics() {
 	filterMetricKey := "key-2"
 	filterOracleChainId := "chain-2"
 
 	// Add pending metrics across 2 keys and 2 oracles
-	updatesByMetric := make(map[string][]types.PendingMetricUpdate)
-	updatesByOracle := make(map[string][]types.PendingMetricUpdate)
-	allPendingUpdates := []types.PendingMetricUpdate{
-		{
-			Metric: &types.Metric{Key: "key-1"}, OracleChainId: "chain-1",
-		},
-		{
-			Metric: &types.Metric{Key: "key-2"}, OracleChainId: "chain-1",
-		},
-		{
-			Metric: &types.Metric{Key: "key-1"}, OracleChainId: "chain-2",
-		},
-		{
-			Metric: &types.Metric{Key: "key-2"}, OracleChainId: "chain-2",
-		},
+	updatesByMetric := make(map[string][]types.Metric)
+	updatesByOracle := make(map[string][]types.Metric)
+	allPendingMetrics := []types.Metric{
+		{Key: "key-1", DestinationOracle: "chain-1"},
+		{Key: "key-2", DestinationOracle: "chain-1"},
+		{Key: "key-1", DestinationOracle: "chain-2"},
+		{Key: "key-2", DestinationOracle: "chain-2"},
 	}
-	for _, pendingUpdate := range allPendingUpdates {
-		key := pendingUpdate.Metric.Key
-		chainId := pendingUpdate.OracleChainId
+	for _, metric := range allPendingMetrics {
+		key := metric.Key
+		chainId := metric.DestinationOracle
 
-		updatesByMetric[key] = append(updatesByMetric[key], pendingUpdate)
-		updatesByOracle[chainId] = append(updatesByOracle[chainId], pendingUpdate)
+		updatesByMetric[key] = append(updatesByMetric[key], metric)
+		updatesByOracle[chainId] = append(updatesByOracle[chainId], metric)
 
-		s.App.ICAOracleKeeper.SetMetricUpdateInProgress(s.Ctx, pendingUpdate)
+		metric.Status = types.MetricStatus_METRIC_STATUS_IN_PROGRESS
+		s.App.ICAOracleKeeper.SetMetric(s.Ctx, metric)
 	}
 
 	// First check with no filters
-	expectedNoFilters := allPendingUpdates
-	queryResponse, err := s.QueryClient.PendingMetricUpdates(s.Ctx, &types.QueryPendingMetricUpdatesRequest{})
+	expectedNoFilters := allPendingMetrics
+	queryResponse, err := s.QueryClient.PendingMetrics(s.Ctx, &types.QueryPendingMetricsRequest{})
 	s.Require().NoError(err, "no error expected when querying pending metric updates with no filter")
-	s.Require().ElementsMatch(expectedNoFilters, queryResponse.PendingUpdates)
+	s.Require().ElementsMatch(expectedNoFilters, queryResponse.Metrics)
 
 	// Check with a filter on the metric (metric key == "key-2")
-	queryResponse, err = s.QueryClient.PendingMetricUpdates(s.Ctx, &types.QueryPendingMetricUpdatesRequest{
+	queryResponse, err = s.QueryClient.PendingMetrics(s.Ctx, &types.QueryPendingMetricsRequest{
 		MetricKey: filterMetricKey,
 	})
 	s.Require().NoError(err, "no error expected when querying pending metric updates with metric key filter")
-	s.Require().ElementsMatch(updatesByMetric[filterMetricKey], queryResponse.PendingUpdates)
+	s.Require().ElementsMatch(updatesByMetric[filterMetricKey], queryResponse.Metrics)
 
 	// Check with a filter on the oracle (chain-id == "chain-2")
-	queryResponse, err = s.QueryClient.PendingMetricUpdates(s.Ctx, &types.QueryPendingMetricUpdatesRequest{
+	queryResponse, err = s.QueryClient.PendingMetrics(s.Ctx, &types.QueryPendingMetricsRequest{
 		OracleChainId: filterOracleChainId,
 	})
 	s.Require().NoError(err, "no error expected when querying pending metric updates with oracle filter")
-	s.Require().ElementsMatch(updatesByOracle[filterOracleChainId], queryResponse.PendingUpdates)
+	s.Require().ElementsMatch(updatesByOracle[filterOracleChainId], queryResponse.Metrics)
 
 	// Check with a filter on both the metric and oracle (metric key == "key2", chain-id == "chain-2")
-	expectedMetricAndOracleFilter := []types.PendingMetricUpdate{{
-		Metric:        &types.Metric{Key: filterMetricKey},
-		OracleChainId: filterOracleChainId,
+	expectedMetricAndOracleFilter := []types.Metric{{
+		Key:               filterMetricKey,
+		DestinationOracle: filterOracleChainId,
 	}}
-	queryResponse, err = s.QueryClient.PendingMetricUpdates(s.Ctx, &types.QueryPendingMetricUpdatesRequest{
+	queryResponse, err = s.QueryClient.PendingMetrics(s.Ctx, &types.QueryPendingMetricsRequest{
 		MetricKey:     filterMetricKey,
 		OracleChainId: filterOracleChainId,
 	})
 	s.Require().NoError(err, "no error expected when querying pending metric updates with metric key and oracle filter")
-	s.Require().ElementsMatch(expectedMetricAndOracleFilter, queryResponse.PendingUpdates)
+	s.Require().ElementsMatch(expectedMetricAndOracleFilter, queryResponse.Metrics)
 }

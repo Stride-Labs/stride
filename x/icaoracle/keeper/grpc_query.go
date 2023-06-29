@@ -43,24 +43,31 @@ func (k Keeper) ActiveOracles(c context.Context, req *types.QueryActiveOraclesRe
 }
 
 // Query all metrics that currently have an ICA in flight
-func (k Keeper) AllPendingMetricUpdates(c context.Context, req *types.QueryAllPendingMetricUpdatesRequest) (*types.QueryAllPendingMetricUpdatesResponse, error) {
+func (k Keeper) AllPendingMetrics(c context.Context, req *types.QueryAllPendingMetricsRequest) (*types.QueryAllPendingMetricsResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
-	pendingMetricUpdates := k.GetAllPendingMetricUpdates(ctx)
-	return &types.QueryAllPendingMetricUpdatesResponse{PendingUpdates: pendingMetricUpdates}, nil
+	pendingMetrics := []types.Metric{}
+	for _, metric := range k.GetAllMetrics(ctx) {
+		if metric.Status == types.MetricStatus_METRIC_STATUS_IN_PROGRESS {
+			pendingMetrics = append(pendingMetrics, metric)
+		}
+	}
+	return &types.QueryAllPendingMetricsResponse{Metrics: pendingMetrics}, nil
 }
 
 // Query all metrics that currently have an ICA in flight, with filters
-func (k Keeper) PendingMetricUpdates(c context.Context, req *types.QueryPendingMetricUpdatesRequest) (*types.QueryPendingMetricUpdatesResponse, error) {
+func (k Keeper) PendingMetrics(c context.Context, req *types.QueryPendingMetricsRequest) (*types.QueryPendingMetricsResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
 
-	pendingMetricUpdates := []types.PendingMetricUpdate{}
-	for _, metricUpdate := range k.GetAllPendingMetricUpdates(ctx) {
-		if req.MetricKey == "" || req.MetricKey == metricUpdate.Metric.Key {
-			if req.OracleChainId == "" || req.OracleChainId == metricUpdate.OracleChainId {
-				pendingMetricUpdates = append(pendingMetricUpdates, metricUpdate)
-			}
+	pendingMetrics := []types.Metric{}
+	for _, metric := range k.GetAllMetrics(ctx) {
+		metricInProgress := metric.Status == types.MetricStatus_METRIC_STATUS_IN_PROGRESS
+		metricKeyMatch := req.MetricKey == "" || req.MetricKey == metric.Key
+		metricOracleMatch := req.OracleChainId == "" || req.OracleChainId == metric.DestinationOracle
+
+		if metricInProgress && metricKeyMatch && metricOracleMatch {
+			pendingMetrics = append(pendingMetrics, metric)
 		}
 	}
 
-	return &types.QueryPendingMetricUpdatesResponse{PendingUpdates: pendingMetricUpdates}, nil
+	return &types.QueryPendingMetricsResponse{Metrics: pendingMetrics}, nil
 }

@@ -170,18 +170,18 @@ Examples:
 			// If no filters are passed, return all pending metrics
 			var res proto.Message
 			if metricKey == "" && oracleChainId == "" {
-				req := &types.QueryAllPendingMetricUpdatesRequest{}
-				res, err = queryClient.AllPendingMetricUpdates(context.Background(), req)
+				req := &types.QueryAllPendingMetricsRequest{}
+				res, err = queryClient.AllPendingMetrics(context.Background(), req)
 				if err != nil {
 					return err
 				}
 			} else {
 				// Otherwise filter by metric key and chain ID
-				req := &types.QueryPendingMetricUpdatesRequest{
+				req := &types.QueryPendingMetricsRequest{
 					MetricKey:     metricKey,
 					OracleChainId: oracleChainId,
 				}
-				res, err = queryClient.PendingMetricUpdates(context.Background(), req)
+				res, err = queryClient.PendingMetrics(context.Background(), req)
 				if err != nil {
 					return err
 				}
