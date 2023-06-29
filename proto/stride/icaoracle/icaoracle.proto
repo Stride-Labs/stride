@@ -1,6 +1,8 @@
 syntax = "proto3";
 package stride.icaoracle;
 
+import "gogoproto/gogo.proto";
+
 option go_package = "github.com/Stride-Labs/stride/v5/x/icaoracle/types";
 
 // Oracle structure stores context about the CW oracle sitting a different chain
@@ -12,14 +14,13 @@ message Oracle {
   string ica_address = 5;
   string contract_address = 6;
   bool active = 7;
-  bool flush_pending_metrics = 8;
 }
 
 // MetricStatus indicates whether the Metric update ICA has been sent
 enum MetricStatus {
-  METRIC_STATUS_UNSPECIFIED = 0;
-  METRIC_STATUS_QUEUED = 1;
-  METRIC_STATUS_IN_PROGRESS = 2;
+  METRIC_STATUS_UNSPECIFIED = 0 [(gogoproto.enumvalue_customname) = "UNSPECIFIED"];
+  METRIC_STATUS_QUEUED = 1 [(gogoproto.enumvalue_customname) = "QUEUED"];
+  METRIC_STATUS_IN_PROGRESS = 2 [(gogoproto.enumvalue_customname) = "IN_PROGRESS" ];
 }
 
 // Metric structure stores a generic metric using a key value structure

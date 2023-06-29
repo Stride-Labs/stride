@@ -68,8 +68,8 @@ func (s *KeeperTestSuite) TestQueryAllPendingMetrics() {
 	// Update the first 3 metrics to in progress
 	expectedMetrics := []types.Metric{}
 	for _, metric := range metrics[:3] {
-		s.App.ICAOracleKeeper.UpdateMetricStatus(s.Ctx, metric, types.MetricStatus_METRIC_STATUS_IN_PROGRESS)
-		metric.Status = types.MetricStatus_METRIC_STATUS_IN_PROGRESS
+		s.App.ICAOracleKeeper.UpdateMetricStatus(s.Ctx, metric, types.MetricStatus_IN_PROGRESS)
+		metric.Status = types.MetricStatus_IN_PROGRESS
 		expectedMetrics = append(expectedMetrics, metric)
 	}
 
@@ -99,7 +99,7 @@ func (s *KeeperTestSuite) TestQueryPendingMetrics() {
 		updatesByMetric[key] = append(updatesByMetric[key], metric)
 		updatesByOracle[chainId] = append(updatesByOracle[chainId], metric)
 
-		metric.Status = types.MetricStatus_METRIC_STATUS_IN_PROGRESS
+		metric.Status = types.MetricStatus_IN_PROGRESS
 		s.App.ICAOracleKeeper.SetMetric(s.Ctx, metric)
 	}
 

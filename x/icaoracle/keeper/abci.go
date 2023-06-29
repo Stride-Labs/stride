@@ -24,7 +24,7 @@ func (k Keeper) EndBlocker(ctx sdk.Context) {
 		// Flag the metric as IN_PROGRESS to prevent resubmissions next block
 		// We do this even in the case where the ICA submission fails (from something like a channel closure)
 		// If the channel closes, once it is restored, the metric will get re-queued
-		k.UpdateMetricStatus(ctx, metric, types.MetricStatus_METRIC_STATUS_IN_PROGRESS)
+		k.UpdateMetricStatus(ctx, metric, types.MetricStatus_IN_PROGRESS)
 
 		if !k.IsOracleICAChannelOpen(ctx, oracle) {
 			k.Logger(ctx).Error(fmt.Sprintf("Oracle %s has a closed ICA channel (%s)", oracle.ChainId, oracle.ChannelId))

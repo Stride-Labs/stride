@@ -14,7 +14,7 @@ func (s *KeeperTestSuite) createMetrics() []types.Metric {
 		metric := types.Metric{
 			Key:    "key-" + suffix,
 			Value:  "value-" + suffix,
-			Status: types.MetricStatus_METRIC_STATUS_QUEUED,
+			Status: types.MetricStatus_QUEUED,
 		}
 
 		metrics = append(metrics, metric)
@@ -59,7 +59,7 @@ func (s *KeeperTestSuite) TestMetricQueue() {
 		metricId := metric.GetMetricID()
 
 		// set the metric to in progres which should remove it from the queue
-		s.App.ICAOracleKeeper.UpdateMetricStatus(s.Ctx, metric, types.MetricStatus_METRIC_STATUS_IN_PROGRESS)
+		s.App.ICAOracleKeeper.UpdateMetricStatus(s.Ctx, metric, types.MetricStatus_IN_PROGRESS)
 
 		queuedMetrics := s.App.ICAOracleKeeper.GetAllQueuedMetrics(s.Ctx)
 		s.Require().Len(queuedMetrics, len(metrics)-1, "number of remaining queued metrics after updating %s", metricId)

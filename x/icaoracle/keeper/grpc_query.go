@@ -47,7 +47,7 @@ func (k Keeper) AllPendingMetrics(c context.Context, req *types.QueryAllPendingM
 	ctx := sdk.UnwrapSDKContext(c)
 	pendingMetrics := []types.Metric{}
 	for _, metric := range k.GetAllMetrics(ctx) {
-		if metric.Status == types.MetricStatus_METRIC_STATUS_IN_PROGRESS {
+		if metric.Status == types.MetricStatus_IN_PROGRESS {
 			pendingMetrics = append(pendingMetrics, metric)
 		}
 	}
@@ -60,7 +60,7 @@ func (k Keeper) PendingMetrics(c context.Context, req *types.QueryPendingMetrics
 
 	pendingMetrics := []types.Metric{}
 	for _, metric := range k.GetAllMetrics(ctx) {
-		metricInProgress := metric.Status == types.MetricStatus_METRIC_STATUS_IN_PROGRESS
+		metricInProgress := metric.Status == types.MetricStatus_IN_PROGRESS
 		metricKeyMatch := req.MetricKey == "" || req.MetricKey == metric.Key
 		metricOracleMatch := req.OracleChainId == "" || req.OracleChainId == metric.DestinationOracle
 

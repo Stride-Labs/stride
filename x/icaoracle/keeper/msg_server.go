@@ -59,10 +59,9 @@ func (k msgServer) AddOracle(goCtx context.Context, msg *types.MsgAddOracle) (*t
 
 	// Create the oracle struct, marked as inactive
 	oracle := types.Oracle{
-		ChainId:             chainId,
-		ConnectionId:        controllerConnectionId,
-		Active:              false,
-		FlushPendingMetrics: false,
+		ChainId:      chainId,
+		ConnectionId: controllerConnectionId,
+		Active:       false,
 	}
 	k.SetOracle(ctx, oracle)
 
@@ -194,8 +193,8 @@ func (k msgServer) RestoreOracleICA(goCtx context.Context, msg *types.MsgRestore
 
 	// Revert all pending metrics for this oracle back to status QUEUED
 	for _, metric := range k.GetAllMetrics(ctx) {
-		if metric.DestinationOracle == msg.OracleChainId && metric.Status == types.MetricStatus_METRIC_STATUS_IN_PROGRESS {
-			k.UpdateMetricStatus(ctx, metric, types.MetricStatus_METRIC_STATUS_QUEUED)
+		if metric.DestinationOracle == msg.OracleChainId && metric.Status == types.MetricStatus_IN_PROGRESS {
+			k.UpdateMetricStatus(ctx, metric, types.MetricStatus_QUEUED)
 		}
 	}
 

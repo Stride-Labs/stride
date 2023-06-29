@@ -19,9 +19,9 @@ func (k Keeper) SetMetric(ctx sdk.Context, metric types.Metric) {
 	store.Set(metricKey, metricValue)
 
 	switch metric.Status {
-	case types.MetricStatus_METRIC_STATUS_QUEUED:
+	case types.MetricStatus_QUEUED:
 		k.addMetricToQueue(ctx, metricKey)
-	case types.MetricStatus_METRIC_STATUS_IN_PROGRESS:
+	case types.MetricStatus_IN_PROGRESS:
 		k.removeMetricFromQueue(ctx, metricKey)
 	default:
 		panic("metric status must be specified as QUEUED or IN_PROGRESS before storing")

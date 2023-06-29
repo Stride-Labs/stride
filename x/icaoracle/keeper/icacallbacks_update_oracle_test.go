@@ -16,7 +16,7 @@ func (s *KeeperTestSuite) SetupTestUpdateOracleCallback() types.Metric {
 		Key:               "key1",
 		UpdateTime:        1,
 		DestinationOracle: HostChainId,
-		Status:            types.MetricStatus_METRIC_STATUS_IN_PROGRESS,
+		Status:            types.MetricStatus_IN_PROGRESS,
 	}
 	s.App.ICAOracleKeeper.SetMetric(s.Ctx, metric)
 

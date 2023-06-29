@@ -32,7 +32,7 @@ func TestMetric(t *testing.T) {
 		UpdateTime:  blockTimeUnix,
 		BlockHeight: blockHeight,
 		Attributes:  "attributes",
-		Status:      types.MetricStatus_METRIC_STATUS_UNSPECIFIED,
+		Status:      types.MetricStatus_UNSPECIFIED,
 	}
 
 	actualMetric := types.NewMetric(ctx, key, value, metricType, attributes)

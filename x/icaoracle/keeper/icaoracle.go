@@ -23,7 +23,7 @@ var (
 // One metric record is created for each oracle, in status QUEUED
 func (k Keeper) QueueMetricUpdate(ctx sdk.Context, key, value, metricType, attributes string) {
 	metric := types.NewMetric(ctx, key, value, metricType, attributes)
-	metric.Status = types.MetricStatus_METRIC_STATUS_QUEUED
+	metric.Status = types.MetricStatus_QUEUED
 
 	for _, oracle := range k.GetAllOracles(ctx) {
 		// Ignore any inactive oracles
