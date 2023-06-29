@@ -4,8 +4,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/auth/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
-
-	icaoracletypes "github.com/Stride-Labs/stride/v5/x/icaoracle/types"
 )
 
 // AccountKeeper defines the expected account keeper used for simulations (noalias)
@@ -38,5 +36,5 @@ type StakeIBCHooks interface {
 }
 
 type ICAOracleKeeper interface {
-	QueueMetricUpdate(ctx sdk.Context, metric icaoracletypes.Metric)
+	QueueMetricUpdate(ctx sdk.Context, key, value, metricType, attributes string)
 }

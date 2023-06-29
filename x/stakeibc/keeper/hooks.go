@@ -136,7 +136,8 @@ func (k Keeper) SetWithdrawalAddress(ctx sdk.Context) {
 
 // Updates the redemption rate for each host zone
 // The redemption rate equation is:
-//   (Unbonded Balance + Staked Balance + Module Account Balance) / (stToken Supply)
+//
+//	(Unbonded Balance + Staked Balance + Module Account Balance) / (stToken Supply)
 func (k Keeper) UpdateRedemptionRates(ctx sdk.Context, depositRecords []recordstypes.DepositRecord) {
 	k.Logger(ctx).Info("Updating Redemption Rates...")
 
@@ -183,18 +184,13 @@ func (k Keeper) UpdateRedemptionRates(ctx sdk.Context, depositRecords []recordst
 		})
 		if err != nil {
 			k.Logger(ctx).Error(fmt.Sprintf("Unable to marshal redemption rate attributes for oracle: %s", err.Error()))
+			continue
 		}
-		redemptionRateOracleUpdate := icaoracletypes.Metric{
-			Key:        fmt.Sprintf("%s_%s", stDenom, icaoracletypes.MetricType_RedemptionRate),
-			Value:      redemptionRate.String(),
-			MetricType: icaoracletypes.MetricType_RedemptionRate,
-			UpdateTime: uint64(ctx.BlockTime().Unix()),
-			Metadata: &icaoracletypes.Metadata{
-				BlockHeight: ctx.BlockHeight(),
-				Attributes:  string(attributes),
-			},
-		}
-		k.ICAOracleKeeper.QueueMetricUpdate(ctx, redemptionRateOracleUpdate)
+
+		metricKey := fmt.Sprintf("%s_%s", stDenom, icaoracletypes.MetricType_RedemptionRate)
+		metricValue := redemptionRate.String()
+		metricType := icaoracletypes.MetricType_RedemptionRate
+		k.ICAOracleKeeper.QueueMetricUpdate(ctx, metricKey, metricValue, metricType, string(attributes))
 	}
 }
 
