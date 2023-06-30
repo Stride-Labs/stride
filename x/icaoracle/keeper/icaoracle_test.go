@@ -133,3 +133,37 @@ func (s *KeeperTestSuite) TestSubmitMetricUpdate_FailedToSubmitICA() {
 	err := s.App.ICAOracleKeeper.SubmitMetricUpdate(s.Ctx, tc.Oracle, tc.Metric)
 	s.Require().ErrorContains(err, "unable to submit update oracle contract ICA: unable to submit ICA transaction")
 }
+
+func (s *KeeperTestSuite) TestPostAllQueuedMetrics() {
+	s.SetupTestSubmitMetricUpdate()
+
+	// Add an inactive oracle
+	s.App.ICAOracleKeeper.SetOracle(s.Ctx, types.Oracle{
+		ChainId: "inactive",
+		Active:  false,
+	})
+
+	// Add metrics across different states
+	metrics := []types.Metric{
+		// Should get sent
+		{Key: "key-1", Value: "value-1", DestinationOracle: HostChainId, Status: types.MetricStatus_QUEUED},
+		{Key: "key-2", Value: "value-2", DestinationOracle: HostChainId, Status: types.MetricStatus_QUEUED},
+		{Key: "key-3", Value: "value-3", DestinationOracle: HostChainId, Status: types.MetricStatus_QUEUED},
+		// Metric not QUEUED
+		{Key: "key-4", Value: "value-4", DestinationOracle: HostChainId, Status: types.MetricStatus_IN_PROGRESS},
+		// Inactive oracle - should not get sent
+		{Key: "key-5", Value: "value-5", DestinationOracle: "inactive", Status: types.MetricStatus_QUEUED},
+		// Oracle not found - should not get sent
+		{Key: "key-6", Value: "value-6", DestinationOracle: "not-found", Status: types.MetricStatus_QUEUED},
+	}
+	for _, metric := range metrics {
+		s.App.ICAOracleKeeper.SetMetric(s.Ctx, metric)
+	}
+
+	// Post all metrics
+	s.App.ICAOracleKeeper.PostAllQueuedMetrics(s.Ctx)
+
+	// Check 3 ICAs were submitted
+	callbacks := s.App.ICAOracleKeeper.ICACallbacksKeeper.GetAllCallbackData(s.Ctx)
+	s.Require().Len(callbacks, 3, "three callbacks submitted")
+}
