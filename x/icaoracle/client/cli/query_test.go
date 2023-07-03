@@ -22,7 +22,7 @@ func (s *ClientTestSuite) TestCmdQueryPendingMetricUpdates() {
 	byMetric := []string{"--metric-key", "key"}
 	byOracle := []string{"--oracle-chain-id", HostChainId}
 
-	cmd := cli.GetCmdQueryPendingMetricUpdates()
+	cmd := cli.GetCmdQueryMetrics()
 	s.ExecuteQueryAndCheckSuccessful(cmd, []string{}, "query pending metric updates")
 	s.ExecuteQueryAndCheckSuccessful(cmd, byMetric, "query pending metric updates by metric")
 	s.ExecuteQueryAndCheckSuccessful(cmd, byOracle, "query pending metric updates by oracle")

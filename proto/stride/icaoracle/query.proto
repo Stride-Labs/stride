@@ -29,22 +29,14 @@ service Query {
         "/Stride-Labs/stride/icaoracle/oracles/by_active";
   }
 
-  // Query all pending metrics
-  rpc AllPendingMetrics(QueryAllPendingMetricsRequest)
-      returns (QueryAllPendingMetricsResponse) {
-    option (google.api.http).get =
-        "/Stride-Labs/stride/icaoracle/pending_metrics";
-  }
-
-  // Query pending metrics with optional filters:
-  // - /pending_metrics/by_metric_or_oracle?metric_key=X
-  // - /pending_metrics/by_metric_or_oracle?oracle_chain_id=Y
-  // -
-  // /pending_metrics/by_metric_or_oracle?metric_key=X&oracle_chain_id=Y
-  rpc PendingMetrics(QueryPendingMetricsRequest)
-      returns (QueryPendingMetricsResponse) {
-    option (google.api.http).get = "/Stride-Labs/stride/icaoracle/"
-                                   "pending_metrics/by_metric_or_oracle";
+  // Query metrics with optional filters
+  //
+  // Ex:
+  // - /metrics
+  // - /metrics?metric_key=X
+  // - /metrics?oracle_chain_id=Y
+  rpc Metrics(QueryMetricsRequest) returns (QueryMetricsResponse) {
+    option (google.api.http).get = "/Stride-Labs/stride/icaoracle/metrics";
   }
 }
 
@@ -64,17 +56,11 @@ message QueryActiveOraclesResponse {
   repeated Oracle oracles = 1 [ (gogoproto.nullable) = false ];
 }
 
-// Query's all metric update's currently in flight
-message QueryAllPendingMetricsRequest {}
-message QueryAllPendingMetricsResponse {
-  repeated Metric metrics = 1 [ (gogoproto.nullable) = false ];
-}
-
-// Query's all metric update's currently in flight with optional filters
-message QueryPendingMetricsRequest {
+// Query's metric's with optional filters
+message QueryMetricsRequest {
   string metric_key = 1;
   string oracle_chain_id = 2;
 }
-message QueryPendingMetricsResponse {
+message QueryMetricsResponse {
   repeated Metric metrics = 1 [ (gogoproto.nullable) = false ];
 }

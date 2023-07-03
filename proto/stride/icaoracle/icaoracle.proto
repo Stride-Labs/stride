@@ -18,9 +18,11 @@ message Oracle {
 
 // MetricStatus indicates whether the Metric update ICA has been sent
 enum MetricStatus {
-  METRIC_STATUS_UNSPECIFIED = 0 [(gogoproto.enumvalue_customname) = "UNSPECIFIED"];
-  METRIC_STATUS_QUEUED = 1 [(gogoproto.enumvalue_customname) = "QUEUED"];
-  METRIC_STATUS_IN_PROGRESS = 2 [(gogoproto.enumvalue_customname) = "IN_PROGRESS" ];
+  METRIC_STATUS_UNSPECIFIED = 0
+      [ (gogoproto.enumvalue_customname) = "UNSPECIFIED" ];
+  METRIC_STATUS_QUEUED = 1 [ (gogoproto.enumvalue_customname) = "QUEUED" ];
+  METRIC_STATUS_IN_PROGRESS = 2
+      [ (gogoproto.enumvalue_customname) = "IN_PROGRESS" ];
 }
 
 // Metric structure stores a generic metric using a key value structure

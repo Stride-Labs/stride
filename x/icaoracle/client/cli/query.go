@@ -35,7 +35,7 @@ func GetQueryCmd() *cobra.Command {
 	cmd.AddCommand(
 		GetCmdQueryOracle(),
 		GetCmdQueryOracles(),
-		GetCmdQueryPendingMetricUpdates(),
+		GetCmdQueryMetrics(),
 	)
 
 	return cmd
@@ -136,18 +136,18 @@ Examples:
 	return cmd
 }
 
-// GetCmdQueryPendingMetricUpdates implements a command to query pending metric updates with optional
+// GetCmdQueryMetrics implements a command to query metrics with optional
 // key and/or oracle chain-id filters
-func GetCmdQueryPendingMetricUpdates() *cobra.Command {
+func GetCmdQueryMetrics() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "pending-metric-updates",
-		Short: "Queries all pending metric update ICAs",
+		Use:   "metrics",
+		Short: "Queries all metric update ICAs",
 		Long: strings.TrimSpace(
-			fmt.Sprintf(`Queries all metric update ICAs that have been sent to the oracle but have not received an acknowledgement
+			fmt.Sprintf(`Queries all metrics with optional filters
 Examples:
-  $ %[1]s query %[2]s pending-metric-updates 
-  $ %[1]s query %[2]s pending-metric-updates --metric-key=[key]
-  $ %[1]s query %[2]s pending-metric-updates --oracle-chain-id=[chain-id]
+  $ %[1]s query %[2]s metrics 
+  $ %[1]s query %[2]s metrics --metric-key=[key]
+  $ %[1]s query %[2]s metrics --oracle-chain-id=[chain-id]
 `, version.AppName, types.ModuleName),
 		),
 		Args: cobra.ExactArgs(0),
@@ -168,23 +168,13 @@ Examples:
 			queryClient := types.NewQueryClient(clientCtx)
 
 			// If no filters are passed, return all pending metrics
-			var res proto.Message
-			if metricKey == "" && oracleChainId == "" {
-				req := &types.QueryAllPendingMetricsRequest{}
-				res, err = queryClient.AllPendingMetrics(context.Background(), req)
-				if err != nil {
-					return err
-				}
-			} else {
-				// Otherwise filter by metric key and chain ID
-				req := &types.QueryPendingMetricsRequest{
-					MetricKey:     metricKey,
-					OracleChainId: oracleChainId,
-				}
-				res, err = queryClient.PendingMetrics(context.Background(), req)
-				if err != nil {
-					return err
-				}
+			req := &types.QueryMetricsRequest{
+				MetricKey:     metricKey,
+				OracleChainId: oracleChainId,
+			}
+			res, err := queryClient.Metrics(context.Background(), req)
+			if err != nil {
+				return err
 			}
 
 			return clientCtx.PrintProto(res)

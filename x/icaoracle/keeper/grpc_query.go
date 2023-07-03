@@ -42,32 +42,19 @@ func (k Keeper) ActiveOracles(c context.Context, req *types.QueryActiveOraclesRe
 	return &types.QueryActiveOraclesResponse{Oracles: oracles}, nil
 }
 
-// Query all metrics that currently have an ICA in flight
-func (k Keeper) AllPendingMetrics(c context.Context, req *types.QueryAllPendingMetricsRequest) (*types.QueryAllPendingMetricsResponse, error) {
-	ctx := sdk.UnwrapSDKContext(c)
-	pendingMetrics := []types.Metric{}
-	for _, metric := range k.GetAllMetrics(ctx) {
-		if metric.Status == types.MetricStatus_IN_PROGRESS {
-			pendingMetrics = append(pendingMetrics, metric)
-		}
-	}
-	return &types.QueryAllPendingMetricsResponse{Metrics: pendingMetrics}, nil
-}
-
-// Query all metrics that currently have an ICA in flight, with filters
-func (k Keeper) PendingMetrics(c context.Context, req *types.QueryPendingMetricsRequest) (*types.QueryPendingMetricsResponse, error) {
+// Query metrics with optional filters
+func (k Keeper) Metrics(c context.Context, req *types.QueryMetricsRequest) (*types.QueryMetricsResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
 
-	pendingMetrics := []types.Metric{}
+	metrics := []types.Metric{}
 	for _, metric := range k.GetAllMetrics(ctx) {
-		metricInProgress := metric.Status == types.MetricStatus_IN_PROGRESS
 		metricKeyMatch := req.MetricKey == "" || req.MetricKey == metric.Key
 		metricOracleMatch := req.OracleChainId == "" || req.OracleChainId == metric.DestinationOracle
 
-		if metricInProgress && metricKeyMatch && metricOracleMatch {
-			pendingMetrics = append(pendingMetrics, metric)
+		if metricKeyMatch && metricOracleMatch {
+			metrics = append(metrics, metric)
 		}
 	}
 
-	return &types.QueryPendingMetricsResponse{Metrics: pendingMetrics}, nil
+	return &types.QueryMetricsResponse{Metrics: metrics}, nil
 }
