@@ -52,12 +52,10 @@ func (k Keeper) SubmitMetricUpdate(ctx sdk.Context, oracle types.Oracle, metric 
 	}
 
 	// Build contract message with metric update
-	contractMsg := types.MsgExecuteContractPostMetric{
-		PostMetric: &metric,
-	}
+	contractMsg := types.NewMsgExecuteContractPostMetric(metric)
 	contractMsgBz, err := json.Marshal(contractMsg)
 	if err != nil {
-		return errorsmod.Wrapf(types.ErrMarshalFailure, "unable to marshal execute contract post metric: %s", err.Error())
+		return errorsmod.Wrapf(err, "unable to marshal execute contract post metric")
 	}
 
 	// Build ICA message to execute the CW contract
@@ -113,8 +111,7 @@ func (k Keeper) PostAllQueuedMetrics(ctx sdk.Context) {
 		}
 
 		// Submit the ICA for each metric
-		err := k.SubmitMetricUpdate(ctx, oracle, metric)
-		if err != nil {
+		if err := k.SubmitMetricUpdate(ctx, oracle, metric); err != nil {
 			k.Logger(ctx).Error(fmt.Sprintf("Failed to submit a metric update ICA - Metric: %+v, Oracle: %+v, %s", metric, oracle, err.Error()))
 			continue
 		}
