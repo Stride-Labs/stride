@@ -25,7 +25,6 @@
                     "/cosmos.distribution.v1beta1.MsgWithdrawDelegatorReward",
                     "/cosmos.distribution.v1beta1.MsgSetWithdrawAddress",
                     "/ibc.applications.transfer.v1.MsgTransfer",
-                    "/ibc.applications.transfer.v1.MsgTransfer",
                     "/cosmwasm.wasm.v1.MsgExecuteContract",
                     "/cosmwasm.wasm.v1.MsgInstantiateContract"
                 ]

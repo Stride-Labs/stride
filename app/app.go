@@ -297,8 +297,7 @@ type StrideApp struct {
 	ScopedICAControllerKeeper capabilitykeeper.ScopedKeeper
 	ScopedICAHostKeeper       capabilitykeeper.ScopedKeeper
 
-	ScopedStakeibcKeeper capabilitykeeper.ScopedKeeper
-	StakeibcKeeper       stakeibcmodulekeeper.Keeper
+	StakeibcKeeper stakeibcmodulekeeper.Keeper
 
 	EpochsKeeper          epochsmodulekeeper.Keeper
 	InterchainqueryKeeper interchainquerykeeper.Keeper
@@ -533,8 +532,6 @@ func NewStrideApp(
 	)
 	icaoracleModule := icaoracle.NewAppModule(appCodec, app.ICAOracleKeeper)
 
-	scopedStakeibcKeeper := app.CapabilityKeeper.ScopeToModule(stakeibcmoduletypes.ModuleName)
-	app.ScopedStakeibcKeeper = scopedStakeibcKeeper
 	stakeibcKeeper := stakeibcmodulekeeper.NewKeeper(
 		appCodec,
 		keys[stakeibcmoduletypes.StoreKey],
