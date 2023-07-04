@@ -9,8 +9,8 @@ import (
 	icacallbackstypes "github.com/Stride-Labs/stride/v11/x/icacallbacks/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	channeltypes "github.com/cosmos/ibc-go/v5/modules/core/04-channel/types"
-	"github.com/golang/protobuf/proto" //nolint:staticcheck
+	"github.com/cosmos/gogoproto/proto"
+	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
 )
 
 // Callback after an instantiating an oracle's CW contract

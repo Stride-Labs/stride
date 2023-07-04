@@ -6,12 +6,12 @@ import (
 	"io/ioutil"
 	"testing"
 
+	tmcli "github.com/cometbft/cometbft/libs/cli"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	clitestutil "github.com/cosmos/cosmos-sdk/testutil/cli"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/spf13/cobra"
 	"github.com/stretchr/testify/suite"
-	tmcli "github.com/tendermint/tendermint/libs/cli"
 
 	"github.com/cosmos/gogoproto/proto"
 
@@ -66,7 +66,7 @@ func (s *ClientTestSuite) ExecuteTxAndCheckSuccessful(cmd *cobra.Command, args [
 	defaultFlags := []string{
 		fmt.Sprintf("--%s=%s", flags.FlagFrom, s.val.Address.String()),
 		fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
-		fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastBlock),
+		fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastSync),
 		fmt.Sprintf("--%s=json", tmcli.OutputFlag),
 		strideclitestutil.DefaultFeeString(s.cfg),
 	}
@@ -98,7 +98,7 @@ func (s *ClientTestSuite) ExecuteGovTxAndCheckSuccessful(cmd *cobra.Command, pro
 		WithFromAddress(s.val.Address).
 		WithFromName(s.val.Moniker).
 		WithSkipConfirmation(true).
-		WithBroadcastMode(flags.BroadcastBlock).
+		WithBroadcastMode(flags.BroadcastSync).
 		WithOutputFormat("json")
 
 	// finally execute the gov tx

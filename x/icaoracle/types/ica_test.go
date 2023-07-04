@@ -4,11 +4,13 @@ import (
 	"testing"
 	"time"
 
+	"github.com/cometbft/cometbft/libs/log"
+	tmtypes "github.com/cometbft/cometbft/proto/tendermint/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/stretchr/testify/require"
-	"github.com/tendermint/tendermint/libs/log"
-	tmtypes "github.com/tendermint/tendermint/proto/tendermint/types"
+
+	proto "github.com/cosmos/gogoproto/proto"
 
 	"github.com/Stride-Labs/stride/v11/x/icaoracle/types"
 )
@@ -19,7 +21,7 @@ func TestValidateICATx(t *testing.T) {
 	validConnectionId := "connection-0"
 	validChannelId := "channel-0"
 	validPortId := "port-0"
-	validMessages := []sdk.Msg{&banktypes.MsgSend{}}
+	validMessages := []proto.Message{&banktypes.MsgSend{}}
 	validTimeout := uint64(time.Now().Add(time.Second).UTC().UnixNano()) // must be after ctx time
 	validCallbackId := "callback-id"
 
@@ -81,7 +83,7 @@ func TestValidateICATx(t *testing.T) {
 				ConnectionId: validConnectionId,
 				ChannelId:    validChannelId,
 				PortId:       validPortId,
-				Messages:     []sdk.Msg{},
+				Messages:     []proto.Message{},
 				Timeout:      validTimeout,
 				CallbackId:   validCallbackId,
 			},

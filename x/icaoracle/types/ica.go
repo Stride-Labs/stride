@@ -6,7 +6,7 @@ import (
 	errorsmod "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/golang/protobuf/proto" //nolint:staticcheck
+	proto "github.com/cosmos/gogoproto/proto"
 )
 
 const (
@@ -17,7 +17,7 @@ type ICATx struct {
 	ConnectionId string
 	ChannelId    string
 	PortId       string
-	Messages     []sdk.Msg
+	Messages     []proto.Message
 	Timeout      uint64
 	CallbackArgs proto.Message
 	CallbackId   string

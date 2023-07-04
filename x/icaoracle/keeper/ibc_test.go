@@ -1,14 +1,13 @@
 package keeper_test
 
 import (
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
-	icatypes "github.com/cosmos/ibc-go/v5/modules/apps/27-interchain-accounts/types"
-	connectiontypes "github.com/cosmos/ibc-go/v5/modules/core/03-connection/types"
-	channeltypes "github.com/cosmos/ibc-go/v5/modules/core/04-channel/types"
-	ibctesting "github.com/cosmos/ibc-go/v5/testing"
+	icatypes "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/types"
+	connectiontypes "github.com/cosmos/ibc-go/v7/modules/core/03-connection/types"
+	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
+	ibctesting "github.com/cosmos/ibc-go/v7/testing"
 
-	"github.com/golang/protobuf/proto" //nolint:staticcheck
+	proto "github.com/cosmos/gogoproto/proto"
 
 	icacallbacktypes "github.com/Stride-Labs/stride/v11/x/icacallbacks/types"
 
@@ -162,7 +161,7 @@ func (s *KeeperTestSuite) SetupTestSubmitICATx() (tx types.ICATx, callbackBz []b
 		ConnectionId: ibctesting.FirstConnectionID,
 		ChannelId:    channelId,
 		PortId:       portId,
-		Messages:     []sdk.Msg{&banktypes.MsgSend{}},
+		Messages:     []proto.Message{&banktypes.MsgSend{}},
 		Timeout:      uint64(s.Ctx.BlockTime().UnixNano() + 1),
 		CallbackId:   "callback_id",
 		CallbackArgs: &callback,
@@ -206,7 +205,7 @@ func (s *KeeperTestSuite) TestSubmitICATx_InvalidMessage() {
 	icaTx, _ := s.SetupTestSubmitICATx()
 
 	// Submit ICA without a nil message - should fail
-	icaTx.Messages = []sdk.Msg{nil}
+	icaTx.Messages = []proto.Message{nil}
 	err := s.App.ICAOracleKeeper.SubmitICATx(s.Ctx, icaTx)
 	s.Require().ErrorContains(err, "unable to serialize cosmos transaction")
 }
