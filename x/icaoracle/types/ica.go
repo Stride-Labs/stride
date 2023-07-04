@@ -17,6 +17,7 @@ type ICATx struct {
 	ConnectionId    string
 	ChannelId       string
 	PortId          string
+	Owner           string
 	Messages        []proto.Message
 	RelativeTimeout time.Duration
 	CallbackArgs    proto.Message
@@ -33,6 +34,9 @@ func (i ICATx) ValidateICATx() error {
 	if i.PortId == "" {
 		return errorsmod.Wrapf(ErrInvalidICARequest, "port-id is empty")
 	}
+	if i.Owner == "" {
+		return errorsmod.Wrapf(ErrInvalidICARequest, "owner is empty")
+	}
 	if len(i.Messages) < 1 {
 		return errorsmod.Wrapf(ErrInvalidICARequest, "messages are empty")
 	}
@@ -44,6 +48,10 @@ func (i ICATx) ValidateICATx() error {
 		return errorsmod.Wrapf(ErrInvalidICARequest, "callback-id is empty")
 	}
 	return nil
+}
+
+func (i ICATx) GetRelativeTimeoutNano() uint64 {
+	return uint64(i.RelativeTimeout.Nanoseconds())
 }
 
 func FormatICAAccountOwner(chainId string, accountType string) string {

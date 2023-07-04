@@ -16,7 +16,7 @@ func (k Keeper) Callbacks() icacallbackstypes.ModuleCallbacks {
 			CallbackFunc: icacallbackstypes.ICACallbackFunction(k.InstantiateOracleCallback),
 		},
 		{
-			CallbackId:   ICACallbackID_InstantiateOracle,
+			CallbackId:   ICACallbackID_UpdateOracle,
 			CallbackFunc: icacallbackstypes.ICACallbackFunction(k.UpdateOracleCallback),
 		},
 	}

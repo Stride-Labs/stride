@@ -131,7 +131,7 @@ func (s *KeeperTestSuite) TestSubmitMetricUpdate_FailedToSubmitICA() {
 
 	// Submit the metric update which should fail
 	err := s.App.ICAOracleKeeper.SubmitMetricUpdate(s.Ctx, tc.Oracle, tc.Metric)
-	s.Require().ErrorContains(err, "unable to submit update oracle contract ICA: unable to submit ICA transaction")
+	s.Require().ErrorContains(err, "unable to submit update oracle contract ICA: unable to send ICA tx")
 }
 
 func (s *KeeperTestSuite) TestPostAllQueuedMetrics() {

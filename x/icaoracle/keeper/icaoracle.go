@@ -76,6 +76,7 @@ func (k Keeper) SubmitMetricUpdate(ctx sdk.Context, oracle types.Oracle, metric 
 		ConnectionId:    oracle.ConnectionId,
 		ChannelId:       oracle.ChannelId,
 		PortId:          oracle.PortId,
+		Owner:           types.FormatICAAccountOwner(oracle.ChainId, types.ICAAccountType_Oracle),
 		Messages:        msgs,
 		RelativeTimeout: MetricUpdateTimeout,
 		CallbackArgs:    &callbackArgs,

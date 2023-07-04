@@ -133,6 +133,7 @@ func (k msgServer) InstantiateOracle(goCtx context.Context, msg *types.MsgInstan
 		ConnectionId:    oracle.ConnectionId,
 		ChannelId:       oracle.ChannelId,
 		PortId:          oracle.PortId,
+		Owner:           types.FormatICAAccountOwner(oracle.ChainId, types.ICAAccountType_Oracle),
 		Messages:        msgs,
 		RelativeTimeout: InstantiateOracleTimeout,
 		CallbackArgs:    &callbackArgs,

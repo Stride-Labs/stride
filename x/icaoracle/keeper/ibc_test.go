@@ -163,6 +163,7 @@ func (s *KeeperTestSuite) SetupTestSubmitICATx() (tx types.ICATx, callbackBz []b
 		ConnectionId:    ibctesting.FirstConnectionID,
 		ChannelId:       channelId,
 		PortId:          portId,
+		Owner:           owner,
 		Messages:        []proto.Message{&banktypes.MsgSend{}},
 		RelativeTimeout: time.Second,
 		CallbackId:      "callback_id",
@@ -223,5 +224,5 @@ func (s *KeeperTestSuite) TestSubmitICATx_SendFailure() {
 
 	// Submit the ICA which should error
 	err := s.App.ICAOracleKeeper.SubmitICATx(s.Ctx, icaTx)
-	s.Require().ErrorContains(err, "unable to submit ICA transaction")
+	s.Require().ErrorContains(err, "unable to send ICA tx")
 }

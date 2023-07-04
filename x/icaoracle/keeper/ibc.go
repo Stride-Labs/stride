@@ -6,6 +6,8 @@ import (
 	errorsmod "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/gogoproto/proto"
+	icacontrollerkeeper "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/controller/keeper"
+	icacontrollertypes "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/controller/types"
 	icatypes "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/types"
 
 	icacallbacktypes "github.com/Stride-Labs/stride/v11/x/icacallbacks/types"
@@ -67,11 +69,13 @@ func (k Keeper) SubmitICATx(ctx sdk.Context, tx types.ICATx) error {
 	}
 
 	// Submit ICA and grab sequence number for the callback key
-	timeout := uint64(tx.RelativeTimeout.Nanoseconds())
-	sequence, err := k.ICAControllerKeeper.SendTx(ctx, nil, tx.ConnectionId, tx.PortId, packetData, timeout)
+	icaMsgServer := icacontrollerkeeper.NewMsgServerImpl(&k.ICAControllerKeeper)
+	msgSendTx := icacontrollertypes.NewMsgSendTx(tx.Owner, tx.ConnectionId, tx.GetRelativeTimeoutNano(), packetData)
+	res, err := icaMsgServer.SendTx(ctx, msgSendTx)
 	if err != nil {
-		return errorsmod.Wrapf(err, "unable to submit ICA transaction")
+		return errorsmod.Wrapf(err, "unable to send ICA tx")
 	}
+	sequence := res.Sequence
 
 	// Store the callback data
 	callbackArgsBz, err := proto.Marshal(tx.CallbackArgs)

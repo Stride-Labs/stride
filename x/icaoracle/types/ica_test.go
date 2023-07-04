@@ -16,6 +16,7 @@ func TestValidateICATx(t *testing.T) {
 	validConnectionId := "connection-0"
 	validChannelId := "channel-0"
 	validPortId := "port-0"
+	validOwner := "owner"
 	validMessages := []proto.Message{&banktypes.MsgSend{}}
 	validTimeout := time.Second
 	validCallbackId := "callback-id"
@@ -31,6 +32,7 @@ func TestValidateICATx(t *testing.T) {
 				ConnectionId:    validConnectionId,
 				ChannelId:       validChannelId,
 				PortId:          validPortId,
+				Owner:           validOwner,
 				Messages:        validMessages,
 				RelativeTimeout: validTimeout,
 				CallbackId:      validCallbackId,
@@ -42,6 +44,7 @@ func TestValidateICATx(t *testing.T) {
 				ConnectionId:    "",
 				ChannelId:       validChannelId,
 				PortId:          validPortId,
+				Owner:           validOwner,
 				Messages:        validMessages,
 				RelativeTimeout: validTimeout,
 				CallbackId:      validCallbackId,
@@ -54,6 +57,7 @@ func TestValidateICATx(t *testing.T) {
 				ConnectionId:    validConnectionId,
 				ChannelId:       "",
 				PortId:          validPortId,
+				Owner:           validOwner,
 				Messages:        validMessages,
 				RelativeTimeout: validTimeout,
 				CallbackId:      validCallbackId,
@@ -66,6 +70,7 @@ func TestValidateICATx(t *testing.T) {
 				ConnectionId:    validConnectionId,
 				ChannelId:       validChannelId,
 				PortId:          "",
+				Owner:           validOwner,
 				Messages:        validMessages,
 				RelativeTimeout: validTimeout,
 				CallbackId:      validCallbackId,
@@ -73,11 +78,25 @@ func TestValidateICATx(t *testing.T) {
 			err: "port-id is empty",
 		},
 		{
+			name: "invalid owner",
+			tx: types.ICATx{
+				ConnectionId:    validConnectionId,
+				ChannelId:       validChannelId,
+				PortId:          validPortId,
+				Owner:           "",
+				Messages:        validMessages,
+				RelativeTimeout: validTimeout,
+				CallbackId:      validCallbackId,
+			},
+			err: "owner is empty",
+		},
+		{
 			name: "invalid messages",
 			tx: types.ICATx{
 				ConnectionId:    validConnectionId,
 				ChannelId:       validChannelId,
 				PortId:          validPortId,
+				Owner:           validOwner,
 				Messages:        []proto.Message{},
 				RelativeTimeout: validTimeout,
 				CallbackId:      validCallbackId,
@@ -90,11 +109,12 @@ func TestValidateICATx(t *testing.T) {
 				ConnectionId:    validConnectionId,
 				ChannelId:       validChannelId,
 				PortId:          validPortId,
+				Owner:           validOwner,
 				Messages:        validMessages,
 				RelativeTimeout: -1 * time.Second,
 				CallbackId:      validCallbackId,
 			},
-			err: "timeout is not in the future",
+			err: "relative timeout must be greater than 0",
 		},
 		{
 			name: "invalid callback-id",
@@ -102,6 +122,7 @@ func TestValidateICATx(t *testing.T) {
 				ConnectionId:    validConnectionId,
 				ChannelId:       validChannelId,
 				PortId:          validPortId,
+				Owner:           validOwner,
 				Messages:        validMessages,
 				RelativeTimeout: validTimeout,
 				CallbackId:      "",
