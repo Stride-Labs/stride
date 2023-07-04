@@ -36,14 +36,10 @@ func (k Keeper) UnmarshalRedemptionCallbackArgs(ctx sdk.Context, redemptionCallb
 }
 
 // ICA Callback after undelegating
-//
-//	If successful:
-//	  * Updates epoch unbonding record status
-//	If timeout:
-//	  * Does nothing
-//	If failure:
-//	  * Reverts epoch unbonding record status
-func RedemptionCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ackResponse *icacallbackstypes.AcknowledgementResponse, args []byte) error {
+// * If successful: Updates epoch unbonding record status
+// * If timeout:    Does nothing
+// * If failure:    Reverts epoch unbonding record status
+func (k Keeper) RedemptionCallback(ctx sdk.Context, packet channeltypes.Packet, ackResponse *icacallbackstypes.AcknowledgementResponse, args []byte) error {
 	// Fetch callback args
 	redemptionCallback, err := k.UnmarshalRedemptionCallbackArgs(ctx, args)
 	if err != nil {
