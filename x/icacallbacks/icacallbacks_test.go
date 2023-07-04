@@ -7,19 +7,19 @@ import (
 	"testing"
 	"time"
 
+	"github.com/cometbft/cometbft/libs/log"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
-	ibctransfertypes "github.com/cosmos/ibc-go/v5/modules/apps/transfer/types"
-	channeltypes "github.com/cosmos/ibc-go/v5/modules/core/04-channel/types"
-	"github.com/gogo/protobuf/proto"
-	"github.com/tendermint/tendermint/libs/log"
+	"github.com/cosmos/gogoproto/proto"
+	ibctransfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
+	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/Stride-Labs/stride/v5/app/apptesting"
-	"github.com/Stride-Labs/stride/v5/x/icacallbacks"
-	icacallbacktypes "github.com/Stride-Labs/stride/v5/x/icacallbacks/types"
+	"github.com/Stride-Labs/stride/v11/app/apptesting"
+	"github.com/Stride-Labs/stride/v11/x/icacallbacks"
+	icacallbacktypes "github.com/Stride-Labs/stride/v11/x/icacallbacks/types"
 )
 
 func TestParseTxMsgDataCurrent(t *testing.T) {

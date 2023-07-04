@@ -17,15 +17,32 @@ NUM_NODES=$(GET_VAR_VALUE   ${CHAIN}_NUM_NODES)
 NODE_PREFIX=$(GET_VAR_VALUE ${CHAIN}_NODE_PREFIX)
 VAL_PREFIX=$(GET_VAR_VALUE  ${CHAIN}_VAL_PREFIX)
 
+# THe host zone can optionally specify additional the micro-denom granularity
+# If they don't specify the ${CHAIN}_MICRO_DENOM_UNITS variable,
+# EXTRA_MICRO_DENOM_UNITS will include 6 0's
+MICRO_DENOM_UNITS_VAR_NAME=${CHAIN}_MICRO_DENOM_UNITS
+MICRO_DENOM_UNITS="${!MICRO_DENOM_UNITS_VAR_NAME:-000000}"
+
+VAL_TOKENS=${VAL_TOKENS}${MICRO_DENOM_UNITS}
+STAKE_TOKENS=${STAKE_TOKENS}${MICRO_DENOM_UNITS}
+ADMIN_TOKENS=${ADMIN_TOKENS}${MICRO_DENOM_UNITS}
+
 set_stride_genesis() {
     genesis_config=$1
 
     # update params
     jq '(.app_state.epochs.epochs[] | select(.identifier=="day") ).duration = $epochLen' --arg epochLen $STRIDE_DAY_EPOCH_DURATION $genesis_config > json.tmp && mv json.tmp $genesis_config
+    jq '(.app_state.epochs.epochs[] | select(.identifier=="hour") ).duration = $epochLen' --arg epochLen $STRIDE_HOUR_EPOCH_DURATION $genesis_config > json.tmp && mv json.tmp $genesis_config
     jq '(.app_state.epochs.epochs[] | select(.identifier=="stride_epoch") ).duration = $epochLen' --arg epochLen $STRIDE_EPOCH_EPOCH_DURATION $genesis_config > json.tmp && mv json.tmp $genesis_config
+    jq '(.app_state.epochs.epochs[] | select(.identifier=="mint") ).duration = $epochLen' --arg epochLen $STRIDE_MINT_EPOCH_DURATION $genesis_config > json.tmp && mv json.tmp $genesis_config
     jq '.app_state.staking.params.unbonding_time = $newVal' --arg newVal "$UNBONDING_TIME" $genesis_config > json.tmp && mv json.tmp $genesis_config
-    jq '.app_state.gov.deposit_params.max_deposit_period = $newVal' --arg newVal "$MAX_DEPOSIT_PERIOD" $genesis_config > json.tmp && mv json.tmp $genesis_config
-    jq '.app_state.gov.voting_params.voting_period = $newVal' --arg newVal "$VOTING_PERIOD" $genesis_config > json.tmp && mv json.tmp $genesis_config
+    jq '.app_state.gov.params.max_deposit_period = $newVal' --arg newVal "$MAX_DEPOSIT_PERIOD" $genesis_config > json.tmp && mv json.tmp $genesis_config
+    jq '.app_state.gov.params.voting_period = $newVal' --arg newVal "$VOTING_PERIOD" $genesis_config > json.tmp && mv json.tmp $genesis_config
+
+    # enable stride as an interchain accounts controller
+    jq "del(.app_state.interchain_accounts)" $genesis_config > json.tmp && mv json.tmp $genesis_config
+    interchain_accts=$(cat $DOCKERNET_HOME/config/ica_controller.json)
+    jq ".app_state += $interchain_accts" $genesis_config > json.tmp && mv json.tmp $genesis_config
 }
 
 set_host_genesis() {
@@ -46,7 +63,7 @@ set_host_genesis() {
 
     # Add interchain accounts to the genesis set
     jq "del(.app_state.interchain_accounts)" $genesis_config > json.tmp && mv json.tmp $genesis_config
-    interchain_accts=$(cat $DOCKERNET_HOME/config/ica.json)
+    interchain_accts=$(cat $DOCKERNET_HOME/config/ica_host.json)
     jq ".app_state += $interchain_accts" $genesis_config > json.tmp && mv json.tmp $genesis_config
 
     # Slightly harshen slashing parameters (if 5 blocks are missed, the validator will be slashed)
@@ -63,7 +80,7 @@ MAIN_CONFIG=""
 MAIN_GENESIS=""
 echo "Initializing $CHAIN chain..."
 for (( i=1; i <= $NUM_NODES; i++ )); do
-    # Node names will be of the form: "stride-node1"
+    # Node names will be of the form: "stride1"
     node_name="${NODE_PREFIX}${i}"
     # Moniker is of the form: STRIDE_1
     moniker=$(printf "${NODE_PREFIX}_${i}" | awk '{ print toupper($0) }')
@@ -98,12 +115,14 @@ for (( i=1; i <= $NUM_NODES; i++ )); do
     sed -i -E '/\[api\]/,/^enable = .*$/ s/^enable = .*$/enable = true/' $app_toml
     sed -i -E 's|unsafe-cors = .*|unsafe-cors = true|g' $app_toml
     sed -i -E "s|snapshot-interval = 0|snapshot-interval = 300|g" $app_toml
+    sed -i -E 's|localhost|0.0.0.0|g' $app_toml
 
     sed -i -E "s|chain-id = \"\"|chain-id = \"${CHAIN_ID}\"|g" $client_toml
     sed -i -E "s|keyring-backend = \"os\"|keyring-backend = \"test\"|g" $client_toml
     sed -i -E "s|node = \".*\"|node = \"tcp://localhost:$RPC_PORT\"|g" $client_toml
 
-    sed -i -E "s|\"stake\"|\"${DENOM}\"|g" $genesis_json
+    sed -i -E "s|\"stake\"|\"${DENOM}\"|g" $genesis_json 
+    sed -i -E "s|\"aphoton\"|\"${DENOM}\"|g" $genesis_json # ethermint default
 
     # Get the endpoint and node ID
     node_id=$($cmd tendermint show-node-id)@$node_name:$PEER_PORT
@@ -144,7 +163,6 @@ if [ "$CHAIN" == "STRIDE" ]; then
     echo "$STRIDE_ADMIN_MNEMONIC" | $MAIN_CMD keys add $STRIDE_ADMIN_ACCT --recover --keyring-backend=test >> $KEYS_LOGS 2>&1
     STRIDE_ADMIN_ADDRESS=$($MAIN_CMD keys show $STRIDE_ADMIN_ACCT --keyring-backend test -a)
     $MAIN_CMD add-genesis-account ${STRIDE_ADMIN_ADDRESS} ${ADMIN_TOKENS}${DENOM}
-
     # add relayer accounts
     for i in "${!RELAYER_ACCTS[@]}"; do
         RELAYER_ACCT="${RELAYER_ACCTS[i]}"

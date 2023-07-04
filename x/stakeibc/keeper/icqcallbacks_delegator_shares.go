@@ -1,6 +1,8 @@
 package keeper
 
 import (
+	sdkmath "cosmossdk.io/math"
+
 	errorsmod "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -8,10 +10,10 @@ import (
 
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
-	"github.com/Stride-Labs/stride/v5/utils"
-	epochtypes "github.com/Stride-Labs/stride/v5/x/epochs/types"
-	icqtypes "github.com/Stride-Labs/stride/v5/x/interchainquery/types"
-	"github.com/Stride-Labs/stride/v5/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v11/utils"
+	epochtypes "github.com/Stride-Labs/stride/v11/x/epochs/types"
+	icqtypes "github.com/Stride-Labs/stride/v11/x/interchainquery/types"
+	"github.com/Stride-Labs/stride/v11/x/stakeibc/types"
 )
 
 // DelegatorSharesCallback is a callback handler for UpdateValidatorSharesExchRate queries.
@@ -81,6 +83,26 @@ func DelegatorSharesCallback(k Keeper, ctx sdk.Context, args []byte, query icqty
 		k.Logger(ctx).Info(utils.LogICQCallbackWithHostZone(chainId, ICQCallbackID_Delegation, "Validator was not slashed"))
 		return nil
 	}
+
+	// If the true delegation is slightly higher than our record keeping, this could be due to float imprecision
+	// Correct record keeping accordingly
+	precisionErrorThreshold := sdkmath.NewInt(25)
+	precisionError := delegatedTokens.Sub(validator.DelegationAmt)
+	if precisionError.IsPositive() && precisionError.LTE(precisionErrorThreshold) {
+		// Update the validator on the host zone
+		validator.DelegationAmt = validator.DelegationAmt.Add(precisionError)
+		hostZone.StakedBal = hostZone.StakedBal.Add(precisionError)
+
+		hostZone.Validators[valIndex] = &validator
+		k.SetHostZone(ctx, hostZone)
+
+		k.Logger(ctx).Info(utils.LogICQCallbackWithHostZone(chainId, ICQCallbackID_Delegation,
+			"Delegation updated to %v", validator.DelegationAmt))
+
+		return nil
+	}
+
+	// If the delegation returned from the query is much higher than our record keeping, exit with an error
 	if delegatedTokens.GT(validator.DelegationAmt) {
 		return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "Validator (%s) tokens returned from query is greater than the DelegationAmt", validator.Address)
 	}

@@ -4,19 +4,20 @@ import (
 	"context"
 	"fmt"
 
-	recordstypes "github.com/Stride-Labs/stride/v5/x/records/types"
+	recordstypes "github.com/Stride-Labs/stride/v11/x/records/types"
 
 	errorsmod "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	bankTypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+	proto "github.com/cosmos/gogoproto/proto"
 
-	epochstypes "github.com/Stride-Labs/stride/v5/x/epochs/types"
-	"github.com/Stride-Labs/stride/v5/x/stakeibc/types"
+	epochstypes "github.com/Stride-Labs/stride/v11/x/epochs/types"
+	"github.com/Stride-Labs/stride/v11/x/stakeibc/types"
 )
 
 type IcaTx struct {
 	ConnectionId string
-	Msgs         []sdk.Msg
+	Msgs         []proto.Message
 	Account      types.ICAAccount
 	Timeout      uint64
 }
@@ -29,6 +30,16 @@ func (k msgServer) ClaimUndelegatedTokens(goCtx context.Context, msg *types.MsgC
 		errMsg := fmt.Sprintf("unable to find claimable redemption record for msg: %v, error %s", msg, err.Error())
 		k.Logger(ctx).Error(errMsg)
 		return nil, errorsmod.Wrap(types.ErrRecordNotFound, errMsg)
+	}
+
+	hostZone, found := k.GetHostZone(ctx, msg.HostZoneId)
+	if !found {
+		return nil, errorsmod.Wrap(types.ErrHostZoneNotFound, fmt.Sprintf("Host zone %s not found", msg.HostZoneId))
+	}
+
+	if hostZone.Halted {
+		k.Logger(ctx).Error(fmt.Sprintf("Host Zone %s halted", msg.HostZoneId))
+		return nil, errorsmod.Wrapf(types.ErrHaltedHostZone, "Host Zone %s halted", msg.HostZoneId)
 	}
 
 	icaTx, err := k.GetRedemptionTransferMsg(ctx, userRedemptionRecord, msg.HostZoneId)
@@ -106,7 +117,7 @@ func (k Keeper) GetRedemptionTransferMsg(ctx sdk.Context, userRedemptionRecord *
 		return nil, errorsmod.Wrap(types.ErrInvalidHostZone, errMsg)
 	}
 
-	var msgs []sdk.Msg
+	var msgs []proto.Message
 	rrAmt := userRedemptionRecord.Amount
 	msgs = append(msgs, &bankTypes.MsgSend{
 		FromAddress: redemptionAccount.Address,

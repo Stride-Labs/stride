@@ -40,8 +40,9 @@ You can optionally pass build arguments to specify which binary to rebuild
 3. `j` This will re-build the Juno binary
 4. `o` This will re-build the Osmo binary
 5. `t` This will re-build the Stargaze binary
-6. `r` This will re-build the Go Relayer binary
-7. `h` This will re-build the Hermes binary
+6. `t` This will re-build the Evmos binary
+7. `r` This will re-build the Go Relayer binary
+8. `h` This will re-build the Hermes binary
 
 Example: `make start-docker build=sg`, this will:
 - Rebuild the Stride and Gaia binaries
@@ -58,6 +59,22 @@ To test the chain with a mnemonic that has tokens (e.g. sending Stride transacti
 close soup mirror crew erode defy knock trigger gather eyebrow tent farm gym gloom base lemon sleep weekend rich forget diagram hurt prize fly
 ```
 This mnemonic will have tokens on every chain running locally.
+
+#### Running integration tests
+Ensure submoules are updated
+```
+git submodule update --init --recursive
+```
+
+Build Stride, Gaia, Evmos, and the go relayer
+```
+make start-docker build=sger
+```
+
+Run integration tests
+```
+make test-integration-docker
+```
 
 ### Making changes to this repository
 ###### Summary
@@ -112,6 +129,7 @@ We use the following modules from [Osmosis](https://github.com/osmosis-labs/osmo
 ```
 x/epochs
 x/mint
+x/ratelimit
 ```
 We use the following module (marketed as public infra) from [Quicksilver](https://github.com/ingenuity-build/quicksilver) provided under [this License](https://github.com/ingenuity-build/quicksilver/blob/main/LICENSE): 
 ```

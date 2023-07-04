@@ -4,6 +4,8 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/auth/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+
+	ratelimittypes "github.com/Stride-Labs/stride/v11/x/ratelimit/types"
 )
 
 // AccountKeeper defines the expected account keeper used for simulations (noalias)
@@ -24,6 +26,8 @@ type BankKeeper interface {
 	SendCoinsFromModuleToAccount(ctx sdk.Context, senderModule string, recipientAddr sdk.AccAddress, amt sdk.Coins) error
 	SendCoinsFromAccountToModule(ctx sdk.Context, senderAddr sdk.AccAddress, recipientModule string, amt sdk.Coins) error
 	MintCoins(ctx sdk.Context, moduleName string, amt sdk.Coins) error
+	GetAllBalances(ctx sdk.Context, addr sdk.AccAddress) sdk.Coins
+	SendCoinsFromModuleToModule(ctx sdk.Context, senderModule string, recipientModule string, amt sdk.Coins) error
 }
 
 // Event Hooks
@@ -37,4 +41,10 @@ type StakeIBCHooks interface {
 
 type ICAOracleKeeper interface {
 	QueueMetricUpdate(ctx sdk.Context, key, value, metricType, attributes string)
+}
+
+type RatelimitKeeper interface {
+	AddDenomToBlacklist(ctx sdk.Context, denom string)
+	RemoveDenomFromBlacklist(ctx sdk.Context, denom string)
+	SetWhitelistedAddressPair(ctx sdk.Context, whitelist ratelimittypes.WhitelistedAddressPair)
 }

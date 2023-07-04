@@ -4,17 +4,17 @@ import (
 	"fmt"
 	"testing"
 
+	tmcli "github.com/cometbft/cometbft/libs/cli"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	clitestutil "github.com/cosmos/cosmos-sdk/testutil/cli"
 	"github.com/stretchr/testify/require"
-	tmcli "github.com/tendermint/tendermint/libs/cli"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	"github.com/Stride-Labs/stride/v5/testutil/network"
-	"github.com/Stride-Labs/stride/v5/testutil/nullify"
-	"github.com/Stride-Labs/stride/v5/x/records/client/cli"
-	"github.com/Stride-Labs/stride/v5/x/records/types"
+	"github.com/Stride-Labs/stride/v11/testutil/network"
+	"github.com/Stride-Labs/stride/v11/testutil/nullify"
+	"github.com/Stride-Labs/stride/v11/x/records/client/cli"
+	"github.com/Stride-Labs/stride/v11/x/records/types"
 )
 
 func networkWithDepositRecordObjects(t *testing.T, n int) (*network.Network, []types.DepositRecord) {
@@ -33,7 +33,6 @@ func networkWithDepositRecordObjects(t *testing.T, n int) (*network.Network, []t
 	buf, err := cfg.Codec.MarshalJSON(&state)
 	require.NoError(t, err)
 	cfg.GenesisState[types.ModuleName] = buf
-	// fmt.Println(fmt.Sprintf("state.DepositRecordList: %v", state.DepositRecordList))
 	return network.New(t, cfg), state.DepositRecordList
 }
 

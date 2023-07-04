@@ -40,6 +40,106 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+<!-- GH ACTIONS TEMPLATE - INSERT NEW VERSION HERE -->
+### Changelog
+
+## [v11.0.0](https://github.com/Stride-Labs/stride/releases/tag/v11.0.0) - 2023-06-23
+
+### On-Chain changes
+1. IBCv7 version bump ([#840](https://github.com/Stride-Labs/stride/pull/840))
+2. Modified version command ([#831](https://github.com/Stride-Labs/stride/pull/831))
+
+### Off-Chain Changes
+1. Remove redundant build tags ([#829](https://github.com/Stride-Labs/stride/pull/829))
+
+## [v10.0.0](https://github.com/Stride-Labs/stride/releases/tag/v10.0.0) - 2023-06-15
+
+### On-Chain changes
+1. SDK 47 / IBC v7 ([#765](https://github.com/Stride-Labs/stride/pull/765))
+2. Fix bug in ICA SendTx ([#812](https://github.com/Stride-Labs/stride/pull/812))
+3. IBC Rate Limiting Audit Fixes ([#818](https://github.com/Stride-Labs/stride/pull/818))
+4. V10 import paths ([#825](https://github.com/Stride-Labs/stride/pull/825))
+5. v10 Upgrade Handler ([#805](https://github.com/Stride-Labs/stride/pull/805)) 
+6. Removed comdex from list of new rate limits ([#826](https://github.com/Stride-Labs/stride/pull/826)) 
+7. Dependency bumps ([0fb5fb6](https://github.com/Stride-Labs/stride/commit/0fb5fb6c014338a7837a569ba5b081235fd9af8a), [fc70522](https://github.com/Stride-Labs/stride/commit/fc7052268cd21c941dfebcb9560123e40e14e5b8), [6aac1d5](https://github.com/Stride-Labs/stride/commit/6aac1d5bb2c4f6cbc00ed0c31793cfc091f7550f), [eddf1ea](https://github.com/Stride-Labs/stride/commit/eddf1eae49e669432dfcce56d28ec71f67f8cff6), [4871518](https://github.com/Stride-Labs/stride/commit/b89d88ce02a23ca01fc574ae1c1a0226a9b2ef74), [b89d88c](https://github.com/Stride-Labs/stride/commit/0fb5fb6c014338a7837a569ba5b081235fd9af8a), [7a332fc](https://github.com/Stride-Labs/stride/commit/7a332fc5e690b71c10b48b6630cba1488fa2f90b), [7eea5ee](https://github.com/Stride-Labs/stride/commit/7eea5eea66973241edbb4261c1408410bfffc4e3), [c74f8f2](https://github.com/Stride-Labs/stride/commit/c74f8f28c9bbc794e70f5ded0af6930d2d10a3a8))
+
+### Off-Chain Changes
+1. Automated changelog [Part 1] ([#788](https://github.com/Stride-Labs/stride/pull/788)) 
+2. Automated changelog [Part 2] ([#799](https://github.com/Stride-Labs/stride/pull/799))
+3. Automated version increment [Part 1] ([#770](https://github.com/Stride-Labs/stride/pull/770)) 
+4. Automated version increment [Part 2] ([#786](https://github.com/Stride-Labs/stride/pull/786)) 
+5. Automate binary versioning ([#789](https://github.com/Stride-Labs/stride/pull/789)) 
+6. Check if binaries exist during dockernet startup ([#816](https://github.com/Stride-Labs/stride/pull/816)) 
+7. Fix dockernet typos ([#754](https://github.com/Stride-Labs/stride/pull/754)) 
+8. Remove third party protos ([#782](https://github.com/Stride-Labs/stride/pull/782))
+9. Changes required to get local to mainnet testing working with Umee ([#776](https://github.com/Stride-Labs/stride/pull/776))
+10. Enabled evmos in upgrade integration tests ([#736](https://github.com/Stride-Labs/stride/pull/736))
+
+
+## [v9.0.0](https://github.com/Stride-Labs/stride/releases/tag/v9.0.0) - 2023-04-19
+
+### On-Chain changes
+1. Autopilot Channel Verification ([62295e3](https://github.com/Stride-Labs/stride/commit/62295e3818de10c13295855d8fc8a224aff3bc70))
+2. Set epoch provisions in mint init genesis ([16dee3e](https://github.com/Stride-Labs/stride/commit/16dee3e4e3645f3118aa30a45159801873cd8bd4))
+3. Add Unit Test to Check Host Zone Min/Max RR ([3a5c7bf](https://github.com/Stride-Labs/stride/commit/3a5c7bfcc3b8c5e7dd870f01bebeb9d949492203))
+4. v9 Upgrade Handler ([b8d5152](https://github.com/Stride-Labs/stride/commit/b8d51526d30e947a9b17a74b93d551380632b79c))
+5. v9 Import Paths ([c88b52e](https://github.com/Stride-Labs/stride/commit/c88b52e34a484fe1e055b58abfce86bc19932990))
+
+### Off-Chain Changes
+These changes do not affect any on-chain functionality, but have been implemented since `v8.0.0`.
+1. Add evmos to dockernet ([3323949](https://github.com/Stride-Labs/stride/commit/332394936f57b87ad0b2987572eaa1cade5ce68b))
+2. Update dockernet go relayer and integration test timing ([edeffb3](https://github.com/Stride-Labs/stride/commit/edeffb320bc93c3cc6f3cabc5d2ce18448bebae0))
+
+## [v8.0.0](https://github.com/Stride-Labs/stride/releases/tag/v8.0.0) - 2023-03-23
+### On-Chain changes
+1. Add Multiple Validators in One Transaction ([4ce1317](https://github.com/Stride-Labs/stride/commit/4ce1317073f4119a891229530677603c10e5700c))
+2. Add new claim queries ([7e7335a](https://github.com/Stride-Labs/stride/commit/7e7335a6466abc13fd51aed1f7c76d621fb3d524))
+3. Autopilot JSON Memo ([d16d7f2](https://github.com/Stride-Labs/stride/commit/d16d7f2676dc6182dd0fd655530136ff3e5780ad))
+4. Enable Delegator Shares Query to Correct DelegationAmt ([5868b82](https://github.com/Stride-Labs/stride/commit/5868b82b60e8548f8e791f1d90dfa9c05031127f))
+5. Add Unit Test for claim module AfterEpochEnd ([29fce22](https://github.com/Stride-Labs/stride/commit/29fce22718002c5bcc76e0dc889f80cd4e392804))
+6. Airdrop Safety Checks ([a7ebe87](https://github.com/Stride-Labs/stride/commit/a7ebe87c7d133b1d40de6d6c3297777f233d61fd))
+7. v8 Upgrade Handler ([31c5dc4](https://github.com/Stride-Labs/stride/commit/31c5dc412019e2e69ccf9cba8fcc5d793ccd6a64))
+8. v8 Import Paths ([0a42766](https://github.com/Stride-Labs/stride/commit/0a42766e900310ce31a9b0b62354229924cb1ee9))
+
+### Off-Chain changes
+These changes do not affect any on-chain functionality, but have been implemented since `v7.0.0`.
+1. Fixed typo in docs for adding a new host ([75f6b6b](https://github.com/Stride-Labs/stride/commit/75f6b6b06fa9058b200eba9395f4b516941bba69))
+2. Automatically Build Docker Image on New Release (in CI) ([26aaf00](https://github.com/Stride-Labs/stride/commit/26aaf00e636c317e5a57cc29a973e1f476072976)),([4febc23](https://github.com/Stride-Labs/stride/commit/4febc230f40dba8c7e1d6443677f8eb0ba34c00a))
+3. Airdrop Testing Scripts ([f305dc](https://github.com/Stride-Labs/stride/commit/f305dc16fb91ec6526292ab039c8dd29a66f619b))
+
+## [v7.0.0](https://github.com/Stride-Labs/stride/releases/tag/v7.0.0) - 2023-03-12
+### On-Chain changes
+1. IBC Rate Limiting ([94e3a91](https://github.com/Stride-Labs/stride/commit/94e3a91dc582218a477771d9a694966bf901fdf5))
+2. Host Zone Reward Reallocation ([3539983](https://github.com/Stride-Labs/stride/commit/353998347af20ae14967e5da73a3f9059c0e1826))
+3. Add Autopilot ([1c173fe](https://github.com/Stride-Labs/stride/commit/1c173fed57418bea8fbb19240245757708f25472))
+3. Prevent undelegations of amount 0 ([3e0f404](https://github.com/Stride-Labs/stride/commit/3e0f40457ed90faa964556c6498c9d976336aa84))
+4. Change `sdkerrors` to `errorsmod` ([dfc5fb0](https://github.com/Stride-Labs/stride/commit/dfc5fb0fb33a471f86f1f74992ff3809919e7e80))
+5. Remove Epoch Unbonding Records with 0 amounts ([470268d](https://github.com/Stride-Labs/stride/commit/470268d393b15b0a4014e3a61c0478eaddc10756))
+6. Remove ICACallbacks from Middleware ([59a872b](https://github.com/Stride-Labs/stride/commit/59a872b20d8553c1a0e8187b2d70304c2a7341b7))
+7. Remove unnecessary setting of EXIT_TRANSFER_QUEUE ([0413e99](https://github.com/Stride-Labs/stride/commit/0413e999d3c67369e50ca40c61763f522dd02e06))
+8. Airdrop Reset ([b7371d7](https://github.com/Stride-Labs/stride/commit/b7371d7b4e02e40cc979d0a0e417113276e3b8a3))
+9. Module Account Safety ([0a325de](https://github.com/Stride-Labs/stride/commit/0a325deddc0bac58cc43e650773cc3408eabc011)) 
+10. Minor optimizations ([c3df52d](https://github.com/Stride-Labs/stride/commit/c3df52d178ebe1e7e3ccf0a697bec3a9fecfdc48), [85e76ec](https://github.com/Stride-Labs/stride/commit/85e76ec9b932f0b5bf5617677d1b8306fd33298f), [5ff42a9](https://github.com/Stride-Labs/stride/commit/5ff42a93b189a240f8cc0ac0a750ac4cd26272f7, [b3196d2](https://github.com/Stride-Labs/stride/commit/b3196d2b3fca62b72b2ba451237379b0747f7b1c), [ddc951a](https://github.com/Stride-Labs/stride/commit/ddc951a7656423c7277671ea89a4fff9b8d0be6f), [bdd05b0](https://github.com/Stride-Labs/stride/commit/bdd05b0f39317e9ce428508fdcda0d66bd2a0ce1) [3d4ba72](https://github.com/Stride-Labs/stride/commit/3d4ba729cfd2529730fdccdb8ee0fdfe151413bd))
+11. Queries ([9b17edf](https://github.com/Stride-Labs/stride/commit/9b17edfe62a752865eaa9b7b95103345d5c66448), [f07ff73](https://github.com/Stride-Labs/stride/commit/f07ff73bd957a6e23afb5c7ec48a6d2334e0d5d7))
+12. Dependency Bumps ([2a04046](https://github.com/Stride-Labs/stride/commit/2a040460dcafdabafca15010facc7e6e2d29609c))
+13. v7 Upgrade Handler ([9bc47dc](https://github.com/Stride-Labs/stride/commit/9bc47dc4efb3ebbbbb8a50fd5b371cb5a37bfb14))
+14. v7 Import Paths ([563bc25](https://github.com/Stride-Labs/stride/commit/563bc25b341c85c8e09d4499f5b3f810338ded60))
+
+
+### Off-Chain changes
+These changes do not affect any on-chain functionality, but have been implemented since `v6.0.0`.
+
+1. Relayer Permissions ([42e2618](https://github.com/Stride-Labs/stride/commit/42e26186e1a4e3fdac60674c322919b5999b5f47))
+2. Setup works across Linux distros ([c7ae1f5](https://github.com/Stride-Labs/stride/commit/c7ae1f558fd4773c6ffbf948ff996976ed45ce5a))
+3. Minor README updates ([7414ce9](https://github.com/Stride-Labs/stride/commit/7414ce9a4c273a92f7a033cb2552eff651c25143))
+4. Dependency Bumps ([24487b8](https://github.com/Stride-Labs/stride/commit/24487b8744c3490aced1e153a81eaa8c5ec3b200))
+
+
+## [v6.0.0](https://github.com/Stride-Labs/stride/releases/tag/v6.0.0) - 2023-02-22
+### On-Chain changes
+1. Reset Stride Airdrops to kick off Season 2.
+
+
 ## [v5.0.0](https://github.com/Stride-Labs/stride/releases/tag/v5.0.0) - 2023-01-19
 ### On-Chain changes
 1. Added query for next send packet sequence number ([fec8b45](https://github.com/Stride-Labs/stride/commit/fec8b4570d9a4a85efd944a1b859cec72d1bf9ea))

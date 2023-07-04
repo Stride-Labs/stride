@@ -7,13 +7,14 @@ import (
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
-	ibctesting "github.com/cosmos/ibc-go/v5/testing"
+	proto "github.com/cosmos/gogoproto/proto"
+	ibctesting "github.com/cosmos/ibc-go/v7/testing"
 	_ "github.com/stretchr/testify/suite"
 
-	epochtypes "github.com/Stride-Labs/stride/v5/x/epochs/types"
-	recordtypes "github.com/Stride-Labs/stride/v5/x/records/types"
-	stakeibckeeper "github.com/Stride-Labs/stride/v5/x/stakeibc/keeper"
-	stakeibctypes "github.com/Stride-Labs/stride/v5/x/stakeibc/types"
+	epochtypes "github.com/Stride-Labs/stride/v11/x/epochs/types"
+	recordtypes "github.com/Stride-Labs/stride/v11/x/records/types"
+	stakeibckeeper "github.com/Stride-Labs/stride/v11/x/stakeibc/keeper"
+	stakeibctypes "github.com/Stride-Labs/stride/v11/x/stakeibc/types"
 )
 
 type ClaimUndelegatedState struct {
@@ -95,7 +96,7 @@ func (s *KeeperTestSuite) SetupClaimUndelegatedTokens() ClaimUndelegatedTestCase
 			redemptionRecord:   redemptionRecord,
 		},
 		expectedIcaMsg: stakeibckeeper.IcaTx{
-			Msgs: []sdk.Msg{&banktypes.MsgSend{
+			Msgs: []proto.Message{&banktypes.MsgSend{
 				FromAddress: redemptionAccount.Address,
 				ToAddress:   receiverAddr,
 				Amount:      redemptionAmount,
@@ -195,7 +196,6 @@ func (s *KeeperTestSuite) TestClaimUndelegatedTokens_NoEpochTracker() {
 	_, err := s.GetMsgServer().ClaimUndelegatedTokens(sdk.WrapSDKContext(s.Ctx), &tc.validMsg)
 	expectedErr := "unable to build redemption transfer message: "
 	expectedErr += "Epoch tracker not found for epoch stride_epoch: epoch not found"
-	fmt.Println()
 	s.Require().EqualError(err, expectedErr)
 }
 

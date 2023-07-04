@@ -7,7 +7,12 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
-	"github.com/Stride-Labs/stride/v5/utils"
+	"github.com/Stride-Labs/stride/v11/utils"
+)
+
+const (
+	MinNumRebalanceValidators = 1
+	MaxNumRebalanceValidators = 1
 )
 
 const TypeMsgRebalanceValidators = "rebalance_validators"
@@ -51,7 +56,7 @@ func (msg *MsgRebalanceValidators) ValidateBasic() error {
 	if err := utils.ValidateAdminAddress(msg.Creator); err != nil {
 		return err
 	}
-	if (msg.NumRebalance < 1) || (msg.NumRebalance > 10) {
+	if (msg.NumRebalance < MinNumRebalanceValidators) || (msg.NumRebalance > MaxNumRebalanceValidators) {
 		return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, fmt.Sprintf("invalid number of validators to rebalance (%d)", msg.NumRebalance))
 	}
 	return nil

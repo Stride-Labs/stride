@@ -7,18 +7,18 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	capabilitytypes "github.com/cosmos/cosmos-sdk/x/capability/types"
-	ibctransfertypes "github.com/cosmos/ibc-go/v5/modules/apps/transfer/types"
-	channeltypes "github.com/cosmos/ibc-go/v5/modules/core/04-channel/types"
-	porttypes "github.com/cosmos/ibc-go/v5/modules/core/05-port/types"
+	ibctransfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
+	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
+	porttypes "github.com/cosmos/ibc-go/v7/modules/core/05-port/types"
 
-	icacallbacks "github.com/Stride-Labs/stride/v5/x/icacallbacks"
-	icacallbacktypes "github.com/Stride-Labs/stride/v5/x/icacallbacks/types"
+	icacallbacks "github.com/Stride-Labs/stride/v11/x/icacallbacks"
+	icacallbacktypes "github.com/Stride-Labs/stride/v11/x/icacallbacks/types"
 
-	"github.com/Stride-Labs/stride/v5/x/records/keeper"
+	"github.com/Stride-Labs/stride/v11/x/records/keeper"
 
 	// "google.golang.org/protobuf/proto" <-- this breaks tx parsing
 
-	ibcexported "github.com/cosmos/ibc-go/v5/modules/core/exported"
+	ibcexported "github.com/cosmos/ibc-go/v7/modules/core/exported"
 )
 
 // IBC MODULE IMPLEMENTATION
@@ -47,14 +47,7 @@ func (im IBCModule) OnChanOpenInit(
 	counterparty channeltypes.Counterparty,
 	version string,
 ) (string, error) {
-	// Note: The channel capability must be claimed by the authentication module in OnChanOpenInit otherwise the
-	// authentication module will not be able to send packets on the channel created for the associated interchain account.
-	// NOTE: unsure if we have to claim this here! CHECK ME
-	// if err := im.keeper.ClaimCapability(ctx, channelCap, host.ChannelCapabilityPath(portID, channelID)); err != nil {
-	// 	return err
-	// }
-	// doCustomLogic()
-	version, err := im.app.OnChanOpenInit(
+	return im.app.OnChanOpenInit(
 		ctx,
 		order,
 		connectionHops,
@@ -64,7 +57,6 @@ func (im IBCModule) OnChanOpenInit(
 		counterparty,
 		version,
 	)
-	return version, err
 }
 
 // OnChanOpenTry implements the IBCModule interface.
@@ -152,9 +144,6 @@ func (im IBCModule) OnRecvPacket(
 	packet channeltypes.Packet,
 	relayer sdk.AccAddress,
 ) ibcexported.Acknowledgement {
-	wrapperAck := channeltypes.NewResultAcknowledgement([]byte{byte(1)})
-	// handle(wrapperAck)
-	_ = wrapperAck
 	// NOTE: acknowledgement will be written synchronously during IBC handler execution.
 	// doCustomLogic(packet)
 	return im.app.OnRecvPacket(ctx, packet, relayer)
