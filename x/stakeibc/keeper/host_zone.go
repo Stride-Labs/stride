@@ -267,3 +267,36 @@ func (k Keeper) GetRedemptionAccount(ctx sdk.Context, hostZone types.HostZone) (
 	}
 	return hostZone.RedemptionAccount, true
 }
+
+func (k Keeper) SetStSupply(ctx sdk.Context, hostZone types.HostZone, stSupply sdk.Coin) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefix(types.StSupplyKey))
+	b := k.cdc.MustMarshal(&stSupply)
+	store.Set([]byte(hostZone.ChainId), b)
+}
+
+func (k Keeper) GetStSupply(ctx sdk.Context, hostZone types.HostZone) (stSupply sdk.Coin, err error) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefix(types.StSupplyKey))
+	b := store.Get([]byte(hostZone.ChainId))
+	if b == nil {
+		return sdk.Coin{}, errorsmod.Wrapf(sdkerrors.ErrUnknownRequest, "No stSupply for HostZone %s found", hostZone.ChainId)
+	}
+	k.cdc.MustUnmarshal(b, &stSupply)
+	return stSupply, nil
+}
+
+func (k Keeper) SetModuleAccountIbcBalance(ctx sdk.Context, hostZone types.HostZone, balance sdk.Coin) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefix(types.ModuleAccountBalanceKey))
+	b := k.cdc.MustMarshal(&balance)
+	store.Set([]byte(hostZone.ChainId), b)
+}
+
+func (k Keeper) GetModuleAccountIbcBalance(ctx sdk.Context, hostZone types.HostZone) (balance sdk.Coin, err error) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefix(types.StSupplyKey))
+	b := store.Get([]byte(hostZone.ChainId))
+	if b == nil {
+		return sdk.Coin{}, errorsmod.Wrapf(sdkerrors.ErrUnknownRequest, "No stSupply for HostZone %s found", hostZone.ChainId)
+	}
+	k.cdc.MustUnmarshal(b, &balance)
+	return balance, nil
+}
+

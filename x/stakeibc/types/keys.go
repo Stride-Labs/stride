@@ -53,4 +53,10 @@ const (
 
 	// EpochTrackerKeyPrefix is the prefix to retrieve all EpochTracker
 	EpochTrackerKeyPrefix = "EpochTracker/value/"
+
+	// stSupply key
+	StSupplyKey = "stSupply"
+	
+	// module account balance key
+	ModuleAccountBalanceKey = "module-account-balance"
 )
