@@ -8,10 +8,10 @@ import (
 
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
 
-	"github.com/Stride-Labs/stride/v5/x/icaoracle/keeper/gov"
+	"github.com/Stride-Labs/stride/v11/x/icaoracle/keeper/gov"
 
-	"github.com/Stride-Labs/stride/v5/x/icaoracle/keeper"
-	"github.com/Stride-Labs/stride/v5/x/icaoracle/types"
+	"github.com/Stride-Labs/stride/v11/x/icaoracle/keeper"
+	"github.com/Stride-Labs/stride/v11/x/icaoracle/types"
 )
 
 // NewMessageHandler returns icaoracle module messages

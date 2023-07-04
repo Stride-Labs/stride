@@ -12,7 +12,7 @@ import (
 	"github.com/cosmos/gogoproto/proto"
 	"github.com/spf13/cobra"
 
-	"github.com/Stride-Labs/stride/v5/x/icaoracle/types"
+	"github.com/Stride-Labs/stride/v11/x/icaoracle/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"

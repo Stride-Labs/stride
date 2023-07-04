@@ -10,7 +10,7 @@ import (
 	"github.com/tendermint/tendermint/libs/log"
 	tmtypes "github.com/tendermint/tendermint/proto/tendermint/types"
 
-	"github.com/Stride-Labs/stride/v5/x/icaoracle/types"
+	"github.com/Stride-Labs/stride/v11/x/icaoracle/types"
 )
 
 func TestValidateICATx(t *testing.T) {

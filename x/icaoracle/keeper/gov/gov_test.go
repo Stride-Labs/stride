@@ -6,9 +6,9 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
-	"github.com/Stride-Labs/stride/v5/app/apptesting"
-	"github.com/Stride-Labs/stride/v5/x/icaoracle/keeper/gov"
-	"github.com/Stride-Labs/stride/v5/x/icaoracle/types"
+	"github.com/Stride-Labs/stride/v11/app/apptesting"
+	"github.com/Stride-Labs/stride/v11/x/icaoracle/keeper/gov"
+	"github.com/Stride-Labs/stride/v11/x/icaoracle/types"
 )
 
 type KeeperTestSuite struct {

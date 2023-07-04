@@ -15,11 +15,11 @@ import (
 
 	"github.com/cosmos/gogoproto/proto"
 
-	"github.com/Stride-Labs/stride/v5/app"
-	cmdcfg "github.com/Stride-Labs/stride/v5/cmd/strided/config"
-	strideclitestutil "github.com/Stride-Labs/stride/v5/testutil/cli"
-	"github.com/Stride-Labs/stride/v5/testutil/network"
-	"github.com/Stride-Labs/stride/v5/x/icaoracle/types"
+	"github.com/Stride-Labs/stride/v11/app"
+	cmdcfg "github.com/Stride-Labs/stride/v11/cmd/strided/config"
+	strideclitestutil "github.com/Stride-Labs/stride/v11/testutil/cli"
+	"github.com/Stride-Labs/stride/v11/testutil/network"
+	"github.com/Stride-Labs/stride/v11/x/icaoracle/types"
 )
 
 var (

@@ -3,10 +3,10 @@ package keeper
 import (
 	errorsmod "cosmossdk.io/errors"
 
-	"github.com/Stride-Labs/stride/v5/utils"
-	"github.com/Stride-Labs/stride/v5/x/icaoracle/types"
+	"github.com/Stride-Labs/stride/v11/utils"
+	"github.com/Stride-Labs/stride/v11/x/icaoracle/types"
 
-	icacallbackstypes "github.com/Stride-Labs/stride/v5/x/icacallbacks/types"
+	icacallbackstypes "github.com/Stride-Labs/stride/v11/x/icacallbacks/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	channeltypes "github.com/cosmos/ibc-go/v5/modules/core/04-channel/types"
@@ -14,8 +14,9 @@ import (
 )
 
 // Callback after an instantiating an oracle's CW contract
-//     If successful: Stores the cosmwasm contract address on the oracle object
-//     If timeout/failure: Does nothing
+//
+//	If successful: Stores the cosmwasm contract address on the oracle object
+//	If timeout/failure: Does nothing
 func InstantiateOracleCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ackResponse *icacallbackstypes.AcknowledgementResponse, args []byte) error {
 	// Fetch callback args
 	instantiateCallback := types.InstantiateOracleCallback{}

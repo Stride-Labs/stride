@@ -7,7 +7,7 @@ import (
 	channeltypes "github.com/cosmos/ibc-go/v5/modules/core/04-channel/types"
 	ibctesting "github.com/cosmos/ibc-go/v5/testing"
 
-	"github.com/Stride-Labs/stride/v5/x/icaoracle/types"
+	"github.com/Stride-Labs/stride/v11/x/icaoracle/types"
 )
 
 // Helper function to create 5 oracle objects with various attributes

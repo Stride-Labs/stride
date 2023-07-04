@@ -1,7 +1,7 @@
 syntax = "proto3";
 package stride.icaoracle;
 
-option go_package = "github.com/Stride-Labs/stride/v5/x/icaoracle/types";
+option go_package = "github.com/Stride-Labs/stride/v11/x/icaoracle/types";
 
 // Msg defines the Msg service.
 service Msg {

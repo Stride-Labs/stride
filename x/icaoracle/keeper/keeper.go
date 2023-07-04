@@ -12,8 +12,8 @@ import (
 	ibckeeper "github.com/cosmos/ibc-go/v5/modules/core/keeper"
 	"github.com/tendermint/tendermint/libs/log"
 
-	icacallbackskeeper "github.com/Stride-Labs/stride/v5/x/icacallbacks/keeper"
-	"github.com/Stride-Labs/stride/v5/x/icaoracle/types"
+	icacallbackskeeper "github.com/Stride-Labs/stride/v11/x/icacallbacks/keeper"
+	"github.com/Stride-Labs/stride/v11/x/icaoracle/types"
 )
 
 type Keeper struct {
