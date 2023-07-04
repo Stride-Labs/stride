@@ -3,6 +3,7 @@ package types
 import (
 	"fmt"
 
+	errorsmod "cosmossdk.io/errors"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
 )
@@ -44,7 +45,7 @@ func (p *ToggleOracleProposal) ValidateBasic() error {
 	}
 
 	if p.OracleChainId == "" {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "oracle-chain-id is required")
+		return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "oracle-chain-id is required")
 	}
 
 	return nil

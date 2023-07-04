@@ -5,6 +5,7 @@ import (
 	"os"
 	"strings"
 
+	errorsmod "cosmossdk.io/errors"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/tx"
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -42,7 +43,7 @@ func submitProposal(clientCtx client.Context, cmd *cobra.Command, proposal govty
 		return err
 	}
 	if len(deposit) != 1 || deposit.GetDenomByIndex(0) != strideDenom {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidCoins, "Deposit token denom must be %s", strideDenom)
+		return errorsmod.Wrapf(sdkerrors.ErrInvalidCoins, "Deposit token denom must be %s", strideDenom)
 	}
 
 	// Build and validate the proposal

@@ -3,6 +3,7 @@ package icaoracle
 import (
 	"fmt"
 
+	errorsmod "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
@@ -34,7 +35,7 @@ func NewMessageHandler(k keeper.Keeper) sdk.Handler {
 			return sdk.WrapServiceResult(ctx, res, err)
 		default:
 			errMsg := fmt.Sprintf("unrecognized %s message type: %T", types.ModuleName, msg)
-			return nil, sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, errMsg)
+			return nil, errorsmod.Wrap(sdkerrors.ErrUnknownRequest, errMsg)
 		}
 	}
 }
@@ -48,7 +49,7 @@ func NewProposalHandler(k keeper.Keeper) govtypes.Handler {
 		case *types.RemoveOracleProposal:
 			return gov.RemoveOracle(ctx, k, proposal)
 		default:
-			return sdkerrors.Wrapf(sdkerrors.ErrUnknownRequest, "unrecognized icaoracle proposal content type: %T", proposal)
+			return errorsmod.Wrapf(sdkerrors.ErrUnknownRequest, "unrecognized icaoracle proposal content type: %T", proposal)
 		}
 	}
 }
