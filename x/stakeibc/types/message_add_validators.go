@@ -7,7 +7,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
-	"github.com/Stride-Labs/stride/v10/utils"
+	"github.com/Stride-Labs/stride/v11/utils"
 )
 
 const TypeMsgAddValidators = "add_validators"

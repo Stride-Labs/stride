@@ -4,7 +4,7 @@ package stride.stakeibc;
 import "stride/stakeibc/ica_account.proto";
 import "stride/stakeibc/validator.proto";
 
-option go_package = "github.com/Stride-Labs/stride/v10/x/stakeibc/types";
+option go_package = "github.com/Stride-Labs/stride/v11/x/stakeibc/types";
 import "gogoproto/gogo.proto";
 import "cosmos_proto/cosmos.proto";
 

@@ -11,10 +11,9 @@ import (
 
 	sdkmath "cosmossdk.io/math"
 
-	icacallbacktypes "github.com/Stride-Labs/stride/v10/x/icacallbacks/types"
-	recordtypes "github.com/Stride-Labs/stride/v10/x/records/types"
-	"github.com/Stride-Labs/stride/v10/x/stakeibc/types"
-	stakeibc "github.com/Stride-Labs/stride/v10/x/stakeibc/types"
+	icacallbacktypes "github.com/Stride-Labs/stride/v11/x/icacallbacks/types"
+	recordtypes "github.com/Stride-Labs/stride/v11/x/records/types"
+	"github.com/Stride-Labs/stride/v11/x/stakeibc/types"
 )
 
 type UndelegateCallbackState struct {
@@ -66,7 +65,7 @@ func (s *KeeperTestSuite) SetupUndelegateCallback() UndelegateCallbackTestCase {
 		acc:           zoneAddress,
 		stAtomBalance: sdk.NewCoin(StAtom, zoneAccountBalance), // Add a few extra tokens to make the test more robust
 	}
-	hostZone := stakeibc.HostZone{
+	hostZone := types.HostZone{
 		ChainId:        HostChainId,
 		HostDenom:      Atom,
 		IbcDenom:       IbcAtom,
