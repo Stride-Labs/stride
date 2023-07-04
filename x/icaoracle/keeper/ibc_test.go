@@ -1,6 +1,8 @@
 package keeper_test
 
 import (
+	"time"
+
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	icatypes "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/types"
 	connectiontypes "github.com/cosmos/ibc-go/v7/modules/core/03-connection/types"
@@ -158,13 +160,13 @@ func (s *KeeperTestSuite) SetupTestSubmitICATx() (tx types.ICATx, callbackBz []b
 
 	// Return a valid ICATx
 	return types.ICATx{
-		ConnectionId: ibctesting.FirstConnectionID,
-		ChannelId:    channelId,
-		PortId:       portId,
-		Messages:     []proto.Message{&banktypes.MsgSend{}},
-		Timeout:      uint64(s.Ctx.BlockTime().UnixNano() + 1),
-		CallbackId:   "callback_id",
-		CallbackArgs: &callback,
+		ConnectionId:    ibctesting.FirstConnectionID,
+		ChannelId:       channelId,
+		PortId:          portId,
+		Messages:        []proto.Message{&banktypes.MsgSend{}},
+		RelativeTimeout: time.Second,
+		CallbackId:      "callback_id",
+		CallbackArgs:    &callback,
 	}, callbackBz
 }
 

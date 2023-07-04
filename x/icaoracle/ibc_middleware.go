@@ -6,6 +6,7 @@ import (
 	errorsmod "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	capabilitytypes "github.com/cosmos/cosmos-sdk/x/capability/types"
+	clienttypes "github.com/cosmos/ibc-go/v7/modules/core/02-client/types"
 	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
 	porttypes "github.com/cosmos/ibc-go/v7/modules/core/05-port/types"
 	ibcexported "github.com/cosmos/ibc-go/v7/modules/core/exported"
@@ -39,13 +40,6 @@ func (im IBCMiddleware) OnChanOpenInit(
 	counterparty channeltypes.Counterparty,
 	version string,
 ) (string, error) {
-	im.keeper.Logger(ctx).Info(fmt.Sprintf("OnChanOpenAck (ICAOracle): portID %s, channelID %s", portID, channelID))
-
-	if err := im.keeper.OnChanOpenInit(ctx, portID, channelID, channelCap); err != nil {
-		im.keeper.Logger(ctx).Error(fmt.Sprintf("ICAOracle ChanOpenInit failed: %s", err.Error()))
-		return version, errorsmod.Wrapf(err, "ICAOracle ChanOpenInit failed")
-	}
-
 	return im.app.OnChanOpenInit(
 		ctx,
 		order,
@@ -56,6 +50,20 @@ func (im IBCMiddleware) OnChanOpenInit(
 		counterparty,
 		version,
 	)
+}
+
+// OnChanOpenTry simply passes down the to next middleware stack
+func (im IBCMiddleware) OnChanOpenTry(
+	ctx sdk.Context,
+	order channeltypes.Order,
+	connectionHops []string,
+	portID,
+	channelID string,
+	chanCap *capabilitytypes.Capability,
+	counterparty channeltypes.Counterparty,
+	counterpartyVersion string,
+) (string, error) {
+	return im.app.OnChanOpenTry(ctx, order, connectionHops, portID, channelID, chanCap, counterparty, counterpartyVersion)
 }
 
 // OnChanOpenAck implements the IBCMiddleware interface
@@ -83,84 +91,64 @@ func (im IBCMiddleware) OnChanOpenAck(
 	)
 }
 
-// OnChanCloseConfirm implements the IBCMiddleware interface
+// OnChanCloseConfirm simply passes down the to next middleware stack
 func (im IBCMiddleware) OnChanCloseConfirm(
 	ctx sdk.Context,
 	portID,
 	channelID string,
 ) error {
-	return nil
+	return im.app.OnChanCloseConfirm(ctx, portID, channelID)
 }
 
-// OnAcknowledgementPacket implements the IBCMiddleware interface
+// OnChanCloseInit simply passes down the to next middleware stack
+func (im IBCMiddleware) OnChanCloseInit(
+	ctx sdk.Context,
+	portID,
+	channelID string,
+) error {
+	return im.app.OnChanCloseInit(ctx, portID, channelID)
+}
+
+// OnChanOpenConfirm simply passes down the to next middleware stack
+func (im IBCMiddleware) OnChanOpenConfirm(
+	ctx sdk.Context,
+	portID,
+	channelID string,
+) error {
+	return im.app.OnChanOpenConfirm(ctx, portID, channelID)
+}
+
+// OnAcknowledgementPacket simply passes down the to next middleware stack
+// The Ack handling and routing is managed by icacallbacks
 func (im IBCMiddleware) OnAcknowledgementPacket(
 	ctx sdk.Context,
 	packet channeltypes.Packet,
 	acknowledgement []byte,
 	relayer sdk.AccAddress,
 ) error {
-	im.keeper.Logger(ctx).Info(fmt.Sprintf("OnAcknowledgementPacket (ICAOracle): Sequence %d, SourcePort %s, SourceChannel %s, DestinationPort %s, DestinationChannel %s",
-		packet.Sequence, packet.SourcePort, packet.SourceChannel, packet.DestinationPort, packet.DestinationChannel))
-
-	if err := im.keeper.OnAcknowledgementPacket(ctx, packet, acknowledgement); err != nil {
-		im.keeper.Logger(ctx).Error(fmt.Sprintf("ICAOracle OnAcknowledementPacket failed: %s", err.Error()))
-		return errorsmod.Wrapf(err, "ICAOracle OnAcknowledementPacket failed")
-	}
-
 	return im.app.OnAcknowledgementPacket(ctx, packet, acknowledgement, relayer)
 }
 
-// OnTimeoutPacket implements the IBCMiddleware interface
-func (im IBCMiddleware) OnTimeoutPacket(ctx sdk.Context, packet channeltypes.Packet, relayer sdk.AccAddress) error {
-	im.keeper.Logger(ctx).Info(fmt.Sprintf("OnTimeoutPacket (ICAOracle): packet %v, relayer %v", packet, relayer))
-
-	// TODO: Call ICA callbacks with timeout
-
+// OnTimeoutPacket simply passes down the to next middleware stack
+// The Ack handling and routing is managed by icacallbacks
+func (im IBCMiddleware) OnTimeoutPacket(
+	ctx sdk.Context,
+	packet channeltypes.Packet,
+	relayer sdk.AccAddress,
+) error {
 	return im.app.OnTimeoutPacket(ctx, packet, relayer)
 }
 
-// OnChanOpenTry implements the IBCMiddleware interface.
-func (im IBCMiddleware) OnChanOpenTry(
-	ctx sdk.Context,
-	order channeltypes.Order,
-	connectionHops []string,
-	portID,
-	channelID string,
-	chanCap *capabilitytypes.Capability,
-	counterparty channeltypes.Counterparty,
-	counterpartyVersion string,
-) (string, error) {
-	panic("UNIMPLEMENTED")
-}
-
-// OnChanOpenConfirm implements the IBCMiddleware interface
-func (im IBCMiddleware) OnChanOpenConfirm(
-	ctx sdk.Context,
-	portID,
-	channelID string,
-) error {
-	panic("UNIMPLEMENTED")
-}
-
-// OnChanCloseInit implements the IBCMiddleware interface
-func (im IBCMiddleware) OnChanCloseInit(
-	ctx sdk.Context,
-	portID,
-	channelID string,
-) error {
-	panic("UNIMPLEMENTED")
-}
-
-// OnRecvPacket implements the IBCMiddleware interface
+// OnRecvPacket simply passes down the to next middleware stack
 func (im IBCMiddleware) OnRecvPacket(
 	ctx sdk.Context,
 	packet channeltypes.Packet,
 	relayer sdk.AccAddress,
 ) ibcexported.Acknowledgement {
-	panic("UNIMPLEMENTED")
+	return im.app.OnRecvPacket(ctx, packet, relayer)
 }
 
-// Send implements the ICS4Wrapper interface
+// SendPacket implements the ICS4 Wrapper interface but is not utilized in the ICA stack
 func (im IBCMiddleware) SendPacket(
 	ctx sdk.Context,
 	chanCap *capabilitytypes.Capability,
@@ -170,28 +158,22 @@ func (im IBCMiddleware) SendPacket(
 	timeoutTimestamp uint64,
 	data []byte,
 ) (sequence uint64, err error) {
-	return im.keeper.ICS4Wrapper.SendPacket(
-		ctx,
-		chanCap,
-		sourcePort,
-		sourceChannel,
-		timeoutHeight,
-		timeoutTimestamp,
-		data,
-	)
+	panic("UNIMPLEMENTED")
 }
 
-// WriteAcknowledgement implements the ICS4Wrapper interface
+// WriteAcknowledgement implements the ICS4 Wrapper interface
+// but is not utilized in the bottom of ICA stack
 func (im IBCMiddleware) WriteAcknowledgement(
 	ctx sdk.Context,
 	chanCap *capabilitytypes.Capability,
 	packet ibcexported.PacketI,
 	ack ibcexported.Acknowledgement,
 ) error {
-	return im.keeper.ICS4Wrapper.WriteAcknowledgement(ctx, chanCap, packet, ack)
+	panic("UNIMPLEMENTED")
 }
 
-// GetAppVersion implements the ICS4Wrapper interface
+// GetAppVersion implements the ICS4 Wrapper interface
+// but is not utilized in the bottom of ICA stack
 func (im IBCMiddleware) GetAppVersion(ctx sdk.Context, portID, channelID string) (string, bool) {
-	return im.keeper.ICS4Wrapper.GetAppVersion(ctx, portID, channelID)
+	panic("UNIMPLEMENTED")
 }

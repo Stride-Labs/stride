@@ -17,7 +17,8 @@ import (
 // The oracle querier can enforce filters to ensure the data is recent, so I think from the Stride
 // perspective, we should lean more conservative and do our best to avoid timeout's and channel closure's
 var (
-	MetricUpdateTimeout = time.Hour * 24 // 1 day
+	InstantiateOracleTimeout = time.Hour * 24 // 1 day
+	MetricUpdateTimeout      = time.Hour * 24 // 1 day
 )
 
 // Queues an metric update across each active oracle
@@ -66,21 +67,19 @@ func (k Keeper) SubmitMetricUpdate(ctx sdk.Context, oracle types.Oracle, metric 
 		Msg:      contractMsgBz,
 	}}
 
-	timeout := uint64(ctx.BlockTime().UnixNano() + MetricUpdateTimeout.Nanoseconds())
-
 	// Submit the ICA to execute the contract
 	callbackArgs := types.UpdateOracleCallback{
 		OracleChainId: oracle.ChainId,
 		Metric:        &metric,
 	}
 	icaTx := types.ICATx{
-		ConnectionId: oracle.ConnectionId,
-		ChannelId:    oracle.ChannelId,
-		PortId:       oracle.PortId,
-		Messages:     msgs,
-		Timeout:      timeout,
-		CallbackArgs: &callbackArgs,
-		CallbackId:   ICACallbackID_UpdateOracle,
+		ConnectionId:    oracle.ConnectionId,
+		ChannelId:       oracle.ChannelId,
+		PortId:          oracle.PortId,
+		Messages:        msgs,
+		RelativeTimeout: MetricUpdateTimeout,
+		CallbackArgs:    &callbackArgs,
+		CallbackId:      ICACallbackID_UpdateOracle,
 	}
 	if err := k.SubmitICATx(ctx, icaTx); err != nil {
 		return errorsmod.Wrapf(err, "unable to submit update oracle contract ICA")

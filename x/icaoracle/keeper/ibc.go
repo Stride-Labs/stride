@@ -2,30 +2,15 @@ package keeper
 
 import (
 	"fmt"
-	"strings"
 
 	errorsmod "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	capabilitytypes "github.com/cosmos/cosmos-sdk/x/capability/types"
 	"github.com/cosmos/gogoproto/proto"
 	icatypes "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/types"
-	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
-	host "github.com/cosmos/ibc-go/v7/modules/core/24-host"
 
-	"github.com/Stride-Labs/stride/v11/x/icacallbacks"
 	icacallbacktypes "github.com/Stride-Labs/stride/v11/x/icacallbacks/types"
 	"github.com/Stride-Labs/stride/v11/x/icaoracle/types"
 )
-
-func (k Keeper) OnChanOpenInit(ctx sdk.Context, portID, channelID string, channelCap *capabilitytypes.Capability) error {
-	// TODO: Update IBC-go to v6/v7 and then there's no longer a need to claim the channel capability here
-	// Until then, we need to make sure we only claim for oracle ports
-	if strings.Contains(portID, types.ICAAccountType_Oracle) {
-		k.Logger(ctx).Info(fmt.Sprintf("%s claimed the channel capability for %s %s", types.ModuleName, channelID, portID))
-		return k.scopedKeeper.ClaimCapability(ctx, channelCap, host.ChannelCapabilityPath(portID, channelID))
-	}
-	return nil
-}
 
 func (k Keeper) OnChanOpenAck(ctx sdk.Context, portID, channelID string) error {
 	// Get the connectionId from the port and channel
@@ -65,44 +50,9 @@ func (k Keeper) OnChanOpenAck(ctx sdk.Context, portID, channelID string) error {
 	return nil
 }
 
-func (k Keeper) OnAcknowledgementPacket(ctx sdk.Context, packet channeltypes.Packet, acknowledgement []byte) error {
-	// If this is not an oracle packet, pass the ack down to the next middleware
-	if !strings.Contains(packet.SourcePort, types.ICAAccountType_Oracle) {
-		return nil
-	}
-
-	// Unpack the acknowledgement into success/error
-	ackResponse, err := icacallbacks.UnpackAcknowledgementResponse(ctx, k.Logger(ctx), acknowledgement, true)
-	if err != nil {
-		errMsg := fmt.Sprintf("Unable to unpack message data from acknowledgement, Sequence %d, from %s %s, to %s %s: %s",
-			packet.Sequence, packet.SourceChannel, packet.SourcePort, packet.DestinationChannel, packet.DestinationPort, err.Error())
-		return errorsmod.Wrapf(icacallbacktypes.ErrInvalidAcknowledgement, errMsg)
-	}
-
-	ackInfo := fmt.Sprintf("sequence #%d, from %s %s, to %s %s",
-		packet.Sequence, packet.SourceChannel, packet.SourcePort, packet.DestinationChannel, packet.DestinationPort)
-	k.Logger(ctx).Info(fmt.Sprintf("Acknowledgement was successfully unmarshalled: ackInfo: %s", ackInfo))
-
-	ctx.EventManager().EmitEvent(
-		sdk.NewEvent(
-			icacallbacktypes.EventTypeAck,
-			sdk.NewAttribute(sdk.AttributeKeyModule, types.ModuleName),
-			sdk.NewAttribute(icacallbacktypes.AttributeKeyAck, ackInfo),
-		),
-	)
-
-	if err := k.ICACallbacksKeeper.CallRegisteredICACallback(ctx, packet, ackResponse); err != nil {
-		errMsg := fmt.Sprintf("Unable to call registered callback from stakeibc OnAcknowledgePacket | Sequence %d, from %s %s, to %s %s",
-			packet.Sequence, packet.SourceChannel, packet.SourcePort, packet.DestinationChannel, packet.DestinationPort)
-		return errorsmod.Wrapf(icacallbacktypes.ErrCallbackFailed, errMsg)
-	}
-
-	return nil
-}
-
 func (k Keeper) SubmitICATx(ctx sdk.Context, tx types.ICATx) error {
 	// Validate the ICATx struct has all the required fields
-	if err := tx.ValidateICATx(ctx); err != nil {
+	if err := tx.ValidateICATx(); err != nil {
 		return err
 	}
 
@@ -116,14 +66,9 @@ func (k Keeper) SubmitICATx(ctx sdk.Context, tx types.ICATx) error {
 		Data: txBz,
 	}
 
-	// TODO: After upgrading ibc-go to v6/v7, we can just pass nil as the chanCap in SendTx
-	chanCap, found := k.scopedKeeper.GetCapability(ctx, host.ChannelCapabilityPath(tx.PortId, tx.ChannelId))
-	if !found {
-		return errorsmod.Wrap(channeltypes.ErrChannelCapabilityNotFound, "module does not own channel capability")
-	}
-
 	// Submit ICA and grab sequence number for the callback key
-	sequence, err := k.ICAControllerKeeper.SendTx(ctx, chanCap, tx.ConnectionId, tx.PortId, packetData, tx.Timeout)
+	timeout := uint64(tx.RelativeTimeout.Nanoseconds())
+	sequence, err := k.ICAControllerKeeper.SendTx(ctx, nil, tx.ConnectionId, tx.PortId, packetData, timeout)
 	if err != nil {
 		return errorsmod.Wrapf(err, "unable to submit ICA transaction")
 	}
@@ -131,7 +76,7 @@ func (k Keeper) SubmitICATx(ctx sdk.Context, tx types.ICATx) error {
 	// Store the callback data
 	callbackArgsBz, err := proto.Marshal(tx.CallbackArgs)
 	if err != nil {
-		return errorsmod.Wrapf(types.ErrMarshalFailure, "unable to marshal callback: %s", err.Error())
+		return errorsmod.Wrapf(err, "unable to marshal callback")
 	}
 	callbackData := icacallbacktypes.CallbackData{
 		CallbackKey:  icacallbacktypes.PacketID(tx.PortId, tx.ChannelId, sequence),

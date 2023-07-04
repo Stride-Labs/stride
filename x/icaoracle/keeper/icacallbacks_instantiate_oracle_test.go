@@ -5,7 +5,6 @@ import (
 	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
 
 	icacallbacktypes "github.com/Stride-Labs/stride/v11/x/icacallbacks/types"
-	"github.com/Stride-Labs/stride/v11/x/icaoracle/keeper"
 	"github.com/Stride-Labs/stride/v11/x/icaoracle/types"
 )
 
@@ -78,7 +77,7 @@ func (s *KeeperTestSuite) executeCallbackAndCheckState(
 	}
 
 	// The callback should not throw an error in these cases (even in the event of a timeout/ack failure)
-	err := keeper.InstantiateOracleCallback(s.App.ICAOracleKeeper, s.Ctx, channeltypes.Packet{}, &ackResponse, callbackArgs)
+	err := s.App.ICAOracleKeeper.InstantiateOracleCallback(s.Ctx, channeltypes.Packet{}, &ackResponse, callbackArgs)
 	s.Require().Nil(err, "no error expected during callback")
 
 	// If the ack was a success, check that the contract address was updated
@@ -114,7 +113,7 @@ func (s *KeeperTestSuite) TestInstantiateOracleCallback_UnmarshalCallbackFailure
 
 	// Calling the callback with invalid callback args should fail
 	invalidArgs := []byte{1, 2, 3}
-	err := keeper.InstantiateOracleCallback(s.App.ICAOracleKeeper, s.Ctx, channeltypes.Packet{}, &tc.ValidAckResponse, invalidArgs)
+	err := s.App.ICAOracleKeeper.InstantiateOracleCallback(s.Ctx, channeltypes.Packet{}, &tc.ValidAckResponse, invalidArgs)
 	s.Require().ErrorContains(err, "unable to unmarshal instantiate oracle callback")
 }
 
@@ -125,7 +124,7 @@ func (s *KeeperTestSuite) TestInstantiateOracleCallback_OracleNotFound() {
 	s.App.ICAOracleKeeper.RemoveOracle(s.Ctx, HostChainId)
 
 	// Call the callback - should fail
-	err := keeper.InstantiateOracleCallback(s.App.ICAOracleKeeper, s.Ctx, channeltypes.Packet{}, &tc.ValidAckResponse, tc.ValidCallbackArgs)
+	err := s.App.ICAOracleKeeper.InstantiateOracleCallback(s.Ctx, channeltypes.Packet{}, &tc.ValidAckResponse, tc.ValidCallbackArgs)
 	s.Require().ErrorContains(err, "oracle not found")
 }
 
@@ -136,7 +135,7 @@ func (s *KeeperTestSuite) TestInstantiateOracleCallback_NoMessagesInICAResponse(
 	invalidAckResponse := tc.ValidAckResponse
 	invalidAckResponse.MsgResponses = [][]byte{}
 
-	err := keeper.InstantiateOracleCallback(s.App.ICAOracleKeeper, s.Ctx, channeltypes.Packet{}, &invalidAckResponse, tc.ValidCallbackArgs)
+	err := s.App.ICAOracleKeeper.InstantiateOracleCallback(s.Ctx, channeltypes.Packet{}, &invalidAckResponse, tc.ValidCallbackArgs)
 	s.Require().ErrorContains(err, "tx response from CW contract instantiation should have 1 message (0 found)")
 }
 
@@ -147,7 +146,7 @@ func (s *KeeperTestSuite) TestInstantiateOracleCallback_UnmarshalICAResponseFail
 	invalidAckResponse := tc.ValidAckResponse
 	invalidAckResponse.MsgResponses = [][]byte{{1, 2, 3}}
 
-	err := keeper.InstantiateOracleCallback(s.App.ICAOracleKeeper, s.Ctx, channeltypes.Packet{}, &invalidAckResponse, tc.ValidCallbackArgs)
+	err := s.App.ICAOracleKeeper.InstantiateOracleCallback(s.Ctx, channeltypes.Packet{}, &invalidAckResponse, tc.ValidCallbackArgs)
 	s.Require().ErrorContains(err, "unable to unmarshal instantiate contract response")
 }
 
@@ -162,6 +161,6 @@ func (s *KeeperTestSuite) TestInstantiateOracleCallback_NoContractAddressInICARe
 	invalidAckResponse := tc.ValidAckResponse
 	invalidAckResponse.MsgResponses = [][]byte{responseWithNoContractBz}
 
-	err = keeper.InstantiateOracleCallback(s.App.ICAOracleKeeper, s.Ctx, channeltypes.Packet{}, &invalidAckResponse, tc.ValidCallbackArgs)
+	err = s.App.ICAOracleKeeper.InstantiateOracleCallback(s.Ctx, channeltypes.Packet{}, &invalidAckResponse, tc.ValidCallbackArgs)
 	s.Require().ErrorContains(err, "response from CW contract instantiation ICA does not contain a contract address")
 }

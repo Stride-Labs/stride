@@ -7,7 +7,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	capabilitykeeper "github.com/cosmos/cosmos-sdk/x/capability/keeper"
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
 	icacontrollerkeeper "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/controller/keeper"
 	ibckeeper "github.com/cosmos/ibc-go/v7/modules/core/keeper"
@@ -21,9 +20,7 @@ type Keeper struct {
 	storeKey   storetypes.StoreKey
 	paramstore paramtypes.Subspace
 
-	scopedKeeper capabilitykeeper.ScopedKeeper
-	ICS4Wrapper  types.ICS4Wrapper
-
+	ICS4Wrapper         types.ICS4Wrapper
 	IBCKeeper           ibckeeper.Keeper
 	ICAControllerKeeper icacontrollerkeeper.Keeper
 	ICACallbacksKeeper  icacallbackskeeper.Keeper
@@ -34,9 +31,7 @@ func NewKeeper(
 	key storetypes.StoreKey,
 	paramstore paramtypes.Subspace,
 
-	scopedKeeper capabilitykeeper.ScopedKeeper,
 	ics4Wrapper types.ICS4Wrapper,
-
 	ibcKeeper ibckeeper.Keeper,
 	icaControllerKeeper icacontrollerkeeper.Keeper,
 	icaCallbacksKeeper icacallbackskeeper.Keeper,
@@ -45,7 +40,6 @@ func NewKeeper(
 		cdc:                 cdc,
 		storeKey:            key,
 		paramstore:          paramstore,
-		scopedKeeper:        scopedKeeper,
 		ICS4Wrapper:         ics4Wrapper,
 		IBCKeeper:           ibcKeeper,
 		ICAControllerKeeper: icaControllerKeeper,

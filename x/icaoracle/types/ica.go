@@ -2,9 +2,9 @@ package types
 
 import (
 	fmt "fmt"
+	"time"
 
 	errorsmod "cosmossdk.io/errors"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	proto "github.com/cosmos/gogoproto/proto"
 )
@@ -14,17 +14,16 @@ const (
 )
 
 type ICATx struct {
-	ConnectionId string
-	ChannelId    string
-	PortId       string
-	Messages     []proto.Message
-	Timeout      uint64
-	CallbackArgs proto.Message
-	CallbackId   string
+	ConnectionId    string
+	ChannelId       string
+	PortId          string
+	Messages        []proto.Message
+	RelativeTimeout time.Duration
+	CallbackArgs    proto.Message
+	CallbackId      string
 }
 
-func (i ICATx) ValidateICATx(ctx sdk.Context) error {
-	blockTime := ctx.BlockTime().UnixNano()
+func (i ICATx) ValidateICATx() error {
 	if i.ConnectionId == "" {
 		return errorsmod.Wrapf(ErrInvalidICARequest, "connection-id is empty")
 	}
@@ -37,9 +36,9 @@ func (i ICATx) ValidateICATx(ctx sdk.Context) error {
 	if len(i.Messages) < 1 {
 		return errorsmod.Wrapf(ErrInvalidICARequest, "messages are empty")
 	}
-	if i.Timeout < uint64(ctx.BlockTime().UnixNano()) {
+	if i.RelativeTimeout <= 0 {
 		return errorsmod.Wrapf(ErrInvalidICARequest,
-			"timeout is not in the future, timeout: %d, block time: %d", i.Timeout, blockTime)
+			"relative timeout must be greater than 0, timeout: %d", i.RelativeTimeout)
 	}
 	if i.CallbackId == "" {
 		return errorsmod.Wrapf(ErrInvalidICARequest, "callback-id is empty")

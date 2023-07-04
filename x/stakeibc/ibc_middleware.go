@@ -189,7 +189,6 @@ func (im IBCMiddleware) OnRecvPacket(
 }
 
 // SendPacket implements the ICS4 Wrapper interface but is not utilized in the ICA stack
-// but is not utilized in the bottom of ICA stack
 func (im IBCMiddleware) SendPacket(
 	ctx sdk.Context,
 	chanCap *capabilitytypes.Capability,

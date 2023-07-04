@@ -3,7 +3,6 @@ package keeper
 import (
 	"context"
 	"encoding/json"
-	"time"
 
 	errorsmod "cosmossdk.io/errors"
 
@@ -126,22 +125,18 @@ func (k msgServer) InstantiateOracle(goCtx context.Context, msg *types.MsgInstan
 		Msg:    contractMsgBz,
 	}}
 
-	// Submit the ICA with a 1 day timeout
-	// The timeout time here is arbitrary, but 1 day gives enough time to manually relay the packet if it gets stuck
-	timeout := uint64(ctx.BlockTime().UnixNano() + (time.Hour * 24).Nanoseconds())
-
 	// Submit the ICA
 	callbackArgs := types.InstantiateOracleCallback{
 		OracleChainId: oracle.ChainId,
 	}
 	icaTx := types.ICATx{
-		ConnectionId: oracle.ConnectionId,
-		ChannelId:    oracle.ChannelId,
-		PortId:       oracle.PortId,
-		Messages:     msgs,
-		Timeout:      timeout,
-		CallbackArgs: &callbackArgs,
-		CallbackId:   ICACallbackID_InstantiateOracle,
+		ConnectionId:    oracle.ConnectionId,
+		ChannelId:       oracle.ChannelId,
+		PortId:          oracle.PortId,
+		Messages:        msgs,
+		RelativeTimeout: InstantiateOracleTimeout,
+		CallbackArgs:    &callbackArgs,
+		CallbackId:      ICACallbackID_InstantiateOracle,
 	}
 	if err := k.SubmitICATx(ctx, icaTx); err != nil {
 		return nil, errorsmod.Wrapf(err, "unable to submit instantiate oracle contract ICA")

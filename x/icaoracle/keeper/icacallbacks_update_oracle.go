@@ -17,11 +17,11 @@ import (
 //
 //	If successful/failure: the metric is removed from the pending store
 //	If timeout: metric is left in pending store so it can be re-submitted
-func UpdateOracleCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ackResponse *icacallbackstypes.AcknowledgementResponse, args []byte) error {
+func (k Keeper) UpdateOracleCallback(ctx sdk.Context, packet channeltypes.Packet, ackResponse *icacallbackstypes.AcknowledgementResponse, args []byte) error {
 	// Fetch callback args
 	updateOracleCallback := types.UpdateOracleCallback{}
 	if err := proto.Unmarshal(args, &updateOracleCallback); err != nil {
-		return errorsmod.Wrapf(types.ErrUnmarshalFailure, "unable to unmarshal update oracle callback: %s", err.Error())
+		return errorsmod.Wrapf(err, "unable to unmarshal update oracle callback")
 	}
 	chainId := updateOracleCallback.OracleChainId
 	k.Logger(ctx).Info(utils.LogICACallbackWithHostZone(chainId, ICACallbackID_UpdateOracle, "Starting update oracle callback"))

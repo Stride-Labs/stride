@@ -309,7 +309,6 @@ type StrideApp struct {
 	RatelimitKeeper       ratelimitmodulekeeper.Keeper
 	ClaimKeeper           claimkeeper.Keeper
 	ICAOracleKeeper       icaoraclekeeper.Keeper
-	scopedICAOracleKeeper capabilitykeeper.ScopedKeeper
 
 	mm           *module.Manager
 	sm           *module.SimulationManager
@@ -523,13 +522,10 @@ func NewStrideApp(
 	recordsModule := recordsmodule.NewAppModule(appCodec, app.RecordsKeeper, app.AccountKeeper, app.BankKeeper)
 
 	// Note: Must be above stakeibc keeper
-	scopedICAOracleKeeper := app.CapabilityKeeper.ScopeToModule(icaoracletypes.ModuleName)
-	app.scopedICAOracleKeeper = scopedICAOracleKeeper
 	app.ICAOracleKeeper = *icaoraclekeeper.NewKeeper(
 		appCodec,
 		keys[icaoracletypes.StoreKey],
 		app.GetSubspace(icaoracletypes.ModuleName),
-		app.scopedICAOracleKeeper,
 		app.IBCKeeper.ChannelKeeper, // ICS4Wrapper - Note: this technically should be ICAController but it doesn't implement ICS4
 		*app.IBCKeeper,
 		app.ICAControllerKeeper,

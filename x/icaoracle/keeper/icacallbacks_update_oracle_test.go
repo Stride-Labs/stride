@@ -5,7 +5,6 @@ import (
 	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
 
 	icacallbacktypes "github.com/Stride-Labs/stride/v11/x/icacallbacks/types"
-	"github.com/Stride-Labs/stride/v11/x/icaoracle/keeper"
 	"github.com/Stride-Labs/stride/v11/x/icaoracle/types"
 )
 
@@ -36,7 +35,7 @@ func (s *KeeperTestSuite) CallCallbackAndCheckState(ackStatus icacallbacktypes.A
 	ackResponse := icacallbacktypes.AcknowledgementResponse{
 		Status: ackStatus,
 	}
-	err = keeper.UpdateOracleCallback(s.App.ICAOracleKeeper, s.Ctx, channeltypes.Packet{}, &ackResponse, callbackBz)
+	err = s.App.ICAOracleKeeper.UpdateOracleCallback(s.Ctx, channeltypes.Packet{}, &ackResponse, callbackBz)
 	s.Require().NoError(err, "no error expected during callback")
 
 	// Confirm the pending update was removed in the case of success/failure
@@ -61,7 +60,7 @@ func (s *KeeperTestSuite) TestUpdateOracleCallback_UnmarshalFailure() {
 	dummyPacket := channeltypes.Packet{}
 	dummyAckResponse := icacallbacktypes.AcknowledgementResponse{}
 	invalidArgs := []byte{1, 2, 3}
-	err := keeper.UpdateOracleCallback(s.App.ICAOracleKeeper, s.Ctx, dummyPacket, &dummyAckResponse, invalidArgs)
+	err := s.App.ICAOracleKeeper.UpdateOracleCallback(s.Ctx, dummyPacket, &dummyAckResponse, invalidArgs)
 	s.Require().ErrorContains(err, "unable to unmarshal update oracle callback")
 }
 
@@ -75,7 +74,7 @@ func (s *KeeperTestSuite) TestUpdateOracleCallback_InvalidCallbackData() {
 	s.Require().NoError(err, "no error expected when marshalling callback data")
 
 	// Callback should fail
-	err = keeper.UpdateOracleCallback(s.App.ICAOracleKeeper, s.Ctx, dummyPacket, &dummyAckResponse, invalidArgs)
+	err = s.App.ICAOracleKeeper.UpdateOracleCallback(s.Ctx, dummyPacket, &dummyAckResponse, invalidArgs)
 	s.Require().ErrorContains(err, "metric is missing from callback")
 
 	// Create another invalid callback args, this time with a metric struct, but no key
@@ -86,6 +85,6 @@ func (s *KeeperTestSuite) TestUpdateOracleCallback_InvalidCallbackData() {
 	s.Require().NoError(err, "no error expected when marshalling callback data")
 
 	// Callback should fail again
-	err = keeper.UpdateOracleCallback(s.App.ICAOracleKeeper, s.Ctx, dummyPacket, &dummyAckResponse, invalidArgs)
+	err = s.App.ICAOracleKeeper.UpdateOracleCallback(s.Ctx, dummyPacket, &dummyAckResponse, invalidArgs)
 	s.Require().ErrorContains(err, "metric is missing from callback")
 }

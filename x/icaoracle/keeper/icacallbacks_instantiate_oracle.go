@@ -17,11 +17,11 @@ import (
 //
 //	If successful: Stores the cosmwasm contract address on the oracle object
 //	If timeout/failure: Does nothing
-func InstantiateOracleCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ackResponse *icacallbackstypes.AcknowledgementResponse, args []byte) error {
+func (k Keeper) InstantiateOracleCallback(ctx sdk.Context, packet channeltypes.Packet, ackResponse *icacallbackstypes.AcknowledgementResponse, args []byte) error {
 	// Fetch callback args
 	instantiateCallback := types.InstantiateOracleCallback{}
 	if err := proto.Unmarshal(args, &instantiateCallback); err != nil {
-		return errorsmod.Wrapf(types.ErrUnmarshalFailure, "unable to unmarshal instantiate oracle callback: %s", err.Error())
+		return errorsmod.Wrapf(err, "unable to unmarshal instantiate oracle callback")
 	}
 	chainId := instantiateCallback.OracleChainId
 	k.Logger(ctx).Info(utils.LogICACallbackWithHostZone(chainId, ICACallbackID_InstantiateOracle, "Starting instantiate oracle callback"))
@@ -50,7 +50,7 @@ func InstantiateOracleCallback(k Keeper, ctx sdk.Context, packet channeltypes.Pa
 	}
 	var instantiateContractResponse types.MsgInstantiateContractResponse
 	if err := proto.Unmarshal(ackResponse.MsgResponses[0], &instantiateContractResponse); err != nil {
-		return errorsmod.Wrapf(types.ErrUnmarshalFailure, "unable to unmarshal instantiate contract response: %s", err.Error())
+		return errorsmod.Wrapf(err, "unable to unmarshal instantiate contract response")
 	}
 	if instantiateContractResponse.Address == "" {
 		return errorsmod.Wrapf(types.ErrInvalidICAResponse, "response from CW contract instantiation ICA does not contain a contract address")
