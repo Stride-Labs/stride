@@ -83,6 +83,7 @@ func (suite *KeeperTestSuite) SetupTest() {
 		Denom:            sdk.DefaultBondDenom,
 		StartTime:        uint64(airdropStartTime.Unix()),
 		Duration:         uint64(types.DefaultAirdropDuration.Seconds()),
+		DailyLimit:       uint64(50_000_000), // 50M
 		AutopilotEnabled: false,
 	})
 	if err != nil {
@@ -97,6 +98,7 @@ func (suite *KeeperTestSuite) SetupTest() {
 		Denom:       sdk.DefaultBondDenom,
 		StartTime:   uint64(airdropStartTime.Add(time.Hour).Unix()),
 		Duration:    uint64(types.DefaultAirdropDuration.Seconds()),
+		DailyLimit:  types.DefaultAirdropDailyLimit.Uint64(),
 	})
 	if err != nil {
 		panic(err)
@@ -110,6 +112,7 @@ func (suite *KeeperTestSuite) SetupTest() {
 		Denom:       sdk.DefaultBondDenom,
 		StartTime:   uint64(airdropStartTime.Unix()),
 		Duration:    uint64(types.DefaultAirdropDuration.Seconds()),
+		DailyLimit:  types.DefaultAirdropDailyLimit.Uint64(),
 	})
 	if err != nil {
 		panic(err)

@@ -33,6 +33,7 @@ func TestGenesis(t *testing.T) {
 					AirdropDuration:    types.DefaultAirdropDuration,
 					ClaimDenom:         sdk.DefaultBondDenom,
 					DistributorAddress: addr3.String(),
+					DailyLimit:         types.DefaultAirdropDailyLimit,
 				},
 			},
 		},

@@ -36,6 +36,16 @@ message Airdrop {
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
     (gogoproto.nullable) = false
   ];
+  // ustrd tokens for daily limit
+  string daily_limit = 9 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable) = false
+  ];
+  // ustrd tokens claimed daily
+  string daily_claimed_so_far = 10 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable) = false
+  ];
   // indicates the airdrop should be claimed via autopilot
   bool autopilot_enabled = 8;
 }

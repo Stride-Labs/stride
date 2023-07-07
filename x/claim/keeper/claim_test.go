@@ -17,6 +17,7 @@ import (
 
 	"github.com/Stride-Labs/stride/v11/x/claim/types"
 	stridevestingtypes "github.com/Stride-Labs/stride/v11/x/claim/vesting/types"
+	epochtypes "github.com/Stride-Labs/stride/v11/x/epochs/types"
 )
 
 // Test functionality for loading allocation data(csv)
@@ -87,6 +88,7 @@ func (suite *KeeperTestSuite) TestHookBeforeAirdropStart() {
 				AirdropDuration:    types.DefaultAirdropDuration,
 				ClaimDenom:         sdk.DefaultBondDenom,
 				DistributorAddress: distributors[types.DefaultAirdropIdentifier].String(),
+				DailyLimit:         types.DefaultAirdropDailyLimit,
 			},
 		},
 	})
@@ -110,23 +112,23 @@ func (suite *KeeperTestSuite) TestHookBeforeAirdropStart() {
 
 	coins, err := suite.app.ClaimKeeper.GetUserTotalClaimable(suite.ctx, addr1, "stride", false)
 	suite.NoError(err)
-	// Now, it is before starting air drop, so this value should return the empty coins
+	// Now, it is before starting airdrop, so this value should return the empty coins
 	suite.True(coins.Empty())
 
 	coins, err = suite.app.ClaimKeeper.GetClaimableAmountForAction(suite.ctx, addr1, types.ACTION_FREE, "stride", false)
 	suite.NoError(err)
-	// Now, it is before starting air drop, so this value should return the empty coins
+	// Now, it is before starting airdrop, so this value should return the empty coins
 	suite.True(coins.Empty())
 
 	err = suite.app.ClaimKeeper.AfterDelegationModified(suite.ctx, addr1, val1)
 	suite.NoError(err)
 	balances := suite.app.BankKeeper.GetAllBalances(suite.ctx, addr1)
-	// Now, it is before starting air drop, so claim module should not send the balances to the user after swap.
+	// Now, it is before starting airdrop, so claim module should not send the balances to the user after delegation.
 	suite.True(balances.Empty())
 
 	suite.app.ClaimKeeper.AfterLiquidStake(suite.ctx.WithBlockTime(airdropStartTime), addr1)
 	balances = suite.app.BankKeeper.GetAllBalances(suite.ctx, addr1)
-	// Now, it is the time for air drop, so claim module should send the balances to the user after liquid stake.
+	// Now, it is the time for airdrop, so claim module should send the balances to the user after liquid stake.
 	claimableAmountForLiquidStake := sdk.NewDecWithPrec(60, 2).
 		Mul(sdk.NewDec(100_000_000)).
 		RoundInt64() // 60% for liquid stake
@@ -329,8 +331,14 @@ func (suite *KeeperTestSuite) TestAirdropFlow() {
 	suite.Require().Equal(coins.String(), sdk.NewCoins(sdk.NewInt64Coin(sdk.DefaultBondDenom, claimableAmountForLiquidStake)).String())
 
 	// get balance after all claim
+	totalClaimedForAddr1 := claimableAmountForFree + claimableAmountForStake + claimableAmountForLiquidStake
 	coins = suite.app.BankKeeper.GetAllBalances(suite.ctx, addr1)
-	suite.Require().Equal(coins.String(), sdk.NewCoins(sdk.NewInt64Coin(sdk.DefaultBondDenom, claimableAmountForFree+claimableAmountForStake+claimableAmountForLiquidStake)).String())
+	suite.Require().Equal(coins.String(), sdk.NewCoins(sdk.NewInt64Coin(sdk.DefaultBondDenom, totalClaimedForAddr1)).String())
+
+	// check if daily_claimed_so_far and claimed_so_far are equal to total clamed amount for addr1
+	airdrop := suite.app.ClaimKeeper.GetAirdropByIdentifier(suite.ctx, "stride")
+	suite.Require().Equal(airdrop.ClaimedSoFar, sdk.NewIntFromUint64(uint64(totalClaimedForAddr1)))
+	suite.Require().Equal(airdrop.DailyClaimedSoFar, sdk.NewIntFromUint64(uint64(totalClaimedForAddr1)))
 
 	// get spendable balances 3 months later
 	ctx := suite.ctx.WithBlockTime(time.Now().Add(types.DefaultVestingDurationForDelegateStake))
@@ -848,4 +856,70 @@ func (suite *KeeperTestSuite) TestGetAirdropByChainId() {
 	// Lookup a non-existent airdrop - it should not be found
 	_, found := suite.app.ClaimKeeper.GetAirdropByChainId(suite.ctx, "fake_chain_id")
 	suite.Require().False(found, "fake_chain_id should not have been found")
+}
+
+func (suite *KeeperTestSuite) TestDailyLimit() {
+	suite.SetupTest()
+
+	addr1 := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
+	addr2 := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
+
+	weight := sdk.NewDecWithPrec(50, 2)
+
+	for _, addr := range []sdk.AccAddress{addr1, addr2} {
+		initialBal := int64(1000)
+		err := suite.app.BankKeeper.SendCoins(suite.ctx, distributors["stride"], addr, sdk.NewCoins(sdk.NewInt64Coin(sdk.DefaultBondDenom, initialBal)))
+		suite.Require().NoError(err)
+		err = suite.app.BankKeeper.SendCoins(suite.ctx, addr, distributors["stride"], sdk.NewCoins(sdk.NewInt64Coin(sdk.DefaultBondDenom, initialBal)))
+		suite.Require().NoError(err)
+	}
+
+	claimRecords := []types.ClaimRecord{
+		{
+			Address:           addr1.String(),
+			Weight:            weight, // 50%
+			ActionCompleted:   []bool{false, false, false},
+			AirdropIdentifier: types.DefaultAirdropIdentifier,
+		},
+		{
+			Address:           addr2.String(),
+			Weight:            weight, // 50%
+			ActionCompleted:   []bool{false, false, false},
+			AirdropIdentifier: types.DefaultAirdropIdentifier,
+		},
+	}
+
+	err := suite.app.ClaimKeeper.SetClaimRecordsWithWeights(suite.ctx, claimRecords)
+	suite.Require().NoError(err)
+
+	// get rewards amount for all actions (free, stake, liquid stake)
+	_, err = suite.app.ClaimKeeper.ClaimCoinsForAction(suite.ctx, addr1, types.ACTION_FREE, "stride")
+	suite.Require().NoError(err)
+	_, err = suite.app.ClaimKeeper.ClaimCoinsForAction(suite.ctx, addr1, types.ACTION_DELEGATE_STAKE, "stride")
+	suite.Require().NoError(err)
+	_, err = suite.app.ClaimKeeper.ClaimCoinsForAction(suite.ctx, addr1, types.ACTION_LIQUID_STAKE, "stride")
+	suite.Require().NoError(err)
+
+	// get balance for addr1 after all claim
+	totalClaimedForAddr1 := sdk.NewDec(100_000_000).
+		Mul(weight).
+		RoundInt64() // 50M
+	coins := suite.app.BankKeeper.GetAllBalances(suite.ctx, addr1)
+	suite.Require().Equal(coins.String(), sdk.NewCoins(sdk.NewInt64Coin(sdk.DefaultBondDenom, totalClaimedForAddr1)).String())
+
+	// totalClaimedForAddr1 just reached daily limit
+	// so addr2 shouldn't be able to claim until daily_claimed_so_far is reset at daily epoch
+	_, err = suite.app.ClaimKeeper.ClaimCoinsForAction(suite.ctx, addr2, types.ACTION_FREE, "stride")
+	suite.Require().Error(err, "should revert tx as total claimed already reached daily limit")
+
+	// run daily epoch and check if daily_claimed_so_far has been reset to 0 and user2 is able to claim tokens
+	epochDaily := epochtypes.EpochInfo{Identifier: epochtypes.DAY_EPOCH}
+	suite.app.EpochsKeeper.SetEpochInfo(suite.ctx, epochDaily)
+	suite.app.ClaimKeeper.AfterEpochEnd(suite.ctx, epochDaily)
+
+	airdrop := suite.app.ClaimKeeper.GetAirdropByIdentifier(suite.ctx, "stride")
+	suite.Require().Equal(sdk.ZeroInt(), airdrop.DailyClaimedSoFar)
+
+	_, err = suite.app.ClaimKeeper.ClaimCoinsForAction(suite.ctx, addr2, types.ACTION_FREE, "stride")
+	suite.Require().NoError(err)
 }

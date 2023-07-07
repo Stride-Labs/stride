@@ -20,6 +20,7 @@ func (s *KeeperTestSuite) TestAfterEpochEnd() {
 	epochInProgressId := "airdrop-" + airdropInProgressId
 
 	claimedSoFar := sdkmath.NewInt(1000)
+	dailyClaimedSoFar := sdkmath.NewInt(100)
 
 	// Add two airdrops - one that ended, and one that's in progress
 	types.DefaultVestingInitialPeriod = time.Minute * 2 // vesting period of 2 minutes
@@ -28,11 +29,13 @@ func (s *KeeperTestSuite) TestAfterEpochEnd() {
 			{
 				AirdropIdentifier: airdropEndedId,
 				ClaimedSoFar:      claimedSoFar,
+				DailyClaimedSoFar: dailyClaimedSoFar,
 				AirdropStartTime:  s.ctx.BlockTime().Add(-3 * time.Minute), // started 3 minutes ago
 			},
 			{
 				AirdropIdentifier: airdropInProgressId,
 				ClaimedSoFar:      claimedSoFar,
+				DailyClaimedSoFar: dailyClaimedSoFar,
 				AirdropStartTime:  s.ctx.BlockTime().Add(-1 * time.Minute), // started 1 minute ago
 			},
 		},
@@ -42,8 +45,10 @@ func (s *KeeperTestSuite) TestAfterEpochEnd() {
 	// Add the corresponding epoch for each airdrop
 	epochEnded := epochtypes.EpochInfo{Identifier: epochEndedId}
 	epochInProgress := epochtypes.EpochInfo{Identifier: epochInProgressId}
+	epochDaily := epochtypes.EpochInfo{Identifier: epochtypes.DAY_EPOCH}
 	s.app.EpochsKeeper.SetEpochInfo(s.ctx, epochEnded)
 	s.app.EpochsKeeper.SetEpochInfo(s.ctx, epochInProgress)
+	s.app.EpochsKeeper.SetEpochInfo(s.ctx, epochDaily)
 
 	// Add claim records for each airdrop
 	actions := [][]bool{
@@ -78,6 +83,7 @@ func (s *KeeperTestSuite) TestAfterEpochEnd() {
 	// Check that the airdrop that ended had everything reset and the actions were reset
 	airdropEnded := s.app.ClaimKeeper.GetAirdropByIdentifier(s.ctx, airdropEndedId)
 	s.Require().Equal(int64(0), airdropEnded.ClaimedSoFar.Int64(), "claimed so far for airdrop that ended")
+	s.Require().Equal(int64(0), airdropEnded.DailyClaimedSoFar.Int64(), "daily claimed so far for airdrop that ended")
 
 	actionsReset := []bool{false, false, false}
 	endedClaimRecords := s.app.ClaimKeeper.GetClaimRecords(s.ctx, airdropEndedId)
@@ -89,6 +95,15 @@ func (s *KeeperTestSuite) TestAfterEpochEnd() {
 
 	// And check that the airdrop that was still in progress has been unchanged
 	airdropInProgress := s.app.ClaimKeeper.GetAirdropByIdentifier(s.ctx, airdropInProgressId)
+	s.Require().Equal(claimedSoFar.Int64(), airdropInProgress.ClaimedSoFar.Int64(), "claimed so far for airdrop in progress")
+	s.Require().Equal(dailyClaimedSoFar.Int64(), airdropInProgress.DailyClaimedSoFar.Int64(), "claimed so far for airdrop in progress")
+
+	// Call AfterEpochEnd with day epoch
+	s.app.ClaimKeeper.AfterEpochEnd(s.ctx, epochDaily)
+
+	// Check that the airdrop that was still in progress had reset only daily_claimed_so_far.
+	airdropInProgress = s.app.ClaimKeeper.GetAirdropByIdentifier(s.ctx, airdropInProgressId)
+	s.Require().Equal(int64(0), airdropInProgress.DailyClaimedSoFar.Int64(), "daily claimed so far for airdrop in progress")
 	s.Require().Equal(claimedSoFar.Int64(), airdropInProgress.ClaimedSoFar.Int64(), "claimed so far for airdrop in progress")
 
 	inProgressClaimRecords := s.app.ClaimKeeper.GetClaimRecords(s.ctx, airdropInProgressId)

@@ -67,6 +67,16 @@ func (k Keeper) AfterEpochEnd(ctx sdk.Context, epochInfo epochstypes.EpochInfo) 
 			k.Logger(ctx).Info(fmt.Sprintf("[CLAIM] airdrop %s not found, skipping reset", airdropIdentifier))
 		}
 	}
+
+	// if Daily Epoch - Reset daily_claimed_so_far for each airdrop
+	if epochInfo.Identifier == epochstypes.DAY_EPOCH {
+		airdropIds := k.GetAirdropIds(ctx)
+		for _, airdropId := range airdropIds {
+			if err := k.ResetClaimedSoFar(ctx, airdropId, true); err != nil {
+				k.Logger(ctx).Info(fmt.Sprintf("[CLAIM] ResetClaimedSoFar %v", err.Error()))
+			}
+		}
+	}
 }
 
 // ________________________________________________________________________________________

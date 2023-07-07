@@ -45,6 +45,7 @@ message MsgCreateAirdrop {
   string denom = 5;
   uint64 start_time = 3;
   uint64 duration = 4;
+  uint64 daily_limit = 8;
   bool autopilot_enabled = 7;
 }
 

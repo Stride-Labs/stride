@@ -30,4 +30,6 @@ var (
 		"failed to modify claim record")
 	ErrAirdropChainIdAlreadyExists = errorsmod.Register(ModuleName, 1113,
 		"airdrop with same chain-id already exists")
+	ErrAleadyReachedDailyLimit = errorsmod.Register(ModuleName, 1114,
+		"already reached daily limit")
 )

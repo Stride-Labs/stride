@@ -183,7 +183,7 @@ func (k Keeper) GetAirdropIds(ctx sdk.Context) []string {
 	return airdropIds
 }
 
-// GetDistributorAccountBalance gets the airdrop coin balance of module account
+// GetDistributorAccountBalance returns the remaining airdrop balance in distributor account
 func (k Keeper) GetDistributorAccountBalance(ctx sdk.Context, airdropIdentifier string) (sdk.Coin, error) {
 	airdrop := k.GetAirdropByIdentifier(ctx, airdropIdentifier)
 	if airdrop == nil {
@@ -200,7 +200,7 @@ func (k Keeper) GetDistributorAccountBalance(ctx sdk.Context, airdropIdentifier 
 // EndAirdrop ends airdrop and clear all user claim records
 func (k Keeper) EndAirdrop(ctx sdk.Context, airdropIdentifier string) error {
 	ctx.Logger().Info("Clearing claims module state entries")
-	k.clearInitialClaimables(ctx, airdropIdentifier)
+	k.RemoveClaimRecords(ctx, airdropIdentifier)
 	k.DeleteTotalWeight(ctx, airdropIdentifier)
 	return k.DeleteAirdropAndEpoch(ctx, airdropIdentifier)
 }
@@ -239,7 +239,7 @@ func (k Keeper) ResetClaimStatus(ctx sdk.Context, airdropIdentifier string) erro
 		}
 		// then, reset the airdrop ClaimedSoFar
 		k.Logger(ctx).Info("[CLAIM] ResetClaimedSoFar...")
-		if err := k.ResetClaimedSoFar(ctx, airdropIdentifier); err != nil {
+		if err := k.ResetClaimedSoFar(ctx, airdropIdentifier, false); err != nil {
 			k.Logger(ctx).Info(fmt.Sprintf("[CLAIM] ResetClaimedSoFar %v", err.Error()))
 			return err
 		}
@@ -247,8 +247,8 @@ func (k Keeper) ResetClaimStatus(ctx sdk.Context, airdropIdentifier string) erro
 	return nil
 }
 
-// ClearClaimables clear claimable amounts
-func (k Keeper) clearInitialClaimables(ctx sdk.Context, airdropIdentifier string) {
+// RemoveClaimRecords removes all claim records for given airdrop identifier
+func (k Keeper) RemoveClaimRecords(ctx sdk.Context, airdropIdentifier string) {
 	store := ctx.KVStore(k.storeKey)
 	iterator := sdk.KVStorePrefixIterator(store, append([]byte(types.ClaimRecordsStorePrefix), []byte(airdropIdentifier)...))
 	defer iterator.Close()
@@ -290,7 +290,7 @@ func (k Keeper) SetClaimRecords(ctx sdk.Context, claimRecords []types.ClaimRecor
 	return nil
 }
 
-// GetClaimables get claimables for genesis export
+// GetClaimRecords get all claim records for given airdrop identifier
 func (k Keeper) GetClaimRecords(ctx sdk.Context, airdropIdentifier string) []types.ClaimRecord {
 	store := ctx.KVStore(k.storeKey)
 	prefixStore := prefix.NewStore(store, append([]byte(types.ClaimRecordsStorePrefix), []byte(airdropIdentifier)...))
@@ -626,6 +626,19 @@ func (k Keeper) AfterClaim(ctx sdk.Context, airdropIdentifier string, claimAmoun
 	return nil
 }
 
+func (k Keeper) BeforeClaim(ctx sdk.Context, airdropIdentifier string) error {
+	airdrop := k.GetAirdropByIdentifier(ctx, airdropIdentifier)
+	if airdrop == nil {
+		return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "invalid airdrop identifier: BeforeClaim")
+	}
+
+	// If daily claimed already reached the limit, revert the tx
+	if airdrop.DailyClaimedSoFar.GTE(airdrop.DailyLimit) {
+		return types.ErrAleadyReachedDailyLimit
+	}
+	return nil
+}
+
 func (k Keeper) ClaimAllCoinsForAction(ctx sdk.Context, addr sdk.AccAddress, action types.Action) (sdk.Coins, error) {
 	// get all airdrops for the user
 	airdropIdentifiers := k.GetAirdropIdentifiersForUser(ctx, addr)
@@ -641,7 +654,7 @@ func (k Keeper) ClaimAllCoinsForAction(ctx sdk.Context, addr sdk.AccAddress, act
 	return totalClaimable, nil
 }
 
-// ClaimCoins remove claimable amount entry and transfer it to user's account
+// ClaimCoinsForAction remove claimable amount entry and transfer it to user's account
 func (k Keeper) ClaimCoinsForAction(ctx sdk.Context, addr sdk.AccAddress, action types.Action, airdropIdentifier string) (sdk.Coins, error) {
 	isPassed := k.IsInitialPeriodPassed(ctx, airdropIdentifier)
 	if airdropIdentifier == "" {
@@ -669,6 +682,12 @@ func (k Keeper) ClaimCoinsForAction(ctx sdk.Context, addr sdk.AccAddress, action
 	canClaim := isStrideVestingAccount || isBaseAcc
 	if !canClaim {
 		return nil, errorsmod.Wrapf(types.ErrInvalidAccount, "Account: %v", acc)
+	}
+
+	// BeforeClaim checks if DailyClaimedSoFar already reached DailyLimit
+	err = k.BeforeClaim(ctx, airdropIdentifier)
+	if err != nil {
+		return nil, err
 	}
 
 	// Claims don't vest if action type is ActionFree or initial period of vesting is passed
@@ -725,6 +744,7 @@ func (k Keeper) ClaimCoinsForAction(ctx sdk.Context, addr sdk.AccAddress, action
 	if airdrop == nil {
 		return nil, errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "invalid airdrop identifier: ClaimCoinsForAction")
 	}
+	// AfterClaim increases DailyClaimedSofar and ClaimedSofar
 	err = k.AfterClaim(ctx, airdropIdentifier, claimableAmount.AmountOf(airdrop.ClaimDenom))
 	if err != nil {
 		return nil, err
@@ -769,6 +789,7 @@ func (k Keeper) CreateAirdropAndEpoch(ctx sdk.Context, msg types.MsgCreateAirdro
 		ClaimDenom:         msg.Denom,
 		DistributorAddress: msg.Distributor,
 		AirdropStartTime:   time.Unix(int64(msg.StartTime), 0),
+		DailyLimit:         sdk.NewIntFromUint64(msg.DailyLimit),
 		AutopilotEnabled:   msg.AutopilotEnabled,
 	}
 
@@ -800,6 +821,7 @@ func (k Keeper) IncrementClaimedSoFar(ctx sdk.Context, identifier string, amount
 	for _, airdrop := range params.Airdrops {
 		if airdrop.AirdropIdentifier == identifier {
 			airdrop.ClaimedSoFar = airdrop.ClaimedSoFar.Add(amount)
+			airdrop.DailyClaimedSoFar = airdrop.DailyClaimedSoFar.Add(amount)
 		}
 		newAirdrops = append(newAirdrops, airdrop)
 	}
@@ -807,8 +829,11 @@ func (k Keeper) IncrementClaimedSoFar(ctx sdk.Context, identifier string, amount
 	return k.SetParams(ctx, params)
 }
 
-// ResetClaimedSoFar resets ClaimedSoFar for a all airdrops
-func (k Keeper) ResetClaimedSoFar(ctx sdk.Context, airdropIdentifier string) error {
+// ResetClaimedSoFar resets ClaimedSoFar for all airdrops
+//
+//	if isDaily is true, reset only DailyClaimedSoFar,
+//	otherwise, reset both ClaimedSoFar and DailyClaimedSoFar
+func (k Keeper) ResetClaimedSoFar(ctx sdk.Context, airdropIdentifier string, isDaily bool) error {
 	params, err := k.GetParams(ctx)
 	k.Logger(ctx).Info(fmt.Sprintf("[CLAIM] params.Airdrops %v", params.Airdrops))
 	if err != nil {
@@ -818,8 +843,11 @@ func (k Keeper) ResetClaimedSoFar(ctx sdk.Context, airdropIdentifier string) err
 	newAirdrops := []*types.Airdrop{}
 	for _, airdrop := range params.Airdrops {
 		if airdrop.AirdropIdentifier == airdropIdentifier {
-			airdrop.ClaimedSoFar = sdkmath.ZeroInt()
-			k.Logger(ctx).Info(fmt.Sprintf("[CLAIM] resetting claimSoFar for %s", airdropIdentifier))
+			if !isDaily {
+				airdrop.ClaimedSoFar = sdkmath.ZeroInt()
+			}
+			airdrop.DailyClaimedSoFar = sdkmath.ZeroInt()
+			k.Logger(ctx).Info(fmt.Sprintf("[CLAIM] resetting ClaimedSoFar for %s", airdropIdentifier))
 		}
 		newAirdrops = append(newAirdrops, airdrop)
 	}

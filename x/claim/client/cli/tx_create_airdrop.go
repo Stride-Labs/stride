@@ -13,9 +13,9 @@ import (
 
 func CmdCreateAirdrop() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "create-airdrop [identifier] [chain-id] [denom] [start] [duration] [autopilot-enabled]",
+		Use:   "create-airdrop [identifier] [chain-id] [denom] [start] [duration] [daily-limit] [autopilot-enabled]",
 		Short: "Broadcast message create-airdrop",
-		Args:  cobra.ExactArgs(6),
+		Args:  cobra.ExactArgs(7),
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
 			identifier := args[0]
 			chainId := args[1]
@@ -28,7 +28,11 @@ func CmdCreateAirdrop() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			autopilotEnabled, err := strconv.ParseBool(args[5])
+			dailyLimit, err := strconv.Atoi(args[5])
+			if err != nil {
+				return err
+			}
+			autopilotEnabled, err := strconv.ParseBool(args[6])
 			if err != nil {
 				return err
 			}
@@ -45,6 +49,7 @@ func CmdCreateAirdrop() *cobra.Command {
 				denom,
 				uint64(argStartTime),
 				uint64(argDuration),
+				uint64(dailyLimit),
 				autopilotEnabled,
 			)
 

@@ -115,6 +115,7 @@ func (s *IntegrationTestSuite) SetupSuite() {
 		s.cfg.BondDenom,
 		strconv.Itoa(int(time.Now().Unix())),
 		strconv.Itoa(int(claimtypes.DefaultAirdropDuration.Seconds())),
+		claimtypes.DefaultAirdropDailyLimit.String(),
 		autopilotEnabled,
 		// common args
 		fmt.Sprintf("--%s=json", tmcli.OutputFlag),
@@ -263,6 +264,7 @@ func (s *IntegrationTestSuite) TestCmdTxCreateAirdrop() {
 		AirdropDuration:    claimtypes.DefaultAirdropDuration,
 		DistributorAddress: distributorAddrs[1],
 		ClaimDenom:         claimtypes.DefaultClaimDenom,
+		DailyLimit:         claimtypes.DefaultAirdropDailyLimit,
 		AutopilotEnabled:   true,
 	}
 
@@ -279,6 +281,7 @@ func (s *IntegrationTestSuite) TestCmdTxCreateAirdrop() {
 				airdrop.ClaimDenom,
 				strconv.Itoa(int(time.Now().Unix())), // start time
 				strconv.Itoa(int(claimtypes.DefaultAirdropDuration.Seconds())), // duration
+				claimtypes.DefaultAirdropDailyLimit.String(),                   // daily limit
 				fmt.Sprintf("%v", airdrop.AutopilotEnabled),
 				// common args
 				fmt.Sprintf("--%s=json", tmcli.OutputFlag),
