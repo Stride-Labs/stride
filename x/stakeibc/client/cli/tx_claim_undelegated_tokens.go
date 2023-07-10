@@ -16,9 +16,9 @@ var _ = strconv.Itoa(0)
 
 func CmdClaimUndelegatedTokens() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "claim-undelegated-tokens [host-zone] [epoch] [sender]",
+		Use:   "claim-undelegated-tokens [host-zone] [epoch] [sender] [timestamp]",
 		Short: "Broadcast message claimUndelegatedTokens",
-		Args:  cobra.ExactArgs(3),
+		Args:  cobra.ExactArgs(4),
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
 			argHostZone := args[0]
 			argEpoch, err := cast.ToUint64E(args[1])
@@ -32,11 +32,17 @@ func CmdClaimUndelegatedTokens() *cobra.Command {
 				return err
 			}
 
+			timetamp, err := strconv.Atoi(args[3])
+			if err != nil {
+				return err
+			}
+
 			msg := types.NewMsgClaimUndelegatedTokens(
 				clientCtx.GetFromAddress().String(),
 				argHostZone,
 				argEpoch,
 				argSender,
+				uint64(timetamp),
 			)
 			if err := msg.ValidateBasic(); err != nil {
 				return err

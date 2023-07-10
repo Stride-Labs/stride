@@ -306,9 +306,10 @@ setup_file() {
 
   # grab the epoch number for the first deposit record in the list od DRs
   EPOCH=$($STRIDE_MAIN_CMD q records list-user-redemption-record  | grep -Fiw 'epoch_number' | head -n 1 | grep -o -E '[0-9]+')
+  TIMESTAMP=$($STRIDE_MAIN_CMD q records list-user-redemption-record  | grep -Fiw 'timestamp' | head -n 1 | grep -o -E '[0-9]+')
 
   # claim the record (send to stride address)
-  $STRIDE_MAIN_CMD tx stakeibc claim-undelegated-tokens $HOST_CHAIN_ID $EPOCH $(STRIDE_ADDRESS) \
+  $STRIDE_MAIN_CMD tx stakeibc claim-undelegated-tokens $HOST_CHAIN_ID $EPOCH $(STRIDE_ADDRESS) $TIMESTAMP \
     --from $STRIDE_VAL --keyring-backend test --chain-id $STRIDE_CHAIN_ID -y
 
   WAIT_FOR_STRING $STRIDE_LOGS "\[CLAIM\] success on $HOST_CHAIN_ID"

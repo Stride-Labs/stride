@@ -41,7 +41,7 @@ func (k Keeper) UserRedemptionRecordForUser(c context.Context, req *types.QueryA
 		}
 		currentDay := req.Day - i
 		// query the user redemption record for the current day
-		userRedemptionRecord, found := k.GetUserRedemptionRecord(ctx, types.UserRedemptionRecordKeyFormatter(req.ChainId, currentDay, req.Address))
+		userRedemptionRecord, found := k.GetUserRedemptionRecord(ctx, types.UserRedemptionRecordKeyFormatter(req.ChainId, currentDay, req.Address, int64(req.Timestamp)))
 		if !found {
 			continue
 		}

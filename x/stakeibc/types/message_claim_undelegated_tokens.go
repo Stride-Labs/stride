@@ -12,12 +12,13 @@ const TypeMsgClaimUndelegatedTokens = "claim_undelegated_tokens"
 
 var _ sdk.Msg = &MsgClaimUndelegatedTokens{}
 
-func NewMsgClaimUndelegatedTokens(creator string, hostZone string, epoch uint64, sender string) *MsgClaimUndelegatedTokens {
+func NewMsgClaimUndelegatedTokens(creator string, hostZone string, epoch uint64, sender string, timestamp uint64) *MsgClaimUndelegatedTokens {
 	return &MsgClaimUndelegatedTokens{
 		Creator:    creator,
 		HostZoneId: hostZone,
 		Epoch:      epoch,
 		Sender:     sender,
+		Timestamp:  timestamp,
 	}
 }
 

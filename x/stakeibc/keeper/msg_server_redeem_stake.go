@@ -40,7 +40,8 @@ func (k msgServer) RedeemStake(goCtx context.Context, msg *types.MsgRedeemStake)
 		return nil, errorsmod.Wrapf(types.ErrEpochNotFound, "epoch tracker found: %s", "day")
 	}
 	senderAddr := sender.String()
-	redemptionId := recordstypes.UserRedemptionRecordKeyFormatter(hostZone.ChainId, epochTracker.EpochNumber, senderAddr)
+	timestamp := ctx.BlockTime().Unix()
+	redemptionId := recordstypes.UserRedemptionRecordKeyFormatter(hostZone.ChainId, epochTracker.EpochNumber, senderAddr, timestamp)
 	_, found = k.RecordsKeeper.GetUserRedemptionRecord(ctx, redemptionId)
 	if found {
 		return nil, errorsmod.Wrapf(recordstypes.ErrRedemptionAlreadyExists, "user already redeemed this epoch: %s", redemptionId)
@@ -95,6 +96,7 @@ func (k msgServer) RedeemStake(goCtx context.Context, msg *types.MsgRedeemStake)
 		Denom:       hostZone.HostDenom,
 		HostZoneId:  hostZone.ChainId,
 		EpochNumber: epochTracker.EpochNumber,
+		Timestamp:   uint64(timestamp),
 		// claimIsPending represents whether a redemption is currently being claimed,
 		// contingent on the host zone unbonding having status CLAIMABLE
 		ClaimIsPending: false,

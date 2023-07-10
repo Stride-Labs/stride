@@ -103,6 +103,7 @@ message MsgClaimUndelegatedTokens {
   string host_zone_id = 2;
   uint64 epoch = 3;
   string sender = 4;
+  uint64 timestamp = 5;
 }
 
 message MsgClaimUndelegatedTokensResponse {}

@@ -18,7 +18,8 @@ message UserRedemptionRecord {
   string denom = 5;
   string host_zone_id = 6;
   uint64 epoch_number = 7;
-  bool claim_is_pending = 8;
+  uint64 timestamp = 8;
+  bool claim_is_pending = 9;
 }
 
 // Msg defines the Msg service.

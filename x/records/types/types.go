@@ -2,6 +2,6 @@ package types
 
 import "fmt"
 
-func UserRedemptionRecordKeyFormatter(chainId string, epochNumber uint64, sender string) string {
-	return fmt.Sprintf("%s.%d.%s", chainId, epochNumber, sender) // {chain_id}.{epoch}.{sender}
+func UserRedemptionRecordKeyFormatter(chainId string, epochNumber uint64, sender string, timestamp int64) string {
+	return fmt.Sprintf("%s.%d.%s.%d", chainId, epochNumber, sender, timestamp) // {chain_id}.{epoch}.{sender}.{timestamp}
 }
