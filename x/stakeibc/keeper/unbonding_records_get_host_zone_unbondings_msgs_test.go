@@ -7,8 +7,7 @@ import (
 	"github.com/golang/protobuf/proto" //nolint:staticcheck
 	_ "github.com/stretchr/testify/suite"
 
-	// TODO [LSM]: Revert type
-	lsmstakingtypes "github.com/iqlusioninc/liquidity-staking-module/x/staking/types"
+	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
 	recordstypes "github.com/Stride-Labs/stride/v9/x/records/types"
 	recordtypes "github.com/Stride-Labs/stride/v9/x/records/types"
@@ -816,7 +815,7 @@ func (s *KeeperTestSuite) TestGetUnbondingICAMessages() {
 			// Check each unbonding
 			for i, expected := range tc.expectedUnbondings {
 				valAddress := expected.Validator
-				actualMsg := actualMessages[i].(*lsmstakingtypes.MsgUndelegate)
+				actualMsg := actualMessages[i].(*stakingtypes.MsgUndelegate)
 				actualSplit := actualSplits[i]
 
 				// Check the ICA message

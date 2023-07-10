@@ -8,7 +8,7 @@ import (
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	lsmstakingtypes "github.com/iqlusioninc/liquidity-staking-module/x/staking/types"
+	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
 	"github.com/Stride-Labs/stride/v9/utils"
 	epochstypes "github.com/Stride-Labs/stride/v9/x/epochs/types"
@@ -23,9 +23,13 @@ type RebalanceValidatorDelegationChange struct {
 }
 
 // Iterate each active host zone and issues redelegation messages to rebalance each
-//   validator's stake according to their weights
+//
+//	validator's stake according to their weights
+//
 // This is required when accepting LSM LiquidStakes as the distribution of stake
-//   from the LSM Tokens will be inconsistend with the host zone's validator set
+//
+//	from the LSM Tokens will be inconsistend with the host zone's validator set
+//
 // Note: this cannot be run more than once in a single unbonding period
 func (k Keeper) RebalanceAllHostZones(ctx sdk.Context) {
 	dayEpoch, found := k.GetEpochTracker(ctx, epochstypes.DAY_EPOCH)
@@ -188,8 +192,7 @@ func (k Keeper) GetRebalanceICAMessages(
 		srcValidator := surplusValidator.ValidatorAddress
 		dstValidator := deficitValidator.ValidatorAddress
 
-		// TODO [LSM]: Revert type
-		msgs = append(msgs, &lsmstakingtypes.MsgBeginRedelegate{
+		msgs = append(msgs, &stakingtypes.MsgBeginRedelegate{
 			DelegatorAddress:    hostZone.DelegationIcaAddress,
 			ValidatorSrcAddress: srcValidator,
 			ValidatorDstAddress: dstValidator,
