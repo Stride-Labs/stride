@@ -34,13 +34,6 @@ elif [[ "${#HOST_CHAINS[@]}" == "0" ]]; then
   HOST_CHAINS=(GAIA)
 fi
 
-# Sets up upgrade if {UPGRADE_NAME} is non-empty
-# UPGRADE_NAME=""
-# UPGRADE_OLD_COMMIT_HASH=""
-
-UPGRADE_NAME="v12"
-UPGRADE_OLD_VERSION="main"
-
 # DENOMS
 STRD_DENOM="ustrd"
 ATOM_DENOM="uatom"

@@ -224,8 +224,8 @@ github.com/Stride-Labs/cast v0.0.3 h1:eM3n/t3hSxb+iw9LDo3r/uGBp3w4U7wPv40GKMtJ1d
 github.com/Stride-Labs/cast v0.0.3/go.mod h1:SpXXQ5YoyJw6s3/6cMTQuxvgRl3PCJiyaX9p6b155UU=
 github.com/Stride-Labs/ibc-go/v7 v7.1.1-0.20230622125415-f45876a168a0 h1:1QKJrTg/QW059hY8uJCIpDojFjx5kA+RdUL3Sz2UjTQ=
 github.com/Stride-Labs/ibc-go/v7 v7.1.1-0.20230622125415-f45876a168a0/go.mod h1:7MptlWeIyqmDiuJeRAFqBvXKY8Hybd+rF8vMSmGd2zg=
-github.com/Stride-Labs/interchain-security/v3 v3.0.0-rc2.0.20230630151730-3e5aa52bfe3c h1:T3oGbcQ54WzrJn92hfmDX2wTPzIJmXpLtCSj/sVnksA=
-github.com/Stride-Labs/interchain-security/v3 v3.0.0-rc2.0.20230630151730-3e5aa52bfe3c/go.mod h1:HKHw9u4xMm5QJV76A03ORAXB2zisgpcunXZSca8TBdg=
+github.com/Stride-Labs/interchain-security/v3 v3.0.1-0.20230711025440-4fe25b1f88c3 h1:o7vfGYiH6U1Mlojj3LwWU7G3bREMhgCiwHwdbuu3Aww=
+github.com/Stride-Labs/interchain-security/v3 v3.0.1-0.20230711025440-4fe25b1f88c3/go.mod h1:HKHw9u4xMm5QJV76A03ORAXB2zisgpcunXZSca8TBdg=
 github.com/VividCortex/gohistogram v1.0.0 h1:6+hBz+qvs0JOrrNhhmR7lFxo5sINxBCGXrdtl/UvroE=
 github.com/VividCortex/gohistogram v1.0.0/go.mod h1:Pf5mBqqDxYaXu3hDrrU+w6nw50o/4+TcAqDqk/vUH7g=
 github.com/adlio/schema v1.3.3 h1:oBJn8I02PyTB466pZO1UZEn1TV5XLlifBSyMrmHl/1I=

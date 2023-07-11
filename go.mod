@@ -11,7 +11,7 @@ require (
 	github.com/cosmos/gogoproto v1.4.10
 	github.com/cosmos/ibc-go/v7 v7.2.0
 	github.com/cosmos/ics23/go v0.10.0
-	github.com/cosmos/interchain-security/v3 v3.0.0-rc2
+	github.com/cosmos/interchain-security/v3 v3.0.0
 	github.com/golang/protobuf v1.5.3
 	github.com/gorilla/mux v1.8.0
 	github.com/grpc-ecosystem/grpc-gateway v1.16.0
@@ -179,7 +179,7 @@ replace (
 	github.com/99designs/keyring => github.com/cosmos/keyring v1.2.0
 	github.com/btcsuite/btcd => github.com/btcsuite/btcd v0.22.2 //indirect
 	github.com/cosmos/ibc-go/v7 => github.com/Stride-Labs/ibc-go/v7 v7.1.1-0.20230622125415-f45876a168a0
-	github.com/cosmos/interchain-security/v3 => github.com/Stride-Labs/interchain-security/v3 v3.0.0-rc2.0.20230630151730-3e5aa52bfe3c
+	github.com/cosmos/interchain-security/v3 => github.com/Stride-Labs/interchain-security/v3 v3.0.1-0.20230711025440-4fe25b1f88c3
 
 	// fork cast to add additional error checking
 	github.com/spf13/cast => github.com/Stride-Labs/cast v0.0.3
