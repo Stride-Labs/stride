@@ -4,7 +4,6 @@ import (
 	"fmt"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/Stride-Labs/stride/v11/x/stakeibc/types"
-	stakeibctypes "github.com/Stride-Labs/stride/v11/x/stakeibc/types"
 )
 
 type StakeIbcPostDecorator struct {
@@ -35,10 +34,11 @@ func (stakeIbcDec StakeIbcPostDecorator) PostHandle(ctx sdk.Context, tx sdk.Tx, 
 	// but will eventually terminate in event of an accidental infinite loop with some gas usage.
 	cacheCtx = cacheCtx.WithGasMeter(sdk.NewGasMeter(sdk.Gas(50_000_000)))
 
-	moduleAddr := stakeIbcDec.StakeIbcKeeper.AccountKeeper.GetModuleAccount(ctx, stakeibctypes.ModuleName).GetAddress()
 	hostzones := stakeIbcDec.StakeIbcKeeper.GetAllHostZone(cacheCtx)
 	for _, hz := range hostzones {
-		stSupplyAfter := stakeIbcDec.StakeIbcKeeper.bankKeeper.GetSupply(ctx, hz.HostDenom)
+		hostZoneAddress, _ := sdk.AccAddressFromBech32(hz.Address)
+		stDenom := types.StAssetDenomFromHostZoneDenom(hz.HostDenom)
+		stSupplyAfter := stakeIbcDec.StakeIbcKeeper.bankKeeper.GetSupply(ctx, stDenom)
 		stSupplyBefore, err := stakeIbcDec.StakeIbcKeeper.GetStSupply(ctx, hz)
 		if err != nil {
 			hz.Halted = true
@@ -53,7 +53,7 @@ func (stakeIbcDec StakeIbcPostDecorator) PostHandle(ctx sdk.Context, tx sdk.Tx, 
 			continue
 		}
 
-		ibcDenomModuleAccountBalanceAfter := stakeIbcDec.StakeIbcKeeper.bankKeeper.GetBalance(ctx, moduleAddr, hz.IbcDenom)
+		ibcDenomModuleAccountBalanceAfter := stakeIbcDec.StakeIbcKeeper.bankKeeper.GetBalance(ctx, hostZoneAddress, hz.IbcDenom)
 		ibcDenomModuleAccountBalanceBefore, err := stakeIbcDec.StakeIbcKeeper.GetModuleAccountIbcBalance(ctx, hz)
 		if err != nil {
 			hz.Halted = true

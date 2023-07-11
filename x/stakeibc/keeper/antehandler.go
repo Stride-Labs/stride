@@ -1,10 +1,9 @@
 package keeper
 
 import (
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	stakeibctypes "github.com/Stride-Labs/stride/v11/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v11/x/stakeibc/types"
 )
 
 type StakeIbcAnteDecorator struct {
@@ -23,11 +22,12 @@ func (stakeIbcAnteDec StakeIbcAnteDecorator) AnteHandle(ctx sdk.Context, tx sdk.
 		return next(ctx, tx, simulate)
 	}
 
-	moduleAddr := stakeIbcAnteDec.StakeIbcKeeper.AccountKeeper.GetModuleAccount(ctx, stakeibctypes.ModuleName).GetAddress()
 	hostzones := stakeIbcAnteDec.StakeIbcKeeper.GetAllHostZone(ctx)
 	for _, hz := range hostzones {
-		stSupplyBeforeTx := stakeIbcAnteDec.StakeIbcKeeper.bankKeeper.GetSupply(ctx, hz.HostDenom)
-		ibcDenomModuleAccountBalance := stakeIbcAnteDec.StakeIbcKeeper.bankKeeper.GetBalance(ctx, moduleAddr, hz.IbcDenom)
+		hostZoneAddress, _ := sdk.AccAddressFromBech32(hz.Address)
+		stDenom := types.StAssetDenomFromHostZoneDenom(hz.HostDenom)
+		stSupplyBeforeTx := stakeIbcAnteDec.StakeIbcKeeper.bankKeeper.GetSupply(ctx, stDenom)
+		ibcDenomModuleAccountBalance := stakeIbcAnteDec.StakeIbcKeeper.bankKeeper.GetBalance(ctx, hostZoneAddress, hz.IbcDenom)
 		stakeIbcAnteDec.StakeIbcKeeper.SetStSupply(ctx, hz, stSupplyBeforeTx)
 		stakeIbcAnteDec.StakeIbcKeeper.SetModuleAccountIbcBalance(ctx, hz, ibcDenomModuleAccountBalance)
 	}
