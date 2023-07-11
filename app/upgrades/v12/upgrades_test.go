@@ -1,4 +1,4 @@
-package v10_test
+package v12_test
 
 import (
 	"testing"
@@ -26,5 +26,5 @@ func TestKeeperTestSuite(t *testing.T) {
 
 func (suite *UpgradeTestSuite) TestUpgrade() {
 	suite.Setup()
-	suite.ConfirmUpgradeSucceededs("v10", dummyUpgradeHeight)
+	suite.ConfirmUpgradeSucceededs("v12", dummyUpgradeHeight)
 }

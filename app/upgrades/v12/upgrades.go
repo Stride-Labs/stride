@@ -1,4 +1,4 @@
-package v10
+package v12
 
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -6,7 +6,7 @@ import (
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 )
 
-// CreateUpgradeHandler creates an SDK upgrade handler for v10
+// CreateUpgradeHandler creates an SDK upgrade handler for v12
 func CreateUpgradeHandler(
 	mm *module.Manager,
 	configurator module.Configurator,

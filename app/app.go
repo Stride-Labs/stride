@@ -641,6 +641,7 @@ func NewStrideApp(
 	// - transfer
 	// - base app
 	var transferStack porttypes.IBCModule = transferIBCModule
+	// NewIBCModule creates a new IBCModule given the keeper
 	transferStack = router.NewIBCMiddleware(
 		transferStack,
 		app.RouterKeeper,

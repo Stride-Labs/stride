@@ -9,7 +9,7 @@ import (
 	authz "github.com/cosmos/cosmos-sdk/x/authz"
 	routertypes "github.com/strangelove-ventures/packet-forward-middleware/v7/router/types"
 
-	v10 "github.com/Stride-Labs/stride/v9/app/upgrades/v10"
+	v12 "github.com/Stride-Labs/stride/v9/app/upgrades/v12"
 	v2 "github.com/Stride-Labs/stride/v9/app/upgrades/v2"
 	v3 "github.com/Stride-Labs/stride/v9/app/upgrades/v3"
 	v4 "github.com/Stride-Labs/stride/v9/app/upgrades/v4"
@@ -106,10 +106,10 @@ func (app *StrideApp) setupUpgradeHandlers() {
 		v9.CreateUpgradeHandler(app.mm, app.configurator, app.ClaimKeeper),
 	)
 
-	// v10 upgrade handler
+	// v12 upgrade handler
 	app.UpgradeKeeper.SetUpgradeHandler(
-		v10.UpgradeName,
-		v10.CreateUpgradeHandler(app.mm, app.configurator),
+		v12.UpgradeName,
+		v12.CreateUpgradeHandler(app.mm, app.configurator),
 	)
 
 	upgradeInfo, err := app.UpgradeKeeper.ReadUpgradeInfoFromDisk()
@@ -136,7 +136,7 @@ func (app *StrideApp) setupUpgradeHandlers() {
 		storeUpgrades = &storetypes.StoreUpgrades{
 			Added: []string{ratelimittypes.StoreKey, autopilottypes.StoreKey},
 		}
-	case "v10":
+	case "v12":
 		storeUpgrades = &storetypes.StoreUpgrades{
 			Added: []string{routertypes.StoreKey},
 		}
