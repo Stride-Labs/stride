@@ -306,6 +306,7 @@ func (k Keeper) DetokenizeAllLSMDeposits(ctx sdk.Context) {
 		delegationICAPortID, err := icatypes.NewControllerPortID(delegationICAOwner)
 		if err != nil {
 			k.Logger(ctx).Error(fmt.Sprintf("Unable to get delegation port ID for %s: %s", hostZone.ChainId, err))
+			continue
 		}
 
 		// If the delegation channel is not open, skip this host zone
