@@ -291,7 +291,7 @@ func (k Keeper) SetModuleAccountIbcBalance(ctx sdk.Context, hostZone types.HostZ
 }
 
 func (k Keeper) GetModuleAccountIbcBalance(ctx sdk.Context, hostZone types.HostZone) (balance sdk.Coin, err error) {
-	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefix(types.StSupplyKey))
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefix(types.ModuleAccountBalanceKey))
 	b := store.Get([]byte(hostZone.ChainId))
 	if b == nil {
 		return sdk.Coin{}, errorsmod.Wrapf(sdkerrors.ErrUnknownRequest, "No stSupply for HostZone %s found", hostZone.ChainId)
