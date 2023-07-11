@@ -23,8 +23,14 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
+	"github.com/cosmos/cosmos-sdk/client"
+	"github.com/cosmos/cosmos-sdk/types/tx/signing"
+	authsigning "github.com/cosmos/cosmos-sdk/x/auth/signing"
+
 	"github.com/Stride-Labs/stride/v11/app"
 	"github.com/Stride-Labs/stride/v11/utils"
+	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
+	clienttx "github.com/cosmos/cosmos-sdk/client/tx"
 )
 
 var (
@@ -73,6 +79,49 @@ func (s *AppTestHelper) Setup() {
 	s.TestAccs = CreateRandomAccounts(3)
 	s.IbcEnabled = false
 	s.IcaAddresses = make(map[string]string)
+}
+
+// BuildTx builds a transaction.
+func (s *AppTestHelper) BuildTx(
+	txBuilder client.TxBuilder,
+	msgs []sdk.Msg,
+	memo string, txFee sdk.Coins,
+	gasLimit uint64, 
+	priv cryptotypes.PrivKey,
+	txConfig client.TxConfig,
+) authsigning.Tx {
+	txBuilder.SetFeeAmount(sdk.NewCoins(sdk.NewCoin("ustrd", sdk.NewInt(10000))))
+	txBuilder.SetGasLimit(500000)
+	err := txBuilder.SetMsgs(msgs...)
+	s.Require().NoError(err)
+
+	// First round: we gather all the signer infos. We use the "set empty
+	// signature" hack to do that.
+	sigV2 := signing.SignatureV2{
+		PubKey: priv.PubKey(),
+		Data: &signing.SingleSignatureData{
+			SignMode:  txConfig.SignModeHandler().DefaultMode(),
+			Signature: nil,
+		},
+		Sequence: 0,
+	}
+
+	err = txBuilder.SetSignatures(sigV2)
+	s.Require().NoError(err)
+
+	// Second round: all signer infos are set, so each signer can sign.
+	signerData := authsigning.SignerData{
+		ChainID:       "STRIDE",
+		AccountNumber: 0,
+		Sequence:      0,
+	}
+	sigV2, err = clienttx.SignWithPrivKey(
+		txConfig.SignModeHandler().DefaultMode(), signerData,
+		txBuilder, priv, txConfig, 0)
+	s.Require().NoError(err)
+	err = txBuilder.SetSignatures(sigV2)
+
+	return txBuilder.GetTx()
 }
 
 // Instantiates an TestHelper without the test suite
