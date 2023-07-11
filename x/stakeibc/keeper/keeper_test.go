@@ -9,6 +9,8 @@ import (
 	"github.com/Stride-Labs/stride/v11/app/apptesting"
 	"github.com/Stride-Labs/stride/v11/x/stakeibc/keeper"
 	"github.com/Stride-Labs/stride/v11/x/stakeibc/types"
+	"github.com/cosmos/cosmos-sdk/client"
+	"github.com/Stride-Labs/stride/v11/app"
 )
 
 const (
@@ -28,11 +30,18 @@ const (
 
 type KeeperTestSuite struct {
 	apptesting.AppTestHelper
+
+	clientCtx   client.Context
 }
 
 func (s *KeeperTestSuite) SetupTest() {
 	s.Setup()
-}
+	encodingConfig := app.MakeEncodingConfig()
+	s.clientCtx = client.Context{}.
+		WithInterfaceRegistry(encodingConfig.InterfaceRegistry).
+		WithTxConfig(encodingConfig.TxConfig).
+		WithLegacyAmino(encodingConfig.Amino)
+	}
 
 // Dynamically gets the MsgServer for this module's keeper
 // this function must be used so that the MsgServer is always created with the most updated App context
