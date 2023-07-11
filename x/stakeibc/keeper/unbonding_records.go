@@ -38,6 +38,14 @@ type ValidatorUnbondCapacity struct {
 // The smaller number means their current delegation is much larger
 // then their fair portion of the current total stake
 func (c *ValidatorUnbondCapacity) GetBalanceRatio() sdk.Dec {
+	// ValidatorUnbondCapaciy structs only exist for validators with positive capacity
+	//   capacity is CurrentDelegation - BalancedDelegation
+	//   positive capacity means CurrentDelegation must be >0
+	// Therefore this code should only be reachable when CurrentDelegation is >0
+	// Throw an explicit panic if this unexpected event ever happens
+	if c.CurrentDelegation.IsZero() {
+		panic(fmt.Sprintf("Error: CurrentDelegation can never be 0 inside GetBalanceRatio(), %v", c))
+	}
 	return sdk.NewDecFromInt(c.BalancedDelegation).Quo(sdk.NewDecFromInt(c.CurrentDelegation))
 }
 

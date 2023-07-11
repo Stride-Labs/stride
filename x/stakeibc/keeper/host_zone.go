@@ -267,6 +267,7 @@ func (k Keeper) AddValidatorToHostZone(ctx sdk.Context, chainId string, validato
 
 // Removes a validator from a host zone
 // The validator must be zero-weight and have no delegations in order to be removed
+// There must also be no LSMTokenDeposits in progress since this would update the delegation on completion
 func (k Keeper) RemoveValidatorFromHostZone(ctx sdk.Context, chainId string, validatorAddress string) error {
 	hostZone, found := k.GetHostZone(ctx, chainId)
 	if !found {
@@ -274,6 +275,17 @@ func (k Keeper) RemoveValidatorFromHostZone(ctx sdk.Context, chainId string, val
 		k.Logger(ctx).Error(errMsg)
 		return errorsmod.Wrapf(types.ErrHostZoneNotFound, errMsg)
 	}
+
+	// Check for LSMTokenDeposit records with this specific validator address
+	lsmTokenDeposits := k.RecordsKeeper.GetAllLSMTokenDeposit(ctx)
+	for _, lsmTokenDeposit := range lsmTokenDeposits {
+		if lsmTokenDeposit.ValidatorAddress == validatorAddress {
+			errMsg := fmt.Sprintf("Validator (%s) still has an LSMTokenDeposit (%v)", validatorAddress, lsmTokenDeposit)
+			k.Logger(ctx).Error(errMsg)
+			return errors.New(errMsg)
+		}
+	}
+
 	for i, val := range hostZone.Validators {
 		if val.GetAddress() == validatorAddress {
 			if val.Delegation.IsZero() && val.Weight == 0 {

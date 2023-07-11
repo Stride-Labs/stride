@@ -212,6 +212,12 @@ func (k Keeper) SlashValidatorOnHostZone(ctx sdk.Context, hostZone types.HostZon
 	chainId := hostZone.ChainId
 	validator := hostZone.Validators[valIndex]
 
+	// In theory, it should be hard to reach a call to this function if validator.Delegation is ever 0
+	// Throw an explicit panic if this unexpected event ever happens to avoid a division by zero error
+	if validator.Delegation.IsZero() {
+		panic(fmt.Sprintf("Error: Delegation on this validator can never be 0 inside SlashValidatorOnHostZone(), %v", validator))
+	}
+
 	// Get slash percentage
 	slashAmount := validator.Delegation.Sub(delegatedTokens)
 	slashPct := sdk.NewDecFromInt(slashAmount).Quo(sdk.NewDecFromInt(validator.Delegation))
