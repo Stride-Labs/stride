@@ -55,6 +55,7 @@ func CreateUpgradeHandler(
 		consumerGenesis.PreCCV = true
 		// Temp fix
 		consumerGenesis.Params.SoftOptOutThreshold = "0.05"
+		consumerGenesis.Params.RewardDenoms = []string{"ustrd"}
 		consumerKeeper.InitGenesis(ctx, &consumerGenesis)
 		consumerKeeper.SetDistributionTransmissionChannel(ctx, "channel-0")
 

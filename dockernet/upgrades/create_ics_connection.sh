@@ -4,7 +4,7 @@ set -eu
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 source ${SCRIPT_DIR}/../config.sh
 
-WAIT_FOR_STRING $STRIDE_LOGS "height=220 module=txindex"
+WAIT_FOR_STRING $STRIDE_LOGS "height=205 module=txindex"
 
 # Create new connections and channels for sharing voting power between two chains
 relayer_logs=${LOGS}/relayer-gaia-ics.log
@@ -35,3 +35,9 @@ echo "Done."
 
 $DOCKER_COMPOSE up -d relayer-gaia-ics
 $DOCKER_COMPOSE logs -f relayer-gaia-ics | sed -r -u "s/\x1B\[([0-9]{1,3}(;[0-9]{1,2})?)?[mGK]//g" >> $relayer_logs 2>&1 &
+
+printf "STRIDE <> GAIA - Registering reward denom to provider..."
+val_addr=$($STRIDE_MAIN_CMD keys show ${STRIDE_VAL_PREFIX}1 --keyring-backend test -a | tr -cd '[:alnum:]._-')
+$STRIDE_MAIN_CMD tx ibc-transfer transfer transfer channel-0 $val_addr 10000ustrd --from ${STRIDE_VAL_PREFIX}1 -y
+WAIT_FOR_BLOCK $STRIDE_LOGS 5
+$GAIA_MAIN_CMD tx provider register-consumer-reward-denom ibc/FF6C2E86490C1C4FBBD24F55032831D2415B9D7882F85C3CC9C2401D79362BEA --from ${GAIA_VAL_PREFIX}1 -y

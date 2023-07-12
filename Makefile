@@ -145,6 +145,10 @@ finish-upgrade-integration-tests:
 
 upgrade-integration-tests-part-1: start-docker-all start-upgrade-integration-tests submit-upgrade-after-tests
 
+setup-ics:
+	bash $(DOCKERNET_HOME)/upgrades/add_consumer.sh
+	bash $(DOCKERNET_HOME)/upgrades/create_ics_connection.sh
+
 ###############################################################################
 ###                           Local to Mainnet                              ###
 ###############################################################################
