@@ -1,0 +1,24 @@
+syntax = "proto3";
+package stride.liquidgov;
+
+import "cosmos/gov/v1beta1/gov.proto";
+import "gogoproto/gogo.proto";
+import "cosmos_proto/cosmos.proto";
+
+option go_package = "github.com/Stride-Labs/stride/v10/x/liquidgov/types";
+
+// Deposit defines the record of what staked coins the user will use for voting.
+message Deposit {
+    // Address of who owns the deposited coins
+    string creator = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+
+	// amount is the amount of locked assets.
+	string amount = 2 [
+        (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+        (gogoproto.nullable) = false
+    ];
+
+	// originally was denom for the denom of locked assets.
+    // but better consistency to look up by the hostzone of that denom 
+    string host_zone_id = 3;
+}

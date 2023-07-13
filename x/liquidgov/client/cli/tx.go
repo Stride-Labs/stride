@@ -21,6 +21,9 @@ func GetTxCmd() *cobra.Command {
 	}
 
 	cmd.AddCommand(CmdUpdateProposal())
+	cmd.AddCommand(CmdDepositVotingStake())
+	cmd.AddCommand(CmdWithdrawVotingStake())
+	cmd.AddCommand(CmdLiquidVote())	
 
 	return cmd 
 }

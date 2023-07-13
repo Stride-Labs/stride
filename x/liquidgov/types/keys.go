@@ -22,8 +22,10 @@ const (
 )
 
 var (
-	ProposalsKeyPrefix = []byte{0x00}
-	ProposalIDPrefix   = []byte{0x01}
+	ProposalsKeyPrefix = KeyPrefix("Proposals/")
+	ProposalIDPrefix   = KeyPrefix("ProposalID/")
+	DepositsKeyPrefix = KeyPrefix("Deposits/")
+	VotesKeyPrefix = KeyPrefix("Votes/")		
 )
 
 
@@ -32,24 +34,45 @@ func KeyPrefix(p string) []byte {
 }
 
 // ProposalKey returns the store key to retrieve a proposal from the proposalID and chain_id fields
-func ProposalKey(proposalID uint64, chain_id string) []byte {
+func ProposalKey(proposal_id uint64, chain_id string) []byte {
 	var key []byte
 
-	epochIdentifierBytes := []byte(chain_id)
 	key = append(key, ProposalsKeyPrefix...)
-	key = append(key, epochIdentifierBytes...)
-	key = append(key, govtypes.GetProposalIDBytes(proposalID)...)
+	key = append(key, KeyPrefix(chain_id)...)
+	key = append(key, govtypes.GetProposalIDBytes(proposal_id)...)
 
 	return key
 }
 
-// ProposalKey returns the store key to retrieve a proposal from the proposalID and chain_id fields
+// ProposalIDKey returns the store key to retrieve the current proposalID
 func ProposalIDKey(chain_id string) []byte {
 	var key []byte
 
-	epochIdentifierBytes := []byte(chain_id)
 	key = append(key, ProposalIDPrefix...)
-	key = append(key, epochIdentifierBytes...)
+	key = append(key, KeyPrefix(chain_id)...)
+
+	return key
+}
+
+// DepositKey returns the store key to retrieve a deposit amount from the creator address and denom fields
+func DepositKey(creator string, denom string) []byte {
+	var key []byte
+
+	key = append(key, DepositsKeyPrefix...)
+	key = append(key, KeyPrefix(denom)...)
+	key = append(key, KeyPrefix(creator)...)
+
+	return key
+}
+
+// VoteKey returns the store key to retrieve a specific vote from the creator given chain and proposal_id fields
+func VoteKey(creator string, chain_id string, proposal_id uint64) []byte {
+	var key []byte
+
+	key = append(key, VotesKeyPrefix...)
+	key = append(key, KeyPrefix(creator)...)
+	key = append(key, KeyPrefix(chain_id)...)
+	key = append(key, govtypes.GetProposalIDBytes(proposal_id)...)
 
 	return key
 }
