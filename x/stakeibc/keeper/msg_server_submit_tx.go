@@ -167,6 +167,14 @@ func (k Keeper) UpdateWithdrawalBalance(ctx sdk.Context, hostZone types.HostZone
 	}
 	queryData := append(bankTypes.CreateAccountBalancesPrefix(withdrawalAddressBz), []byte(hostZone.HostDenom)...)
 
+	// Timeout query at end of epoch
+	strideEpochTracker, found := k.GetEpochTracker(ctx, epochstypes.STRIDE_EPOCH)
+	if !found {
+		return errorsmod.Wrapf(types.ErrEpochNotFound, epochstypes.STRIDE_EPOCH)
+	}
+	timeout := time.Unix(0, int64(strideEpochTracker.NextEpochStartTime))
+	timeoutDuration := timeout.Sub(ctx.BlockTime())
+
 	// Submit the ICQ for the withdrawal account balance
 	query := icqtypes.Query{
 		ChainId:         hostZone.ChainId,
@@ -175,8 +183,8 @@ func (k Keeper) UpdateWithdrawalBalance(ctx sdk.Context, hostZone types.HostZone
 		RequestData:     queryData,
 		CallbackModule:  types.ModuleName,
 		CallbackId:      ICQCallbackID_WithdrawalBalance,
-		TimeoutDuration: time.Hour,
-		TimeoutPolicy:   icqtypes.TimeoutPolicy_RETRY_QUERY_REQUEST,
+		TimeoutDuration: timeoutDuration,
+		TimeoutPolicy:   icqtypes.TimeoutPolicy_REJECT_QUERY_RESPONSE,
 	}
 	if err := k.InterchainQueryKeeper.SubmitICQRequest(ctx, query, false); err != nil {
 		k.Logger(ctx).Error(fmt.Sprintf("Error querying for withdrawal balance, error: %s", err.Error()))
@@ -360,8 +368,8 @@ func (k Keeper) GetLightClientTimeSafely(ctx sdk.Context, connectionID string) (
 
 // Submit a validator exchange rate ICQ as triggered either manually or epochly with a conservative timeout
 func (k Keeper) QueryValidatorExchangeRate(ctx sdk.Context, chainId string, validatorAddress string) error {
-	timeoutDuration := time.Hour
-	timeoutPolicy := icqtypes.TimeoutPolicy_RETRY_QUERY_REQUEST
+	timeoutDuration := time.Hour * 24
+	timeoutPolicy := icqtypes.TimeoutPolicy_REJECT_QUERY_RESPONSE
 	callbackData := []byte{}
 	return k.SubmitValidatorExchangeRateICQ(ctx, chainId, validatorAddress, callbackData, timeoutDuration, timeoutPolicy)
 }
