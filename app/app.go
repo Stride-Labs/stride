@@ -435,6 +435,11 @@ func NewStrideApp(
 
 	// ... other modules keepers
 
+	app.ConsumerKeeper = ccvconsumerkeeper.NewNonZeroKeeper(
+		appCodec,
+		keys[ccvconsumertypes.StoreKey],
+		app.GetSubspace(ccvconsumertypes.ModuleName),
+	)
 	// Create IBC Keeper
 	app.IBCKeeper = ibckeeper.NewKeeper(
 		appCodec,
@@ -562,7 +567,7 @@ func NewStrideApp(
 		*app.IBCKeeper,
 		app.InterchainqueryKeeper,
 		app.RecordsKeeper,
-		&app.StakingKeeper,
+		app.StakingKeeper,
 		app.IcacallbacksKeeper,
 		app.RatelimitKeeper,
 	)
@@ -1118,23 +1123,3 @@ func (app *StrideApp) SimulationManager() *module.SimulationManager {
 func (app *StrideApp) GetConsumerKeeper() ccvconsumerkeeper.Keeper {
 	return app.ConsumerKeeper
 }
-
-// // GetE2eBankKeeper implements the ConsumerApp interface.
-// func (app *StrideApp) GetE2eBankKeeper() e2e.E2eBankKeeper {
-// 	return app.BankKeeper
-// }
-
-// // GetE2eAccountKeeper implements the ConsumerApp interface.
-// func (app *StrideApp) GetE2eAccountKeeper() e2e.E2eAccountKeeper {
-// 	return app.AccountKeeper
-// }
-
-// // GetE2eSlashingKeeper implements the ConsumerApp interface.
-// func (app *StrideApp) GetE2eSlashingKeeper() e2e.E2eSlashingKeeper {
-// 	return app.SlashingKeeper
-// }
-
-// // GetE2eEvidenceKeeper implements the ConsumerApp interface.
-// func (app *StrideApp) GetE2eEvidenceKeeper() e2e.E2eEvidenceKeeper {
-// 	return app.EvidenceKeeper
-// }

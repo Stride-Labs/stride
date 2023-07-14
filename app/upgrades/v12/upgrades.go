@@ -43,7 +43,7 @@ func CreateUpgradeHandler(
 		// }
 
 		nodeHome := cast.ToString(appOpts.Get(flags.FlagHome))
-		consumerUpgradeGenFile := nodeHome + "/config/consumer-genesis.json"
+		consumerUpgradeGenFile := nodeHome + "/config/ccv.json"
 		appState, _, err := genutiltypes.GenesisStateFromGenFile(consumerUpgradeGenFile)
 		if err != nil {
 			return fromVM, fmt.Errorf("failed to unmarshal genesis state: %w", err)
@@ -53,16 +53,11 @@ func CreateUpgradeHandler(
 		cdc.MustUnmarshalJSON(appState[consumertypes.ModuleName], &consumerGenesis)
 
 		consumerGenesis.PreCCV = true
-		// Temp fix
 		consumerGenesis.Params.SoftOptOutThreshold = "0.05"
 		consumerGenesis.Params.RewardDenoms = []string{"ustrd"}
 		consumerKeeper.InitGenesis(ctx, &consumerGenesis)
 		consumerKeeper.SetDistributionTransmissionChannel(ctx, "channel-0")
 
-		ctx.Logger().Info("start to run module migrations...")
-
-		// TODO: temporary fix
 		return fromVM, nil
-		// return app.MM.RunMigrations(ctx, app.configurator, fromVM)
 	}
 }

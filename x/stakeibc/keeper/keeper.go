@@ -40,7 +40,7 @@ type (
 		bankKeeper            bankkeeper.Keeper
 		InterchainQueryKeeper icqkeeper.Keeper
 		RecordsKeeper         recordsmodulekeeper.Keeper
-		StakingKeeper         *stakingkeeper.Keeper
+		StakingKeeper         stakingkeeper.Keeper
 		ICACallbacksKeeper    icacallbackskeeper.Keeper
 		hooks                 types.StakeIBCHooks
 		AccountKeeper         types.AccountKeeper
@@ -59,7 +59,7 @@ func NewKeeper(
 	ibcKeeper ibckeeper.Keeper,
 	interchainQueryKeeper icqkeeper.Keeper,
 	RecordsKeeper recordsmodulekeeper.Keeper,
-	StakingKeeper *stakingkeeper.Keeper,
+	StakingKeeper stakingkeeper.Keeper,
 	ICACallbacksKeeper icacallbackskeeper.Keeper,
 	RatelimitKeeper types.RatelimitKeeper,
 ) Keeper {

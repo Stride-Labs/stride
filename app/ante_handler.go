@@ -7,6 +7,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/auth/ante"
 	ibcante "github.com/cosmos/ibc-go/v7/modules/core/ante"
 	ibckeeper "github.com/cosmos/ibc-go/v7/modules/core/keeper"
+	democracyante "github.com/cosmos/interchain-security/v3/app/consumer-democracy/ante"
 	consumerante "github.com/cosmos/interchain-security/v3/app/consumer/ante"
 	ccvconsumerkeeper "github.com/cosmos/interchain-security/v3/x/ccv/consumer/keeper"
 )
@@ -40,9 +41,9 @@ func NewAnteHandler(options HandlerOptions) (sdk.AnteHandler, error) {
 		ante.NewSetUpContextDecorator(),
 		ante.NewExtensionOptionsDecorator(options.ExtensionOptionChecker),
 		// temporarily disabled so that chain can be tested locally without the provider chain running
-		//consumerante.NewMsgFilterDecorator(options.ConsumerKeeper),
+		consumerante.NewMsgFilterDecorator(options.ConsumerKeeper),
 		consumerante.NewDisabledModulesDecorator("/cosmos.evidence", "/cosmos.slashing"),
-		// democracyante.NewForbiddenProposalsDecorator(IsProposalWhitelisted),
+		democracyante.NewForbiddenProposalsDecorator(IsProposalWhitelisted, IsModuleWhiteList),
 		// ante.NewMempoolFeeDecorator(),
 		ante.NewValidateBasicDecorator(),
 		ante.NewTxTimeoutHeightDecorator(),

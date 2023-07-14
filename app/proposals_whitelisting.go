@@ -3,6 +3,8 @@ package app
 import (
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	distrtypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
+	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
+	govv1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
 	govv1beta1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
 	"github.com/cosmos/cosmos-sdk/x/params/types/proposal"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
@@ -17,6 +19,19 @@ import (
 	minttypes "github.com/Stride-Labs/stride/v12/x/mint/types"
 	stakeibctypes "github.com/Stride-Labs/stride/v12/x/stakeibc/types"
 )
+
+var WhiteListModule = map[string]struct{}{
+	"/cosmos.gov.v1.MsgUpdateParams":               {},
+	"/cosmos.bank.v1beta1.MsgUpdateParams":         {},
+	"/cosmos.staking.v1beta1.MsgUpdateParams":      {},
+	"/cosmos.distribution.v1beta1.MsgUpdateParams": {},
+	"/cosmos.mint.v1beta1.MsgUpdateParams":         {},
+}
+
+func IsModuleWhiteList(typeUrl string) bool {
+	_, found := WhiteListModule[typeUrl]
+	return found
+}
 
 func IsProposalWhitelisted(content govv1beta1.Content) bool {
 	switch c := content.(type) {
@@ -60,9 +75,9 @@ var WhitelistedParams = map[ccvgov.ParamChangeKey]struct{}{
 	//bank
 	{MsgType: banktypes.ModuleName, Key: string(banktypes.KeySendEnabled)}: {},
 	//governance
-	// {MsgType: govtypes.ModuleName, Key: string(govtypes.ParamStoreKeyDepositParams)}: {}, //min_deposit, max_deposit_period
-	// {MsgType: govtypes.ModuleName, Key: string(govtypes.ParamStoreKeyVotingParams)}:  {}, //voting_period
-	// {MsgType: govtypes.ModuleName, Key: string(govtypes.ParamStoreKeyTallyParams)}:   {}, //quorum,threshold,veto_threshold
+	{MsgType: govtypes.ModuleName, Key: string(govv1.ParamStoreKeyDepositParams)}: {}, //min_deposit, max_deposit_period
+	{MsgType: govtypes.ModuleName, Key: string(govv1.ParamStoreKeyVotingParams)}:  {}, //voting_period
+	{MsgType: govtypes.ModuleName, Key: string(govv1.ParamStoreKeyTallyParams)}:   {}, //quorum,threshold,veto_threshold
 	//staking
 	{MsgType: stakingtypes.ModuleName, Key: string(stakingtypes.KeyUnbondingTime)}:     {},
 	{MsgType: stakingtypes.ModuleName, Key: string(stakingtypes.KeyMaxValidators)}:     {},
@@ -70,9 +85,7 @@ var WhitelistedParams = map[ccvgov.ParamChangeKey]struct{}{
 	{MsgType: stakingtypes.ModuleName, Key: string(stakingtypes.KeyHistoricalEntries)}: {},
 	{MsgType: stakingtypes.ModuleName, Key: string(stakingtypes.KeyBondDenom)}:         {},
 	//distribution
-	{MsgType: distrtypes.ModuleName, Key: string(distrtypes.ParamStoreKeyCommunityTax)}: {},
-	// {MsgType: distrtypes.ModuleName, Key: string(distrtypes.ParamStoreKeyBaseProposerReward)}:  {},
-	// {MsgType: distrtypes.ModuleName, Key: string(distrtypes.ParamStoreKeyBonusProposerReward)}: {},
+	{MsgType: distrtypes.ModuleName, Key: string(distrtypes.ParamStoreKeyCommunityTax)}:        {},
 	{MsgType: distrtypes.ModuleName, Key: string(distrtypes.ParamStoreKeyWithdrawAddrEnabled)}: {},
 	//mint
 	{MsgType: minttypes.ModuleName, Key: string(minttypes.KeyMintDenom)}:                            {},
@@ -86,22 +99,21 @@ var WhitelistedParams = map[ccvgov.ParamChangeKey]struct{}{
 	{MsgType: ibctransfertypes.ModuleName, Key: string(ibctransfertypes.KeySendEnabled)}:    {},
 	{MsgType: ibctransfertypes.ModuleName, Key: string(ibctransfertypes.KeyReceiveEnabled)}: {},
 	//ibc staking
-	{MsgType: stakeibctypes.ModuleName, Key: string(stakeibctypes.KeyDepositInterval)}:        {},
-	{MsgType: stakeibctypes.ModuleName, Key: string(stakeibctypes.KeyDelegateInterval)}:       {},
-	{MsgType: stakeibctypes.ModuleName, Key: string(stakeibctypes.KeyRewardsInterval)}:        {},
-	{MsgType: stakeibctypes.ModuleName, Key: string(stakeibctypes.KeyRedemptionRateInterval)}: {},
-	{MsgType: stakeibctypes.ModuleName, Key: string(stakeibctypes.KeyStrideCommission)}:       {},
-	{MsgType: stakeibctypes.ModuleName, Key: string(stakeibctypes.KeyReinvestInterval)}:       {},
-	// {MsgType: stakeibctypes.ModuleName, Key: string(stakeibctypes.KeyValidatorRebalancingThreshold)}:    {},
-	{MsgType: stakeibctypes.ModuleName, Key: string(stakeibctypes.KeyICATimeoutNanos)}:          {},
-	{MsgType: stakeibctypes.ModuleName, Key: string(stakeibctypes.KeyBufferSize)}:               {},
-	{MsgType: stakeibctypes.ModuleName, Key: string(stakeibctypes.KeyIbcTimeoutBlocks)}:         {},
-	{MsgType: stakeibctypes.ModuleName, Key: string(stakeibctypes.KeyFeeTransferTimeoutNanos)}:  {},
-	{MsgType: stakeibctypes.ModuleName, Key: string(stakeibctypes.KeyMaxStakeICACallsPerEpoch)}: {},
-	// {MsgType: stakeibctypes.ModuleName, Key: string(stakeibctypes.KeySafetyMinRedemptionRateThreshold)}: {},
-	// {MsgType: stakeibctypes.ModuleName, Key: string(stakeibctypes.KeySafetyMaxRedemptionRateThreshold)}: {},
-	{MsgType: stakeibctypes.ModuleName, Key: string(stakeibctypes.KeyIBCTransferTimeoutNanos)}: {},
-	{MsgType: stakeibctypes.ModuleName, Key: string(stakeibctypes.KeySafetyNumValidators)}:     {},
+	{MsgType: stakeibctypes.ModuleName, Key: string(stakeibctypes.KeyDepositInterval)}:                   {},
+	{MsgType: stakeibctypes.ModuleName, Key: string(stakeibctypes.KeyDelegateInterval)}:                  {},
+	{MsgType: stakeibctypes.ModuleName, Key: string(stakeibctypes.KeyRewardsInterval)}:                   {},
+	{MsgType: stakeibctypes.ModuleName, Key: string(stakeibctypes.KeyRedemptionRateInterval)}:            {},
+	{MsgType: stakeibctypes.ModuleName, Key: string(stakeibctypes.KeyStrideCommission)}:                  {},
+	{MsgType: stakeibctypes.ModuleName, Key: string(stakeibctypes.KeyReinvestInterval)}:                  {},
+	{MsgType: stakeibctypes.ModuleName, Key: string(stakeibctypes.KeyICATimeoutNanos)}:                   {},
+	{MsgType: stakeibctypes.ModuleName, Key: string(stakeibctypes.KeyBufferSize)}:                        {},
+	{MsgType: stakeibctypes.ModuleName, Key: string(stakeibctypes.KeyIbcTimeoutBlocks)}:                  {},
+	{MsgType: stakeibctypes.ModuleName, Key: string(stakeibctypes.KeyFeeTransferTimeoutNanos)}:           {},
+	{MsgType: stakeibctypes.ModuleName, Key: string(stakeibctypes.KeyMaxStakeICACallsPerEpoch)}:          {},
+	{MsgType: stakeibctypes.ModuleName, Key: string(stakeibctypes.KeyDefaultMinRedemptionRateThreshold)}: {},
+	{MsgType: stakeibctypes.ModuleName, Key: string(stakeibctypes.KeyDefaultMaxRedemptionRateThreshold)}: {},
+	{MsgType: stakeibctypes.ModuleName, Key: string(stakeibctypes.KeyIBCTransferTimeoutNanos)}:           {},
+	{MsgType: stakeibctypes.ModuleName, Key: string(stakeibctypes.KeySafetyNumValidators)}:               {},
 	//ica
 	{MsgType: icahosttypes.SubModuleName, Key: string(icahosttypes.KeyHostEnabled)}:   {},
 	{MsgType: icahosttypes.SubModuleName, Key: string(icahosttypes.KeyAllowMessages)}: {},
