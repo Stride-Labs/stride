@@ -26,6 +26,8 @@ var WhiteListModule = map[string]struct{}{
 	"/cosmos.staking.v1beta1.MsgUpdateParams":      {},
 	"/cosmos.distribution.v1beta1.MsgUpdateParams": {},
 	"/cosmos.mint.v1beta1.MsgUpdateParams":         {},
+	"/cosmos.upgrade.v1beta1.MsgSoftwareUpgrade":   {},
+	"/cosmos.upgrade.v1beta1.MsgCancelUpgrade":     {},
 }
 
 func IsModuleWhiteList(typeUrl string) bool {
