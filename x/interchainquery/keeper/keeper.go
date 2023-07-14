@@ -78,6 +78,10 @@ func (k *Keeper) RetryICQRequest(ctx sdk.Context, query types.Query) error {
 	k.Logger(ctx).Info(utils.LogWithHostZone(query.ChainId,
 		"Queuing ICQ Retry - Query Type: %s, Query ID: %s", query.CallbackId, query.Id))
 
+	// Delete old query
+	k.DeleteQuery(ctx, query.Id)
+
+	// Submit a new query (with a new ID)
 	if err := k.SubmitICQRequest(ctx, query, true); err != nil {
 		return errorsmod.Wrapf(err, types.ErrFailedToRetryQuery.Error())
 	}
