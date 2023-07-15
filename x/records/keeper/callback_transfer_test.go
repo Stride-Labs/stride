@@ -65,7 +65,7 @@ func (s *KeeperTestSuite) TestTransferCallback_Successful() {
 	initialState := tc.initialState
 	validArgs := tc.validArgs
 
-	err := s.App.RecordsKeeper.TransferCallback(s.Ctx, validArgs.packet, validArgs.ackResponse, validArgs.args)
+	err := recordskeeper.TransferCallback(s.App.RecordsKeeper, s.Ctx, validArgs.packet, validArgs.ackResponse, validArgs.args)
 	s.Require().NoError(err)
 
 	// Confirm deposit record has been updated to DELEGATION_QUEUE
@@ -87,7 +87,7 @@ func (s *KeeperTestSuite) TestTransferCallback_TransferCallbackTimeout() {
 	timeoutArgs := tc.validArgs
 	timeoutArgs.ackResponse.Status = icacallbacktypes.AckResponseStatus_TIMEOUT
 
-	err := s.App.RecordsKeeper.TransferCallback(s.Ctx, timeoutArgs.packet, timeoutArgs.ackResponse, timeoutArgs.args)
+	err := recordskeeper.TransferCallback(s.App.RecordsKeeper, s.Ctx, timeoutArgs.packet, timeoutArgs.ackResponse, timeoutArgs.args)
 	s.Require().NoError(err)
 	s.checkTransferStateIfCallbackFailed(tc)
 }
@@ -99,7 +99,7 @@ func (s *KeeperTestSuite) TestTransferCallback_TransferCallbackErrorOnHost() {
 	errorArgs := tc.validArgs
 	errorArgs.ackResponse.Status = icacallbacktypes.AckResponseStatus_TIMEOUT
 
-	err := s.App.RecordsKeeper.TransferCallback(s.Ctx, errorArgs.packet, errorArgs.ackResponse, errorArgs.args)
+	err := recordskeeper.TransferCallback(s.App.RecordsKeeper, s.Ctx, errorArgs.packet, errorArgs.ackResponse, errorArgs.args)
 	s.Require().NoError(err)
 
 	// Confirm deposit record status is reverted
@@ -116,7 +116,7 @@ func (s *KeeperTestSuite) TestTransferCallback_WrongCallbackArgs() {
 	// random args should cause the callback to fail
 	invalidCallbackArgs := []byte("random bytes")
 
-	err := s.App.RecordsKeeper.TransferCallback(s.Ctx, invalidArgs.packet, invalidArgs.ackResponse, invalidCallbackArgs)
+	err := recordskeeper.TransferCallback(s.App.RecordsKeeper, s.Ctx, invalidArgs.packet, invalidArgs.ackResponse, invalidCallbackArgs)
 	s.Require().EqualError(err, "cannot unmarshal transfer callback args: unexpected EOF: cannot unmarshal")
 	s.checkTransferStateIfCallbackFailed(tc)
 }
@@ -127,7 +127,7 @@ func (s *KeeperTestSuite) TestTransferCallback_DepositRecordNotFound() {
 	// Remove deposit record from store
 	s.App.RecordsKeeper.RemoveDepositRecord(s.Ctx, tc.initialState.callbackArgs.DepositRecordId)
 
-	err := s.App.RecordsKeeper.TransferCallback(s.Ctx, tc.validArgs.packet, tc.validArgs.ackResponse, tc.validArgs.args)
+	err := recordskeeper.TransferCallback(s.App.RecordsKeeper, s.Ctx, tc.validArgs.packet, tc.validArgs.ackResponse, tc.validArgs.args)
 	s.Require().EqualError(err, fmt.Sprintf("deposit record not found %d: unknown deposit record", tc.initialState.callbackArgs.DepositRecordId))
 }
 
@@ -138,6 +138,6 @@ func (s *KeeperTestSuite) TestTransferCallback_PacketUnmarshallingError() {
 	invalidArgs := tc.validArgs
 	invalidArgs.packet.Data = []byte("random bytes")
 
-	err := s.App.RecordsKeeper.TransferCallback(s.Ctx, invalidArgs.packet, invalidArgs.ackResponse, invalidArgs.args)
+	err := recordskeeper.TransferCallback(s.App.RecordsKeeper, s.Ctx, invalidArgs.packet, invalidArgs.ackResponse, invalidArgs.args)
 	s.Require().EqualError(err, "cannot unmarshal ICS-20 transfer packet data: invalid character 'r' looking for beginning of value: unknown request")
 }

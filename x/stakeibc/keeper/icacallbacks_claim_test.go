@@ -121,7 +121,7 @@ func (s *KeeperTestSuite) TestClaimCallback_Successful() {
 	initialState := tc.initialState
 	validArgs := tc.validArgs
 
-	err := s.App.StakeibcKeeper.ClaimCallback(s.Ctx, validArgs.packet, validArgs.ackResponse, validArgs.args)
+	err := stakeibckeeper.ClaimCallback(s.App.StakeibcKeeper, s.Ctx, validArgs.packet, validArgs.ackResponse, validArgs.args)
 	s.Require().NoError(err)
 
 	_, found := s.App.RecordsKeeper.GetUserRedemptionRecord(s.Ctx, initialState.callbackArgs.UserRedemptionRecordId)
@@ -164,7 +164,7 @@ func (s *KeeperTestSuite) TestClaimCallback_ClaimCallbackTimeout() {
 	invalidArgs := tc.validArgs
 	invalidArgs.ackResponse.Status = icacallbacktypes.AckResponseStatus_TIMEOUT
 
-	err := s.App.StakeibcKeeper.ClaimCallback(s.Ctx, invalidArgs.packet, invalidArgs.ackResponse, invalidArgs.args)
+	err := stakeibckeeper.ClaimCallback(s.App.StakeibcKeeper, s.Ctx, invalidArgs.packet, invalidArgs.ackResponse, invalidArgs.args)
 	s.Require().NoError(err, "timeout successfully proccessed")
 	s.checkClaimStateIfCallbackFailed(tc)
 }
@@ -176,7 +176,7 @@ func (s *KeeperTestSuite) TestClaimCallback_ClaimCallbackErrorOnHost() {
 	invalidArgs := tc.validArgs
 	invalidArgs.ackResponse.Status = icacallbacktypes.AckResponseStatus_FAILURE
 
-	err := s.App.StakeibcKeeper.ClaimCallback(s.Ctx, invalidArgs.packet, invalidArgs.ackResponse, invalidArgs.args)
+	err := stakeibckeeper.ClaimCallback(s.App.StakeibcKeeper, s.Ctx, invalidArgs.packet, invalidArgs.ackResponse, invalidArgs.args)
 	s.Require().NoError(err, "error ack successfully proccessed")
 	s.checkClaimStateIfCallbackFailed(tc)
 }
@@ -187,7 +187,7 @@ func (s *KeeperTestSuite) TestClaimCallback_WrongCallbackArgs() {
 	// random args should cause the callback to fail
 	invalidCallbackArgs := []byte("random bytes")
 
-	err := s.App.StakeibcKeeper.ClaimCallback(s.Ctx, tc.validArgs.packet, tc.validArgs.ackResponse, invalidCallbackArgs)
+	err := stakeibckeeper.ClaimCallback(s.App.StakeibcKeeper, s.Ctx, tc.validArgs.packet, tc.validArgs.ackResponse, invalidCallbackArgs)
 	s.Require().EqualError(err, "Unable to unmarshal claim callback args: unexpected EOF: unable to unmarshal data structure")
 }
 
@@ -197,7 +197,7 @@ func (s *KeeperTestSuite) TestClaimCallback_RecordNotFound() {
 	// Remove the user redemption record from the state
 	s.App.RecordsKeeper.RemoveUserRedemptionRecord(s.Ctx, tc.initialState.callbackArgs.UserRedemptionRecordId)
 
-	err := s.App.StakeibcKeeper.ClaimCallback(s.Ctx, tc.validArgs.packet, tc.validArgs.ackResponse, tc.validArgs.args)
+	err := stakeibckeeper.ClaimCallback(s.App.StakeibcKeeper, s.Ctx, tc.validArgs.packet, tc.validArgs.ackResponse, tc.validArgs.args)
 	s.Require().EqualError(err, fmt.Sprintf("user redemption record not found %s: record not found", tc.initialState.callbackArgs.UserRedemptionRecordId))
 }
 
