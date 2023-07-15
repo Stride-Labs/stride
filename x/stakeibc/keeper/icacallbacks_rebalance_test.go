@@ -6,6 +6,7 @@ import (
 	_ "github.com/stretchr/testify/suite"
 
 	icacallbacktypes "github.com/Stride-Labs/stride/v12/x/icacallbacks/types"
+	stakeibckeeper "github.com/Stride-Labs/stride/v12/x/stakeibc/keeper"
 	"github.com/Stride-Labs/stride/v12/x/stakeibc/types"
 	stakeibctypes "github.com/Stride-Labs/stride/v12/x/stakeibc/types"
 )

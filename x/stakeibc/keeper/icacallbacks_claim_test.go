@@ -9,6 +9,7 @@ import (
 
 	icacallbacktypes "github.com/Stride-Labs/stride/v12/x/icacallbacks/types"
 	recordtypes "github.com/Stride-Labs/stride/v12/x/records/types"
+	stakeibckeeper "github.com/Stride-Labs/stride/v12/x/stakeibc/keeper"
 	"github.com/Stride-Labs/stride/v12/x/stakeibc/types"
 )
 
