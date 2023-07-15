@@ -7,8 +7,8 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
-	"github.com/Stride-Labs/stride/v11/x/autopilot/keeper"
-	"github.com/Stride-Labs/stride/v11/x/autopilot/types"
+	"github.com/Stride-Labs/stride/v12/x/autopilot/keeper"
+	"github.com/Stride-Labs/stride/v12/x/autopilot/types"
 )
 
 // NewHandler returns autopilot module messages

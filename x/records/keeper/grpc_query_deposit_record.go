@@ -11,7 +11,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	"github.com/Stride-Labs/stride/v11/x/records/types"
+	"github.com/Stride-Labs/stride/v12/x/records/types"
 )
 
 func (k Keeper) DepositRecordAll(c context.Context, req *types.QueryAllDepositRecordRequest) (*types.QueryAllDepositRecordResponse, error) {
