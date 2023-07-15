@@ -1,7 +1,7 @@
 package client
 
 import (
-	"github.com/Stride-Labs/stride/v12/x/ratelimit/client/cli"
+	"github.com/Stride-Labs/stride/v11/x/ratelimit/client/cli"
 
 	govclient "github.com/cosmos/cosmos-sdk/x/gov/client"
 )

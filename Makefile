@@ -132,7 +132,7 @@ upgrade-build-old-binary:
 	@DOCKERNET_HOME=$(DOCKERNET_HOME) BUILDDIR=$(BUILDDIR) bash $(DOCKERNET_HOME)/upgrades/build_old_binary.sh
 
 submit-upgrade-immediately:
-	UPGRADE_HEIGHT=150 bash $(DOCKERNET_HOME)/upgrades/submit_upgrade.sh
+	UPGRADE_HEIGHT=100 bash $(DOCKERNET_HOME)/upgrades/submit_upgrade.sh
 
 submit-upgrade-after-tests:
 	UPGRADE_HEIGHT=400 bash $(DOCKERNET_HOME)/upgrades/submit_upgrade.sh
@@ -144,9 +144,6 @@ finish-upgrade-integration-tests:
 	PART=2 bash $(DOCKERNET_HOME)/tests/run_tests_upgrade.sh
 
 upgrade-integration-tests-part-1: start-docker-all start-upgrade-integration-tests submit-upgrade-after-tests
-
-setup-ics:
-	UPGRADE_HEIGHT=150 bash $(DOCKERNET_HOME)/upgrades/setup_ics.sh
 
 ###############################################################################
 ###                           Local to Mainnet                              ###

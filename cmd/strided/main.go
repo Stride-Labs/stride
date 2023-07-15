@@ -5,10 +5,9 @@ import (
 
 	svrcmd "github.com/cosmos/cosmos-sdk/server/cmd"
 
-	"github.com/Stride-Labs/stride/v12/app"
-	"github.com/Stride-Labs/stride/v12/cmd"
+	"github.com/Stride-Labs/stride/v11/app"
 
-	cmdcfg "github.com/Stride-Labs/stride/v12/cmd/strided/config"
+	cmdcfg "github.com/Stride-Labs/stride/v11/cmd/strided/config"
 )
 
 func main() {
@@ -16,8 +15,6 @@ func main() {
 	cmdcfg.RegisterDenoms()
 
 	rootCmd, _ := NewRootCmd()
-	rootCmd.AddCommand(cmd.AddConsumerSectionCmd(app.DefaultNodeHome))
-
 	if err := svrcmd.Execute(rootCmd, "", app.DefaultNodeHome); err != nil {
 		os.Exit(1)
 	}

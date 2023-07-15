@@ -25,18 +25,18 @@ import (
 	"github.com/cosmos/ibc-go/v7/modules/core/exported"
 	ibctmmigrations "github.com/cosmos/ibc-go/v7/modules/light-clients/07-tendermint/migrations"
 
-	claimkeeper "github.com/Stride-Labs/stride/v12/x/claim/keeper"
-	claimtypes "github.com/Stride-Labs/stride/v12/x/claim/types"
-	icacallbackskeeper "github.com/Stride-Labs/stride/v12/x/icacallbacks/keeper"
-	mintkeeper "github.com/Stride-Labs/stride/v12/x/mint/keeper"
-	minttypes "github.com/Stride-Labs/stride/v12/x/mint/types"
-	ratelimitkeeper "github.com/Stride-Labs/stride/v12/x/ratelimit/keeper"
-	ratelimitgov "github.com/Stride-Labs/stride/v12/x/ratelimit/keeper/gov"
-	ratelimittypes "github.com/Stride-Labs/stride/v12/x/ratelimit/types"
-	recordskeeper "github.com/Stride-Labs/stride/v12/x/records/keeper"
-	recordstypes "github.com/Stride-Labs/stride/v12/x/records/types"
-	stakeibckeeper "github.com/Stride-Labs/stride/v12/x/stakeibc/keeper"
-	stakeibctypes "github.com/Stride-Labs/stride/v12/x/stakeibc/types"
+	claimkeeper "github.com/Stride-Labs/stride/v11/x/claim/keeper"
+	claimtypes "github.com/Stride-Labs/stride/v11/x/claim/types"
+	icacallbackskeeper "github.com/Stride-Labs/stride/v11/x/icacallbacks/keeper"
+	mintkeeper "github.com/Stride-Labs/stride/v11/x/mint/keeper"
+	minttypes "github.com/Stride-Labs/stride/v11/x/mint/types"
+	ratelimitkeeper "github.com/Stride-Labs/stride/v11/x/ratelimit/keeper"
+	ratelimitgov "github.com/Stride-Labs/stride/v11/x/ratelimit/keeper/gov"
+	ratelimittypes "github.com/Stride-Labs/stride/v11/x/ratelimit/types"
+	recordskeeper "github.com/Stride-Labs/stride/v11/x/records/keeper"
+	recordstypes "github.com/Stride-Labs/stride/v11/x/records/types"
+	stakeibckeeper "github.com/Stride-Labs/stride/v11/x/stakeibc/keeper"
+	stakeibctypes "github.com/Stride-Labs/stride/v11/x/stakeibc/types"
 
 	cosmosproto "github.com/cosmos/gogoproto/proto"
 	deprecatedproto "github.com/golang/protobuf/proto" //nolint:staticcheck
@@ -117,7 +117,6 @@ func CreateUpgradeHandler(
 	stakeibcKeeper stakeibckeeper.Keeper,
 ) upgradetypes.UpgradeHandler {
 	return func(ctx sdk.Context, _ upgradetypes.Plan, vm module.VersionMap) (module.VersionMap, error) {
-
 		ctx.Logger().Info("Starting upgrade v10...")
 
 		ctx.Logger().Info("Migrating tendermint consensus params from x/params to x/consensus...")

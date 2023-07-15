@@ -18,12 +18,9 @@ import (
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
-	ibctesting "github.com/cosmos/interchain-security/v3/legacy_ibc_testing/testing"
-	consumertypes "github.com/cosmos/interchain-security/v3/x/ccv/consumer/types"
+	ibctesting "github.com/cosmos/ibc-go/v7/testing"
 
-	testutil "github.com/Stride-Labs/stride/v12/testutil"
-
-	cmdcfg "github.com/Stride-Labs/stride/v12/cmd/strided/config"
+	cmdcfg "github.com/Stride-Labs/stride/v11/cmd/strided/config"
 )
 
 const Bech32Prefix = "stride"
@@ -100,7 +97,6 @@ func GenesisStateWithValSet(app *StrideApp) GenesisState {
 	delegations := make([]stakingtypes.Delegation, 0, len(valSet.Validators))
 
 	bondAmt := sdk.DefaultPowerReduction
-	initValPowers := []abci.ValidatorUpdate{}
 
 	for _, val := range valSet.Validators {
 		pk, _ := cryptocodec.FromTmPubKeyInterface(val.PubKey)
@@ -121,12 +117,6 @@ func GenesisStateWithValSet(app *StrideApp) GenesisState {
 		validators = append(validators, validator)
 		delegations = append(delegations, stakingtypes.NewDelegation(genAccs[0].GetAddress(), val.Address.Bytes(), sdk.OneDec()))
 
-		// add initial validator powers so consumer InitGenesis runs correctly
-		pub, _ := val.ToProto()
-		initValPowers = append(initValPowers, abci.ValidatorUpdate{
-			Power:  val.VotingPower,
-			PubKey: pub.PubKey,
-		})
 	}
 	// set validators and delegations
 	stakingGenesis := stakingtypes.NewGenesisState(stakingtypes.DefaultParams(), validators, delegations)
@@ -158,18 +148,6 @@ func GenesisStateWithValSet(app *StrideApp) GenesisState {
 		[]banktypes.SendEnabled{},
 	)
 	genesisState[banktypes.ModuleName] = app.AppCodec().MustMarshalJSON(bankGenesis)
-
-	vals, err := tmtypes.PB2TM.ValidatorUpdates(initValPowers)
-	if err != nil {
-		panic("failed to get vals")
-	}
-
-	consumerGenesisState := testutil.CreateMinimalConsumerTestGenesis()
-	consumerGenesisState.InitialValSet = initValPowers
-	consumerGenesisState.ProviderConsensusState.NextValidatorsHash = tmtypes.NewValidatorSet(vals).Hash()
-	consumerGenesisState.Params.Enabled = true
-	genesisState[consumertypes.ModuleName] = app.AppCodec().MustMarshalJSON(consumerGenesisState)
-
 	return genesisState
 }
 

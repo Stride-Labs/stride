@@ -8,8 +8,8 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	oldstakeibctypes "github.com/Stride-Labs/stride/v12/x/stakeibc/migrations/v2/types"
-	stakeibctypes "github.com/Stride-Labs/stride/v12/x/stakeibc/types"
+	oldstakeibctypes "github.com/Stride-Labs/stride/v11/x/stakeibc/migrations/v2/types"
+	stakeibctypes "github.com/Stride-Labs/stride/v11/x/stakeibc/types"
 )
 
 func TestConvertToNewValidator(t *testing.T) {

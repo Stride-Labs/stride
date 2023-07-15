@@ -21,13 +21,13 @@ import (
 	icahosttypes "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/host/types"
 	transfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
 
-	"github.com/Stride-Labs/stride/v12/utils"
-	epochskeeper "github.com/Stride-Labs/stride/v12/x/epochs/keeper"
-	epochstypes "github.com/Stride-Labs/stride/v12/x/epochs/types"
-	mintkeeper "github.com/Stride-Labs/stride/v12/x/mint/keeper"
-	minttypes "github.com/Stride-Labs/stride/v12/x/mint/types"
-	stakeibckeeper "github.com/Stride-Labs/stride/v12/x/stakeibc/keeper"
-	stakeibctypes "github.com/Stride-Labs/stride/v12/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v11/utils"
+	epochskeeper "github.com/Stride-Labs/stride/v11/x/epochs/keeper"
+	epochstypes "github.com/Stride-Labs/stride/v11/x/epochs/types"
+	mintkeeper "github.com/Stride-Labs/stride/v11/x/mint/keeper"
+	minttypes "github.com/Stride-Labs/stride/v11/x/mint/types"
+	stakeibckeeper "github.com/Stride-Labs/stride/v11/x/stakeibc/keeper"
+	stakeibctypes "github.com/Stride-Labs/stride/v11/x/stakeibc/types"
 )
 
 // CreateUpgradeHandler creates an SDK upgrade handler for v7

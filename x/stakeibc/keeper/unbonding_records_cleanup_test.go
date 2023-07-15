@@ -4,9 +4,9 @@ import (
 	sdkmath "cosmossdk.io/math"
 	_ "github.com/stretchr/testify/suite"
 
-	recordtypes "github.com/Stride-Labs/stride/v12/x/records/types"
+	recordtypes "github.com/Stride-Labs/stride/v11/x/records/types"
 
-	stakeibc "github.com/Stride-Labs/stride/v12/x/stakeibc/types"
+	stakeibc "github.com/Stride-Labs/stride/v11/x/stakeibc/types"
 )
 
 type CleanupEpochUnbondingRecordsTestCase struct {
