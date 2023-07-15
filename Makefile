@@ -73,6 +73,11 @@ build:
 	mkdir -p $(BUILDDIR)/
 	go build -mod=readonly $(BUILD_FLAGS) -trimpath -o $(BUILDDIR) ./...;
 
+
+build-linux:
+	mkdir -p $(BUILDDIR)/
+	GOOS=linux GOARCH=amd64 go build -mod=readonly $(BUILD_FLAGS) -trimpath -o $(BUILDDIR) ./...
+
 install: go.sum
 	go install $(BUILD_FLAGS) ./cmd/strided
 
