@@ -60,6 +60,7 @@ func (s *KeeperTestSuite) SetupTestUnbondFromHostZone(
 		HostDenom:            Atom,
 		DelegationIcaAddress: "cosmos_DELEGATION",
 		Validators:           validators,
+		TotalDelegations:     totalStake,
 	}
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
 

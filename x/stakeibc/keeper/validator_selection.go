@@ -275,7 +275,7 @@ func (k Keeper) GetTargetValAmtsForHostZone(ctx sdk.Context, hostZone types.Host
 	}
 	k.Logger(ctx).Info(utils.LogWithHostZone(hostZone.ChainId, "Total Validator Weight: %d", totalWeight))
 
-	// sort validators by weight ascending, this is inplace sorting!
+	// sort validators by weight ascending
 	sort.SliceStable(validators, func(i, j int) bool { // Do not use `Slice` here, it is stochastic
 		if validators[i].Weight != validators[j].Weight {
 			return validators[i].Weight < validators[j].Weight
