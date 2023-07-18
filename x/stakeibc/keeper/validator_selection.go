@@ -23,12 +23,10 @@ type RebalanceValidatorDelegationChange struct {
 }
 
 // Iterate each active host zone and issues redelegation messages to rebalance each
-//
-//	validator's stake according to their weights
+// validator's stake according to their weights
 //
 // This is required when accepting LSM LiquidStakes as the distribution of stake
-//
-//	from the LSM Tokens will be inconsistend with the host zone's validator set
+// from the LSM Tokens will be inconsistend with the host zone's validator set
 //
 // Note: this cannot be run more than once in a single unbonding period
 func (k Keeper) RebalanceAllHostZones(ctx sdk.Context) {
