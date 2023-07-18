@@ -152,9 +152,9 @@ func (k Keeper) GetValidatorFromLSMTokenDenom(denom string, validators []*types.
 	validatorAddress := split[0]
 
 	// Confirm the validator:
-	//  1. is in Stride's validator set
-	//  2. does not have an active slash query in flight
-	//  3. has a known exchange rate
+	//  1. Is registered on Stride
+	//  2. Does not have an active slash query in flight
+	//  3. Has a known exchange rate
 	for _, validator := range validators {
 		if validator.Address == validatorAddress {
 			if validator.SlashQueryInProgress {
