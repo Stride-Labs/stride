@@ -251,7 +251,7 @@ func (k Keeper) GetValidatorDelegationDifferences(ctx sdk.Context, hostZone type
 
 // This will split a total delegation amount across validators, according to weights
 // It returns a map of each portion, key'd on validator address
-// Validator's with a slash query in progres are excluded
+// Validator's with a slash query in progress are excluded
 func (k Keeper) GetTargetValAmtsForHostZone(ctx sdk.Context, hostZone types.HostZone, totalDelegation sdkmath.Int) (map[string]sdkmath.Int, error) {
 	// Confirm the expected delegation amount is greater than 0
 	if !totalDelegation.IsPositive() {
