@@ -76,9 +76,10 @@ func (s *KeeperTestSuite) SetupTestLSMLiquidStake() LSMLiquidStakeTestCase {
 		ConnectionId:      ibctesting.FirstConnectionID,
 		TotalDelegations:  totalHostZoneStake,
 		Validators: []*types.Validator{{
-			Address:                   ValAddress,
-			SlashQueryProgressTracker: progressTowardsQuery,
-			SlashQueryCheckpoint:      queryCheckpoint,
+			Address:                    ValAddress,
+			SlashQueryProgressTracker:  progressTowardsQuery,
+			SlashQueryCheckpoint:       queryCheckpoint,
+			InternalSharesToTokensRate: sdk.OneDec(),
 		}},
 		DelegationIcaAddress:  "cosmos_DELEGATION",
 		LsmLiquidStakeEnabled: true,

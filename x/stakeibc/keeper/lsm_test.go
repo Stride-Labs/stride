@@ -33,7 +33,7 @@ func (s *KeeperTestSuite) TestValidateLSMLiquidStake() {
 		ChainId:           HostChainId,
 		TransferChannelId: ibctesting.FirstChannelID,
 		Validators: []*types.Validator{
-			{Address: ValAddress, SlashQueryInProgress: false},
+			{Address: ValAddress, SlashQueryInProgress: false, InternalSharesToTokensRate: sdk.OneDec()},
 		},
 		LsmLiquidStakeEnabled: true,
 	}
@@ -183,7 +183,11 @@ func (s *KeeperTestSuite) TestGetHostZoneFromLSMTokenPath() {
 func (s *KeeperTestSuite) TestGetValidatorFromLSMTokenDenom() {
 	valAddress := "cosmosvaloperXXX"
 	denom := valAddress + "/42" // add record ID
-	validators := []*types.Validator{{Address: valAddress, SlashQueryInProgress: false}}
+	validators := []*types.Validator{{
+		Address:                    valAddress,
+		SlashQueryInProgress:       false,
+		InternalSharesToTokensRate: sdk.OneDec(),
+	}}
 
 	// Successful lookup
 	validator, err := s.App.StakeibcKeeper.GetValidatorFromLSMTokenDenom(denom, validators)
@@ -202,9 +206,21 @@ func (s *KeeperTestSuite) TestGetValidatorFromLSMTokenDenom() {
 	s.Require().ErrorContains(err, "validator (cosmosvaloperXXX) is not registered in the Stride validator set")
 
 	// Pass in a validator that has a slash query in flight - it should fail
-	validatorsWithPendingQuery := []*types.Validator{{Address: valAddress, SlashQueryInProgress: true}}
-	_, err = s.App.StakeibcKeeper.GetValidatorFromLSMTokenDenom(denom, validatorsWithPendingQuery)
+	validatorWithSlashQuery := []*types.Validator{{
+		Address:                    valAddress,
+		SlashQueryInProgress:       true,
+		InternalSharesToTokensRate: sdk.OneDec(),
+	}}
+	_, err = s.App.StakeibcKeeper.GetValidatorFromLSMTokenDenom(denom, validatorWithSlashQuery)
 	s.Require().ErrorContains(err, "validator cosmosvaloperXXX was slashed")
+
+	// Pass in a validator with an uninitialized exchange rate - it should fail
+	validatorWithoutExchangeRate := []*types.Validator{{
+		Address:              valAddress,
+		SlashQueryInProgress: false,
+	}}
+	_, err = s.App.StakeibcKeeper.GetValidatorFromLSMTokenDenom(denom, validatorWithoutExchangeRate)
+	s.Require().ErrorContains(err, "validator cosmosvaloperXXX exchange rate is not known")
 }
 
 func (s *KeeperTestSuite) TestShouldCheckIfValidatorWasSlashed() {

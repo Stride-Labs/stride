@@ -151,12 +151,19 @@ func (k Keeper) GetValidatorFromLSMTokenDenom(denom string, validators []*types.
 	}
 	validatorAddress := split[0]
 
-	// Confirm validator is in Stride's validator set and does not have an active slash query in flight
+	// Confirm the validator:
+	//  1. is in Stride's validator set
+	//  2. does not have an active slash query in flight
+	//  3. has a known exchange rate
 	for _, validator := range validators {
 		if validator.Address == validatorAddress {
 			if validator.SlashQueryInProgress {
 				return types.Validator{}, errorsmod.Wrapf(types.ErrValidatorWasSlashed,
 					"validator %s was slashed, liquid stakes from this validator are temporarily unavailable", validator.Address)
+			}
+			if validator.InternalSharesToTokensRate.IsNil() || validator.InternalSharesToTokensRate.IsZero() {
+				return types.Validator{}, errorsmod.Wrapf(types.ErrValidatorExchangeRateNotKnown,
+					"validator %s exchange rate is not known", validator.Address)
 			}
 			return *validator, nil
 		}
