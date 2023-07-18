@@ -43,7 +43,6 @@ func (s *KeeperTestSuite) SetupTestRebalanceDelegationsForHostZone() RebalanceDe
 			{Address: "val2", Weight: 50, Delegation: sdkmath.NewInt(2000)}, // Expected: 5000
 			{Address: "val3", Weight: 25, Delegation: sdkmath.NewInt(4500)}, // Expected: 2500
 		},
-		TotalDelegations: sdkmath.NewInt(10000),
 	}
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
 
@@ -137,7 +136,6 @@ func (s *KeeperTestSuite) TestRebalanceDelegationsForHostZone_SuccessfulBatchSen
 	//  where the rebalance is going from one validator to the next
 	// This will result in 5 ICA messages submitted
 	numBatches := 5
-	totalDelegation := sdkmath.ZeroInt()
 	validators := []*types.Validator{}
 	for batch := 1; batch <= numBatches; batch++ {
 		for msg := 1; msg <= keeper.RebalanceIcaBatchSize; msg++ {
@@ -145,12 +143,10 @@ func (s *KeeperTestSuite) TestRebalanceDelegationsForHostZone_SuccessfulBatchSen
 				{Address: fmt.Sprintf("src_val_%d_%d", batch, msg), Weight: 1, Delegation: sdkmath.NewInt(2)},
 				{Address: fmt.Sprintf("dst_val_%d_%d", batch, msg), Weight: 1, Delegation: sdkmath.NewInt(0)},
 			}...)
-			totalDelegation = totalDelegation.Add(sdkmath.NewInt(2))
 		}
 	}
 	hostZone := tc.hostZone
 	hostZone.Validators = validators
-	hostZone.TotalDelegations = totalDelegation
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
 
 	// Call rebalance
@@ -190,7 +186,6 @@ func (s *KeeperTestSuite) TestRebalanceDelegationsForHostZone_ZeroWeightValidato
 	// Update the host zone validators so there are only 0 weight validators - rebalance should fail
 	invalidHostZone := tc.hostZone
 	invalidHostZone.Validators = []*types.Validator{{Address: "val1", Weight: 0}}
-	invalidHostZone.TotalDelegations = sdkmath.ZeroInt()
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, invalidHostZone)
 
 	err := s.App.StakeibcKeeper.RebalanceDelegationsForHostZone(s.Ctx, HostChainId)
@@ -345,8 +340,9 @@ func (s *KeeperTestSuite) TestGetValidatorDelegationDifferences() {
 			{Address: "val1", Weight: 10, Delegation: sdkmath.NewInt(20)},
 			{Address: "val2", Weight: 20, Delegation: sdkmath.NewInt(140)},
 			{Address: "val3", Weight: 70, Delegation: sdkmath.NewInt(40)},
+			// Ignore this validator as it has a slash query in progresss
+			{Address: "ignore", Weight: 50, Delegation: sdkmath.NewInt(100), SlashQueryInProgress: true},
 		},
-		TotalDelegations: sdkmath.NewInt(200),
 	}
 
 	// Target delegation is determined by the total delegation * weight

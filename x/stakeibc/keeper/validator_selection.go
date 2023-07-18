@@ -211,8 +211,17 @@ func (k Keeper) GetRebalanceICAMessages(
 //   - Positive delta implies the validator has a surplus (and should lose stake)
 //   - Negative delta implies the validator has a deficit (and should gain stake)
 func (k Keeper) GetValidatorDelegationDifferences(ctx sdk.Context, hostZone types.HostZone) ([]RebalanceValidatorDelegationChange, error) {
+	// The total rebalance amount consists of all delegations from validator's without a slash query in progress
+	// Validators with a slash query in progress will be excluded from rebalancing
+	targetRebalanceAmount := sdkmath.ZeroInt()
+	for _, validator := range hostZone.Validators {
+		if !validator.SlashQueryInProgress {
+			targetRebalanceAmount = targetRebalanceAmount.Add(validator.Delegation)
+		}
+	}
+
 	// Get the target delegation amount for each validator
-	targetDelegations, err := k.GetTargetValAmtsForHostZone(ctx, hostZone, hostZone.TotalDelegations)
+	targetDelegations, err := k.GetTargetValAmtsForHostZone(ctx, hostZone, targetRebalanceAmount)
 	if err != nil {
 		return nil, errorsmod.Wrapf(err, "unable to get target val amounts for host zone %s", hostZone.ChainId)
 	}
