@@ -194,7 +194,7 @@ setup_file() {
 }
 
 @test "[INTEGRATION-BASIC-$CHAIN_NAME] LSM liquid stake" {
-  if [[ "$CHAIN_NAME" != "LSM" ]]; then
+  if [[ "$CHAIN_NAME" != "GAIA" ]]; then
     skip "Skipping LSM liquid stake for chains without LSM support" 
   fi
 
@@ -251,6 +251,10 @@ setup_file() {
 }
 
 @test "[INTEGRATION-BASIC-$CHAIN_NAME] LSM liquid stake with slash query" {
+  if [[ "$CHAIN_NAME" != "GAIA" ]]; then
+    skip "Skipping LSM liquid stake for chains without LSM support" 
+  fi
+
   # get staker and validator addresses
   validator_address=$(GET_VAL_ADDR $CHAIN_NAME 1)
   staker_address_on_stride=$($STRIDE_MAIN_CMD keys show $USER_ACCT -a)

@@ -19,10 +19,7 @@ import (
 
 	bankTypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 
-	// TODO [LSM]: Revert type
-	lsmdistributiontypes "github.com/iqlusioninc/liquidity-staking-module/x/distribution/types"
-	lsmstakingtypes "github.com/iqlusioninc/liquidity-staking-module/x/staking/types"
-
+	distributiontypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
 	epochstypes "github.com/Stride-Labs/stride/v9/x/epochs/types"
@@ -63,7 +60,7 @@ func (k Keeper) DelegateOnHost(ctx sdk.Context, hostZone types.HostZone, amt sdk
 	for _, validator := range hostZone.Validators {
 		relativeAmount := sdk.NewCoin(amt.Denom, targetDelegatedAmts[validator.Address])
 		if relativeAmount.Amount.IsPositive() {
-			msgs = append(msgs, &lsmstakingtypes.MsgDelegate{
+			msgs = append(msgs, &stakingtypes.MsgDelegate{
 				DelegatorAddress: hostZone.DelegationIcaAddress,
 				ValidatorAddress: validator.Address,
 				Amount:           relativeAmount,
@@ -137,7 +134,7 @@ func (k Keeper) SetWithdrawalAddressOnHost(ctx sdk.Context, hostZone types.HostZ
 
 	// Construct the ICA message
 	msgs := []sdk.Msg{
-		&lsmdistributiontypes.MsgSetWithdrawAddress{
+		&distributiontypes.MsgSetWithdrawAddress{
 			DelegatorAddress: hostZone.DelegationIcaAddress,
 			WithdrawAddress:  hostZone.WithdrawalIcaAddress,
 		},

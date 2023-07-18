@@ -72,6 +72,13 @@ set_host_genesis() {
     sed -i -E 's|"signed_blocks_window": "100"|"signed_blocks_window": "10"|g' $genesis_config
     sed -i -E 's|"downtime_jail_duration": "600s"|"downtime_jail_duration": "10s"|g' $genesis_config
     sed -i -E 's|"slash_fraction_downtime": "0.010000000000000000"|"slash_fraction_downtime": "0.050000000000000000"|g' $genesis_config
+
+    # LSM params
+    if [[ "$CHAIN" == "GAIA" ]]; then
+        jq '.app_state.staking.params.validator_bond_factor = $newVal' --arg newVal "$LSM_VALIDATOR_BOND_FACTOR" $genesis_config > json.tmp && mv json.tmp $genesis_config
+        jq '.app_state.staking.params.validator_liquid_staking_cap = $newVal' --arg newVal "$LSM_VALIDATOR_LIQUID_STAKING_CAP" $genesis_config > json.tmp && mv json.tmp $genesis_config
+        jq '.app_state.staking.params.global_liquid_staking_cap = $newVal' --arg newVal "$LSM_GLOBAL_LIQUID_STAKING_CAP" $genesis_config > json.tmp && mv json.tmp $genesis_config
+    fi
 }
 
 MAIN_ID=1 # Node responsible for genesis and persistent_peers
