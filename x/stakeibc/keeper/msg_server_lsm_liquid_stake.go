@@ -19,8 +19,7 @@ import (
 
 // Exchanges a user's LSM tokenized shares for stTokens using the current redemption rate
 // The LSM tokens must live on Stride as an IBC voucher (whose denomtrace we recognize)
-//
-//	before this function is called
+// before this function is called
 //
 // The typical flow:
 //   - A staker tokenizes their delegation on the host zone
@@ -32,9 +31,8 @@ import (
 // As a safety measure, at period checkpoints, the validator's exchange rate is queried and the transaction
 // is not settled until the query returns
 // As a result, this transaction has been split up into a (1) Start and (2) Finish function
-//
-//	If no query is needed, (2) is called immediately after (1)
-//	If a query is needed, (2) is called in the query callback
+//   - If no query is needed, (2) is called immediately after (1)
+//   - If a query is needed, (2) is called in the query callback
 //
 // The transaction response indicates if the query occurred by returning an attribute `TransactionComplete` set to false
 func (k msgServer) LSMLiquidStake(goCtx context.Context, msg *types.MsgLSMLiquidStake) (*types.MsgLSMLiquidStakeResponse, error) {
@@ -136,12 +134,10 @@ func (k Keeper) SubmitValidatorSlashQuery(ctx sdk.Context, lsmLiquidStake types.
 }
 
 // FinishLSMLiquidStake finishes the liquid staking flow by escrowing the LSM token,
-//
-//	sending a user their stToken, and then IBC transfering the LSM Token to the host zone
+// sending a user their stToken, and then IBC transfering the LSM Token to the host zone
 //
 // If the slash query interrupted the transaction, this function is called
-//
-//	asynchronously after the query callback
+// asynchronously after the query callback
 //
 // If no slash query was needed, this is called synchronously after StartLSMLiquidStake
 // If this is run asynchronously, we need to re-validate the transaction info (e.g. staker's balance)
