@@ -149,16 +149,17 @@ func (k Keeper) SetWithdrawalAddress(ctx sdk.Context) {
 // Updates the redemption rate for each host zone
 // At a high level, the redemption rate is equal to the amount of native tokens locked divided by the stTokens in existence.
 // The equation is broken down further into the following sub-components:
-//     Native Tokens Locked:
-//       1. Deposit Account Balance: native tokens deposited from liquid stakes, that are still living on Stride
-//       2. Undelegated Balance:     native tokens that have been transferred to the host zone, but have not been delegated yet
-//       3. Tokenized Delegations:   Delegations inherent in LSM Tokens that have not yet been converted to native stake
-//       4. Native Delegations:      Delegations either from native tokens, or LSM Tokens that have been detokenized
-//    StToken Amount:
-//       1. Total Supply of the stToken
 //
-//  Redemption Rate =
-//  (Deposit Account Balance + Undelegated Balance + Tokenized Delegation + Native Delegation) / (stToken Supply)
+//	   Native Tokens Locked:
+//	     1. Deposit Account Balance: native tokens deposited from liquid stakes, that are still living on Stride
+//	     2. Undelegated Balance:     native tokens that have been transferred to the host zone, but have not been delegated yet
+//	     3. Tokenized Delegations:   Delegations inherent in LSM Tokens that have not yet been converted to native stake
+//	     4. Native Delegations:      Delegations either from native tokens, or LSM Tokens that have been detokenized
+//	  StToken Amount:
+//	     1. Total Supply of the stToken
+//
+//	Redemption Rate =
+//	(Deposit Account Balance + Undelegated Balance + Tokenized Delegation + Native Delegation) / (stToken Supply)
 func (k Keeper) UpdateRedemptionRates(ctx sdk.Context, depositRecords []recordstypes.DepositRecord) {
 	k.Logger(ctx).Info("Updating Redemption Rates...")
 
@@ -179,7 +180,7 @@ func (k Keeper) UpdateRedemptionRateForHostZone(ctx sdk.Context, hostZone types.
 
 	depositAccountBalance := k.GetDepositAccountBalance(hostZone.ChainId, depositRecords)
 	undelegatedBalance := k.GetUndelegatedBalance(hostZone.ChainId, depositRecords)
-	tokenizedDelegation := k.GetTotalTokenizedDelegations(ctx, hostZone.ChainId)
+	tokenizedDelegation := k.GetTotalTokenizedDelegations(ctx, hostZone)
 	nativeDelegation := sdk.NewDecFromInt(hostZone.TotalDelegations)
 
 	k.Logger(ctx).Info(utils.LogWithHostZone(hostZone.ChainId,
@@ -236,11 +237,18 @@ func (k Keeper) GetUndelegatedBalance(chainId string, depositRecords []recordsty
 
 // Returns the total delegated balance that's stored in LSM tokens
 // These are identified by any status besides "DEPOSIT_PENDING"
-func (k Keeper) GetTotalTokenizedDelegations(ctx sdk.Context, chainId string) sdk.Dec {
+func (k Keeper) GetTotalTokenizedDelegations(ctx sdk.Context, hostZone types.HostZone) sdk.Dec {
 	total := sdkmath.ZeroInt()
-	for _, deposit := range k.RecordsKeeper.GetLSMDepositsForHostZone(ctx, chainId) {
+	for _, deposit := range k.RecordsKeeper.GetLSMDepositsForHostZone(ctx, hostZone.ChainId) {
 		if deposit.Status != recordstypes.LSMTokenDeposit_DEPOSIT_PENDING {
-			total = total.Add(deposit.Amount)
+			validator, _, found := GetValidatorFromAddress(hostZone.Validators, deposit.ValidatorAddress)
+			if !found {
+				k.Logger(ctx).Error(fmt.Sprintf("Validator %s found in LSMTokenDeposit but no longer exists", deposit.ValidatorAddress))
+				continue
+			}
+			liquidStakedShares := deposit.Amount
+			liquidStakedTokens := sdk.NewDecFromInt(liquidStakedShares).Mul(validator.InternalSharesToTokensRate)
+			total = total.Add(liquidStakedTokens.TruncateInt())
 		}
 	}
 

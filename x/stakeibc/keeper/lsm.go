@@ -173,6 +173,25 @@ func (k Keeper) GetValidatorFromLSMTokenDenom(denom string, validators []*types.
 		"validator (%s) is not registered in the Stride validator set", validatorAddress)
 }
 
+// Given an LSMToken representing a number of delegator shares, returns the stToken coin
+// using the validator's exchange rate and the host zone redemption rate
+//
+//	StTokens = LSMTokenShares * Validator Exchange Rate / Redemption Rate
+//
+// Note: in the event of a slash query, these tokens will be minted only if the
+// validator's exchange rate did not change
+func (k Keeper) CalculateLSMStToken(liquidStakedShares sdkmath.Int, lsmLiquidStake types.LSMLiquidStake) sdk.Coin {
+	hostZone := lsmLiquidStake.HostZone
+	validator := lsmLiquidStake.Validator
+
+	lsmTokenTokens := sdk.NewDecFromInt(liquidStakedShares).Mul(validator.InternalSharesToTokensRate)
+	stDenom := types.StAssetDenomFromHostZoneDenom(hostZone.HostDenom)
+	stAmount := (lsmTokenTokens.Quo(hostZone.RedemptionRate)).TruncateInt()
+
+	stCoin := sdk.NewCoin(stDenom, stAmount)
+	return stCoin
+}
+
 // Determines the new slash query checkpoint, by mulitplying the query threshold percent by the current TVL
 func (k Keeper) GetUpdatedSlashQueryCheckpoint(ctx sdk.Context, totalDelegations sdkmath.Int) sdkmath.Int {
 	params := k.GetParams(ctx)
