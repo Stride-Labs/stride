@@ -8,6 +8,7 @@ import (
 
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 
+	"github.com/Stride-Labs/stride/v9/utils"
 	"github.com/Stride-Labs/stride/v9/x/stakeibc/types"
 )
 
@@ -36,7 +37,10 @@ func (k Keeper) LiquidStakeRewardCollectorBalance(ctx sdk.Context, msgSvr types.
 			k.Logger(ctx).Error(fmt.Sprintf("Liquid stake from reward collector address failed validate basic: %s", err.Error()))
 			continue
 		}
-		_, err = msgSvr.LiquidStake(ctx, msg)
+		err = utils.ApplyFuncIfNoError(ctx, func(ctx sdk.Context) error {
+			_, err := msgSvr.LiquidStake(ctx, msg)
+			return err
+		})
 		if err != nil {
 			k.Logger(ctx).Error(fmt.Sprintf("Failed to liquid stake %s for hostzone %s: %s", token.String(), hz.ChainId, err.Error()))
 			continue
