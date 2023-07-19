@@ -555,35 +555,49 @@ func (s *KeeperTestSuite) TestDetokenizeAllLSMDeposits() {
 		ChainId:              HostChainId,
 		ConnectionId:         ibctesting.FirstConnectionID,
 		DelegationIcaAddress: delegationICAAddress,
+		Validators: []*types.Validator{
+			{Address: ValAddress},
+		},
 	})
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, types.HostZone{
 		ChainId:      OsmoChainId,
 		ConnectionId: "connection-2",
 	})
 
-	// For each host chain store 4 deposits
-	// 2 of which are ready to be detokenized, and 2 of which are not
+	// For each host chain store 6 deposits
+	// 4 of which are ready to be detokenized, and 2 of which are not
+	// Of the 4 ready to be detokenized, 2 will be related to a nonexistent validator and will fail
 	expectedDepositStatus := map[string]recordstypes.LSMTokenDeposit_Status{}
 	for _, chainId := range []string{HostChainId, OsmoChainId} {
-		for _, startingStatus := range []recordstypes.LSMTokenDeposit_Status{
+		for statusIndex, startingStatus := range []recordstypes.LSMTokenDeposit_Status{
+			recordstypes.LSMTokenDeposit_DETOKENIZATION_QUEUE,
 			recordstypes.LSMTokenDeposit_DETOKENIZATION_QUEUE,
 			recordstypes.LSMTokenDeposit_TRANSFER_IN_PROGRESS,
 		} {
-
 			for i := 0; i < 2; i++ {
+				// The second detokenize queue record for gaia should fail
+				detokenizationShouldFail := chainId == HostChainId && statusIndex == 1
+				valAddress := ValAddress
+				if detokenizationShouldFail {
+					valAddress = "non-existent-validator"
+				}
+
 				denom := fmt.Sprintf("denom-starting-in-status-%s-%d", startingStatus.String(), i)
 				depositKey := fmt.Sprintf("%s-%s", chainId, denom)
 				deposit := recordstypes.LSMTokenDeposit{
-					ChainId: chainId,
-					Denom:   denom,
-					Status:  startingStatus,
+					ChainId:          chainId,
+					Denom:            denom,
+					Status:           startingStatus,
+					ValidatorAddress: valAddress,
 				}
 				s.App.RecordsKeeper.SetLSMTokenDeposit(s.Ctx, deposit)
 
 				// The status is only expected to change for the QUEUED records on the
 				// host chain with the open delegation channel
 				expectedStatus := startingStatus
-				if chainId == HostChainId && startingStatus == recordstypes.LSMTokenDeposit_DETOKENIZATION_QUEUE {
+				if detokenizationShouldFail {
+					expectedStatus = recordstypes.LSMTokenDeposit_DETOKENIZATION_FAILED
+				} else if chainId == HostChainId && startingStatus == recordstypes.LSMTokenDeposit_DETOKENIZATION_QUEUE {
 					expectedStatus = recordstypes.LSMTokenDeposit_DETOKENIZATION_IN_PROGRESS
 				}
 				expectedDepositStatus[depositKey] = expectedStatus
