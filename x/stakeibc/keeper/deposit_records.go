@@ -155,7 +155,9 @@ func (k Keeper) StakeExistingDepositsOnHostZones(ctx sdk.Context, epochNumber ui
 		k.Logger(ctx).Info(utils.LogWithHostZone(depositRecord.HostZoneId, "Staking %v%s", depositRecord.Amount, hostZone.HostDenom))
 		stakeAmount := sdk.NewCoin(hostZone.HostDenom, depositRecord.Amount)
 
-		err := k.DelegateOnHost(ctx, hostZone, stakeAmount, depositRecord)
+		err := utils.ApplyFuncIfNoError(ctx, func(ctx sdk.Context) error {
+			return k.DelegateOnHost(ctx, hostZone, stakeAmount, depositRecord)
+		})
 		if err != nil {
 			k.Logger(ctx).Error(fmt.Sprintf("Did not stake %s on %s | err: %s", stakeAmount.String(), hostZone.ChainId, err.Error()))
 			continue
