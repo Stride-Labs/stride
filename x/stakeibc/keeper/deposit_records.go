@@ -94,7 +94,9 @@ func (k Keeper) TransferExistingDepositsToHostZones(ctx sdk.Context, epochNumber
 		k.Logger(ctx).Info(utils.LogWithHostZone(depositRecord.HostZoneId, "Transfer Msg: %+v", msg))
 
 		// transfer the deposit record and update its status to TRANSFER_IN_PROGRESS
-		err := k.RecordsKeeper.IBCTransferNativeTokens(ctx, msg, depositRecord)
+		err := utils.ApplyFuncIfNoError(ctx, func(ctx sdk.Context) error {
+			return k.RecordsKeeper.IBCTransferNativeTokens(ctx, msg, depositRecord)
+		})
 		if err != nil {
 			k.Logger(ctx).Error(fmt.Sprintf("[TransferExistingDepositsToHostZones] Failed to initiate IBC transfer to host zone, HostZone: %v, Channel: %v, Amount: %v, ModuleAddress: %v, DelegateAddress: %v, Timeout: %v",
 				hostZone.ChainId, hostZone.TransferChannelId, transferCoin, hostZone.DepositAddress, hostZone.DelegationIcaAddress, timeoutTimestamp))
