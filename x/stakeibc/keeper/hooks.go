@@ -139,9 +139,12 @@ func (k Keeper) SetWithdrawalAddress(ctx sdk.Context) {
 	k.Logger(ctx).Info("Setting Withdrawal Addresses...")
 
 	for _, hostZone := range k.GetAllActiveHostZone(ctx) {
-		err := k.SetWithdrawalAddressOnHost(ctx, hostZone)
+		err := utils.ApplyFuncIfNoError(ctx, func(ctx sdk.Context) error {
+			return k.SetWithdrawalAddressOnHost(ctx, hostZone)
+		})
 		if err != nil {
 			k.Logger(ctx).Error(fmt.Sprintf("Unable to set withdrawal address on %s, err: %s", hostZone.ChainId, err))
+			continue
 		}
 	}
 }
@@ -149,16 +152,17 @@ func (k Keeper) SetWithdrawalAddress(ctx sdk.Context) {
 // Updates the redemption rate for each host zone
 // At a high level, the redemption rate is equal to the amount of native tokens locked divided by the stTokens in existence.
 // The equation is broken down further into the following sub-components:
-//     Native Tokens Locked:
-//       1. Deposit Account Balance: native tokens deposited from liquid stakes, that are still living on Stride
-//       2. Undelegated Balance:     native tokens that have been transferred to the host zone, but have not been delegated yet
-//       3. Tokenized Delegations:   Delegations inherent in LSM Tokens that have not yet been converted to native stake
-//       4. Native Delegations:      Delegations either from native tokens, or LSM Tokens that have been detokenized
-//    StToken Amount:
-//       1. Total Supply of the stToken
 //
-//  Redemption Rate =
-//  (Deposit Account Balance + Undelegated Balance + Tokenized Delegation + Native Delegation) / (stToken Supply)
+//	   Native Tokens Locked:
+//	     1. Deposit Account Balance: native tokens deposited from liquid stakes, that are still living on Stride
+//	     2. Undelegated Balance:     native tokens that have been transferred to the host zone, but have not been delegated yet
+//	     3. Tokenized Delegations:   Delegations inherent in LSM Tokens that have not yet been converted to native stake
+//	     4. Native Delegations:      Delegations either from native tokens, or LSM Tokens that have been detokenized
+//	  StToken Amount:
+//	     1. Total Supply of the stToken
+//
+//	Redemption Rate =
+//	(Deposit Account Balance + Undelegated Balance + Tokenized Delegation + Native Delegation) / (stToken Supply)
 func (k Keeper) UpdateRedemptionRates(ctx sdk.Context, depositRecords []recordstypes.DepositRecord) {
 	k.Logger(ctx).Info("Updating Redemption Rates...")
 
