@@ -43,7 +43,10 @@ func (k Keeper) RebalanceAllHostZones(ctx sdk.Context) {
 			continue
 		}
 
-		if err := k.RebalanceDelegationsForHostZone(ctx, hostZone.ChainId); err != nil {
+		err := utils.ApplyFuncIfNoError(ctx, func(ctx sdk.Context) error {
+			return k.RebalanceDelegationsForHostZone(ctx, hostZone.ChainId)
+		})
+		if err != nil {
 			k.Logger(ctx).Error(fmt.Sprintf("Unable to rebalance delegations for %s: %s", hostZone.ChainId, err.Error()))
 			continue
 		}

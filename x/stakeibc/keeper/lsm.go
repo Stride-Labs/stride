@@ -16,6 +16,7 @@ import (
 
 	"github.com/golang/protobuf/proto" //nolint:staticcheck
 
+	"github.com/Stride-Labs/stride/v9/utils"
 	recordstypes "github.com/Stride-Labs/stride/v9/x/records/types"
 	"github.com/Stride-Labs/stride/v9/x/stakeibc/types"
 )
@@ -321,9 +322,17 @@ func (k Keeper) DetokenizeAllLSMDeposits(ctx sdk.Context) {
 			recordstypes.LSMTokenDeposit_DETOKENIZATION_QUEUE,
 		)
 		for _, deposit := range queuedDeposits {
-			if err := k.DetokenizeLSMDeposit(ctx, hostZone, deposit); err != nil {
+			err := utils.ApplyFuncIfNoError(ctx, func(ctx sdk.Context) error {
+				return k.DetokenizeLSMDeposit(ctx, hostZone, deposit)
+			})
+			if err != nil {
 				k.Logger(ctx).Error(fmt.Sprintf("Unable to submit detokenization ICAs for %v%s on %s: %s",
 					deposit.Amount, deposit.Denom, hostZone.ChainId, err.Error()))
+				// QUESTION: Should we update the status here? It's a question of whether we think a retry will succeed
+				// I think the only predictable failure where a retry could potentially work is for a closed channel, which
+				// is accounted for above. The other errors feel fairly deterministic - although there could be some errors
+				// buried in the ibc code that I'm not familiar with
+				k.RecordsKeeper.UpdateLSMTokenDepositStatus(ctx, deposit, recordstypes.LSMTokenDeposit_DETOKENIZATION_FAILED)
 				continue
 			}
 			k.Logger(ctx).Info(fmt.Sprintf("Submitted detokenization ICA for deposit %v%s on %s", deposit.Amount, deposit.Denom, hostZone.ChainId))
