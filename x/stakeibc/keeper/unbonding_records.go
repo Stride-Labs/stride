@@ -438,7 +438,7 @@ func (k Keeper) GetRedemptionSweepAmountAndRecordIds(
 }
 
 // Batch transfers any unbonded tokens from the delegation account to the redemption account
-func (k Keeper) SweepAllUnbondedTokensForHostZone(ctx sdk.Context, hostZone types.HostZone) error {
+func (k Keeper) SweepUnbondedTokensForHostZone(ctx sdk.Context, hostZone types.HostZone) error {
 	k.Logger(ctx).Info(utils.LogWithHostZone(hostZone.ChainId, "Sweeping unbonded tokens"))
 
 	// Confirm the delegation (destination) and redemption (source) accounts are registered
@@ -498,34 +498,17 @@ func (k Keeper) SweepAllUnbondedTokensForHostZone(ctx sdk.Context, hostZone type
 	return nil
 }
 
-// Sends all unbonded tokens to the redemption account
-// returns:
-//   - success indicator if all chains succeeded
-//   - list of successful chains
-//   - list of tokens swept
-//   - list of failed chains
-func (k Keeper) SweepAllUnbondedTokens(ctx sdk.Context) (success bool, successfulSweeps []string, sweepAmounts []sdkmath.Int, failedSweeps []string) {
-	// this function returns true if all chains succeeded, false otherwise
-	// it also returns a list of successful chains (arg 2), tokens swept (arg 3), and failed chains (arg 4)
+// Sends all unbonded tokens that have finished unbonding to the redemption account
+func (k Keeper) SweepUnbondedTokensAllHostZones(ctx sdk.Context) {
 	k.Logger(ctx).Info("Sweeping All Unbonded Tokens...")
 
-	success = true
-	successfulSweeps = []string{}
-	sweepAmounts = []sdkmath.Int{}
-	failedSweeps = []string{}
-	hostZones := k.GetAllActiveHostZone(ctx)
-
-	epochUnbondingRecords := k.RecordsKeeper.GetAllEpochUnbondingRecord(ctx)
-	for _, hostZone := range hostZones {
-		hostZoneSuccess, sweepAmount := k.SweepAllUnbondedTokensForHostZone(ctx, hostZone, epochUnbondingRecords)
-		if hostZoneSuccess {
-			successfulSweeps = append(successfulSweeps, hostZone.ChainId)
-			sweepAmounts = append(sweepAmounts, sweepAmount)
-		} else {
-			success = false
-			failedSweeps = append(failedSweeps, hostZone.ChainId)
+	for _, hostZone := range k.GetAllActiveHostZone(ctx) {
+		err := utils.ApplyFuncIfNoError(ctx, func(ctx sdk.Context) error {
+			return k.SweepUnbondedTokensForHostZone(ctx, hostZone)
+		})
+		if err != nil {
+			k.Logger(ctx).Error(fmt.Sprintf("Error initiating redemption sweep for host zone %s: %s", hostZone.ChainId, err.Error()))
+			continue
 		}
 	}
-
-	return success, successfulSweeps, sweepAmounts, failedSweeps
 }
