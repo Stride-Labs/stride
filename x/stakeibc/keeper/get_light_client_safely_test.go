@@ -53,10 +53,10 @@ func (s *KeeperTestSuite) TestGetLightClientSafely_InvalidConnection() {
 	tc.connectionId = "connection-invalid"
 
 	_, err := s.App.StakeibcKeeper.GetLightClientTimeSafely(s.Ctx, tc.connectionId)
-	s.Require().ErrorContains(err, "invalid connection id", "get lc time: error complains about invalid connection id")
+	s.Require().ErrorContains(err, "connection-id: connection-invalid: connection not found")
 
 	_, err = s.App.StakeibcKeeper.GetLightClientHeightSafely(s.Ctx, tc.connectionId)
-	s.Require().ErrorContains(err, "invalid connection id", "get lc height: error complains about invalid connection id")
+	s.Require().ErrorContains(err, "connection-id: connection-invalid: connection not found")
 }
 
 func (s *KeeperTestSuite) TestGetLightClientHeightSafely_Successful() {
