@@ -251,6 +251,8 @@ func (k Keeper) GetTotalTokenizedDelegations(ctx sdk.Context, chainId string) sd
 	return sdk.NewDecFromInt(total)
 }
 
+// Reinvests staking rewards by querying the accumulated rewards from the withdrawal account,
+// and then sending them to the delegation account on the query callback, where they will be staked
 func (k Keeper) ReinvestRewards(ctx sdk.Context) {
 	k.Logger(ctx).Info("Reinvesting tokens...")
 
@@ -269,7 +271,11 @@ func (k Keeper) ReinvestRewards(ctx sdk.Context) {
 		}
 		k.Logger(ctx).Info(utils.LogWithHostZone(hostZone.ChainId, "BlockTime for host zone: %d", blockTime))
 
-		err = k.UpdateWithdrawalBalance(ctx, hostZone)
+		// Submit a withdrawal balance ICQ to determine the amount of rewards
+		// The rewards will get to the delegation account in the callback
+		err = utils.ApplyFuncIfNoError(ctx, func(ctx sdk.Context) error {
+			return k.SubmitWithdrawalBalanceICQ(ctx, hostZone)
+		})
 		if err != nil {
 			k.Logger(ctx).Error(fmt.Sprintf("Error updating withdrawal balance for host zone %s: %s", hostZone.ConnectionId, err.Error()))
 			continue

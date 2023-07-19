@@ -148,7 +148,7 @@ func (k Keeper) SetWithdrawalAddressOnHost(ctx sdk.Context, hostZone types.HostZ
 }
 
 // Submits an ICQ for the withdrawal account balance
-func (k Keeper) UpdateWithdrawalBalance(ctx sdk.Context, hostZone types.HostZone) error {
+func (k Keeper) SubmitWithdrawalBalanceICQ(ctx sdk.Context, hostZone types.HostZone) error {
 	k.Logger(ctx).Info(utils.LogWithHostZone(hostZone.ChainId, "Submitting ICQ for withdrawal account balance"))
 
 	// Get the withdrawal account address from the host zone
