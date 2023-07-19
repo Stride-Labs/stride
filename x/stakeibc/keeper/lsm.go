@@ -220,13 +220,16 @@ func (k Keeper) TransferAllLSMDeposits(ctx sdk.Context) {
 
 			// If the IBC transfer fails to get off the ground, flag the deposit as FAILED
 			// This is highly unlikely and would indicate a larger problem
-			if err := k.RecordsKeeper.IBCTransferLSMToken(
-				ctx,
-				deposit,
-				hostZone.TransferChannelId,
-				hostZone.DepositAddress,
-				hostZone.DelegationIcaAddress,
-			); err != nil {
+			err := utils.ApplyFuncIfNoError(ctx, func(ctx sdk.Context) error {
+				return k.RecordsKeeper.IBCTransferLSMToken(
+					ctx,
+					deposit,
+					hostZone.TransferChannelId,
+					hostZone.DepositAddress,
+					hostZone.DelegationIcaAddress,
+				)
+			})
+			if err != nil {
 				k.Logger(ctx).Error(fmt.Sprintf("Unable to submit IBC Transfer of LSMToken for %v%s on %s: %s",
 					deposit.Amount, deposit.Denom, hostZone.ChainId, err.Error()))
 				k.RecordsKeeper.UpdateLSMTokenDepositStatus(ctx, deposit, recordstypes.LSMTokenDeposit_TRANSFER_FAILED)
