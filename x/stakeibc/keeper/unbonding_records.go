@@ -352,7 +352,10 @@ func (k Keeper) InitiateAllHostZoneUnbondings(ctx sdk.Context, dayNumber uint64)
 		}
 
 		// Get host zone unbonding message by summing up the unbonding records
-		if err := k.UnbondFromHostZone(ctx, hostZone); err != nil {
+		err := utils.ApplyFuncIfNoError(ctx, func(ctx sdk.Context) error {
+			return k.UnbondFromHostZone(ctx, hostZone)
+		})
+		if err != nil {
 			k.Logger(ctx).Error(fmt.Sprintf("Error initiating host zone unbondings for host zone %s: %s", hostZone.ChainId, err.Error()))
 			continue
 		}
