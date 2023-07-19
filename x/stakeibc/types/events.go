@@ -20,6 +20,7 @@ const (
 	EventTypeValidatorExchangeRateChange = "validator_exchange_rate_change"
 	EventTypeValidatorSlash              = "validator_slash"
 	EventTypeUndelegation                = "undelegation"
+	EventTypeRedemptionSweep             = "redemption_sweep"
 
 	AttributeKeyHostZone         = "host_zone"
 	AttributeKeyConnectionId     = "connection_id"

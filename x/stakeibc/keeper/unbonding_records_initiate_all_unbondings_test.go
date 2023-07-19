@@ -168,5 +168,4 @@ func (s *KeeperTestSuite) TestInitiateAllHostZoneUnbondings_Failed() {
 	// An event should only be emitted for Osmo
 	s.CheckEventValueNotEmitted(types.EventTypeUndelegation, types.AttributeKeyHostZone, HostChainId)
 	s.CheckEventValueEmitted(types.EventTypeUndelegation, types.AttributeKeyHostZone, OsmoChainId)
-
 }
