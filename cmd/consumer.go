@@ -3,6 +3,7 @@ package cmd
 import (
 	"encoding/json"
 	"fmt"
+	"strconv"
 
 	errorsmod "cosmossdk.io/errors"
 	types1 "github.com/cometbft/cometbft/abci/types"
@@ -24,31 +25,46 @@ func AddConsumerSectionCmd(defaultNodeHome string) *cobra.Command {
 	genesisMutator := NewDefaultGenesisIO()
 
 	txCmd := &cobra.Command{
-		Use:                        "add-consumer-section",
+		Use:                        "add-consumer-section [num_nodes]",
+		Args:                       cobra.ExactArgs(1),
 		Short:                      "ONLY FOR TESTING PURPOSES! Modifies genesis so that chain can be started locally with one node.",
 		SuggestionsMinimumDistance: 2,
 		RunE: func(cmd *cobra.Command, args []string) error {
+			numNodes, err := strconv.Atoi(args[0])
+			if err != nil {
+				return errorsmod.Wrap(err, "invalid number of nodes")
+			} else if numNodes == 0 {
+				return errorsmod.Wrap(nil, "num_nodes can not be zero")
+			}
+
 			return genesisMutator.AlterConsumerModuleState(cmd, func(state *GenesisData, _ map[string]json.RawMessage) error {
+				initialValset := []types1.ValidatorUpdate{}
 				genesisState := testutil.CreateMinimalConsumerTestGenesis()
 				clientCtx := client.GetClientContextFromCmd(cmd)
 				serverCtx := server.GetServerContextFromCmd(cmd)
 				config := serverCtx.Config
-				config.SetRoot(clientCtx.HomeDir)
-				privValidator := pvm.LoadFilePV(config.PrivValidatorKeyFile(), config.PrivValidatorStateFile())
-				pk, err := privValidator.GetPubKey()
-				if err != nil {
-					return err
-				}
-				sdkPublicKey, err := cryptocodec.FromTmPubKeyInterface(pk)
-				if err != nil {
-					return err
-				}
-				tmProtoPublicKey, err := cryptocodec.ToTmProtoPublicKey(sdkPublicKey)
-				if err != nil {
-					return err
+				homeDir := clientCtx.HomeDir
+				for i := 1; i <= numNodes; i++ {
+					homeDir = fmt.Sprintf("%s%d", homeDir[:len(homeDir)-1], i)
+					config.SetRoot(homeDir)
+
+					privValidator := pvm.LoadFilePV(config.PrivValidatorKeyFile(), config.PrivValidatorStateFile())
+					pk, err := privValidator.GetPubKey()
+					if err != nil {
+						return err
+					}
+					sdkPublicKey, err := cryptocodec.FromTmPubKeyInterface(pk)
+					if err != nil {
+						return err
+					}
+					tmProtoPublicKey, err := cryptocodec.ToTmProtoPublicKey(sdkPublicKey)
+					if err != nil {
+						return err
+					}
+
+					initialValset = append(initialValset, types1.ValidatorUpdate{PubKey: tmProtoPublicKey, Power: 100})
 				}
 
-				initialValset := []types1.ValidatorUpdate{{PubKey: tmProtoPublicKey, Power: 100}}
 				vals, err := tmtypes.PB2TM.ValidatorUpdates(initialValset)
 				if err != nil {
 					return errorsmod.Wrap(err, "could not convert val updates to validator set")
@@ -58,7 +74,6 @@ func AddConsumerSectionCmd(defaultNodeHome string) *cobra.Command {
 				genesisState.ProviderConsensusState.NextValidatorsHash = tmtypes.NewValidatorSet(vals).Hash()
 
 				state.ConsumerModuleState = genesisState
-
 				return nil
 			})
 		},
