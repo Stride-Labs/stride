@@ -12,10 +12,11 @@ import (
 // after being slashed. The flow is:
 // 1. QueryValidatorExchangeRate (ICQ)
 // 2. ValidatorExchangeRateCallback (CALLBACK)
-// 3. QueryDelegationsIcq (ICQ)
+// 3. SubmitDelegationICQ (ICQ)
 // 4. DelegatorSharesCallback (CALLBACK)
 func (k msgServer) UpdateValidatorSharesExchRate(goCtx context.Context, msg *types.MsgUpdateValidatorSharesExchRate) (*types.MsgUpdateValidatorSharesExchRateResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
+
 	if err := k.QueryValidatorExchangeRate(ctx, msg.ChainId, msg.Valoper); err != nil {
 		return nil, err
 	}

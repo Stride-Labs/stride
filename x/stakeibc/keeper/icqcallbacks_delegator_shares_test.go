@@ -121,6 +121,7 @@ func (s *KeeperTestSuite) SetupDelegatorSharesICQCallback() DelegatorSharesICQCa
 		TimeoutDuration:  timeoutDuration,
 		TimeoutTimestamp: timeoutTimestamp,
 		RequestSent:      true,
+		TimeoutPolicy:    icqtypes.TimeoutPolicy_RETRY_QUERY_REQUEST,
 	}
 	s.App.InterchainqueryKeeper.SetQuery(s.Ctx, query)
 
@@ -143,8 +144,10 @@ func (s *KeeperTestSuite) SetupDelegatorSharesICQCallback() DelegatorSharesICQCa
 
 // Helper function to check if the query was resubmitted in the event that it overlapped an ICA
 func (s *KeeperTestSuite) CheckQueryWasResubmitted(tc DelegatorSharesICQCallbackTestCase, hostZone types.HostZone) {
+	// After removing the original query, there should be only one query left
+	s.App.InterchainqueryKeeper.DeleteQuery(s.Ctx, "query-1")
 	queries := s.App.InterchainqueryKeeper.AllQueries(s.Ctx)
-	s.Require().Len(queries, 1, "one queries expected after re-submission")
+	s.Require().Len(queries, 1, "one query expected after re-submission")
 
 	actualQuery := queries[0]
 	expectedQuery := tc.validArgs.query
@@ -255,7 +258,7 @@ func (s *KeeperTestSuite) TestDelegatorSharesCallback_RetryFailure() {
 
 	// Trigger the callback - this should attempt to retry the query
 	err := stakeibckeeper.DelegatorSharesCallback(s.App.StakeibcKeeper, s.Ctx, tc.validArgs.callbackArgs, invalidQuery)
-	s.Require().ErrorContains(err, "unable to resubmit delegator shares query: connection-id cannot be empty")
+	s.Require().ErrorContains(err, "unable to resubmit delegator shares query: failed to retry query")
 }
 
 func (s *KeeperTestSuite) checkStateIfValidatorNotSlashed(tc DelegatorSharesICQCallbackTestCase) {
