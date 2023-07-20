@@ -43,6 +43,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <!-- GH ACTIONS TEMPLATE - INSERT NEW VERSION HERE -->
 ### Changelog
 
+## [v12.0.0](https://github.com/Stride-Labs/stride/releases/tag/v12.0.0) - 2023-07-15
+
+### On-Chain changes
+1. Add code required for ICS-consumer-migration ([#811](https://github.com/Stride-Labs/stride/pull/811))
+
+### Off-Chain changes
+1. Add helper scripts and tester files for ICS-consumer-migration ([#811](https://github.com/Stride-Labs/stride/pull/811))
+
 ## [v11.0.0](https://github.com/Stride-Labs/stride/releases/tag/v11.0.0) - 2023-06-23
 
 ### On-Chain changes
