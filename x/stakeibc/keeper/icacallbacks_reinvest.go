@@ -42,13 +42,9 @@ func (k Keeper) UnmarshalReinvestCallbackArgs(ctx sdk.Context, reinvestCallback 
 }
 
 // ICA Callback after reinvestment
-//
-//	If successful:
-//	  * Creates a new DepositRecord with the reinvestment amount
-//	  * Issues an ICQ to query the rewards balance
-//	If timeout/failure:
-//	  * Does nothing
-func ReinvestCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ackResponse *icacallbackstypes.AcknowledgementResponse, args []byte) error {
+// * If successful: Creates a new DepositRecord with the reinvestment amount and issues an ICQ to query the rewards balance
+// * If timeout/failure: Does nothing
+func (k Keeper) ReinvestCallback(ctx sdk.Context, packet channeltypes.Packet, ackResponse *icacallbackstypes.AcknowledgementResponse, args []byte) error {
 	// Fetch callback args
 	reinvestCallback, err := k.UnmarshalReinvestCallbackArgs(ctx, args)
 	if err != nil {
