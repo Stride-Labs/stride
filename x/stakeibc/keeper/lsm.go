@@ -184,11 +184,12 @@ func (k Keeper) CalculateLSMStToken(liquidStakedShares sdkmath.Int, lsmLiquidSta
 	hostZone := lsmLiquidStake.HostZone
 	validator := lsmLiquidStake.Validator
 
-	lsmTokenTokens := sdk.NewDecFromInt(liquidStakedShares).Mul(validator.InternalSharesToTokensRate)
-	stDenom := types.StAssetDenomFromHostZoneDenom(hostZone.HostDenom)
-	stAmount := (lsmTokenTokens.Quo(hostZone.RedemptionRate)).TruncateInt()
+	liquidStakedTokens := sdk.NewDecFromInt(liquidStakedShares).Mul(validator.InternalSharesToTokensRate)
+	stAmount := (liquidStakedTokens.Quo(hostZone.RedemptionRate)).TruncateInt()
 
+	stDenom := types.StAssetDenomFromHostZoneDenom(hostZone.HostDenom)
 	stCoin := sdk.NewCoin(stDenom, stAmount)
+
 	return stCoin
 }
 

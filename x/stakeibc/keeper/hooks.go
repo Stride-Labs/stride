@@ -236,7 +236,15 @@ func (k Keeper) GetUndelegatedBalance(chainId string, depositRecords []recordsty
 }
 
 // Returns the total delegated balance that's stored in LSM tokens
-// These are identified by any status besides "DEPOSIT_PENDING"
+// This is used for the redemption rate calculation
+//
+// The relevant tokens are identified by the deposit records in status "DEPOSIT_PENDING"
+// "DEPOSIT_PENDING" means the liquid staker's tokens have not been sent to Stride yet
+// so they should *not* be included in the redemption rate. All other statuses indicate
+// the LSM tokens have been deposited and should be included in the final calculation
+//
+// Each LSM token represents a delegator share so the validator's exchange rate
+// must be used to denominate it's value in native tokens
 func (k Keeper) GetTotalTokenizedDelegations(ctx sdk.Context, hostZone types.HostZone) sdk.Dec {
 	total := sdkmath.ZeroInt()
 	for _, deposit := range k.RecordsKeeper.GetLSMDepositsForHostZone(ctx, hostZone.ChainId) {

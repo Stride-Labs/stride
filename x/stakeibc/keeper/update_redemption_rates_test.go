@@ -271,6 +271,7 @@ func (s *KeeperTestSuite) TestGetRedemptionRate_DepositRecords() {
 }
 
 func (s *KeeperTestSuite) TestGetTokenizedDelegation() {
+	transferQueue := recordtypes.LSMTokenDeposit_TRANSFER_QUEUE
 	transferInProgress := recordtypes.LSMTokenDeposit_TRANSFER_IN_PROGRESS
 	detokenizationQueue := recordtypes.LSMTokenDeposit_DETOKENIZATION_QUEUE
 	detokenizationInProgress := recordtypes.LSMTokenDeposit_DETOKENIZATION_IN_PROGRESS
@@ -293,15 +294,18 @@ func (s *KeeperTestSuite) TestGetTokenizedDelegation() {
 		{ChainId: HostChainId, Status: detokenizationInProgress, Amount: sdk.NewInt(4), ValidatorAddress: "valA"}, // 4 * 1.0 = 4
 
 		// ValidatorB Exchange Rate 0.75
-		{ChainId: HostChainId, Status: detokenizationQueue, Amount: sdk.NewInt(7), ValidatorAddress: "valB"}, // 7 * 0.75 = 5.25 (5)
-		{ChainId: HostChainId, Status: detokenizationQueue, Amount: sdk.NewInt(8), ValidatorAddress: "valB"}, // 8 * 0.75 = 6
+		{ChainId: HostChainId, Status: transferQueue, Amount: sdk.NewInt(7), ValidatorAddress: "valB"}, // 7 * 0.75 = 5.25 (5)
+		{ChainId: HostChainId, Status: transferQueue, Amount: sdk.NewInt(9), ValidatorAddress: "valB"}, // 9 * 0.75 = 6.75 (6)
+
+		{ChainId: HostChainId, Status: detokenizationQueue, Amount: sdk.NewInt(10), ValidatorAddress: "valB"}, // 10 * 0.75 = 7.5 (7)
+		{ChainId: HostChainId, Status: detokenizationQueue, Amount: sdk.NewInt(11), ValidatorAddress: "valB"}, // 11 * 0.75 = 8.25 (8)
 
 		// ValidatorC Exchange Rate 0.50
-		{ChainId: HostChainId, Status: transferFailed, Amount: sdk.NewInt(14), ValidatorAddress: "valC"}, // 14 * 0.5 = 7
-		{ChainId: HostChainId, Status: transferFailed, Amount: sdk.NewInt(17), ValidatorAddress: "valC"}, // 17 * 0.5 = 8.5 (8)
+		{ChainId: HostChainId, Status: transferFailed, Amount: sdk.NewInt(18), ValidatorAddress: "valC"}, // 18 * 0.5 = 9
+		{ChainId: HostChainId, Status: transferFailed, Amount: sdk.NewInt(20), ValidatorAddress: "valC"}, // 20 * 0.5 = 10
 
-		{ChainId: HostChainId, Status: detokenizationFailed, Amount: sdk.NewInt(18), ValidatorAddress: "valC"}, // 18 * 0.5 = 9
-		{ChainId: HostChainId, Status: detokenizationFailed, Amount: sdk.NewInt(20), ValidatorAddress: "valC"}, // 20 * 0.5 = 10
+		{ChainId: HostChainId, Status: detokenizationFailed, Amount: sdk.NewInt(22), ValidatorAddress: "valC"}, // 22 * 0.5 = 11
+		{ChainId: HostChainId, Status: detokenizationFailed, Amount: sdk.NewInt(24), ValidatorAddress: "valC"}, // 24 * 0.5 = 12
 
 		// Status DEPOSIT_PENDING - should be ignored
 		{ChainId: HostChainId, Status: recordtypes.LSMTokenDeposit_DEPOSIT_PENDING, Amount: sdk.NewInt(11)},
@@ -321,7 +325,7 @@ func (s *KeeperTestSuite) TestGetTokenizedDelegation() {
 		{ChainId: HostChainId, Status: transferFailed, Amount: sdk.NewInt(7)},
 		{ChainId: HostChainId, Status: detokenizationFailed, Amount: sdk.NewInt(9)},
 	}
-	expectedTokenizedDelegation := int64(1 + 2 + 3 + 4 + 5 + 6 + 7 + 8 + 9 + 10)
+	expectedTokenizedDelegation := int64(1 + 2 + 3 + 4 + 5 + 6 + 7 + 8 + 9 + 10 + 11 + 12)
 
 	// Store deposits
 	for i, deposit := range lsmDeposits {
