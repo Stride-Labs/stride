@@ -161,7 +161,7 @@ func (k Keeper) GetValidatorFromLSMTokenDenom(denom string, validators []*types.
 				return types.Validator{}, errorsmod.Wrapf(types.ErrValidatorWasSlashed,
 					"validator %s was slashed, liquid stakes from this validator are temporarily unavailable", validator.Address)
 			}
-			if validator.InternalSharesToTokensRate.IsNil() || validator.InternalSharesToTokensRate.IsZero() {
+			if validator.SharesToTokensRate.IsNil() || validator.SharesToTokensRate.IsZero() {
 				return types.Validator{}, errorsmod.Wrapf(types.ErrValidatorExchangeRateNotKnown,
 					"validator %s exchange rate is not known", validator.Address)
 			}
@@ -184,7 +184,7 @@ func (k Keeper) CalculateLSMStToken(liquidStakedShares sdkmath.Int, lsmLiquidSta
 	hostZone := lsmLiquidStake.HostZone
 	validator := lsmLiquidStake.Validator
 
-	liquidStakedTokens := sdk.NewDecFromInt(liquidStakedShares).Mul(validator.InternalSharesToTokensRate)
+	liquidStakedTokens := sdk.NewDecFromInt(liquidStakedShares).Mul(validator.SharesToTokensRate)
 	stAmount := (liquidStakedTokens.Quo(hostZone.RedemptionRate)).TruncateInt()
 
 	stDenom := types.StAssetDenomFromHostZoneDenom(hostZone.HostDenom)

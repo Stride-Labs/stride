@@ -52,7 +52,7 @@ func (s *KeeperTestSuite) SetupDelegatorSharesICQCallback() DelegatorSharesICQCa
 
 	valIndexQueried := 1
 	tokensBeforeSlash := sdkmath.NewInt(1000)
-	internalExchangeRate := sdk.NewDec(1).Quo(sdk.NewDec(2)) // 0.5
+	sharesToTokensRate := sdk.NewDec(1).Quo(sdk.NewDec(2)) // 0.5
 	numShares := sdk.NewDec(1900)
 
 	// 1900 shares * 0.5 exchange rate = 950 tokens
@@ -84,7 +84,7 @@ func (s *KeeperTestSuite) SetupDelegatorSharesICQCallback() DelegatorSharesICQCa
 			{
 				Name:                        "val2",
 				Address:                     ValAddress,
-				InternalSharesToTokensRate:  internalExchangeRate,
+				SharesToTokensRate:          sharesToTokensRate,
 				Delegation:                  tokensBeforeSlash,
 				Weight:                      weightBeforeSlash,
 				SlashQueryInProgress:        true,

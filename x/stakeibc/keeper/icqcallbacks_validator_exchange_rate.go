@@ -51,7 +51,7 @@ func ValidatorExchangeRateCallback(k Keeper, ctx sdk.Context, args []byte, query
 	if !found {
 		return errorsmod.Wrapf(types.ErrValidatorNotFound, "no registered validator for address (%s)", queriedValidator.OperatorAddress)
 	}
-	previousSharesToTokensRate := validator.InternalSharesToTokensRate
+	previousSharesToTokensRate := validator.SharesToTokensRate
 
 	// If the validator's delegation shares is 0, we'll get a division by zero error when trying to get the exchange rate
 	//  because `validator.TokensFromShares` uses delegation shares in the denominator
@@ -66,7 +66,7 @@ func ValidatorExchangeRateCallback(k Keeper, ctx sdk.Context, args []byte, query
 	//  We can use `validator.TokensFromShares`, plug in 1.0 for the number of shares,
 	//    and the returned number of tokens will be equal to the internal exchange rate
 	currentSharesToTokensRate := queriedValidator.TokensFromShares(sdk.NewDec(1.0))
-	validator.InternalSharesToTokensRate = currentSharesToTokensRate
+	validator.SharesToTokensRate = currentSharesToTokensRate
 	hostZone.Validators[valIndex] = &validator
 	k.SetHostZone(ctx, hostZone)
 

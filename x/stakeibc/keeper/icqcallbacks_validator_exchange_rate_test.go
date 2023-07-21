@@ -60,14 +60,14 @@ func (s *KeeperTestSuite) SetupValidatorICQCallback(validatorSlashed, liquidStak
 	// In this example, the validator has 2000 shares, originally had 2000 tokens,
 	// and now has 1000 tokens (after being slashed)
 	numShares := int64(2000)
-	initialExchangeRate := sdk.NewDec(1)
+	sharesToTokensRate := sdk.NewDec(1)
 	exchangeRateIfSlashed := sdk.MustNewDecFromStr("0.5")
 
 	// The validator we'll query the exchange rate for
 	queriedValidator := types.Validator{
-		Name:                       "val1",
-		Address:                    ValAddress,
-		InternalSharesToTokensRate: initialExchangeRate,
+		Name:               "val1",
+		Address:            ValAddress,
+		SharesToTokensRate: sharesToTokensRate,
 	}
 
 	// Mocked state is required for (optional) delegator shares ICQ submission
@@ -152,7 +152,7 @@ func (s *KeeperTestSuite) SetupValidatorICQCallback(validatorSlashed, liquidStak
 func (s *KeeperTestSuite) checkValidatorExchangeRate(expectedExchangeRate sdk.Dec, tc ValidatorICQCallbackTestCase) {
 	hostZone, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx, HostChainId)
 	s.Require().True(found, "host zone found")
-	s.Require().Equal(expectedExchangeRate.String(), hostZone.Validators[0].InternalSharesToTokensRate.String(),
+	s.Require().Equal(expectedExchangeRate.String(), hostZone.Validators[0].SharesToTokensRate.String(),
 		"validator exchange rate should not have updated")
 }
 
@@ -255,7 +255,7 @@ func (s *KeeperTestSuite) TestValidatorExchangeRateCallback_Successful_NoSlash_N
 	s.Require().NoError(err, "validator exchange rate callback error")
 
 	// Confirm validator's exchange rate DID NOT update
-	expectedExchangeRate := tc.initialState.validator.InternalSharesToTokensRate
+	expectedExchangeRate := tc.initialState.validator.SharesToTokensRate
 	s.checkValidatorExchangeRate(expectedExchangeRate, tc)
 
 	// Confirm the delegator shares query WAS NOT submitted
@@ -297,7 +297,7 @@ func (s *KeeperTestSuite) TestValidatorExchangeRateCallback_Successful_NoSlash_L
 	s.Require().NoError(err, "validator exchange rate callback error")
 
 	// Confirm validator's exchange rate DID NOT update
-	expectedExchangeRate := tc.initialState.validator.InternalSharesToTokensRate
+	expectedExchangeRate := tc.initialState.validator.SharesToTokensRate
 	s.checkValidatorExchangeRate(expectedExchangeRate, tc)
 
 	// Confirm the delegator shares query WAS NOT submitted
@@ -335,7 +335,7 @@ func (s *KeeperTestSuite) TestValidatorExchangeRateCallback_Successful_NoSlash_L
 	s.Require().NoError(err, "validator exchange rate callback error")
 
 	// Confirm validator's exchange rate DID NOT update
-	expectedExchangeRate := tc.initialState.validator.InternalSharesToTokensRate
+	expectedExchangeRate := tc.initialState.validator.SharesToTokensRate
 	s.checkValidatorExchangeRate(expectedExchangeRate, tc)
 
 	// Confirm delegator shares query WAS NOT submitted
@@ -381,11 +381,11 @@ func (s *KeeperTestSuite) TestValidatorExchangeRateCallback_Successful_NoPreviou
 	tc := s.SetupValidatorICQCallback(validatorSlashed, false)
 
 	// The exchange rate should update to the initial exchange rate from the test setup
-	expectedExchangeRate := tc.initialState.validator.InternalSharesToTokensRate
+	expectedExchangeRate := tc.initialState.validator.SharesToTokensRate
 
 	// Set the exchange rate to zero
 	hostZone := tc.initialState.hostZone
-	hostZone.Validators[0].InternalSharesToTokensRate = sdk.ZeroDec()
+	hostZone.Validators[0].SharesToTokensRate = sdk.ZeroDec()
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
 
 	err := stakeibckeeper.ValidatorExchangeRateCallback(s.App.StakeibcKeeper, s.Ctx, tc.validArgs.callbackArgs, tc.validArgs.query)
@@ -416,7 +416,7 @@ func (s *KeeperTestSuite) TestValidatorExchangeRateCallback_NoSlash_LiqudStakeFa
 	s.Require().NoError(err, "validator exchange rate callback error")
 
 	// Confirm validator's exchange rate DID update
-	expectedExchangeRate := tc.initialState.validator.InternalSharesToTokensRate
+	expectedExchangeRate := tc.initialState.validator.SharesToTokensRate
 	s.checkValidatorExchangeRate(expectedExchangeRate, tc)
 
 	// Confirm delegator shares query WAS NOT submitted

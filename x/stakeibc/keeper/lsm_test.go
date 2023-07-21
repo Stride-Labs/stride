@@ -33,7 +33,7 @@ func (s *KeeperTestSuite) TestValidateLSMLiquidStake() {
 		ChainId:           HostChainId,
 		TransferChannelId: ibctesting.FirstChannelID,
 		Validators: []*types.Validator{
-			{Address: ValAddress, SlashQueryInProgress: false, InternalSharesToTokensRate: sdk.OneDec()},
+			{Address: ValAddress, SlashQueryInProgress: false, SharesToTokensRate: sdk.OneDec()},
 		},
 		LsmLiquidStakeEnabled: true,
 	}
@@ -184,9 +184,9 @@ func (s *KeeperTestSuite) TestGetValidatorFromLSMTokenDenom() {
 	valAddress := "cosmosvaloperXXX"
 	denom := valAddress + "/42" // add record ID
 	validators := []*types.Validator{{
-		Address:                    valAddress,
-		SlashQueryInProgress:       false,
-		InternalSharesToTokensRate: sdk.OneDec(),
+		Address:              valAddress,
+		SlashQueryInProgress: false,
+		SharesToTokensRate:   sdk.OneDec(),
 	}}
 
 	// Successful lookup
@@ -207,9 +207,9 @@ func (s *KeeperTestSuite) TestGetValidatorFromLSMTokenDenom() {
 
 	// Pass in a validator that has a slash query in flight - it should fail
 	validatorWithSlashQuery := []*types.Validator{{
-		Address:                    valAddress,
-		SlashQueryInProgress:       true,
-		InternalSharesToTokensRate: sdk.OneDec(),
+		Address:              valAddress,
+		SlashQueryInProgress: true,
+		SharesToTokensRate:   sdk.OneDec(),
 	}}
 	_, err = s.App.StakeibcKeeper.GetValidatorFromLSMTokenDenom(denom, validatorWithSlashQuery)
 	s.Require().ErrorContains(err, "validator cosmosvaloperXXX was slashed")
@@ -277,7 +277,7 @@ func (s *KeeperTestSuite) TestCalculateLSMStToken() {
 					RedemptionRate: tc.redemptionRate,
 				},
 				Validator: &types.Validator{
-					InternalSharesToTokensRate: tc.validatorExchangeRate,
+					SharesToTokensRate: tc.validatorExchangeRate,
 				},
 			}
 

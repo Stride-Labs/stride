@@ -77,7 +77,7 @@ func (s *KeeperTestSuite) SetupAddValidators() AddValidatorsTestCase {
 	for _, validator := range expectedValidators {
 		validator.Delegation = sdkmath.ZeroInt()
 		validator.SlashQueryProgressTracker = sdkmath.ZeroInt()
-		validator.InternalSharesToTokensRate = sdk.ZeroDec()
+		validator.SharesToTokensRate = sdk.ZeroDec()
 		validator.SlashQueryCheckpoint = expectedSlashCheckpoint
 	}
 

@@ -255,7 +255,7 @@ func (k Keeper) GetTotalTokenizedDelegations(ctx sdk.Context, hostZone types.Hos
 				continue
 			}
 			liquidStakedShares := deposit.Amount
-			liquidStakedTokens := sdk.NewDecFromInt(liquidStakedShares).Mul(validator.InternalSharesToTokensRate)
+			liquidStakedTokens := sdk.NewDecFromInt(liquidStakedShares).Mul(validator.SharesToTokensRate)
 			total = total.Add(liquidStakedTokens.TruncateInt())
 		}
 	}

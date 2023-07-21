@@ -279,9 +279,9 @@ func (s *KeeperTestSuite) TestGetTokenizedDelegation() {
 	detokenizationFailed := recordtypes.LSMTokenDeposit_DETOKENIZATION_FAILED
 
 	validators := []*types.Validator{
-		{Address: "valA", InternalSharesToTokensRate: sdk.OneDec()},
-		{Address: "valB", InternalSharesToTokensRate: sdk.MustNewDecFromStr("0.75")},
-		{Address: "valC", InternalSharesToTokensRate: sdk.MustNewDecFromStr("0.5")},
+		{Address: "valA", SharesToTokensRate: sdk.OneDec()},
+		{Address: "valB", SharesToTokensRate: sdk.MustNewDecFromStr("0.75")},
+		{Address: "valC", SharesToTokensRate: sdk.MustNewDecFromStr("0.5")},
 	}
 
 	// Total: 1 + 2 + 3 + 4 + 5 + 6 + 7 + 8 + 9 + 10 = 65
