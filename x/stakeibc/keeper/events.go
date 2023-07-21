@@ -61,7 +61,7 @@ func EmitFailedLSMLiquidStakeEvent(ctx sdk.Context, hostZone types.HostZone, lsm
 	)
 }
 
-// Emits an event if a validator's share to tokens rate changed
+// Emits an event if a validator's shares to tokens rate changed
 func EmitValidatorSharesToTokensRateChangeEvent(
 	ctx sdk.Context,
 	chainId string,

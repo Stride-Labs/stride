@@ -214,13 +214,13 @@ func (s *KeeperTestSuite) TestGetValidatorFromLSMTokenDenom() {
 	_, err = s.App.StakeibcKeeper.GetValidatorFromLSMTokenDenom(denom, validatorWithSlashQuery)
 	s.Require().ErrorContains(err, "validator cosmosvaloperXXX was slashed")
 
-	// Pass in a validator with an uninitialized exchange rate - it should fail
+	// Pass in a validator with an uninitialized sharesToTokens rate - it should fail
 	validatorWithoutSharesToTokensRate := []*types.Validator{{
 		Address:              valAddress,
 		SlashQueryInProgress: false,
 	}}
 	_, err = s.App.StakeibcKeeper.GetValidatorFromLSMTokenDenom(denom, validatorWithoutSharesToTokensRate)
-	s.Require().ErrorContains(err, "validator cosmosvaloperXXX exchange rate is not known")
+	s.Require().ErrorContains(err, "validator cosmosvaloperXXX sharesToTokens rate is not known")
 }
 
 func (s *KeeperTestSuite) TestCalculateLSMStToken() {
@@ -233,28 +233,28 @@ func (s *KeeperTestSuite) TestCalculateLSMStToken() {
 	}{
 		// stTokenAmount = liquidStakedShares * validatorSharesToTokensRate / redemptionRate
 		{
-			name:                        "one exchange rate and redemption rate",
+			name:                        "one sharesToTokens rate and redemption rate",
 			liquidStakedShares:          sdkmath.NewInt(1000),
 			validatorSharesToTokensRate: sdk.OneDec(),
 			redemptionRate:              sdk.OneDec(),
 			expectedStAmount:            sdkmath.NewInt(1000),
 		},
 		{
-			name:                        "one exchange rate, non-one redemption rate",
+			name:                        "one sharesToTokens rate, non-one redemption rate",
 			liquidStakedShares:          sdkmath.NewInt(1000),
 			validatorSharesToTokensRate: sdk.OneDec(),
 			redemptionRate:              sdk.MustNewDecFromStr("1.25"),
 			expectedStAmount:            sdkmath.NewInt(800), // 1000 * 1 / 1.25 = 800
 		},
 		{
-			name:                        "non-one exchange rate, one redemption rate",
+			name:                        "non-one sharesToTokens rate, one redemption rate",
 			liquidStakedShares:          sdkmath.NewInt(1000),
 			validatorSharesToTokensRate: sdk.MustNewDecFromStr("0.75"),
 			redemptionRate:              sdk.OneDec(),
 			expectedStAmount:            sdkmath.NewInt(750), // 1000 * 0.75 / 1
 		},
 		{
-			name:                        "non-one exchange rate, non-one redemption rate",
+			name:                        "non-one sharesToTokens rate, non-one redemption rate",
 			liquidStakedShares:          sdkmath.NewInt(1000),
 			validatorSharesToTokensRate: sdk.MustNewDecFromStr("0.75"),
 			redemptionRate:              sdk.MustNewDecFromStr("1.25"),

@@ -357,9 +357,9 @@ func (k Keeper) GetLightClientTimeSafely(ctx sdk.Context, connectionID string) (
 	}
 }
 
-// Submits an ICQ to get a validator's exchange rate
+// Submits an ICQ to get a validator's sharesToTokens rate
 func (k Keeper) QueryValidatorSharesToTokensRate(ctx sdk.Context, chainId, validatorAddress string) error {
-	k.Logger(ctx).Info(utils.LogWithHostZone(chainId, "Submitting ICQ for validator exchange rate to %s", validatorAddress))
+	k.Logger(ctx).Info(utils.LogWithHostZone(chainId, "Submitting ICQ for validator sharesToTokens rate to %s", validatorAddress))
 
 	// Confirm the host zone exists
 	hostZone, found := k.GetHostZone(ctx, chainId)
@@ -379,7 +379,7 @@ func (k Keeper) QueryValidatorSharesToTokensRate(ctx sdk.Context, chainId, valid
 	}
 	queryData := stakingtypes.GetValidatorKey(validatorAddressBz)
 
-	// Submit validator exchange rate ICQ
+	// Submit validator sharesToTokens rate ICQ
 	// Considering this query is executed manually, we can be conservative with the timeout
 	query := icqtypes.Query{
 		ChainId:         hostZone.ChainId,
@@ -391,14 +391,14 @@ func (k Keeper) QueryValidatorSharesToTokensRate(ctx sdk.Context, chainId, valid
 		TimeoutDuration: time.Hour,
 	}
 	if err := k.InterchainQueryKeeper.SubmitICQRequest(ctx, query, false); err != nil {
-		k.Logger(ctx).Error(fmt.Sprintf("Error submitting ICQ for validator exchange rate, error %s", err.Error()))
+		k.Logger(ctx).Error(fmt.Sprintf("Error submitting ICQ for validator sharesToTokens rate, error %s", err.Error()))
 		return err
 	}
 	return nil
 }
 
 // Submits an ICQ to get a validator's delegations
-// This is called after the validator's exchange rate is determined
+// This is called after the validator's sharesToTokens rate is determined
 // The timeoutDuration parameter represents the length of the timeout (not to be confused with an actual timestamp)
 func (k Keeper) QueryDelegationsIcq(ctx sdk.Context, hostZone types.HostZone, validatorAddress string, timeoutDuration time.Duration) error {
 	k.Logger(ctx).Info(utils.LogWithHostZone(hostZone.ChainId, "Submitting ICQ for delegations to %s", validatorAddress))

@@ -205,7 +205,7 @@ func (s *KeeperTestSuite) TestLSMLiquidStake_DifferentRedemptionRates() {
 	tc := s.SetupTestLSMLiquidStake()
 	tc.validMsg.Amount = sdk.NewInt(100) // reduce the stake amount to prevent insufficient balance error
 
-	// Loop over exchange rates: {0.92, 0.94, ..., 1.2}
+	// Loop over sharesToTokens rates: {0.92, 0.94, ..., 1.2}
 	interval := sdk.MustNewDecFromStr("0.01")
 	for i := -8; i <= 10; i += 2 {
 		redemptionDelta := interval.Mul(sdk.NewDec(int64(i))) // i = 2 => delta = 0.02

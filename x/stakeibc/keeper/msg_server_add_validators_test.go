@@ -52,7 +52,7 @@ func (s *KeeperTestSuite) SetupAddValidators() AddValidatorsTestCase {
 	}
 
 	// mapping of query request data to validator name
-	// serves as a reverse lookup to map exchange rate queries to validators
+	// serves as a reverse lookup to map sharesToTokens rate queries to validators
 	validatorQueryDataToName := map[string]string{}
 	for name, address := range validatorAddresses {
 		queryData := s.getSharesToTokensRateQueryData(address)

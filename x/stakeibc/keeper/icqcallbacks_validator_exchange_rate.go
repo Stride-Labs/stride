@@ -19,16 +19,16 @@ import (
 // ValidatorCallback is a callback handler for validator queries.
 //
 // In an attempt to get the ICA's delegation amount on a given validator, we have to query:
-//  1. the validator's internal exchange rate
+//  1. the validator's internal sharesToTokens rate
 //  2. the Delegation ICA's delegated shares
 //     And apply the following equation:
-//     num_tokens = exchange_rate * num_shares
+//     num_tokens = num_shares * sharesToTokensRate
 //
 // This is the callback from query #1
-// We only issue query #2 if the validator exchange rate from #1 has changed (indicating a slash)
+// We only issue query #2 if the validator sharesToTokens rate from #1 has changed (indicating a slash)
 func ValidatorSharesToTokensRateCallback(k Keeper, ctx sdk.Context, args []byte, query icqtypes.Query) error {
 	k.Logger(ctx).Info(utils.LogICQCallbackWithHostZone(query.ChainId, ICQCallbackID_Validator,
-		"Starting validator exchange rate balance callback, QueryId: %vs, QueryType: %s, Connection: %s", query.Id, query.QueryType, query.ConnectionId))
+		"Starting validator sharesToTokens rate balance callback, QueryId: %vs, QueryType: %s, Connection: %s", query.Id, query.QueryType, query.ConnectionId))
 
 	// Confirm host exists
 	chainId := query.ChainId
@@ -53,35 +53,36 @@ func ValidatorSharesToTokensRateCallback(k Keeper, ctx sdk.Context, args []byte,
 	}
 	previousSharesToTokensRate := validator.SharesToTokensRate
 
-	// If the validator's delegation shares is 0, we'll get a division by zero error when trying to get the exchange rate
+	// If the validator's delegation shares is 0, we'll get a division by zero error when trying to get the sharesToTokens rate
 	//  because `validator.TokensFromShares` uses delegation shares in the denominator
 	if queriedValidator.DelegatorShares.IsZero() {
 		return errorsmod.Wrapf(types.ErrDivisionByZero,
-			"can't calculate validator internal exchange rate because delegation amount is 0 (validator: %s)", validator.Address)
+			"can't calculate validator internal sharesToTokens rate because delegation amount is 0 (validator: %s)", validator.Address)
 	}
 
-	// We want the validator's internal exchange rate which is held internally behind `validator.TokensFromShares`
+	// We want the validator's internal sharesToTokens rate which is held internally
+	// behind the inverse of the function `validator.TokensFromShares`
 	//  Since,
-	//     exchange_rate = num_tokens / num_shares
+	//     shares_to_tokens = num_tokens / num_shares
 	//  We can use `validator.TokensFromShares`, plug in 1.0 for the number of shares,
-	//    and the returned number of tokens will be equal to the internal exchange rate
+	//    and the returned number of tokens will be equal to the internal sharesToTokens rate
 	currentSharesToTokensRate := queriedValidator.TokensFromShares(sdk.NewDec(1.0))
 	validator.SharesToTokensRate = currentSharesToTokensRate
 	hostZone.Validators[valIndex] = &validator
 	k.SetHostZone(ctx, hostZone)
 
-	// Check if the validator was slashed by comparing the exchange rate from the query
-	// with the preivously stored exchange rate
+	// Check if the validator was slashed by comparing the sharesToTokens rate from the query
+	// with the preivously stored sharesToTokens rate
 	validatorWasSlashed := false
 	if previousSharesToTokensRate.IsNil() || previousSharesToTokensRate.IsZero() {
 		k.Logger(ctx).Info(utils.LogICQCallbackWithHostZone(chainId, ICQCallbackID_Validator,
-			"Previous Validator Exchange Rate Unknown"))
+			"Previous Validator SharesToTokens Rate Unknown"))
 
 	} else {
 		validatorWasSlashed = !previousSharesToTokensRate.Equal(currentSharesToTokensRate)
 
 		k.Logger(ctx).Info(utils.LogICQCallbackWithHostZone(chainId, ICQCallbackID_Validator,
-			"Previous Validator Exchange Rate: %v, Current Validator Exchange Rate: %v",
+			"Previous Validator SharesToTokens Rate: %v, Current Validator SharesToTokens Rate: %v",
 			previousSharesToTokensRate, currentSharesToTokensRate))
 	}
 
@@ -103,7 +104,7 @@ func ValidatorSharesToTokensRateCallback(k Keeper, ctx sdk.Context, args []byte,
 	if inLSMLiquidStakeCallback {
 		var callbackData types.ValidatorSharesToTokensQueryCallback
 		if err := proto.Unmarshal(query.CallbackData, &callbackData); err != nil {
-			return errorsmod.Wrapf(err, "unable to unmarshal validator exchange rate callback data")
+			return errorsmod.Wrapf(err, "unable to unmarshal validator sharesToTokens rate callback data")
 		}
 		lsmLiquidStake = *callbackData.LsmLiquidStake
 		lsmTokenDeposit = *lsmLiquidStake.Deposit
@@ -137,7 +138,7 @@ func ValidatorSharesToTokensRateCallback(k Keeper, ctx sdk.Context, args []byte,
 	// If we're in the LSM liquid stake callback and there was a slash, reject the transaction by emitting an event
 	if inLSMLiquidStakeCallback {
 		// Emit an event to indicate that the transaction failed
-		errorMessage := fmt.Sprintf("validator was slashed - previous exchange rate: %s, current exchange rate: %s",
+		errorMessage := fmt.Sprintf("validator was slashed - previous sharesToTokens rate: %s, current sharesToTokens rate: %s",
 			previousSharesToTokensRate, currentSharesToTokensRate)
 
 		EmitFailedLSMLiquidStakeEvent(ctx, hostZone, lsmTokenDeposit, errorMessage)
@@ -158,7 +159,7 @@ func ValidatorSharesToTokensRateCallback(k Keeper, ctx sdk.Context, args []byte,
 		timeoutDuration = LSMSlashQueryTimeout
 	}
 
-	// Now that we're armed with the exchange rate, we can query for the delegator shares and calculated the
+	// Now that we're armed with the sharesToTokens rate, we can query for the delegator shares and calculated the
 	// current delegated tokens
 	if err := k.QueryDelegationsIcq(ctx, hostZone, validator.Address, timeoutDuration); err != nil {
 		return errorsmod.Wrapf(types.ErrICQFailed, "Failed to query delegations, err: %s", err.Error())

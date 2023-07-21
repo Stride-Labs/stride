@@ -41,7 +41,7 @@ func (s *KeeperTestSuite) TestQueryValidatorSharesToTokensRate_Successful() {
 	s.SetupQueryValidatorSharesToTokensRate()
 
 	err := s.App.StakeibcKeeper.QueryValidatorSharesToTokensRate(s.Ctx, HostChainId, ValAddress)
-	s.Require().NoError(err, "no error expected when querying validator exchange rate")
+	s.Require().NoError(err, "no error expected when querying validator sharesToTokens rate")
 
 	// check a query was created (a simple test; details about queries are covered in makeRequest's test)
 	queries := s.App.InterchainqueryKeeper.AllQueries(s.Ctx)
