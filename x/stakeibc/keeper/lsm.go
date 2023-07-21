@@ -162,7 +162,7 @@ func (k Keeper) GetValidatorFromLSMTokenDenom(denom string, validators []*types.
 					"validator %s was slashed, liquid stakes from this validator are temporarily unavailable", validator.Address)
 			}
 			if validator.SharesToTokensRate.IsNil() || validator.SharesToTokensRate.IsZero() {
-				return types.Validator{}, errorsmod.Wrapf(types.ErrValidatorExchangeRateNotKnown,
+				return types.Validator{}, errorsmod.Wrapf(types.ErrValidatorSharesToTokensRateNotKnown,
 					"validator %s exchange rate is not known", validator.Address)
 			}
 			return *validator, nil

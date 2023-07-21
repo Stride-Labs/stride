@@ -102,7 +102,7 @@ func (s *KeeperTestSuite) SetupTestLSMLiquidStake() LSMLiquidStakeTestCase {
 	}
 }
 
-func (s *KeeperTestSuite) TestLSMLiquidStake_Successful_NoExchangeRateQuery() {
+func (s *KeeperTestSuite) TestLSMLiquidStake_Successful_NoSharesToTokensRateQuery() {
 	tc := s.SetupTestLSMLiquidStake()
 
 	// Call LSM Liquid stake with a valid message
@@ -141,7 +141,7 @@ func (s *KeeperTestSuite) TestLSMLiquidStake_Successful_NoExchangeRateQuery() {
 	s.Require().Equal(expectedQueryProgress.Int64(), hostZone.Validators[0].SlashQueryProgressTracker.Int64(), "slash query progress")
 }
 
-func (s *KeeperTestSuite) TestLSMLiquidStake_Successful_WithExchangeRateQuery() {
+func (s *KeeperTestSuite) TestLSMLiquidStake_Successful_WithSharesToTokensRateQuery() {
 	tc := s.SetupTestLSMLiquidStake()
 
 	// Increase the liquid stake size so that it breaks the query checkpoint

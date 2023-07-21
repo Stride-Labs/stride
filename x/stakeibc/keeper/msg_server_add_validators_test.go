@@ -23,7 +23,7 @@ type AddValidatorsTestCase struct {
 
 // Helper function to determine the validator's key in the staking store
 // which is used as the request data in the ICQ
-func (s *KeeperTestSuite) getExchangeRateQueryData(validatorAddress string) []byte {
+func (s *KeeperTestSuite) getSharesToTokensRateQueryData(validatorAddress string) []byte {
 	_, validatorAddressBz, err := bech32.DecodeAndConvert(validatorAddress)
 	s.Require().NoError(err, "no error expected when decoding validator address")
 	return stakingtypes.GetValidatorKey(validatorAddressBz)
@@ -55,7 +55,7 @@ func (s *KeeperTestSuite) SetupAddValidators() AddValidatorsTestCase {
 	// serves as a reverse lookup to map exchange rate queries to validators
 	validatorQueryDataToName := map[string]string{}
 	for name, address := range validatorAddresses {
-		queryData := s.getExchangeRateQueryData(address)
+		queryData := s.getSharesToTokensRateQueryData(address)
 		validatorQueryDataToName[string(queryData)] = name
 	}
 
