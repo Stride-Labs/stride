@@ -246,12 +246,12 @@ func (s *KeeperTestSuite) checkDelegatorSharesQueryNotSubmitted() {
 
 // Test case where the callback was successful, there was no slash, and this was not a liquid stake callback
 // Here the exchange rate should not update and there should be no delegator shares query submitted
-func (s *KeeperTestSuite) TestValidatorExchangeRateCallback_Successful_NoSlash_NoLiquidStake() {
+func (s *KeeperTestSuite) TestValidatorSharesToTokensRateCallback_Successful_NoSlash_NoLiquidStake() {
 	validatorSlashed := false
 	lsmCallback := false
 	tc := s.SetupValidatorICQCallback(validatorSlashed, lsmCallback)
 
-	err := stakeibckeeper.ValidatorExchangeRateCallback(s.App.StakeibcKeeper, s.Ctx, tc.validArgs.callbackArgs, tc.validArgs.query)
+	err := stakeibckeeper.ValidatorSharesToTokensRateCallback(s.App.StakeibcKeeper, s.Ctx, tc.validArgs.callbackArgs, tc.validArgs.query)
 	s.Require().NoError(err, "validator exchange rate callback error")
 
 	// Confirm validator's exchange rate DID NOT update
@@ -267,12 +267,12 @@ func (s *KeeperTestSuite) TestValidatorExchangeRateCallback_Successful_NoSlash_N
 
 // Test case where the callback was successful and there was a slash, but the query was issued manually
 // Here the exchange rate should update and the delegator shares query should be submitted
-func (s *KeeperTestSuite) TestValidatorExchangeRateCallback_Successful_Slash_NoLiquidStake() {
+func (s *KeeperTestSuite) TestValidatorSharesToTokensRateCallback_Successful_Slash_NoLiquidStake() {
 	validatorSlashed := true
 	lsmCallback := false
 	tc := s.SetupValidatorICQCallback(validatorSlashed, lsmCallback)
 
-	err := stakeibckeeper.ValidatorExchangeRateCallback(s.App.StakeibcKeeper, s.Ctx, tc.validArgs.callbackArgs, tc.validArgs.query)
+	err := stakeibckeeper.ValidatorSharesToTokensRateCallback(s.App.StakeibcKeeper, s.Ctx, tc.validArgs.callbackArgs, tc.validArgs.query)
 	s.Require().NoError(err, "validator exchange rate callback error")
 
 	// Confirm validator's exchange rate DID update
@@ -288,12 +288,12 @@ func (s *KeeperTestSuite) TestValidatorExchangeRateCallback_Successful_Slash_NoL
 // Test case where the callback was successful, there was no slash, and this query was from a liquid stake
 // Here the exchange rate should not update, the delegator shares query should not be submitted, and
 // the liquid stake should have succeeded
-func (s *KeeperTestSuite) TestValidatorExchangeRateCallback_Successful_NoSlash_LiquidStake() {
+func (s *KeeperTestSuite) TestValidatorSharesToTokensRateCallback_Successful_NoSlash_LiquidStake() {
 	validatorSlashed := false
 	lsmCallback := true
 	tc := s.SetupValidatorICQCallback(validatorSlashed, lsmCallback)
 
-	err := stakeibckeeper.ValidatorExchangeRateCallback(s.App.StakeibcKeeper, s.Ctx, tc.validArgs.callbackArgs, tc.validArgs.query)
+	err := stakeibckeeper.ValidatorSharesToTokensRateCallback(s.App.StakeibcKeeper, s.Ctx, tc.validArgs.callbackArgs, tc.validArgs.query)
 	s.Require().NoError(err, "validator exchange rate callback error")
 
 	// Confirm validator's exchange rate DID NOT update
@@ -311,7 +311,7 @@ func (s *KeeperTestSuite) TestValidatorExchangeRateCallback_Successful_NoSlash_L
 // but the finishing of the liquid stake failed
 // Any state changes from the finish liquid stake should be discarded, including
 // the transfer of LSM tokens to the deposit account
-func (s *KeeperTestSuite) TestValidatorExchangeRateCallback_Successful_NoSlash_LiquidStakeFailed() {
+func (s *KeeperTestSuite) TestValidatorSharesToTokensRateCallback_Successful_NoSlash_LiquidStakeFailed() {
 	validatorSlashed := false
 	lsmCallback := true
 	tc := s.SetupValidatorICQCallback(validatorSlashed, lsmCallback)
@@ -331,7 +331,7 @@ func (s *KeeperTestSuite) TestValidatorExchangeRateCallback_Successful_NoSlash_L
 	// When the callback runs, the finishing of the LSM liquid stake should make partial state changes, including
 	// the sending of LSM tokens to the module account
 	// However, that change should be discarded since the liquid stake failed
-	err = stakeibckeeper.ValidatorExchangeRateCallback(s.App.StakeibcKeeper, s.Ctx, tc.validArgs.callbackArgs, invalidQuery)
+	err = stakeibckeeper.ValidatorSharesToTokensRateCallback(s.App.StakeibcKeeper, s.Ctx, tc.validArgs.callbackArgs, invalidQuery)
 	s.Require().NoError(err, "validator exchange rate callback error")
 
 	// Confirm validator's exchange rate DID NOT update
@@ -357,12 +357,12 @@ func (s *KeeperTestSuite) TestValidatorExchangeRateCallback_Successful_NoSlash_L
 // Test case where the callback was successful, there was a slash, and this query was from a liquid stake
 // Here the exchange rate should update, the delegator shares query should be submitted,
 // and the liquid stake should be rejected
-func (s *KeeperTestSuite) TestValidatorExchangeRateCallback_Successful_Slash_LiquidStake() {
+func (s *KeeperTestSuite) TestValidatorSharesToTokensRateCallback_Successful_Slash_LiquidStake() {
 	validatorSlashed := true
 	lsmCallback := true
 	tc := s.SetupValidatorICQCallback(validatorSlashed, lsmCallback)
 
-	err := stakeibckeeper.ValidatorExchangeRateCallback(s.App.StakeibcKeeper, s.Ctx, tc.validArgs.callbackArgs, tc.validArgs.query)
+	err := stakeibckeeper.ValidatorSharesToTokensRateCallback(s.App.StakeibcKeeper, s.Ctx, tc.validArgs.callbackArgs, tc.validArgs.query)
 	s.Require().NoError(err, "validator exchange rate callback error")
 
 	// Confirm validator's exchange rate DID update
@@ -376,7 +376,7 @@ func (s *KeeperTestSuite) TestValidatorExchangeRateCallback_Successful_Slash_Liq
 }
 
 // Test case where the callback was successful, but there was not previous exchange rate to determine if a slash occured
-func (s *KeeperTestSuite) TestValidatorExchangeRateCallback_Successful_NoPreviousExchangeRate() {
+func (s *KeeperTestSuite) TestValidatorSharesToTokensRateCallback_Successful_NoPreviousExchangeRate() {
 	validatorSlashed := false
 	tc := s.SetupValidatorICQCallback(validatorSlashed, false)
 
@@ -388,7 +388,7 @@ func (s *KeeperTestSuite) TestValidatorExchangeRateCallback_Successful_NoPreviou
 	hostZone.Validators[0].SharesToTokensRate = sdk.ZeroDec()
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
 
-	err := stakeibckeeper.ValidatorExchangeRateCallback(s.App.StakeibcKeeper, s.Ctx, tc.validArgs.callbackArgs, tc.validArgs.query)
+	err := stakeibckeeper.ValidatorSharesToTokensRateCallback(s.App.StakeibcKeeper, s.Ctx, tc.validArgs.callbackArgs, tc.validArgs.query)
 	s.Require().NoError(err, "validator exchange rate callback error")
 
 	// Confirm validator's exchange rate DID update
@@ -399,7 +399,7 @@ func (s *KeeperTestSuite) TestValidatorExchangeRateCallback_Successful_NoPreviou
 }
 
 // Test case where the there was no slash, but the liquid stake callback failed
-func (s *KeeperTestSuite) TestValidatorExchangeRateCallback_NoSlash_LiqudStakeFailed() {
+func (s *KeeperTestSuite) TestValidatorSharesToTokensRateCallback_NoSlash_LiqudStakeFailed() {
 	validatorSlashed := false
 	lsmCallback := true
 	tc := s.SetupValidatorICQCallback(validatorSlashed, lsmCallback)
@@ -412,7 +412,7 @@ func (s *KeeperTestSuite) TestValidatorExchangeRateCallback_NoSlash_LiqudStakeFa
 	s.Require().NoError(err, "no error expected when sending liquid staker's LSM tokens")
 
 	// Now when we call the callback, the callback itself should succeed, but the finishing of the liquid stake should fail
-	err = stakeibckeeper.ValidatorExchangeRateCallback(s.App.StakeibcKeeper, s.Ctx, tc.validArgs.callbackArgs, tc.validArgs.query)
+	err = stakeibckeeper.ValidatorSharesToTokensRateCallback(s.App.StakeibcKeeper, s.Ctx, tc.validArgs.callbackArgs, tc.validArgs.query)
 	s.Require().NoError(err, "validator exchange rate callback error")
 
 	// Confirm validator's exchange rate DID update
@@ -426,60 +426,60 @@ func (s *KeeperTestSuite) TestValidatorExchangeRateCallback_NoSlash_LiqudStakeFa
 	s.checkLSMLiquidStakeFailed()
 }
 
-func (s *KeeperTestSuite) TestValidatorExchangeRateCallback_HostZoneNotFound() {
+func (s *KeeperTestSuite) TestValidatorSharesToTokensRateCallback_HostZoneNotFound() {
 	tc := s.SetupValidatorICQCallback(false, false)
 
 	// Set an incorrect host zone in the query
 	badQuery := tc.validArgs.query
 	badQuery.ChainId = "fake_host_zone"
 
-	err := stakeibckeeper.ValidatorExchangeRateCallback(s.App.StakeibcKeeper, s.Ctx, tc.validArgs.callbackArgs, badQuery)
+	err := stakeibckeeper.ValidatorSharesToTokensRateCallback(s.App.StakeibcKeeper, s.Ctx, tc.validArgs.callbackArgs, badQuery)
 	s.Require().EqualError(err, "no registered zone for queried chain ID (fake_host_zone): host zone not found")
 }
 
-func (s *KeeperTestSuite) TestValidatorExchangeRateCallback_InvalidCallbackArgs() {
+func (s *KeeperTestSuite) TestValidatorSharesToTokensRateCallback_InvalidCallbackArgs() {
 	tc := s.SetupValidatorICQCallback(false, false)
 
 	// Submit callback with invalid callback args (so that it can't unmarshal into a validator)
 	invalidArgs := []byte("random bytes")
-	err := stakeibckeeper.ValidatorExchangeRateCallback(s.App.StakeibcKeeper, s.Ctx, invalidArgs, tc.validArgs.query)
+	err := stakeibckeeper.ValidatorSharesToTokensRateCallback(s.App.StakeibcKeeper, s.Ctx, invalidArgs, tc.validArgs.query)
 	s.Require().ErrorContains(err, "unable to unmarshal query response into Validator type")
 }
 
-func (s *KeeperTestSuite) TestValidatorExchangeRateCallback_InvalidCallbackData() {
+func (s *KeeperTestSuite) TestValidatorSharesToTokensRateCallback_InvalidCallbackData() {
 	tc := s.SetupValidatorICQCallback(false, false)
 
 	// Submit callback with invalid callback args (so that it can't unmarshal into a validator)
 	invalidQuery := tc.validArgs.query
 	invalidQuery.CallbackData = []byte("random bytes")
 
-	err := stakeibckeeper.ValidatorExchangeRateCallback(s.App.StakeibcKeeper, s.Ctx, tc.validArgs.callbackArgs, invalidQuery)
+	err := stakeibckeeper.ValidatorSharesToTokensRateCallback(s.App.StakeibcKeeper, s.Ctx, tc.validArgs.callbackArgs, invalidQuery)
 	s.Require().ErrorContains(err, "unable to unmarshal validator exchange rate callback data")
 }
 
-func (s *KeeperTestSuite) TestValidatorExchangeRateCallback_ValidatorNotFound() {
+func (s *KeeperTestSuite) TestValidatorSharesToTokensRateCallback_ValidatorNotFound() {
 	tc := s.SetupValidatorICQCallback(false, false)
 
 	// Update the callback args to contain a validator address that doesn't exist
 	badCallbackArgs := s.CreateValidatorQueryResponse("fake_val", 1, 1)
-	err := stakeibckeeper.ValidatorExchangeRateCallback(s.App.StakeibcKeeper, s.Ctx, badCallbackArgs, tc.validArgs.query)
+	err := stakeibckeeper.ValidatorSharesToTokensRateCallback(s.App.StakeibcKeeper, s.Ctx, badCallbackArgs, tc.validArgs.query)
 	s.Require().EqualError(err, "no registered validator for address (fake_val): validator not found")
 }
 
-func (s *KeeperTestSuite) TestValidatorExchangeRateCallback_DelegatorSharesZero() {
+func (s *KeeperTestSuite) TestValidatorSharesToTokensRateCallback_DelegatorSharesZero() {
 	tc := s.SetupValidatorICQCallback(false, false)
 
 	// Set the delegator shares to 0, which cause division by zero in `validator.TokensFromShares`
 	valAddress := tc.initialState.validator.Address
 	badCallbackArgs := s.CreateValidatorQueryResponse(valAddress, 1000, 0) // the 1000 is arbitrary, the zero here is what matters
-	err := stakeibckeeper.ValidatorExchangeRateCallback(s.App.StakeibcKeeper, s.Ctx, badCallbackArgs, tc.validArgs.query)
+	err := stakeibckeeper.ValidatorSharesToTokensRateCallback(s.App.StakeibcKeeper, s.Ctx, badCallbackArgs, tc.validArgs.query)
 
 	expectedErrMsg := "can't calculate validator internal exchange rate because delegation amount is 0 "
 	expectedErrMsg += fmt.Sprintf("(validator: %s): division by zero", valAddress)
 	s.Require().EqualError(err, expectedErrMsg)
 }
 
-func (s *KeeperTestSuite) TestValidatorExchangeRateCallback_DelegationQueryFailed() {
+func (s *KeeperTestSuite) TestValidatorSharesToTokensRateCallback_DelegationQueryFailed() {
 	tc := s.SetupValidatorICQCallback(true, false)
 
 	// Remove host zone delegation address so delegation query fails
@@ -487,7 +487,7 @@ func (s *KeeperTestSuite) TestValidatorExchangeRateCallback_DelegationQueryFaile
 	badHostZone.DelegationIcaAddress = ""
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, badHostZone)
 
-	err := stakeibckeeper.ValidatorExchangeRateCallback(s.App.StakeibcKeeper, s.Ctx, tc.validArgs.callbackArgs, tc.validArgs.query)
+	err := stakeibckeeper.ValidatorSharesToTokensRateCallback(s.App.StakeibcKeeper, s.Ctx, tc.validArgs.callbackArgs, tc.validArgs.query)
 
 	expectedErr := "Failed to query delegations, err: no delegation address found for GAIA: "
 	expectedErr += "ICA acccount not found on host zone: failed to submit ICQ"

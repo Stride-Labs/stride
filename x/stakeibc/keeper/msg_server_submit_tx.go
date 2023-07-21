@@ -358,7 +358,7 @@ func (k Keeper) GetLightClientTimeSafely(ctx sdk.Context, connectionID string) (
 }
 
 // Submits an ICQ to get a validator's exchange rate
-func (k Keeper) QueryValidatorExchangeRate(ctx sdk.Context, chainId, validatorAddress string) error {
+func (k Keeper) QueryValidatorSharesToTokensRate(ctx sdk.Context, chainId, validatorAddress string) error {
 	k.Logger(ctx).Info(utils.LogWithHostZone(chainId, "Submitting ICQ for validator exchange rate to %s", validatorAddress))
 
 	// Confirm the host zone exists
