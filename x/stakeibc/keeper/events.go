@@ -36,6 +36,7 @@ func getLSMLiquidStakeEventAttributes(hostZone types.HostZone, lsmTokenDeposit r
 		sdk.NewAttribute(types.AttributeKeyLSMTokenBaseDenom, lsmTokenDeposit.Denom),
 		sdk.NewAttribute(types.AttributeKeyNativeAmount, lsmTokenDeposit.Amount.String()),
 		sdk.NewAttribute(types.AttributeKeyStTokenAmount, lsmTokenDeposit.StToken.Amount.String()),
+		sdk.NewAttribute(types.AttributeKeyLSMLiquidStakeTxId, lsmTokenDeposit.DepositId),
 	}
 }
 
