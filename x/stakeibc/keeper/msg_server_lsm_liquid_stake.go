@@ -107,7 +107,7 @@ func (k Keeper) SubmitValidatorSlashQuery(ctx sdk.Context, lsmLiquidStake types.
 	queryData := stakingtypes.GetValidatorKey(validatorAddressBz)
 
 	// Build and serialize the callback data required to complete the LSM Liquid stake upon query callback
-	callbackData := types.ValidatorExchangeRateQueryCallback{
+	callbackData := types.ValidatorSharesToTokensQueryCallback{
 		LsmLiquidStake: &lsmLiquidStake,
 	}
 	callbackDataBz, err := proto.Marshal(&callbackData)

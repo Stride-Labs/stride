@@ -101,7 +101,7 @@ func ValidatorExchangeRateCallback(k Keeper, ctx sdk.Context, args []byte, query
 	var lsmLiquidStake types.LSMLiquidStake
 	var lsmTokenDeposit recordstypes.LSMTokenDeposit
 	if inLSMLiquidStakeCallback {
-		var callbackData types.ValidatorExchangeRateQueryCallback
+		var callbackData types.ValidatorSharesToTokensQueryCallback
 		if err := proto.Unmarshal(query.CallbackData, &callbackData); err != nil {
 			return errorsmod.Wrapf(err, "unable to unmarshal validator exchange rate callback data")
 		}

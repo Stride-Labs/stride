@@ -123,7 +123,7 @@ func (s *KeeperTestSuite) SetupValidatorICQCallback(validatorSlashed, liquidStak
 			Validator: &queriedValidator,
 			Deposit:   &lsmTokenDeposit,
 		}
-		callbackDataBz, err = proto.Marshal(&types.ValidatorExchangeRateQueryCallback{
+		callbackDataBz, err = proto.Marshal(&types.ValidatorSharesToTokensQueryCallback{
 			LsmLiquidStake: &lsmLiquidStake,
 		})
 		s.Require().NoError(err, "no error expected when marshalling callback data")
@@ -317,7 +317,7 @@ func (s *KeeperTestSuite) TestValidatorExchangeRateCallback_Successful_NoSlash_L
 	tc := s.SetupValidatorICQCallback(validatorSlashed, lsmCallback)
 
 	// Remove the host zone's delegation account - this should cause the finishing of the LSM liquid stake to fail
-	var callbackData types.ValidatorExchangeRateQueryCallback
+	var callbackData types.ValidatorSharesToTokensQueryCallback
 	err := proto.Unmarshal(tc.validArgs.query.CallbackData, &callbackData)
 	s.Require().NoError(err, "no error expected when unmarshaling query args")
 

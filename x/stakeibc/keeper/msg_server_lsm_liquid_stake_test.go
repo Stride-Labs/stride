@@ -190,7 +190,7 @@ func (s *KeeperTestSuite) TestLSMLiquidStake_Successful_WithSharesToTokensRateQu
 		Status:           recordstypes.LSMTokenDeposit_DEPOSIT_PENDING,
 	}
 
-	var actualCallbackData types.ValidatorExchangeRateQueryCallback
+	var actualCallbackData types.ValidatorSharesToTokensQueryCallback
 	err = proto.Unmarshal(actualQuery.CallbackData, &actualCallbackData)
 	s.Require().NoError(err, "no error expected when unmarshalling query callback data")
 
