@@ -149,10 +149,10 @@ func (s *KeeperTestSuite) SetupValidatorICQCallback(validatorSlashed, liquidStak
 }
 
 // Helper function to check the validator exchange rate after the query
-func (s *KeeperTestSuite) checkValidatorExchangeRate(expectedExchangeRate sdk.Dec, tc ValidatorICQCallbackTestCase) {
+func (s *KeeperTestSuite) checkValidatorSharesToTokensRate(expectedSharesToTokensRate sdk.Dec, tc ValidatorICQCallbackTestCase) {
 	hostZone, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx, HostChainId)
 	s.Require().True(found, "host zone found")
-	s.Require().Equal(expectedExchangeRate.String(), hostZone.Validators[0].SharesToTokensRate.String(),
+	s.Require().Equal(expectedSharesToTokensRate.String(), hostZone.Validators[0].SharesToTokensRate.String(),
 		"validator exchange rate should not have updated")
 }
 
@@ -255,8 +255,8 @@ func (s *KeeperTestSuite) TestValidatorSharesToTokensRateCallback_Successful_NoS
 	s.Require().NoError(err, "validator exchange rate callback error")
 
 	// Confirm validator's exchange rate DID NOT update
-	expectedExchangeRate := tc.initialState.validator.SharesToTokensRate
-	s.checkValidatorExchangeRate(expectedExchangeRate, tc)
+	expectedSharesToTokensRate := tc.initialState.validator.SharesToTokensRate
+	s.checkValidatorSharesToTokensRate(expectedSharesToTokensRate, tc)
 
 	// Confirm the delegator shares query WAS NOT submitted
 	s.checkDelegatorSharesQueryNotSubmitted()
@@ -276,7 +276,7 @@ func (s *KeeperTestSuite) TestValidatorSharesToTokensRateCallback_Successful_Sla
 	s.Require().NoError(err, "validator exchange rate callback error")
 
 	// Confirm validator's exchange rate DID update
-	s.checkValidatorExchangeRate(tc.sharesToTokensRateIfSlashed, tc)
+	s.checkValidatorSharesToTokensRate(tc.sharesToTokensRateIfSlashed, tc)
 
 	// Confirm delegator shares query WAS submitted
 	s.checkDelegatorSharesQuerySubmitted(lsmCallback, tc)
@@ -297,8 +297,8 @@ func (s *KeeperTestSuite) TestValidatorSharesToTokensRateCallback_Successful_NoS
 	s.Require().NoError(err, "validator exchange rate callback error")
 
 	// Confirm validator's exchange rate DID NOT update
-	expectedExchangeRate := tc.initialState.validator.SharesToTokensRate
-	s.checkValidatorExchangeRate(expectedExchangeRate, tc)
+	expectedSharesToTokensRate := tc.initialState.validator.SharesToTokensRate
+	s.checkValidatorSharesToTokensRate(expectedSharesToTokensRate, tc)
 
 	// Confirm the delegator shares query WAS NOT submitted
 	s.checkDelegatorSharesQueryNotSubmitted()
@@ -335,8 +335,8 @@ func (s *KeeperTestSuite) TestValidatorSharesToTokensRateCallback_Successful_NoS
 	s.Require().NoError(err, "validator exchange rate callback error")
 
 	// Confirm validator's exchange rate DID NOT update
-	expectedExchangeRate := tc.initialState.validator.SharesToTokensRate
-	s.checkValidatorExchangeRate(expectedExchangeRate, tc)
+	expectedSharesToTokensRate := tc.initialState.validator.SharesToTokensRate
+	s.checkValidatorSharesToTokensRate(expectedSharesToTokensRate, tc)
 
 	// Confirm delegator shares query WAS NOT submitted
 	s.checkDelegatorSharesQueryNotSubmitted()
@@ -366,7 +366,7 @@ func (s *KeeperTestSuite) TestValidatorSharesToTokensRateCallback_Successful_Sla
 	s.Require().NoError(err, "validator exchange rate callback error")
 
 	// Confirm validator's exchange rate DID update
-	s.checkValidatorExchangeRate(tc.sharesToTokensRateIfSlashed, tc)
+	s.checkValidatorSharesToTokensRate(tc.sharesToTokensRateIfSlashed, tc)
 
 	// Confirm delegator shares query WAS submitted
 	s.checkDelegatorSharesQuerySubmitted(lsmCallback, tc)
@@ -376,12 +376,12 @@ func (s *KeeperTestSuite) TestValidatorSharesToTokensRateCallback_Successful_Sla
 }
 
 // Test case where the callback was successful, but there was not previous exchange rate to determine if a slash occured
-func (s *KeeperTestSuite) TestValidatorSharesToTokensRateCallback_Successful_NoPreviousExchangeRate() {
+func (s *KeeperTestSuite) TestValidatorSharesToTokensRateCallback_Successful_NoPreviousSharesToTokensRate() {
 	validatorSlashed := false
 	tc := s.SetupValidatorICQCallback(validatorSlashed, false)
 
 	// The exchange rate should update to the initial exchange rate from the test setup
-	expectedExchangeRate := tc.initialState.validator.SharesToTokensRate
+	expectedSharesToTokensRate := tc.initialState.validator.SharesToTokensRate
 
 	// Set the exchange rate to zero
 	hostZone := tc.initialState.hostZone
@@ -392,7 +392,7 @@ func (s *KeeperTestSuite) TestValidatorSharesToTokensRateCallback_Successful_NoP
 	s.Require().NoError(err, "validator exchange rate callback error")
 
 	// Confirm validator's exchange rate DID update
-	s.checkValidatorExchangeRate(expectedExchangeRate, tc)
+	s.checkValidatorSharesToTokensRate(expectedSharesToTokensRate, tc)
 
 	// Confirm delegator shares query WAS NOT submitted
 	s.checkDelegatorSharesQueryNotSubmitted()
@@ -416,8 +416,8 @@ func (s *KeeperTestSuite) TestValidatorSharesToTokensRateCallback_NoSlash_LiqudS
 	s.Require().NoError(err, "validator exchange rate callback error")
 
 	// Confirm validator's exchange rate DID update
-	expectedExchangeRate := tc.initialState.validator.SharesToTokensRate
-	s.checkValidatorExchangeRate(expectedExchangeRate, tc)
+	expectedSharesToTokensRate := tc.initialState.validator.SharesToTokensRate
+	s.checkValidatorSharesToTokensRate(expectedSharesToTokensRate, tc)
 
 	// Confirm delegator shares query WAS NOT submitted
 	s.checkDelegatorSharesQueryNotSubmitted()
