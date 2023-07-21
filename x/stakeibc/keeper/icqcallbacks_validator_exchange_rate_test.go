@@ -157,36 +157,34 @@ func (s *KeeperTestSuite) checkValidatorExchangeRate(expectedExchangeRate sdk.De
 		"validator exchange rate")
 }
 
-// Helper function to check that the event emitted from an LSM liquid stake
-func (s *KeeperTestSuite) checkLSMLiquidStakeEventEmitted(expectedEventType string) bool {
-	eventEmitted := false
-	for _, event := range s.Ctx.EventManager().Events() {
-		if event.Type == expectedEventType {
-			eventEmitted = true
-		}
-	}
-	return eventEmitted
-}
-
 // Check that the LSMLiquidStake callback succeeded by looking for a successful event emission
 func (s *KeeperTestSuite) checkLSMLiquidStakeSuccess() {
-	eventEmitted := s.checkLSMLiquidStakeEventEmitted(types.EventTypeLSMLiquidStakeRequest)
-	s.Require().True(eventEmitted, "expected to see the event from a successful LSM liquid stake")
+	s.CheckEventValueEmitted(
+		types.EventTypeLSMLiquidStakeRequest,
+		types.AttributeKeyTransactionStatus,
+		types.AttributeValueTransactionSucceeded,
+	)
 }
 
 // Check that the LSMLiquidStake callback failed by looking for a failed event emission
 func (s *KeeperTestSuite) checkLSMLiquidStakeFailed() {
-	eventEmitted := s.checkLSMLiquidStakeEventEmitted(types.EventTypeLSMLiquidStakeFailed)
-	s.Require().True(eventEmitted, "expected to see the event from a failed LSM liquid stake")
+	// Confirm failure was emitted
+	s.CheckEventValueEmitted(
+		types.EventTypeLSMLiquidStakeRequest,
+		types.AttributeKeyTransactionStatus,
+		types.AttributeValueTransactionFailed,
+	)
+	// Confirm success was NOT emitted (to confirm short circuiting)
+	s.CheckEventValueNotEmitted(
+		types.EventTypeLSMLiquidStakeRequest,
+		types.AttributeKeyTransactionStatus,
+		types.AttributeValueTransactionSucceeded,
+	)
 }
 
 // Check that the liquid stake code was not called
 func (s *KeeperTestSuite) checkLSMLiquidStakeNotCalled() {
-	successEventEmitted := s.checkLSMLiquidStakeEventEmitted(types.EventTypeLSMLiquidStakeRequest)
-	s.Require().False(successEventEmitted, "successful liquid stake event should not have been emitted")
-
-	failureEventEmitted := s.checkLSMLiquidStakeEventEmitted(types.EventTypeLSMLiquidStakeFailed)
-	s.Require().False(failureEventEmitted, "failed liquid stake event should not have been emitted")
+	s.CheckEventTypeNotEmitted(types.EventTypeLSMLiquidStakeRequest)
 }
 
 // Helper function to check that the delegator shares query was submitted by checking
@@ -343,8 +341,6 @@ func (s *KeeperTestSuite) TestValidatorExchangeRateCallback_Successful_NoSlash_L
 	// We'll check both that the failed event was emitted, and the success event was not emitted
 	// (to confirm short circuiting)
 	s.checkLSMLiquidStakeFailed()
-	successEmitted := s.checkLSMLiquidStakeEventEmitted(types.EventTypeLSMLiquidStakeRequest)
-	s.Require().False(successEmitted, "expected to not see a successful LSM liquid stake event")
 
 	// Confirm the tokens were not sent to the module account since the state changes were discarded
 	stakerBalance := s.App.BankKeeper.GetBalance(s.Ctx, s.TestAccs[0], tc.initialState.lsmTokenIBCDenom)
