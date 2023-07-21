@@ -395,6 +395,7 @@ func (s *KeeperTestSuite) TestGetBalanceRatio() {
 	testCases := []struct {
 		unbondCapacity keeper.ValidatorUnbondCapacity
 		expectedRatio  sdk.Dec
+		errorExpected  bool
 	}{
 		{
 			unbondCapacity: keeper.ValidatorUnbondCapacity{
@@ -402,6 +403,7 @@ func (s *KeeperTestSuite) TestGetBalanceRatio() {
 				CurrentDelegation:  sdkmath.NewInt(100),
 			},
 			expectedRatio: sdk.ZeroDec(),
+			errorExpected: false,
 		},
 		{
 			unbondCapacity: keeper.ValidatorUnbondCapacity{
@@ -409,6 +411,7 @@ func (s *KeeperTestSuite) TestGetBalanceRatio() {
 				CurrentDelegation:  sdkmath.NewInt(100),
 			},
 			expectedRatio: sdk.MustNewDecFromStr("0.25"),
+			errorExpected: false,			
 		},
 		{
 			unbondCapacity: keeper.ValidatorUnbondCapacity{
@@ -416,6 +419,7 @@ func (s *KeeperTestSuite) TestGetBalanceRatio() {
 				CurrentDelegation:  sdkmath.NewInt(100),
 			},
 			expectedRatio: sdk.MustNewDecFromStr("0.75"),
+			errorExpected: false,			
 		},
 		{
 			unbondCapacity: keeper.ValidatorUnbondCapacity{
@@ -423,10 +427,25 @@ func (s *KeeperTestSuite) TestGetBalanceRatio() {
 				CurrentDelegation:  sdkmath.NewInt(100),
 			},
 			expectedRatio: sdk.MustNewDecFromStr("1.5"),
+			errorExpected: false,			
 		},
+		{
+			unbondCapacity: keeper.ValidatorUnbondCapacity{
+				BalancedDelegation: sdkmath.NewInt(100),
+				CurrentDelegation:  sdkmath.NewInt(0),
+			},
+			expectedRatio: sdk.MustNewDecFromStr("0.0"),
+			errorExpected: true,			
+		},		
 	}
 	for _, tc := range testCases {
-		s.Require().Equal(tc.expectedRatio.String(), tc.unbondCapacity.GetBalanceRatio().String())
+		balanceRatio, err := tc.unbondCapacity.GetBalanceRatio()
+		if err != nil {
+			s.Require().True(tc.errorExpected)
+		} else {
+			s.Require().False(tc.errorExpected)
+			s.Require().Equal(tc.expectedRatio.String(), balanceRatio.String())
+		}
 	}
 }
 
@@ -680,7 +699,8 @@ func (s *KeeperTestSuite) TestSortUnbondingCapacityByPriority() {
 	}
 
 	// Sort the list
-	actualSortedCapacities := keeper.SortUnbondingCapacityByPriority(inputCapacities)
+	actualSortedCapacities, sortErr := keeper.SortUnbondingCapacityByPriority(inputCapacities)
+	s.Require().True(sortErr == nil)
 	s.Require().Len(actualSortedCapacities, len(expectedSortedCapacities), "number of capacities")
 
 	// To make the error easier to understand, we first compare just the list of validator addresses

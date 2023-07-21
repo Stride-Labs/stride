@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	"errors"
 	"fmt"
 
 	sdkmath "cosmossdk.io/math"
@@ -215,7 +216,8 @@ func (k Keeper) SlashValidatorOnHostZone(ctx sdk.Context, hostZone types.HostZon
 	// In theory, it should be hard to reach a call to this function if validator.Delegation is ever 0
 	// Throw an explicit panic if this unexpected event ever happens to avoid a division by zero error
 	if validator.Delegation.IsZero() {
-		panic(fmt.Sprintf("Error: Delegation on this validator can never be 0 inside SlashValidatorOnHostZone(), %v", validator))
+		errMsg := fmt.Sprintf("Error: Delegation on this validator can never be 0 inside SlashValidatorOnHostZone(), %v", validator)
+		return errors.New(errMsg)
 	}
 
 	// Get slash percentage
