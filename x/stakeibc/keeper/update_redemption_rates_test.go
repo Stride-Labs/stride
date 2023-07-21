@@ -52,9 +52,10 @@ func (s *KeeperTestSuite) SetupUpdateRedemptionRates(tc UpdateRedemptionRateTest
 
 	// add an LSMTokenDeposit to represent an LSMLiquidStake that has not yet been detokenized
 	lsmTokenDeposit := recordtypes.LSMTokenDeposit{
-		ChainId: HostChainId,
-		Amount:  tc.justDepositedLSM,
-		Status:  recordtypes.LSMTokenDeposit_TRANSFER_IN_PROGRESS,
+		ChainId:          HostChainId,
+		Amount:           tc.justDepositedLSM,
+		Status:           recordtypes.LSMTokenDeposit_TRANSFER_IN_PROGRESS,
+		ValidatorAddress: ValAddress,
 	}
 	s.App.RecordsKeeper.SetLSMTokenDeposit(s.Ctx, lsmTokenDeposit)
 
@@ -69,6 +70,7 @@ func (s *KeeperTestSuite) SetupUpdateRedemptionRates(tc UpdateRedemptionRateTest
 		HostDenom:        Atom,
 		TotalDelegations: tc.totalDelegation,
 		RedemptionRate:   tc.initialRedemptionRate,
+		Validators:       []*types.Validator{{Address: ValAddress, SharesToTokensRate: sdk.OneDec()}},
 	}
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
 
