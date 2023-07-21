@@ -15,7 +15,6 @@ const (
 	EventTypeRedemptionRequest           = "request_redemption"
 	EventTypeLiquidStakeRequest          = "liquid_stake"
 	EventTypeLSMLiquidStakeRequest       = "lsm_liquid_stake"
-	EventTypeLSMLiquidStakeFailed        = "lsm_liquid_stake_failed"
 	EventTypeHostZoneHalt                = "halt_zone"
 	EventTypeValidatorExchangeRateChange = "validator_exchange_rate_change"
 	EventTypeValidatorSlash              = "validator_slash"
@@ -39,6 +38,7 @@ const (
 	AttributeKeyNativeAmount      = "native_amount"
 	AttributeKeyStTokenAmount     = "sttoken_amount"
 	AttributeKeyValidator         = "validator"
+	AttributeKeyTransactionStatus = "transaction_status"
 
 	AttributeKeyPreviousExchangeRate = "previous_exchange_rate"
 	AttributeKeyCurrentExchangeRate  = "current_exchange_rate"
@@ -48,5 +48,8 @@ const (
 
 	AttributeKeyError = "error"
 
-	AttributeValueCategory = ModuleName
+	AttributeValueCategory             = ModuleName
+	AttributeValueTransactionSucceeded = "success"
+	AttributeValueTransactionPending   = "pending"
+	AttributeValueTransactionFailed    = "failed"
 )

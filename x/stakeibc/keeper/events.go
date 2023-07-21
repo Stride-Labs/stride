@@ -24,39 +24,60 @@ func EmitSuccessfulLiquidStakeEvent(ctx sdk.Context, msg *types.MsgLiquidStake, 
 	)
 }
 
+// Builds common LSM liquid stake attribute for the event emission
+func getLSMLiquidStakeEventAttributes(hostZone types.HostZone, lsmTokenDeposit recordstypes.LSMTokenDeposit) []sdk.Attribute {
+	return []sdk.Attribute{
+		sdk.NewAttribute(sdk.AttributeKeyModule, types.ModuleName),
+		sdk.NewAttribute(types.AttributeKeyLiquidStaker, lsmTokenDeposit.StakerAddress),
+		sdk.NewAttribute(types.AttributeKeyHostZone, hostZone.ChainId),
+		sdk.NewAttribute(types.AttributeKeyNativeBaseDenom, hostZone.HostDenom),
+		sdk.NewAttribute(types.AttributeKeyValidator, lsmTokenDeposit.ValidatorAddress),
+		sdk.NewAttribute(types.AttributeKeyNativeIBCDenom, lsmTokenDeposit.IbcDenom),
+		sdk.NewAttribute(types.AttributeKeyLSMTokenBaseDenom, lsmTokenDeposit.Denom),
+		sdk.NewAttribute(types.AttributeKeyNativeAmount, lsmTokenDeposit.Amount.String()),
+		sdk.NewAttribute(types.AttributeKeyStTokenAmount, lsmTokenDeposit.StToken.Amount.String()),
+	}
+}
+
 // Emits a successful LSM liquid stake event, and displays metadata such as the stToken amount
 func EmitSuccessfulLSMLiquidStakeEvent(ctx sdk.Context, hostZone types.HostZone, lsmTokenDeposit recordstypes.LSMTokenDeposit) {
+	attributes := append(
+		getLSMLiquidStakeEventAttributes(hostZone, lsmTokenDeposit),
+		sdk.NewAttribute(types.AttributeKeyTransactionStatus, types.AttributeValueTransactionSucceeded),
+	)
 	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(
 			types.EventTypeLSMLiquidStakeRequest,
-			sdk.NewAttribute(sdk.AttributeKeyModule, types.ModuleName),
-			sdk.NewAttribute(types.AttributeKeyLiquidStaker, lsmTokenDeposit.StakerAddress),
-			sdk.NewAttribute(types.AttributeKeyHostZone, hostZone.ChainId),
-			sdk.NewAttribute(types.AttributeKeyNativeBaseDenom, hostZone.HostDenom),
-			sdk.NewAttribute(types.AttributeKeyValidator, lsmTokenDeposit.ValidatorAddress),
-			sdk.NewAttribute(types.AttributeKeyNativeIBCDenom, lsmTokenDeposit.IbcDenom),
-			sdk.NewAttribute(types.AttributeKeyLSMTokenBaseDenom, lsmTokenDeposit.Denom),
-			sdk.NewAttribute(types.AttributeKeyNativeAmount, lsmTokenDeposit.Amount.String()),
-			sdk.NewAttribute(types.AttributeKeyStTokenAmount, lsmTokenDeposit.StToken.Amount.String()),
+			attributes...,
 		),
 	)
 }
 
 // Emits a failed LSM liquid stake event, and displays the error
 func EmitFailedLSMLiquidStakeEvent(ctx sdk.Context, hostZone types.HostZone, lsmTokenDeposit recordstypes.LSMTokenDeposit, errorMessage string) {
+	attributes := append(
+		getLSMLiquidStakeEventAttributes(hostZone, lsmTokenDeposit),
+		sdk.NewAttribute(types.AttributeKeyTransactionStatus, types.AttributeValueTransactionFailed),
+		sdk.NewAttribute(types.AttributeKeyError, errorMessage),
+	)
 	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(
-			types.EventTypeLSMLiquidStakeFailed,
-			sdk.NewAttribute(sdk.AttributeKeyModule, types.ModuleName),
-			sdk.NewAttribute(types.AttributeKeyLiquidStaker, lsmTokenDeposit.StakerAddress),
-			sdk.NewAttribute(types.AttributeKeyHostZone, hostZone.ChainId),
-			sdk.NewAttribute(types.AttributeKeyValidator, lsmTokenDeposit.ValidatorAddress),
-			sdk.NewAttribute(types.AttributeKeyNativeBaseDenom, hostZone.HostDenom),
-			sdk.NewAttribute(types.AttributeKeyNativeIBCDenom, lsmTokenDeposit.IbcDenom),
-			sdk.NewAttribute(types.AttributeKeyLSMTokenBaseDenom, lsmTokenDeposit.Denom),
-			sdk.NewAttribute(types.AttributeKeyNativeAmount, lsmTokenDeposit.Amount.String()),
-			sdk.NewAttribute(types.AttributeKeyStTokenAmount, lsmTokenDeposit.StToken.Amount.String()),
-			sdk.NewAttribute(types.AttributeKeyError, errorMessage),
+			types.EventTypeLSMLiquidStakeRequest,
+			attributes...,
+		),
+	)
+}
+
+// Emits a pending LSM liquid stake event, meaning a slash query was submitted
+func EmitPendingLSMLiquidStakeEvent(ctx sdk.Context, hostZone types.HostZone, lsmTokenDeposit recordstypes.LSMTokenDeposit) {
+	attributes := append(
+		getLSMLiquidStakeEventAttributes(hostZone, lsmTokenDeposit),
+		sdk.NewAttribute(types.AttributeKeyTransactionStatus, types.AttributeValueTransactionPending),
+	)
+	ctx.EventManager().EmitEvent(
+		sdk.NewEvent(
+			types.EventTypeLSMLiquidStakeRequest,
+			attributes...,
 		),
 	)
 }
