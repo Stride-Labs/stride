@@ -49,7 +49,7 @@ sleep 2
 
 echo ">>> Transfer to Stride:"
 $GAIA_MAIN_CMD tx ibc-transfer transfer transfer channel-0 $staker_stride_address 10000000${validator_address}/1 --from staker -y | TRIM_TX && echo ""
-sleep 5
+sleep 10
 
 echo "Balance on STRIDE:"
 $STRIDE_MAIN_CMD q bank balances $staker_stride_address && echo ""
