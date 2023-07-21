@@ -34,9 +34,9 @@ type ValidatorICQCallbackArgs struct {
 }
 
 type ValidatorICQCallbackTestCase struct {
-	initialState          ValidatorICQCallbackState
-	validArgs             ValidatorICQCallbackArgs
-	exchangeRateIfSlashed sdk.Dec
+	initialState                ValidatorICQCallbackState
+	validArgs                   ValidatorICQCallbackArgs
+	sharesToTokensRateIfSlashed sdk.Dec
 }
 
 func (s *KeeperTestSuite) CreateValidatorQueryResponse(address string, tokens int64, shares int64) []byte {
@@ -61,7 +61,7 @@ func (s *KeeperTestSuite) SetupValidatorICQCallback(validatorSlashed, liquidStak
 	// and now has 1000 tokens (after being slashed)
 	numShares := int64(2000)
 	sharesToTokensRate := sdk.NewDec(1)
-	exchangeRateIfSlashed := sdk.MustNewDecFromStr("0.5")
+	sharesToTokensRateIfSlashed := sdk.MustNewDecFromStr("0.5")
 
 	// The validator we'll query the exchange rate for
 	queriedValidator := types.Validator{
@@ -137,7 +137,7 @@ func (s *KeeperTestSuite) SetupValidatorICQCallback(validatorSlashed, liquidStak
 			lsmTokenIBCDenom: lsmTokenIBCDenom,
 			stakerBalance:    stakeAmount,
 		},
-		exchangeRateIfSlashed: exchangeRateIfSlashed,
+		sharesToTokensRateIfSlashed: sharesToTokensRateIfSlashed,
 		validArgs: ValidatorICQCallbackArgs{
 			query: icqtypes.Query{
 				ChainId:      HostChainId,
@@ -276,7 +276,7 @@ func (s *KeeperTestSuite) TestValidatorExchangeRateCallback_Successful_Slash_NoL
 	s.Require().NoError(err, "validator exchange rate callback error")
 
 	// Confirm validator's exchange rate DID update
-	s.checkValidatorExchangeRate(tc.exchangeRateIfSlashed, tc)
+	s.checkValidatorExchangeRate(tc.sharesToTokensRateIfSlashed, tc)
 
 	// Confirm delegator shares query WAS submitted
 	s.checkDelegatorSharesQuerySubmitted(lsmCallback, tc)
@@ -366,7 +366,7 @@ func (s *KeeperTestSuite) TestValidatorExchangeRateCallback_Successful_Slash_Liq
 	s.Require().NoError(err, "validator exchange rate callback error")
 
 	// Confirm validator's exchange rate DID update
-	s.checkValidatorExchangeRate(tc.exchangeRateIfSlashed, tc)
+	s.checkValidatorExchangeRate(tc.sharesToTokensRateIfSlashed, tc)
 
 	// Confirm delegator shares query WAS submitted
 	s.checkDelegatorSharesQuerySubmitted(lsmCallback, tc)

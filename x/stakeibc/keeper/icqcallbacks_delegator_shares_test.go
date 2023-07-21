@@ -31,7 +31,7 @@ type DelegatorSharesICQCallbackTestCase struct {
 	expectedDelegationAmount sdkmath.Int
 	expectedSlashAmount      sdkmath.Int
 	expectedWeight           uint64
-	exchangeRate             sdk.Dec
+	sharesToTokensRate       sdk.Dec
 	retryTimeoutDuration     time.Duration
 }
 
@@ -136,7 +136,7 @@ func (s *KeeperTestSuite) SetupDelegatorSharesICQCallback() DelegatorSharesICQCa
 		expectedDelegationAmount: expectedTokensAfterSlash,
 		expectedSlashAmount:      expectedSlashAmount,
 		expectedWeight:           expectedWeightAfterSlash,
-		exchangeRate:             internalExchangeRate,
+		sharesToTokensRate:       sharesToTokensRate,
 		retryTimeoutDuration:     timeoutDuration,
 	}
 }
@@ -367,8 +367,8 @@ func (s *KeeperTestSuite) TestDelegatorSharesCallback_PrecisionError() {
 	// than were tracked in state
 	// This should be interpretted as a precision error and our record keeping should be adjusted
 	precisionErrorTokens := sdk.NewInt(5)
-	precisionErrorShares := sdk.NewDecFromInt(precisionErrorTokens).Quo(tc.exchangeRate)
-	sharesBeforeSlash := sdk.NewDecFromInt(initialValidator.Delegation).Quo(tc.exchangeRate)
+	precisionErrorShares := sdk.NewDecFromInt(precisionErrorTokens).Quo(tc.sharesToTokensRate)
+	sharesBeforeSlash := sdk.NewDecFromInt(initialValidator.Delegation).Quo(tc.sharesToTokensRate)
 
 	queryShares := sharesBeforeSlash.Add(precisionErrorShares)
 	callbackArgs := s.CreateDelegatorSharesQueryResponse(initialValidator.Address, queryShares)
