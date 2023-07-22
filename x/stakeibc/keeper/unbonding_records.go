@@ -42,9 +42,10 @@ func (c *ValidatorUnbondCapacity) GetBalanceRatio() (sdk.Dec, error) {
 	// ValidatorUnbondCapaciy structs only exist for validators with positive capacity
 	//   capacity is CurrentDelegation - BalancedDelegation
 	//   positive capacity means CurrentDelegation must be >0
-	// Therefore this code *should* only be reachable when CurrentDelegation is >0
+
+	// Therefore the current delegation gere should never be zero
 	if c.CurrentDelegation.IsZero() {
-		errMsg := fmt.Sprintf("CurrentDelegation should not be 0 inside GetBalanceRatio(), %v", c)
+		errMsg := fmt.Sprintf("CurrentDelegation should not be 0 inside GetBalanceRatio(), %+v", c)
 		return sdk.ZeroDec(), errors.New(errMsg)
 	}
 	return sdk.NewDecFromInt(c.BalancedDelegation).Quo(sdk.NewDecFromInt(c.CurrentDelegation)), nil
@@ -144,28 +145,20 @@ func (k Keeper) GetValidatorUnbondCapacity(
 //   ideal balanced delegation will always be 0, and thus their ratio will always be 0
 // If the ratio's are equal, the validator with the larger delegation/capacity will come first
 func SortUnbondingCapacityByPriority(validatorUnbondCapacity []ValidatorUnbondCapacity) ([]ValidatorUnbondCapacity, error) {
-	// Compare function has to have signature "func(i,j int) bool"
-	// If errors occur while comparing, panic, and this deferred function will catch it and update the closured error variable
-	var sortingErr error = nil
-	defer func() {
-		if r := recover(); r != nil {
-			sortingErr = errors.New(fmt.Sprintf("Unable to sort Unbond Capacities: %s", r))
+	// Loop through all validators to make sure none error when getting the balance ratio needed for sorting
+	for _, validator := range validatorUnbondCapacity {
+		if _, err := validator.GetBalanceRatio(); err != nil {
+			return nil, err
 		}
-	}()
+	}
 
 	// Pairwise-compare function for Slice Stable Sort
 	lessFunc := func(i, j int) bool {
 		validatorA := validatorUnbondCapacity[i]
 		validatorB := validatorUnbondCapacity[j]
 
-		balanceRatioValA, errA := validatorA.GetBalanceRatio()
-		balanceRatioValB, errB := validatorB.GetBalanceRatio()
-		if errA != nil {
-			panic(fmt.Sprintf("Validator %d, %v could not GetBalanceRatio with error: %s", i, validatorA, errA.Error()))
-		}
-		if errB != nil {
-			panic(fmt.Sprintf("Validator %d: %v could not GetBalanceRatio with error: %s", j, validatorB, errB.Error()))
-		}
+		balanceRatioValA, _ := validatorA.GetBalanceRatio()
+		balanceRatioValB, _ := validatorB.GetBalanceRatio()
 
 		// Sort by the balance ratio first - in ascending order - so the more unbalanced validators appear first
 		if !balanceRatioValA.Equal(balanceRatioValB) {
@@ -183,7 +176,7 @@ func SortUnbondingCapacityByPriority(validatorUnbondCapacity []ValidatorUnbondCa
 	}
 	sort.SliceStable(validatorUnbondCapacity, lessFunc)
 
-	return validatorUnbondCapacity, sortingErr
+	return validatorUnbondCapacity, nil
 }
 
 // Given a total unbond amount and list of unbond capacity for each validator, sorted by unbond priority
@@ -290,9 +283,9 @@ func (k Keeper) UnbondFromHostZone(ctx sdk.Context, hostZone types.HostZone) err
 	// Sort the unbonding capacity by priority
 	// Priority is determined by checking the how proportionally unbalanced each validator is
 	// Zero weight validators will come first in the list
-	prioritizedUnbondCapacity, sortErr := SortUnbondingCapacityByPriority(validatorUnbondCapacity)
-	if sortErr != nil {
-		return sortErr
+	prioritizedUnbondCapacity, err := SortUnbondingCapacityByPriority(validatorUnbondCapacity)
+	if err != nil {
+		return err
 	}	
 
 	// Get the undelegation ICA messages and split delegations for the callback

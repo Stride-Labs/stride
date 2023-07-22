@@ -434,16 +434,15 @@ func (s *KeeperTestSuite) TestGetBalanceRatio() {
 				BalancedDelegation: sdkmath.NewInt(100),
 				CurrentDelegation:  sdkmath.NewInt(0),
 			},
-			expectedRatio: sdk.MustNewDecFromStr("0.0"),
 			errorExpected: true,			
 		},		
 	}
 	for _, tc := range testCases {
 		balanceRatio, err := tc.unbondCapacity.GetBalanceRatio()
-		if err != nil {
-			s.Require().True(tc.errorExpected)
+		if tc.errorExpected {
+			s.Require().Error(err)
 		} else {
-			s.Require().False(tc.errorExpected)
+			s.Require().NoError(err)
 			s.Require().Equal(tc.expectedRatio.String(), balanceRatio.String())
 		}
 	}
@@ -699,8 +698,8 @@ func (s *KeeperTestSuite) TestSortUnbondingCapacityByPriority() {
 	}
 
 	// Sort the list
-	actualSortedCapacities, sortErr := keeper.SortUnbondingCapacityByPriority(inputCapacities)
-	s.Require().True(sortErr == nil)
+	actualSortedCapacities, err := keeper.SortUnbondingCapacityByPriority(inputCapacities)
+	s.Require().NoError(err)
 	s.Require().Len(actualSortedCapacities, len(expectedSortedCapacities), "number of capacities")
 
 	// To make the error easier to understand, we first compare just the list of validator addresses

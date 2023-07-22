@@ -280,9 +280,7 @@ func (k Keeper) RemoveValidatorFromHostZone(ctx sdk.Context, chainId string, val
 	lsmTokenDeposits := k.RecordsKeeper.GetAllLSMTokenDeposit(ctx)
 	for _, lsmTokenDeposit := range lsmTokenDeposits {
 		if lsmTokenDeposit.ValidatorAddress == validatorAddress {
-			errMsg := fmt.Sprintf("Validator (%s) still has an LSMTokenDeposit (%v)", validatorAddress, lsmTokenDeposit)
-			k.Logger(ctx).Error(errMsg)
-			return errors.New(errMsg)
+			return errorsmod.Wrapf(types.ErrUnableToRemoveValidator, "Validator (%s) still has an LSMTokenDeposit (%+v)", validatorAddress, lsmTokenDeposit)
 		}
 	}
 

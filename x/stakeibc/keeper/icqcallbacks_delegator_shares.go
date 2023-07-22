@@ -1,7 +1,6 @@
 package keeper
 
 import (
-	"errors"
 	"fmt"
 
 	sdkmath "cosmossdk.io/math"
@@ -60,6 +59,11 @@ func DelegatorSharesCallback(k Keeper, ctx sdk.Context, args []byte, query icqty
 	validator, valIndex, found := GetValidatorFromAddress(hostZone.Validators, queriedDelegation.ValidatorAddress)
 	if !found {
 		return errorsmod.Wrapf(types.ErrValidatorNotFound, "no registered validator for address (%s)", queriedDelegation.ValidatorAddress)
+	}
+
+	// Check if delegation is zero since this will affect measuring the slash amount
+	if validator.Delegation.IsZero() {
+		return errorsmod.Wrapf(types.ErrNoValidatorAmts, "Current delegation to validator is zero, unable to check slash magnitude %+v", validator)
 	}
 
 	// Check if the ICQ overlapped a delegation, undelegation, or detokenization ICA
@@ -213,11 +217,10 @@ func (k Keeper) SlashValidatorOnHostZone(ctx sdk.Context, hostZone types.HostZon
 	chainId := hostZone.ChainId
 	validator := hostZone.Validators[valIndex]
 
-	// In theory, it should be hard to reach a call to this function if validator.Delegation is ever 0
-	// Throw an explicit panic if this unexpected event ever happens to avoid a division by zero error
+	// There is a check upstream to verify that validator.Delegation is not 0
+	// This check is to explicitly avoid a division by zero error
 	if validator.Delegation.IsZero() {
-		errMsg := fmt.Sprintf("Error: Delegation on this validator can never be 0 inside SlashValidatorOnHostZone(), %v", validator)
-		return errors.New(errMsg)
+		return errorsmod.Wrapf(types.ErrDivisionByZero, "Zero Delegation has caused division by zero from validator, %+v", validator)
 	}
 
 	// Get slash percentage
