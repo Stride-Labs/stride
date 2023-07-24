@@ -57,9 +57,10 @@ for chain in STRIDE ${HOST_CHAINS[@]}; do
 done
 
 
-# Start the chain and create the transfer channels
+# Start the chain, create the transfer channels and create a consumer validator
 bash $SRC/start_chain.sh 
 bash $SRC/start_relayers.sh 
+bash $SRC/create_validator.sh
 
 # Register all host zones 
 for i in ${!HOST_CHAINS[@]}; do
