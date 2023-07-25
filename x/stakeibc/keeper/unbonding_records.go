@@ -43,7 +43,7 @@ func (c *ValidatorUnbondCapacity) GetBalanceRatio() (sdk.Dec, error) {
 	//   capacity is CurrentDelegation - BalancedDelegation
 	//   positive capacity means CurrentDelegation must be >0
 
-	// Therefore the current delegation gere should never be zero
+	// Therefore the current delegation here should never be zero
 	if c.CurrentDelegation.IsZero() {
 		errMsg := fmt.Sprintf("CurrentDelegation should not be 0 inside GetBalanceRatio(), %+v", c)
 		return sdk.ZeroDec(), errors.New(errMsg)
