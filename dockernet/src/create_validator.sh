@@ -5,7 +5,7 @@ SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 
 source $SCRIPT_DIR/../config.sh
 
-STAKE_TOKENS=${STAKE_TOKENS}ustrd
+STAKE_TOKENS=${STAKE_TOKENS}000000ustrd
 
 echo "Creating stride governors.."
 for (( i=1; i <= $STRIDE_NUM_NODES; i++ )); do

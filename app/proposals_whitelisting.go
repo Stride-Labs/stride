@@ -91,7 +91,7 @@ var WhitelistedParams = map[ccvgov.ParamChangeKey]struct{}{
 	//autopilot
 	{MsgType: autopilottypes.ModuleName, Key: string(autopilottypes.KeyStakeibcActive)}: {},
 	{MsgType: autopilottypes.ModuleName, Key: string(autopilottypes.KeyClaimActive)}:    {},
-	// //ICS
+	//ccv consumer
 	{MsgType: ccvconsumertypes.ModuleName, Key: string(ccvconsumertypes.KeyRewardDenoms)}: {},
 	//distribution
 	{MsgType: distrtypes.ModuleName, Key: string(distrtypes.ParamStoreKeyCommunityTax)}:        {},
@@ -103,6 +103,7 @@ var WhitelistedParams = map[ccvgov.ParamChangeKey]struct{}{
 	{MsgType: minttypes.ModuleName, Key: string(minttypes.KeyReductionPeriodInEpochs)}:              {},
 	{MsgType: minttypes.ModuleName, Key: string(minttypes.KeyReductionFactor)}:                      {},
 	{MsgType: minttypes.ModuleName, Key: string(minttypes.KeyPoolAllocationRatio)}:                  {},
+	{MsgType: minttypes.ModuleName, Key: string(minttypes.KeyDeveloperRewardsReceiver)}:             {},
 	{MsgType: minttypes.ModuleName, Key: string(minttypes.KeyMintingRewardsDistributionStartEpoch)}: {},
 	//ibc transfer
 	{MsgType: ibctransfertypes.ModuleName, Key: string(ibctransfertypes.KeySendEnabled)}:    {},
@@ -123,6 +124,9 @@ var WhitelistedParams = map[ccvgov.ParamChangeKey]struct{}{
 	{MsgType: stakeibctypes.ModuleName, Key: string(stakeibctypes.KeyDefaultMaxRedemptionRateThreshold)}: {},
 	{MsgType: stakeibctypes.ModuleName, Key: string(stakeibctypes.KeyIBCTransferTimeoutNanos)}:           {},
 	{MsgType: stakeibctypes.ModuleName, Key: string(stakeibctypes.KeySafetyNumValidators)}:               {},
+	{MsgType: stakeibctypes.ModuleName, Key: string(stakeibctypes.KeySafetyMaxSlashPercent)}:             {},
+	{MsgType: stakeibctypes.ModuleName, Key: string(stakeibctypes.KeyMaxRedemptionRates)}:                {},
+	{MsgType: stakeibctypes.ModuleName, Key: string(stakeibctypes.KeyMinRedemptionRates)}:                {},
 	//ica
 	{MsgType: icahosttypes.SubModuleName, Key: string(icahosttypes.KeyHostEnabled)}:   {},
 	{MsgType: icahosttypes.SubModuleName, Key: string(icahosttypes.KeyAllowMessages)}: {},
