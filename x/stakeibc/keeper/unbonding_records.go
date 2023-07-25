@@ -97,7 +97,7 @@ func (k Keeper) GetTotalUnbondAmountAndRecordsIds(ctx sdk.Context, chainId strin
 //
 // Validators with a balanced delegation less than their current delegation
 // are already at a deficit, are not included in the returned list,
-// and thus, are will not incur any unbonding
+// and thus, will not incur any unbonding
 func (k Keeper) GetValidatorUnbondCapacity(
 	ctx sdk.Context,
 	validators []*types.Validator,
