@@ -153,7 +153,7 @@ func (s *KeeperTestSuite) SetupValidatorICQCallback(validatorSlashed, liquidStak
 func (s *KeeperTestSuite) checkValidatorSharesToTokensRate(expectedSharesToTokensRate sdk.Dec, tc ValidatorICQCallbackTestCase) {
 	hostZone, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx, HostChainId)
 	s.Require().True(found, "host zone found")
-	s.Require().Equal(expectedSharesToTokensRate.String(), hostZone.Validators[0].InternalSharesToTokensRate.String(),
+	s.Require().Equal(expectedSharesToTokensRate.String(), hostZone.Validators[0].SharesToTokensRate.String(),
 		"validator shares to tokens rate")
 }
 

@@ -76,17 +76,10 @@ func (s *KeeperTestSuite) SetupTestLSMLiquidStake() LSMLiquidStakeTestCase {
 		ConnectionId:      ibctesting.FirstConnectionID,
 		TotalDelegations:  totalHostZoneStake,
 		Validators: []*types.Validator{{
-<<<<<<< HEAD
 			Address:                   ValAddress,
 			SlashQueryProgressTracker: progressTowardsQuery,
 			SlashQueryCheckpoint:      queryCheckpoint,
 			SharesToTokensRate:        sdk.OneDec(),
-=======
-			Address:                    ValAddress,
-			SlashQueryProgressTracker:  progressTowardsQuery,
-			SlashQueryCheckpoint:       queryCheckpoint,
-			InternalSharesToTokensRate: sdk.OneDec(),
->>>>>>> lsm
 		}},
 		DelegationIcaAddress:  "cosmos_DELEGATION",
 		LsmLiquidStakeEnabled: true,
@@ -127,7 +120,9 @@ func (s *KeeperTestSuite) TestLSMLiquidStake_Successful_NoSharesToTokensRateQuer
 	s.Require().Equal(tc.validMsg.Amount.Int64(), userStTokenBalance.Amount.Int64(), "user stToken balance")
 
 	// Confirm an LSMDeposit was created
+	expectedDepositId := keeper.GetLSMTokenDepositId(s.Ctx.BlockHeight(), HostChainId, tc.validMsg.Creator, LSMTokenBaseDenom)
 	expectedDeposit := recordstypes.LSMTokenDeposit{
+		DepositId:        expectedDepositId,
 		ChainId:          HostChainId,
 		Denom:            LSMTokenBaseDenom,
 		StakerAddress:    s.TestAccs[0].String(),
@@ -186,7 +181,9 @@ func (s *KeeperTestSuite) TestLSMLiquidStake_Successful_WithSharesToTokensRateQu
 	s.Require().True(len(actualQuery.CallbackData) > 0, "callback data exists")
 
 	expectedStToken := sdk.NewCoin(StAtom, tc.validMsg.Amount)
+	expectedDepositId := keeper.GetLSMTokenDepositId(s.Ctx.BlockHeight(), HostChainId, tc.validMsg.Creator, LSMTokenBaseDenom)
 	expectedLSMTokenDeposit := recordstypes.LSMTokenDeposit{
+		DepositId:        expectedDepositId,
 		ChainId:          HostChainId,
 		Denom:            LSMTokenBaseDenom,
 		IbcDenom:         tc.lsmTokenIBCDenom,

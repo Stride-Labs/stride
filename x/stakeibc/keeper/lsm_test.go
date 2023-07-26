@@ -50,7 +50,9 @@ func (s *KeeperTestSuite) TestValidateLSMLiquidStake() {
 		Amount:           stakeAmount,
 		LsmTokenIbcDenom: ibcDenom,
 	}
+	expectedDepositId := keeper.GetLSMTokenDepositId(s.Ctx.BlockHeight(), HostChainId, liquidStaker.String(), LSMTokenBaseDenom)
 	expectedLSMTokenDeposit := recordstypes.LSMTokenDeposit{
+		DepositId:        expectedDepositId,
 		ChainId:          HostChainId,
 		Denom:            LSMTokenBaseDenom,
 		IbcDenom:         ibcDenom,
