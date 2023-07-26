@@ -439,7 +439,7 @@ func (s *KeeperTestSuite) TestValidatorSharesToTokensRateCallback_NoLiquidStake_
 	s.checkDelegatorSharesQueryNotSubmitted()
 }
 
-func (s *KeeperTestSuite) TestValidatorExchangeRateCallback_LiquidStake_QueryTimeout() {
+func (s *KeeperTestSuite) TestValidatorSharesToTokensRateCallback_LiquidStake_QueryTimeout() {
 	lsmCallback := true
 	tc := s.SetupValidatorICQCallback(false, lsmCallback)
 
@@ -452,7 +452,7 @@ func (s *KeeperTestSuite) TestValidatorExchangeRateCallback_LiquidStake_QueryTim
 
 	// Confirm validator's shares to tokens rate DID NOT update
 	expectedSharesToTokensRate := tc.initialState.validator.SharesToTokensRate
-	s.checkValidatorExchangeRate(expectedSharesToTokensRate, tc)
+	s.checkValidatorSharesToTokensRate(expectedSharesToTokensRate, tc)
 
 	// Confirm delegator shares query WAS NOT submitted
 	s.checkDelegatorSharesQueryNotSubmitted()

@@ -81,8 +81,8 @@ func ValidatorSharesToTokensRateCallback(k Keeper, ctx sdk.Context, args []byte,
 	return nil
 }
 
-// Determines if the validator was slashed by comparing the validator exchange rate from the query response
-// with the exchange rate stored internally
+// Determines if the validator was slashed by comparing the validator sharesToTokens rate from the query response
+// with the sharesToTokens rate stored on the validator
 func (k Keeper) CheckIfValidatorWasSlashed(
 	ctx sdk.Context,
 	hostZone types.HostZone,
@@ -115,8 +115,8 @@ func (k Keeper) CheckIfValidatorWasSlashed(
 
 	// Check if the validator was slashed by comparing the sharesToTokens rate from the query
 	// with the preivously stored sharesToTokens rate
-	previousExchangeRateKnown := !previousSharesToTokensRate.IsNil() && previousSharesToTokensRate.IsPositive()
-	validatorWasSlashed = previousExchangeRateKnown && !previousSharesToTokensRate.Equal(currentSharesToTokensRate)
+	previousSharesToTokensRateKnown := !previousSharesToTokensRate.IsNil() && previousSharesToTokensRate.IsPositive()
+	validatorWasSlashed = previousSharesToTokensRateKnown && !previousSharesToTokensRate.Equal(currentSharesToTokensRate)
 
 	if !validatorWasSlashed {
 		k.Logger(ctx).Info(utils.LogICQCallbackWithHostZone(hostZone.ChainId, ICQCallbackID_Validator,
@@ -126,19 +126,19 @@ func (k Keeper) CheckIfValidatorWasSlashed(
 
 	// Emit an event if the validator was slashed
 	k.Logger(ctx).Info(utils.LogICQCallbackWithHostZone(hostZone.ChainId, ICQCallbackID_Validator,
-		"Previous Validator Exchange Rate: %v, Current Validator Exchange Rate: %v",
+		"Previous Validator SharesToTokens Rate: %v, Current Validator SharesToTokens Rate: %v",
 		previousSharesToTokensRate, currentSharesToTokensRate))
 
-	EmitValidatorExchangeRateChangeEvent(ctx, hostZone.ChainId, validator.Address, previousSharesToTokensRate, currentSharesToTokensRate)
+	EmitValidatorSharesToTokensRateChangeEvent(ctx, hostZone.ChainId, validator.Address, previousSharesToTokensRate, currentSharesToTokensRate)
 
 	return true, nil
 }
 
 // Fails the LSM Liquid Stake if the query timed out
 func (k Keeper) LSMSlashQueryTimeout(ctx sdk.Context, hostZone types.HostZone, query icqtypes.Query) error {
-	var callbackData types.ValidatorExchangeRateQueryCallback
+	var callbackData types.ValidatorSharesToTokensQueryCallback
 	if err := proto.Unmarshal(query.CallbackData, &callbackData); err != nil {
-		return errorsmod.Wrapf(err, "unable to unmarshal validator exchange rate callback data")
+		return errorsmod.Wrapf(err, "unable to unmarshal validator sharesToTokens rate callback data")
 	}
 	lsmLiquidStake := *callbackData.LsmLiquidStake
 
@@ -157,7 +157,7 @@ func (k Keeper) LSMSlashQueryCallback(
 ) error {
 	var callbackData types.ValidatorSharesToTokensQueryCallback
 	if err := proto.Unmarshal(query.CallbackData, &callbackData); err != nil {
-		return errorsmod.Wrapf(err, "unable to unmarshal validator exchange rate callback data")
+		return errorsmod.Wrapf(err, "unable to unmarshal validator sharesToTokens rate callback data")
 	}
 	lsmLiquidStake := *callbackData.LsmLiquidStake
 
