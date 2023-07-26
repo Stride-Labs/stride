@@ -21,10 +21,10 @@ import (
 // DelegatorSharesCallback is a callback handler for UpdateValidatorSharesExchRate queries.
 //
 // In an attempt to get the ICA's delegation amount on a given validator, we have to query:
-//  1. the validator's internal exchange rate
+//  1. the validator's internal shares to tokens rate
 //  2. the Delegation ICA's delegated shares
 //     And apply the following equation:
-//     num_tokens = exchange_rate * num_shares
+//     numTokens = numShares * sharesToTokensRate
 //
 // This is the callback from query #2
 //
@@ -59,6 +59,11 @@ func DelegatorSharesCallback(k Keeper, ctx sdk.Context, args []byte, query icqty
 	validator, valIndex, found := GetValidatorFromAddress(hostZone.Validators, queriedDelegation.ValidatorAddress)
 	if !found {
 		return errorsmod.Wrapf(types.ErrValidatorNotFound, "no registered validator for address (%s)", queriedDelegation.ValidatorAddress)
+	}
+
+	// Check if delegation is zero since this will affect measuring the slash amount
+	if validator.Delegation.IsZero() {
+		return errorsmod.Wrapf(types.ErrNoValidatorAmts, "Current delegation to validator is zero, unable to check slash magnitude %+v", validator)
 	}
 
 	// Check if the ICQ overlapped a delegation, undelegation, or detokenization ICA
@@ -156,8 +161,8 @@ func (k Keeper) CheckDelegationChangedDuringQuery(
 	return false, nil
 }
 
-// Check if a slash occured by comparing the validator's exchange rate  and delegator shares
-// from the query responses (tokens = exchange rate * shares)
+// Check if a slash occured by comparing the validator's sharesToTokens rate and delegator shares
+// from the query responses (tokens = shares * sharesToTokensRate)
 //
 // If the change in delegation only differs by a small precision error, it was likely
 // due to an decimal -> int truncation that occurs during unbonding. In this case, still update the validator
@@ -172,9 +177,9 @@ func (k Keeper) CheckForSlash(
 	chainId := hostZone.ChainId
 	validator := hostZone.Validators[valIndex]
 
-	// Calculate the number of tokens delegated (using the internal exchange rate)
+	// Calculate the number of tokens delegated (using the internal sharesToTokensRate)
 	// note: truncateInt per https://github.com/cosmos/cosmos-sdk/blob/cb31043d35bad90c4daa923bb109f38fd092feda/x/staking/types/validator.go#L431
-	delegatedTokens = queriedDelegation.Shares.Mul(validator.InternalSharesToTokensRate).TruncateInt()
+	delegatedTokens = queriedDelegation.Shares.Mul(validator.SharesToTokensRate).TruncateInt()
 	k.Logger(ctx).Info(utils.LogICQCallbackWithHostZone(chainId, ICQCallbackID_Delegation,
 		"Previous Delegation: %v, Current Delegation: %v", validator.Delegation, delegatedTokens))
 
@@ -216,6 +221,12 @@ func (k Keeper) CheckForSlash(
 func (k Keeper) SlashValidatorOnHostZone(ctx sdk.Context, hostZone types.HostZone, valIndex int64, delegatedTokens sdkmath.Int) error {
 	chainId := hostZone.ChainId
 	validator := hostZone.Validators[valIndex]
+
+	// There is a check upstream to verify that validator.Delegation is not 0
+	// This check is to explicitly avoid a division by zero error
+	if validator.Delegation.IsZero() {
+		return errorsmod.Wrapf(types.ErrDivisionByZero, "Zero Delegation has caused division by zero from validator, %+v", validator)
+	}
 
 	// Get slash percentage
 	slashAmount := validator.Delegation.Sub(delegatedTokens)

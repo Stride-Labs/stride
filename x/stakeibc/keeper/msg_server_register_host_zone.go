@@ -91,7 +91,7 @@ func (k msgServer) RegisterHostZone(goCtx context.Context, msg *types.MsgRegiste
 		IbcDenom:          msg.IbcDenom,
 		HostDenom:         msg.HostDenom,
 		TransferChannelId: msg.TransferChannelId,
-		// Start exchange rate at 1 upon registration
+		// Start sharesToTokens rate at 1 upon registration
 		RedemptionRate:        sdk.NewDec(1),
 		LastRedemptionRate:    sdk.NewDec(1),
 		UnbondingPeriod:       msg.UnbondingPeriod,

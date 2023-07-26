@@ -17,36 +17,30 @@ func (k Keeper) EndBlocker(ctx sdk.Context) {
 
 	events := sdk.Events{}
 	for _, query := range k.AllQueries(ctx) {
-		if !query.RequestSent {
-			k.Logger(ctx).Info(fmt.Sprintf("Interchainquery event emitted %s", query.Id))
-
-			event := sdk.NewEvent(
-				sdk.EventTypeMessage,
-				sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
-				sdk.NewAttribute(sdk.AttributeKeyAction, types.AttributeValueQuery),
-				sdk.NewAttribute(types.AttributeKeyQueryId, query.Id),
-				sdk.NewAttribute(types.AttributeKeyChainId, query.ChainId),
-				sdk.NewAttribute(types.AttributeKeyConnectionId, query.ConnectionId),
-				sdk.NewAttribute(types.AttributeKeyType, query.QueryType),
-				sdk.NewAttribute(types.AttributeKeyHeight, "0"),
-				sdk.NewAttribute(types.AttributeKeyRequest, hex.EncodeToString(query.RequestData)),
-			)
-			events = append(events, event)
-
-			event.Type = "query_request"
-			events = append(events, event)
-
-			query.RequestSent = true
-			k.SetQuery(ctx, query)
-
+		if query.RequestSent {
 			continue
 		}
-		// Re-queue timed-out queries
-		if query.TimeoutTimestamp < uint64(ctx.BlockTime().UnixNano()) {
-			if err := k.RetryICQRequest(ctx, query); err != nil {
-				k.Logger(ctx).Error(fmt.Sprintf("Unable to retry timed out query: %+v", query))
-			}
-		}
+
+		k.Logger(ctx).Info(fmt.Sprintf("Interchainquery event emitted %s", query.Id))
+
+		event := sdk.NewEvent(
+			sdk.EventTypeMessage,
+			sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
+			sdk.NewAttribute(sdk.AttributeKeyAction, types.AttributeValueQuery),
+			sdk.NewAttribute(types.AttributeKeyQueryId, query.Id),
+			sdk.NewAttribute(types.AttributeKeyChainId, query.ChainId),
+			sdk.NewAttribute(types.AttributeKeyConnectionId, query.ConnectionId),
+			sdk.NewAttribute(types.AttributeKeyType, query.QueryType),
+			sdk.NewAttribute(types.AttributeKeyHeight, "0"),
+			sdk.NewAttribute(types.AttributeKeyRequest, hex.EncodeToString(query.RequestData)),
+		)
+		events = append(events, event)
+
+		event.Type = "query_request"
+		events = append(events, event)
+
+		query.RequestSent = true
+		k.SetQuery(ctx, query)
 	}
 
 	if len(events) > 0 {

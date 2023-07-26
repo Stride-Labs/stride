@@ -31,7 +31,7 @@ type DelegatorSharesICQCallbackTestCase struct {
 	expectedDelegationAmount sdkmath.Int
 	expectedSlashAmount      sdkmath.Int
 	expectedWeight           uint64
-	exchangeRate             sdk.Dec
+	sharesToTokensRate       sdk.Dec
 	retryTimeoutDuration     time.Duration
 }
 
@@ -52,10 +52,10 @@ func (s *KeeperTestSuite) SetupDelegatorSharesICQCallback() DelegatorSharesICQCa
 
 	valIndexQueried := 1
 	tokensBeforeSlash := sdkmath.NewInt(1000)
-	internalExchangeRate := sdk.NewDec(1).Quo(sdk.NewDec(2)) // 0.5
+	sharesToTokensRate := sdk.NewDec(1).Quo(sdk.NewDec(2)) // 0.5
 	numShares := sdk.NewDec(1900)
 
-	// 1900 shares * 0.5 exchange rate = 950 tokens
+	// 1900 shares * 0.5 sharesToTokens rate = 950 tokens
 	// 1000 tokens - 950 token = 50 tokens slashed
 	// 50 slash tokens / 1000 initial tokens = 5% slash
 	expectedTokensAfterSlash := sdkmath.NewInt(950)
@@ -65,7 +65,7 @@ func (s *KeeperTestSuite) SetupDelegatorSharesICQCallback() DelegatorSharesICQCa
 	expectedWeightAfterSlash := uint64(19)
 	totalDelegation := sdkmath.NewInt(10_000)
 
-	s.Require().Equal(numShares, sdk.NewDecFromInt(expectedTokensAfterSlash.Mul(sdkmath.NewInt(2))), "tokens, shares, and exchange rate aligned")
+	s.Require().Equal(numShares, sdk.NewDecFromInt(expectedTokensAfterSlash.Mul(sdkmath.NewInt(2))), "tokens, shares, and sharesToTokens rate aligned")
 	s.Require().Equal(slashPercentage, sdk.NewDecFromInt(expectedSlashAmount).Quo(sdk.NewDecFromInt(tokensBeforeSlash)), "expected slash percentage")
 	s.Require().Equal(slashPercentage, sdk.NewDec(int64(weightBeforeSlash-expectedWeightAfterSlash)).Quo(sdk.NewDec(int64(weightBeforeSlash))), "weight reduction")
 
@@ -84,7 +84,7 @@ func (s *KeeperTestSuite) SetupDelegatorSharesICQCallback() DelegatorSharesICQCa
 			{
 				Name:                        "val2",
 				Address:                     ValAddress,
-				InternalSharesToTokensRate:  internalExchangeRate,
+				SharesToTokensRate:          sharesToTokensRate,
 				Delegation:                  tokensBeforeSlash,
 				Weight:                      weightBeforeSlash,
 				SlashQueryInProgress:        true,
@@ -121,6 +121,7 @@ func (s *KeeperTestSuite) SetupDelegatorSharesICQCallback() DelegatorSharesICQCa
 		TimeoutDuration:  timeoutDuration,
 		TimeoutTimestamp: timeoutTimestamp,
 		RequestSent:      true,
+		TimeoutPolicy:    icqtypes.TimeoutPolicy_RETRY_QUERY_REQUEST,
 	}
 	s.App.InterchainqueryKeeper.SetQuery(s.Ctx, query)
 
@@ -136,15 +137,17 @@ func (s *KeeperTestSuite) SetupDelegatorSharesICQCallback() DelegatorSharesICQCa
 		expectedDelegationAmount: expectedTokensAfterSlash,
 		expectedSlashAmount:      expectedSlashAmount,
 		expectedWeight:           expectedWeightAfterSlash,
-		exchangeRate:             internalExchangeRate,
+		sharesToTokensRate:       sharesToTokensRate,
 		retryTimeoutDuration:     timeoutDuration,
 	}
 }
 
 // Helper function to check if the query was resubmitted in the event that it overlapped an ICA
 func (s *KeeperTestSuite) CheckQueryWasResubmitted(tc DelegatorSharesICQCallbackTestCase, hostZone types.HostZone) {
+	// After removing the original query, there should be only one query left
+	s.App.InterchainqueryKeeper.DeleteQuery(s.Ctx, "query-1")
 	queries := s.App.InterchainqueryKeeper.AllQueries(s.Ctx)
-	s.Require().Len(queries, 1, "one queries expected after re-submission")
+	s.Require().Len(queries, 1, "one query expected after re-submission")
 
 	actualQuery := queries[0]
 	expectedQuery := tc.validArgs.query
@@ -255,7 +258,7 @@ func (s *KeeperTestSuite) TestDelegatorSharesCallback_RetryFailure() {
 
 	// Trigger the callback - this should attempt to retry the query
 	err := stakeibckeeper.DelegatorSharesCallback(s.App.StakeibcKeeper, s.Ctx, tc.validArgs.callbackArgs, invalidQuery)
-	s.Require().ErrorContains(err, "unable to resubmit delegator shares query: connection-id cannot be empty")
+	s.Require().ErrorContains(err, "unable to resubmit delegator shares query: failed to retry query")
 }
 
 func (s *KeeperTestSuite) checkStateIfValidatorNotSlashed(tc DelegatorSharesICQCallbackTestCase) {
@@ -367,8 +370,8 @@ func (s *KeeperTestSuite) TestDelegatorSharesCallback_PrecisionError() {
 	// than were tracked in state
 	// This should be interpretted as a precision error and our record keeping should be adjusted
 	precisionErrorTokens := sdk.NewInt(5)
-	precisionErrorShares := sdk.NewDecFromInt(precisionErrorTokens).Quo(tc.exchangeRate)
-	sharesBeforeSlash := sdk.NewDecFromInt(initialValidator.Delegation).Quo(tc.exchangeRate)
+	precisionErrorShares := sdk.NewDecFromInt(precisionErrorTokens).Quo(tc.sharesToTokensRate)
+	sharesBeforeSlash := sdk.NewDecFromInt(initialValidator.Delegation).Quo(tc.sharesToTokensRate)
 
 	queryShares := sharesBeforeSlash.Add(precisionErrorShares)
 	callbackArgs := s.CreateDelegatorSharesQueryResponse(initialValidator.Address, queryShares)

@@ -7,8 +7,7 @@ import (
 	"github.com/golang/protobuf/proto" //nolint:staticcheck
 	_ "github.com/stretchr/testify/suite"
 
-	// TODO [LSM]: Revert type
-	lsmstakingtypes "github.com/iqlusioninc/liquidity-staking-module/x/staking/types"
+	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
 	recordstypes "github.com/Stride-Labs/stride/v9/x/records/types"
 	recordtypes "github.com/Stride-Labs/stride/v9/x/records/types"
@@ -396,6 +395,7 @@ func (s *KeeperTestSuite) TestGetBalanceRatio() {
 	testCases := []struct {
 		unbondCapacity keeper.ValidatorUnbondCapacity
 		expectedRatio  sdk.Dec
+		errorExpected  bool
 	}{
 		{
 			unbondCapacity: keeper.ValidatorUnbondCapacity{
@@ -403,6 +403,7 @@ func (s *KeeperTestSuite) TestGetBalanceRatio() {
 				CurrentDelegation:  sdkmath.NewInt(100),
 			},
 			expectedRatio: sdk.ZeroDec(),
+			errorExpected: false,
 		},
 		{
 			unbondCapacity: keeper.ValidatorUnbondCapacity{
@@ -410,6 +411,7 @@ func (s *KeeperTestSuite) TestGetBalanceRatio() {
 				CurrentDelegation:  sdkmath.NewInt(100),
 			},
 			expectedRatio: sdk.MustNewDecFromStr("0.25"),
+			errorExpected: false,			
 		},
 		{
 			unbondCapacity: keeper.ValidatorUnbondCapacity{
@@ -417,6 +419,7 @@ func (s *KeeperTestSuite) TestGetBalanceRatio() {
 				CurrentDelegation:  sdkmath.NewInt(100),
 			},
 			expectedRatio: sdk.MustNewDecFromStr("0.75"),
+			errorExpected: false,			
 		},
 		{
 			unbondCapacity: keeper.ValidatorUnbondCapacity{
@@ -424,10 +427,24 @@ func (s *KeeperTestSuite) TestGetBalanceRatio() {
 				CurrentDelegation:  sdkmath.NewInt(100),
 			},
 			expectedRatio: sdk.MustNewDecFromStr("1.5"),
+			errorExpected: false,			
 		},
+		{
+			unbondCapacity: keeper.ValidatorUnbondCapacity{
+				BalancedDelegation: sdkmath.NewInt(100),
+				CurrentDelegation:  sdkmath.NewInt(0),
+			},
+			errorExpected: true,			
+		},		
 	}
 	for _, tc := range testCases {
-		s.Require().Equal(tc.expectedRatio.String(), tc.unbondCapacity.GetBalanceRatio().String())
+		balanceRatio, err := tc.unbondCapacity.GetBalanceRatio()
+		if tc.errorExpected {
+			s.Require().Error(err)
+		} else {
+			s.Require().NoError(err)
+			s.Require().Equal(tc.expectedRatio.String(), balanceRatio.String())
+		}
 	}
 }
 
@@ -681,7 +698,8 @@ func (s *KeeperTestSuite) TestSortUnbondingCapacityByPriority() {
 	}
 
 	// Sort the list
-	actualSortedCapacities := keeper.SortUnbondingCapacityByPriority(inputCapacities)
+	actualSortedCapacities, err := keeper.SortUnbondingCapacityByPriority(inputCapacities)
+	s.Require().NoError(err)
 	s.Require().Len(actualSortedCapacities, len(expectedSortedCapacities), "number of capacities")
 
 	// To make the error easier to understand, we first compare just the list of validator addresses
@@ -817,7 +835,7 @@ func (s *KeeperTestSuite) TestGetUnbondingICAMessages() {
 			// Check each unbonding
 			for i, expected := range tc.expectedUnbondings {
 				valAddress := expected.Validator
-				actualMsg := actualMessages[i].(*lsmstakingtypes.MsgUndelegate)
+				actualMsg := actualMessages[i].(*stakingtypes.MsgUndelegate)
 				actualSplit := actualSplits[i]
 
 				// Check the ICA message

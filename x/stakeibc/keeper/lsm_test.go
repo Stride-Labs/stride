@@ -33,7 +33,7 @@ func (s *KeeperTestSuite) TestValidateLSMLiquidStake() {
 		ChainId:           HostChainId,
 		TransferChannelId: ibctesting.FirstChannelID,
 		Validators: []*types.Validator{
-			{Address: ValAddress, SlashQueryInProgress: false},
+			{Address: ValAddress, SlashQueryInProgress: false, SharesToTokensRate: sdk.OneDec()},
 		},
 		LsmLiquidStakeEnabled: true,
 	}
@@ -50,7 +50,9 @@ func (s *KeeperTestSuite) TestValidateLSMLiquidStake() {
 		Amount:           stakeAmount,
 		LsmTokenIbcDenom: ibcDenom,
 	}
+	expectedDepositId := keeper.GetLSMTokenDepositId(s.Ctx.BlockHeight(), HostChainId, liquidStaker.String(), LSMTokenBaseDenom)
 	expectedLSMTokenDeposit := recordstypes.LSMTokenDeposit{
+		DepositId:        expectedDepositId,
 		ChainId:          HostChainId,
 		Denom:            LSMTokenBaseDenom,
 		IbcDenom:         ibcDenom,
@@ -97,6 +99,32 @@ func (s *KeeperTestSuite) TestValidateLSMLiquidStake() {
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
 	_, err = s.App.StakeibcKeeper.ValidateLSMLiquidStake(s.Ctx, validMsg)
 	s.Require().ErrorContains(err, fmt.Sprintf("validator (%s) is not registered in the Stride validator set", ValAddress))
+}
+
+func (s *KeeperTestSuite) TestGetLSMTokenDepositId() {
+	address1 := "stride1h8wj2e5a329ve2r472ydezc4lel4dmsdn5v5sd"
+	address2 := "stride15vg2f5yvrs3673zj89mpwt260cpalws5psxtdh"
+
+	s.Require().Equal(
+		"87bd1d24f68162b37eb564ea17cc946d9119753f5ec2deeeed08b585f4164d30",
+		keeper.GetLSMTokenDepositId(1, HostChainId, address1, ValAddress+"/1"),
+	)
+	s.Require().Equal(
+		"c799379d0fa078df85673cb2cd7a055c7ed1f486c22af28ed492908353398a64",
+		keeper.GetLSMTokenDepositId(2, HostChainId, address1, ValAddress+"/1"),
+	)
+	s.Require().Equal(
+		"e16e4a9018d4a9b68bd1bcec7ddc67df7377242880173f717c2750fedb7ecf69",
+		keeper.GetLSMTokenDepositId(1, OsmoChainId, address1, ValAddress+"/1"),
+	)
+	s.Require().Equal(
+		"05e2ae6b19b05b8be485b77899524eb018cdf65869b450b0272b67cf8aa2936a",
+		keeper.GetLSMTokenDepositId(1, HostChainId, address2, ValAddress+"/1"),
+	)
+	s.Require().Equal(
+		"e0aa2cc10d2daeb8c5fde4cfae367ef098cfc42395eb3d23ca8be498c62717b0",
+		keeper.GetLSMTokenDepositId(1, HostChainId, address1, ValAddress+"/2"),
+	)
 }
 
 func (s *KeeperTestSuite) TestGetLSMTokenDenomTrace() {
@@ -183,7 +211,11 @@ func (s *KeeperTestSuite) TestGetHostZoneFromLSMTokenPath() {
 func (s *KeeperTestSuite) TestGetValidatorFromLSMTokenDenom() {
 	valAddress := "cosmosvaloperXXX"
 	denom := valAddress + "/42" // add record ID
-	validators := []*types.Validator{{Address: valAddress, SlashQueryInProgress: false}}
+	validators := []*types.Validator{{
+		Address:              valAddress,
+		SlashQueryInProgress: false,
+		SharesToTokensRate:   sdk.OneDec(),
+	}}
 
 	// Successful lookup
 	validator, err := s.App.StakeibcKeeper.GetValidatorFromLSMTokenDenom(denom, validators)
@@ -202,9 +234,86 @@ func (s *KeeperTestSuite) TestGetValidatorFromLSMTokenDenom() {
 	s.Require().ErrorContains(err, "validator (cosmosvaloperXXX) is not registered in the Stride validator set")
 
 	// Pass in a validator that has a slash query in flight - it should fail
-	validatorsWithPendingQuery := []*types.Validator{{Address: valAddress, SlashQueryInProgress: true}}
-	_, err = s.App.StakeibcKeeper.GetValidatorFromLSMTokenDenom(denom, validatorsWithPendingQuery)
+	validatorWithSlashQuery := []*types.Validator{{
+		Address:              valAddress,
+		SlashQueryInProgress: true,
+		SharesToTokensRate:   sdk.OneDec(),
+	}}
+	_, err = s.App.StakeibcKeeper.GetValidatorFromLSMTokenDenom(denom, validatorWithSlashQuery)
 	s.Require().ErrorContains(err, "validator cosmosvaloperXXX was slashed")
+
+	// Pass in a validator with an uninitialized sharesToTokens rate - it should fail
+	validatorWithoutSharesToTokensRate := []*types.Validator{{
+		Address:              valAddress,
+		SlashQueryInProgress: false,
+	}}
+	_, err = s.App.StakeibcKeeper.GetValidatorFromLSMTokenDenom(denom, validatorWithoutSharesToTokensRate)
+	s.Require().ErrorContains(err, "validator cosmosvaloperXXX sharesToTokens rate is not known")
+}
+
+func (s *KeeperTestSuite) TestCalculateLSMStToken() {
+	testCases := []struct {
+		name                        string
+		liquidStakedShares          sdkmath.Int
+		validatorSharesToTokensRate sdk.Dec
+		redemptionRate              sdk.Dec
+		expectedStAmount            sdkmath.Int
+	}{
+		// stTokenAmount = liquidStakedShares * validatorSharesToTokensRate / redemptionRate
+		{
+			name:                        "one sharesToTokens rate and redemption rate",
+			liquidStakedShares:          sdkmath.NewInt(1000),
+			validatorSharesToTokensRate: sdk.OneDec(),
+			redemptionRate:              sdk.OneDec(),
+			expectedStAmount:            sdkmath.NewInt(1000),
+		},
+		{
+			name:                        "one sharesToTokens rate, non-one redemption rate",
+			liquidStakedShares:          sdkmath.NewInt(1000),
+			validatorSharesToTokensRate: sdk.OneDec(),
+			redemptionRate:              sdk.MustNewDecFromStr("1.25"),
+			expectedStAmount:            sdkmath.NewInt(800), // 1000 * 1 / 1.25 = 800
+		},
+		{
+			name:                        "non-one sharesToTokens rate, one redemption rate",
+			liquidStakedShares:          sdkmath.NewInt(1000),
+			validatorSharesToTokensRate: sdk.MustNewDecFromStr("0.75"),
+			redemptionRate:              sdk.OneDec(),
+			expectedStAmount:            sdkmath.NewInt(750), // 1000 * 0.75 / 1
+		},
+		{
+			name:                        "non-one sharesToTokens rate, non-one redemption rate",
+			liquidStakedShares:          sdkmath.NewInt(1000),
+			validatorSharesToTokensRate: sdk.MustNewDecFromStr("0.75"),
+			redemptionRate:              sdk.MustNewDecFromStr("1.25"),
+			expectedStAmount:            sdkmath.NewInt(600), // 1000 * 0.75 / 1.25 = 600
+		},
+		{
+			name:                        "decimal to integer truncation",
+			liquidStakedShares:          sdkmath.NewInt(3333),
+			validatorSharesToTokensRate: sdk.MustNewDecFromStr("0.238498282349"),
+			redemptionRate:              sdk.MustNewDecFromStr("1.979034798243"),
+			expectedStAmount:            sdkmath.NewInt(401), // equals 401.667
+		},
+	}
+
+	for _, tc := range testCases {
+		s.Run(tc.name, func() {
+			lsmLiquidStake := types.LSMLiquidStake{
+				HostZone: &types.HostZone{
+					HostDenom:      "denom",
+					RedemptionRate: tc.redemptionRate,
+				},
+				Validator: &types.Validator{
+					SharesToTokensRate: tc.validatorSharesToTokensRate,
+				},
+			}
+
+			actualStCoin := s.App.StakeibcKeeper.CalculateLSMStToken(tc.liquidStakedShares, lsmLiquidStake)
+			s.Require().Equal("stdenom", actualStCoin.Denom, "denom")
+			s.Require().Equal(tc.expectedStAmount.Int64(), actualStCoin.Amount.Int64(), "amount")
+		})
+	}
 }
 
 func (s *KeeperTestSuite) TestShouldCheckIfValidatorWasSlashed() {

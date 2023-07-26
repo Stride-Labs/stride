@@ -11,15 +11,14 @@ const (
 )
 
 const (
-	EventTypeRegisterZone                = "register_zone"
-	EventTypeRedemptionRequest           = "request_redemption"
-	EventTypeLiquidStakeRequest          = "liquid_stake"
-	EventTypeLSMLiquidStakeRequest       = "lsm_liquid_stake"
-	EventTypeLSMLiquidStakeFailed        = "lsm_liquid_stake_failed"
-	EventTypeHostZoneHalt                = "halt_zone"
-	EventTypeValidatorExchangeRateChange = "validator_exchange_rate_change"
-	EventTypeValidatorSlash              = "validator_slash"
-	EventTypeUndelegation                = "undelegation"
+	EventTypeRegisterZone                      = "register_zone"
+	EventTypeRedemptionRequest                 = "request_redemption"
+	EventTypeLiquidStakeRequest                = "liquid_stake"
+	EventTypeLSMLiquidStakeRequest             = "lsm_liquid_stake"
+	EventTypeHostZoneHalt                      = "halt_zone"
+	EventTypeValidatorSharesToTokensRateChange = "validator_shares_to_tokens_rate_change"
+	EventTypeValidatorSlash                    = "validator_slash"
+	EventTypeUndelegation                      = "undelegation"
 
 	AttributeKeyHostZone         = "host_zone"
 	AttributeKeyConnectionId     = "connection_id"
@@ -31,22 +30,27 @@ const (
 
 	AttributeKeyRedemptionRate = "redemption_rate"
 
-	AttributeKeyLiquidStaker      = "liquid_staker"
-	AttributeKeyNativeBaseDenom   = "native_base_denom"
-	AttributeKeyNativeIBCDenom    = "native_ibc_denom"
-	AttributeKeyTotalUnbondAmount = "total_unbond_amount"
-	AttributeKeyLSMTokenBaseDenom = "lsm_token_base_denom"
-	AttributeKeyNativeAmount      = "native_amount"
-	AttributeKeyStTokenAmount     = "sttoken_amount"
-	AttributeKeyValidator         = "validator"
+	AttributeKeyLiquidStaker       = "liquid_staker"
+	AttributeKeyNativeBaseDenom    = "native_base_denom"
+	AttributeKeyNativeIBCDenom     = "native_ibc_denom"
+	AttributeKeyTotalUnbondAmount  = "total_unbond_amount"
+	AttributeKeyLSMTokenBaseDenom  = "lsm_token_base_denom"
+	AttributeKeyNativeAmount       = "native_amount"
+	AttributeKeyStTokenAmount      = "sttoken_amount"
+	AttributeKeyValidator          = "validator"
+	AttributeKeyTransactionStatus  = "transaction_status"
+	AttributeKeyLSMLiquidStakeTxId = "lsm_liquid_stake_tx_id"
 
-	AttributeKeyPreviousExchangeRate = "previous_exchange_rate"
-	AttributeKeyCurrentExchangeRate  = "current_exchange_rate"
-	AttributeKeySlashPercent         = "slash_percent"
-	AttributeKeySlashAmount          = "slash_amount"
-	AttributeKeyCurrentDelegation    = "current_delegation"
+	AttributeKeyPreviousSharesToTokensRate = "previous_shares_to_tokens_rate"
+	AttributeKeyCurrentSharesToTokensRate  = "current_shares_to_tokens_rate"
+	AttributeKeySlashPercent               = "slash_percent"
+	AttributeKeySlashAmount                = "slash_amount"
+	AttributeKeyCurrentDelegation          = "current_delegation"
 
 	AttributeKeyError = "error"
 
-	AttributeValueCategory = ModuleName
+	AttributeValueCategory             = ModuleName
+	AttributeValueTransactionSucceeded = "success"
+	AttributeValueTransactionPending   = "pending"
+	AttributeValueTransactionFailed    = "failed"
 )
