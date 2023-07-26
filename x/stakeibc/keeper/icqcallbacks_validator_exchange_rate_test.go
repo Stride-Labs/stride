@@ -140,8 +140,9 @@ func (s *KeeperTestSuite) SetupValidatorICQCallback(validatorSlashed, liquidStak
 		sharesToTokensRateIfSlashed: sharesToTokensRateIfSlashed,
 		validArgs: ValidatorICQCallbackArgs{
 			query: icqtypes.Query{
-				ChainId:      HostChainId,
-				CallbackData: callbackDataBz,
+				ChainId:          HostChainId,
+				CallbackData:     callbackDataBz,
+				TimeoutTimestamp: uint64(s.Ctx.BlockTime().Add(time.Minute).UnixNano()),
 			},
 			callbackArgs: queryResponse,
 		},
@@ -152,40 +153,38 @@ func (s *KeeperTestSuite) SetupValidatorICQCallback(validatorSlashed, liquidStak
 func (s *KeeperTestSuite) checkValidatorSharesToTokensRate(expectedSharesToTokensRate sdk.Dec, tc ValidatorICQCallbackTestCase) {
 	hostZone, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx, HostChainId)
 	s.Require().True(found, "host zone found")
-	s.Require().Equal(expectedSharesToTokensRate.String(), hostZone.Validators[0].SharesToTokensRate.String(),
-		"validator shares to tokens rate should not have updated")
-}
-
-// Helper function to check that the event emitted from an LSM liquid stake
-func (s *KeeperTestSuite) checkLSMLiquidStakeEventEmitted(expectedEventType string) bool {
-	eventEmitted := false
-	for _, event := range s.Ctx.EventManager().Events() {
-		if event.Type == expectedEventType {
-			eventEmitted = true
-		}
-	}
-	return eventEmitted
+	s.Require().Equal(expectedSharesToTokensRate.String(), hostZone.Validators[0].InternalSharesToTokensRate.String(),
+		"validator shares to tokens rate")
 }
 
 // Check that the LSMLiquidStake callback succeeded by looking for a successful event emission
 func (s *KeeperTestSuite) checkLSMLiquidStakeSuccess() {
-	eventEmitted := s.checkLSMLiquidStakeEventEmitted(types.EventTypeLSMLiquidStakeRequest)
-	s.Require().True(eventEmitted, "expected to see the event from a successful LSM liquid stake")
+	s.CheckEventValueEmitted(
+		types.EventTypeLSMLiquidStakeRequest,
+		types.AttributeKeyTransactionStatus,
+		types.AttributeValueTransactionSucceeded,
+	)
 }
 
 // Check that the LSMLiquidStake callback failed by looking for a failed event emission
 func (s *KeeperTestSuite) checkLSMLiquidStakeFailed() {
-	eventEmitted := s.checkLSMLiquidStakeEventEmitted(types.EventTypeLSMLiquidStakeFailed)
-	s.Require().True(eventEmitted, "expected to see the event from a failed LSM liquid stake")
+	// Confirm failure was emitted
+	s.CheckEventValueEmitted(
+		types.EventTypeLSMLiquidStakeRequest,
+		types.AttributeKeyTransactionStatus,
+		types.AttributeValueTransactionFailed,
+	)
+	// Confirm success was NOT emitted (to confirm short circuiting)
+	s.CheckEventValueNotEmitted(
+		types.EventTypeLSMLiquidStakeRequest,
+		types.AttributeKeyTransactionStatus,
+		types.AttributeValueTransactionSucceeded,
+	)
 }
 
 // Check that the liquid stake code was not called
 func (s *KeeperTestSuite) checkLSMLiquidStakeNotCalled() {
-	successEventEmitted := s.checkLSMLiquidStakeEventEmitted(types.EventTypeLSMLiquidStakeRequest)
-	s.Require().False(successEventEmitted, "successful liquid stake event should not have been emitted")
-
-	failureEventEmitted := s.checkLSMLiquidStakeEventEmitted(types.EventTypeLSMLiquidStakeFailed)
-	s.Require().False(failureEventEmitted, "failed liquid stake event should not have been emitted")
+	s.CheckEventTypeNotEmitted(types.EventTypeLSMLiquidStakeRequest)
 }
 
 // Helper function to check that the delegator shares query was submitted by checking
@@ -216,9 +215,6 @@ func (s *KeeperTestSuite) checkDelegatorSharesQuerySubmitted(liquidStakeCallback
 
 	// Confirm timeout based on the type of query (LSM or manual)
 	timeoutDuration := time.Hour
-	if liquidStakeCallback {
-		timeoutDuration = keeper.LSMSlashQueryTimeout
-	}
 	expectedTimeout := s.Ctx.BlockTime().UnixNano() + (timeoutDuration).Nanoseconds()
 	s.Require().Equal(timeoutDuration, query.TimeoutDuration, "query timeout duration")
 	s.Require().Equal(expectedTimeout, int64(query.TimeoutTimestamp), "query timeout timestamp")
@@ -345,8 +341,6 @@ func (s *KeeperTestSuite) TestValidatorSharesToTokensRateCallback_Successful_NoS
 	// We'll check both that the failed event was emitted, and the success event was not emitted
 	// (to confirm short circuiting)
 	s.checkLSMLiquidStakeFailed()
-	successEmitted := s.checkLSMLiquidStakeEventEmitted(types.EventTypeLSMLiquidStakeRequest)
-	s.Require().False(successEmitted, "expected to not see a successful LSM liquid stake event")
 
 	// Confirm the tokens were not sent to the module account since the state changes were discarded
 	stakerBalance := s.App.BankKeeper.GetBalance(s.Ctx, s.TestAccs[0], tc.initialState.lsmTokenIBCDenom)
@@ -426,6 +420,47 @@ func (s *KeeperTestSuite) TestValidatorSharesToTokensRateCallback_NoSlash_LiqudS
 	s.checkLSMLiquidStakeFailed()
 }
 
+func (s *KeeperTestSuite) TestValidatorSharesToTokensRateCallback_NoLiquidStake_QueryTimeout() {
+	lsmCallback := false
+	tc := s.SetupValidatorICQCallback(false, lsmCallback)
+
+	// Update the query so that it timed out
+	badQuery := tc.validArgs.query
+	badQuery.TimeoutTimestamp = 0
+
+	err := stakeibckeeper.ValidatorSharesToTokensRateCallback(s.App.StakeibcKeeper, s.Ctx, tc.validArgs.callbackArgs, badQuery)
+	s.Require().NoError(err, "validator shares to tokens rate callback error")
+
+	// Confirm validator's shares to tokens rate DID NOT update
+	expectedSharesToTokensRate := tc.initialState.validator.SharesToTokensRate
+	s.checkValidatorSharesToTokensRate(expectedSharesToTokensRate, tc)
+
+	// Confirm delegator shares query WAS NOT submitted
+	s.checkDelegatorSharesQueryNotSubmitted()
+}
+
+func (s *KeeperTestSuite) TestValidatorExchangeRateCallback_LiquidStake_QueryTimeout() {
+	lsmCallback := true
+	tc := s.SetupValidatorICQCallback(false, lsmCallback)
+
+	// Update the query so that it timed out
+	badQuery := tc.validArgs.query
+	badQuery.TimeoutTimestamp = 0
+
+	err := stakeibckeeper.ValidatorSharesToTokensRateCallback(s.App.StakeibcKeeper, s.Ctx, tc.validArgs.callbackArgs, badQuery)
+	s.Require().NoError(err, "validator shares to tokens rate callback error")
+
+	// Confirm validator's shares to tokens rate DID NOT update
+	expectedSharesToTokensRate := tc.initialState.validator.SharesToTokensRate
+	s.checkValidatorExchangeRate(expectedSharesToTokensRate, tc)
+
+	// Confirm delegator shares query WAS NOT submitted
+	s.checkDelegatorSharesQueryNotSubmitted()
+
+	// Confirm the liquid stake failed
+	s.checkLSMLiquidStakeFailed()
+}
+
 func (s *KeeperTestSuite) TestValidatorSharesToTokensRateCallback_HostZoneNotFound() {
 	tc := s.SetupValidatorICQCallback(false, false)
 
@@ -488,8 +523,5 @@ func (s *KeeperTestSuite) TestValidatorSharesToTokensRateCallback_DelegationQuer
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, badHostZone)
 
 	err := stakeibckeeper.ValidatorSharesToTokensRateCallback(s.App.StakeibcKeeper, s.Ctx, tc.validArgs.callbackArgs, tc.validArgs.query)
-
-	expectedErr := "Failed to query delegations, err: no delegation address found for GAIA: "
-	expectedErr += "ICA acccount not found on host zone: failed to submit ICQ"
-	s.Require().EqualError(err, expectedErr)
+	s.Require().ErrorContains(err, "Failed to submit ICQ validator delegations")
 }

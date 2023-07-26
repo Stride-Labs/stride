@@ -12,7 +12,7 @@ import (
 // after being slashed. The flow is:
 // 1. QueryValidatorSharesToTokensRate (ICQ)
 // 2. ValidatorSharesToTokensRate (CALLBACK)
-// 3. QueryDelegationsIcq (ICQ)
+// 3. SubmitDelegationICQ (ICQ)
 // 4. DelegatorSharesCallback (CALLBACK)
 func (k msgServer) UpdateValidatorSharesExchRate(goCtx context.Context, msg *types.MsgUpdateValidatorSharesExchRate) (*types.MsgUpdateValidatorSharesExchRateResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)

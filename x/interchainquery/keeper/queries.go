@@ -21,7 +21,7 @@ import (
 
 // Generates a query ID based on the request information
 // If forceUnique is false, queries of the same request type will have the same query ID
-//  (e.g. "query the ATOM balance of address X", will always have the same query ID)
+// (e.g. "query the ATOM balance of address X", will always have the same query ID)
 // If forceUnique is true, a unique ID will be used for the query
 func (k Keeper) GetQueryId(ctx sdk.Context, query types.Query, forceUnique bool) string {
 	// If forceUnique is true, grab and append the unique query UID

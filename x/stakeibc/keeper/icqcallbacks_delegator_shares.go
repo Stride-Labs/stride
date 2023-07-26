@@ -61,6 +61,11 @@ func DelegatorSharesCallback(k Keeper, ctx sdk.Context, args []byte, query icqty
 		return errorsmod.Wrapf(types.ErrValidatorNotFound, "no registered validator for address (%s)", queriedDelegation.ValidatorAddress)
 	}
 
+	// Check if delegation is zero since this will affect measuring the slash amount
+	if validator.Delegation.IsZero() {
+		return errorsmod.Wrapf(types.ErrNoValidatorAmts, "Current delegation to validator is zero, unable to check slash magnitude %+v", validator)
+	}
+
 	// Check if the ICQ overlapped a delegation, undelegation, or detokenization ICA
 	// that would have modfied the number of delegated tokens
 	prevInternalDelegation := callbackData.InitialValidatorDelegation
@@ -216,6 +221,12 @@ func (k Keeper) CheckForSlash(
 func (k Keeper) SlashValidatorOnHostZone(ctx sdk.Context, hostZone types.HostZone, valIndex int64, delegatedTokens sdkmath.Int) error {
 	chainId := hostZone.ChainId
 	validator := hostZone.Validators[valIndex]
+
+	// There is a check upstream to verify that validator.Delegation is not 0
+	// This check is to explicitly avoid a division by zero error
+	if validator.Delegation.IsZero() {
+		return errorsmod.Wrapf(types.ErrDivisionByZero, "Zero Delegation has caused division by zero from validator, %+v", validator)
+	}
 
 	// Get slash percentage
 	slashAmount := validator.Delegation.Sub(delegatedTokens)

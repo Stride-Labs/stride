@@ -99,6 +99,32 @@ func (s *KeeperTestSuite) TestValidateLSMLiquidStake() {
 	s.Require().ErrorContains(err, fmt.Sprintf("validator (%s) is not registered in the Stride validator set", ValAddress))
 }
 
+func (s *KeeperTestSuite) TestGetLSMTokenDepositId() {
+	address1 := "stride1h8wj2e5a329ve2r472ydezc4lel4dmsdn5v5sd"
+	address2 := "stride15vg2f5yvrs3673zj89mpwt260cpalws5psxtdh"
+
+	s.Require().Equal(
+		"87bd1d24f68162b37eb564ea17cc946d9119753f5ec2deeeed08b585f4164d30",
+		keeper.GetLSMTokenDepositId(1, HostChainId, address1, ValAddress+"/1"),
+	)
+	s.Require().Equal(
+		"c799379d0fa078df85673cb2cd7a055c7ed1f486c22af28ed492908353398a64",
+		keeper.GetLSMTokenDepositId(2, HostChainId, address1, ValAddress+"/1"),
+	)
+	s.Require().Equal(
+		"e16e4a9018d4a9b68bd1bcec7ddc67df7377242880173f717c2750fedb7ecf69",
+		keeper.GetLSMTokenDepositId(1, OsmoChainId, address1, ValAddress+"/1"),
+	)
+	s.Require().Equal(
+		"05e2ae6b19b05b8be485b77899524eb018cdf65869b450b0272b67cf8aa2936a",
+		keeper.GetLSMTokenDepositId(1, HostChainId, address2, ValAddress+"/1"),
+	)
+	s.Require().Equal(
+		"e0aa2cc10d2daeb8c5fde4cfae367ef098cfc42395eb3d23ca8be498c62717b0",
+		keeper.GetLSMTokenDepositId(1, HostChainId, address1, ValAddress+"/2"),
+	)
+}
+
 func (s *KeeperTestSuite) TestGetLSMTokenDenomTrace() {
 	baseDenom := "cosmosvaloper1uk4ze0x4nvh4fk0xm4jdud58eqn4yxhrdt795p/48"
 	path := "transfer/channel-0"

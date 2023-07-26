@@ -22,10 +22,11 @@ import (
 )
 
 type ReinvestCallbackState struct {
-	hostZone      stakeibctypes.HostZone
-	reinvestAmt   sdkmath.Int
-	callbackArgs  types.ReinvestCallback
-	depositRecord recordtypes.DepositRecord
+	hostZone               stakeibctypes.HostZone
+	reinvestAmt            sdkmath.Int
+	callbackArgs           types.ReinvestCallback
+	depositRecord          recordtypes.DepositRecord
+	durationUntilNextEpoch time.Duration
 }
 
 type ReinvestCallbackArgs struct {
@@ -51,6 +52,8 @@ func (s *KeeperTestSuite) SetupReinvestCallback() ReinvestCallbackTestCase {
 		ConnectionId:   ibctesting.FirstConnectionID,
 		FeeIcaAddress:  feeAddress,
 	}
+	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
+
 	expectedNewDepositRecord := recordtypes.DepositRecord{
 		Id:                 0,
 		DepositEpochNumber: 1,
@@ -59,11 +62,16 @@ func (s *KeeperTestSuite) SetupReinvestCallback() ReinvestCallbackTestCase {
 		Status:             recordtypes.DepositRecord_DELEGATION_QUEUE,
 		Source:             recordtypes.DepositRecord_WITHDRAWAL_ICA,
 	}
+
+	durationUntilNextEpoch := time.Minute
+	blockTime := time.Date(2023, 1, 1, 0, 0, 0, 0, time.UTC)
+	s.Ctx = s.Ctx.WithBlockTime(blockTime)
+
 	epochTracker := stakeibctypes.EpochTracker{
-		EpochIdentifier: epochtypes.STRIDE_EPOCH,
-		EpochNumber:     1,
+		EpochIdentifier:    epochtypes.STRIDE_EPOCH,
+		EpochNumber:        1,
+		NextEpochStartTime: uint64(blockTime.Add(durationUntilNextEpoch).UnixNano()),
 	}
-	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
 	s.App.StakeibcKeeper.SetEpochTracker(s.Ctx, epochTracker)
 
 	packet := channeltypes.Packet{}
@@ -77,10 +85,11 @@ func (s *KeeperTestSuite) SetupReinvestCallback() ReinvestCallbackTestCase {
 
 	return ReinvestCallbackTestCase{
 		initialState: ReinvestCallbackState{
-			hostZone:      hostZone,
-			reinvestAmt:   reinvestAmt,
-			callbackArgs:  callbackArgs,
-			depositRecord: expectedNewDepositRecord,
+			hostZone:               hostZone,
+			reinvestAmt:            reinvestAmt,
+			callbackArgs:           callbackArgs,
+			depositRecord:          expectedNewDepositRecord,
+			durationUntilNextEpoch: durationUntilNextEpoch,
 		},
 		validArgs: ReinvestCallbackArgs{
 			packet:      packet,
@@ -121,7 +130,7 @@ func (s *KeeperTestSuite) TestReinvestCallback_Successful() {
 	s.Require().Equal(HostChainId, query.ChainId, "query chain ID")
 	s.Require().Equal(ibctesting.FirstConnectionID, query.ConnectionId, "query connection ID")
 	s.Require().Equal(icqtypes.BANK_STORE_QUERY_WITH_PROOF, query.QueryType, "query type")
-	s.Require().Equal(time.Hour, query.TimeoutDuration, "query timeout duration")
+	s.Require().Equal(tc.initialState.durationUntilNextEpoch, query.TimeoutDuration, "query timeout duration")
 }
 
 func (s *KeeperTestSuite) checkReinvestStateIfCallbackFailed(tc ReinvestCallbackTestCase) {

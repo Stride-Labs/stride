@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	"errors"
 	"fmt"
 	"sort"
 
@@ -9,12 +10,10 @@ import (
 
 	"github.com/golang/protobuf/proto" //nolint:staticcheck
 
-	// TODO [LSM]: Revert type
-	lsmstakingtypes "github.com/iqlusioninc/liquidity-staking-module/x/staking/types"
-
 	errorsmod "cosmossdk.io/errors"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/spf13/cast"
 
 	"github.com/Stride-Labs/stride/v9/utils"
@@ -37,8 +36,17 @@ type ValidatorUnbondCapacity struct {
 // This represents how proportionally unbalanced each validator is
 // The smaller number means their current delegation is much larger
 // then their fair portion of the current total stake
-func (c *ValidatorUnbondCapacity) GetBalanceRatio() sdk.Dec {
-	return sdk.NewDecFromInt(c.BalancedDelegation).Quo(sdk.NewDecFromInt(c.CurrentDelegation))
+func (c *ValidatorUnbondCapacity) GetBalanceRatio() (sdk.Dec, error) {
+	// ValidatorUnbondCapaciy structs only exist for validators with positive capacity
+	//   capacity is CurrentDelegation - BalancedDelegation
+	//   positive capacity means CurrentDelegation must be >0
+
+	// Therefore the current delegation here should never be zero
+	if c.CurrentDelegation.IsZero() {
+		errMsg := fmt.Sprintf("CurrentDelegation should not be 0 inside GetBalanceRatio(), %+v", c)
+		return sdk.ZeroDec(), errors.New(errMsg)
+	}
+	return sdk.NewDecFromInt(c.BalancedDelegation).Quo(sdk.NewDecFromInt(c.CurrentDelegation)), nil
 }
 
 // Creates a new epoch unbonding record for the epoch
@@ -92,11 +100,12 @@ func (k Keeper) GetTotalUnbondAmountAndRecordsIds(ctx sdk.Context, chainId strin
 
 // Determine the unbonding capacity that each validator has
 // The capacity is determined by the difference between their current delegation
-//  and their fair portion of the total stake based on their weights
-//  (i.e. their balanced delegation)
+// and their fair portion of the total stake based on their weights
+// (i.e. their balanced delegation)
+//
 // Validators with a balanced delegation less than their current delegation
-//  are already at a deficit, are not included in the returned list,
-//  and thus, are will not incur any unbonding
+// are already at a deficit, are not included in the returned list,
+// and thus, are will not incur any unbonding
 func (k Keeper) GetValidatorUnbondCapacity(
 	ctx sdk.Context,
 	validators []*types.Validator,
@@ -126,22 +135,36 @@ func (k Keeper) GetValidatorUnbondCapacity(
 // This will sort the validator's by how proportionally unbalanced they are
 //
 // Ex:
-//   Val1: Ideal Balanced Delegation 80,  Current Delegation 100 (surplus of 20), Ratio: 0.8
-//   Val2: Ideal Balanced Delegation 480, Current Delegation 500 (surplus of 20), Ratio: 0.96
+//
+//	Val1: Ideal Balanced Delegation 80,  Current Delegation 100 (surplus of 20), Ratio: 0.8
+//	Val2: Ideal Balanced Delegation 480, Current Delegation 500 (surplus of 20), Ratio: 0.96
+//
 // While both validators have the same net unbalanced delegation, Val2 is proportionally
-//    more balanced since the surplus is a smaller percentage of it's overall delegation
+// more balanced since the surplus is a smaller percentage of it's overall delegation
 //
 // This will also sort such that 0-weight validator's will come first as their
-//   ideal balanced delegation will always be 0, and thus their ratio will always be 0
+// ideal balanced delegation will always be 0, and thus their ratio will always be 0
+//
 // If the ratio's are equal, the validator with the larger delegation/capacity will come first
-func SortUnbondingCapacityByPriority(validatorUnbondCapacity []ValidatorUnbondCapacity) []ValidatorUnbondCapacity {
+func SortUnbondingCapacityByPriority(validatorUnbondCapacity []ValidatorUnbondCapacity) ([]ValidatorUnbondCapacity, error) {
+	// Loop through all validators to make sure none error when getting the balance ratio needed for sorting
+	for _, validator := range validatorUnbondCapacity {
+		if _, err := validator.GetBalanceRatio(); err != nil {
+			return nil, err
+		}
+	}
+
+	// Pairwise-compare function for Slice Stable Sort
 	lessFunc := func(i, j int) bool {
 		validatorA := validatorUnbondCapacity[i]
 		validatorB := validatorUnbondCapacity[j]
 
+		balanceRatioValA, _ := validatorA.GetBalanceRatio()
+		balanceRatioValB, _ := validatorB.GetBalanceRatio()
+
 		// Sort by the balance ratio first - in ascending order - so the more unbalanced validators appear first
-		if !validatorA.GetBalanceRatio().Equal(validatorB.GetBalanceRatio()) {
-			return validatorA.GetBalanceRatio().LT(validatorB.GetBalanceRatio())
+		if !balanceRatioValA.Equal(balanceRatioValB) {
+			return balanceRatioValA.LT(balanceRatioValB)
 		}
 
 		// If the ratio's are equal, use the capacity as a tie breaker
@@ -155,12 +178,13 @@ func SortUnbondingCapacityByPriority(validatorUnbondCapacity []ValidatorUnbondCa
 	}
 	sort.SliceStable(validatorUnbondCapacity, lessFunc)
 
-	return validatorUnbondCapacity
+	return validatorUnbondCapacity, nil
 }
 
 // Given a total unbond amount and list of unbond capacity for each validator, sorted by unbond priority
 // Iterates through the list and unbonds as much as possible from each validator until all the
-//   unbonding has been accounted for
+// unbonding has been accounted for
+//
 // Returns the list of messages and the callback data for the ICA
 func (k Keeper) GetUnbondingICAMessages(
 	hostZone types.HostZone,
@@ -188,7 +212,7 @@ func (k Keeper) GetUnbondingICAMessages(
 		unbondToken := sdk.NewCoin(hostZone.HostDenom, unbondAmount)
 
 		// Build the undelegate ICA messages
-		msgs = append(msgs, &lsmstakingtypes.MsgUndelegate{
+		msgs = append(msgs, &stakingtypes.MsgUndelegate{
 			DelegatorAddress: hostZone.DelegationIcaAddress,
 			ValidatorAddress: validatorCapacity.ValidatorAddress,
 			Amount:           unbondToken,
@@ -214,13 +238,13 @@ func (k Keeper) GetUnbondingICAMessages(
 //
 // First, the total unbond amount is determined from the epoch unbonding records
 // Then that unbond amount is allowed to cascade across the validators in order of how proportionally
-//   different their current delegations are from the weight implied target delegation,
-//   until their capacities have consumed the full amount
-// As a result, unbondings lead to a more balanced distribution of stake across validators
+// different their current delegations are from the weight implied target delegation,
+// until their capacities have consumed the full amount
 //
-// Context:
-//   Over time, as LSM Liquid stakes are accepted, the total stake managed by the protocol becomes unbalanced
-//   as liquid stakes are not aligned with the validator weights. This is only rebalanced once per unbonding period
+// # As a result, unbondings lead to a more balanced distribution of stake across validators
+//
+// Context: Over time, as LSM Liquid stakes are accepted, the total stake managed by the protocol becomes unbalanced
+// as liquid stakes are not aligned with the validator weights. This is only rebalanced once per unbonding period
 func (k Keeper) UnbondFromHostZone(ctx sdk.Context, hostZone types.HostZone) error {
 	k.Logger(ctx).Info(utils.LogWithHostZone(hostZone.ChainId,
 		"Preparing MsgUndelegates from the delegation account to each validator"))
@@ -262,7 +286,10 @@ func (k Keeper) UnbondFromHostZone(ctx sdk.Context, hostZone types.HostZone) err
 	// Sort the unbonding capacity by priority
 	// Priority is determined by checking the how proportionally unbalanced each validator is
 	// Zero weight validators will come first in the list
-	prioritizedUnbondCapacity := SortUnbondingCapacityByPriority(validatorUnbondCapacity)
+	prioritizedUnbondCapacity, err := SortUnbondingCapacityByPriority(validatorUnbondCapacity)
+	if err != nil {
+		return err
+	}	
 
 	// Get the undelegation ICA messages and split delegations for the callback
 	msgs, unbondings, err := k.GetUnbondingICAMessages(hostZone, totalUnbondAmount, prioritizedUnbondCapacity)
@@ -487,11 +514,11 @@ func (k Keeper) SweepAllUnbondedTokensForHostZone(ctx sdk.Context, hostZone type
 }
 
 // Sends all unbonded tokens to the redemption account
-//    returns:
-//       * success indicator if all chains succeeded
-//       * list of successful chains
-//       * list of tokens swept
-//       * list of failed chains
+// returns:
+//   - success indicator if all chains succeeded
+//   - list of successful chains
+//   - list of tokens swept
+//   - list of failed chains
 func (k Keeper) SweepAllUnbondedTokens(ctx sdk.Context) (success bool, successfulSweeps []string, sweepAmounts []sdkmath.Int, failedSweeps []string) {
 	// this function returns true if all chains succeeded, false otherwise
 	// it also returns a list of successful chains (arg 2), tokens swept (arg 3), and failed chains (arg 4)

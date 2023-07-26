@@ -19,10 +19,7 @@ import (
 
 	bankTypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 
-	// TODO [LSM]: Revert type
-	lsmdistributiontypes "github.com/iqlusioninc/liquidity-staking-module/x/distribution/types"
-	lsmstakingtypes "github.com/iqlusioninc/liquidity-staking-module/x/staking/types"
-
+	distributiontypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
 	epochstypes "github.com/Stride-Labs/stride/v9/x/epochs/types"
@@ -63,7 +60,7 @@ func (k Keeper) DelegateOnHost(ctx sdk.Context, hostZone types.HostZone, amt sdk
 	for _, validator := range hostZone.Validators {
 		relativeAmount := sdk.NewCoin(amt.Denom, targetDelegatedAmts[validator.Address])
 		if relativeAmount.Amount.IsPositive() {
-			msgs = append(msgs, &lsmstakingtypes.MsgDelegate{
+			msgs = append(msgs, &stakingtypes.MsgDelegate{
 				DelegatorAddress: hostZone.DelegationIcaAddress,
 				ValidatorAddress: validator.Address,
 				Amount:           relativeAmount,
@@ -137,7 +134,7 @@ func (k Keeper) SetWithdrawalAddressOnHost(ctx sdk.Context, hostZone types.HostZ
 
 	// Construct the ICA message
 	msgs := []sdk.Msg{
-		&lsmdistributiontypes.MsgSetWithdrawAddress{
+		&distributiontypes.MsgSetWithdrawAddress{
 			DelegatorAddress: hostZone.DelegationIcaAddress,
 			WithdrawAddress:  hostZone.WithdrawalIcaAddress,
 		},
@@ -167,6 +164,14 @@ func (k Keeper) UpdateWithdrawalBalance(ctx sdk.Context, hostZone types.HostZone
 	}
 	queryData := append(bankTypes.CreateAccountBalancesPrefix(withdrawalAddressBz), []byte(hostZone.HostDenom)...)
 
+	// Timeout query at end of epoch
+	strideEpochTracker, found := k.GetEpochTracker(ctx, epochstypes.STRIDE_EPOCH)
+	if !found {
+		return errorsmod.Wrapf(types.ErrEpochNotFound, epochstypes.STRIDE_EPOCH)
+	}
+	timeout := time.Unix(0, int64(strideEpochTracker.NextEpochStartTime))
+	timeoutDuration := timeout.Sub(ctx.BlockTime())
+
 	// Submit the ICQ for the withdrawal account balance
 	query := icqtypes.Query{
 		ChainId:         hostZone.ChainId,
@@ -175,7 +180,8 @@ func (k Keeper) UpdateWithdrawalBalance(ctx sdk.Context, hostZone types.HostZone
 		RequestData:     queryData,
 		CallbackModule:  types.ModuleName,
 		CallbackId:      ICQCallbackID_WithdrawalBalance,
-		TimeoutDuration: time.Hour,
+		TimeoutDuration: timeoutDuration,
+		TimeoutPolicy:   icqtypes.TimeoutPolicy_REJECT_QUERY_RESPONSE,
 	}
 	if err := k.InterchainQueryKeeper.SubmitICQRequest(ctx, query, false); err != nil {
 		k.Logger(ctx).Error(fmt.Sprintf("Error querying for withdrawal balance, error: %s", err.Error()))
@@ -357,8 +363,23 @@ func (k Keeper) GetLightClientTimeSafely(ctx sdk.Context, connectionID string) (
 	}
 }
 
-// Submits an ICQ to get a validator's sharesToTokens rate
-func (k Keeper) QueryValidatorSharesToTokensRate(ctx sdk.Context, chainId, validatorAddress string) error {
+// Submit a validator sharesToTokens rate ICQ as triggered either manually or epochly with a conservative timeout
+func (k Keeper) QueryValidatorExchangeRate(ctx sdk.Context, chainId string, validatorAddress string) error {
+	timeoutDuration := time.Hour * 24
+	timeoutPolicy := icqtypes.TimeoutPolicy_REJECT_QUERY_RESPONSE
+	callbackData := []byte{}
+	return k.SubmitValidatorSharesToTokensRateICQ(ctx, chainId, validatorAddress, callbackData, timeoutDuration, timeoutPolicy)
+}
+
+// Submits an ICQ to get a validator's shares to tokens rate
+func (k Keeper) SubmitValidatorSharesToTokensRateICQ(
+	ctx sdk.Context,
+	chainId string,
+	validatorAddress string,
+	callbackDataBz []byte,
+	timeoutDuration time.Duration,
+	timeoutPolicy icqtypes.TimeoutPolicy,
+) error {
 	k.Logger(ctx).Info(utils.LogWithHostZone(chainId, "Submitting ICQ for validator sharesToTokens rate to %s", validatorAddress))
 
 	// Confirm the host zone exists
@@ -388,7 +409,9 @@ func (k Keeper) QueryValidatorSharesToTokensRate(ctx sdk.Context, chainId, valid
 		RequestData:     queryData,
 		CallbackModule:  types.ModuleName,
 		CallbackId:      ICQCallbackID_Validator,
-		TimeoutDuration: time.Hour,
+		CallbackData:    callbackDataBz,
+		TimeoutDuration: timeoutDuration,
+		TimeoutPolicy:   timeoutPolicy,
 	}
 	if err := k.InterchainQueryKeeper.SubmitICQRequest(ctx, query, false); err != nil {
 		k.Logger(ctx).Error(fmt.Sprintf("Error submitting ICQ for validator sharesToTokens rate, error %s", err.Error()))
@@ -400,10 +423,7 @@ func (k Keeper) QueryValidatorSharesToTokensRate(ctx sdk.Context, chainId, valid
 // Submits an ICQ to get a validator's delegations
 // This is called after the validator's sharesToTokens rate is determined
 // The timeoutDuration parameter represents the length of the timeout (not to be confused with an actual timestamp)
-func (k Keeper) QueryDelegationsIcq(ctx sdk.Context, hostZone types.HostZone, validatorAddress string, timeoutDuration time.Duration) error {
-	k.Logger(ctx).Info(utils.LogWithHostZone(hostZone.ChainId, "Submitting ICQ for delegations to %s", validatorAddress))
-
-	// Get the validator and delegator encoded addresses to form the query request
+func (k Keeper) SubmitDelegationICQ(ctx sdk.Context, hostZone types.HostZone, validatorAddress string) error {
 	if hostZone.DelegationIcaAddress == "" {
 		return errorsmod.Wrapf(types.ErrICAAccountNotFound, "no delegation address found for %s", hostZone.ChainId)
 	}
@@ -411,6 +431,15 @@ func (k Keeper) QueryDelegationsIcq(ctx sdk.Context, hostZone types.HostZone, va
 	if !found {
 		return errorsmod.Wrapf(types.ErrValidatorNotFound, "no registered validator for address (%s)", validatorAddress)
 	}
+
+	// Only submit the query if there's not already one in progress
+	if validator.SlashQueryInProgress {
+		k.Logger(ctx).Info(utils.LogWithHostZone(hostZone.ChainId, "Delegations ICQ already in progress"))
+		return nil
+	}
+	k.Logger(ctx).Info(utils.LogWithHostZone(hostZone.ChainId, "Submitting ICQ for delegations to %s", validatorAddress))
+
+	// Get the validator and delegator encoded addresses to form the query request
 	_, validatorAddressBz, err := bech32.DecodeAndConvert(validatorAddress)
 	if err != nil {
 		return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "invalid validator address, could not decode (%s)", err.Error())
@@ -445,7 +474,8 @@ func (k Keeper) QueryDelegationsIcq(ctx sdk.Context, hostZone types.HostZone, va
 		CallbackModule:  types.ModuleName,
 		CallbackId:      ICQCallbackID_Delegation,
 		CallbackData:    callbackDataBz,
-		TimeoutDuration: timeoutDuration,
+		TimeoutDuration: time.Hour,
+		TimeoutPolicy:   icqtypes.TimeoutPolicy_RETRY_QUERY_REQUEST,
 	}
 	if err := k.InterchainQueryKeeper.SubmitICQRequest(ctx, query, false); err != nil {
 		k.Logger(ctx).Error(fmt.Sprintf("Error submitting ICQ for delegation, error : %s", err.Error()))

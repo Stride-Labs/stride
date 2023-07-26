@@ -19,7 +19,7 @@ ADDRESS_PREFIX=$(GET_VAR_VALUE ${CHAIN}_ADDRESS_PREFIX)
 NUM_VALS=$(GET_VAR_VALUE       ${CHAIN}_NUM_NODES)
 
 LSM_ENABLED="false"
-if [[ "$CHAIN" == "LSM" ]]; then
+if [[ "$CHAIN" == "GAIA" ]]; then
     LSM_ENABLED="true"
 fi
 
@@ -29,7 +29,6 @@ $STRIDE_MAIN_CMD tx stakeibc register-host-zone \
     --gas 1000000 --from $STRIDE_ADMIN_ACCT --home $DOCKERNET_HOME/state/stride1 -y | TRIM_TX
 sleep 10
 
-echo "$CHAIN - Registering validators..."
 # Build array of validators of the form:
 # {"name": "...", "address": "...", "weight": "..."}
 validators=()
@@ -43,6 +42,14 @@ for (( i=1; i <= $NUM_VALS; i++ )); do
         validator="${validator},"
     fi
     validators+=("$validator")
+
+    # For LSM-enabled hosts, submit validator-bond txs to allow liquid staking delegations
+    if [[ "$CHAIN" == "GAIA" ]]; then 
+        if [[ "$i" == "1" ]]; then
+            echo "$CHAIN - Submitting validator bonds..."
+        fi
+        $GAIA_MAIN_CMD tx staking validator-bond $delegate_val --from ${VAL_PREFIX}${i} -y | TRIM_TX
+    fi
 done
 
 # Write validators list to json file  of the form:
@@ -51,6 +58,7 @@ validator_json=$DOCKERNET_HOME/state/${NODE_PREFIX}1/validators.json
 echo "{\"validators\": [${validators[*]}]}" > $validator_json
 
 # Add host zone validators to Stride's host zone struct
+echo "$CHAIN - Registering validators..."
 $STRIDE_MAIN_CMD tx stakeibc add-validators $CHAIN_ID $validator_json --gas 1000000 \
     --from $STRIDE_ADMIN_ACCT -y | TRIM_TX
 sleep 5
