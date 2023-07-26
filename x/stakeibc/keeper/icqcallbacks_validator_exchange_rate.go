@@ -20,7 +20,7 @@ import (
 //  1. the validator's internal sharesToTokens rate
 //  2. the Delegation ICA's delegated shares
 //     And apply the following equation:
-//     num_tokens = num_shares * sharesToTokensRate
+//     numTokens = numShares * sharesToTokensRate
 //
 // This is the callback from query #1
 // We only issue query #2 if the validator sharesToTokens rate from #1 has changed (indicating a slash)
@@ -105,7 +105,7 @@ func (k Keeper) CheckIfValidatorWasSlashed(
 	// We want the validator's internal sharesToTokens rate which is held internally
 	// behind the inverse of the function `validator.TokensFromShares`
 	//  Since,
-	//     shares_to_tokens = num_tokens / num_shares
+	//     sharesToTokensRate = numTokens / numShares
 	//  We can use `validator.TokensFromShares`, plug in 1.0 for the number of shares,
 	//    and the returned number of tokens will be equal to the internal sharesToTokens rate
 	currentSharesToTokensRate := queriedValidator.TokensFromShares(sdk.NewDec(1.0))

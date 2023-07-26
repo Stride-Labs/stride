@@ -24,7 +24,7 @@ import (
 //  1. the validator's internal shares to tokens rate
 //  2. the Delegation ICA's delegated shares
 //     And apply the following equation:
-//     numTokens = sharesToTokensRate * numShares
+//     numTokens = numShares * sharesToTokensRate
 //
 // This is the callback from query #2
 //
