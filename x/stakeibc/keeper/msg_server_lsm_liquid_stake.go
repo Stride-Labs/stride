@@ -25,7 +25,7 @@ import (
 //   - - The staker's LSM Tokens are sent to the Stride module account
 //   - - The staker recieves stTokens
 //
-// As a safety measure, at period checkpoints, the validator's exchange rate is queried and the transaction
+// As a safety measure, at period checkpoints, the validator's sharesToTokens rate is queried and the transaction
 // is not settled until the query returns
 // As a result, this transaction has been split up into a (1) Start and (2) Finish function
 //   - If no query is needed, (2) is called immediately after (1)
@@ -75,10 +75,10 @@ func (k Keeper) StartLSMLiquidStake(ctx sdk.Context, msg types.MsgLSMLiquidStake
 			"there is already a previous record with this denom being processed: %s", lsmLiquidStake.Deposit.Denom)
 	}
 
-	// Determine the amount of stTokens to mint using the redemption rate and the validator's exchange rate
-	//    StTokens = LSMTokenShares * Validator Exchange Rate / Redemption Rate
+	// Determine the amount of stTokens to mint using the redemption rate and the validator's sharesToTokens rate
+	//    StTokens = LSMTokenShares * Validator SharesToTokens Rate / Redemption Rate
 	// Note: in the event of a slash query, these tokens will be minted only if the
-	// validator's exchange rate did not change
+	// validator's sharesToTokens rate did not change
 	stCoin := k.CalculateLSMStToken(msg.Amount, lsmLiquidStake)
 	if stCoin.Amount.IsZero() {
 		return types.LSMLiquidStake{}, errorsmod.Wrapf(types.ErrInsufficientLiquidStake,
@@ -92,7 +92,7 @@ func (k Keeper) StartLSMLiquidStake(ctx sdk.Context, msg types.MsgLSMLiquidStake
 	return lsmLiquidStake, nil
 }
 
-// SubmitValidatorSlashQuery submits an interchain query for the validator's exchange rate
+// SubmitValidatorSlashQuery submits an interchain query for the validator's sharesToTokens rate
 // This is done periodically at checkpoints denominated in native tokens
 // (e.g. every 100k ATOM that's LSM liquid staked with validator X)
 func (k Keeper) SubmitValidatorSlashQuery(ctx sdk.Context, lsmLiquidStake types.LSMLiquidStake) error {
@@ -102,15 +102,15 @@ func (k Keeper) SubmitValidatorSlashQuery(ctx sdk.Context, lsmLiquidStake types.
 	timeoutPolicy := icqtypes.TimeoutPolicy_EXECUTE_QUERY_CALLBACK
 
 	// Build and serialize the callback data required to complete the LSM Liquid stake upon query callback
-	callbackData := types.ValidatorExchangeRateQueryCallback{
+	callbackData := types.ValidatorSharesToTokensQueryCallback{
 		LsmLiquidStake: &lsmLiquidStake,
 	}
 	callbackDataBz, err := proto.Marshal(&callbackData)
 	if err != nil {
-		return errorsmod.Wrapf(err, "unable to serialize LSMLiquidStake struct for validator exchange rate query callback")
+		return errorsmod.Wrapf(err, "unable to serialize LSMLiquidStake struct for validator sharesToTokens rate query callback")
 	}
 
-	return k.SubmitValidatorExchangeRateICQ(ctx, chainId, validatorAddress, callbackDataBz, timeoutDuration, timeoutPolicy)
+	return k.SubmitValidatorSharesToTokensRateICQ(ctx, chainId, validatorAddress, callbackDataBz, timeoutDuration, timeoutPolicy)
 }
 
 // FinishLSMLiquidStake finishes the liquid staking flow by escrowing the LSM token,

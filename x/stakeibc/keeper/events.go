@@ -83,22 +83,22 @@ func EmitPendingLSMLiquidStakeEvent(ctx sdk.Context, hostZone types.HostZone, ls
 	)
 }
 
-// Emits an event if a validator's exchange rate changed
-func EmitValidatorExchangeRateChangeEvent(
+// Emits an event if a validator's shares to tokens rate changed
+func EmitValidatorSharesToTokensRateChangeEvent(
 	ctx sdk.Context,
 	chainId string,
 	validatorAddress string,
-	previousExchangeRate,
-	currentExchangeRate sdk.Dec,
+	previousSharesToTokensRate,
+	currentSharesToTokensRate sdk.Dec,
 ) {
 	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(
-			types.EventTypeValidatorExchangeRateChange,
+			types.EventTypeValidatorSharesToTokensRateChange,
 			sdk.NewAttribute(sdk.AttributeKeyModule, types.ModuleName),
 			sdk.NewAttribute(types.AttributeKeyHostZone, chainId),
 			sdk.NewAttribute(types.AttributeKeyValidator, validatorAddress),
-			sdk.NewAttribute(types.AttributeKeyPreviousExchangeRate, previousExchangeRate.String()),
-			sdk.NewAttribute(types.AttributeKeyCurrentExchangeRate, currentExchangeRate.String()),
+			sdk.NewAttribute(types.AttributeKeyPreviousSharesToTokensRate, previousSharesToTokensRate.String()),
+			sdk.NewAttribute(types.AttributeKeyCurrentSharesToTokensRate, currentSharesToTokensRate.String()),
 		),
 	)
 }

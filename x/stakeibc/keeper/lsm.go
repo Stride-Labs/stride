@@ -165,16 +165,16 @@ func (k Keeper) GetValidatorFromLSMTokenDenom(denom string, validators []*types.
 	// Confirm the validator:
 	//  1. Is registered on Stride
 	//  2. Does not have an active slash query in flight
-	//  3. Has a known exchange rate
+	//  3. Has a known sharesToTokens rate
 	for _, validator := range validators {
 		if validator.Address == validatorAddress {
 			if validator.SlashQueryInProgress {
 				return types.Validator{}, errorsmod.Wrapf(types.ErrValidatorWasSlashed,
 					"validator %s was slashed, liquid stakes from this validator are temporarily unavailable", validator.Address)
 			}
-			if validator.InternalSharesToTokensRate.IsNil() || validator.InternalSharesToTokensRate.IsZero() {
-				return types.Validator{}, errorsmod.Wrapf(types.ErrValidatorExchangeRateNotKnown,
-					"validator %s exchange rate is not known", validator.Address)
+			if validator.SharesToTokensRate.IsNil() || validator.SharesToTokensRate.IsZero() {
+				return types.Validator{}, errorsmod.Wrapf(types.ErrValidatorSharesToTokensRateNotKnown,
+					"validator %s sharesToTokens rate is not known", validator.Address)
 			}
 			return *validator, nil
 		}
@@ -185,17 +185,17 @@ func (k Keeper) GetValidatorFromLSMTokenDenom(denom string, validators []*types.
 }
 
 // Given an LSMToken representing a number of delegator shares, returns the stToken coin
-// using the validator's exchange rate and the host zone redemption rate
+// using the validator's sharesToTokens rate and the host zone redemption rate
 //
-//	StTokens = LSMTokenShares * Validator Exchange Rate / Redemption Rate
+//	StTokens = LSMTokenShares * Validator SharesToTokens Rate / Redemption Rate
 //
 // Note: in the event of a slash query, these tokens will be minted only if the
-// validator's exchange rate did not change
+// validator's sharesToTokens rate did not change
 func (k Keeper) CalculateLSMStToken(liquidStakedShares sdkmath.Int, lsmLiquidStake types.LSMLiquidStake) sdk.Coin {
 	hostZone := lsmLiquidStake.HostZone
 	validator := lsmLiquidStake.Validator
 
-	liquidStakedTokens := sdk.NewDecFromInt(liquidStakedShares).Mul(validator.InternalSharesToTokensRate)
+	liquidStakedTokens := sdk.NewDecFromInt(liquidStakedShares).Mul(validator.SharesToTokensRate)
 	stAmount := (liquidStakedTokens.Quo(hostZone.RedemptionRate)).TruncateInt()
 
 	stDenom := types.StAssetDenomFromHostZoneDenom(hostZone.HostDenom)

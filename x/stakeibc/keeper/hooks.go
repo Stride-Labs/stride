@@ -243,7 +243,7 @@ func (k Keeper) GetUndelegatedBalance(chainId string, depositRecords []recordsty
 // so they should *not* be included in the redemption rate. All other statuses indicate
 // the LSM tokens have been deposited and should be included in the final calculation
 //
-// Each LSM token represents a delegator share so the validator's exchange rate
+// Each LSM token represents a delegator share so the validator's shares to tokens rate
 // must be used to denominate it's value in native tokens
 func (k Keeper) GetTotalTokenizedDelegations(ctx sdk.Context, hostZone types.HostZone) sdk.Dec {
 	total := sdkmath.ZeroInt()
@@ -255,7 +255,7 @@ func (k Keeper) GetTotalTokenizedDelegations(ctx sdk.Context, hostZone types.Hos
 				continue
 			}
 			liquidStakedShares := deposit.Amount
-			liquidStakedTokens := sdk.NewDecFromInt(liquidStakedShares).Mul(validator.InternalSharesToTokensRate)
+			liquidStakedTokens := sdk.NewDecFromInt(liquidStakedShares).Mul(validator.SharesToTokensRate)
 			total = total.Add(liquidStakedTokens.TruncateInt())
 		}
 	}

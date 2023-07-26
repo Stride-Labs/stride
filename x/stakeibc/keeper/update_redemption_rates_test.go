@@ -52,9 +52,10 @@ func (s *KeeperTestSuite) SetupUpdateRedemptionRates(tc UpdateRedemptionRateTest
 
 	// add an LSMTokenDeposit to represent an LSMLiquidStake that has not yet been detokenized
 	lsmTokenDeposit := recordtypes.LSMTokenDeposit{
-		ChainId: HostChainId,
-		Amount:  tc.justDepositedLSM,
-		Status:  recordtypes.LSMTokenDeposit_TRANSFER_IN_PROGRESS,
+		ChainId:          HostChainId,
+		Amount:           tc.justDepositedLSM,
+		Status:           recordtypes.LSMTokenDeposit_TRANSFER_IN_PROGRESS,
+		ValidatorAddress: ValAddress,
 	}
 	s.App.RecordsKeeper.SetLSMTokenDeposit(s.Ctx, lsmTokenDeposit)
 
@@ -69,6 +70,7 @@ func (s *KeeperTestSuite) SetupUpdateRedemptionRates(tc UpdateRedemptionRateTest
 		HostDenom:        Atom,
 		TotalDelegations: tc.totalDelegation,
 		RedemptionRate:   tc.initialRedemptionRate,
+		Validators:       []*types.Validator{{Address: ValAddress, SharesToTokensRate: sdk.OneDec()}},
 	}
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
 
@@ -279,28 +281,28 @@ func (s *KeeperTestSuite) TestGetTokenizedDelegation() {
 	detokenizationFailed := recordtypes.LSMTokenDeposit_DETOKENIZATION_FAILED
 
 	validators := []*types.Validator{
-		{Address: "valA", InternalSharesToTokensRate: sdk.OneDec()},
-		{Address: "valB", InternalSharesToTokensRate: sdk.MustNewDecFromStr("0.75")},
-		{Address: "valC", InternalSharesToTokensRate: sdk.MustNewDecFromStr("0.5")},
+		{Address: "valA", SharesToTokensRate: sdk.OneDec()},
+		{Address: "valB", SharesToTokensRate: sdk.MustNewDecFromStr("0.75")},
+		{Address: "valC", SharesToTokensRate: sdk.MustNewDecFromStr("0.5")},
 	}
 
 	// Total: 1 + 2 + 3 + 4 + 5 + 6 + 7 + 8 + 9 + 10 = 65
 	lsmDeposits := []recordtypes.LSMTokenDeposit{
-		// ValidatorA Exchange Rate 1.0
+		// ValidatorA SharesToTokens Rate 1.0
 		{ChainId: HostChainId, Status: transferInProgress, Amount: sdk.NewInt(1), ValidatorAddress: "valA"}, // 1 * 1.0 = 1
 		{ChainId: HostChainId, Status: transferInProgress, Amount: sdk.NewInt(2), ValidatorAddress: "valA"}, // 2 * 1.0 = 2
 
 		{ChainId: HostChainId, Status: detokenizationInProgress, Amount: sdk.NewInt(3), ValidatorAddress: "valA"}, // 3 * 1.0 = 3
 		{ChainId: HostChainId, Status: detokenizationInProgress, Amount: sdk.NewInt(4), ValidatorAddress: "valA"}, // 4 * 1.0 = 4
 
-		// ValidatorB Exchange Rate 0.75
+		// ValidatorB SharesToTokens Rate 0.75
 		{ChainId: HostChainId, Status: transferQueue, Amount: sdk.NewInt(7), ValidatorAddress: "valB"}, // 7 * 0.75 = 5.25 (5)
 		{ChainId: HostChainId, Status: transferQueue, Amount: sdk.NewInt(9), ValidatorAddress: "valB"}, // 9 * 0.75 = 6.75 (6)
 
 		{ChainId: HostChainId, Status: detokenizationQueue, Amount: sdk.NewInt(10), ValidatorAddress: "valB"}, // 10 * 0.75 = 7.5 (7)
 		{ChainId: HostChainId, Status: detokenizationQueue, Amount: sdk.NewInt(11), ValidatorAddress: "valB"}, // 11 * 0.75 = 8.25 (8)
 
-		// ValidatorC Exchange Rate 0.50
+		// ValidatorC SharesToTokens Rate 0.50
 		{ChainId: HostChainId, Status: transferFailed, Amount: sdk.NewInt(18), ValidatorAddress: "valC"}, // 18 * 0.5 = 9
 		{ChainId: HostChainId, Status: transferFailed, Amount: sdk.NewInt(20), ValidatorAddress: "valC"}, // 20 * 0.5 = 10
 

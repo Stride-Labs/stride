@@ -363,16 +363,16 @@ func (k Keeper) GetLightClientTimeSafely(ctx sdk.Context, connectionID string) (
 	}
 }
 
-// Submit a validator exchange rate ICQ as triggered either manually or epochly with a conservative timeout
-func (k Keeper) QueryValidatorExchangeRate(ctx sdk.Context, chainId string, validatorAddress string) error {
+// Submit a validator sharesToTokens rate ICQ as triggered either manually or epochly with a conservative timeout
+func (k Keeper) QueryValidatorSharesToTokensRate(ctx sdk.Context, chainId string, validatorAddress string) error {
 	timeoutDuration := time.Hour * 24
 	timeoutPolicy := icqtypes.TimeoutPolicy_REJECT_QUERY_RESPONSE
 	callbackData := []byte{}
-	return k.SubmitValidatorExchangeRateICQ(ctx, chainId, validatorAddress, callbackData, timeoutDuration, timeoutPolicy)
+	return k.SubmitValidatorSharesToTokensRateICQ(ctx, chainId, validatorAddress, callbackData, timeoutDuration, timeoutPolicy)
 }
 
-// Submits an ICQ to get a validator's exchange rate
-func (k Keeper) SubmitValidatorExchangeRateICQ(
+// Submits an ICQ to get a validator's shares to tokens rate
+func (k Keeper) SubmitValidatorSharesToTokensRateICQ(
 	ctx sdk.Context,
 	chainId string,
 	validatorAddress string,
@@ -380,7 +380,7 @@ func (k Keeper) SubmitValidatorExchangeRateICQ(
 	timeoutDuration time.Duration,
 	timeoutPolicy icqtypes.TimeoutPolicy,
 ) error {
-	k.Logger(ctx).Info(utils.LogWithHostZone(chainId, "Submitting ICQ for validator exchange rate to %s", validatorAddress))
+	k.Logger(ctx).Info(utils.LogWithHostZone(chainId, "Submitting ICQ for validator sharesToTokens rate to %s", validatorAddress))
 
 	// Confirm the host zone exists
 	hostZone, found := k.GetHostZone(ctx, chainId)
@@ -400,7 +400,7 @@ func (k Keeper) SubmitValidatorExchangeRateICQ(
 	}
 	queryData := stakingtypes.GetValidatorKey(validatorAddressBz)
 
-	// Submit validator exchange rate ICQ
+	// Submit validator sharesToTokens rate ICQ
 	// Considering this query is executed manually, we can be conservative with the timeout
 	query := icqtypes.Query{
 		ChainId:         hostZone.ChainId,
@@ -414,14 +414,14 @@ func (k Keeper) SubmitValidatorExchangeRateICQ(
 		TimeoutPolicy:   timeoutPolicy,
 	}
 	if err := k.InterchainQueryKeeper.SubmitICQRequest(ctx, query, false); err != nil {
-		k.Logger(ctx).Error(fmt.Sprintf("Error submitting ICQ for validator exchange rate, error %s", err.Error()))
+		k.Logger(ctx).Error(fmt.Sprintf("Error submitting ICQ for validator sharesToTokens rate, error %s", err.Error()))
 		return err
 	}
 	return nil
 }
 
 // Submits an ICQ to get a validator's delegations
-// This is called after the validator's exchange rate is determined
+// This is called after the validator's sharesToTokens rate is determined
 // The timeoutDuration parameter represents the length of the timeout (not to be confused with an actual timestamp)
 func (k Keeper) SubmitDelegationICQ(ctx sdk.Context, hostZone types.HostZone, validatorAddress string) error {
 	if hostZone.DelegationIcaAddress == "" {

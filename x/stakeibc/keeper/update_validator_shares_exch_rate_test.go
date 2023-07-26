@@ -11,13 +11,13 @@ import (
 	"github.com/Stride-Labs/stride/v9/x/stakeibc/types"
 )
 
-// ================================ 1: QueryValidatorExchangeRate =============================================
+// ================================ 1: QueryValidatorSharesToTokensRate =============================================
 
-type QueryValidatorExchangeRateTestCase struct {
+type QueryValidatorSharesToTokensRateTestCase struct {
 	hostZone types.HostZone
 }
 
-func (s *KeeperTestSuite) SetupQueryValidatorExchangeRate() QueryValidatorExchangeRateTestCase {
+func (s *KeeperTestSuite) SetupQueryValidatorSharesToTokensRate() QueryValidatorSharesToTokensRateTestCase {
 	// set up IBC
 	s.CreateTransferChannel(HostChainId)
 
@@ -31,55 +31,55 @@ func (s *KeeperTestSuite) SetupQueryValidatorExchangeRate() QueryValidatorExchan
 
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
 
-	return QueryValidatorExchangeRateTestCase{
+	return QueryValidatorSharesToTokensRateTestCase{
 		hostZone: hostZone,
 	}
 }
 
-func (s *KeeperTestSuite) TestQueryValidatorExchangeRate_Successful() {
-	s.SetupQueryValidatorExchangeRate()
+func (s *KeeperTestSuite) TestQueryValidatorSharesToTokensRate_Successful() {
+	s.SetupQueryValidatorSharesToTokensRate()
 
-	err := s.App.StakeibcKeeper.QueryValidatorExchangeRate(s.Ctx, HostChainId, ValAddress)
-	s.Require().NoError(err, "no error expected when querying validator exchange rate")
+	err := s.App.StakeibcKeeper.QueryValidatorSharesToTokensRate(s.Ctx, HostChainId, ValAddress)
+	s.Require().NoError(err, "no error expected when querying validator sharesToTokens rate")
 
 	// check a query was created (a simple test; details about queries are covered in makeRequest's test)
 	queries := s.App.InterchainqueryKeeper.AllQueries(s.Ctx)
 	s.Require().Len(queries, 1, "one query should have been created")
 }
 
-func (s *KeeperTestSuite) TestQueryValidatorExchangeRate_NoHostZone() {
-	s.SetupQueryValidatorExchangeRate()
+func (s *KeeperTestSuite) TestQueryValidatorSharesToTokensRate_NoHostZone() {
+	s.SetupQueryValidatorSharesToTokensRate()
 
 	// remove the host zone
 	s.App.StakeibcKeeper.RemoveHostZone(s.Ctx, HostChainId)
 
-	err := s.App.StakeibcKeeper.QueryValidatorExchangeRate(s.Ctx, HostChainId, ValAddress)
+	err := s.App.StakeibcKeeper.QueryValidatorSharesToTokensRate(s.Ctx, HostChainId, ValAddress)
 	s.Require().ErrorContains(err, "Host zone not found")
 
 	// submit a bad chain id
-	err = s.App.StakeibcKeeper.QueryValidatorExchangeRate(s.Ctx, "NOT_GAIA", ValAddress)
+	err = s.App.StakeibcKeeper.QueryValidatorSharesToTokensRate(s.Ctx, "NOT_GAIA", ValAddress)
 	s.Require().ErrorContains(err, "Host zone not found")
 }
 
-func (s *KeeperTestSuite) TestQueryValidatorExchangeRate_InvalidValidator() {
-	s.SetupQueryValidatorExchangeRate()
+func (s *KeeperTestSuite) TestQueryValidatorSharesToTokensRate_InvalidValidator() {
+	s.SetupQueryValidatorSharesToTokensRate()
 
 	// Pass a validator with an invalid prefix - it should fail
-	err := s.App.StakeibcKeeper.QueryValidatorExchangeRate(s.Ctx, HostChainId, "BADPREFIX_123")
+	err := s.App.StakeibcKeeper.QueryValidatorSharesToTokensRate(s.Ctx, HostChainId, "BADPREFIX_123")
 	s.Require().ErrorContains(err, "validator operator address must match the host zone bech32 prefix")
 
 	// Pass a validator with a valid prefix but an invalid address - it should fail
-	err = s.App.StakeibcKeeper.QueryValidatorExchangeRate(s.Ctx, HostChainId, "cosmos_BADADDRESS")
+	err = s.App.StakeibcKeeper.QueryValidatorSharesToTokensRate(s.Ctx, HostChainId, "cosmos_BADADDRESS")
 	s.Require().ErrorContains(err, "invalid validator operator address, could not decode")
 }
 
-func (s *KeeperTestSuite) TestQueryValidatorExchangeRate_MissingConnectionId() {
-	tc := s.SetupQueryValidatorExchangeRate()
+func (s *KeeperTestSuite) TestQueryValidatorSharesToTokensRate_MissingConnectionId() {
+	tc := s.SetupQueryValidatorSharesToTokensRate()
 
 	tc.hostZone.ConnectionId = ""
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, tc.hostZone)
 
-	err := s.App.StakeibcKeeper.QueryValidatorExchangeRate(s.Ctx, HostChainId, ValAddress)
+	err := s.App.StakeibcKeeper.QueryValidatorSharesToTokensRate(s.Ctx, HostChainId, ValAddress)
 	s.Require().ErrorContains(err, "connection-id cannot be empty")
 }
 

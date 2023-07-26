@@ -33,7 +33,7 @@ func (s *KeeperTestSuite) TestValidateLSMLiquidStake() {
 		ChainId:           HostChainId,
 		TransferChannelId: ibctesting.FirstChannelID,
 		Validators: []*types.Validator{
-			{Address: ValAddress, SlashQueryInProgress: false, InternalSharesToTokensRate: sdk.OneDec()},
+			{Address: ValAddress, SlashQueryInProgress: false, SharesToTokensRate: sdk.OneDec()},
 		},
 		LsmLiquidStakeEnabled: true,
 	}
@@ -50,7 +50,9 @@ func (s *KeeperTestSuite) TestValidateLSMLiquidStake() {
 		Amount:           stakeAmount,
 		LsmTokenIbcDenom: ibcDenom,
 	}
+	expectedDepositId := keeper.GetLSMTokenDepositId(s.Ctx.BlockHeight(), HostChainId, liquidStaker.String(), LSMTokenBaseDenom)
 	expectedLSMTokenDeposit := recordstypes.LSMTokenDeposit{
+		DepositId:        expectedDepositId,
 		ChainId:          HostChainId,
 		Denom:            LSMTokenBaseDenom,
 		IbcDenom:         ibcDenom,
@@ -210,9 +212,9 @@ func (s *KeeperTestSuite) TestGetValidatorFromLSMTokenDenom() {
 	valAddress := "cosmosvaloperXXX"
 	denom := valAddress + "/42" // add record ID
 	validators := []*types.Validator{{
-		Address:                    valAddress,
-		SlashQueryInProgress:       false,
-		InternalSharesToTokensRate: sdk.OneDec(),
+		Address:              valAddress,
+		SlashQueryInProgress: false,
+		SharesToTokensRate:   sdk.OneDec(),
 	}}
 
 	// Successful lookup
@@ -233,65 +235,65 @@ func (s *KeeperTestSuite) TestGetValidatorFromLSMTokenDenom() {
 
 	// Pass in a validator that has a slash query in flight - it should fail
 	validatorWithSlashQuery := []*types.Validator{{
-		Address:                    valAddress,
-		SlashQueryInProgress:       true,
-		InternalSharesToTokensRate: sdk.OneDec(),
+		Address:              valAddress,
+		SlashQueryInProgress: true,
+		SharesToTokensRate:   sdk.OneDec(),
 	}}
 	_, err = s.App.StakeibcKeeper.GetValidatorFromLSMTokenDenom(denom, validatorWithSlashQuery)
 	s.Require().ErrorContains(err, "validator cosmosvaloperXXX was slashed")
 
-	// Pass in a validator with an uninitialized exchange rate - it should fail
-	validatorWithoutExchangeRate := []*types.Validator{{
+	// Pass in a validator with an uninitialized sharesToTokens rate - it should fail
+	validatorWithoutSharesToTokensRate := []*types.Validator{{
 		Address:              valAddress,
 		SlashQueryInProgress: false,
 	}}
-	_, err = s.App.StakeibcKeeper.GetValidatorFromLSMTokenDenom(denom, validatorWithoutExchangeRate)
-	s.Require().ErrorContains(err, "validator cosmosvaloperXXX exchange rate is not known")
+	_, err = s.App.StakeibcKeeper.GetValidatorFromLSMTokenDenom(denom, validatorWithoutSharesToTokensRate)
+	s.Require().ErrorContains(err, "validator cosmosvaloperXXX sharesToTokens rate is not known")
 }
 
 func (s *KeeperTestSuite) TestCalculateLSMStToken() {
 	testCases := []struct {
-		name                  string
-		liquidStakedShares    sdkmath.Int
-		validatorExchangeRate sdk.Dec
-		redemptionRate        sdk.Dec
-		expectedStAmount      sdkmath.Int
+		name                        string
+		liquidStakedShares          sdkmath.Int
+		validatorSharesToTokensRate sdk.Dec
+		redemptionRate              sdk.Dec
+		expectedStAmount            sdkmath.Int
 	}{
-		// stTokenAmount = liquidStakedShares * validatorExchangeRate / redemptionRate
+		// stTokenAmount = liquidStakedShares * validatorSharesToTokensRate / redemptionRate
 		{
-			name:                  "one exchange rate and redemption rate",
-			liquidStakedShares:    sdkmath.NewInt(1000),
-			validatorExchangeRate: sdk.OneDec(),
-			redemptionRate:        sdk.OneDec(),
-			expectedStAmount:      sdkmath.NewInt(1000),
+			name:                        "one sharesToTokens rate and redemption rate",
+			liquidStakedShares:          sdkmath.NewInt(1000),
+			validatorSharesToTokensRate: sdk.OneDec(),
+			redemptionRate:              sdk.OneDec(),
+			expectedStAmount:            sdkmath.NewInt(1000),
 		},
 		{
-			name:                  "one exchange rate, non-one redemption rate",
-			liquidStakedShares:    sdkmath.NewInt(1000),
-			validatorExchangeRate: sdk.OneDec(),
-			redemptionRate:        sdk.MustNewDecFromStr("1.25"),
-			expectedStAmount:      sdkmath.NewInt(800), // 1000 * 1 / 1.25 = 800
+			name:                        "one sharesToTokens rate, non-one redemption rate",
+			liquidStakedShares:          sdkmath.NewInt(1000),
+			validatorSharesToTokensRate: sdk.OneDec(),
+			redemptionRate:              sdk.MustNewDecFromStr("1.25"),
+			expectedStAmount:            sdkmath.NewInt(800), // 1000 * 1 / 1.25 = 800
 		},
 		{
-			name:                  "non-one exchange rate, one redemption rate",
-			liquidStakedShares:    sdkmath.NewInt(1000),
-			validatorExchangeRate: sdk.MustNewDecFromStr("0.75"),
-			redemptionRate:        sdk.OneDec(),
-			expectedStAmount:      sdkmath.NewInt(750), // 1000 * 0.75 / 1
+			name:                        "non-one sharesToTokens rate, one redemption rate",
+			liquidStakedShares:          sdkmath.NewInt(1000),
+			validatorSharesToTokensRate: sdk.MustNewDecFromStr("0.75"),
+			redemptionRate:              sdk.OneDec(),
+			expectedStAmount:            sdkmath.NewInt(750), // 1000 * 0.75 / 1
 		},
 		{
-			name:                  "non-one exchange rate, non-one redemption rate",
-			liquidStakedShares:    sdkmath.NewInt(1000),
-			validatorExchangeRate: sdk.MustNewDecFromStr("0.75"),
-			redemptionRate:        sdk.MustNewDecFromStr("1.25"),
-			expectedStAmount:      sdkmath.NewInt(600), // 1000 * 0.75 / 1.25 = 600
+			name:                        "non-one sharesToTokens rate, non-one redemption rate",
+			liquidStakedShares:          sdkmath.NewInt(1000),
+			validatorSharesToTokensRate: sdk.MustNewDecFromStr("0.75"),
+			redemptionRate:              sdk.MustNewDecFromStr("1.25"),
+			expectedStAmount:            sdkmath.NewInt(600), // 1000 * 0.75 / 1.25 = 600
 		},
 		{
-			name:                  "decimal to integer truncation",
-			liquidStakedShares:    sdkmath.NewInt(3333),
-			validatorExchangeRate: sdk.MustNewDecFromStr("0.238498282349"),
-			redemptionRate:        sdk.MustNewDecFromStr("1.979034798243"),
-			expectedStAmount:      sdkmath.NewInt(401), // equals 401.667
+			name:                        "decimal to integer truncation",
+			liquidStakedShares:          sdkmath.NewInt(3333),
+			validatorSharesToTokensRate: sdk.MustNewDecFromStr("0.238498282349"),
+			redemptionRate:              sdk.MustNewDecFromStr("1.979034798243"),
+			expectedStAmount:            sdkmath.NewInt(401), // equals 401.667
 		},
 	}
 
@@ -303,7 +305,7 @@ func (s *KeeperTestSuite) TestCalculateLSMStToken() {
 					RedemptionRate: tc.redemptionRate,
 				},
 				Validator: &types.Validator{
-					InternalSharesToTokensRate: tc.validatorExchangeRate,
+					SharesToTokensRate: tc.validatorSharesToTokensRate,
 				},
 			}
 
