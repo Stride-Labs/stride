@@ -53,4 +53,5 @@ var (
 	ErrValidatorExchangeRateNotKnown     = errorsmod.Register(ModuleName, 1546, "Validator exchange rate not known")
 	ErrInvalidValidatorDelegationUpdates = errorsmod.Register(ModuleName, 1547, "Invalid validator delegation updates")
 	ErrLSMLiquidStakeDisabledForHostZone = errorsmod.Register(ModuleName, 1548, "LSM liquid stake is disabled for host zone")
+	ErrUnableToRemoveValidator           = errorsmod.Register(ModuleName, 1549, "Unable to remove validator")
 )

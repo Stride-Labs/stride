@@ -92,15 +92,16 @@ message LSMTokenDeposit {
     DETOKENIZATION_FAILED = 6;
   }
 
-  string chain_id = 1;
-  string denom = 2;
-  string ibc_denom = 3;
-  string staker_address = 4;
-  string validator_address = 5;
-  string amount = 6 [
+  string deposit_id = 1;
+  string chain_id = 2;
+  string denom = 3;
+  string ibc_denom = 4;
+  string staker_address = 5;
+  string validator_address = 6;
+  string amount = 7 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
     (gogoproto.nullable) = false
   ];
-  cosmos.base.v1beta1.Coin st_token = 7 [ (gogoproto.nullable) = false ];
-  Status status = 8;
+  cosmos.base.v1beta1.Coin st_token = 8 [ (gogoproto.nullable) = false ];
+  Status status = 9;
 }

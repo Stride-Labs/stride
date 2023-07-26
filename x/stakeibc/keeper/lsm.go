@@ -13,7 +13,7 @@ import (
 	icatypes "github.com/cosmos/ibc-go/v5/modules/apps/27-interchain-accounts/types"
 	transfertypes "github.com/cosmos/ibc-go/v5/modules/apps/transfer/types"
 	channeltypes "github.com/cosmos/ibc-go/v5/modules/core/04-channel/types"
-	lsmstakingtypes "github.com/iqlusioninc/liquidity-staking-module/x/staking/types"
+	"github.com/tendermint/tendermint/crypto"
 
 	"github.com/golang/protobuf/proto" //nolint:staticcheck
 
@@ -70,7 +70,9 @@ func (k Keeper) ValidateLSMLiquidStake(ctx sdk.Context, msg types.MsgLSMLiquidSt
 
 	// Build the LSMTokenDeposit record
 	// The stToken will be added outside of this function
+	depositId := GetLSMTokenDepositId(ctx.BlockHeight(), hostZone.ChainId, msg.Creator, lsmTokenBaseDenom)
 	lsmTokenDeposit := recordstypes.LSMTokenDeposit{
+		DepositId:        depositId,
 		ChainId:          hostZone.ChainId,
 		Denom:            lsmTokenBaseDenom,
 		IbcDenom:         msg.LsmTokenIbcDenom,
@@ -86,6 +88,15 @@ func (k Keeper) ValidateLSMLiquidStake(ctx sdk.Context, msg types.MsgLSMLiquidSt
 		HostZone:  &hostZone,
 		Validator: &validator,
 	}, nil
+}
+
+// Generates a unique ID for the LSM token deposit so that, if a slash query is issued,
+// the query callback can be joined back with this tx
+// The key in the store for an LSMTokenDeposit is chainId + denom (meaning, there
+// can only be 1 LSMLiquidStake in progress per tokenization)
+func GetLSMTokenDepositId(blockHeight int64, chainId, stakerAddress, denom string) string {
+	id := fmt.Sprintf("%d-%s-%s-%s", blockHeight, chainId, stakerAddress, denom)
+	return fmt.Sprintf("%x", crypto.Sha256([]byte(id)))
 }
 
 // Parse the LSM Token's IBC denom hash into a DenomTrace object that contains the path and base denom
@@ -283,7 +294,7 @@ func (k Keeper) DetokenizeLSMDeposit(ctx sdk.Context, hostZone types.HostZone, d
 
 	// Build the detokenization ICA message
 	token := sdk.NewCoin(deposit.Denom, deposit.Amount)
-	detokenizeMsg := []sdk.Msg{&lsmstakingtypes.MsgRedeemTokensforShares{
+	detokenizeMsg := []sdk.Msg{&types.MsgRedeemTokensForShares{
 		DelegatorAddress: hostZone.DelegationIcaAddress,
 		Amount:           token,
 	}}
@@ -333,6 +344,7 @@ func (k Keeper) DetokenizeAllLSMDeposits(ctx sdk.Context) {
 		delegationICAPortID, err := icatypes.NewControllerPortID(delegationICAOwner)
 		if err != nil {
 			k.Logger(ctx).Error(fmt.Sprintf("Unable to get delegation port ID for %s: %s", hostZone.ChainId, err))
+			continue
 		}
 
 		// If the delegation channel is not open, skip this host zone

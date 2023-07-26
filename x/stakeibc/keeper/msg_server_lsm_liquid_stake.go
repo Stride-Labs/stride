@@ -5,14 +5,11 @@ import (
 
 	errorsmod "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/types/bech32"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
-	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/gogo/protobuf/proto" //nolint:staticcheck
 
 	icqtypes "github.com/Stride-Labs/stride/v9/x/interchainquery/types"
-
 	recordstypes "github.com/Stride-Labs/stride/v9/x/records/types"
 	"github.com/Stride-Labs/stride/v9/x/stakeibc/types"
 )
@@ -25,8 +22,8 @@ import (
 //   - A staker tokenizes their delegation on the host zone
 //   - The staker IBC transfers their tokenized shares to Stride
 //   - They then call LSMLiquidStake
-//   - The staker's LSM Tokens are sent to the Stride module account
-//   - The staker recieves stTokens
+//   - - The staker's LSM Tokens are sent to the Stride module account
+//   - - The staker recieves stTokens
 //
 // As a safety measure, at period checkpoints, the validator's exchange rate is queried and the transaction
 // is not settled until the query returns
@@ -47,6 +44,9 @@ func (k msgServer) LSMLiquidStake(goCtx context.Context, msg *types.MsgLSMLiquid
 		if err := k.SubmitValidatorSlashQuery(ctx, lsmLiquidStake); err != nil {
 			return nil, err
 		}
+
+		EmitPendingLSMLiquidStakeEvent(ctx, *lsmLiquidStake.HostZone, *lsmLiquidStake.Deposit)
+
 		return &types.MsgLSMLiquidStakeResponse{TransactionComplete: false}, nil
 	}
 
@@ -96,15 +96,10 @@ func (k Keeper) StartLSMLiquidStake(ctx sdk.Context, msg types.MsgLSMLiquidStake
 // This is done periodically at checkpoints denominated in native tokens
 // (e.g. every 100k ATOM that's LSM liquid staked with validator X)
 func (k Keeper) SubmitValidatorSlashQuery(ctx sdk.Context, lsmLiquidStake types.LSMLiquidStake) error {
-	hostZone := lsmLiquidStake.HostZone
-	validator := lsmLiquidStake.Validator
-
-	// Encode the validator address for the query request
-	_, validatorAddressBz, err := bech32.DecodeAndConvert(validator.Address)
-	if err != nil {
-		return errorsmod.Wrapf(err, "invalid validator operator address, could not decode")
-	}
-	queryData := stakingtypes.GetValidatorKey(validatorAddressBz)
+	chainId := lsmLiquidStake.HostZone.ChainId
+	validatorAddress := lsmLiquidStake.Validator.Address
+	timeoutDuration := LSMSlashQueryTimeout
+	timeoutPolicy := icqtypes.TimeoutPolicy_EXECUTE_QUERY_CALLBACK
 
 	// Build and serialize the callback data required to complete the LSM Liquid stake upon query callback
 	callbackData := types.ValidatorExchangeRateQueryCallback{
@@ -115,22 +110,7 @@ func (k Keeper) SubmitValidatorSlashQuery(ctx sdk.Context, lsmLiquidStake types.
 		return errorsmod.Wrapf(err, "unable to serialize LSMLiquidStake struct for validator exchange rate query callback")
 	}
 
-	// Use a short timeout for the query so that user's can get the tokens refunded quickly should the query get stuck
-	query := icqtypes.Query{
-		ChainId:         hostZone.ChainId,
-		ConnectionId:    hostZone.ConnectionId,
-		QueryType:       icqtypes.STAKING_STORE_QUERY_WITH_PROOF,
-		RequestData:     queryData,
-		CallbackModule:  types.ModuleName,
-		CallbackId:      ICQCallbackID_Validator,
-		CallbackData:    callbackDataBz,
-		TimeoutDuration: LSMSlashQueryTimeout,
-	}
-	if err := k.InterchainQueryKeeper.SubmitICQRequest(ctx, query, false); err != nil {
-		return errorsmod.Wrapf(err, "Unable to submit validator exchange rate query")
-	}
-
-	return nil
+	return k.SubmitValidatorExchangeRateICQ(ctx, chainId, validatorAddress, callbackDataBz, timeoutDuration, timeoutPolicy)
 }
 
 // FinishLSMLiquidStake finishes the liquid staking flow by escrowing the LSM token,

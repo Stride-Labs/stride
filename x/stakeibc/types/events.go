@@ -15,7 +15,6 @@ const (
 	EventTypeRedemptionRequest           = "request_redemption"
 	EventTypeLiquidStakeRequest          = "liquid_stake"
 	EventTypeLSMLiquidStakeRequest       = "lsm_liquid_stake"
-	EventTypeLSMLiquidStakeFailed        = "lsm_liquid_stake_failed"
 	EventTypeHostZoneHalt                = "halt_zone"
 	EventTypeValidatorExchangeRateChange = "validator_exchange_rate_change"
 	EventTypeValidatorSlash              = "validator_slash"
@@ -31,14 +30,16 @@ const (
 
 	AttributeKeyRedemptionRate = "redemption_rate"
 
-	AttributeKeyLiquidStaker      = "liquid_staker"
-	AttributeKeyNativeBaseDenom   = "native_base_denom"
-	AttributeKeyNativeIBCDenom    = "native_ibc_denom"
-	AttributeKeyTotalUnbondAmount = "total_unbond_amount"
-	AttributeKeyLSMTokenBaseDenom = "lsm_token_base_denom"
-	AttributeKeyNativeAmount      = "native_amount"
-	AttributeKeyStTokenAmount     = "sttoken_amount"
-	AttributeKeyValidator         = "validator"
+	AttributeKeyLiquidStaker       = "liquid_staker"
+	AttributeKeyNativeBaseDenom    = "native_base_denom"
+	AttributeKeyNativeIBCDenom     = "native_ibc_denom"
+	AttributeKeyTotalUnbondAmount  = "total_unbond_amount"
+	AttributeKeyLSMTokenBaseDenom  = "lsm_token_base_denom"
+	AttributeKeyNativeAmount       = "native_amount"
+	AttributeKeyStTokenAmount      = "sttoken_amount"
+	AttributeKeyValidator          = "validator"
+	AttributeKeyTransactionStatus  = "transaction_status"
+	AttributeKeyLSMLiquidStakeTxId = "lsm_liquid_stake_tx_id"
 
 	AttributeKeyPreviousExchangeRate = "previous_exchange_rate"
 	AttributeKeyCurrentExchangeRate  = "current_exchange_rate"
@@ -48,5 +49,8 @@ const (
 
 	AttributeKeyError = "error"
 
-	AttributeValueCategory = ModuleName
+	AttributeValueCategory             = ModuleName
+	AttributeValueTransactionSucceeded = "success"
+	AttributeValueTransactionPending   = "pending"
+	AttributeValueTransactionFailed    = "failed"
 )
