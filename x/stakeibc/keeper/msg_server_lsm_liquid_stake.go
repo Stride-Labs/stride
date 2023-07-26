@@ -44,6 +44,9 @@ func (k msgServer) LSMLiquidStake(goCtx context.Context, msg *types.MsgLSMLiquid
 		if err := k.SubmitValidatorSlashQuery(ctx, lsmLiquidStake); err != nil {
 			return nil, err
 		}
+
+		EmitPendingLSMLiquidStakeEvent(ctx, *lsmLiquidStake.HostZone, *lsmLiquidStake.Deposit)
+
 		return &types.MsgLSMLiquidStakeResponse{TransactionComplete: false}, nil
 	}
 
