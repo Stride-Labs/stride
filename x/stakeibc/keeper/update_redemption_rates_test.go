@@ -12,7 +12,7 @@ import (
 
 	minttypes "github.com/Stride-Labs/stride/v9/x/mint/types"
 	recordtypes "github.com/Stride-Labs/stride/v9/x/records/types"
-	stakeibctypes "github.com/Stride-Labs/stride/v9/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v9/x/stakeibc/types"
 )
 
 type UpdateRedemptionRateTestCase struct {
@@ -64,7 +64,7 @@ func (s *KeeperTestSuite) SetupUpdateRedemptionRates(tc UpdateRedemptionRateTest
 	s.Require().NoError(err)
 
 	// set the staked balance on the host zone
-	hostZone := stakeibctypes.HostZone{
+	hostZone := types.HostZone{
 		ChainId:          HostChainId,
 		HostDenom:        Atom,
 		TotalDelegations: tc.totalDelegation,
@@ -271,35 +271,61 @@ func (s *KeeperTestSuite) TestGetRedemptionRate_DepositRecords() {
 }
 
 func (s *KeeperTestSuite) TestGetTokenizedDelegation() {
+	transferQueue := recordtypes.LSMTokenDeposit_TRANSFER_QUEUE
+	transferInProgress := recordtypes.LSMTokenDeposit_TRANSFER_IN_PROGRESS
+	detokenizationQueue := recordtypes.LSMTokenDeposit_DETOKENIZATION_QUEUE
+	detokenizationInProgress := recordtypes.LSMTokenDeposit_DETOKENIZATION_IN_PROGRESS
+	transferFailed := recordtypes.LSMTokenDeposit_TRANSFER_FAILED
+	detokenizationFailed := recordtypes.LSMTokenDeposit_DETOKENIZATION_FAILED
+
+	validators := []*types.Validator{
+		{Address: "valA", InternalSharesToTokensRate: sdk.OneDec()},
+		{Address: "valB", InternalSharesToTokensRate: sdk.MustNewDecFromStr("0.75")},
+		{Address: "valC", InternalSharesToTokensRate: sdk.MustNewDecFromStr("0.5")},
+	}
+
+	// Total: 1 + 2 + 3 + 4 + 5 + 6 + 7 + 8 + 9 + 10 = 65
 	lsmDeposits := []recordtypes.LSMTokenDeposit{
-		// Total: 1 + 2 + 3 + 4 + 5 + 6 + 7 + 8 + 9 + 10 = 65
-		{ChainId: HostChainId, Status: recordtypes.LSMTokenDeposit_TRANSFER_IN_PROGRESS, Amount: sdk.NewInt(1)},
-		{ChainId: HostChainId, Status: recordtypes.LSMTokenDeposit_TRANSFER_IN_PROGRESS, Amount: sdk.NewInt(2)},
+		// ValidatorA Exchange Rate 1.0
+		{ChainId: HostChainId, Status: transferInProgress, Amount: sdk.NewInt(1), ValidatorAddress: "valA"}, // 1 * 1.0 = 1
+		{ChainId: HostChainId, Status: transferInProgress, Amount: sdk.NewInt(2), ValidatorAddress: "valA"}, // 2 * 1.0 = 2
 
-		{ChainId: HostChainId, Status: recordtypes.LSMTokenDeposit_DETOKENIZATION_QUEUE, Amount: sdk.NewInt(3)},
-		{ChainId: HostChainId, Status: recordtypes.LSMTokenDeposit_DETOKENIZATION_QUEUE, Amount: sdk.NewInt(4)},
+		{ChainId: HostChainId, Status: detokenizationInProgress, Amount: sdk.NewInt(3), ValidatorAddress: "valA"}, // 3 * 1.0 = 3
+		{ChainId: HostChainId, Status: detokenizationInProgress, Amount: sdk.NewInt(4), ValidatorAddress: "valA"}, // 4 * 1.0 = 4
 
-		{ChainId: HostChainId, Status: recordtypes.LSMTokenDeposit_DETOKENIZATION_IN_PROGRESS, Amount: sdk.NewInt(5)},
-		{ChainId: HostChainId, Status: recordtypes.LSMTokenDeposit_DETOKENIZATION_IN_PROGRESS, Amount: sdk.NewInt(6)},
+		// ValidatorB Exchange Rate 0.75
+		{ChainId: HostChainId, Status: transferQueue, Amount: sdk.NewInt(7), ValidatorAddress: "valB"}, // 7 * 0.75 = 5.25 (5)
+		{ChainId: HostChainId, Status: transferQueue, Amount: sdk.NewInt(9), ValidatorAddress: "valB"}, // 9 * 0.75 = 6.75 (6)
 
-		{ChainId: HostChainId, Status: recordtypes.LSMTokenDeposit_TRANSFER_FAILED, Amount: sdk.NewInt(7)},
-		{ChainId: HostChainId, Status: recordtypes.LSMTokenDeposit_TRANSFER_FAILED, Amount: sdk.NewInt(8)},
+		{ChainId: HostChainId, Status: detokenizationQueue, Amount: sdk.NewInt(10), ValidatorAddress: "valB"}, // 10 * 0.75 = 7.5 (7)
+		{ChainId: HostChainId, Status: detokenizationQueue, Amount: sdk.NewInt(11), ValidatorAddress: "valB"}, // 11 * 0.75 = 8.25 (8)
 
-		{ChainId: HostChainId, Status: recordtypes.LSMTokenDeposit_DETOKENIZATION_FAILED, Amount: sdk.NewInt(9)},
-		{ChainId: HostChainId, Status: recordtypes.LSMTokenDeposit_DETOKENIZATION_FAILED, Amount: sdk.NewInt(10)},
+		// ValidatorC Exchange Rate 0.50
+		{ChainId: HostChainId, Status: transferFailed, Amount: sdk.NewInt(18), ValidatorAddress: "valC"}, // 18 * 0.5 = 9
+		{ChainId: HostChainId, Status: transferFailed, Amount: sdk.NewInt(20), ValidatorAddress: "valC"}, // 20 * 0.5 = 10
+
+		{ChainId: HostChainId, Status: detokenizationFailed, Amount: sdk.NewInt(22), ValidatorAddress: "valC"}, // 22 * 0.5 = 11
+		{ChainId: HostChainId, Status: detokenizationFailed, Amount: sdk.NewInt(24), ValidatorAddress: "valC"}, // 24 * 0.5 = 12
 
 		// Status DEPOSIT_PENDING - should be ignored
 		{ChainId: HostChainId, Status: recordtypes.LSMTokenDeposit_DEPOSIT_PENDING, Amount: sdk.NewInt(11)},
 		{ChainId: HostChainId, Status: recordtypes.LSMTokenDeposit_DEPOSIT_PENDING, Amount: sdk.NewInt(12)},
 
 		// Different chain ID - should be ignored
-		{ChainId: "different", Status: recordtypes.LSMTokenDeposit_TRANSFER_IN_PROGRESS, Amount: sdk.NewInt(1)},
-		{ChainId: "different", Status: recordtypes.LSMTokenDeposit_DETOKENIZATION_QUEUE, Amount: sdk.NewInt(3)},
-		{ChainId: "different", Status: recordtypes.LSMTokenDeposit_DETOKENIZATION_IN_PROGRESS, Amount: sdk.NewInt(5)},
-		{ChainId: "different", Status: recordtypes.LSMTokenDeposit_TRANSFER_FAILED, Amount: sdk.NewInt(7)},
-		{ChainId: "different", Status: recordtypes.LSMTokenDeposit_DETOKENIZATION_FAILED, Amount: sdk.NewInt(9)},
+		{ChainId: "different", Status: transferInProgress, Amount: sdk.NewInt(1)},
+		{ChainId: "different", Status: detokenizationQueue, Amount: sdk.NewInt(3)},
+		{ChainId: "different", Status: detokenizationInProgress, Amount: sdk.NewInt(5)},
+		{ChainId: "different", Status: transferFailed, Amount: sdk.NewInt(7)},
+		{ChainId: "different", Status: detokenizationFailed, Amount: sdk.NewInt(9)},
+
+		// Non-existent validator  - should be ignored
+		{ChainId: HostChainId, Status: transferInProgress, Amount: sdk.NewInt(1)},
+		{ChainId: HostChainId, Status: detokenizationQueue, Amount: sdk.NewInt(3)},
+		{ChainId: HostChainId, Status: detokenizationInProgress, Amount: sdk.NewInt(5)},
+		{ChainId: HostChainId, Status: transferFailed, Amount: sdk.NewInt(7)},
+		{ChainId: HostChainId, Status: detokenizationFailed, Amount: sdk.NewInt(9)},
 	}
-	expectedTokenizedDelegation := int64(1 + 2 + 3 + 4 + 5 + 6 + 7 + 8 + 9 + 10)
+	expectedTokenizedDelegation := int64(1 + 2 + 3 + 4 + 5 + 6 + 7 + 8 + 9 + 10 + 11 + 12)
 
 	// Store deposits
 	for i, deposit := range lsmDeposits {
@@ -308,6 +334,7 @@ func (s *KeeperTestSuite) TestGetTokenizedDelegation() {
 	}
 
 	// Check the total delegation from LSM Tokens
-	actualTokenizedDelegation := s.App.StakeibcKeeper.GetTotalTokenizedDelegations(s.Ctx, HostChainId)
+	hostZone := types.HostZone{ChainId: HostChainId, Validators: validators}
+	actualTokenizedDelegation := s.App.StakeibcKeeper.GetTotalTokenizedDelegations(s.Ctx, hostZone)
 	s.Require().Equal(expectedTokenizedDelegation, actualTokenizedDelegation.TruncateInt64())
 }

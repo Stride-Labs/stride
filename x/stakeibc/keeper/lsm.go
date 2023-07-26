@@ -162,12 +162,19 @@ func (k Keeper) GetValidatorFromLSMTokenDenom(denom string, validators []*types.
 	}
 	validatorAddress := split[0]
 
-	// Confirm validator is in Stride's validator set and does not have an active slash query in flight
+	// Confirm the validator:
+	//  1. Is registered on Stride
+	//  2. Does not have an active slash query in flight
+	//  3. Has a known exchange rate
 	for _, validator := range validators {
 		if validator.Address == validatorAddress {
 			if validator.SlashQueryInProgress {
 				return types.Validator{}, errorsmod.Wrapf(types.ErrValidatorWasSlashed,
 					"validator %s was slashed, liquid stakes from this validator are temporarily unavailable", validator.Address)
+			}
+			if validator.InternalSharesToTokensRate.IsNil() || validator.InternalSharesToTokensRate.IsZero() {
+				return types.Validator{}, errorsmod.Wrapf(types.ErrValidatorExchangeRateNotKnown,
+					"validator %s exchange rate is not known", validator.Address)
 			}
 			return *validator, nil
 		}
@@ -175,6 +182,26 @@ func (k Keeper) GetValidatorFromLSMTokenDenom(denom string, validators []*types.
 
 	return types.Validator{}, errorsmod.Wrapf(types.ErrInvalidLSMToken,
 		"validator (%s) is not registered in the Stride validator set", validatorAddress)
+}
+
+// Given an LSMToken representing a number of delegator shares, returns the stToken coin
+// using the validator's exchange rate and the host zone redemption rate
+//
+//	StTokens = LSMTokenShares * Validator Exchange Rate / Redemption Rate
+//
+// Note: in the event of a slash query, these tokens will be minted only if the
+// validator's exchange rate did not change
+func (k Keeper) CalculateLSMStToken(liquidStakedShares sdkmath.Int, lsmLiquidStake types.LSMLiquidStake) sdk.Coin {
+	hostZone := lsmLiquidStake.HostZone
+	validator := lsmLiquidStake.Validator
+
+	liquidStakedTokens := sdk.NewDecFromInt(liquidStakedShares).Mul(validator.InternalSharesToTokensRate)
+	stAmount := (liquidStakedTokens.Quo(hostZone.RedemptionRate)).TruncateInt()
+
+	stDenom := types.StAssetDenomFromHostZoneDenom(hostZone.HostDenom)
+	stCoin := sdk.NewCoin(stDenom, stAmount)
+
+	return stCoin
 }
 
 // Determines the new slash query checkpoint, by mulitplying the query threshold percent by the current TVL

@@ -75,14 +75,15 @@ func (k Keeper) StartLSMLiquidStake(ctx sdk.Context, msg types.MsgLSMLiquidStake
 			"there is already a previous record with this denom being processed: %s", lsmLiquidStake.Deposit.Denom)
 	}
 
-	// Determine the amount of stTokens to mint using the redemption rate
-	stDenom := types.StAssetDenomFromHostZoneDenom(hostZone.HostDenom)
-	stAmount := (sdk.NewDecFromInt(msg.Amount).Quo(hostZone.RedemptionRate)).TruncateInt()
-	if stAmount.IsZero() {
+	// Determine the amount of stTokens to mint using the redemption rate and the validator's exchange rate
+	//    StTokens = LSMTokenShares * Validator Exchange Rate / Redemption Rate
+	// Note: in the event of a slash query, these tokens will be minted only if the
+	// validator's exchange rate did not change
+	stCoin := k.CalculateLSMStToken(msg.Amount, lsmLiquidStake)
+	if stCoin.Amount.IsZero() {
 		return types.LSMLiquidStake{}, errorsmod.Wrapf(types.ErrInsufficientLiquidStake,
 			"Liquid stake of %s%s would return 0 stTokens", msg.Amount.String(), hostZone.HostDenom)
 	}
-	stCoin := sdk.NewCoin(stDenom, stAmount)
 
 	// Add the stToken to this deposit record
 	lsmLiquidStake.Deposit.StToken = stCoin
