@@ -36,8 +36,6 @@ set_stride_genesis() {
     jq '(.app_state.epochs.epochs[] | select(.identifier=="stride_epoch") ).duration = $epochLen' --arg epochLen $STRIDE_EPOCH_EPOCH_DURATION $genesis_config > json.tmp && mv json.tmp $genesis_config
     jq '(.app_state.epochs.epochs[] | select(.identifier=="mint") ).duration = $epochLen' --arg epochLen $STRIDE_MINT_EPOCH_DURATION $genesis_config > json.tmp && mv json.tmp $genesis_config
     jq '.app_state.staking.params.unbonding_time = $newVal' --arg newVal "$UNBONDING_TIME" $genesis_config > json.tmp && mv json.tmp $genesis_config
-    jq '.app_state.gov.deposit_params.max_deposit_period = $newVal' --arg newVal "$MAX_DEPOSIT_PERIOD" $genesis_config > json.tmp && mv json.tmp $genesis_config
-    jq '.app_state.gov.voting_params.voting_period = $newVal' --arg newVal "$VOTING_PERIOD" $genesis_config > json.tmp && mv json.tmp $genesis_config
     jq '.app_state.gov.params.max_deposit_period = $newVal' --arg newVal "$MAX_DEPOSIT_PERIOD" $genesis_config > json.tmp && mv json.tmp $genesis_config
     jq '.app_state.gov.params.voting_period = $newVal' --arg newVal "$VOTING_PERIOD" $genesis_config > json.tmp && mv json.tmp $genesis_config
 
@@ -139,15 +137,15 @@ for (( i=1; i <= $NUM_NODES; i++ )); do
     # Add this account to the current node
     $cmd add-genesis-account ${val_addr} ${VAL_TOKENS}${DENOM}
 
-    if [[ $CHAIN != "STRIDE" ]]; then
-        cp $DOCKERNET_HOME/state/${STRIDE_NODE_PREFIX}${i}/config/priv_validator_key.json $DOCKERNET_HOME/state/${NODE_PREFIX}${i}/config/priv_validator_key.json
-        cp $DOCKERNET_HOME/state/${STRIDE_NODE_PREFIX}${i}/config/node_key.json $DOCKERNET_HOME/state/${NODE_PREFIX}${i}/config/node_key.json
+    if [[ $CHAIN == "GAIA" ]]; then
+        stride_config=$DOCKERNET_HOME/state/${STRIDE_NODE_PREFIX}${i}/config
+        host_config=$DOCKERNET_HOME/state/${NODE_PREFIX}${i}/config
+        cp ${stride_config}/priv_validator_key.json ${host_config}/priv_validator_key.json
+        cp ${stride_config}/node_key.json ${host_config}/node_key.json
     fi
 
-    if [[ ($CHAIN == "STRIDE" && ($i == 1 || $i == 2)) || $CHAIN != "STRIDE" ]]; then
-        # actually set this account as a validator on the current node 
-        $cmd gentx $val_acct ${STAKE_TOKENS}${DENOM} --chain-id $CHAIN_ID --keyring-backend test &> /dev/null
-    fi
+    # actually set this account as a validator on the current node 
+    $cmd gentx $val_acct ${STAKE_TOKENS}${DENOM} --chain-id $CHAIN_ID --keyring-backend test &> /dev/null
     
     # Get the endpoint and node ID
     node_id=$($cmd tendermint show-node-id)@$node_name:$PEER_PORT
@@ -186,6 +184,7 @@ if [ "$CHAIN" == "STRIDE" ]; then
         RELAYER_MNEMONIC="${RELAYER_MNEMONICS[i]}"
 
         echo "$RELAYER_MNEMONIC" | $MAIN_CMD keys add $RELAYER_ACCT --recover --keyring-backend=test >> $KEYS_LOGS 2>&1
+        
         RELAYER_ADDRESS=$($MAIN_CMD keys show $RELAYER_ACCT --keyring-backend test -a)
         $MAIN_CMD add-genesis-account ${RELAYER_ADDRESS} ${VAL_TOKENS}${DENOM}
     done
