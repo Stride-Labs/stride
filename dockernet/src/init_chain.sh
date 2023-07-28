@@ -144,10 +144,8 @@ for (( i=1; i <= $NUM_NODES; i++ )); do
         cp ${stride_config}/node_key.json ${host_config}/node_key.json
     fi
 
-    if [[ ($CHAIN == "STRIDE" && ($i != 0)) || $CHAIN != "STRIDE" ]]; then
-        # actually set this account as a validator on the current node 
-        $cmd gentx $val_acct ${STAKE_TOKENS}${DENOM} --chain-id $CHAIN_ID --keyring-backend test &> /dev/null
-    fi
+    # actually set this account as a validator on the current node 
+    $cmd gentx $val_acct ${STAKE_TOKENS}${DENOM} --chain-id $CHAIN_ID --keyring-backend test &> /dev/null
     
     # Get the endpoint and node ID
     node_id=$($cmd tendermint show-node-id)@$node_name:$PEER_PORT
@@ -186,6 +184,7 @@ if [ "$CHAIN" == "STRIDE" ]; then
         RELAYER_MNEMONIC="${RELAYER_MNEMONICS[i]}"
 
         echo "$RELAYER_MNEMONIC" | $MAIN_CMD keys add $RELAYER_ACCT --recover --keyring-backend=test >> $KEYS_LOGS 2>&1
+        
         RELAYER_ADDRESS=$($MAIN_CMD keys show $RELAYER_ACCT --keyring-backend test -a)
         $MAIN_CMD add-genesis-account ${RELAYER_ADDRESS} ${VAL_TOKENS}${DENOM}
     done
