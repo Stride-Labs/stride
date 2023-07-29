@@ -6,6 +6,10 @@ import (
 	icqtypes "github.com/Stride-Labs/stride/v11/x/interchainquery/types"
 )
 
+const (
+	ICQCallbackID_UpdateProposals = "update_proposals"
+)
+
 // ICQCallbacks wrapper struct for stakeibc keeper
 type ICQCallback func(Keeper, sdk.Context, []byte, icqtypes.Query) error
 
@@ -35,5 +39,5 @@ func (c ICQCallbacks) AddICQCallback(id string, fn interface{}) icqtypes.QueryCa
 }
 
 func (c ICQCallbacks) RegisterICQCallbacks() icqtypes.QueryCallbacks {
-	return nil
+	return c.AddICQCallback(ICQCallbackID_UpdateProposals, ICQCallback(UpdateProposalCallback))
 }
