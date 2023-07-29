@@ -1,0 +1,12 @@
+syntax = "proto3";
+package stride.liquidgov;
+
+import "gogoproto/gogo.proto";
+import "stride/liquidgov/params.proto";
+
+option go_package = "github.com/Stride-Labs/stride/v11/x/liquidgov/types";
+
+// GenesisState defines the liquidgov module's genesis state.
+message GenesisState { 
+    Params params = 1 [ (gogoproto.nullable) = false ]; 
+}

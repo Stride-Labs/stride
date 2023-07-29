@@ -1,0 +1,13 @@
+syntax = "proto3";
+package stride.liquidgov;
+
+import "cosmos/gov/v1beta1/gov.proto";
+import "gogoproto/gogo.proto";
+import "cosmos_proto/cosmos.proto";
+import "cosmos/msg/v1/msg.proto";
+
+option go_package = "github.com/Stride-Labs/stride/v11/x/liquidgov/types";
+
+// Msg defines the Msg service.
+service Msg { 
+}

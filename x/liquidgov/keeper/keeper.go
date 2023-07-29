@@ -1,0 +1,67 @@
+package keeper
+
+import (
+	"fmt"
+
+	"github.com/cometbft/cometbft/libs/log"
+	"github.com/cosmos/cosmos-sdk/codec"
+	storetypes "github.com/cosmos/cosmos-sdk/store/types"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
+
+	icacallbackskeeper "github.com/Stride-Labs/stride/v11/x/icacallbacks/keeper"
+	icqkeeper "github.com/Stride-Labs/stride/v11/x/interchainquery/keeper"
+	stakeibckeeper "github.com/Stride-Labs/stride/v11/x/stakeibc/keeper"
+
+	"github.com/Stride-Labs/stride/v11/x/liquidgov/types"
+)
+
+type (
+	Keeper struct {
+		cdc        codec.BinaryCodec
+		storeKey   storetypes.StoreKey
+		memKey     storetypes.StoreKey
+		paramstore paramtypes.Subspace
+
+		stakeibcKeeper        stakeibckeeper.Keeper
+		accountKeeper         types.AccountKeeper
+		bankKeeper            types.BankKeeper
+		InterchainQueryKeeper icqkeeper.Keeper
+		ICACallbacksKeeper    icacallbackskeeper.Keeper
+	}
+)
+
+func NewKeeper(
+	cdc codec.BinaryCodec,
+	storeKey,
+	memKey storetypes.StoreKey,
+	ps paramtypes.Subspace,
+
+	stakeibcKeeper stakeibckeeper.Keeper,
+	accountKeeper types.AccountKeeper,
+	bankKeeper types.BankKeeper,
+	interchainQueryKeeper icqkeeper.Keeper,
+	ICACallbacksKeeper icacallbackskeeper.Keeper,
+) *Keeper {
+	// set KeyTable if it has not already been set
+	if !ps.HasKeyTable() {
+		ps = ps.WithKeyTable(types.ParamKeyTable())
+	}
+
+	return &Keeper{
+		cdc:        cdc,
+		storeKey:   storeKey,
+		memKey:     memKey,
+		paramstore: ps,
+
+		stakeibcKeeper:        stakeibcKeeper,
+		accountKeeper:         accountKeeper,
+		bankKeeper:            bankKeeper,
+		InterchainQueryKeeper: interchainQueryKeeper,
+		ICACallbacksKeeper:    ICACallbacksKeeper,
+	}
+}
+
+func (k Keeper) Logger(ctx sdk.Context) log.Logger {
+	return ctx.Logger().With("module", fmt.Sprintf("x/%s", types.ModuleName))
+}
