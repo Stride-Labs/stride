@@ -159,6 +159,12 @@ func (k msgServer) RestoreOracleICA(goCtx context.Context, msg *types.MsgRestore
 		return nil, errorsmod.Wrapf(err, "the oracle (%s) has never had an registered ICA", oracle.ChainId)
 	}
 
+	// Confirm the channel is closed
+	if k.IsOracleICAChannelOpen(ctx, oracle) {
+		return nil, errorsmod.Wrapf(types.ErrUnableToRestoreICAChannel,
+			"channel already open, chain-id: %s, channel-id: %s", oracle.ChainId, oracle.ChannelId)
+	}
+
 	// Grab the connectionEnd for the counterparty connection
 	connectionEnd, found := k.IBCKeeper.ConnectionKeeper.GetConnection(ctx, oracle.ConnectionId)
 	if !found {
@@ -174,7 +180,8 @@ func (k msgServer) RestoreOracleICA(goCtx context.Context, msg *types.MsgRestore
 	}
 	_, exists := k.ICAControllerKeeper.GetInterchainAccountAddress(ctx, oracle.ConnectionId, portId)
 	if !exists {
-		return nil, errorsmod.Wrapf(types.ErrICAAccountDoesNotExist, "cannot find ICA account for connection (%s) and port (%s)", oracle.ConnectionId, portId)
+		return nil, errorsmod.Wrapf(types.ErrICAAccountDoesNotExist,
+			"cannot find ICA account for connection (%s) and port (%s)", oracle.ConnectionId, portId)
 	}
 
 	// Call register ICA again to restore the account

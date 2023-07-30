@@ -17,7 +17,7 @@ type RestoreOracleICATestCase struct {
 	Oracle   types.Oracle
 }
 
-func (s *KeeperTestSuite) SetupTestRestoreOracleICA() RestoreOracleICATestCase {
+func (s *KeeperTestSuite) SetupTestRestoreOracleICA(channelState channeltypes.State) RestoreOracleICATestCase {
 	// Create oracle ICA channel
 	owner := types.FormatICAAccountOwner(HostChainId, types.ICAAccountType_Oracle)
 	channelId := s.CreateICAChannel(owner)
@@ -38,6 +38,14 @@ func (s *KeeperTestSuite) SetupTestRestoreOracleICA() RestoreOracleICATestCase {
 	_, found := s.App.ICAOracleKeeper.GetOracle(s.Ctx, HostChainId)
 	s.Require().True(found, "oracle should be in the store during setup")
 
+	// Update the channel state, if applicable
+	if channelState != channeltypes.OPEN {
+		channel, found := s.App.IBCKeeper.ChannelKeeper.GetChannel(s.Ctx, portId, channelId)
+		s.Require().True(found, "oracle channel should have been found")
+		channel.State = channelState
+		s.App.IBCKeeper.ChannelKeeper.SetChannel(s.Ctx, portId, channelId, channel)
+	}
+
 	return RestoreOracleICATestCase{
 		ValidMsg: types.MsgRestoreOracleICA{OracleChainId: HostChainId},
 		Oracle:   oracle,
@@ -45,17 +53,11 @@ func (s *KeeperTestSuite) SetupTestRestoreOracleICA() RestoreOracleICATestCase {
 }
 
 func (s *KeeperTestSuite) TestRestoreOracleICA_Successful() {
-	tc := s.SetupTestRestoreOracleICA()
+	tc := s.SetupTestRestoreOracleICA(channeltypes.CLOSED)
 
 	// Confirm there are two channels originally
 	channels := s.App.IBCKeeper.ChannelKeeper.GetAllChannels(s.Ctx)
 	s.Require().Len(channels, 2, "there should be 2 channels initially (transfer + oracle)")
-
-	// Close the oracle channel
-	channel, found := s.App.IBCKeeper.ChannelKeeper.GetChannel(s.Ctx, tc.Oracle.PortId, tc.Oracle.ChannelId)
-	s.Require().True(found, "oracle channel should have been found")
-	channel.State = channeltypes.CLOSED
-	s.App.IBCKeeper.ChannelKeeper.SetChannel(s.Ctx, tc.Oracle.PortId, tc.Oracle.ChannelId, channel)
 
 	// Submit the restore message
 	_, err := s.GetMsgServer().RestoreOracleICA(sdk.WrapSDKContext(s.Ctx), &tc.ValidMsg)
@@ -77,7 +79,7 @@ func (s *KeeperTestSuite) TestRestoreOracleICA_Successful() {
 }
 
 func (s *KeeperTestSuite) TestRestoreOracleICA_OracleDoesNotExist() {
-	tc := s.SetupTestRestoreOracleICA()
+	tc := s.SetupTestRestoreOracleICA(channeltypes.CLOSED)
 
 	// Submit the oracle with an invalid host zone, it should fail
 	invalidMsg := tc.ValidMsg
@@ -87,7 +89,7 @@ func (s *KeeperTestSuite) TestRestoreOracleICA_OracleDoesNotExist() {
 }
 
 func (s *KeeperTestSuite) TestRestoreOracleICA_IcaNotRegistered() {
-	tc := s.SetupTestRestoreOracleICA()
+	tc := s.SetupTestRestoreOracleICA(channeltypes.CLOSED)
 
 	// Update the oracle to appear as if the ICA was never registered in the first place
 	oracle := tc.Oracle
@@ -100,7 +102,7 @@ func (s *KeeperTestSuite) TestRestoreOracleICA_IcaNotRegistered() {
 }
 
 func (s *KeeperTestSuite) TestRestoreOracleICA_ConnectionDoesNotExist() {
-	tc := s.SetupTestRestoreOracleICA()
+	tc := s.SetupTestRestoreOracleICA(channeltypes.CLOSED)
 
 	// Update the oracle to to have a non-existent connection-id
 	oracle := tc.Oracle
@@ -113,7 +115,7 @@ func (s *KeeperTestSuite) TestRestoreOracleICA_ConnectionDoesNotExist() {
 }
 
 func (s *KeeperTestSuite) TestRestoreOracleICA_Failure_IcaDoesNotExist() {
-	tc := s.SetupTestRestoreOracleICA()
+	tc := s.SetupTestRestoreOracleICA(channeltypes.CLOSED)
 
 	// Add a new connection-id that is not tied to an ICA
 	differentConnectionId := "connection-2"
@@ -130,11 +132,20 @@ func (s *KeeperTestSuite) TestRestoreOracleICA_Failure_IcaDoesNotExist() {
 	s.Require().ErrorContains(err, "cannot find ICA account for connection")
 }
 
-func (s *KeeperTestSuite) TestRestoreOracleICA_RegisterFailure() {
-	tc := s.SetupTestRestoreOracleICA()
+func (s *KeeperTestSuite) TestRestoreOracleICA_Failure_ChannelOpen() {
+	tc := s.SetupTestRestoreOracleICA(channeltypes.OPEN)
 
-	// Submit the restore message before doing anything else (meaning the channel is still open)
-	// It should fail because the channel is still active
+	// Since the channel already OPEN, the restore should fail
+	_, err := s.GetMsgServer().RestoreOracleICA(sdk.WrapSDKContext(s.Ctx), &tc.ValidMsg)
+	s.Require().ErrorContains(err, "channel already open")
+}
+
+func (s *KeeperTestSuite) TestRestoreOracleICA_Failure_RegisterAccountFailure() {
+	tc := s.SetupTestRestoreOracleICA(channeltypes.INIT)
+
+	// Disable middleware so the ICA registration fails
+	s.App.ICAControllerKeeper.SetMiddlewareDisabled(s.Ctx, tc.Oracle.PortId, tc.Oracle.ConnectionId)
+
 	_, err := s.GetMsgServer().RestoreOracleICA(sdk.WrapSDKContext(s.Ctx), &tc.ValidMsg)
 	s.Require().ErrorContains(err, "unable to register oracle interchain account")
 }

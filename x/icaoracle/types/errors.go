@@ -20,4 +20,5 @@ var (
 	ErrInvalidCallback           = errorsmod.Register(ModuleName, 13, "invalid callback data")
 	ErrICAAccountDoesNotExist    = errorsmod.Register(ModuleName, 14, "ICA account does not exist")
 	ErrInvalidGenesisState       = errorsmod.Register(ModuleName, 15, "Invalid genesis state")
+	ErrUnableToRestoreICAChannel = errorsmod.Register(ModuleName, 16, "unable to restore oracle ICA channel")
 )
