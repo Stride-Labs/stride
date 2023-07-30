@@ -20,5 +20,13 @@ func RemoveOracle(ctx sdk.Context, k keeper.Keeper, proposal *types.RemoveOracle
 	}
 
 	k.RemoveOracle(ctx, proposal.OracleChainId)
+
+	// Remove all metrics that were targeting this oracle
+	for _, metric := range k.GetAllMetrics(ctx) {
+		if metric.DestinationOracle == proposal.OracleChainId {
+			k.RemoveMetric(ctx, metric.GetMetricID())
+		}
+	}
+
 	return nil
 }

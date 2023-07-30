@@ -1,6 +1,7 @@
 package gov_test
 
 import (
+	"fmt"
 	"strconv"
 	"testing"
 
@@ -86,6 +87,19 @@ func (s *KeeperTestSuite) TestGovRemoveOracle() {
 	oracleIndexToRemove := 1
 	oracleToRemove := oracles[oracleIndexToRemove]
 
+	// Add metrics to that oracle
+	for i := 0; i < 3; i++ {
+		metric := types.Metric{
+			Key:               fmt.Sprintf("key-%d", i),
+			Value:             fmt.Sprintf("value-%d", i),
+			BlockHeight:       s.Ctx.BlockHeight(),
+			UpdateTime:        s.Ctx.BlockTime().Unix(),
+			DestinationOracle: oracleToRemove.ChainId,
+			Status:            types.MetricStatus_QUEUED,
+		}
+		s.App.ICAOracleKeeper.SetMetric(s.Ctx, metric)
+	}
+
 	// Remove the oracle thorugh goverance
 	err := gov.RemoveOracle(s.Ctx, s.App.ICAOracleKeeper, &types.RemoveOracleProposal{
 		OracleChainId: oracleToRemove.ChainId,
@@ -105,4 +119,7 @@ func (s *KeeperTestSuite) TestGovRemoveOracle() {
 			s.Require().True(found, "oracle %s should not have been removed", oracle.ChainId)
 		}
 	}
+
+	// Confirm the metrics were removed
+	s.Require().Empty(s.App.ICAOracleKeeper.GetAllMetrics(s.Ctx), "all metrics removed")
 }
