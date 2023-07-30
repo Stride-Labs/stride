@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	icatypes "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/types"
 
 	"github.com/Stride-Labs/stride/v11/x/icaoracle/types"
 )
@@ -36,6 +37,33 @@ func (s *KeeperTestSuite) TestAddOracle_Successful() {
 	expectedOraclePort := fmt.Sprintf("icacontroller-%s.ORACLE", HostChainId)
 	isBound := s.App.ICAControllerKeeper.IsBound(s.Ctx, expectedOraclePort)
 	s.Require().True(isBound, "oracle ICA port %s should have been bound to the ICAController module", expectedOraclePort)
+}
+
+func (s *KeeperTestSuite) TestAddOracle_Successful_IcaAlreadyExists() {
+	validMsg := s.SetupTestAddOracle()
+
+	// Create the oracle ICA channel
+	owner := types.FormatICAAccountOwner(HostChainId, types.ICAAccountType_Oracle)
+	channelID := s.CreateICAChannel(owner)
+	portId, _ := icatypes.NewControllerPortID(owner)
+	icaAddress := s.IcaAddresses[owner]
+
+	// Submit the AddOracle message
+	_, err := s.GetMsgServer().AddOracle(sdk.WrapSDKContext(s.Ctx), &validMsg)
+	s.Require().NoError(err, "no error expected when adding an oracle")
+
+	// Confirm the oracle was created and that the existing ICA channel was used
+	expectedOracle := types.Oracle{
+		ChainId:      HostChainId,
+		ConnectionId: ConnectionId,
+		ChannelId:    channelID,
+		PortId:       portId,
+		IcaAddress:   icaAddress,
+		Active:       false,
+	}
+	actualOracle, found := s.App.ICAOracleKeeper.GetOracle(s.Ctx, HostChainId)
+	s.Require().True(found, "oracle should be created")
+	s.Require().Equal(expectedOracle, actualOracle, "oracle created")
 }
 
 func (s *KeeperTestSuite) TestAddOracle_Failure_OracleAlreadyExists() {

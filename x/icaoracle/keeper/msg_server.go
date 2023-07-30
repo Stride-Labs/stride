@@ -66,6 +66,29 @@ func (k msgServer) AddOracle(goCtx context.Context, msg *types.MsgAddOracle) (*t
 	}
 	k.SetOracle(ctx, oracle)
 
+	// Get the expected port ID for the ICA channel
+	owner := types.FormatICAAccountOwner(chainId, types.ICAAccountType_Oracle)
+	portID, err := icatypes.NewControllerPortID(owner)
+	if err != nil {
+		return nil, err
+	}
+
+	// Check if an ICA account has already been created for this oracle
+	// (in the event that an oracle was removed and then added back)
+	// If so, there's no need to register a new ICA
+	channelID, channelFound := k.ICAControllerKeeper.GetOpenActiveChannel(ctx, controllerConnectionId, portID)
+	icaAddress, icaFound := k.ICAControllerKeeper.GetInterchainAccountAddress(ctx, controllerConnectionId, portID)
+
+	if channelFound && icaFound {
+		oracle.IcaAddress = icaAddress
+		oracle.ChannelId = channelID
+		oracle.PortId = portID
+
+		k.SetOracle(ctx, oracle)
+
+		return &types.MsgAddOracleResponse{}, nil
+	}
+
 	// Get the corresponding connection on the host
 	hostConnectionId := connectionEnd.Counterparty.ConnectionId
 	if hostConnectionId == "" {
@@ -81,7 +104,6 @@ func (k msgServer) AddOracle(goCtx context.Context, msg *types.MsgAddOracle) (*t
 		TxType:                 icatypes.TxTypeSDKMultiMsg,
 	}))
 
-	owner := types.FormatICAAccountOwner(chainId, types.ICAAccountType_Oracle)
 	if err := k.ICAControllerKeeper.RegisterInterchainAccount(ctx, controllerConnectionId, owner, appVersion); err != nil {
 		return nil, errorsmod.Wrapf(err, "unable to register oracle interchain account")
 	}
