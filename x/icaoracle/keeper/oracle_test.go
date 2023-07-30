@@ -1,8 +1,6 @@
 package keeper_test
 
 import (
-	"strconv"
-
 	transfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
 	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
 	ibctesting "github.com/cosmos/ibc-go/v7/testing"
@@ -10,25 +8,8 @@ import (
 	"github.com/Stride-Labs/stride/v11/x/icaoracle/types"
 )
 
-// Helper function to create 5 oracle objects with various attributes
-func (s *KeeperTestSuite) createOracles() []types.Oracle {
-	oracles := []types.Oracle{}
-	for i := 1; i <= 5; i++ {
-		suffix := strconv.Itoa(i)
-		oracle := types.Oracle{
-			ChainId:      "chain-" + suffix,
-			ConnectionId: "connection-" + suffix,
-			Active:       true,
-		}
-
-		oracles = append(oracles, oracle)
-		s.App.ICAOracleKeeper.SetOracle(s.Ctx, oracle)
-	}
-	return oracles
-}
-
 func (s *KeeperTestSuite) TestGetOracle() {
-	oracles := s.createOracles()
+	oracles := s.CreateTestOracles()
 
 	expectedOracle := oracles[1]
 
@@ -38,14 +19,14 @@ func (s *KeeperTestSuite) TestGetOracle() {
 }
 
 func (s *KeeperTestSuite) TestGetAllOracles() {
-	expectedOracles := s.createOracles()
+	expectedOracles := s.CreateTestOracles()
 	actualOracles := s.App.ICAOracleKeeper.GetAllOracles(s.Ctx)
 	s.Require().Len(actualOracles, len(expectedOracles), "number of oracles")
 	s.Require().ElementsMatch(expectedOracles, actualOracles, "contents of oracles")
 }
 
 func (s *KeeperTestSuite) TestRemoveOracle() {
-	oracles := s.createOracles()
+	oracles := s.CreateTestOracles()
 
 	oracleToRemove := oracles[1]
 
@@ -56,7 +37,7 @@ func (s *KeeperTestSuite) TestRemoveOracle() {
 }
 
 func (s *KeeperTestSuite) TestToggleOracle() {
-	oracles := s.createOracles()
+	oracles := s.CreateTestOracles()
 	oracleToToggle := oracles[1]
 
 	// Set the oracle to inactive
@@ -67,7 +48,40 @@ func (s *KeeperTestSuite) TestToggleOracle() {
 	s.Require().True(found, "oracle should have been found, but was not")
 	s.Require().False(oracle.Active, "oracle should have been marked inactive")
 
-	// Set it back to active
+	// Remove the oracle connection ID and then try to re-activate it, it should fail
+	invalidOracle := oracleToToggle
+	invalidOracle.ConnectionId = ""
+	s.App.ICAOracleKeeper.SetOracle(s.Ctx, invalidOracle)
+
+	err = s.App.ICAOracleKeeper.ToggleOracle(s.Ctx, oracleToToggle.ChainId, true)
+	s.Require().ErrorContains(err, "oracle ICA channel has not been registered")
+
+	// Remove the oracle contract address and try to re-activate it, it should fail
+	invalidOracle = oracleToToggle
+	invalidOracle.ContractAddress = ""
+	s.App.ICAOracleKeeper.SetOracle(s.Ctx, invalidOracle)
+
+	err = s.App.ICAOracleKeeper.ToggleOracle(s.Ctx, oracleToToggle.ChainId, true)
+	s.Require().ErrorContains(err, "oracle not instantiated")
+
+	// Reset the oracle with all fields present
+	s.App.ICAOracleKeeper.SetOracle(s.Ctx, oracleToToggle)
+
+	// Close the ICA channel and try to re-active it, it should fail
+	channel, found := s.App.IBCKeeper.ChannelKeeper.GetChannel(s.Ctx, oracle.PortId, oracle.ChannelId)
+	s.Require().True(found)
+	channel.State = channeltypes.CLOSED
+	s.App.IBCKeeper.ChannelKeeper.SetChannel(s.Ctx, oracle.PortId, oracle.ChannelId, channel)
+
+	err = s.App.ICAOracleKeeper.ToggleOracle(s.Ctx, oracleToToggle.ChainId, true)
+	s.Require().ErrorContains(err, "oracle ICA channel is closed")
+
+	// Re-open the channel and try once more - this time it should succeed
+	channel, found = s.App.IBCKeeper.ChannelKeeper.GetChannel(s.Ctx, oracle.PortId, oracle.ChannelId)
+	s.Require().True(found)
+	channel.State = channeltypes.OPEN
+	s.App.IBCKeeper.ChannelKeeper.SetChannel(s.Ctx, oracle.PortId, oracle.ChannelId, channel)
+
 	err = s.App.ICAOracleKeeper.ToggleOracle(s.Ctx, oracleToToggle.ChainId, true)
 	s.Require().NoError(err, "no error expected when toggling oracle")
 
@@ -77,7 +91,7 @@ func (s *KeeperTestSuite) TestToggleOracle() {
 }
 
 func (s *KeeperTestSuite) TestGetOracleFromConnectionId() {
-	oracles := s.createOracles()
+	oracles := s.CreateTestOracles()
 
 	// Get oracle using connection Id
 	expectedOracle := oracles[1]
