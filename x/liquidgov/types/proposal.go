@@ -4,13 +4,13 @@ import (
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
 )
 
-func NewProposal(govProposal govtypes.Proposal, hostZoneId string) (Proposal, error) {
+func NewProposal(hostZoneId string, govProposal *govtypes.Proposal) (*Proposal, error) {
 	p := Proposal{
 		HostZoneId:  hostZoneId,		
 		GovProposal: govProposal,
 	}
 
-	return p, nil
+	return &p, nil
 }
 
 // Proposals is an array of proposal

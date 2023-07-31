@@ -11,7 +11,7 @@ staker_stride_address=$($STRIDE_MAIN_CMD keys show staker1 -a)
 # Pull in proposal id1 from GAIA hub to stride (using ICQ)
 echo ">>> Trigger ICQ to pull in proposal from GAIA to Stride:"
 $STRIDE_MAIN_CMD tx liquidgov update-proposal GAIA 1 --from staker1 -y | TRIM_TX
-sleep 10 && echo ""
+sleep 15 && echo ""
 
 
 # setup.sh should have prepared staker1 to have 1000000 st${ATOM_DENOM} in stride balance
@@ -25,7 +25,9 @@ $STRIDE_MAIN_CMD q bank balances $staker_stride_address
 sleep 3 && echo ""
 
 # Cast a vote on stride using 200000 of escrowed stTokens
-
+echo ">>> Liquid vote "YES" with 200000/500000 of the escrowed stuatom:"
+$STRIDE_MAIN_CMD tx liquidgov liquid-vote GAIA 1 200000 yes --from staker1 -y | TRIM_TX
+sleep 5 && echo ""
 
 # Withdraw extra 300000 stTokens not being used
 echo ">>> Withdraw 300000 stuatom from voting escrow:"

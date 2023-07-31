@@ -13,7 +13,7 @@ message Proposal {
     string host_zone_id = 1;
 
     // contains the id, current status, voting period times, and other core info
-    cosmos.gov.v1beta1.Proposal gov_proposal = 2 [(gogoproto.nullable) = false];
+    cosmos.gov.v1beta1.Proposal gov_proposal = 2 [(gogoproto.nullable) = true];
 
     // contains the human readable title and description 
     // cosmos.gov.v1beta1.TextProposal text_proposal = 3 [(gogoproto.nullable) = false];

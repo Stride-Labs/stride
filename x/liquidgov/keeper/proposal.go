@@ -1,6 +1,8 @@
 package keeper
 
 import (
+	//"fmt"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/Stride-Labs/stride/v11/x/liquidgov/types"
@@ -8,12 +10,12 @@ import (
 
 // GetProposal gets a proposal from store by ProposalID.
 // Panics if can't unmarshal the proposal.
-func (keeper Keeper) GetProposal(ctx sdk.Context, chainId string, proposalID uint64) (types.Proposal, bool) {
+func (keeper Keeper) GetProposal(ctx sdk.Context, chainId string, proposalID uint64) (*types.Proposal, bool) {
 	store := ctx.KVStore(keeper.storeKey)
 
 	bz := store.Get(types.ProposalKey(chainId, proposalID))
 	if bz == nil {
-		return types.Proposal{}, false
+		return &types.Proposal{}, false
 	}
 
 	var proposal types.Proposal
@@ -21,14 +23,16 @@ func (keeper Keeper) GetProposal(ctx sdk.Context, chainId string, proposalID uin
 		panic(err)
 	}
 
-	return proposal, true
+	return &proposal, true
 }
 
 // SetProposal sets a proposal to store.
 // Panics if can't marshal the proposal.
 func (keeper Keeper) SetProposal(ctx sdk.Context, proposal types.Proposal) {
-	bz, err := keeper.MarshalProposal(proposal)
+	//keeper.Logger(ctx).Info(fmt.Sprintf("About to marshall Proposal %+v", proposal))	
+	bz, err := keeper.MarshalProposal(&proposal)
 	if err != nil {
+		//keeper.Logger(ctx).Error(fmt.Sprintf("Error marshalling Proposal %+v", err))
 		panic(err)
 	}
 
@@ -74,8 +78,7 @@ func (keeper Keeper) GetProposals(ctx sdk.Context) (proposals types.Proposals) {
 	return
 }
 
-func (keeper Keeper) MarshalProposal(proposal types.Proposal) ([]byte, error) {
-	// bz, err := keeper.cdc.Marshal(&proposal)
+func (keeper Keeper) MarshalProposal(proposal *types.Proposal) ([]byte, error) {
 	bz, err := proposal.Marshal()
 	if err != nil {
 		return nil, err

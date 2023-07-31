@@ -27,7 +27,10 @@ func NewHandler(k keeper.Keeper) sdk.Handler {
 			return sdk.WrapServiceResult(ctx, res, err)
 		case *types.MsgWithdrawVotingStake:
 			res, err := msgServer.WithdrawVotingStake(sdk.WrapSDKContext(ctx), msg)
-			return sdk.WrapServiceResult(ctx, res, err)						
+			return sdk.WrapServiceResult(ctx, res, err)
+		case *types.MsgLiquidVote:
+			res, err := msgServer.LiquidVote(sdk.WrapSDKContext(ctx), msg)
+			return sdk.WrapServiceResult(ctx, res, err)			
 		default:
 			errMsg := fmt.Sprintf("unrecognized %s message type: %T", types.ModuleName, msg)
 			return nil, errorsmod.Wrap(sdkerrors.ErrUnknownRequest, errMsg)

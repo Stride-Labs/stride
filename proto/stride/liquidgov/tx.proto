@@ -12,7 +12,8 @@ option go_package = "github.com/Stride-Labs/stride/v11/x/liquidgov/types";
 service Msg { 
   rpc UpdateProposal(MsgUpdateProposal) returns (MsgUpdateProposalResponse);
   rpc DepositVotingStake(MsgDepositVotingStake) returns (MsgDepositVotingStakeResponse);
-  rpc WithdrawVotingStake(MsgWithdrawVotingStake) returns (MsgWithdrawVotingStakeResponse);        
+  rpc WithdrawVotingStake(MsgWithdrawVotingStake) returns (MsgWithdrawVotingStakeResponse);
+  rpc LiquidVote(MsgLiquidVote) returns (MsgLiquidVoteResponse);         
 }
 
 message MsgUpdateProposal {
@@ -54,3 +55,20 @@ message MsgWithdrawVotingStake {
 }
 
 message MsgWithdrawVotingStakeResponse {}
+
+
+message MsgLiquidVote {
+  option (cosmos.msg.v1.signer) = "creator";
+
+  string creator = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+  // host_zone_id defines the host zone of the vote
+	string host_zone_id = 2;
+  uint64 proposal_id = 3 [(gogoproto.jsontag) = "proposal_id"];
+  string amount = 4 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable) = false
+  ];  
+  cosmos.gov.v1beta1.VoteOption vote_option = 5;
+}
+
+message MsgLiquidVoteResponse {}

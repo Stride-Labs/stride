@@ -1,0 +1,30 @@
+syntax = "proto3";
+package stride.liquidgov;
+
+import "cosmos/gov/v1beta1/gov.proto";
+import "gogoproto/gogo.proto";
+import "cosmos_proto/cosmos.proto";
+import "google/protobuf/timestamp.proto";
+
+option go_package = "github.com/Stride-Labs/stride/v11/x/liquidgov/types";
+
+// Vote defines the record of what this user has voted.
+message Vote {
+    // Address of who owns the deposited coins
+    string creator = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+
+    // host_zone_id defines the host zone of the proposal, proposal_id specifies which proposal
+    string host_zone_id = 2;
+
+    uint64 proposal_id = 3;
+
+	// amount is the amount of tokens used for this vote.
+	string amount = 4 [
+        (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+        (gogoproto.nullable) = false
+    ];
+
+    cosmos.gov.v1beta1.VoteOption option = 5;
+
+    google.protobuf.Timestamp time_available = 6;
+}

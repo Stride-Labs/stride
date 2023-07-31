@@ -1,8 +1,6 @@
 package keeper
 
 import (
-	"fmt"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/Stride-Labs/stride/v11/x/liquidgov/types"
@@ -76,12 +74,6 @@ func (keeper Keeper) GetDeposits(ctx sdk.Context) (deposits []types.Deposit) {
 	return
 }
 
-// Helper function to iterate votes and see how much of deposit is available now
-func (keeper Keeper) DepositAvailableNow(ctx sdk.Context, creator string, hostZoneId string) (sdk.Int) {
-	deposit, _ := keeper.GetDeposit(ctx, creator, hostZoneId)
-	keeper.Logger(ctx).Info(fmt.Sprintf("looking for available deposit creator:%s hostZone:%s deposit:%v", creator, hostZoneId, deposit))
-	return deposit.Amount // Check with when votes happened/proposals end in future...
-}
 
 func (keeper Keeper) MarshalDeposit(deposit types.Deposit) ([]byte, error) {
 	bz, err := deposit.Marshal()
