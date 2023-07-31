@@ -10,7 +10,9 @@ option go_package = "github.com/Stride-Labs/stride/v11/x/liquidgov/types";
 
 // Msg defines the Msg service.
 service Msg { 
-  rpc UpdateProposal(MsgUpdateProposal) returns (MsgUpdateProposalResponse);    
+  rpc UpdateProposal(MsgUpdateProposal) returns (MsgUpdateProposalResponse);
+  rpc DepositVotingStake(MsgDepositVotingStake) returns (MsgDepositVotingStakeResponse);
+  rpc WithdrawVotingStake(MsgWithdrawVotingStake) returns (MsgWithdrawVotingStakeResponse);        
 }
 
 message MsgUpdateProposal {
@@ -22,3 +24,33 @@ message MsgUpdateProposal {
 }
 
 message MsgUpdateProposalResponse {}
+
+
+message MsgDepositVotingStake {
+  option (cosmos.msg.v1.signer) = "creator";
+  option (gogoproto.equal) = false;
+
+  string creator = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+  string st_denom = 2;
+  string amount = 3 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable) = false
+  ];
+}
+
+message MsgDepositVotingStakeResponse {}
+
+
+message MsgWithdrawVotingStake {
+  option (cosmos.msg.v1.signer) = "creator";
+  option (gogoproto.equal) = false;
+
+  string creator = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+  string st_denom = 2;
+  string amount = 3 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable) = false
+  ];
+}
+
+message MsgWithdrawVotingStakeResponse {}

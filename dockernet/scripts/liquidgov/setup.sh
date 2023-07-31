@@ -35,7 +35,7 @@ sleep 12 && echo ""
 echo "GAIA balances:"
 $GAIA_MAIN_CMD q bank balances $staker_gaia_address 
 echo ""
-echo "STRIDE balnces:"
+echo "STRIDE balances:"
 $STRIDE_MAIN_CMD q bank balances $staker_stride_address
 sleep 3 && echo ""
 
@@ -61,3 +61,21 @@ sleep 10 && echo ""
 # List existing status of proposals
 $GAIA_MAIN_CMD query gov proposals
 sleep 2 && echo ""
+
+
+
+
+
+
+# Stake the IBC atom to have stAtom in the wallet as needed to vote
+echo ">>> Liquid Stake to get some stAtom for voting:"
+$STRIDE_MAIN_CMD tx stakeibc liquid-stake 1000000 $ATOM_DENOM --from staker1 -y | TRIM_TX
+sleep 5 && echo ""
+
+# Verify the accounts were setup and IBC correctly finished sending
+echo "GAIA balances:"
+$GAIA_MAIN_CMD q bank balances $staker_gaia_address 
+echo ""
+echo "STRIDE balances:"
+$STRIDE_MAIN_CMD q bank balances $staker_stride_address
+sleep 3 && echo ""

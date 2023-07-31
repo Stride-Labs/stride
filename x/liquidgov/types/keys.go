@@ -23,6 +23,7 @@ const (
 
 var (
 	ProposalsKeyPrefix = KeyPrefix("Proposals/")
+	DepositsKeyPrefix = KeyPrefix("Deposits/")
 )
 
 func KeyPrefix(p string) []byte {
@@ -36,6 +37,17 @@ func ProposalKey(chainId string, proposalId uint64) []byte {
 	key = append(key, ProposalsKeyPrefix...)
 	key = append(key, KeyPrefix(chainId)...)
 	key = append(key, govtypes.GetProposalIDBytes(proposalId)...)
+
+	return key
+}
+
+// DepositKey returns the store key to retrieve a deposit amount from the creator address and denom fields
+func DepositKey(creator string, denom string) []byte {
+	var key []byte
+
+	key = append(key, DepositsKeyPrefix...)
+	key = append(key, KeyPrefix(denom)...)
+	key = append(key, KeyPrefix(creator)...)
 
 	return key
 }
