@@ -39,10 +39,6 @@ set_stride_genesis() {
     jq '.app_state.gov.params.max_deposit_period = $newVal' --arg newVal "$MAX_DEPOSIT_PERIOD" $genesis_config > json.tmp && mv json.tmp $genesis_config
     jq '.app_state.gov.params.voting_period = $newVal' --arg newVal "$VOTING_PERIOD" $genesis_config > json.tmp && mv json.tmp $genesis_config
 
-    # set consumer genesis
-    $MAIN_CMD add-consumer-section $NUM_NODES
-    jq '.app_state.ccvconsumer.params.unbonding_period = $newVal' --arg newVal "$UNBONDING_TIME" $genesis_config > json.tmp && mv json.tmp $genesis_config
-
     # enable stride as an interchain accounts controller
     jq "del(.app_state.interchain_accounts)" $genesis_config > json.tmp && mv json.tmp $genesis_config
     interchain_accts=$(cat $DOCKERNET_HOME/config/ica_controller.json)
@@ -76,6 +72,14 @@ set_host_genesis() {
     sed -i -E 's|"signed_blocks_window": "100"|"signed_blocks_window": "10"|g' $genesis_config
     sed -i -E 's|"downtime_jail_duration": "600s"|"downtime_jail_duration": "10s"|g' $genesis_config
     sed -i -E 's|"slash_fraction_downtime": "0.010000000000000000"|"slash_fraction_downtime": "0.050000000000000000"|g' $genesis_config
+}
+
+set_consumer_genesis() {
+    genesis_config=$1
+
+    # add consumer genesis
+    $MAIN_CMD add-consumer-section $NUM_NODES
+    jq '.app_state.ccvconsumer.params.unbonding_period = $newVal' --arg newVal "$UNBONDING_TIME" $genesis_config > json.tmp && mv json.tmp $genesis_config
 }
 
 MAIN_ID=1 # Node responsible for genesis and persistent_peers
@@ -137,6 +141,8 @@ for (( i=1; i <= $NUM_NODES; i++ )); do
     # Add this account to the current node
     $cmd add-genesis-account ${val_addr} ${VAL_TOKENS}${DENOM}
 
+    # Copy over the provider stride validator keys to the provider (in the event
+    # that we are testing ICS)
     if [[ $CHAIN == "GAIA" ]]; then
         stride_config=$DOCKERNET_HOME/state/${STRIDE_NODE_PREFIX}${i}/config
         host_config=$DOCKERNET_HOME/state/${NODE_PREFIX}${i}/config
@@ -144,8 +150,10 @@ for (( i=1; i <= $NUM_NODES; i++ )); do
         cp ${stride_config}/node_key.json ${host_config}/node_key.json
     fi
 
-    # actually set this account as a validator on the current node 
-    $cmd gentx $val_acct ${STAKE_TOKENS}${DENOM} --chain-id $CHAIN_ID --keyring-backend test &> /dev/null
+    # Only generate the validator txs for host chains
+    if [[ "$CHAIN" != "STRIDE" && "$CHAIN" != "HOST" ]]; then 
+        $cmd gentx $val_acct ${STAKE_TOKENS}${DENOM} --chain-id $CHAIN_ID --keyring-backend test &> /dev/null
+    fi
     
     # Get the endpoint and node ID
     node_id=$($cmd tendermint show-node-id)@$node_name:$PEER_PORT
@@ -209,7 +217,8 @@ else
     fi
 fi
 
-if [ "$CHAIN" != "STRIDE" ]; then 
+# Only collect the validator genesis txs for host chains
+if [[ "$CHAIN" != "STRIDE" && "$CHAIN" != "HOST" ]]; then 
     # now we process gentx txs on the main node
     $MAIN_CMD collect-gentxs &> /dev/null
 fi
@@ -222,6 +231,11 @@ if [ "$CHAIN" == "STRIDE" ]; then
     set_stride_genesis $MAIN_GENESIS
 else
     set_host_genesis $MAIN_GENESIS
+fi
+
+# update consumer genesis for stride binary chains
+if [[ "$CHAIN" == "STRIDE" || "$CHAIN" == "HOST" ]]; then
+    set_consumer_genesis $MAIN_GENESIS
 fi
 
 # for all peer nodes....
