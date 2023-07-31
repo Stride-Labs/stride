@@ -448,6 +448,42 @@ func (s *KeeperTestSuite) TestStakeDepositRecords_Successful() {
 	s.CheckStateAfterStakingDepositRecords(tc, numFailures)
 }
 
+func (s *KeeperTestSuite) TestStakeDepositRecords_Successful_MultipleBatches() {
+	tc := s.SetupDepositRecords()
+
+	// Add 31 validators so that two batches are submitted
+	validators := []*stakeibctypes.Validator{}
+	for i := 1; i <= 31; i++ {
+		validators = append(validators, &stakeibctypes.Validator{
+			Address: fmt.Sprintf("val-%d", i),
+			Weight:  10,
+		})
+	}
+
+	hostZone := tc.hostZone
+	hostZone.Validators = validators
+	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
+
+	// Stake only one deposit record
+	s.App.StakeibcKeeper.StakeExistingDepositsOnHostZones(s.Ctx, tc.epochNumber, tc.initialDepositRecords.recordsToBeStaked[:1])
+
+	// Confirm there are two callbacks stored (one for each batch)
+	allCallbackData := s.App.IcacallbacksKeeper.GetAllCallbackData(s.Ctx)
+	s.Require().Len(allCallbackData, 2, "number of callbacks")
+
+	// Get the number of delegation messages in each callback
+	delegationsPerBatch := []int{}
+	for _, callbackData := range allCallbackData {
+		callback, err := s.App.StakeibcKeeper.UnmarshalDelegateCallbackArgs(s.Ctx, callbackData.CallbackArgs)
+		s.Require().NoError(err)
+
+		delegationsPerBatch = append(delegationsPerBatch, len(callback.SplitDelegations))
+	}
+
+	// Confirm one has 30 messages and the other has 1 message
+	s.Require().ElementsMatch(delegationsPerBatch, []int{30, 1})
+}
+
 func (s *KeeperTestSuite) TestStakeDepositRecords_SuccessfulCapped() {
 	tc := s.SetupDepositRecords()
 

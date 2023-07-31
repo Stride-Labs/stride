@@ -142,6 +142,42 @@ func (s *KeeperTestSuite) TestDelegateCallback_Successful() {
 	s.Require().Len(records, 0, "number of deposit records")
 }
 
+func (s *KeeperTestSuite) TestDelegateCallback_Successful_PartialDelegation() {
+	tc := s.SetupDelegateCallback()
+	initialState := tc.initialState
+	validArgs := tc.validArgs
+
+	// Increase the delegation amount of the deposit record
+	remaining := sdk.NewInt(10)
+	depositRecord := tc.initialState.depositRecord
+	depositRecord.Amount = depositRecord.Amount.Add(remaining)
+	s.App.RecordsKeeper.SetDepositRecord(s.Ctx, depositRecord)
+
+	// Call the delegate callback
+	err := stakeibckeeper.DelegateCallback(s.App.StakeibcKeeper, s.Ctx, validArgs.packet, validArgs.ackResponse, validArgs.args)
+	s.Require().NoError(err)
+
+	// Confirm total delegation has increased
+	hostZone, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx, HostChainId)
+	s.Require().True(found)
+	s.Require().Equal(initialState.totalDelegation.Add(initialState.balanceToStake), hostZone.TotalDelegations, "total delegation should have increased")
+
+	// Confirm delegations have been added to validators and number delegation changes in progress was reduced
+	val1 := hostZone.Validators[0]
+	val2 := hostZone.Validators[1]
+	s.Require().Equal(val1.Delegation, initialState.val1Bal.Add(initialState.val1RelAmt), "val1 balance should have increased")
+	s.Require().Equal(val2.Delegation, initialState.val2Bal.Add(initialState.val2RelAmt), "val2 balance should have increased")
+
+	// Confirm the number of delegations in progress has decreased
+	s.Require().Equal(0, int(val1.DelegationChangesInProgress), "val1 delegation changes in progress")
+	s.Require().Equal(0, int(val2.DelegationChangesInProgress), "val2 delegation changes in progress")
+
+	// Confirm the deposit record is still present, but with the amount decremented
+	finalDepositRecord, found := s.App.RecordsKeeper.GetDepositRecord(s.Ctx, depositRecord.Id)
+	s.Require().True(found, "deposit record should have been found")
+	s.Require().Equal(remaining, finalDepositRecord.Amount, "deposit records amount")
+}
+
 func (s *KeeperTestSuite) checkDelegateStateIfCallbackFailed(tc DelegateCallbackTestCase) {
 	// Confirm total delegation has not increased
 	hostZone, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx, HostChainId)
