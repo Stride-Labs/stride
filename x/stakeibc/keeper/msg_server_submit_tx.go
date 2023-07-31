@@ -31,6 +31,10 @@ import (
 	host "github.com/cosmos/ibc-go/v5/modules/core/24-host"
 )
 
+const (
+	DelegateICABatchSize = 30
+)
+
 func (k Keeper) DelegateOnHost(ctx sdk.Context, hostZone types.HostZone, amt sdk.Coin, depositRecord recordstypes.DepositRecord) error {
 	// the relevant ICA is the delegate account
 	owner := types.FormatICAAccountOwner(hostZone.ChainId, types.ICAAccountType_DELEGATION)
@@ -73,32 +77,42 @@ func (k Keeper) DelegateOnHost(ctx sdk.Context, hostZone types.HostZone, amt sdk
 	}
 	k.Logger(ctx).Info(utils.LogWithHostZone(hostZone.ChainId, "Preparing MsgDelegates from the delegation account to each validator"))
 
-	// add callback data
-	delegateCallback := types.DelegateCallback{
-		HostZoneId:       hostZone.ChainId,
-		DepositRecordId:  depositRecord.Id,
-		SplitDelegations: splitDelegations,
-	}
-	k.Logger(ctx).Info(utils.LogWithHostZone(hostZone.ChainId, "Marshalling DelegateCallback args: %+v", delegateCallback))
-	marshalledCallbackArgs, err := k.MarshalDelegateCallbackArgs(ctx, delegateCallback)
-	if err != nil {
-		return err
-	}
+	// Send the messages in batches so the gas limit isn't exceedeed
+	for start := 0; start < len(msgs); start += DelegateICABatchSize {
+		end := start + DelegateICABatchSize
+		if end > len(msgs) {
+			end = len(msgs)
+		}
 
-	// Send the transaction through SubmitTx
-	_, err = k.SubmitTxsStrideEpoch(ctx, connectionId, msgs, types.ICAAccountType_DELEGATION, ICACallbackID_Delegate, marshalledCallbackArgs)
-	if err != nil {
-		return errorsmod.Wrapf(err, "Failed to SubmitTxs for connectionId %s on %s. Messages: %s", connectionId, hostZone.ChainId, msgs)
-	}
-	k.Logger(ctx).Info(utils.LogWithHostZone(hostZone.ChainId, "ICA MsgDelegates Successfully Sent"))
+		msgsBatch := msgs[start:end]
+		delegationsBatch := splitDelegations[start:end]
 
-	// flag the delegation change in progress on each validator
-	for _, splitDelegation := range splitDelegations {
-		if err := k.IncrementValidatorDelegationChangesInProgress(&hostZone, splitDelegation.Validator); err != nil {
+		// add callback data
+		delegateCallback := types.DelegateCallback{
+			HostZoneId:       hostZone.ChainId,
+			DepositRecordId:  depositRecord.Id,
+			SplitDelegations: delegationsBatch,
+		}
+		marshalledCallbackArgs, err := k.MarshalDelegateCallbackArgs(ctx, delegateCallback)
+		if err != nil {
 			return err
 		}
+
+		// Send the transaction through SubmitTx
+		_, err = k.SubmitTxsStrideEpoch(ctx, connectionId, msgsBatch, types.ICAAccountType_DELEGATION, ICACallbackID_Delegate, marshalledCallbackArgs)
+		if err != nil {
+			return errorsmod.Wrapf(err, "Failed to SubmitTxs for connectionId %s on %s. Messages: %s", connectionId, hostZone.ChainId, msgs)
+		}
+		k.Logger(ctx).Info(utils.LogWithHostZone(hostZone.ChainId, "ICA MsgDelegates Successfully Sent"))
+
+		// flag the delegation change in progress on each validator
+		for _, splitDelegation := range splitDelegations {
+			if err := k.IncrementValidatorDelegationChangesInProgress(&hostZone, splitDelegation.Validator); err != nil {
+				return err
+			}
+		}
+		k.SetHostZone(ctx, hostZone)
 	}
-	k.SetHostZone(ctx, hostZone)
 
 	// update the record state to DELEGATION_IN_PROGRESS
 	depositRecord.Status = recordstypes.DepositRecord_DELEGATION_IN_PROGRESS
