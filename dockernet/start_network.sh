@@ -50,20 +50,22 @@ if [[ "${UPGRADE_NAME:-}" != "" ]]; then
     echo "Done"
 fi
 
-INCLUDE_HOST=false
 # Initialize the state for each chain
 for chain in STRIDE ${HOST_CHAINS[@]}; do
-    if [[ $chain == "HOST" ]]; then
-        INCLUDE_HOST=true
-    fi
     bash $SRC/init_chain.sh $chain
 done
 
 
-# Start the chain, create the transfer channels and create a consumer validator
+# Start each chain, create the transfer channels and start the relayers
 bash $SRC/start_chain.sh 
 bash $SRC/start_relayers.sh 
-bash $SRC/create_validator.sh $INCLUDE_HOST
+
+# Create governors for chains running the stride binary
+for chain in STRIDE ${HOST_CHAINS[@]}; do
+    if [[ "$chain" == "STRIDE" || "$chain" == "HOST" ]]; then
+        bash $SRC/create_governors.sh $chain
+    fi
+done
 
 # Register all host zones 
 for i in ${!HOST_CHAINS[@]}; do
