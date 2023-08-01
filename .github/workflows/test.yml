@@ -2,9 +2,9 @@ name: Tests & Code Coverage
 
 on:
   push:
-    branches: ["main"]
+    branches: ['main']
   pull_request:
-    branches: ["main"]
+    branches: ['main']
 
 jobs:
   should_run_unit_tests:
@@ -15,9 +15,9 @@ jobs:
       - id: skip_check
         uses: fkirc/skip-duplicate-actions@master
         with:
-          cancel_others: "true" # workflow-runs from outdated commits will be cancelled.
-          concurrent_skipping: "same_content"
-          skip_after_successful_duplicate: "true"
+          cancel_others: 'true' # workflow-runs from outdated commits will be cancelled.
+          concurrent_skipping: 'same_content'
+          skip_after_successful_duplicate: 'true'
           paths: '["**/*.go", "**/*.mod", "**/*.sum"]'
           do_not_skip: '["pull_request", "workflow_dispatch", "schedule"]'
       - name: Skipping test
@@ -33,7 +33,7 @@ jobs:
       - name: Setup Golang
         uses: actions/setup-go@v2.1.4
         with:
-          go-version: 1.20
+          go-version: '1.20'
       # - name: Get data from build cache
       #   uses: actions/cache@v2
       #   with:
