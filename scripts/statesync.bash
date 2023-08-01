@@ -16,11 +16,11 @@ export GOPATH=~/go
 export PATH=$PATH:~/go/bin
 
 # Install with pebbledb
-go mod edit -replace github.com/tendermint/tm-db=github.com/baabeetaa/tm-db@pebble
-go mod tidy
-go install -ldflags '-w -s -X github.com/cosmos/cosmos-sdk/types.DBBackend=pebbledb -X github.com/tendermint/tm-db.ForceSync=1' -tags pebbledb ./...
+# go mod edit -replace github.com/tendermint/tm-db=github.com/baabeetaa/tm-db@pebble
+# go mod tidy
+# go install -ldflags '-w -s -X github.com/cosmos/cosmos-sdk/types.DBBackend=pebbledb -X github.com/tendermint/tm-db.ForceSync=1' -tags pebbledb ./...
 
-# go install ./...
+go install ./...
 
 # NOTE: ABOVE YOU CAN USE ALTERNATIVE DATABASES, HERE ARE THE EXACT COMMANDS
 # go install -ldflags '-w -s -X github.com/cosmos/cosmos-sdk/types.DBBackend=rocksdb' -tags rocksdb ./...
@@ -35,7 +35,7 @@ wget https://raw.githubusercontent.com/Stride-Labs/testnet/main/mainnet/genesis.
 mv genesis.json ~/.stride/config/genesis.json
 
 # Get "trust_hash" and "trust_height".
-INTERVAL=1000
+INTERVAL=10000
 LATEST_HEIGHT=$(curl -s https://stride-rpc.polkachu.com/block | jq -r .result.block.header.height)
 BLOCK_HEIGHT=$(($LATEST_HEIGHT - $INTERVAL))
 TRUST_HASH=$(curl -s "https://stride-rpc.polkachu.com/block?height=$BLOCK_HEIGHT" | jq -r .result.block_id.hash)
@@ -56,4 +56,4 @@ STRIDED_P2P_SEEDS=$(curl -s https://raw.githubusercontent.com/cosmos/chain-regis
 export STRIDED_P2P_SEEDS
 
 # Start chain.
-strided start --x-crisis-skip-assert-invariants --db_backend pebbledb
+strided start --x-crisis-skip-assert-invariants 
