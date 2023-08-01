@@ -111,8 +111,8 @@ func initTendermintConfig() *tmcfg.Config {
 	cfg := tmcfg.DefaultConfig()
 
 	// these values put a higher strain on node memory
-	// cfg.P2P.MaxNumInboundPeers = 100
-	// cfg.P2P.MaxNumOutboundPeers = 40
+	cfg.P2P.MaxNumInboundPeers = 100
+	cfg.P2P.MaxNumOutboundPeers = 40
 
 	return cfg
 }
@@ -153,13 +153,10 @@ func initAppConfig() (string, interface{}) {
 	//
 	// In simapp, we set the min gas prices to 0.
 	// TODO TEST-48 investigate if this is sufficient to allow 0 gas transactions
-	srvCfg.MinGasPrices = "0ustrd"
+	srvCfg.MinGasPrices = "0.001ustrd"
 	srvCfg.API.Enable = true
 	srvCfg.API.EnableUnsafeCORS = true
 	srvCfg.GRPCWeb.EnableUnsafeCORS = true
-
-	// This ensures that upgraded nodes will use iavl fast node.
-	//srvCfg.IAVLDisableFastNode = false
 
 	customAppConfig := CustomAppConfig{
 		Config: *srvCfg,
