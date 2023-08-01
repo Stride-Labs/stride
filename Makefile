@@ -5,7 +5,7 @@ build=s
 cache=false
 COMMIT := $(shell git log -1 --format='%H')
 DOCKER := $(shell which docker)
-DOCKER_BUF := $(DOCKER) run --rm -v $(CURDIR):/workspace --workdir /workspace bufbuild/buf:1.7.0
+DOCKER_BUF := $(DOCKER) run --rm -v $(CURDIR):/workspace --workdir /workspace bufbuild/buf:1.25.0
 STRIDE_HOME=./
 DOCKERNET_HOME=./dockernet
 DOCKERNET_COMPOSE_FILE=$(DOCKERNET_HOME)/docker-compose.yml
@@ -164,7 +164,7 @@ stop-local-to-main:
 ###                                Protobuf                                 ###
 ###############################################################################
 
-containerProtoVer=0.13.0
+containerProtoVer=0.13.5
 containerProtoImage=ghcr.io/cosmos/proto-builder:$(containerProtoVer)
 
 proto-all: proto-format proto-lint proto-gen
