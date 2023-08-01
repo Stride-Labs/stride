@@ -121,7 +121,7 @@ func DelegatorSharesCallback(k Keeper, ctx sdk.Context, args []byte, query icqty
 // between the two is invalidated
 //
 // As a result, we must avoid a race condition between the ICQ and a delegate, undelegate,
-// or detokenization ICA
+// redelegate, or detokenization ICA
 //
 // More specifically, we must avoid the following cases:
 //

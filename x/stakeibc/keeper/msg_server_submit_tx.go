@@ -58,20 +58,26 @@ func (k Keeper) DelegateOnHost(ctx sdk.Context, hostZone types.HostZone, amt sdk
 	var splitDelegations []*types.SplitDelegation
 	var msgs []sdk.Msg
 	for _, validator := range hostZone.Validators {
-		relativeAmount := sdk.NewCoin(amt.Denom, targetDelegatedAmts[validator.Address])
-		if relativeAmount.Amount.IsPositive() {
-			msgs = append(msgs, &stakingtypes.MsgDelegate{
-				DelegatorAddress: hostZone.DelegationIcaAddress,
-				ValidatorAddress: validator.Address,
-				Amount:           relativeAmount,
-			})
+		relativeAmount, ok := targetDelegatedAmts[validator.Address]
+		if !ok || !relativeAmount.IsPositive() {
+			continue
 		}
+
+		msgs = append(msgs, &stakingtypes.MsgDelegate{
+			DelegatorAddress: hostZone.DelegationIcaAddress,
+			ValidatorAddress: validator.Address,
+			Amount:           sdk.NewCoin(amt.Denom, relativeAmount),
+		})
 		splitDelegations = append(splitDelegations, &types.SplitDelegation{
 			Validator: validator.Address,
-			Amount:    relativeAmount.Amount,
+			Amount:    relativeAmount,
 		})
 	}
 	k.Logger(ctx).Info(utils.LogWithHostZone(hostZone.ChainId, "Preparing MsgDelegates from the delegation account to each validator"))
+
+	if len(msgs) == 0 {
+		return errorsmod.Wrap(sdkerrors.ErrInvalidRequest, "Target delegation amount was 0 for each validator")
+	}
 
 	// add callback data
 	delegateCallback := types.DelegateCallback{

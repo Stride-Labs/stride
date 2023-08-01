@@ -331,18 +331,17 @@ func (s *KeeperTestSuite) TestGetRebalanceICAMessages_OddNumberValidators() {
 }
 
 func (s *KeeperTestSuite) TestGetValidatorDelegationDifferences() {
-	validators := []*types.Validator{
-		// Total Weight: 100, Total Delegation: 200
-		{Address: "val1", Weight: 10, Delegation: sdkmath.NewInt(20)},
-		{Address: "val2", Weight: 20, Delegation: sdkmath.NewInt(140)},
-		{Address: "val3", Weight: 70, Delegation: sdkmath.NewInt(40)},
+	hostZone := types.HostZone{
+		ChainId: HostChainId,
+		Validators: []*types.Validator{
+			// Total Weight: 100, Total Delegation: 200
+			{Address: "val1", Weight: 10, Delegation: sdkmath.NewInt(20)},
+			{Address: "val2", Weight: 20, Delegation: sdkmath.NewInt(140)},
+			{Address: "val3", Weight: 70, Delegation: sdkmath.NewInt(40)},
+			// Ignore this validator as it has a slash query in progresss
+			{Address: "ignore", Weight: 50, Delegation: sdkmath.NewInt(100), SlashQueryInProgress: true},
+		},
 	}
-
-	// Shuffle the validators to ensure the sorting worked
-	rand.Shuffle(len(validators), func(i, j int) {
-		validators[i], validators[j] = validators[j], validators[i]
-	})
-	hostZone := types.HostZone{ChainId: HostChainId, Validators: validators}
 
 	// Target delegation is determined by the total delegation * weight
 	// Delta = Current - Target
@@ -363,44 +362,30 @@ func (s *KeeperTestSuite) TestGetValidatorDelegationDifferences() {
 	}
 
 	// Check the error case when there are no delegations
-	_, err = s.App.StakeibcKeeper.GetValidatorDelegationDifferences(s.Ctx, types.HostZone{})
+	_, err = s.App.StakeibcKeeper.GetValidatorDelegationDifferences(s.Ctx, types.HostZone{TotalDelegations: sdkmath.ZeroInt()})
 	s.Require().ErrorContains(err, "unable to get target val amounts for host zone")
 }
 
 func (s *KeeperTestSuite) TestGetTargetValAmtsForHostZone() {
-	initialValidators := []*types.Validator{
+	validators := []*types.Validator{
 		{Address: "val1", Weight: 20},
 		{Address: "val2", Weight: 40},
 		{Address: "val3", Weight: 30},
 		{Address: "val6", Weight: 5},
 		{Address: "val5", Weight: 0},
 		{Address: "val4", Weight: 5},
-	}
-	expectedValidators := []*types.Validator{ // sorted by weight and name
-		{Address: "val5", Weight: 0},
-		{Address: "val4", Weight: 5},
-		{Address: "val6", Weight: 5},
-		{Address: "val1", Weight: 20},
-		{Address: "val3", Weight: 30},
-		{Address: "val2", Weight: 40},
 	}
 
 	// Get targets with an even 100 total delegated - no overflow to last validator
 	totalDelegation := sdkmath.NewInt(100)
-	hostZone := types.HostZone{ChainId: HostChainId, Validators: initialValidators}
+	hostZone := types.HostZone{ChainId: HostChainId, Validators: validators}
 	actualTargets, err := s.App.StakeibcKeeper.GetTargetValAmtsForHostZone(s.Ctx, hostZone, totalDelegation)
 	s.Require().NoError(err, "no error expected when getting target weights for total delegation of 100")
 
-	// Confirm new validator ordering (we check the original host zone because the re-ordering is in place)
-	for i := 0; i < len(hostZone.Validators); i++ {
-		s.Require().Equal(expectedValidators[i].Address, hostZone.Validators[i].Address,
-			"validator %d weight", i)
-	}
-
 	// Confirm target - should equal the validator's weight
-	for _, expectedValidators := range expectedValidators {
-		s.Require().Equal(int64(expectedValidators.Weight), actualTargets[expectedValidators.Address].Int64(),
-			"validator %s target for total delegation of 100", expectedValidators.Address)
+	for _, validator := range validators {
+		s.Require().Equal(int64(validator.Weight), actualTargets[validator.Address].Int64(),
+			"validator %s target for total delegation of 100", validator.Address)
 	}
 
 	// Get targets with an uneven amount delegated - 77 - over flow to last validator
@@ -431,24 +416,8 @@ func (s *KeeperTestSuite) TestGetTargetValAmtsForHostZone() {
 	s.Require().ErrorContains(err, "No non-zero validators found for host zone")
 }
 
-func (s *KeeperTestSuite) TestGetTotalValidatorDelegations() {
-	validators := []*types.Validator{
-		{Address: "val1", Delegation: sdkmath.NewInt(1)},
-		{Address: "val2", Delegation: sdkmath.NewInt(2)},
-		{Address: "val3", Delegation: sdkmath.NewInt(3)},
-		{Address: "val4", Delegation: sdkmath.NewInt(4)},
-		{Address: "val5", Delegation: sdkmath.NewInt(5)},
-	}
-	expectedDelegation := int64(1 + 2 + 3 + 4 + 5)
-
-	hostZone := types.HostZone{Validators: validators}
-	actualDelegations := s.App.StakeibcKeeper.GetTotalValidatorDelegations(hostZone)
-
-	s.Require().Equal(expectedDelegation, actualDelegations.Int64(), "delegations")
-}
-
 func (s *KeeperTestSuite) TestGetTotalValidatorWeight() {
-	validators := []*types.Validator{
+	validators := []types.Validator{
 		{Address: "val1", Weight: 1},
 		{Address: "val2", Weight: 2},
 		{Address: "val3", Weight: 3},
@@ -457,8 +426,7 @@ func (s *KeeperTestSuite) TestGetTotalValidatorWeight() {
 	}
 	expectedTotalWeights := int64(1 + 2 + 3 + 4 + 5)
 
-	hostZone := types.HostZone{Validators: validators}
-	actualTotalWeight := s.App.StakeibcKeeper.GetTotalValidatorWeight(hostZone)
+	actualTotalWeight := s.App.StakeibcKeeper.GetTotalValidatorWeight(validators)
 
 	s.Require().Equal(expectedTotalWeights, int64(actualTotalWeight))
 }
