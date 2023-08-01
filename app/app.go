@@ -609,6 +609,7 @@ func NewStrideApp(
 	if err := app.IcacallbacksKeeper.SetICACallbacks(
 		app.StakeibcKeeper.Callbacks(),
 		app.RecordsKeeper.Callbacks(),
+		app.LiquidgovKeeper.Callbacks(),		
 	); err != nil {
 		return nil
 	}
