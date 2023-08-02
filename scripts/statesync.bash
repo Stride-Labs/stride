@@ -15,17 +15,10 @@ set -uxe
 export GOPATH=~/go
 export PATH=$PATH:~/go/bin
 
-# Install with pebbledb
-# go mod edit -replace github.com/tendermint/tm-db=github.com/baabeetaa/tm-db@pebble
-# go mod tidy
-# go install -ldflags '-w -s -X github.com/cosmos/cosmos-sdk/types.DBBackend=pebbledb -X github.com/tendermint/tm-db.ForceSync=1' -tags pebbledb ./...
 
 go install ./...
 
-# NOTE: ABOVE YOU CAN USE ALTERNATIVE DATABASES, HERE ARE THE EXACT COMMANDS
-# go install -ldflags '-w -s -X github.com/cosmos/cosmos-sdk/types.DBBackend=rocksdb' -tags rocksdb ./...
-# go install -ldflags '-w -s -X github.com/cosmos/cosmos-sdk/types.DBBackend=badgerdb' -tags badgerdb ./...
-# go install -ldflags '-w -s -X github.com/cosmos/cosmos-sdk/types.DBBackend=boltdb' -tags boltdb ./...
+
 
 # Initialize chain.
 strided init test
@@ -44,12 +37,15 @@ TRUST_HASH=$(curl -s "https://stride-rpc.polkachu.com/block?height=$BLOCK_HEIGHT
 echo "trust_height: $BLOCK_HEIGHT"
 echo "trust_hash: $TRUST_HASH"
 
+
+
 # Export state sync variables.
 export STRIDED_STATESYNC_ENABLE=true
 export STRIDED_P2P_MAX_NUM_OUTBOUND_PEERS=200
 export STRIDED_STATESYNC_RPC_SERVERS="https://stride-rpc.polkachu.com:443,https://stride-rpc.polkachu.com:443"
 export STRIDED_STATESYNC_TRUST_HEIGHT=$BLOCK_HEIGHT
 export STRIDED_STATESYNC_TRUST_HASH=$TRUST_HASH
+export STRIDED_TX_INDEX_IDEXER="null"
 
 # Fetch and set list of seeds from chain registry.
 STRIDED_P2P_SEEDS=$(curl -s https://raw.githubusercontent.com/cosmos/chain-registry/master/stride/chain.json | jq -r '[foreach .peers.seeds[] as $item (""; "\($item.id)@\($item.address)")] | join(",")')
