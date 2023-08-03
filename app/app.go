@@ -570,7 +570,6 @@ func NewStrideApp(
 		app.StakingKeeper,
 		app.IcacallbacksKeeper,
 		app.RatelimitKeeper,
-		app.ConsumerKeeper,
 	)
 	app.StakeibcKeeper = *stakeibcKeeper.SetHooks(
 		stakeibcmoduletypes.NewMultiStakeIBCHooks(app.ClaimKeeper.Hooks()),

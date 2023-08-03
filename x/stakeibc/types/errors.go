@@ -49,5 +49,4 @@ var (
 	ErrRewardCollectorAccountNotFound    = errorsmod.Register(ModuleName, 1541, "Reward Collector account not found")
 	ErrHaltedHostZone                    = errorsmod.Register(ModuleName, 1542, "Halted host zone found")
 	ErrInsufficientLiquidStake           = errorsmod.Register(ModuleName, 1543, "Liquid staked amount is too small")
-	ErrStTokenNotFound                   = errorsmod.Register(ModuleName, 1544, "denom not found in stToken list")
 )

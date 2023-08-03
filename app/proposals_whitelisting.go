@@ -14,10 +14,8 @@ import (
 
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 
-	ccvconsumertypes "github.com/cosmos/interchain-security/v3/x/ccv/consumer/types"
 	ccvgov "github.com/cosmos/interchain-security/v3/x/ccv/democracy/governance"
 
-	autopilottypes "github.com/Stride-Labs/stride/v12/x/autopilot/types"
 	minttypes "github.com/Stride-Labs/stride/v12/x/mint/types"
 	stakeibctypes "github.com/Stride-Labs/stride/v12/x/stakeibc/types"
 )
@@ -88,11 +86,6 @@ var WhitelistedParams = map[ccvgov.ParamChangeKey]struct{}{
 	{MsgType: stakingtypes.ModuleName, Key: string(stakingtypes.KeyMaxEntries)}:        {},
 	{MsgType: stakingtypes.ModuleName, Key: string(stakingtypes.KeyHistoricalEntries)}: {},
 	{MsgType: stakingtypes.ModuleName, Key: string(stakingtypes.KeyBondDenom)}:         {},
-	//autopilot
-	{MsgType: autopilottypes.ModuleName, Key: string(autopilottypes.KeyStakeibcActive)}: {},
-	{MsgType: autopilottypes.ModuleName, Key: string(autopilottypes.KeyClaimActive)}:    {},
-	//ccv consumer
-	{MsgType: ccvconsumertypes.ModuleName, Key: string(ccvconsumertypes.KeyRewardDenoms)}: {},
 	//distribution
 	{MsgType: distrtypes.ModuleName, Key: string(distrtypes.ParamStoreKeyCommunityTax)}:        {},
 	{MsgType: distrtypes.ModuleName, Key: string(distrtypes.ParamStoreKeyWithdrawAddrEnabled)}: {},
@@ -124,9 +117,6 @@ var WhitelistedParams = map[ccvgov.ParamChangeKey]struct{}{
 	{MsgType: stakeibctypes.ModuleName, Key: string(stakeibctypes.KeyDefaultMaxRedemptionRateThreshold)}: {},
 	{MsgType: stakeibctypes.ModuleName, Key: string(stakeibctypes.KeyIBCTransferTimeoutNanos)}:           {},
 	{MsgType: stakeibctypes.ModuleName, Key: string(stakeibctypes.KeySafetyNumValidators)}:               {},
-	{MsgType: stakeibctypes.ModuleName, Key: string(stakeibctypes.KeySafetyMaxSlashPercent)}:             {},
-	{MsgType: stakeibctypes.ModuleName, Key: string(stakeibctypes.KeyMaxRedemptionRates)}:                {},
-	{MsgType: stakeibctypes.ModuleName, Key: string(stakeibctypes.KeyMinRedemptionRates)}:                {},
 	//ica
 	{MsgType: icahosttypes.SubModuleName, Key: string(icahosttypes.KeyHostEnabled)}:   {},
 	{MsgType: icahosttypes.SubModuleName, Key: string(icahosttypes.KeyAllowMessages)}: {},
