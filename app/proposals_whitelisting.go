@@ -96,7 +96,6 @@ var WhitelistedParams = map[ccvgov.ParamChangeKey]struct{}{
 	{MsgType: minttypes.ModuleName, Key: string(minttypes.KeyReductionPeriodInEpochs)}:              {},
 	{MsgType: minttypes.ModuleName, Key: string(minttypes.KeyReductionFactor)}:                      {},
 	{MsgType: minttypes.ModuleName, Key: string(minttypes.KeyPoolAllocationRatio)}:                  {},
-	{MsgType: minttypes.ModuleName, Key: string(minttypes.KeyDeveloperRewardsReceiver)}:             {},
 	{MsgType: minttypes.ModuleName, Key: string(minttypes.KeyMintingRewardsDistributionStartEpoch)}: {},
 	//ibc transfer
 	{MsgType: ibctransfertypes.ModuleName, Key: string(ibctransfertypes.KeySendEnabled)}:    {},
