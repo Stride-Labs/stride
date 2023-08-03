@@ -8,7 +8,7 @@
 **state.json
 **test.py
 **test.sh
-**test.py
+
 # build
 launch.sh
 build/*
@@ -39,4 +39,4 @@ vue/*
 .vscode
 !.vscode/settings.json
 
-.ipynb_checkpoints/*
+**/.ipynb_checkpoints

@@ -191,7 +191,7 @@ def main():
     # Update gov module
     print("🗳️ Update gov module")
     print("\tModify governance_voting_period from {} to {}".format(
-            genesis['app_state']['gov']['voting_params']['voting_period'],
+            genesis['app_state']['gov']['voting_params'].get('voting_period'),
             config["governance_voting_period"]))
     genesis['app_state']['gov']['voting_params']['voting_period'] = config["governance_voting_period"]
 
