@@ -217,10 +217,7 @@ func (s *KeeperTestSuite) TestSubmitICATx_SendFailure() {
 	icaTx, _ := s.SetupTestSubmitICATx()
 
 	// Close the channel so that the ICA fails
-	channel, found := s.App.IBCKeeper.ChannelKeeper.GetChannel(s.Ctx, icaTx.PortId, icaTx.ChannelId)
-	s.Require().True(found, "ica channel should have been found")
-	channel.State = channeltypes.CLOSED
-	s.App.IBCKeeper.ChannelKeeper.SetChannel(s.Ctx, icaTx.PortId, icaTx.ChannelId, channel)
+	s.UpdateChannelState(icaTx.PortId, icaTx.ChannelId, channeltypes.CLOSED)
 
 	// Submit the ICA which should error
 	err := s.App.ICAOracleKeeper.SubmitICATx(s.Ctx, icaTx)

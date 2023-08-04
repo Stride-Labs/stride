@@ -17,7 +17,7 @@ type RestoreOracleICATestCase struct {
 	Oracle   types.Oracle
 }
 
-func (s *KeeperTestSuite) SetupTestRestoreOracleICA(channelState channeltypes.State) RestoreOracleICATestCase {
+func (s *KeeperTestSuite) SetupTestRestoreOracleICA() RestoreOracleICATestCase {
 	// Create oracle ICA channel
 	owner := types.FormatICAAccountOwner(HostChainId, types.ICAAccountType_Oracle)
 	channelId := s.CreateICAChannel(owner)
@@ -38,13 +38,8 @@ func (s *KeeperTestSuite) SetupTestRestoreOracleICA(channelState channeltypes.St
 	_, found := s.App.ICAOracleKeeper.GetOracle(s.Ctx, HostChainId)
 	s.Require().True(found, "oracle should be in the store during setup")
 
-	// Update the channel state, if applicable
-	if channelState != channeltypes.OPEN {
-		channel, found := s.App.IBCKeeper.ChannelKeeper.GetChannel(s.Ctx, portId, channelId)
-		s.Require().True(found, "oracle channel should have been found")
-		channel.State = channelState
-		s.App.IBCKeeper.ChannelKeeper.SetChannel(s.Ctx, portId, channelId, channel)
-	}
+	// Close the channel (to test the restore functionality)
+	s.UpdateChannelState(portId, channelId, channeltypes.CLOSED)
 
 	return RestoreOracleICATestCase{
 		ValidMsg: types.MsgRestoreOracleICA{OracleChainId: HostChainId},
@@ -53,7 +48,7 @@ func (s *KeeperTestSuite) SetupTestRestoreOracleICA(channelState channeltypes.St
 }
 
 func (s *KeeperTestSuite) TestRestoreOracleICA_Successful() {
-	tc := s.SetupTestRestoreOracleICA(channeltypes.CLOSED)
+	tc := s.SetupTestRestoreOracleICA()
 
 	// Confirm there are two channels originally
 	channels := s.App.IBCKeeper.ChannelKeeper.GetAllChannels(s.Ctx)
@@ -79,7 +74,7 @@ func (s *KeeperTestSuite) TestRestoreOracleICA_Successful() {
 }
 
 func (s *KeeperTestSuite) TestRestoreOracleICA_OracleDoesNotExist() {
-	tc := s.SetupTestRestoreOracleICA(channeltypes.CLOSED)
+	tc := s.SetupTestRestoreOracleICA()
 
 	// Submit the oracle with an invalid host zone, it should fail
 	invalidMsg := tc.ValidMsg
@@ -89,7 +84,7 @@ func (s *KeeperTestSuite) TestRestoreOracleICA_OracleDoesNotExist() {
 }
 
 func (s *KeeperTestSuite) TestRestoreOracleICA_IcaNotRegistered() {
-	tc := s.SetupTestRestoreOracleICA(channeltypes.CLOSED)
+	tc := s.SetupTestRestoreOracleICA()
 
 	// Update the oracle to appear as if the ICA was never registered in the first place
 	oracle := tc.Oracle
@@ -102,7 +97,7 @@ func (s *KeeperTestSuite) TestRestoreOracleICA_IcaNotRegistered() {
 }
 
 func (s *KeeperTestSuite) TestRestoreOracleICA_ConnectionDoesNotExist() {
-	tc := s.SetupTestRestoreOracleICA(channeltypes.CLOSED)
+	tc := s.SetupTestRestoreOracleICA()
 
 	// Update the oracle to to have a non-existent connection-id
 	oracle := tc.Oracle
@@ -115,7 +110,7 @@ func (s *KeeperTestSuite) TestRestoreOracleICA_ConnectionDoesNotExist() {
 }
 
 func (s *KeeperTestSuite) TestRestoreOracleICA_Failure_IcaDoesNotExist() {
-	tc := s.SetupTestRestoreOracleICA(channeltypes.CLOSED)
+	tc := s.SetupTestRestoreOracleICA()
 
 	// Add a new connection-id that is not tied to an ICA
 	differentConnectionId := "connection-2"
@@ -133,7 +128,10 @@ func (s *KeeperTestSuite) TestRestoreOracleICA_Failure_IcaDoesNotExist() {
 }
 
 func (s *KeeperTestSuite) TestRestoreOracleICA_Failure_ChannelOpen() {
-	tc := s.SetupTestRestoreOracleICA(channeltypes.OPEN)
+	tc := s.SetupTestRestoreOracleICA()
+
+	// Open the channel back up
+	s.UpdateChannelState(tc.Oracle.PortId, tc.Oracle.ChannelId, channeltypes.OPEN)
 
 	// Since the channel already OPEN, the restore should fail
 	_, err := s.GetMsgServer().RestoreOracleICA(sdk.WrapSDKContext(s.Ctx), &tc.ValidMsg)
@@ -141,7 +139,10 @@ func (s *KeeperTestSuite) TestRestoreOracleICA_Failure_ChannelOpen() {
 }
 
 func (s *KeeperTestSuite) TestRestoreOracleICA_Failure_RegisterAccountFailure() {
-	tc := s.SetupTestRestoreOracleICA(channeltypes.INIT)
+	tc := s.SetupTestRestoreOracleICA()
+
+	// Change the channel status to INIT so that it's not OPEN or CLOSED
+	s.UpdateChannelState(tc.Oracle.PortId, tc.Oracle.ChannelId, channeltypes.INIT)
 
 	// Disable middleware so the ICA registration fails
 	s.App.ICAControllerKeeper.SetMiddlewareDisabled(s.Ctx, tc.Oracle.PortId, tc.Oracle.ConnectionId)

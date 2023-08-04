@@ -68,19 +68,13 @@ func (s *KeeperTestSuite) TestToggleOracle() {
 	s.App.ICAOracleKeeper.SetOracle(s.Ctx, oracleToToggle)
 
 	// Close the ICA channel and try to re-active it, it should fail
-	channel, found := s.App.IBCKeeper.ChannelKeeper.GetChannel(s.Ctx, oracle.PortId, oracle.ChannelId)
-	s.Require().True(found)
-	channel.State = channeltypes.CLOSED
-	s.App.IBCKeeper.ChannelKeeper.SetChannel(s.Ctx, oracle.PortId, oracle.ChannelId, channel)
+	s.UpdateChannelState(oracle.PortId, oracle.ChannelId, channeltypes.CLOSED)
 
 	err = s.App.ICAOracleKeeper.ToggleOracle(s.Ctx, oracleToToggle.ChainId, true)
 	s.Require().ErrorContains(err, "oracle ICA channel is closed")
 
 	// Re-open the channel and try once more - this time it should succeed
-	channel, found = s.App.IBCKeeper.ChannelKeeper.GetChannel(s.Ctx, oracle.PortId, oracle.ChannelId)
-	s.Require().True(found)
-	channel.State = channeltypes.OPEN
-	s.App.IBCKeeper.ChannelKeeper.SetChannel(s.Ctx, oracle.PortId, oracle.ChannelId, channel)
+	s.UpdateChannelState(oracle.PortId, oracle.ChannelId, channeltypes.OPEN)
 
 	err = s.App.ICAOracleKeeper.ToggleOracle(s.Ctx, oracleToToggle.ChainId, true)
 	s.Require().NoError(err, "no error expected when toggling oracle")
@@ -117,10 +111,7 @@ func (s *KeeperTestSuite) TestIsOracleICAChannelOpen() {
 	s.Require().True(isOpen, "channel should be open")
 
 	// Close the channel
-	channel, found := s.App.IBCKeeper.ChannelKeeper.GetChannel(s.Ctx, transfertypes.PortID, ibctesting.FirstChannelID)
-	s.Require().True(found, "transfer channel should have been found")
-	channel.State = channeltypes.CLOSED
-	s.App.IBCKeeper.ChannelKeeper.SetChannel(s.Ctx, transfertypes.PortID, ibctesting.FirstChannelID, channel)
+	s.UpdateChannelState(transfertypes.PortID, ibctesting.FirstChannelID, channeltypes.CLOSED)
 
 	// Try again, it should be false this time
 	isOpen = s.App.ICAOracleKeeper.IsOracleICAChannelOpen(s.Ctx, oracle)

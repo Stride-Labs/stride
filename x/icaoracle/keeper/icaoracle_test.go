@@ -124,10 +124,7 @@ func (s *KeeperTestSuite) TestSubmitMetricUpdate_FailedToSubmitICA() {
 	tc := s.SetupTestSubmitMetricUpdate()
 
 	// Close the channel so that the ICA fails
-	channel, found := s.App.IBCKeeper.ChannelKeeper.GetChannel(s.Ctx, tc.Oracle.PortId, tc.Oracle.ChannelId)
-	s.Require().True(found, "ica channel should have been found")
-	channel.State = channeltypes.CLOSED
-	s.App.IBCKeeper.ChannelKeeper.SetChannel(s.Ctx, tc.Oracle.PortId, tc.Oracle.ChannelId, channel)
+	s.UpdateChannelState(tc.Oracle.PortId, tc.Oracle.ChannelId, channeltypes.CLOSED)
 
 	// Submit the metric update which should fail
 	err := s.App.ICAOracleKeeper.SubmitMetricUpdate(s.Ctx, tc.Oracle, tc.Metric)
