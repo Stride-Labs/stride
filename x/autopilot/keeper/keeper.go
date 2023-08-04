@@ -3,16 +3,16 @@ package keeper
 import (
 	"fmt"
 
+	"github.com/cometbft/cometbft/libs/log"
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
-	"github.com/tendermint/tendermint/libs/log"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
 
-	"github.com/Stride-Labs/stride/v9/x/autopilot/types"
-	claimkeeper "github.com/Stride-Labs/stride/v9/x/claim/keeper"
-	stakeibckeeper "github.com/Stride-Labs/stride/v9/x/stakeibc/keeper"
+	"github.com/Stride-Labs/stride/v12/x/autopilot/types"
+	claimkeeper "github.com/Stride-Labs/stride/v12/x/claim/keeper"
+	stakeibckeeper "github.com/Stride-Labs/stride/v12/x/stakeibc/keeper"
 )
 
 type (

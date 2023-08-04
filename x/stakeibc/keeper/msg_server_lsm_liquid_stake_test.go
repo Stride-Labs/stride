@@ -7,13 +7,13 @@ import (
 
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	transfertypes "github.com/cosmos/ibc-go/v5/modules/apps/transfer/types"
-	ibctesting "github.com/cosmos/ibc-go/v5/testing"
+	transfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
+	ibctesting "github.com/cosmos/ibc-go/v7/testing"
 
-	icqtypes "github.com/Stride-Labs/stride/v9/x/interchainquery/types"
-	recordstypes "github.com/Stride-Labs/stride/v9/x/records/types"
-	"github.com/Stride-Labs/stride/v9/x/stakeibc/keeper"
-	"github.com/Stride-Labs/stride/v9/x/stakeibc/types"
+	icqtypes "github.com/Stride-Labs/stride/v12/x/interchainquery/types"
+	recordstypes "github.com/Stride-Labs/stride/v12/x/records/types"
+	"github.com/Stride-Labs/stride/v12/x/stakeibc/keeper"
+	"github.com/Stride-Labs/stride/v12/x/stakeibc/types"
 )
 
 type LSMLiquidStakeTestCase struct {

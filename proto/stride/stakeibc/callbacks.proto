@@ -1,13 +1,12 @@
 syntax = "proto3";
 package stride.stakeibc;
-
 import "gogoproto/gogo.proto";
 import "cosmos/base/v1beta1/coin.proto";
 import "stride/records/records.proto";
 import "stride/stakeibc/host_zone.proto";
 import "stride/stakeibc/validator.proto";
 
-option go_package = "github.com/Stride-Labs/stride/v9/x/stakeibc/types";
+option go_package = "github.com/Stride-Labs/stride/v12/x/stakeibc/types";
 
 message SplitDelegation {
   string validator = 1;

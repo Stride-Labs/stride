@@ -5,9 +5,9 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
-	"github.com/Stride-Labs/stride/v9/app/apptesting"
-	"github.com/Stride-Labs/stride/v9/x/interchainquery/keeper"
-	"github.com/Stride-Labs/stride/v9/x/interchainquery/types"
+	"github.com/Stride-Labs/stride/v12/app/apptesting"
+	"github.com/Stride-Labs/stride/v12/x/interchainquery/keeper"
+	"github.com/Stride-Labs/stride/v12/x/interchainquery/types"
 )
 
 type KeeperTestSuite struct {
@@ -20,6 +20,7 @@ func (s *KeeperTestSuite) SetupTest() {
 
 // Dynamically gets the MsgServer for this module's keeper
 // this function must be used so that the MsgServer is always created with the most updated App context
+//
 //	which can change depending on the type of test
 //	(e.g. tests with only one Stride chain vs tests with multiple chains and IBC support)
 func (s *KeeperTestSuite) GetMsgServer() types.MsgServer {

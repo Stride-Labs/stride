@@ -2,13 +2,13 @@ package keeper_test
 
 import (
 	sdkmath "cosmossdk.io/math"
-	channeltypes "github.com/cosmos/ibc-go/v5/modules/core/04-channel/types"
+	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
 	"github.com/golang/protobuf/proto" //nolint:staticcheck
 
-	icacallbackstypes "github.com/Stride-Labs/stride/v9/x/icacallbacks/types"
-	recordstypes "github.com/Stride-Labs/stride/v9/x/records/types"
-	"github.com/Stride-Labs/stride/v9/x/stakeibc/keeper"
-	"github.com/Stride-Labs/stride/v9/x/stakeibc/types"
+	icacallbackstypes "github.com/Stride-Labs/stride/v12/x/icacallbacks/types"
+	recordstypes "github.com/Stride-Labs/stride/v12/x/records/types"
+	"github.com/Stride-Labs/stride/v12/x/stakeibc/keeper"
+	"github.com/Stride-Labs/stride/v12/x/stakeibc/types"
 )
 
 type DetokenizeCallbackTestCase struct {

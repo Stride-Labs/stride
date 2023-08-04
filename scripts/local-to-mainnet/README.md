@@ -14,11 +14,11 @@
 ## Start Stride Local
 * Build stride and the relayers
 ```bash 
-make build-docker build=srh{n} # where n is the new host zone that was just added
+make build-docker build=sr{n} # where n is the new host zone that was just added
 ```
 * Start a local stride instance and setup all the commands needed to test the flow
 ```
-bash scripts/local-to-mainnet/start.sh
+make start-local-to-main
 ```
 
 ## Walk through Flow

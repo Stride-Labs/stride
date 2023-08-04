@@ -4,11 +4,11 @@ import (
 	"testing"
 	"time"
 
+	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 
-	strideapp "github.com/Stride-Labs/stride/v9/app"
-	"github.com/Stride-Labs/stride/v9/x/stakeibc/keeper"
+	strideapp "github.com/Stride-Labs/stride/v12/app"
+	"github.com/Stride-Labs/stride/v12/x/stakeibc/keeper"
 )
 
 func StakeibcKeeper(t testing.TB) (*keeper.Keeper, sdk.Context) {

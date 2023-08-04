@@ -4,17 +4,17 @@ import (
 	"testing"
 	"time"
 
+	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	"github.com/stretchr/testify/suite"
-	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 
 	sdkmath "cosmossdk.io/math"
 
-	"github.com/Stride-Labs/stride/v9/app"
-	"github.com/Stride-Labs/stride/v9/x/claim/types"
-	minttypes "github.com/Stride-Labs/stride/v9/x/mint/types"
+	"github.com/Stride-Labs/stride/v12/app"
+	"github.com/Stride-Labs/stride/v12/x/claim/types"
+	minttypes "github.com/Stride-Labs/stride/v12/x/mint/types"
 )
 
 type KeeperTestSuite struct {

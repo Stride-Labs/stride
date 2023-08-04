@@ -6,14 +6,14 @@ import (
 	_ "github.com/stretchr/testify/suite"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	ibctesting "github.com/cosmos/ibc-go/v5/testing"
+	ibctesting "github.com/cosmos/ibc-go/v7/testing"
 
 	sdkmath "cosmossdk.io/math"
 
-	epochtypes "github.com/Stride-Labs/stride/v9/x/epochs/types"
-	icacallbackstypes "github.com/Stride-Labs/stride/v9/x/icacallbacks/types"
-	recordstypes "github.com/Stride-Labs/stride/v9/x/records/types"
-	stakeibctypes "github.com/Stride-Labs/stride/v9/x/stakeibc/types"
+	epochtypes "github.com/Stride-Labs/stride/v12/x/epochs/types"
+	icacallbackstypes "github.com/Stride-Labs/stride/v12/x/icacallbacks/types"
+	recordstypes "github.com/Stride-Labs/stride/v12/x/records/types"
+	stakeibctypes "github.com/Stride-Labs/stride/v12/x/stakeibc/types"
 )
 
 type TestDepositRecords struct {

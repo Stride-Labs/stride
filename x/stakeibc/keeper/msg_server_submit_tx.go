@@ -8,27 +8,27 @@ import (
 	errorsmod "cosmossdk.io/errors"
 	"github.com/cosmos/cosmos-sdk/types/bech32"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	"github.com/gogo/protobuf/proto" //nolint:staticcheck
+	"github.com/cosmos/gogoproto/proto"
 	"github.com/spf13/cast"
 
-	"github.com/Stride-Labs/stride/v9/utils"
-	icacallbackstypes "github.com/Stride-Labs/stride/v9/x/icacallbacks/types"
+	"github.com/Stride-Labs/stride/v12/utils"
+	icacallbackstypes "github.com/Stride-Labs/stride/v12/x/icacallbacks/types"
 
-	recordstypes "github.com/Stride-Labs/stride/v9/x/records/types"
-	"github.com/Stride-Labs/stride/v9/x/stakeibc/types"
+	recordstypes "github.com/Stride-Labs/stride/v12/x/records/types"
+	"github.com/Stride-Labs/stride/v12/x/stakeibc/types"
 
 	bankTypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 
 	distributiontypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
-	epochstypes "github.com/Stride-Labs/stride/v9/x/epochs/types"
-	icqtypes "github.com/Stride-Labs/stride/v9/x/interchainquery/types"
+	epochstypes "github.com/Stride-Labs/stride/v12/x/epochs/types"
+	icqtypes "github.com/Stride-Labs/stride/v12/x/interchainquery/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	icatypes "github.com/cosmos/ibc-go/v5/modules/apps/27-interchain-accounts/types"
-	channeltypes "github.com/cosmos/ibc-go/v5/modules/core/04-channel/types"
-	host "github.com/cosmos/ibc-go/v5/modules/core/24-host"
+	icacontrollerkeeper "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/controller/keeper"
+	icacontrollertypes "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/controller/types"
+	icatypes "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/types"
 )
 
 func (k Keeper) DelegateOnHost(ctx sdk.Context, hostZone types.HostZone, amt sdk.Coin, depositRecord recordstypes.DepositRecord) error {
@@ -56,7 +56,7 @@ func (k Keeper) DelegateOnHost(ctx sdk.Context, hostZone types.HostZone, amt sdk
 	}
 
 	var splitDelegations []*types.SplitDelegation
-	var msgs []sdk.Msg
+	var msgs []proto.Message
 	for _, validator := range hostZone.Validators {
 		relativeAmount, ok := targetDelegatedAmts[validator.Address]
 		if !ok || !relativeAmount.IsPositive() {
@@ -139,7 +139,7 @@ func (k Keeper) SetWithdrawalAddressOnHost(ctx sdk.Context, hostZone types.HostZ
 		hostZone.WithdrawalIcaAddress, hostZone.DelegationIcaAddress))
 
 	// Construct the ICA message
-	msgs := []sdk.Msg{
+	msgs := []proto.Message{
 		&distributiontypes.MsgSetWithdrawAddress{
 			DelegatorAddress: hostZone.DelegationIcaAddress,
 			WithdrawAddress:  hostZone.WithdrawalIcaAddress,
@@ -210,7 +210,7 @@ func (k Keeper) GetStartTimeNextEpoch(ctx sdk.Context, epochType string) (uint64
 func (k Keeper) SubmitTxsDayEpoch(
 	ctx sdk.Context,
 	connectionId string,
-	msgs []sdk.Msg,
+	msgs []proto.Message,
 	icaAccountType types.ICAAccountType,
 	callbackId string,
 	callbackArgs []byte,
@@ -225,7 +225,7 @@ func (k Keeper) SubmitTxsDayEpoch(
 func (k Keeper) SubmitTxsStrideEpoch(
 	ctx sdk.Context,
 	connectionId string,
-	msgs []sdk.Msg,
+	msgs []proto.Message,
 	icaAccountType types.ICAAccountType,
 	callbackId string,
 	callbackArgs []byte,
@@ -240,7 +240,7 @@ func (k Keeper) SubmitTxsStrideEpoch(
 func (k Keeper) SubmitTxsEpoch(
 	ctx sdk.Context,
 	connectionId string,
-	msgs []sdk.Msg,
+	msgs []proto.Message,
 	icaAccountType types.ICAAccountType,
 	epochType string,
 	callbackId string,
@@ -262,7 +262,7 @@ func (k Keeper) SubmitTxsEpoch(
 func (k Keeper) SubmitTxs(
 	ctx sdk.Context,
 	connectionId string,
-	msgs []sdk.Msg,
+	msgs []proto.Message,
 	icaAccountType types.ICAAccountType,
 	timeoutTimestamp uint64,
 	callbackId string,
@@ -279,8 +279,10 @@ func (k Keeper) SubmitTxs(
 	}
 
 	k.Logger(ctx).Info(utils.LogWithHostZone(chainId, "  Submitting ICA Tx on %s, %s with TTL: %d", portID, connectionId, timeoutTimestamp))
+	protoMsgs := []proto.Message{}
 	for _, msg := range msgs {
 		k.Logger(ctx).Info(utils.LogWithHostZone(chainId, "    Msg: %+v", msg))
+		protoMsgs = append(protoMsgs, msg)
 	}
 
 	channelID, found := k.ICAControllerKeeper.GetActiveChannelID(ctx, connectionId, portID)
@@ -288,12 +290,7 @@ func (k Keeper) SubmitTxs(
 		return 0, errorsmod.Wrapf(icatypes.ErrActiveChannelNotFound, "failed to retrieve active channel for port %s", portID)
 	}
 
-	chanCap, found := k.scopedKeeper.GetCapability(ctx, host.ChannelCapabilityPath(portID, channelID))
-	if !found {
-		return 0, errorsmod.Wrap(channeltypes.ErrChannelCapabilityNotFound, "module does not own channel capability")
-	}
-
-	data, err := icatypes.SerializeCosmosTx(k.cdc, msgs)
+	data, err := icatypes.SerializeCosmosTx(k.cdc, protoMsgs)
 	if err != nil {
 		return 0, err
 	}
@@ -303,10 +300,15 @@ func (k Keeper) SubmitTxs(
 		Data: data,
 	}
 
-	sequence, err := k.ICAControllerKeeper.SendTx(ctx, chanCap, connectionId, portID, packetData, timeoutTimestamp)
+	// Submit ICA tx
+	msgServer := icacontrollerkeeper.NewMsgServerImpl(&k.ICAControllerKeeper)
+	relativeTimeoutOffset := timeoutTimestamp - uint64(ctx.BlockTime().UnixNano())
+	msgSendTx := icacontrollertypes.NewMsgSendTx(owner, connectionId, relativeTimeoutOffset, packetData)
+	res, err := msgServer.SendTx(ctx, msgSendTx)
 	if err != nil {
 		return 0, err
 	}
+	sequence := res.Sequence
 
 	// Store the callback data
 	if callbackId != "" && callbackArgs != nil {

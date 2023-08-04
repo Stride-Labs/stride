@@ -11,21 +11,21 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/suite"
 
-	"github.com/Stride-Labs/stride/v9/app"
+	"github.com/Stride-Labs/stride/v12/app"
 
-	"github.com/Stride-Labs/stride/v9/app/apptesting"
-	upgradev5 "github.com/Stride-Labs/stride/v9/app/upgrades/v5"
-	oldclaimtypes "github.com/Stride-Labs/stride/v9/x/claim/migrations/v2/types"
-	claimtypes "github.com/Stride-Labs/stride/v9/x/claim/types"
-	icacallbacktypes "github.com/Stride-Labs/stride/v9/x/icacallbacks/types"
-	icqtypes "github.com/Stride-Labs/stride/v9/x/interchainquery/types"
-	recordkeeper "github.com/Stride-Labs/stride/v9/x/records/keeper"
-	oldrecordtypes "github.com/Stride-Labs/stride/v9/x/records/migrations/v2/types"
-	recordtypes "github.com/Stride-Labs/stride/v9/x/records/types"
-	stakeibckeeper "github.com/Stride-Labs/stride/v9/x/stakeibc/keeper"
-	oldstakeibctypes "github.com/Stride-Labs/stride/v9/x/stakeibc/migrations/v2/types"
-	newstakeibctypes "github.com/Stride-Labs/stride/v9/x/stakeibc/migrations/v3/types"
-	stakeibctypes "github.com/Stride-Labs/stride/v9/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v12/app/apptesting"
+	upgradev5 "github.com/Stride-Labs/stride/v12/app/upgrades/v5"
+	oldclaimtypes "github.com/Stride-Labs/stride/v12/x/claim/migrations/v2/types"
+	claimtypes "github.com/Stride-Labs/stride/v12/x/claim/types"
+	icacallbacktypes "github.com/Stride-Labs/stride/v12/x/icacallbacks/types"
+	icqtypes "github.com/Stride-Labs/stride/v12/x/interchainquery/types"
+	recordkeeper "github.com/Stride-Labs/stride/v12/x/records/keeper"
+	oldrecordtypes "github.com/Stride-Labs/stride/v12/x/records/migrations/v2/types"
+	recordtypes "github.com/Stride-Labs/stride/v12/x/records/types"
+	stakeibckeeper "github.com/Stride-Labs/stride/v12/x/stakeibc/keeper"
+	oldstakeibctypes "github.com/Stride-Labs/stride/v12/x/stakeibc/migrations/v2/types"
+	newstakeibctypes "github.com/Stride-Labs/stride/v12/x/stakeibc/migrations/v3/types"
+	stakeibctypes "github.com/Stride-Labs/stride/v12/x/stakeibc/types"
 )
 
 const dummyUpgradeHeight = 5
@@ -43,8 +43,6 @@ func TestKeeperTestSuite(t *testing.T) {
 }
 
 func (s *UpgradeTestSuite) TestUpgrade() {
-	s.Setup()
-
 	// Setup stores for migrated modules
 	codec := app.MakeEncodingConfig().Marshaler
 	checkClaimStoreAfterMigration := s.SetupOldClaimStore(codec)

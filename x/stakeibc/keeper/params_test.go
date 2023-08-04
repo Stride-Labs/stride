@@ -5,8 +5,8 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	testkeeper "github.com/Stride-Labs/stride/v9/testutil/keeper"
-	"github.com/Stride-Labs/stride/v9/x/stakeibc/types"
+	testkeeper "github.com/Stride-Labs/stride/v12/testutil/keeper"
+	"github.com/Stride-Labs/stride/v12/x/stakeibc/types"
 )
 
 func TestGetParams(t *testing.T) {

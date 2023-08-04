@@ -4,11 +4,11 @@ import (
 	"fmt"
 
 	sdkmath "cosmossdk.io/math"
-	ibctesting "github.com/cosmos/ibc-go/v5/testing"
+	ibctesting "github.com/cosmos/ibc-go/v7/testing"
 	"github.com/gogo/protobuf/proto" //nolint:staticcheck
 	_ "github.com/stretchr/testify/suite"
 
-	"github.com/Stride-Labs/stride/v9/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v12/x/stakeibc/types"
 )
 
 // ================================ 1: QueryValidatorSharesToTokensRate =============================================

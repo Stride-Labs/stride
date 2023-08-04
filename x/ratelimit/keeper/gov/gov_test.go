@@ -9,13 +9,13 @@ import (
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	transfertypes "github.com/cosmos/ibc-go/v5/modules/apps/transfer/types"
-	channeltypes "github.com/cosmos/ibc-go/v5/modules/core/04-channel/types"
+	transfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
+	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
 
-	"github.com/Stride-Labs/stride/v9/app/apptesting"
-	minttypes "github.com/Stride-Labs/stride/v9/x/mint/types"
-	"github.com/Stride-Labs/stride/v9/x/ratelimit/keeper/gov"
-	"github.com/Stride-Labs/stride/v9/x/ratelimit/types"
+	"github.com/Stride-Labs/stride/v12/app/apptesting"
+	minttypes "github.com/Stride-Labs/stride/v12/x/mint/types"
+	"github.com/Stride-Labs/stride/v12/x/ratelimit/keeper/gov"
+	"github.com/Stride-Labs/stride/v12/x/ratelimit/types"
 )
 
 type KeeperTestSuite struct {

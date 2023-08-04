@@ -5,13 +5,13 @@ import (
 
 	"github.com/golang/protobuf/proto" //nolint:staticcheck
 
-	transfertypes "github.com/cosmos/ibc-go/v5/modules/apps/transfer/types"
-	channeltypes "github.com/cosmos/ibc-go/v5/modules/core/04-channel/types"
-	ibctesting "github.com/cosmos/ibc-go/v5/testing"
+	transfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
+	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
+	ibctesting "github.com/cosmos/ibc-go/v7/testing"
 
-	icacallbackstypes "github.com/Stride-Labs/stride/v9/x/icacallbacks/types"
-	recordskeeper "github.com/Stride-Labs/stride/v9/x/records/keeper"
-	"github.com/Stride-Labs/stride/v9/x/records/types"
+	icacallbackstypes "github.com/Stride-Labs/stride/v12/x/icacallbacks/types"
+	recordskeeper "github.com/Stride-Labs/stride/v12/x/records/keeper"
+	"github.com/Stride-Labs/stride/v12/x/records/types"
 )
 
 var (

@@ -5,10 +5,10 @@ import (
 
 	errorsmod "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	channeltypes "github.com/cosmos/ibc-go/v5/modules/core/04-channel/types"
+	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
 
-	"github.com/Stride-Labs/stride/v9/x/icacallbacks"
-	icacallbacktypes "github.com/Stride-Labs/stride/v9/x/icacallbacks/types"
+	"github.com/Stride-Labs/stride/v12/x/icacallbacks"
+	icacallbacktypes "github.com/Stride-Labs/stride/v12/x/icacallbacks/types"
 )
 
 // OnAcknowledgementPacket unmarshals the acknowledgement object to determine if the ack was successful and

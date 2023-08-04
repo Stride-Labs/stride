@@ -9,11 +9,11 @@ import (
 	sdkmath "cosmossdk.io/math"
 	"github.com/stretchr/testify/suite"
 
-	"github.com/Stride-Labs/stride/v9/app/apptesting"
-	v8 "github.com/Stride-Labs/stride/v9/app/upgrades/v8"
-	autopilottypes "github.com/Stride-Labs/stride/v9/x/autopilot/types"
-	"github.com/Stride-Labs/stride/v9/x/claim/types"
-	claimtypes "github.com/Stride-Labs/stride/v9/x/claim/types"
+	"github.com/Stride-Labs/stride/v12/app/apptesting"
+	v8 "github.com/Stride-Labs/stride/v12/app/upgrades/v8"
+	autopilottypes "github.com/Stride-Labs/stride/v12/x/autopilot/types"
+	"github.com/Stride-Labs/stride/v12/x/claim/types"
+	claimtypes "github.com/Stride-Labs/stride/v12/x/claim/types"
 )
 
 var (
@@ -46,8 +46,6 @@ func TestKeeperTestSuite(t *testing.T) {
 }
 
 func (s *UpgradeTestSuite) TestUpgrade() {
-	s.Setup()
-
 	s.SetupStoreBeforeUpgrade()
 	s.ConfirmUpgradeSucceededs("v8", dummyUpgradeHeight)
 	s.CheckStoreAfterUpgrade()
@@ -137,10 +135,7 @@ func (s *UpgradeTestSuite) CheckStoreAfterUpgrade() {
 	}
 
 	// Check autopilot params
-	expectedAutoPilotParams := autopilottypes.Params{
-		StakeibcActive: false,
-		ClaimActive:    true,
-	}
+	expectedAutoPilotParams := autopilottypes.DefaultParams()
 	actualAutopilotParams := s.App.AutopilotKeeper.GetParams(s.Ctx)
 	s.Require().Equal(expectedAutoPilotParams, actualAutopilotParams, "autopilot params")
 }

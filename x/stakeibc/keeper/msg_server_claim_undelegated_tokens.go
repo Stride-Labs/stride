@@ -4,19 +4,20 @@ import (
 	"context"
 	"fmt"
 
-	recordstypes "github.com/Stride-Labs/stride/v9/x/records/types"
+	recordstypes "github.com/Stride-Labs/stride/v12/x/records/types"
 
 	errorsmod "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	bankTypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+	proto "github.com/cosmos/gogoproto/proto"
 
-	epochstypes "github.com/Stride-Labs/stride/v9/x/epochs/types"
-	"github.com/Stride-Labs/stride/v9/x/stakeibc/types"
+	epochstypes "github.com/Stride-Labs/stride/v12/x/epochs/types"
+	"github.com/Stride-Labs/stride/v12/x/stakeibc/types"
 )
 
 type IcaTx struct {
 	ConnectionId   string
-	Msgs           []sdk.Msg
+	Msgs           []proto.Message
 	ICAAccountType types.ICAAccountType
 	Timeout        uint64
 }
@@ -111,7 +112,7 @@ func (k Keeper) GetRedemptionTransferMsg(ctx sdk.Context, userRedemptionRecord *
 		return nil, errorsmod.Wrapf(types.ErrICAAccountNotFound, "Redemption account not found for host zone %s", hostZoneId)
 	}
 
-	var msgs []sdk.Msg
+	var msgs []proto.Message
 	rrAmt := userRedemptionRecord.Amount
 	msgs = append(msgs, &bankTypes.MsgSend{
 		FromAddress: hostZone.RedemptionIcaAddress,

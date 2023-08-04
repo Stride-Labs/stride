@@ -58,14 +58,12 @@ $STRIDE_MAIN_CMD q claim claim-record gaia stride16lmf7t0jhaatan6vnxlgv47h2wf0k5
 #         b. ibc-transfer from Osmo to Stride to change the airdrop account to stride1jrmtt5c6z8h5yrrwml488qnm7p3vxrrml2kgvl
 #              Memo: {
 #                "autopilot": {
-#                     "claim": {
-#                         "stride_address": "stride1jrmtt5c6z8h5yrrwml488qnm7p3vxrrml2kgvl",
-#                      },
+#                     "claim": { },
 #                 },
 #              }
 #              Receiver: "xxx"
 echo -e ">>> Claiming airdrop via IBC transfer..."
-memo='{"autopilot": {"receiver": "stride1jrmtt5c6z8h5yrrwml488qnm7p3vxrrml2kgvl","claim": { "stride_address": "stride1jrmtt5c6z8h5yrrwml488qnm7p3vxrrml2kgvl" } }}'
+memo='{"autopilot": {"receiver": "stride1jrmtt5c6z8h5yrrwml488qnm7p3vxrrml2kgvl","claim": { } }}'
 $GAIA_MAIN_CMD tx ibc-transfer transfer transfer channel-0 "$memo" 1uatom --from rly2 -y | TRIM_TX
 sleep 15
 #         c. query the claims module 

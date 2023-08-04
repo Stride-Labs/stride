@@ -3,12 +3,12 @@ package keeper
 import (
 	"fmt"
 
+	"github.com/cometbft/cometbft/libs/log"
 	"github.com/cosmos/cosmos-sdk/codec"
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/tendermint/tendermint/libs/log"
 
-	"github.com/Stride-Labs/stride/v9/x/epochs/types"
+	"github.com/Stride-Labs/stride/v12/x/epochs/types"
 )
 
 // Keeper of this module maintains collections of epochs and hooks.

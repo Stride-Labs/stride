@@ -4,16 +4,16 @@ import (
 	"fmt"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	ibctesting "github.com/cosmos/ibc-go/v5/testing"
+	ibctesting "github.com/cosmos/ibc-go/v7/testing"
 
-	epochtypes "github.com/Stride-Labs/stride/v9/x/epochs/types"
-	icqtypes "github.com/Stride-Labs/stride/v9/x/interchainquery/types"
-	stakeibckeeper "github.com/Stride-Labs/stride/v9/x/stakeibc/keeper"
-	stakeibctypes "github.com/Stride-Labs/stride/v9/x/stakeibc/types"
+	epochtypes "github.com/Stride-Labs/stride/v12/x/epochs/types"
+	icqtypes "github.com/Stride-Labs/stride/v12/x/interchainquery/types"
+	"github.com/Stride-Labs/stride/v12/x/stakeibc/keeper"
+	"github.com/Stride-Labs/stride/v12/x/stakeibc/types"
 )
 
 type FeeBalanceICQCallbackState struct {
-	hostZone         stakeibctypes.HostZone
+	hostZone         types.HostZone
 	feeChannel       Channel
 	feeBalance       int64
 	startICASequence uint64
@@ -34,7 +34,7 @@ func (s *KeeperTestSuite) SetupFeeBalanceCallbackTest() FeeBalanceICQCallbackTes
 	feeChannelId, feePortId := s.CreateICAChannel(feeAccountOwner)
 	feeAddress := s.IcaAddresses[feeAccountOwner]
 
-	hostZone := stakeibctypes.HostZone{
+	hostZone := types.HostZone{
 		ChainId:           HostChainId,
 		HostDenom:         Atom,
 		ConnectionId:      ibctesting.FirstConnectionID,
@@ -42,7 +42,7 @@ func (s *KeeperTestSuite) SetupFeeBalanceCallbackTest() FeeBalanceICQCallbackTes
 		TransferChannelId: ibctesting.FirstChannelID,
 	}
 
-	strideEpochTracker := stakeibctypes.EpochTracker{
+	strideEpochTracker := types.EpochTracker{
 		EpochIdentifier:    epochtypes.STRIDE_EPOCH,
 		EpochNumber:        1,
 		NextEpochStartTime: uint64(s.Coordinator.CurrentTime.UnixNano() + 30_000_000_000), // dictates timeouts
@@ -100,7 +100,7 @@ func (s *KeeperTestSuite) TestFeeBalanceCallback_Successful() {
 	feeChannelId := feeChannel.ChannelID
 
 	// Call the ICQ callback
-	err := stakeibckeeper.FeeBalanceCallback(s.App.StakeibcKeeper, s.Ctx, tc.validArgs.callbackArgs, tc.validArgs.query)
+	err := keeper.FeeBalanceCallback(s.App.StakeibcKeeper, s.Ctx, tc.validArgs.callbackArgs, tc.validArgs.query)
 	s.Require().NoError(err)
 
 	// Confirm the sequence number was incremented
@@ -117,7 +117,7 @@ func (s *KeeperTestSuite) TestFeeBalanceCallback_EmptyCallbackArgs() {
 	emptyCallbackArgs := []byte{}
 
 	// It should short circuit but not throw an error
-	err := stakeibckeeper.FeeBalanceCallback(s.App.StakeibcKeeper, s.Ctx, emptyCallbackArgs, tc.validArgs.query)
+	err := keeper.FeeBalanceCallback(s.App.StakeibcKeeper, s.Ctx, emptyCallbackArgs, tc.validArgs.query)
 	s.Require().NoError(err)
 
 	// No ICA should have been submitted
@@ -130,7 +130,7 @@ func (s *KeeperTestSuite) TestFeeBalanceCallback_ZeroBalance() {
 	// Replace the query response with a coin that has a nil amount
 	tc.validArgs.callbackArgs = s.CreateBalanceQueryResponse(0, Atom)
 
-	err := stakeibckeeper.FeeBalanceCallback(s.App.StakeibcKeeper, s.Ctx, tc.validArgs.callbackArgs, tc.validArgs.query)
+	err := keeper.FeeBalanceCallback(s.App.StakeibcKeeper, s.Ctx, tc.validArgs.callbackArgs, tc.validArgs.query)
 	s.Require().NoError(err)
 
 	// Confirm revinvestment callback was not created
@@ -145,7 +145,7 @@ func (s *KeeperTestSuite) TestFeeBalanceCallback_ZeroBalanceImplied() {
 	coinBz := s.App.RecordsKeeper.Cdc.MustMarshal(&coin)
 	tc.validArgs.callbackArgs = coinBz
 
-	err := stakeibckeeper.FeeBalanceCallback(s.App.StakeibcKeeper, s.Ctx, tc.validArgs.callbackArgs, tc.validArgs.query)
+	err := keeper.FeeBalanceCallback(s.App.StakeibcKeeper, s.Ctx, tc.validArgs.callbackArgs, tc.validArgs.query)
 	s.Require().NoError(err)
 
 	// Confirm revinvestment callback was not created
@@ -158,7 +158,7 @@ func (s *KeeperTestSuite) TestFeeBalanceCallback_HostZoneNotFound() {
 	// Submit callback with incorrect host zone
 	invalidQuery := tc.validArgs.query
 	invalidQuery.ChainId = "fake_host_zone"
-	err := stakeibckeeper.FeeBalanceCallback(s.App.StakeibcKeeper, s.Ctx, tc.validArgs.callbackArgs, invalidQuery)
+	err := keeper.FeeBalanceCallback(s.App.StakeibcKeeper, s.Ctx, tc.validArgs.callbackArgs, invalidQuery)
 	s.Require().EqualError(err, "no registered zone for queried chain ID (fake_host_zone): host zone not found")
 }
 
@@ -167,7 +167,7 @@ func (s *KeeperTestSuite) TestFeeBalanceCallback_InvalidArgs() {
 
 	// Submit callback with invalid callback args (so that it can't unmarshal into a coin)
 	invalidArgs := []byte("random bytes")
-	err := stakeibckeeper.FeeBalanceCallback(s.App.StakeibcKeeper, s.Ctx, invalidArgs, tc.validArgs.query)
+	err := keeper.FeeBalanceCallback(s.App.StakeibcKeeper, s.Ctx, invalidArgs, tc.validArgs.query)
 
 	s.Require().ErrorContains(err, "unable to determine balance from query response")
 }
@@ -180,7 +180,7 @@ func (s *KeeperTestSuite) TestFeeBalanceCallback_NoFeeAccount() {
 	badHostZone.FeeIcaAddress = ""
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, badHostZone)
 
-	err := stakeibckeeper.FeeBalanceCallback(s.App.StakeibcKeeper, s.Ctx, tc.validArgs.callbackArgs, tc.validArgs.query)
+	err := keeper.FeeBalanceCallback(s.App.StakeibcKeeper, s.Ctx, tc.validArgs.callbackArgs, tc.validArgs.query)
 	s.Require().EqualError(err, "no fee account found for GAIA: ICA acccount not found on host zone")
 }
 
@@ -190,7 +190,7 @@ func (s *KeeperTestSuite) TestFeeBalanceCallback_FailedToCalculatedTimeout() {
 	// Remove the epoch tracker so that it cannot calculate the ICA timeout
 	s.App.StakeibcKeeper.RemoveEpochTracker(s.Ctx, epochtypes.STRIDE_EPOCH)
 
-	err := stakeibckeeper.FeeBalanceCallback(s.App.StakeibcKeeper, s.Ctx, tc.validArgs.callbackArgs, tc.validArgs.query)
+	err := keeper.FeeBalanceCallback(s.App.StakeibcKeeper, s.Ctx, tc.validArgs.callbackArgs, tc.validArgs.query)
 	s.Require().ErrorContains(err, "Failed to get ICATimeout from stride_epoch epoch:")
 }
 
@@ -202,7 +202,7 @@ func (s *KeeperTestSuite) TestFeeBalanceCallback_NoTransferChannel() {
 	badHostZone.TransferChannelId = "channel-X"
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, badHostZone)
 
-	err := stakeibckeeper.FeeBalanceCallback(s.App.StakeibcKeeper, s.Ctx, tc.validArgs.callbackArgs, tc.validArgs.query)
+	err := keeper.FeeBalanceCallback(s.App.StakeibcKeeper, s.Ctx, tc.validArgs.callbackArgs, tc.validArgs.query)
 	s.Require().EqualError(err, "transfer channel channel-X not found: channel not found")
 }
 
@@ -214,7 +214,7 @@ func (s *KeeperTestSuite) TestFeeBalanceCallback_FailedSubmitTx() {
 	badHostZone.ConnectionId = "connection-X"
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, badHostZone)
 
-	err := stakeibckeeper.FeeBalanceCallback(s.App.StakeibcKeeper, s.Ctx, tc.validArgs.callbackArgs, tc.validArgs.query)
+	err := keeper.FeeBalanceCallback(s.App.StakeibcKeeper, s.Ctx, tc.validArgs.callbackArgs, tc.validArgs.query)
 	s.Require().ErrorContains(err, "Failed to SubmitTxs")
 	s.Require().ErrorContains(err, "invalid connection id, connection-X not found")
 }

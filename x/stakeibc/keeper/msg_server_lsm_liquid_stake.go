@@ -9,9 +9,9 @@ import (
 
 	"github.com/gogo/protobuf/proto" //nolint:staticcheck
 
-	icqtypes "github.com/Stride-Labs/stride/v9/x/interchainquery/types"
-	recordstypes "github.com/Stride-Labs/stride/v9/x/records/types"
-	"github.com/Stride-Labs/stride/v9/x/stakeibc/types"
+	icqtypes "github.com/Stride-Labs/stride/v12/x/interchainquery/types"
+	recordstypes "github.com/Stride-Labs/stride/v12/x/records/types"
+	"github.com/Stride-Labs/stride/v12/x/stakeibc/types"
 )
 
 // Exchanges a user's LSM tokenized shares for stTokens using the current redemption rate

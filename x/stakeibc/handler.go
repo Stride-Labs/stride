@@ -9,8 +9,8 @@ import (
 
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
 
-	"github.com/Stride-Labs/stride/v9/x/stakeibc/keeper"
-	"github.com/Stride-Labs/stride/v9/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v12/x/stakeibc/keeper"
+	"github.com/Stride-Labs/stride/v12/x/stakeibc/types"
 )
 
 // Handles stakeibc transactions

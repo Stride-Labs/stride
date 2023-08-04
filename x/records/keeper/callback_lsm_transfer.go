@@ -1,20 +1,21 @@
 package keeper
 
 import (
-	"github.com/Stride-Labs/stride/v9/utils"
-	icacallbackstypes "github.com/Stride-Labs/stride/v9/x/icacallbacks/types"
-	"github.com/Stride-Labs/stride/v9/x/records/types"
+	"github.com/Stride-Labs/stride/v12/utils"
+	icacallbackstypes "github.com/Stride-Labs/stride/v12/x/icacallbacks/types"
+	"github.com/Stride-Labs/stride/v12/x/records/types"
 
 	errorsmod "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	channeltypes "github.com/cosmos/ibc-go/v5/modules/core/04-channel/types"
+	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
 	"github.com/golang/protobuf/proto" //nolint:staticcheck
 )
 
 // Callback after an LSM token is IBC tranferred to the host zone
-//   If successful: mark the LSM Token status as DETOKENIZATION_QUEUE
-//   If failure: mark the LSM Token status as FAILED
-//   If timeout: revert the LSM Token status back to TRANSFER_QUEUE so it gets resubmitted
+//
+//	If successful: mark the LSM Token status as DETOKENIZATION_QUEUE
+//	If failure: mark the LSM Token status as FAILED
+//	If timeout: revert the LSM Token status back to TRANSFER_QUEUE so it gets resubmitted
 func LSMTransferCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ackResponse *icacallbackstypes.AcknowledgementResponse, args []byte) error {
 	// Fetch callback args
 	transferCallback := types.TransferLSMTokenCallback{}

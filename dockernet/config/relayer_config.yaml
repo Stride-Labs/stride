@@ -12,8 +12,8 @@ chains:
       rpc-addr: http://stride1:26657
       account-prefix: stride
       keyring-backend: test
-      gas-adjustment: 1.2
-      gas-prices: 0.01ustrd
+      gas-adjustment: 1.3
+      gas-prices: 0.02ustrd
       coin-type: 118
       debug: false
       timeout: 20s
@@ -27,8 +27,8 @@ chains:
       rpc-addr: http://gaia1:26657
       account-prefix: cosmos
       keyring-backend: test
-      gas-adjustment: 1.2
-      gas-prices: 0.01uatom
+      gas-adjustment: 1.3
+      gas-prices: 0.02uatom
       coin-type: 118
       debug: false
       timeout: 20s
@@ -42,8 +42,8 @@ chains:
       rpc-addr: http://juno1:26657
       account-prefix: juno
       keyring-backend: test
-      gas-adjustment: 1.2
-      gas-prices: 0.01ujuno
+      gas-adjustment: 1.3
+      gas-prices: 0.02ujuno
       coin-type: 118
       debug: false
       timeout: 20s
@@ -57,8 +57,8 @@ chains:
       rpc-addr: http://osmo1:26657
       account-prefix: osmo
       keyring-backend: test
-      gas-adjustment: 1.2
-      gas-prices: 0.01uosmo
+      gas-adjustment: 1.3
+      gas-prices: 0.02uosmo
       coin-type: 118
       debug: false
       timeout: 20s
@@ -72,8 +72,8 @@ chains:
       rpc-addr: http://stars1:26657
       account-prefix: stars
       keyring-backend: test
-      gas-adjustment: 1.2
-      gas-prices: 0.01ustars
+      gas-adjustment: 1.3
+      gas-prices: 0.02ustars
       coin-type: 118
       debug: false
       timeout: 20s
@@ -87,8 +87,8 @@ chains:
       rpc-addr: http://host1:26657
       account-prefix: stride
       keyring-backend: test
-      gas-adjustment: 1.2
-      gas-prices: 0.01uwalk
+      gas-adjustment: 1.3
+      gas-prices: 0.02uwalk
       coin-type: 118
       debug: false
       timeout: 20s
@@ -102,8 +102,8 @@ chains:
       rpc-addr: http://evmos1:26657
       account-prefix: evmos
       keyring-backend: test
-      gas-adjustment: 1.2
-      gas-prices: 0.01aevmos
+      gas-adjustment: 1.3
+      gas-prices: 0.02aevmos
       coin-type: 60
       debug: false
       timeout: 20s
@@ -119,8 +119,8 @@ chains:
   #     rpc-addr: http://{node_prefix}1:26657
   #     account-prefix: {bech32_hrp_account_prefix}
   #     keyring-backend: test
-  #     gas-adjustment: 1.2
-  #     gas-prices: 0.01{minimal_denom}
+  #     gas-adjustment: 1.3
+  #     gas-prices: 0.02{minimal_denom}
   #     coin-type: {coin-type}
   #     debug: false
   #     timeout: 20s
@@ -133,6 +133,16 @@ paths:
       chain-id: STRIDE
     dst:
       chain-id: GAIA
+    src-channel-filter:
+      rule: ""
+      channel-list: []
+  stride-gaia-ics:
+    src:
+      chain-id: STRIDE
+      client-id: 07-tendermint-1
+    dst:
+      chain-id: GAIA
+      client-id: 07-tendermint-1
     src-channel-filter:
       rule: ""
       channel-list: []

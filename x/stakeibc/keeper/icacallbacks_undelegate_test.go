@@ -3,19 +3,16 @@ package keeper_test
 import (
 	"time"
 
+	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	stakingTypes "github.com/cosmos/cosmos-sdk/x/staking/types"
-	channeltypes "github.com/cosmos/ibc-go/v5/modules/core/04-channel/types"
-	"github.com/gogo/protobuf/proto" //nolint:staticcheck
+	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+	"github.com/cosmos/gogoproto/proto"
+	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
 	_ "github.com/stretchr/testify/suite"
 
-	sdkmath "cosmossdk.io/math"
-
-	icacallbacktypes "github.com/Stride-Labs/stride/v9/x/icacallbacks/types"
-	recordtypes "github.com/Stride-Labs/stride/v9/x/records/types"
-	stakeibckeeper "github.com/Stride-Labs/stride/v9/x/stakeibc/keeper"
-	"github.com/Stride-Labs/stride/v9/x/stakeibc/types"
-	stakeibc "github.com/Stride-Labs/stride/v9/x/stakeibc/types"
+	icacallbacktypes "github.com/Stride-Labs/stride/v12/x/icacallbacks/types"
+	recordtypes "github.com/Stride-Labs/stride/v12/x/records/types"
+	"github.com/Stride-Labs/stride/v12/x/stakeibc/types"
 )
 
 type UndelegateCallbackState struct {
@@ -69,7 +66,7 @@ func (s *KeeperTestSuite) SetupUndelegateCallback() UndelegateCallbackTestCase {
 		acc:           depositAddress,
 		stAtomBalance: sdk.NewCoin(StAtom, zoneAccountBalance), // Add a few extra tokens to make the test more robust
 	}
-	hostZone := stakeibc.HostZone{
+	hostZone := types.HostZone{
 		ChainId:          HostChainId,
 		HostDenom:        Atom,
 		IbcDenom:         IbcAtom,
@@ -98,7 +95,7 @@ func (s *KeeperTestSuite) SetupUndelegateCallback() UndelegateCallbackTestCase {
 	// Mock ack response
 	packet := channeltypes.Packet{}
 	completionTime := time.Now()
-	msgsUndelegateResponse := &stakingTypes.MsgUndelegateResponse{CompletionTime: completionTime}
+	msgsUndelegateResponse := &stakingtypes.MsgUndelegateResponse{CompletionTime: completionTime}
 	msgsUndelegateResponseBz, err := proto.Marshal(msgsUndelegateResponse)
 	s.Require().NoError(err, "no error expected when marshalling undelegate response")
 
@@ -151,7 +148,7 @@ func (s *KeeperTestSuite) TestUndelegateCallback_Successful() {
 	validArgs := tc.validArgs
 
 	// Callback
-	err := stakeibckeeper.UndelegateCallback(s.App.StakeibcKeeper, s.Ctx, validArgs.packet, validArgs.ackResponse, validArgs.args)
+	err := s.App.StakeibcKeeper.UndelegateCallback(s.Ctx, validArgs.packet, validArgs.ackResponse, validArgs.args)
 	s.Require().NoError(err, "undelegate callback succeeds")
 
 	// Check that total delegation has decreased on the host zone
@@ -220,7 +217,7 @@ func (s *KeeperTestSuite) TestUndelegateCallback_UndelegateCallbackTimeout() {
 	invalidArgs := tc.validArgs
 	invalidArgs.ackResponse.Status = icacallbacktypes.AckResponseStatus_TIMEOUT
 
-	err := stakeibckeeper.UndelegateCallback(s.App.StakeibcKeeper, s.Ctx, invalidArgs.packet, invalidArgs.ackResponse, invalidArgs.args)
+	err := s.App.StakeibcKeeper.UndelegateCallback(s.Ctx, invalidArgs.packet, invalidArgs.ackResponse, invalidArgs.args)
 	s.Require().NoError(err, "undelegate callback succeeds on timeout")
 	s.checkStateIfUndelegateCallbackFailed(tc)
 }
@@ -232,7 +229,7 @@ func (s *KeeperTestSuite) TestUndelegateCallback_UndelegateCallbackErrorOnHost()
 	invalidArgs := tc.validArgs
 	invalidArgs.ackResponse.Status = icacallbacktypes.AckResponseStatus_FAILURE
 
-	err := stakeibckeeper.UndelegateCallback(s.App.StakeibcKeeper, s.Ctx, invalidArgs.packet, invalidArgs.ackResponse, invalidArgs.args)
+	err := s.App.StakeibcKeeper.UndelegateCallback(s.Ctx, invalidArgs.packet, invalidArgs.ackResponse, invalidArgs.args)
 	s.Require().NoError(err, "undelegate callback succeeds with error on host")
 	s.checkStateIfUndelegateCallbackFailed(tc)
 }
@@ -243,7 +240,7 @@ func (s *KeeperTestSuite) TestUndelegateCallback_WrongCallbackArgs() {
 	// random args should cause the callback to fail
 	invalidCallbackArgs := []byte("random bytes")
 
-	err := stakeibckeeper.UndelegateCallback(s.App.StakeibcKeeper, s.Ctx, tc.validArgs.packet, tc.validArgs.ackResponse, invalidCallbackArgs)
+	err := s.App.StakeibcKeeper.UndelegateCallback(s.Ctx, tc.validArgs.packet, tc.validArgs.ackResponse, invalidCallbackArgs)
 	s.Require().EqualError(err, "Unable to unmarshal undelegate callback args: unexpected EOF: unable to unmarshal data structure")
 }
 
@@ -253,7 +250,7 @@ func (s *KeeperTestSuite) TestUndelegateCallback_HostNotFound() {
 	// remove the host zone from the store to trigger a host not found error
 	s.App.StakeibcKeeper.RemoveHostZone(s.Ctx, HostChainId)
 
-	err := stakeibckeeper.UndelegateCallback(s.App.StakeibcKeeper, s.Ctx, tc.validArgs.packet, tc.validArgs.ackResponse, tc.validArgs.args)
+	err := s.App.StakeibcKeeper.UndelegateCallback(s.Ctx, tc.validArgs.packet, tc.validArgs.ackResponse, tc.validArgs.args)
 	s.Require().EqualError(err, "Host zone not found: GAIA: key not found")
 }
 
@@ -287,9 +284,9 @@ func (s *KeeperTestSuite) TestGetLatestCompletionTime_Success() {
 
 	var err error
 	msgResponses := make([][]byte, 2)
-	msgResponses[0], err = proto.Marshal(&stakingTypes.MsgUndelegateResponse{CompletionTime: firstCompletionTime})
+	msgResponses[0], err = proto.Marshal(&stakingtypes.MsgUndelegateResponse{CompletionTime: firstCompletionTime})
 	s.Require().NoError(err, "marshal error")
-	msgResponses[1], err = proto.Marshal(&stakingTypes.MsgUndelegateResponse{CompletionTime: secondCompletionTime})
+	msgResponses[1], err = proto.Marshal(&stakingtypes.MsgUndelegateResponse{CompletionTime: secondCompletionTime})
 	s.Require().NoError(err, "marshal error")
 
 	// Check that the second completion time (the later of the two) is returned
@@ -458,5 +455,5 @@ func (s *KeeperTestSuite) TestBurnTokens_CouldNotSendCoinsFromAccountToModule() 
 	hostZone.HostDenom = "coinDNE"
 
 	err := s.App.StakeibcKeeper.BurnTokens(s.Ctx, hostZone, sdkmath.NewInt(123456))
-	s.Require().EqualError(err, "could not send coins from account stride1755g4dkhpw73gz9h9nwhlcefc6sdf8kcmvcwrk4rxfrz8xpxxjms7savm8 to module stakeibc. err: 0stcoinDNE is smaller than 123456stcoinDNE: insufficient funds")
+	s.Require().EqualError(err, "could not send coins from account stride1755g4dkhpw73gz9h9nwhlcefc6sdf8kcmvcwrk4rxfrz8xpxxjms7savm8 to module stakeibc. err: spendable balance  is smaller than 123456stcoinDNE: insufficient funds")
 }

@@ -34,10 +34,6 @@ elif [[ "${#HOST_CHAINS[@]}" == "0" ]]; then
   HOST_CHAINS=(GAIA)
 fi
 
-# Sets up upgrade if {UPGRADE_NAME} is non-empty
-UPGRADE_NAME=""
-UPGRADE_OLD_COMMIT_HASH=""
-
 # DENOMS
 STRD_DENOM="ustrd"
 ATOM_DENOM="uatom"
@@ -107,7 +103,7 @@ HOST_DAY_EPOCH_DURATION="60s"
 HOST_HOUR_EPOCH_DURATION="60s"
 HOST_WEEK_EPOCH_DURATION="60s"
 HOST_MINT_EPOCH_DURATION="60s"
-UNBONDING_TIME="120s"
+UNBONDING_TIME="240s"
 MAX_DEPOSIT_PERIOD="30s"
 VOTING_PERIOD="30s"
 INITIAL_ANNUAL_PROVISIONS="10000000000000.000000000000000000"
@@ -155,7 +151,7 @@ STRIDE_ADMIN_MNEMONIC="tone cause tribe this switch near host damage idle fragil
 STRIDE_FEE_ADDRESS=stride1czvrk3jkvtj8m27kqsqu2yrkhw3h3ykwj3rxh6
 
 # Binaries are contigent on whether we're doing an upgrade or not
-if [[ "$UPGRADE_NAME" == "" ]]; then 
+if [[ "${UPGRADE_NAME:-}" == "" ]]; then 
   STRIDE_BINARY="$DOCKERNET_HOME/../build/strided"
 else
   if [[ "${NEW_BINARY:-false}" == "false" ]]; then
@@ -246,8 +242,8 @@ EVMOS_RECEIVER_ADDRESS='evmos123z469cfejeusvk87ufrs5520wmdxmmlc7qzuw'
 EVMOS_MICRO_DENOM_UNITS="000000000000000000000000"
 
 # RELAYER
-RELAYER_CMD="$DOCKERNET_HOME/../build/relayer --home $STATE/relayer"
 RELAYER_GAIA_EXEC="$DOCKER_COMPOSE run --rm relayer-gaia"
+RELAYER_GAIA_ICS_EXEC="$DOCKER_COMPOSE run --rm relayer-gaia-ics"
 RELAYER_JUNO_EXEC="$DOCKER_COMPOSE run --rm relayer-juno"
 RELAYER_OSMO_EXEC="$DOCKER_COMPOSE run --rm relayer-osmo"
 RELAYER_STARS_EXEC="$DOCKER_COMPOSE run --rm relayer-stars"
@@ -261,6 +257,8 @@ RELAYER_OSMO_ACCT=rly4
 RELAYER_STARS_ACCT=rly5
 RELAYER_HOST_ACCT=rly6
 RELAYER_EVMOS_ACCT=rly7
+RELAYER_STRIDE_ICS_ACCT=rly11
+RELAYER_GAIA_ICS_ACCT=rly12
 RELAYER_ACCTS=(
   $RELAYER_GAIA_ACCT 
   $RELAYER_JUNO_ACCT 
@@ -268,14 +266,15 @@ RELAYER_ACCTS=(
   $RELAYER_STARS_ACCT 
   $RELAYER_HOST_ACCT 
   $RELAYER_EVMOS_ACCT
+  $RELAYER_GAIA_ICS_ACCT
 )
 
-RELAYER_EVMOS_MNEMONIC="science depart where tell bus ski laptop follow child bronze rebel recall brief plug razor ship degree labor human series today embody fury harvest"
 RELAYER_GAIA_MNEMONIC="fiction perfect rapid steel bundle giant blade grain eagle wing cannon fever must humble dance kitchen lazy episode museum faith off notable rate flavor"
 RELAYER_JUNO_MNEMONIC="kiwi betray topple van vapor flag decorate cement crystal fee family clown cry story gain frost strong year blanket remain grass pig hen empower"
 RELAYER_OSMO_MNEMONIC="unaware wine ramp february bring trust leaf beyond fever inside option dilemma save know captain endless salute radio humble chicken property culture foil taxi"
 RELAYER_STARS_MNEMONIC="deposit dawn erosion talent old broom flip recipe pill hammer animal hill nice ten target metal gas shoe visual nephew soda harbor child simple"
 RELAYER_HOST_MNEMONIC="renew umbrella teach spoon have razor knee sock divert inner nut between immense library inhale dog truly return run remain dune virus diamond clinic"
+RELAYER_GAIA_ICS_MNEMONIC="size chimney clog job robot thunder gaze vapor economy smooth kit denial alter merit produce front force eager outside mansion believe fan tonight detect"
 RELAYER_EVMOS_MNEMONIC="science depart where tell bus ski laptop follow child bronze rebel recall brief plug razor ship degree labor human series today embody fury harvest"
 RELAYER_MNEMONICS=(
   "$RELAYER_GAIA_MNEMONIC"
@@ -284,6 +283,7 @@ RELAYER_MNEMONICS=(
   "$RELAYER_STARS_MNEMONIC"
   "$RELAYER_HOST_MNEMONIC"
   "$RELAYER_EVMOS_MNEMONIC"
+  "$RELAYER_GAIA_ICS_MNEMONIC"
 )
 
 STRIDE_ADDRESS() { 
@@ -325,7 +325,7 @@ GET_VAR_VALUE() {
 WAIT_FOR_BLOCK() {
   num_blocks="${2:-1}"
   for i in $(seq $num_blocks); do
-    ( tail -f -n0 $1 & ) | grep -q "INF executed block height="
+    ( tail -f -n0 $1 & ) | grep -q "executed block.*height="
   done
 }
 

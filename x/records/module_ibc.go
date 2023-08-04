@@ -7,15 +7,12 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	capabilitytypes "github.com/cosmos/cosmos-sdk/x/capability/types"
-	ibctransfertypes "github.com/cosmos/ibc-go/v5/modules/apps/transfer/types"
-	channeltypes "github.com/cosmos/ibc-go/v5/modules/core/04-channel/types"
-	porttypes "github.com/cosmos/ibc-go/v5/modules/core/05-port/types"
+	ibctransfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
+	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
+	porttypes "github.com/cosmos/ibc-go/v7/modules/core/05-port/types"
+	ibcexported "github.com/cosmos/ibc-go/v7/modules/core/exported"
 
-	"github.com/Stride-Labs/stride/v9/x/records/keeper"
-
-	// "google.golang.org/protobuf/proto" <-- this breaks tx parsing
-
-	ibcexported "github.com/cosmos/ibc-go/v5/modules/core/exported"
+	"github.com/Stride-Labs/stride/v12/x/records/keeper"
 )
 
 // IBC MODULE IMPLEMENTATION
@@ -44,14 +41,7 @@ func (im IBCModule) OnChanOpenInit(
 	counterparty channeltypes.Counterparty,
 	version string,
 ) (string, error) {
-	// Note: The channel capability must be claimed by the authentication module in OnChanOpenInit otherwise the
-	// authentication module will not be able to send packets on the channel created for the associated interchain account.
-	// NOTE: unsure if we have to claim this here! CHECK ME
-	// if err := im.keeper.ClaimCapability(ctx, channelCap, host.ChannelCapabilityPath(portID, channelID)); err != nil {
-	// 	return err
-	// }
-	// doCustomLogic()
-	version, err := im.app.OnChanOpenInit(
+	return im.app.OnChanOpenInit(
 		ctx,
 		order,
 		connectionHops,
@@ -61,7 +51,6 @@ func (im IBCModule) OnChanOpenInit(
 		counterparty,
 		version,
 	)
-	return version, err
 }
 
 // OnChanOpenTry implements the IBCModule interface.

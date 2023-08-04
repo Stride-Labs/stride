@@ -7,6 +7,7 @@ source ${CURRENT_DIR}/test_tx_remove.sh
 source ${CURRENT_DIR}/test_quota_update.sh
 source ${CURRENT_DIR}/test_bidirectional_flow.sh
 source ${CURRENT_DIR}/test_denoms.sh
+source ${CURRENT_DIR}/test_send_failure.sh
 
 setup_juno_osmo_channel
 setup_channel_value
@@ -23,3 +24,4 @@ test_denom_ujuno
 test_denom_sttoken
 test_denom_juno_traveler
 test_remove_rate_limit
+test_send_failures

@@ -55,6 +55,10 @@ Using the example above, let's say we created a 24 hour rate limit on `ibc/D24B4
 
 The module also contains a blacklist to completely halt all IBC transfers for a given denom. There are keeper functions to add or remove denoms from the blacklist; however, these functions are not exposed externally through transactions or governance, and they should only be leveraged internally from the protocol in extreme scenarios.
 
+## Address Whitelist
+
+There is also a whitelist to exclude module account's and ICAs. Stride periodically bundles liquid staking deposits and transfers in a single transaction at the top of the epoch. Without a whitelist, this transfer would make the rate limit more likely to trigger a false positive. 
+
 ## Denoms
 
 We always want to refer to the channel ID and denom as they appear on Stride. For instance, in the example above, we would store the rate limit with denom `ibc/D24B4564BCD51D3D02D9987D92571EAC5915676A9BD6D9B0C1D0254CB8A5EA34` and `channel-5`, instead of `uosmo` and `channel-326` (the ChannelID on Osmosis).
@@ -125,6 +129,11 @@ For a more detailed explanation, see the[ ICS-20 ADR](https://github.com/cosmos/
     - (1) Remove Prefix: `transfer/channel-Z/ujuno`
     - (2) Hash: `ibc/...`
 
+## Packet Failures and Timeouts
+When a transfer is sent, the `Outflow` for the corresponding rate limit is incremented. Consequently, if the transfer fails on the host or times out, the change in `Outflow` must be reverted. However, the decrement is only necessary if the acknowledgement or timeout is returned in the same quota window that the packet was originally sent from.
+
+To keep track of whether the packet was sent in the same quota, the sequence number of all pending packets are stored. This is implemented by recording the sequence number of a SendPacket as it is sent, and then removing that list of sequence numbers each time the rate limit is reset at the end of the quota. Additionally, the sequence numbers are also removed when after an acknowledgement or timeout (a step that is not entirely necessary, but does reduce the size of the state).
+
 ## State
 
 ```go
@@ -143,7 +152,7 @@ RateLimit
 ```
 
 ## Keeper functions
-
+### RateLimit 
 ```go
 // Stores a RateLimit object in the store
 SetRateLimit(rateLimit types.RateLimit)
@@ -152,18 +161,74 @@ SetRateLimit(rateLimit types.RateLimit)
 RemoveRateLimit(denom string, channelId string)
 
 // Reads a RateLimit object from the store
-GetRateLimit(denom string, channelId string)
+GetRateLimit(denom string, channelId string) (RateLimit, found)
 
 // Gets a list of all RateLimit objects
-GetAllRateLimits()
+GetAllRateLimits() []RateLimit
 
 // Resets the Inflow and Outflow of a RateLimit and re-calculates the ChannelValue
 ResetRateLimit(denom string, channelId string)
+```
 
+### PendingSendPacket 
+```go
+// Sets the sequence number of a packet that was just sent
+SetPendingSendPacket(channelId string, sequence uint64) 
+
+// Remove a pending packet sequence number from the store
+// This is used after the ack or timeout for a packet has been received
+RemovePendingSendPacket(channelId string, sequence uint64) 
+
+// Checks whether the packet sequence number is in the store - indicating that it was
+// sent during the current quota
+CheckPacketSentDuringCurrentQuota(channelId string, sequence uint64) bool
+
+// Removes all pending sequence numbers from the store
+// This is executed when the quota resets
+RemoveAllChannelPendingSendPackets(channelId string) 
+```
+
+### DenomBlacklist
+```go
+// Adds a denom to a blacklist to prevent all IBC transfers with this denom
+AddDenomToBlacklist(denom string) 
+
+// Removes a denom from a blacklist to re-enable IBC transfers for that denom
+RemoveDenomFromBlacklist(denom string)
+
+// Check if a denom is currently blacklisted
+IsDenomBlacklisted(denom string) bool
+
+// Get all the blacklisted denoms
+GetAllBlacklistedDenoms() []string 
+```
+
+### AddressWhitelist
+```go
+// Adds an pair of sender and receiver addresses to the whitelist to allow all
+// IBC transfers between those addresses to skip all flow calculations
+SetWhitelistedAddressPair(whitelist types.WhitelistedAddressPair)
+
+// Removes a whitelisted address pair so that it's transfers are counted in the quota
+RemoveWhitelistedAddressPair(sender, receiver string) 
+
+// Check if a sender/receiver address pair is currently whitelisted
+IsAddressPairWhitelisted(sender, receiver string) bool 
+
+// Get all the whitelisted addresses
+GetAllWhitelistedAddressPairs() []types.WhitelistedAddressPair
+```
+
+
+### Business Logic
+```go
 // Checks whether a packet will exceed a rate limit quota
 // If it does not exceed the quota, it updates the `Inflow` or `Outflow`
 // If it exceeds the quota, it returns an error
-CheckRateLimitAndUpdateFlow(direction types.PacketDirection, denom string, channelId string, amount sdkmath.Int)
+CheckRateLimitAndUpdateFlow(direction types.PacketDirection, packetInfo RateLimitedPacketInfo) (updated bool)
+
+// Reverts the change in outflow from a SendPacket if it fails or times out
+UndoSendPacket(channelId string, sequence uint64, denom string, amount sdkmath.Int) 
 ```
 
 ## Middleware Functions

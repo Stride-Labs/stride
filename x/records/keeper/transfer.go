@@ -5,13 +5,13 @@ import (
 
 	errorsmod "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	transfertypes "github.com/cosmos/ibc-go/v5/modules/apps/transfer/types"
+	transfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
 	"github.com/golang/protobuf/proto" //nolint:staticcheck
 
-	"github.com/Stride-Labs/stride/v9/utils"
-	icacallbackstypes "github.com/Stride-Labs/stride/v9/x/icacallbacks/types"
+	"github.com/Stride-Labs/stride/v12/utils"
+	icacallbackstypes "github.com/Stride-Labs/stride/v12/x/icacallbacks/types"
 
-	"github.com/Stride-Labs/stride/v9/x/records/types"
+	"github.com/Stride-Labs/stride/v12/x/records/types"
 )
 
 var (

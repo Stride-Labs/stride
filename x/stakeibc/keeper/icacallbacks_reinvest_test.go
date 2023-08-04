@@ -5,20 +5,20 @@ import (
 
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	channeltypes "github.com/cosmos/ibc-go/v5/modules/core/04-channel/types"
-	ibctesting "github.com/cosmos/ibc-go/v5/testing"
+	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
+	ibctesting "github.com/cosmos/ibc-go/v7/testing"
 	_ "github.com/stretchr/testify/suite"
 
-	"github.com/Stride-Labs/stride/v9/app/apptesting"
-	epochtypes "github.com/Stride-Labs/stride/v9/x/epochs/types"
-	icqtypes "github.com/Stride-Labs/stride/v9/x/interchainquery/types"
+	"github.com/Stride-Labs/stride/v12/app/apptesting"
+	epochtypes "github.com/Stride-Labs/stride/v12/x/epochs/types"
+	icqtypes "github.com/Stride-Labs/stride/v12/x/interchainquery/types"
 
-	icacallbacktypes "github.com/Stride-Labs/stride/v9/x/icacallbacks/types"
-	recordtypes "github.com/Stride-Labs/stride/v9/x/records/types"
-	stakeibckeeper "github.com/Stride-Labs/stride/v9/x/stakeibc/keeper"
+	icacallbacktypes "github.com/Stride-Labs/stride/v12/x/icacallbacks/types"
+	recordtypes "github.com/Stride-Labs/stride/v12/x/records/types"
+	stakeibckeeper "github.com/Stride-Labs/stride/v12/x/stakeibc/keeper"
 
-	"github.com/Stride-Labs/stride/v9/x/stakeibc/types"
-	stakeibctypes "github.com/Stride-Labs/stride/v9/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v12/x/stakeibc/types"
+	stakeibctypes "github.com/Stride-Labs/stride/v12/x/stakeibc/types"
 )
 
 type ReinvestCallbackState struct {
@@ -105,7 +105,7 @@ func (s *KeeperTestSuite) TestReinvestCallback_Successful() {
 	expectedRecord := initialState.depositRecord
 	validArgs := tc.validArgs
 
-	err := stakeibckeeper.ReinvestCallback(s.App.StakeibcKeeper, s.Ctx, validArgs.packet, validArgs.ackResponse, validArgs.args)
+	err := s.App.StakeibcKeeper.ReinvestCallback(s.Ctx, validArgs.packet, validArgs.ackResponse, validArgs.args)
 	s.Require().NoError(err)
 
 	// Confirm deposit record has been added
@@ -146,7 +146,7 @@ func (s *KeeperTestSuite) TestReinvestCallback_ReinvestCallbackTimeout() {
 	invalidArgs := tc.validArgs
 	invalidArgs.ackResponse.Status = icacallbacktypes.AckResponseStatus_TIMEOUT
 
-	err := stakeibckeeper.ReinvestCallback(s.App.StakeibcKeeper, s.Ctx, invalidArgs.packet, invalidArgs.ackResponse, invalidArgs.args)
+	err := s.App.StakeibcKeeper.ReinvestCallback(s.Ctx, invalidArgs.packet, invalidArgs.ackResponse, invalidArgs.args)
 	s.Require().NoError(err)
 	s.checkReinvestStateIfCallbackFailed(tc)
 }
@@ -158,7 +158,7 @@ func (s *KeeperTestSuite) TestReinvestCallback_ReinvestCallbackErrorOnHost() {
 	invalidArgs := tc.validArgs
 	invalidArgs.ackResponse.Status = icacallbacktypes.AckResponseStatus_FAILURE
 
-	err := stakeibckeeper.ReinvestCallback(s.App.StakeibcKeeper, s.Ctx, invalidArgs.packet, invalidArgs.ackResponse, invalidArgs.args)
+	err := s.App.StakeibcKeeper.ReinvestCallback(s.Ctx, invalidArgs.packet, invalidArgs.ackResponse, invalidArgs.args)
 	s.Require().NoError(err)
 	s.checkReinvestStateIfCallbackFailed(tc)
 }
@@ -170,7 +170,7 @@ func (s *KeeperTestSuite) TestReinvestCallback_WrongCallbackArgs() {
 	// random args should cause the callback to fail
 	invalidCallbackArgs := []byte("random bytes")
 
-	err := stakeibckeeper.ReinvestCallback(s.App.StakeibcKeeper, s.Ctx, invalidArgs.packet, invalidArgs.ackResponse, invalidCallbackArgs)
+	err := s.App.StakeibcKeeper.ReinvestCallback(s.Ctx, invalidArgs.packet, invalidArgs.ackResponse, invalidCallbackArgs)
 	s.Require().EqualError(err, "Unable to unmarshal reinvest callback args: unexpected EOF: unable to unmarshal data structure")
 }
 
@@ -180,7 +180,7 @@ func (s *KeeperTestSuite) TestReinvestCallback_HostZoneNotFound() {
 	// Remove the host zone
 	s.App.StakeibcKeeper.RemoveHostZone(s.Ctx, HostChainId)
 
-	err := stakeibckeeper.ReinvestCallback(s.App.StakeibcKeeper, s.Ctx, tc.validArgs.packet, tc.validArgs.ackResponse, tc.validArgs.args)
+	err := s.App.StakeibcKeeper.ReinvestCallback(s.Ctx, tc.validArgs.packet, tc.validArgs.ackResponse, tc.validArgs.args)
 	s.Require().ErrorContains(err, "host zone GAIA not found: host zone not found")
 }
 
@@ -192,7 +192,7 @@ func (s *KeeperTestSuite) TestReinvestCallback_NoFeeAccount() {
 	badHostZone.FeeIcaAddress = ""
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, badHostZone)
 
-	err := stakeibckeeper.ReinvestCallback(s.App.StakeibcKeeper, s.Ctx, tc.validArgs.packet, tc.validArgs.ackResponse, tc.validArgs.args)
+	err := s.App.StakeibcKeeper.ReinvestCallback(s.Ctx, tc.validArgs.packet, tc.validArgs.ackResponse, tc.validArgs.args)
 	s.Require().EqualError(err, "no fee account found for GAIA: ICA acccount not found on host zone")
 }
 
@@ -204,7 +204,7 @@ func (s *KeeperTestSuite) TestReinvestCallback_InvalidFeeAccountAddress() {
 	badHostZone.FeeIcaAddress = "invalid_fee_account"
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, badHostZone)
 
-	err := stakeibckeeper.ReinvestCallback(s.App.StakeibcKeeper, s.Ctx, tc.validArgs.packet, tc.validArgs.ackResponse, tc.validArgs.args)
+	err := s.App.StakeibcKeeper.ReinvestCallback(s.Ctx, tc.validArgs.packet, tc.validArgs.ackResponse, tc.validArgs.args)
 	s.Require().ErrorContains(err, "invalid fee account address, could not decode")
 }
 
@@ -215,7 +215,7 @@ func (s *KeeperTestSuite) TestReinvestCallback_MissingEpoch() {
 	// Remove epoch tracker
 	s.App.StakeibcKeeper.RemoveEpochTracker(s.Ctx, epochtypes.STRIDE_EPOCH)
 
-	err := stakeibckeeper.ReinvestCallback(s.App.StakeibcKeeper, s.Ctx, invalidArgs.packet, invalidArgs.ackResponse, invalidArgs.args)
+	err := s.App.StakeibcKeeper.ReinvestCallback(s.Ctx, invalidArgs.packet, invalidArgs.ackResponse, invalidArgs.args)
 	s.Require().ErrorContains(err, "no number for epoch (stride_epoch)")
 }
 
@@ -228,6 +228,6 @@ func (s *KeeperTestSuite) TestReinvestCallback_FailedToSubmitQuery() {
 	badHostZone.ConnectionId = ""
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, badHostZone)
 
-	err := stakeibckeeper.ReinvestCallback(s.App.StakeibcKeeper, s.Ctx, invalidArgs.packet, invalidArgs.ackResponse, invalidArgs.args)
+	err := s.App.StakeibcKeeper.ReinvestCallback(s.Ctx, invalidArgs.packet, invalidArgs.ackResponse, invalidArgs.args)
 	s.Require().EqualError(err, "connection-id cannot be empty: invalid interchain query request")
 }

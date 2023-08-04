@@ -5,7 +5,7 @@ import (
 	"time"
 
 	sdkmath "cosmossdk.io/math"
-	ibctesting "github.com/cosmos/ibc-go/v5/testing"
+	ibctesting "github.com/cosmos/ibc-go/v7/testing"
 
 	"github.com/gogo/protobuf/proto" //nolint:staticcheck
 
@@ -13,11 +13,10 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/bech32"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
-	icqtypes "github.com/Stride-Labs/stride/v9/x/interchainquery/types"
-	recordstypes "github.com/Stride-Labs/stride/v9/x/records/types"
-	"github.com/Stride-Labs/stride/v9/x/stakeibc/keeper"
-	stakeibckeeper "github.com/Stride-Labs/stride/v9/x/stakeibc/keeper"
-	"github.com/Stride-Labs/stride/v9/x/stakeibc/types"
+	icqtypes "github.com/Stride-Labs/stride/v12/x/interchainquery/types"
+	recordstypes "github.com/Stride-Labs/stride/v12/x/records/types"
+	"github.com/Stride-Labs/stride/v12/x/stakeibc/keeper"
+	"github.com/Stride-Labs/stride/v12/x/stakeibc/types"
 )
 
 type ValidatorICQCallbackState struct {
@@ -247,7 +246,7 @@ func (s *KeeperTestSuite) TestValidatorSharesToTokensRateCallback_Successful_NoS
 	lsmCallback := false
 	tc := s.SetupValidatorICQCallback(validatorSlashed, lsmCallback)
 
-	err := stakeibckeeper.ValidatorSharesToTokensRateCallback(s.App.StakeibcKeeper, s.Ctx, tc.validArgs.callbackArgs, tc.validArgs.query)
+	err := keeper.ValidatorSharesToTokensRateCallback(s.App.StakeibcKeeper, s.Ctx, tc.validArgs.callbackArgs, tc.validArgs.query)
 	s.Require().NoError(err, "validator sharesToTokens rate callback error")
 
 	// Confirm validator's sharesToTokens rate DID NOT update
@@ -268,7 +267,7 @@ func (s *KeeperTestSuite) TestValidatorSharesToTokensRateCallback_Successful_Sla
 	lsmCallback := false
 	tc := s.SetupValidatorICQCallback(validatorSlashed, lsmCallback)
 
-	err := stakeibckeeper.ValidatorSharesToTokensRateCallback(s.App.StakeibcKeeper, s.Ctx, tc.validArgs.callbackArgs, tc.validArgs.query)
+	err := keeper.ValidatorSharesToTokensRateCallback(s.App.StakeibcKeeper, s.Ctx, tc.validArgs.callbackArgs, tc.validArgs.query)
 	s.Require().NoError(err, "validator sharesToTokens rate callback error")
 
 	// Confirm validator's sharesToTokens rate DID update
@@ -289,7 +288,7 @@ func (s *KeeperTestSuite) TestValidatorSharesToTokensRateCallback_Successful_NoS
 	lsmCallback := true
 	tc := s.SetupValidatorICQCallback(validatorSlashed, lsmCallback)
 
-	err := stakeibckeeper.ValidatorSharesToTokensRateCallback(s.App.StakeibcKeeper, s.Ctx, tc.validArgs.callbackArgs, tc.validArgs.query)
+	err := keeper.ValidatorSharesToTokensRateCallback(s.App.StakeibcKeeper, s.Ctx, tc.validArgs.callbackArgs, tc.validArgs.query)
 	s.Require().NoError(err, "validator sharesToTokens rate callback error")
 
 	// Confirm validator's sharesToTokens rate DID NOT update
@@ -327,7 +326,7 @@ func (s *KeeperTestSuite) TestValidatorSharesToTokensRateCallback_Successful_NoS
 	// When the callback runs, the finishing of the LSM liquid stake should make partial state changes, including
 	// the sending of LSM tokens to the module account
 	// However, that change should be discarded since the liquid stake failed
-	err = stakeibckeeper.ValidatorSharesToTokensRateCallback(s.App.StakeibcKeeper, s.Ctx, tc.validArgs.callbackArgs, invalidQuery)
+	err = keeper.ValidatorSharesToTokensRateCallback(s.App.StakeibcKeeper, s.Ctx, tc.validArgs.callbackArgs, invalidQuery)
 	s.Require().NoError(err, "validator sharesToTokens rate callback error")
 
 	// Confirm validator's sharesToTokens rate DID NOT update
@@ -356,7 +355,7 @@ func (s *KeeperTestSuite) TestValidatorSharesToTokensRateCallback_Successful_Sla
 	lsmCallback := true
 	tc := s.SetupValidatorICQCallback(validatorSlashed, lsmCallback)
 
-	err := stakeibckeeper.ValidatorSharesToTokensRateCallback(s.App.StakeibcKeeper, s.Ctx, tc.validArgs.callbackArgs, tc.validArgs.query)
+	err := keeper.ValidatorSharesToTokensRateCallback(s.App.StakeibcKeeper, s.Ctx, tc.validArgs.callbackArgs, tc.validArgs.query)
 	s.Require().NoError(err, "validator sharesToTokens rate callback error")
 
 	// Confirm validator's sharesToTokens rate DID update
@@ -382,7 +381,7 @@ func (s *KeeperTestSuite) TestValidatorSharesToTokensRateCallback_Successful_NoP
 	hostZone.Validators[0].SharesToTokensRate = sdk.ZeroDec()
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
 
-	err := stakeibckeeper.ValidatorSharesToTokensRateCallback(s.App.StakeibcKeeper, s.Ctx, tc.validArgs.callbackArgs, tc.validArgs.query)
+	err := keeper.ValidatorSharesToTokensRateCallback(s.App.StakeibcKeeper, s.Ctx, tc.validArgs.callbackArgs, tc.validArgs.query)
 	s.Require().NoError(err, "validator sharesToTokens rate callback error")
 
 	// Confirm validator's sharesToTokens rate DID update
@@ -406,7 +405,7 @@ func (s *KeeperTestSuite) TestValidatorSharesToTokensRateCallback_NoSlash_LiqudS
 	s.Require().NoError(err, "no error expected when sending liquid staker's LSM tokens")
 
 	// Now when we call the callback, the callback itself should succeed, but the finishing of the liquid stake should fail
-	err = stakeibckeeper.ValidatorSharesToTokensRateCallback(s.App.StakeibcKeeper, s.Ctx, tc.validArgs.callbackArgs, tc.validArgs.query)
+	err = keeper.ValidatorSharesToTokensRateCallback(s.App.StakeibcKeeper, s.Ctx, tc.validArgs.callbackArgs, tc.validArgs.query)
 	s.Require().NoError(err, "validator sharesToTokens rate callback error")
 
 	// Confirm validator's sharesToTokens rate DID update
@@ -428,7 +427,7 @@ func (s *KeeperTestSuite) TestValidatorSharesToTokensRateCallback_NoLiquidStake_
 	badQuery := tc.validArgs.query
 	badQuery.TimeoutTimestamp = 0
 
-	err := stakeibckeeper.ValidatorSharesToTokensRateCallback(s.App.StakeibcKeeper, s.Ctx, tc.validArgs.callbackArgs, badQuery)
+	err := keeper.ValidatorSharesToTokensRateCallback(s.App.StakeibcKeeper, s.Ctx, tc.validArgs.callbackArgs, badQuery)
 	s.Require().NoError(err, "validator shares to tokens rate callback error")
 
 	// Confirm validator's shares to tokens rate DID NOT update
@@ -447,7 +446,7 @@ func (s *KeeperTestSuite) TestValidatorSharesToTokensRateCallback_LiquidStake_Qu
 	badQuery := tc.validArgs.query
 	badQuery.TimeoutTimestamp = 0
 
-	err := stakeibckeeper.ValidatorSharesToTokensRateCallback(s.App.StakeibcKeeper, s.Ctx, tc.validArgs.callbackArgs, badQuery)
+	err := keeper.ValidatorSharesToTokensRateCallback(s.App.StakeibcKeeper, s.Ctx, tc.validArgs.callbackArgs, badQuery)
 	s.Require().NoError(err, "validator shares to tokens rate callback error")
 
 	// Confirm validator's shares to tokens rate DID NOT update
@@ -468,7 +467,7 @@ func (s *KeeperTestSuite) TestValidatorSharesToTokensRateCallback_HostZoneNotFou
 	badQuery := tc.validArgs.query
 	badQuery.ChainId = "fake_host_zone"
 
-	err := stakeibckeeper.ValidatorSharesToTokensRateCallback(s.App.StakeibcKeeper, s.Ctx, tc.validArgs.callbackArgs, badQuery)
+	err := keeper.ValidatorSharesToTokensRateCallback(s.App.StakeibcKeeper, s.Ctx, tc.validArgs.callbackArgs, badQuery)
 	s.Require().EqualError(err, "no registered zone for queried chain ID (fake_host_zone): host zone not found")
 }
 
@@ -477,7 +476,7 @@ func (s *KeeperTestSuite) TestValidatorSharesToTokensRateCallback_InvalidCallbac
 
 	// Submit callback with invalid callback args (so that it can't unmarshal into a validator)
 	invalidArgs := []byte("random bytes")
-	err := stakeibckeeper.ValidatorSharesToTokensRateCallback(s.App.StakeibcKeeper, s.Ctx, invalidArgs, tc.validArgs.query)
+	err := keeper.ValidatorSharesToTokensRateCallback(s.App.StakeibcKeeper, s.Ctx, invalidArgs, tc.validArgs.query)
 	s.Require().ErrorContains(err, "unable to unmarshal query response into Validator type")
 }
 
@@ -488,7 +487,7 @@ func (s *KeeperTestSuite) TestValidatorSharesToTokensRateCallback_InvalidCallbac
 	invalidQuery := tc.validArgs.query
 	invalidQuery.CallbackData = []byte("random bytes")
 
-	err := stakeibckeeper.ValidatorSharesToTokensRateCallback(s.App.StakeibcKeeper, s.Ctx, tc.validArgs.callbackArgs, invalidQuery)
+	err := keeper.ValidatorSharesToTokensRateCallback(s.App.StakeibcKeeper, s.Ctx, tc.validArgs.callbackArgs, invalidQuery)
 	s.Require().ErrorContains(err, "unable to unmarshal validator sharesToTokens rate callback data")
 }
 
@@ -497,7 +496,7 @@ func (s *KeeperTestSuite) TestValidatorSharesToTokensRateCallback_ValidatorNotFo
 
 	// Update the callback args to contain a validator address that doesn't exist
 	badCallbackArgs := s.CreateValidatorQueryResponse("fake_val", 1, 1)
-	err := stakeibckeeper.ValidatorSharesToTokensRateCallback(s.App.StakeibcKeeper, s.Ctx, badCallbackArgs, tc.validArgs.query)
+	err := keeper.ValidatorSharesToTokensRateCallback(s.App.StakeibcKeeper, s.Ctx, badCallbackArgs, tc.validArgs.query)
 	s.Require().EqualError(err, "no registered validator for address (fake_val): validator not found")
 }
 
@@ -507,7 +506,7 @@ func (s *KeeperTestSuite) TestValidatorSharesToTokensRateCallback_DelegatorShare
 	// Set the delegator shares to 0, which cause division by zero in `validator.TokensFromShares`
 	valAddress := tc.initialState.validator.Address
 	badCallbackArgs := s.CreateValidatorQueryResponse(valAddress, 1000, 0) // the 1000 is arbitrary, the zero here is what matters
-	err := stakeibckeeper.ValidatorSharesToTokensRateCallback(s.App.StakeibcKeeper, s.Ctx, badCallbackArgs, tc.validArgs.query)
+	err := keeper.ValidatorSharesToTokensRateCallback(s.App.StakeibcKeeper, s.Ctx, badCallbackArgs, tc.validArgs.query)
 
 	expectedErrMsg := "can't calculate validator internal sharesToTokens rate because delegation amount is 0 "
 	expectedErrMsg += fmt.Sprintf("(validator: %s): division by zero", valAddress)
@@ -522,6 +521,6 @@ func (s *KeeperTestSuite) TestValidatorSharesToTokensRateCallback_DelegationQuer
 	badHostZone.DelegationIcaAddress = ""
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, badHostZone)
 
-	err := stakeibckeeper.ValidatorSharesToTokensRateCallback(s.App.StakeibcKeeper, s.Ctx, tc.validArgs.callbackArgs, tc.validArgs.query)
+	err := keeper.ValidatorSharesToTokensRateCallback(s.App.StakeibcKeeper, s.Ctx, tc.validArgs.callbackArgs, tc.validArgs.query)
 	s.Require().ErrorContains(err, "Failed to submit ICQ validator delegations")
 }

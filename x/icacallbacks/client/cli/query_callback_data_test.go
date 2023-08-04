@@ -5,17 +5,17 @@ import (
 	"strconv"
 	"testing"
 
+	tmcli "github.com/cometbft/cometbft/libs/cli"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	clitestutil "github.com/cosmos/cosmos-sdk/testutil/cli"
 	"github.com/stretchr/testify/require"
-	tmcli "github.com/tendermint/tendermint/libs/cli"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	"github.com/Stride-Labs/stride/v9/testutil/network"
-	"github.com/Stride-Labs/stride/v9/testutil/nullify"
-	"github.com/Stride-Labs/stride/v9/x/icacallbacks/client/cli"
-	"github.com/Stride-Labs/stride/v9/x/icacallbacks/types"
+	"github.com/Stride-Labs/stride/v12/testutil/network"
+	"github.com/Stride-Labs/stride/v12/testutil/nullify"
+	"github.com/Stride-Labs/stride/v12/x/icacallbacks/client/cli"
+	"github.com/Stride-Labs/stride/v12/x/icacallbacks/types"
 )
 
 // Prevent strconv unused error

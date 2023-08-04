@@ -4,22 +4,22 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/cosmos/ibc-go/v5/modules/apps/transfer"
-	transfertypes "github.com/cosmos/ibc-go/v5/modules/apps/transfer/types"
-	clienttypes "github.com/cosmos/ibc-go/v5/modules/core/02-client/types"
-	channeltypes "github.com/cosmos/ibc-go/v5/modules/core/04-channel/types"
-	"github.com/tendermint/tendermint/crypto/ed25519"
+	"github.com/cometbft/cometbft/crypto/ed25519"
+	"github.com/cosmos/ibc-go/v7/modules/apps/transfer"
+	transfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
+	clienttypes "github.com/cosmos/ibc-go/v7/modules/core/02-client/types"
+	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
 
-	recordsmodule "github.com/Stride-Labs/stride/v9/x/records"
+	recordsmodule "github.com/Stride-Labs/stride/v12/x/records"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/Stride-Labs/stride/v9/x/autopilot"
-	"github.com/Stride-Labs/stride/v9/x/autopilot/types"
-	epochtypes "github.com/Stride-Labs/stride/v9/x/epochs/types"
-	minttypes "github.com/Stride-Labs/stride/v9/x/mint/types"
-	recordstypes "github.com/Stride-Labs/stride/v9/x/records/types"
-	stakeibctypes "github.com/Stride-Labs/stride/v9/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v12/x/autopilot"
+	"github.com/Stride-Labs/stride/v12/x/autopilot/types"
+	epochtypes "github.com/Stride-Labs/stride/v12/x/epochs/types"
+	minttypes "github.com/Stride-Labs/stride/v12/x/mint/types"
+	recordstypes "github.com/Stride-Labs/stride/v12/x/records/types"
+	stakeibctypes "github.com/Stride-Labs/stride/v12/x/stakeibc/types"
 )
 
 func getStakeibcPacketMetadata(address, action string) string {
@@ -27,7 +27,7 @@ func getStakeibcPacketMetadata(address, action string) string {
 		{
 			"autopilot": {
 				"receiver": "%[1]s",
-				"stakeibc": { "stride_address": "%[1]s", "action": "%[2]s" } 
+				"stakeibc": { "action": "%[2]s" } 
 			}
 		}`, address, action)
 }

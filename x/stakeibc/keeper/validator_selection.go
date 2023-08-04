@@ -10,9 +10,9 @@ import (
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
-	"github.com/Stride-Labs/stride/v9/utils"
-	epochstypes "github.com/Stride-Labs/stride/v9/x/epochs/types"
-	"github.com/Stride-Labs/stride/v9/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v12/utils"
+	epochstypes "github.com/Stride-Labs/stride/v12/x/epochs/types"
+	"github.com/Stride-Labs/stride/v12/x/stakeibc/types"
 )
 
 const RebalanceIcaBatchSize = 5

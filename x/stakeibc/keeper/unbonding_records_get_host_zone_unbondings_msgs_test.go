@@ -3,18 +3,16 @@ package keeper_test
 import (
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	ibctesting "github.com/cosmos/ibc-go/v5/testing"
+	ibctesting "github.com/cosmos/ibc-go/v7/testing"
 	"github.com/golang/protobuf/proto" //nolint:staticcheck
 	_ "github.com/stretchr/testify/suite"
 
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
-	recordstypes "github.com/Stride-Labs/stride/v9/x/records/types"
-	recordtypes "github.com/Stride-Labs/stride/v9/x/records/types"
-
-	epochstypes "github.com/Stride-Labs/stride/v9/x/epochs/types"
-	"github.com/Stride-Labs/stride/v9/x/stakeibc/keeper"
-	"github.com/Stride-Labs/stride/v9/x/stakeibc/types"
+	epochstypes "github.com/Stride-Labs/stride/v12/x/epochs/types"
+	recordtypes "github.com/Stride-Labs/stride/v12/x/records/types"
+	"github.com/Stride-Labs/stride/v12/x/stakeibc/keeper"
+	"github.com/Stride-Labs/stride/v12/x/stakeibc/types"
 )
 
 type ValidatorUnbonding struct {
@@ -66,12 +64,12 @@ func (s *KeeperTestSuite) SetupTestUnbondFromHostZone(
 	// Store the total unbond amount across two epoch unbonding records
 	halfUnbondAmount := unbondAmount.Quo(sdkmath.NewInt(2))
 	for i := uint64(1); i <= 2; i++ {
-		s.App.RecordsKeeper.SetEpochUnbondingRecord(s.Ctx, recordstypes.EpochUnbondingRecord{
+		s.App.RecordsKeeper.SetEpochUnbondingRecord(s.Ctx, recordtypes.EpochUnbondingRecord{
 			EpochNumber: i,
-			HostZoneUnbondings: []*recordstypes.HostZoneUnbonding{
+			HostZoneUnbondings: []*recordtypes.HostZoneUnbonding{
 				{
 					HostZoneId:        HostChainId,
-					Status:            recordstypes.HostZoneUnbonding_UNBONDING_QUEUE,
+					Status:            recordtypes.HostZoneUnbonding_UNBONDING_QUEUE,
 					NativeTokenAmount: halfUnbondAmount,
 				},
 			},
@@ -411,7 +409,7 @@ func (s *KeeperTestSuite) TestGetBalanceRatio() {
 				CurrentDelegation:  sdkmath.NewInt(100),
 			},
 			expectedRatio: sdk.MustNewDecFromStr("0.25"),
-			errorExpected: false,			
+			errorExpected: false,
 		},
 		{
 			unbondCapacity: keeper.ValidatorUnbondCapacity{
@@ -419,7 +417,7 @@ func (s *KeeperTestSuite) TestGetBalanceRatio() {
 				CurrentDelegation:  sdkmath.NewInt(100),
 			},
 			expectedRatio: sdk.MustNewDecFromStr("0.75"),
-			errorExpected: false,			
+			errorExpected: false,
 		},
 		{
 			unbondCapacity: keeper.ValidatorUnbondCapacity{
@@ -427,15 +425,15 @@ func (s *KeeperTestSuite) TestGetBalanceRatio() {
 				CurrentDelegation:  sdkmath.NewInt(100),
 			},
 			expectedRatio: sdk.MustNewDecFromStr("1.5"),
-			errorExpected: false,			
+			errorExpected: false,
 		},
 		{
 			unbondCapacity: keeper.ValidatorUnbondCapacity{
 				BalancedDelegation: sdkmath.NewInt(100),
 				CurrentDelegation:  sdkmath.NewInt(0),
 			},
-			errorExpected: true,			
-		},		
+			errorExpected: true,
+		},
 	}
 	for _, tc := range testCases {
 		balanceRatio, err := tc.unbondCapacity.GetBalanceRatio()

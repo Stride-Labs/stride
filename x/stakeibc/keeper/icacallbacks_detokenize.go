@@ -3,21 +3,22 @@ package keeper
 import (
 	errorsmod "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	channeltypes "github.com/cosmos/ibc-go/v5/modules/core/04-channel/types"
+	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
 	"github.com/golang/protobuf/proto" //nolint:staticcheck
 
-	"github.com/Stride-Labs/stride/v9/utils"
-	icacallbackstypes "github.com/Stride-Labs/stride/v9/x/icacallbacks/types"
-	recordstypes "github.com/Stride-Labs/stride/v9/x/records/types"
-	"github.com/Stride-Labs/stride/v9/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v12/utils"
+	icacallbackstypes "github.com/Stride-Labs/stride/v12/x/icacallbacks/types"
+	recordstypes "github.com/Stride-Labs/stride/v12/x/records/types"
+	"github.com/Stride-Labs/stride/v12/x/stakeibc/types"
 )
 
 // ICACallback after an LSM token is detokenized into native stake
-//   If successful: Remove the token deposit from the store and incremenet the validator delegation
-//   If failure: flag the deposit as DETOKENIZATION_FAILED
-//   If timeout: do nothing
-//     - A timeout will force the channel closed, and once the channel is restored,
-//       the ICA will get resubmitted
+//
+//	If successful: Remove the token deposit from the store and incremenet the validator delegation
+//	If failure: flag the deposit as DETOKENIZATION_FAILED
+//	If timeout: do nothing
+//	  - A timeout will force the channel closed, and once the channel is restored,
+//	    the ICA will get resubmitted
 func DetokenizeCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ackResponse *icacallbackstypes.AcknowledgementResponse, args []byte) error {
 	// Fetch callback args
 	detokenizeCallback := types.DetokenizeSharesCallback{}

@@ -1,25 +1,44 @@
 #!/bin/bash
 
-set -eu 
+set -eu
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 source ${SCRIPT_DIR}/config.sh
 
 BUILDDIR="$2"
 mkdir -p $BUILDDIR
 
-
+# Build the local binary and docker image
 build_local_and_docker() {
+   set +e
+
    module="$1"
    folder="$2"
    title=$(printf "$module" | awk '{ print toupper($0) }')
 
    printf '%s' "Building $title Locally...  "
-   cwd=$PWD
+
+   stride_home=$PWD
    cd $folder
-   GOBIN=$BUILDDIR go install -mod=readonly -trimpath ./... | grep -v -E "deprecated|keychain" | true
+
+   # Clear any previously build binaries, otherwise the binary can get corrupted
+   if [[ "$module" == "stride" ]]; then
+      rm -f build/strided
+   else
+      rm -f build/*
+   fi
+
+   # Many projects have a "check_version" in their makefile that prevents building
+   # the binary if the machine's go version does not match exactly,
+   # however, we can relax this constraint
+   # The following command overrides the check_version using a temporary Makefile override
+   BUILDDIR=$BUILDDIR make -f Makefile -f <(echo -e 'check_version: ;') build --silent 
    local_build_succeeded=${PIPESTATUS[0]}
-   cd $cwd
-   
+   cd $stride_home
+
+   # Some projects have a hard coded build directory, while others allow the passing of BUILDDIR
+   # In the event that they have it hard coded, this will copy it into our build directory
+   mv $folder/build/* $BUILDDIR/ > /dev/null 2>&1
+   mv $folder/bin/* $BUILDDIR/ > /dev/null 2>&1
 
    if [[ "$local_build_succeeded" == "0" ]]; then
       echo "Done" 
@@ -35,7 +54,7 @@ build_local_and_docker() {
       image=dockernet/dockerfiles/Dockerfile.$module
    fi
 
-   DOCKER_BUILDKIT=1 docker build --tag stridezone:$module -f $image . | true
+   DOCKER_BUILDKIT=1 docker build --tag stridezone:$module -f $image . 
    docker_build_succeeded=${PIPESTATUS[0]}
 
    if [[ "$docker_build_succeeded" == "0" ]]; then
@@ -43,6 +62,8 @@ build_local_and_docker() {
    else
       echo "Failed"
    fi
+
+   set -e
    return $docker_build_succeeded
 }
 

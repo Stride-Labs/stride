@@ -5,7 +5,7 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
-	"github.com/Stride-Labs/stride/v9/app/apptesting"
+	"github.com/Stride-Labs/stride/v12/app/apptesting"
 )
 
 var (
@@ -26,15 +26,13 @@ func TestKeeperTestSuite(t *testing.T) {
 	suite.Run(t, new(UpgradeTestSuite))
 }
 
-func (suite *UpgradeTestSuite) TestUpgrade() {
-	suite.Setup()
-
-	suite.ConfirmUpgradeSucceededs("v3", dummyUpgradeHeight)
+func (s *UpgradeTestSuite) TestUpgrade() {
+	s.ConfirmUpgradeSucceededs("v3", dummyUpgradeHeight)
 
 	// make sure claim record was set
-	afterCtx := suite.Ctx.WithBlockHeight(dummyUpgradeHeight)
+	afterCtx := s.Ctx.WithBlockHeight(dummyUpgradeHeight)
 	for _, identifier := range airdropIdentifiers {
-		claimRecords := suite.App.ClaimKeeper.GetClaimRecords(afterCtx, identifier)
-		suite.Require().NotEqual(0, len(claimRecords))
+		claimRecords := s.App.ClaimKeeper.GetClaimRecords(afterCtx, identifier)
+		s.Require().NotEqual(0, len(claimRecords))
 	}
 }

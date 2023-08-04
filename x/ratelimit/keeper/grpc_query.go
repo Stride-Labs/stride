@@ -6,10 +6,10 @@ import (
 	errorsmod "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	transfertypes "github.com/cosmos/ibc-go/v5/modules/apps/transfer/types"
-	ibctmtypes "github.com/cosmos/ibc-go/v5/modules/light-clients/07-tendermint/types"
+	transfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
+	ibctmtypes "github.com/cosmos/ibc-go/v7/modules/light-clients/07-tendermint"
 
-	"github.com/Stride-Labs/stride/v9/x/ratelimit/types"
+	"github.com/Stride-Labs/stride/v12/x/ratelimit/types"
 )
 
 var _ types.QueryServer = Keeper{}
@@ -70,4 +70,18 @@ func (k Keeper) RateLimitsByChannelId(c context.Context, req *types.QueryRateLim
 	}
 
 	return &types.QueryRateLimitsByChannelIdResponse{RateLimits: rateLimits}, nil
+}
+
+// Query all blacklisted denoms
+func (k Keeper) AllBlacklistedDenoms(c context.Context, req *types.QueryAllBlacklistedDenomsRequest) (*types.QueryAllBlacklistedDenomsResponse, error) {
+	ctx := sdk.UnwrapSDKContext(c)
+	blacklistedDenoms := k.GetAllBlacklistedDenoms(ctx)
+	return &types.QueryAllBlacklistedDenomsResponse{Denoms: blacklistedDenoms}, nil
+}
+
+// Query all whitelisted addresses
+func (k Keeper) AllWhitelistedAddresses(c context.Context, req *types.QueryAllWhitelistedAddressesRequest) (*types.QueryAllWhitelistedAddressesResponse, error) {
+	ctx := sdk.UnwrapSDKContext(c)
+	whitelistedAddresses := k.GetAllWhitelistedAddressPairs(ctx)
+	return &types.QueryAllWhitelistedAddressesResponse{AddressPairs: whitelistedAddresses}, nil
 }

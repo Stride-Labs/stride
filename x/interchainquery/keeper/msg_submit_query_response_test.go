@@ -4,13 +4,13 @@ import (
 	"context"
 	"time"
 
+	"github.com/cometbft/cometbft/proto/tendermint/crypto"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/bech32"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	_ "github.com/stretchr/testify/suite"
-	"github.com/tendermint/tendermint/proto/tendermint/crypto"
 
-	"github.com/Stride-Labs/stride/v9/x/interchainquery/types"
+	"github.com/Stride-Labs/stride/v12/x/interchainquery/types"
 )
 
 const (
@@ -174,7 +174,7 @@ func (s *KeeperTestSuite) TestMsgSubmitQueryResponse_FindAndInvokeCallback() {
 
 // To write this test, we need to write data to Gaia, then get the proof for that data and check it using the LC
 // As a first pass, to verify proof checking, we will use an example from Stride integration testing
-//     //   ...down the line, we may want to write tests here that verify the merkle check using proofs from tendermint's proof_test library, https://github.com/tendermint/tendermint/blob/75d51e18f740c7cbfb7d8b4d49182ee6c7f41982/crypto/merkle/proof_test.go
+//     //   ...down the line, we may want to write tests here that verify the merkle check using proofs from tendermint's proof_test library, https://github.com/cometbft/cometbft/blob/75d51e18f740c7cbfb7d8b4d49182ee6c7f41982/crypto/merkle/proof_test.go
 // func (s *KeeperTestSuite) TestMsgSubmitQueryResponse_VerifyProofSuccess() {
 // 	tc := s.SetupMsgSubmitQueryResponse()
 // 	s.App.InterchainqueryKeeper.SetQuery(s.Ctx, tc.query)

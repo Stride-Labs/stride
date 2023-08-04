@@ -16,9 +16,11 @@ import (
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/spf13/cast"
 
-	"github.com/Stride-Labs/stride/v9/utils"
-	recordstypes "github.com/Stride-Labs/stride/v9/x/records/types"
-	"github.com/Stride-Labs/stride/v9/x/stakeibc/types"
+	proto "github.com/cosmos/gogoproto/proto"
+
+	"github.com/Stride-Labs/stride/v12/utils"
+	recordstypes "github.com/Stride-Labs/stride/v12/x/records/types"
+	"github.com/Stride-Labs/stride/v12/x/stakeibc/types"
 )
 
 const (
@@ -476,7 +478,7 @@ func (k Keeper) SweepAllUnbondedTokensForHostZone(ctx sdk.Context, hostZone type
 
 	// Build transfer message to transfer from the delegation account to redemption account
 	sweepCoin := sdk.NewCoin(hostZone.HostDenom, totalAmtTransferToRedemptionAcct)
-	msgs := []sdk.Msg{
+	msgs := []proto.Message{
 		&banktypes.MsgSend{
 			FromAddress: hostZone.DelegationIcaAddress,
 			ToAddress:   hostZone.RedemptionIcaAddress,

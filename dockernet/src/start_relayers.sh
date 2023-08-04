@@ -5,7 +5,9 @@ SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 
 source ${SCRIPT_DIR}/../config.sh
 
+
 for chain in ${HOST_CHAINS[@]}; do
+    chain_id=$(GET_VAR_VALUE     ${chain}_CHAIN_ID)
     relayer_exec=$(GET_VAR_VALUE RELAYER_${chain}_EXEC)
     chain_name=$(printf "$chain" | awk '{ print tolower($0) }')
     account_name=$(GET_VAR_VALUE RELAYER_${chain}_ACCT)
