@@ -23,6 +23,6 @@ func (k Keeper) Callbacks() icacallbackstypes.ModuleCallbacks {
 		{CallbackId: ICACallbackID_Reinvest, CallbackFunc: types.ICACallbackFunction(k.ReinvestCallback)},
 		{CallbackId: ICACallbackID_Redemption, CallbackFunc: types.ICACallbackFunction(k.RedemptionCallback)},
 		{CallbackId: ICACallbackID_Rebalance, CallbackFunc: types.ICACallbackFunction(k.RebalanceCallback)},
-		{CallbackId: ICACallbackID_Rebalance, CallbackFunc: types.ICACallbackFunction(k.DetokenizeCallback)},
+		{CallbackId: ICACallbackID_Detokenize, CallbackFunc: types.ICACallbackFunction(k.DetokenizeCallback)},
 	}
 }

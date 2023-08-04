@@ -18,16 +18,18 @@ type DeleteValidatorTestCase struct {
 func (s *KeeperTestSuite) SetupDeleteValidator() DeleteValidatorTestCase {
 	initialValidators := []*stakeibctypes.Validator{
 		{
-			Name:       "val1",
-			Address:    "stride_VAL1",
-			Weight:     0,
-			Delegation: sdkmath.ZeroInt(),
+			Name:               "val1",
+			Address:            "stride_VAL1",
+			Weight:             0,
+			Delegation:         sdkmath.ZeroInt(),
+			SharesToTokensRate: sdk.OneDec(),
 		},
 		{
-			Name:       "val2",
-			Address:    "stride_VAL2",
-			Weight:     0,
-			Delegation: sdkmath.ZeroInt(),
+			Name:               "val2",
+			Address:            "stride_VAL2",
+			Weight:             0,
+			Delegation:         sdkmath.ZeroInt(),
+			SharesToTokensRate: sdk.OneDec(),
 		},
 	}
 
