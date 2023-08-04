@@ -1,9 +1,7 @@
 package cli_test
 
 import (
-	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"testing"
 
 	tmcli "github.com/cometbft/cometbft/libs/cli"
@@ -12,8 +10,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/spf13/cobra"
 	"github.com/stretchr/testify/suite"
-
-	"github.com/cosmos/gogoproto/proto"
 
 	"github.com/Stride-Labs/stride/v11/app"
 	cmdcfg "github.com/Stride-Labs/stride/v11/cmd/strided/config"
@@ -74,35 +70,6 @@ func (s *ClientTestSuite) ExecuteTxAndCheckSuccessful(cmd *cobra.Command, args [
 
 	clientCtx := s.val.ClientCtx
 	out, err := clitestutil.ExecTestCLICmd(clientCtx, cmd, args)
-	s.Require().NoError(err)
-
-	var response sdk.TxResponse
-	s.Require().NoError(clientCtx.Codec.UnmarshalJSON(out.Bytes(), &response))
-}
-
-func (s *ClientTestSuite) ExecuteGovTxAndCheckSuccessful(cmd *cobra.Command, proposal proto.Message, description string) {
-	// create a temporary file
-	proposalFile, err := ioutil.TempFile("", "proposal.json")
-	s.Require().NoError(err)
-
-	// write a JSON proposal to the file
-	proposalBytes, err := json.Marshal(proposal)
-	s.Require().NoError(err, "no error expected when marshalling proposal")
-	_, err = proposalFile.Write(proposalBytes)
-	s.Require().NoError(err, "no error expected when writing proposal to file")
-	s.Require().NoError(proposalFile.Close(), "no error expected when closing the file")
-
-	// manually build the context object since the flags do not work when executing a gov command directly
-	clientCtx := s.val.ClientCtx.
-		WithFrom(s.val.Address.String()).
-		WithFromAddress(s.val.Address).
-		WithFromName(s.val.Moniker).
-		WithSkipConfirmation(true).
-		WithBroadcastMode(flags.BroadcastSync).
-		WithOutputFormat("json")
-
-	// finally execute the gov tx
-	out, err := clitestutil.ExecTestCLICmd(clientCtx, cmd, []string{proposalFile.Name()})
 	s.Require().NoError(err)
 
 	var response sdk.TxResponse

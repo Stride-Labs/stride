@@ -22,7 +22,7 @@ func (msg *MsgRemoveOracle) GetSigners() []sdk.AccAddress {
 
 func (msg *MsgRemoveOracle) ValidateBasic() error {
 	if _, err := sdk.AccAddressFromBech32(msg.Authority); err != nil {
-		return sdkerrors.Wrap(err, "invalid authority address")
+		return errorsmod.Wrap(err, "invalid authority address")
 	}
 
 	if msg.OracleChainId == "" {

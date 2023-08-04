@@ -230,7 +230,7 @@ func (k msgServer) RestoreOracleICA(goCtx context.Context, msg *types.MsgRestore
 func (ms msgServer) ToggleOracle(goCtx context.Context, msg *types.MsgToggleOracle) (*types.MsgToggleOracleResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 	if ms.authority != msg.Authority {
-		return nil, sdkerrors.Wrapf(govtypes.ErrInvalidSigner, "invalid authority; expected %s, got %s", ms.authority, msg.Authority)
+		return nil, errorsmod.Wrapf(govtypes.ErrInvalidSigner, "invalid authority; expected %s, got %s", ms.authority, msg.Authority)
 	}
 
 	if err := ms.Keeper.ToggleOracle(ctx, msg.OracleChainId, msg.Active); err != nil {
@@ -244,7 +244,7 @@ func (ms msgServer) ToggleOracle(goCtx context.Context, msg *types.MsgToggleOrac
 func (ms msgServer) RemoveOracle(goCtx context.Context, msg *types.MsgRemoveOracle) (*types.MsgRemoveOracleResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 	if ms.authority != msg.Authority {
-		return nil, sdkerrors.Wrapf(govtypes.ErrInvalidSigner, "invalid authority; expected %s, got %s", ms.authority, msg.Authority)
+		return nil, errorsmod.Wrapf(govtypes.ErrInvalidSigner, "invalid authority; expected %s, got %s", ms.authority, msg.Authority)
 	}
 
 	_, found := ms.Keeper.GetOracle(ctx, msg.OracleChainId)
