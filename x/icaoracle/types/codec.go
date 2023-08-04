@@ -2,18 +2,20 @@ package types
 
 import (
 	"github.com/cosmos/cosmos-sdk/codec"
+	"github.com/cosmos/cosmos-sdk/codec/legacy"
 	cdctypes "github.com/cosmos/cosmos-sdk/codec/types"
 	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-
 	"github.com/cosmos/cosmos-sdk/types/msgservice"
-	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
+	govcodec "github.com/cosmos/cosmos-sdk/x/gov/codec"
 )
 
-func RegisterCodec(cdc *codec.LegacyAmino) {
-	cdc.RegisterConcrete(&MsgAddOracle{}, "icaoracle/AddOracle", nil)
-	cdc.RegisterConcrete(&MsgInstantiateOracle{}, "icaoracle/InstantiateOracle", nil)
-	cdc.RegisterConcrete(&MsgRestoreOracleICA{}, "icaoracle/RestoreOracleICA", nil)
+func RegisterLegacyAminoCodec(cdc *codec.LegacyAmino) {
+	legacy.RegisterAminoMsg(cdc, &MsgAddOracle{}, "icaoracle/AddOracle")
+	legacy.RegisterAminoMsg(cdc, &MsgInstantiateOracle{}, "icaoracle/InstantiateOracle")
+	legacy.RegisterAminoMsg(cdc, &MsgRestoreOracleICA{}, "icaoracle/RestoreOracleICA")
+	legacy.RegisterAminoMsg(cdc, &MsgToggleOracle{}, "icaoracle/MsgToggleOracle")
+	legacy.RegisterAminoMsg(cdc, &MsgRemoveOracle{}, "icaoracle/MsgRemoveOracle")
 }
 
 func RegisterInterfaces(registry cdctypes.InterfaceRegistry) {
@@ -21,23 +23,24 @@ func RegisterInterfaces(registry cdctypes.InterfaceRegistry) {
 		&MsgAddOracle{},
 		&MsgInstantiateOracle{},
 		&MsgRestoreOracleICA{},
-	)
-
-	registry.RegisterImplementations((*govtypes.Content)(nil),
-		&ToggleOracleProposal{},
-		&RemoveOracleProposal{},
+		&MsgToggleOracle{},
+		&MsgRemoveOracle{},
 	)
 
 	msgservice.RegisterMsgServiceDesc(registry, &_Msg_serviceDesc)
 }
 
 var (
-	Amino     = codec.NewLegacyAmino()
+	amino     = codec.NewLegacyAmino()
 	ModuleCdc = codec.NewProtoCodec(cdctypes.NewInterfaceRegistry())
 )
 
 func init() {
-	RegisterCodec(Amino)
-	cryptocodec.RegisterCrypto(Amino)
-	sdk.RegisterLegacyAminoCodec(Amino)
+	RegisterLegacyAminoCodec(amino)
+	cryptocodec.RegisterCrypto(amino)
+	sdk.RegisterLegacyAminoCodec(amino)
+
+	// Register all Amino interfaces and concrete types on the authz  and gov Amino codec so that this can later be
+	// used to properly serialize MsgSubmitProposal instances
+	RegisterLegacyAminoCodec(govcodec.Amino)
 }
