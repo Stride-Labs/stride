@@ -152,34 +152,6 @@ setup_file() {
   assert_equal "$diff" $STAKE_AMOUNT
 }
 
-@test "[INTEGRATION-BASIC-$CHAIN_NAME] packet forwarding automatically liquid stakes" {
-  memo='{ "autopilot": { "receiver": "'"$(STRIDE_ADDRESS)"'",  "stakeibc": { "action": "LiquidStake" } } }'
-
-  # get initial balances
-  sttoken_balance_start=$($STRIDE_MAIN_CMD q bank balances $(STRIDE_ADDRESS) --denom st$HOST_DENOM | GETBAL)
-
-  # Send the IBC transfer with the JSON memo
-  transfer_msg_prefix="$HOST_MAIN_CMD tx ibc-transfer transfer transfer $HOST_TRANSFER_CHANNEL"
-  if [[ "$CHAIN_NAME" == "GAIA" ]]; then
-    # For GAIA (ibc-v3), pass the memo into the receiver field
-    $transfer_msg_prefix "$memo" ${PACKET_FORWARD_STAKE_AMOUNT}${HOST_DENOM} --from $HOST_VAL -y 
-  elif [[ "$CHAIN_NAME" == "HOST" ]]; then
-    # For HOST (ibc-v5), pass an address for a receiver and the memo in the --memo field
-    $transfer_msg_prefix $(STRIDE_ADDRESS) ${PACKET_FORWARD_STAKE_AMOUNT}${HOST_DENOM} --memo "$memo" --from $HOST_VAL -y 
-  else
-    # For all other hosts, skip this test
-    skip "Packet forward liquid stake test is only run on GAIA and HOST"
-  fi
-
-  # Wait for the transfer to complete
-  WAIT_FOR_BALANCE_CHANGE STRIDE $(STRIDE_ADDRESS) st$HOST_DENOM
-
-  # make sure stATOM balance increased
-  sttoken_balance_end=$($STRIDE_MAIN_CMD q bank balances $(STRIDE_ADDRESS) --denom st$HOST_DENOM | GETBAL)
-  sttoken_balance_diff=$(($sttoken_balance_end-$sttoken_balance_start))
-  assert_equal "$sttoken_balance_diff" "$PACKET_FORWARD_STAKE_AMOUNT"
-}
-
 # check that tokens on the host are staked
 @test "[INTEGRATION-BASIC-$CHAIN_NAME] tokens on $CHAIN_NAME were staked" {
   # wait for another epoch to pass so that tokens are staked
@@ -273,6 +245,34 @@ setup_file() {
   sttoken_balance_end=$($STRIDE_MAIN_CMD q bank balances $staker_address_on_stride --denom st$HOST_DENOM | GETBAL)
   sttoken_balance_diff=$(($sttoken_balance_end-$sttoken_balance_start))
   assert_equal "$sttoken_balance_diff" "$STAKE_AMOUNT"
+}
+
+@test "[INTEGRATION-BASIC-$CHAIN_NAME] packet forwarding automatically liquid stakes" {
+  memo='{ "autopilot": { "receiver": "'"$(STRIDE_ADDRESS)"'",  "stakeibc": { "action": "LiquidStake" } } }'
+
+  # get initial balances
+  sttoken_balance_start=$($STRIDE_MAIN_CMD q bank balances $(STRIDE_ADDRESS) --denom st$HOST_DENOM | GETBAL)
+
+  # Send the IBC transfer with the JSON memo
+  transfer_msg_prefix="$HOST_MAIN_CMD tx ibc-transfer transfer transfer $HOST_TRANSFER_CHANNEL"
+  if [[ "$CHAIN_NAME" == "GAIA" ]]; then
+    # For GAIA (ibc-v3), pass the memo into the receiver field
+    $transfer_msg_prefix "$memo" ${PACKET_FORWARD_STAKE_AMOUNT}${HOST_DENOM} --from $HOST_VAL -y 
+  elif [[ "$CHAIN_NAME" == "HOST" ]]; then
+    # For HOST (ibc-v5), pass an address for a receiver and the memo in the --memo field
+    $transfer_msg_prefix $(STRIDE_ADDRESS) ${PACKET_FORWARD_STAKE_AMOUNT}${HOST_DENOM} --memo "$memo" --from $HOST_VAL -y 
+  else
+    # For all other hosts, skip this test
+    skip "Packet forward liquid stake test is only run on GAIA and HOST"
+  fi
+
+  # Wait for the transfer to complete
+  WAIT_FOR_BALANCE_CHANGE STRIDE $(STRIDE_ADDRESS) st$HOST_DENOM
+
+  # make sure stATOM balance increased
+  sttoken_balance_end=$($STRIDE_MAIN_CMD q bank balances $(STRIDE_ADDRESS) --denom st$HOST_DENOM | GETBAL)
+  sttoken_balance_diff=$(($sttoken_balance_end-$sttoken_balance_start))
+  assert_equal "$sttoken_balance_diff" "$PACKET_FORWARD_STAKE_AMOUNT"
 }
 
 # check that redemptions and claims work

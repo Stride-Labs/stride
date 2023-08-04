@@ -151,7 +151,7 @@ for (( i=1; i <= $NUM_NODES; i++ )); do
 
     # Copy over the provider stride validator keys to the provider (in the event
     # that we are testing ICS)
-    if [[ $CHAIN == "GAIA" ]]; then
+    if [[ $CHAIN == "GAIA" && -d $DOCKERNET_HOME/state/${STRIDE_NODE_PREFIX}${i} ]]; then
         stride_config=$DOCKERNET_HOME/state/${STRIDE_NODE_PREFIX}${i}/config
         host_config=$DOCKERNET_HOME/state/${NODE_PREFIX}${i}/config
         cp ${stride_config}/priv_validator_key.json ${host_config}/priv_validator_key.json

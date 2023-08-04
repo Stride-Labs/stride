@@ -9,7 +9,7 @@
 # 	url = https://github.com/cosmos/relayer.git
 [submodule "deps/relayer"]
 	# Branch: sam/lsm-poc
-	# Commit: f71dd8229bca3e5dbfc43e6688d095eeef632e79
+	# Commit: 40bf0d66414948d35d77447a478d4ea0b55a2ca8
 	path = deps/relayer
 	url = https://github.com/Stride-Labs/relayer.git
 [submodule "deps/gaia"]

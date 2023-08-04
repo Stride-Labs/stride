@@ -5,7 +5,7 @@ WORKDIR /src/
 
 # TODO [LSM]: Revert
 # ENV COMMIT_HASH=v2.3.1
-ENV COMMIT_HASH=f71dd8229bca3e5dbfc43e6688d095eeef632e79
+ENV COMMIT_HASH=40bf0d66414948d35d77447a478d4ea0b55a2ca8
 
 RUN apk add --update git make gcc linux-headers libc-dev eudev-dev 
 RUN git clone https://github.com/Stride-Labs/relayer.git \
