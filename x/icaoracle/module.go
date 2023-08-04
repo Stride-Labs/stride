@@ -45,12 +45,8 @@ func (AppModuleBasic) Name() string {
 	return types.ModuleName
 }
 
-func (AppModuleBasic) RegisterCodec(cdc *codec.LegacyAmino) {
-	types.RegisterCodec(cdc)
-}
-
 func (AppModuleBasic) RegisterLegacyAminoCodec(cdc *codec.LegacyAmino) {
-	types.RegisterCodec(cdc)
+	types.RegisterLegacyAminoCodec(cdc)
 }
 
 // RegisterInterfaces registers the module's interface types
@@ -118,9 +114,6 @@ func NewAppModule(
 func (am AppModule) Name() string {
 	return am.AppModuleBasic.Name()
 }
-
-// QuerierRoute returns the capability module's query routing key.
-func (AppModule) QuerierRoute() string { return types.QuerierRoute }
 
 // RegisterServices registers a GRPC query service to respond to the
 // module-specific GRPC queries.
