@@ -285,7 +285,7 @@ sleep 5
 
 # ###########################UPGRADE TO SOVEREIGN CHAIN##########################
 
-$SOVEREIGN_BINARY tx gov submit-legacy-proposal software-upgrade "v07-Theta" \
+$SOVEREIGN_BINARY tx gov submit-legacy-proposal software-upgrade "v12" \
 --upgrade-height=36 \
 --upgrade-info="file:///Users/admin/Documents/j121/stride/interchain-security/upgrade-info.json?checksum=sha256:8f204d72e0bbd1a193aee002cf78d17b90e73fdd404403df226e5f3d6a6cba17" \
 --title="upgrade to consumer chain" --description="upgrade to consumer chain description" \

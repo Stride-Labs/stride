@@ -4,8 +4,8 @@ import (
 	"github.com/cosmos/gogoproto/proto"
 	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
 
-	icacallbacktypes "github.com/Stride-Labs/stride/v11/x/icacallbacks/types"
-	"github.com/Stride-Labs/stride/v11/x/icaoracle/types"
+	icacallbacktypes "github.com/Stride-Labs/stride/v12/x/icacallbacks/types"
+	"github.com/Stride-Labs/stride/v12/x/icaoracle/types"
 )
 
 type InstantiateOracleCallbackTestCase struct {

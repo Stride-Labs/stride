@@ -136,6 +136,16 @@ paths:
     src-channel-filter:
       rule: ""
       channel-list: []
+  stride-gaia-ics:
+    src:
+      chain-id: STRIDE
+      client-id: 07-tendermint-1
+    dst:
+      chain-id: GAIA
+      client-id: 07-tendermint-1
+    src-channel-filter:
+      rule: ""
+      channel-list: []
   stride-osmo:
     src:
       chain-id: STRIDE

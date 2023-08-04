@@ -6,12 +6,14 @@ import (
 	"path/filepath"
 
 	authsims "github.com/cosmos/cosmos-sdk/x/auth/simulation"
+	"github.com/cosmos/cosmos-sdk/x/genutil"
+	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
 	porttypes "github.com/cosmos/ibc-go/v7/modules/core/05-port/types"
 	tendermint "github.com/cosmos/ibc-go/v7/modules/light-clients/07-tendermint"
 
 	nodeservice "github.com/cosmos/cosmos-sdk/client/grpc/node"
 
-	"github.com/Stride-Labs/stride/v11/utils"
+	"github.com/Stride-Labs/stride/v12/utils"
 
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/client"
@@ -43,7 +45,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/crisis"
 	crisiskeeper "github.com/cosmos/cosmos-sdk/x/crisis/keeper"
 	crisistypes "github.com/cosmos/cosmos-sdk/x/crisis/types"
-	distr "github.com/cosmos/cosmos-sdk/x/distribution"
 	distrkeeper "github.com/cosmos/cosmos-sdk/x/distribution/keeper"
 	distrtypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
 	"github.com/cosmos/cosmos-sdk/x/evidence"
@@ -52,21 +53,21 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/feegrant"
 	feegrantkeeper "github.com/cosmos/cosmos-sdk/x/feegrant/keeper"
 	feegrantmodule "github.com/cosmos/cosmos-sdk/x/feegrant/module"
-	"github.com/cosmos/cosmos-sdk/x/genutil"
-	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
 	"github.com/cosmos/cosmos-sdk/x/gov"
 	govclient "github.com/cosmos/cosmos-sdk/x/gov/client"
 	govkeeper "github.com/cosmos/cosmos-sdk/x/gov/keeper"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	govtypesv1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
 	govtypesv1beta1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
+	ccvdistr "github.com/cosmos/interchain-security/v3/x/ccv/democracy/distribution"
+	ccvgov "github.com/cosmos/interchain-security/v3/x/ccv/democracy/governance"
 
-	claimvesting "github.com/Stride-Labs/stride/v11/x/claim/vesting"
-	claimvestingtypes "github.com/Stride-Labs/stride/v11/x/claim/vesting/types"
+	claimvesting "github.com/Stride-Labs/stride/v12/x/claim/vesting"
+	claimvestingtypes "github.com/Stride-Labs/stride/v12/x/claim/vesting/types"
 
-	"github.com/Stride-Labs/stride/v11/x/mint"
-	mintkeeper "github.com/Stride-Labs/stride/v11/x/mint/keeper"
-	minttypes "github.com/Stride-Labs/stride/v11/x/mint/types"
+	"github.com/Stride-Labs/stride/v12/x/mint"
+	mintkeeper "github.com/Stride-Labs/stride/v12/x/mint/keeper"
+	minttypes "github.com/Stride-Labs/stride/v12/x/mint/types"
 
 	dbm "github.com/cometbft/cometbft-db"
 	abci "github.com/cometbft/cometbft/abci/types"
@@ -82,7 +83,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/slashing"
 	slashingkeeper "github.com/cosmos/cosmos-sdk/x/slashing/keeper"
 	slashingtypes "github.com/cosmos/cosmos-sdk/x/slashing/types"
-	"github.com/cosmos/cosmos-sdk/x/staking"
 	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/cosmos/cosmos-sdk/x/upgrade"
@@ -98,8 +98,8 @@ import (
 	ibcclienttypes "github.com/cosmos/ibc-go/v7/modules/core/02-client/types"
 	ibchost "github.com/cosmos/ibc-go/v7/modules/core/exported"
 	ibckeeper "github.com/cosmos/ibc-go/v7/modules/core/keeper"
-	ibctesting "github.com/cosmos/ibc-go/v7/testing"
-
+	ibctesting "github.com/cosmos/interchain-security/v3/legacy_ibc_testing/testing"
+	ccvstaking "github.com/cosmos/interchain-security/v3/x/ccv/democracy/staking"
 	"github.com/spf13/cast"
 
 	ica "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts"
@@ -114,41 +114,45 @@ import (
 	// monitoringp "github.com/tendermint/spn/x/monitoringp"
 	// monitoringpkeeper "github.com/tendermint/spn/x/monitoringp/keeper"
 
-	epochsmodule "github.com/Stride-Labs/stride/v11/x/epochs"
-	epochsmodulekeeper "github.com/Stride-Labs/stride/v11/x/epochs/keeper"
-	epochsmoduletypes "github.com/Stride-Labs/stride/v11/x/epochs/types"
+	epochsmodule "github.com/Stride-Labs/stride/v12/x/epochs"
+	epochsmodulekeeper "github.com/Stride-Labs/stride/v12/x/epochs/keeper"
+	epochsmoduletypes "github.com/Stride-Labs/stride/v12/x/epochs/types"
 
-	"github.com/Stride-Labs/stride/v11/x/interchainquery"
-	interchainquerykeeper "github.com/Stride-Labs/stride/v11/x/interchainquery/keeper"
-	interchainquerytypes "github.com/Stride-Labs/stride/v11/x/interchainquery/types"
+	"github.com/Stride-Labs/stride/v12/x/interchainquery"
+	interchainquerykeeper "github.com/Stride-Labs/stride/v12/x/interchainquery/keeper"
+	interchainquerytypes "github.com/Stride-Labs/stride/v12/x/interchainquery/types"
 
-	"github.com/Stride-Labs/stride/v11/x/autopilot"
-	autopilotkeeper "github.com/Stride-Labs/stride/v11/x/autopilot/keeper"
-	autopilottypes "github.com/Stride-Labs/stride/v11/x/autopilot/types"
+	"github.com/Stride-Labs/stride/v12/x/autopilot"
+	autopilotkeeper "github.com/Stride-Labs/stride/v12/x/autopilot/keeper"
+	autopilottypes "github.com/Stride-Labs/stride/v12/x/autopilot/types"
+
+	"github.com/Stride-Labs/stride/v12/x/claim"
+	claimkeeper "github.com/Stride-Labs/stride/v12/x/claim/keeper"
+	claimtypes "github.com/Stride-Labs/stride/v12/x/claim/types"
+	icacallbacksmodule "github.com/Stride-Labs/stride/v12/x/icacallbacks"
+	icacallbacksmodulekeeper "github.com/Stride-Labs/stride/v12/x/icacallbacks/keeper"
+	icacallbacksmoduletypes "github.com/Stride-Labs/stride/v12/x/icacallbacks/types"
+	icaoracle "github.com/Stride-Labs/stride/v12/x/icaoracle"
+	icaoraclekeeper "github.com/Stride-Labs/stride/v12/x/icaoracle/keeper"
+	icaoracletypes "github.com/Stride-Labs/stride/v12/x/icaoracle/types"
+	ratelimitmodule "github.com/Stride-Labs/stride/v12/x/ratelimit"
+	ratelimitclient "github.com/Stride-Labs/stride/v12/x/ratelimit/client"
+	ratelimitmodulekeeper "github.com/Stride-Labs/stride/v12/x/ratelimit/keeper"
+	ratelimitmoduletypes "github.com/Stride-Labs/stride/v12/x/ratelimit/types"
+	recordsmodule "github.com/Stride-Labs/stride/v12/x/records"
+	recordsmodulekeeper "github.com/Stride-Labs/stride/v12/x/records/keeper"
+	recordsmoduletypes "github.com/Stride-Labs/stride/v12/x/records/types"
+	stakeibcmodule "github.com/Stride-Labs/stride/v12/x/stakeibc"
+	stakeibcclient "github.com/Stride-Labs/stride/v12/x/stakeibc/client"
+	stakeibcmodulekeeper "github.com/Stride-Labs/stride/v12/x/stakeibc/keeper"
+	stakeibcmoduletypes "github.com/Stride-Labs/stride/v12/x/stakeibc/types"
+
+	ccvconsumer "github.com/cosmos/interchain-security/v3/x/ccv/consumer"
+	ccvconsumerkeeper "github.com/cosmos/interchain-security/v3/x/ccv/consumer/keeper"
+	ccvconsumertypes "github.com/cosmos/interchain-security/v3/x/ccv/consumer/types"
 
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
-	ibctestingtypes "github.com/cosmos/ibc-go/v7/testing/types"
-
-	"github.com/Stride-Labs/stride/v11/x/claim"
-	claimkeeper "github.com/Stride-Labs/stride/v11/x/claim/keeper"
-	claimtypes "github.com/Stride-Labs/stride/v11/x/claim/types"
-	icacallbacksmodule "github.com/Stride-Labs/stride/v11/x/icacallbacks"
-	icacallbacksmodulekeeper "github.com/Stride-Labs/stride/v11/x/icacallbacks/keeper"
-	icacallbacksmoduletypes "github.com/Stride-Labs/stride/v11/x/icacallbacks/types"
-	icaoracle "github.com/Stride-Labs/stride/v11/x/icaoracle"
-	icaoraclekeeper "github.com/Stride-Labs/stride/v11/x/icaoracle/keeper"
-	icaoracletypes "github.com/Stride-Labs/stride/v11/x/icaoracle/types"
-	ratelimitmodule "github.com/Stride-Labs/stride/v11/x/ratelimit"
-	ratelimitclient "github.com/Stride-Labs/stride/v11/x/ratelimit/client"
-	ratelimitmodulekeeper "github.com/Stride-Labs/stride/v11/x/ratelimit/keeper"
-	ratelimitmoduletypes "github.com/Stride-Labs/stride/v11/x/ratelimit/types"
-	recordsmodule "github.com/Stride-Labs/stride/v11/x/records"
-	recordsmodulekeeper "github.com/Stride-Labs/stride/v11/x/records/keeper"
-	recordsmoduletypes "github.com/Stride-Labs/stride/v11/x/records/types"
-	stakeibcmodule "github.com/Stride-Labs/stride/v11/x/stakeibc"
-	stakeibcclient "github.com/Stride-Labs/stride/v11/x/stakeibc/client"
-	stakeibcmodulekeeper "github.com/Stride-Labs/stride/v11/x/stakeibc/keeper"
-	stakeibcmoduletypes "github.com/Stride-Labs/stride/v11/x/stakeibc/types"
+	"github.com/cosmos/interchain-security/v3/legacy_ibc_testing/core"
 )
 
 const (
@@ -187,9 +191,9 @@ var (
 		genutil.NewAppModuleBasic(genutiltypes.DefaultMessageValidator),
 		bank.AppModuleBasic{},
 		capability.AppModuleBasic{},
-		staking.AppModuleBasic{},
+		ccvstaking.AppModuleBasic{},
 		mint.AppModuleBasic{},
-		distr.AppModuleBasic{},
+		ccvdistr.AppModuleBasic{},
 		gov.NewAppModuleBasic(getGovProposalHandlers()),
 		params.AppModuleBasic{},
 		crisis.AppModuleBasic{},
@@ -211,6 +215,7 @@ var (
 		ratelimitmodule.AppModuleBasic{},
 		icacallbacksmodule.AppModuleBasic{},
 		claim.AppModuleBasic{},
+		ccvconsumer.AppModuleBasic{},
 		autopilot.AppModuleBasic{},
 		icaoracle.AppModuleBasic{},
 		tendermint.AppModuleBasic{},
@@ -221,16 +226,18 @@ var (
 		authtypes.FeeCollectorName: nil,
 		distrtypes.ModuleName:      nil,
 		// mint module needs burn access to remove excess validator tokens (it overallocates, then burns)
-		minttypes.ModuleName:                    {authtypes.Minter, authtypes.Burner},
-		stakingtypes.BondedPoolName:             {authtypes.Burner, authtypes.Staking},
-		stakingtypes.NotBondedPoolName:          {authtypes.Burner, authtypes.Staking},
-		govtypes.ModuleName:                     {authtypes.Burner},
-		ibctransfertypes.ModuleName:             {authtypes.Minter, authtypes.Burner},
-		stakeibcmoduletypes.ModuleName:          {authtypes.Minter, authtypes.Burner, authtypes.Staking},
-		claimtypes.ModuleName:                   nil,
-		interchainquerytypes.ModuleName:         nil,
-		icatypes.ModuleName:                     nil,
-		stakeibcmoduletypes.RewardCollectorName: nil,
+		ccvconsumertypes.ConsumerRedistributeName:     nil,
+		ccvconsumertypes.ConsumerToSendToProviderName: nil,
+		minttypes.ModuleName:                          {authtypes.Minter, authtypes.Burner},
+		stakingtypes.BondedPoolName:                   {authtypes.Burner, authtypes.Staking},
+		stakingtypes.NotBondedPoolName:                {authtypes.Burner, authtypes.Staking},
+		govtypes.ModuleName:                           {authtypes.Burner},
+		ibctransfertypes.ModuleName:                   {authtypes.Minter, authtypes.Burner},
+		stakeibcmoduletypes.ModuleName:                {authtypes.Minter, authtypes.Burner, authtypes.Staking},
+		claimtypes.ModuleName:                         nil,
+		interchainquerytypes.ModuleName:               nil,
+		icatypes.ModuleName:                           nil,
+		stakeibcmoduletypes.RewardCollectorName:       nil,
 	}
 )
 
@@ -285,6 +292,7 @@ type StrideApp struct {
 	// MonitoringKeeper    monitoringpkeeper.Keeper
 	ICAControllerKeeper icacontrollerkeeper.Keeper
 	ICAHostKeeper       icahostkeeper.Keeper
+	ConsumerKeeper      ccvconsumerkeeper.Keeper
 	AutopilotKeeper     autopilotkeeper.Keeper
 
 	// make scoped keepers public for test purposes
@@ -293,6 +301,7 @@ type StrideApp struct {
 	// ScopedMonitoringKeeper capabilitykeeper.ScopedKeeper
 	ScopedICAControllerKeeper capabilitykeeper.ScopedKeeper
 	ScopedICAHostKeeper       capabilitykeeper.ScopedKeeper
+	ScopedCCVConsumerKeeper   capabilitykeeper.ScopedKeeper
 
 	StakeibcKeeper stakeibcmodulekeeper.Keeper
 
@@ -349,6 +358,7 @@ func NewStrideApp(
 		icacallbacksmoduletypes.StoreKey,
 		claimtypes.StoreKey,
 		icaoracletypes.StoreKey,
+		ccvconsumertypes.StoreKey,
 		crisistypes.StoreKey,
 		consensusparamtypes.StoreKey,
 	)
@@ -385,6 +395,7 @@ func NewStrideApp(
 	scopedTransferKeeper := app.CapabilityKeeper.ScopeToModule(ibctransfertypes.ModuleName)
 	scopedICAControllerKeeper := app.CapabilityKeeper.ScopeToModule(icacontrollertypes.SubModuleName)
 	scopedICAHostKeeper := app.CapabilityKeeper.ScopeToModule(icahosttypes.SubModuleName)
+	scopedCCVConsumerKeeper := app.CapabilityKeeper.ScopeToModule(ccvconsumertypes.ModuleName)
 
 	// add keepers
 	app.AccountKeeper = authkeeper.NewAccountKeeper(
@@ -403,10 +414,10 @@ func NewStrideApp(
 	)
 	app.DistrKeeper = distrkeeper.NewKeeper(
 		appCodec, keys[distrtypes.StoreKey], app.AccountKeeper, app.BankKeeper,
-		app.StakingKeeper, authtypes.FeeCollectorName, authtypes.NewModuleAddress(govtypes.ModuleName).String(),
+		app.StakingKeeper, ccvconsumertypes.ConsumerRedistributeName, authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
 	app.SlashingKeeper = slashingkeeper.NewKeeper(
-		appCodec, encodingConfig.Amino, keys[slashingtypes.StoreKey], app.StakingKeeper, authtypes.NewModuleAddress(govtypes.ModuleName).String(),
+		appCodec, encodingConfig.Amino, keys[slashingtypes.StoreKey], &app.ConsumerKeeper, authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
 	app.CrisisKeeper = crisiskeeper.NewKeeper(appCodec, keys[crisistypes.StoreKey],
 		invCheckPeriod, app.BankKeeper, authtypes.FeeCollectorName, authtypes.NewModuleAddress(govtypes.ModuleName).String(),
@@ -424,14 +435,24 @@ func NewStrideApp(
 	// register the staking hooks
 	// NOTE: stakingKeeper above is passed by reference, so that it will contain these hooks
 	app.StakingKeeper.SetHooks(
-		stakingtypes.NewMultiStakingHooks(app.DistrKeeper.Hooks(), app.SlashingKeeper.Hooks(), app.ClaimKeeper.Hooks()),
+		stakingtypes.NewMultiStakingHooks(app.DistrKeeper.Hooks(), app.ClaimKeeper.Hooks()),
 	)
 
 	// ... other modules keepers
 
+	app.ConsumerKeeper = ccvconsumerkeeper.NewNonZeroKeeper(
+		appCodec,
+		keys[ccvconsumertypes.StoreKey],
+		app.GetSubspace(ccvconsumertypes.ModuleName),
+	)
 	// Create IBC Keeper
 	app.IBCKeeper = ibckeeper.NewKeeper(
-		appCodec, keys[ibchost.StoreKey], app.GetSubspace(ibchost.ModuleName), app.StakingKeeper, app.UpgradeKeeper, scopedIBCKeeper,
+		appCodec,
+		keys[ibchost.StoreKey],
+		app.GetSubspace(ibchost.ModuleName),
+		&app.ConsumerKeeper,
+		app.UpgradeKeeper,
+		scopedIBCKeeper,
 	)
 
 	// Create Ratelimit Keeper
@@ -464,10 +485,33 @@ func NewStrideApp(
 
 	// Create evidence Keeper for to register the IBC light client misbehaviour evidence route
 	evidenceKeeper := evidencekeeper.NewKeeper(
-		appCodec, keys[evidencetypes.StoreKey], &app.StakingKeeper, app.SlashingKeeper,
+		appCodec, keys[evidencetypes.StoreKey], &app.ConsumerKeeper, app.SlashingKeeper,
 	)
 	// If evidence needs to be handled for the app, set routes in router here and seal
 	app.EvidenceKeeper = *evidenceKeeper
+
+	// Create CCV consumer and modules
+	app.ConsumerKeeper = ccvconsumerkeeper.NewKeeper(
+		appCodec,
+		keys[ccvconsumertypes.StoreKey],
+		app.GetSubspace(ccvconsumertypes.ModuleName),
+		scopedCCVConsumerKeeper,
+		app.IBCKeeper.ChannelKeeper,
+		&app.IBCKeeper.PortKeeper,
+		app.IBCKeeper.ConnectionKeeper,
+		app.IBCKeeper.ClientKeeper,
+		app.SlashingKeeper,
+		app.BankKeeper,
+		app.AccountKeeper,
+		&app.TransferKeeper,
+		app.IBCKeeper,
+		authtypes.FeeCollectorName,
+	)
+	app.ConsumerKeeper.SetStandaloneStakingKeeper(app.StakingKeeper)
+
+	// register slashing module StakingHooks to the consumer keeper
+	app.ConsumerKeeper = *app.ConsumerKeeper.SetHooks(app.SlashingKeeper.Hooks())
+	consumerModule := ccvconsumer.NewAppModule(app.ConsumerKeeper, app.GetSubspace(ccvconsumertypes.ModuleName))
 
 	// TODO(TEST-20): look for all lines that include 'monitoring' in this file! there are a few places this
 	// is commented out
@@ -573,7 +617,6 @@ func NewStrideApp(
 		appCodec, keys[govtypes.StoreKey], app.AccountKeeper, app.BankKeeper,
 		app.StakingKeeper, app.MsgServiceRouter(), govtypes.DefaultConfig(), authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
-
 	govKeeper.SetLegacyRouter(govRouter)
 	app.GovKeeper = *govKeeper
 
@@ -658,7 +701,9 @@ func NewStrideApp(
 		// ICACallbacks Stack
 		AddRoute(icacontrollertypes.SubModuleName, icacallbacksStack).
 		// Transfer stack
-		AddRoute(ibctransfertypes.ModuleName, transferStack)
+		AddRoute(ibctransfertypes.ModuleName, transferStack).
+		// Consumer stack
+		AddRoute(ccvconsumertypes.ModuleName, consumerModule)
 
 	app.IBCKeeper.SetRouter(ibcRouter)
 
@@ -683,11 +728,11 @@ func NewStrideApp(
 		capability.NewAppModule(appCodec, *app.CapabilityKeeper, false),
 		feegrantmodule.NewAppModule(appCodec, app.AccountKeeper, app.BankKeeper, app.FeeGrantKeeper, app.interfaceRegistry),
 		crisis.NewAppModule(app.CrisisKeeper, skipGenesisInvariants, app.GetSubspace(crisistypes.ModuleName)),
-		gov.NewAppModule(appCodec, &app.GovKeeper, app.AccountKeeper, app.BankKeeper, app.GetSubspace(govtypes.ModuleName)),
+		ccvgov.NewAppModule(appCodec, app.GovKeeper, app.AccountKeeper, app.BankKeeper, IsProposalWhitelisted, app.GetSubspace(govtypes.ModuleName), func(_ string) bool { return true }),
 		mint.NewAppModule(appCodec, app.MintKeeper, app.AccountKeeper, app.BankKeeper),
-		slashing.NewAppModule(appCodec, app.SlashingKeeper, app.AccountKeeper, app.BankKeeper, app.StakingKeeper, app.GetSubspace(slashingtypes.ModuleName)),
-		distr.NewAppModule(appCodec, app.DistrKeeper, app.AccountKeeper, app.BankKeeper, app.StakingKeeper, app.GetSubspace(distrtypes.ModuleName)),
-		staking.NewAppModule(appCodec, &app.StakingKeeper, app.AccountKeeper, app.BankKeeper, app.GetSubspace(stakingtypes.ModuleName)),
+		slashing.NewAppModule(appCodec, app.SlashingKeeper, app.AccountKeeper, app.BankKeeper, app.ConsumerKeeper, app.GetSubspace(slashingtypes.ModuleName)),
+		ccvdistr.NewAppModule(appCodec, app.DistrKeeper, app.AccountKeeper, app.BankKeeper, app.StakingKeeper, authtypes.FeeCollectorName, app.GetSubspace(distrtypes.ModuleName)),
+		ccvstaking.NewAppModule(appCodec, app.StakingKeeper, app.AccountKeeper, app.BankKeeper, app.GetSubspace(stakingtypes.ModuleName)),
 		upgrade.NewAppModule(app.UpgradeKeeper),
 		evidence.NewAppModule(app.EvidenceKeeper),
 		consensus.NewAppModule(appCodec, app.ConsensusParamsKeeper),
@@ -703,6 +748,7 @@ func NewStrideApp(
 		recordsModule,
 		ratelimitModule,
 		icacallbacksModule,
+		consumerModule,
 		autopilotModule,
 		icaoracleModule,
 	)
@@ -739,6 +785,7 @@ func NewStrideApp(
 		ratelimitmoduletypes.ModuleName,
 		icacallbacksmoduletypes.ModuleName,
 		claimtypes.ModuleName,
+		ccvconsumertypes.ModuleName,
 		autopilottypes.ModuleName,
 		icaoracletypes.ModuleName,
 		consensusparamtypes.ModuleName,
@@ -746,6 +793,7 @@ func NewStrideApp(
 
 	app.mm.SetOrderEndBlockers(
 		crisistypes.ModuleName,
+		genutiltypes.ModuleName,
 		govtypes.ModuleName,
 		stakingtypes.ModuleName,
 		capabilitytypes.ModuleName,
@@ -756,7 +804,6 @@ func NewStrideApp(
 		vestingtypes.ModuleName,
 		claimvestingtypes.ModuleName,
 		minttypes.ModuleName,
-		genutiltypes.ModuleName,
 		evidencetypes.ModuleName,
 		feegrant.ModuleName,
 		paramstypes.ModuleName,
@@ -772,6 +819,7 @@ func NewStrideApp(
 		ratelimitmoduletypes.ModuleName,
 		icacallbacksmoduletypes.ModuleName,
 		claimtypes.ModuleName,
+		ccvconsumertypes.ModuleName,
 		autopilottypes.ModuleName,
 		icaoracletypes.ModuleName,
 		consensusparamtypes.ModuleName,
@@ -794,8 +842,8 @@ func NewStrideApp(
 		govtypes.ModuleName,
 		minttypes.ModuleName,
 		crisistypes.ModuleName,
-		ibchost.ModuleName,
 		genutiltypes.ModuleName,
+		ibchost.ModuleName,
 		evidencetypes.ModuleName,
 		paramstypes.ModuleName,
 		upgradetypes.ModuleName,
@@ -810,6 +858,7 @@ func NewStrideApp(
 		ratelimitmoduletypes.ModuleName,
 		icacallbacksmoduletypes.ModuleName,
 		claimtypes.ModuleName,
+		ccvconsumertypes.ModuleName,
 		autopilottypes.ModuleName,
 		icaoracletypes.ModuleName,
 		consensusparamtypes.ModuleName,
@@ -818,7 +867,7 @@ func NewStrideApp(
 	app.mm.RegisterInvariants(app.CrisisKeeper)
 	app.configurator = module.NewConfigurator(app.appCodec, app.MsgServiceRouter(), app.GRPCQueryRouter())
 	app.mm.RegisterServices(app.configurator)
-	app.setupUpgradeHandlers()
+	app.setupUpgradeHandlers(appOpts)
 
 	// create the simulation manager and define the order of the modules for deterministic simulations
 	// app.sm = module.NewSimulationManager(
@@ -853,13 +902,17 @@ func NewStrideApp(
 	app.SetInitChainer(app.InitChainer)
 	app.SetBeginBlocker(app.BeginBlocker)
 
-	anteHandler, err := ante.NewAnteHandler(
-		ante.HandlerOptions{
-			AccountKeeper:   app.AccountKeeper,
-			BankKeeper:      app.BankKeeper,
-			SignModeHandler: encodingConfig.TxConfig.SignModeHandler(),
-			FeegrantKeeper:  app.FeeGrantKeeper,
-			SigGasConsumer:  ante.DefaultSigVerificationGasConsumer,
+	anteHandler, err := NewAnteHandler(
+		HandlerOptions{
+			HandlerOptions: ante.HandlerOptions{
+				AccountKeeper:   app.AccountKeeper,
+				BankKeeper:      app.BankKeeper,
+				FeegrantKeeper:  app.FeeGrantKeeper,
+				SignModeHandler: encodingConfig.TxConfig.SignModeHandler(),
+				SigGasConsumer:  ante.DefaultSigVerificationGasConsumer,
+			},
+			IBCKeeper:      app.IBCKeeper,
+			ConsumerKeeper: app.ConsumerKeeper,
 		},
 	)
 	if err != nil {
@@ -880,6 +933,7 @@ func NewStrideApp(
 	// app.ScopedMonitoringKeeper = scopedMonitoringKeeper
 	app.ScopedICAControllerKeeper = scopedICAControllerKeeper
 	app.ScopedICAHostKeeper = scopedICAHostKeeper
+	app.ScopedCCVConsumerKeeper = scopedCCVConsumerKeeper
 
 	return app
 }
@@ -891,7 +945,7 @@ func (app *StrideApp) Name() string { return app.BaseApp.Name() }
 func (app *StrideApp) GetBaseApp() *baseapp.BaseApp { return app.BaseApp }
 
 // GetStakingKeeper implements the TestingApp interface.
-func (app *StrideApp) GetStakingKeeper() ibctestingtypes.StakingKeeper {
+func (app *StrideApp) GetStakingKeeper() core.StakingKeeper {
 	return app.StakingKeeper
 }
 
@@ -958,7 +1012,7 @@ func (app *StrideApp) BlacklistedModuleAccountAddrs() map[string]bool {
 	// DO NOT REMOVE: StringMapKeys fixes non-deterministic map iteration
 	for _, acc := range utils.StringMapKeys(maccPerms) {
 		// don't blacklist stakeibc module account, so that it can ibc transfer tokens
-		if acc == stakeibcmoduletypes.ModuleName || acc == stakeibcmoduletypes.RewardCollectorName {
+		if acc == stakeibcmoduletypes.ModuleName || acc == stakeibcmoduletypes.RewardCollectorName || acc == ccvconsumertypes.ConsumerToSendToProviderName {
 			continue
 		}
 		modAccAddrs[authtypes.NewModuleAddress(acc).String()] = true
@@ -1078,6 +1132,7 @@ func initParamsKeeper(appCodec codec.BinaryCodec, legacyAmino *codec.LegacyAmino
 	paramsKeeper.Subspace(recordsmoduletypes.ModuleName)
 	paramsKeeper.Subspace(ratelimitmoduletypes.ModuleName)
 	paramsKeeper.Subspace(icacallbacksmoduletypes.ModuleName)
+	paramsKeeper.Subspace(ccvconsumertypes.ModuleName)
 	paramsKeeper.Subspace(autopilottypes.ModuleName)
 	paramsKeeper.Subspace(icaoracletypes.ModuleName)
 	paramsKeeper.Subspace(claimtypes.ModuleName)
@@ -1087,4 +1142,10 @@ func initParamsKeeper(appCodec codec.BinaryCodec, legacyAmino *codec.LegacyAmino
 // SimulationManager implements the SimulationApp interface
 func (app *StrideApp) SimulationManager() *module.SimulationManager {
 	return app.sm
+}
+
+// ConsumerApp interface implementations for e2e tests
+// GetConsumerKeeper implements the ConsumerApp interface.
+func (app *StrideApp) GetConsumerKeeper() ccvconsumerkeeper.Keeper {
+	return app.ConsumerKeeper
 }

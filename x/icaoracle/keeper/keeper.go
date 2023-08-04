@@ -11,8 +11,8 @@ import (
 	icacontrollerkeeper "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/controller/keeper"
 	ibckeeper "github.com/cosmos/ibc-go/v7/modules/core/keeper"
 
-	icacallbackskeeper "github.com/Stride-Labs/stride/v11/x/icacallbacks/keeper"
-	"github.com/Stride-Labs/stride/v11/x/icaoracle/types"
+	icacallbackskeeper "github.com/Stride-Labs/stride/v12/x/icacallbacks/keeper"
+	"github.com/Stride-Labs/stride/v12/x/icaoracle/types"
 )
 
 type Keeper struct {

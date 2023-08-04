@@ -7,14 +7,14 @@ import (
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/Stride-Labs/stride/v11/utils"
-	"github.com/Stride-Labs/stride/v11/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v12/utils"
+	"github.com/Stride-Labs/stride/v12/x/stakeibc/types"
 )
 
 // This function returns a map from Validator Address to how many extra tokens need to be given to that validator
 //
-//   positive implies extra tokens need to be given,
-//   negative impleis tokens need to be taken away
+//	positive implies extra tokens need to be given,
+//	negative impleis tokens need to be taken away
 func (k Keeper) GetValidatorDelegationAmtDifferences(ctx sdk.Context, hostZone types.HostZone) (map[string]sdkmath.Int, error) {
 	validators := hostZone.GetValidators()
 	delegationDelta := make(map[string]sdkmath.Int)

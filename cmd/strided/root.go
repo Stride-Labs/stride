@@ -12,7 +12,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/snapshots"
 	"gopkg.in/yaml.v2"
 
-	"github.com/Stride-Labs/stride/v11/utils"
+	"github.com/Stride-Labs/stride/v12/utils"
 
 	cometbftdb "github.com/cometbft/cometbft-db"
 	"github.com/cometbft/cometbft/libs/cli"
@@ -47,7 +47,7 @@ import (
 	genutilcli "github.com/cosmos/cosmos-sdk/x/genutil/client/cli"
 	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
 
-	"github.com/Stride-Labs/stride/v11/app"
+	"github.com/Stride-Labs/stride/v12/app"
 )
 
 var ChainID string
@@ -159,7 +159,7 @@ func initAppConfig() (string, interface{}) {
 	srvCfg.GRPCWeb.EnableUnsafeCORS = true
 
 	// This ensures that upgraded nodes will use iavl fast node.
-	srvCfg.IAVLDisableFastNode = false
+	//srvCfg.IAVLDisableFastNode = false
 
 	customAppConfig := CustomAppConfig{
 		Config: *srvCfg,

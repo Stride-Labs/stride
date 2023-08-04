@@ -12,7 +12,7 @@ import (
 	icatypes "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/types"
 	ibctmtypes "github.com/cosmos/ibc-go/v7/modules/light-clients/07-tendermint"
 
-	"github.com/Stride-Labs/stride/v11/x/icaoracle/types"
+	"github.com/Stride-Labs/stride/v12/x/icaoracle/types"
 )
 
 type msgServer struct {

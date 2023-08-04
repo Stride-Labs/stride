@@ -8,11 +8,11 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/spf13/cast"
 
-	"github.com/Stride-Labs/stride/v11/utils"
-	epochstypes "github.com/Stride-Labs/stride/v11/x/epochs/types"
-	icaoracletypes "github.com/Stride-Labs/stride/v11/x/icaoracle/types"
-	recordstypes "github.com/Stride-Labs/stride/v11/x/records/types"
-	"github.com/Stride-Labs/stride/v11/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v12/utils"
+	epochstypes "github.com/Stride-Labs/stride/v12/x/epochs/types"
+	icaoracletypes "github.com/Stride-Labs/stride/v12/x/icaoracle/types"
+	recordstypes "github.com/Stride-Labs/stride/v12/x/records/types"
+	"github.com/Stride-Labs/stride/v12/x/stakeibc/types"
 )
 
 func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochInfo epochstypes.EpochInfo) {

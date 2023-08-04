@@ -1,5 +1,5 @@
 [submodule "deps/hermes"]
-	# Commit: fd92eb6d17342bc83003f2067d6a9cd8261f2884
+	# Commit: v1.5.1
 	path = deps/hermes
 	url = https://github.com/informalsystems/ibc-rs.git
 [submodule "deps/relayer"]
