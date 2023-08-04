@@ -8,7 +8,7 @@ import (
 )
 
 func (s *KeeperTestSuite) TestQueryOracle() {
-	allOracles := s.createOracles()
+	allOracles := s.CreateTestOracles()
 	for _, expectedOracle := range allOracles {
 		queryResponse, err := s.QueryClient.Oracle(context.Background(), &types.QueryOracleRequest{
 			ChainId: expectedOracle.ChainId,
@@ -19,7 +19,7 @@ func (s *KeeperTestSuite) TestQueryOracle() {
 }
 
 func (s *KeeperTestSuite) TestQueryAllOracles() {
-	expectedOracles := s.createOracles()
+	expectedOracles := s.CreateTestOracles()
 	queryResponse, err := s.QueryClient.AllOracles(context.Background(), &types.QueryAllOraclesRequest{})
 	s.Require().NoError(err, "no error expected when querying all oracles")
 	s.Require().ElementsMatch(expectedOracles, queryResponse.Oracles)

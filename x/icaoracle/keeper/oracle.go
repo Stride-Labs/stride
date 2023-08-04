@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	errorsmod "cosmossdk.io/errors"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
@@ -64,6 +65,20 @@ func (k Keeper) ToggleOracle(ctx sdk.Context, chainId string, active bool) error
 	oracle, found := k.GetOracle(ctx, chainId)
 	if !found {
 		return types.ErrOracleNotFound
+	}
+
+	// If the oracle is being set to active, we need to first validate the ICA setup
+	if active {
+		if err := oracle.ValidateICASetup(); err != nil {
+			return err
+		}
+		if err := oracle.ValidateContractInstantiated(); err != nil {
+			return err
+		}
+		if !k.IsOracleICAChannelOpen(ctx, oracle) {
+			return errorsmod.Wrapf(types.ErrOracleICAChannelClosed,
+				"chain-id: %s, channel-id: %s", chainId, oracle.ChannelId)
+		}
 	}
 
 	oracle.Active = active
