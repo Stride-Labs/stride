@@ -19,6 +19,7 @@ type Keeper struct {
 	cdc        codec.BinaryCodec
 	storeKey   storetypes.StoreKey
 	paramstore paramtypes.Subspace
+	authority  string
 
 	ICS4Wrapper         types.ICS4Wrapper
 	IBCKeeper           ibckeeper.Keeper
@@ -30,6 +31,7 @@ func NewKeeper(
 	cdc codec.BinaryCodec,
 	key storetypes.StoreKey,
 	paramstore paramtypes.Subspace,
+	authority string,
 
 	ics4Wrapper types.ICS4Wrapper,
 	ibcKeeper ibckeeper.Keeper,
@@ -37,9 +39,11 @@ func NewKeeper(
 	icaCallbacksKeeper icacallbackskeeper.Keeper,
 ) *Keeper {
 	return &Keeper{
-		cdc:                 cdc,
-		storeKey:            key,
-		paramstore:          paramstore,
+		cdc:        cdc,
+		storeKey:   key,
+		paramstore: paramstore,
+		authority:  authority,
+
 		ICS4Wrapper:         ics4Wrapper,
 		IBCKeeper:           ibcKeeper,
 		ICAControllerKeeper: icaControllerKeeper,
@@ -49,4 +53,9 @@ func NewKeeper(
 
 func (k Keeper) Logger(ctx sdk.Context) log.Logger {
 	return ctx.Logger().With("module", fmt.Sprintf("x/%s", types.ModuleName))
+}
+
+// GetAuthority returns the x/staking module's authority.
+func (k Keeper) GetAuthority() string {
+	return k.authority
 }

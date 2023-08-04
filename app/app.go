@@ -136,7 +136,6 @@ import (
 	icacallbacksmodulekeeper "github.com/Stride-Labs/stride/v11/x/icacallbacks/keeper"
 	icacallbacksmoduletypes "github.com/Stride-Labs/stride/v11/x/icacallbacks/types"
 	icaoracle "github.com/Stride-Labs/stride/v11/x/icaoracle"
-	icaoracleclient "github.com/Stride-Labs/stride/v11/x/icaoracle/client"
 	icaoraclekeeper "github.com/Stride-Labs/stride/v11/x/icaoracle/keeper"
 	icaoracletypes "github.com/Stride-Labs/stride/v11/x/icaoracle/types"
 	ratelimitmodule "github.com/Stride-Labs/stride/v11/x/ratelimit"
@@ -171,8 +170,6 @@ func getGovProposalHandlers() []govclient.ProposalHandler {
 		ratelimitclient.UpdateRateLimitProposalHandler,
 		ratelimitclient.RemoveRateLimitProposalHandler,
 		ratelimitclient.ResetRateLimitProposalHandler,
-		icaoracleclient.ToggleOracleProposalHandler,
-		icaoracleclient.RemoveOracleProposalHandler,
 	)
 
 	return govProposalHandlers
@@ -525,6 +522,7 @@ func NewStrideApp(
 		appCodec,
 		keys[icaoracletypes.StoreKey],
 		app.GetSubspace(icaoracletypes.ModuleName),
+		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 		app.IBCKeeper.ChannelKeeper, // ICS4Wrapper - Note: this technically should be ICAController but it doesn't implement ICS4
 		*app.IBCKeeper,
 		app.ICAControllerKeeper,
@@ -569,8 +567,7 @@ func NewStrideApp(
 		AddRoute(upgradetypes.RouterKey, upgrade.NewSoftwareUpgradeProposalHandler(app.UpgradeKeeper)).
 		AddRoute(ibcclienttypes.RouterKey, ibcclient.NewClientProposalHandler(app.IBCKeeper.ClientKeeper)).
 		AddRoute(stakeibcmoduletypes.RouterKey, stakeibcmodule.NewStakeibcProposalHandler(app.StakeibcKeeper)).
-		AddRoute(ratelimitmoduletypes.RouterKey, ratelimitmodule.NewRateLimitProposalHandler(app.RatelimitKeeper, app.IBCKeeper.ChannelKeeper)).
-		AddRoute(icaoracletypes.RouterKey, icaoracle.NewProposalHandler(app.ICAOracleKeeper))
+		AddRoute(ratelimitmoduletypes.RouterKey, ratelimitmodule.NewRateLimitProposalHandler(app.RatelimitKeeper, app.IBCKeeper.ChannelKeeper))
 
 	govKeeper := govkeeper.NewKeeper(
 		appCodec, keys[govtypes.StoreKey], app.AccountKeeper, app.BankKeeper,

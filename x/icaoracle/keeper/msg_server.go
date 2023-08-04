@@ -5,14 +5,12 @@ import (
 	"encoding/json"
 
 	errorsmod "cosmossdk.io/errors"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-
+	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
+	proto "github.com/cosmos/gogoproto/proto"
 	icatypes "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/types"
 	ibctmtypes "github.com/cosmos/ibc-go/v7/modules/light-clients/07-tendermint"
-
-	proto "github.com/cosmos/gogoproto/proto"
 
 	"github.com/Stride-Labs/stride/v11/x/icaoracle/types"
 )
@@ -226,4 +224,42 @@ func (k msgServer) RestoreOracleICA(goCtx context.Context, msg *types.MsgRestore
 	}
 
 	return &types.MsgRestoreOracleICAResponse{}, nil
+}
+
+// Proposal handler for toggling whether an oracle is currently active (meaning it's a destination for metric pushes)
+func (ms msgServer) ToggleOracle(goCtx context.Context, msg *types.MsgToggleOracle) (*types.MsgToggleOracleResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+	if ms.authority != msg.Authority {
+		return nil, sdkerrors.Wrapf(govtypes.ErrInvalidSigner, "invalid authority; expected %s, got %s", ms.authority, msg.Authority)
+	}
+
+	if err := ms.Keeper.ToggleOracle(ctx, msg.OracleChainId, msg.Active); err != nil {
+		return nil, err
+	}
+
+	return &types.MsgToggleOracleResponse{}, nil
+}
+
+// Proposal handler for removing an oracle from the store
+func (ms msgServer) RemoveOracle(goCtx context.Context, msg *types.MsgRemoveOracle) (*types.MsgRemoveOracleResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+	if ms.authority != msg.Authority {
+		return nil, sdkerrors.Wrapf(govtypes.ErrInvalidSigner, "invalid authority; expected %s, got %s", ms.authority, msg.Authority)
+	}
+
+	_, found := ms.Keeper.GetOracle(ctx, msg.OracleChainId)
+	if !found {
+		return nil, types.ErrOracleNotFound
+	}
+
+	ms.Keeper.RemoveOracle(ctx, msg.OracleChainId)
+
+	// Remove all metrics that were targeting this oracle
+	for _, metric := range ms.Keeper.GetAllMetrics(ctx) {
+		if metric.DestinationOracle == msg.OracleChainId {
+			ms.Keeper.RemoveMetric(ctx, metric.GetMetricID())
+		}
+	}
+
+	return &types.MsgRemoveOracleResponse{}, nil
 }
