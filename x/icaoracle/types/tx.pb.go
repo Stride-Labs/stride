@@ -6,6 +6,9 @@ package types
 import (
 	context "context"
 	fmt "fmt"
+	_ "github.com/cosmos/cosmos-proto"
+	_ "github.com/cosmos/cosmos-sdk/types/msgservice"
+	_ "github.com/cosmos/cosmos-sdk/types/tx/amino"
 	grpc1 "github.com/cosmos/gogoproto/grpc"
 	proto "github.com/cosmos/gogoproto/proto"
 	grpc "google.golang.org/grpc"
@@ -302,6 +305,196 @@ func (m *MsgRestoreOracleICAResponse) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_MsgRestoreOracleICAResponse proto.InternalMessageInfo
 
+// Toggle's whether an oracle is active and should receive metric updates
+type MsgToggleOracle struct {
+	// authority is the address that controls the module (defaults to x/gov unless
+	// overwritten).
+	Authority     string `protobuf:"bytes,1,opt,name=authority,proto3" json:"authority,omitempty"`
+	OracleChainId string `protobuf:"bytes,2,opt,name=oracle_chain_id,json=oracleChainId,proto3" json:"oracle_chain_id,omitempty"`
+	Active        bool   `protobuf:"varint,3,opt,name=active,proto3" json:"active,omitempty"`
+}
+
+func (m *MsgToggleOracle) Reset()         { *m = MsgToggleOracle{} }
+func (m *MsgToggleOracle) String() string { return proto.CompactTextString(m) }
+func (*MsgToggleOracle) ProtoMessage()    {}
+func (*MsgToggleOracle) Descriptor() ([]byte, []int) {
+	return fileDescriptor_6e58a377bb8520d3, []int{6}
+}
+func (m *MsgToggleOracle) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *MsgToggleOracle) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_MsgToggleOracle.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *MsgToggleOracle) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MsgToggleOracle.Merge(m, src)
+}
+func (m *MsgToggleOracle) XXX_Size() int {
+	return m.Size()
+}
+func (m *MsgToggleOracle) XXX_DiscardUnknown() {
+	xxx_messageInfo_MsgToggleOracle.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_MsgToggleOracle proto.InternalMessageInfo
+
+func (m *MsgToggleOracle) GetAuthority() string {
+	if m != nil {
+		return m.Authority
+	}
+	return ""
+}
+
+func (m *MsgToggleOracle) GetOracleChainId() string {
+	if m != nil {
+		return m.OracleChainId
+	}
+	return ""
+}
+
+func (m *MsgToggleOracle) GetActive() bool {
+	if m != nil {
+		return m.Active
+	}
+	return false
+}
+
+type MsgToggleOracleResponse struct {
+}
+
+func (m *MsgToggleOracleResponse) Reset()         { *m = MsgToggleOracleResponse{} }
+func (m *MsgToggleOracleResponse) String() string { return proto.CompactTextString(m) }
+func (*MsgToggleOracleResponse) ProtoMessage()    {}
+func (*MsgToggleOracleResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_6e58a377bb8520d3, []int{7}
+}
+func (m *MsgToggleOracleResponse) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *MsgToggleOracleResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_MsgToggleOracleResponse.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *MsgToggleOracleResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MsgToggleOracleResponse.Merge(m, src)
+}
+func (m *MsgToggleOracleResponse) XXX_Size() int {
+	return m.Size()
+}
+func (m *MsgToggleOracleResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_MsgToggleOracleResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_MsgToggleOracleResponse proto.InternalMessageInfo
+
+// Removes an oracle completely
+type MsgRemoveOracle struct {
+	// authority is the address that controls the module (defaults to x/gov unless
+	// overwritten).
+	Authority     string `protobuf:"bytes,1,opt,name=authority,proto3" json:"authority,omitempty"`
+	OracleChainId string `protobuf:"bytes,2,opt,name=oracle_chain_id,json=oracleChainId,proto3" json:"oracle_chain_id,omitempty"`
+}
+
+func (m *MsgRemoveOracle) Reset()         { *m = MsgRemoveOracle{} }
+func (m *MsgRemoveOracle) String() string { return proto.CompactTextString(m) }
+func (*MsgRemoveOracle) ProtoMessage()    {}
+func (*MsgRemoveOracle) Descriptor() ([]byte, []int) {
+	return fileDescriptor_6e58a377bb8520d3, []int{8}
+}
+func (m *MsgRemoveOracle) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *MsgRemoveOracle) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_MsgRemoveOracle.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *MsgRemoveOracle) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MsgRemoveOracle.Merge(m, src)
+}
+func (m *MsgRemoveOracle) XXX_Size() int {
+	return m.Size()
+}
+func (m *MsgRemoveOracle) XXX_DiscardUnknown() {
+	xxx_messageInfo_MsgRemoveOracle.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_MsgRemoveOracle proto.InternalMessageInfo
+
+func (m *MsgRemoveOracle) GetAuthority() string {
+	if m != nil {
+		return m.Authority
+	}
+	return ""
+}
+
+func (m *MsgRemoveOracle) GetOracleChainId() string {
+	if m != nil {
+		return m.OracleChainId
+	}
+	return ""
+}
+
+type MsgRemoveOracleResponse struct {
+}
+
+func (m *MsgRemoveOracleResponse) Reset()         { *m = MsgRemoveOracleResponse{} }
+func (m *MsgRemoveOracleResponse) String() string { return proto.CompactTextString(m) }
+func (*MsgRemoveOracleResponse) ProtoMessage()    {}
+func (*MsgRemoveOracleResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_6e58a377bb8520d3, []int{9}
+}
+func (m *MsgRemoveOracleResponse) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *MsgRemoveOracleResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_MsgRemoveOracleResponse.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *MsgRemoveOracleResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MsgRemoveOracleResponse.Merge(m, src)
+}
+func (m *MsgRemoveOracleResponse) XXX_Size() int {
+	return m.Size()
+}
+func (m *MsgRemoveOracleResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_MsgRemoveOracleResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_MsgRemoveOracleResponse proto.InternalMessageInfo
+
 func init() {
 	proto.RegisterType((*MsgAddOracle)(nil), "stride.icaoracle.MsgAddOracle")
 	proto.RegisterType((*MsgAddOracleResponse)(nil), "stride.icaoracle.MsgAddOracleResponse")
@@ -309,35 +502,53 @@ func init() {
 	proto.RegisterType((*MsgInstantiateOracleResponse)(nil), "stride.icaoracle.MsgInstantiateOracleResponse")
 	proto.RegisterType((*MsgRestoreOracleICA)(nil), "stride.icaoracle.MsgRestoreOracleICA")
 	proto.RegisterType((*MsgRestoreOracleICAResponse)(nil), "stride.icaoracle.MsgRestoreOracleICAResponse")
+	proto.RegisterType((*MsgToggleOracle)(nil), "stride.icaoracle.MsgToggleOracle")
+	proto.RegisterType((*MsgToggleOracleResponse)(nil), "stride.icaoracle.MsgToggleOracleResponse")
+	proto.RegisterType((*MsgRemoveOracle)(nil), "stride.icaoracle.MsgRemoveOracle")
+	proto.RegisterType((*MsgRemoveOracleResponse)(nil), "stride.icaoracle.MsgRemoveOracleResponse")
 }
 
 func init() { proto.RegisterFile("stride/icaoracle/tx.proto", fileDescriptor_6e58a377bb8520d3) }
 
 var fileDescriptor_6e58a377bb8520d3 = []byte{
-	// 367 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xa4, 0x53, 0xd1, 0x4a, 0x32, 0x41,
-	0x18, 0x75, 0xf5, 0xe7, 0x0f, 0x3f, 0xb4, 0x6c, 0x8b, 0x30, 0xab, 0x41, 0x36, 0x12, 0x6f, 0xdc,
-	0xc5, 0x7c, 0x02, 0xf3, 0x6a, 0xa1, 0x25, 0x58, 0x2f, 0x82, 0x6e, 0x64, 0x9c, 0x19, 0xd6, 0xa5,
-	0x9a, 0x91, 0x99, 0x29, 0xec, 0xb6, 0x27, 0xe8, 0x55, 0x7a, 0x8b, 0x2e, 0xbd, 0xec, 0x32, 0xf4,
-	0x45, 0xc2, 0xd5, 0xd5, 0x45, 0x97, 0x12, 0xba, 0x9c, 0x73, 0xce, 0x9c, 0x73, 0xf8, 0x3e, 0x3e,
-	0x38, 0x56, 0x5a, 0x86, 0x94, 0x39, 0x21, 0xc1, 0x42, 0x62, 0xf2, 0xc0, 0x1c, 0x3d, 0xb2, 0x87,
-	0x52, 0x68, 0x61, 0x96, 0xe6, 0x94, 0xbd, 0xa4, 0x2c, 0x0f, 0x0a, 0x9e, 0x0a, 0xda, 0x94, 0xde,
-	0x44, 0x6f, 0xb3, 0x0c, 0x3b, 0x44, 0x32, 0xac, 0x85, 0x2c, 0x1b, 0x55, 0xa3, 0x9e, 0xf7, 0xe3,
-	0xa7, 0x79, 0x0e, 0x45, 0x22, 0x38, 0x67, 0x44, 0x87, 0x82, 0xf7, 0x42, 0x5a, 0xce, 0x46, 0x7c,
-	0x61, 0x05, 0xba, 0xd4, 0x3a, 0x82, 0xc3, 0xa4, 0x9d, 0xcf, 0xd4, 0x50, 0x70, 0xc5, 0xac, 0x57,
-	0x23, 0x22, 0x5c, 0xae, 0x34, 0xe6, 0x3a, 0xc4, 0x9a, 0xfd, 0x9a, 0x57, 0x83, 0xbd, 0x79, 0xc7,
-	0x1e, 0x19, 0xe0, 0x30, 0x91, 0x58, 0x9c, 0xc3, 0x9d, 0x19, 0xea, 0x52, 0xb3, 0x0e, 0x25, 0x22,
-	0xb8, 0x96, 0x98, 0xe8, 0x1e, 0x11, 0x94, 0xcd, 0x84, 0xb9, 0xaa, 0x51, 0xff, 0xe7, 0xef, 0xc6,
-	0x78, 0x47, 0x50, 0xe6, 0x52, 0x0b, 0xc1, 0x69, 0x5a, 0x87, 0x65, 0xc9, 0x5b, 0x38, 0xf0, 0x54,
-	0xe0, 0x33, 0xa5, 0x85, 0x5c, 0x70, 0x6e, 0xa7, 0xfd, 0xf7, 0x8a, 0xd6, 0x19, 0x9c, 0xa4, 0x18,
-	0xc7, 0xb9, 0x97, 0xef, 0x59, 0xc8, 0x79, 0x2a, 0x30, 0xbb, 0x90, 0x5f, 0x2d, 0x02, 0xd9, 0xeb,
-	0xbb, 0xb2, 0x93, 0x93, 0xad, 0xd4, 0x7e, 0xe6, 0x63, 0x73, 0xf3, 0x1e, 0xf6, 0x37, 0xa7, 0x9e,
-	0xfe, 0x79, 0x43, 0x57, 0xb1, 0xb7, 0xd3, 0x2d, 0xc3, 0x06, 0x50, 0xda, 0x18, 0xdf, 0x45, 0xaa,
-	0xc7, 0xba, 0xac, 0xd2, 0xd8, 0x4a, 0x16, 0x27, 0x5d, 0x79, 0x1f, 0x13, 0x64, 0x8c, 0x27, 0xc8,
-	0xf8, 0x9a, 0x20, 0xe3, 0x6d, 0x8a, 0x32, 0xe3, 0x29, 0xca, 0x7c, 0x4e, 0x51, 0xe6, 0xae, 0x15,
-	0x84, 0x7a, 0xf0, 0xd4, 0xb7, 0x89, 0x78, 0x74, 0xba, 0x91, 0x65, 0xe3, 0x1a, 0xf7, 0x95, 0xb3,
-	0xb8, 0x8a, 0xe7, 0x66, 0xd3, 0x19, 0x25, 0x6f, 0xe3, 0x65, 0xc8, 0x54, 0xff, 0x7f, 0x74, 0x1f,
-	0xad, 0xef, 0x00, 0x00, 0x00, 0xff, 0xff, 0x77, 0xc2, 0xbe, 0xdd, 0x3c, 0x03, 0x00, 0x00,
+	// 592 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xbc, 0x95, 0x3d, 0x6f, 0xd3, 0x4e,
+	0x1c, 0xc7, 0xe3, 0x7f, 0xfe, 0x2a, 0xe4, 0x94, 0xd2, 0xd4, 0x54, 0x6d, 0x62, 0xc0, 0xb4, 0x46,
+	0x84, 0x50, 0x29, 0x36, 0x69, 0xc5, 0x83, 0xb2, 0xa5, 0x99, 0x22, 0x11, 0x21, 0x39, 0x4c, 0x08,
+	0x29, 0xba, 0xdc, 0x9d, 0x9c, 0x13, 0x8d, 0x2f, 0xf2, 0x5d, 0xa3, 0x76, 0x65, 0x64, 0x62, 0xe5,
+	0x1d, 0x20, 0xa6, 0x0e, 0xbc, 0x00, 0x46, 0xc6, 0x8a, 0x01, 0x31, 0xa2, 0x64, 0xe8, 0xc4, 0x7b,
+	0x40, 0x7e, 0x76, 0x1c, 0x97, 0x06, 0x21, 0x58, 0x12, 0xdd, 0xf7, 0xf7, 0xbd, 0xdf, 0x7d, 0x3f,
+	0xba, 0x07, 0x83, 0x0a, 0x17, 0x0e, 0xc5, 0xc4, 0xa0, 0x08, 0x32, 0x07, 0xa2, 0x43, 0x62, 0x88,
+	0x63, 0x7d, 0xec, 0x30, 0xc1, 0xe4, 0x92, 0x5f, 0xd2, 0xa3, 0x92, 0x52, 0x41, 0x8c, 0x8f, 0x18,
+	0xef, 0x7b, 0x75, 0xc3, 0x1f, 0xf8, 0x66, 0x65, 0xcb, 0x1f, 0x19, 0x23, 0x6e, 0x19, 0x93, 0x86,
+	0xfb, 0x17, 0x14, 0xd6, 0xe1, 0x88, 0xda, 0xcc, 0xf0, 0x7e, 0x7d, 0x49, 0x7b, 0x27, 0x81, 0x62,
+	0x97, 0x5b, 0x2d, 0x8c, 0x9f, 0x79, 0x7d, 0xe5, 0x3d, 0x70, 0x05, 0x39, 0x04, 0x0a, 0xe6, 0x94,
+	0xa5, 0x6d, 0xa9, 0x56, 0x38, 0x28, 0x7f, 0xf9, 0x58, 0xdf, 0x08, 0xfa, 0xb7, 0x30, 0x76, 0x08,
+	0xe7, 0x3d, 0xe1, 0x50, 0xdb, 0x32, 0x43, 0xa3, 0x7c, 0x07, 0xac, 0x22, 0x66, 0xdb, 0x04, 0x09,
+	0xca, 0xec, 0x3e, 0xc5, 0xe5, 0xff, 0xdc, 0x99, 0x66, 0x31, 0x16, 0x3b, 0xb8, 0xf9, 0xe0, 0xf5,
+	0xf9, 0xe9, 0x6e, 0x38, 0xe5, 0xcd, 0xf9, 0xe9, 0xee, 0xed, 0x00, 0xf7, 0x38, 0x01, 0x9c, 0x8c,
+	0xa2, 0x6d, 0x82, 0x8d, 0xe4, 0xd8, 0x24, 0x7c, 0xcc, 0x6c, 0x4e, 0xb4, 0xaf, 0x92, 0x57, 0xe8,
+	0xd8, 0x5c, 0x40, 0x5b, 0x50, 0x28, 0xc8, 0x1f, 0x64, 0xaf, 0x82, 0x35, 0x7f, 0xed, 0x3e, 0x1a,
+	0x42, 0x9a, 0x48, 0xbf, 0xea, 0xcb, 0x6d, 0x57, 0xed, 0x60, 0xb9, 0x06, 0x4a, 0x88, 0xd9, 0xc2,
+	0x81, 0x48, 0xf4, 0x11, 0xc3, 0xc4, 0x35, 0xe6, 0xb7, 0xa5, 0xda, 0xff, 0xe6, 0xb5, 0x50, 0x6f,
+	0x33, 0x4c, 0x3a, 0xb8, 0xf9, 0x24, 0x0d, 0x7a, 0x2f, 0x1b, 0x74, 0x21, 0xbf, 0xa6, 0x82, 0x9b,
+	0x59, 0x7a, 0x04, 0xfe, 0x41, 0x02, 0xd7, 0xbb, 0xdc, 0x32, 0x09, 0x17, 0xcc, 0x09, 0x8a, 0x9d,
+	0x76, 0xeb, 0x6f, 0x72, 0x37, 0x1f, 0xa7, 0x69, 0xaa, 0xd9, 0x34, 0xe9, 0x50, 0xda, 0x2d, 0x70,
+	0x23, 0x43, 0x8e, 0x58, 0x3e, 0x49, 0x60, 0xad, 0xcb, 0xad, 0xe7, 0xcc, 0xb2, 0x0e, 0xc3, 0xfd,
+	0x7b, 0x04, 0x0a, 0xf0, 0x48, 0x0c, 0x99, 0x43, 0xc5, 0xc9, 0xa5, 0x24, 0xb1, 0x75, 0xe9, 0x3d,
+	0xdc, 0x04, 0x2b, 0x10, 0x09, 0x3a, 0x21, 0xde, 0xce, 0x5d, 0x35, 0x83, 0x51, 0xf3, 0xa1, 0xcb,
+	0x18, 0xf7, 0x73, 0x29, 0xb5, 0x6c, 0xca, 0x64, 0x5c, 0xad, 0x02, 0xb6, 0x52, 0x52, 0x44, 0xf7,
+	0xde, 0xa7, 0x33, 0xc9, 0x88, 0x4d, 0xfe, 0x11, 0xdd, 0x6f, 0x50, 0x24, 0x63, 0x05, 0x14, 0x49,
+	0x29, 0xa4, 0xd8, 0xfb, 0x91, 0x07, 0xf9, 0x2e, 0xb7, 0xe4, 0x1e, 0x28, 0xc4, 0x0f, 0x84, 0xaa,
+	0xa7, 0xdf, 0x22, 0x3d, 0x79, 0x4b, 0x95, 0xea, 0xaf, 0xeb, 0x61, 0x73, 0xf9, 0x15, 0x58, 0x5f,
+	0xbc, 0xc1, 0xd9, 0x93, 0x17, 0x7c, 0x8a, 0xbe, 0x9c, 0x2f, 0x5a, 0x6c, 0x08, 0x4a, 0x0b, 0xb7,
+	0xe6, 0x6e, 0x66, 0x8f, 0xb4, 0x4d, 0xa9, 0x2f, 0x65, 0x8b, 0x56, 0x7a, 0x09, 0x8a, 0x73, 0x67,
+	0x7a, 0x27, 0x73, 0x7a, 0xd2, 0xa2, 0xdc, 0xbf, 0xd4, 0x92, 0xec, 0x3e, 0x77, 0xa6, 0x76, 0x2e,
+	0x08, 0x17, 0x5b, 0x2e, 0xe8, 0x9e, 0xb5, 0xdf, 0x07, 0xdd, 0xcf, 0x53, 0x55, 0x3a, 0x9b, 0xaa,
+	0xd2, 0xf7, 0xa9, 0x2a, 0xbd, 0x9d, 0xa9, 0xb9, 0xb3, 0x99, 0x9a, 0xfb, 0x36, 0x53, 0x73, 0x2f,
+	0xf6, 0x2d, 0x2a, 0x86, 0x47, 0x03, 0x1d, 0xb1, 0x91, 0xd1, 0xf3, 0xda, 0xd5, 0x9f, 0xc2, 0x01,
+	0x37, 0x82, 0xf3, 0x35, 0x69, 0x34, 0xe6, 0xce, 0x98, 0x38, 0x19, 0x13, 0x3e, 0x58, 0xf1, 0x3e,
+	0x31, 0xfb, 0x3f, 0x03, 0x00, 0x00, 0xff, 0xff, 0x89, 0x5e, 0xed, 0xbb, 0xd8, 0x06, 0x00, 0x00,
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -358,6 +569,10 @@ type MsgClient interface {
 	InstantiateOracle(ctx context.Context, in *MsgInstantiateOracle, opts ...grpc.CallOption) (*MsgInstantiateOracleResponse, error)
 	// Restores the oracle ICA channel after a closure
 	RestoreOracleICA(ctx context.Context, in *MsgRestoreOracleICA, opts ...grpc.CallOption) (*MsgRestoreOracleICAResponse, error)
+	// Toggle's whether an oracle is active and should receive metric updates
+	ToggleOracle(ctx context.Context, in *MsgToggleOracle, opts ...grpc.CallOption) (*MsgToggleOracleResponse, error)
+	// Removes an oracle completely
+	RemoveOracle(ctx context.Context, in *MsgRemoveOracle, opts ...grpc.CallOption) (*MsgRemoveOracleResponse, error)
 }
 
 type msgClient struct {
@@ -395,6 +610,24 @@ func (c *msgClient) RestoreOracleICA(ctx context.Context, in *MsgRestoreOracleIC
 	return out, nil
 }
 
+func (c *msgClient) ToggleOracle(ctx context.Context, in *MsgToggleOracle, opts ...grpc.CallOption) (*MsgToggleOracleResponse, error) {
+	out := new(MsgToggleOracleResponse)
+	err := c.cc.Invoke(ctx, "/stride.icaoracle.Msg/ToggleOracle", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *msgClient) RemoveOracle(ctx context.Context, in *MsgRemoveOracle, opts ...grpc.CallOption) (*MsgRemoveOracleResponse, error) {
+	out := new(MsgRemoveOracleResponse)
+	err := c.cc.Invoke(ctx, "/stride.icaoracle.Msg/RemoveOracle", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // MsgServer is the server API for Msg service.
 type MsgServer interface {
 	// Adds a new oracle given a provided connection
@@ -403,6 +636,10 @@ type MsgServer interface {
 	InstantiateOracle(context.Context, *MsgInstantiateOracle) (*MsgInstantiateOracleResponse, error)
 	// Restores the oracle ICA channel after a closure
 	RestoreOracleICA(context.Context, *MsgRestoreOracleICA) (*MsgRestoreOracleICAResponse, error)
+	// Toggle's whether an oracle is active and should receive metric updates
+	ToggleOracle(context.Context, *MsgToggleOracle) (*MsgToggleOracleResponse, error)
+	// Removes an oracle completely
+	RemoveOracle(context.Context, *MsgRemoveOracle) (*MsgRemoveOracleResponse, error)
 }
 
 // UnimplementedMsgServer can be embedded to have forward compatible implementations.
@@ -417,6 +654,12 @@ func (*UnimplementedMsgServer) InstantiateOracle(ctx context.Context, req *MsgIn
 }
 func (*UnimplementedMsgServer) RestoreOracleICA(ctx context.Context, req *MsgRestoreOracleICA) (*MsgRestoreOracleICAResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method RestoreOracleICA not implemented")
+}
+func (*UnimplementedMsgServer) ToggleOracle(ctx context.Context, req *MsgToggleOracle) (*MsgToggleOracleResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ToggleOracle not implemented")
+}
+func (*UnimplementedMsgServer) RemoveOracle(ctx context.Context, req *MsgRemoveOracle) (*MsgRemoveOracleResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method RemoveOracle not implemented")
 }
 
 func RegisterMsgServer(s grpc1.Server, srv MsgServer) {
@@ -477,6 +720,42 @@ func _Msg_RestoreOracleICA_Handler(srv interface{}, ctx context.Context, dec fun
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Msg_ToggleOracle_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MsgToggleOracle)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MsgServer).ToggleOracle(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/stride.icaoracle.Msg/ToggleOracle",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MsgServer).ToggleOracle(ctx, req.(*MsgToggleOracle))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Msg_RemoveOracle_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MsgRemoveOracle)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MsgServer).RemoveOracle(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/stride.icaoracle.Msg/RemoveOracle",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MsgServer).RemoveOracle(ctx, req.(*MsgRemoveOracle))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 var _Msg_serviceDesc = grpc.ServiceDesc{
 	ServiceName: "stride.icaoracle.Msg",
 	HandlerType: (*MsgServer)(nil),
@@ -492,6 +771,14 @@ var _Msg_serviceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "RestoreOracleICA",
 			Handler:    _Msg_RestoreOracleICA_Handler,
+		},
+		{
+			MethodName: "ToggleOracle",
+			Handler:    _Msg_ToggleOracle_Handler,
+		},
+		{
+			MethodName: "RemoveOracle",
+			Handler:    _Msg_RemoveOracle_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
@@ -683,6 +970,136 @@ func (m *MsgRestoreOracleICAResponse) MarshalToSizedBuffer(dAtA []byte) (int, er
 	return len(dAtA) - i, nil
 }
 
+func (m *MsgToggleOracle) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *MsgToggleOracle) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *MsgToggleOracle) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if m.Active {
+		i--
+		if m.Active {
+			dAtA[i] = 1
+		} else {
+			dAtA[i] = 0
+		}
+		i--
+		dAtA[i] = 0x18
+	}
+	if len(m.OracleChainId) > 0 {
+		i -= len(m.OracleChainId)
+		copy(dAtA[i:], m.OracleChainId)
+		i = encodeVarintTx(dAtA, i, uint64(len(m.OracleChainId)))
+		i--
+		dAtA[i] = 0x12
+	}
+	if len(m.Authority) > 0 {
+		i -= len(m.Authority)
+		copy(dAtA[i:], m.Authority)
+		i = encodeVarintTx(dAtA, i, uint64(len(m.Authority)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *MsgToggleOracleResponse) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *MsgToggleOracleResponse) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *MsgToggleOracleResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	return len(dAtA) - i, nil
+}
+
+func (m *MsgRemoveOracle) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *MsgRemoveOracle) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *MsgRemoveOracle) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if len(m.OracleChainId) > 0 {
+		i -= len(m.OracleChainId)
+		copy(dAtA[i:], m.OracleChainId)
+		i = encodeVarintTx(dAtA, i, uint64(len(m.OracleChainId)))
+		i--
+		dAtA[i] = 0x12
+	}
+	if len(m.Authority) > 0 {
+		i -= len(m.Authority)
+		copy(dAtA[i:], m.Authority)
+		i = encodeVarintTx(dAtA, i, uint64(len(m.Authority)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *MsgRemoveOracleResponse) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *MsgRemoveOracleResponse) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *MsgRemoveOracleResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	return len(dAtA) - i, nil
+}
+
 func encodeVarintTx(dAtA []byte, offset int, v uint64) int {
 	offset -= sovTx(v)
 	base := offset
@@ -767,6 +1184,61 @@ func (m *MsgRestoreOracleICA) Size() (n int) {
 }
 
 func (m *MsgRestoreOracleICAResponse) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	return n
+}
+
+func (m *MsgToggleOracle) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.Authority)
+	if l > 0 {
+		n += 1 + l + sovTx(uint64(l))
+	}
+	l = len(m.OracleChainId)
+	if l > 0 {
+		n += 1 + l + sovTx(uint64(l))
+	}
+	if m.Active {
+		n += 2
+	}
+	return n
+}
+
+func (m *MsgToggleOracleResponse) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	return n
+}
+
+func (m *MsgRemoveOracle) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.Authority)
+	if l > 0 {
+		n += 1 + l + sovTx(uint64(l))
+	}
+	l = len(m.OracleChainId)
+	if l > 0 {
+		n += 1 + l + sovTx(uint64(l))
+	}
+	return n
+}
+
+func (m *MsgRemoveOracleResponse) Size() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -1269,6 +1741,354 @@ func (m *MsgRestoreOracleICAResponse) Unmarshal(dAtA []byte) error {
 		}
 		if fieldNum <= 0 {
 			return fmt.Errorf("proto: MsgRestoreOracleICAResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		default:
+			iNdEx = preIndex
+			skippy, err := skipTx(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthTx
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *MsgToggleOracle) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowTx
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: MsgToggleOracle: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: MsgToggleOracle: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Authority", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Authority = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field OracleChainId", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.OracleChainId = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 3:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Active", wireType)
+			}
+			var v int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				v |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			m.Active = bool(v != 0)
+		default:
+			iNdEx = preIndex
+			skippy, err := skipTx(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthTx
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *MsgToggleOracleResponse) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowTx
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: MsgToggleOracleResponse: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: MsgToggleOracleResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		default:
+			iNdEx = preIndex
+			skippy, err := skipTx(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthTx
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *MsgRemoveOracle) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowTx
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: MsgRemoveOracle: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: MsgRemoveOracle: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Authority", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Authority = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field OracleChainId", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.OracleChainId = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipTx(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthTx
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *MsgRemoveOracleResponse) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowTx
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: MsgRemoveOracleResponse: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: MsgRemoveOracleResponse: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		default:
