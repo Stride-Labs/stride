@@ -9,8 +9,6 @@ import (
 
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
 
-	"github.com/Stride-Labs/stride/v11/x/icaoracle/keeper/gov"
-
 	"github.com/Stride-Labs/stride/v11/x/icaoracle/keeper"
 	"github.com/Stride-Labs/stride/v11/x/icaoracle/types"
 )
@@ -45,9 +43,9 @@ func NewProposalHandler(k keeper.Keeper) govtypes.Handler {
 	return func(ctx sdk.Context, content govtypes.Content) error {
 		switch proposal := content.(type) {
 		case *types.ToggleOracleProposal:
-			return gov.ToggleOracle(ctx, k, proposal)
+			return k.HandleToggleOracleProposal(ctx, proposal)
 		case *types.RemoveOracleProposal:
-			return gov.RemoveOracle(ctx, k, proposal)
+			return k.HandleRemoveOracleProposal(ctx, proposal)
 		default:
 			return errorsmod.Wrapf(sdkerrors.ErrUnknownRequest, "unrecognized icaoracle proposal content type: %T", proposal)
 		}
