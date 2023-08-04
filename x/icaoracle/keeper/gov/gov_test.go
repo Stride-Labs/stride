@@ -1,9 +1,11 @@
 package gov_test
 
 import (
+	"fmt"
 	"strconv"
 	"testing"
 
+	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/Stride-Labs/stride/v11/app/apptesting"
@@ -23,25 +25,38 @@ func TestKeeperTestSuite(t *testing.T) {
 	suite.Run(t, new(KeeperTestSuite))
 }
 
-func (s *KeeperTestSuite) addOracles() []types.Oracle {
+// Helper function to create 5 oracle objects with various attributes
+func (s *KeeperTestSuite) CreateTestOracles() []types.Oracle {
 	oracles := []types.Oracle{}
-	for i := 0; i <= 5; i++ {
+	for i := 1; i <= 5; i++ {
 		suffix := strconv.Itoa(i)
+
+		channelId := "channel-" + suffix
+		portId := "port-" + suffix
+
 		oracle := types.Oracle{
 			ChainId:         "chain-" + suffix,
 			ConnectionId:    "connection-" + suffix,
+			ChannelId:       channelId,
+			PortId:          portId,
+			IcaAddress:      "oracle-address",
+			ContractAddress: "contract-address",
 			Active:          true,
-			ContractAddress: "contract-" + suffix,
 		}
 
 		oracles = append(oracles, oracle)
 		s.App.ICAOracleKeeper.SetOracle(s.Ctx, oracle)
+
+		// Create open ICA channel
+		s.App.IBCKeeper.ChannelKeeper.SetChannel(s.Ctx, portId, channelId, channeltypes.Channel{
+			State: channeltypes.OPEN,
+		})
 	}
 	return oracles
 }
 
 func (s *KeeperTestSuite) TestGovToggleOracle() {
-	oracles := s.addOracles()
+	oracles := s.CreateTestOracles()
 
 	oracleIndexToToggle := 1
 	oracleToToggle := oracles[oracleIndexToToggle]
@@ -81,10 +96,23 @@ func (s *KeeperTestSuite) TestGovToggleOracle() {
 }
 
 func (s *KeeperTestSuite) TestGovRemoveOracle() {
-	oracles := s.addOracles()
+	oracles := s.CreateTestOracles()
 
 	oracleIndexToRemove := 1
 	oracleToRemove := oracles[oracleIndexToRemove]
+
+	// Add metrics to that oracle
+	for i := 0; i < 3; i++ {
+		metric := types.Metric{
+			Key:               fmt.Sprintf("key-%d", i),
+			Value:             fmt.Sprintf("value-%d", i),
+			BlockHeight:       s.Ctx.BlockHeight(),
+			UpdateTime:        s.Ctx.BlockTime().Unix(),
+			DestinationOracle: oracleToRemove.ChainId,
+			Status:            types.MetricStatus_QUEUED,
+		}
+		s.App.ICAOracleKeeper.SetMetric(s.Ctx, metric)
+	}
 
 	// Remove the oracle thorugh goverance
 	err := gov.RemoveOracle(s.Ctx, s.App.ICAOracleKeeper, &types.RemoveOracleProposal{
@@ -105,4 +133,7 @@ func (s *KeeperTestSuite) TestGovRemoveOracle() {
 			s.Require().True(found, "oracle %s should not have been removed", oracle.ChainId)
 		}
 	}
+
+	// Confirm the metrics were removed
+	s.Require().Empty(s.App.ICAOracleKeeper.GetAllMetrics(s.Ctx), "all metrics removed")
 }

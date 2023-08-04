@@ -61,10 +61,6 @@ Example:
 				connectionId,
 			)
 
-			if err := msg.ValidateBasic(); err != nil {
-				return err
-			}
-
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
 		},
 	}
@@ -106,10 +102,6 @@ Example:
 				contractCodeId,
 			)
 
-			if err := msg.ValidateBasic(); err != nil {
-				return err
-			}
-
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
 		},
 	}
@@ -144,10 +136,6 @@ Example:
 				clientCtx.GetFromAddress().String(),
 				chainId,
 			)
-
-			if err := msg.ValidateBasic(); err != nil {
-				return err
-			}
 
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
 		},
