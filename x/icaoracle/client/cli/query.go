@@ -44,7 +44,7 @@ func GetQueryCmd() *cobra.Command {
 // GetCmdQueryOracle implements a command to query a specific oracle using the oracle's chain ID
 func GetCmdQueryOracle() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "oracle",
+		Use:   "oracle [chain-id]",
 		Short: "Queries a specific oracle",
 		Long: strings.TrimSpace(
 			fmt.Sprintf(`Queries a specific oracle using the oracle's chain ID
