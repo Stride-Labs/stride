@@ -16,7 +16,7 @@ import (
 //	If successful: mark the LSM Token status as DETOKENIZATION_QUEUE
 //	If failure: mark the LSM Token status as FAILED
 //	If timeout: revert the LSM Token status back to TRANSFER_QUEUE so it gets resubmitted
-func LSMTransferCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ackResponse *icacallbackstypes.AcknowledgementResponse, args []byte) error {
+func (k Keeper) LSMTransferCallback(ctx sdk.Context, packet channeltypes.Packet, ackResponse *icacallbackstypes.AcknowledgementResponse, args []byte) error {
 	// Fetch callback args
 	transferCallback := types.TransferLSMTokenCallback{}
 	if err := proto.Unmarshal(args, &transferCallback); err != nil {

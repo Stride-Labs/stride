@@ -92,13 +92,8 @@ func (s *KeeperTestSuite) SetupClaimUndelegatedTokens() ClaimUndelegatedTestCase
 			redemptionRecord:   redemptionRecord,
 		},
 		expectedIcaMsg: keeper.IcaTx{
-<<<<<<< HEAD
-			Msgs: []sdk.Msg{&banktypes.MsgSend{
-				FromAddress: redemptionAddr,
-=======
 			Msgs: []proto.Message{&banktypes.MsgSend{
-				FromAddress: redemptionAccount.Address,
->>>>>>> main
+				FromAddress: redemptionAddr,
 				ToAddress:   receiverAddr,
 				Amount:      redemptionAmount,
 			}},

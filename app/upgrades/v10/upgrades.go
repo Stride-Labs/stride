@@ -246,7 +246,7 @@ func MigrateCallbackData(ctx sdk.Context, k icacallbackskeeper.Keeper) error {
 			newCallbackArgsBz, err = reserializeCallback(oldCallbackArgsBz, &stakeibctypes.ReinvestCallback{})
 		case stakeibckeeper.ICACallbackID_Undelegate:
 			newCallbackArgsBz, err = reserializeCallback(oldCallbackArgsBz, &stakeibctypes.UndelegateCallback{})
-		case recordskeeper.TRANSFER:
+		case recordskeeper.IBCCallbacksID_NativeTransfer:
 			newCallbackArgsBz, err = reserializeCallback(oldCallbackArgsBz, &recordstypes.TransferCallback{})
 		}
 		if err != nil {
@@ -343,21 +343,21 @@ func EnableRateLimits(
 			return errorsmod.Wrapf(err, "unable to add rate limit for %s", denom)
 		}
 
-		if hostZone.DelegationAccount == nil || hostZone.DelegationAccount.Address == "" {
+		if hostZone.DelegationIcaAddress == "" {
 			return stakeibctypes.ErrICAAccountNotFound
 		}
-		if hostZone.FeeAccount == nil || hostZone.FeeAccount.Address == "" {
+		if hostZone.FeeIcaAddress == "" {
 			return stakeibctypes.ErrICAAccountNotFound
 		}
 
 		ratelimitKeeper.SetWhitelistedAddressPair(ctx, ratelimittypes.WhitelistedAddressPair{
-			Sender:   hostZone.Address,
-			Receiver: hostZone.DelegationAccount.Address,
+			Sender:   hostZone.DepositAddress,
+			Receiver: hostZone.DelegationIcaAddress,
 		})
 
 		rewardCollectorAddress := accountKeeper.GetModuleAccount(ctx, stakeibctypes.RewardCollectorName).GetAddress()
 		ratelimitKeeper.SetWhitelistedAddressPair(ctx, ratelimittypes.WhitelistedAddressPair{
-			Sender:   hostZone.FeeAccount.Address,
+			Sender:   hostZone.FeeIcaAddress,
 			Receiver: rewardCollectorAddress.String(),
 		})
 	}

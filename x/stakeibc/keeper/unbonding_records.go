@@ -5,18 +5,14 @@ import (
 	"fmt"
 	"sort"
 
+	errorsmod "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-
-	"github.com/golang/protobuf/proto" //nolint:staticcheck
-
-	errorsmod "cosmossdk.io/errors"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+	"github.com/cosmos/gogoproto/proto"
 	"github.com/spf13/cast"
-
-	proto "github.com/cosmos/gogoproto/proto"
 
 	"github.com/Stride-Labs/stride/v12/utils"
 	recordstypes "github.com/Stride-Labs/stride/v12/x/records/types"
@@ -195,7 +191,7 @@ func (k Keeper) GetUnbondingICAMessages(
 	hostZone types.HostZone,
 	totalUnbondAmount sdkmath.Int,
 	prioritizedUnbondCapacity []ValidatorUnbondCapacity,
-) (msgs []sdk.Msg, unbondings []*types.SplitDelegation, err error) {
+) (msgs []proto.Message, unbondings []*types.SplitDelegation, err error) {
 	// Loop through each validator and unbond as much as possible
 	remainingUnbondAmount := totalUnbondAmount
 	for _, validatorCapacity := range prioritizedUnbondCapacity {

@@ -2,12 +2,11 @@ package keeper_test
 
 import (
 	sdkmath "cosmossdk.io/math"
+	"github.com/cosmos/gogoproto/proto"
 	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
-	"github.com/golang/protobuf/proto" //nolint:staticcheck
 
 	icacallbackstypes "github.com/Stride-Labs/stride/v12/x/icacallbacks/types"
 	recordstypes "github.com/Stride-Labs/stride/v12/x/records/types"
-	"github.com/Stride-Labs/stride/v12/x/stakeibc/keeper"
 	"github.com/Stride-Labs/stride/v12/x/stakeibc/types"
 )
 
@@ -70,7 +69,7 @@ func (s *KeeperTestSuite) TestDetokenizeCallback_Successful() {
 	ackSuccess := &icacallbackstypes.AcknowledgementResponse{
 		Status: icacallbackstypes.AckResponseStatus_SUCCESS,
 	}
-	err := keeper.DetokenizeCallback(s.App.StakeibcKeeper, s.Ctx, channeltypes.Packet{}, ackSuccess, tc.callbackBz)
+	err := s.App.StakeibcKeeper.DetokenizeCallback(s.Ctx, channeltypes.Packet{}, ackSuccess, tc.callbackBz)
 	s.Require().NoError(err, "no error expected during callback")
 
 	// Check that the deposit was removed
@@ -95,7 +94,7 @@ func (s *KeeperTestSuite) TestDetokenizeCallback_InvalidCallbackArgs() {
 	ackSuccess := &icacallbackstypes.AcknowledgementResponse{
 		Status: icacallbackstypes.AckResponseStatus_SUCCESS,
 	}
-	err := keeper.DetokenizeCallback(s.App.StakeibcKeeper, s.Ctx, channeltypes.Packet{}, ackSuccess, invalidCallbackArgs)
+	err := s.App.StakeibcKeeper.DetokenizeCallback(s.Ctx, channeltypes.Packet{}, ackSuccess, invalidCallbackArgs)
 	s.Require().ErrorContains(err, "unable to unmarshal detokenize callback")
 }
 
@@ -113,7 +112,7 @@ func (s *KeeperTestSuite) TestDetokenizeCallback_HostNotFound() {
 	ackSuccess := &icacallbackstypes.AcknowledgementResponse{
 		Status: icacallbackstypes.AckResponseStatus_SUCCESS,
 	}
-	err = keeper.DetokenizeCallback(s.App.StakeibcKeeper, s.Ctx, channeltypes.Packet{}, ackSuccess, invalidCallbackArgs)
+	err = s.App.StakeibcKeeper.DetokenizeCallback(s.Ctx, channeltypes.Packet{}, ackSuccess, invalidCallbackArgs)
 	s.Require().ErrorContains(err, "Host zone not found")
 }
 
@@ -124,7 +123,7 @@ func (s *KeeperTestSuite) TestDetokenizeCallback_AckTimeout() {
 	ackTimeout := &icacallbackstypes.AcknowledgementResponse{
 		Status: icacallbackstypes.AckResponseStatus_TIMEOUT,
 	}
-	err := keeper.DetokenizeCallback(s.App.StakeibcKeeper, s.Ctx, channeltypes.Packet{}, ackTimeout, tc.callbackBz)
+	err := s.App.StakeibcKeeper.DetokenizeCallback(s.Ctx, channeltypes.Packet{}, ackTimeout, tc.callbackBz)
 	s.Require().NoError(err, "no error expected during callback")
 
 	// The deposit should still be there in status IN_PROGRESS
@@ -145,7 +144,7 @@ func (s *KeeperTestSuite) TestDetokenizeCallback_AckFailure() {
 	ackFailure := &icacallbackstypes.AcknowledgementResponse{
 		Status: icacallbackstypes.AckResponseStatus_FAILURE,
 	}
-	err := keeper.DetokenizeCallback(s.App.StakeibcKeeper, s.Ctx, channeltypes.Packet{}, ackFailure, tc.callbackBz)
+	err := s.App.StakeibcKeeper.DetokenizeCallback(s.Ctx, channeltypes.Packet{}, ackFailure, tc.callbackBz)
 	s.Require().NoError(err, "no error expected during callback")
 
 	// The deposit status should be FAILED

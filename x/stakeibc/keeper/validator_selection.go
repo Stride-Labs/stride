@@ -9,6 +9,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+	"github.com/cosmos/gogoproto/proto"
 
 	"github.com/Stride-Labs/stride/v12/utils"
 	epochstypes "github.com/Stride-Labs/stride/v12/x/epochs/types"
@@ -123,7 +124,7 @@ func (k Keeper) RebalanceDelegationsForHostZone(ctx sdk.Context, chainId string)
 func (k Keeper) GetRebalanceICAMessages(
 	hostZone types.HostZone,
 	validatorDeltas []RebalanceValidatorDelegationChange,
-) (msgs []sdk.Msg, rebalancings []*types.Rebalancing) {
+) (msgs []proto.Message, rebalancings []*types.Rebalancing) {
 	// Sort the list of delegation changes by the size of the change
 	// Sort descending so the surplus validators appear first
 	lessFunc := func(i, j int) bool {

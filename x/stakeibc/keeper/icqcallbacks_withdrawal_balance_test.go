@@ -81,11 +81,7 @@ func (s *KeeperTestSuite) SetupWithdrawalBalanceCallbackTest() WithdrawalBalance
 		initialState: WithdrawalBalanceICQCallbackState{
 			hostZone: hostZone,
 			withdrawalChannel: Channel{
-<<<<<<< HEAD
 				PortID:    withdrawalPortId,
-=======
-				PortID:    icatypes.ControllerPortPrefix + withdrawalAccountOwner,
->>>>>>> main
 				ChannelID: withdrawalChannelId,
 			},
 			withdrawalBalance: withdrawalBalance,

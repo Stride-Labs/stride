@@ -3,8 +3,8 @@ package keeper_test
 import (
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/gogoproto/proto"
 	ibctesting "github.com/cosmos/ibc-go/v7/testing"
-	"github.com/golang/protobuf/proto" //nolint:staticcheck
 	_ "github.com/stretchr/testify/suite"
 
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"

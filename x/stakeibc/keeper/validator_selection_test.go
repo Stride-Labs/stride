@@ -211,7 +211,7 @@ func (s *KeeperTestSuite) checkRebalanceICAMessages(
 ) {
 	// Build the expected ICA messages from the list of rebalancings above
 	delegationAddress := "cosmos_DELEGATION"
-	expectedMsgs := []sdk.Msg{}
+	expectedMsgs := []proto.Message{}
 	for _, rebalancing := range expectedRebalancings {
 		expectedMsgs = append(expectedMsgs, &stakingtypes.MsgBeginRedelegate{
 			DelegatorAddress:    delegationAddress,

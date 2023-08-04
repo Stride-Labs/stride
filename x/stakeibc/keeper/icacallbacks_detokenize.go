@@ -19,7 +19,7 @@ import (
 //	If timeout: do nothing
 //	  - A timeout will force the channel closed, and once the channel is restored,
 //	    the ICA will get resubmitted
-func DetokenizeCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ackResponse *icacallbackstypes.AcknowledgementResponse, args []byte) error {
+func (k Keeper) DetokenizeCallback(ctx sdk.Context, packet channeltypes.Packet, ackResponse *icacallbackstypes.AcknowledgementResponse, args []byte) error {
 	// Fetch callback args
 	detokenizeCallback := types.DetokenizeSharesCallback{}
 	if err := proto.Unmarshal(args, &detokenizeCallback); err != nil {

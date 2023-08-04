@@ -8,14 +8,13 @@ import (
 
 	errorsmod "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
+	"github.com/cometbft/cometbft/crypto"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	"github.com/cosmos/gogoproto/proto"
 	icatypes "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/types"
 	transfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
 	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
-	"github.com/tendermint/tendermint/crypto"
-
-	"github.com/golang/protobuf/proto" //nolint:staticcheck
 
 	recordstypes "github.com/Stride-Labs/stride/v12/x/records/types"
 	"github.com/Stride-Labs/stride/v12/x/stakeibc/types"
@@ -294,7 +293,7 @@ func (k Keeper) DetokenizeLSMDeposit(ctx sdk.Context, hostZone types.HostZone, d
 
 	// Build the detokenization ICA message
 	token := sdk.NewCoin(deposit.Denom, deposit.Amount)
-	detokenizeMsg := []sdk.Msg{&types.MsgRedeemTokensForShares{
+	detokenizeMsg := []proto.Message{&types.MsgRedeemTokensForShares{
 		DelegatorAddress: hostZone.DelegationIcaAddress,
 		Amount:           token,
 	}}

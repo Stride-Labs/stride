@@ -181,7 +181,7 @@ func (s *UpgradeTestSuite) TestMigrateCallbackData() {
 		s.createCallbackData(stakeibckeeper.ICACallbackID_Redemption, &initialRedemptionCallbackArgs),
 		s.createCallbackData(stakeibckeeper.ICACallbackID_Reinvest, &initialReinvestCallbackArgs),
 		s.createCallbackData(stakeibckeeper.ICACallbackID_Undelegate, &initialUndelegateCallbackArgs),
-		s.createCallbackData(recordskeeper.TRANSFER, &initialTransferCallbackArgs),
+		s.createCallbackData(recordskeeper.IBCCallbacksID_NativeTransfer, &initialTransferCallbackArgs),
 	}
 	for i := range initialCallbackData {
 		initialCallbackData[i].CallbackKey = fmt.Sprintf("key-%d", i)
@@ -238,7 +238,7 @@ func (s *UpgradeTestSuite) TestMigrateCallbackData() {
 			s.mustUnmarshalCallback(finalCallback.CallbackArgs, &finalCallbackArgs)
 			s.Require().Equal(initialUndelegateCallbackArgs, finalCallbackArgs, "undelegate callback")
 
-		case recordskeeper.TRANSFER:
+		case recordskeeper.IBCCallbacksID_NativeTransfer:
 			var finalCallbackArgs recordstypes.TransferCallback
 			s.mustUnmarshalCallback(finalCallback.CallbackArgs, &finalCallbackArgs)
 			s.Require().Equal(initialTransferCallbackArgs, finalCallbackArgs, "transfer callback")
@@ -349,16 +349,12 @@ func (s *UpgradeTestSuite) createRewardCollectorModuleAccount() string {
 func (s *UpgradeTestSuite) setupRateLimitedHostZone(chainId, stDenom, channelId string) {
 	// Store host zone in stakeibc
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, stakeibctypes.HostZone{
-		ChainId:           chainId,
-		HostDenom:         strings.ReplaceAll(stDenom, "st", ""),
-		TransferChannelId: channelId,
-		Address:           chainId + ".STAKEIBC",
-		FeeAccount: &stakeibctypes.ICAAccount{
-			Address: chainId + ".FEE",
-		},
-		DelegationAccount: &stakeibctypes.ICAAccount{
-			Address: chainId + ".DELEGATION",
-		},
+		ChainId:              chainId,
+		HostDenom:            strings.ReplaceAll(stDenom, "st", ""),
+		TransferChannelId:    channelId,
+		DepositAddress:       chainId + ".STAKEIBC",
+		FeeIcaAddress:        chainId + ".FEE",
+		DelegationIcaAddress: chainId + ".DELEGATION",
 	})
 
 	// Create the transfer channel

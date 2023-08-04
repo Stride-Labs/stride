@@ -5,8 +5,8 @@ import (
 
 	errorsmod "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/gogoproto/proto"
 	transfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
-	"github.com/golang/protobuf/proto" //nolint:staticcheck
 
 	"github.com/Stride-Labs/stride/v12/utils"
 	icacallbackstypes "github.com/Stride-Labs/stride/v12/x/icacallbacks/types"

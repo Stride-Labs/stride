@@ -3,14 +3,13 @@ package keeper_test
 import (
 	_ "github.com/stretchr/testify/suite"
 
-	"github.com/golang/protobuf/proto" //nolint:staticcheck
+	"github.com/cosmos/gogoproto/proto"
 
 	transfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
 	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
 	ibctesting "github.com/cosmos/ibc-go/v7/testing"
 
 	icacallbackstypes "github.com/Stride-Labs/stride/v12/x/icacallbacks/types"
-	recordskeeper "github.com/Stride-Labs/stride/v12/x/records/keeper"
 	"github.com/Stride-Labs/stride/v12/x/records/types"
 )
 
@@ -49,7 +48,7 @@ func (s *KeeperTestSuite) TestLSMTransferCallback_Successful() {
 	ackSuccess := &icacallbackstypes.AcknowledgementResponse{
 		Status: icacallbackstypes.AckResponseStatus_SUCCESS,
 	}
-	err := recordskeeper.LSMTransferCallback(s.App.RecordsKeeper, s.Ctx, channeltypes.Packet{}, ackSuccess, callbackArgsBz)
+	err := s.App.RecordsKeeper.LSMTransferCallback(s.Ctx, channeltypes.Packet{}, ackSuccess, callbackArgsBz)
 	s.Require().NoError(err, "no error expected when executing callback")
 
 	// Confirm deposit has been updated to DETOKENIZATION_QUEUE
@@ -66,7 +65,7 @@ func (s *KeeperTestSuite) TestLSMTransferCallback_InvalidCallbackArgs() {
 	ackSuccess := &icacallbackstypes.AcknowledgementResponse{
 		Status: icacallbackstypes.AckResponseStatus_SUCCESS,
 	}
-	err := recordskeeper.LSMTransferCallback(s.App.RecordsKeeper, s.Ctx, channeltypes.Packet{}, ackSuccess, invalidCallbackArgs)
+	err := s.App.RecordsKeeper.LSMTransferCallback(s.Ctx, channeltypes.Packet{}, ackSuccess, invalidCallbackArgs)
 	s.Require().ErrorContains(err, "unable to unmarshal LSM transfer callback")
 }
 
@@ -77,7 +76,7 @@ func (s *KeeperTestSuite) TestLSMTransferCallback_AckTimeout() {
 	ackTimeout := &icacallbackstypes.AcknowledgementResponse{
 		Status: icacallbackstypes.AckResponseStatus_TIMEOUT,
 	}
-	err := recordskeeper.LSMTransferCallback(s.App.RecordsKeeper, s.Ctx, channeltypes.Packet{}, ackTimeout, callbackArgsBz)
+	err := s.App.RecordsKeeper.LSMTransferCallback(s.Ctx, channeltypes.Packet{}, ackTimeout, callbackArgsBz)
 	s.Require().NoError(err, "no error expected when executing callback")
 
 	// Confirm deposit has been updated to status TRANSFER_QUEUE
@@ -93,7 +92,7 @@ func (s *KeeperTestSuite) TestLSMTransferCallback_AckFailed() {
 	ackFailure := &icacallbackstypes.AcknowledgementResponse{
 		Status: icacallbackstypes.AckResponseStatus_FAILURE,
 	}
-	err := recordskeeper.LSMTransferCallback(s.App.RecordsKeeper, s.Ctx, channeltypes.Packet{}, ackFailure, callbackArgsBz)
+	err := s.App.RecordsKeeper.LSMTransferCallback(s.Ctx, channeltypes.Packet{}, ackFailure, callbackArgsBz)
 	s.Require().NoError(err)
 
 	// Confirm deposit has been updated to status FAILED
