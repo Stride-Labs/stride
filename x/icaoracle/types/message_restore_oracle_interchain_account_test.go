@@ -49,8 +49,6 @@ func TestMsgRestoreOracleICA(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			if test.err == "" {
 				require.NoError(t, test.msg.ValidateBasic(), "test: %v", test.name)
-				require.Equal(t, test.msg.Route(), types.RouterKey)
-				require.Equal(t, test.msg.Type(), "restore_oracle_ica")
 
 				signers := test.msg.GetSigners()
 				require.Equal(t, len(signers), 1)

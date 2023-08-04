@@ -20,14 +20,6 @@ func NewMsgInstantiateOracle(creator string, chainId string, contractCodeId uint
 	}
 }
 
-func (msg *MsgInstantiateOracle) Route() string {
-	return RouterKey
-}
-
-func (msg *MsgInstantiateOracle) Type() string {
-	return TypeMsgInstantiateOracle
-}
-
 func (msg *MsgInstantiateOracle) GetSigners() []sdk.AccAddress {
 	creator, err := sdk.AccAddressFromBech32(msg.Creator)
 	if err != nil {

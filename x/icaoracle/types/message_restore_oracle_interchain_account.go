@@ -17,14 +17,6 @@ func NewMsgRestoreOracleICA(creator string, oracleChainId string) *MsgRestoreOra
 	}
 }
 
-func (msg *MsgRestoreOracleICA) Route() string {
-	return RouterKey
-}
-
-func (msg *MsgRestoreOracleICA) Type() string {
-	return TypeMsgRestoreOracleICA
-}
-
 func (msg *MsgRestoreOracleICA) GetSigners() []sdk.AccAddress {
 	creator, err := sdk.AccAddressFromBech32(msg.Creator)
 	if err != nil {

@@ -21,14 +21,6 @@ func NewMsgAddOracle(creator string, connectionId string) *MsgAddOracle {
 	}
 }
 
-func (msg *MsgAddOracle) Route() string {
-	return RouterKey
-}
-
-func (msg *MsgAddOracle) Type() string {
-	return TypeMsgAddOracle
-}
-
 func (msg *MsgAddOracle) GetSigners() []sdk.AccAddress {
 	creator, err := sdk.AccAddressFromBech32(msg.Creator)
 	if err != nil {
