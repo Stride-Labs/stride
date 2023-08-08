@@ -79,7 +79,7 @@ func (im IBCMiddleware) OnChanOpenAck(
 
 	if err := im.keeper.OnChanOpenAck(ctx, portID, channelID); err != nil {
 		im.keeper.Logger(ctx).Error(fmt.Sprintf("ICAOracle ChanOpenAck failed: %s", err.Error()))
-		return errorsmod.Wrapf(err, "ICAOracle ChanOpenInit failed")
+		return errorsmod.Wrapf(err, "ICAOracle OnChanOpenAck failed")
 	}
 
 	return im.app.OnChanOpenAck(
