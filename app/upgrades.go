@@ -29,6 +29,7 @@ import (
 	autopilottypes "github.com/Stride-Labs/stride/v12/x/autopilot/types"
 	claimtypes "github.com/Stride-Labs/stride/v12/x/claim/types"
 	icacallbacktypes "github.com/Stride-Labs/stride/v12/x/icacallbacks/types"
+	icaoracletypes "github.com/Stride-Labs/stride/v12/x/icaoracle/types"
 	ratelimittypes "github.com/Stride-Labs/stride/v12/x/ratelimit/types"
 	recordtypes "github.com/Stride-Labs/stride/v12/x/records/types"
 	stakeibctypes "github.com/Stride-Labs/stride/v12/x/stakeibc/types"
@@ -192,6 +193,10 @@ func (app *StrideApp) setupUpgradeHandlers(appOpts servertypes.AppOptions) {
 	case "v12":
 		storeUpgrades = &storetypes.StoreUpgrades{
 			Added: []string{consumertypes.ModuleName},
+		}
+	case "v13":
+		storeUpgrades = &storetypes.StoreUpgrades{
+			Added: []string{icaoracletypes.ModuleName},
 		}
 	}
 
