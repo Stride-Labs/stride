@@ -29,14 +29,17 @@ func (k Keeper) UpdateOracleCallback(ctx sdk.Context, packet channeltypes.Packet
 	// If the ack timed-out, log the error and exit successfully
 	// The metric should remain in the pending store so that the ICA can be resubmitted when the channel is restored
 	if ackResponse.Status == icacallbackstypes.AckResponseStatus_TIMEOUT {
+		EmitUpdateOracleAckEvent(ctx, updateOracleCallback.Metric, "timeout")
 		k.Logger(ctx).Error(utils.LogICACallbackStatusWithHostZone(chainId, ICACallbackID_UpdateOracle, ackResponse.Status, packet))
 		return nil
 	}
 
 	// if the ack fails, log the response as an error, otherwise log the success as an info log
 	if ackResponse.Status == icacallbackstypes.AckResponseStatus_FAILURE {
+		EmitUpdateOracleAckEvent(ctx, updateOracleCallback.Metric, "failure")
 		k.Logger(ctx).Error(utils.LogICACallbackStatusWithHostZone(chainId, ICACallbackID_UpdateOracle, ackResponse.Status, packet))
 	} else {
+		EmitUpdateOracleAckEvent(ctx, updateOracleCallback.Metric, "success")
 		k.Logger(ctx).Info(utils.LogICACallbackStatusWithHostZone(chainId, ICACallbackID_UpdateOracle, ackResponse.Status, packet))
 	}
 

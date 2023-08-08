@@ -12,10 +12,6 @@ import (
 	"github.com/Stride-Labs/stride/v12/x/icaoracle/types"
 )
 
-// QUESTION: Not sure what makes the most sense for the timeout
-// I think we can be more conservative than our epochly logic
-// The oracle querier can enforce filters to ensure the data is recent, so I think from the Stride
-// perspective, we should lean more conservative and do our best to avoid timeout's and channel closure's
 var (
 	InstantiateOracleTimeout = time.Hour * 24 // 1 day
 	MetricUpdateTimeout      = time.Hour * 24 // 1 day
@@ -118,5 +114,6 @@ func (k Keeper) PostAllQueuedMetrics(ctx sdk.Context) {
 		}
 
 		k.Logger(ctx).Info(fmt.Sprintf("Submitted metric update ICA - Metric: %s, Oracle: %s, Time: %d", metric.Key, oracle.ChainId, metric.UpdateTime))
+		EmitUpdateOracleEvent(ctx, metric)
 	}
 }
