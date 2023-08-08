@@ -221,6 +221,7 @@ github.com/Shopify/sarama v1.19.0/go.mod h1:FVkBWblsNy7DGZRfXLU0O9RCGt5g3g3yEuWX
 github.com/Shopify/toxiproxy v2.1.4+incompatible/go.mod h1:OXgGpZ6Cli1/URJOF1DMxUHB2q5Ap20/P/eIdh4G0pI=
 github.com/Stride-Labs/cast v0.0.3 h1:eM3n/t3hSxb+iw9LDo3r/uGBp3w4U7wPv40GKMtJ1dI=
 github.com/Stride-Labs/cast v0.0.3/go.mod h1:SpXXQ5YoyJw6s3/6cMTQuxvgRl3PCJiyaX9p6b155UU=
+github.com/Stride-Labs/cosmos-sdk v0.47.4-stride-distribution-fix-0/go.mod h1:R5n+uM7vguVPFap4pgkdvQCT1nVo/OtPwrlAU40rvok=
 github.com/Stride-Labs/interchain-security/v3 v3.1.1-0.20230713175550-227e13e60bac h1:k1ef68RNRHMtekRusOh9bu5DmHEdvxPyKwotzFu9giU=
 github.com/Stride-Labs/interchain-security/v3 v3.1.1-0.20230713175550-227e13e60bac/go.mod h1:2fILBgypEZcwR3BSzKDw+EsYtMKv9Z6cYXfouh4xTYU=
 github.com/VividCortex/gohistogram v1.0.0 h1:6+hBz+qvs0JOrrNhhmR7lFxo5sINxBCGXrdtl/UvroE=
