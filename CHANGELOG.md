@@ -43,6 +43,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <!-- GH ACTIONS TEMPLATE - INSERT NEW VERSION HERE -->
 ### Changelog
 
+## [v13.0.0](https://github.com/Stride-Labs/stride/releases/tag/v13.0.0) - 2023-08-08
+
+### On-Chain changes
+1. Adds ICA-Based Oracle for Cosmwasm-based Chains ([#884](https://github.com/Stride-Labs/stride/pull/884))
+2. Switch to SDK Fork to address SDKv0.47 Distribution Bug ([#885](https://github.com/Stride-Labs/stride/pull/885))
+3. Add Redundant IBC Relay Decorator ([#882](https://github.com/Stride-Labs/stride/pull/882))
+4. Whitelist missing param keys and register stTokens as consumer fees ([#881](https://github.com/Stride-Labs/stride/pull/881)) 
+
+### Off-Chain changes
+1. Add `build-linux` command ([#859](https://github.com/Stride-Labs/stride/pull/859))
+2. Remove `provider` dependency for Dockernet ([#860](https://github.com/Stride-Labs/stride/pull/860))
+3. Update Dockernet host zone versions ([#883](https://github.com/Stride-Labs/stride/pull/883))
+
 ## [v12.0.0](https://github.com/Stride-Labs/stride/releases/tag/v12.0.0) - 2023-07-15
 
 ### On-Chain changes
