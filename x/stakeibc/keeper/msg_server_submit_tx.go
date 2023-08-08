@@ -10,11 +10,11 @@ import (
 	proto "github.com/cosmos/gogoproto/proto"
 	"github.com/spf13/cast"
 
-	"github.com/Stride-Labs/stride/v12/utils"
-	icacallbackstypes "github.com/Stride-Labs/stride/v12/x/icacallbacks/types"
+	"github.com/Stride-Labs/stride/v13/utils"
+	icacallbackstypes "github.com/Stride-Labs/stride/v13/x/icacallbacks/types"
 
-	recordstypes "github.com/Stride-Labs/stride/v12/x/records/types"
-	"github.com/Stride-Labs/stride/v12/x/stakeibc/types"
+	recordstypes "github.com/Stride-Labs/stride/v13/x/records/types"
+	"github.com/Stride-Labs/stride/v13/x/stakeibc/types"
 
 	bankTypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	distributiontypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
@@ -22,8 +22,8 @@ import (
 
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
-	epochstypes "github.com/Stride-Labs/stride/v12/x/epochs/types"
-	icqtypes "github.com/Stride-Labs/stride/v12/x/interchainquery/types"
+	epochstypes "github.com/Stride-Labs/stride/v13/x/epochs/types"
+	icqtypes "github.com/Stride-Labs/stride/v13/x/interchainquery/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	icacontrollerkeeper "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/controller/keeper"

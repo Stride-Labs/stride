@@ -16,8 +16,8 @@ import (
 
 	ccvgov "github.com/cosmos/interchain-security/v3/x/ccv/democracy/governance"
 
-	minttypes "github.com/Stride-Labs/stride/v12/x/mint/types"
-	stakeibctypes "github.com/Stride-Labs/stride/v12/x/stakeibc/types"
+	minttypes "github.com/Stride-Labs/stride/v13/x/mint/types"
+	stakeibctypes "github.com/Stride-Labs/stride/v13/x/stakeibc/types"
 )
 
 var WhiteListModule = map[string]struct{}{

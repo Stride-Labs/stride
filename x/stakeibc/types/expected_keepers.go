@@ -5,7 +5,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/auth/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 
-	ratelimittypes "github.com/Stride-Labs/stride/v12/x/ratelimit/types"
+	ratelimittypes "github.com/Stride-Labs/stride/v13/x/ratelimit/types"
 )
 
 // AccountKeeper defines the expected account keeper used for simulations (noalias)
