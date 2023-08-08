@@ -59,7 +59,7 @@ func (s *KeeperTestSuite) TestInstantiateOracle_Successful() {
 
 	// Confirm the callback data was stored
 	callbackKey := icacallbacktypes.PacketID(tc.OraclePortId, tc.OracleChannelId, uint64(1))
-	_, found := s.App.ICAOracleKeeper.ICACallbacksKeeper.GetCallbackData(s.Ctx, callbackKey)
+	_, found := s.App.IcacallbacksKeeper.GetCallbackData(s.Ctx, callbackKey)
 	s.Require().True(found, "callback data should have been found")
 }
 

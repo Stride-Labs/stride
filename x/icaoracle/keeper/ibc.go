@@ -16,7 +16,7 @@ import (
 
 func (k Keeper) OnChanOpenAck(ctx sdk.Context, portID, channelID string) error {
 	// Get the connectionId from the port and channel
-	connectionId, _, err := k.IBCKeeper.ChannelKeeper.GetChannelConnection(ctx, portID, channelID)
+	connectionId, _, err := k.ChannelKeeper.GetChannelConnection(ctx, portID, channelID)
 	if err != nil {
 		return errorsmod.Wrapf(err, "unable to get connection from channel (%s) and port (%s)", channelID, portID)
 	}

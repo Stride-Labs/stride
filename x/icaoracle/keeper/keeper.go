@@ -9,9 +9,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
 	icacontrollerkeeper "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/controller/keeper"
-	ibckeeper "github.com/cosmos/ibc-go/v7/modules/core/keeper"
 
-	icacallbackskeeper "github.com/Stride-Labs/stride/v12/x/icacallbacks/keeper"
 	"github.com/Stride-Labs/stride/v12/x/icaoracle/types"
 )
 
@@ -22,9 +20,11 @@ type Keeper struct {
 	authority  string
 
 	ICS4Wrapper         types.ICS4Wrapper
-	IBCKeeper           ibckeeper.Keeper
+	ClientKeeper        types.ClientKeeper
+	ConnectionKeeper    types.ConnectionKeeper
+	ChannelKeeper       types.ChannelKeeper
 	ICAControllerKeeper icacontrollerkeeper.Keeper
-	ICACallbacksKeeper  icacallbackskeeper.Keeper
+	ICACallbacksKeeper  types.ICACallbacksKeeper
 }
 
 func NewKeeper(
@@ -34,9 +34,11 @@ func NewKeeper(
 	authority string,
 
 	ics4Wrapper types.ICS4Wrapper,
-	ibcKeeper ibckeeper.Keeper,
+	clientKeeper types.ClientKeeper,
+	connectionKeeper types.ConnectionKeeper,
+	channelKeeper types.ChannelKeeper,
 	icaControllerKeeper icacontrollerkeeper.Keeper,
-	icaCallbacksKeeper icacallbackskeeper.Keeper,
+	icaCallbacksKeeper types.ICACallbacksKeeper,
 ) *Keeper {
 	return &Keeper{
 		cdc:        cdc,
@@ -45,7 +47,9 @@ func NewKeeper(
 		authority:  authority,
 
 		ICS4Wrapper:         ics4Wrapper,
-		IBCKeeper:           ibcKeeper,
+		ClientKeeper:        clientKeeper,
+		ConnectionKeeper:    connectionKeeper,
+		ChannelKeeper:       channelKeeper,
 		ICAControllerKeeper: icaControllerKeeper,
 		ICACallbacksKeeper:  icaCallbacksKeeper,
 	}

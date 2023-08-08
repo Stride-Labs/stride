@@ -568,7 +568,9 @@ func NewStrideApp(
 		app.GetSubspace(icaoracletypes.ModuleName),
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 		app.IBCKeeper.ChannelKeeper, // ICS4Wrapper - Note: this technically should be ICAController but it doesn't implement ICS4
-		*app.IBCKeeper,
+		app.IBCKeeper.ClientKeeper,
+		app.IBCKeeper.ConnectionKeeper,
+		app.IBCKeeper.ChannelKeeper,
 		app.ICAControllerKeeper,
 		app.IcacallbacksKeeper,
 	)

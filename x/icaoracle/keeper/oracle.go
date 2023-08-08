@@ -98,7 +98,7 @@ func (k Keeper) GetOracleFromConnectionId(ctx sdk.Context, connectionId string) 
 
 // Checks if the oracle ICA channel is open
 func (k Keeper) IsOracleICAChannelOpen(ctx sdk.Context, oracle types.Oracle) bool {
-	channel, found := k.IBCKeeper.ChannelKeeper.GetChannel(ctx, oracle.PortId, oracle.ChannelId)
+	channel, found := k.ChannelKeeper.GetChannel(ctx, oracle.PortId, oracle.ChannelId)
 	if !found {
 		return false
 	}

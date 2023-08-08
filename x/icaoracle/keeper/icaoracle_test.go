@@ -79,7 +79,7 @@ func (s *KeeperTestSuite) TestSubmitMetricUpdate_Success() {
 		CallbackId:   tc.CallbackId,
 		CallbackArgs: tc.CallbackArgs,
 	}
-	actualCallbackData, found := s.App.ICAOracleKeeper.ICACallbacksKeeper.GetCallbackData(s.Ctx, callbackKey)
+	actualCallbackData, found := s.App.IcacallbacksKeeper.GetCallbackData(s.Ctx, callbackKey)
 	s.Require().True(found, "callback data should have been found")
 	s.Require().Equal(expectedCallbackData, actualCallbackData, "callback data")
 }
@@ -161,6 +161,6 @@ func (s *KeeperTestSuite) TestPostAllQueuedMetrics() {
 	s.App.ICAOracleKeeper.PostAllQueuedMetrics(s.Ctx)
 
 	// Check 3 ICAs were submitted
-	callbacks := s.App.ICAOracleKeeper.ICACallbacksKeeper.GetAllCallbackData(s.Ctx)
+	callbacks := s.App.IcacallbacksKeeper.GetAllCallbackData(s.Ctx)
 	s.Require().Len(callbacks, 3, "three callbacks submitted")
 }

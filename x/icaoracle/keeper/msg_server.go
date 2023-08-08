@@ -34,13 +34,13 @@ func (k msgServer) AddOracle(goCtx context.Context, msg *types.MsgAddOracle) (*t
 
 	// Grab the connection and confirm it exists
 	controllerConnectionId := msg.ConnectionId
-	connectionEnd, found := k.IBCKeeper.ConnectionKeeper.GetConnection(ctx, controllerConnectionId)
+	connectionEnd, found := k.ConnectionKeeper.GetConnection(ctx, controllerConnectionId)
 	if !found {
 		return nil, errorsmod.Wrapf(sdkerrors.ErrNotFound, "connection (%s) not found", controllerConnectionId)
 	}
 
 	// Get chain id from the connection
-	clientState, found := k.ICACallbacksKeeper.IBCKeeper.ClientKeeper.GetClientState(ctx, connectionEnd.ClientId)
+	clientState, found := k.ClientKeeper.GetClientState(ctx, connectionEnd.ClientId)
 	if !found {
 		return nil, errorsmod.Wrapf(sdkerrors.ErrNotFound, "client (%s) not found", connectionEnd.ClientId)
 	}
@@ -186,7 +186,7 @@ func (k msgServer) RestoreOracleICA(goCtx context.Context, msg *types.MsgRestore
 	}
 
 	// Grab the connectionEnd for the counterparty connection
-	connectionEnd, found := k.IBCKeeper.ConnectionKeeper.GetConnection(ctx, oracle.ConnectionId)
+	connectionEnd, found := k.ConnectionKeeper.GetConnection(ctx, oracle.ConnectionId)
 	if !found {
 		return nil, errorsmod.Wrapf(sdkerrors.ErrNotFound, "connection (%s) not found", oracle.ConnectionId)
 	}
