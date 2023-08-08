@@ -50,6 +50,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 2. Switch to SDK Fork to address SDKv0.47 Distribution Bug ([#885](https://github.com/Stride-Labs/stride/pull/885))
 3. Add Redundant IBC Relay Decorator ([#882](https://github.com/Stride-Labs/stride/pull/882))
 4. Whitelist missing param keys and register stTokens as consumer fees ([#881](https://github.com/Stride-Labs/stride/pull/881)) 
+5. Add v13 Upgrade Handler ([#886](https://github.com/Stride-Labs/stride/pull/886)) 
+6. Change paths to point towards v13 ([#888](https://github.com/Stride-Labs/stride/pull/888))
 
 ### Off-Chain changes
 1. Add `build-linux` command ([#859](https://github.com/Stride-Labs/stride/pull/859))
