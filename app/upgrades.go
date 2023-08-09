@@ -8,12 +8,15 @@ import (
 	consensustypes "github.com/cosmos/cosmos-sdk/x/consensus/types"
 	crisistypes "github.com/cosmos/cosmos-sdk/x/crisis/types"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
+	v13 "github.com/osmosis-labs/osmosis/v16/app/upgrades/v13"
 
 	authz "github.com/cosmos/cosmos-sdk/x/authz"
 
 	consumertypes "github.com/cosmos/interchain-security/v3/x/ccv/consumer/types"
 
 	capabilitytypes "github.com/cosmos/cosmos-sdk/x/capability/types"
+
+	routertypes "github.com/cosmos/ibc-apps/middleware/packet-forward-middleware/v7"
 
 	v10 "github.com/Stride-Labs/stride/v12/app/upgrades/v10"
 	v11 "github.com/Stride-Labs/stride/v12/app/upgrades/v11"
@@ -161,6 +164,15 @@ func (app *StrideApp) setupUpgradeHandlers(appOpts servertypes.AppOptions) {
 		),
 	)
 
+	// v13 upgrade handler
+	app.UpgradeKeeper.SetUpgradeHandler(
+		v13.UpgradeName,
+		v13.CreateUpgradeHandler(
+			app.mm,
+			app.configurator,
+		),
+	)
+
 	upgradeInfo, err := app.UpgradeKeeper.ReadUpgradeInfoFromDisk()
 	if err != nil {
 		panic(fmt.Errorf("Failed to read upgrade info from disk: %w", err))
@@ -192,6 +204,11 @@ func (app *StrideApp) setupUpgradeHandlers(appOpts servertypes.AppOptions) {
 	case "v12":
 		storeUpgrades = &storetypes.StoreUpgrades{
 			Added: []string{consumertypes.ModuleName},
+		}
+	case "v13":
+		storeUpgrades = &storetypes.StoreUpgrades{
+			// Add PFM store key
+			Added: []string{routertypes.ModuleName},
 		}
 	}
 

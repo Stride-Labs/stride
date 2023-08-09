@@ -9,6 +9,7 @@ require (
 	github.com/cosmos/cosmos-proto v1.0.0-beta.2
 	github.com/cosmos/cosmos-sdk v0.47.4
 	github.com/cosmos/gogoproto v1.4.10
+	github.com/cosmos/ibc-apps/middleware/packet-forward-middleware/v7 v7.0.0
 	github.com/cosmos/ibc-go/v7 v7.2.0
 	github.com/cosmos/ics23/go v0.10.0
 	github.com/cosmos/interchain-security/v3 v3.1.0
