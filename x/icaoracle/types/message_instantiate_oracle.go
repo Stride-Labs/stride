@@ -8,8 +8,6 @@ import (
 	"github.com/Stride-Labs/stride/v12/utils"
 )
 
-const TypeMsgInstantiateOracle = "instantiate_oracle"
-
 var _ sdk.Msg = &MsgInstantiateOracle{}
 
 func NewMsgInstantiateOracle(creator string, chainId string, contractCodeId uint64) *MsgInstantiateOracle {

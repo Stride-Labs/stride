@@ -28,6 +28,8 @@ var WhiteListModule = map[string]struct{}{
 	"/cosmos.mint.v1beta1.MsgUpdateParams":         {},
 	"/cosmos.upgrade.v1beta1.MsgSoftwareUpgrade":   {},
 	"/cosmos.upgrade.v1beta1.MsgCancelUpgrade":     {},
+	"/stride.icaoracle.MsgToggleOracle":            {},
+	"/stride.icaoracle.MsgRemoveOracle":            {},
 }
 
 func IsModuleWhiteList(typeUrl string) bool {

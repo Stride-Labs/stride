@@ -10,8 +10,6 @@ import (
 	"github.com/Stride-Labs/stride/v12/utils"
 )
 
-const TypeMsgAddOracle = "add_oracle"
-
 var _ sdk.Msg = &MsgAddOracle{}
 
 func NewMsgAddOracle(creator string, connectionId string) *MsgAddOracle {

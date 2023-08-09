@@ -6,8 +6,6 @@ import (
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
 
-const TypeMsgToggleOracle = "toggle_oracle"
-
 var _ sdk.Msg = &MsgToggleOracle{}
 
 func (msg *MsgToggleOracle) GetSignBytes() []byte {
