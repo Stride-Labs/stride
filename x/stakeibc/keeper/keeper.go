@@ -45,6 +45,7 @@ type (
 		hooks                 types.StakeIBCHooks
 		AccountKeeper         types.AccountKeeper
 		RatelimitKeeper       types.RatelimitKeeper
+		ConsumerKeeper        types.ConsumerKeeper
 	}
 )
 
@@ -62,6 +63,7 @@ func NewKeeper(
 	StakingKeeper stakingkeeper.Keeper,
 	ICACallbacksKeeper icacallbackskeeper.Keeper,
 	RatelimitKeeper types.RatelimitKeeper,
+	ConsumerKeeper types.ConsumerKeeper,
 ) Keeper {
 	// set KeyTable if it has not already been set
 	if !ps.HasKeyTable() {
@@ -82,6 +84,7 @@ func NewKeeper(
 		StakingKeeper:         StakingKeeper,
 		ICACallbacksKeeper:    ICACallbacksKeeper,
 		RatelimitKeeper:       RatelimitKeeper,
+		ConsumerKeeper:        ConsumerKeeper,
 	}
 }
 
