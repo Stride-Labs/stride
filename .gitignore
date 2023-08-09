@@ -8,6 +8,7 @@
 **state.json
 **test.py
 **test.sh
+**testnet*.json
 
 # build
 launch.sh

@@ -2,17 +2,20 @@
 set -e
 set -o pipefail
 
-STRIDE_HOME=$HOME/.stride
+DEFAULT_STRIDE_HOME=$HOME/.stride
+STRIDE_HOME=${STRIDE_HOME:-$DEFAULT_STRIDE_HOME}
 CONFIG_FOLDER=$STRIDE_HOME/config
 
 DEFAULT_MNEMONIC="deer gaze swear marine one perfect hero twice turkey symbol mushroom hub escape accident prevent rifle horse arena secret endless panel equal rely payment"
 DEFAULT_CHAIN_ID="localstride"
 DEFAULT_MONIKER="val"
+DEFAULT_PERSISTENT_PEER=""
 
 # Override default values with environment variables
 MNEMONIC=${MNEMONIC:-$DEFAULT_MNEMONIC}
 CHAIN_ID=${CHAIN_ID:-$DEFAULT_CHAIN_ID}
 MONIKER=${MONIKER:-$DEFAULT_MONIKER}
+PERSISTENT_PEER=${PERSISTENT_PEER:-$DEFAULT_PERSISTENT_PEER}
 
 install_prerequisites () {
     sudo apk add -q --no-cache \
@@ -36,6 +39,9 @@ edit_config () {
 
     # Update the local client keyring backend
     dasel put string -f $CONFIG_FOLDER/client.toml '.keyring-backend' 'test'
+
+    # Add node as persistent peer
+    dasel put string -f $CONFIG_FOLDER/config.toml '.persistent_peers' "$PERSISTENT_PEER"
 }
 
 if [[ ! -d $CONFIG_FOLDER ]]
