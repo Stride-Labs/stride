@@ -12,6 +12,12 @@ func (s *KeeperTestSuite) TestRegisterStTokenDenomsToWhitelist() {
 	_, err := s.GetMsgServer().RegisterHostZone(sdk.WrapSDKContext(s.Ctx), &tc.validMsg)
 	s.Require().NoError(err, "able to successfully register host zone")
 
+	// RegisterHostZone should have already registered stToken to consumer reward denom whitelist
+	params := s.App.ConsumerKeeper.GetConsumerParams(s.Ctx)
+	stDenom := stakeibctypes.StAssetDenomFromHostZoneDenom(tc.validMsg.HostDenom)
+	expectedWhitelist := []string{stDenom}
+	s.Require().Equal([]string{stDenom}, params.RewardDenoms)
+
 	for _, tc := range []struct {
 		desc              string
 		newDenoms         []string
@@ -20,26 +26,26 @@ func (s *KeeperTestSuite) TestRegisterStTokenDenomsToWhitelist() {
 	}{
 		{
 			desc:              "both valid and invalid denoms",
-			newDenoms:         []string{"stuatom", "stuosmo"},
-			expectedWhitelist: nil,
+			newDenoms:         []string{stDenom, "stuosmo"},
+			expectedWhitelist: expectedWhitelist,
 			expectedErr:       stakeibctypes.ErrStTokenNotFound,
 		},
 		{
 			desc:              "only invalid denoms",
 			newDenoms:         []string{"stuosmo", "stujuno"},
-			expectedWhitelist: nil,
+			expectedWhitelist: expectedWhitelist,
 			expectedErr:       stakeibctypes.ErrStTokenNotFound,
 		},
 		{
 			desc:              "only valid denoms",
-			newDenoms:         []string{"stuatom"},
-			expectedWhitelist: []string{"stuatom"},
+			newDenoms:         []string{stDenom},
+			expectedWhitelist: expectedWhitelist,
 			expectedErr:       nil,
 		},
 		{
 			desc:              "empty",
 			newDenoms:         []string{},
-			expectedWhitelist: []string{"stuatom"},
+			expectedWhitelist: expectedWhitelist,
 			expectedErr:       nil,
 		},
 	} {
