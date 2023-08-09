@@ -77,7 +77,8 @@ func isParamChangeWhitelisted(paramChanges map[ccvgov.ParamChangeKey]struct{}) b
 
 var WhitelistedParams = map[ccvgov.ParamChangeKey]struct{}{
 	//bank
-	{MsgType: banktypes.ModuleName, Key: string(banktypes.KeySendEnabled)}: {},
+	{MsgType: banktypes.ModuleName, Key: string(banktypes.KeySendEnabled)}:        {},
+	{MsgType: banktypes.ModuleName, Key: string(banktypes.KeyDefaultSendEnabled)}: {},
 	//governance
 	{MsgType: govtypes.ModuleName, Key: string(govv1.ParamStoreKeyDepositParams)}: {}, //min_deposit, max_deposit_period
 	{MsgType: govtypes.ModuleName, Key: string(govv1.ParamStoreKeyVotingParams)}:  {}, //voting_period
@@ -88,11 +89,22 @@ var WhitelistedParams = map[ccvgov.ParamChangeKey]struct{}{
 	{MsgType: stakingtypes.ModuleName, Key: string(stakingtypes.KeyMaxEntries)}:        {},
 	{MsgType: stakingtypes.ModuleName, Key: string(stakingtypes.KeyHistoricalEntries)}: {},
 	{MsgType: stakingtypes.ModuleName, Key: string(stakingtypes.KeyBondDenom)}:         {},
+	{MsgType: stakingtypes.ModuleName, Key: string(stakingtypes.KeyMinCommissionRate)}: {},
 	//autopilot
 	{MsgType: autopilottypes.ModuleName, Key: string(autopilottypes.KeyStakeibcActive)}: {},
 	{MsgType: autopilottypes.ModuleName, Key: string(autopilottypes.KeyClaimActive)}:    {},
 	//ccv consumer
-	{MsgType: ccvconsumertypes.ModuleName, Key: string(ccvconsumertypes.KeyRewardDenoms)}: {},
+	{MsgType: ccvconsumertypes.ModuleName, Key: string(ccvconsumertypes.KeyRewardDenoms)}:                      {},
+	{MsgType: ccvconsumertypes.ModuleName, Key: string(ccvconsumertypes.KeyEnabled)}:                           {},
+	{MsgType: ccvconsumertypes.ModuleName, Key: string(ccvconsumertypes.KeyBlocksPerDistributionTransmission)}: {},
+	{MsgType: ccvconsumertypes.ModuleName, Key: string(ccvconsumertypes.KeyDistributionTransmissionChannel)}:   {},
+	{MsgType: ccvconsumertypes.ModuleName, Key: string(ccvconsumertypes.KeyProviderFeePoolAddrStr)}:            {},
+	{MsgType: ccvconsumertypes.ModuleName, Key: string(ccvconsumertypes.KeyTransferTimeoutPeriod)}:             {},
+	{MsgType: ccvconsumertypes.ModuleName, Key: string(ccvconsumertypes.KeyConsumerRedistributionFrac)}:        {},
+	{MsgType: ccvconsumertypes.ModuleName, Key: string(ccvconsumertypes.KeyHistoricalEntries)}:                 {},
+	{MsgType: ccvconsumertypes.ModuleName, Key: string(ccvconsumertypes.KeyConsumerUnbondingPeriod)}:           {},
+	{MsgType: ccvconsumertypes.ModuleName, Key: string(ccvconsumertypes.KeySoftOptOutThreshold)}:               {},
+	{MsgType: ccvconsumertypes.ModuleName, Key: string(ccvconsumertypes.KeyProviderRewardDenoms)}:              {},
 	//distribution
 	{MsgType: distrtypes.ModuleName, Key: string(distrtypes.ParamStoreKeyCommunityTax)}:        {},
 	{MsgType: distrtypes.ModuleName, Key: string(distrtypes.ParamStoreKeyWithdrawAddrEnabled)}: {},
