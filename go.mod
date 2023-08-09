@@ -37,6 +37,7 @@ require (
 	github.com/goccy/go-json v0.9.11 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/google/s2a-go v0.1.4 // indirect
+	github.com/iancoleman/orderedmap v0.2.0 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/oxyno-zeta/gomock-extra-matcher v1.1.0 // indirect
 	github.com/rs/zerolog v1.29.1 // indirect
