@@ -170,23 +170,39 @@ func (k Keeper) UpdateRedemptionRates(ctx sdk.Context, depositRecords []recordst
 		hostZone.RedemptionRate = redemptionRate
 		k.SetHostZone(ctx, hostZone)
 
-		// Queue an oracle metric update - Key is of format: {stToken}_redemption_rate
-		stDenom := types.StAssetDenomFromHostZoneDenom(hostZone.HostDenom)
-		nativeDenom := hostZone.IbcDenom
-		attributes, err := json.Marshal(icaoracletypes.RedemptionRateAttributes{
-			Denom:     stDenom,
-			BaseDenom: nativeDenom,
-		})
-		if err != nil {
-			k.Logger(ctx).Error(fmt.Sprintf("Unable to marshal redemption rate attributes for oracle: %s", err.Error()))
+		// If the redemption rate is outside of safety bounds, exit so the redemption rate is not pushed to the oracle
+		redemptionRateSafe, _ := k.IsRedemptionRateWithinSafetyBounds(ctx, hostZone)
+		if !redemptionRateSafe {
 			continue
 		}
 
-		metricKey := fmt.Sprintf("%s_%s", stDenom, icaoracletypes.MetricType_RedemptionRate)
-		metricValue := redemptionRate.String()
-		metricType := icaoracletypes.MetricType_RedemptionRate
-		k.ICAOracleKeeper.QueueMetricUpdate(ctx, metricKey, metricValue, metricType, string(attributes))
+		// Otherwise, submit the redemption rate to the oracle
+		if err := k.PostRedemptionRateToOracles(ctx, hostZone, redemptionRate); err != nil {
+			k.Logger(ctx).Error(fmt.Sprintf("Unable to send redemption rate to oracle: %s", err.Error()))
+			continue
+		}
 	}
+}
+
+// Pushes a redemption rate update to the ICA oracle
+func (k Keeper) PostRedemptionRateToOracles(ctx sdk.Context, hostZone types.HostZone, redemptionRate sdk.Dec) error {
+	stDenom := types.StAssetDenomFromHostZoneDenom(hostZone.HostDenom)
+	nativeDenom := hostZone.IbcDenom
+	attributes, err := json.Marshal(icaoracletypes.RedemptionRateAttributes{
+		Denom:     stDenom,
+		BaseDenom: nativeDenom,
+	})
+	if err != nil {
+		return err
+	}
+
+	// Metric Key is of format: {stToken}_redemption_rate
+	metricKey := fmt.Sprintf("%s_%s", stDenom, icaoracletypes.MetricType_RedemptionRate)
+	metricValue := redemptionRate.String()
+	metricType := icaoracletypes.MetricType_RedemptionRate
+	k.ICAOracleKeeper.QueueMetricUpdate(ctx, metricKey, metricValue, metricType, string(attributes))
+
+	return nil
 }
 
 func (k Keeper) GetUndelegatedBalance(hostZone types.HostZone, depositRecords []recordstypes.DepositRecord) sdkmath.Int {
