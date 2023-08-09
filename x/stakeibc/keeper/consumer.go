@@ -14,7 +14,7 @@ func (k Keeper) RegisterStTokenDenomsToWhitelist(ctx sdk.Context, denoms []strin
 
 	// get all stToken denoms
 	for _, zone := range hostZones {
-		allDenomsMap["st"+zone.HostDenom] = true
+		allDenomsMap[types.StAssetDenomFromHostZoneDenom(zone.HostDenom)] = true
 	}
 
 	// get registered denoms in the consumer reward denom whitelist

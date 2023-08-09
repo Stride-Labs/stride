@@ -186,6 +186,10 @@ func (k msgServer) RegisterHostZone(goCtx context.Context, msg *types.MsgRegiste
 	}
 	k.RecordsKeeper.AppendDepositRecord(ctx, depositRecord)
 
+	// register stToken to consumer reward denom whitelist so that
+	// stToken rewards can be distributed to provider validators
+	k.RegisterStTokenDenomsToWhitelist(ctx, []string{types.StAssetDenomFromHostZoneDenom(zone.HostDenom)})
+
 	// emit events
 	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(
