@@ -21,6 +21,8 @@ func CreateUpgradeHandler(
 ) upgradetypes.UpgradeHandler {
 	return func(ctx sdk.Context, _ upgradetypes.Plan, vm module.VersionMap) (module.VersionMap, error) {
 		ctx.Logger().Info("Starting upgrade v13...")
+
+		ctx.Logger().Info("Registering stTokens to consumer reward denom whitelist...")
 		hostZones := stakeibcKeeper.GetAllHostZone(ctx)
 		allDenoms := []string{}
 
