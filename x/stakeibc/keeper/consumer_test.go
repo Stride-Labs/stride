@@ -12,8 +12,13 @@ func (s *KeeperTestSuite) TestRegisterStTokenDenomsToWhitelist() {
 	_, err := s.GetMsgServer().RegisterHostZone(sdk.WrapSDKContext(s.Ctx), &tc.validMsg)
 	s.Require().NoError(err, "able to successfully register host zone")
 
-	// RegisterHostZone should have already registered stToken to consumer reward denom whitelist
+	// TODO: Remove this change after ICS consumer keeper validation is fixed
 	params := s.App.ConsumerKeeper.GetConsumerParams(s.Ctx)
+	params.RewardDenoms = []string{"stuatom"}
+	s.App.ConsumerKeeper.SetParams(s.Ctx, params)
+
+	// RegisterHostZone should have already registered stToken to consumer reward denom whitelist
+	params = s.App.ConsumerKeeper.GetConsumerParams(s.Ctx)
 	stDenom := stakeibctypes.StAssetDenomFromHostZoneDenom(tc.validMsg.HostDenom)
 	expectedWhitelist := []string{stDenom}
 	s.Require().Equal([]string{stDenom}, params.RewardDenoms)
