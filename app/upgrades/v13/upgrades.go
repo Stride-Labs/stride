@@ -33,9 +33,11 @@ func CreateUpgradeHandler(
 			allDenoms = append(allDenoms, stakeibctypes.StAssetDenomFromHostZoneDenom(zone.HostDenom))
 		}
 
-		err := stakeibcKeeper.RegisterStTokenDenomsToWhitelist(ctx, allDenoms)
-		if err != nil {
-			return nil, errorsmod.Wrapf(err, "unable to register stTokens to whitelist")
+		if len(allDenoms) > 0 {
+			err := stakeibcKeeper.RegisterStTokenDenomsToWhitelist(ctx, allDenoms)
+			if err != nil {
+				return nil, errorsmod.Wrapf(err, "unable to register stTokens to whitelist")
+			}
 		}
 
 		return mm.RunMigrations(ctx, configurator, vm)
