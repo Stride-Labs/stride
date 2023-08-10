@@ -186,15 +186,6 @@ func (k msgServer) RegisterHostZone(goCtx context.Context, msg *types.MsgRegiste
 	}
 	k.RecordsKeeper.AppendDepositRecord(ctx, depositRecord)
 
-	// register stToken to consumer reward denom whitelist so that
-	// stToken rewards can be distributed to provider validators
-	err = k.RegisterStTokenDenomsToWhitelist(ctx, []string{types.StAssetDenomFromHostZoneDenom(zone.HostDenom)})
-	if err != nil {
-		errMsg := fmt.Sprintf("unable to register reward denom, err: %s", err.Error())
-		k.Logger(ctx).Error(errMsg)
-		return nil, errorsmod.Wrapf(types.ErrFailedToRegisterHostZone, errMsg)
-	}
-
 	// emit events
 	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(
