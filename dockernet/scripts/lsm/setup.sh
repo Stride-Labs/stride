@@ -16,7 +16,7 @@ sleep 5
 # Validator Address:        cosmosvaloper1uk4ze0x4nvh4fk0xm4jdud58eqn4yxhrdt795p
 staker_lsm_address=$($GAIA_MAIN_CMD keys show staker -a) 
 staker_stride_address=$($STRIDE_MAIN_CMD keys show staker -a) 
-validator_address=$(GET_VAL_ADDR GAIA 1) 
+validator_address=$(GET_VAL_ADDR GAIA 2)
 
 ## Fund accounts
 echo ">>> Fund staking account:"
@@ -33,6 +33,7 @@ sleep 5
 
 echo "Delegations:"
 $GAIA_MAIN_CMD q staking delegations $staker_lsm_address && echo ""
+exit
 sleep 2
 
 echo ">>> Tokenize to liquid staker:"
