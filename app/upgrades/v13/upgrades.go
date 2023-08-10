@@ -1,6 +1,8 @@
 package v13
 
 import (
+	errorsmod "cosmossdk.io/errors"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
@@ -31,7 +33,11 @@ func CreateUpgradeHandler(
 			allDenoms = append(allDenoms, stakeibctypes.StAssetDenomFromHostZoneDenom(zone.HostDenom))
 		}
 
-		stakeibcKeeper.RegisterStTokenDenomsToWhitelist(ctx, allDenoms)
+		err := stakeibcKeeper.RegisterStTokenDenomsToWhitelist(ctx, allDenoms)
+		if err != nil {
+			return nil, errorsmod.Wrapf(err, "unable to register stTokens to whitelist")
+		}
+
 		return mm.RunMigrations(ctx, configurator, vm)
 	}
 }
