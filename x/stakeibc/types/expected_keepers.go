@@ -41,6 +41,10 @@ type StakeIBCHooks interface {
 	AfterLiquidStake(ctx sdk.Context, addr sdk.AccAddress) // Must be called after liquid stake is completed
 }
 
+type ICAOracleKeeper interface {
+	QueueMetricUpdate(ctx sdk.Context, key, value, metricType, attributes string)
+}
+
 type RatelimitKeeper interface {
 	AddDenomToBlacklist(ctx sdk.Context, denom string)
 	RemoveDenomFromBlacklist(ctx sdk.Context, denom string)

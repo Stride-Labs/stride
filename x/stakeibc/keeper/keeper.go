@@ -38,13 +38,14 @@ type (
 		ICAControllerKeeper   icacontrollerkeeper.Keeper
 		IBCKeeper             ibckeeper.Keeper
 		bankKeeper            bankkeeper.Keeper
+		AccountKeeper         types.AccountKeeper
 		InterchainQueryKeeper icqkeeper.Keeper
 		RecordsKeeper         recordsmodulekeeper.Keeper
 		StakingKeeper         stakingkeeper.Keeper
 		ICACallbacksKeeper    icacallbackskeeper.Keeper
 		hooks                 types.StakeIBCHooks
-		AccountKeeper         types.AccountKeeper
 		RatelimitKeeper       types.RatelimitKeeper
+		ICAOracleKeeper       types.ICAOracleKeeper
 		ConsumerKeeper        types.ConsumerKeeper
 	}
 )
@@ -63,6 +64,7 @@ func NewKeeper(
 	StakingKeeper stakingkeeper.Keeper,
 	ICACallbacksKeeper icacallbackskeeper.Keeper,
 	RatelimitKeeper types.RatelimitKeeper,
+	icaOracleKeeper types.ICAOracleKeeper,
 	ConsumerKeeper types.ConsumerKeeper,
 ) Keeper {
 	// set KeyTable if it has not already been set
@@ -84,6 +86,7 @@ func NewKeeper(
 		StakingKeeper:         StakingKeeper,
 		ICACallbacksKeeper:    ICACallbacksKeeper,
 		RatelimitKeeper:       RatelimitKeeper,
+		ICAOracleKeeper:       icaOracleKeeper,
 		ConsumerKeeper:        ConsumerKeeper,
 	}
 }

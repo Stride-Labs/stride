@@ -346,6 +346,14 @@ func CopyConnectionAndClientToPath(path *ibctesting.Path, pathToCopy *ibctesting
 	return path
 }
 
+// Helper function to change the state of a channel (i.e. to open/close it)
+func (s *AppTestHelper) UpdateChannelState(portId, channelId string, channelState channeltypes.State) {
+	channel, found := s.App.IBCKeeper.ChannelKeeper.GetChannel(s.Ctx, portId, channelId)
+	s.Require().True(found, "ica channel should have been found")
+	channel.State = channelState
+	s.App.IBCKeeper.ChannelKeeper.SetChannel(s.Ctx, portId, channelId, channel)
+}
+
 // Constructs an ICA Packet Acknowledgement compatible with ibc-go v5+
 func ICAPacketAcknowledgement(t *testing.T, msgType string, msgResponses []proto.Message) channeltypes.Acknowledgement {
 	txMsgData := &sdk.TxMsgData{
