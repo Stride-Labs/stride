@@ -7,7 +7,7 @@ import (
 
 	yaml "gopkg.in/yaml.v2"
 
-	epochtypes "github.com/Stride-Labs/stride/v12/x/epochs/types"
+	epochtypes "github.com/Stride-Labs/stride/v13/x/epochs/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
