@@ -4,6 +4,7 @@ go 1.19
 
 require (
 	cosmossdk.io/math v1.0.1
+	github.com/Stride-Labs/stride/v12 v12.1.0
 	github.com/cometbft/cometbft v0.37.2
 	github.com/cometbft/cometbft-db v0.8.0
 	github.com/cosmos/cosmos-proto v1.0.0-beta.2
@@ -12,6 +13,7 @@ require (
 	github.com/cosmos/ibc-go/v7 v7.2.0
 	github.com/cosmos/ics23/go v0.10.0
 	github.com/cosmos/interchain-security/v3 v3.1.0
+	github.com/gogo/protobuf v1.3.2
 	github.com/golang/protobuf v1.5.3
 	github.com/gorilla/mux v1.8.0
 	github.com/grpc-ecosystem/grpc-gateway v1.16.0
@@ -31,10 +33,6 @@ require github.com/coinbase/rosetta-sdk-go/types v1.0.0 // indirect
 require (
 	cosmossdk.io/log v1.1.1-0.20230704160919-88f2c830b0ca // indirect
 	github.com/99designs/go-keychain v0.0.0-20191008050251-8e49817e8af4 // indirect
-	github.com/gin-gonic/gin v1.8.1 // indirect
-	github.com/go-playground/validator/v10 v10.11.1 // indirect
-	github.com/goccy/go-json v0.9.11 // indirect
-	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/google/s2a-go v0.1.4 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/oxyno-zeta/gomock-extra-matcher v1.1.0 // indirect
