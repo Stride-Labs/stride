@@ -15,7 +15,7 @@ STRIDE_LOGS=$LOGS/stride.log
 TX_LOGS=$DOCKERNET_HOME/logs/tx.log
 KEYS_LOGS=$DOCKERNET_HOME/logs/keys.log
 
-# List of hosts enabled
+# List of hosts enabled 
 HOST_CHAINS=() 
 
 # If no host zones are specified above:
