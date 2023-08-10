@@ -5,7 +5,6 @@ SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 source ${SCRIPT_DIR}/../config.sh
 
 #======== 1. ADD CONSUMER ========
-
 PROVIDER_HOME="$DOCKERNET_HOME/state/${GAIA_NODE_PREFIX}1"
 CONSUMER_HOME_PREFIX="$DOCKERNET_HOME/state/${STRIDE_NODE_PREFIX}"
 CONSUMER_HOME="${CONSUMER_HOME_PREFIX}1"
@@ -141,14 +140,8 @@ $relayer_exec rly keys restore stride $RELAYER_STRIDE_ICS_ACCT "$mnemonic" >> $r
 $relayer_exec rly keys restore $chain_name $account_name "$mnemonic" --coin-type $coin_type >> $relayer_logs 2>&1
 echo "Done restoring relayer keys"
 
-printf "STRIDE <> GAIA - Creating new connections..." | tee -a $relayer_logs
-$relayer_exec rly transact connection stride-gaia-ics >> $relayer_logs 2>&1
-echo "Done."
-sleep 10
-
-printf "STRIDE <> GAIA - Creating new channels..." | tee -a $relayer_logs
-$relayer_exec rly transact channel stride-gaia-ics --src-port consumer --dst-port provider --order ordered --version 1 >> $relayer_logs 2>&1
-echo "Done."
+printf "STRIDE <> GAIA - Creating ICS channel..." | tee -a $relayer_logs
+$relayer_exec rly transact link stride-gaia-ics --src-port consumer --dst-port provider --order ordered --version 1 >> $relayer_logs 2>&1
 
 $DOCKER_COMPOSE up -d relayer-gaia-ics
 $DOCKER_COMPOSE logs -f relayer-gaia-ics | sed -r -u "s/\x1B\[([0-9]{1,3}(;[0-9]{1,2})?)?[mGK]//g" >> $relayer_logs 2>&1 &
