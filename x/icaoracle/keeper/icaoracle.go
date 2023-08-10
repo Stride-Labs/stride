@@ -9,7 +9,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	proto "github.com/cosmos/gogoproto/proto"
 
-	"github.com/Stride-Labs/stride/v12/x/icaoracle/types"
+	"github.com/Stride-Labs/stride/v13/x/icaoracle/types"
 )
 
 var (

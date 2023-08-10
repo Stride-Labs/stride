@@ -1,7 +1,7 @@
 package types // noalias
 
 import (
-	epochstypes "github.com/Stride-Labs/stride/v12/x/epochs/types"
+	epochstypes "github.com/Stride-Labs/stride/v13/x/epochs/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/auth/types"
