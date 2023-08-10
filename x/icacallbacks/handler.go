@@ -7,8 +7,8 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
-	"github.com/Stride-Labs/stride/v12/x/icacallbacks/keeper"
-	"github.com/Stride-Labs/stride/v12/x/icacallbacks/types"
+	"github.com/Stride-Labs/stride/v13/x/icacallbacks/keeper"
+	"github.com/Stride-Labs/stride/v13/x/icacallbacks/types"
 )
 
 // NewHandler ...
