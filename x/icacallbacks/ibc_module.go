@@ -10,8 +10,8 @@ import (
 	porttypes "github.com/cosmos/ibc-go/v7/modules/core/05-port/types"
 	ibcexported "github.com/cosmos/ibc-go/v7/modules/core/exported"
 
-	"github.com/Stride-Labs/stride/v12/x/icacallbacks/keeper"
-	"github.com/Stride-Labs/stride/v12/x/icacallbacks/types"
+	"github.com/Stride-Labs/stride/v13/x/icacallbacks/keeper"
+	"github.com/Stride-Labs/stride/v13/x/icacallbacks/types"
 )
 
 var _ porttypes.IBCModule = &IBCModule{}

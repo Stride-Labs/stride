@@ -7,8 +7,8 @@ import (
 
 	ibctesting "github.com/cosmos/ibc-go/v7/testing"
 
-	icacallbacktypes "github.com/Stride-Labs/stride/v12/x/icacallbacks/types"
-	"github.com/Stride-Labs/stride/v12/x/icaoracle/types"
+	icacallbacktypes "github.com/Stride-Labs/stride/v13/x/icacallbacks/types"
+	"github.com/Stride-Labs/stride/v13/x/icaoracle/types"
 )
 
 type InstantiateOracleTestCase struct {
