@@ -56,10 +56,10 @@ then
 
     strided init localstride -o --chain-id=$CHAIN_ID --home $STRIDE_HOME
     
-    echo $MNEMONIC | strided keys add val --recover --keyring-backend test
+    echo $MNEMONIC | strided keys add val --recover --keyring-backend test --home $STRIDE_HOME
 
-    ACCOUNT_PUBKEY=$(strided keys show --keyring-backend test val --pubkey | dasel -r json '.key' --plain)
-    ACCOUNT_ADDRESS=$(strided keys show -a --keyring-backend test val --bech acc)
+    ACCOUNT_PUBKEY=$(strided keys show --keyring-backend test val --pubkey --home $STRIDE_HOME | dasel -r json '.key' --plain)
+    ACCOUNT_ADDRESS=$(strided keys show -a --keyring-backend test val --bech acc --home $STRIDE_HOME)
 
     VALIDATOR_PUBKEY_JSON=$(strided tendermint show-validator --home $STRIDE_HOME)
     VALIDATOR_PUBKEY=$(echo $VALIDATOR_PUBKEY_JSON | dasel -r json '.key' --plain)
