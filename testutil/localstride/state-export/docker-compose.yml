@@ -5,21 +5,24 @@ services:
   stride:
     image: stridezone:localstride
     build:
-      context: ../../../
       args:
+        context: ../../../
         RUNNER_IMAGE: alpine:3.16
         GO_VERSION: 1.19
     volumes:
-      - ./scripts/start.sh:/home/stride/start.sh
-      - ./scripts/testnetify.py:/home/stride/testnetify.py
-      - ./state_export.json:/home/stride/state_export.json
-      - $HOME/.stride/:/home/stride/.stride/
-    entrypoint:
+      - /home/kentgang/stride/testutil/localstride/state-export/scripts/start1.sh:/home/stride/start.sh
+      - /home/kentgang/stride/testutil/localstride/state-export/scripts/testnetify.py:/home/stride/testnetify.py
+      - /home/kentgang/stride/testutil/localstride/state-export/state_export.json:/home/stride/state_export.json
+      - /home/kentgang/.stride/:/home/stride/.stride/
+    command:
+      - sudo
+      - /bin/bash
       - /home/stride/start.sh
     environment:
       - MONIKER=val
       - CHAIN_ID=localstride
-      - PERSISTENT_PEER=83bef603d202a9e2be41396ad4184f73ccba1a58@stride2:26658
+      - PERSISTENT_PEER=e7302c9e6ece271e2c3667d45114a05977e6eb1d@stride2:26658
+      - STRIDE_HOME=/home/stride/.stride
     ports:
       - 26657:26657
       - 26656:26656
@@ -30,16 +33,18 @@ services:
   stride2:
     image: stridezone:localstride
     build:
-      context: ../../../
       args:
+        context: ../../../
         RUNNER_IMAGE: alpine:3.16
         GO_VERSION: 1.19
     volumes:
-      - ./scripts/start.sh:/home/stride/start.sh
-      - ./scripts/testnetify.py:/home/stride/testnetify.py
-      - ./state_export.json:/home/stride/state_export.json
-      - $HOME/.stride2/:/home/stride/.stride2/
-    entrypoint:
+      - /home/kentgang/stride/testutil/localstride/state-export/scripts/start.sh:/home/stride/start.sh
+      - /home/kentgang/stride/testutil/localstride/state-export/scripts/testnetify.py:/home/stride/testnetify.py
+      - /home/kentgang/stride/testutil/localstride/state-export/state_export.json:/home/stride/state_export.json
+      - /home/kentgang/.stride2/:/home/stride/.stride2/
+    command:
+      - sudo
+      - /bin/bash
       - /home/stride/start.sh
     environment:
       - MONIKER=val
