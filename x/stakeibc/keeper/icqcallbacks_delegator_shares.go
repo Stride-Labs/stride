@@ -12,9 +12,9 @@ import (
 	"github.com/gogo/protobuf/proto" //nolint:staticcheck
 	"github.com/spf13/cast"
 
-	"github.com/Stride-Labs/stride/v12/utils"
-	icqtypes "github.com/Stride-Labs/stride/v12/x/interchainquery/types"
-	"github.com/Stride-Labs/stride/v12/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v13/utils"
+	icqtypes "github.com/Stride-Labs/stride/v13/x/interchainquery/types"
+	"github.com/Stride-Labs/stride/v13/x/stakeibc/types"
 )
 
 // DelegatorSharesCallback is a callback handler for UpdateValidatorSharesExchRate queries.

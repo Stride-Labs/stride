@@ -83,7 +83,7 @@ package {upgradeVersion}
 
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	{new-consensus-version} "github.com/Stride-Labs/stride/v12/x/records/migrations/{new-consensus-version}"
+	{new-consensus-version} "github.com/Stride-Labs/stride/v13/x/records/migrations/{new-consensus-version}"
 )
 
 // TODO: Add migration logic to deserialize with old protos and re-serialize with new ones
@@ -98,7 +98,7 @@ func MigrateStore(ctx sdk.Context) error {
 // app/upgrades/{upgradeVersion}/upgrades.go
 
 import (
-	{module}migration "github.com/Stride-Labs/stride/v12/x/{module}/migrations/{new-consensus-version}"
+	{module}migration "github.com/Stride-Labs/stride/v13/x/{module}/migrations/{new-consensus-version}"
 )
 
 // CreateUpgradeHandler creates an SDK upgrade handler for {upgradeVersion}

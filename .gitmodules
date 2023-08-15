@@ -21,9 +21,9 @@
 	path = deps/juno
 	url = https://github.com/CosmosContracts/juno.git
 [submodule "deps/osmosis"]
-	# Commit: 08669da8509059980dc964976ee1ca60c84f5c8a
+	# Commit: v16.1.1-no-fees
 	path = deps/osmosis
-	url = https://github.com/osmosis-labs/osmosis.git
+	url = https://github.com/Stride-Labs/osmosis.git
 [submodule "deps/stargaze"]
 	# Commit: v9.0.1
 	path = deps/stargaze

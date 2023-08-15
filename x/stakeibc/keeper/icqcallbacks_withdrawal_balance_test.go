@@ -7,11 +7,11 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	ibctesting "github.com/cosmos/ibc-go/v7/testing"
 
-	epochtypes "github.com/Stride-Labs/stride/v12/x/epochs/types"
-	icacallbackstypes "github.com/Stride-Labs/stride/v12/x/icacallbacks/types"
-	icqtypes "github.com/Stride-Labs/stride/v12/x/interchainquery/types"
-	"github.com/Stride-Labs/stride/v12/x/stakeibc/keeper"
-	"github.com/Stride-Labs/stride/v12/x/stakeibc/types"
+	epochtypes "github.com/Stride-Labs/stride/v13/x/epochs/types"
+	icacallbackstypes "github.com/Stride-Labs/stride/v13/x/icacallbacks/types"
+	icqtypes "github.com/Stride-Labs/stride/v13/x/interchainquery/types"
+	"github.com/Stride-Labs/stride/v13/x/stakeibc/keeper"
+	"github.com/Stride-Labs/stride/v13/x/stakeibc/types"
 )
 
 type WithdrawalBalanceICQCallbackState struct {

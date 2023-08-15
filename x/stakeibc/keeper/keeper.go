@@ -12,8 +12,8 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
 
-	icqkeeper "github.com/Stride-Labs/stride/v12/x/interchainquery/keeper"
-	"github.com/Stride-Labs/stride/v12/x/stakeibc/types"
+	icqkeeper "github.com/Stride-Labs/stride/v13/x/interchainquery/keeper"
+	"github.com/Stride-Labs/stride/v13/x/stakeibc/types"
 
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
 	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
@@ -23,9 +23,9 @@ import (
 
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 
-	epochstypes "github.com/Stride-Labs/stride/v12/x/epochs/types"
-	icacallbackskeeper "github.com/Stride-Labs/stride/v12/x/icacallbacks/keeper"
-	recordsmodulekeeper "github.com/Stride-Labs/stride/v12/x/records/keeper"
+	epochstypes "github.com/Stride-Labs/stride/v13/x/epochs/types"
+	icacallbackskeeper "github.com/Stride-Labs/stride/v13/x/icacallbacks/keeper"
+	recordsmodulekeeper "github.com/Stride-Labs/stride/v13/x/records/keeper"
 )
 
 type (
@@ -38,13 +38,15 @@ type (
 		ICAControllerKeeper   icacontrollerkeeper.Keeper
 		IBCKeeper             ibckeeper.Keeper
 		bankKeeper            bankkeeper.Keeper
+		AccountKeeper         types.AccountKeeper
 		InterchainQueryKeeper icqkeeper.Keeper
 		RecordsKeeper         recordsmodulekeeper.Keeper
 		StakingKeeper         stakingkeeper.Keeper
 		ICACallbacksKeeper    icacallbackskeeper.Keeper
 		hooks                 types.StakeIBCHooks
-		AccountKeeper         types.AccountKeeper
 		RatelimitKeeper       types.RatelimitKeeper
+		ICAOracleKeeper       types.ICAOracleKeeper
+		ConsumerKeeper        types.ConsumerKeeper
 	}
 )
 
@@ -62,6 +64,8 @@ func NewKeeper(
 	StakingKeeper stakingkeeper.Keeper,
 	ICACallbacksKeeper icacallbackskeeper.Keeper,
 	RatelimitKeeper types.RatelimitKeeper,
+	icaOracleKeeper types.ICAOracleKeeper,
+	ConsumerKeeper types.ConsumerKeeper,
 ) Keeper {
 	// set KeyTable if it has not already been set
 	if !ps.HasKeyTable() {
@@ -82,6 +86,8 @@ func NewKeeper(
 		StakingKeeper:         StakingKeeper,
 		ICACallbacksKeeper:    ICACallbacksKeeper,
 		RatelimitKeeper:       RatelimitKeeper,
+		ICAOracleKeeper:       icaOracleKeeper,
+		ConsumerKeeper:        ConsumerKeeper,
 	}
 }
 

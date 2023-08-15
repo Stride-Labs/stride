@@ -32,8 +32,8 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
-	"github.com/Stride-Labs/stride/v12/app"
-	"github.com/Stride-Labs/stride/v12/utils"
+	"github.com/Stride-Labs/stride/v13/app"
+	"github.com/Stride-Labs/stride/v13/utils"
 )
 
 var (
@@ -344,6 +344,14 @@ func CopyConnectionAndClientToPath(path *ibctesting.Path, pathToCopy *ibctesting
 	path.EndpointA.ConnectionConfig = pathToCopy.EndpointA.ConnectionConfig
 	path.EndpointB.ConnectionConfig = pathToCopy.EndpointB.ConnectionConfig
 	return path
+}
+
+// Helper function to change the state of a channel (i.e. to open/close it)
+func (s *AppTestHelper) UpdateChannelState(portId, channelId string, channelState channeltypes.State) {
+	channel, found := s.App.IBCKeeper.ChannelKeeper.GetChannel(s.Ctx, portId, channelId)
+	s.Require().True(found, "ica channel should have been found")
+	channel.State = channelState
+	s.App.IBCKeeper.ChannelKeeper.SetChannel(s.Ctx, portId, channelId, channel)
 }
 
 // Constructs an ICA Packet Acknowledgement compatible with ibc-go v5+

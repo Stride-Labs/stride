@@ -5,7 +5,9 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/auth/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 
-	ratelimittypes "github.com/Stride-Labs/stride/v12/x/ratelimit/types"
+	ccvconsumertypes "github.com/cosmos/interchain-security/v3/x/ccv/consumer/types"
+
+	ratelimittypes "github.com/Stride-Labs/stride/v13/x/ratelimit/types"
 )
 
 // AccountKeeper defines the expected account keeper used for simulations (noalias)
@@ -39,8 +41,17 @@ type StakeIBCHooks interface {
 	AfterLiquidStake(ctx sdk.Context, addr sdk.AccAddress) // Must be called after liquid stake is completed
 }
 
+type ICAOracleKeeper interface {
+	QueueMetricUpdate(ctx sdk.Context, key, value, metricType, attributes string)
+}
+
 type RatelimitKeeper interface {
 	AddDenomToBlacklist(ctx sdk.Context, denom string)
 	RemoveDenomFromBlacklist(ctx sdk.Context, denom string)
 	SetWhitelistedAddressPair(ctx sdk.Context, whitelist ratelimittypes.WhitelistedAddressPair)
+}
+
+type ConsumerKeeper interface {
+	GetConsumerParams(ctx sdk.Context) ccvconsumertypes.Params
+	SetParams(ctx sdk.Context, params ccvconsumertypes.Params)
 }

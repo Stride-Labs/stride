@@ -9,16 +9,16 @@ import (
 	ibctesting "github.com/cosmos/ibc-go/v7/testing"
 	_ "github.com/stretchr/testify/suite"
 
-	"github.com/Stride-Labs/stride/v12/app/apptesting"
-	epochtypes "github.com/Stride-Labs/stride/v12/x/epochs/types"
-	icqtypes "github.com/Stride-Labs/stride/v12/x/interchainquery/types"
+	"github.com/Stride-Labs/stride/v13/app/apptesting"
+	epochtypes "github.com/Stride-Labs/stride/v13/x/epochs/types"
+	icqtypes "github.com/Stride-Labs/stride/v13/x/interchainquery/types"
 
-	icacallbacktypes "github.com/Stride-Labs/stride/v12/x/icacallbacks/types"
-	recordtypes "github.com/Stride-Labs/stride/v12/x/records/types"
-	stakeibckeeper "github.com/Stride-Labs/stride/v12/x/stakeibc/keeper"
+	icacallbacktypes "github.com/Stride-Labs/stride/v13/x/icacallbacks/types"
+	recordtypes "github.com/Stride-Labs/stride/v13/x/records/types"
+	stakeibckeeper "github.com/Stride-Labs/stride/v13/x/stakeibc/keeper"
 
-	"github.com/Stride-Labs/stride/v12/x/stakeibc/types"
-	stakeibctypes "github.com/Stride-Labs/stride/v12/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v13/x/stakeibc/types"
+	stakeibctypes "github.com/Stride-Labs/stride/v13/x/stakeibc/types"
 )
 
 type ReinvestCallbackState struct {

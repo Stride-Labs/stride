@@ -1,4 +1,4 @@
-module github.com/Stride-Labs/stride/v12
+module github.com/Stride-Labs/stride/v13
 
 go 1.19
 
@@ -32,9 +32,6 @@ require github.com/coinbase/rosetta-sdk-go/types v1.0.0 // indirect
 require (
 	cosmossdk.io/log v1.1.1-0.20230704160919-88f2c830b0ca // indirect
 	github.com/99designs/go-keychain v0.0.0-20191008050251-8e49817e8af4 // indirect
-	github.com/gin-gonic/gin v1.8.1 // indirect
-	github.com/go-playground/validator/v10 v10.11.1 // indirect
-	github.com/goccy/go-json v0.9.11 // indirect
 	github.com/google/s2a-go v0.1.4 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/oxyno-zeta/gomock-extra-matcher v1.1.0 // indirect
@@ -181,6 +178,10 @@ replace (
 	// Use the keyring specified by the cosmos-sdk
 	github.com/99designs/keyring => github.com/cosmos/keyring v1.2.0
 	github.com/btcsuite/btcd => github.com/btcsuite/btcd v0.22.2 //indirect
+
+	// fork SDK to fix SDKv0.47 Distribution Bug
+	// TODO - Remove this patch and update Tokens in a subsequent upgrade handler
+	github.com/cosmos/cosmos-sdk => github.com/Stride-Labs/cosmos-sdk v0.47.4-stride-distribution-fix-1
 	github.com/cosmos/interchain-security/v3 => github.com/Stride-Labs/interchain-security/v3 v3.1.1-0.20230713175550-227e13e60bac
 
 	// fork cast to add additional error checking

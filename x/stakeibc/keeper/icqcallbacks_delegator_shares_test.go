@@ -11,9 +11,9 @@ import (
 	ibctesting "github.com/cosmos/ibc-go/v7/testing"
 	"github.com/gogo/protobuf/proto" //nolint:staticcheck
 
-	icqtypes "github.com/Stride-Labs/stride/v12/x/interchainquery/types"
-	"github.com/Stride-Labs/stride/v12/x/stakeibc/keeper"
-	"github.com/Stride-Labs/stride/v12/x/stakeibc/types"
+	icqtypes "github.com/Stride-Labs/stride/v13/x/interchainquery/types"
+	"github.com/Stride-Labs/stride/v13/x/stakeibc/keeper"
+	"github.com/Stride-Labs/stride/v13/x/stakeibc/types"
 )
 
 type DelegatorSharesICQCallbackArgs struct {

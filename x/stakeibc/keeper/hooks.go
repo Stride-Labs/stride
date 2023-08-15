@@ -1,16 +1,18 @@
 package keeper
 
 import (
+	"encoding/json"
 	"fmt"
 
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/spf13/cast"
 
-	"github.com/Stride-Labs/stride/v12/utils"
-	epochstypes "github.com/Stride-Labs/stride/v12/x/epochs/types"
-	recordstypes "github.com/Stride-Labs/stride/v12/x/records/types"
-	"github.com/Stride-Labs/stride/v12/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v13/utils"
+	epochstypes "github.com/Stride-Labs/stride/v13/x/epochs/types"
+	icaoracletypes "github.com/Stride-Labs/stride/v13/x/icaoracle/types"
+	recordstypes "github.com/Stride-Labs/stride/v13/x/records/types"
+	"github.com/Stride-Labs/stride/v13/x/stakeibc/types"
 )
 
 const StrideEpochsPerDayEpoch = uint64(4)
@@ -175,7 +177,6 @@ func (k Keeper) UpdateRedemptionRateForHostZone(ctx sdk.Context, hostZone types.
 	if stSupply.IsZero() {
 		k.Logger(ctx).Info(utils.LogWithHostZone(hostZone.ChainId,
 			"No st%s in circulation - redemption rate is unchanged", hostZone.HostDenom))
-		return
 	}
 
 	depositAccountBalance := k.GetDepositAccountBalance(hostZone.ChainId, depositRecords)
@@ -200,6 +201,18 @@ func (k Keeper) UpdateRedemptionRateForHostZone(ctx sdk.Context, hostZone types.
 	hostZone.LastRedemptionRate = hostZone.RedemptionRate
 	hostZone.RedemptionRate = redemptionRate
 	k.SetHostZone(ctx, hostZone)
+
+	// If the redemption rate is outside of safety bounds, exit so the redemption rate is not pushed to the oracle
+	redemptionRateSafe, _ := k.IsRedemptionRateWithinSafetyBounds(ctx, hostZone)
+	if !redemptionRateSafe {
+		return
+	}
+
+	// Otherwise, submit the redemption rate to the oracle
+	if err := k.PostRedemptionRateToOracles(ctx, hostZone, redemptionRate); err != nil {
+		k.Logger(ctx).Error(fmt.Sprintf("Unable to send redemption rate to oracle: %s", err.Error()))
+		return
+	}
 }
 
 // Determine the deposit account balance, representing native tokens that have been deposited
@@ -261,6 +274,27 @@ func (k Keeper) GetTotalTokenizedDelegations(ctx sdk.Context, hostZone types.Hos
 	}
 
 	return sdk.NewDecFromInt(total)
+}
+
+// Pushes a redemption rate update to the ICA oracle
+func (k Keeper) PostRedemptionRateToOracles(ctx sdk.Context, hostZone types.HostZone, redemptionRate sdk.Dec) error {
+	stDenom := types.StAssetDenomFromHostZoneDenom(hostZone.HostDenom)
+	nativeDenom := hostZone.IbcDenom
+	attributes, err := json.Marshal(icaoracletypes.RedemptionRateAttributes{
+		Denom:     stDenom,
+		BaseDenom: nativeDenom,
+	})
+	if err != nil {
+		return err
+	}
+
+	// Metric Key is of format: {stToken}_redemption_rate
+	metricKey := fmt.Sprintf("%s_%s", stDenom, icaoracletypes.MetricType_RedemptionRate)
+	metricValue := redemptionRate.String()
+	metricType := icaoracletypes.MetricType_RedemptionRate
+	k.ICAOracleKeeper.QueueMetricUpdate(ctx, metricKey, metricValue, metricType, string(attributes))
+
+	return nil
 }
 
 func (k Keeper) ReinvestRewards(ctx sdk.Context) {
