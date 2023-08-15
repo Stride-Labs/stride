@@ -26,6 +26,10 @@
 	# Commit: ec337e0357ae6b6727ad9092ac0ce3667df91319
 	path = deps/evmos
 	url = https://github.com/evmos/evmos
+[submodule "deps/sommelier"]
+	# commit v6.0.0
+	path = deps/sommelier
+	url = https://github.com/PeggyJV/sommelier
 # bats
 [submodule "dockernet/tests/bats/bats-core"]
 	path = dockernet/tests/bats/bats-core
