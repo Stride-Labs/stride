@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	icatypes "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/types"
 	connectiontypes "github.com/cosmos/ibc-go/v7/modules/core/03-connection/types"
 	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
 	ibctesting "github.com/cosmos/ibc-go/v7/testing"
@@ -20,9 +19,7 @@ type RestoreOracleICATestCase struct {
 func (s *KeeperTestSuite) SetupTestRestoreOracleICA() RestoreOracleICATestCase {
 	// Create oracle ICA channel
 	owner := types.FormatICAAccountOwner(HostChainId, types.ICAAccountType_Oracle)
-	channelId := s.CreateICAChannel(owner)
-	portId, err := icatypes.NewControllerPortID(owner)
-	s.Require().NoError(err, "no error expected when formatting portId")
+	channelId, portId := s.CreateICAChannel(owner)
 
 	// Create oracle
 	oracle := types.Oracle{

@@ -177,6 +177,7 @@ func (k Keeper) UpdateRedemptionRateForHostZone(ctx sdk.Context, hostZone types.
 	if stSupply.IsZero() {
 		k.Logger(ctx).Info(utils.LogWithHostZone(hostZone.ChainId,
 			"No st%s in circulation - redemption rate is unchanged", hostZone.HostDenom))
+		return
 	}
 
 	depositAccountBalance := k.GetDepositAccountBalance(hostZone.ChainId, depositRecords)
