@@ -13,7 +13,7 @@
 	path = deps/relayer
 	url = https://github.com/Stride-Labs/relayer.git
 [submodule "deps/gaia"]
-	# Commit: v10.0.2-lsm-debug-v4
+	# Commit: v10.0.2-lsm-rc0
 	path = deps/gaia
 	url = https://github.com/Stride-Labs/gaia.git
 [submodule "deps/juno"]

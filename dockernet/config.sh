@@ -383,7 +383,7 @@ GET_VAL_ADDR() {
   val_index=$2
 
   MAIN_CMD=$(GET_VAR_VALUE ${chain}_MAIN_CMD)
-  $MAIN_CMD q staking validators | grep ${chain}_${val_index} -A 5 | grep operator | awk '{print $2}'
+  $MAIN_CMD q staking validators | grep ${chain}_${val_index} -A 6 | grep operator | awk '{print $2}'
 }
 
 GET_ICA_ADDR() {
