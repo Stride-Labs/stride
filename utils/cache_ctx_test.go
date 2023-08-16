@@ -43,6 +43,7 @@ func (s *UtilsTestSuite) TestCacheCtxConsumeGas() {
 			ctx.GasMeter().ConsumeGas(tc.gasUsedPreCtx, "pre ctx")
 			var err error
 			f := func() {
+				// nolint:errcheck
 				utils.ApplyFuncIfNoError(ctx, func(c sdk.Context) error {
 					return consumeGas(c, 1000, 10)
 				})

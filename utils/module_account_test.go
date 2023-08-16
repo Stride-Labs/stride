@@ -12,17 +12,20 @@ import (
 func (s *UtilsTestSuite) TestCreateModuleAccount() {
 	baseWithAddr := func(addr sdk.AccAddress) authtypes.AccountI {
 		acc := authtypes.ProtoBaseAccount()
-		acc.SetAddress(addr)
+		err := acc.SetAddress(addr)
+		s.Require().NoError(err)
 		return acc
 	}
 	userAccViaSeqnum := func(addr sdk.AccAddress) authtypes.AccountI {
 		base := baseWithAddr(addr)
-		base.SetSequence(2)
+		err := base.SetSequence(2)
+		s.Require().NoError(err)
 		return base
 	}
 	userAccViaPubkey := func(addr sdk.AccAddress) authtypes.AccountI {
 		base := baseWithAddr(addr)
-		base.SetPubKey(secp256k1.GenPrivKey().PubKey())
+		err := base.SetPubKey(secp256k1.GenPrivKey().PubKey())
+		s.Require().NoError(err)
 		return base
 	}
 	defaultModuleAccAddr := address.Module("dummy module", []byte{1})
