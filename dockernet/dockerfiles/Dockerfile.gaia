@@ -4,10 +4,10 @@ WORKDIR /opt
 
 RUN apk add --update curl make git libc-dev bash gcc linux-headers eudev-dev python3
 
-ENV COMMIT_HASH=v10.0.2-lsm-rc0
+ENV COMMIT_HASH=75f0714294d2a43462cc2a9e53a1762882d468b6
 
-RUN git clone https://github.com/Stride-Labs/gaia gaia-install \
-    && cd gaia-install \
+RUN git clone https://github.com/cosmos/gaia \
+    && cd gaia \
     && git checkout $COMMIT_HASH \
     && CGO_ENABLED=0 make install
 
