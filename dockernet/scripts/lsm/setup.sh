@@ -14,17 +14,19 @@ sleep 5
 # Staker Address on Stride: stride1x92tnm6pfkl3gsfy0rfaez5myq5zh99a6a2w0p
 # Staker Address on GAIA:   cosmos1x92tnm6pfkl3gsfy0rfaez5myq5zh99aek2jmd
 # Validator Address:        cosmosvaloper1uk4ze0x4nvh4fk0xm4jdud58eqn4yxhrdt795p
-staker_lsm_address=$($GAIA_MAIN_CMD keys show staker -a) 
+staker_gaia_address=$($GAIA_MAIN_CMD keys show staker -a) 
 staker_stride_address=$($STRIDE_MAIN_CMD keys show staker -a) 
 validator_address=$(GET_VAL_ADDR GAIA 1) 
 
 ## Fund accounts
-echo ">>> Fund staking account:"
-$GAIA_MAIN_CMD tx bank send $($GAIA_MAIN_CMD keys show gval1 -a) $staker_lsm_address 10000000uatom --from rly8 -y | TRIM_TX 
+echo ">>> Fund staking accounts:"
+$GAIA_MAIN_CMD tx bank send $($GAIA_MAIN_CMD keys show gval1 -a) $staker_gaia_address 10000000uatom --from rly8 -y | TRIM_TX 
+sleep 5 && echo ""
+$STRIDE_MAIN_CMD tx bank send $($STRIDE_MAIN_CMD keys show val1 -a) $staker_stride_address 10000000ustrd --from val1 -y | TRIM_TX 
 sleep 5 && echo ""
 
 echo "Bank balance:"
-$GAIA_MAIN_CMD q bank balances $staker_lsm_address 
+$GAIA_MAIN_CMD q bank balances $staker_gaia_address 
 
 ## Delegate, Tokenize and Transfer
 echo ">>> Delegate:"
@@ -32,19 +34,19 @@ $GAIA_MAIN_CMD tx staking delegate $validator_address 10000000uatom --from stake
 sleep 5
 
 echo "Delegations:"
-$GAIA_MAIN_CMD q staking delegations $staker_lsm_address && echo ""
+$GAIA_MAIN_CMD q staking delegations $staker_gaia_address && echo ""
 sleep 2
 
 echo ">>> Tokenize to liquid staker:"
-$GAIA_MAIN_CMD tx staking tokenize-share $validator_address 10000000uatom $staker_lsm_address --from staker -y --gas auto | TRIM_TX && echo ""
+$GAIA_MAIN_CMD tx staking tokenize-share $validator_address 10000000uatom $staker_gaia_address --from staker -y --gas auto | TRIM_TX && echo ""
 sleep 5
 
 echo "Balance on GAIA:"
-$GAIA_MAIN_CMD q bank balances $staker_lsm_address && echo ""
+$GAIA_MAIN_CMD q bank balances $staker_gaia_address && echo ""
 sleep 2
 
 echo "Tokenized shares:"
-$GAIA_MAIN_CMD q distribution tokenize-share-record-rewards $staker_lsm_address && echo ""
+$GAIA_MAIN_CMD q distribution tokenize-share-record-rewards $staker_gaia_address && echo ""
 sleep 2
 
 echo ">>> Transfer to Stride:"
