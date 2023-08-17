@@ -61,6 +61,10 @@ import (
 	govtypesv1beta1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
 	ccvdistr "github.com/cosmos/interchain-security/v3/x/ccv/democracy/distribution"
 	ccvgov "github.com/cosmos/interchain-security/v3/x/ccv/democracy/governance"
+	evmosvesting "github.com/evmos/vesting/x/vesting"
+	evmosvestingclient "github.com/evmos/vesting/x/vesting/client"
+	evmosvestingkeeper "github.com/evmos/vesting/x/vesting/keeper"
+	evmosvestingtypes "github.com/evmos/vesting/x/vesting/types"
 
 	claimvesting "github.com/Stride-Labs/stride/v13/x/claim/vesting"
 	claimvestingtypes "github.com/Stride-Labs/stride/v13/x/claim/vesting/types"
@@ -174,6 +178,7 @@ func getGovProposalHandlers() []govclient.ProposalHandler {
 		ratelimitclient.UpdateRateLimitProposalHandler,
 		ratelimitclient.RemoveRateLimitProposalHandler,
 		ratelimitclient.ResetRateLimitProposalHandler,
+		evmosvestingclient.RegisterClawbackProposalHandler,
 	)
 
 	return govProposalHandlers
@@ -219,6 +224,7 @@ var (
 		autopilot.AppModuleBasic{},
 		icaoracle.AppModuleBasic{},
 		tendermint.AppModuleBasic{},
+		evmosvesting.AppModuleBasic{},
 	)
 
 	// module account permissions
@@ -273,6 +279,7 @@ type StrideApp struct {
 	memKeys map[string]*storetypes.MemoryStoreKey
 
 	// keepers
+	VestingKeeper         evmosvestingkeeper.Keeper
 	AccountKeeper         authkeeper.AccountKeeper
 	BankKeeper            bankkeeper.Keeper
 	CapabilityKeeper      *capabilitykeeper.Keeper
@@ -361,6 +368,7 @@ func NewStrideApp(
 		ccvconsumertypes.StoreKey,
 		crisistypes.StoreKey,
 		consensusparamtypes.StoreKey,
+		evmosvestingtypes.StoreKey,
 	)
 	tkeys := sdk.NewTransientStoreKeys(paramstypes.TStoreKey)
 	memKeys := sdk.NewMemoryStoreKeys(capabilitytypes.MemStoreKey)
@@ -607,6 +615,11 @@ func NewStrideApp(
 		app.ClaimKeeper)
 	autopilotModule := autopilot.NewAppModule(appCodec, app.AutopilotKeeper)
 
+	app.VestingKeeper = evmosvestingkeeper.NewKeeper(
+		keys[evmosvestingtypes.StoreKey], authtypes.NewModuleAddress(govtypes.ModuleName), appCodec,
+		app.AccountKeeper, app.BankKeeper, app.DistrKeeper, app.StakingKeeper,
+	)
+
 	// Register Gov (must be registerd after stakeibc)
 	govRouter := govtypesv1beta1.NewRouter()
 	govRouter.AddRoute(govtypes.RouterKey, govtypesv1beta1.ProposalHandler).
@@ -614,7 +627,8 @@ func NewStrideApp(
 		AddRoute(upgradetypes.RouterKey, upgrade.NewSoftwareUpgradeProposalHandler(app.UpgradeKeeper)).
 		AddRoute(ibcclienttypes.RouterKey, ibcclient.NewClientProposalHandler(app.IBCKeeper.ClientKeeper)).
 		AddRoute(stakeibcmoduletypes.RouterKey, stakeibcmodule.NewStakeibcProposalHandler(app.StakeibcKeeper)).
-		AddRoute(ratelimitmoduletypes.RouterKey, ratelimitmodule.NewRateLimitProposalHandler(app.RatelimitKeeper, app.IBCKeeper.ChannelKeeper))
+		AddRoute(ratelimitmoduletypes.RouterKey, ratelimitmodule.NewRateLimitProposalHandler(app.RatelimitKeeper, app.IBCKeeper.ChannelKeeper)).
+		AddRoute(evmosvestingtypes.RouterKey, evmosvesting.NewVestingProposalHandler(&app.VestingKeeper))
 
 	govKeeper := govkeeper.NewKeeper(
 		appCodec, keys[govtypes.StoreKey], app.AccountKeeper, app.BankKeeper,
@@ -742,6 +756,7 @@ func NewStrideApp(
 		ibc.NewAppModule(app.IBCKeeper),
 		params.NewAppModule(app.ParamsKeeper),
 		claim.NewAppModule(appCodec, app.ClaimKeeper),
+		evmosvesting.NewAppModule(app.VestingKeeper, app.AccountKeeper, app.BankKeeper, app.StakingKeeper),
 		transferModule,
 		// monitoringModule,
 		stakeibcModule,
@@ -779,6 +794,7 @@ func NewStrideApp(
 		genutiltypes.ModuleName,
 		feegrant.ModuleName,
 		paramstypes.ModuleName,
+		evmosvestingtypes.ModuleName,
 		// monitoringptypes.ModuleName,
 		icatypes.ModuleName,
 		stakeibcmoduletypes.ModuleName,
@@ -814,6 +830,7 @@ func NewStrideApp(
 		ibchost.ModuleName,
 		ibctransfertypes.ModuleName,
 		// monitoringptypes.ModuleName,
+		evmosvestingtypes.ModuleName,
 		icatypes.ModuleName,
 		stakeibcmoduletypes.ModuleName,
 		epochsmoduletypes.ModuleName,
@@ -853,6 +870,7 @@ func NewStrideApp(
 		ibctransfertypes.ModuleName,
 		feegrant.ModuleName,
 		// monitoringptypes.ModuleName,
+		evmosvestingtypes.ModuleName,
 		icatypes.ModuleName,
 		stakeibcmoduletypes.ModuleName,
 		epochsmoduletypes.ModuleName,
