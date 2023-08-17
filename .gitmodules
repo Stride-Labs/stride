@@ -36,3 +36,6 @@
 [submodule "dockernet/tests/bats/bats-support"]
 	path = dockernet/tests/bats/bats-support
 	url = https://github.com/bats-core/bats-support.git
+[submodule "deps/centauri"]
+	path = deps/centauri
+	url = https://github.com/notional-labs/composable-centauri.git
