@@ -32,7 +32,7 @@ $GAIA_MAIN_CMD q bank balances $staker_gaia_address
 
 ## Delegate, Tokenize and Transfer
 echo ">>> Delegate to Coinbase:"
-$GAIA_MAIN_CMD tx staking delegate $validator_address_2 10000000uatom --from staker -y | TRIM_TX && echo ""
+$GAIA_MAIN_CMD tx staking delegate $validator_address_2 100000000000uatom --from staker -y | TRIM_TX && echo ""
 sleep 5
 echo ">>> Delegate to XXX:"
 $GAIA_MAIN_CMD tx staking delegate $validator_address_3 10000000uatom --from staker -y | TRIM_TX && echo ""
