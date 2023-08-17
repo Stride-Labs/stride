@@ -9,6 +9,9 @@ for chain_id in STRIDE ${HOST_CHAINS[@]}; do
     num_nodes=$(GET_VAR_VALUE ${chain_id}_NUM_NODES)
     node_prefix=$(GET_VAR_VALUE ${chain_id}_NODE_PREFIX)
 
+    if [[ $node_prefix == "banksy" ]]; then
+        node_prefix="centauri"
+    fi
     log_file=$DOCKERNET_HOME/logs/${node_prefix}.log
 
     echo "Starting $chain_id chain"
@@ -22,6 +25,9 @@ for chain_id in STRIDE ${HOST_CHAINS[@]}; do
     printf "Waiting for $chain_id to start..."
 
     node_prefix=$(GET_VAR_VALUE ${chain_id}_NODE_PREFIX)
+    if [[ $node_prefix == "banksy" ]]; then
+        node_prefix="centauri"
+    fi
     log_file=$DOCKERNET_HOME/logs/${node_prefix}.log
 
     ( tail -f -n0 $log_file & ) | grep -q "finalizing commit of block"

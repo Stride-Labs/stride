@@ -90,9 +90,17 @@ MAIN_GENESIS=""
 echo "Initializing $CHAIN chain..."
 for (( i=1; i <= $NUM_NODES; i++ )); do
     # Node names will be of the form: "stride1"
-    node_name="${NODE_PREFIX}${i}"
+    if [[ $NODE_PREFIX == "banksy" ]]; then
+        node_name="centauri${i}"
+    else
+        node_name="${NODE_PREFIX}${i}"
+    fi
     # Moniker is of the form: STRIDE_1
-    moniker=$(printf "${NODE_PREFIX}_${i}" | awk '{ print toupper($0) }')
+    if [[ $NODE_PREFIX == "banksy" ]]; then
+        moniker=$(printf "centauri_${i}" | awk '{ print toupper($0) }')
+    else
+        moniker=$(printf "${NODE_PREFIX}_${i}" | awk '{ print toupper($0) }')
+    fi
 
     # Create a state directory for the current node and initialize the chain
     mkdir -p $STATE/$node_name
@@ -240,7 +248,11 @@ fi
 
 # for all peer nodes....
 for (( i=2; i <= $NUM_NODES; i++ )); do
-    node_name="${NODE_PREFIX}${i}"
+    if [[ $NODE_PREFIX == "banksy" ]]; then
+        node_name="centauri${i}"
+    else
+        node_name="${NODE_PREFIX}${i}"
+    fi
     config_toml="${STATE}/${node_name}/config/config.toml"
     genesis_json="${STATE}/${node_name}/config/genesis.json"
 

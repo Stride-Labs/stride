@@ -99,7 +99,7 @@ while getopts sgojtehrn flag; do
       o) build_local_and_docker osmo deps/osmosis ;;
       t) build_local_and_docker stars deps/stargaze ;;
       e) build_local_and_docker evmos deps/evmos ;;
-      n) continue ;; # build_local_and_docker {new-host-zone} deps/{new-host-zone} ;;
+      n) build_local_and_docker centauri deps/centauri;;
       r) build_local_and_docker relayer deps/relayer ;;  
       h) echo "Building Hermes Docker... ";
          docker build --tag stridezone:hermes -f dockernet/dockerfiles/Dockerfile.hermes . ;

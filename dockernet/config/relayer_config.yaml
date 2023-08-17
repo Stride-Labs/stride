@@ -111,21 +111,21 @@ chains:
       sign-mode: direct
       extra-codecs:
         - ethermint
-  # {new-host-zone}:
-  #   type: cosmos
-  #   value:
-  #     key: rly{N}
-  #     chain-id: {CHAIN_ID}
-  #     rpc-addr: http://{node_prefix}1:26657
-  #     account-prefix: {bech32_hrp_account_prefix}
-  #     keyring-backend: test
-  #     gas-adjustment: 1.3
-  #     gas-prices: 0.02{minimal_denom}
-  #     coin-type: {coin-type}
-  #     debug: false
-  #     timeout: 20s
-  #     output-format: json
-  #     sign-mode: direct
+  centauri:
+    type: cosmos
+    value:
+      key: rly13
+      chain-id: CENTAURI
+      rpc-addr: http://centauri1:26657
+      account-prefix: centauri
+      keyring-backend: test
+      gas-adjustment: 1.3
+      gas-prices: 0.02ppica
+      coin-type: 118
+      debug: true
+      timeout: 20s
+      output-format: json
+      sign-mode: direct
 
 paths:
   stride-gaia:
@@ -186,11 +186,11 @@ paths:
     src-channel-filter:
       rule: ""
       channel-list: []
-  # stride-{new-host-zone}:
-  #   src:
-  #     chain-id: STRIDE
-  #   dst:
-  #     chain-id: {CHAIN_ID}
-  #   src-channel-filter:
-  #     rule: ""
-  #     channel-list: []
+  stride-centauri:
+    src:
+      chain-id: STRIDE
+    dst:
+      chain-id: CENTAURI
+    src-channel-filter:
+      rule: ""
+      channel-list: []

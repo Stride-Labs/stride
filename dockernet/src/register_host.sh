@@ -42,6 +42,9 @@ done
 
 # Write validators list to json file  of the form:
 # {"validators": [{"name": "...", "address": "...", "weight": "..."}, {"name": ... }] }
+if [[ $NODE_PREFIX == "banksy" ]]; then
+    NODE_PREFIX="centauri"   
+fi
 validator_json=$DOCKERNET_HOME/state/${NODE_PREFIX}1/validators.json
 echo "{\"validators\": [${validators[*]}]}" > $validator_json
 

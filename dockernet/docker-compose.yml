@@ -264,3 +264,39 @@ services:
       - ./state/relayer-juno-osmo:/home/relayer/.relayer
     restart: always
     command: [ "bash", "start.sh", "juno-osmo" ]
+    
+  centauri1:
+    image: stridezone:centauri
+    volumes:
+      - ./state/centauri1:/home/composable-centauri/.banksy
+    ports:
+      - "25957:26657"
+      - "1247:1317"
+      - "9020:9090"
+
+  centauri2:
+    image: stridezone:centauri
+    volumes:
+      - ./state/centauri2:/home/composable-centauri/.banksy
+
+  centauri3:
+    image: stridezone:centauri
+    volumes:
+      - ./state/centauri3:/home/composable-centauri/.banksy
+
+  centauri4:
+    image: stridezone:centauri
+    volumes:
+      - ./state/centauri4:/home/composable-centauri/.banksy
+
+  centauri5:
+    image: stridezone:centauri
+    volumes:
+      - ./state/centauri5:/home/composable-centauri/.banksy
+
+  relayer-centauri:
+    image: stridezone:relayer
+    volumes:
+      - ./state/relayer-centauri:/home/relayer/.relayer
+    restart: always
+    command: [ "bash", "start.sh", "stride-centauri" ]

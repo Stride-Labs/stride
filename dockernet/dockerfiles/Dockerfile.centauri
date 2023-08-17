@@ -1,0 +1,36 @@
+FROM golang:1.20-alpine AS builder
+
+WORKDIR /opt/
+
+RUN set -eux; apk add --no-cache ca-certificates build-base; apk add git linux-headers
+
+ENV COMMIT_HASH=c1c3bb81598b4c9b01c75c20952723ac2129f3ca
+
+RUN git clone https://github.com/notional-labs/composable-centauri.git \
+    && cd composable-centauri \
+    && git checkout ${COMMIT_HASH} 
+
+WORKDIR /opt/composable-centauri
+
+RUN set -eux; \    
+    export ARCH=$(uname -m); \
+    WASM_VERSION=$(go list -m all | grep github.com/CosmWasm/wasmvm | awk '{print $2}'); \
+    if [ ! -z "${WASM_VERSION}" ]; then \
+      wget -O /lib/libwasmvm_muslc.a https://github.com/CosmWasm/wasmvm/releases/download/${WASM_VERSION}/libwasmvm_muslc.${ARCH}.a; \      
+    fi; \
+    go mod download;
+
+RUN LEDGER_ENABLED=false BUILD_TAGS=muslc LINK_STATICALLY=true make build
+
+FROM alpine:3.16
+COPY --from=builder /opt/composable-centauri/bin/centaurid /usr/local/bin/
+RUN apk add bash vim \
+    && addgroup -g 1000 composable-centauri \
+    && adduser -S -h /home/composable-centauri -D composable-centauri -u 1000 -G composable-centauri
+
+USER 1000
+WORKDIR /home/composable-centauri
+
+EXPOSE 26657 26656 1317 9090
+
+CMD ["centaurid", "start"]
