@@ -16,6 +16,7 @@ sleep 5
 # Validator Address:        cosmosvaloper1uk4ze0x4nvh4fk0xm4jdud58eqn4yxhrdt795p
 staker_gaia_address=$($GAIA_MAIN_CMD keys show staker -a) 
 staker_stride_address=$($STRIDE_MAIN_CMD keys show staker -a) 
+validator_address_1=$(GET_VAL_ADDR GAIA 1)
 validator_address_2=$(GET_VAL_ADDR GAIA 2)
 validator_address_3=$(GET_VAL_ADDR GAIA 3)
 validator_address_4=$(GET_VAL_ADDR GAIA 4)
@@ -31,13 +32,16 @@ echo "Bank balance:"
 $GAIA_MAIN_CMD q bank balances $staker_gaia_address 
 
 ## Delegate, Tokenize and Transfer
-echo ">>> Delegate to Coinbase:"
-$GAIA_MAIN_CMD tx staking delegate $validator_address_2 100000000000uatom --from staker -y | TRIM_TX && echo ""
+echo ">>> Delegate to Val 1:"
+$GAIA_MAIN_CMD tx staking delegate $validator_address_1 10000000uatom --from staker -y | TRIM_TX && echo ""
 sleep 5
-echo ">>> Delegate to XXX:"
+echo ">>> Delegate to Val 2:"
+$GAIA_MAIN_CMD tx staking delegate $validator_address_2 10000000uatom --from staker -y | TRIM_TX && echo ""
+sleep 5
+echo ">>> Delegate to Val 3:"
 $GAIA_MAIN_CMD tx staking delegate $validator_address_3 10000000uatom --from staker -y | TRIM_TX && echo ""
 sleep 5
-echo ">>> Delegate to XXX:"
+echo ">>> Delegate to Val 4:"
 $GAIA_MAIN_CMD tx staking delegate $validator_address_4 10000000uatom --from staker -y | TRIM_TX && echo ""
 sleep 5
 
@@ -46,7 +50,8 @@ $GAIA_MAIN_CMD q staking delegations $staker_gaia_address && echo ""
 sleep 2
 
 echo ">>> Tokenize to liquid staker:"
-$GAIA_MAIN_CMD tx staking tokenize-share $validator_address_2 10000000uatom $staker_gaia_address --from staker -y --gas auto | TRIM_TX && echo ""
+$GAIA_MAIN_CMD tx staking tokenize-share $validator_address_2 10000000uatom $staker_gaia_address --from staker -y \
+    --gas auto --gas-adjustment 1.3 | TRIM_TX && echo ""
 sleep 5
 
 echo "Balance on GAIA:"
