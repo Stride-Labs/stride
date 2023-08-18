@@ -44,10 +44,9 @@ sleep 5
 echo "Delegations:"
 $GAIA_MAIN_CMD q staking delegations $staker_gaia_address && echo ""
 sleep 2
-exit 0
 
 echo ">>> Tokenize to liquid staker:"
-$GAIA_MAIN_CMD tx staking tokenize-share $validator_address 10000000uatom $staker_gaia_address --from staker -y --gas auto | TRIM_TX && echo ""
+$GAIA_MAIN_CMD tx staking tokenize-share $validator_address_2 10000000uatom $staker_gaia_address --from staker -y --gas auto | TRIM_TX && echo ""
 sleep 5
 
 echo "Balance on GAIA:"
@@ -59,7 +58,7 @@ $GAIA_MAIN_CMD q distribution tokenize-share-record-rewards $staker_gaia_address
 sleep 2
 
 echo ">>> Transfer to Stride:"
-$GAIA_MAIN_CMD tx ibc-transfer transfer transfer channel-0 $staker_stride_address 10000000${validator_address}/1 --from staker -y | TRIM_TX && echo ""
+$GAIA_MAIN_CMD tx ibc-transfer transfer transfer channel-0 $staker_stride_address 10000000${validator_address_2}/1 --from staker -y | TRIM_TX && echo ""
 sleep 10
 
 echo "Balance on STRIDE:"
