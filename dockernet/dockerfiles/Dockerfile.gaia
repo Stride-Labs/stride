@@ -4,7 +4,7 @@ WORKDIR /opt
 
 RUN apk add --update curl make git libc-dev bash gcc linux-headers eudev-dev python3
 
-ENV COMMIT_HASH=75f0714294d2a43462cc2a9e53a1762882d468b6
+ENV COMMIT_HASH=v12.0.0-rc0
 
 RUN git clone https://github.com/cosmos/gaia \
     && cd gaia \
