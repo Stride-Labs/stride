@@ -41,8 +41,8 @@ edit_config () {
     dasel put string -f $CONFIG_FOLDER/client.toml '.keyring-backend' 'test'
 
     # Add node as persistent peer
-    dasel put string -f $CONFIG_FOLDER/config.toml '.persistent_peers' "54e5756fab67bb16c1aae617dfc31bc7c91344d1@stride:26656"
-    dasel put string -f $CONFIG_FOLDER/config.toml '.p2p.persistent_peers' "54e5756fab67bb16c1aae617dfc31bc7c91344d1@stride:26656"
+    dasel put string -f $CONFIG_FOLDER/config.toml '.persistent_peers' "{NODE_ID_ONE}@stride:26656"
+    dasel put string -f $CONFIG_FOLDER/config.toml '.p2p.persistent_peers' "{NODE_ID_ONE}@stride:26656"
 }
 
 if [[ ! -d $CONFIG_FOLDER ]]

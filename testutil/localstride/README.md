@@ -56,86 +56,171 @@ make localnet-clean
 
 ## 2. LocalStride - With Mainnet State
 
-A few things to note before getting started. The below method will only work if you are using the same version as mainnet. In other words,
-if mainnet is on v8.0.0 and you try to do this on a v9.0.0 tag or on main, you will run into an error when initializing the genesis. What you can do though is run localstride on the mainnet version, then go through the upgrade process to ensure the upgrade with mainnet state goes smoothly.
-
-**Note**: Running localstride with mainnet state is very memory intensive. It is recommended to allocate at least 15GB of memory to docker, otherwise, the node will crash before it can start up.
+A few things to note before getting started:
+ * The local version of stride must match the version of stride on mainnet. I.e. if mainnet is on v11.0.0 and you try following these instructions for v12.0.0 or main, it will fail when initializing the genesis. What can be done instead is starting with v11.0.0 and running the upgrade from v11 to v12 to ensure it goes smoothly.  
+ * Running localstride with mainnet state is very memory intensive. It is recommended to have 128GB of memory available, possibly through a VM. If partway through the instructions, the docker service exits with code 137, this means it ran out of memory.
+ * It is recommended that you wait for a snapshot from the last twelve hours to be present at `https://polkachu.com/tendermint_snapshots/stride` before proceeding.  
+ * The commands should be run from the root of stride repository unless stated otherwise.  
 
 ### Create a mainnet state export
 
-1. Set up a node on mainnet
+0. If using a VM, be sure to SSH in directly through a local terminal, using a command like:  
+```sh
+gcloud compute ssh --zone "us-central1-a" "biggie-smalls" --project "stride-nodes"
+```
 
-2. Ensure your node is caught up to the head of the network, or whatever block you want to start your testnet from
-
-3. Stop your Stride daemon
-
-4. Take a state export snapshot with the following command:
+1. Set up a node on mainnet. The following command will download a wizard to guide you through the process.  
 
 ```sh
-strided export > state_export.json
+bash -c "$(curl -sSL node.stride.zone/install)"
 ```
 
-This will create a file called `state_export.json` which is a snapshot of the current mainnet state.
+2. Check that the local node is caught up to the mainnet bloc kheight, before killing the Stride daemon. The current block height can be found at `https://www.mintscan.io/stride/blocks`.  
 
-### Use the state export in LocalStride
-
-5. Copy the `state_export.json` to the `localstride/state_export` folder within the stride repo
+3. Export the mainnet state with the following command:
 
 ```sh
-cp state_export.json stride/testutil/localstride/state-export/
+strided export > export_state.json
 ```
 
-6. Build the `local:stride` docker image (select yes if prompted to recursively remove):
+### Bootstrap LocalStride with mainnet state
 
-```bash
-make localnet-state-export-init
+4. Copy or move the mainnet state to the `localstride/state-export` folder.  
+
+```sh
+cp export_state.json testutil/localstride/state-export/
 ```
 
-The command:
+5. If running from scratch, ignore this step. If a past run was executed, delete the home directories for the `stride` and `stride2` services. These may be located at `~/.stride` and `~/.stride2` respectively.  
 
-- Builds a local docker image with the latest changes
-- Cleans the `$HOME/.stride` folder
+6. Build the `local:stride` docker image. 
 
-7. Start LocalStride:
+```sh
+make localnet-state-export-build
+```
 
-```bash
+7. Start LocalStride, and kill the process once it's completed preparing the genesis files.
+
+```sh
 make localnet-state-export-start
 ```
 
-> Note
->
-> You can also start LocalStride in detach mode with:
->
-> `make localnet-state-export-startd`
+This command will begin by consuming the `export_state.json` file from steps 1-4, make modifications to allocate nearly all power to the local private validator key,  and output several files.  
 
-When running this command for the first time, `local:stride` will:
+It will take a few moments to open and write the json file. The process should be killed after the json is written and before/while tendermint is setting up.
 
-- Modify the provided `state_export.json` to create a new state suitable for a testnet
-- Start the chain
+Once you see something akin to the following effect, the process can be killed:  
 
-You will then go through the genesis initialization process and hit the first block (not block 1, but the block number after your snapshot was taken)
-
-During this process, you may see only p2p logs and no blocks. **This could be the case for the next 30 minutes**, but will eventually start hitting blocks.
-
-9. The following account was added to your machine:
-
-```bash
-Address: 
-stride1wal8dgs7whmykpdaz0chan2f54ynythkz0cazc
-
-Mnemonic: 
-deer gaze swear marine one perfect hero twice turkey symbol mushroom hub escape accident prevent rifle horse arena secret endless panel equal rely payment
+```sh
+state-export-stride-1   | 	Update total ustrd supply from 86896976915130 to 2086896976915130
+state-export-stride-1   | Set governors as validators
+state-export-stride-1   | 🥸  Replace Provider Fee Pool Addr
+state-export-stride-1   | 📝 Writing /root/.stride/config/genesis.json... (it may take a while)
+state-export-stride2-1  | /root/.stride
+state-export-stride2-1  | 836fd688c92f31dc84dfc138cd006c6a5083abee
+state-export-stride-1   | /root/.stride
+state-export-stride-1   | c59c5cf7730a2ebc3a6b9259f91d3e795a90d521
+state-export-stride2-1  | 4:16PM INF starting node with ABCI Tendermint in-process module=server
+state-export-stride-1   | 4:16PM INF starting node with ABCI Tendermint in-process module=server
 ```
 
-This account represents a validator that has the majority of voting power with the same state as mainnet state (at the time you took the snapshot)
+Note, there are two services being initialized, the primary node `stride` and a kicker node companion `stride2`. The hashes `836fd688c92f31dc84dfc138cd006c6a5083abee` and `c59c5cf7730a2ebc3a6b9259f91d3e795a90d521` in the example above are the node ids that must be added as persistent peers in the configuration files for the two nodes.  
 
-10. On your host machine, you can now query the state-exported testnet:
+8. Modify the two driver scripts to modify the configurations with the correct node id of the opposite node.  
+
+In `stride/testutil/localstride/state-export/scripts/start1.sh`, modify lines 44-45 by replacing `{NODE_ID_TWO}` with the node id of the service `stride2`. For the example above:  
+
+```sh
+    dasel put string -f $CONFIG_FOLDER/config.toml '.persistent_peers' "836fd688c92f31dc84dfc138cd006c6a5083abee@stride2:26658"
+    dasel put string -f $CONFIG_FOLDER/config.toml '.p2p.persistent_peers' "836fd688c92f31dc84dfc138cd006c6a5083abee@stride2:26658"
+}
+```
+
+Repeat the previous instruction for `start2.sh` resulting in:
+```sh
+    dasel put string -f $CONFIG_FOLDER/config.toml '.persistent_peers' "c59c5cf7730a2ebc3a6b9259f91d3e795a90d521@stride:26656"
+    dasel put string -f $CONFIG_FOLDER/config.toml '.p2p.persistent_peers' "c59c5cf7730a2ebc3a6b9259f91d3e795a90d521@stride:26656"
+}
+```
+
+Note, the node ID for `stride` is used in `start2.sh` and the node ID for `stride2` is used in `start1.sh`.  
+
+9. Open a second terminal. In both terminals navigate to `stride/testutil/localstride/state-export`  
+
+Around the same time, run these two commands in their own terminals: 
+
+```sh
+docker-compose up stride
+```
+
+```sh
+docker-compose up stride2
+```
+
+10. Wait for it to chug, and start producing blocks (eta: 5 min).  
+
+Some key checkpoints and expected behavior are:  
+
+* The node is nominally initialized, and its address is declared  
+
+```sh
+state-export-stride-1  | 4:22PM INF This node is a validator addr=8A1C116786FE88D48E1B7092A3C76727BD085179 module=consensus pubKey=krLZ4b5DKXjeGarvm3s7kSZ6HXsJ9WZmf3iQqTKGOeU=
+```
+
+* The persistent peer is recognized and added to the address book  
+
+```sh
+state-export-stride-1  | 4:22PM INF Adding persistent peers addrs=["836fd688c92f31dc84dfc138cd006c6a5083abee@stride2:26658"] module=p2p
+state-export-stride-1  | 4:22PM INF Adding unconditional peer ids ids=[] module=p2p
+state-export-stride-1  | 4:22PM INF Add our address to book addr={"id":"c59c5cf7730a2ebc3a6b9259f91d3e795a90d521","ip":"0.0.0.0","port":26656} book=/root/.stride/config/addrbook.json module=p2p
+```
+
+* A proposal is processed, and the initial block the mainnet state export is on is completed 
+
+```sh
+state-export-stride-1  | 4:22PM INF received proposal module=consensus proposal={"Type":32,"block_id":{"hash":"3311D9A96272B4125DC895A0E437DA68830E119D28986291F68864FE9EB419EF","parts":{"hash":"9723CBAA04AB11FF9758BE8D0053F42A65E75DC556D8B7F45D956F3AC3A04815","total":1}},"height":5037413,"pol_round":-1,"round":0,"signature":"NvjaOCu5Klsd0fuVBzq6Kez3/KQVx0psuJEf/Kr/TEz2n+OWDLd3vCcFmaTU5/EWUeM4/vXeq50oTqr18R4RDg==","timestamp":"2023-08-18T16:22:30.865176394Z"}
+state-export-stride-1  | 4:22PM INF received complete proposal block hash=3311D9A96272B4125DC895A0E437DA68830E119D28986291F68864FE9EB419EF height=5037413 module=consensus
+state-export-stride-1  | 4:22PM INF finalizing commit of block hash={} height=5037413 module=consensus num_txs=0 root=E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855
+```
+
+Note, this does *not* indicate that the blockchain is fully operational.
+
+* Some errors may be raised. The nodes will connect to its peer, while also complaining it needs other peers. The node is believed to be consuming the genesis state in the background.
+
+```sh
+state-export-stride-1  | 4:24PM ERR Connection failed @ sendRoutine conn={"Logger":{"Logger":{}}} err="pong timeout" module=p2p peer={"id":"836fd688c92f31dc84dfc138cd006c6a5083abee","ip":"172.18.0.3","port":60706}
+state-export-stride-1  | 4:24PM INF service stop impl={"Logger":{"Logger":{}}} module=p2p msg={} peer={"id":"836fd688c92f31dc84dfc138cd006c6a5083abee","ip":"172.18.0.3","port":60706}
+state-export-stride-1  | 4:24PM ERR Stopping peer for error err="pong timeout" module=p2p peer={"Data":{},"Logger":{"Logger":{}}}
+state-export-stride-1  | 4:24PM INF service stop impl={"Data":{},"Logger":{"Logger":{}}} module=p2p msg={} peer={"id":"836fd688c92f31dc84dfc138cd006c6a5083abee","ip":"172.18.0.3","port":60706}
+state-export-stride-1  | 4:24PM INF service start impl="Peer{MConn{172.18.0.3:51340} 836fd688c92f31dc84dfc138cd006c6a5083abee in}" module=p2p msg={} peer={"id":"836fd688c92f31dc84dfc138cd006c6a5083abee","ip":"172.18.0.3","port":51340}
+state-export-stride-1  | 4:24PM INF service start impl=MConn{172.18.0.3:51340} module=p2p msg={} peer={"id":"836fd688c92f31dc84dfc138cd006c6a5083abee","ip":"172.18.0.3","port":51340}
+state-export-stride-1  | 4:24PM INF Saving AddrBook to file book=/root/.stride/config/addrbook.json module=p2p size=0
+```
+
+* Eventually, more proposals will be received and the reported block height will increment:
+
+```sh
+state-export-stride-1  | 4:26PM INF executed block height=5037415 module=state num_invalid_txs=0 num_valid_txs=0
+state-export-stride-1  | 4:26PM INF commit synced commit=436F6D6D697449447B5B34312034392032343920313620333520313236203232352038362035322038332035392036382032343020323720313930203135342038352031303220313535203131352031333720313230203136342031373920353720313934203633203132203130302032313020323330203136375D3A3443444436377D module=server
+state-export-stride-1  | 4:26PM INF committed state app_hash=2931F910237EE15634533B44F01BBE9A55669B738978A4B339C23F0C64D2E6A7 height=5037415 module=state num_txs=0
+state-export-stride-1  | 4:26PM INF indexed block exents height=5037415 module=txindex
+state-export-stride-1  | 4:26PM INF Ensure peers module=pex numDialing=0 numInPeers=1 numOutPeers=0 numToDial=10
+state-export-stride-1  | 4:26PM INF We need more addresses. Sending pexRequest to random peer module=pex peer={"Data":{},"Logger":{"Logger":{}}}
+state-export-stride-1  | 4:26PM INF No addresses to dial. Falling back to seeds module=pex
+state-export-stride-1  | 4:26PM INF Timed out dur=4916.365002 height=5037416 module=consensus round=0 step=1
+```
+
+In the example above, we see the height has gone from 415 -> 416. The blockchain is fully operational at this time.
+
+10. Exit out of the kicker node.  
+
+11. You can now query the status of LocalStride:
 
 ```sh
 strided status
 ```
 
-11. Here is an example command to ensure complete understanding:
+Additionally, you can send tokens:  
 
 ```sh
 strided tx bank send val stride1qym804u6sa2gvxedfy96c0v9jc0ww7593uechw 10000000ustrd --chain-id localstride --keyring-backend test
