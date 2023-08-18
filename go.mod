@@ -12,7 +12,7 @@ require (
 	github.com/cosmos/ibc-go/v7 v7.2.0
 	github.com/cosmos/ics23/go v0.10.0
 	github.com/cosmos/interchain-security/v3 v3.1.0
-	github.com/evmos/vesting v0.0.0-20230817111354-4c2002b41021
+	github.com/evmos/vesting v0.0.0-20230818101748-9ea561e4529c
 	github.com/gogo/protobuf v1.3.3
 	github.com/golang/protobuf v1.5.3
 	github.com/gorilla/mux v1.8.0
@@ -186,7 +186,7 @@ replace (
 	github.com/cosmos/cosmos-sdk => github.com/Stride-Labs/cosmos-sdk v0.47.4-stride-distribution-fix-1
 	github.com/cosmos/interchain-security/v3 => github.com/Stride-Labs/interchain-security/v3 v3.1.1-0.20230713175550-227e13e60bac
 
-	github.com/evmos/vesting => ../vesting
+	//github.com/evmos/vesting => ../vesting
 	github.com/gogo/protobuf => github.com/regen-network/protobuf v1.3.3-alpha.regen.1
 
 	// fork cast to add additional error checking
