@@ -6,6 +6,7 @@ cache=false
 COMMIT := $(shell git log -1 --format='%H')
 DOCKER := $(shell which docker)
 DOCKER_BUF := $(DOCKER) run --rm -v $(CURDIR):/workspace --workdir /workspace bufbuild/buf:1.7.0
+STRIDE_HOME=./
 DOCKERNET_HOME=./dockernet
 DOCKERNET_COMPOSE_FILE=$(DOCKERNET_HOME)/docker-compose.yml
 LOCALSTRIDE_HOME=./testutil/localstride
@@ -42,9 +43,6 @@ endif
 build_tags += $(BUILD_TAGS)
 build_tags := $(strip $(build_tags))
 
-build_tags += $(BUILD_TAGS)
-build_tags := $(strip $(build_tags))
-
 whitespace :=
 whitespace += $(whitespace)
 comma := ,
@@ -74,6 +72,9 @@ BUILD_FLAGS := -tags "$(build_tags)" -ldflags '$(ldflags)'
 build:
 	mkdir -p $(BUILDDIR)/
 	go build -mod=readonly $(BUILD_FLAGS) -trimpath -o $(BUILDDIR) ./...;
+
+build-linux:
+	GOOS=linux GOARCH=amd64 $(MAKE) build
 
 install: go.sum
 	go install $(BUILD_FLAGS) ./cmd/strided
@@ -114,10 +115,10 @@ test-integration-docker:
 build-docker:
 	@bash $(DOCKERNET_HOME)/build.sh -${build} ${BUILDDIR}
 
-start-docker: build-docker
+start-docker: stop-docker build-docker
 	@bash $(DOCKERNET_HOME)/start_network.sh
 
-start-docker-all: build-docker
+start-docker-all: stop-docker build-docker
 	@ALL_HOST_CHAINS=true bash $(DOCKERNET_HOME)/start_network.sh
 
 clean-docker:
@@ -130,15 +131,25 @@ stop-docker:
 	@bash $(DOCKERNET_HOME)/pkill.sh
 	docker-compose -f $(DOCKERNET_COMPOSE_FILE) down
 
-upgrade-init:
+upgrade-build-old-binary:
+	@DOCKERNET_HOME=$(DOCKERNET_HOME) BUILDDIR=$(BUILDDIR) bash $(DOCKERNET_HOME)/upgrades/build_old_binary.sh
+
+submit-upgrade-immediately:
+	UPGRADE_HEIGHT=150 bash $(DOCKERNET_HOME)/upgrades/submit_upgrade.sh
+
+submit-upgrade-after-tests:
+	UPGRADE_HEIGHT=700 bash $(DOCKERNET_HOME)/upgrades/submit_upgrade.sh
+
+start-upgrade-integration-tests:
 	PART=1 bash $(DOCKERNET_HOME)/tests/run_tests_upgrade.sh
 
-upgrade-submit:
-	UPGRADE_HEIGHT=400 bash $(DOCKERNET_HOME)/upgrades/submit_upgrade.sh
-
-upgrade-validate:
+finish-upgrade-integration-tests:
 	PART=2 bash $(DOCKERNET_HOME)/tests/run_tests_upgrade.sh
 
+upgrade-integration-tests-part-1: start-docker-all start-upgrade-integration-tests submit-upgrade-after-tests
+
+setup-ics:
+	UPGRADE_HEIGHT=150 bash $(DOCKERNET_HOME)/upgrades/setup_ics.sh
 
 ###############################################################################
 ###                           Local to Mainnet                              ###

@@ -12,11 +12,11 @@ import (
 	proto "github.com/cosmos/gogoproto/proto"
 	"github.com/spf13/cast"
 
-	icqkeeper "github.com/Stride-Labs/stride/v9/x/interchainquery/keeper"
+	icqkeeper "github.com/Stride-Labs/stride/v13/x/interchainquery/keeper"
 
-	"github.com/Stride-Labs/stride/v9/utils"
-	icqtypes "github.com/Stride-Labs/stride/v9/x/interchainquery/types"
-	"github.com/Stride-Labs/stride/v9/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v13/utils"
+	icqtypes "github.com/Stride-Labs/stride/v13/x/interchainquery/types"
+	"github.com/Stride-Labs/stride/v13/x/stakeibc/types"
 )
 
 // WithdrawalBalanceCallback is a callback handler for WithdrawalBalance queries.

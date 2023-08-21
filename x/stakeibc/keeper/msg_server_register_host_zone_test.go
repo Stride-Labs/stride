@@ -5,17 +5,17 @@ import (
 
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	ibctesting "github.com/cosmos/ibc-go/v7/testing"
+	ibctesting "github.com/cosmos/interchain-security/v3/legacy_ibc_testing/testing"
 	_ "github.com/stretchr/testify/suite"
 
 	icatypes "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/types"
 
 	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
 
-	epochtypes "github.com/Stride-Labs/stride/v9/x/epochs/types"
-	recordstypes "github.com/Stride-Labs/stride/v9/x/records/types"
-	recordtypes "github.com/Stride-Labs/stride/v9/x/records/types"
-	stakeibctypes "github.com/Stride-Labs/stride/v9/x/stakeibc/types"
+	epochtypes "github.com/Stride-Labs/stride/v13/x/epochs/types"
+	recordstypes "github.com/Stride-Labs/stride/v13/x/records/types"
+	recordtypes "github.com/Stride-Labs/stride/v13/x/records/types"
+	stakeibctypes "github.com/Stride-Labs/stride/v13/x/stakeibc/types"
 )
 
 type RegisterHostZoneTestCase struct {
@@ -82,7 +82,7 @@ func (s *KeeperTestSuite) SetupRegisterHostZone() RegisterHostZoneTestCase {
 // This function 1) creates a new host zone and 2) returns what would be a successful register message
 func (s *KeeperTestSuite) createNewHostZoneMessage(chainID string, denom string, prefix string) stakeibctypes.MsgRegisterHostZone {
 	// Create a new test chain and connection ID
-	osmoChain := ibctesting.NewTestChain(s.T(), s.Coordinator, chainID)
+	osmoChain := ibctesting.NewTestChain(s.T(), s.Coordinator, ibctesting.SetupTestingApp, chainID)
 	path := ibctesting.NewPath(s.StrideChain, osmoChain)
 	s.Coordinator.SetupConnections(path)
 	connectionId := path.EndpointA.ConnectionID

@@ -33,10 +33,10 @@ setup_file() {
   STRIDE_TRANFER_CHANNEL="channel-${TRANSFER_CHANNEL_NUMBER}"
   HOST_TRANSFER_CHANNEL="channel-0"
 
-  TRANSFER_AMOUNT=5000000
-  STAKE_AMOUNT=1000000
+  TRANSFER_AMOUNT=50000000
+  STAKE_AMOUNT=10000000
   REDEEM_AMOUNT=10000
-  PACKET_FORWARD_STAKE_AMOUNT=30000
+  PACKET_FORWARD_STAKE_AMOUNT=300000
 
   GETBAL() {
     head -n 1 | grep -o -E '[0-9]+' || "0"
@@ -159,8 +159,7 @@ setup_file() {
 }
 
 @test "[INTEGRATION-BASIC-$CHAIN_NAME] packet forwarding automatically liquid stakes" {
-  skip "DefaultActive set to false, skip test"
-  memo='{ "autopilot": { "receiver": "'"$(STRIDE_ADDRESS)"'",  "stakeibc": { "stride_address": "'"$(STRIDE_ADDRESS)"'", "action": "LiquidStake" } } }'
+  memo='{ "autopilot": { "receiver": "'"$(STRIDE_ADDRESS)"'",  "stakeibc": { "action": "LiquidStake" } } }'
 
   # get initial balances
   sttoken_balance_start=$($STRIDE_MAIN_CMD q bank balances $(STRIDE_ADDRESS) --denom st$HOST_DENOM | GETBAL)

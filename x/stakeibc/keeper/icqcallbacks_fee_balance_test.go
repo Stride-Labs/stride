@@ -8,10 +8,10 @@ import (
 
 	icatypes "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/types"
 
-	epochtypes "github.com/Stride-Labs/stride/v9/x/epochs/types"
-	icqtypes "github.com/Stride-Labs/stride/v9/x/interchainquery/types"
-	stakeibckeeper "github.com/Stride-Labs/stride/v9/x/stakeibc/keeper"
-	stakeibctypes "github.com/Stride-Labs/stride/v9/x/stakeibc/types"
+	epochtypes "github.com/Stride-Labs/stride/v13/x/epochs/types"
+	icqtypes "github.com/Stride-Labs/stride/v13/x/interchainquery/types"
+	stakeibckeeper "github.com/Stride-Labs/stride/v13/x/stakeibc/keeper"
+	stakeibctypes "github.com/Stride-Labs/stride/v13/x/stakeibc/types"
 )
 
 type FeeBalanceICQCallbackState struct {

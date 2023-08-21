@@ -5,7 +5,7 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/Stride-Labs/stride/v9/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v13/x/stakeibc/types"
 )
 
 // This kicks off two ICQs, each with a callback, that will update the number of tokens on a validator

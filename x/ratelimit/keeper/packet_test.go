@@ -13,8 +13,8 @@ import (
 
 	tmbytes "github.com/cometbft/cometbft/libs/bytes"
 
-	"github.com/Stride-Labs/stride/v9/x/ratelimit/keeper"
-	"github.com/Stride-Labs/stride/v9/x/ratelimit/types"
+	"github.com/Stride-Labs/stride/v13/x/ratelimit/keeper"
+	"github.com/Stride-Labs/stride/v13/x/ratelimit/types"
 )
 
 const (
@@ -148,6 +148,58 @@ func TestParseDenomFromRecvPacket(t *testing.T) {
 	}
 }
 
+func (s *KeeperTestSuite) TestParsePacketInfo() {
+	sourceChannel := "channel-100"
+	destinationChannel := "channel-200"
+	denom := "denom"
+	amountString := "100"
+	amountInt := sdkmath.NewInt(100)
+	sender := "sender"
+	receiver := "receiver"
+
+	packetData, err := json.Marshal(transfertypes.FungibleTokenPacketData{
+		Denom:    denom,
+		Amount:   amountString,
+		Sender:   sender,
+		Receiver: receiver,
+	})
+	s.Require().NoError(err)
+
+	packet := channeltypes.Packet{
+		SourcePort:         transferPort,
+		SourceChannel:      sourceChannel,
+		DestinationPort:    transferPort,
+		DestinationChannel: destinationChannel,
+		Data:               packetData,
+	}
+
+	// Send 'denom' from channel-100 (stride) -> channel-200
+	// Since the 'denom' is native, it's kept as is for the rate limit object
+	expectedSendPacketInfo := keeper.RateLimitedPacketInfo{
+		ChannelID: sourceChannel,
+		Denom:     denom,
+		Amount:    amountInt,
+		Sender:    sender,
+		Receiver:  receiver,
+	}
+	actualSendPacketInfo, err := keeper.ParsePacketInfo(packet, types.PACKET_SEND)
+	s.Require().NoError(err, "no error expected when parsing send packet")
+	s.Require().Equal(expectedSendPacketInfo, actualSendPacketInfo, "send packet")
+
+	// Receive 'denom' from channel-100 -> channel-200 (stride)
+	// The stride channel (channel-200) should be tacked onto the end and the denom should be hashed
+	expectedRecvPacketInfo := keeper.RateLimitedPacketInfo{
+		ChannelID: destinationChannel,
+		Denom:     hashDenomTrace(fmt.Sprintf("transfer/%s/%s", destinationChannel, denom)),
+		Amount:    amountInt,
+		Sender:    sender,
+		Receiver:  receiver,
+	}
+	actualRecvPacketInfo, err := keeper.ParsePacketInfo(packet, types.PACKET_RECV)
+	s.Require().NoError(err, "no error expected when parsing recv packet")
+	s.Require().Equal(expectedRecvPacketInfo, actualRecvPacketInfo, "recv packet")
+}
+
 func (s *KeeperTestSuite) createRateLimitCloseToQuota(denom string, channelId string, direction types.PacketDirection) {
 	channelValue := sdkmath.NewInt(100)
 	threshold := sdkmath.NewInt(10)
@@ -185,6 +237,7 @@ func (s *KeeperTestSuite) TestSendRateLimitedPacket() {
 	sourceChannel := channelOnStride
 	destinationChannel := channelOnHost
 	amountToExceed := "5"
+	sequence := uint64(10)
 
 	// Create rate limit (for SEND, use SOURCE channel)
 	s.createRateLimitCloseToQuota(denom, sourceChannel, types.PACKET_SEND)
@@ -198,13 +251,25 @@ func (s *KeeperTestSuite) TestSendRateLimitedPacket() {
 		DestinationPort:    transferPort,
 		DestinationChannel: destinationChannel,
 		Data:               packetData,
+		Sequence:           sequence,
 	}
 
 	// We check for a quota error because it doesn't appear until the end of the function
 	// We're avoiding checking for a success here because we can get a false positive if the rate limit doesn't exist
-	err = s.App.RatelimitKeeper.SendRateLimitedPacket(s.Ctx, packet.SourceChannel, packet.Data)
+	err = s.App.RatelimitKeeper.SendRateLimitedPacket(s.Ctx, packet)
 	s.Require().ErrorIs(err, types.ErrQuotaExceeded, "error type")
 	s.Require().ErrorContains(err, "Outflow exceeds quota", "error text")
+
+	// Reset the rate limit and try again
+	err = s.App.RatelimitKeeper.ResetRateLimit(s.Ctx, denom, channelId)
+	s.Require().NoError(err, "no error expected when resetting rate limit")
+
+	err = s.App.RatelimitKeeper.SendRateLimitedPacket(s.Ctx, packet)
+	s.Require().NoError(err, "no error expected when sending packet after reset")
+
+	// Check that the pending packet was stored
+	found := s.App.RatelimitKeeper.CheckPacketSentDuringCurrentQuota(s.Ctx, sourceChannel, sequence)
+	s.Require().True(found, "pending send packet")
 }
 
 func (s *KeeperTestSuite) TestReceiveRateLimitedPacket() {
@@ -237,4 +302,145 @@ func (s *KeeperTestSuite) TestReceiveRateLimitedPacket() {
 	err = s.App.RatelimitKeeper.ReceiveRateLimitedPacket(s.Ctx, packet)
 	s.Require().ErrorIs(err, types.ErrQuotaExceeded, "error type")
 	s.Require().ErrorContains(err, "Inflow exceeds quota", "error text")
+}
+
+func (s *KeeperTestSuite) TestAcknowledgeRateLimitedPacket_AckSuccess() {
+	// For ack packets, the source will be stride and the destination will be the host
+	denom := ustrd
+	sourceChannel := channelOnStride
+	destinationChannel := channelOnHost
+	sequence := uint64(10)
+
+	// Create rate limit - the flow and quota does not matter for this test
+	s.App.RatelimitKeeper.SetRateLimit(s.Ctx, types.RateLimit{
+		Path: &types.Path{Denom: denom, ChannelId: channelId},
+	})
+
+	// Store the pending packet for this sequence number
+	s.App.RatelimitKeeper.SetPendingSendPacket(s.Ctx, sourceChannel, sequence)
+
+	// Build the ack packet
+	packetData, err := json.Marshal(transfertypes.FungibleTokenPacketData{Denom: denom, Amount: "10"})
+	s.Require().NoError(err)
+	packet := channeltypes.Packet{
+		SourcePort:         transferPort,
+		SourceChannel:      sourceChannel,
+		DestinationPort:    transferPort,
+		DestinationChannel: destinationChannel,
+		Data:               packetData,
+		Sequence:           sequence,
+	}
+	ackSuccess := transfertypes.ModuleCdc.MustMarshalJSON(&channeltypes.Acknowledgement{
+		Response: &channeltypes.Acknowledgement_Result{Result: []byte{1}},
+	})
+
+	// Call AckPacket with the successful ack
+	err = s.App.RatelimitKeeper.AcknowledgeRateLimitedPacket(s.Ctx, packet, ackSuccess)
+	s.Require().NoError(err, "no error expected during AckPacket")
+
+	// Confirm the pending packet was removed
+	found := s.App.RatelimitKeeper.CheckPacketSentDuringCurrentQuota(s.Ctx, sourceChannel, sequence)
+	s.Require().False(found, "send packet should have been removed")
+}
+
+func (s *KeeperTestSuite) TestAcknowledgeRateLimitedPacket_AckFailure() {
+	// For ack packets, the source will be stride and the destination will be the host
+	denom := ustrd
+	sourceChannel := channelOnStride
+	destinationChannel := channelOnHost
+	initialOutflow := sdkmath.NewInt(100)
+	packetAmount := sdkmath.NewInt(10)
+	sequence := uint64(10)
+
+	// Create rate limit - only outflow is needed to this tests
+	s.App.RatelimitKeeper.SetRateLimit(s.Ctx, types.RateLimit{
+		Path: &types.Path{Denom: denom, ChannelId: channelId},
+		Flow: &types.Flow{Outflow: initialOutflow},
+	})
+
+	// Store the pending packet for this sequence number
+	s.App.RatelimitKeeper.SetPendingSendPacket(s.Ctx, sourceChannel, sequence)
+
+	// Build the ack packet
+	packetData, err := json.Marshal(transfertypes.FungibleTokenPacketData{Denom: denom, Amount: packetAmount.String()})
+	s.Require().NoError(err)
+	packet := channeltypes.Packet{
+		SourcePort:         transferPort,
+		SourceChannel:      sourceChannel,
+		DestinationPort:    transferPort,
+		DestinationChannel: destinationChannel,
+		Data:               packetData,
+		Sequence:           sequence,
+	}
+	ackFailure := transfertypes.ModuleCdc.MustMarshalJSON(&channeltypes.Acknowledgement{
+		Response: &channeltypes.Acknowledgement_Error{Error: "error"},
+	})
+
+	// Call OnTimeoutPacket with the failed ack
+	err = s.App.RatelimitKeeper.AcknowledgeRateLimitedPacket(s.Ctx, packet, ackFailure)
+	s.Require().NoError(err, "no error expected during AckPacket")
+
+	// Confirm the pending packet was removed
+	found := s.App.RatelimitKeeper.CheckPacketSentDuringCurrentQuota(s.Ctx, sourceChannel, sequence)
+	s.Require().False(found, "send packet should have been removed")
+
+	// Confirm the flow was adjusted
+	rateLimit, found := s.App.RatelimitKeeper.GetRateLimit(s.Ctx, denom, sourceChannel)
+	s.Require().True(found)
+	s.Require().Equal(initialOutflow.Sub(packetAmount).Int64(), rateLimit.Flow.Outflow.Int64(), "outflow")
+}
+
+func (s *KeeperTestSuite) TestTimeoutRateLimitedPacket() {
+	// For timeout packets, the source will be stride and the destination will be the host
+	denom := ustrd
+	sourceChannel := channelOnStride
+	destinationChannel := channelOnHost
+	initialOutflow := sdkmath.NewInt(100)
+	packetAmount := sdkmath.NewInt(10)
+	sequence := uint64(10)
+
+	// Create rate limit - only outflow is needed to this tests
+	s.App.RatelimitKeeper.SetRateLimit(s.Ctx, types.RateLimit{
+		Path: &types.Path{Denom: denom, ChannelId: channelId},
+		Flow: &types.Flow{Outflow: initialOutflow},
+	})
+
+	// Store the pending packet for this sequence number
+	s.App.RatelimitKeeper.SetPendingSendPacket(s.Ctx, sourceChannel, sequence)
+
+	// Build the timeout packet
+	packetData, err := json.Marshal(transfertypes.FungibleTokenPacketData{Denom: denom, Amount: packetAmount.String()})
+	s.Require().NoError(err)
+	packet := channeltypes.Packet{
+		SourcePort:         transferPort,
+		SourceChannel:      sourceChannel,
+		DestinationPort:    transferPort,
+		DestinationChannel: destinationChannel,
+		Data:               packetData,
+		Sequence:           sequence,
+	}
+
+	// Call OnTimeoutPacket - the outflow should get decremented
+	err = s.App.RatelimitKeeper.TimeoutRateLimitedPacket(s.Ctx, packet)
+	s.Require().NoError(err, "no error expected when calling timeout packet")
+
+	expectedOutflow := initialOutflow.Sub(packetAmount)
+	rateLimit, found := s.App.RatelimitKeeper.GetRateLimit(s.Ctx, denom, channelId)
+	s.Require().True(found)
+	s.Require().Equal(expectedOutflow.Int64(), rateLimit.Flow.Outflow.Int64(), "outflow decremented")
+
+	// Check that the pending packet has been removed
+	found = s.App.RatelimitKeeper.CheckPacketSentDuringCurrentQuota(s.Ctx, channelId, sequence)
+	s.Require().False(found, "pending packet should have been removed")
+
+	// Call OnTimeoutPacket again with a different sequence number
+	// (to simulate a timeout that arrived in a different quota window from where the send occurred)
+	// The outflow should not change
+	packet.Sequence -= 1
+	err = s.App.RatelimitKeeper.TimeoutRateLimitedPacket(s.Ctx, packet)
+	s.Require().NoError(err, "no error expected when calling timeout packet again")
+
+	rateLimit, found = s.App.RatelimitKeeper.GetRateLimit(s.Ctx, denom, channelId)
+	s.Require().True(found)
+	s.Require().Equal(expectedOutflow.Int64(), rateLimit.Flow.Outflow.Int64(), "outflow should not have changed")
 }

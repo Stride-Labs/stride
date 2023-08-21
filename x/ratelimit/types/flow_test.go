@@ -6,7 +6,7 @@ import (
 	sdkmath "cosmossdk.io/math"
 	"github.com/stretchr/testify/require"
 
-	"github.com/Stride-Labs/stride/v9/x/ratelimit/types"
+	"github.com/Stride-Labs/stride/v13/x/ratelimit/types"
 )
 
 func TestAddInflow(t *testing.T) {

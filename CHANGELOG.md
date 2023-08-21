@@ -41,6 +41,64 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 <!-- GH ACTIONS TEMPLATE - INSERT NEW VERSION HERE -->
+### Changelog
+
+## [v13.0.0](https://github.com/Stride-Labs/stride/releases/tag/v13.0.0) - 2023-08-08
+
+### On-Chain changes
+1. Adds ICA-Based Oracle for Cosmwasm-based Chains ([#884](https://github.com/Stride-Labs/stride/pull/884))
+2. Switch to SDK Fork to address SDKv0.47 Distribution Bug ([#885](https://github.com/Stride-Labs/stride/pull/885))
+3. Add Redundant IBC Relay Decorator ([#882](https://github.com/Stride-Labs/stride/pull/882))
+4. Whitelist missing param keys and register stTokens as consumer fees ([#881](https://github.com/Stride-Labs/stride/pull/881)) 
+5. Add v13 Upgrade Handler ([#886](https://github.com/Stride-Labs/stride/pull/886)) 
+6. Change paths to point towards v13 ([#891](https://github.com/Stride-Labs/stride/pull/888))
+7. Removed consumer param store updates ([#892](https://github.com/Stride-Labs/stride/pull/892))
+
+### Off-Chain changes
+1. Add `build-linux` command ([#859](https://github.com/Stride-Labs/stride/pull/859))
+2. Remove `provider` dependency for Dockernet ([#860](https://github.com/Stride-Labs/stride/pull/860))
+3. Update Dockernet host zone versions ([#883](https://github.com/Stride-Labs/stride/pull/883))
+
+## [v12.0.0](https://github.com/Stride-Labs/stride/releases/tag/v12.0.0) - 2023-07-15
+
+### On-Chain changes
+1. Add code required for ICS-consumer-migration ([#811](https://github.com/Stride-Labs/stride/pull/811))
+
+### Off-Chain changes
+1. Add helper scripts and tester files for ICS-consumer-migration ([#811](https://github.com/Stride-Labs/stride/pull/811))
+
+## [v11.0.0](https://github.com/Stride-Labs/stride/releases/tag/v11.0.0) - 2023-06-23
+
+### On-Chain changes
+1. IBCv7 version bump ([#840](https://github.com/Stride-Labs/stride/pull/840))
+2. Modified version command ([#831](https://github.com/Stride-Labs/stride/pull/831))
+
+### Off-Chain Changes
+1. Remove redundant build tags ([#829](https://github.com/Stride-Labs/stride/pull/829))
+
+## [v10.0.0](https://github.com/Stride-Labs/stride/releases/tag/v10.0.0) - 2023-06-15
+
+### On-Chain changes
+1. SDK 47 / IBC v7 ([#765](https://github.com/Stride-Labs/stride/pull/765))
+2. Fix bug in ICA SendTx ([#812](https://github.com/Stride-Labs/stride/pull/812))
+3. IBC Rate Limiting Audit Fixes ([#818](https://github.com/Stride-Labs/stride/pull/818))
+4. V10 import paths ([#825](https://github.com/Stride-Labs/stride/pull/825))
+5. v10 Upgrade Handler ([#805](https://github.com/Stride-Labs/stride/pull/805)) 
+6. Removed comdex from list of new rate limits ([#826](https://github.com/Stride-Labs/stride/pull/826)) 
+7. Dependency bumps ([0fb5fb6](https://github.com/Stride-Labs/stride/commit/0fb5fb6c014338a7837a569ba5b081235fd9af8a), [fc70522](https://github.com/Stride-Labs/stride/commit/fc7052268cd21c941dfebcb9560123e40e14e5b8), [6aac1d5](https://github.com/Stride-Labs/stride/commit/6aac1d5bb2c4f6cbc00ed0c31793cfc091f7550f), [eddf1ea](https://github.com/Stride-Labs/stride/commit/eddf1eae49e669432dfcce56d28ec71f67f8cff6), [4871518](https://github.com/Stride-Labs/stride/commit/b89d88ce02a23ca01fc574ae1c1a0226a9b2ef74), [b89d88c](https://github.com/Stride-Labs/stride/commit/0fb5fb6c014338a7837a569ba5b081235fd9af8a), [7a332fc](https://github.com/Stride-Labs/stride/commit/7a332fc5e690b71c10b48b6630cba1488fa2f90b), [7eea5ee](https://github.com/Stride-Labs/stride/commit/7eea5eea66973241edbb4261c1408410bfffc4e3), [c74f8f2](https://github.com/Stride-Labs/stride/commit/c74f8f28c9bbc794e70f5ded0af6930d2d10a3a8))
+
+### Off-Chain Changes
+1. Automated changelog [Part 1] ([#788](https://github.com/Stride-Labs/stride/pull/788)) 
+2. Automated changelog [Part 2] ([#799](https://github.com/Stride-Labs/stride/pull/799))
+3. Automated version increment [Part 1] ([#770](https://github.com/Stride-Labs/stride/pull/770)) 
+4. Automated version increment [Part 2] ([#786](https://github.com/Stride-Labs/stride/pull/786)) 
+5. Automate binary versioning ([#789](https://github.com/Stride-Labs/stride/pull/789)) 
+6. Check if binaries exist during dockernet startup ([#816](https://github.com/Stride-Labs/stride/pull/816)) 
+7. Fix dockernet typos ([#754](https://github.com/Stride-Labs/stride/pull/754)) 
+8. Remove third party protos ([#782](https://github.com/Stride-Labs/stride/pull/782))
+9. Changes required to get local to mainnet testing working with Umee ([#776](https://github.com/Stride-Labs/stride/pull/776))
+10. Enabled evmos in upgrade integration tests ([#736](https://github.com/Stride-Labs/stride/pull/736))
+
 
 ## [v9.0.0](https://github.com/Stride-Labs/stride/releases/tag/v9.0.0) - 2023-04-19
 

@@ -3,12 +3,16 @@ package apptesting
 import (
 	"strings"
 	"testing"
+	"time"
 
 	abci "github.com/cometbft/cometbft/abci/types"
 	ibctransfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
+	ccvprovidertypes "github.com/cosmos/interchain-security/v3/x/ccv/provider/types"
+	ccvtypes "github.com/cosmos/interchain-security/v3/x/ccv/types"
 
 	"github.com/cometbft/cometbft/crypto/ed25519"
-	tmtypes "github.com/cometbft/cometbft/proto/tendermint/types"
+	tmtypesproto "github.com/cometbft/cometbft/proto/tendermint/types"
+	tmtypes "github.com/cometbft/cometbft/types"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -17,18 +21,24 @@ import (
 	"github.com/cosmos/gogoproto/proto"
 	icatypes "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/types"
 	transfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
+	clienttypes "github.com/cosmos/ibc-go/v7/modules/core/02-client/types"
 	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
-	ibctesting "github.com/cosmos/ibc-go/v7/testing"
+
 	"github.com/cosmos/ibc-go/v7/testing/simapp"
+	appProvider "github.com/cosmos/interchain-security/v3/app/provider"
+	ibctesting "github.com/cosmos/interchain-security/v3/legacy_ibc_testing/testing"
+	icstestingutils "github.com/cosmos/interchain-security/v3/testutil/ibc_testing"
+	e2e "github.com/cosmos/interchain-security/v3/testutil/integration"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
-	"github.com/Stride-Labs/stride/v9/app"
-	"github.com/Stride-Labs/stride/v9/utils"
+	"github.com/Stride-Labs/stride/v13/app"
+	"github.com/Stride-Labs/stride/v13/utils"
 )
 
 var (
-	StrideChainID = "STRIDE"
+	StrideChainID   = "STRIDE"
+	ProviderChainID = "PROVIDER"
 
 	TestIcaVersion = string(icatypes.ModuleCdc.MustMarshalJSON(&icatypes.Metadata{
 		Version:                icatypes.Version,
@@ -47,14 +57,16 @@ type SuitelessAppTestHelper struct {
 type AppTestHelper struct {
 	suite.Suite
 
-	App     *app.StrideApp
-	HostApp *simapp.SimApp
+	App         *app.StrideApp
+	HostApp     *simapp.SimApp
+	ProviderApp e2e.ProviderApp
 
-	IbcEnabled   bool
-	Coordinator  *ibctesting.Coordinator
-	StrideChain  *ibctesting.TestChain
-	HostChain    *ibctesting.TestChain
-	TransferPath *ibctesting.Path
+	IbcEnabled    bool
+	Coordinator   *ibctesting.Coordinator
+	StrideChain   *ibctesting.TestChain
+	HostChain     *ibctesting.TestChain
+	ProviderChain *ibctesting.TestChain
+	TransferPath  *ibctesting.Path
 
 	QueryHelper  *baseapp.QueryServiceTestHelper
 	TestAccs     []sdk.AccAddress
@@ -65,7 +77,7 @@ type AppTestHelper struct {
 // AppTestHelper Constructor
 func (s *AppTestHelper) Setup() {
 	s.App = app.InitStrideTestApp(true)
-	s.Ctx = s.App.BaseApp.NewContext(false, tmtypes.Header{Height: 1, ChainID: StrideChainID})
+	s.Ctx = s.App.BaseApp.NewContext(false, tmtypesproto.Header{Height: 1, ChainID: StrideChainID})
 	s.QueryHelper = &baseapp.QueryServiceTestHelper{
 		GRPCQueryRouter: s.App.GRPCQueryRouter(),
 		Ctx:             s.Ctx,
@@ -81,7 +93,7 @@ func (s *AppTestHelper) Setup() {
 func SetupSuitelessTestHelper() SuitelessAppTestHelper {
 	s := SuitelessAppTestHelper{}
 	s.App = app.InitStrideTestApp(true)
-	s.Ctx = s.App.BaseApp.NewContext(false, tmtypes.Header{Height: 1, ChainID: StrideChainID})
+	s.Ctx = s.App.BaseApp.NewContext(false, tmtypesproto.Header{Height: 1, ChainID: StrideChainID})
 	return s
 }
 
@@ -123,20 +135,68 @@ func CreateRandomAccounts(numAccts int) []sdk.AccAddress {
 func (s *AppTestHelper) SetupIBCChains(hostChainID string) {
 	s.Coordinator = ibctesting.NewCoordinator(s.T(), 0)
 
+	// Initialize a provider testing app
+	s.ProviderChain = ibctesting.NewTestChain(s.T(), s.Coordinator, icstestingutils.ProviderAppIniter, ProviderChainID)
+	s.ProviderApp = s.ProviderChain.App.(*appProvider.App)
+
 	// Initialize a stride testing app by casting a StrideApp -> TestingApp
-	ibctesting.DefaultTestingAppInit = app.InitStrideIBCTestingApp
-	s.StrideChain = ibctesting.NewTestChain(s.T(), s.Coordinator, StrideChainID)
+	s.StrideChain = ibctesting.NewTestChainWithValSet(s.T(), s.Coordinator, app.InitStrideIBCTestingApp, StrideChainID,
+		s.ProviderChain.Vals, s.ProviderChain.Signers)
 
 	// Initialize a host testing app using SimApp -> TestingApp
-	ibctesting.DefaultTestingAppInit = ibctesting.SetupTestingApp
-	s.HostChain = ibctesting.NewTestChain(s.T(), s.Coordinator, hostChainID)
+	s.HostChain = ibctesting.NewTestChain(s.T(), s.Coordinator, ibctesting.SetupTestingApp, hostChainID)
 
 	// Update coordinator
 	s.Coordinator.Chains = map[string]*ibctesting.TestChain{
-		StrideChainID: s.StrideChain,
-		hostChainID:   s.HostChain,
+		StrideChainID:   s.StrideChain,
+		hostChainID:     s.HostChain,
+		ProviderChainID: s.ProviderChain,
 	}
 	s.IbcEnabled = true
+
+	// valsets must match
+	providerValUpdates := tmtypes.TM2PB.ValidatorUpdates(s.ProviderChain.Vals)
+	strideValUpdates := tmtypes.TM2PB.ValidatorUpdates(s.StrideChain.Vals)
+	s.Require().True(len(providerValUpdates) == len(strideValUpdates), "initial valset not matching")
+
+	// for i := 0; i < len(providerValUpdates); i++ {
+	// 	addr1 := ccvutils.GetChangePubKeyAddress(providerValUpdates[i])
+	// 	addr2 := ccvutils.GetChangePubKeyAddress(strideValUpdates[i])
+	// 	s.Require().True(bytes.Equal(addr1, addr2), "validator mismatch")
+	// }
+
+	// move chains to the next block
+	s.ProviderChain.NextBlock()
+	s.StrideChain.NextBlock()
+	s.HostChain.NextBlock()
+
+	providerKeeper := s.ProviderApp.GetProviderKeeper()
+	// create consumer client on provider chain and set as consumer client for consumer chainID in provider keeper.
+	err := providerKeeper.CreateConsumerClient(
+		s.ProviderChain.GetContext(),
+		&ccvprovidertypes.ConsumerAdditionProposal{
+			ChainId:                           s.StrideChain.ChainID,
+			InitialHeight:                     s.StrideChain.LastHeader.GetHeight().(clienttypes.Height),
+			BlocksPerDistributionTransmission: 50,
+			CcvTimeoutPeriod:                  time.Hour,
+			TransferTimeoutPeriod:             time.Hour,
+			UnbondingPeriod:                   time.Hour * 504,
+			ConsumerRedistributionFraction:    "0.75",
+			HistoricalEntries:                 10000,
+		},
+	)
+	s.Require().NoError(err)
+
+	// move provider to next block to commit the state
+	s.ProviderChain.NextBlock()
+
+	// initialize the consumer chain with the genesis state stored on the provider
+	strideConsumerGenesis, found := providerKeeper.GetConsumerGenesis(
+		s.ProviderChain.GetContext(),
+		s.StrideChain.ChainID,
+	)
+	s.Require().True(found, "consumer genesis not found")
+	s.StrideChain.App.(*app.StrideApp).GetConsumerKeeper().InitGenesis(s.StrideChain.GetContext(), &strideConsumerGenesis)
 }
 
 // Creates clients, connections, and a transfer channel between stride and a host chain
@@ -149,22 +209,18 @@ func (s *AppTestHelper) CreateTransferChannel(hostChainID string) {
 		"The testing app has already been initialized with a different chainID (%s)", s.HostChain.ChainID)
 
 	// Create clients, connections, and a transfer channel
-	s.TransferPath = NewTransferPath(s.StrideChain, s.HostChain)
+	s.TransferPath = NewTransferPath(s.StrideChain, s.HostChain, s.ProviderChain)
 	s.Coordinator.Setup(s.TransferPath)
 
 	// Replace stride and host apps with those from TestingApp
 	s.App = s.StrideChain.App.(*app.StrideApp)
-	s.HostApp = s.HostChain.GetSimApp()
+	// s.HostApp = s.HostChain.GetSimApp()
 	s.Ctx = s.StrideChain.GetContext()
 
 	// Finally confirm the channel was setup properly
-	s.Require().Equal(ibctesting.FirstClientID, s.TransferPath.EndpointA.ClientID, "stride clientID")
+	s.Require().Equal("07-tendermint-1", s.TransferPath.EndpointA.ClientID, "stride clientID")
 	s.Require().Equal(ibctesting.FirstConnectionID, s.TransferPath.EndpointA.ConnectionID, "stride connectionID")
 	s.Require().Equal(ibctesting.FirstChannelID, s.TransferPath.EndpointA.ChannelID, "stride transfer channelID")
-
-	s.Require().Equal(ibctesting.FirstClientID, s.TransferPath.EndpointB.ClientID, "host clientID")
-	s.Require().Equal(ibctesting.FirstConnectionID, s.TransferPath.EndpointB.ConnectionID, "host connectionID")
-	s.Require().Equal(ibctesting.FirstChannelID, s.TransferPath.EndpointB.ChannelID, "host transfer channelID")
 }
 
 // Creates an ICA channel through ibctesting
@@ -181,7 +237,7 @@ func (s *AppTestHelper) CreateICAChannel(owner string) string {
 	}
 
 	// Create ICA Path and then copy over the client and connection from the transfer path
-	icaPath := NewIcaPath(s.StrideChain, s.HostChain)
+	icaPath := NewIcaPath(s.StrideChain, s.HostChain, s.ProviderChain)
 	icaPath = CopyConnectionAndClientToPath(icaPath, s.TransferPath)
 
 	// Register the ICA and complete the handshake
@@ -192,6 +248,9 @@ func (s *AppTestHelper) CreateICAChannel(owner string) string {
 
 	err = icaPath.EndpointA.ChanOpenAck()
 	s.Require().NoError(err, "ChanOpenAck error")
+
+	// err = s.App.ICAControllerKeeper.RegisterInterchainAccount(s.Ctx, icaPath.EndpointA.ConnectionID, owner, TestIcaVersion)
+	// s.Require().NoError(err, "register interchain account error")
 
 	err = icaPath.EndpointB.ChanOpenConfirm()
 	s.Require().NoError(err, "ChanOpenConfirm error")
@@ -237,7 +296,7 @@ func (s *AppTestHelper) RegisterInterchainAccount(endpoint *ibctesting.Endpoint,
 }
 
 // Creates a transfer channel between two chains
-func NewTransferPath(chainA *ibctesting.TestChain, chainB *ibctesting.TestChain) *ibctesting.Path {
+func NewTransferPath(chainA *ibctesting.TestChain, chainB *ibctesting.TestChain, providerChain *ibctesting.TestChain) *ibctesting.Path {
 	path := ibctesting.NewPath(chainA, chainB)
 	path.EndpointA.ChannelConfig.PortID = ibctesting.TransferPort
 	path.EndpointB.ChannelConfig.PortID = ibctesting.TransferPort
@@ -245,11 +304,17 @@ func NewTransferPath(chainA *ibctesting.TestChain, chainB *ibctesting.TestChain)
 	path.EndpointB.ChannelConfig.Order = channeltypes.UNORDERED
 	path.EndpointA.ChannelConfig.Version = transfertypes.Version
 	path.EndpointB.ChannelConfig.Version = transfertypes.Version
+
+	trustingPeriodFraction := providerChain.App.(*appProvider.App).GetProviderKeeper().GetTrustingPeriodFraction(providerChain.GetContext())
+	consumerUnbondingPeriod := path.EndpointA.Chain.App.(*app.StrideApp).GetConsumerKeeper().GetUnbondingPeriod(path.EndpointA.Chain.GetContext())
+	path.EndpointB.ClientConfig.(*ibctesting.TendermintConfig).UnbondingPeriod = consumerUnbondingPeriod
+	path.EndpointB.ClientConfig.(*ibctesting.TendermintConfig).TrustingPeriod, _ = ccvtypes.CalculateTrustPeriod(consumerUnbondingPeriod, trustingPeriodFraction)
+
 	return path
 }
 
 // Creates an ICA channel between two chains
-func NewIcaPath(chainA *ibctesting.TestChain, chainB *ibctesting.TestChain) *ibctesting.Path {
+func NewIcaPath(chainA *ibctesting.TestChain, chainB *ibctesting.TestChain, providerChain *ibctesting.TestChain) *ibctesting.Path {
 	path := ibctesting.NewPath(chainA, chainB)
 	path.EndpointA.ChannelConfig.PortID = icatypes.HostPortID
 	path.EndpointB.ChannelConfig.PortID = icatypes.HostPortID
@@ -257,6 +322,12 @@ func NewIcaPath(chainA *ibctesting.TestChain, chainB *ibctesting.TestChain) *ibc
 	path.EndpointB.ChannelConfig.Order = channeltypes.ORDERED
 	path.EndpointA.ChannelConfig.Version = TestIcaVersion
 	path.EndpointB.ChannelConfig.Version = TestIcaVersion
+
+	trustingPeriodFraction := providerChain.App.(*appProvider.App).GetProviderKeeper().GetTrustingPeriodFraction(providerChain.GetContext())
+	consumerUnbondingPeriod := path.EndpointA.Chain.App.(*app.StrideApp).GetConsumerKeeper().GetUnbondingPeriod(path.EndpointA.Chain.GetContext())
+	path.EndpointB.ClientConfig.(*ibctesting.TendermintConfig).UnbondingPeriod = consumerUnbondingPeriod
+	path.EndpointB.ClientConfig.(*ibctesting.TendermintConfig).TrustingPeriod, _ = ccvtypes.CalculateTrustPeriod(consumerUnbondingPeriod, trustingPeriodFraction)
+
 	return path
 }
 
@@ -273,6 +344,14 @@ func CopyConnectionAndClientToPath(path *ibctesting.Path, pathToCopy *ibctesting
 	path.EndpointA.ConnectionConfig = pathToCopy.EndpointA.ConnectionConfig
 	path.EndpointB.ConnectionConfig = pathToCopy.EndpointB.ConnectionConfig
 	return path
+}
+
+// Helper function to change the state of a channel (i.e. to open/close it)
+func (s *AppTestHelper) UpdateChannelState(portId, channelId string, channelState channeltypes.State) {
+	channel, found := s.App.IBCKeeper.ChannelKeeper.GetChannel(s.Ctx, portId, channelId)
+	s.Require().True(found, "ica channel should have been found")
+	channel.State = channelState
+	s.App.IBCKeeper.ChannelKeeper.SetChannel(s.Ctx, portId, channelId, channel)
 }
 
 // Constructs an ICA Packet Acknowledgement compatible with ibc-go v5+

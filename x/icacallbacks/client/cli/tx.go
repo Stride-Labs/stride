@@ -7,7 +7,7 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/client"
 	// "github.com/cosmos/cosmos-sdk/client/flags"
-	"github.com/Stride-Labs/stride/v9/x/icacallbacks/types"
+	"github.com/Stride-Labs/stride/v13/x/icacallbacks/types"
 )
 
 // GetTxCmd returns the transaction commands for this module

@@ -10,7 +10,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
 
-	"github.com/Stride-Labs/stride/v9/x/ratelimit/types"
+	"github.com/Stride-Labs/stride/v13/x/ratelimit/types"
 )
 
 type (

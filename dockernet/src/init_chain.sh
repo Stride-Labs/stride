@@ -36,8 +36,8 @@ set_stride_genesis() {
     jq '(.app_state.epochs.epochs[] | select(.identifier=="stride_epoch") ).duration = $epochLen' --arg epochLen $STRIDE_EPOCH_EPOCH_DURATION $genesis_config > json.tmp && mv json.tmp $genesis_config
     jq '(.app_state.epochs.epochs[] | select(.identifier=="mint") ).duration = $epochLen' --arg epochLen $STRIDE_MINT_EPOCH_DURATION $genesis_config > json.tmp && mv json.tmp $genesis_config
     jq '.app_state.staking.params.unbonding_time = $newVal' --arg newVal "$UNBONDING_TIME" $genesis_config > json.tmp && mv json.tmp $genesis_config
-    jq '.app_state.gov.deposit_params.max_deposit_period = $newVal' --arg newVal "$MAX_DEPOSIT_PERIOD" $genesis_config > json.tmp && mv json.tmp $genesis_config
-    jq '.app_state.gov.voting_params.voting_period = $newVal' --arg newVal "$VOTING_PERIOD" $genesis_config > json.tmp && mv json.tmp $genesis_config
+    jq '.app_state.gov.params.max_deposit_period = $newVal' --arg newVal "$MAX_DEPOSIT_PERIOD" $genesis_config > json.tmp && mv json.tmp $genesis_config
+    jq '.app_state.gov.params.voting_period = $newVal' --arg newVal "$VOTING_PERIOD" $genesis_config > json.tmp && mv json.tmp $genesis_config
 
     # enable stride as an interchain accounts controller
     jq "del(.app_state.interchain_accounts)" $genesis_config > json.tmp && mv json.tmp $genesis_config
@@ -54,6 +54,7 @@ set_host_genesis() {
     jq '(.app_state.epochs.epochs[]? | select(.identifier=="week") ).duration = $epochLen' --arg epochLen $HOST_WEEK_EPOCH_DURATION $genesis_config > json.tmp && mv json.tmp $genesis_config
     jq '(.app_state.epochs.epochs[]? | select(.identifier=="mint") ).duration = $epochLen' --arg epochLen $HOST_MINT_EPOCH_DURATION $genesis_config > json.tmp && mv json.tmp $genesis_config
     jq '.app_state.staking.params.unbonding_time = $newVal' --arg newVal "$UNBONDING_TIME" $genesis_config > json.tmp && mv json.tmp $genesis_config
+    jq '.app_state.gov.voting_params.voting_period = $newVal' --arg newVal "$VOTING_PERIOD" $genesis_config > json.tmp && mv json.tmp $genesis_config
 
     # Set the mint start time to the genesis time if the chain configures inflation at the block level (e.g. stars)
     # also reduce the number of initial annual provisions so the inflation rate is not too high
@@ -71,6 +72,14 @@ set_host_genesis() {
     sed -i -E 's|"signed_blocks_window": "100"|"signed_blocks_window": "10"|g' $genesis_config
     sed -i -E 's|"downtime_jail_duration": "600s"|"downtime_jail_duration": "10s"|g' $genesis_config
     sed -i -E 's|"slash_fraction_downtime": "0.010000000000000000"|"slash_fraction_downtime": "0.050000000000000000"|g' $genesis_config
+}
+
+set_consumer_genesis() {
+    genesis_config=$1
+
+    # add consumer genesis
+    $MAIN_CMD add-consumer-section $NUM_NODES
+    jq '.app_state.ccvconsumer.params.unbonding_period = $newVal' --arg newVal "$UNBONDING_TIME" $genesis_config > json.tmp && mv json.tmp $genesis_config
 }
 
 MAIN_ID=1 # Node responsible for genesis and persistent_peers
@@ -115,6 +124,7 @@ for (( i=1; i <= $NUM_NODES; i++ )); do
     sed -i -E '/\[api\]/,/^enable = .*$/ s/^enable = .*$/enable = true/' $app_toml
     sed -i -E 's|unsafe-cors = .*|unsafe-cors = true|g' $app_toml
     sed -i -E "s|snapshot-interval = 0|snapshot-interval = 300|g" $app_toml
+    sed -i -E 's|localhost|0.0.0.0|g' $app_toml
 
     sed -i -E "s|chain-id = \"\"|chain-id = \"${CHAIN_ID}\"|g" $client_toml
     sed -i -E "s|keyring-backend = \"os\"|keyring-backend = \"test\"|g" $client_toml
@@ -123,10 +133,6 @@ for (( i=1; i <= $NUM_NODES; i++ )); do
     sed -i -E "s|\"stake\"|\"${DENOM}\"|g" $genesis_json 
     sed -i -E "s|\"aphoton\"|\"${DENOM}\"|g" $genesis_json # ethermint default
 
-    # Get the endpoint and node ID
-    node_id=$($cmd tendermint show-node-id)@$node_name:$PEER_PORT
-    echo "Node #$i ID: $node_id"
-
     # add a validator account
     val_acct="${VAL_PREFIX}${i}"
     val_mnemonic="${VAL_MNEMONICS[((i-1))]}"
@@ -134,8 +140,24 @@ for (( i=1; i <= $NUM_NODES; i++ )); do
     val_addr=$($cmd keys show $val_acct --keyring-backend test -a | tr -cd '[:alnum:]._-')
     # Add this account to the current node
     $cmd add-genesis-account ${val_addr} ${VAL_TOKENS}${DENOM}
-    # actually set this account as a validator on the current node 
-    $cmd gentx $val_acct ${STAKE_TOKENS}${DENOM} --chain-id $CHAIN_ID --keyring-backend test &> /dev/null
+
+    # Copy over the provider stride validator keys to the provider (in the event
+    # that we are testing ICS)
+    if [[ $CHAIN == "GAIA" ]]; then
+        stride_config=$DOCKERNET_HOME/state/${STRIDE_NODE_PREFIX}${i}/config
+        host_config=$DOCKERNET_HOME/state/${NODE_PREFIX}${i}/config
+        cp ${stride_config}/priv_validator_key.json ${host_config}/priv_validator_key.json
+        cp ${stride_config}/node_key.json ${host_config}/node_key.json
+    fi
+
+    # Only generate the validator txs for host chains
+    if [[ "$CHAIN" != "STRIDE" && "$CHAIN" != "HOST" ]]; then 
+        $cmd gentx $val_acct ${STAKE_TOKENS}${DENOM} --chain-id $CHAIN_ID --keyring-backend test &> /dev/null
+    fi
+    
+    # Get the endpoint and node ID
+    node_id=$($cmd tendermint show-node-id)@$node_name:$PEER_PORT
+    echo "Node #$i ID: $node_id"
 
     # Cleanup from seds
     rm -rf ${client_toml}-E
@@ -150,7 +172,9 @@ for (( i=1; i <= $NUM_NODES; i++ )); do
     else
         # also add this account and it's genesis tx to the main node
         $MAIN_CMD add-genesis-account ${val_addr} ${VAL_TOKENS}${DENOM}
-        cp ${STATE}/${node_name}/config/gentx/*.json ${STATE}/${MAIN_NODE_NAME}/config/gentx/
+        if [ -d "${STATE}/${node_name}/config/gentx" ]; then
+            cp ${STATE}/${node_name}/config/gentx/*.json ${STATE}/${MAIN_NODE_NAME}/config/gentx/
+        fi
 
         # and add each validator's keys to the first state directory
         echo "$val_mnemonic" | $MAIN_CMD keys add $val_acct --recover --keyring-backend=test &> /dev/null
@@ -168,6 +192,7 @@ if [ "$CHAIN" == "STRIDE" ]; then
         RELAYER_MNEMONIC="${RELAYER_MNEMONICS[i]}"
 
         echo "$RELAYER_MNEMONIC" | $MAIN_CMD keys add $RELAYER_ACCT --recover --keyring-backend=test >> $KEYS_LOGS 2>&1
+        
         RELAYER_ADDRESS=$($MAIN_CMD keys show $RELAYER_ACCT --keyring-backend test -a)
         $MAIN_CMD add-genesis-account ${RELAYER_ADDRESS} ${VAL_TOKENS}${DENOM}
     done
@@ -184,10 +209,19 @@ else
     echo "$RELAYER_MNEMONIC" | $MAIN_CMD keys add $RELAYER_ACCT --recover --keyring-backend=test >> $KEYS_LOGS 2>&1
     RELAYER_ADDRESS=$($MAIN_CMD keys show $RELAYER_ACCT --keyring-backend test -a | tr -cd '[:alnum:]._-')
     $MAIN_CMD add-genesis-account ${RELAYER_ADDRESS} ${VAL_TOKENS}${DENOM}
+
+    if [ "$CHAIN" == "GAIA" ]; then 
+        echo "$RELAYER_GAIA_ICS_MNEMONIC" | $MAIN_CMD keys add $RELAYER_GAIA_ICS_ACCT --recover --keyring-backend=test >> $KEYS_LOGS 2>&1
+        RELAYER_ADDRESS=$($MAIN_CMD keys show $RELAYER_GAIA_ICS_ACCT --keyring-backend test -a | tr -cd '[:alnum:]._-')
+        $MAIN_CMD add-genesis-account ${RELAYER_ADDRESS} ${VAL_TOKENS}${DENOM}
+    fi
 fi
 
-# now we process gentx txs on the main node
-$MAIN_CMD collect-gentxs &> /dev/null
+# Only collect the validator genesis txs for host chains
+if [[ "$CHAIN" != "STRIDE" && "$CHAIN" != "HOST" ]]; then 
+    # now we process gentx txs on the main node
+    $MAIN_CMD collect-gentxs &> /dev/null
+fi
 
 # wipe out the persistent peers for the main node (these are incorrectly autogenerated for each validator during collect-gentxs)
 sed -i -E "s|persistent_peers = .*|persistent_peers = \"\"|g" $MAIN_CONFIG
@@ -197,6 +231,11 @@ if [ "$CHAIN" == "STRIDE" ]; then
     set_stride_genesis $MAIN_GENESIS
 else
     set_host_genesis $MAIN_GENESIS
+fi
+
+# update consumer genesis for stride binary chains
+if [[ "$CHAIN" == "STRIDE" || "$CHAIN" == "HOST" ]]; then
+    set_consumer_genesis $MAIN_GENESIS
 fi
 
 # for all peer nodes....

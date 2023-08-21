@@ -3,28 +3,37 @@ package app
 import (
 	"fmt"
 
+	servertypes "github.com/cosmos/cosmos-sdk/server/types"
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
-	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
-
 	authz "github.com/cosmos/cosmos-sdk/x/authz"
+	capabilitytypes "github.com/cosmos/cosmos-sdk/x/capability/types"
+	consensustypes "github.com/cosmos/cosmos-sdk/x/consensus/types"
+	crisistypes "github.com/cosmos/cosmos-sdk/x/crisis/types"
+	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
+	consumertypes "github.com/cosmos/interchain-security/v3/x/ccv/consumer/types"
 
-	v2 "github.com/Stride-Labs/stride/v9/app/upgrades/v2"
-	v3 "github.com/Stride-Labs/stride/v9/app/upgrades/v3"
-	v4 "github.com/Stride-Labs/stride/v9/app/upgrades/v4"
-	v5 "github.com/Stride-Labs/stride/v9/app/upgrades/v5"
-	v6 "github.com/Stride-Labs/stride/v9/app/upgrades/v6"
-	v7 "github.com/Stride-Labs/stride/v9/app/upgrades/v7"
-	v8 "github.com/Stride-Labs/stride/v9/app/upgrades/v8"
-	v9 "github.com/Stride-Labs/stride/v9/app/upgrades/v9"
-	autopilottypes "github.com/Stride-Labs/stride/v9/x/autopilot/types"
-	claimtypes "github.com/Stride-Labs/stride/v9/x/claim/types"
-	icacallbacktypes "github.com/Stride-Labs/stride/v9/x/icacallbacks/types"
-	ratelimittypes "github.com/Stride-Labs/stride/v9/x/ratelimit/types"
-	recordtypes "github.com/Stride-Labs/stride/v9/x/records/types"
-	stakeibctypes "github.com/Stride-Labs/stride/v9/x/stakeibc/types"
+	v10 "github.com/Stride-Labs/stride/v13/app/upgrades/v10"
+	v11 "github.com/Stride-Labs/stride/v13/app/upgrades/v11"
+	v12 "github.com/Stride-Labs/stride/v13/app/upgrades/v12"
+	v13 "github.com/Stride-Labs/stride/v13/app/upgrades/v13"
+	v2 "github.com/Stride-Labs/stride/v13/app/upgrades/v2"
+	v3 "github.com/Stride-Labs/stride/v13/app/upgrades/v3"
+	v4 "github.com/Stride-Labs/stride/v13/app/upgrades/v4"
+	v5 "github.com/Stride-Labs/stride/v13/app/upgrades/v5"
+	v6 "github.com/Stride-Labs/stride/v13/app/upgrades/v6"
+	v7 "github.com/Stride-Labs/stride/v13/app/upgrades/v7"
+	v8 "github.com/Stride-Labs/stride/v13/app/upgrades/v8"
+	v9 "github.com/Stride-Labs/stride/v13/app/upgrades/v9"
+	autopilottypes "github.com/Stride-Labs/stride/v13/x/autopilot/types"
+	claimtypes "github.com/Stride-Labs/stride/v13/x/claim/types"
+	icacallbacktypes "github.com/Stride-Labs/stride/v13/x/icacallbacks/types"
+	icaoracletypes "github.com/Stride-Labs/stride/v13/x/icaoracle/types"
+	ratelimittypes "github.com/Stride-Labs/stride/v13/x/ratelimit/types"
+	recordtypes "github.com/Stride-Labs/stride/v13/x/records/types"
+	stakeibctypes "github.com/Stride-Labs/stride/v13/x/stakeibc/types"
 )
 
-func (app *StrideApp) setupUpgradeHandlers() {
+func (app *StrideApp) setupUpgradeHandlers(appOpts servertypes.AppOptions) {
 	// v2 upgrade handler
 	app.UpgradeKeeper.SetUpgradeHandler(
 		v2.UpgradeName,
@@ -104,6 +113,63 @@ func (app *StrideApp) setupUpgradeHandlers() {
 		v9.CreateUpgradeHandler(app.mm, app.configurator, app.ClaimKeeper),
 	)
 
+	// v10 upgrade handler
+	app.UpgradeKeeper.SetUpgradeHandler(
+		v10.UpgradeName,
+		v10.CreateUpgradeHandler(
+			app.mm,
+			app.configurator,
+			app.appCodec,
+			app.keys[capabilitytypes.ModuleName],
+			app.AccountKeeper,
+			app.BankKeeper,
+			app.CapabilityKeeper,
+			app.IBCKeeper.ChannelKeeper,
+			app.ClaimKeeper,
+			app.IBCKeeper.ClientKeeper,
+			app.ConsensusParamsKeeper,
+			app.GovKeeper,
+			app.IcacallbacksKeeper,
+			app.MintKeeper,
+			app.ParamsKeeper,
+			app.RatelimitKeeper,
+			app.StakeibcKeeper,
+		),
+	)
+
+	// v11 upgrade handler
+	app.UpgradeKeeper.SetUpgradeHandler(
+		v11.UpgradeName,
+		v11.CreateUpgradeHandler(
+			app.mm,
+			app.configurator,
+		),
+	)
+
+	// v12 upgrade handler
+	app.UpgradeKeeper.SetUpgradeHandler(
+		v12.UpgradeName,
+		v12.CreateUpgradeHandler(
+			app.mm,
+			app.configurator,
+			app.appCodec,
+			appOpts,
+			*app.IBCKeeper,
+			&app.ConsumerKeeper,
+			app.StakingKeeper,
+		),
+	)
+
+	// v13 upgrade handler
+	app.UpgradeKeeper.SetUpgradeHandler(
+		v13.UpgradeName,
+		v13.CreateUpgradeHandler(
+			app.mm,
+			app.configurator,
+			app.StakeibcKeeper,
+		),
+	)
+
 	upgradeInfo, err := app.UpgradeKeeper.ReadUpgradeInfoFromDisk()
 	if err != nil {
 		panic(fmt.Errorf("Failed to read upgrade info from disk: %w", err))
@@ -127,6 +193,18 @@ func (app *StrideApp) setupUpgradeHandlers() {
 	case "v7":
 		storeUpgrades = &storetypes.StoreUpgrades{
 			Added: []string{ratelimittypes.StoreKey, autopilottypes.StoreKey},
+		}
+	case "v10":
+		storeUpgrades = &storetypes.StoreUpgrades{
+			Added: []string{crisistypes.StoreKey, consensustypes.StoreKey},
+		}
+	case "v12":
+		storeUpgrades = &storetypes.StoreUpgrades{
+			Added: []string{consumertypes.ModuleName},
+		}
+	case "v13":
+		storeUpgrades = &storetypes.StoreUpgrades{
+			Added: []string{icaoracletypes.ModuleName},
 		}
 	}
 

@@ -381,6 +381,166 @@ func (m *QueryRateLimitsByChannelIdResponse) GetRateLimits() []RateLimit {
 	return nil
 }
 
+type QueryAllBlacklistedDenomsRequest struct {
+}
+
+func (m *QueryAllBlacklistedDenomsRequest) Reset()         { *m = QueryAllBlacklistedDenomsRequest{} }
+func (m *QueryAllBlacklistedDenomsRequest) String() string { return proto.CompactTextString(m) }
+func (*QueryAllBlacklistedDenomsRequest) ProtoMessage()    {}
+func (*QueryAllBlacklistedDenomsRequest) Descriptor() ([]byte, []int) {
+	return fileDescriptor_97a373ef8fcef03b, []int{8}
+}
+func (m *QueryAllBlacklistedDenomsRequest) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *QueryAllBlacklistedDenomsRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_QueryAllBlacklistedDenomsRequest.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *QueryAllBlacklistedDenomsRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryAllBlacklistedDenomsRequest.Merge(m, src)
+}
+func (m *QueryAllBlacklistedDenomsRequest) XXX_Size() int {
+	return m.Size()
+}
+func (m *QueryAllBlacklistedDenomsRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_QueryAllBlacklistedDenomsRequest.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_QueryAllBlacklistedDenomsRequest proto.InternalMessageInfo
+
+type QueryAllBlacklistedDenomsResponse struct {
+	Denoms []string `protobuf:"bytes,1,rep,name=denoms,proto3" json:"denoms,omitempty"`
+}
+
+func (m *QueryAllBlacklistedDenomsResponse) Reset()         { *m = QueryAllBlacklistedDenomsResponse{} }
+func (m *QueryAllBlacklistedDenomsResponse) String() string { return proto.CompactTextString(m) }
+func (*QueryAllBlacklistedDenomsResponse) ProtoMessage()    {}
+func (*QueryAllBlacklistedDenomsResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_97a373ef8fcef03b, []int{9}
+}
+func (m *QueryAllBlacklistedDenomsResponse) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *QueryAllBlacklistedDenomsResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_QueryAllBlacklistedDenomsResponse.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *QueryAllBlacklistedDenomsResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryAllBlacklistedDenomsResponse.Merge(m, src)
+}
+func (m *QueryAllBlacklistedDenomsResponse) XXX_Size() int {
+	return m.Size()
+}
+func (m *QueryAllBlacklistedDenomsResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_QueryAllBlacklistedDenomsResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_QueryAllBlacklistedDenomsResponse proto.InternalMessageInfo
+
+func (m *QueryAllBlacklistedDenomsResponse) GetDenoms() []string {
+	if m != nil {
+		return m.Denoms
+	}
+	return nil
+}
+
+type QueryAllWhitelistedAddressesRequest struct {
+}
+
+func (m *QueryAllWhitelistedAddressesRequest) Reset()         { *m = QueryAllWhitelistedAddressesRequest{} }
+func (m *QueryAllWhitelistedAddressesRequest) String() string { return proto.CompactTextString(m) }
+func (*QueryAllWhitelistedAddressesRequest) ProtoMessage()    {}
+func (*QueryAllWhitelistedAddressesRequest) Descriptor() ([]byte, []int) {
+	return fileDescriptor_97a373ef8fcef03b, []int{10}
+}
+func (m *QueryAllWhitelistedAddressesRequest) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *QueryAllWhitelistedAddressesRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_QueryAllWhitelistedAddressesRequest.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *QueryAllWhitelistedAddressesRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryAllWhitelistedAddressesRequest.Merge(m, src)
+}
+func (m *QueryAllWhitelistedAddressesRequest) XXX_Size() int {
+	return m.Size()
+}
+func (m *QueryAllWhitelistedAddressesRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_QueryAllWhitelistedAddressesRequest.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_QueryAllWhitelistedAddressesRequest proto.InternalMessageInfo
+
+type QueryAllWhitelistedAddressesResponse struct {
+	AddressPairs []WhitelistedAddressPair `protobuf:"bytes,1,rep,name=address_pairs,json=addressPairs,proto3" json:"address_pairs"`
+}
+
+func (m *QueryAllWhitelistedAddressesResponse) Reset()         { *m = QueryAllWhitelistedAddressesResponse{} }
+func (m *QueryAllWhitelistedAddressesResponse) String() string { return proto.CompactTextString(m) }
+func (*QueryAllWhitelistedAddressesResponse) ProtoMessage()    {}
+func (*QueryAllWhitelistedAddressesResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_97a373ef8fcef03b, []int{11}
+}
+func (m *QueryAllWhitelistedAddressesResponse) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *QueryAllWhitelistedAddressesResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_QueryAllWhitelistedAddressesResponse.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *QueryAllWhitelistedAddressesResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryAllWhitelistedAddressesResponse.Merge(m, src)
+}
+func (m *QueryAllWhitelistedAddressesResponse) XXX_Size() int {
+	return m.Size()
+}
+func (m *QueryAllWhitelistedAddressesResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_QueryAllWhitelistedAddressesResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_QueryAllWhitelistedAddressesResponse proto.InternalMessageInfo
+
+func (m *QueryAllWhitelistedAddressesResponse) GetAddressPairs() []WhitelistedAddressPair {
+	if m != nil {
+		return m.AddressPairs
+	}
+	return nil
+}
+
 func init() {
 	proto.RegisterType((*QueryAllRateLimitsRequest)(nil), "stride.ratelimit.QueryAllRateLimitsRequest")
 	proto.RegisterType((*QueryAllRateLimitsResponse)(nil), "stride.ratelimit.QueryAllRateLimitsResponse")
@@ -390,46 +550,60 @@ func init() {
 	proto.RegisterType((*QueryRateLimitsByChainIdResponse)(nil), "stride.ratelimit.QueryRateLimitsByChainIdResponse")
 	proto.RegisterType((*QueryRateLimitsByChannelIdRequest)(nil), "stride.ratelimit.QueryRateLimitsByChannelIdRequest")
 	proto.RegisterType((*QueryRateLimitsByChannelIdResponse)(nil), "stride.ratelimit.QueryRateLimitsByChannelIdResponse")
+	proto.RegisterType((*QueryAllBlacklistedDenomsRequest)(nil), "stride.ratelimit.QueryAllBlacklistedDenomsRequest")
+	proto.RegisterType((*QueryAllBlacklistedDenomsResponse)(nil), "stride.ratelimit.QueryAllBlacklistedDenomsResponse")
+	proto.RegisterType((*QueryAllWhitelistedAddressesRequest)(nil), "stride.ratelimit.QueryAllWhitelistedAddressesRequest")
+	proto.RegisterType((*QueryAllWhitelistedAddressesResponse)(nil), "stride.ratelimit.QueryAllWhitelistedAddressesResponse")
 }
 
 func init() { proto.RegisterFile("stride/ratelimit/query.proto", fileDescriptor_97a373ef8fcef03b) }
 
 var fileDescriptor_97a373ef8fcef03b = []byte{
-	// 538 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xac, 0x94, 0xcd, 0x6e, 0xd3, 0x40,
-	0x10, 0xc7, 0xb3, 0x85, 0x00, 0x99, 0x0a, 0x09, 0x2d, 0x2d, 0x4a, 0xdd, 0xe2, 0x06, 0x5f, 0x88,
-	0xf8, 0xf0, 0x42, 0x42, 0x85, 0xf8, 0xa8, 0x10, 0x46, 0x1c, 0x2a, 0xe5, 0x82, 0xe1, 0xc4, 0x25,
-	0x38, 0xf1, 0xe2, 0x58, 0x72, 0xbc, 0xa9, 0x77, 0x83, 0x88, 0x50, 0x2f, 0x3c, 0x01, 0x12, 0x57,
-	0xae, 0x3c, 0x04, 0x47, 0x6e, 0x3d, 0xa1, 0x4a, 0x5c, 0x38, 0x21, 0x94, 0xf0, 0x20, 0xc8, 0xbb,
-	0x8e, 0x4b, 0x12, 0xa7, 0x75, 0xa4, 0xdc, 0x36, 0x3b, 0x33, 0xff, 0xf9, 0xcd, 0xf8, 0xbf, 0x81,
-	0x2d, 0x2e, 0x22, 0xdf, 0xa5, 0x24, 0x72, 0x04, 0x0d, 0xfc, 0xae, 0x2f, 0xc8, 0x7e, 0x9f, 0x46,
-	0x03, 0xb3, 0x17, 0x31, 0xc1, 0xf0, 0x25, 0x15, 0x35, 0xd3, 0xa8, 0x56, 0x99, 0xc9, 0x4f, 0x4f,
-	0xaa, 0x46, 0xdb, 0xf2, 0x18, 0xf3, 0x02, 0x4a, 0x9c, 0x9e, 0x4f, 0x9c, 0x30, 0x64, 0xc2, 0x11,
-	0x3e, 0x0b, 0x79, 0x12, 0x5d, 0xf3, 0x98, 0xc7, 0xe4, 0x91, 0xc4, 0x27, 0x75, 0x6b, 0x6c, 0xc2,
-	0xc6, 0x8b, 0xb8, 0xed, 0xd3, 0x20, 0xb0, 0x1d, 0x41, 0x1b, 0xb1, 0x1c, 0xb7, 0xe9, 0x7e, 0x9f,
-	0x72, 0x61, 0xbc, 0x01, 0x2d, 0x2b, 0xc8, 0x7b, 0x2c, 0xe4, 0x14, 0x5b, 0xb0, 0x1a, 0x13, 0x34,
-	0x25, 0x02, 0x2f, 0xa3, 0xca, 0x99, 0xea, 0x6a, 0x6d, 0xd3, 0x9c, 0x06, 0x37, 0xd3, 0x52, 0xeb,
-	0xec, 0xe1, 0xef, 0xed, 0x82, 0x0d, 0x51, 0xaa, 0x65, 0x34, 0x60, 0x5d, 0x76, 0x48, 0x73, 0x92,
-	0xd6, 0x78, 0x0d, 0x8a, 0x2e, 0x0d, 0x59, 0xb7, 0x8c, 0x2a, 0xa8, 0x5a, 0xb2, 0xd5, 0x0f, 0x7c,
-	0x15, 0xa0, 0xdd, 0x71, 0xc2, 0x90, 0x06, 0x4d, 0xdf, 0x2d, 0xaf, 0xc8, 0x50, 0x29, 0xb9, 0xd9,
-	0x73, 0x8d, 0x57, 0x70, 0x65, 0x5a, 0x2d, 0x61, 0x7d, 0x08, 0x70, 0xcc, 0x2a, 0x35, 0x4f, 0x46,
-	0xb5, 0x4b, 0x29, 0xa4, 0xf1, 0x18, 0xb6, 0x27, 0x55, 0xb9, 0x35, 0x78, 0xd6, 0x71, 0xfc, 0x70,
-	0xcf, 0x1d, 0xd3, 0x6e, 0xc0, 0x85, 0x76, 0x7c, 0x13, 0x53, 0x29, 0xe0, 0xf3, 0x6d, 0x95, 0x61,
-	0xbc, 0x85, 0xca, 0xfc, 0xea, 0x25, 0x6e, 0xd2, 0x82, 0x6b, 0x59, 0x7d, 0xd4, 0x66, 0xc6, 0x9c,
-	0x93, 0xfb, 0x43, 0xd3, 0xfb, 0xeb, 0x80, 0x71, 0x92, 0xc6, 0xf2, 0x68, 0x6b, 0x3f, 0x8a, 0x50,
-	0x94, 0xad, 0xf0, 0x17, 0x04, 0x17, 0x27, 0xfc, 0x85, 0x6f, 0xce, 0x4a, 0xcd, 0xb5, 0xa8, 0x76,
-	0x2b, 0x5f, 0xb2, 0x42, 0x37, 0xee, 0x7c, 0xfc, 0xf9, 0xf7, 0xf3, 0xca, 0x0d, 0x5c, 0x25, 0x2f,
-	0x65, 0xd5, 0xed, 0x86, 0xd3, 0xe2, 0x64, 0xfe, 0xc3, 0xe2, 0xf8, 0x2b, 0x82, 0x52, 0x2a, 0x84,
-	0xaf, 0xcf, 0xe9, 0x36, 0x6d, 0x5f, 0xad, 0x7a, 0x7a, 0x62, 0x82, 0xf4, 0x5c, 0x22, 0x3d, 0xc1,
-	0xbb, 0x39, 0x91, 0xc8, 0x87, 0xe3, 0x2f, 0x78, 0x40, 0x5a, 0x83, 0xa6, 0x7a, 0x19, 0xdf, 0x10,
-	0x5c, 0xce, 0xb0, 0x18, 0xbe, 0x7b, 0x1a, 0xc8, 0x8c, 0x99, 0xb5, 0xda, 0x22, 0x25, 0xc9, 0x14,
-	0x8f, 0xe4, 0x14, 0x3b, 0xb8, 0x9e, 0x77, 0xb1, 0x72, 0x0c, 0xf9, 0x60, 0x0e, 0xf0, 0x77, 0x04,
-	0xeb, 0x99, 0x96, 0xc3, 0xf5, 0x7c, 0x28, 0x13, 0x26, 0xd7, 0xee, 0x2d, 0x56, 0x94, 0x4c, 0xb0,
-	0x2b, 0x27, 0xb8, 0x8f, 0x77, 0x16, 0x9a, 0x60, 0xfc, 0x21, 0xac, 0xc6, 0xe1, 0x50, 0x47, 0x47,
-	0x43, 0x1d, 0xfd, 0x19, 0xea, 0xe8, 0xd3, 0x48, 0x2f, 0x1c, 0x8d, 0xf4, 0xc2, 0xaf, 0x91, 0x5e,
-	0x78, 0x5d, 0xf3, 0x7c, 0xd1, 0xe9, 0xb7, 0xcc, 0x36, 0xeb, 0x66, 0x49, 0xbf, 0x7b, 0x40, 0xde,
-	0xff, 0xa7, 0x2f, 0x06, 0x3d, 0xca, 0x5b, 0xe7, 0xe4, 0x9f, 0x73, 0xfd, 0x5f, 0x00, 0x00, 0x00,
-	0xff, 0xff, 0xee, 0xbd, 0x97, 0x5e, 0x24, 0x06, 0x00, 0x00,
+	// 692 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xac, 0x96, 0x4f, 0x4f, 0x13, 0x4f,
+	0x18, 0xc7, 0x3b, 0xfc, 0x7e, 0x20, 0x7d, 0x90, 0xc4, 0x8c, 0x80, 0xb0, 0x60, 0xa9, 0xab, 0xc6,
+	0xc6, 0x3f, 0x5d, 0x68, 0x45, 0x8d, 0x48, 0x0c, 0x55, 0x0f, 0x24, 0x98, 0x68, 0x31, 0x31, 0xf1,
+	0x52, 0xa7, 0xdd, 0xb1, 0x9d, 0xb8, 0xec, 0x96, 0x9d, 0x45, 0x6d, 0x08, 0x17, 0x5f, 0x81, 0x89,
+	0x57, 0xaf, 0xbe, 0x08, 0x8f, 0x1e, 0x4c, 0x38, 0x12, 0xbd, 0x78, 0x32, 0x86, 0xfa, 0x42, 0xcc,
+	0xce, 0xcc, 0x6e, 0x6d, 0xbb, 0x5b, 0xba, 0x09, 0xb7, 0xe9, 0xcc, 0xf3, 0x7c, 0x9f, 0xcf, 0xf7,
+	0xd9, 0x79, 0x26, 0x85, 0x05, 0xee, 0xb9, 0xcc, 0xa4, 0x86, 0x4b, 0x3c, 0x6a, 0xb1, 0x6d, 0xe6,
+	0x19, 0x3b, 0xbb, 0xd4, 0x6d, 0xe5, 0x9b, 0xae, 0xe3, 0x39, 0xf8, 0x8c, 0x3c, 0xcd, 0x87, 0xa7,
+	0x5a, 0xb6, 0x2f, 0x3e, 0x5c, 0xc9, 0x1c, 0x6d, 0xa1, 0xee, 0x38, 0x75, 0x8b, 0x1a, 0xa4, 0xc9,
+	0x0c, 0x62, 0xdb, 0x8e, 0x47, 0x3c, 0xe6, 0xd8, 0x5c, 0x9d, 0x4e, 0xd5, 0x9d, 0xba, 0x23, 0x96,
+	0x86, 0xbf, 0x92, 0xbb, 0xfa, 0x3c, 0xcc, 0x3d, 0xf5, 0xcb, 0xae, 0x5b, 0x56, 0x99, 0x78, 0x74,
+	0xd3, 0x97, 0xe3, 0x65, 0xba, 0xb3, 0x4b, 0xb9, 0xa7, 0xbf, 0x04, 0x2d, 0xea, 0x90, 0x37, 0x1d,
+	0x9b, 0x53, 0x5c, 0x82, 0x09, 0x9f, 0xa0, 0x22, 0x10, 0xf8, 0x2c, 0xca, 0xfe, 0x97, 0x9b, 0x28,
+	0xcc, 0xe7, 0x7b, 0xc1, 0xf3, 0x61, 0x6a, 0xe9, 0xff, 0x83, 0x5f, 0x8b, 0xa9, 0x32, 0xb8, 0xa1,
+	0x96, 0xbe, 0x09, 0xd3, 0xa2, 0x42, 0x18, 0xa3, 0x4a, 0xe3, 0x29, 0x18, 0x35, 0xa9, 0xed, 0x6c,
+	0xcf, 0xa2, 0x2c, 0xca, 0xa5, 0xcb, 0xf2, 0x07, 0x3e, 0x0f, 0x50, 0x6b, 0x10, 0xdb, 0xa6, 0x56,
+	0x85, 0x99, 0xb3, 0x23, 0xe2, 0x28, 0xad, 0x76, 0x36, 0x4c, 0xfd, 0x19, 0xcc, 0xf4, 0xaa, 0x29,
+	0xd6, 0xbb, 0x00, 0x1d, 0x56, 0xa1, 0x39, 0x18, 0xb5, 0x9c, 0x0e, 0x21, 0xf5, 0x7b, 0xb0, 0xd8,
+	0xad, 0xca, 0x4b, 0xad, 0x07, 0x0d, 0xc2, 0xec, 0x0d, 0x33, 0xa0, 0x9d, 0x83, 0xf1, 0x9a, 0xbf,
+	0xe3, 0x53, 0x49, 0xe0, 0x53, 0x35, 0x19, 0xa1, 0xbf, 0x82, 0x6c, 0x7c, 0xf6, 0x09, 0x76, 0xb2,
+	0x04, 0x17, 0xa2, 0xea, 0xc8, 0xce, 0x04, 0x9c, 0xdd, 0xfd, 0x43, 0xbd, 0xfd, 0x6b, 0x80, 0x3e,
+	0x48, 0xe3, 0x04, 0x69, 0x75, 0xd5, 0x95, 0x75, 0xcb, 0x2a, 0x59, 0xa4, 0xf6, 0xda, 0x62, 0xdc,
+	0xa3, 0xe6, 0x43, 0xff, 0x23, 0x87, 0xb7, 0x6f, 0x55, 0x39, 0x8a, 0x8e, 0x51, 0x30, 0x33, 0x30,
+	0x26, 0xae, 0x86, 0xe4, 0x48, 0x97, 0xd5, 0x2f, 0xfd, 0x32, 0x5c, 0x0c, 0x92, 0x9f, 0x37, 0x98,
+	0x8f, 0xe4, 0x27, 0xaf, 0x9b, 0xa6, 0x4b, 0x39, 0xa7, 0x61, 0x8d, 0x3d, 0xb8, 0x34, 0x38, 0x4c,
+	0x95, 0xd9, 0x82, 0x49, 0x22, 0x37, 0x2b, 0x4d, 0xc2, 0xdc, 0xc0, 0x75, 0xae, 0xdf, 0x75, 0xbf,
+	0xcc, 0x13, 0xc2, 0x5c, 0xd5, 0x82, 0xd3, 0xa4, 0xb3, 0xc5, 0x0b, 0xdf, 0xc7, 0x61, 0x54, 0x54,
+	0xc7, 0x9f, 0x10, 0x4c, 0x76, 0x0d, 0x19, 0xbe, 0xd6, 0xaf, 0x1c, 0x3b, 0xa7, 0xda, 0xf5, 0xe1,
+	0x82, 0xa5, 0x17, 0x7d, 0xe9, 0xfd, 0x8f, 0x3f, 0x1f, 0x47, 0xae, 0xe2, 0x9c, 0xb1, 0x25, 0xb2,
+	0x6e, 0x6c, 0x92, 0x2a, 0x37, 0xe2, 0x5f, 0x17, 0x8e, 0x3f, 0x23, 0x48, 0x87, 0x42, 0xf8, 0x4a,
+	0x4c, 0xb5, 0xde, 0x19, 0xd6, 0x72, 0xc7, 0x07, 0x2a, 0xa4, 0x47, 0x02, 0xe9, 0x3e, 0x5e, 0x1b,
+	0x12, 0xc9, 0xd8, 0xeb, 0x5c, 0xe3, 0x7d, 0xa3, 0xda, 0xaa, 0xc8, 0xe7, 0xe1, 0x0b, 0x82, 0xb3,
+	0x11, 0x73, 0x86, 0x97, 0x8f, 0x03, 0xe9, 0x9b, 0x68, 0xad, 0x90, 0x24, 0x45, 0xb9, 0x58, 0x15,
+	0x2e, 0x56, 0x70, 0x71, 0xd8, 0xc6, 0x0a, 0x1b, 0xe2, 0xd5, 0xd8, 0xc7, 0x5f, 0x11, 0x4c, 0x47,
+	0xce, 0x1d, 0x2e, 0x0e, 0x87, 0xd2, 0x35, 0xe9, 0xda, 0xcd, 0x64, 0x49, 0xca, 0xc1, 0x9a, 0x70,
+	0x70, 0x1b, 0xaf, 0x24, 0x72, 0x10, 0x7c, 0x08, 0xbf, 0xff, 0x53, 0x51, 0xd3, 0x8a, 0x0b, 0xf1,
+	0x17, 0x34, 0x6e, 0xfc, 0xb5, 0x62, 0xa2, 0x1c, 0x65, 0xe0, 0x8e, 0x30, 0x50, 0xc0, 0x4b, 0x83,
+	0x0d, 0x54, 0x3b, 0x02, 0xf2, 0xea, 0x70, 0xfc, 0x0d, 0xc1, 0xb9, 0x98, 0x57, 0x00, 0xaf, 0xc4,
+	0xa3, 0x0c, 0x78, 0x5c, 0xb4, 0x5b, 0x49, 0xd3, 0x92, 0xdd, 0xa3, 0xb7, 0x1d, 0x8d, 0x0a, 0x09,
+	0x44, 0x4a, 0x8f, 0x0f, 0x8e, 0x32, 0xe8, 0xf0, 0x28, 0x83, 0x7e, 0x1f, 0x65, 0xd0, 0x87, 0x76,
+	0x26, 0x75, 0xd8, 0xce, 0xa4, 0x7e, 0xb6, 0x33, 0xa9, 0x17, 0xc5, 0x3a, 0xf3, 0x1a, 0xbb, 0xd5,
+	0x7c, 0xcd, 0xd9, 0x8e, 0x12, 0x7e, 0xb3, 0x5c, 0x34, 0xde, 0xfd, 0x23, 0xef, 0xb5, 0x9a, 0x94,
+	0x57, 0xc7, 0xc4, 0xdf, 0x84, 0xe2, 0xdf, 0x00, 0x00, 0x00, 0xff, 0xff, 0x6d, 0xfb, 0x49, 0x14,
+	0xae, 0x08, 0x00, 0x00,
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -448,6 +622,8 @@ type QueryClient interface {
 	RateLimit(ctx context.Context, in *QueryRateLimitRequest, opts ...grpc.CallOption) (*QueryRateLimitResponse, error)
 	RateLimitsByChainId(ctx context.Context, in *QueryRateLimitsByChainIdRequest, opts ...grpc.CallOption) (*QueryRateLimitsByChainIdResponse, error)
 	RateLimitsByChannelId(ctx context.Context, in *QueryRateLimitsByChannelIdRequest, opts ...grpc.CallOption) (*QueryRateLimitsByChannelIdResponse, error)
+	AllBlacklistedDenoms(ctx context.Context, in *QueryAllBlacklistedDenomsRequest, opts ...grpc.CallOption) (*QueryAllBlacklistedDenomsResponse, error)
+	AllWhitelistedAddresses(ctx context.Context, in *QueryAllWhitelistedAddressesRequest, opts ...grpc.CallOption) (*QueryAllWhitelistedAddressesResponse, error)
 }
 
 type queryClient struct {
@@ -494,12 +670,32 @@ func (c *queryClient) RateLimitsByChannelId(ctx context.Context, in *QueryRateLi
 	return out, nil
 }
 
+func (c *queryClient) AllBlacklistedDenoms(ctx context.Context, in *QueryAllBlacklistedDenomsRequest, opts ...grpc.CallOption) (*QueryAllBlacklistedDenomsResponse, error) {
+	out := new(QueryAllBlacklistedDenomsResponse)
+	err := c.cc.Invoke(ctx, "/stride.ratelimit.Query/AllBlacklistedDenoms", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *queryClient) AllWhitelistedAddresses(ctx context.Context, in *QueryAllWhitelistedAddressesRequest, opts ...grpc.CallOption) (*QueryAllWhitelistedAddressesResponse, error) {
+	out := new(QueryAllWhitelistedAddressesResponse)
+	err := c.cc.Invoke(ctx, "/stride.ratelimit.Query/AllWhitelistedAddresses", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // QueryServer is the server API for Query service.
 type QueryServer interface {
 	AllRateLimits(context.Context, *QueryAllRateLimitsRequest) (*QueryAllRateLimitsResponse, error)
 	RateLimit(context.Context, *QueryRateLimitRequest) (*QueryRateLimitResponse, error)
 	RateLimitsByChainId(context.Context, *QueryRateLimitsByChainIdRequest) (*QueryRateLimitsByChainIdResponse, error)
 	RateLimitsByChannelId(context.Context, *QueryRateLimitsByChannelIdRequest) (*QueryRateLimitsByChannelIdResponse, error)
+	AllBlacklistedDenoms(context.Context, *QueryAllBlacklistedDenomsRequest) (*QueryAllBlacklistedDenomsResponse, error)
+	AllWhitelistedAddresses(context.Context, *QueryAllWhitelistedAddressesRequest) (*QueryAllWhitelistedAddressesResponse, error)
 }
 
 // UnimplementedQueryServer can be embedded to have forward compatible implementations.
@@ -517,6 +713,12 @@ func (*UnimplementedQueryServer) RateLimitsByChainId(ctx context.Context, req *Q
 }
 func (*UnimplementedQueryServer) RateLimitsByChannelId(ctx context.Context, req *QueryRateLimitsByChannelIdRequest) (*QueryRateLimitsByChannelIdResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method RateLimitsByChannelId not implemented")
+}
+func (*UnimplementedQueryServer) AllBlacklistedDenoms(ctx context.Context, req *QueryAllBlacklistedDenomsRequest) (*QueryAllBlacklistedDenomsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method AllBlacklistedDenoms not implemented")
+}
+func (*UnimplementedQueryServer) AllWhitelistedAddresses(ctx context.Context, req *QueryAllWhitelistedAddressesRequest) (*QueryAllWhitelistedAddressesResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method AllWhitelistedAddresses not implemented")
 }
 
 func RegisterQueryServer(s grpc1.Server, srv QueryServer) {
@@ -595,6 +797,42 @@ func _Query_RateLimitsByChannelId_Handler(srv interface{}, ctx context.Context, 
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Query_AllBlacklistedDenoms_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(QueryAllBlacklistedDenomsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(QueryServer).AllBlacklistedDenoms(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/stride.ratelimit.Query/AllBlacklistedDenoms",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(QueryServer).AllBlacklistedDenoms(ctx, req.(*QueryAllBlacklistedDenomsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Query_AllWhitelistedAddresses_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(QueryAllWhitelistedAddressesRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(QueryServer).AllWhitelistedAddresses(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/stride.ratelimit.Query/AllWhitelistedAddresses",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(QueryServer).AllWhitelistedAddresses(ctx, req.(*QueryAllWhitelistedAddressesRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 var _Query_serviceDesc = grpc.ServiceDesc{
 	ServiceName: "stride.ratelimit.Query",
 	HandlerType: (*QueryServer)(nil),
@@ -614,6 +852,14 @@ var _Query_serviceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "RateLimitsByChannelId",
 			Handler:    _Query_RateLimitsByChannelId_Handler,
+		},
+		{
+			MethodName: "AllBlacklistedDenoms",
+			Handler:    _Query_AllBlacklistedDenoms_Handler,
+		},
+		{
+			MethodName: "AllWhitelistedAddresses",
+			Handler:    _Query_AllWhitelistedAddresses_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
@@ -886,6 +1132,121 @@ func (m *QueryRateLimitsByChannelIdResponse) MarshalToSizedBuffer(dAtA []byte) (
 	return len(dAtA) - i, nil
 }
 
+func (m *QueryAllBlacklistedDenomsRequest) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *QueryAllBlacklistedDenomsRequest) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *QueryAllBlacklistedDenomsRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	return len(dAtA) - i, nil
+}
+
+func (m *QueryAllBlacklistedDenomsResponse) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *QueryAllBlacklistedDenomsResponse) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *QueryAllBlacklistedDenomsResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if len(m.Denoms) > 0 {
+		for iNdEx := len(m.Denoms) - 1; iNdEx >= 0; iNdEx-- {
+			i -= len(m.Denoms[iNdEx])
+			copy(dAtA[i:], m.Denoms[iNdEx])
+			i = encodeVarintQuery(dAtA, i, uint64(len(m.Denoms[iNdEx])))
+			i--
+			dAtA[i] = 0xa
+		}
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *QueryAllWhitelistedAddressesRequest) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *QueryAllWhitelistedAddressesRequest) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *QueryAllWhitelistedAddressesRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	return len(dAtA) - i, nil
+}
+
+func (m *QueryAllWhitelistedAddressesResponse) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *QueryAllWhitelistedAddressesResponse) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *QueryAllWhitelistedAddressesResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if len(m.AddressPairs) > 0 {
+		for iNdEx := len(m.AddressPairs) - 1; iNdEx >= 0; iNdEx-- {
+			{
+				size, err := m.AddressPairs[iNdEx].MarshalToSizedBuffer(dAtA[:i])
+				if err != nil {
+					return 0, err
+				}
+				i -= size
+				i = encodeVarintQuery(dAtA, i, uint64(size))
+			}
+			i--
+			dAtA[i] = 0xa
+		}
+	}
+	return len(dAtA) - i, nil
+}
+
 func encodeVarintQuery(dAtA []byte, offset int, v uint64) int {
 	offset -= sovQuery(v)
 	base := offset
@@ -1000,6 +1361,54 @@ func (m *QueryRateLimitsByChannelIdResponse) Size() (n int) {
 	_ = l
 	if len(m.RateLimits) > 0 {
 		for _, e := range m.RateLimits {
+			l = e.Size()
+			n += 1 + l + sovQuery(uint64(l))
+		}
+	}
+	return n
+}
+
+func (m *QueryAllBlacklistedDenomsRequest) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	return n
+}
+
+func (m *QueryAllBlacklistedDenomsResponse) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if len(m.Denoms) > 0 {
+		for _, s := range m.Denoms {
+			l = len(s)
+			n += 1 + l + sovQuery(uint64(l))
+		}
+	}
+	return n
+}
+
+func (m *QueryAllWhitelistedAddressesRequest) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	return n
+}
+
+func (m *QueryAllWhitelistedAddressesResponse) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if len(m.AddressPairs) > 0 {
+		for _, e := range m.AddressPairs {
 			l = e.Size()
 			n += 1 + l + sovQuery(uint64(l))
 		}
@@ -1655,6 +2064,272 @@ func (m *QueryRateLimitsByChannelIdResponse) Unmarshal(dAtA []byte) error {
 			}
 			m.RateLimits = append(m.RateLimits, RateLimit{})
 			if err := m.RateLimits[len(m.RateLimits)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipQuery(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *QueryAllBlacklistedDenomsRequest) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowQuery
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: QueryAllBlacklistedDenomsRequest: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: QueryAllBlacklistedDenomsRequest: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		default:
+			iNdEx = preIndex
+			skippy, err := skipQuery(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *QueryAllBlacklistedDenomsResponse) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowQuery
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: QueryAllBlacklistedDenomsResponse: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: QueryAllBlacklistedDenomsResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Denoms", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthQuery
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Denoms = append(m.Denoms, string(dAtA[iNdEx:postIndex]))
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipQuery(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *QueryAllWhitelistedAddressesRequest) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowQuery
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: QueryAllWhitelistedAddressesRequest: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: QueryAllWhitelistedAddressesRequest: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		default:
+			iNdEx = preIndex
+			skippy, err := skipQuery(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *QueryAllWhitelistedAddressesResponse) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowQuery
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: QueryAllWhitelistedAddressesResponse: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: QueryAllWhitelistedAddressesResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field AddressPairs", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthQuery
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.AddressPairs = append(m.AddressPairs, WhitelistedAddressPair{})
+			if err := m.AddressPairs[len(m.AddressPairs)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex

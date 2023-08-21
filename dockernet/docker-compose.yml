@@ -216,6 +216,13 @@ services:
     restart: always
     command: [ "bash", "start.sh", "stride-gaia" ]
 
+  relayer-gaia-ics:
+    image: stridezone:relayer
+    volumes:
+      - ./state/relayer-gaia-ics:/home/relayer/.relayer
+    restart: always
+    command: [ "bash", "start.sh", "stride-gaia-ics" ]
+
   relayer-juno:
     image: stridezone:relayer
     volumes:
