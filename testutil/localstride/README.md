@@ -68,6 +68,7 @@ A few things to note before getting started:
 ```sh
 gcloud compute ssh --zone "us-central1-a" "biggie-smalls" --project "stride-nodes"
 ```
+Also, replace `/home/kentgang/` in the two volumes sections with your home directory in `stride/testutil/localstride/state-export/docker-compose.yml`
 
 1. Set up a node on mainnet. The following command will download a wizard to guide you through the process.  
 
