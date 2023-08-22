@@ -102,6 +102,11 @@ func (k Keeper) RebalanceCallback(ctx sdk.Context, packet channeltypes.Packet, a
 		// for the destination validator
 		valAddrMap[srcValidator].Delegation = valAddrMap[srcValidator].Delegation.Sub(rebalancing.Amt)
 		valAddrMap[dstValidator].Delegation = valAddrMap[dstValidator].Delegation.Add(rebalancing.Amt)
+
+		k.Logger(ctx).Info(utils.LogICACallbackWithHostZone(chainId, ICACallbackID_Rebalance,
+			"  Decrementing delegation on %s by %v", srcValidator, rebalancing.Amt))
+		k.Logger(ctx).Info(utils.LogICACallbackWithHostZone(chainId, ICACallbackID_Rebalance,
+			"  Incrementing delegation on %s by %v", dstValidator, rebalancing.Amt))
 	}
 
 	k.SetHostZone(ctx, hostZone)

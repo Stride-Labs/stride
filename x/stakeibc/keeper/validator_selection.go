@@ -43,6 +43,7 @@ func (k Keeper) RebalanceAllHostZones(ctx sdk.Context) {
 				"Host does not rebalance this epoch (Unbonding Period: %d, Epoch: %d)", hostZone.UnbondingPeriod, dayEpoch.EpochNumber))
 			continue
 		}
+		k.Logger(ctx).Info(utils.LogWithHostZone(hostZone.ChainId, "Rebalancing delegations"))
 
 		if err := k.RebalanceDelegationsForHostZone(ctx, hostZone.ChainId); err != nil {
 			k.Logger(ctx).Error(fmt.Sprintf("Unable to rebalance delegations for %s: %s", hostZone.ChainId, err.Error()))
@@ -244,7 +245,9 @@ func (k Keeper) GetValidatorDelegationDifferences(ctx sdk.Context, hostZone type
 				Delta:            delegationChange,
 			})
 			totalDelegationChange = totalDelegationChange.Add(delegationChange)
-			k.Logger(ctx).Info(fmt.Sprintf("Adding delegation: %v to validator: %s", delegationChange, validator.Address))
+
+			k.Logger(ctx).Info(utils.LogWithHostZone(hostZone.ChainId,
+				"Validator %s delegation surplus/deficit: %v", validator.Address, delegationChange))
 		}
 	}
 
