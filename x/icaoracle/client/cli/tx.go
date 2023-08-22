@@ -84,14 +84,14 @@ Example:
   $ %[1]s tx %[2]s instantiate-oracle osmosis-1 1000 channel-0
 `, version.AppName, types.ModuleName),
 		),
-		Args: cobra.ExactArgs(2),
+		Args: cobra.ExactArgs(3),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			chainId := args[0]
 			contractCodeId, err := strconv.ParseUint(args[1], 10, 64)
 			if err != nil {
 				return err
 			}
-			transferChannelOnOracle := args[1]
+			transferChannelOnOracle := args[2]
 
 			clientCtx, err := client.GetClientTxContext(cmd)
 			if err != nil {
