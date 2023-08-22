@@ -234,17 +234,6 @@ func (k Keeper) SlashValidatorOnHostZone(ctx sdk.Context, hostZone types.HostZon
 		"Validator was slashed! Validator: %s, Delegator: %s, Delegation in State: %v, Delegation from ICQ %v, Slash Amount: %v, Slash Pct: %v",
 		validator.Address, hostZone.DelegationIcaAddress, validator.Delegation, delegatedTokens, slashAmount, slashPct))
 
-	// Abort if the slash was greater than the safety threshold
-	slashThreshold, err := cast.ToInt64E(k.GetParam(ctx, types.KeySafetyMaxSlashPercent))
-	if err != nil {
-		return err
-	}
-	slashThresholdDecimal := sdk.NewDec(slashThreshold).Quo(sdk.NewDec(100))
-	if slashPct.GT(slashThresholdDecimal) {
-		return errorsmod.Wrapf(types.ErrSlashExceedsSafetyThreshold,
-			"Validator slashed but ABORTING update, slash (%v) is greater than safety threshold (%v)", slashPct, slashThresholdDecimal)
-	}
-
 	// Update the validator weight and delegation reflect to reflect the slash
 	weight, err := cast.ToInt64E(validator.Weight)
 	if err != nil {
