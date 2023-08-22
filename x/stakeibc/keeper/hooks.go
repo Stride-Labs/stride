@@ -189,8 +189,8 @@ func (k Keeper) PostRedemptionRateToOracles(ctx sdk.Context, hostZone types.Host
 	stDenom := types.StAssetDenomFromHostZoneDenom(hostZone.HostDenom)
 	nativeDenom := hostZone.IbcDenom
 	attributes, err := json.Marshal(icaoracletypes.RedemptionRateAttributes{
-		Denom:     stDenom,
-		BaseDenom: nativeDenom,
+		SttokenDenom:     stDenom,
+		NativeTokenDenom: nativeDenom,
 	})
 	if err != nil {
 		return err
