@@ -73,14 +73,15 @@ Example:
 // Instantiates an oracle cosmwasm contract
 func CmdInstantiateOracle() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "instantiate-oracle [oracle-chain-id] [contract-code-id]",
+		Use:   "instantiate-oracle [oracle-chain-id] [contract-code-id] [transfer-channel-on-oracle]",
 		Short: "Instantiates an oracle cosmwasm contract",
 		Long: strings.TrimSpace(
 			fmt.Sprintf(`Submits an ICA to instantiate the oracle cosmwasm contract.
-Must provide the codeID of a cosmwasm contract that has already been uploaded to the host chain.
+Must provide the codeID of a cosmwasm contract that has already been uploaded to the host chain, 
+as well as the transfer channel ID as it lives on the oracle's chain. 
 
 Example:
-  $ %[1]s tx %[2]s instantiate-oracle osmosis-1 1000
+  $ %[1]s tx %[2]s instantiate-oracle osmosis-1 1000 channel-0
 `, version.AppName, types.ModuleName),
 		),
 		Args: cobra.ExactArgs(2),
@@ -90,6 +91,7 @@ Example:
 			if err != nil {
 				return err
 			}
+			transferChannelOnOracle := args[1]
 
 			clientCtx, err := client.GetClientTxContext(cmd)
 			if err != nil {
@@ -100,6 +102,7 @@ Example:
 				clientCtx.GetFromAddress().String(),
 				chainId,
 				contractCodeId,
+				transferChannelOnOracle,
 			)
 
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)

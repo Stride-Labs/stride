@@ -1,6 +1,8 @@
 package types
 
 import (
+	"regexp"
+
 	errorsmod "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -10,11 +12,12 @@ import (
 
 var _ sdk.Msg = &MsgInstantiateOracle{}
 
-func NewMsgInstantiateOracle(creator string, chainId string, contractCodeId uint64) *MsgInstantiateOracle {
+func NewMsgInstantiateOracle(creator string, chainId string, contractCodeId uint64, transferChannelId string) *MsgInstantiateOracle {
 	return &MsgInstantiateOracle{
-		Creator:        creator,
-		OracleChainId:  chainId,
-		ContractCodeId: contractCodeId,
+		Creator:                 creator,
+		OracleChainId:           chainId,
+		ContractCodeId:          contractCodeId,
+		TransferChannelOnOracle: transferChannelId,
 	}
 }
 
@@ -46,6 +49,14 @@ func (msg *MsgInstantiateOracle) ValidateBasic() error {
 
 	if msg.ContractCodeId == 0 {
 		return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "contract code-id cannot be 0")
+	}
+
+	matched, err := regexp.MatchString(`^channel-\d+$`, msg.TransferChannelOnOracle)
+	if err != nil {
+		return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "unable to verify channel-id (%s)", msg.TransferChannelOnOracle)
+	}
+	if !matched {
+		return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "invalid channel-id (%s), must be of the format 'channel-{N}'", msg.TransferChannelOnOracle)
 	}
 
 	return nil

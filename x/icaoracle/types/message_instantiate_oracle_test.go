@@ -18,6 +18,7 @@ func TestMsgInstantiateOracle(t *testing.T) {
 
 	validChainId := "chain-1"
 	validCodeId := uint64(1)
+	validChannelId := "channel-0"
 
 	tests := []struct {
 		name string
@@ -27,46 +28,61 @@ func TestMsgInstantiateOracle(t *testing.T) {
 		{
 			name: "successful message",
 			msg: types.MsgInstantiateOracle{
-				Creator:        validAdminAddress,
-				OracleChainId:  validChainId,
-				ContractCodeId: validCodeId,
+				Creator:                 validAdminAddress,
+				OracleChainId:           validChainId,
+				ContractCodeId:          validCodeId,
+				TransferChannelOnOracle: validChannelId,
 			},
 		},
 		{
 			name: "invalid creator address",
 			msg: types.MsgInstantiateOracle{
-				Creator:        invalidAddress,
-				OracleChainId:  validChainId,
-				ContractCodeId: validCodeId,
+				Creator:                 invalidAddress,
+				OracleChainId:           validChainId,
+				ContractCodeId:          validCodeId,
+				TransferChannelOnOracle: validChannelId,
 			},
 			err: "invalid creator address",
 		},
 		{
 			name: "invalid admin address",
 			msg: types.MsgInstantiateOracle{
-				Creator:        validNotAdminAddress,
-				OracleChainId:  validChainId,
-				ContractCodeId: validCodeId,
+				Creator:                 validNotAdminAddress,
+				OracleChainId:           validChainId,
+				ContractCodeId:          validCodeId,
+				TransferChannelOnOracle: validChannelId,
 			},
 			err: "invalid creator address",
 		},
 		{
 			name: "invalid chain-id",
 			msg: types.MsgInstantiateOracle{
-				Creator:        validAdminAddress,
-				OracleChainId:  "",
-				ContractCodeId: validCodeId,
+				Creator:                 validAdminAddress,
+				OracleChainId:           "",
+				ContractCodeId:          validCodeId,
+				TransferChannelOnOracle: validChannelId,
 			},
 			err: "oracle-chain-id is required",
 		},
 		{
 			name: "invalid code ID",
 			msg: types.MsgInstantiateOracle{
-				Creator:        validAdminAddress,
-				OracleChainId:  validChainId,
-				ContractCodeId: 0,
+				Creator:                 validAdminAddress,
+				OracleChainId:           validChainId,
+				ContractCodeId:          0,
+				TransferChannelOnOracle: validChannelId,
 			},
 			err: "contract code-id cannot be 0",
+		},
+		{
+			name: "invalid channel ID",
+			msg: types.MsgInstantiateOracle{
+				Creator:                 validAdminAddress,
+				OracleChainId:           validChainId,
+				ContractCodeId:          validCodeId,
+				TransferChannelOnOracle: "chan-0",
+			},
+			err: "invalid channel-id (chan-0)",
 		},
 	}
 
