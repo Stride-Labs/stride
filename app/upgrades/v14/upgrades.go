@@ -20,6 +20,10 @@ func CreateUpgradeHandler(
 ) upgradetypes.UpgradeHandler {
 	return func(ctx sdk.Context, _ upgradetypes.Plan, vm module.VersionMap) (module.VersionMap, error) {
 		ctx.Logger().Info("Starting upgrade v14...")
+
+		ctx.Logger().Info("Loading airdrop allocations...")
+		claimKeeper.LoadAllocationData(ctx, allocations)
+
 		return mm.RunMigrations(ctx, configurator, vm)
 	}
 }
