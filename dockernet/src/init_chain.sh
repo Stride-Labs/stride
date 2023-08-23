@@ -151,8 +151,10 @@ for (( i=1; i <= $NUM_NODES; i++ )); do
     fi
 
     # Only generate the validator txs for host chains
-    if [[ "$CHAIN" != "STRIDE" && "$CHAIN" != "HOST" ]]; then 
-        $cmd gentx $val_acct ${STAKE_TOKENS}${DENOM} --chain-id $CHAIN_ID --keyring-backend test &> /dev/null
+    if [[ $CHAIN == "SOMM" ]]; then
+        $cmd gentx $val_acct ${STAKE_TOKENS}${DENOM} 0xcbFB78ADA6a529750cd4380cA87B0B8c7d3Ce17D somm1uk4ze0x4nvh4fk0xm4jdud58eqn4yxhryr9ufc 0xf7f8fdf71eb0daa7229ff437c1f7ebd80af9121904c8c7da83ab5ec03b1e32835b1b9806bfc520acc0931f3003f19b3ac341f4142f6a76e3e748e683e2f2618b1c --chain-id $CHAIN_ID --keyring-backend test
+    elif [[ "$CHAIN" != "STRIDE" && "$CHAIN" != "HOST" ]]; then 
+        $cmd gentx $val_acct ${STAKE_TOKENS}${DENOM} --chain-id $CHAIN_ID --keyring-backend test
     fi
     
     # Get the endpoint and node ID

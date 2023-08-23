@@ -200,6 +200,15 @@ services:
     volumes:
       - ./state/evmos5:/home/evmos/.evmosd
 
+  somm1:
+    image: stridezone:sommelier
+    volumes:
+      - ./state/somm1:/home/sommelier/.sommelier
+    ports:
+      - "25957:26657"
+      - "1247:1317"
+      - "9020:9090"
+
   # Fill in new host zone being tested here
 
   hermes:
@@ -257,6 +266,13 @@ services:
       - ./state/relayer-evmos:/home/relayer/.relayer
     restart: always
     command: [ "bash", "start.sh", "stride-evmos" ]
+
+  relayer-somm:
+    image: stridezone:relayer
+    volumes:
+      - ./state/relayer-somm:/home/relayer/.relayer
+    restart: always
+    command: [ "bash", "start.sh", "stride-somm" ]
 
   relayer-juno-osmo:
     image: stridezone:relayer

@@ -16,7 +16,7 @@ TX_LOGS=$DOCKERNET_HOME/logs/tx.log
 KEYS_LOGS=$DOCKERNET_HOME/logs/keys.log
 
 # List of hosts enabled 
-HOST_CHAINS=() 
+HOST_CHAINS=(SOMM) 
 
 # If no host zones are specified above:
 #  `start-docker` defaults to just GAIA if HOST_CHAINS is empty
@@ -42,12 +42,14 @@ OSMO_DENOM="uosmo"
 STARS_DENOM="ustars"
 WALK_DENOM="uwalk"
 EVMOS_DENOM="aevmos"
+SOMM_DENOM="usomm"
 STATOM_DENOM="stuatom"
 STJUNO_DENOM="stujuno"
 STOSMO_DENOM="stuosmo"
 STSTARS_DENOM="stustars"
 STWALK_DENOM="stuwalk"
 STEVMOS_DENOM="staevmos"
+STSOMM_DENOM="stusomm"
 
 IBC_STRD_DENOM='ibc/FF6C2E86490C1C4FBBD24F55032831D2415B9D7882F85C3CC9C2401D79362BEA'  
 
@@ -81,6 +83,11 @@ IBC_HOST_CHANNEL_1_DENOM='ibc/FB7E2520A1ED6890E1632904A4ACA1B3D2883388F8E2B88F2D
 IBC_HOST_CHANNEL_2_DENOM='ibc/D664DC1D38648FC4C697D9E9CF2D26369318DFE668B31F81809383A8A88CFCF4'
 IBC_HOST_CHANNEL_3_DENOM='ibc/FD7AA7EB2C1D5D97A8693CCD71FFE3F5AFF12DB6756066E11E69873DE91A33EA'
 
+IBC_SOMM_CHANNEL_0_DENOM='ibc/D436A8D1000477AA28BB5A53882BC518055B366F077B817E79FA65A932827707'
+IBC_SOMM_CHANNEL_1_DENOM='ibc/BA2C88D94F6E06302740D1B1A970A095B7FC101AB5FC449E258D8170F1715A46'
+IBC_SOMM_CHANNEL_2_DENOM='ibc/963D7FF5B6572CCC2996CDE3E4907FC06DAA70528758E61BFAAC35FA824455A5'
+IBC_SOMM_CHANNEL_3_DENOM='ibc/7037A7AC0EE3D27AEB831F2CAE792E72FA37197A6D7F2E26D09BBAAECB98CB01'
+
 # COIN TYPES
 # Coin types can be found at https://github.com/satoshilabs/slips/blob/master/slip-0044.md
 COSMOS_COIN_TYPE=118
@@ -92,6 +99,7 @@ IBC_ATOM_DENOM=$IBC_GAIA_CHANNEL_0_DENOM
 IBC_JUNO_DENOM=$IBC_JUNO_CHANNEL_1_DENOM
 IBC_OSMO_DENOM=$IBC_OSMO_CHANNEL_2_DENOM
 IBC_STARS_DENOM=$IBC_STARS_CHANNEL_3_DENOM
+IBC_SOMM_DENOM=$IBC_SOMM_CHANNEL_0_DENOM
 
 # CHAIN PARAMS
 BLOCK_TIME='1s'
@@ -233,6 +241,18 @@ EVMOS_MAIN_CMD="$EVMOS_BINARY --home $DOCKERNET_HOME/state/${EVMOS_NODE_PREFIX}1
 EVMOS_RECEIVER_ADDRESS='evmos123z469cfejeusvk87ufrs5520wmdxmmlc7qzuw'
 EVMOS_MICRO_DENOM_UNITS="000000000000000000000000"
 
+# SOMM
+SOMM_CHAIN_ID=sommelier-3
+SOMM_NODE_PREFIX=somm
+SOMM_NUM_NODES=1
+SOMM_BINARY="$DOCKERNET_HOME/../build/sommelier"
+SOMM_VAL_PREFIX=sval
+SOMM_ADDRESS_PREFIX=somm
+SOMM_REV_ACCT=srev1
+SOMM_RPC_PORT=25957
+SOMM_MAIN_CMD="$SOMM_BINARY --home $DOCKERNET_HOME/state/${SOMM_NODE_PREFIX}1"
+SOMM_RECEIVER_ADDRESS='somm1s9jeckettd5kgff2mwtrcsxwl6dsd4wt5n8kqf'
+
 # RELAYER
 RELAYER_GAIA_EXEC="$DOCKER_COMPOSE run --rm relayer-gaia"
 RELAYER_GAIA_ICS_EXEC="$DOCKER_COMPOSE run --rm relayer-gaia-ics"
@@ -241,6 +261,7 @@ RELAYER_OSMO_EXEC="$DOCKER_COMPOSE run --rm relayer-osmo"
 RELAYER_STARS_EXEC="$DOCKER_COMPOSE run --rm relayer-stars"
 RELAYER_EVMOS_EXEC="$DOCKER_COMPOSE run --rm relayer-evmos"
 RELAYER_HOST_EXEC="$DOCKER_COMPOSE run --rm relayer-host"
+RELAYER_SOMM_EXEC="$DOCKER_COMPOSE run --rm relayer-somm"
 
 RELAYER_STRIDE_ACCT=rly1
 RELAYER_GAIA_ACCT=rly2
@@ -251,6 +272,7 @@ RELAYER_HOST_ACCT=rly6
 RELAYER_EVMOS_ACCT=rly7
 RELAYER_STRIDE_ICS_ACCT=rly11
 RELAYER_GAIA_ICS_ACCT=rly12
+RELAYER_SOMM_ACCT=rly13
 RELAYER_ACCTS=(
   $RELAYER_GAIA_ACCT 
   $RELAYER_JUNO_ACCT 
@@ -259,6 +281,7 @@ RELAYER_ACCTS=(
   $RELAYER_HOST_ACCT 
   $RELAYER_EVMOS_ACCT
   $RELAYER_GAIA_ICS_ACCT
+  $RELAYER_SOMM_ACCT
 )
 
 RELAYER_GAIA_MNEMONIC="fiction perfect rapid steel bundle giant blade grain eagle wing cannon fever must humble dance kitchen lazy episode museum faith off notable rate flavor"
@@ -268,6 +291,8 @@ RELAYER_STARS_MNEMONIC="deposit dawn erosion talent old broom flip recipe pill h
 RELAYER_HOST_MNEMONIC="renew umbrella teach spoon have razor knee sock divert inner nut between immense library inhale dog truly return run remain dune virus diamond clinic"
 RELAYER_GAIA_ICS_MNEMONIC="size chimney clog job robot thunder gaze vapor economy smooth kit denial alter merit produce front force eager outside mansion believe fan tonight detect"
 RELAYER_EVMOS_MNEMONIC="science depart where tell bus ski laptop follow child bronze rebel recall brief plug razor ship degree labor human series today embody fury harvest"
+# somm10r8uyjf782rljny2qq507xkd8lvv5tunhsjuwn
+RELAYER_SOMM_MNEMONIC="brisk nasty afraid idle lemon theme ritual find lunar panel bonus file choose avocado orbit ozone clock trophy post put result eyebrow kid summer"
 RELAYER_MNEMONICS=(
   "$RELAYER_GAIA_MNEMONIC"
   "$RELAYER_JUNO_MNEMONIC"
@@ -276,7 +301,9 @@ RELAYER_MNEMONICS=(
   "$RELAYER_HOST_MNEMONIC"
   "$RELAYER_EVMOS_MNEMONIC"
   "$RELAYER_GAIA_ICS_MNEMONIC"
+  "$RELAYER_SOMM_MNEMONIC"
 )
+BRIDGE_SOMM_MNEMONIC="olympic excess turkey vibrant zero spider service idea side result digital era zoo banner alcohol fashion acid fly certain tongue empower slush ridge soldier"
 
 STRIDE_ADDRESS() { 
   # After an upgrade, the keys query can sometimes print migration info, 
@@ -300,6 +327,9 @@ HOST_ADDRESS() {
 }
 EVMOS_ADDRESS() { 
   $EVMOS_MAIN_CMD keys show ${EVMOS_VAL_PREFIX}1 --keyring-backend test -a 
+}
+SOMM_ADDRESS() {
+  $SOMM_MAIN_CMD keys show ${SOMM_VAL_PREFIX}1 --keyring-backend test -a 
 }
 
 CSLEEP() {
