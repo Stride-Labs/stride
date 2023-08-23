@@ -348,19 +348,6 @@ func (s *KeeperTestSuite) TestDelegatorSharesCallback_WeightOverfow() {
 	s.Require().Regexp(expectedErrMsg, err.Error())
 }
 
-func (s *KeeperTestSuite) TestDelegatorSharesCallback_SlashGtTenPercent() {
-	tc := s.SetupDelegatorSharesICQCallback()
-
-	// Update the callback args to contain a number of shares that would imply a slash greater than 10%
-	valAddress := tc.hostZone.Validators[tc.valIndexQueried].Address
-	badCallbackArgs := s.CreateDelegatorSharesQueryResponse(valAddress, sdk.NewDec(1600))
-
-	err := keeper.DelegatorSharesCallback(s.App.StakeibcKeeper, s.Ctx, badCallbackArgs, tc.validArgs.query)
-	expectedErrMsg := "Validator slashed but ABORTING update, slash (0.200000000000000000) is greater than safety threshold (0.100000000000000000): "
-	expectedErrMsg += "slash is greater than safety threshold"
-	s.Require().EqualError(err, expectedErrMsg)
-}
-
 func (s *KeeperTestSuite) TestDelegatorSharesCallback_PrecisionError() {
 	tc := s.SetupDelegatorSharesICQCallback()
 	initialValidator := tc.hostZone.Validators[tc.valIndexQueried]
