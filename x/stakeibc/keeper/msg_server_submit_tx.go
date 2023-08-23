@@ -421,7 +421,7 @@ func (k Keeper) SubmitValidatorSharesToTokensRateICQ(
 		TimeoutDuration: timeoutDuration,
 		TimeoutPolicy:   timeoutPolicy,
 	}
-	if err := k.InterchainQueryKeeper.SubmitICQRequest(ctx, query, false); err != nil {
+	if err := k.InterchainQueryKeeper.SubmitICQRequest(ctx, query, true); err != nil {
 		k.Logger(ctx).Error(fmt.Sprintf("Error submitting ICQ for validator sharesToTokens rate, error %s", err.Error()))
 		return err
 	}
