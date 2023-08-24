@@ -83,6 +83,9 @@ func (s *KeeperTestSuite) SetupReinvestCallback() ReinvestCallbackTestCase {
 	args, err := s.App.StakeibcKeeper.MarshalReinvestCallbackArgs(s.Ctx, callbackArgs)
 	s.Require().NoError(err)
 
+	// Mock the latest client height for the ICQ submission
+	s.MockClientLatestHeight(1)
+
 	return ReinvestCallbackTestCase{
 		initialState: ReinvestCallbackState{
 			hostZone:               hostZone,

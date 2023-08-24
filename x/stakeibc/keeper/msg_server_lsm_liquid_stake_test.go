@@ -86,6 +86,9 @@ func (s *KeeperTestSuite) SetupTestLSMLiquidStake() LSMLiquidStakeTestCase {
 	}
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
 
+	// Mock the latest client height for the ICQ submission
+	s.MockClientLatestHeight(1)
+
 	return LSMLiquidStakeTestCase{
 		hostZone:             hostZone,
 		liquidStakerAddress:  userAddress,

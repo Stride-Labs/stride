@@ -61,7 +61,7 @@ func (s *KeeperTestSuite) SetupAddValidators() AddValidatorsTestCase {
 
 	validMsg := types.MsgAddValidators{
 		Creator:  "stride_ADMIN",
-		HostZone: "GAIA",
+		HostZone: HostChainId,
 		Validators: []*types.Validator{
 			{Name: "val1", Address: validatorAddresses["val1"], Weight: 1},
 			{Name: "val2", Address: validatorAddresses["val2"], Weight: 2},
@@ -82,6 +82,9 @@ func (s *KeeperTestSuite) SetupAddValidators() AddValidatorsTestCase {
 	}
 
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
+
+	// Mock the latest client height for the ICQ submission
+	s.MockClientLatestHeight(1)
 
 	return AddValidatorsTestCase{
 		hostZone:                 hostZone,
