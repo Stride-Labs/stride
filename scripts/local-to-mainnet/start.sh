@@ -6,17 +6,17 @@ SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 ### SETTING VARIABLES FOR LOCAL TO MAINNET BELOW ONLY
 
 STRIDE_CHAIN_ID=local-test-1 # # DO NOT USE STRIDE MAINNET CHAIN ID! always use a new chain id by incrementing the suffix after each run
-HOST_CHAIN_ID=cosmoshub-4 # chain id on the host
-HOST_RPC=https://comsos-rpc.polkachu.com # RPC on the host
-HOST_ACCOUNT_PREFIX=cosmos
-HOST_DENOM=uatom
-HOST_BINARY=build/gaiad
+HOST_CHAIN_ID=sommelier-3 # chain id on the host
+HOST_RPC=https://sommelier-rpc.polkachu.com:443 # RPC on the host
+HOST_ACCOUNT_PREFIX=somm
+HOST_DENOM=usomm
+HOST_BINARY=build/sommelier
 HOST_COIN_TYPE=118
-HOST_VAL_NAME_1=imperator
-HOST_VAL_ADDRESS_1=cosmosvaloper1vvwtk805lxehwle9l4yudmq6mn0g32px9xtkhc
-HOST_VAL_NAME_2=notional
-HOST_VAL_ADDRESS_2=cosmosvaloper1083svrca4t350mphfv9x45wq9asrs60cdmrflj
-HOT_WALLET_1_ADDRESS=cosmos1c37n9aywapx2v0s6vk2yedydkkhq65zzeupe92
+HOST_VAL_NAME_1=polkachu
+HOST_VAL_ADDRESS_1=sommvaloper1gp957czryfgyvxwn3tfnyy2f0t9g2p4pu0vlu3
+HOST_VAL_NAME_2=everstake
+HOST_VAL_ADDRESS_2=sommvaloper1y0few0kgxa7vtq8nskjsdwdtyqglj3k5pv2c4d
+HOT_WALLET_1_ADDRESS=somm1ufncclux9fzgra4pm4ucdw6z5el3gu92ru2hqc
 
 ### ^^^ SETTING VARIABLES FOR LOCAL TO MAINNET ABOVE ONLY ^^^ 
 
@@ -76,7 +76,7 @@ sed -i -E "s|HOST_COIN_TYPE|$HOST_COIN_TYPE|g" $RELAYER_CONFIG_FILE
 # rm -f $TMP_MNEMONICS
 
 echo "Adding Relayer keys"
-RELAYER_CMD="$SCRIPT_DIR/../../build/rly --home $STATE/rly"
+RELAYER_CMD="$DOCKER_COMPOSE run --rm relayer rly"
 $RELAYER_CMD keys restore stride rly1 "$RELAYER_STRIDE_MNEMONIC" 
 $RELAYER_CMD keys restore host rly2 "$HOT_WALLET_3_MNEMONIC" 
 
