@@ -183,6 +183,7 @@ func (app *StrideApp) setupUpgradeHandlers(appOpts servertypes.AppOptions) {
 			app.configurator,
 			app.StakeibcKeeper,
 			&app.ConsumerKeeper,
+			app.ClaimKeeper,
 		),
 	)
 
