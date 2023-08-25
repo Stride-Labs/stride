@@ -5,7 +5,7 @@ import (
 
 	errorsmod "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/gogo/protobuf/proto" //nolint:staticcheck
+	"github.com/cosmos/gogoproto/proto"
 
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 

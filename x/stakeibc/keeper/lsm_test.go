@@ -13,7 +13,7 @@ import (
 	"github.com/Stride-Labs/stride/v13/x/stakeibc/keeper"
 	"github.com/Stride-Labs/stride/v13/x/stakeibc/types"
 
-	"github.com/gogo/protobuf/proto" //nolint:staticcheck
+	"github.com/cosmos/gogoproto/proto"
 )
 
 func (s *KeeperTestSuite) TestValidateLSMLiquidStake() {

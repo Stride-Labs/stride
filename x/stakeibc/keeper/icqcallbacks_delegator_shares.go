@@ -9,7 +9,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
-	"github.com/gogo/protobuf/proto" //nolint:staticcheck
+	"github.com/cosmos/gogoproto/proto"
 	"github.com/spf13/cast"
 
 	"github.com/Stride-Labs/stride/v13/utils"
