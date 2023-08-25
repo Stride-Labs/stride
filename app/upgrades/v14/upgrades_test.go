@@ -7,12 +7,17 @@ import (
 
 	sdkmath "cosmossdk.io/math"
 
+	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/suite"
+
+	"github.com/Stride-Labs/stride/v13/app"
 
 	"github.com/Stride-Labs/stride/v13/app/apptesting"
 	v14 "github.com/Stride-Labs/stride/v13/app/upgrades/v14"
 	claimtypes "github.com/Stride-Labs/stride/v13/x/claim/types"
+	oldstakeibctypes "github.com/Stride-Labs/stride/v13/x/stakeibc/migrations/v3/types"
+	stakeibctypes "github.com/Stride-Labs/stride/v13/x/stakeibc/types"
 )
 
 var (
@@ -35,12 +40,16 @@ func TestKeeperTestSuite(t *testing.T) {
 }
 
 func (s *UpgradeTestSuite) TestUpgrade() {
-	s.SetupStoreBeforeUpgrade()
+	s.SetupOldAirdrops()
+	checkStakeibcStoreAfterUpgrade := s.SetupOldStakeibcStore()
+
 	s.ConfirmUpgradeSucceededs("v14", dummyUpgradeHeight)
-	s.CheckStoreAfterUpgrade()
+
+	s.CheckAirdropsAfterUpgrade()
+	checkStakeibcStoreAfterUpgrade()
 }
 
-func (s *UpgradeTestSuite) SetupStoreBeforeUpgrade() {
+func (s *UpgradeTestSuite) SetupOldAirdrops() {
 	// Add a test aidrop to the store
 	params := claimtypes.Params{
 		Airdrops: []*claimtypes.Airdrop{
@@ -52,12 +61,13 @@ func (s *UpgradeTestSuite) SetupStoreBeforeUpgrade() {
 	}
 	err := s.App.ClaimKeeper.SetParams(s.Ctx, params)
 	s.Require().NoError(err, "no error expected when setting claim params")
+
 	// Set vesting to 0s
 	claimtypes.DefaultVestingInitialPeriod, err = time.ParseDuration("0s")
 	s.Require().NoError(err, "no error expected when setting vesting initial period")
 }
 
-func (s *UpgradeTestSuite) CheckStoreAfterUpgrade() {
+func (s *UpgradeTestSuite) CheckAirdropsAfterUpgrade() {
 	afterCtx := s.Ctx.WithBlockHeight(dummyUpgradeHeight)
 
 	// Check that all airdrops were added, osmosis airdrop wasn't removed
@@ -105,4 +115,59 @@ func (s *UpgradeTestSuite) CheckAirdropAdded(ctx sdk.Context, airdrop *claimtype
 	s.Require().True(found, "epoch tracker should be found")
 	s.Require().Zero(epochInfo.CurrentEpoch, "epoch should be zero")
 	s.Require().Equal(epochInfo.Duration, claimtypes.DefaultEpochDuration, "epoch duration should be equal to airdrop duration")
+}
+
+func (s *UpgradeTestSuite) SetupOldStakeibcStore() func() {
+	codec := app.MakeEncodingConfig().Marshaler
+	stakeibcStore := s.Ctx.KVStore(s.App.GetKey(stakeibctypes.StoreKey))
+	hostzoneStore := prefix.NewStore(stakeibcStore, stakeibctypes.KeyPrefix(stakeibctypes.HostZoneKey))
+
+	// Add two host zones with the old type
+	for i := int64(1); i <= 2; i++ {
+		hostZone := oldstakeibctypes.HostZone{
+			ChainId:            fmt.Sprintf("chain-%d", i),
+			Address:            fmt.Sprintf("address-%d", i),
+			UnbondingFrequency: 3,
+			DelegationAccount: &oldstakeibctypes.ICAAccount{
+				Address: fmt.Sprintf("delegation-%d", i),
+			},
+			BlacklistedValidators: []*oldstakeibctypes.Validator{
+				{Name: "val", Address: "address"},
+			},
+			StakedBal: sdkmath.NewInt(i),
+			Validators: []*oldstakeibctypes.Validator{
+				{
+					Address: fmt.Sprintf("val-%d", i),
+					InternalExchangeRate: &oldstakeibctypes.ValidatorExchangeRate{
+						InternalTokensToSharesRate: sdk.NewDec(i),
+					},
+					DelegationAmt: sdk.NewInt(i),
+				},
+			},
+		}
+
+		hostZoneBz := codec.MustMarshal(&hostZone)
+		hostzoneStore.Set([]byte(hostZone.ChainId), hostZoneBz)
+	}
+
+	return func() {
+		// Confirm the host zones have been migrated properly
+		for i := int64(1); i <= 2; i++ {
+			hostZone, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx, fmt.Sprintf("chain-%d", i))
+			s.Require().True(found)
+
+			s.Require().Equal(fmt.Sprintf("chain-%d", i), hostZone.ChainId, "chain-id")
+			s.Require().Equal(fmt.Sprintf("address-%d", i), hostZone.DepositAddress, "deposit address")
+			s.Require().Equal(fmt.Sprintf("delegation-%d", i), hostZone.DelegationIcaAddress, "delegation address")
+			s.Require().Equal(uint64(14), hostZone.UnbondingPeriod, "unbonding period")
+			s.Require().Equal(sdkmath.NewInt(i), hostZone.TotalDelegations, "total delegations")
+
+			validator := hostZone.Validators[0]
+			s.Require().Equal(fmt.Sprintf("val-%d", i), validator.Address, "validator address")
+			s.Require().Equal(sdk.NewDec(i), validator.SharesToTokensRate, "validator shares to tokens rate")
+			s.Require().Equal(false, validator.SlashQueryInProgress, "validator slash query in progress")
+			s.Require().Equal(int64(0), validator.DelegationChangesInProgress, "validator delegations in progress")
+			s.Require().Equal(sdk.ZeroInt(), validator.SlashQueryProgressTracker, "validator delegations in progress")
+		}
+	}
 }
