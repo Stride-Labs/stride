@@ -19,5 +19,6 @@ message GenesisState {
   repeated DepositRecord deposit_record_list = 7
       [ (gogoproto.nullable) = false ];
   uint64 deposit_record_count = 8;
-  // next id: 9
+  repeated LSMTokenDeposit lsm_token_deposit_list = 9
+      [ (gogoproto.nullable) = false ];
 }
