@@ -8,7 +8,7 @@ import (
 
 // staking message types
 //
-//nolint:gosec // these are not hard coded credentials
+// #nosec G101
 const (
 	TypeMsgRedeemTokensForShares = "redeem_tokens_for_shares"
 )
