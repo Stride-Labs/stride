@@ -180,6 +180,7 @@ func (app *StrideApp) setupUpgradeHandlers(appOpts servertypes.AppOptions) {
 			app.configurator,
 			app.appCodec,
 			app.ClaimKeeper,
+			app.InterchainqueryKeeper,
 			app.StakeibcKeeper,
 			app.keys[stakeibctypes.StoreKey],
 		),

@@ -14,6 +14,7 @@ import (
 	"github.com/Stride-Labs/stride/v13/utils"
 	claimkeeper "github.com/Stride-Labs/stride/v13/x/claim/keeper"
 	claimtypes "github.com/Stride-Labs/stride/v13/x/claim/types"
+	icqkeeper "github.com/Stride-Labs/stride/v13/x/interchainquery/keeper"
 	stakeibckeeper "github.com/Stride-Labs/stride/v13/x/stakeibc/keeper"
 	stakeibcmigration "github.com/Stride-Labs/stride/v13/x/stakeibc/migrations/v3"
 	stakeibctypes "github.com/Stride-Labs/stride/v13/x/stakeibc/types"
@@ -48,6 +49,7 @@ func CreateUpgradeHandler(
 	configurator module.Configurator,
 	cdc codec.Codec,
 	claimKeeper claimkeeper.Keeper,
+	icqKeeper icqkeeper.Keeper,
 	stakeibcKeeper stakeibckeeper.Keeper,
 	stakeibcStoreKey storetypes.StoreKey,
 ) upgradetypes.UpgradeHandler {
@@ -69,9 +71,9 @@ func CreateUpgradeHandler(
 		// Update Stakeibc Params
 		MigrateStakeibcParams(ctx, stakeibcKeeper)
 
-		// Migrate the Query struct from ICQ
-
-		// Submit queries for each cosmoshub validator's SharesToTokensRate
+		// Clear out any pending queries since the Query type updated
+		// There shouldn't be any queries here unless the upgrade happened right at the epoch
+		ClearPendingQueries(ctx, icqKeeper)
 
 		// `RunMigrations` (below) checks the old consensus version of each module (found in
 		// the store) and compares it against the updated consensus version in the binary
@@ -165,4 +167,12 @@ func AddAirdrops(ctx sdk.Context, claimKeeper claimkeeper.Keeper) error {
 func MigrateStakeibcParams(ctx sdk.Context, k stakeibckeeper.Keeper) {
 	params := stakeibctypes.DefaultParams()
 	k.SetParams(ctx, params)
+}
+
+// Since the Query struct was updated, it's easier to just clear out any pending
+// queries rather than attempt to migrate them
+func ClearPendingQueries(ctx sdk.Context, k icqkeeper.Keeper) {
+	for _, query := range k.AllQueries(ctx) {
+		k.DeleteQuery(ctx, query.Id)
+	}
 }
