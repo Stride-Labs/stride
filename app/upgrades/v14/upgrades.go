@@ -29,10 +29,15 @@ import (
 var (
 	UpgradeName = "v14"
 
-	VestingStartTime_12z83xmr = int64(1662350400) // Sept 4, 2022
-	VestingStartTime_1nwyvkxm = int64(1662350400) // Sept 4, 2022
-	Account1                  = "stride12z83xmrkr7stjk4q2vn95c02n7jryj55gd3aq3"
-	Account2                  = "stride1nwyvkxm89yg8e3fyxgruyct4zp90mg4nlk87lg"
+	VestingStartTimeAccount1 = int64(1662350400) // Sept 4, 2022
+	VestingEndTimeAccount1   = int64(1788512452)
+	VestingStartTimeAccount2 = int64(1662350400) // Sept 4, 2022
+	VestingEndTimeAccount2   = int64(1820016452)
+	Account1                 = "stride12z83xmrkr7stjk4q2vn95c02n7jryj55gd3aq3"
+	Account1VestingUstrd     = int64(187_500_000_000)
+	Account2                 = "stride1nwyvkxm89yg8e3fyxgruyct4zp90mg4nlk87lg"
+	Account2VestingUstrd     = int64(375_000_000_000)
+	FunderAddress            = "stride1k8c2m5cn322akk5wy8lpt87dd2f4yh9azg7jlh" // F5 TODO: change this to a SL multisig
 )
 
 // CreateUpgradeHandler creates an SDK upgrade handler for v14
@@ -69,26 +74,47 @@ func CreateUpgradeHandler(
 
 func MigrateAccount1(ctx sdk.Context, evk evmosvestingkeeper.Keeper, sk stakingkeeper.Keeper, ak authkeeper.AccountKeeper, bk bankkeeper.Keeper) error {
 	// fetch the account
-	account := ak.GetAccount(ctx, sdk.AccAddress(Account1))
+	account := ak.GetAccount(ctx, sdk.MustAccAddressFromBech32(Account1))
 	if account == nil {
-		return nil
+		// account must be initialized
+		return errorsmod.Wrapf(errortypes.ErrInvalidRequest, "account %s not found", Account1)
 	}
-	// First, create the clawback vesting account. This will reset the account type
+	// First, reset the account as a base account. Only accounts that conform to the BaseAccount interface can be converted to ClawbackVestingAccounts
+	baseVestingAcc := account.(*vesting.ContinuousVestingAccount).BaseVestingAccount
+	baseAcc := baseVestingAcc.BaseAccount
+	ak.SetAccount(ctx, baseAcc)
+
+	// Then, create the clawback vesting account. This will reset the account type
 	createClawbackMsg := &types.MsgCreateClawbackVestingAccount{
-		FunderAddress:     Account1,
+		FunderAddress:     FunderAddress,
 		VestingAddress:    Account1,
 		EnableGovClawback: false,
 	}
-	_, err := evk.CreateClawbackVestingAccount(ctx.Context(), createClawbackMsg)
+	_, err := evk.CreateClawbackVestingAccount(sdk.WrapSDKContext(ctx), createClawbackMsg)
 	if err != nil {
 		return err
 	}
 
+	// TODO: verify sk.BondDenom(ctx) is ustrd
+	// NOTE: LockupPeriods adds a transfer restriction. Unvested tokens are also transfer restricted. The behavior we want is
+	// Vested:
+	// - transferable
+	// - delegatable
+	// - votable
+	// Unvested:
+	// - not transferable
+	// - delegatable
+	// - votable
+	// This is the default behavior (without a lockup). So, we don't add LockupPeriods.
 	fundAccMsg := &types.MsgFundVestingAccount{
-		FunderAddress:  Account1,
+		FunderAddress:  FunderAddress,
 		VestingAddress: Account1,
-		StartTime:      time.Unix(VestingStartTime_12z83xmr, 0),
-		// TODO: add vesting and lockup periods
+		StartTime:      time.Unix(VestingStartTimeAccount1, 0),
+		VestingPeriods: sdkvesting.Periods{
+			// Period is 3 years
+			// 60*60*24*365*3 seconds
+			{Length: 94608000, Amount: sdk.NewCoins(sdk.NewCoin(sk.BondDenom(ctx), sdk.NewInt(Account1VestingUstrd)))},
+		},
 	}
 
 	// Then, fund the account
@@ -102,13 +128,13 @@ func MigrateAccount1(ctx sdk.Context, evk evmosvestingkeeper.Keeper, sk stakingk
 
 func MigrateAccount2(ctx sdk.Context, ak authkeeper.AccountKeeper) error {
 	// Get account
-	account := ak.GetAccount(ctx, sdk.AccAddress(Account2))
+	account := ak.GetAccount(ctx, sdk.MustAccAddressFromBech32(Account2))
 	if account == nil {
 		return nil
 	}
 	// change the start_time to Sept 4, 2022. The ugprade goes live on or after Sept 4, 2023, so the first year vest is still enforced
 	// (the account was previously set to start on Sept 4, 2023)
-	account.(*vesting.ContinuousVestingAccount).StartTime = VestingStartTime_1nwyvkxm
+	account.(*vesting.ContinuousVestingAccount).StartTime = VestingStartTimeAccount2
 	// NOTE: we shouldn't have to update delegated_vesting on the BaseAccount. That's because,
 	// DF (delegated free) and DV (delegated vesting) coins are set on (un)delegation and are point-in-time.
 	// So, delegated_vesting overcounts how many tokens are vesting. Whenever an undelegation occurs, DF and DV should be set correctly.
@@ -199,7 +225,7 @@ func FundVestingAccount(ctx sdk.Context, k evmosvestingkeeper.Keeper, stakingKee
 		sdk.Events{
 			sdk.NewEvent(
 				evmosvestingtypes.EventTypeFundVestingAccount,
-				// sdk.NewAttribute(sdk.AttributeKeySender, msg.FunderAddress),
+				sdk.NewAttribute(sdk.AttributeKeySender, msg.FunderAddress),
 				sdk.NewAttribute(evmosvestingtypes.AttributeKeyCoins, vestingCoins.String()),
 				sdk.NewAttribute(evmosvestingtypes.AttributeKeyStartTime, msg.StartTime.String()),
 				sdk.NewAttribute(evmosvestingtypes.AttributeKeyAccount, msg.VestingAddress),
