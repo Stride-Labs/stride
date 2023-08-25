@@ -8,8 +8,13 @@ import (
 	newstakeibctypes "github.com/Stride-Labs/stride/v13/x/stakeibc/types"
 )
 
-const (
-	ValidatorSlashQueryThreshold uint64 = 1 // denominated in percentage of TVL (1 => 1%)
+var (
+	// The threshold, denominated in percentage of TVL, of when a slash query should
+	// be submitted (1 => 1%)
+	ValidatorSlashQueryThreshold uint64 = 1
+	// The exchange rate here does not matter since it will be updated after the slash query
+	// Setting it to this value makes it easier to verify that we've submitted the query
+	DefaultExchangeRate = sdk.MustNewDecFromStr("1.000000000000001")
 )
 
 // Converts an old validator data type to the new schema
@@ -24,6 +29,11 @@ func convertToNewValidator(oldValidator oldstakeibctypes.Validator, totalDelegat
 	queryThreshold := sdk.NewDecWithPrec(int64(ValidatorSlashQueryThreshold), 2) // percentage
 	slashQueryCheckpoint := queryThreshold.Mul(sdk.NewDecFromInt(totalDelegations)).TruncateInt()
 
+	sharesToTokensRate := DefaultExchangeRate
+	if oldValidator.InternalExchangeRate != nil && !oldValidator.InternalExchangeRate.InternalTokensToSharesRate.IsNil() {
+		sharesToTokensRate = oldValidator.InternalExchangeRate.InternalTokensToSharesRate
+	}
+
 	return newstakeibctypes.Validator{
 		Name:                        oldValidator.Name,
 		Address:                     oldValidator.Address,
@@ -31,7 +41,7 @@ func convertToNewValidator(oldValidator oldstakeibctypes.Validator, totalDelegat
 		Delegation:                  oldValidator.DelegationAmt,
 		SlashQueryProgressTracker:   sdkmath.ZeroInt(),
 		SlashQueryCheckpoint:        slashQueryCheckpoint,
-		SharesToTokensRate:          oldValidator.InternalExchangeRate.InternalTokensToSharesRate,
+		SharesToTokensRate:          sharesToTokensRate,
 		DelegationChangesInProgress: 0,
 		SlashQueryInProgress:        false,
 	}
