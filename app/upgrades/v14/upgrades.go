@@ -16,7 +16,7 @@ var (
 	UpgradeName = "v14"
 
 	AirdropDuration  = time.Hour * 24 * 30 * 12 * 3                 // 3 years
-	AirdropStartTime = time.Date(2023, 9, 4, 16, 0, 0, 0, time.UTC) // Sept 3, 2023 @ 16:00 UTC (12:00 EST)
+	AirdropStartTime = time.Date(2023, 9, 4, 16, 0, 0, 0, time.UTC) // Sept 4, 2023 @ 16:00 UTC (12:00 EST)
 
 	InjectiveAirdropDistributor = "stride1gxy4qnm7pg2wzfpc3j7rk7ggvyq2ls944f0wus"
 	InjectiveAirdropIdentifier  = "injective"
