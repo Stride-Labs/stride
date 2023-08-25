@@ -3,6 +3,7 @@ package v14
 import (
 	"time"
 
+	errorsmod "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
@@ -45,68 +46,84 @@ func CreateUpgradeHandler(
 	return func(ctx sdk.Context, _ upgradetypes.Plan, vm module.VersionMap) (module.VersionMap, error) {
 		ctx.Logger().Info("Starting upgrade v14...")
 
-		duration := uint64(AirdropDuration.Seconds())
-		startTime := uint64(AirdropStartTime.Unix())
-
-		// Add the Injective Airdrop
-		ctx.Logger().Info("Adding Injective airdrop...")
-		if err := claimKeeper.CreateAirdropAndEpoch(ctx, claimtypes.MsgCreateAirdrop{
-			Distributor:      InjectiveAirdropDistributor,
-			Identifier:       InjectiveAirdropIdentifier,
-			ChainId:          InjectiveChainId,
-			Denom:            claimtypes.DefaultClaimDenom,
-			StartTime:        startTime,
-			Duration:         duration,
-			AutopilotEnabled: true,
-		}); err != nil {
-			return vm, err
+		// Add airdrops for Injective, Comedex, Somm, and Umee
+		if err := AddAirdrops(ctx, claimKeeper); err != nil {
+			return vm, errorsmod.Wrapf(err, "unable to add airdrops")
 		}
 
-		// Add the Comdex Airdrop
-		ctx.Logger().Info("Adding Comdex airdrop...")
-		if err := claimKeeper.CreateAirdropAndEpoch(ctx, claimtypes.MsgCreateAirdrop{
-			Distributor:      ComdexAirdropDistributor,
-			Identifier:       ComdexAirdropIdentifier,
-			ChainId:          ComdexChainId,
-			Denom:            claimtypes.DefaultClaimDenom,
-			StartTime:        startTime,
-			Duration:         duration,
-			AutopilotEnabled: false,
-		}); err != nil {
-			return vm, err
-		}
+		// Migrate the Validator and HostZone structs from stakeibc, and update the params
 
-		// Add the Somm Airdrop
-		ctx.Logger().Info("Adding Somm airdrop...")
-		if err := claimKeeper.CreateAirdropAndEpoch(ctx, claimtypes.MsgCreateAirdrop{
-			Distributor:      SommAirdropDistributor,
-			Identifier:       SommAirdropIdentifier,
-			ChainId:          SommChainId,
-			Denom:            claimtypes.DefaultClaimDenom,
-			StartTime:        startTime,
-			Duration:         duration,
-			AutopilotEnabled: false,
-		}); err != nil {
-			return vm, err
-		}
+		// Migrate the queries struct from ICQ
 
-		// Add the Umee Airdrop
-		ctx.Logger().Info("Adding Umee airdrop...")
-		if err := claimKeeper.CreateAirdropAndEpoch(ctx, claimtypes.MsgCreateAirdrop{
-			Distributor:      UmeeAirdropDistributor,
-			Identifier:       UmeeAirdropIdentifier,
-			ChainId:          UmeeChainId,
-			Denom:            claimtypes.DefaultClaimDenom,
-			StartTime:        startTime,
-			Duration:         duration,
-			AutopilotEnabled: false,
-		}); err != nil {
-			return vm, err
-		}
-
-		ctx.Logger().Info("Loading airdrop allocations...")
-		claimKeeper.LoadAllocationData(ctx, allocations)
+		// Submit queries for each validator's SharesToTokensRate
 
 		return mm.RunMigrations(ctx, configurator, vm)
 	}
+}
+
+// Add airdrops for Injective, Comdex, Somm, and Umee
+func AddAirdrops(ctx sdk.Context, claimKeeper claimkeeper.Keeper) error {
+	duration := uint64(AirdropDuration.Seconds())
+	startTime := uint64(AirdropStartTime.Unix())
+
+	// Add the Injective Airdrop
+	ctx.Logger().Info("Adding Injective airdrop...")
+	if err := claimKeeper.CreateAirdropAndEpoch(ctx, claimtypes.MsgCreateAirdrop{
+		Distributor:      InjectiveAirdropDistributor,
+		Identifier:       InjectiveAirdropIdentifier,
+		ChainId:          InjectiveChainId,
+		Denom:            claimtypes.DefaultClaimDenom,
+		StartTime:        startTime,
+		Duration:         duration,
+		AutopilotEnabled: true,
+	}); err != nil {
+		return err
+	}
+
+	// Add the Comdex Airdrop
+	ctx.Logger().Info("Adding Comdex airdrop...")
+	if err := claimKeeper.CreateAirdropAndEpoch(ctx, claimtypes.MsgCreateAirdrop{
+		Distributor:      ComdexAirdropDistributor,
+		Identifier:       ComdexAirdropIdentifier,
+		ChainId:          ComdexChainId,
+		Denom:            claimtypes.DefaultClaimDenom,
+		StartTime:        startTime,
+		Duration:         duration,
+		AutopilotEnabled: false,
+	}); err != nil {
+		return err
+	}
+
+	// Add the Somm Airdrop
+	ctx.Logger().Info("Adding Somm airdrop...")
+	if err := claimKeeper.CreateAirdropAndEpoch(ctx, claimtypes.MsgCreateAirdrop{
+		Distributor:      SommAirdropDistributor,
+		Identifier:       SommAirdropIdentifier,
+		ChainId:          SommChainId,
+		Denom:            claimtypes.DefaultClaimDenom,
+		StartTime:        startTime,
+		Duration:         duration,
+		AutopilotEnabled: false,
+	}); err != nil {
+		return err
+	}
+
+	// Add the Umee Airdrop
+	ctx.Logger().Info("Adding Umee airdrop...")
+	if err := claimKeeper.CreateAirdropAndEpoch(ctx, claimtypes.MsgCreateAirdrop{
+		Distributor:      UmeeAirdropDistributor,
+		Identifier:       UmeeAirdropIdentifier,
+		ChainId:          UmeeChainId,
+		Denom:            claimtypes.DefaultClaimDenom,
+		StartTime:        startTime,
+		Duration:         duration,
+		AutopilotEnabled: false,
+	}); err != nil {
+		return err
+	}
+
+	ctx.Logger().Info("Loading airdrop allocations...")
+	claimKeeper.LoadAllocationData(ctx, allocations)
+
+	return nil
 }
