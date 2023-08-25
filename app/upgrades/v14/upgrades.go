@@ -23,6 +23,8 @@ import (
 var (
 	UpgradeName = "v14"
 
+	GaiaChainId = "cosmoshub-4"
+
 	AirdropDuration  = time.Hour * 24 * 30 * 12 * 3                 // 3 years
 	AirdropStartTime = time.Date(2023, 9, 4, 16, 0, 0, 0, time.UTC) // Sept 4, 2023 @ 16:00 UTC (12:00 EST)
 
@@ -74,6 +76,9 @@ func CreateUpgradeHandler(
 		// Clear out any pending queries since the Query type updated
 		// There shouldn't be any queries here unless the upgrade happened right at the epoch
 		ClearPendingQueries(ctx, icqKeeper)
+
+		// Enable LSM for the Gaia
+		EnableLSMForGaia(ctx, stakeibcKeeper)
 
 		// `RunMigrations` (below) checks the old consensus version of each module (found in
 		// the store) and compares it against the updated consensus version in the binary
@@ -175,4 +180,17 @@ func ClearPendingQueries(ctx sdk.Context, k icqkeeper.Keeper) {
 	for _, query := range k.AllQueries(ctx) {
 		k.DeleteQuery(ctx, query.Id)
 	}
+}
+
+// Enable LSM liquid stakes for Gaia
+func EnableLSMForGaia(ctx sdk.Context, k stakeibckeeper.Keeper) error {
+	hostZone, found := k.GetHostZone(ctx, GaiaChainId)
+	if !found {
+		return stakeibctypes.ErrHostZoneNotFound.Wrapf(GaiaChainId)
+	}
+
+	hostZone.LsmLiquidStakeEnabled = true
+	k.SetHostZone(ctx, hostZone)
+
+	return nil
 }
