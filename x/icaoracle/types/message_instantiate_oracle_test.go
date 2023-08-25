@@ -97,6 +97,7 @@ func TestMsgInstantiateOracle(t *testing.T) {
 
 				require.Equal(t, test.msg.OracleChainId, validChainId, "chainId")
 				require.Equal(t, test.msg.ContractCodeId, validCodeId, "codeId")
+				require.Equal(t, test.msg.Type(), "instantiate_oracle", "type")
 			} else {
 				require.ErrorContains(t, test.msg.ValidateBasic(), test.err, "test: %v", test.name)
 			}
