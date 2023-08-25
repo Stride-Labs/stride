@@ -181,18 +181,6 @@ func validMinRedemptionRateThreshold(i interface{}) error {
 	return nil
 }
 
-func validSlashPercent(i interface{}) error {
-	ival, ok := i.(uint64)
-	if !ok {
-		return fmt.Errorf("parameter not accepted: %T", i)
-	}
-	if ival > 100 {
-		return fmt.Errorf("parameter must be between 0 and 100: %d", ival)
-	}
-
-	return nil
-}
-
 func isPositive(i interface{}) error {
 	ival, ok := i.(uint64)
 	if !ok {
