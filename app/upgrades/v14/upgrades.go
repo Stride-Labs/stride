@@ -37,7 +37,7 @@ var (
 	Account1VestingUstrd     = int64(187_500_000_000)
 	Account2                 = "stride1nwyvkxm89yg8e3fyxgruyct4zp90mg4nlk87lg"
 	Account2VestingUstrd     = int64(375_000_000_000)
-	FunderAddress            = "stride1k8c2m5cn322akk5wy8lpt87dd2f4yh9azg7jlh" // F5 TODO: change this to a SL multisig
+	FunderAddress            = "stride1avdulp2p7jjv37valeyt4c6fn6qtfhevr2ej3r" // TODO: test the MS with a tx!
 )
 
 // CreateUpgradeHandler creates an SDK upgrade handler for v14
