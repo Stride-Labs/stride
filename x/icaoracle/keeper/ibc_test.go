@@ -4,7 +4,6 @@ import (
 	"time"
 
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
-	icatypes "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/types"
 	connectiontypes "github.com/cosmos/ibc-go/v7/modules/core/03-connection/types"
 	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
 	ibctesting "github.com/cosmos/ibc-go/v7/testing"
@@ -30,9 +29,7 @@ type OnChanOpenAckTestCase struct {
 func (s *KeeperTestSuite) SetupTestOnChanOpenAck() OnChanOpenAckTestCase {
 	// Create clients, connections, and an oracle ICA channel
 	owner := types.FormatICAAccountOwner(HostChainId, types.ICAAccountType_Oracle)
-	channelId := s.CreateICAChannel(owner)
-	portId, err := icatypes.NewControllerPortID(owner)
-	s.Require().NoError(err, "no error expected when formatting portId")
+	channelId, portId := s.CreateICAChannel(owner)
 
 	// Get ica address that was just created
 	icaAddress, found := s.App.ICAControllerKeeper.GetInterchainAccountAddress(s.Ctx, ibctesting.FirstConnectionID, portId)
@@ -107,12 +104,10 @@ func (s *KeeperTestSuite) TestOnChanOpenAck_NotOracleChannel() {
 
 	// Create non-oracle ICA channel and use that for the callback
 	owner := types.FormatICAAccountOwner(HostChainId, "NOT_ORACLE")
-	differentChannelId := s.CreateICAChannel(owner)
-	differentPortId, err := icatypes.NewControllerPortID(owner)
-	s.Require().NoError(err, "no error expected when formatting portId")
+	differentChannelId, differentPortId := s.CreateICAChannel(owner)
 
 	// The callback should succeed but the oracle should not be updated
-	err = s.App.ICAOracleKeeper.OnChanOpenAck(s.Ctx, differentPortId, differentChannelId)
+	err := s.App.ICAOracleKeeper.OnChanOpenAck(s.Ctx, differentPortId, differentChannelId)
 	s.Require().NoError(err, "no error expected when calling OnChanOpenAck")
 
 	actualOracle, found := s.App.ICAOracleKeeper.GetOracle(s.Ctx, HostChainId)
@@ -149,13 +144,11 @@ func (s *KeeperTestSuite) TestOnChanOpenAck_NoICAAddress() {
 func (s *KeeperTestSuite) SetupTestSubmitICATx() (tx types.ICATx, callbackBz []byte) {
 	// Create clients, connections, and an oracle ICA channel
 	owner := types.FormatICAAccountOwner(HostChainId, types.ICAAccountType_Oracle)
-	channelId := s.CreateICAChannel(owner)
-	portId, err := icatypes.NewControllerPortID(owner)
-	s.Require().NoError(err, "no error expected when formatting portId")
+	channelId, portId := s.CreateICAChannel(owner)
 
 	// Callback args (we can use any callback type here)
 	callback := types.InstantiateOracleCallback{OracleChainId: HostChainId}
-	callbackBz, err = proto.Marshal(&callback)
+	callbackBz, err := proto.Marshal(&callback)
 	s.Require().NoError(err, "no error expected when serializing callback args")
 
 	// Return a valid ICATx

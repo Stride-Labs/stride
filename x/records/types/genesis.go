@@ -19,7 +19,7 @@ func DefaultGenesis() *GenesisState {
 		EpochUnbondingRecordList:  []EpochUnbondingRecord{},
 		DepositRecordList:         []DepositRecord{},
 		DepositRecordCount:        0,
-		// this line is used by starport scaffolding # genesis/types/default
+		LsmTokenDepositList:       []LSMTokenDeposit{},
 	}
 }
 
@@ -58,7 +58,22 @@ func (gs GenesisState) Validate() error {
 		depositRecordIdMap[elem.Id] = true
 	}
 
-	// this line is used by starport scaffolding # genesis/types/validate
+	// Check for duplicate LSM token denoms
+	lsmTokenDepositIdMap := make(map[string]bool)
+	lsmTokenDepositChainDenomMap := make(map[string]bool)
+	for _, elem := range gs.LsmTokenDepositList {
+		if _, ok := lsmTokenDepositIdMap[elem.DepositId]; ok {
+			return fmt.Errorf("duplicated lsm token deposit ID")
+		}
+		lsmTokenDepositIdMap[elem.DepositId] = true
+
+		chainDenomId := elem.ChainId + elem.Denom
+		if _, ok := lsmTokenDepositChainDenomMap[chainDenomId]; ok {
+			return fmt.Errorf("duplicated chain ID and denom")
+		}
+
+		lsmTokenDepositChainDenomMap[chainDenomId] = true
+	}
 
 	return gs.Params.Validate()
 }

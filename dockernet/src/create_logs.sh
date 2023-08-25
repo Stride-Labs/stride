@@ -35,6 +35,8 @@ while true; do
     $STRIDE_MAIN_CMD q records list-epoch-unbonding-record  >> $TEMP_LOGS_DIR/$STATE_LOG
     printf '\n%s\n' "LIST-USER-REDEMPTION-RECORDS" >>$TEMP_LOGS_DIR/$STATE_LOG
     $STRIDE_MAIN_CMD q records list-user-redemption-record >> $TEMP_LOGS_DIR/$STATE_LOG
+    printf '\n%s\n' "LIST-LSM-TOKEN-DEPOSIT-RECORDS" >>$TEMP_LOGS_DIR/$STATE_LOG
+    $STRIDE_MAIN_CMD q records lsm-deposits >> $TEMP_LOGS_DIR/$STATE_LOG
 
     printf '\n%s\n' "BALANCES STRIDE" >>$TEMP_LOGS_DIR/$BALANCES_LOG
     $STRIDE_MAIN_CMD q bank balances $(STRIDE_ADDRESS) >>$TEMP_LOGS_DIR/$BALANCES_LOG

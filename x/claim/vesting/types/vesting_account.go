@@ -92,7 +92,7 @@ func (bva *BaseVestingAccount) TrackDelegation(balance, vestingCoins, amount sdk
 //
 // NOTE: The undelegation (bond refund) amount may exceed the delegated
 // vesting (bond) amount due to the way undelegation truncates the bond refund,
-// which can increase the validator's exchange rate (tokens/shares) slightly if
+// which can increase the validator's sharesToTokens rate slightly if
 // the undelegated tokens are non-integral.
 //
 // CONTRACT: The account's coins and undelegation coins must be sorted.

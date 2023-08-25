@@ -6,8 +6,10 @@ import (
 	"github.com/stretchr/testify/suite"
 
 	"github.com/Stride-Labs/stride/v13/app/apptesting"
-	"github.com/Stride-Labs/stride/v13/x/records/keeper"
-	"github.com/Stride-Labs/stride/v13/x/records/types"
+)
+
+const (
+	HostChainId = "GAIA"
 )
 
 type KeeperTestSuite struct {
@@ -16,15 +18,6 @@ type KeeperTestSuite struct {
 
 func (s *KeeperTestSuite) SetupTest() {
 	s.Setup()
-}
-
-// Dynamically gets the MsgServer for this module's keeper
-// this function must be used so that the MsgServer is always created with the most updated App context
-//
-//	which can change depending on the type of test
-//	(e.g. tests with only one Stride chain vs tests with multiple chains and IBC support)
-func (s *KeeperTestSuite) GetMsgServer() types.MsgServer {
-	return keeper.NewMsgServerImpl(s.App.RecordsKeeper)
 }
 
 func TestKeeperTestSuite(t *testing.T) {

@@ -70,8 +70,8 @@ func (k msgServer) RegisterHostZone(goCtx context.Context, msg *types.MsgRegiste
 	}
 
 	// create and save the zones's module account
-	zoneAddress := types.NewZoneAddress(chainId)
-	if err := utils.CreateModuleAccount(ctx, k.AccountKeeper, zoneAddress); err != nil {
+	depositAddress := types.NewHostZoneDepositAddress(chainId)
+	if err := utils.CreateModuleAccount(ctx, k.AccountKeeper, depositAddress); err != nil {
 		return nil, errorsmod.Wrapf(err, "unable to create module account for host zone %s", chainId)
 	}
 
@@ -91,13 +91,14 @@ func (k msgServer) RegisterHostZone(goCtx context.Context, msg *types.MsgRegiste
 		IbcDenom:          msg.IbcDenom,
 		HostDenom:         msg.HostDenom,
 		TransferChannelId: msg.TransferChannelId,
-		// Start exchange rate at 1 upon registration
-		RedemptionRate:     sdk.NewDec(1),
-		LastRedemptionRate: sdk.NewDec(1),
-		UnbondingFrequency: msg.UnbondingFrequency,
-		Address:            zoneAddress.String(),
-		MinRedemptionRate:  msg.MinRedemptionRate,
-		MaxRedemptionRate:  msg.MaxRedemptionRate,
+		// Start sharesToTokens rate at 1 upon registration
+		RedemptionRate:        sdk.NewDec(1),
+		LastRedemptionRate:    sdk.NewDec(1),
+		UnbondingPeriod:       msg.UnbondingPeriod,
+		DepositAddress:        depositAddress.String(),
+		MinRedemptionRate:     msg.MinRedemptionRate,
+		MaxRedemptionRate:     msg.MaxRedemptionRate,
+		LsmLiquidStakeEnabled: msg.LsmLiquidStakeEnabled,
 	}
 	// write the zone back to the store
 	k.SetHostZone(ctx, zone)

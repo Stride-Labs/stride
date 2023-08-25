@@ -15,6 +15,8 @@ import (
 	"github.com/Stride-Labs/stride/v13/x/stakeibc/types"
 )
 
+const StrideEpochsPerDayEpoch = uint64(4)
+
 func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochInfo epochstypes.EpochInfo) {
 	// Update the stakeibc epoch tracker
 	epochNumber, err := k.UpdateEpochTracker(ctx, epochInfo)
@@ -68,6 +70,15 @@ func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochInfo epochstypes.EpochInf
 		// Reinvest staking rewards
 		if epochNumber%reinvestInterval == 0 { // allow a few blocks from UpdateUndelegatedBal to avoid conflicts
 			k.ReinvestRewards(ctx)
+		}
+
+		// Rebalance stake according to validator weights
+		// This should only be run once per day, but it should not be run on a stride epoch that
+		//   overlaps the day epoch, otherwise the unbondings could cause a redelegation to fail
+		// On mainnet, the stride epoch overlaps the day epoch when `epochNumber % 4 == 1`,
+		//   so this will trigger the epoch before the unbonding
+		if epochNumber%StrideEpochsPerDayEpoch == 0 {
+			k.RebalanceAllHostZones(ctx)
 		}
 	}
 	if epochInfo.Identifier == epochstypes.MINT_EPOCH {
@@ -138,50 +149,132 @@ func (k Keeper) SetWithdrawalAddress(ctx sdk.Context) {
 }
 
 // Updates the redemption rate for each host zone
-// The redemption rate equation is:
+// At a high level, the redemption rate is equal to the amount of native tokens locked divided by the stTokens in existence.
+// The equation is broken down further into the following sub-components:
 //
-//	(Unbonded Balance + Staked Balance + Module Account Balance) / (stToken Supply)
+//	   Native Tokens Locked:
+//	     1. Deposit Account Balance: native tokens deposited from liquid stakes, that are still living on Stride
+//	     2. Undelegated Balance:     native tokens that have been transferred to the host zone, but have not been delegated yet
+//	     3. Tokenized Delegations:   Delegations inherent in LSM Tokens that have not yet been converted to native stake
+//	     4. Native Delegations:      Delegations either from native tokens, or LSM Tokens that have been detokenized
+//	  StToken Amount:
+//	     1. Total Supply of the stToken
+//
+//	Redemption Rate =
+//	(Deposit Account Balance + Undelegated Balance + Tokenized Delegation + Native Delegation) / (stToken Supply)
 func (k Keeper) UpdateRedemptionRates(ctx sdk.Context, depositRecords []recordstypes.DepositRecord) {
 	k.Logger(ctx).Info("Updating Redemption Rates...")
 
 	// Update the redemption rate for each host zone
 	for _, hostZone := range k.GetAllActiveHostZone(ctx) {
+		k.UpdateRedemptionRateForHostZone(ctx, hostZone, depositRecords)
+	}
+}
 
-		// Gather redemption rate components
-		stSupply := k.bankKeeper.GetSupply(ctx, types.StAssetDenomFromHostZoneDenom(hostZone.HostDenom)).Amount
-		if stSupply.IsZero() {
-			k.Logger(ctx).Info(utils.LogWithHostZone(hostZone.ChainId, "No st%s in circulation - redemption rate is unchanged", hostZone.HostDenom))
-			continue
-		}
-		undelegatedBalance := k.GetUndelegatedBalance(hostZone, depositRecords)
-		stakedBalance := hostZone.StakedBal
-		moduleAcctBalance := k.GetModuleAccountBalance(hostZone, depositRecords)
-
+func (k Keeper) UpdateRedemptionRateForHostZone(ctx sdk.Context, hostZone types.HostZone, depositRecords []recordstypes.DepositRecord) {
+	// Gather redemption rate components
+	stSupply := k.bankKeeper.GetSupply(ctx, types.StAssetDenomFromHostZoneDenom(hostZone.HostDenom)).Amount
+	if stSupply.IsZero() {
 		k.Logger(ctx).Info(utils.LogWithHostZone(hostZone.ChainId,
-			"Redemption Rate Components - Undelegated Balance: %v, Staked Balance: %v, Module Account Balance: %v, stToken Supply: %v",
-			undelegatedBalance, stakedBalance, moduleAcctBalance, stSupply))
+			"No st%s in circulation - redemption rate is unchanged", hostZone.HostDenom))
+		return
+	}
 
-		// Calculate the redemption rate
-		redemptionRate := (sdk.NewDecFromInt(undelegatedBalance).Add(sdk.NewDecFromInt(stakedBalance)).Add(sdk.NewDecFromInt(moduleAcctBalance))).Quo(sdk.NewDecFromInt(stSupply))
-		k.Logger(ctx).Info(utils.LogWithHostZone(hostZone.ChainId, "New Redemption Rate: %v (vs Prev Rate: %v)", redemptionRate, hostZone.RedemptionRate))
+	depositAccountBalance := k.GetDepositAccountBalance(hostZone.ChainId, depositRecords)
+	undelegatedBalance := k.GetUndelegatedBalance(hostZone.ChainId, depositRecords)
+	tokenizedDelegation := k.GetTotalTokenizedDelegations(ctx, hostZone)
+	nativeDelegation := sdk.NewDecFromInt(hostZone.TotalDelegations)
 
-		// Update the host zone
-		hostZone.LastRedemptionRate = hostZone.RedemptionRate
-		hostZone.RedemptionRate = redemptionRate
-		k.SetHostZone(ctx, hostZone)
+	k.Logger(ctx).Info(utils.LogWithHostZone(hostZone.ChainId,
+		"Redemption Rate Components - Deposit Account Balance: %v, Undelegated Balance: %v, "+
+			"LSM Delegated Balance: %v, Native Delegations: %v, stToken Supply: %v",
+		depositAccountBalance, undelegatedBalance, tokenizedDelegation,
+		nativeDelegation, stSupply))
 
-		// If the redemption rate is outside of safety bounds, exit so the redemption rate is not pushed to the oracle
-		redemptionRateSafe, _ := k.IsRedemptionRateWithinSafetyBounds(ctx, hostZone)
-		if !redemptionRateSafe {
-			continue
-		}
+	// Calculate the redemption rate
+	nativeTokensLocked := depositAccountBalance.Add(undelegatedBalance).Add(tokenizedDelegation).Add(nativeDelegation)
+	redemptionRate := nativeTokensLocked.Quo(sdk.NewDecFromInt(stSupply))
 
-		// Otherwise, submit the redemption rate to the oracle
-		if err := k.PostRedemptionRateToOracles(ctx, hostZone, redemptionRate); err != nil {
-			k.Logger(ctx).Error(fmt.Sprintf("Unable to send redemption rate to oracle: %s", err.Error()))
-			continue
+	k.Logger(ctx).Info(utils.LogWithHostZone(hostZone.ChainId,
+		"New Redemption Rate: %v (vs Prev Rate: %v)", redemptionRate, hostZone.RedemptionRate))
+
+	// Update the host zone
+	hostZone.LastRedemptionRate = hostZone.RedemptionRate
+	hostZone.RedemptionRate = redemptionRate
+	k.SetHostZone(ctx, hostZone)
+
+	// If the redemption rate is outside of safety bounds, exit so the redemption rate is not pushed to the oracle
+	redemptionRateSafe, _ := k.IsRedemptionRateWithinSafetyBounds(ctx, hostZone)
+	if !redemptionRateSafe {
+		return
+	}
+
+	// Otherwise, submit the redemption rate to the oracle
+	if err := k.PostRedemptionRateToOracles(ctx, hostZone, redemptionRate); err != nil {
+		k.Logger(ctx).Error(fmt.Sprintf("Unable to send redemption rate to oracle: %s", err.Error()))
+		return
+	}
+}
+
+// Determine the deposit account balance, representing native tokens that have been deposited
+// from liquid stakes, but have not yet been transferred to the host
+func (k Keeper) GetDepositAccountBalance(chainId string, depositRecords []recordstypes.DepositRecord) sdk.Dec {
+	// sum on deposit records with status TRANSFER_QUEUE or TRANSFER_IN_PROGRESS
+	totalAmount := sdkmath.ZeroInt()
+	for _, depositRecord := range depositRecords {
+		transferStatus := (depositRecord.Status == recordstypes.DepositRecord_TRANSFER_QUEUE ||
+			depositRecord.Status == recordstypes.DepositRecord_TRANSFER_IN_PROGRESS)
+
+		if depositRecord.HostZoneId == chainId && transferStatus {
+			totalAmount = totalAmount.Add(depositRecord.Amount)
 		}
 	}
+
+	return sdk.NewDecFromInt(totalAmount)
+}
+
+// Determine the undelegated balance from the deposit records queued for staking
+func (k Keeper) GetUndelegatedBalance(chainId string, depositRecords []recordstypes.DepositRecord) sdk.Dec {
+	// sum on deposit records with status DELEGATION_QUEUE or DELEGATION_IN_PROGRESS
+	totalAmount := sdkmath.ZeroInt()
+	for _, depositRecord := range depositRecords {
+		delegationStatus := (depositRecord.Status == recordstypes.DepositRecord_DELEGATION_QUEUE ||
+			depositRecord.Status == recordstypes.DepositRecord_DELEGATION_IN_PROGRESS)
+
+		if depositRecord.HostZoneId == chainId && delegationStatus {
+			totalAmount = totalAmount.Add(depositRecord.Amount)
+		}
+	}
+
+	return sdk.NewDecFromInt(totalAmount)
+}
+
+// Returns the total delegated balance that's stored in LSM tokens
+// This is used for the redemption rate calculation
+//
+// The relevant tokens are identified by the deposit records in status "DEPOSIT_PENDING"
+// "DEPOSIT_PENDING" means the liquid staker's tokens have not been sent to Stride yet
+// so they should *not* be included in the redemption rate. All other statuses indicate
+// the LSM tokens have been deposited and should be included in the final calculation
+//
+// Each LSM token represents a delegator share so the validator's shares to tokens rate
+// must be used to denominate it's value in native tokens
+func (k Keeper) GetTotalTokenizedDelegations(ctx sdk.Context, hostZone types.HostZone) sdk.Dec {
+	total := sdkmath.ZeroInt()
+	for _, deposit := range k.RecordsKeeper.GetLSMDepositsForHostZone(ctx, hostZone.ChainId) {
+		if deposit.Status != recordstypes.LSMTokenDeposit_DEPOSIT_PENDING {
+			validator, _, found := GetValidatorFromAddress(hostZone.Validators, deposit.ValidatorAddress)
+			if !found {
+				k.Logger(ctx).Error(fmt.Sprintf("Validator %s found in LSMTokenDeposit but no longer exists", deposit.ValidatorAddress))
+				continue
+			}
+			liquidStakedShares := deposit.Amount
+			liquidStakedTokens := sdk.NewDecFromInt(liquidStakedShares).Mul(validator.SharesToTokensRate)
+			total = total.Add(liquidStakedTokens.TruncateInt())
+		}
+	}
+
+	return sdk.NewDecFromInt(total)
 }
 
 // Pushes a redemption rate update to the ICA oracle
@@ -205,43 +298,12 @@ func (k Keeper) PostRedemptionRateToOracles(ctx sdk.Context, hostZone types.Host
 	return nil
 }
 
-func (k Keeper) GetUndelegatedBalance(hostZone types.HostZone, depositRecords []recordstypes.DepositRecord) sdkmath.Int {
-	// filter to only the deposit records for the host zone with status DELEGATION_QUEUE
-	UndelegatedDepositRecords := utils.FilterDepositRecords(depositRecords, func(record recordstypes.DepositRecord) (condition bool) {
-		return ((record.Status == recordstypes.DepositRecord_DELEGATION_QUEUE || record.Status == recordstypes.DepositRecord_DELEGATION_IN_PROGRESS) && record.HostZoneId == hostZone.ChainId)
-	})
-
-	// sum the amounts of the deposit records
-	totalAmount := sdkmath.ZeroInt()
-	for _, depositRecord := range UndelegatedDepositRecords {
-		totalAmount = totalAmount.Add(depositRecord.Amount)
-	}
-
-	return totalAmount
-}
-
-func (k Keeper) GetModuleAccountBalance(hostZone types.HostZone, depositRecords []recordstypes.DepositRecord) sdkmath.Int {
-	// filter to only the deposit records for the host zone with status DELEGATION
-	ModuleAccountRecords := utils.FilterDepositRecords(depositRecords, func(record recordstypes.DepositRecord) (condition bool) {
-		return (record.Status == recordstypes.DepositRecord_TRANSFER_QUEUE || record.Status == recordstypes.DepositRecord_TRANSFER_IN_PROGRESS) && record.HostZoneId == hostZone.ChainId
-	})
-
-	// sum the amounts of the deposit records
-	totalAmount := sdkmath.ZeroInt()
-	for _, depositRecord := range ModuleAccountRecords {
-		totalAmount = totalAmount.Add(depositRecord.Amount)
-	}
-
-	return totalAmount
-}
-
 func (k Keeper) ReinvestRewards(ctx sdk.Context) {
 	k.Logger(ctx).Info("Reinvesting tokens...")
 
 	for _, hostZone := range k.GetAllActiveHostZone(ctx) {
 		// only process host zones once withdrawal accounts are registered
-		withdrawalAccount := hostZone.WithdrawalAccount
-		if withdrawalAccount == nil || withdrawalAccount.Address == "" {
+		if hostZone.WithdrawalIcaAddress == "" {
 			k.Logger(ctx).Info(utils.LogWithHostZone(hostZone.ChainId, "Withdrawal account not registered for host zone"))
 			continue
 		}
