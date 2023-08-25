@@ -67,10 +67,11 @@ func CreateUpgradeHandler(
 		}
 
 		// Update Stakeibc Params
+		MigrateStakeibcParams(ctx, stakeibcKeeper)
 
-		// Migrate the queries struct from ICQ
+		// Migrate the Query struct from ICQ
 
-		// Submit queries for each validator's SharesToTokensRate
+		// Submit queries for each cosmoshub validator's SharesToTokensRate
 
 		// `RunMigrations` (below) checks the old consensus version of each module (found in
 		// the store) and compares it against the updated consensus version in the binary
@@ -151,4 +152,17 @@ func AddAirdrops(ctx sdk.Context, claimKeeper claimkeeper.Keeper) error {
 	claimKeeper.LoadAllocationData(ctx, allocations)
 
 	return nil
+}
+
+// Migrate the stakeibc params, specifically:
+//   - Remove SafetyNumValidators
+//   - Remove SafetyMaxSlashPercentage
+//   - Add ValidatorSlashQueryThreshold
+//
+// NOTE: If a parameter is added, the old params cannot be unmarshalled
+// to the new schema. To get around this, we have to set each parameter explicitly
+// Considering all mainnet stakeibc params are set to the default, we can just use that
+func MigrateStakeibcParams(ctx sdk.Context, k stakeibckeeper.Keeper) {
+	params := stakeibctypes.DefaultParams()
+	k.SetParams(ctx, params)
 }
