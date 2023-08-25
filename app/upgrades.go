@@ -178,8 +178,10 @@ func (app *StrideApp) setupUpgradeHandlers(appOpts servertypes.AppOptions) {
 		v14.CreateUpgradeHandler(
 			app.mm,
 			app.configurator,
-			app.StakeibcKeeper,
+			app.appCodec,
 			app.ClaimKeeper,
+			app.StakeibcKeeper,
+			app.keys[stakeibctypes.StoreKey],
 		),
 	)
 

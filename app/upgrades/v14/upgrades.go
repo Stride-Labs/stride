@@ -4,13 +4,19 @@ import (
 	"time"
 
 	errorsmod "cosmossdk.io/errors"
+	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 
+	storetypes "github.com/cosmos/cosmos-sdk/store/types"
+
+	"github.com/Stride-Labs/stride/v13/utils"
 	claimkeeper "github.com/Stride-Labs/stride/v13/x/claim/keeper"
 	claimtypes "github.com/Stride-Labs/stride/v13/x/claim/types"
 	stakeibckeeper "github.com/Stride-Labs/stride/v13/x/stakeibc/keeper"
+	stakeibcmigration "github.com/Stride-Labs/stride/v13/x/stakeibc/migrations/v3"
+	stakeibctypes "github.com/Stride-Labs/stride/v13/x/stakeibc/types"
 )
 
 var (
@@ -40,22 +46,41 @@ var (
 func CreateUpgradeHandler(
 	mm *module.Manager,
 	configurator module.Configurator,
-	stakeibcKeeper stakeibckeeper.Keeper,
+	cdc codec.Codec,
 	claimKeeper claimkeeper.Keeper,
+	stakeibcKeeper stakeibckeeper.Keeper,
+	stakeibcStoreKey storetypes.StoreKey,
 ) upgradetypes.UpgradeHandler {
 	return func(ctx sdk.Context, _ upgradetypes.Plan, vm module.VersionMap) (module.VersionMap, error) {
 		ctx.Logger().Info("Starting upgrade v14...")
+		currentVersions := mm.GetVersionMap()
 
 		// Add airdrops for Injective, Comedex, Somm, and Umee
 		if err := AddAirdrops(ctx, claimKeeper); err != nil {
 			return vm, errorsmod.Wrapf(err, "unable to add airdrops")
 		}
 
-		// Migrate the Validator and HostZone structs from stakeibc, and update the params
+		// Migrate the Validator and HostZone structs from stakeibc
+		utils.LogModuleMigration(ctx, currentVersions, stakeibctypes.ModuleName)
+		if err := stakeibcmigration.MigrateStore(ctx, stakeibcStoreKey, cdc); err != nil {
+			return vm, errorsmod.Wrapf(err, "unable to migrate stakeibc store")
+		}
+
+		// Update Stakeibc Params
 
 		// Migrate the queries struct from ICQ
 
 		// Submit queries for each validator's SharesToTokensRate
+
+		// `RunMigrations` (below) checks the old consensus version of each module (found in
+		// the store) and compares it against the updated consensus version in the binary
+		// If the old and new consensus versions are not the same, it attempts to call that
+		// module's migration function that must be registered ahead of time
+		//
+		// Since the migrations above were executed directly (instead of being registered
+		// and invoked through a Migrator), we need to set the module versions in the versionMap
+		// to the new version, to prevent RunMigrations from attempting to re-run each migrations
+		vm[stakeibctypes.ModuleName] = currentVersions[stakeibctypes.ModuleName]
 
 		return mm.RunMigrations(ctx, configurator, vm)
 	}
