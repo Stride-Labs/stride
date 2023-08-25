@@ -47,11 +47,17 @@ func (k Keeper) VerifyKeyProof(ctx sdk.Context, msg *types.MsgSubmitQueryRespons
 	}
 
 	// Get the client consensus state at the height 1 block above the message height
-	msgHeight, err := cast.ToUint64E(msg.Height)
+	proofHeight, err := cast.ToUint64E(msg.Height)
 	if err != nil {
 		return err
 	}
-	height := clienttypes.NewHeight(clienttypes.ParseChainID(query.ChainId), msgHeight+1)
+	height := clienttypes.NewHeight(clienttypes.ParseChainID(query.ChainId), proofHeight+1)
+
+	// Confirm the query proof height occurred after the submission height
+	if proofHeight <= query.SubmissionHeight {
+		return errorsmod.Wrapf(types.ErrInvalidICQProof,
+			"Query proof height (%d) is older than the submission height (%d)", proofHeight, query.SubmissionHeight)
+	}
 
 	// Get the client state and consensus state from the connection Id
 	connection, found := k.IBCKeeper.ConnectionKeeper.GetConnection(ctx, query.ConnectionId)

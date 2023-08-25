@@ -6,10 +6,6 @@ import (
 	"time"
 
 	abci "github.com/cometbft/cometbft/abci/types"
-	ibctransfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
-	ccvprovidertypes "github.com/cosmos/interchain-security/v3/x/ccv/provider/types"
-	ccvtypes "github.com/cosmos/interchain-security/v3/x/ccv/types"
-
 	"github.com/cometbft/cometbft/crypto/ed25519"
 	tmtypesproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	tmtypes "github.com/cometbft/cometbft/types"
@@ -20,15 +16,19 @@ import (
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 	"github.com/cosmos/gogoproto/proto"
 	icatypes "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/types"
+	ibctransfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
 	transfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
 	clienttypes "github.com/cosmos/ibc-go/v7/modules/core/02-client/types"
+	connectiontypes "github.com/cosmos/ibc-go/v7/modules/core/03-connection/types"
 	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
-
+	tendermint "github.com/cosmos/ibc-go/v7/modules/light-clients/07-tendermint"
 	"github.com/cosmos/ibc-go/v7/testing/simapp"
 	appProvider "github.com/cosmos/interchain-security/v3/app/provider"
 	ibctesting "github.com/cosmos/interchain-security/v3/legacy_ibc_testing/testing"
 	icstestingutils "github.com/cosmos/interchain-security/v3/testutil/ibc_testing"
 	e2e "github.com/cosmos/interchain-security/v3/testutil/integration"
+	ccvprovidertypes "github.com/cosmos/interchain-security/v3/x/ccv/provider/types"
+	ccvtypes "github.com/cosmos/interchain-security/v3/x/ccv/types"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
@@ -39,6 +39,7 @@ import (
 var (
 	StrideChainID   = "STRIDE"
 	ProviderChainID = "PROVIDER"
+	FirstClientId   = "07-tendermint-0"
 
 	TestIcaVersion = string(icatypes.ModuleCdc.MustMarshalJSON(&icatypes.Metadata{
 		Version:                icatypes.Version,
@@ -249,9 +250,6 @@ func (s *AppTestHelper) CreateICAChannel(owner string) (channelID, portID string
 	err = icaPath.EndpointA.ChanOpenAck()
 	s.Require().NoError(err, "ChanOpenAck error")
 
-	// err = s.App.ICAControllerKeeper.RegisterInterchainAccount(s.Ctx, icaPath.EndpointA.ConnectionID, owner, TestIcaVersion)
-	// s.Require().NoError(err, "register interchain account error")
-
 	err = icaPath.EndpointB.ChanOpenConfirm()
 	s.Require().NoError(err, "ChanOpenConfirm error")
 
@@ -413,7 +411,8 @@ func (s *AppTestHelper) GetIBCDenomTrace(denom string) transfertypes.DenomTrace 
 
 // Creates and stores an IBC denom from a base denom on transfer channel-0
 // This is only required for tests that use the transfer keeper and require that the IBC
-//   denom is present in the store
+// denom is present in the store
+//
 // Returns the IBC hash
 func (s *AppTestHelper) CreateAndStoreIBCDenom(baseDenom string) (ibcDenom string) {
 	denomTrace := s.GetIBCDenomTrace(baseDenom)
@@ -424,6 +423,18 @@ func (s *AppTestHelper) CreateAndStoreIBCDenom(baseDenom string) (ibcDenom strin
 func (s *AppTestHelper) MarshalledICS20PacketData() sdk.AccAddress {
 	data := ibctransfertypes.FungibleTokenPacketData{}
 	return data.GetBytes()
+}
+
+// Helper function to mock out a connection, client, and revision height
+func (s *AppTestHelper) MockClientLatestHeight(height uint64) {
+	clientState := tendermint.ClientState{
+		LatestHeight: clienttypes.NewHeight(1, height),
+	}
+	connection := connectiontypes.ConnectionEnd{
+		ClientId: FirstClientId,
+	}
+	s.App.IBCKeeper.ConnectionKeeper.SetConnection(s.Ctx, ibctesting.FirstConnectionID, connection)
+	s.App.IBCKeeper.ClientKeeper.SetClientState(s.Ctx, FirstClientId, &clientState)
 }
 
 func (s *AppTestHelper) ConfirmUpgradeSucceededs(upgradeName string, upgradeHeight int64) {

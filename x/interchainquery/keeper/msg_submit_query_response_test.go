@@ -11,6 +11,7 @@ import (
 	_ "github.com/stretchr/testify/suite"
 
 	"github.com/Stride-Labs/stride/v13/x/interchainquery/types"
+	stakeibctypes "github.com/Stride-Labs/stride/v13/x/stakeibc/types"
 )
 
 const (
@@ -53,6 +54,12 @@ func (s *KeeperTestSuite) SetupMsgSubmitQueryResponse() MsgSubmitQueryResponseTe
 		TimeoutTimestamp: uint64(s.Ctx.BlockTime().Add(timeoutDuration).UnixNano()),
 	}
 
+	hostZone := stakeibctypes.HostZone{
+		ChainId:      HostChainId,
+		ConnectionId: s.TransferPath.EndpointA.ConnectionID,
+	}
+	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
+
 	return MsgSubmitQueryResponseTestCase{
 		validMsg: types.MsgSubmitQueryResponse{
 			ChainId:     HostChainId,
@@ -92,6 +99,19 @@ func (s *KeeperTestSuite) TestMsgSubmitQueryResponse_UnknownId() {
 	// check that the query is STILL in the store, as it should NOT be deleted because the query was not found
 	_, found := s.App.InterchainqueryKeeper.GetQuery(s.Ctx, tc.query.Id)
 	s.Require().True(found)
+}
+
+func (s *KeeperTestSuite) TestMsgSubmitQueryResponse_ProofStale() {
+	tc := s.SetupMsgSubmitQueryResponse()
+
+	// Set the submission time in the future
+	tc.query.QueryType = types.BANK_STORE_QUERY_WITH_PROOF
+	tc.query.SubmissionHeight = 100
+	s.App.InterchainqueryKeeper.SetQuery(s.Ctx, tc.query)
+
+	// Attempt to submit the response, it should fail because the response is stale
+	_, err := s.GetMsgServer().SubmitQueryResponse(tc.goCtx, &tc.validMsg)
+	s.Require().ErrorContains(err, "Query proof height (16) is older than the submission height (100)")
 }
 
 func (s *KeeperTestSuite) TestMsgSubmitQueryResponse_Timeout_RejectQuery() {

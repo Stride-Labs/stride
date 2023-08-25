@@ -8,9 +8,10 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/cometbft/cometbft/libs/log"
-	ibckeeper "github.com/cosmos/ibc-go/v7/modules/core/keeper"
-
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
+	clienttypes "github.com/cosmos/ibc-go/v7/modules/core/02-client/types"
+	connectiontypes "github.com/cosmos/ibc-go/v7/modules/core/03-connection/types"
+	ibckeeper "github.com/cosmos/ibc-go/v7/modules/core/keeper"
 
 	"github.com/Stride-Labs/stride/v13/utils"
 	"github.com/Stride-Labs/stride/v13/x/interchainquery/types"
@@ -64,6 +65,18 @@ func (k *Keeper) SubmitICQRequest(ctx sdk.Context, query types.Query, forceUniqu
 	// Generate and set the query ID - optionally force it to be unique
 	query.Id = k.GetQueryId(ctx, query, forceUnique)
 	query.RequestSent = false
+
+	// Set the submission height on the Query to the latest light client height
+	// In the query response, this will be used to verify that the query wasn't historical
+	connection, found := k.IBCKeeper.ConnectionKeeper.GetConnection(ctx, query.ConnectionId)
+	if !found {
+		return errorsmod.Wrapf(connectiontypes.ErrConnectionNotFound, query.ConnectionId)
+	}
+	clientState, found := k.IBCKeeper.ClientKeeper.GetClientState(ctx, connection.ClientId)
+	if !found {
+		return errorsmod.Wrapf(clienttypes.ErrClientNotFound, connection.ClientId)
+	}
+	query.SubmissionHeight = clientState.GetLatestHeight().GetRevisionHeight()
 
 	// Save the query to the store
 	// If the same query is re-requested, it will get replace in the store with an updated TTL
