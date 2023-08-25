@@ -16,6 +16,8 @@ import (
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 	ccvconsumerkeeper "github.com/cosmos/interchain-security/v3/x/ccv/consumer/keeper"
 
+	stakeibctypes "github.com/Stride-Labs/stride/v13/x/stakeibc/types"
+
 	claimkeeper "github.com/Stride-Labs/stride/v13/x/claim/keeper"
 	claimtypes "github.com/Stride-Labs/stride/v13/x/claim/types"
 	stakeibckeeper "github.com/Stride-Labs/stride/v13/x/stakeibc/keeper"
@@ -95,6 +97,7 @@ func CreateUpgradeHandler(
 		ak := accountKeeper
 		bk := bankKeeper
 		ck := consumerKeeper
+		sibc := stakeibcKeeper
 
 		// AIRDROP CHANGES
 		if err := InitAirdrops(ctx, claimKeeper); err != nil {
@@ -116,7 +119,7 @@ func CreateUpgradeHandler(
 		// ICS CHANGES
 		// In the v13 upgrade, params were reset to genesis. In v12, the version map wasn't updated. So when mm.RunMigrations(ctx, configurator, vm) ran
 		// in v13, InitGenesis was run for ccvconsumer.
-		if err := SetConsumerParams(ctx, ck); err != nil {
+		if err := SetConsumerParams(ctx, ck, sibc); err != nil {
 			return vm, errorsmod.Wrapf(err, "unable to set consumer params")
 		}
 		// Since the last upgrade (which is also when rewards stopped accumulating), to much STRD has been sent to the consumer fee pool. This is because
@@ -267,7 +270,7 @@ func MigrateAccount2(ctx sdk.Context, ak authkeeper.AccountKeeper) error {
 	return nil
 }
 
-func SetConsumerParams(ctx sdk.Context, ck *ccvconsumerkeeper.Keeper) error {
+func SetConsumerParams(ctx sdk.Context, ck *ccvconsumerkeeper.Keeper, sibc stakeibckeeper.Keeper) error {
 
 	// Pre-upgrade params
 	// "params": {
@@ -291,10 +294,22 @@ func SetConsumerParams(ctx sdk.Context, ck *ccvconsumerkeeper.Keeper) error {
 	ccvconsumerparams.DistributionTransmissionChannel = DistributionTransmissionChannel
 	ccvconsumerparams.ProviderFeePoolAddrStr = ProviderFeePoolAddrStr
 	ccvconsumerparams.ConsumerRedistributionFraction = ConsumerRedistributionFraction
-
-	// TODO: Set reward denoms to stTokens after re-merging PR
-
 	ck.SetParams(ctx, ccvconsumerparams)
+
+	// Then, add the stTokens to the reward list
+	ctx.Logger().Info("Registering stTokens to consumer reward denom whitelist...")
+	hostZones := sibc.GetAllHostZone(ctx)
+	allDenoms := []string{}
+
+	// get all stToken denoms
+	for _, zone := range hostZones {
+		allDenoms = append(allDenoms, stakeibctypes.StAssetDenomFromHostZoneDenom(zone.HostDenom))
+	}
+
+	err := sibc.RegisterStTokenDenomsToWhitelist(ctx, allDenoms)
+	if err != nil {
+		return errorsmod.Wrapf(err, "unable to register stTokens to whitelist")
+	}
 
 	return nil
 }

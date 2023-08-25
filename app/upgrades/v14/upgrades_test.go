@@ -8,6 +8,8 @@ import (
 	sdkmath "cosmossdk.io/math"
 	evmosvestingtypes "github.com/evmos/vesting/x/vesting/types"
 
+	stakeibctypes "github.com/Stride-Labs/stride/v13/x/stakeibc/types"
+
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	"github.com/cosmos/cosmos-sdk/x/auth/vesting/types"
 
@@ -49,6 +51,7 @@ func (s *UpgradeTestSuite) TestUpgrade() {
 	s.SetupAirdrops()
 	s.SetupVestingStoreBeforeUpgrade()
 	s.FundConsToSendToProviderModuleAccount()
+	s.SetupConsumerRewards()
 
 	// Upgrade
 	s.ConfirmUpgradeSucceededs("v14", dummyUpgradeHeight)
@@ -58,6 +61,31 @@ func (s *UpgradeTestSuite) TestUpgrade() {
 	s.CheckCcvConsumerParamsAfterUpgrade()
 	s.CheckRefundAfterUpgrade()
 	s.CheckAirdropsInitialized()
+	s.VerifyConsumerRewards()
+}
+
+func (s *UpgradeTestSuite) SetupConsumerRewards() {
+	// Clear the reward denoms in the consumer keeper
+	consumerParams := s.App.ConsumerKeeper.GetConsumerParams(s.Ctx)
+	consumerParams.RewardDenoms = []string{"denomA", "denomB"}
+	s.App.ConsumerKeeper.SetParams(s.Ctx, consumerParams)
+
+	// Add host zones
+	hostZones := []stakeibctypes.HostZone{
+		{ChainId: "cosmoshub-4", HostDenom: "uatom"},
+		{ChainId: "osmosis-1", HostDenom: "uosmo"},
+		{ChainId: "juno-1", HostDenom: "ujuno"},
+	}
+	for _, hostZone := range hostZones {
+		s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
+	}
+}
+
+func (s *UpgradeTestSuite) VerifyConsumerRewards() {
+	// Confirm the new reward denoms were registered
+	expectedRewardDenoms := []string{"denomA", "denomB", "stuatom", "stuosmo", "stujuno"}
+	consumerParams := s.App.ConsumerKeeper.GetConsumerParams(s.Ctx)
+	s.Require().ElementsMatch(expectedRewardDenoms, consumerParams.RewardDenoms)
 }
 
 func (s *UpgradeTestSuite) FundConsToSendToProviderModuleAccount() {
