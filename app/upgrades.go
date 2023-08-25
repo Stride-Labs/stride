@@ -93,6 +93,7 @@ func (app *StrideApp) setupUpgradeHandlers(appOpts servertypes.AppOptions) {
 			app.ICAHostKeeper,
 			app.MintKeeper,
 			app.StakeibcKeeper,
+			app.keys[stakeibctypes.StoreKey],
 		),
 	)
 

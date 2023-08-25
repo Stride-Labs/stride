@@ -1,11 +1,12 @@
 syntax = "proto3";
 package stride.records;
 
+import "stride/records/records.proto";
+import "stride/records/params.proto";
+
 import "gogoproto/gogo.proto";
 import "google/api/annotations.proto";
 import "cosmos/base/query/v1beta1/pagination.proto";
-import "stride/records/genesis.proto";
-// this line is used by starport scaffolding # 1
 
 option go_package = "github.com/Stride-Labs/stride/v13/x/records/types";
 
@@ -51,8 +52,6 @@ service Query {
         "/Stride-Labs/stride/records/epoch_unbonding_record";
   }
 
-  // this line is used by starport scaffolding # 2
-
   // Queries a DepositRecord by id.
   rpc DepositRecord(QueryGetDepositRecordRequest)
       returns (QueryGetDepositRecordResponse) {
@@ -71,6 +70,19 @@ service Query {
       returns (QueryDepositRecordByHostResponse) {
     option (google.api.http).get = "/Stride-Labs/stride/records/"
                                    "deposit_record_by_host_zone/{host_zone_id}";
+  }
+
+  // Queries the existing LSMTokenDeposits for one specific deposit
+  rpc LSMDeposit(QueryLSMDepositRequest) returns (QueryLSMDepositResponse) {
+    option (google.api.http).get =
+        "/Stride-Labs/stride/stakeibc/lsm_deposit/{chain_id}/{denom}";
+  }
+
+  // Queries the existing LSMTokenDeposits for all which match filters
+  //   intended use:
+  //   ...stakeibc/lsm_deposits?chain_id=X&validator_address=Y&status=Z
+  rpc LSMDeposits(QueryLSMDepositsRequest) returns (QueryLSMDepositsResponse) {
+    option (google.api.http).get = "/Stride-Labs/stride/stakeibc/lsm_deposits";
   }
 }
 
@@ -151,4 +163,23 @@ message QueryAllEpochUnbondingRecordResponse {
   repeated EpochUnbondingRecord epoch_unbonding_record = 1
       [ (gogoproto.nullable) = false ];
   cosmos.base.query.v1beta1.PageResponse pagination = 2;
+}
+
+message QueryLSMDepositRequest {
+  string chain_id = 1;
+  string denom = 2;
+}
+
+message QueryLSMDepositResponse {
+  LSMTokenDeposit deposit = 1 [ (gogoproto.nullable) = false ];
+}
+
+message QueryLSMDepositsRequest {
+  string chain_id = 1;
+  string validator_address = 2;
+  string status = 3;
+}
+
+message QueryLSMDepositsResponse {
+  repeated LSMTokenDeposit deposits = 1 [ (gogoproto.nullable) = false ];
 }

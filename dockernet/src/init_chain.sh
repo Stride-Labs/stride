@@ -26,15 +26,25 @@ MICRO_DENOM_UNITS="${!MICRO_DENOM_UNITS_VAR_NAME:-000000}"
 VAL_TOKENS=${VAL_TOKENS}${MICRO_DENOM_UNITS}
 STAKE_TOKENS=${STAKE_TOKENS}${MICRO_DENOM_UNITS}
 ADMIN_TOKENS=${ADMIN_TOKENS}${MICRO_DENOM_UNITS}
+USER_TOKENS=${USER_TOKENS}${MICRO_DENOM_UNITS}
 
-set_stride_genesis() {
+set_stride_epochs() {
     genesis_config=$1
 
-    # update params
+    # set epochs
     jq '(.app_state.epochs.epochs[] | select(.identifier=="day") ).duration = $epochLen' --arg epochLen $STRIDE_DAY_EPOCH_DURATION $genesis_config > json.tmp && mv json.tmp $genesis_config
     jq '(.app_state.epochs.epochs[] | select(.identifier=="hour") ).duration = $epochLen' --arg epochLen $STRIDE_HOUR_EPOCH_DURATION $genesis_config > json.tmp && mv json.tmp $genesis_config
     jq '(.app_state.epochs.epochs[] | select(.identifier=="stride_epoch") ).duration = $epochLen' --arg epochLen $STRIDE_EPOCH_EPOCH_DURATION $genesis_config > json.tmp && mv json.tmp $genesis_config
     jq '(.app_state.epochs.epochs[] | select(.identifier=="mint") ).duration = $epochLen' --arg epochLen $STRIDE_MINT_EPOCH_DURATION $genesis_config > json.tmp && mv json.tmp $genesis_config
+}
+
+set_stride_genesis() {
+    genesis_config=$1
+
+    # set epochs
+    set_stride_epochs $genesis_config
+
+    # set params
     jq '.app_state.staking.params.unbonding_time = $newVal' --arg newVal "$UNBONDING_TIME" $genesis_config > json.tmp && mv json.tmp $genesis_config
     jq '.app_state.gov.params.max_deposit_period = $newVal' --arg newVal "$MAX_DEPOSIT_PERIOD" $genesis_config > json.tmp && mv json.tmp $genesis_config
     jq '.app_state.gov.params.voting_period = $newVal' --arg newVal "$VOTING_PERIOD" $genesis_config > json.tmp && mv json.tmp $genesis_config
@@ -72,6 +82,13 @@ set_host_genesis() {
     sed -i -E 's|"signed_blocks_window": "100"|"signed_blocks_window": "10"|g' $genesis_config
     sed -i -E 's|"downtime_jail_duration": "600s"|"downtime_jail_duration": "10s"|g' $genesis_config
     sed -i -E 's|"slash_fraction_downtime": "0.010000000000000000"|"slash_fraction_downtime": "0.050000000000000000"|g' $genesis_config
+
+    # LSM params
+    if [[ "$CHAIN" == "GAIA" ]]; then
+        jq '.app_state.staking.params.validator_bond_factor = $newVal' --arg newVal "$LSM_VALIDATOR_BOND_FACTOR" $genesis_config > json.tmp && mv json.tmp $genesis_config
+        jq '.app_state.staking.params.validator_liquid_staking_cap = $newVal' --arg newVal "$LSM_VALIDATOR_LIQUID_STAKING_CAP" $genesis_config > json.tmp && mv json.tmp $genesis_config
+        jq '.app_state.staking.params.global_liquid_staking_cap = $newVal' --arg newVal "$LSM_GLOBAL_LIQUID_STAKING_CAP" $genesis_config > json.tmp && mv json.tmp $genesis_config
+    fi
 }
 
 set_consumer_genesis() {
@@ -143,7 +160,7 @@ for (( i=1; i <= $NUM_NODES; i++ )); do
 
     # Copy over the provider stride validator keys to the provider (in the event
     # that we are testing ICS)
-    if [[ $CHAIN == "GAIA" ]]; then
+    if [[ $CHAIN == "GAIA" && -d $DOCKERNET_HOME/state/${STRIDE_NODE_PREFIX}${i} ]]; then
         stride_config=$DOCKERNET_HOME/state/${STRIDE_NODE_PREFIX}${i}/config
         host_config=$DOCKERNET_HOME/state/${NODE_PREFIX}${i}/config
         cp ${stride_config}/priv_validator_key.json ${host_config}/priv_validator_key.json
@@ -186,6 +203,7 @@ if [ "$CHAIN" == "STRIDE" ]; then
     echo "$STRIDE_ADMIN_MNEMONIC" | $MAIN_CMD keys add $STRIDE_ADMIN_ACCT --recover --keyring-backend=test >> $KEYS_LOGS 2>&1
     STRIDE_ADMIN_ADDRESS=$($MAIN_CMD keys show $STRIDE_ADMIN_ACCT --keyring-backend test -a)
     $MAIN_CMD add-genesis-account ${STRIDE_ADMIN_ADDRESS} ${ADMIN_TOKENS}${DENOM}
+
     # add relayer accounts
     for i in "${!RELAYER_ACCTS[@]}"; do
         RELAYER_ACCT="${RELAYER_ACCTS[i]}"
@@ -217,6 +235,12 @@ else
     fi
 fi
 
+# add a staker account for integration tests
+# the account should live on both stride and the host chain
+echo "$USER_MNEMONIC" | $MAIN_CMD keys add $USER_ACCT --recover --keyring-backend=test >> $KEYS_LOGS 2>&1
+USER_ADDRESS=$($MAIN_CMD keys show $USER_ACCT --keyring-backend test -a)
+$MAIN_CMD add-genesis-account ${USER_ADDRESS} ${USER_TOKENS}${DENOM}
+
 # Only collect the validator genesis txs for host chains
 if [[ "$CHAIN" != "STRIDE" && "$CHAIN" != "HOST" ]]; then 
     # now we process gentx txs on the main node
@@ -236,6 +260,12 @@ fi
 # update consumer genesis for stride binary chains
 if [[ "$CHAIN" == "STRIDE" || "$CHAIN" == "HOST" ]]; then
     set_consumer_genesis $MAIN_GENESIS
+fi
+
+# the HOST chain must set the epochs to fulfill the invariant that the stride epoch
+# is 1/4th the day epoch
+if [[ "$CHAIN" == "HOST" ]]; then
+    set_stride_epochs $MAIN_GENESIS
 fi
 
 # for all peer nodes....

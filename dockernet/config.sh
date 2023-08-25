@@ -108,11 +108,17 @@ MAX_DEPOSIT_PERIOD="30s"
 VOTING_PERIOD="30s"
 INITIAL_ANNUAL_PROVISIONS="10000000000000.000000000000000000"
 
+# LSM Params
+LSM_VALIDATOR_BOND_FACTOR="250"
+LSM_GLOBAL_LIQUID_STAKING_CAP="0.25"
+LSM_VALIDATOR_LIQUID_STAKING_CAP="0.50"
+
 # Tokens are denominated in the macro-unit 
 # (e.g. 5000000STRD implies 5000000000000ustrd)
 VAL_TOKENS=5000000
 STAKE_TOKENS=5000
 ADMIN_TOKENS=1000
+USER_TOKENS=100
 
 # CHAIN MNEMONICS
 VAL_MNEMONIC_1="close soup mirror crew erode defy knock trigger gather eyebrow tent farm gym gloom base lemon sleep weekend rich forget diagram hurt prize fly"
@@ -128,6 +134,8 @@ VAL_MNEMONICS=(
     "$VAL_MNEMONIC_5"
 )
 REV_MNEMONIC="tonight bonus finish chaos orchard plastic view nurse salad regret pause awake link bacon process core talent whale million hope luggage sauce card weasel"
+USER_MNEMONIC="brief play describe burden half aim soccer carbon hope wait output play vacuum joke energy crucial output mimic cruise brother document rail anger leaf"
+USER_ACCT=user
 
 # STRIDE 
 STRIDE_CHAIN_ID=STRIDE
@@ -239,8 +247,8 @@ RELAYER_GAIA_ICS_EXEC="$DOCKER_COMPOSE run --rm relayer-gaia-ics"
 RELAYER_JUNO_EXEC="$DOCKER_COMPOSE run --rm relayer-juno"
 RELAYER_OSMO_EXEC="$DOCKER_COMPOSE run --rm relayer-osmo"
 RELAYER_STARS_EXEC="$DOCKER_COMPOSE run --rm relayer-stars"
-RELAYER_EVMOS_EXEC="$DOCKER_COMPOSE run --rm relayer-evmos"
 RELAYER_HOST_EXEC="$DOCKER_COMPOSE run --rm relayer-host"
+RELAYER_EVMOS_EXEC="$DOCKER_COMPOSE run --rm relayer-evmos"
 
 RELAYER_STRIDE_ACCT=rly1
 RELAYER_GAIA_ACCT=rly2
@@ -325,19 +333,44 @@ WAIT_FOR_STRING() {
   ( tail -f -n0 $1 & ) | grep -q "$2"
 }
 
+# Sleep until the balance has changed
+# Optionally provide a minimum amount it must change by (to ignore interest)
 WAIT_FOR_BALANCE_CHANGE() {
   chain=$1
   address=$2
   denom=$3
+  minimum_change=${4:-1} # defaults to 1
 
   max_blocks=30
 
   main_cmd=$(GET_VAR_VALUE ${chain}_MAIN_CMD)
-  initial_balance=$($main_cmd q bank balances $address --denom $denom | grep amount)
+  initial_balance=$($main_cmd q bank balances $address --denom $denom | grep amount | NUMBERS_ONLY)
   for i in $(seq $max_blocks); do
-    new_balance=$($main_cmd q bank balances $address --denom $denom | grep amount)
+    new_balance=$($main_cmd q bank balances $address --denom $denom | grep amount | NUMBERS_ONLY)
+    balance_change=$(echo "$new_balance - $initial_balance" | bc)
 
-    if [[ "$new_balance" != "$initial_balance" ]]; then
+    if [[ $(echo "$balance_change >= $minimum_change" | bc -l) == "1" ]]; then
+      break
+    fi
+
+    WAIT_FOR_BLOCK $STRIDE_LOGS 1
+  done
+}
+
+# Sleep until the total delegation amount has changed
+# Optionally provide a minimum amount it must change by  (to ignore interest)
+WAIT_FOR_DELEGATION_CHANGE() {
+  chain_id=$1
+  minimum_change=${2:-1} # defaults to 1
+
+  max_blocks=30
+
+  initial_delegation=$($STRIDE_MAIN_CMD q stakeibc show-host-zone $chain_id | grep "total_delegations" | NUMBERS_ONLY)
+  for i in $(seq $max_blocks); do
+    new_delegation=$($STRIDE_MAIN_CMD q stakeibc show-host-zone $chain_id | grep "total_delegations" | NUMBERS_ONLY)
+    delegation_change=$(echo "$new_delegation - $initial_delegation" | bc)
+
+    if [[ $(echo "$delegation_change >= $minimum_change" | bc -l) == "1" ]]; then
       break
     fi
 
@@ -350,16 +383,35 @@ GET_VAL_ADDR() {
   val_index=$2
 
   MAIN_CMD=$(GET_VAR_VALUE ${chain}_MAIN_CMD)
-  $MAIN_CMD q staking validators | grep ${chain}_${val_index} -A 5 | grep operator | awk '{print $2}'
+  $MAIN_CMD q staking validators | grep ${chain}_${val_index} -A 6 | grep operator | awk '{print $2}'
 }
 
 GET_ICA_ADDR() {
   chain_id="$1"
   ica_type="$2" #delegation, fee, redemption, or withdrawal
 
-  $STRIDE_MAIN_CMD q stakeibc show-host-zone $chain_id | grep ${ica_type}_account -A 1 | grep address | awk '{print $2}'
+  $STRIDE_MAIN_CMD q stakeibc show-host-zone $chain_id | grep ${ica_type}_ica_address | awk '{print $2}'
+}
+
+GET_IBC_DENOM() {
+  transfer_channel_id="$1"
+  base_denom="$2"
+
+  echo "ibc/$($STRIDE_MAIN_CMD q ibc-transfer denom-hash transfer/${transfer_channel_id}/${base_denom} | awk '{print $2}')"
 }
 
 TRIM_TX() {
   grep -E "code:|txhash:" | sed 's/^/  /'
+}
+
+NUMBERS_ONLY() {
+  tr -cd '[:digit:]'
+}
+
+GETBAL() {
+  head -n 1 | grep -o -E '[0-9]+' || "0"
+}
+
+GETSTAKE() {
+  tail -n 2 | head -n 1 | grep -o -E '[0-9]+' | head -n 1
 }

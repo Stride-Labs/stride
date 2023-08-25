@@ -30,6 +30,11 @@ func KeyPrefix(p string) []byte {
 	return []byte(p)
 }
 
+// Create the LSMTokenDeposit prefix as chainId + denom
+func GetLSMTokenDepositKey(chainId, denom string) []byte {
+	return append([]byte(chainId), []byte(denom)...)
+}
+
 const (
 	UserRedemptionRecordKey      = "UserRedemptionRecord-value-"
 	UserRedemptionRecordCountKey = "UserRedemptionRecord-count-"
@@ -40,4 +45,5 @@ const (
 	EpochUnbondingRecordCountKey = "EpochUnbondingRecord-count-"
 	DepositRecordKey             = "DepositRecord-value-"
 	DepositRecordCountKey        = "DepositRecord-count-"
+	LSMTokenDepositKey           = "LSMTokenDeposit"
 )

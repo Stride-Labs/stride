@@ -42,6 +42,18 @@ func TestGenesis(t *testing.T) {
 			},
 		},
 		DepositRecordCount: 2,
+		LsmTokenDepositList: []types.LSMTokenDeposit{
+			{
+				DepositId: "ID1",
+				ChainId:   "chain-1",
+				Denom:     "denom1",
+			},
+			{
+				DepositId: "ID2",
+				ChainId:   "chain-2",
+				Denom:     "denom2",
+			},
+		},
 	}
 	k, ctx := keepertest.RecordsKeeper(t)
 	records.InitGenesis(ctx, *k, genesisState)
@@ -55,5 +67,6 @@ func TestGenesis(t *testing.T) {
 
 	require.ElementsMatch(t, genesisState.DepositRecordList, got.DepositRecordList)
 	require.Equal(t, genesisState.DepositRecordCount, got.DepositRecordCount)
+	require.ElementsMatch(t, genesisState.LsmTokenDepositList, got.LsmTokenDepositList)
 	// this line is used by starport scaffolding # genesis/test/assert
 }
