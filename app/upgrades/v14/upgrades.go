@@ -94,7 +94,7 @@ func CreateUpgradeHandler(
 		// Since the last upgrade (which is also when rewards stopped accumulating), to much STRD has been sent to the consumer fee pool. This is because
 		// ConsumerRedistributionFraction was updated from 0.85 to 0.75 in the last upgrade. 25% of inflation (instead of 15%) was being sent there. So,
 		// we need to send 1-(15/25) = 40% of the STRD in the fee pool back to the fee distribution account.
-		if err := SendConsumerFeePoolToFeeDistribution(ctx, ck, bk, ak); err != nil {
+		if err := SendConsumerFeePoolToFeeDistribution(ctx, ck, bk, ak, sk); err != nil {
 			return vm, errorsmod.Wrapf(err, "unable to send consumer fee pool to fee distribution")
 		}
 
@@ -206,7 +206,7 @@ func SetConsumerParams(ctx sdk.Context, ck *ccvconsumerkeeper.Keeper) error {
 	return nil
 }
 
-func SendConsumerFeePoolToFeeDistribution(ctx sdk.Context, ck *ccvconsumerkeeper.Keeper, bk bankkeeper.Keeper, ak authkeeper.AccountKeeper) error {
+func SendConsumerFeePoolToFeeDistribution(ctx sdk.Context, ck *ccvconsumerkeeper.Keeper, bk bankkeeper.Keeper, ak authkeeper.AccountKeeper, sk stakingkeeper.Keeper) error {
 	// Read account balance of consumer fee account
 	address := sdk.MustAccAddressFromBech32(ConsToSendToProvider)
 	frac, err := sdk.NewDecFromStr(RefundFraction)
@@ -215,8 +215,8 @@ func SendConsumerFeePoolToFeeDistribution(ctx sdk.Context, ck *ccvconsumerkeeper
 		panic(fmt.Errorf("ConsumerRedistributionFrac is invalid: %w", err))
 	}
 
-	total := bk.GetAllBalances(ctx, address)
-	totalTokens := sdk.NewDecCoinsFromCoins(total...)
+	total := bk.GetBalance(ctx, address, sk.BondDenom(ctx))
+	totalTokens := sdk.NewDecCoinsFromCoins(total)
 	// truncated decimals are implicitly added to provider
 	refundTokens, _ := totalTokens.MulDec(frac).TruncateDecimal()
 	for _, token := range refundTokens {
