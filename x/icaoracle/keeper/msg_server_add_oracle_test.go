@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	icatypes "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/types"
 
 	"github.com/Stride-Labs/stride/v13/x/icaoracle/types"
 )
@@ -44,8 +43,7 @@ func (s *KeeperTestSuite) TestAddOracle_Successful_IcaAlreadyExists() {
 
 	// Create the oracle ICA channel
 	owner := types.FormatICAAccountOwner(HostChainId, types.ICAAccountType_Oracle)
-	channelID := s.CreateICAChannel(owner)
-	portId, _ := icatypes.NewControllerPortID(owner)
+	channelID, portId := s.CreateICAChannel(owner)
 	icaAddress := s.IcaAddresses[owner]
 
 	// Submit the AddOracle message

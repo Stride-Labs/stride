@@ -15,6 +15,11 @@ func (k msgServer) AddValidators(goCtx context.Context, msg *types.MsgAddValidat
 		if err := k.AddValidatorToHostZone(ctx, msg.HostZone, *validator, false); err != nil {
 			return nil, err
 		}
+
+		// Query and store the validator's sharesToTokens rate
+		if err := k.QueryValidatorSharesToTokensRate(ctx, msg.HostZone, validator.Address); err != nil {
+			return nil, err
+		}
 	}
 
 	return &types.MsgAddValidatorsResponse{}, nil
