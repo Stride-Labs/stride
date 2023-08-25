@@ -10,6 +10,8 @@ import (
 	"github.com/Stride-Labs/stride/v13/utils"
 )
 
+const TypeMsgInstantiateOracle = "instantiate_oracle"
+
 var _ sdk.Msg = &MsgInstantiateOracle{}
 
 func NewMsgInstantiateOracle(creator string, chainId string, contractCodeId uint64, transferChannelId string) *MsgInstantiateOracle {
@@ -19,6 +21,10 @@ func NewMsgInstantiateOracle(creator string, chainId string, contractCodeId uint
 		ContractCodeId:          contractCodeId,
 		TransferChannelOnOracle: transferChannelId,
 	}
+}
+
+func (msg MsgInstantiateOracle) Type() string {
+	return TypeMsgInstantiateOracle
 }
 
 func (msg *MsgInstantiateOracle) GetSigners() []sdk.AccAddress {
