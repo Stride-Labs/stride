@@ -10,9 +10,11 @@ import (
 	errortypes "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
 	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
+	ccvconsumerkeeper "github.com/cosmos/interchain-security/v3/x/ccv/consumer/keeper"
 
 	stakeibckeeper "github.com/Stride-Labs/stride/v13/x/stakeibc/keeper"
 
@@ -29,6 +31,7 @@ import (
 var (
 	UpgradeName = "v14"
 
+	// Vesting
 	VestingStartTimeAccount1 = int64(1662350400) // Sept 4, 2022
 	VestingEndTimeAccount1   = int64(1788512452)
 	VestingStartTimeAccount2 = int64(1662350400) // Sept 4, 2022
@@ -37,7 +40,18 @@ var (
 	Account1VestingUstrd     = int64(187_500_000_000)
 	Account2                 = "stride1nwyvkxm89yg8e3fyxgruyct4zp90mg4nlk87lg"
 	Account2VestingUstrd     = int64(375_000_000_000)
-	FunderAddress            = "stride1avdulp2p7jjv37valeyt4c6fn6qtfhevr2ej3r" // TODO: test the MS with a tx!
+	FunderAddress            = "stride1avdulp2p7jjv37valeyt4c6fn6qtfhevr2ej3r"
+
+	// ICS
+	DistributionTransmissionChannel = "channel-0"
+	// Module account address for consumer_rewards_pool (see: https://github.com/cosmos/interchain-security/blob/main/x/ccv/provider/types/keys.go#L33C25-L33C46)
+	ProviderFeePoolAddrStr         = "cosmos1ap0mh6xzfn8943urr84q6ae7zfnar48am2erhd"
+	ConsumerRedistributionFraction = "0.85"
+	Enabled                        = true
+	RefundFraction                 = "0.4"
+	// strided q auth module-account cons_to_send_to_provider
+	ConsToSendToProvider = "stride1ywtansy6ss0jtq8ckrcv6jzkps8yh8mfmvxqvv"
+	FeeCollector         = "stride17xpfvakm2amg962yls6f84z3kell8c5lnjrul3"
 )
 
 // CreateUpgradeHandler creates an SDK upgrade handler for v14
@@ -49,6 +63,7 @@ func CreateUpgradeHandler(
 	accountKeeper authkeeper.AccountKeeper,
 	configurator module.Configurator,
 	stakeibcKeeper stakeibckeeper.Keeper,
+	consumerKeeper *ccvconsumerkeeper.Keeper,
 ) upgradetypes.UpgradeHandler {
 	return func(ctx sdk.Context, _ upgradetypes.Plan, vm module.VersionMap) (module.VersionMap, error) {
 		ctx.Logger().Info("Starting upgrade v14...")
@@ -56,7 +71,9 @@ func CreateUpgradeHandler(
 		sk := stakingKeeper
 		ak := accountKeeper
 		bk := bankKeeper
+		ck := consumerKeeper
 
+		// VESTING CHANGES
 		// Migrate SL employee pool Account1 to evmos vesting account
 		if err := MigrateAccount1(ctx, evk, sk, ak, bk); err != nil {
 			return vm, errorsmod.Wrapf(err, "unable to migrate account 12z83x")
@@ -66,6 +83,19 @@ func CreateUpgradeHandler(
 		// migrate Account2 from a ContinuousVestingAccount that starts on Sept 4, 2023 to a continuous vesting account that starts on Sept 4, 2022
 		if err := MigrateAccount2(ctx, ak); err != nil {
 			return vm, errorsmod.Wrapf(err, "unable to migrate account 1nwyvk")
+		}
+
+		// ICS CHANGES
+		// In the v13 upgrade, params were reset to genesis. In v12, the version map wasn't updated. So when mm.RunMigrations(ctx, configurator, vm) ran
+		// in v13, InitGenesis was run for ccvconsumer.
+		if err := SetConsumerParams(ctx, ck); err != nil {
+			return vm, errorsmod.Wrapf(err, "unable to set consumer params")
+		}
+		// Since the last upgrade (which is also when rewards stopped accumulating), to much STRD has been sent to the consumer fee pool. This is because
+		// ConsumerRedistributionFraction was updated from 0.85 to 0.75 in the last upgrade. 25% of inflation (instead of 15%) was being sent there. So,
+		// we need to send 1-(15/25) = 40% of the STRD in the fee pool back to the fee distribution account.
+		if err := SendConsumerFeePoolToFeeDistribution(ctx, ck, bk, ak); err != nil {
+			return vm, errorsmod.Wrapf(err, "unable to send consumer fee pool to fee distribution")
 		}
 
 		return mm.RunMigrations(ctx, configurator, vm)
@@ -95,7 +125,7 @@ func MigrateAccount1(ctx sdk.Context, evk evmosvestingkeeper.Keeper, sk stakingk
 		return err
 	}
 
-	// TODO: verify sk.BondDenom(ctx) is ustrd
+	// TODO: verify sk.BondDenom(ctx) is ustrd by querying the account after running localstride
 	// NOTE: LockupPeriods adds a transfer restriction. Unvested tokens are also transfer restricted. The behavior we want is
 	// Vested:
 	// - transferable
@@ -141,6 +171,60 @@ func MigrateAccount2(ctx sdk.Context, ak authkeeper.AccountKeeper) error {
 	// See: https://github.com/cosmos/cosmos-sdk/commit/c5238b0d1ecfef8be3ccdaee02d23ee93ef9c69b
 	// set the account
 	ak.SetAccount(ctx, account)
+	return nil
+}
+
+func SetConsumerParams(ctx sdk.Context, ck *ccvconsumerkeeper.Keeper) error {
+
+	// Pre-upgrade params
+	// "params": {
+	// 		"enabled": false, Set to true
+	// 		"blocks_per_distribution_transmission": "1000", OK
+	// 		"distribution_transmission_channel": "", Set to channel-0
+	//	 	"provider_fee_pool_addr_str": "", Set to address
+	//	 	"ccv_timeout_period": "2419200s", OK
+	//	 	"transfer_timeout_period": "3600s", OK
+	//	 	"consumer_redistribution_fraction": "0.75", Set to 0.85
+	//	 	"historical_entries": "10000",  OK
+	//	 	"unbonding_period": "1728000s", reset in proposal:
+	//	 	"soft_opt_out_threshold": "0.05", OK
+	//	 	"reward_denoms": [], Set to stTokens and revert change
+	//	 	"provider_reward_denoms": [] Leave unset
+	// 	}
+	// Params should match https://dev.mintscan.io/cosmos/proposals/799
+
+	ccvconsumerparams := ck.GetConsumerParams(ctx)
+	ccvconsumerparams.Enabled = true
+	ccvconsumerparams.DistributionTransmissionChannel = DistributionTransmissionChannel
+	ccvconsumerparams.ProviderFeePoolAddrStr = ProviderFeePoolAddrStr
+	ccvconsumerparams.ConsumerRedistributionFraction = ConsumerRedistributionFraction
+
+	// TODO: Set reward denoms to stTokens after re-merging PR
+
+	ck.SetParams(ctx, ccvconsumerparams)
+
+	return nil
+}
+
+func SendConsumerFeePoolToFeeDistribution(ctx sdk.Context, ck *ccvconsumerkeeper.Keeper, bk bankkeeper.Keeper, ak authkeeper.AccountKeeper) error {
+	// Read account balance of consumer fee account
+	address := sdk.MustAccAddressFromBech32(ConsToSendToProvider)
+	frac, err := sdk.NewDecFromStr(RefundFraction)
+	if err != nil {
+		// ConsumerRedistributionFrac was already validated when set as a param
+		panic(fmt.Errorf("ConsumerRedistributionFrac is invalid: %w", err))
+	}
+
+	total := bk.GetAllBalances(ctx, address)
+	totalTokens := sdk.NewDecCoinsFromCoins(total...)
+	// truncated decimals are implicitly added to provider
+	refundTokens, _ := totalTokens.MulDec(frac).TruncateDecimal()
+	for _, token := range refundTokens {
+		// Send tokens back to the fee distributinon address
+		// NOTE: This is technically not a module account because it's removed from maccPerms (in order to allow ibc transfers, see: https://github.com/cosmos/ibc-go/issues/1889)
+		// But conceptually it's a module account
+		bk.SendCoinsFromAccountToModule(ctx, address, authtypes.FeeCollectorName, sdk.NewCoins(token))
+	}
 	return nil
 }
 

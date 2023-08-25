@@ -181,6 +181,7 @@ func (app *StrideApp) setupUpgradeHandlers(appOpts servertypes.AppOptions) {
 			app.AccountKeeper,
 			app.configurator,
 			app.StakeibcKeeper,
+			&app.ConsumerKeeper,
 		),
 	)
 

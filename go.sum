@@ -223,8 +223,8 @@ github.com/Stride-Labs/cast v0.0.3 h1:eM3n/t3hSxb+iw9LDo3r/uGBp3w4U7wPv40GKMtJ1d
 github.com/Stride-Labs/cast v0.0.3/go.mod h1:SpXXQ5YoyJw6s3/6cMTQuxvgRl3PCJiyaX9p6b155UU=
 github.com/Stride-Labs/cosmos-sdk v0.47.4-stride-distribution-fix-1 h1:AFXHtq6Zb4aTwYhU+DiBGiHGi0kxYA/8hTD+Hcm5U/E=
 github.com/Stride-Labs/cosmos-sdk v0.47.4-stride-distribution-fix-1/go.mod h1:R5n+uM7vguVPFap4pgkdvQCT1nVo/OtPwrlAU40rvok=
-github.com/Stride-Labs/interchain-security/v3 v3.1.1-0.20230713175550-227e13e60bac h1:k1ef68RNRHMtekRusOh9bu5DmHEdvxPyKwotzFu9giU=
-github.com/Stride-Labs/interchain-security/v3 v3.1.1-0.20230713175550-227e13e60bac/go.mod h1:2fILBgypEZcwR3BSzKDw+EsYtMKv9Z6cYXfouh4xTYU=
+github.com/Stride-Labs/interchain-security/v3 v3.1.0-remove-validation-bug-7d3d9d h1:xKJRWjDVuwc9UfkHJ3Xw7Cs4csRnNzyxW3D4lXqMlvA=
+github.com/Stride-Labs/interchain-security/v3 v3.1.0-remove-validation-bug-7d3d9d/go.mod h1:2fILBgypEZcwR3BSzKDw+EsYtMKv9Z6cYXfouh4xTYU=
 github.com/VividCortex/gohistogram v1.0.0 h1:6+hBz+qvs0JOrrNhhmR7lFxo5sINxBCGXrdtl/UvroE=
 github.com/VividCortex/gohistogram v1.0.0/go.mod h1:Pf5mBqqDxYaXu3hDrrU+w6nw50o/4+TcAqDqk/vUH7g=
 github.com/adlio/schema v1.3.3 h1:oBJn8I02PyTB466pZO1UZEn1TV5XLlifBSyMrmHl/1I=
