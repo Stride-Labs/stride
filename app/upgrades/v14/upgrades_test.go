@@ -67,8 +67,7 @@ func (s *UpgradeTestSuite) CheckStoreAfterUpgrade() {
 
 	// ------ OSMO -------
 	osmoAirdrop := claimParams.Airdrops[0]
-	// Check that the params of the osmo airdrop were reset
-	s.Require().Equal(osmoAirdropId, osmoAirdrop.AirdropIdentifier, "osmo airdrop identifier")
+	s.Require().Equal(osmoAirdropId, osmoAirdrop.AirdropIdentifier, "osmo airdrop identifier") // verify this wasn't deleted
 
 	// ------ INJECTIVE -------
 	injectiveAirdrop := claimParams.Airdrops[1]
