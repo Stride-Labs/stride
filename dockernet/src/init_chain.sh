@@ -28,14 +28,23 @@ STAKE_TOKENS=${STAKE_TOKENS}${MICRO_DENOM_UNITS}
 ADMIN_TOKENS=${ADMIN_TOKENS}${MICRO_DENOM_UNITS}
 USER_TOKENS=${USER_TOKENS}${MICRO_DENOM_UNITS}
 
-set_stride_genesis() {
+set_stride_epochs() {
     genesis_config=$1
 
-    # update params
+    # set epochs
     jq '(.app_state.epochs.epochs[] | select(.identifier=="day") ).duration = $epochLen' --arg epochLen $STRIDE_DAY_EPOCH_DURATION $genesis_config > json.tmp && mv json.tmp $genesis_config
     jq '(.app_state.epochs.epochs[] | select(.identifier=="hour") ).duration = $epochLen' --arg epochLen $STRIDE_HOUR_EPOCH_DURATION $genesis_config > json.tmp && mv json.tmp $genesis_config
     jq '(.app_state.epochs.epochs[] | select(.identifier=="stride_epoch") ).duration = $epochLen' --arg epochLen $STRIDE_EPOCH_EPOCH_DURATION $genesis_config > json.tmp && mv json.tmp $genesis_config
     jq '(.app_state.epochs.epochs[] | select(.identifier=="mint") ).duration = $epochLen' --arg epochLen $STRIDE_MINT_EPOCH_DURATION $genesis_config > json.tmp && mv json.tmp $genesis_config
+}
+
+set_stride_genesis() {
+    genesis_config=$1
+
+    # set epochs
+    set_stride_epochs $genesis_config
+
+    # set params
     jq '.app_state.staking.params.unbonding_time = $newVal' --arg newVal "$UNBONDING_TIME" $genesis_config > json.tmp && mv json.tmp $genesis_config
     jq '.app_state.gov.params.max_deposit_period = $newVal' --arg newVal "$MAX_DEPOSIT_PERIOD" $genesis_config > json.tmp && mv json.tmp $genesis_config
     jq '.app_state.gov.params.voting_period = $newVal' --arg newVal "$VOTING_PERIOD" $genesis_config > json.tmp && mv json.tmp $genesis_config
@@ -251,6 +260,12 @@ fi
 # update consumer genesis for stride binary chains
 if [[ "$CHAIN" == "STRIDE" || "$CHAIN" == "HOST" ]]; then
     set_consumer_genesis $MAIN_GENESIS
+fi
+
+# the HOST chain must set the epochs to fulfill the invariant that the stride epoch
+# is 1/4th the day epoch
+if [[ "$CHAIN" == "HOST" ]]; then
+    set_stride_epochs $MAIN_GENESIS
 fi
 
 # for all peer nodes....

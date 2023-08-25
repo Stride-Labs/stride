@@ -42,8 +42,12 @@ The `interchainquery` module keeps `Query` objects and modifies the information 
 6. `callback_module`: name of the module that will handle the callback
 7. `callback_id`: ID for the function that will be called after the response is returned
 8. `callback_data`: optional serialized data associated with the callback
-9. `timeout`: time at which the query expires (in unix nano)
-10. `request_sent`: boolean indicating whether the query event has been emitted (and can be identified by a relayer)
+9. `timeout_policy`: specifies how to handle a timeout (fail the query, retry the query, or execute the callback with a timeout)
+10. `timeout_duration`: the relative time from the current block with which the query should timeout
+11. `timeout_timestamp`: the absolute time at which the query times out
+12. `request_sent`: boolean indicating whether the query event has been emitted (and can be identified by a relayer)
+13. `submission_height`: the light client hight of the queried chain at the time of query submission
+
 
 `DataPoint` has information types that pertain to the data that is queried. `DataPoint` keeps the following:
 

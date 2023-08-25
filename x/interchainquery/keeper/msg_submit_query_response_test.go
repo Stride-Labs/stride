@@ -173,10 +173,11 @@ func (s *KeeperTestSuite) TestMsgSubmitQueryResponse_Timeout_ExecuteCallback() {
 	tc.query.TimeoutPolicy = types.TimeoutPolicy_EXECUTE_QUERY_CALLBACK
 	s.App.InterchainqueryKeeper.SetQuery(s.Ctx, tc.query)
 
-	// rather than testing by executing the callback in its entirety,
-	//   check by invoking it without a registered host zone and catching the appropriate error
+	// Rather than testing by executing the callback in its entirety,
+	// check by invoking without the required mocked state and catching
+	// the error that's thrown at the start of the callback
 	_, err := s.GetMsgServer().SubmitQueryResponse(tc.goCtx, &tc.validMsg)
-	s.Require().ErrorContains(err, "no registered zone for queried chain ID", "callback was invoked")
+	s.Require().ErrorContains(err, "unable to determine balance from query response")
 }
 
 func (s *KeeperTestSuite) TestMsgSubmitQueryResponse_FindAndInvokeCallback() {
@@ -187,9 +188,10 @@ func (s *KeeperTestSuite) TestMsgSubmitQueryResponse_FindAndInvokeCallback() {
 	// The withdrawal balance test is already covered in it's respective module
 	// For this test, we just want to check that the callback function is invoked
 	// To do this, we can just ignore the appropriate withdrawal balance callback
-	//   mocked state, and catch the expected error
+	// mocked state, and catch the expected error that happens at the beginning of
+	// the callback
 	_, err := s.GetMsgServer().SubmitQueryResponse(tc.goCtx, &tc.validMsg)
-	s.Require().ErrorContains(err, "no registered zone for queried chain ID", "callback was invoked")
+	s.Require().ErrorContains(err, "unable to determine balance from query response")
 }
 
 // To write this test, we need to write data to Gaia, then get the proof for that data and check it using the LC
