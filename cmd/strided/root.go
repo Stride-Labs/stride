@@ -265,6 +265,7 @@ func txCommand() *cobra.Command {
 
 	app.ModuleBasics.AddTxCommands(cmd)
 	cmd.PersistentFlags().String(flags.FlagChainID, "", "The network chain ID")
+	cmd.PersistentFlags().String(flags.FlagFrom, "", "Name or address of private key with which to sign")
 
 	return cmd
 }
