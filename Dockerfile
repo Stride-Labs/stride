@@ -13,8 +13,6 @@ COPY go.sum .
 
 RUN --mount=type=cache,target=/root/.cache/go-build \
     --mount=type=cache,target=/root/go/pkg/mod \
-    --mount=type=secret,id=GITHUB_TOKEN \
-    git config --global url."https://$(cat /run/secrets/GITHUB_TOKEN)@github.com/".insteadOf "https://github.com/" && \
     go mod download
 
 # Copy the remaining files
