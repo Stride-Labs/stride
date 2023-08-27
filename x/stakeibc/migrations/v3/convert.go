@@ -14,7 +14,7 @@ var (
 	ValidatorSlashQueryThreshold uint64 = 1
 	// The exchange rate here does not matter since it will be updated after the slash query
 	// Setting it to this value makes it easier to verify that we've submitted the query
-	DefaultExchangeRate = sdk.MustNewDecFromStr("1.000000000000001")
+	DefaultExchangeRate = sdk.MustNewDecFromStr("0.999999999999999999")
 )
 
 // Converts an old validator data type to the new schema
