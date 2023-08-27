@@ -111,7 +111,8 @@ func (s *UpgradeTestSuite) CheckRefundAfterUpgrade() {
 func (s *UpgradeTestSuite) CheckCcvConsumerParamsAfterUpgrade() {
 	afterCtx := s.Ctx.WithBlockHeight(dummyUpgradeHeight)
 	// Verify the ccv consumer params are set correctly
-	ccvConsumerParams := s.App.ConsumerKeeper.GetConsumerParams(afterCtx)
+	ck := s.App.ConsumerKeeper
+	ccvConsumerParams := ck.GetConsumerParams(afterCtx)
 	// Verify DistributionTransmissionChannel is set
 	s.Require().Equal(v14.DistributionTransmissionChannel, ccvConsumerParams.DistributionTransmissionChannel)
 	// Verify ProviderFeePoolAddrStr is set
@@ -120,6 +121,14 @@ func (s *UpgradeTestSuite) CheckCcvConsumerParamsAfterUpgrade() {
 	s.Require().Equal(v14.ConsumerRedistributionFraction, ccvConsumerParams.ConsumerRedistributionFraction)
 	// Verify Enabled is set
 	s.Require().Equal(v14.Enabled, ccvConsumerParams.Enabled)
+
+	// Verify ccv consumer data is set properly
+	providerChannel, found := ck.GetProviderChannel(afterCtx)
+	s.Require().True(found, "provider channel should be found")
+	s.Require().Equal(v14.ProviderChannelId, providerChannel, fmt.Sprintf("provider channel should be set to %s", v14.ProviderChannelId))
+	providerClientId, found := ck.GetProviderClientID(afterCtx)
+	s.Require().True(found, "provider client id should be found")
+	s.Require().Equal(v14.ProviderClientId, providerClientId, fmt.Sprintf("provider client id should be set to %s", v14.ProviderClientId))
 
 	// TODO: verify reward denoms are set correctly
 }

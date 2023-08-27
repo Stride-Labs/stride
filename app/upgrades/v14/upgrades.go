@@ -57,6 +57,9 @@ var (
 	ConsToSendToProvider = "stride1ywtansy6ss0jtq8ckrcv6jzkps8yh8mfmvxqvv"
 	FeeCollector         = "stride17xpfvakm2amg962yls6f84z3kell8c5lnjrul3"
 
+	ProviderChannelId = "channel-146"
+	ProviderClientId  = "07-tendermint-127"
+
 	// Airdrop params
 	AirdropDuration  = time.Hour * 24 * 30 * 12 * 3                 // 3 years
 	AirdropStartTime = time.Date(2023, 9, 4, 16, 0, 0, 0, time.UTC) // Sept 4, 2023 @ 16:00 UTC (12:00 EST)
@@ -121,6 +124,9 @@ func CreateUpgradeHandler(
 		// in v13, InitGenesis was run for ccvconsumer.
 		if err := SetConsumerParams(ctx, ck, sibc); err != nil {
 			return vm, errorsmod.Wrapf(err, "unable to set consumer params")
+		}
+		if err := SetConsumerData(ctx, ck); err != nil {
+			return vm, errorsmod.Wrapf(err, "unable to set consumer data")
 		}
 		// Since the last upgrade (which is also when rewards stopped accumulating), to much STRD has been sent to the consumer fee pool. This is because
 		// ConsumerRedistributionFraction was updated from 0.85 to 0.75 in the last upgrade. 25% of inflation (instead of 15%) was being sent there. So,
@@ -311,6 +317,15 @@ func SetConsumerParams(ctx sdk.Context, ck *ccvconsumerkeeper.Keeper, sibc stake
 		return errorsmod.Wrapf(err, "unable to register stTokens to whitelist")
 	}
 
+	return nil
+}
+
+func SetConsumerData(ctx sdk.Context, ck *ccvconsumerkeeper.Keeper) error {
+	// We need to set a few fields on ccvconsumer
+	// - ProviderClientId
+	// - ProviderChannelId
+	ck.SetProviderClientID(ctx, ProviderClientId)
+	ck.SetProviderChannel(ctx, ProviderChannelId)
 	return nil
 }
 
