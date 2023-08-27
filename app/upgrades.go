@@ -11,6 +11,7 @@ import (
 	crisistypes "github.com/cosmos/cosmos-sdk/x/crisis/types"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 	consumertypes "github.com/cosmos/interchain-security/v3/x/ccv/consumer/types"
+	evmosvestingtypes "github.com/evmos/vesting/x/vesting/types"
 
 	v10 "github.com/Stride-Labs/stride/v13/app/upgrades/v10"
 	v11 "github.com/Stride-Labs/stride/v13/app/upgrades/v11"
@@ -171,7 +172,6 @@ func (app *StrideApp) setupUpgradeHandlers(appOpts servertypes.AppOptions) {
 			app.StakeibcKeeper,
 		),
 	)
-
 	// v14 upgrade handler
 	app.UpgradeKeeper.SetUpgradeHandler(
 		v14.UpgradeName,
@@ -179,9 +179,14 @@ func (app *StrideApp) setupUpgradeHandlers(appOpts servertypes.AppOptions) {
 			app.mm,
 			app.configurator,
 			app.appCodec,
+			app.AccountKeeper,
+			app.BankKeeper,
 			app.ClaimKeeper,
+			&app.ConsumerKeeper,
 			app.InterchainqueryKeeper,
 			app.StakeibcKeeper,
+			app.StakingKeeper,
+			app.VestingKeeper,
 			app.keys[stakeibctypes.StoreKey],
 		),
 	)
@@ -221,6 +226,10 @@ func (app *StrideApp) setupUpgradeHandlers(appOpts servertypes.AppOptions) {
 	case "v13":
 		storeUpgrades = &storetypes.StoreUpgrades{
 			Added: []string{icaoracletypes.ModuleName},
+		}
+	case "v14":
+		storeUpgrades = &storetypes.StoreUpgrades{
+			Added: []string{evmosvestingtypes.ModuleName},
 		}
 	}
 

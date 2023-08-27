@@ -6,23 +6,29 @@ import (
 	"time"
 
 	sdkmath "cosmossdk.io/math"
-
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+	"github.com/cosmos/cosmos-sdk/x/auth/vesting/types"
+	evmosvestingtypes "github.com/evmos/vesting/x/vesting/types"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/Stride-Labs/stride/v13/app"
-
 	"github.com/Stride-Labs/stride/v13/app/apptesting"
 	v14 "github.com/Stride-Labs/stride/v13/app/upgrades/v14"
 	claimtypes "github.com/Stride-Labs/stride/v13/x/claim/types"
-	"github.com/Stride-Labs/stride/v13/x/interchainquery/types"
+	interchainquerytypes "github.com/Stride-Labs/stride/v13/x/interchainquery/types"
 	oldstakeibctypes "github.com/Stride-Labs/stride/v13/x/stakeibc/migrations/v3/types"
 	stakeibctypes "github.com/Stride-Labs/stride/v13/x/stakeibc/types"
 )
 
 var (
+	emptyCoins         = sdk.Coins{}
 	dummyUpgradeHeight = int64(5)
+	// Shortly after the upgrade - 9/25/23
+	AfterUpgrade = int64(1695677732)
+	Account2End  = int64(1820016452)
+	InitCoins    = int64(100)
 
 	osmoAirdropId = "osmosis"
 	ustrd         = "ustrd"
@@ -41,19 +47,166 @@ func TestKeeperTestSuite(t *testing.T) {
 }
 
 func (s *UpgradeTestSuite) TestUpgrade() {
-	s.SetupOldAirdrops()
+	// Setup
+	s.SetupAirdrops()
+	s.SetupVestingStoreBeforeUpgrade()
+	s.FundConsToSendToProviderModuleAccount()
+	s.SetupConsumerRewards()
 	checkStakeibcStoreAfterUpgrade := s.SetupOldStakeibcStore()
 	checkPendingQueriesRemoved := s.SetupPendingQueries()
 
+	// Upgrade
 	s.ConfirmUpgradeSucceededs("v14", dummyUpgradeHeight)
 
-	s.CheckAirdropsAfterUpgrade()
+	// Post-upgrade checks
+	s.CheckVestingStoreAfterUpgrade()
+	s.CheckCcvConsumerParamsAfterUpgrade()
+	s.CheckRefundAfterUpgrade()
+	s.CheckAirdropsInitialized()
+	s.VerifyConsumerRewards()
+	s.CheckAirdropsInitialized()
 	checkStakeibcStoreAfterUpgrade()
 	checkPendingQueriesRemoved()
 }
 
-// Setups the airdrop store before the upgrade to test that airdrops were added
-func (s *UpgradeTestSuite) SetupOldAirdrops() {
+func (s *UpgradeTestSuite) SetupConsumerRewards() {
+	// Clear the reward denoms in the consumer keeper
+	consumerParams := s.App.ConsumerKeeper.GetConsumerParams(s.Ctx)
+	consumerParams.RewardDenoms = []string{"denomA", "denomB"}
+	s.App.ConsumerKeeper.SetParams(s.Ctx, consumerParams)
+
+	// Add host zones
+	hostZones := []stakeibctypes.HostZone{
+		{ChainId: "cosmoshub-4", HostDenom: "uatom"},
+		{ChainId: "osmosis-1", HostDenom: "uosmo"},
+		{ChainId: "juno-1", HostDenom: "ujuno"},
+	}
+	for _, hostZone := range hostZones {
+		s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
+	}
+}
+
+func (s *UpgradeTestSuite) VerifyConsumerRewards() {
+	// Confirm the new reward denoms were registered
+	expectedRewardDenoms := []string{"denomA", "denomB", "stuatom", "stuosmo", "stujuno"}
+	consumerParams := s.App.ConsumerKeeper.GetConsumerParams(s.Ctx)
+	s.Require().ElementsMatch(expectedRewardDenoms, consumerParams.RewardDenoms)
+}
+
+func (s *UpgradeTestSuite) FundConsToSendToProviderModuleAccount() {
+	// Fund the cons_to_send_to_provider module account
+	address := sdk.MustAccAddressFromBech32(v14.ConsToSendToProvider)
+	s.FundAccount(address, sdk.NewCoin(s.App.StakingKeeper.BondDenom(s.Ctx), sdkmath.NewInt(InitCoins)))
+}
+
+func (s *UpgradeTestSuite) CheckRefundAfterUpgrade() {
+	afterCtx := s.Ctx.WithBlockHeight(dummyUpgradeHeight)
+	// Verify the correct number of tokens were sent out of the cons_to_send_to_provider module account
+	icsFeeAddress := sdk.MustAccAddressFromBech32(v14.ConsToSendToProvider)
+	// Check the account balance
+	balance := s.App.BankKeeper.GetBalance(afterCtx, icsFeeAddress, s.App.StakingKeeper.BondDenom(afterCtx))
+	refundFrac, err := sdk.NewDecFromStr(v14.RefundFraction)
+	s.Require().NoError(err)
+	remainingFrac := sdk.NewDec(int64(1)).Sub(refundFrac)
+	expectedNumCoins := remainingFrac.Mul(sdk.NewDec(InitCoins)).TruncateInt64()
+	s.Require().Equal(sdk.NewInt64Coin(s.App.StakingKeeper.BondDenom(s.Ctx), expectedNumCoins), balance)
+
+}
+
+func (s *UpgradeTestSuite) CheckCcvConsumerParamsAfterUpgrade() {
+	afterCtx := s.Ctx.WithBlockHeight(dummyUpgradeHeight)
+	// Verify the ccv consumer params are set correctly
+	ccvConsumerParams := s.App.ConsumerKeeper.GetConsumerParams(afterCtx)
+	// Verify DistributionTransmissionChannel is set
+	s.Require().Equal(v14.DistributionTransmissionChannel, ccvConsumerParams.DistributionTransmissionChannel)
+	// Verify ProviderFeePoolAddrStr is set
+	s.Require().Equal(v14.ProviderFeePoolAddrStr, ccvConsumerParams.ProviderFeePoolAddrStr)
+	// Verify ConsumerRedistributionFraction is set
+	s.Require().Equal(v14.ConsumerRedistributionFraction, ccvConsumerParams.ConsumerRedistributionFraction)
+	// Verify Enabled is set
+	s.Require().Equal(v14.Enabled, ccvConsumerParams.Enabled)
+
+	// TODO: verify reward denoms are set correctly
+}
+
+func (s *UpgradeTestSuite) SetupVestingStoreBeforeUpgrade() {
+	// Initialize the two accounts as continuous vesting accounts
+	// Create the ContinuousVestingAccount
+	address1, err := sdk.AccAddressFromBech32(v14.Account1)
+	s.Require().NoError(err)
+	address2, err := sdk.AccAddressFromBech32(v14.Account2)
+	s.Require().NoError(err)
+	account1 := s.CreateContinuousVestingAccount(address1, v14.VestingStartTimeAccount1, v14.VestingEndTimeAccount1, v14.Account1VestingUstrd)
+	account2 := s.CreateContinuousVestingAccount(address2, v14.VestingStartTimeAccount2, v14.VestingEndTimeAccount2, v14.Account2VestingUstrd)
+
+	// Fund accounts 1 and 2
+	s.FundAccount(address1, sdk.NewCoin(s.App.StakingKeeper.BondDenom(s.Ctx), sdkmath.NewInt(v14.Account1VestingUstrd)))
+	s.FundAccount(address2, sdk.NewCoin(s.App.StakingKeeper.BondDenom(s.Ctx), sdkmath.NewInt(v14.Account2VestingUstrd)))
+
+	// Store the accounts as ContinuousVestingAccounts
+	s.App.AccountKeeper.SetAccount(s.Ctx, account1)
+	s.App.AccountKeeper.SetAccount(s.Ctx, account2)
+}
+
+func (s *UpgradeTestSuite) CheckVestingStoreAfterUpgrade() {
+	afterCtx := s.Ctx.WithBlockHeight(dummyUpgradeHeight)
+	address1, err := sdk.AccAddressFromBech32(v14.Account1)
+	s.Require().NoError(err)
+	address2, err := sdk.AccAddressFromBech32(v14.Account2)
+	s.Require().NoError(err)
+	// Verify account1 is now a ClawbackVestingAccount
+	account1 := s.App.AccountKeeper.GetAccount(afterCtx, address1)
+	s.Require().IsType(&evmosvestingtypes.ClawbackVestingAccount{}, account1)
+
+	// And that no tokens are vested after the upgrade
+	vestingAccount1 := account1.(*evmosvestingtypes.ClawbackVestingAccount)
+	afterUpgrade := time.Unix(AfterUpgrade, 0)
+	coins := vestingAccount1.GetVestedOnly(afterUpgrade)
+	s.Require().Equal(int64(0), coins.AmountOf(s.App.StakingKeeper.BondDenom(s.Ctx)).Int64())
+
+	// Verify account2 is still a ContinuousVestingAccount
+	account2 := s.App.AccountKeeper.GetAccount(afterCtx, address2)
+	s.Require().IsType(&types.ContinuousVestingAccount{}, account2)
+	// Verify the correct number of tokens is vested after the upgrade
+	vestingAccount2 := account2.(*types.ContinuousVestingAccount)
+	coins = vestingAccount2.GetVestedCoins(afterUpgrade)
+	expectedVestedCoins := int64(float64(v14.Account2VestingUstrd)*(float64(AfterUpgrade-v14.VestingStartTimeAccount2)/float64(v14.VestingEndTimeAccount2-v14.VestingStartTimeAccount2))) + 1 // add 1, rounding
+	s.Require().Equal(expectedVestedCoins, coins.AmountOf(s.App.StakingKeeper.BondDenom(s.Ctx)).Int64())
+}
+
+func initBaseAccount(address sdk.AccAddress) *authtypes.BaseAccount {
+	bacc := authtypes.NewBaseAccountWithAddress(address)
+	return bacc
+}
+
+func (s *UpgradeTestSuite) CreateContinuousVestingAccount(address sdk.AccAddress, start int64, end int64, coins int64) *types.ContinuousVestingAccount {
+	startTime := time.Unix(start, 0)
+	endTime := time.Unix(end, 0)
+
+	// init a base account
+	// send tokens to the base account
+	bacc := initBaseAccount(address)
+	origCoins := sdk.Coins{sdk.NewInt64Coin(s.App.StakingKeeper.BondDenom(s.Ctx), coins)}
+	cva := types.NewContinuousVestingAccount(bacc, origCoins, start, end)
+
+	// Sanity check the vesting schedule
+	// require no coins vested in the very beginning of the vesting schedule
+	vestedCoins := cva.GetVestedCoins(startTime)
+	s.Require().Nil(vestedCoins)
+
+	// require all coins vested at the end of the vesting schedule)
+	vestedCoins = cva.GetVestedCoins(endTime)
+	s.Require().Equal(origCoins, vestedCoins)
+
+	// require 50% of coins vested
+	midpoint := time.Unix((start+end)/2, 0)
+	vestedCoins = cva.GetVestedCoins(midpoint)
+	s.Require().Equal(sdk.Coins{sdk.NewInt64Coin(s.App.StakingKeeper.BondDenom(s.Ctx), coins/2)}, vestedCoins)
+
+	return cva
+}
+
+func (s *UpgradeTestSuite) SetupAirdrops() {
 	// Add a test aidrop to the store
 	params := claimtypes.Params{
 		Airdrops: []*claimtypes.Airdrop{
@@ -71,8 +224,7 @@ func (s *UpgradeTestSuite) SetupOldAirdrops() {
 	s.Require().NoError(err, "no error expected when setting vesting initial period")
 }
 
-// Checks that the injective, comdex, somm, and umee airdrops were added after the upgrade
-func (s *UpgradeTestSuite) CheckAirdropsAfterUpgrade() {
+func (s *UpgradeTestSuite) CheckAirdropsInitialized() {
 	afterCtx := s.Ctx.WithBlockHeight(dummyUpgradeHeight)
 
 	// Check that all airdrops were added, osmosis airdrop wasn't removed
@@ -202,7 +354,9 @@ func (s *UpgradeTestSuite) SetupOldStakeibcStore() func() {
 // Returns a callback function to verify they were removed
 func (s *UpgradeTestSuite) SetupPendingQueries() func() {
 	for i := 0; i < 3; i++ {
-		s.App.InterchainqueryKeeper.SetQuery(s.Ctx, types.Query{Id: fmt.Sprintf("query-%d", i)})
+		s.App.InterchainqueryKeeper.SetQuery(s.Ctx, interchainquerytypes.Query{
+			Id: fmt.Sprintf("query-%d", i),
+		})
 	}
 
 	numQueries := len(s.App.InterchainqueryKeeper.AllQueries(s.Ctx))
