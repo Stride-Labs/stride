@@ -32,6 +32,15 @@ var (
 
 	osmoAirdropId = "osmosis"
 	ustrd         = "ustrd"
+
+	testHostZones = []struct {
+		chainId string
+		denom   string
+	}{
+		{chainId: "cosmoshub-4", denom: "uatom"},
+		{chainId: "osmosis-1", denom: "uosmo"},
+		{chainId: "juno-1", denom: "ujuno"},
+	}
 )
 
 type UpgradeTestSuite struct {
@@ -75,15 +84,7 @@ func (s *UpgradeTestSuite) SetupConsumerRewards() {
 	consumerParams.RewardDenoms = []string{"denomA", "denomB"}
 	s.App.ConsumerKeeper.SetParams(s.Ctx, consumerParams)
 
-	// Add host zones
-	hostZones := []stakeibctypes.HostZone{
-		{ChainId: "cosmoshub-4", HostDenom: "uatom"},
-		{ChainId: "osmosis-1", HostDenom: "uosmo"},
-		{ChainId: "juno-1", HostDenom: "ujuno"},
-	}
-	for _, hostZone := range hostZones {
-		s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
-	}
+	// The new host zones are added in the SetupStakeibcStore function
 }
 
 func (s *UpgradeTestSuite) VerifyConsumerRewards() {
@@ -283,9 +284,10 @@ func (s *UpgradeTestSuite) SetupOldStakeibcStore() func() {
 	hostzoneStore := prefix.NewStore(stakeibcStore, stakeibctypes.KeyPrefix(stakeibctypes.HostZoneKey))
 
 	// Add two host zones with the old type
-	for i := int64(1); i <= 2; i++ {
+	for i, host := range testHostZones {
 		hostZone := oldstakeibctypes.HostZone{
-			ChainId:            fmt.Sprintf("chain-%d", i),
+			ChainId:            host.chainId,
+			HostDenom:          host.denom,
 			Address:            fmt.Sprintf("address-%d", i),
 			UnbondingFrequency: 3,
 			DelegationAccount: &oldstakeibctypes.ICAAccount{
@@ -294,14 +296,14 @@ func (s *UpgradeTestSuite) SetupOldStakeibcStore() func() {
 			BlacklistedValidators: []*oldstakeibctypes.Validator{
 				{Name: "val", Address: "address"},
 			},
-			StakedBal: sdkmath.NewInt(i),
+			StakedBal: sdkmath.NewInt(int64(i)),
 			Validators: []*oldstakeibctypes.Validator{
 				{
 					Address: fmt.Sprintf("val-%d", i),
 					InternalExchangeRate: &oldstakeibctypes.ValidatorExchangeRate{
-						InternalTokensToSharesRate: sdk.NewDec(i),
+						InternalTokensToSharesRate: sdk.NewDec(int64(i)),
 					},
-					DelegationAmt: sdk.NewInt(i),
+					DelegationAmt: sdkmath.NewInt(int64(i)),
 				},
 			},
 		}
@@ -310,39 +312,35 @@ func (s *UpgradeTestSuite) SetupOldStakeibcStore() func() {
 		hostzoneStore.Set([]byte(hostZone.ChainId), hostZoneBz)
 	}
 
-	// Add gaia host to test that LSM is enabled
-	hostZoneBz := codec.MustMarshal(&oldstakeibctypes.HostZone{
-		ChainId: v14.GaiaChainId,
-	})
-	hostzoneStore.Set([]byte(v14.GaiaChainId), hostZoneBz)
-
 	return func() {
 		// Confirm the host zones have been migrated properly
-		for i := int64(1); i <= 2; i++ {
-			hostZone, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx, fmt.Sprintf("chain-%d", i))
+		for i, host := range testHostZones {
+			hostZone, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx, host.chainId)
 			s.Require().True(found)
 
 			// Check new host zone attributes
-			s.Require().Equal(fmt.Sprintf("chain-%d", i), hostZone.ChainId, "chain-id")
+			s.Require().Equal(host.chainId, hostZone.ChainId, "chain-id")
+			s.Require().Equal(host.denom, hostZone.HostDenom, "denom")
 			s.Require().Equal(fmt.Sprintf("address-%d", i), hostZone.DepositAddress, "deposit address")
 			s.Require().Equal(fmt.Sprintf("delegation-%d", i), hostZone.DelegationIcaAddress, "delegation address")
 			s.Require().Equal(uint64(14), hostZone.UnbondingPeriod, "unbonding period")
-			s.Require().Equal(sdkmath.NewInt(i), hostZone.TotalDelegations, "total delegations")
-			s.Require().Equal(false, hostZone.LsmLiquidStakeEnabled, "total delegations")
+			s.Require().Equal(sdkmath.NewInt(int64(i)), hostZone.TotalDelegations, "total delegations")
+
+			// Confirm gaia has LSM enabled
+			expectedLSMEnabled := false
+			if host.chainId == v14.GaiaChainId {
+				expectedLSMEnabled = true
+			}
+			s.Require().Equal(expectedLSMEnabled, hostZone.LsmLiquidStakeEnabled)
 
 			// Check new validator attributes
 			validator := hostZone.Validators[0]
 			s.Require().Equal(fmt.Sprintf("val-%d", i), validator.Address, "validator address")
-			s.Require().Equal(sdk.NewDec(i), validator.SharesToTokensRate, "validator shares to tokens rate")
+			s.Require().Equal(sdk.NewDec(int64(i)), validator.SharesToTokensRate, "validator shares to tokens rate")
 			s.Require().Equal(false, validator.SlashQueryInProgress, "validator slash query in progress")
 			s.Require().Equal(int64(0), validator.DelegationChangesInProgress, "validator delegations in progress")
 			s.Require().Equal(sdk.ZeroInt(), validator.SlashQueryProgressTracker, "validator delegations in progress")
 		}
-
-		// Confirm gaia has LSM enabled
-		hostZone, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx, v14.GaiaChainId)
-		s.Require().True(found)
-		s.Require().True(hostZone.LsmLiquidStakeEnabled)
 
 		// Finally check that the new params were set
 		params := s.App.StakeibcKeeper.GetParams(s.Ctx)
