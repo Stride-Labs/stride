@@ -5,35 +5,37 @@ import (
 	"time"
 
 	errorsmod "cosmossdk.io/errors"
+	"github.com/cosmos/cosmos-sdk/codec"
+	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	"github.com/cosmos/cosmos-sdk/telemetry"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	errortypes "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+	sdkvesting "github.com/cosmos/cosmos-sdk/x/auth/vesting/types"
+	vesting "github.com/cosmos/cosmos-sdk/x/auth/vesting/types"
 	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
 	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 	ccvconsumerkeeper "github.com/cosmos/interchain-security/v3/x/ccv/consumer/keeper"
-
-	stakeibctypes "github.com/Stride-Labs/stride/v13/x/stakeibc/types"
-
-	claimkeeper "github.com/Stride-Labs/stride/v13/x/claim/keeper"
-	claimtypes "github.com/Stride-Labs/stride/v13/x/claim/types"
-	stakeibckeeper "github.com/Stride-Labs/stride/v13/x/stakeibc/keeper"
-
-	// evmosvestingclient "github.com/evmos/vesting/x/vesting/client"
-	sdkvesting "github.com/cosmos/cosmos-sdk/x/auth/vesting/types"
 	evmosvestingkeeper "github.com/evmos/vesting/x/vesting/keeper"
 	"github.com/evmos/vesting/x/vesting/types"
 	evmosvestingtypes "github.com/evmos/vesting/x/vesting/types"
 
-	// "github.com/cosmos/cosmos-sdk/x/auth/vesting"
-	vesting "github.com/cosmos/cosmos-sdk/x/auth/vesting/types"
+	"github.com/Stride-Labs/stride/v13/utils"
+	claimkeeper "github.com/Stride-Labs/stride/v13/x/claim/keeper"
+	claimtypes "github.com/Stride-Labs/stride/v13/x/claim/types"
+	icqkeeper "github.com/Stride-Labs/stride/v13/x/interchainquery/keeper"
+	stakeibckeeper "github.com/Stride-Labs/stride/v13/x/stakeibc/keeper"
+	stakeibcmigration "github.com/Stride-Labs/stride/v13/x/stakeibc/migrations/v3"
+	stakeibctypes "github.com/Stride-Labs/stride/v13/x/stakeibc/types"
 )
 
 var (
 	UpgradeName = "v14"
+
+	GaiaChainId = "cosmoshub-4"
 
 	// Vesting
 	VestingStartTimeAccount1 = int64(1662350400) // Sept 4, 2022
@@ -81,25 +83,46 @@ var (
 // CreateUpgradeHandler creates an SDK upgrade handler for v14
 func CreateUpgradeHandler(
 	mm *module.Manager,
-	evmosvestingKeeper evmosvestingkeeper.Keeper,
-	stakingKeeper stakingkeeper.Keeper,
-	bankKeeper bankkeeper.Keeper,
-	accountKeeper authkeeper.AccountKeeper,
 	configurator module.Configurator,
-	stakeibcKeeper stakeibckeeper.Keeper,
-	consumerKeeper *ccvconsumerkeeper.Keeper,
+	cdc codec.Codec,
+	accountKeeper authkeeper.AccountKeeper,
+	bankKeeper bankkeeper.Keeper,
 	claimKeeper claimkeeper.Keeper,
+	consumerKeeper *ccvconsumerkeeper.Keeper,
+	icqKeeper icqkeeper.Keeper,
+	stakeibcKeeper stakeibckeeper.Keeper,
+	stakingKeeper stakingkeeper.Keeper,
+	evmosvestingKeeper evmosvestingkeeper.Keeper,
+	stakeibcStoreKey storetypes.StoreKey,
 ) upgradetypes.UpgradeHandler {
 	return func(ctx sdk.Context, _ upgradetypes.Plan, vm module.VersionMap) (module.VersionMap, error) {
 		ctx.Logger().Info("Starting upgrade v14...")
+
 		evk := evmosvestingKeeper
 		sk := stakingKeeper
 		ak := accountKeeper
 		bk := bankKeeper
 		ck := consumerKeeper
 		sibc := stakeibcKeeper
+		currentVersions := mm.GetVersionMap()
 
-		// AIRDROP CHANGES
+		// Migrate the Validator and HostZone structs from stakeibc
+		utils.LogModuleMigration(ctx, currentVersions, stakeibctypes.ModuleName)
+		if err := stakeibcmigration.MigrateStore(ctx, stakeibcStoreKey, cdc); err != nil {
+			return vm, errorsmod.Wrapf(err, "unable to migrate stakeibc store")
+		}
+
+		// Update Stakeibc Params
+		MigrateStakeibcParams(ctx, stakeibcKeeper)
+
+		// Clear out any pending queries since the Query type updated
+		// There shouldn't be any queries here unless the upgrade happened right at the epoch
+		ClearPendingQueries(ctx, icqKeeper)
+
+		// Enable LSM for the Gaia
+		EnableLSMForGaia(ctx, stakeibcKeeper)
+
+		// Add airdrops for Injective, Comedex, Somm, and Umee
 		if err := InitAirdrops(ctx, claimKeeper); err != nil {
 			return vm, errorsmod.Wrapf(err, "unable to migrate airdrop")
 		}
@@ -128,6 +151,16 @@ func CreateUpgradeHandler(
 		if err := SendConsumerFeePoolToFeeDistribution(ctx, ck, bk, ak, sk); err != nil {
 			return vm, errorsmod.Wrapf(err, "unable to send consumer fee pool to fee distribution")
 		}
+
+		// `RunMigrations` (below) checks the old consensus version of each module (found in
+		// the store) and compares it against the updated consensus version in the binary
+		// If the old and new consensus versions are not the same, it attempts to call that
+		// module's migration function that must be registered ahead of time
+		//
+		// Since the migrations above were executed directly (instead of being registered
+		// and invoked through a Migrator), we need to set the module versions in the versionMap
+		// to the new version, to prevent RunMigrations from attempting to re-run each migrations
+		vm[stakeibctypes.ModuleName] = currentVersions[stakeibctypes.ModuleName]
 
 		return mm.RunMigrations(ctx, configurator, vm)
 	}
@@ -252,6 +285,39 @@ func MigrateAccount1(ctx sdk.Context, evk evmosvestingkeeper.Keeper, sk stakingk
 	return nil
 }
 
+// Migrate the stakeibc params, specifically:
+//   - Remove SafetyNumValidators
+//   - Remove SafetyMaxSlashPercentage
+//   - Add ValidatorSlashQueryThreshold
+//
+// NOTE: If a parameter is added, the old params cannot be unmarshalled
+// to the new schema. To get around this, we have to set each parameter explicitly
+// Considering all mainnet stakeibc params are set to the default, we can just use that
+func MigrateStakeibcParams(ctx sdk.Context, k stakeibckeeper.Keeper) {
+	params := stakeibctypes.DefaultParams()
+	k.SetParams(ctx, params)
+}
+
+// Since the Query struct was updated, it's easier to just clear out any pending
+// queries rather than attempt to migrate them
+func ClearPendingQueries(ctx sdk.Context, k icqkeeper.Keeper) {
+	for _, query := range k.AllQueries(ctx) {
+		k.DeleteQuery(ctx, query.Id)
+	}
+}
+
+// Enable LSM liquid stakes for Gaia
+func EnableLSMForGaia(ctx sdk.Context, k stakeibckeeper.Keeper) error {
+	hostZone, found := k.GetHostZone(ctx, GaiaChainId)
+	if !found {
+		return stakeibctypes.ErrHostZoneNotFound.Wrapf(GaiaChainId)
+	}
+
+	hostZone.LsmLiquidStakeEnabled = true
+	k.SetHostZone(ctx, hostZone)
+
+	return nil
+}
 func MigrateAccount2(ctx sdk.Context, ak authkeeper.AccountKeeper) error {
 	// Get account
 	account := ak.GetAccount(ctx, sdk.MustAccAddressFromBech32(Account2))

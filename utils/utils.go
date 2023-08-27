@@ -10,6 +10,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/address"
 	"github.com/cosmos/cosmos-sdk/types/bech32"
+	"github.com/cosmos/cosmos-sdk/types/module"
 
 	errorsmod "cosmossdk.io/errors"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -269,4 +270,10 @@ func LogHeader(s string, a ...any) string {
 	header := fmt.Sprintf(s, a...)
 	pad := strings.Repeat("-", (lineLength-len(header))/2)
 	return fmt.Sprintf("%s %s %s", pad, header, pad)
+}
+
+// Logs a module's migration info
+func LogModuleMigration(ctx sdk.Context, versionMap module.VersionMap, moduleName string) {
+	currentVersion := versionMap[moduleName]
+	ctx.Logger().Info(fmt.Sprintf("migrating module %s from version %d to version %d", moduleName, currentVersion-1, currentVersion))
 }
