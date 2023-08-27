@@ -16,6 +16,7 @@ import (
 	"github.com/Stride-Labs/stride/v13/app/apptesting"
 	v14 "github.com/Stride-Labs/stride/v13/app/upgrades/v14"
 	claimtypes "github.com/Stride-Labs/stride/v13/x/claim/types"
+	"github.com/Stride-Labs/stride/v13/x/interchainquery/types"
 	oldstakeibctypes "github.com/Stride-Labs/stride/v13/x/stakeibc/migrations/v3/types"
 	stakeibctypes "github.com/Stride-Labs/stride/v13/x/stakeibc/types"
 )
@@ -42,13 +43,16 @@ func TestKeeperTestSuite(t *testing.T) {
 func (s *UpgradeTestSuite) TestUpgrade() {
 	s.SetupOldAirdrops()
 	checkStakeibcStoreAfterUpgrade := s.SetupOldStakeibcStore()
+	checkPendingQueriesRemoved := s.SetupPendingQueries()
 
 	s.ConfirmUpgradeSucceededs("v14", dummyUpgradeHeight)
 
 	s.CheckAirdropsAfterUpgrade()
 	checkStakeibcStoreAfterUpgrade()
+	checkPendingQueriesRemoved()
 }
 
+// Setups the airdrop store before the upgrade to test that airdrops were added
 func (s *UpgradeTestSuite) SetupOldAirdrops() {
 	// Add a test aidrop to the store
 	params := claimtypes.Params{
@@ -67,6 +71,7 @@ func (s *UpgradeTestSuite) SetupOldAirdrops() {
 	s.Require().NoError(err, "no error expected when setting vesting initial period")
 }
 
+// Checks that the injective, comdex, somm, and umee airdrops were added after the upgrade
 func (s *UpgradeTestSuite) CheckAirdropsAfterUpgrade() {
 	afterCtx := s.Ctx.WithBlockHeight(dummyUpgradeHeight)
 
@@ -96,6 +101,7 @@ func (s *UpgradeTestSuite) CheckAirdropsAfterUpgrade() {
 	s.CheckAirdropAdded(afterCtx, umeeAirdrop, v14.UmeeAirdropDistributor, v14.UmeeAirdropIdentifier, v14.UmeeChainId, false)
 }
 
+// Helper function to check the attributes of the new Airdrop
 func (s *UpgradeTestSuite) CheckAirdropAdded(ctx sdk.Context, airdrop *claimtypes.Airdrop, distributor string, identifier string, chainId string, autopilotEnabled bool) {
 	// Check that the params of the airdrop were initialized
 	s.Require().Equal(identifier, airdrop.AirdropIdentifier, fmt.Sprintf("%s airdrop identifier", identifier))
@@ -117,6 +123,8 @@ func (s *UpgradeTestSuite) CheckAirdropAdded(ctx sdk.Context, airdrop *claimtype
 	s.Require().Equal(epochInfo.Duration, claimtypes.DefaultEpochDuration, "epoch duration should be equal to airdrop duration")
 }
 
+// Setups up the stakeibc store with old host zones before the upgrade
+// Returns a callback function that verifies the expected state after the upgrade
 func (s *UpgradeTestSuite) SetupOldStakeibcStore() func() {
 	codec := app.MakeEncodingConfig().Marshaler
 	stakeibcStore := s.Ctx.KVStore(s.App.GetKey(stakeibctypes.StoreKey))
@@ -150,18 +158,27 @@ func (s *UpgradeTestSuite) SetupOldStakeibcStore() func() {
 		hostzoneStore.Set([]byte(hostZone.ChainId), hostZoneBz)
 	}
 
+	// Add gaia host to test that LSM is enabled
+	hostZoneBz := codec.MustMarshal(&oldstakeibctypes.HostZone{
+		ChainId: v14.GaiaChainId,
+	})
+	hostzoneStore.Set([]byte(v14.GaiaChainId), hostZoneBz)
+
 	return func() {
 		// Confirm the host zones have been migrated properly
 		for i := int64(1); i <= 2; i++ {
 			hostZone, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx, fmt.Sprintf("chain-%d", i))
 			s.Require().True(found)
 
+			// Check new host zone attributes
 			s.Require().Equal(fmt.Sprintf("chain-%d", i), hostZone.ChainId, "chain-id")
 			s.Require().Equal(fmt.Sprintf("address-%d", i), hostZone.DepositAddress, "deposit address")
 			s.Require().Equal(fmt.Sprintf("delegation-%d", i), hostZone.DelegationIcaAddress, "delegation address")
 			s.Require().Equal(uint64(14), hostZone.UnbondingPeriod, "unbonding period")
 			s.Require().Equal(sdkmath.NewInt(i), hostZone.TotalDelegations, "total delegations")
+			s.Require().Equal(false, hostZone.LsmLiquidStakeEnabled, "total delegations")
 
+			// Check new validator attributes
 			validator := hostZone.Validators[0]
 			s.Require().Equal(fmt.Sprintf("val-%d", i), validator.Address, "validator address")
 			s.Require().Equal(sdk.NewDec(i), validator.SharesToTokensRate, "validator shares to tokens rate")
@@ -169,5 +186,30 @@ func (s *UpgradeTestSuite) SetupOldStakeibcStore() func() {
 			s.Require().Equal(int64(0), validator.DelegationChangesInProgress, "validator delegations in progress")
 			s.Require().Equal(sdk.ZeroInt(), validator.SlashQueryProgressTracker, "validator delegations in progress")
 		}
+
+		// Confirm gaia has LSM enabled
+		hostZone, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx, v14.GaiaChainId)
+		s.Require().True(found)
+		s.Require().True(hostZone.LsmLiquidStakeEnabled)
+
+		// Finally check that the new params were set
+		params := s.App.StakeibcKeeper.GetParams(s.Ctx)
+		s.Require().Equal(stakeibctypes.DefaultParams(), params, "new params set after upgrade")
+	}
+}
+
+// Setups pending queries in the store to test that the queries were removed
+// Returns a callback function to verify they were removed
+func (s *UpgradeTestSuite) SetupPendingQueries() func() {
+	for i := 0; i < 3; i++ {
+		s.App.InterchainqueryKeeper.SetQuery(s.Ctx, types.Query{Id: fmt.Sprintf("query-%d", i)})
+	}
+
+	numQueries := len(s.App.InterchainqueryKeeper.AllQueries(s.Ctx))
+	s.Require().Equal(3, numQueries, "number of queres before the upgrade")
+
+	return func() {
+		numQueries := len(s.App.InterchainqueryKeeper.AllQueries(s.Ctx))
+		s.Require().Zero(numQueries, "number of queres after the upgrade")
 	}
 }
