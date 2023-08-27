@@ -207,10 +207,8 @@ func (k Keeper) DecrementValidatorDelegationChangesInProgress(hostZone *types.Ho
 		return errorsmod.Wrapf(types.ErrValidatorNotFound, "validator %s not found", validatorAddress)
 	}
 	if validator.DelegationChangesInProgress == 0 {
-		// TODO: Revert after upgrade v14
-		// return errorsmod.Wrapf(types.ErrInvalidValidatorDelegationUpdates,
-		// 	"cannot decrement the number of delegation updates if the validator has 0 updates in progress")
-		return nil
+		return errorsmod.Wrapf(types.ErrInvalidValidatorDelegationUpdates,
+			"cannot decrement the number of delegation updates if the validator has 0 updates in progress")
 	}
 	validator.DelegationChangesInProgress -= 1
 	hostZone.Validators[valIndex] = &validator

@@ -29,6 +29,7 @@ func convertToNewValidator(oldValidator oldstakeibctypes.Validator, totalDelegat
 	queryThreshold := sdk.NewDecWithPrec(int64(ValidatorSlashQueryThreshold), 2) // percentage
 	slashQueryCheckpoint := queryThreshold.Mul(sdk.NewDecFromInt(totalDelegations)).TruncateInt()
 
+	// Note: The old name of "TokensToShares" was slightly misleading - it represents the conversion of shares to tokens
 	sharesToTokensRate := DefaultExchangeRate
 	if oldValidator.InternalExchangeRate != nil && !oldValidator.InternalExchangeRate.InternalTokensToSharesRate.IsNil() {
 		sharesToTokensRate = oldValidator.InternalExchangeRate.InternalTokensToSharesRate
@@ -63,8 +64,8 @@ func convertToNewHostZone(oldHostZone oldstakeibctypes.HostZone) newstakeibctype
 
 	return newstakeibctypes.HostZone{
 		ChainId:               oldHostZone.ChainId,
-		ConnectionId:          oldHostZone.ConnectionId,
 		Bech32Prefix:          oldHostZone.Bech32Prefix,
+		ConnectionId:          oldHostZone.ConnectionId,
 		TransferChannelId:     oldHostZone.TransferChannelId,
 		IbcDenom:              oldHostZone.IbcDenom,
 		HostDenom:             oldHostZone.HostDenom,
