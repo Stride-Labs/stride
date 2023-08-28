@@ -9,6 +9,7 @@ import (
 
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/Stride-Labs/stride/v13/app"
@@ -24,6 +25,7 @@ import (
 	recordtypes "github.com/Stride-Labs/stride/v13/x/records/types"
 	stakeibckeeper "github.com/Stride-Labs/stride/v13/x/stakeibc/keeper"
 	oldstakeibctypes "github.com/Stride-Labs/stride/v13/x/stakeibc/migrations/v2/types"
+	newstakeibctypes "github.com/Stride-Labs/stride/v13/x/stakeibc/migrations/v3/types"
 	stakeibctypes "github.com/Stride-Labs/stride/v13/x/stakeibc/types"
 )
 
@@ -42,6 +44,8 @@ func TestKeeperTestSuite(t *testing.T) {
 }
 
 func (s *UpgradeTestSuite) TestUpgrade() {
+	// Note: The max slash safety threshold was deprecated in v14 and was later removed from this unit test
+
 	// Setup stores for migrated modules
 	codec := app.MakeEncodingConfig().Marshaler
 	checkClaimStoreAfterMigration := s.SetupOldClaimStore(codec)
@@ -51,7 +55,7 @@ func (s *UpgradeTestSuite) TestUpgrade() {
 
 	// Setup store for stale query and max slash percent param
 	checkStaleQueryRemoval := s.SetupRemoveStaleQuery()
-	checkMaxSlashParamAdded := s.SetupAddMaxSlashPercentParam()
+	// checkMaxSlashParamAdded := s.SetupAddMaxSlashPercentParam()
 
 	// Run upgrade
 	s.ConfirmUpgradeSucceededs("v5", dummyUpgradeHeight)
@@ -64,7 +68,7 @@ func (s *UpgradeTestSuite) TestUpgrade() {
 
 	// Confirm query was removed and max slash percent parameter was added
 	checkStaleQueryRemoval()
-	checkMaxSlashParamAdded()
+	// checkMaxSlashParamAdded()
 }
 
 // Sets up the old claim store and returns a callback function that can be used to verify
@@ -369,15 +373,17 @@ func (s *UpgradeTestSuite) SetupOldStakeibcStore(codec codec.Codec) func() {
 
 	// Callback to check stakeibc store after migration
 	return func() {
-		hostZone, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx, hostZoneId)
-		s.Require().True(found, "host zone found")
+		hostZoneBz := hostzoneStore.Get([]byte(hostZone.ChainId))
+		var hostZone newstakeibctypes.HostZone
+		codec.MustUnmarshal(hostZoneBz, &hostZone)
+
 		s.Require().Equal(hostZone.ChainId, hostZoneId, "host zone chain id")
 
 		s.Require().Equal(hostZone.DelegationAccount.Address, delegationAddress, "delegation address")
 		s.Require().Equal(hostZone.RedemptionAccount.Address, redemptionAddress, "redemption address")
 
-		s.Require().Equal(hostZone.DelegationAccount.Target, stakeibctypes.ICAAccountType_DELEGATION, "delegation target")
-		s.Require().Equal(hostZone.RedemptionAccount.Target, stakeibctypes.ICAAccountType_REDEMPTION, "redemption target")
+		s.Require().Equal(hostZone.DelegationAccount.Target, newstakeibctypes.ICAAccountType_DELEGATION, "delegation target")
+		s.Require().Equal(hostZone.RedemptionAccount.Target, newstakeibctypes.ICAAccountType_REDEMPTION, "redemption target")
 
 		s.Require().Nil(hostZone.FeeAccount, "fee account")
 		s.Require().Nil(hostZone.WithdrawalAccount, "withdrawal account")
@@ -410,17 +416,19 @@ func (s *UpgradeTestSuite) SetupRemoveStaleQuery() func() {
 // the the parameter was successfully updated back to it's default value after the upgrade
 func (s *UpgradeTestSuite) SetupAddMaxSlashPercentParam() func() {
 	// Set the max slash percent to 0
-	stakeibcParamStore := s.App.GetSubspace(stakeibctypes.ModuleName)
-	stakeibcParamStore.Set(s.Ctx, stakeibctypes.KeySafetyMaxSlashPercent, uint64(0))
+	paramSet := paramtypes.NewParamSetPair(newstakeibctypes.KeySafetyMaxSlashPercent, uint64(0), func(value interface{}) error { return nil })
+	keyTable := paramtypes.NewKeyTable(paramSet)
+	stakeibcParamStore := s.App.GetSubspace(stakeibctypes.ModuleName).WithKeyTable(keyTable)
+	stakeibcParamStore.Set(s.Ctx, newstakeibctypes.KeySafetyMaxSlashPercent, uint64(0))
 
 	// Confirm it was updated
-	maxSlashPercent := s.App.StakeibcKeeper.GetParam(s.Ctx, stakeibctypes.KeySafetyMaxSlashPercent)
+	maxSlashPercent := s.App.StakeibcKeeper.GetParam(s.Ctx, newstakeibctypes.KeySafetyMaxSlashPercent)
 	s.Require().Equal(uint64(0), maxSlashPercent, "max slash percent should be 0")
 
 	// Callback to check that the parameter was added to the store
 	return func() {
 		// Confirm MaxSlashPercent was added with the default value
-		maxSlashPercent := s.App.StakeibcKeeper.GetParam(s.Ctx, stakeibctypes.KeySafetyMaxSlashPercent)
-		s.Require().Equal(stakeibctypes.DefaultSafetyMaxSlashPercent, maxSlashPercent, "max slash percent should be default")
+		maxSlashPercent := s.App.StakeibcKeeper.GetParam(s.Ctx, newstakeibctypes.KeySafetyMaxSlashPercent)
+		s.Require().Equal(newstakeibctypes.DefaultSafetyMaxSlashPercent, maxSlashPercent, "max slash percent should be default")
 	}
 }

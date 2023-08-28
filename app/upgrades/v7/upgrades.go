@@ -6,6 +6,8 @@ import (
 	errorsmod "cosmossdk.io/errors"
 
 	"github.com/cosmos/cosmos-sdk/codec"
+	"github.com/cosmos/cosmos-sdk/store/prefix"
+	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/address"
 	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
@@ -27,6 +29,7 @@ import (
 	mintkeeper "github.com/Stride-Labs/stride/v13/x/mint/keeper"
 	minttypes "github.com/Stride-Labs/stride/v13/x/mint/types"
 	stakeibckeeper "github.com/Stride-Labs/stride/v13/x/stakeibc/keeper"
+	newstakeibctypes "github.com/Stride-Labs/stride/v13/x/stakeibc/migrations/v3/types"
 	stakeibctypes "github.com/Stride-Labs/stride/v13/x/stakeibc/types"
 )
 
@@ -41,6 +44,7 @@ func CreateUpgradeHandler(
 	icahostKeeper icahostkeeper.Keeper,
 	mintKeeper mintkeeper.Keeper,
 	stakeibcKeeper stakeibckeeper.Keeper,
+	stakeibcStoreKey storetypes.StoreKey,
 ) upgradetypes.UpgradeHandler {
 	return func(ctx sdk.Context, _ upgradetypes.Plan, vm module.VersionMap) (module.VersionMap, error) {
 		ctx.Logger().Info("Starting upgrade v7...")
@@ -55,10 +59,10 @@ func CreateUpgradeHandler(
 		AddICAHostAllowMessages(ctx, icahostKeeper)
 
 		// Add min/max redemption rate threshold and a `Halted`` boolean to each host zone
-		AddRedemptionRateSafetyChecks(ctx, stakeibcKeeper)
+		AddRedemptionRateSafetyChecks(cdc, stakeibcStoreKey, ctx, stakeibcKeeper)
 
 		// Change the juno unbonding frequency to 5
-		if err := ModifyJunoUnbondingFrequency(ctx, stakeibcKeeper); err != nil {
+		if err := ModifyJunoUnbondingFrequency(cdc, stakeibcStoreKey, ctx, stakeibcKeeper); err != nil {
 			return vm, errorsmod.Wrapf(err, "unable to modify juno unbonding frequency")
 		}
 
@@ -75,6 +79,45 @@ func CreateUpgradeHandler(
 		ctx.Logger().Info("Running module mogrations...")
 		return mm.RunMigrations(ctx, configurator, vm)
 	}
+}
+
+// GetHostZone but with fixed historical stakeibc types
+func GetHostZone(
+	cdc codec.Codec,
+	stakeibcStoreKey storetypes.StoreKey,
+	ctx sdk.Context,
+	chainId string,
+) (val newstakeibctypes.HostZone, found bool) {
+	store := prefix.NewStore(ctx.KVStore(stakeibcStoreKey), stakeibctypes.KeyPrefix(stakeibctypes.HostZoneKey))
+	b := store.Get([]byte(chainId))
+	if b == nil {
+		return val, false
+	}
+	cdc.MustUnmarshal(b, &val)
+	return val, true
+}
+
+// SetHostZone but with fixed historical stakeibc types
+func SetHostZone(cdc codec.Codec, stakeibcStoreKey storetypes.StoreKey, ctx sdk.Context, hostZone newstakeibctypes.HostZone) {
+	store := prefix.NewStore(ctx.KVStore(stakeibcStoreKey), stakeibctypes.KeyPrefix(stakeibctypes.HostZoneKey))
+	b := cdc.MustMarshal(&hostZone)
+	store.Set([]byte(hostZone.ChainId), b)
+}
+
+// GetAllHostZone but with fixed historical stakeibc types
+func GetAllHostZone(cdc codec.Codec, stakeibcStoreKey storetypes.StoreKey, ctx sdk.Context) (list []newstakeibctypes.HostZone) {
+	store := prefix.NewStore(ctx.KVStore(stakeibcStoreKey), stakeibctypes.KeyPrefix(stakeibctypes.HostZoneKey))
+	iterator := sdk.KVStorePrefixIterator(store, []byte{})
+
+	defer iterator.Close()
+
+	for ; iterator.Valid(); iterator.Next() {
+		var val newstakeibctypes.HostZone
+		cdc.MustUnmarshal(iterator.Value(), &val)
+		list = append(list, val)
+	}
+
+	return
 }
 
 // Add a new hourly epoch that will be used by the rate limit module
@@ -131,7 +174,7 @@ func AddICAHostAllowMessages(ctx sdk.Context, k icahostkeeper.Keeper) {
 
 // Add the min/max redemption rate to each host zone as safety bounds, using the default for each
 // Also set the Halted boolean to false
-func AddRedemptionRateSafetyChecks(ctx sdk.Context, k stakeibckeeper.Keeper) {
+func AddRedemptionRateSafetyChecks(cdc codec.Codec, storeKey storetypes.StoreKey, ctx sdk.Context, k stakeibckeeper.Keeper) {
 	ctx.Logger().Info("Setting min/max redemption rate safety bounds on each host zone")
 
 	// Set new stakeibc params
@@ -147,29 +190,29 @@ func AddRedemptionRateSafetyChecks(ctx sdk.Context, k stakeibckeeper.Keeper) {
 	defaultMinRedemptionRate := sdk.NewDecWithPrec(int64(params.DefaultMinRedemptionRateThreshold), 2)
 	defaultMaxRedemptionRate := sdk.NewDecWithPrec(int64(params.DefaultMaxRedemptionRateThreshold), 2)
 
-	for _, hostZone := range k.GetAllHostZone(ctx) {
+	for _, hostZone := range GetAllHostZone(cdc, storeKey, ctx) {
 
 		hostZone.MinRedemptionRate = defaultMinRedemptionRate
 		hostZone.MaxRedemptionRate = defaultMaxRedemptionRate
 		hostZone.Halted = false
 
-		k.SetHostZone(ctx, hostZone)
+		SetHostZone(cdc, storeKey, ctx, hostZone)
 	}
 }
 
 // Update the unbonding frequency of juno to 5 to align with the 28 day unbonding period
-func ModifyJunoUnbondingFrequency(ctx sdk.Context, k stakeibckeeper.Keeper) error {
+func ModifyJunoUnbondingFrequency(cdc codec.Codec, storeKey storetypes.StoreKey, ctx sdk.Context, k stakeibckeeper.Keeper) error {
 	ctx.Logger().Info("Updating juno unbonding frequency")
 
 	junoChainId := "juno-1"
 	unbondingFrequency := uint64(5)
 
-	junoHostZone, found := k.GetHostZone(ctx, junoChainId)
+	junoHostZone, found := GetHostZone(cdc, storeKey, ctx, junoChainId)
 	if !found {
 		return stakeibctypes.ErrHostZoneNotFound
 	}
 	junoHostZone.UnbondingFrequency = unbondingFrequency
-	k.SetHostZone(ctx, junoHostZone)
+	SetHostZone(cdc, storeKey, ctx, junoHostZone)
 
 	return nil
 }

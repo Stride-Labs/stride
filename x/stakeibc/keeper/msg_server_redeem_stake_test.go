@@ -35,24 +35,24 @@ func (s *KeeperTestSuite) SetupRedeemStake() RedeemStakeTestCase {
 	s.FundAccount(user.acc, user.atomBalance)
 	s.FundAccount(user.acc, user.stAtomBalance)
 
-	zoneAddress := stakeibctypes.NewZoneAddress(HostChainId)
+	depositAddress := stakeibctypes.NewHostZoneDepositAddress(HostChainId)
 
 	zoneAccount := Account{
-		acc:           zoneAddress,
+		acc:           depositAddress,
 		atomBalance:   sdk.NewInt64Coin("ibc/uatom", 10_000_000),
 		stAtomBalance: sdk.NewInt64Coin("stuatom", 10_000_000),
 	}
 	s.FundAccount(zoneAccount.acc, zoneAccount.atomBalance)
 	s.FundAccount(zoneAccount.acc, zoneAccount.stAtomBalance)
 
-	// TODO define the host zone with stakedBal and validators with staked amounts
+	// TODO define the host zone with total delegation and validators with staked amounts
 	hostZone := stakeibctypes.HostZone{
-		ChainId:        HostChainId,
-		HostDenom:      "uatom",
-		Bech32Prefix:   "cosmos",
-		RedemptionRate: sdk.NewDec(1.0),
-		StakedBal:      sdkmath.NewInt(1234567890),
-		Address:        zoneAddress.String(),
+		ChainId:          HostChainId,
+		HostDenom:        "uatom",
+		Bech32Prefix:     "cosmos",
+		RedemptionRate:   sdk.NewDec(1.0),
+		TotalDelegations: sdkmath.NewInt(1234567890),
+		DepositAddress:   depositAddress.String(),
 	}
 
 	epochTrackerDay := stakeibctypes.EpochTracker{
@@ -280,7 +280,7 @@ func (s *KeeperTestSuite) TestRedeemStake_InvalidHostAddress() {
 
 	// Update hostzone with invalid address
 	badHostZone, _ := s.App.StakeibcKeeper.GetHostZone(s.Ctx, tc.validMsg.HostZone)
-	badHostZone.Address = "cosmosXXX"
+	badHostZone.DepositAddress = "cosmosXXX"
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, badHostZone)
 
 	_, err := s.GetMsgServer().RedeemStake(sdk.WrapSDKContext(s.Ctx), &tc.validMsg)

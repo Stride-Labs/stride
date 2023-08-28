@@ -2,7 +2,6 @@ package keeper_test
 
 import (
 	"github.com/cosmos/gogoproto/proto"
-	icatypes "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/types"
 	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
 	ibctesting "github.com/cosmos/ibc-go/v7/testing"
 
@@ -21,9 +20,7 @@ type SubmitMetricUpdateTestCase struct {
 func (s *KeeperTestSuite) SetupTestSubmitMetricUpdate() SubmitMetricUpdateTestCase {
 	// Create clients, connections, and an oracle ICA channel
 	owner := types.FormatICAAccountOwner(HostChainId, types.ICAAccountType_Oracle)
-	channelId := s.CreateICAChannel(owner)
-	portId, err := icatypes.NewControllerPortID(owner)
-	s.Require().NoError(err, "no error expected when formatting portId")
+	channelId, portId := s.CreateICAChannel(owner)
 
 	// Create oracle
 	oracle := types.Oracle{

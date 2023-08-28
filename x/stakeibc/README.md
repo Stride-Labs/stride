@@ -32,12 +32,14 @@ StrideCommission (default uint64 = 10)
 ICATimeoutNanos(default uint64 = 600000000000)
 BufferSize (default uint64 = 5)
 IbcTimeoutBlocks (default uint64 = 300)
-FeeTransferTimeoutNanos (default uint64 = 1800000000000
+FeeTransferTimeoutNanos (default uint64 = 1800000000000)
 DefaultMinRedemptionRateThreshold (default uint64 = 90)
 DefaultMaxRedemptionRateThreshold (default uint64 = 150)
 MaxStakeICACallsPerEpoch (default uint64 = 100)
 IBCTransferTimeoutNanos (default uint64 = 1800000000000)
-SafetyNumValidators (default uint64 = 35)
+MinRedemptionRates (default uint64 = 90)
+MaxRedemptionRates (default uint64 = 150)
+ValidatorSlashQueryThreshold (default uint64 = 1)
 ```
 
 ## Keeper functions

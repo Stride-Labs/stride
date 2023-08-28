@@ -12,7 +12,7 @@
                     "/cosmos.staking.v1beta1.MsgDelegate",
                     "/cosmos.staking.v1beta1.MsgUndelegate",
                     "/cosmos.staking.v1beta1.MsgBeginRedelegate",
-                    "/cosmos.staking.v1beta1.MsgRedeemTokensforShares",
+                    "/cosmos.staking.v1beta1.MsgRedeemTokensForShares",
                     "/cosmos.staking.v1beta1.MsgTokenizeShares",
                     "/cosmos.staking.v1beta1.MsgCancelUnbondingDelegation",
                     "/cosmos.distribution.v1beta1.MsgWithdrawDelegatorReward",

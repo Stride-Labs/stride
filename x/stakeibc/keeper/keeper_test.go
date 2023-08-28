@@ -24,6 +24,10 @@ const (
 	IbcOsmo     = "ibc/uosmo"
 	OsmoPrefix  = "osmo"
 	OsmoChainId = "OSMO"
+
+	ValAddress           = "cosmosvaloper1uk4ze0x4nvh4fk0xm4jdud58eqn4yxhrdt795p"
+	DelegationICAAddress = "cosmos1gcx4yeplccq9nk6awzmm0gq8jf7yet80qj70tkwy0mz7pg87nepswn2dj8"
+	LSMTokenBaseDenom    = ValAddress + "/32"
 )
 
 type KeeperTestSuite struct {

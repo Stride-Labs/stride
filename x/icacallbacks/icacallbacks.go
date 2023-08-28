@@ -81,6 +81,7 @@ func UnpackAcknowledgementResponse(ctx sdk.Context, logger log.Logger, ack []byt
 	case *channeltypes.Acknowledgement_Error:
 		logger.Error(fmt.Sprintf("acknowledgement error: %s", response.Error))
 		return &types.AcknowledgementResponse{Status: types.AckResponseStatus_FAILURE, Error: response.Error}, nil
+
 	default:
 		return nil, errorsmod.Wrapf(channeltypes.ErrInvalidAcknowledgement, "unsupported acknowledgement response field type %T", response)
 	}
