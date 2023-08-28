@@ -51,6 +51,7 @@ func TestMsgRemoveOracle(t *testing.T) {
 			if test.err == "" {
 				require.NoError(t, test.msg.ValidateBasic(), "test: %v", test.name)
 				require.Equal(t, test.msg.OracleChainId, validChainId, "oracle chain-id")
+				require.Equal(t, test.msg.Type(), "remove_oracle", "type")
 			} else {
 				require.ErrorContains(t, test.msg.ValidateBasic(), test.err, "test: %v", test.name)
 			}
