@@ -10,6 +10,8 @@ import (
 	"github.com/Stride-Labs/stride/v13/utils"
 )
 
+const TypeMsgAddOracle = "add_oracle"
+
 var _ sdk.Msg = &MsgAddOracle{}
 
 func NewMsgAddOracle(creator string, connectionId string) *MsgAddOracle {
@@ -17,6 +19,10 @@ func NewMsgAddOracle(creator string, connectionId string) *MsgAddOracle {
 		Creator:      creator,
 		ConnectionId: connectionId,
 	}
+}
+
+func (msg MsgAddOracle) Type() string {
+	return TypeMsgAddOracle
 }
 
 func (msg *MsgAddOracle) GetSigners() []sdk.AccAddress {

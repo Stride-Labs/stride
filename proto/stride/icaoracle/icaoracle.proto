@@ -39,7 +39,4 @@ message Metric {
 }
 
 // Attributes associated with a RedemptionRate metric update
-message RedemptionRateAttributes {
-  string denom = 1;
-  string base_denom = 2;
-}
+message RedemptionRateAttributes { string sttoken_denom = 1; }

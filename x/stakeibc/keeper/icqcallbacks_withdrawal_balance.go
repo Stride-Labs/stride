@@ -9,7 +9,7 @@ import (
 	errorsmod "cosmossdk.io/errors"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
-	proto "github.com/cosmos/gogoproto/proto"
+	"github.com/cosmos/gogoproto/proto"
 	"github.com/spf13/cast"
 
 	icqkeeper "github.com/Stride-Labs/stride/v13/x/interchainquery/keeper"

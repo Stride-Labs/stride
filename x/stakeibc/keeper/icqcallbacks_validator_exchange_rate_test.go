@@ -7,7 +7,7 @@ import (
 	sdkmath "cosmossdk.io/math"
 	ibctesting "github.com/cosmos/ibc-go/v7/testing"
 
-	"github.com/gogo/protobuf/proto" //nolint:staticcheck
+	"github.com/cosmos/gogoproto/proto"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/bech32"

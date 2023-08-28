@@ -41,6 +41,7 @@ message MsgInstantiateOracle {
   string creator = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
   string oracle_chain_id = 2;
   uint64 contract_code_id = 3;
+  string transfer_channel_on_oracle = 4;
 }
 message MsgInstantiateOracleResponse {}
 

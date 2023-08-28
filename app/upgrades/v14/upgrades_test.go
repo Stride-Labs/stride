@@ -6,20 +6,20 @@ import (
 	"time"
 
 	sdkmath "cosmossdk.io/math"
-	evmosvestingtypes "github.com/evmos/vesting/x/vesting/types"
-
-	stakeibctypes "github.com/Stride-Labs/stride/v13/x/stakeibc/types"
-
+	"github.com/cosmos/cosmos-sdk/store/prefix"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	"github.com/cosmos/cosmos-sdk/x/auth/vesting/types"
-
-	sdk "github.com/cosmos/cosmos-sdk/types"
+	evmosvestingtypes "github.com/evmos/vesting/x/vesting/types"
 	"github.com/stretchr/testify/suite"
 
-	claimtypes "github.com/Stride-Labs/stride/v13/x/claim/types"
-
+	"github.com/Stride-Labs/stride/v13/app"
 	"github.com/Stride-Labs/stride/v13/app/apptesting"
 	v14 "github.com/Stride-Labs/stride/v13/app/upgrades/v14"
+	claimtypes "github.com/Stride-Labs/stride/v13/x/claim/types"
+	interchainquerytypes "github.com/Stride-Labs/stride/v13/x/interchainquery/types"
+	oldstakeibctypes "github.com/Stride-Labs/stride/v13/x/stakeibc/migrations/v3/types"
+	stakeibctypes "github.com/Stride-Labs/stride/v13/x/stakeibc/types"
 )
 
 var (
@@ -31,6 +31,15 @@ var (
 
 	osmoAirdropId = "osmosis"
 	ustrd         = "ustrd"
+
+	testHostZones = []struct {
+		chainId string
+		denom   string
+	}{
+		{chainId: "cosmoshub-4", denom: "uatom"},
+		{chainId: "osmosis-1", denom: "uosmo"},
+		{chainId: "juno-1", denom: "ujuno"},
+	}
 )
 
 type UpgradeTestSuite struct {
@@ -51,6 +60,8 @@ func (s *UpgradeTestSuite) TestUpgrade() {
 	s.SetupVestingStoreBeforeUpgrade()
 	s.FundConsToSendToProviderModuleAccount()
 	s.SetupConsumerRewards()
+	checkStakeibcStoreAfterUpgrade := s.SetupOldStakeibcStore()
+	checkPendingQueriesRemoved := s.SetupPendingQueries()
 
 	// Upgrade
 	s.ConfirmUpgradeSucceededs("v14", dummyUpgradeHeight)
@@ -61,6 +72,9 @@ func (s *UpgradeTestSuite) TestUpgrade() {
 	s.CheckRefundAfterUpgrade()
 	s.CheckAirdropsInitialized()
 	s.VerifyConsumerRewards()
+	s.CheckAirdropsInitialized()
+	checkStakeibcStoreAfterUpgrade()
+	checkPendingQueriesRemoved()
 }
 
 func (s *UpgradeTestSuite) SetupConsumerRewards() {
@@ -69,15 +83,7 @@ func (s *UpgradeTestSuite) SetupConsumerRewards() {
 	consumerParams.RewardDenoms = []string{"denomA", "denomB"}
 	s.App.ConsumerKeeper.SetParams(s.Ctx, consumerParams)
 
-	// Add host zones
-	hostZones := []stakeibctypes.HostZone{
-		{ChainId: "cosmoshub-4", HostDenom: "uatom"},
-		{ChainId: "osmosis-1", HostDenom: "uosmo"},
-		{ChainId: "juno-1", HostDenom: "ujuno"},
-	}
-	for _, hostZone := range hostZones {
-		s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
-	}
+	// The new host zones are added in the SetupStakeibcStore function
 }
 
 func (s *UpgradeTestSuite) VerifyConsumerRewards() {
@@ -168,7 +174,6 @@ func (s *UpgradeTestSuite) CheckVestingStoreAfterUpgrade() {
 	s.Require().Equal(expectedVestedCoins, coins.AmountOf(s.App.StakingKeeper.BondDenom(s.Ctx)).Int64())
 }
 
-// ---------------------- Utils ----------------------
 func initBaseAccount(address sdk.AccAddress) *authtypes.BaseAccount {
 	bacc := authtypes.NewBaseAccountWithAddress(address)
 	return bacc
@@ -213,6 +218,7 @@ func (s *UpgradeTestSuite) SetupAirdrops() {
 	}
 	err := s.App.ClaimKeeper.SetParams(s.Ctx, params)
 	s.Require().NoError(err, "no error expected when setting claim params")
+
 	// Set vesting to 0s
 	claimtypes.DefaultVestingInitialPeriod, err = time.ParseDuration("0s")
 	s.Require().NoError(err, "no error expected when setting vesting initial period")
@@ -247,6 +253,7 @@ func (s *UpgradeTestSuite) CheckAirdropsInitialized() {
 	s.CheckAirdropAdded(afterCtx, umeeAirdrop, v14.UmeeAirdropDistributor, v14.UmeeAirdropIdentifier, v14.UmeeChainId, false)
 }
 
+// Helper function to check the attributes of the new Airdrop
 func (s *UpgradeTestSuite) CheckAirdropAdded(ctx sdk.Context, airdrop *claimtypes.Airdrop, distributor string, identifier string, chainId string, autopilotEnabled bool) {
 	// Check that the params of the airdrop were initialized
 	s.Require().Equal(identifier, airdrop.AirdropIdentifier, fmt.Sprintf("%s airdrop identifier", identifier))
@@ -266,4 +273,94 @@ func (s *UpgradeTestSuite) CheckAirdropAdded(ctx sdk.Context, airdrop *claimtype
 	s.Require().True(found, "epoch tracker should be found")
 	s.Require().Zero(epochInfo.CurrentEpoch, "epoch should be zero")
 	s.Require().Equal(epochInfo.Duration, claimtypes.DefaultEpochDuration, "epoch duration should be equal to airdrop duration")
+}
+
+// Setups up the stakeibc store with old host zones before the upgrade
+// Returns a callback function that verifies the expected state after the upgrade
+func (s *UpgradeTestSuite) SetupOldStakeibcStore() func() {
+	codec := app.MakeEncodingConfig().Marshaler
+	stakeibcStore := s.Ctx.KVStore(s.App.GetKey(stakeibctypes.StoreKey))
+	hostzoneStore := prefix.NewStore(stakeibcStore, stakeibctypes.KeyPrefix(stakeibctypes.HostZoneKey))
+
+	// Add two host zones with the old type
+	for i, host := range testHostZones {
+		hostZone := oldstakeibctypes.HostZone{
+			ChainId:            host.chainId,
+			HostDenom:          host.denom,
+			Address:            fmt.Sprintf("address-%d", i),
+			UnbondingFrequency: 3,
+			DelegationAccount: &oldstakeibctypes.ICAAccount{
+				Address: fmt.Sprintf("delegation-%d", i),
+			},
+			BlacklistedValidators: []*oldstakeibctypes.Validator{
+				{Name: "val", Address: "address"},
+			},
+			StakedBal: sdkmath.NewInt(int64(i)),
+			Validators: []*oldstakeibctypes.Validator{
+				{
+					Address: fmt.Sprintf("val-%d", i),
+					InternalExchangeRate: &oldstakeibctypes.ValidatorExchangeRate{
+						InternalTokensToSharesRate: sdk.NewDec(int64(i)),
+					},
+					DelegationAmt: sdkmath.NewInt(int64(i)),
+				},
+			},
+		}
+
+		hostZoneBz := codec.MustMarshal(&hostZone)
+		hostzoneStore.Set([]byte(hostZone.ChainId), hostZoneBz)
+	}
+
+	return func() {
+		// Confirm the host zones have been migrated properly
+		for i, host := range testHostZones {
+			hostZone, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx, host.chainId)
+			s.Require().True(found)
+
+			// Check new host zone attributes
+			s.Require().Equal(host.chainId, hostZone.ChainId, "chain-id")
+			s.Require().Equal(host.denom, hostZone.HostDenom, "denom")
+			s.Require().Equal(fmt.Sprintf("address-%d", i), hostZone.DepositAddress, "deposit address")
+			s.Require().Equal(fmt.Sprintf("delegation-%d", i), hostZone.DelegationIcaAddress, "delegation address")
+			s.Require().Equal(uint64(14), hostZone.UnbondingPeriod, "unbonding period")
+			s.Require().Equal(sdkmath.NewInt(int64(i)), hostZone.TotalDelegations, "total delegations")
+
+			// Confirm gaia has LSM enabled
+			expectedLSMEnabled := false
+			if host.chainId == v14.GaiaChainId {
+				expectedLSMEnabled = true
+			}
+			s.Require().Equal(expectedLSMEnabled, hostZone.LsmLiquidStakeEnabled)
+
+			// Check new validator attributes
+			validator := hostZone.Validators[0]
+			s.Require().Equal(fmt.Sprintf("val-%d", i), validator.Address, "validator address")
+			s.Require().Equal(sdk.NewDec(int64(i)), validator.SharesToTokensRate, "validator shares to tokens rate")
+			s.Require().Equal(false, validator.SlashQueryInProgress, "validator slash query in progress")
+			s.Require().Equal(int64(0), validator.DelegationChangesInProgress, "validator delegations in progress")
+			s.Require().Equal(sdk.ZeroInt(), validator.SlashQueryProgressTracker, "validator delegations in progress")
+		}
+
+		// Finally check that the new params were set
+		params := s.App.StakeibcKeeper.GetParams(s.Ctx)
+		s.Require().Equal(stakeibctypes.DefaultParams(), params, "new params set after upgrade")
+	}
+}
+
+// Setups pending queries in the store to test that the queries were removed
+// Returns a callback function to verify they were removed
+func (s *UpgradeTestSuite) SetupPendingQueries() func() {
+	for i := 0; i < 3; i++ {
+		s.App.InterchainqueryKeeper.SetQuery(s.Ctx, interchainquerytypes.Query{
+			Id: fmt.Sprintf("query-%d", i),
+		})
+	}
+
+	numQueries := len(s.App.InterchainqueryKeeper.AllQueries(s.Ctx))
+	s.Require().Equal(3, numQueries, "number of queres before the upgrade")
+
+	return func() {
+		numQueries := len(s.App.InterchainqueryKeeper.AllQueries(s.Ctx))
+		s.Require().Zero(numQueries, "number of queres after the upgrade")
+	}
 }

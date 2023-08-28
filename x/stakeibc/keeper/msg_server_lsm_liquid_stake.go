@@ -6,8 +6,7 @@ import (
 	errorsmod "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-
-	"github.com/gogo/protobuf/proto" //nolint:staticcheck
+	"github.com/cosmos/gogoproto/proto"
 
 	icqtypes "github.com/Stride-Labs/stride/v13/x/interchainquery/types"
 	recordstypes "github.com/Stride-Labs/stride/v13/x/records/types"

@@ -210,7 +210,7 @@ func (k Keeper) UpdateRedemptionRateForHostZone(ctx sdk.Context, hostZone types.
 	}
 
 	// Otherwise, submit the redemption rate to the oracle
-	if err := k.PostRedemptionRateToOracles(ctx, hostZone, redemptionRate); err != nil {
+	if err := k.PostRedemptionRateToOracles(ctx, hostZone.HostDenom, redemptionRate); err != nil {
 		k.Logger(ctx).Error(fmt.Sprintf("Unable to send redemption rate to oracle: %s", err.Error()))
 		return
 	}
@@ -278,12 +278,10 @@ func (k Keeper) GetTotalTokenizedDelegations(ctx sdk.Context, hostZone types.Hos
 }
 
 // Pushes a redemption rate update to the ICA oracle
-func (k Keeper) PostRedemptionRateToOracles(ctx sdk.Context, hostZone types.HostZone, redemptionRate sdk.Dec) error {
-	stDenom := types.StAssetDenomFromHostZoneDenom(hostZone.HostDenom)
-	nativeDenom := hostZone.IbcDenom
+func (k Keeper) PostRedemptionRateToOracles(ctx sdk.Context, hostDenom string, redemptionRate sdk.Dec) error {
+	stDenom := types.StAssetDenomFromHostZoneDenom(hostDenom)
 	attributes, err := json.Marshal(icaoracletypes.RedemptionRateAttributes{
-		Denom:     stDenom,
-		BaseDenom: nativeDenom,
+		SttokenDenom: stDenom,
 	})
 	if err != nil {
 		return err
