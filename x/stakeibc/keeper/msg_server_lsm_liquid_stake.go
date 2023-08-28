@@ -8,9 +8,9 @@ import (
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/gogoproto/proto"
 
-	icqtypes "github.com/Stride-Labs/stride/v13/x/interchainquery/types"
-	recordstypes "github.com/Stride-Labs/stride/v13/x/records/types"
-	"github.com/Stride-Labs/stride/v13/x/stakeibc/types"
+	icqtypes "github.com/Stride-Labs/stride/v14/x/interchainquery/types"
+	recordstypes "github.com/Stride-Labs/stride/v14/x/records/types"
+	"github.com/Stride-Labs/stride/v14/x/stakeibc/types"
 )
 
 // Exchanges a user's LSM tokenized shares for stTokens using the current redemption rate

@@ -11,8 +11,8 @@ import (
 	porttypes "github.com/cosmos/ibc-go/v7/modules/core/05-port/types"
 	ibcexported "github.com/cosmos/ibc-go/v7/modules/core/exported"
 
-	"github.com/Stride-Labs/stride/v13/x/stakeibc/keeper"
-	"github.com/Stride-Labs/stride/v13/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v14/x/stakeibc/keeper"
+	"github.com/Stride-Labs/stride/v14/x/stakeibc/types"
 )
 
 var _ porttypes.Middleware = &IBCMiddleware{}

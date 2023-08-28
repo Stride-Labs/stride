@@ -8,11 +8,11 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/spf13/cast"
 
-	"github.com/Stride-Labs/stride/v13/utils"
-	epochstypes "github.com/Stride-Labs/stride/v13/x/epochs/types"
-	icaoracletypes "github.com/Stride-Labs/stride/v13/x/icaoracle/types"
-	recordstypes "github.com/Stride-Labs/stride/v13/x/records/types"
-	"github.com/Stride-Labs/stride/v13/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v14/utils"
+	epochstypes "github.com/Stride-Labs/stride/v14/x/epochs/types"
+	icaoracletypes "github.com/Stride-Labs/stride/v14/x/icaoracle/types"
+	recordstypes "github.com/Stride-Labs/stride/v14/x/records/types"
+	"github.com/Stride-Labs/stride/v14/x/stakeibc/types"
 )
 
 const StrideEpochsPerDayEpoch = uint64(4)
