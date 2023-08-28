@@ -23,7 +23,6 @@ import (
 )
 
 var (
-	emptyCoins         = sdk.Coins{}
 	dummyUpgradeHeight = int64(5)
 	// Shortly after the upgrade - 9/25/23
 	AfterUpgrade = int64(1695677732)

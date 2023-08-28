@@ -331,7 +331,10 @@ func SendConsumerFeePoolToFeeDistribution(ctx sdk.Context, ck *ccvconsumerkeeper
 		// Send tokens back to the fee distributinon address
 		// NOTE: This is technically not a module account because it's removed from maccPerms (in order to allow ibc transfers, see: https://github.com/cosmos/ibc-go/issues/1889)
 		// But conceptually it's a module account
-		bk.SendCoinsFromAccountToModule(ctx, address, authtypes.FeeCollectorName, sdk.NewCoins(token))
+		err := bk.SendCoinsFromAccountToModule(ctx, address, authtypes.FeeCollectorName, sdk.NewCoins(token))
+		if err != nil {
+			return errorsmod.Wrapf(err, "unable to send consumer fee pool to fee distribution")
+		}
 	}
 	return nil
 }
