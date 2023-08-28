@@ -11,11 +11,13 @@ import (
 	crisistypes "github.com/cosmos/cosmos-sdk/x/crisis/types"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 	consumertypes "github.com/cosmos/interchain-security/v3/x/ccv/consumer/types"
+	evmosvestingtypes "github.com/evmos/vesting/x/vesting/types"
 
 	v10 "github.com/Stride-Labs/stride/v13/app/upgrades/v10"
 	v11 "github.com/Stride-Labs/stride/v13/app/upgrades/v11"
 	v12 "github.com/Stride-Labs/stride/v13/app/upgrades/v12"
 	v13 "github.com/Stride-Labs/stride/v13/app/upgrades/v13"
+	v14 "github.com/Stride-Labs/stride/v13/app/upgrades/v14"
 	v2 "github.com/Stride-Labs/stride/v13/app/upgrades/v2"
 	v3 "github.com/Stride-Labs/stride/v13/app/upgrades/v3"
 	v4 "github.com/Stride-Labs/stride/v13/app/upgrades/v4"
@@ -170,6 +172,24 @@ func (app *StrideApp) setupUpgradeHandlers(appOpts servertypes.AppOptions) {
 			app.StakeibcKeeper,
 		),
 	)
+	// v14 upgrade handler
+	app.UpgradeKeeper.SetUpgradeHandler(
+		v14.UpgradeName,
+		v14.CreateUpgradeHandler(
+			app.mm,
+			app.configurator,
+			app.appCodec,
+			app.AccountKeeper,
+			app.BankKeeper,
+			app.ClaimKeeper,
+			&app.ConsumerKeeper,
+			app.InterchainqueryKeeper,
+			app.StakeibcKeeper,
+			app.StakingKeeper,
+			app.VestingKeeper,
+			app.keys[stakeibctypes.StoreKey],
+		),
+	)
 
 	upgradeInfo, err := app.UpgradeKeeper.ReadUpgradeInfoFromDisk()
 	if err != nil {
@@ -206,6 +226,10 @@ func (app *StrideApp) setupUpgradeHandlers(appOpts servertypes.AppOptions) {
 	case "v13":
 		storeUpgrades = &storetypes.StoreUpgrades{
 			Added: []string{icaoracletypes.ModuleName},
+		}
+	case "v14":
+		storeUpgrades = &storetypes.StoreUpgrades{
+			Added: []string{evmosvestingtypes.ModuleName},
 		}
 	}
 
