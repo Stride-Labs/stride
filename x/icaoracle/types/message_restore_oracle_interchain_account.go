@@ -6,6 +6,8 @@ import (
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
 
+const TypeMsgRestoreOracleICA = "restore_oracle_ica"
+
 var _ sdk.Msg = &MsgRestoreOracleICA{}
 
 func NewMsgRestoreOracleICA(creator string, oracleChainId string) *MsgRestoreOracleICA {
@@ -13,6 +15,10 @@ func NewMsgRestoreOracleICA(creator string, oracleChainId string) *MsgRestoreOra
 		Creator:       creator,
 		OracleChainId: oracleChainId,
 	}
+}
+
+func (msg MsgRestoreOracleICA) Type() string {
+	return TypeMsgRestoreOracleICA
 }
 
 func (msg *MsgRestoreOracleICA) GetSigners() []sdk.AccAddress {
