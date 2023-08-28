@@ -120,7 +120,10 @@ func CreateUpgradeHandler(
 		ClearPendingQueries(ctx, icqKeeper)
 
 		// Enable LSM for the Gaia
-		EnableLSMForGaia(ctx, stakeibcKeeper)
+		err := EnableLSMForGaia(ctx, stakeibcKeeper)
+		if err != nil {
+			return vm, errorsmod.Wrapf(err, "unable to enable LSM for Gaia")
+		}
 
 		// Add airdrops for Injective, Comedex, Somm, and Umee
 		if err := InitAirdrops(ctx, claimKeeper); err != nil {
