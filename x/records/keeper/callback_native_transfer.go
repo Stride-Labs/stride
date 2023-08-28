@@ -5,8 +5,8 @@ import (
 
 	ibctransfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
 
-	icacallbackstypes "github.com/Stride-Labs/stride/v13/x/icacallbacks/types"
-	"github.com/Stride-Labs/stride/v13/x/records/types"
+	icacallbackstypes "github.com/Stride-Labs/stride/v14/x/icacallbacks/types"
+	"github.com/Stride-Labs/stride/v14/x/records/types"
 
 	errorsmod "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"

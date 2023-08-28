@@ -7,7 +7,7 @@ import (
 
 	ccvconsumertypes "github.com/cosmos/interchain-security/v3/x/ccv/consumer/types"
 
-	ratelimittypes "github.com/Stride-Labs/stride/v13/x/ratelimit/types"
+	ratelimittypes "github.com/Stride-Labs/stride/v14/x/ratelimit/types"
 )
 
 // AccountKeeper defines the expected account keeper used for simulations (noalias)

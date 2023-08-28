@@ -21,9 +21,9 @@ import (
 	ibctesting "github.com/cosmos/interchain-security/v3/legacy_ibc_testing/testing"
 	consumertypes "github.com/cosmos/interchain-security/v3/x/ccv/consumer/types"
 
-	testutil "github.com/Stride-Labs/stride/v13/testutil"
+	testutil "github.com/Stride-Labs/stride/v14/testutil"
 
-	cmdcfg "github.com/Stride-Labs/stride/v13/cmd/strided/config"
+	cmdcfg "github.com/Stride-Labs/stride/v14/cmd/strided/config"
 )
 
 const Bech32Prefix = "stride"
