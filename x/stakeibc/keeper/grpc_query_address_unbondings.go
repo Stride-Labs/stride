@@ -60,9 +60,10 @@ func (k Keeper) AddressUnbondings(c context.Context, req *types.QueryAddressUnbo
 						if !found {
 							return nil, sdkerrors.ErrKeyNotFound
 						}
-						daysUntilUnbonding := hostZone.UnbondingFrequency - (currentDay % hostZone.UnbondingFrequency)
+						unbondingFrequency := hostZone.GetUnbondingFrequency()
+						daysUntilUnbonding := unbondingFrequency - (currentDay % unbondingFrequency)
 						unbondingStartTime := dayEpochTracker.NextEpochStartTime + ((daysUntilUnbonding - 1) * nanosecondsInDay)
-						unbondingDurationEstimate := (hostZone.UnbondingFrequency - 1) * 7
+						unbondingDurationEstimate := (unbondingFrequency - 1) * 7
 						unbondingTime = unbondingStartTime + (unbondingDurationEstimate * nanosecondsInDay)
 					}
 					unbondingTime = unbondingTime + nanosecondsInDay

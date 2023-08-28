@@ -13,6 +13,7 @@ import (
 	"github.com/Stride-Labs/stride/v13/app/apptesting"
 	v7 "github.com/Stride-Labs/stride/v13/app/upgrades/v7"
 	epochstypes "github.com/Stride-Labs/stride/v13/x/epochs/types"
+	newstakeibctypes "github.com/Stride-Labs/stride/v13/x/stakeibc/migrations/v3/types"
 	stakeibctypes "github.com/Stride-Labs/stride/v13/x/stakeibc/types"
 
 	// This isn't the exact type host zone schema as the one that's will be in the store
@@ -177,14 +178,27 @@ func (s *UpgradeTestSuite) SetupHostZones() {
 	hostzoneStore.Set([]byte(juno.ChainId), junoBz)
 }
 
+// Helper function to read in the host zone with the new stakeibc types
+func (s *UpgradeTestSuite) GetNewHostZone(chainId string) newstakeibctypes.HostZone {
+	codec := app.MakeEncodingConfig().Marshaler
+	stakeibcStore := s.Ctx.KVStore(s.App.GetKey(stakeibctypes.StoreKey))
+	hostzoneStore := prefix.NewStore(stakeibcStore, stakeibctypes.KeyPrefix(stakeibctypes.HostZoneKey))
+
+	bz := hostzoneStore.Get([]byte(chainId))
+	s.Require().NotNil(bz, "host zone should have been found")
+
+	var hostZone newstakeibctypes.HostZone
+	codec.MustUnmarshal(bz, &hostZone)
+
+	return hostZone
+}
+
 // Check that the juno unbondinng frequency was changed after the upgrade
 func (s *UpgradeTestSuite) CheckUnbondingFrequencyAfterUpgrade() {
-	osmosis, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx, OsmosisChainId)
-	s.Require().True(found, "osmosis host zone should have been found")
+	osmosis := s.GetNewHostZone(OsmosisChainId)
 	s.Require().Equal(OsmosisUnbondingFrequency, osmosis.UnbondingFrequency)
 
-	juno, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx, JunoChainId)
-	s.Require().True(found, "juno host zone should have been found")
+	juno := s.GetNewHostZone(JunoChainId)
 	s.Require().Equal(ExpectedJunoUnbondingFrequency, juno.UnbondingFrequency)
 }
 
@@ -262,7 +276,9 @@ func (s *UpgradeTestSuite) TestAddICAHostAllowMessages() {
 func (s *UpgradeTestSuite) TestModifyJunoUnbondingFrequency() {
 	s.SetupHostZones()
 
-	err := v7.ModifyJunoUnbondingFrequency(s.Ctx, s.App.StakeibcKeeper)
+	codec := app.MakeEncodingConfig().Marshaler
+	stakeibcStoreKey := s.App.GetKey(stakeibctypes.StoreKey)
+	err := v7.ModifyJunoUnbondingFrequency(codec, stakeibcStoreKey, s.Ctx, s.App.StakeibcKeeper)
 	s.Require().NoError(err)
 
 	s.CheckUnbondingFrequencyAfterUpgrade()
@@ -270,7 +286,11 @@ func (s *UpgradeTestSuite) TestModifyJunoUnbondingFrequency() {
 
 func (s *UpgradeTestSuite) TestAddRedemptionRateSafetyChecks() {
 	s.SetupHostZones()
-	v7.AddRedemptionRateSafetyChecks(s.Ctx, s.App.StakeibcKeeper)
+
+	codec := app.MakeEncodingConfig().Marshaler
+	stakeibcStoreKey := s.App.GetKey(stakeibctypes.StoreKey)
+	v7.AddRedemptionRateSafetyChecks(codec, stakeibcStoreKey, s.Ctx, s.App.StakeibcKeeper)
+
 	s.CheckRedemptionRateSafetyParamsAfterUpgrade()
 }
 

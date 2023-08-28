@@ -116,6 +116,13 @@ func (k msgServer) RestoreInterchainAccount(goCtx context.Context, msg *types.Ms
 			k.Logger(ctx).Error(errMsg)
 			return nil, err
 		}
+
+		// Revert all pending LSM Detokenizations from status DETOKENIZATION_IN_PROGRESS to status DETOKENIZATION_QUEUE
+		pendingDeposits := k.RecordsKeeper.GetLSMDepositsForHostZoneWithStatus(ctx, hostZone.ChainId, recordtypes.LSMTokenDeposit_DETOKENIZATION_IN_PROGRESS)
+		for _, lsmDeposit := range pendingDeposits {
+			k.Logger(ctx).Info(fmt.Sprintf("Setting LSMTokenDeposit %s to status DETOKENIZATION_QUEUE", lsmDeposit.Denom))
+			k.RecordsKeeper.UpdateLSMTokenDepositStatus(ctx, lsmDeposit, recordtypes.LSMTokenDeposit_DETOKENIZATION_QUEUE)
+		}
 	}
 
 	return &types.MsgRestoreInterchainAccountResponse{}, nil

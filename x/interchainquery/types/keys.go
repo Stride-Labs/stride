@@ -16,8 +16,9 @@ const (
 
 // prefix bytes for the interchainquery persistent store
 const (
-	prefixData  = iota + 1
-	prefixQuery = iota + 1
+	prefixData         = iota + 1
+	prefixQuery        = iota + 1
+	prefixQueryCounter = iota + 1
 )
 
 // keys for proof queries to various stores, note: there's an implicit assumption here that
@@ -33,8 +34,9 @@ const (
 )
 
 var (
-	KeyPrefixData  = []byte{prefixData}
-	KeyPrefixQuery = []byte{prefixQuery}
+	KeyPrefixData   = []byte{prefixData}
+	KeyPrefixQuery  = []byte{prefixQuery}
+	KeyQueryCounter = []byte{prefixQueryCounter}
 )
 
 func KeyPrefix(p string) []byte {

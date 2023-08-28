@@ -34,14 +34,20 @@ The `interchainquery` module keeps `Query` objects and modifies the information 
 
 `Query` has information types that pertain to the query itself. `Query` keeps the following:
 
-1. `id` keeps the query identification string.
-2. `connection_id` keeps the id of the connection between the controller and host chain.
-3. `chain_id` keeps the id of the queried chain.
-4. `query_type` keeps the type of interchain query (e.g. bank store query)
-5. `request` keeps an bytecode encoded version of the interchain query
-6. `callback_id` keeps the function that will be called by the interchain query
-7. `ttl` time at which the query expires (in unix nano)
-8. `request_sent` keeps a boolean indicating whether the query event has been emitted (and can be identified by a relayer)
+1. `id`: query identification string.
+2. `connection_id`: id of the connection between the controller and host chain.
+3. `chain_id`: id of the queried chain.
+4. `query_type`: type of interchain query (e.g. bank store query)
+5. `request_data`: serialized request information (e.g. the address with which to query)
+6. `callback_module`: name of the module that will handle the callback
+7. `callback_id`: ID for the function that will be called after the response is returned
+8. `callback_data`: optional serialized data associated with the callback
+9. `timeout_policy`: specifies how to handle a timeout (fail the query, retry the query, or execute the callback with a timeout)
+10. `timeout_duration`: the relative time from the current block with which the query should timeout
+11. `timeout_timestamp`: the absolute time at which the query times out
+12. `request_sent`: boolean indicating whether the query event has been emitted (and can be identified by a relayer)
+13. `submission_height`: the light client hight of the queried chain at the time of query submission
+
 
 `DataPoint` has information types that pertain to the data that is queried. `DataPoint` keeps the following:
 

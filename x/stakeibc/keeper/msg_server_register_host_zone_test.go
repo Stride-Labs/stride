@@ -22,7 +22,7 @@ type RegisterHostZoneTestCase struct {
 	validMsg                   stakeibctypes.MsgRegisterHostZone
 	epochUnbondingRecordNumber uint64
 	strideEpochNumber          uint64
-	unbondingFrequency         uint64
+	unbondingPeriod            uint64
 	defaultRedemptionRate      sdk.Dec
 	atomHostZoneChainId        string
 }
@@ -30,7 +30,7 @@ type RegisterHostZoneTestCase struct {
 func (s *KeeperTestSuite) SetupRegisterHostZone() RegisterHostZoneTestCase {
 	epochUnbondingRecordNumber := uint64(3)
 	strideEpochNumber := uint64(4)
-	unbondingFrequency := uint64(3)
+	unbondingPeriod := uint64(14)
 	defaultRedemptionRate := sdk.NewDec(1)
 	atomHostZoneChainId := "GAIA"
 
@@ -53,21 +53,21 @@ func (s *KeeperTestSuite) SetupRegisterHostZone() RegisterHostZoneTestCase {
 	s.App.RecordsKeeper.SetEpochUnbondingRecord(s.Ctx, epochUnbondingRecord)
 
 	defaultMsg := stakeibctypes.MsgRegisterHostZone{
-		ConnectionId:       ibctesting.FirstConnectionID,
-		Bech32Prefix:       GaiaPrefix,
-		HostDenom:          Atom,
-		IbcDenom:           IbcAtom,
-		TransferChannelId:  ibctesting.FirstChannelID,
-		UnbondingFrequency: unbondingFrequency,
-		MinRedemptionRate:  sdk.NewDec(0),
-		MaxRedemptionRate:  sdk.NewDec(0),
+		ConnectionId:      ibctesting.FirstConnectionID,
+		Bech32Prefix:      GaiaPrefix,
+		HostDenom:         Atom,
+		IbcDenom:          IbcAtom,
+		TransferChannelId: ibctesting.FirstChannelID,
+		UnbondingPeriod:   unbondingPeriod,
+		MinRedemptionRate: sdk.NewDec(0),
+		MaxRedemptionRate: sdk.NewDec(0),
 	}
 
 	return RegisterHostZoneTestCase{
 		validMsg:                   defaultMsg,
 		epochUnbondingRecordNumber: epochUnbondingRecordNumber,
 		strideEpochNumber:          strideEpochNumber,
-		unbondingFrequency:         unbondingFrequency,
+		unbondingPeriod:            unbondingPeriod,
 		defaultRedemptionRate:      defaultRedemptionRate,
 		atomHostZoneChainId:        atomHostZoneChainId,
 	}
@@ -126,7 +126,7 @@ func (s *KeeperTestSuite) TestRegisterHostZone_Success() {
 	defaultMaxThreshold := sdk.NewDec(int64(stakeibctypes.DefaultMaxRedemptionRateThreshold)).Quo(sdk.NewDec(100))
 	s.Require().Equal(defaultMinThreshold, hostZone.MinRedemptionRate, "min redemption rate set to default")
 	s.Require().Equal(defaultMaxThreshold, hostZone.MaxRedemptionRate, "max redemption rate set to default")
-	s.Require().Equal(tc.unbondingFrequency, hostZone.UnbondingFrequency, "unbonding frequency set to default: 3")
+	s.Require().Equal(tc.unbondingPeriod, hostZone.UnbondingPeriod, "unbonding period")
 
 	// Confirm host zone unbonding record was created
 	epochUnbondingRecord, found := s.App.RecordsKeeper.GetEpochUnbondingRecord(s.Ctx, tc.epochUnbondingRecordNumber)
@@ -140,7 +140,7 @@ func (s *KeeperTestSuite) TestRegisterHostZone_Success() {
 	s.Require().Equal(recordstypes.HostZoneUnbonding_UNBONDING_QUEUE, hostZoneUnbonding.Status, "host zone unbonding set to bonded")
 
 	// Confirm a module account was created
-	hostZoneModuleAccount, err := sdk.AccAddressFromBech32(hostZone.Address)
+	hostZoneModuleAccount, err := sdk.AccAddressFromBech32(hostZone.DepositAddress)
 	s.Require().NoError(err, "converting module address to account")
 	acc := s.App.AccountKeeper.GetAccount(s.Ctx, hostZoneModuleAccount)
 	s.Require().NotNil(acc, "host zone module account found in account keeper")
@@ -311,7 +311,7 @@ func (s *KeeperTestSuite) TestRegisterHostZone_CannotFindEpochUnbondingRecord() 
 	msg := tc.validMsg
 
 	// delete the epoch unbonding record
-	s.App.StakeibcKeeper.RecordsKeeper.RemoveEpochUnbondingRecord(s.Ctx, tc.epochUnbondingRecordNumber)
+	s.App.RecordsKeeper.RemoveEpochUnbondingRecord(s.Ctx, tc.epochUnbondingRecordNumber)
 
 	_, err := s.GetMsgServer().RegisterHostZone(sdk.WrapSDKContext(s.Ctx), &msg)
 	expectedErrMsg := "unable to find latest epoch unbonding record: epoch unbonding record not found"

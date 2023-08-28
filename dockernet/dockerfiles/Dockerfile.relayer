@@ -1,17 +1,19 @@
 # syntax = docker/dockerfile:1
-FROM golang:1.19-alpine3.15 AS builder
+FROM golang:1.20-alpine3.16 AS builder
 
 WORKDIR /src/
 
-ENV COMMIT_HASH=e95dd80608536c31d37354bdd7f7ec46a2172009
+# TODO [LSM]: Revert
+# ENV COMMIT_HASH=v2.4.1
+ENV COMMIT_HASH=0136134766142f133f263f3bba72d7077e7bc2c1
 
 RUN apk add --update git make gcc linux-headers libc-dev eudev-dev 
-RUN git clone https://github.com/cosmos/relayer.git \
+RUN git clone https://github.com/Stride-Labs/relayer.git \
     && cd relayer \
     && git checkout $COMMIT_HASH \
     && make install
 
-FROM alpine:3.15
+FROM alpine:3.16
 COPY --from=builder /go/bin/rly /usr/local/bin/
 RUN apk add bash vim \
     && addgroup -g 1000 relayer \
