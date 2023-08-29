@@ -98,7 +98,6 @@ func CreateUpgradeHandler(
 	return func(ctx sdk.Context, _ upgradetypes.Plan, vm module.VersionMap) (module.VersionMap, error) {
 		ctx.Logger().Info("Starting upgrade v14...")
 
-		evk := evmosvestingKeeper
 		sk := stakingKeeper
 		ak := accountKeeper
 		bk := bankKeeper
@@ -118,29 +117,6 @@ func CreateUpgradeHandler(
 		// Clear out any pending queries since the Query type updated
 		// There shouldn't be any queries here unless the upgrade happened right at the epoch
 		ClearPendingQueries(ctx, icqKeeper)
-
-		// Enable LSM for the Gaia
-		err := EnableLSMForGaia(ctx, stakeibcKeeper)
-		if err != nil {
-			return vm, errorsmod.Wrapf(err, "unable to enable LSM for Gaia")
-		}
-
-		// Add airdrops for Injective, Comedex, Somm, and Umee
-		if err := InitAirdrops(ctx, claimKeeper); err != nil {
-			return vm, errorsmod.Wrapf(err, "unable to migrate airdrop")
-		}
-
-		// VESTING CHANGES
-		// Migrate SL employee pool Account1 to evmos vesting account
-		if err := MigrateAccount1(ctx, evk, sk, ak, bk); err != nil {
-			return vm, errorsmod.Wrapf(err, "unable to migrate account 12z83x")
-		}
-
-		// Update vesting schedule - SL employee pool tokens were mistankenly assigned an investor vesting schedule
-		// migrate Account2 from a ContinuousVestingAccount that starts on Sept 4, 2023 to a continuous vesting account that starts on Sept 4, 2022
-		if err := MigrateAccount2(ctx, ak); err != nil {
-			return vm, errorsmod.Wrapf(err, "unable to migrate account 1nwyvk")
-		}
 
 		// ICS CHANGES
 		// In the v13 upgrade, params were reset to genesis. In v12, the version map wasn't updated. So when mm.RunMigrations(ctx, configurator, vm) ran
@@ -298,6 +274,7 @@ func MigrateAccount1(ctx sdk.Context, evk evmosvestingkeeper.Keeper, sk stakingk
 // Considering all mainnet stakeibc params are set to the default, we can just use that
 func MigrateStakeibcParams(ctx sdk.Context, k stakeibckeeper.Keeper) {
 	params := stakeibctypes.DefaultParams()
+	params.DefaultMaxRedemptionRateThreshold = 1000
 	k.SetParams(ctx, params)
 }
 
