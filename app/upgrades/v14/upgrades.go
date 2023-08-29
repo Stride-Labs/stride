@@ -26,6 +26,8 @@ import (
 	"github.com/Stride-Labs/stride/v14/utils"
 	claimkeeper "github.com/Stride-Labs/stride/v14/x/claim/keeper"
 	claimtypes "github.com/Stride-Labs/stride/v14/x/claim/types"
+	epochskeeper "github.com/Stride-Labs/stride/v14/x/epochs/keeper"
+	epochstypes "github.com/Stride-Labs/stride/v14/x/epochs/types"
 	icqkeeper "github.com/Stride-Labs/stride/v14/x/interchainquery/keeper"
 	stakeibckeeper "github.com/Stride-Labs/stride/v14/x/stakeibc/keeper"
 	stakeibcmigration "github.com/Stride-Labs/stride/v14/x/stakeibc/migrations/v3"
@@ -94,6 +96,7 @@ func CreateUpgradeHandler(
 	stakingKeeper stakingkeeper.Keeper,
 	evmosvestingKeeper evmosvestingkeeper.Keeper,
 	stakeibcStoreKey storetypes.StoreKey,
+	epochsKeeper epochskeeper.Keeper,
 ) upgradetypes.UpgradeHandler {
 	return func(ctx sdk.Context, _ upgradetypes.Plan, vm module.VersionMap) (module.VersionMap, error) {
 		ctx.Logger().Info("Starting upgrade v14...")
@@ -141,6 +144,23 @@ func CreateUpgradeHandler(
 		// to the new version, to prevent RunMigrations from attempting to re-run each migrations
 		vm[stakeibctypes.ModuleName] = currentVersions[stakeibctypes.ModuleName]
 
+		// Set stride epoch to 12 hours so that it's 1/4th the day epoch of 2 days
+		ctx.Logger().Info("Updating epoch info...")
+		epoch, found := epochsKeeper.GetEpochInfo(ctx, epochstypes.STRIDE_EPOCH)
+		if !found {
+			return vm, fmt.Errorf("unable to find epochs info")
+		}
+		epoch.Duration = time.Hour * 12
+		epochsKeeper.SetEpochInfo(ctx, epoch)
+
+		epochTracker, found := sibc.GetEpochTracker(ctx, epochstypes.STRIDE_EPOCH)
+		if !found {
+			return vm, fmt.Errorf("unable to find epoch tracker")
+		}
+		epochTracker.Duration = uint64((time.Hour * 12).Nanoseconds())
+		sibc.SetEpochTracker(ctx, epochTracker)
+
+		ctx.Logger().Info("Running module migrations...")
 		return mm.RunMigrations(ctx, configurator, vm)
 	}
 }

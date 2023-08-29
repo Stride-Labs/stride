@@ -188,6 +188,7 @@ func (app *StrideApp) setupUpgradeHandlers(appOpts servertypes.AppOptions) {
 			app.StakingKeeper,
 			app.VestingKeeper,
 			app.keys[stakeibctypes.StoreKey],
+			app.EpochsKeeper,
 		),
 	)
 
