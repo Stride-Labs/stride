@@ -160,6 +160,14 @@ func CreateUpgradeHandler(
 		epochTracker.Duration = uint64((time.Hour * 12).Nanoseconds())
 		sibc.SetEpochTracker(ctx, epochTracker)
 
+		// Ensure the unbonding times for each host zone is > 0
+		for _, hostZone := range sibc.GetAllHostZone(ctx) {
+			if hostZone.UnbondingPeriod == 0 {
+				hostZone.UnbondingPeriod = 1
+				sibc.SetHostZone(ctx, hostZone)
+			}
+		}
+
 		ctx.Logger().Info("Running module migrations...")
 		return mm.RunMigrations(ctx, configurator, vm)
 	}
