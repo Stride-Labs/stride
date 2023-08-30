@@ -33,7 +33,7 @@ $GAIA_MAIN_CMD q bank balances $staker_gaia_address
 
 ## Delegate, Tokenize and Transfer
 echo ">>> Delegate to Val 1:"
-$GAIA_MAIN_CMD tx staking delegate $validator_address_1 10000000uatom --from staker -y | TRIM_TX && echo ""
+$GAIA_MAIN_CMD tx staking delegate $validator_address_1 100000000uatom --from staker -y | TRIM_TX && echo ""
 sleep 5
 echo ">>> Delegate to Val 2:"
 $GAIA_MAIN_CMD tx staking delegate $validator_address_2 10000000uatom --from staker -y | TRIM_TX && echo ""
@@ -48,6 +48,8 @@ sleep 5
 echo "Delegations:"
 $GAIA_MAIN_CMD q staking delegations $staker_gaia_address && echo ""
 sleep 2
+
+exit 0
 
 echo ">>> Tokenize to liquid staker:"
 $GAIA_MAIN_CMD tx staking tokenize-share $validator_address_2 10000000uatom $staker_gaia_address --from staker -y \
