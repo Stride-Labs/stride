@@ -22,7 +22,7 @@ jobs:
 
       - name: Install make
         run: |
-          apt install make -y
+          sudo apt install make -y
 
       - name: Build strided binary
         run: |
