@@ -1,0 +1,59 @@
+name: Publish binary to release
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+
+      - name: Git Checkout
+        uses: actions/checkout@v3
+
+      - name: Set up GO
+        uses: actions/setup-go@v4
+        with:
+          go-version: '1.19'
+
+      - name: Install make
+        run: |
+          sudo apt install make -y
+
+      - name: Build strided binary
+        run: |
+          make install
+          make build
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: strided
+          path: build/strided
+
+  publish:
+    needs: [build]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v3
+        id: download
+        with:
+          name: strided
+
+      - name: Set tag output
+        id: vars
+        run: echo "tag=${GITHUB_REF#refs/*/}" >> $GITHUB_OUTPUT
+
+      - name: Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ steps.vars.outputs.tag }}
+          name: Release ${{ steps.vars.outputs.tag }}
+          files: ${{ steps.download.outputs.download-path }}/strided
+          token: ${{ secrets.GITHUB_TOKEN }}
