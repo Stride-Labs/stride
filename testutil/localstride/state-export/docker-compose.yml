@@ -10,11 +10,13 @@ services:
         RUNNER_IMAGE: alpine:3.16
         GO_VERSION: 1.19
     volumes:
-      - ./scripts/start.sh:/home/stride/start.sh
-      - ./scripts/testnetify.py:/home/stride/testnetify.py
-      - ./state_export.json:/home/stride/state_export.json
-      - $HOME/.stride/:/home/stride/.stride/
-    entrypoint:
+      - ./stride/testutil/localstride/state-export/scripts/start1.sh:/home/stride/start.sh
+      - ./stride/testutil/localstride/state-export/scripts/testnetify.py:/home/stride/testnetify.py
+      - ./stride/testutil/localstride/state-export/state_export.json:/home/stride/state_export.json
+      - ./.stride:/home/stride/.stride
+    command:
+      - sudo
+      - /bin/bash
       - /home/stride/start.sh
     environment:
       - MONIKER=val
@@ -25,3 +27,26 @@ services:
       - 1317:1317
       - 9090:9090
       - 9091:9091
+
+  stride2:
+    image: stridezone:localstride
+    build:
+      context: ../../../
+      args:
+        RUNNER_IMAGE: alpine:3.16
+        GO_VERSION: 1.19
+    volumes:
+      - ./stride/testutil/localstride/state-export/scripts/start2.sh:/home/stride/start.sh
+      - ./stride/testutil/localstride/state-export/scripts/testnetify.py:/home/stride/testnetify.py
+      - ./stride/testutil/localstride/state-export/state_export.json:/home/stride/state_export.json
+      - ./.stride2:/home/stride/.stride2
+    command:
+      - sudo
+      - /bin/bash
+      - /home/stride/start.sh
+    environment:
+      - MONIKER=val
+      - CHAIN_ID=localstride
+      - MNEMONIC=moral abandon vast load where nuclear doctor pottery fork thrive shoulder marble shaft ignore echo habit goddess sudden scout volume castle street duck school
+    ports:
+      - 26658:26656

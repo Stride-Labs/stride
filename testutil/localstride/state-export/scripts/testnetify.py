@@ -23,8 +23,8 @@ BONDED_TOKENS_POOL_MODULE_ADDRESS = "stride1fl48vsnmsdzcv85q5d2q4z5ajdha8yu3ksfn
 
 config = {
     "governance_voting_period": "180s",
-    "epoch_day_duration": '3600s',
-    "epoch_stride_duration": "3600s",
+    "epoch_day_duration": '86400s',
+    "epoch_stride_duration": "21600s",
 }
 
 def replace(d, old_value, new_value):
@@ -191,9 +191,9 @@ def main():
     # Update gov module
     print("🗳️ Update gov module")
     print("\tModify governance_voting_period from {} to {}".format(
-            genesis['app_state']['gov']['voting_params']['voting_period'],
+            genesis['app_state']['gov']['params']['voting_period'],
             config["governance_voting_period"]))
-    genesis['app_state']['gov']['voting_params']['voting_period'] = config["governance_voting_period"]
+    genesis['app_state']['gov']['params']['voting_period'] = config["governance_voting_period"]
 
     # Update epochs module
     print("⌛ Update epochs module")
@@ -324,6 +324,24 @@ def main():
             print("\tUpdate total ustrd supply from {} to {}".format(supply["amount"], str(int(supply["amount"]) + 2000000000000000)))
             supply["amount"] = str(int(supply["amount"]) + 2000000000000000)
             break
+
+    print("Set governors as validators")
+    # TODO: There is a check in baseapp/abci.go to see that
+    # validators before init and after are the same, but that
+    # isn't true in the post-ics world, in particular for
+    # sovereign to consumer changeovers
+    # See: https://github.com/cosmos/cosmos-sdk/blob/main/baseapp/abci.go#L114
+    init_val_set = [
+        {'power': val['power'],
+         'pub_key': {'ed25519': val['pub_key']['value']}
+        } for val in genesis['validators']
+    ]
+    genesis['app_state']['ccvconsumer']['initial_val_set'] = init_val_set
+
+    # Update provider fee pool addr
+    print("🥸  Replace Provider Fee Pool Addr")
+    genesis['app_state']['ccvconsumer']['params']['provider_fee_pool_addr_str'] = "stride1h2r2k24349gtx7e4kfxxl8gzqz8tn6zyc0sq2a"
+    genesis['app_state']['ccvconsumer']['params']['enabled'] = True
 
     print("📝 Writing {}... (it may take a while)".format(args.output_genesis))
     with open(args.output_genesis, 'w') as f:

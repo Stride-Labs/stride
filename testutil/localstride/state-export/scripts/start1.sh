@@ -2,7 +2,8 @@
 set -e
 set -o pipefail
 
-STRIDE_HOME=$HOME/.stride
+# Expected to be run through docker compose
+STRIDE_HOME=/home/stride/.stride
 CONFIG_FOLDER=$STRIDE_HOME/config
 
 DEFAULT_MNEMONIC="deer gaze swear marine one perfect hero twice turkey symbol mushroom hub escape accident prevent rifle horse arena secret endless panel equal rely payment"
@@ -36,6 +37,10 @@ edit_config () {
 
     # Update the local client keyring backend
     dasel put string -f $CONFIG_FOLDER/client.toml '.keyring-backend' 'test'
+
+    # Add node as persistent peer
+    dasel put string -f $CONFIG_FOLDER/config.toml '.persistent_peers' "52e828892a25f396117c7aa987cfd5eb09bb9e18@stride2:26658"
+    dasel put string -f $CONFIG_FOLDER/config.toml '.p2p.persistent_peers' "52e828892a25f396117c7aa987cfd5eb09bb9e18@stride2:26658"
 }
 
 if [[ ! -d $CONFIG_FOLDER ]]
@@ -49,11 +54,11 @@ then
     echo "STRIDE_HOME: $STRIDE_HOME"
 
     strided init localstride -o --chain-id=$CHAIN_ID --home $STRIDE_HOME
-    
-    echo $MNEMONIC | strided keys add val --recover --keyring-backend test
 
-    ACCOUNT_PUBKEY=$(strided keys show --keyring-backend test val --pubkey | dasel -r json '.key' --plain)
-    ACCOUNT_ADDRESS=$(strided keys show -a --keyring-backend test val --bech acc)
+    echo $MNEMONIC | strided keys add val --recover --keyring-backend test --home $STRIDE_HOME
+
+    ACCOUNT_PUBKEY=$(strided keys show --keyring-backend test val --pubkey --home $STRIDE_HOME | dasel -r json '.key' --plain)
+    ACCOUNT_ADDRESS=$(strided keys show -a --keyring-backend test val --bech acc --home $STRIDE_HOME)
 
     VALIDATOR_PUBKEY_JSON=$(strided tendermint show-validator --home $STRIDE_HOME)
     VALIDATOR_PUBKEY=$(echo $VALIDATOR_PUBKEY_JSON | dasel -r json '.key' --plain)
@@ -73,7 +78,10 @@ then
     --account-pubkey $ACCOUNT_PUBKEY \
     --account-address $ACCOUNT_ADDRESS
 
-    edit_config
 fi
+
+edit_config
+echo $STRIDE_HOME | cat
+strided tendermint show-node-id --home $STRIDE_HOME | cat
 
 strided start --home $STRIDE_HOME --x-crisis-skip-assert-invariants

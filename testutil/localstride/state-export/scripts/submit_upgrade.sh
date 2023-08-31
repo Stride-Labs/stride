@@ -21,7 +21,8 @@ TRIM_TX() {
   grep -E "code:|txhash:" | sed 's/^/  /'
 }
 
-STRIDE_MAIN_CMD="docker-compose -f ${SCRIPT_DIR}/../docker-compose.yml exec -it stride strided"
+STRIDE_MAIN_CMD="docker-compose -f ${SCRIPT_DIR}/../docker-compose.yml exec -it stride sudo strided"
+STRIDE_TX_CMD="docker-compose -f ${SCRIPT_DIR}/../docker-compose.yml exec -it stride sudo strided --home /home/stride/.stride "
 
 printf "PROPOSAL\n"
 $STRIDE_MAIN_CMD tx gov submit-legacy-proposal software-upgrade $upgrade_name \
