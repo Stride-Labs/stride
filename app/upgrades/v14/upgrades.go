@@ -27,7 +27,6 @@ import (
 	claimkeeper "github.com/Stride-Labs/stride/v14/x/claim/keeper"
 	claimtypes "github.com/Stride-Labs/stride/v14/x/claim/types"
 	epochskeeper "github.com/Stride-Labs/stride/v14/x/epochs/keeper"
-	epochstypes "github.com/Stride-Labs/stride/v14/x/epochs/types"
 	icqkeeper "github.com/Stride-Labs/stride/v14/x/interchainquery/keeper"
 	stakeibckeeper "github.com/Stride-Labs/stride/v14/x/stakeibc/keeper"
 	stakeibcmigration "github.com/Stride-Labs/stride/v14/x/stakeibc/migrations/v3"
@@ -143,22 +142,6 @@ func CreateUpgradeHandler(
 		// and invoked through a Migrator), we need to set the module versions in the versionMap
 		// to the new version, to prevent RunMigrations from attempting to re-run each migrations
 		vm[stakeibctypes.ModuleName] = currentVersions[stakeibctypes.ModuleName]
-
-		// Set stride epoch to 12 hours so that it's 1/4th the day epoch of 2 days
-		ctx.Logger().Info("Updating epoch info...")
-		epoch, found := epochsKeeper.GetEpochInfo(ctx, epochstypes.STRIDE_EPOCH)
-		if !found {
-			return vm, fmt.Errorf("unable to find epochs info")
-		}
-		epoch.Duration = time.Hour * 12
-		epochsKeeper.SetEpochInfo(ctx, epoch)
-
-		epochTracker, found := sibc.GetEpochTracker(ctx, epochstypes.STRIDE_EPOCH)
-		if !found {
-			return vm, fmt.Errorf("unable to find epoch tracker")
-		}
-		epochTracker.Duration = uint64((time.Hour * 12).Nanoseconds())
-		sibc.SetEpochTracker(ctx, epochTracker)
 
 		// Ensure the unbonding times for each host zone is > 0
 		for _, hostZone := range sibc.GetAllHostZone(ctx) {
