@@ -18,6 +18,8 @@ HOST_DENOM=$(GET_VAR_VALUE     ${CHAIN}_DENOM)
 ADDRESS_PREFIX=$(GET_VAR_VALUE ${CHAIN}_ADDRESS_PREFIX)
 NUM_VALS=$(GET_VAR_VALUE       ${CHAIN}_NUM_NODES)
 
+VAL_BOND_AMOUNT=100000000
+
 LSM_ENABLED="false"
 if [[ "$CHAIN" == "GAIA" ]]; then
     LSM_ENABLED="true"
@@ -28,6 +30,12 @@ $STRIDE_MAIN_CMD tx stakeibc register-host-zone \
     $CONNECTION $HOST_DENOM $ADDRESS_PREFIX $IBC_DENOM $CHANNEL 1 $LSM_ENABLED \
     --gas 1000000 --from $STRIDE_ADMIN_ACCT --home $DOCKERNET_HOME/state/stride1 -y | TRIM_TX
 sleep 10
+
+if [[ "$CHAIN" == "GAIA" ]]; then 
+    echo "Creating validator bond account"
+    $GAIA_MAIN_CMD keys add val-bond-account
+    val_bond_address=$($GAIA_MAIN_CMD keys show val-bond-account -a)
+fi
 
 # Build array of validators of the form:
 # {"name": "...", "address": "...", "weight": "..."}
@@ -48,7 +56,15 @@ for (( i=1; i <= $NUM_VALS; i++ )); do
         if [[ "$i" == "1" ]]; then
             echo "$CHAIN - Submitting validator bonds..."
         fi
-        $GAIA_MAIN_CMD tx staking validator-bond $delegate_val --from ${VAL_PREFIX}${i} -y | TRIM_TX
+        
+        $GAIA_MAIN_CMD tx bank send ${VAL_PREFIX}${i} $val_bond_address ${VAL_BOND_AMOUNT}uatom --from ${VAL_PREFIX}${i} -y | TRIM_TX
+        sleep 5
+
+        $GAIA_MAIN_CMD tx staking delegate $delegate_val ${VAL_BOND_AMOUNT}uatom --from val-bond-account -y | TRIM_TX
+        sleep 5
+
+        $GAIA_MAIN_CMD tx staking validator-bond $delegate_val --from val-bond-account -y | TRIM_TX
+        sleep 5
     fi
 done
 
