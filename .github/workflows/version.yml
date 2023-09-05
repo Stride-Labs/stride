@@ -28,7 +28,7 @@ jobs:
         with:
           persist-credentials: false
           fetch-depth: 0
-          ref: main
+          ref: debug-import-paths-2
 
       - name: Set Git Config
         run: |
