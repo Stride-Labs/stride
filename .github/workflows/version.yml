@@ -38,6 +38,10 @@ jobs:
       - name: Create branch
         run: git checkout -b ${{ env.branch_name }}
 
+      - name: Test Docker Volume Mount
+        run: |
+          docker run --rm -v $(pwd):/workspace alpine:latest ls -la /workspace
+
       - name: Update versions in files
         run: ./scripts/version.sh
 
