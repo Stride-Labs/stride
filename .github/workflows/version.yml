@@ -41,35 +41,35 @@ jobs:
       - name: Update versions in files
         run: ./scripts/version.sh
 
-      - name: Push changes
-        id: push
-        continue-on-error: true
-        run: |
-          git push https://$GH_TOKEN@github.com/Stride-Labs/stride.git ${{ env.branch_name }}
-        env:
-          GH_TOKEN: ${{ secrets.GH_ACTIONS_PAT }}
+      # - name: Push changes
+      #   id: push
+      #   continue-on-error: true
+      #   run: |
+      #     git push https://$GH_TOKEN@github.com/Stride-Labs/stride.git ${{ env.branch_name }}
+      #   env:
+      #     GH_TOKEN: ${{ secrets.GH_ACTIONS_PAT }}
 
-      - name: Check Push Success
-        if: ${{ steps.push.outcome == 'failure' }}
-        run: |
-          echo "Push failed. The token might be expired or have insufficient permissions. Please check your token."
-          exit 1
+      # - name: Check Push Success
+      #   if: ${{ steps.push.outcome == 'failure' }}
+      #   run: |
+      #     echo "Push failed. The token might be expired or have insufficient permissions. Please check your token."
+      #     exit 1
 
-      - name: Fetch New Branch
-        run: |
-          git fetch --all
+      # - name: Fetch New Branch
+      #   run: |
+      #     git fetch --all
 
-      - name: Create Pull Request
-        run: |
-          curl \
-          -X POST \
-          -H "Accept: application/vnd.github.v3+json" \
-          -H "Authorization: token ${{ secrets.GH_ACTIONS_PAT }}" \
-          https://api.github.com/repos/${{ github.repository }}/pulls \
-          -d '{
-          "title":"${{ env.NEW_VERSION }} Import Paths",
-          "head":"${{ env.branch_name }}",
-          "base":"main",
-          "body":"This is an automatically generated pull request.\n\nPlease review and merge the changes.\n\n## Context\n\n* Updates package name to `github.com/Stride-Labs/stride/${{ env.NEW_VERSION }}`\n* Re-generates protos",
-          "maintainer_can_modify": true
-          }'
+      # - name: Create Pull Request
+      #   run: |
+      #     curl \
+      #     -X POST \
+      #     -H "Accept: application/vnd.github.v3+json" \
+      #     -H "Authorization: token ${{ secrets.GH_ACTIONS_PAT }}" \
+      #     https://api.github.com/repos/${{ github.repository }}/pulls \
+      #     -d '{
+      #     "title":"${{ env.NEW_VERSION }} Import Paths",
+      #     "head":"${{ env.branch_name }}",
+      #     "base":"main",
+      #     "body":"This is an automatically generated pull request.\n\nPlease review and merge the changes.\n\n## Context\n\n* Updates package name to `github.com/Stride-Labs/stride/${{ env.NEW_VERSION }}`\n* Re-generates protos",
+      #     "maintainer_can_modify": true
+      #     }'
