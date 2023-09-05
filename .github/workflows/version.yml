@@ -41,12 +41,8 @@ jobs:
       - name: Change Directory Permissions
         run: sudo chmod -R 777 .
 
-      - name: Proto gen
-        run: |
-          make proto-all
-
-      # - name: Update versions in files
-      #   run: ./scripts/version.sh
+      - name: Update versions in files
+        run: ./scripts/version.sh
 
       # - name: Push changes
       #   id: push
