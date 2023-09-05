@@ -53,6 +53,14 @@ jobs:
         if: ${{ steps.push.outcome == 'failure' }}
         run: |
           echo "Push failed. The token might be expired or have insufficient permissions. Please check your token."
+          echo "If the token is expired, you can create a new token using the dev-stride account by going to:"
+          echo "  -> Profile"
+          echo "  -> Settings"
+          echo "  -> Developer Settings"
+          echo "  -> Personal Access Tokens"
+          echo "  -> Tokens (classic)"
+          echo "  -> Generate New Token (classic)"
+          echo "  -> Then update the GH_ACTIONS_PAT secret to the new token"
           exit 1
 
       - name: Fetch New Branch
