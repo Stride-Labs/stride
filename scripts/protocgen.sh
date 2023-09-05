@@ -23,6 +23,7 @@ generate_protos "./cosmwasm"
 
 echo "Before going back"
 ls -la .
+ls -la ./stride
 
 cd ..
 
