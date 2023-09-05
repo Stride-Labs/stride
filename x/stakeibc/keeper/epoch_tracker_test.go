@@ -7,10 +7,10 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 
-	keepertest "github.com/Stride-Labs/stride/v14/testutil/keeper"
-	"github.com/Stride-Labs/stride/v14/testutil/nullify"
-	"github.com/Stride-Labs/stride/v14/x/stakeibc/keeper"
-	"github.com/Stride-Labs/stride/v14/x/stakeibc/types"
+	keepertest "github.com/Stride-Labs/stride/v15/testutil/keeper"
+	"github.com/Stride-Labs/stride/v15/testutil/nullify"
+	"github.com/Stride-Labs/stride/v15/x/stakeibc/keeper"
+	"github.com/Stride-Labs/stride/v15/x/stakeibc/types"
 )
 
 // Prevent strconv unused error

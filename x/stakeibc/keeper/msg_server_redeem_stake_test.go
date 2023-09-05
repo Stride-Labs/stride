@@ -7,9 +7,9 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	_ "github.com/stretchr/testify/suite"
 
-	epochtypes "github.com/Stride-Labs/stride/v14/x/epochs/types"
-	recordtypes "github.com/Stride-Labs/stride/v14/x/records/types"
-	stakeibctypes "github.com/Stride-Labs/stride/v14/x/stakeibc/types"
+	epochtypes "github.com/Stride-Labs/stride/v15/x/epochs/types"
+	recordtypes "github.com/Stride-Labs/stride/v15/x/records/types"
+	stakeibctypes "github.com/Stride-Labs/stride/v15/x/stakeibc/types"
 )
 
 type RedeemStakeState struct {
