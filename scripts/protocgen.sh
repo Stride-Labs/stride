@@ -21,6 +21,9 @@ generate_protos "./stride"
 generate_protos "./cosmos"
 generate_protos "./cosmwasm"
 
+echo "Before going back"
+ls -la .
+
 cd ..
 
 # move proto files to the right places
