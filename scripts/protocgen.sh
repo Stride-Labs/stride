@@ -26,5 +26,14 @@ cd ..
 # move proto files to the right places
 #
 # Note: Proto files are suffixed with the current binary version.
-cp -r github.com/Stride-Labs/stride/v14/* ./
+echo ">>> ."
+ls -la .
+echo ">>> github.com"
+ls -la github.com
+echo ">>> github.com/Stride-Labs/stride"
+ls -la github.com/Stride-Labs/stride
+echo ">>> github.com/Stride-Labs/stride/v15"
+ls -la github.com/Stride-Labs/stride/v15
+
+cp -r github.com/Stride-Labs/stride/v15/* ./
 rm -rf github.com
