@@ -38,9 +38,9 @@ jobs:
       - name: Create branch
         run: git checkout -b ${{ env.branch_name }}
 
-      - name: Change directory permissions
-        run: |
-          sudo chmod 777 .
+      # - name: Change directory permissions
+      #   run: |
+      #     sudo chmod 777 .
 
       - name: Update versions in files
         run: ./scripts/version.sh
