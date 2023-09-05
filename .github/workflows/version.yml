@@ -17,7 +17,7 @@ jobs:
         run: |
           old_version=${{ github.event.inputs.old_version }}
           new_version=${{ github.event.inputs.new_version }}
-          branch_name=actions/update-stride-version-${new_version}-debug
+          branch_name=actions/update-stride-version-${new_version}
 
           echo "OLD_VERSION=$old_version" >> $GITHUB_ENV
           echo "NEW_VERSION=$new_version" >> $GITHUB_ENV
@@ -38,8 +38,9 @@ jobs:
       - name: Create branch
         run: git checkout -b ${{ env.branch_name }}
 
-      - name: Change Directory Permissions
-        run: sudo chmod -R 777 .
+      - name: Change directory permissions
+        run: |
+          sudo chmod 777 .
 
       - name: Update versions in files
         run: ./scripts/version.sh
