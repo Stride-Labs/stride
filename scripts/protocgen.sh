@@ -8,7 +8,8 @@ generate_protos() {
   for dir in $proto_dirs; do
     for file in $(find "${dir}" -maxdepth 1 -name '*.proto'); do
       if grep go_package "$file" &>/dev/null; then
-        buf generate --template buf.gen.gogo.yaml "$file"
+        buf generate --template buf.gen.gogo.yaml --output /workspace "$file"
+        ls -R
       fi
     done
   done
@@ -20,6 +21,9 @@ cd proto
 generate_protos "./stride"
 generate_protos "./cosmos"
 generate_protos "./cosmwasm"
+
+echo "Buf env"
+buf env
 
 echo "Pwd"
 pwd
