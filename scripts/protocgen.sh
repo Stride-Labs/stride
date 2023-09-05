@@ -21,9 +21,14 @@ generate_protos "./stride"
 generate_protos "./cosmos"
 generate_protos "./cosmwasm"
 
+echo "Pwd"
+pwd
+
 echo "Before going back"
 ls -la .
-ls -la ./stride
+
+echo "Find"
+find /workspace -type d -name "github.com"
 
 cd ..
 
