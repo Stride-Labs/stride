@@ -40,10 +40,10 @@ jobs:
 
       - name: Test Docker Volume Mount
         run: |
-          docker run --rm -v $(pwd):/workspace alpine:latest ls -la /workspace
+          make proto-all
 
-      - name: Update versions in files
-        run: ./scripts/version.sh
+      # - name: Update versions in files
+      #   run: ./scripts/version.sh
 
       # - name: Push changes
       #   id: push
