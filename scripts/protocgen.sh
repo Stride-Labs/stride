@@ -37,12 +37,15 @@ cd ..
 # Note: Proto files are suffixed with the current binary version.
 echo ">>> ."
 ls -la .
+
 echo ">>> github.com"
 ls -la github.com
+
 echo ">>> github.com/Stride-Labs/stride"
 ls -la github.com/Stride-Labs/stride
-echo ">>> github.com/Stride-Labs/stride/v15"
-ls -la github.com/Stride-Labs/stride/v15
 
-cp -r github.com/Stride-Labs/stride/v15/* ./
+echo ">>> github.com/Stride-Labs/stride/v14"
+ls -la github.com/Stride-Labs/stride/v14
+
+cp -r github.com/Stride-Labs/stride/v14/* ./
 rm -rf github.com
