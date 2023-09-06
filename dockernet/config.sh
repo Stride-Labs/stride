@@ -3,6 +3,8 @@
 set -eu
 DOCKERNET_HOME=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 
+LC_NUMERIC=en_US.UTF-8
+
 STATE=$DOCKERNET_HOME/state
 LOGS=$DOCKERNET_HOME/logs
 UPGRADES=$DOCKERNET_HOME/upgrades
