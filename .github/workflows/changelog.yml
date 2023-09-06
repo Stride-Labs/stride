@@ -95,6 +95,6 @@ jobs:
           "title":"${{ env.NEW_MAJOR_VERSION }} Changelog",
           "head":"${{ env.branch_name }}",
           "base":"main",
-          "body":"This is an automatically generated pull request.\n\nPlease review and merge the changes. **Remember to split the On-Chain vs Off-Chain commits!**\n\n## Context\n\nUpdated changelog for ${{ env.NEW_MAJOR_VERSION }} release\n\n## Brief Changelog\n\n* Updated main changelog with on-chain and off-chain changes\n* Updated upgrade-specific changelog with on-chain changes only\n",
+          "body":"This is an automatically generated pull request.\n\nPlease review and merge the changes.\n\n## Context\n\nUpdated changelog for ${{ env.NEW_MAJOR_VERSION }} release\n\n## Brief Changelog\n\n* Updated main changelog with on-chain and off-chain changes\n",
           "maintainer_can_modify": true
           }'
