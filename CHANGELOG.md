@@ -42,6 +42,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <!-- GH ACTIONS TEMPLATE - INSERT NEW VERSION HERE -->
 
+## [v14.0.0](https://github.com/Stride-Labs/stride/releases/tag/v14.0.0) - 2023-09-06
+
+### On-Chain changes
+1. LSM ([#708](https://github.com/Stride-Labs/stride/pull/708))
+2. Added oracle transfer channel to icaoracle MsgInstantiateOracle and register aminos ([#899](https://github.com/Stride-Labs/stride/pull/899))
+3. v14 upgrade handler ([#903](https://github.com/Stride-Labs/stride/pull/903))
+4. Bump version v13 to v14 ([#913](https://github.com/Stride-Labs/stride/pull/913))
+
+### Off-Chain changes
+1. added icaoracle license ([#901](https://github.com/Stride-Labs/stride/pull/901))
+2. update changelog ([#914](https://github.com/Stride-Labs/stride/pull/914))
+
+
 ## [v14.0.0](https://github.com/Stride-Labs/stride/releases/tag/v14.0.0) - 2023-08-27
 
 ### On-Chain changes
