@@ -26,8 +26,10 @@ if ! echo $NEW_VERSION | grep -Eq $VERSION_REGEX; then
 fi 
 
 GITHUB_PR_URL="https://github.com/Stride-Labs/stride/pull"
+
 GO_FILES='^x/.*\.go$|^app/.*\.go$'
 TEST_FILES='.*_test\.go$'
+
 CURRENT_DATE=$(date +'%Y-%m-%d')
 NEW_MAJOR_VERSION=$(echo "$NEW_VERSION" | cut -d '.' -f 1)
 
@@ -36,7 +38,6 @@ TEMP_ON_CHAIN_CHANGELOG="TEMP_ON_CHAIN_CHANGELOG.md"
 TEMP_OFF_CHAIN_CHANGELOG="TEMP_OFF_CHAIN_CHANGELOG.md"
 TEMP_MAIN_CHANGELOG="TEMP_MAIN_CHANGELOG.md"
 
-UPGRADE_CHANGELOG="app/upgrades/$NEW_MAJOR_VERSION/README.md"
 MAIN_CHANGELOG="CHANGELOG.md"
 MAIN_CHANGELOG_INSERT_STATEMENT="<!-- GH ACTIONS TEMPLATE - INSERT NEW VERSION HERE -->"
 
@@ -45,7 +46,7 @@ MAIN_CHANGELOG_INSERT_STATEMENT="<!-- GH ACTIONS TEMPLATE - INSERT NEW VERSION H
 modified_on_chain_file() {
   commit=$1
 
-  # Get all modified 
+  # Get all modified files
   modified_files=$(git diff-tree --no-commit-id --name-only -r $commit)
 
   # Filter for go files in x/ or x/app, that were not test files
@@ -60,23 +61,24 @@ modified_on_chain_file() {
   return 1 # false
 }
 
-# First we'll gather the list of all commits between the new and old version
+# Gather the list of all commits between the new and old version
+# The output on each line will be in the format: {commit_hash} {commit_title}
 # The last line does not end with a new line character, so we have to append a new empty line
-# so that the last line is picked up
+# so that the full output is propogated into the while loop
 git log --pretty=format:"%H %s" ${OLD_VERSION}..${NEW_VERSION} --reverse > $TEMP_COMMITS
 echo "" >> $TEMP_COMMITS
 
-# Then we'll loop through those commits and build out the commit descriptions for the on-chain and off-chain sections
+# Loop through the commits and build out the commit descriptions for the on-chain and off-chain sections
 on_chain_index=1
 off_chain_index=1
 cat $TEMP_COMMITS | while read line; do
   commit_hash=$(echo $line | cut -d' ' -f1)
   commit_title=$(echo $line | cut -d' ' -f2-)
 
-  # Pull out the PR number (e.g. "Added LSM Support (#803)" -> 803)
+  # Pull out the PR number (e.g. "Added LSM Support (#803)" -> "803")
   pr_number=$(echo $commit_title | sed -n 's/.*#\([0-9]*\).*/\1/p')
 
-  # Build the commit description by replacing the PR number with the url
+  # Build the commit description by replacing the PR number with the full url
   # (e.g. "Added LSM Support (#803)" -> "Added LSM Support ([#803](https://github.com/Stride-Labs/stride/pull/803))"
   description=$(echo $commit_title | sed "s|#$pr_number|[#$pr_number]($GITHUB_PR_URL/$pr_number)|")
 
@@ -90,27 +92,24 @@ cat $TEMP_COMMITS | while read line; do
   fi
 done 
 
-# Now build the main and upgrade changelogs
-# For the main changelog, we'll first write out just the upgrade section to a temporary file and then
-# insert it into the main file
-echo "## [$NEW_VERSION](https://github.com/Stride-Labs/stride/releases/tag/$NEW_VERSION) - $CURRENT_DATE" >> $TEMP_MAIN_CHANGELOG
+# Build a temporary changelog file with the just changes from this upgrade
+# This will later be inserted into the main changelog file
+echo -e "\n## [$NEW_VERSION](https://github.com/Stride-Labs/stride/releases/tag/$NEW_VERSION) - $CURRENT_DATE" > $TEMP_MAIN_CHANGELOG
 
-# If there were on-chain changes, add the relevant sections to the main and upgrade changelog
-if [[ $on_chain_index -gt 1 ]]; then
+# If there were on-chain changes, add the "On-Chain" section
+if [[ -n "$TEMP_ON_CHAIN_CHANGELOG" ]]; then
   echo -e "\n### On-Chain changes" >> $TEMP_MAIN_CHANGELOG
-  echo "$TEMP_ON_CHAIN_CHANGELOG" >> $TEMP_MAIN_CHANGELOG
-
-  echo "# Upgrade $NEW_MAJOR_VERSION Changelog" > $UPGRADE_CHANGELOG
-  echo "$TEMP_ON_CHAIN_CHANGELOG" >> $UPGRADE_CHANGELOG
+  cat "$TEMP_ON_CHAIN_CHANGELOG" >> $TEMP_MAIN_CHANGELOG
 fi
 
-# If there were off-chain changes, only add them to the main change log
-if [[ $off_chain_index -gt 1 ]]; then
+# If there were off-chain changes, add the "Off-Chain" section
+if [[ -n "$TEMP_OFF_CHAIN_CHANGELOG" ]]; then
   echo -e "\n### Off-Chain changes" >> $TEMP_MAIN_CHANGELOG
-  echo "$TEMP_OFF_CHAIN_CHANGELOG" >> $TEMP_MAIN_CHANGELOG
+  cat "$TEMP_OFF_CHAIN_CHANGELOG" >> $TEMP_MAIN_CHANGELOG
 fi
 
-# Insert the temporary main changelog into the actual file
+# Insert the temporary changelog into the main file
+echo "" >> $TEMP_MAIN_CHANGELOG
 sed -i -e "/$MAIN_CHANGELOG_INSERT_STATEMENT/r $TEMP_MAIN_CHANGELOG" $MAIN_CHANGELOG
 
 # Finally, cleanup all the temp files
