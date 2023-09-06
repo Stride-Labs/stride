@@ -30,7 +30,7 @@ jobs:
         with:
           persist-credentials: false
           fetch-depth: 0
-          ref: main
+          ref: fixed-auto-changelog-script
 
       - name: Set Git Config
         run: |
