@@ -63,6 +63,21 @@ jobs:
         if: ${{ steps.push.outcome == 'failure' }}
         run: |
           echo "Push failed. The token might be expired or have insufficient permissions. Please check your token."
+          echo "The token can be found in the 'dev-stride' account. To view the token, login to 'dev-stride' and go to:"
+          echo "  -> Profile"
+          echo "  -> Settings"
+          echo "  -> Developer Settings"
+          echo "  -> Personal Access Tokens"
+          echo "  -> Tokens (classic)"
+          echo "  -> 'GH Actions' Token"
+          echo ""
+          echo "If the token is expired, you can click on the token and then select 'Regenerate Token'"
+          echo "After regenerating a new token, you'll have to update the 'GH_ACTIONS_PAT' environment variable:"
+          echo "   -> Navigate to the stride repo"
+          echo "   -> Settings"
+          echo "   -> Secrets and variables"
+          echo "   -> Actions"
+          echo "   -> Then modify 'GH_ACTIONS_PAT'"
           exit 1
 
       - name: Fetch New Branch
@@ -80,6 +95,6 @@ jobs:
           "title":"${{ env.NEW_MAJOR_VERSION }} Changelog",
           "head":"${{ env.branch_name }}",
           "base":"main",
-          "body":"This is an automatically generated pull request.\n\nPlease review and merge the changes. **Remember to split the On-Chain vs Off-Chain commits!**\n\n## Context\n\nUpdated changelog for ${{ env.NEW_MAJOR_VERSION }} release\n\n## Brief Changelog\n\n* Updated main changelog with on-chain and off-chain changes\n* Updated upgrade-specific changelog with on-chain changes only\n",
+          "body":"This is an automatically generated pull request.\n\nPlease review and merge the changes.\n\n## Context\n\nUpdated changelog for ${{ env.NEW_MAJOR_VERSION }} release\n\n## Brief Changelog\n\n* Updated main changelog with on-chain and off-chain changes\n",
           "maintainer_can_modify": true
           }'
