@@ -5,20 +5,13 @@ import (
 	"fmt"
 
 	sdkmath "cosmossdk.io/math"
-	ibctransfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	ibctypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
-	clienttypes "github.com/cosmos/ibc-go/v7/modules/core/02-client/types"
-
-	//"github.com/spf13/cast"
 
 	"github.com/Stride-Labs/stride/v14/utils"
-	//recordstypes "github.com/Stride-Labs/stride/v14/x/records/types"
-	"github.com/Stride-Labs/stride/v14/x/stakeibc/types"
 )
 
 // ibc transfers tokens from the foreign hub community pool deposit ICA address onto Stride hub
+// then as an atomic action, liquid stake the tokens with Autopilot commands in the ibc message memos
 func (k Keeper) IBCTransferCommunityPoolICATokensToStride(ctx sdk.Context, communityPoolHostZoneId string, token sdk.Coin) error {
 	k.Logger(ctx).Info(fmt.Sprintf("Transfering %d %s tokens from community pool deposit ICA to Stride hub holding address", token.Amount.Int64(), token.Denom))
 
@@ -28,9 +21,6 @@ func (k Keeper) IBCTransferCommunityPoolICATokensToStride(ctx sdk.Context, commu
 		k.Logger(ctx).Error(fmt.Sprintf("[IBCTransferCommunityPoolICATokensToStride] The amount %v to transfer did not meet the minimum threshold!", token.Amount))
 		return errors.New("Transfer Amount below threshold!")
 	}
-
-	// TODO: add check that the denom is something we know how to handle -- here is where a token whitelist would filter for coin types
-
 
 	hostZone, hostZoneFound := k.GetHostZone(ctx, communityPoolHostZoneId)
 	if !hostZoneFound || hostZone.Halted {
@@ -45,40 +35,34 @@ func (k Keeper) IBCTransferCommunityPoolICATokensToStride(ctx sdk.Context, commu
 		return errors.New("Critical addresses missing from hostZone config!")
 	}
 
+	// TODO: add more detailed check logic that the denom is something we know how to liquid stake -- here is where a token whitelist could filter
+	// Could also add logic for some coins which could be liquid staked to be distributed instead, traded to different denom, etc.
 
-	k.Logger(ctx).Info(fmt.Sprintf("[IBCTransferCommunityPoolICATokensToStride] Transferring %v%s", token.Amount, token.Denom))
-	
-	// NOTE: this assumes no clock drift between chains, which tendermint guarantees
-	ibcTransferTimeoutNanos := k.GetParam(ctx, types.KeyIBCTransferTimeoutNanos)
-	timeoutTimestamp := uint64(ctx.BlockTime().UnixNano()) + ibcTransferTimeoutNanos
-
-	msg := ibctypes.NewMsgTransfer(
-		ibctransfertypes.PortID,
-		hostZone.TransferChannelId,
-		token,
-		hostZone.CommunityPoolDepositIcaAddress, // ICA controlled address on foreign hub
-		hostZone.CommunityPoolHoldingAddress, // Stride address, unique to each community pool / hostzone
-		clienttypes.Height{},
-		timeoutTimestamp,
-		"Sweep stake-able tokens from community pool deposit address to Stride chain",
-	)
+	// Some denoms can be liquid staked, others might not be but we still want to return all of those to the community pool for distribution.  
+	// Everything in the deposit ICA needs to come over to the Stride holding account but only liquid-stakable assets will need autopilot 
+	shouldLiquidStake := k.DenomCanLiquidStake(ctx, token.Denom)
 
 	// ibc transfer tokens from foreign hub deposit ICA address to Stride hub "holding" address
-	err := k.IBCTransferCommunityPoolTokens(ctx, msg)
+	err := k.IBCTransferCommunityPoolTokens(ctx, token, hostZone, shouldLiquidStake)
 	if err != nil {
-		k.Logger(ctx).Error(fmt.Sprintf("[IBCTransferCommunityPoolICATokensToStride] Failed to initiate IBC transfer to host zone, HostZone: %v, Channel: %v, Coin: %v, SendAddress: %v, RecAddress: %v, Timeout: %v",
-			hostZone.ChainId, hostZone.TransferChannelId, token, hostZone.CommunityPoolDepositIcaAddress, hostZone.CommunityPoolHoldingAddress, timeoutTimestamp))
+		k.Logger(ctx).Error(fmt.Sprintf("[IBCTransferCommunityPoolICATokensToStride] Failed to submit transfer to host zone, HostZone: %v, Channel: %v, Coin: %v, SendAddress: %v, RecAddress: %v",
+			hostZone.ChainId, hostZone.TransferChannelId, token, hostZone.CommunityPoolDepositIcaAddress, hostZone.CommunityPoolHoldingAddress))
 		k.Logger(ctx).Error(fmt.Sprintf("[IBCTransferCommunityPoolICATokensToStride] err {%s}", err.Error()))
-		return errors.New("")
+		return err
 	}
 
-	k.Logger(ctx).Info(utils.LogWithHostZone(hostZone.ChainId, "[IBCTransferCommunityPoolICATokensToStride] Successfully submitted transfer for community pool tokens"))
+	k.Logger(ctx).Info(utils.LogWithHostZone(hostZone.ChainId, "[IBCTransferCommunityPoolICATokensToStride] Transfer community pool tokens to Stride successfully initiated!"))
 
 	return nil
 }
 
-// Calls liquid stake on all stake-able tokens in the community pool holding address, stTokens come back to holding address
-func (k Keeper) LiquidStakeCommunityPoolTokens(ctx sdk.Context, communityPoolHoldingAddress string) error {
-
-	return nil
+// Check if incoming denom is the base denom of a known hostZone for which Stride is able to liquid stake
+func (k Keeper) DenomCanLiquidStake(ctx sdk.Context, denom string) bool {
+	hostZones := k.GetAllHostZone(ctx)
+	for _, zone := range hostZones {
+		if denom == zone.HostDenom {
+			return true
+		}
+	}
+	return false
 }

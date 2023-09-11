@@ -2,7 +2,6 @@ syntax = "proto3";
 package stride.stakeibc;
 import "gogoproto/gogo.proto";
 import "cosmos/base/v1beta1/coin.proto";
-import "cosmos_proto/cosmos.proto";
 import "stride/records/records.proto";
 import "stride/stakeibc/host_zone.proto";
 import "stride/stakeibc/validator.proto";
@@ -80,9 +79,4 @@ message DelegatorSharesQueryCallback {
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
     (gogoproto.nullable) = false
   ];
-}
-
-message CommunityPoolTransferCallback {
-  string community_pool_holding_address = 1
-    [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
 }
