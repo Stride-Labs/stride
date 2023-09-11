@@ -10,6 +10,42 @@ import (
 	"github.com/Stride-Labs/stride/v14/utils"
 )
 
+// For each hostZone with a valid community pool, trigger the ICQs and ICAs to transfer deposited tokens to holding address
+// Since ICQs and ICAs take time to complete, it is almost certain tokens swept in and processed will be swept out in a later epoch
+func (k Keeper) SweepInAllDepositedCommunityPoolTokens(ctx sdk.Context) error {
+	hostZones := k.GetAllActiveHostZone(ctx)
+	for _, hostZone := range hostZones {
+		if hostZone.CommunityPoolDepositIcaAddress != "" &&
+			hostZone.CommunityPoolHoldingAddress != "" &&
+			hostZone.CommunityPoolReturnIcaAddress != "" {
+				k.ICQCommunityPoolDepositICABalances(ctx, hostZone.ChainId)
+			}
+	}
+	return nil
+}
+
+// For each hostZone with a valid community pool, trigger the transfers of tokens in the holding address to the return ICA
+func (k Keeper) SweepOutAllReturningCommunityPoolTokens(ctx sdk.Context) error {
+	hostZones := k.GetAllActiveHostZone(ctx)
+	for _, hostZone := range hostZones {
+		if hostZone.CommunityPoolDepositIcaAddress != "" &&
+			hostZone.CommunityPoolHoldingAddress != "" &&
+			hostZone.CommunityPoolReturnIcaAddress != "" {
+				k.IBCReturnAllCommunityPoolTokens(ctx, hostZone)
+			}
+	}	
+	return nil
+}
+
+
+
+// Place holder function, will ICQ to see what balances exist in the deposit ICA on the community pool host zone
+// In the ICQ callback, for existing balances it will call IBCTransferCommunityPoolICATokensToStride with found token as input
+func (k Keeper) ICQCommunityPoolDepositICABalances(ctx sdk.Context, communityPoolHostZoneId string) error {
+	return nil
+}
+
+
 // ibc transfers tokens from the foreign hub community pool deposit ICA address onto Stride hub
 // then as an atomic action, liquid stake the tokens with Autopilot commands in the ibc message memos
 func (k Keeper) IBCTransferCommunityPoolICATokensToStride(ctx sdk.Context, communityPoolHostZoneId string, token sdk.Coin) error {

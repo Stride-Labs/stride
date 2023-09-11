@@ -44,4 +44,7 @@ func (k Keeper) EndBlocker(ctx sdk.Context) {
 	// Submit an IBC transfer or detokenization ICA for all queued LSM Deposits across each host
 	k.TransferAllLSMDeposits(ctx)
 	k.DetokenizeAllLSMDeposits(ctx)
+	// Transfers in and out of tokens for hostZones which have community pools
+	k.SweepInAllDepositedCommunityPoolTokens(ctx)
+	k.SweepOutAllReturningCommunityPoolTokens(ctx)	
 }
