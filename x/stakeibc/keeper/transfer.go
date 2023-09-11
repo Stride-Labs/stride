@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	ibctypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
 	clienttypes "github.com/cosmos/ibc-go/v7/modules/core/02-client/types"
 
@@ -49,5 +50,53 @@ func (k Keeper) IBCTransferCommunityPoolTokens(ctx sdk.Context, token sdk.Coin, 
 
 	k.Logger(ctx).Info(fmt.Sprintf("[IBCTransferCommunityPoolTokens] Successfully submitted ibc transfer message %+v", msgTransferResponse))
 
+	return nil
+}
+
+
+// Transfers all tokens in the Stride-side holding address over to the communityPoolReturnAddress ICA
+func (k Keeper) IBCReturnAllCommunityPoolTokens(ctx sdk.Context, communityPoolHostZone types.HostZone) error {
+	// Use bankKeeper to see all coin types and amounts currently in the stride-side holding address
+	req := banktypes.NewQueryAllBalancesRequest(sdk.AccAddress(communityPoolHostZone.CommunityPoolHoldingAddress), nil)
+	resp, err := k.bankKeeper.AllBalances(ctx, req)
+	if err != nil {
+		return err
+	}
+
+	memo := ""
+	errors := make([]error, 0)
+
+	for _, foundCoin := range resp.Balances {
+		// build and send an IBC message for each coin to transfer all back to the communityPoolHostZone
+		ibcTransferTimeoutNanos := k.GetParam(ctx, types.KeyIBCTransferTimeoutNanos)
+		timeoutTimestamp := uint64(ctx.BlockTime().UnixNano()) + ibcTransferTimeoutNanos
+		msg := ibctypes.NewMsgTransfer(
+			ibctypes.PortID,
+			communityPoolHostZone.TransferChannelId,
+			foundCoin,
+			communityPoolHostZone.CommunityPoolHoldingAddress, // from Stride address, unique to each community pool / hostzone
+			communityPoolHostZone.CommunityPoolReturnIcaAddress, // to ICA controlled address on foreign hub
+			clienttypes.Height{},
+			timeoutTimestamp,
+			memo,
+		)
+
+		msgTransferResponse, err := k.RecordsKeeper.TransferKeeper.Transfer(sdk.WrapSDKContext(ctx), msg)
+		if err != nil {
+			result := fmt.Sprintf("[IBCReturnAllCommunityPoolTokens] Error submitting ibc transfer for %v %s with message %s", 
+				foundCoin.Amount, foundCoin.Denom, err.Error())
+			k.Logger(ctx).Error(result)
+			errors = append(errors, err) // log and keep track of errors but don't let one failure stop later transfers
+		} else {
+			result := fmt.Sprintf("[IBCReturnAllCommunityPoolTokens] Successfully submitted ibc transfer for %v %s with response %+v", 
+				foundCoin.Amount, foundCoin.Denom, msgTransferResponse)
+			k.Logger(ctx).Info(result)
+		}
+	}
+
+	// if there were any errors return the first one for now...
+	if len(errors) > 0 {
+		return errors[0]
+	}	
 	return nil
 }
