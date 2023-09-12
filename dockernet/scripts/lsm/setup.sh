@@ -18,55 +18,44 @@ staker_gaia_address=$($GAIA_MAIN_CMD keys show staker -a)
 staker_stride_address=$($STRIDE_MAIN_CMD keys show staker -a) 
 validator_address_1=$(GET_VAL_ADDR GAIA 1)
 validator_address_2=$(GET_VAL_ADDR GAIA 2)
+echo $(GET_VAL_ADDR GAIA 2)
+
 validator_address_3=$(GET_VAL_ADDR GAIA 3)
 validator_address_4=$(GET_VAL_ADDR GAIA 4)
 
-# ## Fund accounts
-# echo ">>> Fund staking accounts:"
-$GAIA_MAIN_CMD tx bank send $($GAIA_MAIN_CMD keys show gval1 -a) $staker_gaia_address 5000000uatom --from rly8 -y | TRIM_TX 
-$GAIA_MAIN_CMD tx bank send $staker_gaia_address $($GAIA_MAIN_CMD keys show gval1 -a) 23940uatom --from staker -y | TRIM_TX 
-# sleep 5 && echo ""
-# $STRIDE_MAIN_CMD tx bank send $($STRIDE_MAIN_CMD keys show val1 -a) $staker_stride_address 10000000ustrd --from val1 -y | TRIM_TX 
-# sleep 5 && echo ""
+## Fund accounts
+echo ">>> Fund staking accounts:"
+$GAIA_MAIN_CMD tx bank send $($GAIA_MAIN_CMD keys show gval1 -a) $staker_gaia_address 2000000000000uatom --from rly8 -y | TRIM_TX 
+sleep 5 && echo ""
+$STRIDE_MAIN_CMD tx bank send $($STRIDE_MAIN_CMD keys show val1 -a) $staker_stride_address 100000000ustrd --from val1 -y | TRIM_TX 
+sleep 5 && echo ""
 
-# echo "Bank balance:"
-# $GAIA_MAIN_CMD q bank balances $staker_gaia_address 
+echo "Bank balance:"
+$GAIA_MAIN_CMD q bank balances $staker_gaia_address 
 
-# ## Delegate, Tokenize and Transfer
-# echo ">>> Delegate to Val 1:"
-# $GAIA_MAIN_CMD tx staking undelegate $validator_address_1 10000000uatom --from staker -y | TRIM_TX && echo ""
-# sleep 5
-# echo ">>> Delegate to Val 2:"
-# $GAIA_MAIN_CMD tx staking delegate $validator_address_2 6000000uatom --from staker -y | TRIM_TX && echo ""
-# sleep 5
-# echo ">>> Delegate to Val 3:"
-# $GAIA_MAIN_CMD tx staking unbond $validator_address_3 10000000uatom --from staker -y | TRIM_TX && echo ""
-# sleep 5
-# echo ">>> Delegate to Val 4:"
-# $GAIA_MAIN_CMD tx staking unbond $validator_address_4 7000000uatom --from staker -y | TRIM_TX && echo ""
-# sleep 5
+## Delegate, Tokenize and Transfer
+echo "Delegate from staker to Validator 1 and Validator 2 (10 ATOM each)"
+echo ">>> Delegate to Val 1:"
+$GAIA_MAIN_CMD tx staking delegate $validator_address_1 10000000uatom --from staker -y | TRIM_TX && echo ""
+sleep 5
+echo ">>> Delegate to Val 2:"
+$GAIA_MAIN_CMD tx staking delegate $validator_address_2 10000000uatom --from staker -y | TRIM_TX && echo ""
+sleep 5
 
-# echo "Delegations:"
-# $GAIA_MAIN_CMD q staking delegations $staker_gaia_address && echo ""
-# sleep 2
 
-# echo ">>> Tokenize to liquid staker:"
-# $GAIA_MAIN_CMD tx staking tokenize-share $validator_address_2 10000000uatom $staker_gaia_address --from staker -y \
-#     --gas auto --gas-adjustment 1.3 | TRIM_TX && echo ""
-# sleep 5
 
-# echo "Balance on GAIA:"
-# $GAIA_MAIN_CMD q bank balances $staker_gaia_address && echo ""
-# sleep 2
+echo "\n\nValidator Bond to Validator 2 (small amount 1 ATOM) and to Validator 3 (large amount 10 ATOM)"
+## Delegate, Tokenize and Transfer
+echo ">>> Delegate to Val 2 from rly8"
+$GAIA_MAIN_CMD tx staking delegate $validator_address_2 1000000uatom --from rly8 -y | TRIM_TX && echo ""
+sleep 5
+echo ">>> Validator Bond to Val 2 from rly8"
+$GAIA_MAIN_CMD tx staking validator-bond $validator_address_2 --from rly8 -y | TRIM_TX
+sleep 5
 
-# echo "Tokenized shares:"
-# $GAIA_MAIN_CMD q distribution tokenize-share-record-rewards $staker_gaia_address && echo ""
-# sleep 2
-
-# echo ">>> Transfer to Stride:"
-# $GAIA_MAIN_CMD tx ibc-transfer transfer transfer channel-0 $staker_stride_address 10000000${validator_address_2}/1 --from staker -y | TRIM_TX && echo ""
-# sleep 10
-
-# echo "Balance on STRIDE:"
-# $STRIDE_MAIN_CMD q bank balances $staker_stride_address && echo ""
-# sleep 2
+echo "\n>>> Delegate to Val 3 from rly8"
+$GAIA_MAIN_CMD tx staking delegate $validator_address_3 10000000uatom --from rly8 -y | TRIM_TX && echo ""
+sleep 5
+echo ">>> Validator Bond to Val 3 from rly8"
+$GAIA_MAIN_CMD tx staking validator-bond $validator_address_3 --from rly8 -y | TRIM_TX
+"
