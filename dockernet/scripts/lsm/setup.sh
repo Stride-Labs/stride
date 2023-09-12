@@ -4,12 +4,12 @@ SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 source ${SCRIPT_DIR}/../../config.sh
 
 ## Create Accounts
-# echo ">>> Registering Accounts:"
-# mnemonic="match blade slide sort seven width degree february garden hospital valve odor scan exhaust bird chuckle age ozone timber claim office hurdle dance roast"
-# echo $mnemonic | $STRIDE_MAIN_CMD keys add staker --recover --keyring-backend test
-# sleep 5
-# echo $mnemonic | $GAIA_MAIN_CMD keys add staker --recover --keyring-backend test
-# sleep 5
+echo ">>> Registering Accounts:"
+mnemonic="match blade slide sort seven width degree february garden hospital valve odor scan exhaust bird chuckle age ozone timber claim office hurdle dance roast"
+echo $mnemonic | $STRIDE_MAIN_CMD keys add staker --recover --keyring-backend test
+sleep 5
+echo $mnemonic | $GAIA_MAIN_CMD keys add staker --recover --keyring-backend test
+sleep 5
 
 # Staker Address on Stride: stride1x92tnm6pfkl3gsfy0rfaez5myq5zh99a6a2w0p
 # Staker Address on GAIA:   cosmos1x92tnm6pfkl3gsfy0rfaez5myq5zh99aek2jmd
