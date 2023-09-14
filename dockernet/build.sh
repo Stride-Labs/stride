@@ -31,6 +31,7 @@ build_local_and_docker() {
    # the binary if the machine's go version does not match exactly,
    # however, we can relax this constraint
    # The following command overrides the check_version using a temporary Makefile override
+   echo $BUILDDIR
    BUILDDIR=$BUILDDIR make -f Makefile -f <(echo -e 'check_version: ;') build --silent 
    local_build_succeeded=${PIPESTATUS[0]}
    cd $stride_home
@@ -99,7 +100,7 @@ while getopts sgojtehrn flag; do
       o) build_local_and_docker osmo deps/osmosis ;;
       t) build_local_and_docker stars deps/stargaze ;;
       e) build_local_and_docker evmos deps/evmos ;;
-      n) continue ;; # build_local_and_docker {new-host-zone} deps/{new-host-zone} ;;
+      n) build_local_and_docker dydx deps/dydx/protocol ;;
       r) build_local_and_docker relayer deps/relayer ;;  
       h) echo "Building Hermes Docker... ";
          docker build --tag stridezone:hermes -f dockernet/dockerfiles/Dockerfile.hermes . ;

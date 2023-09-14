@@ -200,6 +200,35 @@ services:
     volumes:
       - ./state/evmos5:/home/evmos/.evmosd
 
+  dydx1:
+    image: stridezone:dydx
+    volumes:
+      - ./state/dydx1:/home/v4-chain/.dydxprotocol
+    ports:
+      - "25957:26657"
+      - "1247:1317"
+      - "9020:9090"
+
+  dydx2:
+    image: stridezone:dydx
+    volumes:
+      - ./state/dydx2:/home/v4-chain/.dydxprotocol
+
+  dydx3:
+    image: stridezone:dydx
+    volumes:
+      - ./state/dydx3:/home/v4-chain/.dydxprotocol
+
+  dydx4:
+    image: stridezone:dydx
+    volumes:
+      - ./state/dydx4:/home/v4-chain/.dydxprotocol
+
+  dydx5:
+    image: stridezone:dydx
+    volumes:
+      - ./state/dydx5:/home/v4-chain/.dydxprotocol
+
   # Fill in new host zone being tested here
 
   hermes:
@@ -258,9 +287,17 @@ services:
     restart: always
     command: [ "bash", "start.sh", "stride-evmos" ]
 
+  relayer-dydx:
+    image: stridezone:relayer
+    volumes:
+      - ./state/relayer-dydx:/home/relayer/.relayer
+    restart: always
+    command: [ "bash", "start.sh", "dydx" ]
+
   relayer-juno-osmo:
     image: stridezone:relayer
     volumes:
       - ./state/relayer-juno-osmo:/home/relayer/.relayer
     restart: always
     command: [ "bash", "start.sh", "juno-osmo" ]
+

@@ -1,0 +1,29 @@
+FROM golang:1.19-alpine3.15 AS builder
+
+WORKDIR /opt/
+
+RUN set -eux; apk add --no-cache ca-certificates build-base; apk add git linux-headers
+
+ENV COMMIT_HASH=e3b80713848b76fdecafc11ea64bf6d5a58428d8
+
+RUN git clone https://github.com/Stride-Labs/v4-chain.git \
+    && cd v4-chain/protocol \
+    && git checkout ${COMMIT_HASH} 
+
+WORKDIR /opt/v4-chain/protocol
+
+# pull the `make build` command from the repo Dockerfile
+RUN make build
+
+FROM alpine:3.15
+COPY --from=builder /opt/v4-chain/protocol/build/dydxprotocold /usr/local/bin/
+RUN apk add bash vim \
+    && addgroup -g 1000 v4-chain \
+    && adduser -S -h /home/v4-chain -D v4-chain -u 1000 -G v4-chain
+
+USER 1000
+WORKDIR /home/v4-chain/protocol
+
+EXPOSE 26657 26656 1317 9090
+
+CMD ["dydxprotocold", "start"]
