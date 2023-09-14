@@ -2,18 +2,19 @@ package keeper
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/cosmos/cosmos-sdk/types/bech32"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 
-	icqtypes "github.com/Stride-Labs/stride/v13/x/interchainquery/types"
+	icqtypes "github.com/Stride-Labs/stride/v14/x/interchainquery/types"
 
-	"github.com/Stride-Labs/stride/v13/utils"
-	epochtypes "github.com/Stride-Labs/stride/v13/x/epochs/types"
-	icacallbackstypes "github.com/Stride-Labs/stride/v13/x/icacallbacks/types"
-	recordstypes "github.com/Stride-Labs/stride/v13/x/records/types"
-	"github.com/Stride-Labs/stride/v13/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v14/utils"
+	epochtypes "github.com/Stride-Labs/stride/v14/x/epochs/types"
+	icacallbackstypes "github.com/Stride-Labs/stride/v14/x/icacallbacks/types"
+	recordstypes "github.com/Stride-Labs/stride/v14/x/records/types"
+	"github.com/Stride-Labs/stride/v14/x/stakeibc/types"
 
 	errorsmod "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -42,8 +43,12 @@ func (k Keeper) UnmarshalReinvestCallbackArgs(ctx sdk.Context, reinvestCallback 
 }
 
 // ICA Callback after reinvestment
-// * If successful: Creates a new DepositRecord with the reinvestment amount and issues an ICQ to query the rewards balance
-// * If timeout/failure: Does nothing
+//
+//	If successful:
+//	   * Creates a new DepositRecord with the reinvestment amount
+//	   * Issues an ICQ to query the rewards balance
+//	If timeout/failure:
+//	   * Does nothing
 func (k Keeper) ReinvestCallback(ctx sdk.Context, packet channeltypes.Packet, ackResponse *icacallbackstypes.AcknowledgementResponse, args []byte) error {
 	// Fetch callback args
 	reinvestCallback, err := k.UnmarshalReinvestCallbackArgs(ctx, args)
@@ -98,32 +103,35 @@ func (k Keeper) ReinvestCallback(ctx sdk.Context, packet channeltypes.Packet, ac
 
 	// Encode the fee account address for the query request
 	// The query request consists of the fee account address and denom
-	feeAccount := hostZone.FeeAccount
-	if feeAccount == nil || feeAccount.Address == "" {
+	if hostZone.FeeIcaAddress == "" {
 		return errorsmod.Wrapf(types.ErrICAAccountNotFound, "no fee account found for %s", chainId)
 	}
-	_, feeAddressBz, err := bech32.DecodeAndConvert(feeAccount.Address)
+	_, feeAddressBz, err := bech32.DecodeAndConvert(hostZone.FeeIcaAddress)
 	if err != nil {
 		return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "invalid fee account address, could not decode (%s)", err.Error())
 	}
 	queryData := append(banktypes.CreateAccountBalancesPrefix(feeAddressBz), []byte(hostZone.HostDenom)...)
 
-	// The query should timeout before the next epoch
-	timeout, err := k.GetICATimeoutNanos(ctx, epochtypes.STRIDE_EPOCH)
-	if err != nil {
-		return errorsmod.Wrapf(err, "Failed to get ICATimeout from %s epoch", epochtypes.STRIDE_EPOCH)
-	}
-
 	// Submit an ICQ for the rewards balance in the fee account
 	k.Logger(ctx).Info(utils.LogICACallbackWithHostZone(chainId, ICACallbackID_Reinvest, "Submitting ICQ for fee account balance"))
-	return k.InterchainQueryKeeper.MakeRequest(
-		ctx,
-		types.ModuleName,
-		ICQCallbackID_FeeBalance,
-		chainId,
-		hostZone.ConnectionId,
-		icqtypes.BANK_STORE_QUERY_WITH_PROOF,
-		queryData,
-		timeout,
-	)
+
+	timeout := time.Unix(0, int64(strideEpochTracker.NextEpochStartTime))
+	timeoutDuration := timeout.Sub(ctx.BlockTime())
+
+	query := icqtypes.Query{
+		ChainId:         chainId,
+		ConnectionId:    hostZone.ConnectionId,
+		QueryType:       icqtypes.BANK_STORE_QUERY_WITH_PROOF,
+		RequestData:     queryData,
+		CallbackModule:  types.ModuleName,
+		CallbackId:      ICQCallbackID_FeeBalance,
+		TimeoutDuration: timeoutDuration,
+		TimeoutPolicy:   icqtypes.TimeoutPolicy_REJECT_QUERY_RESPONSE,
+	}
+	if err := k.InterchainQueryKeeper.SubmitICQRequest(ctx, query, false); err != nil {
+		k.Logger(ctx).Error(fmt.Sprintf("Error submitting ICQ for fee balance, error %s", err.Error()))
+		return err
+	}
+
+	return nil
 }

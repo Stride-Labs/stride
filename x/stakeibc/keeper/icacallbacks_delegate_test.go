@@ -6,21 +6,21 @@ import (
 	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
 	_ "github.com/stretchr/testify/suite"
 
-	icacallbacktypes "github.com/Stride-Labs/stride/v13/x/icacallbacks/types"
+	icacallbacktypes "github.com/Stride-Labs/stride/v14/x/icacallbacks/types"
 
-	recordtypes "github.com/Stride-Labs/stride/v13/x/records/types"
-	"github.com/Stride-Labs/stride/v13/x/stakeibc/types"
+	recordtypes "github.com/Stride-Labs/stride/v14/x/records/types"
+	"github.com/Stride-Labs/stride/v14/x/stakeibc/types"
 )
 
 type DelegateCallbackState struct {
-	stakedBal      sdkmath.Int
-	val1Bal        sdkmath.Int
-	val2Bal        sdkmath.Int
-	val1RelAmt     sdkmath.Int
-	val2RelAmt     sdkmath.Int
-	balanceToStake sdkmath.Int
-	depositRecord  recordtypes.DepositRecord
-	callbackArgs   types.DelegateCallback
+	totalDelegation sdkmath.Int
+	val1Bal         sdkmath.Int
+	val2Bal         sdkmath.Int
+	val1RelAmt      sdkmath.Int
+	val2RelAmt      sdkmath.Int
+	balanceToStake  sdkmath.Int
+	depositRecord   recordtypes.DepositRecord
+	callbackArgs    types.DelegateCallback
 }
 
 type DelegateCallbackArgs struct {
@@ -35,30 +35,32 @@ type DelegateCallbackTestCase struct {
 }
 
 func (s *KeeperTestSuite) SetupDelegateCallback() DelegateCallbackTestCase {
-	stakedBal := sdkmath.NewInt(1_000_000)
+	totalDelegation := sdkmath.NewInt(1_000_000)
 	val1Bal := sdkmath.NewInt(400_000)
-	val2Bal := stakedBal.Sub(val1Bal)
+	val2Bal := totalDelegation.Sub(val1Bal)
 	balanceToStake := sdkmath.NewInt(300_000)
 	val1RelAmt := sdkmath.NewInt(120_000)
 	val2RelAmt := sdkmath.NewInt(180_000)
 
 	val1 := types.Validator{
-		Name:          "val1",
-		Address:       "val1_address",
-		DelegationAmt: val1Bal,
+		Name:                        "val1",
+		Address:                     "val1_address",
+		Delegation:                  val1Bal,
+		DelegationChangesInProgress: 1,
 	}
 	val2 := types.Validator{
-		Name:          "val2",
-		Address:       "val2_address",
-		DelegationAmt: val2Bal,
+		Name:                        "val2",
+		Address:                     "val2_address",
+		Delegation:                  val2Bal,
+		DelegationChangesInProgress: 1,
 	}
 	hostZone := types.HostZone{
-		ChainId:        HostChainId,
-		HostDenom:      Atom,
-		IbcDenom:       IbcAtom,
-		RedemptionRate: sdk.NewDec(1.0),
-		Validators:     []*types.Validator{&val1, &val2},
-		StakedBal:      stakedBal,
+		ChainId:          HostChainId,
+		HostDenom:        Atom,
+		IbcDenom:         IbcAtom,
+		RedemptionRate:   sdk.NewDec(1.0),
+		Validators:       []*types.Validator{&val1, &val2},
+		TotalDelegations: totalDelegation,
 	}
 	depositRecord := recordtypes.DepositRecord{
 		Id:                 1,
@@ -93,14 +95,14 @@ func (s *KeeperTestSuite) SetupDelegateCallback() DelegateCallbackTestCase {
 
 	return DelegateCallbackTestCase{
 		initialState: DelegateCallbackState{
-			stakedBal:      stakedBal,
-			balanceToStake: balanceToStake,
-			depositRecord:  depositRecord,
-			callbackArgs:   callbackArgs,
-			val1Bal:        val1Bal,
-			val2Bal:        val2Bal,
-			val1RelAmt:     val1RelAmt,
-			val2RelAmt:     val2RelAmt,
+			totalDelegation: totalDelegation,
+			balanceToStake:  balanceToStake,
+			depositRecord:   depositRecord,
+			callbackArgs:    callbackArgs,
+			val1Bal:         val1Bal,
+			val2Bal:         val2Bal,
+			val1RelAmt:      val1RelAmt,
+			val2RelAmt:      val2RelAmt,
 		},
 		validArgs: DelegateCallbackArgs{
 			packet:      packet,
@@ -118,16 +120,20 @@ func (s *KeeperTestSuite) TestDelegateCallback_Successful() {
 	err := s.App.StakeibcKeeper.DelegateCallback(s.Ctx, validArgs.packet, validArgs.ackResponse, validArgs.args)
 	s.Require().NoError(err)
 
-	// Confirm stakedBal has increased
+	// Confirm total delegation has increased
 	hostZone, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx, HostChainId)
 	s.Require().True(found)
-	s.Require().Equal(initialState.stakedBal.Add(initialState.balanceToStake), hostZone.StakedBal, "stakedBal should have increased")
+	s.Require().Equal(initialState.totalDelegation.Add(initialState.balanceToStake), hostZone.TotalDelegations, "total delegation should have increased")
 
-	// Confirm delegations have been added to validators
+	// Confirm delegations have been added to validators and number delegation changes in progress was reduced
 	val1 := hostZone.Validators[0]
 	val2 := hostZone.Validators[1]
-	s.Require().Equal(initialState.val1Bal.Add(initialState.val1RelAmt), val1.DelegationAmt, "val1 balance should have increased")
-	s.Require().Equal(initialState.val2Bal.Add(initialState.val2RelAmt), val2.DelegationAmt, "val2 balance should have increased")
+	s.Require().Equal(val1.Delegation, initialState.val1Bal.Add(initialState.val1RelAmt), "val1 balance should have increased")
+	s.Require().Equal(val2.Delegation, initialState.val2Bal.Add(initialState.val2RelAmt), "val2 balance should have increased")
+
+	// Confirm the number of delegations in progress has decreased
+	s.Require().Equal(0, int(val1.DelegationChangesInProgress), "val1 delegation changes in progress")
+	s.Require().Equal(0, int(val2.DelegationChangesInProgress), "val2 delegation changes in progress")
 
 	// Confirm deposit record has been removed
 	records := s.App.RecordsKeeper.GetAllDepositRecord(s.Ctx)
@@ -135,10 +141,14 @@ func (s *KeeperTestSuite) TestDelegateCallback_Successful() {
 }
 
 func (s *KeeperTestSuite) checkDelegateStateIfCallbackFailed(tc DelegateCallbackTestCase) {
-	// Confirm stakedBal has not increased
+	// Confirm total delegation has not increased
 	hostZone, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx, HostChainId)
 	s.Require().True(found)
-	s.Require().Equal(tc.initialState.stakedBal, hostZone.StakedBal, "stakedBal should not have increased")
+	s.Require().Equal(tc.initialState.totalDelegation, hostZone.TotalDelegations, "total delegation should not have increased")
+
+	// Confirm the number of delegations in progress has decreased
+	s.Require().Equal(0, int(hostZone.Validators[0].DelegationChangesInProgress), "val1 delegation changes in progress")
+	s.Require().Equal(0, int(hostZone.Validators[1].DelegationChangesInProgress), "val2 delegation changes in progress")
 
 	// Confirm deposit record has NOT been removed
 	records := s.App.RecordsKeeper.GetAllDepositRecord(s.Ctx)
@@ -179,7 +189,6 @@ func (s *KeeperTestSuite) TestDelegateCallback_WrongCallbackArgs() {
 
 	err := s.App.StakeibcKeeper.DelegateCallback(s.Ctx, tc.validArgs.packet, tc.validArgs.ackResponse, invalidCallbackArgs)
 	s.Require().EqualError(err, "Unable to unmarshal delegate callback args: unexpected EOF: unable to unmarshal data structure")
-	s.checkDelegateStateIfCallbackFailed(tc)
 }
 
 func (s *KeeperTestSuite) TestDelegateCallback_HostNotFound() {
@@ -190,12 +199,6 @@ func (s *KeeperTestSuite) TestDelegateCallback_HostNotFound() {
 
 	err := s.App.StakeibcKeeper.DelegateCallback(s.Ctx, tc.validArgs.packet, tc.validArgs.ackResponse, tc.validArgs.args)
 	s.Require().EqualError(err, "host zone not found GAIA: invalid request")
-
-	// Confirm deposit record has NOT been removed
-	records := s.App.RecordsKeeper.GetAllDepositRecord(s.Ctx)
-	s.Require().Len(records, 1, "number of deposit records")
-	record := records[0]
-	s.Require().Equal(recordtypes.DepositRecord_DELEGATION_QUEUE, record.Status, "deposit record status should not have changed")
 }
 
 func (s *KeeperTestSuite) TestDelegateCallback_MissingValidator() {
@@ -215,6 +218,5 @@ func (s *KeeperTestSuite) TestDelegateCallback_MissingValidator() {
 	s.Require().NoError(err)
 
 	err = s.App.StakeibcKeeper.DelegateCallback(s.Ctx, tc.validArgs.packet, tc.validArgs.ackResponse, invalidCallbackArgs)
-	s.Require().EqualError(err, "Failed to add delegation to validator: can't change delegation on validator")
-	s.checkDelegateStateIfCallbackFailed(tc)
+	s.Require().ErrorContains(err, "validator not found")
 }

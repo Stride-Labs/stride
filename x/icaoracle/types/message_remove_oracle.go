@@ -6,7 +6,13 @@ import (
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
 
+const TypeMsgRemoveOracle = "remove_oracle"
+
 var _ sdk.Msg = &MsgRemoveOracle{}
+
+func (msg MsgRemoveOracle) Type() string {
+	return TypeMsgRemoveOracle
+}
 
 func (msg *MsgRemoveOracle) GetSignBytes() []byte {
 	bz := ModuleCdc.MustMarshalJSON(msg)

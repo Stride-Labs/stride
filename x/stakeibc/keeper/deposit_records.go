@@ -11,9 +11,9 @@ import (
 	clienttypes "github.com/cosmos/ibc-go/v7/modules/core/02-client/types"
 	"github.com/spf13/cast"
 
-	"github.com/Stride-Labs/stride/v13/utils"
-	recordstypes "github.com/Stride-Labs/stride/v13/x/records/types"
-	"github.com/Stride-Labs/stride/v13/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v14/utils"
+	recordstypes "github.com/Stride-Labs/stride/v14/x/records/types"
+	"github.com/Stride-Labs/stride/v14/x/stakeibc/types"
 )
 
 // Create a new deposit record for each host zone for the given epoch
@@ -68,13 +68,10 @@ func (k Keeper) TransferExistingDepositsToHostZones(ctx sdk.Context, epochNumber
 			continue
 		}
 
-		hostZoneModuleAddress := hostZone.Address
-		delegateAccount := hostZone.DelegationAccount
-		if delegateAccount == nil || delegateAccount.Address == "" {
+		if hostZone.DelegationIcaAddress == "" {
 			k.Logger(ctx).Error(fmt.Sprintf("[TransferExistingDepositsToHostZones] Zone %s is missing a delegation address!", hostZone.ChainId))
 			continue
 		}
-		delegateAddress := delegateAccount.Address
 
 		k.Logger(ctx).Info(utils.LogWithHostZone(depositRecord.HostZoneId, "Transferring %v%s", depositRecord.Amount, hostZone.HostDenom))
 		transferCoin := sdk.NewCoin(hostZone.IbcDenom, depositRecord.Amount)
@@ -89,8 +86,8 @@ func (k Keeper) TransferExistingDepositsToHostZones(ctx sdk.Context, epochNumber
 			ibctransfertypes.PortID,
 			hostZone.TransferChannelId,
 			transferCoin,
-			hostZoneModuleAddress,
-			delegateAddress,
+			hostZone.DepositAddress,
+			hostZone.DelegationIcaAddress,
 			clienttypes.Height{},
 			timeoutTimestamp,
 			"",
@@ -98,10 +95,10 @@ func (k Keeper) TransferExistingDepositsToHostZones(ctx sdk.Context, epochNumber
 		k.Logger(ctx).Info(utils.LogWithHostZone(depositRecord.HostZoneId, "Transfer Msg: %+v", msg))
 
 		// transfer the deposit record and update its status to TRANSFER_IN_PROGRESS
-		err := k.RecordsKeeper.Transfer(ctx, msg, depositRecord)
+		err := k.RecordsKeeper.IBCTransferNativeTokens(ctx, msg, depositRecord)
 		if err != nil {
 			k.Logger(ctx).Error(fmt.Sprintf("[TransferExistingDepositsToHostZones] Failed to initiate IBC transfer to host zone, HostZone: %v, Channel: %v, Amount: %v, ModuleAddress: %v, DelegateAddress: %v, Timeout: %v",
-				hostZone.ChainId, hostZone.TransferChannelId, transferCoin, hostZoneModuleAddress, delegateAddress, timeoutTimestamp))
+				hostZone.ChainId, hostZone.TransferChannelId, transferCoin, hostZone.DepositAddress, hostZone.DelegationIcaAddress, timeoutTimestamp))
 			k.Logger(ctx).Error(fmt.Sprintf("[TransferExistingDepositsToHostZones] err {%s}", err.Error()))
 			continue
 		}
@@ -132,6 +129,9 @@ func (k Keeper) StakeExistingDepositsOnHostZones(ctx sdk.Context, epochNumber ui
 	}
 
 	for _, depositRecord := range stakeDepositRecords[:maxDepositRecordsToStake] {
+		if depositRecord.Amount.IsZero() {
+			continue
+		}
 		k.Logger(ctx).Info(utils.LogWithHostZone(depositRecord.HostZoneId,
 			"Processing deposit record %d: %v%s", depositRecord.Id, depositRecord.Amount, depositRecord.Denom))
 
@@ -146,8 +146,7 @@ func (k Keeper) StakeExistingDepositsOnHostZones(ctx sdk.Context, epochNumber ui
 			continue
 		}
 
-		delegateAccount := hostZone.DelegationAccount
-		if delegateAccount == nil || delegateAccount.Address == "" {
+		if hostZone.DelegationIcaAddress == "" {
 			k.Logger(ctx).Error(fmt.Sprintf("[StakeExistingDepositsOnHostZones] Zone %s is missing a delegation address!", hostZone.ChainId))
 			continue
 		}

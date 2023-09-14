@@ -13,7 +13,7 @@ import (
 
 	nodeservice "github.com/cosmos/cosmos-sdk/client/grpc/node"
 
-	"github.com/Stride-Labs/stride/v13/utils"
+	"github.com/Stride-Labs/stride/v14/utils"
 
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/client"
@@ -61,13 +61,17 @@ import (
 	govtypesv1beta1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
 	ccvdistr "github.com/cosmos/interchain-security/v3/x/ccv/democracy/distribution"
 	ccvgov "github.com/cosmos/interchain-security/v3/x/ccv/democracy/governance"
+	evmosvesting "github.com/evmos/vesting/x/vesting"
+	evmosvestingclient "github.com/evmos/vesting/x/vesting/client"
+	evmosvestingkeeper "github.com/evmos/vesting/x/vesting/keeper"
+	evmosvestingtypes "github.com/evmos/vesting/x/vesting/types"
 
-	claimvesting "github.com/Stride-Labs/stride/v13/x/claim/vesting"
-	claimvestingtypes "github.com/Stride-Labs/stride/v13/x/claim/vesting/types"
+	claimvesting "github.com/Stride-Labs/stride/v14/x/claim/vesting"
+	claimvestingtypes "github.com/Stride-Labs/stride/v14/x/claim/vesting/types"
 
-	"github.com/Stride-Labs/stride/v13/x/mint"
-	mintkeeper "github.com/Stride-Labs/stride/v13/x/mint/keeper"
-	minttypes "github.com/Stride-Labs/stride/v13/x/mint/types"
+	"github.com/Stride-Labs/stride/v14/x/mint"
+	mintkeeper "github.com/Stride-Labs/stride/v14/x/mint/keeper"
+	minttypes "github.com/Stride-Labs/stride/v14/x/mint/types"
 
 	dbm "github.com/cometbft/cometbft-db"
 	abci "github.com/cometbft/cometbft/abci/types"
@@ -114,38 +118,38 @@ import (
 	// monitoringp "github.com/tendermint/spn/x/monitoringp"
 	// monitoringpkeeper "github.com/tendermint/spn/x/monitoringp/keeper"
 
-	epochsmodule "github.com/Stride-Labs/stride/v13/x/epochs"
-	epochsmodulekeeper "github.com/Stride-Labs/stride/v13/x/epochs/keeper"
-	epochsmoduletypes "github.com/Stride-Labs/stride/v13/x/epochs/types"
+	epochsmodule "github.com/Stride-Labs/stride/v14/x/epochs"
+	epochsmodulekeeper "github.com/Stride-Labs/stride/v14/x/epochs/keeper"
+	epochsmoduletypes "github.com/Stride-Labs/stride/v14/x/epochs/types"
 
-	"github.com/Stride-Labs/stride/v13/x/interchainquery"
-	interchainquerykeeper "github.com/Stride-Labs/stride/v13/x/interchainquery/keeper"
-	interchainquerytypes "github.com/Stride-Labs/stride/v13/x/interchainquery/types"
+	"github.com/Stride-Labs/stride/v14/x/interchainquery"
+	interchainquerykeeper "github.com/Stride-Labs/stride/v14/x/interchainquery/keeper"
+	interchainquerytypes "github.com/Stride-Labs/stride/v14/x/interchainquery/types"
 
-	"github.com/Stride-Labs/stride/v13/x/autopilot"
-	autopilotkeeper "github.com/Stride-Labs/stride/v13/x/autopilot/keeper"
-	autopilottypes "github.com/Stride-Labs/stride/v13/x/autopilot/types"
+	"github.com/Stride-Labs/stride/v14/x/autopilot"
+	autopilotkeeper "github.com/Stride-Labs/stride/v14/x/autopilot/keeper"
+	autopilottypes "github.com/Stride-Labs/stride/v14/x/autopilot/types"
 
-	"github.com/Stride-Labs/stride/v13/x/claim"
-	claimkeeper "github.com/Stride-Labs/stride/v13/x/claim/keeper"
-	claimtypes "github.com/Stride-Labs/stride/v13/x/claim/types"
-	icacallbacksmodule "github.com/Stride-Labs/stride/v13/x/icacallbacks"
-	icacallbacksmodulekeeper "github.com/Stride-Labs/stride/v13/x/icacallbacks/keeper"
-	icacallbacksmoduletypes "github.com/Stride-Labs/stride/v13/x/icacallbacks/types"
-	icaoracle "github.com/Stride-Labs/stride/v13/x/icaoracle"
-	icaoraclekeeper "github.com/Stride-Labs/stride/v13/x/icaoracle/keeper"
-	icaoracletypes "github.com/Stride-Labs/stride/v13/x/icaoracle/types"
-	ratelimitmodule "github.com/Stride-Labs/stride/v13/x/ratelimit"
-	ratelimitclient "github.com/Stride-Labs/stride/v13/x/ratelimit/client"
-	ratelimitmodulekeeper "github.com/Stride-Labs/stride/v13/x/ratelimit/keeper"
-	ratelimitmoduletypes "github.com/Stride-Labs/stride/v13/x/ratelimit/types"
-	recordsmodule "github.com/Stride-Labs/stride/v13/x/records"
-	recordsmodulekeeper "github.com/Stride-Labs/stride/v13/x/records/keeper"
-	recordsmoduletypes "github.com/Stride-Labs/stride/v13/x/records/types"
-	stakeibcmodule "github.com/Stride-Labs/stride/v13/x/stakeibc"
-	stakeibcclient "github.com/Stride-Labs/stride/v13/x/stakeibc/client"
-	stakeibcmodulekeeper "github.com/Stride-Labs/stride/v13/x/stakeibc/keeper"
-	stakeibcmoduletypes "github.com/Stride-Labs/stride/v13/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v14/x/claim"
+	claimkeeper "github.com/Stride-Labs/stride/v14/x/claim/keeper"
+	claimtypes "github.com/Stride-Labs/stride/v14/x/claim/types"
+	icacallbacksmodule "github.com/Stride-Labs/stride/v14/x/icacallbacks"
+	icacallbacksmodulekeeper "github.com/Stride-Labs/stride/v14/x/icacallbacks/keeper"
+	icacallbacksmoduletypes "github.com/Stride-Labs/stride/v14/x/icacallbacks/types"
+	icaoracle "github.com/Stride-Labs/stride/v14/x/icaoracle"
+	icaoraclekeeper "github.com/Stride-Labs/stride/v14/x/icaoracle/keeper"
+	icaoracletypes "github.com/Stride-Labs/stride/v14/x/icaoracle/types"
+	ratelimitmodule "github.com/Stride-Labs/stride/v14/x/ratelimit"
+	ratelimitclient "github.com/Stride-Labs/stride/v14/x/ratelimit/client"
+	ratelimitmodulekeeper "github.com/Stride-Labs/stride/v14/x/ratelimit/keeper"
+	ratelimitmoduletypes "github.com/Stride-Labs/stride/v14/x/ratelimit/types"
+	recordsmodule "github.com/Stride-Labs/stride/v14/x/records"
+	recordsmodulekeeper "github.com/Stride-Labs/stride/v14/x/records/keeper"
+	recordsmoduletypes "github.com/Stride-Labs/stride/v14/x/records/types"
+	stakeibcmodule "github.com/Stride-Labs/stride/v14/x/stakeibc"
+	stakeibcclient "github.com/Stride-Labs/stride/v14/x/stakeibc/client"
+	stakeibcmodulekeeper "github.com/Stride-Labs/stride/v14/x/stakeibc/keeper"
+	stakeibcmoduletypes "github.com/Stride-Labs/stride/v14/x/stakeibc/types"
 
 	ccvconsumer "github.com/cosmos/interchain-security/v3/x/ccv/consumer"
 	ccvconsumerkeeper "github.com/cosmos/interchain-security/v3/x/ccv/consumer/keeper"
@@ -170,10 +174,12 @@ func getGovProposalHandlers() []govclient.ProposalHandler {
 		ibcclientclient.UpdateClientProposalHandler,
 		ibcclientclient.UpgradeProposalHandler,
 		stakeibcclient.AddValidatorsProposalHandler,
+		stakeibcclient.ToggleLSMProposalHandler,
 		ratelimitclient.AddRateLimitProposalHandler,
 		ratelimitclient.UpdateRateLimitProposalHandler,
 		ratelimitclient.RemoveRateLimitProposalHandler,
 		ratelimitclient.ResetRateLimitProposalHandler,
+		evmosvestingclient.RegisterClawbackProposalHandler,
 	)
 
 	return govProposalHandlers
@@ -219,6 +225,7 @@ var (
 		autopilot.AppModuleBasic{},
 		icaoracle.AppModuleBasic{},
 		tendermint.AppModuleBasic{},
+		evmosvesting.AppModuleBasic{},
 	)
 
 	// module account permissions
@@ -273,6 +280,7 @@ type StrideApp struct {
 	memKeys map[string]*storetypes.MemoryStoreKey
 
 	// keepers
+	VestingKeeper         evmosvestingkeeper.Keeper
 	AccountKeeper         authkeeper.AccountKeeper
 	BankKeeper            bankkeeper.Keeper
 	CapabilityKeeper      *capabilitykeeper.Keeper
@@ -361,6 +369,7 @@ func NewStrideApp(
 		ccvconsumertypes.StoreKey,
 		crisistypes.StoreKey,
 		consensusparamtypes.StoreKey,
+		evmosvestingtypes.StoreKey,
 	)
 	tkeys := sdk.NewTransientStoreKeys(paramstypes.TStoreKey)
 	memKeys := sdk.NewMemoryStoreKeys(capabilitytypes.MemStoreKey)
@@ -607,6 +616,11 @@ func NewStrideApp(
 		app.ClaimKeeper)
 	autopilotModule := autopilot.NewAppModule(appCodec, app.AutopilotKeeper)
 
+	app.VestingKeeper = evmosvestingkeeper.NewKeeper(
+		keys[evmosvestingtypes.StoreKey], authtypes.NewModuleAddress(govtypes.ModuleName), appCodec,
+		app.AccountKeeper, app.BankKeeper, app.DistrKeeper, app.StakingKeeper,
+	)
+
 	// Register Gov (must be registerd after stakeibc)
 	govRouter := govtypesv1beta1.NewRouter()
 	govRouter.AddRoute(govtypes.RouterKey, govtypesv1beta1.ProposalHandler).
@@ -614,7 +628,8 @@ func NewStrideApp(
 		AddRoute(upgradetypes.RouterKey, upgrade.NewSoftwareUpgradeProposalHandler(app.UpgradeKeeper)).
 		AddRoute(ibcclienttypes.RouterKey, ibcclient.NewClientProposalHandler(app.IBCKeeper.ClientKeeper)).
 		AddRoute(stakeibcmoduletypes.RouterKey, stakeibcmodule.NewStakeibcProposalHandler(app.StakeibcKeeper)).
-		AddRoute(ratelimitmoduletypes.RouterKey, ratelimitmodule.NewRateLimitProposalHandler(app.RatelimitKeeper, app.IBCKeeper.ChannelKeeper))
+		AddRoute(ratelimitmoduletypes.RouterKey, ratelimitmodule.NewRateLimitProposalHandler(app.RatelimitKeeper, app.IBCKeeper.ChannelKeeper)).
+		AddRoute(evmosvestingtypes.RouterKey, evmosvesting.NewVestingProposalHandler(&app.VestingKeeper))
 
 	govKeeper := govkeeper.NewKeeper(
 		appCodec, keys[govtypes.StoreKey], app.AccountKeeper, app.BankKeeper,
@@ -724,6 +739,7 @@ func NewStrideApp(
 			app.AccountKeeper, app.StakingKeeper, app.BaseApp.DeliverTx,
 			encodingConfig.TxConfig,
 		),
+		evmosvesting.NewAppModule(app.VestingKeeper, app.AccountKeeper, app.BankKeeper, app.StakingKeeper),
 		auth.NewAppModule(appCodec, app.AccountKeeper, authsims.RandomGenesisAccounts, app.GetSubspace(authtypes.ModuleName)),
 		vesting.NewAppModule(app.AccountKeeper, app.BankKeeper),
 		claimvesting.NewAppModule(app.AccountKeeper, app.BankKeeper),
@@ -779,6 +795,7 @@ func NewStrideApp(
 		genutiltypes.ModuleName,
 		feegrant.ModuleName,
 		paramstypes.ModuleName,
+		evmosvestingtypes.ModuleName,
 		// monitoringptypes.ModuleName,
 		icatypes.ModuleName,
 		stakeibcmoduletypes.ModuleName,
@@ -814,6 +831,7 @@ func NewStrideApp(
 		ibchost.ModuleName,
 		ibctransfertypes.ModuleName,
 		// monitoringptypes.ModuleName,
+		evmosvestingtypes.ModuleName,
 		icatypes.ModuleName,
 		stakeibcmoduletypes.ModuleName,
 		epochsmoduletypes.ModuleName,
@@ -853,6 +871,7 @@ func NewStrideApp(
 		ibctransfertypes.ModuleName,
 		feegrant.ModuleName,
 		// monitoringptypes.ModuleName,
+		evmosvestingtypes.ModuleName,
 		icatypes.ModuleName,
 		stakeibcmoduletypes.ModuleName,
 		epochsmoduletypes.ModuleName,

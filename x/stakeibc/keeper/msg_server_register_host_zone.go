@@ -7,10 +7,10 @@ import (
 	sdkmath "cosmossdk.io/math"
 	icatypes "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/types"
 
-	"github.com/Stride-Labs/stride/v13/utils"
-	epochtypes "github.com/Stride-Labs/stride/v13/x/epochs/types"
-	recordstypes "github.com/Stride-Labs/stride/v13/x/records/types"
-	"github.com/Stride-Labs/stride/v13/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v14/utils"
+	epochtypes "github.com/Stride-Labs/stride/v14/x/epochs/types"
+	recordstypes "github.com/Stride-Labs/stride/v14/x/records/types"
+	"github.com/Stride-Labs/stride/v14/x/stakeibc/types"
 
 	errorsmod "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -70,8 +70,8 @@ func (k msgServer) RegisterHostZone(goCtx context.Context, msg *types.MsgRegiste
 	}
 
 	// create and save the zones's module account
-	zoneAddress := types.NewZoneAddress(chainId)
-	if err := utils.CreateModuleAccount(ctx, k.AccountKeeper, zoneAddress); err != nil {
+	depositAddress := types.NewHostZoneDepositAddress(chainId)
+	if err := utils.CreateModuleAccount(ctx, k.AccountKeeper, depositAddress); err != nil {
 		return nil, errorsmod.Wrapf(err, "unable to create module account for host zone %s", chainId)
 	}
 
@@ -91,13 +91,14 @@ func (k msgServer) RegisterHostZone(goCtx context.Context, msg *types.MsgRegiste
 		IbcDenom:          msg.IbcDenom,
 		HostDenom:         msg.HostDenom,
 		TransferChannelId: msg.TransferChannelId,
-		// Start exchange rate at 1 upon registration
-		RedemptionRate:     sdk.NewDec(1),
-		LastRedemptionRate: sdk.NewDec(1),
-		UnbondingFrequency: msg.UnbondingFrequency,
-		Address:            zoneAddress.String(),
-		MinRedemptionRate:  msg.MinRedemptionRate,
-		MaxRedemptionRate:  msg.MaxRedemptionRate,
+		// Start sharesToTokens rate at 1 upon registration
+		RedemptionRate:        sdk.NewDec(1),
+		LastRedemptionRate:    sdk.NewDec(1),
+		UnbondingPeriod:       msg.UnbondingPeriod,
+		DepositAddress:        depositAddress.String(),
+		MinRedemptionRate:     msg.MinRedemptionRate,
+		MaxRedemptionRate:     msg.MaxRedemptionRate,
+		LsmLiquidStakeEnabled: msg.LsmLiquidStakeEnabled,
 	}
 	// write the zone back to the store
 	k.SetHostZone(ctx, zone)
@@ -185,6 +186,15 @@ func (k msgServer) RegisterHostZone(goCtx context.Context, msg *types.MsgRegiste
 		DepositEpochNumber: strideEpochTracker.EpochNumber,
 	}
 	k.RecordsKeeper.AppendDepositRecord(ctx, depositRecord)
+
+	// register stToken to consumer reward denom whitelist so that
+	// stToken rewards can be distributed to provider validators
+	err = k.RegisterStTokenDenomsToWhitelist(ctx, []string{types.StAssetDenomFromHostZoneDenom(zone.HostDenom)})
+	if err != nil {
+		errMsg := fmt.Sprintf("unable to register reward denom, err: %s", err.Error())
+		k.Logger(ctx).Error(errMsg)
+		return nil, errorsmod.Wrapf(types.ErrFailedToRegisterHostZone, errMsg)
+	}
 
 	// emit events
 	ctx.EventManager().EmitEvent(

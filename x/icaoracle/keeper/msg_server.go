@@ -12,7 +12,7 @@ import (
 	icatypes "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/types"
 	ibctmtypes "github.com/cosmos/ibc-go/v7/modules/light-clients/07-tendermint"
 
-	"github.com/Stride-Labs/stride/v13/x/icaoracle/types"
+	"github.com/Stride-Labs/stride/v14/x/icaoracle/types"
 )
 
 type msgServer struct {
@@ -129,7 +129,8 @@ func (k msgServer) InstantiateOracle(goCtx context.Context, msg *types.MsgInstan
 
 	// Build the contract-specific instantiation message
 	contractMsg := types.MsgInstantiateOracleContract{
-		AdminAddress: oracle.IcaAddress,
+		AdminAddress:      oracle.IcaAddress,
+		TransferChannelId: msg.TransferChannelOnOracle,
 	}
 	contractMsgBz, err := json.Marshal(contractMsg)
 	if err != nil {

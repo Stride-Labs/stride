@@ -1,7 +1,7 @@
 package keeper
 
 import (
-	icacallbackstypes "github.com/Stride-Labs/stride/v13/x/icacallbacks/types"
+	icacallbackstypes "github.com/Stride-Labs/stride/v14/x/icacallbacks/types"
 )
 
 const (
@@ -11,6 +11,7 @@ const (
 	ICACallbackID_Reinvest   = "reinvest"
 	ICACallbackID_Redemption = "redemption"
 	ICACallbackID_Rebalance  = "rebalance"
+	ICACallbackID_Detokenize = "detokenize"
 )
 
 func (k Keeper) Callbacks() icacallbackstypes.ModuleCallbacks {
@@ -21,5 +22,6 @@ func (k Keeper) Callbacks() icacallbackstypes.ModuleCallbacks {
 		{CallbackId: ICACallbackID_Reinvest, CallbackFunc: icacallbackstypes.ICACallbackFunction(k.ReinvestCallback)},
 		{CallbackId: ICACallbackID_Redemption, CallbackFunc: icacallbackstypes.ICACallbackFunction(k.RedemptionCallback)},
 		{CallbackId: ICACallbackID_Rebalance, CallbackFunc: icacallbackstypes.ICACallbackFunction(k.RebalanceCallback)},
+		{CallbackId: ICACallbackID_Detokenize, CallbackFunc: icacallbackstypes.ICACallbackFunction(k.DetokenizeCallback)},
 	}
 }

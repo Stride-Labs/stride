@@ -3,7 +3,7 @@ package keeper
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	icqtypes "github.com/Stride-Labs/stride/v13/x/interchainquery/types"
+	icqtypes "github.com/Stride-Labs/stride/v14/x/interchainquery/types"
 )
 
 const (
@@ -46,5 +46,5 @@ func (c ICQCallbacks) RegisterICQCallbacks() icqtypes.QueryCallbacks {
 		AddICQCallback(ICQCallbackID_WithdrawalBalance, ICQCallback(WithdrawalBalanceCallback)).
 		AddICQCallback(ICQCallbackID_FeeBalance, ICQCallback(FeeBalanceCallback)).
 		AddICQCallback(ICQCallbackID_Delegation, ICQCallback(DelegatorSharesCallback)).
-		AddICQCallback(ICQCallbackID_Validator, ICQCallback(ValidatorExchangeRateCallback))
+		AddICQCallback(ICQCallbackID_Validator, ICQCallback(ValidatorSharesToTokensRateCallback))
 }

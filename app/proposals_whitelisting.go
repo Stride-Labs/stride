@@ -17,9 +17,9 @@ import (
 	ccvconsumertypes "github.com/cosmos/interchain-security/v3/x/ccv/consumer/types"
 	ccvgov "github.com/cosmos/interchain-security/v3/x/ccv/democracy/governance"
 
-	autopilottypes "github.com/Stride-Labs/stride/v13/x/autopilot/types"
-	minttypes "github.com/Stride-Labs/stride/v13/x/mint/types"
-	stakeibctypes "github.com/Stride-Labs/stride/v13/x/stakeibc/types"
+	autopilottypes "github.com/Stride-Labs/stride/v14/x/autopilot/types"
+	minttypes "github.com/Stride-Labs/stride/v14/x/mint/types"
+	stakeibctypes "github.com/Stride-Labs/stride/v14/x/stakeibc/types"
 )
 
 var WhiteListModule = map[string]struct{}{
@@ -137,8 +137,6 @@ var WhitelistedParams = map[ccvgov.ParamChangeKey]struct{}{
 	{MsgType: stakeibctypes.ModuleName, Key: string(stakeibctypes.KeyDefaultMinRedemptionRateThreshold)}: {},
 	{MsgType: stakeibctypes.ModuleName, Key: string(stakeibctypes.KeyDefaultMaxRedemptionRateThreshold)}: {},
 	{MsgType: stakeibctypes.ModuleName, Key: string(stakeibctypes.KeyIBCTransferTimeoutNanos)}:           {},
-	{MsgType: stakeibctypes.ModuleName, Key: string(stakeibctypes.KeySafetyNumValidators)}:               {},
-	{MsgType: stakeibctypes.ModuleName, Key: string(stakeibctypes.KeySafetyMaxSlashPercent)}:             {},
 	{MsgType: stakeibctypes.ModuleName, Key: string(stakeibctypes.KeyMaxRedemptionRates)}:                {},
 	{MsgType: stakeibctypes.ModuleName, Key: string(stakeibctypes.KeyMinRedemptionRates)}:                {},
 	//ica

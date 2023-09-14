@@ -1,30 +1,32 @@
 package keeper_test
 
 import (
+	"time"
+
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
 	ibctesting "github.com/cosmos/ibc-go/v7/testing"
 	_ "github.com/stretchr/testify/suite"
 
-	"github.com/Stride-Labs/stride/v13/app/apptesting"
-	epochtypes "github.com/Stride-Labs/stride/v13/x/epochs/types"
-	icqtypes "github.com/Stride-Labs/stride/v13/x/interchainquery/types"
+	"github.com/Stride-Labs/stride/v14/app/apptesting"
+	epochtypes "github.com/Stride-Labs/stride/v14/x/epochs/types"
+	icqtypes "github.com/Stride-Labs/stride/v14/x/interchainquery/types"
 
-	icacallbacktypes "github.com/Stride-Labs/stride/v13/x/icacallbacks/types"
-	recordtypes "github.com/Stride-Labs/stride/v13/x/records/types"
-	stakeibckeeper "github.com/Stride-Labs/stride/v13/x/stakeibc/keeper"
+	icacallbacktypes "github.com/Stride-Labs/stride/v14/x/icacallbacks/types"
+	recordtypes "github.com/Stride-Labs/stride/v14/x/records/types"
+	stakeibckeeper "github.com/Stride-Labs/stride/v14/x/stakeibc/keeper"
 
-	"github.com/Stride-Labs/stride/v13/x/stakeibc/types"
-	stakeibctypes "github.com/Stride-Labs/stride/v13/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v14/x/stakeibc/types"
+	stakeibctypes "github.com/Stride-Labs/stride/v14/x/stakeibc/types"
 )
 
 type ReinvestCallbackState struct {
-	hostZone       stakeibctypes.HostZone
-	reinvestAmt    sdkmath.Int
-	callbackArgs   types.ReinvestCallback
-	depositRecord  recordtypes.DepositRecord
-	icaTimeoutTime int64
+	hostZone               stakeibctypes.HostZone
+	reinvestAmt            sdkmath.Int
+	callbackArgs           types.ReinvestCallback
+	depositRecord          recordtypes.DepositRecord
+	durationUntilNextEpoch time.Duration
 }
 
 type ReinvestCallbackArgs struct {
@@ -42,20 +44,16 @@ func (s *KeeperTestSuite) SetupReinvestCallback() ReinvestCallbackTestCase {
 	reinvestAmt := sdkmath.NewInt(1_000)
 	feeAddress := apptesting.CreateRandomAccounts(1)[0].String() // must be valid bech32 address
 
-	epochEndTime := uint64(100)
-	buffer := uint64(10)
-	icaTimeoutTime := int64(90)
-
 	hostZone := stakeibctypes.HostZone{
 		ChainId:        HostChainId,
 		HostDenom:      Atom,
 		IbcDenom:       IbcAtom,
 		RedemptionRate: sdk.NewDec(1.0),
 		ConnectionId:   ibctesting.FirstConnectionID,
-		FeeAccount: &stakeibctypes.ICAAccount{
-			Address: feeAddress,
-		},
+		FeeIcaAddress:  feeAddress,
 	}
+	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
+
 	expectedNewDepositRecord := recordtypes.DepositRecord{
 		Id:                 0,
 		DepositEpochNumber: 1,
@@ -64,18 +62,17 @@ func (s *KeeperTestSuite) SetupReinvestCallback() ReinvestCallbackTestCase {
 		Status:             recordtypes.DepositRecord_DELEGATION_QUEUE,
 		Source:             recordtypes.DepositRecord_WITHDRAWAL_ICA,
 	}
+
+	durationUntilNextEpoch := time.Minute
+	blockTime := time.Date(2023, 1, 1, 0, 0, 0, 0, time.UTC)
+	s.Ctx = s.Ctx.WithBlockTime(blockTime)
+
 	epochTracker := stakeibctypes.EpochTracker{
 		EpochIdentifier:    epochtypes.STRIDE_EPOCH,
 		EpochNumber:        1,
-		NextEpochStartTime: epochEndTime,
-		Duration:           epochEndTime,
+		NextEpochStartTime: uint64(blockTime.Add(durationUntilNextEpoch).UnixNano()),
 	}
-	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
 	s.App.StakeibcKeeper.SetEpochTracker(s.Ctx, epochTracker)
-
-	params := s.App.StakeibcKeeper.GetParams(s.Ctx)
-	params.BufferSize = buffer
-	s.App.StakeibcKeeper.SetParams(s.Ctx, params)
 
 	packet := channeltypes.Packet{}
 	ackResponse := icacallbacktypes.AcknowledgementResponse{Status: icacallbacktypes.AckResponseStatus_SUCCESS}
@@ -86,13 +83,16 @@ func (s *KeeperTestSuite) SetupReinvestCallback() ReinvestCallbackTestCase {
 	args, err := s.App.StakeibcKeeper.MarshalReinvestCallbackArgs(s.Ctx, callbackArgs)
 	s.Require().NoError(err)
 
+	// Mock the latest client height for the ICQ submission
+	s.MockClientLatestHeight(1)
+
 	return ReinvestCallbackTestCase{
 		initialState: ReinvestCallbackState{
-			hostZone:       hostZone,
-			reinvestAmt:    reinvestAmt,
-			callbackArgs:   callbackArgs,
-			depositRecord:  expectedNewDepositRecord,
-			icaTimeoutTime: icaTimeoutTime,
+			hostZone:               hostZone,
+			reinvestAmt:            reinvestAmt,
+			callbackArgs:           callbackArgs,
+			depositRecord:          expectedNewDepositRecord,
+			durationUntilNextEpoch: durationUntilNextEpoch,
 		},
 		validArgs: ReinvestCallbackArgs{
 			packet:      packet,
@@ -133,7 +133,7 @@ func (s *KeeperTestSuite) TestReinvestCallback_Successful() {
 	s.Require().Equal(HostChainId, query.ChainId, "query chain ID")
 	s.Require().Equal(ibctesting.FirstConnectionID, query.ConnectionId, "query connection ID")
 	s.Require().Equal(icqtypes.BANK_STORE_QUERY_WITH_PROOF, query.QueryType, "query type")
-	s.Require().Equal(tc.initialState.icaTimeoutTime, int64(query.Ttl), "query timeout")
+	s.Require().Equal(tc.initialState.durationUntilNextEpoch, query.TimeoutDuration, "query timeout duration")
 }
 
 func (s *KeeperTestSuite) checkReinvestStateIfCallbackFailed(tc ReinvestCallbackTestCase) {
@@ -192,7 +192,7 @@ func (s *KeeperTestSuite) TestReinvestCallback_NoFeeAccount() {
 
 	// Remove the fee account
 	badHostZone := tc.initialState.hostZone
-	badHostZone.FeeAccount = nil
+	badHostZone.FeeIcaAddress = ""
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, badHostZone)
 
 	err := s.App.StakeibcKeeper.ReinvestCallback(s.Ctx, tc.validArgs.packet, tc.validArgs.ackResponse, tc.validArgs.args)
@@ -204,7 +204,7 @@ func (s *KeeperTestSuite) TestReinvestCallback_InvalidFeeAccountAddress() {
 
 	// Remove the fee account
 	badHostZone := tc.initialState.hostZone
-	badHostZone.FeeAccount.Address = "invalid_fee_account"
+	badHostZone.FeeIcaAddress = "invalid_fee_account"
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, badHostZone)
 
 	err := s.App.StakeibcKeeper.ReinvestCallback(s.Ctx, tc.validArgs.packet, tc.validArgs.ackResponse, tc.validArgs.args)
@@ -232,5 +232,5 @@ func (s *KeeperTestSuite) TestReinvestCallback_FailedToSubmitQuery() {
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, badHostZone)
 
 	err := s.App.StakeibcKeeper.ReinvestCallback(s.Ctx, invalidArgs.packet, invalidArgs.ackResponse, invalidArgs.args)
-	s.Require().EqualError(err, "[ICQ Validation Check] Failed! connection id cannot be empty: invalid request")
+	s.Require().EqualError(err, "connection-id cannot be empty: invalid interchain query request")
 }

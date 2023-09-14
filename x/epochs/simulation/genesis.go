@@ -9,7 +9,7 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/types/module"
 
-	"github.com/Stride-Labs/stride/v13/x/epochs/types"
+	"github.com/Stride-Labs/stride/v14/x/epochs/types"
 )
 
 // RandomizedGenState generates a random GenesisState for mint

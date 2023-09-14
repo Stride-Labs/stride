@@ -11,11 +11,11 @@ import (
 	clienttypes "github.com/cosmos/ibc-go/v7/modules/core/02-client/types"
 	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
 
-	"github.com/Stride-Labs/stride/v13/utils"
-	epochtypes "github.com/Stride-Labs/stride/v13/x/epochs/types"
-	icqkeeper "github.com/Stride-Labs/stride/v13/x/interchainquery/keeper"
-	icqtypes "github.com/Stride-Labs/stride/v13/x/interchainquery/types"
-	"github.com/Stride-Labs/stride/v13/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v14/utils"
+	epochtypes "github.com/Stride-Labs/stride/v14/x/epochs/types"
+	icqkeeper "github.com/Stride-Labs/stride/v14/x/interchainquery/keeper"
+	icqtypes "github.com/Stride-Labs/stride/v14/x/interchainquery/types"
+	"github.com/Stride-Labs/stride/v14/x/stakeibc/types"
 )
 
 // FeeBalanceCallback is a callback handler for FeeBalnce queries.
@@ -44,13 +44,12 @@ func FeeBalanceCallback(k Keeper, ctx sdk.Context, args []byte, query icqtypes.Q
 	// Confirm the balance is greater than zero
 	if feeBalanceAmount.LTE(sdkmath.ZeroInt()) {
 		k.Logger(ctx).Info(utils.LogICQCallbackWithHostZone(chainId, ICQCallbackID_FeeBalance,
-			"No balance to transfer for address: %v, balance: %v", hostZone.FeeAccount.GetAddress(), feeBalanceAmount))
+			"No balance to transfer for address: %s, balance: %v", hostZone.FeeIcaAddress, feeBalanceAmount))
 		return nil
 	}
 
 	// Confirm the fee account has been initiated
-	feeAccount := hostZone.FeeAccount
-	if feeAccount == nil || feeAccount.Address == "" {
+	if hostZone.FeeIcaAddress == "" {
 		return errorsmod.Wrapf(types.ErrICAAccountNotFound, "no fee account found for %s", chainId)
 	}
 
@@ -74,7 +73,7 @@ func FeeBalanceCallback(k Keeper, ctx sdk.Context, args []byte, query icqtypes.Q
 		transfertypes.PortID,
 		counterpartyChannelId,
 		rewardsCoin,
-		feeAccount.Address,
+		hostZone.FeeIcaAddress,
 		rewardsCollectorAddress.String(),
 		clienttypes.Height{},
 		timeout,
@@ -86,7 +85,7 @@ func FeeBalanceCallback(k Keeper, ctx sdk.Context, args []byte, query icqtypes.Q
 		"Preparing MsgTransfer of %v from the fee account to the rewards collector module account (for commission)", rewardsCoin.String()))
 
 	// Send the transaction through SubmitTx
-	if _, err := k.SubmitTxsStrideEpoch(ctx, hostZone.ConnectionId, msgs, *feeAccount, ICACallbackID_Reinvest, nil); err != nil {
+	if _, err := k.SubmitTxsStrideEpoch(ctx, hostZone.ConnectionId, msgs, types.ICAAccountType_FEE, ICACallbackID_Reinvest, nil); err != nil {
 		return errorsmod.Wrapf(types.ErrICATxFailed, "Failed to SubmitTxs, Messages: %v, err: %s", msgs, err.Error())
 	}
 

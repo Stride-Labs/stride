@@ -3,7 +3,7 @@ package stride.icaoracle;
 
 import "gogoproto/gogo.proto";
 
-option go_package = "github.com/Stride-Labs/stride/v13/x/icaoracle/types";
+option go_package = "github.com/Stride-Labs/stride/v14/x/icaoracle/types";
 
 // Oracle structure stores context about the CW oracle sitting a different chain
 message Oracle {
@@ -39,7 +39,4 @@ message Metric {
 }
 
 // Attributes associated with a RedemptionRate metric update
-message RedemptionRateAttributes {
-  string denom = 1;
-  string base_denom = 2;
-}
+message RedemptionRateAttributes { string sttoken_denom = 1; }

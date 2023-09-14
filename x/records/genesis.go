@@ -3,8 +3,8 @@ package records
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/Stride-Labs/stride/v13/x/records/keeper"
-	"github.com/Stride-Labs/stride/v13/x/records/types"
+	"github.com/Stride-Labs/stride/v14/x/records/keeper"
+	"github.com/Stride-Labs/stride/v14/x/records/types"
 )
 
 // InitGenesis initializes the capability module's state from a provided genesis
@@ -30,6 +30,11 @@ func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState types.GenesisState) 
 
 	// Set depositRecord count
 	k.SetDepositRecordCount(ctx, genState.DepositRecordCount)
+
+	// Set all lsm deposit records
+	for _, elem := range genState.LsmTokenDepositList {
+		k.SetLSMTokenDeposit(ctx, elem)
+	}
 }
 
 // ExportGenesis returns the capability module's exported genesis.
@@ -41,7 +46,7 @@ func ExportGenesis(ctx sdk.Context, k keeper.Keeper) *types.GenesisState {
 
 	genesis.UserRedemptionRecordList = k.GetAllUserRedemptionRecord(ctx)
 	genesis.EpochUnbondingRecordList = k.GetAllEpochUnbondingRecord(ctx)
-	// this line is used by starport scaffolding # genesis/module/export
+	genesis.LsmTokenDepositList = k.GetAllLSMTokenDeposit(ctx)
 
 	return genesis
 }

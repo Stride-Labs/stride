@@ -5,14 +5,13 @@ import (
 	ibctesting "github.com/cosmos/ibc-go/v7/testing"
 	_ "github.com/stretchr/testify/suite"
 
-	recordtypes "github.com/Stride-Labs/stride/v13/x/records/types"
-
-	stakeibc "github.com/Stride-Labs/stride/v13/x/stakeibc/types"
+	recordtypes "github.com/Stride-Labs/stride/v14/x/records/types"
+	"github.com/Stride-Labs/stride/v14/x/stakeibc/types"
 )
 
 type InitiateAllHostZoneUnbondingsTestCase struct {
 	epochUnbondingRecords []recordtypes.EpochUnbondingRecord
-	hostZones             []stakeibc.HostZone
+	hostZones             []types.HostZone
 }
 
 func (s *KeeperTestSuite) SetupInitiateAllHostZoneUnbondings() InitiateAllHostZoneUnbondingsTestCase {
@@ -22,54 +21,46 @@ func (s *KeeperTestSuite) SetupInitiateAllHostZoneUnbondings() InitiateAllHostZo
 	osmoValAddr := "osmo_VALIDATOR"
 	gaiaDelegationAddr := "cosmos_DELEGATION"
 	osmoDelegationAddr := "osmo_DELEGATION"
-	//  define the host zone with stakedBal and validators with staked amounts
-	gaiaValidators := []*stakeibc.Validator{
+	//  define the host zone with total delegation and validators with staked amounts
+	gaiaValidators := []*types.Validator{
 		{
-			Address:       gaiaValAddr,
-			DelegationAmt: sdkmath.NewInt(5_000_000),
-			Weight:        uint64(10),
+			Address:    gaiaValAddr,
+			Delegation: sdkmath.NewInt(5_000_000),
+			Weight:     uint64(10),
 		},
 		{
-			Address:       gaiaValAddr + "2",
-			DelegationAmt: sdkmath.NewInt(3_000_000),
-			Weight:        uint64(6),
+			Address:    gaiaValAddr + "2",
+			Delegation: sdkmath.NewInt(3_000_000),
+			Weight:     uint64(6),
 		},
 	}
-	gaiaDelegationAccount := stakeibc.ICAAccount{
-		Address: gaiaDelegationAddr,
-		Target:  stakeibc.ICAAccountType_DELEGATION,
-	}
-	osmoValidators := []*stakeibc.Validator{
+	osmoValidators := []*types.Validator{
 		{
-			Address:       osmoValAddr,
-			DelegationAmt: sdkmath.NewInt(5_000_000),
-			Weight:        uint64(10),
+			Address:    osmoValAddr,
+			Delegation: sdkmath.NewInt(5_000_000),
+			Weight:     uint64(10),
 		},
 	}
-	osmoDelegationAccount := stakeibc.ICAAccount{
-		Address: osmoDelegationAddr,
-		Target:  stakeibc.ICAAccountType_DELEGATION,
-	}
-	hostZones := []stakeibc.HostZone{
+	hostZones := []types.HostZone{
 		{
-			ChainId:            HostChainId,
-			HostDenom:          Atom,
-			Bech32Prefix:       GaiaPrefix,
-			UnbondingFrequency: 3,
-			Validators:         gaiaValidators,
-			DelegationAccount:  &gaiaDelegationAccount,
-			StakedBal:          sdkmath.NewInt(5_000_000),
-			ConnectionId:       ibctesting.FirstConnectionID,
+			ChainId:              HostChainId,
+			HostDenom:            Atom,
+			Bech32Prefix:         GaiaPrefix,
+			UnbondingPeriod:      14,
+			Validators:           gaiaValidators,
+			DelegationIcaAddress: gaiaDelegationAddr,
+			TotalDelegations:     sdkmath.NewInt(5_000_000),
+			ConnectionId:         ibctesting.FirstConnectionID,
 		},
 		{
-			ChainId:            OsmoChainId,
-			HostDenom:          Osmo,
-			Bech32Prefix:       OsmoPrefix,
-			UnbondingFrequency: 4,
-			Validators:         osmoValidators,
-			DelegationAccount:  &osmoDelegationAccount,
-			StakedBal:          sdkmath.NewInt(5_000_000),
-			ConnectionId:       ibctesting.FirstConnectionID,
+			ChainId:              OsmoChainId,
+			HostDenom:            Osmo,
+			Bech32Prefix:         OsmoPrefix,
+			UnbondingPeriod:      21,
+			Validators:           osmoValidators,
+			DelegationIcaAddress: osmoDelegationAddr,
+			TotalDelegations:     sdkmath.NewInt(5_000_000),
+			ConnectionId:         ibctesting.FirstConnectionID,
 		},
 	}
 	// list of epoch unbonding records
@@ -103,7 +94,7 @@ func (s *KeeperTestSuite) SetupInitiateAllHostZoneUnbondings() InitiateAllHostZo
 		s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
 	}
 
-	s.App.StakeibcKeeper.SetEpochTracker(s.Ctx, stakeibc.EpochTracker{
+	s.App.StakeibcKeeper.SetEpochTracker(s.Ctx, types.EpochTracker{
 		EpochIdentifier:    "day",
 		EpochNumber:        12,
 		NextEpochStartTime: uint64(2661750006000000000), // arbitrary time in the future, year 2056 I believe
@@ -117,41 +108,43 @@ func (s *KeeperTestSuite) SetupInitiateAllHostZoneUnbondings() InitiateAllHostZo
 }
 
 func (s *KeeperTestSuite) TestInitiateAllHostZoneUnbondings_Successful() {
-	// tests that we can successful initiate a host zone unbonding for ATOM and OSMO
+	// tests that we can successful initiate a host zone unbonding for GAIA and OSMO
 	s.SetupInitiateAllHostZoneUnbondings()
-	success, successful_unbondings, failed_unbondings := s.App.StakeibcKeeper.InitiateAllHostZoneUnbondings(s.Ctx, 12)
-	s.Require().True(success, "initiating unbondings returns true")
-	s.Require().Len(successful_unbondings, 2, "initiating unbondings returns 2 successful unbondings")
-	s.Require().Len(failed_unbondings, 0, "initiating unbondings returns 0 failed unbondings")
+	s.App.StakeibcKeeper.InitiateAllHostZoneUnbondings(s.Ctx, 12)
+
+	// An event should be emitted for each if they were successful
+	s.CheckEventValueEmitted(types.EventTypeUndelegation, types.AttributeKeyHostZone, HostChainId)
+	s.CheckEventValueEmitted(types.EventTypeUndelegation, types.AttributeKeyHostZone, OsmoChainId)
 }
 
 func (s *KeeperTestSuite) TestInitiateAllHostZoneUnbondings_GaiaSuccessful() {
 	// Tests that if we initiate unbondings a day where only Gaia is supposed to unbond, it succeeds and Osmo is ignored
 	s.SetupInitiateAllHostZoneUnbondings()
-	success, successful_unbondings, failed_unbondings := s.App.StakeibcKeeper.InitiateAllHostZoneUnbondings(s.Ctx, 9)
-	s.Require().True(success, "initiating gaia unbondings returns true")
-	s.Require().Len(successful_unbondings, 1, "initiating gaia unbondings returns 1 successful unbondings")
-	s.Require().Len(failed_unbondings, 0, "initiating gaia unbondings returns 0 failed unbondings")
-	s.Require().Equal("GAIA", successful_unbondings[0], "initiating gaia unbondings returns gaia")
+	s.App.StakeibcKeeper.InitiateAllHostZoneUnbondings(s.Ctx, 9)
+
+	// An event should only be emitted for Gaia
+	s.CheckEventValueEmitted(types.EventTypeUndelegation, types.AttributeKeyHostZone, HostChainId)
+	s.CheckEventValueNotEmitted(types.EventTypeUndelegation, types.AttributeKeyHostZone, OsmoChainId)
 }
 
 func (s *KeeperTestSuite) TestInitiateAllHostZoneUnbondings_OsmoSuccessful() {
 	// Tests that if we initiate unbondings a day where only Osmo is supposed to unbond, it succeeds and Gaia is ignored
 	s.SetupInitiateAllHostZoneUnbondings()
-	success, successful_unbondings, failed_unbondings := s.App.StakeibcKeeper.InitiateAllHostZoneUnbondings(s.Ctx, 8)
-	s.Require().True(success, "initiating osmo unbondings returns true")
-	s.Require().Len(successful_unbondings, 1, "initiating osmo unbondings returns 1 successful unbondings")
-	s.Require().Len(failed_unbondings, 0, "initiating osmo unbondings returns 0 failed unbondings")
-	s.Require().Equal("OSMO", successful_unbondings[0], "initiating osmo unbondings returns gaia")
+	s.App.StakeibcKeeper.InitiateAllHostZoneUnbondings(s.Ctx, 8)
+
+	// An event should only be emitted for Osmo
+	s.CheckEventValueNotEmitted(types.EventTypeUndelegation, types.AttributeKeyHostZone, HostChainId)
+	s.CheckEventValueEmitted(types.EventTypeUndelegation, types.AttributeKeyHostZone, OsmoChainId)
 }
 
 func (s *KeeperTestSuite) TestInitiateAllHostZoneUnbondings_NoneSuccessful() {
 	// Tests that if we initiate unbondings a day where none are supposed to unbond, it works successfully
 	s.SetupInitiateAllHostZoneUnbondings()
-	success, successful_unbondings, failed_unbondings := s.App.StakeibcKeeper.InitiateAllHostZoneUnbondings(s.Ctx, 10)
-	s.Require().True(success, "initiating no unbondings returns true")
-	s.Require().Len(successful_unbondings, 0, "initiating no unbondings returns 0 successful unbondings")
-	s.Require().Len(failed_unbondings, 0, "initiating no unbondings returns 0 failed unbondings")
+	s.App.StakeibcKeeper.InitiateAllHostZoneUnbondings(s.Ctx, 10)
+
+	// No event should be emitted for either host
+	s.CheckEventValueNotEmitted(types.EventTypeUndelegation, types.AttributeKeyHostZone, HostChainId)
+	s.CheckEventValueNotEmitted(types.EventTypeUndelegation, types.AttributeKeyHostZone, OsmoChainId)
 }
 
 func (s *KeeperTestSuite) TestInitiateAllHostZoneUnbondings_Failed() {
@@ -159,19 +152,20 @@ func (s *KeeperTestSuite) TestInitiateAllHostZoneUnbondings_Failed() {
 	// but Osmo does and is successful
 	s.SetupInitiateAllHostZoneUnbondings()
 	hostZone, _ := s.App.StakeibcKeeper.GetHostZone(s.Ctx, HostChainId)
-	hostZone.Validators = []*stakeibc.Validator{
+	hostZone.Validators = []*types.Validator{
 		{
-			Address:       "cosmos_VALIDATOR",
-			DelegationAmt: sdkmath.NewInt(1_000_000),
-			Weight:        uint64(10),
+			Address:    "cosmos_VALIDATOR",
+			Delegation: sdkmath.NewInt(1_000_000),
+			Weight:     uint64(10),
 		},
 	}
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
 	hostZone, _ = s.App.StakeibcKeeper.GetHostZone(s.Ctx, HostChainId)
-	success, successful_unbondings, failed_unbondings := s.App.StakeibcKeeper.InitiateAllHostZoneUnbondings(s.Ctx, 12)
-	s.Require().False(success, "initiating bad unbondings returns false")
-	s.Require().Len(successful_unbondings, 1, "initiating bad unbondings has 1 success")
-	s.Require().Len(failed_unbondings, 1, "initiating bad unbondings has 1 failure")
-	s.Require().Equal("OSMO", successful_unbondings[0], "initiating bad unbondings succeeds on osmo")
-	s.Require().Equal("GAIA", failed_unbondings[0], "initiating bad unbondings fails on gaia")
+
+	s.App.StakeibcKeeper.InitiateAllHostZoneUnbondings(s.Ctx, 12)
+
+	// An event should only be emitted for Osmo
+	s.CheckEventValueNotEmitted(types.EventTypeUndelegation, types.AttributeKeyHostZone, HostChainId)
+	s.CheckEventValueEmitted(types.EventTypeUndelegation, types.AttributeKeyHostZone, OsmoChainId)
+
 }

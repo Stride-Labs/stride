@@ -7,8 +7,10 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
-	"github.com/Stride-Labs/stride/v13/utils"
+	"github.com/Stride-Labs/stride/v14/utils"
 )
+
+const TypeMsgAddOracle = "add_oracle"
 
 var _ sdk.Msg = &MsgAddOracle{}
 
@@ -17,6 +19,10 @@ func NewMsgAddOracle(creator string, connectionId string) *MsgAddOracle {
 		Creator:      creator,
 		ConnectionId: connectionId,
 	}
+}
+
+func (msg MsgAddOracle) Type() string {
+	return TypeMsgAddOracle
 }
 
 func (msg *MsgAddOracle) GetSigners() []sdk.AccAddress {

@@ -12,8 +12,8 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
 
-	icqkeeper "github.com/Stride-Labs/stride/v13/x/interchainquery/keeper"
-	"github.com/Stride-Labs/stride/v13/x/stakeibc/types"
+	icqkeeper "github.com/Stride-Labs/stride/v14/x/interchainquery/keeper"
+	"github.com/Stride-Labs/stride/v14/x/stakeibc/types"
 
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
 	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
@@ -23,9 +23,9 @@ import (
 
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 
-	epochstypes "github.com/Stride-Labs/stride/v13/x/epochs/types"
-	icacallbackskeeper "github.com/Stride-Labs/stride/v13/x/icacallbacks/keeper"
-	recordsmodulekeeper "github.com/Stride-Labs/stride/v13/x/records/keeper"
+	epochstypes "github.com/Stride-Labs/stride/v14/x/epochs/types"
+	icacallbackskeeper "github.com/Stride-Labs/stride/v14/x/icacallbacks/keeper"
+	recordsmodulekeeper "github.com/Stride-Labs/stride/v14/x/records/keeper"
 )
 
 type (
@@ -276,36 +276,4 @@ func (k Keeper) IsRedemptionRateWithinSafetyBounds(ctx sdk.Context, zone types.H
 		return false, errorsmod.Wrapf(types.ErrRedemptionRateOutsideSafetyBounds, errMsg)
 	}
 	return true, nil
-}
-
-// Check the max number of validators to confirm we won't exceed it when adding a new validator
-// Types of additions:
-//   - change a weight from zero to non-zero
-//   - add a new validator with non-zero weight
-func (k Keeper) ConfirmValSetHasSpace(ctx sdk.Context, validators []*types.Validator) error {
-
-	// get max val parameter
-	maxNumVals, err := cast.ToIntE(k.GetParam(ctx, types.KeySafetyNumValidators))
-	if err != nil {
-		errMsg := fmt.Sprintf("Error getting safety max num validators | err: %s", err.Error())
-		k.Logger(ctx).Error(errMsg)
-		return errorsmod.Wrap(types.ErrMaxNumValidators, errMsg)
-	}
-
-	// count up the number of validators with non-zero weights
-	numNonzeroWgtValidators := 0
-	for _, validator := range validators {
-		if validator.Weight > 0 {
-			numNonzeroWgtValidators++
-		}
-	}
-
-	// check if the number of validators with non-zero weights is below than the max
-	if numNonzeroWgtValidators >= maxNumVals {
-		errMsg := fmt.Sprintf("Attempting to add new validator but already reached max number of validators (%d)", maxNumVals)
-		k.Logger(ctx).Error(errMsg)
-		return errorsmod.Wrap(types.ErrMaxNumValidators, errMsg)
-	}
-
-	return nil
 }

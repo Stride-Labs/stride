@@ -4,13 +4,14 @@ package stride.stakeibc;
 import "stride/stakeibc/ica_account.proto";
 import "stride/stakeibc/validator.proto";
 
-option go_package = "github.com/Stride-Labs/stride/v13/x/stakeibc/types";
+option go_package = "github.com/Stride-Labs/stride/v14/x/stakeibc/types";
 import "gogoproto/gogo.proto";
 import "cosmos_proto/cosmos.proto";
 
 // Msg defines the Msg service.
 service Msg {
   rpc LiquidStake(MsgLiquidStake) returns (MsgLiquidStakeResponse);
+  rpc LSMLiquidStake(MsgLSMLiquidStake) returns (MsgLSMLiquidStakeResponse);
   rpc RedeemStake(MsgRedeemStake) returns (MsgRedeemStakeResponse);
   rpc RegisterHostZone(MsgRegisterHostZone)
       returns (MsgRegisterHostZoneResponse);
@@ -37,8 +38,17 @@ message MsgLiquidStake {
   ];
   string host_denom = 3;
 }
-
 message MsgLiquidStakeResponse {}
+
+message MsgLSMLiquidStake {
+  string creator = 1;
+  string amount = 2 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable) = false
+  ];
+  string lsm_token_ibc_denom = 3;
+}
+message MsgLSMLiquidStakeResponse { bool transaction_complete = 1; }
 
 message MsgClearBalance {
   string creator = 1;
@@ -49,7 +59,6 @@ message MsgClearBalance {
   ];
   string channel = 4;
 }
-
 message MsgClearBalanceResponse {}
 
 message MsgRedeemStake {
@@ -61,7 +70,6 @@ message MsgRedeemStake {
   string host_zone = 3;
   string receiver = 4;
 }
-
 message MsgRedeemStakeResponse {}
 
 // next: 15
@@ -76,8 +84,8 @@ message MsgRegisterHostZone {
   string creator = 6;
   string transfer_channel_id = 10
       [ (gogoproto.moretags) = "yaml:\"transfer_channel_id\"" ];
-  uint64 unbonding_frequency = 11
-      [ (gogoproto.moretags) = "yaml:\"unbonding_frequency\"" ];
+  uint64 unbonding_period = 11
+      [ (gogoproto.moretags) = "yaml:\"unbonding_period\"" ];
   string min_redemption_rate = 13 [
     (cosmos_proto.scalar) = "cosmos.Dec",
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
@@ -88,8 +96,8 @@ message MsgRegisterHostZone {
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false
   ];
+  bool lsm_liquid_stake_enabled = 15;
 }
-
 message MsgRegisterHostZoneResponse {}
 
 message MsgClaimUndelegatedTokens {
@@ -99,7 +107,6 @@ message MsgClaimUndelegatedTokens {
   uint64 epoch = 3;
   string sender = 4;
 }
-
 message MsgClaimUndelegatedTokensResponse {}
 
 message MsgRebalanceValidators {

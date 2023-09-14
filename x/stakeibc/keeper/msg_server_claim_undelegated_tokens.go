@@ -4,22 +4,22 @@ import (
 	"context"
 	"fmt"
 
-	recordstypes "github.com/Stride-Labs/stride/v13/x/records/types"
+	recordstypes "github.com/Stride-Labs/stride/v14/x/records/types"
 
 	errorsmod "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	bankTypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	proto "github.com/cosmos/gogoproto/proto"
 
-	epochstypes "github.com/Stride-Labs/stride/v13/x/epochs/types"
-	"github.com/Stride-Labs/stride/v13/x/stakeibc/types"
+	epochstypes "github.com/Stride-Labs/stride/v14/x/epochs/types"
+	"github.com/Stride-Labs/stride/v14/x/stakeibc/types"
 )
 
 type IcaTx struct {
-	ConnectionId string
-	Msgs         []proto.Message
-	Account      types.ICAAccount
-	Timeout      uint64
+	ConnectionId   string
+	Msgs           []proto.Message
+	ICAAccountType types.ICAAccountType
+	Timeout        uint64
 }
 
 func (k msgServer) ClaimUndelegatedTokens(goCtx context.Context, msg *types.MsgClaimUndelegatedTokens) (*types.MsgClaimUndelegatedTokensResponse, error) {
@@ -57,7 +57,7 @@ func (k msgServer) ClaimUndelegatedTokens(goCtx context.Context, msg *types.MsgC
 	if err != nil {
 		return nil, errorsmod.Wrap(err, "unable to marshal claim callback args")
 	}
-	_, err = k.SubmitTxs(ctx, icaTx.ConnectionId, icaTx.Msgs, icaTx.Account, icaTx.Timeout, ICACallbackID_Claim, marshalledCallbackArgs)
+	_, err = k.SubmitTxs(ctx, icaTx.ConnectionId, icaTx.Msgs, icaTx.ICAAccountType, icaTx.Timeout, ICACallbackID_Claim, marshalledCallbackArgs)
 	if err != nil {
 		k.Logger(ctx).Error(fmt.Sprintf("Submit tx error: %s", err.Error()))
 		return nil, errorsmod.Wrap(err, "unable to submit ICA redemption tx")
@@ -106,21 +106,16 @@ func (k Keeper) GetRedemptionTransferMsg(ctx sdk.Context, userRedemptionRecord *
 	// grab necessary fields to construct ICA call
 	hostZone, found := k.GetHostZone(ctx, hostZoneId)
 	if !found {
-		errMsg := fmt.Sprintf("Host zone %s not found", hostZoneId)
-		k.Logger(ctx).Error(errMsg)
-		return nil, errorsmod.Wrap(types.ErrInvalidHostZone, errMsg)
+		return nil, errorsmod.Wrapf(types.ErrInvalidHostZone, "Host zone %s not found", hostZoneId)
 	}
-	redemptionAccount, found := k.GetRedemptionAccount(ctx, hostZone)
-	if !found {
-		errMsg := fmt.Sprintf("Redemption account not found for host zone %s", hostZoneId)
-		k.Logger(ctx).Error(errMsg)
-		return nil, errorsmod.Wrap(types.ErrInvalidHostZone, errMsg)
+	if hostZone.RedemptionIcaAddress == "" {
+		return nil, errorsmod.Wrapf(types.ErrICAAccountNotFound, "Redemption account not found for host zone %s", hostZoneId)
 	}
 
 	var msgs []proto.Message
 	rrAmt := userRedemptionRecord.Amount
 	msgs = append(msgs, &bankTypes.MsgSend{
-		FromAddress: redemptionAccount.Address,
+		FromAddress: hostZone.RedemptionIcaAddress,
 		ToAddress:   userRedemptionRecord.Receiver,
 		Amount:      sdk.NewCoins(sdk.NewCoin(userRedemptionRecord.Denom, rrAmt)),
 	})
@@ -137,10 +132,10 @@ func (k Keeper) GetRedemptionTransferMsg(ctx sdk.Context, userRedemptionRecord *
 	timeout := nextEpochStarttime + icaTimeOutNanos
 
 	icaTx := IcaTx{
-		ConnectionId: hostZone.GetConnectionId(),
-		Msgs:         msgs,
-		Account:      *redemptionAccount,
-		Timeout:      timeout,
+		ConnectionId:   hostZone.GetConnectionId(),
+		Msgs:           msgs,
+		ICAAccountType: types.ICAAccountType_REDEMPTION,
+		Timeout:        timeout,
 	}
 
 	return &icaTx, nil

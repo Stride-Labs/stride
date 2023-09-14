@@ -9,8 +9,8 @@ import (
 
 	sdkmath "cosmossdk.io/math"
 
-	"github.com/Stride-Labs/stride/v13/x/records/types"
-	recordtypes "github.com/Stride-Labs/stride/v13/x/records/types"
+	"github.com/Stride-Labs/stride/v14/x/records/types"
+	recordtypes "github.com/Stride-Labs/stride/v14/x/records/types"
 )
 
 type TransferTestCase struct {
@@ -49,7 +49,7 @@ func (s *KeeperTestSuite) SetupTransfer() TransferTestCase {
 func (s *KeeperTestSuite) TestTransfer_Successful() {
 	tc := s.SetupTransfer()
 
-	err := s.App.RecordsKeeper.Transfer(s.Ctx, &tc.transferMsg, tc.depositRecord)
+	err := s.App.RecordsKeeper.IBCTransferNativeTokens(s.Ctx, &tc.transferMsg, tc.depositRecord)
 	s.Require().NoError(err)
 
 	// Confirm deposit record has been updated to TRANSFER_IN_PROGRESS

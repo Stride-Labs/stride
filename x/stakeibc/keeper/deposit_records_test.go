@@ -8,14 +8,12 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	ibctesting "github.com/cosmos/ibc-go/v7/testing"
 
-	icatypes "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/types"
-
 	sdkmath "cosmossdk.io/math"
 
-	epochtypes "github.com/Stride-Labs/stride/v13/x/epochs/types"
-	icacallbackstypes "github.com/Stride-Labs/stride/v13/x/icacallbacks/types"
-	recordstypes "github.com/Stride-Labs/stride/v13/x/records/types"
-	stakeibctypes "github.com/Stride-Labs/stride/v13/x/stakeibc/types"
+	epochtypes "github.com/Stride-Labs/stride/v14/x/epochs/types"
+	icacallbackstypes "github.com/Stride-Labs/stride/v14/x/icacallbacks/types"
+	recordstypes "github.com/Stride-Labs/stride/v14/x/records/types"
+	stakeibctypes "github.com/Stride-Labs/stride/v14/x/stakeibc/types"
 )
 
 type TestDepositRecords struct {
@@ -45,7 +43,7 @@ type DepositRecordsTestCase struct {
 	initialDepositRecords       TestDepositRecords
 	initialModuleAccountBalance sdk.Coin
 	hostZone                    stakeibctypes.HostZone
-	hostModuleAddress           sdk.AccAddress
+	hostZoneDepositAddress      sdk.AccAddress
 	epochNumber                 uint64
 	TransferChannel             Channel
 	DelegationChannel           Channel
@@ -143,15 +141,15 @@ func (s *KeeperTestSuite) GetInitialDepositRecords(currentEpoch uint64) TestDepo
 
 func (s *KeeperTestSuite) SetupDepositRecords() DepositRecordsTestCase {
 	delegationAccountOwner := fmt.Sprintf("%s.%s", HostChainId, "DELEGATION")
-	delegationChannelID := s.CreateICAChannel(delegationAccountOwner)
+	delegationChannelID, delegationPortID := s.CreateICAChannel(delegationAccountOwner)
 	delegationAddress := s.IcaAddresses[delegationAccountOwner]
 
 	ibcDenomTrace := s.GetIBCDenomTrace(Atom) // we need a true IBC denom here
-	hostModuleAddress := stakeibctypes.NewZoneAddress(HostChainId)
+	depositAddress := stakeibctypes.NewHostZoneDepositAddress(HostChainId)
 	s.App.TransferKeeper.SetDenomTrace(s.Ctx, ibcDenomTrace)
 
 	initialModuleAccountBalance := sdk.NewCoin(ibcDenomTrace.IBCDenom(), sdkmath.NewInt(15_000))
-	s.FundAccount(hostModuleAddress, initialModuleAccountBalance)
+	s.FundAccount(depositAddress, initialModuleAccountBalance)
 
 	validators := []*stakeibctypes.Validator{
 		{
@@ -167,14 +165,14 @@ func (s *KeeperTestSuite) SetupDepositRecords() DepositRecordsTestCase {
 	}
 
 	hostZone := stakeibctypes.HostZone{
-		ChainId:           HostChainId,
-		Address:           hostModuleAddress.String(),
-		DelegationAccount: &stakeibctypes.ICAAccount{Address: delegationAddress},
-		ConnectionId:      ibctesting.FirstConnectionID,
-		TransferChannelId: ibctesting.FirstChannelID,
-		HostDenom:         Atom,
-		IbcDenom:          ibcDenomTrace.IBCDenom(),
-		Validators:        validators,
+		ChainId:              HostChainId,
+		DepositAddress:       depositAddress.String(),
+		DelegationIcaAddress: delegationAddress,
+		ConnectionId:         ibctesting.FirstConnectionID,
+		TransferChannelId:    ibctesting.FirstChannelID,
+		HostDenom:            Atom,
+		IbcDenom:             ibcDenomTrace.IBCDenom(),
+		Validators:           validators,
 	}
 
 	currentEpoch := uint64(2)
@@ -196,14 +194,14 @@ func (s *KeeperTestSuite) SetupDepositRecords() DepositRecordsTestCase {
 		initialDepositRecords:       initialDepositRecords,
 		initialModuleAccountBalance: initialModuleAccountBalance,
 		hostZone:                    hostZone,
-		hostModuleAddress:           hostModuleAddress,
+		hostZoneDepositAddress:      depositAddress,
 		epochNumber:                 currentEpoch,
 		TransferChannel: Channel{
 			PortID:    ibctesting.TransferPort,
 			ChannelID: ibctesting.FirstChannelID,
 		},
 		DelegationChannel: Channel{
-			PortID:    icatypes.ControllerPortPrefix + delegationAccountOwner,
+			PortID:    delegationPortID,
 			ChannelID: delegationChannelID,
 		},
 	}
@@ -336,7 +334,7 @@ func (s *KeeperTestSuite) CheckStateAfterTransferringDepositRecords(tc DepositRe
 		expectedTransferAmount = expectedTransferAmount.Add(depositRecord.Amount)
 	}
 	expectedModuleBalance := tc.initialModuleAccountBalance.SubAmount(expectedTransferAmount)
-	actualModuleBalance := s.App.BankKeeper.GetBalance(s.Ctx, tc.hostModuleAddress, tc.hostZone.IbcDenom)
+	actualModuleBalance := s.App.BankKeeper.GetBalance(s.Ctx, tc.hostZoneDepositAddress, tc.hostZone.IbcDenom)
 	s.CompareCoins(expectedModuleBalance, actualModuleBalance, "host module balance")
 
 	// Confirm deposit records with 0 amount were removed
@@ -376,18 +374,7 @@ func (s *KeeperTestSuite) TestTransferDepositRecords_NoDelegationAccount() {
 	tc := s.SetupDepositRecords()
 	// Remove the delegation account from the host zone
 	badHostZone := tc.hostZone
-	badHostZone.DelegationAccount = nil
-	s.App.StakeibcKeeper.SetHostZone(s.Ctx, badHostZone)
-
-	numFailed := len(tc.initialDepositRecords.recordsToBeTransfered)
-	s.CheckStateAfterTransferringDepositRecords(tc, numFailed)
-}
-
-func (s *KeeperTestSuite) TestTransferDepositRecords_NoDelegationAddress() {
-	tc := s.SetupDepositRecords()
-	// Remove the delegation address from the host zone
-	badHostZone := tc.hostZone
-	badHostZone.DelegationAccount.Address = ""
+	badHostZone.DelegationIcaAddress = ""
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, badHostZone)
 
 	numFailed := len(tc.initialDepositRecords.recordsToBeTransfered)
@@ -493,18 +480,7 @@ func (s *KeeperTestSuite) TestStakeDepositRecords_NoDelegationAccount() {
 	tc := s.SetupDepositRecords()
 	// Remove the delegation account from the host zone
 	badHostZone := tc.hostZone
-	badHostZone.DelegationAccount = nil
-	s.App.StakeibcKeeper.SetHostZone(s.Ctx, badHostZone)
-
-	numFailed := len(tc.initialDepositRecords.recordsToBeStaked)
-	s.CheckStateAfterStakingDepositRecords(tc, numFailed)
-}
-
-func (s *KeeperTestSuite) TestStakeDepositRecords_NoDelegationAddress() {
-	tc := s.SetupDepositRecords()
-	// Remove the delegation address from the host zone
-	badHostZone := tc.hostZone
-	badHostZone.DelegationAccount.Address = ""
+	badHostZone.DelegationIcaAddress = ""
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, badHostZone)
 
 	numFailed := len(tc.initialDepositRecords.recordsToBeStaked)

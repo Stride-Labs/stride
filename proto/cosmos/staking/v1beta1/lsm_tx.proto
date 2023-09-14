@@ -1,0 +1,30 @@
+syntax = "proto3";
+package cosmos.staking.v1beta1;
+
+import "gogoproto/gogo.proto";
+
+import "cosmos/base/v1beta1/coin.proto";
+
+option go_package = "github.com/Stride-Labs/stride/v14/x/stakeibc/types";
+
+// Given SDK version conflicts between gaia with LSM and Stride,
+// we can't import the RedeemTokensForShares type
+// So instead we redefine it here
+// Once LSM has been upstreamed to SDK 50, we can switch back to an import
+
+// MsgRedeemTokensForShares redeems a tokenized share back into a native
+// delegation
+message MsgRedeemTokensForShares {
+  option (gogoproto.equal) = false;
+  option (gogoproto.goproto_getters) = false;
+
+  string delegator_address = 1
+      [ (gogoproto.moretags) = "yaml:\"delegator_address\"" ];
+  cosmos.base.v1beta1.Coin amount = 2 [ (gogoproto.nullable) = false ];
+}
+
+// MsgRedeemTokensForSharesResponse defines the Msg/MsgRedeemTokensForShares
+// response type.
+message MsgRedeemTokensForSharesResponse {
+  cosmos.base.v1beta1.Coin amount = 1 [ (gogoproto.nullable) = false ];
+}

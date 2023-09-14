@@ -5,8 +5,8 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/Stride-Labs/stride/v13/app/apptesting"
-	"github.com/Stride-Labs/stride/v13/x/icaoracle/types"
+	"github.com/Stride-Labs/stride/v14/app/apptesting"
+	"github.com/Stride-Labs/stride/v14/x/icaoracle/types"
 )
 
 func TestMsgRestoreOracleICA(t *testing.T) {
@@ -55,6 +55,7 @@ func TestMsgRestoreOracleICA(t *testing.T) {
 				require.Equal(t, signers[0].String(), validAddr)
 
 				require.Equal(t, test.msg.OracleChainId, validChainId, "oracle-chain-id")
+				require.Equal(t, test.msg.Type(), "restore_oracle_ica", "type")
 			} else {
 				require.ErrorContains(t, test.msg.ValidateBasic(), test.err, "test: %v", test.name)
 			}

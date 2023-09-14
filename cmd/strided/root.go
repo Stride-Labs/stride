@@ -12,7 +12,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/snapshots"
 	"gopkg.in/yaml.v2"
 
-	"github.com/Stride-Labs/stride/v13/utils"
+	"github.com/Stride-Labs/stride/v14/utils"
 
 	cometbftdb "github.com/cometbft/cometbft-db"
 	"github.com/cometbft/cometbft/libs/cli"
@@ -47,7 +47,7 @@ import (
 	genutilcli "github.com/cosmos/cosmos-sdk/x/genutil/client/cli"
 	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
 
-	"github.com/Stride-Labs/stride/v13/app"
+	"github.com/Stride-Labs/stride/v14/app"
 )
 
 var ChainID string
@@ -265,6 +265,7 @@ func txCommand() *cobra.Command {
 
 	app.ModuleBasics.AddTxCommands(cmd)
 	cmd.PersistentFlags().String(flags.FlagChainID, "", "The network chain ID")
+	cmd.PersistentFlags().String(flags.FlagFrom, "", "Name or address of private key with which to sign")
 
 	return cmd
 }

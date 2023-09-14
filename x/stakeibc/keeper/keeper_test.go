@@ -6,9 +6,9 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/suite"
 
-	"github.com/Stride-Labs/stride/v13/app/apptesting"
-	"github.com/Stride-Labs/stride/v13/x/stakeibc/keeper"
-	"github.com/Stride-Labs/stride/v13/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v14/app/apptesting"
+	"github.com/Stride-Labs/stride/v14/x/stakeibc/keeper"
+	"github.com/Stride-Labs/stride/v14/x/stakeibc/types"
 )
 
 const (
@@ -24,6 +24,10 @@ const (
 	IbcOsmo     = "ibc/uosmo"
 	OsmoPrefix  = "osmo"
 	OsmoChainId = "OSMO"
+
+	ValAddress           = "cosmosvaloper1uk4ze0x4nvh4fk0xm4jdud58eqn4yxhrdt795p"
+	DelegationICAAddress = "cosmos1gcx4yeplccq9nk6awzmm0gq8jf7yet80qj70tkwy0mz7pg87nepswn2dj8"
+	LSMTokenBaseDenom    = ValAddress + "/32"
 )
 
 type KeeperTestSuite struct {

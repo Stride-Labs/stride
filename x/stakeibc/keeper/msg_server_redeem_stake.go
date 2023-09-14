@@ -4,14 +4,14 @@ import (
 	"context"
 	"fmt"
 
-	recordstypes "github.com/Stride-Labs/stride/v13/x/records/types"
-	"github.com/Stride-Labs/stride/v13/x/stakeibc/types"
+	recordstypes "github.com/Stride-Labs/stride/v14/x/records/types"
+	"github.com/Stride-Labs/stride/v14/x/stakeibc/types"
 
 	errorsmod "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
-	"github.com/Stride-Labs/stride/v13/utils"
+	"github.com/Stride-Labs/stride/v14/utils"
 )
 
 func (k msgServer) RedeemStake(goCtx context.Context, msg *types.MsgRedeemStake) (*types.MsgRedeemStakeResponse, error) {
@@ -47,7 +47,6 @@ func (k msgServer) RedeemStake(goCtx context.Context, msg *types.MsgRedeemStake)
 	}
 
 	// ensure the recipient address is a valid bech32 address on the hostZone
-	// TODO(TEST-112) do we need to check the hostZone before this check? Would need access to keeper
 	_, err = utils.AccAddressFromBech32(msg.Receiver, hostZone.Bech32Prefix)
 	if err != nil {
 		return nil, errorsmod.Wrapf(sdkerrors.ErrInvalidAddress, "invalid receiver address (%s)", err)
@@ -57,7 +56,7 @@ func (k msgServer) RedeemStake(goCtx context.Context, msg *types.MsgRedeemStake)
 	stDenom := types.StAssetDenomFromHostZoneDenom(hostZone.HostDenom)
 	nativeAmount := sdk.NewDecFromInt(msg.Amount).Mul(hostZone.RedemptionRate).RoundInt()
 
-	if nativeAmount.GT(hostZone.StakedBal) {
+	if nativeAmount.GT(hostZone.TotalDelegations) {
 		return nil, errorsmod.Wrapf(types.ErrInvalidAmount, "cannot unstake an amount g.t. staked balance on host zone: %v", msg.Amount)
 	}
 
@@ -68,7 +67,6 @@ func (k msgServer) RedeemStake(goCtx context.Context, msg *types.MsgRedeemStake)
 		return nil, errorsmod.Wrapf(types.ErrRedemptionRateOutsideSafetyBounds, errMsg)
 	}
 
-	// TODO(TEST-112) bigint safety
 	coinString := nativeAmount.String() + stDenom
 	inCoin, err := sdk.ParseCoinNormalized(coinString)
 	if err != nil {
@@ -115,11 +113,11 @@ func (k msgServer) RedeemStake(goCtx context.Context, msg *types.MsgRedeemStake)
 
 	// Escrow user's balance
 	redeemCoin := sdk.NewCoins(sdk.NewCoin(stDenom, msg.Amount))
-	bech32ZoneAddress, err := sdk.AccAddressFromBech32(hostZone.Address)
+	depositAddress, err := sdk.AccAddressFromBech32(hostZone.DepositAddress)
 	if err != nil {
-		return nil, fmt.Errorf("could not bech32 decode address %s of zone with id: %s", hostZone.Address, hostZone.ChainId)
+		return nil, fmt.Errorf("could not bech32 decode address %s of zone with id: %s", hostZone.DepositAddress, hostZone.ChainId)
 	}
-	err = k.bankKeeper.SendCoins(ctx, sender, bech32ZoneAddress, redeemCoin)
+	err = k.bankKeeper.SendCoins(ctx, sender, depositAddress, redeemCoin)
 	if err != nil {
 		k.Logger(ctx).Error("Failed to send sdk.NewCoins(inCoins) from account to module")
 		return nil, errorsmod.Wrapf(types.ErrInsufficientFunds, "couldn't send %v derivative %s tokens to module account. err: %s", msg.Amount, hostZone.HostDenom, err.Error())

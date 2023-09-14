@@ -1,19 +1,11 @@
 syntax = "proto3";
 package stride.stakeibc;
 
-import "cosmos_proto/cosmos.proto";
-
-option go_package = "github.com/Stride-Labs/stride/v13/x/stakeibc/types";
+option go_package = "github.com/Stride-Labs/stride/v14/x/stakeibc/types";
 
 enum ICAAccountType {
   DELEGATION = 0;
   FEE = 1;
   WITHDRAWAL = 2;
   REDEMPTION = 3;
-}
-
-message ICAAccount {
-  string address = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
-  ICAAccountType target = 3;
-  reserved 2;
 }
