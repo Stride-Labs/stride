@@ -190,7 +190,7 @@ func (k Keeper) CheckForSlash(
 
 	// If the true delegation is slightly higher than our record keeping, this could be due to float imprecision
 	// Correct record keeping accordingly
-	precisionErrorThreshold := sdkmath.NewInt(25)
+	precisionErrorThreshold := sdkmath.NewInt(1000)
 	precisionError := delegatedTokens.Sub(validator.Delegation)
 	if precisionError.IsPositive() && precisionError.LTE(precisionErrorThreshold) {
 		// Update the validator on the host zone
