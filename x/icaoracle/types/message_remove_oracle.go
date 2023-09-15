@@ -4,14 +4,22 @@ import (
 	errorsmod "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	"github.com/cosmos/cosmos-sdk/x/auth/migrations/legacytx"
 )
 
 const TypeMsgRemoveOracle = "remove_oracle"
 
-var _ sdk.Msg = &MsgRemoveOracle{}
+var (
+	_ sdk.Msg            = &MsgRemoveOracle{}
+	_ legacytx.LegacyMsg = &MsgRemoveOracle{}
+)
 
 func (msg MsgRemoveOracle) Type() string {
 	return TypeMsgRemoveOracle
+}
+
+func (msg MsgRemoveOracle) Route() string {
+	return RouterKey
 }
 
 func (msg *MsgRemoveOracle) GetSignBytes() []byte {
