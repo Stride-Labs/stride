@@ -39,3 +39,6 @@
 [submodule "dockernet/tests/bats/bats-support"]
 	path = dockernet/tests/bats/bats-support
 	url = https://github.com/bats-core/bats-support.git
+[submodule "deps/dydx"]
+	path = deps/dydx
+	url = https://github.com/Stride-Labs/v4-chain.git
