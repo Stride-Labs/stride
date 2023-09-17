@@ -25,7 +25,7 @@ import (
 //
 // Note: for now, to get proofs in your ICQs, you need to query the entire store on the host zone! e.g. "store/bank/key"
 func CalibrateDelegationCallback(k Keeper, ctx sdk.Context, args []byte, query icqtypes.Query) error {
-	k.Logger(ctx).Info(utils.LogICQCallbackWithHostZone(query.ChainId, ICQCallbackID_Delegation,
+	k.Logger(ctx).Info(utils.LogICQCallbackWithHostZone(query.ChainId, ICQCallbackID_Calibrate,
 		"Starting delegator shares callback, QueryId: %vs, QueryType: %s, Connection: %s", query.Id, query.QueryType, query.ConnectionId))
 
 	// Confirm host exists
@@ -41,7 +41,7 @@ func CalibrateDelegationCallback(k Keeper, ctx sdk.Context, args []byte, query i
 	if err != nil {
 		return errorsmod.Wrapf(err, "unable to unmarshal delegator shares query response into Delegation type")
 	}
-	k.Logger(ctx).Info(utils.LogICQCallbackWithHostZone(chainId, ICQCallbackID_Delegation, "Query response - Delegator: %s, Validator: %s, Shares: %v",
+	k.Logger(ctx).Info(utils.LogICQCallbackWithHostZone(chainId, ICQCallbackID_Calibrate, "Query response - Delegator: %s, Validator: %s, Shares: %v",
 		queriedDelegation.DelegatorAddress, queriedDelegation.ValidatorAddress, queriedDelegation.Shares))
 
 	// Unmarshal the callback data containing the previous delegation to the validator (from the time the query was submitted)
@@ -125,12 +125,12 @@ func (k Keeper) CheckForUpdatedDelegation(
 	// Calculate the number of tokens delegated (using the internal sharesToTokensRate)
 	// note: truncateInt per https://github.com/cosmos/cosmos-sdk/blob/cb31043d35bad90c4daa923bb109f38fd092feda/x/staking/types/validator.go#L431
 	delegatedTokens = queriedDelegation.Shares.Mul(validator.SharesToTokensRate).TruncateInt()
-	k.Logger(ctx).Info(utils.LogICQCallbackWithHostZone(chainId, ICQCallbackID_Delegation,
+	k.Logger(ctx).Info(utils.LogICQCallbackWithHostZone(chainId, ICQCallbackID_Calibrate,
 		"Previous Delegation: %v, Current Delegation: %v", validator.Delegation, delegatedTokens))
 
 	// Confirm the validator has actually been slashed
 	if delegatedTokens.Equal(validator.Delegation) {
-		k.Logger(ctx).Info(utils.LogICQCallbackWithHostZone(chainId, ICQCallbackID_Delegation, "Validator was not slashed"))
+		k.Logger(ctx).Info(utils.LogICQCallbackWithHostZone(chainId, ICQCallbackID_Calibrate, "Validator was not slashed"))
 		return false, delegatedTokens, nil
 	}
 
@@ -145,7 +145,7 @@ func (k Keeper) CheckForUpdatedDelegation(
 		hostZone.Validators[valIndex] = validator
 		k.SetHostZone(ctx, hostZone)
 
-		k.Logger(ctx).Info(utils.LogICQCallbackWithHostZone(chainId, ICQCallbackID_Delegation,
+		k.Logger(ctx).Info(utils.LogICQCallbackWithHostZone(chainId, ICQCallbackID_Calibrate,
 			"Delegation updated to %v", validator.Delegation))
 
 		return false, delegatedTokens, nil
@@ -171,7 +171,7 @@ func (k Keeper) UpdateDelegationOnValidatorAndHostZone(ctx sdk.Context, hostZone
 	hostZone.Validators[valIndex] = validator
 	k.SetHostZone(ctx, hostZone)
 
-	k.Logger(ctx).Info(utils.LogICQCallbackWithHostZone(chainId, ICQCallbackID_Delegation,
+	k.Logger(ctx).Info(utils.LogICQCallbackWithHostZone(chainId, ICQCallbackID_Calibrate,
 		"Delegation updated to: %v, Weight updated to: %v", validator.Delegation, validator.Weight))
 
 	return nil

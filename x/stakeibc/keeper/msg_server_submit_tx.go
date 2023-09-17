@@ -545,7 +545,7 @@ func (k Keeper) SubmitCalibrationICQ(ctx sdk.Context, hostZone types.HostZone, v
 		QueryType:       icqtypes.STAKING_STORE_QUERY_WITH_PROOF,
 		RequestData:     queryData,
 		CallbackModule:  types.ModuleName,
-		CallbackId:      ICQCallbackID_Delegation,
+		CallbackId:      ICQCallbackID_Calibrate,
 		CallbackData:    callbackDataBz,
 		TimeoutDuration: time.Hour,
 		TimeoutPolicy:   icqtypes.TimeoutPolicy_RETRY_QUERY_REQUEST,
