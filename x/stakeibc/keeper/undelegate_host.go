@@ -103,7 +103,8 @@ func (k Keeper) UndelegateHostEvmos(ctx sdk.Context, totalUnbondAmount math.Int)
 
 		// Store the callback data
 		undelegateHostCallback := types.UndelegateHostCallback{
-			Amt: totalUnbondAmount,
+			Amt:              totalUnbondAmount,
+			SplitDelegations: unbondingsBatch,
 		}
 		callbackArgsBz, err := proto.Marshal(&undelegateHostCallback)
 		if err != nil {

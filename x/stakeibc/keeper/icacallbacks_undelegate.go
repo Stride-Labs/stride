@@ -262,6 +262,19 @@ func (k Keeper) UndelegateHostCallback(ctx sdk.Context, packet channeltypes.Pack
 		return nil
 	}
 
+	// Get the host zone
+	evmosHost, found := k.GetHostZone(ctx, EvmosHostZoneChainId)
+	if !found {
+		return errorsmod.Wrapf(types.ErrHostZoneNotFound, "host zone %s not found", EvmosHostZoneChainId)
+	}
+
+	// Update delegation balances
+	err := k.UpdateDelegationBalances(ctx, evmosHost, undelegateHostCallback)
+	if err != nil {
+		k.Logger(ctx).Error(fmt.Sprintf("UndelegateCallback | %s", err.Error()))
+		return err
+	}
+
 	k.Logger(ctx).Info("UndelegateHostCallback success:", icacallbackstypes.AckResponseStatus_SUCCESS, packet)
 
 	k.Logger(ctx).Info(">>>>>>>>>>> SetUndelegateHostPrevented <<<<<<<<<<<<<<<")
@@ -269,5 +282,18 @@ func (k Keeper) UndelegateHostCallback(ctx sdk.Context, packet channeltypes.Pack
 		return err
 	}
 
+	return nil
+}
+
+// Decrement the delegation field on the host zone and each validator's delegations after a successful unbonding ICA
+func (k Keeper) UpdateDelegationBalances(ctx sdk.Context, hostZone types.HostZone, undelegateCallback types.UndelegateCallback) error {
+	// Undelegate from each validator and update host zone staked balance, if successful
+	for _, undelegation := range undelegateCallback.SplitDelegations {
+		err := k.AddDelegationToValidator(ctx, &hostZone, undelegation.Validator, undelegation.Amount.Neg(), ICACallbackID_Undelegate)
+		if err != nil {
+			return err
+		}
+	}
+	k.SetHostZone(ctx, hostZone)
 	return nil
 }

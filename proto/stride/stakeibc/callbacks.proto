@@ -47,6 +47,7 @@ message UndelegateHostCallback {
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
     (gogoproto.nullable) = false
   ];
+  repeated SplitDelegation split_delegations = 2;
 }
 
 message RedemptionCallback {
