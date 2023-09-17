@@ -29,6 +29,7 @@ func GetQueryCmd(queryRoute string) *cobra.Command {
 	cmd.AddCommand(CmdListEpochTracker())
 	cmd.AddCommand(CmdShowEpochTracker())
 	cmd.AddCommand(CmdNextPacketSequence())
+	cmd.AddCommand(CmdShowHubUnbondings())
 
 	return cmd
 }

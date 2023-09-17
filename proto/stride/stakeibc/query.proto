@@ -73,6 +73,13 @@ service Query {
     option (google.api.http).get =
         "/Stride-Labs/stride/stakeibc/unbondings/{address}";
   }
+
+  // Queries hub unbondings
+  rpc NextHubUnbonding(QueryNextHubUnbonding)
+      returns (QueryNextHubUnbondingResponse) {
+    option (google.api.http).get =
+        "/Stride-Labs/stride/stakeibc/unbondings/nexthubunbondings";
+  }
 }
 
 // QueryInterchainAccountFromAddressRequest is the request type for the
@@ -146,3 +153,7 @@ message QueryAddressUnbondingsResponse {
   repeated AddressUnbonding address_unbondings = 1
       [ (gogoproto.nullable) = false ];
 }
+
+message QueryNextHubUnbonding {}
+message QueryNextHubUnbondingResponse {}
+
