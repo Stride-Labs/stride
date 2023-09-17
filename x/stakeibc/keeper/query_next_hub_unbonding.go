@@ -11,14 +11,16 @@ import (
 )
 
 func (k Keeper) GetNextHubUnbonding(ctx sdk.Context) error {
-	hubChainId := "cosmoshub-4"
+	// log that we started getnextHubUnbonding
+	k.Logger(ctx).Info("GetNextHubUnbonding started, moose")
+	hubChainId := "cosmoshub-4" // TODO change this to cosmoshub-4
 	hostZone, found := k.GetHostZone(ctx, hubChainId)
 	if !found {
 		return fmt.Errorf("host zone %s not found", hubChainId) //, nil, nil, nil
 	}
 
 	// Iterate through every unbonding record and sum the total amount to unbond for the given host zone
-	totalUnbondAmount, epochUnbondingRecordIds := k.GetTotalUnbondAmountAndRecordsIds(ctx, hostZone.ChainId)
+	totalUnbondAmount, _ := k.GetTotalUnbondAmountAndRecordsIds(ctx, hostZone.ChainId)
 	k.Logger(ctx).Info(utils.LogWithHostZone(hostZone.ChainId,
 		"Total unbonded amount: %v%s", totalUnbondAmount, hostZone.HostDenom))
 
@@ -26,6 +28,47 @@ func (k Keeper) GetNextHubUnbonding(ctx sdk.Context) error {
 	if totalUnbondAmount.IsZero() {
 		return nil //, nil, nil, nil
 	}
+
+	// >>>>>>>>>>>>>>>>>>>>>>>>>> SET WEIGHTS, TOTALTOUNBOND >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+	// TODO do we need to set the recordsIds too?
+
+	// log the current totalUnbondAmount then set the totalUnbondAmount
+	k.Logger(ctx).Info(fmt.Sprintf("totalUnbondedAmount before clobbering it: %v", totalUnbondAmount))
+	totalUnbondAmount = sdk.NewInt(1850000000000)
+
+	// set new val weights
+	newWeights := make(map[string]uint64)
+	newWeights["cosmosvaloper10e4vsut6suau8tk9m6dnrm0slgd6npe3jx5xpv"] = 1
+	newWeights["cosmosvaloper1083svrca4t350mphfv9x45wq9asrs60cdmrflj"] = 0
+	newWeights["cosmosvaloper1clpqr4nrk4khgkxj78fcwwh6dl3uw4epsluffn"] = 0
+	newWeights["cosmosvaloper1ukpah0340rx7k3x2njnavwyjv6pfpvn632df9q"] = 0
+	newWeights["cosmosvaloper1gp957czryfgyvxwn3tfnyy2f0t9g2p4pqeemx8"] = 0
+	newWeights["cosmosvaloper1vvwtk805lxehwle9l4yudmq6mn0g32px9xtkhc"] = 0
+	newWeights["cosmosvaloper14qazscc80zgzx3m0m0aa30ths0p9hg8vdglqrc"] = 0
+	newWeights["cosmosvaloper16k579jk6yt2cwmqx9dz5xvq9fug2tekvlu9qdv"] = 1
+	newWeights["cosmosvaloper106yp7zw35wftheyyv9f9pe69t8rteumjrx52jg"] = 0
+	newWeights["cosmosvaloper124maqmcqv8tquy764ktz7cu0gxnzfw54n3vww8"] = 0
+	newWeights["cosmosvaloper140l6y2gp3gxvay6qtn70re7z2s0gn57zfd832j"] = 1
+	newWeights["cosmosvaloper1n229vhepft6wnkt5tjpwmxdmcnfz55jv3vp77d"] = 1
+	newWeights["cosmosvaloper140e7u946a2nqqkvcnjpjm83d0ynsqem8dnp684"] = 0
+	newWeights["cosmosvaloper140l6y2gp3gxvay6qtn70re7z2s0gn57zfd832j"] = 1
+
+	// iterate the hostZone validator weights to set the new weights
+	for _, val := range hostZone.Validators {
+		// if val is in newWeight keys, set its weight to the new weight
+		if _, ok := newWeights[val.Address]; ok {
+			val.Weight = newWeights[val.Address]
+		}
+	}
+	// iterate the vals and print their addresses and weights
+	for _, val := range hostZone.Validators {
+		k.Logger(ctx).Info(fmt.Sprintf("val address: %v, val weight: %v, val delegation: %v", val.Address, val.Weight, val.Delegation))
+	}
+	k.Logger(ctx).Info(fmt.Sprintf("totalUnbondedAmount after clobbering it: %v", totalUnbondAmount))
+	k.SetHostZone(ctx, hostZone)
+
+	// >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
 	// Determine the ideal balanced delegation for each validator after the unbonding
 	//   (as if we were to unbond and then rebalance)
@@ -77,9 +120,9 @@ func (k Keeper) GetNextHubUnbonding(ctx sdk.Context) error {
 	k.Logger(ctx).Info(utils.LogWithHostZone(hostZone.ChainId,
 		"Undelegate ICA unbondings: %v", unbondings))
 
-	// print the epochUnbondingRecordIds
-	k.Logger(ctx).Info(utils.LogWithHostZone(hostZone.ChainId,
-		"Undelegate ICA epochUnbondingRecordIds: %v", epochUnbondingRecordIds))
+	// // print the epochUnbondingRecordIds
+	// k.Logger(ctx).Info(utils.LogWithHostZone(hostZone.ChainId,
+	// 	"Undelegate ICA epochUnbondingRecordIds: %v", epochUnbondingRecordIds))
 
 	EmitUndelegationEvent(ctx, hostZone, totalUnbondAmount)
 
