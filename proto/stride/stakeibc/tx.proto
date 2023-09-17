@@ -28,7 +28,7 @@ service Msg {
   rpc UpdateValidatorSharesExchRate(MsgUpdateValidatorSharesExchRate)
       returns (MsgUpdateValidatorSharesExchRateResponse);
   rpc ClearBalance(MsgClearBalance) returns (MsgClearBalanceResponse);
-  rpc UndelegateHost(MsgUndelegateHost) returns (MsgUndelegateHost);
+  rpc UndelegateHost(MsgUndelegateHost) returns (MsgUndelegateHostResponse);
 }
 
 message MsgLiquidStake {
