@@ -268,14 +268,14 @@ func (k Keeper) UndelegateHostCallback(ctx sdk.Context, packet channeltypes.Pack
 		return errorsmod.Wrapf(types.ErrHostZoneNotFound, "host zone %s not found", EvmosHostZoneChainId)
 	}
 
+	k.Logger(ctx).Info("UndelegateHostCallback success:", icacallbackstypes.AckResponseStatus_SUCCESS, packet)
+
 	// Update delegation balances
-	err := k.UpdateDelegationBalances(ctx, evmosHost, undelegateHostCallback)
+	err := k.UpdateDelegationBalancesHost(ctx, evmosHost, undelegateHostCallback)
 	if err != nil {
 		k.Logger(ctx).Error(fmt.Sprintf("UndelegateCallback | %s", err.Error()))
 		return err
 	}
-
-	k.Logger(ctx).Info("UndelegateHostCallback success:", icacallbackstypes.AckResponseStatus_SUCCESS, packet)
 
 	k.Logger(ctx).Info(">>>>>>>>>>> SetUndelegateHostPrevented <<<<<<<<<<<<<<<")
 	if err := k.SetUndelegateHostPrevented(ctx); err != nil {
@@ -285,11 +285,11 @@ func (k Keeper) UndelegateHostCallback(ctx sdk.Context, packet channeltypes.Pack
 	return nil
 }
 
-// Decrement the delegation field on the host zone and each validator's delegations after a successful unbonding ICA
-func (k Keeper) UpdateDelegationBalances(ctx sdk.Context, hostZone types.HostZone, undelegateCallback types.UndelegateCallback) error {
-	// Undelegate from each validator and update host zone staked balance, if successful
-	for _, undelegation := range undelegateCallback.SplitDelegations {
-		err := k.AddDelegationToValidator(ctx, &hostZone, undelegation.Validator, undelegation.Amount.Neg(), ICACallbackID_Undelegate)
+// Decrement the delegation field on host and each validator's delegations after a successful unbonding ICA
+func (k Keeper) UpdateDelegationBalancesHost(ctx sdk.Context, hostZone types.HostZone, undelegateHostCallback types.UndelegateHostCallback) error {
+	// Undelegate from each validator and update Evmos staked balance, if successful
+	for _, undelegation := range undelegateHostCallback.SplitDelegations {
+		err := k.AddDelegationToValidator(ctx, &hostZone, undelegation.Validator, undelegation.Amount.Neg(), ICACallbackID_UndelegateHost)
 		if err != nil {
 			return err
 		}
