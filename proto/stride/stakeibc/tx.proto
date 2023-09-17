@@ -27,6 +27,8 @@ service Msg {
       returns (MsgRestoreInterchainAccountResponse);
   rpc UpdateValidatorSharesExchRate(MsgUpdateValidatorSharesExchRate)
       returns (MsgUpdateValidatorSharesExchRateResponse);
+  rpc CalibrateDelegation(MsgCalibrateDelegation)
+      returns (MsgCalibrateDelegationResponse);
   rpc ClearBalance(MsgClearBalance) returns (MsgClearBalanceResponse);
 }
 
@@ -151,3 +153,10 @@ message MsgUpdateValidatorSharesExchRate {
   string valoper = 3;
 }
 message MsgUpdateValidatorSharesExchRateResponse {}
+
+message MsgCalibrateDelegation {
+  string creator = 1;
+  string chain_id = 2;
+  string valoper = 3;
+}
+message MsgCalibrateDelegationResponse {}
