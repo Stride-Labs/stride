@@ -9,7 +9,7 @@ import (
 	"github.com/Stride-Labs/stride/v14/x/stakeibc/types"
 )
 
-func (k msgServer) UpdateTightBounds(goCtx context.Context, msg *types.MsgUpdateTightBounds) (*types.MsgUpdateTightBoundsResponse, error) {
+func (k msgServer) UpdateInnerRedemptionRateBounds(goCtx context.Context, msg *types.MsgUpdateInnerRedemptionRateBounds) (*types.MsgUpdateInnerRedemptionRateBoundsResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
 	// Confirm host zone exists
@@ -22,8 +22,8 @@ func (k msgServer) UpdateTightBounds(goCtx context.Context, msg *types.MsgUpdate
 	// Get the wide bounds
 	outerMinSafetyThreshold, outerMaxSafetyThreshold := k.GetOuterSafetyBounds(ctx, zone)
 
-	innerMinSafetyThreshold := msg.MinTightRedemptionRate
-	innerMaxSafetyThreshold := msg.MaxTightRedemptionRate
+	innerMinSafetyThreshold := msg.MinInnerRedemptionRate
+	innerMaxSafetyThreshold := msg.MaxInnerRedemptionRate
 
 	// Confirm the inner bounds are within the outer bounds
 	if innerMinSafetyThreshold.LT(outerMinSafetyThreshold) {
@@ -43,9 +43,9 @@ func (k msgServer) UpdateTightBounds(goCtx context.Context, msg *types.MsgUpdate
 	}
 
 	// Set the inner bounds on the host zone
-	zone.MinTightRedemptionRate = innerMinSafetyThreshold
-	zone.MaxTightRedemptionRate = innerMaxSafetyThreshold
+	zone.MinInnerRedemptionRate = innerMinSafetyThreshold
+	zone.MaxInnerRedemptionRate = innerMaxSafetyThreshold
 	k.SetHostZone(ctx, zone)
 
-	return &types.MsgUpdateTightBoundsResponse{}, nil
+	return &types.MsgUpdateInnerRedemptionRateBoundsResponse{}, nil
 }

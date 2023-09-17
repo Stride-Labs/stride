@@ -265,11 +265,11 @@ func (k Keeper) IsRedemptionRateWithinSafetyBounds(ctx sdk.Context, zone types.H
 		return false, errorsmod.Wrapf(types.ErrRedemptionRateOutsideSafetyBounds, errMsg)
 	}
 
-	// Verify the redemption rate is within the tight safety bounds
-	// The tight safety bounds should always be within the safety bounds, but
+	// Verify the redemption rate is within the inner safety bounds
+	// The inner safety bounds should always be within the safety bounds, but
 	// the redundancy above is cheap.
-	if redemptionRate.LT(zone.MinTightRedemptionRate) || redemptionRate.GT(zone.MaxTightRedemptionRate) {
-		errMsg := fmt.Sprintf("IsRedemptionRateWithinSafetyBounds check failed %s is outside tight safety bounds [%s, %s]", redemptionRate.String(), minSafetyThreshold.String(), maxSafetyThreshold.String())
+	if redemptionRate.LT(zone.MinInnerRedemptionRate) || redemptionRate.GT(zone.MaxInnerRedemptionRate) {
+		errMsg := fmt.Sprintf("IsRedemptionRateWithinSafetyBounds check failed %s is outside inner safety bounds [%s, %s]", redemptionRate.String(), minSafetyThreshold.String(), maxSafetyThreshold.String())
 		k.Logger(ctx).Error(errMsg)
 		return false, errorsmod.Wrapf(types.ErrRedemptionRateOutsideSafetyBounds, errMsg)
 	}

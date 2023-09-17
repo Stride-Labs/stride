@@ -10,7 +10,7 @@ import (
 	"github.com/Stride-Labs/stride/v14/x/stakeibc/types"
 )
 
-func CmdUpdateTightBounds() *cobra.Command {
+func CmdUpdateInnerRedemptionRateBounds() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "update-tight-bounds [chainid] [min-bound] [max-bound]",
 		Short: "Broadcast message update-tight-bounds",
@@ -20,16 +20,16 @@ func CmdUpdateTightBounds() *cobra.Command {
 			minRedemptionRateStr := args[1]
 			maxRedemptionRateStr := args[2]
 
-			minTightRedemptionRate := sdk.ZeroDec()
+			minInnerRedemptionRate := sdk.ZeroDec()
 			if minRedemptionRateStr != "" {
-				minTightRedemptionRate, err = sdk.NewDecFromStr(minRedemptionRateStr)
+				minInnerRedemptionRate, err = sdk.NewDecFromStr(minRedemptionRateStr)
 				if err != nil {
 					return err
 				}
 			}
-			maxTightRedemptionRate := sdk.ZeroDec()
+			maxInnerRedemptionRate := sdk.ZeroDec()
 			if maxRedemptionRateStr != "" {
-				maxTightRedemptionRate, err = sdk.NewDecFromStr(maxRedemptionRateStr)
+				maxInnerRedemptionRate, err = sdk.NewDecFromStr(maxRedemptionRateStr)
 				if err != nil {
 					return err
 				}
@@ -40,11 +40,11 @@ func CmdUpdateTightBounds() *cobra.Command {
 				return err
 			}
 
-			msg := types.NewMsgUpdateTightBounds(
+			msg := types.NewMsgUpdateInnerRedemptionRateBounds(
 				clientCtx.GetFromAddress().String(),
 				argChainId,
-				minTightRedemptionRate,
-				maxTightRedemptionRate,
+				minInnerRedemptionRate,
+				maxInnerRedemptionRate,
 			)
 			if err := msg.ValidateBasic(); err != nil {
 				return err

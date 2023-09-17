@@ -28,26 +28,26 @@ service Msg {
   rpc UpdateValidatorSharesExchRate(MsgUpdateValidatorSharesExchRate)
       returns (MsgUpdateValidatorSharesExchRateResponse);
   rpc ClearBalance(MsgClearBalance) returns (MsgClearBalanceResponse);
-  rpc UpdateTightBounds(MsgUpdateTightBounds)
-      returns (MsgUpdateTightBoundsResponse);
+  rpc UpdateInnerRedemptionRateBounds(MsgUpdateInnerRedemptionRateBounds)
+      returns (MsgUpdateInnerRedemptionRateBoundsResponse);
 }
 
-message MsgUpdateTightBounds {
+message MsgUpdateInnerRedemptionRateBounds {
   string creator = 1;
   string chain_id = 2;
-  string min_tight_redemption_rate = 3 [
+  string min_inner_redemption_rate = 3 [
     (cosmos_proto.scalar) = "cosmos.Dec",
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false
   ];
-  string max_tight_redemption_rate = 4 [
+  string max_inner_redemption_rate = 4 [
     (cosmos_proto.scalar) = "cosmos.Dec",
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false
   ];
 }
 
-message MsgUpdateTightBoundsResponse {}
+message MsgUpdateInnerRedemptionRateBoundsResponse {}
 
 message MsgLiquidStake {
   string creator = 1;

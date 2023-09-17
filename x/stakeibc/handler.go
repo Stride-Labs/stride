@@ -58,8 +58,8 @@ func NewMessageHandler(k keeper.Keeper) sdk.Handler {
 		case *types.MsgUpdateValidatorSharesExchRate:
 			res, err := msgServer.UpdateValidatorSharesExchRate(sdk.WrapSDKContext(ctx), msg)
 			return sdk.WrapServiceResult(ctx, res, err)
-		case *types.MsgUpdateTightBounds:
-			res, err := msgServer.UpdateTightBounds(sdk.WrapSDKContext(ctx), msg)
+		case *types.MsgUpdateInnerRedemptionRateBounds:
+			res, err := msgServer.UpdateInnerRedemptionRateBounds(sdk.WrapSDKContext(ctx), msg)
 			return sdk.WrapServiceResult(ctx, res, err)
 		default:
 			errMsg := fmt.Sprintf("unrecognized %s message type: %T", types.ModuleName, msg)
