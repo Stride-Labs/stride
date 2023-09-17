@@ -237,7 +237,7 @@ func (k Keeper) BurnTokens(ctx sdk.Context, hostZone types.HostZone, stTokenBurn
 // ICA Callback after undelegating host
 //
 //	If successful:
-//	  * sets isPrevented = true
+//	  * sets SetUndelegateHostPrevented
 //	If timeout:
 //	  * Does nothing
 //	If failure:
@@ -264,8 +264,10 @@ func (k Keeper) UndelegateHostCallback(ctx sdk.Context, packet channeltypes.Pack
 
 	k.Logger(ctx).Info("UndelegateHostCallback success:", icacallbackstypes.AckResponseStatus_SUCCESS, packet)
 
-	// TODO set isPrevented = true
-	k.Logger(ctx).Info(">>>>>>>>>>> isPrevented has been set to true <<<<<<<<<<<<<<<")
+	k.Logger(ctx).Info(">>>>>>>>>>> SetUndelegateHostPrevented <<<<<<<<<<<<<<<")
+	if err := k.SetUndelegateHostPrevented(ctx); err != nil {
+		return err
+	}
 
 	return nil
 }
