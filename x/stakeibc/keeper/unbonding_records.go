@@ -301,6 +301,10 @@ func (k Keeper) UnbondFromHostZone(ctx sdk.Context, hostZone types.HostZone) err
 		return errorsmod.Wrap(sdkerrors.ErrInvalidRequest, "Target unbonded amount was 0 for each validator")
 	}
 
+	if len(msgs) > UndelegateICABatchSize {
+		return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, fmt.Sprintf("too many undelegation messages (%d) for host zone %s", len(msgs), hostZone.ChainId))
+	}
+
 	// Send the messages in batches so the gas limit isn't exceedeed
 	for start := 0; start < len(msgs); start += UndelegateICABatchSize {
 		end := start + UndelegateICABatchSize
