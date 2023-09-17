@@ -14,8 +14,8 @@ import (
 )
 
 const (
-	MaxNumTokensUnbondable = 1000000000000000000 // 1e18
-	EvmosHostZoneChainId   = "evmos_9001-2"
+	MaxNumTokensUnbondableStr = "1000000000000000000000000000" // 1e18
+	EvmosHostZoneChainId      = "evmos_9001-2"
 )
 
 // Submits undelegation ICA message for Evmos
@@ -38,7 +38,11 @@ func (k Keeper) UndelegateHostEvmos(ctx sdk.Context, totalUnbondAmount math.Int)
 
 	// if the total unbond amount is greater than the max, exit
 	// TODO: this overflows above ~100e18, NEED NEW TYPE
-	if totalUnbondAmount.GT(math.NewInt(MaxNumTokensUnbondable)) {
+	MaxNumTokensUnbondable, found := math.NewIntFromString(MaxNumTokensUnbondableStr)
+	if !found {
+		return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "unable to parse MaxNumTokensUnbondable %s", MaxNumTokensUnbondable)
+	}
+	if totalUnbondAmount.GT(MaxNumTokensUnbondable) {
 		return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "total unbond amount %v%s is greater than MaxNumTokensUnbondable %v%s",
 			totalUnbondAmount, evmosHost.HostDenom, MaxNumTokensUnbondable, evmosHost.HostDenom)
 	}
