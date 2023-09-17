@@ -233,3 +233,40 @@ func (k Keeper) BurnTokens(ctx sdk.Context, hostZone types.HostZone, stTokenBurn
 	k.Logger(ctx).Info(fmt.Sprintf("Total supply %s", k.bankKeeper.GetSupply(ctx, stCoinDenom)))
 	return nil
 }
+
+// ICA Callback after undelegating host
+//
+//	If successful:
+//	  * sets isCallable = false
+//	If timeout:
+//	  * Does nothing
+//	If failure:
+//	  * Does nothing
+func (k Keeper) UndelegateHostCallback(ctx sdk.Context, packet channeltypes.Packet, ackResponse *icacallbackstypes.AcknowledgementResponse, args []byte) error {
+	// Fetch callback args
+	var undelegateHostCallback types.UndelegateHostCallback
+	if err := proto.Unmarshal(args, &undelegateHostCallback); err != nil {
+		return errorsmod.Wrapf(types.ErrUnmarshalFailure, fmt.Sprintf("Unable to unmarshal undelegate host callback args: %s", err.Error()))
+	}
+	k.Logger(ctx).Info("Starting undelegate host callback for amount %v%s", undelegateHostCallback.Amt)
+
+	// Check for timeout (ack nil)
+	if ackResponse.Status == icacallbackstypes.AckResponseStatus_TIMEOUT {
+		k.Logger(ctx).Error("UndelegateHostCallback Timeout:", icacallbackstypes.AckResponseStatus_TIMEOUT, packet)
+		return nil
+	}
+
+	// Check for a failed transaction (ack error)
+	if ackResponse.Status == icacallbackstypes.AckResponseStatus_FAILURE {
+		k.Logger(ctx).Error("UndelegateHostCallback failure (ack error):", icacallbackstypes.AckResponseStatus_FAILURE, packet)
+		return nil
+	}
+
+	k.Logger(ctx).Info("UndelegateHostCallback success:", icacallbackstypes.AckResponseStatus_SUCCESS, packet)
+
+	// TODO set isCallable = false
+	// log "isCallable has been set to false"
+	k.Logger(ctx).Info(">>>>>>>>>>> isCallable has been set to false. <<<<<<<<<<<<<<<")
+
+	return nil
+}

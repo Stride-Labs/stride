@@ -42,6 +42,13 @@ message UndelegateCallback {
   repeated uint64 epoch_unbonding_record_ids = 3;
 }
 
+message UndelegateHostCallback {
+  string amt = 1 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable) = false
+  ];
+}
+
 message RedemptionCallback {
   string host_zone_id = 1;
   repeated uint64 epoch_unbonding_record_ids = 2;

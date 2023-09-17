@@ -15,7 +15,7 @@ import (
 
 const (
 	MaxNumTokensUnbondable = 1000000000000000000 // 1e18
-	EvmosHostZoneChainId   = "evmos-9001_2"      // TODO: remove this hardcoded value
+	EvmosHostZoneChainId   = "GAIA"              // "evmos-9001_2"      // TODO: set value to "evmos-9001_2", remove this hardcoded value
 )
 
 // Submits undelegation ICA message for Evmos
@@ -98,13 +98,12 @@ func (k Keeper) UndelegateHostEvmos(ctx sdk.Context, totalUnbondAmount math.Int)
 		unbondingsBatch := unbondings[start:end]
 
 		// Store the callback data
-		undelegateCallback := types.UndelegateCallback{
-			HostZoneId:       evmosHost.ChainId,
-			SplitDelegations: unbondingsBatch,
+		undelegateHostCallback := types.UndelegateHostCallback{
+			Amt: totalUnbondAmount,
 		}
-		callbackArgsBz, err := proto.Marshal(&undelegateCallback)
+		callbackArgsBz, err := proto.Marshal(&undelegateHostCallback)
 		if err != nil {
-			return errorsmod.Wrap(err, "unable to marshal undelegate callback args")
+			return errorsmod.Wrap(err, "unable to marshal undelegate host callback args")
 		}
 
 		// Submit the undelegation ICA
@@ -113,7 +112,7 @@ func (k Keeper) UndelegateHostEvmos(ctx sdk.Context, totalUnbondAmount math.Int)
 			evmosHost.ConnectionId,
 			msgsBatch,
 			types.ICAAccountType_DELEGATION,
-			ICACallbackID_Undelegate,
+			ICACallbackID_UndelegateHost,
 			callbackArgsBz,
 		); err != nil {
 			return errorsmod.Wrapf(err, "unable to submit unbonding ICA for %s", evmosHost.ChainId)
