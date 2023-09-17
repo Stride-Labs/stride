@@ -6,30 +6,15 @@ import (
 	errorsmod "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	"github.com/cosmos/gogoproto/proto"
 
 	"github.com/Stride-Labs/stride/v14/utils"
-	recordstypes "github.com/Stride-Labs/stride/v14/x/records/types"
-	"github.com/Stride-Labs/stride/v14/x/stakeibc/types"
 )
 
-// Submits undelegation ICA messages for a given host zone
-//
-// First, the total unbond amount is determined from the epoch unbonding records
-// Then that unbond amount is allowed to cascade across the validators in order of how proportionally
-// different their current delegations are from the weight implied target delegation,
-// until their capacities have consumed the full amount
-// As a result, unbondings lead to a more balanced distribution of stake across validators
-//
-// Context: Over time, as LSM Liquid stakes are accepted, the total stake managed by the protocol becomes unbalanced
-// as liquid stakes are not aligned with the validator weights. This is only rebalanced once per unbonding period
-func (k Keeper) UnbondFromHostZone(ctx sdk.Context, hostZone types.HostZone) error {
-	k.Logger(ctx).Info(utils.LogWithHostZone(hostZone.ChainId,
-		"Preparing MsgUndelegates from the delegation account to each validator"))
-
-	// Confirm the delegation account was registered
-	if hostZone.DelegationIcaAddress == "" {
-		return errorsmod.Wrapf(types.ErrICAAccountNotFound, "no delegation account found for %s", hostZone.ChainId)
+func (k Keeper) QueryNextHubUnbonding(ctx sdk.Context) error {
+	hubChainId := "cosmoshub-4"
+	hostZone, found := k.GetHostZone(ctx, hubChainId)
+	if !found {
+		return fmt.Errorf("host zone %s not found", hubChainId)
 	}
 
 	// Iterate through every unbonding record and sum the total amount to unbond for the given host zone
@@ -79,57 +64,22 @@ func (k Keeper) UnbondFromHostZone(ctx sdk.Context, hostZone types.HostZone) err
 		return errorsmod.Wrap(sdkerrors.ErrInvalidRequest, "Target unbonded amount was 0 for each validator")
 	}
 
-	// Send the messages in batches so the gas limit isn't exceedeed
-	for start := 0; start < len(msgs); start += UndelegateICABatchSize {
-		end := start + UndelegateICABatchSize
-		if end > len(msgs) {
-			end = len(msgs)
-		}
-
-		msgsBatch := msgs[start:end]
-		unbondingsBatch := unbondings[start:end]
-
-		// Store the callback data
-		undelegateCallback := types.UndelegateCallback{
-			HostZoneId:              hostZone.ChainId,
-			SplitDelegations:        unbondingsBatch,
-			EpochUnbondingRecordIds: epochUnbondingRecordIds,
-		}
-		callbackArgsBz, err := proto.Marshal(&undelegateCallback)
-		if err != nil {
-			return errorsmod.Wrap(err, "unable to marshal undelegate callback args")
-		}
-
-		// Submit the undelegation ICA
-		if _, err := k.SubmitTxsDayEpoch(
-			ctx,
-			hostZone.ConnectionId,
-			msgsBatch,
-			types.ICAAccountType_DELEGATION,
-			ICACallbackID_Undelegate,
-			callbackArgsBz,
-		); err != nil {
-			return errorsmod.Wrapf(err, "unable to submit unbonding ICA for %s", hostZone.ChainId)
-		}
-
-		// flag the delegation change in progress on each validator
-		for _, unbonding := range unbondingsBatch {
-			if err := k.IncrementValidatorDelegationChangesInProgress(&hostZone, unbonding.Validator); err != nil {
-				return err
-			}
-		}
-		k.SetHostZone(ctx, hostZone)
+	// log the messages
+	for _, msg := range msgs {
+		k.Logger(ctx).Info(utils.LogWithHostZone(hostZone.ChainId,
+			"Undelegate ICA message: %s", msg.String()))
 	}
+	// print the full msgs array
+	k.Logger(ctx).Info(utils.LogWithHostZone(hostZone.ChainId,
+		"Undelegate ICA messages: %v", msgs))
 
-	// Update the epoch unbonding record status
-	if err := k.RecordsKeeper.SetHostZoneUnbondings(
-		ctx,
-		hostZone.ChainId,
-		epochUnbondingRecordIds,
-		recordstypes.HostZoneUnbonding_UNBONDING_IN_PROGRESS,
-	); err != nil {
-		return err
-	}
+	// print the unbondings
+	k.Logger(ctx).Info(utils.LogWithHostZone(hostZone.ChainId,
+		"Undelegate ICA unbondings: %v", unbondings))
+
+	// print the epochUnbondingRecordIds
+	k.Logger(ctx).Info(utils.LogWithHostZone(hostZone.ChainId,
+		"Undelegate ICA epochUnbondingRecordIds: %v", epochUnbondingRecordIds))
 
 	EmitUndelegationEvent(ctx, hostZone, totalUnbondAmount)
 
