@@ -49,5 +49,8 @@ func (msg *MsgUndelegateHost) ValidateBasic() error {
 	if err := utils.ValidateAdminAddress(msg.Creator); err != nil {
 		return err
 	}
+	if msg.Amount.IsZero() {
+		return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "amount must be positive")
+	}
 	return nil
 }
