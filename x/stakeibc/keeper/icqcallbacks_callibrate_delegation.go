@@ -7,10 +7,8 @@ import (
 
 	errorsmod "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/cosmos/gogoproto/proto"
-	"github.com/spf13/cast"
 
 	"github.com/Stride-Labs/stride/v14/utils"
 	icqtypes "github.com/Stride-Labs/stride/v14/x/interchainquery/types"
@@ -60,11 +58,6 @@ func CalibrateDelegationCallback(k Keeper, ctx sdk.Context, args []byte, query i
 		return errorsmod.Wrapf(types.ErrValidatorNotFound, "no registered validator for address (%s)", queriedDelegation.ValidatorAddress)
 	}
 
-	// Check if delegation is zero since this will affect measuring the slash amount
-	if validator.Delegation.IsZero() {
-		return errorsmod.Wrapf(types.ErrNoValidatorAmts, "Current delegation to validator is zero, unable to check slash magnitude %+v", validator)
-	}
-
 	// Check if the ICQ overlapped a delegation, undelegation, or detokenization ICA
 	// that would have modfied the number of delegated tokens
 	prevInternalDelegation := callbackData.InitialValidatorDelegation
@@ -98,7 +91,7 @@ func CalibrateDelegationCallback(k Keeper, ctx sdk.Context, args []byte, query i
 	k.SetHostZone(ctx, hostZone)
 
 	// Confirm the validator was slashed by looking at the number of tokens associated with the delegation
-	validatorWasSlashed, delegatedTokens, err := k.CheckForSlash(ctx, hostZone, valIndex, queriedDelegation)
+	validatorWasSlashed, delegatedTokens, err := k.CheckForUpdatedDelegation(ctx, hostZone, valIndex, queriedDelegation)
 	if err != nil {
 		return err
 	}
@@ -108,7 +101,7 @@ func CalibrateDelegationCallback(k Keeper, ctx sdk.Context, args []byte, query i
 	}
 
 	// If the validator was slashed and the query did not overlap any ICAs, update the internal record keeping
-	if err := k.SlashValidatorOnHostZone(ctx, hostZone, valIndex, delegatedTokens); err != nil {
+	if err := k.UpdateDelegationOnValidatorAndHostZone(ctx, hostZone, valIndex, delegatedTokens); err != nil {
 		return err
 	}
 
@@ -167,7 +160,7 @@ func (k Keeper) CheckDelegationChangedDuringQuery(
 // due to an decimal -> int truncation that occurs during unbonding. In this case, still update the validator
 //
 // If the change in delegation was an increase, the response can't be trusted so an error is thrown
-func (k Keeper) CheckForSlash(
+func (k Keeper) CheckForUpdatedDelegation(
 	ctx sdk.Context,
 	hostZone types.HostZone,
 	valIndex int64,
@@ -190,9 +183,8 @@ func (k Keeper) CheckForSlash(
 
 	// If the true delegation is slightly higher than our record keeping, this could be due to float imprecision
 	// Correct record keeping accordingly
-	precisionErrorThreshold := sdkmath.NewInt(25)
 	precisionError := delegatedTokens.Sub(validator.Delegation)
-	if precisionError.IsPositive() && precisionError.LTE(precisionErrorThreshold) {
+	if precisionError.IsPositive() {
 		// Update the validator on the host zone
 		validator.Delegation = validator.Delegation.Add(precisionError)
 		hostZone.TotalDelegations = hostZone.TotalDelegations.Add(precisionError)
@@ -206,42 +198,19 @@ func (k Keeper) CheckForSlash(
 		return false, delegatedTokens, nil
 	}
 
-	// If the delegation returned from the query is much higher than our record keeping, exit with an error
-	if delegatedTokens.GT(validator.Delegation) {
-		return false, delegatedTokens, errorsmod.Wrapf(sdkerrors.ErrInvalidRequest,
-			"Validator (%s) tokens returned from query is greater than the Delegation", validator.Address)
-	}
-
 	return true, delegatedTokens, nil
 }
 
 // Update the accounting on the host zone and validator to record the slash
 // NOTE: we assume any decrease in delegation amt that's not tracked via records is a slash
-func (k Keeper) SlashValidatorOnHostZone(ctx sdk.Context, hostZone types.HostZone, valIndex int64, delegatedTokens sdkmath.Int) error {
+func (k Keeper) UpdateDelegationOnValidatorAndHostZone(ctx sdk.Context, hostZone types.HostZone, valIndex int64, delegatedTokens sdkmath.Int) error {
 	chainId := hostZone.ChainId
 	validator := hostZone.Validators[valIndex]
 
-	// There is a check upstream to verify that validator.Delegation is not 0
-	// This check is to explicitly avoid a division by zero error
-	if validator.Delegation.IsZero() {
-		return errorsmod.Wrapf(types.ErrDivisionByZero, "Zero Delegation has caused division by zero from validator, %+v", validator)
-	}
-
 	// Get slash percentage
 	slashAmount := validator.Delegation.Sub(delegatedTokens)
-	slashPct := sdk.NewDecFromInt(slashAmount).Quo(sdk.NewDecFromInt(validator.Delegation))
-	k.Logger(ctx).Info(utils.LogICQCallbackWithHostZone(chainId, ICQCallbackID_Delegation,
-		"Validator was slashed! Validator: %s, Delegator: %s, Delegation in State: %v, Delegation from ICQ %v, Slash Amount: %v, Slash Pct: %v",
-		validator.Address, hostZone.DelegationIcaAddress, validator.Delegation, delegatedTokens, slashAmount, slashPct))
 
 	// Update the validator weight and delegation reflect to reflect the slash
-	weight, err := cast.ToInt64E(validator.Weight)
-	if err != nil {
-		return errorsmod.Wrapf(types.ErrIntCast, "unable to convert validator weight to int64, err: %s", err.Error())
-	}
-	weightAdjustment := sdk.NewDecFromInt(delegatedTokens).Quo(sdk.NewDecFromInt(validator.Delegation))
-
-	validator.Weight = sdk.NewDec(weight).Mul(weightAdjustment).TruncateInt().Uint64()
 	validator.Delegation = validator.Delegation.Sub(slashAmount)
 
 	// Update the validator on the host zone
@@ -251,10 +220,6 @@ func (k Keeper) SlashValidatorOnHostZone(ctx sdk.Context, hostZone types.HostZon
 
 	k.Logger(ctx).Info(utils.LogICQCallbackWithHostZone(chainId, ICQCallbackID_Delegation,
 		"Delegation updated to: %v, Weight updated to: %v", validator.Delegation, validator.Weight))
-
-	// Update the redemption rate
-	depositRecords := k.RecordsKeeper.GetAllDepositRecord(ctx)
-	k.UpdateRedemptionRateForHostZone(ctx, hostZone, depositRecords)
 
 	return nil
 }
