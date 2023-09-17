@@ -293,5 +293,5 @@ func (k Keeper) GetOuterSafetyBounds(ctx sdk.Context, zone types.HostZone) (sdk.
 		maxSafetyThreshold = zone.MaxRedemptionRate
 	}
 
-	return minSafetyThreshold, maxSafetyThreshold, nil
+	return minSafetyThreshold, maxSafetyThreshold
 }
