@@ -11,14 +11,14 @@ import (
 )
 
 const (
-	isCallable = true
+	isPrevented = true
 )
 
 func (k msgServer) UndelegateHost(goCtx context.Context, msg *types.MsgUndelegateHost) (*types.MsgUndelegateHostResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
 	// undelegateHost is callable only if it has not yet been called and succeeded
-	if !isCallable {
+	if !isPrevented {
 		return nil, errorsmod.Wrapf(types.ErrUndelegateHostNotCallable, "")
 	}
 
