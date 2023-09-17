@@ -4,12 +4,12 @@ import (
 	"fmt"
 
 	errorsmod "cosmossdk.io/errors"
+	"cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/gogoproto/proto"
 
 	"github.com/Stride-Labs/stride/v14/utils"
-	recordstypes "github.com/Stride-Labs/stride/v14/x/records/types"
 	"github.com/Stride-Labs/stride/v14/x/stakeibc/types"
 )
 
@@ -18,41 +18,54 @@ const (
 	EvmosHostZoneChainId   = "GAIA"              // "evmos-9001_2"      // TODO: set value to "evmos-9001_2", remove this hardcoded value
 )
 
-func (k Keeper) UnbondFromHostZone(ctx sdk.Context, hostZone types.HostZone) error {
-	k.Logger(ctx).Info(utils.LogWithHostZone(hostZone.ChainId,
-		"Preparing MsgUndelegates from the delegation account to each validator"))
+// Submits undelegation ICA message for Evmos
+// The total unbond amount is input, capped at MaxNumTokensUnbondable.
+func (k Keeper) UndelegateHostEvmos(ctx sdk.Context, totalUnbondAmount math.Int) error {
 
-	// Confirm the delegation account was registered
-	if hostZone.DelegationIcaAddress == "" {
-		return errorsmod.Wrapf(types.ErrICAAccountNotFound, "no delegation account found for %s", hostZone.ChainId)
+	// Get the host zone
+	evmosHost, found := k.GetHostZone(ctx, EvmosHostZoneChainId)
+	if !found {
+		return errorsmod.Wrapf(types.ErrHostZoneNotFound, "host zone %s not found", EvmosHostZoneChainId)
 	}
 
-	// Iterate through every unbonding record and sum the total amount to unbond for the given host zone
-	totalUnbondAmount, epochUnbondingRecordIds := k.GetTotalUnbondAmountAndRecordsIds(ctx, hostZone.ChainId)
-	k.Logger(ctx).Info(utils.LogWithHostZone(hostZone.ChainId,
-		"Total unbonded amount: %v%s", totalUnbondAmount, hostZone.HostDenom))
+	k.Logger(ctx).Info(utils.LogWithHostZone(evmosHost.ChainId,
+		"Total unbonded amount: %v%s", totalUnbondAmount, evmosHost.HostDenom))
 
 	// If there's nothing to unbond, return and move on to the next host zone
 	if totalUnbondAmount.IsZero() {
 		return nil
 	}
 
+	// if the total unbond amount is greater than the max, exit
+	// TODO: this overflows above ~100e18, NEED NEW TYPE
+	if totalUnbondAmount.GT(math.NewInt(MaxNumTokensUnbondable)) {
+		return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "total unbond amount %v%s is greater than MaxNumTokensUnbondable %v%s",
+			totalUnbondAmount, evmosHost.HostDenom, MaxNumTokensUnbondable, evmosHost.HostDenom)
+	}
+
+	k.Logger(ctx).Info("Preparing MsgUndelegates from the delegation account to each validator on Evmos")
+
+	// Confirm the delegation account was registered
+	if evmosHost.DelegationIcaAddress == "" {
+		return errorsmod.Wrapf(types.ErrICAAccountNotFound, "no delegation account found for %s", evmosHost.ChainId)
+	}
+
 	// Determine the ideal balanced delegation for each validator after the unbonding
 	//   (as if we were to unbond and then rebalance)
 	// This will serve as the starting point for determining how much to unbond each validator
-	delegationAfterUnbonding := hostZone.TotalDelegations.Sub(totalUnbondAmount)
-	balancedDelegationsAfterUnbonding, err := k.GetTargetValAmtsForHostZone(ctx, hostZone, delegationAfterUnbonding)
+	delegationAfterUnbonding := evmosHost.TotalDelegations.Sub(totalUnbondAmount)
+	balancedDelegationsAfterUnbonding, err := k.GetTargetValAmtsForHostZone(ctx, evmosHost, delegationAfterUnbonding)
 	if err != nil {
-		return errorsmod.Wrapf(err, "unable to get target val amounts for host zone %s", hostZone.ChainId)
+		return errorsmod.Wrapf(err, "unable to get target val amounts for host zone %s", evmosHost.ChainId)
 	}
 
 	// Determine the unbond capacity for each validator
 	// Each validator can only unbond up to the difference between their current delegation and their balanced delegation
 	// The validator's current delegation will be above their balanced delegation if they've received LSM Liquid Stakes
 	//   (which is only rebalanced once per unbonding period)
-	validatorUnbondCapacity := k.GetValidatorUnbondCapacity(ctx, hostZone.Validators, balancedDelegationsAfterUnbonding)
+	validatorUnbondCapacity := k.GetValidatorUnbondCapacity(ctx, evmosHost.Validators, balancedDelegationsAfterUnbonding)
 	if len(validatorUnbondCapacity) == 0 {
-		return fmt.Errorf("there are no validators on %s with sufficient unbond capacity", hostZone.ChainId)
+		return fmt.Errorf("there are no validators on %s with sufficient unbond capacity", evmosHost.ChainId)
 	}
 
 	// Sort the unbonding capacity by priority
@@ -64,7 +77,7 @@ func (k Keeper) UnbondFromHostZone(ctx sdk.Context, hostZone types.HostZone) err
 	}
 
 	// Get the undelegation ICA messages and split delegations for the callback
-	msgs, unbondings, err := k.GetUnbondingICAMessages(hostZone, totalUnbondAmount, prioritizedUnbondCapacity)
+	msgs, unbondings, err := k.GetUnbondingICAMessages(evmosHost, totalUnbondAmount, prioritizedUnbondCapacity)
 	if err != nil {
 		return err
 	}
@@ -86,9 +99,8 @@ func (k Keeper) UnbondFromHostZone(ctx sdk.Context, hostZone types.HostZone) err
 
 		// Store the callback data
 		undelegateCallback := types.UndelegateCallback{
-			HostZoneId:              hostZone.ChainId,
-			SplitDelegations:        unbondingsBatch,
-			EpochUnbondingRecordIds: epochUnbondingRecordIds,
+			HostZoneId:       evmosHost.ChainId,
+			SplitDelegations: unbondingsBatch,
 		}
 		callbackArgsBz, err := proto.Marshal(&undelegateCallback)
 		if err != nil {
@@ -98,35 +110,25 @@ func (k Keeper) UnbondFromHostZone(ctx sdk.Context, hostZone types.HostZone) err
 		// Submit the undelegation ICA
 		if _, err := k.SubmitTxsDayEpoch(
 			ctx,
-			hostZone.ConnectionId,
+			evmosHost.ConnectionId,
 			msgsBatch,
 			types.ICAAccountType_DELEGATION,
 			ICACallbackID_Undelegate,
 			callbackArgsBz,
 		); err != nil {
-			return errorsmod.Wrapf(err, "unable to submit unbonding ICA for %s", hostZone.ChainId)
+			return errorsmod.Wrapf(err, "unable to submit unbonding ICA for %s", evmosHost.ChainId)
 		}
 
 		// flag the delegation change in progress on each validator
 		for _, unbonding := range unbondingsBatch {
-			if err := k.IncrementValidatorDelegationChangesInProgress(&hostZone, unbonding.Validator); err != nil {
+			if err := k.IncrementValidatorDelegationChangesInProgress(&evmosHost, unbonding.Validator); err != nil {
 				return err
 			}
 		}
-		k.SetHostZone(ctx, hostZone)
+		k.SetHostZone(ctx, evmosHost)
 	}
 
-	// Update the epoch unbonding record status
-	if err := k.RecordsKeeper.SetHostZoneUnbondings(
-		ctx,
-		hostZone.ChainId,
-		epochUnbondingRecordIds,
-		recordstypes.HostZoneUnbonding_UNBONDING_IN_PROGRESS,
-	); err != nil {
-		return err
-	}
-
-	EmitUndelegationEvent(ctx, hostZone, totalUnbondAmount)
+	EmitUndelegationEvent(ctx, evmosHost, totalUnbondAmount)
 
 	return nil
 }
