@@ -22,7 +22,7 @@ func (k msgServer) UndelegateHost(goCtx context.Context, msg *types.MsgUndelegat
 
 	// Get host zone unbonding message by summing up the unbonding records
 	if err := k.UndelegateHostEvmos(ctx, msg.Amount); err != nil {
-		k.Logger(ctx).Error(fmt.Sprintf("Error initiating host zone unbondings for UndelegateHostEvmos", err.Error()))
+		return nil, fmt.Errorf("Error initiating host zone unbondings for UndelegateHostEvmos %s", err.Error())
 	}
 
 	// log: issuing an undelegation to Evmos
