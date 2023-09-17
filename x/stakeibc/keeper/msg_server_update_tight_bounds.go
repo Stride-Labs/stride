@@ -13,13 +13,39 @@ func (k msgServer) UpdateTightBounds(goCtx context.Context, msg *types.MsgUpdate
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
 	// Confirm host zone exists
-	_, found := k.GetHostZone(ctx, msg.ChainId)
+	zone, found := k.GetHostZone(ctx, msg.ChainId)
 	if !found {
 		k.Logger(ctx).Error(fmt.Sprintf("Host Zone not found: %s", msg.ChainId))
 		return nil, types.ErrInvalidHostZone
 	}
 
-	// TODO: set the bounds
+	// Get the wide bounds
+	outerMinSafetyThreshold, outerMaxSafetyThreshold := k.GetOuterSafetyBounds(ctx, zone)
+
+	innerMinSafetyThreshold := msg.MinTightRedemptionRate
+	innerMaxSafetyThreshold := msg.MaxTightRedemptionRate
+
+	// Confirm the inner bounds are within the outer bounds
+	if innerMinSafetyThreshold.LT(outerMinSafetyThreshold) {
+		k.Logger(ctx).Error(fmt.Sprintf("Inner min safety threshold (%s) is less than outer min safety threshold (%s)", innerMinSafetyThreshold, outerMinSafetyThreshold))
+		return nil, types.ErrInvalidBounds
+	}
+
+	if innerMaxSafetyThreshold.GT(outerMaxSafetyThreshold) {
+		k.Logger(ctx).Error(fmt.Sprintf("Inner max safety threshold (%s) is greater than outer max safety threshold (%s)", innerMaxSafetyThreshold, outerMaxSafetyThreshold))
+		return nil, types.ErrInvalidBounds
+	}
+
+	// Confirm the max is greater than the min
+	if innerMaxSafetyThreshold.LTE(innerMinSafetyThreshold) {
+		k.Logger(ctx).Error(fmt.Sprintf("Inner max safety threshold (%s) is less than inner min safety threshold (%s)", innerMaxSafetyThreshold, innerMinSafetyThreshold))
+		return nil, types.ErrInvalidBounds
+	}
+
+	// Set the inner bounds on the host zone
+	zone.MinTightRedemptionRate = innerMinSafetyThreshold
+	zone.MaxTightRedemptionRate = innerMaxSafetyThreshold
+	k.SetHostZone(ctx, zone)
 
 	return &types.MsgUpdateTightBoundsResponse{}, nil
 }
