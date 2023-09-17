@@ -1,8 +1,6 @@
 package keeper
 
 import (
-	"fmt"
-
 	sdkmath "cosmossdk.io/math"
 
 	errorsmod "cosmossdk.io/errors"
@@ -106,51 +104,6 @@ func CalibrateDelegationCallback(k Keeper, ctx sdk.Context, args []byte, query i
 	}
 
 	return nil
-}
-
-// The number of tokens returned from the query must be consistent with the tokens
-// stored in our internal record keeping during this callback, otherwise the comparision
-// between the two is invalidated
-//
-// As a result, we must avoid a race condition between the ICQ and a delegate, undelegate,
-// redelegate, or detokenization ICA
-//
-// More specifically, we must avoid the following cases:
-//
-//	Case 1)
-//	         ICQ Lands on Host                                          ICQ Ack on Stride
-//	                             ICA Lands on Host    ICA Ack on Stride
-//	Case 2)
-//	         ICA Lands on Host                                          ICA Ack on Stride
-//	                             ICQ Lands on Host    ICQ Ack on Stride
-//
-// We can prevent Case #1 by checking if the delegation total on the validator has changed
-// while the query was in flight
-//
-// We can prevent Case #2 by checking if the validator has a delegation change in progress
-func (k Keeper) CheckDelegationChangedDuringQuery(
-	ctx sdk.Context,
-	validator types.Validator,
-	previousInternalDelegation sdkmath.Int,
-	currentInternalDelegation sdkmath.Int,
-) (overlapped bool, err error) {
-	// Confirm the delegation total in the internal record keeping has not changed while the query was inflight
-	// If it has changed, exit this callback (to prevent any accounting errors) and resubmit the query
-	if !currentInternalDelegation.Equal(previousInternalDelegation) {
-		k.Logger(ctx).Error(fmt.Sprintf(
-			"Validator (%s) delegation changed while delegator shares query was in flight. Resubmitting query", validator.Address))
-		return true, nil
-	}
-
-	// Confirm there isn't currently an active delegation change ICA for this validator
-	if validator.DelegationChangesInProgress > 0 {
-		k.Logger(ctx).Error(fmt.Sprintf(
-			"Validator (%s) has %d delegation changing ICAs in progress. Resubmitting query ",
-			validator.Address, validator.DelegationChangesInProgress))
-		return true, nil
-	}
-
-	return false, nil
 }
 
 // Check if a slash occured by comparing the validator's sharesToTokens rate and delegator shares
