@@ -17,7 +17,7 @@ func (k msgServer) CalibrateDelegation(goCtx context.Context, msg *types.MsgCali
 		return nil, types.ErrHostZoneNotFound
 	}
 
-	if err := k.SubmitDelegationICQ(ctx, hostZone, msg.Valoper); err != nil {
+	if err := k.SubmitCalibrationICQ(ctx, hostZone, msg.Valoper); err != nil {
 		return nil, err
 	}
 
