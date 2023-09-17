@@ -1,8 +1,6 @@
 package keeper
 
 import (
-	sdkmath "cosmossdk.io/math"
-
 	errorsmod "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
@@ -85,94 +83,28 @@ func CalibrateDelegationCallback(k Keeper, ctx sdk.Context, args []byte, query i
 	// If there was no ICA/ICQ overlap, update the validator to indicate that the query
 	//  is no longer in progress (which will unblock LSM liquid stakes to that validator)
 	validator.SlashQueryInProgress = false
-	hostZone.Validators[valIndex] = &validator
-	k.SetHostZone(ctx, hostZone)
-
-	// Confirm the validator was slashed by looking at the number of tokens associated with the delegation
-	validatorWasSlashed, delegatedTokens, err := k.CheckForUpdatedDelegation(ctx, hostZone, valIndex, queriedDelegation)
-	if err != nil {
-		return err
-	}
-	// If the validator was not slashed, exit now
-	if !validatorWasSlashed {
-		return nil
-	}
-
-	// If the validator was slashed and the query did not overlap any ICAs, update the internal record keeping
-	if err := k.UpdateDelegationOnValidatorAndHostZone(ctx, hostZone, valIndex, delegatedTokens); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-// Check if a slash occured by comparing the validator's sharesToTokens rate and delegator shares
-// from the query responses (tokens = shares * sharesToTokensRate)
-//
-// If the change in delegation only differs by a small precision error, it was likely
-// due to an decimal -> int truncation that occurs during unbonding. In this case, still update the validator
-//
-// If the change in delegation was an increase, the response can't be trusted so an error is thrown
-func (k Keeper) CheckForUpdatedDelegation(
-	ctx sdk.Context,
-	hostZone types.HostZone,
-	valIndex int64,
-	queriedDelegation stakingtypes.Delegation,
-) (validatorWasSlashed bool, delegatedTokens sdkmath.Int, err error) {
-	chainId := hostZone.ChainId
-	validator := hostZone.Validators[valIndex]
 
 	// Calculate the number of tokens delegated (using the internal sharesToTokensRate)
 	// note: truncateInt per https://github.com/cosmos/cosmos-sdk/blob/cb31043d35bad90c4daa923bb109f38fd092feda/x/staking/types/validator.go#L431
-	delegatedTokens = queriedDelegation.Shares.Mul(validator.SharesToTokensRate).TruncateInt()
+	delegatedTokens := queriedDelegation.Shares.Mul(validator.SharesToTokensRate).TruncateInt()
 	k.Logger(ctx).Info(utils.LogICQCallbackWithHostZone(chainId, ICQCallbackID_Calibrate,
 		"Previous Delegation: %v, Current Delegation: %v", validator.Delegation, delegatedTokens))
 
 	// Confirm the validator has actually been slashed
 	if delegatedTokens.Equal(validator.Delegation) {
-		k.Logger(ctx).Info(utils.LogICQCallbackWithHostZone(chainId, ICQCallbackID_Calibrate, "Validator was not slashed"))
-		return false, delegatedTokens, nil
+		k.Logger(ctx).Info(utils.LogICQCallbackWithHostZone(chainId, ICQCallbackID_Calibrate, "Validator delegation is correct"))
+		return nil
 	}
 
-	// If the true delegation is slightly higher than our record keeping, this could be due to float imprecision
-	// Correct record keeping accordingly
-	precisionError := delegatedTokens.Sub(validator.Delegation)
-	if precisionError.IsPositive() {
-		// Update the validator on the host zone
-		validator.Delegation = validator.Delegation.Add(precisionError)
-		hostZone.TotalDelegations = hostZone.TotalDelegations.Add(precisionError)
-
-		hostZone.Validators[valIndex] = validator
-		k.SetHostZone(ctx, hostZone)
-
-		k.Logger(ctx).Info(utils.LogICQCallbackWithHostZone(chainId, ICQCallbackID_Calibrate,
-			"Delegation updated to %v", validator.Delegation))
-
-		return false, delegatedTokens, nil
-	}
-
-	return true, delegatedTokens, nil
-}
-
-// Update the accounting on the host zone and validator to record the slash
-// NOTE: we assume any decrease in delegation amt that's not tracked via records is a slash
-func (k Keeper) UpdateDelegationOnValidatorAndHostZone(ctx sdk.Context, hostZone types.HostZone, valIndex int64, delegatedTokens sdkmath.Int) error {
-	chainId := hostZone.ChainId
-	validator := hostZone.Validators[valIndex]
-
-	// Get slash percentage
-	slashAmount := validator.Delegation.Sub(delegatedTokens)
-
-	// Update the validator weight and delegation reflect to reflect the slash
-	validator.Delegation = validator.Delegation.Sub(slashAmount)
-
-	// Update the validator on the host zone
-	hostZone.TotalDelegations = hostZone.TotalDelegations.Sub(slashAmount)
-	hostZone.Validators[valIndex] = validator
-	k.SetHostZone(ctx, hostZone)
+	delegationChange := validator.Delegation.Sub(delegatedTokens)
+	validator.Delegation = validator.Delegation.Sub(delegationChange)
+	hostZone.TotalDelegations = hostZone.TotalDelegations.Sub(delegationChange)
 
 	k.Logger(ctx).Info(utils.LogICQCallbackWithHostZone(chainId, ICQCallbackID_Calibrate,
-		"Delegation updated to: %v, Weight updated to: %v", validator.Delegation, validator.Weight))
+		"Delegation updated to: %v", validator.Delegation))
+
+	hostZone.Validators[valIndex] = &validator
+	k.SetHostZone(ctx, hostZone)
 
 	return nil
 }
