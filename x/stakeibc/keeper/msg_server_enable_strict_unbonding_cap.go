@@ -8,14 +8,19 @@ import (
 	"github.com/Stride-Labs/stride/v14/x/stakeibc/types"
 )
 
-const EnableStrictUnbondingCapKey = "admin-gate"
+const EnableStrictUnbondingCapKey = "strict-unbonding-cap"
 
 func (k msgServer) EnableStrictUnbondingCap(goCtx context.Context, msg *types.MsgEnableStrictUnbondingCap) (*types.MsgEnableStrictUnbondingCapResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
 	// change the state in the store
 	store := ctx.KVStore(k.storeKey)
-	store.Set([]byte(EnableStrictUnbondingCapKey), []byte{1})
+
+	if k.IsStrictUnbondingEnabled(ctx) { // set the cap to false
+		store.Set([]byte(EnableStrictUnbondingCapKey), []byte{0})
+	} else { // set the cap to true
+		store.Set([]byte(EnableStrictUnbondingCapKey), []byte{1})
+	}
 
 	return &types.MsgEnableStrictUnbondingCapResponse{}, nil
 }
@@ -25,5 +30,7 @@ func (k Keeper) IsStrictUnbondingEnabled(ctx sdk.Context) bool {
 	if !store.Has([]byte(EnableStrictUnbondingCapKey)) {
 		return false
 	}
-	return store.Get([]byte(EnableStrictUnbondingCapKey))[0] == 1
+
+	value := store.Get([]byte(EnableStrictUnbondingCapKey))
+	return len(value) == 1 && value[0] == 1
 }
