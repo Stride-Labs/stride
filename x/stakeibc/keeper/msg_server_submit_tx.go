@@ -505,13 +505,6 @@ func (k Keeper) SubmitCalibrationICQ(ctx sdk.Context, hostZone types.HostZone, v
 		return errorsmod.Wrapf(types.ErrValidatorNotFound, "no registered validator for address (%s)", validatorAddress)
 	}
 
-	// Only submit the query if there's not already one in progress
-	if validator.SlashQueryInProgress {
-		k.Logger(ctx).Info(utils.LogWithHostZone(hostZone.ChainId, "Delegations ICQ already in progress"))
-		return nil
-	}
-	k.Logger(ctx).Info(utils.LogWithHostZone(hostZone.ChainId, "Submitting ICQ for delegations to %s", validatorAddress))
-
 	// Get the validator and delegator encoded addresses to form the query request
 	_, validatorAddressBz, err := bech32.DecodeAndConvert(validatorAddress)
 	if err != nil {
