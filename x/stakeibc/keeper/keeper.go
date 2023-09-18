@@ -269,8 +269,9 @@ func (k Keeper) IsRedemptionRateWithinSafetyBounds(ctx sdk.Context, zone types.H
 	// The inner safety bounds should always be within the safety bounds, but
 	// the redundancy above is cheap.
 	// There is also one scenario where the outer bounds go within the inner bounds - if they're updated as part of a param change proposal.
-	if redemptionRate.LT(zone.MinInnerRedemptionRate) || redemptionRate.GT(zone.MaxInnerRedemptionRate) {
-		errMsg := fmt.Sprintf("IsRedemptionRateWithinSafetyBounds check failed %s is outside inner safety bounds [%s, %s]", redemptionRate.String(), minSafetyThreshold.String(), maxSafetyThreshold.String())
+	minInnerSafetyThreshold, maxInnerSafetyThreshold := k.GetInnerSafetyBounds(ctx, zone)
+	if redemptionRate.LT(minInnerSafetyThreshold) || redemptionRate.GT(maxInnerSafetyThreshold) {
+		errMsg := fmt.Sprintf("IsRedemptionRateWithinSafetyBounds check failed %s is outside inner safety bounds [%s, %s]", redemptionRate.String(), minInnerSafetyThreshold.String(), maxInnerSafetyThreshold.String())
 		k.Logger(ctx).Error(errMsg)
 		return false, errorsmod.Wrapf(types.ErrRedemptionRateOutsideSafetyBounds, errMsg)
 	}
@@ -292,6 +293,20 @@ func (k Keeper) GetOuterSafetyBounds(ctx sdk.Context, zone types.HostZone) (sdk.
 
 	if !zone.MaxRedemptionRate.IsNil() && zone.MaxRedemptionRate.IsPositive() {
 		maxSafetyThreshold = zone.MaxRedemptionRate
+	}
+
+	return minSafetyThreshold, maxSafetyThreshold
+}
+
+func (k Keeper) GetInnerSafetyBounds(ctx sdk.Context, zone types.HostZone) (sdk.Dec, sdk.Dec) {
+	// Fetch the inner bounds
+	minSafetyThreshold, maxSafetyThreshold := k.GetOuterSafetyBounds(ctx, zone)
+
+	if !zone.MinInnerRedemptionRate.IsNil() && zone.MinInnerRedemptionRate.IsPositive() && zone.MinInnerRedemptionRate.GT(minSafetyThreshold) {
+		minSafetyThreshold = zone.MinInnerRedemptionRate
+	}
+	if !zone.MaxInnerRedemptionRate.IsNil() && zone.MaxInnerRedemptionRate.IsPositive() && zone.MaxInnerRedemptionRate.LT(maxSafetyThreshold) {
+		maxSafetyThreshold = zone.MaxInnerRedemptionRate
 	}
 
 	return minSafetyThreshold, maxSafetyThreshold
