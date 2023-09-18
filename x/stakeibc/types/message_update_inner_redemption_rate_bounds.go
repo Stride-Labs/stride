@@ -48,7 +48,7 @@ func (msg *MsgUpdateInnerRedemptionRateBounds) ValidateBasic() error {
 		return errorsmod.Wrapf(sdkerrors.ErrInvalidAddress, "invalid creator address (%s)", err)
 	}
 	// Confirm the max is greater than the min
-	if msg.MaxInnerRedemptionRate.LTE(msg.MaxInnerRedemptionRate) {
+	if msg.MaxInnerRedemptionRate.LTE(msg.MinInnerRedemptionRate) {
 		return errorsmod.Wrapf(ErrInvalidBounds, "Inner max safety threshold (%s) is less than inner min safety threshold (%s)", msg.MaxInnerRedemptionRate, msg.MinInnerRedemptionRate)
 	}
 	if err := utils.ValidateAdminAddress(msg.Creator); err != nil {

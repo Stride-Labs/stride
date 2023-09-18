@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	errorsmod "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/Stride-Labs/stride/v14/x/stakeibc/types"
@@ -27,13 +28,15 @@ func (k msgServer) UpdateInnerRedemptionRateBounds(goCtx context.Context, msg *t
 
 	// Confirm the inner bounds are within the outer bounds
 	if innerMinSafetyThreshold.LT(outerMinSafetyThreshold) {
-		k.Logger(ctx).Error(fmt.Sprintf("Inner min safety threshold (%s) is less than outer min safety threshold (%s)", innerMinSafetyThreshold, outerMinSafetyThreshold))
-		return nil, types.ErrInvalidBounds
+		errMsg := fmt.Sprintf("inner min safety threshold (%s) is less than outer min safety threshold (%s)", innerMinSafetyThreshold, outerMinSafetyThreshold)
+		k.Logger(ctx).Error(errMsg)
+		return nil, errorsmod.Wrapf(types.ErrInvalidBounds, errMsg)
 	}
 
 	if innerMaxSafetyThreshold.GT(outerMaxSafetyThreshold) {
-		k.Logger(ctx).Error(fmt.Sprintf("Inner max safety threshold (%s) is greater than outer max safety threshold (%s)", innerMaxSafetyThreshold, outerMaxSafetyThreshold))
-		return nil, types.ErrInvalidBounds
+		errMsg := fmt.Sprintf("inner max safety threshold (%s) is greater than outer max safety threshold (%s)", innerMaxSafetyThreshold, outerMaxSafetyThreshold)
+		k.Logger(ctx).Error(errMsg)
+		return nil, errorsmod.Wrapf(types.ErrInvalidBounds, errMsg)
 	}
 
 	// Set the inner bounds on the host zone
