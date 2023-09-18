@@ -5,7 +5,7 @@ package keeper
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	epochtypes "github.com/Stride-Labs/stride/v14/x/epochs/types"
+	epochtypes "github.com/Stride-Labs/stride/v15/x/epochs/types"
 )
 
 // RegisterInvariants registers all governance invariants.

@@ -9,10 +9,10 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 
-	keepertest "github.com/Stride-Labs/stride/v14/testutil/keeper"
-	"github.com/Stride-Labs/stride/v14/testutil/nullify"
-	"github.com/Stride-Labs/stride/v14/x/stakeibc/keeper"
-	"github.com/Stride-Labs/stride/v14/x/stakeibc/types"
+	keepertest "github.com/Stride-Labs/stride/v15/testutil/keeper"
+	"github.com/Stride-Labs/stride/v15/testutil/nullify"
+	"github.com/Stride-Labs/stride/v15/x/stakeibc/keeper"
+	"github.com/Stride-Labs/stride/v15/x/stakeibc/types"
 )
 
 func createNHostZone(keeper *keeper.Keeper, ctx sdk.Context, n int) []types.HostZone {
@@ -23,6 +23,8 @@ func createNHostZone(keeper *keeper.Keeper, ctx sdk.Context, n int) []types.Host
 		items[i].LastRedemptionRate = sdk.NewDec(1)
 		items[i].MinRedemptionRate = sdk.NewDecWithPrec(5, 1)
 		items[i].MaxRedemptionRate = sdk.NewDecWithPrec(15, 1)
+		items[i].MinInnerRedemptionRate = sdk.NewDecWithPrec(5, 1)
+		items[i].MaxInnerRedemptionRate = sdk.NewDecWithPrec(15, 1)
 		items[i].TotalDelegations = sdkmath.ZeroInt()
 		keeper.SetHostZone(ctx, items[i])
 	}

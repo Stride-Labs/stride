@@ -41,7 +41,25 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 <!-- GH ACTIONS TEMPLATE - INSERT NEW VERSION HERE -->
-### Changelog
+
+## [v15.0.0](https://github.com/Stride-Labs/stride/releases/tag/v15.0.0) - 2023-09-18
+
+### On-Chain changes
+1. Added ICAOracle route implementations for legacy Msg type ([#923](https://github.com/Stride-Labs/stride/pull/923))
+2. increased precision error buffer on delegator shares callback ([#933](https://github.com/Stride-Labs/stride/pull/933))
+3. Use detokenization amount from tx response ([#934](https://github.com/Stride-Labs/stride/pull/934))
+4. add inner bounds ([#938](https://github.com/Stride-Labs/stride/pull/938))
+5. added cap on undelegate messages ([#940](https://github.com/Stride-Labs/stride/pull/940))
+6. add rounding calibration function ([#936](https://github.com/Stride-Labs/stride/pull/936))
+7. Undel host function ([#935](https://github.com/Stride-Labs/stride/pull/935))
+8. v15 upgrade handler ([#941](https://github.com/Stride-Labs/stride/pull/941))
+9. v15 Import Paths ([#944](https://github.com/Stride-Labs/stride/pull/944))
+
+### Off-Chain changes
+1. Fixed bug in import path CI ([#919](https://github.com/Stride-Labs/stride/pull/919))
+2. Finished auto changelog script ([#928](https://github.com/Stride-Labs/stride/pull/928))
+3. updated osmo submodule ([#931](https://github.com/Stride-Labs/stride/pull/931))
+
 
 ## [v14.0.0](https://github.com/Stride-Labs/stride/releases/tag/v14.0.0) - 2023-08-27
 

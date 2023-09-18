@@ -14,13 +14,13 @@ import (
 	"github.com/cosmos/gogoproto/proto"
 	"github.com/spf13/cast"
 
-	"github.com/Stride-Labs/stride/v14/utils"
-	recordstypes "github.com/Stride-Labs/stride/v14/x/records/types"
-	"github.com/Stride-Labs/stride/v14/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v15/utils"
+	recordstypes "github.com/Stride-Labs/stride/v15/x/records/types"
+	"github.com/Stride-Labs/stride/v15/x/stakeibc/types"
 )
 
 const (
-	UndelegateICABatchSize = 30
+	UndelegateICABatchSize = 32
 )
 
 type ValidatorUnbondCapacity struct {
@@ -299,6 +299,10 @@ func (k Keeper) UnbondFromHostZone(ctx sdk.Context, hostZone types.HostZone) err
 	// Shouldn't be possible, but if all the validator's had a target unbonding of zero, do not send an ICA
 	if len(msgs) == 0 {
 		return errorsmod.Wrap(sdkerrors.ErrInvalidRequest, "Target unbonded amount was 0 for each validator")
+	}
+
+	if len(msgs) > UndelegateICABatchSize {
+		return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, fmt.Sprintf("too many undelegation messages (%d) for host zone %s", len(msgs), hostZone.ChainId))
 	}
 
 	// Send the messages in batches so the gas limit isn't exceedeed

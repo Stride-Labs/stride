@@ -12,9 +12,9 @@ import (
 	"github.com/cosmos/gogoproto/proto"
 	"github.com/spf13/cast"
 
-	"github.com/Stride-Labs/stride/v14/utils"
-	icqtypes "github.com/Stride-Labs/stride/v14/x/interchainquery/types"
-	"github.com/Stride-Labs/stride/v14/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v15/utils"
+	icqtypes "github.com/Stride-Labs/stride/v15/x/interchainquery/types"
+	"github.com/Stride-Labs/stride/v15/x/stakeibc/types"
 )
 
 // DelegatorSharesCallback is a callback handler for UpdateValidatorSharesExchRate queries.
@@ -190,7 +190,7 @@ func (k Keeper) CheckForSlash(
 
 	// If the true delegation is slightly higher than our record keeping, this could be due to float imprecision
 	// Correct record keeping accordingly
-	precisionErrorThreshold := sdkmath.NewInt(25)
+	precisionErrorThreshold := sdkmath.NewInt(1000)
 	precisionError := delegatedTokens.Sub(validator.Delegation)
 	if precisionError.IsPositive() && precisionError.LTE(precisionErrorThreshold) {
 		// Update the validator on the host zone
