@@ -14,7 +14,7 @@ import (
 )
 
 const (
-	MaxNumTokensUnbondableStr = "1000000000000000000000000000" // 1e18
+	MaxNumTokensUnbondableStr = "10000000000000000000000000" // 10,000,000e18
 	EvmosHostZoneChainId      = "evmos_9001-2"
 )
 
