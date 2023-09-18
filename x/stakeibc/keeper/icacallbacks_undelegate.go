@@ -250,6 +250,24 @@ func (k Keeper) UndelegateHostCallback(ctx sdk.Context, packet channeltypes.Pack
 	}
 	k.Logger(ctx).Info("Starting undelegate host callback for amount %v%s", undelegateHostCallback.Amt)
 
+	// Regardless of failure/success/timeout, indicate that this ICA has completed
+	hostZone, found := k.GetHostZone(ctx, EvmosHostZoneChainId)
+	if !found {
+		return errorsmod.Wrapf(sdkerrors.ErrKeyNotFound, "Host zone not found: %s", EvmosHostZoneChainId)
+	}
+	for _, splitDelegation := range undelegateHostCallback.SplitDelegations {
+		if err := k.DecrementValidatorDelegationChangesInProgress(&hostZone, splitDelegation.Validator); err != nil {
+			// TODO: Revert after v14 upgrade
+			if errors.Is(err, types.ErrInvalidValidatorDelegationUpdates) {
+				k.Logger(ctx).Error(utils.LogICACallbackWithHostZone(EvmosHostZoneChainId, ICACallbackID_Undelegate,
+					"Invariant failed - delegation changes in progress fell below 0 for %s", splitDelegation.Validator))
+				continue
+			}
+			return err
+		}
+	}
+	k.SetHostZone(ctx, hostZone)
+
 	// Check for timeout (ack nil)
 	if ackResponse.Status == icacallbackstypes.AckResponseStatus_TIMEOUT {
 		k.Logger(ctx).Error("UndelegateHostCallback Timeout:", icacallbackstypes.AckResponseStatus_TIMEOUT, packet)
