@@ -27,9 +27,30 @@ service Msg {
       returns (MsgRestoreInterchainAccountResponse);
   rpc UpdateValidatorSharesExchRate(MsgUpdateValidatorSharesExchRate)
       returns (MsgUpdateValidatorSharesExchRateResponse);
+  rpc CalibrateDelegation(MsgCalibrateDelegation)
+      returns (MsgCalibrateDelegationResponse);
   rpc ClearBalance(MsgClearBalance) returns (MsgClearBalanceResponse);
   rpc UndelegateHost(MsgUndelegateHost) returns (MsgUndelegateHostResponse);
+  rpc UpdateInnerRedemptionRateBounds(MsgUpdateInnerRedemptionRateBounds)
+      returns (MsgUpdateInnerRedemptionRateBoundsResponse);
 }
+
+message MsgUpdateInnerRedemptionRateBounds {
+  string creator = 1;
+  string chain_id = 2;
+  string min_inner_redemption_rate = 3 [
+    (cosmos_proto.scalar) = "cosmos.Dec",
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
+  string max_inner_redemption_rate = 4 [
+    (cosmos_proto.scalar) = "cosmos.Dec",
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
+}
+
+message MsgUpdateInnerRedemptionRateBoundsResponse {}
 
 message MsgLiquidStake {
   string creator = 1;
@@ -152,7 +173,6 @@ message MsgUpdateValidatorSharesExchRate {
   string valoper = 3;
 }
 message MsgUpdateValidatorSharesExchRateResponse {}
-
 message MsgUndelegateHost {
   string creator = 1;
   string amount = 2 [
@@ -163,3 +183,9 @@ message MsgUndelegateHost {
 }
 message MsgUndelegateHostResponse {}
 
+message MsgCalibrateDelegation {
+  string creator = 1;
+  string chain_id = 2;
+  string valoper = 3;
+}
+message MsgCalibrateDelegationResponse {}
