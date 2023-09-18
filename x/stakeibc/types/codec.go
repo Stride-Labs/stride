@@ -24,6 +24,7 @@ func RegisterCodec(cdc *codec.LegacyAmino) {
 	cdc.RegisterConcrete(&MsgRestoreInterchainAccount{}, "stakeibc/RestoreInterchainAccount", nil)
 	cdc.RegisterConcrete(&MsgUpdateValidatorSharesExchRate{}, "stakeibc/UpdateValidatorSharesExchRate", nil)
 	cdc.RegisterConcrete(&MsgCalibrateDelegation{}, "stakeibc/CalibrateDelegation", nil)
+	cdc.RegisterConcrete(&MsgUpdateInnerRedemptionRateBounds{}, "stakeibc/UpdateInnerRedemptionRateBounds", nil)
 	// this line is used by starport scaffolding # 2
 }
 
@@ -39,7 +40,9 @@ func RegisterInterfaces(registry cdctypes.InterfaceRegistry) {
 		&MsgChangeValidatorWeight{},
 		&MsgDeleteValidator{},
 		&MsgRestoreInterchainAccount{},
+		&MsgUpdateValidatorSharesExchRate{},
 		&MsgCalibrateDelegation{},
+		&MsgUpdateInnerRedemptionRateBounds{},
 	)
 
 	registry.RegisterImplementations((*govtypes.Content)(nil),
