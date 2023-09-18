@@ -26,7 +26,7 @@ func (k msgServer) UndelegateHost(goCtx context.Context, msg *types.MsgUndelegat
 	}
 
 	// log: issuing an undelegation to Evmos
-	k.Logger(ctx).Info(fmt.Sprintf("Issuing an undelegation to Evmos"))
+	k.Logger(ctx).Info("Issuing an undelegation to Evmos")
 
 	return &types.MsgUndelegateHostResponse{}, nil
 }
