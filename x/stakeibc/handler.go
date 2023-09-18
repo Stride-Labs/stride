@@ -58,6 +58,12 @@ func NewMessageHandler(k keeper.Keeper) sdk.Handler {
 		case *types.MsgUpdateValidatorSharesExchRate:
 			res, err := msgServer.UpdateValidatorSharesExchRate(sdk.WrapSDKContext(ctx), msg)
 			return sdk.WrapServiceResult(ctx, res, err)
+		case *types.MsgUndelegateHost:
+			res, err := msgServer.UndelegateHost(sdk.WrapSDKContext(ctx), msg)
+			return sdk.WrapServiceResult(ctx, res, err)
+		case *types.MsgCalibrateDelegation:
+			res, err := msgServer.CalibrateDelegation(sdk.WrapSDKContext(ctx), msg)
+			return sdk.WrapServiceResult(ctx, res, err)
 		case *types.MsgUpdateInnerRedemptionRateBounds:
 			res, err := msgServer.UpdateInnerRedemptionRateBounds(sdk.WrapSDKContext(ctx), msg)
 			return sdk.WrapServiceResult(ctx, res, err)

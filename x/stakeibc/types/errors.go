@@ -56,5 +56,6 @@ var (
 	ErrInvalidValidatorDelegationUpdates   = errorsmod.Register(ModuleName, 1548, "Invalid validator delegation updates")
 	ErrLSMLiquidStakeDisabledForHostZone   = errorsmod.Register(ModuleName, 1549, "LSM liquid stake is disabled for host zone")
 	ErrUnableToRemoveValidator             = errorsmod.Register(ModuleName, 1550, "Unable to remove validator")
-	ErrInvalidBounds                       = errorsmod.Register(ModuleName, 1551, "Invalid safety bounds - inner bounds must be within outer bounds")
+	ErrUndelegateHostNotCallable           = errorsmod.Register(ModuleName, 1551, "Undelegate host is disabled")
+	ErrInvalidBounds                       = errorsmod.Register(ModuleName, 1552, "Invalid safety bounds - inner bounds must be within outer bounds")
 )
