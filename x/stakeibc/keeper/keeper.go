@@ -254,6 +254,33 @@ func (k Keeper) GetICATimeoutNanos(ctx sdk.Context, epochType string) (uint64, e
 
 // safety check: ensure the redemption rate is NOT below our min safety threshold && NOT above our max safety threshold on host zone
 func (k Keeper) IsRedemptionRateWithinSafetyBounds(ctx sdk.Context, zone types.HostZone) (bool, error) {
+	// Get the wide bounds
+	minSafetyThreshold, maxSafetyThreshold := k.GetOuterSafetyBounds(ctx, zone)
+
+	redemptionRate := zone.RedemptionRate
+
+	if redemptionRate.LT(minSafetyThreshold) || redemptionRate.GT(maxSafetyThreshold) {
+		errMsg := fmt.Sprintf("IsRedemptionRateWithinSafetyBounds check failed %s is outside safety bounds [%s, %s]", redemptionRate.String(), minSafetyThreshold.String(), maxSafetyThreshold.String())
+		k.Logger(ctx).Error(errMsg)
+		return false, errorsmod.Wrapf(types.ErrRedemptionRateOutsideSafetyBounds, errMsg)
+	}
+
+	// Verify the redemption rate is within the inner safety bounds
+	// The inner safety bounds should always be within the safety bounds, but
+	// the redundancy above is cheap.
+	// There is also one scenario where the outer bounds go within the inner bounds - if they're updated as part of a param change proposal.
+	minInnerSafetyThreshold, maxInnerSafetyThreshold := k.GetInnerSafetyBounds(ctx, zone)
+	if redemptionRate.LT(minInnerSafetyThreshold) || redemptionRate.GT(maxInnerSafetyThreshold) {
+		errMsg := fmt.Sprintf("IsRedemptionRateWithinSafetyBounds check failed %s is outside inner safety bounds [%s, %s]", redemptionRate.String(), minInnerSafetyThreshold.String(), maxInnerSafetyThreshold.String())
+		k.Logger(ctx).Error(errMsg)
+		return false, errorsmod.Wrapf(types.ErrRedemptionRateOutsideSafetyBounds, errMsg)
+	}
+
+	return true, nil
+}
+
+func (k Keeper) GetOuterSafetyBounds(ctx sdk.Context, zone types.HostZone) (sdk.Dec, sdk.Dec) {
+	// Fetch the wide bounds
 	minSafetyThresholdInt := k.GetParam(ctx, types.KeyDefaultMinRedemptionRateThreshold)
 	minSafetyThreshold := sdk.NewDec(int64(minSafetyThresholdInt)).Quo(sdk.NewDec(100))
 
@@ -268,12 +295,19 @@ func (k Keeper) IsRedemptionRateWithinSafetyBounds(ctx sdk.Context, zone types.H
 		maxSafetyThreshold = zone.MaxRedemptionRate
 	}
 
-	redemptionRate := zone.RedemptionRate
+	return minSafetyThreshold, maxSafetyThreshold
+}
 
-	if redemptionRate.LT(minSafetyThreshold) || redemptionRate.GT(maxSafetyThreshold) {
-		errMsg := fmt.Sprintf("IsRedemptionRateWithinSafetyBounds check failed %s is outside safety bounds [%s, %s]", redemptionRate.String(), minSafetyThreshold.String(), maxSafetyThreshold.String())
-		k.Logger(ctx).Error(errMsg)
-		return false, errorsmod.Wrapf(types.ErrRedemptionRateOutsideSafetyBounds, errMsg)
+func (k Keeper) GetInnerSafetyBounds(ctx sdk.Context, zone types.HostZone) (sdk.Dec, sdk.Dec) {
+	// Fetch the inner bounds
+	minSafetyThreshold, maxSafetyThreshold := k.GetOuterSafetyBounds(ctx, zone)
+
+	if !zone.MinInnerRedemptionRate.IsNil() && zone.MinInnerRedemptionRate.IsPositive() && zone.MinInnerRedemptionRate.GT(minSafetyThreshold) {
+		minSafetyThreshold = zone.MinInnerRedemptionRate
 	}
-	return true, nil
+	if !zone.MaxInnerRedemptionRate.IsNil() && zone.MaxInnerRedemptionRate.IsPositive() && zone.MaxInnerRedemptionRate.LT(maxSafetyThreshold) {
+		maxSafetyThreshold = zone.MaxInnerRedemptionRate
+	}
+
+	return minSafetyThreshold, maxSafetyThreshold
 }
