@@ -2,13 +2,7 @@ package keeper_test
 
 import (
 	_ "github.com/stretchr/testify/suite"
-
-	stakeibctypes "github.com/Stride-Labs/stride/v14/x/stakeibc/types"
 )
-
-type SetUndelegateHostPreventedTestCase struct {
-	validMsg stakeibctypes.MsgUndelegateHost
-}
 
 func (s *KeeperTestSuite) TestEnableStrictUnbondingCap_CapNotSet() {
 
