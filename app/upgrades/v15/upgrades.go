@@ -17,10 +17,10 @@ var (
 	EvmosInnerMinRedemptionRate = sdk.MustNewDecFromStr("1.318")
 	EvmosMaxRedemptionRate      = sdk.MustNewDecFromStr("1.500")
 
-	RedemptionRateOuterMinAdjustment = sdk.MustNewDecFromStr("0.05")
-	RedemptionRateInnerMinAdjustment = sdk.MustNewDecFromStr("0.03")
-	RedemptionRateInnerMaxAdjustment = sdk.MustNewDecFromStr("0.05")
-	RedemptionRateOuterMaxAdjustment = sdk.MustNewDecFromStr("0.10")
+	RedemptionRateOuterMinAdjustment = sdk.MustNewDecFromStr("0.50")
+	RedemptionRateInnerMinAdjustment = sdk.MustNewDecFromStr("0.50")
+	RedemptionRateInnerMaxAdjustment = sdk.MustNewDecFromStr("0.50")
+	RedemptionRateOuterMaxAdjustment = sdk.MustNewDecFromStr("0.50")
 )
 
 // CreateUpgradeHandler creates an SDK upgrade handler for v15
