@@ -92,13 +92,16 @@ func (k msgServer) RegisterHostZone(goCtx context.Context, msg *types.MsgRegiste
 		HostDenom:         msg.HostDenom,
 		TransferChannelId: msg.TransferChannelId,
 		// Start sharesToTokens rate at 1 upon registration
-		RedemptionRate:        sdk.NewDec(1),
-		LastRedemptionRate:    sdk.NewDec(1),
-		UnbondingPeriod:       msg.UnbondingPeriod,
-		DepositAddress:        depositAddress.String(),
-		MinRedemptionRate:     msg.MinRedemptionRate,
-		MaxRedemptionRate:     msg.MaxRedemptionRate,
-		LsmLiquidStakeEnabled: msg.LsmLiquidStakeEnabled,
+		RedemptionRate:     sdk.NewDec(1),
+		LastRedemptionRate: sdk.NewDec(1),
+		UnbondingPeriod:    msg.UnbondingPeriod,
+		DepositAddress:     depositAddress.String(),
+		MinRedemptionRate:  msg.MinRedemptionRate,
+		MaxRedemptionRate:  msg.MaxRedemptionRate,
+		// Default the inner bounds to the outer bounds
+		MinInnerRedemptionRate: msg.MinRedemptionRate,
+		MaxInnerRedemptionRate: msg.MaxRedemptionRate,
+		LsmLiquidStakeEnabled:  msg.LsmLiquidStakeEnabled,
 	}
 	// write the zone back to the store
 	k.SetHostZone(ctx, zone)
