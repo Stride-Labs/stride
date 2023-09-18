@@ -36,12 +36,6 @@ func (k msgServer) UpdateInnerRedemptionRateBounds(goCtx context.Context, msg *t
 		return nil, types.ErrInvalidBounds
 	}
 
-	// Confirm the max is greater than the min
-	if innerMaxSafetyThreshold.LTE(innerMinSafetyThreshold) {
-		k.Logger(ctx).Error(fmt.Sprintf("Inner max safety threshold (%s) is less than inner min safety threshold (%s)", innerMaxSafetyThreshold, innerMinSafetyThreshold))
-		return nil, types.ErrInvalidBounds
-	}
-
 	// Set the inner bounds on the host zone
 	zone.MinInnerRedemptionRate = innerMinSafetyThreshold
 	zone.MaxInnerRedemptionRate = innerMaxSafetyThreshold

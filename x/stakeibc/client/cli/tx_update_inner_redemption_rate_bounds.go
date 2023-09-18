@@ -17,23 +17,8 @@ func CmdUpdateInnerRedemptionRateBounds() *cobra.Command {
 		Args:  cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
 			argChainId := args[0]
-			minRedemptionRateStr := args[1]
-			maxRedemptionRateStr := args[2]
-
-			minInnerRedemptionRate := sdk.ZeroDec()
-			if minRedemptionRateStr != "" {
-				minInnerRedemptionRate, err = sdk.NewDecFromStr(minRedemptionRateStr)
-				if err != nil {
-					return err
-				}
-			}
-			maxInnerRedemptionRate := sdk.ZeroDec()
-			if maxRedemptionRateStr != "" {
-				maxInnerRedemptionRate, err = sdk.NewDecFromStr(maxRedemptionRateStr)
-				if err != nil {
-					return err
-				}
-			}
+			minInnerRedemptionRate := sdk.MustNewDecFromStr(args[1])
+			maxInnerRedemptionRate := sdk.MustNewDecFromStr(args[2])
 
 			clientCtx, err := client.GetClientTxContext(cmd)
 			if err != nil {
