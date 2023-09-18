@@ -5,6 +5,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/module"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 
+	icqkeeper "github.com/Stride-Labs/stride/v14/x/interchainquery/keeper"
 	stakeibckeeper "github.com/Stride-Labs/stride/v14/x/stakeibc/keeper"
 )
 
@@ -26,6 +27,7 @@ var (
 func CreateUpgradeHandler(
 	mm *module.Manager,
 	configurator module.Configurator,
+	icqKeeper icqkeeper.Keeper,
 	stakeibcKeeper stakeibckeeper.Keeper,
 ) upgradetypes.UpgradeHandler {
 	return func(ctx sdk.Context, _ upgradetypes.Plan, vm module.VersionMap) (module.VersionMap, error) {
@@ -57,6 +59,13 @@ func CreateUpgradeHandler(
 				hostZone.MaxRedemptionRate = outerMax
 
 				stakeibcKeeper.SetHostZone(ctx, hostZone)
+			}
+		}
+
+		// Clear all stale delegator shares queries
+		for _, query := range icqKeeper.AllQueries(ctx) {
+			if query.CallbackId == stakeibckeeper.ICQCallbackID_Delegation {
+				icqKeeper.DeleteQuery(ctx, query.Id)
 			}
 		}
 

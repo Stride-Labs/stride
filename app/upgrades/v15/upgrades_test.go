@@ -10,6 +10,8 @@ import (
 
 	"github.com/Stride-Labs/stride/v14/app/apptesting"
 	v15 "github.com/Stride-Labs/stride/v14/app/upgrades/v15"
+	icqtypes "github.com/Stride-Labs/stride/v14/x/interchainquery/types"
+	stakeibckeeper "github.com/Stride-Labs/stride/v14/x/stakeibc/keeper"
 	stakeibctypes "github.com/Stride-Labs/stride/v14/x/stakeibc/types"
 )
 
@@ -36,6 +38,19 @@ type UpdateRedemptionRateBounds struct {
 func (s *UpgradeTestSuite) TestUpgrade() {
 	dummyUpgradeHeight := int64(5)
 
+	// Setup the store before the ugprade
+	checkRedemptionRatesAfterUpgrade := s.SetupRedemptionRatesBeforeUpgrade()
+	checkQueriesAfterUpgrade := s.SetupQueriesBeforeUpgrade()
+
+	// Run the upgrade to set the bounds and clear pending queries
+	s.ConfirmUpgradeSucceededs("v15", dummyUpgradeHeight)
+
+	// Check the store after the upgrade
+	checkRedemptionRatesAfterUpgrade()
+	checkQueriesAfterUpgrade()
+}
+
+func (s *UpgradeTestSuite) SetupRedemptionRatesBeforeUpgrade() func() {
 	// Define test cases consisting of an initial redemption rate and expected bounds
 	testCases := []UpdateRedemptionRateBounds{
 		{
@@ -77,28 +92,54 @@ func (s *UpgradeTestSuite) TestUpgrade() {
 		ChainId: v15.EvmosChainId,
 	})
 
-	// Run the upgrade to set the bounds
-	s.ConfirmUpgradeSucceededs("v15", dummyUpgradeHeight)
+	// Return callback function to chck that bounds were set
+	return func() {
+		// Confirm the correct bounds were set
+		for i, tc := range testCases {
+			chainId := fmt.Sprintf("chain-%d", i)
 
-	// Confirm the correct bounds were set
-	for i, tc := range testCases {
-		chainId := fmt.Sprintf("chain-%d", i)
+			hostZone, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx, chainId)
+			s.Require().True(found)
 
-		hostZone, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx, chainId)
+			s.Require().Equal(tc.ExpectedMinOuterRedemptionRate, hostZone.MinRedemptionRate, "min outer")
+			s.Require().Equal(tc.ExpectedMinInnerRedemptionRate, hostZone.MinInnerRedemptionRate, "min inner")
+			s.Require().Equal(tc.ExpectedMaxInnerRedemptionRate, hostZone.MaxInnerRedemptionRate, "max inner")
+			s.Require().Equal(tc.ExpectedMaxOuterRedemptionRate, hostZone.MaxRedemptionRate, "max outer")
+		}
+
+		// Confirm evmos' custom bounds were set
+		evmosHostZone, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx, v15.EvmosChainId)
 		s.Require().True(found)
 
-		s.Require().Equal(tc.ExpectedMinOuterRedemptionRate, hostZone.MinRedemptionRate, "min outer")
-		s.Require().Equal(tc.ExpectedMinInnerRedemptionRate, hostZone.MinInnerRedemptionRate, "min inner")
-		s.Require().Equal(tc.ExpectedMaxInnerRedemptionRate, hostZone.MaxInnerRedemptionRate, "max inner")
-		s.Require().Equal(tc.ExpectedMaxOuterRedemptionRate, hostZone.MaxRedemptionRate, "max outer")
+		s.Require().Equal(v15.EvmosOuterMinRedemptionRate, evmosHostZone.MinRedemptionRate, "min outer")
+		s.Require().Equal(v15.EvmosInnerMinRedemptionRate, evmosHostZone.MinInnerRedemptionRate, "min inner")
+		s.Require().Equal(v15.EvmosMaxRedemptionRate, evmosHostZone.MaxInnerRedemptionRate, "max inner")
+		s.Require().Equal(v15.EvmosMaxRedemptionRate, evmosHostZone.MaxRedemptionRate, "max outer")
+	}
+}
+
+func (s *UpgradeTestSuite) SetupQueriesBeforeUpgrade() func() {
+	// Set pending queries of different types
+	queries := []icqtypes.Query{
+		{Id: "1", CallbackId: stakeibckeeper.ICQCallbackID_Validator},
+		{Id: "2", CallbackId: stakeibckeeper.ICQCallbackID_Delegation}, // deleted
+		{Id: "3", CallbackId: stakeibckeeper.ICQCallbackID_Delegation}, // deleted
+		{Id: "4", CallbackId: stakeibckeeper.ICQCallbackID_WithdrawalBalance},
+	}
+	expectedQueriesAfterUpgrade := []string{"1", "4"}
+
+	for _, query := range queries {
+		s.App.InterchainqueryKeeper.SetQuery(s.Ctx, query)
 	}
 
-	// Confirm evmos' custom bounds were set
-	evmosHostZone, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx, v15.EvmosChainId)
-	s.Require().True(found)
+	// Return callback function to check that queries were removed
+	return func() {
+		queryIds := []string{}
+		for _, query := range s.App.InterchainqueryKeeper.AllQueries(s.Ctx) {
+			queryIds = append(queryIds, query.Id)
+		}
 
-	s.Require().Equal(v15.EvmosOuterMinRedemptionRate, evmosHostZone.MinRedemptionRate, "min outer")
-	s.Require().Equal(v15.EvmosInnerMinRedemptionRate, evmosHostZone.MinInnerRedemptionRate, "min inner")
-	s.Require().Equal(v15.EvmosMaxRedemptionRate, evmosHostZone.MaxInnerRedemptionRate, "max inner")
-	s.Require().Equal(v15.EvmosMaxRedemptionRate, evmosHostZone.MaxRedemptionRate, "max outer")
+		s.Require().Len(queryIds, 2)
+		s.Require().ElementsMatch(queryIds, expectedQueriesAfterUpgrade)
+	}
 }
