@@ -15,7 +15,7 @@ func CmdCalibrateDelegation() *cobra.Command {
 		Short: "Broadcast message calibrate-delegation",
 		Args:  cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
-			argHostdenom := args[0]
+			argChainId := args[0]
 			argValoper := args[1]
 
 			clientCtx, err := client.GetClientTxContext(cmd)
@@ -25,7 +25,7 @@ func CmdCalibrateDelegation() *cobra.Command {
 
 			msg := types.NewMsgCalibrateDelegation(
 				clientCtx.GetFromAddress().String(),
-				argHostdenom,
+				argChainId,
 				argValoper,
 			)
 			if err := msg.ValidateBasic(); err != nil {

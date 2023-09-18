@@ -52,11 +52,9 @@ func (msg *MsgCalibrateDelegation) ValidateBasic() error {
 		return err
 	}
 
-	// basic checks on host denom
 	if len(msg.ChainId) == 0 {
 		return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "chainid is required")
 	}
-	// basic checks on host zone
 	if len(msg.Valoper) == 0 {
 		return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "valoper is required")
 	}
