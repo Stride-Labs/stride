@@ -12,6 +12,7 @@ import (
 
 	icacallbacktypes "github.com/Stride-Labs/stride/v14/x/icacallbacks/types"
 	recordtypes "github.com/Stride-Labs/stride/v14/x/records/types"
+	stakeibckeeper "github.com/Stride-Labs/stride/v14/x/stakeibc/keeper"
 	"github.com/Stride-Labs/stride/v14/x/stakeibc/types"
 )
 
@@ -181,14 +182,14 @@ func (s *KeeperTestSuite) SetupUndelegateHostCallback() UndelegateCallbackHostTe
 		Delegation:                  val2Bal,
 		DelegationChangesInProgress: 1,
 	}
-	depositAddress := types.NewHostZoneDepositAddress(HostChainId)
+	depositAddress := types.NewHostZoneDepositAddress(stakeibckeeper.EvmosHostZoneChainId)
 	zoneAccountBalance := balanceToUnstake.Add(sdkmath.NewInt(10))
 	zoneAccount := Account{
 		acc:           depositAddress,
 		stAtomBalance: sdk.NewCoin(StAtom, zoneAccountBalance), // Add a few extra tokens to make the test more robust
 	}
 	hostZone := types.HostZone{
-		ChainId:          HostChainId,
+		ChainId:          stakeibckeeper.EvmosHostZoneChainId,
 		HostDenom:        Atom,
 		IbcDenom:         IbcAtom,
 		RedemptionRate:   sdk.NewDec(1.0),
@@ -200,7 +201,7 @@ func (s *KeeperTestSuite) SetupUndelegateHostCallback() UndelegateCallbackHostTe
 
 	// Set up EpochUnbondingRecord, HostZoneUnbonding and token state
 	hostZoneUnbonding := recordtypes.HostZoneUnbonding{
-		HostZoneId:    HostChainId,
+		HostZoneId:    stakeibckeeper.EvmosHostZoneChainId,
 		Status:        recordtypes.HostZoneUnbonding_UNBONDING_QUEUE,
 		StTokenAmount: balanceToUnstake,
 	}
@@ -591,7 +592,7 @@ func (s *KeeperTestSuite) TestUndelegateCallbackHost_Successful() {
 	s.Require().NoError(err, "undelegate host callback succeeds")
 
 	// Check that total delegation has decreased on the host zone
-	hostZone, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx, HostChainId)
+	hostZone, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx, stakeibckeeper.EvmosHostZoneChainId)
 	s.Require().True(found)
 	s.Require().Equal(hostZone.TotalDelegations, initialState.totalDelegations.Sub(tc.balanceToUnstake), "total delegation has decreased on the host zone")
 
@@ -614,7 +615,7 @@ func (s *KeeperTestSuite) checkStateIfUndelegateCallbackHostFailed(tc Undelegate
 	initialState := tc.initialState
 
 	// Check that total delegation has NOT decreased on the host zone
-	hostZone, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx, HostChainId)
+	hostZone, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx, stakeibckeeper.EvmosHostZoneChainId)
 	s.Require().True(found, "host zone found")
 	s.Require().Equal(initialState.totalDelegations, hostZone.TotalDelegations, "total delegation has NOT decreased on the host zone")
 
@@ -679,8 +680,8 @@ func (s *KeeperTestSuite) TestUndelegateCallbackHost_HostNotFound() {
 	tc := s.SetupUndelegateHostCallback()
 
 	// remove the host zone from the store to trigger a host not found error
-	s.App.StakeibcKeeper.RemoveHostZone(s.Ctx, HostChainId)
+	s.App.StakeibcKeeper.RemoveHostZone(s.Ctx, stakeibckeeper.EvmosHostZoneChainId)
 
 	err := s.App.StakeibcKeeper.UndelegateHostCallback(s.Ctx, tc.validArgs.packet, tc.validArgs.ackResponse, tc.validArgs.args)
-	s.Require().EqualError(err, "Host zone not found: GAIA: key not found")
+	s.Require().EqualError(err, "Host zone not found: evmos_9001-2: key not found")
 }

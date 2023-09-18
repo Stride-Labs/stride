@@ -22,8 +22,7 @@ func (s *KeeperTestSuite) SetupTestUndelegateHost(
 	unbondAmount sdkmath.Int,
 	validators []*types.Validator,
 ) UnbondingTestCase {
-	HostChainId := UndelegateHostZoneChainId
-	delegationAccountOwner := types.FormatICAAccountOwner(HostChainId, types.ICAAccountType_DELEGATION)
+	delegationAccountOwner := types.FormatICAAccountOwner(UndelegateHostZoneChainId, types.ICAAccountType_DELEGATION)
 	delegationChannelID, delegationPortID := s.CreateICAChannel(delegationAccountOwner)
 
 	// Sanity checks:
@@ -40,7 +39,7 @@ func (s *KeeperTestSuite) SetupTestUndelegateHost(
 
 	// Store the validators on the host zone
 	hostZone := types.HostZone{
-		ChainId:              HostChainId,
+		ChainId:              UndelegateHostZoneChainId,
 		ConnectionId:         ibctesting.FirstConnectionID,
 		HostDenom:            Atom,
 		DelegationIcaAddress: "cosmos_DELEGATION",
@@ -56,7 +55,7 @@ func (s *KeeperTestSuite) SetupTestUndelegateHost(
 			EpochNumber: i,
 			HostZoneUnbondings: []*recordtypes.HostZoneUnbonding{
 				{
-					HostZoneId:        HostChainId,
+					HostZoneId:        UndelegateHostZoneChainId,
 					Status:            recordtypes.HostZoneUnbonding_UNBONDING_QUEUE,
 					NativeTokenAmount: halfUnbondAmount,
 				},
@@ -122,7 +121,7 @@ func (s *KeeperTestSuite) CheckUndelegateHostMessages(tc UnbondingTestCase, expe
 	}
 
 	// Check the delegation change in progress was incremented from each that had an unbonding
-	actualHostZone, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx, HostChainId)
+	actualHostZone, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx, UndelegateHostZoneChainId)
 	s.Require().True(found, "host zone should have been found")
 
 	for _, actualValidator := range actualHostZone.Validators {
@@ -306,11 +305,10 @@ func (s *KeeperTestSuite) TestUndelegateHost_Successful_UnbondTotalGreaterThanTo
 
 func (s *KeeperTestSuite) TestUndelegateHost_AmountTooLarge() {
 	// Call undelegateHost with an amount that is greater than the max amount, it should fail
-	const maxNumTokensUnbondableStr = "10000000000000000000000000"
-	maxNumTokensUnbondable, found := math.NewIntFromString(maxNumTokensUnbondableStr)
-	s.Require().True(found, "could not parse MaxNumTokensUnbondable")
-	err := s.App.StakeibcKeeper.UndelegateHostEvmos(s.Ctx, maxNumTokensUnbondable.Add(math.NewInt(1)))
-	s.Require().ErrorContains(err, fmt.Sprintf("total unbond amount %v is greater than MaxNumTokensUnbondable %v", maxNumTokensUnbondable.Add(math.NewInt(1)), maxNumTokensUnbondable))
+	unbondAmount, ok := math.NewIntFromString("25000000000000000000000001")
+	s.Require().True(ok, "could not parse unbondAmount")
+	err := s.App.StakeibcKeeper.UndelegateHostEvmos(s.Ctx, unbondAmount)
+	s.Require().ErrorContains(err, fmt.Sprintf("total unbond amount %v is greater than", unbondAmount))
 }
 
 func (s *KeeperTestSuite) TestUndelegateHost_ZeroUnbondAmount() {
