@@ -22,6 +22,16 @@ const (
 // The total unbond amount is input, capped at MaxNumTokensUnbondable.
 func (k Keeper) UndelegateHostEvmos(ctx sdk.Context, totalUnbondAmount math.Int) error {
 
+	// if the total unbond amount is greater than the max, exit
+	MaxNumTokensUnbondable, found := math.NewIntFromString(MaxNumTokensUnbondableStr)
+	if !found {
+		return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "unable to parse MaxNumTokensUnbondable %s", MaxNumTokensUnbondable)
+	}
+	if totalUnbondAmount.GT(MaxNumTokensUnbondable) {
+		return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "total unbond amount %v is greater than MaxNumTokensUnbondable %v",
+			totalUnbondAmount, MaxNumTokensUnbondable)
+	}
+
 	// Get the host zone
 	evmosHost, found := k.GetHostZone(ctx, EvmosHostZoneChainId)
 	if !found {
@@ -34,17 +44,6 @@ func (k Keeper) UndelegateHostEvmos(ctx sdk.Context, totalUnbondAmount math.Int)
 	// If there's nothing to unbond, return and move on to the next host zone
 	if totalUnbondAmount.IsZero() {
 		return nil
-	}
-
-	// if the total unbond amount is greater than the max, exit
-	// TODO: this overflows above ~100e18, NEED NEW TYPE
-	MaxNumTokensUnbondable, found := math.NewIntFromString(MaxNumTokensUnbondableStr)
-	if !found {
-		return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "unable to parse MaxNumTokensUnbondable %s", MaxNumTokensUnbondable)
-	}
-	if totalUnbondAmount.GT(MaxNumTokensUnbondable) {
-		return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "total unbond amount %v%s is greater than MaxNumTokensUnbondable %v%s",
-			totalUnbondAmount, evmosHost.HostDenom, MaxNumTokensUnbondable, evmosHost.HostDenom)
 	}
 
 	k.Logger(ctx).Info("Preparing MsgUndelegates from the delegation account to each validator on Evmos")
