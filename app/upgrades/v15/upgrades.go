@@ -34,6 +34,7 @@ func CreateUpgradeHandler(
 		ctx.Logger().Info("Starting upgrade v15...")
 
 		// Set host zone redemption rate bounds based on a percentage of their current rate
+		ctx.Logger().Info("Updating redemption rate bounds...")
 		for _, hostZone := range stakeibcKeeper.GetAllHostZone(ctx) {
 			if hostZone.ChainId == EvmosChainId {
 				hostZone.MinRedemptionRate = EvmosOuterMinRedemptionRate
@@ -63,6 +64,7 @@ func CreateUpgradeHandler(
 		}
 
 		// Clear all stale delegator shares queries
+		ctx.Logger().Info("Deleting stale ICQs...")
 		for _, query := range icqKeeper.AllQueries(ctx) {
 			if query.CallbackId == stakeibckeeper.ICQCallbackID_Delegation {
 				icqKeeper.DeleteQuery(ctx, query.Id)
