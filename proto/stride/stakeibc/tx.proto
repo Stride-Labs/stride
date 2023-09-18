@@ -179,7 +179,6 @@ message MsgUndelegateHost {
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
     (gogoproto.nullable) = false
   ];
-
 }
 message MsgUndelegateHostResponse {}
 
