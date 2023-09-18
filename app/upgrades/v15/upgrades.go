@@ -12,9 +12,9 @@ var (
 	UpgradeName = "v15"
 
 	EvmosChainId                = "evmos_9001-2"
-	EvmosOuterMinRedemptionRate = sdk.MustNewDecFromStr("1.340")
-	EvmosInnerMinRedemptionRate = sdk.MustNewDecFromStr("1.367")
-	EvmosMaxRedemptionRate      = sdk.MustNewDecFromStr("1.552")
+	EvmosOuterMinRedemptionRate = sdk.MustNewDecFromStr("1.290")
+	EvmosInnerMinRedemptionRate = sdk.MustNewDecFromStr("1.318")
+	EvmosMaxRedemptionRate      = sdk.MustNewDecFromStr("1.500")
 
 	RedemptionRateOuterMinAdjustment = sdk.MustNewDecFromStr("0.05")
 	RedemptionRateInnerMinAdjustment = sdk.MustNewDecFromStr("0.03")
