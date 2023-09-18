@@ -37,6 +37,7 @@ func GetTxCmd() *cobra.Command {
 	cmd.AddCommand(CmdUpdateValidatorSharesExchRate())
 	cmd.AddCommand(CmdCalibrateDelegation())
 	cmd.AddCommand(CmdClearBalance())
+	cmd.AddCommand(CmdUndelegateHost())
 	cmd.AddCommand(CmdUpdateInnerRedemptionRateBounds())
 
 	return cmd

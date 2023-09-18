@@ -20,7 +20,7 @@ import (
 )
 
 const (
-	UndelegateICABatchSize = 30
+	UndelegateICABatchSize = 32
 )
 
 type ValidatorUnbondCapacity struct {
