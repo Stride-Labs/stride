@@ -14,7 +14,7 @@ import (
 )
 
 const (
-	MaxNumTokensUnbondableStr = "10000000000000000000000000" // 10,000,000e18
+	MaxNumTokensUnbondableStr = "2500000000000000000000000" // 2,500,000e18
 	EvmosHostZoneChainId      = "evmos_9001-2"
 )
 
@@ -23,13 +23,13 @@ const (
 func (k Keeper) UndelegateHostEvmos(ctx sdk.Context, totalUnbondAmount math.Int) error {
 
 	// if the total unbond amount is greater than the max, exit
-	MaxNumTokensUnbondable, found := math.NewIntFromString(MaxNumTokensUnbondableStr)
-	if !found {
-		return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "unable to parse MaxNumTokensUnbondable %s", MaxNumTokensUnbondable)
+	maxNumTokensUnbondable, ok := math.NewIntFromString(MaxNumTokensUnbondableStr)
+	if !ok {
+		return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "unable to parse maxNumTokensUnbondable %s", maxNumTokensUnbondable)
 	}
-	if totalUnbondAmount.GT(MaxNumTokensUnbondable) {
-		return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "total unbond amount %v is greater than MaxNumTokensUnbondable %v",
-			totalUnbondAmount, MaxNumTokensUnbondable)
+	if totalUnbondAmount.GT(maxNumTokensUnbondable) {
+		return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "total unbond amount %v is greater than maxNumTokensUnbondable %v",
+			totalUnbondAmount, maxNumTokensUnbondable)
 	}
 
 	// Get the host zone

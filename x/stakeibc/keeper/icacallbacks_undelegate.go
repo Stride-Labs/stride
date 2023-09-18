@@ -295,8 +295,9 @@ func (k Keeper) UndelegateHostCallback(ctx sdk.Context, packet channeltypes.Pack
 		return err
 	}
 
-	k.Logger(ctx).Info(">>>>>>>>>>> SetUndelegateHostPrevented <<<<<<<<<<<<<<<")
+	k.Logger(ctx).Info("UndelegateHostCallback: SetUndelegateHostPrevented")
 	if err := k.SetUndelegateHostPrevented(ctx); err != nil {
+		k.Logger(ctx).Error(fmt.Sprintf("UndelegateHostCallback failed due to SetUndelegateHostPrevented | %s", err.Error()))
 		return err
 	}
 
