@@ -12,9 +12,9 @@ import (
 
 func CmdUpdateInnerRedemptionRateBounds() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "update-tight-bounds [chainid] [min-bound] [max-bound]",
-		Short: "Broadcast message update-tight-bounds",
-		Args:  cobra.ExactArgs(2),
+		Use:   "set-redemption-rate-bounds [chainid] [min-bound] [max-bound]",
+		Short: "Broadcast message set-redemption-rate-bounds",
+		Args:  cobra.ExactArgs(3),
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
 			argChainId := args[0]
 			minInnerRedemptionRate := sdk.MustNewDecFromStr(args[1])
