@@ -7,8 +7,8 @@ import (
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	"github.com/stretchr/testify/require"
 
-	"github.com/Stride-Labs/stride/v14/app/apptesting"
-	"github.com/Stride-Labs/stride/v14/x/icaoracle/types"
+	"github.com/Stride-Labs/stride/v15/app/apptesting"
+	"github.com/Stride-Labs/stride/v15/x/icaoracle/types"
 )
 
 func TestMsgRemoveOracle(t *testing.T) {

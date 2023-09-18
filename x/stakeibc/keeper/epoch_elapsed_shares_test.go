@@ -6,8 +6,8 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	epochtypes "github.com/Stride-Labs/stride/v14/x/epochs/types"
-	stakeibctypes "github.com/Stride-Labs/stride/v14/x/stakeibc/types"
+	epochtypes "github.com/Stride-Labs/stride/v15/x/epochs/types"
+	stakeibctypes "github.com/Stride-Labs/stride/v15/x/stakeibc/types"
 )
 
 // These are used to indicate that the value does not matter for the sake of the test

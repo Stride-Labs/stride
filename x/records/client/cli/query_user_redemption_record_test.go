@@ -14,10 +14,10 @@ import (
 
 	sdkmath "cosmossdk.io/math"
 
-	"github.com/Stride-Labs/stride/v14/testutil/network"
-	"github.com/Stride-Labs/stride/v14/testutil/nullify"
-	"github.com/Stride-Labs/stride/v14/x/records/client/cli"
-	"github.com/Stride-Labs/stride/v14/x/records/types"
+	"github.com/Stride-Labs/stride/v15/testutil/network"
+	"github.com/Stride-Labs/stride/v15/testutil/nullify"
+	"github.com/Stride-Labs/stride/v15/x/records/client/cli"
+	"github.com/Stride-Labs/stride/v15/x/records/types"
 )
 
 func networkWithUserRedemptionRecordObjects(t *testing.T, n int) (*network.Network, []types.UserRedemptionRecord) {

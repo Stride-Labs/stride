@@ -8,9 +8,9 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	keepertest "github.com/Stride-Labs/stride/v14/testutil/keeper"
-	"github.com/Stride-Labs/stride/v14/testutil/nullify"
-	"github.com/Stride-Labs/stride/v14/x/stakeibc/types"
+	keepertest "github.com/Stride-Labs/stride/v15/testutil/keeper"
+	"github.com/Stride-Labs/stride/v15/testutil/nullify"
+	"github.com/Stride-Labs/stride/v15/x/stakeibc/types"
 )
 
 func TestValidatorQuery(t *testing.T) {

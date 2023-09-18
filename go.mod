@@ -1,4 +1,4 @@
-module github.com/Stride-Labs/stride/v14
+module github.com/Stride-Labs/stride/v15
 
 go 1.19
 

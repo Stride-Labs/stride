@@ -3,9 +3,9 @@ package keeper
 import (
 	"fmt"
 
-	"github.com/Stride-Labs/stride/v14/utils"
-	icacallbackstypes "github.com/Stride-Labs/stride/v14/x/icacallbacks/types"
-	"github.com/Stride-Labs/stride/v14/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v15/utils"
+	icacallbackstypes "github.com/Stride-Labs/stride/v15/x/icacallbacks/types"
+	"github.com/Stride-Labs/stride/v15/x/stakeibc/types"
 
 	errorsmod "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
