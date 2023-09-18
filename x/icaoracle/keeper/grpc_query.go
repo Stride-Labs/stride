@@ -5,7 +5,7 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/Stride-Labs/stride/v14/x/icaoracle/types"
+	"github.com/Stride-Labs/stride/v15/x/icaoracle/types"
 )
 
 var _ types.QueryServer = Keeper{}

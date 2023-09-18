@@ -4,7 +4,7 @@ package stride.stakeibc;
 import "stride/stakeibc/ica_account.proto";
 import "stride/stakeibc/validator.proto";
 
-option go_package = "github.com/Stride-Labs/stride/v14/x/stakeibc/types";
+option go_package = "github.com/Stride-Labs/stride/v15/x/stakeibc/types";
 import "gogoproto/gogo.proto";
 import "cosmos_proto/cosmos.proto";
 
@@ -179,7 +179,6 @@ message MsgUndelegateHost {
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
     (gogoproto.nullable) = false
   ];
-
 }
 message MsgUndelegateHostResponse {}
 

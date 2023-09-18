@@ -6,8 +6,8 @@ import (
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/stretchr/testify/require"
 
-	"github.com/Stride-Labs/stride/v14/app/apptesting"
-	"github.com/Stride-Labs/stride/v14/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v15/app/apptesting"
+	"github.com/Stride-Labs/stride/v15/x/stakeibc/types"
 )
 
 func TestMsgRebalanceValidators_ValidateBasic(t *testing.T) {

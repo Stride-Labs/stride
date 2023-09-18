@@ -9,9 +9,9 @@ import (
 	ibctesting "github.com/cosmos/ibc-go/v7/testing"
 	_ "github.com/stretchr/testify/suite"
 
-	epochstypes "github.com/Stride-Labs/stride/v14/x/epochs/types"
-	recordtypes "github.com/Stride-Labs/stride/v14/x/records/types"
-	"github.com/Stride-Labs/stride/v14/x/stakeibc/types"
+	epochstypes "github.com/Stride-Labs/stride/v15/x/epochs/types"
+	recordtypes "github.com/Stride-Labs/stride/v15/x/records/types"
+	"github.com/Stride-Labs/stride/v15/x/stakeibc/types"
 )
 
 const UndelegateHostZoneChainId = "evmos_9001-2" // the relevant zone for this test
