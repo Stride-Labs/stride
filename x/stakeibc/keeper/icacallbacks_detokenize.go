@@ -1,6 +1,8 @@
 package keeper
 
 import (
+	"fmt"
+
 	errorsmod "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/gogoproto/proto"
@@ -61,8 +63,21 @@ func (k Keeper) DetokenizeCallback(ctx sdk.Context, packet channeltypes.Packet, 
 	// If the ICA succeeded, remove the token deposit
 	k.RecordsKeeper.RemoveLSMTokenDeposit(ctx, deposit.ChainId, deposit.Denom)
 
+	// Determine the actual number of tokens that were turned to native stake
+	// (this can be slightly different than the amount initiated in the redeem tokens tx
+	// due a precision error in the SDK)
+	if len(ackResponse.MsgResponses) != 1 {
+		return fmt.Errorf("Invalid number of messages (%d) in detokenize response: %v",
+			len(ackResponse.MsgResponses), ackResponse.MsgResponses)
+	}
+	var detokenizeResponse types.MsgRedeemTokensForSharesResponse
+	if err := proto.Unmarshal(ackResponse.MsgResponses[0], &detokenizeResponse); err != nil {
+		return err
+	}
+	stakeAmount := detokenizeResponse.Amount.Amount
+
 	// Update delegation on the host zone and validator
-	err := k.AddDelegationToValidator(ctx, &hostZone, deposit.ValidatorAddress, deposit.Amount, ICACallbackID_Detokenize)
+	err := k.AddDelegationToValidator(ctx, &hostZone, deposit.ValidatorAddress, stakeAmount, ICACallbackID_Detokenize)
 	if err != nil {
 		return err
 	}
