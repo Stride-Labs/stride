@@ -12,8 +12,9 @@ var (
 	UpgradeName = "v15"
 
 	EvmosChainId                = "evmos_9001-2"
-	EvmosOuterMinRedemptionRate = sdk.MustNewDecFromStr("1.34")
-	EvmosInnerMinRedemptionRate = sdk.MustNewDecFromStr("1.36")
+	EvmosOuterMinRedemptionRate = sdk.MustNewDecFromStr("1.340")
+	EvmosInnerMinRedemptionRate = sdk.MustNewDecFromStr("1.367")
+	EvmosMaxRedemptionRate      = sdk.MustNewDecFromStr("1.552")
 
 	RedemptionRateOuterMinAdjustment = sdk.MustNewDecFromStr("0.05")
 	RedemptionRateInnerMinAdjustment = sdk.MustNewDecFromStr("0.03")
@@ -35,7 +36,8 @@ func CreateUpgradeHandler(
 			if hostZone.ChainId == EvmosChainId {
 				hostZone.MinRedemptionRate = EvmosOuterMinRedemptionRate
 				hostZone.MinInnerRedemptionRate = EvmosInnerMinRedemptionRate
-				hostZone.MaxInnerRedemptionRate = hostZone.MaxRedemptionRate
+				hostZone.MaxInnerRedemptionRate = EvmosMaxRedemptionRate
+				hostZone.MaxRedemptionRate = EvmosMaxRedemptionRate
 
 				stakeibcKeeper.SetHostZone(ctx, hostZone)
 			} else {

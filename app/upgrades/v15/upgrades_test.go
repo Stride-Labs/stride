@@ -73,10 +73,8 @@ func (s *UpgradeTestSuite) TestUpgrade() {
 	}
 
 	// Create an evmos host zone
-	initialEvmosMaxOuter := sdk.MustNewDecFromStr("1.50")
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, stakeibctypes.HostZone{
-		ChainId:           v15.EvmosChainId,
-		MaxRedemptionRate: initialEvmosMaxOuter,
+		ChainId: v15.EvmosChainId,
 	})
 
 	// Run the upgrade to set the bounds
@@ -91,7 +89,7 @@ func (s *UpgradeTestSuite) TestUpgrade() {
 
 		s.Require().Equal(tc.ExpectedMinOuterRedemptionRate, hostZone.MinRedemptionRate, "min outer")
 		s.Require().Equal(tc.ExpectedMinInnerRedemptionRate, hostZone.MinInnerRedemptionRate, "min inner")
-		s.Require().Equal(tc.ExpectedMaxInnerRedemptionRate, hostZone.MinInnerRedemptionRate, "max inner")
+		s.Require().Equal(tc.ExpectedMaxInnerRedemptionRate, hostZone.MaxInnerRedemptionRate, "max inner")
 		s.Require().Equal(tc.ExpectedMaxOuterRedemptionRate, hostZone.MaxRedemptionRate, "max outer")
 	}
 
@@ -101,6 +99,6 @@ func (s *UpgradeTestSuite) TestUpgrade() {
 
 	s.Require().Equal(v15.EvmosOuterMinRedemptionRate, evmosHostZone.MinRedemptionRate, "min outer")
 	s.Require().Equal(v15.EvmosInnerMinRedemptionRate, evmosHostZone.MinInnerRedemptionRate, "min inner")
-	s.Require().Equal(initialEvmosMaxOuter, evmosHostZone.MinInnerRedemptionRate, "max inner")
-	s.Require().Equal(initialEvmosMaxOuter, evmosHostZone.MaxRedemptionRate, "max outer")
+	s.Require().Equal(v15.EvmosMaxRedemptionRate, evmosHostZone.MaxInnerRedemptionRate, "max inner")
+	s.Require().Equal(v15.EvmosMaxRedemptionRate, evmosHostZone.MaxRedemptionRate, "max outer")
 }
