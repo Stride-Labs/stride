@@ -11,6 +11,9 @@ import (
 	"github.com/Stride-Labs/stride/v15/x/stakeibc/types"
 )
 
+// CalibrationThreshold is the max amount of tokens by which a calibration can alter internal record keeping of delegations
+var CalibrationThreshold = sdk.NewInt(1000)
+
 // DelegatorSharesCallback is a callback handler for UpdateValidatorSharesExchRate queries.
 //
 // In an attempt to get the ICA's delegation amount on a given validator, we have to query:
@@ -67,6 +70,12 @@ func CalibrateDelegationCallback(k Keeper, ctx sdk.Context, args []byte, query i
 	}
 
 	delegationChange := validator.Delegation.Sub(delegatedTokens)
+	// if the delegation change is more than the calibration threshold constant, log and throw an error
+	if delegationChange.Abs().GTE(CalibrationThreshold) {
+		k.Logger(ctx).Info(utils.LogICQCallbackWithHostZone(chainId, ICQCallbackID_Calibrate,
+			"Delegation change is GT CalibrationThreshold, failing calibration callback"))
+		return errorsmod.Wrapf(types.ErrCalibrationThresholdExceeded, "calibration threshold %v exceeded, attempted to calibrate by %v ", CalibrationThreshold, delegationChange)
+	}
 	validator.Delegation = validator.Delegation.Sub(delegationChange)
 	hostZone.TotalDelegations = hostZone.TotalDelegations.Sub(delegationChange)
 
