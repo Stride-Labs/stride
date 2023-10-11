@@ -30,7 +30,6 @@ service Msg {
   rpc CalibrateDelegation(MsgCalibrateDelegation)
       returns (MsgCalibrateDelegationResponse);
   rpc ClearBalance(MsgClearBalance) returns (MsgClearBalanceResponse);
-  rpc UndelegateHost(MsgUndelegateHost) returns (MsgUndelegateHostResponse);
   rpc UpdateInnerRedemptionRateBounds(MsgUpdateInnerRedemptionRateBounds)
       returns (MsgUpdateInnerRedemptionRateBoundsResponse);
 }
@@ -173,14 +172,6 @@ message MsgUpdateValidatorSharesExchRate {
   string valoper = 3;
 }
 message MsgUpdateValidatorSharesExchRateResponse {}
-message MsgUndelegateHost {
-  string creator = 1;
-  string amount = 2 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
-    (gogoproto.nullable) = false
-  ];
-}
-message MsgUndelegateHostResponse {}
 
 message MsgCalibrateDelegation {
   string creator = 1;

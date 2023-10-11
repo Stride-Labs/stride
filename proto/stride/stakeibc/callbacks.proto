@@ -36,20 +36,6 @@ message ReinvestCallback {
   string host_zone_id = 3;
 }
 
-message UndelegateCallback {
-  string host_zone_id = 1;
-  repeated SplitDelegation split_delegations = 2;
-  repeated uint64 epoch_unbonding_record_ids = 3;
-}
-
-message UndelegateHostCallback {
-  string amt = 1 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
-    (gogoproto.nullable) = false
-  ];
-  repeated SplitDelegation split_delegations = 2;
-}
-
 message RedemptionCallback {
   string host_zone_id = 1;
   repeated uint64 epoch_unbonding_record_ids = 2;
