@@ -11,6 +11,7 @@ const (
 	ICQCallbackID_FeeBalance        = "feebalance"
 	ICQCallbackID_Delegation        = "delegation"
 	ICQCallbackID_Validator         = "validator"
+	ICQCallbackID_Calibrate         = "calibrate"
 )
 
 // ICQCallbacks wrapper struct for stakeibc keeper
@@ -47,4 +48,5 @@ func (c ICQCallbacks) RegisterICQCallbacks() icqtypes.QueryCallbacks {
 		AddICQCallback(ICQCallbackID_FeeBalance, ICQCallback(FeeBalanceCallback)).
 		AddICQCallback(ICQCallbackID_Delegation, ICQCallback(DelegatorSharesCallback)).
 		AddICQCallback(ICQCallbackID_Validator, ICQCallback(ValidatorSharesToTokensRateCallback)).
+		AddICQCallback(ICQCallbackID_Calibrate, ICQCallback(CalibrateDelegationCallback))
 }
