@@ -46,5 +46,5 @@ func (c ICQCallbacks) RegisterICQCallbacks() icqtypes.QueryCallbacks {
 		AddICQCallback(ICQCallbackID_WithdrawalBalance, ICQCallback(WithdrawalBalanceCallback)).
 		AddICQCallback(ICQCallbackID_FeeBalance, ICQCallback(FeeBalanceCallback)).
 		AddICQCallback(ICQCallbackID_Delegation, ICQCallback(DelegatorSharesCallback)).
-		AddICQCallback(ICQCallbackID_Validator, ICQCallback(ValidatorSharesToTokensRateCallback)).
+		AddICQCallback(ICQCallbackID_Validator, ICQCallback(ValidatorSharesToTokensRateCallback))
 }
