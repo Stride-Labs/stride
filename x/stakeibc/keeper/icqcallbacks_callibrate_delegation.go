@@ -54,36 +54,6 @@ func CalibrateDelegationCallback(k Keeper, ctx sdk.Context, args []byte, query i
 		return errorsmod.Wrapf(types.ErrValidatorNotFound, "no registered validator for address (%s)", queriedDelegation.ValidatorAddress)
 	}
 
-	// Check if the ICQ overlapped a delegation, undelegation, or detokenization ICA
-	// that would have modfied the number of delegated tokens
-	prevInternalDelegation := callbackData.InitialValidatorDelegation
-	currInternalDelegation := validator.Delegation
-	icaOverlappedIcq, err := k.CheckDelegationChangedDuringQuery(ctx, validator, prevInternalDelegation, currInternalDelegation)
-	if err != nil {
-		return err
-	}
-
-	// If the ICA/ICQ overlapped, submit a new query
-	if icaOverlappedIcq {
-		// Store the updated validator delegation amount
-		callbackDataBz, err := proto.Marshal(&types.DelegatorSharesQueryCallback{
-			InitialValidatorDelegation: currInternalDelegation,
-		})
-		if err != nil {
-			return errorsmod.Wrapf(err, "unable to marshal delegator shares callback data")
-		}
-		query.CallbackData = callbackDataBz
-
-		if err := k.InterchainQueryKeeper.RetryICQRequest(ctx, query); err != nil {
-			return errorsmod.Wrapf(err, "unable to resubmit delegator shares query")
-		}
-		return nil
-	}
-
-	// If there was no ICA/ICQ overlap, update the validator to indicate that the query
-	//  is no longer in progress (which will unblock LSM liquid stakes to that validator)
-	validator.SlashQueryInProgress = false
-
 	// Calculate the number of tokens delegated (using the internal sharesToTokensRate)
 	// note: truncateInt per https://github.com/cosmos/cosmos-sdk/blob/cb31043d35bad90c4daa923bb109f38fd092feda/x/staking/types/validator.go#L431
 	delegatedTokens := queriedDelegation.Shares.Mul(validator.SharesToTokensRate).TruncateInt()

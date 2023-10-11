@@ -526,11 +526,6 @@ func (k Keeper) SubmitCalibrationICQ(ctx sdk.Context, hostZone types.HostZone, v
 		return errorsmod.Wrapf(err, "unable to marshal delegator shares callback data")
 	}
 
-	// Update the validator to indicate that the slash query is in progress
-	validator.SlashQueryInProgress = true
-	hostZone.Validators[valIndex] = &validator
-	k.SetHostZone(ctx, hostZone)
-
 	// Submit delegator shares ICQ
 	query := icqtypes.Query{
 		ChainId:         hostZone.ChainId,
