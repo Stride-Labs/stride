@@ -375,3 +375,24 @@ func (s *KeeperTestSuite) TestDelegatorSharesCallback_PrecisionError() {
 	expectedValDelegation := tc.hostZone.Validators[tc.valIndexQueried].Delegation.Add(precisionErrorTokens)
 	s.Require().Equal(expectedValDelegation.Int64(), validator.Delegation.Int64(), "validator delegation amount")
 }
+
+func (s *KeeperTestSuite) TestCalibrateDelegationCallback_Successful() {
+	tc := s.SetupDelegatorSharesICQCallback()
+
+	// Callback
+	err := keeper.CalibrateDelegationCallback(s.App.StakeibcKeeper, s.Ctx, tc.validArgs.callbackArgs, tc.validArgs.query)
+	s.Require().NoError(err, "calibrate delegation callback error")
+
+	// Confirm the staked balance was decreased on the host
+	hostZone, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx, HostChainId)
+	s.Require().True(found, "host zone found")
+	s.Require().Equal(tc.expectedSlashAmount.Int64(), tc.hostZone.TotalDelegations.Sub(hostZone.TotalDelegations).Int64(), "staked bal slash")
+
+	// Confirm the validator's weight and delegation amount were not reduced
+	validator := hostZone.Validators[tc.valIndexQueried]
+	s.Require().NotEqual(tc.expectedWeight, validator.Weight, "validator weight")
+	s.Require().Equal(tc.expectedDelegationAmount.Int64(), validator.Delegation.Int64(), "validator delegation amount")
+
+	// Confirm the validator query is still in progress (calibration callback does not set it false)
+	s.Require().True(validator.SlashQueryInProgress, "slash query in progress")
+}
