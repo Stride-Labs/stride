@@ -13,8 +13,8 @@ import (
 	errorsmod "cosmossdk.io/errors"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
-	"github.com/Stride-Labs/stride/v15/utils"
-	"github.com/Stride-Labs/stride/v15/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v16/utils"
+	"github.com/Stride-Labs/stride/v16/x/stakeibc/types"
 )
 
 // SetHostZone set a specific hostZone in the store
