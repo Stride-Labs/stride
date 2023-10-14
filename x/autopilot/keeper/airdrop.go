@@ -11,10 +11,10 @@ import (
 	transfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
 	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
 
-	"github.com/Stride-Labs/stride/v15/utils"
-	"github.com/Stride-Labs/stride/v15/x/autopilot/types"
-	claimtypes "github.com/Stride-Labs/stride/v15/x/claim/types"
-	stakeibctypes "github.com/Stride-Labs/stride/v15/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v16/utils"
+	"github.com/Stride-Labs/stride/v16/x/autopilot/types"
+	claimtypes "github.com/Stride-Labs/stride/v16/x/claim/types"
+	stakeibctypes "github.com/Stride-Labs/stride/v16/x/stakeibc/types"
 )
 
 func (k Keeper) TryUpdateAirdropClaim(
