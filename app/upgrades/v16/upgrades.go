@@ -23,7 +23,7 @@ func CreateUpgradeHandler(
 	ratelimitKeeper ratelimitkeeper.Keeper,
 ) upgradetypes.UpgradeHandler {
 	return func(ctx sdk.Context, _ upgradetypes.Plan, vm module.VersionMap) (module.VersionMap, error) {
-		ctx.Logger().Info("Starting upgrade v15...")
+		ctx.Logger().Info("Starting upgrade v16...")
 
 		// unhalt Cosmos Hub host zone
 		ctx.Logger().Info("Unhalting Cosmos Hub...")

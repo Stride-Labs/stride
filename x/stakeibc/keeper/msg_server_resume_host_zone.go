@@ -28,6 +28,10 @@ func (k msgServer) ResumeHostZone(goCtx context.Context, msg *types.MsgResumeHos
 		return nil, errorsmod.Wrapf(types.ErrHostZoneNotHalted, errMsg)
 	}
 
+	// remove from blacklist
+	stDenom := types.StAssetDenomFromHostZoneDenom(hostZone.HostDenom)
+	k.RatelimitKeeper.RemoveDenomFromBlacklist(ctx, stDenom)
+
 	// Resume zone
 	hostZone.Halted = false
 	k.SetHostZone(ctx, hostZone)
