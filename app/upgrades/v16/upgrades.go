@@ -1,8 +1,6 @@
 package v16
 
 import (
-	"fmt"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
@@ -15,6 +13,7 @@ var (
 	UpgradeName = "v16"
 
 	CosmosHubChainId = "cosmoshub-4"
+	CosmosHubStToken = "stuatom"
 )
 
 // CreateUpgradeHandler creates an SDK upgrade handler for v15
@@ -37,13 +36,9 @@ func CreateUpgradeHandler(
 			stakeibcKeeper.SetHostZone(ctx, hostZone)
 		}
 
-		// remove all assets from the blacklist
+		// remove stuatom from rate limits
 		ctx.Logger().Info("Removing stuatom as a blacklisted asset...")
-		allBlacklistDenoms := ratelimitKeeper.GetAllBlacklistedDenoms(ctx)
-		for _, denom := range allBlacklistDenoms {
-			ctx.Logger().Info(fmt.Sprintf("Removing denom from blacklist: %s", denom))
-			ratelimitKeeper.RemoveDenomFromBlacklist(ctx, denom)
-		}
+		ratelimitKeeper.RemoveDenomFromBlacklist(ctx, CosmosHubStToken)
 
 		return mm.RunMigrations(ctx, configurator, vm)
 	}
