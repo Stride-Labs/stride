@@ -42,6 +42,7 @@ func (k msgServer) UpdateInnerRedemptionRateBounds(goCtx context.Context, msg *t
 	// Set the inner bounds on the host zone
 	zone.MinInnerRedemptionRate = innerMinSafetyThreshold
 	zone.MaxInnerRedemptionRate = innerMaxSafetyThreshold
+
 	k.SetHostZone(ctx, zone)
 
 	return &types.MsgUpdateInnerRedemptionRateBoundsResponse{}, nil

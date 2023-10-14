@@ -39,6 +39,7 @@ func GetTxCmd() *cobra.Command {
 	cmd.AddCommand(CmdClearBalance())
 	cmd.AddCommand(CmdUndelegateHost())
 	cmd.AddCommand(CmdUpdateInnerRedemptionRateBounds())
+	cmd.AddCommand(CmdResumeHostZone())
 
 	return cmd
 }

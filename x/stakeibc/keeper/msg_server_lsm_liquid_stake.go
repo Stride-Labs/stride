@@ -67,6 +67,10 @@ func (k Keeper) StartLSMLiquidStake(ctx sdk.Context, msg types.MsgLSMLiquidStake
 	}
 	hostZone := lsmLiquidStake.HostZone
 
+	if hostZone.Halted {
+		return types.LSMLiquidStake{}, errorsmod.Wrapf(types.ErrHaltedHostZone, "host zone %s is halted", hostZone.ChainId)
+	}
+
 	// Check if we already have tokens with this denom in records
 	_, found := k.RecordsKeeper.GetLSMTokenDeposit(ctx, hostZone.ChainId, lsmLiquidStake.Deposit.Denom)
 	if found {

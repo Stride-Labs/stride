@@ -33,6 +33,7 @@ service Msg {
   rpc UndelegateHost(MsgUndelegateHost) returns (MsgUndelegateHostResponse);
   rpc UpdateInnerRedemptionRateBounds(MsgUpdateInnerRedemptionRateBounds)
       returns (MsgUpdateInnerRedemptionRateBoundsResponse);
+  rpc ResumeHostZone(MsgResumeHostZone) returns (MsgResumeHostZoneResponse);
 }
 
 message MsgUpdateInnerRedemptionRateBounds {
@@ -188,3 +189,9 @@ message MsgCalibrateDelegation {
   string valoper = 3;
 }
 message MsgCalibrateDelegationResponse {}
+
+message MsgResumeHostZone {
+  string creator = 1;
+  string chain_id = 2;
+}
+message MsgResumeHostZoneResponse {}

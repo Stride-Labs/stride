@@ -1,3 +1,4 @@
+// #nosec G101
 package types
 
 import (
@@ -7,10 +8,8 @@ import (
 )
 
 // staking message types
-//
-// #nosec G101
 const (
-	TypeMsgRedeemTokensForShares = "redeem_tokens_for_shares"
+	TypeMsgRedeemTokensForShares = "redeem_tokens_for_shares" // #nosec G101
 )
 
 var (
