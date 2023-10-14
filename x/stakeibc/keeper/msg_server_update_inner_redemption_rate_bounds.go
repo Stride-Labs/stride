@@ -43,11 +43,6 @@ func (k msgServer) UpdateInnerRedemptionRateBounds(goCtx context.Context, msg *t
 	zone.MinInnerRedemptionRate = innerMinSafetyThreshold
 	zone.MaxInnerRedemptionRate = innerMaxSafetyThreshold
 
-	// if the redemption rate is within the bounds, unhalt the host zone
-	if zone.RedemptionRate.GTE(innerMinSafetyThreshold) && zone.RedemptionRate.LTE(innerMaxSafetyThreshold) {
-		zone.Halted = false
-	}
-
 	k.SetHostZone(ctx, zone)
 
 	return &types.MsgUpdateInnerRedemptionRateBoundsResponse{}, nil
