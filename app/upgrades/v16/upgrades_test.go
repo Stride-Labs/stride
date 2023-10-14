@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"testing"
 
+	sdk "github.com/cosmos/cosmos-sdk/types"
+
 	"github.com/stretchr/testify/suite"
 
 	"github.com/Stride-Labs/stride/v15/app/apptesting"
@@ -46,15 +48,25 @@ func (s *UpgradeTestSuite) SetupHostZonesBeforeUpgrade() func() {
 		chainId := fmt.Sprintf("chain-%d", i)
 
 		hostZone := stakeibctypes.HostZone{
-			ChainId: chainId,
-			Halted:  false,
+			ChainId:                chainId,
+			Halted:                 false,
+			RedemptionRate:         sdk.MustNewDecFromStr("1.0"),
+			MinInnerRedemptionRate: sdk.MustNewDecFromStr("0.95"),
+			MinRedemptionRate:      sdk.MustNewDecFromStr("0.97"),
+			MaxInnerRedemptionRate: sdk.MustNewDecFromStr("1.05"),
+			MaxRedemptionRate:      sdk.MustNewDecFromStr("1.10"),
 		}
 		s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
 	}
 	// create Cosmos Hub Host Zone
 	hostZone := stakeibctypes.HostZone{
-		ChainId: CosmosHubChainIdTest,
-		Halted:  true,
+		ChainId:                CosmosHubChainIdTest,
+		Halted:                 true,
+		RedemptionRate:         sdk.MustNewDecFromStr("1.0"),
+		MinInnerRedemptionRate: sdk.MustNewDecFromStr("0.95"),
+		MinRedemptionRate:      sdk.MustNewDecFromStr("0.97"),
+		MaxInnerRedemptionRate: sdk.MustNewDecFromStr("1.05"),
+		MaxRedemptionRate:      sdk.MustNewDecFromStr("1.10"),
 	}
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
 
@@ -63,7 +75,7 @@ func (s *UpgradeTestSuite) SetupHostZonesBeforeUpgrade() func() {
 		hostZones := s.App.StakeibcKeeper.GetAllHostZone(s.Ctx)
 
 		for _, hostZone := range hostZones {
-			s.Require().False(hostZone.Halted, "host zone should not be halted")
+			s.Require().False(hostZone.Halted, fmt.Sprintf("host zone %s should not be halted: %v", hostZone.ChainId, hostZone))
 		}
 		// Confirm Cosmos Hub host zone is not unhalted
 		cosmosHubHostZone, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx, CosmosHubChainIdTest)
