@@ -7,6 +7,7 @@ import (
 
 	ratelimitkeeper "github.com/Stride-Labs/stride/v15/x/ratelimit/keeper"
 	stakeibckeeper "github.com/Stride-Labs/stride/v15/x/stakeibc/keeper"
+	stakeibctypes "github.com/Stride-Labs/stride/v15/x/stakeibc/types"
 )
 
 var (
@@ -30,11 +31,11 @@ func CreateUpgradeHandler(
 		ctx.Logger().Info("Unhalting Cosmos Hub...")
 		hostZone, found := stakeibcKeeper.GetHostZone(ctx, CosmosHubChainId)
 		if !found {
-			ctx.Logger().Error("Cosmos Hub host zone not found!")
-		} else {
-			hostZone.Halted = false
-			stakeibcKeeper.SetHostZone(ctx, hostZone)
+			return vm, stakeibctypes.ErrHostZoneNotFound.Wrap(CosmosHubChainId)
 		}
+
+		hostZone.Halted = false
+		stakeibcKeeper.SetHostZone(ctx, hostZone)
 
 		// remove stuatom from rate limits
 		ctx.Logger().Info("Removing stuatom as a blacklisted asset...")
