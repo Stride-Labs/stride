@@ -28,6 +28,8 @@ message HostZone {
       [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
   string redemption_ica_address = 25
       [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+  string reward_trade_ica_address = 32
+      [ (cosmos_proto.scalar) = "cosmos.AddressString" ];      
   string total_delegations = 13 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
     (gogoproto.nullable) = false
