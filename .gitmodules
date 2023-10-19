@@ -29,6 +29,10 @@
 	# Commit: ec337e0357ae6b6727ad9092ac0ce3667df91319
 	path = deps/evmos
 	url = https://github.com/evmos/evmos
+[submodule "deps/dydx"]
+	# Commit: protocol/v0.4.1
+	path = deps/dydx
+	url = https://github.com/dydxprotocol/v4-chain.git
 # bats
 [submodule "dockernet/tests/bats/bats-core"]
 	path = dockernet/tests/bats/bats-core
@@ -39,6 +43,3 @@
 [submodule "dockernet/tests/bats/bats-support"]
 	path = dockernet/tests/bats/bats-support
 	url = https://github.com/bats-core/bats-support.git
-[submodule "deps/dydx"]
-	path = deps/dydx
-	url = https://github.com/dydxprotocol/v4-chain.git
