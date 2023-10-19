@@ -16,7 +16,8 @@ TX_LOGS=$DOCKERNET_HOME/logs/tx.log
 KEYS_LOGS=$DOCKERNET_HOME/logs/keys.log
 
 # List of hosts enabled 
-HOST_CHAINS=() 
+# TODO [DYDX]: Revert to main hosts
+HOST_CHAINS=(DYDX) 
 
 # If no host zones are specified above:
 #  `start-docker` defaults to just GAIA if HOST_CHAINS is empty
@@ -42,12 +43,14 @@ OSMO_DENOM="uosmo"
 STARS_DENOM="ustars"
 WALK_DENOM="uwalk"
 EVMOS_DENOM="aevmos"
+DYDX_DENOM="udydx"
 STATOM_DENOM="stuatom"
 STJUNO_DENOM="stujuno"
 STOSMO_DENOM="stuosmo"
 STSTARS_DENOM="stustars"
 STWALK_DENOM="stuwalk"
 STEVMOS_DENOM="staevmos"
+STDYDX_DENOM="studydx"
 
 IBC_STRD_DENOM='ibc/FF6C2E86490C1C4FBBD24F55032831D2415B9D7882F85C3CC9C2401D79362BEA'  
 
@@ -80,6 +83,11 @@ IBC_HOST_CHANNEL_0_DENOM='ibc/82DBA832457B89E1A344DA51761D92305F7581B7EA6C18D850
 IBC_HOST_CHANNEL_1_DENOM='ibc/FB7E2520A1ED6890E1632904A4ACA1B3D2883388F8E2B88F2D6A54AA15E4B49E'
 IBC_HOST_CHANNEL_2_DENOM='ibc/D664DC1D38648FC4C697D9E9CF2D26369318DFE668B31F81809383A8A88CFCF4'
 IBC_HOST_CHANNEL_3_DENOM='ibc/FD7AA7EB2C1D5D97A8693CCD71FFE3F5AFF12DB6756066E11E69873DE91A33EA'
+
+IBC_DYDX_CHANNEL_0_DENOM='ibc/815D14313C85CADBDFCEB13C8028DB853BE16CF6600D6B3A90ECFB7DCF1FAAF9'
+IBC_DYDX_CHANNEL_1_DENOM='ibc/78B7A771A2ECBF5D10DC6AB35568A7AC4161DB21B3A848DA470655358A6DD854'
+IBC_DYDX_CHANNEL_2_DENOM='ibc/748465E0D883217048DB25F4C3825D03F682A06FE292E21072BF678E249DAC18'
+IBC_DYDX_CHANNEL_3_DENOM='ibc/6301148031C0AC9A392C2DDB1B2D1F11B3B9D0A3ECF20C6B5122685D9E4CC631'
 
 # COIN TYPES
 # Coin types can be found at https://github.com/satoshilabs/slips/blob/master/slip-0044.md
@@ -241,6 +249,22 @@ EVMOS_MAIN_CMD="$EVMOS_BINARY --home $DOCKERNET_HOME/state/${EVMOS_NODE_PREFIX}1
 EVMOS_RECEIVER_ADDRESS='evmos123z469cfejeusvk87ufrs5520wmdxmmlc7qzuw'
 EVMOS_MICRO_DENOM_UNITS="000000000000000000000000"
 
+# DYDX
+DYDX_CHAIN_ID=DYDX
+DYDX_NODE_PREFIX=dydx
+DYDX_NUM_NODES=1
+DYDX_BINARY="$DOCKERNET_HOME/../build/dydxprotocold"
+DYDX_VAL_PREFIX=val
+DYDX_ADDRESS_PREFIX=dydx
+DYDX_REV_ACCT=rev
+DYDX_DENOM=$DYDX_DENOM
+DYDX_RPC_PORT=25957
+DYDX_MAIN_CMD="$DYDX_BINARY --home $DOCKERNET_HOME/state/${DYDX_NODE_PREFIX}1"
+DYDX_RECEIVER_ADDRESS='dydx1q9caajs6wrfu2yhytvkqd2csxycx6revdcme9y'
+# The micro denom is actually the same as default cosmos chains but there's a 
+# minimum stake amount so this effectively gets the validator over the minimum
+DYDX_MICRO_DENOM_UNITS="000000000000000" 
+
 # RELAYER
 RELAYER_GAIA_EXEC="$DOCKER_COMPOSE run --rm relayer-gaia"
 RELAYER_GAIA_ICS_EXEC="$DOCKER_COMPOSE run --rm relayer-gaia-ics"
@@ -249,6 +273,7 @@ RELAYER_OSMO_EXEC="$DOCKER_COMPOSE run --rm relayer-osmo"
 RELAYER_STARS_EXEC="$DOCKER_COMPOSE run --rm relayer-stars"
 RELAYER_HOST_EXEC="$DOCKER_COMPOSE run --rm relayer-host"
 RELAYER_EVMOS_EXEC="$DOCKER_COMPOSE run --rm relayer-evmos"
+RELAYER_DYDX_EXEC="$DOCKER_COMPOSE run --rm relayer-dydx"
 
 RELAYER_STRIDE_ACCT=rly1
 RELAYER_GAIA_ACCT=rly2
@@ -257,8 +282,9 @@ RELAYER_OSMO_ACCT=rly4
 RELAYER_STARS_ACCT=rly5
 RELAYER_HOST_ACCT=rly6
 RELAYER_EVMOS_ACCT=rly7
-RELAYER_STRIDE_ICS_ACCT=rly11
-RELAYER_GAIA_ICS_ACCT=rly12
+RELAYER_STRIDE_ICS_ACCT=rly8
+RELAYER_GAIA_ICS_ACCT=rly9
+RELAYER_DYDX_ACCT=rly10
 RELAYER_ACCTS=(
   $RELAYER_GAIA_ACCT 
   $RELAYER_JUNO_ACCT 
@@ -267,6 +293,7 @@ RELAYER_ACCTS=(
   $RELAYER_HOST_ACCT 
   $RELAYER_EVMOS_ACCT
   $RELAYER_GAIA_ICS_ACCT
+  $RELAYER_DYDX_ACCT
 )
 
 RELAYER_GAIA_MNEMONIC="fiction perfect rapid steel bundle giant blade grain eagle wing cannon fever must humble dance kitchen lazy episode museum faith off notable rate flavor"
@@ -276,6 +303,7 @@ RELAYER_STARS_MNEMONIC="deposit dawn erosion talent old broom flip recipe pill h
 RELAYER_HOST_MNEMONIC="renew umbrella teach spoon have razor knee sock divert inner nut between immense library inhale dog truly return run remain dune virus diamond clinic"
 RELAYER_GAIA_ICS_MNEMONIC="size chimney clog job robot thunder gaze vapor economy smooth kit denial alter merit produce front force eager outside mansion believe fan tonight detect"
 RELAYER_EVMOS_MNEMONIC="science depart where tell bus ski laptop follow child bronze rebel recall brief plug razor ship degree labor human series today embody fury harvest"
+RELAYER_DYDX_MNEMONIC="mother depth nature rapid draw west afraid depend allow fee siren useful catalog sun biology cabbage busy science front smile nurse balcony medal burst"
 RELAYER_MNEMONICS=(
   "$RELAYER_GAIA_MNEMONIC"
   "$RELAYER_JUNO_MNEMONIC"
@@ -284,6 +312,7 @@ RELAYER_MNEMONICS=(
   "$RELAYER_HOST_MNEMONIC"
   "$RELAYER_EVMOS_MNEMONIC"
   "$RELAYER_GAIA_ICS_MNEMONIC"
+  "$RELAYER_DYDX_MNEMONIC"
 )
 
 STRIDE_ADDRESS() { 
@@ -308,6 +337,9 @@ HOST_ADDRESS() {
 }
 EVMOS_ADDRESS() { 
   $EVMOS_MAIN_CMD keys show ${EVMOS_VAL_PREFIX}1 --keyring-backend test -a 
+}
+DYDX_ADDRESS() { 
+  $DYDX_MAIN_CMD keys show ${DYDX_VAL_PREFIX}1 --keyring-backend test -a 
 }
 
 CSLEEP() {

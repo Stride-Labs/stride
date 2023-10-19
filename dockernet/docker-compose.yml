@@ -203,7 +203,7 @@ services:
   dydx1:
     image: stridezone:dydx
     volumes:
-      - ./state/dydx1:/home/dydx/.dydxd
+      - ./state/dydx1:/home/dydx/.dydxprotocol
     ports:
       - "25957:26657"
       - "1247:1317"
@@ -212,17 +212,17 @@ services:
   dydx2:
     image: stridezone:dydx
     volumes:
-      - ./state/dydx2:/home/dydx/.dydxd
+      - ./state/dydx2:/home/dydx/.dydxprotocol
 
   dydx3:
     image: stridezone:dydx
     volumes:
-      - ./state/dydx3:/home/dydx/.dydxd
+      - ./state/dydx3:/home/dydx/.dydxprotocol
 
   dydx4:
     image: stridezone:dydx
     volumes:
-      - ./state/dydx4:/home/dydx/.dydxd
+      - ./state/dydx4:/home/dydx/.dydxprotocol
 
   dydx5:
     image: stridezone:dydx

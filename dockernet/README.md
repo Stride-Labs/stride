@@ -21,6 +21,10 @@ while getopts sgojhir{n} flag; do
    ...
    n) build_local_and_docker {new-host-zone} deps/{new-host-zone} ;;  
 ```
+* Before moving on, test that you can build the binary and docker iamge by running
+```bash
+make build-docker build={n}
+```
 * Add the host zone and relayer to `dockernet/docker-compose.yml`. Add 5 nodes, adding port forwarding to the first node only. Add the relayer. Drop the RPC port number by 100, and the API/gRPC port by 10, relative to the last host zone that was added.
 ```
   {new-host-zone}1:
