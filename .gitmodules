@@ -30,9 +30,10 @@
 	path = deps/evmos
 	url = https://github.com/evmos/evmos
 [submodule "deps/dydx"]
-	# Commit: protocol/v0.4.1
+	# TODO [DYDX]: Switch to official dydxprotocol release after ICA PR is merged
+	# Commit: fafd3a9e2083180d7f7809f5080897e714e52bec
 	path = deps/dydx
-	url = https://github.com/dydxprotocol/v4-chain.git
+	url = https://github.com/Stride-Labs/v4-chain.git
 # bats
 [submodule "dockernet/tests/bats/bats-core"]
 	path = dockernet/tests/bats/bats-core
