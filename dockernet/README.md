@@ -3,12 +3,13 @@
 ## Dockernet
 ### Adding a new host zone
 * Create a new dockerfile to `dockernet/dockerfiles` (named `Dockerfile.{new-host-zone}`). Use one of the other host zone's dockerfile's as a starting port to provide the certain boilerplate such as the package installs, adding user, exposing ports, etc. You can often find a dockerfile in the github directory of the host zone. In the dockerfile, set `COMMIT_HASH` to the current mainnet commit hash of the chain being tested (or the target commit hash, if we're launching the zone in the future after an upgrade). For newer chains, create a branch and a pull-request, but *do not* merge it (we don't maintain test versions of each chain).
-* Add the repo as a submodule
-```
+* Add the repo as a submodule(e.g. https://github.com/dydxprotocol/v4-chain.git)
+```bash 
+# run from the top level stride repo
 git submodule add {repo-url} deps/{new-host-zone}
 ```
 * Update the commit hash
-```
+```bash
 cd deps/{new-host-zone}
 git checkout {commit-hash}
 cd ..
@@ -48,12 +49,12 @@ make build-docker build={n}
     volumes:
       - ./dockernet/state/{new-host-zone}5:/home/{new-host-zone}/.{new-host-zone}d
   ...
-  relayer-{chain_id}:
+  relayer-{chain}:
     image: stridezone:relayer
     volumes:
-      - ./state/relayer-{chain_id}:/home/relayer/.relayer
+      - ./state/relayer-{chain}:/home/relayer/.relayer
     restart: always
-    command: [ "bash", "start.sh", "stride-{chain_id}" ]
+    command: [ "bash", "start.sh", "stride-{chain}" ]
 ```
 * Add the following parameters to `dockernet/config.sh`, where `CHAIN` is the ID of the new host zone. For the relayer, you can use the mnemonic below or create your own. Note: you'll have to add the variables in the right places in `dockernet/config.sh`, as noted below.
 ```
@@ -101,7 +102,7 @@ ${CHAIN_ID}_ADDRESS() {
 }
 
 ```
-* Add the IBC denom's for the host zone across each channel to `dockernet/config.sh` (e.g. `IBC_{HOST}_CHANNEL_{N}_DENOM)`). You can generate the variables by uncommenting `x/stakeibc/keeper/get_denom_traces_test.go`, specifying the ChainID and denom, and running `make test-unit`. Add the output to `dockernet/config.sh`. Note: You have to run the test using the "run test" button in VSCode, or pass in the `-v` flag and run the tests using `go test -mod=readonly ./x/stakeibc/...`, for the output to show up.
+* Add the IBC denoms for the host zone across each channel to `dockernet/config.sh` (e.g. `IBC_{HOST}_CHANNEL_{N}_DENOM)`). You can generate the variables by uncommenting `x/stakeibc/keeper/get_denom_traces_test.go`, specifying the ChainID and denom, and running `make test-unit`. Add the output to `dockernet/config.sh`. Note: You have to run the test using the "run test" button in VSCode, or pass in the `-v` flag and run the tests using `go test -mod=readonly ./x/stakeibc/...`, for the output to show up.
 * Add a section to the `dockernet/config/relayer_config.yaml`. Most chains will use either the cosmos coin type (118) or eth coin type (60). If a new coin type is used, add it to the top of `config.sh` for future reference.
 ```
 chains:
