@@ -8,4 +8,6 @@ enum ICAAccountType {
   FEE = 1;
   WITHDRAWAL = 2;
   REDEMPTION = 3;
+  COMMUNITY_POOL_DEPOSIT = 4;
+  COMMUNITY_POOL_RETURN = 5;
 }
