@@ -85,8 +85,11 @@ ST{CHAIN}_DENOM="st{min_denom}"
 RELAYER_{CHAIN}_EXEC="docker-compose run --rm relayer-{new-host-zone}"
 RELAYER_{CHAIN}_ACCT=rly{add one since the account from the last host zone}
 
-# NOTE: Update the RELAYER_ACCTS variable directly!
-RELAYER_ACCTS=(... $RELAYER_{CHAIN}_ACCT)
+# NOTE: Update the STRIDE_RELAYER_ACCTS variable directly!
+STRIDE_RELAYER_ACCTS=(
+  ... 
+  $RELAYER_{CHAIN}_ACCT
+)
 
 # stride1muwz5er4wq7svxnh5dgn2tssm92je5dwthxl7q
 RELAYER_{CHAIN}_MNEMONIC="science depart where tell bus ski laptop follow child bronze rebel recall brief plug razor ship degree labor human series today embody fury harvest"
@@ -103,7 +106,7 @@ ${CHAIN_ID}_ADDRESS() {
 
 ```
 * Add the IBC denoms for the host zone across each channel to `dockernet/config.sh` (e.g. `IBC_{HOST}_CHANNEL_{N}_DENOM)`). You can generate the variables by uncommenting `x/stakeibc/keeper/get_denom_traces_test.go`, specifying the ChainID and denom, and running `make test-unit`. Add the output to `dockernet/config.sh`. Note: You have to run the test using the "run test" button in VSCode, or pass in the `-v` flag and run the tests using `go test -mod=readonly ./x/stakeibc/...`, for the output to show up.
-* Add a section to the `dockernet/config/relayer_config.yaml`. Most chains will use either the cosmos coin type (118) or eth coin type (60). If a new coin type is used, add it to the top of `config.sh` for future reference.
+* Add a section to the `dockernet/config/relayer_config_stride.yaml`. Most chains will use either the cosmos coin type (118) or eth coin type (60). If a new coin type is used, add it to the top of `config.sh` for future reference.
 ```
 chains:
   ...

@@ -296,6 +296,7 @@ RELAYER_EVMOS_EXEC="$DOCKER_COMPOSE run --rm relayer-evmos"
 RELAYER_DYDX_EXEC="$DOCKER_COMPOSE run --rm relayer-dydx"
 RELAYER_NOBLE_EXEC="$DOCKER_COMPOSE run --rm relayer-noble"
 
+# Accounts for relay paths with stride
 RELAYER_STRIDE_ACCT=rly1
 RELAYER_GAIA_ACCT=rly2
 RELAYER_JUNO_ACCT=rly3
@@ -306,8 +307,7 @@ RELAYER_EVMOS_ACCT=rly7
 RELAYER_STRIDE_ICS_ACCT=rly8
 RELAYER_GAIA_ICS_ACCT=rly9
 RELAYER_DYDX_ACCT=rly10
-RELAYER_NOBLE_ACCT=rly11
-RELAYER_ACCTS=(
+STRIDE_RELAYER_ACCTS=(
   $RELAYER_GAIA_ACCT 
   $RELAYER_JUNO_ACCT 
   $RELAYER_OSMO_ACCT 
@@ -317,7 +317,11 @@ RELAYER_ACCTS=(
   $RELAYER_GAIA_ICS_ACCT
   $RELAYER_DYDX_ACCT
 )
+# Accounts for relay paths between two non-stride chains
+RELAYER_NOBLE_ACCT=rly11
+RELAYER_DYDX_NOBLE_ACCT=rly12
 
+# Mnemonics for connections with stride
 RELAYER_GAIA_MNEMONIC="fiction perfect rapid steel bundle giant blade grain eagle wing cannon fever must humble dance kitchen lazy episode museum faith off notable rate flavor"
 RELAYER_JUNO_MNEMONIC="kiwi betray topple van vapor flag decorate cement crystal fee family clown cry story gain frost strong year blanket remain grass pig hen empower"
 RELAYER_OSMO_MNEMONIC="unaware wine ramp february bring trust leaf beyond fever inside option dilemma save know captain endless salute radio humble chicken property culture foil taxi"
@@ -326,8 +330,6 @@ RELAYER_HOST_MNEMONIC="renew umbrella teach spoon have razor knee sock divert in
 RELAYER_GAIA_ICS_MNEMONIC="size chimney clog job robot thunder gaze vapor economy smooth kit denial alter merit produce front force eager outside mansion believe fan tonight detect"
 RELAYER_EVMOS_MNEMONIC="science depart where tell bus ski laptop follow child bronze rebel recall brief plug razor ship degree labor human series today embody fury harvest"
 RELAYER_DYDX_MNEMONIC="mother depth nature rapid draw west afraid depend allow fee siren useful catalog sun biology cabbage busy science front smile nurse balcony medal burst"
-RELAYER_NOBLE_MNEMONIC="sentence fruit crumble sail bar knife exact flame apart prosper hint myth clean among tiny burden depart purity select envelope identify cross physical emerge"
-
 STRIDE_RELAYER_MNEMONICS=(
   "$RELAYER_GAIA_MNEMONIC"
   "$RELAYER_JUNO_MNEMONIC"
@@ -338,6 +340,10 @@ STRIDE_RELAYER_MNEMONICS=(
   "$RELAYER_GAIA_ICS_MNEMONIC"
   "$RELAYER_DYDX_MNEMONIC"
 )
+# Mnemonics for connections between two non-stride chains
+RELAYER_NOBLE_MNEMONIC="sentence fruit crumble sail bar knife exact flame apart prosper hint myth clean among tiny burden depart purity select envelope identify cross physical emerge"
+RELAYER_DYDX_NOBLE_MNEMONIC="aerobic breeze claw climb bounce morning tank victory eight funny employ bracket hire reduce fine flee lava domain warfare loop theme fly tattoo must"
+
 
 STRIDE_ADDRESS() { 
   # After an upgrade, the keys query can sometimes print migration info, 

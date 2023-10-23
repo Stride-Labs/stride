@@ -209,14 +209,14 @@ if [ "$CHAIN" == "STRIDE" ]; then
     $MAIN_CMD add-genesis-account ${STRIDE_ADMIN_ADDRESS} ${ADMIN_TOKENS}${DENOM}
 
     # add relayer accounts
-    for i in "${!RELAYER_ACCTS[@]}"; do
-        RELAYER_ACCT="${RELAYER_ACCTS[i]}"
-        RELAYER_MNEMONIC="${STRIDE_RELAYER_MNEMONICS[i]}"
+    for i in "${!STRIDE_RELAYER_ACCTS[@]}"; do
+        relayer_acct="${STRIDE_RELAYER_ACCTS[i]}"
+        relayer_mnemonic="${STRIDE_RELAYER_MNEMONICS[i]}"
 
-        echo "$RELAYER_MNEMONIC" | $MAIN_CMD keys add $RELAYER_ACCT --recover --keyring-backend=test >> $KEYS_LOGS 2>&1
+        echo "$relayer_mnemonic" | $MAIN_CMD keys add $relayer_acct --recover --keyring-backend=test >> $KEYS_LOGS 2>&1
         
-        RELAYER_ADDRESS=$($MAIN_CMD keys show $RELAYER_ACCT --keyring-backend test -a)
-        $MAIN_CMD add-genesis-account ${RELAYER_ADDRESS} ${VAL_TOKENS}${DENOM}
+        relayer_address=$($MAIN_CMD keys show $relayer_acct --keyring-backend test -a)
+        $MAIN_CMD add-genesis-account ${relayer_address} ${VAL_TOKENS}${DENOM}
     done
 else 
     # add a revenue account
@@ -225,26 +225,34 @@ else
     echo $REV_MNEMONIC | $MAIN_CMD keys add $REV_ACCT --recover --keyring-backend=test >> $KEYS_LOGS 2>&1
 
     # add a relayer account
-    RELAYER_ACCT=$(GET_VAR_VALUE     RELAYER_${CHAIN}_ACCT)
-    RELAYER_MNEMONIC=$(GET_VAR_VALUE RELAYER_${CHAIN}_MNEMONIC)
+    relayer_acct=$(GET_VAR_VALUE     RELAYER_${CHAIN}_ACCT)
+    relayer_mnemonic=$(GET_VAR_VALUE RELAYER_${CHAIN}_MNEMONIC)
 
-    echo "$RELAYER_MNEMONIC" | $MAIN_CMD keys add $RELAYER_ACCT --recover --keyring-backend=test >> $KEYS_LOGS 2>&1
-    RELAYER_ADDRESS=$($MAIN_CMD keys show $RELAYER_ACCT --keyring-backend test -a | tr -cd '[:alnum:]._-')
-    $MAIN_CMD add-genesis-account ${RELAYER_ADDRESS} ${VAL_TOKENS}${DENOM}
+    echo "$relayer_mnemonic" | $MAIN_CMD keys add $relayer_acct --recover --keyring-backend=test >> $KEYS_LOGS 2>&1
+    relayer_address=$($MAIN_CMD keys show $relayer_acct --keyring-backend test -a | tr -cd '[:alnum:]._-')
+    $MAIN_CMD add-genesis-account ${relayer_address} ${VAL_TOKENS}${DENOM}
 
     if [ "$CHAIN" == "GAIA" ]; then 
         echo "$RELAYER_GAIA_ICS_MNEMONIC" | $MAIN_CMD keys add $RELAYER_GAIA_ICS_ACCT --recover --keyring-backend=test >> $KEYS_LOGS 2>&1
-        RELAYER_ADDRESS=$($MAIN_CMD keys show $RELAYER_GAIA_ICS_ACCT --keyring-backend test -a | tr -cd '[:alnum:]._-')
-        $MAIN_CMD add-genesis-account ${RELAYER_ADDRESS} ${VAL_TOKENS}${DENOM}
+        relayer_address=$($MAIN_CMD keys show $RELAYER_GAIA_ICS_ACCT --keyring-backend test -a | tr -cd '[:alnum:]._-')
+        $MAIN_CMD add-genesis-account ${relayer_address} ${VAL_TOKENS}${DENOM}
     fi
 
-    # For noble, add a param authority account
+    if [ "$CHAIN" == "DYDX" ]; then
+        echo "$RELAYER_DYDX_NOBLE_MNEMONIC" | $MAIN_CMD keys add $RELAYER_DYDX_NOBLE_ACCT --recover --keyring-backend test >> $KEYS_LOGS 2>&1
+        relayer_address=$($MAIN_CMD keys show $RELAYER_DYDX_NOBLE_ACCT --keyring-backend test -a | tr -cd '[:alnum:]._-')
+        $MAIN_CMD add-genesis-account ${relayer_address} ${VAL_TOKENS}${DENOM}
+    fi
+
+    # For noble, add a param authority account and set a minting denom so that IBC transfers are allowed
     if [ "$CHAIN" == "NOBLE" ]; then
         echo "$NOBLE_AUTHORITHY_MNEMONIC" | $MAIN_CMD keys add authority --recover --keyring-backend test >> $KEYS_LOGS 2>&1
         AUTHORITHY_ADDRESS=$($MAIN_CMD keys show authority --keyring-backend test -a | tr -cd '[:alnum:]._-')
         $MAIN_CMD add-genesis-account ${AUTHORITHY_ADDRESS} ${VAL_TOKENS}${DENOM},${VAL_TOKENS}${USDC_DENOM}
 
-        sed -i -E "s|\"authority\": \"\"|\"authority\":\"${AUTHORITHY_ADDRESS}\"|g" $genesis_json 
+        sed -i -E 's|"authority": ""|"authority":"'${AUTHORITHY_ADDRESS}'"|g' $genesis_json 
+        sed -i -E 's|"mintingDenom": null|"mintingDenom":{"denom":"'${DENOM}'"}|g' $genesis_json  
+        sed -i -E 's|"denom_metadata": \[\]|"denom_metadata":\[{"name": "Token", "base": "'${DENOM}'"}\]|g' $genesis_json  
     fi
 fi
 

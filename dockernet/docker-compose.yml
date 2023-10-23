@@ -323,10 +323,10 @@ services:
     restart: always
     command: [ "bash", "start.sh", "stride-dydx" ]
 
-  relayer-noble:
+  relayer-dydx-noble:
     image: stridezone:relayer
     volumes:
-      - ./state/relayer-noble:/home/relayer/.relayer
+      - ./state/relayer-dydx-noble:/home/relayer/.relayer
     restart: always
     command: [ "bash", "start.sh", "dydx-noble" ]
 
