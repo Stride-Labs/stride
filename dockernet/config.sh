@@ -387,6 +387,12 @@ GET_VAR_VALUE() {
   echo "${!var_name}"
 }
 
+SAVE_DOCKER_LOGS() {
+  service_name=$1
+  log_path=$2
+  $DOCKER_COMPOSE logs -f $service_name | sed -r -u "s/\x1B\[([0-9]{1,3}(;[0-9]{1,2})?)?[mGK]//g" >> $log_path 2>&1 &
+}
+
 WAIT_FOR_BLOCK() {
   num_blocks="${2:-1}"
   for i in $(seq $num_blocks); do
