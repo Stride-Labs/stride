@@ -7,7 +7,7 @@ chains:
   stride:
     type: cosmos
     value:
-      key: rly1
+      key: stride
       chain-id: STRIDE
       rpc-addr: http://stride1:26657
       account-prefix: stride
@@ -22,7 +22,7 @@ chains:
   gaia:
     type: cosmos
     value:
-      key: rly2
+      key: gaia
       chain-id: GAIA
       rpc-addr: http://gaia1:26657
       account-prefix: cosmos
@@ -37,7 +37,7 @@ chains:
   juno:
     type: cosmos
     value:
-      key: rly3
+      key: juno
       chain-id: JUNO
       rpc-addr: http://juno1:26657
       account-prefix: juno
@@ -52,7 +52,7 @@ chains:
   osmo:
     type: cosmos
     value:
-      key: rly4
+      key: osmo
       chain-id: OSMO
       rpc-addr: http://osmo1:26657
       account-prefix: osmo
@@ -67,7 +67,7 @@ chains:
   stars:
     type: cosmos
     value:
-      key: rly5
+      key: stars
       chain-id: STARS
       rpc-addr: http://stars1:26657
       account-prefix: stars
@@ -82,7 +82,7 @@ chains:
   host:
     type: cosmos
     value:
-      key: rly6
+      key: host
       chain-id: HOST
       rpc-addr: http://host1:26657
       account-prefix: stride
@@ -97,7 +97,7 @@ chains:
   evmos:
     type: cosmos
     value:
-      key: rly7
+      key: evmos
       chain-id: evmos_9001-2
       rpc-addr: http://evmos1:26657
       account-prefix: evmos
@@ -114,7 +114,7 @@ chains:
   dydx:
     type: cosmos
     value:
-      key: rly10
+      key: dydx-stride
       chain-id: DYDX
       rpc-addr: http://dydx1:26657
       account-prefix: dydx
@@ -129,7 +129,7 @@ chains:
   # {new-host-zone}:
   #   type: cosmos
   #   value:
-  #     key: rly{N}
+  #     key: {new-host-zone}
   #     chain-id: {CHAIN_ID}
   #     rpc-addr: http://{node_prefix}1:26657
   #     account-prefix: {bech32_hrp_account_prefix}

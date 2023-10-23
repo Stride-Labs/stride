@@ -18,8 +18,8 @@ KEYS_LOGS=$DOCKERNET_HOME/logs/keys.log
 # List of hosts enabled 
 # HOST_CHAINS have liquid staking support, ACCESSORY_CHAINS do not
 # TODO [DYDX]: Revert to main hosts
-HOST_CHAINS=(DYDX)
-ACCESSORY_CHAINS=(NOBLE) 
+HOST_CHAINS=(GAIA HOST)
+ACCESSORY_CHAINS=()
 
 # If no host zones are specified above:
 #  `start-docker` defaults to just GAIA if HOST_CHAINS is empty
@@ -286,64 +286,39 @@ NOBLE_RECEIVER_ADDRESS='noble1dd9sxkz3wr723lsf65h549ykdh4npxzh5qawmg'
 NOBLE_AUTHORITHY_MNEMONIC="giant screen unit high agree swing impact switch lend universe sand myself conduct sustain august barely misery lawsuit honey social version window demise palace"
 
 # RELAYER
-RELAYER_GAIA_EXEC="$DOCKER_COMPOSE run --rm relayer-gaia"
-RELAYER_GAIA_ICS_EXEC="$DOCKER_COMPOSE run --rm relayer-gaia-ics"
-RELAYER_JUNO_EXEC="$DOCKER_COMPOSE run --rm relayer-juno"
-RELAYER_OSMO_EXEC="$DOCKER_COMPOSE run --rm relayer-osmo"
-RELAYER_STARS_EXEC="$DOCKER_COMPOSE run --rm relayer-stars"
-RELAYER_HOST_EXEC="$DOCKER_COMPOSE run --rm relayer-host"
-RELAYER_EVMOS_EXEC="$DOCKER_COMPOSE run --rm relayer-evmos"
-RELAYER_DYDX_EXEC="$DOCKER_COMPOSE run --rm relayer-dydx"
-RELAYER_NOBLE_EXEC="$DOCKER_COMPOSE run --rm relayer-noble"
-
-# Accounts for relay paths with stride
-RELAYER_STRIDE_ACCT=rly1
-RELAYER_GAIA_ACCT=rly2
-RELAYER_JUNO_ACCT=rly3
-RELAYER_OSMO_ACCT=rly4
-RELAYER_STARS_ACCT=rly5
-RELAYER_HOST_ACCT=rly6
-RELAYER_EVMOS_ACCT=rly7
-RELAYER_STRIDE_ICS_ACCT=rly8
-RELAYER_GAIA_ICS_ACCT=rly9
-RELAYER_DYDX_ACCT=rly10
-STRIDE_RELAYER_ACCTS=(
-  $RELAYER_GAIA_ACCT 
-  $RELAYER_JUNO_ACCT 
-  $RELAYER_OSMO_ACCT 
-  $RELAYER_STARS_ACCT 
-  $RELAYER_HOST_ACCT 
-  $RELAYER_EVMOS_ACCT
-  $RELAYER_GAIA_ICS_ACCT
-  $RELAYER_DYDX_ACCT
-)
-# Accounts for relay paths between two non-stride chains
-RELAYER_NOBLE_ACCT=rly11
-RELAYER_DYDX_NOBLE_ACCT=rly12
-
-# Mnemonics for connections with stride
 RELAYER_GAIA_MNEMONIC="fiction perfect rapid steel bundle giant blade grain eagle wing cannon fever must humble dance kitchen lazy episode museum faith off notable rate flavor"
 RELAYER_JUNO_MNEMONIC="kiwi betray topple van vapor flag decorate cement crystal fee family clown cry story gain frost strong year blanket remain grass pig hen empower"
 RELAYER_OSMO_MNEMONIC="unaware wine ramp february bring trust leaf beyond fever inside option dilemma save know captain endless salute radio humble chicken property culture foil taxi"
 RELAYER_STARS_MNEMONIC="deposit dawn erosion talent old broom flip recipe pill hammer animal hill nice ten target metal gas shoe visual nephew soda harbor child simple"
 RELAYER_HOST_MNEMONIC="renew umbrella teach spoon have razor knee sock divert inner nut between immense library inhale dog truly return run remain dune virus diamond clinic"
-RELAYER_GAIA_ICS_MNEMONIC="size chimney clog job robot thunder gaze vapor economy smooth kit denial alter merit produce front force eager outside mansion believe fan tonight detect"
+RELAYER_ICS_MNEMONIC="size chimney clog job robot thunder gaze vapor economy smooth kit denial alter merit produce front force eager outside mansion believe fan tonight detect"
 RELAYER_EVMOS_MNEMONIC="science depart where tell bus ski laptop follow child bronze rebel recall brief plug razor ship degree labor human series today embody fury harvest"
 RELAYER_DYDX_MNEMONIC="mother depth nature rapid draw west afraid depend allow fee siren useful catalog sun biology cabbage busy science front smile nurse balcony medal burst"
-STRIDE_RELAYER_MNEMONICS=(
-  "$RELAYER_GAIA_MNEMONIC"
-  "$RELAYER_JUNO_MNEMONIC"
-  "$RELAYER_OSMO_MNEMONIC"
-  "$RELAYER_STARS_MNEMONIC"
-  "$RELAYER_HOST_MNEMONIC"
-  "$RELAYER_EVMOS_MNEMONIC"
-  "$RELAYER_GAIA_ICS_MNEMONIC"
-  "$RELAYER_DYDX_MNEMONIC"
-)
-# Mnemonics for connections between two non-stride chains
-RELAYER_NOBLE_MNEMONIC="sentence fruit crumble sail bar knife exact flame apart prosper hint myth clean among tiny burden depart purity select envelope identify cross physical emerge"
+RELAYER_NOBLE_DYDX_MNEMONIC="sentence fruit crumble sail bar knife exact flame apart prosper hint myth clean among tiny burden depart purity select envelope identify cross physical emerge"
 RELAYER_DYDX_NOBLE_MNEMONIC="aerobic breeze claw climb bounce morning tank victory eight funny employ bracket hire reduce fine flee lava domain warfare loop theme fly tattoo must"
 
+RELAYER_PATHS=(
+  # Path           src_chain  dst_chain   src_acct      dst_acct        src_mnemonic                  dst_mnemonic
+  stride-gaia      STRIDE     GAIA        stride-gaia   gaia            RELAYER_GAIA_MNEMONIC         RELAYER_GAIA_MNEMONIC
+  stride-juno      STRIDE     JUNO        stride-juno   juno            RELAYER_JUNO_MNEMONIC         RELAYER_JUNO_MNEMONIC
+  stride-osmo      STRIDE     OSMO        stride-osmo   osmo            RELAYER_OSMO_MNEMONIC         RELAYER_OSMO_MNEMONIC
+  stride-stars     STRIDE     STARS       stride-stars  stars           RELAYER_STARS_MNEMONIC        RELAYER_STARS_MNEMONIC
+  stride-host      STRIDE     HOST        stride-host   host            RELAYER_HOST_MNEMONIC         RELAYER_HOST_MNEMONIC
+  stride-evmos     STRIDE     EVMOS       stride-evmos  evmos           RELAYER_EVMOS_MNEMONIC        RELAYER_EVMOS_MNEMONIC
+  stride-dydx      STRIDE     DYDX        stride-dydx   dydx-stride     RELAYER_DYDX_MNEMONIC         RELAYER_DYDX_MNEMONIC
+
+  # Non-stride paths
+  stride-gaia-ics  STRIDE     GAIA        stride-ics    gaia-ics        RELAYER_ICS_MNEMONIC          RELAYER_ICS_MNEMONIC
+  dydx-noble       DYDX       NOBLE       dydx-noble    noble           RELAYER_DYDX_NOBLE_MNEMONIC   RELAYER_NOBLE_DYDX_MNEMONIC
+)
+RELAYER_PATH_NUM_COLUMNS=7
+RELAYER_PATH_NAME_COLUMN=0
+RELAYER_SRC_CHAIN_COLUMN=1
+RELAYER_DST_CHAIN_COLUMN=2
+RELAYER_SRC_ACCT_COLUMN=3
+RELAYER_DST_ACCT_COLUMN=4
+RELAYER_SRC_MNEMONIC_COLUMN=5
+RELAYER_DST_MNEMONIC_COLUMN=6
 
 STRIDE_ADDRESS() { 
   # After an upgrade, the keys query can sometimes print migration info, 
@@ -385,6 +360,12 @@ CSLEEP() {
 GET_VAR_VALUE() {
   var_name="$1"
   echo "${!var_name}"
+}
+
+SAVE_DOCKER_LOGS() {
+  service_name=$1
+  log_path=$2
+  $DOCKER_COMPOSE logs -f ${service_name} | sed -r -u "s/\x1B\[([0-9]{1,3}(;[0-9]{1,2})?)?[mGK]//g" >> $log_path 2>&1 &
 }
 
 WAIT_FOR_BLOCK() {

@@ -7,7 +7,7 @@ chains:
   stride:
     type: cosmos
     value:
-      key: rly8
+      key: stride-ics
       chain-id: STRIDE
       rpc-addr: http://stride1:26657
       account-prefix: stride
@@ -21,7 +21,7 @@ chains:
   gaia:
     type: cosmos
     value:
-      key: rly9
+      key: gaia-ics
       chain-id: GAIA
       rpc-addr: http://gaia1:26657
       account-prefix: cosmos

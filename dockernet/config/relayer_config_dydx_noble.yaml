@@ -7,7 +7,7 @@ chains:
   dydx:
     type: cosmos
     value:
-      key: rly12
+      key: dydx-noble
       chain-id: DYDX
       rpc-addr: http://dydx1:26657
       account-prefix: dydx
@@ -22,7 +22,7 @@ chains:
   noble:
     type: cosmos
     value:
-      key: rly11
+      key: noble
       chain-id: NOBLE
       rpc-addr: http://noble1:26657
       account-prefix: noble

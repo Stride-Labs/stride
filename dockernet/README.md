@@ -2,15 +2,15 @@
 
 ## Dockernet
 ### Adding a new host zone
-* Create a new dockerfile to `dockernet/dockerfiles` (named `Dockerfile.{new-host-zone}`). Use one of the other host zone's dockerfile's as a starting port to provide the certain boilerplate such as the package installs, adding user, exposing ports, etc. You can often find a dockerfile in the github directory of the host zone. In the dockerfile, set `COMMIT_HASH` to the current mainnet commit hash of the chain being tested (or the target commit hash, if we're launching the zone in the future after an upgrade). For newer chains, create a branch and a pull-request, but *do not* merge it (we don't maintain test versions of each chain).
-* Add the repo as a submodule(e.g. https://github.com/dydxprotocol/v4-chain.git)
+* Create a new dockerfile to `dockernet/dockerfiles` (named `Dockerfile.{chain}`). Use one of the other host zone's dockerfile's as a starting port to provide the certain boilerplate such as the package installs, adding user, exposing ports, etc. You can often find a dockerfile in the github directory of the host zone. In the dockerfile, set `COMMIT_HASH` to the current mainnet commit hash of the chain being tested (or the target commit hash, if we're launching the zone in the future after an upgrade). For newer chains, create a branch and a pull-request, but *do not* merge it (we don't maintain test versions of each chain).
+* Add the repo as a submodule(e.g. https://github.com/osmosis-labs/osmosis.git)
 ```bash 
 # run from the top level stride repo
-git submodule add {repo-url} deps/{new-host-zone}
+git submodule add {repo-url} deps/{chain}
 ```
 * Update the commit hash
 ```bash
-cd deps/{new-host-zone}
+cd deps/{chain}
 git checkout {commit-hash}
 cd ..
 ```
@@ -20,7 +20,7 @@ cd ..
 while getopts sgojhir{z} flag; do
    case "${flag}" in
    ...
-   z) build_local_and_docker {new-host-zone} deps/{new-host-zone} ;;  
+   z) build_local_and_docker {chain} deps/{chain} ;;  
 ```
 * Before moving on, test that you can build the binary and docker iamge by running
 ```bash
@@ -28,35 +28,35 @@ make build-docker build={z}
 ```
 * Add the host zone and relayer to `dockernet/docker-compose.yml`. Add 5 nodes, adding port forwarding to the first node only. Add the relayer. Drop the RPC port number by 100, and the API/gRPC port by 10, relative to the last host zone that was added.
 ```
-  {new-host-zone}1:
-    image: stridezone:{new-host-zone}
+  {chain}1:
+    image: stridezone:{chain}
     volumes:
-      - ./dockernet/state/{new-host-zone}1:/home/{new-host-zone}/.{new-host-zone}d
+      - ./dockernet/state/{chain}1:/home/{chain}/.{chain}d
     ports:
       - "{rpc-port}:26657"
       - "{api-port}:1317"
       - "{grpc-port}:9090"
 
-  {new-host-zone}2:
-    image: stridezone:{new-host-zone}
+  {chain}2:
+    image: stridezone:{chain}
     volumes:
-      - ./dockernet/state/{new-host-zone}2:/home/{new-host-zone}/.{new-host-zone}d
+      - ./dockernet/state/{chain}2:/home/{chain}/.{chain}d
 
     ...
 
-  {new-host-zone}5:
-    image: stridezone:{new-host-zone}
+  {chain}5:
+    image: stridezone:{chain}
     volumes:
-      - ./dockernet/state/{new-host-zone}5:/home/{new-host-zone}/.{new-host-zone}d
+      - ./dockernet/state/{chain}5:/home/{chain}/.{chain}d
   ...
-  relayer-{chain}:
+  relayer-stride-{chain}:
     image: stridezone:relayer
     volumes:
-      - ./state/relayer-{chain}:/home/relayer/.relayer
+      - ./state/relayer-stride-{chain}:/home/relayer/.relayer
     restart: always
     command: [ "bash", "start.sh", "stride-{chain}" ]
 ```
-* Add the following parameters to `dockernet/config.sh`, where `CHAIN` is the ID of the new host zone. For the relayer, you can use the mnemonic below or create your own. Note: you'll have to add the variables in the right places in `dockernet/config.sh`, as noted below.
+* Add the following parameters to `dockernet/config.sh`, where `CHAIN` is the capitalized name of the new host zone. For the relayer, you can use the mnemonic below or create your own. Note: you'll have to add the variables in the right places in `dockernet/config.sh`, as noted below.
 ```
 # add to the top of dockernet/config.sh
 {CHAIN}_DENOM="{min_denom}"
@@ -64,9 +64,9 @@ ST{CHAIN}_DENOM="st{min_denom}"
 
 # add in the new chain's config section
 {CHAIN}_CHAIN_ID={NEW-HOST-ZONE}
-{CHAIN}_NODE_PREFIX={new-host-zone}
+{CHAIN}_NODE_PREFIX={chain}
 {CHAIN}_NUM_NODES=3
-{CHAIN}_BINARY="$DOCKERNET_HOME/../build/{new-host-zone}d"
+{CHAIN}_BINARY="$DOCKERNET_HOME/../build/{chain}d"
 {CHAIN}_VAL_PREFIX={n}val
 {CHAIN}_ADDRESS_PREFIX=stars
 {CHAIN}_REV_ACCT={n}rev1
@@ -81,22 +81,15 @@ ST{CHAIN}_DENOM="st{min_denom}"
 # If this variable is excluded, it will default to 6 digits
 {CHAIN}_MICRO_DENOM_UNITS=000000000000000000
 
-# Add *below* the RELAYER section!
-RELAYER_{CHAIN}_EXEC="docker-compose run --rm relayer-{new-host-zone}"
-RELAYER_{CHAIN}_ACCT=rly{add one since the account from the last host zone}
+# Add the relayer path information and mnemonic
+# If this host zone is not getting merged, feel free to use the mnemonic below; otherwise, 
+# generate a new mnemonic with: `build/strided keys add dummy --keyring-backend test` 
+RELAYER_{CHAIN}_MNEMONIC=service acoustic among bench bulk special empower intact coral debris call stick coin million pudding refuse solar copper slam cage uncover just begin hedgehog"
 
-# NOTE: Update the STRIDE_RELAYER_ACCTS variable directly!
-STRIDE_RELAYER_ACCTS=(
+# NOTE: Update the RELAYER_PATHS variable directly!
+RELAYER_PATHS=(
   ... 
-  $RELAYER_{CHAIN}_ACCT
-)
-
-# stride1muwz5er4wq7svxnh5dgn2tssm92je5dwthxl7q
-RELAYER_{CHAIN}_MNEMONIC="science depart where tell bus ski laptop follow child bronze rebel recall brief plug razor ship degree labor human series today embody fury harvest"
-# NOTE: Update the STRIDE_RELAYER_MNEMONICS variable directly!
-STRIDE_RELAYER_MNEMONICS=(
-    ...
-    "$RELAYER_{CHAIN}_MNEMONIC"
+  stride-${chain} STRIDE ${CHAIN} stride-${chain} ${chain} RELAYER_${CHAIN}_MNEMONIC RELAYER_${CHAIN}_MNEMONIC
 )
 
 # Add the {CHAIN_ID}_ADDRESS function
@@ -110,12 +103,12 @@ ${CHAIN_ID}_ADDRESS() {
 ```
 chains:
   ...
-  {new-host-zone}:
+  {chain}:
     type: cosmos
     value:
-      key: rly{N}
+      key: {chain}
       chain-id: {CHAIN_ID}
-      rpc-addr: http://{new-host-zone}1:26657
+      rpc-addr: http://{chain}1:26657
       account-prefix: {bech32_hrp_account_prefix}
       keyring-backend: test
       gas-adjustment: 1.2
@@ -127,7 +120,7 @@ chains:
   ...
 paths:
   ...
-    stride-{new-host-zone}:
+    stride-{chain}:
     src:
       chain-id: STRIDE
     dst:
@@ -153,7 +146,7 @@ fi
 # CHAIN_NAME=OSMO TRANSFER_CHANNEL_NUMBER=2 $BATS $INTEGRATION_TEST_FILE
 CHAIN_NAME={NEW-HOST-ZONE} TRANSFER_CHANNEL_NUMBER=1 $BATS $INTEGRATION_TEST_FILE
 ```
-* Start the network as normal. Make sure to rebuild the new host zone when running for the first time. You can view the logs in `dockernet/logs/{new-host-zone}.log` to ensure the network started successfully.
+* Start the network as normal. Make sure to rebuild the new host zone when running for the first time. You can view the logs in `dockernet/logs/{chain}.log` to ensure the network started successfully.
 ```
 make build-docker build=n
 make start-docker

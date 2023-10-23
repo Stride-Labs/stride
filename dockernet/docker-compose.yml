@@ -267,59 +267,59 @@ services:
       - ./state/hermes/config.toml:/home/hermes/.hermes/config.toml
     restart: always
 
-  relayer-gaia:
+  relayer-stride-gaia:
     image: stridezone:relayer
     volumes:
-      - ./state/relayer-gaia:/home/relayer/.relayer
+      - ./state/relayer-stride-gaia:/home/relayer/.relayer
     restart: always
     command: [ "bash", "start.sh", "stride-gaia" ]
 
   relayer-gaia-ics:
     image: stridezone:relayer
     volumes:
-      - ./state/relayer-gaia-ics:/home/relayer/.relayer
+      - ./state/relayer-stride-gaia-ics:/home/relayer/.relayer
     restart: always
     command: [ "bash", "start.sh", "stride-gaia-ics" ]
 
-  relayer-juno:
+  relayer-stride-juno:
     image: stridezone:relayer
     volumes:
-      - ./state/relayer-juno:/home/relayer/.relayer
+      - ./state/relayer-stride-juno:/home/relayer/.relayer
     restart: always
     command: [ "bash", "start.sh", "stride-juno" ]
 
-  relayer-osmo:
+  relayer-stride-osmo:
     image: stridezone:relayer
     volumes:
-      - ./state/relayer-osmo:/home/relayer/.relayer
+      - ./state/relayer-stride-osmo:/home/relayer/.relayer
     restart: always
     command: [ "bash", "start.sh", "stride-osmo" ]
 
-  relayer-stars:
+  relayer-stride-stars:
     image: stridezone:relayer
     volumes:
-      - ./state/relayer-stars:/home/relayer/.relayer
+      - ./state/relayer-stride-stars:/home/relayer/.relayer
     restart: always
     command: [ "bash", "start.sh", "stride-stars" ]
 
-  relayer-host:
+  relayer-stride-host:
     image: stridezone:relayer
     volumes:
-      - ./state/relayer-host:/home/relayer/.relayer
+      - ./state/relayer-stride-host:/home/relayer/.relayer
     restart: always
     command: [ "bash", "start.sh", "stride-host" ]
 
-  relayer-evmos:
+  relayer-stride--evmos:
     image: stridezone:relayer
     volumes:
-      - ./state/relayer-evmos:/home/relayer/.relayer
+      - ./state/relayer-stride-evmos:/home/relayer/.relayer
     restart: always
     command: [ "bash", "start.sh", "stride-evmos" ]
 
-  relayer-dydx:
+  relayer-stride-dydx:
     image: stridezone:relayer
     volumes:
-      - ./state/relayer-dydx:/home/relayer/.relayer
+      - ./state/relayer-stride-dydx:/home/relayer/.relayer
     restart: always
     command: [ "bash", "start.sh", "stride-dydx" ]
 
