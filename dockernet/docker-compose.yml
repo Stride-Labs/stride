@@ -229,6 +229,35 @@ services:
     volumes:
       - ./state/dydx5:/home/dydx/.dydxprotocol
 
+  noble1:
+    image: stridezone:noble
+    volumes:
+      - ./state/noble1:/home/noble/.noble
+    ports:
+      - "25857:26657"
+      - "1237:1317"
+      - "9010:9090"
+
+  noble2:
+    image: stridezone:noble
+    volumes:
+      - ./state/noble2:/home/noble/.noble
+
+  noble3:
+    image: stridezone:noble
+    volumes:
+      - ./state/noble3:/home/noble/.noble
+
+  noble4:
+    image: stridezone:noble
+    volumes:
+      - ./state/noble4:/home/noble/.noble
+
+  noble5:
+    image: stridezone:noble
+    volumes:
+      - ./state/noble5:/home/noble/.noble
+
   # Fill in new host zone being tested here
 
   hermes:
@@ -293,6 +322,13 @@ services:
       - ./state/relayer-dydx:/home/relayer/.relayer
     restart: always
     command: [ "bash", "start.sh", "stride-dydx" ]
+
+  relayer-noble:
+    image: stridezone:relayer
+    volumes:
+      - ./state/relayer-noble:/home/relayer/.relayer
+    restart: always
+    command: [ "bash", "start.sh", "dydx-noble" ]
 
   relayer-juno-osmo:
     image: stridezone:relayer

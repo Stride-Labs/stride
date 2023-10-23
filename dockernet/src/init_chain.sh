@@ -156,7 +156,11 @@ for (( i=1; i <= $NUM_NODES; i++ )); do
     echo "$val_mnemonic" | $cmd keys add $val_acct --recover --keyring-backend=test >> $KEYS_LOGS 2>&1
     val_addr=$($cmd keys show $val_acct --keyring-backend test -a | tr -cd '[:alnum:]._-')
     # Add this account to the current node
-    $cmd add-genesis-account ${val_addr} ${VAL_TOKENS}${DENOM}
+    genesis_coins=${VAL_TOKENS}${DENOM}
+    if [[ "$CHAIN" == "NOBLE" ]]; then
+        genesis_coins=${genesis_coins},${VAL_TOKENS}${USDC_DENOM}
+    fi
+    $cmd add-genesis-account ${val_addr} ${genesis_coins}
 
     # Copy over the provider stride validator keys to the provider (in the event
     # that we are testing ICS)
@@ -207,7 +211,7 @@ if [ "$CHAIN" == "STRIDE" ]; then
     # add relayer accounts
     for i in "${!RELAYER_ACCTS[@]}"; do
         RELAYER_ACCT="${RELAYER_ACCTS[i]}"
-        RELAYER_MNEMONIC="${RELAYER_MNEMONICS[i]}"
+        RELAYER_MNEMONIC="${STRIDE_RELAYER_MNEMONICS[i]}"
 
         echo "$RELAYER_MNEMONIC" | $MAIN_CMD keys add $RELAYER_ACCT --recover --keyring-backend=test >> $KEYS_LOGS 2>&1
         
@@ -232,6 +236,15 @@ else
         echo "$RELAYER_GAIA_ICS_MNEMONIC" | $MAIN_CMD keys add $RELAYER_GAIA_ICS_ACCT --recover --keyring-backend=test >> $KEYS_LOGS 2>&1
         RELAYER_ADDRESS=$($MAIN_CMD keys show $RELAYER_GAIA_ICS_ACCT --keyring-backend test -a | tr -cd '[:alnum:]._-')
         $MAIN_CMD add-genesis-account ${RELAYER_ADDRESS} ${VAL_TOKENS}${DENOM}
+    fi
+
+    # For noble, add a param authority account
+    if [ "$CHAIN" == "NOBLE" ]; then
+        echo "$NOBLE_AUTHORITHY_MNEMONIC" | $MAIN_CMD keys add authority --recover --keyring-backend test >> $KEYS_LOGS 2>&1
+        AUTHORITHY_ADDRESS=$($MAIN_CMD keys show authority --keyring-backend test -a | tr -cd '[:alnum:]._-')
+        $MAIN_CMD add-genesis-account ${AUTHORITHY_ADDRESS} ${VAL_TOKENS}${DENOM},${VAL_TOKENS}${USDC_DENOM}
+
+        sed -i -E "s|\"authority\": \"\"|\"authority\":\"${AUTHORITHY_ADDRESS}\"|g" $genesis_json 
     fi
 fi
 

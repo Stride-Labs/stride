@@ -16,8 +16,10 @@ TX_LOGS=$DOCKERNET_HOME/logs/tx.log
 KEYS_LOGS=$DOCKERNET_HOME/logs/keys.log
 
 # List of hosts enabled 
+# HOST_CHAINS have liquid staking support, ACCESSORY_CHAINS do not
 # TODO [DYDX]: Revert to main hosts
-HOST_CHAINS=(DYDX) 
+HOST_CHAINS=(DYDX)
+ACCESSORY_CHAINS=(NOBLE) 
 
 # If no host zones are specified above:
 #  `start-docker` defaults to just GAIA if HOST_CHAINS is empty
@@ -29,6 +31,8 @@ HOST_CHAINS=(DYDX)
 #  - STARS
 #  - EVMOS
 #  - HOST (Stride chain enabled as a host zone)
+#  - DYDX
+#  - NOBLE (only runs as an accessory chain - does not have liquid staking functionality)
 if [[ "${ALL_HOST_CHAINS:-false}" == "true" ]]; then 
   HOST_CHAINS=(GAIA EVMOS HOST)
 elif [[ "${#HOST_CHAINS[@]}" == "0" ]]; then 
@@ -44,6 +48,8 @@ STARS_DENOM="ustars"
 WALK_DENOM="uwalk"
 EVMOS_DENOM="aevmos"
 DYDX_DENOM="udydx"
+NOBLE_DENOM="utoken"
+USDC_DENOM="uusdc"
 STATOM_DENOM="stuatom"
 STJUNO_DENOM="stujuno"
 STOSMO_DENOM="stuosmo"
@@ -265,6 +271,20 @@ DYDX_RECEIVER_ADDRESS='dydx1q9caajs6wrfu2yhytvkqd2csxycx6revdcme9y'
 # minimum stake amount so this effectively gets the validator over the minimum
 DYDX_MICRO_DENOM_UNITS="000000000000000" 
 
+# NOBLE
+NOBLE_CHAIN_ID=NOBLE
+NOBLE_NODE_PREFIX=noble
+NOBLE_NUM_NODES=1
+NOBLE_BINARY="$DOCKERNET_HOME/../build/nobled"
+NOBLE_VAL_PREFIX=val
+NOBLE_ADDRESS_PREFIX=noble
+NOBLE_REV_ACCT=rev
+NOBLE_DENOM=$NOBLE_DENOM
+NOBLE_RPC_PORT=25857
+NOBLE_MAIN_CMD="$NOBLE_BINARY --home $DOCKERNET_HOME/state/${NOBLE_NODE_PREFIX}1"
+NOBLE_RECEIVER_ADDRESS='noble1dd9sxkz3wr723lsf65h549ykdh4npxzh5qawmg'
+NOBLE_AUTHORITHY_MNEMONIC="giant screen unit high agree swing impact switch lend universe sand myself conduct sustain august barely misery lawsuit honey social version window demise palace"
+
 # RELAYER
 RELAYER_GAIA_EXEC="$DOCKER_COMPOSE run --rm relayer-gaia"
 RELAYER_GAIA_ICS_EXEC="$DOCKER_COMPOSE run --rm relayer-gaia-ics"
@@ -274,6 +294,7 @@ RELAYER_STARS_EXEC="$DOCKER_COMPOSE run --rm relayer-stars"
 RELAYER_HOST_EXEC="$DOCKER_COMPOSE run --rm relayer-host"
 RELAYER_EVMOS_EXEC="$DOCKER_COMPOSE run --rm relayer-evmos"
 RELAYER_DYDX_EXEC="$DOCKER_COMPOSE run --rm relayer-dydx"
+RELAYER_NOBLE_EXEC="$DOCKER_COMPOSE run --rm relayer-noble"
 
 RELAYER_STRIDE_ACCT=rly1
 RELAYER_GAIA_ACCT=rly2
@@ -285,6 +306,7 @@ RELAYER_EVMOS_ACCT=rly7
 RELAYER_STRIDE_ICS_ACCT=rly8
 RELAYER_GAIA_ICS_ACCT=rly9
 RELAYER_DYDX_ACCT=rly10
+RELAYER_NOBLE_ACCT=rly11
 RELAYER_ACCTS=(
   $RELAYER_GAIA_ACCT 
   $RELAYER_JUNO_ACCT 
@@ -304,7 +326,9 @@ RELAYER_HOST_MNEMONIC="renew umbrella teach spoon have razor knee sock divert in
 RELAYER_GAIA_ICS_MNEMONIC="size chimney clog job robot thunder gaze vapor economy smooth kit denial alter merit produce front force eager outside mansion believe fan tonight detect"
 RELAYER_EVMOS_MNEMONIC="science depart where tell bus ski laptop follow child bronze rebel recall brief plug razor ship degree labor human series today embody fury harvest"
 RELAYER_DYDX_MNEMONIC="mother depth nature rapid draw west afraid depend allow fee siren useful catalog sun biology cabbage busy science front smile nurse balcony medal burst"
-RELAYER_MNEMONICS=(
+RELAYER_NOBLE_MNEMONIC="sentence fruit crumble sail bar knife exact flame apart prosper hint myth clean among tiny burden depart purity select envelope identify cross physical emerge"
+
+STRIDE_RELAYER_MNEMONICS=(
   "$RELAYER_GAIA_MNEMONIC"
   "$RELAYER_JUNO_MNEMONIC"
   "$RELAYER_OSMO_MNEMONIC"
@@ -340,6 +364,9 @@ EVMOS_ADDRESS() {
 }
 DYDX_ADDRESS() { 
   $DYDX_MAIN_CMD keys show ${DYDX_VAL_PREFIX}1 --keyring-backend test -a 
+}
+NOBLE_ADDRESS() { 
+  $NOBLE_MAIN_CMD keys show ${NOBLE_VAL_PREFIX}1 --keyring-backend test -a 
 }
 
 CSLEEP() {

@@ -5,7 +5,7 @@ SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 source ${SCRIPT_DIR}/config.sh
 
 # Confirm binaries are present
-for chain in STRIDE ${HOST_CHAINS[@]}; do
+for chain in STRIDE ${HOST_CHAINS[@]} ${ACCESSORY_CHAINS[@]}; do
     binary_path=$(GET_VAR_VALUE ${chain}_BINARY)
     binary_path=$(realpath "$binary_path")
     if [[ ! -e "$binary_path" ]]; then
@@ -51,7 +51,7 @@ if [[ "${UPGRADE_NAME:-}" != "" ]]; then
 fi
 
 # Initialize the state for each chain
-for chain in STRIDE ${HOST_CHAINS[@]}; do
+for chain in STRIDE ${HOST_CHAINS[@]} ${ACCESSORY_CHAINS[@]}; do
     bash $SRC/init_chain.sh $chain
 done
 
@@ -67,9 +67,9 @@ for chain in STRIDE ${HOST_CHAINS[@]}; do
     fi
 done
 
-# Register all host zones 
+# Register all host zones (except noble)
 for i in ${!HOST_CHAINS[@]}; do
-    bash $SRC/register_host.sh ${HOST_CHAINS[$i]} $i 
+    bash $SRC/register_host.sh $chain $i 
 done
 
 $SRC/create_logs.sh &
