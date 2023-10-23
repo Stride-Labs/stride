@@ -15,16 +15,16 @@ git checkout {commit-hash}
 cd ..
 ```
 * Add a comment to `.gitmodules` with the commit hash
-* Add the build command for that host zone in `dockernet/build.sh`. For most zones, we use the first letter of the zone, for the new zone, just use `n` (since it won't be merged in, it won't conflict with anything).
+* Add the build command for that host zone in `dockernet/build.sh`. For most zones, we use the first letter of the zone, for the new zone, just use `z` (since it won't be merged in, it won't conflict with anything).
 ```
-while getopts sgojhir{n} flag; do
+while getopts sgojhir{z} flag; do
    case "${flag}" in
    ...
-   n) build_local_and_docker {new-host-zone} deps/{new-host-zone} ;;  
+   z) build_local_and_docker {new-host-zone} deps/{new-host-zone} ;;  
 ```
 * Before moving on, test that you can build the binary and docker iamge by running
 ```bash
-make build-docker build={n}
+make build-docker build={z}
 ```
 * Add the host zone and relayer to `dockernet/docker-compose.yml`. Add 5 nodes, adding port forwarding to the first node only. Add the relayer. Drop the RPC port number by 100, and the API/gRPC port by 10, relative to the last host zone that was added.
 ```
@@ -90,8 +90,8 @@ RELAYER_ACCTS=(... $RELAYER_{CHAIN}_ACCT)
 
 # stride1muwz5er4wq7svxnh5dgn2tssm92je5dwthxl7q
 RELAYER_{CHAIN}_MNEMONIC="science depart where tell bus ski laptop follow child bronze rebel recall brief plug razor ship degree labor human series today embody fury harvest"
-# NOTE: Update the RELAYER_MNEMONICS variable directly!
-RELAYER_MNEMONICS=(
+# NOTE: Update the STRIDE_RELAYER_MNEMONICS variable directly!
+STRIDE_RELAYER_MNEMONICS=(
     ...
     "$RELAYER_{CHAIN}_MNEMONIC"
 )
