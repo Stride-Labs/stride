@@ -153,6 +153,63 @@ func (k Keeper) SetWithdrawalAddressOnHost(ctx sdk.Context, hostZone types.HostZ
 	return nil
 }
 
+func (k Keeper) ClaimAccruedStakingRewardsOnHost(ctx sdk.Context, hostZone types.HostZone) error {
+	// The relevant ICA is the delegate account
+	owner := types.FormatICAAccountOwner(hostZone.ChainId, types.ICAAccountType_DELEGATION)
+	portID, err := icatypes.NewControllerPortID(owner)
+	if err != nil {
+		return errorsmod.Wrapf(sdkerrors.ErrInvalidAddress, "%s has no associated portId", owner)
+	}
+	connectionId, err := k.GetConnectionId(ctx, portID)
+	if err != nil {
+		return errorsmod.Wrapf(sdkerrors.ErrInvalidChainID, "%s has no associated connection", portID)
+	}
+
+	// Fetch the relevant ICA
+	if hostZone.DelegationIcaAddress == "" {
+		k.Logger(ctx).Error(fmt.Sprintf("Zone %s is missing a delegation address!", hostZone.ChainId))
+		return nil
+	}
+
+	if hostZone.WithdrawalIcaAddress == "" {
+		k.Logger(ctx).Error(fmt.Sprintf("Zone %s is missing a withdrawal address!", hostZone.ChainId))
+		return nil
+	}
+	k.Logger(ctx).Info(utils.LogWithHostZone(hostZone.ChainId, "Withdrawal Address: %s, Delegator Address: %s",
+		hostZone.WithdrawalIcaAddress, hostZone.DelegationIcaAddress))
+
+	validators := hostZone.Validators
+	// build multi-message transaction to withdraw rewards from each validator
+	msgs := make([]proto.Message, 0, len(validators))
+	for _, Val := range validators {
+
+		// skip withdrawing rewards
+		if Val.Delegation.IsZero() {
+			continue
+		}
+		val, err := sdk.ValAddressFromBech32(Val.Address)
+		if err != nil {
+			return err
+		}
+		delIca, err := sdk.AccAddressFromBech32(hostZone.DelegationIcaAddress)
+		if err != nil {
+			return err
+		}
+		msg := distributiontypes.NewMsgWithdrawDelegatorReward(delIca, val)
+		if err := msg.ValidateBasic(); err != nil {
+			return err
+		}
+		msgs = append(msgs, msg)
+	}
+
+	_, err = k.SubmitTxsStrideEpoch(ctx, connectionId, msgs, types.ICAAccountType_DELEGATION, "", nil)
+	if err != nil {
+		return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "Failed to SubmitTxs for %s, %s, %s", connectionId, hostZone.ChainId, msgs)
+	}
+
+	return nil
+}
+
 // Submits an ICQ for the withdrawal account balance
 func (k Keeper) UpdateWithdrawalBalance(ctx sdk.Context, hostZone types.HostZone) error {
 	k.Logger(ctx).Info(utils.LogWithHostZone(hostZone.ChainId, "Submitting ICQ for withdrawal account balance"))
