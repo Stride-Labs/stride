@@ -6,9 +6,9 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/suite"
 
-	"github.com/Stride-Labs/stride/v15/app/apptesting"
-	"github.com/Stride-Labs/stride/v15/x/stakeibc/keeper"
-	"github.com/Stride-Labs/stride/v15/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v16/app/apptesting"
+	"github.com/Stride-Labs/stride/v16/x/stakeibc/keeper"
+	"github.com/Stride-Labs/stride/v16/x/stakeibc/types"
 )
 
 const (

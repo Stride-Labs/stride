@@ -1,7 +1,7 @@
 package types_test
 
 import (
-	strideApp "github.com/Stride-Labs/stride/v15/app"
+	strideApp "github.com/Stride-Labs/stride/v16/app"
 )
 
 var (

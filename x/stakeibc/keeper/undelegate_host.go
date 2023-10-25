@@ -9,8 +9,8 @@ import (
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/gogoproto/proto"
 
-	"github.com/Stride-Labs/stride/v15/utils"
-	"github.com/Stride-Labs/stride/v15/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v16/utils"
+	"github.com/Stride-Labs/stride/v16/x/stakeibc/types"
 )
 
 const (

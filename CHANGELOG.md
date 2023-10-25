@@ -42,6 +42,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <!-- GH ACTIONS TEMPLATE - INSERT NEW VERSION HERE -->
 
+## [v16.0.0](https://github.com/Stride-Labs/stride/releases/tag/v16.0.0) - 2023-10-14
+
+### On-Chain changes
+1. Inflation Fix ([#951](https://github.com/Stride-Labs/stride/pull/951))
+2. v16 Import Paths ([#952](https://github.com/Stride-Labs/stride/pull/952))
+
 ## [v15.0.0](https://github.com/Stride-Labs/stride/releases/tag/v15.0.0) - 2023-09-18
 
 ### On-Chain changes
