@@ -7,7 +7,7 @@ import (
 	errorsmod "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/Stride-Labs/stride/v15/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v16/x/stakeibc/types"
 )
 
 func (k msgServer) UpdateInnerRedemptionRateBounds(goCtx context.Context, msg *types.MsgUpdateInnerRedemptionRateBounds) (*types.MsgUpdateInnerRedemptionRateBoundsResponse, error) {
@@ -42,6 +42,7 @@ func (k msgServer) UpdateInnerRedemptionRateBounds(goCtx context.Context, msg *t
 	// Set the inner bounds on the host zone
 	zone.MinInnerRedemptionRate = innerMinSafetyThreshold
 	zone.MaxInnerRedemptionRate = innerMaxSafetyThreshold
+
 	k.SetHostZone(ctx, zone)
 
 	return &types.MsgUpdateInnerRedemptionRateBoundsResponse{}, nil

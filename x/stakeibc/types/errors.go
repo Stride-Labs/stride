@@ -58,4 +58,5 @@ var (
 	ErrUnableToRemoveValidator             = errorsmod.Register(ModuleName, 1550, "Unable to remove validator")
 	ErrUndelegateHostNotCallable           = errorsmod.Register(ModuleName, 1551, "Undelegate host is disabled")
 	ErrInvalidBounds                       = errorsmod.Register(ModuleName, 1552, "Invalid safety bounds - inner bounds must be within outer bounds")
+	ErrHostZoneNotHalted                   = errorsmod.Register(ModuleName, 1553, "host zone is not halted")
 )

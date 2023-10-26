@@ -8,7 +8,7 @@ import (
 
 	errorsmod "cosmossdk.io/errors"
 
-	icacallbacktypes "github.com/Stride-Labs/stride/v15/x/icacallbacks/types"
+	icacallbacktypes "github.com/Stride-Labs/stride/v16/x/icacallbacks/types"
 )
 
 func migrateCallbacks(store sdk.KVStore, cdc codec.BinaryCodec) error {
