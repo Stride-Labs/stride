@@ -12,6 +12,8 @@ const (
 	ICACallbackID_Redemption = "redemption"
 	ICACallbackID_Rebalance  = "rebalance"
 	ICACallbackID_Detokenize = "detokenize"
+
+	ICACallbackID_CommunityPoolReturn = "communitypoolreturn"
 )
 
 func (k Keeper) Callbacks() icacallbackstypes.ModuleCallbacks {
@@ -23,5 +25,6 @@ func (k Keeper) Callbacks() icacallbackstypes.ModuleCallbacks {
 		{CallbackId: ICACallbackID_Redemption, CallbackFunc: icacallbackstypes.ICACallbackFunction(k.RedemptionCallback)},
 		{CallbackId: ICACallbackID_Rebalance, CallbackFunc: icacallbackstypes.ICACallbackFunction(k.RebalanceCallback)},
 		{CallbackId: ICACallbackID_Detokenize, CallbackFunc: icacallbackstypes.ICACallbackFunction(k.DetokenizeCallback)},
+		{CallbackId: ICACallbackID_CommunityPoolReturn, CallbackFunc: icacallbackstypes.ICACallbackFunction(k.CommunityPoolReturnCallback)},		
 	}
 }
