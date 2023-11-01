@@ -38,7 +38,7 @@ type UpdateRedemptionRateBounds struct {
 func (s *UpgradeTestSuite) TestUpgrade() {
 	dummyUpgradeHeight := int64(5)
 
-	// Setup the store before the ugprade
+	// Setup the store before the upgrade
 	checkRedemptionRatesAfterUpgrade := s.SetupRedemptionRatesBeforeUpgrade()
 	checkQueriesAfterUpgrade := s.SetupQueriesBeforeUpgrade()
 

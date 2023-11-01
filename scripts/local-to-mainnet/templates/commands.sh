@@ -36,7 +36,7 @@ DOCKER_COMPOSE logs -f relayer | sed -r -u "s/\x1B\[([0-9]{1,3}(;[0-9]{1,2})?)?[
 # IBC Transfer from HOST to stride (from relayer account)
 HOST_BINARY tx ibc-transfer transfer transfer $transfer_channel stride1u20df3trc2c2zdhm8qvh2hdjx9ewh00sv6eyy8 4000000HOST_DENOM --from hot --chain-id HOST_CHAIN_ID -y --keyring-backend test --node http://HOST_ENDPOINT:26657 --fees 150000HOST_DENOM
 
-# Confirm funds were recieved on stride and get IBC denom
+# Confirm funds were received on stride and get IBC denom
 build/strided --home STRIDE_HOME q bank balances stride1u20df3trc2c2zdhm8qvh2hdjx9ewh00sv6eyy8
 
 # Register host zone
