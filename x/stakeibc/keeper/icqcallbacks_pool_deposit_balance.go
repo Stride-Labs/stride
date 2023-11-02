@@ -19,7 +19,7 @@ import (
 //  autopilot memo causes (hostDenom -> stake), (stHostDenom -> redeem), or (otherDenom -> do nothing)
 
 // Note: for now, to get proofs in your ICQs, you need to query the entire store on the host zone! e.g. "store/bank/key"
-func PoolDepositBalanceCallback(k Keeper, ctx sdk.Context, args []byte, query icqtypes.Query) error {
+func CommunityPoolDepositBalanceCallback(k Keeper, ctx sdk.Context, args []byte, query icqtypes.Query) error {
 	k.Logger(ctx).Info(utils.LogICQCallbackWithHostZone(query.ChainId, ICQCallbackID_CommunityPoolDepositBalance,
 		"Starting community pool deposit balance callback, QueryId: %vs, QueryType: %s, Connection: %s", query.Id, query.QueryType, query.ConnectionId))
 
@@ -60,11 +60,11 @@ func PoolDepositBalanceCallback(k Keeper, ctx sdk.Context, args []byte, query ic
 	if depositDenom == communityPoolHostZone.HostDenom {
 		autoPilotAction = LiquidStake
 	}
-	ibcStDenom := k.GetStakedHostTokenIbcDenomOnHostZone(communityPoolHostZone)
+	ibcStDenom := k.GetStakedHostTokenDenomOnHostZone(communityPoolHostZone)
 	if depositDenom == ibcStDenom {
 		autoPilotAction = RedeemStake
 	}
 	transferCoin := sdk.NewCoin(depositDenom, depositBalanceAmount)
 
-	return k.IBCTransferCommunityPoolTokens(ctx, transferCoin, communityPoolHostZone, autoPilotAction)
+	return k.TransferCommunityPoolTokens(ctx, transferCoin, communityPoolHostZone, autoPilotAction)
 }

@@ -24,7 +24,7 @@ const (
 )
 
 // Transfers tokens from the community pool deposit ICA account to the host zone holding module address for that pool
-func (k Keeper) IBCTransferCommunityPoolTokens(ctx sdk.Context, token sdk.Coin, communityPoolHostZone types.HostZone, memoAction string) error {
+func (k Keeper) TransferCommunityPoolTokens(ctx sdk.Context, token sdk.Coin, communityPoolHostZone types.HostZone, memoAction string) error {
 
 	// The memo may contain autopilot commands to atomically liquid stake tokens when transfer succeeds
 	//  both transfer+liquid stake will succeed and stTokens will end in the stride side holding address, 
@@ -91,7 +91,7 @@ func (k Keeper) IBCTransferCommunityPoolTokens(ctx sdk.Context, token sdk.Coin, 
 
 
 // Transfers all tokens in the Stride-side holding address over to the communityPoolReturnAddress ICA
-func (k Keeper) IBCReturnAllCommunityPoolTokens(ctx sdk.Context, communityPoolHostZone types.HostZone) error {
+func (k Keeper) ReturnAllCommunityPoolTokens(ctx sdk.Context, communityPoolHostZone types.HostZone) error {
 	// Use bankKeeper to see all coin types and amounts currently in the stride-side holding module address
 	req := banktypes.NewQueryAllBalancesRequest(sdk.AccAddress(communityPoolHostZone.CommunityPoolHoldingAddress), nil)
 	resp, err := k.bankKeeper.AllBalances(ctx, req)
@@ -132,7 +132,7 @@ func (k Keeper) IBCReturnAllCommunityPoolTokens(ctx sdk.Context, communityPoolHo
 			callbackArgs := types.CommunityPoolReturnTransferCallback{
 				HostZoneId: communityPoolHostZone.ChainId,
 				DenomStride: foundCoin.Denom,
-				IbcDenom: k.GetIbcDenomOnHostZone(foundCoin.Denom, communityPoolHostZone),
+				IbcDenom: k.GetDenomOnHostZone(foundCoin.Denom, communityPoolHostZone),
 				Amount: foundCoin.Amount,
 			}
 			callbackArgsBz, err := proto.Marshal(&callbackArgs)
@@ -162,7 +162,7 @@ func (k Keeper) IBCReturnAllCommunityPoolTokens(ctx sdk.Context, communityPoolHo
 
 
 // helper function to find the ibc denom on the foreign chain of tokens after transfer from stride  
-func (k Keeper) GetIbcDenomOnHostZone(strideDenom string, hostZone types.HostZone) (ibcDenom string) {
+func (k Keeper) GetDenomOnHostZone(strideDenom string, hostZone types.HostZone) (ibcDenom string) {
 	// we use the hostZone.TransferChannelId because direction is stride to hostZone
 	sourcePrefix := transfertypes.GetDenomPrefix(transfertypes.PortID, hostZone.TransferChannelId)
 	prefixedDenom := sourcePrefix + strideDenom
@@ -171,8 +171,8 @@ func (k Keeper) GetIbcDenomOnHostZone(strideDenom string, hostZone types.HostZon
 }
 
 // given a hostZone with native denom, returns the ibc denom on the zone for the staked stDenom 
-func (k Keeper) GetStakedHostTokenIbcDenomOnHostZone(hostZone types.HostZone) (ibcStakedDenom string) {
+func (k Keeper) GetStakedHostTokenDenomOnHostZone(hostZone types.HostZone) (ibcStakedDenom string) {
 	nativeDenom := hostZone.HostDenom
 	stDenomOnStride := types.StAssetDenomFromHostZoneDenom(nativeDenom)
-	return k.GetIbcDenomOnHostZone(stDenomOnStride, hostZone)
+	return k.GetDenomOnHostZone(stDenomOnStride, hostZone)
 }

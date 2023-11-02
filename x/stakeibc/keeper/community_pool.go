@@ -28,19 +28,19 @@ func (k Keeper) SweepAllCommunityPoolTokens(ctx sdk.Context) error {
 			hostZone.CommunityPoolHoldingAddress != "" &&
 			hostZone.CommunityPoolReturnIcaAddress != "" {
 				// ICQ for the host denom of the chain, these are tokens the pool wants staked
-				err:= k.ICQCommunityPoolDepositICABalance(ctx, hostZone, hostZone.HostDenom)
+				err:= k.QueryCommunityPoolDepositBalance(ctx, hostZone, hostZone.HostDenom)
 				if err != nil {
 					return err
 				}
 				// ICQ for the stToken of the host denom, these are tokens the pool wants redeemed
 				//   if stDenom is the denom on stride, ibcStDenom is the ibc denom on hostZone for stDenom
-				ibcStDenom := k.GetStakedHostTokenIbcDenomOnHostZone(hostZone)
-				err = k.ICQCommunityPoolDepositICABalance(ctx, hostZone, ibcStDenom)
+				ibcStDenom := k.GetStakedHostTokenDenomOnHostZone(hostZone)
+				err = k.QueryCommunityPoolDepositBalance(ctx, hostZone, ibcStDenom)
 				if err != nil {
 					return err
 				}				
 				// Transfer out all all tokens in the holding address back to the Return ICA
-				err = k.IBCReturnAllCommunityPoolTokens(ctx, hostZone)
+				err = k.ReturnAllCommunityPoolTokens(ctx, hostZone)
 				if err != nil {
 					return err
 				}				
@@ -52,7 +52,7 @@ func (k Keeper) SweepAllCommunityPoolTokens(ctx sdk.Context) error {
 
 // ICQ specific denom for balance in the deposit ICA on the community pool host zone
 // The ICQ callback will call IBCTransferCommunityPoolICATokensToStride with found token(s) as input
-func (k Keeper) ICQCommunityPoolDepositICABalance(ctx sdk.Context, hostZone types.HostZone, denom string) error {
+func (k Keeper) QueryCommunityPoolDepositBalance(ctx sdk.Context, hostZone types.HostZone, denom string) error {
 	k.Logger(ctx).Info(utils.LogWithHostZone(hostZone.ChainId, "Submitting ICQ for %s in community pool deposit account balance", denom))
 
 	// Get the withdrawal account address from the host zone
