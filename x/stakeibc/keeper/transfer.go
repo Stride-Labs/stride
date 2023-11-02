@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 
+	//"cosmossdk.io/errors"
 	errorsmod "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
@@ -38,7 +39,7 @@ func (k Keeper) TransferCommunityPoolTokens(ctx sdk.Context, token sdk.Coin, hos
 		autopilotMetadata.Autopilot.Stakeibc.Action = "LiquidStake"		
 		autopilotCmdBz, err := json.Marshal(autopilotMetadata)
 		if err != nil {
-			errorsmod.Wrapf(err, "Couldn't build autopilot json for %v", autopilotMetadata)
+			return errorsmod.Wrapf(err, "Couldn't build autopilot json for %v", autopilotMetadata)
 		}
 
 		memoCommands = string(autopilotCmdBz)
@@ -48,7 +49,7 @@ func (k Keeper) TransferCommunityPoolTokens(ctx sdk.Context, token sdk.Coin, hos
 		autopilotMetadata.Autopilot.Stakeibc.Action = "RedeemStake"		
 		autopilotCmdBz, err := json.Marshal(autopilotMetadata)
 		if err != nil {
-			errorsmod.Wrapf(err, "Couldn't build autopilot json for %v", autopilotMetadata)
+			return errorsmod.Wrapf(err, "Couldn't build autopilot json for %v", autopilotMetadata)
 		}
 
 		memoCommands = string(autopilotCmdBz)
@@ -146,8 +147,9 @@ func (k Keeper) TransferCoinToReturn(ctx sdk.Context, hostZone types.HostZone, c
 
 	msgTransferResponse, err := k.RecordsKeeper.TransferKeeper.Transfer(sdk.WrapSDKContext(ctx), msg)
 	if err != nil {
-			return errorsmod.Wrapf(err, "Error submitting ibc transfer for %+v", coin)
+		return errorsmod.Wrapf(err, "Error submitting ibc transfer for %+v", coin)
 	} else {
+		//return errorsmod.Wrapf(errors.New(""), "denom is %s", k.GetDenomOnHostZone(coin.Denom, hostZone))
 		result := fmt.Sprintf("Successfully submitted ibctransfer for %+v with response %+v", 
 				coin, msgTransferResponse)
 		k.Logger(ctx).Info(result)
