@@ -35,6 +35,8 @@ func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochInfo epochstypes.EpochInf
 		k.CleanupEpochUnbondingRecords(ctx, epochNumber)
 		// Create an empty unbonding record for this epoch
 		k.CreateEpochUnbondingRecord(ctx, epochNumber)
+		// Transfers in and out of tokens for hostZones which have community pools
+		k.SweepAllCommunityPoolTokens(ctx)
 	}
 
 	// Stride Epoch - Process Deposits and Delegations

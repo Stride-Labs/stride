@@ -26,7 +26,6 @@ func GetTxCmd() *cobra.Command {
 
 	cmd.AddCommand(CmdLiquidStake())
 	cmd.AddCommand(CmdLSMLiquidStake())
-	cmd.AddCommand(CmdCommunityPoolLiquidStake())	
 	cmd.AddCommand(CmdRegisterHostZone())
 	cmd.AddCommand(CmdRedeemStake())
 	cmd.AddCommand(CmdClaimUndelegatedTokens())

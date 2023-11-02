@@ -169,3 +169,10 @@ func (k Keeper) GetIbcDenomOnHostZone(strideDenom string, hostZone types.HostZon
 
 	return transfertypes.ParseDenomTrace(prefixedDenom).IBCDenom()
 }
+
+// given a hostZone with native denom, returns the ibc denom on the zone for the staked stDenom 
+func (k Keeper) GetStakedHostTokenIbcDenomOnHostZone(hostZone types.HostZone) (ibcStakedDenom string) {
+	nativeDenom := hostZone.HostDenom
+	stDenomOnStride := types.StAssetDenomFromHostZoneDenom(nativeDenom)
+	return k.GetIbcDenomOnHostZone(stDenomOnStride, hostZone)
+}

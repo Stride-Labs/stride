@@ -12,8 +12,6 @@ import "cosmos_proto/cosmos.proto";
 service Msg {
   rpc LiquidStake(MsgLiquidStake) returns (MsgLiquidStakeResponse);
   rpc LSMLiquidStake(MsgLSMLiquidStake) returns (MsgLSMLiquidStakeResponse);
-  rpc CommunityPoolLiquidStake(MsgCommunityPoolLiquidStake) 
-      returns (MsgCommunityPoolLiquidStakeResponse);  
   rpc RedeemStake(MsgRedeemStake) returns (MsgRedeemStakeResponse);
   rpc RegisterHostZone(MsgRegisterHostZone)
       returns (MsgRegisterHostZoneResponse);
@@ -51,17 +49,6 @@ message MsgLSMLiquidStake {
   string lsm_token_ibc_denom = 3;
 }
 message MsgLSMLiquidStakeResponse { bool transaction_complete = 1; }
-
-message MsgCommunityPoolLiquidStake {
-  string creator = 1;
-  string chain_id = 2;
-  string amount = 3 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
-    (gogoproto.nullable) = false
-  ];
-  string token_denom = 4;
-}
-message MsgCommunityPoolLiquidStakeResponse {}
 
 message MsgClearBalance {
   string creator = 1;
