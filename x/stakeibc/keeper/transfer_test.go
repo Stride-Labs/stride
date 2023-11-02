@@ -198,7 +198,47 @@ func (s *KeeperTestSuite) TestGetDenomOnHostZone() {
 			strideDenom: "uatom", 
 			transferChannel: "channel-3",
 			ibcDenom: "ibc/A4DB47A9D3CF9A068D454513891B526702455D3EF08FB9EB558C561F9DC2B701",
-		},		
+		},
+		{
+			strideDenom: "uatom", 
+			transferChannel: "channel-10",
+			ibcDenom: "ibc/A670D9568B3E399316EEDE40C1181B7AA4BD0695F0B37513CE9B95B977DFC12E",
+		},
+		{
+			strideDenom: "uosmo", 
+			transferChannel: "channel-999",
+			ibcDenom: "ibc/BBF0BA1A51EA726A21CDC784B4834DCB64407BB6E2BFC8F15DE266DB05F6000D",
+		},
+		{
+			strideDenom: "uusdc", 
+			transferChannel: "channel-208",
+			ibcDenom: "ibc/D189335C6E4A68B513C10AB227BF1C1D38C746766278BA3EEB4FB14124F1D858",
+		},
+		{
+			strideDenom: "ujuno", 
+			transferChannel: "channel-42",
+			ibcDenom: "ibc/46B44899322F3CD854D2D46DEEF881958467CDD4B3B10086DA49296BBED94BED",
+		},
+		{
+			strideDenom: "aevmos", 
+			transferChannel: "channel-204",
+			ibcDenom: "ibc/6AE98883D4D5D5FF9E50D7130F1305DA2FFA0C652D1DD9C123657C6B4EB2DF8A",
+		},
+		{
+			strideDenom: "ustrd", 
+			transferChannel: "channel-326",
+			ibcDenom: "ibc/A8CA5EE328FA10C9519DF6057DA1F69682D28F7D0F5CCC7ECB72E3DCA2D157A4",
+		},
+		{
+			strideDenom: "stuatom", 
+			transferChannel: "channel-326",
+			ibcDenom: "ibc/C140AFD542AE77BD7DCC83F13FDD8C5E5BB8C4929785E6EC2F4C636F98F17901",
+		},
+		{
+			strideDenom: "stuosmo", 
+			transferChannel: "channel-326",
+			ibcDenom: "ibc/D176154B0C63D1F9C6DCFB4F70349EBF2E2B5A87A05902F57A6AE92B863E9AEC",
+		},
 	}
 
 	hostZone := types.HostZone{

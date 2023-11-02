@@ -12,7 +12,6 @@ const (
 	ICACallbackID_Redemption = "redemption"
 	ICACallbackID_Rebalance  = "rebalance"
 	ICACallbackID_Detokenize = "detokenize"
-
 	ICACallbackID_CommunityPoolReturn = "communitypoolreturn"
 )
 
