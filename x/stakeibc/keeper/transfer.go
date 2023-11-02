@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 
 	//"cosmossdk.io/errors"
@@ -27,14 +28,30 @@ const (
 )
 
 // Transfers tokens from the community pool deposit ICA account to the host zone holding module address for that pool
-func (k Keeper) TransferCommunityPoolTokens(ctx sdk.Context, token sdk.Coin, hostZone types.HostZone, autoPilotAction string) error {
+func (k Keeper) TransferCommunityPoolTokens(ctx sdk.Context, hostZone types.HostZone, token sdk.Coin, autoPilotAction string) error {
+	// Verify that the holding address exists
+	if hostZone.CommunityPoolHoldingAddress == "" || hostZone.CommunityPoolDepositIcaAddress == "" {
+		return errors.New("Invalid holding address or deposit address, cannot build valid ICA commands")
+	}
 
 	// The memo may contain autopilot commands to atomically liquid stake/redeem tokens when transfer succeeds
 	//  both transfer+liquid stake will succeed and tokens will end in the stride side holding address, 
 	//  or neither will and the original base tokens will return to the foreign deposit ICA address
 	memoCommands := ""
-	autopilotMetadata := autopilottypes.RawPacketMetadata{}
-	autopilotMetadata.Autopilot.Receiver = hostZone.CommunityPoolHoldingAddress
+	autopilotMetadata := autopilottypes.RawPacketMetadata{
+		Autopilot: &struct{
+			Receiver string                  				`json:"receiver"`
+			Stakeibc *autopilottypes.StakeibcPacketMetadata `json:"stakeibc,omitempty"`
+			Claim    *autopilottypes.ClaimPacketMetadata    `json:"claim,omitempty"`
+		}{
+			Receiver: hostZone.CommunityPoolHoldingAddress,
+			Stakeibc: &autopilottypes.StakeibcPacketMetadata{
+				Action: "LiquidStake",
+				StrideAddress: hostZone.CommunityPoolHoldingAddress,
+			},
+		},
+	}
+
 	if autoPilotAction == LiquidStake {
 		autopilotMetadata.Autopilot.Stakeibc.Action = "LiquidStake"		
 		autopilotCmdBz, err := json.Marshal(autopilotMetadata)

@@ -15,6 +15,80 @@ import (
 
 const chainId = "GAIA"
 
+type TransferCommunityPoolTokensTestCase struct {
+	hostZone	types.HostZone
+	coin 		sdk.Coin
+	action 		string
+}
+
+func (s *KeeperTestSuite) SetupTransferCommunityPoolTokens() TransferCommunityPoolTokensTestCase {
+	s.CreateICAChannel(chainId+"."+types.ICAAccountType_COMMUNITY_POOL_DEPOSIT.String())
+
+	holdingAccount := s.TestAccs[0]
+	holdingAddress := holdingAccount.String()
+	depositIcaAccount := s.TestAccs[1]
+	depositIcaAddress := depositIcaAccount.String()
+	hostZone := types.HostZone{
+		ChainId: chainId,
+		ConnectionId: "connection-0",
+		TransferChannelId: "channel-0",
+		CommunityPoolHoldingAddress: holdingAddress,
+		CommunityPoolDepositIcaAddress: depositIcaAddress,
+	}
+
+	balanceToTransfer := sdkmath.NewInt(1_000_000)
+	coin := sdk.NewCoin("tokens", balanceToTransfer)
+	s.FundAccount(depositIcaAccount, coin)
+
+	return TransferCommunityPoolTokensTestCase{
+		hostZone: hostZone,
+		coin: coin,
+		action: keeper.LiquidStake,
+	}
+}
+
+func (s *KeeperTestSuite) TestTransferCommunityPoolTokens_MissingHoldingFail() {
+	tc := s.SetupTransferCommunityPoolTokens()
+	tc.hostZone.CommunityPoolHoldingAddress = ""
+
+	// Verify that the ICA msg was successfully sent off
+	err := s.App.StakeibcKeeper.TransferCommunityPoolTokens(s.Ctx, tc.hostZone, tc.coin, tc.action)
+	s.Require().ErrorContains(err, "holding address")
+}
+
+func (s *KeeperTestSuite) TestTransferCommunityPoolTokens_MissingDepositFail() {
+	tc := s.SetupTransferCommunityPoolTokens()
+	tc.hostZone.CommunityPoolDepositIcaAddress = ""
+
+	// Verify that the ICA msg was successfully sent off
+	err := s.App.StakeibcKeeper.TransferCommunityPoolTokens(s.Ctx, tc.hostZone, tc.coin, tc.action)
+	s.Require().ErrorContains(err, "deposit address")
+}
+
+func (s *KeeperTestSuite) TestTransferCommunityPoolTokens_ConnectionSendFail() {
+	tc := s.SetupTransferCommunityPoolTokens()
+	tc.hostZone.ConnectionId = "MissingChannel"
+
+	// Verify that the ICA msg was successfully sent off
+	err := s.App.StakeibcKeeper.TransferCommunityPoolTokens(s.Ctx, tc.hostZone, tc.coin, tc.action)
+	s.Require().ErrorContains(err, "invalid connection id")
+}
+
+func (s *KeeperTestSuite) TestTransferCommunityPoolTokens_Successful() {
+	tc := s.SetupTransferCommunityPoolTokens()
+
+	// Verify that the ICA msg was successfully sent off
+	err := s.App.StakeibcKeeper.TransferCommunityPoolTokens(s.Ctx, tc.hostZone, tc.coin, tc.action)
+	s.Require().NoError(err)
+
+	// Get the tx packets which are being sent
+	// Get the marshalled msg data --> verify the fields are as expected in transfer message
+	//   verify the autopilot message is correct
+}
+
+
+
+
 type TransferCoinToReturnTestCase struct {
 	hostZone 	types.HostZone
 	coin   		sdk.Coin

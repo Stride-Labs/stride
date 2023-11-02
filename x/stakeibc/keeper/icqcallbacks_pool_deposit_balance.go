@@ -66,5 +66,5 @@ func CommunityPoolDepositBalanceCallback(k Keeper, ctx sdk.Context, args []byte,
 	}
 	transferCoin := sdk.NewCoin(depositDenom, depositBalanceAmount)
 
-	return k.TransferCommunityPoolTokens(ctx, transferCoin, communityPoolHostZone, autoPilotAction)
+	return k.TransferCommunityPoolTokens(ctx, communityPoolHostZone, transferCoin, autoPilotAction)
 }
