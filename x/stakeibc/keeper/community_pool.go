@@ -21,7 +21,7 @@ import (
 
 // For each hostZone with a valid community pool, trigger the ICQs and ICAs to transfer tokens from DepositICA or back to ReturnICA
 // Since ICQs and ICAs take time to complete, it is almost certain tokens swept in and processed will be swept out in a later epoch
-func (k Keeper) SweepAllCommunityPoolTokens(ctx sdk.Context) error {
+func (k Keeper) SweepAllCommunityPoolTokens(ctx sdk.Context) {
 	hostZones := k.GetAllActiveHostZone(ctx)
 	for _, hostZone := range hostZones {
 		if hostZone.CommunityPoolDepositIcaAddress != "" &&
@@ -30,23 +30,22 @@ func (k Keeper) SweepAllCommunityPoolTokens(ctx sdk.Context) error {
 				// ICQ for the host denom of the chain, these are tokens the pool wants staked
 				err:= k.QueryCommunityPoolDepositBalance(ctx, hostZone, hostZone.HostDenom)
 				if err != nil {
-					return err
+					k.Logger(ctx).Error(utils.LogWithHostZone(hostZone.ChainId, "Querying hostDenom %s - %s", hostZone.HostDenom, err.Error()))
 				}
 				// ICQ for the stToken of the host denom, these are tokens the pool wants redeemed
 				//   if stDenom is the denom on stride, ibcStDenom is the ibc denom on hostZone for stDenom
 				ibcStDenom := k.GetStakedHostTokenDenomOnHostZone(hostZone)
 				err = k.QueryCommunityPoolDepositBalance(ctx, hostZone, ibcStDenom)
 				if err != nil {
-					return err
+					k.Logger(ctx).Error(utils.LogWithHostZone(hostZone.ChainId, "Querying stHostDenom %s - %s", ibcStDenom, err.Error()))
 				}				
 				// Transfer out all all tokens in the holding address back to the Return ICA
 				err = k.ReturnAllCommunityPoolTokens(ctx, hostZone)
 				if err != nil {
-					return err
+					k.Logger(ctx).Error(utils.LogWithHostZone(hostZone.ChainId, "Returning from holding address - %s", err.Error()))
 				}				
 			}
 	}
-	return nil
 }
 
 

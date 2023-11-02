@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	"encoding/json"
 	"fmt"
 
 	errorsmod "cosmossdk.io/errors"
@@ -13,6 +14,7 @@ import (
 	clienttypes "github.com/cosmos/ibc-go/v7/modules/core/02-client/types"
 	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
 
+	autopilottypes "github.com/Stride-Labs/stride/v14/x/autopilot/types"
 	icacallbackstypes "github.com/Stride-Labs/stride/v14/x/icacallbacks/types"
 	"github.com/Stride-Labs/stride/v14/x/stakeibc/types"
 )
@@ -24,29 +26,43 @@ const (
 )
 
 // Transfers tokens from the community pool deposit ICA account to the host zone holding module address for that pool
-func (k Keeper) TransferCommunityPoolTokens(ctx sdk.Context, token sdk.Coin, communityPoolHostZone types.HostZone, memoAction string) error {
+func (k Keeper) TransferCommunityPoolTokens(ctx sdk.Context, token sdk.Coin, hostZone types.HostZone, autoPilotAction string) error {
 
-	// The memo may contain autopilot commands to atomically liquid stake tokens when transfer succeeds
-	//  both transfer+liquid stake will succeed and stTokens will end in the stride side holding address, 
+	// The memo may contain autopilot commands to atomically liquid stake/redeem tokens when transfer succeeds
+	//  both transfer+liquid stake will succeed and tokens will end in the stride side holding address, 
 	//  or neither will and the original base tokens will return to the foreign deposit ICA address
 	memoCommands := ""
-	if memoAction == LiquidStake {
-		autopilotStakeCmd := "{ \"autopilot\": { \"receiver\": \"%s\",  \"stakeibc\": { \"action\": \"LiquidStake\" } } }"
-		memoCommands = fmt.Sprintf(autopilotStakeCmd, communityPoolHostZone.CommunityPoolHoldingAddress)
-		stakedDenom := types.StAssetDenomFromHostZoneDenom(token.Denom)
-		k.Logger(ctx).Info(fmt.Sprintf("[IBCTransferCommunityPoolTokens] Transferring %v %s and then liquid staking to %s", token.Amount, token.Denom, stakedDenom))
-	} else if memoAction == RedeemStake {
-		autopilotRedeemCmd := "{ \"autopilot\": { \"receiver\": \"%s\",  \"stakeibc\": { \"action\": \"RedeemStake\" } } }"	
-		memoCommands = fmt.Sprintf(autopilotRedeemCmd, communityPoolHostZone.CommunityPoolHoldingAddress)
-		k.Logger(ctx).Info(fmt.Sprintf("[IBCTransferCommunityPoolTokens] Transferring %v %s and then redeeming stake", token.Amount, token.Denom))
+	autopilotMetadata := autopilottypes.RawPacketMetadata{}
+	autopilotMetadata.Autopilot.Receiver = hostZone.CommunityPoolHoldingAddress
+	if autoPilotAction == LiquidStake {
+		autopilotMetadata.Autopilot.Stakeibc.Action = "LiquidStake"		
+		autopilotCmdBz, err := json.Marshal(autopilotMetadata)
+		if err != nil {
+			errorsmod.Wrapf(err, "Couldn't build autopilot json for %v", autopilotMetadata)
+		}
+
+		memoCommands = string(autopilotCmdBz)
+		k.Logger(ctx).Info(fmt.Sprintf("[TransferCommunityPoolTokens] Transferring %v %s and then liquid staking with memo %s", 
+			token.Amount, token.Denom, memoCommands))
+	} else if autoPilotAction == RedeemStake {
+		autopilotMetadata.Autopilot.Stakeibc.Action = "RedeemStake"		
+		autopilotCmdBz, err := json.Marshal(autopilotMetadata)
+		if err != nil {
+			errorsmod.Wrapf(err, "Couldn't build autopilot json for %v", autopilotMetadata)
+		}
+
+		memoCommands = string(autopilotCmdBz)
+		k.Logger(ctx).Info(fmt.Sprintf("[TransferCommunityPoolTokens] Transferring %v %s and then redeeming stake with memo %s", 
+			token.Amount, token.Denom, memoCommands))
 	} else {
-		k.Logger(ctx).Info(fmt.Sprintf("[IBCTransferCommunityPoolTokens] Transferring %v %s with no additional action", token.Amount, token.Denom))
+		k.Logger(ctx).Info(fmt.Sprintf("[TransferCommunityPoolTokens] Transferring %v %s with no additional action", 
+			token.Amount, token.Denom))
 	}
 
 	// get community pool chain's transfer channel for sending tokens from hostZone to Stride
-	transferChannel, found := k.IBCKeeper.ChannelKeeper.GetChannel(ctx, ibctypes.PortID, communityPoolHostZone.TransferChannelId)
+	transferChannel, found := k.IBCKeeper.ChannelKeeper.GetChannel(ctx, ibctypes.PortID, hostZone.TransferChannelId)
 	if !found {
-		return errorsmod.Wrapf(channeltypes.ErrChannelNotFound, "transfer channel %s not found", communityPoolHostZone.TransferChannelId)
+		return errorsmod.Wrapf(channeltypes.ErrChannelNotFound, "transfer channel %s not found", hostZone.TransferChannelId)
 	}
 	incomingTransferChannelId := transferChannel.Counterparty.ChannelId
 
@@ -60,8 +76,8 @@ func (k Keeper) TransferCommunityPoolTokens(ctx sdk.Context, token sdk.Coin, com
 		ibctypes.PortID,
 		incomingTransferChannelId, // for transfers of communityPoolHostZone -> Stride
 		token,
-		communityPoolHostZone.CommunityPoolDepositIcaAddress, // ICA controlled address on community pool zone
-		communityPoolHostZone.CommunityPoolHoldingAddress, // Stride address, unique to each community pool / hostzone
+		hostZone.CommunityPoolDepositIcaAddress, // ICA controlled address on community pool zone
+		hostZone.CommunityPoolHoldingAddress, // Stride address, unique to each community pool / hostzone
 		clienttypes.Height{},
 		transferTimeoutTimestamp,
 		memoCommands,
@@ -75,7 +91,7 @@ func (k Keeper) TransferCommunityPoolTokens(ctx sdk.Context, token sdk.Coin, com
 
 	// Send the transaction through SubmitTx to kick off ICA commands -- no ICA callback method name, or callback args needed
 	_, err := k.SubmitTxs(ctx, 
-		communityPoolHostZone.ConnectionId, 
+		hostZone.ConnectionId, 
 		msgs, 
 		types.ICAAccountType_COMMUNITY_POOL_DEPOSIT, 
 		icaTimeoutTimestamp, 
@@ -84,79 +100,79 @@ func (k Keeper) TransferCommunityPoolTokens(ctx sdk.Context, token sdk.Coin, com
 	if err != nil {
 		return errorsmod.Wrapf(types.ErrICATxFailed, "Failed to SubmitTxs, Messages: %v, err: %s", msgs, err.Error())
 	}
-	k.Logger(ctx).Info(fmt.Sprintf("[IBCTransferCommunityPoolTokens] Successfully sent ICA command to kick off remote ibc transfer from community pool deposit ICA"))
+	k.Logger(ctx).Info(fmt.Sprintf("[TransferCommunityPoolTokens] Successfully sent ICA command to kick off remote ibc transfer from community pool deposit ICA"))
 
 	return nil
 }
 
 
 // Transfers all tokens in the Stride-side holding address over to the communityPoolReturnAddress ICA
-func (k Keeper) ReturnAllCommunityPoolTokens(ctx sdk.Context, communityPoolHostZone types.HostZone) error {
+func (k Keeper) ReturnAllCommunityPoolTokens(ctx sdk.Context, hostZone types.HostZone) error {
 	// Use bankKeeper to see all coin types and amounts currently in the stride-side holding module address
-	req := banktypes.NewQueryAllBalancesRequest(sdk.AccAddress(communityPoolHostZone.CommunityPoolHoldingAddress), nil)
+	req := banktypes.NewQueryAllBalancesRequest(sdk.AccAddress(hostZone.CommunityPoolHoldingAddress), nil)
 	resp, err := k.bankKeeper.AllBalances(ctx, req)
 	if err != nil {
-		return err
+		return errorsmod.Wrapf(err, "Couldn't look up balances in holding address")
 	}
 
-	memo := ""
-	errors := make([]error, 0)
-	ibcTransferTimeoutNanos := k.GetParam(ctx, types.KeyIBCTransferTimeoutNanos)
-
+	var transferErr error;
 	for _, foundCoin := range resp.Balances {
-		// build and send an IBC message for each coin to transfer all back to the communityPoolHostZone
-		timeoutTimestamp := uint64(ctx.BlockTime().UnixNano()) + ibcTransferTimeoutNanos
-		msg := ibctypes.NewMsgTransfer(
-			ibctypes.PortID,
-			communityPoolHostZone.TransferChannelId,
-			foundCoin,
-			communityPoolHostZone.CommunityPoolHoldingAddress, // from Stride address, unique to each community pool / hostzone
-			communityPoolHostZone.CommunityPoolReturnIcaAddress, // to ICA controlled address on foreign hub
-			clienttypes.Height{},
-			timeoutTimestamp,
-			memo,
-		)
+		if transferErr = k.TransferCoinToReturn(ctx, hostZone, foundCoin); transferErr != nil {
+			k.Logger(ctx).Error(errorsmod.Wrapf(transferErr, "error in token transfer %+v", foundCoin).Error())
+		}
+	}
 
-		msgTransferResponse, err := k.RecordsKeeper.TransferKeeper.Transfer(sdk.WrapSDKContext(ctx), msg)
+	return transferErr // will be nil if no errors in loop
+}
+
+
+func (k Keeper) TransferCoinToReturn(ctx sdk.Context, hostZone types.HostZone, coin sdk.Coin) error {
+	memo := ""
+	ibcTransferTimeoutNanos := k.GetParam(ctx, types.KeyIBCTransferTimeoutNanos)
+	timeoutTimestamp := uint64(ctx.BlockTime().UnixNano()) + ibcTransferTimeoutNanos
+
+	// build and send an IBC message for each coin to transfer all back to the hostZone
+	msg := ibctypes.NewMsgTransfer(
+		ibctypes.PortID,
+		hostZone.TransferChannelId,
+		coin,
+		hostZone.CommunityPoolHoldingAddress, // from Stride address, unique to each community pool / hostzone
+		hostZone.CommunityPoolReturnIcaAddress, // to ICA controlled address on foreign hub
+		clienttypes.Height{},
+		timeoutTimestamp,
+		memo,
+	)
+
+	msgTransferResponse, err := k.RecordsKeeper.TransferKeeper.Transfer(sdk.WrapSDKContext(ctx), msg)
+	if err != nil {
+			return errorsmod.Wrapf(err, "Error submitting ibc transfer for %+v", coin)
+	} else {
+		result := fmt.Sprintf("Successfully submitted ibctransfer for %+v with response %+v", 
+				coin, msgTransferResponse)
+		k.Logger(ctx).Info(result)
+
+		// If there was no error in sending the transfer msg, store what the transferred denom will be in callback with amount
+		callbackArgs := types.CommunityPoolReturnTransferCallback{
+			HostZoneId: hostZone.ChainId,
+			DenomStride: coin.Denom,
+			IbcDenom: k.GetDenomOnHostZone(coin.Denom, hostZone),
+			Amount: coin.Amount,
+		}
+		callbackArgsBz, err := proto.Marshal(&callbackArgs)
 		if err != nil {
-			result := fmt.Sprintf("[IBCReturnAllCommunityPoolTokens] Error submitting ibc transfer for %v %s with message %s", 
-				foundCoin.Amount, foundCoin.Denom, err.Error())
-			k.Logger(ctx).Error(result)
-			errors = append(errors, err) // log and keep track of errors but don't let one failure stop later transfer attempts
-		} else {
-			result := fmt.Sprintf("[IBCReturnAllCommunityPoolTokens] Successfully submitted ibc transfer for %v %s with response %+v", 
-				foundCoin.Amount, foundCoin.Denom, msgTransferResponse)
-			k.Logger(ctx).Info(result)
-
-			// If there was no error in sending the transfer msg, store what the transferred denom will be in callback with amount
-			callbackArgs := types.CommunityPoolReturnTransferCallback{
-				HostZoneId: communityPoolHostZone.ChainId,
-				DenomStride: foundCoin.Denom,
-				IbcDenom: k.GetDenomOnHostZone(foundCoin.Denom, communityPoolHostZone),
-				Amount: foundCoin.Amount,
-			}
-			callbackArgsBz, err := proto.Marshal(&callbackArgs)
-			if err != nil {
-				return errorsmod.Wrapf(err, "Unable to marshal community pool return transfer callback data for %+v", callbackArgs)
-			}
-
-			// Register a callback by hand when the transfer msg gets the completed ack, different callback for each coin in module
-			k.ICACallbacksKeeper.SetCallbackData(ctx, icacallbackstypes.CallbackData{
-				CallbackKey:  icacallbackstypes.PacketID(msg.SourcePort, msg.SourceChannel, msgTransferResponse.Sequence),
-				PortId:       msg.SourcePort,
-				ChannelId:    msg.SourceChannel,
-				Sequence:     msgTransferResponse.Sequence,
-				CallbackId:   ICACallbackID_CommunityPoolReturn,
-				CallbackArgs: callbackArgsBz,
-			})			
+			return errorsmod.Wrapf(err, "Unable to marshal pool return transfer callback %+v", callbackArgs)
 		}
 
+		// Register a callback by hand when the transfer msg gets the completed ack, different callback for each coin in module
+		k.ICACallbacksKeeper.SetCallbackData(ctx, icacallbackstypes.CallbackData{
+			CallbackKey:  icacallbackstypes.PacketID(msg.SourcePort, msg.SourceChannel, msgTransferResponse.Sequence),
+			PortId:       msg.SourcePort,
+			ChannelId:    msg.SourceChannel,
+			Sequence:     msgTransferResponse.Sequence,
+			CallbackId:   ICACallbackID_CommunityPoolReturn,
+			CallbackArgs: callbackArgsBz,
+		})
 	}
-
-	// if there were any errors return the first one for now...
-	if len(errors) > 0 {
-		return errors[0]
-	}	
 	return nil
 }
 
