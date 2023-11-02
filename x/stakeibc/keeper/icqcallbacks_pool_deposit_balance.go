@@ -31,7 +31,7 @@ func CommunityPoolDepositBalanceCallback(k Keeper, ctx sdk.Context, args []byte,
 	}
 
 	// Unmarshal the query response args to determine the balance *and* the denom
-	//  get amount from the query response, get denom from the marshalled callback data 
+	//  get amount from the query response, get denom from the marshalled callback data
 	depositBalanceAmount, err := icqkeeper.UnmarshalAmountFromBalanceQuery(k.cdc, args)
 	if err != nil {
 		return errorsmod.Wrap(err, "unable to determine deposit balance from query response")
@@ -41,7 +41,7 @@ func CommunityPoolDepositBalanceCallback(k Keeper, ctx sdk.Context, args []byte,
 	var callbackData types.CommunityPoolDepositQueryCallback
 	if err := proto.Unmarshal(query.CallbackData, &callbackData); err != nil {
 		return errorsmod.Wrapf(err, "unable to unmarshal community pool deposit query callback data")
-	}	
+	}
 	depositDenom := callbackData.Denom
 
 	k.Logger(ctx).Info(utils.LogICQCallbackWithHostZone(chainId, ICQCallbackID_CommunityPoolDepositBalance,
@@ -66,5 +66,5 @@ func CommunityPoolDepositBalanceCallback(k Keeper, ctx sdk.Context, args []byte,
 	}
 	transferCoin := sdk.NewCoin(depositDenom, depositBalanceAmount)
 
-	return k.TransferCommunityPoolTokens(ctx, communityPoolHostZone, transferCoin, autoPilotAction)
+	return k.TransferCommunityPoolDepositToHolding(ctx, communityPoolHostZone, transferCoin, autoPilotAction)
 }
