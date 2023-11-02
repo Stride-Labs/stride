@@ -7,8 +7,7 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/bech32"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	bankTypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	disttypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
 
 	"github.com/cosmos/gogoproto/proto"
@@ -27,30 +26,29 @@ func (k Keeper) SweepAllCommunityPoolTokens(ctx sdk.Context) {
 		if hostZone.CommunityPoolDepositIcaAddress != "" &&
 			hostZone.CommunityPoolHoldingAddress != "" &&
 			hostZone.CommunityPoolReturnIcaAddress != "" {
-				// ICQ for the host denom of the chain, these are tokens the pool wants staked
-				err:= k.QueryCommunityPoolDepositBalance(ctx, hostZone, hostZone.HostDenom)
-				if err != nil {
-					k.Logger(ctx).Error(utils.LogWithHostZone(hostZone.ChainId, "Querying hostDenom %s - %s", hostZone.HostDenom, err.Error()))
-				}
-				// ICQ for the stToken of the host denom, these are tokens the pool wants redeemed
-				//   if stDenom is the denom on stride, ibcStDenom is the ibc denom on hostZone for stDenom
-				ibcStDenom := k.GetStakedHostTokenDenomOnHostZone(hostZone)
-				err = k.QueryCommunityPoolDepositBalance(ctx, hostZone, ibcStDenom)
-				if err != nil {
-					k.Logger(ctx).Error(utils.LogWithHostZone(hostZone.ChainId, "Querying stHostDenom %s - %s", ibcStDenom, err.Error()))
-				}				
-				// Transfer out all all tokens in the holding address back to the Return ICA
-				err = k.ReturnAllCommunityPoolTokens(ctx, hostZone)
-				if err != nil {
-					k.Logger(ctx).Error(utils.LogWithHostZone(hostZone.ChainId, "Returning from holding address - %s", err.Error()))
-				}				
+			// ICQ for the host denom of the chain, these are tokens the pool wants staked
+			err := k.QueryCommunityPoolDepositBalance(ctx, hostZone, hostZone.HostDenom)
+			if err != nil {
+				k.Logger(ctx).Error(utils.LogWithHostZone(hostZone.ChainId, "Querying hostDenom %s - %s", hostZone.HostDenom, err.Error()))
 			}
+			// ICQ for the stToken of the host denom, these are tokens the pool wants redeemed
+			//   if stDenom is the denom on stride, ibcStDenom is the ibc denom on hostZone for stDenom
+			ibcStDenom := k.GetStakedHostTokenDenomOnHostZone(hostZone)
+			err = k.QueryCommunityPoolDepositBalance(ctx, hostZone, ibcStDenom)
+			if err != nil {
+				k.Logger(ctx).Error(utils.LogWithHostZone(hostZone.ChainId, "Querying stHostDenom %s - %s", ibcStDenom, err.Error()))
+			}
+			// Transfer out all tokens in the holding address back to the Return ICA
+			err = k.ReturnAllCommunityPoolTokens(ctx, hostZone)
+			if err != nil {
+				k.Logger(ctx).Error(utils.LogWithHostZone(hostZone.ChainId, "Returning from holding address - %s", err.Error()))
+			}
+		}
 	}
 }
 
-
 // ICQ specific denom for balance in the deposit ICA on the community pool host zone
-// The ICQ callback will call IBCTransferCommunityPoolICATokensToStride with found token(s) as input
+// The ICQ callback will call the transfer function with found token(s) as input
 func (k Keeper) QueryCommunityPoolDepositBalance(ctx sdk.Context, hostZone types.HostZone, denom string) error {
 	k.Logger(ctx).Info(utils.LogWithHostZone(hostZone.ChainId, "Submitting ICQ for %s in community pool deposit account balance", denom))
 
@@ -63,9 +61,9 @@ func (k Keeper) QueryCommunityPoolDepositBalance(ctx sdk.Context, hostZone types
 	// The query request consists of the account address and denom passed in
 	_, depositAddressBz, err := bech32.DecodeAndConvert(hostZone.CommunityPoolDepositIcaAddress)
 	if err != nil {
-		return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "invalid withdrawal account address, could not decode (%s)", hostZone.CommunityPoolDepositIcaAddress)
+		return errorsmod.Wrapf(err, "invalid withdrawal account address, could not decode (%s)", hostZone.CommunityPoolDepositIcaAddress)
 	}
-	queryData := append(bankTypes.CreateAccountBalancesPrefix(depositAddressBz), []byte(denom)...)
+	queryData := append(banktypes.CreateAccountBalancesPrefix(depositAddressBz), []byte(denom)...)
 
 	// The response might be a coin, or might just be an int depending on sdk version
 	// Since we need the denom later, store the denom as callback data for the query
@@ -76,7 +74,6 @@ func (k Keeper) QueryCommunityPoolDepositBalance(ctx sdk.Context, hostZone types
 	if err != nil {
 		return errorsmod.Wrapf(err, "unable to marshal community pool deposit balance callback data %v", callbackData)
 	}
-
 
 	// Timeout query at end of epoch
 	strideEpochTracker, found := k.GetEpochTracker(ctx, epochstypes.STRIDE_EPOCH)
@@ -105,30 +102,49 @@ func (k Keeper) QueryCommunityPoolDepositBalance(ctx sdk.Context, hostZone types
 	return nil
 }
 
+// Transfers all tokens in the Stride-side holding address over to the communityPoolReturnAddress ICA
+func (k Keeper) ReturnAllCommunityPoolTokens(ctx sdk.Context, hostZone types.HostZone) error {
+	// Use bankKeeper to see all coin types and amounts currently in the stride-side holding module address
+	req := banktypes.NewQueryAllBalancesRequest(sdk.AccAddress(hostZone.CommunityPoolHoldingAddress), nil)
+	resp, err := k.bankKeeper.AllBalances(ctx, req)
+	if err != nil {
+		return errorsmod.Wrapf(err, "Couldn't look up balances in holding address")
+	}
+
+	for _, foundCoin := range resp.Balances {
+		if err = k.TransferHoldingToCommunityPoolReturn(ctx, hostZone, foundCoin); err != nil {
+			k.Logger(ctx).Error(errorsmod.Wrapf(err, "error in token transfer %+v", foundCoin).Error())
+			continue
+		}
+	}
+
+	return nil
+}
+
 // Using tokens in the CommunityPoolReturnIcaAddress, ICA tx to fund community pool
 // Note: The denoms of the passed in token have to be ibc denoms which exist on the communityPoolHostZone
 func (k Keeper) FundCommunityPool(ctx sdk.Context, communityPoolHostZone types.HostZone, token sdk.Coin) error {
 	fundCoins := sdk.NewCoins(token)
-	
+
 	var msgs []proto.Message
 	msgs = append(msgs, &disttypes.MsgFundCommunityPool{
-		Amount: fundCoins,
+		Amount:    fundCoins,
 		Depositor: communityPoolHostZone.CommunityPoolReturnIcaAddress,
 	})
 
-	// No need to build ICA callback data or input an ICA callback method 
+	// No need to build ICA callback data or input an ICA callback method
 	icaCallbackId := ""
-	var icaCallbackData []byte;
+	var icaCallbackData []byte
 	ibcTransferTimeoutNanos := k.GetParam(ctx, types.KeyIBCTransferTimeoutNanos)
 	icaTimeoutTimestamp := uint64(ctx.BlockTime().UnixNano()) + ibcTransferTimeoutNanos
 
 	// Send the transaction through SubmitTx to kick off ICA command -- no ICA callback method name, or callback args needed
-	_, err := k.SubmitTxs(ctx, 
-		communityPoolHostZone.ConnectionId, 
-		msgs, 
-		types.ICAAccountType_COMMUNITY_POOL_RETURN, 
-		icaTimeoutTimestamp, 
-		icaCallbackId, 
+	_, err := k.SubmitTxs(ctx,
+		communityPoolHostZone.ConnectionId,
+		msgs,
+		types.ICAAccountType_COMMUNITY_POOL_RETURN,
+		icaTimeoutTimestamp,
+		icaCallbackId,
 		icaCallbackData)
 	if err != nil {
 		return errorsmod.Wrapf(types.ErrICATxFailed, "Failed to SubmitTxs for FundCommunityPool, Messages: %v, err: %s", msgs, err.Error())
