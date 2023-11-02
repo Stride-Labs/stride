@@ -179,3 +179,34 @@ func (s *KeeperTestSuite) TestTransferCoinToReturn_Sequence() {
 	callback := callbacks[0]
 	s.Require().Equal(sequence, callback.Sequence, "transfer msg sequence should be equal")
 }
+
+
+type GetDenomOnHostZoneTestCase struct {
+	strideDenom 	string
+	transferChannel	string
+	ibcDenom		string
+}
+
+func (s *KeeperTestSuite) TestGetDenomOnHostZone() {
+	testCases := []GetDenomOnHostZoneTestCase{
+		{
+			strideDenom: "uatom", 
+			transferChannel: "channel-0",
+			ibcDenom: "ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2",
+		},
+		{
+			strideDenom: "uatom", 
+			transferChannel: "channel-3",
+			ibcDenom: "ibc/A4DB47A9D3CF9A068D454513891B526702455D3EF08FB9EB558C561F9DC2B701",
+		},		
+	}
+
+	hostZone := types.HostZone{
+		TransferChannelId: "",
+	}
+	for _, tc := range testCases {
+		hostZone.TransferChannelId = tc.transferChannel
+		computedDenom := s.App.StakeibcKeeper.GetDenomOnHostZone(tc.strideDenom, hostZone)
+		s.Require().Equal(computedDenom, tc.ibcDenom, "ibcDenom should match known value")
+	}	
+}
