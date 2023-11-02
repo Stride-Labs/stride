@@ -35,7 +35,5 @@ func (k Keeper) CommunityPoolReturnCallback(ctx sdk.Context, packet channeltypes
 	// Using the ibc denom as it will appear on the community pool host zone after the transfer
 	// create tokens assuming the full amount sent has landed and then fire ICA tx to Fund Community Pool
 	token := sdk.NewCoin(ibcDenom, amount)
-	k.FundCommunityPool(ctx, communityPoolHostZone, token)
-
-	return nil
+	return k.FundCommunityPool(ctx, communityPoolHostZone, token)
 }

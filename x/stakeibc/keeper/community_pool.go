@@ -1,7 +1,6 @@
 package keeper
 
 import (
-	"fmt"
 	"time"
 
 	errorsmod "cosmossdk.io/errors"
@@ -65,7 +64,7 @@ func (k Keeper) ICQCommunityPoolDepositICABalance(ctx sdk.Context, hostZone type
 	// The query request consists of the account address and denom passed in
 	_, depositAddressBz, err := bech32.DecodeAndConvert(hostZone.CommunityPoolDepositIcaAddress)
 	if err != nil {
-		return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "invalid withdrawal account address, could not decode (%s)", err.Error())
+		return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "invalid withdrawal account address, could not decode (%s)", hostZone.CommunityPoolDepositIcaAddress)
 	}
 	queryData := append(bankTypes.CreateAccountBalancesPrefix(depositAddressBz), []byte(denom)...)
 
@@ -76,7 +75,7 @@ func (k Keeper) ICQCommunityPoolDepositICABalance(ctx sdk.Context, hostZone type
 	}
 	callbackDataBz, err := proto.Marshal(&callbackData)
 	if err != nil {
-		return errorsmod.Wrapf(err, "unable to marshal community pool deposit balance callback data")
+		return errorsmod.Wrapf(err, "unable to marshal community pool deposit balance callback data %v", callbackData)
 	}
 
 
@@ -101,8 +100,7 @@ func (k Keeper) ICQCommunityPoolDepositICABalance(ctx sdk.Context, hostZone type
 		TimeoutPolicy:   icqtypes.TimeoutPolicy_REJECT_QUERY_RESPONSE,
 	}
 	if err := k.InterchainQueryKeeper.SubmitICQRequest(ctx, query, false); err != nil {
-		k.Logger(ctx).Error(fmt.Sprintf("Error querying for pool deposit balance, error: %s", err.Error()))
-		return err
+		return errorsmod.Wrapf(err, "Error querying for pool deposit balance")
 	}
 
 	return nil
