@@ -119,6 +119,7 @@ func (k Keeper) ReturnAllCommunityPoolTokens(ctx sdk.Context, hostZone types.Hos
 	for _, foundCoin := range resp.Balances {
 		if transferErr = k.TransferCoinToReturn(ctx, hostZone, foundCoin); transferErr != nil {
 			k.Logger(ctx).Error(errorsmod.Wrapf(transferErr, "error in token transfer %+v", foundCoin).Error())
+			continue
 		}
 	}
 
