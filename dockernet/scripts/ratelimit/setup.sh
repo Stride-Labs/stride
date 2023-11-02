@@ -39,7 +39,7 @@ setup_channel_value() {
     print_header "INITIALIZING CHANNEL VALUE"
 
     # IBC Transfer
-    echo "Transfering for channel value..."
+    echo "Transferring for channel value..."
     echo ">>> uatom"
     $GAIA_MAIN_CMD tx ibc-transfer transfer transfer channel-0 $(STRIDE_ADDRESS) ${INITIAL_CHANNEL_VALUE}uatom --from ${GAIA_VAL_PREFIX}1 -y | TRIM_TX
     sleep 3

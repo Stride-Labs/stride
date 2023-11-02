@@ -327,7 +327,7 @@ func MigrateAccount2(ctx sdk.Context, ak authkeeper.AccountKeeper) error {
 	if account == nil {
 		return nil
 	}
-	// change the start_time to Sept 4, 2022. The ugprade goes live on or after Sept 4, 2023, so the first year vest is still enforced
+	// change the start_time to Sept 4, 2022. The upgrade goes live on or after Sept 4, 2023, so the first year vest is still enforced
 	// (the account was previously set to start on Sept 4, 2023)
 	account.(*vesting.ContinuousVestingAccount).StartTime = VestingStartTimeAccount2
 	// NOTE: we shouldn't have to update delegated_vesting on the BaseAccount. That's because,
