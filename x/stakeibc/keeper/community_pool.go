@@ -59,15 +59,14 @@ func (k Keeper) ProcessAllCommunityPoolTokens(ctx sdk.Context) {
 			k.Logger(ctx).Error(utils.LogWithHostZone(hostZone.ChainId,
 				"Liquid staking and transfering tokens in stake holding address - %s", err.Error()))
 		}
-		// Redeem tokens that are in the redeem holding address
+		// RedeemStake tokens in the redeem holding address, in 30 days they claim to the return ica
 		if err = k.RedeemCommunityPoolTokens(ctx, hostZone); err != nil {
 			k.Logger(ctx).Error(utils.LogWithHostZone(hostZone.ChainId,
 				"Redeeming stTokens in redeem holding address - %s", err.Error()))
 		}
 
-		/****** Epoch 3: Query return ICA for denom/stDenom, FundCommunityPool from return ICA *******/
+		/****** Stage 3: Query return ICA for denom/stDenom, FundCommunityPool from return ICA *******/
 
-		// ICQ for host denom or stDenom tokens in return ICA and call FundCommunityPool
 		err = k.QueryCommunityPoolBalance(ctx, hostZone, types.ICAAccountType_COMMUNITY_POOL_RETURN, denom)
 		if err != nil {
 			k.Logger(ctx).Error(utils.LogWithHostZone(hostZone.ChainId, "Querying hostDenom %s in return- %s", denom, err.Error()))
