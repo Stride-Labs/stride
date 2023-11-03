@@ -33,14 +33,14 @@ func (k Keeper) ProcessAllCommunityPoolTokens(ctx sdk.Context) {
 		denom := hostZone.HostDenom
 		stDenom := k.GetStakedDenomOnHostZone(ctx, hostZone)
 
-		/****** Epoch 1 *******/	
+		/****** Epoch 1 *******/
 		// ICQ for the host denom of the chain, these are tokens the pool wants staked
 		err := k.QueryCommunityPoolBalance(ctx, hostZone, types.ICAAccountType_COMMUNITY_POOL_DEPOSIT, denom)
 		if err != nil {
 			k.Logger(ctx).Error(utils.LogWithHostZone(hostZone.ChainId, "Querying hostDenom %s in deposit- %s", denom, err.Error()))
 		}
 		// ICQ for staked tokens of the host denom, these are tokens the pool wants redeemed
-		err = k.QueryCommunityPoolBalance(ctx, hostZone,types.ICAAccountType_COMMUNITY_POOL_DEPOSIT, stDenom)
+		err = k.QueryCommunityPoolBalance(ctx, hostZone, types.ICAAccountType_COMMUNITY_POOL_DEPOSIT, stDenom)
 		if err != nil {
 			k.Logger(ctx).Error(utils.LogWithHostZone(hostZone.ChainId, "Querying stHostDenom %s in deposit - %s", stDenom, err.Error()))
 		}
@@ -52,13 +52,13 @@ func (k Keeper) ProcessAllCommunityPoolTokens(ctx sdk.Context) {
 			k.Logger(ctx).Error(utils.LogWithHostZone(hostZone.ChainId, "Transforming tokens in holding address - %s", err.Error()))
 		}
 
-		/****** Epoch 3 *******/	
-		// ICQ for and denom or stDenom tokens in return ICA and call FundCommunityPool 
+		/****** Epoch 3 *******/
+		// ICQ for and denom or stDenom tokens in return ICA and call FundCommunityPool
 		err = k.QueryCommunityPoolBalance(ctx, hostZone, types.ICAAccountType_COMMUNITY_POOL_RETURN, denom)
 		if err != nil {
 			k.Logger(ctx).Error(utils.LogWithHostZone(hostZone.ChainId, "Querying hostDenom %s in return- %s", denom, err.Error()))
 		}
-		err = k.QueryCommunityPoolBalance(ctx, hostZone,types.ICAAccountType_COMMUNITY_POOL_RETURN, stDenom)
+		err = k.QueryCommunityPoolBalance(ctx, hostZone, types.ICAAccountType_COMMUNITY_POOL_RETURN, stDenom)
 		if err != nil {
 			k.Logger(ctx).Error(utils.LogWithHostZone(hostZone.ChainId, "Querying stHostDenom %s in return - %s", stDenom, err.Error()))
 		}
@@ -67,12 +67,13 @@ func (k Keeper) ProcessAllCommunityPoolTokens(ctx sdk.Context) {
 
 // ICQ specific denom for balance in the deposit ICA or return ICA on the community pool host zone
 // Depending on account type and denom, discovered tokens are transferred to Stride or funded to the pool
-func (k Keeper) QueryCommunityPoolBalance(ctx sdk.Context, 
-											hostZone types.HostZone, 
-											icaType types.ICAAccountType, 
-											denom string) error {
-
-	k.Logger(ctx).Info(utils.LogWithHostZone(hostZone.ChainId, 
+func (k Keeper) QueryCommunityPoolBalance(
+	ctx sdk.Context,
+	hostZone types.HostZone,
+	icaType types.ICAAccountType,
+	denom string,
+) error {
+	k.Logger(ctx).Info(utils.LogWithHostZone(hostZone.ChainId,
 		"Building ICQ for %s balance in community pool %s address", denom, icaType.String()))
 
 	icaAddress := ""
@@ -81,7 +82,7 @@ func (k Keeper) QueryCommunityPoolBalance(ctx sdk.Context,
 	} else if icaType == types.ICAAccountType_COMMUNITY_POOL_RETURN {
 		icaAddress = hostZone.CommunityPoolReturnIcaAddress
 	} else {
-		return errorsmod.Wrapf(types.ErrICAAccountNotFound, "icaType must be either deposit or return!")		
+		return errorsmod.Wrapf(types.ErrICAAccountNotFound, "icaType must be either deposit or return!")
 	}
 
 	// Verify a valid ica address exists for this host zone
@@ -92,16 +93,16 @@ func (k Keeper) QueryCommunityPoolBalance(ctx sdk.Context,
 
 	_, addressBz, err := bech32.DecodeAndConvert(icaAddress)
 	if err != nil {
-		return errorsmod.Wrapf(err, "invalid %s address, could not decode (%s)", 
+		return errorsmod.Wrapf(err, "invalid %s address, could not decode (%s)",
 			icaType.String(), hostZone.CommunityPoolDepositIcaAddress)
 	}
 	queryData := append(banktypes.CreateAccountBalancesPrefix(addressBz), []byte(denom)...)
-	
+
 	// The response might be a coin, or might just be an int depending on sdk version
 	// Since we need the denom later, store the denom as callback data for the query
 	callbackData := types.CommunityPoolBalanceQueryCallback{
 		IcaType: icaType,
-		Denom: denom,
+		Denom:   denom,
 	}
 	callbackDataBz, err := proto.Marshal(&callbackData)
 	if err != nil {
