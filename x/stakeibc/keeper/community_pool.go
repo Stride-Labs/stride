@@ -33,11 +33,15 @@ func (k Keeper) ProcessAllCommunityPoolTokens(ctx sdk.Context) {
 
 		// stDenom is the ibc denom on hostZone when the hostZone's native denom is staked
 		denom := hostZone.HostDenom
-		stDenom := k.GetStakedDenomOnHostZone(ctx, hostZone)
+		stDenom, err := k.GetStakedDenomOnHostZone(ctx, hostZone)
+		if err != nil {
+			k.Logger(ctx).Error(utils.LogWithHostZone(hostZone.ChainId, "Unable to get stToken ibc denom - %s", err.Error()))
+			continue
+		}
 
 		/****** Epoch 1 *******/
 		// ICQ for the host denom of the chain, these are tokens the pool wants staked
-		err := k.QueryCommunityPoolBalance(ctx, hostZone, types.ICAAccountType_COMMUNITY_POOL_DEPOSIT, denom)
+		err = k.QueryCommunityPoolBalance(ctx, hostZone, types.ICAAccountType_COMMUNITY_POOL_DEPOSIT, denom)
 		if err != nil {
 			k.Logger(ctx).Error(utils.LogWithHostZone(hostZone.ChainId, "Querying hostDenom %s in deposit- %s", denom, err.Error()))
 		}

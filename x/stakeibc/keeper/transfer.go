@@ -37,13 +37,20 @@ func (k Keeper) TransferCommunityPoolDepositToHolding(ctx sdk.Context, hostZone 
 	}
 	endEpochTimestamp := uint64(strideEpochTracker.NextEpochStartTime)
 
+	// Determine the host zone's stToken ibc denom
+	nativeDenom := hostZone.HostDenom
+	stIBCDenom, err := k.GetStakedDenomOnHostZone(ctx, hostZone)
+	if err != nil {
+		return err
+	}
+
 	// If the token is an stToken, we send it to the redeem holding address to be redeemed
 	// Otherwise, we send it to the stake holding address to be liquid staked
 	var destinationHoldingAddress string
 	switch token.Denom {
-	case hostZone.HostDenom:
+	case nativeDenom:
 		destinationHoldingAddress = hostZone.CommunityPoolStakeHoldingAddress
-	case types.StAssetDenomFromHostZoneDenom(hostZone.HostDenom):
+	case stIBCDenom:
 		destinationHoldingAddress = hostZone.CommunityPoolRedeemHoldingAddress
 	default:
 		return fmt.Errorf("Invalid community pool transfer denom: %s", token.Denom)
@@ -68,7 +75,7 @@ func (k Keeper) TransferCommunityPoolDepositToHolding(ctx sdk.Context, hostZone 
 	var icaCallbackData []byte
 
 	// Send the transaction through SubmitTx to kick off ICA commands -- no ICA callback method name, or callback args needed
-	_, err := k.SubmitTxs(ctx,
+	_, err = k.SubmitTxs(ctx,
 		hostZone.ConnectionId,
 		msgs,
 		types.ICAAccountType_COMMUNITY_POOL_DEPOSIT,
@@ -114,16 +121,19 @@ func (k Keeper) TransferHoldingToCommunityPoolReturn(ctx sdk.Context, hostZone t
 }
 
 // given a hostZone with native denom, returns the ibc denom on the zone for the staked stDenom
-func (k Keeper) GetStakedDenomOnHostZone(ctx sdk.Context, hostZone types.HostZone) (ibcStakedDenom string) {
+func (k Keeper) GetStakedDenomOnHostZone(ctx sdk.Context, hostZone types.HostZone) (ibcStakedDenom string, err error) {
 	nativeDenom := hostZone.HostDenom
 	stDenomOnStride := types.StAssetDenomFromHostZoneDenom(nativeDenom)
 
 	// use counterparty transfer channel because tokens come through this channel to hostZone
-	transferChannel, _ := k.IBCKeeper.ChannelKeeper.GetChannel(ctx, transfertypes.PortID, hostZone.TransferChannelId)
-	counterpartyChannelId := transferChannel.Counterparty.ChannelId
+	transferChannel, found := k.IBCKeeper.ChannelKeeper.GetChannel(ctx, transfertypes.PortID, hostZone.TransferChannelId)
+	if !found {
+		return ibcStakedDenom, channeltypes.ErrChannelNotFound.Wrapf(hostZone.TransferChannelId)
+	}
 
+	counterpartyChannelId := transferChannel.Counterparty.ChannelId
 	sourcePrefix := transfertypes.GetDenomPrefix(transfertypes.PortID, counterpartyChannelId)
 	prefixedDenom := sourcePrefix + stDenomOnStride
 
-	return transfertypes.ParseDenomTrace(prefixedDenom).IBCDenom()
+	return transfertypes.ParseDenomTrace(prefixedDenom).IBCDenom(), nil
 }
