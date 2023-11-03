@@ -131,7 +131,7 @@ func (k Keeper) GetStakedDenomOnHostZone(ctx sdk.Context, hostZone types.HostZon
 	// use counterparty transfer channel because tokens come through this channel to hostZone
 	transferChannel, found := k.IBCKeeper.ChannelKeeper.GetChannel(ctx, transfertypes.PortID, hostZone.TransferChannelId)
 	if !found {
-		return ibcStakedDenom, channeltypes.ErrChannelNotFound.Wrapf(hostZone.TransferChannelId)
+		return "", channeltypes.ErrChannelNotFound.Wrapf(hostZone.TransferChannelId)
 	}
 
 	counterpartyChannelId := transferChannel.Counterparty.ChannelId
