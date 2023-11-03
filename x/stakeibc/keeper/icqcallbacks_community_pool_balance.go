@@ -22,7 +22,7 @@ import (
 // Note: for now, to get proofs in your ICQs, you need to query the entire store on the host zone! e.g. "store/bank/key"
 func CommunityPoolBalanceCallback(k Keeper, ctx sdk.Context, args []byte, query icqtypes.Query) error {
 	k.Logger(ctx).Info(utils.LogICQCallbackWithHostZone(query.ChainId, ICQCallbackID_CommunityPoolBalance,
-		"Starting community pool balance callback, QueryId: %vs, QueryType: %s, Connection: %s", 
+		"Starting community pool balance callback, QueryId: %vs, QueryType: %s, Connection: %s",
 		query.Id, query.QueryType, query.ConnectionId))
 
 	// Confirm host exists
@@ -44,7 +44,7 @@ func CommunityPoolBalanceCallback(k Keeper, ctx sdk.Context, args []byte, query 
 	if err := proto.Unmarshal(query.CallbackData, &callbackData); err != nil {
 		return errorsmod.Wrapf(err, "unable to unmarshal community pool balance query callback data")
 	}
-	icaType := callbackData.IcaType 
+	icaType := callbackData.IcaType
 	denom := callbackData.Denom
 
 	k.Logger(ctx).Info(utils.LogICQCallbackWithHostZone(chainId, ICQCallbackID_CommunityPoolBalance,
@@ -60,16 +60,27 @@ func CommunityPoolBalanceCallback(k Keeper, ctx sdk.Context, args []byte, query 
 
 	token := sdk.NewCoin(denom, amount)
 
+	// Based on the account type, we kick off the relevant ICA (transfer or fund)
+	// If either of the ICAs fails midway through it's invocation, we swallow the
+	// error and revert any partial state so that the query response submission can finish
 	if icaType == types.ICAAccountType_COMMUNITY_POOL_DEPOSIT {
-		// Send ICA msg to kick off transfer from deposit ICA to holding
-		utils.ApplyFuncIfNoError(ctx, func(c sdk.Context) error {
+		// Send ICA msg to kick off transfer from deposit ICA to stake holding address
+		err := utils.ApplyFuncIfNoError(ctx, func(c sdk.Context) error {
 			return k.TransferCommunityPoolDepositToHolding(ctx, hostZone, token)
-		})		
+		})
+		if err != nil {
+			k.Logger(ctx).Error(utils.LogICQCallbackWithHostZone(chainId, ICQCallbackID_CommunityPoolBalance,
+				"Initiating transfer to holding address failed: %s", err.Error()))
+		}
 	} else if icaType == types.ICAAccountType_COMMUNITY_POOL_RETURN {
-		// Send ICA msg to FundCommunityPool with token found in return ICA		
-		utils.ApplyFuncIfNoError(ctx, func(c sdk.Context) error {
+		// Send ICA msg to FundCommunityPool with token found in return ICA
+		err := utils.ApplyFuncIfNoError(ctx, func(c sdk.Context) error {
 			return k.FundCommunityPool(ctx, hostZone, token)
 		})
+		if err != nil {
+			k.Logger(ctx).Error(utils.LogICQCallbackWithHostZone(chainId, ICQCallbackID_CommunityPoolBalance,
+				"Initiating community pool fund failed: %s", err.Error()))
+		}
 	}
 
 	return nil

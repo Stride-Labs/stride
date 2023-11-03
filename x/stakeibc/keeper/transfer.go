@@ -16,11 +16,11 @@ import (
 	"github.com/Stride-Labs/stride/v14/x/stakeibc/types"
 )
 
-// Transfers tokens from the community pool deposit ICA account to the host zone holding module address for that pool
+// Transfers tokens from the community pool deposit ICA account to the host zone stake holding module address for that pool
 func (k Keeper) TransferCommunityPoolDepositToHolding(ctx sdk.Context, hostZone types.HostZone, token sdk.Coin) error {
-	// Verify that the deposit ica address exists on the host zone and holding address exists on stride
+	// Verify that the deposit ica address exists on the host zone and stake holding address exists on stride
 	if hostZone.CommunityPoolDepositIcaAddress == "" || hostZone.CommunityPoolStakeHoldingAddress == "" {
-		return errors.New("Invalid holding address or deposit address, cannot build valid ICA transfer kickoff command")
+		return errors.New("Invalid deposit address or stake holding address, cannot build valid ICA transfer kickoff command")
 	}
 
 	// get the hostZone counterparty transfer channel for sending tokens from hostZone to Stride
@@ -66,12 +66,12 @@ func (k Keeper) TransferCommunityPoolDepositToHolding(ctx sdk.Context, hostZone 
 	if err != nil {
 		return errorsmod.Wrapf(err, "Failed to SubmitTxs, Messages: %v, err: %s", msgs, err.Error())
 	}
-	k.Logger(ctx).Info("Successfully sent ICA command to kick off ibc transfer from deposit ICA to holding address")
+	k.Logger(ctx).Info("Successfully sent ICA command to kick off ibc transfer from deposit ICA to stake holding address")
 
 	return nil
 }
 
-// Transfers a given token from the stride-side holding address to the return ICA address on the host zone
+// Transfers a given token from the stride-side stake holding address to the return ICA address on the host zone
 func (k Keeper) TransferHoldingToCommunityPoolReturn(ctx sdk.Context, hostZone types.HostZone, coin sdk.Coin) error {
 	memo := ""
 	ibcTransferTimeoutNanos := k.GetParam(ctx, types.KeyIBCTransferTimeoutNanos)

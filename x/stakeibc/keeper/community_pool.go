@@ -51,12 +51,12 @@ func (k Keeper) ProcessAllCommunityPoolTokens(ctx sdk.Context) {
 		// LiquidStake tokens in the stake holding address and transfer to the return ica
 		if err = k.LiquidStakeCommunityPoolTokens(ctx, hostZone); err != nil {
 			k.Logger(ctx).Error(utils.LogWithHostZone(hostZone.ChainId,
-				"Liquid staking and transfering tokens in holding address - %s", err.Error()))
+				"Liquid staking and transfering tokens in stake holding address - %s", err.Error()))
 		}
 		// Redeem tokens that are in the redeem holding address
 		if err = k.RedeemCommunityPoolTokens(ctx, hostZone); err != nil {
 			k.Logger(ctx).Error(utils.LogWithHostZone(hostZone.ChainId,
-				"Redeeming stTokens in holding address - %s", err.Error()))
+				"Redeeming stTokens in redeem holding address - %s", err.Error()))
 		}
 
 		/****** Epoch 3 *******/
@@ -143,7 +143,7 @@ func (k Keeper) QueryCommunityPoolBalance(
 	return nil
 }
 
-// Liquid stake all native tokens in the holding address
+// Liquid stake all native tokens in the stake holding address
 func (k Keeper) LiquidStakeCommunityPoolTokens(ctx sdk.Context, hostZone types.HostZone) error {
 	// Get the number of native tokens in the stake address
 	// The native tokens will be an ibc denom since they've been transferred to stride
@@ -157,7 +157,7 @@ func (k Keeper) LiquidStakeCommunityPoolTokens(ctx sdk.Context, hostZone types.H
 	}
 
 	// TODO: Move LS function to keeper method instead of message server
-	// Liquid stake the balance in the holding account
+	// Liquid stake the balance in the stake holding account
 	msgServer := NewMsgServerImpl(k)
 	liquidStakeRequest := types.MsgLiquidStake{
 		Creator:   hostZone.CommunityPoolStakeHoldingAddress,
@@ -173,7 +173,7 @@ func (k Keeper) LiquidStakeCommunityPoolTokens(ctx sdk.Context, hostZone types.H
 	return k.TransferHoldingToCommunityPoolReturn(ctx, hostZone, resp.StToken)
 }
 
-// Redeem all the stTokens in the holding address
+// Redeem all the stTokens in the redeem holding address
 func (k Keeper) RedeemCommunityPoolTokens(ctx sdk.Context, hostZone types.HostZone) error {
 	// Get the number of stTokens in the redeem address
 	stDenom := types.StAssetDenomFromHostZoneDenom(hostZone.HostDenom)
@@ -186,7 +186,7 @@ func (k Keeper) RedeemCommunityPoolTokens(ctx sdk.Context, hostZone types.HostZo
 	}
 
 	// TODO: Move Redeem function to keeper method instead of message server
-	// Redeem the stTokens in the holding account
+	// Redeem the stTokens in the redeem holding account
 	// The return ICA address will be the recipient of the claim
 	msgServer := NewMsgServerImpl(k)
 	redeemStakeRequest := types.MsgRedeemStake{
