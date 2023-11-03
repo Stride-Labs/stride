@@ -32,7 +32,7 @@ setup_juno_osmo_channel() {
     echo "Done"
 
     $DOCKER_COMPOSE up -d relayer-${path}
-    $DOCKER_COMPOSE logs -f relayer-${path} | sed -r -u "s/\x1B\[([0-9]{1,3}(;[0-9]{1,2})?)?[mGK]//g" >> $relayer_logs 2>&1 &
+    SAVE_DOCKER_LOGS relayer-${path} $relayer_logs
 }
 
 setup_channel_value() {
