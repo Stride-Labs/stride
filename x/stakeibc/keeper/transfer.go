@@ -37,14 +37,26 @@ func (k Keeper) TransferCommunityPoolDepositToHolding(ctx sdk.Context, hostZone 
 	}
 	endEpochTimestamp := uint64(strideEpochTracker.NextEpochStartTime)
 
+	// If the token is an stToken, we send it to the redeem holding address to be redeemed
+	// Otherwise, we send it to the stake holding address to be liquid staked
+	var destinationHoldingAddress string
+	switch token.Denom {
+	case hostZone.HostDenom:
+		destinationHoldingAddress = hostZone.CommunityPoolStakeHoldingAddress
+	case types.StAssetDenomFromHostZoneDenom(hostZone.HostDenom):
+		destinationHoldingAddress = hostZone.CommunityPoolRedeemHoldingAddress
+	default:
+		return fmt.Errorf("Invalid community pool transfer denom: %s", token.Denom)
+	}
+
 	memo := ""
 	var msgs []proto.Message
 	msgs = append(msgs, transfertypes.NewMsgTransfer(
 		transfertypes.PortID,
 		counterpartyChannelId, // for transfers of communityPoolHostZone -> Stride
 		token,
-		hostZone.CommunityPoolDepositIcaAddress,   // ICA controlled address on community pool zone
-		hostZone.CommunityPoolStakeHoldingAddress, // Stride address, unique to each community pool / hostzone
+		hostZone.CommunityPoolDepositIcaAddress, // ICA controlled address on community pool zone
+		destinationHoldingAddress,               // Stride address, unique to each community pool / hostzone
 		clienttypes.Height{},
 		endEpochTimestamp,
 		memo,
