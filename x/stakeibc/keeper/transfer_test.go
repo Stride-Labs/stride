@@ -8,6 +8,7 @@ import (
 
 	sdkmath "cosmossdk.io/math"
 
+	epochtypes "github.com/Stride-Labs/stride/v14/x/epochs/types"
 	"github.com/Stride-Labs/stride/v14/x/stakeibc/types"
 )
 
@@ -35,6 +36,12 @@ func (s *KeeperTestSuite) SetupTransferCommunityPoolDepositToHolding() TransferC
 		CommunityPoolStakeAddress:      stakeAddress,
 		CommunityPoolDepositIcaAddress: depositIcaAddress,
 	}
+
+	strideEpoch := types.EpochTracker{
+		EpochIdentifier:    epochtypes.STRIDE_EPOCH,
+		NextEpochStartTime: uint64(10), // used for transfer timeout
+	}
+	s.App.StakeibcKeeper.SetEpochTracker(s.Ctx, strideEpoch)
 
 	balanceToTransfer := sdkmath.NewInt(1_000_000)
 	coin := sdk.NewCoin("tokens", balanceToTransfer)
