@@ -33,25 +33,27 @@ func (k Keeper) ProcessAllCommunityPoolTokens(ctx sdk.Context) {
 
 		// stDenom is the ibc denom on hostZone when the hostZone's native denom is staked
 		denom := hostZone.HostDenom
-		stDenom, err := k.GetStakedDenomOnHostZone(ctx, hostZone)
+		stIbcDenom, err := k.GetStIbcDenomOnHostZone(ctx, hostZone)
 		if err != nil {
 			k.Logger(ctx).Error(utils.LogWithHostZone(hostZone.ChainId, "Unable to get stToken ibc denom - %s", err.Error()))
 			continue
 		}
 
-		/****** Epoch 1 *******/
+		/****** Stage 1: Query deposit ICA for denom/stDenom, Transfer tokens to stride *******/
+
 		// ICQ for the host denom of the chain, these are tokens the pool wants staked
 		err = k.QueryCommunityPoolBalance(ctx, hostZone, types.ICAAccountType_COMMUNITY_POOL_DEPOSIT, denom)
 		if err != nil {
 			k.Logger(ctx).Error(utils.LogWithHostZone(hostZone.ChainId, "Querying hostDenom %s in deposit- %s", denom, err.Error()))
 		}
 		// ICQ for staked tokens of the host denom, these are tokens the pool wants redeemed
-		err = k.QueryCommunityPoolBalance(ctx, hostZone, types.ICAAccountType_COMMUNITY_POOL_DEPOSIT, stDenom)
+		err = k.QueryCommunityPoolBalance(ctx, hostZone, types.ICAAccountType_COMMUNITY_POOL_DEPOSIT, stIbcDenom)
 		if err != nil {
-			k.Logger(ctx).Error(utils.LogWithHostZone(hostZone.ChainId, "Querying stHostDenom %s in deposit - %s", stDenom, err.Error()))
+			k.Logger(ctx).Error(utils.LogWithHostZone(hostZone.ChainId, "Querying stHostDenom %s in deposit - %s", stIbcDenom, err.Error()))
 		}
 
-		/****** Epoch 2 *******/
+		/****** Stage 2: LiquidStake denom and transfer to return ICA, or RedeemStake stDenom *******/
+
 		// LiquidStake tokens in the stake holding address and transfer to the return ica
 		if err = k.LiquidStakeCommunityPoolTokens(ctx, hostZone); err != nil {
 			k.Logger(ctx).Error(utils.LogWithHostZone(hostZone.ChainId,
@@ -63,15 +65,16 @@ func (k Keeper) ProcessAllCommunityPoolTokens(ctx sdk.Context) {
 				"Redeeming stTokens in redeem holding address - %s", err.Error()))
 		}
 
-		/****** Epoch 3 *******/
+		/****** Epoch 3: Query return ICA for denom/stDenom, FundCommunityPool from return ICA *******/
+
 		// ICQ for host denom or stDenom tokens in return ICA and call FundCommunityPool
 		err = k.QueryCommunityPoolBalance(ctx, hostZone, types.ICAAccountType_COMMUNITY_POOL_RETURN, denom)
 		if err != nil {
 			k.Logger(ctx).Error(utils.LogWithHostZone(hostZone.ChainId, "Querying hostDenom %s in return- %s", denom, err.Error()))
 		}
-		err = k.QueryCommunityPoolBalance(ctx, hostZone, types.ICAAccountType_COMMUNITY_POOL_RETURN, stDenom)
+		err = k.QueryCommunityPoolBalance(ctx, hostZone, types.ICAAccountType_COMMUNITY_POOL_RETURN, stIbcDenom)
 		if err != nil {
-			k.Logger(ctx).Error(utils.LogWithHostZone(hostZone.ChainId, "Querying stHostDenom %s in return - %s", stDenom, err.Error()))
+			k.Logger(ctx).Error(utils.LogWithHostZone(hostZone.ChainId, "Querying stHostDenom %s in return - %s", stIbcDenom, err.Error()))
 		}
 	}
 }
@@ -87,12 +90,13 @@ func (k Keeper) QueryCommunityPoolBalance(
 	k.Logger(ctx).Info(utils.LogWithHostZone(hostZone.ChainId,
 		"Building ICQ for %s balance in community pool %s address", denom, icaType.String()))
 
-	icaAddress := ""
-	if icaType == types.ICAAccountType_COMMUNITY_POOL_DEPOSIT {
+	var icaAddress string
+	switch icaType {
+	case types.ICAAccountType_COMMUNITY_POOL_DEPOSIT:
 		icaAddress = hostZone.CommunityPoolDepositIcaAddress
-	} else if icaType == types.ICAAccountType_COMMUNITY_POOL_RETURN {
+	case types.ICAAccountType_COMMUNITY_POOL_RETURN:
 		icaAddress = hostZone.CommunityPoolReturnIcaAddress
-	} else {
+	default:
 		return errorsmod.Wrapf(types.ErrICAAccountNotFound, "icaType must be either deposit or return!")
 	}
 
@@ -105,7 +109,7 @@ func (k Keeper) QueryCommunityPoolBalance(
 	_, addressBz, err := bech32.DecodeAndConvert(icaAddress)
 	if err != nil {
 		return errorsmod.Wrapf(err, "invalid %s address, could not decode (%s)",
-			icaType.String(), hostZone.CommunityPoolDepositIcaAddress)
+			icaType.String(), icaAddress)
 	}
 	queryData := append(banktypes.CreateAccountBalancesPrefix(addressBz), []byte(denom)...)
 

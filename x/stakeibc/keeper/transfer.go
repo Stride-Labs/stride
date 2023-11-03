@@ -39,7 +39,7 @@ func (k Keeper) TransferCommunityPoolDepositToHolding(ctx sdk.Context, hostZone 
 
 	// Determine the host zone's stToken ibc denom
 	nativeDenom := hostZone.HostDenom
-	stIBCDenom, err := k.GetStakedDenomOnHostZone(ctx, hostZone)
+	stIbcDenom, err := k.GetStIbcDenomOnHostZone(ctx, hostZone)
 	if err != nil {
 		return err
 	}
@@ -50,7 +50,7 @@ func (k Keeper) TransferCommunityPoolDepositToHolding(ctx sdk.Context, hostZone 
 	switch token.Denom {
 	case nativeDenom:
 		destinationHoldingAddress = hostZone.CommunityPoolStakeHoldingAddress
-	case stIBCDenom:
+	case stIbcDenom:
 		destinationHoldingAddress = hostZone.CommunityPoolRedeemHoldingAddress
 	default:
 		return fmt.Errorf("Invalid community pool transfer denom: %s", token.Denom)
@@ -124,7 +124,7 @@ func (k Keeper) TransferHoldingToCommunityPoolReturn(ctx sdk.Context, hostZone t
 }
 
 // given a hostZone with native denom, returns the ibc denom on the zone for the staked stDenom
-func (k Keeper) GetStakedDenomOnHostZone(ctx sdk.Context, hostZone types.HostZone) (ibcStakedDenom string, err error) {
+func (k Keeper) GetStIbcDenomOnHostZone(ctx sdk.Context, hostZone types.HostZone) (ibcStakedDenom string, err error) {
 	nativeDenom := hostZone.HostDenom
 	stDenomOnStride := types.StAssetDenomFromHostZoneDenom(nativeDenom)
 
