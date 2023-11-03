@@ -4,6 +4,7 @@ import (
 	"time"
 
 	errorsmod "cosmossdk.io/errors"
+	sdkmath "cosmossdk.io/math"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/bech32"
@@ -20,59 +21,106 @@ import (
 
 // For each hostZone with a valid community pool, trigger the ICQs and ICAs to transfer tokens from DepositICA or back to ReturnICA
 // Since ICQs and ICAs take time to complete, it is almost certain tokens swept in and processed will be swept out in a later epoch
-func (k Keeper) SweepAllCommunityPoolTokens(ctx sdk.Context) {
+func (k Keeper) ProcessAllCommunityPoolTokens(ctx sdk.Context) {
 	hostZones := k.GetAllActiveHostZone(ctx)
 	for _, hostZone := range hostZones {
-		if hostZone.CommunityPoolDepositIcaAddress != "" &&
-			hostZone.CommunityPoolHoldingAddress != "" &&
-			hostZone.CommunityPoolReturnIcaAddress != "" {
-			// ICQ for the host denom of the chain, these are tokens the pool wants staked
-			err := k.QueryCommunityPoolDepositBalance(ctx, hostZone, hostZone.HostDenom)
-			if err != nil {
-				k.Logger(ctx).Error(utils.LogWithHostZone(hostZone.ChainId, "Querying hostDenom %s - %s", hostZone.HostDenom, err.Error()))
-			}
-			// ICQ for the stToken of the host denom, these are tokens the pool wants redeemed
-			//   if stDenom is the denom on stride, ibcStDenom is the ibc denom on hostZone for stDenom
-			ibcStDenom := k.GetStakedHostTokenDenomOnHostZone(hostZone)
-			err = k.QueryCommunityPoolDepositBalance(ctx, hostZone, ibcStDenom)
-			if err != nil {
-				k.Logger(ctx).Error(utils.LogWithHostZone(hostZone.ChainId, "Querying stHostDenom %s - %s", ibcStDenom, err.Error()))
-			}
-			// Transfer out all tokens in the holding address back to the Return ICA
-			err = k.ReturnAllCommunityPoolTokens(ctx, hostZone)
-			if err != nil {
-				k.Logger(ctx).Error(utils.LogWithHostZone(hostZone.ChainId, "Returning from holding address - %s", err.Error()))
-			}
+		if hostZone.CommunityPoolDepositIcaAddress == "" ||
+			hostZone.CommunityPoolStakeHoldingAddress == "" ||
+			hostZone.CommunityPoolRedeemHoldingAddress == "" ||
+			hostZone.CommunityPoolReturnIcaAddress == "" {
+			continue
+		}
+
+		// stDenom is the ibc denom on hostZone when the hostZone's native denom is staked
+		denom := hostZone.HostDenom
+		stIbcDenom, err := k.GetStIbcDenomOnHostZone(ctx, hostZone)
+		if err != nil {
+			k.Logger(ctx).Error(utils.LogWithHostZone(hostZone.ChainId, "Unable to get stToken ibc denom - %s", err.Error()))
+			continue
+		}
+
+		/****** Stage 1: Query deposit ICA for denom/stDenom, Transfer tokens to stride *******/
+
+		// ICQ for the host denom of the chain, these are tokens the pool wants staked
+		err = k.QueryCommunityPoolBalance(ctx, hostZone, types.ICAAccountType_COMMUNITY_POOL_DEPOSIT, denom)
+		if err != nil {
+			k.Logger(ctx).Error(utils.LogWithHostZone(hostZone.ChainId, "Querying hostDenom %s in deposit- %s", denom, err.Error()))
+		}
+		// ICQ for staked tokens of the host denom, these are tokens the pool wants redeemed
+		err = k.QueryCommunityPoolBalance(ctx, hostZone, types.ICAAccountType_COMMUNITY_POOL_DEPOSIT, stIbcDenom)
+		if err != nil {
+			k.Logger(ctx).Error(utils.LogWithHostZone(hostZone.ChainId, "Querying stHostDenom %s in deposit - %s", stIbcDenom, err.Error()))
+		}
+
+		/****** Stage 2: LiquidStake denom and transfer to return ICA, or RedeemStake stDenom *******/
+
+		// LiquidStake tokens in the stake holding address and transfer to the return ica
+		if err = k.LiquidStakeCommunityPoolTokens(ctx, hostZone); err != nil {
+			k.Logger(ctx).Error(utils.LogWithHostZone(hostZone.ChainId,
+				"Liquid staking and transfering tokens in stake holding address - %s", err.Error()))
+		}
+		// RedeemStake tokens in the redeem holding address, in 30 days they claim to the return ica
+		if err = k.RedeemCommunityPoolTokens(ctx, hostZone); err != nil {
+			k.Logger(ctx).Error(utils.LogWithHostZone(hostZone.ChainId,
+				"Redeeming stTokens in redeem holding address - %s", err.Error()))
+		}
+
+		/****** Stage 3: Query return ICA for denom/stDenom, FundCommunityPool from return ICA *******/
+
+		err = k.QueryCommunityPoolBalance(ctx, hostZone, types.ICAAccountType_COMMUNITY_POOL_RETURN, denom)
+		if err != nil {
+			k.Logger(ctx).Error(utils.LogWithHostZone(hostZone.ChainId, "Querying hostDenom %s in return- %s", denom, err.Error()))
+		}
+		err = k.QueryCommunityPoolBalance(ctx, hostZone, types.ICAAccountType_COMMUNITY_POOL_RETURN, stIbcDenom)
+		if err != nil {
+			k.Logger(ctx).Error(utils.LogWithHostZone(hostZone.ChainId, "Querying stHostDenom %s in return - %s", stIbcDenom, err.Error()))
 		}
 	}
 }
 
-// ICQ specific denom for balance in the deposit ICA on the community pool host zone
-// The ICQ callback will call the transfer function with found token(s) as input
-func (k Keeper) QueryCommunityPoolDepositBalance(ctx sdk.Context, hostZone types.HostZone, denom string) error {
-	k.Logger(ctx).Info(utils.LogWithHostZone(hostZone.ChainId, "Submitting ICQ for %s in community pool deposit account balance", denom))
+// ICQ specific denom for balance in the deposit ICA or return ICA on the community pool host zone
+// Depending on account type and denom, discovered tokens are transferred to Stride or funded to the pool
+func (k Keeper) QueryCommunityPoolBalance(
+	ctx sdk.Context,
+	hostZone types.HostZone,
+	icaType types.ICAAccountType,
+	denom string,
+) error {
+	k.Logger(ctx).Info(utils.LogWithHostZone(hostZone.ChainId,
+		"Building ICQ for %s balance in community pool %s address", denom, icaType.String()))
 
-	// Get the withdrawal account address from the host zone
-	if hostZone.CommunityPoolDepositIcaAddress == "" {
-		return errorsmod.Wrapf(types.ErrICAAccountNotFound, "no deposit account found for %s", hostZone.ChainId)
+	var icaAddress string
+	switch icaType {
+	case types.ICAAccountType_COMMUNITY_POOL_DEPOSIT:
+		icaAddress = hostZone.CommunityPoolDepositIcaAddress
+	case types.ICAAccountType_COMMUNITY_POOL_RETURN:
+		icaAddress = hostZone.CommunityPoolReturnIcaAddress
+	default:
+		return errorsmod.Wrapf(types.ErrICAAccountNotFound, "icaType must be either deposit or return!")
 	}
 
-	// Encode the deposit account address for the query request
-	// The query request consists of the account address and denom passed in
-	_, depositAddressBz, err := bech32.DecodeAndConvert(hostZone.CommunityPoolDepositIcaAddress)
+	// Verify a valid ica address exists for this host zone
+	if icaAddress == "" {
+		return errorsmod.Wrapf(types.ErrICAAccountNotFound, "no address of type %s found for %s",
+			icaType.String(), hostZone.ChainId)
+	}
+
+	_, addressBz, err := bech32.DecodeAndConvert(icaAddress)
 	if err != nil {
-		return errorsmod.Wrapf(err, "invalid withdrawal account address, could not decode (%s)", hostZone.CommunityPoolDepositIcaAddress)
+		return errorsmod.Wrapf(err, "invalid %s address, could not decode (%s)",
+			icaType.String(), icaAddress)
 	}
-	queryData := append(banktypes.CreateAccountBalancesPrefix(depositAddressBz), []byte(denom)...)
+	queryData := append(banktypes.CreateAccountBalancesPrefix(addressBz), []byte(denom)...)
 
 	// The response might be a coin, or might just be an int depending on sdk version
 	// Since we need the denom later, store the denom as callback data for the query
-	callbackData := types.CommunityPoolDepositQueryCallback{
-		Denom: denom,
+	callbackData := types.CommunityPoolBalanceQueryCallback{
+		IcaType: icaType,
+		Denom:   denom,
 	}
 	callbackDataBz, err := proto.Marshal(&callbackData)
 	if err != nil {
-		return errorsmod.Wrapf(err, "unable to marshal community pool deposit balance callback data %v", callbackData)
+		return errorsmod.Wrapf(err, "can't marshal community pool balance callback data %+v", callbackData)
 	}
 
 	// Timeout query at end of epoch
@@ -90,46 +138,86 @@ func (k Keeper) QueryCommunityPoolDepositBalance(ctx sdk.Context, hostZone types
 		QueryType:       icqtypes.BANK_STORE_QUERY_WITH_PROOF,
 		RequestData:     queryData,
 		CallbackModule:  types.ModuleName,
-		CallbackId:      ICQCallbackID_CommunityPoolDepositBalance,
+		CallbackId:      ICQCallbackID_CommunityPoolBalance,
 		CallbackData:    callbackDataBz,
 		TimeoutDuration: timeoutDuration,
 		TimeoutPolicy:   icqtypes.TimeoutPolicy_REJECT_QUERY_RESPONSE,
 	}
 	if err := k.InterchainQueryKeeper.SubmitICQRequest(ctx, query, false); err != nil {
-		return errorsmod.Wrapf(err, "Error querying for pool deposit balance")
+		return errorsmod.Wrapf(err, "Error submitting query for pool ica balance")
 	}
 
 	return nil
 }
 
-// Transfers all tokens in the Stride-side holding address over to the communityPoolReturnAddress ICA
-func (k Keeper) ReturnAllCommunityPoolTokens(ctx sdk.Context, hostZone types.HostZone) error {
-	// Use bankKeeper to see all coin types and amounts currently in the stride-side holding module address
-	req := banktypes.NewQueryAllBalancesRequest(sdk.AccAddress(hostZone.CommunityPoolHoldingAddress), nil)
-	resp, err := k.bankKeeper.AllBalances(ctx, req)
+// Liquid stake all native tokens in the stake holding address
+func (k Keeper) LiquidStakeCommunityPoolTokens(ctx sdk.Context, hostZone types.HostZone) error {
+	// Get the number of native tokens in the stake address
+	// The native tokens will be an ibc denom since they've been transferred to stride
+	communityPoolStakeAddress := sdk.AccAddress(hostZone.CommunityPoolStakeHoldingAddress)
+	nativeTokens := k.bankKeeper.GetBalance(ctx, communityPoolStakeAddress, hostZone.IbcDenom)
+
+	// If there aren't enough tokens, do nothing
+	// (consider specifying a minimum here)
+	if nativeTokens.Amount.LTE(sdkmath.ZeroInt()) {
+		return nil
+	}
+
+	// TODO: Move LS function to keeper method instead of message server
+	// Liquid stake the balance in the stake holding account
+	msgServer := NewMsgServerImpl(k)
+	liquidStakeRequest := types.MsgLiquidStake{
+		Creator:   hostZone.CommunityPoolStakeHoldingAddress,
+		Amount:    nativeTokens.Amount,
+		HostDenom: hostZone.HostDenom,
+	}
+	resp, err := msgServer.LiquidStake(ctx, &liquidStakeRequest)
 	if err != nil {
-		return errorsmod.Wrapf(err, "Couldn't look up balances in holding address")
+		return err
 	}
 
-	for _, foundCoin := range resp.Balances {
-		if err = k.TransferHoldingToCommunityPoolReturn(ctx, hostZone, foundCoin); err != nil {
-			k.Logger(ctx).Error(errorsmod.Wrapf(err, "error in token transfer %+v", foundCoin).Error())
-			continue
-		}
+	// If the liquid stake was successful, transfer the stTokens to the return ICA
+	return k.TransferHoldingToCommunityPoolReturn(ctx, hostZone, resp.StToken)
+}
+
+// Redeem all the stTokens in the redeem holding address
+func (k Keeper) RedeemCommunityPoolTokens(ctx sdk.Context, hostZone types.HostZone) error {
+	// Get the number of stTokens in the redeem address
+	stDenom := types.StAssetDenomFromHostZoneDenom(hostZone.HostDenom)
+	communityPoolRedeemAddress := sdk.AccAddress(hostZone.CommunityPoolRedeemHoldingAddress)
+	stTokens := k.bankKeeper.GetBalance(ctx, communityPoolRedeemAddress, stDenom)
+
+	// If there aren't enough tokens, do nothing
+	if stTokens.Amount.LTE(sdkmath.ZeroInt()) {
+		return nil
+	}
+
+	// TODO: Move Redeem function to keeper method instead of message server
+	// Redeem the stTokens in the redeem holding account
+	// The return ICA address will be the recipient of the claim
+	msgServer := NewMsgServerImpl(k)
+	redeemStakeRequest := types.MsgRedeemStake{
+		Creator:  hostZone.CommunityPoolRedeemHoldingAddress,
+		Amount:   stTokens.Amount,
+		HostZone: hostZone.ChainId,
+		Receiver: hostZone.CommunityPoolReturnIcaAddress,
+	}
+	if _, err := msgServer.RedeemStake(ctx, &redeemStakeRequest); err != nil {
+		return err
 	}
 
 	return nil
 }
 
-// Using tokens in the CommunityPoolReturnIcaAddress, ICA tx to fund community pool
-// Note: The denoms of the passed in token have to be ibc denoms which exist on the communityPoolHostZone
-func (k Keeper) FundCommunityPool(ctx sdk.Context, communityPoolHostZone types.HostZone, token sdk.Coin) error {
+// Using tokens in the CommunityPoolReturnIcaAddress, trigger ICA tx to fund community pool
+// Note: The denom of the passed in token has to be the denom which exists on the hostZone not Stride
+func (k Keeper) FundCommunityPool(ctx sdk.Context, hostZone types.HostZone, token sdk.Coin) error {
 	fundCoins := sdk.NewCoins(token)
 
 	var msgs []proto.Message
 	msgs = append(msgs, &disttypes.MsgFundCommunityPool{
 		Amount:    fundCoins,
-		Depositor: communityPoolHostZone.CommunityPoolReturnIcaAddress,
+		Depositor: hostZone.CommunityPoolReturnIcaAddress,
 	})
 
 	// No need to build ICA callback data or input an ICA callback method
@@ -138,16 +226,16 @@ func (k Keeper) FundCommunityPool(ctx sdk.Context, communityPoolHostZone types.H
 	ibcTransferTimeoutNanos := k.GetParam(ctx, types.KeyIBCTransferTimeoutNanos)
 	icaTimeoutTimestamp := uint64(ctx.BlockTime().UnixNano()) + ibcTransferTimeoutNanos
 
-	// Send the transaction through SubmitTx to kick off ICA command -- no ICA callback method name, or callback args needed
+	// Send the transaction through SubmitTx to kick off ICA command
 	_, err := k.SubmitTxs(ctx,
-		communityPoolHostZone.ConnectionId,
+		hostZone.ConnectionId,
 		msgs,
 		types.ICAAccountType_COMMUNITY_POOL_RETURN,
 		icaTimeoutTimestamp,
 		icaCallbackId,
 		icaCallbackData)
 	if err != nil {
-		return errorsmod.Wrapf(types.ErrICATxFailed, "Failed to SubmitTxs for FundCommunityPool, Messages: %v, err: %s", msgs, err.Error())
+		return errorsmod.Wrapf(err, "Failed to SubmitTxs for FundCommunityPool, Messages: %+v", msgs)
 	}
 
 	return nil
