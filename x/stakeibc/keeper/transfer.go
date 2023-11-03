@@ -19,7 +19,7 @@ import (
 // Transfers tokens from the community pool deposit ICA account to the host zone holding module address for that pool
 func (k Keeper) TransferCommunityPoolDepositToHolding(ctx sdk.Context, hostZone types.HostZone, token sdk.Coin) error {
 	// Verify that the deposit ica address exists on the host zone and holding address exists on stride
-	if hostZone.CommunityPoolHoldingAddress == "" || hostZone.CommunityPoolDepositIcaAddress == "" {
+	if hostZone.CommunityPoolDepositIcaAddress == "" || hostZone.CommunityPoolStakeAddress == "" {
 		return errors.New("Invalid holding address or deposit address, cannot build valid ICA transfer kickoff command")
 	}
 
@@ -44,7 +44,7 @@ func (k Keeper) TransferCommunityPoolDepositToHolding(ctx sdk.Context, hostZone 
 		counterpartyChannelId, // for transfers of communityPoolHostZone -> Stride
 		token,
 		hostZone.CommunityPoolDepositIcaAddress, // ICA controlled address on community pool zone
-		hostZone.CommunityPoolHoldingAddress,    // Stride address, unique to each community pool / hostzone
+		hostZone.CommunityPoolStakeAddress,      // Stride address, unique to each community pool / hostzone
 		clienttypes.Height{},
 		endEpochTimestamp,
 		memo,
@@ -82,7 +82,7 @@ func (k Keeper) TransferHoldingToCommunityPoolReturn(ctx sdk.Context, hostZone t
 		transfertypes.PortID,
 		hostZone.TransferChannelId,
 		coin,
-		hostZone.CommunityPoolHoldingAddress,   // from Stride address, unique to each community pool / hostzone
+		hostZone.CommunityPoolStakeAddress,     // from Stride address, unique to each community pool / hostzone
 		hostZone.CommunityPoolReturnIcaAddress, // to ICA controlled address on foreign hub
 		clienttypes.Height{},
 		timeoutTimestamp,
@@ -112,6 +112,6 @@ func (k Keeper) GetStakedDenomOnHostZone(ctx sdk.Context, hostZone types.HostZon
 
 	sourcePrefix := transfertypes.GetDenomPrefix(transfertypes.PortID, counterpartyChannelId)
 	prefixedDenom := sourcePrefix + stDenomOnStride
-	
+
 	return transfertypes.ParseDenomTrace(prefixedDenom).IBCDenom()
 }

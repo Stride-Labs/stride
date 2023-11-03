@@ -25,15 +25,14 @@ func (s *KeeperTestSuite) SetupTransferCommunityPoolDepositToHolding() TransferC
 	owner := types.FormatICAAccountOwner(chainId, types.ICAAccountType_COMMUNITY_POOL_DEPOSIT)
 	channelId, portId := s.CreateICAChannel(owner)
 
-	holdingAccount := s.TestAccs[0]
-	holdingAddress := holdingAccount.String()
+	stakeAddress := s.TestAccs[0].String()
 	depositIcaAccount := s.TestAccs[1]
 	depositIcaAddress := depositIcaAccount.String()
 	hostZone := types.HostZone{
 		ChainId:                        chainId,
 		ConnectionId:                   "connection-0",
 		TransferChannelId:              "channel-0",
-		CommunityPoolHoldingAddress:    holdingAddress,
+		CommunityPoolStakeAddress:      stakeAddress,
 		CommunityPoolDepositIcaAddress: depositIcaAddress,
 	}
 
@@ -65,9 +64,9 @@ func (s *KeeperTestSuite) TestTransferCommunityPoolDepositToHolding_Successful()
 	s.Require().Equal(endSequence, startSequence+1, "sequence number should have incremented")
 }
 
-func (s *KeeperTestSuite) TestTransferCommunityPoolDepositToHolding_MissingHoldingFail() {
+func (s *KeeperTestSuite) TestTransferCommunityPoolDepositToHolding_MissingStakeAddressFail() {
 	tc := s.SetupTransferCommunityPoolDepositToHolding()
-	tc.hostZone.CommunityPoolHoldingAddress = ""
+	tc.hostZone.CommunityPoolStakeAddress = ""
 
 	// Verify that the ICA msg was successfully sent off
 	err := s.App.StakeibcKeeper.TransferCommunityPoolDepositToHolding(s.Ctx, tc.hostZone, tc.coin)
@@ -118,19 +117,19 @@ func (s *KeeperTestSuite) TestTransferHoldingToCommunityPoolReturn_Successful() 
 func (s *KeeperTestSuite) SetupTransferHoldingToCommunityPoolReturn() TransferHoldingToCommunityPoolReturnTestCase {
 	s.CreateTransferChannel(chainId)
 
-	holdingAccount := s.TestAccs[0]
-	holdingAddress := holdingAccount.String()
+	stakeAccount := s.TestAccs[0]
+	stakeAddress := stakeAccount.String()
 	returnIcaAddress := s.TestAccs[1].String()
 	hostZone := types.HostZone{
 		ChainId:                       chainId,
 		TransferChannelId:             "channel-0",
-		CommunityPoolHoldingAddress:   holdingAddress,
+		CommunityPoolStakeAddress:     stakeAddress,
 		CommunityPoolReturnIcaAddress: returnIcaAddress,
 	}
 
 	balanceToTransfer := sdkmath.NewInt(1_000_000)
 	coin := sdk.NewCoin("tokens", balanceToTransfer)
-	s.FundAccount(holdingAccount, coin)
+	s.FundAccount(stakeAccount, coin)
 
 	return TransferHoldingToCommunityPoolReturnTestCase{
 		hostZone: hostZone,
@@ -156,4 +155,3 @@ func (s *KeeperTestSuite) TestTransferHoldingToCommunityPoolReturn_MissingTokens
 	s.Require().ErrorContains(err, "Error submitting ibc transfer")
 	s.Require().ErrorContains(err, "insufficient funds")
 }
-
