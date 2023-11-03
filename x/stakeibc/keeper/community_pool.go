@@ -49,12 +49,12 @@ func (k Keeper) ProcessAllCommunityPoolTokens(ctx sdk.Context) {
 
 		/****** Epoch 2 *******/
 		// LiquidStake tokens in the holding address and transfer to the return ica
-		if err = k.LiquidStakeAndTransferCommunityPoolTokens(ctx, hostZone); err != nil {
+		if err = k.LiquidStakeCommunityPoolTokens(ctx, hostZone); err != nil {
 			k.Logger(ctx).Error(utils.LogWithHostZone(hostZone.ChainId,
 				"Liquid staking and transfering tokens in holding address - %s", err.Error()))
 		}
 		// Redeem tokens in the holding address
-		if err = k.RedeemCommunityPoolStTokens(ctx, hostZone); err != nil {
+		if err = k.RedeemCommunityPoolTokens(ctx, hostZone); err != nil {
 			k.Logger(ctx).Error(utils.LogWithHostZone(hostZone.ChainId,
 				"Redeeming stTokens in holding address - %s", err.Error()))
 		}
@@ -143,7 +143,7 @@ func (k Keeper) QueryCommunityPoolBalance(ctx sdk.Context,
 }
 
 // Liquid stake all native tokens in the holding address
-func (k Keeper) LiquidStakeAndTransferCommunityPoolTokens(ctx sdk.Context, hostZone types.HostZone) error {
+func (k Keeper) LiquidStakeCommunityPoolTokens(ctx sdk.Context, hostZone types.HostZone) error {
 	// Get the number of native tokens in the stake address
 	// The native tokens will be an ibc denom since they've been transferred to stride
 	communityPoolStakeAddress := sdk.AccAddress(hostZone.CommunityPoolStakeAddress)
@@ -168,12 +168,12 @@ func (k Keeper) LiquidStakeAndTransferCommunityPoolTokens(ctx sdk.Context, hostZ
 		return err
 	}
 
-	// Transfer the stTokens to the return ICA
+	// If the liquid stake was successful, transfer the stTokens to the return ICA
 	return k.TransferHoldingToCommunityPoolReturn(ctx, hostZone, resp.StToken)
 }
 
 // Redeem all the stTokens in the holding address
-func (k Keeper) RedeemCommunityPoolStTokens(ctx sdk.Context, hostZone types.HostZone) error {
+func (k Keeper) RedeemCommunityPoolTokens(ctx sdk.Context, hostZone types.HostZone) error {
 	// Get the number of stTokens in the redeem address
 	stDenom := types.StAssetDenomFromHostZoneDenom(hostZone.HostDenom)
 	communityPoolRedeemAddress := sdk.AccAddress(hostZone.CommunityPoolRedeemAddress)
