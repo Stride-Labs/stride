@@ -74,11 +74,12 @@ func (k Keeper) ProcessAllCommunityPoolTokens(ctx sdk.Context) {
 
 // ICQ specific denom for balance in the deposit ICA or return ICA on the community pool host zone
 // Depending on account type and denom, discovered tokens are transferred to Stride or funded to the pool
-func (k Keeper) QueryCommunityPoolBalance(ctx sdk.Context,
+func (k Keeper) QueryCommunityPoolBalance(
+	ctx sdk.Context,
 	hostZone types.HostZone,
 	icaType types.ICAAccountType,
-	denom string) error {
-
+	denom string,
+) error {
 	k.Logger(ctx).Info(utils.LogWithHostZone(hostZone.ChainId,
 		"Building ICQ for %s balance in community pool %s address", denom, icaType.String()))
 
