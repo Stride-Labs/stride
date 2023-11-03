@@ -26,15 +26,15 @@ func (s *KeeperTestSuite) SetupTransferCommunityPoolDepositToHolding() TransferC
 	owner := types.FormatICAAccountOwner(chainId, types.ICAAccountType_COMMUNITY_POOL_DEPOSIT)
 	channelId, portId := s.CreateICAChannel(owner)
 
-	stakeAddress := s.TestAccs[0].String()
+	holdingAddress := s.TestAccs[0].String()
 	depositIcaAccount := s.TestAccs[1]
 	depositIcaAddress := depositIcaAccount.String()
 	hostZone := types.HostZone{
-		ChainId:                        chainId,
-		ConnectionId:                   "connection-0",
-		TransferChannelId:              "channel-0",
-		CommunityPoolStakeAddress:      stakeAddress,
-		CommunityPoolDepositIcaAddress: depositIcaAddress,
+		ChainId:                          chainId,
+		ConnectionId:                     "connection-0",
+		TransferChannelId:                "channel-0",
+		CommunityPoolStakeHoldingAddress: holdingAddress,
+		CommunityPoolDepositIcaAddress:   depositIcaAddress,
 	}
 
 	strideEpoch := types.EpochTracker{
@@ -73,7 +73,7 @@ func (s *KeeperTestSuite) TestTransferCommunityPoolDepositToHolding_Successful()
 
 func (s *KeeperTestSuite) TestTransferCommunityPoolDepositToHolding_MissingStakeAddressFail() {
 	tc := s.SetupTransferCommunityPoolDepositToHolding()
-	tc.hostZone.CommunityPoolStakeAddress = ""
+	tc.hostZone.CommunityPoolStakeHoldingAddress = ""
 
 	// Verify that the ICA msg was successfully sent off
 	err := s.App.StakeibcKeeper.TransferCommunityPoolDepositToHolding(s.Ctx, tc.hostZone, tc.coin)
@@ -124,19 +124,19 @@ func (s *KeeperTestSuite) TestTransferHoldingToCommunityPoolReturn_Successful() 
 func (s *KeeperTestSuite) SetupTransferHoldingToCommunityPoolReturn() TransferHoldingToCommunityPoolReturnTestCase {
 	s.CreateTransferChannel(chainId)
 
-	stakeAccount := s.TestAccs[0]
-	stakeAddress := stakeAccount.String()
+	holdingAccount := s.TestAccs[0]
+	holdingAddress := holdingAccount.String()
 	returnIcaAddress := s.TestAccs[1].String()
 	hostZone := types.HostZone{
-		ChainId:                       chainId,
-		TransferChannelId:             "channel-0",
-		CommunityPoolStakeAddress:     stakeAddress,
-		CommunityPoolReturnIcaAddress: returnIcaAddress,
+		ChainId:                          chainId,
+		TransferChannelId:                "channel-0",
+		CommunityPoolStakeHoldingAddress: holdingAddress,
+		CommunityPoolReturnIcaAddress:    returnIcaAddress,
 	}
 
 	balanceToTransfer := sdkmath.NewInt(1_000_000)
 	coin := sdk.NewCoin("tokens", balanceToTransfer)
-	s.FundAccount(stakeAccount, coin)
+	s.FundAccount(holdingAccount, coin)
 
 	return TransferHoldingToCommunityPoolReturnTestCase{
 		hostZone: hostZone,

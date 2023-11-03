@@ -19,7 +19,7 @@ import (
 // Transfers tokens from the community pool deposit ICA account to the host zone holding module address for that pool
 func (k Keeper) TransferCommunityPoolDepositToHolding(ctx sdk.Context, hostZone types.HostZone, token sdk.Coin) error {
 	// Verify that the deposit ica address exists on the host zone and holding address exists on stride
-	if hostZone.CommunityPoolDepositIcaAddress == "" || hostZone.CommunityPoolStakeAddress == "" {
+	if hostZone.CommunityPoolDepositIcaAddress == "" || hostZone.CommunityPoolStakeHoldingAddress == "" {
 		return errors.New("Invalid holding address or deposit address, cannot build valid ICA transfer kickoff command")
 	}
 
@@ -43,8 +43,8 @@ func (k Keeper) TransferCommunityPoolDepositToHolding(ctx sdk.Context, hostZone 
 		transfertypes.PortID,
 		counterpartyChannelId, // for transfers of communityPoolHostZone -> Stride
 		token,
-		hostZone.CommunityPoolDepositIcaAddress, // ICA controlled address on community pool zone
-		hostZone.CommunityPoolStakeAddress,      // Stride address, unique to each community pool / hostzone
+		hostZone.CommunityPoolDepositIcaAddress,   // ICA controlled address on community pool zone
+		hostZone.CommunityPoolStakeHoldingAddress, // Stride address, unique to each community pool / hostzone
 		clienttypes.Height{},
 		endEpochTimestamp,
 		memo,
@@ -82,8 +82,8 @@ func (k Keeper) TransferHoldingToCommunityPoolReturn(ctx sdk.Context, hostZone t
 		transfertypes.PortID,
 		hostZone.TransferChannelId,
 		coin,
-		hostZone.CommunityPoolStakeAddress,     // from Stride address, unique to each community pool / hostzone
-		hostZone.CommunityPoolReturnIcaAddress, // to ICA controlled address on foreign hub
+		hostZone.CommunityPoolStakeHoldingAddress, // from Stride address, unique to each community pool / hostzone
+		hostZone.CommunityPoolReturnIcaAddress,    // to ICA controlled address on foreign hub
 		clienttypes.Height{},
 		timeoutTimestamp,
 		memo,

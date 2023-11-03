@@ -25,8 +25,8 @@ func (k Keeper) ProcessAllCommunityPoolTokens(ctx sdk.Context) {
 	hostZones := k.GetAllActiveHostZone(ctx)
 	for _, hostZone := range hostZones {
 		if hostZone.CommunityPoolDepositIcaAddress == "" ||
-			hostZone.CommunityPoolStakeAddress == "" ||
-			hostZone.CommunityPoolRedeemAddress == "" ||
+			hostZone.CommunityPoolStakeHoldingAddress == "" ||
+			hostZone.CommunityPoolRedeemHoldingAddress == "" ||
 			hostZone.CommunityPoolReturnIcaAddress == "" {
 			continue
 		}
@@ -146,7 +146,7 @@ func (k Keeper) QueryCommunityPoolBalance(ctx sdk.Context,
 func (k Keeper) LiquidStakeCommunityPoolTokens(ctx sdk.Context, hostZone types.HostZone) error {
 	// Get the number of native tokens in the stake address
 	// The native tokens will be an ibc denom since they've been transferred to stride
-	communityPoolStakeAddress := sdk.AccAddress(hostZone.CommunityPoolStakeAddress)
+	communityPoolStakeAddress := sdk.AccAddress(hostZone.CommunityPoolStakeHoldingAddress)
 	nativeTokens := k.bankKeeper.GetBalance(ctx, communityPoolStakeAddress, hostZone.IbcDenom)
 
 	// If there aren't enough tokens, do nothing
@@ -159,7 +159,7 @@ func (k Keeper) LiquidStakeCommunityPoolTokens(ctx sdk.Context, hostZone types.H
 	// Liquid stake the balance in the holding account
 	msgServer := NewMsgServerImpl(k)
 	liquidStakeRequest := types.MsgLiquidStake{
-		Creator:   hostZone.CommunityPoolStakeAddress,
+		Creator:   hostZone.CommunityPoolStakeHoldingAddress,
 		Amount:    nativeTokens.Amount,
 		HostDenom: hostZone.HostDenom,
 	}
@@ -176,7 +176,7 @@ func (k Keeper) LiquidStakeCommunityPoolTokens(ctx sdk.Context, hostZone types.H
 func (k Keeper) RedeemCommunityPoolTokens(ctx sdk.Context, hostZone types.HostZone) error {
 	// Get the number of stTokens in the redeem address
 	stDenom := types.StAssetDenomFromHostZoneDenom(hostZone.HostDenom)
-	communityPoolRedeemAddress := sdk.AccAddress(hostZone.CommunityPoolRedeemAddress)
+	communityPoolRedeemAddress := sdk.AccAddress(hostZone.CommunityPoolRedeemHoldingAddress)
 	stTokens := k.bankKeeper.GetBalance(ctx, communityPoolRedeemAddress, stDenom)
 
 	// If there aren't enough tokens, do nothing
@@ -189,7 +189,7 @@ func (k Keeper) RedeemCommunityPoolTokens(ctx sdk.Context, hostZone types.HostZo
 	// The return ICA address will be the recipient of the claim
 	msgServer := NewMsgServerImpl(k)
 	redeemStakeRequest := types.MsgRedeemStake{
-		Creator:  hostZone.CommunityPoolRedeemAddress,
+		Creator:  hostZone.CommunityPoolRedeemHoldingAddress,
 		Amount:   stTokens.Amount,
 		HostZone: hostZone.ChainId,
 		Receiver: hostZone.CommunityPoolReturnIcaAddress,
