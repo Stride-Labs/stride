@@ -48,12 +48,12 @@ func (k Keeper) ProcessAllCommunityPoolTokens(ctx sdk.Context) {
 		}
 
 		/****** Epoch 2 *******/
-		// LiquidStake tokens in the holding address and transfer to the return ica
+		// LiquidStake tokens in the stake holding address and transfer to the return ica
 		if err = k.LiquidStakeCommunityPoolTokens(ctx, hostZone); err != nil {
 			k.Logger(ctx).Error(utils.LogWithHostZone(hostZone.ChainId,
 				"Liquid staking and transfering tokens in holding address - %s", err.Error()))
 		}
-		// Redeem tokens in the holding address
+		// Redeem tokens that are in the redeem holding address
 		if err = k.RedeemCommunityPoolTokens(ctx, hostZone); err != nil {
 			k.Logger(ctx).Error(utils.LogWithHostZone(hostZone.ChainId,
 				"Redeeming stTokens in holding address - %s", err.Error()))
