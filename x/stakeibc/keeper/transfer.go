@@ -16,11 +16,11 @@ import (
 	"github.com/Stride-Labs/stride/v14/x/stakeibc/types"
 )
 
-// Transfers tokens from the community pool deposit ICA account to the host zone holding module address for that pool
+// Transfers tokens from the community pool deposit ICA account to the host zone stake holding module address for that pool
 func (k Keeper) TransferCommunityPoolDepositToHolding(ctx sdk.Context, hostZone types.HostZone, token sdk.Coin) error {
-	// Verify that the deposit ica address exists on the host zone and holding address exists on stride
-	if hostZone.CommunityPoolHoldingAddress == "" || hostZone.CommunityPoolDepositIcaAddress == "" {
-		return errors.New("Invalid holding address or deposit address, cannot build valid ICA transfer kickoff command")
+	// Verify that the deposit ica address exists on the host zone and stake holding address exists on stride
+	if hostZone.CommunityPoolDepositIcaAddress == "" || hostZone.CommunityPoolStakeHoldingAddress == "" {
+		return errors.New("Invalid deposit address or stake holding address, cannot build valid ICA transfer kickoff command")
 	}
 
 	// get the hostZone counterparty transfer channel for sending tokens from hostZone to Stride
@@ -37,6 +37,25 @@ func (k Keeper) TransferCommunityPoolDepositToHolding(ctx sdk.Context, hostZone 
 	}
 	endEpochTimestamp := uint64(strideEpochTracker.NextEpochStartTime)
 
+	// Determine the host zone's stToken ibc denom
+	nativeDenom := hostZone.HostDenom
+	stIBCDenom, err := k.GetStakedDenomOnHostZone(ctx, hostZone)
+	if err != nil {
+		return err
+	}
+
+	// If the token is an stToken, we send it to the redeem holding address to be redeemed
+	// Otherwise, we send it to the stake holding address to be liquid staked
+	var destinationHoldingAddress string
+	switch token.Denom {
+	case nativeDenom:
+		destinationHoldingAddress = hostZone.CommunityPoolStakeHoldingAddress
+	case stIBCDenom:
+		destinationHoldingAddress = hostZone.CommunityPoolRedeemHoldingAddress
+	default:
+		return fmt.Errorf("Invalid community pool transfer denom: %s", token.Denom)
+	}
+
 	memo := ""
 	var msgs []proto.Message
 	msgs = append(msgs, transfertypes.NewMsgTransfer(
@@ -44,7 +63,7 @@ func (k Keeper) TransferCommunityPoolDepositToHolding(ctx sdk.Context, hostZone 
 		counterpartyChannelId, // for transfers of communityPoolHostZone -> Stride
 		token,
 		hostZone.CommunityPoolDepositIcaAddress, // ICA controlled address on community pool zone
-		hostZone.CommunityPoolHoldingAddress,    // Stride address, unique to each community pool / hostzone
+		destinationHoldingAddress,               // Stride address, unique to each community pool / hostzone
 		clienttypes.Height{},
 		endEpochTimestamp,
 		memo,
@@ -56,7 +75,7 @@ func (k Keeper) TransferCommunityPoolDepositToHolding(ctx sdk.Context, hostZone 
 	var icaCallbackData []byte
 
 	// Send the transaction through SubmitTx to kick off ICA commands -- no ICA callback method name, or callback args needed
-	_, err := k.SubmitTxs(ctx,
+	_, err = k.SubmitTxs(ctx,
 		hostZone.ConnectionId,
 		msgs,
 		types.ICAAccountType_COMMUNITY_POOL_DEPOSIT,
@@ -66,26 +85,29 @@ func (k Keeper) TransferCommunityPoolDepositToHolding(ctx sdk.Context, hostZone 
 	if err != nil {
 		return errorsmod.Wrapf(err, "Failed to SubmitTxs, Messages: %v, err: %s", msgs, err.Error())
 	}
-	k.Logger(ctx).Info("Successfully sent ICA command to kick off ibc transfer from deposit ICA to holding address")
+	k.Logger(ctx).Info("Successfully sent ICA command to kick off ibc transfer from deposit ICA to stake holding address")
 
 	return nil
 }
 
-// Transfers a given token from the stride-side holding address to the return ICA address on the host zone
+// Transfers a recently minted stToken from the stride-side stake holding address to the return ICA address on the host zone
 func (k Keeper) TransferHoldingToCommunityPoolReturn(ctx sdk.Context, hostZone types.HostZone, coin sdk.Coin) error {
 	memo := ""
-	ibcTransferTimeoutNanos := k.GetParam(ctx, types.KeyIBCTransferTimeoutNanos)
-	timeoutTimestamp := uint64(ctx.BlockTime().UnixNano()) + ibcTransferTimeoutNanos
+	strideEpochTracker, found := k.GetEpochTracker(ctx, epochstypes.STRIDE_EPOCH)
+	if !found {
+		return errorsmod.Wrapf(types.ErrEpochNotFound, epochstypes.STRIDE_EPOCH)
+	}
+	endEpochTimestamp := uint64(strideEpochTracker.NextEpochStartTime)
 
 	// build and send an IBC message for each coin to transfer all back to the hostZone
 	msg := transfertypes.NewMsgTransfer(
 		transfertypes.PortID,
 		hostZone.TransferChannelId,
 		coin,
-		hostZone.CommunityPoolHoldingAddress,   // from Stride address, unique to each community pool / hostzone
-		hostZone.CommunityPoolReturnIcaAddress, // to ICA controlled address on foreign hub
+		hostZone.CommunityPoolStakeHoldingAddress, // from Stride address, unique to each community pool / hostzone
+		hostZone.CommunityPoolReturnIcaAddress,    // to ICA controlled address on foreign hub
 		clienttypes.Height{},
-		timeoutTimestamp,
+		endEpochTimestamp,
 		memo,
 	)
 
@@ -102,16 +124,19 @@ func (k Keeper) TransferHoldingToCommunityPoolReturn(ctx sdk.Context, hostZone t
 }
 
 // given a hostZone with native denom, returns the ibc denom on the zone for the staked stDenom
-func (k Keeper) GetStakedDenomOnHostZone(ctx sdk.Context, hostZone types.HostZone) (ibcStakedDenom string) {
+func (k Keeper) GetStakedDenomOnHostZone(ctx sdk.Context, hostZone types.HostZone) (ibcStakedDenom string, err error) {
 	nativeDenom := hostZone.HostDenom
 	stDenomOnStride := types.StAssetDenomFromHostZoneDenom(nativeDenom)
 
 	// use counterparty transfer channel because tokens come through this channel to hostZone
-	transferChannel, _ := k.IBCKeeper.ChannelKeeper.GetChannel(ctx, transfertypes.PortID, hostZone.TransferChannelId)
-	counterpartyChannelId := transferChannel.Counterparty.ChannelId
+	transferChannel, found := k.IBCKeeper.ChannelKeeper.GetChannel(ctx, transfertypes.PortID, hostZone.TransferChannelId)
+	if !found {
+		return "", channeltypes.ErrChannelNotFound.Wrapf(hostZone.TransferChannelId)
+	}
 
+	counterpartyChannelId := transferChannel.Counterparty.ChannelId
 	sourcePrefix := transfertypes.GetDenomPrefix(transfertypes.PortID, counterpartyChannelId)
 	prefixedDenom := sourcePrefix + stDenomOnStride
-	
-	return transfertypes.ParseDenomTrace(prefixedDenom).IBCDenom()
+
+	return transfertypes.ParseDenomTrace(prefixedDenom).IBCDenom(), nil
 }

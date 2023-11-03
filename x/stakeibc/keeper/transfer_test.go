@@ -8,6 +8,7 @@ import (
 
 	sdkmath "cosmossdk.io/math"
 
+	epochtypes "github.com/Stride-Labs/stride/v14/x/epochs/types"
 	"github.com/Stride-Labs/stride/v14/x/stakeibc/types"
 )
 
@@ -25,17 +26,22 @@ func (s *KeeperTestSuite) SetupTransferCommunityPoolDepositToHolding() TransferC
 	owner := types.FormatICAAccountOwner(chainId, types.ICAAccountType_COMMUNITY_POOL_DEPOSIT)
 	channelId, portId := s.CreateICAChannel(owner)
 
-	holdingAccount := s.TestAccs[0]
-	holdingAddress := holdingAccount.String()
+	holdingAddress := s.TestAccs[0].String()
 	depositIcaAccount := s.TestAccs[1]
 	depositIcaAddress := depositIcaAccount.String()
 	hostZone := types.HostZone{
-		ChainId:                        chainId,
-		ConnectionId:                   "connection-0",
-		TransferChannelId:              "channel-0",
-		CommunityPoolHoldingAddress:    holdingAddress,
-		CommunityPoolDepositIcaAddress: depositIcaAddress,
+		ChainId:                          chainId,
+		ConnectionId:                     "connection-0",
+		TransferChannelId:                "channel-0",
+		CommunityPoolStakeHoldingAddress: holdingAddress,
+		CommunityPoolDepositIcaAddress:   depositIcaAddress,
 	}
+
+	strideEpoch := types.EpochTracker{
+		EpochIdentifier:    epochtypes.STRIDE_EPOCH,
+		NextEpochStartTime: uint64(10), // used for transfer timeout
+	}
+	s.App.StakeibcKeeper.SetEpochTracker(s.Ctx, strideEpoch)
 
 	balanceToTransfer := sdkmath.NewInt(1_000_000)
 	coin := sdk.NewCoin("tokens", balanceToTransfer)
@@ -65,9 +71,9 @@ func (s *KeeperTestSuite) TestTransferCommunityPoolDepositToHolding_Successful()
 	s.Require().Equal(endSequence, startSequence+1, "sequence number should have incremented")
 }
 
-func (s *KeeperTestSuite) TestTransferCommunityPoolDepositToHolding_MissingHoldingFail() {
+func (s *KeeperTestSuite) TestTransferCommunityPoolDepositToHolding_MissingStakeAddressFail() {
 	tc := s.SetupTransferCommunityPoolDepositToHolding()
-	tc.hostZone.CommunityPoolHoldingAddress = ""
+	tc.hostZone.CommunityPoolStakeHoldingAddress = ""
 
 	// Verify that the ICA msg was successfully sent off
 	err := s.App.StakeibcKeeper.TransferCommunityPoolDepositToHolding(s.Ctx, tc.hostZone, tc.coin)
@@ -122,10 +128,10 @@ func (s *KeeperTestSuite) SetupTransferHoldingToCommunityPoolReturn() TransferHo
 	holdingAddress := holdingAccount.String()
 	returnIcaAddress := s.TestAccs[1].String()
 	hostZone := types.HostZone{
-		ChainId:                       chainId,
-		TransferChannelId:             "channel-0",
-		CommunityPoolHoldingAddress:   holdingAddress,
-		CommunityPoolReturnIcaAddress: returnIcaAddress,
+		ChainId:                          chainId,
+		TransferChannelId:                "channel-0",
+		CommunityPoolStakeHoldingAddress: holdingAddress,
+		CommunityPoolReturnIcaAddress:    returnIcaAddress,
 	}
 
 	balanceToTransfer := sdkmath.NewInt(1_000_000)
@@ -156,4 +162,3 @@ func (s *KeeperTestSuite) TestTransferHoldingToCommunityPoolReturn_MissingTokens
 	s.Require().ErrorContains(err, "Error submitting ibc transfer")
 	s.Require().ErrorContains(err, "insufficient funds")
 }
-
