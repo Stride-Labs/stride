@@ -4,6 +4,7 @@ import (
 	"time"
 
 	errorsmod "cosmossdk.io/errors"
+	sdkmath "cosmossdk.io/math"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/bech32"
@@ -47,14 +48,19 @@ func (k Keeper) ProcessAllCommunityPoolTokens(ctx sdk.Context) {
 		}
 
 		/****** Epoch 2 *******/
-		// LiquidStake tokens of denom, RedeemStake tokens of stDenom before transfer to return ica
-		err = k.TransformTokensInHolding(ctx, hostZone)
-		if err != nil {
-			k.Logger(ctx).Error(utils.LogWithHostZone(hostZone.ChainId, "Transforming tokens in holding address - %s", err.Error()))
+		// LiquidStake tokens in the holding address and transfer to the return ica
+		if err = k.LiquidStakeAndTransferCommunityPoolTokens(ctx, hostZone); err != nil {
+			k.Logger(ctx).Error(utils.LogWithHostZone(hostZone.ChainId,
+				"Liquid staking and transfering tokens in holding address - %s", err.Error()))
+		}
+		// Redeem tokens in the holding address
+		if err = k.RedeemCommunityPoolStTokens(ctx, hostZone); err != nil {
+			k.Logger(ctx).Error(utils.LogWithHostZone(hostZone.ChainId,
+				"Redeeming stTokens in holding address - %s", err.Error()))
 		}
 
 		/****** Epoch 3 *******/
-		// ICQ for and denom or stDenom tokens in return ICA and call FundCommunityPool
+		// ICQ for host denom or stDenom tokens in return ICA and call FundCommunityPool
 		err = k.QueryCommunityPoolBalance(ctx, hostZone, types.ICAAccountType_COMMUNITY_POOL_RETURN, denom)
 		if err != nil {
 			k.Logger(ctx).Error(utils.LogWithHostZone(hostZone.ChainId, "Querying hostDenom %s in return- %s", denom, err.Error()))
@@ -136,26 +142,60 @@ func (k Keeper) QueryCommunityPoolBalance(ctx sdk.Context,
 	return nil
 }
 
-func (k Keeper) TransformTokensInHolding(ctx sdk.Context, hostZone types.HostZone) error {
-	// Use bankKeeper to see all coin types and amounts currently in the stride-side holding module address
-	req := banktypes.NewQueryAllBalancesRequest(sdk.AccAddress(hostZone.CommunityPoolHoldingAddress), nil)
-	resp, err := k.bankKeeper.AllBalances(ctx, req)
-	if err != nil {
-		return errorsmod.Wrapf(err, "Couldn't look up balances in holding address")
+// Liquid stake all native tokens in the holding address
+func (k Keeper) LiquidStakeAndTransferCommunityPoolTokens(ctx sdk.Context, hostZone types.HostZone) error {
+	// Get the number of native tokens in the stake address
+	// The native tokens will be an ibc denom since they've been transferred to stride
+	communityPoolStakeAddress := sdk.AccAddress(hostZone.CommunityPoolStakeAddress)
+	nativeTokens := k.bankKeeper.GetBalance(ctx, communityPoolStakeAddress, hostZone.IbcDenom)
+
+	// If there aren't enough tokens, do nothing
+	// (consider specifying a minimum here)
+	if nativeTokens.Amount.LTE(sdkmath.ZeroInt()) {
+		return nil
 	}
 
-	// Very important: these are the denoms on stride
-	denom := hostZone.IbcDenom
-	stDenom := types.StAssetDenomFromHostZoneDenom(hostZone.HostDenom)
+	// TODO: Move LS function to keeper method instead of message server
+	// Liquid stake the balance in the holding account
+	msgServer := NewMsgServerImpl(k)
+	liquidStakeRequest := types.MsgLiquidStake{
+		Creator:   hostZone.CommunityPoolStakeAddress,
+		Amount:    nativeTokens.Amount,
+		HostDenom: hostZone.HostDenom,
+	}
+	resp, err := msgServer.LiquidStake(ctx, &liquidStakeRequest)
+	if err != nil {
+		return err
+	}
 
-	for _, foundTokens := range resp.Balances {
-		if foundTokens.Denom == denom {
-			// Liquid Stake these tokens
-			// Immediately transfer new stTokens to return ICA
-		} else if foundTokens.Denom == stDenom {
-			// Redeem Stake these tokens
-			// takes 30 days but unstaked claimed to return ICA
-		}
+	// Transfer the stTokens to the return ICA
+	return k.TransferHoldingToCommunityPoolReturn(ctx, hostZone, resp.StToken)
+}
+
+// Redeem all the stTokens in the holding address
+func (k Keeper) RedeemCommunityPoolStTokens(ctx sdk.Context, hostZone types.HostZone) error {
+	// Get the number of stTokens in the redeem address
+	stDenom := types.StAssetDenomFromHostZoneDenom(hostZone.HostDenom)
+	communityPoolRedeemAddress := sdk.AccAddress(hostZone.CommunityPoolRedeemAddress)
+	stTokens := k.bankKeeper.GetBalance(ctx, communityPoolRedeemAddress, stDenom)
+
+	// If there aren't enough tokens, do nothing
+	if stTokens.Amount.LTE(sdkmath.ZeroInt()) {
+		return nil
+	}
+
+	// TODO: Move Redeem function to keeper method instead of message server
+	// Redeem the stTokens in the holding account
+	// The return ICA address will be the recipient of the claim
+	msgServer := NewMsgServerImpl(k)
+	redeemStakeRequest := types.MsgRedeemStake{
+		Creator:  hostZone.CommunityPoolRedeemAddress,
+		Amount:   stTokens.Amount,
+		HostZone: hostZone.ChainId,
+		Receiver: hostZone.CommunityPoolReturnIcaAddress,
+	}
+	if _, err := msgServer.RedeemStake(ctx, &redeemStakeRequest); err != nil {
+		return err
 	}
 
 	return nil
