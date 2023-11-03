@@ -93,8 +93,11 @@ func (k Keeper) TransferCommunityPoolDepositToHolding(ctx sdk.Context, hostZone 
 // Transfers a given token from the stride-side stake holding address to the return ICA address on the host zone
 func (k Keeper) TransferHoldingToCommunityPoolReturn(ctx sdk.Context, hostZone types.HostZone, coin sdk.Coin) error {
 	memo := ""
-	ibcTransferTimeoutNanos := k.GetParam(ctx, types.KeyIBCTransferTimeoutNanos)
-	timeoutTimestamp := uint64(ctx.BlockTime().UnixNano()) + ibcTransferTimeoutNanos
+	strideEpochTracker, found := k.GetEpochTracker(ctx, epochstypes.STRIDE_EPOCH)
+	if !found {
+		return errorsmod.Wrapf(types.ErrEpochNotFound, epochstypes.STRIDE_EPOCH)
+	}
+	endEpochTimestamp := uint64(strideEpochTracker.NextEpochStartTime)
 
 	// build and send an IBC message for each coin to transfer all back to the hostZone
 	msg := transfertypes.NewMsgTransfer(
@@ -104,7 +107,7 @@ func (k Keeper) TransferHoldingToCommunityPoolReturn(ctx sdk.Context, hostZone t
 		hostZone.CommunityPoolStakeHoldingAddress, // from Stride address, unique to each community pool / hostzone
 		hostZone.CommunityPoolReturnIcaAddress,    // to ICA controlled address on foreign hub
 		clienttypes.Height{},
-		timeoutTimestamp,
+		endEpochTimestamp,
 		memo,
 	)
 
