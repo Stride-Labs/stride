@@ -90,7 +90,7 @@ func (k Keeper) TransferCommunityPoolDepositToHolding(ctx sdk.Context, hostZone 
 	return nil
 }
 
-// Transfers a given token from the stride-side stake holding address to the return ICA address on the host zone
+// Transfers a recently minted stToken from the stride-side stake holding address to the return ICA address on the host zone
 func (k Keeper) TransferHoldingToCommunityPoolReturn(ctx sdk.Context, hostZone types.HostZone, coin sdk.Coin) error {
 	memo := ""
 	strideEpochTracker, found := k.GetEpochTracker(ctx, epochstypes.STRIDE_EPOCH)
