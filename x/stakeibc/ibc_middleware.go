@@ -107,6 +107,16 @@ func (im IBCMiddleware) OnChanOpenAck(
 	if err != nil {
 		return err
 	}
+	communityPoolDepositOwner := types.FormatICAAccountOwner(hostChainId, types.ICAAccountType_COMMUNITY_POOL_DEPOSIT)
+	communityPoolDepositAddress, err := icatypes.NewControllerPortID(communityPoolDepositOwner)
+	if err != nil {
+		return err
+	}
+	communityPoolReturnOwner := types.FormatICAAccountOwner(hostChainId, types.ICAAccountType_COMMUNITY_POOL_RETURN)
+	communityPoolReturnAddress, err := icatypes.NewControllerPortID(communityPoolReturnOwner)
+	if err != nil {
+		return err
+	}
 
 	// Set ICA account addresses
 	switch {
@@ -118,6 +128,10 @@ func (im IBCMiddleware) OnChanOpenAck(
 		zoneInfo.DelegationIcaAddress = address
 	case portID == redemptionAddress:
 		zoneInfo.RedemptionIcaAddress = address
+	case portID == communityPoolDepositAddress:
+		zoneInfo.CommunityPoolDepositIcaAddress = address
+	case portID == communityPoolReturnAddress:
+		zoneInfo.CommunityPoolReturnIcaAddress = address
 	default:
 		ctx.Logger().Error(fmt.Sprintf("Missing portId: %s", portID))
 	}
