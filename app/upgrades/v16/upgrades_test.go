@@ -31,7 +31,7 @@ func TestKeeperTestSuite(t *testing.T) {
 func (s *UpgradeTestSuite) TestUpgrade() {
 	dummyUpgradeHeight := int64(5)
 
-	// Setup the store before the ugprade
+	// Setup the store before the upgrade
 	checkCosmosHubAfterUpgrade := s.SetupHostZonesBeforeUpgrade()
 
 	// Run the upgrade to set the bounds and clear pending queries

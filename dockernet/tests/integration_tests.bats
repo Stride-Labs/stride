@@ -310,7 +310,7 @@ setup_file() {
   # check that the tokens were transferred to the sender account
   end_balance=$($HOST_MAIN_CMD q bank balances $HOST_RECEIVER_ADDRESS --denom $HOST_DENOM | GETBAL)
 
-  # check that the undelegated tokens were transfered to the sender account
+  # check that the undelegated tokens were transferred to the sender account
   diff_positive=$(($end_balance > $start_balance))
   assert_equal "$diff_positive" "1"
 }
@@ -331,7 +331,7 @@ setup_file() {
   $STRIDE_MAIN_CMD tx distribution withdraw-all-rewards --from ${STRIDE_VAL_PREFIX}2 -y 
   WAIT_FOR_BLOCK $STRIDE_LOGS 2
 
-  # confirm they've recieved stTokens
+  # confirm they've received stTokens
   sttoken_balance=$($STRIDE_MAIN_CMD q bank balances $val_address --denom st$HOST_DENOM | GETBAL)
   rewards_accumulated=$(($sttoken_balance > 0))
   assert_equal "$rewards_accumulated" "1"
