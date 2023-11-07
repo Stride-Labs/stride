@@ -277,6 +277,17 @@ func (s *KeeperTestSuite) TestLiquidStakeCommunityPoolTokens_Success() {
 	s.Require().Equal(startSequence, endSequence, "no transfer should have been initiated")
 }
 
+// Test liquid stake with an invalid stake holding address
+func (s *KeeperTestSuite) TestLiquidStakeCommunityPoolTokens_Failure_InvalidAddress() {
+	tc := s.SetupLiquidStakeCommunityPoolTokens()
+
+	invalidHostZone := tc.hostZone
+	invalidHostZone.CommunityPoolStakeHoldingAddress = "invalid"
+
+	err := s.App.StakeibcKeeper.LiquidStakeCommunityPoolTokens(s.Ctx, invalidHostZone)
+	s.Require().ErrorContains(err, "decoding bech32 failed")
+}
+
 // Test liquid stake with an invalid host denom, which should cause the liquid stake to fail
 func (s *KeeperTestSuite) TestLiquidStakeCommunityPoolTokens_LiquidStakeFailure() {
 	tc := s.SetupLiquidStakeCommunityPoolTokens()
