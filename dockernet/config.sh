@@ -464,6 +464,13 @@ GET_ICA_ADDR() {
   $STRIDE_MAIN_CMD q stakeibc show-host-zone $chain_id | grep ${ica_type}_ica_address | awk '{print $2}'
 }
 
+GET_HOST_ZONE_FIELD() {
+  chain_id="$1"
+  field="$2"
+
+  $STRIDE_MAIN_CMD q stakeibc show-host-zone $chain_id | grep $field | awk '{print $2}'
+}
+
 GET_IBC_DENOM() {
   transfer_channel_id="$1"
   base_denom="$2"
