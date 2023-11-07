@@ -621,7 +621,7 @@ func NewStrideApp(
 		app.AccountKeeper, app.BankKeeper, app.DistrKeeper, app.StakingKeeper,
 	)
 
-	// Register Gov (must be registerd after stakeibc)
+	// Register Gov (must be registered after stakeibc)
 	govRouter := govtypesv1beta1.NewRouter()
 	govRouter.AddRoute(govtypes.RouterKey, govtypesv1beta1.ProposalHandler).
 		AddRoute(paramproposal.RouterKey, params.NewParamChangeProposalHandler(app.ParamsKeeper)).
