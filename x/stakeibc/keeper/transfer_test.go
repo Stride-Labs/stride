@@ -1,6 +1,8 @@
 package keeper_test
 
 import (
+	"time"
+
 	_ "github.com/stretchr/testify/suite"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -33,13 +35,15 @@ func (s *KeeperTestSuite) SetupTransferCommunityPoolDepositToHolding() TransferC
 		ChainId:                          chainId,
 		ConnectionId:                     "connection-0",
 		TransferChannelId:                "channel-0",
+		HostDenom:                        "tokens",
 		CommunityPoolStakeHoldingAddress: holdingAddress,
 		CommunityPoolDepositIcaAddress:   depositIcaAddress,
 	}
 
 	strideEpoch := types.EpochTracker{
 		EpochIdentifier:    epochtypes.STRIDE_EPOCH,
-		NextEpochStartTime: uint64(10), // used for transfer timeout
+		NextEpochStartTime: uint64(time.Now().Unix()+3_000_000_000), // used for transfer timeout
+		Duration:           uint64(3_000_000_000),
 	}
 	s.App.StakeibcKeeper.SetEpochTracker(s.Ctx, strideEpoch)
 
@@ -103,6 +107,37 @@ type TransferHoldingToCommunityPoolReturnTestCase struct {
 	coin     sdk.Coin
 }
 
+func (s *KeeperTestSuite) SetupTransferHoldingToCommunityPoolReturn() TransferHoldingToCommunityPoolReturnTestCase {
+	s.CreateTransferChannel(chainId)
+
+	holdingAccount := s.TestAccs[0]
+	holdingAddress := holdingAccount.String()
+	returnIcaAddress := s.TestAccs[1].String()
+	hostZone := types.HostZone{
+		ChainId:                          chainId,
+		TransferChannelId:                "channel-0",
+		HostDenom:                        "tokens",
+		CommunityPoolStakeHoldingAddress: holdingAddress,
+		CommunityPoolReturnIcaAddress:    returnIcaAddress,
+	}
+
+	strideEpoch := types.EpochTracker{
+		EpochIdentifier:    epochtypes.STRIDE_EPOCH,
+		NextEpochStartTime: uint64(time.Now().Unix()+3_000_000_000), // used for transfer timeout
+		Duration:           uint64(3_000_000_000),
+	}
+	s.App.StakeibcKeeper.SetEpochTracker(s.Ctx, strideEpoch)
+
+	balanceToTransfer := sdkmath.NewInt(1_000_000)
+	coin := sdk.NewCoin("tokens", balanceToTransfer)
+	s.FundAccount(holdingAccount, coin)
+
+	return TransferHoldingToCommunityPoolReturnTestCase{
+		hostZone: hostZone,
+		coin:     coin,
+	}
+}
+
 func (s *KeeperTestSuite) TestTransferHoldingToCommunityPoolReturn_Successful() {
 	tc := s.SetupTransferHoldingToCommunityPoolReturn()
 
@@ -119,29 +154,6 @@ func (s *KeeperTestSuite) TestTransferHoldingToCommunityPoolReturn_Successful() 
 		transfertypes.PortID, tc.hostZone.TransferChannelId)
 	s.Require().True(found)
 	s.Require().Equal(endSequence, startSequence+1, "sequence number should have incremented")
-}
-
-func (s *KeeperTestSuite) SetupTransferHoldingToCommunityPoolReturn() TransferHoldingToCommunityPoolReturnTestCase {
-	s.CreateTransferChannel(chainId)
-
-	holdingAccount := s.TestAccs[0]
-	holdingAddress := holdingAccount.String()
-	returnIcaAddress := s.TestAccs[1].String()
-	hostZone := types.HostZone{
-		ChainId:                          chainId,
-		TransferChannelId:                "channel-0",
-		CommunityPoolStakeHoldingAddress: holdingAddress,
-		CommunityPoolReturnIcaAddress:    returnIcaAddress,
-	}
-
-	balanceToTransfer := sdkmath.NewInt(1_000_000)
-	coin := sdk.NewCoin("tokens", balanceToTransfer)
-	s.FundAccount(holdingAccount, coin)
-
-	return TransferHoldingToCommunityPoolReturnTestCase{
-		hostZone: hostZone,
-		coin:     coin,
-	}
 }
 
 func (s *KeeperTestSuite) TestTransferHoldingToCommunityPoolReturn_ChannelTransferFail() {
