@@ -131,10 +131,14 @@ func (k Keeper) GetStIbcDenomOnHostZone(ctx sdk.Context, hostZone types.HostZone
 	// use counterparty transfer channel because tokens come through this channel to hostZone
 	transferChannel, found := k.IBCKeeper.ChannelKeeper.GetChannel(ctx, transfertypes.PortID, hostZone.TransferChannelId)
 	if !found {
-		return "", channeltypes.ErrChannelNotFound.Wrapf(hostZone.TransferChannelId)
+		return "", channeltypes.ErrChannelNotFound.Wrap(hostZone.TransferChannelId)
 	}
 
 	counterpartyChannelId := transferChannel.Counterparty.ChannelId
+	if counterpartyChannelId == "" {
+		return "", channeltypes.ErrChannelNotFound.Wrapf("counterparty channel not found for %s", hostZone.TransferChannelId)
+	}
+
 	sourcePrefix := transfertypes.GetDenomPrefix(transfertypes.PortID, counterpartyChannelId)
 	prefixedDenom := sourcePrefix + stDenomOnStride
 
