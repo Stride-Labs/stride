@@ -228,4 +228,13 @@ func (s *KeeperTestSuite) TestGetStIbcDenomOnHostZone() {
 	_, err := s.App.StakeibcKeeper.GetStIbcDenomOnHostZone(s.Ctx, invalidHostZone)
 	s.Require().ErrorContains(err, "channel not found")
 
+	// Test a channel that has a non-transfer port
+	s.App.IBCKeeper.ChannelKeeper.SetChannel(s.Ctx, "different port", "channel-1000", channeltypes.Channel{})
+	_, err = s.App.StakeibcKeeper.GetStIbcDenomOnHostZone(s.Ctx, invalidHostZone)
+	s.Require().ErrorContains(err, "channel not found")
+
+	// Test a with an empty counterparty channel
+	s.App.IBCKeeper.ChannelKeeper.SetChannel(s.Ctx, transfertypes.PortID, "channel-1000", channeltypes.Channel{})
+	_, err = s.App.StakeibcKeeper.GetStIbcDenomOnHostZone(s.Ctx, invalidHostZone)
+	s.Require().ErrorContains(err, "counterparty channel not found")
 }
