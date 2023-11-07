@@ -139,3 +139,8 @@ func NewHostZoneDepositAddress(chainId string) sdk.AccAddress {
 	key := append([]byte("zone"), []byte(chainId)...)
 	return address.Module(ModuleName, key)
 }
+
+func NewHostZoneModuleAddress(chainId string, accountAlias string) sdk.AccAddress {
+	key := append([]byte(chainId), []byte(accountAlias)...)
+	return address.Module(ModuleName, key)
+}
