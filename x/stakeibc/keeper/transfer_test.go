@@ -1,8 +1,6 @@
 package keeper_test
 
 import (
-	"time"
-
 	_ "github.com/stretchr/testify/suite"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -42,8 +40,7 @@ func (s *KeeperTestSuite) SetupTransferCommunityPoolDepositToHolding() TransferC
 
 	strideEpoch := types.EpochTracker{
 		EpochIdentifier:    epochtypes.STRIDE_EPOCH,
-		NextEpochStartTime: uint64(time.Now().UnixNano() + 3_000_000_000), // used for transfer timeout
-		Duration:           uint64(3_000_000_000),
+		NextEpochStartTime: uint64(s.Coordinator.CurrentTime.UnixNano() + 30_000_000_000), // used for transfer timeout
 	}
 	s.App.StakeibcKeeper.SetEpochTracker(s.Ctx, strideEpoch)
 
@@ -123,11 +120,10 @@ func (s *KeeperTestSuite) SetupTransferHoldingToCommunityPoolReturn() TransferHo
 
 	strideEpoch := types.EpochTracker{
 		EpochIdentifier:    epochtypes.STRIDE_EPOCH,
-		NextEpochStartTime: uint64(time.Now().UnixNano() + 3_000_000_000), // used for transfer timeout
-		Duration:           uint64(3_000_000_000),
+		NextEpochStartTime: uint64(s.Coordinator.CurrentTime.UnixNano() + 30_000_000_000), // used for transfer timeout
 	}
 	s.App.StakeibcKeeper.SetEpochTracker(s.Ctx, strideEpoch)
-
+	
 	balanceToTransfer := sdkmath.NewInt(1_000_000)
 	coin := sdk.NewCoin("tokens", balanceToTransfer)
 	s.FundAccount(holdingAccount, coin)
