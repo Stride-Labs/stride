@@ -1,12 +1,14 @@
 package keeper_test
 
 import (
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/cosmos/gogoproto/proto"
 	ibctesting "github.com/cosmos/ibc-go/v7/testing"
 
 	epochtypes "github.com/Stride-Labs/stride/v14/x/epochs/types"
 	icqtypes "github.com/Stride-Labs/stride/v14/x/interchainquery/types"
+	recordtypes "github.com/Stride-Labs/stride/v14/x/records/types"
 	"github.com/Stride-Labs/stride/v14/x/stakeibc/keeper"
 	"github.com/Stride-Labs/stride/v14/x/stakeibc/types"
 )
@@ -143,4 +145,57 @@ func (s *KeeperTestSuite) TestQueryCommunityPoolBalance_FailedQuerySubmission() 
 
 	err := s.App.StakeibcKeeper.QueryCommunityPoolBalance(s.Ctx, hostZone, icaAccountType, Atom)
 	s.Require().ErrorContains(err, "Error submitting query for pool ica balance")
+}
+
+func (s *KeeperTestSuite) TestLiquidStakeCommunityPoolTokens() {
+	s.CreateTransferChannel(HostChainId)
+
+	// Create relevant module and ICA accounts
+	depositAddress := s.TestAccs[0]
+	communityPoolHoldingAddress := s.TestAccs[1]
+	communityPoolReturnICAAddress := s.TestAccs[2]
+
+	// Create a host zone with valid addresses to perform the liquid stake
+	hostZone := types.HostZone{
+		ChainId:                          HostChainId,
+		HostDenom:                        Atom,
+		IbcDenom:                         IbcAtom,
+		TransferChannelId:                ibctesting.FirstChannelID,
+		CommunityPoolStakeHoldingAddress: communityPoolHoldingAddress.String(),
+		CommunityPoolReturnIcaAddress:    communityPoolReturnICAAddress.String(),
+		DepositAddress:                   depositAddress.String(),
+		RedemptionRate:                   sdk.OneDec(),
+	}
+	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
+
+	// Create the epoch tracker and deposit records so the liquid stake succeeds
+	epochNumber := uint64(1)
+	epochTracker := types.EpochTracker{
+		EpochIdentifier:    epochtypes.STRIDE_EPOCH,
+		EpochNumber:        epochNumber,
+		NextEpochStartTime: uint64(s.Coordinator.CurrentTime.UnixNano() + 30_000_000), // dictates transfer timeout
+	}
+	depositRecord := recordtypes.DepositRecord{
+		Id:         epochNumber,
+		HostZoneId: HostChainId,
+		Status:     recordtypes.DepositRecord_TRANSFER_QUEUE,
+	}
+	s.App.StakeibcKeeper.SetEpochTracker(s.Ctx, epochTracker)
+	s.App.RecordsKeeper.SetDepositRecord(s.Ctx, depositRecord)
+
+	// Fund the holding address with native tokens (in IBC form) and
+	// some dummy tokens that should not get touched by these functions
+	initialNativeTokens := sdk.NewInt(1000)
+	initialDummyTokens := sdk.NewInt(999)
+	s.FundAccount(communityPoolHoldingAddress, sdk.NewCoin(IbcAtom, initialNativeTokens))
+	s.FundAccount(communityPoolHoldingAddress, sdk.NewCoin(Atom, initialDummyTokens))   // dummy token
+	s.FundAccount(communityPoolHoldingAddress, sdk.NewCoin(StAtom, initialDummyTokens)) // dummy token
+
+	// Call liquid stake which should convert the whole native tokens amount to stTokens and transfer it
+	err := s.App.StakeibcKeeper.LiquidStakeCommunityPoolTokens(s.Ctx, hostZone)
+	s.Require().NoError(err, "no error expected during liquid stake")
+
+	// Confirm there are no longer tokens in the holding address
+	ibcAtomBalance := s.App.BankKeeper.GetBalance(s.Ctx, communityPoolHoldingAddress, IbcAtom)
+	s.Require().Zero(ibcAtomBalance.Amount, "balance of holidng address should be zero")
 }
