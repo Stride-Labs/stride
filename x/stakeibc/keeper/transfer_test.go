@@ -42,7 +42,7 @@ func (s *KeeperTestSuite) SetupTransferCommunityPoolDepositToHolding() TransferC
 
 	strideEpoch := types.EpochTracker{
 		EpochIdentifier:    epochtypes.STRIDE_EPOCH,
-		NextEpochStartTime: uint64(time.Now().Unix()+3_000_000_000), // used for transfer timeout
+		NextEpochStartTime: uint64(time.Now().UnixNano() + 3_000_000_000), // used for transfer timeout
 		Duration:           uint64(3_000_000_000),
 	}
 	s.App.StakeibcKeeper.SetEpochTracker(s.Ctx, strideEpoch)
@@ -123,7 +123,7 @@ func (s *KeeperTestSuite) SetupTransferHoldingToCommunityPoolReturn() TransferHo
 
 	strideEpoch := types.EpochTracker{
 		EpochIdentifier:    epochtypes.STRIDE_EPOCH,
-		NextEpochStartTime: uint64(time.Now().Unix()+3_000_000_000), // used for transfer timeout
+		NextEpochStartTime: uint64(time.Now().UnixNano() + 3_000_000_000), // used for transfer timeout
 		Duration:           uint64(3_000_000_000),
 	}
 	s.App.StakeibcKeeper.SetEpochTracker(s.Ctx, strideEpoch)
