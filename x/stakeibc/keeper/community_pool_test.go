@@ -3,10 +3,13 @@ package keeper_test
 import (
 	"time"
 
+	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/cosmos/gogoproto/proto"
 	ibctesting "github.com/cosmos/ibc-go/v7/testing"
+
+	transfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
 
 	epochtypes "github.com/Stride-Labs/stride/v14/x/epochs/types"
 	icqtypes "github.com/Stride-Labs/stride/v14/x/interchainquery/types"
@@ -14,6 +17,10 @@ import (
 	"github.com/Stride-Labs/stride/v14/x/stakeibc/keeper"
 	"github.com/Stride-Labs/stride/v14/x/stakeibc/types"
 )
+
+// -----------------------------
+// Query Community Pool Balances
+// -----------------------------
 
 type QueryCommunityPoolBalanceTestCase struct {
 	hostZone        types.HostZone
@@ -169,7 +176,17 @@ func (s *KeeperTestSuite) TestQueryCommunityPoolBalance_FailedQuerySubmission() 
 	s.Require().ErrorContains(err, "Error submitting query for pool ica balance")
 }
 
-func (s *KeeperTestSuite) TestLiquidStakeCommunityPoolTokens() {
+// ----------------------------------
+// Liquid Stake Community Pool Tokens
+// ----------------------------------
+
+type LiquidStakeCommunityPoolTokensTestCase struct {
+	hostZone            types.HostZone
+	initialNativeTokens sdkmath.Int
+	initialDummyTokens  sdkmath.Int
+}
+
+func (s *KeeperTestSuite) SetupLiquidStakeCommunityPoolTokens() LiquidStakeCommunityPoolTokensTestCase {
 	s.CreateTransferChannel(HostChainId)
 
 	// Create relevant module and ICA accounts
@@ -198,9 +215,10 @@ func (s *KeeperTestSuite) TestLiquidStakeCommunityPoolTokens() {
 		NextEpochStartTime: uint64(s.Coordinator.CurrentTime.UnixNano() + 30_000_000), // dictates transfer timeout
 	}
 	depositRecord := recordtypes.DepositRecord{
-		Id:         epochNumber,
-		HostZoneId: HostChainId,
-		Status:     recordtypes.DepositRecord_TRANSFER_QUEUE,
+		Id:                 epochNumber,
+		DepositEpochNumber: epochNumber,
+		HostZoneId:         HostChainId,
+		Status:             recordtypes.DepositRecord_TRANSFER_QUEUE,
 	}
 	s.App.StakeibcKeeper.SetEpochTracker(s.Ctx, epochTracker)
 	s.App.RecordsKeeper.SetDepositRecord(s.Ctx, depositRecord)
@@ -213,11 +231,70 @@ func (s *KeeperTestSuite) TestLiquidStakeCommunityPoolTokens() {
 	s.FundAccount(communityPoolHoldingAddress, sdk.NewCoin(Atom, initialDummyTokens))   // dummy token
 	s.FundAccount(communityPoolHoldingAddress, sdk.NewCoin(StAtom, initialDummyTokens)) // dummy token
 
+	return LiquidStakeCommunityPoolTokensTestCase{
+		hostZone:            hostZone,
+		initialNativeTokens: initialNativeTokens,
+		initialDummyTokens:  initialDummyTokens,
+	}
+}
+
+func (s *KeeperTestSuite) TestLiquidStakeCommunityPoolTokens_Success() {
+	tc := s.SetupLiquidStakeCommunityPoolTokens()
+
+	transferPortId := transfertypes.PortID
+	transferChannelId := ibctesting.FirstChannelID
+	communityPoolHoldingAddress := sdk.MustAccAddressFromBech32(tc.hostZone.CommunityPoolStakeHoldingAddress)
+
 	// Call liquid stake which should convert the whole native tokens amount to stTokens and transfer it
-	err := s.App.StakeibcKeeper.LiquidStakeCommunityPoolTokens(s.Ctx, hostZone)
+	err := s.App.StakeibcKeeper.LiquidStakeCommunityPoolTokens(s.Ctx, tc.hostZone)
 	s.Require().NoError(err, "no error expected during liquid stake")
 
-	// Confirm there are no longer tokens in the holding address
+	// Confirm there are no longer native tokens in the holding address
 	ibcAtomBalance := s.App.BankKeeper.GetBalance(s.Ctx, communityPoolHoldingAddress, IbcAtom)
-	s.Require().Zero(ibcAtomBalance.Amount, "balance of holidng address should be zero")
+	s.Require().Zero(ibcAtomBalance.Amount.Int64(), "balance of holding address should be zero")
+
+	// Confirm the dummy tokens are still present
+	dummyTokenBalance1 := s.App.BankKeeper.GetBalance(s.Ctx, communityPoolHoldingAddress, Atom)
+	dummyTokenBalance2 := s.App.BankKeeper.GetBalance(s.Ctx, communityPoolHoldingAddress, StAtom)
+	s.Require().Equal(tc.initialDummyTokens, dummyTokenBalance2.Amount, "dummy token 2 was not touched")
+	s.Require().Equal(tc.initialDummyTokens, dummyTokenBalance1.Amount, "dummy token 1 was not touched")
+
+	// Confirm the stTokens have been escrowed as a result of the transfer
+	escrowAddress := transfertypes.GetEscrowAddress(transferPortId, transferChannelId)
+	stTokenEscrowBalance := s.App.BankKeeper.GetBalance(s.Ctx, escrowAddress, StAtom)
+	s.Require().Equal(tc.initialNativeTokens.Int64(), stTokenEscrowBalance.Amount.Int64(), "st token escrow balance")
+
+	// Check that if we run the liquid stake function again, nothing should get transferred
+	startSequence, found := s.App.IBCKeeper.ChannelKeeper.GetNextSequenceSend(s.Ctx, transferPortId, transferChannelId)
+	s.Require().True(found, "sequence number not found before liquid stake")
+
+	err = s.App.StakeibcKeeper.LiquidStakeCommunityPoolTokens(s.Ctx, tc.hostZone)
+	s.Require().NoError(err, "no error expected during second liquid stake")
+
+	endSequence, found := s.App.IBCKeeper.ChannelKeeper.GetNextSequenceSend(s.Ctx, transferPortId, transferChannelId)
+	s.Require().True(found, "sequence number not found after after liquid stake")
+
+	s.Require().Equal(startSequence, endSequence, "no transfer should have been initiated")
+}
+
+// Test liquid stake with an invalid host denom, which should cause the liquid stake to fail
+func (s *KeeperTestSuite) TestLiquidStakeCommunityPoolTokens_LiquidStakeFailure() {
+	tc := s.SetupLiquidStakeCommunityPoolTokens()
+
+	invalidHostZone := tc.hostZone
+	invalidHostZone.HostDenom = "invalid"
+
+	err := s.App.StakeibcKeeper.LiquidStakeCommunityPoolTokens(s.Ctx, invalidHostZone)
+	s.Require().ErrorContains(err, "Failed to liquid stake")
+}
+
+// Set an invalid transfer channel on the host so that the transfer fails
+func (s *KeeperTestSuite) TestLiquidStakeCommunityPoolTokens_TransferFailure() {
+	tc := s.SetupLiquidStakeCommunityPoolTokens()
+
+	invalidHostZone := tc.hostZone
+	invalidHostZone.TransferChannelId = "channel-X"
+
+	err := s.App.StakeibcKeeper.LiquidStakeCommunityPoolTokens(s.Ctx, invalidHostZone)
+	s.Require().ErrorContains(err, "Error submitting ibc transfer")
 }
