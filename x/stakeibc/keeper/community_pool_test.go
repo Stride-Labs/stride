@@ -55,7 +55,6 @@ func (s *KeeperTestSuite) SetupQueryCommunityPoolBalance(icaAccountType types.IC
 func (s *KeeperTestSuite) checkCommunityPoolQuerySubmission(
 	tc QueryCommunityPoolBalanceTestCase,
 	icaAccountType types.ICAAccountType,
-	expectedIcaAddress string,
 ) {
 	// Check that one query was submitted
 	queries := s.App.InterchainqueryKeeper.AllQueries(s.Ctx)
@@ -87,6 +86,10 @@ func (s *KeeperTestSuite) checkCommunityPoolQuerySubmission(
 	s.Require().Equal(expectedCallbackData, actualCallbackData, "query callabck data")
 
 	// Confirm query request info
+	expectedIcaAddress := tc.hostZone.CommunityPoolDepositIcaAddress
+	if icaAccountType == types.ICAAccountType_COMMUNITY_POOL_RETURN {
+		expectedIcaAddress = tc.hostZone.CommunityPoolReturnIcaAddress
+	}
 	requestData := query.RequestData[1:] // Remove BalancePrefix byte
 	actualAddress, actualDenom, err := banktypes.AddressAndDenomFromBalancesStore(requestData)
 	s.Require().NoError(err, "no error expected when retrieving address and denom from store key")
@@ -102,7 +105,7 @@ func (s *KeeperTestSuite) TestQueryCommunityPoolBalance_Successful_Deposit() {
 	err := s.App.StakeibcKeeper.QueryCommunityPoolBalance(s.Ctx, tc.hostZone, icaAccountType, Atom)
 	s.Require().NoError(err, "no error expected when querying pool balance")
 
-	s.checkCommunityPoolQuerySubmission(tc, icaAccountType, tc.hostZone.CommunityPoolDepositIcaAddress)
+	s.checkCommunityPoolQuerySubmission(tc, icaAccountType)
 }
 
 // Tests a community pool balance query to the return ICA account
@@ -113,7 +116,7 @@ func (s *KeeperTestSuite) TestQueryCommunityPoolBalance_Successful_Return() {
 	err := s.App.StakeibcKeeper.QueryCommunityPoolBalance(s.Ctx, tc.hostZone, icaAccountType, Atom)
 	s.Require().NoError(err, "no error expected when querying pool balance")
 
-	s.checkCommunityPoolQuerySubmission(tc, icaAccountType, tc.hostZone.CommunityPoolReturnIcaAddress)
+	s.checkCommunityPoolQuerySubmission(tc, icaAccountType)
 }
 
 // Tests a community pool balance query that fails due to an invalid account type
