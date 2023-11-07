@@ -153,7 +153,7 @@ func (k Keeper) SetWithdrawalAddress(ctx sdk.Context) {
 
 // Claim staking rewards for each host zone
 func (k Keeper) ClaimAccruedStakingRewards(ctx sdk.Context) {
-	k.Logger(ctx).Info("Claiming Accured Staking Rewards...")
+	k.Logger(ctx).Info("Claiming Accrued Staking Rewards...")
 
 	for _, hostZone := range k.GetAllActiveHostZone(ctx) {
 		err := k.ClaimAccruedStakingRewardsOnHost(ctx, hostZone)

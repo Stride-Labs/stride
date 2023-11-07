@@ -187,17 +187,9 @@ func (k Keeper) ClaimAccruedStakingRewardsOnHost(ctx sdk.Context, hostZone types
 		if Val.Delegation.IsZero() {
 			continue
 		}
-		val, err := sdk.ValAddressFromBech32(Val.Address)
-		if err != nil {
-			return err
-		}
-		delIca, err := sdk.AccAddressFromBech32(hostZone.DelegationIcaAddress)
-		if err != nil {
-			return err
-		}
-		msg := distributiontypes.NewMsgWithdrawDelegatorReward(delIca, val)
-		if err := msg.ValidateBasic(); err != nil {
-			return err
+		msg := &distributiontypes.MsgWithdrawDelegatorReward{
+			DelegatorAddress: hostZone.DelegationIcaAddress,
+			ValidatorAddress: Val.Address,
 		}
 		msgs = append(msgs, msg)
 	}
