@@ -56,4 +56,5 @@ var (
 	ErrInvalidValidatorDelegationUpdates   = errorsmod.Register(ModuleName, 1548, "Invalid validator delegation updates")
 	ErrLSMLiquidStakeDisabledForHostZone   = errorsmod.Register(ModuleName, 1549, "LSM liquid stake is disabled for host zone")
 	ErrUnableToRemoveValidator             = errorsmod.Register(ModuleName, 1550, "Unable to remove validator")
+	ErrUnableToRedeemStake                 = errorsmod.Register(ModuleName, 1552, "Failed to redeem stake")	
 )

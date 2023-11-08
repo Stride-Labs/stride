@@ -3,12 +3,15 @@ package keeper_test
 import (
 	"time"
 
+	sdkmath "cosmossdk.io/math"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/cosmos/gogoproto/proto"
 	ibctesting "github.com/cosmos/ibc-go/v7/testing"
 
 	epochtypes "github.com/Stride-Labs/stride/v14/x/epochs/types"
 	icqtypes "github.com/Stride-Labs/stride/v14/x/interchainquery/types"
+	recordtypes "github.com/Stride-Labs/stride/v14/x/records/types"
 	"github.com/Stride-Labs/stride/v14/x/stakeibc/keeper"
 	"github.com/Stride-Labs/stride/v14/x/stakeibc/types"
 )
@@ -165,4 +168,117 @@ func (s *KeeperTestSuite) TestQueryCommunityPoolBalance_FailedQuerySubmission() 
 
 	err := s.App.StakeibcKeeper.QueryCommunityPoolBalance(s.Ctx, invalidHostZone, icaAccountType, Atom)
 	s.Require().ErrorContains(err, "Error submitting query for pool ica balance")
+}
+
+
+
+type RedeemCommunityPoolTokensTestCase struct {
+	hostZone                     types.HostZone
+	initialDummyTokens           sdkmath.Int
+	communityPoolHoldingAddress  sdk.AccAddress
+}
+
+func (s *KeeperTestSuite) SetupRedeemCommunityPoolTokens() RedeemCommunityPoolTokensTestCase {
+	s.CreateTransferChannel(HostChainId)
+
+	// Create relevant module and ICA accounts
+	depositAddress := s.TestAccs[0]
+	communityPoolHoldingAddress := s.TestAccs[1]
+	communityPoolReturnICAAddress := DelegationICAAddress // need an address on HostChain (starts cosmos)
+
+	// native stTokens which will be redeemed, dummy tokens which should not be touched
+	initialNativeStTokens := sdk.NewInt(1000)
+	initialDummyTokens := sdk.NewInt(999)
+
+	// Fund the redeem holding address with native staked tokens and
+	// some dummy tokens that should not get touched while redeeming
+	stDenom := types.StAssetDenomFromHostZoneDenom(Atom)
+	s.FundAccount(communityPoolHoldingAddress, sdk.NewCoin(stDenom, initialNativeStTokens))
+	s.FundAccount(communityPoolHoldingAddress, sdk.NewCoin(Atom, initialDummyTokens))   // dummy token
+	s.FundAccount(communityPoolHoldingAddress, sdk.NewCoin(IbcAtom, initialDummyTokens)) // dummy token
+
+	// Create a host zone with valid addresses to perform the liquid stake
+	hostZone := types.HostZone{
+		ChainId:                           HostChainId,
+		Bech32Prefix:                      Bech32Prefix,
+		HostDenom:                         Atom,
+		IbcDenom:                          IbcAtom,
+		TransferChannelId:                 ibctesting.FirstChannelID,
+		CommunityPoolRedeemHoldingAddress: communityPoolHoldingAddress.String(),
+		CommunityPoolReturnIcaAddress:     communityPoolReturnICAAddress,
+		DepositAddress:                    depositAddress.String(),
+		TotalDelegations:                  initialNativeStTokens, // at least as much as we are trying to redeem
+		RedemptionRate:                    sdk.OneDec(),
+	}
+	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
+
+	// Create the epoch tracker and deposit records so the liquid stake succeeds
+	epochNumber := uint64(1)
+	epochTracker := types.EpochTracker{
+		EpochIdentifier:    epochtypes.DAY_EPOCH,
+		EpochNumber:        epochNumber,
+		NextEpochStartTime: uint64(s.Coordinator.CurrentTime.UnixNano() + 30_000_000), // dictates transfer timeout
+	}
+	s.App.StakeibcKeeper.SetEpochTracker(s.Ctx, epochTracker)
+
+	// Setup the epoch unbonding record with a HostZoneUnbonding for the hostZone
+	var unbondings []*recordtypes.HostZoneUnbonding;
+	unbonding := &recordtypes.HostZoneUnbonding{
+		HostZoneId:      HostChainId,
+	}
+	unbondings = append(unbondings, unbonding)
+	epochUnbondingRecord := recordtypes.EpochUnbondingRecord{
+		EpochNumber:        epochNumber,
+		HostZoneUnbondings: unbondings,
+	}
+	s.App.RecordsKeeper.SetEpochUnbondingRecord(s.Ctx, epochUnbondingRecord)
+
+	return RedeemCommunityPoolTokensTestCase{
+		hostZone:                    hostZone,
+		initialDummyTokens:          initialDummyTokens,
+		communityPoolHoldingAddress: communityPoolHoldingAddress,
+	}
+}
+
+func (s *KeeperTestSuite) TestRedeemCommunityPoolTokens_Success() {
+	tc := s.SetupRedeemCommunityPoolTokens()
+
+	// Call redeem stake which should start the unbonding for the native staked tokens amount
+	err := s.App.StakeibcKeeper.RedeemCommunityPoolTokens(s.Ctx, tc.hostZone)
+	s.Require().NoError(err, "no error expected during redeem stake")
+
+	// Confirm there are no longer staked tokens in the holding address after redeem
+	stDenom := types.StAssetDenomFromHostZoneDenom(tc.hostZone.HostDenom)
+	stAtomBalance := s.App.BankKeeper.GetBalance(s.Ctx, tc.communityPoolHoldingAddress, stDenom)
+	s.Require().Zero(stAtomBalance.Amount.Int64(), "balance of redeem holidng address should be zero")
+
+	// Confirm the dummy tokens were untouched by the redeem call
+	atomBalance := s.App.BankKeeper.GetBalance(s.Ctx, tc.communityPoolHoldingAddress, Atom)
+	ibcAtomBalance := s.App.BankKeeper.GetBalance(s.Ctx, tc.communityPoolHoldingAddress, IbcAtom)	
+	s.Require().Equal(tc.initialDummyTokens.Int64(), atomBalance.Amount.Int64(), "Atom tokens should not be touched")
+	s.Require().Equal(tc.initialDummyTokens.Int64(), ibcAtomBalance.Amount.Int64(), "IbcAtom tokens should not be touched")		
+}
+
+// Test redeem stake with an invalid redeem holding address
+func (s *KeeperTestSuite) TestRedeemCommunityPoolTokens_Failure_InvalidAddress() {
+	tc := s.SetupRedeemCommunityPoolTokens()
+
+	invalidHostZone := tc.hostZone
+	invalidHostZone.CommunityPoolRedeemHoldingAddress = "invalid"
+	s.App.StakeibcKeeper.SetHostZone(s.Ctx, invalidHostZone)
+
+	err := s.App.StakeibcKeeper.RedeemCommunityPoolTokens(s.Ctx, invalidHostZone)
+	s.Require().ErrorContains(err, "decoding bech32 failed")
+}
+
+// Test redeem stake with an invalid redeem holding address
+func (s *KeeperTestSuite) TestRedeemCommunityPoolTokens_Failure_NotEnoughDelegations() {
+	tc := s.SetupRedeemCommunityPoolTokens()
+
+	invalidHostZone := tc.hostZone
+	invalidHostZone.TotalDelegations = sdk.ZeroInt()
+	s.App.StakeibcKeeper.SetHostZone(s.Ctx, invalidHostZone)
+
+	err := s.App.StakeibcKeeper.RedeemCommunityPoolTokens(s.Ctx, invalidHostZone)
+	s.Require().ErrorContains(err, "invalid amount")
 }
