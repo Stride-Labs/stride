@@ -7,12 +7,11 @@ import (
 )
 
 const (
-	ICQCallbackID_WithdrawalBalance = "withdrawalbalance"
-	ICQCallbackID_FeeBalance        = "feebalance"
-	ICQCallbackID_Delegation        = "delegation"
-	ICQCallbackID_Validator         = "validator"
-
-	ICQCallbackID_CommunityPoolBalance = "communitypoolbalance"	
+	ICQCallbackID_WithdrawalBalance    = "withdrawalbalance"
+	ICQCallbackID_FeeBalance           = "feebalance"
+	ICQCallbackID_Delegation           = "delegation"
+	ICQCallbackID_Validator            = "validator"
+	ICQCallbackID_CommunityPoolBalance = "communitypoolbalance"
 )
 
 // ICQCallbacks wrapper struct for stakeibc keeper
