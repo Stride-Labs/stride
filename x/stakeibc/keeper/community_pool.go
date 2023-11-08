@@ -167,8 +167,10 @@ func (k Keeper) LiquidStakeCommunityPoolTokens(ctx sdk.Context, hostZone types.H
 	// If there aren't enough tokens, do nothing
 	// (consider specifying a minimum here)
 	if nativeTokens.Amount.LTE(sdkmath.ZeroInt()) {
+		k.Logger(ctx).Info(utils.LogWithHostZone(hostZone.ChainId, "No community pool tokens to liquid stake"))
 		return nil
 	}
+	k.Logger(ctx).Info(utils.LogWithHostZone(hostZone.ChainId, "Liquid staking community pool tokens: %+v", nativeTokens))
 
 	// TODO: Move LS function to keeper method instead of message server
 	// Liquid stake the balance in the stake holding account
@@ -199,8 +201,10 @@ func (k Keeper) RedeemCommunityPoolTokens(ctx sdk.Context, hostZone types.HostZo
 
 	// If there aren't enough tokens, do nothing
 	if stTokens.Amount.LTE(sdkmath.ZeroInt()) {
+		k.Logger(ctx).Info(utils.LogWithHostZone(hostZone.ChainId, "No community pool tokens to redeem"))
 		return nil
 	}
+	k.Logger(ctx).Info(utils.LogWithHostZone(hostZone.ChainId, "Redeeming community pool tokens: %+v", stTokens))
 
 	// TODO: Move Redeem function to keeper method instead of message server
 	// Redeem the stTokens in the redeem holding account

@@ -42,7 +42,6 @@ var (
 	ErrDivisionByZero                      = errorsmod.Register(ModuleName, 1534, "division by zero")
 	ErrSlashExceedsSafetyThreshold         = errorsmod.Register(ModuleName, 1535, "slash is greater than safety threshold")
 	ErrInvalidEpoch                        = errorsmod.Register(ModuleName, 1536, "invalid epoch tracker")
-	ErrHostZoneICAAccountNotFound          = errorsmod.Register(ModuleName, 1537, "host zone's ICA account not found")
 	ErrNoValidatorAmts                     = errorsmod.Register(ModuleName, 1538, "could not fetch validator amts")
 	ErrMaxNumValidators                    = errorsmod.Register(ModuleName, 1539, "max number of validators reached")
 	ErrUndelegationAmount                  = errorsmod.Register(ModuleName, 1540, "Undelegation amount is greater than stakedBal")
