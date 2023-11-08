@@ -154,7 +154,10 @@ func (k Keeper) QueryCommunityPoolBalance(
 func (k Keeper) LiquidStakeCommunityPoolTokens(ctx sdk.Context, hostZone types.HostZone) error {
 	// Get the number of native tokens in the stake address
 	// The native tokens will be an ibc denom since they've been transferred to stride
-	communityPoolStakeAddress := sdk.AccAddress(hostZone.CommunityPoolStakeHoldingAddress)
+	communityPoolStakeAddress, err := sdk.AccAddressFromBech32(hostZone.CommunityPoolStakeHoldingAddress)
+	if err != nil {
+		return err
+	}
 	nativeTokens := k.bankKeeper.GetBalance(ctx, communityPoolStakeAddress, hostZone.IbcDenom)
 
 	// If there aren't enough tokens, do nothing
@@ -173,7 +176,7 @@ func (k Keeper) LiquidStakeCommunityPoolTokens(ctx sdk.Context, hostZone types.H
 	}
 	resp, err := msgServer.LiquidStake(ctx, &liquidStakeRequest)
 	if err != nil {
-		return err
+		return types.ErrFailedToLiquidStake.Wrapf(err.Error())
 	}
 
 	// If the liquid stake was successful, transfer the stTokens to the return ICA
@@ -183,8 +186,11 @@ func (k Keeper) LiquidStakeCommunityPoolTokens(ctx sdk.Context, hostZone types.H
 // Redeem all the stTokens in the redeem holding address
 func (k Keeper) RedeemCommunityPoolTokens(ctx sdk.Context, hostZone types.HostZone) error {
 	// Get the number of stTokens in the redeem address
+	communityPoolRedeemAddress, err := sdk.AccAddressFromBech32(hostZone.CommunityPoolRedeemHoldingAddress)
+	if err != nil {
+		return err
+	}
 	stDenom := types.StAssetDenomFromHostZoneDenom(hostZone.HostDenom)
-	communityPoolRedeemAddress := sdk.AccAddress(hostZone.CommunityPoolRedeemHoldingAddress)
 	stTokens := k.bankKeeper.GetBalance(ctx, communityPoolRedeemAddress, stDenom)
 
 	// If there aren't enough tokens, do nothing
@@ -203,7 +209,7 @@ func (k Keeper) RedeemCommunityPoolTokens(ctx sdk.Context, hostZone types.HostZo
 		Receiver: hostZone.CommunityPoolReturnIcaAddress,
 	}
 	if _, err := msgServer.RedeemStake(ctx, &redeemStakeRequest); err != nil {
-		return err
+		return types.ErrUnableToRedeemStake.Wrapf(err.Error())
 	}
 
 	return nil

@@ -200,6 +200,64 @@ services:
     volumes:
       - ./state/evmos5:/home/evmos/.evmosd
 
+  dydx1:
+    image: stridezone:dydx
+    volumes:
+      - ./state/dydx1:/home/dydx/.dydxprotocol
+    ports:
+      - "25957:26657"
+      - "1247:1317"
+      - "9020:9090"
+
+  dydx2:
+    image: stridezone:dydx
+    volumes:
+      - ./state/dydx2:/home/dydx/.dydxprotocol
+
+  dydx3:
+    image: stridezone:dydx
+    volumes:
+      - ./state/dydx3:/home/dydx/.dydxprotocol
+
+  dydx4:
+    image: stridezone:dydx
+    volumes:
+      - ./state/dydx4:/home/dydx/.dydxprotocol
+
+  dydx5:
+    image: stridezone:dydx
+    volumes:
+      - ./state/dydx5:/home/dydx/.dydxprotocol
+
+  noble1:
+    image: stridezone:noble
+    volumes:
+      - ./state/noble1:/home/noble/.noble
+    ports:
+      - "25857:26657"
+      - "1237:1317"
+      - "9010:9090"
+
+  noble2:
+    image: stridezone:noble
+    volumes:
+      - ./state/noble2:/home/noble/.noble
+
+  noble3:
+    image: stridezone:noble
+    volumes:
+      - ./state/noble3:/home/noble/.noble
+
+  noble4:
+    image: stridezone:noble
+    volumes:
+      - ./state/noble4:/home/noble/.noble
+
+  noble5:
+    image: stridezone:noble
+    volumes:
+      - ./state/noble5:/home/noble/.noble
+
   # Fill in new host zone being tested here
 
   hermes:
@@ -257,6 +315,20 @@ services:
       - ./state/relayer-evmos:/home/relayer/.relayer
     restart: always
     command: [ "bash", "start.sh", "stride-evmos" ]
+
+  relayer-dydx:
+    image: stridezone:relayer
+    volumes:
+      - ./state/relayer-dydx:/home/relayer/.relayer
+    restart: always
+    command: [ "bash", "start.sh", "stride-dydx" ]
+
+  relayer-dydx-noble:
+    image: stridezone:relayer
+    volumes:
+      - ./state/relayer-dydx-noble:/home/relayer/.relayer
+    restart: always
+    command: [ "bash", "start.sh", "dydx-noble" ]
 
   relayer-juno-osmo:
     image: stridezone:relayer

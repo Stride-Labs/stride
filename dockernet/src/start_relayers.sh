@@ -18,7 +18,7 @@ for chain in ${HOST_CHAINS[@]}; do
 
     mkdir -p $relayer_config
     chmod -R 777 $STATE/relayer-${chain_name}
-    cp ${DOCKERNET_HOME}/config/relayer_config.yaml $relayer_config/config.yaml
+    cp ${DOCKERNET_HOME}/config/relayer_config_stride.yaml $relayer_config/config.yaml
 
     printf "STRIDE <> $chain - Adding relayer keys..."
     $relayer_exec rly keys restore stride $RELAYER_STRIDE_ACCT "$mnemonic" >> $relayer_logs 2>&1
@@ -30,5 +30,6 @@ for chain in ${HOST_CHAINS[@]}; do
     echo "Done"
 
     $DOCKER_COMPOSE up -d relayer-${chain_name}
-    $DOCKER_COMPOSE logs -f relayer-${chain_name} | sed -r -u "s/\x1B\[([0-9]{1,3}(;[0-9]{1,2})?)?[mGK]//g" >> $relayer_logs 2>&1 &
+    SAVE_DOCKER_LOGS relayer-${chain_name} $relayer_logs
 done
+

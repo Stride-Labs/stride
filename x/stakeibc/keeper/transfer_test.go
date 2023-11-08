@@ -5,6 +5,8 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	transfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
+	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
+	ibctesting "github.com/cosmos/ibc-go/v7/testing"
 
 	sdkmath "cosmossdk.io/math"
 
@@ -17,7 +19,6 @@ const chainId = "GAIA"
 type TransferCommunityPoolDepositToHoldingTestCase struct {
 	hostZone  types.HostZone
 	coin      sdk.Coin
-	action    string
 	channelId string
 	portId    string
 }
@@ -31,9 +32,9 @@ func (s *KeeperTestSuite) SetupTransferCommunityPoolDepositToHolding() TransferC
 	depositIcaAddress := depositIcaAccount.String()
 	hostZone := types.HostZone{
 		ChainId:                          chainId,
-		ConnectionId:                     "connection-0",
-		TransferChannelId:                "channel-0",
-		HostDenom:                        "tokens",
+		ConnectionId:                     ibctesting.FirstConnectionID,
+		TransferChannelId:                ibctesting.FirstChannelID,
+		HostDenom:                        Atom,
 		CommunityPoolStakeHoldingAddress: holdingAddress,
 		CommunityPoolDepositIcaAddress:   depositIcaAddress,
 	}
@@ -45,7 +46,7 @@ func (s *KeeperTestSuite) SetupTransferCommunityPoolDepositToHolding() TransferC
 	s.App.StakeibcKeeper.SetEpochTracker(s.Ctx, strideEpoch)
 
 	balanceToTransfer := sdkmath.NewInt(1_000_000)
-	coin := sdk.NewCoin("tokens", balanceToTransfer)
+	coin := sdk.NewCoin(Atom, balanceToTransfer)
 	s.FundAccount(depositIcaAccount, coin)
 
 	return TransferCommunityPoolDepositToHoldingTestCase{
@@ -112,8 +113,8 @@ func (s *KeeperTestSuite) SetupTransferHoldingToCommunityPoolReturn() TransferHo
 	returnIcaAddress := s.TestAccs[1].String()
 	hostZone := types.HostZone{
 		ChainId:                          chainId,
-		TransferChannelId:                "channel-0",
-		HostDenom:                        "tokens",
+		TransferChannelId:                ibctesting.FirstChannelID,
+		HostDenom:                        Atom,
 		CommunityPoolStakeHoldingAddress: holdingAddress,
 		CommunityPoolReturnIcaAddress:    returnIcaAddress,
 	}
@@ -123,9 +124,9 @@ func (s *KeeperTestSuite) SetupTransferHoldingToCommunityPoolReturn() TransferHo
 		NextEpochStartTime: uint64(s.Coordinator.CurrentTime.UnixNano() + 30_000_000_000), // used for transfer timeout
 	}
 	s.App.StakeibcKeeper.SetEpochTracker(s.Ctx, strideEpoch)
-	
+
 	balanceToTransfer := sdkmath.NewInt(1_000_000)
-	coin := sdk.NewCoin("tokens", balanceToTransfer)
+	coin := sdk.NewCoin(Atom, balanceToTransfer)
 	s.FundAccount(holdingAccount, coin)
 
 	return TransferHoldingToCommunityPoolReturnTestCase{
@@ -169,4 +170,80 @@ func (s *KeeperTestSuite) TestTransferHoldingToCommunityPoolReturn_MissingTokens
 	err := s.App.StakeibcKeeper.TransferHoldingToCommunityPoolReturn(s.Ctx, tc.hostZone, tc.coin)
 	s.Require().ErrorContains(err, "Error submitting ibc transfer")
 	s.Require().ErrorContains(err, "insufficient funds")
+}
+
+func (s *KeeperTestSuite) TestGetStIbcDenomOnHostZone() {
+	testCases := []struct {
+		hostDenom        string
+		channelOnStride  string
+		channelOnHost    string
+		expectedIBCDenom string
+	}{
+		{
+			hostDenom:        "uatom",
+			channelOnStride:  "channel-0",
+			channelOnHost:    "channel-391",
+			expectedIBCDenom: "ibc/B05539B66B72E2739B986B86391E5D08F12B8D5D2C2A7F8F8CF9ADF674DFA231",
+		},
+		{
+			hostDenom:        "uosmo",
+			channelOnStride:  "channel-5",
+			channelOnHost:    "channel-326",
+			expectedIBCDenom: "ibc/D176154B0C63D1F9C6DCFB4F70349EBF2E2B5A87A05902F57A6AE92B863E9AEC",
+		},
+		{
+			hostDenom:        "ujuno",
+			channelOnStride:  "channel-24",
+			channelOnHost:    "channel-139",
+			expectedIBCDenom: "ibc/F4F5F27F40F927F8A4FF9F5601F80AD5D77B366570E7C59856B8CE4135AC1F59",
+		},
+		{
+			hostDenom:        "ustars",
+			channelOnStride:  "channel-19",
+			channelOnHost:    "channel-106",
+			expectedIBCDenom: "ibc/7A58490427EF0092E2BFFB4BEEBA38E29B09E9B98557DFC78335B43F15CF2676",
+		},
+		{
+			hostDenom:        "inj",
+			channelOnStride:  "channel-6",
+			channelOnHost:    "channel-89",
+			expectedIBCDenom: "ibc/AC87717EA002B0123B10A05063E69BCA274BA2C44D842AEEB41558D2856DCE93",
+		},
+	}
+
+	// Create each channel on stride with the associated host channel as a counterparty
+	for _, tc := range testCases {
+		channel := channeltypes.Channel{
+			Counterparty: channeltypes.Counterparty{
+				ChannelId: tc.channelOnHost,
+			},
+		}
+		s.App.IBCKeeper.ChannelKeeper.SetChannel(s.Ctx, transfertypes.PortID, tc.channelOnStride, channel)
+	}
+
+	// For each case, check the generated IBC denom
+	for _, tc := range testCases {
+		hostZone := types.HostZone{
+			TransferChannelId: tc.channelOnStride,
+			HostDenom:         tc.hostDenom,
+		}
+		actualIBCDenom, err := s.App.StakeibcKeeper.GetStIbcDenomOnHostZone(s.Ctx, hostZone)
+		s.Require().NoError(err, "no error expected when generating IBC denom")
+		s.Require().Equal(tc.expectedIBCDenom, actualIBCDenom, "stToken ibc denom")
+	}
+
+	// Test a non-existent channel ID
+	invalidHostZone := types.HostZone{TransferChannelId: "channel-1000"}
+	_, err := s.App.StakeibcKeeper.GetStIbcDenomOnHostZone(s.Ctx, invalidHostZone)
+	s.Require().ErrorContains(err, "channel not found")
+
+	// Test a channel that has a non-transfer port
+	s.App.IBCKeeper.ChannelKeeper.SetChannel(s.Ctx, "different port", "channel-1000", channeltypes.Channel{})
+	_, err = s.App.StakeibcKeeper.GetStIbcDenomOnHostZone(s.Ctx, invalidHostZone)
+	s.Require().ErrorContains(err, "channel not found")
+
+	// Test a with an empty counterparty channel
+	s.App.IBCKeeper.ChannelKeeper.SetChannel(s.Ctx, transfertypes.PortID, "channel-1000", channeltypes.Channel{})
+	_, err = s.App.StakeibcKeeper.GetStIbcDenomOnHostZone(s.Ctx, invalidHostZone)
+	s.Require().ErrorContains(err, "counterparty channel not found")
 }
