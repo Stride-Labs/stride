@@ -44,12 +44,14 @@ func (k Keeper) ProcessAllCommunityPoolTokens(ctx sdk.Context) {
 		// ICQ for the host denom of the chain, these are tokens the pool wants staked
 		err = k.QueryCommunityPoolBalance(ctx, hostZone, types.ICAAccountType_COMMUNITY_POOL_DEPOSIT, denom)
 		if err != nil {
-			k.Logger(ctx).Error(utils.LogWithHostZone(hostZone.ChainId, "Querying hostDenom %s in deposit- %s", denom, err.Error()))
+			k.Logger(ctx).Error(utils.LogWithHostZone(hostZone.ChainId,
+				"Failed to submit ICQ for native denom %s in deposit ICA - %s", denom, err.Error()))
 		}
 		// ICQ for staked tokens of the host denom, these are tokens the pool wants redeemed
 		err = k.QueryCommunityPoolBalance(ctx, hostZone, types.ICAAccountType_COMMUNITY_POOL_DEPOSIT, stIbcDenom)
 		if err != nil {
-			k.Logger(ctx).Error(utils.LogWithHostZone(hostZone.ChainId, "Querying stHostDenom %s in deposit - %s", stIbcDenom, err.Error()))
+			k.Logger(ctx).Error(utils.LogWithHostZone(hostZone.ChainId,
+				"Failed to submit ICQ for stHostDenom %s in deposit ICA - %s", stIbcDenom, err.Error()))
 		}
 
 		/****** Stage 2: LiquidStake denom and transfer to return ICA, or RedeemStake stDenom *******/
@@ -57,23 +59,25 @@ func (k Keeper) ProcessAllCommunityPoolTokens(ctx sdk.Context) {
 		// LiquidStake tokens in the stake holding address and transfer to the return ica
 		if err = k.LiquidStakeCommunityPoolTokens(ctx, hostZone); err != nil {
 			k.Logger(ctx).Error(utils.LogWithHostZone(hostZone.ChainId,
-				"Liquid staking and transfering tokens in stake holding address - %s", err.Error()))
+				"Failed to liquid staking and transfer community pool tokens in stake holding address - %s", err.Error()))
 		}
 		// RedeemStake tokens in the redeem holding address, in 30 days they claim to the return ica
 		if err = k.RedeemCommunityPoolTokens(ctx, hostZone); err != nil {
 			k.Logger(ctx).Error(utils.LogWithHostZone(hostZone.ChainId,
-				"Redeeming stTokens in redeem holding address - %s", err.Error()))
+				"Failed to redeeming stTokens in redeem holding address - %s", err.Error()))
 		}
 
 		/****** Stage 3: Query return ICA for denom/stDenom, FundCommunityPool from return ICA *******/
 
 		err = k.QueryCommunityPoolBalance(ctx, hostZone, types.ICAAccountType_COMMUNITY_POOL_RETURN, denom)
 		if err != nil {
-			k.Logger(ctx).Error(utils.LogWithHostZone(hostZone.ChainId, "Querying hostDenom %s in return- %s", denom, err.Error()))
+			k.Logger(ctx).Error(utils.LogWithHostZone(hostZone.ChainId,
+				"Failed to submit ICQ for native denom %s in return ICA - %s", denom, err.Error()))
 		}
 		err = k.QueryCommunityPoolBalance(ctx, hostZone, types.ICAAccountType_COMMUNITY_POOL_RETURN, stIbcDenom)
 		if err != nil {
-			k.Logger(ctx).Error(utils.LogWithHostZone(hostZone.ChainId, "Querying stHostDenom %s in return - %s", stIbcDenom, err.Error()))
+			k.Logger(ctx).Error(utils.LogWithHostZone(hostZone.ChainId,
+				"Failed to submit ICQ for stHostDenom %s in return ICA - %s", stIbcDenom, err.Error()))
 		}
 	}
 }
