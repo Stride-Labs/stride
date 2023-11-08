@@ -234,18 +234,23 @@ func (k Keeper) FundCommunityPool(ctx sdk.Context, hostZone types.HostZone, toke
 		Depositor: hostZone.CommunityPoolReturnIcaAddress,
 	})
 
+	// Timeout the ICA at the end of the epoch
+	strideEpochTracker, found := k.GetEpochTracker(ctx, epochstypes.STRIDE_EPOCH)
+	if !found {
+		return errorsmod.Wrapf(types.ErrEpochNotFound, epochstypes.STRIDE_EPOCH)
+	}
+	timeoutTimestamp := uint64(strideEpochTracker.NextEpochStartTime)
+
 	// No need to build ICA callback data or input an ICA callback method
 	icaCallbackId := ""
 	var icaCallbackData []byte
-	ibcTransferTimeoutNanos := k.GetParam(ctx, types.KeyIBCTransferTimeoutNanos)
-	icaTimeoutTimestamp := uint64(ctx.BlockTime().UnixNano()) + ibcTransferTimeoutNanos
 
 	// Send the transaction through SubmitTx to kick off ICA command
 	_, err := k.SubmitTxs(ctx,
 		hostZone.ConnectionId,
 		msgs,
 		types.ICAAccountType_COMMUNITY_POOL_RETURN,
-		icaTimeoutTimestamp,
+		timeoutTimestamp,
 		icaCallbackId,
 		icaCallbackData)
 	if err != nil {
