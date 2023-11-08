@@ -176,7 +176,7 @@ func (k Keeper) LiquidStakeCommunityPoolTokens(ctx sdk.Context, hostZone types.H
 	}
 	resp, err := msgServer.LiquidStake(ctx, &liquidStakeRequest)
 	if err != nil {
-		return err
+		return types.ErrFailedToLiquidStake.Wrapf(err.Error())
 	}
 
 	// If the liquid stake was successful, transfer the stTokens to the return ICA
