@@ -44,8 +44,8 @@ func (k Keeper) TransferCommunityPoolDepositToHolding(ctx sdk.Context, hostZone 
 		return err
 	}
 
-	// If the token is an stToken, we send it to the redeem holding address to be redeemed
-	// Otherwise, we send it to the stake holding address to be liquid staked
+	// If the token is the host zone's native token, we send it to the stake holding address to be liquid staked
+	// Otherwise, if it's an stToken, we send it to the redeem holding address to be redeemed
 	var destinationHoldingAddress string
 	switch token.Denom {
 	case nativeDenom:
