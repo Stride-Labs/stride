@@ -184,30 +184,30 @@ func (s *KeeperTestSuite) SetupRedeemCommunityPoolTokens() RedeemCommunityPoolTo
 	// Create relevant module and ICA accounts
 	depositAddress := s.TestAccs[0]
 	communityPoolHoldingAddress := s.TestAccs[1]
-	communityPoolReturnICAAddress := DelegationICAAddress // need an address on HostChain (starts cosmos)
+	communityPoolReturnICAAddress := HostICAAddress // need an address on HostChain (starts cosmos)
 
-	// native stTokens which will be redeemed, dummy tokens which should not be touched
-	initialNativeStTokens := sdk.NewInt(1000)
+	// stTokens which will be redeemed, dummy tokens which should not be touched
+	initialStTokens := sdk.NewInt(1000)
 	initialDummyTokens := sdk.NewInt(999)
 
-	// Fund the redeem holding address with native staked tokens and
+	// Fund the redeem holding address with stTokens and
 	// some dummy tokens that should not get touched while redeeming
 	stDenom := types.StAssetDenomFromHostZoneDenom(Atom)
-	s.FundAccount(communityPoolHoldingAddress, sdk.NewCoin(stDenom, initialNativeStTokens))
+	s.FundAccount(communityPoolHoldingAddress, sdk.NewCoin(stDenom, initialStTokens))
 	s.FundAccount(communityPoolHoldingAddress, sdk.NewCoin(Atom, initialDummyTokens))   // dummy token
 	s.FundAccount(communityPoolHoldingAddress, sdk.NewCoin(IbcAtom, initialDummyTokens)) // dummy token
 
 	// Create a host zone with valid addresses to perform the liquid stake
 	hostZone := types.HostZone{
-		ChainId:                           HostChainId,
-		Bech32Prefix:                      Bech32Prefix,
+		ChainId:                           HostChainId,	//GAIA
+		Bech32Prefix:                      Bech32Prefix, //cosmos
 		HostDenom:                         Atom,
 		IbcDenom:                          IbcAtom,
 		TransferChannelId:                 ibctesting.FirstChannelID,
 		CommunityPoolRedeemHoldingAddress: communityPoolHoldingAddress.String(),
 		CommunityPoolReturnIcaAddress:     communityPoolReturnICAAddress,
 		DepositAddress:                    depositAddress.String(),
-		TotalDelegations:                  initialNativeStTokens, // at least as much as we are trying to redeem
+		TotalDelegations:                  initialStTokens, // at least as much as we are trying to redeem
 		RedemptionRate:                    sdk.OneDec(),
 	}
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
@@ -217,7 +217,6 @@ func (s *KeeperTestSuite) SetupRedeemCommunityPoolTokens() RedeemCommunityPoolTo
 	epochTracker := types.EpochTracker{
 		EpochIdentifier:    epochtypes.DAY_EPOCH,
 		EpochNumber:        epochNumber,
-		NextEpochStartTime: uint64(s.Coordinator.CurrentTime.UnixNano() + 30_000_000), // dictates transfer timeout
 	}
 	s.App.StakeibcKeeper.SetEpochTracker(s.Ctx, epochTracker)
 
@@ -243,9 +242,17 @@ func (s *KeeperTestSuite) SetupRedeemCommunityPoolTokens() RedeemCommunityPoolTo
 func (s *KeeperTestSuite) TestRedeemCommunityPoolTokens_Success() {
 	tc := s.SetupRedeemCommunityPoolTokens()
 
-	// Call redeem stake which should start the unbonding for the native staked tokens amount
+	// Verify that no user redemption records exist yet
+	userRedemptionRecords := s.App.RecordsKeeper.GetAllUserRedemptionRecord(s.Ctx)
+	s.Require().Zero(len(userRedemptionRecords), "No user redemption records expected yet")
+
+	// Call redeem stake which should start the unbonding for the stToken amount
 	err := s.App.StakeibcKeeper.RedeemCommunityPoolTokens(s.Ctx, tc.hostZone)
 	s.Require().NoError(err, "no error expected during redeem stake")
+
+	// Check that a new user redemption record was created from the call to redeem
+	userRedemptionRecords = s.App.RecordsKeeper.GetAllUserRedemptionRecord(s.Ctx)
+	s.Require().Equal(1, len(userRedemptionRecords), "New user redemption records should be created")
 
 	// Confirm there are no longer staked tokens in the holding address after redeem
 	stDenom := types.StAssetDenomFromHostZoneDenom(tc.hostZone.HostDenom)
@@ -257,6 +264,14 @@ func (s *KeeperTestSuite) TestRedeemCommunityPoolTokens_Success() {
 	ibcAtomBalance := s.App.BankKeeper.GetBalance(s.Ctx, tc.communityPoolHoldingAddress, IbcAtom)	
 	s.Require().Equal(tc.initialDummyTokens.Int64(), atomBalance.Amount.Int64(), "Atom tokens should not be touched")
 	s.Require().Equal(tc.initialDummyTokens.Int64(), ibcAtomBalance.Amount.Int64(), "IbcAtom tokens should not be touched")		
+
+	// Call redeem stake again but now there is no more stTokens to be redeemed.
+	err = s.App.StakeibcKeeper.RedeemCommunityPoolTokens(s.Ctx, tc.hostZone)
+	s.Require().NoError(err, "no error expected during redeem stake")
+
+	// Check that no new user redemption records were created from the second call to redeem
+	userRedemptionRecords = s.App.RecordsKeeper.GetAllUserRedemptionRecord(s.Ctx)
+	s.Require().Equal(1, len(userRedemptionRecords), "New user redemption records should be created")
 }
 
 // Test redeem stake with an invalid redeem holding address
@@ -265,7 +280,6 @@ func (s *KeeperTestSuite) TestRedeemCommunityPoolTokens_Failure_InvalidAddress()
 
 	invalidHostZone := tc.hostZone
 	invalidHostZone.CommunityPoolRedeemHoldingAddress = "invalid"
-	s.App.StakeibcKeeper.SetHostZone(s.Ctx, invalidHostZone)
 
 	err := s.App.StakeibcKeeper.RedeemCommunityPoolTokens(s.Ctx, invalidHostZone)
 	s.Require().ErrorContains(err, "decoding bech32 failed")

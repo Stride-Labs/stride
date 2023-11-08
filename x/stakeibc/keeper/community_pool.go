@@ -209,7 +209,7 @@ func (k Keeper) RedeemCommunityPoolTokens(ctx sdk.Context, hostZone types.HostZo
 		Receiver: hostZone.CommunityPoolReturnIcaAddress,
 	}
 	if _, err := msgServer.RedeemStake(ctx, &redeemStakeRequest); err != nil {
-		return err
+		return types.ErrUnableToRedeemStake.Wrapf(err.Error())
 	}
 
 	return nil
