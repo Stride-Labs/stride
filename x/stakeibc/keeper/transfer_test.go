@@ -6,6 +6,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	transfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
 	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
+	ibctesting "github.com/cosmos/ibc-go/v7/testing"
 
 	sdkmath "cosmossdk.io/math"
 
@@ -31,20 +32,21 @@ func (s *KeeperTestSuite) SetupTransferCommunityPoolDepositToHolding() TransferC
 	depositIcaAddress := depositIcaAccount.String()
 	hostZone := types.HostZone{
 		ChainId:                          chainId,
-		ConnectionId:                     "connection-0",
-		TransferChannelId:                "channel-0",
+		ConnectionId:                     ibctesting.FirstConnectionID,
+		TransferChannelId:                ibctesting.FirstChannelID,
+		HostDenom:                        Atom,
 		CommunityPoolStakeHoldingAddress: holdingAddress,
 		CommunityPoolDepositIcaAddress:   depositIcaAddress,
 	}
 
 	strideEpoch := types.EpochTracker{
 		EpochIdentifier:    epochtypes.STRIDE_EPOCH,
-		NextEpochStartTime: uint64(10), // used for transfer timeout
+		NextEpochStartTime: uint64(s.Coordinator.CurrentTime.UnixNano() + 30_000_000_000), // used for transfer timeout
 	}
 	s.App.StakeibcKeeper.SetEpochTracker(s.Ctx, strideEpoch)
 
 	balanceToTransfer := sdkmath.NewInt(1_000_000)
-	coin := sdk.NewCoin("tokens", balanceToTransfer)
+	coin := sdk.NewCoin(Atom, balanceToTransfer)
 	s.FundAccount(depositIcaAccount, coin)
 
 	return TransferCommunityPoolDepositToHoldingTestCase{
@@ -103,6 +105,36 @@ type TransferHoldingToCommunityPoolReturnTestCase struct {
 	coin     sdk.Coin
 }
 
+func (s *KeeperTestSuite) SetupTransferHoldingToCommunityPoolReturn() TransferHoldingToCommunityPoolReturnTestCase {
+	s.CreateTransferChannel(chainId)
+
+	holdingAccount := s.TestAccs[0]
+	holdingAddress := holdingAccount.String()
+	returnIcaAddress := s.TestAccs[1].String()
+	hostZone := types.HostZone{
+		ChainId:                          chainId,
+		TransferChannelId:                ibctesting.FirstChannelID,
+		HostDenom:                        Atom,
+		CommunityPoolStakeHoldingAddress: holdingAddress,
+		CommunityPoolReturnIcaAddress:    returnIcaAddress,
+	}
+
+	strideEpoch := types.EpochTracker{
+		EpochIdentifier:    epochtypes.STRIDE_EPOCH,
+		NextEpochStartTime: uint64(s.Coordinator.CurrentTime.UnixNano() + 30_000_000_000), // used for transfer timeout
+	}
+	s.App.StakeibcKeeper.SetEpochTracker(s.Ctx, strideEpoch)
+
+	balanceToTransfer := sdkmath.NewInt(1_000_000)
+	coin := sdk.NewCoin(Atom, balanceToTransfer)
+	s.FundAccount(holdingAccount, coin)
+
+	return TransferHoldingToCommunityPoolReturnTestCase{
+		hostZone: hostZone,
+		coin:     coin,
+	}
+}
+
 func (s *KeeperTestSuite) TestTransferHoldingToCommunityPoolReturn_Successful() {
 	tc := s.SetupTransferHoldingToCommunityPoolReturn()
 
@@ -119,29 +151,6 @@ func (s *KeeperTestSuite) TestTransferHoldingToCommunityPoolReturn_Successful() 
 		transfertypes.PortID, tc.hostZone.TransferChannelId)
 	s.Require().True(found)
 	s.Require().Equal(endSequence, startSequence+1, "sequence number should have incremented")
-}
-
-func (s *KeeperTestSuite) SetupTransferHoldingToCommunityPoolReturn() TransferHoldingToCommunityPoolReturnTestCase {
-	s.CreateTransferChannel(chainId)
-
-	holdingAccount := s.TestAccs[0]
-	holdingAddress := holdingAccount.String()
-	returnIcaAddress := s.TestAccs[1].String()
-	hostZone := types.HostZone{
-		ChainId:                          chainId,
-		TransferChannelId:                "channel-0",
-		CommunityPoolStakeHoldingAddress: holdingAddress,
-		CommunityPoolReturnIcaAddress:    returnIcaAddress,
-	}
-
-	balanceToTransfer := sdkmath.NewInt(1_000_000)
-	coin := sdk.NewCoin("tokens", balanceToTransfer)
-	s.FundAccount(holdingAccount, coin)
-
-	return TransferHoldingToCommunityPoolReturnTestCase{
-		hostZone: hostZone,
-		coin:     coin,
-	}
 }
 
 func (s *KeeperTestSuite) TestTransferHoldingToCommunityPoolReturn_ChannelTransferFail() {
