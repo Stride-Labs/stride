@@ -72,9 +72,9 @@ func CalibrateDelegationCallback(k Keeper, ctx sdk.Context, args []byte, query i
 	delegationChange := validator.Delegation.Sub(delegatedTokens)
 	// if the delegation change is more than the calibration threshold constant, log and throw an error
 	if delegationChange.Abs().GTE(CalibrationThreshold) {
-		k.Logger(ctx).Info(utils.LogICQCallbackWithHostZone(chainId, ICQCallbackID_Calibrate,
+		k.Logger(ctx).Error(utils.LogICQCallbackWithHostZone(chainId, ICQCallbackID_Calibrate,
 			"Delegation change is GT CalibrationThreshold, failing calibration callback"))
-		return errorsmod.Wrapf(types.ErrCalibrationThresholdExceeded, "calibration threshold %v exceeded, attempted to calibrate by %v ", CalibrationThreshold, delegationChange)
+		return nil
 	}
 	validator.Delegation = validator.Delegation.Sub(delegationChange)
 	hostZone.TotalDelegations = hostZone.TotalDelegations.Sub(delegationChange)
