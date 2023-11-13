@@ -20,8 +20,8 @@ import (
 // If the address queried was the return ICA address, call FundCommunityPool
 
 // Note: for now, to get proofs in your ICQs, you need to query the entire store on the host zone! e.g. "store/bank/key"
-func CommunityPoolBalanceCallback(k Keeper, ctx sdk.Context, args []byte, query icqtypes.Query) error {
-	k.Logger(ctx).Info(utils.LogICQCallbackWithHostZone(query.ChainId, ICQCallbackID_CommunityPoolBalance,
+func CommunityPoolIcaBalanceCallback(k Keeper, ctx sdk.Context, args []byte, query icqtypes.Query) error {
+	k.Logger(ctx).Info(utils.LogICQCallbackWithHostZone(query.ChainId, ICQCallbackID_CommunityPoolIcaBalance,
 		"Starting community pool balance callback, QueryId: %vs, QueryType: %s, Connection: %s",
 		query.Id, query.QueryType, query.ConnectionId))
 
@@ -47,13 +47,13 @@ func CommunityPoolBalanceCallback(k Keeper, ctx sdk.Context, args []byte, query 
 	icaType := callbackData.IcaType
 	denom := callbackData.Denom
 
-	k.Logger(ctx).Info(utils.LogICQCallbackWithHostZone(chainId, ICQCallbackID_CommunityPoolBalance,
+	k.Logger(ctx).Info(utils.LogICQCallbackWithHostZone(chainId, ICQCallbackID_CommunityPoolIcaBalance,
 		"Query response - Community Pool Balance: %+v %s %s", amount, icaType.String(), denom))
 
 	// Confirm the balance is greater than zero for now...
 	// ...perhaps use a positive threshold in the future to avoid work when transfer would be small
 	if amount.LTE(sdkmath.ZeroInt()) {
-		k.Logger(ctx).Info(utils.LogICQCallbackWithHostZone(chainId, ICQCallbackID_CommunityPoolBalance,
+		k.Logger(ctx).Info(utils.LogICQCallbackWithHostZone(chainId, ICQCallbackID_CommunityPoolIcaBalance,
 			"No need to transfer tokens -- not enough found %v %s", amount, denom))
 		return nil
 	}
@@ -69,7 +69,7 @@ func CommunityPoolBalanceCallback(k Keeper, ctx sdk.Context, args []byte, query 
 			return k.TransferCommunityPoolDepositToHolding(ctx, hostZone, token)
 		})
 		if err != nil {
-			k.Logger(ctx).Error(utils.LogICQCallbackWithHostZone(chainId, ICQCallbackID_CommunityPoolBalance,
+			k.Logger(ctx).Error(utils.LogICQCallbackWithHostZone(chainId, ICQCallbackID_CommunityPoolIcaBalance,
 				"Initiating transfer to holding address failed: %s", err.Error()))
 		}
 	} else if icaType == types.ICAAccountType_COMMUNITY_POOL_RETURN {
@@ -78,7 +78,7 @@ func CommunityPoolBalanceCallback(k Keeper, ctx sdk.Context, args []byte, query 
 			return k.FundCommunityPool(ctx, hostZone, token)
 		})
 		if err != nil {
-			k.Logger(ctx).Error(utils.LogICQCallbackWithHostZone(chainId, ICQCallbackID_CommunityPoolBalance,
+			k.Logger(ctx).Error(utils.LogICQCallbackWithHostZone(chainId, ICQCallbackID_CommunityPoolIcaBalance,
 				"Initiating community pool fund failed: %s", err.Error()))
 		}
 	}

@@ -99,7 +99,7 @@ func (k Keeper) TransferHoldingToCommunityPoolReturn(ctx sdk.Context, hostZone t
 	}
 	endEpochTimestamp := uint64(strideEpochTracker.NextEpochStartTime)
 
-	// build and send an IBC message for each coin to transfer all back to the hostZone
+	// build and send an IBC message for the coin to transfer it back to the hostZone
 	msg := transfertypes.NewMsgTransfer(
 		transfertypes.PortID,
 		hostZone.TransferChannelId,

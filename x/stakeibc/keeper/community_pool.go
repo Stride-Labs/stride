@@ -42,12 +42,12 @@ func (k Keeper) ProcessAllCommunityPoolTokens(ctx sdk.Context) {
 		/****** Stage 1: Query deposit ICA for denom/stDenom, Transfer tokens to stride *******/
 
 		// ICQ for the host denom of the chain, these are tokens the pool wants staked
-		err = k.QueryCommunityPoolBalance(ctx, hostZone, types.ICAAccountType_COMMUNITY_POOL_DEPOSIT, denom)
+		err = k.QueryCommunityPoolIcaBalance(ctx, hostZone, types.ICAAccountType_COMMUNITY_POOL_DEPOSIT, denom)
 		if err != nil {
 			k.Logger(ctx).Error(utils.LogWithHostZone(hostZone.ChainId, "Querying hostDenom %s in deposit- %s", denom, err.Error()))
 		}
 		// ICQ for staked tokens of the host denom, these are tokens the pool wants redeemed
-		err = k.QueryCommunityPoolBalance(ctx, hostZone, types.ICAAccountType_COMMUNITY_POOL_DEPOSIT, stIbcDenom)
+		err = k.QueryCommunityPoolIcaBalance(ctx, hostZone, types.ICAAccountType_COMMUNITY_POOL_DEPOSIT, stIbcDenom)
 		if err != nil {
 			k.Logger(ctx).Error(utils.LogWithHostZone(hostZone.ChainId, "Querying stHostDenom %s in deposit - %s", stIbcDenom, err.Error()))
 		}
@@ -67,11 +67,11 @@ func (k Keeper) ProcessAllCommunityPoolTokens(ctx sdk.Context) {
 
 		/****** Stage 3: Query return ICA for denom/stDenom, FundCommunityPool from return ICA *******/
 
-		err = k.QueryCommunityPoolBalance(ctx, hostZone, types.ICAAccountType_COMMUNITY_POOL_RETURN, denom)
+		err = k.QueryCommunityPoolIcaBalance(ctx, hostZone, types.ICAAccountType_COMMUNITY_POOL_RETURN, denom)
 		if err != nil {
 			k.Logger(ctx).Error(utils.LogWithHostZone(hostZone.ChainId, "Querying hostDenom %s in return- %s", denom, err.Error()))
 		}
-		err = k.QueryCommunityPoolBalance(ctx, hostZone, types.ICAAccountType_COMMUNITY_POOL_RETURN, stIbcDenom)
+		err = k.QueryCommunityPoolIcaBalance(ctx, hostZone, types.ICAAccountType_COMMUNITY_POOL_RETURN, stIbcDenom)
 		if err != nil {
 			k.Logger(ctx).Error(utils.LogWithHostZone(hostZone.ChainId, "Querying stHostDenom %s in return - %s", stIbcDenom, err.Error()))
 		}
@@ -80,7 +80,7 @@ func (k Keeper) ProcessAllCommunityPoolTokens(ctx sdk.Context) {
 
 // ICQ specific denom for balance in the deposit ICA or return ICA on the community pool host zone
 // Depending on account type and denom, discovered tokens are transferred to Stride or funded to the pool
-func (k Keeper) QueryCommunityPoolBalance(
+func (k Keeper) QueryCommunityPoolIcaBalance(
 	ctx sdk.Context,
 	hostZone types.HostZone,
 	icaType types.ICAAccountType,
@@ -138,7 +138,7 @@ func (k Keeper) QueryCommunityPoolBalance(
 		QueryType:       icqtypes.BANK_STORE_QUERY_WITH_PROOF,
 		RequestData:     queryData,
 		CallbackModule:  types.ModuleName,
-		CallbackId:      ICQCallbackID_CommunityPoolBalance,
+		CallbackId:      ICQCallbackID_CommunityPoolIcaBalance,
 		CallbackData:    callbackDataBz,
 		TimeoutDuration: timeoutDuration,
 		TimeoutPolicy:   icqtypes.TimeoutPolicy_REJECT_QUERY_RESPONSE,
@@ -194,6 +194,7 @@ func (k Keeper) RedeemCommunityPoolTokens(ctx sdk.Context, hostZone types.HostZo
 	stTokens := k.bankKeeper.GetBalance(ctx, communityPoolRedeemAddress, stDenom)
 
 	// If there aren't enough tokens, do nothing
+	// (consider a greater than zero minimum threshold to avoid extra transfers)
 	if stTokens.Amount.LTE(sdkmath.ZeroInt()) {
 		return nil
 	}
