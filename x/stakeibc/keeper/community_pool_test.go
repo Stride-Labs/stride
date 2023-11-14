@@ -82,7 +82,7 @@ func (s *KeeperTestSuite) checkCommunityPoolQuerySubmission(
 
 	// Confirm callback data
 	s.Require().Equal(types.ModuleName, query.CallbackModule, "query callback module")
-	s.Require().Equal(keeper.ICQCallbackID_CommunityPoolBalance, query.CallbackId, "query callback id")
+	s.Require().Equal(keeper.ICQCallbackID_CommunityPoolIcaBalance, query.CallbackId, "query callback id")
 
 	var actualCallbackData types.CommunityPoolBalanceQueryCallback
 	err := proto.Unmarshal(query.CallbackData, &actualCallbackData)
@@ -111,7 +111,7 @@ func (s *KeeperTestSuite) TestQueryCommunityPoolBalance_Successful_Deposit() {
 	icaAccountType := types.ICAAccountType_COMMUNITY_POOL_DEPOSIT
 	tc := s.SetupQueryCommunityPoolBalance(icaAccountType)
 
-	err := s.App.StakeibcKeeper.QueryCommunityPoolBalance(s.Ctx, tc.hostZone, icaAccountType, Atom)
+	err := s.App.StakeibcKeeper.QueryCommunityPoolIcaBalance(s.Ctx, tc.hostZone, icaAccountType, Atom)
 	s.Require().NoError(err, "no error expected when querying pool balance")
 
 	s.checkCommunityPoolQuerySubmission(tc, icaAccountType)
@@ -122,7 +122,7 @@ func (s *KeeperTestSuite) TestQueryCommunityPoolBalance_Successful_Return() {
 	icaAccountType := types.ICAAccountType_COMMUNITY_POOL_RETURN
 	tc := s.SetupQueryCommunityPoolBalance(icaAccountType)
 
-	err := s.App.StakeibcKeeper.QueryCommunityPoolBalance(s.Ctx, tc.hostZone, icaAccountType, Atom)
+	err := s.App.StakeibcKeeper.QueryCommunityPoolIcaBalance(s.Ctx, tc.hostZone, icaAccountType, Atom)
 	s.Require().NoError(err, "no error expected when querying pool balance")
 
 	s.checkCommunityPoolQuerySubmission(tc, icaAccountType)
@@ -134,7 +134,7 @@ func (s *KeeperTestSuite) TestQueryCommunityPoolBalance_Failure_InvalidAccountTy
 	tc := s.SetupQueryCommunityPoolBalance(icaAccountType)
 
 	invalidAccountType := types.ICAAccountType_DELEGATION
-	err := s.App.StakeibcKeeper.QueryCommunityPoolBalance(s.Ctx, tc.hostZone, invalidAccountType, Atom)
+	err := s.App.StakeibcKeeper.QueryCommunityPoolIcaBalance(s.Ctx, tc.hostZone, invalidAccountType, Atom)
 	s.Require().ErrorContains(err, "icaType must be either deposit or return!")
 }
 
@@ -147,7 +147,7 @@ func (s *KeeperTestSuite) TestQueryCommunityPoolBalance_Failure_InvalidAccountAd
 	invalidHostZone := tc.hostZone
 	invalidHostZone.CommunityPoolDepositIcaAddress = "invalid_address"
 
-	err := s.App.StakeibcKeeper.QueryCommunityPoolBalance(s.Ctx, invalidHostZone, icaAccountType, Atom)
+	err := s.App.StakeibcKeeper.QueryCommunityPoolIcaBalance(s.Ctx, invalidHostZone, icaAccountType, Atom)
 	s.Require().ErrorContains(err, "invalid COMMUNITY_POOL_DEPOSIT address, could not decode (invalid_address)")
 }
 
@@ -159,7 +159,7 @@ func (s *KeeperTestSuite) TestQueryCommunityPoolBalance_Failure_MissingEpoch() {
 	// Remove the stride epoch so the test fails
 	s.App.StakeibcKeeper.RemoveEpochTracker(s.Ctx, epochtypes.STRIDE_EPOCH)
 
-	err := s.App.StakeibcKeeper.QueryCommunityPoolBalance(s.Ctx, tc.hostZone, icaAccountType, Atom)
+	err := s.App.StakeibcKeeper.QueryCommunityPoolIcaBalance(s.Ctx, tc.hostZone, icaAccountType, Atom)
 	s.Require().ErrorContains(err, "stride_epoch: epoch not found")
 }
 
@@ -172,7 +172,7 @@ func (s *KeeperTestSuite) TestQueryCommunityPoolBalance_FailedQuerySubmission() 
 	invalidHostZone := tc.hostZone
 	invalidHostZone.ConnectionId = "invalid_connection"
 
-	err := s.App.StakeibcKeeper.QueryCommunityPoolBalance(s.Ctx, invalidHostZone, icaAccountType, Atom)
+	err := s.App.StakeibcKeeper.QueryCommunityPoolIcaBalance(s.Ctx, invalidHostZone, icaAccountType, Atom)
 	s.Require().ErrorContains(err, "Error submitting query for pool ica balance")
 }
 
