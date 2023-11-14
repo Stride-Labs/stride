@@ -11,6 +11,7 @@ import (
 	porttypes "github.com/cosmos/ibc-go/v7/modules/core/05-port/types"
 	ibcexported "github.com/cosmos/ibc-go/v7/modules/core/exported"
 
+	ratelimittypes "github.com/Stride-Labs/stride/v14/x/ratelimit/types"
 	"github.com/Stride-Labs/stride/v14/x/stakeibc/keeper"
 	"github.com/Stride-Labs/stride/v14/x/stakeibc/types"
 )
@@ -134,6 +135,47 @@ func (im IBCMiddleware) OnChanOpenAck(
 		zoneInfo.CommunityPoolReturnIcaAddress = address
 	default:
 		ctx.Logger().Error(fmt.Sprintf("Missing portId: %s", portID))
+	}
+
+	// Once the delegation channel is registered, whitelist epochly transfers so they're not rate limited
+	// Epochly transfers go from the deposit address to the delegation address
+	if portID == delegationAddress {
+		im.keeper.RatelimitKeeper.SetWhitelistedAddressPair(ctx, ratelimittypes.WhitelistedAddressPair{
+			Sender:   zoneInfo.DepositAddress,
+			Receiver: zoneInfo.DelegationIcaAddress,
+		})
+	}
+
+	// Once the fee channel is registered, whitelist reward transfers so they're not rate limited
+	// Reward transfers go from the fee address to the reward collector
+	if portID == feeAddress {
+		rewardCollectorAddress := im.keeper.AccountKeeper.GetModuleAccount(ctx, types.RewardCollectorName).GetAddress()
+		im.keeper.RatelimitKeeper.SetWhitelistedAddressPair(ctx, ratelimittypes.WhitelistedAddressPair{
+			Sender:   zoneInfo.FeeIcaAddress,
+			Receiver: rewardCollectorAddress.String(),
+		})
+	}
+
+	// Once the community pool deposit ICA is registered, whitelist epochly community pool transfers
+	// from the deposit ICA to the community pool holding accounts
+	if portID == communityPoolDepositAddress {
+		im.keeper.RatelimitKeeper.SetWhitelistedAddressPair(ctx, ratelimittypes.WhitelistedAddressPair{
+			Sender:   zoneInfo.CommunityPoolDepositIcaAddress,
+			Receiver: zoneInfo.CommunityPoolStakeHoldingAddress,
+		})
+		im.keeper.RatelimitKeeper.SetWhitelistedAddressPair(ctx, ratelimittypes.WhitelistedAddressPair{
+			Sender:   zoneInfo.CommunityPoolDepositIcaAddress,
+			Receiver: zoneInfo.CommunityPoolRedeemHoldingAddress,
+		})
+	}
+
+	// Once the community pool return ICA is registered, whitelist epochly community pool transfers
+	// from the community pool stake holding account to the community pool return ICA
+	if portID == communityPoolReturnAddress {
+		im.keeper.RatelimitKeeper.SetWhitelistedAddressPair(ctx, ratelimittypes.WhitelistedAddressPair{
+			Sender:   zoneInfo.CommunityPoolStakeHoldingAddress,
+			Receiver: zoneInfo.CommunityPoolReturnIcaAddress,
+		})
 	}
 
 	im.keeper.SetHostZone(ctx, zoneInfo)
