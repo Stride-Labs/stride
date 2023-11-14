@@ -1,7 +1,6 @@
 package keeper
 
 import (
-	"errors"
 	"fmt"
 
 	errorsmod "cosmossdk.io/errors"
@@ -20,7 +19,8 @@ import (
 func (k Keeper) TransferCommunityPoolDepositToHolding(ctx sdk.Context, hostZone types.HostZone, token sdk.Coin) error {
 	// Verify that the deposit ica address exists on the host zone and stake holding address exists on stride
 	if hostZone.CommunityPoolDepositIcaAddress == "" || hostZone.CommunityPoolStakeHoldingAddress == "" {
-		return errors.New("Invalid deposit address or stake holding address, cannot build valid ICA transfer kickoff command")
+		return types.ErrICAAccountNotFound.Wrap(
+			"Invalid deposit address or stake holding address, cannot build valid ICA transfer kickoff command")
 	}
 
 	// get the hostZone counterparty transfer channel for sending tokens from hostZone to Stride
@@ -44,8 +44,8 @@ func (k Keeper) TransferCommunityPoolDepositToHolding(ctx sdk.Context, hostZone 
 		return err
 	}
 
-	// If the token is an stToken, we send it to the redeem holding address to be redeemed
-	// Otherwise, we send it to the stake holding address to be liquid staked
+	// If the token is the host zone's native token, we send it to the stake holding address to be liquid staked
+	// Otherwise, if it's an stToken, we send it to the redeem holding address to be redeemed
 	var destinationHoldingAddress string
 	switch token.Denom {
 	case nativeDenom:
