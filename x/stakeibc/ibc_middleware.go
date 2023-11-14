@@ -91,7 +91,7 @@ func (im IBCMiddleware) OnChanOpenAck(
 	}
 	ctx.Logger().Info(fmt.Sprintf("Found matching address for chain: %s, address %s, port %s", zoneInfo.ChainId, address, portID))
 
-	// addresses
+	// expected port IDs for each ICA account type
 	withdrawalPortID, err := icatypes.NewControllerPortID(types.FormatICAAccountOwner(hostChainId, types.ICAAccountType_WITHDRAWAL))
 	if err != nil {
 		return err
