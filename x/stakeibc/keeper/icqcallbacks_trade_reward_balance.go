@@ -23,12 +23,7 @@ func TradeRewardBalanceCallback(k Keeper, ctx sdk.Context, args []byte, query ic
 	k.Logger(ctx).Info(utils.LogICQCallbackWithHostZone(query.ChainId, ICQCallbackID_WithdrawalRewardBalance,
 		"Starting withdrawal reward balance callback, QueryId: %vs, QueryType: %s, Connection: %s", query.Id, query.QueryType, query.ConnectionId))
 
-	// Confirm queried zone exists
-	chainId := query.ChainId
-	tradeZone, found := k.GetHostZone(ctx, chainId) // this query went to the trade zone
-	if !found {
-		return errorsmod.Wrapf(types.ErrHostZoneNotFound, "no registered zone for queried chain ID (%s)", chainId)
-	}
+	chainId := query.ChainId // should be the tradeZoneId, used in logging
 
 	// Unmarshal the query response args to determine the balance
 	tradeRewardBalanceAmount, err := icqkeeper.UnmarshalAmountFromBalanceQuery(k.cdc, args)
@@ -36,32 +31,27 @@ func TradeRewardBalanceCallback(k Keeper, ctx sdk.Context, args []byte, query ic
 		return errorsmod.Wrap(err, "unable to determine balance from query response")
 	}
 
-	// Unmarshal the callback data containing the hostChain and rewardDenom on that host zone
-	var callbackData types.TradeRewardBalanceQueryCallback
-	if err := proto.Unmarshal(query.CallbackData, &callbackData); err != nil {
-		return errorsmod.Wrapf(err, "unable to unmarshal trade reward balance callback data")
-	}
-	hostZone, found := k.GetHostZone(ctx, callbackData.HostZoneId) // this query went to the trade zone, hostZone comes from callback data
-	if !found {
-		return errorsmod.Wrapf(types.ErrHostZoneNotFound, "no host zone could be loaded for callback chain ID (%s)", callbackData.HostZoneId)
-	}	
-
-	// Confirm the balance is greater than zero
+	// Confirm the balance is greater than zero, or else exit without further action for now
 	if tradeRewardBalanceAmount.LTE(sdkmath.ZeroInt()) {
 		k.Logger(ctx).Info(utils.LogICQCallbackWithHostZone(chainId, ICQCallbackID_TradeRewardBalance,
-			"No balance of reward tokens yet found in address: %s, balance: %v", hostZone.RewardTradeIcaAddress, tradeRewardBalanceAmount))
+			"Not enough balance of reward tokens yet found in trade ICA! balance: %+v", tradeRewardBalanceAmount))
 		return nil
 	}
 
+	// Unmarshal the callback data containing the tradeRoute we are on
+	var tradeRoute types.TradeRoute
+	if err := proto.Unmarshal(query.CallbackData, &tradeRoute); err != nil {
+		return errorsmod.Wrapf(err, "unable to unmarshal trade reward balance callback data")
+	}
 	k.Logger(ctx).Info(utils.LogICQCallbackWithHostZone(chainId, ICQCallbackID_TradeRewardBalance,
-		"Query response - Withdrawal Reward Balance: %v %s", tradeRewardBalanceAmount, callbackData.RewardDenomOnTradeZone))
+		"Query response - Withdrawal Reward Balance: %v %s", tradeRewardBalanceAmount, tradeRoute.RewardDenomOnTradeZone))
 
 
 	// Trade all found reward tokens in the trade ICA to the output denom of their trade pool
-	k.TradeRewardTokens(ctx, tradeRewardBalanceAmount, callbackData.RewardDenomOnTradeZone, hostZone, tradeZone)
-	k.Logger(ctx).Info(utils.LogICQCallbackWithHostZone(callbackData.TradeZoneId, ICQCallbackID_TradeRewardBalance, 
-		"Swapping discovered reward tokens %v %s on tradeZone %s", 
-		tradeRewardBalanceAmount, callbackData.RewardDenomOnTradeZone, tradeZone.ChainId))
+	k.TradeRewardTokens(ctx, tradeRewardBalanceAmount, tradeRoute)
+	k.Logger(ctx).Info(utils.LogICQCallbackWithHostZone(chainId, ICQCallbackID_TradeRewardBalance, 
+		"Swapping discovered reward tokens %v %s for %s", 
+		tradeRewardBalanceAmount, tradeRoute.RewardDenomOnTradeZone, tradeRoute.TargetDenomOnTradeZone))
 
 	return nil
 }

@@ -80,20 +80,3 @@ message DelegatorSharesQueryCallback {
     (gogoproto.nullable) = false
   ];
 }
-
-message WithdrawalRewardBalanceQueryCallback {
-  string reward_denom_on_host_zone = 1;
-  string host_zone_id = 2;
-}
-
-message TradeRewardBalanceQueryCallback {
-  string reward_denom_on_trade_zone = 1;
-  string host_zone_id = 2;
-  string trade_zone_id = 3;
-}
-
-message TradeConvertedBalanceQueryCallback {
-  string converted_denom_on_trade_zone = 1;
-  string host_zone_id = 2;
-  string trade_zone_id = 3;  
-}

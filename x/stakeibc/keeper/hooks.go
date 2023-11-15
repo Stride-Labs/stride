@@ -80,6 +80,9 @@ func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochInfo epochstypes.EpochInf
 		if epochNumber%StrideEpochsPerDayEpoch == 0 {
 			k.RebalanceAllHostZones(ctx)
 		}
+
+		// Check all trade routes and auto-swap any reward tokens (revenue in a foreign denom) to host denom 
+		k.ConvertAllRewardTokens(ctx)
 	}
 	if epochInfo.Identifier == epochstypes.MINT_EPOCH {
 		k.AllocateHostZoneReward(ctx)
