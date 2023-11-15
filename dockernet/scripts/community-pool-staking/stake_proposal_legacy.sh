@@ -19,11 +19,11 @@ echo ">>> Submitting proposal to spend community pool tokens..."
 $GAIA_MAIN_CMD tx gov submit-proposal community-pool-spend $proposal_file --from ${GAIA_VAL_PREFIX}1 -y | TRIM_TX
 sleep 5
 
-echo ">>> Voting on proposal..."
+echo -e "\n>>> Voting on proposal..."
 proposal_id=$($GAIA_MAIN_CMD q gov proposals | grep 'id:' | tail -1 | awk '{printf $2}' | tr -d '"')
 $GAIA_MAIN_CMD tx gov vote $proposal_id yes --from ${GAIA_VAL_PREFIX}1 -y | TRIM_TX
 
-echo ">>> Waiting for proposal to pass..."
+echo -e "\n>>> Waiting for proposal to pass..."
 printf "\nPROPOSAL STATUS\n"
 while true; do
     status=$($GAIA_MAIN_CMD query gov proposal $proposal_id | grep "status" | awk '{printf $2}')
