@@ -18,8 +18,6 @@ func (k Keeper) GetTradeRouteKey(ctx sdk.Context, tradeRoute types.TradeRoute) (
 	return k.GetTradeRouteKeyFromDenoms(ctx, routeStartDenom, routeEndDenom)
 }
 
-
-
 // SetTradeRoute set a specific tradeRoute in the store
 func (k Keeper) SetTradeRoute(ctx sdk.Context, tradeRoute types.TradeRoute) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefix(types.TradeRouteKey))
@@ -37,17 +35,17 @@ func (k Keeper) GetTradeRoute(ctx sdk.Context, startDenom string, endDenom strin
 	}
 	k.cdc.MustUnmarshal(b, &val)
 	return val, true
-} 
+}
 
 // RemoveTradeRoute removes a tradeRoute from the store
 func (k Keeper) RemoveTradeRoute(ctx sdk.Context, startDenom string, endDenom string) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefix(types.TradeRouteKey))
-	storeKey := k.GetTradeRouteKeyFromDenoms(ctx, startDenom, endDenom)	
+	storeKey := k.GetTradeRouteKeyFromDenoms(ctx, startDenom, endDenom)
 	store.Delete(storeKey)
 }
 
 // GetAllTradeRoute returns all tradeRoutes
-func (k Keeper) GetAllTradeRoute(ctx sdk.Context) (list []types.TradeRoute) {
+func (k Keeper) GetAllTradeRoutes(ctx sdk.Context) (list []types.TradeRoute) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefix(types.TradeRouteKey))
 	iterator := sdk.KVStorePrefixIterator(store, []byte{})
 
@@ -59,22 +57,5 @@ func (k Keeper) GetAllTradeRoute(ctx sdk.Context) (list []types.TradeRoute) {
 		list = append(list, val)
 	}
 
-	return
-}
-
-// GetAllTradeRouteForHostZone uses that targetDenomOnHostZone should be the hostDenom for the chain
-func (k Keeper) GetAllTradeRouteForHostZone(ctx sdk.Context, chainId string) (list []types.TradeRoute) {
-	tradeRoutes := k.GetAllTradeRoute(ctx)
-	for _, tradeRoute := range tradeRoutes {
-		hostZone, err := k.GetHostZoneFromHostDenom(ctx, tradeRoute.TargetDenomOnHostZone)
-		if err == nil && hostZone.ChainId == chainId {
-			// Marshal and unmarshal to "deep copy" since subfields contain pointers
-			var copied types.TradeRoute
-			value := k.cdc.MustMarshal(&tradeRoute)
-			k.cdc.MustUnmarshal(value, &copied)
-			list = append(list, copied)
-		}
-		// If err != nil then hostZone wasn't found, return empty list
-	}
 	return
 }
