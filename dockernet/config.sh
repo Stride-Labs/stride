@@ -17,9 +17,8 @@ KEYS_LOGS=$DOCKERNET_HOME/logs/keys.log
 
 # List of hosts enabled 
 # HOST_CHAINS have liquid staking support, ACCESSORY_CHAINS do not
-# TODO [DYDX]: Revert to main hosts
-HOST_CHAINS=(DYDX)
-ACCESSORY_CHAINS=(NOBLE OSMO) 
+HOST_CHAINS=()
+ACCESSORY_CHAINS=() 
 
 # If no host zones are specified above:
 #  `start-docker` defaults to just GAIA if HOST_CHAINS is empty
