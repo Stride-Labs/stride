@@ -53,4 +53,7 @@ const (
 
 	// EpochTrackerKeyPrefix is the prefix to retrieve all EpochTracker
 	EpochTrackerKeyPrefix = "EpochTracker/value/"
+
+	// TradeRoute keys prefix to retrieve all TradeZones
+	TradeRouteKey = "TradeRoute-value-"
 )

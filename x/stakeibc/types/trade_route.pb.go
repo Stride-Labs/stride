@@ -23,6 +23,182 @@ var _ = math.Inf
 // proto package needs to be updated.
 const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 
+type TradeHop struct {
+	FromTransferChannelId string      `protobuf:"bytes,1,opt,name=from_transfer_channel_id,json=fromTransferChannelId,proto3" json:"from_transfer_channel_id,omitempty"`
+	ToTransferChannelId   string      `protobuf:"bytes,2,opt,name=to_transfer_channel_id,json=toTransferChannelId,proto3" json:"to_transfer_channel_id,omitempty"`
+	FromAccount           *ICAAccount `protobuf:"bytes,3,opt,name=from_account,json=fromAccount,proto3" json:"from_account,omitempty"`
+	ToAccount             *ICAAccount `protobuf:"bytes,4,opt,name=to_account,json=toAccount,proto3" json:"to_account,omitempty"`
+}
+
+func (m *TradeHop) Reset()         { *m = TradeHop{} }
+func (m *TradeHop) String() string { return proto.CompactTextString(m) }
+func (*TradeHop) ProtoMessage()    {}
+func (*TradeHop) Descriptor() ([]byte, []int) {
+	return fileDescriptor_c252b142ecf88017, []int{0}
+}
+func (m *TradeHop) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *TradeHop) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_TradeHop.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *TradeHop) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_TradeHop.Merge(m, src)
+}
+func (m *TradeHop) XXX_Size() int {
+	return m.Size()
+}
+func (m *TradeHop) XXX_DiscardUnknown() {
+	xxx_messageInfo_TradeHop.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_TradeHop proto.InternalMessageInfo
+
+func (m *TradeHop) GetFromTransferChannelId() string {
+	if m != nil {
+		return m.FromTransferChannelId
+	}
+	return ""
+}
+
+func (m *TradeHop) GetToTransferChannelId() string {
+	if m != nil {
+		return m.ToTransferChannelId
+	}
+	return ""
+}
+
+func (m *TradeHop) GetFromAccount() *ICAAccount {
+	if m != nil {
+		return m.FromAccount
+	}
+	return nil
+}
+
+func (m *TradeHop) GetToAccount() *ICAAccount {
+	if m != nil {
+		return m.ToAccount
+	}
+	return nil
+}
+
+type TradeRoute struct {
+	RewardDenomOnHostZone   string    `protobuf:"bytes,1,opt,name=reward_denom_on_host_zone,json=rewardDenomOnHostZone,proto3" json:"reward_denom_on_host_zone,omitempty"`
+	RewardDenomOnRewardZone string    `protobuf:"bytes,2,opt,name=reward_denom_on_reward_zone,json=rewardDenomOnRewardZone,proto3" json:"reward_denom_on_reward_zone,omitempty"`
+	RewardDenomOnTradeZone  string    `protobuf:"bytes,3,opt,name=reward_denom_on_trade_zone,json=rewardDenomOnTradeZone,proto3" json:"reward_denom_on_trade_zone,omitempty"`
+	TargetDenomOnTradeZone  string    `protobuf:"bytes,4,opt,name=target_denom_on_trade_zone,json=targetDenomOnTradeZone,proto3" json:"target_denom_on_trade_zone,omitempty"`
+	TargetDenomOnHostZone   string    `protobuf:"bytes,5,opt,name=target_denom_on_host_zone,json=targetDenomOnHostZone,proto3" json:"target_denom_on_host_zone,omitempty"`
+	HostToRewardHop         *TradeHop `protobuf:"bytes,6,opt,name=host_to_reward_hop,json=hostToRewardHop,proto3" json:"host_to_reward_hop,omitempty"`
+	RewardToTradeHop        *TradeHop `protobuf:"bytes,7,opt,name=reward_to_trade_hop,json=rewardToTradeHop,proto3" json:"reward_to_trade_hop,omitempty"`
+	TradeToHostHop          *TradeHop `protobuf:"bytes,8,opt,name=trade_to_host_hop,json=tradeToHostHop,proto3" json:"trade_to_host_hop,omitempty"`
+	PoolId                  uint64    `protobuf:"varint,9,opt,name=pool_id,json=poolId,proto3" json:"pool_id,omitempty"`
+}
+
+func (m *TradeRoute) Reset()         { *m = TradeRoute{} }
+func (m *TradeRoute) String() string { return proto.CompactTextString(m) }
+func (*TradeRoute) ProtoMessage()    {}
+func (*TradeRoute) Descriptor() ([]byte, []int) {
+	return fileDescriptor_c252b142ecf88017, []int{1}
+}
+func (m *TradeRoute) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *TradeRoute) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_TradeRoute.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *TradeRoute) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_TradeRoute.Merge(m, src)
+}
+func (m *TradeRoute) XXX_Size() int {
+	return m.Size()
+}
+func (m *TradeRoute) XXX_DiscardUnknown() {
+	xxx_messageInfo_TradeRoute.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_TradeRoute proto.InternalMessageInfo
+
+func (m *TradeRoute) GetRewardDenomOnHostZone() string {
+	if m != nil {
+		return m.RewardDenomOnHostZone
+	}
+	return ""
+}
+
+func (m *TradeRoute) GetRewardDenomOnRewardZone() string {
+	if m != nil {
+		return m.RewardDenomOnRewardZone
+	}
+	return ""
+}
+
+func (m *TradeRoute) GetRewardDenomOnTradeZone() string {
+	if m != nil {
+		return m.RewardDenomOnTradeZone
+	}
+	return ""
+}
+
+func (m *TradeRoute) GetTargetDenomOnTradeZone() string {
+	if m != nil {
+		return m.TargetDenomOnTradeZone
+	}
+	return ""
+}
+
+func (m *TradeRoute) GetTargetDenomOnHostZone() string {
+	if m != nil {
+		return m.TargetDenomOnHostZone
+	}
+	return ""
+}
+
+func (m *TradeRoute) GetHostToRewardHop() *TradeHop {
+	if m != nil {
+		return m.HostToRewardHop
+	}
+	return nil
+}
+
+func (m *TradeRoute) GetRewardToTradeHop() *TradeHop {
+	if m != nil {
+		return m.RewardToTradeHop
+	}
+	return nil
+}
+
+func (m *TradeRoute) GetTradeToHostHop() *TradeHop {
+	if m != nil {
+		return m.TradeToHostHop
+	}
+	return nil
+}
+
+func (m *TradeRoute) GetPoolId() uint64 {
+	if m != nil {
+		return m.PoolId
+	}
+	return 0
+}
+
 // TradeRoutes defines all info needed for token transfers and trade operations
 type TradeRoutes struct {
 	TransferRoutes []TransferRoute `protobuf:"bytes,1,rep,name=transfer_routes,json=transferRoutes,proto3" json:"transfer_routes"`
@@ -33,7 +209,7 @@ func (m *TradeRoutes) Reset()         { *m = TradeRoutes{} }
 func (m *TradeRoutes) String() string { return proto.CompactTextString(m) }
 func (*TradeRoutes) ProtoMessage()    {}
 func (*TradeRoutes) Descriptor() ([]byte, []int) {
-	return fileDescriptor_c252b142ecf88017, []int{0}
+	return fileDescriptor_c252b142ecf88017, []int{2}
 }
 func (m *TradeRoutes) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -105,7 +281,7 @@ func (m *TransferRoute) Reset()         { *m = TransferRoute{} }
 func (m *TransferRoute) String() string { return proto.CompactTextString(m) }
 func (*TransferRoute) ProtoMessage()    {}
 func (*TransferRoute) Descriptor() ([]byte, []int) {
-	return fileDescriptor_c252b142ecf88017, []int{1}
+	return fileDescriptor_c252b142ecf88017, []int{3}
 }
 func (m *TransferRoute) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -223,7 +399,7 @@ func (m *TradePool) Reset()         { *m = TradePool{} }
 func (m *TradePool) String() string { return proto.CompactTextString(m) }
 func (*TradePool) ProtoMessage()    {}
 func (*TradePool) Descriptor() ([]byte, []int) {
-	return fileDescriptor_c252b142ecf88017, []int{2}
+	return fileDescriptor_c252b142ecf88017, []int{4}
 }
 func (m *TradePool) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -281,6 +457,8 @@ func (m *TradePool) GetPoolId() uint64 {
 }
 
 func init() {
+	proto.RegisterType((*TradeHop)(nil), "stride.stakeibc.TradeHop")
+	proto.RegisterType((*TradeRoute)(nil), "stride.stakeibc.TradeRoute")
 	proto.RegisterType((*TradeRoutes)(nil), "stride.stakeibc.TradeRoutes")
 	proto.RegisterType((*TransferRoute)(nil), "stride.stakeibc.TransferRoute")
 	proto.RegisterType((*TradePool)(nil), "stride.stakeibc.TradePool")
@@ -289,39 +467,217 @@ func init() {
 func init() { proto.RegisterFile("stride/stakeibc/trade_route.proto", fileDescriptor_c252b142ecf88017) }
 
 var fileDescriptor_c252b142ecf88017 = []byte{
-	// 506 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x6c, 0x93, 0xc1, 0x6e, 0xd3, 0x4c,
-	0x14, 0x85, 0xe3, 0x3f, 0xf9, 0x53, 0x72, 0xdd, 0x34, 0x62, 0x08, 0xc4, 0xea, 0xc2, 0x69, 0x23,
-	0x84, 0xba, 0xc1, 0x86, 0x52, 0x75, 0xdf, 0x96, 0x4d, 0xa4, 0x22, 0x55, 0xa1, 0x2b, 0x36, 0xd1,
-	0xc4, 0x33, 0x8d, 0x47, 0x24, 0x1e, 0x6b, 0x66, 0x8c, 0xe0, 0x1d, 0x58, 0xf0, 0x06, 0xbc, 0x4e,
-	0x97, 0x5d, 0xb2, 0x42, 0x28, 0x79, 0x05, 0x1e, 0x00, 0x79, 0xae, 0x6d, 0xec, 0x88, 0x5d, 0x72,
-	0xee, 0x77, 0xee, 0xb1, 0xe6, 0xcc, 0xc0, 0xb1, 0x36, 0x4a, 0x30, 0x1e, 0x6a, 0x43, 0x3f, 0x72,
-	0xb1, 0x88, 0x42, 0xa3, 0x28, 0xe3, 0x73, 0x25, 0x33, 0xc3, 0x83, 0x54, 0x49, 0x23, 0xc9, 0x00,
-	0x91, 0xa0, 0x44, 0x0e, 0x87, 0x4b, 0xb9, 0x94, 0x76, 0x16, 0xe6, 0xbf, 0x10, 0x9b, 0x7c, 0x77,
-	0xc0, 0xbd, 0xcd, 0xcd, 0xb3, 0xdc, 0xab, 0xc9, 0x3b, 0x18, 0x18, 0x45, 0x13, 0x7d, 0xc7, 0x15,
-	0xae, 0xd3, 0x9e, 0x73, 0xd4, 0x3e, 0x71, 0x4f, 0xfd, 0x60, 0x67, 0x61, 0x70, 0x5b, 0x70, 0xd6,
-	0x79, 0xd9, 0xb9, 0xff, 0x39, 0x6e, 0xcd, 0x0e, 0x4c, 0x5d, 0xd4, 0xe4, 0x02, 0x5c, 0xfc, 0xb4,
-	0x54, 0xca, 0x95, 0xf6, 0xda, 0x76, 0xd5, 0xe1, 0xbf, 0x56, 0x31, 0x7e, 0x23, 0xe5, 0xaa, 0x58,
-	0x03, 0xa6, 0x14, 0xf4, 0xe4, 0x77, 0x1b, 0xfa, 0x8d, 0x28, 0x32, 0x06, 0x57, 0x1b, 0xaa, 0xcc,
-	0x9c, 0xf1, 0x44, 0xae, 0x3d, 0xe7, 0xc8, 0x39, 0xe9, 0xcd, 0xc0, 0x4a, 0x6f, 0x73, 0x85, 0x1c,
-	0xc3, 0xfe, 0x5a, 0x30, 0xb6, 0xe2, 0x05, 0xf1, 0x9f, 0x25, 0x5c, 0xd4, 0x2a, 0xe4, 0x4e, 0x24,
-	0x42, 0xc7, 0x05, 0xd2, 0x46, 0x04, 0x35, 0x44, 0x9e, 0xc3, 0x01, 0xc6, 0x44, 0x31, 0x15, 0xc9,
-	0x5c, 0x30, 0xaf, 0x63, 0xa1, 0x7d, 0xab, 0x5e, 0xe5, 0xe2, 0x94, 0x91, 0x17, 0x30, 0x28, 0xb2,
-	0x2a, 0xec, 0x7f, 0x8b, 0xf5, 0x51, 0xae, 0x71, 0x45, 0x60, 0xc5, 0x75, 0x91, 0x43, 0xb9, 0xe4,
-	0x02, 0x78, 0x82, 0xa9, 0x55, 0x0d, 0xa9, 0x54, 0xc6, 0xdb, 0xb3, 0xec, 0x63, 0x3b, 0x2a, 0x4f,
-	0xe3, 0x46, 0x2a, 0x43, 0xce, 0xe0, 0xd9, 0x0e, 0x1f, 0xc5, 0x34, 0x49, 0xf8, 0xca, 0x7b, 0x64,
-	0x2d, 0xc3, 0x86, 0xe5, 0x0a, 0x67, 0xe4, 0x15, 0x0c, 0x8b, 0xaf, 0x69, 0xc6, 0xf4, 0xac, 0x87,
-	0xe0, 0xac, 0x91, 0x73, 0x0e, 0xa3, 0x5d, 0x47, 0x19, 0x04, 0xd6, 0xf4, 0xb4, 0x69, 0x2a, 0x93,
-	0xce, 0x61, 0x94, 0x52, 0xad, 0x4d, 0xac, 0x64, 0xb6, 0x8c, 0xe7, 0x22, 0xa2, 0x73, 0xca, 0x98,
-	0xe2, 0x5a, 0x7b, 0x2e, 0xfa, 0x6a, 0xe3, 0x69, 0x44, 0x2f, 0x70, 0x38, 0xf9, 0xea, 0x40, 0xaf,
-	0xba, 0x16, 0x64, 0x02, 0xfd, 0x58, 0xea, 0x5a, 0x15, 0x58, 0xba, 0x9b, 0x8b, 0xe5, 0xc9, 0x8d,
-	0xc1, 0x15, 0x49, 0x9a, 0x99, 0x46, 0xe9, 0x60, 0xa5, 0xaa, 0x73, 0x99, 0x99, 0xbf, 0x44, 0xd1,
-	0x39, 0x6a, 0x88, 0x8c, 0x60, 0x2f, 0xbf, 0xa9, 0x65, 0xd9, 0x9d, 0x59, 0x37, 0xff, 0x3b, 0x65,
-	0x97, 0xd7, 0xf7, 0x1b, 0xdf, 0x79, 0xd8, 0xf8, 0xce, 0xaf, 0x8d, 0xef, 0x7c, 0xdb, 0xfa, 0xad,
-	0x87, 0xad, 0xdf, 0xfa, 0xb1, 0xf5, 0x5b, 0x1f, 0x4e, 0x97, 0xc2, 0xc4, 0xd9, 0x22, 0x88, 0xe4,
-	0x3a, 0x7c, 0x6f, 0xef, 0xf5, 0xcb, 0x6b, 0xba, 0xd0, 0x61, 0xf1, 0x44, 0x3f, 0xbd, 0x3e, 0x0b,
-	0x3f, 0xd7, 0x1e, 0xea, 0x97, 0x94, 0xeb, 0x45, 0xd7, 0x3e, 0xbe, 0x37, 0x7f, 0x02, 0x00, 0x00,
-	0xff, 0xff, 0xdf, 0xf1, 0xb3, 0xc8, 0xc8, 0x03, 0x00, 0x00,
+	// 792 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x8c, 0x55, 0xcd, 0x6e, 0xdb, 0x46,
+	0x10, 0x16, 0x23, 0x55, 0x89, 0x86, 0x76, 0xd4, 0xac, 0x5d, 0x4b, 0x56, 0x00, 0x59, 0x11, 0x8a,
+	0x42, 0x97, 0x4a, 0xad, 0x13, 0xa4, 0x41, 0xd1, 0x43, 0x15, 0x1b, 0x85, 0x05, 0xa4, 0x68, 0xc0,
+	0xea, 0x94, 0x0b, 0x41, 0x91, 0xb4, 0x48, 0xd4, 0xe2, 0x10, 0xdc, 0x55, 0xff, 0x4e, 0x7d, 0x80,
+	0x1e, 0xfa, 0x06, 0x3d, 0xf6, 0x55, 0x7c, 0xf4, 0xb1, 0xa7, 0xa2, 0xb0, 0x5f, 0xa1, 0x0f, 0x50,
+	0xec, 0xcc, 0x92, 0x12, 0x25, 0x01, 0xce, 0x8d, 0xfc, 0xe6, 0xfb, 0x66, 0x76, 0x66, 0x3e, 0x2e,
+	0xe1, 0x99, 0x54, 0x59, 0x1c, 0x84, 0x23, 0xa9, 0xbc, 0x1f, 0xc2, 0x78, 0xe6, 0x8f, 0x54, 0xe6,
+	0x05, 0xa1, 0x9b, 0xe1, 0x52, 0x85, 0xc3, 0x34, 0x43, 0x85, 0xa2, 0xc9, 0x94, 0x61, 0x4e, 0xe9,
+	0x1c, 0xce, 0x71, 0x8e, 0x14, 0x1b, 0xe9, 0x27, 0xa6, 0x75, 0xb6, 0x32, 0xc5, 0xbe, 0xe7, 0x7a,
+	0xbe, 0x8f, 0xcb, 0x44, 0x31, 0xa5, 0xff, 0xdb, 0x03, 0x78, 0x34, 0xd5, 0xf9, 0x2f, 0x30, 0x15,
+	0x5f, 0x40, 0xfb, 0x32, 0xc3, 0x85, 0xab, 0x32, 0x2f, 0x91, 0x97, 0x61, 0xe6, 0xfa, 0x91, 0x97,
+	0x24, 0xe1, 0x95, 0x1b, 0x07, 0x6d, 0xab, 0x67, 0x0d, 0x1a, 0xce, 0x47, 0x3a, 0x3e, 0x35, 0xe1,
+	0x33, 0x8e, 0x4e, 0x02, 0xf1, 0x1c, 0x8e, 0x14, 0xee, 0x94, 0x3d, 0x20, 0xd9, 0x81, 0xc2, 0x6d,
+	0xd1, 0x39, 0xec, 0x51, 0x35, 0x73, 0xa0, 0x76, 0xb5, 0x67, 0x0d, 0xec, 0xd3, 0xa7, 0xc3, 0x8d,
+	0xde, 0x86, 0x93, 0xb3, 0xf1, 0x98, 0x29, 0xaf, 0x6b, 0xd7, 0xff, 0x9c, 0x58, 0x8e, 0xad, 0x65,
+	0x06, 0x12, 0x5f, 0x03, 0x28, 0x2c, 0x72, 0xd4, 0xde, 0x37, 0x47, 0x43, 0xa1, 0x01, 0xfa, 0x7f,
+	0xd5, 0x00, 0x68, 0x04, 0x8e, 0x9e, 0xb0, 0x78, 0x05, 0xc7, 0x59, 0xf8, 0x93, 0x97, 0x05, 0x6e,
+	0x10, 0x26, 0xb8, 0x70, 0x31, 0x71, 0x23, 0x94, 0xca, 0xfd, 0x15, 0x93, 0x30, 0x9f, 0x02, 0x13,
+	0xce, 0x75, 0xfc, 0xbb, 0xe4, 0x02, 0xa5, 0x7a, 0x87, 0x49, 0x28, 0xbe, 0x82, 0xa7, 0x9b, 0x4a,
+	0xf3, 0x4e, 0x5a, 0x1e, 0x45, 0xab, 0xa4, 0x75, 0xe8, 0x85, 0xd4, 0x5f, 0x42, 0x67, 0x53, 0xcd,
+	0x8b, 0x27, 0x71, 0x95, 0xc4, 0x47, 0x25, 0x31, 0x1d, 0x3a, 0xd7, 0x2a, 0x2f, 0x9b, 0x87, 0x6a,
+	0xa7, 0xb6, 0xc6, 0x5a, 0x66, 0x6c, 0x69, 0x5f, 0xc1, 0xf1, 0xa6, 0x76, 0xd5, 0xef, 0x07, 0xdc,
+	0x6f, 0x49, 0x5a, 0xf4, 0xfb, 0x0d, 0x08, 0x62, 0x2a, 0xcc, 0xfb, 0x8c, 0x30, 0x6d, 0xd7, 0x69,
+	0x05, 0xc7, 0x5b, 0x2b, 0xc8, 0x5d, 0xe6, 0x34, 0xb5, 0x68, 0x8a, 0xdc, 0xba, 0xb6, 0xdd, 0x05,
+	0x1c, 0x18, 0x3d, 0x9b, 0x28, 0x08, 0x29, 0xd1, 0xc3, 0xfb, 0x12, 0x7d, 0xc8, 0xaa, 0x29, 0x16,
+	0x06, 0x3e, 0x87, 0x27, 0xac, 0x57, 0xc8, 0x4d, 0xe8, 0x3c, 0x8f, 0xee, 0xcb, 0xf3, 0x98, 0x34,
+	0x53, 0xd4, 0x8d, 0xe9, 0x2c, 0x2d, 0x78, 0x98, 0x22, 0x92, 0x7d, 0x1b, 0x3d, 0x6b, 0x50, 0x73,
+	0xea, 0xfa, 0x75, 0x12, 0xf4, 0xff, 0xb4, 0xc0, 0x5e, 0x39, 0x45, 0x8a, 0x6f, 0xa1, 0x59, 0x78,
+	0x9e, 0x3e, 0x4f, 0xd9, 0xb6, 0x7a, 0xd5, 0x81, 0x7d, 0xda, 0xdd, 0x55, 0x8c, 0x78, 0xa4, 0x24,
+	0x0f, 0x56, 0xa8, 0xee, 0x0a, 0x94, 0x62, 0x0c, 0x36, 0x9f, 0x5e, 0x97, 0x93, 0xed, 0x2a, 0xa5,
+	0xea, 0xec, 0x3e, 0xf7, 0x5b, 0xc4, 0x2b, 0x93, 0x06, 0x54, 0x0e, 0xc8, 0xfe, 0x7f, 0x55, 0xd8,
+	0x2f, 0x95, 0x12, 0x27, 0x60, 0x4b, 0xe5, 0x65, 0x66, 0xbb, 0xc6, 0xc0, 0x40, 0x10, 0xed, 0x53,
+	0x3c, 0x83, 0xbd, 0x45, 0x1c, 0x04, 0x57, 0xa1, 0x61, 0xb0, 0x4d, 0x6d, 0xc6, 0x0a, 0xca, 0x65,
+	0x9c, 0xc4, 0x32, 0x32, 0x14, 0x36, 0xa3, 0xcd, 0x18, 0x53, 0x3e, 0x86, 0xc7, 0x5c, 0xc6, 0x8f,
+	0xbc, 0x38, 0xd1, 0xa3, 0x63, 0xd7, 0xed, 0x11, 0x7a, 0xa6, 0xc1, 0x49, 0x20, 0x3e, 0x81, 0xa6,
+	0xa9, 0x55, 0xd0, 0xd8, 0x61, 0xfb, 0x0c, 0xaf, 0xf1, 0x4c, 0xc1, 0x82, 0x57, 0x67, 0x1e, 0xc3,
+	0x39, 0x6f, 0x08, 0x07, 0x5c, 0xb5, 0x58, 0x43, 0x8a, 0x99, 0x22, 0xe7, 0x34, 0x9c, 0x27, 0x14,
+	0xca, 0xa7, 0xf1, 0x16, 0x33, 0x25, 0x5e, 0xc0, 0xd1, 0x06, 0xdf, 0x5c, 0x55, 0x64, 0x92, 0x86,
+	0x73, 0x58, 0x92, 0x98, 0xab, 0x4a, 0x7c, 0x06, 0x87, 0xe6, 0x34, 0xe5, 0x32, 0x0d, 0xd2, 0x08,
+	0x8e, 0x95, 0xea, 0xbc, 0x84, 0xd6, 0xa6, 0x22, 0x2f, 0x04, 0xe6, 0x1e, 0x2d, 0x89, 0xf2, 0x4a,
+	0x2f, 0xa1, 0x95, 0x7a, 0x52, 0xaa, 0x28, 0xc3, 0xe5, 0x3c, 0x72, 0xe9, 0xba, 0x0e, 0x82, 0x2c,
+	0x94, 0xb2, 0x6d, 0xb3, 0x6e, 0x2d, 0x3c, 0xf1, 0xbd, 0x31, 0x07, 0xfb, 0xbf, 0x5b, 0xd0, 0x28,
+	0x6c, 0x21, 0xfa, 0xb0, 0x4f, 0xe6, 0x2f, 0x66, 0xc7, 0x4b, 0xb7, 0x35, 0x98, 0x4f, 0xee, 0x04,
+	0xec, 0x38, 0x49, 0x97, 0xaa, 0xb4, 0x74, 0x20, 0xa8, 0xd8, 0x39, 0x2e, 0xd5, 0x8a, 0x61, 0x76,
+	0xce, 0x18, 0x53, 0xd6, 0xbe, 0x93, 0xda, 0xfa, 0x77, 0xf2, 0xfa, 0xcd, 0xf5, 0x6d, 0xd7, 0xba,
+	0xb9, 0xed, 0x5a, 0xff, 0xde, 0x76, 0xad, 0x3f, 0xee, 0xba, 0x95, 0x9b, 0xbb, 0x6e, 0xe5, 0xef,
+	0xbb, 0x6e, 0xe5, 0xdd, 0xe9, 0x3c, 0x56, 0xd1, 0x72, 0x36, 0xf4, 0x71, 0x31, 0xfa, 0x9e, 0x7c,
+	0xfd, 0xe9, 0x1b, 0x6f, 0x26, 0x47, 0xe6, 0x47, 0xf5, 0xe3, 0xe7, 0x2f, 0x46, 0x3f, 0xaf, 0xfd,
+	0xf8, 0x7e, 0x49, 0x43, 0x39, 0xab, 0xd3, 0x9f, 0xea, 0xf9, 0xff, 0x01, 0x00, 0x00, 0xff, 0xff,
+	0x88, 0xa4, 0xda, 0xe8, 0x18, 0x07, 0x00, 0x00,
+}
+
+func (m *TradeHop) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *TradeHop) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *TradeHop) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if m.ToAccount != nil {
+		{
+			size, err := m.ToAccount.MarshalToSizedBuffer(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = encodeVarintTradeRoute(dAtA, i, uint64(size))
+		}
+		i--
+		dAtA[i] = 0x22
+	}
+	if m.FromAccount != nil {
+		{
+			size, err := m.FromAccount.MarshalToSizedBuffer(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = encodeVarintTradeRoute(dAtA, i, uint64(size))
+		}
+		i--
+		dAtA[i] = 0x1a
+	}
+	if len(m.ToTransferChannelId) > 0 {
+		i -= len(m.ToTransferChannelId)
+		copy(dAtA[i:], m.ToTransferChannelId)
+		i = encodeVarintTradeRoute(dAtA, i, uint64(len(m.ToTransferChannelId)))
+		i--
+		dAtA[i] = 0x12
+	}
+	if len(m.FromTransferChannelId) > 0 {
+		i -= len(m.FromTransferChannelId)
+		copy(dAtA[i:], m.FromTransferChannelId)
+		i = encodeVarintTradeRoute(dAtA, i, uint64(len(m.FromTransferChannelId)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *TradeRoute) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *TradeRoute) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *TradeRoute) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if m.PoolId != 0 {
+		i = encodeVarintTradeRoute(dAtA, i, uint64(m.PoolId))
+		i--
+		dAtA[i] = 0x48
+	}
+	if m.TradeToHostHop != nil {
+		{
+			size, err := m.TradeToHostHop.MarshalToSizedBuffer(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = encodeVarintTradeRoute(dAtA, i, uint64(size))
+		}
+		i--
+		dAtA[i] = 0x42
+	}
+	if m.RewardToTradeHop != nil {
+		{
+			size, err := m.RewardToTradeHop.MarshalToSizedBuffer(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = encodeVarintTradeRoute(dAtA, i, uint64(size))
+		}
+		i--
+		dAtA[i] = 0x3a
+	}
+	if m.HostToRewardHop != nil {
+		{
+			size, err := m.HostToRewardHop.MarshalToSizedBuffer(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = encodeVarintTradeRoute(dAtA, i, uint64(size))
+		}
+		i--
+		dAtA[i] = 0x32
+	}
+	if len(m.TargetDenomOnHostZone) > 0 {
+		i -= len(m.TargetDenomOnHostZone)
+		copy(dAtA[i:], m.TargetDenomOnHostZone)
+		i = encodeVarintTradeRoute(dAtA, i, uint64(len(m.TargetDenomOnHostZone)))
+		i--
+		dAtA[i] = 0x2a
+	}
+	if len(m.TargetDenomOnTradeZone) > 0 {
+		i -= len(m.TargetDenomOnTradeZone)
+		copy(dAtA[i:], m.TargetDenomOnTradeZone)
+		i = encodeVarintTradeRoute(dAtA, i, uint64(len(m.TargetDenomOnTradeZone)))
+		i--
+		dAtA[i] = 0x22
+	}
+	if len(m.RewardDenomOnTradeZone) > 0 {
+		i -= len(m.RewardDenomOnTradeZone)
+		copy(dAtA[i:], m.RewardDenomOnTradeZone)
+		i = encodeVarintTradeRoute(dAtA, i, uint64(len(m.RewardDenomOnTradeZone)))
+		i--
+		dAtA[i] = 0x1a
+	}
+	if len(m.RewardDenomOnRewardZone) > 0 {
+		i -= len(m.RewardDenomOnRewardZone)
+		copy(dAtA[i:], m.RewardDenomOnRewardZone)
+		i = encodeVarintTradeRoute(dAtA, i, uint64(len(m.RewardDenomOnRewardZone)))
+		i--
+		dAtA[i] = 0x12
+	}
+	if len(m.RewardDenomOnHostZone) > 0 {
+		i -= len(m.RewardDenomOnHostZone)
+		copy(dAtA[i:], m.RewardDenomOnHostZone)
+		i = encodeVarintTradeRoute(dAtA, i, uint64(len(m.RewardDenomOnHostZone)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
 }
 
 func (m *TradeRoutes) Marshal() (dAtA []byte, err error) {
@@ -535,6 +891,75 @@ func encodeVarintTradeRoute(dAtA []byte, offset int, v uint64) int {
 	dAtA[offset] = uint8(v)
 	return base
 }
+func (m *TradeHop) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.FromTransferChannelId)
+	if l > 0 {
+		n += 1 + l + sovTradeRoute(uint64(l))
+	}
+	l = len(m.ToTransferChannelId)
+	if l > 0 {
+		n += 1 + l + sovTradeRoute(uint64(l))
+	}
+	if m.FromAccount != nil {
+		l = m.FromAccount.Size()
+		n += 1 + l + sovTradeRoute(uint64(l))
+	}
+	if m.ToAccount != nil {
+		l = m.ToAccount.Size()
+		n += 1 + l + sovTradeRoute(uint64(l))
+	}
+	return n
+}
+
+func (m *TradeRoute) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.RewardDenomOnHostZone)
+	if l > 0 {
+		n += 1 + l + sovTradeRoute(uint64(l))
+	}
+	l = len(m.RewardDenomOnRewardZone)
+	if l > 0 {
+		n += 1 + l + sovTradeRoute(uint64(l))
+	}
+	l = len(m.RewardDenomOnTradeZone)
+	if l > 0 {
+		n += 1 + l + sovTradeRoute(uint64(l))
+	}
+	l = len(m.TargetDenomOnTradeZone)
+	if l > 0 {
+		n += 1 + l + sovTradeRoute(uint64(l))
+	}
+	l = len(m.TargetDenomOnHostZone)
+	if l > 0 {
+		n += 1 + l + sovTradeRoute(uint64(l))
+	}
+	if m.HostToRewardHop != nil {
+		l = m.HostToRewardHop.Size()
+		n += 1 + l + sovTradeRoute(uint64(l))
+	}
+	if m.RewardToTradeHop != nil {
+		l = m.RewardToTradeHop.Size()
+		n += 1 + l + sovTradeRoute(uint64(l))
+	}
+	if m.TradeToHostHop != nil {
+		l = m.TradeToHostHop.Size()
+		n += 1 + l + sovTradeRoute(uint64(l))
+	}
+	if m.PoolId != 0 {
+		n += 1 + sovTradeRoute(uint64(m.PoolId))
+	}
+	return n
+}
+
 func (m *TradeRoutes) Size() (n int) {
 	if m == nil {
 		return 0
@@ -638,6 +1063,529 @@ func sovTradeRoute(x uint64) (n int) {
 }
 func sozTradeRoute(x uint64) (n int) {
 	return sovTradeRoute(uint64((x << 1) ^ uint64((int64(x) >> 63))))
+}
+func (m *TradeHop) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowTradeRoute
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: TradeHop: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: TradeHop: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field FromTransferChannelId", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTradeRoute
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTradeRoute
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTradeRoute
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.FromTransferChannelId = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field ToTransferChannelId", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTradeRoute
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTradeRoute
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTradeRoute
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.ToTransferChannelId = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 3:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field FromAccount", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTradeRoute
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthTradeRoute
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthTradeRoute
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.FromAccount == nil {
+				m.FromAccount = &ICAAccount{}
+			}
+			if err := m.FromAccount.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 4:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field ToAccount", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTradeRoute
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthTradeRoute
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthTradeRoute
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.ToAccount == nil {
+				m.ToAccount = &ICAAccount{}
+			}
+			if err := m.ToAccount.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipTradeRoute(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthTradeRoute
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *TradeRoute) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowTradeRoute
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: TradeRoute: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: TradeRoute: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field RewardDenomOnHostZone", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTradeRoute
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTradeRoute
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTradeRoute
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.RewardDenomOnHostZone = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field RewardDenomOnRewardZone", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTradeRoute
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTradeRoute
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTradeRoute
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.RewardDenomOnRewardZone = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 3:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field RewardDenomOnTradeZone", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTradeRoute
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTradeRoute
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTradeRoute
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.RewardDenomOnTradeZone = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 4:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field TargetDenomOnTradeZone", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTradeRoute
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTradeRoute
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTradeRoute
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.TargetDenomOnTradeZone = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 5:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field TargetDenomOnHostZone", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTradeRoute
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTradeRoute
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTradeRoute
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.TargetDenomOnHostZone = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 6:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field HostToRewardHop", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTradeRoute
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthTradeRoute
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthTradeRoute
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.HostToRewardHop == nil {
+				m.HostToRewardHop = &TradeHop{}
+			}
+			if err := m.HostToRewardHop.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 7:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field RewardToTradeHop", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTradeRoute
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthTradeRoute
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthTradeRoute
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.RewardToTradeHop == nil {
+				m.RewardToTradeHop = &TradeHop{}
+			}
+			if err := m.RewardToTradeHop.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 8:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field TradeToHostHop", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTradeRoute
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthTradeRoute
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthTradeRoute
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.TradeToHostHop == nil {
+				m.TradeToHostHop = &TradeHop{}
+			}
+			if err := m.TradeToHostHop.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 9:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field PoolId", wireType)
+			}
+			m.PoolId = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTradeRoute
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.PoolId |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		default:
+			iNdEx = preIndex
+			skippy, err := skipTradeRoute(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthTradeRoute
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
 }
 func (m *TradeRoutes) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)

@@ -18,8 +18,7 @@ import (
 	epochstypes "github.com/Stride-Labs/stride/v14/x/epochs/types"
 	icqtypes "github.com/Stride-Labs/stride/v14/x/interchainquery/types"
 	"github.com/Stride-Labs/stride/v14/x/stakeibc/types"
-
-	osmosistypes "github.com/osmosis-labs/osmosis/x/gamm/types"
+	//osmosistypes "github.com/osmosis-labs/osmosis/x/gamm/types"
 )
 
 // The goal of this code is to allow certain reward token types to be automatically traded into other types
@@ -234,7 +233,7 @@ func (k Keeper) TradeRewardTokens(ctx sdk.Context,
 					rewardDenomOnTradeZone string,
 					hostZone types.HostZone, 
 					tradeZone types.HostZone) error {
-	// Load the tradepool info if it exists
+	/*// Load the tradepool info if it exists
 	tradePool, poolErr := k.GetTradePool(ctx, rewardDenomOnTradeZone, hostZone.ChainId)
 	if poolErr != nil {
 		return poolErr
@@ -267,7 +266,7 @@ func (k Keeper) TradeRewardTokens(ctx sdk.Context,
 	_, err := k.SubmitTxsStrideEpoch(ctx, tradeZone.ConnectionId, msgs, types.ICAAccountType_TRADE, callbackId, callbackArgs)
 	if err != nil {
 		return errorsmod.Wrapf(types.ErrICATxFailed, "Failed to SubmitTxs, Messages: %v, err: %s", msgs, err.Error())
-	}
+	}*/
 
 	return nil
 }
