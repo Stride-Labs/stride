@@ -64,7 +64,14 @@ set_host_genesis() {
     jq '(.app_state.epochs.epochs[]? | select(.identifier=="week") ).duration = $epochLen' --arg epochLen $HOST_WEEK_EPOCH_DURATION $genesis_config > json.tmp && mv json.tmp $genesis_config
     jq '(.app_state.epochs.epochs[]? | select(.identifier=="mint") ).duration = $epochLen' --arg epochLen $HOST_MINT_EPOCH_DURATION $genesis_config > json.tmp && mv json.tmp $genesis_config
     jq '.app_state.staking.params.unbonding_time = $newVal' --arg newVal "$UNBONDING_TIME" $genesis_config > json.tmp && mv json.tmp $genesis_config
-    jq '.app_state.gov.voting_params.voting_period = $newVal' --arg newVal "$VOTING_PERIOD" $genesis_config > json.tmp && mv json.tmp $genesis_config
+    
+    # Shorten voting period (we need both of these to support both versions of the SDK)
+    if [[ "$(jq '.app_state.gov | has("voting_params")' $genesis_config)" == "true" ]]; then
+        jq '.app_state.gov.voting_params.voting_period = $newVal' --arg newVal "$VOTING_PERIOD" $genesis_config > json.tmp && mv json.tmp $genesis_config
+    fi
+    if [[ "$(jq '.app_state.gov | has("params")' $genesis_config)" == "true" ]]; then
+        jq '.app_state.gov.params.voting_period = $newVal' --arg newVal "$VOTING_PERIOD" $genesis_config > json.tmp && mv json.tmp $genesis_config
+    fi
 
     # Set the mint start time to the genesis time if the chain configures inflation at the block level (e.g. stars)
     # also reduce the number of initial annual provisions so the inflation rate is not too high
@@ -97,6 +104,15 @@ set_consumer_genesis() {
     # add consumer genesis
     $MAIN_CMD add-consumer-section $NUM_NODES
     jq '.app_state.ccvconsumer.params.unbonding_period = $newVal' --arg newVal "$UNBONDING_TIME" $genesis_config > json.tmp && mv json.tmp $genesis_config
+}
+
+add_relayer_account() {
+    relayer_acct="$1"
+    relayer_mnemonic="$2"
+
+    echo "$relayer_mnemonic" | $MAIN_CMD keys add $relayer_acct --recover --keyring-backend=test >> $KEYS_LOGS 2>&1
+    relayer_address=$($MAIN_CMD keys show $relayer_acct --keyring-backend test -a | tr -cd '[:alnum:]._-')
+    $MAIN_CMD add-genesis-account ${relayer_address} ${VAL_TOKENS}${DENOM}
 }
 
 MAIN_ID=1 # Node responsible for genesis and persistent_peers
@@ -213,10 +229,7 @@ if [ "$CHAIN" == "STRIDE" ]; then
         relayer_acct="${STRIDE_RELAYER_ACCTS[i]}"
         relayer_mnemonic="${STRIDE_RELAYER_MNEMONICS[i]}"
 
-        echo "$relayer_mnemonic" | $MAIN_CMD keys add $relayer_acct --recover --keyring-backend=test >> $KEYS_LOGS 2>&1
-        
-        relayer_address=$($MAIN_CMD keys show $relayer_acct --keyring-backend test -a)
-        $MAIN_CMD add-genesis-account ${relayer_address} ${VAL_TOKENS}${DENOM}
+        add_relayer_account "$relayer_acct" "$relayer_mnemonic"
     done
 else 
     # add a revenue account
@@ -224,24 +237,26 @@ else
     REV_ACCT=${!REV_ACCT_VAR}
     echo $REV_MNEMONIC | $MAIN_CMD keys add $REV_ACCT --recover --keyring-backend=test >> $KEYS_LOGS 2>&1
 
-    # add a relayer account
-    relayer_acct=$(GET_VAR_VALUE     RELAYER_${CHAIN}_ACCT)
-    relayer_mnemonic=$(GET_VAR_VALUE RELAYER_${CHAIN}_MNEMONIC)
+    # add a relayer account if the chain is a HOST_CHAIN
+    # if it's only an accessory chain, the account will be added after the network is started
+    is_host_chain=false
+    for host_chain in ${HOST_CHAINS[@]}; do
+        if [ "$CHAIN" == "$host_chain" ]; then 
+            relayer_acct=$(GET_VAR_VALUE     RELAYER_${CHAIN}_ACCT)
+            relayer_mnemonic=$(GET_VAR_VALUE RELAYER_${CHAIN}_MNEMONIC)
 
-    echo "$relayer_mnemonic" | $MAIN_CMD keys add $relayer_acct --recover --keyring-backend=test >> $KEYS_LOGS 2>&1
-    relayer_address=$($MAIN_CMD keys show $relayer_acct --keyring-backend test -a | tr -cd '[:alnum:]._-')
-    $MAIN_CMD add-genesis-account ${relayer_address} ${VAL_TOKENS}${DENOM}
+            add_relayer_account "$relayer_acct" "$relayer_mnemonic"
+            break
+        fi
+    done
 
+    # gaia ICS and noble have a different config setup, so we handle them explicitly here
     if [ "$CHAIN" == "GAIA" ]; then 
-        echo "$RELAYER_GAIA_ICS_MNEMONIC" | $MAIN_CMD keys add $RELAYER_GAIA_ICS_ACCT --recover --keyring-backend=test >> $KEYS_LOGS 2>&1
-        relayer_address=$($MAIN_CMD keys show $RELAYER_GAIA_ICS_ACCT --keyring-backend test -a | tr -cd '[:alnum:]._-')
-        $MAIN_CMD add-genesis-account ${relayer_address} ${VAL_TOKENS}${DENOM}
+        add_relayer_account "$RELAYER_GAIA_ICS_ACCT" "$RELAYER_GAIA_ICS_MNEMONIC"
     fi
-
-    if [ "$CHAIN" == "DYDX" ]; then
-        echo "$RELAYER_DYDX_NOBLE_MNEMONIC" | $MAIN_CMD keys add $RELAYER_DYDX_NOBLE_ACCT --recover --keyring-backend test >> $KEYS_LOGS 2>&1
-        relayer_address=$($MAIN_CMD keys show $RELAYER_DYDX_NOBLE_ACCT --keyring-backend test -a | tr -cd '[:alnum:]._-')
-        $MAIN_CMD add-genesis-account ${relayer_address} ${VAL_TOKENS}${DENOM}
+    if [ "$CHAIN" == "NOBLE" ]; then 
+        add_relayer_account noble-dydx "$RELAYER_NOBLE_DYDX_MNEMONIC"
+        add_relayer_account noble-osmo "$RELAYER_NOBLE_OSMO_MNEMONIC"
     fi
 
     # For noble, add a param authority account and set a minting denom so that IBC transfers are allowed

@@ -7,7 +7,7 @@ chains:
   dydx:
     type: cosmos
     value:
-      key: rly12
+      key: dydx
       chain-id: DYDX
       rpc-addr: http://dydx1:26657
       account-prefix: dydx
@@ -22,7 +22,7 @@ chains:
   noble:
     type: cosmos
     value:
-      key: rly11
+      key: noble
       chain-id: NOBLE
       rpc-addr: http://noble1:26657
       account-prefix: noble
@@ -34,12 +34,43 @@ chains:
       timeout: 20s
       output-format: json
       sign-mode: direct
+  osmo:
+    type: cosmos
+    value:
+      key: osmo
+      chain-id: OSMO
+      rpc-addr: http://osmo1:26657
+      account-prefix: osmo
+      keyring-backend: test
+      gas-adjustment: 1.3
+      gas-prices: 0.00uosmo
+      coin-type: 118
+      debug: false
+      timeout: 20s
+      output-format: json
+      sign-mode: direct
 paths:
   dydx-noble:
     src:
       chain-id: DYDX
     dst:
       chain-id: NOBLE
+    src-channel-filter:
+      rule: ""
+      channel-list: []
+  noble-osmo:
+    src:
+      chain-id: NOBLE
+    dst:
+      chain-id: OSMO
+    src-channel-filter:
+      rule: ""
+      channel-list: []
+  osmo-dydx:
+    src:
+      chain-id: OSMO
+    dst:
+      chain-id: DYDX
     src-channel-filter:
       rule: ""
       channel-list: []

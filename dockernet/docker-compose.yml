@@ -323,6 +323,13 @@ services:
     restart: always
     command: [ "bash", "start.sh", "stride-dydx" ]
 
+  relayer-juno-osmo:
+    image: stridezone:relayer
+    volumes:
+      - ./state/relayer-juno-osmo:/home/relayer/.relayer
+    restart: always
+    command: [ "bash", "start.sh", "juno-osmo" ]
+
   relayer-dydx-noble:
     image: stridezone:relayer
     volumes:
@@ -330,9 +337,16 @@ services:
     restart: always
     command: [ "bash", "start.sh", "dydx-noble" ]
 
-  relayer-juno-osmo:
+  relayer-noble-osmo:
     image: stridezone:relayer
     volumes:
-      - ./state/relayer-juno-osmo:/home/relayer/.relayer
+      - ./state/relayer-noble-osmo:/home/relayer/.relayer
     restart: always
-    command: [ "bash", "start.sh", "juno-osmo" ]
+    command: [ "bash", "start.sh", "noble-osmo" ]
+
+  relayer-osmo-dydx:
+    image: stridezone:relayer
+    volumes:
+      - ./state/relayer-osmo-dydx:/home/relayer/.relayer
+    restart: always
+    command: [ "bash", "start.sh", "osmo-dydx" ]
