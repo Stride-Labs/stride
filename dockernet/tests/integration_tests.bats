@@ -191,7 +191,7 @@ setup_file() {
   
   WAIT_FOR_BLOCK $STRIDE_LOGS 8
 
-  lsm_token_ibc_denom=$(GET_IBC_DENOM $STRIDE_TRANSFER_CHANNEL ${validator_address}/${record_id})
+  lsm_token_ibc_denom=$(GET_IBC_DENOM STRIDE $STRIDE_TRANSFER_CHANNEL ${validator_address}/${record_id})
 
   # get initial balances
   sttoken_balance_start=$($STRIDE_MAIN_CMD q bank balances $staker_address_on_stride --denom st$HOST_DENOM | GETBAL)
@@ -232,7 +232,7 @@ setup_file() {
 
   # get the LSM token denom
   record_id=$($HOST_MAIN_CMD q staking last-tokenize-share-record-id | awk '{print $2}' | tr -d '"')
-  lsm_token_ibc_denom=$(GET_IBC_DENOM $STRIDE_TRANSFER_CHANNEL ${validator_address}/${record_id})
+  lsm_token_ibc_denom=$(GET_IBC_DENOM STRIDE $STRIDE_TRANSFER_CHANNEL ${validator_address}/${record_id})
 
   # get the stToken balance before the liquid stake
   sttoken_balance_start=$($STRIDE_MAIN_CMD q bank balances $staker_address_on_stride --denom st$HOST_DENOM | GETBAL)

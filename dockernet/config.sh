@@ -473,10 +473,44 @@ GET_HOST_ZONE_FIELD() {
 }
 
 GET_IBC_DENOM() {
-  transfer_channel_id="$1"
-  base_denom="$2"
+  chain="$1"
+  transfer_channel_id="$2"
+  base_denom="$3"
 
-  echo "ibc/$($STRIDE_MAIN_CMD q ibc-transfer denom-hash transfer/${transfer_channel_id}/${base_denom} | awk '{print $2}')"
+  main_cmd=$(GET_VAR_VALUE ${chain}_MAIN_CMD)
+  echo "ibc/$($main_cmd q ibc-transfer denom-hash transfer/${transfer_channel_id}/${base_denom} | awk '{print $2}')"
+}
+
+GET_CLIENT_ID_FROM_CHAIN_ID() {
+  src_chain="$1"
+  counterparty_chain_id="$2"
+
+  main_cmd=$(GET_VAR_VALUE ${src_chain}_MAIN_CMD)
+  $main_cmd q ibc client states | grep $counterparty_chain_id -B 6 | grep client_id | awk '{print $3}'
+}
+
+GET_CONNECTION_ID_FROM_CLIENT_ID() {
+  src_chain="$1"
+  client_id="$2"
+
+  main_cmd=$(GET_VAR_VALUE ${src_chain}_MAIN_CMD)
+  $main_cmd q ibc connection path $client_id | grep connection- | awk '{print $2}'
+}
+
+GET_TRANSFER_CHANNEL_ID_FROM_CONNECTION_ID() {
+  src_chain="$1"
+  connection_id="$2"
+
+  main_cmd=$(GET_VAR_VALUE ${src_chain}_MAIN_CMD)
+  $main_cmd q ibc channel connections $connection_id | grep -m 1 "channel_id" | awk '{print $3}'
+}
+
+GET_COUNTERPARTY_TRANSFER_CHANNEL_ID() {
+  src_chain="$1"
+  channel_id="$2"
+
+  main_cmd=$(GET_VAR_VALUE ${src_chain}_MAIN_CMD)
+  $main_cmd q ibc channel end transfer $channel_id | grep -A 2 counterparty | grep channel_id | awk '{print $2}'
 }
 
 TRIM_TX() {
