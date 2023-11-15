@@ -9,10 +9,9 @@ option go_package = "github.com/Stride-Labs/stride/v14/x/stakeibc/types";
 // Define new types less general and more specific to this task, old types to be removed in later PR
 
 message TradeHop {
-  string      from_transfer_channel_id = 1;
-  string      to_transfer_channel_id = 2;
-  ICAAccount  from_account = 3 [ (gogoproto.nullable) = true ];
-  ICAAccount  to_account = 4 [ (gogoproto.nullable) = true ];
+  string      transfer_channel_id = 1;
+  ICAAccount  from_account = 2 [ (gogoproto.nullable) = true ];
+  ICAAccount  to_account = 3 [ (gogoproto.nullable) = true ];
 }
 
 message TradeRoute {
