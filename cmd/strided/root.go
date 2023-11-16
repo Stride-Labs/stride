@@ -48,6 +48,8 @@ import (
 	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
 
 	"github.com/Stride-Labs/stride/v16/app"
+
+	rosettaCmd "github.com/cosmos/rosetta/cmd"
 )
 
 var ChainID string
@@ -210,6 +212,9 @@ func initRootCmd(rootCmd *cobra.Command, encodingConfig app.EncodingConfig) {
 		versionCommand(),
 		keys.Commands(app.DefaultNodeHome),
 	)
+
+	// add rosetta
+	rootCmd.AddCommand(rosettaCmd.RosettaCommand(encodingConfig.InterfaceRegistry, encodingConfig.Marshaler))
 }
 
 func addModuleInitFlags(startCmd *cobra.Command) {

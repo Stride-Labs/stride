@@ -4,6 +4,7 @@ go 1.19
 
 require (
 	cosmossdk.io/math v1.0.1
+	cosmossdk.io/tools/rosetta v0.1.0
 	github.com/cometbft/cometbft v0.37.2
 	github.com/cometbft/cometbft-db v0.8.0
 	github.com/cosmos/cosmos-proto v1.0.0-beta.2
@@ -24,12 +25,9 @@ require (
 	google.golang.org/genproto/googleapis/api v0.0.0-20230629202037-9506855d4529
 	google.golang.org/grpc v1.57.0
 	gopkg.in/yaml.v2 v2.4.0
-
 )
 
 require github.com/linxGnu/grocksdb v1.7.16 // indirect
-
-require github.com/coinbase/rosetta-sdk-go/types v1.0.0 // indirect
 
 require (
 	cosmossdk.io/log v1.1.1-0.20230704160919-88f2c830b0ca // indirect
@@ -53,7 +51,6 @@ require (
 	cosmossdk.io/core v0.5.1 // indirect
 	cosmossdk.io/depinject v1.0.0-alpha.3 // indirect
 	cosmossdk.io/errors v1.0.0
-	cosmossdk.io/tools/rosetta v0.2.1 // indirect
 	filippo.io/edwards25519 v1.0.0 // indirect
 	github.com/99designs/keyring v1.2.1 // indirect
 	github.com/ChainSafe/go-schnorrkel v0.0.0-20200405005733-88cbf1b4c40d // indirect
@@ -74,7 +71,6 @@ require (
 	github.com/cosmos/gogogateway v1.2.0 // indirect
 	github.com/cosmos/iavl v0.20.0 // indirect
 	github.com/cosmos/ledger-cosmos-go v0.12.2 // indirect
-	github.com/cosmos/rosetta-sdk-go v0.10.0 // indirect
 	github.com/creachadair/taskgroup v0.4.2 // indirect
 	github.com/danieljoos/wincred v1.1.2 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
