@@ -1,119 +1,89 @@
 package keeper_test
 
 import (
-	"strconv"
-	"testing"
+	"fmt"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/stretchr/testify/require"
-
-	keepertest "github.com/Stride-Labs/stride/v14/testutil/keeper"
-	"github.com/Stride-Labs/stride/v14/testutil/nullify"
-	"github.com/Stride-Labs/stride/v14/x/stakeibc/keeper"
 	"github.com/Stride-Labs/stride/v14/x/stakeibc/types"
 )
 
-func createNTradeRoute(keeper *keeper.Keeper, ctx sdk.Context, n int) []types.TradeRoute {
-	items := make([]types.TradeRoute, n)
-	for i := range items {
-
-		hostChain := strconv.Itoa(i) + "chain"
-		rewardChain := strconv.Itoa(i+1) + "chain"
-		tradeChain := strconv.Itoa(i+2) + "chain"
+func (s *KeeperTestSuite) CreateTradeRoutes() (routes []types.TradeRoute) {
+	for i := 1; i <= 5; i++ {
+		hostChain := fmt.Sprintf("chain-H%d", i)
+		rewardChain := fmt.Sprintf("chain-R%d", i)
+		tradeChain := fmt.Sprintf("chain-T%d", i)
 
 		hostICA := types.ICAAccount{
 			ChainId: hostChain,
-			Type: types.ICAAccountType_WITHDRAWAL,
+			Type:    types.ICAAccountType_WITHDRAWAL,
 		}
 		rewardICA := types.ICAAccount{
 			ChainId: rewardChain,
-			Type: types.ICAAccountType_UNWIND,
+			Type:    types.ICAAccountType_UNWIND,
 		}
 		tradeICA := types.ICAAccount{
 			ChainId: tradeChain,
-			Type: types.ICAAccountType_TRADE,
+			Type:    types.ICAAccountType_TRADE,
 		}
 
-		host_reward_hop := types.TradeHop{
+		hostRewardHop := types.TradeHop{
 			FromAccount: &hostICA,
-			ToAccount: &rewardICA,
+			ToAccount:   &rewardICA,
 		}
-		reward_trade_hop := types.TradeHop{
+		rewardTradeHop := types.TradeHop{
 			FromAccount: &rewardICA,
-			ToAccount: &tradeICA,
+			ToAccount:   &tradeICA,
 		}
-		trade_host_hop := types.TradeHop{
+		tradeHostHop := types.TradeHop{
 			FromAccount: &tradeICA,
-			ToAccount: &hostICA,			
+			ToAccount:   &hostICA,
 		}
 
-		hostDenom := strconv.Itoa(i) + "denom"
-		rewardDenom := strconv.Itoa(i+1) + "denom"
+		hostDenom := fmt.Sprintf("host-denom-%d", i)
+		rewardDenom := fmt.Sprintf("reward-denom-%d", i)
 
-		items[i].RewardDenomOnHostZone = "ibc-" + rewardDenom + "-on-" + hostChain
-		items[i].RewardDenomOnRewardZone = rewardDenom
-		items[i].RewardDenomOnTradeZone = "ibc-" + rewardDenom + "-on-" + tradeChain
-		items[i].TargetDenomOnTradeZone = "ibc-" + hostDenom + "-on-" + tradeChain
-		items[i].TargetDenomOnHostZone = hostDenom
+		route := types.TradeRoute{
+			RewardDenomOnHostZone:   "ibc-" + rewardDenom + "-on-" + hostChain,
+			RewardDenomOnRewardZone: rewardDenom,
+			RewardDenomOnTradeZone:  "ibc-" + rewardDenom + "-on-" + tradeChain,
+			TargetDenomOnTradeZone:  "ibc-" + hostDenom + "-on-" + tradeChain,
+			TargetDenomOnHostZone:   hostDenom,
 
-		items[i].HostToRewardHop = &host_reward_hop
-		items[i].RewardToTradeHop = &reward_trade_hop
-		items[i].TradeToHostHop = &trade_host_hop
+			HostToRewardHop:  &hostRewardHop,
+			RewardToTradeHop: &rewardTradeHop,
+			TradeToHostHop:   &tradeHostHop,
 
-		items[i].PoolId = uint64(i * 1000)
+			PoolId: uint64(i * 100),
+		}
 
-		keeper.SetTradeRoute(ctx, items[i])
+		s.App.StakeibcKeeper.SetTradeRoute(s.Ctx, route)
 	}
-	return items
+
+	return routes
 }
 
-func TestTradeRouteGet(t *testing.T) {
-	keeper, ctx := keepertest.StakeibcKeeper(t)
-	items := createNTradeRoute(keeper, ctx, 10)
-	for _, item := range items {
-		got, found := keeper.GetTradeRoute(ctx, item.RewardDenomOnHostZone, item.TargetDenomOnHostZone)
-		require.True(t, found)
-		require.Equal(t,
-			nullify.Fill(&item),
-			nullify.Fill(&got),
-		)
-	}
-}
+func (s *KeeperTestSuite) TestGetTradeRoute() {
+	routes := s.CreateTradeRoutes()
+	for i, route := range routes {
+		startDenom := route.RewardDenomOnHostZone
+		endDenom := route.TargetDenomOnHostZone
 
-func TestTradeRouteRemove(t *testing.T) {
-	keeper, ctx := keepertest.StakeibcKeeper(t)
-	items := createNTradeRoute(keeper, ctx, 10)
-	for _, item := range items {
-		keeper.RemoveTradeRoute(ctx, item.RewardDenomOnHostZone, item.TargetDenomOnHostZone)
-		_, found := keeper.GetTradeRoute(ctx, item.RewardDenomOnHostZone, item.TargetDenomOnHostZone)
-		require.False(t, found)
+		actualRoute, found := s.App.StakeibcKeeper.GetTradeRoute(s.Ctx, startDenom, endDenom)
+		s.Require().True(found, "route should have been found")
+		s.Require().Equal(routes[i], actualRoute, "route doesn't match")
 	}
 }
 
-func TestTradeRouteGetAll(t *testing.T) {
-	keeper, ctx := keepertest.StakeibcKeeper(t)
-	items := createNTradeRoute(keeper, ctx, 10)
-	require.ElementsMatch(t,
-		nullify.Fill(items),
-		nullify.Fill(keeper.GetAllTradeRoute(ctx)),
-	)
+func (s *KeeperTestSuite) TestRemoveTradeRoute() {
+	routes := s.CreateTradeRoutes()
+	for _, route := range routes {
+		s.App.StakeibcKeeper.RemoveTradeRoute(s.Ctx, route.RewardDenomOnHostZone, route.TargetDenomOnHostZone)
+		_, found := s.App.StakeibcKeeper.GetTradeRoute(s.Ctx, route.RewardDenomOnHostZone, route.TargetDenomOnHostZone)
+		s.Require().False(found, "route shoudl not have been found")
+	}
 }
 
-func TestTradeRouteGetAllForHostZone(t *testing.T) {
-	keeper, ctx := keepertest.StakeibcKeeper(t)
-	createNTradeRoute(keeper, ctx, 10)
-
-	chainNum := strconv.Itoa(3)
-	chainId :=  chainNum + "chain"
-	chainDenom := chainNum + "denom"
-	zone := types.HostZone{
-		ChainId: chainId,
-		HostDenom: chainDenom,
-	}
-	keeper.SetHostZone(ctx, zone)
-
-	routes := keeper.GetAllTradeRouteForHostZone(ctx, chainId)
-	require.Equal(t, 1, len(routes), "Should only be one route for %s", chainId)
-	require.Equal(t, chainId, routes[0].HostToRewardHop.FromAccount.ChainId, "Host ICA should be from the requested chain")
-	require.Equal(t, chainDenom, routes[0].TargetDenomOnHostZone, "TargetDenomOnHostZone should be the host denom for the zone")
+func (s *KeeperTestSuite) TestGetAllTradeRoutes() {
+	expectedRoutes := s.CreateTradeRoutes()
+	actualRoutes := s.App.StakeibcKeeper.GetAllTradeRoutes(s.Ctx)
+	s.Require().ElementsMatch(expectedRoutes, actualRoutes)
 }
