@@ -106,5 +106,5 @@ func (k msgServer) LiquidStake(goCtx context.Context, msg *types.MsgLiquidStake)
 	EmitSuccessfulLiquidStakeEvent(ctx, msg, *hostZone, stAmount)
 
 	k.hooks.AfterLiquidStake(ctx, liquidStakerAddress)
-	return &types.MsgLiquidStakeResponse{}, nil
+	return &types.MsgLiquidStakeResponse{StToken: stCoin}, nil
 }

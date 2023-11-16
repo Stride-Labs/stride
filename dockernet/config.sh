@@ -17,9 +17,8 @@ KEYS_LOGS=$DOCKERNET_HOME/logs/keys.log
 
 # List of hosts enabled 
 # HOST_CHAINS have liquid staking support, ACCESSORY_CHAINS do not
-# TODO [DYDX]: Revert to main hosts
-HOST_CHAINS=(DYDX)
-ACCESSORY_CHAINS=(NOBLE) 
+HOST_CHAINS=()
+ACCESSORY_CHAINS=() 
 
 # If no host zones are specified above:
 #  `start-docker` defaults to just GAIA if HOST_CHAINS is empty
@@ -317,9 +316,6 @@ STRIDE_RELAYER_ACCTS=(
   $RELAYER_GAIA_ICS_ACCT
   $RELAYER_DYDX_ACCT
 )
-# Accounts for relay paths between two non-stride chains
-RELAYER_NOBLE_ACCT=rly11
-RELAYER_DYDX_NOBLE_ACCT=rly12
 
 # Mnemonics for connections with stride
 RELAYER_GAIA_MNEMONIC="fiction perfect rapid steel bundle giant blade grain eagle wing cannon fever must humble dance kitchen lazy episode museum faith off notable rate flavor"
@@ -341,8 +337,12 @@ STRIDE_RELAYER_MNEMONICS=(
   "$RELAYER_DYDX_MNEMONIC"
 )
 # Mnemonics for connections between two non-stride chains
-RELAYER_NOBLE_MNEMONIC="sentence fruit crumble sail bar knife exact flame apart prosper hint myth clean among tiny burden depart purity select envelope identify cross physical emerge"
+RELAYER_NOBLE_DYDX_MNEMONIC="sentence fruit crumble sail bar knife exact flame apart prosper hint myth clean among tiny burden depart purity select envelope identify cross physical emerge"
 RELAYER_DYDX_NOBLE_MNEMONIC="aerobic breeze claw climb bounce morning tank victory eight funny employ bracket hire reduce fine flee lava domain warfare loop theme fly tattoo must"
+RELAYER_NOBLE_OSMO_MNEMONIC="actual field visual wage orbit add human unit happy rich evil chair entire person february cactus deputy impact gasp elbow sunset brand possible fly"
+RELAYER_OSMO_NOBLE_MNEMONIC="obey clinic miss grunt inflict laugh sell moral kitchen tumble gold song flavor rather horn exhaust state amazing poverty differ approve spike village device"
+RELAYER_DYDX_OSMO_MNEMONIC="small fire step promote fox reward book seek arctic session illegal loyal because brass spoil minute wonder jazz shoe price muffin churn evil monitor"
+RELAYER_OSMO_DYDX_MNEMONIC="risk wool reason sweet current strategy female miracle squeeze that wire develop ocean rapid domain lift blame monkey sick round museum item maze trumpet"
 
 
 STRIDE_ADDRESS() { 
@@ -464,11 +464,52 @@ GET_ICA_ADDR() {
   $STRIDE_MAIN_CMD q stakeibc show-host-zone $chain_id | grep ${ica_type}_ica_address | awk '{print $2}'
 }
 
-GET_IBC_DENOM() {
-  transfer_channel_id="$1"
-  base_denom="$2"
+GET_HOST_ZONE_FIELD() {
+  chain_id="$1"
+  field="$2"
 
-  echo "ibc/$($STRIDE_MAIN_CMD q ibc-transfer denom-hash transfer/${transfer_channel_id}/${base_denom} | awk '{print $2}')"
+  $STRIDE_MAIN_CMD q stakeibc show-host-zone $chain_id | grep $field | awk '{print $2}'
+}
+
+GET_IBC_DENOM() {
+  chain="$1"
+  transfer_channel_id="$2"
+  base_denom="$3"
+
+  main_cmd=$(GET_VAR_VALUE ${chain}_MAIN_CMD)
+  echo "ibc/$($main_cmd q ibc-transfer denom-hash transfer/${transfer_channel_id}/${base_denom} | awk '{print $2}')"
+}
+
+GET_CLIENT_ID_FROM_CHAIN_ID() {
+  src_chain="$1"
+  counterparty_chain_id="$2"
+
+  main_cmd=$(GET_VAR_VALUE ${src_chain}_MAIN_CMD)
+  $main_cmd q ibc client states | grep $counterparty_chain_id -B 6 | grep client_id | awk '{print $3}'
+}
+
+GET_CONNECTION_ID_FROM_CLIENT_ID() {
+  src_chain="$1"
+  client_id="$2"
+
+  main_cmd=$(GET_VAR_VALUE ${src_chain}_MAIN_CMD)
+  $main_cmd q ibc connection path $client_id | grep connection- | awk '{print $2}'
+}
+
+GET_TRANSFER_CHANNEL_ID_FROM_CONNECTION_ID() {
+  src_chain="$1"
+  connection_id="$2"
+
+  main_cmd=$(GET_VAR_VALUE ${src_chain}_MAIN_CMD)
+  $main_cmd q ibc channel connections $connection_id | grep -m 1 "channel_id" | awk '{print $3}'
+}
+
+GET_COUNTERPARTY_TRANSFER_CHANNEL_ID() {
+  src_chain="$1"
+  channel_id="$2"
+
+  main_cmd=$(GET_VAR_VALUE ${src_chain}_MAIN_CMD)
+  $main_cmd q ibc channel end transfer $channel_id | grep -A 2 counterparty | grep channel_id | awk '{print $2}'
 }
 
 TRIM_TX() {

@@ -508,7 +508,7 @@ func (s *KeeperTestSuite) TestTransferAllLSMDeposits() {
 			ChainId:              HostChainId,
 			TransferChannelId:    ibctesting.FirstChannelID,
 			DepositAddress:       s.TestAccs[1].String(),
-			DelegationIcaAddress: DelegationICAAddress,
+			DelegationIcaAddress: HostICAAddress,
 		},
 		{
 			// Missing delegation ICA

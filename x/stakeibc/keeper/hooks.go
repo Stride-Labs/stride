@@ -80,6 +80,9 @@ func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochInfo epochstypes.EpochInf
 		if epochNumber%StrideEpochsPerDayEpoch == 0 {
 			k.RebalanceAllHostZones(ctx)
 		}
+
+		// Transfers in and out of tokens for hostZones which have community pools
+		k.ProcessAllCommunityPoolTokens(ctx)
 	}
 	if epochInfo.Identifier == epochstypes.MINT_EPOCH {
 		k.AllocateHostZoneReward(ctx)
