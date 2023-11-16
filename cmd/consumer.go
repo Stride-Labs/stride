@@ -18,7 +18,7 @@ import (
 	ccvconsumertypes "github.com/cosmos/interchain-security/v3/x/ccv/consumer/types"
 	"github.com/spf13/cobra"
 
-	"github.com/Stride-Labs/stride/v14/testutil"
+	"github.com/Stride-Labs/stride/v16/testutil"
 )
 
 func AddConsumerSectionCmd(defaultNodeHome string) *cobra.Command {

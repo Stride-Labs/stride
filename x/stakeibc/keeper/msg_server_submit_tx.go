@@ -11,19 +11,19 @@ import (
 	"github.com/cosmos/gogoproto/proto"
 	"github.com/spf13/cast"
 
-	"github.com/Stride-Labs/stride/v14/utils"
-	icacallbackstypes "github.com/Stride-Labs/stride/v14/x/icacallbacks/types"
+	"github.com/Stride-Labs/stride/v16/utils"
+	icacallbackstypes "github.com/Stride-Labs/stride/v16/x/icacallbacks/types"
 
-	recordstypes "github.com/Stride-Labs/stride/v14/x/records/types"
-	"github.com/Stride-Labs/stride/v14/x/stakeibc/types"
+	recordstypes "github.com/Stride-Labs/stride/v16/x/records/types"
+	"github.com/Stride-Labs/stride/v16/x/stakeibc/types"
 
 	bankTypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 
 	distributiontypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
-	epochstypes "github.com/Stride-Labs/stride/v14/x/epochs/types"
-	icqtypes "github.com/Stride-Labs/stride/v14/x/interchainquery/types"
+	epochstypes "github.com/Stride-Labs/stride/v16/x/epochs/types"
+	icqtypes "github.com/Stride-Labs/stride/v16/x/interchainquery/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	icacontrollerkeeper "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/controller/keeper"
@@ -481,6 +481,64 @@ func (k Keeper) SubmitDelegationICQ(ctx sdk.Context, hostZone types.HostZone, va
 		RequestData:     queryData,
 		CallbackModule:  types.ModuleName,
 		CallbackId:      ICQCallbackID_Delegation,
+		CallbackData:    callbackDataBz,
+		TimeoutDuration: time.Hour,
+		TimeoutPolicy:   icqtypes.TimeoutPolicy_RETRY_QUERY_REQUEST,
+	}
+	if err := k.InterchainQueryKeeper.SubmitICQRequest(ctx, query, false); err != nil {
+		k.Logger(ctx).Error(fmt.Sprintf("Error submitting ICQ for delegation, error : %s", err.Error()))
+		return err
+	}
+
+	return nil
+}
+
+// Submits an ICQ to get a validator's delegations
+// This is called after the validator's sharesToTokens rate is determined
+// The timeoutDuration parameter represents the length of the timeout (not to be confused with an actual timestamp)
+func (k Keeper) SubmitCalibrationICQ(ctx sdk.Context, hostZone types.HostZone, validatorAddress string) error {
+	if hostZone.DelegationIcaAddress == "" {
+		return errorsmod.Wrapf(types.ErrICAAccountNotFound, "no delegation address found for %s", hostZone.ChainId)
+	}
+	validator, valIndex, found := GetValidatorFromAddress(hostZone.Validators, validatorAddress)
+	if !found {
+		return errorsmod.Wrapf(types.ErrValidatorNotFound, "no registered validator for address (%s)", validatorAddress)
+	}
+
+	// Get the validator and delegator encoded addresses to form the query request
+	_, validatorAddressBz, err := bech32.DecodeAndConvert(validatorAddress)
+	if err != nil {
+		return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "invalid validator address, could not decode (%s)", err.Error())
+	}
+	_, delegatorAddressBz, err := bech32.DecodeAndConvert(hostZone.DelegationIcaAddress)
+	if err != nil {
+		return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "invalid delegator address, could not decode (%s)", err.Error())
+	}
+	queryData := stakingtypes.GetDelegationKey(delegatorAddressBz, validatorAddressBz)
+
+	// Store the current validator's delegation in the callback data so we can determine if it changed
+	// while the query was in flight
+	callbackData := types.DelegatorSharesQueryCallback{
+		InitialValidatorDelegation: validator.Delegation,
+	}
+	callbackDataBz, err := proto.Marshal(&callbackData)
+	if err != nil {
+		return errorsmod.Wrapf(err, "unable to marshal delegator shares callback data")
+	}
+
+	// Update the validator to indicate that the slash query is in progress
+	validator.SlashQueryInProgress = true
+	hostZone.Validators[valIndex] = &validator
+	k.SetHostZone(ctx, hostZone)
+
+	// Submit delegator shares ICQ
+	query := icqtypes.Query{
+		ChainId:         hostZone.ChainId,
+		ConnectionId:    hostZone.ConnectionId,
+		QueryType:       icqtypes.STAKING_STORE_QUERY_WITH_PROOF,
+		RequestData:     queryData,
+		CallbackModule:  types.ModuleName,
+		CallbackId:      ICQCallbackID_Calibrate,
 		CallbackData:    callbackDataBz,
 		TimeoutDuration: time.Hour,
 		TimeoutPolicy:   icqtypes.TimeoutPolicy_RETRY_QUERY_REQUEST,

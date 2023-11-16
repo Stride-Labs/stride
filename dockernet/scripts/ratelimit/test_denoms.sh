@@ -7,10 +7,10 @@ source ${CURRENT_DIR}/common.sh
 # 1. Send native
 # 2. Send non-native (one hop away)
 # 3. Send non-native (two hops away)
-# 4. Recieve sink (one hop away)
-# 5. Recieve sink (two hops away)
+# 4. Receive sink (one hop away)
+# 5. Receive sink (two hops away)
 # 6. Receive source native
-# 7. Recieve source non-native
+# 7. Receive source non-native
 #
 # For each case, we'll simply need to try the transfer and check if the flow updated,
 #  if the flow didn't update along with expectations, that means either the denom or channel was wrong
@@ -44,7 +44,7 @@ test_denom_ustrd() {
 ##############################################
 # ujuno from Juno to Stride, then back to Juno
 ##############################################
-__test_denom_receive_packet_non_native() { # recieve sink (one hop)
+__test_denom_receive_packet_non_native() { # receive sink (one hop)
     # ujuno sent from Juno to Stride
     #   Expected Denom: ibc/EFF323CC632EC4F747C61BCE238A758EFDB7699C3226565F7C20DA06509D59A5
     #   Expected Channel: channel-1
@@ -78,7 +78,7 @@ __test_denom_send_packet_native_sttoken() { # send native
     check_transfer_status STRIDE OSMO channel-2 channel-2 10000000 stujuno stujuno true
 }
 
-__test_denom_recieve_packet_native_sttoken() { # receive source native
+__test_denom_receive_packet_native_sttoken() { # receive source native
     # stujuno sent from Osmosis to Stride
     #   Expected Denom: stujuno
     #   Expected Channel: channel-2
@@ -91,7 +91,7 @@ test_denom_sttoken() {
     wait_until_epoch_end
 
     __test_denom_send_packet_native_sttoken
-    __test_denom_recieve_packet_native_sttoken
+    __test_denom_receive_packet_native_sttoken
 }
 
 ########################################################################
@@ -122,7 +122,7 @@ __test_denom_send_packet_non_native_two_hops() { # send non-native (two hops)
     check_transfer_status STRIDE JUNO channel-1 channel-1 10000000 $traveler_juno_on_stride $traveler_juno_on_stride true
 }
 
-__test_denom_receive_packet_source_non_native() { # recieve source non-native
+__test_denom_receive_packet_source_non_native() { # receive source non-native
     # ujuno (through Osmosis, then Stride) sent from Juno to Stride
     #  Expected Denom: ibc/CD369927BBCE5198E0DC0D1A341C2F1DE51B1228BFD0633430055A39F58D229C 
     #                  (transfer/channel-2(juno)/transfer/channel-5(osmo)/ujuno)

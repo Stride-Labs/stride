@@ -7,7 +7,7 @@ import "stride/stakeibc/host_zone.proto";
 import "stride/stakeibc/validator.proto";
 import "stride/stakeibc/ica_account.proto";
 
-option go_package = "github.com/Stride-Labs/stride/v14/x/stakeibc/types";
+option go_package = "github.com/Stride-Labs/stride/v16/x/stakeibc/types";
 
 message SplitDelegation {
   string validator = 1;
@@ -41,6 +41,14 @@ message UndelegateCallback {
   string host_zone_id = 1;
   repeated SplitDelegation split_delegations = 2;
   repeated uint64 epoch_unbonding_record_ids = 3;
+}
+
+message UndelegateHostCallback {
+  string amt = 1 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable) = false
+  ];
+  repeated SplitDelegation split_delegations = 2;
 }
 
 message RedemptionCallback {

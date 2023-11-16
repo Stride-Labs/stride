@@ -10,7 +10,7 @@ import "stride/stakeibc/host_zone.proto";
 import "stride/stakeibc/epoch_tracker.proto";
 import "stride/stakeibc/address_unbonding.proto";
 
-option go_package = "github.com/Stride-Labs/stride/v14/x/stakeibc/types";
+option go_package = "github.com/Stride-Labs/stride/v16/x/stakeibc/types";
 
 // Query defines the gRPC querier service.
 service Query {

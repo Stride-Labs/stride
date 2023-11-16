@@ -6,13 +6,17 @@ import (
 	errorsmod "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	"github.com/cosmos/cosmos-sdk/x/auth/migrations/legacytx"
 
-	"github.com/Stride-Labs/stride/v14/utils"
+	"github.com/Stride-Labs/stride/v16/utils"
 )
 
 const TypeMsgAddOracle = "add_oracle"
 
-var _ sdk.Msg = &MsgAddOracle{}
+var (
+	_ sdk.Msg            = &MsgAddOracle{}
+	_ legacytx.LegacyMsg = &MsgAddOracle{}
+)
 
 func NewMsgAddOracle(creator string, connectionId string) *MsgAddOracle {
 	return &MsgAddOracle{
@@ -23,6 +27,10 @@ func NewMsgAddOracle(creator string, connectionId string) *MsgAddOracle {
 
 func (msg MsgAddOracle) Type() string {
 	return TypeMsgAddOracle
+}
+
+func (msg MsgAddOracle) Route() string {
+	return RouterKey
 }
 
 func (msg *MsgAddOracle) GetSigners() []sdk.AccAddress {
