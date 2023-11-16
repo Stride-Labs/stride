@@ -4,7 +4,6 @@ package osmosis.gamm.v1beta1;
 import "gogoproto/gogo.proto";
 import "amino/amino.proto";
 import "cosmos/base/v1beta1/coin.proto";
-import "osmosis/poolmanager/v1beta1/swap_route.proto";
 
 option go_package = "github.com/Stride-Labs/stride/v14/x/stakeibc/types";
 
@@ -13,8 +12,7 @@ message MsgSwapExactAmountIn {
   option (amino.name) = "osmosis/gamm/swap-exact-amount-in";
 
   string sender = 1 [ (gogoproto.moretags) = "yaml:\"sender\"" ];
-  repeated osmosis.poolmanager.v1beta1.SwapAmountInRoute routes = 2
-      [ (gogoproto.nullable) = false ];
+  repeated SwapAmountInRoute routes = 2 [ (gogoproto.nullable) = false ];
   cosmos.base.v1beta1.Coin token_in = 3 [
     (gogoproto.moretags) = "yaml:\"token_in\"",
     (gogoproto.nullable) = false
@@ -34,4 +32,10 @@ message MsgSwapExactAmountInResponse {
     (gogoproto.moretags) = "yaml:\"token_out_amount\"",
     (gogoproto.nullable) = false
   ];
+}
+
+message SwapAmountInRoute {
+  uint64 pool_id = 1 [ (gogoproto.moretags) = "yaml:\"pool_id\"" ];
+  string token_out_denom = 2
+      [ (gogoproto.moretags) = "yaml:\"token_out_denom\"" ];
 }
