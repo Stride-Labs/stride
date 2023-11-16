@@ -11,8 +11,8 @@ import (
 	clienttypes "github.com/cosmos/ibc-go/v7/modules/core/02-client/types"
 	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
 
-	epochstypes "github.com/Stride-Labs/stride/v14/x/epochs/types"
-	"github.com/Stride-Labs/stride/v14/x/stakeibc/types"
+	epochstypes "github.com/Stride-Labs/stride/v16/x/epochs/types"
+	"github.com/Stride-Labs/stride/v16/x/stakeibc/types"
 )
 
 // Transfers tokens from the community pool deposit ICA account to the host zone stake holding module address for that pool
