@@ -6,63 +6,22 @@ import "stride/stakeibc/ica_account.proto";
 
 option go_package = "github.com/Stride-Labs/stride/v14/x/stakeibc/types";
 
-// Define new types less general and more specific to this task, old types to be removed in later PR
-
 message TradeHop {
-  string      transfer_channel_id = 1;
-  ICAAccount  from_account = 2 [ (gogoproto.nullable) = true ];
-  ICAAccount  to_account = 3 [ (gogoproto.nullable) = true ];
+  string transfer_channel_id = 1;
+  ICAAccount from_account = 2 [ (gogoproto.nullable) = true ];
+  ICAAccount to_account = 3 [ (gogoproto.nullable) = true ];
 }
 
 message TradeRoute {
-	string reward_denom_on_host_zone = 1;
-	string reward_denom_on_reward_zone = 2;
-	string reward_denom_on_trade_zone = 3;
-	string target_denom_on_trade_zone = 4;
-	string target_denom_on_host_zone = 5;
+  string reward_denom_on_host_zone = 1;
+  string reward_denom_on_reward_zone = 2;
+  string reward_denom_on_trade_zone = 3;
+  string target_denom_on_trade_zone = 4;
+  string target_denom_on_host_zone = 5;
 
-	TradeHop host_to_reward_hop = 6;
-	TradeHop reward_to_trade_hop = 7;
-	TradeHop trade_to_host_hop = 8;
+  TradeHop host_to_reward_hop = 6;
+  TradeHop reward_to_trade_hop = 7;
+  TradeHop trade_to_host_hop = 8;
 
-	uint64 pool_id = 9;
-}
-
-//Old types to be removed later below this line 
-//---------------------------------------------
-
-// TradeRoutes defines all info needed for token transfers and trade operations
-message TradeRoutes {
-  repeated TransferRoute transfer_routes = 1 [ (gogoproto.nullable) = false ];
-  repeated TradePool trade_pools = 3 [ (gogoproto.nullable) = false ];  
-}
-
-// TransferRoute has the connection info needed to do either a direct or two-hop unwinding ibc transfer
-// For direct routes: 
-//    middle_denom, middle_chain_id, finish_transfer_port/channel, and passthrough_ica_address should be empty
-// For unwinding routes, 
-//    the middle denom ought to be the host denom for the middle chain
-//    if the middle chain has the newest pfm installed, the passthrough_ica_address can be "pfm"
-//    if the middle chain has pfm installed but is older, a legal address will be needed on the middle chain
-//    if the middle chain doesn't have pfm installed at all, two separate ibc transfers will be needed
-message TransferRoute {
-  string start_denom = 1;
-  string middle_denom = 2;
-  string finish_denom = 3;
-  string start_chain_id = 4;
-  string middle_chain_id = 5;
-  string finish_chain_id = 6;
-  string start_transfer_port = 7;
-  string start_transfer_channel = 8;
-  string finish_transfer_port = 9;
-  string finish_transfer_channel = 10;
-  string passthrough_ica_address = 11; 
-}
-
-// TradePool defines which pool on the tradeZone to use when making a swap
-message TradePool {
-  string host_chain_id = 1;
-  string input_denom = 2;
-  string output_denom = 3;
-  uint64 pool_id = 4;
+  uint64 pool_id = 9;
 }

@@ -327,6 +327,42 @@ func (k Keeper) SubmitTxs(
 	return sequence, nil
 }
 
+func (k Keeper) SubmitICATxWithoutCallback(
+	ctx sdk.Context, 
+	connectionId string, 
+	icaAccountType types.ICAAccountType,
+	msgs []proto.Message,
+	timeoutTimestamp uint64,
+) error {
+	// Compute useful connection properties to avoid needing them as params
+	chainId, err := k.GetChainID(ctx, connectionId)
+	if err != nil {
+		return err
+	}
+	owner := types.FormatICAAccountOwner(chainId, icaAccountType)
+
+	// Serialize tx messages
+	txBz, err := icatypes.SerializeCosmosTx(k.cdc, msgs)
+	if err != nil {
+		return errorsmod.Wrapf(err, "unable to serialize cosmos transaction")
+	}
+	packetData := icatypes.InterchainAccountPacketData{
+		Type: icatypes.EXECUTE_TX,
+		Data: txBz,
+	}
+	relativeTimeoutOffset := timeoutTimestamp - uint64(ctx.BlockTime().UnixNano())
+
+	// Submit ICA, no need to store callback data or register callback function
+	icaMsgServer := icacontrollerkeeper.NewMsgServerImpl(&k.ICAControllerKeeper)
+	msgSendTx := icacontrollertypes.NewMsgSendTx(owner, connectionId, relativeTimeoutOffset, packetData)
+	_, err = icaMsgServer.SendTx(ctx, msgSendTx)
+	if err != nil {
+		return errorsmod.Wrapf(err, "unable to send ICA tx")
+	}
+	
+	return nil
+}
+
 func (k Keeper) GetLightClientHeightSafely(ctx sdk.Context, connectionID string) (uint64, error) {
 	// get light client's latest height
 	conn, found := k.IBCKeeper.ConnectionKeeper.GetConnection(ctx, connectionID)

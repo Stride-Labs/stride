@@ -23,12 +23,7 @@ func WithdrawalRewardBalanceCallback(k Keeper, ctx sdk.Context, args []byte, que
 	k.Logger(ctx).Info(utils.LogICQCallbackWithHostZone(query.ChainId, ICQCallbackID_WithdrawalRewardBalance,
 		"Starting withdrawal reward balance callback, QueryId: %vs, QueryType: %s, Connection: %s", query.Id, query.QueryType, query.ConnectionId))
 
-	// Confirm host exists
 	chainId := query.ChainId
-	hostZone, found := k.GetHostZone(ctx, chainId)
-	if !found {
-		return errorsmod.Wrapf(types.ErrHostZoneNotFound, "no registered zone for queried chain ID (%s)", chainId)
-	}
 
 	// Unmarshal the query response args to determine the balance
 	withdrawalRewardBalanceAmount, err := icqkeeper.UnmarshalAmountFromBalanceQuery(k.cdc, args)
@@ -36,33 +31,26 @@ func WithdrawalRewardBalanceCallback(k Keeper, ctx sdk.Context, args []byte, que
 		return errorsmod.Wrap(err, "unable to determine balance from query response")
 	}
 
-	// Confirm the balance is greater than zero
+	// Confirm the balance is greater than zero, or else exit early without further action
 	if withdrawalRewardBalanceAmount.LTE(sdkmath.ZeroInt()) {
 		k.Logger(ctx).Info(utils.LogICQCallbackWithHostZone(chainId, ICQCallbackID_WithdrawalBalance,
-			"No balance of reward tokens yet found in address: %s, balance: %v", hostZone.WithdrawalIcaAddress, withdrawalRewardBalanceAmount))
+			"Not enough reward tokens yet found in withdrawalICA, balance: %v", withdrawalRewardBalanceAmount))
 		return nil
 	}
 
-	// Unmarshal the callback data containing the hostChain and rewardDenom on that host zone
-	var callbackData types.WithdrawalRewardBalanceQueryCallback
-	if err := proto.Unmarshal(query.CallbackData, &callbackData); err != nil {
+	// Unmarshal the callback data which is just the trade route
+	var tradeRoute types.TradeRoute
+	if err := proto.Unmarshal(query.CallbackData, &tradeRoute); err != nil {
 		return errorsmod.Wrapf(err, "unable to unmarshal withdrawal reward balance callback data")
 	}
 	k.Logger(ctx).Info(utils.LogICQCallbackWithHostZone(chainId, ICQCallbackID_WithdrawalRewardBalance,
-		"Query response - Withdrawal Reward Balance: %v %s", withdrawalRewardBalanceAmount, callbackData.RewardDenomOnHostZone))
-
-	// Transfer all found reward tokens from the hostZone to the tradeZone to be converted
-	tradeZoneID := k.GetTradeZoneID(ctx, callbackData.RewardDenomOnHostZone, callbackData.HostZoneId)
-	tradeZone, found := k.GetHostZone(ctx, tradeZoneID)
-	if !found {
-		return errorsmod.Wrapf(types.ErrHostZoneNotFound, "no registered zone for the needed trade zone ID (%s)", tradeZoneID)
-	}
+		"Query response - Withdrawal Reward Balance: %v %s", withdrawalRewardBalanceAmount, tradeRoute.RewardDenomOnHostZone))
 	
 	// Using ICA commands on the withdrawal address, transfer the found reward tokens from the host zone to the trade zone
-	k.TransferHostRewardTokensToTrade(ctx, withdrawalRewardBalanceAmount, callbackData.RewardDenomOnHostZone, hostZone, tradeZone)
+	k.TransferRewardTokensHostToTrade(ctx, withdrawalRewardBalanceAmount, tradeRoute)
 	k.Logger(ctx).Info(utils.LogICQCallbackWithHostZone(chainId, ICQCallbackID_WithdrawalRewardBalance, 
-		"Sending discovered reward tokens %v %s from hostZone %s to tradeZone %s", 
-		withdrawalRewardBalanceAmount, callbackData.RewardDenomOnHostZone, hostZone.ChainId, tradeZone.ChainId))
+		"Sending discovered reward tokens %v %s from hostZone to tradeZone", 
+		withdrawalRewardBalanceAmount, tradeRoute.RewardDenomOnHostZone))
 
 	return nil
 }

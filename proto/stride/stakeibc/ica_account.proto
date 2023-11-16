@@ -8,7 +8,7 @@ enum ICAAccountType {
   FEE = 1;
   WITHDRAWAL = 2;
   REDEMPTION = 3;
-  UNWIND = 6;  
+  UNWIND = 6;
   TRADE = 7;
 }
 
@@ -16,7 +16,5 @@ message ICAAccount {
   string chain_id = 1;
   ICAAccountType type = 2;
   string connection_id = 3;
-  string channel_id = 4;
-  string port_id = 5;
-  string address = 6;
+  string address = 4;
 }
