@@ -30,7 +30,7 @@ func (k Keeper) GetTradeRoute(ctx sdk.Context, startDenom string, endDenom strin
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefix(types.TradeRouteKey))
 	storeKey := k.GetTradeRouteKeyFromDenoms(ctx, startDenom, endDenom)
 	b := store.Get(storeKey)
-	if b == nil {
+	if len(b) == 0 {
 		return val, false
 	}
 	k.cdc.MustUnmarshal(b, &val)
