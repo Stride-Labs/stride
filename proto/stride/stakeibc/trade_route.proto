@@ -8,8 +8,8 @@ option go_package = "github.com/Stride-Labs/stride/v14/x/stakeibc/types";
 
 message TradeHop {
   string transfer_channel_id = 1;
-  ICAAccount from_account = 2 [ (gogoproto.nullable) = true ];
-  ICAAccount to_account = 3 [ (gogoproto.nullable) = true ];
+  ICAAccount from_account = 2 [ (gogoproto.nullable) = false ];
+  ICAAccount to_account = 3 [ (gogoproto.nullable) = false ];
 }
 
 message TradeRoute {
@@ -19,9 +19,9 @@ message TradeRoute {
   string target_denom_on_trade_zone = 4;
   string target_denom_on_host_zone = 5;
 
-  TradeHop host_to_reward_hop = 6;
-  TradeHop reward_to_trade_hop = 7;
-  TradeHop trade_to_host_hop = 8;
+  TradeHop host_to_reward_hop = 6 [ (gogoproto.nullable) = false ];
+  TradeHop reward_to_trade_hop = 7 [ (gogoproto.nullable) = false ];
+  TradeHop trade_to_host_hop = 8 [ (gogoproto.nullable) = false ];
 
   uint64 pool_id = 9;
 }
