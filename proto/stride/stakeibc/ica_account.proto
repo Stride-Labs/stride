@@ -8,7 +8,7 @@ enum ICAAccountType {
   FEE = 1;
   WITHDRAWAL = 2;
   REDEMPTION = 3;
-  UNWIND = 6;  
+  UNWIND = 6;
   TRADE = 7;
 }
 

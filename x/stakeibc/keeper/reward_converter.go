@@ -17,7 +17,6 @@ import (
 	epochstypes "github.com/Stride-Labs/stride/v14/x/epochs/types"
 	icqtypes "github.com/Stride-Labs/stride/v14/x/interchainquery/types"
 	"github.com/Stride-Labs/stride/v14/x/stakeibc/types"
-	//osmosistypes "github.com/osmosis-labs/osmosis/x/gamm/types"
 )
 
 // The goal of this code is to allow certain reward token types to be automatically traded into other types
@@ -134,40 +133,40 @@ func (k Keeper) TransferConvertedTokensTradeToHost(ctx sdk.Context, amount sdk.I
 // Trade all the reward tokens in the Trade ICA for the target output token type using ICA remote tx on trade zone
 // Params define the inputs, outputs, routes, and pool information on the trade zone for each type of token
 func (k Keeper) TradeRewardTokens(ctx sdk.Context, amount sdk.Int, route types.TradeRoute) error {
-	/*// Load the tradepool info if it exists
-	tradePool, poolErr := k.GetTradePool(ctx, rewardDenomOnTradeZone, hostZone.ChainId)
-	if poolErr != nil {
-		return poolErr
-	}
-	tradeTokens := sdk.NewCoin(rewardDenomOnTradeZone, amount)
+	tradeIcaAccount := route.RewardToTradeHop.ToAccount
+	tradeTokens := sdk.NewCoin(route.RewardDenomOnTradeZone, amount)
+
 	// Prepare Osmosis GAMM module MsgSwapExactAmountIn from the trade account to perform the trade
 	// If we want to generalize in the future, write swap message generation funcs for each DEX type, 
 	// decide which msg generation function to call based on check of which tradeZone was passed in
 	var msgs []proto.Message
 	if amount.GT(sdk.ZeroInt()) {
-		var routes []osmosistypes.SwapAmountInRoute
-		routes = append(routes, osmosistypes.SwapAmountInRoute{
-			PoolId: tradePool.PoolId,
-			TokenOutDenom: tradePool.OutputDenom,
+		var routes []types.SwapAmountInRoute
+		routes = append(routes, types.SwapAmountInRoute{
+			PoolId: route.PoolId,
+			TokenOutDenom: route.TargetDenomOnTradeZone,
 		});
-		msgs = append(msgs, &osmosistypes.MsgSwapExactAmountIn{
-			Sender: hostZone.RewardTradeIcaAddress, // address exists on trade zone but field stored on hostZone
+		msgs = append(msgs, &types.MsgSwapExactAmountIn{
+			Sender: tradeIcaAccount.Address,
 			Routes: routes,
 			TokenIn: tradeTokens,
 			TokenOutMinAmount: sdk.ZeroInt(),
 		})
-		k.Logger(ctx).Info(utils.LogWithHostZone(tradeZone.ChainId,
-			"Preparing MsgSwapExactAmountIn of %v from the trade account", tradeTokens.String()))
+		k.Logger(ctx).Info(utils.LogWithHostZone(tradeIcaAccount.ChainId,
+			"Preparing MsgSwapExactAmountIn of %+v from the trade account", tradeTokens))
 	}
 
-	// Send the transaction through SubmitTxsStrideEpoch
-	// By making the callbackId = "", no callback data will be needed and callbackArgs will be ignored
-	callbackId := ""
-	var callbackArgs []byte
-	_, err := k.SubmitTxsStrideEpoch(ctx, tradeZone.ConnectionId, msgs, types.ICAAccountType_TRADE, callbackId, callbackArgs)
+	strideEpochTracker, found := k.GetEpochTracker(ctx, epochstypes.STRIDE_EPOCH)
+	if !found {
+		return errorsmod.Wrapf(types.ErrEpochNotFound, epochstypes.STRIDE_EPOCH)
+	}
+	timeout := uint64(strideEpochTracker.NextEpochStartTime)
+
+	// Send the ICA tx to perform the swap on the tradeZone
+	err := k.SubmitICATxWithoutCallback(ctx, tradeIcaAccount.ConnectionId, types.ICAAccountType_TRADE, msgs, timeout)
 	if err != nil {
-		return errorsmod.Wrapf(types.ErrICATxFailed, "Failed to SubmitTxs, Messages: %v, err: %s", msgs, err.Error())
-	}*/
+		return errorsmod.Wrapf(types.ErrICATxFailed, "Failed to submit ICA tx for the swap, Messages: %v, err: %s", msgs, err.Error())
+	}
 
 	return nil
 }

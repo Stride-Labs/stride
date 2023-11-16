@@ -7,21 +7,21 @@ import "stride/stakeibc/ica_account.proto";
 option go_package = "github.com/Stride-Labs/stride/v14/x/stakeibc/types";
 
 message TradeHop {
-  string      transfer_channel_id = 1;
-  ICAAccount  from_account = 2 [ (gogoproto.nullable) = true ];
-  ICAAccount  to_account = 3 [ (gogoproto.nullable) = true ];
+  string transfer_channel_id = 1;
+  ICAAccount from_account = 2 [ (gogoproto.nullable) = true ];
+  ICAAccount to_account = 3 [ (gogoproto.nullable) = true ];
 }
 
 message TradeRoute {
-	string reward_denom_on_host_zone = 1;
-	string reward_denom_on_reward_zone = 2;
-	string reward_denom_on_trade_zone = 3;
-	string target_denom_on_trade_zone = 4;
-	string target_denom_on_host_zone = 5;
+  string reward_denom_on_host_zone = 1;
+  string reward_denom_on_reward_zone = 2;
+  string reward_denom_on_trade_zone = 3;
+  string target_denom_on_trade_zone = 4;
+  string target_denom_on_host_zone = 5;
 
-	TradeHop host_to_reward_hop = 6;
-	TradeHop reward_to_trade_hop = 7;
-	TradeHop trade_to_host_hop = 8;
+  TradeHop host_to_reward_hop = 6;
+  TradeHop reward_to_trade_hop = 7;
+  TradeHop trade_to_host_hop = 8;
 
-	uint64 pool_id = 9;
+  uint64 pool_id = 9;
 }
