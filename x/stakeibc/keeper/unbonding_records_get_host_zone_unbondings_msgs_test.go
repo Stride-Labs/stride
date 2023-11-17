@@ -360,7 +360,7 @@ func (s *KeeperTestSuite) TestUnbondFromHostZone_Successful_HubUnbondingsTest() 
 		{Address: "game", Weight: 22, Delegation: sdkmath.NewInt(542445260)},
 	}
 
-	totalUnbondAmount := sdkmath.NewInt(428227320496)
+	totalUnbondAmount := sdkmath.NewInt(540313933163)
 	totalStake := sdkmath.NewInt(0)
 	for _, val := range validators {
 		totalStake = totalStake.Add(val.Delegation)
