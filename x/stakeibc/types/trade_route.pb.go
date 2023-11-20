@@ -88,12 +88,10 @@ func (m *TradeHop) GetToAccount() ICAAccount {
 }
 
 // TradeRoute represents a round trip including info on transfer and how to do
-// the swap It makes the assumption that the reward token is always foreign to
-// the host so
-//
-//	the first two hops are to unwind the ibc denom and get tokens to the trade
-//	chain the last hop is the return trip home so funds start/end in the
-//	withdrawl ICA on hostZone
+// the swap. It makes the assumption that the reward token is always foreign to
+// the host so therefore the first two hops are to unwind the ibc denom enroute
+// to the trade chain and the last hop is the return so funds start/end in the
+// withdrawl ICA on hostZone
 type TradeRoute struct {
 	// ibc denom for the reward on the host zone
 	RewardDenomOnHostZone string `protobuf:"bytes,1,opt,name=reward_denom_on_host_zone,json=rewardDenomOnHostZone,proto3" json:"reward_denom_on_host_zone,omitempty"`
@@ -108,11 +106,11 @@ type TradeRoute struct {
 	HostToRewardHop       TradeHop `protobuf:"bytes,6,opt,name=host_to_reward_hop,json=hostToRewardHop,proto3" json:"host_to_reward_hop"`
 	RewardToTradeHop      TradeHop `protobuf:"bytes,7,opt,name=reward_to_trade_hop,json=rewardToTradeHop,proto3" json:"reward_to_trade_hop"`
 	TradeToHostHop        TradeHop `protobuf:"bytes,8,opt,name=trade_to_host_hop,json=tradeToHostHop,proto3" json:"trade_to_host_hop"`
-	// for now, Osmosis is the only trade chain so this is an osmosis pool id
+	// Currently Osmosis is the only trade chain so this is an osmosis pool id
 	PoolId uint64 `protobuf:"varint,9,opt,name=pool_id,json=poolId,proto3" json:"pool_id,omitempty"`
-	// The spot price is a math/big int which can be variable length byte array
+	// Spot price is a decimal ratio of the input to output denom as a string
 	SpotPrice string `protobuf:"bytes,10,opt,name=spot_price,json=spotPrice,proto3" json:"spot_price,omitempty"`
-	// min and max set size boundaries for swaps of reward denom on trade chain
+	// min and max set boundaries of reward denom on trade chain we will swap
 	MinSwapAmount github_com_cosmos_cosmos_sdk_types.Int `protobuf:"bytes,11,opt,name=min_swap_amount,json=minSwapAmount,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Int" json:"min_swap_amount"`
 	MaxSwapAmount github_com_cosmos_cosmos_sdk_types.Int `protobuf:"bytes,12,opt,name=max_swap_amount,json=maxSwapAmount,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Int" json:"max_swap_amount"`
 }

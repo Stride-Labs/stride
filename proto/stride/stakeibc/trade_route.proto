@@ -16,11 +16,10 @@ message TradeHop {
 }
 
 // TradeRoute represents a round trip including info on transfer and how to do
-// the swap It makes the assumption that the reward token is always foreign to
-// the host so
-//  the first two hops are to unwind the ibc denom and get tokens to the trade
-//  chain the last hop is the return trip home so funds start/end in the
-//  withdrawl ICA on hostZone
+// the swap. It makes the assumption that the reward token is always foreign to
+// the host so therefore the first two hops are to unwind the ibc denom enroute
+// to the trade chain and the last hop is the return so funds start/end in the
+// withdrawl ICA on hostZone
 message TradeRoute {
   // ibc denom for the reward on the host zone
   string reward_denom_on_host_zone = 1;
@@ -37,13 +36,13 @@ message TradeRoute {
   TradeHop reward_to_trade_hop = 7 [ (gogoproto.nullable) = false ];
   TradeHop trade_to_host_hop = 8 [ (gogoproto.nullable) = false ];
 
-  // for now, Osmosis is the only trade chain so this is an osmosis pool id
+  // Currently Osmosis is the only trade chain so this is an osmosis pool id
   uint64 pool_id = 9;
 
-  // The spot price is a math/big int which can be variable length byte array
+  // Spot price is a decimal ratio of the input to output denom as a string
   string spot_price = 10;
 
-  // min and max set size boundaries for swaps of reward denom on trade chain
+  // min and max set boundaries of reward denom on trade chain we will swap
   string min_swap_amount = 11 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
     (gogoproto.nullable) = false

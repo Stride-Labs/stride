@@ -28,6 +28,12 @@ service Msg {
   rpc UpdateValidatorSharesExchRate(MsgUpdateValidatorSharesExchRate)
       returns (MsgUpdateValidatorSharesExchRateResponse);
   rpc ClearBalance(MsgClearBalance) returns (MsgClearBalanceResponse);
+  rpc CreateTradeRoute(MsgCreateTradeRoute)
+      returns (MsgCreateTradeRouteResponse);
+  rpc DeleteTradeRoute(MsgDeleteTradeRoute)
+      returns (MsgDeleteTradeRouteResponse);
+  rpc UpdateTradeRoute(MsgUpdateTradeRoute)
+      returns (MsgUpdateTradeRouteResponse);
 }
 
 message MsgLiquidStake {
@@ -151,3 +157,61 @@ message MsgUpdateValidatorSharesExchRate {
   string valoper = 3;
 }
 message MsgUpdateValidatorSharesExchRateResponse {}
+
+message MsgCreateTradeRoute {
+  string creator = 1;
+  string host_chain_id = 2;
+  string host_connection_id = 3;
+  string host_ica_address = 4;
+  string reward_chain_id = 5;
+  string reward_connection_id = 6;
+  string reward_ica_address = 7;
+  string trade_chain_id = 8;
+  string trade_connection_id = 9;
+  string trade_ica_address = 10;
+  string host_reward_transfer_channel_id = 11;
+  string reward_trade_transfer_channel_id = 12;
+  string trade_host_transfer_channel_id = 13;
+  string reward_denom_on_host = 14;
+  string reward_denom_on_reward = 15;
+  string reward_denom_on_trade = 16;
+  string target_denom_on_trade = 17;
+  string target_denom_on_host = 18;
+  uint64 pool_id = 19;
+  string min_swap_amount = 20 [
+    (cosmos_proto.scalar) = "cosmos.Int",
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable) = false
+  ];
+  string max_swap_amount = 21 [
+    (cosmos_proto.scalar) = "cosmos.Int",
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable) = false
+  ];
+}
+message MsgCreateTradeRouteResponse {}
+
+message MsgDeleteTradeRoute {
+  string creator = 1;
+  string host_denom = 2;
+  string reward_denom = 3;
+}
+message MsgDeleteTradeRouteResponse {}
+
+message MsgUpdateTradeRoute {
+  string creator = 1;
+  string host_denom = 2;
+  string reward_denom = 3;
+  uint64 pool_id = 4;
+  string min_swap_amount = 5 [
+    (cosmos_proto.scalar) = "cosmos.Int",
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable) = false
+  ];
+  string max_swap_amount = 6 [
+    (cosmos_proto.scalar) = "cosmos.Int",
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable) = false
+  ];
+}
+message MsgUpdateTradeRouteResponse {}
