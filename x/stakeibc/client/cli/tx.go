@@ -36,6 +36,9 @@ func GetTxCmd() *cobra.Command {
 	cmd.AddCommand(CmdRestoreInterchainAccount())
 	cmd.AddCommand(CmdUpdateValidatorSharesExchRate())
 	cmd.AddCommand(CmdClearBalance())
+	cmd.AddCommand(CmdCreateTradeRoute())
+	cmd.AddCommand(CmdDeleteTradeRoute())
+	cmd.AddCommand(CmdUpdateTradeRoute())
 
 	return cmd
 }

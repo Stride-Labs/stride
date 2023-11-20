@@ -2,41 +2,53 @@ syntax = "proto3";
 package stride.stakeibc;
 
 import "gogoproto/gogo.proto";
+import "stride/stakeibc/ica_account.proto";
 
 option go_package = "github.com/Stride-Labs/stride/v14/x/stakeibc/types";
 
-// TradeRoutes defines all info needed for token transfers and trade operations
-message TradeRoutes {
-  repeated TransferRoute transfer_routes = 1 [ (gogoproto.nullable) = false ];
-  repeated TradePool trade_pools = 3 [ (gogoproto.nullable) = false ];  
+// Represents a single directional hop from one ICA to another ICA
+// transfer_channel is between the first chain and second
+// No need for the transfer port because that is a fixed variable
+message TradeHop {
+  string transfer_channel_id = 1;
+  ICAAccount from_account = 2 [ (gogoproto.nullable) = false ];
+  ICAAccount to_account = 3 [ (gogoproto.nullable) = false ];
 }
 
-// TransferRoute has the connection info needed to do either a direct or two-hop unwinding ibc transfer
-// For direct routes: 
-//    middle_denom, middle_chain_id, finish_transfer_port/channel, and passthrough_ica_address should be empty
-// For unwinding routes, 
-//    the middle denom ought to be the host denom for the middle chain
-//    if the middle chain has the newest pfm installed, the passthrough_ica_address can be "pfm"
-//    if the middle chain has pfm installed but is older, a legal address will be needed on the middle chain
-//    if the middle chain doesn't have pfm installed at all, two separate ibc transfers will be needed
-message TransferRoute {
-  string start_denom = 1;
-  string middle_denom = 2;
-  string finish_denom = 3;
-  string start_chain_id = 4;
-  string middle_chain_id = 5;
-  string finish_chain_id = 6;
-  string start_transfer_port = 7;
-  string start_transfer_channel = 8;
-  string finish_transfer_port = 9;
-  string finish_transfer_channel = 10;
-  string passthrough_ica_address = 11; 
-}
+// TradeRoute represents a round trip including info on transfer and how to do
+// the swap. It makes the assumption that the reward token is always foreign to
+// the host so therefore the first two hops are to unwind the ibc denom enroute
+// to the trade chain and the last hop is the return so funds start/end in the
+// withdrawl ICA on hostZone
+message TradeRoute {
+  // ibc denom for the reward on the host zone
+  string reward_denom_on_host_zone = 1;
+  // should be the native denom for the reward chain
+  string reward_denom_on_reward_zone = 2;
+  // ibc denom of the reward on the trade chain, input to the swap
+  string reward_denom_on_trade_zone = 3;
+  // ibc of the host denom on the trade chain, output from the swap
+  string target_denom_on_trade_zone = 4;
+  // should be the same as the native host denom on the host chain
+  string target_denom_on_host_zone = 5;
 
-// TradePool defines which pool on the tradeZone to use when making a swap
-message TradePool {
-  string host_chain_id = 1;
-  string input_denom = 2;
-  string output_denom = 3;
-  uint64 pool_id = 4;
+  TradeHop host_to_reward_hop = 6 [ (gogoproto.nullable) = false ];
+  TradeHop reward_to_trade_hop = 7 [ (gogoproto.nullable) = false ];
+  TradeHop trade_to_host_hop = 8 [ (gogoproto.nullable) = false ];
+
+  // Currently Osmosis is the only trade chain so this is an osmosis pool id
+  uint64 pool_id = 9;
+
+  // Spot price is a decimal ratio of the input to output denom as a string
+  string spot_price = 10;
+
+  // min and max set boundaries of reward denom on trade chain we will swap
+  string min_swap_amount = 11 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable) = false
+  ];
+  string max_swap_amount = 12 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable) = false
+  ];
 }

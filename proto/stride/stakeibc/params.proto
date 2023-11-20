@@ -2,7 +2,6 @@ syntax = "proto3";
 package stride.stakeibc;
 
 import "gogoproto/gogo.proto";
-import "stride/stakeibc/trade_route.proto";
 
 option go_package = "github.com/Stride-Labs/stride/v14/x/stakeibc/types";
 
@@ -27,7 +26,6 @@ message Params {
   uint64 default_max_redemption_rate_threshold = 15;
   uint64 ibc_transfer_timeout_nanos = 16;
   uint64 validator_slash_query_threshold = 19;
-  TradeRoutes trade_routes = 20;
 
   reserved 8, 17, 18;
 }

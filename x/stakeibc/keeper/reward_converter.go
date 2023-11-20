@@ -1,7 +1,6 @@
 package keeper
 
 import (
-	"errors"
 	"fmt"
 	"time"
 
@@ -18,8 +17,6 @@ import (
 	epochstypes "github.com/Stride-Labs/stride/v14/x/epochs/types"
 	icqtypes "github.com/Stride-Labs/stride/v14/x/interchainquery/types"
 	"github.com/Stride-Labs/stride/v14/x/stakeibc/types"
-
-	osmosistypes "github.com/osmosis-labs/osmosis/x/gamm/types"
 )
 
 // The goal of this code is to allow certain reward token types to be automatically traded into other types
@@ -40,259 +37,185 @@ import (
 // Normal staking flow continues from there. So if the target denom is the original host zone base denom
 // as will often be the case, then these tokens will follow the normal staking and distribution flow.
 
-// Normal IBC transfers can't always be used, pfm transfers might be needed to unwind through the reward zone
-// even if the converted denom is hostZone host denom, direct routes contain channel info between host and trade zones
-// (going through Stride would mess up the IBC denoms further, the host zone ICA can kick off ibc/pfm transfer)
+// msgs with packet forwarding memos can unwind through the reward zone and chain two transfer hops without callbacks
 
-var (
-	// Timeout for the IBC transfer of the Tokens across zones, sometimes with pfm for 2 hops
-	TransferTimeout = time.Hour * 24 // 1 day
-)
-
-// Helper to load all trade-able reward token denoms based on what TransferRoutes from hostZone -> tradeZone are defined
-// important: these are the ibc denoms as they exist on the hostZone, not the tradeZone
-// these are the denoms for which the balance should be checked in the QueryWithdrawalRewardBalance ICQs
-func (k Keeper) GetHostZoneTradeableDenoms(ctx sdk.Context, hostZoneID string) (denoms []string) {
-	params := k.GetParams(ctx)
-	tradeRoutes := params.TradeRoutes
-	for _, route := range tradeRoutes.TransferRoutes {
-		if route.StartChainId == hostZoneID {
-			denoms = append(denoms, route.StartDenom)
-		} 
+// ICA tx will kick off transfering the reward tokens from the hostZone withdrawl ICA to the tradeZone trade ICA
+// This will be two hops to unwind the ibc denom through the rewardZone using pfm in the transfer memo if possible
+func (k Keeper) TransferRewardTokensHostToTrade(ctx sdk.Context, amount sdk.Int, route types.TradeRoute) error {
+	// Timeout for ica tx and the transfer msgs is at end of epoch
+	strideEpochTracker, found := k.GetEpochTracker(ctx, epochstypes.STRIDE_EPOCH)
+	if !found {
+		return errorsmod.Wrapf(types.ErrEpochNotFound, epochstypes.STRIDE_EPOCH)
 	}
-	return denoms
-}
+	timeout := uint64(strideEpochTracker.NextEpochStartTime)
 
-// Helper to load all trade-able reward token denoms based on what TradePools are defined
-// Important: these are the ibc denoms as they exist on the tradeZone, not the hostZone
-// these are the denoms for which the balance should be checked in the QueryTradeRewardBalance ICQs
-func (k Keeper) GetTradeZoneTradeableDenoms(ctx sdk.Context) (denoms []string) {
-	params := k.GetParams(ctx)
-	tradeRoutes := params.TradeRoutes
-	for _, pool := range tradeRoutes.TradePools {
-		denoms = append(denoms, pool.InputDenom)
-	}
-	return denoms
-}
+	startingDenom := route.RewardDenomOnHostZone
+	sendTokens := sdk.NewCoin(startingDenom, amount)
 
-// Helper to load all converted token denoms based on what TransferRoutes from tradeZone -> hostZone are defined
-// Important: these are the ibc denoms as they exist on the tradeZone, not the hostZone
-// these are the denoms for which the balance should be checked in the QueryTradeConvertedBalance ICQs
-func (k Keeper) GetTradeZoneConvertedDenoms(ctx sdk.Context, tradeZoneID string) (denoms []string) {
-	return k.GetHostZoneTradeableDenoms(ctx, tradeZoneID)
-}
+	withdrawlIcaAddress := route.HostToRewardHop.FromAccount.Address
+	unwindIcaAddress := route.HostToRewardHop.ToAccount.Address
+	tradeIcaAddress := route.RewardToTradeHop.ToAccount.Address
 
-// Helper to get which tradeZone this denom on this hostZone can be found to have pools
-// Important: these are the ibc denoms as they exist on the hostZone, not the tradeZone
-func (k Keeper) GetTradeZoneID(ctx sdk.Context, denomOnHostZone string, hostZoneID string) (tradeZoneID string) {
-	params := k.GetParams(ctx)
-	tradeRoutes := params.TradeRoutes
-	for _, route := range tradeRoutes.TransferRoutes {
-		if route.StartDenom == denomOnHostZone && 
-			route.StartChainId == hostZoneID {
-				return route.FinishChainId
-			} 
-	}
-	return "osmosis-1" // default tradezone, still needs to be defined in the hostZones
-}
+	// Import and use pfm data structures instead of this JSON if we can determine consistent module version...
+	memoJSON := fmt.Sprintf(`"forward": {"receiver": "%s","port": "%s","channel":"%s","timeout":"10m","retries": 2}`,
+		tradeIcaAddress, transfertypes.PortID, route.RewardToTradeHop.TransferChannelId)
+	// This transfer channel id is a channel on the reward Zone for transfers to the trade zone
+	// so remember, this transfer channel id will not exist on hostZone or stride
 
-// Helper to get the tradePool for this input denom on tradeZone originally coming from this hostZone 
-// Important: these are the ibc denoms as they exist on the tradeZone, not the hostZone
-func (k Keeper) GetTradePool(ctx sdk.Context, rewardDenomOnTradeZone string, hostZoneID string) (types.TradePool, error) {
-	params := k.GetParams(ctx)
-	tradeRoutes := params.TradeRoutes
-	for _, pool := range tradeRoutes.TradePools {
-		if pool.InputDenom == rewardDenomOnTradeZone && 
-			pool.HostChainId == hostZoneID {
-				return pool, nil
-			} 
-	}
-	return types.TradePool{}, errors.New("No trade pool found defined in the params for this source and denom")
-}
-
-// Helper to locate the route if it exists in the params based on start denom and the start and finish chains
-func (k Keeper) GetTransferRoute(ctx sdk.Context, startDenom string, startChainID string, finishChainID string) (types.TransferRoute, error) {
-	params := k.GetParams(ctx)
-	tradeRoutes := params.TradeRoutes
-
-	for _, route := range tradeRoutes.TransferRoutes {
-		if route.StartDenom == startDenom && 
-			route.StartChainId == startChainID && 
-				route.FinishChainId == finishChainID {
-					return route, nil
-		}
-	}
-	return types.TransferRoute{}, errors.New("No route was found defined in the params for this transfer")
-}
-
-// Helper function with internal logic to determine if denoms are foreign ibc denoms and PFM unwinding is needed
-// Only use when both startZone and finishZone are not strideZone itself and therefore these addresses are ICAs
-func (k Keeper) TransferTokensFromStartZonetoFinishZone(ctx sdk.Context, 
-					amount sdk.Int, 
-					startZoneDenom string, 
-					startZone types.HostZone, 
-					startZoneAddress string, 
-					finishZone types.HostZone, 
-					finishZoneAddress string) error {
-	// Get the route if it exists
-	route, routeErr := k.GetTransferRoute(ctx, startZoneDenom, startZone.ChainId, finishZone.ChainId)
-	if routeErr != nil {
-		return routeErr
-	}
-
-	// Check if this is a single hop direct ibc transfer or a two-hop ibc unwinding transfer
-	if route.MiddleDenom == "" && route.MiddleChainId == "" {
-		// found a direct route, use info to kick off standard ibc transfer (from the startZoneAddress ICA)
-		sendTokens := sdk.NewCoin(startZoneDenom, amount)
-		timeout := uint64(ctx.BlockTime().UnixNano() + (TransferTimeout).Nanoseconds())
-
-		var msgs []proto.Message
-		msgs = append(msgs, &transfertypes.MsgTransfer{
-			SourcePort:       transfertypes.PortID, //route.StartTransferPort if need custom port
-			SourceChannel:    route.StartTransferChannel,
-			Token:            sendTokens,
-			Sender:           startZoneAddress,
-			Receiver:         finishZoneAddress,
-			TimeoutTimestamp: timeout,
-		})					
-		k.Logger(ctx).Info(utils.LogWithHostZone(startZone.ChainId,
-			"Preparing MsgTransfer of %v from %s to %s", sendTokens.String(), startZone.ChainId, finishZone.ChainId))
-	
-		// Send the transaction through SubmitTxsStrideEpoch to kick off transfer from the startZone to the finishZone
-		// By making the callbackId = "", no callback data will be needed and callbackArgs will be ignored
-		callbackId := ""
-		var callbackArgs []byte;
-		_, err := k.SubmitTxsStrideEpoch(ctx, startZone.ConnectionId, msgs, types.ICAAccountType_WITHDRAWAL, callbackId, callbackArgs)
-		if err != nil {
-			return errorsmod.Wrapf(types.ErrICATxFailed, "Failed to SubmitTxs, Messages: %v, err: %s", msgs, err.Error())
-		}
-
-		return nil
-
-	} else {
-		// found an unwinding route, use info to kick off standard ibc transfer (from the startZoneAddress ICA)
-		// and then include the relevant memo for pfm to perform the chained transfer to the finishZoneAddress
-		sendTokens := sdk.NewCoin(startZoneDenom, amount)
-		timeout := uint64(ctx.BlockTime().UnixNano() + (TransferTimeout).Nanoseconds())
-
-		memoJSON := fmt.Sprintf(`"forward": {"receiver": "%s","port": "%s","channel":"%s","timeout":"10m","retries": 2}`,
-			finishZoneAddress, route.FinishTransferPort, route.FinishTransferChannel)
-
-		var msgs []proto.Message
-		msgs = append(msgs, &transfertypes.MsgTransfer{
-			SourcePort:       transfertypes.PortID, //route.TransferRoute.TransferPort if need custom port
-			SourceChannel:    route.StartTransferChannel,
-			Token:            sendTokens,
-			Sender:           startZoneAddress,
-			Receiver:         route.PassthroughIcaAddress, // could be "pfm" or a real address depending on version
-			TimeoutTimestamp: timeout,
-			Memo:             memoJSON,	
-		})					
-		k.Logger(ctx).Info(utils.LogWithHostZone(startZone.ChainId,
-			"Preparing MsgTransfer of %v from %s to %s", sendTokens.String(), startZone.ChainId, finishZone.ChainId))
-	
-		// Send the transaction through SubmitTxsStrideEpoch to kick off transfer from the startZone to the finishZone
-		// By making the callbackId = "", no callback data will be needed and callbackArgs will be ignored
-		callbackId := ""
-		var callbackArgs []byte
-		_, err := k.SubmitTxsStrideEpoch(ctx, startZone.ConnectionId, msgs, types.ICAAccountType_WITHDRAWAL, callbackId, callbackArgs)
-		if err != nil {
-			return errorsmod.Wrapf(types.ErrICATxFailed, "Failed to SubmitTxs, Messages: %v, err: %s", msgs, err.Error())
-		}
-
-		return nil
-	}
-}
-
-
-// Transfer the reward tokens from the hostZone withdrawl ICA to be converted on the tradeZone
-func (k Keeper) TransferHostRewardTokensToTrade(ctx sdk.Context, amount sdk.Int, rewardDenom string, hostZone types.HostZone, tradeZone types.HostZone) error {
-	return k.TransferTokensFromStartZonetoFinishZone(ctx, 
-		amount, 
-		rewardDenom,
-		hostZone, 
-		hostZone.WithdrawalIcaAddress, 
-		tradeZone, 
-		hostZone.RewardTradeIcaAddress) // this ICA exists on the tradeZone but stored per hostZone
-}
-
-// Transfer the converted tokens back from tradeZone to the hostZone withdrawal ICA
-func (k Keeper) TransferTradeConvertedTokensToHost(ctx sdk.Context, amount sdk.Int, convertedDenom string, hostZone types.HostZone, tradeZone types.HostZone) error {
-	return k.TransferTokensFromStartZonetoFinishZone(ctx, 
-		amount, 
-		convertedDenom, 
-		tradeZone, 
-		hostZone.RewardTradeIcaAddress, // this ICA exists on the tradeZone but stored per hostZone
-		hostZone, 
-		hostZone.WithdrawalIcaAddress)
-}
-
-// Trade all the reward tokens in the Trade ICA for the target output token type using ICA remote tx on trade zone
-// Params define the inputs, outputs, routes, and pool information on the trade zone for each type of token
-func (k Keeper) TradeRewardTokens(ctx sdk.Context, 
-					amount sdk.Int,
-					rewardDenomOnTradeZone string,
-					hostZone types.HostZone, 
-					tradeZone types.HostZone) error {
-	// Load the tradepool info if it exists
-	tradePool, poolErr := k.GetTradePool(ctx, rewardDenomOnTradeZone, hostZone.ChainId)
-	if poolErr != nil {
-		return poolErr
-	}
-	tradeTokens := sdk.NewCoin(rewardDenomOnTradeZone, amount)
-	// Prepare Osmosis GAMM module MsgSwapExactAmountIn from the trade account to perform the trade
-	// If we want to generalize in the future, write swap message generation funcs for each DEX type, 
-	// decide which msg generation function to call based on check of which tradeZone was passed in
 	var msgs []proto.Message
-	if amount.GT(sdk.ZeroInt()) {
-		var routes []osmosistypes.SwapAmountInRoute
-		routes = append(routes, osmosistypes.SwapAmountInRoute{
-			PoolId: tradePool.PoolId,
-			TokenOutDenom: tradePool.OutputDenom,
-		});
-		msgs = append(msgs, &osmosistypes.MsgSwapExactAmountIn{
-			Sender: hostZone.RewardTradeIcaAddress, // address exists on trade zone but field stored on hostZone
-			Routes: routes,
-			TokenIn: tradeTokens,
-			TokenOutMinAmount: sdk.ZeroInt(),
-		})
-		k.Logger(ctx).Info(utils.LogWithHostZone(tradeZone.ChainId,
-			"Preparing MsgSwapExactAmountIn of %v from the trade account", tradeTokens.String()))
-	}
+	msgs = append(msgs, &transfertypes.MsgTransfer{
+		SourcePort:       transfertypes.PortID,
+		SourceChannel:    route.HostToRewardHop.TransferChannelId, // channel on hostZone for transfers to rewardZone
+		Token:            sendTokens,
+		Sender:           withdrawlIcaAddress,
+		Receiver:         unwindIcaAddress, // could be "pfm" or a real address depending on version
+		TimeoutTimestamp: timeout,
+		Memo:             memoJSON,
+	})
 
-	// Send the transaction through SubmitTxsStrideEpoch
-	// By making the callbackId = "", no callback data will be needed and callbackArgs will be ignored
-	callbackId := ""
-	var callbackArgs []byte
-	_, err := k.SubmitTxsStrideEpoch(ctx, tradeZone.ConnectionId, msgs, types.ICAAccountType_TRADE, callbackId, callbackArgs)
+	hostZoneId := route.HostToRewardHop.FromAccount.ChainId
+	rewardZoneId := route.HostToRewardHop.ToAccount.ChainId
+	tradeZoneId := route.RewardToTradeHop.ToAccount.ChainId
+	k.Logger(ctx).Info(utils.LogWithHostZone(hostZoneId,
+		"Preparing MsgTransfer of %+v from %s to %s to %s", sendTokens, hostZoneId, rewardZoneId, tradeZoneId))
+
+	// Send the ICA tx to kick off transfer from hostZone through rewardZone to the tradeZone (no callbacks)
+	hostZoneConnectionId := route.HostToRewardHop.FromAccount.ConnectionId
+	err := k.SubmitICATxWithoutCallback(ctx, hostZoneConnectionId, types.ICAAccountType_WITHDRAWAL, msgs, timeout)
 	if err != nil {
-		return errorsmod.Wrapf(types.ErrICATxFailed, "Failed to SubmitTxs, Messages: %v, err: %s", msgs, err.Error())
+		return errorsmod.Wrapf(types.ErrICATxFailed, "Failed to submit ICA tx, Messages: %+v, err: %s", msgs, err.Error())
 	}
 
 	return nil
 }
 
+// ICA tx to kick off transfering the converted tokens back from tradeZone to the hostZone withdrawal ICA
+func (k Keeper) TransferConvertedTokensTradeToHost(ctx sdk.Context, amount sdk.Int, route types.TradeRoute) error {
+	// Timeout for ica tx and the transfer msgs is at end of epoch
+	strideEpochTracker, found := k.GetEpochTracker(ctx, epochstypes.STRIDE_EPOCH)
+	if !found {
+		return errorsmod.Wrapf(types.ErrEpochNotFound, epochstypes.STRIDE_EPOCH)
+	}
+	timeout := uint64(strideEpochTracker.NextEpochStartTime)
+
+	convertedDenom := route.TargetDenomOnTradeZone
+	sendTokens := sdk.NewCoin(convertedDenom, amount)
+
+	tradeIcaAddress := route.TradeToHostHop.FromAccount.Address
+	withdrawlIcaAddress := route.TradeToHostHop.ToAccount.Address
+
+	var msgs []proto.Message
+	msgs = append(msgs, &transfertypes.MsgTransfer{
+		SourcePort:       transfertypes.PortID,
+		SourceChannel:    route.TradeToHostHop.TransferChannelId, // channel on tradeZone for transfers to hostZone
+		Token:            sendTokens,
+		Sender:           tradeIcaAddress,
+		Receiver:         withdrawlIcaAddress,
+		TimeoutTimestamp: timeout,
+		Memo:             "",
+	})
+
+	hostZoneId := route.TradeToHostHop.ToAccount.ChainId
+	tradeZoneId := route.TradeToHostHop.FromAccount.ChainId
+	k.Logger(ctx).Info(utils.LogWithHostZone(hostZoneId,
+		"Preparing MsgTransfer of %+v from %s to %s", sendTokens, tradeZoneId, hostZoneId))
+
+	// Send the ICA tx to kick off transfer from hostZone through rewardZone to the tradeZone (no callbacks)
+	tradeZoneConnectionId := route.TradeToHostHop.FromAccount.ConnectionId
+	err := k.SubmitICATxWithoutCallback(ctx, tradeZoneConnectionId, types.ICAAccountType_TRADE, msgs, timeout)
+	if err != nil {
+		return errorsmod.Wrapf(types.ErrICATxFailed, "Failed to submit ICA tx, Messages: %+v, err: %s", msgs, err.Error())
+	}
+
+	return nil
+}
+
+// Trade reward tokens in the Trade ICA for the target output token type using ICA remote tx on trade zone
+// The amount represents the total amount of the reward token in the trade ICA found by the calling ICQ
+// Depending on min and max swap amounts set in the route, it is possible not the full amount given will swap
+func (k Keeper) TradeRewardTokens(ctx sdk.Context, amount sdk.Int, route types.TradeRoute) error {
+	// If the min swap amount was not set it would be ZeroInt, if positive we need to compare to the amount given	
+	//  then if the min swap amount is greater than the current amount, do nothing this epoch to avoid small swaps
+	if route.MinSwapAmount.IsPositive() && route.MinSwapAmount.GT(amount) {
+		return nil
+	}
+
+	// If the max swap amount was not set it would be ZeroInt, if positive we need to compare to the amount given
+	//  then if max swap amount is LTE to amount full swap is possible so amount is fine, otherwise set amount to max
+	if route.MaxSwapAmount.IsPositive() && route.MaxSwapAmount.GT(amount) {
+		amount = route.MaxSwapAmount
+	} 
+
+	// See if pool swap spot price has been set to a valid ratio (string representing a float like "10.203")
+	// If there is a valid spot price, use it to set a floor for the acceptable minimum output tokens
+	// 5% slippage is allowed so multiply by 0.95 the expected spot price to get the target minimum
+	// minOut is the minimum number of route.TargetDenomOnTradeZone we must receive or the swap will fail
+	minOut := sdk.ZeroInt()
+	if route.SpotPrice != "" {
+		if spotPrice, err := sdk.NewDecFromStr(route.SpotPrice); err == nil {
+			slippageRatio := sdk.NewDecWithPrec(95, 2) // 0.95 to allow 5% loss to slippage
+			inputToOutputRatio := slippageRatio.Mul(spotPrice)
+			minOut = sdk.NewDecFromInt(amount).Mul(inputToOutputRatio).TruncateInt()
+		} else {
+			k.Logger(ctx).Error("Couldn't parse the spot price %s as a Decimal", route.SpotPrice)
+			// Don't allow a missing spot price to stop the swap, use zeroInt as the lower bound for now
+		}
+	}
+
+	tradeIcaAccount := route.RewardToTradeHop.ToAccount
+	tradeTokens := sdk.NewCoin(route.RewardDenomOnTradeZone, amount)
+
+	// Prepare Osmosis GAMM module MsgSwapExactAmountIn from the trade account to perform the trade
+	// If we want to generalize in the future, write swap message generation funcs for each DEX type,
+	// decide which msg generation function to call based on check of which tradeZone was passed in
+	var msgs []proto.Message
+	if amount.GT(sdk.ZeroInt()) {
+		var routes []types.SwapAmountInRoute
+		routes = append(routes, types.SwapAmountInRoute{
+			PoolId:        route.PoolId,
+			TokenOutDenom: route.TargetDenomOnTradeZone,
+		})
+		msgs = append(msgs, &types.MsgSwapExactAmountIn{
+			Sender:            tradeIcaAccount.Address,
+			Routes:            routes,
+			TokenIn:           tradeTokens,
+			TokenOutMinAmount: minOut,
+		})
+		k.Logger(ctx).Info(utils.LogWithHostZone(tradeIcaAccount.ChainId,
+			"Preparing MsgSwapExactAmountIn of %+v from the trade account", tradeTokens))
+	}
+
+	strideEpochTracker, found := k.GetEpochTracker(ctx, epochstypes.STRIDE_EPOCH)
+	if !found {
+		return errorsmod.Wrapf(types.ErrEpochNotFound, epochstypes.STRIDE_EPOCH)
+	}
+	timeout := uint64(strideEpochTracker.NextEpochStartTime)
+
+	// Send the ICA tx to perform the swap on the tradeZone
+	err := k.SubmitICATxWithoutCallback(ctx, tradeIcaAccount.ConnectionId, types.ICAAccountType_TRADE, msgs, timeout)
+	if err != nil {
+		return errorsmod.Wrapf(types.ErrICATxFailed, "Failed to submit ICA tx for the swap, Messages: %v, err: %s", msgs, err.Error())
+	}
+
+	return nil
+}
 
 // ICQ calls for remote ICA balances
 // There is a single trade zone (hardcoded as Osmosis for now but maybe additional DEXes allowed in the future)
 // We have to initialize a single hostZone object for the trade zone once in initialization and then it can be used in all these calls
 
 // Kick off ICQ for the reward denom balance in the withdrawal address
-func (k Keeper) WithdrawalRewardBalanceQuery(ctx sdk.Context, hostZone types.HostZone, hostZoneRewardDenom string) error {
-	k.Logger(ctx).Info(utils.LogWithHostZone(hostZone.ChainId, "Submitting ICQ for reward denom in withdrawal account"))
-
-	// Get the withdrawal account address from the host zone
-	if hostZone.WithdrawalIcaAddress == "" {
-		return errorsmod.Wrapf(types.ErrICAAccountNotFound, "no withdrawal account found for %s", hostZone.ChainId)
-	}
+func (k Keeper) WithdrawalRewardBalanceQuery(ctx sdk.Context, route types.TradeRoute) error {
+	withdrawalAccount := route.HostToRewardHop.FromAccount
+	k.Logger(ctx).Info(utils.LogWithHostZone(withdrawalAccount.ChainId, "Submitting ICQ for reward denom in withdrawal account"))
 
 	// Encode the withdrawal account address for the query request
 	// The query request consists of the withdrawal account address and reward denom
-	_, withdrawalAddressBz, err := bech32.DecodeAndConvert(hostZone.WithdrawalIcaAddress)
+	_, withdrawalAddressBz, err := bech32.DecodeAndConvert(withdrawalAccount.Address)
 	if err != nil {
 		return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "invalid withdrawal account address, could not decode (%s)", err.Error())
 	}
-	queryData := append(bankTypes.CreateAccountBalancesPrefix(withdrawalAddressBz), []byte(hostZoneRewardDenom)...)
+	queryData := append(bankTypes.CreateAccountBalancesPrefix(withdrawalAddressBz), []byte(route.RewardDenomOnHostZone)...)
 
 	// Timeout query at end of epoch
 	strideEpochTracker, found := k.GetEpochTracker(ctx, epochstypes.STRIDE_EPOCH)
@@ -302,21 +225,17 @@ func (k Keeper) WithdrawalRewardBalanceQuery(ctx sdk.Context, hostZone types.Hos
 	timeout := time.Unix(0, int64(strideEpochTracker.NextEpochStartTime))
 	timeoutDuration := timeout.Sub(ctx.BlockTime())
 
-	// Marshalling callback data to pass into query
-	callbackData := types.WithdrawalRewardBalanceQueryCallback{
-		RewardDenomOnHostZone: hostZoneRewardDenom,
-		HostZoneId: hostZone.ChainId,
-	}
+	// The only callback data we need is the trade route
+	callbackData := route
 	callbackDataBz, err := proto.Marshal(&callbackData)
 	if err != nil {
-		return errorsmod.Wrapf(err, "unable to marshal WithdrawalRewardBalanceQuery callback data")
+		return errorsmod.Wrapf(err, "unable to marshal TradeRoute callback data")
 	}
-
 
 	// Submit the ICQ for the withdrawal account balance
 	query := icqtypes.Query{
-		ChainId:         hostZone.ChainId,
-		ConnectionId:    hostZone.ConnectionId,
+		ChainId:         withdrawalAccount.ChainId,
+		ConnectionId:    withdrawalAccount.ConnectionId,
 		QueryType:       icqtypes.BANK_STORE_QUERY_WITH_PROOF,
 		RequestData:     queryData,
 		CallbackModule:  types.ModuleName,
@@ -334,22 +253,18 @@ func (k Keeper) WithdrawalRewardBalanceQuery(ctx sdk.Context, hostZone types.Hos
 }
 
 // Kick off ICQ for how many reward tokens are in the trade ICA associated with this host zone
-func (k Keeper) TradeRewardBalanceQuery(ctx sdk.Context, hostZone types.HostZone, tradeZone types.HostZone, tradeZoneRewardDenom string) error {
-	k.Logger(ctx).Info(utils.LogWithHostZone(hostZone.ChainId, "Submitting ICQ for reward denom in trade ICA account"))
-
-	// Get the trade account address from the host zone
-	if hostZone.RewardTradeIcaAddress == "" {
-		return errorsmod.Wrapf(types.ErrICAAccountNotFound, "no trade account found for %s", hostZone.ChainId)
-	}
+func (k Keeper) TradeRewardBalanceQuery(ctx sdk.Context, route types.TradeRoute) error {
+	tradeAccount := route.RewardToTradeHop.ToAccount
+	k.Logger(ctx).Info(utils.LogWithHostZone(tradeAccount.ChainId, "Submitting ICQ for reward denom in trade ICA account"))
 
 	// Encode the trade account address for the query request
 	// The query request consists of the trade account address and reward denom
 	// keep in mind this ICA address actually exists on trade zone but is associated with trades performed for host zone
-	_, tradeAddressBz, err := bech32.DecodeAndConvert(hostZone.RewardTradeIcaAddress)
+	_, tradeAddressBz, err := bech32.DecodeAndConvert(tradeAccount.Address)
 	if err != nil {
 		return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "invalid trade account address, could not decode (%s)", err.Error())
 	}
-	queryData := append(bankTypes.CreateAccountBalancesPrefix(tradeAddressBz), []byte(tradeZoneRewardDenom)...)
+	queryData := append(bankTypes.CreateAccountBalancesPrefix(tradeAddressBz), []byte(route.RewardDenomOnTradeZone)...)
 
 	// Timeout query at end of epoch
 	strideEpochTracker, found := k.GetEpochTracker(ctx, epochstypes.STRIDE_EPOCH)
@@ -359,22 +274,17 @@ func (k Keeper) TradeRewardBalanceQuery(ctx sdk.Context, hostZone types.HostZone
 	timeout := time.Unix(0, int64(strideEpochTracker.NextEpochStartTime))
 	timeoutDuration := timeout.Sub(ctx.BlockTime())
 
-	// Marshalling callback data to pass into query
-	callbackData := types.TradeRewardBalanceQueryCallback{
-		RewardDenomOnTradeZone: tradeZoneRewardDenom,
-		HostZoneId: hostZone.ChainId,
-		TradeZoneId: tradeZone.ChainId,
-	}
+	// The only callback data we need is the trade route
+	callbackData := route
 	callbackDataBz, err := proto.Marshal(&callbackData)
 	if err != nil {
 		return errorsmod.Wrapf(err, "unable to marshal TradeRewardBalanceQuery callback data")
 	}
 
-
 	// Submit the ICQ for the withdrawal account balance
 	query := icqtypes.Query{
-		ChainId:         tradeZone.ChainId,
-		ConnectionId:    tradeZone.ConnectionId, // query needs to go to the trade zone, not the host zone
+		ChainId:         tradeAccount.ChainId,
+		ConnectionId:    tradeAccount.ConnectionId, // query needs to go to the trade zone, not the host zone
 		QueryType:       icqtypes.BANK_STORE_QUERY_WITH_PROOF,
 		RequestData:     queryData,
 		CallbackModule:  types.ModuleName,
@@ -392,22 +302,18 @@ func (k Keeper) TradeRewardBalanceQuery(ctx sdk.Context, hostZone types.HostZone
 }
 
 // Kick off ICQ for how many converted tokens are in the trade ICA associated with this host zone
-func (k Keeper) TradeConvertedBalanceQuery(ctx sdk.Context, hostZone types.HostZone, tradeZone types.HostZone, tradeZoneConvertedDenom string) error {
-	k.Logger(ctx).Info(utils.LogWithHostZone(hostZone.ChainId, "Submitting ICQ for converted denom in trade ICA account"))
-
-	// Get the trade account address from the host zone
-	if hostZone.RewardTradeIcaAddress == "" {
-		return errorsmod.Wrapf(types.ErrICAAccountNotFound, "no trade account found for %s", hostZone.ChainId)
-	}
+func (k Keeper) TradeConvertedBalanceQuery(ctx sdk.Context, route types.TradeRoute) error {
+	tradeAccount := route.RewardToTradeHop.ToAccount
+	k.Logger(ctx).Info(utils.LogWithHostZone(tradeAccount.ChainId, "Submitting ICQ for converted denom in trade ICA account"))
 
 	// Encode the trade account address for the query request
 	// The query request consists of the trade account address and converted denom
 	// keep in mind this ICA address actually exists on trade zone but is associated with trades performed for host zone
-	_, tradeAddressBz, err := bech32.DecodeAndConvert(hostZone.RewardTradeIcaAddress) 
+	_, tradeAddressBz, err := bech32.DecodeAndConvert(tradeAccount.Address)
 	if err != nil {
 		return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "invalid trade account address, could not decode (%s)", err.Error())
 	}
-	queryData := append(bankTypes.CreateAccountBalancesPrefix(tradeAddressBz), []byte(tradeZoneConvertedDenom)...)
+	queryData := append(bankTypes.CreateAccountBalancesPrefix(tradeAddressBz), []byte(route.TargetDenomOnTradeZone)...)
 
 	// Timeout query at end of epoch
 	strideEpochTracker, found := k.GetEpochTracker(ctx, epochstypes.STRIDE_EPOCH)
@@ -417,22 +323,17 @@ func (k Keeper) TradeConvertedBalanceQuery(ctx sdk.Context, hostZone types.HostZ
 	timeout := time.Unix(0, int64(strideEpochTracker.NextEpochStartTime))
 	timeoutDuration := timeout.Sub(ctx.BlockTime())
 
-	// Marshalling callback data to pass into query
-	callbackData := types.TradeConvertedBalanceQueryCallback{
-		ConvertedDenomOnTradeZone: tradeZoneConvertedDenom,
-		HostZoneId: hostZone.ChainId,
-		TradeZoneId: tradeZone.ChainId,
-	}
+	// The only callback data we need is the trade route
+	callbackData := route
 	callbackDataBz, err := proto.Marshal(&callbackData)
 	if err != nil {
-		return errorsmod.Wrapf(err, "unable to marshal WithdrawalRewardBalanceQuery callback data")
+		return errorsmod.Wrapf(err, "unable to marshal trade route as callback data")
 	}
-
 
 	// Submit the ICQ for the withdrawal account balance
 	query := icqtypes.Query{
-		ChainId:         tradeZone.ChainId,
-		ConnectionId:    tradeZone.ConnectionId, // query needs to go to the trade zone, not the host zone
+		ChainId:         tradeAccount.ChainId,
+		ConnectionId:    tradeAccount.ConnectionId, // query needs to go to the trade zone, not the host zone
 		QueryType:       icqtypes.BANK_STORE_QUERY_WITH_PROOF,
 		RequestData:     queryData,
 		CallbackModule:  types.ModuleName,
@@ -449,29 +350,92 @@ func (k Keeper) TradeConvertedBalanceQuery(ctx sdk.Context, hostZone types.HostZ
 	return nil
 }
 
+// Kick off ICQ for the spot price on the pool given the input and output denoms implied by the given TradeRoute
+//  the callback for this query is responsible for updating the returned spot price on the keeper data
+func (k Keeper) PoolSpotPriceQuery(ctx sdk.Context, route types.TradeRoute) error {
+	tradeAccount := route.RewardToTradeHop.ToAccount
+	k.Logger(ctx).Info(utils.LogWithHostZone(tradeAccount.ChainId, "Submitting ICQ for spot price in this pool"))
 
-// Final helper function to be run epochly, kicks off all queries on all token types which match that ICA
-func (k Keeper) ConvertAllRewards(ctx sdk.Context) {
-	for _, hostZone := range k.GetAllActiveHostZone(ctx) {
-		hostZoneTradableDenoms := k.GetHostZoneTradeableDenoms(ctx, hostZone.ChainId)
-		if len(hostZoneTradableDenoms) == 0 {
-			continue
-		}
-		for _, hostZoneRewardDenom := range hostZoneTradableDenoms {
-			k.WithdrawalRewardBalanceQuery(ctx, hostZone, hostZoneRewardDenom)
-		}
+	// Unlike balance queries, we can't do a normal ICQ which interacts with the foreign data store directly
+	// because on Osmosis the spot price for a pool is not stored down to their keeper data, it is computed each request
+	// Therefore we have to perform a query against their actual service, through the Osmosis spot price query route
 
-		tradeZoneID := k.GetTradeZoneID(ctx, hostZoneTradableDenoms[0], hostZone.ChainId)
-		tradeZone, _ := k.GetHostZone(ctx, tradeZoneID)
+	// The stride interchainquery module likely can't actually handle this type of query so this likely won't work yet...
 
-		tradeZoneRewardDenoms := k.GetTradeZoneTradeableDenoms(ctx)
-		for _, tradeZoneRewardDenom := range tradeZoneRewardDenoms {
-			k.TradeRewardBalanceQuery(ctx, hostZone, tradeZone, tradeZoneRewardDenom)
-		}
+	// Encode the osmosis spot price query request for the specific pool and denoms
+	spotPriceRequest := types.QuerySpotPriceRequest{
+		PoolId: route.PoolId,
+		BaseAssetDenom: route.RewardDenomOnTradeZone,
+		QuoteAssetDenom: route.TargetDenomOnTradeZone,
+	}
+	queryData := k.cdc.MustMarshal(&spotPriceRequest)
 
-		tradeZoneConvertedDenoms := k.GetTradeZoneConvertedDenoms(ctx, tradeZone.ChainId)
-		for _, tradeZoneConvertedDenom := range tradeZoneConvertedDenoms {
-			k.TradeConvertedBalanceQuery(ctx, hostZone, tradeZone, tradeZoneConvertedDenom)
-		}		
+	// Timeout query at end of epoch
+	strideEpochTracker, found := k.GetEpochTracker(ctx, epochstypes.STRIDE_EPOCH)
+	if !found {
+		return errorsmod.Wrapf(types.ErrEpochNotFound, epochstypes.STRIDE_EPOCH)
+	}
+	timeout := time.Unix(0, int64(strideEpochTracker.NextEpochStartTime))
+	timeoutDuration := timeout.Sub(ctx.BlockTime())
+
+	// The only callback data we will need is the trade route
+	callbackData := route
+	callbackDataBz, err := proto.Marshal(&callbackData)
+	if err != nil {
+		return errorsmod.Wrapf(err, "unable to marshal TradeRewardBalanceQuery callback data")
+	}
+
+	// Submit the ICQ for the trade pool spot price query
+	query := icqtypes.Query{
+		ChainId:         tradeAccount.ChainId,
+		ConnectionId:    tradeAccount.ConnectionId, // query needs to go to the trade zone, not the host zone
+		QueryType:       icqtypes.BANK_STORE_QUERY_WITH_PROOF,
+		RequestData:     queryData,
+		CallbackModule:  types.ModuleName,
+		CallbackId:      ICQCallbackID_PoolSpotPrice,
+		CallbackData:    callbackDataBz,
+		TimeoutDuration: timeoutDuration,
+		TimeoutPolicy:   icqtypes.TimeoutPolicy_REJECT_QUERY_RESPONSE,
+	}
+	if err := k.InterchainQueryKeeper.SubmitICQRequest(ctx, query, false); err != nil {
+		k.Logger(ctx).Error(fmt.Sprintf("Error querying pool spot price, error: %s", err.Error()))
+		return err
+	}
+
+	return nil
+}
+
+// The current design assumes foreign reward tokens start and end in the hostZone withdrawal address
+// Step 1: transfer reward tokens to trade chain
+// Step 2: perform the swap with as many reward tokens as possible
+// Step 3: return the swapped tokens to the withdrawal ICA on hostZone
+// Independently there is an ICQ to get the swap price and update it in the keeper state
+
+// Because the swaps have limits on how many tokens can be used to avoid slippage,
+// the swaps and price checks happen on a faster (hourly) cadence than the transfers (stride epochly)
+
+// Helper function to be run stride epochly, kicks off queries on specific denoms on route
+func (k Keeper) TransferAllRewardTokens(ctx sdk.Context) {
+	for _, route := range k.GetAllTradeRoutes(ctx) {
+		// Step 1: ICQ reward balance on hostZone, transfer funds with unwinding to trade chain
+		k.WithdrawalRewardBalanceQuery(ctx, route)
+		// Step 3: ICQ converted tokens in trade ICA, transfer funds back to hostZone withdrawal ICA
+		k.TradeConvertedBalanceQuery(ctx, route)
+	}
+}
+
+// Helper function to be run hourly, kicks off query which will kick off actual swaps to happen
+func (k Keeper) SwapAllRewardTokens(ctx sdk.Context) {
+	for _, route := range k.GetAllTradeRoutes(ctx) {
+		// Step 2: ICQ reward balance in trade ICA, swap tokens according to limiting rules
+		k.TradeRewardBalanceQuery(ctx, route)
+	}
+}
+
+// Helper function to be run hourly, kicks off query to get and update the swap price in keeper data
+func (k Keeper) UpdateAllSwapPrices(ctx sdk.Context) {
+	for _, route := range k.GetAllTradeRoutes(ctx) {
+		// ICQ swap price for the specific pair on this route and update keeper on callback
+		k.PoolSpotPriceQuery(ctx, route)
 	}
 }
