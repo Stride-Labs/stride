@@ -6,22 +6,50 @@ import "stride/stakeibc/ica_account.proto";
 
 option go_package = "github.com/Stride-Labs/stride/v14/x/stakeibc/types";
 
+// Represents a single directional hop from one ICA to another ICA
+// transfer_channel is between the first chain and second
+// No need for the transfer port because that is a fixed variable
 message TradeHop {
   string transfer_channel_id = 1;
   ICAAccount from_account = 2 [ (gogoproto.nullable) = false ];
   ICAAccount to_account = 3 [ (gogoproto.nullable) = false ];
 }
 
+// TradeRoute represents a round trip including info on transfer and how to do
+// the swap It makes the assumption that the reward token is always foreign to
+// the host so
+//  the first two hops are to unwind the ibc denom and get tokens to the trade
+//  chain the last hop is the return trip home so funds start/end in the
+//  withdrawl ICA on hostZone
 message TradeRoute {
+  // ibc denom for the reward on the host zone
   string reward_denom_on_host_zone = 1;
+  // should be the native denom for the reward chain
   string reward_denom_on_reward_zone = 2;
+  // ibc denom of the reward on the trade chain, input to the swap
   string reward_denom_on_trade_zone = 3;
+  // ibc of the host denom on the trade chain, output from the swap
   string target_denom_on_trade_zone = 4;
+  // should be the same as the native host denom on the host chain
   string target_denom_on_host_zone = 5;
 
   TradeHop host_to_reward_hop = 6 [ (gogoproto.nullable) = false ];
   TradeHop reward_to_trade_hop = 7 [ (gogoproto.nullable) = false ];
   TradeHop trade_to_host_hop = 8 [ (gogoproto.nullable) = false ];
 
+  // for now, Osmosis is the only trade chain so this is an osmosis pool id
   uint64 pool_id = 9;
+
+  // The spot price is a math/big int which can be variable length byte array
+  string spot_price = 10;
+
+  // min and max set size boundaries for swaps of reward denom on trade chain
+  string min_swap_amount = 11 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable) = false
+  ];
+  string max_swap_amount = 12 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable) = false
+  ];
 }

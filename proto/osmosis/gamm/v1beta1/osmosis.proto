@@ -39,3 +39,32 @@ message SwapAmountInRoute {
   string token_out_denom = 2
       [ (gogoproto.moretags) = "yaml:\"token_out_denom\"" ];
 }
+
+
+// This is the query and response type on gamm/v1beta1, there is also a similar type on gamm/v2
+// This version is deprecated, the intended one is in x/poolmanager which is the newer rpc route
+// The most up to date is an rpc route named SpotPriceV2 on poolmanager/v2
+// In poolmanager/v1beta1 and poolmanager/v2 all fields are the same as defined here...
+// But the messages are called SpotPriceRequest/Response without Query in front
+
+
+// QuerySpotPriceRequest defines the gRPC request structure for a SpotPrice
+// query.
+message QuerySpotPriceRequest {
+  option deprecated = true;
+  uint64 pool_id = 1 [ (gogoproto.moretags) = "yaml:\"pool_id\"" ];
+  string base_asset_denom = 2
+      [ (gogoproto.moretags) = "yaml:\"base_asset_denom\"" ];
+  string quote_asset_denom = 3
+      [ (gogoproto.moretags) = "yaml:\"quote_asset_denom\"" ];
+  reserved 4;
+  reserved "withSwapFee";
+}
+
+// QuerySpotPriceResponse defines the gRPC response structure for a SpotPrice
+// query.
+message QuerySpotPriceResponse {
+  option deprecated = true;
+  // String of the Dec. Ex) 10.203uatom
+  string spot_price = 1 [ (gogoproto.moretags) = "yaml:\"spot_price\"" ];
+}

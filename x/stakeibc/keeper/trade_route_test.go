@@ -3,6 +3,8 @@ package keeper_test
 import (
 	"fmt"
 
+	sdk "github.com/cosmos/cosmos-sdk/types"
+
 	"github.com/Stride-Labs/stride/v14/x/stakeibc/types"
 )
 
@@ -53,6 +55,10 @@ func (s *KeeperTestSuite) CreateTradeRoutes() (routes []types.TradeRoute) {
 			TradeToHostHop:   tradeHostHop,
 
 			PoolId: uint64(i * 100),
+			SpotPrice: "",
+
+			MinSwapAmount: sdk.ZeroInt(),
+			MaxSwapAmount: sdk.NewInt(1_000_000_000),
 		}
 		routes = append(routes, route)
 

@@ -16,6 +16,7 @@ import (
 )
 
 const StrideEpochsPerDayEpoch = uint64(4)
+const SwapRewardInterval = uint64(2)
 
 func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochInfo epochstypes.EpochInfo) {
 	// Update the stakeibc epoch tracker
@@ -81,12 +82,19 @@ func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochInfo epochstypes.EpochInf
 			k.RebalanceAllHostZones(ctx)
 		}
 
-		// Check all trade routes and auto-swap any reward tokens (revenue in a foreign denom) to host denom 
-		k.ConvertAllRewardTokens(ctx)
+		// Do transfers for all reward and swapped tokens defined by the trade routes every stride epoch
+		k.TransferAllRewardTokens(ctx)
 	}
 	if epochInfo.Identifier == epochstypes.MINT_EPOCH {
 		k.AllocateHostZoneReward(ctx)
 	}
+	if epochInfo.Identifier == epochstypes.HOUR_EPOCH {
+		k.UpdateAllSwapPrices(ctx) // update swap spot price frequently
+
+		if epochNumber % SwapRewardInterval == 0 {
+			k.SwapAllRewardTokens(ctx)
+		}
+	}	
 }
 
 func (k Keeper) AfterEpochEnd(ctx sdk.Context, epochInfo epochstypes.EpochInfo) {}

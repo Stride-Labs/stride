@@ -130,9 +130,38 @@ func (k Keeper) TransferConvertedTokensTradeToHost(ctx sdk.Context, amount sdk.I
 	return nil
 }
 
-// Trade all the reward tokens in the Trade ICA for the target output token type using ICA remote tx on trade zone
-// Params define the inputs, outputs, routes, and pool information on the trade zone for each type of token
+// Trade reward tokens in the Trade ICA for the target output token type using ICA remote tx on trade zone
+// The amount represents the total amount of the reward token in the trade ICA found by the calling ICQ
+// Depending on min and max swap amounts set in the route, it is possible not the full amount given will swap
 func (k Keeper) TradeRewardTokens(ctx sdk.Context, amount sdk.Int, route types.TradeRoute) error {
+	// If the min swap amount was not set it would be ZeroInt, if positive we need to compare to the amount given	
+	//  then if the min swap amount is greater than the current amount, do nothing this epoch to avoid small swaps
+	if route.MinSwapAmount.IsPositive() && route.MinSwapAmount.GT(amount) {
+		return nil
+	}
+
+	// If the max swap amount was not set it would be ZeroInt, if positive we need to compare to the amount given
+	//  then if max swap amount is LTE to amount full swap is possible so amount is fine, otherwise set amount to max
+	if route.MaxSwapAmount.IsPositive() && route.MaxSwapAmount.GT(amount) {
+		amount = route.MaxSwapAmount
+	} 
+
+	// See if pool swap spot price has been set to a valid ratio (string representing a float like "10.203")
+	// If there is a valid spot price, use it to set a floor for the acceptable minimum output tokens
+	// 5% slippage is allowed so multiply by 0.95 the expected spot price to get the target minimum
+	// minOut is the minimum number of route.TargetDenomOnTradeZone we must receive or the swap will fail
+	minOut := sdk.ZeroInt()
+	if route.SpotPrice != "" {
+		if spotPrice, err := sdk.NewDecFromStr(route.SpotPrice); err == nil {
+			slippageRatio := sdk.NewDecWithPrec(95, 2) // 0.95 to allow 5% loss to slippage
+			inputToOutputRatio := slippageRatio.Mul(spotPrice)
+			minOut = sdk.NewDecFromInt(amount).Mul(inputToOutputRatio).TruncateInt()
+		} else {
+			k.Logger(ctx).Error("Couldn't parse the spot price %s as a Decimal", route.SpotPrice)
+			// Don't allow a missing spot price to stop the swap, use zeroInt as the lower bound for now
+		}
+	}
+
 	tradeIcaAccount := route.RewardToTradeHop.ToAccount
 	tradeTokens := sdk.NewCoin(route.RewardDenomOnTradeZone, amount)
 
@@ -150,7 +179,7 @@ func (k Keeper) TradeRewardTokens(ctx sdk.Context, amount sdk.Int, route types.T
 			Sender:            tradeIcaAccount.Address,
 			Routes:            routes,
 			TokenIn:           tradeTokens,
-			TokenOutMinAmount: sdk.ZeroInt(),
+			TokenOutMinAmount: minOut,
 		})
 		k.Logger(ctx).Info(utils.LogWithHostZone(tradeIcaAccount.ChainId,
 			"Preparing MsgSwapExactAmountIn of %+v from the trade account", tradeTokens))
@@ -321,11 +350,92 @@ func (k Keeper) TradeConvertedBalanceQuery(ctx sdk.Context, route types.TradeRou
 	return nil
 }
 
-// Final helper function to be run epochly, kicks off queries on specific denoms on route
-func (k Keeper) ConvertAllRewardTokens(ctx sdk.Context) {
+// Kick off ICQ for the spot price on the pool given the input and output denoms implied by the given TradeRoute
+//  the callback for this query is responsible for updating the returned spot price on the keeper data
+func (k Keeper) PoolSpotPriceQuery(ctx sdk.Context, route types.TradeRoute) error {
+	tradeAccount := route.RewardToTradeHop.ToAccount
+	k.Logger(ctx).Info(utils.LogWithHostZone(tradeAccount.ChainId, "Submitting ICQ for spot price in this pool"))
+
+	// Unlike balance queries, we can't do a normal ICQ which interacts with the foreign data store directly
+	// because on Osmosis the spot price for a pool is not stored down to their keeper data, it is computed each request
+	// Therefore we have to perform a query against their actual service, through the Osmosis spot price query route
+
+	// The stride interchainquery module likely can't actually handle this type of query so this likely won't work yet...
+
+	// Encode the osmosis spot price query request for the specific pool and denoms
+	spotPriceRequest := types.QuerySpotPriceRequest{
+		PoolId: route.PoolId,
+		BaseAssetDenom: route.RewardDenomOnTradeZone,
+		QuoteAssetDenom: route.TargetDenomOnTradeZone,
+	}
+	queryData := k.cdc.MustMarshal(&spotPriceRequest)
+
+	// Timeout query at end of epoch
+	strideEpochTracker, found := k.GetEpochTracker(ctx, epochstypes.STRIDE_EPOCH)
+	if !found {
+		return errorsmod.Wrapf(types.ErrEpochNotFound, epochstypes.STRIDE_EPOCH)
+	}
+	timeout := time.Unix(0, int64(strideEpochTracker.NextEpochStartTime))
+	timeoutDuration := timeout.Sub(ctx.BlockTime())
+
+	// The only callback data we will need is the trade route
+	callbackData := route
+	callbackDataBz, err := proto.Marshal(&callbackData)
+	if err != nil {
+		return errorsmod.Wrapf(err, "unable to marshal TradeRewardBalanceQuery callback data")
+	}
+
+	// Submit the ICQ for the trade pool spot price query
+	query := icqtypes.Query{
+		ChainId:         tradeAccount.ChainId,
+		ConnectionId:    tradeAccount.ConnectionId, // query needs to go to the trade zone, not the host zone
+		QueryType:       icqtypes.BANK_STORE_QUERY_WITH_PROOF,
+		RequestData:     queryData,
+		CallbackModule:  types.ModuleName,
+		CallbackId:      ICQCallbackID_PoolSpotPrice,
+		CallbackData:    callbackDataBz,
+		TimeoutDuration: timeoutDuration,
+		TimeoutPolicy:   icqtypes.TimeoutPolicy_REJECT_QUERY_RESPONSE,
+	}
+	if err := k.InterchainQueryKeeper.SubmitICQRequest(ctx, query, false); err != nil {
+		k.Logger(ctx).Error(fmt.Sprintf("Error querying pool spot price, error: %s", err.Error()))
+		return err
+	}
+
+	return nil
+}
+
+// The current design assumes foreign reward tokens start and end in the hostZone withdrawal address
+// Step 1: transfer reward tokens to trade chain
+// Step 2: perform the swap with as many reward tokens as possible
+// Step 3: return the swapped tokens to the withdrawal ICA on hostZone
+// Independently there is an ICQ to get the swap price and update it in the keeper state
+
+// Because the swaps have limits on how many tokens can be used to avoid slippage,
+// the swaps and price checks happen on a faster (hourly) cadence than the transfers (stride epochly)
+
+// Helper function to be run stride epochly, kicks off queries on specific denoms on route
+func (k Keeper) TransferAllRewardTokens(ctx sdk.Context) {
 	for _, route := range k.GetAllTradeRoutes(ctx) {
+		// Step 1: ICQ reward balance on hostZone, transfer funds with unwinding to trade chain
 		k.WithdrawalRewardBalanceQuery(ctx, route)
-		k.TradeRewardBalanceQuery(ctx, route)
+		// Step 3: ICQ converted tokens in trade ICA, transfer funds back to hostZone withdrawal ICA
 		k.TradeConvertedBalanceQuery(ctx, route)
+	}
+}
+
+// Helper function to be run hourly, kicks off query which will kick off actual swaps to happen
+func (k Keeper) SwapAllRewardTokens(ctx sdk.Context) {
+	for _, route := range k.GetAllTradeRoutes(ctx) {
+		// Step 2: ICQ reward balance in trade ICA, swap tokens according to limiting rules
+		k.TradeRewardBalanceQuery(ctx, route)
+	}
+}
+
+// Helper function to be run hourly, kicks off query to get and update the swap price in keeper data
+func (k Keeper) UpdateAllSwapPrices(ctx sdk.Context) {
+	for _, route := range k.GetAllTradeRoutes(ctx) {
+		// ICQ swap price for the specific pair on this route and update keeper on callback
+		k.PoolSpotPriceQuery(ctx, route)
 	}
 }
