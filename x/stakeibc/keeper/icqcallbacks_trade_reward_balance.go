@@ -7,11 +7,11 @@ import (
 	errorsmod "cosmossdk.io/errors"
 	"github.com/cosmos/gogoproto/proto"
 
-	icqkeeper "github.com/Stride-Labs/stride/v14/x/interchainquery/keeper"
+	icqkeeper "github.com/Stride-Labs/stride/v16/x/interchainquery/keeper"
 
-	"github.com/Stride-Labs/stride/v14/utils"
-	icqtypes "github.com/Stride-Labs/stride/v14/x/interchainquery/types"
-	"github.com/Stride-Labs/stride/v14/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v16/utils"
+	icqtypes "github.com/Stride-Labs/stride/v16/x/interchainquery/types"
+	"github.com/Stride-Labs/stride/v16/x/stakeibc/types"
 )
 
 // TradeRewardBalanceCallback is a callback handler for TradeRewardBalance queries.
@@ -46,11 +46,10 @@ func TradeRewardBalanceCallback(k Keeper, ctx sdk.Context, args []byte, query ic
 	k.Logger(ctx).Info(utils.LogICQCallbackWithHostZone(chainId, ICQCallbackID_TradeRewardBalance,
 		"Query response - Withdrawal Reward Balance: %v %s", tradeRewardBalanceAmount, tradeRoute.RewardDenomOnTradeZone))
 
-
 	// Trade all found reward tokens in the trade ICA to the output denom of their trade pool
 	k.TradeRewardTokens(ctx, tradeRewardBalanceAmount, tradeRoute)
-	k.Logger(ctx).Info(utils.LogICQCallbackWithHostZone(chainId, ICQCallbackID_TradeRewardBalance, 
-		"Swapping discovered reward tokens %v %s for %s", 
+	k.Logger(ctx).Info(utils.LogICQCallbackWithHostZone(chainId, ICQCallbackID_TradeRewardBalance,
+		"Swapping discovered reward tokens %v %s for %s",
 		tradeRewardBalanceAmount, tradeRoute.RewardDenomOnTradeZone, tradeRoute.TargetDenomOnTradeZone))
 
 	return nil

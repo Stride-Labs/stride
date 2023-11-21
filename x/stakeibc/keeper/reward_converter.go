@@ -13,10 +13,10 @@ import (
 
 	transfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
 
-	"github.com/Stride-Labs/stride/v14/utils"
-	epochstypes "github.com/Stride-Labs/stride/v14/x/epochs/types"
-	icqtypes "github.com/Stride-Labs/stride/v14/x/interchainquery/types"
-	"github.com/Stride-Labs/stride/v14/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v16/utils"
+	epochstypes "github.com/Stride-Labs/stride/v16/x/epochs/types"
+	icqtypes "github.com/Stride-Labs/stride/v16/x/interchainquery/types"
+	"github.com/Stride-Labs/stride/v16/x/stakeibc/types"
 )
 
 // The goal of this code is to allow certain reward token types to be automatically traded into other types
@@ -134,7 +134,7 @@ func (k Keeper) TransferConvertedTokensTradeToHost(ctx sdk.Context, amount sdk.I
 // The amount represents the total amount of the reward token in the trade ICA found by the calling ICQ
 // Depending on min and max swap amounts set in the route, it is possible not the full amount given will swap
 func (k Keeper) TradeRewardTokens(ctx sdk.Context, amount sdk.Int, route types.TradeRoute) error {
-	// If the min swap amount was not set it would be ZeroInt, if positive we need to compare to the amount given	
+	// If the min swap amount was not set it would be ZeroInt, if positive we need to compare to the amount given
 	//  then if the min swap amount is greater than the current amount, do nothing this epoch to avoid small swaps
 	if route.MinSwapAmount.IsPositive() && route.MinSwapAmount.GT(amount) {
 		return nil
@@ -144,7 +144,7 @@ func (k Keeper) TradeRewardTokens(ctx sdk.Context, amount sdk.Int, route types.T
 	//  then if max swap amount is LTE to amount full swap is possible so amount is fine, otherwise set amount to max
 	if route.MaxSwapAmount.IsPositive() && route.MaxSwapAmount.GT(amount) {
 		amount = route.MaxSwapAmount
-	} 
+	}
 
 	// See if pool swap spot price has been set to a valid ratio (string representing a float like "10.203")
 	// If there is a valid spot price, use it to set a floor for the acceptable minimum output tokens
@@ -351,7 +351,8 @@ func (k Keeper) TradeConvertedBalanceQuery(ctx sdk.Context, route types.TradeRou
 }
 
 // Kick off ICQ for the spot price on the pool given the input and output denoms implied by the given TradeRoute
-//  the callback for this query is responsible for updating the returned spot price on the keeper data
+//
+//	the callback for this query is responsible for updating the returned spot price on the keeper data
 func (k Keeper) PoolSpotPriceQuery(ctx sdk.Context, route types.TradeRoute) error {
 	tradeAccount := route.RewardToTradeHop.ToAccount
 	k.Logger(ctx).Info(utils.LogWithHostZone(tradeAccount.ChainId, "Submitting ICQ for spot price in this pool"))
@@ -364,8 +365,8 @@ func (k Keeper) PoolSpotPriceQuery(ctx sdk.Context, route types.TradeRoute) erro
 
 	// Encode the osmosis spot price query request for the specific pool and denoms
 	spotPriceRequest := types.QuerySpotPriceRequest{
-		PoolId: route.PoolId,
-		BaseAssetDenom: route.RewardDenomOnTradeZone,
+		PoolId:          route.PoolId,
+		BaseAssetDenom:  route.RewardDenomOnTradeZone,
 		QuoteAssetDenom: route.TargetDenomOnTradeZone,
 	}
 	queryData := k.cdc.MustMarshal(&spotPriceRequest)

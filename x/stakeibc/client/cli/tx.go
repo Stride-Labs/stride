@@ -9,7 +9,7 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/client"
 
-	"github.com/Stride-Labs/stride/v14/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v16/x/stakeibc/types"
 )
 
 var DefaultRelativePacketTimeoutTimestamp = cast.ToUint64((time.Duration(10) * time.Minute).Nanoseconds())
@@ -35,7 +35,11 @@ func GetTxCmd() *cobra.Command {
 	cmd.AddCommand(CmdDeleteValidator())
 	cmd.AddCommand(CmdRestoreInterchainAccount())
 	cmd.AddCommand(CmdUpdateValidatorSharesExchRate())
+	cmd.AddCommand(CmdCalibrateDelegation())
 	cmd.AddCommand(CmdClearBalance())
+	cmd.AddCommand(CmdUndelegateHost())
+	cmd.AddCommand(CmdUpdateInnerRedemptionRateBounds())
+	cmd.AddCommand(CmdResumeHostZone())
 	cmd.AddCommand(CmdCreateTradeRoute())
 	cmd.AddCommand(CmdDeleteTradeRoute())
 	cmd.AddCommand(CmdUpdateTradeRoute())

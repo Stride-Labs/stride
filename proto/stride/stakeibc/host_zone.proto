@@ -5,7 +5,7 @@ import "stride/stakeibc/validator.proto";
 import "gogoproto/gogo.proto";
 import "cosmos_proto/cosmos.proto";
 
-option go_package = "github.com/Stride-Labs/stride/v14/x/stakeibc/types";
+option go_package = "github.com/Stride-Labs/stride/v16/x/stakeibc/types";
 
 message HostZone {
   string chain_id = 1;
@@ -28,7 +28,13 @@ message HostZone {
       [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
   string redemption_ica_address = 25
       [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
-  string reward_trade_ica_address = 32
+  string community_pool_deposit_ica_address = 30
+      [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+  string community_pool_return_ica_address = 31
+      [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+  string community_pool_stake_holding_address = 32
+      [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+  string community_pool_redeem_holding_address = 33
       [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
   string total_delegations = 13 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
@@ -50,6 +56,16 @@ message HostZone {
     (gogoproto.nullable) = false
   ];
   string max_redemption_rate = 21 [
+    (cosmos_proto.scalar) = "cosmos.Dec",
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
+  string min_inner_redemption_rate = 28 [
+    (cosmos_proto.scalar) = "cosmos.Dec",
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
+  string max_inner_redemption_rate = 29 [
     (cosmos_proto.scalar) = "cosmos.Dec",
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false

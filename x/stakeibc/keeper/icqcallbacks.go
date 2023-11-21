@@ -3,19 +3,20 @@ package keeper
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	icqtypes "github.com/Stride-Labs/stride/v14/x/interchainquery/types"
+	icqtypes "github.com/Stride-Labs/stride/v16/x/interchainquery/types"
 )
 
 const (
-	ICQCallbackID_WithdrawalBalance = "withdrawalbalance"
-	ICQCallbackID_FeeBalance        = "feebalance"
-	ICQCallbackID_Delegation        = "delegation"
-	ICQCallbackID_Validator         = "validator"
-
-	ICQCallbackID_WithdrawalRewardBalance 	= "withdrawalrewardbalance"
-	ICQCallbackID_TradeRewardBalance 		= "traderewardbalance"	
-	ICQCallbackID_TradeConvertedBalance 	= "tradeconvertedbalance"
-	ICQCallbackID_PoolSpotPrice 	        = "poolspotprice"		
+	ICQCallbackID_WithdrawalBalance       = "withdrawalbalance"
+	ICQCallbackID_FeeBalance              = "feebalance"
+	ICQCallbackID_Delegation              = "delegation"
+	ICQCallbackID_Validator               = "validator"
+	ICQCallbackID_Calibrate               = "calibrate"
+	ICQCallbackID_CommunityPoolIcaBalance = "communitypoolicabalance"
+	ICQCallbackID_WithdrawalRewardBalance = "withdrawalrewardbalance"
+	ICQCallbackID_TradeRewardBalance      = "traderewardbalance"
+	ICQCallbackID_TradeConvertedBalance   = "tradeconvertedbalance"
+	ICQCallbackID_PoolSpotPrice           = "poolspotprice"
 )
 
 // ICQCallbacks wrapper struct for stakeibc keeper
@@ -52,6 +53,8 @@ func (c ICQCallbacks) RegisterICQCallbacks() icqtypes.QueryCallbacks {
 		AddICQCallback(ICQCallbackID_FeeBalance, ICQCallback(FeeBalanceCallback)).
 		AddICQCallback(ICQCallbackID_Delegation, ICQCallback(DelegatorSharesCallback)).
 		AddICQCallback(ICQCallbackID_Validator, ICQCallback(ValidatorSharesToTokensRateCallback)).
+		AddICQCallback(ICQCallbackID_Calibrate, ICQCallback(CalibrateDelegationCallback)).
+		AddICQCallback(ICQCallbackID_CommunityPoolIcaBalance, ICQCallback(CommunityPoolIcaBalanceCallback)).
 		AddICQCallback(ICQCallbackID_WithdrawalRewardBalance, ICQCallback(WithdrawalRewardBalanceCallback)).
 		AddICQCallback(ICQCallbackID_TradeRewardBalance, ICQCallback(TradeRewardBalanceCallback)).
 		AddICQCallback(ICQCallbackID_TradeConvertedBalance, ICQCallback(TradeConvertedBalanceCallback)).

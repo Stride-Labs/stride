@@ -11,30 +11,30 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/spf13/cobra"
 
-	"github.com/Stride-Labs/stride/v14/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v16/x/stakeibc/types"
 )
 
 type TradeRouteDef struct {
-	HostChainId string `json:"host_chain_id,omitempty"`
-	HostConnectionId string `json:"host_connection_id,omitempty"`
-	HostIcaAddress string `json:"host_ica_address,omitempty"`
-	RewardChainId string `json:"reward_chain_id,omitempty"`
-	RewardConnectionId string `json:"reward_connection_id,omitempty"`
-	RewardIcaAddress string `json:"reward_ica_address,omitempty"`
-	TradeChainId string `json:"trade_chain_id,omitempty"`
-	TradeConnectionId string `json:"trade_connection_id,omitempty"`
-	TradeIcaAddress string `json:"trade_ica_address,omitempty"`
-	HostRewardTransferChannelId string `json:"host_reward_transfer_channel_id,omitempty"`
+	HostChainId                  string `json:"host_chain_id,omitempty"`
+	HostConnectionId             string `json:"host_connection_id,omitempty"`
+	HostIcaAddress               string `json:"host_ica_address,omitempty"`
+	RewardChainId                string `json:"reward_chain_id,omitempty"`
+	RewardConnectionId           string `json:"reward_connection_id,omitempty"`
+	RewardIcaAddress             string `json:"reward_ica_address,omitempty"`
+	TradeChainId                 string `json:"trade_chain_id,omitempty"`
+	TradeConnectionId            string `json:"trade_connection_id,omitempty"`
+	TradeIcaAddress              string `json:"trade_ica_address,omitempty"`
+	HostRewardTransferChannelId  string `json:"host_reward_transfer_channel_id,omitempty"`
 	RewardTradeTransferChannelId string `json:"reward_trade_transfer_channel_id,omitempty"`
-	TradeHostTransferChannelId string `json:"trade_host_transfer_channel_id,omitempty"`
-	RewardDenomOnHost string `json:"reward_denom_on_host,omitempty"`
-	RewardDenomOnReward string `json:"reward_denom_on_reward,omitempty"`
-	RewardDenomOnTrade string `json:"reward_denom_on_trade,omitempty"`
-	TargetDenomOnTrade string `json:"target_denom_on_trade,omitempty"`
-	TargetDenomOnHost string `json:"target_denom_on_host,omitempty"`
-	PoolId string `json:"pool_id,omitempty"`
-	MinSwapAmount string `json:"min_swap_amount,omitempty"`
-	MaxSwapAmount string `json:"max_swap_amount,omitempty"`		
+	TradeHostTransferChannelId   string `json:"trade_host_transfer_channel_id,omitempty"`
+	RewardDenomOnHost            string `json:"reward_denom_on_host,omitempty"`
+	RewardDenomOnReward          string `json:"reward_denom_on_reward,omitempty"`
+	RewardDenomOnTrade           string `json:"reward_denom_on_trade,omitempty"`
+	TargetDenomOnTrade           string `json:"target_denom_on_trade,omitempty"`
+	TargetDenomOnHost            string `json:"target_denom_on_host,omitempty"`
+	PoolId                       string `json:"pool_id,omitempty"`
+	MinSwapAmount                string `json:"min_swap_amount,omitempty"`
+	MaxSwapAmount                string `json:"max_swap_amount,omitempty"`
 }
 
 // Parse a JSON with fields for a new trade route in the format
@@ -103,7 +103,7 @@ func CmdCreateTradeRoute() *cobra.Command {
 			maxSwapAmount, found := sdk.NewIntFromString(newRoute.MaxSwapAmount)
 			if !found {
 				const MaxUint = ^uint(0)
-				const MaxInt = int64(MaxUint >> 1) 
+				const MaxInt = int64(MaxUint >> 1)
 				maxSwapAmount = sdk.NewInt(MaxInt)
 			}
 

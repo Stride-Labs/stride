@@ -6,9 +6,9 @@ import (
 	errorsmod "cosmossdk.io/errors"
 	"github.com/cosmos/gogoproto/proto"
 
-	"github.com/Stride-Labs/stride/v14/utils"
-	icqtypes "github.com/Stride-Labs/stride/v14/x/interchainquery/types"
-	"github.com/Stride-Labs/stride/v14/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v16/utils"
+	icqtypes "github.com/Stride-Labs/stride/v16/x/interchainquery/types"
+	"github.com/Stride-Labs/stride/v16/x/stakeibc/types"
 )
 
 // TradeRewardBalanceCallback is a callback handler for TradeRewardBalance queries.
@@ -23,7 +23,7 @@ func PoolSpotPriceCallback(k Keeper, ctx sdk.Context, args []byte, query icqtype
 	chainId := query.ChainId // should be the tradeZoneId, used in logging
 
 	// Unmarshal the query response args, should be a SpotPriceResponse type
-	var reponse types.QuerySpotPriceResponse;
+	var reponse types.QuerySpotPriceResponse
 	err := reponse.Unmarshal(args)
 	if err != nil {
 		return errorsmod.Wrap(err, "unable to unmarshal the query response")
@@ -37,9 +37,8 @@ func PoolSpotPriceCallback(k Keeper, ctx sdk.Context, args []byte, query icqtype
 		return errorsmod.Wrapf(err, "unable to unmarshal trade reward balance callback data")
 	}
 	k.Logger(ctx).Info(utils.LogICQCallbackWithHostZone(chainId, ICQCallbackID_PoolSpotPrice,
-		"Query response - spot price ratio of %s to %s is %s", 
+		"Query response - spot price ratio of %s to %s is %s",
 		tradeRoute.RewardDenomOnTradeZone, tradeRoute.TargetDenomOnTradeZone, reponse.SpotPrice))
-
 
 	// Update the spot price stored on the trade route data in the keeper
 	tradeRoute.SpotPrice = reponse.SpotPrice

@@ -9,8 +9,8 @@ import (
 
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
 
-	"github.com/Stride-Labs/stride/v14/x/stakeibc/keeper"
-	"github.com/Stride-Labs/stride/v14/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v16/x/stakeibc/keeper"
+	"github.com/Stride-Labs/stride/v16/x/stakeibc/types"
 )
 
 // Handles stakeibc transactions
@@ -58,6 +58,18 @@ func NewMessageHandler(k keeper.Keeper) sdk.Handler {
 		case *types.MsgUpdateValidatorSharesExchRate:
 			res, err := msgServer.UpdateValidatorSharesExchRate(sdk.WrapSDKContext(ctx), msg)
 			return sdk.WrapServiceResult(ctx, res, err)
+		case *types.MsgUndelegateHost:
+			res, err := msgServer.UndelegateHost(sdk.WrapSDKContext(ctx), msg)
+			return sdk.WrapServiceResult(ctx, res, err)
+		case *types.MsgCalibrateDelegation:
+			res, err := msgServer.CalibrateDelegation(sdk.WrapSDKContext(ctx), msg)
+			return sdk.WrapServiceResult(ctx, res, err)
+		case *types.MsgUpdateInnerRedemptionRateBounds:
+			res, err := msgServer.UpdateInnerRedemptionRateBounds(sdk.WrapSDKContext(ctx), msg)
+			return sdk.WrapServiceResult(ctx, res, err)
+		case *types.MsgResumeHostZone:
+			res, err := msgServer.ResumeHostZone(sdk.WrapSDKContext(ctx), msg)
+			return sdk.WrapServiceResult(ctx, res, err)
 		case *types.MsgCreateTradeRoute:
 			res, err := msgServer.CreateTradeRoute(sdk.WrapSDKContext(ctx), msg)
 			return sdk.WrapServiceResult(ctx, res, err)
@@ -66,7 +78,7 @@ func NewMessageHandler(k keeper.Keeper) sdk.Handler {
 			return sdk.WrapServiceResult(ctx, res, err)
 		case *types.MsgUpdateTradeRoute:
 			res, err := msgServer.UpdateTradeRoute(sdk.WrapSDKContext(ctx), msg)
-			return sdk.WrapServiceResult(ctx, res, err)			
+			return sdk.WrapServiceResult(ctx, res, err)
 		default:
 			errMsg := fmt.Sprintf("unrecognized %s message type: %T", types.ModuleName, msg)
 			return nil, errorsmod.Wrap(sdkerrors.ErrUnknownRequest, errMsg)

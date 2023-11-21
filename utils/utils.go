@@ -17,9 +17,9 @@ import (
 
 	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
 
-	config "github.com/Stride-Labs/stride/v14/cmd/strided/config"
-	icacallbacktypes "github.com/Stride-Labs/stride/v14/x/icacallbacks/types"
-	recordstypes "github.com/Stride-Labs/stride/v14/x/records/types"
+	config "github.com/Stride-Labs/stride/v16/cmd/strided/config"
+	icacallbacktypes "github.com/Stride-Labs/stride/v16/x/icacallbacks/types"
+	recordstypes "github.com/Stride-Labs/stride/v16/x/records/types"
 )
 
 func FilterDepositRecords(arr []recordstypes.DepositRecord, condition func(recordstypes.DepositRecord) bool) (ret []recordstypes.DepositRecord) {
@@ -98,7 +98,8 @@ func GetFromBech32(bech32str, prefix string) ([]byte, error) {
 func VerifyAddressFormat(bz []byte) error {
 	verifier := func(bz []byte) error {
 		n := len(bz)
-		if n == 20 {
+		// Base accounts are length 20, module/ICA accounts are length 32
+		if n == 20 || n == 32 {
 			return nil
 		}
 		return fmt.Errorf("incorrect address length %d", n)

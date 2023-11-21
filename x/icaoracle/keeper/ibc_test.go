@@ -10,9 +10,9 @@ import (
 
 	proto "github.com/cosmos/gogoproto/proto"
 
-	icacallbacktypes "github.com/Stride-Labs/stride/v14/x/icacallbacks/types"
+	icacallbacktypes "github.com/Stride-Labs/stride/v16/x/icacallbacks/types"
 
-	"github.com/Stride-Labs/stride/v14/x/icaoracle/types"
+	"github.com/Stride-Labs/stride/v16/x/icaoracle/types"
 )
 
 // ------------------------------------------

@@ -5,7 +5,7 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/Stride-Labs/stride/v14/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v16/x/stakeibc/types"
 )
 
 func (s *KeeperTestSuite) CreateTradeRoutes() (routes []types.TradeRoute) {
@@ -54,7 +54,7 @@ func (s *KeeperTestSuite) CreateTradeRoutes() (routes []types.TradeRoute) {
 			RewardToTradeHop: rewardTradeHop,
 			TradeToHostHop:   tradeHostHop,
 
-			PoolId: uint64(i * 100),
+			PoolId:    uint64(i * 100),
 			SpotPrice: "",
 
 			MinSwapAmount: sdk.ZeroInt(),

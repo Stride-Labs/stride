@@ -11,7 +11,7 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/Stride-Labs/stride/v14/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v16/x/stakeibc/types"
 )
 
 // host-denom and reward-denom are to find which trade route should be updated
@@ -32,7 +32,7 @@ func CmdUpdateTradeRoute() *cobra.Command {
 			maxSwapAmount, found := sdk.NewIntFromString(args[4])
 			if !found {
 				const MaxUint = ^uint(0)
-				const MaxInt = int64(MaxUint >> 1) 
+				const MaxInt = int64(MaxUint >> 1)
 				maxSwapAmount = sdk.NewInt(MaxInt)
 			}
 

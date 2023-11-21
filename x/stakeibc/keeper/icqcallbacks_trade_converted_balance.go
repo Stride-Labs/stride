@@ -7,11 +7,11 @@ import (
 	errorsmod "cosmossdk.io/errors"
 	"github.com/cosmos/gogoproto/proto"
 
-	icqkeeper "github.com/Stride-Labs/stride/v14/x/interchainquery/keeper"
+	icqkeeper "github.com/Stride-Labs/stride/v16/x/interchainquery/keeper"
 
-	"github.com/Stride-Labs/stride/v14/utils"
-	icqtypes "github.com/Stride-Labs/stride/v14/x/interchainquery/types"
-	"github.com/Stride-Labs/stride/v14/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v16/utils"
+	icqtypes "github.com/Stride-Labs/stride/v16/x/interchainquery/types"
+	"github.com/Stride-Labs/stride/v16/x/stakeibc/types"
 )
 
 // TradeConvertedBalanceCallback is a callback handler for TradeConvertedBalance queries.
@@ -44,10 +44,10 @@ func TradeConvertedBalanceCallback(k Keeper, ctx sdk.Context, args []byte, query
 		return nil
 	}
 
-	// Using ICA commands on the trade address, transfer the found converted tokens from the trade zone to the host zone	
+	// Using ICA commands on the trade address, transfer the found converted tokens from the trade zone to the host zone
 	k.TransferConvertedTokensTradeToHost(ctx, tradeConvertedBalanceAmount, tradeRoute)
-	k.Logger(ctx).Info(utils.LogICQCallbackWithHostZone(chainId, ICQCallbackID_WithdrawalRewardBalance, 
-		"Sending discovered converted tokens %v %s from tradeZone back to hostZone", 
+	k.Logger(ctx).Info(utils.LogICQCallbackWithHostZone(chainId, ICQCallbackID_WithdrawalRewardBalance,
+		"Sending discovered converted tokens %v %s from tradeZone back to hostZone",
 		tradeConvertedBalanceAmount, tradeRoute.TargetDenomOnTradeZone))
 
 	return nil

@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/Stride-Labs/stride/v14/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v16/x/stakeibc/types"
 
 	errorsmod "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -22,57 +22,57 @@ func (k msgServer) CreateTradeRoute(goCtx context.Context, msg *types.MsgCreateT
 	}
 
 	hostICA := types.ICAAccount{
-		ChainId: msg.HostChainId,
-		Type: types.ICAAccountType_WITHDRAWAL,
+		ChainId:      msg.HostChainId,
+		Type:         types.ICAAccountType_WITHDRAWAL,
 		ConnectionId: msg.HostConnectionId,
-		Address: msg.HostIcaAddress,
+		Address:      msg.HostIcaAddress,
 	}
 
 	rewardICA := types.ICAAccount{
-		ChainId: msg.RewardChainId,
-		Type: types.ICAAccountType_UNWIND,
+		ChainId:      msg.RewardChainId,
+		Type:         types.ICAAccountType_UNWIND,
 		ConnectionId: msg.RewardConnectionId,
-		Address: msg.RewardIcaAddress,
+		Address:      msg.RewardIcaAddress,
 	}
 
 	tradeICA := types.ICAAccount{
-		ChainId: msg.TradeChainId,
-		Type: types.ICAAccountType_TRADE,
+		ChainId:      msg.TradeChainId,
+		Type:         types.ICAAccountType_TRADE,
 		ConnectionId: msg.TradeConnectionId,
-		Address: msg.TradeIcaAddress,
+		Address:      msg.TradeIcaAddress,
 	}
 
 	hostRewardHop := types.TradeHop{
 		TransferChannelId: msg.HostRewardTransferChannelId,
-		FromAccount: hostICA,
-		ToAccount: rewardICA,
+		FromAccount:       hostICA,
+		ToAccount:         rewardICA,
 	}
 
 	rewardTradeHop := types.TradeHop{
 		TransferChannelId: msg.RewardTradeTransferChannelId,
-		FromAccount: rewardICA,
-		ToAccount: tradeICA,
+		FromAccount:       rewardICA,
+		ToAccount:         tradeICA,
 	}
 
 	tradeHostHop := types.TradeHop{
 		TransferChannelId: msg.TradeHostTransferChannelId,
-		FromAccount: tradeICA,
-		ToAccount: hostICA,
-	}	
+		FromAccount:       tradeICA,
+		ToAccount:         hostICA,
+	}
 
 	newTradeRoute := types.TradeRoute{
-		RewardDenomOnHostZone: msg.RewardDenomOnHost,
+		RewardDenomOnHostZone:   msg.RewardDenomOnHost,
 		RewardDenomOnRewardZone: msg.RewardDenomOnReward,
-		RewardDenomOnTradeZone: msg.RewardDenomOnTrade,
-		TargetDenomOnTradeZone: msg.TargetDenomOnTrade,
-		TargetDenomOnHostZone: msg.TargetDenomOnHost,
-		HostToRewardHop: hostRewardHop,
-		RewardToTradeHop: rewardTradeHop,
-		TradeToHostHop: tradeHostHop,
-		PoolId: msg.PoolId,
-		SpotPrice: "", // this should only ever be set by ICQ so initialize to blank
-		MinSwapAmount: msg.MinSwapAmount,
-		MaxSwapAmount: msg.MaxSwapAmount,
+		RewardDenomOnTradeZone:  msg.RewardDenomOnTrade,
+		TargetDenomOnTradeZone:  msg.TargetDenomOnTrade,
+		TargetDenomOnHostZone:   msg.TargetDenomOnHost,
+		HostToRewardHop:         hostRewardHop,
+		RewardToTradeHop:        rewardTradeHop,
+		TradeToHostHop:          tradeHostHop,
+		PoolId:                  msg.PoolId,
+		SpotPrice:               "", // this should only ever be set by ICQ so initialize to blank
+		MinSwapAmount:           msg.MinSwapAmount,
+		MaxSwapAmount:           msg.MaxSwapAmount,
 	}
 
 	k.SetTradeRoute(ctx, newTradeRoute)
