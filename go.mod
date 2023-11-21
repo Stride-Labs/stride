@@ -36,9 +36,7 @@ require (
 	github.com/99designs/go-keychain v0.0.0-20191008050251-8e49817e8af4 // indirect
 	github.com/google/s2a-go v0.1.4 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
-	github.com/osmosis-labs/osmosis v1.0.4 // indirect
 	github.com/oxyno-zeta/gomock-extra-matcher v1.1.0 // indirect
-	github.com/regen-network/cosmos-proto v0.3.1 // indirect
 	github.com/rs/zerolog v1.29.1 // indirect
 	golang.org/x/sync v0.2.0 // indirect
 	google.golang.org/genproto v0.0.0-20230706204954-ccb25ca9f130 // indirect
