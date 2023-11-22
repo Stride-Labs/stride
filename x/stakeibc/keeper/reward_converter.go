@@ -151,16 +151,12 @@ func (k Keeper) TradeRewardTokens(ctx sdk.Context, amount sdk.Int, route types.T
 	// 5% slippage is allowed so multiply by 0.95 the expected spot price to get the target minimum
 	// minOut is the minimum number of route.TargetDenomOnTradeZone we must receive or the swap will fail
 	minOut := sdk.ZeroInt()
-	if route.SpotPrice != "" {
-		if spotPrice, err := sdk.NewDecFromStr(route.SpotPrice); err == nil {
-			slippageRatio := sdk.NewDecWithPrec(95, 2) // 0.95 to allow 5% loss to slippage
-			inputToOutputRatio := slippageRatio.Mul(spotPrice)
-			minOut = sdk.NewDecFromInt(amount).Mul(inputToOutputRatio).TruncateInt()
-		} else {
-			k.Logger(ctx).Error("Couldn't parse the spot price %s as a Decimal", route.SpotPrice)
-			// Don't allow a missing spot price to stop the swap, use zeroInt as the lower bound for now
-		}
+	if route.InputToOutputTwap == sdk.ZeroDec() {
+		return fmt.Errorf("TWAP not found for pool %d", route.PoolId)
 	}
+	slippageRatio := sdk.NewDecWithPrec(95, 2) // 0.95 to allow 5% loss to slippage
+	inputToOutputRatio := slippageRatio.Mul(route.InputToOutputTwap)
+	minOut = sdk.NewDecFromInt(amount).Mul(inputToOutputRatio).TruncateInt()
 
 	tradeIcaAccount := route.RewardToTradeHop.ToAccount
 	tradeTokens := sdk.NewCoin(route.RewardDenomOnTradeZone, amount)
@@ -352,13 +348,9 @@ func (k Keeper) TradeConvertedBalanceQuery(ctx sdk.Context, route types.TradeRou
 
 // Kick off ICQ for the spot price on the pool given the input and output denoms implied by the given TradeRoute
 // the callback for this query is responsible for updating the returned spot price on the keeper data
-func (k Keeper) PoolSpotPriceQuery(ctx sdk.Context, route types.TradeRoute) error {
+func (k Keeper) PoolPriceQuery(ctx sdk.Context, route types.TradeRoute) error {
 	tradeAccount := route.RewardToTradeHop.ToAccount
 	k.Logger(ctx).Info(utils.LogWithHostZone(tradeAccount.ChainId, "Submitting ICQ for spot price in this pool"))
-
-	// Unlike balance queries, we can't do a normal ICQ which interacts with the foreign data store directly
-	// because on Osmosis the spot price for a pool is not stored down to their keeper data, it is computed each request
-	// Therefore we have to perform a query against their actual service, through the Osmosis spot price query route
 
 	// The stride interchainquery module likely can't actually handle this type of query so this likely won't work yet...
 
@@ -394,7 +386,7 @@ func (k Keeper) PoolSpotPriceQuery(ctx sdk.Context, route types.TradeRoute) erro
 		QueryType:       icqtypes.BANK_STORE_QUERY_WITH_PROOF,
 		RequestData:     queryData,
 		CallbackModule:  types.ModuleName,
-		CallbackId:      ICQCallbackID_PoolSpotPrice,
+		CallbackId:      ICQCallbackID_PoolPrice,
 		CallbackData:    callbackDataBz,
 		TimeoutDuration: timeoutDuration,
 		TimeoutPolicy:   icqtypes.TimeoutPolicy_REJECT_QUERY_RESPONSE,
@@ -446,7 +438,7 @@ func (k Keeper) SwapAllRewardTokens(ctx sdk.Context) {
 func (k Keeper) UpdateAllSwapPrices(ctx sdk.Context) {
 	for _, route := range k.GetAllTradeRoutes(ctx) {
 		// ICQ swap price for the specific pair on this route and update keeper on callback
-		if err := k.PoolSpotPriceQuery(ctx, route); err != nil {
+		if err := k.PoolPriceQuery(ctx, route); err != nil {
 			k.Logger(ctx).Error(fmt.Sprintf("Unable to submit query for pool spot price: %s", err))
 		}
 	}
