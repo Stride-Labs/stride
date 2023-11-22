@@ -150,13 +150,12 @@ func (k Keeper) TradeRewardTokens(ctx sdk.Context, amount sdk.Int, route types.T
 	// If there is a valid spot price, use it to set a floor for the acceptable minimum output tokens
 	// 5% slippage is allowed so multiply by 0.95 the expected spot price to get the target minimum
 	// minOut is the minimum number of route.TargetDenomOnTradeZone we must receive or the swap will fail
-	minOut := sdk.ZeroInt()
 	if route.InputToOutputTwap == sdk.ZeroDec() {
 		return fmt.Errorf("TWAP not found for pool %d", route.PoolId)
 	}
 	slippageRatio := sdk.NewDecWithPrec(95, 2) // 0.95 to allow 5% loss to slippage
 	inputToOutputRatio := slippageRatio.Mul(route.InputToOutputTwap)
-	minOut = sdk.NewDecFromInt(amount).Mul(inputToOutputRatio).TruncateInt()
+	minOut := sdk.NewDecFromInt(amount).Mul(inputToOutputRatio).TruncateInt()
 
 	tradeIcaAccount := route.RewardToTradeHop.ToAccount
 	tradeTokens := sdk.NewCoin(route.RewardDenomOnTradeZone, amount)
@@ -352,17 +351,14 @@ func (k Keeper) PoolPriceQuery(ctx sdk.Context, route types.TradeRoute) error {
 	tradeAccount := route.RewardToTradeHop.ToAccount
 	k.Logger(ctx).Info(utils.LogWithHostZone(tradeAccount.ChainId, "Submitting ICQ for spot price in this pool"))
 
-	// The stride interchainquery module likely can't actually handle this type of query so this likely won't work yet...
+	// Sort denom's
+	denom1, denom2 := route.RewardDenomOnTradeZone, route.TargetDenomOnTradeZone
+	if denom1 > denom2 {
+		denom1, denom2 = denom2, denom1
+	}
 
-	// Encode the osmosis spot price query request for the specific pool and denoms
-	// spotPriceRequest := types.QuerySpotPriceRequest{
-	// 	PoolId:          route.PoolId,
-	// 	BaseAssetDenom:  route.RewardDenomOnTradeZone,
-	// 	QuoteAssetDenom: route.TargetDenomOnTradeZone,
-	// }
-	// queryData := k.cdc.MustMarshal(&spotPriceRequest)
-	// TODO [DYDX]: Use TWAP in separate PR
-	queryData := []byte{}
+	// Build query request data which consists of the TWAP store key built from each denom
+	queryData := icqtypes.FormatOsmosisMostRecentTWAPKey(route.PoolId, denom1, denom2)
 
 	// Timeout query at end of epoch
 	strideEpochTracker, found := k.GetEpochTracker(ctx, epochstypes.STRIDE_EPOCH)
@@ -383,7 +379,7 @@ func (k Keeper) PoolPriceQuery(ctx sdk.Context, route types.TradeRoute) error {
 	query := icqtypes.Query{
 		ChainId:         tradeAccount.ChainId,
 		ConnectionId:    tradeAccount.ConnectionId, // query needs to go to the trade zone, not the host zone
-		QueryType:       icqtypes.BANK_STORE_QUERY_WITH_PROOF,
+		QueryType:       icqtypes.TWAP_STORE_QUERY_WITH_PROOF,
 		RequestData:     queryData,
 		CallbackModule:  types.ModuleName,
 		CallbackId:      ICQCallbackID_PoolPrice,
