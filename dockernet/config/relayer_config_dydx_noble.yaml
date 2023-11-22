@@ -4,6 +4,21 @@ global:
   memo: ""
   light-cache-size: 20
 chains:
+  stride:
+    type: cosmos
+    value:
+      key: stride
+      chain-id: STRIDE
+      rpc-addr: http://stride1:26657
+      account-prefix: stride
+      keyring-backend: test
+      gas-adjustment: 1.3
+      gas-prices: 0.02ustrd
+      coin-type: 118
+      debug: false
+      timeout: 20s
+      output-format: json
+      sign-mode: direct
   dydx:
     type: cosmos
     value:
@@ -50,6 +65,14 @@ chains:
       output-format: json
       sign-mode: direct
 paths:
+  stride-osmo:
+    src:
+      chain-id: STRIDE
+    dst:
+      chain-id: OSMO
+    src-channel-filter:
+      rule: ""
+      channel-list: []
   dydx-noble:
     src:
       chain-id: DYDX
