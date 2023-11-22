@@ -133,52 +133,56 @@ func (k Keeper) TransferConvertedTokensTradeToHost(ctx sdk.Context, amount sdk.I
 // Trade reward tokens in the Trade ICA for the target output token type using ICA remote tx on trade zone
 // The amount represents the total amount of the reward token in the trade ICA found by the calling ICQ
 // Depending on min and max swap amounts set in the route, it is possible not the full amount given will swap
-func (k Keeper) TradeRewardTokens(ctx sdk.Context, amount sdk.Int, route types.TradeRoute) error {
+func (k Keeper) TradeRewardTokens(ctx sdk.Context, rewardAmount sdk.Int, route types.TradeRoute) error {
 	// If the min swap amount was not set it would be ZeroInt, if positive we need to compare to the amount given
 	//  then if the min swap amount is greater than the current amount, do nothing this epoch to avoid small swaps
-	if route.MinSwapAmount.IsPositive() && route.MinSwapAmount.GT(amount) {
+	if route.MinSwapAmount.IsPositive() && route.MinSwapAmount.GT(rewardAmount) {
 		return nil
 	}
 
 	// If the max swap amount was not set it would be ZeroInt, if positive we need to compare to the amount given
 	//  then if max swap amount is LTE to amount full swap is possible so amount is fine, otherwise set amount to max
-	if route.MaxSwapAmount.IsPositive() && route.MaxSwapAmount.GT(amount) {
-		amount = route.MaxSwapAmount
+	if route.MaxSwapAmount.IsPositive() && route.MaxSwapAmount.GT(rewardAmount) {
+		rewardAmount = route.MaxSwapAmount
 	}
 
-	// See if pool swap spot price has been set to a valid ratio (string representing a float like "10.203")
-	// If there is a valid spot price, use it to set a floor for the acceptable minimum output tokens
-	// 5% slippage is allowed so multiply by 0.95 the expected spot price to get the target minimum
+	// See if pool swap price has been set to a valid ratio
+	// If there is a valid price, use it to set a floor for the acceptable minimum output tokens
 	// minOut is the minimum number of route.TargetDenomOnTradeZone we must receive or the swap will fail
-	if route.InputToOutputTwap == sdk.ZeroDec() {
-		return fmt.Errorf("TWAP not found for pool %d", route.PoolId)
+	//
+	// To calculate minOut, we first convert the rewardAmount into units of HostDenom,
+	//   and then we multiply by (1 - maxSlippage)
+	//
+	// The price of the host token is denominated in units of reward tokens
+	// Meaning, a price of 1.1 implies 1.1 RewardTokens are needed to buy 1 HostToken
+	// So, to convert from units of RewardTokens to units of HostTokens,
+	// we divide the reward amount by the price:
+	//   AmountInHost = AmountInReward / PriceOfHostRelativeToReward
+	if route.HostTokenPrice == sdk.ZeroDec() {
+		return fmt.Errorf("Price not found for pool %d", route.PoolId)
 	}
-	slippageRatio := sdk.NewDecWithPrec(95, 2) // 0.95 to allow 5% loss to slippage
-	inputToOutputRatio := slippageRatio.Mul(route.InputToOutputTwap)
-	minOut := sdk.NewDecFromInt(amount).Mul(inputToOutputRatio).TruncateInt()
+	rewardAmountConverted := sdk.NewDecFromInt(rewardAmount).Quo(route.HostTokenPrice)
+	minOutPercentage := sdk.OneDec().Sub(route.MaxSlippagePercentage)
+	minOut := rewardAmountConverted.Mul(minOutPercentage).TruncateInt()
 
 	tradeIcaAccount := route.RewardToTradeHop.ToAccount
-	tradeTokens := sdk.NewCoin(route.RewardDenomOnTradeZone, amount)
+	tradeTokens := sdk.NewCoin(route.RewardDenomOnTradeZone, rewardAmount)
 
 	// Prepare Osmosis GAMM module MsgSwapExactAmountIn from the trade account to perform the trade
 	// If we want to generalize in the future, write swap message generation funcs for each DEX type,
 	// decide which msg generation function to call based on check of which tradeZone was passed in
-	var msgs []proto.Message
-	if amount.GT(sdk.ZeroInt()) {
-		var routes []types.SwapAmountInRoute
-		routes = append(routes, types.SwapAmountInRoute{
-			PoolId:        route.PoolId,
-			TokenOutDenom: route.TargetDenomOnTradeZone,
-		})
-		msgs = append(msgs, &types.MsgSwapExactAmountIn{
-			Sender:            tradeIcaAccount.Address,
-			Routes:            routes,
-			TokenIn:           tradeTokens,
-			TokenOutMinAmount: minOut,
-		})
-		k.Logger(ctx).Info(utils.LogWithHostZone(tradeIcaAccount.ChainId,
-			"Preparing MsgSwapExactAmountIn of %+v from the trade account", tradeTokens))
-	}
+	routes := []types.SwapAmountInRoute{{
+		PoolId:        route.PoolId,
+		TokenOutDenom: route.TargetDenomOnTradeZone,
+	}}
+	msgs := []proto.Message{&types.MsgSwapExactAmountIn{
+		Sender:            tradeIcaAccount.Address,
+		Routes:            routes,
+		TokenIn:           tradeTokens,
+		TokenOutMinAmount: minOut,
+	}}
+	k.Logger(ctx).Info(utils.LogWithHostZone(tradeIcaAccount.ChainId,
+		"Preparing MsgSwapExactAmountIn of %+v from the trade account", tradeTokens))
 
 	strideEpochTracker, found := k.GetEpochTracker(ctx, epochstypes.STRIDE_EPOCH)
 	if !found {

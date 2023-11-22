@@ -43,7 +43,7 @@ message TradeRoute {
 
   // price of the output denom relative to the input denom
   // this is update periodically via an ICQ
-  string price = 10 [
+  string host_token_price = 10 [
     (cosmos_proto.scalar) = "cosmos.Dec",
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false

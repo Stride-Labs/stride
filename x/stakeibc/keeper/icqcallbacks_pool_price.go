@@ -12,11 +12,22 @@ import (
 	"github.com/Stride-Labs/stride/v16/x/stakeibc/types"
 )
 
-// TradeRewardBalanceCallback is a callback handler for TradeRewardBalance queries.
-// The query response will return the trade ICA account balance for a specific (foreign ibc) denom
-// If the balance is non-zero, ICA MsgSends are submitted to initiate a swap on the tradeZone
+// PoolPriceCallback is a callback handler for PoolPrice query.
+// The query response returns an Osmosis TwapRecord for the associated pool denom's
 //
-// Note: for now, to get proofs in your ICQs, you need to query the entire store on the host zone! e.g. "store/bank/key"
+// The assets in the response are identified by indicies and are sorted alphabetically
+// (e.g. if the two denom's are ibc/AXXX, and ibc/BXXX,
+// then Asset0Denom is ibc/AXXX and Asset1Denom is ibc/BXXX)
+//
+// The price fields (P0LastSpotPrice and P1LastSpotPrice) represent the relative
+// ratios of tokens in the pool
+//
+//	P0LastSpotPrice gives the ratio of Asset0Denom / Asset1Denom
+//	P1LastSpotPrice gives the ratio of Asset1Denom / Asset0Denom
+//
+// When storing down the price, we want to denominate the price of the TargetDenom,
+// relative to the price of the RewardDenom, which means we have to take the inverse
+// from the response
 func PoolPriceCallback(k Keeper, ctx sdk.Context, args []byte, query icqtypes.Query) error {
 	k.Logger(ctx).Info(utils.LogICQCallbackWithHostZone(query.ChainId, ICQCallbackID_PoolPrice,
 		"Starting pool spot price callback, QueryId: %vs, QueryType: %s, Connection: %s", query.Id, query.QueryType, query.ConnectionId))
@@ -30,21 +41,55 @@ func PoolPriceCallback(k Keeper, ctx sdk.Context, args []byte, query icqtypes.Qu
 		return errorsmod.Wrap(err, "unable to unmarshal the query response")
 	}
 
-	price := sdk.ZeroDec()
-	fmt.Printf("%+v\n", twapRecord)
-
 	// Unmarshal the callback data containing the tradeRoute we are on
 	var tradeRoute types.TradeRoute
 	if err := proto.Unmarshal(query.CallbackData, &tradeRoute); err != nil {
 		return errorsmod.Wrapf(err, "unable to unmarshal trade reward balance callback data")
 	}
-	k.Logger(ctx).Info(utils.LogICQCallbackWithHostZone(chainId, ICQCallbackID_PoolPrice,
-		"Query response - spot price ratio of %s to %s is %s",
-		tradeRoute.RewardDenomOnTradeZone, tradeRoute.TargetDenomOnTradeZone, price))
 
-	// Update the spot price stored on the trade route data in the keeper
-	tradeRoute.InputToOutputTwap = price
+	// Confirm the denom's from the query response match the denom's in the route
+	if err := AssertTwapAssetsMatchTradeRoute(twapRecord, tradeRoute); err != nil {
+		return err
+	}
+
+	// Get the associate "SpotPrice" from the twap record, based on the asset ordering
+	// The "SpotPrice" is actually a ratio of the assets in the pool
+	var ratioOfHostToRewardDenom sdk.Dec
+	if twapRecord.Asset0Denom == tradeRoute.TargetDenomOnTradeZone {
+		ratioOfHostToRewardDenom = twapRecord.P0LastSpotPrice
+	} else {
+		ratioOfHostToRewardDenom = twapRecord.P1LastSpotPrice
+	}
+
+	// We want the price of the host denom in terms of the reward denom,
+	// so we can use the ratio above to determine the price, via (1 / RatioOfHostToReward)
+	hostPrice := sdk.OneDec().Quo(ratioOfHostToRewardDenom)
+
+	k.Logger(ctx).Info(utils.LogICQCallbackWithHostZone(chainId, ICQCallbackID_PoolPrice,
+		"Query response - price ratio of %s to %s is %s",
+		tradeRoute.RewardDenomOnTradeZone, tradeRoute.TargetDenomOnTradeZone, hostPrice))
+
+	// Update the price and time on the trade route data
+	tradeRoute.HostTokenPrice = hostPrice
+	tradeRoute.LastPriceUpdateTime = ctx.BlockTime()
 	k.SetTradeRoute(ctx, tradeRoute)
 
 	return nil
+}
+
+// Helper function to confirm that the two assets in the twap record match the assets in the trade route
+// The assets in the twap record are sorted alphabetically, so we have to check both orderings
+func AssertTwapAssetsMatchTradeRoute(twapRecord types.OsmosisTwapRecord, tradeRoute types.TradeRoute) error {
+	hostDenomMatchFirst := twapRecord.Asset0Denom == tradeRoute.TargetDenomOnHostZone
+	rewardDenomMatchSecond := twapRecord.Asset1Denom == tradeRoute.RewardDenomOnHostZone
+
+	rewardDenomMatchFirst := twapRecord.Asset0Denom == tradeRoute.RewardDenomOnHostZone
+	hostDenomMatchSecond := twapRecord.Asset1Denom == tradeRoute.TargetDenomOnHostZone
+
+	if (hostDenomMatchFirst && rewardDenomMatchSecond) || (rewardDenomMatchFirst && hostDenomMatchSecond) {
+		return nil
+	}
+
+	return fmt.Errorf("Assets in query response (%s, %s) do not match denom's from trade route (%s, %s)",
+		twapRecord.Asset0Denom, twapRecord.Asset1Denom, tradeRoute.TargetDenomOnTradeZone, tradeRoute.RewardDenomOnTradeZone)
 }
