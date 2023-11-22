@@ -80,11 +80,11 @@ func PoolPriceCallback(k Keeper, ctx sdk.Context, args []byte, query icqtypes.Qu
 // Helper function to confirm that the two assets in the twap record match the assets in the trade route
 // The assets in the twap record are sorted alphabetically, so we have to check both orderings
 func AssertTwapAssetsMatchTradeRoute(twapRecord types.OsmosisTwapRecord, tradeRoute types.TradeRoute) error {
-	hostDenomMatchFirst := twapRecord.Asset0Denom == tradeRoute.TargetDenomOnHostZone
-	rewardDenomMatchSecond := twapRecord.Asset1Denom == tradeRoute.RewardDenomOnHostZone
+	hostDenomMatchFirst := twapRecord.Asset0Denom == tradeRoute.TargetDenomOnTradeZone
+	rewardDenomMatchSecond := twapRecord.Asset1Denom == tradeRoute.RewardDenomOnTradeZone
 
-	rewardDenomMatchFirst := twapRecord.Asset0Denom == tradeRoute.RewardDenomOnHostZone
-	hostDenomMatchSecond := twapRecord.Asset1Denom == tradeRoute.TargetDenomOnHostZone
+	rewardDenomMatchFirst := twapRecord.Asset0Denom == tradeRoute.RewardDenomOnTradeZone
+	hostDenomMatchSecond := twapRecord.Asset1Denom == tradeRoute.TargetDenomOnTradeZone
 
 	if (hostDenomMatchFirst && rewardDenomMatchSecond) || (rewardDenomMatchFirst && hostDenomMatchSecond) {
 		return nil
