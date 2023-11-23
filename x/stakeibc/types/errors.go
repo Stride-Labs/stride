@@ -60,4 +60,5 @@ var (
 	ErrHostZoneNotHalted                   = errorsmod.Register(ModuleName, 1553, "host zone is not halted")
 	ErrFailedToLiquidStake                 = errorsmod.Register(ModuleName, 1554, "Failed to liquid stake")
 	ErrUnableToRedeemStake                 = errorsmod.Register(ModuleName, 1555, "Failed to redeem stake")
+	ErrInvalidDenom                        = errorsmod.Register(ModuleName, 1556, "Invalid denom")
 )
