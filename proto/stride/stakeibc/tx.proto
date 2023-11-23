@@ -223,32 +223,31 @@ message MsgCreateTradeRoute {
   string host_chain_id = 2;
 
   // Connection IDs between stride and the other zones
-  string stride_to_host_connection_id = 3;
-  string stride_to_reward_connection_id = 4;
-  string stride_to_trade_connection_id = 5;
+  string stride_to_reward_connection_id = 3;
+  string stride_to_trade_connection_id = 4;
 
   // Transfer channels between the host, reward, and trade zones
-  string host_to_reward_transfer_channel_id = 6;
-  string reward_to_trade_transfer_channel_id = 7;
-  string trade_to_host_transfer_channel_id = 8;
+  string host_to_reward_transfer_channel_id = 5;
+  string reward_to_trade_transfer_channel_id = 6;
+  string trade_to_host_transfer_channel_id = 7;
 
   // ibc denom for the reward token on the host zone (e.g. ibc/usdc on dYdX)
-  string reward_denom_on_host = 9;
+  string reward_denom_on_host = 8;
   // native denom of reward token on the reward zone (e.g. usdc on Noble)
-  string reward_denom_on_reward = 10;
+  string reward_denom_on_reward = 9;
   // ibc denom of the reward token on the trade zone (e.g. ibc/usdc on Osmosis)
-  string reward_denom_on_trade = 11;
+  string reward_denom_on_trade = 10;
   // ibc denom of the host's token on the trade zone (e.g. ibc/dydx on Osmosis)
-  string host_denom_on_trade = 12;
+  string host_denom_on_trade = 11;
   // the host zone's native denom (e.g. dydx on dYdX)
-  string host_denom_on_host = 13;
+  string host_denom_on_host = 12;
 
   // The osmosis pool ID
-  uint64 pool_id = 14;
+  uint64 pool_id = 13;
 
   // min and max set boundaries of reward denom on trade chain we will swap
-  uint64 min_swap_amount = 15;
-  uint64 max_swap_amount = 16;
+  uint64 min_swap_amount = 14;
+  uint64 max_swap_amount = 15;
 }
 message MsgCreateTradeRouteResponse {}
 
