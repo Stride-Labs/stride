@@ -143,7 +143,7 @@ func (k Keeper) RegisterTradeRouteICAAccount(
 	}
 	counterpartyConnectionId := connection.Counterparty.ConnectionId
 
-	// Register the interchain account
+	// Build the appVersion, owner, and portId needed for registration
 	appVersion := string(icatypes.ModuleCdc.MustMarshalJSON(&icatypes.Metadata{
 		Version:                icatypes.Version,
 		ControllerConnectionId: connectionId,
@@ -152,15 +152,36 @@ func (k Keeper) RegisterTradeRouteICAAccount(
 		TxType:                 icatypes.TxTypeSDKMultiMsg,
 	}))
 	owner := types.FormatICAAccountOwner(chainId, icaAccountType)
-	if err := k.ICAControllerKeeper.RegisterInterchainAccount(ctx, connectionId, owner, appVersion); err != nil {
+	portID, err := icatypes.NewControllerPortID(owner)
+	if err != nil {
 		return account, err
 	}
 
-	// Return the ICAAccount
+	// Create the associate ICAAccount object
 	account = types.ICAAccount{
 		ChainId:      chainId,
 		Type:         icaAccountType,
 		ConnectionId: connectionId,
+	}
+
+	// Check if an ICA account has already been created
+	// (in the event that this trade route was removed and then added back)
+	// If so, there's no need to register a new ICA
+	_, channelFound := k.ICAControllerKeeper.GetOpenActiveChannel(ctx, connectionId, portID)
+	icaAddress, icaFound := k.ICAControllerKeeper.GetInterchainAccountAddress(ctx, connectionId, portID)
+	if channelFound && icaFound {
+		account = types.ICAAccount{
+			ChainId:      chainId,
+			Type:         icaAccountType,
+			ConnectionId: connectionId,
+			Address:      icaAddress,
+		}
+		return account, nil
+	}
+
+	// Otherwise, if there's no account already, register a new one
+	if err := k.ICAControllerKeeper.RegisterInterchainAccount(ctx, connectionId, owner, appVersion); err != nil {
+		return account, err
 	}
 
 	return account, nil
