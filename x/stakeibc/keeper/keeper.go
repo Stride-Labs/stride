@@ -35,6 +35,7 @@ type (
 		storeKey              storetypes.StoreKey
 		memKey                storetypes.StoreKey
 		paramstore            paramtypes.Subspace
+		authority             string
 		ICAControllerKeeper   icacontrollerkeeper.Keeper
 		IBCKeeper             ibckeeper.Keeper
 		bankKeeper            bankkeeper.Keeper
@@ -55,6 +56,7 @@ func NewKeeper(
 	storeKey,
 	memKey storetypes.StoreKey,
 	ps paramtypes.Subspace,
+	authority string,
 	accountKeeper types.AccountKeeper,
 	bankKeeper bankkeeper.Keeper,
 	icacontrollerkeeper icacontrollerkeeper.Keeper,
@@ -77,6 +79,7 @@ func NewKeeper(
 		storeKey:              storeKey,
 		memKey:                memKey,
 		paramstore:            ps,
+		authority:             authority,
 		AccountKeeper:         accountKeeper,
 		bankKeeper:            bankKeeper,
 		ICAControllerKeeper:   icacontrollerkeeper,
@@ -104,6 +107,11 @@ func (k *Keeper) SetHooks(gh types.StakeIBCHooks) *Keeper {
 	k.hooks = gh
 
 	return k
+}
+
+// GetAuthority returns the x/icaoracle module's authority.
+func (k Keeper) GetAuthority() string {
+	return k.authority
 }
 
 func (k Keeper) GetChainID(ctx sdk.Context, connectionID string) (string, error) {
