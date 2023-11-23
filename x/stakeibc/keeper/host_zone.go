@@ -35,6 +35,18 @@ func (k Keeper) GetHostZone(ctx sdk.Context, chainId string) (val types.HostZone
 	return val, true
 }
 
+// GetActiveHostZone returns an error if the host zone is not found or if it's found, but is halted
+func (k Keeper) GetActiveHostZone(ctx sdk.Context, chainId string) (hostZone types.HostZone, err error) {
+	hostZone, found := k.GetHostZone(ctx, chainId)
+	if !found {
+		return hostZone, types.ErrHostZoneNotFound.Wrap(chainId)
+	}
+	if hostZone.Halted {
+		return hostZone, types.ErrHaltedHostZone.Wrap(chainId)
+	}
+	return hostZone, nil
+}
+
 // GetHostZoneFromHostDenom returns a HostZone from a HostDenom
 func (k Keeper) GetHostZoneFromHostDenom(ctx sdk.Context, denom string) (*types.HostZone, error) {
 	var matchZone types.HostZone

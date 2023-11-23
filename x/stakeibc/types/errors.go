@@ -61,4 +61,6 @@ var (
 	ErrFailedToLiquidStake                 = errorsmod.Register(ModuleName, 1554, "Failed to liquid stake")
 	ErrUnableToRedeemStake                 = errorsmod.Register(ModuleName, 1555, "Failed to redeem stake")
 	ErrInvalidDenom                        = errorsmod.Register(ModuleName, 1556, "Invalid denom")
+	ErrTradeRouteAlreadyExists             = errorsmod.Register(ModuleName, 1557, "Trade route already exists")
+	ErrClientStateNotTendermint            = errorsmod.Register(ModuleName, 1558, "Client state not tendermint")
 )
