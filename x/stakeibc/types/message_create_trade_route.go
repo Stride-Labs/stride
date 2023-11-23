@@ -1,7 +1,6 @@
 package types
 
 import (
-	"errors"
 	"regexp"
 	"strings"
 
@@ -48,9 +47,10 @@ func (msg *MsgCreateTradeRoute) ValidateBasic() error {
 		return errorsmod.Wrap(err, "invalid authority address")
 	}
 
-	if err := validateConnectionId(msg.StrideToHostConnectionId); err != nil {
-		return errorsmod.Wrap(err, "invalid stride to host connection ID")
+	if msg.HostChainId == "" {
+		return errorsmod.Wrap(sdkerrors.ErrInvalidRequest, "host chain ID cannot be empty")
 	}
+
 	if err := validateConnectionId(msg.StrideToRewardConnectionId); err != nil {
 		return errorsmod.Wrap(err, "invalid stride to reward connection ID")
 	}
@@ -85,13 +85,10 @@ func (msg *MsgCreateTradeRoute) ValidateBasic() error {
 	}
 
 	if msg.PoolId < 1 {
-		return errors.New("invalid pool ID")
-	}
-	if msg.MinSwapAmount < 0 || msg.MaxSwapAmount < 0 {
-		return errors.New("min and max swap amount must be positive")
+		return errorsmod.Wrap(sdkerrors.ErrInvalidRequest, "invalid pool id")
 	}
 	if msg.MinSwapAmount > msg.MaxSwapAmount {
-		return errors.New("min swap amount cannot be greater than max swap amount")
+		return errorsmod.Wrap(sdkerrors.ErrInvalidRequest, "min swap amount cannot be greater than max swap amount")
 	}
 
 	return nil
