@@ -77,6 +77,7 @@ func (ms msgServer) CreateTradeRoute(goCtx context.Context, msg *types.MsgCreate
 		ChainId:      msg.HostChainId,
 		Type:         types.ICAAccountType_WITHDRAWAL,
 		ConnectionId: hostZone.ConnectionId,
+		Address:      hostZone.WithdrawalIcaAddress,
 	}
 	rewardICA, err := ms.Keeper.RegisterTradeRouteICAAccount(ctx, msg.StrideToRewardConnectionId, types.ICAAccountType_UNWIND)
 	if err != nil {

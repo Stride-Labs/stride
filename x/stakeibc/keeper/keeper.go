@@ -107,7 +107,7 @@ func (k *Keeper) SetHooks(gh types.StakeIBCHooks) *Keeper {
 	return k
 }
 
-// GetAuthority returns the x/icaoracle module's authority.
+// GetAuthority returns the x/stakeibc module's authority.
 func (k Keeper) GetAuthority() string {
 	return k.authority
 }
