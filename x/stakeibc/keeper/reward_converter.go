@@ -151,7 +151,7 @@ func (k Keeper) TradeRewardTokens(ctx sdk.Context, rewardAmount sdk.Int, route t
 	// minOut is the minimum number of route.TargetDenomOnTradeZone we must receive or the swap will fail
 	//
 	// To calculate minOut, we first convert the rewardAmount into units of HostDenom,
-	//   and then we multiply by (1 - maxSlippage)
+	//   and then we multiply by (1 - MaxAllowedSwapLossRate)
 	//
 	// The price of the host token is denominated in units of reward tokens
 	// Meaning, a price of 1.1 implies 1.1 RewardTokens are needed to buy 1 HostToken
@@ -162,7 +162,7 @@ func (k Keeper) TradeRewardTokens(ctx sdk.Context, rewardAmount sdk.Int, route t
 		return fmt.Errorf("Price not found for pool %d", route.PoolId)
 	}
 	rewardAmountConverted := sdk.NewDecFromInt(rewardAmount).Quo(route.HostTokenPrice)
-	minOutPercentage := sdk.OneDec().Sub(route.MaxSlippagePercentage)
+	minOutPercentage := sdk.OneDec().Sub(route.MaxAllowedSwapLossRate)
 	minOut := rewardAmountConverted.Mul(minOutPercentage).TruncateInt()
 
 	tradeIcaAccount := route.RewardToTradeHop.ToAccount
