@@ -78,7 +78,7 @@ func (im IBCMiddleware) OnChanOpenAck(
 	}
 	// get host chain id from connection
 	// fetch counterparty connection
-	hostChainId, err := im.keeper.GetChainID(ctx, controllerConnectionId)
+	hostChainId, err := im.keeper.GetChainIdFromConnectionId(ctx, controllerConnectionId)
 	if err != nil {
 		ctx.Logger().Error(fmt.Sprintf("Unable to obtain counterparty chain for connection: %s, port: %s, err: %s", controllerConnectionId, portID, err.Error()))
 		return nil
