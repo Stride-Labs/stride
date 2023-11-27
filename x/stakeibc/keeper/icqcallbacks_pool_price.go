@@ -54,16 +54,16 @@ func PoolPriceCallback(k Keeper, ctx sdk.Context, args []byte, query icqtypes.Qu
 
 	// Get the associate "SpotPrice" from the twap record, based on the asset ordering
 	// The "SpotPrice" is actually a ratio of the assets in the pool
-	var ratioOfHostToRewardDenom sdk.Dec
-	if twapRecord.Asset0Denom == tradeRoute.TargetDenomOnTradeZone {
-		ratioOfHostToRewardDenom = twapRecord.P0LastSpotPrice
-	} else {
-		ratioOfHostToRewardDenom = twapRecord.P1LastSpotPrice
-	}
-
 	// We want the price of the host denom in terms of the reward denom,
-	// so we can use the ratio above to determine the price, via (1 / RatioOfHostToReward)
-	hostPrice := sdk.OneDec().Quo(ratioOfHostToRewardDenom)
+	//   so we can actually grab the price that corresponds with the other asset, which
+	//   is essentially the same as taking the inverse of the ratio
+	// i.e. For Asset0, we want (1 / Asset0Price) which is equal to Asset1Price
+	var hostPrice sdk.Dec
+	if twapRecord.Asset0Denom == tradeRoute.TargetDenomOnTradeZone {
+		hostPrice = twapRecord.P1LastSpotPrice
+	} else {
+		hostPrice = twapRecord.P0LastSpotPrice
+	}
 
 	k.Logger(ctx).Info(utils.LogICQCallbackWithHostZone(chainId, ICQCallbackID_PoolPrice,
 		"Query response - price ratio of %s to %s is %s",
