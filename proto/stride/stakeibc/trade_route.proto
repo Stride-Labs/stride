@@ -49,7 +49,7 @@ message TradeRoute {
     (gogoproto.nullable) = false
   ];
   // timestamp that the price was last updated
-  google.protobuf.Timestamp last_price_update_time = 11
+  google.protobuf.Timestamp price_update_time = 11
       [ (gogoproto.nullable) = false, (gogoproto.stdtime) = true ];
 
   // max acceptable slippage from the trade, (e.g. 0.05 for 5%)
