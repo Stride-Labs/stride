@@ -41,9 +41,10 @@ message TradeRoute {
   // Currently Osmosis is the only trade chain so this is an osmosis pool id
   uint64 pool_id = 9;
 
-  // price of the output denom relative to the input denom
-  // this is update periodically via an ICQ
-  string host_token_price = 10 [
+  // Spot price in the pool to convert the reward denom to the host denom
+  // output_tokens = swap_price * input tokens
+  // This value may be slightly stale as it is updated by an ICQ
+  string swap_price = 10 [
     (cosmos_proto.scalar) = "cosmos.Dec",
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false

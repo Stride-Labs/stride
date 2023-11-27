@@ -147,21 +147,23 @@ func (k Keeper) TradeRewardTokens(ctx sdk.Context, rewardAmount sdk.Int, route t
 	}
 
 	// See if pool swap price has been set to a valid ratio
+	// The only time this should not be set is right after the pool is added,
+	// before an ICQ has been submitted for the price
+	if route.SwapPrice == sdk.ZeroDec() {
+		return fmt.Errorf("Price not found for pool %d", route.PoolId)
+	}
+
 	// If there is a valid price, use it to set a floor for the acceptable minimum output tokens
 	// minOut is the minimum number of route.TargetDenomOnTradeZone we must receive or the swap will fail
 	//
 	// To calculate minOut, we first convert the rewardAmount into units of HostDenom,
 	//   and then we multiply by (1 - MaxAllowedSwapLossRate)
 	//
-	// The price of the host token is denominated in units of reward tokens
-	// Meaning, a price of 1.1 implies 1.1 RewardTokens are needed to buy 1 HostToken
+	// The price on the trade route represents the ratio of host denom to reward denom
 	// So, to convert from units of RewardTokens to units of HostTokens,
-	// we divide the reward amount by the price:
-	//   AmountInHost = AmountInReward / PriceOfHostRelativeToReward
-	if route.HostTokenPrice == sdk.ZeroDec() {
-		return fmt.Errorf("Price not found for pool %d", route.PoolId)
-	}
-	rewardAmountConverted := sdk.NewDecFromInt(rewardAmount).Quo(route.HostTokenPrice)
+	// we multiply the reward amount by the price:
+	//   AmountInHost = AmountInReward * SwapPrice
+	rewardAmountConverted := sdk.NewDecFromInt(rewardAmount).Mul(route.SwapPrice)
 	minOutPercentage := sdk.OneDec().Sub(route.MaxAllowedSwapLossRate)
 	minOut := rewardAmountConverted.Mul(minOutPercentage).TruncateInt()
 
