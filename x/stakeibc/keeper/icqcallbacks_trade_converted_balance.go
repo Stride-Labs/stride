@@ -45,8 +45,15 @@ func TradeConvertedBalanceCallback(k Keeper, ctx sdk.Context, args []byte, query
 	}
 
 	// Using ICA commands on the trade address, transfer the found converted tokens from the trade zone to the host zone
-	k.TransferConvertedTokensTradeToHost(ctx, tradeConvertedBalanceAmount, tradeRoute)
-	k.Logger(ctx).Info(utils.LogICQCallbackWithHostZone(chainId, ICQCallbackID_WithdrawalRewardBalance,
+	err = utils.ApplyFuncIfNoError(ctx, func(c sdk.Context) error {
+		return k.TransferConvertedTokensTradeToHost(ctx, tradeConvertedBalanceAmount, tradeRoute)
+	})
+	if err != nil {
+		k.Logger(ctx).Error(utils.LogICQCallbackWithHostZone(chainId, ICQCallbackID_TradeConvertedBalance,
+			"Initiating transfer of converted tokens to back to host zone failed: %s", err.Error()))
+	}
+
+	k.Logger(ctx).Info(utils.LogICQCallbackWithHostZone(chainId, ICQCallbackID_TradeConvertedBalance,
 		"Sending discovered converted tokens %v %s from tradeZone back to hostZone",
 		tradeConvertedBalanceAmount, tradeRoute.TargetDenomOnTradeZone))
 
