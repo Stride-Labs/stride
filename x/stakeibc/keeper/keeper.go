@@ -5,27 +5,25 @@ import (
 
 	errorsmod "cosmossdk.io/errors"
 	"github.com/cometbft/cometbft/libs/log"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	"github.com/spf13/cast"
-
 	"github.com/cosmos/cosmos-sdk/codec"
+	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
-
-	icqkeeper "github.com/Stride-Labs/stride/v16/x/interchainquery/keeper"
-	"github.com/Stride-Labs/stride/v16/x/stakeibc/types"
-
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
 	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 	icacontrollerkeeper "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/controller/keeper"
+	clienttypes "github.com/cosmos/ibc-go/v7/modules/core/02-client/types"
+	connectiontypes "github.com/cosmos/ibc-go/v7/modules/core/03-connection/types"
 	ibckeeper "github.com/cosmos/ibc-go/v7/modules/core/keeper"
 	ibctmtypes "github.com/cosmos/ibc-go/v7/modules/light-clients/07-tendermint"
-
-	storetypes "github.com/cosmos/cosmos-sdk/store/types"
+	"github.com/spf13/cast"
 
 	epochstypes "github.com/Stride-Labs/stride/v16/x/epochs/types"
 	icacallbackskeeper "github.com/Stride-Labs/stride/v16/x/icacallbacks/keeper"
+	icqkeeper "github.com/Stride-Labs/stride/v16/x/interchainquery/keeper"
 	recordsmodulekeeper "github.com/Stride-Labs/stride/v16/x/records/keeper"
+	"github.com/Stride-Labs/stride/v16/x/stakeibc/types"
 )
 
 type (
@@ -35,6 +33,7 @@ type (
 		storeKey              storetypes.StoreKey
 		memKey                storetypes.StoreKey
 		paramstore            paramtypes.Subspace
+		authority             string
 		ICAControllerKeeper   icacontrollerkeeper.Keeper
 		IBCKeeper             ibckeeper.Keeper
 		bankKeeper            bankkeeper.Keeper
@@ -55,6 +54,7 @@ func NewKeeper(
 	storeKey,
 	memKey storetypes.StoreKey,
 	ps paramtypes.Subspace,
+	authority string,
 	accountKeeper types.AccountKeeper,
 	bankKeeper bankkeeper.Keeper,
 	icacontrollerkeeper icacontrollerkeeper.Keeper,
@@ -77,6 +77,7 @@ func NewKeeper(
 		storeKey:              storeKey,
 		memKey:                memKey,
 		paramstore:            ps,
+		authority:             authority,
 		AccountKeeper:         accountKeeper,
 		bankKeeper:            bankKeeper,
 		ICAControllerKeeper:   icacontrollerkeeper,
@@ -106,24 +107,24 @@ func (k *Keeper) SetHooks(gh types.StakeIBCHooks) *Keeper {
 	return k
 }
 
-func (k Keeper) GetChainID(ctx sdk.Context, connectionID string) (string, error) {
-	conn, found := k.IBCKeeper.ConnectionKeeper.GetConnection(ctx, connectionID)
+// GetAuthority returns the x/stakeibc module's authority.
+func (k Keeper) GetAuthority() string {
+	return k.authority
+}
+
+// Lookup a chain ID from a connection ID by looking up the client state
+func (k Keeper) GetChainIdFromConnectionId(ctx sdk.Context, connectionID string) (string, error) {
+	connection, found := k.IBCKeeper.ConnectionKeeper.GetConnection(ctx, connectionID)
 	if !found {
-		errMsg := fmt.Sprintf("invalid connection id, %s not found", connectionID)
-		k.Logger(ctx).Error(errMsg)
-		return "", fmt.Errorf(errMsg)
+		return "", errorsmod.Wrap(connectiontypes.ErrConnectionNotFound, connectionID)
 	}
-	clientState, found := k.IBCKeeper.ClientKeeper.GetClientState(ctx, conn.ClientId)
+	clientState, found := k.IBCKeeper.ClientKeeper.GetClientState(ctx, connection.ClientId)
 	if !found {
-		errMsg := fmt.Sprintf("client id %s not found for connection %s", conn.ClientId, connectionID)
-		k.Logger(ctx).Error(errMsg)
-		return "", fmt.Errorf(errMsg)
+		return "", errorsmod.Wrap(clienttypes.ErrClientNotFound, connection.ClientId)
 	}
 	client, ok := clientState.(*ibctmtypes.ClientState)
 	if !ok {
-		errMsg := fmt.Sprintf("invalid client state for client %s on connection %s", conn.ClientId, connectionID)
-		k.Logger(ctx).Error(errMsg)
-		return "", fmt.Errorf(errMsg)
+		return "", types.ErrClientStateNotTendermint
 	}
 
 	return client.ChainId, nil

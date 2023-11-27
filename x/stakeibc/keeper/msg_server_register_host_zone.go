@@ -29,7 +29,7 @@ func (k msgServer) RegisterHostZone(goCtx context.Context, msg *types.MsgRegiste
 	counterpartyConnection := connectionEnd.Counterparty
 
 	// Get chain id from connection
-	chainId, err := k.GetChainID(ctx, msg.ConnectionId)
+	chainId, err := k.GetChainIdFromConnectionId(ctx, msg.ConnectionId)
 	if err != nil {
 		errMsg := fmt.Sprintf("unable to obtain chain id from connection %s, err: %s", msg.ConnectionId, err.Error())
 		k.Logger(ctx).Error(errMsg)

@@ -8,6 +8,8 @@ option go_package = "github.com/Stride-Labs/stride/v16/x/stakeibc/types";
 import "gogoproto/gogo.proto";
 import "cosmos_proto/cosmos.proto";
 import "cosmos/base/v1beta1/coin.proto";
+import "cosmos/msg/v1/msg.proto";
+import "amino/amino.proto";
 
 // Msg defines the Msg service.
 service Msg {
@@ -210,35 +212,42 @@ message MsgResumeHostZone {
 message MsgResumeHostZoneResponse {}
 
 message MsgCreateTradeRoute {
-  string creator = 1;
+  option (cosmos.msg.v1.signer) = "authority";
+  option (amino.name) = "stride/x/stakeibc/MsgCreateTradeRoute";
+
+  // authority is the address that controls the module (defaults to x/gov unless
+  // overwritten).
+  string authority = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+
+  // The chain ID of the host zone
   string host_chain_id = 2;
-  string host_connection_id = 3;
-  string host_ica_address = 4;
-  string reward_chain_id = 5;
-  string reward_connection_id = 6;
-  string reward_ica_address = 7;
-  string trade_chain_id = 8;
-  string trade_connection_id = 9;
-  string trade_ica_address = 10;
-  string host_reward_transfer_channel_id = 11;
-  string reward_trade_transfer_channel_id = 12;
-  string trade_host_transfer_channel_id = 13;
-  string reward_denom_on_host = 14;
-  string reward_denom_on_reward = 15;
-  string reward_denom_on_trade = 16;
-  string target_denom_on_trade = 17;
-  string target_denom_on_host = 18;
-  uint64 pool_id = 19;
-  string min_swap_amount = 20 [
-    (cosmos_proto.scalar) = "cosmos.Int",
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
-    (gogoproto.nullable) = false
-  ];
-  string max_swap_amount = 21 [
-    (cosmos_proto.scalar) = "cosmos.Int",
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
-    (gogoproto.nullable) = false
-  ];
+
+  // Connection IDs between stride and the other zones
+  string stride_to_reward_connection_id = 3;
+  string stride_to_trade_connection_id = 4;
+
+  // Transfer channels between the host, reward, and trade zones
+  string host_to_reward_transfer_channel_id = 5;
+  string reward_to_trade_transfer_channel_id = 6;
+  string trade_to_host_transfer_channel_id = 7;
+
+  // ibc denom for the reward token on the host zone (e.g. ibc/usdc on dYdX)
+  string reward_denom_on_host = 8;
+  // native denom of reward token on the reward zone (e.g. usdc on Noble)
+  string reward_denom_on_reward = 9;
+  // ibc denom of the reward token on the trade zone (e.g. ibc/usdc on Osmosis)
+  string reward_denom_on_trade = 10;
+  // ibc denom of the host's token on the trade zone (e.g. ibc/dydx on Osmosis)
+  string host_denom_on_trade = 11;
+  // the host zone's native denom (e.g. dydx on dYdX)
+  string host_denom_on_host = 12;
+
+  // The osmosis pool ID
+  uint64 pool_id = 13;
+
+  // min and max set boundaries of reward denom on trade chain we will swap
+  uint64 min_swap_amount = 14;
+  uint64 max_swap_amount = 15;
 }
 message MsgCreateTradeRouteResponse {}
 

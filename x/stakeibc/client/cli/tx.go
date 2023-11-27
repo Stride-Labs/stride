@@ -40,7 +40,6 @@ func GetTxCmd() *cobra.Command {
 	cmd.AddCommand(CmdUndelegateHost())
 	cmd.AddCommand(CmdUpdateInnerRedemptionRateBounds())
 	cmd.AddCommand(CmdResumeHostZone())
-	cmd.AddCommand(CmdCreateTradeRoute())
 	cmd.AddCommand(CmdDeleteTradeRoute())
 	cmd.AddCommand(CmdUpdateTradeRoute())
 

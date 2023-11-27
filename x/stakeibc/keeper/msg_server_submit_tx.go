@@ -268,7 +268,7 @@ func (k Keeper) SubmitTxs(
 	callbackId string,
 	callbackArgs []byte,
 ) (uint64, error) {
-	chainId, err := k.GetChainID(ctx, connectionId)
+	chainId, err := k.GetChainIdFromConnectionId(ctx, connectionId)
 	if err != nil {
 		return 0, err
 	}
@@ -328,14 +328,14 @@ func (k Keeper) SubmitTxs(
 }
 
 func (k Keeper) SubmitICATxWithoutCallback(
-	ctx sdk.Context, 
-	connectionId string, 
+	ctx sdk.Context,
+	connectionId string,
 	icaAccountType types.ICAAccountType,
 	msgs []proto.Message,
 	timeoutTimestamp uint64,
 ) error {
 	// Compute useful connection properties to avoid needing them as params
-	chainId, err := k.GetChainID(ctx, connectionId)
+	chainId, err := k.GetChainIdFromConnectionId(ctx, connectionId)
 	if err != nil {
 		return err
 	}
@@ -359,7 +359,7 @@ func (k Keeper) SubmitICATxWithoutCallback(
 	if err != nil {
 		return errorsmod.Wrapf(err, "unable to send ICA tx")
 	}
-	
+
 	return nil
 }
 
