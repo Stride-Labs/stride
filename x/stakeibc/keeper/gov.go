@@ -3,7 +3,7 @@ package keeper
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/Stride-Labs/stride/v12/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v16/x/stakeibc/types"
 )
 
 func (k Keeper) AddValidatorsProposal(ctx sdk.Context, msg *types.AddValidatorsProposal) error {
@@ -12,6 +12,18 @@ func (k Keeper) AddValidatorsProposal(ctx sdk.Context, msg *types.AddValidatorsP
 			return err
 		}
 	}
+
+	return nil
+}
+
+func (k Keeper) ToggleLSMProposal(ctx sdk.Context, msg *types.ToggleLSMProposal) error {
+	hostZone, found := k.GetHostZone(ctx, msg.HostZone)
+	if !found {
+		return types.ErrHostZoneNotFound.Wrap(msg.HostZone)
+	}
+
+	hostZone.LsmLiquidStakeEnabled = msg.Enabled
+	k.SetHostZone(ctx, hostZone)
 
 	return nil
 }

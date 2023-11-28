@@ -1,0 +1,334 @@
+Stride BSL License Grant
+
+Business Source License 1.1 https://mariadb.com/bsl11/ 
+
+License text copyright © 2023 MariaDB plc, All Rights Reserved. 
+“Business Source License” is a trademark of MariaDB plc.
+
+-------------------------------------------------------------------------------------------
+
+Licensor:             Stride Labs, Inc.
+
+Licensed Work:        Stride Multichain Liquid Staking 
+                      ICA Oracle core Cosmos SDK module software
+
+Additional Use Grant: You may make production use of the Licensed Work only 
+                      as part of the Stride blockchain approved by the Stride 
+                      on-chain token governance protocols.
+
+Change Date:          For each version, [4] years from the date of release of that version.
+
+Change License:       GNU General Public License version 2
+
+-------------------------------------------------------------------------------------------
+
+Terms
+
+The Licensor hereby grants you the right to copy, modify, create derivative works, 
+redistribute, and make non-production use of the Licensed Work. The Licensor may make 
+an Additional Use Grant, above, permitting limited production use.
+
+Effective on the Change Date, or the fourth anniversary of the first publicly available 
+distribution of a specific version of the Licensed Work under this License, whichever 
+comes first, the Licensor hereby grants you rights under the terms of the Change License, 
+and the rights granted in the paragraph above terminate.
+
+If your use of the Licensed Work does not comply with the requirements currently in effect 
+as described in this License, you must purchase a commercial license from the Licensor, 
+its affiliated entities, or authorized resellers, or you must refrain from using the 
+Licensed Work.
+
+All copies of the original and modified Licensed Work, and derivative works of the 
+Licensed Work, are subject to this License. This License applies separately for each 
+version of the Licensed Work and the Change Date may vary for each version of the Licensed 
+Work released by Licensor.
+
+You must conspicuously display this License on each original or modified copy of the 
+Licensed Work. If you receive the Licensed Work in original or modified form from a 
+third party, the terms and conditions set forth in this License apply to your use of 
+that work.
+
+Any use of the Licensed Work in violation of this License will automatically terminate 
+your rights under this License for the current and all other versions of the Licensed Work.
+
+This License does not grant you any right in any trademark or logo of Licensor or its 
+affiliates (provided that you may use a trademark or logo of Licensor as expressly required 
+by this License).TO THE EXTENT PERMITTED BY APPLICABLE LAW, THE LICENSED WORK IS PROVIDED 
+ON AN “AS IS” BASIS. LICENSOR HEREBY DISCLAIMS ALL WARRANTIES AND CONDITIONS, EXPRESS OR 
+IMPLIED, INCLUDING (WITHOUT LIMITATION) WARRANTIES OF MERCHANTABILITY, FITNESS FOR A 
+PARTICULAR PURPOSE, NON-INFRINGEMENT, AND TITLE. MariaDB hereby grants you permission to 
+use this License’s text to license your works, and to refer to it using the trademark 
+“Business Source License”, as long as you comply with the Covenants of Licensor below.
+
+-------------------------------------------------------------------------------------------
+
+Covenants of Licensor
+
+In consideration of the right to use this License’s text and the “Business Source License” 
+name and trademark, Licensor covenants to MariaDB, and to all other recipients of the 
+licensed work to be provided by Licensor:
+
+To specify as the Change License the GPL Version 2.0 or any later version, or a license 
+that is compatible with GPL Version 2.0 or a later version, where “compatible” means that 
+software provided under the Change License can be included in a program with software 
+provided under GPL Version 2.0 or a later version. Licensor may specify additional Change 
+Licenses without limitation.
+To either: (a) specify an additional grant of rights to use that does not impose any 
+               additional restriction on the right granted in this License, as the 
+               Additional Use Grant; or 
+           (b) insert the text “None” to specify a Change Date. Not to modify this 
+               License in any other way.
+
+-------------------------------------------------------------------------------------------
+
+Notice
+
+The Business Source License (this document, or the “License”) is not an Open Source license. 
+However, the Licensed Work will eventually be made available under an Open Source License, 
+as stated in this License.
+
+-------------------------------------------------------------------------------------------
+
+This license applies retroactively to the following commits:
+
+d1a0eae43fa08f3e54910c8f3381af4f3e83aca7
+66ee28b05a5ef086c6924b06e96cb2550e778141
+b2312b8bc5421e857c8ad70f779847aa58330947
+089cfc5d2036f71ab2cd935fb7641d89adafb330
+983a129996acbe2224a406f824d4d08e3b135425
+5ba8816aa89c683154d55900ce22166c406ab8df
+bd182094742ca4ae4df654ca8a432362a61d9871
+827e1361c438b08c3b4dec2ecc4a58a3c81643dd
+558d25ad8286bde00ec3f63c459eb960a587acfe
+e0e98e43140cef0ba78107eb77b5aefcba6e48bd
+f7a353ba153cf68aa527239309de5a00206e9017
+f5c4cf7c4f70c371d3e44baabe276dfb72df7149
+59913b1d3f693c70c2aff032fb9c9622e3c2a0d7
+f1c024b1532eccfcf4e6c9e8b365f5d3b75e396f
+c277b784d25f8c5ad9da2541216a0530637476ec
+d3eb4344e4706be7f0d0b57a60f146ec0d701abd
+d61959e77337e3b687b46d8bdbd47fe146eb2ab9
+0e6a03f64447a36d712f8c49642be95f029ed78f
+080c326c82dab53a33bb1cba77bb6c4806286664
+624bf8b3649d13d76c30357baa5ea536afd80e3f
+9d9ca03bfe7f8d7e59bbec5cb07e24616f1f360e
+eacbe486ee428359ee1b80f221991372ce4f9440
+d38e9b4b6cae3ee31c7197601b6cadc40a95ea8d
+a69e8a78dc64301079824db9740aaa02ddbde0b0
+d6404304bd962dc5d5f677130b921c4a2c453f39
+885444ccfaba1d5d832c0db15c4ccf8d3a9c16d3
+96182bedd27607ccb11878fbd1e031678a3ab030
+851a4168239aab68366569d56c5be563bc6d2cf7
+a04e6177561969612349605722a2969f8767c271
+6574198cb6223631e6d001d86aa80fe9e7afe766
+608d5de19b8a262feaf295f4b89bf7622b7ab761
+09194a23200e77b7a5502719127a9d6dcee3cd24
+7d7ef654a5891f1371c76ab0eaaf84f6c90c04b7
+71d06f039e565946bffceef89ee75a2a984c94ea
+a13239f2949a8a359846e4bbc05b9b87551ae4b3
+bed4b5fe52cb2c936674450c43226345c933960e
+2e0911f33b3c70d573c3d482dade6aa90b68943a
+05968335993aab7cf9db7f843633449241ebc090
+b8f62e520fd765fe052cbfb684d44f1c3f52c449
+4611788dece762e182f9fe1eb63e3e563ad33696
+8ae50d38d1e307332cf73a9660502418f5b269b7
+89b7604114e201ba5ef5d41f73dc883445d190c7
+4aa716fb3c76e4c46d58683927f7463c94e6a997
+3123f4db2b870ba0e0c52363682d9686609c389f
+f02f2dd99036cc28c8e47eeaafc525ecdff06d11
+1a4413ebe139e107b207a1043cf6587be47e5ddc
+91d5473d03b59e3cce1645c7ad42a54fc395dbf2
+9c6e796539df223f7e0b8614a1fba6a091070c69
+d6f68acc60c3d3e572bc3e0ac73bdf7825cbb09e
+d51949b3400039e2f037c91a12285a2056e375c4
+234d8ac641a82e21c1b762d0965891eb81b8bdfc
+3d17661c97ab95a86a690c39600e672afa17eb98
+cca0da9d4a2fe4bb77228437353a064385573f43
+7640b14f58c539847ff7d8758726dd88151eb95a
+92b4af44206d71122ca4da0502d7e97ef45e8d36
+e1d1b633078f773d07a1f80f88e094df57d8c8cb
+91541b267e1b0f61fab26c1e5a6cb210df096a64
+0c1343865fb8ac255733e559855d40503dec5a41
+e9af246d4c151dfd2b7dfe04fc398c70cde00188
+b44bd1663af0bff06bbc850a1a7bdabf3257554b
+fc7fe43674fb9850b4135620bc51a02b3ca96ab8
+95ad02c74440b7c581a6e138a0294f229203c015
+a8eb76937569cb285bb6e870af30afbddfcf1def
+c62cfc2c7b11d3d86b1967a5e1a5233298c5d10a
+1d5da15cedcda1ea6d707980e024d7b93c684cc5
+2de3b6070c33cbd57471309ca74ea25d4ffaa19d
+00fedb03e3579d92b97006ac185b7ed9f6477eb8
+1889bd7ab54834fbc0e639b32b0225e913623268
+bbf0bb7f52878f3205c76bb1e96662fe7bd7af8d
+b4abd61a1d2af18c057bb1aa64e992cd456307ec
+2a9ead570a02cb0ad34040fe6949814bbfcaa6ec
+de99fa592f5624a68fba71bf6913a283231c84d5
+1e641f99d0bd703fdf3ddcf8dcf6e63932316f42
+cd0b74fb7014925d200214cee75691bcb8166632
+2d2f647a35350e3a7ae82b3f095236ff87bbb150
+95fd8085e52ce3b3f52d65d69c011715ead732ee
+4db410ed17e17988339d44afe97174ee663e8392
+e75913c837c7de4c25db4a0a477479ff7fbcd65c
+b6afb511e1691a4f12a229fb7a0e321c947af493
+050b79eb51066fd2c416001facd75800b102f05f
+d4b3e0fbbe1cca74534b73e76deb18deafd7591c
+192e9673e3ae97a38491204b9924b43cec529253
+332d797e1cc527dd009d98ecbf9a2bb62179f7eb
+882126243ec7b0bcc345a991327a0d4453c428b6
+dfd716634439a253a96fd81dd844a46046955230
+1ea27fe060a0bf37161d75c303bcada84dbf346f
+436bf6fc5b979ca669f10b433237b2c5d64bef26
+efbe18edad8a1222bfb5b088985c3226e5d0fd21
+70bfad42f6fe0a789b5ae2c3d6eb42d9f9989078
+055b8f0e93dfd848fa8c2981c0cfea6d0525f1bf
+2e7b4a175fd63473af80a528b5556021dc43421c
+7bb9b4b3dce4d5f62b2aba98822647b257cdf6fe
+94262082d288ac14cc398424d37b563bed97ab24
+2f54693aaa34054d80761aaf8f22fad6891b01cd
+ff714bf6999549a82fe61806f7a9c69aef966d9a
+4b5d80ac5cafb418debc8a860959d4a6c6797cfb
+f61119edb643300bed3b5dd250a393733092daee
+995bfb355660a0a86ecbdbc6f0d77c0dd3386507
+6719a44bc2366f675a96d4df3c82a73ab475c314
+a3eff2dc5a33a64bd86341b40f980ce58a736b11
+6a0c44ad1fa5dd50802fba214657d7e35972421f
+c9667a85ce282fdca84dcc5467001253ec26d02c
+5514e479035cd11e34fed21000479ce659bad0de
+5383d57ab52092d8f03dba58e9b126db309d6344
+b49bf45ebb2da5dae4feb12621103d35675556ef
+4de878d15a3c4b73ec1d7c4cfb5a02d7d1e1cebf
+c74f8f28c9bbc794e70f5ded0af6930d2d10a3a8
+7eea5eea66973241edbb4261c1408410bfffc4e3
+7a332fc5e690b71c10b48b6630cba1488fa2f90b
+b89d88ce02a23ca01fc574ae1c1a0226a9b2ef74
+4871518a47d1fc0e570e13d11f2c6bf5ece775eb
+eddf1eae49e669432dfcce56d28ec71f67f8cff6
+6aac1d5bb2c4f6cbc00ed0c31793cfc091f7550f
+fc7052268cd21c941dfebcb9560123e40e14e5b8
+59b0480e13de4680ab464efc1ee4eda338ccf934
+0f8b0da4b4f3803e7cf4346a93fcadf53131cb80
+e50637c3c9dd52c152583df42d806db01f254d7d
+0fb5fb6c014338a7837a569ba5b081235fd9af8a
+3aeb075f36cb12711201a7f17e8b8d856bd99a01
+c6c05e5294074ccb2aea486110a45a103bb61a99
+3b968fef62e2d886117f0b70fb94984c44b2be80
+2172b238c4ca2a1f8daf9bf88a430695943edc3d
+936c33fa39350c6fe2aeba8813057a1a03575595
+778ed925150730902a40c4cbf749a51ddacfa52e
+2c406549d8c91ebd483896e0973cb37d025fff05
+d59a8a099d09b7356d4d2b2ca2358bb229c8385b
+6df1ba5787d52a34b45daef45a5a65ea8d847d8e
+c88b52e34a484fe1e055b58abfce86bc19932990
+b8d51526d30e947a9b17a74b93d551380632b79c
+62295e3818de10c13295855d8fc8a224aff3bc70
+332394936f57b87ad0b2987572eaa1cade5ce68b
+3a5c7bfcc3b8c5e7dd870f01bebeb9d949492203
+edeffb320bc93c3cc6f3cabc5d2ce18448bebae0
+16dee3e4e3645f3118aa30a45159801873cd8bd4
+3c69e7644859981b1fd9313eb1f0c5e5886e4a0d
+f305dc16fb91ec6526292ab039c8dd29a66f619b
+a7ebe87c7d133b1d40de6d6c3297777f233d61fd
+d16d7f2676dc6182dd0fd655530136ff3e5780ad
+31c5dc412019e2e69ccf9cba8fcc5d793ccd6a64
+0a42766e900310ce31a9b0b62354229924cb1ee9
+29fce22718002c5bcc76e0dc889f80cd4e392804
+4ce1317073f4119a891229530677603c10e5700c
+7e7335a6466abc13fd51aed1f7c76d621fb3d524
+75f6b6b06fa9058b200eba9395f4b516941bba69
+5868b82b60e8548f8e791f1d90dfa9c05031127f
+4febc230f40dba8c7e1d6443677f8eb0ba34c00a
+26aaf00e636c317e5a57cc29a973e1f476072976
+ef4808d4095c3da3c4f35e1b37495b5813624d14
+0510592d5bc000ad555717ac524e1d081d01aa7b
+563bc25b341c85c8e09d4499f5b3f810338ded60
+9bc47dc4efb3ebbbbb8a50fd5b371cb5a37bfb14
+bdd05b0f39317e9ce428508fdcda0d66bd2a0ce1
+3d4ba729cfd2529730fdccdb8ee0fdfe151413bd
+0a325deddc0bac58cc43e650773cc3408eabc011
+ddc951a7656423c7277671ea89a4fff9b8d0be6f
+f07ff73bd957a6e23afb5c7ec48a6d2334e0d5d7
+b3196d2b3fca62b72b2ba451237379b0747f7b1c
+616b1503dfd97e349208d5e2b3180fb386615ae4
+5ff42a93b189a240f8cc0ac0a750ac4cd26272f7
+1c173fed57418bea8fbb19240245757708f25472
+85e76ec9b932f0b5bf5617677d1b8306fd33298f
+9b17edfe62a752865eaa9b7b95103345d5c66448
+b7371d7b4e02e40cc979d0a0e417113276e3b8a3
+d4822a528d596ec86b4891c4ae0783ec386fa687
+e71ef6ccdf42ac87ca0e36dcf3200aa521b9ca11
+7b6c260d9c9670b254ace3cdb61254b5f419f3fb
+1a950623255621d1c81011e6d6530db1988e5704
+353998347af20ae14967e5da73a3f9059c0e1826
+79817ae6defe15f90dfa70136423a19897d7d781
+25d0284ccdd26e64bcd3b3054304bc46403b1736
+4021f78bf37dd3c3b78b692220a6ec7982dadc00
+18c8293514004daf7dcf190c067f4fa2b6688a05
+314e233d75169223765dc8ba0e0d51401398f9cc
+15460fc280d3f70dbecd3cea777ad932b3e06768
+c3df52d178ebe1e7e3ccf0a697bec3a9fecfdc48
+692fecc777402951d0df24b1456dca0255b2f9c5
+4cf5bb43130aabb194f022c8bae9526b0b9ca8f6
+f38c2bea4e997751d520388c47382219ed052e76
+b145bbfd7536c4ba4b791c0dd3a56a481dca28ac
+4cfce957d948354787f2a8b5224ed92f0612ac09
+831d1a89aece783c3b06b6d5ebefacd94c171574
+7414ce9a4c273a92f7a033cb2552eff651c25143
+c7ae1f558fd4773c6ffbf948ff996976ed45ce5a
+645430c514953203ec284e9f1d224f32e516b2b0
+57170c43486e99e0d1c66ae81a43d447e2c5ca72
+3f6816ba8e2de8615660ee67cf11ef4a249d0f44
+46886422ad2bd467732f468130b45ddc54fcf578
+8bce92c2d07c17dfdd242a60c53efea11dd2149a
+be3363590b32ecc5fe20b283d9ed790c3cff2838
+94e3a91dc582218a477771d9a694966bf901fdf5
+f95e0bbf9f76b1cc676945b4f55cdc1f53101cb4
+60320e3b2d62879e1f74ee2a9cfa202e665f7d8e
+cafe83839a368bb5943226adc8086ba0a192caef
+b3a8faf1ea6f5e312e7e4134adff2e563d0d46f7
+827a5c72befd1fb7464f6a1b33acd74f46b2840f
+5391e3295d2a8636cc975ac36bfc03fab9e45dcb
+bcd228d680f74da19a10eba070575c40de724404
+7e9e7c703f3f36887647caf5b7956b2c869a711a
+abc704a9039d5dfd11d12205f42e1c28b05ab4a2
+b746e63906b13b47ff719a60c907f87b8648eaed
+26b1c05a8fdd3729121170ad5b546cd63bf0931b
+8bad60bb7d0d9922f0fa991fc7ee061a5e78a527
+533bb921e8add98bd110d658aa42f920dec5b5be
+4b1c63332452b2772dc1b26b47547975b8cbd8e0
+65a10d6dea3a95833c0df6d894a889219cd10d66
+54358c34cb31d2363c0af24ded9b809f000a8835
+058f58ae3d92c3f1c83feb5bbf028f6f0f4ebc18
+7d212ae5bc2a3453f2dc5158fd20890129295e63
+e6c9032cb0836d95da61158e6cefde0b09acfdc7
+089cfc5d2036f71ab2cd935fb7641d89adafb330
+bd182094742ca4ae4df654ca8a432362a61d9871
+827e1361c438b08c3b4dec2ecc4a58a3c81643dd
+558d25ad8286bde00ec3f63c459eb960a587acfe
+e0e98e43140cef0ba78107eb77b5aefcba6e48bd
+f7a353ba153cf68aa527239309de5a00206e9017
+f5c4cf7c4f70c371d3e44baabe276dfb72df7149
+2e0911f33b3c70d573c3d482dade6aa90b68943a
+05968335993aab7cf9db7f843633449241ebc090
+4611788dece762e182f9fe1eb63e3e563ad33696
+91d5473d03b59e3cce1645c7ad42a54fc395dbf2
+9c6e796539df223f7e0b8614a1fba6a091070c69
+e9af246d4c151dfd2b7dfe04fc398c70cde00188
+b44bd1663af0bff06bbc850a1a7bdabf3257554b
+fc7fe43674fb9850b4135620bc51a02b3ca96ab8
+95ad02c74440b7c581a6e138a0294f229203c015
+c62cfc2c7b11d3d86b1967a5e1a5233298c5d10a
+1d5da15cedcda1ea6d707980e024d7b93c684cc5
+2de3b6070c33cbd57471309ca74ea25d4ffaa19d
+1889bd7ab54834fbc0e639b32b0225e913623268
+22537f60fe249d744387cfbd338766f982d1cbcd
+e8cf6ac80afdefcd2c13f5eb433eacbf61c7c84c
+533bb921e8add98bd110d658aa42f920dec5b5be
+1e8fa3465fea99f092b49d53ee71e0f8db06c390
+0336771c560990b30d8beef4c56f74bafed7478b
+13bc64c16db6a3bd4b4923b52cc9d8378bc43fd3
+a136c6e5e417f995f477eb6e8e68e636c6a39c09
+f4d748a3d013c5b36b608769d779409b933a2062
+dfb27c6a0ece3b3f6af4a6c4213c03273bdbf6bd
+13da90899d75f15ae493f7516a87d54975bca84c
+219311d74cc14006ef6f327683a12d243b57546e
+4b1c63332452b2772dc1b26b47547975b8cbd8e0

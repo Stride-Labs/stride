@@ -35,6 +35,8 @@ while true; do
     $STRIDE_MAIN_CMD q records list-epoch-unbonding-record  >> $TEMP_LOGS_DIR/$STATE_LOG
     printf '\n%s\n' "LIST-USER-REDEMPTION-RECORDS" >>$TEMP_LOGS_DIR/$STATE_LOG
     $STRIDE_MAIN_CMD q records list-user-redemption-record >> $TEMP_LOGS_DIR/$STATE_LOG
+    printf '\n%s\n' "LIST-LSM-TOKEN-DEPOSIT-RECORDS" >>$TEMP_LOGS_DIR/$STATE_LOG
+    $STRIDE_MAIN_CMD q records lsm-deposits >> $TEMP_LOGS_DIR/$STATE_LOG
 
     printf '\n%s\n' "BALANCES STRIDE" >>$TEMP_LOGS_DIR/$BALANCES_LOG
     $STRIDE_MAIN_CMD q bank balances $(STRIDE_ADDRESS) >>$TEMP_LOGS_DIR/$BALANCES_LOG
@@ -48,21 +50,40 @@ while true; do
         WITHDRAWAL_ICA_ADDR=$(GET_ICA_ADDR $HOST_CHAIN_ID withdrawal)
         FEE_ICA_ADDR=$(GET_ICA_ADDR $HOST_CHAIN_ID fee)
 
-        printf '\n%s\n' "==========================  $chain  =============================" >>$TEMP_LOGS_DIR/$BALANCES_LOG
+        COMMUNITY_POOL_DEPOSIT_ADDR=$(GET_ICA_ADDR $HOST_CHAIN_ID community_pool_deposit)
+        COMMUNITY_POOL_RETURN_ADDR=$(GET_ICA_ADDR $HOST_CHAIN_ID community_pool_return)
 
-        printf '\n%s\n' "BALANCES $chain (DELEGATION ACCT)" >>$TEMP_LOGS_DIR/$BALANCES_LOG
-        $HOST_MAIN_CMD q bank balances $DELEGATION_ICA_ADDR >>$TEMP_LOGS_DIR/$BALANCES_LOG
-        printf '\n%s\n' "DELEGATIONS $chain (DELEGATION ACCT)" >>$TEMP_LOGS_DIR/$BALANCES_LOG
-        $HOST_MAIN_CMD q staking delegations $DELEGATION_ICA_ADDR >>$TEMP_LOGS_DIR/$BALANCES_LOG
-        printf '\n%s\n' "UNBONDING-DELEGATIONS $chain (DELEGATION ACCT)" >>$TEMP_LOGS_DIR/$BALANCES_LOG
-        $HOST_MAIN_CMD q staking unbonding-delegations $DELEGATION_ICA_ADDR >>$TEMP_LOGS_DIR/$BALANCES_LOG
+        COMMUNITY_POOL_STAKE_ADDR=$(GET_HOST_ZONE_FIELD $HOST_CHAIN_ID community_pool_stake_holding_address)
+        COMMUNITY_POOL_REDEEM_ADDR=$(GET_HOST_ZONE_FIELD $HOST_CHAIN_ID community_pool_redeem_holding_address)
 
-        printf '\n%s\n' "BALANCES $chain (REDEMPTION ACCT)" >>$TEMP_LOGS_DIR/$BALANCES_LOG
-        $HOST_MAIN_CMD q bank balances $REDEMPTION_ICA_ADDR >>$TEMP_LOGS_DIR/$BALANCES_LOG
-        printf '\n%s\n' "BALANCES $chain (FEE ACCT)" >>$TEMP_LOGS_DIR/$BALANCES_LOG
-        $HOST_MAIN_CMD q bank balances $FEE_ICA_ADDR >>$TEMP_LOGS_DIR/$BALANCES_LOG
-        printf '\n%s\n' "BALANCES $chain (WITHDRAWAL ACCT)" >>$TEMP_LOGS_DIR/$BALANCES_LOG
-        $HOST_MAIN_CMD q bank balances $WITHDRAWAL_ICA_ADDR >>$TEMP_LOGS_DIR/$BALANCES_LOG
+        printf '\n%s\n' "==========================  $chain  =============================" >> $TEMP_LOGS_DIR/$BALANCES_LOG
+
+        printf '\n%s\n' "DELEGATIONS $chain" >> $TEMP_LOGS_DIR/$BALANCES_LOG
+        $HOST_MAIN_CMD q staking delegations $DELEGATION_ICA_ADDR >> $TEMP_LOGS_DIR/$BALANCES_LOG
+        printf '\n%s\n' "UNBONDING-DELEGATIONS $chain" >> $TEMP_LOGS_DIR/$BALANCES_LOG
+        $HOST_MAIN_CMD q staking unbonding-delegations $DELEGATION_ICA_ADDR >> $TEMP_LOGS_DIR/$BALANCES_LOG
+
+        printf '\n%s\n' "DELEGATION ACCT BALANCE" >> $TEMP_LOGS_DIR/$BALANCES_LOG
+        $HOST_MAIN_CMD q bank balances $DELEGATION_ICA_ADDR >> $TEMP_LOGS_DIR/$BALANCES_LOG
+        printf '\n%s\n' "REDEMPTION ACCT BALANCE" >> $TEMP_LOGS_DIR/$BALANCES_LOG
+        $HOST_MAIN_CMD q bank balances $REDEMPTION_ICA_ADDR >> $TEMP_LOGS_DIR/$BALANCES_LOG
+        printf '\n%s\n' "FEE ACCT BALANCE" >> $TEMP_LOGS_DIR/$BALANCES_LOG
+        $HOST_MAIN_CMD q bank balances $FEE_ICA_ADDR >> $TEMP_LOGS_DIR/$BALANCES_LOG
+        printf '\n%s\n' "WITHDRAWAL ACCT BALANCE" >> $TEMP_LOGS_DIR/$BALANCES_LOG
+        $HOST_MAIN_CMD q bank balances $WITHDRAWAL_ICA_ADDR >> $TEMP_LOGS_DIR/$BALANCES_LOG
+
+        printf '\n%s\n' "COMMUNITY POOL BALANCE" >> $TEMP_LOGS_DIR/$BALANCES_LOG
+        $HOST_MAIN_CMD q distribution community-pool >> $TEMP_LOGS_DIR/$BALANCES_LOG
+
+        printf '\n%s\n' "COMMUNITY POOL DEPOSIT ACCT BALANCE" >> $TEMP_LOGS_DIR/$BALANCES_LOG
+        $HOST_MAIN_CMD q bank balances $COMMUNITY_POOL_DEPOSIT_ADDR >> $TEMP_LOGS_DIR/$BALANCES_LOG
+        printf '\n%s\n' "COMMUNITY POOL RETURN ACCT BALANCE" >> $TEMP_LOGS_DIR/$BALANCES_LOG
+        $HOST_MAIN_CMD q bank balances $COMMUNITY_POOL_RETURN_ADDR >> $TEMP_LOGS_DIR/$BALANCES_LOG
+
+        printf '\n%s\n' "COMMUNITY POOL STAKE HOLDING ACCT BALANCE" >> $TEMP_LOGS_DIR/$BALANCES_LOG
+        $STRIDE_MAIN_CMD q bank balances $COMMUNITY_POOL_STAKE_ADDR >> $TEMP_LOGS_DIR/$BALANCES_LOG
+        printf '\n%s\n' "COMMUNITY POOL REDEEM HOLDING ACCT BALANCE" >> $TEMP_LOGS_DIR/$BALANCES_LOG
+        $STRIDE_MAIN_CMD q bank balances $COMMUNITY_POOL_REDEEM_ADDR >> $TEMP_LOGS_DIR/$BALANCES_LOG
     done
 
     mv $TEMP_LOGS_DIR/*.log $LOGS_DIR

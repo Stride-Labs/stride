@@ -5,7 +5,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/Stride-Labs/stride/v12/x/records/types"
+	"github.com/Stride-Labs/stride/v16/x/records/types"
 )
 
 func TestGenesisState_Validate(t *testing.T) {
@@ -50,7 +50,55 @@ func TestGenesisState_Validate(t *testing.T) {
 			},
 			valid: false,
 		},
-		// this line is used by starport scaffolding # types/genesis/testcase
+		{
+			desc: "duplicated lsm token deposit id",
+			genState: &types.GenesisState{
+				LsmTokenDepositList: []types.LSMTokenDeposit{
+					{
+						DepositId: "1",
+					},
+					{
+						DepositId: "1",
+					},
+				},
+			},
+			valid: false,
+		},
+		{
+			desc: "duplicated lsm token deposit id",
+			genState: &types.GenesisState{
+				LsmTokenDepositList: []types.LSMTokenDeposit{
+					{
+						ChainId: "chain-1",
+						Denom:   "denom1",
+					},
+					{
+						ChainId: "chain-1",
+						Denom:   "denom1",
+					},
+				},
+			},
+			valid: false,
+		},
+		{
+			desc: "valid lsm token deposits",
+			genState: &types.GenesisState{
+				PortId: "port-1",
+				LsmTokenDepositList: []types.LSMTokenDeposit{
+					{
+						DepositId: "1",
+						ChainId:   "chain-1",
+						Denom:     "denom1",
+					},
+					{
+						DepositId: "2",
+						ChainId:   "chain-2",
+						Denom:     "denom2",
+					},
+				},
+			},
+			valid: true,
+		},
 	} {
 		t.Run(tc.desc, func(t *testing.T) {
 			err := tc.genState.Validate()

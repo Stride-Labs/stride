@@ -11,7 +11,7 @@ import (
 	ibctransfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
 	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
 
-	"github.com/Stride-Labs/stride/v12/x/icacallbacks/types"
+	"github.com/Stride-Labs/stride/v16/x/icacallbacks/types"
 )
 
 // Parses ICA tx responses and returns a list of each serialized response
@@ -81,6 +81,7 @@ func UnpackAcknowledgementResponse(ctx sdk.Context, logger log.Logger, ack []byt
 	case *channeltypes.Acknowledgement_Error:
 		logger.Error(fmt.Sprintf("acknowledgement error: %s", response.Error))
 		return &types.AcknowledgementResponse{Status: types.AckResponseStatus_FAILURE, Error: response.Error}, nil
+
 	default:
 		return nil, errorsmod.Wrapf(channeltypes.ErrInvalidAcknowledgement, "unsupported acknowledgement response field type %T", response)
 	}

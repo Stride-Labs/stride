@@ -8,4 +8,6 @@ var (
 	ErrInvalidICQProof       = errors.New("icq query response failed")
 	ErrICQCallbackNotFound   = errors.New("icq callback id not found")
 	ErrInvalidConsensusState = errors.New("invalid consensus state")
+	ErrInvalidICQRequest     = errors.New("invalid interchain query request")
+	ErrFailedToRetryQuery    = errors.New("failed to retry query")
 )

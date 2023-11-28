@@ -11,8 +11,9 @@ import (
 	porttypes "github.com/cosmos/ibc-go/v7/modules/core/05-port/types"
 	ibcexported "github.com/cosmos/ibc-go/v7/modules/core/exported"
 
-	"github.com/Stride-Labs/stride/v12/x/stakeibc/keeper"
-	"github.com/Stride-Labs/stride/v12/x/stakeibc/types"
+	ratelimittypes "github.com/Stride-Labs/stride/v16/x/ratelimit/types"
+	"github.com/Stride-Labs/stride/v16/x/stakeibc/keeper"
+	"github.com/Stride-Labs/stride/v16/x/stakeibc/types"
 )
 
 var _ porttypes.Middleware = &IBCMiddleware{}
@@ -90,39 +91,91 @@ func (im IBCMiddleware) OnChanOpenAck(
 	}
 	ctx.Logger().Info(fmt.Sprintf("Found matching address for chain: %s, address %s, port %s", zoneInfo.ChainId, address, portID))
 
-	// addresses
-	withdrawalAddress, err := icatypes.NewControllerPortID(types.FormatICAAccountOwner(hostChainId, types.ICAAccountType_WITHDRAWAL))
+	// expected port IDs for each ICA account type
+	withdrawalPortID, err := icatypes.NewControllerPortID(types.FormatICAAccountOwner(hostChainId, types.ICAAccountType_WITHDRAWAL))
 	if err != nil {
 		return err
 	}
-	feeAddress, err := icatypes.NewControllerPortID(types.FormatICAAccountOwner(hostChainId, types.ICAAccountType_FEE))
+	feePortID, err := icatypes.NewControllerPortID(types.FormatICAAccountOwner(hostChainId, types.ICAAccountType_FEE))
 	if err != nil {
 		return err
 	}
-	delegationAddress, err := icatypes.NewControllerPortID(types.FormatICAAccountOwner(hostChainId, types.ICAAccountType_DELEGATION))
+	delegationPortID, err := icatypes.NewControllerPortID(types.FormatICAAccountOwner(hostChainId, types.ICAAccountType_DELEGATION))
 	if err != nil {
 		return err
 	}
-	redemptionAddress, err := icatypes.NewControllerPortID(types.FormatICAAccountOwner(hostChainId, types.ICAAccountType_REDEMPTION))
+	redemptionPortID, err := icatypes.NewControllerPortID(types.FormatICAAccountOwner(hostChainId, types.ICAAccountType_REDEMPTION))
+	if err != nil {
+		return err
+	}
+	communityPoolDepositOwner := types.FormatICAAccountOwner(hostChainId, types.ICAAccountType_COMMUNITY_POOL_DEPOSIT)
+	communityPoolDepositPortID, err := icatypes.NewControllerPortID(communityPoolDepositOwner)
+	if err != nil {
+		return err
+	}
+	communityPoolReturnOwner := types.FormatICAAccountOwner(hostChainId, types.ICAAccountType_COMMUNITY_POOL_RETURN)
+	communityPoolReturnPortID, err := icatypes.NewControllerPortID(communityPoolReturnOwner)
 	if err != nil {
 		return err
 	}
 
 	// Set ICA account addresses
 	switch {
-	// withdrawal address
-	case portID == withdrawalAddress:
-		zoneInfo.WithdrawalAccount = &types.ICAAccount{Address: address, Target: types.ICAAccountType_WITHDRAWAL}
-	// fee address
-	case portID == feeAddress:
-		zoneInfo.FeeAccount = &types.ICAAccount{Address: address, Target: types.ICAAccountType_FEE}
-	// delegation address
-	case portID == delegationAddress:
-		zoneInfo.DelegationAccount = &types.ICAAccount{Address: address, Target: types.ICAAccountType_DELEGATION}
-	case portID == redemptionAddress:
-		zoneInfo.RedemptionAccount = &types.ICAAccount{Address: address, Target: types.ICAAccountType_REDEMPTION}
+	case portID == withdrawalPortID:
+		zoneInfo.WithdrawalIcaAddress = address
+	case portID == feePortID:
+		zoneInfo.FeeIcaAddress = address
+	case portID == delegationPortID:
+		zoneInfo.DelegationIcaAddress = address
+	case portID == redemptionPortID:
+		zoneInfo.RedemptionIcaAddress = address
+	case portID == communityPoolDepositPortID:
+		zoneInfo.CommunityPoolDepositIcaAddress = address
+	case portID == communityPoolReturnPortID:
+		zoneInfo.CommunityPoolReturnIcaAddress = address
 	default:
 		ctx.Logger().Error(fmt.Sprintf("Missing portId: %s", portID))
+	}
+
+	// Once the delegation channel is registered, whitelist epochly transfers so they're not rate limited
+	// Epochly transfers go from the deposit address to the delegation address
+	if portID == delegationPortID {
+		im.keeper.RatelimitKeeper.SetWhitelistedAddressPair(ctx, ratelimittypes.WhitelistedAddressPair{
+			Sender:   zoneInfo.DepositAddress,
+			Receiver: zoneInfo.DelegationIcaAddress,
+		})
+	}
+
+	// Once the fee channel is registered, whitelist reward transfers so they're not rate limited
+	// Reward transfers go from the fee address to the reward collector
+	if portID == feePortID {
+		rewardCollectorAddress := im.keeper.AccountKeeper.GetModuleAccount(ctx, types.RewardCollectorName).GetAddress()
+		im.keeper.RatelimitKeeper.SetWhitelistedAddressPair(ctx, ratelimittypes.WhitelistedAddressPair{
+			Sender:   zoneInfo.FeeIcaAddress,
+			Receiver: rewardCollectorAddress.String(),
+		})
+	}
+
+	// Once the community pool deposit ICA is registered, whitelist epochly community pool transfers
+	// from the deposit ICA to the community pool holding accounts
+	if portID == communityPoolDepositPortID {
+		im.keeper.RatelimitKeeper.SetWhitelistedAddressPair(ctx, ratelimittypes.WhitelistedAddressPair{
+			Sender:   zoneInfo.CommunityPoolDepositIcaAddress,
+			Receiver: zoneInfo.CommunityPoolStakeHoldingAddress,
+		})
+		im.keeper.RatelimitKeeper.SetWhitelistedAddressPair(ctx, ratelimittypes.WhitelistedAddressPair{
+			Sender:   zoneInfo.CommunityPoolDepositIcaAddress,
+			Receiver: zoneInfo.CommunityPoolRedeemHoldingAddress,
+		})
+	}
+
+	// Once the community pool return ICA is registered, whitelist epochly community pool transfers
+	// from the community pool stake holding account to the community pool return ICA
+	if portID == communityPoolReturnPortID {
+		im.keeper.RatelimitKeeper.SetWhitelistedAddressPair(ctx, ratelimittypes.WhitelistedAddressPair{
+			Sender:   zoneInfo.CommunityPoolStakeHoldingAddress,
+			Receiver: zoneInfo.CommunityPoolReturnIcaAddress,
+		})
 	}
 
 	im.keeper.SetHostZone(ctx, zoneInfo)
@@ -189,7 +242,6 @@ func (im IBCMiddleware) OnRecvPacket(
 }
 
 // SendPacket implements the ICS4 Wrapper interface but is not utilized in the ICA stack
-// but is not utilized in the bottom of ICA stack
 func (im IBCMiddleware) SendPacket(
 	ctx sdk.Context,
 	chanCap *capabilitytypes.Capability,

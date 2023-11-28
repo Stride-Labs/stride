@@ -12,7 +12,7 @@ import (
 
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
-	"github.com/Stride-Labs/stride/v12/x/ratelimit/types"
+	"github.com/Stride-Labs/stride/v16/x/ratelimit/types"
 )
 
 // Get the rate limit byte key built from the denom and channelId

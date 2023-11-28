@@ -25,18 +25,18 @@ import (
 	"github.com/cosmos/ibc-go/v7/modules/core/exported"
 	ibctmmigrations "github.com/cosmos/ibc-go/v7/modules/light-clients/07-tendermint/migrations"
 
-	claimkeeper "github.com/Stride-Labs/stride/v12/x/claim/keeper"
-	claimtypes "github.com/Stride-Labs/stride/v12/x/claim/types"
-	icacallbackskeeper "github.com/Stride-Labs/stride/v12/x/icacallbacks/keeper"
-	mintkeeper "github.com/Stride-Labs/stride/v12/x/mint/keeper"
-	minttypes "github.com/Stride-Labs/stride/v12/x/mint/types"
-	ratelimitkeeper "github.com/Stride-Labs/stride/v12/x/ratelimit/keeper"
-	ratelimitgov "github.com/Stride-Labs/stride/v12/x/ratelimit/keeper/gov"
-	ratelimittypes "github.com/Stride-Labs/stride/v12/x/ratelimit/types"
-	recordskeeper "github.com/Stride-Labs/stride/v12/x/records/keeper"
-	recordstypes "github.com/Stride-Labs/stride/v12/x/records/types"
-	stakeibckeeper "github.com/Stride-Labs/stride/v12/x/stakeibc/keeper"
-	stakeibctypes "github.com/Stride-Labs/stride/v12/x/stakeibc/types"
+	claimkeeper "github.com/Stride-Labs/stride/v16/x/claim/keeper"
+	claimtypes "github.com/Stride-Labs/stride/v16/x/claim/types"
+	icacallbackskeeper "github.com/Stride-Labs/stride/v16/x/icacallbacks/keeper"
+	mintkeeper "github.com/Stride-Labs/stride/v16/x/mint/keeper"
+	minttypes "github.com/Stride-Labs/stride/v16/x/mint/types"
+	ratelimitkeeper "github.com/Stride-Labs/stride/v16/x/ratelimit/keeper"
+	ratelimitgov "github.com/Stride-Labs/stride/v16/x/ratelimit/keeper/gov"
+	ratelimittypes "github.com/Stride-Labs/stride/v16/x/ratelimit/types"
+	recordskeeper "github.com/Stride-Labs/stride/v16/x/records/keeper"
+	recordstypes "github.com/Stride-Labs/stride/v16/x/records/types"
+	stakeibckeeper "github.com/Stride-Labs/stride/v16/x/stakeibc/keeper"
+	stakeibctypes "github.com/Stride-Labs/stride/v16/x/stakeibc/types"
 
 	cosmosproto "github.com/cosmos/gogoproto/proto"
 	deprecatedproto "github.com/golang/protobuf/proto" //nolint:staticcheck
@@ -246,7 +246,7 @@ func MigrateCallbackData(ctx sdk.Context, k icacallbackskeeper.Keeper) error {
 			newCallbackArgsBz, err = reserializeCallback(oldCallbackArgsBz, &stakeibctypes.ReinvestCallback{})
 		case stakeibckeeper.ICACallbackID_Undelegate:
 			newCallbackArgsBz, err = reserializeCallback(oldCallbackArgsBz, &stakeibctypes.UndelegateCallback{})
-		case recordskeeper.TRANSFER:
+		case recordskeeper.IBCCallbacksID_NativeTransfer:
 			newCallbackArgsBz, err = reserializeCallback(oldCallbackArgsBz, &recordstypes.TransferCallback{})
 		}
 		if err != nil {
@@ -343,21 +343,21 @@ func EnableRateLimits(
 			return errorsmod.Wrapf(err, "unable to add rate limit for %s", denom)
 		}
 
-		if hostZone.DelegationAccount == nil || hostZone.DelegationAccount.Address == "" {
+		if hostZone.DelegationIcaAddress == "" {
 			return stakeibctypes.ErrICAAccountNotFound
 		}
-		if hostZone.FeeAccount == nil || hostZone.FeeAccount.Address == "" {
+		if hostZone.FeeIcaAddress == "" {
 			return stakeibctypes.ErrICAAccountNotFound
 		}
 
 		ratelimitKeeper.SetWhitelistedAddressPair(ctx, ratelimittypes.WhitelistedAddressPair{
-			Sender:   hostZone.Address,
-			Receiver: hostZone.DelegationAccount.Address,
+			Sender:   hostZone.DepositAddress,
+			Receiver: hostZone.DelegationIcaAddress,
 		})
 
 		rewardCollectorAddress := accountKeeper.GetModuleAccount(ctx, stakeibctypes.RewardCollectorName).GetAddress()
 		ratelimitKeeper.SetWhitelistedAddressPair(ctx, ratelimittypes.WhitelistedAddressPair{
-			Sender:   hostZone.FeeAccount.Address,
+			Sender:   hostZone.FeeIcaAddress,
 			Receiver: rewardCollectorAddress.String(),
 		})
 	}

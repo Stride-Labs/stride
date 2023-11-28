@@ -10,16 +10,16 @@ import (
 	clienttypes "github.com/cosmos/ibc-go/v7/modules/core/02-client/types"
 	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
 
-	recordsmodule "github.com/Stride-Labs/stride/v12/x/records"
+	recordsmodule "github.com/Stride-Labs/stride/v16/x/records"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/Stride-Labs/stride/v12/x/autopilot"
-	"github.com/Stride-Labs/stride/v12/x/autopilot/types"
-	epochtypes "github.com/Stride-Labs/stride/v12/x/epochs/types"
-	minttypes "github.com/Stride-Labs/stride/v12/x/mint/types"
-	recordstypes "github.com/Stride-Labs/stride/v12/x/records/types"
-	stakeibctypes "github.com/Stride-Labs/stride/v12/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v16/x/autopilot"
+	"github.com/Stride-Labs/stride/v16/x/autopilot/types"
+	epochtypes "github.com/Stride-Labs/stride/v16/x/epochs/types"
+	minttypes "github.com/Stride-Labs/stride/v16/x/mint/types"
+	recordstypes "github.com/Stride-Labs/stride/v16/x/records/types"
+	stakeibctypes "github.com/Stride-Labs/stride/v16/x/stakeibc/types"
 )
 
 func getStakeibcPacketMetadata(address, action string) string {
@@ -208,20 +208,14 @@ func (suite *KeeperTestSuite) TestLiquidStakeOnRecvPacket() {
 			})
 			// set host zone for env
 			suite.App.StakeibcKeeper.SetHostZone(ctx, stakeibctypes.HostZone{
-				ChainId:               "hub-1",
-				ConnectionId:          "connection-0",
-				Bech32Prefix:          "cosmos",
-				TransferChannelId:     "channel-0",
-				Validators:            []*stakeibctypes.Validator{},
-				BlacklistedValidators: []*stakeibctypes.Validator{},
-				WithdrawalAccount:     nil,
-				FeeAccount:            nil,
-				DelegationAccount:     nil,
-				RedemptionAccount:     nil,
-				IbcDenom:              atomIbcDenom,
-				HostDenom:             atomHostDenom,
-				RedemptionRate:        sdk.NewDec(1),
-				Address:               addr1.String(),
+				ChainId:           "hub-1",
+				ConnectionId:      "connection-0",
+				Bech32Prefix:      "cosmos",
+				TransferChannelId: "channel-0",
+				IbcDenom:          atomIbcDenom,
+				HostDenom:         atomHostDenom,
+				RedemptionRate:    sdk.NewDec(1),
+				DepositAddress:    addr1.String(),
 			})
 
 			// mint coins to be spent on liquid staking

@@ -19,9 +19,9 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 
-	"github.com/Stride-Labs/stride/v12/x/stakeibc/client/cli"
-	"github.com/Stride-Labs/stride/v12/x/stakeibc/keeper"
-	"github.com/Stride-Labs/stride/v12/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v16/x/stakeibc/client/cli"
+	"github.com/Stride-Labs/stride/v16/x/stakeibc/keeper"
+	"github.com/Stride-Labs/stride/v16/x/stakeibc/types"
 )
 
 var (
@@ -163,15 +163,16 @@ func (am AppModule) ExportGenesis(ctx sdk.Context, cdc codec.JSONCodec) json.Raw
 }
 
 // ConsensusVersion implements ConsensusVersion.
-func (AppModule) ConsensusVersion() uint64 { return 2 }
+func (AppModule) ConsensusVersion() uint64 { return 3 }
 
 // BeginBlock executes all ABCI BeginBlock logic respective to the capability module.
 func (am AppModule) BeginBlock(ctx sdk.Context, _ abci.RequestBeginBlock) {
-	BeginBlocker(ctx, am.keeper, am.bankKeeper, am.accountKeeper)
+	am.keeper.BeginBlocker(ctx)
 }
 
 // EndBlock executes all ABCI EndBlock logic respective to the capability module. It
 // returns no validator updates.
 func (am AppModule) EndBlock(ctx sdk.Context, _ abci.RequestEndBlock) []abci.ValidatorUpdate {
+	am.keeper.EndBlocker(ctx)
 	return []abci.ValidatorUpdate{}
 }

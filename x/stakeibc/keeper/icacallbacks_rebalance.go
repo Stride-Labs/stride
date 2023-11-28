@@ -3,9 +3,9 @@ package keeper
 import (
 	"fmt"
 
-	"github.com/Stride-Labs/stride/v12/utils"
-	icacallbackstypes "github.com/Stride-Labs/stride/v12/x/icacallbacks/types"
-	"github.com/Stride-Labs/stride/v12/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v16/utils"
+	icacallbackstypes "github.com/Stride-Labs/stride/v16/x/icacallbacks/types"
+	"github.com/Stride-Labs/stride/v16/x/stakeibc/types"
 
 	errorsmod "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -46,6 +46,21 @@ func (k Keeper) RebalanceCallback(ctx sdk.Context, packet channeltypes.Packet, a
 	chainId := rebalanceCallback.HostZoneId
 	k.Logger(ctx).Info(utils.LogICACallbackWithHostZone(chainId, ICACallbackID_Rebalance, "Starting rebalance callback"))
 
+	// Regardless of failure/success/timeout, indicate that this ICA has completed
+	hostZone, found := k.GetHostZone(ctx, rebalanceCallback.HostZoneId)
+	if !found {
+		return errorsmod.Wrapf(sdkerrors.ErrKeyNotFound, "Host zone not found: %s", rebalanceCallback.HostZoneId)
+	}
+	for _, rebalancing := range rebalanceCallback.Rebalancings {
+		if err := k.DecrementValidatorDelegationChangesInProgress(&hostZone, rebalancing.SrcValidator); err != nil {
+			return err
+		}
+		if err := k.DecrementValidatorDelegationChangesInProgress(&hostZone, rebalancing.DstValidator); err != nil {
+			return err
+		}
+	}
+	k.SetHostZone(ctx, hostZone)
+
 	// Check for timeout (ack nil)
 	// No action is necessary on a timeout
 	if ackResponse.Status == icacallbackstypes.AckResponseStatus_TIMEOUT {
@@ -65,12 +80,6 @@ func (k Keeper) RebalanceCallback(ctx sdk.Context, packet channeltypes.Packet, a
 	k.Logger(ctx).Info(utils.LogICACallbackStatusWithHostZone(chainId, ICACallbackID_Rebalance,
 		icacallbackstypes.AckResponseStatus_SUCCESS, packet))
 
-	// Confirm the host zone exists
-	hostZone, found := k.GetHostZone(ctx, chainId)
-	if !found {
-		return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "host zone not found %s", chainId)
-	}
-
 	// Assemble a map from validatorAddress -> validator
 	valAddrMap := make(map[string]*types.Validator)
 	for _, val := range hostZone.Validators {
@@ -82,20 +91,24 @@ func (k Keeper) RebalanceCallback(ctx sdk.Context, packet channeltypes.Packet, a
 		srcValidator := rebalancing.SrcValidator
 		dstValidator := rebalancing.DstValidator
 
-		// Decrement the total delegation from the source validator
-		if _, valFound := valAddrMap[srcValidator]; valFound {
-			valAddrMap[srcValidator].DelegationAmt = valAddrMap[srcValidator].DelegationAmt.Sub(rebalancing.Amt)
-		} else {
-			return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "validator not found %s", srcValidator)
+		if _, valFound := valAddrMap[srcValidator]; !valFound {
+			return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "source validator not found %s", srcValidator)
+		}
+		if _, valFound := valAddrMap[dstValidator]; !valFound {
+			return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "destination validator not found %s", dstValidator)
 		}
 
-		// Increment the total delegation for the destination validator
-		if _, valFound := valAddrMap[dstValidator]; valFound {
-			valAddrMap[dstValidator].DelegationAmt = valAddrMap[dstValidator].DelegationAmt.Add(rebalancing.Amt)
-		} else {
-			return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "validator not found %s", dstValidator)
-		}
+		// Decrement the delegation from the source validator and increment the delegation
+		// for the destination validator
+		valAddrMap[srcValidator].Delegation = valAddrMap[srcValidator].Delegation.Sub(rebalancing.Amt)
+		valAddrMap[dstValidator].Delegation = valAddrMap[dstValidator].Delegation.Add(rebalancing.Amt)
+
+		k.Logger(ctx).Info(utils.LogICACallbackWithHostZone(chainId, ICACallbackID_Rebalance,
+			"  Decrementing delegation on %s by %v", srcValidator, rebalancing.Amt))
+		k.Logger(ctx).Info(utils.LogICACallbackWithHostZone(chainId, ICACallbackID_Rebalance,
+			"  Incrementing delegation on %s by %v", dstValidator, rebalancing.Amt))
 	}
+
 	k.SetHostZone(ctx, hostZone)
 
 	return nil

@@ -1,15 +1,16 @@
 package keeper
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/spf13/cast"
 
-	"github.com/Stride-Labs/stride/v12/utils"
-	recordstypes "github.com/Stride-Labs/stride/v12/x/records/types"
-	"github.com/Stride-Labs/stride/v12/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v16/utils"
+	recordstypes "github.com/Stride-Labs/stride/v16/x/records/types"
+	"github.com/Stride-Labs/stride/v16/x/stakeibc/types"
 
-	icacallbackstypes "github.com/Stride-Labs/stride/v12/x/icacallbacks/types"
+	icacallbackstypes "github.com/Stride-Labs/stride/v16/x/icacallbacks/types"
 
 	errorsmod "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -63,6 +64,20 @@ func (k Keeper) DelegateCallback(ctx sdk.Context, packet channeltypes.Packet, ac
 		return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "deposit record not found %d", recordId)
 	}
 
+	// Regardless of failure/success/timeout, indicate that this ICA has completed
+	for _, splitDelegation := range delegateCallback.SplitDelegations {
+		if err := k.DecrementValidatorDelegationChangesInProgress(&hostZone, splitDelegation.Validator); err != nil {
+			// TODO: Revert after v14 upgrade
+			if errors.Is(err, types.ErrInvalidValidatorDelegationUpdates) {
+				k.Logger(ctx).Error(utils.LogICACallbackWithHostZone(chainId, ICACallbackID_Delegate,
+					"Invariant failed - delegation changes in progress fell below 0 for %s", splitDelegation.Validator))
+				continue
+			}
+			return err
+		}
+	}
+	k.SetHostZone(ctx, hostZone)
+
 	// Check for timeout (ack nil)
 	// No need to reset the deposit record status since it will get reverted when the channel is restored
 	if ackResponse.Status == icacallbackstypes.AckResponseStatus_TIMEOUT {
@@ -88,13 +103,12 @@ func (k Keeper) DelegateCallback(ctx sdk.Context, packet channeltypes.Packet, ac
 
 	// Update delegations on the host zone
 	for _, splitDelegation := range delegateCallback.SplitDelegations {
-		hostZone.StakedBal = hostZone.StakedBal.Add(splitDelegation.Amount)
-		success := k.AddDelegationToValidator(ctx, hostZone, splitDelegation.Validator, splitDelegation.Amount, ICACallbackID_Delegate)
-		if !success {
-			return errorsmod.Wrapf(types.ErrValidatorDelegationChg, "Failed to add delegation to validator")
+		err := k.AddDelegationToValidator(ctx, &hostZone, splitDelegation.Validator, splitDelegation.Amount, ICACallbackID_Delegate)
+		if err != nil {
+			return errorsmod.Wrapf(err, "Failed to add delegation to validator")
 		}
-		k.SetHostZone(ctx, hostZone)
 	}
+	k.SetHostZone(ctx, hostZone)
 
 	k.RecordsKeeper.RemoveDepositRecord(ctx, cast.ToUint64(recordId))
 	k.Logger(ctx).Info(fmt.Sprintf("[DELEGATION] success on %s", chainId))

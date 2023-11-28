@@ -8,8 +8,8 @@ import (
 	errorsmod "cosmossdk.io/errors"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
-	epochtypes "github.com/Stride-Labs/stride/v12/x/epochs/types"
-	"github.com/Stride-Labs/stride/v12/x/stakeibc/types"
+	epochtypes "github.com/Stride-Labs/stride/v16/x/epochs/types"
+	"github.com/Stride-Labs/stride/v16/x/stakeibc/types"
 )
 
 // Exchanges a user's native tokens for stTokens using the current redemption rate
@@ -42,7 +42,7 @@ func (k msgServer) LiquidStake(goCtx context.Context, msg *types.MsgLiquidStake)
 	if err != nil {
 		return nil, errorsmod.Wrapf(err, "user's address is invalid")
 	}
-	hostZoneAddress, err := sdk.AccAddressFromBech32(hostZone.Address)
+	hostZoneDepositAddress, err := sdk.AccAddressFromBech32(hostZone.DepositAddress)
 	if err != nil {
 		return nil, errorsmod.Wrapf(err, "host zone address is invalid")
 	}
@@ -84,7 +84,7 @@ func (k msgServer) LiquidStake(goCtx context.Context, msg *types.MsgLiquidStake)
 	}
 
 	// Transfer the native tokens from the user to module account
-	if err := k.bankKeeper.SendCoins(ctx, liquidStakerAddress, hostZoneAddress, sdk.NewCoins(nativeCoin)); err != nil {
+	if err := k.bankKeeper.SendCoins(ctx, liquidStakerAddress, hostZoneDepositAddress, sdk.NewCoins(nativeCoin)); err != nil {
 		return nil, errorsmod.Wrap(err, "failed to send tokens from Account to Module")
 	}
 
@@ -103,19 +103,8 @@ func (k msgServer) LiquidStake(goCtx context.Context, msg *types.MsgLiquidStake)
 	k.RecordsKeeper.SetDepositRecord(ctx, *depositRecord)
 
 	// Emit liquid stake event
-	ctx.EventManager().EmitEvent(
-		sdk.NewEvent(
-			types.EventTypeLiquidStakeRequest,
-			sdk.NewAttribute(sdk.AttributeKeyModule, types.ModuleName),
-			sdk.NewAttribute(types.AttributeKeyLiquidStaker, msg.Creator),
-			sdk.NewAttribute(types.AttributeKeyHostZone, hostZone.ChainId),
-			sdk.NewAttribute(types.AttributeKeyNativeBaseDenom, msg.HostDenom),
-			sdk.NewAttribute(types.AttributeKeyNativeIBCDenom, hostZone.IbcDenom),
-			sdk.NewAttribute(types.AttributeKeyNativeAmount, msg.Amount.String()),
-			sdk.NewAttribute(types.AttributeKeyStTokenAmount, stAmount.String()),
-		),
-	)
+	EmitSuccessfulLiquidStakeEvent(ctx, msg, *hostZone, stAmount)
 
 	k.hooks.AfterLiquidStake(ctx, liquidStakerAddress)
-	return &types.MsgLiquidStakeResponse{}, nil
+	return &types.MsgLiquidStakeResponse{StToken: stCoin}, nil
 }

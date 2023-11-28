@@ -41,7 +41,60 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 <!-- GH ACTIONS TEMPLATE - INSERT NEW VERSION HERE -->
-### Changelog
+
+## [v16.0.0](https://github.com/Stride-Labs/stride/releases/tag/v16.0.0) - 2023-10-14
+
+### On-Chain changes
+1. Inflation Fix ([#951](https://github.com/Stride-Labs/stride/pull/951))
+2. v16 Import Paths ([#952](https://github.com/Stride-Labs/stride/pull/952))
+
+## [v15.0.0](https://github.com/Stride-Labs/stride/releases/tag/v15.0.0) - 2023-09-18
+
+### On-Chain changes
+1. Added ICAOracle route implementations for legacy Msg type ([#923](https://github.com/Stride-Labs/stride/pull/923))
+2. increased precision error buffer on delegator shares callback ([#933](https://github.com/Stride-Labs/stride/pull/933))
+3. Use detokenization amount from tx response ([#934](https://github.com/Stride-Labs/stride/pull/934))
+4. add inner bounds ([#938](https://github.com/Stride-Labs/stride/pull/938))
+5. added cap on undelegate messages ([#940](https://github.com/Stride-Labs/stride/pull/940))
+6. add rounding calibration function ([#936](https://github.com/Stride-Labs/stride/pull/936))
+7. Undel host function ([#935](https://github.com/Stride-Labs/stride/pull/935))
+8. v15 upgrade handler ([#941](https://github.com/Stride-Labs/stride/pull/941))
+9. v15 Import Paths ([#944](https://github.com/Stride-Labs/stride/pull/944))
+
+### Off-Chain changes
+1. Fixed bug in import path CI ([#919](https://github.com/Stride-Labs/stride/pull/919))
+2. Finished auto changelog script ([#928](https://github.com/Stride-Labs/stride/pull/928))
+3. updated osmo submodule ([#931](https://github.com/Stride-Labs/stride/pull/931))
+
+
+## [v14.0.0](https://github.com/Stride-Labs/stride/releases/tag/v14.0.0) - 2023-08-27
+
+### On-Chain changes
+1. Add LSM support ([#708](https://github.com/Stride-Labs/stride/pull/708))
+2. Added oracle transfer channel to icaoracle MsgInstantiateOracle and register aminos ([#899](https://github.com/Stride-Labs/stride/pull/899))
+3. Init airdrops for Umee, Somm, Comdex, Injective ([#903](https://github.com/Stride-Labs/stride/pull/903))
+4. Migrate vesting accounts ([#903](https://github.com/Stride-Labs/stride/pull/903))
+5. Add Evmos' x/vesting module ([#903](https://github.com/Stride-Labs/stride/pull/903))
+
+### Off-Chain changes
+1. Add ICA Oracle License ([#901](https://github.com/Stride-Labs/stride/pull/901))
+
+
+## [v13.0.0](https://github.com/Stride-Labs/stride/releases/tag/v13.0.0) - 2023-08-08
+
+### On-Chain changes
+1. Adds ICA-Based Oracle for Cosmwasm-based Chains ([#884](https://github.com/Stride-Labs/stride/pull/884))
+2. Switch to SDK Fork to address SDKv0.47 Distribution Bug ([#885](https://github.com/Stride-Labs/stride/pull/885))
+3. Add Redundant IBC Relay Decorator ([#882](https://github.com/Stride-Labs/stride/pull/882))
+4. Whitelist missing param keys and register stTokens as consumer fees ([#881](https://github.com/Stride-Labs/stride/pull/881)) 
+5. Add v13 Upgrade Handler ([#886](https://github.com/Stride-Labs/stride/pull/886)) 
+6. Change paths to point towards v13 ([#891](https://github.com/Stride-Labs/stride/pull/888))
+7. Removed consumer param store updates ([#892](https://github.com/Stride-Labs/stride/pull/892))
+
+### Off-Chain changes
+1. Add `build-linux` command ([#859](https://github.com/Stride-Labs/stride/pull/859))
+2. Remove `provider` dependency for Dockernet ([#860](https://github.com/Stride-Labs/stride/pull/860))
+3. Update Dockernet host zone versions ([#883](https://github.com/Stride-Labs/stride/pull/883))
 
 ## [v12.0.0](https://github.com/Stride-Labs/stride/releases/tag/v12.0.0) - 2023-07-15
 

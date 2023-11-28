@@ -54,7 +54,7 @@ build_local_and_docker() {
       image=dockernet/dockerfiles/Dockerfile.$module
    fi
 
-   DOCKER_BUILDKIT=1 docker build --tag stridezone:$module -f $image . 
+   DOCKER_BUILDKIT=1 docker build --tag stridezone:$module -f $image .
    docker_build_succeeded=${PIPESTATUS[0]}
 
    if [[ "$docker_build_succeeded" == "0" ]]; then
@@ -83,7 +83,7 @@ revert_admin_address() {
 
 
 # build docker images and local binaries
-while getopts sgojtehrn flag; do
+while getopts sgojtednhrz flag; do
    case "${flag}" in
       # For stride, we need to update the admin address to one that we have the seed phrase for
       s) replace_admin_address
@@ -99,7 +99,9 @@ while getopts sgojtehrn flag; do
       o) build_local_and_docker osmo deps/osmosis ;;
       t) build_local_and_docker stars deps/stargaze ;;
       e) build_local_and_docker evmos deps/evmos ;;
-      n) continue ;; # build_local_and_docker {new-host-zone} deps/{new-host-zone} ;;
+      d) build_local_and_docker dydx deps/dydx/protocol ;;
+      n) build_local_and_docker noble deps/noble ;;
+      z) continue ;; # build_local_and_docker {new-host-zone} deps/{new-host-zone} ;;
       r) build_local_and_docker relayer deps/relayer ;;  
       h) echo "Building Hermes Docker... ";
          docker build --tag stridezone:hermes -f dockernet/dockerfiles/Dockerfile.hermes . ;

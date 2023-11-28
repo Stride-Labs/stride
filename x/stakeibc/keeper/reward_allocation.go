@@ -8,7 +8,7 @@ import (
 
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 
-	"github.com/Stride-Labs/stride/v12/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v16/x/stakeibc/types"
 )
 
 // Liquid Stake Reward Collector Balance
@@ -74,6 +74,7 @@ func (k Keeper) SweepStTokensFromRewardCollToFeeColl(ctx sdk.Context) error {
 
 // (1) liquid stake reward collector balance, then (2) sweet stTokens from reward collector to fee collector
 func (k Keeper) AllocateHostZoneReward(ctx sdk.Context) {
+	// TODO: Move LS function to keeper method instead of message server
 	msgSvr := NewMsgServerImpl(k)
 	if rewardsFound := k.LiquidStakeRewardCollectorBalance(ctx, msgSvr); !rewardsFound {
 		k.Logger(ctx).Info("No accrued rewards in the reward collector account")

@@ -32,14 +32,14 @@ setup_juno_osmo_channel() {
     echo "Done"
 
     $DOCKER_COMPOSE up -d relayer-${path}
-    $DOCKER_COMPOSE logs -f relayer-${path} | sed -r -u "s/\x1B\[([0-9]{1,3}(;[0-9]{1,2})?)?[mGK]//g" >> $relayer_logs 2>&1 &
+    SAVE_DOCKER_LOGS relayer-${path} $relayer_logs
 }
 
 setup_channel_value() {
     print_header "INITIALIZING CHANNEL VALUE"
 
     # IBC Transfer
-    echo "Transfering for channel value..."
+    echo "Transferring for channel value..."
     echo ">>> uatom"
     $GAIA_MAIN_CMD tx ibc-transfer transfer transfer channel-0 $(STRIDE_ADDRESS) ${INITIAL_CHANNEL_VALUE}uatom --from ${GAIA_VAL_PREFIX}1 -y | TRIM_TX
     sleep 3

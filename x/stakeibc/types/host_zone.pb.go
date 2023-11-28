@@ -25,34 +25,35 @@ var _ = math.Inf
 // proto package needs to be updated.
 const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 
-// next id: 22
 type HostZone struct {
-	ChainId               string       `protobuf:"bytes,1,opt,name=chain_id,json=chainId,proto3" json:"chain_id,omitempty"`
-	ConnectionId          string       `protobuf:"bytes,2,opt,name=connection_id,json=connectionId,proto3" json:"connection_id,omitempty"`
-	Bech32Prefix          string       `protobuf:"bytes,17,opt,name=bech32prefix,proto3" json:"bech32prefix,omitempty"`
-	TransferChannelId     string       `protobuf:"bytes,12,opt,name=transfer_channel_id,json=transferChannelId,proto3" json:"transfer_channel_id,omitempty"`
-	Validators            []*Validator `protobuf:"bytes,3,rep,name=validators,proto3" json:"validators,omitempty"`
-	BlacklistedValidators []*Validator `protobuf:"bytes,4,rep,name=blacklisted_validators,json=blacklistedValidators,proto3" json:"blacklisted_validators,omitempty"`
-	WithdrawalAccount     *ICAAccount  `protobuf:"bytes,5,opt,name=withdrawal_account,json=withdrawalAccount,proto3" json:"withdrawal_account,omitempty"`
-	FeeAccount            *ICAAccount  `protobuf:"bytes,6,opt,name=fee_account,json=feeAccount,proto3" json:"fee_account,omitempty"`
-	DelegationAccount     *ICAAccount  `protobuf:"bytes,7,opt,name=delegation_account,json=delegationAccount,proto3" json:"delegation_account,omitempty"`
-	RedemptionAccount     *ICAAccount  `protobuf:"bytes,16,opt,name=redemption_account,json=redemptionAccount,proto3" json:"redemption_account,omitempty"`
+	ChainId           string `protobuf:"bytes,1,opt,name=chain_id,json=chainId,proto3" json:"chain_id,omitempty"`
+	Bech32Prefix      string `protobuf:"bytes,17,opt,name=bech32prefix,proto3" json:"bech32prefix,omitempty"`
+	ConnectionId      string `protobuf:"bytes,2,opt,name=connection_id,json=connectionId,proto3" json:"connection_id,omitempty"`
+	TransferChannelId string `protobuf:"bytes,12,opt,name=transfer_channel_id,json=transferChannelId,proto3" json:"transfer_channel_id,omitempty"`
 	// ibc denom on stride
 	IbcDenom string `protobuf:"bytes,8,opt,name=ibc_denom,json=ibcDenom,proto3" json:"ibc_denom,omitempty"`
 	// native denom on host zone
-	HostDenom string `protobuf:"bytes,9,opt,name=host_denom,json=hostDenom,proto3" json:"host_denom,omitempty"`
-	// TODO(TEST-68): Should we make this an array and store the last n redemption
-	// rates then calculate a TWARR?
-	LastRedemptionRate github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,10,opt,name=last_redemption_rate,json=lastRedemptionRate,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"last_redemption_rate"`
-	RedemptionRate     github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,11,opt,name=redemption_rate,json=redemptionRate,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"redemption_rate"`
-	// stores how many days we should wait before issuing unbondings
-	UnbondingFrequency uint64 `protobuf:"varint,14,opt,name=unbonding_frequency,json=unbondingFrequency,proto3" json:"unbonding_frequency,omitempty"`
-	// TODO(TEST-101) int to dec
-	StakedBal         github_com_cosmos_cosmos_sdk_types.Int `protobuf:"bytes,13,opt,name=staked_bal,json=stakedBal,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Int" json:"staked_bal"`
-	Address           string                                 `protobuf:"bytes,18,opt,name=address,proto3" json:"address,omitempty" yaml:"address"`
-	Halted            bool                                   `protobuf:"varint,19,opt,name=halted,proto3" json:"halted,omitempty"`
-	MinRedemptionRate github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,20,opt,name=min_redemption_rate,json=minRedemptionRate,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"min_redemption_rate"`
-	MaxRedemptionRate github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,21,opt,name=max_redemption_rate,json=maxRedemptionRate,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"max_redemption_rate"`
+	HostDenom                         string                                 `protobuf:"bytes,9,opt,name=host_denom,json=hostDenom,proto3" json:"host_denom,omitempty"`
+	UnbondingPeriod                   uint64                                 `protobuf:"varint,26,opt,name=unbonding_period,json=unbondingPeriod,proto3" json:"unbonding_period,omitempty"`
+	Validators                        []*Validator                           `protobuf:"bytes,3,rep,name=validators,proto3" json:"validators,omitempty"`
+	DepositAddress                    string                                 `protobuf:"bytes,18,opt,name=deposit_address,json=depositAddress,proto3" json:"deposit_address,omitempty"`
+	WithdrawalIcaAddress              string                                 `protobuf:"bytes,22,opt,name=withdrawal_ica_address,json=withdrawalIcaAddress,proto3" json:"withdrawal_ica_address,omitempty"`
+	FeeIcaAddress                     string                                 `protobuf:"bytes,23,opt,name=fee_ica_address,json=feeIcaAddress,proto3" json:"fee_ica_address,omitempty"`
+	DelegationIcaAddress              string                                 `protobuf:"bytes,24,opt,name=delegation_ica_address,json=delegationIcaAddress,proto3" json:"delegation_ica_address,omitempty"`
+	RedemptionIcaAddress              string                                 `protobuf:"bytes,25,opt,name=redemption_ica_address,json=redemptionIcaAddress,proto3" json:"redemption_ica_address,omitempty"`
+	CommunityPoolDepositIcaAddress    string                                 `protobuf:"bytes,30,opt,name=community_pool_deposit_ica_address,json=communityPoolDepositIcaAddress,proto3" json:"community_pool_deposit_ica_address,omitempty"`
+	CommunityPoolReturnIcaAddress     string                                 `protobuf:"bytes,31,opt,name=community_pool_return_ica_address,json=communityPoolReturnIcaAddress,proto3" json:"community_pool_return_ica_address,omitempty"`
+	CommunityPoolStakeHoldingAddress  string                                 `protobuf:"bytes,32,opt,name=community_pool_stake_holding_address,json=communityPoolStakeHoldingAddress,proto3" json:"community_pool_stake_holding_address,omitempty"`
+	CommunityPoolRedeemHoldingAddress string                                 `protobuf:"bytes,33,opt,name=community_pool_redeem_holding_address,json=communityPoolRedeemHoldingAddress,proto3" json:"community_pool_redeem_holding_address,omitempty"`
+	TotalDelegations                  github_com_cosmos_cosmos_sdk_types.Int `protobuf:"bytes,13,opt,name=total_delegations,json=totalDelegations,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Int" json:"total_delegations"`
+	LastRedemptionRate                github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,10,opt,name=last_redemption_rate,json=lastRedemptionRate,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"last_redemption_rate"`
+	RedemptionRate                    github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,11,opt,name=redemption_rate,json=redemptionRate,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"redemption_rate"`
+	MinRedemptionRate                 github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,20,opt,name=min_redemption_rate,json=minRedemptionRate,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"min_redemption_rate"`
+	MaxRedemptionRate                 github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,21,opt,name=max_redemption_rate,json=maxRedemptionRate,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"max_redemption_rate"`
+	MinInnerRedemptionRate            github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,28,opt,name=min_inner_redemption_rate,json=minInnerRedemptionRate,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"min_inner_redemption_rate"`
+	MaxInnerRedemptionRate            github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,29,opt,name=max_inner_redemption_rate,json=maxInnerRedemptionRate,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"max_inner_redemption_rate"`
+	LsmLiquidStakeEnabled             bool                                   `protobuf:"varint,27,opt,name=lsm_liquid_stake_enabled,json=lsmLiquidStakeEnabled,proto3" json:"lsm_liquid_stake_enabled,omitempty"`
+	Halted                            bool                                   `protobuf:"varint,19,opt,name=halted,proto3" json:"halted,omitempty"`
 }
 
 func (m *HostZone) Reset()         { *m = HostZone{} }
@@ -95,16 +96,16 @@ func (m *HostZone) GetChainId() string {
 	return ""
 }
 
-func (m *HostZone) GetConnectionId() string {
+func (m *HostZone) GetBech32Prefix() string {
 	if m != nil {
-		return m.ConnectionId
+		return m.Bech32Prefix
 	}
 	return ""
 }
 
-func (m *HostZone) GetBech32Prefix() string {
+func (m *HostZone) GetConnectionId() string {
 	if m != nil {
-		return m.Bech32Prefix
+		return m.ConnectionId
 	}
 	return ""
 }
@@ -114,48 +115,6 @@ func (m *HostZone) GetTransferChannelId() string {
 		return m.TransferChannelId
 	}
 	return ""
-}
-
-func (m *HostZone) GetValidators() []*Validator {
-	if m != nil {
-		return m.Validators
-	}
-	return nil
-}
-
-func (m *HostZone) GetBlacklistedValidators() []*Validator {
-	if m != nil {
-		return m.BlacklistedValidators
-	}
-	return nil
-}
-
-func (m *HostZone) GetWithdrawalAccount() *ICAAccount {
-	if m != nil {
-		return m.WithdrawalAccount
-	}
-	return nil
-}
-
-func (m *HostZone) GetFeeAccount() *ICAAccount {
-	if m != nil {
-		return m.FeeAccount
-	}
-	return nil
-}
-
-func (m *HostZone) GetDelegationAccount() *ICAAccount {
-	if m != nil {
-		return m.DelegationAccount
-	}
-	return nil
-}
-
-func (m *HostZone) GetRedemptionAccount() *ICAAccount {
-	if m != nil {
-		return m.RedemptionAccount
-	}
-	return nil
 }
 
 func (m *HostZone) GetIbcDenom() string {
@@ -172,18 +131,88 @@ func (m *HostZone) GetHostDenom() string {
 	return ""
 }
 
-func (m *HostZone) GetUnbondingFrequency() uint64 {
+func (m *HostZone) GetUnbondingPeriod() uint64 {
 	if m != nil {
-		return m.UnbondingFrequency
+		return m.UnbondingPeriod
 	}
 	return 0
 }
 
-func (m *HostZone) GetAddress() string {
+func (m *HostZone) GetValidators() []*Validator {
 	if m != nil {
-		return m.Address
+		return m.Validators
+	}
+	return nil
+}
+
+func (m *HostZone) GetDepositAddress() string {
+	if m != nil {
+		return m.DepositAddress
 	}
 	return ""
+}
+
+func (m *HostZone) GetWithdrawalIcaAddress() string {
+	if m != nil {
+		return m.WithdrawalIcaAddress
+	}
+	return ""
+}
+
+func (m *HostZone) GetFeeIcaAddress() string {
+	if m != nil {
+		return m.FeeIcaAddress
+	}
+	return ""
+}
+
+func (m *HostZone) GetDelegationIcaAddress() string {
+	if m != nil {
+		return m.DelegationIcaAddress
+	}
+	return ""
+}
+
+func (m *HostZone) GetRedemptionIcaAddress() string {
+	if m != nil {
+		return m.RedemptionIcaAddress
+	}
+	return ""
+}
+
+func (m *HostZone) GetCommunityPoolDepositIcaAddress() string {
+	if m != nil {
+		return m.CommunityPoolDepositIcaAddress
+	}
+	return ""
+}
+
+func (m *HostZone) GetCommunityPoolReturnIcaAddress() string {
+	if m != nil {
+		return m.CommunityPoolReturnIcaAddress
+	}
+	return ""
+}
+
+func (m *HostZone) GetCommunityPoolStakeHoldingAddress() string {
+	if m != nil {
+		return m.CommunityPoolStakeHoldingAddress
+	}
+	return ""
+}
+
+func (m *HostZone) GetCommunityPoolRedeemHoldingAddress() string {
+	if m != nil {
+		return m.CommunityPoolRedeemHoldingAddress
+	}
+	return ""
+}
+
+func (m *HostZone) GetLsmLiquidStakeEnabled() bool {
+	if m != nil {
+		return m.LsmLiquidStakeEnabled
+	}
+	return false
 }
 
 func (m *HostZone) GetHalted() bool {
@@ -200,49 +229,60 @@ func init() {
 func init() { proto.RegisterFile("stride/stakeibc/host_zone.proto", fileDescriptor_f81bf5b42c61245a) }
 
 var fileDescriptor_f81bf5b42c61245a = []byte{
-	// 672 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xac, 0x94, 0xcf, 0x4e, 0xdb, 0x4a,
-	0x14, 0xc6, 0xe3, 0x0b, 0x17, 0x92, 0x09, 0xff, 0x32, 0x01, 0x64, 0x40, 0x37, 0xc9, 0x4d, 0xa5,
-	0x2a, 0x8b, 0xe2, 0x88, 0xb0, 0x43, 0x6c, 0xf8, 0xa3, 0xaa, 0x41, 0x74, 0x51, 0x57, 0x62, 0xc1,
-	0xc6, 0x1a, 0xcf, 0x9c, 0x24, 0x23, 0x9c, 0x99, 0xd4, 0x33, 0x81, 0xd0, 0x47, 0xe8, 0xaa, 0x0f,
-	0xd3, 0x87, 0x60, 0x89, 0xba, 0xaa, 0xba, 0x40, 0x15, 0xbc, 0x41, 0x9f, 0xa0, 0xca, 0xd8, 0x4e,
-	0x4c, 0xb2, 0x80, 0x4a, 0xac, 0xec, 0x39, 0xdf, 0x77, 0x7e, 0xdf, 0xe8, 0x8c, 0x3d, 0xa8, 0xac,
-	0x74, 0xc8, 0x19, 0xd4, 0x95, 0x26, 0x17, 0xc0, 0x7d, 0x5a, 0xef, 0x48, 0xa5, 0xbd, 0xcf, 0x52,
-	0x80, 0xd3, 0x0b, 0xa5, 0x96, 0x78, 0x39, 0x32, 0x38, 0x89, 0x61, 0x73, 0xaa, 0xe3, 0x92, 0x04,
-	0x9c, 0x11, 0x2d, 0xc3, 0xa8, 0x63, 0xf3, 0xff, 0x49, 0x03, 0xa7, 0xc4, 0x23, 0x94, 0xca, 0xbe,
-	0xd0, 0xb1, 0x65, 0xb5, 0x2d, 0xdb, 0xd2, 0xbc, 0xd6, 0x87, 0x6f, 0x71, 0x75, 0x83, 0x4a, 0xd5,
-	0x95, 0xca, 0x8b, 0x84, 0x68, 0x11, 0x49, 0xd5, 0x2f, 0x08, 0x65, 0xdf, 0x49, 0xa5, 0xcf, 0xa5,
-	0x00, 0xbc, 0x81, 0xb2, 0xb4, 0x43, 0xb8, 0xf0, 0x38, 0xb3, 0xad, 0x8a, 0x55, 0xcb, 0xb9, 0xf3,
-	0x66, 0xdd, 0x64, 0xf8, 0x15, 0x5a, 0xa4, 0x52, 0x08, 0xa0, 0x9a, 0x4b, 0xa3, 0xff, 0x63, 0xf4,
-	0x85, 0x71, 0xb1, 0xc9, 0x70, 0x15, 0x2d, 0xf8, 0x40, 0x3b, 0xbb, 0x8d, 0x5e, 0x08, 0x2d, 0x3e,
-	0xb0, 0x0b, 0x91, 0x27, 0x5d, 0xc3, 0x0e, 0x2a, 0xea, 0x90, 0x08, 0xd5, 0x82, 0xd0, 0xa3, 0x1d,
-	0x22, 0x04, 0x04, 0x43, 0xdc, 0x82, 0xb1, 0x16, 0x12, 0xe9, 0x28, 0x52, 0x9a, 0x0c, 0xef, 0x21,
-	0x34, 0x9a, 0x83, 0xb2, 0x67, 0x2a, 0x33, 0xb5, 0x7c, 0x63, 0xd3, 0x99, 0x98, 0x9d, 0x73, 0x96,
-	0x58, 0xdc, 0x94, 0x1b, 0x7f, 0x40, 0xeb, 0x7e, 0x40, 0xe8, 0x45, 0xc0, 0x95, 0x06, 0xe6, 0xa5,
-	0x38, 0xb3, 0x4f, 0x72, 0xd6, 0x52, 0x9d, 0x67, 0x63, 0xe4, 0x09, 0xc2, 0x57, 0x5c, 0x77, 0x58,
-	0x48, 0xae, 0x48, 0x90, 0x0c, 0xdf, 0xfe, 0xb7, 0x62, 0xd5, 0xf2, 0x8d, 0xad, 0x29, 0x5c, 0xf3,
-	0xe8, 0xe0, 0x20, 0xb2, 0xb8, 0x85, 0x71, 0x5b, 0x5c, 0xc2, 0xfb, 0x28, 0xdf, 0x02, 0x18, 0x41,
-	0xe6, 0x9e, 0x86, 0xa0, 0x16, 0x40, 0xd2, 0x7d, 0x82, 0x30, 0x83, 0x00, 0xda, 0xc4, 0x9c, 0x48,
-	0x02, 0x99, 0x7f, 0xc6, 0x4e, 0xc6, 0x6d, 0x29, 0x56, 0x08, 0x0c, 0xba, 0xbd, 0x47, 0xac, 0x95,
-	0x67, 0xb0, 0xc6, 0x6d, 0x09, 0x6b, 0x0b, 0xe5, 0xb8, 0x4f, 0x3d, 0x06, 0x42, 0x76, 0xed, 0xac,
-	0x39, 0xd6, 0x2c, 0xf7, 0xe9, 0xf1, 0x70, 0x8d, 0xff, 0x43, 0xc8, 0xfc, 0x07, 0x91, 0x9a, 0x33,
-	0x6a, 0x6e, 0x58, 0x89, 0x64, 0x81, 0x56, 0x03, 0xa2, 0xb4, 0x97, 0xda, 0x4c, 0x48, 0x34, 0xd8,
-	0x68, 0x68, 0x3c, 0xdc, 0xbf, 0xb9, 0x2b, 0x67, 0x7e, 0xde, 0x95, 0x5f, 0xb7, 0xb9, 0xee, 0xf4,
-	0x7d, 0x87, 0xca, 0x6e, 0xfc, 0x31, 0xc7, 0x8f, 0x6d, 0xc5, 0x2e, 0xea, 0xfa, 0xba, 0x07, 0xca,
-	0x39, 0x06, 0xfa, 0xfd, 0xdb, 0x36, 0x8a, 0xbf, 0xf5, 0x63, 0xa0, 0x2e, 0x1e, 0x92, 0xdd, 0x11,
-	0xd8, 0x25, 0x1a, 0x30, 0xa0, 0xe5, 0xc9, 0xa8, 0xfc, 0x0b, 0x44, 0x2d, 0x85, 0x8f, 0x63, 0xea,
-	0xa8, 0xd8, 0x17, 0xbe, 0x14, 0x8c, 0x8b, 0xb6, 0xd7, 0x0a, 0xe1, 0x53, 0x1f, 0x04, 0xbd, 0xb6,
-	0x97, 0x2a, 0x56, 0x6d, 0xd6, 0xc5, 0x23, 0xe9, 0x6d, 0xa2, 0xe0, 0xf7, 0x08, 0x99, 0x69, 0x33,
-	0xcf, 0x27, 0x81, 0xbd, 0x68, 0xb6, 0xe4, 0xfc, 0xc5, 0x96, 0x9a, 0x42, 0xbb, 0xb9, 0x88, 0x70,
-	0x48, 0x02, 0xfc, 0x06, 0xcd, 0x13, 0xc6, 0x42, 0x50, 0xca, 0xc6, 0x86, 0x85, 0x7f, 0xdf, 0x95,
-	0x97, 0xae, 0x49, 0x37, 0xd8, 0xab, 0xc6, 0x42, 0xd5, 0x4d, 0x2c, 0x78, 0x1d, 0xcd, 0x75, 0x48,
-	0xa0, 0x81, 0xd9, 0xc5, 0x8a, 0x55, 0xcb, 0xba, 0xf1, 0x0a, 0x07, 0xa8, 0xd8, 0xe5, 0x62, 0xea,
-	0x6c, 0x56, 0x5f, 0x60, 0x60, 0x85, 0x2e, 0x17, 0x13, 0x47, 0x33, 0x4c, 0x23, 0x83, 0xa9, 0xb4,
-	0xb5, 0x17, 0x49, 0x23, 0x83, 0xc7, 0x69, 0x27, 0xb3, 0xd9, 0xe5, 0x95, 0x95, 0xc3, 0xd3, 0x9b,
-	0xfb, 0x92, 0x75, 0x7b, 0x5f, 0xb2, 0x7e, 0xdd, 0x97, 0xac, 0xaf, 0x0f, 0xa5, 0xcc, 0xed, 0x43,
-	0x29, 0xf3, 0xe3, 0xa1, 0x94, 0x39, 0x6f, 0xa4, 0x82, 0x3e, 0x9a, 0xdf, 0x61, 0xfb, 0x94, 0xf8,
-	0xaa, 0x1e, 0xdf, 0xc8, 0x97, 0x3b, 0x3b, 0xf5, 0xc1, 0xf8, 0x5e, 0x36, 0xc1, 0xfe, 0x9c, 0xb9,
-	0x61, 0x77, 0xff, 0x04, 0x00, 0x00, 0xff, 0xff, 0xf6, 0x0a, 0x02, 0x65, 0x0a, 0x06, 0x00, 0x00,
+	// 836 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xac, 0x96, 0xcf, 0x6e, 0xdb, 0x36,
+	0x18, 0xc0, 0xe3, 0x55, 0x4d, 0x14, 0xb6, 0x89, 0x65, 0xc5, 0xf5, 0x94, 0x74, 0x71, 0x9c, 0xec,
+	0x0f, 0xb2, 0x43, 0x6c, 0x2c, 0x05, 0x36, 0x60, 0xd8, 0x61, 0xed, 0x3c, 0xa0, 0x36, 0x82, 0xa2,
+	0x50, 0x80, 0x1d, 0xba, 0x83, 0x40, 0x89, 0x9f, 0x2d, 0xae, 0x12, 0xe9, 0x91, 0x74, 0xe3, 0xee,
+	0x29, 0xf6, 0x30, 0x7d, 0x88, 0x1e, 0x8b, 0xee, 0x32, 0xec, 0x50, 0x0c, 0xc9, 0x8b, 0x0c, 0xa2,
+	0x24, 0x5b, 0xb6, 0x32, 0x08, 0x05, 0x7c, 0x8a, 0xf8, 0xfd, 0xf9, 0xfd, 0xf4, 0x51, 0x54, 0x2c,
+	0x74, 0x24, 0x95, 0xa0, 0x04, 0x7a, 0x52, 0xe1, 0x97, 0x40, 0xfd, 0xa0, 0x17, 0x72, 0xa9, 0xbc,
+	0x3f, 0x38, 0x83, 0xee, 0x44, 0x70, 0xc5, 0xed, 0x7a, 0x5a, 0xd0, 0xcd, 0x0b, 0x0e, 0x4a, 0x1d,
+	0xaf, 0x70, 0x44, 0x09, 0x56, 0x5c, 0xa4, 0x1d, 0x07, 0xcd, 0x31, 0x1f, 0x73, 0x7d, 0xd9, 0x4b,
+	0xae, 0xb2, 0xe8, 0x7e, 0xc0, 0x65, 0xcc, 0xa5, 0x97, 0x26, 0xd2, 0x45, 0x9a, 0x3a, 0xf9, 0xab,
+	0x8e, 0xcc, 0xa7, 0x5c, 0xaa, 0x17, 0x9c, 0x81, 0xbd, 0x8f, 0xcc, 0x20, 0xc4, 0x94, 0x79, 0x94,
+	0x38, 0xb5, 0x4e, 0xed, 0x74, 0xdb, 0xdd, 0xd2, 0xeb, 0x01, 0xb1, 0x4f, 0xd0, 0x7d, 0x1f, 0x82,
+	0xf0, 0xd1, 0xf9, 0x44, 0xc0, 0x88, 0xce, 0x9c, 0x86, 0x4e, 0x2f, 0xc5, 0xec, 0xcf, 0xd1, 0x4e,
+	0xc0, 0x19, 0x83, 0x40, 0x51, 0xae, 0x19, 0x9f, 0xa4, 0x45, 0x8b, 0xe0, 0x80, 0xd8, 0x5d, 0xb4,
+	0xa7, 0x04, 0x66, 0x72, 0x04, 0xc2, 0x0b, 0x42, 0xcc, 0x18, 0x44, 0x49, 0xe9, 0x7d, 0x5d, 0xda,
+	0xc8, 0x53, 0x3f, 0xa5, 0x99, 0x01, 0xb1, 0x1f, 0xa2, 0x6d, 0xea, 0x07, 0x1e, 0x01, 0xc6, 0x63,
+	0xc7, 0xd4, 0x55, 0x26, 0xf5, 0x83, 0x7e, 0xb2, 0xb6, 0x0f, 0x11, 0xd2, 0x7b, 0x96, 0x66, 0xb7,
+	0x75, 0x76, 0x3b, 0x89, 0xa4, 0xe9, 0xaf, 0x91, 0x35, 0x65, 0x3e, 0x67, 0x84, 0xb2, 0xb1, 0x37,
+	0x01, 0x41, 0x39, 0x71, 0x0e, 0x3a, 0xb5, 0x53, 0xc3, 0xad, 0xcf, 0xe3, 0xcf, 0x75, 0xd8, 0xfe,
+	0x1e, 0xa1, 0xf9, 0x5e, 0x4a, 0xe7, 0x4e, 0xe7, 0xce, 0xe9, 0xbd, 0xf3, 0x83, 0xee, 0xca, 0xfe,
+	0x77, 0x7f, 0xc9, 0x4b, 0xdc, 0x42, 0xb5, 0xfd, 0x18, 0xd5, 0x09, 0x4c, 0xb8, 0xa4, 0xca, 0xc3,
+	0x84, 0x08, 0x90, 0xd2, 0xb1, 0x93, 0x5b, 0x79, 0xe2, 0xbc, 0x7f, 0x73, 0xd6, 0xcc, 0xb6, 0xfb,
+	0x71, 0x9a, 0xb9, 0x54, 0x82, 0xb2, 0xb1, 0xbb, 0x9b, 0x35, 0x64, 0x51, 0xfb, 0x19, 0x6a, 0x5d,
+	0x51, 0x15, 0x12, 0x81, 0xaf, 0x70, 0xe4, 0xd1, 0x00, 0xcf, 0x49, 0xad, 0x0a, 0x52, 0x73, 0xd1,
+	0x37, 0x08, 0x70, 0xce, 0xfb, 0x11, 0xd5, 0x47, 0x00, 0x4b, 0xa0, 0x4f, 0x2b, 0x40, 0x3b, 0x23,
+	0x80, 0x02, 0xe1, 0x19, 0x6a, 0x11, 0x88, 0x60, 0x8c, 0xd3, 0x87, 0x59, 0x00, 0x39, 0x55, 0x77,
+	0xb4, 0xe8, 0x5b, 0xe6, 0x09, 0x20, 0x10, 0x4f, 0x4a, 0xbc, 0xfd, 0x2a, 0xde, 0xa2, 0xaf, 0xc0,
+	0x23, 0xe8, 0x24, 0xe0, 0x71, 0x3c, 0x65, 0x54, 0xbd, 0xf6, 0x26, 0x9c, 0x47, 0x5e, 0xfe, 0x0c,
+	0x8a, 0xec, 0x76, 0x05, 0xbb, 0x3d, 0x67, 0x3c, 0xe7, 0x3c, 0xea, 0xa7, 0x84, 0x82, 0xc5, 0x47,
+	0xc7, 0x2b, 0x16, 0x01, 0x6a, 0x2a, 0x96, 0x07, 0x38, 0xaa, 0x90, 0x1c, 0x2e, 0x49, 0x5c, 0x0d,
+	0x28, 0x38, 0x42, 0xf4, 0xc5, 0x8a, 0x43, 0x9f, 0x37, 0x2f, 0xe4, 0x91, 0x3e, 0xb8, 0xb9, 0xa6,
+	0x53, 0xa1, 0xe9, 0x2c, 0x69, 0x2e, 0x13, 0xc6, 0xd3, 0x14, 0x91, 0x9b, 0x7e, 0x43, 0x5f, 0x96,
+	0xa6, 0x21, 0x00, 0x71, 0x49, 0x75, 0x5c, 0xa1, 0x3a, 0x5e, 0x99, 0x28, 0x81, 0xac, 0xb8, 0x7e,
+	0x45, 0x0d, 0xc5, 0x15, 0x4e, 0x1e, 0x4b, 0x7e, 0x1a, 0xa4, 0xb3, 0xa3, 0xb9, 0xdd, 0xb7, 0x1f,
+	0x8e, 0x36, 0xfe, 0xf9, 0x70, 0xf4, 0xd5, 0x98, 0xaa, 0x70, 0xea, 0x77, 0x03, 0x1e, 0x67, 0xff,
+	0x94, 0xb2, 0x3f, 0x67, 0x92, 0xbc, 0xec, 0xa9, 0xd7, 0x13, 0x90, 0xdd, 0x01, 0x53, 0xae, 0xa5,
+	0x41, 0xfd, 0x05, 0xc7, 0x66, 0xa8, 0x19, 0x61, 0xa9, 0xbc, 0xc2, 0x89, 0x12, 0x58, 0x81, 0x83,
+	0x34, 0xff, 0x87, 0x8f, 0xe0, 0xf7, 0x21, 0x78, 0xff, 0xe6, 0x0c, 0x65, 0x53, 0xf6, 0x21, 0x70,
+	0xed, 0x84, 0xec, 0xce, 0xc1, 0x2e, 0x56, 0x60, 0x03, 0xaa, 0xaf, 0xaa, 0xee, 0xad, 0x41, 0xb5,
+	0x2b, 0x96, 0x35, 0x11, 0xda, 0x8b, 0x29, 0x2b, 0x4d, 0xd5, 0x5c, 0x83, 0xaa, 0x11, 0x53, 0xe6,
+	0x96, 0x6d, 0x78, 0x56, 0xb2, 0x3d, 0x58, 0x8b, 0x0d, 0xcf, 0x56, 0x6c, 0x57, 0x68, 0x3f, 0x99,
+	0x8d, 0x32, 0x06, 0xa2, 0xe4, 0xfc, 0x6c, 0x0d, 0xce, 0x56, 0x4c, 0xd9, 0x20, 0xa1, 0xdf, 0x22,
+	0xc6, 0xb3, 0xff, 0x11, 0x1f, 0xae, 0x45, 0x8c, 0x67, 0xb7, 0x89, 0xbf, 0x43, 0x4e, 0x24, 0x63,
+	0x2f, 0xa2, 0xbf, 0x4f, 0x29, 0xc9, 0xde, 0x69, 0x60, 0xd8, 0x8f, 0x80, 0x38, 0x0f, 0x3b, 0xb5,
+	0x53, 0xd3, 0x7d, 0x10, 0xc9, 0xf8, 0x42, 0xa7, 0xf5, 0xdb, 0xfa, 0x73, 0x9a, 0xb4, 0x5b, 0x68,
+	0x33, 0xc4, 0x91, 0x02, 0xe2, 0xec, 0xe9, 0xb2, 0x6c, 0x35, 0x34, 0x4c, 0xc3, 0xba, 0x3b, 0x34,
+	0xcc, 0xbb, 0xd6, 0xe6, 0xd0, 0x30, 0x37, 0xad, 0xad, 0xa1, 0x61, 0x6e, 0x59, 0xe6, 0xd0, 0x30,
+	0x77, 0xad, 0xfa, 0xd0, 0x30, 0xeb, 0x96, 0x35, 0x34, 0x4c, 0xcb, 0x6a, 0x3c, 0xb9, 0x78, 0x7b,
+	0xdd, 0xae, 0xbd, 0xbb, 0x6e, 0xd7, 0xfe, 0xbd, 0x6e, 0xd7, 0xfe, 0xbc, 0x69, 0x6f, 0xbc, 0xbb,
+	0x69, 0x6f, 0xfc, 0x7d, 0xd3, 0xde, 0x78, 0x71, 0x5e, 0x18, 0xf1, 0x52, 0xff, 0xba, 0x9d, 0x5d,
+	0x60, 0x5f, 0xf6, 0xb2, 0x0f, 0x8b, 0x57, 0xdf, 0x7c, 0xdb, 0x9b, 0x2d, 0x3e, 0x2f, 0xf4, 0xc8,
+	0xfe, 0xa6, 0xfe, 0x54, 0x78, 0xf4, 0x5f, 0x00, 0x00, 0x00, 0xff, 0xff, 0xb2, 0x1b, 0x81, 0xe0,
+	0xb0, 0x08, 0x00, 0x00,
 }
 
 func (m *HostZone) Marshal() (dAtA []byte, err error) {
@@ -265,6 +305,121 @@ func (m *HostZone) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	_ = i
 	var l int
 	_ = l
+	if len(m.CommunityPoolRedeemHoldingAddress) > 0 {
+		i -= len(m.CommunityPoolRedeemHoldingAddress)
+		copy(dAtA[i:], m.CommunityPoolRedeemHoldingAddress)
+		i = encodeVarintHostZone(dAtA, i, uint64(len(m.CommunityPoolRedeemHoldingAddress)))
+		i--
+		dAtA[i] = 0x2
+		i--
+		dAtA[i] = 0x8a
+	}
+	if len(m.CommunityPoolStakeHoldingAddress) > 0 {
+		i -= len(m.CommunityPoolStakeHoldingAddress)
+		copy(dAtA[i:], m.CommunityPoolStakeHoldingAddress)
+		i = encodeVarintHostZone(dAtA, i, uint64(len(m.CommunityPoolStakeHoldingAddress)))
+		i--
+		dAtA[i] = 0x2
+		i--
+		dAtA[i] = 0x82
+	}
+	if len(m.CommunityPoolReturnIcaAddress) > 0 {
+		i -= len(m.CommunityPoolReturnIcaAddress)
+		copy(dAtA[i:], m.CommunityPoolReturnIcaAddress)
+		i = encodeVarintHostZone(dAtA, i, uint64(len(m.CommunityPoolReturnIcaAddress)))
+		i--
+		dAtA[i] = 0x1
+		i--
+		dAtA[i] = 0xfa
+	}
+	if len(m.CommunityPoolDepositIcaAddress) > 0 {
+		i -= len(m.CommunityPoolDepositIcaAddress)
+		copy(dAtA[i:], m.CommunityPoolDepositIcaAddress)
+		i = encodeVarintHostZone(dAtA, i, uint64(len(m.CommunityPoolDepositIcaAddress)))
+		i--
+		dAtA[i] = 0x1
+		i--
+		dAtA[i] = 0xf2
+	}
+	{
+		size := m.MaxInnerRedemptionRate.Size()
+		i -= size
+		if _, err := m.MaxInnerRedemptionRate.MarshalTo(dAtA[i:]); err != nil {
+			return 0, err
+		}
+		i = encodeVarintHostZone(dAtA, i, uint64(size))
+	}
+	i--
+	dAtA[i] = 0x1
+	i--
+	dAtA[i] = 0xea
+	{
+		size := m.MinInnerRedemptionRate.Size()
+		i -= size
+		if _, err := m.MinInnerRedemptionRate.MarshalTo(dAtA[i:]); err != nil {
+			return 0, err
+		}
+		i = encodeVarintHostZone(dAtA, i, uint64(size))
+	}
+	i--
+	dAtA[i] = 0x1
+	i--
+	dAtA[i] = 0xe2
+	if m.LsmLiquidStakeEnabled {
+		i--
+		if m.LsmLiquidStakeEnabled {
+			dAtA[i] = 1
+		} else {
+			dAtA[i] = 0
+		}
+		i--
+		dAtA[i] = 0x1
+		i--
+		dAtA[i] = 0xd8
+	}
+	if m.UnbondingPeriod != 0 {
+		i = encodeVarintHostZone(dAtA, i, uint64(m.UnbondingPeriod))
+		i--
+		dAtA[i] = 0x1
+		i--
+		dAtA[i] = 0xd0
+	}
+	if len(m.RedemptionIcaAddress) > 0 {
+		i -= len(m.RedemptionIcaAddress)
+		copy(dAtA[i:], m.RedemptionIcaAddress)
+		i = encodeVarintHostZone(dAtA, i, uint64(len(m.RedemptionIcaAddress)))
+		i--
+		dAtA[i] = 0x1
+		i--
+		dAtA[i] = 0xca
+	}
+	if len(m.DelegationIcaAddress) > 0 {
+		i -= len(m.DelegationIcaAddress)
+		copy(dAtA[i:], m.DelegationIcaAddress)
+		i = encodeVarintHostZone(dAtA, i, uint64(len(m.DelegationIcaAddress)))
+		i--
+		dAtA[i] = 0x1
+		i--
+		dAtA[i] = 0xc2
+	}
+	if len(m.FeeIcaAddress) > 0 {
+		i -= len(m.FeeIcaAddress)
+		copy(dAtA[i:], m.FeeIcaAddress)
+		i = encodeVarintHostZone(dAtA, i, uint64(len(m.FeeIcaAddress)))
+		i--
+		dAtA[i] = 0x1
+		i--
+		dAtA[i] = 0xba
+	}
+	if len(m.WithdrawalIcaAddress) > 0 {
+		i -= len(m.WithdrawalIcaAddress)
+		copy(dAtA[i:], m.WithdrawalIcaAddress)
+		i = encodeVarintHostZone(dAtA, i, uint64(len(m.WithdrawalIcaAddress)))
+		i--
+		dAtA[i] = 0x1
+		i--
+		dAtA[i] = 0xb2
+	}
 	{
 		size := m.MaxRedemptionRate.Size()
 		i -= size
@@ -301,10 +456,10 @@ func (m *HostZone) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 		i--
 		dAtA[i] = 0x98
 	}
-	if len(m.Address) > 0 {
-		i -= len(m.Address)
-		copy(dAtA[i:], m.Address)
-		i = encodeVarintHostZone(dAtA, i, uint64(len(m.Address)))
+	if len(m.DepositAddress) > 0 {
+		i -= len(m.DepositAddress)
+		copy(dAtA[i:], m.DepositAddress)
+		i = encodeVarintHostZone(dAtA, i, uint64(len(m.DepositAddress)))
 		i--
 		dAtA[i] = 0x1
 		i--
@@ -319,29 +474,10 @@ func (m *HostZone) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 		i--
 		dAtA[i] = 0x8a
 	}
-	if m.RedemptionAccount != nil {
-		{
-			size, err := m.RedemptionAccount.MarshalToSizedBuffer(dAtA[:i])
-			if err != nil {
-				return 0, err
-			}
-			i -= size
-			i = encodeVarintHostZone(dAtA, i, uint64(size))
-		}
-		i--
-		dAtA[i] = 0x1
-		i--
-		dAtA[i] = 0x82
-	}
-	if m.UnbondingFrequency != 0 {
-		i = encodeVarintHostZone(dAtA, i, uint64(m.UnbondingFrequency))
-		i--
-		dAtA[i] = 0x70
-	}
 	{
-		size := m.StakedBal.Size()
+		size := m.TotalDelegations.Size()
 		i -= size
-		if _, err := m.StakedBal.MarshalTo(dAtA[i:]); err != nil {
+		if _, err := m.TotalDelegations.MarshalTo(dAtA[i:]); err != nil {
 			return 0, err
 		}
 		i = encodeVarintHostZone(dAtA, i, uint64(size))
@@ -388,56 +524,6 @@ func (m *HostZone) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 		i = encodeVarintHostZone(dAtA, i, uint64(len(m.IbcDenom)))
 		i--
 		dAtA[i] = 0x42
-	}
-	if m.DelegationAccount != nil {
-		{
-			size, err := m.DelegationAccount.MarshalToSizedBuffer(dAtA[:i])
-			if err != nil {
-				return 0, err
-			}
-			i -= size
-			i = encodeVarintHostZone(dAtA, i, uint64(size))
-		}
-		i--
-		dAtA[i] = 0x3a
-	}
-	if m.FeeAccount != nil {
-		{
-			size, err := m.FeeAccount.MarshalToSizedBuffer(dAtA[:i])
-			if err != nil {
-				return 0, err
-			}
-			i -= size
-			i = encodeVarintHostZone(dAtA, i, uint64(size))
-		}
-		i--
-		dAtA[i] = 0x32
-	}
-	if m.WithdrawalAccount != nil {
-		{
-			size, err := m.WithdrawalAccount.MarshalToSizedBuffer(dAtA[:i])
-			if err != nil {
-				return 0, err
-			}
-			i -= size
-			i = encodeVarintHostZone(dAtA, i, uint64(size))
-		}
-		i--
-		dAtA[i] = 0x2a
-	}
-	if len(m.BlacklistedValidators) > 0 {
-		for iNdEx := len(m.BlacklistedValidators) - 1; iNdEx >= 0; iNdEx-- {
-			{
-				size, err := m.BlacklistedValidators[iNdEx].MarshalToSizedBuffer(dAtA[:i])
-				if err != nil {
-					return 0, err
-				}
-				i -= size
-				i = encodeVarintHostZone(dAtA, i, uint64(size))
-			}
-			i--
-			dAtA[i] = 0x22
-		}
 	}
 	if len(m.Validators) > 0 {
 		for iNdEx := len(m.Validators) - 1; iNdEx >= 0; iNdEx-- {
@@ -501,24 +587,6 @@ func (m *HostZone) Size() (n int) {
 			n += 1 + l + sovHostZone(uint64(l))
 		}
 	}
-	if len(m.BlacklistedValidators) > 0 {
-		for _, e := range m.BlacklistedValidators {
-			l = e.Size()
-			n += 1 + l + sovHostZone(uint64(l))
-		}
-	}
-	if m.WithdrawalAccount != nil {
-		l = m.WithdrawalAccount.Size()
-		n += 1 + l + sovHostZone(uint64(l))
-	}
-	if m.FeeAccount != nil {
-		l = m.FeeAccount.Size()
-		n += 1 + l + sovHostZone(uint64(l))
-	}
-	if m.DelegationAccount != nil {
-		l = m.DelegationAccount.Size()
-		n += 1 + l + sovHostZone(uint64(l))
-	}
 	l = len(m.IbcDenom)
 	if l > 0 {
 		n += 1 + l + sovHostZone(uint64(l))
@@ -535,20 +603,13 @@ func (m *HostZone) Size() (n int) {
 	if l > 0 {
 		n += 1 + l + sovHostZone(uint64(l))
 	}
-	l = m.StakedBal.Size()
+	l = m.TotalDelegations.Size()
 	n += 1 + l + sovHostZone(uint64(l))
-	if m.UnbondingFrequency != 0 {
-		n += 1 + sovHostZone(uint64(m.UnbondingFrequency))
-	}
-	if m.RedemptionAccount != nil {
-		l = m.RedemptionAccount.Size()
-		n += 2 + l + sovHostZone(uint64(l))
-	}
 	l = len(m.Bech32Prefix)
 	if l > 0 {
 		n += 2 + l + sovHostZone(uint64(l))
 	}
-	l = len(m.Address)
+	l = len(m.DepositAddress)
 	if l > 0 {
 		n += 2 + l + sovHostZone(uint64(l))
 	}
@@ -559,6 +620,48 @@ func (m *HostZone) Size() (n int) {
 	n += 2 + l + sovHostZone(uint64(l))
 	l = m.MaxRedemptionRate.Size()
 	n += 2 + l + sovHostZone(uint64(l))
+	l = len(m.WithdrawalIcaAddress)
+	if l > 0 {
+		n += 2 + l + sovHostZone(uint64(l))
+	}
+	l = len(m.FeeIcaAddress)
+	if l > 0 {
+		n += 2 + l + sovHostZone(uint64(l))
+	}
+	l = len(m.DelegationIcaAddress)
+	if l > 0 {
+		n += 2 + l + sovHostZone(uint64(l))
+	}
+	l = len(m.RedemptionIcaAddress)
+	if l > 0 {
+		n += 2 + l + sovHostZone(uint64(l))
+	}
+	if m.UnbondingPeriod != 0 {
+		n += 2 + sovHostZone(uint64(m.UnbondingPeriod))
+	}
+	if m.LsmLiquidStakeEnabled {
+		n += 3
+	}
+	l = m.MinInnerRedemptionRate.Size()
+	n += 2 + l + sovHostZone(uint64(l))
+	l = m.MaxInnerRedemptionRate.Size()
+	n += 2 + l + sovHostZone(uint64(l))
+	l = len(m.CommunityPoolDepositIcaAddress)
+	if l > 0 {
+		n += 2 + l + sovHostZone(uint64(l))
+	}
+	l = len(m.CommunityPoolReturnIcaAddress)
+	if l > 0 {
+		n += 2 + l + sovHostZone(uint64(l))
+	}
+	l = len(m.CommunityPoolStakeHoldingAddress)
+	if l > 0 {
+		n += 2 + l + sovHostZone(uint64(l))
+	}
+	l = len(m.CommunityPoolRedeemHoldingAddress)
+	if l > 0 {
+		n += 2 + l + sovHostZone(uint64(l))
+	}
 	return n
 }
 
@@ -692,148 +795,6 @@ func (m *HostZone) Unmarshal(dAtA []byte) error {
 			}
 			m.Validators = append(m.Validators, &Validator{})
 			if err := m.Validators[len(m.Validators)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
-				return err
-			}
-			iNdEx = postIndex
-		case 4:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field BlacklistedValidators", wireType)
-			}
-			var msglen int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowHostZone
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				msglen |= int(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			if msglen < 0 {
-				return ErrInvalidLengthHostZone
-			}
-			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return ErrInvalidLengthHostZone
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.BlacklistedValidators = append(m.BlacklistedValidators, &Validator{})
-			if err := m.BlacklistedValidators[len(m.BlacklistedValidators)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
-				return err
-			}
-			iNdEx = postIndex
-		case 5:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field WithdrawalAccount", wireType)
-			}
-			var msglen int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowHostZone
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				msglen |= int(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			if msglen < 0 {
-				return ErrInvalidLengthHostZone
-			}
-			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return ErrInvalidLengthHostZone
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			if m.WithdrawalAccount == nil {
-				m.WithdrawalAccount = &ICAAccount{}
-			}
-			if err := m.WithdrawalAccount.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
-				return err
-			}
-			iNdEx = postIndex
-		case 6:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field FeeAccount", wireType)
-			}
-			var msglen int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowHostZone
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				msglen |= int(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			if msglen < 0 {
-				return ErrInvalidLengthHostZone
-			}
-			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return ErrInvalidLengthHostZone
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			if m.FeeAccount == nil {
-				m.FeeAccount = &ICAAccount{}
-			}
-			if err := m.FeeAccount.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
-				return err
-			}
-			iNdEx = postIndex
-		case 7:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field DelegationAccount", wireType)
-			}
-			var msglen int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowHostZone
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				msglen |= int(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			if msglen < 0 {
-				return ErrInvalidLengthHostZone
-			}
-			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return ErrInvalidLengthHostZone
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			if m.DelegationAccount == nil {
-				m.DelegationAccount = &ICAAccount{}
-			}
-			if err := m.DelegationAccount.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex
@@ -1003,7 +964,7 @@ func (m *HostZone) Unmarshal(dAtA []byte) error {
 			iNdEx = postIndex
 		case 13:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field StakedBal", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field TotalDelegations", wireType)
 			}
 			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
@@ -1031,62 +992,7 @@ func (m *HostZone) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			if err := m.StakedBal.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
-				return err
-			}
-			iNdEx = postIndex
-		case 14:
-			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field UnbondingFrequency", wireType)
-			}
-			m.UnbondingFrequency = 0
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowHostZone
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				m.UnbondingFrequency |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-		case 16:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field RedemptionAccount", wireType)
-			}
-			var msglen int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowHostZone
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				msglen |= int(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			if msglen < 0 {
-				return ErrInvalidLengthHostZone
-			}
-			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return ErrInvalidLengthHostZone
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			if m.RedemptionAccount == nil {
-				m.RedemptionAccount = &ICAAccount{}
-			}
-			if err := m.RedemptionAccount.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+			if err := m.TotalDelegations.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex
@@ -1124,7 +1030,7 @@ func (m *HostZone) Unmarshal(dAtA []byte) error {
 			iNdEx = postIndex
 		case 18:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Address", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field DepositAddress", wireType)
 			}
 			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
@@ -1152,7 +1058,7 @@ func (m *HostZone) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.Address = string(dAtA[iNdEx:postIndex])
+			m.DepositAddress = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
 		case 19:
 			if wireType != 0 {
@@ -1241,6 +1147,369 @@ func (m *HostZone) Unmarshal(dAtA []byte) error {
 			if err := m.MaxRedemptionRate.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
+			iNdEx = postIndex
+		case 22:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field WithdrawalIcaAddress", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowHostZone
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthHostZone
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthHostZone
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.WithdrawalIcaAddress = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 23:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field FeeIcaAddress", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowHostZone
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthHostZone
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthHostZone
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.FeeIcaAddress = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 24:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field DelegationIcaAddress", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowHostZone
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthHostZone
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthHostZone
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.DelegationIcaAddress = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 25:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field RedemptionIcaAddress", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowHostZone
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthHostZone
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthHostZone
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.RedemptionIcaAddress = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 26:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field UnbondingPeriod", wireType)
+			}
+			m.UnbondingPeriod = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowHostZone
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.UnbondingPeriod |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 27:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field LsmLiquidStakeEnabled", wireType)
+			}
+			var v int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowHostZone
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				v |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			m.LsmLiquidStakeEnabled = bool(v != 0)
+		case 28:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field MinInnerRedemptionRate", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowHostZone
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthHostZone
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthHostZone
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if err := m.MinInnerRedemptionRate.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 29:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field MaxInnerRedemptionRate", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowHostZone
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthHostZone
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthHostZone
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if err := m.MaxInnerRedemptionRate.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 30:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field CommunityPoolDepositIcaAddress", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowHostZone
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthHostZone
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthHostZone
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.CommunityPoolDepositIcaAddress = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 31:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field CommunityPoolReturnIcaAddress", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowHostZone
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthHostZone
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthHostZone
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.CommunityPoolReturnIcaAddress = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 32:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field CommunityPoolStakeHoldingAddress", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowHostZone
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthHostZone
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthHostZone
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.CommunityPoolStakeHoldingAddress = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 33:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field CommunityPoolRedeemHoldingAddress", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowHostZone
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthHostZone
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthHostZone
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.CommunityPoolRedeemHoldingAddress = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
 		default:
 			iNdEx = preIndex

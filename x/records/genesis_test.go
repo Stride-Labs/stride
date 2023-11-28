@@ -5,10 +5,10 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	keepertest "github.com/Stride-Labs/stride/v12/testutil/keeper"
-	"github.com/Stride-Labs/stride/v12/testutil/nullify"
-	"github.com/Stride-Labs/stride/v12/x/records"
-	"github.com/Stride-Labs/stride/v12/x/records/types"
+	keepertest "github.com/Stride-Labs/stride/v16/testutil/keeper"
+	"github.com/Stride-Labs/stride/v16/testutil/nullify"
+	"github.com/Stride-Labs/stride/v16/x/records"
+	"github.com/Stride-Labs/stride/v16/x/records/types"
 )
 
 func TestGenesis(t *testing.T) {
@@ -42,6 +42,18 @@ func TestGenesis(t *testing.T) {
 			},
 		},
 		DepositRecordCount: 2,
+		LsmTokenDepositList: []types.LSMTokenDeposit{
+			{
+				DepositId: "ID1",
+				ChainId:   "chain-1",
+				Denom:     "denom1",
+			},
+			{
+				DepositId: "ID2",
+				ChainId:   "chain-2",
+				Denom:     "denom2",
+			},
+		},
 	}
 	k, ctx := keepertest.RecordsKeeper(t)
 	records.InitGenesis(ctx, *k, genesisState)
@@ -55,5 +67,6 @@ func TestGenesis(t *testing.T) {
 
 	require.ElementsMatch(t, genesisState.DepositRecordList, got.DepositRecordList)
 	require.Equal(t, genesisState.DepositRecordCount, got.DepositRecordCount)
+	require.ElementsMatch(t, genesisState.LsmTokenDepositList, got.LsmTokenDepositList)
 	// this line is used by starport scaffolding # genesis/test/assert
 }

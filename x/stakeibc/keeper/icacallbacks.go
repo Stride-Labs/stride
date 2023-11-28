@@ -1,26 +1,29 @@
 package keeper
 
 import (
-	"github.com/Stride-Labs/stride/v12/x/icacallbacks/types"
-	icacallbackstypes "github.com/Stride-Labs/stride/v12/x/icacallbacks/types"
+	icacallbackstypes "github.com/Stride-Labs/stride/v16/x/icacallbacks/types"
 )
 
 const (
-	ICACallbackID_Delegate   = "delegate"
-	ICACallbackID_Claim      = "claim"
-	ICACallbackID_Undelegate = "undelegate"
-	ICACallbackID_Reinvest   = "reinvest"
-	ICACallbackID_Redemption = "redemption"
-	ICACallbackID_Rebalance  = "rebalance"
+	ICACallbackID_Delegate       = "delegate"
+	ICACallbackID_Claim          = "claim"
+	ICACallbackID_Undelegate     = "undelegate"
+	ICACallbackID_UndelegateHost = "undelegatehost"
+	ICACallbackID_Reinvest       = "reinvest"
+	ICACallbackID_Redemption     = "redemption"
+	ICACallbackID_Rebalance      = "rebalance"
+	ICACallbackID_Detokenize     = "detokenize"
 )
 
 func (k Keeper) Callbacks() icacallbackstypes.ModuleCallbacks {
-	return []types.ICACallback{
-		{CallbackId: ICACallbackID_Delegate, CallbackFunc: types.ICACallbackFunction(k.DelegateCallback)},
-		{CallbackId: ICACallbackID_Claim, CallbackFunc: types.ICACallbackFunction(k.ClaimCallback)},
-		{CallbackId: ICACallbackID_Undelegate, CallbackFunc: types.ICACallbackFunction(k.UndelegateCallback)},
-		{CallbackId: ICACallbackID_Reinvest, CallbackFunc: types.ICACallbackFunction(k.ReinvestCallback)},
-		{CallbackId: ICACallbackID_Redemption, CallbackFunc: types.ICACallbackFunction(k.RedemptionCallback)},
-		{CallbackId: ICACallbackID_Rebalance, CallbackFunc: types.ICACallbackFunction(k.RebalanceCallback)},
+	return []icacallbackstypes.ICACallback{
+		{CallbackId: ICACallbackID_Delegate, CallbackFunc: icacallbackstypes.ICACallbackFunction(k.DelegateCallback)},
+		{CallbackId: ICACallbackID_Claim, CallbackFunc: icacallbackstypes.ICACallbackFunction(k.ClaimCallback)},
+		{CallbackId: ICACallbackID_Undelegate, CallbackFunc: icacallbackstypes.ICACallbackFunction(k.UndelegateCallback)},
+		{CallbackId: ICACallbackID_UndelegateHost, CallbackFunc: icacallbackstypes.ICACallbackFunction(k.UndelegateHostCallback)},
+		{CallbackId: ICACallbackID_Reinvest, CallbackFunc: icacallbackstypes.ICACallbackFunction(k.ReinvestCallback)},
+		{CallbackId: ICACallbackID_Redemption, CallbackFunc: icacallbackstypes.ICACallbackFunction(k.RedemptionCallback)},
+		{CallbackId: ICACallbackID_Rebalance, CallbackFunc: icacallbackstypes.ICACallbackFunction(k.RebalanceCallback)},
+		{CallbackId: ICACallbackID_Detokenize, CallbackFunc: icacallbackstypes.ICACallbackFunction(k.DetokenizeCallback)},
 	}
 }

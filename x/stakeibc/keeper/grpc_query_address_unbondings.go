@@ -12,8 +12,8 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
-	epochtypes "github.com/Stride-Labs/stride/v12/x/epochs/types"
-	"github.com/Stride-Labs/stride/v12/x/stakeibc/types"
+	epochtypes "github.com/Stride-Labs/stride/v16/x/epochs/types"
+	"github.com/Stride-Labs/stride/v16/x/stakeibc/types"
 )
 
 const nanosecondsInDay = 86400000000000
@@ -60,9 +60,10 @@ func (k Keeper) AddressUnbondings(c context.Context, req *types.QueryAddressUnbo
 						if !found {
 							return nil, sdkerrors.ErrKeyNotFound
 						}
-						daysUntilUnbonding := hostZone.UnbondingFrequency - (currentDay % hostZone.UnbondingFrequency)
+						unbondingFrequency := hostZone.GetUnbondingFrequency()
+						daysUntilUnbonding := unbondingFrequency - (currentDay % unbondingFrequency)
 						unbondingStartTime := dayEpochTracker.NextEpochStartTime + ((daysUntilUnbonding - 1) * nanosecondsInDay)
-						unbondingDurationEstimate := (hostZone.UnbondingFrequency - 1) * 7
+						unbondingDurationEstimate := (unbondingFrequency - 1) * 7
 						unbondingTime = unbondingStartTime + (unbondingDurationEstimate * nanosecondsInDay)
 					}
 					unbondingTime = unbondingTime + nanosecondsInDay

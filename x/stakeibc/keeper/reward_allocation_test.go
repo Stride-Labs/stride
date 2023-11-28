@@ -15,9 +15,9 @@ import (
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	_ "github.com/stretchr/testify/suite"
 
-	epochtypes "github.com/Stride-Labs/stride/v12/x/epochs/types"
-	recordtypes "github.com/Stride-Labs/stride/v12/x/records/types"
-	stakeibctypes "github.com/Stride-Labs/stride/v12/x/stakeibc/types"
+	epochtypes "github.com/Stride-Labs/stride/v16/x/epochs/types"
+	recordtypes "github.com/Stride-Labs/stride/v16/x/records/types"
+	stakeibctypes "github.com/Stride-Labs/stride/v16/x/stakeibc/types"
 )
 
 func (s *KeeperTestSuite) SetupTestRewardAllocation() {
@@ -28,14 +28,14 @@ func (s *KeeperTestSuite) SetupTestRewardAllocation() {
 		HostDenom:      Atom,
 		IbcDenom:       IbcAtom,
 		RedemptionRate: sdk.OneDec(),
-		Address:        stakeibctypes.NewZoneAddress(HostChainId).String(),
+		DepositAddress: stakeibctypes.NewHostZoneDepositAddress(HostChainId).String(),
 	}
 	hostZone2 := stakeibctypes.HostZone{
 		ChainId:        OsmoChainId,
 		HostDenom:      Osmo,
 		IbcDenom:       IbcOsmo,
 		RedemptionRate: sdk.OneDec(),
-		Address:        stakeibctypes.NewZoneAddress(OsmoChainId).String(),
+		DepositAddress: stakeibctypes.NewHostZoneDepositAddress(OsmoChainId).String(),
 	}
 
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone1)

@@ -6,10 +6,6 @@ import (
 	"time"
 
 	abci "github.com/cometbft/cometbft/abci/types"
-	ibctransfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
-	ccvprovidertypes "github.com/cosmos/interchain-security/v3/x/ccv/provider/types"
-	ccvtypes "github.com/cosmos/interchain-security/v3/x/ccv/types"
-
 	"github.com/cometbft/cometbft/crypto/ed25519"
 	tmtypesproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	tmtypes "github.com/cometbft/cometbft/types"
@@ -20,25 +16,30 @@ import (
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 	"github.com/cosmos/gogoproto/proto"
 	icatypes "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/types"
+	ibctransfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
 	transfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
 	clienttypes "github.com/cosmos/ibc-go/v7/modules/core/02-client/types"
+	connectiontypes "github.com/cosmos/ibc-go/v7/modules/core/03-connection/types"
 	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
-
+	tendermint "github.com/cosmos/ibc-go/v7/modules/light-clients/07-tendermint"
 	"github.com/cosmos/ibc-go/v7/testing/simapp"
 	appProvider "github.com/cosmos/interchain-security/v3/app/provider"
 	ibctesting "github.com/cosmos/interchain-security/v3/legacy_ibc_testing/testing"
 	icstestingutils "github.com/cosmos/interchain-security/v3/testutil/ibc_testing"
 	e2e "github.com/cosmos/interchain-security/v3/testutil/integration"
+	ccvprovidertypes "github.com/cosmos/interchain-security/v3/x/ccv/provider/types"
+	ccvtypes "github.com/cosmos/interchain-security/v3/x/ccv/types"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
-	"github.com/Stride-Labs/stride/v12/app"
-	"github.com/Stride-Labs/stride/v12/utils"
+	"github.com/Stride-Labs/stride/v16/app"
+	"github.com/Stride-Labs/stride/v16/utils"
 )
 
 var (
 	StrideChainID   = "STRIDE"
 	ProviderChainID = "PROVIDER"
+	FirstClientId   = "07-tendermint-0"
 
 	TestIcaVersion = string(icatypes.ModuleCdc.MustMarshalJSON(&icatypes.Metadata{
 		Version:                icatypes.Version,
@@ -225,7 +226,7 @@ func (s *AppTestHelper) CreateTransferChannel(hostChainID string) {
 
 // Creates an ICA channel through ibctesting
 // Also creates a transfer channel is if hasn't been done yet
-func (s *AppTestHelper) CreateICAChannel(owner string) string {
+func (s *AppTestHelper) CreateICAChannel(owner string) (channelID, portID string) {
 	// If we have yet to create a client/connection (through creating a transfer channel), do that here
 	_, transferChannelExists := s.App.IBCKeeper.ChannelKeeper.GetChannel(s.Ctx, ibctesting.TransferPort, ibctesting.FirstChannelID)
 	if !transferChannelExists {
@@ -249,17 +250,14 @@ func (s *AppTestHelper) CreateICAChannel(owner string) string {
 	err = icaPath.EndpointA.ChanOpenAck()
 	s.Require().NoError(err, "ChanOpenAck error")
 
-	// err = s.App.ICAControllerKeeper.RegisterInterchainAccount(s.Ctx, icaPath.EndpointA.ConnectionID, owner, TestIcaVersion)
-	// s.Require().NoError(err, "register interchain account error")
-
 	err = icaPath.EndpointB.ChanOpenConfirm()
 	s.Require().NoError(err, "ChanOpenConfirm error")
 
 	s.Ctx = s.StrideChain.GetContext()
 
 	// Confirm the ICA channel was created properly
-	portID := icaPath.EndpointA.ChannelConfig.PortID
-	channelID := icaPath.EndpointA.ChannelID
+	portID = icaPath.EndpointA.ChannelConfig.PortID
+	channelID = icaPath.EndpointA.ChannelID
 	_, found := s.App.IBCKeeper.ChannelKeeper.GetChannel(s.Ctx, portID, channelID)
 	s.Require().True(found, "Channel not found after creation, PortID: %s, ChannelID: %s", portID, channelID)
 
@@ -271,7 +269,7 @@ func (s *AppTestHelper) CreateICAChannel(owner string) string {
 	// Finally set the active channel
 	s.App.ICAControllerKeeper.SetActiveChannelID(s.Ctx, ibctesting.FirstConnectionID, portID, channelID)
 
-	return channelID
+	return channelID, portID
 }
 
 // Register's a new ICA account on the next channel available
@@ -346,6 +344,14 @@ func CopyConnectionAndClientToPath(path *ibctesting.Path, pathToCopy *ibctesting
 	return path
 }
 
+// Helper function to change the state of a channel (i.e. to open/close it)
+func (s *AppTestHelper) UpdateChannelState(portId, channelId string, channelState channeltypes.State) {
+	channel, found := s.App.IBCKeeper.ChannelKeeper.GetChannel(s.Ctx, portId, channelId)
+	s.Require().True(found, "ica channel should have been found")
+	channel.State = channelState
+	s.App.IBCKeeper.ChannelKeeper.SetChannel(s.Ctx, portId, channelId, channel)
+}
+
 // Constructs an ICA Packet Acknowledgement compatible with ibc-go v5+
 func ICAPacketAcknowledgement(t *testing.T, msgType string, msgResponses []proto.Message) channeltypes.Acknowledgement {
 	txMsgData := &sdk.TxMsgData{
@@ -403,9 +409,32 @@ func (s *AppTestHelper) GetIBCDenomTrace(denom string) transfertypes.DenomTrace 
 	return transfertypes.ParseDenomTrace(prefixedDenom)
 }
 
+// Creates and stores an IBC denom from a base denom on transfer channel-0
+// This is only required for tests that use the transfer keeper and require that the IBC
+// denom is present in the store
+//
+// Returns the IBC hash
+func (s *AppTestHelper) CreateAndStoreIBCDenom(baseDenom string) (ibcDenom string) {
+	denomTrace := s.GetIBCDenomTrace(baseDenom)
+	s.App.TransferKeeper.SetDenomTrace(s.Ctx, denomTrace)
+	return denomTrace.IBCDenom()
+}
+
 func (s *AppTestHelper) MarshalledICS20PacketData() sdk.AccAddress {
 	data := ibctransfertypes.FungibleTokenPacketData{}
 	return data.GetBytes()
+}
+
+// Helper function to mock out a connection, client, and revision height
+func (s *AppTestHelper) MockClientLatestHeight(height uint64) {
+	clientState := tendermint.ClientState{
+		LatestHeight: clienttypes.NewHeight(1, height),
+	}
+	connection := connectiontypes.ConnectionEnd{
+		ClientId: FirstClientId,
+	}
+	s.App.IBCKeeper.ConnectionKeeper.SetConnection(s.Ctx, ibctesting.FirstConnectionID, connection)
+	s.App.IBCKeeper.ClientKeeper.SetClientState(s.Ctx, FirstClientId, &clientState)
 }
 
 func (s *AppTestHelper) ConfirmUpgradeSucceededs(upgradeName string, upgradeHeight int64) {
@@ -442,4 +471,83 @@ func GetAdminAddress() (address string, ok bool) {
 // Modifies sdk config to have stride address prefixes (used for non-keeper tests)
 func SetupConfig() {
 	app.SetupConfig()
+}
+
+// Searches for an event using the current context
+func (s *AppTestHelper) getEventsFromEventType(eventType string) (events []sdk.Event) {
+	for _, event := range s.Ctx.EventManager().Events() {
+		if event.Type == eventType {
+			events = append(events, event)
+		}
+	}
+	return events
+}
+
+// Searches for an event attribute, given an event
+// Returns the value if found
+func (s *AppTestHelper) getEventValuesFromAttribute(event sdk.Event, attributeKey string) (values []string) {
+	for _, attribute := range event.Attributes {
+		if string(attribute.Key) == attributeKey {
+			values = append(values, string(attribute.Value))
+		}
+	}
+	return values
+}
+
+// Searches for an event that has an attribute value matching the expected value
+// Returns whether there was a match, as well as a list for all the values found
+// for that attribute (for the error message)
+func (s *AppTestHelper) checkEventAttributeValueMatch(
+	events []sdk.Event,
+	attributeKey,
+	expectedValue string,
+) (allValues []string, found bool) {
+	for _, event := range events {
+		allValues = append(allValues, s.getEventValuesFromAttribute(event, attributeKey)...)
+		for _, actualValue := range allValues {
+			if actualValue == expectedValue {
+				found = true
+			}
+		}
+	}
+	return allValues, found
+}
+
+// Checks if an event was emitted
+func (s *AppTestHelper) CheckEventTypeEmitted(eventType string) []sdk.Event {
+	events := s.getEventsFromEventType(eventType)
+	eventEmitted := len(events) > 0
+	s.Require().True(eventEmitted, "%s event should have been emitted", eventType)
+	return events
+}
+
+// Checks that an event was not emitted
+func (s *AppTestHelper) CheckEventTypeNotEmitted(eventType string) {
+	events := s.getEventsFromEventType(eventType)
+	eventNotEmitted := len(events) == 0
+	s.Require().True(eventNotEmitted, "%s event should not have been emitted", eventType)
+}
+
+// Checks that an event was emitted and that the value matches expectations
+func (s *AppTestHelper) CheckEventValueEmitted(eventType, attributeKey, expectedValue string) {
+	events := s.CheckEventTypeEmitted(eventType)
+
+	// Check all events and attributes for a match
+	allValues, valueFound := s.checkEventAttributeValueMatch(events, attributeKey, expectedValue)
+	s.Require().True(valueFound, "attribute %s with value %s should have been found in event %s. Values emitted for attribute: %+v",
+		attributeKey, expectedValue, eventType, allValues)
+}
+
+// Checks that there was no event emitted that matches the event type, attribute, and value
+func (s *AppTestHelper) CheckEventValueNotEmitted(eventType, attributeKey, expectedValue string) {
+	// Check that either the event or attribute were not emitted
+	events := s.getEventsFromEventType(eventType)
+	if len(events) == 0 {
+		return
+	}
+
+	// Check all events and attributes to make sure there's no match
+	allValues, valueFound := s.checkEventAttributeValueMatch(events, attributeKey, expectedValue)
+	s.Require().False(valueFound, "attribute %s with value %s should not have been found in event %s. Values emitted for attribute: %+v",
+		attributeKey, expectedValue, eventType, allValues)
 }

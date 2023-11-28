@@ -4,30 +4,41 @@ import (
 	"strings"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/types/address"
 
 	errorsmod "cosmossdk.io/errors"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	ibctransfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
 
-	"github.com/Stride-Labs/stride/v12/utils"
+	"github.com/Stride-Labs/stride/v16/utils"
 )
 
 const TypeMsgRegisterHostZone = "register_host_zone"
 
 var _ sdk.Msg = &MsgRegisterHostZone{}
 
-func NewMsgRegisterHostZone(creator string, connectionId string, bech32prefix string, hostDenom string, ibcDenom string, transferChannelId string, unbondingFrequency uint64, minRedemptionRate, maxRedemptionRate sdk.Dec) *MsgRegisterHostZone {
+func NewMsgRegisterHostZone(
+	creator string,
+	connectionId string,
+	bech32prefix string,
+	hostDenom string,
+	ibcDenom string,
+	transferChannelId string,
+	unbondingPeriod uint64,
+	minRedemptionRate sdk.Dec,
+	maxRedemptionRate sdk.Dec,
+	lsmLiquidStakeEnabled bool,
+) *MsgRegisterHostZone {
 	return &MsgRegisterHostZone{
-		Creator:            creator,
-		ConnectionId:       connectionId,
-		Bech32Prefix:       bech32prefix,
-		HostDenom:          hostDenom,
-		IbcDenom:           ibcDenom,
-		TransferChannelId:  transferChannelId,
-		UnbondingFrequency: unbondingFrequency,
-		MinRedemptionRate:  minRedemptionRate,
-		MaxRedemptionRate:  maxRedemptionRate,
+		Creator:               creator,
+		ConnectionId:          connectionId,
+		Bech32Prefix:          bech32prefix,
+		HostDenom:             hostDenom,
+		IbcDenom:              ibcDenom,
+		TransferChannelId:     transferChannelId,
+		UnbondingPeriod:       unbondingPeriod,
+		MinRedemptionRate:     minRedemptionRate,
+		MaxRedemptionRate:     maxRedemptionRate,
+		LsmLiquidStakeEnabled: lsmLiquidStakeEnabled,
 	}
 }
 
@@ -52,7 +63,6 @@ func (msg *MsgRegisterHostZone) GetSignBytes() []byte {
 	return sdk.MustSortJSON(bz)
 }
 
-// TODO(TEST-112) add validation on bech32prefix upon zone creation
 func (msg *MsgRegisterHostZone) ValidateBasic() error {
 	_, err := sdk.AccAddressFromBech32(msg.Creator)
 	if err != nil {
@@ -103,7 +113,7 @@ func (msg *MsgRegisterHostZone) ValidateBasic() error {
 		return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "transfer channel id must begin with 'channel'")
 	}
 	// unbonding frequency must be positive nonzero
-	if msg.UnbondingFrequency < 1 {
+	if msg.UnbondingPeriod < 1 {
 		return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "unbonding frequency must be greater than zero")
 	}
 	// min/max redemption rate check
@@ -122,9 +132,4 @@ func (msg *MsgRegisterHostZone) ValidateBasic() error {
 	}
 
 	return nil
-}
-
-func NewZoneAddress(chainId string) sdk.AccAddress {
-	key := append([]byte("zone"), []byte(chainId)...)
-	return address.Module(ModuleName, key)
 }

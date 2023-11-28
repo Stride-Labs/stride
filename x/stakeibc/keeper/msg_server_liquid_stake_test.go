@@ -7,9 +7,9 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	_ "github.com/stretchr/testify/suite"
 
-	epochtypes "github.com/Stride-Labs/stride/v12/x/epochs/types"
-	recordtypes "github.com/Stride-Labs/stride/v12/x/records/types"
-	stakeibctypes "github.com/Stride-Labs/stride/v12/x/stakeibc/types"
+	epochtypes "github.com/Stride-Labs/stride/v16/x/epochs/types"
+	recordtypes "github.com/Stride-Labs/stride/v16/x/records/types"
+	stakeibctypes "github.com/Stride-Labs/stride/v16/x/stakeibc/types"
 )
 
 type Account struct {
@@ -40,10 +40,10 @@ func (s *KeeperTestSuite) SetupLiquidStake() LiquidStakeTestCase {
 	}
 	s.FundAccount(user.acc, user.atomBalance)
 
-	zoneAddress := stakeibctypes.NewZoneAddress(HostChainId)
+	depositAddress := stakeibctypes.NewHostZoneDepositAddress(HostChainId)
 
 	zoneAccount := Account{
-		acc:           zoneAddress,
+		acc:           depositAddress,
 		atomBalance:   sdk.NewInt64Coin(IbcAtom, 10_000_000),
 		stAtomBalance: sdk.NewInt64Coin(StAtom, 10_000_000),
 	}
@@ -55,7 +55,7 @@ func (s *KeeperTestSuite) SetupLiquidStake() LiquidStakeTestCase {
 		HostDenom:      Atom,
 		IbcDenom:       IbcAtom,
 		RedemptionRate: sdk.NewDec(1.0),
-		Address:        zoneAddress.String(),
+		DepositAddress: depositAddress.String(),
 	}
 
 	epochTracker := stakeibctypes.EpochTracker{
@@ -133,7 +133,7 @@ func (s *KeeperTestSuite) TestLiquidStake_DifferentRedemptionRates() {
 	user := tc.user
 	msg := tc.validMsg
 
-	// Loop over exchange rates: {0.92, 0.94, ..., 1.2}
+	// Loop over sharesToTokens rates: {0.92, 0.94, ..., 1.2}
 	for i := -8; i <= 10; i += 2 {
 		redemptionDelta := sdk.NewDecWithPrec(1.0, 1).Quo(sdk.NewDec(10)).Mul(sdk.NewDec(int64(i))) // i = 2 => delta = 0.02
 		newRedemptionRate := sdk.NewDec(1.0).Add(redemptionDelta)
@@ -195,7 +195,7 @@ func (s *KeeperTestSuite) TestLiquidStake_InvalidHostAddress() {
 
 	// Update hostzone with invalid address
 	badHostZone := tc.initialState.hostZone
-	badHostZone.Address = "cosmosXXX"
+	badHostZone.DepositAddress = "cosmosXXX"
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, badHostZone)
 
 	_, err := s.GetMsgServer().LiquidStake(sdk.WrapSDKContext(s.Ctx), &tc.validMsg)

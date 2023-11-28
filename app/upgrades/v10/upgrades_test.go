@@ -16,22 +16,22 @@ import (
 	transfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
 	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
 
-	"github.com/Stride-Labs/stride/v12/app/apptesting"
-	v10 "github.com/Stride-Labs/stride/v12/app/upgrades/v10"
-	"github.com/Stride-Labs/stride/v12/utils"
+	"github.com/Stride-Labs/stride/v16/app/apptesting"
+	v10 "github.com/Stride-Labs/stride/v16/app/upgrades/v10"
+	"github.com/Stride-Labs/stride/v16/utils"
 
-	icacallbackstypes "github.com/Stride-Labs/stride/v12/x/icacallbacks/types"
-	ratelimittypes "github.com/Stride-Labs/stride/v12/x/ratelimit/types"
-	recordskeeper "github.com/Stride-Labs/stride/v12/x/records/keeper"
-	recordstypes "github.com/Stride-Labs/stride/v12/x/records/types"
-	stakeibckeeper "github.com/Stride-Labs/stride/v12/x/stakeibc/keeper"
-	"github.com/Stride-Labs/stride/v12/x/stakeibc/types"
-	stakeibctypes "github.com/Stride-Labs/stride/v12/x/stakeibc/types"
+	icacallbackstypes "github.com/Stride-Labs/stride/v16/x/icacallbacks/types"
+	ratelimittypes "github.com/Stride-Labs/stride/v16/x/ratelimit/types"
+	recordskeeper "github.com/Stride-Labs/stride/v16/x/records/keeper"
+	recordstypes "github.com/Stride-Labs/stride/v16/x/records/types"
+	stakeibckeeper "github.com/Stride-Labs/stride/v16/x/stakeibc/keeper"
+	"github.com/Stride-Labs/stride/v16/x/stakeibc/types"
+	stakeibctypes "github.com/Stride-Labs/stride/v16/x/stakeibc/types"
 
 	cosmosproto "github.com/cosmos/gogoproto/proto"
 	deprecatedproto "github.com/golang/protobuf/proto" //nolint:staticcheck
 
-	claimtypes "github.com/Stride-Labs/stride/v12/x/claim/types"
+	claimtypes "github.com/Stride-Labs/stride/v16/x/claim/types"
 )
 
 var initialRateLimitChannelValue = sdk.NewInt(1_000_000)
@@ -181,7 +181,7 @@ func (s *UpgradeTestSuite) TestMigrateCallbackData() {
 		s.createCallbackData(stakeibckeeper.ICACallbackID_Redemption, &initialRedemptionCallbackArgs),
 		s.createCallbackData(stakeibckeeper.ICACallbackID_Reinvest, &initialReinvestCallbackArgs),
 		s.createCallbackData(stakeibckeeper.ICACallbackID_Undelegate, &initialUndelegateCallbackArgs),
-		s.createCallbackData(recordskeeper.TRANSFER, &initialTransferCallbackArgs),
+		s.createCallbackData(recordskeeper.IBCCallbacksID_NativeTransfer, &initialTransferCallbackArgs),
 	}
 	for i := range initialCallbackData {
 		initialCallbackData[i].CallbackKey = fmt.Sprintf("key-%d", i)
@@ -238,7 +238,7 @@ func (s *UpgradeTestSuite) TestMigrateCallbackData() {
 			s.mustUnmarshalCallback(finalCallback.CallbackArgs, &finalCallbackArgs)
 			s.Require().Equal(initialUndelegateCallbackArgs, finalCallbackArgs, "undelegate callback")
 
-		case recordskeeper.TRANSFER:
+		case recordskeeper.IBCCallbacksID_NativeTransfer:
 			var finalCallbackArgs recordstypes.TransferCallback
 			s.mustUnmarshalCallback(finalCallback.CallbackArgs, &finalCallbackArgs)
 			s.Require().Equal(initialTransferCallbackArgs, finalCallbackArgs, "transfer callback")
@@ -349,16 +349,12 @@ func (s *UpgradeTestSuite) createRewardCollectorModuleAccount() string {
 func (s *UpgradeTestSuite) setupRateLimitedHostZone(chainId, stDenom, channelId string) {
 	// Store host zone in stakeibc
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, stakeibctypes.HostZone{
-		ChainId:           chainId,
-		HostDenom:         strings.ReplaceAll(stDenom, "st", ""),
-		TransferChannelId: channelId,
-		Address:           chainId + ".STAKEIBC",
-		FeeAccount: &stakeibctypes.ICAAccount{
-			Address: chainId + ".FEE",
-		},
-		DelegationAccount: &stakeibctypes.ICAAccount{
-			Address: chainId + ".DELEGATION",
-		},
+		ChainId:              chainId,
+		HostDenom:            strings.ReplaceAll(stDenom, "st", ""),
+		TransferChannelId:    channelId,
+		DepositAddress:       chainId + ".STAKEIBC",
+		FeeIcaAddress:        chainId + ".FEE",
+		DelegationIcaAddress: chainId + ".DELEGATION",
 	})
 
 	// Create the transfer channel

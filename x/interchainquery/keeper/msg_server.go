@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"context"
+	"fmt"
 	"net/url"
 	"sort"
 	"strings"
@@ -15,8 +16,8 @@ import (
 	ics23 "github.com/cosmos/ics23/go"
 	"github.com/spf13/cast"
 
-	"github.com/Stride-Labs/stride/v12/utils"
-	"github.com/Stride-Labs/stride/v12/x/interchainquery/types"
+	"github.com/Stride-Labs/stride/v16/utils"
+	"github.com/Stride-Labs/stride/v16/x/interchainquery/types"
 )
 
 type msgServer struct {
@@ -46,11 +47,17 @@ func (k Keeper) VerifyKeyProof(ctx sdk.Context, msg *types.MsgSubmitQueryRespons
 	}
 
 	// Get the client consensus state at the height 1 block above the message height
-	msgHeight, err := cast.ToUint64E(msg.Height)
+	proofHeight, err := cast.ToUint64E(msg.Height)
 	if err != nil {
 		return err
 	}
-	height := clienttypes.NewHeight(clienttypes.ParseChainID(query.ChainId), msgHeight+1)
+	height := clienttypes.NewHeight(clienttypes.ParseChainID(query.ChainId), proofHeight+1)
+
+	// Confirm the query proof height occurred after the submission height
+	if proofHeight <= query.SubmissionHeight {
+		return errorsmod.Wrapf(types.ErrInvalidICQProof,
+			"Query proof height (%d) is older than the submission height (%d)", proofHeight, query.SubmissionHeight)
+	}
 
 	// Get the client state and consensus state from the connection Id
 	connection, found := k.IBCKeeper.ConnectionKeeper.GetConnection(ctx, query.ConnectionId)
@@ -81,7 +88,7 @@ func (k Keeper) VerifyKeyProof(ctx sdk.Context, msg *types.MsgSubmitQueryRespons
 	var clientStateProof []*ics23.ProofSpec = tendermintClientState.ProofSpecs
 
 	// Get the merkle path and merkle proof
-	path := commitmenttypes.NewMerklePath([]string{pathParts[1], url.PathEscape(string(query.Request))}...)
+	path := commitmenttypes.NewMerklePath([]string{pathParts[1], url.PathEscape(string(query.RequestData))}...)
 	merkleProof, err := commitmenttypes.ConvertProofs(msg.ProofOps)
 	if err != nil {
 		return errorsmod.Wrapf(types.ErrInvalidICQProof, "Error converting proofs: %s", err.Error())
@@ -105,6 +112,29 @@ func (k Keeper) VerifyKeyProof(ctx sdk.Context, msg *types.MsgSubmitQueryRespons
 	return nil
 }
 
+// Handles a query timeout based on the timeout policy
+func (k Keeper) HandleQueryTimeout(ctx sdk.Context, msg *types.MsgSubmitQueryResponse, query types.Query) error {
+	k.Logger(ctx).Error(utils.LogICQCallbackWithHostZone(query.ChainId, query.CallbackId,
+		"QUERY TIMEOUT - QueryId: %s, TTL: %d, BlockTime: %d", query.Id, query.TimeoutTimestamp, ctx.BlockHeader().Time.UnixNano()))
+
+	switch query.TimeoutPolicy {
+	case types.TimeoutPolicy_REJECT_QUERY_RESPONSE:
+		k.Logger(ctx).Info(utils.LogICQCallbackWithHostZone(query.ChainId, query.CallbackId, "Rejecting query"))
+		return nil
+
+	case types.TimeoutPolicy_RETRY_QUERY_REQUEST:
+		k.Logger(ctx).Info(utils.LogICQCallbackWithHostZone(query.ChainId, query.CallbackId, "Retrying query..."))
+		return k.RetryICQRequest(ctx, query)
+
+	case types.TimeoutPolicy_EXECUTE_QUERY_CALLBACK:
+		k.Logger(ctx).Info(utils.LogICQCallbackWithHostZone(query.ChainId, query.CallbackId, "Executing callback..."))
+		return k.InvokeCallback(ctx, msg, query)
+
+	default:
+		return fmt.Errorf("Unsupported query timeout policy: %s", query.TimeoutPolicy.String())
+	}
+}
+
 // call the query's associated callback function
 func (k Keeper) InvokeCallback(ctx sdk.Context, msg *types.MsgSubmitQueryResponse, query types.Query) error {
 	// get all the callback handlers and sort them for determinism
@@ -121,7 +151,14 @@ func (k Keeper) InvokeCallback(ctx sdk.Context, msg *types.MsgSubmitQueryRespons
 
 		// Once the callback is found, invoke the function
 		if moduleCallbackHandler.HasICQCallback(query.CallbackId) {
-			return moduleCallbackHandler.CallICQCallback(ctx, query.CallbackId, msg.Result, query)
+			if err := moduleCallbackHandler.CallICQCallback(ctx, query.CallbackId, msg.Result, query); err != nil {
+				k.Logger(ctx).Error(utils.LogICQCallbackWithHostZone(query.ChainId, query.CallbackId,
+					"Error invoking ICQ callback, error: %s, %s, Query Response: %s",
+					err.Error(), query.Description(), msg.Result))
+
+				return err
+			}
+			return nil
 		}
 	}
 
@@ -165,17 +202,6 @@ func (k msgServer) SubmitQueryResponse(goCtx context.Context, msg *types.MsgSubm
 	// Immediately delete the query so it cannot process again
 	k.DeleteQuery(ctx, query.Id)
 
-	// Verify the query hasn't expired (if the block time is greater than the TTL timestamp, the query is expired)
-	currBlockTime, err := cast.ToUint64E(ctx.BlockTime().UnixNano())
-	if err != nil {
-		return nil, err
-	}
-	if query.Ttl < currBlockTime {
-		k.Logger(ctx).Error(utils.LogICQCallbackWithHostZone(query.ChainId, query.CallbackId,
-			"QUERY TIMEOUT - QueryId: %s, TTL: %d, BlockTime: %d", query.Id, query.Ttl, ctx.BlockHeader().Time.UnixNano()))
-		return &types.MsgSubmitQueryResponseResponse{}, nil
-	}
-
 	// If the query is contentless, end
 	if len(msg.Result) == 0 {
 		k.Logger(ctx).Info(utils.LogICQCallbackWithHostZone(query.ChainId, query.CallbackId,
@@ -183,12 +209,16 @@ func (k msgServer) SubmitQueryResponse(goCtx context.Context, msg *types.MsgSubm
 		return &types.MsgSubmitQueryResponseResponse{}, nil
 	}
 
-	// Call the query's associated callback function
-	err = k.InvokeCallback(ctx, msg, query)
-	if err != nil {
-		k.Logger(ctx).Error(utils.LogICQCallbackWithHostZone(query.ChainId, query.CallbackId,
-			"Error invoking ICQ callback, error: %s, QueryId: %s, QueryType: %s, ConnectionId: %s, QueryRequest: %v, QueryReponse: %v",
-			err.Error(), msg.QueryId, query.QueryType, query.ConnectionId, query.Request, msg.Result))
+	// Check if the query has expired (if the block time is greater than the TTL timestamp, the query has expired)
+	if query.HasTimedOut(ctx.BlockTime()) {
+		if err := k.HandleQueryTimeout(ctx, msg, query); err != nil {
+			return nil, err
+		}
+		return &types.MsgSubmitQueryResponseResponse{}, nil
+	}
+
+	// Invoke the query callback (if the query has not timed out)
+	if err := k.InvokeCallback(ctx, msg, query); err != nil {
 		return nil, err
 	}
 

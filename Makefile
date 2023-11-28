@@ -138,7 +138,7 @@ submit-upgrade-immediately:
 	UPGRADE_HEIGHT=150 bash $(DOCKERNET_HOME)/upgrades/submit_upgrade.sh
 
 submit-upgrade-after-tests:
-	UPGRADE_HEIGHT=400 bash $(DOCKERNET_HOME)/upgrades/submit_upgrade.sh
+	UPGRADE_HEIGHT=700 bash $(DOCKERNET_HOME)/upgrades/submit_upgrade.sh
 
 start-upgrade-integration-tests:
 	PART=1 bash $(DOCKERNET_HOME)/tests/run_tests_upgrade.sh
@@ -164,14 +164,14 @@ stop-local-to-main:
 ###                                Protobuf                                 ###
 ###############################################################################
 
-containerProtoVer=0.13.0
+containerProtoVer=0.14.0
 containerProtoImage=ghcr.io/cosmos/proto-builder:$(containerProtoVer)
 
 proto-all: proto-format proto-lint proto-gen
 
 proto-gen:
 	@echo "Generating Protobuf files"
-	@$(DOCKER) run --rm -v $(CURDIR):/workspace --workdir /workspace $(containerProtoImage) \
+	@$(DOCKER) run --user $(id -u):$(id -g) --rm -v $(CURDIR):/workspace --workdir /workspace $(containerProtoImage) \
 		sh ./scripts/protocgen.sh; 
 
 proto-format:

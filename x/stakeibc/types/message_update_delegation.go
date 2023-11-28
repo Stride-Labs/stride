@@ -6,8 +6,6 @@ import (
 	errorsmod "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-
-	"github.com/Stride-Labs/stride/v12/utils"
 )
 
 const TypeMsgUpdateValidatorSharesExchRate = "update_validator_shares_exch_rate"
@@ -48,9 +46,7 @@ func (msg *MsgUpdateValidatorSharesExchRate) ValidateBasic() error {
 	if err != nil {
 		return errorsmod.Wrapf(sdkerrors.ErrInvalidAddress, "invalid creator address (%s)", err)
 	}
-	if err := utils.ValidateAdminAddress(msg.Creator); err != nil {
-		return err
-	}
+
 	// basic checks on host denom
 	if len(msg.ChainId) == 0 {
 		return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "chainid is required")

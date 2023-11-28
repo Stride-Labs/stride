@@ -2,30 +2,44 @@ syntax = "proto3";
 package stride.stakeibc;
 
 import "stride/stakeibc/validator.proto";
-import "stride/stakeibc/ica_account.proto";
 import "gogoproto/gogo.proto";
 import "cosmos_proto/cosmos.proto";
 
-option go_package = "github.com/Stride-Labs/stride/v12/x/stakeibc/types";
+option go_package = "github.com/Stride-Labs/stride/v16/x/stakeibc/types";
 
-// next id: 22
 message HostZone {
   string chain_id = 1;
-  string connection_id = 2;
   string bech32prefix = 17;
+  string connection_id = 2;
   string transfer_channel_id = 12;
-  repeated Validator validators = 3;
-  repeated Validator blacklisted_validators = 4;
-  ICAAccount withdrawal_account = 5;
-  ICAAccount fee_account = 6;
-  ICAAccount delegation_account = 7;
-  ICAAccount redemption_account = 16;
   // ibc denom on stride
   string ibc_denom = 8;
   // native denom on host zone
   string host_denom = 9;
-  // TODO(TEST-68): Should we make this an array and store the last n redemption
-  // rates then calculate a TWARR?
+  uint64 unbonding_period = 26;
+  repeated Validator validators = 3;
+  string deposit_address = 18
+      [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+  string withdrawal_ica_address = 22
+      [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+  string fee_ica_address = 23
+      [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+  string delegation_ica_address = 24
+      [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+  string redemption_ica_address = 25
+      [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+  string community_pool_deposit_ica_address = 30
+      [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+  string community_pool_return_ica_address = 31
+      [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+  string community_pool_stake_holding_address = 32
+      [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+  string community_pool_redeem_holding_address = 33
+      [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+  string total_delegations = 13 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable) = false
+  ];
   string last_redemption_rate = 10 [
     (cosmos_proto.scalar) = "cosmos.Dec",
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
@@ -36,15 +50,6 @@ message HostZone {
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false
   ];
-  // stores how many days we should wait before issuing unbondings
-  uint64 unbonding_frequency = 14;
-  // TODO(TEST-101) int to dec
-  string staked_bal = 13 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
-    (gogoproto.nullable) = false
-  ];
-  string address = 18 [ (gogoproto.moretags) = "yaml:\"address\"" ];
-  bool halted = 19;
   string min_redemption_rate = 20 [
     (cosmos_proto.scalar) = "cosmos.Dec",
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
@@ -55,5 +60,17 @@ message HostZone {
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false
   ];
-  reserved 15;
+  string min_inner_redemption_rate = 28 [
+    (cosmos_proto.scalar) = "cosmos.Dec",
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
+  string max_inner_redemption_rate = 29 [
+    (cosmos_proto.scalar) = "cosmos.Dec",
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
+  bool lsm_liquid_stake_enabled = 27;
+  bool halted = 19;
+  reserved 4, 5, 6, 7, 14, 15, 16;
 }

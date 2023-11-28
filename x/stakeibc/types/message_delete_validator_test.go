@@ -6,7 +6,7 @@ import (
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/stretchr/testify/require"
 
-	"github.com/Stride-Labs/stride/v12/testutil/sample"
+	"github.com/Stride-Labs/stride/v16/testutil/sample"
 )
 
 func TestMsgDeleteValidator_ValidateBasic(t *testing.T) {

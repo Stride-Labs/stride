@@ -12,8 +12,8 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
 
-	icqkeeper "github.com/Stride-Labs/stride/v12/x/interchainquery/keeper"
-	"github.com/Stride-Labs/stride/v12/x/stakeibc/types"
+	icqkeeper "github.com/Stride-Labs/stride/v16/x/interchainquery/keeper"
+	"github.com/Stride-Labs/stride/v16/x/stakeibc/types"
 
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
 	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
@@ -23,9 +23,9 @@ import (
 
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 
-	epochstypes "github.com/Stride-Labs/stride/v12/x/epochs/types"
-	icacallbackskeeper "github.com/Stride-Labs/stride/v12/x/icacallbacks/keeper"
-	recordsmodulekeeper "github.com/Stride-Labs/stride/v12/x/records/keeper"
+	epochstypes "github.com/Stride-Labs/stride/v16/x/epochs/types"
+	icacallbackskeeper "github.com/Stride-Labs/stride/v16/x/icacallbacks/keeper"
+	recordsmodulekeeper "github.com/Stride-Labs/stride/v16/x/records/keeper"
 )
 
 type (
@@ -38,13 +38,15 @@ type (
 		ICAControllerKeeper   icacontrollerkeeper.Keeper
 		IBCKeeper             ibckeeper.Keeper
 		bankKeeper            bankkeeper.Keeper
+		AccountKeeper         types.AccountKeeper
 		InterchainQueryKeeper icqkeeper.Keeper
 		RecordsKeeper         recordsmodulekeeper.Keeper
 		StakingKeeper         stakingkeeper.Keeper
 		ICACallbacksKeeper    icacallbackskeeper.Keeper
 		hooks                 types.StakeIBCHooks
-		AccountKeeper         types.AccountKeeper
 		RatelimitKeeper       types.RatelimitKeeper
+		ICAOracleKeeper       types.ICAOracleKeeper
+		ConsumerKeeper        types.ConsumerKeeper
 	}
 )
 
@@ -62,6 +64,8 @@ func NewKeeper(
 	StakingKeeper stakingkeeper.Keeper,
 	ICACallbacksKeeper icacallbackskeeper.Keeper,
 	RatelimitKeeper types.RatelimitKeeper,
+	icaOracleKeeper types.ICAOracleKeeper,
+	ConsumerKeeper types.ConsumerKeeper,
 ) Keeper {
 	// set KeyTable if it has not already been set
 	if !ps.HasKeyTable() {
@@ -82,6 +86,8 @@ func NewKeeper(
 		StakingKeeper:         StakingKeeper,
 		ICACallbacksKeeper:    ICACallbacksKeeper,
 		RatelimitKeeper:       RatelimitKeeper,
+		ICAOracleKeeper:       icaOracleKeeper,
+		ConsumerKeeper:        ConsumerKeeper,
 	}
 }
 
@@ -248,6 +254,33 @@ func (k Keeper) GetICATimeoutNanos(ctx sdk.Context, epochType string) (uint64, e
 
 // safety check: ensure the redemption rate is NOT below our min safety threshold && NOT above our max safety threshold on host zone
 func (k Keeper) IsRedemptionRateWithinSafetyBounds(ctx sdk.Context, zone types.HostZone) (bool, error) {
+	// Get the wide bounds
+	minSafetyThreshold, maxSafetyThreshold := k.GetOuterSafetyBounds(ctx, zone)
+
+	redemptionRate := zone.RedemptionRate
+
+	if redemptionRate.LT(minSafetyThreshold) || redemptionRate.GT(maxSafetyThreshold) {
+		errMsg := fmt.Sprintf("IsRedemptionRateWithinSafetyBounds check failed %s is outside safety bounds [%s, %s]", redemptionRate.String(), minSafetyThreshold.String(), maxSafetyThreshold.String())
+		k.Logger(ctx).Error(errMsg)
+		return false, errorsmod.Wrapf(types.ErrRedemptionRateOutsideSafetyBounds, errMsg)
+	}
+
+	// Verify the redemption rate is within the inner safety bounds
+	// The inner safety bounds should always be within the safety bounds, but
+	// the redundancy above is cheap.
+	// There is also one scenario where the outer bounds go within the inner bounds - if they're updated as part of a param change proposal.
+	minInnerSafetyThreshold, maxInnerSafetyThreshold := k.GetInnerSafetyBounds(ctx, zone)
+	if redemptionRate.LT(minInnerSafetyThreshold) || redemptionRate.GT(maxInnerSafetyThreshold) {
+		errMsg := fmt.Sprintf("IsRedemptionRateWithinSafetyBounds check failed %s is outside inner safety bounds [%s, %s]", redemptionRate.String(), minInnerSafetyThreshold.String(), maxInnerSafetyThreshold.String())
+		k.Logger(ctx).Error(errMsg)
+		return false, errorsmod.Wrapf(types.ErrRedemptionRateOutsideSafetyBounds, errMsg)
+	}
+
+	return true, nil
+}
+
+func (k Keeper) GetOuterSafetyBounds(ctx sdk.Context, zone types.HostZone) (sdk.Dec, sdk.Dec) {
+	// Fetch the wide bounds
 	minSafetyThresholdInt := k.GetParam(ctx, types.KeyDefaultMinRedemptionRateThreshold)
 	minSafetyThreshold := sdk.NewDec(int64(minSafetyThresholdInt)).Quo(sdk.NewDec(100))
 
@@ -262,44 +295,19 @@ func (k Keeper) IsRedemptionRateWithinSafetyBounds(ctx sdk.Context, zone types.H
 		maxSafetyThreshold = zone.MaxRedemptionRate
 	}
 
-	redemptionRate := zone.RedemptionRate
-
-	if redemptionRate.LT(minSafetyThreshold) || redemptionRate.GT(maxSafetyThreshold) {
-		errMsg := fmt.Sprintf("IsRedemptionRateWithinSafetyBounds check failed %s is outside safety bounds [%s, %s]", redemptionRate.String(), minSafetyThreshold.String(), maxSafetyThreshold.String())
-		k.Logger(ctx).Error(errMsg)
-		return false, errorsmod.Wrapf(types.ErrRedemptionRateOutsideSafetyBounds, errMsg)
-	}
-	return true, nil
+	return minSafetyThreshold, maxSafetyThreshold
 }
 
-// Check the max number of validators to confirm we won't exceed it when adding a new validator
-// Types of additions:
-//   - change a weight from zero to non-zero
-//   - add a new validator with non-zero weight
-func (k Keeper) ConfirmValSetHasSpace(ctx sdk.Context, validators []*types.Validator) error {
+func (k Keeper) GetInnerSafetyBounds(ctx sdk.Context, zone types.HostZone) (sdk.Dec, sdk.Dec) {
+	// Fetch the inner bounds
+	minSafetyThreshold, maxSafetyThreshold := k.GetOuterSafetyBounds(ctx, zone)
 
-	// get max val parameter
-	maxNumVals, err := cast.ToIntE(k.GetParam(ctx, types.KeySafetyNumValidators))
-	if err != nil {
-		errMsg := fmt.Sprintf("Error getting safety max num validators | err: %s", err.Error())
-		k.Logger(ctx).Error(errMsg)
-		return errorsmod.Wrap(types.ErrMaxNumValidators, errMsg)
+	if !zone.MinInnerRedemptionRate.IsNil() && zone.MinInnerRedemptionRate.IsPositive() && zone.MinInnerRedemptionRate.GT(minSafetyThreshold) {
+		minSafetyThreshold = zone.MinInnerRedemptionRate
+	}
+	if !zone.MaxInnerRedemptionRate.IsNil() && zone.MaxInnerRedemptionRate.IsPositive() && zone.MaxInnerRedemptionRate.LT(maxSafetyThreshold) {
+		maxSafetyThreshold = zone.MaxInnerRedemptionRate
 	}
 
-	// count up the number of validators with non-zero weights
-	numNonzeroWgtValidators := 0
-	for _, validator := range validators {
-		if validator.Weight > 0 {
-			numNonzeroWgtValidators++
-		}
-	}
-
-	// check if the number of validators with non-zero weights is below than the max
-	if numNonzeroWgtValidators >= maxNumVals {
-		errMsg := fmt.Sprintf("Attempting to add new validator but already reached max number of validators (%d)", maxNumVals)
-		k.Logger(ctx).Error(errMsg)
-		return errorsmod.Wrap(types.ErrMaxNumValidators, errMsg)
-	}
-
-	return nil
+	return minSafetyThreshold, maxSafetyThreshold
 }

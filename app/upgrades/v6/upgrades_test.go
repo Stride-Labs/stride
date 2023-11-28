@@ -10,11 +10,11 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/suite"
 
-	"github.com/Stride-Labs/stride/v12/app"
+	"github.com/Stride-Labs/stride/v16/app"
 
-	"github.com/Stride-Labs/stride/v12/app/apptesting"
-	"github.com/Stride-Labs/stride/v12/x/claim/types"
-	claimtypes "github.com/Stride-Labs/stride/v12/x/claim/types"
+	"github.com/Stride-Labs/stride/v16/app/apptesting"
+	"github.com/Stride-Labs/stride/v16/x/claim/types"
+	claimtypes "github.com/Stride-Labs/stride/v16/x/claim/types"
 )
 
 const dummyUpgradeHeight = 5

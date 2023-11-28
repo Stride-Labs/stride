@@ -2,12 +2,15 @@
 	# Commit: v1.5.1
 	path = deps/hermes
 	url = https://github.com/informalsystems/ibc-rs.git
+# TODO [LSM]: Revert to cosmos relayer once they've merged 
+# the fix for the unbonding time query
 [submodule "deps/relayer"]
-	# Commit: e95dd80608536c31d37354bdd7f7ec46a2172009
+	# Branch: sam/lsm-poc
+	# Commit: 0136134766142f133f263f3bba72d7077e7bc2c1
 	path = deps/relayer
-	url = https://github.com/cosmos/relayer.git
+	url = https://github.com/Stride-Labs/relayer.git
 [submodule "deps/gaia"]
-	# Commit: v9.1.0
+	# Commit: v12.0.0-rc0
 	path = deps/gaia
 	url = https://github.com/cosmos/gaia.git
 [submodule "deps/juno"]
@@ -26,6 +29,15 @@
 	# Commit: ec337e0357ae6b6727ad9092ac0ce3667df91319
 	path = deps/evmos
 	url = https://github.com/evmos/evmos
+[submodule "deps/dydx"]
+	# TODO [DYDX]: Switch to official dydxprotocol release after ICA PR is merged
+	# Commit: fafd3a9e2083180d7f7809f5080897e714e52bec
+	path = deps/dydx
+	url = https://github.com/Stride-Labs/v4-chain.git
+[submodule "deps/noble"]
+	# Commit: v3.1.0
+	path = deps/noble
+	url = https://github.com/strangelove-ventures/noble.git
 # bats
 [submodule "dockernet/tests/bats/bats-core"]
 	path = dockernet/tests/bats/bats-core

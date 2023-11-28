@@ -6,8 +6,8 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/Stride-Labs/stride/v12/x/ratelimit/keeper"
-	"github.com/Stride-Labs/stride/v12/x/ratelimit/types"
+	"github.com/Stride-Labs/stride/v16/x/ratelimit/keeper"
+	"github.com/Stride-Labs/stride/v16/x/ratelimit/types"
 )
 
 // InitGenesis initializes the capability module's state from a provided genesis

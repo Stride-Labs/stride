@@ -3,7 +3,7 @@
 * The fleet must be up and running for the host since we need the websocket endpoint
 
 ## Setup 
-* Ensure you have dockernet setup properly including all submodules up to date and the `STRIDE_ADMIN_MNEMONIC` enviornment variable set 
+* Ensure you have dockernet setup properly including all submodules up to date and the `STRIDE_ADMIN_MNEMONIC` environment variable set
 * Fund three hot wallets and set the mnemonics as environment variables (`HOT_WALLET_1_MNEMONIC`, `HOT_WALLET_2_MNEMONIC`, `HOT_WALLET_3_MNEMONIC`)
     * They all must have a non-zero balance on the host
     * Wallet #1 should have enough to fund each liquid stake (~5 native token per attempt)

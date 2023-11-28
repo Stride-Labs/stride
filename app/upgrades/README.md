@@ -63,27 +63,27 @@ func (app *StrideApp) setupUpgradeHandlers() {
 	}
 ```
 
-# Migrations (Only required if the state changed)
-## Store Old Proto Types
+## Migrations (Only required if the state changed)
+### Store Old Proto Types
 ```go
 // x/{moduleName}/migrations/{oldVersion}/types/{data_type}.pb.go
 ```
 
-## Increment the Module's Consensus Version
+### Increment the Module's Consensus Version
 * The consensus version is different from the chain version - it is specific to each module and is incremented every time state is migrated
 ```go
 // x/{moduleName}/module.go
 func (AppModule) ConsensusVersion() uint64 { return 2 }
 ```
 
-## Define Migration Logic
+### Define Migration Logic
 ```go
 // x/{moduleName}/migrations/{new-consensus-version}/migrations.go
 package {upgradeVersion}
 
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	{new-consensus-version} "github.com/Stride-Labs/stride/v12/x/records/migrations/{new-consensus-version}"
+	{new-consensus-version} "github.com/Stride-Labs/stride/v13/x/records/migrations/{new-consensus-version}"
 )
 
 // TODO: Add migration logic to deserialize with old protos and re-serialize with new ones
@@ -93,12 +93,12 @@ func MigrateStore(ctx sdk.Context) error {
 }
 ```
 
-## Specify the Migration in the Upgrade Handler
+### Specify the Migration in the Upgrade Handler
 ```go
 // app/upgrades/{upgradeVersion}/upgrades.go
 
 import (
-	{module}migration "github.com/Stride-Labs/stride/v12/x/{module}/migrations/{new-consensus-version}"
+	{module}migration "github.com/Stride-Labs/stride/v13/x/{module}/migrations/{new-consensus-version}"
 )
 
 // CreateUpgradeHandler creates an SDK upgrade handler for {upgradeVersion}
@@ -118,10 +118,22 @@ func CreateUpgradeHandler(
 }
 ```
 
-## Add Additional Parameters to `CreateUpgradeHandler` Invocation 
+### Add Additional Parameters to `CreateUpgradeHandler` Invocation 
 ```go
 // app/upgrades.go
 	...
 		{upgradeVersion}.CreateUpgradeHandler(app.mm, app.configurator, app.appCodec, app.{module}Keeper),
 	...
 ```
+
+## Import Paths
+* Go to GitHub Actions and manually trigger the "Version" job
+* This will replace the import path of each file and open a new PR with the changes
+* To make the review easier, you can pipe the diffs into a file and open them in an editor which will let you quickly scroll through them (rather than having to wait for each file to render on github)
+```
+git diff origin/main..origin/actions/update-stride-version-{upgradeVersion} > diffs.txt
+```
+
+## Changelog
+* Go to GitHub Actions and manually trigger the "Changelog" job
+* This will open a PR with the changes

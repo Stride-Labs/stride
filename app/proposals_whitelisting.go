@@ -14,10 +14,12 @@ import (
 
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 
+	ccvconsumertypes "github.com/cosmos/interchain-security/v3/x/ccv/consumer/types"
 	ccvgov "github.com/cosmos/interchain-security/v3/x/ccv/democracy/governance"
 
-	minttypes "github.com/Stride-Labs/stride/v12/x/mint/types"
-	stakeibctypes "github.com/Stride-Labs/stride/v12/x/stakeibc/types"
+	autopilottypes "github.com/Stride-Labs/stride/v16/x/autopilot/types"
+	minttypes "github.com/Stride-Labs/stride/v16/x/mint/types"
+	stakeibctypes "github.com/Stride-Labs/stride/v16/x/stakeibc/types"
 )
 
 var WhiteListModule = map[string]struct{}{
@@ -28,6 +30,8 @@ var WhiteListModule = map[string]struct{}{
 	"/cosmos.mint.v1beta1.MsgUpdateParams":         {},
 	"/cosmos.upgrade.v1beta1.MsgSoftwareUpgrade":   {},
 	"/cosmos.upgrade.v1beta1.MsgCancelUpgrade":     {},
+	"/stride.icaoracle.MsgToggleOracle":            {},
+	"/stride.icaoracle.MsgRemoveOracle":            {},
 }
 
 func IsModuleWhiteList(typeUrl string) bool {
@@ -75,7 +79,8 @@ func isParamChangeWhitelisted(paramChanges map[ccvgov.ParamChangeKey]struct{}) b
 
 var WhitelistedParams = map[ccvgov.ParamChangeKey]struct{}{
 	//bank
-	{MsgType: banktypes.ModuleName, Key: string(banktypes.KeySendEnabled)}: {},
+	{MsgType: banktypes.ModuleName, Key: string(banktypes.KeySendEnabled)}:        {},
+	{MsgType: banktypes.ModuleName, Key: string(banktypes.KeyDefaultSendEnabled)}: {},
 	//governance
 	{MsgType: govtypes.ModuleName, Key: string(govv1.ParamStoreKeyDepositParams)}: {}, //min_deposit, max_deposit_period
 	{MsgType: govtypes.ModuleName, Key: string(govv1.ParamStoreKeyVotingParams)}:  {}, //voting_period
@@ -86,6 +91,22 @@ var WhitelistedParams = map[ccvgov.ParamChangeKey]struct{}{
 	{MsgType: stakingtypes.ModuleName, Key: string(stakingtypes.KeyMaxEntries)}:        {},
 	{MsgType: stakingtypes.ModuleName, Key: string(stakingtypes.KeyHistoricalEntries)}: {},
 	{MsgType: stakingtypes.ModuleName, Key: string(stakingtypes.KeyBondDenom)}:         {},
+	{MsgType: stakingtypes.ModuleName, Key: string(stakingtypes.KeyMinCommissionRate)}: {},
+	//autopilot
+	{MsgType: autopilottypes.ModuleName, Key: string(autopilottypes.KeyStakeibcActive)}: {},
+	{MsgType: autopilottypes.ModuleName, Key: string(autopilottypes.KeyClaimActive)}:    {},
+	//ccv consumer
+	{MsgType: ccvconsumertypes.ModuleName, Key: string(ccvconsumertypes.KeyRewardDenoms)}:                      {},
+	{MsgType: ccvconsumertypes.ModuleName, Key: string(ccvconsumertypes.KeyEnabled)}:                           {},
+	{MsgType: ccvconsumertypes.ModuleName, Key: string(ccvconsumertypes.KeyBlocksPerDistributionTransmission)}: {},
+	{MsgType: ccvconsumertypes.ModuleName, Key: string(ccvconsumertypes.KeyDistributionTransmissionChannel)}:   {},
+	{MsgType: ccvconsumertypes.ModuleName, Key: string(ccvconsumertypes.KeyProviderFeePoolAddrStr)}:            {},
+	{MsgType: ccvconsumertypes.ModuleName, Key: string(ccvconsumertypes.KeyTransferTimeoutPeriod)}:             {},
+	{MsgType: ccvconsumertypes.ModuleName, Key: string(ccvconsumertypes.KeyConsumerRedistributionFrac)}:        {},
+	{MsgType: ccvconsumertypes.ModuleName, Key: string(ccvconsumertypes.KeyHistoricalEntries)}:                 {},
+	{MsgType: ccvconsumertypes.ModuleName, Key: string(ccvconsumertypes.KeyConsumerUnbondingPeriod)}:           {},
+	{MsgType: ccvconsumertypes.ModuleName, Key: string(ccvconsumertypes.KeySoftOptOutThreshold)}:               {},
+	{MsgType: ccvconsumertypes.ModuleName, Key: string(ccvconsumertypes.KeyProviderRewardDenoms)}:              {},
 	//distribution
 	{MsgType: distrtypes.ModuleName, Key: string(distrtypes.ParamStoreKeyCommunityTax)}:        {},
 	{MsgType: distrtypes.ModuleName, Key: string(distrtypes.ParamStoreKeyWithdrawAddrEnabled)}: {},
@@ -96,6 +117,7 @@ var WhitelistedParams = map[ccvgov.ParamChangeKey]struct{}{
 	{MsgType: minttypes.ModuleName, Key: string(minttypes.KeyReductionPeriodInEpochs)}:              {},
 	{MsgType: minttypes.ModuleName, Key: string(minttypes.KeyReductionFactor)}:                      {},
 	{MsgType: minttypes.ModuleName, Key: string(minttypes.KeyPoolAllocationRatio)}:                  {},
+	{MsgType: minttypes.ModuleName, Key: string(minttypes.KeyDeveloperRewardsReceiver)}:             {},
 	{MsgType: minttypes.ModuleName, Key: string(minttypes.KeyMintingRewardsDistributionStartEpoch)}: {},
 	//ibc transfer
 	{MsgType: ibctransfertypes.ModuleName, Key: string(ibctransfertypes.KeySendEnabled)}:    {},
@@ -115,7 +137,8 @@ var WhitelistedParams = map[ccvgov.ParamChangeKey]struct{}{
 	{MsgType: stakeibctypes.ModuleName, Key: string(stakeibctypes.KeyDefaultMinRedemptionRateThreshold)}: {},
 	{MsgType: stakeibctypes.ModuleName, Key: string(stakeibctypes.KeyDefaultMaxRedemptionRateThreshold)}: {},
 	{MsgType: stakeibctypes.ModuleName, Key: string(stakeibctypes.KeyIBCTransferTimeoutNanos)}:           {},
-	{MsgType: stakeibctypes.ModuleName, Key: string(stakeibctypes.KeySafetyNumValidators)}:               {},
+	{MsgType: stakeibctypes.ModuleName, Key: string(stakeibctypes.KeyMaxRedemptionRates)}:                {},
+	{MsgType: stakeibctypes.ModuleName, Key: string(stakeibctypes.KeyMinRedemptionRates)}:                {},
 	//ica
 	{MsgType: icahosttypes.SubModuleName, Key: string(icahosttypes.KeyHostEnabled)}:   {},
 	{MsgType: icahosttypes.SubModuleName, Key: string(icahosttypes.KeyAllowMessages)}: {},
