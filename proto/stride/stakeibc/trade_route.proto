@@ -49,12 +49,12 @@ message TradeRoute {
     (gogoproto.nullable) = false
   ];
   // unix time in seconds that the price was last updated
-  int64 price_update_timestamp = 11;
+  uint64 price_update_timestamp = 11;
 
   // Threshold defining the percentage of tokens that could be lost in the trade
-  // This captures both the loss from slippage and from a stale price value on
-  // stride 0.05 means the output from the trade can be no less than a 5%
-  // deviation from the current value
+  // This captures both the loss from slippage and from a stale price on stride
+  // 0.05 means the output from the trade can be no less than a 5% deviation
+  // from the current value
   string max_allowed_swap_loss_rate = 12 [
     (cosmos_proto.scalar) = "cosmos.Dec",
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",

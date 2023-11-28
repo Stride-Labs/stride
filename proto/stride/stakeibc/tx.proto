@@ -245,9 +245,15 @@ message MsgCreateTradeRoute {
   // The osmosis pool ID
   uint64 pool_id = 13;
 
+  // Threshold defining the percentage of tokens that could be lost in the trade
+  // This captures both the loss from slippage and from a stale price on stride
+  // "0.05" means the output from the trade can be no less than a 5% deviation
+  // from the current value
+  string max_allowed_swap_loss_rate = 14;
+
   // min and max set boundaries of reward denom on trade chain we will swap
-  uint64 min_swap_amount = 14;
-  uint64 max_swap_amount = 15;
+  uint64 min_swap_amount = 15;
+  uint64 max_swap_amount = 16;
 }
 message MsgCreateTradeRouteResponse {}
 
