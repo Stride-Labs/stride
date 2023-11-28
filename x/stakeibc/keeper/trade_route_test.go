@@ -40,6 +40,15 @@ func (s *KeeperTestSuite) CreateTradeRoutes() (routes []types.TradeRoute) {
 			ToAccount:   hostICA,
 		}
 
+		tradeConfig := types.TradeConfig{
+			PoolId:                 uint64(i * 100),
+			SwapPrice:              sdk.OneDec(),
+			MaxAllowedSwapLossRate: sdk.MustNewDecFromStr("0.05"),
+
+			MinSwapAmount: sdk.ZeroInt(),
+			MaxSwapAmount: sdk.NewInt(1_000_000_000),
+		}
+
 		hostDenom := fmt.Sprintf("host-denom-%d", i)
 		rewardDenom := fmt.Sprintf("reward-denom-%d", i)
 
@@ -54,11 +63,7 @@ func (s *KeeperTestSuite) CreateTradeRoutes() (routes []types.TradeRoute) {
 			RewardToTradeHop: rewardTradeHop,
 			TradeToHostHop:   tradeHostHop,
 
-			PoolId:    uint64(i * 100),
-			SwapPrice: sdk.OneDec(),
-
-			MinSwapAmount: sdk.ZeroInt(),
-			MaxSwapAmount: sdk.NewInt(1_000_000_000),
+			TradeConfig: tradeConfig,
 		}
 		routes = append(routes, route)
 

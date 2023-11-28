@@ -109,9 +109,21 @@ func (ms msgServer) CreateTradeRoute(goCtx context.Context, msg *types.MsgCreate
 		ToAccount:         hostICA,
 	}
 
+	// If a max allowed swap loss is not provided, use the default
 	maxAllowedSwapLossRate := msg.MaxAllowedSwapLossRate
 	if maxAllowedSwapLossRate == "" {
 		maxAllowedSwapLossRate = DefaultMaxAllowedSwapLossRate
+	}
+
+	// Create the trade config to specify parameters needed for the swap
+	tradeConfig := types.TradeConfig{
+		PoolId:               msg.PoolId,
+		SwapPrice:            sdk.ZeroDec(), // this should only ever be set by ICQ so initialize to blank
+		PriceUpdateTimestamp: 0,
+
+		MaxAllowedSwapLossRate: sdk.MustNewDecFromStr(maxAllowedSwapLossRate),
+		MinSwapAmount:          sdkmath.NewIntFromUint64(msg.MinSwapAmount),
+		MaxSwapAmount:          sdkmath.NewIntFromUint64(msg.MaxSwapAmount),
 	}
 
 	// Finally build and store the main trade route
@@ -126,13 +138,7 @@ func (ms msgServer) CreateTradeRoute(goCtx context.Context, msg *types.MsgCreate
 		RewardToTradeHop: rewardToTradeHop,
 		TradeToHostHop:   tradeToHostHop,
 
-		PoolId:               msg.PoolId,
-		SwapPrice:            sdk.ZeroDec(), // this should only ever be set by ICQ so initialize to blank
-		PriceUpdateTimestamp: 0,
-
-		MaxAllowedSwapLossRate: sdk.MustNewDecFromStr(maxAllowedSwapLossRate),
-		MinSwapAmount:          sdkmath.NewIntFromUint64(msg.MinSwapAmount),
-		MaxSwapAmount:          sdkmath.NewIntFromUint64(msg.MaxSwapAmount),
+		TradeConfig: tradeConfig,
 	}
 
 	ms.Keeper.SetTradeRoute(ctx, tradeRoute)
