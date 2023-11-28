@@ -121,6 +121,7 @@ type TradeRoute struct {
 	// deviation from the current value
 	MaxAllowedSwapLossRate github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,12,opt,name=max_allowed_swap_loss_rate,json=maxAllowedSwapLossRate,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"max_allowed_swap_loss_rate"`
 	// min and max set boundaries of reward denom on trade chain we will swap
+	// min also decides when reward token transfers are worth it (transfer fees)
 	MinSwapAmount github_com_cosmos_cosmos_sdk_types.Int `protobuf:"bytes,13,opt,name=min_swap_amount,json=minSwapAmount,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Int" json:"min_swap_amount"`
 	MaxSwapAmount github_com_cosmos_cosmos_sdk_types.Int `protobuf:"bytes,14,opt,name=max_swap_amount,json=maxSwapAmount,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Int" json:"max_swap_amount"`
 }
