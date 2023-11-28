@@ -152,26 +152,7 @@ setup_file() {
   assert_equal "$diff" $STAKE_AMOUNT
 }
 
-@test "[INTEGRATION-BASIC-$CHAIN_NAME] transfer st$HOST_DENOM to host chain" {
-  # get initial balances
-  sttoken_balance_start=$($STRIDE_MAIN_CMD q bank balances $(STRIDE_ADDRESS) --denom st$HOST_DENOM | GETBAL)
-  stibctoken_balance_start=$($HOST_MAIN_CMD q bank balances $HOST_VAL_ADDRESS --denom $IBC_GAIA_STATOM_DENOM | GETBAL)
-
-  # do IBC transfer
-  $STRIDE_MAIN_CMD tx ibc-transfer transfer transfer $STRIDE_TRANFER_CHANNEL $HOST_VAL_ADDRESS ${PACKET_FORWARD_STAKE_AMOUNT}st${HOST_DENOM} --from $STRIDE_VAL -y &
-  WAIT_FOR_BLOCK $STRIDE_LOGS 8
-
-  # make sure stATOM balance decreased
-  sttoken_balance_end=$($STRIDE_MAIN_CMD q bank balances $(STRIDE_ADDRESS) --denom st$HOST_DENOM | GETBAL)
-  stibctoken_balance_end=$($HOST_MAIN_CMD q bank balances $HOST_VAL_ADDRESS --denom $IBC_GAIA_STATOM_DENOM | GETBAL)
-  sttoken_balance_diff=$(($sttoken_balance_start-$sttoken_balance_end))
-  stibctoken_balance_diff=$(($stibctoken_balance_end-$stibctoken_balance_start))
-  assert_equal "$sttoken_balance_diff" "$PACKET_FORWARD_STAKE_AMOUNT"
-  assert_equal "$stibctoken_balance_diff" "$PACKET_FORWARD_STAKE_AMOUNT"
-}
-
 @test "[INTEGRATION-BASIC-$CHAIN_NAME] packet forwarding automatically liquid stake and ibc transfer stAsset to original network" {
-  skip "DefaultActive set to false, skip test"
   memo='{ "autopilot": { "receiver": "'"$(STRIDE_ADDRESS)"'",  "stakeibc": { "action": "LiquidStake", "ibc_receiver": "'$HOST_VAL_ADDRESS'" } } }'
 
   # get initial balances
