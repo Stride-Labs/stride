@@ -70,6 +70,7 @@ func (im IBCMiddleware) OnChanOpenAck(
 	controllerConnectionId, err := im.keeper.GetConnectionId(ctx, portID)
 	if err != nil {
 		ctx.Logger().Error(fmt.Sprintf("Unable to get connection for port: %s", portID))
+		return nil
 	}
 	address, found := im.keeper.ICAControllerKeeper.GetInterchainAccountAddress(ctx, controllerConnectionId, portID)
 	if !found {
