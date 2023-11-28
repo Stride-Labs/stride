@@ -23,7 +23,7 @@ func (k msgServer) UpdateTradeRoute(goCtx context.Context, msg *types.MsgUpdateT
 
 	routes := k.GetAllTradeRoutes(ctx)
 	for _, route := range routes {
-		if route.TargetDenomOnHostZone == msg.HostDenom && route.RewardDenomOnRewardZone == msg.RewardDenom {
+		if route.HostDenomOnHostZone == msg.HostDenom && route.RewardDenomOnRewardZone == msg.RewardDenom {
 			route.PoolId = msg.PoolId
 			route.MinSwapAmount = msg.MinSwapAmount
 			route.MaxSwapAmount = msg.MaxSwapAmount

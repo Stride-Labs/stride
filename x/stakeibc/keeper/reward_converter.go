@@ -29,12 +29,12 @@ import (
 //  1. Epochly check the reward denom balance in the withdrawal address
 //     on callback, send all this reward denom from withdrawl ICA to trade ICA on the trade zone (OSMOSIS)
 //  2. Epochly check the reward denom balance in trade ICA
-//     on callback, trade all reward denom for target output denom defined by pool and routes in params
-//  3. Epochly check the target denom balance in trade ICA
-//     on callback, transfer these target denoms from trade ICA to withdrawal ICA on original host zone
+//     on callback, trade all reward denom for host denom defined by pool and routes in params
+//  3. Epochly check the host denom balance in trade ICA
+//     on callback, transfer these host denom tokens from trade ICA to withdrawal ICA on original host zone
 //
-// Normal staking flow continues from there. So if the target denom is the original host zone base denom
-// as will often be the case, then these tokens will follow the normal staking and distribution flow.
+// Normal staking flow continues from there. So the host denom tokens will land on the original host zone
+// and the normal staking and distribution flow will continue from there.
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 // ICA tx will kick off transfering the reward tokens from the hostZone withdrawl ICA to the tradeZone trade ICA
@@ -98,7 +98,7 @@ func (k Keeper) TransferConvertedTokensTradeToHost(ctx sdk.Context, amount sdk.I
 	}
 	timeout := uint64(strideEpochTracker.NextEpochStartTime)
 
-	convertedDenom := route.TargetDenomOnTradeZone
+	convertedDenom := route.HostDenomOnTradeZone
 	sendTokens := sdk.NewCoin(convertedDenom, amount)
 
 	tradeIcaAddress := route.TradeToHostHop.FromAccount.Address
@@ -130,7 +130,7 @@ func (k Keeper) TransferConvertedTokensTradeToHost(ctx sdk.Context, amount sdk.I
 	return nil
 }
 
-// Trade reward tokens in the Trade ICA for the target output token type using ICA remote tx on trade zone
+// Trade reward tokens in the Trade ICA for the host denom tokens using ICA remote tx on trade zone
 // The amount represents the total amount of the reward token in the trade ICA found by the calling ICQ
 // Depending on min and max swap amounts set in the route, it is possible not the full amount given will swap
 func (k Keeper) TradeRewardTokens(ctx sdk.Context, rewardAmount sdk.Int, route types.TradeRoute) error {
@@ -154,7 +154,7 @@ func (k Keeper) TradeRewardTokens(ctx sdk.Context, rewardAmount sdk.Int, route t
 	}
 
 	// If there is a valid price, use it to set a floor for the acceptable minimum output tokens
-	// minOut is the minimum number of route.TargetDenomOnTradeZone we must receive or the swap will fail
+	// minOut is the minimum number of HostDenom tokens we must receive or the swap will fail
 	//
 	// To calculate minOut, we first convert the rewardAmount into units of HostDenom,
 	//   and then we multiply by (1 - MaxAllowedSwapLossRate)
@@ -175,7 +175,7 @@ func (k Keeper) TradeRewardTokens(ctx sdk.Context, rewardAmount sdk.Int, route t
 	// decide which msg generation function to call based on check of which tradeZone was passed in
 	routes := []types.SwapAmountInRoute{{
 		PoolId:        route.PoolId,
-		TokenOutDenom: route.TargetDenomOnTradeZone,
+		TokenOutDenom: route.HostDenomOnTradeZone,
 	}}
 	msgs := []proto.Message{&types.MsgSwapExactAmountIn{
 		Sender:            tradeIcaAccount.Address,
@@ -315,7 +315,7 @@ func (k Keeper) TradeConvertedBalanceQuery(ctx sdk.Context, route types.TradeRou
 	if err != nil {
 		return errorsmod.Wrapf(err, "invalid trade account address (%s), could not decode", tradeAccount.Address)
 	}
-	queryData := append(bankTypes.CreateAccountBalancesPrefix(tradeAddressBz), []byte(route.TargetDenomOnTradeZone)...)
+	queryData := append(bankTypes.CreateAccountBalancesPrefix(tradeAddressBz), []byte(route.HostDenomOnTradeZone)...)
 
 	// Timeout query at end of epoch
 	strideEpochTracker, found := k.GetEpochTracker(ctx, epochstypes.STRIDE_EPOCH)
@@ -358,7 +358,7 @@ func (k Keeper) PoolPriceQuery(ctx sdk.Context, route types.TradeRoute) error {
 	k.Logger(ctx).Info(utils.LogWithHostZone(tradeAccount.ChainId, "Submitting ICQ for spot price in this pool"))
 
 	// Sort denom's
-	denom1, denom2 := route.RewardDenomOnTradeZone, route.TargetDenomOnTradeZone
+	denom1, denom2 := route.RewardDenomOnTradeZone, route.HostDenomOnTradeZone
 	if denom1 > denom2 {
 		denom1, denom2 = denom2, denom1
 	}
@@ -438,7 +438,7 @@ func (k Keeper) SwapAllRewardTokens(ctx sdk.Context) {
 
 // Helper function to be run hourly, kicks off query to get and update the swap price in keeper data
 func (k Keeper) UpdateAllSwapPrices(ctx sdk.Context) {
-	k.SetTradeRoute(ctx, types.TradeRoute{RewardDenomOnHostZone: "A", TargetDenomOnHostZone: "B"})
+	k.SetTradeRoute(ctx, types.TradeRoute{RewardDenomOnHostZone: "A", HostDenomOnHostZone: "B"})
 	for _, route := range k.GetAllTradeRoutes(ctx) {
 		// ICQ swap price for the specific pair on this route and update keeper on callback
 		if err := k.PoolPriceQuery(ctx, route); err != nil {

@@ -29,9 +29,9 @@ message TradeRoute {
   // ibc denom of the reward on the trade chain, input to the swap
   string reward_denom_on_trade_zone = 3;
   // ibc of the host denom on the trade chain, output from the swap
-  string target_denom_on_trade_zone = 4;
+  string host_denom_on_trade_zone = 4;
   // should be the same as the native host denom on the host chain
-  string target_denom_on_host_zone = 5;
+  string host_denom_on_host_zone = 5;
 
   TradeHop host_to_reward_hop = 6 [ (gogoproto.nullable) = false ];
   TradeHop reward_to_trade_hop = 7 [ (gogoproto.nullable) = false ];

@@ -55,7 +55,7 @@ func TradeConvertedBalanceCallback(k Keeper, ctx sdk.Context, args []byte, query
 
 	k.Logger(ctx).Info(utils.LogICQCallbackWithHostZone(chainId, ICQCallbackID_TradeConvertedBalance,
 		"Sending discovered converted tokens %v %s from tradeZone back to hostZone",
-		tradeConvertedBalanceAmount, tradeRoute.TargetDenomOnTradeZone))
+		tradeConvertedBalanceAmount, tradeRoute.HostDenomOnTradeZone))
 
 	return nil
 }

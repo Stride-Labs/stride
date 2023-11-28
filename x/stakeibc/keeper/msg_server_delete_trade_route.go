@@ -23,8 +23,8 @@ func (k msgServer) DeleteTradeRoute(goCtx context.Context, msg *types.MsgDeleteT
 
 	routes := k.GetAllTradeRoutes(ctx)
 	for _, route := range routes {
-		if route.TargetDenomOnHostZone == msg.HostDenom && route.RewardDenomOnRewardZone == msg.RewardDenom {
-			k.RemoveTradeRoute(ctx, route.RewardDenomOnHostZone, route.TargetDenomOnHostZone)
+		if route.HostDenomOnHostZone == msg.HostDenom && route.RewardDenomOnRewardZone == msg.RewardDenom {
+			k.RemoveTradeRoute(ctx, route.RewardDenomOnHostZone, route.HostDenomOnHostZone)
 		}
 		// if no matching trade route was found for the given host-denom and reward-denom... do nothing
 	}

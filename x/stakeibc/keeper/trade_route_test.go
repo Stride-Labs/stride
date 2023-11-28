@@ -47,15 +47,15 @@ func (s *KeeperTestSuite) CreateTradeRoutes() (routes []types.TradeRoute) {
 			RewardDenomOnHostZone:   "ibc-" + rewardDenom + "-on-" + hostChain,
 			RewardDenomOnRewardZone: rewardDenom,
 			RewardDenomOnTradeZone:  "ibc-" + rewardDenom + "-on-" + tradeChain,
-			TargetDenomOnTradeZone:  "ibc-" + hostDenom + "-on-" + tradeChain,
-			TargetDenomOnHostZone:   hostDenom,
+			HostDenomOnTradeZone:    "ibc-" + hostDenom + "-on-" + tradeChain,
+			HostDenomOnHostZone:     hostDenom,
 
 			HostToRewardHop:  hostRewardHop,
 			RewardToTradeHop: rewardTradeHop,
 			TradeToHostHop:   tradeHostHop,
 
-			PoolId:         uint64(i * 100),
-			HostTokenPrice: sdk.OneDec(),
+			PoolId:    uint64(i * 100),
+			SwapPrice: sdk.OneDec(),
 
 			MinSwapAmount: sdk.ZeroInt(),
 			MaxSwapAmount: sdk.NewInt(1_000_000_000),
@@ -72,7 +72,7 @@ func (s *KeeperTestSuite) TestGetTradeRoute() {
 	routes := s.CreateTradeRoutes()
 	for i, route := range routes {
 		startDenom := route.RewardDenomOnHostZone
-		endDenom := route.TargetDenomOnHostZone
+		endDenom := route.HostDenomOnHostZone
 
 		actualRoute, found := s.App.StakeibcKeeper.GetTradeRoute(s.Ctx, startDenom, endDenom)
 		s.Require().True(found, "route should have been found")
@@ -83,8 +83,8 @@ func (s *KeeperTestSuite) TestGetTradeRoute() {
 func (s *KeeperTestSuite) TestRemoveTradeRoute() {
 	routes := s.CreateTradeRoutes()
 	for _, route := range routes {
-		s.App.StakeibcKeeper.RemoveTradeRoute(s.Ctx, route.RewardDenomOnHostZone, route.TargetDenomOnHostZone)
-		_, found := s.App.StakeibcKeeper.GetTradeRoute(s.Ctx, route.RewardDenomOnHostZone, route.TargetDenomOnHostZone)
+		s.App.StakeibcKeeper.RemoveTradeRoute(s.Ctx, route.RewardDenomOnHostZone, route.HostDenomOnHostZone)
+		_, found := s.App.StakeibcKeeper.GetTradeRoute(s.Ctx, route.RewardDenomOnHostZone, route.HostDenomOnHostZone)
 		s.Require().False(found, "route should not have been found")
 	}
 }

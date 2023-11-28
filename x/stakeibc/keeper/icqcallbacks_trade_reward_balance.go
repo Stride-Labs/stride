@@ -57,7 +57,7 @@ func TradeRewardBalanceCallback(k Keeper, ctx sdk.Context, args []byte, query ic
 
 	k.Logger(ctx).Info(utils.LogICQCallbackWithHostZone(chainId, ICQCallbackID_TradeRewardBalance,
 		"Swapping discovered reward tokens %v %s for %s",
-		tradeRewardBalanceAmount, tradeRoute.RewardDenomOnTradeZone, tradeRoute.TargetDenomOnTradeZone))
+		tradeRewardBalanceAmount, tradeRoute.RewardDenomOnTradeZone, tradeRoute.HostDenomOnTradeZone))
 
 	return nil
 }
