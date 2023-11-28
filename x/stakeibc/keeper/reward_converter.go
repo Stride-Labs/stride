@@ -133,7 +133,7 @@ func (k Keeper) TransferConvertedTokensTradeToHost(ctx sdk.Context, amount sdk.I
 // Trade reward tokens in the Trade ICA for the host denom tokens using ICA remote tx on trade zone
 // The amount represents the total amount of the reward token in the trade ICA found by the calling ICQ
 // Depending on min and max swap amounts set in the route, it is possible not the full amount given will swap
-func (k Keeper) TradeRewardTokens(ctx sdk.Context, rewardAmount sdk.Int, route types.TradeRoute) error {
+func (k Keeper) SwapRewardTokens(ctx sdk.Context, rewardAmount sdk.Int, route types.TradeRoute) error {
 	// If the min swap amount was not set it would be ZeroInt, if positive we need to compare to the amount given
 	//  then if the min swap amount is greater than the current amount, do nothing this epoch to avoid small swaps
 	if route.MinSwapAmount.IsPositive() && route.MinSwapAmount.GT(rewardAmount) {
