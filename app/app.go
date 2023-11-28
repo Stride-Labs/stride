@@ -156,9 +156,9 @@ import (
 	ccvconsumertypes "github.com/cosmos/interchain-security/v3/x/ccv/consumer/types"
 
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
-	packetforward "github.com/cosmos/ibc-apps/middleware/packet-forward-middleware/v7/router"
-	packetforwardkeeper "github.com/cosmos/ibc-apps/middleware/packet-forward-middleware/v7/router/keeper"
-	packetforwardtypes "github.com/cosmos/ibc-apps/middleware/packet-forward-middleware/v7/router/types"
+	"github.com/cosmos/ibc-apps/middleware/packet-forward-middleware/v7/packetforward"
+	packetforwardkeeper "github.com/cosmos/ibc-apps/middleware/packet-forward-middleware/v7/packetforward/keeper"
+	packetforwardtypes "github.com/cosmos/ibc-apps/middleware/packet-forward-middleware/v7/packetforward/types"
 	"github.com/cosmos/interchain-security/v3/legacy_ibc_testing/core"
 )
 
@@ -489,18 +489,20 @@ func NewStrideApp(
 	app.PacketForwardKeeper = packetforwardkeeper.NewKeeper(
 		appCodec,
 		keys[packetforwardtypes.StoreKey],
-		app.GetSubspace(packetforwardtypes.ModuleName),
+		// app.GetSubspace(packetforwardtypes.ModuleName), TODO: why is this in the integration docs but not in code?
 		app.TransferKeeper, // will be zero-value here, reference is set later on with SetTransferKeeper.
 		app.IBCKeeper.ChannelKeeper,
 		app.DistrKeeper,
 		app.BankKeeper,
 		app.IBCKeeper.ChannelKeeper,
+		authtypes.NewModuleAddress(govtypes.ModuleName).String(), // TODO: this is not in the integration docs, but a comment says the authority should be the gov module
 	)
 
 	// Create Transfer Keepers
 	app.TransferKeeper = ibctransferkeeper.NewKeeper(
 		appCodec, keys[ibctransfertypes.StoreKey],
 		app.GetSubspace(ibctransfertypes.ModuleName),
+		// TODO: Do we need to import the app.PacketForwardKeeper here?
 		app.RatelimitKeeper, // ICS4Wrapper
 		app.IBCKeeper.ChannelKeeper,
 		&app.IBCKeeper.PortKeeper,
@@ -796,7 +798,7 @@ func NewStrideApp(
 		ibc.NewAppModule(app.IBCKeeper),
 		params.NewAppModule(app.ParamsKeeper),
 		claim.NewAppModule(appCodec, app.ClaimKeeper),
-		packetforward.NewAppModule(app.PacketForwardKeeper),
+		packetforward.NewAppModule(app.PacketForwardKeeper), // What should legacySubspace be set to and why is it required? https://github.com/cosmos/ibc-apps/issues/146
 		transferModule,
 		// monitoringModule,
 		stakeibcModule,
