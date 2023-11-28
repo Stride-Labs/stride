@@ -12,8 +12,8 @@ option go_package = "github.com/Stride-Labs/stride/v16/x/stakeibc/types";
 // No need for the transfer port because that is a fixed variable
 message TradeHop {
   string transfer_channel_id = 1;
-  ICAAccount from_account = 2 [ (gogoproto.nullable) = false ];
-  ICAAccount to_account = 3 [ (gogoproto.nullable) = false ];
+  string from_address = 2;
+  string to_address = 3;
 }
 
 // TradeRoute represents a round trip including info on transfer and how to do
@@ -33,29 +33,42 @@ message TradeRoute {
   // should be the same as the native host denom on the host chain
   string host_denom_on_host_zone = 5;
 
-  TradeHop host_to_reward_hop = 6 [ (gogoproto.nullable) = false ];
-  TradeHop reward_to_trade_hop = 7 [ (gogoproto.nullable) = false ];
-  TradeHop trade_to_host_hop = 8 [ (gogoproto.nullable) = false ];
+  // ICAAccount on the host zone with the reward tokens
+  // This is the same as the host zone withdrawal ICA account
+  ICAAccount host_account = 6 [ (gogoproto.nullable) = false ];
+  // ICAAccount on the reward zone that is acts as the intermediate
+  // receiver of the transfer from host zone to trade zone
+  ICAAccount unwind_account = 7 [ (gogoproto.nullable) = false ];
+  // ICAAccount responsible for executing the swap of reward
+  // tokens for host tokens
+  ICAAccount trade_account = 8 [ (gogoproto.nullable) = false ];
+
+  // Hop responsible for the transfer of reward tokens to the reward zone
+  TradeHop host_to_reward_hop = 9 [ (gogoproto.nullable) = false ];
+  // Hop responsible for the transfer of reward tokens to the trade zone
+  TradeHop reward_to_trade_hop = 10 [ (gogoproto.nullable) = false ];
+  // Hop responseible for the transfer of host tokens back to the host zone
+  TradeHop trade_to_host_hop = 11 [ (gogoproto.nullable) = false ];
 
   // Currently Osmosis is the only trade chain so this is an osmosis pool id
-  uint64 pool_id = 9;
+  uint64 pool_id = 12;
 
   // Spot price in the pool to convert the reward denom to the host denom
   // output_tokens = swap_price * input tokens
   // This value may be slightly stale as it is updated by an ICQ
-  string swap_price = 10 [
+  string swap_price = 13 [
     (cosmos_proto.scalar) = "cosmos.Dec",
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false
   ];
   // unix time in seconds that the price was last updated
-  int64 price_update_timestamp = 11;
+  int64 price_update_timestamp = 14;
 
   // Threshold defining the percentage of tokens that could be lost in the trade
   // This captures both the loss from slippage and from a stale price value on
   // stride 0.05 means the output from the trade can be no less than a 5%
   // deviation from the current value
-  string max_allowed_swap_loss_rate = 12 [
+  string max_allowed_swap_loss_rate = 15 [
     (cosmos_proto.scalar) = "cosmos.Dec",
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false
@@ -63,11 +76,11 @@ message TradeRoute {
 
   // min and max set boundaries of reward denom on trade chain we will swap
   // min also decides when reward token transfers are worth it (transfer fees)
-  string min_swap_amount = 13 [
+  string min_swap_amount = 16 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
     (gogoproto.nullable) = false
   ];
-  string max_swap_amount = 14 [
+  string max_swap_amount = 17 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
     (gogoproto.nullable) = false
   ];
