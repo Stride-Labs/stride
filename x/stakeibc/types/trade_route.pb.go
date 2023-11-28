@@ -111,6 +111,7 @@ type TradeRoute struct {
 	// Spot price is a decimal ratio of the input to output denom as a string
 	SpotPrice string `protobuf:"bytes,10,opt,name=spot_price,json=spotPrice,proto3" json:"spot_price,omitempty"`
 	// min and max set boundaries of reward denom on trade chain we will swap
+	// min also decides when reward token transfers are worth it (transfer fees)
 	MinSwapAmount github_com_cosmos_cosmos_sdk_types.Int `protobuf:"bytes,11,opt,name=min_swap_amount,json=minSwapAmount,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Int" json:"min_swap_amount"`
 	MaxSwapAmount github_com_cosmos_cosmos_sdk_types.Int `protobuf:"bytes,12,opt,name=max_swap_amount,json=maxSwapAmount,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Int" json:"max_swap_amount"`
 }

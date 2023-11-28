@@ -43,6 +43,7 @@ message TradeRoute {
   string spot_price = 10;
 
   // min and max set boundaries of reward denom on trade chain we will swap
+  // min also decides when reward token transfers are worth it (transfer fees)
   string min_swap_amount = 11 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
     (gogoproto.nullable) = false
