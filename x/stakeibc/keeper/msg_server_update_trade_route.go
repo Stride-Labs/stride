@@ -18,25 +18,25 @@ func (ms msgServer) UpdateTradeRoute(goCtx context.Context, msg *types.MsgUpdate
 		return nil, errorsmod.Wrapf(govtypes.ErrInvalidSigner, "invalid authority; expected %s, got %s", ms.authority, msg.Authority)
 	}
 
-	routes := ms.Keeper.GetAllTradeRoutes(ctx)
-	for _, route := range routes {
-		if route.HostDenomOnHostZone == msg.HostDenom && route.RewardDenomOnRewardZone == msg.RewardDenom {
-			tradeConfig := types.TradeConfig{
-				PoolId: msg.PoolId,
-
-				SwapPrice:            sdk.ZeroDec(),
-				PriceUpdateTimestamp: 0,
-
-				MaxAllowedSwapLossRate: sdk.MustNewDecFromStr(msg.MaxAllowedSwapLossRate),
-				MinSwapAmount:          sdkmath.NewIntFromUint64(msg.MinSwapAmount),
-				MaxSwapAmount:          sdkmath.NewIntFromUint64(msg.MaxSwapAmount),
-			}
-
-			route.TradeConfig = tradeConfig
-			ms.Keeper.SetTradeRoute(ctx, route)
-		}
-		// if no matching trade route was found for the given host-denom and reward-denom... do nothing
+	route, found := ms.Keeper.GetTradeRoute(ctx, msg.RewardDenom, msg.HostDenom)
+	if !found {
+		return nil, errorsmod.Wrapf(types.ErrTradeRouteNotFound,
+			"no trade route for rewardDenom %s and hostDenom %s", msg.RewardDenom, msg.HostDenom)
 	}
+
+	updatedConfig := types.TradeConfig{
+		PoolId: msg.PoolId,
+
+		SwapPrice:            sdk.ZeroDec(),
+		PriceUpdateTimestamp: 0,
+
+		MaxAllowedSwapLossRate: sdk.MustNewDecFromStr(msg.MaxAllowedSwapLossRate),
+		MinSwapAmount:          sdkmath.NewIntFromUint64(msg.MinSwapAmount),
+		MaxSwapAmount:          sdkmath.NewIntFromUint64(msg.MaxSwapAmount),
+	}
+
+	route.TradeConfig = updatedConfig
+	ms.Keeper.SetTradeRoute(ctx, route)
 
 	return &types.MsgUpdateTradeRouteResponse{}, nil
 }

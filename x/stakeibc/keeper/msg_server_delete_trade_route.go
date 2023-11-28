@@ -17,13 +17,13 @@ func (ms msgServer) DeleteTradeRoute(goCtx context.Context, msg *types.MsgDelete
 		return nil, errorsmod.Wrapf(govtypes.ErrInvalidSigner, "invalid authority; expected %s, got %s", ms.authority, msg.Authority)
 	}
 
-	routes := ms.Keeper.GetAllTradeRoutes(ctx)
-	for _, route := range routes {
-		if route.HostDenomOnHostZone == msg.HostDenom && route.RewardDenomOnRewardZone == msg.RewardDenom {
-			ms.Keeper.RemoveTradeRoute(ctx, route.RewardDenomOnHostZone, route.HostDenomOnHostZone)
-		}
-		// if no matching trade route was found for the given host-denom and reward-denom... do nothing
+	_, found := ms.Keeper.GetTradeRoute(ctx, msg.RewardDenom, msg.HostDenom)
+	if !found {
+		return nil, errorsmod.Wrapf(types.ErrTradeRouteNotFound,
+			"no trade route for rewardDenom %s and hostDenom %s", msg.RewardDenom, msg.HostDenom)
 	}
+
+	ms.Keeper.RemoveTradeRoute(ctx, msg.RewardDenom, msg.HostDenom)
 
 	return &types.MsgDeleteTradeRouteResponse{}, nil
 }

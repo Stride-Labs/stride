@@ -88,8 +88,8 @@ func (s *KeeperTestSuite) TestGetTradeRoute() {
 func (s *KeeperTestSuite) TestRemoveTradeRoute() {
 	routes := s.CreateTradeRoutes()
 	for _, route := range routes {
-		s.App.StakeibcKeeper.RemoveTradeRoute(s.Ctx, route.RewardDenomOnHostZone, route.HostDenomOnHostZone)
-		_, found := s.App.StakeibcKeeper.GetTradeRoute(s.Ctx, route.RewardDenomOnHostZone, route.HostDenomOnHostZone)
+		s.App.StakeibcKeeper.RemoveTradeRoute(s.Ctx, route.RewardDenomOnRewardZone, route.HostDenomOnHostZone)
+		_, found := s.App.StakeibcKeeper.GetTradeRoute(s.Ctx, route.RewardDenomOnRewardZone, route.HostDenomOnHostZone)
 		s.Require().False(found, "route should not have been found")
 	}
 }

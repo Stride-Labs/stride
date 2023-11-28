@@ -161,6 +161,8 @@ func (m *TradeConfig) GetPriceUpdateTimestamp() uint64 {
 // the host so therefore the first two hops are to unwind the ibc denom enroute
 // to the trade chain and the last hop is the return so funds start/end in the
 // withdrawl ICA on hostZone
+// The structure is key'd on reward denom and host denom in their native forms
+// (i.e. reward_denom_on_reward_zone and host_denom_on_host_zone)
 type TradeRoute struct {
 	// ibc denom for the reward on the host zone
 	RewardDenomOnHostZone string `protobuf:"bytes,1,opt,name=reward_denom_on_host_zone,json=rewardDenomOnHostZone,proto3" json:"reward_denom_on_host_zone,omitempty"`

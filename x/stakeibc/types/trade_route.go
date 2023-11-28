@@ -1,5 +1,5 @@
 package types
 
 func (t TradeRoute) GetKey() []byte {
-	return TradeRouteKeyFromDenoms(t.RewardDenomOnHostZone, t.HostDenomOnHostZone)
+	return TradeRouteKeyFromDenoms(t.RewardDenomOnRewardZone, t.HostDenomOnHostZone)
 }

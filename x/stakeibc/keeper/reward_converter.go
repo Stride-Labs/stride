@@ -447,7 +447,6 @@ func (k Keeper) SwapAllRewardTokens(ctx sdk.Context) {
 
 // Helper function to be run hourly, kicks off query to get and update the swap price in keeper data
 func (k Keeper) UpdateAllSwapPrices(ctx sdk.Context) {
-	k.SetTradeRoute(ctx, types.TradeRoute{RewardDenomOnHostZone: "A", HostDenomOnHostZone: "B"})
 	for _, route := range k.GetAllTradeRoutes(ctx) {
 		// ICQ swap price for the specific pair on this route and update keeper on callback
 		if err := k.PoolPriceQuery(ctx, route); err != nil {

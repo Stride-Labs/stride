@@ -59,10 +59,10 @@ func (ms msgServer) CreateTradeRoute(goCtx context.Context, msg *types.MsgCreate
 	}
 
 	// Validate trade route does not already exist for this denom
-	_, found := ms.Keeper.GetTradeRoute(ctx, msg.RewardDenomOnHost, msg.HostDenomOnHost)
+	_, found := ms.Keeper.GetTradeRoute(ctx, msg.RewardDenomOnReward, msg.HostDenomOnHost)
 	if found {
 		return nil, errorsmod.Wrapf(types.ErrTradeRouteAlreadyExists,
-			"startDenom: %s, endDenom: %s", msg.RewardDenomOnHost, msg.HostDenomOnHost)
+			"startDenom: %s, endDenom: %s", msg.RewardDenomOnReward, msg.HostDenomOnHost)
 	}
 
 	// Confirm the host chain exists and the withdrawal address has been initialized
