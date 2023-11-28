@@ -30,13 +30,13 @@ func (k Keeper) OnChanOpenAck(ctx sdk.Context, portID, channelID string) error {
 
 	// Check if the chainId matches one of the host zones, and if so,
 	// store the relevant ICA address on the host zone struct
-	if err := k.StoreHostZoneIcaAddresses(ctx, chainId, portID, address); err != nil {
+	if err := k.StoreHostZoneIcaAddress(ctx, chainId, portID, address); err != nil {
 		return err
 	}
 
 	// Check if the chainId matches any ICAs from trade routes, and if so,
 	// store the relevant ICA addresses in the trade route structs
-	if err := k.StoreTradeRouteIcaAddresses(ctx, chainId, portID, address); err != nil {
+	if err := k.StoreTradeRouteIcaAddress(ctx, chainId, portID, address); err != nil {
 		return err
 	}
 
@@ -46,7 +46,7 @@ func (k Keeper) OnChanOpenAck(ctx sdk.Context, portID, channelID string) error {
 // Checks if the chainId matches a given host zone, and the address matches a relevant ICA account
 // If so, stores the ICA address on the host zone struct
 // Also whitelists ICA addresses from rate limiting
-func (k Keeper) StoreHostZoneIcaAddresses(ctx sdk.Context, chainId, portId, address string) error {
+func (k Keeper) StoreHostZoneIcaAddress(ctx sdk.Context, chainId, portId, address string) error {
 	// Check if the chainId matches a host zone
 	// If the chainId does not match (for instance, a reward zone in a trade route is not a host zone)
 	// then we can ignore the ICA address checks
@@ -155,7 +155,7 @@ func (k Keeper) StoreHostZoneIcaAddresses(ctx sdk.Context, chainId, portId, addr
 
 // Checks if the port matches an ICA account on the trade route, and if so, stores the
 // relevant ICA address on the trade route
-func (k Keeper) StoreTradeRouteIcaAddresses(ctx sdk.Context, chainId, portId, address string) error {
+func (k Keeper) StoreTradeRouteIcaAddress(ctx sdk.Context, chainId, portId, address string) error {
 	// Get the exepected port Id for each ICA account type (using the chainId)
 	tradeOwner := types.FormatICAAccountOwner(chainId, types.ICAAccountType_TRADE)
 	tradePortID, err := icatypes.NewControllerPortID(tradeOwner)
