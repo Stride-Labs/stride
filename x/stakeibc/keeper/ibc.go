@@ -6,49 +6,55 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	icatypes "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/types"
 
+	ratelimittypes "github.com/Stride-Labs/stride/v16/x/ratelimit/types"
 	"github.com/Stride-Labs/stride/v16/x/stakeibc/types"
 )
 
-func (k Keeper) OnChanOpenAck(ctx sdk.Context, portId, channelId string) error {
-	controllerConnectionId, err := im.keeper.GetConnectionId(ctx, portID)
-	if err != nil {
-		ctx.Logger().Error(fmt.Sprintf("Unable to get connection for port: %s", portID))
-		return nil
-	}
-	address, found := im.keeper.ICAControllerKeeper.GetInterchainAccountAddress(ctx, controllerConnectionId, portID)
+func (k Keeper) OnChanOpenAck(ctx sdk.Context, portID, channelID string) error {
+	controllerConnectionId, found := k.GetConnectionIdFromICAPortId(ctx, portID)
 	if !found {
-		ctx.Logger().Error(fmt.Sprintf("Expected to find an address for %s/%s", controllerConnectionId, portID))
+		ctx.Logger().Info(fmt.Sprintf("portId %s has no associated ICA account", portID))
 		return nil
 	}
+	address, found := k.ICAControllerKeeper.GetInterchainAccountAddress(ctx, controllerConnectionId, portID)
+	if !found {
+		ctx.Logger().Info(fmt.Sprintf("No ICA address associated with connection %s and port %s", controllerConnectionId, portID))
+		return nil
+	}
+
 	// get host chain id from connection
 	// fetch counterparty connection
-	hostChainId, err := im.keeper.GetChainIdFromConnectionId(ctx, controllerConnectionId)
+	hostChainId, err := k.GetChainIdFromConnectionId(ctx, controllerConnectionId)
 	if err != nil {
 		ctx.Logger().Error(fmt.Sprintf("Unable to obtain counterparty chain for connection: %s, port: %s, err: %s", controllerConnectionId, portID, err.Error()))
 		return nil
 	}
 	//  get zone info
-	zoneInfo, found := im.keeper.GetHostZone(ctx, hostChainId)
+	hostZone, found := k.GetHostZone(ctx, hostChainId)
 	if !found {
 		ctx.Logger().Error(fmt.Sprintf("Expected to find zone info for %v", hostChainId))
 		return nil
 	}
-	ctx.Logger().Info(fmt.Sprintf("Found matching address for chain: %s, address %s, port %s", zoneInfo.ChainId, address, portID))
+	ctx.Logger().Info(fmt.Sprintf("Found matching address for chain: %s, address %s, port %s", hostZone.ChainId, address, portID))
 
 	// expected port IDs for each ICA account type
-	withdrawalPortID, err := icatypes.NewControllerPortID(types.FormatICAAccountOwner(hostChainId, types.ICAAccountType_WITHDRAWAL))
+	withdrawalOwner := types.FormatICAAccountOwner(hostChainId, types.ICAAccountType_WITHDRAWAL)
+	withdrawalPortID, err := icatypes.NewControllerPortID(withdrawalOwner)
 	if err != nil {
 		return err
 	}
-	feePortID, err := icatypes.NewControllerPortID(types.FormatICAAccountOwner(hostChainId, types.ICAAccountType_FEE))
+	feeOwner := types.FormatICAAccountOwner(hostChainId, types.ICAAccountType_FEE)
+	feePortID, err := icatypes.NewControllerPortID(feeOwner)
 	if err != nil {
 		return err
 	}
-	delegationPortID, err := icatypes.NewControllerPortID(types.FormatICAAccountOwner(hostChainId, types.ICAAccountType_DELEGATION))
+	delegationOwner := types.FormatICAAccountOwner(hostChainId, types.ICAAccountType_DELEGATION)
+	delegationPortID, err := icatypes.NewControllerPortID(delegationOwner)
 	if err != nil {
 		return err
 	}
-	redemptionPortID, err := icatypes.NewControllerPortID(types.FormatICAAccountOwner(hostChainId, types.ICAAccountType_REDEMPTION))
+	rewardOwner := types.FormatICAAccountOwner(hostChainId, types.ICAAccountType_REDEMPTION)
+	redemptionPortID, err := icatypes.NewControllerPortID(rewardOwner)
 	if err != nil {
 		return err
 	}
@@ -66,36 +72,38 @@ func (k Keeper) OnChanOpenAck(ctx sdk.Context, portId, channelId string) error {
 	// Set ICA account addresses
 	switch {
 	case portID == withdrawalPortID:
-		zoneInfo.WithdrawalIcaAddress = address
+		hostZone.WithdrawalIcaAddress = address
 	case portID == feePortID:
-		zoneInfo.FeeIcaAddress = address
+		hostZone.FeeIcaAddress = address
 	case portID == delegationPortID:
-		zoneInfo.DelegationIcaAddress = address
+		hostZone.DelegationIcaAddress = address
 	case portID == redemptionPortID:
-		zoneInfo.RedemptionIcaAddress = address
+		hostZone.RedemptionIcaAddress = address
 	case portID == communityPoolDepositPortID:
-		zoneInfo.CommunityPoolDepositIcaAddress = address
+		hostZone.CommunityPoolDepositIcaAddress = address
 	case portID == communityPoolReturnPortID:
-		zoneInfo.CommunityPoolReturnIcaAddress = address
+		hostZone.CommunityPoolReturnIcaAddress = address
 	default:
 		ctx.Logger().Error(fmt.Sprintf("Missing portId: %s", portID))
 	}
 
+	k.SetHostZone(ctx, hostZone)
+
 	// Once the delegation channel is registered, whitelist epochly transfers so they're not rate limited
 	// Epochly transfers go from the deposit address to the delegation address
 	if portID == delegationPortID {
-		im.keeper.RatelimitKeeper.SetWhitelistedAddressPair(ctx, ratelimittypes.WhitelistedAddressPair{
-			Sender:   zoneInfo.DepositAddress,
-			Receiver: zoneInfo.DelegationIcaAddress,
+		k.RatelimitKeeper.SetWhitelistedAddressPair(ctx, ratelimittypes.WhitelistedAddressPair{
+			Sender:   hostZone.DepositAddress,
+			Receiver: hostZone.DelegationIcaAddress,
 		})
 	}
 
 	// Once the fee channel is registered, whitelist reward transfers so they're not rate limited
 	// Reward transfers go from the fee address to the reward collector
 	if portID == feePortID {
-		rewardCollectorAddress := im.keeper.AccountKeeper.GetModuleAccount(ctx, types.RewardCollectorName).GetAddress()
-		im.keeper.RatelimitKeeper.SetWhitelistedAddressPair(ctx, ratelimittypes.WhitelistedAddressPair{
-			Sender:   zoneInfo.FeeIcaAddress,
+		rewardCollectorAddress := k.AccountKeeper.GetModuleAccount(ctx, types.RewardCollectorName).GetAddress()
+		k.RatelimitKeeper.SetWhitelistedAddressPair(ctx, ratelimittypes.WhitelistedAddressPair{
+			Sender:   hostZone.FeeIcaAddress,
 			Receiver: rewardCollectorAddress.String(),
 		})
 	}
@@ -103,27 +111,24 @@ func (k Keeper) OnChanOpenAck(ctx sdk.Context, portId, channelId string) error {
 	// Once the community pool deposit ICA is registered, whitelist epochly community pool transfers
 	// from the deposit ICA to the community pool holding accounts
 	if portID == communityPoolDepositPortID {
-		im.keeper.RatelimitKeeper.SetWhitelistedAddressPair(ctx, ratelimittypes.WhitelistedAddressPair{
-			Sender:   zoneInfo.CommunityPoolDepositIcaAddress,
-			Receiver: zoneInfo.CommunityPoolStakeHoldingAddress,
+		k.RatelimitKeeper.SetWhitelistedAddressPair(ctx, ratelimittypes.WhitelistedAddressPair{
+			Sender:   hostZone.CommunityPoolDepositIcaAddress,
+			Receiver: hostZone.CommunityPoolStakeHoldingAddress,
 		})
-		im.keeper.RatelimitKeeper.SetWhitelistedAddressPair(ctx, ratelimittypes.WhitelistedAddressPair{
-			Sender:   zoneInfo.CommunityPoolDepositIcaAddress,
-			Receiver: zoneInfo.CommunityPoolRedeemHoldingAddress,
+		k.RatelimitKeeper.SetWhitelistedAddressPair(ctx, ratelimittypes.WhitelistedAddressPair{
+			Sender:   hostZone.CommunityPoolDepositIcaAddress,
+			Receiver: hostZone.CommunityPoolRedeemHoldingAddress,
 		})
 	}
 
 	// Once the community pool return ICA is registered, whitelist epochly community pool transfers
 	// from the community pool stake holding account to the community pool return ICA
 	if portID == communityPoolReturnPortID {
-		im.keeper.RatelimitKeeper.SetWhitelistedAddressPair(ctx, ratelimittypes.WhitelistedAddressPair{
-			Sender:   zoneInfo.CommunityPoolStakeHoldingAddress,
-			Receiver: zoneInfo.CommunityPoolReturnIcaAddress,
+		k.RatelimitKeeper.SetWhitelistedAddressPair(ctx, ratelimittypes.WhitelistedAddressPair{
+			Sender:   hostZone.CommunityPoolStakeHoldingAddress,
+			Receiver: hostZone.CommunityPoolReturnIcaAddress,
 		})
 	}
 
-	im.keeper.SetHostZone(ctx, zoneInfo)
-
-	// call underlying app's OnChanOpenAck
-	return im.app.OnChanOpenAck(ctx, portID, channelID, counterpartyChannelID, counterpartyVersion)
+	return nil
 }
