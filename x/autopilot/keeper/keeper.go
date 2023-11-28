@@ -9,6 +9,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
+	ibctransferkeeper "github.com/cosmos/ibc-go/v7/modules/apps/transfer/keeper"
 
 	"github.com/Stride-Labs/stride/v16/x/autopilot/types"
 	claimkeeper "github.com/Stride-Labs/stride/v16/x/claim/keeper"
@@ -22,6 +23,7 @@ type (
 		paramstore     paramtypes.Subspace
 		stakeibcKeeper stakeibckeeper.Keeper
 		claimKeeper    claimkeeper.Keeper
+		transferKeeper ibctransferkeeper.Keeper
 	}
 )
 
@@ -31,6 +33,7 @@ func NewKeeper(
 	ps paramtypes.Subspace,
 	stakeibcKeeper stakeibckeeper.Keeper,
 	claimKeeper claimkeeper.Keeper,
+	transferKeeper ibctransferkeeper.Keeper,
 ) *Keeper {
 	// set KeyTable if it has not already been set
 	if !ps.HasKeyTable() {
@@ -43,6 +46,7 @@ func NewKeeper(
 		paramstore:     ps,
 		stakeibcKeeper: stakeibcKeeper,
 		claimKeeper:    claimKeeper,
+		transferKeeper: transferKeeper,
 	}
 }
 
