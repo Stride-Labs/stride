@@ -2,36 +2,41 @@ package keeper
 
 import (
 	"context"
-	"fmt"
+
+	sdkmath "cosmossdk.io/math"
+	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 
 	"github.com/Stride-Labs/stride/v16/x/stakeibc/types"
 
 	errorsmod "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
 
-func (k msgServer) UpdateTradeRoute(goCtx context.Context, msg *types.MsgUpdateTradeRoute) (*types.MsgUpdateTradeRouteResponse, error) {
+func (ms msgServer) UpdateTradeRoute(goCtx context.Context, msg *types.MsgUpdateTradeRoute) (*types.MsgUpdateTradeRouteResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
-	k.Logger(ctx).Info(fmt.Sprintf("update trade route: %s", msg.String()))
-
-	// get our addresses, make sure they're valid
-	_, err := sdk.AccAddressFromBech32(msg.Creator)
-	if err != nil {
-		return nil, errorsmod.Wrapf(sdkerrors.ErrInvalidAddress, "creator address is invalid: %s. err: %s", msg.Creator, err.Error())
+	if ms.authority != msg.Authority {
+		return nil, errorsmod.Wrapf(govtypes.ErrInvalidSigner, "invalid authority; expected %s, got %s", ms.authority, msg.Authority)
 	}
 
-	routes := k.GetAllTradeRoutes(ctx)
+	routes := ms.Keeper.GetAllTradeRoutes(ctx)
 	for _, route := range routes {
 		if route.HostDenomOnHostZone == msg.HostDenom && route.RewardDenomOnRewardZone == msg.RewardDenom {
-			route.PoolId = msg.PoolId
-			route.MinSwapAmount = msg.MinSwapAmount
-			route.MaxSwapAmount = msg.MaxSwapAmount
-			k.SetTradeRoute(ctx, route)
+			tradeConfig := types.TradeConfig{
+				PoolId: msg.PoolId,
+
+				SwapPrice:            sdk.ZeroDec(),
+				PriceUpdateTimestamp: 0,
+
+				MaxAllowedSwapLossRate: sdk.MustNewDecFromStr(msg.MaxAllowedSwapLossRate),
+				MinSwapAmount:          sdkmath.NewIntFromUint64(msg.MinSwapAmount),
+				MaxSwapAmount:          sdkmath.NewIntFromUint64(msg.MaxSwapAmount),
+			}
+
+			route.TradeConfig = tradeConfig
+			ms.Keeper.SetTradeRoute(ctx, route)
 		}
 		// if no matching trade route was found for the given host-denom and reward-denom... do nothing
 	}
 
-	k.Logger(ctx).Info(fmt.Sprintf("update trade route: %s", msg.String()))
 	return &types.MsgUpdateTradeRouteResponse{}, nil
 }
