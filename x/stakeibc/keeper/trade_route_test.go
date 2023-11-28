@@ -15,29 +15,35 @@ func (s *KeeperTestSuite) CreateTradeRoutes() (routes []types.TradeRoute) {
 		tradeChain := fmt.Sprintf("chain-T%d", i)
 
 		hostICA := types.ICAAccount{
-			ChainId: hostChain,
-			Type:    types.ICAAccountType_WITHDRAWAL,
+			ChainId:      hostChain,
+			Type:         types.ICAAccountType_WITHDRAWAL,
+			ConnectionId: fmt.Sprintf("connection-0%d", i),
+			Address:      "host_ica_address",
 		}
 		rewardICA := types.ICAAccount{
-			ChainId: rewardChain,
-			Type:    types.ICAAccountType_UNWIND,
+			ChainId:      rewardChain,
+			Type:         types.ICAAccountType_UNWIND,
+			ConnectionId: fmt.Sprintf("connection-1%d", i),
+			Address:      "reward_ica_address",
 		}
 		tradeICA := types.ICAAccount{
-			ChainId: tradeChain,
-			Type:    types.ICAAccountType_TRADE,
+			ChainId:      tradeChain,
+			Type:         types.ICAAccountType_TRADE,
+			ConnectionId: fmt.Sprintf("connection-2%d", i),
+			Address:      "trade_ica_address",
 		}
 
 		hostRewardHop := types.TradeHop{
-			FromAccount: hostICA,
-			ToAccount:   rewardICA,
+			FromAddress: hostICA.Address,
+			ToAddress:   rewardICA.Address,
 		}
 		rewardTradeHop := types.TradeHop{
-			FromAccount: rewardICA,
-			ToAccount:   tradeICA,
+			FromAddress: rewardICA.Address,
+			ToAddress:   tradeICA.Address,
 		}
 		tradeHostHop := types.TradeHop{
-			FromAccount: tradeICA,
-			ToAccount:   hostICA,
+			FromAddress: tradeICA.Address,
+			ToAddress:   hostICA.Address,
 		}
 
 		hostDenom := fmt.Sprintf("host-denom-%d", i)

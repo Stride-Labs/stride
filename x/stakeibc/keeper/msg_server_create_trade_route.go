@@ -79,7 +79,7 @@ func (ms msgServer) CreateTradeRoute(goCtx context.Context, msg *types.MsgCreate
 		ConnectionId: hostZone.ConnectionId,
 		Address:      hostZone.WithdrawalIcaAddress,
 	}
-	rewardICA, err := ms.Keeper.RegisterTradeRouteICAAccount(ctx, msg.StrideToRewardConnectionId, types.ICAAccountType_UNWIND)
+	unwindICA, err := ms.Keeper.RegisterTradeRouteICAAccount(ctx, msg.StrideToRewardConnectionId, types.ICAAccountType_UNWIND)
 	if err != nil {
 		return nil, errorsmod.Wrapf(err, "unable to register the unwind ICA account")
 	}
@@ -89,22 +89,15 @@ func (ms msgServer) CreateTradeRoute(goCtx context.Context, msg *types.MsgCreate
 	}
 
 	// Create the hops between each zone
+	// The ICA addresses will be stored in the OnChanOpenAck callback
 	hostToRewardHop := types.TradeHop{
 		TransferChannelId: msg.HostToRewardTransferChannelId,
-		FromAccount:       hostICA,
-		ToAccount:         rewardICA,
 	}
-
 	rewardToTradeHop := types.TradeHop{
 		TransferChannelId: msg.RewardToTradeTransferChannelId,
-		FromAccount:       rewardICA,
-		ToAccount:         tradeICA,
 	}
-
 	tradeToHostHop := types.TradeHop{
 		TransferChannelId: msg.TradeToHostTransferChannelId,
-		FromAccount:       tradeICA,
-		ToAccount:         hostICA,
 	}
 
 	// Finally build and store the main trade route
@@ -114,13 +107,21 @@ func (ms msgServer) CreateTradeRoute(goCtx context.Context, msg *types.MsgCreate
 		RewardDenomOnTradeZone:  msg.RewardDenomOnTrade,
 		HostDenomOnTradeZone:    msg.HostDenomOnTrade,
 		HostDenomOnHostZone:     msg.HostDenomOnHost,
-		HostToRewardHop:         hostToRewardHop,
-		RewardToTradeHop:        rewardToTradeHop,
-		TradeToHostHop:          tradeToHostHop,
-		PoolId:                  msg.PoolId,
-		SwapPrice:               sdk.ZeroDec(), // this should only ever be set by ICQ so initialize to blank
-		MinSwapAmount:           sdkmath.NewIntFromUint64(msg.MinSwapAmount),
-		MaxSwapAmount:           sdkmath.NewIntFromUint64(msg.MaxSwapAmount),
+
+		HostAccount:   hostICA,
+		UnwindAccount: unwindICA,
+		TradeAccount:  tradeICA,
+
+		HostToRewardHop:  hostToRewardHop,
+		RewardToTradeHop: rewardToTradeHop,
+		TradeToHostHop:   tradeToHostHop,
+
+		PoolId:               msg.PoolId,
+		SwapPrice:            sdk.ZeroDec(), // this should only ever be set by ICQ so initialize to blank
+		PriceUpdateTimestamp: 0,
+
+		MinSwapAmount: sdkmath.NewIntFromUint64(msg.MinSwapAmount),
+		MaxSwapAmount: sdkmath.NewIntFromUint64(msg.MaxSwapAmount),
 	}
 
 	ms.Keeper.SetTradeRoute(ctx, tradeRoute)
