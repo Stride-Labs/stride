@@ -4,7 +4,6 @@ package stride.stakeibc;
 import "gogoproto/gogo.proto";
 import "stride/stakeibc/ica_account.proto";
 import "cosmos_proto/cosmos.proto";
-import "google/protobuf/timestamp.proto";
 
 option go_package = "github.com/Stride-Labs/stride/v16/x/stakeibc/types";
 
@@ -49,9 +48,8 @@ message TradeRoute {
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false
   ];
-  // timestamp that the price was last updated
-  google.protobuf.Timestamp price_update_time = 11
-      [ (gogoproto.nullable) = false, (gogoproto.stdtime) = true ];
+  // unix time in seconds that the price was last updated
+  int64 price_update_timestamp = 11;
 
   // Threshold defining the percentage of tokens that could be lost in the trade
   // This captures both the loss from slippage and from a stale price value on

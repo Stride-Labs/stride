@@ -67,7 +67,7 @@ func PoolPriceCallback(k Keeper, ctx sdk.Context, args []byte, query icqtypes.Qu
 
 	// Update the price and time on the trade route data
 	tradeRoute.SwapPrice = price
-	tradeRoute.PriceUpdateTime = ctx.BlockTime()
+	tradeRoute.PriceUpdateTimestamp = ctx.BlockTime().Unix()
 	k.SetTradeRoute(ctx, tradeRoute)
 
 	return nil
