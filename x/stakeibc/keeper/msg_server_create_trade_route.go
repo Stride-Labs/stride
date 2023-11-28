@@ -14,6 +14,8 @@ import (
 	connectiontypes "github.com/cosmos/ibc-go/v7/modules/core/03-connection/types"
 )
 
+var DefaultMaxAllowedSwapLossRate = "0.05"
+
 // Gov tx to to register a trade route that swaps reward tokens for a different denom
 //
 // Example proposal:
@@ -107,20 +109,30 @@ func (ms msgServer) CreateTradeRoute(goCtx context.Context, msg *types.MsgCreate
 		ToAccount:         hostICA,
 	}
 
+	maxAllowedSwapLossRate := msg.MaxAllowedSwapLossRate
+	if maxAllowedSwapLossRate == "" {
+		maxAllowedSwapLossRate = DefaultMaxAllowedSwapLossRate
+	}
+
 	// Finally build and store the main trade route
 	tradeRoute := types.TradeRoute{
 		RewardDenomOnHostZone:   msg.RewardDenomOnHost,
 		RewardDenomOnRewardZone: msg.RewardDenomOnReward,
 		RewardDenomOnTradeZone:  msg.RewardDenomOnTrade,
-		TargetDenomOnTradeZone:  msg.HostDenomOnTrade,
-		TargetDenomOnHostZone:   msg.HostDenomOnHost,
-		HostToRewardHop:         hostToRewardHop,
-		RewardToTradeHop:        rewardToTradeHop,
-		TradeToHostHop:          tradeToHostHop,
-		PoolId:                  msg.PoolId,
-		SwapPrice:               sdk.ZeroDec(), // this should only ever be set by ICQ so initialize to blank
-		MinSwapAmount:           sdkmath.NewIntFromUint64(msg.MinSwapAmount),
-		MaxSwapAmount:           sdkmath.NewIntFromUint64(msg.MaxSwapAmount),
+		HostDenomOnTradeZone:    msg.HostDenomOnTrade,
+		HostDenomOnHostZone:     msg.HostDenomOnHost,
+
+		HostToRewardHop:  hostToRewardHop,
+		RewardToTradeHop: rewardToTradeHop,
+		TradeToHostHop:   tradeToHostHop,
+
+		PoolId:               msg.PoolId,
+		SwapPrice:            sdk.ZeroDec(), // this should only ever be set by ICQ so initialize to blank
+		PriceUpdateTimestamp: 0,
+
+		MaxAllowedSwapLossRate: sdk.MustNewDecFromStr(maxAllowedSwapLossRate),
+		MinSwapAmount:          sdkmath.NewIntFromUint64(msg.MinSwapAmount),
+		MaxSwapAmount:          sdkmath.NewIntFromUint64(msg.MaxSwapAmount),
 	}
 
 	ms.Keeper.SetTradeRoute(ctx, tradeRoute)

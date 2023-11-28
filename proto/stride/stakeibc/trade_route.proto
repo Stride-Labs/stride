@@ -4,7 +4,6 @@ package stride.stakeibc;
 import "gogoproto/gogo.proto";
 import "stride/stakeibc/ica_account.proto";
 import "cosmos_proto/cosmos.proto";
-import "google/protobuf/timestamp.proto";
 
 option go_package = "github.com/Stride-Labs/stride/v16/x/stakeibc/types";
 
@@ -30,9 +29,9 @@ message TradeRoute {
   // ibc denom of the reward on the trade chain, input to the swap
   string reward_denom_on_trade_zone = 3;
   // ibc of the host denom on the trade chain, output from the swap
-  string target_denom_on_trade_zone = 4;
+  string host_denom_on_trade_zone = 4;
   // should be the same as the native host denom on the host chain
-  string target_denom_on_host_zone = 5;
+  string host_denom_on_host_zone = 5;
 
   TradeHop host_to_reward_hop = 6 [ (gogoproto.nullable) = false ];
   TradeHop reward_to_trade_hop = 7 [ (gogoproto.nullable) = false ];
@@ -49,14 +48,13 @@ message TradeRoute {
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false
   ];
-  // timestamp that the price was last updated
-  google.protobuf.Timestamp price_update_time = 11
-      [ (gogoproto.nullable) = false, (gogoproto.stdtime) = true ];
+  // unix time in seconds that the price was last updated
+  uint64 price_update_timestamp = 11;
 
   // Threshold defining the percentage of tokens that could be lost in the trade
-  // This captures both the loss from slippage and from a stale price value on
-  // stride 0.05 means the output from the trade can be no less than a 5%
-  // deviation from the current value
+  // This captures both the loss from slippage and from a stale price on stride
+  // 0.05 means the output from the trade can be no less than a 5% deviation
+  // from the current value
   string max_allowed_swap_loss_rate = 12 [
     (cosmos_proto.scalar) = "cosmos.Dec",
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",

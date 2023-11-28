@@ -25,9 +25,8 @@ import (
 //	P0LastSpotPrice gives the ratio of Asset0Denom / Asset1Denom
 //	P1LastSpotPrice gives the ratio of Asset1Denom / Asset0Denom
 //
-// When storing down the price, we want to denominate the price of the TargetDenom,
-// relative to the price of the RewardDenom, which means we have to take the inverse
-// from the response
+// When storing down the price, we want to store down the ratio of HostDenom.
+// Meaning, if Asset0Denom is the host denom, we want to store P0LastSpotPrice
 func PoolPriceCallback(k Keeper, ctx sdk.Context, args []byte, query icqtypes.Query) error {
 	k.Logger(ctx).Info(utils.LogICQCallbackWithHostZone(query.ChainId, ICQCallbackID_PoolPrice,
 		"Starting pool spot price callback, QueryId: %vs, QueryType: %s, Connection: %s", query.Id, query.QueryType, query.ConnectionId))
@@ -55,7 +54,7 @@ func PoolPriceCallback(k Keeper, ctx sdk.Context, args []byte, query icqtypes.Qu
 	// Get the associate "SpotPrice" from the twap record, based on the asset ordering
 	// The "SpotPrice" is actually a ratio of the assets in the pool
 	var price sdk.Dec
-	if twapRecord.Asset0Denom == tradeRoute.TargetDenomOnTradeZone {
+	if twapRecord.Asset0Denom == tradeRoute.HostDenomOnTradeZone {
 		price = twapRecord.P0LastSpotPrice
 	} else {
 		price = twapRecord.P1LastSpotPrice
@@ -63,11 +62,11 @@ func PoolPriceCallback(k Keeper, ctx sdk.Context, args []byte, query icqtypes.Qu
 
 	k.Logger(ctx).Info(utils.LogICQCallbackWithHostZone(chainId, ICQCallbackID_PoolPrice,
 		"Query response - price ratio of %s to %s is %s",
-		tradeRoute.RewardDenomOnTradeZone, tradeRoute.TargetDenomOnTradeZone, price))
+		tradeRoute.RewardDenomOnTradeZone, tradeRoute.HostDenomOnTradeZone, price))
 
 	// Update the price and time on the trade route data
 	tradeRoute.SwapPrice = price
-	tradeRoute.PriceUpdateTime = ctx.BlockTime()
+	tradeRoute.PriceUpdateTimestamp = uint64(ctx.BlockTime().UnixNano())
 	k.SetTradeRoute(ctx, tradeRoute)
 
 	return nil
@@ -76,16 +75,16 @@ func PoolPriceCallback(k Keeper, ctx sdk.Context, args []byte, query icqtypes.Qu
 // Helper function to confirm that the two assets in the twap record match the assets in the trade route
 // The assets in the twap record are sorted alphabetically, so we have to check both orderings
 func AssertTwapAssetsMatchTradeRoute(twapRecord types.OsmosisTwapRecord, tradeRoute types.TradeRoute) error {
-	hostDenomMatchFirst := twapRecord.Asset0Denom == tradeRoute.TargetDenomOnTradeZone
+	hostDenomMatchFirst := twapRecord.Asset0Denom == tradeRoute.HostDenomOnTradeZone
 	rewardDenomMatchSecond := twapRecord.Asset1Denom == tradeRoute.RewardDenomOnTradeZone
 
 	rewardDenomMatchFirst := twapRecord.Asset0Denom == tradeRoute.RewardDenomOnTradeZone
-	hostDenomMatchSecond := twapRecord.Asset1Denom == tradeRoute.TargetDenomOnTradeZone
+	hostDenomMatchSecond := twapRecord.Asset1Denom == tradeRoute.HostDenomOnTradeZone
 
 	if (hostDenomMatchFirst && rewardDenomMatchSecond) || (rewardDenomMatchFirst && hostDenomMatchSecond) {
 		return nil
 	}
 
 	return fmt.Errorf("Assets in query response (%s, %s) do not match denom's from trade route (%s, %s)",
-		twapRecord.Asset0Denom, twapRecord.Asset1Denom, tradeRoute.TargetDenomOnTradeZone, tradeRoute.RewardDenomOnTradeZone)
+		twapRecord.Asset0Denom, twapRecord.Asset1Denom, tradeRoute.HostDenomOnTradeZone, tradeRoute.RewardDenomOnTradeZone)
 }
