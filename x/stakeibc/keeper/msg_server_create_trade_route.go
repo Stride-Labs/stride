@@ -92,12 +92,14 @@ func (ms msgServer) CreateTradeRoute(goCtx context.Context, msg *types.MsgCreate
 	// The ICA addresses will be stored in the OnChanOpenAck callback
 	hostToRewardHop := types.TradeHop{
 		TransferChannelId: msg.HostToRewardTransferChannelId,
+		FromAddress:       hostZone.WithdrawalIcaAddress,
 	}
 	rewardToTradeHop := types.TradeHop{
 		TransferChannelId: msg.RewardToTradeTransferChannelId,
 	}
 	tradeToHostHop := types.TradeHop{
 		TransferChannelId: msg.TradeToHostTransferChannelId,
+		ToAddress:         hostZone.WithdrawalIcaAddress,
 	}
 
 	// Finally build and store the main trade route

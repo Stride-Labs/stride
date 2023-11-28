@@ -34,6 +34,12 @@ func (k Keeper) OnChanOpenAck(ctx sdk.Context, portID, channelID string) error {
 		return err
 	}
 
+	// Check if the chainId matches any ICAs from trade routes, and if so,
+	// store the relevant ICA addresses in the trade route structs
+	if err := k.StoreTradeRouteIcaAddresses(ctx, chainId, portID, address); err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -97,7 +103,7 @@ func (k Keeper) StoreHostZoneIcaAddresses(ctx sdk.Context, chainId, portId, addr
 	case portId == communityPoolReturnPortID:
 		hostZone.CommunityPoolReturnIcaAddress = address
 	default:
-		k.Logger(ctx).Info(fmt.Sprintf("chainId %s has an associated host zone, but does not match any ICA accounts", chainId))
+		k.Logger(ctx).Info(fmt.Sprintf("portId %s has an associated host zone, but does not match any ICA accounts", portId))
 		return nil
 	}
 
@@ -142,6 +148,47 @@ func (k Keeper) StoreHostZoneIcaAddresses(ctx sdk.Context, chainId, portId, addr
 			Sender:   hostZone.CommunityPoolStakeHoldingAddress,
 			Receiver: hostZone.CommunityPoolReturnIcaAddress,
 		})
+	}
+
+	return nil
+}
+
+// Checks if the port matches an ICA account on the trade route, and if so, stores the
+// relevant ICA address on the trade route
+func (k Keeper) StoreTradeRouteIcaAddresses(ctx sdk.Context, chainId, portId, address string) error {
+	// Get the exepected port Id for each ICA account type (using the chainId)
+	tradeOwner := types.FormatICAAccountOwner(chainId, types.ICAAccountType_TRADE)
+	tradePortID, err := icatypes.NewControllerPortID(tradeOwner)
+	if err != nil {
+		return err
+	}
+	unwindOwner := types.FormatICAAccountOwner(chainId, types.ICAAccountType_UNWIND)
+	unwindPortID, err := icatypes.NewControllerPortID(unwindOwner)
+	if err != nil {
+		return err
+	}
+
+	// Check if the port Id matches either the trade or unwind ICA on the tradeRoute
+	// If the chainId and port Id from the callback match the account
+	// on a trade route, set the ICA address in the relevant places,
+	// including the from/to addresses on each hop
+	for _, tradeRoute := range k.GetAllTradeRoutes(ctx) {
+		if tradeRoute.UnwindAccount.ChainId == chainId && portId == unwindPortID {
+			tradeRoute.UnwindAccount.Address = address
+			tradeRoute.HostToRewardHop.ToAddress = address
+			tradeRoute.RewardToTradeHop.FromAddress = address
+
+			k.Logger(ctx).Info(fmt.Sprintf("ICA Address %s found for Unwind ICA on %s", address, tradeRoute.Description()))
+
+		} else if tradeRoute.TradeAccount.ChainId == chainId && portId == tradePortID {
+			tradeRoute.TradeAccount.Address = address
+			tradeRoute.RewardToTradeHop.ToAddress = address
+			tradeRoute.TradeToHostHop.FromAddress = address
+
+			k.Logger(ctx).Info(fmt.Sprintf("ICA Address %s found for Trade ICA on %s", address, tradeRoute.Description()))
+		}
+
+		k.SetTradeRoute(ctx, tradeRoute)
 	}
 
 	return nil
