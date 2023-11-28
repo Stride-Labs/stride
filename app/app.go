@@ -798,7 +798,7 @@ func NewStrideApp(
 		ibc.NewAppModule(app.IBCKeeper),
 		params.NewAppModule(app.ParamsKeeper),
 		claim.NewAppModule(appCodec, app.ClaimKeeper),
-		packetforward.NewAppModule(app.PacketForwardKeeper), // What should legacySubspace be set to and why is it required? https://github.com/cosmos/ibc-apps/issues/146
+		packetforward.NewAppModule(app.PacketForwardKeeper, nil), // What should legacySubspace be set to and why is it required? https://github.com/cosmos/ibc-apps/issues/146
 		transferModule,
 		// monitoringModule,
 		stakeibcModule,
