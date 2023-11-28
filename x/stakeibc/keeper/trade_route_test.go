@@ -55,7 +55,7 @@ func (s *KeeperTestSuite) CreateTradeRoutes() (routes []types.TradeRoute) {
 			TradeToHostHop:   tradeHostHop,
 
 			PoolId:         uint64(i * 100),
-			HostTokenPrice: sdk.OneDec(),
+			SwapPrice: 		sdk.OneDec(),
 
 			MinSwapAmount: sdk.ZeroInt(),
 			MaxSwapAmount: sdk.NewInt(1_000_000_000),

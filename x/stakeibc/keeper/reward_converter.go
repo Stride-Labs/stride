@@ -5,6 +5,7 @@ import (
 	"time"
 
 	errorsmod "cosmossdk.io/errors"
+	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/bech32"
 	bankTypes "github.com/cosmos/cosmos-sdk/x/bank/types"
@@ -41,7 +42,14 @@ import (
 // This will be two hops to unwind the ibc denom through the rewardZone using pfm in the transfer memo if possible
 //
 // msgs with packet forwarding memos can unwind through the reward zone and chain two transfer hops without callbacks
-func (k Keeper) TransferRewardTokensHostToTrade(ctx sdk.Context, amount sdk.Int, route types.TradeRoute) error {
+func (k Keeper) TransferRewardTokensHostToTrade(ctx sdk.Context, amount sdkmath.Int, route types.TradeRoute) error {
+	// If the min swap amount was not set it would be ZeroInt, if positive we need to compare to the amount given
+	//  then if the min swap amount is greater than the current amount, do nothing this epoch to avoid small transfers
+	//  Particularly important for the PFM hop if the reward chain has frictional transfer fees (like noble chain)
+	if route.MinSwapAmount.IsPositive() && route.MinSwapAmount.GT(amount) {
+		return nil
+	}
+
 	// Timeout for ica tx and the transfer msgs is at end of epoch
 	strideEpochTracker, found := k.GetEpochTracker(ctx, epochstypes.STRIDE_EPOCH)
 	if !found {
@@ -90,7 +98,7 @@ func (k Keeper) TransferRewardTokensHostToTrade(ctx sdk.Context, amount sdk.Int,
 }
 
 // ICA tx to kick off transfering the converted tokens back from tradeZone to the hostZone withdrawal ICA
-func (k Keeper) TransferConvertedTokensTradeToHost(ctx sdk.Context, amount sdk.Int, route types.TradeRoute) error {
+func (k Keeper) TransferConvertedTokensTradeToHost(ctx sdk.Context, amount sdkmath.Int, route types.TradeRoute) error {
 	// Timeout for ica tx and the transfer msgs is at end of epoch
 	strideEpochTracker, found := k.GetEpochTracker(ctx, epochstypes.STRIDE_EPOCH)
 	if !found {
@@ -133,7 +141,7 @@ func (k Keeper) TransferConvertedTokensTradeToHost(ctx sdk.Context, amount sdk.I
 // Trade reward tokens in the Trade ICA for the target output token type using ICA remote tx on trade zone
 // The amount represents the total amount of the reward token in the trade ICA found by the calling ICQ
 // Depending on min and max swap amounts set in the route, it is possible not the full amount given will swap
-func (k Keeper) TradeRewardTokens(ctx sdk.Context, rewardAmount sdk.Int, route types.TradeRoute) error {
+func (k Keeper) TradeRewardTokens(ctx sdk.Context, rewardAmount sdkmath.Int, route types.TradeRoute) error {
 	// If the min swap amount was not set it would be ZeroInt, if positive we need to compare to the amount given
 	//  then if the min swap amount is greater than the current amount, do nothing this epoch to avoid small swaps
 	if route.MinSwapAmount.IsPositive() && route.MinSwapAmount.GT(rewardAmount) {
