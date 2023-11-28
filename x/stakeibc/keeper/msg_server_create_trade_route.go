@@ -118,7 +118,7 @@ func (ms msgServer) CreateTradeRoute(goCtx context.Context, msg *types.MsgCreate
 		RewardToTradeHop:        rewardToTradeHop,
 		TradeToHostHop:          tradeToHostHop,
 		PoolId:                  msg.PoolId,
-		SpotPrice:               "", // this should only ever be set by ICQ so initialize to blank
+		SwapPrice:               sdk.ZeroDec(), // this should only ever be set by ICQ so initialize to blank
 		MinSwapAmount:           sdkmath.NewIntFromUint64(msg.MinSwapAmount),
 		MaxSwapAmount:           sdkmath.NewIntFromUint64(msg.MaxSwapAmount),
 	}

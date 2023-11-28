@@ -141,57 +141,58 @@ func (k Keeper) TransferConvertedTokensTradeToHost(ctx sdk.Context, amount sdkma
 // Trade reward tokens in the Trade ICA for the target output token type using ICA remote tx on trade zone
 // The amount represents the total amount of the reward token in the trade ICA found by the calling ICQ
 // Depending on min and max swap amounts set in the route, it is possible not the full amount given will swap
-func (k Keeper) TradeRewardTokens(ctx sdk.Context, amount sdkmath.Int, route types.TradeRoute) error {
+func (k Keeper) TradeRewardTokens(ctx sdk.Context, rewardAmount sdkmath.Int, route types.TradeRoute) error {
 	// If the min swap amount was not set it would be ZeroInt, if positive we need to compare to the amount given
 	//  then if the min swap amount is greater than the current amount, do nothing this epoch to avoid small swaps
-	if route.MinSwapAmount.IsPositive() && route.MinSwapAmount.GT(amount) {
+	if route.MinSwapAmount.IsPositive() && route.MinSwapAmount.GT(rewardAmount) {
 		return nil
 	}
 
 	// If the max swap amount was not set it would be ZeroInt, if positive we need to compare to the amount given
 	//  then if max swap amount is LTE to amount full swap is possible so amount is fine, otherwise set amount to max
-	if route.MaxSwapAmount.IsPositive() && route.MaxSwapAmount.GT(amount) {
-		amount = route.MaxSwapAmount
+	if route.MaxSwapAmount.IsPositive() && route.MaxSwapAmount.GT(rewardAmount) {
+		rewardAmount = route.MaxSwapAmount
 	}
 
-	// See if pool swap spot price has been set to a valid ratio (string representing a float like "10.203")
-	// If there is a valid spot price, use it to set a floor for the acceptable minimum output tokens
-	// 5% slippage is allowed so multiply by 0.95 the expected spot price to get the target minimum
-	// minOut is the minimum number of route.TargetDenomOnTradeZone we must receive or the swap will fail
-	minOut := sdk.ZeroInt()
-	if route.SpotPrice != "" {
-		if spotPrice, err := sdk.NewDecFromStr(route.SpotPrice); err == nil {
-			slippageRatio := sdk.NewDecWithPrec(95, 2) // 0.95 to allow 5% loss to slippage
-			inputToOutputRatio := slippageRatio.Mul(spotPrice)
-			minOut = sdk.NewDecFromInt(amount).Mul(inputToOutputRatio).TruncateInt()
-		} else {
-			k.Logger(ctx).Error("Couldn't parse the spot price %s as a Decimal", route.SpotPrice)
-			// Don't allow a missing spot price to stop the swap, use zeroInt as the lower bound for now
-		}
+	// See if pool swap price has been set to a valid ratio
+	// The only time this should not be set is right after the pool is added,
+	// before an ICQ has been submitted for the price
+	if route.SwapPrice == sdk.ZeroDec() {
+		return fmt.Errorf("Price not found for pool %d", route.PoolId)
 	}
+
+	// If there is a valid price, use it to set a floor for the acceptable minimum output tokens
+	// minOut is the minimum number of route.TargetDenomOnTradeZone we must receive or the swap will fail
+	//
+	// To calculate minOut, we first convert the rewardAmount into units of HostDenom,
+	//   and then we multiply by (1 - MaxAllowedSwapLossRate)
+	//
+	// The price on the trade route represents the ratio of host denom to reward denom
+	// So, to convert from units of RewardTokens to units of HostTokens,
+	// we multiply the reward amount by the price:
+	//   AmountInHost = AmountInReward * SwapPrice
+	rewardAmountConverted := sdk.NewDecFromInt(rewardAmount).Mul(route.SwapPrice)
+	minOutPercentage := sdk.OneDec().Sub(route.MaxAllowedSwapLossRate)
+	minOut := rewardAmountConverted.Mul(minOutPercentage).TruncateInt()
 
 	tradeIcaAccount := route.RewardToTradeHop.ToAccount
-	tradeTokens := sdk.NewCoin(route.RewardDenomOnTradeZone, amount)
+	tradeTokens := sdk.NewCoin(route.RewardDenomOnTradeZone, rewardAmount)
 
 	// Prepare Osmosis GAMM module MsgSwapExactAmountIn from the trade account to perform the trade
 	// If we want to generalize in the future, write swap message generation funcs for each DEX type,
 	// decide which msg generation function to call based on check of which tradeZone was passed in
-	var msgs []proto.Message
-	if amount.GT(sdk.ZeroInt()) {
-		var routes []types.SwapAmountInRoute
-		routes = append(routes, types.SwapAmountInRoute{
-			PoolId:        route.PoolId,
-			TokenOutDenom: route.TargetDenomOnTradeZone,
-		})
-		msgs = append(msgs, &types.MsgSwapExactAmountIn{
-			Sender:            tradeIcaAccount.Address,
-			Routes:            routes,
-			TokenIn:           tradeTokens,
-			TokenOutMinAmount: minOut,
-		})
-		k.Logger(ctx).Info(utils.LogWithHostZone(tradeIcaAccount.ChainId,
-			"Preparing MsgSwapExactAmountIn of %+v from the trade account", tradeTokens))
-	}
+	routes := []types.SwapAmountInRoute{{
+		PoolId:        route.PoolId,
+		TokenOutDenom: route.TargetDenomOnTradeZone,
+	}}
+	msgs := []proto.Message{&types.MsgSwapExactAmountIn{
+		Sender:            tradeIcaAccount.Address,
+		Routes:            routes,
+		TokenIn:           tradeTokens,
+		TokenOutMinAmount: minOut,
+	}}
+	k.Logger(ctx).Info(utils.LogWithHostZone(tradeIcaAccount.ChainId,
+		"Preparing MsgSwapExactAmountIn of %+v from the trade account", tradeTokens))
 
 	strideEpochTracker, found := k.GetEpochTracker(ctx, epochstypes.STRIDE_EPOCH)
 	if !found {
@@ -360,25 +361,18 @@ func (k Keeper) TradeConvertedBalanceQuery(ctx sdk.Context, route types.TradeRou
 
 // Kick off ICQ for the spot price on the pool given the input and output denoms implied by the given TradeRoute
 // the callback for this query is responsible for updating the returned spot price on the keeper data
-func (k Keeper) PoolSpotPriceQuery(ctx sdk.Context, route types.TradeRoute) error {
+func (k Keeper) PoolPriceQuery(ctx sdk.Context, route types.TradeRoute) error {
 	tradeAccount := route.RewardToTradeHop.ToAccount
 	k.Logger(ctx).Info(utils.LogWithHostZone(tradeAccount.ChainId, "Submitting ICQ for spot price in this pool"))
 
-	// Unlike balance queries, we can't do a normal ICQ which interacts with the foreign data store directly
-	// because on Osmosis the spot price for a pool is not stored down to their keeper data, it is computed each request
-	// Therefore we have to perform a query against their actual service, through the Osmosis spot price query route
+	// Sort denom's
+	denom1, denom2 := route.RewardDenomOnTradeZone, route.TargetDenomOnTradeZone
+	if denom1 > denom2 {
+		denom1, denom2 = denom2, denom1
+	}
 
-	// The stride interchainquery module likely can't actually handle this type of query so this likely won't work yet...
-
-	// Encode the osmosis spot price query request for the specific pool and denoms
-	// spotPriceRequest := types.QuerySpotPriceRequest{
-	// 	PoolId:          route.PoolId,
-	// 	BaseAssetDenom:  route.RewardDenomOnTradeZone,
-	// 	QuoteAssetDenom: route.TargetDenomOnTradeZone,
-	// }
-	// queryData := k.cdc.MustMarshal(&spotPriceRequest)
-	// TODO [DYDX]: Use TWAP in separate PR
-	queryData := []byte{}
+	// Build query request data which consists of the TWAP store key built from each denom
+	queryData := icqtypes.FormatOsmosisMostRecentTWAPKey(route.PoolId, denom1, denom2)
 
 	// Timeout query at end of epoch
 	strideEpochTracker, found := k.GetEpochTracker(ctx, epochstypes.STRIDE_EPOCH)
@@ -399,10 +393,10 @@ func (k Keeper) PoolSpotPriceQuery(ctx sdk.Context, route types.TradeRoute) erro
 	query := icqtypes.Query{
 		ChainId:         tradeAccount.ChainId,
 		ConnectionId:    tradeAccount.ConnectionId, // query needs to go to the trade zone, not the host zone
-		QueryType:       icqtypes.BANK_STORE_QUERY_WITH_PROOF,
+		QueryType:       icqtypes.TWAP_STORE_QUERY_WITH_PROOF,
 		RequestData:     queryData,
 		CallbackModule:  types.ModuleName,
-		CallbackId:      ICQCallbackID_PoolSpotPrice,
+		CallbackId:      ICQCallbackID_PoolPrice,
 		CallbackData:    callbackDataBz,
 		TimeoutDuration: timeoutDuration,
 		TimeoutPolicy:   icqtypes.TimeoutPolicy_REJECT_QUERY_RESPONSE,
@@ -455,7 +449,7 @@ func (k Keeper) UpdateAllSwapPrices(ctx sdk.Context) {
 	k.SetTradeRoute(ctx, types.TradeRoute{RewardDenomOnHostZone: "A", TargetDenomOnHostZone: "B"})
 	for _, route := range k.GetAllTradeRoutes(ctx) {
 		// ICQ swap price for the specific pair on this route and update keeper on callback
-		if err := k.PoolSpotPriceQuery(ctx, route); err != nil {
+		if err := k.PoolPriceQuery(ctx, route); err != nil {
 			k.Logger(ctx).Error(fmt.Sprintf("Unable to submit query for pool spot price: %s", err))
 		}
 	}
