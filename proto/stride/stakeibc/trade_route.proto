@@ -3,6 +3,8 @@ package stride.stakeibc;
 
 import "gogoproto/gogo.proto";
 import "stride/stakeibc/ica_account.proto";
+import "cosmos_proto/cosmos.proto";
+import "google/protobuf/timestamp.proto";
 
 option go_package = "github.com/Stride-Labs/stride/v16/x/stakeibc/types";
 
@@ -39,15 +41,34 @@ message TradeRoute {
   // Currently Osmosis is the only trade chain so this is an osmosis pool id
   uint64 pool_id = 9;
 
-  // Spot price is a decimal ratio of the input to output denom as a string
-  string spot_price = 10;
+  // Spot price in the pool to convert the reward denom to the host denom
+  // output_tokens = swap_price * input tokens
+  // This value may be slightly stale as it is updated by an ICQ
+  string swap_price = 10 [
+    (cosmos_proto.scalar) = "cosmos.Dec",
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
+  // timestamp that the price was last updated
+  google.protobuf.Timestamp price_update_time = 11
+      [ (gogoproto.nullable) = false, (gogoproto.stdtime) = true ];
+
+  // Threshold defining the percentage of tokens that could be lost in the trade
+  // This captures both the loss from slippage and from a stale price value on
+  // stride 0.05 means the output from the trade can be no less than a 5%
+  // deviation from the current value
+  string max_allowed_swap_loss_rate = 12 [
+    (cosmos_proto.scalar) = "cosmos.Dec",
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
 
   // min and max set boundaries of reward denom on trade chain we will swap
-  string min_swap_amount = 11 [
+  string min_swap_amount = 13 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
     (gogoproto.nullable) = false
   ];
-  string max_swap_amount = 12 [
+  string max_swap_amount = 14 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
     (gogoproto.nullable) = false
   ];

@@ -350,3 +350,10 @@ services:
       - ./state/relayer-osmo-dydx:/home/relayer/.relayer
     restart: always
     command: [ "bash", "start.sh", "osmo-dydx" ]
+
+  relayer-stride-osmo:
+    image: stridezone:relayer
+    volumes:
+      - ./state/relayer-stride-osmo:/home/relayer/.relayer
+    restart: always
+    command: [ "bash", "start.sh", "stride-osmo" ]

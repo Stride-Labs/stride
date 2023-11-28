@@ -17,8 +17,8 @@ KEYS_LOGS=$DOCKERNET_HOME/logs/keys.log
 
 # List of hosts enabled 
 # HOST_CHAINS have liquid staking support, ACCESSORY_CHAINS do not
-HOST_CHAINS=()
-ACCESSORY_CHAINS=() 
+HOST_CHAINS=(DYDX)
+ACCESSORY_CHAINS=(NOBLE OSMO) 
 
 # If no host zones are specified above:
 #  `start-docker` defaults to just GAIA if HOST_CHAINS is empty
@@ -336,14 +336,15 @@ STRIDE_RELAYER_MNEMONICS=(
   "$RELAYER_GAIA_ICS_MNEMONIC"
   "$RELAYER_DYDX_MNEMONIC"
 )
-# Mnemonics for connections between two non-stride chains
+# Mnemonics for connections between accessory chains
 RELAYER_NOBLE_DYDX_MNEMONIC="sentence fruit crumble sail bar knife exact flame apart prosper hint myth clean among tiny burden depart purity select envelope identify cross physical emerge"
 RELAYER_DYDX_NOBLE_MNEMONIC="aerobic breeze claw climb bounce morning tank victory eight funny employ bracket hire reduce fine flee lava domain warfare loop theme fly tattoo must"
 RELAYER_NOBLE_OSMO_MNEMONIC="actual field visual wage orbit add human unit happy rich evil chair entire person february cactus deputy impact gasp elbow sunset brand possible fly"
 RELAYER_OSMO_NOBLE_MNEMONIC="obey clinic miss grunt inflict laugh sell moral kitchen tumble gold song flavor rather horn exhaust state amazing poverty differ approve spike village device"
 RELAYER_DYDX_OSMO_MNEMONIC="small fire step promote fox reward book seek arctic session illegal loyal because brass spoil minute wonder jazz shoe price muffin churn evil monitor"
 RELAYER_OSMO_DYDX_MNEMONIC="risk wool reason sweet current strategy female miracle squeeze that wire develop ocean rapid domain lift blame monkey sick round museum item maze trumpet"
-
+RELAYER_STRIDE_OSMO_MNEMONIC="father october lonely ticket leave regret pudding buffalo return asthma plastic piano beef orient ill clip right phone ready pottery helmet hip solid galaxy"
+RELAYER_OSMO_STRIDE_MNEMONIC="narrow assist come feel canyon anxiety three reason satoshi inspire region little attend impulse what student dog armor economy faculty dutch distance upon calm"
 
 STRIDE_ADDRESS() { 
   # After an upgrade, the keys query can sometimes print migration info, 

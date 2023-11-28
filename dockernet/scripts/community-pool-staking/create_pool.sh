@@ -11,25 +11,21 @@ dydx_to_osmo_client=$(GET_CLIENT_ID_FROM_CHAIN_ID DYDX OSMO)
 dydx_to_osmo_connection=$(GET_CONNECTION_ID_FROM_CLIENT_ID DYDX $dydx_to_osmo_client)
 dydx_to_osmo_channel=$(GET_TRANSFER_CHANNEL_ID_FROM_CONNECTION_ID DYDX $dydx_to_osmo_connection)
 osmo_to_dydx_channel=$(GET_COUNTERPARTY_TRANSFER_CHANNEL_ID DYDX $dydx_to_osmo_channel)
-dydx_denom_on_osmo=$(GET_IBC_DENOM OSMO $osmo_to_dydx_channel $DYDX_DENOM)
 
 echo -e "\nDYDX -> OSMO:"
 echo "  Client: $dydx_to_osmo_client"
 echo "  Connection: $dydx_to_osmo_connection"
 echo "  Transfer Channel: $dydx_to_osmo_channel -> $osmo_to_dydx_channel"
-echo "  IBC Denom: $dydx_denom_on_osmo"
 
 noble_to_osmo_client=$(GET_CLIENT_ID_FROM_CHAIN_ID NOBLE OSMO)
 noble_to_osmo_connection=$(GET_CONNECTION_ID_FROM_CLIENT_ID NOBLE $noble_to_osmo_client)
 noble_to_osmo_channel=$(GET_TRANSFER_CHANNEL_ID_FROM_CONNECTION_ID NOBLE $noble_to_osmo_connection)
 osmo_to_noble_channel=$(GET_COUNTERPARTY_TRANSFER_CHANNEL_ID NOBLE $noble_to_osmo_channel)
-usdc_denom_on_osmo=$(GET_IBC_DENOM OSMO $osmo_to_noble_channel $USDC_DENOM)
 
 echo -e "\nNOBLE -> OSMO:"
 echo "  Client: $noble_to_osmo_client"
 echo "  Connection: $noble_to_osmo_connection"
 echo "  Transfer Channel: $noble_to_osmo_channel -> $osmo_to_noble_channel"
-echo "  IBC Denom: $usdc_denom_on_osmo"
 
 echo -e "\nSending dydx/usdc to osmosis for initial liquidity..."
 
@@ -44,6 +40,13 @@ sleep 15
 
 echo ">>> Balances:"
 $OSMO_MAIN_CMD q bank balances $(OSMO_ADDRESS)
+
+echo -e "\nDetermining IBC Denoms..."
+dydx_denom_on_osmo=$(GET_IBC_DENOM OSMO $osmo_to_dydx_channel $DYDX_DENOM)
+usdc_denom_on_osmo=$(GET_IBC_DENOM OSMO $osmo_to_noble_channel $USDC_DENOM)
+
+echo "  ibc/dydx on Osmosis: $dydx_denom_on_osmo"
+echo "  ibc/usdc on Osmosis: $usdc_denom_on_osmo"
 
 echo -e "\nCreating dydx/usdc pool on osmosis..."
 pool_file=${STATE}/${OSMO_NODE_PREFIX}1/pool.json

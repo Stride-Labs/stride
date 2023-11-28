@@ -16,7 +16,7 @@ const (
 	ICQCallbackID_WithdrawalRewardBalance = "withdrawalrewardbalance"
 	ICQCallbackID_TradeRewardBalance      = "traderewardbalance"
 	ICQCallbackID_TradeConvertedBalance   = "tradeconvertedbalance"
-	ICQCallbackID_PoolSpotPrice           = "poolspotprice"
+	ICQCallbackID_PoolPrice               = "poolprice"
 )
 
 // ICQCallbacks wrapper struct for stakeibc keeper
@@ -58,5 +58,5 @@ func (c ICQCallbacks) RegisterICQCallbacks() icqtypes.QueryCallbacks {
 		AddICQCallback(ICQCallbackID_WithdrawalRewardBalance, ICQCallback(WithdrawalRewardBalanceCallback)).
 		AddICQCallback(ICQCallbackID_TradeRewardBalance, ICQCallback(TradeRewardBalanceCallback)).
 		AddICQCallback(ICQCallbackID_TradeConvertedBalance, ICQCallback(TradeConvertedBalanceCallback)).
-		AddICQCallback(ICQCallbackID_PoolSpotPrice, ICQCallback(PoolSpotPriceCallback))
+		AddICQCallback(ICQCallbackID_PoolPrice, ICQCallback(PoolPriceCallback))
 }
