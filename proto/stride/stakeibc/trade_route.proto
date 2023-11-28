@@ -16,27 +16,8 @@ message TradeHop {
   ICAAccount to_account = 3 [ (gogoproto.nullable) = false ];
 }
 
-// TradeRoute represents a round trip including info on transfer and how to do
-// the swap. It makes the assumption that the reward token is always foreign to
-// the host so therefore the first two hops are to unwind the ibc denom enroute
-// to the trade chain and the last hop is the return so funds start/end in the
-// withdrawl ICA on hostZone
-message TradeRoute {
-  // ibc denom for the reward on the host zone
-  string reward_denom_on_host_zone = 1;
-  // should be the native denom for the reward chain
-  string reward_denom_on_reward_zone = 2;
-  // ibc denom of the reward on the trade chain, input to the swap
-  string reward_denom_on_trade_zone = 3;
-  // ibc of the host denom on the trade chain, output from the swap
-  string host_denom_on_trade_zone = 4;
-  // should be the same as the native host denom on the host chain
-  string host_denom_on_host_zone = 5;
-
-  TradeHop host_to_reward_hop = 6 [ (gogoproto.nullable) = false ];
-  TradeHop reward_to_trade_hop = 7 [ (gogoproto.nullable) = false ];
-  TradeHop trade_to_host_hop = 8 [ (gogoproto.nullable) = false ];
-
+// Stores pool information needed to execute the swap along a trade route
+message TradeConfig {
   // Currently Osmosis is the only trade chain so this is an osmosis pool id
   uint64 pool_id = 9;
 
@@ -71,4 +52,30 @@ message TradeRoute {
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
     (gogoproto.nullable) = false
   ];
+}
+
+// TradeRoute represents a round trip including info on transfer and how to do
+// the swap. It makes the assumption that the reward token is always foreign to
+// the host so therefore the first two hops are to unwind the ibc denom enroute
+// to the trade chain and the last hop is the return so funds start/end in the
+// withdrawl ICA on hostZone
+message TradeRoute {
+  // ibc denom for the reward on the host zone
+  string reward_denom_on_host_zone = 1;
+  // should be the native denom for the reward chain
+  string reward_denom_on_reward_zone = 2;
+  // ibc denom of the reward on the trade chain, input to the swap
+  string reward_denom_on_trade_zone = 3;
+  // ibc of the host denom on the trade chain, output from the swap
+  string host_denom_on_trade_zone = 4;
+  // should be the same as the native host denom on the host chain
+  string host_denom_on_host_zone = 5;
+
+  TradeHop host_to_reward_hop = 6 [ (gogoproto.nullable) = false ];
+  TradeHop reward_to_trade_hop = 7 [ (gogoproto.nullable) = false ];
+  TradeHop trade_to_host_hop = 8 [ (gogoproto.nullable) = false ];
+
+  // specifies the configuration needed to execute the swap
+  // such as pool_id, slippage, min trade amount, etc.
+  TradeConfig trade_config = 9 [ (gogoproto.nullable) = false ];
 }

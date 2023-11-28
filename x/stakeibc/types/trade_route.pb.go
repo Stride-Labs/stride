@@ -88,25 +88,8 @@ func (m *TradeHop) GetToAccount() ICAAccount {
 	return ICAAccount{}
 }
 
-// TradeRoute represents a round trip including info on transfer and how to do
-// the swap. It makes the assumption that the reward token is always foreign to
-// the host so therefore the first two hops are to unwind the ibc denom enroute
-// to the trade chain and the last hop is the return so funds start/end in the
-// withdrawl ICA on hostZone
-type TradeRoute struct {
-	// ibc denom for the reward on the host zone
-	RewardDenomOnHostZone string `protobuf:"bytes,1,opt,name=reward_denom_on_host_zone,json=rewardDenomOnHostZone,proto3" json:"reward_denom_on_host_zone,omitempty"`
-	// should be the native denom for the reward chain
-	RewardDenomOnRewardZone string `protobuf:"bytes,2,opt,name=reward_denom_on_reward_zone,json=rewardDenomOnRewardZone,proto3" json:"reward_denom_on_reward_zone,omitempty"`
-	// ibc denom of the reward on the trade chain, input to the swap
-	RewardDenomOnTradeZone string `protobuf:"bytes,3,opt,name=reward_denom_on_trade_zone,json=rewardDenomOnTradeZone,proto3" json:"reward_denom_on_trade_zone,omitempty"`
-	// ibc of the host denom on the trade chain, output from the swap
-	HostDenomOnTradeZone string `protobuf:"bytes,4,opt,name=host_denom_on_trade_zone,json=hostDenomOnTradeZone,proto3" json:"host_denom_on_trade_zone,omitempty"`
-	// should be the same as the native host denom on the host chain
-	HostDenomOnHostZone string   `protobuf:"bytes,5,opt,name=host_denom_on_host_zone,json=hostDenomOnHostZone,proto3" json:"host_denom_on_host_zone,omitempty"`
-	HostToRewardHop     TradeHop `protobuf:"bytes,6,opt,name=host_to_reward_hop,json=hostToRewardHop,proto3" json:"host_to_reward_hop"`
-	RewardToTradeHop    TradeHop `protobuf:"bytes,7,opt,name=reward_to_trade_hop,json=rewardToTradeHop,proto3" json:"reward_to_trade_hop"`
-	TradeToHostHop      TradeHop `protobuf:"bytes,8,opt,name=trade_to_host_hop,json=tradeToHostHop,proto3" json:"trade_to_host_hop"`
+// Stores pool information needed to execute the swap along a trade route
+type TradeConfig struct {
 	// Currently Osmosis is the only trade chain so this is an osmosis pool id
 	PoolId uint64 `protobuf:"varint,9,opt,name=pool_id,json=poolId,proto3" json:"pool_id,omitempty"`
 	// Spot price in the pool to convert the reward denom to the host denom
@@ -126,11 +109,82 @@ type TradeRoute struct {
 	MaxSwapAmount github_com_cosmos_cosmos_sdk_types.Int `protobuf:"bytes,14,opt,name=max_swap_amount,json=maxSwapAmount,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Int" json:"max_swap_amount"`
 }
 
+func (m *TradeConfig) Reset()         { *m = TradeConfig{} }
+func (m *TradeConfig) String() string { return proto.CompactTextString(m) }
+func (*TradeConfig) ProtoMessage()    {}
+func (*TradeConfig) Descriptor() ([]byte, []int) {
+	return fileDescriptor_c252b142ecf88017, []int{1}
+}
+func (m *TradeConfig) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *TradeConfig) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_TradeConfig.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *TradeConfig) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_TradeConfig.Merge(m, src)
+}
+func (m *TradeConfig) XXX_Size() int {
+	return m.Size()
+}
+func (m *TradeConfig) XXX_DiscardUnknown() {
+	xxx_messageInfo_TradeConfig.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_TradeConfig proto.InternalMessageInfo
+
+func (m *TradeConfig) GetPoolId() uint64 {
+	if m != nil {
+		return m.PoolId
+	}
+	return 0
+}
+
+func (m *TradeConfig) GetPriceUpdateTimestamp() uint64 {
+	if m != nil {
+		return m.PriceUpdateTimestamp
+	}
+	return 0
+}
+
+// TradeRoute represents a round trip including info on transfer and how to do
+// the swap. It makes the assumption that the reward token is always foreign to
+// the host so therefore the first two hops are to unwind the ibc denom enroute
+// to the trade chain and the last hop is the return so funds start/end in the
+// withdrawl ICA on hostZone
+type TradeRoute struct {
+	// ibc denom for the reward on the host zone
+	RewardDenomOnHostZone string `protobuf:"bytes,1,opt,name=reward_denom_on_host_zone,json=rewardDenomOnHostZone,proto3" json:"reward_denom_on_host_zone,omitempty"`
+	// should be the native denom for the reward chain
+	RewardDenomOnRewardZone string `protobuf:"bytes,2,opt,name=reward_denom_on_reward_zone,json=rewardDenomOnRewardZone,proto3" json:"reward_denom_on_reward_zone,omitempty"`
+	// ibc denom of the reward on the trade chain, input to the swap
+	RewardDenomOnTradeZone string `protobuf:"bytes,3,opt,name=reward_denom_on_trade_zone,json=rewardDenomOnTradeZone,proto3" json:"reward_denom_on_trade_zone,omitempty"`
+	// ibc of the host denom on the trade chain, output from the swap
+	HostDenomOnTradeZone string `protobuf:"bytes,4,opt,name=host_denom_on_trade_zone,json=hostDenomOnTradeZone,proto3" json:"host_denom_on_trade_zone,omitempty"`
+	// should be the same as the native host denom on the host chain
+	HostDenomOnHostZone string   `protobuf:"bytes,5,opt,name=host_denom_on_host_zone,json=hostDenomOnHostZone,proto3" json:"host_denom_on_host_zone,omitempty"`
+	HostToRewardHop     TradeHop `protobuf:"bytes,6,opt,name=host_to_reward_hop,json=hostToRewardHop,proto3" json:"host_to_reward_hop"`
+	RewardToTradeHop    TradeHop `protobuf:"bytes,7,opt,name=reward_to_trade_hop,json=rewardToTradeHop,proto3" json:"reward_to_trade_hop"`
+	TradeToHostHop      TradeHop `protobuf:"bytes,8,opt,name=trade_to_host_hop,json=tradeToHostHop,proto3" json:"trade_to_host_hop"`
+	// specifies the configuration needed to execute the swap
+	// such as pool_id, slippage, min trade amount, etc.
+	TradeConfig TradeConfig `protobuf:"bytes,9,opt,name=trade_config,json=tradeConfig,proto3" json:"trade_config"`
+}
+
 func (m *TradeRoute) Reset()         { *m = TradeRoute{} }
 func (m *TradeRoute) String() string { return proto.CompactTextString(m) }
 func (*TradeRoute) ProtoMessage()    {}
 func (*TradeRoute) Descriptor() ([]byte, []int) {
-	return fileDescriptor_c252b142ecf88017, []int{1}
+	return fileDescriptor_c252b142ecf88017, []int{2}
 }
 func (m *TradeRoute) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -215,70 +269,66 @@ func (m *TradeRoute) GetTradeToHostHop() TradeHop {
 	return TradeHop{}
 }
 
-func (m *TradeRoute) GetPoolId() uint64 {
+func (m *TradeRoute) GetTradeConfig() TradeConfig {
 	if m != nil {
-		return m.PoolId
+		return m.TradeConfig
 	}
-	return 0
-}
-
-func (m *TradeRoute) GetPriceUpdateTimestamp() uint64 {
-	if m != nil {
-		return m.PriceUpdateTimestamp
-	}
-	return 0
+	return TradeConfig{}
 }
 
 func init() {
 	proto.RegisterType((*TradeHop)(nil), "stride.stakeibc.TradeHop")
+	proto.RegisterType((*TradeConfig)(nil), "stride.stakeibc.TradeConfig")
 	proto.RegisterType((*TradeRoute)(nil), "stride.stakeibc.TradeRoute")
 }
 
 func init() { proto.RegisterFile("stride/stakeibc/trade_route.proto", fileDescriptor_c252b142ecf88017) }
 
 var fileDescriptor_c252b142ecf88017 = []byte{
-	// 657 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xac, 0x94, 0xcf, 0x4e, 0xdb, 0x4c,
-	0x10, 0xc0, 0x63, 0xe0, 0x03, 0x32, 0xfc, 0xfb, 0x30, 0x14, 0x4c, 0x90, 0x02, 0xe5, 0x50, 0x71,
-	0xc1, 0x51, 0x29, 0x42, 0x55, 0xc5, 0xa1, 0x81, 0x1c, 0x48, 0x15, 0xb5, 0x95, 0x49, 0x7b, 0xa0,
-	0x87, 0xd5, 0xc6, 0x5e, 0x88, 0x45, 0xec, 0xb1, 0xbc, 0x9b, 0x26, 0xed, 0x53, 0xf4, 0x61, 0xfa,
-	0x04, 0x3d, 0x71, 0x44, 0x3d, 0x55, 0x3d, 0xa0, 0x0a, 0xee, 0x7d, 0x86, 0x6a, 0x67, 0x6d, 0x20,
-	0xd0, 0x03, 0xad, 0x7a, 0x82, 0xf5, 0xcc, 0xef, 0x37, 0x33, 0x9b, 0xdd, 0x85, 0x87, 0x52, 0xa5,
-	0x61, 0x20, 0x2a, 0x52, 0xf1, 0x13, 0x11, 0xb6, 0xfc, 0x8a, 0x4a, 0x79, 0x20, 0x58, 0x8a, 0x5d,
-	0x25, 0xdc, 0x24, 0x45, 0x85, 0xf6, 0x8c, 0x49, 0x71, 0xf3, 0x94, 0xd2, 0xfc, 0x31, 0x1e, 0x23,
-	0xc5, 0x2a, 0xfa, 0x3f, 0x93, 0x56, 0xba, 0x63, 0x0a, 0x7d, 0xce, 0xb8, 0xef, 0x63, 0x37, 0x56,
-	0x59, 0xca, 0x92, 0x8f, 0x32, 0x42, 0xc9, 0x0c, 0x6b, 0x16, 0x26, 0xb4, 0xf6, 0xc5, 0x82, 0xf1,
-	0xa6, 0x2e, 0xbd, 0x8f, 0x89, 0xed, 0xc2, 0x9c, 0x4a, 0x79, 0x2c, 0x8f, 0x44, 0xca, 0xfc, 0x36,
-	0x8f, 0x63, 0xd1, 0x61, 0x61, 0xe0, 0x58, 0xab, 0xd6, 0x7a, 0xd1, 0x9b, 0xcd, 0x43, 0x7b, 0x26,
-	0x52, 0x0f, 0xec, 0x1a, 0x4c, 0x1e, 0xa5, 0x18, 0xe5, 0xd5, 0x9c, 0xa1, 0x55, 0x6b, 0x7d, 0x62,
-	0x73, 0xd9, 0xbd, 0xd5, 0xb8, 0x5b, 0xdf, 0xab, 0x56, 0x4d, 0xca, 0xee, 0xc8, 0xe9, 0xf9, 0x4a,
-	0xc1, 0x9b, 0xd0, 0x58, 0xf6, 0xc9, 0x7e, 0x0e, 0xa0, 0xf0, 0xca, 0x31, 0x7c, 0x5f, 0x47, 0x51,
-	0x61, 0xf6, 0x61, 0xed, 0xe7, 0x18, 0x00, 0x0d, 0xe1, 0xe9, 0xed, 0xb3, 0x9f, 0xc2, 0x52, 0x2a,
-	0x7a, 0x3c, 0x0d, 0x58, 0x20, 0x62, 0x8c, 0x18, 0xc6, 0xac, 0x8d, 0x52, 0xb1, 0x8f, 0x18, 0x8b,
-	0x6c, 0x98, 0x07, 0x26, 0xa1, 0xa6, 0xe3, 0xaf, 0xe2, 0x7d, 0x94, 0xea, 0x10, 0x63, 0x61, 0xef,
-	0xc0, 0xf2, 0x6d, 0x32, 0x5b, 0x13, 0x3b, 0x44, 0xec, 0xe2, 0x00, 0xeb, 0xd1, 0x82, 0xe8, 0x67,
-	0x50, 0xba, 0x4d, 0x9b, 0x5f, 0x95, 0xe0, 0x61, 0x82, 0x17, 0x06, 0x60, 0x6a, 0x9a, 0xd8, 0x6d,
-	0x70, 0xa8, 0xc7, 0xdf, 0x91, 0x23, 0x44, 0xce, 0xeb, 0xf8, 0x1d, 0x6e, 0x0b, 0x16, 0x07, 0xb9,
-	0xeb, 0x49, 0xff, 0x23, 0x6c, 0xee, 0x06, 0x76, 0x35, 0x67, 0x03, 0x6c, 0xca, 0x53, 0x98, 0xcf,
-	0xd7, 0xc6, 0xc4, 0x19, 0xa5, 0xad, 0x5f, 0xba, 0xb3, 0xf5, 0xf9, 0xf9, 0xc8, 0x36, 0x7e, 0x46,
-	0xa3, 0x4d, 0x34, 0x83, 0xeb, 0x63, 0xf3, 0x12, 0xe6, 0x32, 0x8b, 0xc2, 0xac, 0x6f, 0xad, 0x1b,
-	0xbb, 0x9f, 0xee, 0x7f, 0xc3, 0x36, 0xf1, 0xea, 0x18, 0xbe, 0x80, 0x59, 0x63, 0x51, 0x68, 0xc6,
-	0xd1, 0xb6, 0xf1, 0xfb, 0xd9, 0xa6, 0x89, 0x6c, 0xa2, 0x1e, 0x55, 0xbb, 0x16, 0x61, 0x2c, 0x41,
-	0xa4, 0x63, 0x5c, 0x5c, 0xb5, 0xd6, 0x47, 0xbc, 0x51, 0xbd, 0xac, 0x07, 0xf6, 0x3b, 0x00, 0xd9,
-	0xe3, 0x09, 0x4b, 0xd2, 0xd0, 0x17, 0x0e, 0xe8, 0xbd, 0xda, 0xdd, 0xd1, 0x8a, 0xef, 0xe7, 0x2b,
-	0x8f, 0x8e, 0x43, 0xd5, 0xee, 0xb6, 0x5c, 0x1f, 0xa3, 0xec, 0xb6, 0x64, 0x7f, 0x36, 0x64, 0x70,
-	0x52, 0x51, 0x1f, 0x12, 0x21, 0xdd, 0x9a, 0xf0, 0xbf, 0x7e, 0xde, 0x80, 0xec, 0x32, 0xd5, 0x84,
-	0xef, 0x15, 0xb5, 0xef, 0xb5, 0xd6, 0xd9, 0x5b, 0xb0, 0x40, 0x5e, 0xd6, 0x4d, 0x02, 0xae, 0x04,
-	0x53, 0x61, 0x24, 0xa4, 0xe2, 0x51, 0xe2, 0x4c, 0x50, 0x13, 0xf3, 0x14, 0x7d, 0x43, 0xc1, 0x66,
-	0x1e, 0xb3, 0xfb, 0x50, 0x8a, 0x78, 0x9f, 0xf1, 0x4e, 0x07, 0x7b, 0x22, 0x60, 0xd4, 0x5e, 0x07,
-	0xa5, 0x64, 0x29, 0x57, 0xc2, 0x99, 0xfc, 0x07, 0x2d, 0x2e, 0x44, 0xbc, 0x5f, 0x35, 0xfa, 0x83,
-	0x1e, 0x4f, 0x1a, 0x28, 0xa5, 0xc7, 0x95, 0xb0, 0xdf, 0xc2, 0x4c, 0x14, 0xc6, 0xa6, 0x22, 0x8f,
-	0xe8, 0x1e, 0x4e, 0x51, 0x39, 0xf7, 0x0f, 0xca, 0xd5, 0x63, 0xe5, 0x4d, 0x45, 0x61, 0xac, 0xcd,
-	0x55, 0x92, 0x90, 0x97, 0xf7, 0x07, 0xbc, 0xd3, 0x7f, 0xe9, 0xe5, 0xfd, 0x6b, 0xef, 0x6e, 0xe3,
-	0xf4, 0xa2, 0x6c, 0x9d, 0x5d, 0x94, 0xad, 0x1f, 0x17, 0x65, 0xeb, 0xd3, 0x65, 0xb9, 0x70, 0x76,
-	0x59, 0x2e, 0x7c, 0xbb, 0x2c, 0x17, 0x0e, 0x37, 0x6f, 0x08, 0x0f, 0xe8, 0xa8, 0x6c, 0x34, 0x78,
-	0x4b, 0x56, 0xb2, 0x47, 0xf2, 0xfd, 0xe3, 0xed, 0x4a, 0xff, 0xc6, 0xa3, 0xab, 0x0b, 0xb4, 0x46,
-	0xe9, 0x29, 0x7c, 0xf2, 0x2b, 0x00, 0x00, 0xff, 0xff, 0x05, 0x21, 0xfb, 0x8a, 0x94, 0x05, 0x00,
+	// 689 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xac, 0x94, 0x4f, 0x4f, 0x13, 0x41,
+	0x14, 0xc0, 0xbb, 0x50, 0x81, 0x4e, 0xf9, 0x23, 0x0b, 0xc2, 0x52, 0x4c, 0x41, 0x0e, 0x86, 0x0b,
+	0xdb, 0x88, 0x84, 0x18, 0xc3, 0xc1, 0x42, 0x4d, 0xa8, 0x69, 0xd4, 0x2c, 0xd5, 0x03, 0x1e, 0x26,
+	0xd3, 0xdd, 0xa1, 0xdd, 0xd0, 0xdd, 0xb7, 0xd9, 0x99, 0xda, 0xea, 0xa7, 0xf0, 0xc3, 0xf8, 0x09,
+	0x3c, 0x71, 0x24, 0x9e, 0x8c, 0x07, 0x34, 0xf4, 0x8b, 0x98, 0x79, 0xb3, 0x0b, 0x2d, 0x70, 0xa8,
+	0xc6, 0x13, 0xcc, 0xbe, 0xf7, 0xfb, 0xcd, 0x7b, 0xdb, 0x7d, 0x8f, 0x3c, 0x12, 0x32, 0xf6, 0x3d,
+	0x5e, 0x12, 0x92, 0x9d, 0x72, 0xbf, 0xe1, 0x96, 0x64, 0xcc, 0x3c, 0x4e, 0x63, 0xe8, 0x48, 0x6e,
+	0x47, 0x31, 0x48, 0x30, 0xe7, 0x74, 0x8a, 0x9d, 0xa6, 0x14, 0x16, 0x9b, 0xd0, 0x04, 0x8c, 0x95,
+	0xd4, 0x7f, 0x3a, 0xad, 0x70, 0xcb, 0xe4, 0xbb, 0x8c, 0x32, 0xd7, 0x85, 0x4e, 0x28, 0x93, 0x94,
+	0x15, 0x17, 0x44, 0x00, 0x82, 0x6a, 0x56, 0x1f, 0x74, 0x68, 0xe3, 0x9b, 0x41, 0xa6, 0xea, 0xea,
+	0xea, 0x43, 0x88, 0x4c, 0x9b, 0x2c, 0xc8, 0x98, 0x85, 0xe2, 0x84, 0xc7, 0xd4, 0x6d, 0xb1, 0x30,
+	0xe4, 0x6d, 0xea, 0x7b, 0x96, 0xb1, 0x6e, 0x6c, 0xe6, 0x9c, 0xf9, 0x34, 0x74, 0xa0, 0x23, 0x55,
+	0xcf, 0xac, 0x90, 0xe9, 0x93, 0x18, 0x82, 0xf4, 0x36, 0x6b, 0x6c, 0xdd, 0xd8, 0xcc, 0x6f, 0xaf,
+	0xda, 0x37, 0x0a, 0xb7, 0xab, 0x07, 0xe5, 0xb2, 0x4e, 0xd9, 0xcf, 0x9e, 0x5d, 0xac, 0x65, 0x9c,
+	0xbc, 0xc2, 0x92, 0x47, 0xe6, 0x0b, 0x42, 0x24, 0x5c, 0x39, 0xc6, 0x47, 0x75, 0xe4, 0x24, 0x24,
+	0x0f, 0x36, 0xfa, 0xe3, 0x24, 0x8f, 0x4d, 0x1c, 0x40, 0x78, 0xe2, 0x37, 0xcd, 0x65, 0x32, 0x19,
+	0x01, 0x60, 0xed, 0xb9, 0x75, 0x63, 0x33, 0xeb, 0x4c, 0xa8, 0x63, 0xd5, 0x33, 0x3f, 0x10, 0x22,
+	0xba, 0x2c, 0xa2, 0x51, 0xec, 0xbb, 0xdc, 0x22, 0xaa, 0xaf, 0xfd, 0x3d, 0x65, 0xfb, 0x79, 0xb1,
+	0xf6, 0xb8, 0xe9, 0xcb, 0x56, 0xa7, 0x61, 0xbb, 0x10, 0x24, 0xaf, 0x28, 0xf9, 0xb3, 0x25, 0xbc,
+	0xd3, 0x92, 0xfc, 0x14, 0x71, 0x61, 0x57, 0xb8, 0xfb, 0xfd, 0xeb, 0x16, 0x49, 0xde, 0x60, 0x85,
+	0xbb, 0x4e, 0x4e, 0xf9, 0xde, 0x2a, 0x9d, 0xb9, 0x43, 0x96, 0xd0, 0x4b, 0x3b, 0x91, 0xc7, 0x24,
+	0xa7, 0xd2, 0x0f, 0xb8, 0x90, 0x2c, 0x88, 0xac, 0x3c, 0x16, 0xb1, 0x88, 0xd1, 0x77, 0x18, 0xac,
+	0xa7, 0x31, 0xb3, 0x47, 0x0a, 0x01, 0xeb, 0x51, 0xd6, 0x6e, 0x43, 0x97, 0x7b, 0x14, 0xcb, 0x6b,
+	0x83, 0x10, 0x34, 0x66, 0x92, 0x5b, 0xd3, 0xff, 0xa1, 0xc4, 0xa5, 0x80, 0xf5, 0xca, 0x5a, 0x7f,
+	0xd4, 0x65, 0x51, 0x0d, 0x84, 0x70, 0x98, 0xe4, 0xe6, 0x7b, 0x32, 0x17, 0xf8, 0xa1, 0xbe, 0x91,
+	0x05, 0xf8, 0xf2, 0x67, 0xf0, 0x3a, 0xfb, 0x2f, 0xae, 0xab, 0x86, 0xd2, 0x99, 0x09, 0xfc, 0x50,
+	0x99, 0xcb, 0x28, 0x41, 0x2f, 0xeb, 0x0d, 0x79, 0x67, 0xff, 0xd1, 0xcb, 0x7a, 0xd7, 0xde, 0x8d,
+	0x5f, 0x59, 0x42, 0xf0, 0x57, 0x76, 0xd4, 0x90, 0x98, 0xcf, 0xc8, 0x4a, 0xcc, 0xbb, 0x2c, 0xf6,
+	0xa8, 0xc7, 0x43, 0x08, 0x28, 0x84, 0xb4, 0x05, 0x42, 0xd2, 0xcf, 0x10, 0xf2, 0xe4, 0x93, 0x7d,
+	0xa0, 0x13, 0x2a, 0x2a, 0xfe, 0x26, 0x3c, 0x04, 0x21, 0x8f, 0x21, 0xe4, 0xe6, 0x1e, 0x59, 0xbd,
+	0x49, 0x26, 0x67, 0x64, 0xc7, 0x90, 0x5d, 0x1e, 0x62, 0x1d, 0x3c, 0x20, 0xfd, 0x9c, 0x14, 0x6e,
+	0xd2, 0x7a, 0x76, 0x11, 0x1e, 0x47, 0x78, 0x69, 0x08, 0xc6, 0xa2, 0x91, 0xdd, 0x25, 0x16, 0xd6,
+	0x78, 0x17, 0x99, 0x45, 0x72, 0x51, 0xc5, 0x6f, 0x71, 0x3b, 0x64, 0x79, 0x98, 0xbb, 0xee, 0xf4,
+	0x1e, 0x62, 0x0b, 0x03, 0xd8, 0x55, 0x9f, 0x35, 0x62, 0x62, 0x9e, 0x84, 0xb4, 0xbf, 0x16, 0x44,
+	0xd6, 0x04, 0x0e, 0xd8, 0xca, 0xad, 0x01, 0x4b, 0xb7, 0x40, 0x32, 0x5e, 0x73, 0x0a, 0xad, 0x83,
+	0x6e, 0x5c, 0x2d, 0x87, 0xd7, 0x64, 0x21, 0xb1, 0x48, 0x48, 0xea, 0x56, 0xba, 0xc9, 0xd1, 0x74,
+	0xf7, 0x35, 0x5b, 0x87, 0xab, 0x65, 0xf3, 0x8a, 0xcc, 0x6b, 0x8b, 0x04, 0xdd, 0x8e, 0xb2, 0x4d,
+	0x8d, 0x66, 0x9b, 0x45, 0xb2, 0x0e, 0xaa, 0x55, 0xe5, 0x7a, 0x49, 0xa6, 0xb5, 0xcb, 0xc5, 0x05,
+	0x80, 0x53, 0x9f, 0xdf, 0x7e, 0x78, 0xb7, 0x46, 0x2f, 0x89, 0x74, 0x13, 0xc9, 0x81, 0x47, 0xb5,
+	0xb3, 0xcb, 0xa2, 0x71, 0x7e, 0x59, 0x34, 0x7e, 0x5f, 0x16, 0x8d, 0x2f, 0xfd, 0x62, 0xe6, 0xbc,
+	0x5f, 0xcc, 0xfc, 0xe8, 0x17, 0x33, 0xc7, 0xdb, 0x03, 0x9f, 0xec, 0x11, 0x4a, 0xb7, 0x6a, 0xac,
+	0x21, 0x4a, 0xc9, 0xee, 0xfd, 0xf8, 0x64, 0xb7, 0xd4, 0x1b, 0xd8, 0xe5, 0xea, 0x13, 0x6e, 0x4c,
+	0xe0, 0x86, 0x7d, 0xfa, 0x27, 0x00, 0x00, 0xff, 0xff, 0x88, 0xb2, 0xc0, 0xbe, 0xeb, 0x05, 0x00,
 	0x00,
 }
 
@@ -332,7 +382,7 @@ func (m *TradeHop) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	return len(dAtA) - i, nil
 }
 
-func (m *TradeRoute) Marshal() (dAtA []byte, err error) {
+func (m *TradeConfig) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalToSizedBuffer(dAtA[:size])
@@ -342,12 +392,12 @@ func (m *TradeRoute) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *TradeRoute) MarshalTo(dAtA []byte) (int, error) {
+func (m *TradeConfig) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
-func (m *TradeRoute) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+func (m *TradeConfig) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
@@ -402,6 +452,39 @@ func (m *TradeRoute) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 		i--
 		dAtA[i] = 0x48
 	}
+	return len(dAtA) - i, nil
+}
+
+func (m *TradeRoute) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *TradeRoute) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *TradeRoute) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	{
+		size, err := m.TradeConfig.MarshalToSizedBuffer(dAtA[:i])
+		if err != nil {
+			return 0, err
+		}
+		i -= size
+		i = encodeVarintTradeRoute(dAtA, i, uint64(size))
+	}
+	i--
+	dAtA[i] = 0x4a
 	{
 		size, err := m.TradeToHostHop.MarshalToSizedBuffer(dAtA[:i])
 		if err != nil {
@@ -498,6 +581,29 @@ func (m *TradeHop) Size() (n int) {
 	return n
 }
 
+func (m *TradeConfig) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if m.PoolId != 0 {
+		n += 1 + sovTradeRoute(uint64(m.PoolId))
+	}
+	l = m.SwapPrice.Size()
+	n += 1 + l + sovTradeRoute(uint64(l))
+	if m.PriceUpdateTimestamp != 0 {
+		n += 1 + sovTradeRoute(uint64(m.PriceUpdateTimestamp))
+	}
+	l = m.MaxAllowedSwapLossRate.Size()
+	n += 1 + l + sovTradeRoute(uint64(l))
+	l = m.MinSwapAmount.Size()
+	n += 1 + l + sovTradeRoute(uint64(l))
+	l = m.MaxSwapAmount.Size()
+	n += 1 + l + sovTradeRoute(uint64(l))
+	return n
+}
+
 func (m *TradeRoute) Size() (n int) {
 	if m == nil {
 		return 0
@@ -530,19 +636,7 @@ func (m *TradeRoute) Size() (n int) {
 	n += 1 + l + sovTradeRoute(uint64(l))
 	l = m.TradeToHostHop.Size()
 	n += 1 + l + sovTradeRoute(uint64(l))
-	if m.PoolId != 0 {
-		n += 1 + sovTradeRoute(uint64(m.PoolId))
-	}
-	l = m.SwapPrice.Size()
-	n += 1 + l + sovTradeRoute(uint64(l))
-	if m.PriceUpdateTimestamp != 0 {
-		n += 1 + sovTradeRoute(uint64(m.PriceUpdateTimestamp))
-	}
-	l = m.MaxAllowedSwapLossRate.Size()
-	n += 1 + l + sovTradeRoute(uint64(l))
-	l = m.MinSwapAmount.Size()
-	n += 1 + l + sovTradeRoute(uint64(l))
-	l = m.MaxSwapAmount.Size()
+	l = m.TradeConfig.Size()
 	n += 1 + l + sovTradeRoute(uint64(l))
 	return n
 }
@@ -677,6 +771,230 @@ func (m *TradeHop) Unmarshal(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if err := m.ToAccount.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipTradeRoute(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthTradeRoute
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *TradeConfig) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowTradeRoute
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: TradeConfig: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: TradeConfig: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 9:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field PoolId", wireType)
+			}
+			m.PoolId = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTradeRoute
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.PoolId |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 10:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field SwapPrice", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTradeRoute
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTradeRoute
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTradeRoute
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if err := m.SwapPrice.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 11:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field PriceUpdateTimestamp", wireType)
+			}
+			m.PriceUpdateTimestamp = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTradeRoute
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.PriceUpdateTimestamp |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 12:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field MaxAllowedSwapLossRate", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTradeRoute
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTradeRoute
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTradeRoute
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if err := m.MaxAllowedSwapLossRate.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 13:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field MinSwapAmount", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTradeRoute
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTradeRoute
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTradeRoute
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if err := m.MinSwapAmount.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 14:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field MaxSwapAmount", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTradeRoute
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTradeRoute
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTradeRoute
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if err := m.MaxSwapAmount.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex
@@ -990,29 +1308,10 @@ func (m *TradeRoute) Unmarshal(dAtA []byte) error {
 			}
 			iNdEx = postIndex
 		case 9:
-			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field PoolId", wireType)
-			}
-			m.PoolId = 0
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowTradeRoute
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				m.PoolId |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-		case 10:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field SwapPrice", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field TradeConfig", wireType)
 			}
-			var stringLen uint64
+			var msglen int
 			for shift := uint(0); ; shift += 7 {
 				if shift >= 64 {
 					return ErrIntOverflowTradeRoute
@@ -1022,144 +1321,22 @@ func (m *TradeRoute) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
+				msglen |= int(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}
 			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
+			if msglen < 0 {
 				return ErrInvalidLengthTradeRoute
 			}
-			postIndex := iNdEx + intStringLen
+			postIndex := iNdEx + msglen
 			if postIndex < 0 {
 				return ErrInvalidLengthTradeRoute
 			}
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			if err := m.SwapPrice.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
-				return err
-			}
-			iNdEx = postIndex
-		case 11:
-			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field PriceUpdateTimestamp", wireType)
-			}
-			m.PriceUpdateTimestamp = 0
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowTradeRoute
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				m.PriceUpdateTimestamp |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-		case 12:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field MaxAllowedSwapLossRate", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowTradeRoute
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthTradeRoute
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return ErrInvalidLengthTradeRoute
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			if err := m.MaxAllowedSwapLossRate.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
-				return err
-			}
-			iNdEx = postIndex
-		case 13:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field MinSwapAmount", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowTradeRoute
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthTradeRoute
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return ErrInvalidLengthTradeRoute
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			if err := m.MinSwapAmount.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
-				return err
-			}
-			iNdEx = postIndex
-		case 14:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field MaxSwapAmount", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowTradeRoute
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthTradeRoute
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return ErrInvalidLengthTradeRoute
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			if err := m.MaxSwapAmount.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+			if err := m.TradeConfig.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex
