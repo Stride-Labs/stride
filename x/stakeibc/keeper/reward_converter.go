@@ -67,7 +67,7 @@ func (k Keeper) TransferRewardTokensHostToTrade(ctx sdk.Context, amount sdkmath.
 	// Import and use pfm data structures instead of this JSON if we can determine consistent module version...
 	// This transfer channel id is a channel on the reward Zone for transfers to the trade zone
 	// (not to be confused with a transfer channel on Stride or the Host Zone)
-	memoJSON := fmt.Sprintf(`"forward": {"receiver": "%s","port": "%s","channel":"%s","timeout":"10m","retries": 2}`,
+	memoJSON := fmt.Sprintf(`"{ forward": {"receiver": "%s", "port": "%s", "channel":"%s", "timeout":"10m", "retries": 2} }`,
 		tradeIcaAddress, transfertypes.PortID, route.RewardToTradeChannelId)
 
 	var msgs []proto.Message
@@ -151,14 +151,14 @@ func (k Keeper) SwapRewardTokens(ctx sdk.Context, rewardAmount sdkmath.Int, rout
 
 	// If the max swap amount was not set it would be ZeroInt, if positive we need to compare to the amount given
 	//  then if max swap amount is LTE to amount full swap is possible so amount is fine, otherwise set amount to max
-	if tradeConfig.MaxSwapAmount.IsPositive() && tradeConfig.MaxSwapAmount.GT(rewardAmount) {
+	if tradeConfig.MaxSwapAmount.IsPositive() && rewardAmount.GT(tradeConfig.MaxSwapAmount) {
 		rewardAmount = tradeConfig.MaxSwapAmount
 	}
 
 	// See if pool swap price has been set to a valid ratio
 	// The only time this should not be set is right after the pool is added,
 	// before an ICQ has been submitted for the price
-	if tradeConfig.SwapPrice == sdk.ZeroDec() {
+	if tradeConfig.SwapPrice.IsZero() {
 		return fmt.Errorf("Price not found for pool %d", tradeConfig.PoolId)
 	}
 
@@ -279,11 +279,11 @@ func (k Keeper) TradeRewardBalanceQuery(ctx sdk.Context, route types.TradeRoute)
 	queryData := append(bankTypes.CreateAccountBalancesPrefix(tradeAddressBz), []byte(route.RewardDenomOnTradeZone)...)
 
 	// Timeout query at end of epoch
-	strideEpochTracker, found := k.GetEpochTracker(ctx, epochstypes.STRIDE_EPOCH)
+	hourEpochTracker, found := k.GetEpochTracker(ctx, epochstypes.HOUR_EPOCH)
 	if !found {
-		return errorsmod.Wrapf(types.ErrEpochNotFound, epochstypes.STRIDE_EPOCH)
+		return errorsmod.Wrapf(types.ErrEpochNotFound, epochstypes.HOUR_EPOCH)
 	}
-	timeout := time.Unix(0, int64(strideEpochTracker.NextEpochStartTime))
+	timeout := time.Unix(0, int64(hourEpochTracker.NextEpochStartTime))
 	timeoutDuration := timeout.Sub(ctx.BlockTime())
 
 	// The only callback data we need is the trade route
@@ -376,11 +376,11 @@ func (k Keeper) PoolPriceQuery(ctx sdk.Context, route types.TradeRoute) error {
 	queryData := icqtypes.FormatOsmosisMostRecentTWAPKey(route.TradeConfig.PoolId, denom1, denom2)
 
 	// Timeout query at end of epoch
-	strideEpochTracker, found := k.GetEpochTracker(ctx, epochstypes.STRIDE_EPOCH)
+	hourEpochTracker, found := k.GetEpochTracker(ctx, epochstypes.HOUR_EPOCH)
 	if !found {
-		return errorsmod.Wrapf(types.ErrEpochNotFound, epochstypes.STRIDE_EPOCH)
+		return errorsmod.Wrapf(types.ErrEpochNotFound, epochstypes.HOUR_EPOCH)
 	}
-	timeout := time.Unix(0, int64(strideEpochTracker.NextEpochStartTime))
+	timeout := time.Unix(0, int64(hourEpochTracker.NextEpochStartTime))
 	timeoutDuration := timeout.Sub(ctx.BlockTime())
 
 	// The only callback data we will need is the trade route

@@ -73,6 +73,14 @@ paths:
     src-channel-filter:
       rule: ""
       channel-list: []
+  stride-noble:
+    src:
+      chain-id: STRIDE
+    dst:
+      chain-id: NOBLE
+    src-channel-filter:
+      rule: ""
+      channel-list: []
   dydx-noble:
     src:
       chain-id: DYDX

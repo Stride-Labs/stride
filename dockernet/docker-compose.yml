@@ -357,3 +357,11 @@ services:
       - ./state/relayer-stride-osmo:/home/relayer/.relayer
     restart: always
     command: [ "bash", "start.sh", "stride-osmo" ]
+
+  relayer-stride-noble:
+    image: stridezone:relayer
+    volumes:
+      - ./state/relayer-stride-noble:/home/relayer/.relayer
+    restart: always
+    command: [ "bash", "start.sh", "stride-noble" ]
+
