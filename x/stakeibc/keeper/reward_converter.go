@@ -46,7 +46,7 @@ func (k Keeper) TransferRewardTokensHostToTrade(ctx sdk.Context, amount sdkmath.
 	// If the min swap amount was not set it would be ZeroInt, if positive we need to compare to the amount given
 	//  then if the min swap amount is greater than the current amount, do nothing this epoch to avoid small transfers
 	//  Particularly important for the PFM hop if the reward chain has frictional transfer fees (like noble chain)
-	if route.MinSwapAmount.IsPositive() && route.MinSwapAmount.GT(amount) {
+	if route.TradeConfig.MinSwapAmount.IsPositive() && route.TradeConfig.MinSwapAmount.GT(amount) {
 		return nil
 	}
 
@@ -144,21 +144,22 @@ func (k Keeper) TransferConvertedTokensTradeToHost(ctx sdk.Context, amount sdkma
 func (k Keeper) SwapRewardTokens(ctx sdk.Context, rewardAmount sdkmath.Int, route types.TradeRoute) error {
 	// If the min swap amount was not set it would be ZeroInt, if positive we need to compare to the amount given
 	//  then if the min swap amount is greater than the current amount, do nothing this epoch to avoid small swaps
-	if route.MinSwapAmount.IsPositive() && route.MinSwapAmount.GT(rewardAmount) {
+	tradeConfig := route.TradeConfig
+	if tradeConfig.MinSwapAmount.IsPositive() && tradeConfig.MinSwapAmount.GT(rewardAmount) {
 		return nil
 	}
 
 	// If the max swap amount was not set it would be ZeroInt, if positive we need to compare to the amount given
 	//  then if max swap amount is LTE to amount full swap is possible so amount is fine, otherwise set amount to max
-	if route.MaxSwapAmount.IsPositive() && route.MaxSwapAmount.GT(rewardAmount) {
-		rewardAmount = route.MaxSwapAmount
+	if tradeConfig.MaxSwapAmount.IsPositive() && tradeConfig.MaxSwapAmount.GT(rewardAmount) {
+		rewardAmount = tradeConfig.MaxSwapAmount
 	}
 
 	// See if pool swap price has been set to a valid ratio
 	// The only time this should not be set is right after the pool is added,
 	// before an ICQ has been submitted for the price
-	if route.SwapPrice == sdk.ZeroDec() {
-		return fmt.Errorf("Price not found for pool %d", route.PoolId)
+	if tradeConfig.SwapPrice == sdk.ZeroDec() {
+		return fmt.Errorf("Price not found for pool %d", tradeConfig.PoolId)
 	}
 
 	// If there is a valid price, use it to set a floor for the acceptable minimum output tokens
@@ -171,8 +172,8 @@ func (k Keeper) SwapRewardTokens(ctx sdk.Context, rewardAmount sdkmath.Int, rout
 	// So, to convert from units of RewardTokens to units of HostTokens,
 	// we multiply the reward amount by the price:
 	//   AmountInHost = AmountInReward * SwapPrice
-	rewardAmountConverted := sdk.NewDecFromInt(rewardAmount).Mul(route.SwapPrice)
-	minOutPercentage := sdk.OneDec().Sub(route.MaxAllowedSwapLossRate)
+	rewardAmountConverted := sdk.NewDecFromInt(rewardAmount).Mul(tradeConfig.SwapPrice)
+	minOutPercentage := sdk.OneDec().Sub(tradeConfig.MaxAllowedSwapLossRate)
 	minOut := rewardAmountConverted.Mul(minOutPercentage).TruncateInt()
 
 	tradeIcaAccount := route.RewardToTradeHop.ToAccount
@@ -182,7 +183,7 @@ func (k Keeper) SwapRewardTokens(ctx sdk.Context, rewardAmount sdkmath.Int, rout
 	// If we want to generalize in the future, write swap message generation funcs for each DEX type,
 	// decide which msg generation function to call based on check of which tradeZone was passed in
 	routes := []types.SwapAmountInRoute{{
-		PoolId:        route.PoolId,
+		PoolId:        tradeConfig.PoolId,
 		TokenOutDenom: route.HostDenomOnTradeZone,
 	}}
 	msgs := []proto.Message{&types.MsgSwapExactAmountIn{
@@ -372,7 +373,7 @@ func (k Keeper) PoolPriceQuery(ctx sdk.Context, route types.TradeRoute) error {
 	}
 
 	// Build query request data which consists of the TWAP store key built from each denom
-	queryData := icqtypes.FormatOsmosisMostRecentTWAPKey(route.PoolId, denom1, denom2)
+	queryData := icqtypes.FormatOsmosisMostRecentTWAPKey(route.TradeConfig.PoolId, denom1, denom2)
 
 	// Timeout query at end of epoch
 	strideEpochTracker, found := k.GetEpochTracker(ctx, epochstypes.STRIDE_EPOCH)
@@ -446,7 +447,6 @@ func (k Keeper) SwapAllRewardTokens(ctx sdk.Context) {
 
 // Helper function to be run hourly, kicks off query to get and update the swap price in keeper data
 func (k Keeper) UpdateAllSwapPrices(ctx sdk.Context) {
-	k.SetTradeRoute(ctx, types.TradeRoute{RewardDenomOnHostZone: "A", HostDenomOnHostZone: "B"})
 	for _, route := range k.GetAllTradeRoutes(ctx) {
 		// ICQ swap price for the specific pair on this route and update keeper on callback
 		if err := k.PoolPriceQuery(ctx, route); err != nil {
