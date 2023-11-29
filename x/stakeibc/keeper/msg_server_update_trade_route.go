@@ -11,6 +11,29 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
+// Gov tx to update the trade config of a trade route
+//
+// Example proposal:
+//
+//		{
+//		   "title": "Update a the trade config for host chain X",
+//		   "metadata": "",
+//		   "summary": "Update a the trade config for host chain X",
+//		   "messages":[
+//		      {
+//		         "@type": "/stride.stakeibc.MsgUpdateTradeRoute",
+//		         "authority": "stride10d07y265gmmuvt4z0w9aw880jnsr700jefnezl",
+//
+//				 "pool_id": 1,
+//				 "max_allowed_swap_loss_rate": "0.05",
+//				 "min_swap_amount": "10000000",
+//				 "max_swap_amount": "1000000000"
+//			  }
+//		   ],
+//		   "deposit": "2000000000ustrd"
+//	   }
+//
+// >>> strided tx gov submit-proposal {proposal_file.json} --from wallet
 func (ms msgServer) UpdateTradeRoute(goCtx context.Context, msg *types.MsgUpdateTradeRoute) (*types.MsgUpdateTradeRouteResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 	if ms.authority != msg.Authority {

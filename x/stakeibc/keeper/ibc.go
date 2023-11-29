@@ -157,12 +157,12 @@ func (k Keeper) StoreHostZoneIcaAddress(ctx sdk.Context, chainId, portId, addres
 // relevant ICA address on the trade route
 func (k Keeper) StoreTradeRouteIcaAddress(ctx sdk.Context, chainId, portId, address string) error {
 	// Get the exepected port Id for each ICA account type (using the chainId)
-	tradeOwner := types.FormatICAAccountOwner(chainId, types.ICAAccountType_TRADE)
+	tradeOwner := types.FormatICAAccountOwner(chainId, types.ICAAccountType_CONVERTER_TRADE)
 	tradePortID, err := icatypes.NewControllerPortID(tradeOwner)
 	if err != nil {
 		return err
 	}
-	unwindOwner := types.FormatICAAccountOwner(chainId, types.ICAAccountType_UNWIND)
+	unwindOwner := types.FormatICAAccountOwner(chainId, types.ICAAccountType_CONVERTER_UNWIND)
 	unwindPortID, err := icatypes.NewControllerPortID(unwindOwner)
 	if err != nil {
 		return err
@@ -173,19 +173,13 @@ func (k Keeper) StoreTradeRouteIcaAddress(ctx sdk.Context, chainId, portId, addr
 	// on a trade route, set the ICA address in the relevant places,
 	// including the from/to addresses on each hop
 	for _, tradeRoute := range k.GetAllTradeRoutes(ctx) {
-		if tradeRoute.UnwindAccount.ChainId == chainId && portId == unwindPortID {
-			tradeRoute.UnwindAccount.Address = address
-			tradeRoute.HostToRewardHop.ToAddress = address
-			tradeRoute.RewardToTradeHop.FromAddress = address
-
+		if tradeRoute.RewardAccount.ChainId == chainId && portId == unwindPortID {
 			k.Logger(ctx).Info(fmt.Sprintf("ICA Address %s found for Unwind ICA on %s", address, tradeRoute.Description()))
+			tradeRoute.RewardAccount.Address = address
 
 		} else if tradeRoute.TradeAccount.ChainId == chainId && portId == tradePortID {
-			tradeRoute.TradeAccount.Address = address
-			tradeRoute.RewardToTradeHop.ToAddress = address
-			tradeRoute.TradeToHostHop.FromAddress = address
-
 			k.Logger(ctx).Info(fmt.Sprintf("ICA Address %s found for Trade ICA on %s", address, tradeRoute.Description()))
+			tradeRoute.TradeAccount.Address = address
 		}
 
 		k.SetTradeRoute(ctx, tradeRoute)
