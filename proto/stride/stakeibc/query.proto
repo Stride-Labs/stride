@@ -9,8 +9,9 @@ import "stride/stakeibc/validator.proto";
 import "stride/stakeibc/host_zone.proto";
 import "stride/stakeibc/epoch_tracker.proto";
 import "stride/stakeibc/address_unbonding.proto";
+import "stride/stakeibc/trade_route.proto";
 
-option go_package = "github.com/Stride-Labs/stride/v14/x/stakeibc/types";
+option go_package = "github.com/Stride-Labs/stride/v16/x/stakeibc/types";
 
 // Query defines the gRPC querier service.
 service Query {
@@ -72,6 +73,12 @@ service Query {
       returns (QueryAddressUnbondingsResponse) {
     option (google.api.http).get =
         "/Stride-Labs/stride/stakeibc/unbondings/{address}";
+  }
+
+  // Queries all trade routes
+  rpc AllTradeRoutes(QueryAllTradeRoutes)
+      returns (QueryAllTradeRoutesResponse) {
+    option (google.api.http).get = "/Stride-Labs/stride/stakeibc/trade_routes";
   }
 }
 
@@ -145,4 +152,10 @@ message QueryAddressUnbondings { string address = 1; }
 message QueryAddressUnbondingsResponse {
   repeated AddressUnbonding address_unbondings = 1
       [ (gogoproto.nullable) = false ];
+}
+
+message QueryAllTradeRoutes {};
+
+message QueryAllTradeRoutesResponse {
+  repeated TradeRoute trade_routes = 1 [ (gogoproto.nullable) = false ];
 }

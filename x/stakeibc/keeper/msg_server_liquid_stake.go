@@ -8,8 +8,8 @@ import (
 	errorsmod "cosmossdk.io/errors"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
-	epochtypes "github.com/Stride-Labs/stride/v14/x/epochs/types"
-	"github.com/Stride-Labs/stride/v14/x/stakeibc/types"
+	epochtypes "github.com/Stride-Labs/stride/v16/x/epochs/types"
+	"github.com/Stride-Labs/stride/v16/x/stakeibc/types"
 )
 
 // Exchanges a user's native tokens for stTokens using the current redemption rate
@@ -106,5 +106,5 @@ func (k msgServer) LiquidStake(goCtx context.Context, msg *types.MsgLiquidStake)
 	EmitSuccessfulLiquidStakeEvent(ctx, msg, *hostZone, stAmount)
 
 	k.hooks.AfterLiquidStake(ctx, liquidStakerAddress)
-	return &types.MsgLiquidStakeResponse{}, nil
+	return &types.MsgLiquidStakeResponse{StToken: stCoin}, nil
 }

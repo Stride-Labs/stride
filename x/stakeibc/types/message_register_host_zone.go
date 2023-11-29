@@ -4,13 +4,12 @@ import (
 	"strings"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/types/address"
 
 	errorsmod "cosmossdk.io/errors"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	ibctransfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
 
-	"github.com/Stride-Labs/stride/v14/utils"
+	"github.com/Stride-Labs/stride/v16/utils"
 )
 
 const TypeMsgRegisterHostZone = "register_host_zone"
@@ -133,9 +132,4 @@ func (msg *MsgRegisterHostZone) ValidateBasic() error {
 	}
 
 	return nil
-}
-
-func NewHostZoneDepositAddress(chainId string) sdk.AccAddress {
-	key := append([]byte("zone"), []byte(chainId)...)
-	return address.Module(ModuleName, key)
 }

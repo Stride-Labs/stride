@@ -13,8 +13,8 @@ import (
 	errorsmod "cosmossdk.io/errors"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
-	"github.com/Stride-Labs/stride/v14/utils"
-	"github.com/Stride-Labs/stride/v14/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v16/utils"
+	"github.com/Stride-Labs/stride/v16/x/stakeibc/types"
 )
 
 // SetHostZone set a specific hostZone in the store
@@ -33,6 +33,18 @@ func (k Keeper) GetHostZone(ctx sdk.Context, chainId string) (val types.HostZone
 	}
 	k.cdc.MustUnmarshal(b, &val)
 	return val, true
+}
+
+// GetActiveHostZone returns an error if the host zone is not found or if it's found, but is halted
+func (k Keeper) GetActiveHostZone(ctx sdk.Context, chainId string) (hostZone types.HostZone, err error) {
+	hostZone, found := k.GetHostZone(ctx, chainId)
+	if !found {
+		return hostZone, types.ErrHostZoneNotFound.Wrapf("host zone %s not found", chainId)
+	}
+	if hostZone.Halted {
+		return hostZone, types.ErrHaltedHostZone.Wrapf("host zone %s is halted", chainId)
+	}
+	return hostZone, nil
 }
 
 // GetHostZoneFromHostDenom returns a HostZone from a HostDenom

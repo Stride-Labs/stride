@@ -9,9 +9,9 @@ import (
 	transfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
 	ibctesting "github.com/cosmos/ibc-go/v7/testing"
 
-	recordstypes "github.com/Stride-Labs/stride/v14/x/records/types"
-	"github.com/Stride-Labs/stride/v14/x/stakeibc/keeper"
-	"github.com/Stride-Labs/stride/v14/x/stakeibc/types"
+	recordstypes "github.com/Stride-Labs/stride/v16/x/records/types"
+	"github.com/Stride-Labs/stride/v16/x/stakeibc/keeper"
+	"github.com/Stride-Labs/stride/v16/x/stakeibc/types"
 
 	"github.com/cosmos/gogoproto/proto"
 )
@@ -508,7 +508,7 @@ func (s *KeeperTestSuite) TestTransferAllLSMDeposits() {
 			ChainId:              HostChainId,
 			TransferChannelId:    ibctesting.FirstChannelID,
 			DepositAddress:       s.TestAccs[1].String(),
-			DelegationIcaAddress: DelegationICAAddress,
+			DelegationIcaAddress: HostICAAddress,
 		},
 		{
 			// Missing delegation ICA

@@ -10,7 +10,7 @@ import (
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
 	icacontrollerkeeper "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/controller/keeper"
 
-	"github.com/Stride-Labs/stride/v14/x/icaoracle/types"
+	"github.com/Stride-Labs/stride/v16/x/icaoracle/types"
 )
 
 type Keeper struct {
@@ -59,7 +59,7 @@ func (k Keeper) Logger(ctx sdk.Context) log.Logger {
 	return ctx.Logger().With("module", fmt.Sprintf("x/%s", types.ModuleName))
 }
 
-// GetAuthority returns the x/staking module's authority.
+// GetAuthority returns the x/icaoracle module's authority.
 func (k Keeper) GetAuthority() string {
 	return k.authority
 }

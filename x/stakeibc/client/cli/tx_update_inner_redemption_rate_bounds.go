@@ -4,32 +4,32 @@ import (
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/tx"
-
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/spf13/cobra"
 
-	"github.com/Stride-Labs/stride/v14/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v16/x/stakeibc/types"
 )
 
-// The host-denom and reward-denom are not ibc denoms
-// these are the native denoms as they appear on their own chains
-func CmdDeleteTradeRoute() *cobra.Command {
+func CmdUpdateInnerRedemptionRateBounds() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "delete-trade-route [host-denom] [reward-denom]",
-		Short: "Broadcast message delete-trade-route",
-		Args:  cobra.ExactArgs(2),
+		Use:   "set-redemption-rate-bounds [chainid] [min-bound] [max-bound]",
+		Short: "Broadcast message set-redemption-rate-bounds",
+		Args:  cobra.ExactArgs(3),
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
-			hostDenom := args[0]
-			rewardDenom := args[1]
+			argChainId := args[0]
+			minInnerRedemptionRate := sdk.MustNewDecFromStr(args[1])
+			maxInnerRedemptionRate := sdk.MustNewDecFromStr(args[2])
 
 			clientCtx, err := client.GetClientTxContext(cmd)
 			if err != nil {
 				return err
 			}
 
-			msg := types.NewMsgDeleteTradeRoute(
+			msg := types.NewMsgUpdateInnerRedemptionRateBounds(
 				clientCtx.GetFromAddress().String(),
-				hostDenom,
-				rewardDenom,
+				argChainId,
+				minInnerRedemptionRate,
+				maxInnerRedemptionRate,
 			)
 			if err := msg.ValidateBasic(); err != nil {
 				return err

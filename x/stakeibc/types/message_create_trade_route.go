@@ -1,73 +1,36 @@
 package types
 
 import (
+	"regexp"
+	"strings"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
 	errorsmod "cosmossdk.io/errors"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	sdkmath "cosmossdk.io/math"
+	"github.com/cosmos/cosmos-sdk/x/auth/migrations/legacytx"
 )
 
 const TypeMsgCreateTradeRoute = "create_trade_route"
 
-var _ sdk.Msg = &MsgCreateTradeRoute{}
+const (
+	ConnectionIdRegex = `^connection-\d+$`
+	ChannelIdRegex    = `^channel-\d+$`
+	IBCPrefix         = "ibc/"
+)
 
-func NewMsgCreateTradeRoute(
-	creator string,
-	hostChainId string,
-	hostConnectionId string,
-	hostIcaAddress string,
-	rewardChainId string,
-	rewardConnectionId string,
-	rewardIcaAddress string,
-	tradeChainId string,
-	tradeConnectionId string,
-	tradeIcaAddress string,
-	hostRewardTransfer string,
-	rewardTradeTransfer string,
-	tradeHostTransfer string,
-	rewardDenomOnHost string,
-	rewardDenomOnReward string,
-	rewardDenomOnTrade string,
-	targetDenomOnTrade string,
-	targetDenomOnHost string,
-	poolId uint64,
-	minSwapAmount sdk.Int,
-	maxSwapAmount sdk.Int,
-) *MsgCreateTradeRoute {
-	return &MsgCreateTradeRoute{
-		Creator:  creator,
-		HostChainId: hostChainId,
-		HostConnectionId: hostConnectionId,
-		HostIcaAddress: hostIcaAddress,
-		RewardChainId: rewardChainId,
-		RewardConnectionId: rewardConnectionId,
-		RewardIcaAddress: rewardIcaAddress,
-		TradeChainId: tradeChainId,
-		TradeConnectionId: tradeConnectionId,
-		TradeIcaAddress: tradeIcaAddress,
-		HostRewardTransferChannelId: hostRewardTransfer,
-		RewardTradeTransferChannelId: rewardTradeTransfer,
-		TradeHostTransferChannelId: tradeHostTransfer,
-		PoolId: poolId,
-		MinSwapAmount: minSwapAmount,
-		MaxSwapAmount: maxSwapAmount,
-	}
-}
-
-func (msg *MsgCreateTradeRoute) Route() string {
-	return RouterKey
-}
+var (
+	_ sdk.Msg            = &MsgCreateTradeRoute{}
+	_ legacytx.LegacyMsg = &MsgCreateTradeRoute{}
+)
 
 func (msg *MsgCreateTradeRoute) Type() string {
 	return TypeMsgCreateTradeRoute
 }
 
-func (msg *MsgCreateTradeRoute) GetSigners() []sdk.AccAddress {
-	creator, err := sdk.AccAddressFromBech32(msg.Creator)
-	if err != nil {
-		panic(err)
-	}
-	return []sdk.AccAddress{creator}
+func (msg *MsgCreateTradeRoute) Route() string {
+	return RouterKey
 }
 
 func (msg *MsgCreateTradeRoute) GetSignBytes() []byte {
@@ -75,14 +38,102 @@ func (msg *MsgCreateTradeRoute) GetSignBytes() []byte {
 	return sdk.MustSortJSON(bz)
 }
 
+func (msg *MsgCreateTradeRoute) GetSigners() []sdk.AccAddress {
+	addr, _ := sdk.AccAddressFromBech32(msg.Authority)
+	return []sdk.AccAddress{addr}
+}
+
 func (msg *MsgCreateTradeRoute) ValidateBasic() error {
-	// check valid creator address
-	_, err := sdk.AccAddressFromBech32(msg.Creator)
-	if err != nil {
-		return errorsmod.Wrapf(sdkerrors.ErrInvalidAddress, "invalid creator address (%s)", err)
+	if _, err := sdk.AccAddressFromBech32(msg.Authority); err != nil {
+		return errorsmod.Wrap(err, "invalid authority address")
 	}
 
-	// need to add a lot of validation logic here to verify all trade route fields valid
+	if msg.HostChainId == "" {
+		return errorsmod.Wrap(sdkerrors.ErrInvalidRequest, "host chain ID cannot be empty")
+	}
 
+	if err := validateConnectionId(msg.StrideToRewardConnectionId); err != nil {
+		return errorsmod.Wrap(err, "invalid stride to reward connection ID")
+	}
+	if err := validateConnectionId(msg.StrideToTradeConnectionId); err != nil {
+		return errorsmod.Wrap(err, "invalid stride to trade connection ID")
+	}
+
+	if err := validateChannelId(msg.HostToRewardTransferChannelId); err != nil {
+		return errorsmod.Wrap(err, "invalid host to reward channel ID")
+	}
+	if err := validateChannelId(msg.RewardToTradeTransferChannelId); err != nil {
+		return errorsmod.Wrap(err, "invalid reward to trade channel ID")
+	}
+	if err := validateChannelId(msg.TradeToHostTransferChannelId); err != nil {
+		return errorsmod.Wrap(err, "invalid trade to host channel ID")
+	}
+
+	if err := validateDenom(msg.RewardDenomOnHost, true); err != nil {
+		return errorsmod.Wrap(err, "invalid reward denom on host")
+	}
+	if err := validateDenom(msg.RewardDenomOnReward, false); err != nil {
+		return errorsmod.Wrap(err, "invalid reward denom on host")
+	}
+	if err := validateDenom(msg.RewardDenomOnTrade, true); err != nil {
+		return errorsmod.Wrap(err, "invalid reward denom on host")
+	}
+	if err := validateDenom(msg.HostDenomOnTrade, true); err != nil {
+		return errorsmod.Wrap(err, "invalid reward denom on host")
+	}
+	if err := validateDenom(msg.HostDenomOnHost, false); err != nil {
+		return errorsmod.Wrap(err, "invalid reward denom on host")
+	}
+
+	if msg.PoolId < 1 {
+		return errorsmod.Wrap(sdkerrors.ErrInvalidRequest, "invalid pool id")
+	}
+	if msg.MaxSwapAmount.GT(sdkmath.ZeroInt()) && msg.MinSwapAmount.GT(msg.MaxSwapAmount) {
+		return errorsmod.Wrap(sdkerrors.ErrInvalidRequest, "min swap amount cannot be greater than max swap amount")
+	}
+
+	maxAllowedSwapLossRate, err := sdk.NewDecFromStr(msg.MaxAllowedSwapLossRate)
+	if err != nil {
+		return errorsmod.Wrapf(err, "unable to cast max allowed swap loss rate to a decimal")
+	}
+	if maxAllowedSwapLossRate.LT(sdk.ZeroDec()) || maxAllowedSwapLossRate.GT(sdk.OneDec()) {
+		return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "max allowed swap loss rate must be between 0 and 1")
+	}
+
+	return nil
+}
+
+// Helper function to validate a connection Id
+func validateConnectionId(connectionId string) error {
+	matched, err := regexp.MatchString(ConnectionIdRegex, connectionId)
+	if err != nil {
+		return errorsmod.Wrapf(err, "unable to verify connnection-id (%s)", connectionId)
+	}
+	if !matched {
+		return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "invalid connection-id (%s), must be of the format 'connection-{N}'", connectionId)
+	}
+	return nil
+}
+
+// Helper function to validate a channel Id
+func validateChannelId(channelId string) error {
+	matched, err := regexp.MatchString(ChannelIdRegex, channelId)
+	if err != nil {
+		return errorsmod.Wrapf(err, "unable to verify channel-id (%s)", channelId)
+	}
+	if !matched {
+		return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "invalid channel-id (%s), must be of the format 'channel-{N}'", channelId)
+	}
+	return nil
+}
+
+// Helper function to validate a denom
+func validateDenom(denom string, ibc bool) error {
+	if denom == "" {
+		return errorsmod.Wrap(ErrInvalidDenom, "denom is empty")
+	}
+	if ibc && !strings.HasPrefix(denom, IBCPrefix) {
+		return errorsmod.Wrapf(ErrInvalidDenom, "denom (%s) should have ibc prefix", denom)
+	}
 	return nil
 }

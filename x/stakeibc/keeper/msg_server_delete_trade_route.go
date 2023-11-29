@@ -2,33 +2,48 @@ package keeper
 
 import (
 	"context"
-	"fmt"
 
-	"github.com/Stride-Labs/stride/v14/x/stakeibc/types"
+	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
+
+	"github.com/Stride-Labs/stride/v16/x/stakeibc/types"
 
 	errorsmod "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
 
-func (k msgServer) DeleteTradeRoute(goCtx context.Context, msg *types.MsgDeleteTradeRoute) (*types.MsgDeleteTradeRouteResponse, error) {
+// Gov tx to remove a trade route
+//
+// Example proposal:
+//
+//		{
+//		   "title": "Remove a new trade route for host chain X",
+//		   "metadata": "Remove a new trade route for host chain X",
+//		   "summary": "Remove a new trade route for host chain X",
+//		   "messages":[
+//		      {
+//		         "@type": "/stride.stakeibc.MsgDeleteTradeRoute",
+//		         "authority": "stride10d07y265gmmuvt4z0w9aw880jnsr700jefnezl",
+//				 "reward_denom": "rewardToken",
+//				 "host_denom": "hostToken
+//			  }
+//		   ],
+//		   "deposit": "2000000000ustrd"
+//	   }
+//
+// >>> strided tx gov submit-proposal {proposal_file.json} --from wallet
+func (ms msgServer) DeleteTradeRoute(goCtx context.Context, msg *types.MsgDeleteTradeRoute) (*types.MsgDeleteTradeRouteResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
-	k.Logger(ctx).Info(fmt.Sprintf("delete trade route: %s", msg.String()))
-
-	// get our addresses, make sure they're valid
-	_, err := sdk.AccAddressFromBech32(msg.Creator)
-	if err != nil {
-		return nil, errorsmod.Wrapf(sdkerrors.ErrInvalidAddress, "creator address is invalid: %s. err: %s", msg.Creator, err.Error())
+	if ms.authority != msg.Authority {
+		return nil, errorsmod.Wrapf(govtypes.ErrInvalidSigner, "invalid authority; expected %s, got %s", ms.authority, msg.Authority)
 	}
 
-	routes := k.GetAllTradeRoutes(ctx)
-	for _, route := range routes {
-		if route.TargetDenomOnHostZone == msg.HostDenom && route.RewardDenomOnRewardZone == msg.RewardDenom {
-			k.RemoveTradeRoute(ctx, route.RewardDenomOnHostZone, route.TargetDenomOnHostZone)
-		}
-		// if no matching trade route was found for the given host-denom and reward-denom... do nothing
+	_, found := ms.Keeper.GetTradeRoute(ctx, msg.RewardDenom, msg.HostDenom)
+	if !found {
+		return nil, errorsmod.Wrapf(types.ErrTradeRouteNotFound,
+			"no trade route for rewardDenom %s and hostDenom %s", msg.RewardDenom, msg.HostDenom)
 	}
 
-	k.Logger(ctx).Info(fmt.Sprintf("delete trade route: %s", msg.String()))
+	ms.Keeper.RemoveTradeRoute(ctx, msg.RewardDenom, msg.HostDenom)
+
 	return &types.MsgDeleteTradeRouteResponse{}, nil
 }

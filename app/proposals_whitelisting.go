@@ -17,9 +17,9 @@ import (
 	ccvconsumertypes "github.com/cosmos/interchain-security/v3/x/ccv/consumer/types"
 	ccvgov "github.com/cosmos/interchain-security/v3/x/ccv/democracy/governance"
 
-	autopilottypes "github.com/Stride-Labs/stride/v14/x/autopilot/types"
-	minttypes "github.com/Stride-Labs/stride/v14/x/mint/types"
-	stakeibctypes "github.com/Stride-Labs/stride/v14/x/stakeibc/types"
+	autopilottypes "github.com/Stride-Labs/stride/v16/x/autopilot/types"
+	minttypes "github.com/Stride-Labs/stride/v16/x/mint/types"
+	stakeibctypes "github.com/Stride-Labs/stride/v16/x/stakeibc/types"
 )
 
 var WhiteListModule = map[string]struct{}{
@@ -32,6 +32,7 @@ var WhiteListModule = map[string]struct{}{
 	"/cosmos.upgrade.v1beta1.MsgCancelUpgrade":     {},
 	"/stride.icaoracle.MsgToggleOracle":            {},
 	"/stride.icaoracle.MsgRemoveOracle":            {},
+	"/stride.stakeibc.MsgCreateTradeRoute":         {},
 }
 
 func IsModuleWhiteList(typeUrl string) bool {

@@ -4,10 +4,11 @@ package osmosis.gamm.v1beta1;
 import "gogoproto/gogo.proto";
 import "amino/amino.proto";
 import "cosmos/base/v1beta1/coin.proto";
+import "google/protobuf/timestamp.proto";
 
-option go_package = "github.com/Stride-Labs/stride/v14/x/stakeibc/types";
+option go_package = "github.com/Stride-Labs/stride/v16/x/stakeibc/types";
 
-// ===================== MsgSwapExactAmountIn
+// MsgSwapExactAmountIn stores the tx Msg type to swap tokens in the trade ICA
 message MsgSwapExactAmountIn {
   option (amino.name) = "osmosis/gamm/swap-exact-amount-in";
 
@@ -25,45 +26,63 @@ message MsgSwapExactAmountIn {
   ];
 }
 
-message MsgSwapExactAmountInResponse {
-  string token_out_amount = 1 [
-
-    (gogoproto.customtype) = "cosmossdk.io/math.Int",
-    (gogoproto.moretags) = "yaml:\"token_out_amount\"",
-    (gogoproto.nullable) = false
-  ];
-}
-
 message SwapAmountInRoute {
   uint64 pool_id = 1 [ (gogoproto.moretags) = "yaml:\"pool_id\"" ];
   string token_out_denom = 2
       [ (gogoproto.moretags) = "yaml:\"token_out_denom\"" ];
 }
 
-// This is the query and response type on gamm/v1beta1, there is also a similar
-// type on gamm/v2 This version is deprecated, the intended one is in
-// x/poolmanager which is the newer rpc route The most up to date is an rpc
-// route named SpotPriceV2 on poolmanager/v2 In poolmanager/v1beta1 and
-// poolmanager/v2 all fields are the same as defined here... But the messages
-// are called SpotPriceRequest/Response without Query in front
+// A TwapRecord stores the most recent price of a pair of denom's
+message OsmosisTwapRecord {
+  uint64 pool_id = 1;
+  // Lexicographically smaller denom of the pair
+  string asset0_denom = 2;
+  // Lexicographically larger denom of the pair
+  string asset1_denom = 3;
+  // height this record corresponds to, for debugging purposes
+  int64 height = 4 [
+    (gogoproto.moretags) = "yaml:\"record_height\"",
+    (gogoproto.jsontag) = "record_height"
+  ];
+  // This field should only exist until we have a global registry in the state
+  // machine, mapping prior block heights within {TIME RANGE} to times.
+  google.protobuf.Timestamp time = 5 [
+    (gogoproto.nullable) = false,
+    (gogoproto.stdtime) = true,
+    (gogoproto.moretags) = "yaml:\"record_time\""
+  ];
 
-// QuerySpotPriceRequest defines the gRPC request structure for a SpotPrice
-// query.
-message QuerySpotPriceRequest {
-  option deprecated = true;
-  uint64 pool_id = 1 [ (gogoproto.moretags) = "yaml:\"pool_id\"" ];
-  string base_asset_denom = 2
-      [ (gogoproto.moretags) = "yaml:\"base_asset_denom\"" ];
-  string quote_asset_denom = 3
-      [ (gogoproto.moretags) = "yaml:\"quote_asset_denom\"" ];
-  reserved 4;
-  reserved "withSwapFee";
-}
+  // We store the last spot prices in the struct, so that we can interpolate
+  // accumulator values for times between when accumulator records are stored.
+  string p0_last_spot_price = 6 [
+    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
+    (gogoproto.nullable) = false
+  ];
+  string p1_last_spot_price = 7 [
+    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
+    (gogoproto.nullable) = false
+  ];
 
-// QuerySpotPriceResponse defines the gRPC response structure for a SpotPrice
-// query.
-message QuerySpotPriceResponse {
-  option deprecated = true;
-  // String of the Dec. Ex) 10.203uatom
-  string spot_price = 1 [ (gogoproto.moretags) = "yaml:\"spot_price\"" ];
+  string p0_arithmetic_twap_accumulator = 8 [
+    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
+    (gogoproto.nullable) = false
+  ];
+  string p1_arithmetic_twap_accumulator = 9 [
+    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
+    (gogoproto.nullable) = false
+  ];
+
+  string geometric_twap_accumulator = 10 [
+    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
+    (gogoproto.nullable) = false
+  ];
+
+  // This field contains the time in which the last spot price error occured.
+  // It is used to alert the caller if they are getting a potentially erroneous
+  // TWAP, due to an unforeseen underlying error.
+  google.protobuf.Timestamp last_error_time = 11 [
+    (gogoproto.nullable) = false,
+    (gogoproto.stdtime) = true,
+    (gogoproto.moretags) = "yaml:\"last_error_time\""
+  ];
 }

@@ -7,11 +7,11 @@ import (
 	errorsmod "cosmossdk.io/errors"
 	"github.com/cosmos/gogoproto/proto"
 
-	icqkeeper "github.com/Stride-Labs/stride/v14/x/interchainquery/keeper"
+	icqkeeper "github.com/Stride-Labs/stride/v16/x/interchainquery/keeper"
 
-	"github.com/Stride-Labs/stride/v14/utils"
-	icqtypes "github.com/Stride-Labs/stride/v14/x/interchainquery/types"
-	"github.com/Stride-Labs/stride/v14/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v16/utils"
+	icqtypes "github.com/Stride-Labs/stride/v16/x/interchainquery/types"
+	"github.com/Stride-Labs/stride/v16/x/stakeibc/types"
 )
 
 // TradeConvertedBalanceCallback is a callback handler for TradeConvertedBalance queries.
@@ -44,11 +44,18 @@ func TradeConvertedBalanceCallback(k Keeper, ctx sdk.Context, args []byte, query
 		return nil
 	}
 
-	// Using ICA commands on the trade address, transfer the found converted tokens from the trade zone to the host zone	
-	k.TransferConvertedTokensTradeToHost(ctx, tradeConvertedBalanceAmount, tradeRoute)
-	k.Logger(ctx).Info(utils.LogICQCallbackWithHostZone(chainId, ICQCallbackID_WithdrawalRewardBalance, 
-		"Sending discovered converted tokens %v %s from tradeZone back to hostZone", 
-		tradeConvertedBalanceAmount, tradeRoute.TargetDenomOnTradeZone))
+	// Using ICA commands on the trade address, transfer the found converted tokens from the trade zone to the host zone
+	err = utils.ApplyFuncIfNoError(ctx, func(c sdk.Context) error {
+		return k.TransferConvertedTokensTradeToHost(ctx, tradeConvertedBalanceAmount, tradeRoute)
+	})
+	if err != nil {
+		k.Logger(ctx).Error(utils.LogICQCallbackWithHostZone(chainId, ICQCallbackID_TradeConvertedBalance,
+			"Initiating transfer of converted tokens to back to host zone failed: %s", err.Error()))
+	}
+
+	k.Logger(ctx).Info(utils.LogICQCallbackWithHostZone(chainId, ICQCallbackID_TradeConvertedBalance,
+		"Sending discovered converted tokens %v %s from tradeZone back to hostZone",
+		tradeConvertedBalanceAmount, tradeRoute.HostDenomOnTradeZone))
 
 	return nil
 }

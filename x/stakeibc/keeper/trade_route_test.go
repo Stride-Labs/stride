@@ -5,7 +5,7 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/Stride-Labs/stride/v14/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v16/x/stakeibc/types"
 )
 
 func (s *KeeperTestSuite) CreateTradeRoutes() (routes []types.TradeRoute) {
@@ -15,29 +15,31 @@ func (s *KeeperTestSuite) CreateTradeRoutes() (routes []types.TradeRoute) {
 		tradeChain := fmt.Sprintf("chain-T%d", i)
 
 		hostICA := types.ICAAccount{
-			ChainId: hostChain,
-			Type:    types.ICAAccountType_WITHDRAWAL,
+			ChainId:      hostChain,
+			Type:         types.ICAAccountType_WITHDRAWAL,
+			ConnectionId: fmt.Sprintf("connection-0%d", i),
+			Address:      "host_ica_address",
 		}
 		rewardICA := types.ICAAccount{
-			ChainId: rewardChain,
-			Type:    types.ICAAccountType_UNWIND,
+			ChainId:      rewardChain,
+			Type:         types.ICAAccountType_CONVERTER_UNWIND,
+			ConnectionId: fmt.Sprintf("connection-1%d", i),
+			Address:      "reward_ica_address",
 		}
 		tradeICA := types.ICAAccount{
-			ChainId: tradeChain,
-			Type:    types.ICAAccountType_TRADE,
+			ChainId:      tradeChain,
+			Type:         types.ICAAccountType_CONVERTER_TRADE,
+			ConnectionId: fmt.Sprintf("connection-2%d", i),
+			Address:      "trade_ica_address",
 		}
 
-		hostRewardHop := types.TradeHop{
-			FromAccount: hostICA,
-			ToAccount:   rewardICA,
-		}
-		rewardTradeHop := types.TradeHop{
-			FromAccount: rewardICA,
-			ToAccount:   tradeICA,
-		}
-		tradeHostHop := types.TradeHop{
-			FromAccount: tradeICA,
-			ToAccount:   hostICA,
+		tradeConfig := types.TradeConfig{
+			PoolId:                 uint64(i * 100),
+			SwapPrice:              sdk.OneDec(),
+			MaxAllowedSwapLossRate: sdk.MustNewDecFromStr("0.05"),
+
+			MinSwapAmount: sdk.ZeroInt(),
+			MaxSwapAmount: sdk.NewInt(1_000_000_000),
 		}
 
 		hostDenom := fmt.Sprintf("host-denom-%d", i)
@@ -47,18 +49,18 @@ func (s *KeeperTestSuite) CreateTradeRoutes() (routes []types.TradeRoute) {
 			RewardDenomOnHostZone:   "ibc-" + rewardDenom + "-on-" + hostChain,
 			RewardDenomOnRewardZone: rewardDenom,
 			RewardDenomOnTradeZone:  "ibc-" + rewardDenom + "-on-" + tradeChain,
-			TargetDenomOnTradeZone:  "ibc-" + hostDenom + "-on-" + tradeChain,
-			TargetDenomOnHostZone:   hostDenom,
+			HostDenomOnTradeZone:    "ibc-" + hostDenom + "-on-" + tradeChain,
+			HostDenomOnHostZone:     hostDenom,
 
-			HostToRewardHop:  hostRewardHop,
-			RewardToTradeHop: rewardTradeHop,
-			TradeToHostHop:   tradeHostHop,
+			HostAccount:   hostICA,
+			RewardAccount: rewardICA,
+			TradeAccount:  tradeICA,
 
-			PoolId: uint64(i * 100),
-			SpotPrice: "",
+			HostToRewardChannelId:  fmt.Sprintf("channel-0%d", i),
+			RewardToTradeChannelId: fmt.Sprintf("channel-1%d", i),
+			TradeToHostChannelId:   fmt.Sprintf("channel-2%d", i),
 
-			MinSwapAmount: sdk.ZeroInt(),
-			MaxSwapAmount: sdk.NewInt(1_000_000_000),
+			TradeConfig: tradeConfig,
 		}
 		routes = append(routes, route)
 
@@ -71,8 +73,8 @@ func (s *KeeperTestSuite) CreateTradeRoutes() (routes []types.TradeRoute) {
 func (s *KeeperTestSuite) TestGetTradeRoute() {
 	routes := s.CreateTradeRoutes()
 	for i, route := range routes {
-		startDenom := route.RewardDenomOnHostZone
-		endDenom := route.TargetDenomOnHostZone
+		startDenom := route.RewardDenomOnRewardZone
+		endDenom := route.HostDenomOnHostZone
 
 		actualRoute, found := s.App.StakeibcKeeper.GetTradeRoute(s.Ctx, startDenom, endDenom)
 		s.Require().True(found, "route should have been found")
@@ -83,8 +85,8 @@ func (s *KeeperTestSuite) TestGetTradeRoute() {
 func (s *KeeperTestSuite) TestRemoveTradeRoute() {
 	routes := s.CreateTradeRoutes()
 	for _, route := range routes {
-		s.App.StakeibcKeeper.RemoveTradeRoute(s.Ctx, route.RewardDenomOnHostZone, route.TargetDenomOnHostZone)
-		_, found := s.App.StakeibcKeeper.GetTradeRoute(s.Ctx, route.RewardDenomOnHostZone, route.TargetDenomOnHostZone)
+		s.App.StakeibcKeeper.RemoveTradeRoute(s.Ctx, route.RewardDenomOnRewardZone, route.HostDenomOnHostZone)
+		_, found := s.App.StakeibcKeeper.GetTradeRoute(s.Ctx, route.RewardDenomOnRewardZone, route.HostDenomOnHostZone)
 		s.Require().False(found, "route should not have been found")
 	}
 }

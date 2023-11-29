@@ -7,11 +7,11 @@ import (
 	errorsmod "cosmossdk.io/errors"
 	"github.com/cosmos/gogoproto/proto"
 
-	icqkeeper "github.com/Stride-Labs/stride/v14/x/interchainquery/keeper"
+	icqkeeper "github.com/Stride-Labs/stride/v16/x/interchainquery/keeper"
 
-	"github.com/Stride-Labs/stride/v14/utils"
-	icqtypes "github.com/Stride-Labs/stride/v14/x/interchainquery/types"
-	"github.com/Stride-Labs/stride/v14/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v16/utils"
+	icqtypes "github.com/Stride-Labs/stride/v16/x/interchainquery/types"
+	"github.com/Stride-Labs/stride/v16/x/stakeibc/types"
 )
 
 // TradeRewardBalanceCallback is a callback handler for TradeRewardBalance queries.
@@ -20,7 +20,7 @@ import (
 //
 // Note: for now, to get proofs in your ICQs, you need to query the entire store on the host zone! e.g. "store/bank/key"
 func TradeRewardBalanceCallback(k Keeper, ctx sdk.Context, args []byte, query icqtypes.Query) error {
-	k.Logger(ctx).Info(utils.LogICQCallbackWithHostZone(query.ChainId, ICQCallbackID_WithdrawalRewardBalance,
+	k.Logger(ctx).Info(utils.LogICQCallbackWithHostZone(query.ChainId, ICQCallbackID_TradeRewardBalance,
 		"Starting withdrawal reward balance callback, QueryId: %vs, QueryType: %s, Connection: %s", query.Id, query.QueryType, query.ConnectionId))
 
 	chainId := query.ChainId // should be the tradeZoneId, used in logging
@@ -34,7 +34,7 @@ func TradeRewardBalanceCallback(k Keeper, ctx sdk.Context, args []byte, query ic
 	// Confirm the balance is greater than zero, or else exit without further action for now
 	if tradeRewardBalanceAmount.LTE(sdkmath.ZeroInt()) {
 		k.Logger(ctx).Info(utils.LogICQCallbackWithHostZone(chainId, ICQCallbackID_TradeRewardBalance,
-			"Not enough balance of reward tokens yet found in trade ICA! balance: %+v", tradeRewardBalanceAmount))
+			"Not enough reward tokens found in trade ICA, balance: %+v", tradeRewardBalanceAmount))
 		return nil
 	}
 
@@ -46,12 +46,18 @@ func TradeRewardBalanceCallback(k Keeper, ctx sdk.Context, args []byte, query ic
 	k.Logger(ctx).Info(utils.LogICQCallbackWithHostZone(chainId, ICQCallbackID_TradeRewardBalance,
 		"Query response - Withdrawal Reward Balance: %v %s", tradeRewardBalanceAmount, tradeRoute.RewardDenomOnTradeZone))
 
-
 	// Trade all found reward tokens in the trade ICA to the output denom of their trade pool
-	k.TradeRewardTokens(ctx, tradeRewardBalanceAmount, tradeRoute)
-	k.Logger(ctx).Info(utils.LogICQCallbackWithHostZone(chainId, ICQCallbackID_TradeRewardBalance, 
-		"Swapping discovered reward tokens %v %s for %s", 
-		tradeRewardBalanceAmount, tradeRoute.RewardDenomOnTradeZone, tradeRoute.TargetDenomOnTradeZone))
+	err = utils.ApplyFuncIfNoError(ctx, func(c sdk.Context) error {
+		return k.SwapRewardTokens(ctx, tradeRewardBalanceAmount, tradeRoute)
+	})
+	if err != nil {
+		k.Logger(ctx).Error(utils.LogICQCallbackWithHostZone(chainId, ICQCallbackID_TradeRewardBalance,
+			"Submitting ICA to swapping reward tokens failed: %s", err.Error()))
+	}
+
+	k.Logger(ctx).Info(utils.LogICQCallbackWithHostZone(chainId, ICQCallbackID_TradeRewardBalance,
+		"Swapping discovered reward tokens %v %s for %s",
+		tradeRewardBalanceAmount, tradeRoute.RewardDenomOnTradeZone, tradeRoute.HostDenomOnTradeZone))
 
 	return nil
 }

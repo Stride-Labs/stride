@@ -8,9 +8,9 @@ import (
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/gogoproto/proto"
 
-	icqtypes "github.com/Stride-Labs/stride/v14/x/interchainquery/types"
-	recordstypes "github.com/Stride-Labs/stride/v14/x/records/types"
-	"github.com/Stride-Labs/stride/v14/x/stakeibc/types"
+	icqtypes "github.com/Stride-Labs/stride/v16/x/interchainquery/types"
+	recordstypes "github.com/Stride-Labs/stride/v16/x/records/types"
+	"github.com/Stride-Labs/stride/v16/x/stakeibc/types"
 )
 
 // Exchanges a user's LSM tokenized shares for stTokens using the current redemption rate
@@ -66,6 +66,10 @@ func (k Keeper) StartLSMLiquidStake(ctx sdk.Context, msg types.MsgLSMLiquidStake
 		return types.LSMLiquidStake{}, err
 	}
 	hostZone := lsmLiquidStake.HostZone
+
+	if hostZone.Halted {
+		return types.LSMLiquidStake{}, errorsmod.Wrapf(types.ErrHaltedHostZone, "host zone %s is halted", hostZone.ChainId)
+	}
 
 	// Check if we already have tokens with this denom in records
 	_, found := k.RecordsKeeper.GetLSMTokenDeposit(ctx, hostZone.ChainId, lsmLiquidStake.Deposit.Denom)

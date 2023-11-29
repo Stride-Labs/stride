@@ -6,7 +6,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/spf13/cobra"
 
-	"github.com/Stride-Labs/stride/v14/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v16/x/stakeibc/types"
 )
 
 // GetQueryCmd returns the cli query commands for this module
@@ -29,6 +29,7 @@ func GetQueryCmd(queryRoute string) *cobra.Command {
 	cmd.AddCommand(CmdListEpochTracker())
 	cmd.AddCommand(CmdShowEpochTracker())
 	cmd.AddCommand(CmdNextPacketSequence())
+	cmd.AddCommand(CmdListTradeRoutes())
 
 	return cmd
 }

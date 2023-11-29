@@ -34,7 +34,7 @@ const (
 	AttributeKeyNativeBaseDenom    = "native_base_denom"
 	AttributeKeyNativeIBCDenom     = "native_ibc_denom"
 	AttributeKeyTotalUnbondAmount  = "total_unbond_amount"
-	AttributeKeyLSMTokenBaseDenom  = "lsm_token_base_denom"
+	AttributeKeyLSMTokenBaseDenom  = "lsm_token_base_denom" // #nosec G101
 	AttributeKeyNativeAmount       = "native_amount"
 	AttributeKeyStTokenAmount      = "sttoken_amount"
 	AttributeKeyValidator          = "validator"

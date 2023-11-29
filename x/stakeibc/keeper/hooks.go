@@ -8,11 +8,11 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/spf13/cast"
 
-	"github.com/Stride-Labs/stride/v14/utils"
-	epochstypes "github.com/Stride-Labs/stride/v14/x/epochs/types"
-	icaoracletypes "github.com/Stride-Labs/stride/v14/x/icaoracle/types"
-	recordstypes "github.com/Stride-Labs/stride/v14/x/records/types"
-	"github.com/Stride-Labs/stride/v14/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v16/utils"
+	epochstypes "github.com/Stride-Labs/stride/v16/x/epochs/types"
+	icaoracletypes "github.com/Stride-Labs/stride/v16/x/icaoracle/types"
+	recordstypes "github.com/Stride-Labs/stride/v16/x/records/types"
+	"github.com/Stride-Labs/stride/v16/x/stakeibc/types"
 )
 
 const StrideEpochsPerDayEpoch = uint64(4)
@@ -82,6 +82,9 @@ func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochInfo epochstypes.EpochInf
 			k.RebalanceAllHostZones(ctx)
 		}
 
+		// Transfers in and out of tokens for hostZones which have community pools
+		k.ProcessAllCommunityPoolTokens(ctx)
+
 		// Do transfers for all reward and swapped tokens defined by the trade routes every stride epoch
 		k.TransferAllRewardTokens(ctx)
 	}
@@ -91,10 +94,10 @@ func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochInfo epochstypes.EpochInf
 	if epochInfo.Identifier == epochstypes.HOUR_EPOCH {
 		k.UpdateAllSwapPrices(ctx) // update swap spot price frequently
 
-		if epochNumber % SwapRewardInterval == 0 {
+		if epochNumber%SwapRewardInterval == 0 {
 			k.SwapAllRewardTokens(ctx)
 		}
-	}	
+	}
 }
 
 func (k Keeper) AfterEpochEnd(ctx sdk.Context, epochInfo epochstypes.EpochInfo) {}

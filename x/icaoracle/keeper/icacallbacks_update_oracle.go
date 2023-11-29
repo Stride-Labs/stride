@@ -3,10 +3,10 @@ package keeper
 import (
 	errorsmod "cosmossdk.io/errors"
 
-	"github.com/Stride-Labs/stride/v14/utils"
-	"github.com/Stride-Labs/stride/v14/x/icaoracle/types"
+	"github.com/Stride-Labs/stride/v16/utils"
+	"github.com/Stride-Labs/stride/v16/x/icaoracle/types"
 
-	icacallbackstypes "github.com/Stride-Labs/stride/v14/x/icacallbacks/types"
+	icacallbackstypes "github.com/Stride-Labs/stride/v16/x/icacallbacks/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/gogoproto/proto"

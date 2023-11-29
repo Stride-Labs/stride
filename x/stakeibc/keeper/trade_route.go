@@ -4,7 +4,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/Stride-Labs/stride/v14/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v16/x/stakeibc/types"
 )
 
 // SetTradeRoute set a specific tradeRoute in the store
@@ -16,6 +16,7 @@ func (k Keeper) SetTradeRoute(ctx sdk.Context, tradeRoute types.TradeRoute) {
 }
 
 // GetTradeRoute returns a tradeRoute from its start and end denoms
+// The start and end denom's are in their native format (e.g. uusdc and udydx)
 func (k Keeper) GetTradeRoute(ctx sdk.Context, startDenom string, endDenom string) (val types.TradeRoute, found bool) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefix(types.TradeRouteKeyPrefix))
 	key := types.TradeRouteKeyFromDenoms(startDenom, endDenom)
@@ -28,6 +29,7 @@ func (k Keeper) GetTradeRoute(ctx sdk.Context, startDenom string, endDenom strin
 }
 
 // RemoveTradeRoute removes a tradeRoute from the store
+// The start and end denom's are in their native format (e.g. uusdc and udydx)
 func (k Keeper) RemoveTradeRoute(ctx sdk.Context, startDenom string, endDenom string) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefix(types.TradeRouteKeyPrefix))
 	key := types.TradeRouteKeyFromDenoms(startDenom, endDenom)

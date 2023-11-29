@@ -7,11 +7,11 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	ibctesting "github.com/cosmos/ibc-go/v7/testing"
 
-	epochtypes "github.com/Stride-Labs/stride/v14/x/epochs/types"
-	icacallbackstypes "github.com/Stride-Labs/stride/v14/x/icacallbacks/types"
-	icqtypes "github.com/Stride-Labs/stride/v14/x/interchainquery/types"
-	"github.com/Stride-Labs/stride/v14/x/stakeibc/keeper"
-	"github.com/Stride-Labs/stride/v14/x/stakeibc/types"
+	epochtypes "github.com/Stride-Labs/stride/v16/x/epochs/types"
+	icacallbackstypes "github.com/Stride-Labs/stride/v16/x/icacallbacks/types"
+	icqtypes "github.com/Stride-Labs/stride/v16/x/interchainquery/types"
+	"github.com/Stride-Labs/stride/v16/x/stakeibc/keeper"
+	"github.com/Stride-Labs/stride/v16/x/stakeibc/types"
 )
 
 type WithdrawalBalanceICQCallbackState struct {
@@ -238,5 +238,5 @@ func (s *KeeperTestSuite) TestWithdrawalBalanceCallback_FailedSubmitTx() {
 
 	err := keeper.WithdrawalBalanceCallback(s.App.StakeibcKeeper, s.Ctx, tc.validArgs.callbackArgs, tc.validArgs.query)
 	s.Require().ErrorContains(err, "Failed to SubmitTxs")
-	s.Require().ErrorContains(err, "invalid connection id, connection-X not found")
+	s.Require().ErrorContains(err, "connection connection-X not found")
 }

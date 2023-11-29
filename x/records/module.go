@@ -17,9 +17,9 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 
-	"github.com/Stride-Labs/stride/v14/x/records/client/cli"
-	"github.com/Stride-Labs/stride/v14/x/records/keeper"
-	"github.com/Stride-Labs/stride/v14/x/records/types"
+	"github.com/Stride-Labs/stride/v16/x/records/client/cli"
+	"github.com/Stride-Labs/stride/v16/x/records/keeper"
+	"github.com/Stride-Labs/stride/v16/x/records/types"
 )
 
 var (
