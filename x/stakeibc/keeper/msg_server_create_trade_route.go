@@ -14,7 +14,10 @@ import (
 	connectiontypes "github.com/cosmos/ibc-go/v7/modules/core/03-connection/types"
 )
 
-var DefaultMaxAllowedSwapLossRate = "0.05"
+var (
+	DefaultMaxAllowedSwapLossRate = "0.05"
+	DefaultMaxSwapAmount          = sdkmath.NewIntWithDecimal(10, 24) // 10e24
+)
 
 // Gov tx to to register a trade route that swaps reward tokens for a different denom
 //
@@ -114,6 +117,10 @@ func (ms msgServer) CreateTradeRoute(goCtx context.Context, msg *types.MsgCreate
 	if maxAllowedSwapLossRate == "" {
 		maxAllowedSwapLossRate = DefaultMaxAllowedSwapLossRate
 	}
+	maxSwapAmount := msg.MaxSwapAmount
+	if maxSwapAmount.IsZero() {
+		maxSwapAmount = DefaultMaxSwapAmount
+	}
 
 	// Create the trade config to specify parameters needed for the swap
 	tradeConfig := types.TradeConfig{
@@ -122,8 +129,8 @@ func (ms msgServer) CreateTradeRoute(goCtx context.Context, msg *types.MsgCreate
 		PriceUpdateTimestamp: 0,
 
 		MaxAllowedSwapLossRate: sdk.MustNewDecFromStr(maxAllowedSwapLossRate),
-		MinSwapAmount:          sdkmath.NewIntFromUint64(msg.MinSwapAmount),
-		MaxSwapAmount:          sdkmath.NewIntFromUint64(msg.MaxSwapAmount),
+		MinSwapAmount:          msg.MinSwapAmount,
+		MaxSwapAmount:          maxSwapAmount,
 	}
 
 	// Finally build and store the main trade route

@@ -8,6 +8,7 @@ import (
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
 	errorsmod "cosmossdk.io/errors"
+	sdkmath "cosmossdk.io/math"
 	"github.com/cosmos/cosmos-sdk/x/auth/migrations/legacytx"
 )
 
@@ -87,7 +88,7 @@ func (msg *MsgCreateTradeRoute) ValidateBasic() error {
 	if msg.PoolId < 1 {
 		return errorsmod.Wrap(sdkerrors.ErrInvalidRequest, "invalid pool id")
 	}
-	if msg.MinSwapAmount > msg.MaxSwapAmount {
+	if msg.MaxSwapAmount.GT(sdkmath.ZeroInt()) && msg.MinSwapAmount.GT(msg.MaxSwapAmount) {
 		return errorsmod.Wrap(sdkerrors.ErrInvalidRequest, "min swap amount cannot be greater than max swap amount")
 	}
 

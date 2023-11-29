@@ -3,7 +3,6 @@ package keeper
 import (
 	"context"
 
-	sdkmath "cosmossdk.io/math"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 
 	"github.com/Stride-Labs/stride/v16/x/stakeibc/types"
@@ -24,15 +23,24 @@ func (ms msgServer) UpdateTradeRoute(goCtx context.Context, msg *types.MsgUpdate
 			"no trade route for rewardDenom %s and hostDenom %s", msg.RewardDenom, msg.HostDenom)
 	}
 
+	maxAllowedSwapLossRate := msg.MaxAllowedSwapLossRate
+	if maxAllowedSwapLossRate == "" {
+		maxAllowedSwapLossRate = DefaultMaxAllowedSwapLossRate
+	}
+	maxSwapAmount := msg.MaxSwapAmount
+	if maxSwapAmount.IsZero() {
+		maxSwapAmount = DefaultMaxSwapAmount
+	}
+
 	updatedConfig := types.TradeConfig{
 		PoolId: msg.PoolId,
 
 		SwapPrice:            sdk.ZeroDec(),
 		PriceUpdateTimestamp: 0,
 
-		MaxAllowedSwapLossRate: sdk.MustNewDecFromStr(msg.MaxAllowedSwapLossRate),
-		MinSwapAmount:          sdkmath.NewIntFromUint64(msg.MinSwapAmount),
-		MaxSwapAmount:          sdkmath.NewIntFromUint64(msg.MaxSwapAmount),
+		MaxAllowedSwapLossRate: sdk.MustNewDecFromStr(maxAllowedSwapLossRate),
+		MinSwapAmount:          maxSwapAmount,
+		MaxSwapAmount:          msg.MaxSwapAmount,
 	}
 
 	route.TradeConfig = updatedConfig
