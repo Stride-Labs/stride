@@ -238,8 +238,11 @@ func (k Keeper) WithdrawalRewardBalanceQuery(ctx sdk.Context, route types.TradeR
 	timeout := time.Unix(0, int64(strideEpochTracker.NextEpochStartTime))
 	timeoutDuration := timeout.Sub(ctx.BlockTime())
 
-	// The only callback data we need is the trade route
-	callbackData := route
+	// We need the trade route keys in the callback to look up the tradeRoute struct
+	callbackData := types.TradeRouteCallback{
+		RewardDenom: route.RewardDenomOnRewardZone,
+		HostDenom:   route.HostDenomOnHostZone,
+	}
 	callbackDataBz, err := proto.Marshal(&callbackData)
 	if err != nil {
 		return errorsmod.Wrapf(err, "unable to marshal TradeRoute callback data")
@@ -286,8 +289,11 @@ func (k Keeper) TradeRewardBalanceQuery(ctx sdk.Context, route types.TradeRoute)
 	timeout := time.Unix(0, int64(hourEpochTracker.NextEpochStartTime))
 	timeoutDuration := timeout.Sub(ctx.BlockTime())
 
-	// The only callback data we need is the trade route
-	callbackData := route
+	// We need the trade route keys in the callback to look up the tradeRoute struct
+	callbackData := types.TradeRouteCallback{
+		RewardDenom: route.RewardDenomOnRewardZone,
+		HostDenom:   route.HostDenomOnHostZone,
+	}
 	callbackDataBz, err := proto.Marshal(&callbackData)
 	if err != nil {
 		return errorsmod.Wrapf(err, "unable to marshal TradeRewardBalanceQuery callback data")
@@ -334,8 +340,11 @@ func (k Keeper) TradeConvertedBalanceQuery(ctx sdk.Context, route types.TradeRou
 	timeout := time.Unix(0, int64(strideEpochTracker.NextEpochStartTime))
 	timeoutDuration := timeout.Sub(ctx.BlockTime())
 
-	// The only callback data we need is the trade route
-	callbackData := route
+	// We need the trade route keys in the callback to look up the tradeRoute struct
+	callbackData := types.TradeRouteCallback{
+		RewardDenom: route.RewardDenomOnRewardZone,
+		HostDenom:   route.HostDenomOnHostZone,
+	}
 	callbackDataBz, err := proto.Marshal(&callbackData)
 	if err != nil {
 		return errorsmod.Wrapf(err, "unable to marshal trade route as callback data")
@@ -383,8 +392,11 @@ func (k Keeper) PoolPriceQuery(ctx sdk.Context, route types.TradeRoute) error {
 	timeout := time.Unix(0, int64(hourEpochTracker.NextEpochStartTime))
 	timeoutDuration := timeout.Sub(ctx.BlockTime())
 
-	// The only callback data we will need is the trade route
-	callbackData := route
+	// We need the trade route keys in the callback to look up the tradeRoute struct
+	callbackData := types.TradeRouteCallback{
+		RewardDenom: route.RewardDenomOnRewardZone,
+		HostDenom:   route.HostDenomOnHostZone,
+	}
 	callbackDataBz, err := proto.Marshal(&callbackData)
 	if err != nil {
 		return errorsmod.Wrapf(err, "unable to marshal TradeRewardBalanceQuery callback data")

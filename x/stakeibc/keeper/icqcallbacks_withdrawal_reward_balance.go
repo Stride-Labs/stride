@@ -38,11 +38,19 @@ func WithdrawalRewardBalanceCallback(k Keeper, ctx sdk.Context, args []byte, que
 		return nil
 	}
 
-	// Unmarshal the callback data which is just the trade route
-	var tradeRoute types.TradeRoute
-	if err := proto.Unmarshal(query.CallbackData, &tradeRoute); err != nil {
-		return errorsmod.Wrapf(err, "unable to unmarshal withdrawal reward balance callback data")
+	// Unmarshal the callback data containing the tradeRoute we are on
+	var tradeRouteCallback types.TradeRouteCallback
+	if err := proto.Unmarshal(query.CallbackData, &tradeRouteCallback); err != nil {
+		return errorsmod.Wrapf(err, "unable to unmarshal trade reward balance callback data")
 	}
+
+	// Lookup the trade route from the keys in the callback
+	tradeRoute, found := k.GetTradeRoute(ctx, tradeRouteCallback.RewardDenom, tradeRouteCallback.HostDenom)
+	if !found {
+		return types.ErrTradeRouteNotFound.Wrapf("trade route from %s to %s not found",
+			tradeRouteCallback.RewardDenom, tradeRouteCallback.HostDenom)
+	}
+
 	k.Logger(ctx).Info(utils.LogICQCallbackWithHostZone(chainId, ICQCallbackID_WithdrawalRewardBalance,
 		"Query response - Withdrawal Reward Balance: %v %s", withdrawalRewardBalanceAmount, tradeRoute.RewardDenomOnHostZone))
 
