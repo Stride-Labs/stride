@@ -209,12 +209,23 @@ func (s *KeeperTestSuite) TestWithdrawalRewardBalanceCallback_InvalidArgs() {
 func (s *KeeperTestSuite) TestWithdrawalRewardBalanceCallback_FailedSubmitTx() {
 	testCase := s.SetupWithdrawalRewardBalanceCallbackTestCase()
 
+	// Get the sequence number before the ICA is submitted to confirm it incremented
+	startSequence, found := s.App.StakeibcKeeper.IBCKeeper.ChannelKeeper.GetNextSequenceSend(s.Ctx, testCase.PortID, testCase.ChannelID)
+	s.Require().True(found, "sequence number not found before callback executed")
+
 	// Remove connectionId from host ICAAccount on TradeRoute so the ICA tx fails
 	testCase.TradeRoute.HostAccount.ConnectionId = "bad-connection"
 	callbackDataBz, _ := proto.Marshal(&testCase.TradeRoute)
 	testCase.Response.Query.CallbackData = callbackDataBz
 
 	err := keeper.WithdrawalRewardBalanceCallback(s.App.StakeibcKeeper, s.Ctx, testCase.Response.CallbackArgs, testCase.Response.Query)
-	s.Require().ErrorContains(err, "Failed to submit ICA tx")
-	s.Require().ErrorContains(err, "connection not found")	
+	//s.Require().ErrorContains(err, "Failed to submit ICA tx")
+	//s.Require().ErrorContains(err, "connection not found")	
+	s.Require().NoError(err)
+
+	// Confirm the sequence number was NOT incremented, meaning the transfer ICA was not called
+	// Normally this would cause an error from the ICA tx send, but we consume those in the ApplyIfNoError wrapper
+	endSequence, found := s.App.StakeibcKeeper.IBCKeeper.ChannelKeeper.GetNextSequenceSend(s.Ctx, testCase.PortID, testCase.ChannelID)
+	s.Require().True(found, "sequence number not found after callback should have executed ICA")
+	s.Require().Equal(endSequence, startSequence, "sequence number should NOT have increased, no transfer should happen")	
 }
