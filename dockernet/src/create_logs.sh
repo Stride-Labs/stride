@@ -98,7 +98,7 @@ while true; do
 
 
     TRADE_ICA_ADDR=$($STRIDE_MAIN_CMD q stakeibc list-trade-routes | grep trade_account -A 2 | grep address | awk '{print $2}')
-    if [[ "$TRADE_ICA_ADDR" != "" ]]; then
+    if [[ "$TRADE_ICA_ADDR" == "$OSMO_ADDRESS_PREFIX"* ]]; then
         printf '\n%s\n' "TRADE ACCT BALANCE" >> $TEMP_LOGS_DIR/$BALANCES_LOG
         $OSMO_MAIN_CMD q bank balances $TRADE_ICA_ADDR >> $TEMP_LOGS_DIR/$BALANCES_LOG
     fi
