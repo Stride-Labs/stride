@@ -91,7 +91,7 @@ cat << EOF > $proposal_file
       "host_denom_on_trade": "$dydx_denom_on_osmo",
       "host_denom_on_host": "$DYDX_DENOM",
       "pool_id": 1,
-      "max_allowed_swap_loss_rate": "0.05"
+      "max_allowed_swap_loss_rate": "0.15"
     }
   ],
   "deposit": "2000000000ustrd"
