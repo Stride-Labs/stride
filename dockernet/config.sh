@@ -108,7 +108,7 @@ IBC_STARS_DENOM=$IBC_STARS_CHANNEL_3_DENOM
 
 # CHAIN PARAMS
 BLOCK_TIME='1s'
-STRIDE_HOUR_EPOCH_DURATION="90s"
+STRIDE_HOUR_EPOCH_DURATION="30s"
 STRIDE_DAY_EPOCH_DURATION="140s"
 STRIDE_EPOCH_EPOCH_DURATION="35s"
 STRIDE_MINT_EPOCH_DURATION="20s"
@@ -513,6 +513,41 @@ GET_COUNTERPARTY_TRANSFER_CHANNEL_ID() {
 
   main_cmd=$(GET_VAR_VALUE ${src_chain}_MAIN_CMD)
   $main_cmd q ibc channel end transfer $channel_id | grep -A 2 counterparty | grep channel_id | awk '{print $2}'
+}
+
+GET_LATEST_PROPOSAL_ID() {
+  chain="$1"
+
+  main_cmd=$(GET_VAR_VALUE ${chain}_MAIN_CMD)
+  $main_cmd q gov proposals | grep '  id:' | tail -1 | awk '{printf $2}' | tr -d '"'
+}
+
+WATCH_PROPOSAL_STATUS() {
+  chain="$1"
+  proposal_id="$2"
+
+  main_cmd=$(GET_VAR_VALUE ${chain}_MAIN_CMD)
+
+  # Continually polls the proposal status until it passes or fails
+  while true; do
+    status=$($main_cmd query gov proposal $proposal_id | grep "status" | awk '{printf $2}')
+    if [[ "$status" == "PROPOSAL_STATUS_VOTING_PERIOD" ]]; then
+        echo "  Proposal still in progress..."
+        sleep 5
+    elif [[ "$status" == "PROPOSAL_STATUS_PASSED" ]]; then
+        echo "  Proposal passed!"
+        exit 0
+    elif [[ "$status" == "PROPOSAL_STATUS_REJECTED" ]]; then
+        echo "  Proposal rejected!"
+        exit 1
+    elif [[ "$status" == "PROPOSAL_STATUS_FAILED" ]]; then
+        echo "  Proposal failed!"
+        exit 1
+    else 
+        echo "ERROR: Unknown proposal status: $status"
+        exit 1
+    fi
+  done
 }
 
 TRIM_TX() {
