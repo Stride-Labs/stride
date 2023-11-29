@@ -50,12 +50,17 @@ func (k Keeper) TransferRewardTokensHostToTrade(ctx sdk.Context, amount sdkmath.
 		return nil
 	}
 
-	// Timeout for ica tx and the transfer msgs is at end of epoch
+	// Get the epoch tracker to determine the timeouts
 	strideEpochTracker, found := k.GetEpochTracker(ctx, epochstypes.STRIDE_EPOCH)
 	if !found {
 		return errorsmod.Wrapf(types.ErrEpochNotFound, epochstypes.STRIDE_EPOCH)
 	}
-	timeout := uint64(strideEpochTracker.NextEpochStartTime)
+
+	// Timeout the first transfer halfway through the epoch, and the second transfer at the end of the epoch
+	// The pfm transfer requires a duration instead of a timestamp for the timeout, so we just use half the epoch length
+	halfEpochDuration := strideEpochTracker.Duration / 2
+	firstTransferTimeoutTimestamp := uint64(strideEpochTracker.NextEpochStartTime - halfEpochDuration)
+	secondTransferTimeoutDuration := fmt.Sprintf("%ds", halfEpochDuration/1e9) // in seconds
 
 	startingDenom := route.RewardDenomOnHostZone
 	sendTokens := sdk.NewCoin(startingDenom, amount)
@@ -67,8 +72,8 @@ func (k Keeper) TransferRewardTokensHostToTrade(ctx sdk.Context, amount sdkmath.
 	// Import and use pfm data structures instead of this JSON if we can determine consistent module version...
 	// This transfer channel id is a channel on the reward Zone for transfers to the trade zone
 	// (not to be confused with a transfer channel on Stride or the Host Zone)
-	memoJSON := fmt.Sprintf(`"{ forward": {"receiver": "%s", "port": "%s", "channel":"%s", "timeout":"10m", "retries": 2} }`,
-		tradeIcaAddress, transfertypes.PortID, route.RewardToTradeChannelId)
+	memoJSON := fmt.Sprintf(`{ "forward": {"receiver": "%s", "port": "%s", "channel":"%s", "timeout":"%s", "retries": 0} }`,
+		tradeIcaAddress, transfertypes.PortID, route.RewardToTradeChannelId, secondTransferTimeoutDuration)
 
 	var msgs []proto.Message
 	msgs = append(msgs, &transfertypes.MsgTransfer{
@@ -77,7 +82,7 @@ func (k Keeper) TransferRewardTokensHostToTrade(ctx sdk.Context, amount sdkmath.
 		Token:            sendTokens,
 		Sender:           withdrawlIcaAddress,
 		Receiver:         unwindIcaAddress, // could be "pfm" or a real address depending on version
-		TimeoutTimestamp: timeout,
+		TimeoutTimestamp: firstTransferTimeoutTimestamp,
 		Memo:             memoJSON,
 	})
 
