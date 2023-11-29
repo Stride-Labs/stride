@@ -11,6 +11,7 @@ TEMP_LOGS_DIR=$LOGS_DIR/temp
 
 STATE_LOG=state.log
 BALANCES_LOG=balances.log
+CHANNELS_LOG=channels.log
 
 mkdir -p $TEMP_LOGS_DIR
 
@@ -85,6 +86,15 @@ while true; do
         printf '\n%s\n' "COMMUNITY POOL REDEEM HOLDING ACCT BALANCE" >> $TEMP_LOGS_DIR/$BALANCES_LOG
         $STRIDE_MAIN_CMD q bank balances $COMMUNITY_POOL_REDEEM_ADDR >> $TEMP_LOGS_DIR/$BALANCES_LOG
     done
+
+
+    TRADE_ICA_ADDR=$($STRIDE_MAIN_CMD q stakeibc list-trade-routes | grep trade_account -A 2 | grep "address" | awk '{print $2}')
+    if [[ "$TRADE_ICA_ADDR" != "" ]]; then
+        printf '\n%s\n' "TRADE ACCT BALANCE" >> $TEMP_LOGS_DIR/$BALANCES_LOG
+        $OSMO_MAIN_CMD q bank balances $TRADE_ICA_ADDR >> $TEMP_LOGS_DIR/$BALANCES_LOG
+    fi
+
+    $STRIDE_MAIN_CMD q ibc channel channels  | grep -E "channel_id|port|state" >> $TEMP_LOGS_DIR/$CHANNELS_LOG
 
     mv $TEMP_LOGS_DIR/*.log $LOGS_DIR
     sleep 3
