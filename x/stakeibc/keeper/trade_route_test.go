@@ -15,29 +15,22 @@ func (s *KeeperTestSuite) CreateTradeRoutes() (routes []types.TradeRoute) {
 		tradeChain := fmt.Sprintf("chain-T%d", i)
 
 		hostICA := types.ICAAccount{
-			ChainId: hostChain,
-			Type:    types.ICAAccountType_WITHDRAWAL,
+			ChainId:      hostChain,
+			Type:         types.ICAAccountType_WITHDRAWAL,
+			ConnectionId: fmt.Sprintf("connection-0%d", i),
+			Address:      "host_ica_address",
 		}
 		rewardICA := types.ICAAccount{
-			ChainId: rewardChain,
-			Type:    types.ICAAccountType_UNWIND,
+			ChainId:      rewardChain,
+			Type:         types.ICAAccountType_CONVERTER_UNWIND,
+			ConnectionId: fmt.Sprintf("connection-1%d", i),
+			Address:      "reward_ica_address",
 		}
 		tradeICA := types.ICAAccount{
-			ChainId: tradeChain,
-			Type:    types.ICAAccountType_TRADE,
-		}
-
-		hostRewardHop := types.TradeHop{
-			FromAccount: hostICA,
-			ToAccount:   rewardICA,
-		}
-		rewardTradeHop := types.TradeHop{
-			FromAccount: rewardICA,
-			ToAccount:   tradeICA,
-		}
-		tradeHostHop := types.TradeHop{
-			FromAccount: tradeICA,
-			ToAccount:   hostICA,
+			ChainId:      tradeChain,
+			Type:         types.ICAAccountType_CONVERTER_TRADE,
+			ConnectionId: fmt.Sprintf("connection-2%d", i),
+			Address:      "trade_ica_address",
 		}
 
 		tradeConfig := types.TradeConfig{
@@ -59,9 +52,13 @@ func (s *KeeperTestSuite) CreateTradeRoutes() (routes []types.TradeRoute) {
 			HostDenomOnTradeZone:    "ibc-" + hostDenom + "-on-" + tradeChain,
 			HostDenomOnHostZone:     hostDenom,
 
-			HostToRewardHop:  hostRewardHop,
-			RewardToTradeHop: rewardTradeHop,
-			TradeToHostHop:   tradeHostHop,
+			HostAccount:   hostICA,
+			RewardAccount: rewardICA,
+			TradeAccount:  tradeICA,
+
+			HostToRewardChannelId:  fmt.Sprintf("channel-0%d", i),
+			RewardToTradeChannelId: fmt.Sprintf("channel-1%d", i),
+			TradeToHostChannelId:   fmt.Sprintf("channel-2%d", i),
 
 			TradeConfig: tradeConfig,
 		}
@@ -76,7 +73,7 @@ func (s *KeeperTestSuite) CreateTradeRoutes() (routes []types.TradeRoute) {
 func (s *KeeperTestSuite) TestGetTradeRoute() {
 	routes := s.CreateTradeRoutes()
 	for i, route := range routes {
-		startDenom := route.RewardDenomOnHostZone
+		startDenom := route.RewardDenomOnRewardZone
 		endDenom := route.HostDenomOnHostZone
 
 		actualRoute, found := s.App.StakeibcKeeper.GetTradeRoute(s.Ctx, startDenom, endDenom)

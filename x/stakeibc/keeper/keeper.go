@@ -116,11 +116,11 @@ func (k Keeper) GetAuthority() string {
 func (k Keeper) GetChainIdFromConnectionId(ctx sdk.Context, connectionID string) (string, error) {
 	connection, found := k.IBCKeeper.ConnectionKeeper.GetConnection(ctx, connectionID)
 	if !found {
-		return "", errorsmod.Wrap(connectiontypes.ErrConnectionNotFound, connectionID)
+		return "", errorsmod.Wrapf(connectiontypes.ErrConnectionNotFound, "connection %s not found", connectionID)
 	}
 	clientState, found := k.IBCKeeper.ClientKeeper.GetClientState(ctx, connection.ClientId)
 	if !found {
-		return "", errorsmod.Wrap(clienttypes.ErrClientNotFound, connection.ClientId)
+		return "", errorsmod.Wrapf(clienttypes.ErrClientNotFound, "client %s not found", connection.ClientId)
 	}
 	client, ok := clientState.(*ibctmtypes.ClientState)
 	if !ok {
@@ -153,16 +153,15 @@ func (k Keeper) GetCounterpartyChainId(ctx sdk.Context, connectionID string) (st
 	return counterpartyClient.ChainId, nil
 }
 
-func (k Keeper) GetConnectionId(ctx sdk.Context, portId string) (string, error) {
+// Searches all interchain accounts and finds the connection ID that corresponds with a given port ID
+func (k Keeper) GetConnectionIdFromICAPortId(ctx sdk.Context, portId string) (connectionId string, found bool) {
 	icas := k.ICAControllerKeeper.GetAllInterchainAccounts(ctx)
 	for _, ica := range icas {
 		if ica.PortId == portId {
-			return ica.ConnectionId, nil
+			return ica.ConnectionId, true
 		}
 	}
-	errMsg := fmt.Sprintf("portId %s has no associated connectionId", portId)
-	k.Logger(ctx).Error(errMsg)
-	return "", fmt.Errorf(errMsg)
+	return "", false
 }
 
 // helper to get what share of the curr epoch we're through

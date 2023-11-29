@@ -25,8 +25,8 @@ import (
 //	P0LastSpotPrice gives the ratio of Asset0Denom / Asset1Denom
 //	P1LastSpotPrice gives the ratio of Asset1Denom / Asset0Denom
 //
-// When storing down the price, we want to store down the ratio of HostDenom to RewardDenom
-// Meaning, if Asset0Denom is the HostDenom, we want to store P0LastSpotPrice
+// When storing down the price, we want to store down the ratio of HostDenom.
+// Meaning, if Asset0Denom is the host denom, we want to store P0LastSpotPrice
 func PoolPriceCallback(k Keeper, ctx sdk.Context, args []byte, query icqtypes.Query) error {
 	k.Logger(ctx).Info(utils.LogICQCallbackWithHostZone(query.ChainId, ICQCallbackID_PoolPrice,
 		"Starting pool spot price callback, QueryId: %vs, QueryType: %s, Connection: %s", query.Id, query.QueryType, query.ConnectionId))

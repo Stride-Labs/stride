@@ -39,10 +39,10 @@ func (k Keeper) GetHostZone(ctx sdk.Context, chainId string) (val types.HostZone
 func (k Keeper) GetActiveHostZone(ctx sdk.Context, chainId string) (hostZone types.HostZone, err error) {
 	hostZone, found := k.GetHostZone(ctx, chainId)
 	if !found {
-		return hostZone, types.ErrHostZoneNotFound.Wrap(chainId)
+		return hostZone, types.ErrHostZoneNotFound.Wrapf("host zone %s not found", chainId)
 	}
 	if hostZone.Halted {
-		return hostZone, types.ErrHaltedHostZone.Wrap(chainId)
+		return hostZone, types.ErrHaltedHostZone.Wrapf("host zone %s is halted", chainId)
 	}
 	return hostZone, nil
 }

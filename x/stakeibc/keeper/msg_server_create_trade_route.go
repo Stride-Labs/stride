@@ -19,7 +19,7 @@ var (
 	DefaultMaxSwapAmount          = sdkmath.NewIntWithDecimal(10, 24) // 10e24
 )
 
-// Gov tx to to register a trade route that swaps reward tokens for a different denom
+// Gov tx to register a trade route that swaps reward tokens for a different denom
 //
 // Example proposal:
 //
@@ -47,8 +47,9 @@ var (
 //				 "host_denom_on_host": "hostToken",
 //
 //				 "pool_id": 1,
-//				 "min_swap_amount": 10000000,
-//				 "max_swap_amount": 1000000000
+//				 "max_allowed_swap_loss_rate": "0.05"
+//				 "min_swap_amount": "10000000",
+//				 "max_swap_amount": "1000000000"
 //			  }
 //		   ],
 //		   "deposit": "2000000000ustrd"
@@ -84,32 +85,13 @@ func (ms msgServer) CreateTradeRoute(goCtx context.Context, msg *types.MsgCreate
 		ConnectionId: hostZone.ConnectionId,
 		Address:      hostZone.WithdrawalIcaAddress,
 	}
-	rewardICA, err := ms.Keeper.RegisterTradeRouteICAAccount(ctx, msg.StrideToRewardConnectionId, types.ICAAccountType_UNWIND)
+	unwindICA, err := ms.Keeper.RegisterTradeRouteICAAccount(ctx, msg.StrideToRewardConnectionId, types.ICAAccountType_CONVERTER_UNWIND)
 	if err != nil {
 		return nil, errorsmod.Wrapf(err, "unable to register the unwind ICA account")
 	}
-	tradeICA, err := ms.Keeper.RegisterTradeRouteICAAccount(ctx, msg.StrideToTradeConnectionId, types.ICAAccountType_TRADE)
+	tradeICA, err := ms.Keeper.RegisterTradeRouteICAAccount(ctx, msg.StrideToTradeConnectionId, types.ICAAccountType_CONVERTER_TRADE)
 	if err != nil {
 		return nil, errorsmod.Wrapf(err, "unable to register the trade ICA account")
-	}
-
-	// Create the hops between each zone
-	hostToRewardHop := types.TradeHop{
-		TransferChannelId: msg.HostToRewardTransferChannelId,
-		FromAccount:       hostICA,
-		ToAccount:         rewardICA,
-	}
-
-	rewardToTradeHop := types.TradeHop{
-		TransferChannelId: msg.RewardToTradeTransferChannelId,
-		FromAccount:       rewardICA,
-		ToAccount:         tradeICA,
-	}
-
-	tradeToHostHop := types.TradeHop{
-		TransferChannelId: msg.TradeToHostTransferChannelId,
-		FromAccount:       tradeICA,
-		ToAccount:         hostICA,
 	}
 
 	// If a max allowed swap loss is not provided, use the default
@@ -141,9 +123,13 @@ func (ms msgServer) CreateTradeRoute(goCtx context.Context, msg *types.MsgCreate
 		HostDenomOnTradeZone:    msg.HostDenomOnTrade,
 		HostDenomOnHostZone:     msg.HostDenomOnHost,
 
-		HostToRewardHop:  hostToRewardHop,
-		RewardToTradeHop: rewardToTradeHop,
-		TradeToHostHop:   tradeToHostHop,
+		HostAccount:   hostICA,
+		RewardAccount: unwindICA,
+		TradeAccount:  tradeICA,
+
+		HostToRewardChannelId:  msg.HostToRewardTransferChannelId,
+		RewardToTradeChannelId: msg.RewardToTradeTransferChannelId,
+		TradeToHostChannelId:   msg.TradeToHostTransferChannelId,
 
 		TradeConfig: tradeConfig,
 	}
@@ -153,6 +139,8 @@ func (ms msgServer) CreateTradeRoute(goCtx context.Context, msg *types.MsgCreate
 	return &types.MsgCreateTradeRouteResponse{}, nil
 }
 
+// Registers a new TradeRoute ICAAccount, given the type
+// Stores down the connection and chainId now, and the address upon callback
 func (k Keeper) RegisterTradeRouteICAAccount(
 	ctx sdk.Context,
 	connectionId string,
