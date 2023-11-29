@@ -67,7 +67,7 @@ func (k Keeper) TransferRewardTokensHostToTrade(ctx sdk.Context, amount sdkmath.
 	// Import and use pfm data structures instead of this JSON if we can determine consistent module version...
 	// This transfer channel id is a channel on the reward Zone for transfers to the trade zone
 	// (not to be confused with a transfer channel on Stride or the Host Zone)
-	memoJSON := fmt.Sprintf(`"forward": {"receiver": "%s","port": "%s","channel":"%s","timeout":"10m","retries": 2}`,
+	memoJSON := fmt.Sprintf(`"{ forward": {"receiver": "%s", "port": "%s", "channel":"%s", "timeout":"10m", "retries": 2} }`,
 		tradeIcaAddress, transfertypes.PortID, route.RewardToTradeChannelId)
 
 	var msgs []proto.Message
