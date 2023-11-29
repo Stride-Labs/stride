@@ -62,8 +62,8 @@ func (ms msgServer) UpdateTradeRoute(goCtx context.Context, msg *types.MsgUpdate
 		PriceUpdateTimestamp: 0,
 
 		MaxAllowedSwapLossRate: sdk.MustNewDecFromStr(maxAllowedSwapLossRate),
-		MinSwapAmount:          maxSwapAmount,
-		MaxSwapAmount:          msg.MaxSwapAmount,
+		MinSwapAmount:          msg.MinSwapAmount,
+		MaxSwapAmount:          maxSwapAmount,
 	}
 
 	route.TradeConfig = updatedConfig
