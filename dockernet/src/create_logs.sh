@@ -19,6 +19,7 @@ while true; do
     N_VALIDATORS_STRIDE=$($STRIDE_MAIN_CMD q tendermint-validator-set | grep -o address | wc -l | tr -dc '0-9')
     echo "STRIDE @ $($STRIDE_MAIN_CMD q tendermint-validator-set | head -n 1 | tr -dc '0-9') | $N_VALIDATORS_STRIDE VALS" >$TEMP_LOGS_DIR/$STATE_LOG
     echo "STRIDE @ $($STRIDE_MAIN_CMD q tendermint-validator-set | head -n 1 | tr -dc '0-9') | $N_VALIDATORS_STRIDE VALS" >$TEMP_LOGS_DIR/$BALANCES_LOG
+    echo "STRIDE @ $($STRIDE_MAIN_CMD q tendermint-validator-set | head -n 1 | tr -dc '0-9') | $N_VALIDATORS_STRIDE VALS" >$TEMP_LOGS_DIR/$CHANNELS_LOG
 
     for chain in ${HOST_CHAINS[@]}; do
         HOST_MAIN_CMD=$(GET_VAR_VALUE ${chain}_MAIN_CMD)
@@ -45,7 +46,7 @@ while true; do
     $STRIDE_MAIN_CMD q bank balances $(STRIDE_ADDRESS) >>$TEMP_LOGS_DIR/$BALANCES_LOG
 
     printf '\n%s\n' "==========================  STRIDE  =============================" >> $TEMP_LOGS_DIR/$CHANNELS_LOG
-    $STRIDE_MAIN_CMD q ibc channel channels  | grep -E "channel_id|port|state" >> $TEMP_LOGS_DIR/$CHANNELS_LOG
+    $STRIDE_MAIN_CMD q ibc channel channels | grep -E "channel_id|port|state" >> $TEMP_LOGS_DIR/$CHANNELS_LOG || true
 
     for chain in ${HOST_CHAINS[@]}; do
         HOST_CHAIN_ID=$(GET_VAR_VALUE ${chain}_CHAIN_ID)
@@ -92,7 +93,7 @@ while true; do
         $STRIDE_MAIN_CMD q bank balances $COMMUNITY_POOL_REDEEM_ADDR >> $TEMP_LOGS_DIR/$BALANCES_LOG
 
         printf '\n%s\n' "==========================  $chain  =============================" >> $TEMP_LOGS_DIR/$CHANNELS_LOG
-        $HOST_MAIN_CMD q ibc channel channels  | grep -E "channel_id|port|state" >> $TEMP_LOGS_DIR/$CHANNELS_LOG
+        $HOST_MAIN_CMD q ibc channel channels | grep -E "channel_id|port|state" >> $TEMP_LOGS_DIR/$CHANNELS_LOG || true
     done
 
 
@@ -105,7 +106,7 @@ while true; do
     for chain in ${ACCESSORY_CHAINS[@]}; do
         ACCESSORY_MAIN_CMD=$(GET_VAR_VALUE ${chain}_MAIN_CMD)
         printf '\n%s\n' "==========================  $chain  =============================" >> $TEMP_LOGS_DIR/$CHANNELS_LOG
-        $ACCESSORY_MAIN_CMD q ibc channel channels  | grep -E "channel_id|port|state" >> $TEMP_LOGS_DIR/$CHANNELS_LOG
+        $ACCESSORY_MAIN_CMD q ibc channel channels | grep -E "channel_id|port|state" >> $TEMP_LOGS_DIR/$CHANNELS_LOG || true
     done
 
     mv $TEMP_LOGS_DIR/*.log $LOGS_DIR
