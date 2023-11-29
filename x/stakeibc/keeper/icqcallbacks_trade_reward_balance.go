@@ -54,17 +54,13 @@ func TradeRewardBalanceCallback(k Keeper, ctx sdk.Context, args []byte, query ic
 		"Query response - Withdrawal Reward Balance: %v %s", tradeRewardBalanceAmount, tradeRoute.RewardDenomOnTradeZone))
 
 	// Trade all found reward tokens in the trade ICA to the output denom of their trade pool
-	err = utils.ApplyFuncIfNoError(ctx, func(c sdk.Context) error {
-		return k.SwapRewardTokens(ctx, tradeRewardBalanceAmount, tradeRoute)
-	})
-	if err != nil {
-		k.Logger(ctx).Error(utils.LogICQCallbackWithHostZone(chainId, ICQCallbackID_TradeRewardBalance,
-			"Submitting ICA to swapping reward tokens failed: %s", err.Error()))
-	} else {
-		k.Logger(ctx).Info(utils.LogICQCallbackWithHostZone(chainId, ICQCallbackID_TradeRewardBalance,
-			"Swapping discovered reward tokens %v %s for %s",
-			tradeRewardBalanceAmount, tradeRoute.RewardDenomOnTradeZone, tradeRoute.HostDenomOnTradeZone))
+	if err := k.SwapRewardTokens(ctx, tradeRewardBalanceAmount, tradeRoute); err != nil {
+		return errorsmod.Wrapf(err, "unable to swap reward tokens")
 	}
+
+	k.Logger(ctx).Info(utils.LogICQCallbackWithHostZone(chainId, ICQCallbackID_TradeRewardBalance,
+		"Swapping discovered reward tokens %v %s for %s",
+		tradeRewardBalanceAmount, tradeRoute.RewardDenomOnTradeZone, tradeRoute.HostDenomOnTradeZone))
 
 	return nil
 }

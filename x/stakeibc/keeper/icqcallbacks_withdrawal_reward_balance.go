@@ -55,17 +55,13 @@ func WithdrawalRewardBalanceCallback(k Keeper, ctx sdk.Context, args []byte, que
 		"Query response - Withdrawal Reward Balance: %v %s", withdrawalRewardBalanceAmount, tradeRoute.RewardDenomOnHostZone))
 
 	// Using ICA commands on the withdrawal address, transfer the found reward tokens from the host zone to the trade zone
-	err = utils.ApplyFuncIfNoError(ctx, func(c sdk.Context) error {
-		return k.TransferRewardTokensHostToTrade(ctx, withdrawalRewardBalanceAmount, tradeRoute)
-	})
-	if err != nil {
-		k.Logger(ctx).Error(utils.LogICQCallbackWithHostZone(chainId, ICQCallbackID_WithdrawalRewardBalance,
-			"Initiating transfer of reward tokens to trade ICA failed: %s", err.Error()))
-	} else {
-		k.Logger(ctx).Info(utils.LogICQCallbackWithHostZone(chainId, ICQCallbackID_WithdrawalRewardBalance,
-			"Sending discovered reward tokens %v %s from hostZone to tradeZone",
-			withdrawalRewardBalanceAmount, tradeRoute.RewardDenomOnHostZone))
+	if err := k.TransferRewardTokensHostToTrade(ctx, withdrawalRewardBalanceAmount, tradeRoute); err != nil {
+		return errorsmod.Wrapf(err, "initiating transfer of reward tokens to trade ICA failed")
 	}
+
+	k.Logger(ctx).Info(utils.LogICQCallbackWithHostZone(chainId, ICQCallbackID_WithdrawalRewardBalance,
+		"Sending discovered reward tokens %v %s from hostZone to tradeZone",
+		withdrawalRewardBalanceAmount, tradeRoute.RewardDenomOnHostZone))
 
 	return nil
 }
