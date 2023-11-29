@@ -7,15 +7,6 @@ import "cosmos_proto/cosmos.proto";
 
 option go_package = "github.com/Stride-Labs/stride/v16/x/stakeibc/types";
 
-// Represents a single directional hop from one ICA to another ICA
-// transfer_channel is between the first chain and second
-// No need for the transfer port because that is a fixed variable
-message TradeHop {
-  string transfer_channel_id = 1;
-  string from_address = 2;
-  string to_address = 3;
-}
-
 // Stores pool information needed to execute the swap along a trade route
 message TradeConfig {
   // Currently Osmosis is the only trade chain so this is an osmosis pool id
@@ -78,17 +69,20 @@ message TradeRoute {
   ICAAccount host_account = 6 [ (gogoproto.nullable) = false ];
   // ICAAccount on the reward zone that is acts as the intermediate
   // receiver of the transfer from host zone to trade zone
-  ICAAccount unwind_account = 7 [ (gogoproto.nullable) = false ];
+  ICAAccount reward_account = 7 [ (gogoproto.nullable) = false ];
   // ICAAccount responsible for executing the swap of reward
   // tokens for host tokens
   ICAAccount trade_account = 8 [ (gogoproto.nullable) = false ];
 
-  // Hop responsible for the transfer of reward tokens to the reward zone
-  TradeHop host_to_reward_hop = 9 [ (gogoproto.nullable) = false ];
-  // Hop responsible for the transfer of reward tokens to the trade zone
-  TradeHop reward_to_trade_hop = 10 [ (gogoproto.nullable) = false ];
-  // Hop responseible for the transfer of host tokens back to the host zone
-  TradeHop trade_to_host_hop = 11 [ (gogoproto.nullable) = false ];
+  // Channel responsible for the transfer of reward tokens from the host
+  // zone to the reward zone. This is the channel ID on the host zone side
+  string host_to_reward_channel_id = 9;
+  // Channel responsible for the transfer of reward tokens from the reward
+  // zone to the trade zone. This is the channel ID on the reward zone side
+  string reward_to_trade_channel_id = 10;
+  // Channel responsible for the transfer of host tokens from the trade
+  // zone, back to the host zone. This is the channel ID on the trade zone side
+  string trade_to_host_channel_id = 11;
 
   // specifies the configuration needed to execute the swap
   // such as pool_id, slippage, min trade amount, etc.

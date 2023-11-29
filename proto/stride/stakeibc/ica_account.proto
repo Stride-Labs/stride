@@ -10,8 +10,8 @@ enum ICAAccountType {
   REDEMPTION = 3;
   COMMUNITY_POOL_DEPOSIT = 4;
   COMMUNITY_POOL_RETURN = 5;
-  UNWIND = 6;
-  TRADE = 7;
+  CONVERTER_UNWIND = 6;
+  CONVERTER_TRADE = 7;
 }
 
 message ICAAccount {
