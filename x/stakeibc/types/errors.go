@@ -63,4 +63,5 @@ var (
 	ErrInvalidDenom                        = errorsmod.Register(ModuleName, 1556, "Invalid denom")
 	ErrTradeRouteAlreadyExists             = errorsmod.Register(ModuleName, 1557, "Trade route already exists")
 	ErrClientStateNotTendermint            = errorsmod.Register(ModuleName, 1558, "Client state not tendermint")
+	ErrTradeRouteNotFound                  = errorsmod.Register(ModuleName, 1559, "trade route not found")
 )

@@ -211,6 +211,7 @@ message MsgResumeHostZone {
 }
 message MsgResumeHostZoneResponse {}
 
+// Creates a new trade route
 message MsgCreateTradeRoute {
   option (cosmos.msg.v1.signer) = "authority";
   option (amino.name) = "stride/x/stakeibc/MsgCreateTradeRoute";
@@ -245,31 +246,75 @@ message MsgCreateTradeRoute {
   // The osmosis pool ID
   uint64 pool_id = 13;
 
-  // min and max set boundaries of reward denom on trade chain we will swap
-  uint64 min_swap_amount = 14;
-  uint64 max_swap_amount = 15;
-}
-message MsgCreateTradeRouteResponse {}
+  // Threshold defining the percentage of tokens that could be lost in the trade
+  // This captures both the loss from slippage and from a stale price on stride
+  // "0.05" means the output from the trade can be no less than a 5% deviation
+  // from the current value
+  string max_allowed_swap_loss_rate = 14;
 
-message MsgDeleteTradeRoute {
-  string creator = 1;
-  string host_denom = 2;
-  string reward_denom = 3;
-}
-message MsgDeleteTradeRouteResponse {}
-
-message MsgUpdateTradeRoute {
-  string creator = 1;
-  string host_denom = 2;
-  string reward_denom = 3;
-  uint64 pool_id = 4;
-  string min_swap_amount = 5 [
-    (cosmos_proto.scalar) = "cosmos.Int",
+  // minimum amount of reward tokens to initate a swap
+  // if not provided, defaults to 0
+  string min_swap_amount = 15 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
     (gogoproto.nullable) = false
   ];
-  string max_swap_amount = 6 [
-    (cosmos_proto.scalar) = "cosmos.Int",
+  // maximum amount of reward tokens in a single swap
+  // if not provided, defaults to 10e24
+  string max_swap_amount = 16 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable) = false
+  ];
+}
+message MsgCreateTradeRouteResponse {}
+
+// Deletes a trade route
+message MsgDeleteTradeRoute {
+  option (cosmos.msg.v1.signer) = "authority";
+  option (amino.name) = "stride/x/stakeibc/MsgDeleteTradeRoute";
+
+  // authority is the address that controls the module (defaults to x/gov unless
+  // overwritten).
+  string authority = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+
+  // The reward denom of the route in it's native form (e.g. usdc)
+  string reward_denom = 2;
+  // The host zone's denom in it's native form (e.g. dydx)
+  string host_denom = 3;
+}
+message MsgDeleteTradeRouteResponse {}
+
+// Updates the config of a trade route
+message MsgUpdateTradeRoute {
+  option (cosmos.msg.v1.signer) = "authority";
+  option (amino.name) = "stride/x/stakeibc/MsgUpdateTradeRoute";
+
+  // authority is the address that controls the module (defaults to x/gov unless
+  // overwritten).
+  string authority = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+
+  // The reward denom of the route in it's native form (e.g. usdc)
+  string reward_denom = 2;
+  // The host zone's denom in it's native form (e.g. dydx)
+  string host_denom = 3;
+
+  // The osmosis pool ID
+  uint64 pool_id = 4;
+
+  // Threshold defining the percentage of tokens that could be lost in the trade
+  // This captures both the loss from slippage and from a stale price on stride
+  // "0.05" means the output from the trade can be no less than a 5% deviation
+  // from the current value
+  string max_allowed_swap_loss_rate = 5;
+
+  // minimum amount of reward tokens to initate a swap
+  // if not provided, defaults to 0
+  string min_swap_amount = 6 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable) = false
+  ];
+  // maximum amount of reward tokens in a single swap
+  // if not provided, defaults to 10e24
+  string max_swap_amount = 7 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
     (gogoproto.nullable) = false
   ];

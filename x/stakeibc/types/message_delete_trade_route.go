@@ -2,6 +2,7 @@ package types
 
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/x/auth/migrations/legacytx"
 
 	errorsmod "cosmossdk.io/errors"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -9,30 +10,17 @@ import (
 
 const TypeMsgDeleteTradeRoute = "delete_trade_route"
 
-var _ sdk.Msg = &MsgDeleteTradeRoute{}
-
-func NewMsgDeleteTradeRoute(creator string, hostDenom string, rewardDenom string) *MsgDeleteTradeRoute {
-	return &MsgDeleteTradeRoute{
-		Creator:  creator,
-		HostDenom: hostDenom,
-		RewardDenom: rewardDenom,
-	}
-}
-
-func (msg *MsgDeleteTradeRoute) Route() string {
-	return RouterKey
-}
+var (
+	_ sdk.Msg            = &MsgDeleteTradeRoute{}
+	_ legacytx.LegacyMsg = &MsgDeleteTradeRoute{}
+)
 
 func (msg *MsgDeleteTradeRoute) Type() string {
 	return TypeMsgDeleteTradeRoute
 }
 
-func (msg *MsgDeleteTradeRoute) GetSigners() []sdk.AccAddress {
-	creator, err := sdk.AccAddressFromBech32(msg.Creator)
-	if err != nil {
-		panic(err)
-	}
-	return []sdk.AccAddress{creator}
+func (msg *MsgDeleteTradeRoute) Route() string {
+	return RouterKey
 }
 
 func (msg *MsgDeleteTradeRoute) GetSignBytes() []byte {
@@ -40,11 +28,14 @@ func (msg *MsgDeleteTradeRoute) GetSignBytes() []byte {
 	return sdk.MustSortJSON(bz)
 }
 
+func (msg *MsgDeleteTradeRoute) GetSigners() []sdk.AccAddress {
+	addr, _ := sdk.AccAddressFromBech32(msg.Authority)
+	return []sdk.AccAddress{addr}
+}
+
 func (msg *MsgDeleteTradeRoute) ValidateBasic() error {
-	// check valid creator address
-	_, err := sdk.AccAddressFromBech32(msg.Creator)
-	if err != nil {
-		return errorsmod.Wrapf(sdkerrors.ErrInvalidAddress, "invalid creator address (%s)", err)
+	if _, err := sdk.AccAddressFromBech32(msg.Authority); err != nil {
+		return errorsmod.Wrap(err, "invalid authority address")
 	}
 
 	if msg.HostDenom == "" {

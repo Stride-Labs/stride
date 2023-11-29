@@ -4,7 +4,7 @@ import fmt "fmt"
 
 // Builds the store key from the reward and host denom's
 func (t TradeRoute) GetKey() []byte {
-	return TradeRouteKeyFromDenoms(t.RewardDenomOnHostZone, t.HostDenomOnHostZone)
+	return TradeRouteKeyFromDenoms(t.RewardDenomOnRewardZone, t.HostDenomOnHostZone)
 }
 
 // Human readable description for logging

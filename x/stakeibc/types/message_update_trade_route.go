@@ -2,47 +2,26 @@ package types
 
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/x/auth/migrations/legacytx"
 
 	errorsmod "cosmossdk.io/errors"
+	sdkmath "cosmossdk.io/math"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
 
 const TypeMsgUpdateTradeRoute = "update_trade_route"
 
-var _ sdk.Msg = &MsgDeleteTradeRoute{}
-
-func NewMsgUpdateTradeRoute(
-	creator string, 
-	hostDenom string,
-	rewardDenom string,
-	poolId uint64, 
-	minSwapAmount sdk.Int, 
-	maxSwapAmount sdk.Int,
-) *MsgUpdateTradeRoute {
-	return &MsgUpdateTradeRoute{
-		Creator:  creator,
-		HostDenom: hostDenom,
-		RewardDenom: rewardDenom,
-		PoolId: poolId,
-		MinSwapAmount: minSwapAmount,
-		MaxSwapAmount: maxSwapAmount,
-	}
-}
-
-func (msg *MsgUpdateTradeRoute) Route() string {
-	return RouterKey
-}
+var (
+	_ sdk.Msg            = &MsgUpdateTradeRoute{}
+	_ legacytx.LegacyMsg = &MsgUpdateTradeRoute{}
+)
 
 func (msg *MsgUpdateTradeRoute) Type() string {
 	return TypeMsgUpdateTradeRoute
 }
 
-func (msg *MsgUpdateTradeRoute) GetSigners() []sdk.AccAddress {
-	creator, err := sdk.AccAddressFromBech32(msg.Creator)
-	if err != nil {
-		panic(err)
-	}
-	return []sdk.AccAddress{creator}
+func (msg *MsgUpdateTradeRoute) Route() string {
+	return RouterKey
 }
 
 func (msg *MsgUpdateTradeRoute) GetSignBytes() []byte {
@@ -50,11 +29,35 @@ func (msg *MsgUpdateTradeRoute) GetSignBytes() []byte {
 	return sdk.MustSortJSON(bz)
 }
 
+func (msg *MsgUpdateTradeRoute) GetSigners() []sdk.AccAddress {
+	addr, _ := sdk.AccAddressFromBech32(msg.Authority)
+	return []sdk.AccAddress{addr}
+}
 func (msg *MsgUpdateTradeRoute) ValidateBasic() error {
-	// check valid creator address
-	_, err := sdk.AccAddressFromBech32(msg.Creator)
+	if _, err := sdk.AccAddressFromBech32(msg.Authority); err != nil {
+		return errorsmod.Wrap(err, "invalid authority address")
+	}
+
+	if msg.HostDenom == "" {
+		return errorsmod.Wrapf(sdkerrors.ErrNotFound, "missing host denom")
+	}
+	if msg.RewardDenom == "" {
+		return errorsmod.Wrapf(sdkerrors.ErrNotFound, "missing reward denom")
+	}
+
+	if msg.PoolId < 1 {
+		return errorsmod.Wrap(sdkerrors.ErrInvalidRequest, "invalid pool id")
+	}
+	if msg.MaxSwapAmount.GT(sdkmath.ZeroInt()) && msg.MinSwapAmount.GT(msg.MaxSwapAmount) {
+		return errorsmod.Wrap(sdkerrors.ErrInvalidRequest, "min swap amount cannot be greater than max swap amount")
+	}
+
+	maxAllowedSwapLossRate, err := sdk.NewDecFromStr(msg.MaxAllowedSwapLossRate)
 	if err != nil {
-		return errorsmod.Wrapf(sdkerrors.ErrInvalidAddress, "invalid creator address (%s)", err)
+		return errorsmod.Wrapf(err, "unable to cast max allowed swap loss rate to a decimal")
+	}
+	if maxAllowedSwapLossRate.LT(sdk.ZeroDec()) || maxAllowedSwapLossRate.GT(sdk.OneDec()) {
+		return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "max allowed swap loss rate must be between 0 and 1")
 	}
 
 	return nil

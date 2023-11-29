@@ -16,11 +16,51 @@ message TradeHop {
   string to_address = 3;
 }
 
+// Stores pool information needed to execute the swap along a trade route
+message TradeConfig {
+  // Currently Osmosis is the only trade chain so this is an osmosis pool id
+  uint64 pool_id = 1;
+
+  // Spot price in the pool to convert the reward denom to the host denom
+  // output_tokens = swap_price * input tokens
+  // This value may be slightly stale as it is updated by an ICQ
+  string swap_price = 2 [
+    (cosmos_proto.scalar) = "cosmos.Dec",
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
+  // unix time in seconds that the price was last updated
+  uint64 price_update_timestamp = 3;
+
+  // Threshold defining the percentage of tokens that could be lost in the trade
+  // This captures both the loss from slippage and from a stale price on stride
+  // 0.05 means the output from the trade can be no less than a 5% deviation
+  // from the current value
+  string max_allowed_swap_loss_rate = 4 [
+    (cosmos_proto.scalar) = "cosmos.Dec",
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
+
+  // min and max set boundaries of reward denom on trade chain we will swap
+  // min also decides when reward token transfers are worth it (transfer fees)
+  string min_swap_amount = 5 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable) = false
+  ];
+  string max_swap_amount = 6 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable) = false
+  ];
+}
+
 // TradeRoute represents a round trip including info on transfer and how to do
 // the swap. It makes the assumption that the reward token is always foreign to
 // the host so therefore the first two hops are to unwind the ibc denom enroute
 // to the trade chain and the last hop is the return so funds start/end in the
 // withdrawl ICA on hostZone
+// The structure is key'd on reward denom and host denom in their native forms
+// (i.e. reward_denom_on_reward_zone and host_denom_on_host_zone)
 message TradeRoute {
   // ibc denom for the reward on the host zone
   string reward_denom_on_host_zone = 1;
@@ -50,38 +90,7 @@ message TradeRoute {
   // Hop responseible for the transfer of host tokens back to the host zone
   TradeHop trade_to_host_hop = 11 [ (gogoproto.nullable) = false ];
 
-  // Currently Osmosis is the only trade chain so this is an osmosis pool id
-  uint64 pool_id = 12;
-
-  // Spot price in the pool to convert the reward denom to the host denom
-  // output_tokens = swap_price * input tokens
-  // This value may be slightly stale as it is updated by an ICQ
-  string swap_price = 13 [
-    (cosmos_proto.scalar) = "cosmos.Dec",
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
-    (gogoproto.nullable) = false
-  ];
-  // unix time in seconds that the price was last updated
-  int64 price_update_timestamp = 14;
-
-  // Threshold defining the percentage of tokens that could be lost in the trade
-  // This captures both the loss from slippage and from a stale price value on
-  // stride 0.05 means the output from the trade can be no less than a 5%
-  // deviation from the current value
-  string max_allowed_swap_loss_rate = 15 [
-    (cosmos_proto.scalar) = "cosmos.Dec",
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
-    (gogoproto.nullable) = false
-  ];
-
-  // min and max set boundaries of reward denom on trade chain we will swap
-  // min also decides when reward token transfers are worth it (transfer fees)
-  string min_swap_amount = 16 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
-    (gogoproto.nullable) = false
-  ];
-  string max_swap_amount = 17 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
-    (gogoproto.nullable) = false
-  ];
+  // specifies the configuration needed to execute the swap
+  // such as pool_id, slippage, min trade amount, etc.
+  TradeConfig trade_config = 12 [ (gogoproto.nullable) = false ];
 }
