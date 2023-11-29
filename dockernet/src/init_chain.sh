@@ -255,6 +255,7 @@ else
         add_relayer_account "$RELAYER_GAIA_ICS_ACCT" "$RELAYER_GAIA_ICS_MNEMONIC"
     fi
     if [ "$CHAIN" == "NOBLE" ]; then 
+        add_relayer_account stride-noble "$RELAYER_NOBLE_STRIDE_MNEMONIC"
         add_relayer_account noble-dydx "$RELAYER_NOBLE_DYDX_MNEMONIC"
         add_relayer_account noble-osmo "$RELAYER_NOBLE_OSMO_MNEMONIC"
     fi

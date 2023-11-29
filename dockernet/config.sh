@@ -345,6 +345,8 @@ RELAYER_DYDX_OSMO_MNEMONIC="small fire step promote fox reward book seek arctic 
 RELAYER_OSMO_DYDX_MNEMONIC="risk wool reason sweet current strategy female miracle squeeze that wire develop ocean rapid domain lift blame monkey sick round museum item maze trumpet"
 RELAYER_STRIDE_OSMO_MNEMONIC="father october lonely ticket leave regret pudding buffalo return asthma plastic piano beef orient ill clip right phone ready pottery helmet hip solid galaxy"
 RELAYER_OSMO_STRIDE_MNEMONIC="narrow assist come feel canyon anxiety three reason satoshi inspire region little attend impulse what student dog armor economy faculty dutch distance upon calm"
+RELAYER_STRIDE_NOBLE_MNEMONIC="absent confirm lumber hobby glide alter remain yard mixed fiscal series kitchen effort protect pistol hire bless police year struggle near hour wisdom jewel"
+RELAYER_NOBLE_STRIDE_MNEMONIC="jar point equal question fatigue frog disorder wasp labor obtain head print orbit entire frown high sadness dash retire idea coffee rubber rough until"
 
 STRIDE_ADDRESS() { 
   # After an upgrade, the keys query can sometimes print migration info, 

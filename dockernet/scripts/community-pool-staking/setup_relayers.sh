@@ -3,7 +3,7 @@ set -eu
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 source ${SCRIPT_DIR}/../../config.sh
 
-for path in "dydx-noble" "noble-osmo" "osmo-dydx" "stride-osmo"; do
+for path in "dydx-noble" "noble-osmo" "osmo-dydx" "stride-osmo" "stride-noble"; do
     relayer_logs=${LOGS}/relayer-${path}.log
     relayer_config=$STATE/relayer-${path}/config
     relayer_exec="$DOCKER_COMPOSE run --rm relayer-$path"
