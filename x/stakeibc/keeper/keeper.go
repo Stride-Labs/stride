@@ -116,11 +116,11 @@ func (k Keeper) GetAuthority() string {
 func (k Keeper) GetChainIdFromConnectionId(ctx sdk.Context, connectionID string) (string, error) {
 	connection, found := k.IBCKeeper.ConnectionKeeper.GetConnection(ctx, connectionID)
 	if !found {
-		return "", errorsmod.Wrap(connectiontypes.ErrConnectionNotFound, connectionID)
+		return "", errorsmod.Wrapf(connectiontypes.ErrConnectionNotFound, "connection %s not found", connectionID)
 	}
 	clientState, found := k.IBCKeeper.ClientKeeper.GetClientState(ctx, connection.ClientId)
 	if !found {
-		return "", errorsmod.Wrap(clienttypes.ErrClientNotFound, connection.ClientId)
+		return "", errorsmod.Wrapf(clienttypes.ErrClientNotFound, "client %s not found", connection.ClientId)
 	}
 	client, ok := clientState.(*ibctmtypes.ClientState)
 	if !ok {

@@ -17,7 +17,7 @@ import (
 //
 //		{
 //		   "title": "Update a the trade config for host chain X",
-//		   "metadata": "",
+//		   "metadata": "Update a the trade config for host chain X",
 //		   "summary": "Update a the trade config for host chain X",
 //		   "messages":[
 //		      {

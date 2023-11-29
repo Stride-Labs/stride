@@ -73,7 +73,7 @@ func (s *KeeperTestSuite) CreateTradeRoutes() (routes []types.TradeRoute) {
 func (s *KeeperTestSuite) TestGetTradeRoute() {
 	routes := s.CreateTradeRoutes()
 	for i, route := range routes {
-		startDenom := route.RewardDenomOnHostZone
+		startDenom := route.RewardDenomOnRewardZone
 		endDenom := route.HostDenomOnHostZone
 
 		actualRoute, found := s.App.StakeibcKeeper.GetTradeRoute(s.Ctx, startDenom, endDenom)

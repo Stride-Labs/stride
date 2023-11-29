@@ -17,7 +17,7 @@ import (
 //
 //		{
 //		   "title": "Remove a new trade route for host chain X",
-//		   "metadata": "",
+//		   "metadata": "Remove a new trade route for host chain X",
 //		   "summary": "Remove a new trade route for host chain X",
 //		   "messages":[
 //		      {

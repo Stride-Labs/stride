@@ -93,11 +93,11 @@ func (s *KeeperTestSuite) TestTransferCommunityPoolDepositToHolding_MissingDepos
 
 func (s *KeeperTestSuite) TestTransferCommunityPoolDepositToHolding_ConnectionSendFail() {
 	tc := s.SetupTransferCommunityPoolDepositToHolding()
-	tc.hostZone.ConnectionId = "MissingChannel"
+	tc.hostZone.ConnectionId = "MissingConnection"
 
 	// Verify that the ICA msg was successfully sent off
 	err := s.App.StakeibcKeeper.TransferCommunityPoolDepositToHolding(s.Ctx, tc.hostZone, tc.coin)
-	s.Require().ErrorContains(err, "invalid connection id")
+	s.Require().ErrorContains(err, "connection MissingConnection not found")
 }
 
 type TransferHoldingToCommunityPoolReturnTestCase struct {

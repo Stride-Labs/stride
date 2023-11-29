@@ -25,7 +25,7 @@ var (
 //
 //		{
 //		   "title": "Create a new trade route for host chain X",
-//		   "metadata": "",
+//		   "metadata": "Create a new trade route for host chain X",
 //		   "summary": "Create a new trade route for host chain X",
 //		   "messages":[
 //		      {
