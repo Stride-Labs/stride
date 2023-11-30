@@ -139,3 +139,31 @@ func TestMsgCreateTradeRoute(t *testing.T) {
 	invalidMessage.MaxAllowedSwapLossRate = "1.01"
 	require.ErrorContains(t, invalidMessage.ValidateBasic(), "max allowed swap loss rate must be between 0 and 1")
 }
+
+func TestValidateConnectionId(t *testing.T) {
+	require.NoError(t, types.ValidateConnectionId("connection-0"))
+	require.NoError(t, types.ValidateConnectionId("connection-10"))
+	require.NoError(t, types.ValidateConnectionId("connection-1203"))
+
+	require.ErrorContains(t, types.ValidateConnectionId("connection-X"), "invalid connection-id (connection-X)")
+	require.ErrorContains(t, types.ValidateConnectionId(""), "invalid connection-id ()")
+}
+
+func TestValidateChannelId(t *testing.T) {
+	require.NoError(t, types.ValidateChannelId("channel-0"))
+	require.NoError(t, types.ValidateChannelId("channel-10"))
+	require.NoError(t, types.ValidateChannelId("channel-1203"))
+
+	require.ErrorContains(t, types.ValidateChannelId("channel-X"), "invalid channel-id (channel-X)")
+	require.ErrorContains(t, types.ValidateChannelId(""), "invalid channel-id ()")
+}
+
+func TestValidateDenom(t *testing.T) {
+	require.NoError(t, types.ValidateDenom("denom", false))
+	require.NoError(t, types.ValidateDenom("ibc/denom", false))
+	require.NoError(t, types.ValidateDenom("ibc/denom", true))
+
+	require.ErrorContains(t, types.ValidateDenom("", false), "denom is empty")
+	require.ErrorContains(t, types.ValidateDenom("", true), "denom is empty")
+	require.ErrorContains(t, types.ValidateDenom("denom", true), "denom (denom) should have ibc prefix")
+}
