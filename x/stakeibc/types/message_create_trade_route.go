@@ -73,16 +73,16 @@ func (msg *MsgCreateTradeRoute) ValidateBasic() error {
 		return errorsmod.Wrap(err, "invalid reward denom on host")
 	}
 	if err := validateDenom(msg.RewardDenomOnReward, false); err != nil {
-		return errorsmod.Wrap(err, "invalid reward denom on host")
+		return errorsmod.Wrap(err, "invalid reward denom on reward")
 	}
 	if err := validateDenom(msg.RewardDenomOnTrade, true); err != nil {
-		return errorsmod.Wrap(err, "invalid reward denom on host")
+		return errorsmod.Wrap(err, "invalid reward denom on trade")
 	}
 	if err := validateDenom(msg.HostDenomOnTrade, true); err != nil {
-		return errorsmod.Wrap(err, "invalid reward denom on host")
+		return errorsmod.Wrap(err, "invalid host denom on trade")
 	}
 	if err := validateDenom(msg.HostDenomOnHost, false); err != nil {
-		return errorsmod.Wrap(err, "invalid reward denom on host")
+		return errorsmod.Wrap(err, "invalid host denom on host")
 	}
 
 	if msg.PoolId < 1 {
