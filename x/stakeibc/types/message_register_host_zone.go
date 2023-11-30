@@ -4,7 +4,6 @@ import (
 	"strings"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/types/address"
 
 	errorsmod "cosmossdk.io/errors"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -133,9 +132,4 @@ func (msg *MsgRegisterHostZone) ValidateBasic() error {
 	}
 
 	return nil
-}
-
-func NewHostZoneDepositAddress(chainId string) sdk.AccAddress {
-	key := append([]byte("zone"), []byte(chainId)...)
-	return address.Module(ModuleName, key)
 }
