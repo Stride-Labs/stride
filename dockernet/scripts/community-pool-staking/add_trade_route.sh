@@ -70,7 +70,7 @@ usdc_denom_on_host=$(GET_IBC_DENOM $HOST_CHAIN_ID $host_to_noble_channel $USDC_D
 usdc_denom_on_osmo=$(GET_IBC_DENOM OSMO           $osmo_to_noble_channel $USDC_DENOM)
 host_denom_on_osmo=$(GET_IBC_DENOM OSMO           $osmo_to_host_channel $HOST_DENOM)
 
-echo "  ibc/$USDC_DENOM on dYdX:    $usdc_denom_on_host"
+echo "  ibc/$USDC_DENOM on Host:    $usdc_denom_on_host"
 echo "  ibc/$USDC_DENOM on Osmosis: $usdc_denom_on_osmo"
 echo "  ibc/$HOST_DENOM on Osmosis: $host_denom_on_osmo"
 
