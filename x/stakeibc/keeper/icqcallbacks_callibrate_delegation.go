@@ -12,7 +12,7 @@ import (
 )
 
 // CalibrationThreshold is the max amount of tokens by which a calibration can alter internal record keeping of delegations
-var CalibrationThreshold = sdk.NewInt(100000)
+var CalibrationThreshold = sdk.NewInt(3000)
 
 // DelegatorSharesCallback is a callback handler for UpdateValidatorSharesExchRate queries.
 //
