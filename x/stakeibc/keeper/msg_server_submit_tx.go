@@ -158,26 +158,12 @@ func (k Keeper) SetWithdrawalAddressOnHost(ctx sdk.Context, hostZone types.HostZ
 }
 
 func (k Keeper) ClaimAccruedStakingRewardsOnHost(ctx sdk.Context, hostZone types.HostZone) error {
-	// The relevant ICA is the delegate account
-	owner := types.FormatICAAccountOwner(hostZone.ChainId, types.ICAAccountType_DELEGATION)
-	portID, err := icatypes.NewControllerPortID(owner)
-	if err != nil {
-		return errorsmod.Wrapf(sdkerrors.ErrInvalidAddress, "%s has no associated portId", owner)
-	}
-	connectionId, err := k.GetConnectionId(ctx, portID)
-	if err != nil {
-		return errorsmod.Wrapf(sdkerrors.ErrInvalidChainID, "%s has no associated connection", portID)
-	}
-
 	// Fetch the relevant ICA
 	if hostZone.DelegationIcaAddress == "" {
-		k.Logger(ctx).Error(fmt.Sprintf("Zone %s is missing a delegation address!", hostZone.ChainId))
-		return nil
+		return errorsmod.Wrapf(types.ErrICAAccountNotFound, "delegation ICA not found for %s", hostZone.ChainId)
 	}
-
 	if hostZone.WithdrawalIcaAddress == "" {
-		k.Logger(ctx).Error(fmt.Sprintf("Zone %s is missing a withdrawal address!", hostZone.ChainId))
-		return nil
+		return errorsmod.Wrapf(types.ErrICAAccountNotFound, "withdrawal ICA not found for %s", hostZone.ChainId)
 	}
 	k.Logger(ctx).Info(utils.LogWithHostZone(hostZone.ChainId, "Withdrawal Address: %s, Delegator Address: %s",
 		hostZone.WithdrawalIcaAddress, hostZone.DelegationIcaAddress))
@@ -197,23 +183,23 @@ func (k Keeper) ClaimAccruedStakingRewardsOnHost(ctx sdk.Context, hostZone types
 		if end > len(validators) {
 			end = len(validators)
 		}
-		msgs := make([]proto.Message, 0, end-start)
+		msgs := []proto.Message{}
 		// Iterate over the items within the batch
-		for _, Val := range validators[start:end] {
+		for _, val := range validators[start:end] {
 			// skip withdrawing rewards
-			if Val.Delegation.IsZero() {
+			if val.Delegation.IsZero() {
 				continue
 			}
 			msg := &distributiontypes.MsgWithdrawDelegatorReward{
 				DelegatorAddress: hostZone.DelegationIcaAddress,
-				ValidatorAddress: Val.Address,
+				ValidatorAddress: val.Address,
 			}
 			msgs = append(msgs, msg)
 		}
 
-		_, err = k.SubmitTxsStrideEpoch(ctx, connectionId, msgs, types.ICAAccountType_DELEGATION, "", nil)
+		_, err := k.SubmitTxsStrideEpoch(ctx, hostZone.ConnectionId, msgs, types.ICAAccountType_DELEGATION, "", nil)
 		if err != nil {
-			return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "Failed to SubmitTxs for %s, %s, %s", connectionId, hostZone.ChainId, msgs)
+			return errorsmod.Wrapf(err, "Failed to SubmitTxs for %s, %s, %s", hostZone.ConnectionId, hostZone.ChainId, msgs)
 		}
 	}
 
