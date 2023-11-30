@@ -41,9 +41,16 @@ func PoolPriceCallback(k Keeper, ctx sdk.Context, args []byte, query icqtypes.Qu
 	}
 
 	// Unmarshal the callback data containing the tradeRoute we are on
-	var tradeRoute types.TradeRoute
-	if err := proto.Unmarshal(query.CallbackData, &tradeRoute); err != nil {
+	var tradeRouteCallback types.TradeRouteCallback
+	if err := proto.Unmarshal(query.CallbackData, &tradeRouteCallback); err != nil {
 		return errorsmod.Wrapf(err, "unable to unmarshal trade reward balance callback data")
+	}
+
+	// Lookup the trade route from the keys in the callback
+	tradeRoute, found := k.GetTradeRoute(ctx, tradeRouteCallback.RewardDenom, tradeRouteCallback.HostDenom)
+	if !found {
+		return types.ErrTradeRouteNotFound.Wrapf("trade route from %s to %s not found",
+			tradeRouteCallback.RewardDenom, tradeRouteCallback.HostDenom)
 	}
 
 	// Confirm the denom's from the query response match the denom's in the route
