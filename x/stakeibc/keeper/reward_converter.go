@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	"encoding/json"
 	"fmt"
 	"time"
 
@@ -18,6 +19,18 @@ import (
 	icqtypes "github.com/Stride-Labs/stride/v16/x/interchainquery/types"
 	"github.com/Stride-Labs/stride/v16/x/stakeibc/types"
 )
+
+// JSON Memo for PFM transfers
+type PacketForwardMetadata struct {
+	Forward *ForwardMetadata `json:"forward"`
+}
+type ForwardMetadata struct {
+	Receiver string `json:"receiver,omitempty"`
+	Port     string `json:"port,omitempty"`
+	Channel  string `json:"channel,omitempty"`
+	Timeout  string `json:"timeout,omitempty"`
+	Retries  uint8  `json:"retries,omitempty"`
+}
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // The goal of this code is to allow certain reward token types to be automatically traded into other types
@@ -50,12 +63,17 @@ func (k Keeper) TransferRewardTokensHostToTrade(ctx sdk.Context, amount sdkmath.
 		return nil
 	}
 
-	// Timeout for ica tx and the transfer msgs is at end of epoch
+	// Get the epoch tracker to determine the timeouts
 	strideEpochTracker, found := k.GetEpochTracker(ctx, epochstypes.STRIDE_EPOCH)
 	if !found {
 		return errorsmod.Wrapf(types.ErrEpochNotFound, epochstypes.STRIDE_EPOCH)
 	}
-	timeout := uint64(strideEpochTracker.NextEpochStartTime)
+
+	// Timeout the first transfer halfway through the epoch, and the second transfer at the end of the epoch
+	// The pfm transfer requires a duration instead of a timestamp for the timeout, so we just use half the epoch length
+	halfEpochDuration := strideEpochTracker.Duration / 2
+	transfer1TimeoutTimestamp := uint64(strideEpochTracker.NextEpochStartTime - halfEpochDuration) // unix nano
+	transfer2TimeoutDuration := fmt.Sprintf("%ds", halfEpochDuration/1e9)                          // string in seconds
 
 	startingDenom := route.RewardDenomOnHostZone
 	sendTokens := sdk.NewCoin(startingDenom, amount)
@@ -64,11 +82,22 @@ func (k Keeper) TransferRewardTokensHostToTrade(ctx sdk.Context, amount sdkmath.
 	unwindIcaAddress := route.RewardAccount.Address
 	tradeIcaAddress := route.TradeAccount.Address
 
-	// Import and use pfm data structures instead of this JSON if we can determine consistent module version...
+	// Build the pfm memo to specify the forwarding logic
 	// This transfer channel id is a channel on the reward Zone for transfers to the trade zone
 	// (not to be confused with a transfer channel on Stride or the Host Zone)
-	memoJSON := fmt.Sprintf(`"{ forward": {"receiver": "%s", "port": "%s", "channel":"%s", "timeout":"10m", "retries": 2} }`,
-		tradeIcaAddress, transfertypes.PortID, route.RewardToTradeChannelId)
+	memo := PacketForwardMetadata{
+		Forward: &ForwardMetadata{
+			Receiver: tradeIcaAddress,
+			Port:     transfertypes.PortID,
+			Channel:  route.RewardToTradeChannelId,
+			Timeout:  transfer2TimeoutDuration,
+			Retries:  0,
+		},
+	}
+	memoJSON, err := json.Marshal(memo)
+	if err != nil {
+		return err
+	}
 
 	var msgs []proto.Message
 	msgs = append(msgs, &transfertypes.MsgTransfer{
@@ -77,8 +106,8 @@ func (k Keeper) TransferRewardTokensHostToTrade(ctx sdk.Context, amount sdkmath.
 		Token:            sendTokens,
 		Sender:           withdrawlIcaAddress,
 		Receiver:         unwindIcaAddress, // could be "pfm" or a real address depending on version
-		TimeoutTimestamp: timeout,
-		Memo:             memoJSON,
+		TimeoutTimestamp: transfer1TimeoutTimestamp,
+		Memo:             string(memoJSON),
 	})
 
 	hostZoneId := route.HostAccount.ChainId
@@ -89,7 +118,7 @@ func (k Keeper) TransferRewardTokensHostToTrade(ctx sdk.Context, amount sdkmath.
 
 	// Send the ICA tx to kick off transfer from hostZone through rewardZone to the tradeZone (no callbacks)
 	hostZoneConnectionId := route.HostAccount.ConnectionId
-	err := k.SubmitICATxWithoutCallback(ctx, hostZoneConnectionId, types.ICAAccountType_WITHDRAWAL, msgs, timeout)
+	err = k.SubmitICATxWithoutCallback(ctx, hostZoneConnectionId, types.ICAAccountType_WITHDRAWAL, msgs, transfer1TimeoutTimestamp)
 	if err != nil {
 		return errorsmod.Wrapf(err, "Failed to submit ICA tx, Messages: %+v", msgs)
 	}
