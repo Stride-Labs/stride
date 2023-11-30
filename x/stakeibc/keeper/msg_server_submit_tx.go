@@ -31,6 +31,10 @@ import (
 	icatypes "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/types"
 )
 
+const (
+	ClaimRewardsICABatchSize = 10
+)
+
 func (k Keeper) DelegateOnHost(ctx sdk.Context, hostZone types.HostZone, amt sdk.Coin, depositRecord recordstypes.DepositRecord) error {
 	// the relevant ICA is the delegate account
 	owner := types.FormatICAAccountOwner(hostZone.ChainId, types.ICAAccountType_DELEGATION)
@@ -179,24 +183,38 @@ func (k Keeper) ClaimAccruedStakingRewardsOnHost(ctx sdk.Context, hostZone types
 		hostZone.WithdrawalIcaAddress, hostZone.DelegationIcaAddress))
 
 	validators := hostZone.Validators
-	// build multi-message transaction to withdraw rewards from each validator
-	msgs := make([]proto.Message, 0, len(validators))
-	for _, Val := range validators {
 
-		// skip withdrawing rewards
-		if Val.Delegation.IsZero() {
-			continue
-		}
-		msg := &distributiontypes.MsgWithdrawDelegatorReward{
-			DelegatorAddress: hostZone.DelegationIcaAddress,
-			ValidatorAddress: Val.Address,
-		}
-		msgs = append(msgs, msg)
-	}
+	// Build multi-message transaction to withdraw rewards from each validator
+	// batching txs into groups of ClaimRewardsICABatchSize messages, to ensure they will fit in the host's blockSize
 
-	_, err = k.SubmitTxsStrideEpoch(ctx, connectionId, msgs, types.ICAAccountType_DELEGATION, "", nil)
-	if err != nil {
-		return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "Failed to SubmitTxs for %s, %s, %s", connectionId, hostZone.ChainId, msgs)
+	// Calculate the number of batches
+	numBatches := (len(validators) + ClaimRewardsICABatchSize - 1) / ClaimRewardsICABatchSize
+
+	// Iterate over the batches
+	for batch := 0; batch < numBatches; batch++ {
+		start := batch * ClaimRewardsICABatchSize
+		end := (batch + 1) * ClaimRewardsICABatchSize
+		if end > len(validators) {
+			end = len(validators)
+		}
+		msgs := make([]proto.Message, 0, end-start)
+		// Iterate over the items within the batch
+		for _, Val := range validators[start:end] {
+			// skip withdrawing rewards
+			if Val.Delegation.IsZero() {
+				continue
+			}
+			msg := &distributiontypes.MsgWithdrawDelegatorReward{
+				DelegatorAddress: hostZone.DelegationIcaAddress,
+				ValidatorAddress: Val.Address,
+			}
+			msgs = append(msgs, msg)
+		}
+
+		_, err = k.SubmitTxsStrideEpoch(ctx, connectionId, msgs, types.ICAAccountType_DELEGATION, "", nil)
+		if err != nil {
+			return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "Failed to SubmitTxs for %s, %s, %s", connectionId, hostZone.ChainId, msgs)
+		}
 	}
 
 	return nil
