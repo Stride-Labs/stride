@@ -3,14 +3,18 @@ set -eu
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 source ${SCRIPT_DIR}/../../config.sh
 
-for path in "dydx-noble" "noble-osmo" "osmo-dydx" "stride-osmo" "stride-noble"; do
+# Host chain can be dydx or gaia
+HOST_CHAIN=$REWARD_CONVERTER_HOST_ZONE
+host_chain=$(printf "$HOST_CHAIN" | awk '{ print tolower($0) }')
+
+for path in "$host_chain-noble" "noble-osmo" "osmo-$host_chain" "stride-osmo" "stride-noble"; do
     relayer_logs=${LOGS}/relayer-${path}.log
     relayer_config=$STATE/relayer-${path}/config
     relayer_exec="$DOCKER_COMPOSE run --rm relayer-$path"
 
     mkdir -p $relayer_config
     chmod -R 777 $STATE/relayer-${path}
-    cp ${DOCKERNET_HOME}/config/relayer_config_dydx_noble.yaml $relayer_config/config.yaml
+    cp ${DOCKERNET_HOME}/config/relayer_config_reward_converter.yaml $relayer_config/config.yaml
 
     IFS='-' read -r zone_1 zone_2 <<< "$path"
 
