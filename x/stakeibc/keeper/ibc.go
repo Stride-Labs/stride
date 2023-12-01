@@ -156,7 +156,7 @@ func (k Keeper) StoreHostZoneIcaAddress(ctx sdk.Context, chainId, portId, addres
 // Checks if the port matches an ICA account on the trade route, and if so, stores the
 // relevant ICA address on the trade route
 func (k Keeper) StoreTradeRouteIcaAddress(ctx sdk.Context, chainId, portId, address string) error {
-	// Get the exepected port Id for each ICA account type (using the chainId)
+	// Get the expected port Id for each ICA account type (using the chainId)
 	tradeOwner := types.FormatICAAccountOwner(chainId, types.ICAAccountType_CONVERTER_TRADE)
 	tradePortID, err := icatypes.NewControllerPortID(tradeOwner)
 	if err != nil {
