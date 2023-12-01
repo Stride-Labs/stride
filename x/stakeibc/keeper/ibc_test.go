@@ -6,8 +6,78 @@ import (
 	"github.com/Stride-Labs/stride/v16/x/stakeibc/types"
 )
 
-func (s *KeeperTestSuite) TestOnChanOpenAck() {
+// ------------------------------------------
+//          	OnChanOpenAck
+// ------------------------------------------
 
+func (s *KeeperTestSuite) TestOnChanOpenAck() {
+	// Define the mocked out ids for both the delegation and trade accounts
+	delegationChainId := "delegation-1"
+	delegationAddress := "delegation-address"
+	delegationConnectionId := "connection-0"
+	delegationChannelId := "channel-0"
+	delegationClientId := "07-tendermint-0"
+
+	tradeChainId := "trade-1"
+	tradeAddress := "trade-address"
+	tradeConnectionId := "connection-1"
+	tradeChannelId := "channel-1"
+	tradeClientId := "07-tendermint-1"
+
+	// Create a host zone with out any ICA addresses
+	s.App.StakeibcKeeper.SetHostZone(s.Ctx, types.HostZone{
+		ChainId: delegationChainId,
+	})
+
+	// Create a trade route without any ICA addresses
+	s.App.StakeibcKeeper.SetTradeRoute(s.Ctx, types.TradeRoute{
+		RewardDenomOnRewardZone: RewardDenom,
+		HostDenomOnHostZone:     HostDenom,
+		TradeAccount: types.ICAAccount{
+			ChainId: tradeChainId,
+		},
+	})
+
+	// Create the ICA channels for both the delegation and trade accounts
+	delegationOwner := types.FormatICAAccountOwner(delegationChainId, types.ICAAccountType_DELEGATION)
+	delegationPortId, _ := icatypes.NewControllerPortID(delegationOwner)
+
+	tradeOwner := types.FormatICAAccountOwner(tradeChainId, types.ICAAccountType_CONVERTER_TRADE)
+	tradePortId, _ := icatypes.NewControllerPortID(tradeOwner)
+
+	// Mock out an ICA address for each
+	s.App.ICAControllerKeeper.SetInterchainAccountAddress(s.Ctx, delegationConnectionId, delegationPortId, delegationAddress)
+	s.App.ICAControllerKeeper.SetInterchainAccountAddress(s.Ctx, tradeConnectionId, tradePortId, tradeAddress)
+
+	// Mock out a client and connection for each channel so the callback can map back from portId to chainId
+	s.MockClientAndConnection(delegationChainId, delegationClientId, delegationConnectionId)
+	s.MockClientAndConnection(tradeChainId, tradeClientId, tradeConnectionId)
+
+	// Call the callback with the delegation ICA port and confirm the delegation address is set
+	err := s.App.StakeibcKeeper.OnChanOpenAck(s.Ctx, delegationPortId, delegationChannelId)
+	s.Require().NoError(err, "no error expected when running callback with delegation port")
+
+	hostZone := s.MustGetHostZone(delegationChainId)
+	s.Require().Equal(delegationAddress, hostZone.DelegationIcaAddress, "delegation address")
+
+	// Call the callback with the trade ICA port and confirm the trade address is set
+	err = s.App.StakeibcKeeper.OnChanOpenAck(s.Ctx, tradePortId, tradeChannelId)
+	s.Require().NoError(err, "no error expected when running callback with trade port")
+
+	tradeRoute, found := s.App.StakeibcKeeper.GetTradeRoute(s.Ctx, RewardDenom, HostDenom)
+	s.Require().True(found, "trade route should have been round")
+	s.Require().Equal(tradeAddress, tradeRoute.TradeAccount.Address, "trade address")
+
+	// Call the callback with a non-ICA port and confirm the host zone and trade route remained unchanged
+	err = s.App.StakeibcKeeper.OnChanOpenAck(s.Ctx, tradePortId, tradeChannelId)
+	s.Require().NoError(err, "no error expected when running callback with non-ICA port")
+
+	finalHostZone := s.MustGetHostZone(delegationChainId)
+	s.Require().Equal(hostZone, finalHostZone, "host zone should not have been modified")
+
+	finalTradeRoute, found := s.App.StakeibcKeeper.GetTradeRoute(s.Ctx, RewardDenom, HostDenom)
+	s.Require().True(found, "trade route should have been round")
+	s.Require().Equal(tradeRoute, finalTradeRoute, "trade route should not have been modified")
 }
 
 // ------------------------------------------

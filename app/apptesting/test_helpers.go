@@ -437,6 +437,20 @@ func (s *AppTestHelper) MockClientLatestHeight(height uint64) {
 	s.App.IBCKeeper.ClientKeeper.SetClientState(s.Ctx, FirstClientId, &clientState)
 }
 
+// Helper function to mock out a client and connection to test
+// mapping from connection ID back to chain ID
+func (s *AppTestHelper) MockClientAndConnection(chainId, clientId, connectionId string) {
+	clientState := tendermint.ClientState{
+		ChainId: chainId,
+	}
+	s.App.IBCKeeper.ClientKeeper.SetClientState(s.Ctx, clientId, &clientState)
+
+	connection := connectiontypes.ConnectionEnd{
+		ClientId: clientId,
+	}
+	s.App.IBCKeeper.ConnectionKeeper.SetConnection(s.Ctx, connectionId, connection)
+}
+
 func (s *AppTestHelper) ConfirmUpgradeSucceededs(upgradeName string, upgradeHeight int64) {
 	s.Ctx = s.Ctx.WithBlockHeight(upgradeHeight - 1)
 	plan := upgradetypes.Plan{Name: upgradeName, Height: upgradeHeight}

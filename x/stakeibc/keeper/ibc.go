@@ -57,6 +57,11 @@ func (k Keeper) StoreHostZoneIcaAddress(ctx sdk.Context, chainId, portId, addres
 	}
 
 	// expected port IDs for each ICA account type
+	delegationOwner := types.FormatICAAccountOwner(chainId, types.ICAAccountType_DELEGATION)
+	delegationPortID, err := icatypes.NewControllerPortID(delegationOwner)
+	if err != nil {
+		return err
+	}
 	withdrawalOwner := types.FormatICAAccountOwner(chainId, types.ICAAccountType_WITHDRAWAL)
 	withdrawalPortID, err := icatypes.NewControllerPortID(withdrawalOwner)
 	if err != nil {
@@ -67,13 +72,8 @@ func (k Keeper) StoreHostZoneIcaAddress(ctx sdk.Context, chainId, portId, addres
 	if err != nil {
 		return err
 	}
-	delegationOwner := types.FormatICAAccountOwner(chainId, types.ICAAccountType_DELEGATION)
-	delegationPortID, err := icatypes.NewControllerPortID(delegationOwner)
-	if err != nil {
-		return err
-	}
-	rewardOwner := types.FormatICAAccountOwner(chainId, types.ICAAccountType_REDEMPTION)
-	redemptionPortID, err := icatypes.NewControllerPortID(rewardOwner)
+	redemptionOwner := types.FormatICAAccountOwner(chainId, types.ICAAccountType_REDEMPTION)
+	redemptionPortID, err := icatypes.NewControllerPortID(redemptionOwner)
 	if err != nil {
 		return err
 	}
