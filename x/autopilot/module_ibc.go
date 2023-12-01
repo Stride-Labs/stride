@@ -125,33 +125,34 @@ func (im IBCModule) OnRecvPacket(
 		packet.Sequence, packet.SourcePort, packet.SourceChannel, packet.DestinationPort, packet.DestinationChannel))
 
 	// NOTE: acknowledgement will be written synchronously during IBC handler execution.
-	var data transfertypes.FungibleTokenPacketData
-	if err := transfertypes.ModuleCdc.UnmarshalJSON(packet.GetData(), &data); err != nil {
+	var fungibleTokenPacketData transfertypes.FungibleTokenPacketData
+	if err := transfertypes.ModuleCdc.UnmarshalJSON(packet.GetData(), &fungibleTokenPacketData); err != nil {
 		return channeltypes.NewErrorAcknowledgement(err)
 	}
 
 	// Error any transactions with a Memo or Receiver field are greater than the max characters
-	if len(data.Memo) > MaxMemoCharLength {
-		return channeltypes.NewErrorAcknowledgement(errorsmod.Wrapf(types.ErrInvalidMemoSize, "memo length: %d", len(data.Memo)))
+	if len(fungibleTokenPacketData.Memo) > MaxMemoCharLength {
+		return channeltypes.NewErrorAcknowledgement(errorsmod.Wrapf(types.ErrInvalidMemoSize, "memo length: %d", len(fungibleTokenPacketData.Memo)))
 	}
-	if len(data.Receiver) > MaxMemoCharLength {
-		return channeltypes.NewErrorAcknowledgement(errorsmod.Wrapf(types.ErrInvalidMemoSize, "receiver length: %d", len(data.Receiver)))
+	if len(fungibleTokenPacketData.Receiver) > MaxMemoCharLength {
+		return channeltypes.NewErrorAcknowledgement(errorsmod.Wrapf(types.ErrInvalidMemoSize, "receiver length: %d", len(fungibleTokenPacketData.Receiver)))
 	}
 
 	// ibc-go v5 has a Memo field that can store forwarding info
 	// For older version of ibc-go, the data must be stored in the receiver field
+	// TODO: can we remove this backwards compatibility?
 	var metadata string
-	if data.Memo != "" { // ibc-go v5+
-		metadata = data.Memo
+	if fungibleTokenPacketData.Memo != "" { // ibc-go v5+
+		metadata = fungibleTokenPacketData.Memo
 	} else { // before ibc-go v5
-		metadata = data.Receiver
+		metadata = fungibleTokenPacketData.Receiver
 	}
 
 	// If a valid receiver address has been provided and no memo,
 	// this is clearly just an normal IBC transfer
 	// Pass down the stack immediately instead of parsing
-	_, err := sdk.AccAddressFromBech32(data.Receiver)
-	if err == nil && data.Memo == "" {
+	_, err := sdk.AccAddressFromBech32(fungibleTokenPacketData.Receiver)
+	if err == nil && fungibleTokenPacketData.Memo == "" {
 		return im.app.OnRecvPacket(ctx, packet, relayer)
 	}
 
@@ -167,11 +168,11 @@ func (im IBCModule) OnRecvPacket(
 		return im.app.OnRecvPacket(ctx, packet, relayer)
 	}
 
-	// Modify the packet data by replacing the JSON metadata field with a receiver address
+	// Modify the packet fungibleTokenPacketData by replacing the JSON metadata field with a receiver address
 	// to allow the packet to continue down the stack
-	newData := data
-	newData.Receiver = packetForwardMetadata.Receiver
-	bz, err := transfertypes.ModuleCdc.MarshalJSON(&newData)
+	replacedReceiverFungibleTokenPacketData := fungibleTokenPacketData
+	replacedReceiverFungibleTokenPacketData.Receiver = packetForwardMetadata.Receiver
+	bz, err := transfertypes.ModuleCdc.MarshalJSON(&replacedReceiverFungibleTokenPacketData)
 	if err != nil {
 		return channeltypes.NewErrorAcknowledgement(err)
 	}
@@ -191,14 +192,14 @@ func (im IBCModule) OnRecvPacket(
 	case types.StakeibcPacketMetadata:
 		// If stakeibc routing is inactive (but the packet had routing info in the memo) return an ack error
 		if !autopilotParams.StakeibcActive {
-			im.keeper.Logger(ctx).Error(fmt.Sprintf("Packet from %s had stakeibc routing info but autopilot stakeibc routing is disabled", newData.Sender))
+			im.keeper.Logger(ctx).Error(fmt.Sprintf("Packet from %s had stakeibc routing info but autopilot stakeibc routing is disabled", replacedReceiverFungibleTokenPacketData.Sender))
 			return channeltypes.NewErrorAcknowledgement(types.ErrPacketForwardingInactive)
 		}
-		im.keeper.Logger(ctx).Info(fmt.Sprintf("Forwaring packet from %s to stakeibc", newData.Sender))
+		im.keeper.Logger(ctx).Info(fmt.Sprintf("Forwaring packet from %s to stakeibc", replacedReceiverFungibleTokenPacketData.Sender))
 
 		// Try to liquid stake - return an ack error if it fails, otherwise return the ack generated from the earlier packet propogation
-		if err := im.keeper.TryLiquidStaking(ctx, packet, newData, routingInfo); err != nil {
-			im.keeper.Logger(ctx).Error(fmt.Sprintf("Error liquid staking packet from autopilot for %s: %s", newData.Sender, err.Error()))
+		if err := im.keeper.TryLiquidStaking(ctx, packet, replacedReceiverFungibleTokenPacketData, routingInfo); err != nil {
+			im.keeper.Logger(ctx).Error(fmt.Sprintf("Error liquid staking packet from autopilot for %s: %s", replacedReceiverFungibleTokenPacketData.Sender, err.Error()))
 			return channeltypes.NewErrorAcknowledgement(err)
 		}
 
@@ -207,13 +208,13 @@ func (im IBCModule) OnRecvPacket(
 	case types.ClaimPacketMetadata:
 		// If claim routing is inactive (but the packet had routing info in the memo) return an ack error
 		if !autopilotParams.ClaimActive {
-			im.keeper.Logger(ctx).Error(fmt.Sprintf("Packet from %s had claim routing info but autopilot claim routing is disabled", newData.Sender))
+			im.keeper.Logger(ctx).Error(fmt.Sprintf("Packet from %s had claim routing info but autopilot claim routing is disabled", replacedReceiverFungibleTokenPacketData.Sender))
 			return channeltypes.NewErrorAcknowledgement(types.ErrPacketForwardingInactive)
 		}
-		im.keeper.Logger(ctx).Info(fmt.Sprintf("Forwaring packet from %s to claim", newData.Sender))
+		im.keeper.Logger(ctx).Info(fmt.Sprintf("Forwaring packet from %s to claim", replacedReceiverFungibleTokenPacketData.Sender))
 
-		if err := im.keeper.TryUpdateAirdropClaim(ctx, packet, newData, routingInfo); err != nil {
-			im.keeper.Logger(ctx).Error(fmt.Sprintf("Error updating airdrop claim from autopilot for %s: %s", newData.Sender, err.Error()))
+		if err := im.keeper.TryUpdateAirdropClaim(ctx, packet, replacedReceiverFungibleTokenPacketData, routingInfo); err != nil {
+			im.keeper.Logger(ctx).Error(fmt.Sprintf("Error updating airdrop claim from autopilot for %s: %s", replacedReceiverFungibleTokenPacketData.Sender, err.Error()))
 			return channeltypes.NewErrorAcknowledgement(err)
 		}
 

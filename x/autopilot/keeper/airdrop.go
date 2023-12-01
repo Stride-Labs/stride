@@ -20,7 +20,7 @@ import (
 func (k Keeper) TryUpdateAirdropClaim(
 	ctx sdk.Context,
 	packet channeltypes.Packet,
-	data transfertypes.FungibleTokenPacketData,
+	fungibleTokenPacketData transfertypes.FungibleTokenPacketData,
 	packetMetadata types.ClaimPacketMetadata,
 ) error {
 	params := k.GetParams(ctx)
@@ -38,12 +38,20 @@ func (k Keeper) TryUpdateAirdropClaim(
 			"host zone not found for transfer channel %s", packet.GetDestChannel())
 	}
 
-	// grab relevant addresses
-	senderStrideAddress := utils.ConvertAddressToStrideAddress(data.Sender)
-	if senderStrideAddress == "" {
-		return errorsmod.Wrapf(sdkerrors.ErrInvalidAddress, fmt.Sprintf("invalid sender address (%s)", data.Sender))
+	// By getting senderAddressConvertedToStrideAddress, we can check if the sender of this packet
+	// has a corresponding address on Stride that owns claim records.
+	// Importantly, this functionality is gated by chains - i.e. packets that come across the canonical Evmos <> Stride
+	// can update claim records associated with _Evmos_ only.
+	// This prevents malicious IBC channels from updating claim records (in essence, Stride trusts that the sender address on
+	// certain IBC channels triggered the transaction that triggered the IBC transfer).
+	// NOTE: An older version of PFM broke this assumption, but this functionality is only turned on for Evmos (has new PFM)
+	// and Injective (has no PFM).
+	senderAddressConvertedToStrideAddress := utils.ConvertAddressToStrideAddress(fungibleTokenPacketData.Sender)
+	if senderAddressConvertedToStrideAddress == "" {
+		return errorsmod.Wrapf(sdkerrors.ErrInvalidAddress, fmt.Sprintf("invalid sender address (%s)", fungibleTokenPacketData.Sender))
 	}
-	newStrideAddress := packetMetadata.StrideAddress
+	// This is the updated owner of a claim record.
+	targetStrideAddressForClaimRecord := fungibleTokenPacketData.Receiver
 
 	// find the airdrop for this host chain ID
 	airdrop, found := k.claimKeeper.GetAirdropByChainId(ctx, hostZone.ChainId)
@@ -55,8 +63,8 @@ func (k Keeper) TryUpdateAirdropClaim(
 	}
 
 	airdropId := airdrop.AirdropIdentifier
-	k.Logger(ctx).Info(fmt.Sprintf("updating airdrop address %s (orig %s) to %s for airdrop %s",
-		senderStrideAddress, data.Sender, newStrideAddress, airdropId))
+	k.Logger(ctx).Info(fmt.Sprintf("updating airdrop address %s (senderAddressConvertedToStrideAddress %s) to %s for airdrop %s",
+		senderAddressConvertedToStrideAddress, fungibleTokenPacketData.Sender, targetStrideAddressForClaimRecord, airdropId))
 
-	return k.claimKeeper.UpdateAirdropAddress(ctx, senderStrideAddress, newStrideAddress, airdropId)
+	return k.claimKeeper.UpdateAirdropAddress(ctx, senderAddressConvertedToStrideAddress, targetStrideAddressForClaimRecord, airdropId)
 }

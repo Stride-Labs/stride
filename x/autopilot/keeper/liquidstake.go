@@ -19,7 +19,7 @@ import (
 func (k Keeper) TryLiquidStaking(
 	ctx sdk.Context,
 	packet channeltypes.Packet,
-	newData transfertypes.FungibleTokenPacketData,
+	fungibleTokenPacketData transfertypes.FungibleTokenPacketData,
 	packetMetadata types.StakeibcPacketMetadata,
 ) error {
 	params := k.GetParams(ctx)
@@ -28,19 +28,19 @@ func (k Keeper) TryLiquidStaking(
 	}
 
 	// In this case, we can't process a liquid staking transaction, because we're dealing with STRD tokens
-	if transfertypes.ReceiverChainIsSource(packet.GetSourcePort(), packet.GetSourceChannel(), newData.Denom) {
+	if transfertypes.ReceiverChainIsSource(packet.GetSourcePort(), packet.GetSourceChannel(), fungibleTokenPacketData.Denom) {
 		return errors.New("the native token is not supported for liquid staking")
 	}
 
-	amount, ok := sdk.NewIntFromString(newData.Amount)
+	amount, ok := sdk.NewIntFromString(fungibleTokenPacketData.Amount)
 	if !ok {
 		return errors.New("not a parsable amount field")
 	}
 
-	// Note: newData.denom is base denom e.g. uatom - not ibc/xxx
-	var token = sdk.NewCoin(newData.Denom, amount)
+	// Note: fungibleTokenPacketData.denom is base denom e.g. uatom - not ibc/xxx
+	var token = sdk.NewCoin(fungibleTokenPacketData.Denom, amount)
 
-	prefixedDenom := transfertypes.GetDenomPrefix(packet.GetDestPort(), packet.GetDestChannel()) + newData.Denom
+	prefixedDenom := transfertypes.GetDenomPrefix(packet.GetDestPort(), packet.GetDestChannel()) + fungibleTokenPacketData.Denom
 	ibcDenom := transfertypes.ParseDenomTrace(prefixedDenom).IBCDenom()
 
 	hostZone, err := k.stakeibcKeeper.GetHostZoneFromHostDenom(ctx, token.Denom)
@@ -52,12 +52,16 @@ func (k Keeper) TryLiquidStaking(
 		return fmt.Errorf("ibc denom %s is not equal to host zone ibc denom %s", ibcDenom, hostZone.IbcDenom)
 	}
 
-	strideAddress, err := sdk.AccAddressFromBech32(packetMetadata.StrideAddress)
+	// fungibleTokenPacketData.Receiver is either the ICS-20 receiver field, or it's parsed from the memo
+	// in the receiver field
+	// Importantly, this is also the address that receives tokens (fungibleTokenPacketData.Amount above)
+	// That means, anyone can send tokens to any address, and cause that address to liquid stake them
+	liquidStakingAddress, err := sdk.AccAddressFromBech32(fungibleTokenPacketData.Receiver)
 	if err != nil {
-		return errorsmod.Wrapf(sdkerrors.ErrInvalidAddress, "invalid stride_address (%s) in autopilot memo", strideAddress)
+		return errorsmod.Wrapf(sdkerrors.ErrInvalidAddress, "invalid stride_address (%s) in autopilot memo", liquidStakingAddress)
 	}
 
-	return k.RunLiquidStake(ctx, strideAddress, token)
+	return k.RunLiquidStake(ctx, liquidStakingAddress, token)
 }
 
 func (k Keeper) RunLiquidStake(ctx sdk.Context, addr sdk.AccAddress, token sdk.Coin) error {
