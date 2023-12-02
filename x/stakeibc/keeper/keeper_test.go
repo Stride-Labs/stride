@@ -2,11 +2,13 @@ package keeper_test
 
 import (
 	"testing"
+	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/Stride-Labs/stride/v16/app/apptesting"
+	epochtypes "github.com/Stride-Labs/stride/v16/x/epochs/types"
 	"github.com/Stride-Labs/stride/v16/x/stakeibc/keeper"
 	"github.com/Stride-Labs/stride/v16/x/stakeibc/types"
 )
@@ -49,6 +51,16 @@ func (s *KeeperTestSuite) GetMsgServer() types.MsgServer {
 
 func TestKeeperTestSuite(t *testing.T) {
 	suite.Run(t, new(KeeperTestSuite))
+}
+
+// Helper function to create an stride epoch tracker that dictates the timeout
+func (s *KeeperTestSuite) CreateStrideEpochForICATimeout(timeoutDuration time.Duration) {
+	epochEndTime := uint64(s.Ctx.BlockTime().Add(timeoutDuration).UnixNano())
+	epochTracker := types.EpochTracker{
+		EpochIdentifier:    epochtypes.STRIDE_EPOCH,
+		NextEpochStartTime: epochEndTime,
+	}
+	s.App.StakeibcKeeper.SetEpochTracker(s.Ctx, epochTracker)
 }
 
 func (s *KeeperTestSuite) TestIsRedemptionRateWithinSafetyBounds() {

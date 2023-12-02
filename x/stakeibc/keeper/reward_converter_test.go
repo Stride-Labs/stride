@@ -101,20 +101,18 @@ func (s *KeeperTestSuite) TestTransferRewardTokensHostToTrade() {
 
 	// Attempt to call the function again with an transfer amount below the min,
 	// it should not submit an ICA
-	err = s.App.StakeibcKeeper.TransferRewardTokensHostToTrade(s.Ctx, minSwapAmount.Sub(sdkmath.OneInt()), route)
-	s.Require().NoError(err, "no error expected when submitting transfer")
+	invalidTransferAmount := minSwapAmount.Sub(sdkmath.OneInt())
+	err = s.App.StakeibcKeeper.TransferRewardTokensHostToTrade(s.Ctx, invalidTransferAmount, route)
+	s.Require().NoError(err, "no error expected when submitting transfer with amount below minimum")
 
 	endSequence := s.MustGetNextSequenceNumber(portId, channelId)
 	s.Require().Equal(sequenceAfterTransfer, endSequence, "sequence number should NOT have incremented")
 
-	// Remove the connection ID so the ICA fails
+	// Remove the connection ID and confirm the ICA fails
 	invalidRoute := route
 	invalidRoute.HostAccount.ConnectionId = ""
-	err = s.App.StakeibcKeeper.TransferRewardTokensHostToTrade(s.Ctx, minSwapAmount.Sub(sdkmath.OneInt()), invalidRoute)
-	s.Require().NoError(err, "no error expected when submitting transfer")
-
-	endSequence = s.MustGetNextSequenceNumber(portId, channelId)
-	s.Require().Equal(sequenceAfterTransfer, endSequence, "sequence number should NOT have incremented")
+	err = s.App.StakeibcKeeper.TransferRewardTokensHostToTrade(s.Ctx, transferAmount, invalidRoute)
+	s.Require().ErrorContains(err, "Failed to submit ICA tx")
 
 	// Delete the epoch tracker and call each function, confirming they both fail
 	s.App.StakeibcKeeper.RemoveEpochTracker(s.Ctx, epochtypes.STRIDE_EPOCH)
@@ -289,5 +287,60 @@ func (s *KeeperTestSuite) TestGetSwapMsg() {
 }
 
 func (s *KeeperTestSuite) TestSwapRewardTokens() {
+	// Create an ICA channel for the transfer submission
+	owner := types.FormatICAAccountOwner(HostChainId, types.ICAAccountType_CONVERTER_TRADE)
+	channelId, portId := s.CreateICAChannel(owner)
 
+	minSwapAmount := sdkmath.NewInt(10)
+	rewardAmount := sdkmath.NewInt(100)
+
+	route := types.TradeRoute{
+		RewardDenomOnTradeZone: "ibc/reward_on_trade",
+		HostDenomOnTradeZone:   "ibc/host_on_trade",
+
+		TradeAccount: types.ICAAccount{
+			Address:      "trade_address",
+			ConnectionId: ibctesting.FirstConnectionID,
+		},
+
+		TradeConfig: types.TradeConfig{
+			PoolId:                 100,
+			SwapPrice:              sdk.OneDec(),
+			MinSwapAmount:          minSwapAmount,
+			MaxSwapAmount:          sdkmath.NewInt(1000),
+			MaxAllowedSwapLossRate: sdk.MustNewDecFromStr("0.1"),
+		},
+	}
+
+	// Create an epoch tracker to dictate the timeout
+	s.CreateStrideEpochForICATimeout(time.Minute) // arbitrary timeout time
+
+	// Execute the swap and confirm the sequence number increments
+	startSequence := s.MustGetNextSequenceNumber(portId, channelId)
+
+	err := s.App.StakeibcKeeper.SwapRewardTokens(s.Ctx, rewardAmount, route)
+	s.Require().NoError(err, "no error expected when submitting swap")
+
+	sequenceAfterSwap := s.MustGetNextSequenceNumber(portId, channelId)
+	s.Require().Equal(startSequence+1, sequenceAfterSwap, "sequence number should have incremented")
+
+	// Attempt to call the function again with an swap amount below the min,
+	// it should not submit an ICA
+	invalidSwapAmount := minSwapAmount.Sub(sdkmath.OneInt())
+	err = s.App.StakeibcKeeper.SwapRewardTokens(s.Ctx, invalidSwapAmount, route)
+	s.Require().NoError(err, "no error expected when submitting transfer with amount below minimum")
+
+	endSequence := s.MustGetNextSequenceNumber(portId, channelId)
+	s.Require().Equal(sequenceAfterSwap, endSequence, "sequence number should NOT have incremented")
+
+	// Remove the connection ID so the ICA fails
+	invalidRoute := route
+	invalidRoute.TradeAccount.ConnectionId = ""
+	err = s.App.StakeibcKeeper.SwapRewardTokens(s.Ctx, rewardAmount, invalidRoute)
+	s.Require().ErrorContains(err, "Failed to submit ICA tx")
+
+	// Delete the epoch tracker and confirm the swap fails
+	s.App.StakeibcKeeper.RemoveEpochTracker(s.Ctx, epochtypes.STRIDE_EPOCH)
+	err = s.App.StakeibcKeeper.SwapRewardTokens(s.Ctx, rewardAmount, route)
+	s.Require().ErrorContains(err, "epoch not found")
 }
