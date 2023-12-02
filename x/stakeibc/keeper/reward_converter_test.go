@@ -124,3 +124,170 @@ func (s *KeeperTestSuite) TestTransferRewardTokensHostToTrade() {
 	err = s.App.StakeibcKeeper.TransferRewardTokensHostToTrade(s.Ctx, transferAmount, route)
 	s.Require().ErrorContains(err, "epoch not found")
 }
+
+func (s *KeeperTestSuite) TestGetSwapMsg() {
+	poolId := uint64(100)
+	tradeAddress := "trade_address"
+
+	rewardDenom := "ibc/reward_on_trade"
+	hostDenom := "ibc/host_on_trade"
+
+	baseTradeRoute := types.TradeRoute{
+		RewardDenomOnTradeZone: rewardDenom,
+		HostDenomOnTradeZone:   hostDenom,
+
+		TradeAccount: types.ICAAccount{
+			Address: tradeAddress,
+		},
+
+		TradeConfig: types.TradeConfig{
+			PoolId: poolId,
+		},
+	}
+
+	testCases := []struct {
+		name                string
+		price               sdk.Dec
+		maxAllowedSwapLoss  sdk.Dec
+		minSwapAmount       sdkmath.Int
+		maxSwapAmount       sdkmath.Int
+		rewardAmount        sdkmath.Int
+		expectedTradeAmount sdkmath.Int
+		expectedMinOut      sdkmath.Int
+		expectedError       string
+	}{
+		{
+			// Reward Amount: 100, Min: 0, Max: 200 => Trade Amount: 100
+			// Price: 1, Slippage: 5% => Min Out: 95
+			name:               "swap 1",
+			price:              sdk.MustNewDecFromStr("1.0"),
+			maxAllowedSwapLoss: sdk.MustNewDecFromStr("0.05"),
+
+			maxSwapAmount:       sdkmath.NewInt(200),
+			rewardAmount:        sdkmath.NewInt(100),
+			expectedTradeAmount: sdkmath.NewInt(100),
+
+			expectedMinOut: sdkmath.NewInt(95),
+		},
+		{
+			// Reward Amount: 100, Min: 0, Max: 200 => Trade Amount: 100
+			// Price: 0.70, Slippage: 10% => Min Out: 100 * 0.70 * 0.9 = 63
+			name:               "swap 2",
+			price:              sdk.MustNewDecFromStr("0.70"),
+			maxAllowedSwapLoss: sdk.MustNewDecFromStr("0.10"),
+
+			maxSwapAmount:       sdkmath.NewInt(200),
+			rewardAmount:        sdkmath.NewInt(100),
+			expectedTradeAmount: sdkmath.NewInt(100),
+
+			expectedMinOut: sdkmath.NewInt(63),
+		},
+		{
+			// Reward Amount: 100, Min: 0, Max: 200 => Trade Amount: 100
+			// Price: 1.80, Slippage: 15% => Min Out: 100 * 1.8 * 0.85 = 153
+			name:               "swap 3",
+			price:              sdk.MustNewDecFromStr("1.8"),
+			maxAllowedSwapLoss: sdk.MustNewDecFromStr("0.15"),
+
+			maxSwapAmount:       sdkmath.NewInt(200),
+			rewardAmount:        sdkmath.NewInt(100),
+			expectedTradeAmount: sdkmath.NewInt(100),
+
+			expectedMinOut: sdkmath.NewInt(153),
+		},
+		{
+			// Reward Amount: 200, Min: 0, Max: 100 => Trade Amount: 100
+			// Price: 1, Slippage: 5% => Min Out: 95
+			name:               "capped by max swap amount",
+			price:              sdk.MustNewDecFromStr("1.0"),
+			maxAllowedSwapLoss: sdk.MustNewDecFromStr("0.05"),
+
+			maxSwapAmount:       sdkmath.NewInt(100),
+			rewardAmount:        sdkmath.NewInt(200),
+			expectedTradeAmount: sdkmath.NewInt(100),
+
+			expectedMinOut: sdkmath.NewInt(95),
+		},
+		{
+			// Reward Amount: 100, Min: 0, Max: 200 => Trade Amount: 100
+			// Price: 1, Slippage: 5.001% => Min Out: 94.999 => truncated to 94
+			name:               "int truncation in min out caused by decimal max swap allowed",
+			price:              sdk.MustNewDecFromStr("1.0"),
+			maxAllowedSwapLoss: sdk.MustNewDecFromStr("0.05001"),
+
+			maxSwapAmount:       sdkmath.NewInt(200),
+			rewardAmount:        sdkmath.NewInt(100),
+			expectedTradeAmount: sdkmath.NewInt(100),
+
+			expectedMinOut: sdkmath.NewInt(94),
+		},
+		{
+			// Reward Amount: 100, Min: 0, Max: 200 => Trade Amount: 100
+			// Price: 0.9998, Slippage: 10% => Min Out: 89.991 => truncated to 89
+			name:               "int truncation in min out caused by decimal price",
+			price:              sdk.MustNewDecFromStr("0.9998"),
+			maxAllowedSwapLoss: sdk.MustNewDecFromStr("0.10"),
+
+			maxSwapAmount:       sdkmath.NewInt(200),
+			rewardAmount:        sdkmath.NewInt(100),
+			expectedTradeAmount: sdkmath.NewInt(100),
+
+			expectedMinOut: sdkmath.NewInt(89),
+		},
+		{
+			// Reward Amount: 89234, Min: 0, Max: 23424 => Trade Amount: 23424
+			// Price: 15.234323, Slippage: 9.234329%
+			//   => Min Out: 23424 * 15.234323 * 0.90765671 = 323896.19 => truncates to 323896
+			name:               "int truncation from random numbers",
+			price:              sdk.MustNewDecFromStr("15.234323"),
+			maxAllowedSwapLoss: sdk.MustNewDecFromStr("0.09234329"),
+
+			maxSwapAmount:       sdkmath.NewInt(23424),
+			rewardAmount:        sdkmath.NewInt(89234),
+			expectedTradeAmount: sdkmath.NewInt(23424),
+
+			expectedMinOut: sdkmath.NewInt(323896),
+		},
+		{
+			// Missing price
+			name:               "missing price error",
+			price:              sdk.ZeroDec(),
+			maxAllowedSwapLoss: sdk.MustNewDecFromStr("0"),
+
+			maxSwapAmount:       sdkmath.NewInt(0),
+			rewardAmount:        sdkmath.NewInt(0),
+			expectedTradeAmount: sdkmath.NewInt(0),
+			expectedMinOut:      sdkmath.NewInt(0),
+
+			expectedError: "Price not found for pool",
+		},
+	}
+
+	for _, tc := range testCases {
+		route := baseTradeRoute
+
+		route.TradeConfig.SwapPrice = tc.price
+		route.TradeConfig.MinSwapAmount = tc.minSwapAmount
+		route.TradeConfig.MaxSwapAmount = tc.maxSwapAmount
+		route.TradeConfig.MaxAllowedSwapLossRate = tc.maxAllowedSwapLoss
+
+		msg, err := s.App.StakeibcKeeper.GetSwapMsg(tc.rewardAmount, route)
+
+		if tc.expectedError != "" {
+			s.Require().ErrorContains(err, tc.expectedError, "%s - error expected", tc.name)
+			continue
+		}
+		s.Require().Equal(tradeAddress, msg.Sender, "%s - sender", tc.name)
+		s.Require().Equal(poolId, msg.Routes[0].PoolId, "%s - pool id", tc.name)
+
+		s.Require().Equal(hostDenom, msg.Routes[0].TokenOutDenom, "%s - token out denom", tc.name)
+		s.Require().Equal(rewardDenom, msg.TokenIn.Denom, "%s - token in denom", tc.name)
+
+		s.Require().Equal(tc.expectedTradeAmount.Int64(), msg.TokenIn.Amount.Int64(), "%s - token in amount", tc.name)
+		s.Require().Equal(tc.expectedMinOut.Int64(), msg.TokenOutMinAmount.Int64(), "%s - min token out", tc.name)
+	}
+}
+
+func (s *KeeperTestSuite) TestSwapRewardTokens() {
+
+}

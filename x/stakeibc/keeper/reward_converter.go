@@ -185,15 +185,9 @@ func (k Keeper) TransferConvertedTokensTradeToHost(ctx sdk.Context, amount sdkma
 // Depending on min and max swap amounts set in the route, it is possible not the full amount given will swap
 // The minimum amount of tokens that can come out of the trade is calculated using a price from the pool
 func (k Keeper) GetSwapMsg(rewardAmount sdkmath.Int, route types.TradeRoute) (msg types.MsgSwapExactAmountIn, err error) {
-	// If the min swap amount was not set it would be ZeroInt, if positive we need to compare to the amount given
-	//  then if the min swap amount is greater than the current amount, do nothing this epoch to avoid small swaps
-	tradeConfig := route.TradeConfig
-	if tradeConfig.MinSwapAmount.IsPositive() && tradeConfig.MinSwapAmount.GT(rewardAmount) {
-		return msg, nil
-	}
-
 	// If the max swap amount was not set it would be ZeroInt, if positive we need to compare to the amount given
 	//  then if max swap amount is LTE to amount full swap is possible so amount is fine, otherwise set amount to max
+	tradeConfig := route.TradeConfig
 	if tradeConfig.MaxSwapAmount.IsPositive() && rewardAmount.GT(tradeConfig.MaxSwapAmount) {
 		rewardAmount = tradeConfig.MaxSwapAmount
 	}
@@ -241,6 +235,13 @@ func (k Keeper) GetSwapMsg(rewardAmount sdkmath.Int, route types.TradeRoute) (ms
 // Trade reward tokens in the Trade ICA for the host denom tokens using ICA remote tx on trade zone
 // The amount represents the total amount of the reward token in the trade ICA found by the calling ICQ
 func (k Keeper) SwapRewardTokens(ctx sdk.Context, rewardAmount sdkmath.Int, route types.TradeRoute) error {
+	// If the min swap amount was not set it would be ZeroInt, if positive we need to compare to the amount given
+	//  then if the min swap amount is greater than the current amount, do nothing this epoch to avoid small swaps
+	tradeConfig := route.TradeConfig
+	if tradeConfig.MinSwapAmount.IsPositive() && tradeConfig.MinSwapAmount.GT(rewardAmount) {
+		return nil
+	}
+
 	// Build the Osmosis swap message to convert reward tokens to host tokens
 	msg, err := k.GetSwapMsg(rewardAmount, route)
 	if err != nil {
