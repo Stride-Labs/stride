@@ -25,11 +25,11 @@ type PacketForwardMetadata struct {
 	Forward *ForwardMetadata `json:"forward"`
 }
 type ForwardMetadata struct {
-	Receiver string `json:"receiver,omitempty"`
-	Port     string `json:"port,omitempty"`
-	Channel  string `json:"channel,omitempty"`
-	Timeout  string `json:"timeout,omitempty"`
-	Retries  uint8  `json:"retries,omitempty"`
+	Receiver string `json:"receiver"`
+	Port     string `json:"port"`
+	Channel  string `json:"channel"`
+	Timeout  string `json:"timeout"`
+	Retries  int64  `json:"retries"`
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -58,13 +58,6 @@ func (k Keeper) GetHostToTradeTransferMsg(
 	amount sdkmath.Int,
 	route types.TradeRoute,
 ) (msg transfertypes.MsgTransfer, err error) {
-	// If the min swap amount was not set it would be ZeroInt, if positive we need to compare to the amount given
-	//  then if the min swap amount is greater than the current amount, do nothing this epoch to avoid small transfers
-	//  Particularly important for the PFM hop if the reward chain has frictional transfer fees (like noble chain)
-	if route.TradeConfig.MinSwapAmount.IsPositive() && route.TradeConfig.MinSwapAmount.GT(amount) {
-		return msg, nil
-	}
-
 	// Get the epoch tracker to determine the timeouts
 	strideEpochTracker, found := k.GetEpochTracker(ctx, epochstypes.STRIDE_EPOCH)
 	if !found {
@@ -117,6 +110,13 @@ func (k Keeper) GetHostToTradeTransferMsg(
 // ICA tx will kick off transfering the reward tokens from the hostZone withdrawl ICA to the tradeZone trade ICA
 // This will be two hops to unwind the ibc denom through the rewardZone using pfm in the transfer memo
 func (k Keeper) TransferRewardTokensHostToTrade(ctx sdk.Context, amount sdkmath.Int, route types.TradeRoute) error {
+	// If the min swap amount was not set it would be ZeroInt, if positive we need to compare to the amount given
+	//  then if the min swap amount is greater than the current amount, do nothing this epoch to avoid small transfers
+	//  Particularly important for the PFM hop if the reward chain has frictional transfer fees (like noble chain)
+	if route.TradeConfig.MinSwapAmount.IsPositive() && route.TradeConfig.MinSwapAmount.GT(amount) {
+		return nil
+	}
+
 	// Build the PFM transfer message from host to trade zone
 	msg, err := k.GetHostToTradeTransferMsg(ctx, amount, route)
 	if err != nil {
