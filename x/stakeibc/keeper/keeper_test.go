@@ -27,9 +27,16 @@ const (
 	OsmoPrefix  = "osmo"
 	OsmoChainId = "OSMO"
 
+	HostDenom   = "udenom"
+	RewardDenom = "ureward"
+
 	ValAddress        = "cosmosvaloper1uk4ze0x4nvh4fk0xm4jdud58eqn4yxhrdt795p"
 	HostICAAddress    = "cosmos1gcx4yeplccq9nk6awzmm0gq8jf7yet80qj70tkwy0mz7pg87nepswn2dj8"
 	LSMTokenBaseDenom = ValAddress + "/32"
+
+	DepositAddress                    = "deposit"
+	CommunityPoolStakeHoldingAddress  = "staking-holding"
+	CommunityPoolRedeemHoldingAddress = "redeem-holding"
 )
 
 type KeeperTestSuite struct {
