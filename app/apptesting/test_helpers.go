@@ -409,6 +409,13 @@ func (s *AppTestHelper) GetIBCDenomTrace(denom string) transfertypes.DenomTrace 
 	return transfertypes.ParseDenomTrace(prefixedDenom)
 }
 
+// Helper function to get the next sequence number for testing when an ICA was submitted
+func (s *AppTestHelper) MustGetNextSequenceNumber(portId, channelId string) uint64 {
+	sequence, found := s.App.StakeibcKeeper.IBCKeeper.ChannelKeeper.GetNextSequenceSend(s.Ctx, portId, channelId)
+	s.Require().True(found, "sequence number for port %s and channel %s was not found", portId, channelId)
+	return sequence
+}
+
 // Creates and stores an IBC denom from a base denom on transfer channel-0
 // This is only required for tests that use the transfer keeper and require that the IBC
 // denom is present in the store

@@ -2,11 +2,13 @@ package keeper_test
 
 import (
 	"testing"
+	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/Stride-Labs/stride/v16/app/apptesting"
+	epochtypes "github.com/Stride-Labs/stride/v16/x/epochs/types"
 	"github.com/Stride-Labs/stride/v16/x/stakeibc/keeper"
 	"github.com/Stride-Labs/stride/v16/x/stakeibc/types"
 )
@@ -25,16 +27,9 @@ const (
 	OsmoPrefix  = "osmo"
 	OsmoChainId = "OSMO"
 
-	HostDenom   = "udenom"
-	RewardDenom = "ureward"
-
 	ValAddress        = "cosmosvaloper1uk4ze0x4nvh4fk0xm4jdud58eqn4yxhrdt795p"
 	HostICAAddress    = "cosmos1gcx4yeplccq9nk6awzmm0gq8jf7yet80qj70tkwy0mz7pg87nepswn2dj8"
 	LSMTokenBaseDenom = ValAddress + "/32"
-
-	DepositAddress                    = "deposit"
-	CommunityPoolStakeHoldingAddress  = "staking-holding"
-	CommunityPoolRedeemHoldingAddress = "redeem-holding"
 )
 
 type KeeperTestSuite struct {
@@ -63,6 +58,16 @@ func (s *KeeperTestSuite) MustGetHostZone(chainId string) types.HostZone {
 	hostZone, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx, chainId)
 	s.Require().True(found, "host zone should have been found")
 	return hostZone
+}
+
+// Helper function to create an stride epoch tracker that dictates the timeout
+func (s *KeeperTestSuite) CreateStrideEpochForICATimeout(timeoutDuration time.Duration) {
+	epochEndTime := uint64(s.Ctx.BlockTime().Add(timeoutDuration).UnixNano())
+	epochTracker := types.EpochTracker{
+		EpochIdentifier:    epochtypes.STRIDE_EPOCH,
+		NextEpochStartTime: epochEndTime,
+	}
+	s.App.StakeibcKeeper.SetEpochTracker(s.Ctx, epochTracker)
 }
 
 func (s *KeeperTestSuite) TestIsRedemptionRateWithinSafetyBounds() {
