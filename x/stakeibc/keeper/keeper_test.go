@@ -53,6 +53,13 @@ func TestKeeperTestSuite(t *testing.T) {
 	suite.Run(t, new(KeeperTestSuite))
 }
 
+// Helper function to get a host zone and confirm it was found
+func (s *KeeperTestSuite) MustGetHostZone(chainId string) types.HostZone {
+	hostZone, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx, chainId)
+	s.Require().True(found, "host zone should have been found")
+	return hostZone
+}
+
 // Helper function to create an stride epoch tracker that dictates the timeout
 func (s *KeeperTestSuite) CreateStrideEpochForICATimeout(timeoutDuration time.Duration) {
 	epochEndTime := uint64(s.Ctx.BlockTime().Add(timeoutDuration).UnixNano())

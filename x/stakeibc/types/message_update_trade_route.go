@@ -51,7 +51,6 @@ func (msg *MsgUpdateTradeRoute) ValidateBasic() error {
 	if msg.MaxSwapAmount.GT(sdkmath.ZeroInt()) && msg.MinSwapAmount.GT(msg.MaxSwapAmount) {
 		return errorsmod.Wrap(sdkerrors.ErrInvalidRequest, "min swap amount cannot be greater than max swap amount")
 	}
-
 	maxAllowedSwapLossRate, err := sdk.NewDecFromStr(msg.MaxAllowedSwapLossRate)
 	if err != nil {
 		return errorsmod.Wrapf(err, "unable to cast max allowed swap loss rate to a decimal")

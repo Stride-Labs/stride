@@ -52,37 +52,37 @@ func (msg *MsgCreateTradeRoute) ValidateBasic() error {
 		return errorsmod.Wrap(sdkerrors.ErrInvalidRequest, "host chain ID cannot be empty")
 	}
 
-	if err := validateConnectionId(msg.StrideToRewardConnectionId); err != nil {
+	if err := ValidateConnectionId(msg.StrideToRewardConnectionId); err != nil {
 		return errorsmod.Wrap(err, "invalid stride to reward connection ID")
 	}
-	if err := validateConnectionId(msg.StrideToTradeConnectionId); err != nil {
+	if err := ValidateConnectionId(msg.StrideToTradeConnectionId); err != nil {
 		return errorsmod.Wrap(err, "invalid stride to trade connection ID")
 	}
 
-	if err := validateChannelId(msg.HostToRewardTransferChannelId); err != nil {
+	if err := ValidateChannelId(msg.HostToRewardTransferChannelId); err != nil {
 		return errorsmod.Wrap(err, "invalid host to reward channel ID")
 	}
-	if err := validateChannelId(msg.RewardToTradeTransferChannelId); err != nil {
+	if err := ValidateChannelId(msg.RewardToTradeTransferChannelId); err != nil {
 		return errorsmod.Wrap(err, "invalid reward to trade channel ID")
 	}
-	if err := validateChannelId(msg.TradeToHostTransferChannelId); err != nil {
+	if err := ValidateChannelId(msg.TradeToHostTransferChannelId); err != nil {
 		return errorsmod.Wrap(err, "invalid trade to host channel ID")
 	}
 
-	if err := validateDenom(msg.RewardDenomOnHost, true); err != nil {
+	if err := ValidateDenom(msg.RewardDenomOnHost, true); err != nil {
 		return errorsmod.Wrap(err, "invalid reward denom on host")
 	}
-	if err := validateDenom(msg.RewardDenomOnReward, false); err != nil {
-		return errorsmod.Wrap(err, "invalid reward denom on host")
+	if err := ValidateDenom(msg.RewardDenomOnReward, false); err != nil {
+		return errorsmod.Wrap(err, "invalid reward denom on reward")
 	}
-	if err := validateDenom(msg.RewardDenomOnTrade, true); err != nil {
-		return errorsmod.Wrap(err, "invalid reward denom on host")
+	if err := ValidateDenom(msg.RewardDenomOnTrade, true); err != nil {
+		return errorsmod.Wrap(err, "invalid reward denom on trade")
 	}
-	if err := validateDenom(msg.HostDenomOnTrade, true); err != nil {
-		return errorsmod.Wrap(err, "invalid reward denom on host")
+	if err := ValidateDenom(msg.HostDenomOnTrade, true); err != nil {
+		return errorsmod.Wrap(err, "invalid host denom on trade")
 	}
-	if err := validateDenom(msg.HostDenomOnHost, false); err != nil {
-		return errorsmod.Wrap(err, "invalid reward denom on host")
+	if err := ValidateDenom(msg.HostDenomOnHost, false); err != nil {
+		return errorsmod.Wrap(err, "invalid host denom on host")
 	}
 
 	if msg.PoolId < 1 {
@@ -104,7 +104,7 @@ func (msg *MsgCreateTradeRoute) ValidateBasic() error {
 }
 
 // Helper function to validate a connection Id
-func validateConnectionId(connectionId string) error {
+func ValidateConnectionId(connectionId string) error {
 	matched, err := regexp.MatchString(ConnectionIdRegex, connectionId)
 	if err != nil {
 		return errorsmod.Wrapf(err, "unable to verify connnection-id (%s)", connectionId)
@@ -116,7 +116,7 @@ func validateConnectionId(connectionId string) error {
 }
 
 // Helper function to validate a channel Id
-func validateChannelId(channelId string) error {
+func ValidateChannelId(channelId string) error {
 	matched, err := regexp.MatchString(ChannelIdRegex, channelId)
 	if err != nil {
 		return errorsmod.Wrapf(err, "unable to verify channel-id (%s)", channelId)
@@ -128,7 +128,7 @@ func validateChannelId(channelId string) error {
 }
 
 // Helper function to validate a denom
-func validateDenom(denom string, ibc bool) error {
+func ValidateDenom(denom string, ibc bool) error {
 	if denom == "" {
 		return errorsmod.Wrap(ErrInvalidDenom, "denom is empty")
 	}
