@@ -8,10 +8,10 @@ import (
 
 	sdkmath "cosmossdk.io/math"
 
-	"github.com/Stride-Labs/stride/v15/app/apptesting"
-	"github.com/Stride-Labs/stride/v15/testutil/nullify"
-	"github.com/Stride-Labs/stride/v15/x/ratelimit"
-	"github.com/Stride-Labs/stride/v15/x/ratelimit/types"
+	"github.com/Stride-Labs/stride/v16/app/apptesting"
+	"github.com/Stride-Labs/stride/v16/testutil/nullify"
+	"github.com/Stride-Labs/stride/v16/x/ratelimit"
+	"github.com/Stride-Labs/stride/v16/x/ratelimit/types"
 )
 
 func createRateLimits() []types.RateLimit {

@@ -4,9 +4,10 @@ package stride.stakeibc;
 import "stride/stakeibc/ica_account.proto";
 import "stride/stakeibc/validator.proto";
 
-option go_package = "github.com/Stride-Labs/stride/v15/x/stakeibc/types";
+option go_package = "github.com/Stride-Labs/stride/v16/x/stakeibc/types";
 import "gogoproto/gogo.proto";
 import "cosmos_proto/cosmos.proto";
+import "cosmos/base/v1beta1/coin.proto";
 
 // Msg defines the Msg service.
 service Msg {
@@ -32,6 +33,7 @@ service Msg {
   rpc ClearBalance(MsgClearBalance) returns (MsgClearBalanceResponse);
   rpc UpdateInnerRedemptionRateBounds(MsgUpdateInnerRedemptionRateBounds)
       returns (MsgUpdateInnerRedemptionRateBoundsResponse);
+  rpc ResumeHostZone(MsgResumeHostZone) returns (MsgResumeHostZoneResponse);
 }
 
 message MsgUpdateInnerRedemptionRateBounds {
@@ -59,7 +61,12 @@ message MsgLiquidStake {
   ];
   string host_denom = 3;
 }
-message MsgLiquidStakeResponse {}
+message MsgLiquidStakeResponse {
+  cosmos.base.v1beta1.Coin st_token = 1 [
+    (gogoproto.nullable) = false,
+    (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"
+  ];
+}
 
 message MsgLSMLiquidStake {
   string creator = 1;
@@ -179,3 +186,9 @@ message MsgCalibrateDelegation {
   string valoper = 3;
 }
 message MsgCalibrateDelegationResponse {}
+
+message MsgResumeHostZone {
+  string creator = 1;
+  string chain_id = 2;
+}
+message MsgResumeHostZoneResponse {}

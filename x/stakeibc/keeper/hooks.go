@@ -8,11 +8,11 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/spf13/cast"
 
-	"github.com/Stride-Labs/stride/v15/utils"
-	epochstypes "github.com/Stride-Labs/stride/v15/x/epochs/types"
-	icaoracletypes "github.com/Stride-Labs/stride/v15/x/icaoracle/types"
-	recordstypes "github.com/Stride-Labs/stride/v15/x/records/types"
-	"github.com/Stride-Labs/stride/v15/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v16/utils"
+	epochstypes "github.com/Stride-Labs/stride/v16/x/epochs/types"
+	icaoracletypes "github.com/Stride-Labs/stride/v16/x/icaoracle/types"
+	recordstypes "github.com/Stride-Labs/stride/v16/x/records/types"
+	"github.com/Stride-Labs/stride/v16/x/stakeibc/types"
 )
 
 const StrideEpochsPerDayEpoch = uint64(4)
@@ -80,6 +80,9 @@ func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochInfo epochstypes.EpochInf
 		if epochNumber%StrideEpochsPerDayEpoch == 0 {
 			k.RebalanceAllHostZones(ctx)
 		}
+
+		// Transfers in and out of tokens for hostZones which have community pools
+		k.ProcessAllCommunityPoolTokens(ctx)
 	}
 	if epochInfo.Identifier == epochstypes.MINT_EPOCH {
 		k.AllocateHostZoneReward(ctx)

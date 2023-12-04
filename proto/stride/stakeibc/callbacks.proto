@@ -5,8 +5,9 @@ import "cosmos/base/v1beta1/coin.proto";
 import "stride/records/records.proto";
 import "stride/stakeibc/host_zone.proto";
 import "stride/stakeibc/validator.proto";
+import "stride/stakeibc/ica_account.proto";
 
-option go_package = "github.com/Stride-Labs/stride/v15/x/stakeibc/types";
+option go_package = "github.com/Stride-Labs/stride/v16/x/stakeibc/types";
 
 message SplitDelegation {
   string validator = 1;
@@ -79,4 +80,9 @@ message DelegatorSharesQueryCallback {
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
     (gogoproto.nullable) = false
   ];
+}
+
+message CommunityPoolBalanceQueryCallback {
+  ICAAccountType ica_type = 1;
+  string denom = 2;
 }

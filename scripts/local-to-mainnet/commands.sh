@@ -40,7 +40,7 @@ docker-compose -f scripts/local-to-mainnet/docker-compose.yml logs -f relayer | 
 # IBC Transfer from HOST to stride (from relayer account)
 build/gaiad tx ibc-transfer transfer transfer $transfer_channel stride1u20df3trc2c2zdhm8qvh2hdjx9ewh00sv6eyy8 4000000uatom --from hot --chain-id cosmoshub-4 -y --keyring-backend test --node http://HOST_ENDPOINT:26657 --fees 150000uatom
 
-# Confirm funds were recieved on stride and get IBC denom
+# Confirm funds were received on stride and get IBC denom
 build/strided --home scripts/state/stride1 q bank balances stride1u20df3trc2c2zdhm8qvh2hdjx9ewh00sv6eyy8
 
 # Register host zone

@@ -8,11 +8,11 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/Stride-Labs/stride/v15/app/apptesting"
-	v15 "github.com/Stride-Labs/stride/v15/app/upgrades/v15"
-	icqtypes "github.com/Stride-Labs/stride/v15/x/interchainquery/types"
-	stakeibckeeper "github.com/Stride-Labs/stride/v15/x/stakeibc/keeper"
-	stakeibctypes "github.com/Stride-Labs/stride/v15/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v16/app/apptesting"
+	v15 "github.com/Stride-Labs/stride/v16/app/upgrades/v15"
+	icqtypes "github.com/Stride-Labs/stride/v16/x/interchainquery/types"
+	stakeibckeeper "github.com/Stride-Labs/stride/v16/x/stakeibc/keeper"
+	stakeibctypes "github.com/Stride-Labs/stride/v16/x/stakeibc/types"
 )
 
 type UpgradeTestSuite struct {
@@ -38,7 +38,7 @@ type UpdateRedemptionRateBounds struct {
 func (s *UpgradeTestSuite) TestUpgrade() {
 	dummyUpgradeHeight := int64(5)
 
-	// Setup the store before the ugprade
+	// Setup the store before the upgrade
 	checkRedemptionRatesAfterUpgrade := s.SetupRedemptionRatesBeforeUpgrade()
 	checkQueriesAfterUpgrade := s.SetupQueriesBeforeUpgrade()
 
