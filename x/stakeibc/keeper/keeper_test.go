@@ -25,9 +25,16 @@ const (
 	OsmoPrefix  = "osmo"
 	OsmoChainId = "OSMO"
 
-	ValAddress           = "cosmosvaloper1uk4ze0x4nvh4fk0xm4jdud58eqn4yxhrdt795p"
-	HostICAAddress       = "cosmos1gcx4yeplccq9nk6awzmm0gq8jf7yet80qj70tkwy0mz7pg87nepswn2dj8"
-	LSMTokenBaseDenom    = ValAddress + "/32"
+	HostDenom   = "udenom"
+	RewardDenom = "ureward"
+
+	ValAddress        = "cosmosvaloper1uk4ze0x4nvh4fk0xm4jdud58eqn4yxhrdt795p"
+	HostICAAddress    = "cosmos1gcx4yeplccq9nk6awzmm0gq8jf7yet80qj70tkwy0mz7pg87nepswn2dj8"
+	LSMTokenBaseDenom = ValAddress + "/32"
+
+	DepositAddress                    = "deposit"
+	CommunityPoolStakeHoldingAddress  = "staking-holding"
+	CommunityPoolRedeemHoldingAddress = "redeem-holding"
 )
 
 type KeeperTestSuite struct {
@@ -49,6 +56,13 @@ func (s *KeeperTestSuite) GetMsgServer() types.MsgServer {
 
 func TestKeeperTestSuite(t *testing.T) {
 	suite.Run(t, new(KeeperTestSuite))
+}
+
+// Helper function to get a host zone and confirm it was found
+func (s *KeeperTestSuite) MustGetHostZone(chainId string) types.HostZone {
+	hostZone, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx, chainId)
+	s.Require().True(found, "host zone should have been found")
+	return hostZone
 }
 
 func (s *KeeperTestSuite) TestIsRedemptionRateWithinSafetyBounds() {
