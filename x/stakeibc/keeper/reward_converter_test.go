@@ -13,7 +13,7 @@ import (
 	"github.com/Stride-Labs/stride/v16/x/stakeibc/types"
 )
 
-// Tests TransferRewardTokensHostToTrade and GetHostToTradeTransferMsg
+// Tests TransferRewardTokensHostToTrade and BuildHostToTradeTransferMsg
 func (s *KeeperTestSuite) TestTransferRewardTokensHostToTrade() {
 	// Create an ICA channel for the transfer submission
 	owner := types.FormatICAAccountOwner(HostChainId, types.ICAAccountType_WITHDRAWAL)
@@ -86,7 +86,7 @@ func (s *KeeperTestSuite) TestTransferRewardTokensHostToTrade() {
 	}
 
 	// Confirm the generated message matches expectations
-	actualMsg, err := s.App.StakeibcKeeper.GetHostToTradeTransferMsg(s.Ctx, transferAmount, route)
+	actualMsg, err := s.App.StakeibcKeeper.BuildHostToTradeTransferMsg(s.Ctx, transferAmount, route)
 	s.Require().NoError(err, "no error expected when building transfer message")
 	s.Require().Equal(expectedMsg, actualMsg, "transfer message should have matched")
 
@@ -117,13 +117,13 @@ func (s *KeeperTestSuite) TestTransferRewardTokensHostToTrade() {
 	// Delete the epoch tracker and call each function, confirming they both fail
 	s.App.StakeibcKeeper.RemoveEpochTracker(s.Ctx, epochtypes.STRIDE_EPOCH)
 
-	_, err = s.App.StakeibcKeeper.GetHostToTradeTransferMsg(s.Ctx, transferAmount, route)
+	_, err = s.App.StakeibcKeeper.BuildHostToTradeTransferMsg(s.Ctx, transferAmount, route)
 	s.Require().ErrorContains(err, "epoch not found")
 	err = s.App.StakeibcKeeper.TransferRewardTokensHostToTrade(s.Ctx, transferAmount, route)
 	s.Require().ErrorContains(err, "epoch not found")
 }
 
-func (s *KeeperTestSuite) TestGetSwapMsg() {
+func (s *KeeperTestSuite) TestBuildSwapMsg() {
 	poolId := uint64(100)
 	tradeAddress := "trade_address"
 
@@ -269,7 +269,7 @@ func (s *KeeperTestSuite) TestGetSwapMsg() {
 		route.TradeConfig.MaxSwapAmount = tc.maxSwapAmount
 		route.TradeConfig.MaxAllowedSwapLossRate = tc.maxAllowedSwapLoss
 
-		msg, err := s.App.StakeibcKeeper.GetSwapMsg(tc.rewardAmount, route)
+		msg, err := s.App.StakeibcKeeper.BuildSwapMsg(tc.rewardAmount, route)
 
 		if tc.expectedError != "" {
 			s.Require().ErrorContains(err, tc.expectedError, "%s - error expected", tc.name)

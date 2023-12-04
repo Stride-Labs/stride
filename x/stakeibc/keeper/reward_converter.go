@@ -53,7 +53,7 @@ type ForwardMetadata struct {
 
 // Builds a PFM transfer message to send reward tokens from the host zone,
 // through the reward zone (to unwind) and finally to the trade zone
-func (k Keeper) GetHostToTradeTransferMsg(
+func (k Keeper) BuildHostToTradeTransferMsg(
 	ctx sdk.Context,
 	amount sdkmath.Int,
 	route types.TradeRoute,
@@ -118,7 +118,7 @@ func (k Keeper) TransferRewardTokensHostToTrade(ctx sdk.Context, amount sdkmath.
 	}
 
 	// Build the PFM transfer message from host to trade zone
-	msg, err := k.GetHostToTradeTransferMsg(ctx, amount, route)
+	msg, err := k.BuildHostToTradeTransferMsg(ctx, amount, route)
 	if err != nil {
 		return err
 	}
@@ -184,7 +184,7 @@ func (k Keeper) TransferConvertedTokensTradeToHost(ctx sdk.Context, amount sdkma
 // Builds the Osmosis swap message to trade reward tokens for host tokens
 // Depending on min and max swap amounts set in the route, it is possible not the full amount given will swap
 // The minimum amount of tokens that can come out of the trade is calculated using a price from the pool
-func (k Keeper) GetSwapMsg(rewardAmount sdkmath.Int, route types.TradeRoute) (msg types.MsgSwapExactAmountIn, err error) {
+func (k Keeper) BuildSwapMsg(rewardAmount sdkmath.Int, route types.TradeRoute) (msg types.MsgSwapExactAmountIn, err error) {
 	// If the max swap amount was not set it would be ZeroInt, if positive we need to compare to the amount given
 	//  then if max swap amount is LTE to amount full swap is possible so amount is fine, otherwise set amount to max
 	tradeConfig := route.TradeConfig
@@ -243,7 +243,7 @@ func (k Keeper) SwapRewardTokens(ctx sdk.Context, rewardAmount sdkmath.Int, rout
 	}
 
 	// Build the Osmosis swap message to convert reward tokens to host tokens
-	msg, err := k.GetSwapMsg(rewardAmount, route)
+	msg, err := k.BuildSwapMsg(rewardAmount, route)
 	if err != nil {
 		return err
 	}
