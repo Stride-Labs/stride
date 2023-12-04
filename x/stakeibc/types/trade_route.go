@@ -2,6 +2,11 @@ package types
 
 import fmt "fmt"
 
+// Builds the store key (as a string) from the reward and host denom's
+func (t TradeRoute) GetID() string {
+	return t.RewardDenomOnRewardZone + "-" + t.HostDenomOnHostZone
+}
+
 // Builds the store key from the reward and host denom's
 func (t TradeRoute) GetKey() []byte {
 	return TradeRouteKeyFromDenoms(t.RewardDenomOnRewardZone, t.HostDenomOnHostZone)
