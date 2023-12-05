@@ -150,6 +150,16 @@ func (s *KeeperTestSuite) TestCreateTradeRoute_Success_DefaultPoolConfig() {
 	s.submitCreateTradeRouteAndValidate(msg, expectedTradeRoute)
 }
 
+// Tests trying to create a route from an invalid authority
+func (s *KeeperTestSuite) TestCreateTradeRoute_Failure_Authority() {
+	msg, _ := s.SetupTestCreateTradeRoute()
+
+	msg.Authority = "not-gov-address"
+
+	_, err := s.GetMsgServer().CreateTradeRoute(sdk.WrapSDKContext(s.Ctx), &msg)
+	s.Require().ErrorContains(err, "invalid authority")
+}
+
 // Tests creating a duplicate trade route
 func (s *KeeperTestSuite) TestCreateTradeRoute_Failure_DuplicateTradeRoute() {
 	msg, _ := s.SetupTestCreateTradeRoute()
