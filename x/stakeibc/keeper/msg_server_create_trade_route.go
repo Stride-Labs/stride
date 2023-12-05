@@ -165,7 +165,7 @@ func (k Keeper) RegisterTradeRouteICAAccount(
 	}
 	counterpartyConnectionId := connection.Counterparty.ConnectionId
 
-	// Build the appVersion with the counterparty connection ID
+	// Build the appVersion, owner, and portId needed for registration
 	appVersion := string(icatypes.ModuleCdc.MustMarshalJSON(&icatypes.Metadata{
 		Version:                icatypes.Version,
 		ControllerConnectionId: connectionId,
@@ -173,17 +173,17 @@ func (k Keeper) RegisterTradeRouteICAAccount(
 		Encoding:               icatypes.EncodingProtobuf,
 		TxType:                 icatypes.TxTypeSDKMultiMsg,
 	}))
+	owner := types.FormatTradeRouteICAOwnerFromRouteId(chainId, tradeRouteId, icaAccountType)
+	portID, err := icatypes.NewControllerPortID(owner)
+	if err != nil {
+		return account, err
+	}
 
-	// Create the associate ICAAccount object, and determine the owner and portId
+	// Create the associate ICAAccount object
 	account = types.ICAAccount{
 		ChainId:      chainId,
 		Type:         icaAccountType,
 		ConnectionId: connectionId,
-	}
-	owner := types.FormatTradeRouteICAOwnerFromAccount(tradeRouteId, account)
-	portID, err := icatypes.NewControllerPortID(owner)
-	if err != nil {
-		return account, err
 	}
 
 	// Check if an ICA account has already been created

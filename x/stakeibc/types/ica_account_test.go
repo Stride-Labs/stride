@@ -74,11 +74,7 @@ func TestFormatTradeRouteICAOwner(t *testing.T) {
 			require.Equal(t, actual, tc.owner, "format trade route ICA owner")
 
 			tradeRouteId := "ureward-uhost"
-			account := types.ICAAccount{
-				ChainId: chainId,
-				Type:    tc.accountType,
-			}
-			actual = types.FormatTradeRouteICAOwnerFromAccount(tradeRouteId, account)
+			actual = types.FormatTradeRouteICAOwnerFromRouteId(chainId, tradeRouteId, tc.accountType)
 			require.Equal(t, actual, tc.owner, "format trade route ICA owner by account")
 		})
 	}

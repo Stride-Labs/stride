@@ -11,12 +11,11 @@ func FormatHostZoneICAOwner(chainId string, accountType ICAAccountType) (result 
 // in the form "{chainId}.{rewardDenom}-{hostDenom}.{ICA_TYPE}"
 func FormatTradeRouteICAOwner(chainId, rewardDenom, hostDenom string, icaAccountType ICAAccountType) string {
 	tradeRouteId := GetTradeRouteId(rewardDenom, hostDenom)
-	return fmt.Sprintf("%s.%s.%s", chainId, tradeRouteId, icaAccountType.String())
+	return FormatTradeRouteICAOwnerFromRouteId(chainId, tradeRouteId, icaAccountType)
 }
 
 // Helper function to build the ICA owner for a trade route ICA
-// in the form "{chainId}.{rewardDenom}-{hostDenom}.{ICA_TYPE}"
-// from an ICAAccount
-func FormatTradeRouteICAOwnerFromAccount(tradeRouteId string, icaAccount ICAAccount) string {
-	return fmt.Sprintf("%s.%s.%s", icaAccount.ChainId, tradeRouteId, icaAccount.Type.String())
+// in the form "{chainId}.{tradeRouteId}.{ICA_TYPE}"
+func FormatTradeRouteICAOwnerFromRouteId(chainId, tradeRouteId string, icaAccountType ICAAccountType) string {
+	return fmt.Sprintf("%s.%s.%s", chainId, tradeRouteId, icaAccountType.String())
 }
