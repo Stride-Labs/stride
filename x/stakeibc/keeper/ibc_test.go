@@ -35,6 +35,7 @@ func (s *KeeperTestSuite) TestOnChanOpenAck() {
 		HostDenomOnHostZone:     HostDenom,
 		TradeAccount: types.ICAAccount{
 			ChainId: tradeChainId,
+			Type:    types.ICAAccountType_CONVERTER_TRADE,
 		},
 	})
 
@@ -42,7 +43,7 @@ func (s *KeeperTestSuite) TestOnChanOpenAck() {
 	delegationOwner := types.FormatICAAccountOwner(delegationChainId, types.ICAAccountType_DELEGATION)
 	delegationPortId, _ := icatypes.NewControllerPortID(delegationOwner)
 
-	tradeOwner := types.FormatICAAccountOwner(tradeChainId, types.ICAAccountType_CONVERTER_TRADE)
+	tradeOwner := types.FormatTradeRouteICAOwner(tradeChainId, RewardDenom, HostDenom, types.ICAAccountType_CONVERTER_TRADE)
 	tradePortId, _ := icatypes.NewControllerPortID(tradeOwner)
 
 	// Mock out an ICA address for each
@@ -247,9 +248,11 @@ func (s *KeeperTestSuite) TestStoreTradeRouteIcaAddress() {
 		HostDenomOnHostZone:     HostDenom,
 		RewardAccount: types.ICAAccount{
 			ChainId: HostChainId,
+			Type:    types.ICAAccountType_CONVERTER_UNWIND,
 		},
 		TradeAccount: types.ICAAccount{
 			ChainId: HostChainId,
+			Type:    types.ICAAccountType_CONVERTER_TRADE,
 		},
 	}
 
@@ -261,7 +264,7 @@ func (s *KeeperTestSuite) TestStoreTradeRouteIcaAddress() {
 		// If the portId is -1, pass a non-ica port
 		portId := "not-ica-port"
 		if accountType != -1 {
-			owner := types.FormatICAAccountOwner(HostChainId, accountType)
+			owner := types.FormatTradeRouteICAOwner(HostChainId, RewardDenom, HostDenom, accountType)
 			portId, _ = icatypes.NewControllerPortID(owner)
 		}
 
@@ -277,7 +280,7 @@ func (s *KeeperTestSuite) TestStoreTradeRouteIcaAddress() {
 
 	// Check with a matching port, but no matching chainId
 	accountType := types.ICAAccountType_CONVERTER_TRADE
-	owner := types.FormatICAAccountOwner(HostChainId, accountType)
+	owner := types.FormatTradeRouteICAOwner(HostChainId, RewardDenom, HostDenom, accountType)
 	portId, _ := icatypes.NewControllerPortID(owner)
 	address := accountType.String()
 
