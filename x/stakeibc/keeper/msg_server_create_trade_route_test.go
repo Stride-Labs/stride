@@ -4,11 +4,12 @@ import (
 	sdkmath "cosmossdk.io/math"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	icatypes "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/types"
 
 	"github.com/Stride-Labs/stride/v16/x/stakeibc/types"
 )
 
-func (s *KeeperTestSuite) TestMsgCreateTradeRoute() {
+func (s *KeeperTestSuite) SetupTestCreateTradeRoute() (msg types.MsgCreateTradeRoute, expectedTradeRoute types.TradeRoute) {
 	rewardChainId := "reward-0"
 	tradeChainId := "trade-0"
 
@@ -53,7 +54,7 @@ func (s *KeeperTestSuite) TestMsgCreateTradeRoute() {
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
 
 	// Define a valid message given the parameters above
-	msg := types.MsgCreateTradeRoute{
+	msg = types.MsgCreateTradeRoute{
 		Authority:   Authority,
 		HostChainId: HostChainId,
 
@@ -77,7 +78,7 @@ func (s *KeeperTestSuite) TestMsgCreateTradeRoute() {
 	}
 
 	// Build out the expected trade route given the above
-	expectedTradeRoute := types.TradeRoute{
+	expectedTradeRoute = types.TradeRoute{
 		RewardDenomOnHostZone:   rewardDenomOnHost,
 		RewardDenomOnRewardZone: rewardDenomOnReward,
 		RewardDenomOnTradeZone:  rewardDenomOnTrade,
@@ -117,11 +118,101 @@ func (s *KeeperTestSuite) TestMsgCreateTradeRoute() {
 		},
 	}
 
-	// Create the trade route and confirm the created route matches expectations
+	return msg, expectedTradeRoute
+}
+
+// Helper function to create a trade route and check the created route matched expectations
+func (s *KeeperTestSuite) submitCreateTradeRouteAndValidate(msg types.MsgCreateTradeRoute, expectedRoute types.TradeRoute) {
 	_, err := s.GetMsgServer().CreateTradeRoute(sdk.WrapSDKContext(s.Ctx), &msg)
 	s.Require().NoError(err, "no error expected when creating trade route")
 
-	actualTradeRoute, found := s.App.StakeibcKeeper.GetTradeRoute(s.Ctx, RewardDenom, HostDenom)
+	actualRoute, found := s.App.StakeibcKeeper.GetTradeRoute(s.Ctx, RewardDenom, HostDenom)
 	s.Require().True(found, "trade route should have been created")
-	s.Require().Equal(expectedTradeRoute, actualTradeRoute, "trade route")
+	s.Require().Equal(expectedRoute, actualRoute, "trade route")
+}
+
+// Tests a successful trade route creation
+func (s *KeeperTestSuite) TestCreateTradeRoute_Success() {
+	msg, expectedTradeRoute := s.SetupTestCreateTradeRoute()
+	s.submitCreateTradeRouteAndValidate(msg, expectedTradeRoute)
+}
+
+// Tests creating a trade route that uses the default pool config values
+func (s *KeeperTestSuite) TestCreateTradeRoute_Success_DefaultPoolConfig() {
+	msg, expectedTradeRoute := s.SetupTestCreateTradeRoute()
+
+	// Update the message and remove some trade config parameters
+	msg.MaxSwapAmount = sdk.ZeroInt()
+	msg.MaxAllowedSwapLossRate = ""
+
+	// Update the expected message to have the default values
+	msg, expectedTradeRoute = s.SetupTestCreateTradeRoute()
+	s.submitCreateTradeRouteAndValidate(msg, expectedTradeRoute)
+}
+
+// Tests creating a duplicate trade route
+func (s *KeeperTestSuite) TestCreateTradeRoute_Failure_DuplicateTradeRoute() {
+	msg, _ := s.SetupTestCreateTradeRoute()
+
+	// Store down a trade route so the tx hits a duplicate trade route error
+	s.App.StakeibcKeeper.SetTradeRoute(s.Ctx, types.TradeRoute{
+		RewardDenomOnRewardZone: RewardDenom,
+		HostDenomOnHostZone:     HostDenom,
+	})
+
+	_, err := s.GetMsgServer().CreateTradeRoute(sdk.WrapSDKContext(s.Ctx), &msg)
+	s.Require().ErrorContains(err, "Trade route already exists")
+}
+
+// Tests creating a trade route when the host zone or withdrawal address does not exist
+func (s *KeeperTestSuite) TestCreateTradeRoute_Failure_HostZoneNotRegistered() {
+	msg, _ := s.SetupTestCreateTradeRoute()
+
+	// Remove the host zone withdrawal address and confirm it fails
+	invalidHostZone := s.MustGetHostZone(HostChainId)
+	invalidHostZone.WithdrawalIcaAddress = ""
+	s.App.StakeibcKeeper.SetHostZone(s.Ctx, invalidHostZone)
+
+	_, err := s.GetMsgServer().CreateTradeRoute(sdk.WrapSDKContext(s.Ctx), &msg)
+	s.Require().ErrorContains(err, "withdrawal account not initialized on host zone")
+
+	// Remove the host zone completely and check that that also fails
+	s.App.StakeibcKeeper.RemoveHostZone(s.Ctx, HostChainId)
+
+	_, err = s.GetMsgServer().CreateTradeRoute(sdk.WrapSDKContext(s.Ctx), &msg)
+	s.Require().ErrorContains(err, "host zone not found")
+}
+
+// Tests creating a trade route where the ICA channels cannot be created
+// because the ICA connections do not exist
+func (s *KeeperTestSuite) TestCreateTradeRoute_Failure_ConnectionNotFound() {
+	// Test with non-existent reward connection
+	msg, _ := s.SetupTestCreateTradeRoute()
+	msg.StrideToRewardConnectionId = "connection-X"
+
+	// Remove the host zone completely and check that that also fails
+	_, err := s.GetMsgServer().CreateTradeRoute(sdk.WrapSDKContext(s.Ctx), &msg)
+	s.Require().ErrorContains(err, "unable to register the unwind ICA account: connection connection-X not found")
+
+	// Setup again, but this time use a non-existent trade connection
+	msg, _ = s.SetupTestCreateTradeRoute()
+	msg.StrideToTradeConnectionId = "connection-Y"
+
+	_, err = s.GetMsgServer().CreateTradeRoute(sdk.WrapSDKContext(s.Ctx), &msg)
+	s.Require().ErrorContains(err, "unable to register the trade ICA account: connection connection-Y not found")
+}
+
+// Tests creating a trade route where the ICA registration step fails
+func (s *KeeperTestSuite) TestCreateTradeRoute_Failure_UnableToRegisterICA() {
+	msg, expectedRoute := s.SetupTestCreateTradeRoute()
+
+	// Disable ICA middleware for the trade channel so the ICA fails
+	// TODO [DYDX]: Replace with new formatter
+	tradeAccount := expectedRoute.TradeAccount
+	tradeOwner := types.FormatICAAccountOwner(tradeAccount.ChainId, types.ICAAccountType_CONVERTER_TRADE)
+	tradePortId, _ := icatypes.NewControllerPortID(tradeOwner)
+	s.App.ICAControllerKeeper.SetMiddlewareDisabled(s.Ctx, tradePortId, tradeAccount.ConnectionId)
+
+	_, err := s.GetMsgServer().CreateTradeRoute(sdk.WrapSDKContext(s.Ctx), &msg)
+	s.Require().ErrorContains(err, "unable to register the trade ICA account")
 }
