@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	rosettaCmd "cosmossdk.io/tools/rosetta/cmd"
 	"github.com/cosmos/cosmos-sdk/snapshots"
 	"gopkg.in/yaml.v2"
 
@@ -210,6 +211,10 @@ func initRootCmd(rootCmd *cobra.Command, encodingConfig app.EncodingConfig) {
 		versionCommand(),
 		keys.Commands(app.DefaultNodeHome),
 	)
+
+	// add rosetta
+	rootCmd.AddCommand(rosettaCmd.RosettaCommand(encodingConfig.InterfaceRegistry, encodingConfig.Marshaler))
+
 }
 
 func addModuleInitFlags(startCmd *cobra.Command) {
