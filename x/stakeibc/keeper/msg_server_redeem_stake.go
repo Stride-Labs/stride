@@ -18,6 +18,7 @@ func (k msgServer) RedeemStake(goCtx context.Context, msg *types.MsgRedeemStake)
 	ctx := sdk.UnwrapSDKContext(goCtx)
 	k.Logger(ctx).Info(fmt.Sprintf("redeem stake: %s", msg.String()))
 
+	// ----------------- PRELIMINARY CHECKS -----------------
 	// get our addresses, make sure they're valid
 	sender, err := sdk.AccAddressFromBech32(msg.Creator)
 	if err != nil {
@@ -80,13 +81,18 @@ func (k msgServer) RedeemStake(goCtx context.Context, msg *types.MsgRedeemStake)
 		return nil, errorsmod.Wrapf(sdkerrors.ErrInvalidCoins, "balance is lower than redemption amount. redemption amount: %v, balance %v: ", msg.Amount, balance.Amount)
 	}
 
-	//
-	// CHECKS ABOVE - UNBONDING RECORD KEEPING BELOW
+	// ----------------- UNBONDING RECORD KEEPING -----------------
 	// Fetch the record
 	senderAddr := sender.String()
 	redemptionId := recordstypes.UserRedemptionRecordKeyFormatter(hostZone.ChainId, epochTracker.EpochNumber, senderAddr)
-	userRedemptionRecord, found := k.RecordsKeeper.GetUserRedemptionRecord(ctx, redemptionId)
-	if !found {
+	userRedemptionRecord, userHasRedeemedThisEpoch := k.RecordsKeeper.GetUserRedemptionRecord(ctx, redemptionId)
+	if userHasRedeemedThisEpoch {
+		k.Logger(ctx).Info(fmt.Sprintf("UserRedemptionRecord found for %s", redemptionId))
+		// Add the unbonded amount to the UserRedemptionRecord
+		// The record is set below
+		userRedemptionRecord.Amount.Add(nativeAmount)
+	} else {
+		// First time a user is redeeming this epoch
 		userRedemptionRecord = recordstypes.UserRedemptionRecord{
 			Id:          redemptionId,
 			Sender:      senderAddr,
@@ -100,9 +106,6 @@ func (k msgServer) RedeemStake(goCtx context.Context, msg *types.MsgRedeemStake)
 			ClaimIsPending: false,
 		}
 		k.Logger(ctx).Info(fmt.Sprintf("UserRedemptionRecord not found - creating for %s", redemptionId))
-	} else {
-		k.Logger(ctx).Info(fmt.Sprintf("UserRedemptionRecord found for %s", redemptionId))
-		// Add the unbonded amount to the UserRedemptionRecord
 	}
 
 	// then add undelegation amount to epoch unbonding records
@@ -118,8 +121,10 @@ func (k msgServer) RedeemStake(goCtx context.Context, msg *types.MsgRedeemStake)
 		return nil, errorsmod.Wrapf(types.ErrInvalidHostZone, "host zone not found in unbondings: %s", hostZone.ChainId)
 	}
 	hostZoneUnbonding.NativeTokenAmount = hostZoneUnbonding.NativeTokenAmount.Add(nativeAmount)
-	// TODO: only append if a URR is being created for the first time
-	hostZoneUnbonding.UserRedemptionRecords = append(hostZoneUnbonding.UserRedemptionRecords, userRedemptionRecord.Id)
+	if !userHasRedeemedThisEpoch {
+		// Only append if a UserRedemptionRecord to the HZU if it wasn't previously appended
+		hostZoneUnbonding.UserRedemptionRecords = append(hostZoneUnbonding.UserRedemptionRecords, userRedemptionRecord.Id)
+	}
 
 	// Escrow user's balance
 	redeemCoin := sdk.NewCoins(sdk.NewCoin(stDenom, msg.Amount))
