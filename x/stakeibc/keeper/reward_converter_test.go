@@ -16,7 +16,7 @@ import (
 // Tests TransferRewardTokensHostToTrade and BuildHostToTradeTransferMsg
 func (s *KeeperTestSuite) TestTransferRewardTokensHostToTrade() {
 	// Create an ICA channel for the transfer submission
-	owner := types.FormatICAAccountOwner(HostChainId, types.ICAAccountType_WITHDRAWAL)
+	owner := types.FormatHostZoneICAOwner(HostChainId, types.ICAAccountType_WITHDRAWAL)
 	channelId, portId := s.CreateICAChannel(owner)
 
 	// Define components of transfer message
@@ -288,7 +288,7 @@ func (s *KeeperTestSuite) TestBuildSwapMsg() {
 
 func (s *KeeperTestSuite) TestSwapRewardTokens() {
 	// Create an ICA channel for the transfer submission
-	owner := types.FormatICAAccountOwner(HostChainId, types.ICAAccountType_CONVERTER_TRADE)
+	owner := types.FormatHostZoneICAOwner(HostChainId, types.ICAAccountType_CONVERTER_TRADE)
 	channelId, portId := s.CreateICAChannel(owner)
 
 	minSwapAmount := sdkmath.NewInt(10)

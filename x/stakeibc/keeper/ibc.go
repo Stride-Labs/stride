@@ -57,32 +57,32 @@ func (k Keeper) StoreHostZoneIcaAddress(ctx sdk.Context, chainId, portId, addres
 	}
 
 	// expected port IDs for each ICA account type
-	delegationOwner := types.FormatICAAccountOwner(chainId, types.ICAAccountType_DELEGATION)
+	delegationOwner := types.FormatHostZoneICAOwner(chainId, types.ICAAccountType_DELEGATION)
 	delegationPortID, err := icatypes.NewControllerPortID(delegationOwner)
 	if err != nil {
 		return err
 	}
-	withdrawalOwner := types.FormatICAAccountOwner(chainId, types.ICAAccountType_WITHDRAWAL)
+	withdrawalOwner := types.FormatHostZoneICAOwner(chainId, types.ICAAccountType_WITHDRAWAL)
 	withdrawalPortID, err := icatypes.NewControllerPortID(withdrawalOwner)
 	if err != nil {
 		return err
 	}
-	feeOwner := types.FormatICAAccountOwner(chainId, types.ICAAccountType_FEE)
+	feeOwner := types.FormatHostZoneICAOwner(chainId, types.ICAAccountType_FEE)
 	feePortID, err := icatypes.NewControllerPortID(feeOwner)
 	if err != nil {
 		return err
 	}
-	redemptionOwner := types.FormatICAAccountOwner(chainId, types.ICAAccountType_REDEMPTION)
+	redemptionOwner := types.FormatHostZoneICAOwner(chainId, types.ICAAccountType_REDEMPTION)
 	redemptionPortID, err := icatypes.NewControllerPortID(redemptionOwner)
 	if err != nil {
 		return err
 	}
-	communityPoolDepositOwner := types.FormatICAAccountOwner(chainId, types.ICAAccountType_COMMUNITY_POOL_DEPOSIT)
+	communityPoolDepositOwner := types.FormatHostZoneICAOwner(chainId, types.ICAAccountType_COMMUNITY_POOL_DEPOSIT)
 	communityPoolDepositPortID, err := icatypes.NewControllerPortID(communityPoolDepositOwner)
 	if err != nil {
 		return err
 	}
-	communityPoolReturnOwner := types.FormatICAAccountOwner(chainId, types.ICAAccountType_COMMUNITY_POOL_RETURN)
+	communityPoolReturnOwner := types.FormatHostZoneICAOwner(chainId, types.ICAAccountType_COMMUNITY_POOL_RETURN)
 	communityPoolReturnPortID, err := icatypes.NewControllerPortID(communityPoolReturnOwner)
 	if err != nil {
 		return err

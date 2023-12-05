@@ -40,7 +40,7 @@ func (s *KeeperTestSuite) TestOnChanOpenAck() {
 	})
 
 	// Create the ICA channels for both the delegation and trade accounts
-	delegationOwner := types.FormatICAAccountOwner(delegationChainId, types.ICAAccountType_DELEGATION)
+	delegationOwner := types.FormatHostZoneICAOwner(delegationChainId, types.ICAAccountType_DELEGATION)
 	delegationPortId, _ := icatypes.NewControllerPortID(delegationOwner)
 
 	tradeOwner := types.FormatTradeRouteICAOwner(tradeChainId, RewardDenom, HostDenom, types.ICAAccountType_CONVERTER_TRADE)
@@ -189,7 +189,7 @@ func (s *KeeperTestSuite) TestStoreHostZoneIcaAddress() {
 		// If the portId is -1, pass a non-ica port
 		portId := "not-ica-port"
 		if accountType != -1 {
-			owner := types.FormatICAAccountOwner(HostChainId, accountType)
+			owner := types.FormatHostZoneICAOwner(HostChainId, accountType)
 			portId, _ = icatypes.NewControllerPortID(owner)
 		}
 

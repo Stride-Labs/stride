@@ -2,9 +2,9 @@ package types
 
 import fmt "fmt"
 
-// Helper function to build the ICA owner in the form "{id}.{ICA_TYPE}"
-func FormatICAAccountOwner(id string, accountType ICAAccountType) (result string) {
-	return id + "." + accountType.String()
+// Helper function to build the host zone ICA owner in the form "{chainId}.{ICA_TYPE}"
+func FormatHostZoneICAOwner(chainId string, accountType ICAAccountType) (result string) {
+	return chainId + "." + accountType.String()
 }
 
 // Helper function to build the ICA owner for a trade route ICA

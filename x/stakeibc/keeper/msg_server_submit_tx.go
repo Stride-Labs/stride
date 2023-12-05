@@ -34,7 +34,7 @@ import (
 func (k Keeper) DelegateOnHost(ctx sdk.Context, hostZone types.HostZone, amt sdk.Coin, depositRecord recordstypes.DepositRecord) error {
 	// TODO: Remove this block and use connection-id from host zone
 	// the relevant ICA is the delegate account
-	owner := types.FormatICAAccountOwner(hostZone.ChainId, types.ICAAccountType_DELEGATION)
+	owner := types.FormatHostZoneICAOwner(hostZone.ChainId, types.ICAAccountType_DELEGATION)
 	portID, err := icatypes.NewControllerPortID(owner)
 	if err != nil {
 		return errorsmod.Wrapf(sdkerrors.ErrInvalidAddress, "%s has no associated portId", owner)
@@ -117,7 +117,7 @@ func (k Keeper) DelegateOnHost(ctx sdk.Context, hostZone types.HostZone, amt sdk
 func (k Keeper) SetWithdrawalAddressOnHost(ctx sdk.Context, hostZone types.HostZone) error {
 	// TODO: Remove this block and use connection-id from host zone
 	// The relevant ICA is the delegate account
-	owner := types.FormatICAAccountOwner(hostZone.ChainId, types.ICAAccountType_DELEGATION)
+	owner := types.FormatHostZoneICAOwner(hostZone.ChainId, types.ICAAccountType_DELEGATION)
 	portID, err := icatypes.NewControllerPortID(owner)
 	if err != nil {
 		return errorsmod.Wrapf(sdkerrors.ErrInvalidAddress, "%s has no associated portId", owner)
@@ -261,6 +261,7 @@ func (k Keeper) SubmitTxsEpoch(
 }
 
 // SubmitTxs submits an ICA transaction containing multiple messages
+// This function only supports messages to ICAs on the host zone
 func (k Keeper) SubmitTxs(
 	ctx sdk.Context,
 	connectionId string,
@@ -274,7 +275,7 @@ func (k Keeper) SubmitTxs(
 	if err != nil {
 		return 0, err
 	}
-	owner := types.FormatICAAccountOwner(chainId, icaAccountType)
+	owner := types.FormatHostZoneICAOwner(chainId, icaAccountType)
 	portID, err := icatypes.NewControllerPortID(owner)
 	if err != nil {
 		return 0, err
