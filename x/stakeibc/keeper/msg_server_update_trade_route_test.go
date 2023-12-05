@@ -15,7 +15,7 @@ func (s *KeeperTestSuite) submitUpdateTradeRouteAndValidate(msg types.MsgUpdateT
 	s.Require().NoError(err, "no error expected when updating trade route")
 
 	actualRoute, found := s.App.StakeibcKeeper.GetTradeRoute(s.Ctx, RewardDenom, HostDenom)
-	s.Require().True(found, "trade route should have been created")
+	s.Require().True(found, "trade route should have been updated")
 	s.Require().Equal(expectedRoute, actualRoute, "trade route")
 }
 

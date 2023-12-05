@@ -6,6 +6,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	icatypes "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/types"
 
+	"github.com/Stride-Labs/stride/v16/x/stakeibc/keeper"
 	"github.com/Stride-Labs/stride/v16/x/stakeibc/types"
 )
 
@@ -133,21 +134,23 @@ func (s *KeeperTestSuite) submitCreateTradeRouteAndValidate(msg types.MsgCreateT
 
 // Tests a successful trade route creation
 func (s *KeeperTestSuite) TestCreateTradeRoute_Success() {
-	msg, expectedTradeRoute := s.SetupTestCreateTradeRoute()
-	s.submitCreateTradeRouteAndValidate(msg, expectedTradeRoute)
+	msg, expectedRoute := s.SetupTestCreateTradeRoute()
+	s.submitCreateTradeRouteAndValidate(msg, expectedRoute)
 }
 
 // Tests creating a trade route that uses the default pool config values
 func (s *KeeperTestSuite) TestCreateTradeRoute_Success_DefaultPoolConfig() {
-	msg, expectedTradeRoute := s.SetupTestCreateTradeRoute()
+	msg, expectedRoute := s.SetupTestCreateTradeRoute()
 
 	// Update the message and remove some trade config parameters
+	// so that the defaults are used
 	msg.MaxSwapAmount = sdk.ZeroInt()
 	msg.MaxAllowedSwapLossRate = ""
 
-	// Update the expected message to have the default values
-	msg, expectedTradeRoute = s.SetupTestCreateTradeRoute()
-	s.submitCreateTradeRouteAndValidate(msg, expectedTradeRoute)
+	expectedRoute.TradeConfig.MaxAllowedSwapLossRate = sdk.MustNewDecFromStr(keeper.DefaultMaxAllowedSwapLossRate)
+	expectedRoute.TradeConfig.MaxSwapAmount = keeper.DefaultMaxSwapAmount
+
+	s.submitCreateTradeRouteAndValidate(msg, expectedRoute)
 }
 
 // Tests trying to create a route from an invalid authority
