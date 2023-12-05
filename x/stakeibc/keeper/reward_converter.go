@@ -132,7 +132,8 @@ func (k Keeper) TransferRewardTokensHostToTrade(ctx sdk.Context, amount sdkmath.
 
 	// Send the ICA tx to kick off transfer from hostZone through rewardZone to the tradeZone (no callbacks)
 	hostZoneConnectionId := route.HostAccount.ConnectionId
-	err = k.SubmitICATxWithoutCallback(ctx, hostZoneConnectionId, types.ICAAccountType_WITHDRAWAL, msgs, msg.TimeoutTimestamp)
+	withdrawalOwner := route.HostAccount.FormatTradeRouteICAOwner(route.GetRouteId())
+	err = k.SubmitICATxWithoutCallback(ctx, hostZoneConnectionId, withdrawalOwner, msgs, msg.TimeoutTimestamp)
 	if err != nil {
 		return errorsmod.Wrapf(err, "Failed to submit ICA tx, Messages: %+v", msgs)
 	}
@@ -173,7 +174,8 @@ func (k Keeper) TransferConvertedTokensTradeToHost(ctx sdk.Context, amount sdkma
 
 	// Send the ICA tx to kick off transfer from hostZone through rewardZone to the tradeZone (no callbacks)
 	tradeZoneConnectionId := route.TradeAccount.ConnectionId
-	err := k.SubmitICATxWithoutCallback(ctx, tradeZoneConnectionId, types.ICAAccountType_CONVERTER_TRADE, msgs, timeout)
+	tradeOwner := route.TradeAccount.FormatTradeRouteICAOwner(route.GetRouteId())
+	err := k.SubmitICATxWithoutCallback(ctx, tradeZoneConnectionId, tradeOwner, msgs, timeout)
 	if err != nil {
 		return errorsmod.Wrapf(err, "Failed to submit ICA tx, Messages: %+v", msgs)
 	}
@@ -261,7 +263,8 @@ func (k Keeper) SwapRewardTokens(ctx sdk.Context, rewardAmount sdkmath.Int, rout
 	timeout := uint64(strideEpochTracker.NextEpochStartTime)
 
 	// Send the ICA tx to perform the swap on the tradeZone
-	err = k.SubmitICATxWithoutCallback(ctx, tradeIcaAccount.ConnectionId, types.ICAAccountType_CONVERTER_TRADE, msgs, timeout)
+	tradeOwner := route.TradeAccount.FormatTradeRouteICAOwner(route.GetRouteId())
+	err = k.SubmitICATxWithoutCallback(ctx, tradeIcaAccount.ConnectionId, tradeOwner, msgs, timeout)
 	if err != nil {
 		return errorsmod.Wrapf(err, "Failed to submit ICA tx for the swap, Messages: %v", msgs)
 	}

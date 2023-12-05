@@ -332,17 +332,10 @@ func (k Keeper) SubmitTxs(
 func (k Keeper) SubmitICATxWithoutCallback(
 	ctx sdk.Context,
 	connectionId string,
-	icaAccountType types.ICAAccountType,
+	icaAccountOwner string,
 	msgs []proto.Message,
 	timeoutTimestamp uint64,
 ) error {
-	// Compute useful connection properties to avoid needing them as params
-	chainId, err := k.GetChainIdFromConnectionId(ctx, connectionId)
-	if err != nil {
-		return err
-	}
-	owner := types.FormatICAAccountOwner(chainId, icaAccountType)
-
 	// Serialize tx messages
 	txBz, err := icatypes.SerializeCosmosTx(k.cdc, msgs)
 	if err != nil {
@@ -356,7 +349,7 @@ func (k Keeper) SubmitICATxWithoutCallback(
 
 	// Submit ICA, no need to store callback data or register callback function
 	icaMsgServer := icacontrollerkeeper.NewMsgServerImpl(&k.ICAControllerKeeper)
-	msgSendTx := icacontrollertypes.NewMsgSendTx(owner, connectionId, relativeTimeoutOffset, packetData)
+	msgSendTx := icacontrollertypes.NewMsgSendTx(icaAccountOwner, connectionId, relativeTimeoutOffset, packetData)
 	_, err = icaMsgServer.SendTx(ctx, msgSendTx)
 	if err != nil {
 		return errorsmod.Wrapf(err, "unable to send ICA tx")
