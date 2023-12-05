@@ -16,7 +16,7 @@ import (
 // Tests TransferRewardTokensHostToTrade and BuildHostToTradeTransferMsg
 func (s *KeeperTestSuite) TestTransferRewardTokensHostToTrade() {
 	// Create an ICA channel for the transfer submission
-	owner := types.FormatHostZoneICAOwner(HostChainId, types.ICAAccountType_WITHDRAWAL)
+	owner := types.FormatTradeRouteICAOwner(HostChainId, RewardDenom, HostDenom, types.ICAAccountType_WITHDRAWAL)
 	channelId, portId := s.CreateICAChannel(owner)
 
 	// Define components of transfer message
@@ -24,7 +24,7 @@ func (s *KeeperTestSuite) TestTransferRewardTokensHostToTrade() {
 	rewardToTradeChannelId := "channel-1"
 
 	rewardDenomOnHostZone := "ibc/reward_on_host"
-	rewardDenomOnRewardZone := "reward_on_reward"
+	rewardDenomOnRewardZone := RewardDenom
 
 	withdrawalAddress := "withdrawal_address"
 	unwindAddress := "unwind_address"
@@ -47,10 +47,13 @@ func (s *KeeperTestSuite) TestTransferRewardTokensHostToTrade() {
 
 		RewardDenomOnHostZone:   rewardDenomOnHostZone,
 		RewardDenomOnRewardZone: rewardDenomOnRewardZone,
+		HostDenomOnHostZone:     HostDenom,
 
 		HostAccount: types.ICAAccount{
+			ChainId:      HostChainId,
 			Address:      withdrawalAddress,
 			ConnectionId: ibctesting.FirstConnectionID,
+			Type:         types.ICAAccountType_WITHDRAWAL,
 		},
 		RewardAccount: types.ICAAccount{
 			Address: unwindAddress,
@@ -288,19 +291,24 @@ func (s *KeeperTestSuite) TestBuildSwapMsg() {
 
 func (s *KeeperTestSuite) TestSwapRewardTokens() {
 	// Create an ICA channel for the transfer submission
-	owner := types.FormatHostZoneICAOwner(HostChainId, types.ICAAccountType_CONVERTER_TRADE)
+	owner := types.FormatTradeRouteICAOwner(HostChainId, RewardDenom, HostDenom, types.ICAAccountType_CONVERTER_TRADE)
 	channelId, portId := s.CreateICAChannel(owner)
 
 	minSwapAmount := sdkmath.NewInt(10)
 	rewardAmount := sdkmath.NewInt(100)
 
 	route := types.TradeRoute{
+		RewardDenomOnRewardZone: RewardDenom,
+		HostDenomOnHostZone:     HostDenom,
+
 		RewardDenomOnTradeZone: "ibc/reward_on_trade",
 		HostDenomOnTradeZone:   "ibc/host_on_trade",
 
 		TradeAccount: types.ICAAccount{
+			ChainId:      HostChainId,
 			Address:      "trade_address",
 			ConnectionId: ibctesting.FirstConnectionID,
+			Type:         types.ICAAccountType_CONVERTER_TRADE,
 		},
 
 		TradeConfig: types.TradeConfig{
