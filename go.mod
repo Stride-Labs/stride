@@ -29,11 +29,12 @@ require (
 
 require github.com/linxGnu/grocksdb v1.7.16 // indirect
 
-require github.com/coinbase/rosetta-sdk-go/types v1.0.0 // indirect
-
 require (
 	cosmossdk.io/log v1.1.1-0.20230704160919-88f2c830b0ca // indirect
+	cosmossdk.io/tools/rosetta v0.2.1 // indirect
 	github.com/99designs/go-keychain v0.0.0-20191008050251-8e49817e8af4 // indirect
+	github.com/coinbase/rosetta-sdk-go v0.8.1 // indirect
+	github.com/cosmos/rosetta-sdk-go v0.10.0 // indirect
 	github.com/google/s2a-go v0.1.4 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/oxyno-zeta/gomock-extra-matcher v1.1.0 // indirect
@@ -53,7 +54,6 @@ require (
 	cosmossdk.io/core v0.5.1 // indirect
 	cosmossdk.io/depinject v1.0.0-alpha.3 // indirect
 	cosmossdk.io/errors v1.0.0
-	cosmossdk.io/tools/rosetta v0.2.1 // indirect
 	filippo.io/edwards25519 v1.0.0 // indirect
 	github.com/99designs/keyring v1.2.1 // indirect
 	github.com/ChainSafe/go-schnorrkel v0.0.0-20200405005733-88cbf1b4c40d // indirect
@@ -74,7 +74,6 @@ require (
 	github.com/cosmos/gogogateway v1.2.0 // indirect
 	github.com/cosmos/iavl v0.20.0 // indirect
 	github.com/cosmos/ledger-cosmos-go v0.12.2 // indirect
-	github.com/cosmos/rosetta-sdk-go v0.10.0 // indirect
 	github.com/creachadair/taskgroup v0.4.2 // indirect
 	github.com/danieljoos/wincred v1.1.2 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
