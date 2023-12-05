@@ -446,16 +446,42 @@ func (s *AppTestHelper) MockClientLatestHeight(height uint64) {
 
 // Helper function to mock out a client and connection to test
 // mapping from connection ID back to chain ID
+// This also mocks out the consensus state to enable testing registering interchain accounts
 func (s *AppTestHelper) MockClientAndConnection(chainId, clientId, connectionId string) {
+	clientHeight := clienttypes.Height{
+		RevisionHeight: uint64(s.Ctx.BlockHeight()),
+	}
 	clientState := tendermint.ClientState{
-		ChainId: chainId,
+		ChainId:        chainId,
+		LatestHeight:   clientHeight,
+		TrustingPeriod: time.Minute * 10,
 	}
 	s.App.IBCKeeper.ClientKeeper.SetClientState(s.Ctx, clientId, &clientState)
 
+	consensusState := tendermint.ConsensusState{
+		Timestamp: s.Ctx.BlockTime(),
+	}
+	s.App.IBCKeeper.ClientKeeper.SetClientConsensusState(s.Ctx, clientId, clientHeight, &consensusState)
+
 	connection := connectiontypes.ConnectionEnd{
 		ClientId: clientId,
+		Versions: []*connectiontypes.Version{connectiontypes.DefaultIBCVersion},
 	}
 	s.App.IBCKeeper.ConnectionKeeper.SetConnection(s.Ctx, connectionId, connection)
+}
+
+// Helper function to mock out an ICA address
+func (s *AppTestHelper) MockICAChannel(connectionId, channelId, owner, address string) {
+	// Create an open channel with the ICA port
+	portId, _ := icatypes.NewControllerPortID(owner)
+	channel := channeltypes.Channel{
+		State: channeltypes.OPEN,
+	}
+	s.App.IBCKeeper.ChannelKeeper.SetChannel(s.Ctx, portId, channelId, channel)
+
+	// Then set the address and make the channel active
+	s.App.ICAControllerKeeper.SetInterchainAccountAddress(s.Ctx, connectionId, portId, address)
+	s.App.ICAControllerKeeper.SetActiveChannelID(s.Ctx, connectionId, portId, channelId)
 }
 
 func (s *AppTestHelper) ConfirmUpgradeSucceededs(upgradeName string, upgradeHeight int64) {
