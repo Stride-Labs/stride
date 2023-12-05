@@ -79,7 +79,7 @@ func (ms msgServer) CreateTradeRoute(goCtx context.Context, msg *types.MsgCreate
 	}
 
 	// Register the new ICA accounts
-	tradeRouteId := types.GetTradeRouteId(msg.RewardDenomOnReward, msg.RewardDenomOnHost)
+	tradeRouteId := types.GetTradeRouteId(msg.RewardDenomOnReward, msg.HostDenomOnHost)
 	hostICA := types.ICAAccount{
 		ChainId:      msg.HostChainId,
 		Type:         types.ICAAccountType_WITHDRAWAL,
