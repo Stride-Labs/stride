@@ -10,66 +10,119 @@ import (
 	"github.com/Stride-Labs/stride/v16/x/stakeibc/types"
 )
 
-func (s *KeeperTestSuite) TestCalibrateDelegation() {
-	valIndexQueried := 1
-	tokensBeforeSlash := sdkmath.NewInt(10000)
-	sharesToTokensRate := sdk.NewDec(1).Quo(sdk.NewDec(2)) // 0.5
-	numShares := sdk.NewDec(5000)
+func (s *KeeperTestSuite) TestCalibrateDelegation_Success() {
+	queriedValIndex := 1
+	initialTotalDelegations := sdkmath.NewInt(1_000_000)
 
-	// 5000 shares * 0.5 sharesToTokens rate = 2500 tokens
-	// 10000 tokens - 2500 token = 7500 tokens slashed
-	// 7500 slash tokens / 10000 initial tokens = 75% slash
-	expectedTokensAfterSlash := sdkmath.NewInt(2500)
-	expectedSlashAmount := tokensBeforeSlash.Sub(expectedTokensAfterSlash)
-	weightBeforeSlash := uint64(20)
-	totalDelegation := sdkmath.NewInt(100000)
-
-	s.Require().Equal(numShares, sdk.NewDecFromInt(expectedTokensAfterSlash.Mul(sdkmath.NewInt(2))), "tokens, shares, and sharesToTokens rate aligned")
-
-	hostZone := types.HostZone{
+	baseHostZone := types.HostZone{
 		ChainId:          HostChainId,
-		TotalDelegations: totalDelegation,
+		TotalDelegations: initialTotalDelegations,
 		Validators: []*types.Validator{
-			// This validator isn't being queried
-			{
-				Name:       "val1",
-				Address:    "valoper1",
-				Delegation: sdkmath.ZeroInt(),
-			},
-			// This is the validator being queried
-			{
-				Name:               "val2",
-				Address:            ValAddress,
-				SharesToTokensRate: sharesToTokensRate,
-				Delegation:         tokensBeforeSlash,
-			},
+			{Address: "valoper1"}, // not queried
+			{Address: ValAddress}, // queried validator - will get overridden in each test case
 		},
 	}
-	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
 
-	// Mock out the query and query response
-	queryResponse := s.CreateDelegatorSharesQueryResponse(ValAddress, numShares)
-	query := icqtypes.Query{ChainId: HostChainId}
+	testCases := []struct {
+		name                  string
+		currentDelegation     sdkmath.Int
+		sharesInQueryResponse sdk.Dec
+		sharesToTokensRate    sdk.Dec
+		expectedEndDelegation sdkmath.Int
+	}{
+		{
+			// Current delegation: 10,000 tokens
+			// Query response:     13,334 shares * 0.75 sharesToTokens = 10,000 tokens (+0)
+			name:                  "delegation change of 0",
+			currentDelegation:     sdkmath.NewInt(10_000),
+			sharesInQueryResponse: sdk.MustNewDecFromStr("13334"),
+			sharesToTokensRate:    sdk.MustNewDecFromStr("0.75"),
+			expectedEndDelegation: sdkmath.NewInt(10_000),
+		},
+		{
+			// Current delegation: 10,000 tokens
+			// Query response:     10,000 shares * 0.75 sharesToTokens = 7,500 tokens (-2,500)
+			name:                  "negative delegation change",
+			currentDelegation:     sdkmath.NewInt(10_000),
+			sharesInQueryResponse: sdk.MustNewDecFromStr("10000"),
+			sharesToTokensRate:    sdk.MustNewDecFromStr("0.75"),
+			expectedEndDelegation: sdkmath.NewInt(7_500),
+		},
+		{
+			// Current delegation: 12,500 tokens
+			// Query response:     20,000 shares * 0.75 sharesToTokens = 15,000 tokens (+2,500)
+			name:                  "positive delegation change",
+			currentDelegation:     sdkmath.NewInt(12_500),
+			sharesInQueryResponse: sdk.MustNewDecFromStr("20000"),
+			sharesToTokensRate:    sdk.MustNewDecFromStr("0.75"),
+			expectedEndDelegation: sdkmath.NewInt(15_000),
+		},
+		{
+			// Current delegation: 12,500 tokens
+			// Query response:     10,000 shares * 0.75 sharesToTokens = 7,500 tokens (-5,000)
+			name:                  "negative delegation change at threshold boundary",
+			currentDelegation:     sdkmath.NewInt(12_500),
+			sharesInQueryResponse: sdk.MustNewDecFromStr("10000"),
+			sharesToTokensRate:    sdk.MustNewDecFromStr("0.75"),
+			expectedEndDelegation: sdkmath.NewInt(7_500),
+		},
+		{
+			// Current delegation: 10,000 tokens
+			// Query response:     20,000 shares * 0.75 sharesToTokens = 15,000 tokens (+5,000)
+			name:                  "positive delegation change at threshold boundary",
+			currentDelegation:     sdkmath.NewInt(10_000),
+			sharesInQueryResponse: sdk.MustNewDecFromStr("20000"),
+			sharesToTokensRate:    sdk.MustNewDecFromStr("0.75"),
+			expectedEndDelegation: sdkmath.NewInt(15_000),
+		},
+		{
+			// Current delegation: 12,501 tokens
+			// Query response:     10,000 shares * 0.75 sharesToTokens = 7,500 tokens (-5,001)
+			name:                  "negative delegation change exceeds threshold",
+			currentDelegation:     sdkmath.NewInt(12_501),
+			sharesInQueryResponse: sdk.MustNewDecFromStr("10000"),
+			sharesToTokensRate:    sdk.MustNewDecFromStr("0.75"),
+			expectedEndDelegation: sdkmath.NewInt(12_501), // no change
+		},
+		{
+			// Current delegation: 9,999 tokens
+			// Query response:     20,000 shares * 0.75 sharesToTokens = 15,000 tokens (+5,001)
+			name:                  "positive delegation change exceeds threshold",
+			currentDelegation:     sdkmath.NewInt(9_999),
+			sharesInQueryResponse: sdk.MustNewDecFromStr("20000"),
+			sharesToTokensRate:    sdk.MustNewDecFromStr("0.75"),
+			expectedEndDelegation: sdkmath.NewInt(9_999), // no change
+		},
+	}
 
-	delegationAmountBeforeSlash := hostZone.Validators[valIndexQueried].Delegation
+	for _, tc := range testCases {
+		// Define a host zone with the current parameters
+		hostZone := baseHostZone
+		hostZone.Validators[queriedValIndex] = &types.Validator{
+			Address:            ValAddress,
+			Delegation:         tc.currentDelegation,
+			SharesToTokensRate: tc.sharesToTokensRate,
+		}
+		s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
 
-	//////////
+		// Mock out the query response and confirm the callback succeede
+		query := icqtypes.Query{ChainId: HostChainId}
+		queryResponse := s.CreateDelegatorSharesQueryResponse(ValAddress, tc.sharesInQueryResponse)
 
-	// Callback
-	err := keeper.CalibrateDelegationCallback(s.App.StakeibcKeeper, s.Ctx, queryResponse, query)
-	// nil return indicates that the callback was not successful
-	s.Require().Nil(err)
+		err := keeper.CalibrateDelegationCallback(s.App.StakeibcKeeper, s.Ctx, queryResponse, query)
+		s.Require().NoError(err, "%s - no error expected during delegation callback", tc.name)
 
-	// Confirm the staked balance was not decreased on the host
-	hostZone, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx, HostChainId)
-	s.Require().True(found, "host zone found")
-	s.Require().Equal(sdk.ZeroInt().Int64(), hostZone.TotalDelegations.Sub(hostZone.TotalDelegations).Int64(), "staked bal not slashed")
+		// Fetch the updated host zone and validator
+		updatedHostZone, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx, HostChainId)
+		s.Require().True(found, "%s - host zone should have been found", tc.name)
+		updatedValidator := updatedHostZone.Validators[queriedValIndex]
 
-	// Confirm the validator's weight and delegation amount were not reduced
-	validator := hostZone.Validators[valIndexQueried]
-	s.Require().Equal(weightBeforeSlash, validator.Weight, "validator weight unchanged")
-	s.Require().Equal(delegationAmountBeforeSlash.Int64(), validator.Delegation.Int64(), "validator delegation amount")
-
-	// Confirm the validator query is still in progress (calibration callback does not set it false)
-	s.Require().True(validator.SlashQueryInProgress, "slash query in progress")
+		// Confirm the delegation changes match expectations
+		expectedDelegationChange := tc.expectedEndDelegation.Sub(tc.currentDelegation)
+		expectedTotalDelegation := initialTotalDelegations.Add(expectedDelegationChange)
+		s.Require().Equal(tc.expectedEndDelegation.Int64(), updatedValidator.Delegation.Int64(),
+			"%s - validator delegation", tc.name)
+		s.Require().Equal(expectedTotalDelegation.Int64(), updatedHostZone.TotalDelegations.Int64(),
+			"%s - host zone total delegation", tc.name)
+	}
 }

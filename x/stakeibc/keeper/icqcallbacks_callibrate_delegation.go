@@ -11,7 +11,7 @@ import (
 )
 
 // CalibrationThreshold is the max amount of tokens by which a calibration can alter internal record keeping of delegations
-var CalibrationThreshold = sdk.NewInt(3000)
+var CalibrationThreshold = sdk.NewInt(5000)
 
 // DelegatorSharesCallback is a callback handler for UpdateValidatorSharesExchRate queries.
 //
@@ -66,7 +66,7 @@ func CalibrateDelegationCallback(k Keeper, ctx sdk.Context, args []byte, query i
 	// return nil so the query submission succeeds
 	// Note: There should be no stateful changes above this line
 	delegationChange := validator.Delegation.Sub(delegatedTokens)
-	if delegationChange.Abs().GTE(CalibrationThreshold) {
+	if delegationChange.Abs().GT(CalibrationThreshold) {
 		k.Logger(ctx).Error(utils.LogICQCallbackWithHostZone(chainId, ICQCallbackID_Calibrate,
 			"Delegation change is GT CalibrationThreshold, failing calibration callback"))
 		return nil
