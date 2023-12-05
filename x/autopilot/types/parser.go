@@ -25,37 +25,6 @@ type ModuleRoutingInfo interface {
 	Validate() error
 }
 
-// NOTE: I removed StakeibcPacketMetadata from StakeibcPacketMetadata/ClaimPacketMetadata because it was
-// just being set to the receiver.
-// I'm not sure this was necessary for airdrop linking, but it was necessary for liquid stakes, because the
-// address that liquid stakes _must_ be the address that received tokens.
-// A cleaner design here would be to do something like PFM, which is
-// liquid_staking_address = hash(channel, sender)
-// This removes the need for a receiving address.
-// Tokens can be liquid staked via this protocol-owned address, which more clearly separates
-// concerns (random addresses can't receive tokens, then be forced to liquid stake, which is the case today).
-// The above isn't a big deal at face value - if you want to send someone an LST you can also do it using the bank module.
-// For liquid stake, this is straightforward - we can just use a bank send after the tokens have been liquid staked.
-
-// For liquid stake and forward, it is slightly more challenging, because if the IBC transfer fails, a fallback address on Stride
-// is required (and this might not happen immediately - it could happen in a timeout). Unfortunately, liquid stake and forward
-// re-introduces the PFM bug, because senders can no longer be trusted. Consider the following case:
-// - A on Evmos sends 10 EVMOS to C on Stride, to be forwarded to B on Osmosis
-// - 10 EVMOS -> 10 stEVMOS via B on Stride, IBC transferred to C on Osmosis with sender B
-// - solution: enforce B is the same address as A, so A = B = C and the sender is trusted
-// - drawback: doesn't work for chains with a different address derivition - the fallback address B
-// 				might not be accessible (low confidence)
-
-// Possible solutions
-// (1) Just make the sender hash(channel, sender) so it's unusable on the destination chain
-// 		pros: PFM-like solution, proven in prod
-// 		cons: more complex since we need a fallback if the IBC transfer fails
-// (2) Constrain the forwarding logic
-// 		(1) tokens can only be sent to/from Evmos on the canonical channel
-// 		(2) the receiver on Stride is overridden and set to the mechanical Stride address
-// 			- what if the IBC times out and the user needs to manually claim their tokens?
-// 			- we could design a retry mechanism (tx on Stride that anyone can call)
-
 // Packet metadata info specific to Stakeibc (e.g. 1-click liquid staking)
 type StakeibcPacketMetadata struct {
 	Action string `json:"action"`
