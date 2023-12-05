@@ -4,7 +4,6 @@ import (
 	errorsmod "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
-	"github.com/cosmos/gogoproto/proto"
 
 	"github.com/Stride-Labs/stride/v16/utils"
 	icqtypes "github.com/Stride-Labs/stride/v16/x/interchainquery/types"
@@ -12,7 +11,7 @@ import (
 )
 
 // CalibrationThreshold is the max amount of tokens by which a calibration can alter internal record keeping of delegations
-var CalibrationThreshold = sdk.NewInt(3000)
+var CalibrationThreshold = sdk.NewInt(5000)
 
 // DelegatorSharesCallback is a callback handler for UpdateValidatorSharesExchRate queries.
 //
@@ -45,12 +44,6 @@ func CalibrateDelegationCallback(k Keeper, ctx sdk.Context, args []byte, query i
 	k.Logger(ctx).Info(utils.LogICQCallbackWithHostZone(chainId, ICQCallbackID_Calibrate, "Query response - Delegator: %s, Validator: %s, Shares: %v",
 		queriedDelegation.DelegatorAddress, queriedDelegation.ValidatorAddress, queriedDelegation.Shares))
 
-	// Unmarshal the callback data containing the previous delegation to the validator (from the time the query was submitted)
-	var callbackData types.DelegatorSharesQueryCallback
-	if err := proto.Unmarshal(query.CallbackData, &callbackData); err != nil {
-		return errorsmod.Wrapf(err, "unable to unmarshal delegator shares callback data")
-	}
-
 	// Grab the validator object from the hostZone using the address returned from the query
 	validator, valIndex, found := GetValidatorFromAddress(hostZone.Validators, queriedDelegation.ValidatorAddress)
 	if !found {
@@ -69,9 +62,11 @@ func CalibrateDelegationCallback(k Keeper, ctx sdk.Context, args []byte, query i
 		return nil
 	}
 
+	// if the delegation change is more than the calibration threshold constant,
+	// return nil so the query submission succeeds
+	// Note: There should be no stateful changes above this line
 	delegationChange := validator.Delegation.Sub(delegatedTokens)
-	// if the delegation change is more than the calibration threshold constant, log and throw an error
-	if delegationChange.Abs().GTE(CalibrationThreshold) {
+	if delegationChange.Abs().GT(CalibrationThreshold) {
 		k.Logger(ctx).Error(utils.LogICQCallbackWithHostZone(chainId, ICQCallbackID_Calibrate,
 			"Delegation change is GT CalibrationThreshold, failing calibration callback"))
 		return nil
@@ -79,11 +74,11 @@ func CalibrateDelegationCallback(k Keeper, ctx sdk.Context, args []byte, query i
 	validator.Delegation = validator.Delegation.Sub(delegationChange)
 	hostZone.TotalDelegations = hostZone.TotalDelegations.Sub(delegationChange)
 
-	k.Logger(ctx).Info(utils.LogICQCallbackWithHostZone(chainId, ICQCallbackID_Calibrate,
-		"Delegation updated to: %v", validator.Delegation))
-
 	hostZone.Validators[valIndex] = &validator
 	k.SetHostZone(ctx, hostZone)
+
+	k.Logger(ctx).Info(utils.LogICQCallbackWithHostZone(chainId, ICQCallbackID_Calibrate,
+		"Delegation updated to: %v", validator.Delegation))
 
 	return nil
 }
