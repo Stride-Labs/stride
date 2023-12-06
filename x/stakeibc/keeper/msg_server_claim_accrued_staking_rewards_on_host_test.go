@@ -7,12 +7,12 @@ import (
 	_ "github.com/stretchr/testify/suite"
 
 	epochtypes "github.com/Stride-Labs/stride/v16/x/epochs/types"
+	stakeibckeeper "github.com/Stride-Labs/stride/v16/x/stakeibc/keeper"
 	types "github.com/Stride-Labs/stride/v16/x/stakeibc/types"
 )
 
 // constant number of zero delegations
 const numZeroDelegations = 37
-const claimRewardsICABatchSize = 10
 
 func (s *KeeperTestSuite) ClaimAccruedStakingRewardsOnHost() {
 	// Create a delegation ICA channel for the ICA submission
@@ -61,7 +61,7 @@ func (s *KeeperTestSuite) ClaimAccruedStakingRewardsOnHost() {
 	// Confirm sequence number incremented by the number of txs
 	// where the number of txs is equal:
 	// (total_validators - validators_with_zero_delegation) / batch_size
-	batchSize := (numberGTClaimRewardsBatchSize - numZeroDelegations) / claimRewardsICABatchSize
+	batchSize := (numberGTClaimRewardsBatchSize - numZeroDelegations) / stakeibckeeper.ClaimRewardsICABatchSize
 	expectedEndSequence := startSequence + uint64(batchSize)
 	actualEndSequence, found := s.App.IBCKeeper.ChannelKeeper.GetNextSequenceSend(s.Ctx, portId, channelId)
 	s.Require().True(found)
