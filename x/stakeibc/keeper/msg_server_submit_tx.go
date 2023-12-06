@@ -501,6 +501,12 @@ func (k Keeper) SubmitCalibrationICQ(ctx sdk.Context, hostZone types.HostZone, v
 		return errorsmod.Wrapf(types.ErrICAAccountNotFound, "no delegation address found for %s", hostZone.ChainId)
 	}
 
+	// ensure the validator is in the set for this host
+	_, _, found := GetValidatorFromAddress(hostZone.Validators, validatorAddress)
+	if !found {
+		return errorsmod.Wrapf(types.ErrValidatorNotFound, "no registered validator for address (%s)", validatorAddress)
+	}
+
 	// Get the validator and delegator encoded addresses to form the query request
 	_, validatorAddressBz, err := bech32.DecodeAndConvert(validatorAddress)
 	if err != nil {
