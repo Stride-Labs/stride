@@ -192,9 +192,11 @@ func (k Keeper) ClaimAccruedStakingRewardsOnHost(ctx sdk.Context, hostZone types
 			msgs = append(msgs, msg)
 		}
 
-		_, err := k.SubmitTxsStrideEpoch(ctx, hostZone.ConnectionId, msgs, types.ICAAccountType_DELEGATION, "", nil)
-		if err != nil {
-			return errorsmod.Wrapf(err, "Failed to SubmitTxs for %s, %s, %s", hostZone.ConnectionId, hostZone.ChainId, msgs)
+		if len(msgs) > 0 {
+			_, err := k.SubmitTxsStrideEpoch(ctx, hostZone.ConnectionId, msgs, types.ICAAccountType_DELEGATION, "", nil)
+			if err != nil {
+				return errorsmod.Wrapf(err, "Failed to SubmitTxs for %s, %s, %s", hostZone.ConnectionId, hostZone.ChainId, msgs)
+			}
 		}
 	}
 
