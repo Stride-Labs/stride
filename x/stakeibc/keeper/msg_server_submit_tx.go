@@ -172,20 +172,15 @@ func (k Keeper) ClaimAccruedStakingRewardsOnHost(ctx sdk.Context, hostZone types
 
 	// Build multi-message transaction to withdraw rewards from each validator
 	// batching txs into groups of ClaimRewardsICABatchSize messages, to ensure they will fit in the host's blockSize
-
-	// Calculate the number of batches
-	numBatches := (len(validators) + ClaimRewardsICABatchSize - 1) / ClaimRewardsICABatchSize
-
-	// Iterate over the batches
-	for batch := 0; batch < numBatches; batch++ {
-		start := batch * ClaimRewardsICABatchSize
-		end := (batch + 1) * ClaimRewardsICABatchSize
+	for start := 0; start < len(validators); start += ClaimRewardsICABatchSize {
+		end := start + ClaimRewardsICABatchSize
 		if end > len(validators) {
 			end = len(validators)
 		}
+		batch := validators[start:end]
 		msgs := []proto.Message{}
 		// Iterate over the items within the batch
-		for _, val := range validators[start:end] {
+		for _, val := range batch {
 			// skip withdrawing rewards
 			if val.Delegation.IsZero() {
 				continue
