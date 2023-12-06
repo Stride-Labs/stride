@@ -144,7 +144,7 @@ printf "STRIDE <> GAIA - Creating ICS channel..." | tee -a $relayer_logs
 $relayer_exec rly transact link stride-gaia-ics --src-port consumer --dst-port provider --order ordered --version 1 >> $relayer_logs 2>&1
 
 $DOCKER_COMPOSE up -d relayer-gaia-ics
-$DOCKER_COMPOSE logs -f relayer-gaia-ics | sed -r -u "s/\x1B\[([0-9]{1,3}(;[0-9]{1,2})?)?[mGK]//g" >> $relayer_logs 2>&1 &
+SAVE_DOCKER_LOGS relayer-gaia-ics $relayer_logs
 
 printf "STRIDE <> GAIA - Registering reward denom to provider..."
 val_addr=$($STRIDE_MAIN_CMD keys show ${STRIDE_VAL_PREFIX}1 --keyring-backend test -a | tr -cd '[:alnum:]._-')
