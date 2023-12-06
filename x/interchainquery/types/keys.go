@@ -54,6 +54,11 @@ func KeyPrefix(p string) []byte {
 }
 
 func FormatOsmosisMostRecentTWAPKey(poolId uint64, denom1, denom2 string) []byte {
+	// Sort denoms
+	if denom1 > denom2 {
+		denom1, denom2 = denom2, denom1
+	}
+
 	poolIdBz := fmt.Sprintf("%0.20d", poolId)
 	return []byte(fmt.Sprintf("%s%s%s%s%s%s", OsmosisMostRecentTWAPsPrefix, poolIdBz, OsmosisKeySeparator, denom1, OsmosisKeySeparator, denom2))
 }

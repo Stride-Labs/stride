@@ -6,10 +6,13 @@ import (
 
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/gogoproto/proto"
 	transfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
 	ibctesting "github.com/cosmos/ibc-go/v7/testing"
 
 	epochtypes "github.com/Stride-Labs/stride/v16/x/epochs/types"
+	icqtypes "github.com/Stride-Labs/stride/v16/x/interchainquery/types"
+	"github.com/Stride-Labs/stride/v16/x/stakeibc/keeper"
 	"github.com/Stride-Labs/stride/v16/x/stakeibc/types"
 )
 
@@ -313,7 +316,7 @@ func (s *KeeperTestSuite) TestSwapRewardTokens() {
 	}
 
 	// Create an epoch tracker to dictate the timeout
-	s.CreateStrideEpochForICATimeout(time.Minute) // arbitrary timeout time
+	s.CreateEpochForICATimeout(epochtypes.STRIDE_EPOCH, time.Minute) // arbitrary timeout time
 
 	// Execute the swap and confirm the sequence number increments
 	startSequence := s.MustGetNextSequenceNumber(portId, channelId)
@@ -343,4 +346,71 @@ func (s *KeeperTestSuite) TestSwapRewardTokens() {
 	s.App.StakeibcKeeper.RemoveEpochTracker(s.Ctx, epochtypes.STRIDE_EPOCH)
 	err = s.App.StakeibcKeeper.SwapRewardTokens(s.Ctx, rewardAmount, route)
 	s.Require().ErrorContains(err, "epoch not found")
+}
+
+func (s *KeeperTestSuite) TestPoolPriceQuery() {
+	// Create a transfer channel so the connection exists for the query submission
+	s.CreateTransferChannel(HostChainId)
+
+	// Create an epoch tracker to dictate the query timeout
+	timeoutDuration := time.Minute * 10
+	s.CreateEpochForICATimeout(epochtypes.HOUR_EPOCH, timeoutDuration)
+
+	// Define the trade route
+	poolId := uint64(100)
+	tradeRewardDenom := "ibc/reward-denom-on-trade"
+	tradeHostDenom := "ibc/reward-denom-on-host"
+
+	route := types.TradeRoute{
+		RewardDenomOnRewardZone: RewardDenom,
+		HostDenomOnHostZone:     HostDenom,
+		RewardDenomOnTradeZone:  tradeRewardDenom,
+		HostDenomOnTradeZone:    tradeHostDenom,
+
+		TradeAccount: types.ICAAccount{
+			ChainId:      HostChainId,
+			ConnectionId: ibctesting.FirstConnectionID,
+		},
+		TradeConfig: types.TradeConfig{
+			PoolId: poolId,
+		},
+	}
+
+	expectedCallbackData := types.TradeRouteCallback{
+		RewardDenom: RewardDenom,
+		HostDenom:   HostDenom,
+	}
+
+	// Submit the pool price ICQ
+	err := s.App.StakeibcKeeper.PoolPriceQuery(s.Ctx, route)
+	s.Require().NoError(err, "no error expected when submitting pool price query")
+
+	// Confirm the query object was stored
+	queries := s.App.InterchainqueryKeeper.AllQueries(s.Ctx)
+	s.Require().Len(queries, 1, "there should have been 1 query submitted")
+	query := queries[0]
+
+	s.Require().Equal(HostChainId, query.ChainId, "query chain ID")
+	s.Require().Equal(ibctesting.FirstConnectionID, query.ConnectionId, "query connection ID")
+	s.Require().Equal(icqtypes.TWAP_STORE_QUERY_WITH_PROOF, query.QueryType, "query type")
+	s.Require().Equal(types.ModuleName, query.CallbackModule, "query module")
+
+	// Confirm the query request key is the same regardless of which order the denom's are specified
+	expectedRequestData := icqtypes.FormatOsmosisMostRecentTWAPKey(poolId, tradeRewardDenom, tradeHostDenom)
+	expectedRequestDataSwapped := icqtypes.FormatOsmosisMostRecentTWAPKey(poolId, tradeHostDenom, tradeRewardDenom)
+	s.Require().Equal(string(expectedRequestData), string(query.RequestData), "query request data")
+	s.Require().Equal(expectedRequestData, expectedRequestDataSwapped, "osmosis twap denoms should be sorted")
+
+	// Check the callback data
+	var actualCallbackData types.TradeRouteCallback
+	err = proto.Unmarshal(query.CallbackData, &actualCallbackData)
+	s.Require().NoError(err, "no error expected when unmarshalling callback data")
+	s.Require().Equal(expectedCallbackData, actualCallbackData, "query callback ID")
+	s.Require().Equal(keeper.ICQCallbackID_PoolPrice, query.CallbackId, "query callback ID")
+
+	// Check the query timeout
+	expectedTimeoutTimestamp := s.Ctx.BlockTime().Add(timeoutDuration).UnixNano()
+	s.Require().Equal(timeoutDuration, query.TimeoutDuration, "query timeout duration")
+	s.Require().Equal(expectedTimeoutTimestamp, int64(query.TimeoutTimestamp), "query timeout timestamp")
+	s.Require().Equal(icqtypes.TimeoutPolicy_REJECT_QUERY_RESPONSE, query.TimeoutPolicy, "query timeout policy")
 }

@@ -434,14 +434,12 @@ func (k Keeper) PoolPriceQuery(ctx sdk.Context, route types.TradeRoute) error {
 	tradeAccount := route.TradeAccount
 	k.Logger(ctx).Info(utils.LogWithHostZone(tradeAccount.ChainId, "Submitting ICQ for spot price in this pool"))
 
-	// Sort denom's
-	denom1, denom2 := route.RewardDenomOnTradeZone, route.HostDenomOnTradeZone
-	if denom1 > denom2 {
-		denom1, denom2 = denom2, denom1
-	}
-
 	// Build query request data which consists of the TWAP store key built from each denom
-	queryData := icqtypes.FormatOsmosisMostRecentTWAPKey(route.TradeConfig.PoolId, denom1, denom2)
+	queryData := icqtypes.FormatOsmosisMostRecentTWAPKey(
+		route.TradeConfig.PoolId,
+		route.RewardDenomOnTradeZone,
+		route.HostDenomOnTradeZone,
+	)
 
 	// Timeout query at end of epoch
 	hourEpochTracker, found := k.GetEpochTracker(ctx, epochstypes.HOUR_EPOCH)
