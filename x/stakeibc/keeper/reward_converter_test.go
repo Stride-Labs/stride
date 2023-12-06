@@ -390,27 +390,24 @@ func (s *KeeperTestSuite) TestPoolPriceQuery() {
 	s.Require().Len(queries, 1, "there should have been 1 query submitted")
 	query := queries[0]
 
-	s.Require().Equal(HostChainId, query.ChainId, "query chain ID")
-	s.Require().Equal(ibctesting.FirstConnectionID, query.ConnectionId, "query connection ID")
-	s.Require().Equal(icqtypes.TWAP_STORE_QUERY_WITH_PROOF, query.QueryType, "query type")
-	s.Require().Equal(types.ModuleName, query.CallbackModule, "query module")
-
 	// Confirm the query request key is the same regardless of which order the denom's are specified
 	expectedRequestData := icqtypes.FormatOsmosisMostRecentTWAPKey(poolId, tradeRewardDenom, tradeHostDenom)
 	expectedRequestDataSwapped := icqtypes.FormatOsmosisMostRecentTWAPKey(poolId, tradeHostDenom, tradeRewardDenom)
-	s.Require().Equal(string(expectedRequestData), string(query.RequestData), "query request data")
 	s.Require().Equal(expectedRequestData, expectedRequestDataSwapped, "osmosis twap denoms should be sorted")
 
-	// Check the callback data
+	// Validate the fields of the query
+	s.ValidateQueryObject(
+		query,
+		icqtypes.TWAP_STORE_QUERY_WITH_PROOF,
+		expectedRequestData,
+		keeper.ICQCallbackID_PoolPrice,
+		timeoutDuration,
+		icqtypes.TimeoutPolicy_REJECT_QUERY_RESPONSE,
+	)
+
+	// Validate the query callback data
 	var actualCallbackData types.TradeRouteCallback
 	err = proto.Unmarshal(query.CallbackData, &actualCallbackData)
-	s.Require().NoError(err, "no error expected when unmarshalling callback data")
-	s.Require().Equal(expectedCallbackData, actualCallbackData, "query callback ID")
-	s.Require().Equal(keeper.ICQCallbackID_PoolPrice, query.CallbackId, "query callback ID")
-
-	// Check the query timeout
-	expectedTimeoutTimestamp := s.Ctx.BlockTime().Add(timeoutDuration).UnixNano()
-	s.Require().Equal(timeoutDuration, query.TimeoutDuration, "query timeout duration")
-	s.Require().Equal(expectedTimeoutTimestamp, int64(query.TimeoutTimestamp), "query timeout timestamp")
-	s.Require().Equal(icqtypes.TimeoutPolicy_REJECT_QUERY_RESPONSE, query.TimeoutPolicy, "query timeout policy")
+	s.Require().NoError(err)
+	s.Require().Equal(expectedCallbackData, actualCallbackData, "query callback data")
 }

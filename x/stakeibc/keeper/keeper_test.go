@@ -5,9 +5,11 @@ import (
 	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	ibctesting "github.com/cosmos/ibc-go/v7/testing"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/Stride-Labs/stride/v16/app/apptesting"
+	icqtypes "github.com/Stride-Labs/stride/v16/x/interchainquery/types"
 	"github.com/Stride-Labs/stride/v16/x/stakeibc/keeper"
 	"github.com/Stride-Labs/stride/v16/x/stakeibc/types"
 )
@@ -74,6 +76,33 @@ func (s *KeeperTestSuite) CreateEpochForICATimeout(epochType string, timeoutDura
 		NextEpochStartTime: epochEndTime,
 	}
 	s.App.StakeibcKeeper.SetEpochTracker(s.Ctx, epochTracker)
+}
+
+// Validates the query object stored after an ICQ submission, using some default testing
+// values (e.g. HostChainId, stakeibc module name, etc.)
+func (s *KeeperTestSuite) ValidateQueryObject(
+	query icqtypes.Query,
+	queryType string,
+	queryData []byte,
+	callbackId string,
+	timeoutDuration time.Duration,
+	timeoutPolicy icqtypes.TimeoutPolicy,
+) {
+	// Validate the chainId and connectionId
+	s.Require().Equal(HostChainId, query.ChainId, "query chain ID")
+	s.Require().Equal(ibctesting.FirstConnectionID, query.ConnectionId, "query connection ID")
+	s.Require().Equal(types.ModuleName, query.CallbackModule, "query module")
+
+	// Validate the query type and request data
+	s.Require().Equal(queryType, query.QueryType, "query type")
+	s.Require().Equal(string(queryData), string(query.RequestData), "query request data")
+	s.Require().Equal(callbackId, query.CallbackId, "query callback ID")
+
+	// Validate the query timeout
+	expectedTimeoutTimestamp := s.Ctx.BlockTime().Add(timeoutDuration).UnixNano()
+	s.Require().Equal(timeoutDuration, query.TimeoutDuration, "query timeout duration")
+	s.Require().Equal(expectedTimeoutTimestamp, int64(query.TimeoutTimestamp), "query timeout timestamp")
+	s.Require().Equal(icqtypes.TimeoutPolicy_REJECT_QUERY_RESPONSE, query.TimeoutPolicy, "query timeout policy")
 }
 
 func (s *KeeperTestSuite) TestIsRedemptionRateWithinSafetyBounds() {
