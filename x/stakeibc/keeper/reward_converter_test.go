@@ -385,19 +385,13 @@ func (s *KeeperTestSuite) TestPoolPriceQuery() {
 	err := s.App.StakeibcKeeper.PoolPriceQuery(s.Ctx, route)
 	s.Require().NoError(err, "no error expected when submitting pool price query")
 
-	// Confirm the query object was stored
-	queries := s.App.InterchainqueryKeeper.AllQueries(s.Ctx)
-	s.Require().Len(queries, 1, "there should have been 1 query submitted")
-	query := queries[0]
-
 	// Confirm the query request key is the same regardless of which order the denom's are specified
 	expectedRequestData := icqtypes.FormatOsmosisMostRecentTWAPKey(poolId, tradeRewardDenom, tradeHostDenom)
 	expectedRequestDataSwapped := icqtypes.FormatOsmosisMostRecentTWAPKey(poolId, tradeHostDenom, tradeRewardDenom)
 	s.Require().Equal(expectedRequestData, expectedRequestDataSwapped, "osmosis twap denoms should be sorted")
 
 	// Validate the fields of the query
-	s.ValidateQueryObject(
-		query,
+	query := s.ValidateQuerySubmission(
 		icqtypes.TWAP_STORE_QUERY_WITH_PROOF,
 		expectedRequestData,
 		keeper.ICQCallbackID_PoolPrice,

@@ -79,15 +79,20 @@ func (s *KeeperTestSuite) CreateEpochForICATimeout(epochType string, timeoutDura
 }
 
 // Validates the query object stored after an ICQ submission, using some default testing
-// values (e.g. HostChainId, stakeibc module name, etc.)
-func (s *KeeperTestSuite) ValidateQueryObject(
-	query icqtypes.Query,
+// values (e.g. HostChainId, stakeibc module name, etc.), and returning the query
+// NOTE: This assumes there was only one submission and grabs the first query from the store
+func (s *KeeperTestSuite) ValidateQuerySubmission(
 	queryType string,
 	queryData []byte,
 	callbackId string,
 	timeoutDuration time.Duration,
 	timeoutPolicy icqtypes.TimeoutPolicy,
-) {
+) icqtypes.Query {
+	// Check that there's only one query
+	queries := s.App.InterchainqueryKeeper.AllQueries(s.Ctx)
+	s.Require().Len(queries, 1, "there should have been 1 query submitted")
+	query := queries[0]
+
 	// Validate the chainId and connectionId
 	s.Require().Equal(HostChainId, query.ChainId, "query chain ID")
 	s.Require().Equal(ibctesting.FirstConnectionID, query.ConnectionId, "query connection ID")
@@ -103,6 +108,8 @@ func (s *KeeperTestSuite) ValidateQueryObject(
 	s.Require().Equal(timeoutDuration, query.TimeoutDuration, "query timeout duration")
 	s.Require().Equal(expectedTimeoutTimestamp, int64(query.TimeoutTimestamp), "query timeout timestamp")
 	s.Require().Equal(icqtypes.TimeoutPolicy_REJECT_QUERY_RESPONSE, query.TimeoutPolicy, "query timeout policy")
+
+	return query
 }
 
 func (s *KeeperTestSuite) TestIsRedemptionRateWithinSafetyBounds() {
