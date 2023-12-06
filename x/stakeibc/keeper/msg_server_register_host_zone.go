@@ -72,7 +72,17 @@ func (k msgServer) RegisterHostZone(goCtx context.Context, msg *types.MsgRegiste
 	// create and save the zones's module account
 	depositAddress := types.NewHostZoneDepositAddress(chainId)
 	if err := utils.CreateModuleAccount(ctx, k.AccountKeeper, depositAddress); err != nil {
-		return nil, errorsmod.Wrapf(err, "unable to create module account for host zone %s", chainId)
+		return nil, errorsmod.Wrapf(err, "unable to create deposit account for host zone %s", chainId)
+	}
+
+	// Create the host zone's community pool holding accounts
+	communityPoolStakeAddress := types.NewHostZoneModuleAddress(chainId, "community-pool-stake")
+	communityPoolRedeemAddress := types.NewHostZoneModuleAddress(chainId, "community-pool-redeem")
+	if err := utils.CreateModuleAccount(ctx, k.AccountKeeper, communityPoolStakeAddress); err != nil {
+		return nil, errorsmod.Wrapf(err, "unable to create community pool stake account for host zone %s", chainId)
+	}
+	if err := utils.CreateModuleAccount(ctx, k.AccountKeeper, communityPoolRedeemAddress); err != nil {
+		return nil, errorsmod.Wrapf(err, "unable to create community pool redeem account for host zone %s", chainId)
 	}
 
 	params := k.GetParams(ctx)
@@ -92,12 +102,14 @@ func (k msgServer) RegisterHostZone(goCtx context.Context, msg *types.MsgRegiste
 		HostDenom:         msg.HostDenom,
 		TransferChannelId: msg.TransferChannelId,
 		// Start sharesToTokens rate at 1 upon registration
-		RedemptionRate:     sdk.NewDec(1),
-		LastRedemptionRate: sdk.NewDec(1),
-		UnbondingPeriod:    msg.UnbondingPeriod,
-		DepositAddress:     depositAddress.String(),
-		MinRedemptionRate:  msg.MinRedemptionRate,
-		MaxRedemptionRate:  msg.MaxRedemptionRate,
+		RedemptionRate:                    sdk.NewDec(1),
+		LastRedemptionRate:                sdk.NewDec(1),
+		UnbondingPeriod:                   msg.UnbondingPeriod,
+		DepositAddress:                    depositAddress.String(),
+		CommunityPoolStakeHoldingAddress:  communityPoolStakeAddress.String(),
+		CommunityPoolRedeemHoldingAddress: communityPoolRedeemAddress.String(),
+		MinRedemptionRate:                 msg.MinRedemptionRate,
+		MaxRedemptionRate:                 msg.MaxRedemptionRate,
 		// Default the inner bounds to the outer bounds
 		MinInnerRedemptionRate: msg.MinRedemptionRate,
 		MaxInnerRedemptionRate: msg.MaxRedemptionRate,
@@ -145,6 +157,18 @@ func (k msgServer) RegisterHostZone(goCtx context.Context, msg *types.MsgRegiste
 		errMsg := fmt.Sprintf("unable to register redemption account, err: %s", err.Error())
 		k.Logger(ctx).Error(errMsg)
 		return nil, errorsmod.Wrapf(types.ErrFailedToRegisterHostZone, errMsg)
+	}
+
+	// create community pool deposit account
+	communityPoolDepositAccount := types.FormatICAAccountOwner(chainId, types.ICAAccountType_COMMUNITY_POOL_DEPOSIT)
+	if err := k.ICAControllerKeeper.RegisterInterchainAccount(ctx, zone.ConnectionId, communityPoolDepositAccount, appVersion); err != nil {
+		return nil, errorsmod.Wrapf(types.ErrFailedToRegisterHostZone, "failed to register community pool deposit ICA")
+	}
+
+	// create community pool return account
+	communityPoolReturnAccount := types.FormatICAAccountOwner(chainId, types.ICAAccountType_COMMUNITY_POOL_RETURN)
+	if err := k.ICAControllerKeeper.RegisterInterchainAccount(ctx, zone.ConnectionId, communityPoolReturnAccount, appVersion); err != nil {
+		return nil, errorsmod.Wrapf(types.ErrFailedToRegisterHostZone, "failed to register community pool return ICA")
 	}
 
 	// add this host zone to unbonding hostZones, otherwise users won't be able to unbond
