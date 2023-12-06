@@ -114,6 +114,22 @@ func (s *KeeperTestSuite) TestTransferRewardTokensHostToTrade() {
 	err = s.App.StakeibcKeeper.TransferRewardTokensHostToTrade(s.Ctx, transferAmount, invalidRoute)
 	s.Require().ErrorContains(err, "Failed to submit ICA tx")
 
+	// Check unregisted ICA addresses cause failures
+	invalidRoute = route
+	invalidRoute.HostAccount.Address = ""
+	_, err = s.App.StakeibcKeeper.BuildHostToTradeTransferMsg(s.Ctx, transferAmount, invalidRoute)
+	s.Require().ErrorContains(err, "no host account found")
+
+	invalidRoute = route
+	invalidRoute.RewardAccount.Address = ""
+	_, err = s.App.StakeibcKeeper.BuildHostToTradeTransferMsg(s.Ctx, transferAmount, invalidRoute)
+	s.Require().ErrorContains(err, "no reward account found")
+
+	invalidRoute = route
+	invalidRoute.TradeAccount.Address = ""
+	_, err = s.App.StakeibcKeeper.BuildHostToTradeTransferMsg(s.Ctx, transferAmount, invalidRoute)
+	s.Require().ErrorContains(err, "no trade account found")
+
 	// Delete the epoch tracker and call each function, confirming they both fail
 	s.App.StakeibcKeeper.RemoveEpochTracker(s.Ctx, epochtypes.STRIDE_EPOCH)
 
@@ -121,6 +137,50 @@ func (s *KeeperTestSuite) TestTransferRewardTokensHostToTrade() {
 	s.Require().ErrorContains(err, "epoch not found")
 	err = s.App.StakeibcKeeper.TransferRewardTokensHostToTrade(s.Ctx, transferAmount, route)
 	s.Require().ErrorContains(err, "epoch not found")
+}
+
+func (s *KeeperTestSuite) TestTransferConvertedTokensTradeToHost() {
+	transferAmount := sdkmath.NewInt(1000)
+
+	// Register a trade ICA account for the transfer
+	channelId, portId := s.CreateICAChannel(types.FormatICAAccountOwner(HostChainId, types.ICAAccountType_CONVERTER_TRADE))
+
+	// Create trade route with fields needed for transfer
+	route := types.TradeRoute{
+		HostDenomOnTradeZone: HostDenom,
+		TradeToHostChannelId: "channel-1",
+		HostAccount: types.ICAAccount{
+			Address: "host_address",
+		},
+		TradeAccount: types.ICAAccount{
+			Address:      "trade_address",
+			ConnectionId: ibctesting.FirstConnectionID,
+		},
+	}
+	s.App.StakeibcKeeper.SetTradeRoute(s.Ctx, route)
+
+	// Create epoch tracker to dictate timeout
+	s.CreateStrideEpochForICATimeout(time.Second * 10)
+
+	// Confirm the sequence number was incremented after a successful send
+	startSequence := s.MustGetNextSequenceNumber(portId, channelId)
+
+	err := s.App.StakeibcKeeper.TransferConvertedTokensTradeToHost(s.Ctx, transferAmount, route)
+	s.Require().NoError(err, "no error expected when transfering tokens")
+
+	endSequence := s.MustGetNextSequenceNumber(portId, channelId)
+	s.Require().Equal(startSequence+1, endSequence, "sequence number should have incremented from transfer")
+
+	// Attempt to send without a valid ICA address - it should fail
+	invalidRoute := route
+	invalidRoute.HostAccount.Address = ""
+	err = s.App.StakeibcKeeper.TransferConvertedTokensTradeToHost(s.Ctx, transferAmount, invalidRoute)
+	s.Require().ErrorContains(err, "no host account found")
+
+	invalidRoute = route
+	invalidRoute.TradeAccount.Address = ""
+	err = s.App.StakeibcKeeper.TransferConvertedTokensTradeToHost(s.Ctx, transferAmount, invalidRoute)
+	s.Require().ErrorContains(err, "no trade account found")
 }
 
 func (s *KeeperTestSuite) TestBuildSwapMsg() {
@@ -284,6 +344,12 @@ func (s *KeeperTestSuite) TestBuildSwapMsg() {
 		s.Require().Equal(tc.expectedTradeAmount.Int64(), msg.TokenIn.Amount.Int64(), "%s - token in amount", tc.name)
 		s.Require().Equal(tc.expectedMinOut.Int64(), msg.TokenOutMinAmount.Int64(), "%s - min token out", tc.name)
 	}
+
+	// Test with a missing ICA address
+	invalidRoute := baseTradeRoute
+	invalidRoute.TradeAccount.Address = ""
+	_, err := s.App.StakeibcKeeper.BuildSwapMsg(sdk.NewInt(1), invalidRoute)
+	s.Require().ErrorContains(err, "no trade account found")
 }
 
 func (s *KeeperTestSuite) TestSwapRewardTokens() {

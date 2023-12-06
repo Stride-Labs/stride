@@ -77,6 +77,17 @@ func (k Keeper) BuildHostToTradeTransferMsg(
 	unwindIcaAddress := route.RewardAccount.Address
 	tradeIcaAddress := route.TradeAccount.Address
 
+	// Validate ICAs were registered
+	if withdrawlIcaAddress == "" {
+		return msg, errorsmod.Wrapf(types.ErrICAAccountNotFound, "no host account found for %s", route.Description())
+	}
+	if unwindIcaAddress == "" {
+		return msg, errorsmod.Wrapf(types.ErrICAAccountNotFound, "no reward account found for %s", route.Description())
+	}
+	if tradeIcaAddress == "" {
+		return msg, errorsmod.Wrapf(types.ErrICAAccountNotFound, "no trade account found for %s", route.Description())
+	}
+
 	// Build the pfm memo to specify the forwarding logic
 	// This transfer channel id is a channel on the reward Zone for transfers to the trade zone
 	// (not to be confused with a transfer channel on Stride or the Host Zone)
@@ -152,8 +163,15 @@ func (k Keeper) TransferConvertedTokensTradeToHost(ctx sdk.Context, amount sdkma
 	convertedDenom := route.HostDenomOnTradeZone
 	sendTokens := sdk.NewCoin(convertedDenom, amount)
 
+	// Validate ICAs were registered
 	tradeIcaAddress := route.TradeAccount.Address
 	withdrawlIcaAddress := route.HostAccount.Address
+	if withdrawlIcaAddress == "" {
+		return errorsmod.Wrapf(types.ErrICAAccountNotFound, "no host account found for %s", route.Description())
+	}
+	if tradeIcaAddress == "" {
+		return errorsmod.Wrapf(types.ErrICAAccountNotFound, "no trade account found for %s", route.Description())
+	}
 
 	var msgs []proto.Message
 	msgs = append(msgs, &transfertypes.MsgTransfer{
@@ -185,6 +203,12 @@ func (k Keeper) TransferConvertedTokensTradeToHost(ctx sdk.Context, amount sdkma
 // Depending on min and max swap amounts set in the route, it is possible not the full amount given will swap
 // The minimum amount of tokens that can come out of the trade is calculated using a price from the pool
 func (k Keeper) BuildSwapMsg(rewardAmount sdkmath.Int, route types.TradeRoute) (msg types.MsgSwapExactAmountIn, err error) {
+	// Validate the trade ICA was registered
+	tradeIcaAddress := route.TradeAccount.Address
+	if tradeIcaAddress == "" {
+		return msg, errorsmod.Wrapf(types.ErrICAAccountNotFound, "no trade account found for %s", route.Description())
+	}
+
 	// If the max swap amount was not set it would be ZeroInt, if positive we need to compare to the amount given
 	//  then if max swap amount is LTE to amount full swap is possible so amount is fine, otherwise set amount to max
 	tradeConfig := route.TradeConfig
@@ -223,7 +247,7 @@ func (k Keeper) BuildSwapMsg(rewardAmount sdkmath.Int, route types.TradeRoute) (
 		TokenOutDenom: route.HostDenomOnTradeZone,
 	}}
 	msg = types.MsgSwapExactAmountIn{
-		Sender:            route.TradeAccount.Address,
+		Sender:            tradeIcaAddress,
 		Routes:            routes,
 		TokenIn:           tradeTokens,
 		TokenOutMinAmount: minOut,
