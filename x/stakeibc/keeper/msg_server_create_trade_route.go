@@ -79,17 +79,24 @@ func (ms msgServer) CreateTradeRoute(goCtx context.Context, msg *types.MsgCreate
 	}
 
 	// Register the new ICA accounts
+	tradeRouteId := types.GetTradeRouteId(msg.RewardDenomOnReward, msg.HostDenomOnHost)
 	hostICA := types.ICAAccount{
 		ChainId:      msg.HostChainId,
 		Type:         types.ICAAccountType_WITHDRAWAL,
 		ConnectionId: hostZone.ConnectionId,
 		Address:      hostZone.WithdrawalIcaAddress,
 	}
-	unwindICA, err := ms.Keeper.RegisterTradeRouteICAAccount(ctx, msg.StrideToRewardConnectionId, types.ICAAccountType_CONVERTER_UNWIND)
+
+	unwindConnectionId := msg.StrideToRewardConnectionId
+	unwindICAType := types.ICAAccountType_CONVERTER_UNWIND
+	unwindICA, err := ms.Keeper.RegisterTradeRouteICAAccount(ctx, tradeRouteId, unwindConnectionId, unwindICAType)
 	if err != nil {
 		return nil, errorsmod.Wrapf(err, "unable to register the unwind ICA account")
 	}
-	tradeICA, err := ms.Keeper.RegisterTradeRouteICAAccount(ctx, msg.StrideToTradeConnectionId, types.ICAAccountType_CONVERTER_TRADE)
+
+	tradeConnectionId := msg.StrideToTradeConnectionId
+	tradeICAType := types.ICAAccountType_CONVERTER_TRADE
+	tradeICA, err := ms.Keeper.RegisterTradeRouteICAAccount(ctx, tradeRouteId, tradeConnectionId, tradeICAType)
 	if err != nil {
 		return nil, errorsmod.Wrapf(err, "unable to register the trade ICA account")
 	}
@@ -143,6 +150,7 @@ func (ms msgServer) CreateTradeRoute(goCtx context.Context, msg *types.MsgCreate
 // Stores down the connection and chainId now, and the address upon callback
 func (k Keeper) RegisterTradeRouteICAAccount(
 	ctx sdk.Context,
+	tradeRouteId string,
 	connectionId string,
 	icaAccountType types.ICAAccountType,
 ) (account types.ICAAccount, err error) {
@@ -165,7 +173,7 @@ func (k Keeper) RegisterTradeRouteICAAccount(
 		Encoding:               icatypes.EncodingProtobuf,
 		TxType:                 icatypes.TxTypeSDKMultiMsg,
 	}))
-	owner := types.FormatICAAccountOwner(chainId, icaAccountType)
+	owner := types.FormatTradeRouteICAOwnerFromRouteId(chainId, tradeRouteId, icaAccountType)
 	portID, err := icatypes.NewControllerPortID(owner)
 	if err != nil {
 		return account, err

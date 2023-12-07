@@ -35,7 +35,7 @@ func (s *KeeperTestSuite) SetupTestUnbondFromHostZone(
 	unbondAmount sdkmath.Int,
 	validators []*types.Validator,
 ) UnbondingTestCase {
-	delegationAccountOwner := types.FormatICAAccountOwner(HostChainId, types.ICAAccountType_DELEGATION)
+	delegationAccountOwner := types.FormatHostZoneICAOwner(HostChainId, types.ICAAccountType_DELEGATION)
 	delegationChannelID, delegationPortID := s.CreateICAChannel(delegationAccountOwner)
 
 	// Sanity checks:

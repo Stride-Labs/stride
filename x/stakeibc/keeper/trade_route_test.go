@@ -73,10 +73,10 @@ func (s *KeeperTestSuite) CreateTradeRoutes() (routes []types.TradeRoute) {
 func (s *KeeperTestSuite) TestGetTradeRoute() {
 	routes := s.CreateTradeRoutes()
 	for i, route := range routes {
-		startDenom := route.RewardDenomOnRewardZone
-		endDenom := route.HostDenomOnHostZone
+		rewardDenom := route.RewardDenomOnRewardZone
+		hostDenom := route.HostDenomOnHostZone
 
-		actualRoute, found := s.App.StakeibcKeeper.GetTradeRoute(s.Ctx, startDenom, endDenom)
+		actualRoute, found := s.App.StakeibcKeeper.GetTradeRoute(s.Ctx, rewardDenom, hostDenom)
 		s.Require().True(found, "route should have been found")
 		s.Require().Equal(routes[i], actualRoute, "route doesn't match")
 	}
