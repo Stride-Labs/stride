@@ -337,7 +337,7 @@ func (s *KeeperTestSuite) TestSwapRewardTokens() {
 	}
 
 	// Create an epoch tracker to dictate the timeout
-	s.CreateStrideEpochForICATimeout(time.Minute) // arbitrary timeout time
+	s.CreateEpochForICATimeout(epochtypes.STRIDE_EPOCH, time.Minute) // arbitrary timeout time
 
 	// Execute the swap and confirm the sequence number increments
 	startSequence := s.MustGetNextSequenceNumber(portId, channelId)
