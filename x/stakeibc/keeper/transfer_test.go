@@ -24,7 +24,7 @@ type TransferCommunityPoolDepositToHoldingTestCase struct {
 }
 
 func (s *KeeperTestSuite) SetupTransferCommunityPoolDepositToHolding() TransferCommunityPoolDepositToHoldingTestCase {
-	owner := types.FormatICAAccountOwner(chainId, types.ICAAccountType_COMMUNITY_POOL_DEPOSIT)
+	owner := types.FormatHostZoneICAOwner(chainId, types.ICAAccountType_COMMUNITY_POOL_DEPOSIT)
 	channelId, portId := s.CreateICAChannel(owner)
 
 	holdingAddress := s.TestAccs[0].String()

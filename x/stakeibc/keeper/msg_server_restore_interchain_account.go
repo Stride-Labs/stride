@@ -33,7 +33,7 @@ func (k msgServer) RestoreInterchainAccount(goCtx context.Context, msg *types.Ms
 	counterpartyConnection := connectionEnd.Counterparty
 
 	// only allow restoring an account if it already exists
-	owner := types.FormatICAAccountOwner(msg.ChainId, msg.AccountType)
+	owner := types.FormatHostZoneICAOwner(msg.ChainId, msg.AccountType)
 	portID, err := icatypes.NewControllerPortID(owner)
 	if err != nil {
 		errMsg := fmt.Sprintf("could not create portID for ICA controller account address: %s", owner)

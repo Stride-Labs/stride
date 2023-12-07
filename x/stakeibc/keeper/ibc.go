@@ -57,32 +57,32 @@ func (k Keeper) StoreHostZoneIcaAddress(ctx sdk.Context, chainId, portId, addres
 	}
 
 	// expected port IDs for each ICA account type
-	delegationOwner := types.FormatICAAccountOwner(chainId, types.ICAAccountType_DELEGATION)
+	delegationOwner := types.FormatHostZoneICAOwner(chainId, types.ICAAccountType_DELEGATION)
 	delegationPortID, err := icatypes.NewControllerPortID(delegationOwner)
 	if err != nil {
 		return err
 	}
-	withdrawalOwner := types.FormatICAAccountOwner(chainId, types.ICAAccountType_WITHDRAWAL)
+	withdrawalOwner := types.FormatHostZoneICAOwner(chainId, types.ICAAccountType_WITHDRAWAL)
 	withdrawalPortID, err := icatypes.NewControllerPortID(withdrawalOwner)
 	if err != nil {
 		return err
 	}
-	feeOwner := types.FormatICAAccountOwner(chainId, types.ICAAccountType_FEE)
+	feeOwner := types.FormatHostZoneICAOwner(chainId, types.ICAAccountType_FEE)
 	feePortID, err := icatypes.NewControllerPortID(feeOwner)
 	if err != nil {
 		return err
 	}
-	redemptionOwner := types.FormatICAAccountOwner(chainId, types.ICAAccountType_REDEMPTION)
+	redemptionOwner := types.FormatHostZoneICAOwner(chainId, types.ICAAccountType_REDEMPTION)
 	redemptionPortID, err := icatypes.NewControllerPortID(redemptionOwner)
 	if err != nil {
 		return err
 	}
-	communityPoolDepositOwner := types.FormatICAAccountOwner(chainId, types.ICAAccountType_COMMUNITY_POOL_DEPOSIT)
+	communityPoolDepositOwner := types.FormatHostZoneICAOwner(chainId, types.ICAAccountType_COMMUNITY_POOL_DEPOSIT)
 	communityPoolDepositPortID, err := icatypes.NewControllerPortID(communityPoolDepositOwner)
 	if err != nil {
 		return err
 	}
-	communityPoolReturnOwner := types.FormatICAAccountOwner(chainId, types.ICAAccountType_COMMUNITY_POOL_RETURN)
+	communityPoolReturnOwner := types.FormatHostZoneICAOwner(chainId, types.ICAAccountType_COMMUNITY_POOL_RETURN)
 	communityPoolReturnPortID, err := icatypes.NewControllerPortID(communityPoolReturnOwner)
 	if err != nil {
 		return err
@@ -155,34 +155,39 @@ func (k Keeper) StoreHostZoneIcaAddress(ctx sdk.Context, chainId, portId, addres
 
 // Checks if the port matches an ICA account on the trade route, and if so, stores the
 // relevant ICA address on the trade route
-func (k Keeper) StoreTradeRouteIcaAddress(ctx sdk.Context, chainId, portId, address string) error {
-	// Get the expected port Id for each ICA account type (using the chainId)
-	tradeOwner := types.FormatICAAccountOwner(chainId, types.ICAAccountType_CONVERTER_TRADE)
-	tradePortID, err := icatypes.NewControllerPortID(tradeOwner)
-	if err != nil {
-		return err
-	}
-	unwindOwner := types.FormatICAAccountOwner(chainId, types.ICAAccountType_CONVERTER_UNWIND)
-	unwindPortID, err := icatypes.NewControllerPortID(unwindOwner)
-	if err != nil {
-		return err
-	}
-
+func (k Keeper) StoreTradeRouteIcaAddress(ctx sdk.Context, callbackChainId, callbackPortId, address string) error {
 	// Check if the port Id matches either the trade or unwind ICA on the tradeRoute
 	// If the chainId and port Id from the callback match the account
 	// on a trade route, set the ICA address in the relevant places,
 	// including the from/to addresses on each hop
-	for _, tradeRoute := range k.GetAllTradeRoutes(ctx) {
-		if tradeRoute.RewardAccount.ChainId == chainId && portId == unwindPortID {
-			k.Logger(ctx).Info(fmt.Sprintf("ICA Address %s found for Unwind ICA on %s", address, tradeRoute.Description()))
-			tradeRoute.RewardAccount.Address = address
-
-		} else if tradeRoute.TradeAccount.ChainId == chainId && portId == tradePortID {
-			k.Logger(ctx).Info(fmt.Sprintf("ICA Address %s found for Trade ICA on %s", address, tradeRoute.Description()))
-			tradeRoute.TradeAccount.Address = address
+	for _, route := range k.GetAllTradeRoutes(ctx) {
+		// Build the expected port ID for the reward and trade accounts,
+		// using the chainId and route ID
+		rewardAccount := route.RewardAccount
+		rewardOwner := types.FormatTradeRouteICAOwnerFromRouteId(rewardAccount.ChainId, route.GetRouteId(), rewardAccount.Type)
+		rewardPortId, err := icatypes.NewControllerPortID(rewardOwner)
+		if err != nil {
+			return err
 		}
 
-		k.SetTradeRoute(ctx, tradeRoute)
+		tradeAccount := route.TradeAccount
+		tradeOwner := types.FormatTradeRouteICAOwnerFromRouteId(tradeAccount.ChainId, route.GetRouteId(), tradeAccount.Type)
+		tradePortId, err := icatypes.NewControllerPortID(tradeOwner)
+		if err != nil {
+			return err
+		}
+
+		// Check if route IDs match the callback chainId/portId
+		if route.RewardAccount.ChainId == callbackChainId && callbackPortId == rewardPortId {
+			k.Logger(ctx).Info(fmt.Sprintf("ICA Address %s found for Unwind ICA on %s", address, route.Description()))
+			route.RewardAccount.Address = address
+
+		} else if route.TradeAccount.ChainId == callbackChainId && callbackPortId == tradePortId {
+			k.Logger(ctx).Info(fmt.Sprintf("ICA Address %s found for Trade ICA on %s", address, route.Description()))
+			route.TradeAccount.Address = address
+		}
+
+		k.SetTradeRoute(ctx, route)
 	}
 
 	return nil

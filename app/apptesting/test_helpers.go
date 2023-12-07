@@ -231,7 +231,10 @@ func (s *AppTestHelper) CreateICAChannel(owner string) (channelID, portID string
 	_, transferChannelExists := s.App.IBCKeeper.ChannelKeeper.GetChannel(s.Ctx, ibctesting.TransferPort, ibctesting.FirstChannelID)
 	if !transferChannelExists {
 		ownerSplit := strings.Split(owner, ".")
-		s.Require().Equal(2, len(ownerSplit), "owner should be of the form: {HostZone}.{AccountName}")
+		isHostZoneICA := len(ownerSplit) == 2
+		isTradeRouteICA := len(ownerSplit) == 3
+		s.Require().True(isHostZoneICA || isTradeRouteICA,
+			"owner should be either of the form: {chainId}.{AccountName} or {chainId}.{rewarDenom}-{hostDenom}.{accountName}")
 
 		hostChainID := ownerSplit[0]
 		s.CreateTransferChannel(hostChainID)
