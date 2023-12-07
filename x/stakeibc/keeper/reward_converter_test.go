@@ -387,7 +387,7 @@ func (s *KeeperTestSuite) TestSwapRewardTokens() {
 	}
 
 	// Create an epoch tracker to dictate the timeout
-	s.CreateStrideEpochForICATimeout(time.Minute) // arbitrary timeout time
+	s.CreateEpochForICATimeout(epochtypes.HOUR_EPOCH, time.Minute) // arbitrary timeout time
 
 	// Execute the swap and confirm the sequence number increments
 	startSequence := s.MustGetNextSequenceNumber(portId, channelId)
@@ -414,7 +414,7 @@ func (s *KeeperTestSuite) TestSwapRewardTokens() {
 	s.Require().ErrorContains(err, "Failed to submit ICA tx")
 
 	// Delete the epoch tracker and confirm the swap fails
-	s.App.StakeibcKeeper.RemoveEpochTracker(s.Ctx, epochtypes.STRIDE_EPOCH)
+	s.App.StakeibcKeeper.RemoveEpochTracker(s.Ctx, epochtypes.HOUR_EPOCH)
 	err = s.App.StakeibcKeeper.SwapRewardTokens(s.Ctx, rewardAmount, route)
 	s.Require().ErrorContains(err, "epoch not found")
 }
