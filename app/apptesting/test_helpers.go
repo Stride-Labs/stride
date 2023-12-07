@@ -12,6 +12,8 @@ import (
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/types/bech32"
+	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 	"github.com/cosmos/gogoproto/proto"
@@ -471,6 +473,23 @@ func (s *AppTestHelper) ConfirmUpgradeSucceededs(upgradeName string, upgradeHeig
 		beginBlockRequest := abci.RequestBeginBlock{}
 		s.App.BeginBlocker(s.Ctx, beginBlockRequest)
 	})
+}
+
+// Returns the bank store key prefix for an address and denom
+// Useful for testing balance ICQs
+func (s *AppTestHelper) GetBankStoreKeyPrefix(address, denom string) []byte {
+	_, addressBz, err := bech32.DecodeAndConvert(address)
+	s.Require().NoError(err, "no error expected when bech decoding address")
+	return append(banktypes.CreateAccountBalancesPrefix(addressBz), []byte(denom)...)
+}
+
+// Extracts the address and denom from a bank store prefix
+// Useful for testing balance ICQs as it can confirm that the serialized query request
+// data has the proper address and denom
+func (s *AppTestHelper) ExtractAddressAndDenomFromBankPrefix(data []byte) (address, denom string) {
+	addressBz, denom, err := banktypes.AddressAndDenomFromBalancesStore(data[1:]) // Remove BalancePrefix byte
+	s.Require().NoError(err, "no error expected when getting address and denom from balance store")
+	return addressBz.String(), denom
 }
 
 // Generates a valid and invalid test address (used for non-keeper tests)

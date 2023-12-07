@@ -31,8 +31,8 @@ const (
 	HostDenom   = "udenom"
 	RewardDenom = "ureward"
 
-	ICAAddress        = "stride1gcx4yeplccq9nk6awzmm0gq8jf7yet80qj70tkwy0mz7pg87nepsen0l38"
 	ValAddress        = "cosmosvaloper1uk4ze0x4nvh4fk0xm4jdud58eqn4yxhrdt795p"
+	StrideICAAddress  = "stride1gcx4yeplccq9nk6awzmm0gq8jf7yet80qj70tkwy0mz7pg87nepsen0l38"
 	HostICAAddress    = "cosmos1gcx4yeplccq9nk6awzmm0gq8jf7yet80qj70tkwy0mz7pg87nepswn2dj8"
 	LSMTokenBaseDenom = ValAddress + "/32"
 

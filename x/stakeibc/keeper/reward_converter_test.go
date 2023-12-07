@@ -6,8 +6,6 @@ import (
 
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/types/bech32"
-	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/cosmos/gogoproto/proto"
 	transfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
 	ibctesting "github.com/cosmos/ibc-go/v7/testing"
@@ -371,6 +369,30 @@ func (s *KeeperTestSuite) TestSwapRewardTokens() {
 }
 
 // --------------------------------------------------------------
+//            Trade Route ICQ Test Helpers
+// --------------------------------------------------------------
+
+// Helper function to validate the address and denom from the query request data
+func (s *KeeperTestSuite) validateAddressAndDenomInRequest(data []byte, expectedAddress, expectedDenom string) {
+	actualAddress, actualDenom := s.ExtractAddressAndDenomFromBankPrefix(data)
+	s.Require().Equal(expectedAddress, actualAddress, "query account address")
+	s.Require().Equal(expectedDenom, actualDenom, "query denom")
+}
+
+// Helper function to validate the trade route query callback data
+func (s *KeeperTestSuite) validateTradeRouteQueryCallback(actualCallbackDataBz []byte) {
+	expectedCallbackData := types.TradeRouteCallback{
+		RewardDenom: RewardDenom,
+		HostDenom:   HostDenom,
+	}
+
+	var actualCallbackData types.TradeRouteCallback
+	err := proto.Unmarshal(actualCallbackDataBz, &actualCallbackData)
+	s.Require().NoError(err)
+	s.Require().Equal(expectedCallbackData, actualCallbackData, "query callback data")
+}
+
+// --------------------------------------------------------------
 //            Withdrawal Account - Reward Balance Query
 // --------------------------------------------------------------
 
@@ -388,7 +410,7 @@ func (s *KeeperTestSuite) SetupWithdrawalRewardBalanceQueryTestCase() (route typ
 		HostAccount: types.ICAAccount{
 			ChainId:      HostChainId,
 			ConnectionId: ibctesting.FirstConnectionID,
-			Address:      ICAAddress, // must be a valid bech32, easiest to use stride prefix for validation
+			Address:      StrideICAAddress, // must be a valid bech32, easiest to use stride prefix for validation
 		},
 	}
 	s.App.StakeibcKeeper.SetTradeRoute(s.Ctx, tradeRoute)
@@ -407,9 +429,8 @@ func (s *KeeperTestSuite) TestWithdrawalRewardBalanceQuery_Successful() {
 	err := s.App.StakeibcKeeper.WithdrawalRewardBalanceQuery(s.Ctx, route)
 	s.Require().NoError(err, "no error expected when querying balance")
 
-	// Validate fields from the query submission
-	_, addressBz, _ := bech32.DecodeAndConvert(HostICAAddress)
-	expectedRequestData := append(banktypes.CreateAccountBalancesPrefix(addressBz), []byte(route.RewardDenomOnHostZone)...)
+	// Validate fields from ICQ submission
+	expectedRequestData := s.GetBankStoreKeyPrefix(StrideICAAddress, route.RewardDenomOnHostZone)
 
 	query := s.ValidateQuerySubmission(
 		icqtypes.BANK_STORE_QUERY_WITH_PROOF,
@@ -419,23 +440,8 @@ func (s *KeeperTestSuite) TestWithdrawalRewardBalanceQuery_Successful() {
 		icqtypes.TimeoutPolicy_REJECT_QUERY_RESPONSE,
 	)
 
-	expectedCallbackData := types.TradeRouteCallback{
-		RewardDenom: RewardDenom,
-		HostDenom:   HostDenom,
-	}
-
-	// Deserialize and confirm query request info
-	requestData := query.RequestData[1:] // Remove BalancePrefix byte
-	actualAddress, actualDenom, err := banktypes.AddressAndDenomFromBalancesStore(requestData)
-	s.Require().NoError(err, "no error expected when retrieving address and denom from store key")
-	s.Require().Equal(route.HostAccount.Address, actualAddress.String(), "query account address")
-	s.Require().Equal(route.RewardDenomOnHostZone, actualDenom, "query denom")
-
-	// Validate the query callback data
-	var actualCallbackData types.TradeRouteCallback
-	err = proto.Unmarshal(query.CallbackData, &actualCallbackData)
-	s.Require().NoError(err)
-	s.Require().Equal(expectedCallbackData, actualCallbackData, "query callback data")
+	s.validateAddressAndDenomInRequest(query.RequestData, route.HostAccount.Address, route.RewardDenomOnHostZone)
+	s.validateTradeRouteQueryCallback(query.CallbackData)
 }
 
 // Tests a WithdrawalRewardBalanceQuery that fails due to an invalid account address
@@ -489,7 +495,7 @@ func (s *KeeperTestSuite) SetupTradeRewardBalanceQueryTestCase() (route types.Tr
 		TradeAccount: types.ICAAccount{
 			ChainId:      HostChainId,
 			ConnectionId: ibctesting.FirstConnectionID,
-			Address:      ICAAddress, // must be a valid bech32, easiest to use stride prefix for validation
+			Address:      StrideICAAddress, // must be a valid bech32, easiest to use stride prefix for validation
 		},
 	}
 	s.App.StakeibcKeeper.SetTradeRoute(s.Ctx, tradeRoute)
@@ -508,9 +514,8 @@ func (s *KeeperTestSuite) TestTradeRewardBalanceQuery_Successful() {
 	err := s.App.StakeibcKeeper.TradeRewardBalanceQuery(s.Ctx, route)
 	s.Require().NoError(err, "no error expected when querying balance")
 
-	// Validate fields from the query submission
-	_, addressBz, _ := bech32.DecodeAndConvert(HostICAAddress)
-	expectedRequestData := append(banktypes.CreateAccountBalancesPrefix(addressBz), []byte(route.RewardDenomOnTradeZone)...)
+	// Validate fields from ICQ submission
+	expectedRequestData := s.GetBankStoreKeyPrefix(StrideICAAddress, route.RewardDenomOnTradeZone)
 
 	query := s.ValidateQuerySubmission(
 		icqtypes.BANK_STORE_QUERY_WITH_PROOF,
@@ -520,23 +525,8 @@ func (s *KeeperTestSuite) TestTradeRewardBalanceQuery_Successful() {
 		icqtypes.TimeoutPolicy_REJECT_QUERY_RESPONSE,
 	)
 
-	expectedCallbackData := types.TradeRouteCallback{
-		RewardDenom: RewardDenom,
-		HostDenom:   HostDenom,
-	}
-
-	// Deserialize and confirm query request info
-	requestData := query.RequestData[1:] // Remove BalancePrefix byte
-	actualAddress, actualDenom, err := banktypes.AddressAndDenomFromBalancesStore(requestData)
-	s.Require().NoError(err, "no error expected when retrieving address and denom from store key")
-	s.Require().Equal(route.TradeAccount.Address, actualAddress.String(), "query account address")
-	s.Require().Equal(route.RewardDenomOnTradeZone, actualDenom, "query denom")
-
-	// Validate the query callback data
-	var actualCallbackData types.TradeRouteCallback
-	err = proto.Unmarshal(query.CallbackData, &actualCallbackData)
-	s.Require().NoError(err)
-	s.Require().Equal(expectedCallbackData, actualCallbackData, "query callback data")
+	s.validateAddressAndDenomInRequest(query.RequestData, route.TradeAccount.Address, route.RewardDenomOnTradeZone)
+	s.validateTradeRouteQueryCallback(query.CallbackData)
 }
 
 // Tests a TradeRewardBalanceQuery that fails due to an invalid account address
@@ -591,7 +581,7 @@ func (s *KeeperTestSuite) SetupTradeConvertedBalanceQueryTestCase() (route types
 		TradeAccount: types.ICAAccount{
 			ChainId:      HostChainId,
 			ConnectionId: ibctesting.FirstConnectionID,
-			Address:      ICAAddress, // must be a valid bech32, easiest to use stride prefix for validation
+			Address:      StrideICAAddress, // must be a valid bech32, easiest to use stride prefix for validation
 		},
 	}
 	s.App.StakeibcKeeper.SetTradeRoute(s.Ctx, tradeRoute)
@@ -610,9 +600,8 @@ func (s *KeeperTestSuite) TestTradeConvertedBalanceQuery_Successful() {
 	err := s.App.StakeibcKeeper.TradeConvertedBalanceQuery(s.Ctx, route)
 	s.Require().NoError(err, "no error expected when querying balance")
 
-	// Validate fields from the query submission
-	_, addressBz, _ := bech32.DecodeAndConvert(HostICAAddress)
-	expectedRequestData := append(banktypes.CreateAccountBalancesPrefix(addressBz), []byte(route.HostDenomOnTradeZone)...)
+	// Validate fields from ICQ submission
+	expectedRequestData := s.GetBankStoreKeyPrefix(StrideICAAddress, route.HostDenomOnTradeZone)
 
 	query := s.ValidateQuerySubmission(
 		icqtypes.BANK_STORE_QUERY_WITH_PROOF,
@@ -622,23 +611,8 @@ func (s *KeeperTestSuite) TestTradeConvertedBalanceQuery_Successful() {
 		icqtypes.TimeoutPolicy_REJECT_QUERY_RESPONSE,
 	)
 
-	expectedCallbackData := types.TradeRouteCallback{
-		RewardDenom: RewardDenom,
-		HostDenom:   HostDenom,
-	}
-
-	// Deserialize and confirm query request info
-	requestData := query.RequestData[1:] // Remove BalancePrefix byte
-	actualAddress, actualDenom, err := banktypes.AddressAndDenomFromBalancesStore(requestData)
-	s.Require().NoError(err, "no error expected when retrieving address and denom from store key")
-	s.Require().Equal(route.TradeAccount.Address, actualAddress.String(), "query account address")
-	s.Require().Equal(route.HostDenomOnTradeZone, actualDenom, "query denom")
-
-	// Validate the query callback data
-	var actualCallbackData types.TradeRouteCallback
-	err = proto.Unmarshal(query.CallbackData, &actualCallbackData)
-	s.Require().NoError(err)
-	s.Require().Equal(expectedCallbackData, actualCallbackData, "query callback data")
+	s.validateAddressAndDenomInRequest(query.RequestData, route.TradeAccount.Address, route.HostDenomOnTradeZone)
+	s.validateTradeRouteQueryCallback(query.CallbackData)
 }
 
 // Tests a TradeConvertedBalanceQuery that fails due to an invalid account address
