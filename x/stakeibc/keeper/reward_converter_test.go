@@ -479,4 +479,15 @@ func (s *KeeperTestSuite) TestPoolPriceQuery() {
 	err = proto.Unmarshal(query.CallbackData, &actualCallbackData)
 	s.Require().NoError(err)
 	s.Require().Equal(expectedCallbackData, actualCallbackData, "query callback data")
+
+	// Remove the connection ID from the trade account and confirm the query submission fails
+	invalidRoute := route
+	invalidRoute.TradeAccount.ConnectionId = ""
+	err = s.App.StakeibcKeeper.PoolPriceQuery(s.Ctx, invalidRoute)
+	s.Require().ErrorContains(err, "invalid interchain query request")
+
+	// Remove the epoch tracker so the function fails to get a timeout
+	s.App.StakeibcKeeper.RemoveEpochTracker(s.Ctx, epochtypes.HOUR_EPOCH)
+	err = s.App.StakeibcKeeper.PoolPriceQuery(s.Ctx, route)
+	s.Require().ErrorContains(err, "hour: epoch not found")
 }
