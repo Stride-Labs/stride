@@ -247,6 +247,7 @@ func (k Keeper) GetUnbondingICAMessages(
 // In the event that the number of generated undelegate messages exceeds the batch size,
 // reduce the number of messages by dividing any excess amongst proportionally based on
 // the remaining delegation
+// This will no longer be necessary after undelegations to 32+ validators is supported
 func (k Keeper) ConsolidateUnbondingMessages(
 	totalUnbondAmount sdkmath.Int,
 	initialUnbondings []*types.SplitDelegation,
@@ -265,20 +266,20 @@ func (k Keeper) ConsolidateUnbondingMessages(
 		unbondAmountFromBatch = unbondAmountFromBatch.Add(unbonding.Amount)
 		initialUnbondingsMap[unbonding.Validator] = unbonding.Amount
 	}
-	excessAmount := totalUnbondAmount.Sub(unbondAmountFromBatch)
+	totalExcessAmount := totalUnbondAmount.Sub(unbondAmountFromBatch)
 
 	// Store the delegation of each validator that was expected *after* the originally
 	// planned unbonding went through
 	// e.g. If the validator had 10 before unbonding, and in the first pass, 3 was
 	//      supposed to be unbonded, their delegation after the first pass is 7
-	totalDelegationsAfterFirstPass := sdkmath.ZeroInt()
-	delegationsAfterFirstPass := map[string]sdkmath.Int{}
+	totalDelegationsAfterFirstPass := sdk.ZeroDec()
+	delegationsAfterFirstPass := map[string]sdk.Dec{}
 	for _, capacity := range unbondCapacities {
 		// Only add validators that were in the initial unbonding plan
 		// The delegation after the first pass is calculated by taking the "current delegation"
 		// (aka delegation before unbonding) and subtracting the unbond amount
 		if initialUnbondAmount, ok := initialUnbondingsMap[capacity.ValidatorAddress]; ok {
-			delegationAfterFirstPass := capacity.CurrentDelegation.Sub(initialUnbondAmount)
+			delegationAfterFirstPass := sdk.NewDecFromInt(capacity.CurrentDelegation.Sub(initialUnbondAmount))
 
 			delegationsAfterFirstPass[capacity.ValidatorAddress] = delegationAfterFirstPass
 			totalDelegationsAfterFirstPass = totalDelegationsAfterFirstPass.Add(delegationAfterFirstPass)
@@ -292,6 +293,7 @@ func (k Keeper) ConsolidateUnbondingMessages(
 
 	// Loop through the original unbonding messages and proportionally divide out
 	// the excess amongst the validators in the set
+	excessRemaining := totalExcessAmount
 	for i := range unbondingsCapped {
 		unbonding := unbondingsCapped[i]
 
@@ -304,10 +306,13 @@ func (k Keeper) ConsolidateUnbondingMessages(
 				return finalUnbondings, fmt.Errorf("validator not found in initial unbonding plan")
 			}
 			unbondIncreaseProportion := delegationAfterFirstPass.Quo(totalDelegationsAfterFirstPass)
-			validatorUnbondIncrease = excessAmount.Mul(unbondIncreaseProportion)
+			validatorUnbondIncrease = sdk.NewDecFromInt(totalExcessAmount).Mul(unbondIncreaseProportion).TruncateInt()
+
+			// Decrement excess
+			excessRemaining = excessRemaining.Sub(validatorUnbondIncrease)
 		} else {
 			// The last validator in the set should get any remainder from int truction
-			validatorUnbondIncrease = excessAmount
+			validatorUnbondIncrease = excessRemaining
 		}
 
 		// Build the updated message with the new amount
@@ -315,6 +320,12 @@ func (k Keeper) ConsolidateUnbondingMessages(
 			Validator: unbonding.Validator,
 			Amount:    unbonding.Amount.Add(validatorUnbondIncrease),
 		})
+	}
+
+	// Sanity check that we've accounted for all the excess
+	if excessRemaining.IsZero() {
+		return finalUnbondings, fmt.Errorf("Unable to redistribute all excess - initial: %v, remaining: %v",
+			totalExcessAmount, excessRemaining)
 	}
 
 	return finalUnbondings, nil
