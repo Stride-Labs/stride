@@ -80,7 +80,7 @@ func (k Keeper) UndelegateHostEvmos(ctx sdk.Context, totalUnbondAmount math.Int)
 	}
 
 	// Get the undelegation ICA messages and split delegations for the callback
-	msgs, unbondings, err := k.GetUnbondingICAMessages(evmosHost, totalUnbondAmount, prioritizedUnbondCapacity)
+	msgs, unbondings, err := k.GetUnbondingICAMessages(evmosHost, totalUnbondAmount, prioritizedUnbondCapacity, UndelegateICABatchSize)
 	if err != nil {
 		return err
 	}

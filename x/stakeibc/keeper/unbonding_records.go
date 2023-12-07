@@ -185,6 +185,7 @@ func (k Keeper) GetUnbondingICAMessages(
 	hostZone types.HostZone,
 	totalUnbondAmount sdkmath.Int,
 	prioritizedUnbondCapacity []ValidatorUnbondCapacity,
+	batchSize int,
 ) (msgs []proto.Message, unbondings []*types.SplitDelegation, err error) {
 	// Loop through each validator and unbond as much as possible
 	remainingUnbondAmount := totalUnbondAmount
@@ -213,14 +214,14 @@ func (k Keeper) GetUnbondingICAMessages(
 
 	// If the number of messages exceeds the batch size, shrink it down the the batch size
 	// by re-distributing the exceess
-	if len(unbondings) > UndelegateICABatchSize {
-		unbondings, err = k.ConsolidateUnbondingMessages(totalUnbondAmount, unbondings, prioritizedUnbondCapacity, UndelegateICABatchSize)
+	if len(unbondings) > batchSize {
+		unbondings, err = k.ConsolidateUnbondingMessages(totalUnbondAmount, unbondings, prioritizedUnbondCapacity, batchSize)
 		if err != nil {
 			return msgs, unbondings, errorsmod.Wrapf(err, "unable to consolidate unbonding messages")
 		}
 
 		// Sanity check that the number of messages is now under the batch size
-		if len(unbondings) > UndelegateICABatchSize {
+		if len(unbondings) > batchSize {
 			return msgs, unbondings, errorsmod.Wrapf(sdkerrors.ErrInvalidRequest,
 				fmt.Sprintf("too many undelegation messages (%d) for host zone %s", len(msgs), hostZone.ChainId))
 		}
@@ -396,7 +397,12 @@ func (k Keeper) UnbondFromHostZone(ctx sdk.Context, hostZone types.HostZone) err
 	}
 
 	// Get the undelegation ICA messages and split delegations for the callback
-	msgs, unbondings, err := k.GetUnbondingICAMessages(hostZone, totalUnbondAmount, prioritizedUnbondCapacity)
+	msgs, unbondings, err := k.GetUnbondingICAMessages(
+		hostZone,
+		totalUnbondAmount,
+		prioritizedUnbondCapacity,
+		UndelegateICABatchSize,
+	)
 	if err != nil {
 		return err
 	}

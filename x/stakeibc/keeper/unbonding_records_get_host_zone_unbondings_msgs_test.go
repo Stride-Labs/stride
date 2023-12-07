@@ -770,11 +770,24 @@ func (s *KeeperTestSuite) TestGetUnbondingICAMessages() {
 		DelegationIcaAddress: delegationAddress,
 	}
 
+	batchSize := 4
 	validatorCapacities := []keeper.ValidatorUnbondCapacity{
 		{ValidatorAddress: "val1", Capacity: sdkmath.NewInt(100)},
 		{ValidatorAddress: "val2", Capacity: sdkmath.NewInt(200)},
 		{ValidatorAddress: "val3", Capacity: sdkmath.NewInt(300)},
 		{ValidatorAddress: "val4", Capacity: sdkmath.NewInt(400)},
+
+		// This validator will fall out of the batch and will be redistributed
+		{ValidatorAddress: "val5", Capacity: sdkmath.NewInt(1000)},
+	}
+
+	// Set the current delegation to 1000 + capacity so after their delegation
+	// after the first pass at unbonding is left at 1000
+	// This is so that we can simulate consolidating messages after reaching
+	// the capacity of the first four validators
+	for i, capacity := range validatorCapacities[:batchSize] {
+		capacity.CurrentDelegation = sdkmath.NewInt(1000).Add(capacity.Capacity)
+		validatorCapacities[i] = capacity
 	}
 
 	testCases := []struct {
@@ -842,8 +855,19 @@ func (s *KeeperTestSuite) TestGetUnbondingICAMessages() {
 			},
 		},
 		{
+			name:              "unbonding requires message consolidation",
+			totalUnbondAmount: sdkmath.NewInt(2000), // excess of 1000
+			expectedUnbondings: []ValidatorUnbonding{
+				// Redistributed excess denoted after plus sign
+				{Validator: "val1", UnbondAmount: sdkmath.NewInt(100 + 250)},
+				{Validator: "val2", UnbondAmount: sdkmath.NewInt(200 + 250)},
+				{Validator: "val3", UnbondAmount: sdkmath.NewInt(300 + 250)},
+				{Validator: "val4", UnbondAmount: sdkmath.NewInt(400 + 250)},
+			},
+		},
+		{
 			name:              "insufficient delegation",
-			totalUnbondAmount: sdkmath.NewInt(1001),
+			totalUnbondAmount: sdkmath.NewInt(2001),
 			expectedError:     "unable to unbond full amount",
 		},
 	}
@@ -855,6 +879,7 @@ func (s *KeeperTestSuite) TestGetUnbondingICAMessages() {
 				hostZone,
 				tc.totalUnbondAmount,
 				validatorCapacities,
+				batchSize,
 			)
 
 			// If this is an error test case, check the error message
