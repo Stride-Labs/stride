@@ -202,21 +202,36 @@ func (k Keeper) GetUnbondingICAMessages(
 		} else {
 			unbondAmount = remainingUnbondAmount
 		}
-
 		remainingUnbondAmount = remainingUnbondAmount.Sub(unbondAmount)
-		unbondToken := sdk.NewCoin(hostZone.HostDenom, unbondAmount)
-
-		// Build the undelegate ICA messages
-		msgs = append(msgs, &stakingtypes.MsgUndelegate{
-			DelegatorAddress: hostZone.DelegationIcaAddress,
-			ValidatorAddress: validatorCapacity.ValidatorAddress,
-			Amount:           unbondToken,
-		})
 
 		// Build the validator splits for the callback
 		unbondings = append(unbondings, &types.SplitDelegation{
 			Validator: validatorCapacity.ValidatorAddress,
 			Amount:    unbondAmount,
+		})
+	}
+
+	// If the number of messages exceeds the batch size, shrink it down the the batch size
+	// by re-distributing the exceess
+	if len(unbondings) > UndelegateICABatchSize {
+		unbondings, err = k.ConsolidateUnbondingMessages(totalUnbondAmount, unbondings, prioritizedUnbondCapacity, UndelegateICABatchSize)
+		if err != nil {
+			return msgs, unbondings, errorsmod.Wrapf(err, "unable to consolidate unbonding messages")
+		}
+
+		// Sanity check that the number of messages is now under the batch size
+		if len(unbondings) > UndelegateICABatchSize {
+			return msgs, unbondings, errorsmod.Wrapf(sdkerrors.ErrInvalidRequest,
+				fmt.Sprintf("too many undelegation messages (%d) for host zone %s", len(msgs), hostZone.ChainId))
+		}
+	}
+
+	// Build the undelegate ICA messages from the splits
+	for _, unbonding := range unbondings {
+		msgs = append(msgs, &stakingtypes.MsgUndelegate{
+			DelegatorAddress: hostZone.DelegationIcaAddress,
+			ValidatorAddress: unbonding.Validator,
+			Amount:           sdk.NewCoin(hostZone.HostDenom, unbonding.Amount),
 		})
 	}
 
@@ -227,6 +242,82 @@ func (k Keeper) GetUnbondingICAMessages(
 	}
 
 	return msgs, unbondings, nil
+}
+
+// In the event that the number of generated undelegate messages exceeds the batch size,
+// reduce the number of messages by dividing any excess amongst proportionally based on
+// the remaining delegation
+func (k Keeper) ConsolidateUnbondingMessages(
+	totalUnbondAmount sdkmath.Int,
+	initialUnbondings []*types.SplitDelegation,
+	unbondCapacities []ValidatorUnbondCapacity,
+	batchSize int,
+) (finalUnbondings []*types.SplitDelegation, err error) {
+	// Grab the first {batch_size} number of messages from the list
+	// This will consist of the validators with the most capacity
+	unbondingsCapped := initialUnbondings[:batchSize]
+
+	// Calculate the amount that was initially meant to be unbonded from that batch,
+	// and determine the remainder that needs to be redistributed
+	unbondAmountFromBatch := sdkmath.ZeroInt()
+	initialUnbondingsMap := map[string]sdkmath.Int{}
+	for _, unbonding := range unbondingsCapped {
+		unbondAmountFromBatch = unbondAmountFromBatch.Add(unbonding.Amount)
+		initialUnbondingsMap[unbonding.Validator] = unbonding.Amount
+	}
+	excessAmount := totalUnbondAmount.Sub(unbondAmountFromBatch)
+
+	// Store the delegation of each validator that was expected *after* the originally
+	// planned unbonding went through
+	// e.g. If the validator had 10 before unbonding, and in the first pass, 3 was
+	//      supposed to be unbonded, their delegation after the first pass is 7
+	totalDelegationsAfterFirstPass := sdkmath.ZeroInt()
+	delegationsAfterFirstPass := map[string]sdkmath.Int{}
+	for _, capacity := range unbondCapacities {
+		// Only add validators that were in the initial unbonding plan
+		// The delegation after the first pass is calculated by taking the "current delegation"
+		// (aka delegation before unbonding) and subtracting the unbond amount
+		if initialUnbondAmount, ok := initialUnbondingsMap[capacity.ValidatorAddress]; ok {
+			delegationAfterFirstPass := capacity.CurrentDelegation.Sub(initialUnbondAmount)
+
+			delegationsAfterFirstPass[capacity.ValidatorAddress] = delegationAfterFirstPass
+			totalDelegationsAfterFirstPass = totalDelegationsAfterFirstPass.Add(delegationAfterFirstPass)
+		}
+	}
+
+	// This should never happen, but it protects against a division by zero error below
+	if totalDelegationsAfterFirstPass.IsZero() {
+		return finalUnbondings, errors.New("no delegations to redistribute during consolidation")
+	}
+
+	// Loop through the original unbonding messages and proportionally divide out
+	// the excess amongst the validators in the set
+	for i := range unbondingsCapped {
+		unbonding := unbondingsCapped[i]
+
+		var validatorUnbondIncrease sdkmath.Int
+		if i != len(unbondingsCapped)-1 {
+			// For all but the last validator, calculate their unbonding increase by
+			// splitting the excess proportionally in line with their remaining delegation
+			delegationAfterFirstPass, ok := delegationsAfterFirstPass[unbonding.Validator]
+			if !ok {
+				return finalUnbondings, fmt.Errorf("validator not found in initial unbonding plan")
+			}
+			unbondIncreaseProportion := delegationAfterFirstPass.Quo(totalDelegationsAfterFirstPass)
+			validatorUnbondIncrease = excessAmount.Mul(unbondIncreaseProportion)
+		} else {
+			// The last validator in the set should get any remainder from int truction
+			validatorUnbondIncrease = excessAmount
+		}
+
+		// Build the updated message with the new amount
+		finalUnbondings = append(finalUnbondings, &types.SplitDelegation{
+			Validator: unbonding.Validator,
+			Amount:    unbonding.Amount.Add(validatorUnbondIncrease),
+		})
+	}
+
+	return finalUnbondings, nil
 }
 
 // Submits undelegation ICA messages for a given host zone
@@ -302,10 +393,6 @@ func (k Keeper) UnbondFromHostZone(ctx sdk.Context, hostZone types.HostZone) err
 	// Shouldn't be possible, but if all the validator's had a target unbonding of zero, do not send an ICA
 	if len(msgs) == 0 {
 		return errorsmod.Wrap(sdkerrors.ErrInvalidRequest, "Target unbonded amount was 0 for each validator")
-	}
-
-	if len(msgs) > UndelegateICABatchSize {
-		return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, fmt.Sprintf("too many undelegation messages (%d) for host zone %s", len(msgs), hostZone.ChainId))
 	}
 
 	// Send the messages in batches so the gas limit isn't exceedeed
