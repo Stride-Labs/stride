@@ -146,7 +146,8 @@ func (s *KeeperTestSuite) TestTransferConvertedTokensTradeToHost() {
 	transferAmount := sdkmath.NewInt(1000)
 
 	// Register a trade ICA account for the transfer
-	channelId, portId := s.CreateICAChannel(types.FormatICAAccountOwner(HostChainId, types.ICAAccountType_CONVERTER_TRADE))
+	owner := types.FormatTradeRouteICAOwner(HostChainId, RewardDenom, HostDenom, types.ICAAccountType_CONVERTER_TRADE)
+	channelId, portId := s.CreateICAChannel(owner)
 
 	// Create trade route with fields needed for transfer
 	route := types.TradeRoute{
@@ -163,7 +164,7 @@ func (s *KeeperTestSuite) TestTransferConvertedTokensTradeToHost() {
 	s.App.StakeibcKeeper.SetTradeRoute(s.Ctx, route)
 
 	// Create epoch tracker to dictate timeout
-	s.CreateStrideEpochForICATimeout(time.Second * 10)
+	s.CreateEpochForICATimeout(epochtypes.STRIDE_EPOCH, time.Second*10)
 
 	// Confirm the sequence number was incremented after a successful send
 	startSequence := s.MustGetNextSequenceNumber(portId, channelId)
