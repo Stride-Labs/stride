@@ -133,6 +133,17 @@ func (s *KeeperTestSuite) TestWithdrawalRewardBalanceCallback_InvalidArgs() {
 	s.Require().ErrorContains(err, "unable to determine balance from query response")
 }
 
+func (s *KeeperTestSuite) TestWithdrawalRewardBalanceCallback_InvalidCallbackData() {
+	tc := s.SetupWithdrawalRewardBalanceCallbackTestCase()
+
+	// Update the callback data so that it can't be successfully unmarshalled
+	invalidQuery := tc.Response.Query
+	invalidQuery.CallbackData = []byte("random bytes")
+
+	err := keeper.WithdrawalRewardBalanceCallback(s.App.StakeibcKeeper, s.Ctx, tc.Response.CallbackArgs, invalidQuery)
+	s.Require().ErrorContains(err, "unable to unmarshal trade reward balance callback data")
+}
+
 func (s *KeeperTestSuite) TestWithdrawalRewardBalanceCallback_TradeRouteNotFound() {
 	tc := s.SetupWithdrawalRewardBalanceCallbackTestCase()
 

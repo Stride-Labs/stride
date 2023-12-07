@@ -101,6 +101,17 @@ func (s *KeeperTestSuite) TestTradeConvertedBalanceCallback_InvalidArgs() {
 	s.Require().ErrorContains(err, "unable to determine balance from query response")
 }
 
+func (s *KeeperTestSuite) TestTradeConvertedBalanceCallback_InvalidCallbackData() {
+	tc := s.SetupTradeConvertedBalanceCallbackTestCase()
+
+	// Update the callback data so that it can't be successfully unmarshalled
+	invalidQuery := tc.Response.Query
+	invalidQuery.CallbackData = []byte("random bytes")
+
+	err := keeper.TradeConvertedBalanceCallback(s.App.StakeibcKeeper, s.Ctx, tc.Response.CallbackArgs, invalidQuery)
+	s.Require().ErrorContains(err, "unable to unmarshal trade reward balance callback data")
+}
+
 func (s *KeeperTestSuite) TestTradeConvertedBalanceCallback_TradeRouteNotFound() {
 	tc := s.SetupTradeConvertedBalanceCallbackTestCase()
 
