@@ -8,7 +8,6 @@ import (
 	"github.com/stretchr/testify/suite"
 
 	"github.com/Stride-Labs/stride/v16/app/apptesting"
-	epochtypes "github.com/Stride-Labs/stride/v16/x/epochs/types"
 	"github.com/Stride-Labs/stride/v16/x/stakeibc/keeper"
 	"github.com/Stride-Labs/stride/v16/x/stakeibc/types"
 )
@@ -67,11 +66,11 @@ func (s *KeeperTestSuite) MustGetHostZone(chainId string) types.HostZone {
 	return hostZone
 }
 
-// Helper function to create an stride epoch tracker that dictates the timeout
-func (s *KeeperTestSuite) CreateStrideEpochForICATimeout(timeoutDuration time.Duration) {
+// Helper function to create an epoch tracker that dictates the timeout
+func (s *KeeperTestSuite) CreateEpochForICATimeout(epochType string, timeoutDuration time.Duration) {
 	epochEndTime := uint64(s.Ctx.BlockTime().Add(timeoutDuration).UnixNano())
 	epochTracker := types.EpochTracker{
-		EpochIdentifier:    epochtypes.STRIDE_EPOCH,
+		EpochIdentifier:    epochType,
 		NextEpochStartTime: epochEndTime,
 	}
 	s.App.StakeibcKeeper.SetEpochTracker(s.Ctx, epochTracker)

@@ -254,9 +254,9 @@ func (k Keeper) SwapRewardTokens(ctx sdk.Context, rewardAmount sdkmath.Int, rout
 		"Preparing MsgSwapExactAmountIn of %+v from the trade account", msg.TokenIn))
 
 	// Timeout the swap at the end of the epoch
-	strideEpochTracker, found := k.GetEpochTracker(ctx, epochstypes.STRIDE_EPOCH)
+	strideEpochTracker, found := k.GetEpochTracker(ctx, epochstypes.HOUR_EPOCH)
 	if !found {
-		return errorsmod.Wrapf(types.ErrEpochNotFound, epochstypes.STRIDE_EPOCH)
+		return errorsmod.Wrapf(types.ErrEpochNotFound, epochstypes.HOUR_EPOCH)
 	}
 	timeout := uint64(strideEpochTracker.NextEpochStartTime)
 
@@ -289,13 +289,13 @@ func (k Keeper) WithdrawalRewardBalanceQuery(ctx sdk.Context, route types.TradeR
 	}
 	queryData := append(bankTypes.CreateAccountBalancesPrefix(withdrawalAddressBz), []byte(route.RewardDenomOnHostZone)...)
 
-	// Timeout query at end of epoch
+	// Timeout the query halfway through the epoch (since that's when the first transfer
+	// in the pfm sequence will timeout)
 	strideEpochTracker, found := k.GetEpochTracker(ctx, epochstypes.STRIDE_EPOCH)
 	if !found {
 		return errorsmod.Wrapf(types.ErrEpochNotFound, epochstypes.STRIDE_EPOCH)
 	}
-	timeout := time.Unix(0, int64(strideEpochTracker.NextEpochStartTime))
-	timeoutDuration := timeout.Sub(ctx.BlockTime())
+	timeoutDuration := time.Duration(strideEpochTracker.Duration) / 2
 
 	// We need the trade route keys in the callback to look up the tradeRoute struct
 	callbackData := types.TradeRouteCallback{
