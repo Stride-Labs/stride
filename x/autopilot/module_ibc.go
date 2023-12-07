@@ -203,7 +203,12 @@ func (im IBCModule) OnRecvPacket(
 				im.keeper.Logger(ctx).Error(fmt.Sprintf("Error liquid staking packet from autopilot for %s: %s", newData.Sender, err.Error()))
 				return channeltypes.NewErrorAcknowledgement(err)
 			}
-			// case types.RedeemStake: TODO: add redeem stake logic
+		case types.RedeemStake:
+			// Try to redeem stake - return an ack error if it fails, otherwise return the ack generated from the earlier packet propogation
+			if err := im.keeper.TryRedeemStake(ctx, packet, newData, routingInfo); err != nil {
+				im.keeper.Logger(ctx).Error(fmt.Sprintf("Error redeem staking packet from autopilot for %s: %s", newData.Sender, err.Error()))
+				return channeltypes.NewErrorAcknowledgement(err)
+			}
 		}
 
 		return ack
