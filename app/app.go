@@ -156,6 +156,9 @@ import (
 	ccvconsumertypes "github.com/cosmos/interchain-security/v3/x/ccv/consumer/types"
 
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
+	"github.com/cosmos/ibc-apps/middleware/packet-forward-middleware/v7/packetforward"
+	packetforwardkeeper "github.com/cosmos/ibc-apps/middleware/packet-forward-middleware/v7/packetforward/keeper"
+	packetforwardtypes "github.com/cosmos/ibc-apps/middleware/packet-forward-middleware/v7/packetforward/types"
 	"github.com/cosmos/interchain-security/v3/legacy_ibc_testing/core"
 )
 
@@ -225,6 +228,7 @@ var (
 		autopilot.AppModuleBasic{},
 		icaoracle.AppModuleBasic{},
 		tendermint.AppModuleBasic{},
+		packetforward.AppModuleBasic{},
 		evmosvesting.AppModuleBasic{},
 	)
 
@@ -302,6 +306,7 @@ type StrideApp struct {
 	ICAHostKeeper       icahostkeeper.Keeper
 	ConsumerKeeper      ccvconsumerkeeper.Keeper
 	AutopilotKeeper     autopilotkeeper.Keeper
+	PacketForwardKeeper *packetforwardkeeper.Keeper
 
 	// make scoped keepers public for test purposes
 	ScopedIBCKeeper      capabilitykeeper.ScopedKeeper
@@ -369,6 +374,7 @@ func NewStrideApp(
 		ccvconsumertypes.StoreKey,
 		crisistypes.StoreKey,
 		consensusparamtypes.StoreKey,
+		packetforwardtypes.StoreKey,
 		evmosvestingtypes.StoreKey,
 	)
 	tkeys := sdk.NewTransientStoreKeys(paramstypes.TStoreKey)
@@ -478,10 +484,25 @@ func NewStrideApp(
 	)
 	ratelimitModule := ratelimitmodule.NewAppModule(appCodec, app.RatelimitKeeper)
 
+	// Initialize the packet forward middleware Keeper
+	// It's important to note that the PFM Keeper must be initialized before the Transfer Keeper
+	app.PacketForwardKeeper = packetforwardkeeper.NewKeeper(
+		appCodec,
+		keys[packetforwardtypes.StoreKey],
+		// app.GetSubspace(packetforwardtypes.ModuleName), TODO: why is this in the integration docs but not in code?
+		app.TransferKeeper, // will be zero-value here, reference is set later on with SetTransferKeeper.
+		app.IBCKeeper.ChannelKeeper,
+		app.DistrKeeper,
+		app.BankKeeper,
+		app.IBCKeeper.ChannelKeeper,
+		authtypes.NewModuleAddress(govtypes.ModuleName).String(), // TODO: this is not in the integration docs, but a comment says the authority should be the gov module
+	)
+
 	// Create Transfer Keepers
 	app.TransferKeeper = ibctransferkeeper.NewKeeper(
 		appCodec, keys[ibctransfertypes.StoreKey],
 		app.GetSubspace(ibctransfertypes.ModuleName),
+		// TODO: Do we need to import the app.PacketForwardKeeper here?
 		app.RatelimitKeeper, // ICS4Wrapper
 		app.IBCKeeper.ChannelKeeper,
 		&app.IBCKeeper.PortKeeper,
@@ -489,6 +510,10 @@ func NewStrideApp(
 		app.BankKeeper,
 		scopedTransferKeeper,
 	)
+
+	// Set the TransferKeeper reference in the PacketForwardKeeper
+	app.PacketForwardKeeper.SetTransferKeeper(app.TransferKeeper)
+
 	transferModule := transfer.NewAppModule(app.TransferKeeper)
 	transferIBCModule := transfer.NewIBCModule(app.TransferKeeper)
 
@@ -699,14 +724,29 @@ func NewStrideApp(
 	icacallbacksStack = icaoracle.NewIBCMiddleware(icacallbacksStack, app.ICAOracleKeeper)
 	icacallbacksStack = icacontroller.NewIBCMiddleware(icacallbacksStack, app.ICAControllerKeeper)
 
+	// Create Transfer Stack
+	// SendPacket, since it is originating from the application to core IBC:
+	// transferKeeper.SendPacket -> packetforward.SendPacket -> channel.SendPacket
+
+	// RecvPacket, message that originates from core IBC and goes down to app, the flow is the other way
+	// channel.RecvPacket -> packetforward.OnRecvPacket -> transfer.OnRecvPacket
+
 	// Stack three contains
-	// - IBC
+	// - core ibc
 	// - autopilot
 	// - records
 	// - ratelimit
+	// - pfm
 	// - transfer
 	// - base app
 	var transferStack porttypes.IBCModule = transferIBCModule
+	transferStack = packetforward.NewIBCMiddleware(
+		transferStack,
+		app.PacketForwardKeeper,
+		0, // retries on timeout
+		packetforwardkeeper.DefaultForwardTransferPacketTimeoutTimestamp, // forward timeout
+		packetforwardkeeper.DefaultRefundTransferPacketTimeoutTimestamp,  // refund timeout
+	)
 	transferStack = ratelimitmodule.NewIBCMiddleware(app.RatelimitKeeper, transferStack)
 	transferStack = recordsmodule.NewIBCModule(app.RecordsKeeper, transferStack)
 	transferStack = autopilot.NewIBCModule(app.AutopilotKeeper, transferStack)
@@ -758,6 +798,7 @@ func NewStrideApp(
 		ibc.NewAppModule(app.IBCKeeper),
 		params.NewAppModule(app.ParamsKeeper),
 		claim.NewAppModule(appCodec, app.ClaimKeeper),
+		packetforward.NewAppModule(app.PacketForwardKeeper, nil), // What should legacySubspace be set to and why is it required? https://github.com/cosmos/ibc-apps/issues/146
 		transferModule,
 		// monitoringModule,
 		stakeibcModule,
@@ -809,6 +850,7 @@ func NewStrideApp(
 		autopilottypes.ModuleName,
 		icaoracletypes.ModuleName,
 		consensusparamtypes.ModuleName,
+		packetforwardtypes.ModuleName,
 	)
 
 	app.mm.SetOrderEndBlockers(
@@ -844,6 +886,7 @@ func NewStrideApp(
 		autopilottypes.ModuleName,
 		icaoracletypes.ModuleName,
 		consensusparamtypes.ModuleName,
+		packetforwardtypes.ModuleName,
 	)
 
 	// NOTE: The genutils module must occur after staking so that pools are
@@ -884,6 +927,7 @@ func NewStrideApp(
 		autopilottypes.ModuleName,
 		icaoracletypes.ModuleName,
 		consensusparamtypes.ModuleName,
+		packetforwardtypes.ModuleName,
 	)
 
 	app.mm.RegisterInvariants(app.CrisisKeeper)
@@ -1156,6 +1200,7 @@ func initParamsKeeper(appCodec codec.BinaryCodec, legacyAmino *codec.LegacyAmino
 	paramsKeeper.Subspace(icacallbacksmoduletypes.ModuleName)
 	paramsKeeper.Subspace(ccvconsumertypes.ModuleName)
 	paramsKeeper.Subspace(autopilottypes.ModuleName)
+	paramsKeeper.Subspace(packetforwardtypes.ModuleName).WithKeyTable(packetforwardtypes.ParamKeyTable())
 	paramsKeeper.Subspace(icaoracletypes.ModuleName)
 	paramsKeeper.Subspace(claimtypes.ModuleName)
 	return paramsKeeper
