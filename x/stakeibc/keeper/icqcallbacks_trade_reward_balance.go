@@ -39,20 +39,23 @@ func TradeRewardBalanceCallback(k Keeper, ctx sdk.Context, args []byte, query ic
 	}
 
 	// Unmarshal the callback data containing the tradeRoute we are on
-	var tradeRoute types.TradeRoute
-	if err := proto.Unmarshal(query.CallbackData, &tradeRoute); err != nil {
+	var tradeRouteCallback types.TradeRouteCallback
+	if err := proto.Unmarshal(query.CallbackData, &tradeRouteCallback); err != nil {
 		return errorsmod.Wrapf(err, "unable to unmarshal trade reward balance callback data")
+	}
+
+	// Lookup the trade route from the keys in the callback
+	tradeRoute, found := k.GetTradeRoute(ctx, tradeRouteCallback.RewardDenom, tradeRouteCallback.HostDenom)
+	if !found {
+		return types.ErrTradeRouteNotFound.Wrapf("trade route from %s to %s not found",
+			tradeRouteCallback.RewardDenom, tradeRouteCallback.HostDenom)
 	}
 	k.Logger(ctx).Info(utils.LogICQCallbackWithHostZone(chainId, ICQCallbackID_TradeRewardBalance,
 		"Query response - Withdrawal Reward Balance: %v %s", tradeRewardBalanceAmount, tradeRoute.RewardDenomOnTradeZone))
 
 	// Trade all found reward tokens in the trade ICA to the output denom of their trade pool
-	err = utils.ApplyFuncIfNoError(ctx, func(c sdk.Context) error {
-		return k.SwapRewardTokens(ctx, tradeRewardBalanceAmount, tradeRoute)
-	})
-	if err != nil {
-		k.Logger(ctx).Error(utils.LogICQCallbackWithHostZone(chainId, ICQCallbackID_TradeRewardBalance,
-			"Submitting ICA to swapping reward tokens failed: %s", err.Error()))
+	if err := k.SwapRewardTokens(ctx, tradeRewardBalanceAmount, tradeRoute); err != nil {
+		return errorsmod.Wrapf(err, "unable to swap reward tokens")
 	}
 
 	k.Logger(ctx).Info(utils.LogICQCallbackWithHostZone(chainId, ICQCallbackID_TradeRewardBalance,

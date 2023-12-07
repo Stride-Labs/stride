@@ -17,7 +17,7 @@ KEYS_LOGS=$DOCKERNET_HOME/logs/keys.log
 
 # List of hosts enabled 
 # HOST_CHAINS have liquid staking support, ACCESSORY_CHAINS do not
-HOST_CHAINS=(DYDX)
+HOST_CHAINS=()
 ACCESSORY_CHAINS=(NOBLE OSMO) 
 
 # If no host zones are specified above:
@@ -37,6 +37,7 @@ if [[ "${ALL_HOST_CHAINS:-false}" == "true" ]]; then
 elif [[ "${#HOST_CHAINS[@]}" == "0" ]]; then 
   HOST_CHAINS=(GAIA)
 fi
+REWARD_CONVERTER_HOST_ZONE=${HOST_CHAINS[0]}
 
 # DENOMS
 STRD_DENOM="ustrd"
@@ -108,7 +109,7 @@ IBC_STARS_DENOM=$IBC_STARS_CHANNEL_3_DENOM
 
 # CHAIN PARAMS
 BLOCK_TIME='1s'
-STRIDE_HOUR_EPOCH_DURATION="90s"
+STRIDE_HOUR_EPOCH_DURATION="60s"
 STRIDE_DAY_EPOCH_DURATION="140s"
 STRIDE_EPOCH_EPOCH_DURATION="35s"
 STRIDE_MINT_EPOCH_DURATION="20s"
@@ -337,14 +338,22 @@ STRIDE_RELAYER_MNEMONICS=(
   "$RELAYER_DYDX_MNEMONIC"
 )
 # Mnemonics for connections between accessory chains
-RELAYER_NOBLE_DYDX_MNEMONIC="sentence fruit crumble sail bar knife exact flame apart prosper hint myth clean among tiny burden depart purity select envelope identify cross physical emerge"
-RELAYER_DYDX_NOBLE_MNEMONIC="aerobic breeze claw climb bounce morning tank victory eight funny employ bracket hire reduce fine flee lava domain warfare loop theme fly tattoo must"
-RELAYER_NOBLE_OSMO_MNEMONIC="actual field visual wage orbit add human unit happy rich evil chair entire person february cactus deputy impact gasp elbow sunset brand possible fly"
-RELAYER_OSMO_NOBLE_MNEMONIC="obey clinic miss grunt inflict laugh sell moral kitchen tumble gold song flavor rather horn exhaust state amazing poverty differ approve spike village device"
-RELAYER_DYDX_OSMO_MNEMONIC="small fire step promote fox reward book seek arctic session illegal loyal because brass spoil minute wonder jazz shoe price muffin churn evil monitor"
-RELAYER_OSMO_DYDX_MNEMONIC="risk wool reason sweet current strategy female miracle squeeze that wire develop ocean rapid domain lift blame monkey sick round museum item maze trumpet"
 RELAYER_STRIDE_OSMO_MNEMONIC="father october lonely ticket leave regret pudding buffalo return asthma plastic piano beef orient ill clip right phone ready pottery helmet hip solid galaxy"
 RELAYER_OSMO_STRIDE_MNEMONIC="narrow assist come feel canyon anxiety three reason satoshi inspire region little attend impulse what student dog armor economy faculty dutch distance upon calm"
+RELAYER_STRIDE_NOBLE_MNEMONIC="absent confirm lumber hobby glide alter remain yard mixed fiscal series kitchen effort protect pistol hire bless police year struggle near hour wisdom jewel"
+RELAYER_NOBLE_STRIDE_MNEMONIC="jar point equal question fatigue frog disorder wasp labor obtain head print orbit entire frown high sadness dash retire idea coffee rubber rough until"
+RELAYER_NOBLE_OSMO_MNEMONIC="actual field visual wage orbit add human unit happy rich evil chair entire person february cactus deputy impact gasp elbow sunset brand possible fly"
+RELAYER_OSMO_NOBLE_MNEMONIC="obey clinic miss grunt inflict laugh sell moral kitchen tumble gold song flavor rather horn exhaust state amazing poverty differ approve spike village device"
+# Mnemonics between host zone and accessory chains when running with GAIA as the host
+RELAYER_GAIA_NOBLE_MNEMONIC="aerobic breeze claw climb bounce morning tank victory eight funny employ bracket hire reduce fine flee lava domain warfare loop theme fly tattoo must"
+RELAYER_NOBLE_GAIA_MNEMONIC="sentence fruit crumble sail bar knife exact flame apart prosper hint myth clean among tiny burden depart purity select envelope identify cross physical emerge"
+RELAYER_GAIA_OSMO_MNEMONIC="small fire step promote fox reward book seek arctic session illegal loyal because brass spoil minute wonder jazz shoe price muffin churn evil monitor"
+RELAYER_OSMO_GAIA_MNEMONIC="risk wool reason sweet current strategy female miracle squeeze that wire develop ocean rapid domain lift blame monkey sick round museum item maze trumpet"
+# Mnemonics between host zone and accessory chains when running with DYDX as the host
+RELAYER_NOBLE_DYDX_MNEMONIC="sentence fruit crumble sail bar knife exact flame apart prosper hint myth clean among tiny burden depart purity select envelope identify cross physical emerge"
+RELAYER_DYDX_NOBLE_MNEMONIC="aerobic breeze claw climb bounce morning tank victory eight funny employ bracket hire reduce fine flee lava domain warfare loop theme fly tattoo must"
+RELAYER_DYDX_OSMO_MNEMONIC="small fire step promote fox reward book seek arctic session illegal loyal because brass spoil minute wonder jazz shoe price muffin churn evil monitor"
+RELAYER_OSMO_DYDX_MNEMONIC="risk wool reason sweet current strategy female miracle squeeze that wire develop ocean rapid domain lift blame monkey sick round museum item maze trumpet"
 
 STRIDE_ADDRESS() { 
   # After an upgrade, the keys query can sometimes print migration info, 
@@ -511,6 +520,41 @@ GET_COUNTERPARTY_TRANSFER_CHANNEL_ID() {
 
   main_cmd=$(GET_VAR_VALUE ${src_chain}_MAIN_CMD)
   $main_cmd q ibc channel end transfer $channel_id | grep -A 2 counterparty | grep channel_id | awk '{print $2}'
+}
+
+GET_LATEST_PROPOSAL_ID() {
+  chain="$1"
+
+  main_cmd=$(GET_VAR_VALUE ${chain}_MAIN_CMD)
+  $main_cmd q gov proposals | grep '  id:' | tail -1 | awk '{printf $2}' | tr -d '"'
+}
+
+WATCH_PROPOSAL_STATUS() {
+  chain="$1"
+  proposal_id="$2"
+
+  main_cmd=$(GET_VAR_VALUE ${chain}_MAIN_CMD)
+
+  # Continually polls the proposal status until it passes or fails
+  while true; do
+    status=$($main_cmd query gov proposal $proposal_id | grep "status" | awk '{printf $2}')
+    if [[ "$status" == "PROPOSAL_STATUS_VOTING_PERIOD" ]]; then
+        echo "  Proposal still in progress..."
+        sleep 5
+    elif [[ "$status" == "PROPOSAL_STATUS_PASSED" ]]; then
+        echo "  Proposal passed!"
+        exit 0
+    elif [[ "$status" == "PROPOSAL_STATUS_REJECTED" ]]; then
+        echo "  Proposal rejected!"
+        exit 1
+    elif [[ "$status" == "PROPOSAL_STATUS_FAILED" ]]; then
+        echo "  Proposal failed!"
+        exit 1
+    else 
+        echo "ERROR: Unknown proposal status: $status"
+        exit 1
+    fi
+  done
 }
 
 TRIM_TX() {

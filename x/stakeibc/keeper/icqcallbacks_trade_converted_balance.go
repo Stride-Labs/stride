@@ -31,10 +31,17 @@ func TradeConvertedBalanceCallback(k Keeper, ctx sdk.Context, args []byte, query
 		return errorsmod.Wrap(err, "unable to determine balance from query response")
 	}
 
-	// Unmarshal the callback data containing the trade route we are on
-	var tradeRoute types.TradeRoute
-	if err := proto.Unmarshal(query.CallbackData, &tradeRoute); err != nil {
+	// Unmarshal the callback data containing the tradeRoute we are on
+	var tradeRouteCallback types.TradeRouteCallback
+	if err := proto.Unmarshal(query.CallbackData, &tradeRouteCallback); err != nil {
 		return errorsmod.Wrapf(err, "unable to unmarshal trade reward balance callback data")
+	}
+
+	// Lookup the trade route from the keys in the callback
+	tradeRoute, found := k.GetTradeRoute(ctx, tradeRouteCallback.RewardDenom, tradeRouteCallback.HostDenom)
+	if !found {
+		return types.ErrTradeRouteNotFound.Wrapf("trade route from %s to %s not found",
+			tradeRouteCallback.RewardDenom, tradeRouteCallback.HostDenom)
 	}
 
 	// Confirm the balance is greater than zero, or else exit with no further action
@@ -45,12 +52,8 @@ func TradeConvertedBalanceCallback(k Keeper, ctx sdk.Context, args []byte, query
 	}
 
 	// Using ICA commands on the trade address, transfer the found converted tokens from the trade zone to the host zone
-	err = utils.ApplyFuncIfNoError(ctx, func(c sdk.Context) error {
-		return k.TransferConvertedTokensTradeToHost(ctx, tradeConvertedBalanceAmount, tradeRoute)
-	})
-	if err != nil {
-		k.Logger(ctx).Error(utils.LogICQCallbackWithHostZone(chainId, ICQCallbackID_TradeConvertedBalance,
-			"Initiating transfer of converted tokens to back to host zone failed: %s", err.Error()))
+	if err := k.TransferConvertedTokensTradeToHost(ctx, tradeConvertedBalanceAmount, tradeRoute); err != nil {
+		return errorsmod.Wrapf(err, "initiating transfer of converted tokens to back to host zone failed")
 	}
 
 	k.Logger(ctx).Info(utils.LogICQCallbackWithHostZone(chainId, ICQCallbackID_TradeConvertedBalance,

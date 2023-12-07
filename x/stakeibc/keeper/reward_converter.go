@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	"encoding/json"
 	"fmt"
 	"time"
 
@@ -18,6 +19,18 @@ import (
 	icqtypes "github.com/Stride-Labs/stride/v16/x/interchainquery/types"
 	"github.com/Stride-Labs/stride/v16/x/stakeibc/types"
 )
+
+// JSON Memo for PFM transfers
+type PacketForwardMetadata struct {
+	Forward *ForwardMetadata `json:"forward"`
+}
+type ForwardMetadata struct {
+	Receiver string `json:"receiver"`
+	Port     string `json:"port"`
+	Channel  string `json:"channel"`
+	Timeout  string `json:"timeout"`
+	Retries  int64  `json:"retries"`
+}
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // The goal of this code is to allow certain reward token types to be automatically traded into other types
@@ -38,24 +51,24 @@ import (
 // and the normal staking and distribution flow will continue from there.
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-// ICA tx will kick off transfering the reward tokens from the hostZone withdrawl ICA to the tradeZone trade ICA
-// This will be two hops to unwind the ibc denom through the rewardZone using pfm in the transfer memo if possible
-//
-// msgs with packet forwarding memos can unwind through the reward zone and chain two transfer hops without callbacks
-func (k Keeper) TransferRewardTokensHostToTrade(ctx sdk.Context, amount sdkmath.Int, route types.TradeRoute) error {
-	// If the min swap amount was not set it would be ZeroInt, if positive we need to compare to the amount given
-	//  then if the min swap amount is greater than the current amount, do nothing this epoch to avoid small transfers
-	//  Particularly important for the PFM hop if the reward chain has frictional transfer fees (like noble chain)
-	if route.TradeConfig.MinSwapAmount.IsPositive() && route.TradeConfig.MinSwapAmount.GT(amount) {
-		return nil
-	}
-
-	// Timeout for ica tx and the transfer msgs is at end of epoch
+// Builds a PFM transfer message to send reward tokens from the host zone,
+// through the reward zone (to unwind) and finally to the trade zone
+func (k Keeper) BuildHostToTradeTransferMsg(
+	ctx sdk.Context,
+	amount sdkmath.Int,
+	route types.TradeRoute,
+) (msg transfertypes.MsgTransfer, err error) {
+	// Get the epoch tracker to determine the timeouts
 	strideEpochTracker, found := k.GetEpochTracker(ctx, epochstypes.STRIDE_EPOCH)
 	if !found {
-		return errorsmod.Wrapf(types.ErrEpochNotFound, epochstypes.STRIDE_EPOCH)
+		return msg, errorsmod.Wrapf(types.ErrEpochNotFound, epochstypes.STRIDE_EPOCH)
 	}
-	timeout := uint64(strideEpochTracker.NextEpochStartTime)
+
+	// Timeout the first transfer halfway through the epoch, and the second transfer at the end of the epoch
+	// The pfm transfer requires a duration instead of a timestamp for the timeout, so we just use half the epoch length
+	halfEpochDuration := strideEpochTracker.Duration / 2
+	transfer1TimeoutTimestamp := uint64(strideEpochTracker.NextEpochStartTime - halfEpochDuration) // unix nano
+	transfer2TimeoutDuration := fmt.Sprintf("%ds", halfEpochDuration/1e9)                          // string in seconds
 
 	startingDenom := route.RewardDenomOnHostZone
 	sendTokens := sdk.NewCoin(startingDenom, amount)
@@ -64,32 +77,62 @@ func (k Keeper) TransferRewardTokensHostToTrade(ctx sdk.Context, amount sdkmath.
 	unwindIcaAddress := route.RewardAccount.Address
 	tradeIcaAddress := route.TradeAccount.Address
 
-	// Import and use pfm data structures instead of this JSON if we can determine consistent module version...
+	// Build the pfm memo to specify the forwarding logic
 	// This transfer channel id is a channel on the reward Zone for transfers to the trade zone
 	// (not to be confused with a transfer channel on Stride or the Host Zone)
-	memoJSON := fmt.Sprintf(`"forward": {"receiver": "%s","port": "%s","channel":"%s","timeout":"10m","retries": 2}`,
-		tradeIcaAddress, transfertypes.PortID, route.RewardToTradeChannelId)
+	memo := PacketForwardMetadata{
+		Forward: &ForwardMetadata{
+			Receiver: tradeIcaAddress,
+			Port:     transfertypes.PortID,
+			Channel:  route.RewardToTradeChannelId,
+			Timeout:  transfer2TimeoutDuration,
+			Retries:  0,
+		},
+	}
+	memoJSON, err := json.Marshal(memo)
+	if err != nil {
+		return msg, err
+	}
 
-	var msgs []proto.Message
-	msgs = append(msgs, &transfertypes.MsgTransfer{
+	msg = transfertypes.MsgTransfer{
 		SourcePort:       transfertypes.PortID,
 		SourceChannel:    route.HostToRewardChannelId, // channel on hostZone for transfers to rewardZone
 		Token:            sendTokens,
 		Sender:           withdrawlIcaAddress,
 		Receiver:         unwindIcaAddress, // could be "pfm" or a real address depending on version
-		TimeoutTimestamp: timeout,
-		Memo:             memoJSON,
-	})
+		TimeoutTimestamp: transfer1TimeoutTimestamp,
+		Memo:             string(memoJSON),
+	}
+
+	return msg, nil
+}
+
+// ICA tx will kick off transfering the reward tokens from the hostZone withdrawl ICA to the tradeZone trade ICA
+// This will be two hops to unwind the ibc denom through the rewardZone using pfm in the transfer memo
+func (k Keeper) TransferRewardTokensHostToTrade(ctx sdk.Context, amount sdkmath.Int, route types.TradeRoute) error {
+	// If the min swap amount was not set it would be ZeroInt, if positive we need to compare to the amount given
+	//  then if the min swap amount is greater than the current amount, do nothing this epoch to avoid small transfers
+	//  Particularly important for the PFM hop if the reward chain has frictional transfer fees (like noble chain)
+	if route.TradeConfig.MinSwapAmount.IsPositive() && route.TradeConfig.MinSwapAmount.GT(amount) {
+		return nil
+	}
+
+	// Build the PFM transfer message from host to trade zone
+	msg, err := k.BuildHostToTradeTransferMsg(ctx, amount, route)
+	if err != nil {
+		return err
+	}
+	msgs := []proto.Message{&msg}
 
 	hostZoneId := route.HostAccount.ChainId
 	rewardZoneId := route.RewardAccount.ChainId
 	tradeZoneId := route.TradeAccount.ChainId
 	k.Logger(ctx).Info(utils.LogWithHostZone(hostZoneId,
-		"Preparing MsgTransfer of %+v from %s to %s to %s", sendTokens, hostZoneId, rewardZoneId, tradeZoneId))
+		"Preparing MsgTransfer of %+v from %s to %s to %s", msg.Token, hostZoneId, rewardZoneId, tradeZoneId))
 
 	// Send the ICA tx to kick off transfer from hostZone through rewardZone to the tradeZone (no callbacks)
 	hostZoneConnectionId := route.HostAccount.ConnectionId
-	err := k.SubmitICATxWithoutCallback(ctx, hostZoneConnectionId, types.ICAAccountType_WITHDRAWAL, msgs, timeout)
+	err = k.SubmitICATxWithoutCallback(ctx, hostZoneConnectionId, types.ICAAccountType_WITHDRAWAL, msgs, msg.TimeoutTimestamp)
 	if err != nil {
 		return errorsmod.Wrapf(err, "Failed to submit ICA tx, Messages: %+v", msgs)
 	}
@@ -138,28 +181,22 @@ func (k Keeper) TransferConvertedTokensTradeToHost(ctx sdk.Context, amount sdkma
 	return nil
 }
 
-// Trade reward tokens in the Trade ICA for the host denom tokens using ICA remote tx on trade zone
-// The amount represents the total amount of the reward token in the trade ICA found by the calling ICQ
+// Builds the Osmosis swap message to trade reward tokens for host tokens
 // Depending on min and max swap amounts set in the route, it is possible not the full amount given will swap
-func (k Keeper) SwapRewardTokens(ctx sdk.Context, rewardAmount sdkmath.Int, route types.TradeRoute) error {
-	// If the min swap amount was not set it would be ZeroInt, if positive we need to compare to the amount given
-	//  then if the min swap amount is greater than the current amount, do nothing this epoch to avoid small swaps
-	tradeConfig := route.TradeConfig
-	if tradeConfig.MinSwapAmount.IsPositive() && tradeConfig.MinSwapAmount.GT(rewardAmount) {
-		return nil
-	}
-
+// The minimum amount of tokens that can come out of the trade is calculated using a price from the pool
+func (k Keeper) BuildSwapMsg(rewardAmount sdkmath.Int, route types.TradeRoute) (msg types.MsgSwapExactAmountIn, err error) {
 	// If the max swap amount was not set it would be ZeroInt, if positive we need to compare to the amount given
 	//  then if max swap amount is LTE to amount full swap is possible so amount is fine, otherwise set amount to max
-	if tradeConfig.MaxSwapAmount.IsPositive() && tradeConfig.MaxSwapAmount.GT(rewardAmount) {
+	tradeConfig := route.TradeConfig
+	if tradeConfig.MaxSwapAmount.IsPositive() && rewardAmount.GT(tradeConfig.MaxSwapAmount) {
 		rewardAmount = tradeConfig.MaxSwapAmount
 	}
 
 	// See if pool swap price has been set to a valid ratio
 	// The only time this should not be set is right after the pool is added,
 	// before an ICQ has been submitted for the price
-	if tradeConfig.SwapPrice == sdk.ZeroDec() {
-		return fmt.Errorf("Price not found for pool %d", tradeConfig.PoolId)
+	if tradeConfig.SwapPrice.IsZero() {
+		return msg, fmt.Errorf("Price not found for pool %d", tradeConfig.PoolId)
 	}
 
 	// If there is a valid price, use it to set a floor for the acceptable minimum output tokens
@@ -176,7 +213,6 @@ func (k Keeper) SwapRewardTokens(ctx sdk.Context, rewardAmount sdkmath.Int, rout
 	minOutPercentage := sdk.OneDec().Sub(tradeConfig.MaxAllowedSwapLossRate)
 	minOut := rewardAmountConverted.Mul(minOutPercentage).TruncateInt()
 
-	tradeIcaAccount := route.TradeAccount
 	tradeTokens := sdk.NewCoin(route.RewardDenomOnTradeZone, rewardAmount)
 
 	// Prepare Osmosis GAMM module MsgSwapExactAmountIn from the trade account to perform the trade
@@ -186,15 +222,38 @@ func (k Keeper) SwapRewardTokens(ctx sdk.Context, rewardAmount sdkmath.Int, rout
 		PoolId:        tradeConfig.PoolId,
 		TokenOutDenom: route.HostDenomOnTradeZone,
 	}}
-	msgs := []proto.Message{&types.MsgSwapExactAmountIn{
-		Sender:            tradeIcaAccount.Address,
+	msg = types.MsgSwapExactAmountIn{
+		Sender:            route.TradeAccount.Address,
 		Routes:            routes,
 		TokenIn:           tradeTokens,
 		TokenOutMinAmount: minOut,
-	}}
-	k.Logger(ctx).Info(utils.LogWithHostZone(tradeIcaAccount.ChainId,
-		"Preparing MsgSwapExactAmountIn of %+v from the trade account", tradeTokens))
+	}
 
+	return msg, nil
+}
+
+// Trade reward tokens in the Trade ICA for the host denom tokens using ICA remote tx on trade zone
+// The amount represents the total amount of the reward token in the trade ICA found by the calling ICQ
+func (k Keeper) SwapRewardTokens(ctx sdk.Context, rewardAmount sdkmath.Int, route types.TradeRoute) error {
+	// If the min swap amount was not set it would be ZeroInt, if positive we need to compare to the amount given
+	//  then if the min swap amount is greater than the current amount, do nothing this epoch to avoid small swaps
+	tradeConfig := route.TradeConfig
+	if tradeConfig.MinSwapAmount.IsPositive() && tradeConfig.MinSwapAmount.GT(rewardAmount) {
+		return nil
+	}
+
+	// Build the Osmosis swap message to convert reward tokens to host tokens
+	msg, err := k.BuildSwapMsg(rewardAmount, route)
+	if err != nil {
+		return err
+	}
+	msgs := []proto.Message{&msg}
+
+	tradeIcaAccount := route.TradeAccount
+	k.Logger(ctx).Info(utils.LogWithHostZone(tradeIcaAccount.ChainId,
+		"Preparing MsgSwapExactAmountIn of %+v from the trade account", msg.TokenIn))
+
+	// Timeout the swap at the end of the epoch
 	strideEpochTracker, found := k.GetEpochTracker(ctx, epochstypes.STRIDE_EPOCH)
 	if !found {
 		return errorsmod.Wrapf(types.ErrEpochNotFound, epochstypes.STRIDE_EPOCH)
@@ -202,7 +261,7 @@ func (k Keeper) SwapRewardTokens(ctx sdk.Context, rewardAmount sdkmath.Int, rout
 	timeout := uint64(strideEpochTracker.NextEpochStartTime)
 
 	// Send the ICA tx to perform the swap on the tradeZone
-	err := k.SubmitICATxWithoutCallback(ctx, tradeIcaAccount.ConnectionId, types.ICAAccountType_CONVERTER_TRADE, msgs, timeout)
+	err = k.SubmitICATxWithoutCallback(ctx, tradeIcaAccount.ConnectionId, types.ICAAccountType_CONVERTER_TRADE, msgs, timeout)
 	if err != nil {
 		return errorsmod.Wrapf(err, "Failed to submit ICA tx for the swap, Messages: %v", msgs)
 	}
@@ -238,8 +297,11 @@ func (k Keeper) WithdrawalRewardBalanceQuery(ctx sdk.Context, route types.TradeR
 	timeout := time.Unix(0, int64(strideEpochTracker.NextEpochStartTime))
 	timeoutDuration := timeout.Sub(ctx.BlockTime())
 
-	// The only callback data we need is the trade route
-	callbackData := route
+	// We need the trade route keys in the callback to look up the tradeRoute struct
+	callbackData := types.TradeRouteCallback{
+		RewardDenom: route.RewardDenomOnRewardZone,
+		HostDenom:   route.HostDenomOnHostZone,
+	}
 	callbackDataBz, err := proto.Marshal(&callbackData)
 	if err != nil {
 		return errorsmod.Wrapf(err, "unable to marshal TradeRoute callback data")
@@ -279,15 +341,18 @@ func (k Keeper) TradeRewardBalanceQuery(ctx sdk.Context, route types.TradeRoute)
 	queryData := append(bankTypes.CreateAccountBalancesPrefix(tradeAddressBz), []byte(route.RewardDenomOnTradeZone)...)
 
 	// Timeout query at end of epoch
-	strideEpochTracker, found := k.GetEpochTracker(ctx, epochstypes.STRIDE_EPOCH)
+	hourEpochTracker, found := k.GetEpochTracker(ctx, epochstypes.HOUR_EPOCH)
 	if !found {
-		return errorsmod.Wrapf(types.ErrEpochNotFound, epochstypes.STRIDE_EPOCH)
+		return errorsmod.Wrapf(types.ErrEpochNotFound, epochstypes.HOUR_EPOCH)
 	}
-	timeout := time.Unix(0, int64(strideEpochTracker.NextEpochStartTime))
+	timeout := time.Unix(0, int64(hourEpochTracker.NextEpochStartTime))
 	timeoutDuration := timeout.Sub(ctx.BlockTime())
 
-	// The only callback data we need is the trade route
-	callbackData := route
+	// We need the trade route keys in the callback to look up the tradeRoute struct
+	callbackData := types.TradeRouteCallback{
+		RewardDenom: route.RewardDenomOnRewardZone,
+		HostDenom:   route.HostDenomOnHostZone,
+	}
 	callbackDataBz, err := proto.Marshal(&callbackData)
 	if err != nil {
 		return errorsmod.Wrapf(err, "unable to marshal TradeRewardBalanceQuery callback data")
@@ -334,8 +399,11 @@ func (k Keeper) TradeConvertedBalanceQuery(ctx sdk.Context, route types.TradeRou
 	timeout := time.Unix(0, int64(strideEpochTracker.NextEpochStartTime))
 	timeoutDuration := timeout.Sub(ctx.BlockTime())
 
-	// The only callback data we need is the trade route
-	callbackData := route
+	// We need the trade route keys in the callback to look up the tradeRoute struct
+	callbackData := types.TradeRouteCallback{
+		RewardDenom: route.RewardDenomOnRewardZone,
+		HostDenom:   route.HostDenomOnHostZone,
+	}
 	callbackDataBz, err := proto.Marshal(&callbackData)
 	if err != nil {
 		return errorsmod.Wrapf(err, "unable to marshal trade route as callback data")
@@ -376,15 +444,18 @@ func (k Keeper) PoolPriceQuery(ctx sdk.Context, route types.TradeRoute) error {
 	queryData := icqtypes.FormatOsmosisMostRecentTWAPKey(route.TradeConfig.PoolId, denom1, denom2)
 
 	// Timeout query at end of epoch
-	strideEpochTracker, found := k.GetEpochTracker(ctx, epochstypes.STRIDE_EPOCH)
+	hourEpochTracker, found := k.GetEpochTracker(ctx, epochstypes.HOUR_EPOCH)
 	if !found {
-		return errorsmod.Wrapf(types.ErrEpochNotFound, epochstypes.STRIDE_EPOCH)
+		return errorsmod.Wrapf(types.ErrEpochNotFound, epochstypes.HOUR_EPOCH)
 	}
-	timeout := time.Unix(0, int64(strideEpochTracker.NextEpochStartTime))
+	timeout := time.Unix(0, int64(hourEpochTracker.NextEpochStartTime))
 	timeoutDuration := timeout.Sub(ctx.BlockTime())
 
-	// The only callback data we will need is the trade route
-	callbackData := route
+	// We need the trade route keys in the callback to look up the tradeRoute struct
+	callbackData := types.TradeRouteCallback{
+		RewardDenom: route.RewardDenomOnRewardZone,
+		HostDenom:   route.HostDenomOnHostZone,
+	}
 	callbackDataBz, err := proto.Marshal(&callbackData)
 	if err != nil {
 		return errorsmod.Wrapf(err, "unable to marshal TradeRewardBalanceQuery callback data")

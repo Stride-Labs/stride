@@ -409,6 +409,13 @@ func (s *AppTestHelper) GetIBCDenomTrace(denom string) transfertypes.DenomTrace 
 	return transfertypes.ParseDenomTrace(prefixedDenom)
 }
 
+// Helper function to get the next sequence number for testing when an ICA was submitted
+func (s *AppTestHelper) MustGetNextSequenceNumber(portId, channelId string) uint64 {
+	sequence, found := s.App.StakeibcKeeper.IBCKeeper.ChannelKeeper.GetNextSequenceSend(s.Ctx, portId, channelId)
+	s.Require().True(found, "sequence number for port %s and channel %s was not found", portId, channelId)
+	return sequence
+}
+
 // Creates and stores an IBC denom from a base denom on transfer channel-0
 // This is only required for tests that use the transfer keeper and require that the IBC
 // denom is present in the store
@@ -435,6 +442,20 @@ func (s *AppTestHelper) MockClientLatestHeight(height uint64) {
 	}
 	s.App.IBCKeeper.ConnectionKeeper.SetConnection(s.Ctx, ibctesting.FirstConnectionID, connection)
 	s.App.IBCKeeper.ClientKeeper.SetClientState(s.Ctx, FirstClientId, &clientState)
+}
+
+// Helper function to mock out a client and connection to test
+// mapping from connection ID back to chain ID
+func (s *AppTestHelper) MockClientAndConnection(chainId, clientId, connectionId string) {
+	clientState := tendermint.ClientState{
+		ChainId: chainId,
+	}
+	s.App.IBCKeeper.ClientKeeper.SetClientState(s.Ctx, clientId, &clientState)
+
+	connection := connectiontypes.ConnectionEnd{
+		ClientId: clientId,
+	}
+	s.App.IBCKeeper.ConnectionKeeper.SetConnection(s.Ctx, connectionId, connection)
 }
 
 func (s *AppTestHelper) ConfirmUpgradeSucceededs(upgradeName string, upgradeHeight int64) {
