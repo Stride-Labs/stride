@@ -156,3 +156,72 @@ func (s *KeeperTestSuite) TestPoolPriceCallback_DenomMismatch() {
 	s.Require().ErrorContains(err, "Assets in query response")
 	s.Require().ErrorContains(err, "do not match denom's from trade route")
 }
+
+func (s *KeeperTestSuite) TestAssertTwapAssetsMatchTradeRoute() {
+	testCases := []struct {
+		name          string
+		twapRecord    types.OsmosisTwapRecord
+		tradeRoute    types.TradeRoute
+		expectedMatch bool
+	}{
+		{
+			name:          "successful match - 1",
+			twapRecord:    types.OsmosisTwapRecord{Asset0Denom: "denom-a", Asset1Denom: "denom-b"},
+			tradeRoute:    types.TradeRoute{RewardDenomOnTradeZone: "denom-a", HostDenomOnTradeZone: "denom-b"},
+			expectedMatch: true,
+		},
+		{
+			name:          "successful match - 2",
+			twapRecord:    types.OsmosisTwapRecord{Asset0Denom: "denom-b", Asset1Denom: "denom-a"},
+			tradeRoute:    types.TradeRoute{RewardDenomOnTradeZone: "denom-b", HostDenomOnTradeZone: "denom-a"},
+			expectedMatch: true,
+		},
+		{
+			name:          "successful match - 3",
+			twapRecord:    types.OsmosisTwapRecord{Asset0Denom: "denom-a", Asset1Denom: "denom-b"},
+			tradeRoute:    types.TradeRoute{RewardDenomOnTradeZone: "denom-b", HostDenomOnTradeZone: "denom-a"},
+			expectedMatch: true,
+		},
+		{
+			name:          "successful match - 4",
+			twapRecord:    types.OsmosisTwapRecord{Asset0Denom: "denom-b", Asset1Denom: "denom-a"},
+			tradeRoute:    types.TradeRoute{RewardDenomOnTradeZone: "denom-a", HostDenomOnTradeZone: "denom-b"},
+			expectedMatch: true,
+		},
+		{
+			name:          "mismatch osmo asset 0",
+			twapRecord:    types.OsmosisTwapRecord{Asset0Denom: "denom-z", Asset1Denom: "denom-b"},
+			tradeRoute:    types.TradeRoute{RewardDenomOnTradeZone: "denom-a", HostDenomOnTradeZone: "denom-b"},
+			expectedMatch: false,
+		},
+		{
+			name:          "mismatch osmo asset 1",
+			twapRecord:    types.OsmosisTwapRecord{Asset0Denom: "denom-a", Asset1Denom: "denom-z"},
+			tradeRoute:    types.TradeRoute{RewardDenomOnTradeZone: "denom-a", HostDenomOnTradeZone: "denom-b"},
+			expectedMatch: false,
+		},
+		{
+			name:          "mismatch route reward denom",
+			twapRecord:    types.OsmosisTwapRecord{Asset0Denom: "denom-a", Asset1Denom: "denom-b"},
+			tradeRoute:    types.TradeRoute{RewardDenomOnTradeZone: "denom-z", HostDenomOnTradeZone: "denom-b"},
+			expectedMatch: false,
+		},
+		{
+			name:          "mismatch route host denom",
+			twapRecord:    types.OsmosisTwapRecord{Asset0Denom: "denom-a", Asset1Denom: "denom-b"},
+			tradeRoute:    types.TradeRoute{RewardDenomOnTradeZone: "denom-a", HostDenomOnTradeZone: "denom-z"},
+			expectedMatch: false,
+		},
+	}
+
+	for _, tc := range testCases {
+		s.Run(tc.name, func() {
+			err := keeper.AssertTwapAssetsMatchTradeRoute(tc.twapRecord, tc.tradeRoute)
+			if tc.expectedMatch {
+				s.Require().NoError(err)
+			} else {
+				s.Require().Error(err)
+			}
+		})
+	}
+}
