@@ -6,6 +6,7 @@ import (
 
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/types/bech32"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/cosmos/gogoproto/proto"
 	transfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
@@ -376,89 +377,72 @@ func (s *KeeperTestSuite) TestSwapRewardTokens() {
 // Create the traderoute for these tests, only need the withdrawal address and the
 //
 //	reward_denom_on_host since this will be what is used in the query, no other setup
-func (s *KeeperTestSuite) SetupWithdrawalRewardBalanceQueryTestCase() types.TradeRoute {
-	// Create the connection between Stride and HostChain with the withdrawal account initialized
-	withdrawalAccountOwner := fmt.Sprintf("%s.%s", HostChainId, types.ICAAccountType_WITHDRAWAL.String())
-	withdrawalChannelId, withdrawalPortId := s.CreateICAChannel(withdrawalAccountOwner)
-	withdrawalAddress := s.IcaAddresses[withdrawalAccountOwner]
-	withdrawalConnectionId, _, _ := s.App.StakeibcKeeper.IBCKeeper.ChannelKeeper.
-		GetChannelConnection(s.Ctx, withdrawalPortId, withdrawalChannelId)
+func (s *KeeperTestSuite) SetupWithdrawalRewardBalanceQueryTestCase() (route types.TradeRoute, expectedTimeout time.Duration) {
+	// Create a transfer channel so the connection exists for the query submission
+	s.CreateTransferChannel(HostChainId)
 
-	hostICA := types.ICAAccount{
-		ChainId:      HostChainId,
-		Type:         types.ICAAccountType_WITHDRAWAL,
-		ConnectionId: withdrawalConnectionId,
-		Address:      withdrawalAddress,
-	}
-
-	// Must initialize these or they will serialize differently from the default values
-	tradeConfig := types.TradeConfig{
-		SwapPrice:              sdk.OneDec(),
-		MaxAllowedSwapLossRate: sdk.MustNewDecFromStr("0.05"),
-		MinSwapAmount:          sdk.ZeroInt(),
-		MaxSwapAmount:          sdk.NewIntFromUint64(uint64(1_000_000)),
-	}
-
-	// Create and set the trade route for testing
+	// Create and set the trade route
 	tradeRoute := types.TradeRoute{
-		RewardDenomOnHostZone: "ibc/reward_on_host",
-		HostAccount:           hostICA,
-		TradeConfig:           tradeConfig,
+		RewardDenomOnRewardZone: RewardDenom,
+		HostDenomOnHostZone:     HostDenom,
+		RewardDenomOnHostZone:   "ibc/reward_on_host",
+		HostAccount: types.ICAAccount{
+			ChainId:      HostChainId,
+			Type:         types.ICAAccountType_WITHDRAWAL,
+			ConnectionId: ibctesting.FirstConnectionID,
+			Address:      ICAAddress, // must be a valid bech32, easiest to use stride prefix for validation
+		},
 	}
 	s.App.StakeibcKeeper.SetTradeRoute(s.Ctx, tradeRoute)
 
 	// Create and set the epoch tracker for timeouts
 	timeoutDuration := time.Second * 30
-	epochEndTime := uint64(s.Ctx.BlockTime().Add(timeoutDuration).UnixNano())
-	epochTracker := types.EpochTracker{
-		EpochIdentifier:    epochtypes.STRIDE_EPOCH,
-		NextEpochStartTime: epochEndTime,
-	}
-	s.App.StakeibcKeeper.SetEpochTracker(s.Ctx, epochTracker)
+	s.CreateEpochForICATimeout(epochtypes.STRIDE_EPOCH, timeoutDuration)
 
-	return tradeRoute
+	return tradeRoute, timeoutDuration
 }
 
 // Tests a successful WithdrawalRewardBalanceQuery
 func (s *KeeperTestSuite) TestWithdrawalRewardBalanceQuery_Successful() {
-	tradeRoute := s.SetupWithdrawalRewardBalanceQueryTestCase()
+	route, timeoutDuration := s.SetupWithdrawalRewardBalanceQueryTestCase()
 
-	err := s.App.StakeibcKeeper.WithdrawalRewardBalanceQuery(s.Ctx, tradeRoute)
+	err := s.App.StakeibcKeeper.WithdrawalRewardBalanceQuery(s.Ctx, route)
 	s.Require().NoError(err, "no error expected when querying balance")
 
-	// Check that one query was submitted
-	queries := s.App.InterchainqueryKeeper.AllQueries(s.Ctx)
-	s.Require().Len(queries, 1, "there should have been 1 query submitted")
-	query := queries[0]
+	// Validate fields from the query submission
+	_, addressBz, _ := bech32.DecodeAndConvert(HostICAAddress)
+	expectedRequestData := append(banktypes.CreateAccountBalancesPrefix(addressBz), []byte(route.RewardDenomOnHostZone)...)
 
-	// Confirm query contents
-	s.Require().Equal(tradeRoute.HostAccount.ChainId, query.ChainId, "query chain ID")
-	s.Require().Equal(tradeRoute.HostAccount.ConnectionId, query.ConnectionId, "query connection ID")
-	s.Require().Equal(icqtypes.BANK_STORE_QUERY_WITH_PROOF, query.QueryType, "query type")
-	s.Require().Equal(icqtypes.TimeoutPolicy_REJECT_QUERY_RESPONSE, query.TimeoutPolicy, "query timeout policy")
+	query := s.ValidateQuerySubmission(
+		icqtypes.BANK_STORE_QUERY_WITH_PROOF,
+		expectedRequestData,
+		keeper.ICQCallbackID_WithdrawalRewardBalance,
+		timeoutDuration,
+		icqtypes.TimeoutPolicy_REJECT_QUERY_RESPONSE,
+	)
 
-	// Confirm callback data
-	s.Require().Equal(types.ModuleName, query.CallbackModule, "query callback module")
-	s.Require().Equal(keeper.ICQCallbackID_WithdrawalRewardBalance, query.CallbackId, "query callback id")
+	expectedCallbackData := types.TradeRouteCallback{
+		RewardDenom: RewardDenom,
+		HostDenom:   HostDenom,
+	}
 
-	var actualCallbackData types.TradeRoute
-	err = proto.Unmarshal(query.CallbackData, &actualCallbackData)
-	s.Require().NoError(err, "no error expected when unmarshalling callback data")
-
-	// Callback data should just be the trade route itself
-	s.Require().Equal(tradeRoute, actualCallbackData, "query callabck data")
-
-	// Confirm query request info
+	// Deserialize and confirm query request info
 	requestData := query.RequestData[1:] // Remove BalancePrefix byte
 	actualAddress, actualDenom, err := banktypes.AddressAndDenomFromBalancesStore(requestData)
 	s.Require().NoError(err, "no error expected when retrieving address and denom from store key")
-	s.Require().Equal(tradeRoute.HostAccount.Address, actualAddress.String(), "query account address")
-	s.Require().Equal(tradeRoute.RewardDenomOnHostZone, actualDenom, "query denom")
+	s.Require().Equal(route.HostAccount.Address, actualAddress.String(), "query account address")
+	s.Require().Equal(route.RewardDenomOnHostZone, actualDenom, "query denom")
+
+	// Validate the query callback data
+	var actualCallbackData types.TradeRouteCallback
+	err = proto.Unmarshal(query.CallbackData, &actualCallbackData)
+	s.Require().NoError(err)
+	s.Require().Equal(expectedCallbackData, actualCallbackData, "query callback data")
 }
 
 // Tests a WithdrawalRewardBalanceQuery that fails due to an invalid account address
 func (s *KeeperTestSuite) TestWithdrawalRewardBalanceQuery_Failure_InvalidAccountAddress() {
-	tradeRoute := s.SetupWithdrawalRewardBalanceQueryTestCase()
+	tradeRoute, _ := s.SetupWithdrawalRewardBalanceQueryTestCase()
 
 	// Change the withdrawal ICA account address to be invalid
 	tradeRoute.HostAccount.Address = "invalid_address"
@@ -469,7 +453,7 @@ func (s *KeeperTestSuite) TestWithdrawalRewardBalanceQuery_Failure_InvalidAccoun
 
 // Tests a WithdrawalRewardBalanceQuery that fails due to a missing epoch tracker
 func (s *KeeperTestSuite) TestWithdrawalRewardBalanceQuery_Failure_MissingEpoch() {
-	tradeRoute := s.SetupWithdrawalRewardBalanceQueryTestCase()
+	tradeRoute, _ := s.SetupWithdrawalRewardBalanceQueryTestCase()
 
 	// Remove the stride epoch so the test fails
 	s.App.StakeibcKeeper.RemoveEpochTracker(s.Ctx, epochtypes.STRIDE_EPOCH)
@@ -480,7 +464,7 @@ func (s *KeeperTestSuite) TestWithdrawalRewardBalanceQuery_Failure_MissingEpoch(
 
 // Tests a WithdrawalRewardBalanceQuery that fails to submit the query due to bad connection
 func (s *KeeperTestSuite) TestWithdrawalRewardBalanceQuery_FailedQuerySubmission() {
-	tradeRoute := s.SetupWithdrawalRewardBalanceQueryTestCase()
+	tradeRoute, _ := s.SetupWithdrawalRewardBalanceQueryTestCase()
 
 	// Change the withdrawal ICA connection id to be invalid
 	tradeRoute.HostAccount.ConnectionId = "invalid_connection"
