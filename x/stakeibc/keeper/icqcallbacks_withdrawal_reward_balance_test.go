@@ -133,6 +133,21 @@ func (s *KeeperTestSuite) TestWithdrawalRewardBalanceCallback_InvalidArgs() {
 	s.Require().ErrorContains(err, "unable to determine balance from query response")
 }
 
+func (s *KeeperTestSuite) TestWithdrawalRewardBalanceCallback_TradeRouteNotFound() {
+	tc := s.SetupWithdrawalRewardBalanceCallbackTestCase()
+
+	// Update the callback data so that it keys to a trade route that doesn't exist
+	invalidCallbackDataBz, _ := proto.Marshal(&types.TradeRouteCallback{
+		RewardDenom: RewardDenom,
+		HostDenom:   "different-host-denom",
+	})
+	invalidQuery := tc.Response.Query
+	invalidQuery.CallbackData = invalidCallbackDataBz
+
+	err := keeper.WithdrawalRewardBalanceCallback(s.App.StakeibcKeeper, s.Ctx, tc.Response.CallbackArgs, invalidQuery)
+	s.Require().ErrorContains(err, "trade route not found")
+}
+
 func (s *KeeperTestSuite) TestWithdrawalRewardBalanceCallback_FailedSubmitTx() {
 	tc := s.SetupWithdrawalRewardBalanceCallbackTestCase()
 
