@@ -16,16 +16,14 @@ import (
 	"github.com/Stride-Labs/stride/v16/x/stakeibc/types"
 )
 
-type ICQCallbackArgs struct {
-	Query        icqtypes.Query
-	CallbackArgs []byte
-}
-
+// Useful across all balance query icqcallback tests
 type BalanceQueryCallbackTestCase struct {
-	TradeRoute types.TradeRoute
-	Response   ICQCallbackArgs
-	ChannelID  string
-	PortID     string
+	TradeRoute    types.TradeRoute
+	Response      ICQCallbackArgs
+	Balance       sdkmath.Int
+	ChannelID     string
+	PortID        string
+	StartSequence uint64
 }
 
 // --------------------------------------------------------------

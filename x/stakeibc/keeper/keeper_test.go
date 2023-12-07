@@ -41,6 +41,11 @@ const (
 	CommunityPoolRedeemHoldingAddress = "redeem-holding"
 )
 
+type ICQCallbackArgs struct {
+	Query        icqtypes.Query
+	CallbackArgs []byte
+}
+
 type KeeperTestSuite struct {
 	apptesting.AppTestHelper
 }
