@@ -375,8 +375,7 @@ func (s *KeeperTestSuite) TestSwapRewardTokens() {
 // --------------------------------------------------------------
 
 // Create the traderoute for these tests, only need the withdrawal address and the
-//
-//	reward_denom_on_host since this will be what is used in the query, no other setup
+// reward_denom_on_host since this will be what is used in the query, no other setup
 func (s *KeeperTestSuite) SetupWithdrawalRewardBalanceQueryTestCase() (route types.TradeRoute, expectedTimeout time.Duration) {
 	// Create a transfer channel so the connection exists for the query submission
 	s.CreateTransferChannel(HostChainId)
@@ -478,91 +477,73 @@ func (s *KeeperTestSuite) TestWithdrawalRewardBalanceQuery_FailedQuerySubmission
 // --------------------------------------------------------------
 
 // Create the traderoute for these tests, only need the trade address and the
-//
-//	reward_denom_on_trade since this will be what is used in the query, no other setup
-func (s *KeeperTestSuite) SetupTradeRewardBalanceQueryTestCase() types.TradeRoute {
-	// Create the connection between Stride and OsmoChain with the trade account initialized
-	tradeAccountOwner := fmt.Sprintf("%s.%s", OsmoChainId, types.ICAAccountType_CONVERTER_TRADE.String())
-	tradeChannelId, tradePortId := s.CreateICAChannel(tradeAccountOwner)
-	tradeAddress := s.IcaAddresses[tradeAccountOwner]
-	tradeConnectionId, _, _ := s.App.StakeibcKeeper.IBCKeeper.ChannelKeeper.
-		GetChannelConnection(s.Ctx, tradePortId, tradeChannelId)
+// reward_denom_on_trade since this will be what is used in the query, no other setup
+func (s *KeeperTestSuite) SetupTradeRewardBalanceQueryTestCase() (route types.TradeRoute, expectedTimeout time.Duration) {
+	// Create a transfer channel so the connection exists for the query submission
+	s.CreateTransferChannel(HostChainId)
 
-	tradeICA := types.ICAAccount{
-		ChainId:      OsmoChainId,
-		Type:         types.ICAAccountType_CONVERTER_TRADE,
-		ConnectionId: tradeConnectionId,
-		Address:      tradeAddress,
-	}
-
-	// Must initialize these or they will serialize differently from the default values
-	tradeConfig := types.TradeConfig{
-		SwapPrice:              sdk.OneDec(),
-		MaxAllowedSwapLossRate: sdk.MustNewDecFromStr("0.05"),
-		MinSwapAmount:          sdk.ZeroInt(),
-		MaxSwapAmount:          sdk.NewIntFromUint64(uint64(1_000_000)),
-	}
-
-	// Create and set the trade route for testing
+	// Create and set the trade route
 	tradeRoute := types.TradeRoute{
-		RewardDenomOnTradeZone: "ibc/reward_on_trade",
-		TradeAccount:           tradeICA,
-		TradeConfig:            tradeConfig,
+		RewardDenomOnRewardZone: RewardDenom,
+		HostDenomOnHostZone:     HostDenom,
+		RewardDenomOnTradeZone:  "ibc/reward_on_trade",
+		TradeAccount: types.ICAAccount{
+			ChainId:      HostChainId,
+			Type:         types.ICAAccountType_CONVERTER_TRADE,
+			ConnectionId: ibctesting.FirstConnectionID,
+			Address:      ICAAddress, // must be a valid bech32, easiest to use stride prefix for validation
+		},
 	}
 	s.App.StakeibcKeeper.SetTradeRoute(s.Ctx, tradeRoute)
 
 	// Create and set the epoch tracker for timeouts
 	timeoutDuration := time.Second * 30
-	epochEndTime := uint64(s.Ctx.BlockTime().Add(timeoutDuration).UnixNano())
-	epochTracker := types.EpochTracker{
-		EpochIdentifier:    epochtypes.STRIDE_EPOCH,
-		NextEpochStartTime: epochEndTime,
-	}
-	s.App.StakeibcKeeper.SetEpochTracker(s.Ctx, epochTracker)
+	s.CreateEpochForICATimeout(epochtypes.HOUR_EPOCH, timeoutDuration)
 
-	return tradeRoute
+	return tradeRoute, timeoutDuration
 }
 
 // Tests a successful TradeRewardBalanceQuery
 func (s *KeeperTestSuite) TestTradeRewardBalanceQuery_Successful() {
-	tradeRoute := s.SetupTradeRewardBalanceQueryTestCase()
+	route, timeoutDuration := s.SetupTradeRewardBalanceQueryTestCase()
 
-	err := s.App.StakeibcKeeper.TradeRewardBalanceQuery(s.Ctx, tradeRoute)
+	err := s.App.StakeibcKeeper.TradeRewardBalanceQuery(s.Ctx, route)
 	s.Require().NoError(err, "no error expected when querying balance")
 
-	// Check that one query was submitted
-	queries := s.App.InterchainqueryKeeper.AllQueries(s.Ctx)
-	s.Require().Len(queries, 1, "there should have been 1 query submitted")
-	query := queries[0]
+	// Validate fields from the query submission
+	_, addressBz, _ := bech32.DecodeAndConvert(HostICAAddress)
+	expectedRequestData := append(banktypes.CreateAccountBalancesPrefix(addressBz), []byte(route.RewardDenomOnTradeZone)...)
 
-	// Confirm query contents
-	s.Require().Equal(tradeRoute.TradeAccount.ChainId, query.ChainId, "query chain ID")
-	s.Require().Equal(tradeRoute.TradeAccount.ConnectionId, query.ConnectionId, "query connection ID")
-	s.Require().Equal(icqtypes.BANK_STORE_QUERY_WITH_PROOF, query.QueryType, "query type")
-	s.Require().Equal(icqtypes.TimeoutPolicy_REJECT_QUERY_RESPONSE, query.TimeoutPolicy, "query timeout policy")
+	query := s.ValidateQuerySubmission(
+		icqtypes.BANK_STORE_QUERY_WITH_PROOF,
+		expectedRequestData,
+		keeper.ICQCallbackID_TradeRewardBalance,
+		timeoutDuration,
+		icqtypes.TimeoutPolicy_REJECT_QUERY_RESPONSE,
+	)
 
-	// Confirm callback data
-	s.Require().Equal(types.ModuleName, query.CallbackModule, "query callback module")
-	s.Require().Equal(keeper.ICQCallbackID_TradeRewardBalance, query.CallbackId, "query callback id")
+	expectedCallbackData := types.TradeRouteCallback{
+		RewardDenom: RewardDenom,
+		HostDenom:   HostDenom,
+	}
 
-	var actualCallbackData types.TradeRoute
-	err = proto.Unmarshal(query.CallbackData, &actualCallbackData)
-	s.Require().NoError(err, "no error expected when unmarshalling callback data")
-
-	// Callback data should just be the trade route itself
-	s.Require().Equal(tradeRoute, actualCallbackData, "query callabck data")
-
-	// Confirm query request info
+	// Deserialize and confirm query request info
 	requestData := query.RequestData[1:] // Remove BalancePrefix byte
 	actualAddress, actualDenom, err := banktypes.AddressAndDenomFromBalancesStore(requestData)
 	s.Require().NoError(err, "no error expected when retrieving address and denom from store key")
-	s.Require().Equal(tradeRoute.TradeAccount.Address, actualAddress.String(), "query account address")
-	s.Require().Equal(tradeRoute.RewardDenomOnTradeZone, actualDenom, "query denom")
+	s.Require().Equal(route.TradeAccount.Address, actualAddress.String(), "query account address")
+	s.Require().Equal(route.RewardDenomOnTradeZone, actualDenom, "query denom")
+
+	// Validate the query callback data
+	var actualCallbackData types.TradeRouteCallback
+	err = proto.Unmarshal(query.CallbackData, &actualCallbackData)
+	s.Require().NoError(err)
+	s.Require().Equal(expectedCallbackData, actualCallbackData, "query callback data")
 }
 
 // Tests a TradeRewardBalanceQuery that fails due to an invalid account address
 func (s *KeeperTestSuite) TestTradeRewardBalanceQuery_Failure_InvalidAccountAddress() {
-	tradeRoute := s.SetupTradeRewardBalanceQueryTestCase()
+	tradeRoute, _ := s.SetupTradeRewardBalanceQueryTestCase()
 
 	// Change the trade ICA account address to be invalid
 	tradeRoute.TradeAccount.Address = "invalid_address"
@@ -573,18 +554,18 @@ func (s *KeeperTestSuite) TestTradeRewardBalanceQuery_Failure_InvalidAccountAddr
 
 // Tests a TradeRewardBalanceQuery that fails due to a missing epoch tracker
 func (s *KeeperTestSuite) TestTradeRewardBalanceQuery_Failure_MissingEpoch() {
-	tradeRoute := s.SetupTradeRewardBalanceQueryTestCase()
+	tradeRoute, _ := s.SetupTradeRewardBalanceQueryTestCase()
 
 	// Remove the stride epoch so the test fails
-	s.App.StakeibcKeeper.RemoveEpochTracker(s.Ctx, epochtypes.STRIDE_EPOCH)
+	s.App.StakeibcKeeper.RemoveEpochTracker(s.Ctx, epochtypes.HOUR_EPOCH)
 
 	err := s.App.StakeibcKeeper.TradeRewardBalanceQuery(s.Ctx, tradeRoute)
-	s.Require().ErrorContains(err, "stride_epoch: epoch not found")
+	s.Require().ErrorContains(err, "hour: epoch not found")
 }
 
 // Tests a TradeRewardBalanceQuery that fails to submit the query due to bad connection
 func (s *KeeperTestSuite) TestTradeRewardBalanceQuery_FailedQuerySubmission() {
-	tradeRoute := s.SetupTradeRewardBalanceQueryTestCase()
+	tradeRoute, _ := s.SetupTradeRewardBalanceQueryTestCase()
 
 	// Change the trade ICA connection id to be invalid
 	tradeRoute.TradeAccount.ConnectionId = "invalid_connection"
