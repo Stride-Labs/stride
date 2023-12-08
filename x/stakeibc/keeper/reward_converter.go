@@ -124,7 +124,13 @@ func (k Keeper) TransferRewardTokensHostToTrade(ctx sdk.Context, amount sdkmath.
 	// If the min swap amount was not set it would be ZeroInt, if positive we need to compare to the amount given
 	//  then if the min swap amount is greater than the current amount, do nothing this epoch to avoid small transfers
 	//  Particularly important for the PFM hop if the reward chain has frictional transfer fees (like noble chain)
-	if route.TradeConfig.MinSwapAmount.IsPositive() && route.TradeConfig.MinSwapAmount.GT(amount) {
+	if route.TradeConfig.MinSwapAmount.GT(amount) {
+		return nil
+	}
+
+	// Similarly, if there's no price on the trade route yet, don't initiate the transfer because
+	// we know the swap will not be submitted
+	if route.TradeConfig.SwapPrice.IsZero() {
 		return nil
 	}
 

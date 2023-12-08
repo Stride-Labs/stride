@@ -44,6 +44,7 @@ func (s *KeeperTestSuite) SetupWithdrawalRewardBalanceCallbackTestCase() Balance
 
 		TradeConfig: types.TradeConfig{
 			MinSwapAmount: sdk.ZeroInt(),
+			SwapPrice:     sdk.OneDec(),
 		},
 	}
 	s.App.StakeibcKeeper.SetTradeRoute(s.Ctx, route)
