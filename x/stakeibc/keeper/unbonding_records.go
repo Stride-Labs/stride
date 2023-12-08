@@ -267,7 +267,16 @@ func (k Keeper) UnbondFromHostZone(ctx sdk.Context, hostZone types.HostZone) err
 	// Determine the ideal balanced delegation for each validator after the unbonding
 	//   (as if we were to unbond and then rebalance)
 	// This will serve as the starting point for determining how much to unbond each validator
-	delegationAfterUnbonding := hostZone.TotalDelegations.Sub(totalUnbondAmount)
+	// first, get the total delegations _excluding_ validators with slash_query_in_progress
+	totalValidDelegationBeforeUnbonding := sdkmath.ZeroInt()
+	for _, validator := range hostZone.Validators {
+		if !validator.SlashQueryInProgress {
+			totalValidDelegationBeforeUnbonding = totalValidDelegationBeforeUnbonding.Add(validator.Delegation)
+		}
+	}
+	// then subtract out the amount to unbond
+	delegationAfterUnbonding := totalValidDelegationBeforeUnbonding.Sub(totalUnbondAmount)
+
 	balancedDelegationsAfterUnbonding, err := k.GetTargetValAmtsForHostZone(ctx, hostZone, delegationAfterUnbonding)
 	if err != nil {
 		return errorsmod.Wrapf(err, "unable to get target val amounts for host zone %s", hostZone.ChainId)
