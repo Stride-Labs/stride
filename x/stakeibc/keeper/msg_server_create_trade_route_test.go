@@ -127,7 +127,7 @@ func (s *KeeperTestSuite) submitCreateTradeRouteAndValidate(msg types.MsgCreateT
 	_, err := s.GetMsgServer().CreateTradeRoute(sdk.WrapSDKContext(s.Ctx), &msg)
 	s.Require().NoError(err, "no error expected when creating trade route")
 
-	actualRoute, found := s.App.StakeibcKeeper.GetTradeRoute(s.Ctx, RewardDenom, HostDenom)
+	actualRoute, found := s.App.StakeibcKeeper.GetTradeRoute(s.Ctx, msg.RewardDenomOnReward, msg.HostDenomOnHost)
 	s.Require().True(found, "trade route should have been created")
 	s.Require().Equal(expectedRoute, actualRoute, "trade route")
 }
