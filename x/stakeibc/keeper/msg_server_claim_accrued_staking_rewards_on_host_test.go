@@ -16,7 +16,7 @@ const numZeroDelegations = 37
 
 func (s *KeeperTestSuite) ClaimAccruedStakingRewardsOnHost() {
 	// Create a delegation ICA channel for the ICA submission
-	owner := types.FormatICAAccountOwner(HostChainId, types.ICAAccountType_DELEGATION)
+	owner := types.FormatHostZoneICAOwner(HostChainId, types.ICAAccountType_DELEGATION)
 	channelId, portId := s.CreateICAChannel(owner)
 
 	// Create validators
