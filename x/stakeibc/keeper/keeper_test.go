@@ -7,12 +7,15 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/suite"
 
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
+
 	"github.com/Stride-Labs/stride/v16/app/apptesting"
 	"github.com/Stride-Labs/stride/v16/x/stakeibc/keeper"
 	"github.com/Stride-Labs/stride/v16/x/stakeibc/types"
 )
 
-const (
+var (
 	Atom         = "uatom"
 	StAtom       = "stuatom"
 	IbcAtom      = "ibc/uatom"
@@ -36,6 +39,8 @@ const (
 	DepositAddress                    = "deposit"
 	CommunityPoolStakeHoldingAddress  = "staking-holding"
 	CommunityPoolRedeemHoldingAddress = "redeem-holding"
+
+	Authority = authtypes.NewModuleAddress(govtypes.ModuleName).String()
 )
 
 type KeeperTestSuite struct {
