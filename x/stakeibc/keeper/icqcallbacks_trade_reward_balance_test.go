@@ -27,8 +27,10 @@ func (s *KeeperTestSuite) SetupTradeRewardBalanceCallbackTestCase() BalanceQuery
 		HostDenomOnTradeZone:   "ibc/host_on_trade",
 
 		TradeAccount: types.ICAAccount{
+			ChainId:      HostChainId,
 			Address:      "trade-address",
 			ConnectionId: ibctesting.FirstConnectionID,
+			Type:         types.ICAAccountType_CONVERTER_TRADE,
 		},
 
 		TradeConfig: types.TradeConfig{
@@ -43,7 +45,7 @@ func (s *KeeperTestSuite) SetupTradeRewardBalanceCallbackTestCase() BalanceQuery
 
 	// Create and set the epoch tracker for timeouts
 	timeoutDuration := time.Second * 30
-	s.CreateEpochForICATimeout(epochtypes.STRIDE_EPOCH, timeoutDuration)
+	s.CreateEpochForICATimeout(epochtypes.HOUR_EPOCH, timeoutDuration)
 
 	// Build query object and serialized query response
 	balance := sdkmath.NewInt(1_000_000)

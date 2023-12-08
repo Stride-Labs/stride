@@ -29,8 +29,10 @@ func (s *KeeperTestSuite) SetupTradeConvertedBalanceCallbackTestCase() BalanceQu
 			Address: "withdrawal-address",
 		},
 		TradeAccount: types.ICAAccount{
+			ChainId:      HostChainId,
 			Address:      "trade-address",
 			ConnectionId: ibctesting.FirstConnectionID,
+			Type:         types.ICAAccountType_CONVERTER_TRADE,
 		},
 	}
 	s.App.StakeibcKeeper.SetTradeRoute(s.Ctx, route)

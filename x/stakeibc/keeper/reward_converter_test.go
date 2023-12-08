@@ -168,14 +168,19 @@ func (s *KeeperTestSuite) TestTransferConvertedTokensTradeToHost() {
 
 	// Create trade route with fields needed for transfer
 	route := types.TradeRoute{
-		HostDenomOnTradeZone: HostDenom,
+		RewardDenomOnRewardZone: RewardDenom,
+		HostDenomOnHostZone:     HostDenom,
+
+		HostDenomOnTradeZone: "ibc/host-on-trade",
 		TradeToHostChannelId: "channel-1",
 		HostAccount: types.ICAAccount{
 			Address: "host_address",
 		},
 		TradeAccount: types.ICAAccount{
+			ChainId:      HostChainId,
 			Address:      "trade_address",
 			ConnectionId: ibctesting.FirstConnectionID,
+			Type:         types.ICAAccountType_CONVERTER_TRADE,
 		},
 	}
 	s.App.StakeibcKeeper.SetTradeRoute(s.Ctx, route)
@@ -488,11 +493,12 @@ func (s *KeeperTestSuite) SetupWithdrawalRewardBalanceQueryTestCase() (route typ
 	}
 	s.App.StakeibcKeeper.SetTradeRoute(s.Ctx, tradeRoute)
 
-	// Create and set the epoch tracker for timeouts
-	timeoutDuration := time.Second * 30
-	s.CreateEpochForICATimeout(epochtypes.STRIDE_EPOCH, timeoutDuration)
+	// Create and set the epoch tracker for timeouts (the timeout is halfway through the epoch)
+	epochDuration := time.Second * 30
+	expectedTimeout = epochDuration / 2
+	s.CreateEpochForICATimeout(epochtypes.STRIDE_EPOCH, epochDuration)
 
-	return tradeRoute, timeoutDuration
+	return tradeRoute, expectedTimeout
 }
 
 // Tests a successful WithdrawalRewardBalanceQuery

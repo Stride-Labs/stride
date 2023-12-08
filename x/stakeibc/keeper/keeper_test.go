@@ -85,6 +85,7 @@ func (s *KeeperTestSuite) CreateEpochForICATimeout(epochType string, timeoutDura
 	epochTracker := types.EpochTracker{
 		EpochIdentifier:    epochType,
 		NextEpochStartTime: epochEndTime,
+		Duration:           uint64(timeoutDuration),
 	}
 	s.App.StakeibcKeeper.SetEpochTracker(s.Ctx, epochTracker)
 }

@@ -30,8 +30,10 @@ func (s *KeeperTestSuite) SetupWithdrawalRewardBalanceCallbackTestCase() Balance
 		RewardToTradeChannelId: "channel-3",
 
 		HostAccount: types.ICAAccount{
+			ChainId:      HostChainId,
 			Address:      "withdrawal-address",
 			ConnectionId: ibctesting.FirstConnectionID,
+			Type:         types.ICAAccountType_WITHDRAWAL,
 		},
 		RewardAccount: types.ICAAccount{
 			Address: "reward-address",
