@@ -16,8 +16,7 @@ import (
 
 func (s *KeeperTestSuite) SetupTradeRewardBalanceCallbackTestCase() BalanceQueryCallbackTestCase {
 	// Create the connection between Stride and HostChain with the withdrawal account initialized
-	// TODO [DYDX]: Replace with trade route formatter
-	tradeAccountOwner := types.FormatICAAccountOwner(HostChainId, types.ICAAccountType_CONVERTER_TRADE)
+	tradeAccountOwner := types.FormatTradeRouteICAOwner(HostChainId, RewardDenom, HostDenom, types.ICAAccountType_CONVERTER_TRADE)
 	tradeChannelId, tradePortId := s.CreateICAChannel(tradeAccountOwner)
 
 	route := types.TradeRoute{

@@ -18,8 +18,7 @@ import (
 // Therefore we need to setup traderoute fields used in the entire transfer (with pfm)
 func (s *KeeperTestSuite) SetupWithdrawalRewardBalanceCallbackTestCase() BalanceQueryCallbackTestCase {
 	// Create the connection between Stride and HostChain with the withdrawal account initialized
-	// TODO [DYDX]: Replace with trade route formatter
-	withdrawalAccountOwner := types.FormatICAAccountOwner(HostChainId, types.ICAAccountType_WITHDRAWAL)
+	withdrawalAccountOwner := types.FormatTradeRouteICAOwner(HostChainId, RewardDenom, HostDenom, types.ICAAccountType_WITHDRAWAL)
 	withdrawalChannelId, withdrawalPortId := s.CreateICAChannel(withdrawalAccountOwner)
 
 	route := types.TradeRoute{
