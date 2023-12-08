@@ -1,7 +1,6 @@
 package keeper
 
 import (
-	"errors"
 	"fmt"
 
 	"github.com/spf13/cast"
@@ -67,12 +66,6 @@ func (k Keeper) DelegateCallback(ctx sdk.Context, packet channeltypes.Packet, ac
 	// Regardless of failure/success/timeout, indicate that this ICA has completed
 	for _, splitDelegation := range delegateCallback.SplitDelegations {
 		if err := k.DecrementValidatorDelegationChangesInProgress(&hostZone, splitDelegation.Validator); err != nil {
-			// TODO: Revert after v14 upgrade
-			if errors.Is(err, types.ErrInvalidValidatorDelegationUpdates) {
-				k.Logger(ctx).Error(utils.LogICACallbackWithHostZone(chainId, ICACallbackID_Delegate,
-					"Invariant failed - delegation changes in progress fell below 0 for %s", splitDelegation.Validator))
-				continue
-			}
 			return err
 		}
 	}
