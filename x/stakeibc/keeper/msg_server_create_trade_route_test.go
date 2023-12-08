@@ -42,8 +42,7 @@ func (s *KeeperTestSuite) SetupTestCreateTradeRoute() (msg types.MsgCreateTradeR
 
 	// Register an exisiting ICA account for the unwind ICA to test that
 	// existing accounts are re-used
-	// TODO [DYDX]: Replace with trade route owner
-	owner := types.FormatICAAccountOwner(rewardChainId, types.ICAAccountType_CONVERTER_UNWIND)
+	owner := types.FormatTradeRouteICAOwner(rewardChainId, RewardDenom, HostDenom, types.ICAAccountType_CONVERTER_UNWIND)
 	s.MockICAChannel(rewardConnectionId, "channel-0", owner, unwindAddress)
 
 	// Create a host zone with an exisiting withdrawal address
@@ -220,9 +219,8 @@ func (s *KeeperTestSuite) TestCreateTradeRoute_Failure_UnableToRegisterICA() {
 	msg, expectedRoute := s.SetupTestCreateTradeRoute()
 
 	// Disable ICA middleware for the trade channel so the ICA fails
-	// TODO [DYDX]: Replace with new formatter
 	tradeAccount := expectedRoute.TradeAccount
-	tradeOwner := types.FormatICAAccountOwner(tradeAccount.ChainId, types.ICAAccountType_CONVERTER_TRADE)
+	tradeOwner := types.FormatTradeRouteICAOwner(tradeAccount.ChainId, RewardDenom, HostDenom, types.ICAAccountType_CONVERTER_TRADE)
 	tradePortId, _ := icatypes.NewControllerPortID(tradeOwner)
 	s.App.ICAControllerKeeper.SetMiddlewareDisabled(s.Ctx, tradePortId, tradeAccount.ConnectionId)
 
