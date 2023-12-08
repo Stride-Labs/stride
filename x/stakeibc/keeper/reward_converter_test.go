@@ -16,6 +16,19 @@ import (
 	"github.com/Stride-Labs/stride/v16/x/stakeibc/types"
 )
 
+// Useful across all balance query icqcallback tests
+type BalanceQueryCallbackTestCase struct {
+	TradeRoute types.TradeRoute
+	Response   ICQCallbackArgs
+	Balance    sdkmath.Int
+	ChannelID  string
+	PortID     string
+}
+
+// --------------------------------------------------------------
+//                   Transfer Host to Trade
+// --------------------------------------------------------------
+
 // Tests TransferRewardTokensHostToTrade and BuildHostToTradeTransferMsg
 func (s *KeeperTestSuite) TestTransferRewardTokensHostToTrade() {
 	// Create an ICA channel for the transfer submission
@@ -154,14 +167,19 @@ func (s *KeeperTestSuite) TestTransferConvertedTokensTradeToHost() {
 
 	// Create trade route with fields needed for transfer
 	route := types.TradeRoute{
-		HostDenomOnTradeZone: HostDenom,
+		RewardDenomOnRewardZone: RewardDenom,
+		HostDenomOnHostZone:     HostDenom,
+
+		HostDenomOnTradeZone: "ibc/host-on-trade",
 		TradeToHostChannelId: "channel-1",
 		HostAccount: types.ICAAccount{
 			Address: "host_address",
 		},
 		TradeAccount: types.ICAAccount{
+			ChainId:      HostChainId,
 			Address:      "trade_address",
 			ConnectionId: ibctesting.FirstConnectionID,
+			Type:         types.ICAAccountType_CONVERTER_TRADE,
 		},
 	}
 	s.App.StakeibcKeeper.SetTradeRoute(s.Ctx, route)
@@ -189,6 +207,10 @@ func (s *KeeperTestSuite) TestTransferConvertedTokensTradeToHost() {
 	err = s.App.StakeibcKeeper.TransferConvertedTokensTradeToHost(s.Ctx, transferAmount, invalidRoute)
 	s.Require().ErrorContains(err, "no trade account found")
 }
+
+// --------------------------------------------------------------
+//                    Reward Token Swap
+// --------------------------------------------------------------
 
 func (s *KeeperTestSuite) TestBuildSwapMsg() {
 	poolId := uint64(100)
@@ -422,6 +444,290 @@ func (s *KeeperTestSuite) TestSwapRewardTokens() {
 	err = s.App.StakeibcKeeper.SwapRewardTokens(s.Ctx, rewardAmount, route)
 	s.Require().ErrorContains(err, "epoch not found")
 }
+
+// --------------------------------------------------------------
+//            Trade Route ICQ Test Helpers
+// --------------------------------------------------------------
+
+// Helper function to validate the address and denom from the query request data
+func (s *KeeperTestSuite) validateAddressAndDenomInRequest(data []byte, expectedAddress, expectedDenom string) {
+	actualAddress, actualDenom := s.ExtractAddressAndDenomFromBankPrefix(data)
+	s.Require().Equal(expectedAddress, actualAddress, "query account address")
+	s.Require().Equal(expectedDenom, actualDenom, "query denom")
+}
+
+// Helper function to validate the trade route query callback data
+func (s *KeeperTestSuite) validateTradeRouteQueryCallback(actualCallbackDataBz []byte) {
+	expectedCallbackData := types.TradeRouteCallback{
+		RewardDenom: RewardDenom,
+		HostDenom:   HostDenom,
+	}
+
+	var actualCallbackData types.TradeRouteCallback
+	err := proto.Unmarshal(actualCallbackDataBz, &actualCallbackData)
+	s.Require().NoError(err)
+	s.Require().Equal(expectedCallbackData, actualCallbackData, "query callback data")
+}
+
+// --------------------------------------------------------------
+//            Withdrawal Account - Reward Balance Query
+// --------------------------------------------------------------
+
+// Create the traderoute for these tests, only need the withdrawal address and the
+// reward_denom_on_host since this will be what is used in the query, no other setup
+func (s *KeeperTestSuite) SetupWithdrawalRewardBalanceQueryTestCase() (route types.TradeRoute, expectedTimeout time.Duration) {
+	// Create a transfer channel so the connection exists for the query submission
+	s.CreateTransferChannel(HostChainId)
+
+	// Create and set the trade route
+	tradeRoute := types.TradeRoute{
+		RewardDenomOnRewardZone: RewardDenom,
+		HostDenomOnHostZone:     HostDenom,
+		RewardDenomOnHostZone:   "ibc/reward_on_host",
+		HostAccount: types.ICAAccount{
+			ChainId:      HostChainId,
+			ConnectionId: ibctesting.FirstConnectionID,
+			Address:      StrideICAAddress, // must be a valid bech32, easiest to use stride prefix for validation
+		},
+	}
+	s.App.StakeibcKeeper.SetTradeRoute(s.Ctx, tradeRoute)
+
+	// Create and set the epoch tracker for timeouts (the timeout is halfway through the epoch)
+	epochDuration := time.Second * 30
+	expectedTimeout = epochDuration / 2
+	s.CreateEpochForICATimeout(epochtypes.STRIDE_EPOCH, epochDuration)
+
+	return tradeRoute, expectedTimeout
+}
+
+// Tests a successful WithdrawalRewardBalanceQuery
+func (s *KeeperTestSuite) TestWithdrawalRewardBalanceQuery_Successful() {
+	route, timeoutDuration := s.SetupWithdrawalRewardBalanceQueryTestCase()
+
+	err := s.App.StakeibcKeeper.WithdrawalRewardBalanceQuery(s.Ctx, route)
+	s.Require().NoError(err, "no error expected when querying balance")
+
+	// Validate fields from ICQ submission
+	expectedRequestData := s.GetBankStoreKeyPrefix(StrideICAAddress, route.RewardDenomOnHostZone)
+
+	query := s.ValidateQuerySubmission(
+		icqtypes.BANK_STORE_QUERY_WITH_PROOF,
+		expectedRequestData,
+		keeper.ICQCallbackID_WithdrawalRewardBalance,
+		timeoutDuration,
+		icqtypes.TimeoutPolicy_REJECT_QUERY_RESPONSE,
+	)
+
+	s.validateAddressAndDenomInRequest(query.RequestData, route.HostAccount.Address, route.RewardDenomOnHostZone)
+	s.validateTradeRouteQueryCallback(query.CallbackData)
+}
+
+// Tests a WithdrawalRewardBalanceQuery that fails due to an invalid account address
+func (s *KeeperTestSuite) TestWithdrawalRewardBalanceQuery_Failure_InvalidAccountAddress() {
+	tradeRoute, _ := s.SetupWithdrawalRewardBalanceQueryTestCase()
+
+	// Change the withdrawal ICA account address to be invalid
+	tradeRoute.HostAccount.Address = "invalid_address"
+
+	err := s.App.StakeibcKeeper.WithdrawalRewardBalanceQuery(s.Ctx, tradeRoute)
+	s.Require().ErrorContains(err, "invalid withdrawal account address")
+}
+
+// Tests a WithdrawalRewardBalanceQuery that fails due to a missing epoch tracker
+func (s *KeeperTestSuite) TestWithdrawalRewardBalanceQuery_Failure_MissingEpoch() {
+	tradeRoute, _ := s.SetupWithdrawalRewardBalanceQueryTestCase()
+
+	// Remove the stride epoch so the test fails
+	s.App.StakeibcKeeper.RemoveEpochTracker(s.Ctx, epochtypes.STRIDE_EPOCH)
+
+	err := s.App.StakeibcKeeper.WithdrawalRewardBalanceQuery(s.Ctx, tradeRoute)
+	s.Require().ErrorContains(err, "stride_epoch: epoch not found")
+}
+
+// Tests a WithdrawalRewardBalanceQuery that fails to submit the query due to bad connection
+func (s *KeeperTestSuite) TestWithdrawalRewardBalanceQuery_FailedQuerySubmission() {
+	tradeRoute, _ := s.SetupWithdrawalRewardBalanceQueryTestCase()
+
+	// Change the withdrawal ICA connection id to be invalid
+	tradeRoute.HostAccount.ConnectionId = "invalid_connection"
+
+	err := s.App.StakeibcKeeper.WithdrawalRewardBalanceQuery(s.Ctx, tradeRoute)
+	s.Require().ErrorContains(err, "invalid connection-id (invalid_connection)")
+}
+
+// --------------------------------------------------------------
+//             Trade Account - Reward Balance Query
+// --------------------------------------------------------------
+
+// Create the traderoute for these tests, only need the trade address and the
+// reward_denom_on_trade since this will be what is used in the query, no other setup
+func (s *KeeperTestSuite) SetupTradeRewardBalanceQueryTestCase() (route types.TradeRoute, expectedTimeout time.Duration) {
+	// Create a transfer channel so the connection exists for the query submission
+	s.CreateTransferChannel(HostChainId)
+
+	// Create and set the trade route
+	tradeRoute := types.TradeRoute{
+		RewardDenomOnRewardZone: RewardDenom,
+		HostDenomOnHostZone:     HostDenom,
+		RewardDenomOnTradeZone:  "ibc/reward_on_trade",
+		TradeAccount: types.ICAAccount{
+			ChainId:      HostChainId,
+			ConnectionId: ibctesting.FirstConnectionID,
+			Address:      StrideICAAddress, // must be a valid bech32, easiest to use stride prefix for validation
+		},
+	}
+	s.App.StakeibcKeeper.SetTradeRoute(s.Ctx, tradeRoute)
+
+	// Create and set the epoch tracker for timeouts
+	timeoutDuration := time.Second * 30
+	s.CreateEpochForICATimeout(epochtypes.HOUR_EPOCH, timeoutDuration)
+
+	return tradeRoute, timeoutDuration
+}
+
+// Tests a successful TradeRewardBalanceQuery
+func (s *KeeperTestSuite) TestTradeRewardBalanceQuery_Successful() {
+	route, timeoutDuration := s.SetupTradeRewardBalanceQueryTestCase()
+
+	err := s.App.StakeibcKeeper.TradeRewardBalanceQuery(s.Ctx, route)
+	s.Require().NoError(err, "no error expected when querying balance")
+
+	// Validate fields from ICQ submission
+	expectedRequestData := s.GetBankStoreKeyPrefix(StrideICAAddress, route.RewardDenomOnTradeZone)
+
+	query := s.ValidateQuerySubmission(
+		icqtypes.BANK_STORE_QUERY_WITH_PROOF,
+		expectedRequestData,
+		keeper.ICQCallbackID_TradeRewardBalance,
+		timeoutDuration,
+		icqtypes.TimeoutPolicy_REJECT_QUERY_RESPONSE,
+	)
+
+	s.validateAddressAndDenomInRequest(query.RequestData, route.TradeAccount.Address, route.RewardDenomOnTradeZone)
+	s.validateTradeRouteQueryCallback(query.CallbackData)
+}
+
+// Tests a TradeRewardBalanceQuery that fails due to an invalid account address
+func (s *KeeperTestSuite) TestTradeRewardBalanceQuery_Failure_InvalidAccountAddress() {
+	tradeRoute, _ := s.SetupTradeRewardBalanceQueryTestCase()
+
+	// Change the trade ICA account address to be invalid
+	tradeRoute.TradeAccount.Address = "invalid_address"
+
+	err := s.App.StakeibcKeeper.TradeRewardBalanceQuery(s.Ctx, tradeRoute)
+	s.Require().ErrorContains(err, "invalid trade account address")
+}
+
+// Tests a TradeRewardBalanceQuery that fails due to a missing epoch tracker
+func (s *KeeperTestSuite) TestTradeRewardBalanceQuery_Failure_MissingEpoch() {
+	tradeRoute, _ := s.SetupTradeRewardBalanceQueryTestCase()
+
+	// Remove the stride epoch so the test fails
+	s.App.StakeibcKeeper.RemoveEpochTracker(s.Ctx, epochtypes.HOUR_EPOCH)
+
+	err := s.App.StakeibcKeeper.TradeRewardBalanceQuery(s.Ctx, tradeRoute)
+	s.Require().ErrorContains(err, "hour: epoch not found")
+}
+
+// Tests a TradeRewardBalanceQuery that fails to submit the query due to bad connection
+func (s *KeeperTestSuite) TestTradeRewardBalanceQuery_FailedQuerySubmission() {
+	tradeRoute, _ := s.SetupTradeRewardBalanceQueryTestCase()
+
+	// Change the trade ICA connection id to be invalid
+	tradeRoute.TradeAccount.ConnectionId = "invalid_connection"
+
+	err := s.App.StakeibcKeeper.TradeRewardBalanceQuery(s.Ctx, tradeRoute)
+	s.Require().ErrorContains(err, "invalid connection-id (invalid_connection)")
+}
+
+// --------------------------------------------------------------
+//            Trade Account - Converted Balance Query
+// --------------------------------------------------------------
+
+// Create the traderoute for these tests, only need the trade address and the
+// host_denom_on_trade since this will be what is used in the query, no other setup
+func (s *KeeperTestSuite) SetupTradeConvertedBalanceQueryTestCase() (route types.TradeRoute, expectedTimeout time.Duration) {
+	// Create a transfer channel so the connection exists for the query submission
+	s.CreateTransferChannel(HostChainId)
+
+	// Create and set the trade route
+	tradeRoute := types.TradeRoute{
+		RewardDenomOnRewardZone: RewardDenom,
+		HostDenomOnHostZone:     HostDenom,
+		HostDenomOnTradeZone:    "ibc/host_on_trade",
+		TradeAccount: types.ICAAccount{
+			ChainId:      HostChainId,
+			ConnectionId: ibctesting.FirstConnectionID,
+			Address:      StrideICAAddress, // must be a valid bech32, easiest to use stride prefix for validation
+		},
+	}
+	s.App.StakeibcKeeper.SetTradeRoute(s.Ctx, tradeRoute)
+
+	// Create and set the epoch tracker for timeouts
+	timeoutDuration := time.Second * 30
+	s.CreateEpochForICATimeout(epochtypes.STRIDE_EPOCH, timeoutDuration)
+
+	return tradeRoute, timeoutDuration
+}
+
+// Tests a successful TradeConvertedBalanceQuery
+func (s *KeeperTestSuite) TestTradeConvertedBalanceQuery_Successful() {
+	route, timeoutDuration := s.SetupTradeConvertedBalanceQueryTestCase()
+
+	err := s.App.StakeibcKeeper.TradeConvertedBalanceQuery(s.Ctx, route)
+	s.Require().NoError(err, "no error expected when querying balance")
+
+	// Validate fields from ICQ submission
+	expectedRequestData := s.GetBankStoreKeyPrefix(StrideICAAddress, route.HostDenomOnTradeZone)
+
+	query := s.ValidateQuerySubmission(
+		icqtypes.BANK_STORE_QUERY_WITH_PROOF,
+		expectedRequestData,
+		keeper.ICQCallbackID_TradeConvertedBalance,
+		timeoutDuration,
+		icqtypes.TimeoutPolicy_REJECT_QUERY_RESPONSE,
+	)
+
+	s.validateAddressAndDenomInRequest(query.RequestData, route.TradeAccount.Address, route.HostDenomOnTradeZone)
+	s.validateTradeRouteQueryCallback(query.CallbackData)
+}
+
+// Tests a TradeConvertedBalanceQuery that fails due to an invalid account address
+func (s *KeeperTestSuite) TestTradeConvertedBalanceQuery_Failure_InvalidAccountAddress() {
+	tradeRoute, _ := s.SetupTradeConvertedBalanceQueryTestCase()
+
+	// Change the trade ICA account address to be invalid
+	tradeRoute.TradeAccount.Address = "invalid_address"
+
+	err := s.App.StakeibcKeeper.TradeConvertedBalanceQuery(s.Ctx, tradeRoute)
+	s.Require().ErrorContains(err, "invalid trade account address")
+}
+
+// Tests a TradeConvertedBalanceQuery that fails due to a missing epoch tracker
+func (s *KeeperTestSuite) TestTradeConvertedBalanceQuery_Failure_MissingEpoch() {
+	tradeRoute, _ := s.SetupTradeConvertedBalanceQueryTestCase()
+
+	// Remove the stride epoch so the test fails
+	s.App.StakeibcKeeper.RemoveEpochTracker(s.Ctx, epochtypes.STRIDE_EPOCH)
+
+	err := s.App.StakeibcKeeper.TradeConvertedBalanceQuery(s.Ctx, tradeRoute)
+	s.Require().ErrorContains(err, "stride_epoch: epoch not found")
+}
+
+// Tests a TradeConvertedBalanceQuery that fails to submit the query due to bad connection
+func (s *KeeperTestSuite) TestTradeConvertedBalanceQuery_FailedQuerySubmission() {
+	tradeRoute, _ := s.SetupTradeConvertedBalanceQueryTestCase()
+
+	// Change the trade ICA connection id to be invalid
+	tradeRoute.TradeAccount.ConnectionId = "invalid_connection"
+
+	err := s.App.StakeibcKeeper.TradeConvertedBalanceQuery(s.Ctx, tradeRoute)
+	s.Require().ErrorContains(err, "invalid connection-id (invalid_connection)")
+}
+
+// --------------------------------------------------------------
+//                   Pool Price Query
+// --------------------------------------------------------------
 
 func (s *KeeperTestSuite) TestPoolPriceQuery() {
 	// Create a transfer channel so the connection exists for the query submission
