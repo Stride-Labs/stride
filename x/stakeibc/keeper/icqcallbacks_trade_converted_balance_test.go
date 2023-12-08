@@ -83,12 +83,14 @@ func (s *KeeperTestSuite) TestTradeConvertedBalanceCallback_ZeroBalance() {
 	// Replace the query response with a coin that has a zero amount
 	tc.Response.CallbackArgs = s.CreateBalanceQueryResponse(0, tc.TradeRoute.HostDenomOnHostZone)
 
+	// We also remove the connection ID from the trade route so that, IF an ICA was submitted it would fail
+	// However, it should never go down this route since the balance is 0
+	invalidRoute := tc.TradeRoute
+	invalidRoute.TradeAccount.ConnectionId = "bad-connection"
+	s.App.StakeibcKeeper.SetTradeRoute(s.Ctx, invalidRoute)
+
 	err := keeper.TradeConvertedBalanceCallback(s.App.StakeibcKeeper, s.Ctx, tc.Response.CallbackArgs, tc.Response.Query)
 	s.Require().NoError(err)
-
-	// Confirm the sequence number was NOT incremented, meaning the transfer ICA was not called
-	endSequence := s.MustGetNextSequenceNumber(tc.PortID, tc.ChannelID)
-	s.Require().Equal(endSequence, tc.StartSequence, "sequence number should NOT have increased, no transfer should happen")
 }
 
 func (s *KeeperTestSuite) TestTradeConvertedBalanceCallback_InvalidArgs() {
