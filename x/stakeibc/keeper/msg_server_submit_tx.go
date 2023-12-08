@@ -34,7 +34,7 @@ import (
 func (k Keeper) DelegateOnHost(ctx sdk.Context, hostZone types.HostZone, amt sdk.Coin, depositRecord recordstypes.DepositRecord) error {
 	// TODO: Remove this block and use connection-id from host zone
 	// the relevant ICA is the delegate account
-	owner := types.FormatICAAccountOwner(hostZone.ChainId, types.ICAAccountType_DELEGATION)
+	owner := types.FormatHostZoneICAOwner(hostZone.ChainId, types.ICAAccountType_DELEGATION)
 	portID, err := icatypes.NewControllerPortID(owner)
 	if err != nil {
 		return errorsmod.Wrapf(sdkerrors.ErrInvalidAddress, "%s has no associated portId", owner)
@@ -117,7 +117,7 @@ func (k Keeper) DelegateOnHost(ctx sdk.Context, hostZone types.HostZone, amt sdk
 func (k Keeper) SetWithdrawalAddressOnHost(ctx sdk.Context, hostZone types.HostZone) error {
 	// TODO: Remove this block and use connection-id from host zone
 	// The relevant ICA is the delegate account
-	owner := types.FormatICAAccountOwner(hostZone.ChainId, types.ICAAccountType_DELEGATION)
+	owner := types.FormatHostZoneICAOwner(hostZone.ChainId, types.ICAAccountType_DELEGATION)
 	portID, err := icatypes.NewControllerPortID(owner)
 	if err != nil {
 		return errorsmod.Wrapf(sdkerrors.ErrInvalidAddress, "%s has no associated portId", owner)
@@ -261,6 +261,7 @@ func (k Keeper) SubmitTxsEpoch(
 }
 
 // SubmitTxs submits an ICA transaction containing multiple messages
+// This function only supports messages to ICAs on the host zone
 func (k Keeper) SubmitTxs(
 	ctx sdk.Context,
 	connectionId string,
@@ -274,7 +275,7 @@ func (k Keeper) SubmitTxs(
 	if err != nil {
 		return 0, err
 	}
-	owner := types.FormatICAAccountOwner(chainId, icaAccountType)
+	owner := types.FormatHostZoneICAOwner(chainId, icaAccountType)
 	portID, err := icatypes.NewControllerPortID(owner)
 	if err != nil {
 		return 0, err
@@ -332,17 +333,10 @@ func (k Keeper) SubmitTxs(
 func (k Keeper) SubmitICATxWithoutCallback(
 	ctx sdk.Context,
 	connectionId string,
-	icaAccountType types.ICAAccountType,
+	icaAccountOwner string,
 	msgs []proto.Message,
 	timeoutTimestamp uint64,
 ) error {
-	// Compute useful connection properties to avoid needing them as params
-	chainId, err := k.GetChainIdFromConnectionId(ctx, connectionId)
-	if err != nil {
-		return err
-	}
-	owner := types.FormatICAAccountOwner(chainId, icaAccountType)
-
 	// Serialize tx messages
 	txBz, err := icatypes.SerializeCosmosTx(k.cdc, msgs)
 	if err != nil {
@@ -356,7 +350,7 @@ func (k Keeper) SubmitICATxWithoutCallback(
 
 	// Submit ICA, no need to store callback data or register callback function
 	icaMsgServer := icacontrollerkeeper.NewMsgServerImpl(&k.ICAControllerKeeper)
-	msgSendTx := icacontrollertypes.NewMsgSendTx(owner, connectionId, relativeTimeoutOffset, packetData)
+	msgSendTx := icacontrollertypes.NewMsgSendTx(icaAccountOwner, connectionId, relativeTimeoutOffset, packetData)
 	_, err = icaMsgServer.SendTx(ctx, msgSendTx)
 	if err != nil {
 		return errorsmod.Wrapf(err, "unable to send ICA tx")

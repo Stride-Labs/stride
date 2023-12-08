@@ -48,8 +48,8 @@ func EpochTrackerKey(epochIdentifier string) []byte {
 }
 
 // Definition for the store key format based on tradeRoute start and end denoms
-func TradeRouteKeyFromDenoms(startDenom string, endDenom string) (key []byte) {
-	return []byte(startDenom + "-" + endDenom)
+func TradeRouteKeyFromDenoms(rewardDenom, hostDenom string) (key []byte) {
+	return []byte(rewardDenom + "-" + hostDenom)
 }
 
 const (

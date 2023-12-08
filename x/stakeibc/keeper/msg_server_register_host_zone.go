@@ -128,7 +128,7 @@ func (k msgServer) RegisterHostZone(goCtx context.Context, msg *types.MsgRegiste
 
 	// generate delegate account
 	// NOTE: in the future, if we implement proxy governance, we'll need many more delegate accounts
-	delegateAccount := types.FormatICAAccountOwner(chainId, types.ICAAccountType_DELEGATION)
+	delegateAccount := types.FormatHostZoneICAOwner(chainId, types.ICAAccountType_DELEGATION)
 	if err := k.ICAControllerKeeper.RegisterInterchainAccount(ctx, zone.ConnectionId, delegateAccount, appVersion); err != nil {
 		errMsg := fmt.Sprintf("unable to register delegation account, err: %s", err.Error())
 		k.Logger(ctx).Error(errMsg)
@@ -136,7 +136,7 @@ func (k msgServer) RegisterHostZone(goCtx context.Context, msg *types.MsgRegiste
 	}
 
 	// generate fee account
-	feeAccount := types.FormatICAAccountOwner(chainId, types.ICAAccountType_FEE)
+	feeAccount := types.FormatHostZoneICAOwner(chainId, types.ICAAccountType_FEE)
 	if err := k.ICAControllerKeeper.RegisterInterchainAccount(ctx, zone.ConnectionId, feeAccount, appVersion); err != nil {
 		errMsg := fmt.Sprintf("unable to register fee account, err: %s", err.Error())
 		k.Logger(ctx).Error(errMsg)
@@ -144,7 +144,7 @@ func (k msgServer) RegisterHostZone(goCtx context.Context, msg *types.MsgRegiste
 	}
 
 	// generate withdrawal account
-	withdrawalAccount := types.FormatICAAccountOwner(chainId, types.ICAAccountType_WITHDRAWAL)
+	withdrawalAccount := types.FormatHostZoneICAOwner(chainId, types.ICAAccountType_WITHDRAWAL)
 	if err := k.ICAControllerKeeper.RegisterInterchainAccount(ctx, zone.ConnectionId, withdrawalAccount, appVersion); err != nil {
 		errMsg := fmt.Sprintf("unable to register withdrawal account, err: %s", err.Error())
 		k.Logger(ctx).Error(errMsg)
@@ -152,7 +152,7 @@ func (k msgServer) RegisterHostZone(goCtx context.Context, msg *types.MsgRegiste
 	}
 
 	// generate redemption account
-	redemptionAccount := types.FormatICAAccountOwner(chainId, types.ICAAccountType_REDEMPTION)
+	redemptionAccount := types.FormatHostZoneICAOwner(chainId, types.ICAAccountType_REDEMPTION)
 	if err := k.ICAControllerKeeper.RegisterInterchainAccount(ctx, zone.ConnectionId, redemptionAccount, appVersion); err != nil {
 		errMsg := fmt.Sprintf("unable to register redemption account, err: %s", err.Error())
 		k.Logger(ctx).Error(errMsg)
@@ -160,13 +160,13 @@ func (k msgServer) RegisterHostZone(goCtx context.Context, msg *types.MsgRegiste
 	}
 
 	// create community pool deposit account
-	communityPoolDepositAccount := types.FormatICAAccountOwner(chainId, types.ICAAccountType_COMMUNITY_POOL_DEPOSIT)
+	communityPoolDepositAccount := types.FormatHostZoneICAOwner(chainId, types.ICAAccountType_COMMUNITY_POOL_DEPOSIT)
 	if err := k.ICAControllerKeeper.RegisterInterchainAccount(ctx, zone.ConnectionId, communityPoolDepositAccount, appVersion); err != nil {
 		return nil, errorsmod.Wrapf(types.ErrFailedToRegisterHostZone, "failed to register community pool deposit ICA")
 	}
 
 	// create community pool return account
-	communityPoolReturnAccount := types.FormatICAAccountOwner(chainId, types.ICAAccountType_COMMUNITY_POOL_RETURN)
+	communityPoolReturnAccount := types.FormatHostZoneICAOwner(chainId, types.ICAAccountType_COMMUNITY_POOL_RETURN)
 	if err := k.ICAControllerKeeper.RegisterInterchainAccount(ctx, zone.ConnectionId, communityPoolReturnAccount, appVersion); err != nil {
 		return nil, errorsmod.Wrapf(types.ErrFailedToRegisterHostZone, "failed to register community pool return ICA")
 	}
