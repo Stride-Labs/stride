@@ -135,7 +135,7 @@ func (s *KeeperTestSuite) TestPoolPriceCallback_TradeRouteNotFound() {
 	s.Require().ErrorContains(err, "trade route not found")
 }
 
-func (s *KeeperTestSuite) TestPoolPriceCallback_DenomMismatch() {
+func (s *KeeperTestSuite) TestPoolPriceCallback_TradeDenomMismatch() {
 	tc := s.SetupPoolPriceCallbackTestCase(true) // ordering doesn't matter
 
 	// Update the trade route so that the denom's in the route don't match the query response
