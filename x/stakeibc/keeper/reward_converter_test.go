@@ -6,10 +6,13 @@ import (
 
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/gogoproto/proto"
 	transfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
 	ibctesting "github.com/cosmos/ibc-go/v7/testing"
 
 	epochtypes "github.com/Stride-Labs/stride/v16/x/epochs/types"
+	icqtypes "github.com/Stride-Labs/stride/v16/x/interchainquery/types"
+	"github.com/Stride-Labs/stride/v16/x/stakeibc/keeper"
 	"github.com/Stride-Labs/stride/v16/x/stakeibc/types"
 )
 
@@ -418,4 +421,73 @@ func (s *KeeperTestSuite) TestSwapRewardTokens() {
 	s.App.StakeibcKeeper.RemoveEpochTracker(s.Ctx, epochtypes.HOUR_EPOCH)
 	err = s.App.StakeibcKeeper.SwapRewardTokens(s.Ctx, rewardAmount, route)
 	s.Require().ErrorContains(err, "epoch not found")
+}
+
+func (s *KeeperTestSuite) TestPoolPriceQuery() {
+	// Create a transfer channel so the connection exists for the query submission
+	s.CreateTransferChannel(HostChainId)
+
+	// Create an epoch tracker to dictate the query timeout
+	timeoutDuration := time.Minute * 10
+	s.CreateEpochForICATimeout(epochtypes.HOUR_EPOCH, timeoutDuration)
+
+	// Define the trade route
+	poolId := uint64(100)
+	tradeRewardDenom := "ibc/reward-denom-on-trade"
+	tradeHostDenom := "ibc/reward-denom-on-host"
+
+	route := types.TradeRoute{
+		RewardDenomOnRewardZone: RewardDenom,
+		HostDenomOnHostZone:     HostDenom,
+		RewardDenomOnTradeZone:  tradeRewardDenom,
+		HostDenomOnTradeZone:    tradeHostDenom,
+
+		TradeAccount: types.ICAAccount{
+			ChainId:      HostChainId,
+			ConnectionId: ibctesting.FirstConnectionID,
+		},
+		TradeConfig: types.TradeConfig{
+			PoolId: poolId,
+		},
+	}
+
+	expectedCallbackData := types.TradeRouteCallback{
+		RewardDenom: RewardDenom,
+		HostDenom:   HostDenom,
+	}
+
+	// Submit the pool price ICQ
+	err := s.App.StakeibcKeeper.PoolPriceQuery(s.Ctx, route)
+	s.Require().NoError(err, "no error expected when submitting pool price query")
+
+	// Confirm the query request key is the same regardless of which order the denom's are specified
+	expectedRequestData := icqtypes.FormatOsmosisMostRecentTWAPKey(poolId, tradeRewardDenom, tradeHostDenom)
+	expectedRequestDataSwapped := icqtypes.FormatOsmosisMostRecentTWAPKey(poolId, tradeHostDenom, tradeRewardDenom)
+	s.Require().Equal(expectedRequestData, expectedRequestDataSwapped, "osmosis twap denoms should be sorted")
+
+	// Validate the fields of the query
+	query := s.ValidateQuerySubmission(
+		icqtypes.TWAP_STORE_QUERY_WITH_PROOF,
+		expectedRequestData,
+		keeper.ICQCallbackID_PoolPrice,
+		timeoutDuration,
+		icqtypes.TimeoutPolicy_REJECT_QUERY_RESPONSE,
+	)
+
+	// Validate the query callback data
+	var actualCallbackData types.TradeRouteCallback
+	err = proto.Unmarshal(query.CallbackData, &actualCallbackData)
+	s.Require().NoError(err)
+	s.Require().Equal(expectedCallbackData, actualCallbackData, "query callback data")
+
+	// Remove the connection ID from the trade account and confirm the query submission fails
+	invalidRoute := route
+	invalidRoute.TradeAccount.ConnectionId = ""
+	err = s.App.StakeibcKeeper.PoolPriceQuery(s.Ctx, invalidRoute)
+	s.Require().ErrorContains(err, "invalid interchain query request")
+
+	// Remove the epoch tracker so the function fails to get a timeout
+	s.App.StakeibcKeeper.RemoveEpochTracker(s.Ctx, epochtypes.HOUR_EPOCH)
+	err = s.App.StakeibcKeeper.PoolPriceQuery(s.Ctx, route)
+	s.Require().ErrorContains(err, "hour: epoch not found")
 }

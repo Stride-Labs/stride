@@ -5,12 +5,14 @@ import (
 	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	ibctesting "github.com/cosmos/ibc-go/v7/testing"
 	"github.com/stretchr/testify/suite"
 
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 
 	"github.com/Stride-Labs/stride/v16/app/apptesting"
+	icqtypes "github.com/Stride-Labs/stride/v16/x/interchainquery/types"
 	"github.com/Stride-Labs/stride/v16/x/stakeibc/keeper"
 	"github.com/Stride-Labs/stride/v16/x/stakeibc/types"
 )
@@ -79,6 +81,40 @@ func (s *KeeperTestSuite) CreateEpochForICATimeout(epochType string, timeoutDura
 		NextEpochStartTime: epochEndTime,
 	}
 	s.App.StakeibcKeeper.SetEpochTracker(s.Ctx, epochTracker)
+}
+
+// Validates the query object stored after an ICQ submission, using some default testing
+// values (e.g. HostChainId, stakeibc module name, etc.), and returning the query
+// NOTE: This assumes there was only one submission and grabs the first query from the store
+func (s *KeeperTestSuite) ValidateQuerySubmission(
+	queryType string,
+	queryData []byte,
+	callbackId string,
+	timeoutDuration time.Duration,
+	timeoutPolicy icqtypes.TimeoutPolicy,
+) icqtypes.Query {
+	// Check that there's only one query
+	queries := s.App.InterchainqueryKeeper.AllQueries(s.Ctx)
+	s.Require().Len(queries, 1, "there should have been 1 query submitted")
+	query := queries[0]
+
+	// Validate the chainId and connectionId
+	s.Require().Equal(HostChainId, query.ChainId, "query chain ID")
+	s.Require().Equal(ibctesting.FirstConnectionID, query.ConnectionId, "query connection ID")
+	s.Require().Equal(types.ModuleName, query.CallbackModule, "query module")
+
+	// Validate the query type and request data
+	s.Require().Equal(queryType, query.QueryType, "query type")
+	s.Require().Equal(string(queryData), string(query.RequestData), "query request data")
+	s.Require().Equal(callbackId, query.CallbackId, "query callback ID")
+
+	// Validate the query timeout
+	expectedTimeoutTimestamp := s.Ctx.BlockTime().Add(timeoutDuration).UnixNano()
+	s.Require().Equal(timeoutDuration, query.TimeoutDuration, "query timeout duration")
+	s.Require().Equal(expectedTimeoutTimestamp, int64(query.TimeoutTimestamp), "query timeout timestamp")
+	s.Require().Equal(icqtypes.TimeoutPolicy_REJECT_QUERY_RESPONSE, query.TimeoutPolicy, "query timeout policy")
+
+	return query
 }
 
 func (s *KeeperTestSuite) TestIsRedemptionRateWithinSafetyBounds() {
