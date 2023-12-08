@@ -61,9 +61,6 @@ func (s *KeeperTestSuite) SetupWithdrawalRewardBalanceCallbackTestCase() Balance
 	query := icqtypes.Query{CallbackData: callbackDataBz}
 	queryResponse := s.CreateBalanceQueryResponse(balance.Int64(), route.RewardDenomOnHostZone)
 
-	// Get start sequence to test ICA submission
-	startSequence := s.MustGetNextSequenceNumber(withdrawalPortId, withdrawalChannelId)
-
 	return BalanceQueryCallbackTestCase{
 		TradeRoute: route,
 		Balance:    balance,
@@ -71,9 +68,8 @@ func (s *KeeperTestSuite) SetupWithdrawalRewardBalanceCallbackTestCase() Balance
 			Query:        query,
 			CallbackArgs: queryResponse,
 		},
-		ChannelID:     withdrawalChannelId,
-		PortID:        withdrawalPortId,
-		StartSequence: startSequence,
+		ChannelID: withdrawalChannelId,
+		PortID:    withdrawalPortId,
 	}
 }
 
@@ -81,15 +77,13 @@ func (s *KeeperTestSuite) SetupWithdrawalRewardBalanceCallbackTestCase() Balance
 func (s *KeeperTestSuite) TestWithdrawalRewardBalanceCallback_Successful() {
 	tc := s.SetupWithdrawalRewardBalanceCallbackTestCase()
 
-	err := keeper.WithdrawalRewardBalanceCallback(s.App.StakeibcKeeper, s.Ctx, tc.Response.CallbackArgs, tc.Response.Query)
-	s.Require().NoError(err)
-
 	// ICA inside of TransferRewardTokensHostToTrade should execute but it uses submitTXWithoutCallback
 	// So no need to confirm ICA callback data was stored and no need to confirm callback args values
 
-	// Confirm the sequence number was incremented
-	endSequence := s.MustGetNextSequenceNumber(tc.PortID, tc.ChannelID)
-	s.Require().Equal(endSequence, tc.StartSequence+1, "sequence number should increase after callback executed")
+	// Confirm ICA was submitted by checking that the sequence number incremented
+	s.CheckICATxSubmitted(tc.PortID, tc.ChannelID, func() error {
+		return keeper.WithdrawalRewardBalanceCallback(s.App.StakeibcKeeper, s.Ctx, tc.Response.CallbackArgs, tc.Response.Query)
+	})
 }
 
 // Verify that if the amount returned by the ICQ response is less than the min_swap_amount, no transfer happens
@@ -101,13 +95,10 @@ func (s *KeeperTestSuite) TestWithdrawalRewardBalanceCallback_SuccessfulNoTransf
 	route.TradeConfig.MinSwapAmount = tc.Balance.Add(sdkmath.OneInt())
 	s.App.StakeibcKeeper.SetTradeRoute(s.Ctx, route)
 
-	err := keeper.WithdrawalRewardBalanceCallback(s.App.StakeibcKeeper, s.Ctx, tc.Response.CallbackArgs, tc.Response.Query)
-	s.Require().NoError(err)
-
 	// ICA inside of TransferRewardTokensHostToTrade should not actually execute because of min_swap_amount
-	// Confirm the sequence number was NOT incremented
-	endSequence := s.MustGetNextSequenceNumber(tc.PortID, tc.ChannelID)
-	s.Require().Equal(endSequence, tc.StartSequence, "sequence number should NOT have increased, no transfer should happen")
+	s.CheckICATxNotSubmitted(tc.PortID, tc.ChannelID, func() error {
+		return keeper.WithdrawalRewardBalanceCallback(s.App.StakeibcKeeper, s.Ctx, tc.Response.CallbackArgs, tc.Response.Query)
+	})
 }
 
 func (s *KeeperTestSuite) TestWithdrawalRewardBalanceCallback_ZeroBalance() {
@@ -116,12 +107,10 @@ func (s *KeeperTestSuite) TestWithdrawalRewardBalanceCallback_ZeroBalance() {
 	// Replace the query response with a coin that has a zero amount
 	tc.Response.CallbackArgs = s.CreateBalanceQueryResponse(0, tc.TradeRoute.RewardDenomOnHostZone)
 
-	err := keeper.WithdrawalRewardBalanceCallback(s.App.StakeibcKeeper, s.Ctx, tc.Response.CallbackArgs, tc.Response.Query)
-	s.Require().NoError(err)
-
-	// Confirm the sequence number was NOT incremented, meaning the transfer ICA was not called
-	endSequence := s.MustGetNextSequenceNumber(tc.PortID, tc.ChannelID)
-	s.Require().Equal(endSequence, tc.StartSequence, "sequence number should NOT have increased, no transfer should happen")
+	// Confirm the transfer ICA was never sent
+	s.CheckICATxNotSubmitted(tc.PortID, tc.ChannelID, func() error {
+		return keeper.WithdrawalRewardBalanceCallback(s.App.StakeibcKeeper, s.Ctx, tc.Response.CallbackArgs, tc.Response.Query)
+	})
 }
 
 func (s *KeeperTestSuite) TestWithdrawalRewardBalanceCallback_InvalidArgs() {

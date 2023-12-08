@@ -56,9 +56,6 @@ func (s *KeeperTestSuite) SetupTradeRewardBalanceCallbackTestCase() BalanceQuery
 	query := icqtypes.Query{CallbackData: callbackDataBz}
 	queryResponse := s.CreateBalanceQueryResponse(balance.Int64(), route.RewardDenomOnTradeZone)
 
-	// Get start sequence to test ICA submission
-	startSequence := s.MustGetNextSequenceNumber(tradePortId, tradeChannelId)
-
 	return BalanceQueryCallbackTestCase{
 		TradeRoute: route,
 		Balance:    balance,
@@ -66,9 +63,8 @@ func (s *KeeperTestSuite) SetupTradeRewardBalanceCallbackTestCase() BalanceQuery
 			Query:        query,
 			CallbackArgs: queryResponse,
 		},
-		ChannelID:     tradeChannelId,
-		PortID:        tradePortId,
-		StartSequence: startSequence,
+		ChannelID: tradeChannelId,
+		PortID:    tradePortId,
 	}
 }
 
