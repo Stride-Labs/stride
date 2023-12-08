@@ -354,6 +354,34 @@ func (s *AppTestHelper) UpdateChannelState(portId, channelId string, channelStat
 	s.App.IBCKeeper.ChannelKeeper.SetChannel(s.Ctx, portId, channelId, channel)
 }
 
+// Helper function to check if an ICA was submitted by seeing if the sequence number incremented
+func (s *AppTestHelper) CheckICATxSubmitted(portId, channelId string, icaFunction func() error) {
+	// Get the sequence before the tested funciton is run
+	startSequence := s.MustGetNextSequenceNumber(portId, channelId)
+
+	// Run the test function and confirm there's no error
+	err := icaFunction()
+	s.Require().NoError(err, "no error expected executing tested function")
+
+	// Check that the sequence number incremented
+	endSequence := s.MustGetNextSequenceNumber(portId, channelId)
+	s.Require().Equal(startSequence+1, endSequence, "sequence number should have incremented from tested function")
+}
+
+// Helper function to check if an ICA was NOT submitted by seeing if the sequence number did not increment
+func (s *AppTestHelper) CheckICATxNotSubmitted(portId, channelId string, icaFunction func() error) {
+	// Get the sequence before the tested funciton is run
+	startSequence := s.MustGetNextSequenceNumber(portId, channelId)
+
+	// Run the test function and confirm there's no error
+	err := icaFunction()
+	s.Require().NoError(err, "no error expected executing tested function")
+
+	// Check that the sequence number did not change
+	endSequence := s.MustGetNextSequenceNumber(portId, channelId)
+	s.Require().Equal(startSequence, endSequence, "sequence number should NOT have incremented from tested function")
+}
+
 // Constructs an ICA Packet Acknowledgement compatible with ibc-go v5+
 func ICAPacketAcknowledgement(t *testing.T, msgType string, msgResponses []proto.Message) channeltypes.Acknowledgement {
 	txMsgData := &sdk.TxMsgData{

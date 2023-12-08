@@ -75,12 +75,10 @@ func (s *KeeperTestSuite) SetupTradeRewardBalanceCallbackTestCase() BalanceQuery
 func (s *KeeperTestSuite) TestTradeRewardBalanceCallback_Successful() {
 	tc := s.SetupTradeRewardBalanceCallbackTestCase()
 
-	err := keeper.TradeRewardBalanceCallback(s.App.StakeibcKeeper, s.Ctx, tc.Response.CallbackArgs, tc.Response.Query)
-	s.Require().NoError(err)
-
-	// Confirm the sequence number was incremented
-	endSequence := s.MustGetNextSequenceNumber(tc.PortID, tc.ChannelID)
-	s.Require().Equal(endSequence, tc.StartSequence+1, "sequence number should increase after callback executed")
+	// Check that the callback triggered the ICA
+	s.CheckICATxSubmitted(tc.PortID, tc.ChannelID, func() error {
+		return keeper.TradeRewardBalanceCallback(s.App.StakeibcKeeper, s.Ctx, tc.Response.CallbackArgs, tc.Response.Query)
+	})
 }
 
 // Verify that if the amount returned by the ICQ response is less than the min_swap_amount, no trade happens
@@ -92,13 +90,10 @@ func (s *KeeperTestSuite) TestTradeRewardBalanceCallback_SuccessfulNoSwap() {
 	route.TradeConfig.MinSwapAmount = tc.Balance.Add(sdkmath.OneInt())
 	s.App.StakeibcKeeper.SetTradeRoute(s.Ctx, route)
 
-	err := keeper.TradeRewardBalanceCallback(s.App.StakeibcKeeper, s.Ctx, tc.Response.CallbackArgs, tc.Response.Query)
-	s.Require().NoError(err)
-
 	// ICA inside of TransferRewardTokensHostToTrade should not actually execute because of min_swap_amount
-	// Confirm the sequence number was NOT incremented
-	endSequence := s.MustGetNextSequenceNumber(tc.PortID, tc.ChannelID)
-	s.Require().Equal(endSequence, tc.StartSequence, "sequence number should NOT have increased, no swap should happen")
+	s.CheckICATxNotSubmitted(tc.PortID, tc.ChannelID, func() error {
+		return keeper.TradeRewardBalanceCallback(s.App.StakeibcKeeper, s.Ctx, tc.Response.CallbackArgs, tc.Response.Query)
+	})
 }
 
 func (s *KeeperTestSuite) TestTradeRewardBalanceCallback_ZeroBalance() {
@@ -107,12 +102,10 @@ func (s *KeeperTestSuite) TestTradeRewardBalanceCallback_ZeroBalance() {
 	// Replace the query response with a coin that has a zero amount
 	tc.Response.CallbackArgs = s.CreateBalanceQueryResponse(0, tc.TradeRoute.HostDenomOnTradeZone)
 
-	err := keeper.TradeRewardBalanceCallback(s.App.StakeibcKeeper, s.Ctx, tc.Response.CallbackArgs, tc.Response.Query)
-	s.Require().NoError(err)
-
-	// Confirm the sequence number was NOT incremented, meaning the trade ICA was not executed
-	endSequence := s.MustGetNextSequenceNumber(tc.PortID, tc.ChannelID)
-	s.Require().Equal(endSequence, tc.StartSequence, "sequence number should NOT have increased, no swap should happen")
+	// Confirm the ICA was not executed
+	s.CheckICATxNotSubmitted(tc.PortID, tc.ChannelID, func() error {
+		return keeper.TradeRewardBalanceCallback(s.App.StakeibcKeeper, s.Ctx, tc.Response.CallbackArgs, tc.Response.Query)
+	})
 }
 
 func (s *KeeperTestSuite) TestTradeRewardBalanceCallback_InvalidArgs() {

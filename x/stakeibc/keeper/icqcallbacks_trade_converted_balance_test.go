@@ -69,12 +69,10 @@ func (s *KeeperTestSuite) SetupTradeConvertedBalanceCallbackTestCase() BalanceQu
 func (s *KeeperTestSuite) TestTradeConvertedBalanceCallback_Successful() {
 	tc := s.SetupTradeConvertedBalanceCallbackTestCase()
 
-	err := keeper.TradeConvertedBalanceCallback(s.App.StakeibcKeeper, s.Ctx, tc.Response.CallbackArgs, tc.Response.Query)
-	s.Require().NoError(err)
-
-	// Confirm the sequence number was incremented
-	endSequence := s.MustGetNextSequenceNumber(tc.PortID, tc.ChannelID)
-	s.Require().Equal(endSequence, tc.StartSequence+1, "sequence number should increase after callback executed")
+	// Check that the ICA was submitted from within the ICQ callback
+	s.CheckICATxSubmitted(tc.PortID, tc.ChannelID, func() error {
+		return keeper.TradeConvertedBalanceCallback(s.App.StakeibcKeeper, s.Ctx, tc.Response.CallbackArgs, tc.Response.Query)
+	})
 }
 
 func (s *KeeperTestSuite) TestTradeConvertedBalanceCallback_ZeroBalance() {
