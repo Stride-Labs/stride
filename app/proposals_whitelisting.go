@@ -33,6 +33,8 @@ var WhiteListModule = map[string]struct{}{
 	"/stride.icaoracle.MsgToggleOracle":            {},
 	"/stride.icaoracle.MsgRemoveOracle":            {},
 	"/stride.stakeibc.MsgCreateTradeRoute":         {},
+	"/stride.stakeibc.MsgUpdateTradeRoute":         {},
+	"/stride.stakeibc.MsgDeleteTradeRoute":         {},
 }
 
 func IsModuleWhiteList(typeUrl string) bool {
