@@ -45,6 +45,9 @@ func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochInfo epochstypes.EpochInf
 		delegationInterval := k.GetParam(ctx, types.KeyDelegateInterval)
 		reinvestInterval := k.GetParam(ctx, types.KeyReinvestInterval)
 
+		// Claim accrued staking rewards at the beginning of the epoch
+		k.ClaimAccruedStakingRewards(ctx)
+
 		// Create a new deposit record for each host zone and the grab all deposit records
 		k.CreateDepositRecordsForEpoch(ctx, epochNumber)
 		depositRecords := k.RecordsKeeper.GetAllDepositRecord(ctx)
@@ -147,6 +150,18 @@ func (k Keeper) SetWithdrawalAddress(ctx sdk.Context) {
 		err := k.SetWithdrawalAddressOnHost(ctx, hostZone)
 		if err != nil {
 			k.Logger(ctx).Error(fmt.Sprintf("Unable to set withdrawal address on %s, err: %s", hostZone.ChainId, err))
+		}
+	}
+}
+
+// Claim staking rewards for each host zone
+func (k Keeper) ClaimAccruedStakingRewards(ctx sdk.Context) {
+	k.Logger(ctx).Info("Claiming Accrued Staking Rewards...")
+
+	for _, hostZone := range k.GetAllActiveHostZone(ctx) {
+		err := k.ClaimAccruedStakingRewardsOnHost(ctx, hostZone)
+		if err != nil {
+			k.Logger(ctx).Error(fmt.Sprintf("Unable to claim accrued staking rewards on %s, err: %s", hostZone.ChainId, err))
 		}
 	}
 }

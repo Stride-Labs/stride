@@ -31,6 +31,10 @@ import (
 	icatypes "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/types"
 )
 
+const (
+	ClaimRewardsICABatchSize = 10
+)
+
 func (k Keeper) DelegateOnHost(ctx sdk.Context, hostZone types.HostZone, amt sdk.Coin, depositRecord recordstypes.DepositRecord) error {
 	// the relevant ICA is the delegate account
 	owner := types.FormatICAAccountOwner(hostZone.ChainId, types.ICAAccountType_DELEGATION)
@@ -148,6 +152,52 @@ func (k Keeper) SetWithdrawalAddressOnHost(ctx sdk.Context, hostZone types.HostZ
 	_, err = k.SubmitTxsStrideEpoch(ctx, connectionId, msgs, types.ICAAccountType_DELEGATION, "", nil)
 	if err != nil {
 		return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "Failed to SubmitTxs for %s, %s, %s", connectionId, hostZone.ChainId, msgs)
+	}
+
+	return nil
+}
+
+func (k Keeper) ClaimAccruedStakingRewardsOnHost(ctx sdk.Context, hostZone types.HostZone) error {
+	// Fetch the relevant ICA
+	if hostZone.DelegationIcaAddress == "" {
+		return errorsmod.Wrapf(types.ErrICAAccountNotFound, "delegation ICA not found for %s", hostZone.ChainId)
+	}
+	if hostZone.WithdrawalIcaAddress == "" {
+		return errorsmod.Wrapf(types.ErrICAAccountNotFound, "withdrawal ICA not found for %s", hostZone.ChainId)
+	}
+	k.Logger(ctx).Info(utils.LogWithHostZone(hostZone.ChainId, "Withdrawal Address: %s, Delegator Address: %s",
+		hostZone.WithdrawalIcaAddress, hostZone.DelegationIcaAddress))
+
+	validators := hostZone.Validators
+
+	// Build multi-message transaction to withdraw rewards from each validator
+	// batching txs into groups of ClaimRewardsICABatchSize messages, to ensure they will fit in the host's blockSize
+	for start := 0; start < len(validators); start += ClaimRewardsICABatchSize {
+		end := start + ClaimRewardsICABatchSize
+		if end > len(validators) {
+			end = len(validators)
+		}
+		batch := validators[start:end]
+		msgs := []proto.Message{}
+		// Iterate over the items within the batch
+		for _, val := range batch {
+			// skip withdrawing rewards
+			if val.Delegation.IsZero() {
+				continue
+			}
+			msg := &distributiontypes.MsgWithdrawDelegatorReward{
+				DelegatorAddress: hostZone.DelegationIcaAddress,
+				ValidatorAddress: val.Address,
+			}
+			msgs = append(msgs, msg)
+		}
+
+		if len(msgs) > 0 {
+			_, err := k.SubmitTxsStrideEpoch(ctx, hostZone.ConnectionId, msgs, types.ICAAccountType_DELEGATION, "", nil)
+			if err != nil {
+				return errorsmod.Wrapf(err, "Failed to SubmitTxs for %s, %s, %s", hostZone.ConnectionId, hostZone.ChainId, msgs)
+			}
+		}
 	}
 
 	return nil
