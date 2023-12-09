@@ -36,7 +36,7 @@ When an epoch triggers the execution of code, that code is executed at the first
 Stride uses three epoch identifiers as found in `x/epochs/genesis.go`
 
 1. `DAY_EPOCH`: this identifies an epoch that lasts 24 hours.
-2. `STRIDE_EPOCH`: this identifies an epoch that lasts 5 minutes on local mode tesnet (although this may be changed) and longer on public testnet and mainnet, and is used in the `x/stakeibc/` module as a time interval in accordance with which the Stride app chain performs certain functions, such as autocompound stakig rewards.
+2. `STRIDE_EPOCH`: this identifies an epoch that lasts 5 minutes on local mode testnet (although this may be changed) and longer on public testnet and mainnet, and is used in the `x/stakeibc/` module as a time interval in accordance with which the Stride app chain performs certain functions, such as autocompound staking rewards.
 
 ## State
 

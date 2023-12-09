@@ -61,7 +61,7 @@ close soup mirror crew erode defy knock trigger gather eyebrow tent farm gym glo
 This mnemonic will have tokens on every chain running locally.
 
 #### Running integration tests
-Ensure submoules are updated
+Ensure submodules are updated
 ```
 git submodule update --init --recursive
 ```
