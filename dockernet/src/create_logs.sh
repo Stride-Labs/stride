@@ -103,7 +103,7 @@ while true; do
         $OSMO_MAIN_CMD q bank balances $TRADE_ICA_ADDR >> $TEMP_LOGS_DIR/$BALANCES_LOG
     fi
 
-    for chain in ${ACCESSORY_CHAINS[@]}; do
+    for chain in ${ACCESSORY_CHAINS[@]:-}; do
         ACCESSORY_MAIN_CMD=$(GET_VAR_VALUE ${chain}_MAIN_CMD)
         printf '\n%s\n' "==========================  $chain  =============================" >> $TEMP_LOGS_DIR/$CHANNELS_LOG
         $ACCESSORY_MAIN_CMD q ibc channel channels | grep -E "channel_id|port|state" >> $TEMP_LOGS_DIR/$CHANNELS_LOG || true
