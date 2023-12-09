@@ -86,9 +86,17 @@ func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochInfo epochstypes.EpochInf
 
 		// Transfers in and out of tokens for hostZones which have community pools
 		k.ProcessAllCommunityPoolTokens(ctx)
+
+		// Do transfers for all reward and swapped tokens defined by the trade routes every stride epoch
+		k.TransferAllRewardTokens(ctx)
 	}
 	if epochInfo.Identifier == epochstypes.MINT_EPOCH {
 		k.AllocateHostZoneReward(ctx)
+	}
+	// At the hour epoch, query the swap price on each trade route and initiate the token swap
+	if epochInfo.Identifier == epochstypes.HOUR_EPOCH {
+		k.UpdateAllSwapPrices(ctx)
+		k.SwapAllRewardTokens(ctx)
 	}
 }
 

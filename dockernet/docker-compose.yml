@@ -1,5 +1,6 @@
 version: "3"
 services:
+  # Stride nodes
   stride1:
     image: stridezone:stride
     volumes:
@@ -19,6 +20,7 @@ services:
     volumes:
       - ./state/stride3:/home/stride/.stride
 
+  # Host zones
   gaia1:
     image: stridezone:gaia
     volumes:
@@ -37,16 +39,6 @@ services:
     image: stridezone:gaia
     volumes:
       - ./state/gaia3:/home/gaia/.gaia
-
-  gaia4:
-    image: stridezone:gaia
-    volumes:
-      - ./state/gaia4:/home/gaia/.gaia
-
-  gaia5:
-    image: stridezone:gaia
-    volumes:
-      - ./state/gaia5:/home/gaia/.gaia
 
   juno1:
     image: stridezone:juno
@@ -67,16 +59,6 @@ services:
     volumes:
       - ./state/juno3:/home/juno/.juno
 
-  juno4:
-    image: stridezone:juno
-    volumes:
-      - ./state/juno4:/home/juno/.juno
-
-  juno5:
-    image: stridezone:juno
-    volumes:
-      - ./state/juno5:/home/juno/.juno
-
   osmo1:
     image: stridezone:osmo
     volumes:
@@ -96,16 +78,6 @@ services:
     volumes:
       - ./state/osmo3:/home/osmosis/.osmosisd
 
-  osmo4:
-    image: stridezone:osmo
-    volumes:
-      - ./state/osmo4:/home/osmosis/.osmosisd
-
-  osmo5:
-    image: stridezone:osmo
-    volumes:
-      - ./state/osmo5:/home/osmosis/.osmosisd
-
   stars1:
     image: stridezone:stars
     volumes:
@@ -124,16 +96,6 @@ services:
     image: stridezone:stars
     volumes:
       - ./state/stars3:/home/stars/.starsd
-
-  stars4:
-    image: stridezone:stars
-    volumes:
-      - ./state/stars4:/home/stars/.starsd
-
-  stars5:
-    image: stridezone:stars
-    volumes:
-      - ./state/stars5:/home/stars/.starsd
 
   # For the host chain, we must override the command to prevent an old binary from
   # being run when testing upgrades
@@ -159,18 +121,6 @@ services:
     volumes:
       - ./state/host3:/home/stride/.stride
 
-  host4:
-    image: stridezone:stride
-    command: strided start
-    volumes:
-      - ./state/host4:/home/stride/.stride
-
-  host5:
-    image: stridezone:stride
-    command: strided start
-    volumes:
-      - ./state/host5:/home/stride/.stride
-
   evmos1:
     image: stridezone:evmos
     volumes:
@@ -189,16 +139,6 @@ services:
     image: stridezone:evmos
     volumes:
       - ./state/evmos3:/home/evmos/.evmosd
-
-  evmos4:
-    image: stridezone:evmos
-    volumes:
-      - ./state/evmos4:/home/evmos/.evmosd
-
-  evmos5:
-    image: stridezone:evmos
-    volumes:
-      - ./state/evmos5:/home/evmos/.evmosd
 
   dydx1:
     image: stridezone:dydx
@@ -219,16 +159,6 @@ services:
     volumes:
       - ./state/dydx3:/home/dydx/.dydxprotocol
 
-  dydx4:
-    image: stridezone:dydx
-    volumes:
-      - ./state/dydx4:/home/dydx/.dydxprotocol
-
-  dydx5:
-    image: stridezone:dydx
-    volumes:
-      - ./state/dydx5:/home/dydx/.dydxprotocol
-
   noble1:
     image: stridezone:noble
     volumes:
@@ -248,16 +178,6 @@ services:
     volumes:
       - ./state/noble3:/home/noble/.noble
 
-  noble4:
-    image: stridezone:noble
-    volumes:
-      - ./state/noble4:/home/noble/.noble
-
-  noble5:
-    image: stridezone:noble
-    volumes:
-      - ./state/noble5:/home/noble/.noble
-
   # Fill in new host zone being tested here
 
   hermes:
@@ -267,6 +187,7 @@ services:
       - ./state/hermes/config.toml:/home/hermes/.hermes/config.toml
     restart: always
 
+  # Host zone relayers
   relayer-gaia:
     image: stridezone:relayer
     volumes:
@@ -323,6 +244,7 @@ services:
     restart: always
     command: [ "bash", "start.sh", "stride-dydx" ]
 
+  # Relayers for rate limiter tests
   relayer-juno-osmo:
     image: stridezone:relayer
     volumes:
@@ -330,12 +252,13 @@ services:
     restart: always
     command: [ "bash", "start.sh", "juno-osmo" ]
 
-  relayer-dydx-noble:
+  # Relayers for reward converter accessory chains
+  relayer-stride-noble:
     image: stridezone:relayer
     volumes:
-      - ./state/relayer-dydx-noble:/home/relayer/.relayer
+      - ./state/relayer-stride-noble:/home/relayer/.relayer
     restart: always
-    command: [ "bash", "start.sh", "dydx-noble" ]
+    command: [ "bash", "start.sh", "stride-noble" ]
 
   relayer-noble-osmo:
     image: stridezone:relayer
@@ -344,9 +267,39 @@ services:
     restart: always
     command: [ "bash", "start.sh", "noble-osmo" ]
 
+  relayer-stride-osmo:
+    image: stridezone:relayer
+    volumes:
+      - ./state/relayer-stride-osmo:/home/relayer/.relayer
+    restart: always
+    command: [ "bash", "start.sh", "stride-osmo" ]
+
+  # Relayers for reward converter with dydx
+  relayer-dydx-noble:
+    image: stridezone:relayer
+    volumes:
+      - ./state/relayer-dydx-noble:/home/relayer/.relayer
+    restart: always
+    command: [ "bash", "start.sh", "dydx-noble" ]
+
   relayer-osmo-dydx:
     image: stridezone:relayer
     volumes:
       - ./state/relayer-osmo-dydx:/home/relayer/.relayer
     restart: always
     command: [ "bash", "start.sh", "osmo-dydx" ]
+
+  # Relayers for reward converter with gaia
+  relayer-gaia-noble:
+    image: stridezone:relayer
+    volumes:
+      - ./state/relayer-gaia-noble:/home/relayer/.relayer
+    restart: always
+    command: [ "bash", "start.sh", "gaia-noble" ]
+
+  relayer-osmo-gaia:
+    image: stridezone:relayer
+    volumes:
+      - ./state/relayer-osmo-gaia:/home/relayer/.relayer
+    restart: always
+    command: [ "bash", "start.sh", "osmo-gaia" ]

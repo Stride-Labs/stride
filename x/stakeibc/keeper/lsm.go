@@ -339,7 +339,7 @@ func (k Keeper) DetokenizeAllLSMDeposits(ctx sdk.Context) {
 	// Submit detokenization ICAs for each active host zone
 	for _, hostZone := range k.GetAllActiveHostZone(ctx) {
 		// Get the host zone's delegation ICA portID
-		delegationICAOwner := types.FormatICAAccountOwner(hostZone.ChainId, types.ICAAccountType_DELEGATION)
+		delegationICAOwner := types.FormatHostZoneICAOwner(hostZone.ChainId, types.ICAAccountType_DELEGATION)
 		delegationICAPortID, err := icatypes.NewControllerPortID(delegationICAOwner)
 		if err != nil {
 			k.Logger(ctx).Error(fmt.Sprintf("Unable to get delegation port ID for %s: %s", hostZone.ChainId, err))
