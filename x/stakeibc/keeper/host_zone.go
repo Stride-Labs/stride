@@ -74,9 +74,9 @@ func (k Keeper) GetHostZoneFromTransferChannelID(ctx sdk.Context, channelID stri
 }
 
 // RemoveHostZone removes a hostZone from the store
-func (k Keeper) RemoveHostZone(ctx sdk.Context, chain_id string) {
+func (k Keeper) RemoveHostZone(ctx sdk.Context, chainId string) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefix(types.HostZoneKey))
-	store.Delete([]byte(chain_id))
+	store.Delete([]byte(chainId))
 }
 
 // GetAllHostZone returns all hostZone

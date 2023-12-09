@@ -1,8 +1,6 @@
 package cli
 
 import (
-	"errors"
-	"fmt"
 	"strings"
 
 	"github.com/cosmos/cosmos-sdk/client"
@@ -15,24 +13,26 @@ import (
 
 func CmdRestoreInterchainAccount() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "restore-interchain-account [chain-id] [account-type]",
+		Use:   "restore-interchain-account [chain-id] [connection-id] [account-owner]",
 		Short: "Broadcast message restore-interchain-account",
 		Long: strings.TrimSpace(
-			fmt.Sprintf(`Restores a closed channel associated with an interchain account.
-Specify the interchain account type as either: %s, %s, %s, or %s`,
-				types.ICAAccountType_DELEGATION,
-				types.ICAAccountType_WITHDRAWAL,
-				types.ICAAccountType_REDEMPTION,
-				types.ICAAccountType_FEE)),
-		Args: cobra.ExactArgs(2),
-		RunE: func(cmd *cobra.Command, args []string) (err error) {
-			argChainId := args[0]
-			argAccountType := args[1]
+			`Restores a closed channel associated with an interchain account.
+Specify the chain ID and account owner - where the owner is the alias for the ICA account
 
-			accountType, found := types.ICAAccountType_value[argAccountType]
-			if !found {
-				return errors.New("Invalid account type.")
-			}
+For host zone ICA accounts, the owner is of the form {chainId}.{accountType}
+ex:
+>>> strided tx restore-interchain-account cosmoshub-4 connection-0 cosmoshub-4.DELEGATION 
+
+For trade route ICA accounts, the owner is of the form:
+    {chainId}.{rewardDenom}-{hostDenom}.{accountType}
+ex:
+>>> strided tx restore-interchain-account dydx-mainnet-1 connection-1 dydx-mainnet-1.uusdc.udydx.CONVERTER_TRADE 
+		`),
+		Args: cobra.ExactArgs(3),
+		RunE: func(cmd *cobra.Command, args []string) (err error) {
+			chainId := args[0]
+			connectionId := args[1]
+			accountOwner := args[2]
 
 			clientCtx, err := client.GetClientTxContext(cmd)
 			if err != nil {
@@ -41,8 +41,9 @@ Specify the interchain account type as either: %s, %s, %s, or %s`,
 
 			msg := types.NewMsgRestoreInterchainAccount(
 				clientCtx.GetFromAddress().String(),
-				argChainId,
-				types.ICAAccountType(accountType),
+				chainId,
+				connectionId,
+				accountOwner,
 			)
 			if err := msg.ValidateBasic(); err != nil {
 				return err

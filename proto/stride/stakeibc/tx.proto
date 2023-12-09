@@ -1,7 +1,6 @@
 syntax = "proto3";
 package stride.stakeibc;
 
-import "stride/stakeibc/ica_account.proto";
 import "stride/stakeibc/validator.proto";
 
 option go_package = "github.com/Stride-Labs/stride/v16/x/stakeibc/types";
@@ -178,7 +177,8 @@ message MsgDeleteValidatorResponse {}
 message MsgRestoreInterchainAccount {
   string creator = 1;
   string chain_id = 2;
-  ICAAccountType account_type = 3;
+  string connection_id = 3;
+  string account_owner = 4;
 }
 message MsgRestoreInterchainAccountResponse {}
 

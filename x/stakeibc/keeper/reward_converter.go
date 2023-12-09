@@ -149,7 +149,7 @@ func (k Keeper) TransferRewardTokensHostToTrade(ctx sdk.Context, amount sdkmath.
 
 	// Send the ICA tx to kick off transfer from hostZone through rewardZone to the tradeZone (no callbacks)
 	hostAccount := route.HostAccount
-	withdrawalOwner := types.FormatTradeRouteICAOwnerFromRouteId(hostAccount.ChainId, route.GetRouteId(), hostAccount.Type)
+	withdrawalOwner := types.FormatHostZoneICAOwner(hostAccount.ChainId, hostAccount.Type)
 	err = k.SubmitICATxWithoutCallback(ctx, hostAccount.ConnectionId, withdrawalOwner, msgs, msg.TimeoutTimestamp)
 	if err != nil {
 		return errorsmod.Wrapf(err, "Failed to submit ICA tx, Messages: %+v", msgs)

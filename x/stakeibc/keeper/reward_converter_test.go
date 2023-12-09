@@ -39,7 +39,7 @@ type TransferRewardHostToTradeTestCase struct {
 
 func (s *KeeperTestSuite) SetupTransferRewardTokensHostToTradeTestCase() TransferRewardHostToTradeTestCase {
 	// Create an ICA channel for the transfer submission
-	owner := types.FormatTradeRouteICAOwner(HostChainId, RewardDenom, HostDenom, types.ICAAccountType_WITHDRAWAL)
+	owner := types.FormatHostZoneICAOwner(HostChainId, types.ICAAccountType_WITHDRAWAL)
 	channelId, portId := s.CreateICAChannel(owner)
 
 	// Define components of transfer message
