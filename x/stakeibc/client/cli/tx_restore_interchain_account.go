@@ -26,7 +26,7 @@ ex:
 For trade route ICA accounts, the owner is of the form:
     {chainId}.{rewardDenom}-{hostDenom}.{accountType}
 ex:
->>> strided tx restore-interchain-account dydx-mainnet-1 connection-1 dydx-mainnet-1.uusdc.udydx.CONVERTER_TRADE 
+>>> strided tx restore-interchain-account dydx-mainnet-1 connection-1 dydx-mainnet-1.uusdc-udydx.CONVERTER_TRADE 
 		`),
 		Args: cobra.ExactArgs(3),
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
