@@ -35,6 +35,18 @@ func (k Keeper) GetHostZone(ctx sdk.Context, chainId string) (val types.HostZone
 	return val, true
 }
 
+// GetActiveHostZone returns an error if the host zone is not found or if it's found, but is halted
+func (k Keeper) GetActiveHostZone(ctx sdk.Context, chainId string) (hostZone types.HostZone, err error) {
+	hostZone, found := k.GetHostZone(ctx, chainId)
+	if !found {
+		return hostZone, types.ErrHostZoneNotFound.Wrapf("host zone %s not found", chainId)
+	}
+	if hostZone.Halted {
+		return hostZone, types.ErrHaltedHostZone.Wrapf("host zone %s is halted", chainId)
+	}
+	return hostZone, nil
+}
+
 // GetHostZoneFromHostDenom returns a HostZone from a HostDenom
 func (k Keeper) GetHostZoneFromHostDenom(ctx sdk.Context, denom string) (*types.HostZone, error) {
 	var matchZone types.HostZone
@@ -62,9 +74,9 @@ func (k Keeper) GetHostZoneFromTransferChannelID(ctx sdk.Context, channelID stri
 }
 
 // RemoveHostZone removes a hostZone from the store
-func (k Keeper) RemoveHostZone(ctx sdk.Context, chain_id string) {
+func (k Keeper) RemoveHostZone(ctx sdk.Context, chainId string) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefix(types.HostZoneKey))
-	store.Delete([]byte(chain_id))
+	store.Delete([]byte(chainId))
 }
 
 // GetAllHostZone returns all hostZone

@@ -38,6 +38,8 @@ sed -i -E "s|chain-id = \"\"|chain-id = \"${CHAIN_ID}\"|g" $client_toml
 sed -i -E "s|keyring-backend = \"os\"|keyring-backend = \"test\"|g" $client_toml
 sed -i -E "s|node = \".*\"|node = \"tcp://localhost:26657\"|g" $client_toml
 
+sed -i -E "s|\"stake\"|\"${DENOM}\"|g" $genesis_json 
+
 jq '(.app_state.epochs.epochs[] | select(.identifier=="day") ).duration = $epochLen' --arg epochLen $STRIDE_DAY_EPOCH_DURATION $genesis_json > json.tmp && mv json.tmp $genesis_json
 jq '(.app_state.epochs.epochs[] | select(.identifier=="stride_epoch") ).duration = $epochLen' --arg epochLen $STRIDE_EPOCH_EPOCH_DURATION $genesis_json > json.tmp && mv json.tmp $genesis_json
 jq '.app_state.gov.params.max_deposit_period = $newVal' --arg newVal "$MAX_DEPOSIT_PERIOD" $genesis_json > json.tmp && mv json.tmp $genesis_json
@@ -62,6 +64,17 @@ $STRIDED add-genesis-account $($STRIDED keys show val -a) 100000000000${DENOM}
 echo "$STRIDE_ADMIN_MNEMONIC" | $STRIDED keys add admin --recover --keyring-backend=test 
 $STRIDED add-genesis-account $($STRIDED keys show admin -a) 100000000000${DENOM}
 
-$STRIDED start
+# Start the daemon in the background
+$STRIDED start & 
+pid=$!
+sleep 10
 
+# Add a governator
+echo "Adding governator..."
+pub_key=$($STRIDED tendermint show-validator)
+$STRIDED tx staking create-validator --amount 1000000000${DENOM} --from val \
+    --pubkey=$pub_key --commission-rate="0.10" --commission-max-rate="0.20" \
+    --commission-max-change-rate="0.01" --min-self-delegation="1" -y 
 
+# Bring the daemon back to the foreground
+wait $pid

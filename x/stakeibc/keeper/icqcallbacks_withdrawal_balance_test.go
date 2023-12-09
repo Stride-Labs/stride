@@ -238,5 +238,5 @@ func (s *KeeperTestSuite) TestWithdrawalBalanceCallback_FailedSubmitTx() {
 
 	err := keeper.WithdrawalBalanceCallback(s.App.StakeibcKeeper, s.Ctx, tc.validArgs.callbackArgs, tc.validArgs.query)
 	s.Require().ErrorContains(err, "Failed to SubmitTxs")
-	s.Require().ErrorContains(err, "invalid connection id, connection-X not found")
+	s.Require().ErrorContains(err, "connection connection-X not found")
 }

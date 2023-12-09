@@ -582,7 +582,7 @@ func (s *KeeperTestSuite) TestTransferAllLSMDeposits() {
 
 func (s *KeeperTestSuite) TestDetokenizeLSMDeposit() {
 	// Create the delegation ICA
-	owner := types.FormatICAAccountOwner(HostChainId, types.ICAAccountType_DELEGATION)
+	owner := types.FormatHostZoneICAOwner(HostChainId, types.ICAAccountType_DELEGATION)
 	s.CreateICAChannel(owner)
 	portId, err := icatypes.NewControllerPortID(owner)
 	s.Require().NoError(err, "no error expected when formatting portId")
@@ -649,7 +649,7 @@ func (s *KeeperTestSuite) TestDetokenizeLSMDeposit() {
 
 func (s *KeeperTestSuite) TestDetokenizeAllLSMDeposits() {
 	// Create an open delegation ICA channel
-	owner := types.FormatICAAccountOwner(HostChainId, types.ICAAccountType_DELEGATION)
+	owner := types.FormatHostZoneICAOwner(HostChainId, types.ICAAccountType_DELEGATION)
 	s.CreateICAChannel(owner)
 	portId, err := icatypes.NewControllerPortID(owner)
 	s.Require().NoError(err, "no error expected when formatting portId")
