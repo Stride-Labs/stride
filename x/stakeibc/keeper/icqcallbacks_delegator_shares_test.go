@@ -205,7 +205,10 @@ func (s *KeeperTestSuite) TestDelegatorSharesCallback_Retry_DelegationChange() {
 	// Confirm the validator's delegation was not modified
 	hostZone, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx, tc.hostZone.ChainId)
 	s.Require().True(found, "host zone found")
-	s.Require().Equal(initialDelegation.Int64(), hostZone.Validators[tc.valIndexQueried].Delegation.Int64(), "validator delegation")
+
+	validator := hostZone.Validators[tc.valIndexQueried]
+	s.Require().Equal(initialDelegation.Int64(), validator.Delegation.Int64(), "validator delegation")
+	s.Require().True(validator.SlashQueryInProgress, "slash query should still be in progress")
 
 	// Confirm the query was resubmitted
 	// The new delegation amount should be stored in the callback data
@@ -235,7 +238,9 @@ func (s *KeeperTestSuite) TestDelegatorSharesCallback_Retry_DelegationICAInProgr
 	s.Require().True(found, "host zone found")
 
 	initialDelegation := initialHostZone.Validators[tc.valIndexQueried].Delegation
-	s.Require().Equal(initialDelegation.Int64(), actualHostZone.Validators[tc.valIndexQueried].Delegation.Int64(), "validator delegation")
+	actualValidator := actualHostZone.Validators[tc.valIndexQueried]
+	s.Require().Equal(initialDelegation.Int64(), actualValidator.Delegation.Int64(), "validator delegation")
+	s.Require().True(actualValidator.SlashQueryInProgress, "slash query should still be in progress")
 
 	// Confirm the query was resubmitted
 	s.CheckQueryWasResubmitted(tc, actualHostZone)
@@ -269,6 +274,7 @@ func (s *KeeperTestSuite) checkStateIfValidatorNotSlashed(tc DelegatorSharesICQC
 	finalValidator := hostZone.Validators[tc.valIndexQueried]
 	s.Require().Equal(initialValidator.Weight, finalValidator.Weight, "validator weight should not have updated")
 	s.Require().Equal(initialValidator.Delegation, finalValidator.Delegation, "validator delegation amount should not have updated")
+	s.Require().False(finalValidator.SlashQueryInProgress, "slash query in progress flag should be reset to false")
 }
 
 func (s *KeeperTestSuite) TestDelegatorSharesCallback_HostZoneNotFound() {
@@ -373,26 +379,76 @@ func (s *KeeperTestSuite) TestDelegatorSharesCallback_PrecisionError() {
 
 	validator := hostZone.Validators[tc.valIndexQueried]
 	expectedValDelegation := tc.hostZone.Validators[tc.valIndexQueried].Delegation.Add(precisionErrorTokens)
+	s.Require().False(validator.SlashQueryInProgress, "slash query in progress should have been reset")
 	s.Require().Equal(expectedValDelegation.Int64(), validator.Delegation.Int64(), "validator delegation amount")
 }
 
-func (s *KeeperTestSuite) TestCalibrateDelegationCallback_Successful() {
+func (s *KeeperTestSuite) TestDelegatorSharesCallback_ZeroInternalDelegation() {
 	tc := s.SetupDelegatorSharesICQCallback()
+	initialValidator := tc.hostZone.Validators[tc.valIndexQueried]
 
-	// Callback
-	err := keeper.CalibrateDelegationCallback(s.App.StakeibcKeeper, s.Ctx, tc.validArgs.callbackArgs, tc.validArgs.query)
-	s.Require().NoError(err, "calibrate delegation callback error")
+	// Update the validator so that it currently has 0 assumed tokens
+	initialValidator.Delegation = sdkmath.ZeroInt()
+	s.App.StakeibcKeeper.SetHostZone(s.Ctx, tc.hostZone)
 
-	// Confirm the staked balance was decreased on the host
+	tc.validArgs.query.CallbackData, _ = proto.Marshal(&types.DelegatorSharesQueryCallback{
+		InitialValidatorDelegation: sdk.ZeroInt(),
+	})
+
+	// Update the delegator shares query response so that it shows that there are 5 more tokens delegated
+	queryTokens := sdk.NewInt(5)
+	queryShares := sdk.NewDecFromInt(queryTokens).Quo(tc.sharesToTokensRate)
+
+	callbackArgs := s.CreateDelegatorSharesQueryResponse(initialValidator.Address, queryShares)
+	err := keeper.DelegatorSharesCallback(s.App.StakeibcKeeper, s.Ctx, callbackArgs, tc.validArgs.query)
+	s.Require().NoError(err)
+
+	// Confirm host zone and validator were updated
 	hostZone, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx, HostChainId)
 	s.Require().True(found, "host zone found")
-	s.Require().Equal(tc.expectedSlashAmount.Int64(), tc.hostZone.TotalDelegations.Sub(hostZone.TotalDelegations).Int64(), "staked bal slash")
 
-	// Confirm the validator's weight and delegation amount were not reduced
+	expectedTotalDelegation := tc.hostZone.TotalDelegations.Add(queryTokens)
+	s.Require().Equal(expectedTotalDelegation.Int64(), hostZone.TotalDelegations.Int64(), "host zone staked balance")
+
 	validator := hostZone.Validators[tc.valIndexQueried]
-	s.Require().NotEqual(tc.expectedWeight, validator.Weight, "validator weight")
-	s.Require().Equal(tc.expectedDelegationAmount.Int64(), validator.Delegation.Int64(), "validator delegation amount")
+	s.Require().False(validator.SlashQueryInProgress, "slash query in progress should have been reset")
+	s.Require().Equal(queryTokens.Int64(), validator.Delegation.Int64(), "validator delegation amount")
+}
 
-	// Confirm the validator query is still in progress (calibration callback does not set it false)
-	s.Require().True(validator.SlashQueryInProgress, "slash query in progress")
+func (s *KeeperTestSuite) TestDelegatorSharesCallback_ZeroExternalDelegation() {
+	tc := s.SetupDelegatorSharesICQCallback()
+	initialValidator := tc.hostZone.Validators[tc.valIndexQueried]
+
+	// Update the delegator shares query response so that it shows that there are 0 delegated tokens
+	queryShares := sdk.NewDec(0)
+
+	callbackArgs := s.CreateDelegatorSharesQueryResponse(initialValidator.Address, queryShares)
+	err := keeper.DelegatorSharesCallback(s.App.StakeibcKeeper, s.Ctx, callbackArgs, tc.validArgs.query)
+	s.Require().NoError(err)
+
+	// Confirm host zone and validator were updated
+	hostZone, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx, HostChainId)
+	s.Require().True(found, "host zone found")
+
+	expectedTotalDelegation := tc.hostZone.TotalDelegations.Sub(initialValidator.Delegation)
+	s.Require().Equal(expectedTotalDelegation.Int64(), hostZone.TotalDelegations.Int64(), "host zone staked balance")
+
+	validator := hostZone.Validators[tc.valIndexQueried]
+	s.Require().False(validator.SlashQueryInProgress, "slash query in progress should have been reset")
+	s.Require().Zero(validator.Delegation.Int64(), "validator delegation amount")
+
+	// Run the callback again, and confirm there's no failure (testing the case of 0 internal and external)
+	callbackArgs = s.CreateDelegatorSharesQueryResponse(initialValidator.Address, sdk.ZeroDec())
+	err = keeper.DelegatorSharesCallback(s.App.StakeibcKeeper, s.Ctx, callbackArgs, tc.validArgs.query)
+	s.Require().NoError(err)
+
+	hostZone, found = s.App.StakeibcKeeper.GetHostZone(s.Ctx, HostChainId)
+	s.Require().True(found, "host zone found")
+
+	expectedTotalDelegation = tc.hostZone.TotalDelegations.Sub(initialValidator.Delegation)
+	s.Require().Equal(expectedTotalDelegation.Int64(), hostZone.TotalDelegations.Int64(), "host zone staked balance")
+
+	validator = hostZone.Validators[tc.valIndexQueried]
+	s.Require().False(validator.SlashQueryInProgress, "slash query in progress should have been reset")
+	s.Require().Zero(validator.Delegation.Int64(), "validator delegation amount")
 }
