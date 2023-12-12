@@ -7,7 +7,6 @@ import (
 
 	ratelimitkeeper "github.com/Stride-Labs/stride/v16/x/ratelimit/keeper"
 	stakeibckeeper "github.com/Stride-Labs/stride/v16/x/stakeibc/keeper"
-	stakeibctypes "github.com/Stride-Labs/stride/v16/x/stakeibc/types"
 )
 
 var (
@@ -27,19 +26,19 @@ func CreateUpgradeHandler(
 	return func(ctx sdk.Context, _ upgradetypes.Plan, vm module.VersionMap) (module.VersionMap, error) {
 		ctx.Logger().Info("Starting upgrade v16...")
 
-		// unhalt Cosmos Hub host zone
-		ctx.Logger().Info("Unhalting Cosmos Hub...")
-		hostZone, found := stakeibcKeeper.GetHostZone(ctx, CosmosHubChainId)
-		if !found {
-			return vm, stakeibctypes.ErrHostZoneNotFound.Wrap(CosmosHubChainId)
-		}
+		// // unhalt Cosmos Hub host zone
+		// ctx.Logger().Info("Unhalting Cosmos Hub...")
+		// hostZone, found := stakeibcKeeper.GetHostZone(ctx, CosmosHubChainId)
+		// if !found {
+		// 	return vm, stakeibctypes.ErrHostZoneNotFound.Wrap(CosmosHubChainId)
+		// }
 
-		hostZone.Halted = false
-		stakeibcKeeper.SetHostZone(ctx, hostZone)
+		// hostZone.Halted = false
+		// stakeibcKeeper.SetHostZone(ctx, hostZone)
 
-		// remove stuatom from rate limits
-		ctx.Logger().Info("Removing stuatom as a blacklisted asset...")
-		ratelimitKeeper.RemoveDenomFromBlacklist(ctx, CosmosHubStToken)
+		// // remove stuatom from rate limits
+		// ctx.Logger().Info("Removing stuatom as a blacklisted asset...")
+		// ratelimitKeeper.RemoveDenomFromBlacklist(ctx, CosmosHubStToken)
 
 		return mm.RunMigrations(ctx, configurator, vm)
 	}
