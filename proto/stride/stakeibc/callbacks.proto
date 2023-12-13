@@ -86,3 +86,8 @@ message CommunityPoolBalanceQueryCallback {
   ICAAccountType ica_type = 1;
   string denom = 2;
 }
+
+message TradeRouteCallback {
+  string reward_denom = 1;
+  string host_denom = 2;
+}

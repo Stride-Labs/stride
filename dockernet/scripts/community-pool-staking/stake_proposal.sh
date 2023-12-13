@@ -4,7 +4,7 @@ SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 source ${SCRIPT_DIR}/../../config.sh
 
 deposit_ica_account=$(GET_ICA_ADDR DYDX community_pool_deposit)
-proposal_file=${STATE}/${DYDX_NODE_PREFIX}1/pool.json
+proposal_file=${STATE}/${DYDX_NODE_PREFIX}1/proposal.json
 cat << EOF > $proposal_file
 {
   "title": "Community Spend: Liquid stake",
