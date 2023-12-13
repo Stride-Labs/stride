@@ -12,6 +12,8 @@ import (
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/types/bech32"
+	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 	"github.com/cosmos/gogoproto/proto"
@@ -231,7 +233,10 @@ func (s *AppTestHelper) CreateICAChannel(owner string) (channelID, portID string
 	_, transferChannelExists := s.App.IBCKeeper.ChannelKeeper.GetChannel(s.Ctx, ibctesting.TransferPort, ibctesting.FirstChannelID)
 	if !transferChannelExists {
 		ownerSplit := strings.Split(owner, ".")
-		s.Require().Equal(2, len(ownerSplit), "owner should be of the form: {HostZone}.{AccountName}")
+		isHostZoneICA := len(ownerSplit) == 2
+		isTradeRouteICA := len(ownerSplit) == 3
+		s.Require().True(isHostZoneICA || isTradeRouteICA,
+			"owner should be either of the form: {chainId}.{AccountName} or {chainId}.{rewarDenom}-{hostDenom}.{accountName}")
 
 		hostChainID := ownerSplit[0]
 		s.CreateTransferChannel(hostChainID)
@@ -352,6 +357,34 @@ func (s *AppTestHelper) UpdateChannelState(portId, channelId string, channelStat
 	s.App.IBCKeeper.ChannelKeeper.SetChannel(s.Ctx, portId, channelId, channel)
 }
 
+// Helper function to check if an ICA was submitted by seeing if the sequence number incremented
+func (s *AppTestHelper) CheckICATxSubmitted(portId, channelId string, icaFunction func() error) {
+	// Get the sequence before the tested funciton is run
+	startSequence := s.MustGetNextSequenceNumber(portId, channelId)
+
+	// Run the test function and confirm there's no error
+	err := icaFunction()
+	s.Require().NoError(err, "no error expected executing tested function")
+
+	// Check that the sequence number incremented
+	endSequence := s.MustGetNextSequenceNumber(portId, channelId)
+	s.Require().Equal(startSequence+1, endSequence, "sequence number should have incremented from tested function")
+}
+
+// Helper function to check if an ICA was NOT submitted by seeing if the sequence number did not increment
+func (s *AppTestHelper) CheckICATxNotSubmitted(portId, channelId string, icaFunction func() error) {
+	// Get the sequence before the tested funciton is run
+	startSequence := s.MustGetNextSequenceNumber(portId, channelId)
+
+	// Run the test function and confirm there's no error
+	err := icaFunction()
+	s.Require().NoError(err, "no error expected executing tested function")
+
+	// Check that the sequence number did not change
+	endSequence := s.MustGetNextSequenceNumber(portId, channelId)
+	s.Require().Equal(startSequence, endSequence, "sequence number should NOT have incremented from tested function")
+}
+
 // Constructs an ICA Packet Acknowledgement compatible with ibc-go v5+
 func ICAPacketAcknowledgement(t *testing.T, msgType string, msgResponses []proto.Message) channeltypes.Acknowledgement {
 	txMsgData := &sdk.TxMsgData{
@@ -409,6 +442,13 @@ func (s *AppTestHelper) GetIBCDenomTrace(denom string) transfertypes.DenomTrace 
 	return transfertypes.ParseDenomTrace(prefixedDenom)
 }
 
+// Helper function to get the next sequence number for testing when an ICA was submitted
+func (s *AppTestHelper) MustGetNextSequenceNumber(portId, channelId string) uint64 {
+	sequence, found := s.App.StakeibcKeeper.IBCKeeper.ChannelKeeper.GetNextSequenceSend(s.Ctx, portId, channelId)
+	s.Require().True(found, "sequence number for port %s and channel %s was not found", portId, channelId)
+	return sequence
+}
+
 // Creates and stores an IBC denom from a base denom on transfer channel-0
 // This is only required for tests that use the transfer keeper and require that the IBC
 // denom is present in the store
@@ -437,6 +477,46 @@ func (s *AppTestHelper) MockClientLatestHeight(height uint64) {
 	s.App.IBCKeeper.ClientKeeper.SetClientState(s.Ctx, FirstClientId, &clientState)
 }
 
+// Helper function to mock out a client and connection to test
+// mapping from connection ID back to chain ID
+// This also mocks out the consensus state to enable testing registering interchain accounts
+func (s *AppTestHelper) MockClientAndConnection(chainId, clientId, connectionId string) {
+	clientHeight := clienttypes.Height{
+		RevisionHeight: uint64(s.Ctx.BlockHeight()),
+	}
+	clientState := tendermint.ClientState{
+		ChainId:        chainId,
+		LatestHeight:   clientHeight,
+		TrustingPeriod: time.Minute * 10,
+	}
+	s.App.IBCKeeper.ClientKeeper.SetClientState(s.Ctx, clientId, &clientState)
+
+	consensusState := tendermint.ConsensusState{
+		Timestamp: s.Ctx.BlockTime(),
+	}
+	s.App.IBCKeeper.ClientKeeper.SetClientConsensusState(s.Ctx, clientId, clientHeight, &consensusState)
+
+	connection := connectiontypes.ConnectionEnd{
+		ClientId: clientId,
+		Versions: []*connectiontypes.Version{connectiontypes.DefaultIBCVersion},
+	}
+	s.App.IBCKeeper.ConnectionKeeper.SetConnection(s.Ctx, connectionId, connection)
+}
+
+// Helper function to mock out an ICA address
+func (s *AppTestHelper) MockICAChannel(connectionId, channelId, owner, address string) {
+	// Create an open channel with the ICA port
+	portId, _ := icatypes.NewControllerPortID(owner)
+	channel := channeltypes.Channel{
+		State: channeltypes.OPEN,
+	}
+	s.App.IBCKeeper.ChannelKeeper.SetChannel(s.Ctx, portId, channelId, channel)
+
+	// Then set the address and make the channel active
+	s.App.ICAControllerKeeper.SetInterchainAccountAddress(s.Ctx, connectionId, portId, address)
+	s.App.ICAControllerKeeper.SetActiveChannelID(s.Ctx, connectionId, portId, channelId)
+}
+
 func (s *AppTestHelper) ConfirmUpgradeSucceededs(upgradeName string, upgradeHeight int64) {
 	s.Ctx = s.Ctx.WithBlockHeight(upgradeHeight - 1)
 	plan := upgradetypes.Plan{Name: upgradeName, Height: upgradeHeight}
@@ -450,6 +530,23 @@ func (s *AppTestHelper) ConfirmUpgradeSucceededs(upgradeName string, upgradeHeig
 		beginBlockRequest := abci.RequestBeginBlock{}
 		s.App.BeginBlocker(s.Ctx, beginBlockRequest)
 	})
+}
+
+// Returns the bank store key prefix for an address and denom
+// Useful for testing balance ICQs
+func (s *AppTestHelper) GetBankStoreKeyPrefix(address, denom string) []byte {
+	_, addressBz, err := bech32.DecodeAndConvert(address)
+	s.Require().NoError(err, "no error expected when bech decoding address")
+	return append(banktypes.CreateAccountBalancesPrefix(addressBz), []byte(denom)...)
+}
+
+// Extracts the address and denom from a bank store prefix
+// Useful for testing balance ICQs as it can confirm that the serialized query request
+// data has the proper address and denom
+func (s *AppTestHelper) ExtractAddressAndDenomFromBankPrefix(data []byte) (address, denom string) {
+	addressBz, denom, err := banktypes.AddressAndDenomFromBalancesStore(data[1:]) // Remove BalancePrefix byte
+	s.Require().NoError(err, "no error expected when getting address and denom from balance store")
+	return addressBz.String(), denom
 }
 
 // Generates a valid and invalid test address (used for non-keeper tests)

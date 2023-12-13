@@ -1,5 +1,7 @@
 package types
 
+import fmt "fmt"
+
 const (
 	// ModuleName defines the module name
 	ModuleName = "interchainquery"
@@ -31,6 +33,14 @@ const (
 	STAKING_STORE_QUERY_WITH_PROOF = "store/staking/key"
 	// The bank store is key'd by the account address
 	BANK_STORE_QUERY_WITH_PROOF = "store/bank/key"
+	// The Osmosis twap store - key'd by the pool ID and denom's
+	TWAP_STORE_QUERY_WITH_PROOF = "store/twap/key"
+)
+
+var (
+	// Osmosis TWAP query info
+	OsmosisKeySeparator          = "|"
+	OsmosisMostRecentTWAPsPrefix = "recent_twap" + OsmosisKeySeparator
 )
 
 var (
@@ -41,4 +51,14 @@ var (
 
 func KeyPrefix(p string) []byte {
 	return []byte(p)
+}
+
+func FormatOsmosisMostRecentTWAPKey(poolId uint64, denom1, denom2 string) []byte {
+	// Sort denoms
+	if denom1 > denom2 {
+		denom1, denom2 = denom2, denom1
+	}
+
+	poolIdBz := fmt.Sprintf("%0.20d", poolId)
+	return []byte(fmt.Sprintf("%s%s%s%s%s%s", OsmosisMostRecentTWAPsPrefix, poolIdBz, OsmosisKeySeparator, denom1, OsmosisKeySeparator, denom2))
 }

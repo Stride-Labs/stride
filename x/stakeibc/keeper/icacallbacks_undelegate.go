@@ -48,12 +48,6 @@ func (k Keeper) UndelegateCallback(ctx sdk.Context, packet channeltypes.Packet, 
 	}
 	for _, splitDelegation := range undelegateCallback.SplitDelegations {
 		if err := k.DecrementValidatorDelegationChangesInProgress(&hostZone, splitDelegation.Validator); err != nil {
-			// TODO: Revert after v14 upgrade
-			if errors.Is(err, types.ErrInvalidValidatorDelegationUpdates) {
-				k.Logger(ctx).Error(utils.LogICACallbackWithHostZone(chainId, ICACallbackID_Undelegate,
-					"Invariant failed - delegation changes in progress fell below 0 for %s", splitDelegation.Validator))
-				continue
-			}
 			return err
 		}
 	}
