@@ -258,62 +258,62 @@ func (k Keeper) ConsolidateUnbondingMessages(
 ) (finalUnbondings []*types.SplitDelegation, err error) {
 	// Grab the first {batch_size} number of messages from the list
 	// This will consist of the validators with the most capacity
-	unbondingsCapped := initialUnbondings[:batchSize]
+	unbondingsBatch := initialUnbondings[:batchSize]
 
 	// Calculate the amount that was initially meant to be unbonded from that batch,
 	// and determine the remainder that needs to be redistributed
-	unbondAmountFromBatch := sdkmath.ZeroInt()
-	initialUnbondingsMap := map[string]sdkmath.Int{}
-	for _, unbonding := range unbondingsCapped {
-		unbondAmountFromBatch = unbondAmountFromBatch.Add(unbonding.Amount)
-		initialUnbondingsMap[unbonding.Validator] = unbonding.Amount
+	initialUnbondAmountFromBatch := sdkmath.ZeroInt()
+	initialUnbondAmountFromBatchByVal := map[string]sdkmath.Int{}
+	for _, unbonding := range unbondingsBatch {
+		initialUnbondAmountFromBatch = initialUnbondAmountFromBatch.Add(unbonding.Amount)
+		initialUnbondAmountFromBatchByVal[unbonding.Validator] = unbonding.Amount
 	}
-	totalExcessAmount := totalUnbondAmount.Sub(unbondAmountFromBatch)
+	totalExcessAmount := totalUnbondAmount.Sub(initialUnbondAmountFromBatch)
 
 	// Store the delegation of each validator that was expected *after* the originally
 	// planned unbonding went through
 	// e.g. If the validator had 10 before unbonding, and in the first pass, 3 was
 	//      supposed to be unbonded, their delegation after the first pass is 7
-	totalDelegationsAfterFirstPass := sdk.ZeroDec()
-	delegationsAfterFirstPass := map[string]sdk.Dec{}
+	totalRemainingDelegationsAcrossBatch := sdk.ZeroDec()
+	remainingDelegationsInBatchByVal := map[string]sdk.Dec{}
 	for _, capacity := range unbondCapacities {
 		// Only add validators that were in the initial unbonding plan
 		// The delegation after the first pass is calculated by taking the "current delegation"
 		// (aka delegation before unbonding) and subtracting the unbond amount
-		if initialUnbondAmount, ok := initialUnbondingsMap[capacity.ValidatorAddress]; ok {
-			delegationAfterFirstPass := sdk.NewDecFromInt(capacity.CurrentDelegation.Sub(initialUnbondAmount))
+		if initialUnbondAmount, ok := initialUnbondAmountFromBatchByVal[capacity.ValidatorAddress]; ok {
+			remainingDelegation := sdk.NewDecFromInt(capacity.CurrentDelegation.Sub(initialUnbondAmount))
 
-			delegationsAfterFirstPass[capacity.ValidatorAddress] = delegationAfterFirstPass
-			totalDelegationsAfterFirstPass = totalDelegationsAfterFirstPass.Add(delegationAfterFirstPass)
+			remainingDelegationsInBatchByVal[capacity.ValidatorAddress] = remainingDelegation
+			totalRemainingDelegationsAcrossBatch = totalRemainingDelegationsAcrossBatch.Add(remainingDelegation)
 		}
 	}
 
 	// This is to protect against a division by zero error, but this would technically be possible
 	// if the 32 validators with the most capacity were all 0 weight
-	if totalDelegationsAfterFirstPass.IsZero() {
+	if totalRemainingDelegationsAcrossBatch.IsZero() {
 		return finalUnbondings, errors.New("no delegations to redistribute during consolidation")
 	}
 
 	// Before we start dividing up the excess, make sure we have sufficient stake in the capped set to cover it
-	if sdk.NewDecFromInt(totalExcessAmount).GT(totalDelegationsAfterFirstPass) {
+	if sdk.NewDecFromInt(totalExcessAmount).GT(totalRemainingDelegationsAcrossBatch) {
 		return finalUnbondings, errors.New("not enough exisiting delegation in the batch to cover the excess")
 	}
 
 	// Loop through the original unbonding messages and proportionally divide out
 	// the excess amongst the validators in the set
 	excessRemaining := totalExcessAmount
-	for i := range unbondingsCapped {
-		unbonding := unbondingsCapped[i]
+	for i := range unbondingsBatch {
+		unbonding := unbondingsBatch[i]
 
 		var validatorUnbondIncrease sdkmath.Int
-		if i != len(unbondingsCapped)-1 {
+		if i != len(unbondingsBatch)-1 {
 			// For all but the last validator, calculate their unbonding increase by
 			// splitting the excess proportionally in line with their remaining delegation
-			delegationAfterFirstPass, ok := delegationsAfterFirstPass[unbonding.Validator]
+			remainingDelegation, ok := remainingDelegationsInBatchByVal[unbonding.Validator]
 			if !ok {
 				return finalUnbondings, fmt.Errorf("validator not found in initial unbonding plan")
 			}
-			unbondIncreaseProportion := delegationAfterFirstPass.Quo(totalDelegationsAfterFirstPass)
+			unbondIncreaseProportion := remainingDelegation.Quo(totalRemainingDelegationsAcrossBatch)
 			validatorUnbondIncrease = sdk.NewDecFromInt(totalExcessAmount).Mul(unbondIncreaseProportion).TruncateInt()
 
 			// Decrement excess
