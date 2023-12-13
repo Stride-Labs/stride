@@ -35,7 +35,7 @@ func (s *KeeperTestSuite) SetupTestUnbondFromHostZone(
 	unbondAmount sdkmath.Int,
 	validators []*types.Validator,
 ) UnbondingTestCase {
-	delegationAccountOwner := types.FormatICAAccountOwner(HostChainId, types.ICAAccountType_DELEGATION)
+	delegationAccountOwner := types.FormatHostZoneICAOwner(HostChainId, types.ICAAccountType_DELEGATION)
 	delegationChannelID, delegationPortID := s.CreateICAChannel(delegationAccountOwner)
 
 	// Sanity checks:
@@ -195,6 +195,44 @@ func (s *KeeperTestSuite) TestUnbondFromHostZone_Successful_UnbondOnlyZeroWeight
 		// 50 - 40 = 10 unbond remaining
 		// valE has #2 priority - unbond up to remaining
 		{Validator: "valE", UnbondAmount: sdkmath.NewInt(10)},
+	}
+
+	tc := s.SetupTestUnbondFromHostZone(totalWeight, totalStake, totalUnbondAmount, validators)
+	s.CheckUnbondingMessages(tc, expectedUnbondings)
+}
+
+func (s *KeeperTestSuite) TestUnbondFromHostZone_Successful_UnbondIgnoresSlashQueryInProgress() {
+	// Native Stake:       100
+	// LSM Stake:           0
+	// Total Stake:        100
+	//
+	// Slash Query In Progress Stake: 25
+	// Eligible Stake: 		75
+	//
+	// Unbond Amount:        20
+	// Stake After Unbond: 80
+	// Eligible Stake After Unbond 45
+	totalUnbondAmount := sdkmath.NewInt(20)
+	totalStake := sdkmath.NewInt(100)
+	totalWeight := int64(100)
+
+	validators := []*types.Validator{
+		// Current: 25, Weight: 15%, Balanced: (15/75) * 55= 11, Capacity: 25-11 = 14 > 0
+		{Address: "valA", Weight: 15, Delegation: sdkmath.NewInt(25)},
+		// Current: 25, Weight: 20%, Balanced: (20/75) * 55 = 14.66, Capacity: 25-14.66 = 10.44 > 0
+		{Address: "valB", Weight: 20, Delegation: sdkmath.NewInt(25)},
+		// Current: 25, Weight: 40%, Balanced: (40/75) * 55 = 29.33, Capacity: 25-29.33 < 0
+		{Address: "valC", Weight: 40, Delegation: sdkmath.NewInt(25)},
+		// Current: 25, Weight: 25%, Slash-Query-In-Progress so ignored
+		{Address: "valD", Weight: 25, Delegation: sdkmath.NewInt(25), SlashQueryInProgress: true},
+	}
+
+	expectedUnbondings := []ValidatorUnbonding{
+		// valA has #1 priority - unbond up to 14
+		{Validator: "valA", UnbondAmount: sdkmath.NewInt(14)},
+		// 20 - 14 = 6 unbond remaining
+		// valB has #2 priority - unbond up to remaining
+		{Validator: "valB", UnbondAmount: sdkmath.NewInt(6)},
 	}
 
 	tc := s.SetupTestUnbondFromHostZone(totalWeight, totalStake, totalUnbondAmount, validators)
