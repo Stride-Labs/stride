@@ -311,7 +311,7 @@ func (k Keeper) ConsolidateUnbondingMessages(
 			// splitting the excess proportionally in line with their remaining delegation
 			remainingDelegation, ok := remainingDelegationsInBatchByVal[unbonding.Validator]
 			if !ok {
-				return finalUnbondings, fmt.Errorf("validator not found in initial unbonding plan")
+				return finalUnbondings, fmt.Errorf("validator %s not found in initial unbonding plan", unbonding.Validator)
 			}
 			unbondIncreaseProportion := remainingDelegation.Quo(totalRemainingDelegationsAcrossBatch)
 			validatorUnbondIncrease = sdk.NewDecFromInt(totalExcessAmount).Mul(unbondIncreaseProportion).TruncateInt()
@@ -320,6 +320,17 @@ func (k Keeper) ConsolidateUnbondingMessages(
 			excessRemaining = excessRemaining.Sub(validatorUnbondIncrease)
 		} else {
 			// The last validator in the set should get any remainder from int truction
+			// First confirm the validator has sufficient remaining delegation to cover this
+			remainingDelegation, ok := remainingDelegationsInBatchByVal[unbonding.Validator]
+			if !ok {
+				return finalUnbondings, fmt.Errorf("validator %s not found in initial unbonding plan", unbonding.Validator)
+			}
+			if sdk.NewDecFromInt(excessRemaining).GT(remainingDelegation) {
+				return finalUnbondings,
+					fmt.Errorf("validator %s does not have enough remaining delegation (%v) to cover the excess (%v)",
+						unbonding.Validator, remainingDelegation, excessRemaining)
+			}
+
 			validatorUnbondIncrease = excessRemaining
 		}
 
