@@ -914,7 +914,7 @@ func (s *KeeperTestSuite) TestGetUnbondingICAMessages() {
 	}
 }
 
-func (s *KeeperTestSuite) TestConsolidateUnbondingMessages() {
+func (s *KeeperTestSuite) TestConsolidateUnbondingMessages_Success() {
 	batchSize := 4
 	totalUnbondAmount := int64(1501)
 	excessUnbondAmount := int64(101)
@@ -1019,4 +1019,34 @@ func (s *KeeperTestSuite) TestConsolidateUnbondingMessages() {
 			"%s - validator final unbond amount should have increased by %d from %d",
 			expectedUnbonding.Validator, validator.expectedDelegationIncrease, initialUnbonding.Amount.Int64())
 	}
+}
+
+func (s *KeeperTestSuite) TestConsolidateUnbondingMessages_Failure() {
+	batchSize := 4
+	totalUnbondAmount := sdkmath.NewInt(1000)
+
+	// Setup the capacities such that after the first pass, there is 1 token remaining amongst the batch
+	capacities := []keeper.ValidatorUnbondCapacity{
+		{ValidatorAddress: "val1", Capacity: sdkmath.NewInt(100), CurrentDelegation: sdkmath.NewInt(100 + 1)}, // extra token
+		{ValidatorAddress: "val2", Capacity: sdkmath.NewInt(100), CurrentDelegation: sdkmath.NewInt(100)},
+		{ValidatorAddress: "val3", Capacity: sdkmath.NewInt(100), CurrentDelegation: sdkmath.NewInt(100)},
+		{ValidatorAddress: "val4", Capacity: sdkmath.NewInt(100), CurrentDelegation: sdkmath.NewInt(100)},
+
+		// Excess
+		{ValidatorAddress: "val5", Capacity: sdkmath.NewInt(600), CurrentDelegation: sdkmath.NewInt(600)},
+	}
+
+	// Create the unbondings such that they align with the above and each validtor unbonds their full amount
+	unbondings := []*types.SplitDelegation{}
+	for _, capacitiy := range capacities {
+		unbondings = append(unbondings, &types.SplitDelegation{
+			Validator: capacitiy.ValidatorAddress,
+			Amount:    capacitiy.Capacity,
+		})
+	}
+
+	// Call consolidate - it should fail because there is not enough remaining delegation
+	// on each validator to cover the excess
+	_, err := s.App.StakeibcKeeper.ConsolidateUnbondingMessages(totalUnbondAmount, unbondings, capacities, batchSize)
+	s.Require().ErrorContains(err, "not enough exisiting delegation in the batch to cover the excess")
 }
