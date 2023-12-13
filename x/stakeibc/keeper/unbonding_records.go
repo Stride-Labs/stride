@@ -249,6 +249,7 @@ func (k Keeper) GetUnbondingICAMessages(
 // reduce the number of messages by dividing any excess amongst proportionally based on
 // the remaining delegation
 // This will no longer be necessary after undelegations to 32+ validators is supported
+// NOTE: This assumes unbondCapacities are stored in order of capacity
 func (k Keeper) ConsolidateUnbondingMessages(
 	totalUnbondAmount sdkmath.Int,
 	initialUnbondings []*types.SplitDelegation,
@@ -287,9 +288,15 @@ func (k Keeper) ConsolidateUnbondingMessages(
 		}
 	}
 
-	// This should never happen, but it protects against a division by zero error below
+	// This is to protect against a division by zero error, but this would technically be possible
+	// if the 32 validators with the most capacity were all 0 weight
 	if totalDelegationsAfterFirstPass.IsZero() {
 		return finalUnbondings, errors.New("no delegations to redistribute during consolidation")
+	}
+
+	// Before we start dividing up the excess, make sure we have sufficient stake in the capped set to cover it
+	if sdk.NewDecFromInt(totalExcessAmount).GT(totalDelegationsAfterFirstPass) {
+		return finalUnbondings, errors.New("not enough exisiting delegation in the batch to cover the excess")
 	}
 
 	// Loop through the original unbonding messages and proportionally divide out
