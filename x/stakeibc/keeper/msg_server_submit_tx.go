@@ -582,7 +582,9 @@ func (k Keeper) SubmitCalibrationICQ(ctx sdk.Context, hostZone types.HostZone, v
 	if hostZone.DelegationIcaAddress == "" {
 		return errorsmod.Wrapf(types.ErrICAAccountNotFound, "no delegation address found for %s", hostZone.ChainId)
 	}
-	validator, valIndex, found := GetValidatorFromAddress(hostZone.Validators, validatorAddress)
+
+	// ensure the validator is in the set for this host
+	_, _, found := GetValidatorFromAddress(hostZone.Validators, validatorAddress)
 	if !found {
 		return errorsmod.Wrapf(types.ErrValidatorNotFound, "no registered validator for address (%s)", validatorAddress)
 	}
@@ -598,21 +600,6 @@ func (k Keeper) SubmitCalibrationICQ(ctx sdk.Context, hostZone types.HostZone, v
 	}
 	queryData := stakingtypes.GetDelegationKey(delegatorAddressBz, validatorAddressBz)
 
-	// Store the current validator's delegation in the callback data so we can determine if it changed
-	// while the query was in flight
-	callbackData := types.DelegatorSharesQueryCallback{
-		InitialValidatorDelegation: validator.Delegation,
-	}
-	callbackDataBz, err := proto.Marshal(&callbackData)
-	if err != nil {
-		return errorsmod.Wrapf(err, "unable to marshal delegator shares callback data")
-	}
-
-	// Update the validator to indicate that the slash query is in progress
-	validator.SlashQueryInProgress = true
-	hostZone.Validators[valIndex] = &validator
-	k.SetHostZone(ctx, hostZone)
-
 	// Submit delegator shares ICQ
 	query := icqtypes.Query{
 		ChainId:         hostZone.ChainId,
@@ -621,12 +608,11 @@ func (k Keeper) SubmitCalibrationICQ(ctx sdk.Context, hostZone types.HostZone, v
 		RequestData:     queryData,
 		CallbackModule:  types.ModuleName,
 		CallbackId:      ICQCallbackID_Calibrate,
-		CallbackData:    callbackDataBz,
+		CallbackData:    []byte{},
 		TimeoutDuration: time.Hour,
 		TimeoutPolicy:   icqtypes.TimeoutPolicy_RETRY_QUERY_REQUEST,
 	}
 	if err := k.InterchainQueryKeeper.SubmitICQRequest(ctx, query, false); err != nil {
-		k.Logger(ctx).Error(fmt.Sprintf("Error submitting ICQ for delegation, error : %s", err.Error()))
 		return err
 	}
 
