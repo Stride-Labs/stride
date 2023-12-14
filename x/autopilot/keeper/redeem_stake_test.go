@@ -292,7 +292,7 @@ func (s *KeeperTestSuite) TestTryRedeemStake() {
 }
 
 // TODO: Move to ibc_test.go when OnRecvPacket is moved
-func (suite *KeeperTestSuite) TestOnRecvPacket_RedeemStake() {
+func (s *KeeperTestSuite) TestOnRecvPacket_RedeemStake() {
 	now := time.Now()
 
 	packet := channeltypes.Packet{
@@ -404,29 +404,29 @@ func (suite *KeeperTestSuite) TestOnRecvPacket_RedeemStake() {
 	}
 
 	for i, tc := range testCases {
-		suite.Run(fmt.Sprintf("Case %d", i), func() {
+		s.Run(fmt.Sprintf("Case %d", i), func() {
 			packet.Data = transfertypes.ModuleCdc.MustMarshalJSON(&tc.packetData)
 
-			suite.SetupTest() // reset
-			ctx := suite.Ctx
+			s.SetupTest() // reset
+			ctx := s.Ctx
 
-			suite.App.AutopilotKeeper.SetParams(ctx, types.Params{StakeibcActive: tc.forwardingActive})
+			s.App.AutopilotKeeper.SetParams(ctx, types.Params{StakeibcActive: tc.forwardingActive})
 
 			// set epoch tracker for env
-			suite.App.StakeibcKeeper.SetEpochTracker(ctx, stakeibctypes.EpochTracker{
+			s.App.StakeibcKeeper.SetEpochTracker(ctx, stakeibctypes.EpochTracker{
 				EpochIdentifier:    epochtypes.STRIDE_EPOCH,
 				EpochNumber:        1,
 				NextEpochStartTime: uint64(now.Unix()),
 				Duration:           43200,
 			})
-			suite.App.StakeibcKeeper.SetEpochTracker(ctx, stakeibctypes.EpochTracker{
+			s.App.StakeibcKeeper.SetEpochTracker(ctx, stakeibctypes.EpochTracker{
 				EpochIdentifier:    "day",
 				EpochNumber:        1,
 				NextEpochStartTime: uint64(now.Unix()),
 				Duration:           86400,
 			})
 			// set deposit record for env
-			suite.App.RecordsKeeper.SetDepositRecord(ctx, recordstypes.DepositRecord{
+			s.App.RecordsKeeper.SetDepositRecord(ctx, recordstypes.DepositRecord{
 				Id:                 1,
 				Amount:             sdk.NewInt(100),
 				Denom:              atomIbcDenom,
@@ -436,7 +436,7 @@ func (suite *KeeperTestSuite) TestOnRecvPacket_RedeemStake() {
 				Source:             recordstypes.DepositRecord_STRIDE,
 			})
 
-			suite.App.RecordsKeeper.SetEpochUnbondingRecord(ctx, recordstypes.EpochUnbondingRecord{
+			s.App.RecordsKeeper.SetEpochUnbondingRecord(ctx, recordstypes.EpochUnbondingRecord{
 				EpochNumber: 1,
 				HostZoneUnbondings: []*recordstypes.HostZoneUnbonding{
 					{
@@ -449,7 +449,7 @@ func (suite *KeeperTestSuite) TestOnRecvPacket_RedeemStake() {
 			})
 
 			// set host zone for env
-			suite.App.StakeibcKeeper.SetHostZone(ctx, stakeibctypes.HostZone{
+			s.App.StakeibcKeeper.SetHostZone(ctx, stakeibctypes.HostZone{
 				ChainId:              "hub-1",
 				ConnectionId:         "connection-0",
 				Bech32Prefix:         "cosmos",
@@ -468,40 +468,40 @@ func (suite *KeeperTestSuite) TestOnRecvPacket_RedeemStake() {
 
 			// mint coins to be spent on liquid staking
 			coins := sdk.Coins{sdk.NewInt64Coin(atomIbcDenom, 1000000)}
-			err := suite.App.BankKeeper.MintCoins(ctx, minttypes.ModuleName, coins)
-			suite.Require().NoError(err)
-			err = suite.App.BankKeeper.SendCoinsFromModuleToAccount(ctx, minttypes.ModuleName, addr1, coins)
-			suite.Require().NoError(err)
+			err := s.App.BankKeeper.MintCoins(ctx, minttypes.ModuleName, coins)
+			s.Require().NoError(err)
+			err = s.App.BankKeeper.SendCoinsFromModuleToAccount(ctx, minttypes.ModuleName, addr1, coins)
+			s.Require().NoError(err)
 
 			// issue liquid-stake tokens
-			msgServer := stakeibckeeper.NewMsgServerImpl(suite.App.StakeibcKeeper)
+			msgServer := stakeibckeeper.NewMsgServerImpl(s.App.StakeibcKeeper)
 			msg := stakeibctypes.NewMsgLiquidStake(addr1.String(), sdk.NewInt(1000000), atomHostDenom)
-			_, err = msgServer.LiquidStake(sdk.WrapSDKContext(suite.Ctx), msg)
-			suite.Require().NoError(err)
+			_, err = msgServer.LiquidStake(sdk.WrapSDKContext(s.Ctx), msg)
+			s.Require().NoError(err)
 
 			// send tokens to ibc transfer channel escrow address
 			escrowAddr := transfertypes.GetEscrowAddress(packet.DestinationPort, packet.DestinationChannel)
-			err = suite.App.BankKeeper.SendCoins(suite.Ctx, addr1, escrowAddr, sdk.Coins{sdk.NewInt64Coin(stAtomDenom, 1000000)})
-			suite.Require().NoError(err)
-			suite.App.TransferKeeper.SetTotalEscrowForDenom(suite.Ctx, sdk.NewInt64Coin(stAtomDenom, 1000000))
+			err = s.App.BankKeeper.SendCoins(s.Ctx, addr1, escrowAddr, sdk.Coins{sdk.NewInt64Coin(stAtomDenom, 1000000)})
+			s.Require().NoError(err)
+			s.App.TransferKeeper.SetTotalEscrowForDenom(s.Ctx, sdk.NewInt64Coin(stAtomDenom, 1000000))
 
-			transferIBCModule := transfer.NewIBCModule(suite.App.TransferKeeper)
-			recordsStack := recordsmodule.NewIBCModule(suite.App.RecordsKeeper, transferIBCModule)
-			routerIBCModule := router.NewIBCModule(suite.App.AutopilotKeeper, recordsStack)
+			transferIBCModule := transfer.NewIBCModule(s.App.TransferKeeper)
+			recordsStack := recordsmodule.NewIBCModule(s.App.RecordsKeeper, transferIBCModule)
+			routerIBCModule := router.NewIBCModule(s.App.AutopilotKeeper, recordsStack)
 			ack := routerIBCModule.OnRecvPacket(
 				ctx,
 				packet,
 				addr1,
 			)
 			if tc.expSuccess {
-				suite.Require().True(ack.Success(), string(ack.Acknowledgement()))
+				s.Require().True(ack.Success(), string(ack.Acknowledgement()))
 
 				// check if redeem record is created
-				hostZoneUnbonding, found := suite.App.RecordsKeeper.GetHostZoneUnbondingByChainId(ctx, 1, "hub-1")
-				suite.Require().True(found)
-				suite.Require().True(len(hostZoneUnbonding.UserRedemptionRecords) > 0)
+				hostZoneUnbonding, found := s.App.RecordsKeeper.GetHostZoneUnbondingByChainId(ctx, 1, "hub-1")
+				s.Require().True(found)
+				s.Require().True(len(hostZoneUnbonding.UserRedemptionRecords) > 0)
 			} else {
-				suite.Require().False(ack.Success(), string(ack.Acknowledgement()))
+				s.Require().False(ack.Success(), string(ack.Acknowledgement()))
 			}
 		})
 	}
