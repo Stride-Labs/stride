@@ -16,6 +16,11 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
+const (
+	CommunityPoolStakeHoldingAddressKey  = "community-pool-stake"
+	CommunityPoolRedeemHoldingAddressKey = "community-pool-redeem"
+)
+
 func (k msgServer) RegisterHostZone(goCtx context.Context, msg *types.MsgRegisterHostZone) (*types.MsgRegisterHostZoneResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
@@ -76,8 +81,8 @@ func (k msgServer) RegisterHostZone(goCtx context.Context, msg *types.MsgRegiste
 	}
 
 	// Create the host zone's community pool holding accounts
-	communityPoolStakeAddress := types.NewHostZoneModuleAddress(chainId, "community-pool-stake")
-	communityPoolRedeemAddress := types.NewHostZoneModuleAddress(chainId, "community-pool-redeem")
+	communityPoolStakeAddress := types.NewHostZoneModuleAddress(chainId, CommunityPoolStakeHoldingAddressKey)
+	communityPoolRedeemAddress := types.NewHostZoneModuleAddress(chainId, CommunityPoolRedeemHoldingAddressKey)
 	if err := utils.CreateModuleAccount(ctx, k.AccountKeeper, communityPoolStakeAddress); err != nil {
 		return nil, errorsmod.Wrapf(err, "unable to create community pool stake account for host zone %s", chainId)
 	}
