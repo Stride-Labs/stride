@@ -1,7 +1,6 @@
 package keeper
 
 import (
-	"errors"
 	"fmt"
 	"time"
 
@@ -225,88 +224,5 @@ func (k Keeper) BurnTokens(ctx sdk.Context, hostZone types.HostZone, stTokenBurn
 		return errorsmod.Wrapf(types.ErrInsufficientFunds, "couldn't burn %v%s tokens in module account. err: %s", stTokenBurnAmount, stCoinDenom, err.Error())
 	}
 	k.Logger(ctx).Info(fmt.Sprintf("Total supply %s", k.bankKeeper.GetSupply(ctx, stCoinDenom)))
-	return nil
-}
-
-// ICA Callback after undelegating host
-//
-//	If successful:
-//	  * sets SetUndelegateHostPrevented
-//	If timeout:
-//	  * Does nothing
-//	If failure:
-//	  * Does nothing
-func (k Keeper) UndelegateHostCallback(ctx sdk.Context, packet channeltypes.Packet, ackResponse *icacallbackstypes.AcknowledgementResponse, args []byte) error {
-	// Fetch callback args
-	var undelegateHostCallback types.UndelegateHostCallback
-	if err := proto.Unmarshal(args, &undelegateHostCallback); err != nil {
-		return errorsmod.Wrapf(types.ErrUnmarshalFailure, fmt.Sprintf("Unable to unmarshal undelegate host callback args: %s", err.Error()))
-	}
-	k.Logger(ctx).Info("Starting undelegate host callback for amount %v%s", undelegateHostCallback.Amt)
-
-	// Regardless of failure/success/timeout, indicate that this ICA has completed
-	hostZone, found := k.GetHostZone(ctx, EvmosHostZoneChainId)
-	if !found {
-		return errorsmod.Wrapf(sdkerrors.ErrKeyNotFound, "Host zone not found: %s", EvmosHostZoneChainId)
-	}
-	for _, splitDelegation := range undelegateHostCallback.SplitDelegations {
-		if err := k.DecrementValidatorDelegationChangesInProgress(&hostZone, splitDelegation.Validator); err != nil {
-			// TODO: Revert after v14 upgrade
-			if errors.Is(err, types.ErrInvalidValidatorDelegationUpdates) {
-				k.Logger(ctx).Error(utils.LogICACallbackWithHostZone(EvmosHostZoneChainId, ICACallbackID_Undelegate,
-					"Invariant failed - delegation changes in progress fell below 0 for %s", splitDelegation.Validator))
-				continue
-			}
-			return err
-		}
-	}
-	k.SetHostZone(ctx, hostZone)
-
-	// Check for timeout (ack nil)
-	if ackResponse.Status == icacallbackstypes.AckResponseStatus_TIMEOUT {
-		k.Logger(ctx).Error("UndelegateHostCallback Timeout:", icacallbackstypes.AckResponseStatus_TIMEOUT, packet)
-		return nil
-	}
-
-	// Check for a failed transaction (ack error)
-	if ackResponse.Status == icacallbackstypes.AckResponseStatus_FAILURE {
-		k.Logger(ctx).Error("UndelegateHostCallback failure (ack error):", icacallbackstypes.AckResponseStatus_FAILURE, packet)
-		return nil
-	}
-
-	// Get the host zone
-	evmosHost, found := k.GetHostZone(ctx, EvmosHostZoneChainId)
-	if !found {
-		return errorsmod.Wrapf(types.ErrHostZoneNotFound, "host zone %s not found", EvmosHostZoneChainId)
-	}
-
-	k.Logger(ctx).Info("UndelegateHostCallback success:", icacallbackstypes.AckResponseStatus_SUCCESS, packet)
-
-	// Update delegation balances
-	err := k.UpdateDelegationBalancesHost(ctx, evmosHost, undelegateHostCallback)
-	if err != nil {
-		k.Logger(ctx).Error(fmt.Sprintf("UndelegateCallback | %s", err.Error()))
-		return err
-	}
-
-	k.Logger(ctx).Info("UndelegateHostCallback: SetUndelegateHostPrevented")
-	if err := k.SetUndelegateHostPrevented(ctx); err != nil {
-		k.Logger(ctx).Error(fmt.Sprintf("UndelegateHostCallback failed due to SetUndelegateHostPrevented | %s", err.Error()))
-		return err
-	}
-
-	return nil
-}
-
-// Decrement the delegation field on host and each validator's delegations after a successful unbonding ICA
-func (k Keeper) UpdateDelegationBalancesHost(ctx sdk.Context, hostZone types.HostZone, undelegateHostCallback types.UndelegateHostCallback) error {
-	// Undelegate from each validator and update Evmos staked balance, if successful
-	for _, undelegation := range undelegateHostCallback.SplitDelegations {
-		err := k.AddDelegationToValidator(ctx, &hostZone, undelegation.Validator, undelegation.Amount.Neg(), ICACallbackID_UndelegateHost)
-		if err != nil {
-			return err
-		}
-	}
-	k.SetHostZone(ctx, hostZone)
 	return nil
 }
