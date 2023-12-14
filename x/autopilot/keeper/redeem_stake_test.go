@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"time"
 
+	sdkmath "cosmossdk.io/math"
 	"github.com/cometbft/cometbft/crypto/ed25519"
 	"github.com/cosmos/ibc-go/v7/modules/apps/transfer"
 	transfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
-	clienttypes "github.com/cosmos/ibc-go/v7/modules/core/02-client/types"
 	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
 
 	recordsmodule "github.com/Stride-Labs/stride/v16/x/records"
@@ -31,6 +31,47 @@ func getRedeemStakeStakeibcPacketMetadata(address, ibcReceiver, transferChannel 
 				"stakeibc": { "action": "RedeemStake", "ibc_receiver": "%[2]s", "transfer_channel": "%[3]s" } 
 			}
 		}`, address, ibcReceiver, transferChannel)
+}
+
+// Helper function to mock out all the state needed to test redeem stake
+// The state is mocked out with an atom host zone
+func (s *KeeperTestSuite) SetupAutopilotRedeemStake(featureEnabled bool, redeemAmount sdkmath.Int, depositAddress, redeemerOnStride sdk.AccAddress) {
+	// Set whether the feature is active
+	params := s.App.AutopilotKeeper.GetParams(s.Ctx)
+	params.StakeibcActive = featureEnabled
+	s.App.AutopilotKeeper.SetParams(s.Ctx, params)
+
+	// set epoch tracker to look up epoch unbonding record
+	s.App.StakeibcKeeper.SetEpochTracker(s.Ctx, stakeibctypes.EpochTracker{
+		EpochIdentifier: epochtypes.DAY_EPOCH,
+		EpochNumber:     1,
+	})
+
+	// set epoch unbonding record which will store the new user redemption record
+	s.App.RecordsKeeper.SetEpochUnbondingRecord(s.Ctx, recordstypes.EpochUnbondingRecord{
+		EpochNumber: 1,
+		HostZoneUnbondings: []*recordstypes.HostZoneUnbonding{
+			{
+				HostZoneId:            HostChainId,
+				UserRedemptionRecords: []string{},
+				NativeTokenAmount:     sdk.NewInt(1000000),
+			},
+		},
+	})
+
+	// store the host zone
+	s.App.StakeibcKeeper.SetHostZone(s.Ctx, stakeibctypes.HostZone{
+		ChainId:          HostChainId,
+		Bech32Prefix:     HostBechPrefix, // required to validate claim receiver
+		HostDenom:        HostDenom,
+		RedemptionRate:   sdk.NewDec(1), // used to determine native token amount
+		DepositAddress:   depositAddress.String(),
+		TotalDelegations: redeemAmount, // there must be enough stake to cover the redemption
+	})
+
+	// fund the user with sttokens so they can redeem
+	// (the function being tested is invoked downstream of the IBC transfer)
+	s.FundAccount(redeemerOnStride, sdk.NewCoin("st"+HostDenom, redeemAmount))
 }
 
 func (s *KeeperTestSuite) TestTryRedeemStake() {
@@ -66,10 +107,6 @@ func (s *KeeperTestSuite) TestTryRedeemStake() {
 	// StOsmo will have a valid denom but no host zone
 	stOsmo := "stuosmo"
 	stOsmoTrace := transfertypes.GetPrefixedDenom(transfertypes.PortID, hubToStrideChannel, stOsmo)
-
-	// Build the atom IBC hash (this is just of the host zone - not the autopilot transfer)
-	atomTraceAfterTransfer := transfertypes.GetPrefixedDenom(transfertypes.PortID, strideToHubChannel, atom)
-	atomIBCHash := transfertypes.ParseDenomTrace(atomTraceAfterTransfer).GetFullDenomPath()
 
 	testCases := []struct {
 		name           string
@@ -232,43 +269,7 @@ func (s *KeeperTestSuite) TestTryRedeemStake() {
 
 	for _, tc := range testCases {
 		s.Run(tc.name, func() {
-			// Set whether the feature is active
-			params := s.App.AutopilotKeeper.GetParams(s.Ctx)
-			params.StakeibcActive = tc.enabled
-			s.App.AutopilotKeeper.SetParams(s.Ctx, params)
-
-			// set epoch tracker to look up epoch unbonding record
-			s.App.StakeibcKeeper.SetEpochTracker(s.Ctx, stakeibctypes.EpochTracker{
-				EpochIdentifier: epochtypes.DAY_EPOCH,
-				EpochNumber:     1,
-			})
-
-			// set epoch unbonding record which will store the new user redemption record
-			s.App.RecordsKeeper.SetEpochUnbondingRecord(s.Ctx, recordstypes.EpochUnbondingRecord{
-				EpochNumber: 1,
-				HostZoneUnbondings: []*recordstypes.HostZoneUnbonding{
-					{
-						HostZoneId:            HostChainId,
-						UserRedemptionRecords: []string{},
-						NativeTokenAmount:     sdk.NewInt(1000000),
-					},
-				},
-			})
-
-			// store the host zone
-			s.App.StakeibcKeeper.SetHostZone(s.Ctx, stakeibctypes.HostZone{
-				ChainId:          HostChainId,
-				Bech32Prefix:     HostBechPrefix, // required to validate claim receiver
-				IbcDenom:         atomIBCHash,
-				HostDenom:        atom,
-				RedemptionRate:   sdk.NewDec(1), // used to determine native token amount
-				DepositAddress:   depositAddress.String(),
-				TotalDelegations: redeemAmount, // there must be enough stake to cover the redemption
-			})
-
-			// fund the user with sttokens so they can redeem
-			// (the function being tested is invoked downstream of the IBC transfer)
-			s.FundAccount(redeemerOnStride, sdk.NewCoin(stAtom, redeemAmount))
+			s.SetupAutopilotRedeemStake(tc.enabled, redeemAmount, depositAddress, redeemerOnStride)
 
 			err := s.App.AutopilotKeeper.TryRedeemStake(s.Ctx, packet, tc.packetData, tc.packetMetadata)
 			if tc.expectedError == "" {
@@ -290,6 +291,7 @@ func (s *KeeperTestSuite) TestTryRedeemStake() {
 	}
 }
 
+// TODO: Move to ibc_test.go when OnRecvPacket is moved
 func (suite *KeeperTestSuite) TestOnRecvPacket_RedeemStake() {
 	now := time.Now()
 
@@ -299,9 +301,6 @@ func (suite *KeeperTestSuite) TestOnRecvPacket_RedeemStake() {
 		SourceChannel:      "channel-0",
 		DestinationPort:    "transfer",
 		DestinationChannel: "channel-0",
-		Data:               []byte{},
-		TimeoutHeight:      clienttypes.Height{},
-		TimeoutTimestamp:   0,
 	}
 
 	atomHostDenom := "uatom"
