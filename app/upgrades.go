@@ -20,6 +20,7 @@ import (
 	v14 "github.com/Stride-Labs/stride/v16/app/upgrades/v14"
 	v15 "github.com/Stride-Labs/stride/v16/app/upgrades/v15"
 	v16 "github.com/Stride-Labs/stride/v16/app/upgrades/v16"
+	v17 "github.com/Stride-Labs/stride/v16/app/upgrades/v17"
 	v2 "github.com/Stride-Labs/stride/v16/app/upgrades/v2"
 	v3 "github.com/Stride-Labs/stride/v16/app/upgrades/v3"
 	v4 "github.com/Stride-Labs/stride/v16/app/upgrades/v4"
@@ -213,6 +214,18 @@ func (app *StrideApp) setupUpgradeHandlers(appOpts servertypes.AppOptions) {
 			app.configurator,
 			app.StakeibcKeeper,
 			app.RatelimitKeeper,
+		),
+	)
+
+	// v17 upgrade handler
+	app.UpgradeKeeper.SetUpgradeHandler(
+		v17.UpgradeName,
+		v17.CreateUpgradeHandler(
+			app.mm,
+			app.configurator,
+			app.InterchainqueryKeeper,
+			app.RatelimitKeeper,
+			app.StakeibcKeeper,
 		),
 	)
 
