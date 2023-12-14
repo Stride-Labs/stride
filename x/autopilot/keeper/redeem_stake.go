@@ -4,9 +4,8 @@ import (
 	"fmt"
 
 	errorsmod "cosmossdk.io/errors"
-	"github.com/armon/go-metrics"
+	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	transfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
 	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
 
@@ -26,9 +25,14 @@ func (k Keeper) TryRedeemStake(
 		return fmt.Errorf("packet forwarding param is not active")
 	}
 
-	// In this case, we can't process a liquid staking transaction, because we're dealing IBC tokens from other chains
+	// At this point in the stack, the denom's in the packet data appear as they existed on the sender zone,
+	//   but as a denom trace instead of a hash
+	// Meaning, for native stTokens, the port and channel on the host zone are part of the denom
+	//   (e.g. transfer/{channel-on-hub}/stuatom)
+	// Only stride native stTokens can be redeemed, so we confirm that the denom's prefix matches
+	//   the packet's "source" channel (i.e. the channel on the host zone)
 	if !transfertypes.ReceiverChainIsSource(packet.GetSourcePort(), packet.GetSourceChannel(), newData.Denom) {
-		return fmt.Errorf("the ibc tokens are not supported for redeem stake")
+		return fmt.Errorf("the ibc token %s is not supported for redeem stake", newData.Denom)
 	}
 
 	voucherPrefix := transfertypes.GetDenomPrefix(packet.GetSourcePort(), packet.GetSourceChannel())
@@ -40,39 +44,27 @@ func (k Keeper) TryRedeemStake(
 	hostZoneDenom := stakeibctypes.HostZoneDenomFromStAssetDenom(stAssetDenom)
 
 	amount, ok := sdk.NewIntFromString(newData.Amount)
-	if !ok {
+	if !ok || amount.IsNegative() {
 		return fmt.Errorf("not a parsable amount field")
 	}
 
-	// Note: newData.denom is ibc denom for st assets - e.g. ibc/xxx
-	var token = sdk.Coin{
-		Denom:  newData.Denom,
-		Amount: amount,
-	}
+	strideAddress := newData.Receiver
+	redemptionReceiver := packetMetadata.IbcReceiver
 
-	if err := token.Validate(); err != nil {
-		return err
-	}
-
-	strideAddress, err := sdk.AccAddressFromBech32(newData.Receiver)
-	if err != nil {
-		return errorsmod.Wrapf(sdkerrors.ErrInvalidAddress, "invalid receiver (%s) in autopilot memo", strideAddress)
-	}
-
-	return k.RunRedeemStake(ctx, strideAddress, packetMetadata.IbcReceiver, hostZoneDenom, token, []metrics.Label{})
+	return k.RunRedeemStake(ctx, strideAddress, redemptionReceiver, hostZoneDenom, amount)
 }
 
-func (k Keeper) RunRedeemStake(ctx sdk.Context, addr sdk.AccAddress, receiver string, hostZoneDenom string, token sdk.Coin, labels []metrics.Label) error {
+func (k Keeper) RunRedeemStake(ctx sdk.Context, strideAddress string, redemptionReceiver string, hostZoneDenom string, amount sdkmath.Int) error {
 	hostZone, err := k.stakeibcKeeper.GetHostZoneFromHostDenom(ctx, hostZoneDenom)
 	if err != nil {
 		return err
 	}
 
 	msg := &stakeibctypes.MsgRedeemStake{
-		Creator:  addr.String(),
-		Amount:   token.Amount,
+		Creator:  strideAddress,
+		Amount:   amount,
 		HostZone: hostZone.ChainId,
-		Receiver: receiver,
+		Receiver: redemptionReceiver,
 	}
 
 	if err := msg.ValidateBasic(); err != nil {
@@ -80,12 +72,9 @@ func (k Keeper) RunRedeemStake(ctx sdk.Context, addr sdk.AccAddress, receiver st
 	}
 
 	msgServer := stakeibckeeper.NewMsgServerImpl(k.stakeibcKeeper)
-	_, err = msgServer.RedeemStake(
-		sdk.WrapSDKContext(ctx),
-		msg,
-	)
-	if err != nil {
-		return errorsmod.Wrapf(sdkerrors.ErrInsufficientFunds, err.Error())
+	if _, err = msgServer.RedeemStake(sdk.WrapSDKContext(ctx), msg); err != nil {
+		return errorsmod.Wrapf(err, "redeem stake failed")
 	}
+
 	return nil
 }
