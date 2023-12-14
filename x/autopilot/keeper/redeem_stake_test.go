@@ -194,21 +194,20 @@ func (suite *KeeperTestSuite) TestOnRecvPacket_RedeemStake() {
 
 			// set host zone for env
 			suite.App.StakeibcKeeper.SetHostZone(ctx, stakeibctypes.HostZone{
-				ChainId:               "hub-1",
-				ConnectionId:          "connection-0",
-				Bech32Prefix:          "cosmos",
-				TransferChannelId:     "channel-0",
-				Validators:            []*stakeibctypes.Validator{},
-				BlacklistedValidators: []*stakeibctypes.Validator{},
-				WithdrawalAccount:     nil,
-				FeeAccount:            nil,
-				DelegationAccount:     nil,
-				RedemptionAccount:     nil,
-				IbcDenom:              atomIbcDenom,
-				HostDenom:             atomHostDenom,
-				RedemptionRate:        sdk.NewDec(1),
-				Address:               addr1.String(),
-				StakedBal:             sdk.NewInt(1000000),
+				ChainId:              "hub-1",
+				ConnectionId:         "connection-0",
+				Bech32Prefix:         "cosmos",
+				TransferChannelId:    "channel-0",
+				Validators:           []*stakeibctypes.Validator{},
+				WithdrawalIcaAddress: "",
+				FeeIcaAddress:        "",
+				DelegationIcaAddress: "",
+				RedemptionIcaAddress: "",
+				IbcDenom:             atomIbcDenom,
+				HostDenom:            atomHostDenom,
+				RedemptionRate:       sdk.NewDec(1),
+				DepositAddress:       addr1.String(),
+				TotalDelegations:     sdk.NewInt(1000000),
 			})
 
 			// mint coins to be spent on liquid staking
