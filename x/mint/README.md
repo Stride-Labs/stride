@@ -73,7 +73,7 @@ func (m Minter) EpochProvision(params Params) sdk.Coin {
 3. `epoch_identifier` defines the epoch identifier to be used for mint module e.g. "weekly"
 4. `reduction_period_in_epochs` defines the number of epochs to pass to reduce mint amount
 5. `reduction_factor` defines the reduction factor of tokens at every `reduction_period_in_epochs`
-6. `distribution_proportions` defines distribution rules for minted tokens, when developer rewards address is empty, it distribute tokens to community pool.
+6. `distribution_proportions` defines distribution rules for minted tokens, when developer rewards address is empty, it distributes tokens to community pool.
 7. `weighted_developer_rewards_receivers` provides the addresses that receives developer rewards by weight
 8. `minting_rewards_distribution_start_epoch` defines the start epoch of minting to make sure minting start after initial pools are set
 

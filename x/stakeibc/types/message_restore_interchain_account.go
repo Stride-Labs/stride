@@ -1,20 +1,23 @@
 package types
 
 import (
+	"strings"
+
 	errorsmod "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
 
-const TypeMsgRestoreInterchainAccount = "register_interchain_account"
+const TypeMsgRestoreInterchainAccount = "restore_interchain_account"
 
 var _ sdk.Msg = &MsgRestoreInterchainAccount{}
 
-func NewMsgRestoreInterchainAccount(creator string, chainId string, accountType ICAAccountType) *MsgRestoreInterchainAccount {
+func NewMsgRestoreInterchainAccount(creator, chainId, connectionId, owner string) *MsgRestoreInterchainAccount {
 	return &MsgRestoreInterchainAccount{
-		Creator:     creator,
-		ChainId:     chainId,
-		AccountType: accountType,
+		Creator:      creator,
+		ChainId:      chainId,
+		ConnectionId: connectionId,
+		AccountOwner: owner,
 	}
 }
 
@@ -43,6 +46,18 @@ func (msg *MsgRestoreInterchainAccount) ValidateBasic() error {
 	_, err := sdk.AccAddressFromBech32(msg.Creator)
 	if err != nil {
 		return errorsmod.Wrapf(sdkerrors.ErrInvalidAddress, "invalid creator address (%s)", err)
+	}
+	if msg.ChainId == "" {
+		return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "chain ID must be specified")
+	}
+	if !strings.HasPrefix(msg.ConnectionId, "connection-") {
+		return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "connection ID must be specified")
+	}
+	if msg.AccountOwner == "" {
+		return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "ICA account owner must be specified")
+	}
+	if !strings.HasPrefix(msg.AccountOwner, msg.ChainId) {
+		return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "ICA account owner does not match chain ID")
 	}
 	return nil
 }
