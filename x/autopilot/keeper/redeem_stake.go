@@ -17,8 +17,8 @@ import (
 func (k Keeper) TryRedeemStake(
 	ctx sdk.Context,
 	packet channeltypes.Packet,
-	newData transfertypes.FungibleTokenPacketData,
-	packetMetadata types.StakeibcPacketMetadata,
+	transferPacketData transfertypes.FungibleTokenPacketData,
+	autopilotMetadata types.StakeibcPacketMetadata,
 ) error {
 	params := k.GetParams(ctx)
 	if !params.StakeibcActive {
@@ -31,25 +31,25 @@ func (k Keeper) TryRedeemStake(
 	//   (e.g. transfer/{channel-on-hub}/stuatom)
 	// Only stride native stTokens can be redeemed, so we confirm that the denom's prefix matches
 	//   the packet's "source" channel (i.e. the channel on the host zone)
-	if !transfertypes.ReceiverChainIsSource(packet.GetSourcePort(), packet.GetSourceChannel(), newData.Denom) {
-		return fmt.Errorf("the ibc token %s is not supported for redeem stake", newData.Denom)
+	if !transfertypes.ReceiverChainIsSource(packet.GetSourcePort(), packet.GetSourceChannel(), transferPacketData.Denom) {
+		return fmt.Errorf("the ibc token %s is not supported for redeem stake", transferPacketData.Denom)
 	}
 
 	voucherPrefix := transfertypes.GetDenomPrefix(packet.GetSourcePort(), packet.GetSourceChannel())
-	stAssetDenom := newData.Denom[len(voucherPrefix):]
+	stAssetDenom := transferPacketData.Denom[len(voucherPrefix):]
 	if !stakeibctypes.IsStAssetDenom(stAssetDenom) {
 		return fmt.Errorf("not a liquid staking token")
 	}
 
 	hostZoneDenom := stakeibctypes.HostZoneDenomFromStAssetDenom(stAssetDenom)
 
-	amount, ok := sdk.NewIntFromString(newData.Amount)
+	amount, ok := sdk.NewIntFromString(transferPacketData.Amount)
 	if !ok || amount.IsNegative() {
 		return fmt.Errorf("not a parsable amount field")
 	}
 
-	strideAddress := newData.Receiver
-	redemptionReceiver := packetMetadata.IbcReceiver
+	strideAddress := transferPacketData.Receiver
+	redemptionReceiver := autopilotMetadata.IbcReceiver
 
 	return k.RunRedeemStake(ctx, strideAddress, redemptionReceiver, hostZoneDenom, amount)
 }
