@@ -116,7 +116,8 @@ func (im IBCModule) OnChanCloseConfirm(
 // OnRecvPacket implements the IBCModule interface. A successful acknowledgement
 // is returned if the packet data is successfully decoded and the receive application
 // logic returns without error.
-// TODO: Move this to the keeper so we can right unit tests that cover the individual ack error cases
+// TODO: Move this to the keeper so there's more transparency into errors
+// Otherwise, it's difficult to debug tests and it's unclear when there are false positive test cases
 func (im IBCModule) OnRecvPacket(
 	ctx sdk.Context,
 	packet channeltypes.Packet,
