@@ -104,9 +104,19 @@ func (s *KeeperTestSuite) TestRedeemStake_Successful() {
 	user := tc.user
 	redeemAmount := msg.Amount
 
-	// get the initial unbonding amount *before* calling liquid stake, so we can use it to calc expected vs actual in diff space
-	_, err := s.GetMsgServer().RedeemStake(sdk.WrapSDKContext(s.Ctx), &msg)
-	s.Require().NoError(err)
+	// Split the message amount in 2, and call redeem stake twice (each with half the amount)
+	// This will check that the same user can redeem multiple times
+	msg1 := msg
+	msg1.Amount = msg1.Amount.Quo(sdkmath.NewInt(2)) // half the amount
+
+	msg2 := msg
+	msg2.Amount = msg.Amount.Sub(msg1.Amount) // remaining half
+
+	_, err := s.GetMsgServer().RedeemStake(sdk.WrapSDKContext(s.Ctx), &msg1)
+	s.Require().NoError(err, "no error expected during first redemption")
+
+	_, err = s.GetMsgServer().RedeemStake(sdk.WrapSDKContext(s.Ctx), &msg2)
+	s.Require().NoError(err, "no error expected during second redemption")
 
 	// User STUATOM balance should have DECREASED by the amount to be redeemed
 	expectedUserStAtomBalance := user.stAtomBalance.SubAmount(redeemAmount)
@@ -139,15 +149,11 @@ func (s *KeeperTestSuite) TestRedeemStake_Successful() {
 	userRedemptionRecordId := userRedemptionRecords[0]
 	userRedemptionRecord, found := s.App.RecordsKeeper.GetUserRedemptionRecord(s.Ctx, userRedemptionRecordId)
 	s.Require().True(found)
-	// check amount
-	s.Require().Equal(expectedHostZoneUnbondingNativeAmount, userRedemptionRecord.Amount, "redemption record amount")
-	// check sender
+
+	s.Require().Equal(msg.Amount, userRedemptionRecord.Amount, "redemption record amount")
 	s.Require().Equal(msg.Creator, userRedemptionRecord.Sender, "redemption record sender")
-	// check receiver
 	s.Require().Equal(msg.Receiver, userRedemptionRecord.Receiver, "redemption record receiver")
-	// check host zone
 	s.Require().Equal(msg.HostZone, userRedemptionRecord.HostZoneId, "redemption record host zone")
-	// check claimIsPending
 	s.Require().False(userRedemptionRecord.ClaimIsPending, "redemption record is not claimable")
 	s.Require().NotEqual(hostZoneUnbonding.Status, recordtypes.HostZoneUnbonding_CLAIMABLE, "host zone unbonding should NOT be marked as CLAIMABLE")
 }

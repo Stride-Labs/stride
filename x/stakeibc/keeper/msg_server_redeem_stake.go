@@ -90,7 +90,7 @@ func (k msgServer) RedeemStake(goCtx context.Context, msg *types.MsgRedeemStake)
 		k.Logger(ctx).Info(fmt.Sprintf("UserRedemptionRecord found for %s", redemptionId))
 		// Add the unbonded amount to the UserRedemptionRecord
 		// The record is set below
-		userRedemptionRecord.Amount.Add(nativeAmount)
+		userRedemptionRecord.Amount = userRedemptionRecord.Amount.Add(nativeAmount)
 	} else {
 		// First time a user is redeeming this epoch
 		userRedemptionRecord = recordstypes.UserRedemptionRecord{
