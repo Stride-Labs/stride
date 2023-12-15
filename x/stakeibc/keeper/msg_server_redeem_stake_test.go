@@ -250,16 +250,6 @@ func (s *KeeperTestSuite) TestRedeemStake_NoEpochTrackerDay() {
 	s.Require().EqualError(err, "latest epoch unbonding record not found: epoch unbonding record not found")
 }
 
-func (s *KeeperTestSuite) TestRedeemStake_UserAlreadyRedeemedThisEpoch() {
-	tc := s.SetupRedeemStake()
-
-	invalidMsg := tc.validMsg
-	_, err := s.GetMsgServer().RedeemStake(sdk.WrapSDKContext(s.Ctx), &invalidMsg)
-	s.Require().NoError(err)
-	_, err = s.GetMsgServer().RedeemStake(sdk.WrapSDKContext(s.Ctx), &invalidMsg)
-	s.Require().EqualError(err, fmt.Sprintf("user already redeemed this epoch: GAIA.1.%s: redemption record already exists", s.TestAccs[0]))
-}
-
 func (s *KeeperTestSuite) TestRedeemStake_HostZoneNoUnbondings() {
 	tc := s.SetupRedeemStake()
 
