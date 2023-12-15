@@ -313,6 +313,32 @@ func (k Keeper) RemoveValidatorFromHostZone(ctx sdk.Context, chainId string, val
 	return errorsmod.Wrapf(types.ErrValidatorNotFound, errMsg)
 }
 
+// Checks if any validator's portion of the weight is greater than the cap
+func (k Keeper) CheckValidatorWeightsBelowCap(ctx sdk.Context, validators []*types.Validator) error {
+	params := k.GetParams(ctx)
+	validatorWeightCap := float64(params.ValidatorWeightCap)
+
+	// Store a map of each validator weight, as well as the total
+	totalWeight := float64(0)
+	weightsByValidator := map[string]float64{}
+	for _, validator := range validators {
+		weightsByValidator[validator.Address] = float64(validator.Weight)
+		totalWeight += float64(validator.Weight)
+	}
+
+	// Check if any validator exceeds the cap
+	for _, address := range utils.StringMapKeys[float64](weightsByValidator) {
+		weightPercentage := weightsByValidator[address] / totalWeight * 100
+		if weightPercentage > validatorWeightCap {
+			return errorsmod.Wrapf(types.ErrValidatorExceedsWeightCap,
+				"validator %s exceeds weight cap, has a %v%% shares with a %v%% cap",
+				address, weightPercentage, validatorWeightCap)
+		}
+	}
+
+	return nil
+}
+
 // Get a validator and its index from a list of validators, by address
 func GetValidatorFromAddress(validators []*types.Validator, address string) (val types.Validator, index int64, found bool) {
 	for i, v := range validators {
