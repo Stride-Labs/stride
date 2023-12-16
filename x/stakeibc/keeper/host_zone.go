@@ -346,7 +346,7 @@ func (k Keeper) CheckValidatorWeightsBelowCap(ctx sdk.Context, validators []*typ
 		weightPercentage := weightsByValidator[address] / totalWeight * 100
 		if weightPercentage > validatorWeightCap {
 			return errorsmod.Wrapf(types.ErrValidatorExceedsWeightCap,
-				"validator %s exceeds weight cap, has a %v%% shares with a %v%% cap",
+				"validator %s exceeds weight cap, has %v%% of the total weight when the cap is %v%%",
 				address, weightPercentage, validatorWeightCap)
 		}
 	}
