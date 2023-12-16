@@ -370,3 +370,129 @@ func (s *KeeperTestSuite) TestAddDelegationToValidator() {
 	err = s.App.StakeibcKeeper.AddDelegationToValidator(s.Ctx, hostZone, ValAddress, sdkmath.NewInt(-7000), "")
 	s.Require().ErrorContains(err, "Delegation change (7000) is greater than total delegation amount on host")
 }
+
+func (s *KeeperTestSuite) TestCheckValidatorWeightsBelowCap() {
+	testCases := []struct {
+		name       string
+		weightCap  uint64
+		validators []*types.Validator
+		exceedsCap bool
+	}{
+		{
+			name:      "not enough validators",
+			weightCap: 10,
+			validators: []*types.Validator{
+				{Address: "val1", Weight: 0},
+				{Address: "val2", Weight: 0},
+				{Address: "val3", Weight: 0},
+				{Address: "val4", Weight: 0},
+				{Address: "val5", Weight: 0},
+				{Address: "val6", Weight: 0},
+				{Address: "val7", Weight: 0},
+				{Address: "val8", Weight: 0},
+				{Address: "val9", Weight: 0},
+			},
+			exceedsCap: false,
+		},
+		{
+			name:      "zero total weight",
+			weightCap: 10,
+			validators: []*types.Validator{
+				{Address: "val1", Weight: 0},
+				{Address: "val2", Weight: 0},
+				{Address: "val3", Weight: 0},
+				{Address: "val4", Weight: 0},
+				{Address: "val5", Weight: 0},
+				{Address: "val6", Weight: 0},
+				{Address: "val7", Weight: 0},
+				{Address: "val8", Weight: 0},
+				{Address: "val9", Weight: 0},
+				{Address: "val10", Weight: 0},
+			},
+			exceedsCap: false,
+		},
+		{
+			name:      "10pct splits below threshold",
+			weightCap: 11,
+			validators: []*types.Validator{
+				{Address: "val1", Weight: 1},
+				{Address: "val2", Weight: 1},
+				{Address: "val3", Weight: 1},
+				{Address: "val4", Weight: 1},
+				{Address: "val5", Weight: 1},
+				{Address: "val6", Weight: 1},
+				{Address: "val7", Weight: 1},
+				{Address: "val8", Weight: 1},
+				{Address: "val9", Weight: 1},
+				{Address: "val10", Weight: 1},
+			},
+			exceedsCap: false,
+		},
+		{
+			name:      "10pct splits at threshold",
+			weightCap: 10,
+			validators: []*types.Validator{
+				{Address: "val1", Weight: 1},
+				{Address: "val2", Weight: 1},
+				{Address: "val3", Weight: 1},
+				{Address: "val4", Weight: 1},
+				{Address: "val5", Weight: 1},
+				{Address: "val6", Weight: 1},
+				{Address: "val7", Weight: 1},
+				{Address: "val8", Weight: 1},
+				{Address: "val9", Weight: 1},
+				{Address: "val10", Weight: 1},
+			},
+			exceedsCap: false,
+		},
+		{
+			name:      "10pct splits exceeds threshold",
+			weightCap: 9,
+			validators: []*types.Validator{
+				{Address: "val1", Weight: 1},
+				{Address: "val2", Weight: 1},
+				{Address: "val3", Weight: 1},
+				{Address: "val4", Weight: 1},
+				{Address: "val5", Weight: 1},
+				{Address: "val6", Weight: 1},
+				{Address: "val7", Weight: 1},
+				{Address: "val8", Weight: 1},
+				{Address: "val9", Weight: 1},
+				{Address: "val10", Weight: 1},
+			},
+			exceedsCap: true,
+		},
+		{
+			name:      "One val exceeds cap",
+			weightCap: 10,
+			validators: []*types.Validator{
+				{Address: "val1", Weight: 1},
+				{Address: "val2", Weight: 1},
+				{Address: "val3", Weight: 1},
+				{Address: "val4", Weight: 1},
+				{Address: "val5", Weight: 1},
+				{Address: "val6", Weight: 1},
+				{Address: "val7", Weight: 1},
+				{Address: "val8", Weight: 2},
+				{Address: "val9", Weight: 1},
+				{Address: "val10", Weight: 1},
+			},
+			exceedsCap: true,
+		},
+	}
+
+	for _, tc := range testCases {
+		s.Run(tc.name, func() {
+			params := s.App.StakeibcKeeper.GetParams(s.Ctx)
+			params.ValidatorWeightCap = tc.weightCap
+			s.App.StakeibcKeeper.SetParams(s.Ctx, params)
+
+			err := s.App.StakeibcKeeper.CheckValidatorWeightsBelowCap(s.Ctx, tc.validators)
+			if !tc.exceedsCap {
+				s.Require().NoError(err, "set should not have exceeded cap")
+			} else {
+				s.Require().Error(err, "set should have exceeded cap")
+			}
+		})
+	}
+}

@@ -17,6 +17,10 @@ import (
 	"github.com/Stride-Labs/stride/v16/x/stakeibc/types"
 )
 
+const (
+	MinValidatorsBeforeWeightCapCheck = 10
+)
+
 // SetHostZone set a specific hostZone in the store
 func (k Keeper) SetHostZone(ctx sdk.Context, hostZone types.HostZone) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefix(types.HostZoneKey))
@@ -315,6 +319,11 @@ func (k Keeper) RemoveValidatorFromHostZone(ctx sdk.Context, chainId string, val
 
 // Checks if any validator's portion of the weight is greater than the cap
 func (k Keeper) CheckValidatorWeightsBelowCap(ctx sdk.Context, validators []*types.Validator) error {
+	// If there's only a few validators, don't enforce this yet
+	if len(validators) < MinValidatorsBeforeWeightCapCheck {
+		return nil
+	}
+
 	params := k.GetParams(ctx)
 	validatorWeightCap := float64(params.ValidatorWeightCap)
 
@@ -324,6 +333,11 @@ func (k Keeper) CheckValidatorWeightsBelowCap(ctx sdk.Context, validators []*typ
 	for _, validator := range validators {
 		weightsByValidator[validator.Address] = float64(validator.Weight)
 		totalWeight += float64(validator.Weight)
+	}
+
+	// If the total validator weights are 0, exit prematurely
+	if totalWeight == 0 {
+		return nil
 	}
 
 	// Check if any validator exceeds the cap
