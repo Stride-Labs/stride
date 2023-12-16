@@ -278,7 +278,8 @@ func (k Keeper) AddValidatorToHostZone(ctx sdk.Context, chainId string, validato
 
 	k.SetHostZone(ctx, hostZone)
 
-	return nil
+	// Finally, confirm none of the validator's exceed the weight cap
+	return k.CheckValidatorWeightsBelowCap(ctx, hostZone.Validators)
 }
 
 // Removes a validator from a host zone
