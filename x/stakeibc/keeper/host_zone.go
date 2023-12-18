@@ -276,10 +276,14 @@ func (k Keeper) AddValidatorToHostZone(ctx sdk.Context, chainId string, validato
 		SlashQueryCheckpoint:      checkpoint,
 	})
 
+	// Finally, confirm none of the validator's exceed the weight cap
+	if err := k.CheckValidatorWeightsBelowCap(ctx, hostZone.Validators); err != nil {
+		return err
+	}
+
 	k.SetHostZone(ctx, hostZone)
 
-	// Finally, confirm none of the validator's exceed the weight cap
-	return k.CheckValidatorWeightsBelowCap(ctx, hostZone.Validators)
+	return nil
 }
 
 // Removes a validator from a host zone
@@ -325,6 +329,7 @@ func (k Keeper) CheckValidatorWeightsBelowCap(ctx sdk.Context, validators []*typ
 		return nil
 	}
 
+	// The weight cap in params is an int representing a percentage (e.g. 10 is 10%)
 	params := k.GetParams(ctx)
 	validatorWeightCap := float64(params.ValidatorWeightCap)
 
