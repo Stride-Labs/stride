@@ -289,7 +289,8 @@ func (k Keeper) ConsolidateUnbondingMessages(
 	}
 
 	// This is to protect against a division by zero error, but this would technically be possible
-	// if the 32 validators with the most capacity were all 0 weight
+	// if the 32 validators with the most capacity were all 0 weight and we wanted to unbond more
+	// than their combined delegation
 	if totalRemainingDelegationsAcrossBatch.IsZero() {
 		return finalUnbondings, errors.New("no delegations to redistribute during consolidation")
 	}
@@ -304,15 +305,15 @@ func (k Keeper) ConsolidateUnbondingMessages(
 	excessRemaining := totalExcessAmount
 	for i := range unbondingsBatch {
 		unbonding := unbondingsBatch[i]
+		remainingDelegation, ok := remainingDelegationsInBatchByVal[unbonding.Validator]
+		if !ok {
+			return finalUnbondings, fmt.Errorf("validator %s not found in initial unbonding plan", unbonding.Validator)
+		}
 
 		var validatorUnbondIncrease sdkmath.Int
 		if i != len(unbondingsBatch)-1 {
 			// For all but the last validator, calculate their unbonding increase by
 			// splitting the excess proportionally in line with their remaining delegation
-			remainingDelegation, ok := remainingDelegationsInBatchByVal[unbonding.Validator]
-			if !ok {
-				return finalUnbondings, fmt.Errorf("validator %s not found in initial unbonding plan", unbonding.Validator)
-			}
 			unbondIncreaseProportion := remainingDelegation.Quo(totalRemainingDelegationsAcrossBatch)
 			validatorUnbondIncrease = sdk.NewDecFromInt(totalExcessAmount).Mul(unbondIncreaseProportion).TruncateInt()
 
@@ -321,16 +322,11 @@ func (k Keeper) ConsolidateUnbondingMessages(
 		} else {
 			// The last validator in the set should get any remainder from int truction
 			// First confirm the validator has sufficient remaining delegation to cover this
-			remainingDelegation, ok := remainingDelegationsInBatchByVal[unbonding.Validator]
-			if !ok {
-				return finalUnbondings, fmt.Errorf("validator %s not found in initial unbonding plan", unbonding.Validator)
-			}
 			if sdk.NewDecFromInt(excessRemaining).GT(remainingDelegation) {
 				return finalUnbondings,
 					fmt.Errorf("validator %s does not have enough remaining delegation (%v) to cover the excess (%v)",
 						unbonding.Validator, remainingDelegation, excessRemaining)
 			}
-
 			validatorUnbondIncrease = excessRemaining
 		}
 
