@@ -370,6 +370,18 @@ func (s *KeeperTestSuite) TestOnRecvPacket_RedeemStake() {
 			expSuccess: false,
 		},
 		{
+			name:    "failed because not stride address",
+			enabled: true,
+			packetData: transfertypes.FungibleTokenPacketData{
+				Denom:    stAtomTrace,
+				Amount:   redeemAmount.String(),
+				Sender:   "cosmos16plylpsgxechajltx9yeseqexzdzut9g8vla4k",
+				Receiver: getRedeemStakeStakeibcPacketMetadata("osmo15440wjgs208zm6dz8wvk23z5lmcx9hyxk0ew3c", redeemerOnHost),
+				Memo:     "",
+			},
+			expSuccess: false,
+		},
+		{
 			name:    "failed because invalid redeem address",
 			enabled: true,
 			packetData: transfertypes.FungibleTokenPacketData{
