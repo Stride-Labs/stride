@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"context"
+	"fmt"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
@@ -18,6 +19,7 @@ func (k msgServer) CalibrateDelegation(goCtx context.Context, msg *types.MsgCali
 	}
 
 	if err := k.SubmitCalibrationICQ(ctx, hostZone, msg.Valoper); err != nil {
+		k.Logger(ctx).Error(fmt.Sprintf("Error submitting ICQ for delegation, error : %s", err.Error()))
 		return nil, err
 	}
 
