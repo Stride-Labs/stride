@@ -539,7 +539,7 @@ func (s *UpgradeTestSuite) TestUpdateRateLimitThresholds() {
 			HostDenom:      "uosmo",
 			RateLimitDenom: "stuosmo",
 			Duration:       20,
-			Threshold:      sdkmath.NewInt(10),
+			Threshold:      sdkmath.NewInt(20),
 		},
 		"juno": {
 			// No denom on matching host

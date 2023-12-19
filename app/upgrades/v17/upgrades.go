@@ -38,17 +38,24 @@ var (
 	OsmosisRedemptionRateBuffer = sdk.MustNewDecFromStr("0.02")
 
 	// Rate limits updated according to TVL
+	// Framework:
+	//       < 2.5M: No rate limit
+	//   2.5M - 10M: 50%
+	//    10M - 20M: 25%
+	//    20M - 40M: 20%
+	//    40M - 50M: 15%
+	//        > 50M: 10%
 	UpdatedRateLimits = map[string]sdkmath.Int{
-		"comdex-1":     sdkmath.ZeroInt(),  // TVL: ~130k |     <1M  | No rate limit
-		"cosmoshub-4":  sdkmath.NewInt(10), // TVL:  ~50M |    30M+  | 10% RL
-		"evmos_9001-2": sdkmath.NewInt(50), // TVL:   ~3M | 1M-15M+  | 50% RL
-		"injective-1":  sdkmath.NewInt(50), // TVL:   ~3M | 1M-15M+  | 50% RL
-		"juno-1":       sdkmath.NewInt(50), // TVL:   ~3M | 1M-15M+  | 50% RL
-		"osmosis-1":    sdkmath.NewInt(10), // TVL:  ~30M |    30M+  | 10% RL
-		"phoenix-1":    sdkmath.ZeroInt(),  // TVL: ~190k |     <1M  | No rate limit
-		"sommelier-3":  sdkmath.ZeroInt(),  // TVL: ~450k |     <1M  | No rate limit
-		"stargaze-1":   sdkmath.NewInt(50), // TVL: 1.35M | 1M-15M+  | 50% RL
-		"umee-1":       sdkmath.ZeroInt(),  // TVL: ~200k |     <1M  | No rate limit
+		"comdex-1":     sdkmath.ZeroInt(),  // TVL: ~130k |   <2.5M  | No rate limit
+		"cosmoshub-4":  sdkmath.NewInt(10), // TVL:  ~50M |    50M+  | 10% RL
+		"evmos_9001-2": sdkmath.NewInt(50), // TVL:   ~3M | 2.5M-10M | 50% RL
+		"injective-1":  sdkmath.NewInt(50), // TVL:   ~3M | 2.5M-10M | 50% RL
+		"juno-1":       sdkmath.NewInt(50), // TVL:   ~3M | 2.5M-10M | 50% RL
+		"osmosis-1":    sdkmath.NewInt(20), // TVL:  ~30M |  20M-40M | 20% RL
+		"phoenix-1":    sdkmath.ZeroInt(),  // TVL: ~190k |   <2.5M  | No rate limit
+		"sommelier-3":  sdkmath.ZeroInt(),  // TVL: ~450k |   <2.5M  | No rate limit
+		"stargaze-1":   sdkmath.ZeroInt(),  // TVL: 1.35M |   <2.5M  | No rate limit
+		"umee-1":       sdkmath.ZeroInt(),  // TVL: ~200k |   <2.5M  | No rate limit
 	}
 
 	// Osmo transfer channel is required for new rate limits
