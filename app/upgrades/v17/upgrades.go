@@ -26,11 +26,16 @@ var (
 	// Community pool tax updated from 2 -> 5%
 	CommunityPoolTax = sdk.MustNewDecFromStr("0.05")
 
-	// Rate limit bounds updated to give ~3 months of slack on outer bounds
+	// Redemption rate bounds updated to give ~3 months of slack on outer bounds
 	RedemptionRateOuterMinAdjustment = sdk.MustNewDecFromStr("0.05")
 	RedemptionRateInnerMinAdjustment = sdk.MustNewDecFromStr("0.03")
 	RedemptionRateInnerMaxAdjustment = sdk.MustNewDecFromStr("0.05")
 	RedemptionRateOuterMaxAdjustment = sdk.MustNewDecFromStr("0.10")
+
+	// Osmosis will have a slighly larger buffer with the redemption rate
+	// since their yield is less predictable
+	OsmosisChainId              = "osmosis-1"
+	OsmosisRedemptionRateBuffer = sdk.MustNewDecFromStr("0.02")
 
 	// Rate limits updated according to TVL
 	UpdatedRateLimits = map[string]sdkmath.Int{
@@ -39,7 +44,7 @@ var (
 		"evmos_9001-2": sdkmath.NewInt(50), // TVL:   ~3M | 1M-15M+  | 50% RL
 		"injective-1":  sdkmath.NewInt(50), // TVL:   ~3M | 1M-15M+  | 50% RL
 		"juno-1":       sdkmath.NewInt(50), // TVL:   ~3M | 1M-15M+  | 50% RL
-		"osmosis-1":    sdkmath.NewInt(25), // TVL:  ~30M |    30M+  | 10% RL
+		"osmosis-1":    sdkmath.NewInt(10), // TVL:  ~30M |    30M+  | 10% RL
 		"phoenix-1":    sdkmath.ZeroInt(),  // TVL: ~190k |     <1M  | No rate limit
 		"sommelier-3":  sdkmath.ZeroInt(),  // TVL: ~450k |     <1M  | No rate limit
 		"stargaze-1":   sdkmath.NewInt(50), // TVL: 1.35M | 1M-15M+  | 50% RL
@@ -85,7 +90,7 @@ func CreateUpgradeHandler(
 		UpdateRateLimitThresholds(ctx, stakeibcKeeper, ratelimitKeeper)
 
 		ctx.Logger().Info("Adding rate limits to Osmosis...")
-		if err := RateLimitToOsmosis(ctx, ratelimitKeeper); err != nil {
+		if err := AddRateLimitToOsmosis(ctx, ratelimitKeeper); err != nil {
 			return vm, errorsmod.Wrapf(err, "unable to add rate limits to Osmosis")
 		}
 
@@ -186,10 +191,16 @@ func IncreaseCommunityPoolTax(ctx sdk.Context, k distributionkeeper.Keeper) erro
 // Updates the outer redemption rate bounds
 func UpdateRedemptionRateBounds(ctx sdk.Context, k stakeibckeeper.Keeper) {
 	for _, hostZone := range k.GetAllHostZone(ctx) {
+		// Give osmosis a bit more slack since OSMO stakers collect real yield
+		outerAdjustment := RedemptionRateOuterMaxAdjustment
+		if hostZone.ChainId == OsmosisChainId {
+			outerAdjustment = outerAdjustment.Add(OsmosisRedemptionRateBuffer)
+		}
+
 		outerMinDelta := hostZone.RedemptionRate.Mul(RedemptionRateOuterMinAdjustment)
 		innerMinDelta := hostZone.RedemptionRate.Mul(RedemptionRateInnerMinAdjustment)
 		innerMaxDelta := hostZone.RedemptionRate.Mul(RedemptionRateInnerMaxAdjustment)
-		outerMaxDelta := hostZone.RedemptionRate.Mul(RedemptionRateOuterMaxAdjustment)
+		outerMaxDelta := hostZone.RedemptionRate.Mul(outerAdjustment)
 
 		outerMin := hostZone.RedemptionRate.Sub(outerMinDelta)
 		innerMin := hostZone.RedemptionRate.Sub(innerMinDelta)
@@ -212,7 +223,7 @@ func UpdateRateLimitThresholds(ctx sdk.Context, sk stakeibckeeper.Keeper, rk rat
 		hostDenom := stDenom[2:]
 
 		// Lookup the associated host zone to get the chain ID
-		hostZone, err := sk.GetHostZoneFromHostDenom(ctx, stDenom)
+		hostZone, err := sk.GetHostZoneFromHostDenom(ctx, hostDenom)
 		if err != nil {
 			ctx.Logger().Error(fmt.Sprintf("host zone not found for denom %s", hostDenom))
 			continue
@@ -239,7 +250,7 @@ func UpdateRateLimitThresholds(ctx sdk.Context, sk stakeibckeeper.Keeper, rk rat
 }
 
 // Rate limits transfers to osmosis across each stToken
-func RateLimitToOsmosis(ctx sdk.Context, k ratelimitkeeper.Keeper) error {
+func AddRateLimitToOsmosis(ctx sdk.Context, k ratelimitkeeper.Keeper) error {
 	for _, rateLimit := range k.GetAllRateLimits(ctx) {
 		denom := rateLimit.Path.Denom
 
