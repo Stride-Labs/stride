@@ -7,7 +7,6 @@ import (
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	icatypes "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/types"
-	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
 	"github.com/stretchr/testify/suite"
 
 	icqtypes "github.com/Stride-Labs/stride/v16/x/interchainquery/types"
@@ -15,8 +14,22 @@ import (
 
 	"github.com/Stride-Labs/stride/v16/app/apptesting"
 	v17 "github.com/Stride-Labs/stride/v16/app/upgrades/v17"
+	"github.com/Stride-Labs/stride/v16/x/stakeibc/keeper"
 	stakeibckeeper "github.com/Stride-Labs/stride/v16/x/stakeibc/keeper"
 	stakeibctypes "github.com/Stride-Labs/stride/v16/x/stakeibc/types"
+)
+
+const (
+	GaiaChainId      = "cosmoshub-4"
+	SommelierChainId = "sommelier-3"
+
+	Atom = "uatom"
+	Osmo = "uosmo"
+	Somm = "usomm"
+
+	StAtom = "st" + Atom
+	StOsmo = "st" + Osmo
+	StSomm = "st" + Somm
 )
 
 type UpdateRedemptionRateBounds struct {
@@ -56,7 +69,283 @@ func TestKeeperTestSuite(t *testing.T) {
 }
 
 func (s *UpgradeTestSuite) TestUpgrade() {
+	dummyUpgradeHeight := int64(5)
 
+	// Setup store before upgrade
+	checkHostZonesAfterUpgrade := s.SetupHostZonesBeforeUpgrade()
+	checkRateLimitsAfterUpgrade := s.SetupRateLimitsBeforeUpgrade()
+	checkCommunityPoolTaxAfterUpgrade := s.SetupCommunityPoolTaxBeforeUpgrade()
+	checkQueriesAfterUpgrade := s.SetupQueriesBeforeUpgrade()
+
+	// Submit upgrade and confirm handler succeeds
+	s.ConfirmUpgradeSucceededs("v17", dummyUpgradeHeight)
+
+	// Check state after upgrade
+	checkHostZonesAfterUpgrade()
+	checkRateLimitsAfterUpgrade()
+	checkCommunityPoolTaxAfterUpgrade()
+	checkQueriesAfterUpgrade()
+}
+
+// Helper function to check that the community pool stake and redeem holding
+// module accounts were registered and stored on the host zone
+func (s *UpgradeTestSuite) checkCommunityPoolModuleAccountsRegistered(chainId string) {
+	hostZone, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx, chainId)
+	s.Require().True(found, "host zone should have been found")
+
+	s.Require().NotEmpty(hostZone.CommunityPoolStakeHoldingAddress, "stake holding for %s should not be empty", chainId)
+	s.Require().NotEmpty(hostZone.CommunityPoolRedeemHoldingAddress, "redeem holding for %s should not be empty", chainId)
+
+	stakeHoldingAddress := sdk.MustAccAddressFromBech32(hostZone.CommunityPoolStakeHoldingAddress)
+	redeemHoldingAddress := sdk.MustAccAddressFromBech32(hostZone.CommunityPoolRedeemHoldingAddress)
+
+	stakeHoldingAccount := s.App.AccountKeeper.GetAccount(s.Ctx, stakeHoldingAddress)
+	redeemHoldingAccount := s.App.AccountKeeper.GetAccount(s.Ctx, redeemHoldingAddress)
+
+	s.Require().NotNil(stakeHoldingAccount, "stake holding account should have been registered for %s", chainId)
+	s.Require().NotNil(redeemHoldingAccount, "redeem holding account should have been registered for %s", chainId)
+}
+
+// Helper function to check that the community pool deposit and return ICA accounts were registered for the host zone
+// The addresses don't get set until the callback, but we can check that the expected ICA controller port was claimed
+// by the ICA controller module
+func (s *UpgradeTestSuite) checkCommunityPoolICAAccountsRegistered(chainId string) {
+	depositOwner := stakeibctypes.FormatHostZoneICAOwner(chainId, stakeibctypes.ICAAccountType_COMMUNITY_POOL_DEPOSIT)
+	returnOwner := stakeibctypes.FormatHostZoneICAOwner(chainId, stakeibctypes.ICAAccountType_COMMUNITY_POOL_RETURN)
+
+	expectedDepositPortId, _ := icatypes.NewControllerPortID(depositOwner)
+	expectedReturnPortId, _ := icatypes.NewControllerPortID(returnOwner)
+
+	depositPortIdRegistered := s.App.ICAControllerKeeper.IsBound(s.Ctx, expectedDepositPortId)
+	returnPortIdRegistered := s.App.ICAControllerKeeper.IsBound(s.Ctx, expectedReturnPortId)
+
+	s.Require().True(depositPortIdRegistered, "deposit port %s should have been bound", expectedDepositPortId)
+	s.Require().True(returnPortIdRegistered, "return port %s should have been bound", expectedReturnPortId)
+}
+
+func (s *UpgradeTestSuite) SetupHostZonesBeforeUpgrade() func() {
+	hostZones := []stakeibctypes.HostZone{
+		{
+			ChainId:      GaiaChainId,
+			HostDenom:    Atom,
+			ConnectionId: "connection-1",
+			Validators: []*stakeibctypes.Validator{
+				{Address: "val1", SlashQueryInProgress: false},
+				{Address: "val2", SlashQueryInProgress: true},
+			},
+			RedemptionRate: sdk.MustNewDecFromStr("1.1"),
+		},
+		{
+			ChainId:      v17.OsmosisChainId,
+			HostDenom:    Osmo,
+			ConnectionId: "connection-2",
+			Validators: []*stakeibctypes.Validator{
+				{Address: "val3", SlashQueryInProgress: true},
+				{Address: "val4", SlashQueryInProgress: false},
+			},
+			RedemptionRate: sdk.MustNewDecFromStr("1.2"),
+		},
+		{
+			// This host is just added for the rate limit test
+			// No need to validate accounts and redemptino rates
+			ChainId:      SommelierChainId,
+			HostDenom:    Somm,
+			ConnectionId: "connection-3",
+			Validators: []*stakeibctypes.Validator{
+				{Address: "val5", SlashQueryInProgress: true},
+				{Address: "val6", SlashQueryInProgress: false},
+			},
+			RedemptionRate: sdk.MustNewDecFromStr("1.0"),
+		},
+	}
+
+	for i, hostZone := range hostZones {
+		s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
+
+		clientId := fmt.Sprintf("07-tendermint-%d", i)
+		s.MockClientAndConnection(hostZone.ChainId, clientId, hostZone.ConnectionId)
+	}
+
+	// Return callback to check store after upgrade
+	return func() {
+		// Check that the module and ICA accounts were registered
+		s.checkCommunityPoolModuleAccountsRegistered(GaiaChainId)
+		s.checkCommunityPoolModuleAccountsRegistered(v17.OsmosisChainId)
+
+		s.checkCommunityPoolICAAccountsRegistered(GaiaChainId)
+		s.checkCommunityPoolICAAccountsRegistered(v17.OsmosisChainId)
+
+		// Check that the redemption rate bounds were set
+		gaiaHostZone, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx, GaiaChainId)
+		s.Require().True(found)
+
+		s.Require().Equal(sdk.MustNewDecFromStr("1.045"), gaiaHostZone.MinRedemptionRate, "gaia min outer")      // 1.1 - 5% = 1.045
+		s.Require().Equal(sdk.MustNewDecFromStr("1.067"), gaiaHostZone.MinInnerRedemptionRate, "gaia min inner") // 1.1 - 3% = 1.067
+		s.Require().Equal(sdk.MustNewDecFromStr("1.155"), gaiaHostZone.MaxInnerRedemptionRate, "gaia max inner") // 1.1 + 5% = 1.155
+		s.Require().Equal(sdk.MustNewDecFromStr("1.210"), gaiaHostZone.MaxRedemptionRate, "gaia max outer")      // 1.1 + 10% = 1.21
+
+		osmoHostZone, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx, "osmosis-1")
+		s.Require().True(found)
+
+		s.Require().Equal(sdk.MustNewDecFromStr("1.140"), osmoHostZone.MinRedemptionRate, "osmo min outer")      // 1.2 - 5% = 1.140
+		s.Require().Equal(sdk.MustNewDecFromStr("1.164"), osmoHostZone.MinInnerRedemptionRate, "osmo min inner") // 1.2 - 3% = 1.164
+		s.Require().Equal(sdk.MustNewDecFromStr("1.260"), osmoHostZone.MaxInnerRedemptionRate, "osmo max inner") // 1.2 + 5% = 1.260
+		s.Require().Equal(sdk.MustNewDecFromStr("1.344"), osmoHostZone.MaxRedemptionRate, "osmo max outer")      // 1.2 + 12% = 1.344
+
+		// Check that there are no slash queries in progress
+		for _, hostZone := range s.App.StakeibcKeeper.GetAllHostZone(s.Ctx) {
+			for _, validator := range hostZone.Validators {
+				s.Require().False(validator.SlashQueryInProgress, "slash query in progress should have been set to false")
+			}
+		}
+	}
+}
+
+func (s *UpgradeTestSuite) SetupRateLimitsBeforeUpgrade() func() {
+	gaiaChannelId := "channel-0"
+
+	initialThreshold := sdk.OneInt()
+	initialFlow := sdkmath.NewInt(10)
+	initialChannelValue := sdkmath.NewInt(100)
+	updatedChannelValue := sdkmath.NewInt(200)
+
+	ratesLimits := []AddRateLimits{
+		{
+			// Gaia rate limit
+			// Treshold should be updated, new gaia RL added
+			Denom:     StAtom,
+			ChannelId: gaiaChannelId,
+		},
+		{
+			// Osmo rate limit
+			// Treshold should be updated, no new RL added
+			Denom:     StOsmo,
+			ChannelId: v17.OsmosisTransferChannelId,
+		},
+		{
+			// Somm rate limit
+			// Should be removed
+			Denom:     StSomm,
+			ChannelId: "channel-10",
+		},
+	}
+
+	// Add rate limits
+	// No need to register host zones since they're initialized in the setup host zone function
+	for _, rateLimit := range ratesLimits {
+		s.App.RatelimitKeeper.SetRateLimit(s.Ctx, ratelimittypes.RateLimit{
+			Path: &ratelimittypes.Path{
+				Denom:     rateLimit.Denom,
+				ChannelId: rateLimit.ChannelId,
+			},
+			Quota: &ratelimittypes.Quota{
+				MaxPercentSend: initialThreshold,
+				MaxPercentRecv: initialThreshold,
+				DurationHours:  10,
+			},
+			Flow: &ratelimittypes.Flow{
+				Outflow:      initialFlow,
+				Inflow:       initialFlow,
+				ChannelValue: initialChannelValue,
+			},
+		})
+
+		// mint the token for the channel value
+		s.FundAccount(s.TestAccs[0], sdk.NewCoin(rateLimit.Denom, updatedChannelValue))
+	}
+
+	// Return callback to check store after upgrade
+	return func() {
+		// Check that we have 3 RLs
+		//   (1) stuosmo on Stride -> Osmosis
+		//   (2) stuatom on Stride -> Gaia
+		//   (3) stuatom on Stride -> Osmosis
+		acutalRateLimits := s.App.RatelimitKeeper.GetAllRateLimits(s.Ctx)
+		s.Require().Len(acutalRateLimits, 3, "there should be 3 rate limits at the end")
+
+		// Check the stosmo rate limit
+		stOsmoRateLimit, found := s.App.RatelimitKeeper.GetRateLimit(s.Ctx, StOsmo, v17.OsmosisTransferChannelId)
+		s.Require().True(found)
+
+		osmoThreshold := v17.UpdatedRateLimits[v17.OsmosisChainId]
+		s.Require().Equal(osmoThreshold, stOsmoRateLimit.Quota.MaxPercentSend, "stosmo max percent send")
+		s.Require().Equal(osmoThreshold, stOsmoRateLimit.Quota.MaxPercentRecv, "stosmo max percent recv")
+		s.Require().Equal(initialFlow, stOsmoRateLimit.Flow.Outflow, "stosmo outflow")
+		s.Require().Equal(initialFlow, stOsmoRateLimit.Flow.Inflow, "stosmo inflow")
+		s.Require().Equal(initialChannelValue, stOsmoRateLimit.Flow.ChannelValue, "stosmo channel value")
+
+		// Check the stuatom -> Gaia rate limit
+		stAtomToGaiaRateLimit, found := s.App.RatelimitKeeper.GetRateLimit(s.Ctx, StAtom, gaiaChannelId)
+		s.Require().True(found)
+
+		atomThreshold := v17.UpdatedRateLimits[GaiaChainId]
+		s.Require().Equal(atomThreshold, stAtomToGaiaRateLimit.Quota.MaxPercentSend, "statom -> gaia max percent send")
+		s.Require().Equal(atomThreshold, stAtomToGaiaRateLimit.Quota.MaxPercentRecv, "statom -> gaia max percent recv")
+		s.Require().Equal(initialFlow, stAtomToGaiaRateLimit.Flow.Outflow, "statom -> gaia outflow")
+		s.Require().Equal(initialFlow, stAtomToGaiaRateLimit.Flow.Inflow, "statom -> gaia inflow")
+		s.Require().Equal(initialChannelValue, stAtomToGaiaRateLimit.Flow.ChannelValue, "statom -> gaia channel value")
+
+		// Check the stuatom -> Osmo rate limit
+		// The flow should be reset to 0 and the channel value should update
+		stAtomToOsmoRateLimit, found := s.App.RatelimitKeeper.GetRateLimit(s.Ctx, StAtom, v17.OsmosisTransferChannelId)
+		s.Require().True(found)
+
+		s.Require().Equal(atomThreshold, stAtomToOsmoRateLimit.Quota.MaxPercentSend, "statom -> osmo max percent send")
+		s.Require().Equal(atomThreshold, stAtomToOsmoRateLimit.Quota.MaxPercentRecv, "statom -> osmo max percent recv")
+
+		s.Require().Zero(stAtomToOsmoRateLimit.Flow.Outflow.Int64(), "statom -> osmo outflow")
+		s.Require().Zero(stAtomToOsmoRateLimit.Flow.Inflow.Int64(), "statom -> osmo inflow")
+		s.Require().Equal(updatedChannelValue, stAtomToOsmoRateLimit.Flow.ChannelValue, "statom -> osmo channel value")
+	}
+}
+
+func (s *UpgradeTestSuite) SetupCommunityPoolTaxBeforeUpgrade() func() {
+	// Set initial community pool tax to 2%
+	initialTax := sdk.MustNewDecFromStr("0.02")
+	params := s.App.DistrKeeper.GetParams(s.Ctx)
+	params.CommunityTax = initialTax
+	err := s.App.DistrKeeper.SetParams(s.Ctx, params)
+	s.Require().NoError(err, "no error expected when setting params")
+
+	// Return callback to check store after upgrade
+	return func() {
+		// Confirm the tax increased
+		updatedParams := s.App.DistrKeeper.GetParams(s.Ctx)
+		s.Require().Equal(v17.CommunityPoolTax.String(), updatedParams.CommunityTax.String(),
+			"community pool tax should have been updated")
+	}
+}
+
+func (s *UpgradeTestSuite) SetupQueriesBeforeUpgrade() func() {
+	// Set two queries - one for a slash, and one that's not for a slash
+	queries := []icqtypes.Query{
+		{
+			Id:         "query-1",
+			CallbackId: keeper.ICQCallbackID_Delegation,
+		},
+		{
+			Id:         "query-2",
+			CallbackId: keeper.ICQCallbackID_Calibrate,
+		},
+	}
+	for _, query := range queries {
+		s.App.InterchainqueryKeeper.SetQuery(s.Ctx, query)
+	}
+
+	// Return callback to check store after upgrade
+	return func() {
+		// Confirm one query was removed
+		remainingQueries := s.App.InterchainqueryKeeper.AllQueries(s.Ctx)
+		s.Require().Len(remainingQueries, 1, "there should be only 1 remaining query")
+
+		// Confirm the slash query was removed
+		_, found := s.App.InterchainqueryKeeper.GetQuery(s.Ctx, "query-1")
+		s.Require().False(found, "slash query should have been removed")
+
+		// Confirm the other query is still there
+		_, found = s.App.InterchainqueryKeeper.GetQuery(s.Ctx, "query-2")
+		s.Require().True(found, "non-slash query should not have been removed")
+	}
 }
 
 func (s *UpgradeTestSuite) TestRegisterCommunityPoolAddresses() {
@@ -81,37 +370,11 @@ func (s *UpgradeTestSuite) TestRegisterCommunityPoolAddresses() {
 	err := v17.RegisterCommunityPoolAddresses(s.Ctx, s.App.StakeibcKeeper)
 	s.Require().NoError(err, "no error expected when registering ICA addresses")
 
-	// Confirm the module accounts were created and stored on each host
+	// Confirm the module accounts and ICAs were registered
 	for _, chainId := range chainIds {
-		hostZone, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx, chainId)
-		s.Require().True(found, "host zone should have been found")
-
-		s.Require().NotEmpty(hostZone.CommunityPoolStakeHoldingAddress, "stake holding for %s should not be empty", chainId)
-		s.Require().NotEmpty(hostZone.CommunityPoolRedeemHoldingAddress, "redeem holding for %s should not be empty", chainId)
-
-		stakeHoldingAddress := sdk.MustAccAddressFromBech32(hostZone.CommunityPoolStakeHoldingAddress)
-		redeemHoldingAddress := sdk.MustAccAddressFromBech32(hostZone.CommunityPoolRedeemHoldingAddress)
-
-		stakeHoldingAccount := s.App.AccountKeeper.GetAccount(s.Ctx, stakeHoldingAddress)
-		redeemHoldingAccount := s.App.AccountKeeper.GetAccount(s.Ctx, redeemHoldingAddress)
-
-		s.Require().NotNil(stakeHoldingAccount, "stake holding account should have been registered for %s", chainId)
-		s.Require().NotNil(redeemHoldingAccount, "redeem holding account should have been registered for %s", chainId)
+		s.checkCommunityPoolModuleAccountsRegistered(chainId)
+		s.checkCommunityPoolICAAccountsRegistered(chainId)
 	}
-
-	// Confirm the ICAs were registered
-	// The addresses don't get set until the callback, but we can check the events and confirm they were registered
-	for _, chainId := range chainIds {
-		depositOwner := stakeibctypes.FormatHostZoneICAOwner(chainId, stakeibctypes.ICAAccountType_COMMUNITY_POOL_DEPOSIT)
-		returnOwner := stakeibctypes.FormatHostZoneICAOwner(chainId, stakeibctypes.ICAAccountType_COMMUNITY_POOL_RETURN)
-
-		expectedDepositPortId, _ := icatypes.NewControllerPortID(depositOwner)
-		expectedReturnPortId, _ := icatypes.NewControllerPortID(returnOwner)
-
-		s.CheckEventValueEmitted(channeltypes.EventTypeChannelOpenInit, channeltypes.AttributeKeyPortID, expectedDepositPortId)
-		s.CheckEventValueEmitted(channeltypes.EventTypeChannelOpenInit, channeltypes.AttributeKeyPortID, expectedReturnPortId)
-	}
-
 }
 
 func (s *UpgradeTestSuite) TestDeleteAllStaleQueries() {

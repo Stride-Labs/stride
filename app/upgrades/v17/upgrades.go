@@ -69,7 +69,7 @@ func CreateUpgradeHandler(
 
 		ctx.Logger().Info("Migrating host zones...")
 		if err := RegisterCommunityPoolAddresses(ctx, stakeibcKeeper); err != nil {
-			return vm, errorsmod.Wrapf(err, "unable to migrate host zones")
+			return vm, errorsmod.Wrapf(err, "unable to register community pool addresses on host zones")
 		}
 
 		ctx.Logger().Info("Deleting all pending queries...")
