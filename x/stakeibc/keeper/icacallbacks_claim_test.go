@@ -32,7 +32,7 @@ type ClaimCallbackTestCase struct {
 
 func (s *KeeperTestSuite) SetupClaimCallback() ClaimCallbackTestCase {
 	epochNumber := uint64(1)
-	recordId1 := recordtypes.UserRedemptionRecordKeyFormatter(HostChainId, epochNumber, "sender")
+	recordId1 := recordtypes.UserRedemptionRecordKeyFormatter(HostChainId, epochNumber, "recevier")
 	userRedemptionRecord1 := recordtypes.UserRedemptionRecord{
 		Id: recordId1,
 		// after a user calls ClaimUndelegatedTokens, the record is set to claimIsPending = true
@@ -40,12 +40,12 @@ func (s *KeeperTestSuite) SetupClaimCallback() ClaimCallbackTestCase {
 		ClaimIsPending: true,
 		Amount:         sdkmath.ZeroInt(),
 	}
-	recordId2 := recordtypes.UserRedemptionRecordKeyFormatter(HostChainId, epochNumber, "other_sender")
+	recordId2 := recordtypes.UserRedemptionRecordKeyFormatter(HostChainId, epochNumber, "other_recevier")
 	userRedemptionRecord2 := recordtypes.UserRedemptionRecord{
 		Id:             recordId2,
 		ClaimIsPending: false,
 	}
-	recordId3 := recordtypes.UserRedemptionRecordKeyFormatter("not_gaia", epochNumber, "sender")
+	recordId3 := recordtypes.UserRedemptionRecordKeyFormatter("not_gaia", epochNumber, "recevier")
 	userRedemptionRecord3 := recordtypes.UserRedemptionRecord{
 		Id:             recordId3,
 		ClaimIsPending: false,

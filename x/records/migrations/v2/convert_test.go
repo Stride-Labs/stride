@@ -121,7 +121,6 @@ func TestConvertUserRedemptionRecord(t *testing.T) {
 	}
 	expectedNewUserRedemptionRecord := recordstypes.UserRedemptionRecord{
 		Id:             id,
-		Sender:         sender,
 		Receiver:       receiver,
 		Amount:         sdkmath.NewInt(1),
 		Denom:          denom,
