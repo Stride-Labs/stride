@@ -131,10 +131,10 @@ message MsgRegisterHostZoneResponse {}
 
 message MsgClaimUndelegatedTokens {
   string creator = 1;
-  // UserUnbondingRecords are keyed on {chain_id}.{epoch}.{sender}
+  // UserUnbondingRecords are keyed on {chain_id}.{epoch}.{receiver}
   string host_zone_id = 2;
   uint64 epoch = 3;
-  string sender = 4;
+  string receiver = 4;
 }
 message MsgClaimUndelegatedTokensResponse {}
 
