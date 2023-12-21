@@ -161,8 +161,9 @@ func (im IBCModule) OnRecvPacket(
 		return channeltypes.NewErrorAcknowledgement(err)
 	}
 
-	// If the parsed metadata is nil, that means there is no forwarding logic
+	// If the parsed metadata is nil, that means there is no autopilot forwarding logic
 	// Pass the packet down to the next middleware
+	// PFM packets will also go down this path
 	if packetForwardMetadata == nil {
 		return im.app.OnRecvPacket(ctx, packet, relayer)
 	}

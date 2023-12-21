@@ -126,6 +126,11 @@ func TestParsePacketMetadata(t *testing.T) {
 			expectedNilMetadata: true,
 		},
 		{
+			name:                "PFM transfer",
+			metadata:            `{"forward": {}}`,
+			expectedNilMetadata: true,
+		},
+		{
 			name:                "empty memo",
 			metadata:            "",
 			expectedNilMetadata: true,
@@ -139,6 +144,11 @@ func TestParsePacketMetadata(t *testing.T) {
 			name:                "different module specified",
 			metadata:            `{ "other_module": { } }`,
 			expectedNilMetadata: true,
+		},
+		{
+			name:        "both autopilot and pfm in the memo",
+			metadata:    `{"autopilot": {}, "forward": {}}`,
+			expectedErr: "autopilot and pfm cannot both be used in the same packet",
 		},
 		{
 			name:        "empty receiver address",

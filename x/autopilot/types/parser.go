@@ -14,6 +14,7 @@ type RawPacketMetadata struct {
 		Stakeibc *StakeibcPacketMetadata `json:"stakeibc,omitempty"`
 		Claim    *ClaimPacketMetadata    `json:"claim,omitempty"`
 	} `json:"autopilot"`
+	Forward *interface{} `json:"forward"`
 }
 
 type PacketForwardMetadata struct {
@@ -76,7 +77,7 @@ func (m ClaimPacketMetadata) Validate() error {
 // In the ICS-20 packet, the metadata can optionally indicate a module to route to (e.g. stakeibc)
 // The PacketForwardMetadata returned from this function contains attributes for each autopilot supported module
 // It can only be forward to one module per packet
-// Returns nil if there was no metadata found
+// Returns nil if there was no autopilot metadata found
 func ParsePacketMetadata(metadata string) (*PacketForwardMetadata, error) {
 	// If we can't unmarshal the metadata into a PacketMetadata struct,
 	// assume packet forwarding was no used and pass back nil so that autopilot is ignored
@@ -85,7 +86,14 @@ func ParsePacketMetadata(metadata string) (*PacketForwardMetadata, error) {
 		return nil, nil
 	}
 
-	// If no forwarding logic was used for autopilot, return the metadata with each disabled
+	// Packets cannot be used for both autopilot and PFM at the same time
+	// If both fields were provided, reject the packet
+	if raw.Autopilot != nil && raw.Forward != nil {
+		return nil, errorsmod.Wrapf(ErrInvalidPacketMetadata, "autopilot and pfm cannot both be used in the same packet")
+	}
+
+	// If no forwarding logic was used for autopilot, return nil to indicate that
+	// there's no autopilot action needed
 	if raw.Autopilot == nil {
 		return nil, nil
 	}
