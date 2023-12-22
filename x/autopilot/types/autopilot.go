@@ -1,11 +1,45 @@
 package types
 
 import (
+	"errors"
 	fmt "fmt"
 
+	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/address"
+	transfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
 )
+
+// TokenPacketMetadata is meant to replicate transfertypes.FungibleTokenPacketData
+// but it drops the original sender (who is untrusted) and adds a hashed receiver
+// that can be used for any forwarding
+type TokenPacketMetadata struct {
+	OriginalReceiver string
+	HashedReceiver   string
+	Amount           sdkmath.Int
+	Denom            string
+}
+
+// Builds a TokenPacketMetadata object using the fields of a FungibleTokenPacketData
+// and adding a hashed receiver
+func NewTokenPacketMetadata(channelId string, data transfertypes.FungibleTokenPacketData) (TokenPacketMetadata, error) {
+	hashedReceiver, err := GenerateHashedReceiver(channelId, data.Sender)
+	if err != nil {
+		return TokenPacketMetadata{}, err
+	}
+
+	amount, ok := sdk.NewIntFromString(data.Amount)
+	if !ok {
+		return TokenPacketMetadata{}, errors.New("not a parsable amount field")
+	}
+
+	return TokenPacketMetadata{
+		OriginalReceiver: data.Receiver,
+		HashedReceiver:   hashedReceiver,
+		Amount:           amount,
+		Denom:            data.Denom,
+	}, nil
+}
 
 // GenerateHashedReceiver returns the receiver address for a given channel and original sender.
 // It overrides the receiver address to be a hash of the channel/origSender so that
