@@ -15,6 +15,8 @@ import (
 	stakeibctypes "github.com/Stride-Labs/stride/v16/x/stakeibc/types"
 )
 
+// Attempts to do an autopilot liquid stake (and optional forward)
+// The liquid stake is only allowed if the inbound packet came along a trusted channel
 func (k Keeper) TryLiquidStaking(
 	ctx sdk.Context,
 	packet channeltypes.Packet,
@@ -31,17 +33,18 @@ func (k Keeper) TryLiquidStaking(
 		return errors.New("the native token is not supported for liquid staking")
 	}
 
-	// Note: denom is base denom e.g. uatom - not ibc/xxx
-	var token = sdk.NewCoin(transferMetadata.Denom, transferMetadata.Amount)
-
+	// Note: the denom in the packet is the base denom e.g. uatom - not ibc/xxx
+	// We need to use the port and channel to build the IBC denom
 	prefixedDenom := transfertypes.GetPrefixedDenom(packet.GetDestPort(), packet.GetDestChannel(), transferMetadata.Denom)
 	ibcDenom := transfertypes.ParseDenomTrace(prefixedDenom).IBCDenom()
 
-	hostZone, err := k.stakeibcKeeper.GetHostZoneFromHostDenom(ctx, token.Denom)
+	hostZone, err := k.stakeibcKeeper.GetHostZoneFromHostDenom(ctx, transferMetadata.Denom)
 	if err != nil {
-		return fmt.Errorf("host zone not found for denom (%s)", token.Denom)
+		return fmt.Errorf("host zone not found for denom (%s)", transferMetadata.Denom)
 	}
 
+	// Verify the IBC denom of the packet matches the host zone, to confirm the packet
+	// was sent over a trusted channel
 	if hostZone.IbcDenom != ibcDenom {
 		return fmt.Errorf("ibc denom %s is not equal to host zone ibc denom %s", ibcDenom, hostZone.IbcDenom)
 	}
@@ -49,7 +52,14 @@ func (k Keeper) TryLiquidStaking(
 	return k.RunLiquidStake(ctx, transferMetadata, actionMetadata)
 }
 
-func (k Keeper) RunLiquidStake(ctx sdk.Context, transferMetadata types.AutopilotTransferMetadata, packetMetadata types.StakeibcPacketMetadata) error {
+// Submits a LiquidStake message from the hashed receiver
+// If a forwarding recipient is specified, the stTokens are ibc transferred
+// If there is no forwarding recipient, they are bank sent to the original receiver
+func (k Keeper) RunLiquidStake(
+	ctx sdk.Context,
+	transferMetadata types.AutopilotTransferMetadata,
+	actionMetadata types.StakeibcPacketMetadata,
+) error {
 	msg := &stakeibctypes.MsgLiquidStake{
 		Creator:   transferMetadata.HashedReceiver,
 		Amount:    transferMetadata.Amount,
@@ -61,7 +71,7 @@ func (k Keeper) RunLiquidStake(ctx sdk.Context, transferMetadata types.Autopilot
 	}
 
 	msgServer := stakeibckeeper.NewMsgServerImpl(k.stakeibcKeeper)
-	result, err := msgServer.LiquidStake(
+	msgResponse, err := msgServer.LiquidStake(
 		sdk.WrapSDKContext(ctx),
 		msg,
 	)
@@ -69,45 +79,52 @@ func (k Keeper) RunLiquidStake(ctx sdk.Context, transferMetadata types.Autopilot
 		return errorsmod.Wrapf(err, err.Error())
 	}
 
+	// If the IBCReceiver is empty, there is no forwarding step
+	// but we still need to transfer the stTokens to the original recipient
+	if actionMetadata.IbcReceiver == "" {
+		fromAddress := sdk.MustAccAddressFromBech32(transferMetadata.HashedReceiver)
+		toAddress := sdk.MustAccAddressFromBech32(transferMetadata.OriginalReceiver)
+
+		return k.bankkeeper.SendCoins(ctx, fromAddress, toAddress, sdk.NewCoins(msgResponse.StToken))
+	}
+
+	// Otherwise, if there is forwarding info, submit the IBC transfer
+	return k.IBCTransferStToken(ctx, msgResponse.StToken, transferMetadata, actionMetadata)
+}
+
+// Submits an IBC transfer of the stToken to a non-stride zone (either back to the host zone or to a different zone)
+// The sender of the transfer is the hashed receiver of the original autopilot inbound transfer
+func (k Keeper) IBCTransferStToken(
+	ctx sdk.Context,
+	stToken sdk.Coin,
+	transferMetadata types.AutopilotTransferMetadata,
+	actionMetadata types.StakeibcPacketMetadata,
+) error {
 	hostZone, err := k.stakeibcKeeper.GetHostZoneFromHostDenom(ctx, transferMetadata.Denom)
 	if err != nil {
 		return err
 	}
 
-	// If the IBCReceiver is empty, there is no forwarding step
-	// but we still need to transfer the stTokens to the original recipient
-	if packetMetadata.IbcReceiver == "" {
-		fromAddress := sdk.MustAccAddressFromBech32(transferMetadata.HashedReceiver)
-		toAddress := sdk.MustAccAddressFromBech32(transferMetadata.OriginalReceiver)
+	// Use the default transfer timeout of 10 minutes
+	timeoutTimestamp := uint64(ctx.BlockTime().UnixNano()) + transfertypes.DefaultRelativePacketTimeoutTimestamp
 
-		return k.bankkeeper.SendCoins(ctx, fromAddress, toAddress, sdk.NewCoins(result.StToken))
-	}
-
-	// Otherwise, if there is forwarding info, submit the IBC transfer
-	return k.IBCTransferStAsset(ctx, result.StToken, transferMetadata.HashedReceiver, hostZone, packetMetadata)
-}
-
-func (k Keeper) IBCTransferStAsset(ctx sdk.Context, stAsset sdk.Coin, sender string, hostZone *stakeibctypes.HostZone, packetMetadata types.StakeibcPacketMetadata) error {
-	ibcTransferTimeoutNanos := k.stakeibcKeeper.GetParam(ctx, stakeibctypes.KeyIBCTransferTimeoutNanos)
-	timeoutTimestamp := uint64(ctx.BlockTime().UnixNano()) + ibcTransferTimeoutNanos
-	channelId := packetMetadata.TransferChannel
+	// If there's no channelID specified in the packet, default to the channel on the host zone
+	channelId := actionMetadata.TransferChannel
 	if channelId == "" {
 		channelId = hostZone.TransferChannelId
 	}
+
+	// The transfer message is sent from the hashed receiver to prevent impersonation
 	transferMsg := &transfertypes.MsgTransfer{
-		SourcePort:    transfertypes.PortID,
-		SourceChannel: channelId,
-		Token:         stAsset,
-		// TODO: does this reintroduce the bug in PFM where senders can be spoofed?
-		// If so, should we instead call PFM directly to forward the packet?
-		// Or should we obfuscate the sender, making it a random address?
-		Sender:           sender,
-		Receiver:         packetMetadata.IbcReceiver,
+		SourcePort:       transfertypes.PortID,
+		SourceChannel:    channelId,
+		Token:            stToken,
+		Sender:           transferMetadata.HashedReceiver,
+		Receiver:         actionMetadata.IbcReceiver,
 		TimeoutTimestamp: timeoutTimestamp,
-		// TimeoutHeight:    clienttypes.Height{},
-		// Memo:             "stTokenIBCTransfer",
+		Memo:             "autopilot-liquid-stake-and-forward",
 	}
 
-	_, err := k.transferKeeper.Transfer(sdk.WrapSDKContext(ctx), transferMsg)
+	_, err = k.transferKeeper.Transfer(sdk.WrapSDKContext(ctx), transferMsg)
 	return err
 }

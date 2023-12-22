@@ -17,6 +17,7 @@ import (
 	stakeibctypes "github.com/Stride-Labs/stride/v16/x/stakeibc/types"
 )
 
+// Attempt to link a host address with a stride address to enable airdrop claims
 func (k Keeper) TryUpdateAirdropClaim(
 	ctx sdk.Context,
 	packet channeltypes.Packet,
