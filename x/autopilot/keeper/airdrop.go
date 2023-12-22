@@ -20,8 +20,7 @@ import (
 func (k Keeper) TryUpdateAirdropClaim(
 	ctx sdk.Context,
 	packet channeltypes.Packet,
-	data transfertypes.FungibleTokenPacketData,
-	packetMetadata types.ClaimPacketMetadata,
+	data types.TokenPacketMetadata,
 ) error {
 	params := k.GetParams(ctx)
 	if !params.ClaimActive {
@@ -43,7 +42,7 @@ func (k Keeper) TryUpdateAirdropClaim(
 	if senderStrideAddress == "" {
 		return errorsmod.Wrapf(sdkerrors.ErrInvalidAddress, fmt.Sprintf("invalid sender address (%s)", data.Sender))
 	}
-	newStrideAddress := packetMetadata.StrideAddress
+	newStrideAddress := data.OriginalReceiver
 
 	// find the airdrop for this host chain ID
 	airdrop, found := k.claimKeeper.GetAirdropByChainId(ctx, hostZone.ChainId)
@@ -58,5 +57,14 @@ func (k Keeper) TryUpdateAirdropClaim(
 	k.Logger(ctx).Info(fmt.Sprintf("updating airdrop address %s (orig %s) to %s for airdrop %s",
 		senderStrideAddress, data.Sender, newStrideAddress, airdropId))
 
-	return k.claimKeeper.UpdateAirdropAddress(ctx, senderStrideAddress, newStrideAddress, airdropId)
+	if err := k.claimKeeper.UpdateAirdropAddress(ctx, senderStrideAddress, newStrideAddress, airdropId); err != nil {
+		return err
+	}
+
+	// Finally send token back to the original reciever (since the hashed receiver was used for the transfer)
+	fromAddress := sdk.MustAccAddressFromBech32(data.HashedReceiver)
+	toAddress := sdk.MustAccAddressFromBech32(data.OriginalReceiver)
+	token := sdk.NewCoin(data.Denom, data.Amount)
+
+	return k.bankkeeper.SendCoins(ctx, fromAddress, toAddress, sdk.NewCoins(token))
 }

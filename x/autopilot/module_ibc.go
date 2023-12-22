@@ -7,7 +7,6 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	capabilitytypes "github.com/cosmos/cosmos-sdk/x/capability/types"
-	ibctransfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
 	transfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
 	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
 	porttypes "github.com/cosmos/ibc-go/v7/modules/core/05-port/types"
@@ -168,10 +167,19 @@ func (im IBCModule) OnRecvPacket(
 		return im.app.OnRecvPacket(ctx, packet, relayer)
 	}
 
+	//// At this point, we are officially dealing with an autopilot packet
+
+	// Build a new token packet metadata that includes a hashed receiver address
+	tokenPacketData, err := types.NewTokenPacketMetadata(packet.DestinationChannel, data)
+	if err != nil {
+		return channeltypes.NewErrorAcknowledgement(err)
+	}
+
 	// Modify the packet data by replacing the JSON metadata field with a receiver address
 	// to allow the packet to continue down the stack
+	// Use the hashed receiver to prevent impersonation in downstream applications
 	newData := data
-	newData.Receiver = packetForwardMetadata.Receiver
+	newData.Receiver = tokenPacketData.HashedReceiver
 	bz, err := transfertypes.ModuleCdc.MarshalJSON(&newData)
 	if err != nil {
 		return channeltypes.NewErrorAcknowledgement(err)
@@ -200,7 +208,7 @@ func (im IBCModule) OnRecvPacket(
 		switch routingInfo.Action {
 		case types.LiquidStake:
 			// Try to liquid stake - return an ack error if it fails, otherwise return the ack generated from the earlier packet propogation
-			if err := im.keeper.TryLiquidStaking(ctx, packet, newData, routingInfo); err != nil {
+			if err := im.keeper.TryLiquidStaking(ctx, packet, tokenPacketData, routingInfo); err != nil {
 				im.keeper.Logger(ctx).Error(fmt.Sprintf("Error liquid staking packet from autopilot for %s: %s", newData.Sender, err.Error()))
 				return channeltypes.NewErrorAcknowledgement(err)
 			}
@@ -217,7 +225,7 @@ func (im IBCModule) OnRecvPacket(
 		}
 		im.keeper.Logger(ctx).Info(fmt.Sprintf("Forwaring packet from %s to claim", newData.Sender))
 
-		if err := im.keeper.TryUpdateAirdropClaim(ctx, packet, newData, routingInfo); err != nil {
+		if err := im.keeper.TryUpdateAirdropClaim(ctx, packet, tokenPacketData); err != nil {
 			im.keeper.Logger(ctx).Error(fmt.Sprintf("Error updating airdrop claim from autopilot for %s: %s", newData.Sender, err.Error()))
 			return channeltypes.NewErrorAcknowledgement(err)
 		}
@@ -274,5 +282,5 @@ func (im IBCModule) WriteAcknowledgement(
 
 // GetAppVersion returns the interchain accounts metadata.
 func (im IBCModule) GetAppVersion(ctx sdk.Context, portID, channelID string) (string, bool) {
-	return ibctransfertypes.Version, true // im.keeper.GetAppVersion(ctx, portID, channelID)
+	return transfertypes.Version, true // im.keeper.GetAppVersion(ctx, portID, channelID)
 }

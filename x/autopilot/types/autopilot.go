@@ -14,6 +14,7 @@ import (
 // but it drops the original sender (who is untrusted) and adds a hashed receiver
 // that can be used for any forwarding
 type TokenPacketMetadata struct {
+	Sender           string
 	OriginalReceiver string
 	HashedReceiver   string
 	Amount           sdkmath.Int
@@ -34,6 +35,7 @@ func NewTokenPacketMetadata(channelId string, data transfertypes.FungibleTokenPa
 	}
 
 	return TokenPacketMetadata{
+		Sender:           data.Sender,
 		OriginalReceiver: data.Receiver,
 		HashedReceiver:   hashedReceiver,
 		Amount:           amount,

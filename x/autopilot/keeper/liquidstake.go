@@ -7,7 +7,6 @@ import (
 	errorsmod "cosmossdk.io/errors"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	transfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
 	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
 
@@ -19,7 +18,7 @@ import (
 func (k Keeper) TryLiquidStaking(
 	ctx sdk.Context,
 	packet channeltypes.Packet,
-	newData transfertypes.FungibleTokenPacketData,
+	newData types.TokenPacketMetadata,
 	packetMetadata types.StakeibcPacketMetadata,
 ) error {
 	params := k.GetParams(ctx)
@@ -32,13 +31,8 @@ func (k Keeper) TryLiquidStaking(
 		return errors.New("the native token is not supported for liquid staking")
 	}
 
-	amount, ok := sdk.NewIntFromString(newData.Amount)
-	if !ok {
-		return errors.New("not a parsable amount field")
-	}
-
-	// Note: newData.denom is base denom e.g. uatom - not ibc/xxx
-	var token = sdk.NewCoin(newData.Denom, amount)
+	// Note: denom is base denom e.g. uatom - not ibc/xxx
+	var token = sdk.NewCoin(newData.Denom, newData.Amount)
 
 	prefixedDenom := transfertypes.GetPrefixedDenom(packet.GetDestPort(), packet.GetDestChannel(), newData.Denom)
 	ibcDenom := transfertypes.ParseDenomTrace(prefixedDenom).IBCDenom()
@@ -52,19 +46,14 @@ func (k Keeper) TryLiquidStaking(
 		return fmt.Errorf("ibc denom %s is not equal to host zone ibc denom %s", ibcDenom, hostZone.IbcDenom)
 	}
 
-	strideAddress, err := sdk.AccAddressFromBech32(packetMetadata.StrideAddress)
-	if err != nil {
-		return errorsmod.Wrapf(sdkerrors.ErrInvalidAddress, "invalid stride_address (%s) in autopilot memo", strideAddress)
-	}
-
-	return k.RunLiquidStake(ctx, strideAddress, token, packetMetadata)
+	return k.RunLiquidStake(ctx, newData, packetMetadata)
 }
 
-func (k Keeper) RunLiquidStake(ctx sdk.Context, addr sdk.AccAddress, token sdk.Coin, packetMetadata types.StakeibcPacketMetadata) error {
+func (k Keeper) RunLiquidStake(ctx sdk.Context, transferMetadata types.TokenPacketMetadata, packetMetadata types.StakeibcPacketMetadata) error {
 	msg := &stakeibctypes.MsgLiquidStake{
-		Creator:   addr.String(),
-		Amount:    token.Amount,
-		HostDenom: token.Denom,
+		Creator:   transferMetadata.HashedReceiver,
+		Amount:    transferMetadata.Amount,
+		HostDenom: transferMetadata.Denom,
 	}
 
 	if err := msg.ValidateBasic(); err != nil {
@@ -80,16 +69,22 @@ func (k Keeper) RunLiquidStake(ctx sdk.Context, addr sdk.AccAddress, token sdk.C
 		return errorsmod.Wrapf(err, err.Error())
 	}
 
-	if packetMetadata.IbcReceiver == "" {
-		return nil
-	}
-
-	hostZone, err := k.stakeibcKeeper.GetHostZoneFromHostDenom(ctx, token.Denom)
+	hostZone, err := k.stakeibcKeeper.GetHostZoneFromHostDenom(ctx, transferMetadata.Denom)
 	if err != nil {
 		return err
 	}
 
-	return k.IBCTransferStAsset(ctx, result.StToken, addr.String(), hostZone, packetMetadata)
+	// If the IBCReceiver is empty, there is no forwarding step
+	// but we still need to transfer the stTokens to the original recipient
+	if packetMetadata.IbcReceiver == "" {
+		fromAddress := sdk.MustAccAddressFromBech32(transferMetadata.HashedReceiver)
+		toAddress := sdk.MustAccAddressFromBech32(transferMetadata.OriginalReceiver)
+
+		return k.bankkeeper.SendCoins(ctx, fromAddress, toAddress, sdk.NewCoins(result.StToken))
+	}
+
+	// Otherwise, if there is forwarding info, submit the IBC transfer
+	return k.IBCTransferStAsset(ctx, result.StToken, transferMetadata.HashedReceiver, hostZone, packetMetadata)
 }
 
 func (k Keeper) IBCTransferStAsset(ctx sdk.Context, stAsset sdk.Coin, sender string, hostZone *stakeibctypes.HostZone, packetMetadata types.StakeibcPacketMetadata) error {
