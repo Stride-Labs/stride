@@ -13,7 +13,7 @@ import (
 // TokenPacketMetadata is meant to replicate transfertypes.FungibleTokenPacketData
 // but it drops the original sender (who is untrusted) and adds a hashed receiver
 // that can be used for any forwarding
-type TokenPacketMetadata struct {
+type AutopilotTransferMetadata struct {
 	Sender           string
 	OriginalReceiver string
 	HashedReceiver   string
@@ -21,20 +21,20 @@ type TokenPacketMetadata struct {
 	Denom            string
 }
 
-// Builds a TokenPacketMetadata object using the fields of a FungibleTokenPacketData
+// Builds a AutopilotTransferMetadata object using the fields of a FungibleTokenPacketData
 // and adding a hashed receiver
-func NewTokenPacketMetadata(channelId string, data transfertypes.FungibleTokenPacketData) (TokenPacketMetadata, error) {
+func NewAutopilotTransferMetadata(channelId string, data transfertypes.FungibleTokenPacketData) (AutopilotTransferMetadata, error) {
 	hashedReceiver, err := GenerateHashedReceiver(channelId, data.Sender)
 	if err != nil {
-		return TokenPacketMetadata{}, err
+		return AutopilotTransferMetadata{}, err
 	}
 
 	amount, ok := sdk.NewIntFromString(data.Amount)
 	if !ok {
-		return TokenPacketMetadata{}, errors.New("not a parsable amount field")
+		return AutopilotTransferMetadata{}, errors.New("not a parsable amount field")
 	}
 
-	return TokenPacketMetadata{
+	return AutopilotTransferMetadata{
 		Sender:           data.Sender,
 		OriginalReceiver: data.Receiver,
 		HashedReceiver:   hashedReceiver,

@@ -18,8 +18,8 @@ import (
 func (k Keeper) TryLiquidStaking(
 	ctx sdk.Context,
 	packet channeltypes.Packet,
-	newData types.TokenPacketMetadata,
-	packetMetadata types.StakeibcPacketMetadata,
+	transferMetadata types.AutopilotTransferMetadata,
+	actionMetadata types.StakeibcPacketMetadata,
 ) error {
 	params := k.GetParams(ctx)
 	if !params.StakeibcActive {
@@ -27,14 +27,14 @@ func (k Keeper) TryLiquidStaking(
 	}
 
 	// In this case, we can't process a liquid staking transaction, because we're dealing with STRD tokens
-	if transfertypes.ReceiverChainIsSource(packet.GetSourcePort(), packet.GetSourceChannel(), newData.Denom) {
+	if transfertypes.ReceiverChainIsSource(packet.GetSourcePort(), packet.GetSourceChannel(), transferMetadata.Denom) {
 		return errors.New("the native token is not supported for liquid staking")
 	}
 
 	// Note: denom is base denom e.g. uatom - not ibc/xxx
-	var token = sdk.NewCoin(newData.Denom, newData.Amount)
+	var token = sdk.NewCoin(transferMetadata.Denom, transferMetadata.Amount)
 
-	prefixedDenom := transfertypes.GetPrefixedDenom(packet.GetDestPort(), packet.GetDestChannel(), newData.Denom)
+	prefixedDenom := transfertypes.GetPrefixedDenom(packet.GetDestPort(), packet.GetDestChannel(), transferMetadata.Denom)
 	ibcDenom := transfertypes.ParseDenomTrace(prefixedDenom).IBCDenom()
 
 	hostZone, err := k.stakeibcKeeper.GetHostZoneFromHostDenom(ctx, token.Denom)
@@ -46,10 +46,10 @@ func (k Keeper) TryLiquidStaking(
 		return fmt.Errorf("ibc denom %s is not equal to host zone ibc denom %s", ibcDenom, hostZone.IbcDenom)
 	}
 
-	return k.RunLiquidStake(ctx, newData, packetMetadata)
+	return k.RunLiquidStake(ctx, transferMetadata, actionMetadata)
 }
 
-func (k Keeper) RunLiquidStake(ctx sdk.Context, transferMetadata types.TokenPacketMetadata, packetMetadata types.StakeibcPacketMetadata) error {
+func (k Keeper) RunLiquidStake(ctx sdk.Context, transferMetadata types.AutopilotTransferMetadata, packetMetadata types.StakeibcPacketMetadata) error {
 	msg := &stakeibctypes.MsgLiquidStake{
 		Creator:   transferMetadata.HashedReceiver,
 		Amount:    transferMetadata.Amount,

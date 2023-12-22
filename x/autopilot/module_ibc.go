@@ -124,38 +124,38 @@ func (im IBCModule) OnRecvPacket(
 		packet.Sequence, packet.SourcePort, packet.SourceChannel, packet.DestinationPort, packet.DestinationChannel))
 
 	// NOTE: acknowledgement will be written synchronously during IBC handler execution.
-	var data transfertypes.FungibleTokenPacketData
-	if err := transfertypes.ModuleCdc.UnmarshalJSON(packet.GetData(), &data); err != nil {
+	var tokenPacketData transfertypes.FungibleTokenPacketData
+	if err := transfertypes.ModuleCdc.UnmarshalJSON(packet.GetData(), &tokenPacketData); err != nil {
 		return channeltypes.NewErrorAcknowledgement(err)
 	}
 
 	// Error any transactions with a Memo or Receiver field are greater than the max characters
-	if len(data.Memo) > MaxMemoCharLength {
-		return channeltypes.NewErrorAcknowledgement(errorsmod.Wrapf(types.ErrInvalidMemoSize, "memo length: %d", len(data.Memo)))
+	if len(tokenPacketData.Memo) > MaxMemoCharLength {
+		return channeltypes.NewErrorAcknowledgement(errorsmod.Wrapf(types.ErrInvalidMemoSize, "memo length: %d", len(tokenPacketData.Memo)))
 	}
-	if len(data.Receiver) > MaxMemoCharLength {
-		return channeltypes.NewErrorAcknowledgement(errorsmod.Wrapf(types.ErrInvalidMemoSize, "receiver length: %d", len(data.Receiver)))
+	if len(tokenPacketData.Receiver) > MaxMemoCharLength {
+		return channeltypes.NewErrorAcknowledgement(errorsmod.Wrapf(types.ErrInvalidMemoSize, "receiver length: %d", len(tokenPacketData.Receiver)))
 	}
 
 	// ibc-go v5 has a Memo field that can store forwarding info
 	// For older version of ibc-go, the data must be stored in the receiver field
 	var metadata string
-	if data.Memo != "" { // ibc-go v5+
-		metadata = data.Memo
+	if tokenPacketData.Memo != "" { // ibc-go v5+
+		metadata = tokenPacketData.Memo
 	} else { // before ibc-go v5
-		metadata = data.Receiver
+		metadata = tokenPacketData.Receiver
 	}
 
 	// If a valid receiver address has been provided and no memo,
 	// this is clearly just an normal IBC transfer
 	// Pass down the stack immediately instead of parsing
-	_, err := sdk.AccAddressFromBech32(data.Receiver)
-	if err == nil && data.Memo == "" {
+	_, err := sdk.AccAddressFromBech32(tokenPacketData.Receiver)
+	if err == nil && tokenPacketData.Memo == "" {
 		return im.app.OnRecvPacket(ctx, packet, relayer)
 	}
 
 	// parse out any forwarding info
-	packetForwardMetadata, err := types.ParsePacketMetadata(metadata)
+	autopilotActionMetadata, err := types.ParseAutopilotActionMetadata(metadata)
 	if err != nil {
 		return channeltypes.NewErrorAcknowledgement(err)
 	}
@@ -163,14 +163,15 @@ func (im IBCModule) OnRecvPacket(
 	// If the parsed metadata is nil, that means there is no autopilot forwarding logic
 	// Pass the packet down to the next middleware
 	// PFM packets will also go down this path
-	if packetForwardMetadata == nil {
+	if autopilotActionMetadata == nil {
 		return im.app.OnRecvPacket(ctx, packet, relayer)
 	}
 
 	//// At this point, we are officially dealing with an autopilot packet
 
 	// Build a new token packet metadata that includes a hashed receiver address
-	tokenPacketData, err := types.NewTokenPacketMetadata(packet.DestinationChannel, data)
+	// This will be used for the remaining autopilot actions after the packet's been sent down the stack
+	autopilotTransferMetadata, err := types.NewAutopilotTransferMetadata(packet.DestinationChannel, tokenPacketData)
 	if err != nil {
 		return channeltypes.NewErrorAcknowledgement(err)
 	}
@@ -178,9 +179,9 @@ func (im IBCModule) OnRecvPacket(
 	// Modify the packet data by replacing the JSON metadata field with a receiver address
 	// to allow the packet to continue down the stack
 	// Use the hashed receiver to prevent impersonation in downstream applications
-	newData := data
-	newData.Receiver = tokenPacketData.HashedReceiver
-	bz, err := transfertypes.ModuleCdc.MarshalJSON(&newData)
+	newTokenPacketData := tokenPacketData
+	newTokenPacketData.Receiver = autopilotTransferMetadata.HashedReceiver
+	bz, err := transfertypes.ModuleCdc.MarshalJSON(&newTokenPacketData)
 	if err != nil {
 		return channeltypes.NewErrorAcknowledgement(err)
 	}
@@ -194,22 +195,23 @@ func (im IBCModule) OnRecvPacket(
 	}
 
 	autopilotParams := im.keeper.GetParams(ctx)
+	sender := autopilotTransferMetadata.Sender
 
 	// If the transfer was successful, then route to the corresponding module, if applicable
-	switch routingInfo := packetForwardMetadata.RoutingInfo.(type) {
+	switch routingInfo := autopilotActionMetadata.RoutingInfo.(type) {
 	case types.StakeibcPacketMetadata:
 		// If stakeibc routing is inactive (but the packet had routing info in the memo) return an ack error
 		if !autopilotParams.StakeibcActive {
-			im.keeper.Logger(ctx).Error(fmt.Sprintf("Packet from %s had stakeibc routing info but autopilot stakeibc routing is disabled", newData.Sender))
+			im.keeper.Logger(ctx).Error(fmt.Sprintf("Packet from %s had stakeibc routing info but autopilot stakeibc routing is disabled", sender))
 			return channeltypes.NewErrorAcknowledgement(types.ErrPacketForwardingInactive)
 		}
-		im.keeper.Logger(ctx).Info(fmt.Sprintf("Forwaring packet from %s to stakeibc", newData.Sender))
+		im.keeper.Logger(ctx).Info(fmt.Sprintf("Forwaring packet from %s to stakeibc", sender))
 
 		switch routingInfo.Action {
 		case types.LiquidStake:
 			// Try to liquid stake - return an ack error if it fails, otherwise return the ack generated from the earlier packet propogation
-			if err := im.keeper.TryLiquidStaking(ctx, packet, tokenPacketData, routingInfo); err != nil {
-				im.keeper.Logger(ctx).Error(fmt.Sprintf("Error liquid staking packet from autopilot for %s: %s", newData.Sender, err.Error()))
+			if err := im.keeper.TryLiquidStaking(ctx, packet, autopilotTransferMetadata, routingInfo); err != nil {
+				im.keeper.Logger(ctx).Error(fmt.Sprintf("Error liquid staking packet from autopilot for %s: %s", sender, err.Error()))
 				return channeltypes.NewErrorAcknowledgement(err)
 			}
 			// case types.RedeemStake: TODO: add redeem stake logic
@@ -220,13 +222,13 @@ func (im IBCModule) OnRecvPacket(
 	case types.ClaimPacketMetadata:
 		// If claim routing is inactive (but the packet had routing info in the memo) return an ack error
 		if !autopilotParams.ClaimActive {
-			im.keeper.Logger(ctx).Error(fmt.Sprintf("Packet from %s had claim routing info but autopilot claim routing is disabled", newData.Sender))
+			im.keeper.Logger(ctx).Error(fmt.Sprintf("Packet from %s had claim routing info but autopilot claim routing is disabled", sender))
 			return channeltypes.NewErrorAcknowledgement(types.ErrPacketForwardingInactive)
 		}
-		im.keeper.Logger(ctx).Info(fmt.Sprintf("Forwaring packet from %s to claim", newData.Sender))
+		im.keeper.Logger(ctx).Info(fmt.Sprintf("Forwaring packet from %s to claim", sender))
 
-		if err := im.keeper.TryUpdateAirdropClaim(ctx, packet, tokenPacketData); err != nil {
-			im.keeper.Logger(ctx).Error(fmt.Sprintf("Error updating airdrop claim from autopilot for %s: %s", newData.Sender, err.Error()))
+		if err := im.keeper.TryUpdateAirdropClaim(ctx, packet, autopilotTransferMetadata); err != nil {
+			im.keeper.Logger(ctx).Error(fmt.Sprintf("Error updating airdrop claim from autopilot for %s: %s", sender, err.Error()))
 			return channeltypes.NewErrorAcknowledgement(err)
 		}
 

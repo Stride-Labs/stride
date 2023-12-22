@@ -16,7 +16,7 @@ type RawPacketMetadata struct {
 	Forward *interface{} `json:"forward"`
 }
 
-type PacketForwardMetadata struct {
+type AutopilotActionMetadata struct {
 	Receiver    string
 	RoutingInfo ModuleRoutingInfo
 }
@@ -74,10 +74,10 @@ func (m ClaimPacketMetadata) Validate() error {
 
 // Parse packet metadata intended for autopilot
 // In the ICS-20 packet, the metadata can optionally indicate a module to route to (e.g. stakeibc)
-// The PacketForwardMetadata returned from this function contains attributes for each autopilot supported module
+// The AutopilotActionMetadata returned from this function contains attributes for each autopilot supported module
 // It can only be forward to one module per packet
 // Returns nil if there was no autopilot metadata found
-func ParsePacketMetadata(metadata string) (*PacketForwardMetadata, error) {
+func ParseAutopilotActionMetadata(metadata string) (*AutopilotActionMetadata, error) {
 	// If we can't unmarshal the metadata into a PacketMetadata struct,
 	// assume packet forwarding was no used and pass back nil so that autopilot is ignored
 	var raw RawPacketMetadata
@@ -127,7 +127,7 @@ func ParsePacketMetadata(metadata string) (*PacketForwardMetadata, error) {
 		return nil, errorsmod.Wrapf(err, ErrInvalidPacketMetadata.Error())
 	}
 
-	return &PacketForwardMetadata{
+	return &AutopilotActionMetadata{
 		Receiver:    raw.Autopilot.Receiver,
 		RoutingInfo: routingInfo,
 	}, nil
