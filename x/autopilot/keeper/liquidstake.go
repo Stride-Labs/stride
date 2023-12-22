@@ -20,7 +20,7 @@ import (
 func (k Keeper) TryLiquidStaking(
 	ctx sdk.Context,
 	packet channeltypes.Packet,
-	transferMetadata types.AutopilotTransferMetadata,
+	transferMetadata transfertypes.FungibleTokenPacketData,
 	actionMetadata types.StakeibcPacketMetadata,
 ) error {
 	params := k.GetParams(ctx)
@@ -57,12 +57,17 @@ func (k Keeper) TryLiquidStaking(
 // If there is no forwarding recipient, they are bank sent to the original receiver
 func (k Keeper) RunLiquidStake(
 	ctx sdk.Context,
-	transferMetadata types.AutopilotTransferMetadata,
+	transferMetadata transfertypes.FungibleTokenPacketData,
 	actionMetadata types.StakeibcPacketMetadata,
 ) error {
+	amount, ok := sdk.NewIntFromString(transferMetadata.Amount)
+	if !ok {
+		return errors.New("not a parsable amount field")
+	}
+
 	msg := &stakeibctypes.MsgLiquidStake{
-		Creator:   transferMetadata.HashedReceiver,
-		Amount:    transferMetadata.Amount,
+		Creator:   transferMetadata.Receiver,
+		Amount:    amount,
 		HostDenom: transferMetadata.Denom,
 	}
 
@@ -80,12 +85,8 @@ func (k Keeper) RunLiquidStake(
 	}
 
 	// If the IBCReceiver is empty, there is no forwarding step
-	// but we still need to transfer the stTokens to the original recipient
 	if actionMetadata.IbcReceiver == "" {
-		fromAddress := sdk.MustAccAddressFromBech32(transferMetadata.HashedReceiver)
-		toAddress := sdk.MustAccAddressFromBech32(transferMetadata.OriginalReceiver)
-
-		return k.bankkeeper.SendCoins(ctx, fromAddress, toAddress, sdk.NewCoins(msgResponse.StToken))
+		return nil
 	}
 
 	// Otherwise, if there is forwarding info, submit the IBC transfer
@@ -97,7 +98,7 @@ func (k Keeper) RunLiquidStake(
 func (k Keeper) IBCTransferStToken(
 	ctx sdk.Context,
 	stToken sdk.Coin,
-	transferMetadata types.AutopilotTransferMetadata,
+	transferMetadata transfertypes.FungibleTokenPacketData,
 	actionMetadata types.StakeibcPacketMetadata,
 ) error {
 	hostZone, err := k.stakeibcKeeper.GetHostZoneFromHostDenom(ctx, transferMetadata.Denom)
@@ -114,12 +115,20 @@ func (k Keeper) IBCTransferStToken(
 		channelId = hostZone.TransferChannelId
 	}
 
-	// The transfer message is sent from the hashed receiver to prevent impersonation
+	// Generate a hashed address for the sender to prevent impersonation at downstream zones
+	// Note: The channel ID here is different than the one used in PFM
+	// (we use the outbound channelID, they use the inbound channelID)
+	// DOUBLE CHECK ME that it shouldn't matter
+	hashedSender, err := types.GenerateHashedSender(channelId, transferMetadata.Sender)
+	if err != nil {
+		return err
+	}
+
 	transferMsg := &transfertypes.MsgTransfer{
 		SourcePort:       transfertypes.PortID,
 		SourceChannel:    channelId,
 		Token:            stToken,
-		Sender:           transferMetadata.HashedReceiver,
+		Sender:           hashedSender,
 		Receiver:         actionMetadata.IbcReceiver,
 		TimeoutTimestamp: timeoutTimestamp,
 		Memo:             "autopilot-liquid-stake-and-forward",

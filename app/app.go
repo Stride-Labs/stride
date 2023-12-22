@@ -612,7 +612,6 @@ func NewStrideApp(
 		appCodec,
 		keys[autopilottypes.StoreKey],
 		app.GetSubspace(autopilottypes.ModuleName),
-		app.BankKeeper,
 		app.StakeibcKeeper,
 		app.ClaimKeeper,
 		app.TransferKeeper,

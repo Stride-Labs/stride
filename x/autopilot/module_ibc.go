@@ -169,18 +169,11 @@ func (im IBCModule) OnRecvPacket(
 
 	//// At this point, we are officially dealing with an autopilot packet
 
-	// Build a new token packet metadata that includes a hashed receiver address
-	// This will be used for the remaining autopilot actions after the packet's been sent down the stack
-	autopilotTransferMetadata, err := types.NewAutopilotTransferMetadata(packet.DestinationChannel, tokenPacketData)
-	if err != nil {
-		return channeltypes.NewErrorAcknowledgement(err)
-	}
-
 	// Modify the packet data by replacing the JSON metadata field with a receiver address
 	// to allow the packet to continue down the stack
 	// Use the hashed receiver to prevent impersonation in downstream applications
 	newTokenPacketData := tokenPacketData
-	newTokenPacketData.Receiver = autopilotTransferMetadata.HashedReceiver
+	newTokenPacketData.Receiver = autopilotActionMetadata.Receiver
 	bz, err := transfertypes.ModuleCdc.MarshalJSON(&newTokenPacketData)
 	if err != nil {
 		return channeltypes.NewErrorAcknowledgement(err)
@@ -195,7 +188,7 @@ func (im IBCModule) OnRecvPacket(
 	}
 
 	autopilotParams := im.keeper.GetParams(ctx)
-	sender := autopilotTransferMetadata.Sender
+	sender := tokenPacketData.Sender
 
 	// If the transfer was successful, then route to the corresponding module, if applicable
 	switch routingInfo := autopilotActionMetadata.RoutingInfo.(type) {
@@ -210,7 +203,7 @@ func (im IBCModule) OnRecvPacket(
 		switch routingInfo.Action {
 		case types.LiquidStake:
 			// Try to liquid stake - return an ack error if it fails, otherwise return the ack generated from the earlier packet propogation
-			if err := im.keeper.TryLiquidStaking(ctx, packet, autopilotTransferMetadata, routingInfo); err != nil {
+			if err := im.keeper.TryLiquidStaking(ctx, packet, newTokenPacketData, routingInfo); err != nil {
 				im.keeper.Logger(ctx).Error(fmt.Sprintf("Error liquid staking packet from autopilot for %s: %s", sender, err.Error()))
 				return channeltypes.NewErrorAcknowledgement(err)
 			}
@@ -227,7 +220,7 @@ func (im IBCModule) OnRecvPacket(
 		}
 		im.keeper.Logger(ctx).Info(fmt.Sprintf("Forwaring packet from %s to claim", sender))
 
-		if err := im.keeper.TryUpdateAirdropClaim(ctx, packet, autopilotTransferMetadata); err != nil {
+		if err := im.keeper.TryUpdateAirdropClaim(ctx, packet, newTokenPacketData); err != nil {
 			im.keeper.Logger(ctx).Error(fmt.Sprintf("Error updating airdrop claim from autopilot for %s: %s", sender, err.Error()))
 			return channeltypes.NewErrorAcknowledgement(err)
 		}

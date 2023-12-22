@@ -12,7 +12,6 @@ import (
 	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
 
 	"github.com/Stride-Labs/stride/v16/utils"
-	"github.com/Stride-Labs/stride/v16/x/autopilot/types"
 	claimtypes "github.com/Stride-Labs/stride/v16/x/claim/types"
 	stakeibctypes "github.com/Stride-Labs/stride/v16/x/stakeibc/types"
 )
@@ -21,7 +20,7 @@ import (
 func (k Keeper) TryUpdateAirdropClaim(
 	ctx sdk.Context,
 	packet channeltypes.Packet,
-	transferMetadata types.AutopilotTransferMetadata,
+	transferMetadata transfertypes.FungibleTokenPacketData,
 ) error {
 	params := k.GetParams(ctx)
 	if !params.ClaimActive {
@@ -43,7 +42,7 @@ func (k Keeper) TryUpdateAirdropClaim(
 	if senderStrideAddress == "" {
 		return errorsmod.Wrapf(sdkerrors.ErrInvalidAddress, fmt.Sprintf("invalid sender address (%s)", transferMetadata.Sender))
 	}
-	newStrideAddress := transferMetadata.OriginalReceiver
+	newStrideAddress := transferMetadata.Receiver
 
 	// find the airdrop for this host chain ID
 	airdrop, found := k.claimKeeper.GetAirdropByChainId(ctx, hostZone.ChainId)
@@ -58,14 +57,5 @@ func (k Keeper) TryUpdateAirdropClaim(
 	k.Logger(ctx).Info(fmt.Sprintf("updating airdrop address %s (orig %s) to %s for airdrop %s",
 		senderStrideAddress, transferMetadata.Sender, newStrideAddress, airdropId))
 
-	if err := k.claimKeeper.UpdateAirdropAddress(ctx, senderStrideAddress, newStrideAddress, airdropId); err != nil {
-		return err
-	}
-
-	// Finally send token back to the original reciever (since the hashed receiver was used for the transfer)
-	fromAddress := sdk.MustAccAddressFromBech32(transferMetadata.HashedReceiver)
-	toAddress := sdk.MustAccAddressFromBech32(transferMetadata.OriginalReceiver)
-	token := sdk.NewCoin(transferMetadata.Denom, transferMetadata.Amount)
-
-	return k.bankkeeper.SendCoins(ctx, fromAddress, toAddress, sdk.NewCoins(token))
+	return k.claimKeeper.UpdateAirdropAddress(ctx, senderStrideAddress, newStrideAddress, airdropId)
 }
