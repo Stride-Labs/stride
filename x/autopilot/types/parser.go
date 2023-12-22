@@ -7,24 +7,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-type RawPacketMetadata struct {
-	Autopilot *struct {
-		Receiver string                  `json:"receiver"`
-		Stakeibc *StakeibcPacketMetadata `json:"stakeibc,omitempty"`
-		Claim    *ClaimPacketMetadata    `json:"claim,omitempty"`
-	} `json:"autopilot"`
-	Forward *interface{} `json:"forward"`
-}
-
-type AutopilotActionMetadata struct {
-	Receiver    string
-	RoutingInfo ModuleRoutingInfo
-}
-
-type ModuleRoutingInfo interface {
-	Validate() error
-}
-
 const LiquidStake = "LiquidStake"
 const RedeemStake = "RedeemStake"
 

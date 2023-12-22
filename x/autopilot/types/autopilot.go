@@ -10,6 +10,20 @@ import (
 	transfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
 )
 
+// RawPacketMetadata defines the raw JSON memo that's used in an autopilot transfer
+// The PFM forward key is also used here to validate that the packet is not trying
+// to use autopilot and PFM at the same time
+// As a result, only the forward key is needed, cause the actual parsing of the PFM
+// packet will occur in the PFM module
+type RawPacketMetadata struct {
+	Autopilot *struct {
+		Receiver string                  `json:"receiver"`
+		Stakeibc *StakeibcPacketMetadata `json:"stakeibc,omitempty"`
+		Claim    *ClaimPacketMetadata    `json:"claim,omitempty"`
+	} `json:"autopilot"`
+	Forward *interface{} `json:"forward"`
+}
+
 // TokenPacketMetadata is meant to replicate transfertypes.FungibleTokenPacketData
 // but it drops the original sender (who is untrusted) and adds a hashed receiver
 // that can be used for any forwarding
@@ -19,6 +33,18 @@ type AutopilotTransferMetadata struct {
 	HashedReceiver   string
 	Amount           sdkmath.Int
 	Denom            string
+}
+
+// AutopilotActionMetadata stores the metadata that's specific to the autopilot action
+// e.g. Fields required for LiquidStake
+type AutopilotActionMetadata struct {
+	Receiver    string
+	RoutingInfo ModuleRoutingInfo
+}
+
+// ModuleRoutingInfo defines the interface required for each autopilot action
+type ModuleRoutingInfo interface {
+	Validate() error
 }
 
 // Builds a AutopilotTransferMetadata object using the fields of a FungibleTokenPacketData
