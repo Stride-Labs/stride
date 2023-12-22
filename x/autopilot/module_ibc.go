@@ -154,8 +154,8 @@ func (im IBCModule) OnRecvPacket(
 		return im.app.OnRecvPacket(ctx, packet, relayer)
 	}
 
-	// parse out any forwarding info
-	autopilotActionMetadata, err := types.ParseAutopilotActionMetadata(metadata)
+	// parse out any autopilot forwarding info
+	autopilotMetadata, err := types.ParseAutopilotMetadata(metadata)
 	if err != nil {
 		return channeltypes.NewErrorAcknowledgement(err)
 	}
@@ -163,7 +163,7 @@ func (im IBCModule) OnRecvPacket(
 	// If the parsed metadata is nil, that means there is no autopilot forwarding logic
 	// Pass the packet down to the next middleware
 	// PFM packets will also go down this path
-	if autopilotActionMetadata == nil {
+	if autopilotMetadata == nil {
 		return im.app.OnRecvPacket(ctx, packet, relayer)
 	}
 
@@ -171,10 +171,8 @@ func (im IBCModule) OnRecvPacket(
 
 	// Modify the packet data by replacing the JSON metadata field with a receiver address
 	// to allow the packet to continue down the stack
-	// Use the hashed receiver to prevent impersonation in downstream applications
-	newTokenPacketData := tokenPacketData
-	newTokenPacketData.Receiver = autopilotActionMetadata.Receiver
-	bz, err := transfertypes.ModuleCdc.MarshalJSON(&newTokenPacketData)
+	tokenPacketData.Receiver = autopilotMetadata.Receiver
+	bz, err := transfertypes.ModuleCdc.MarshalJSON(&tokenPacketData)
 	if err != nil {
 		return channeltypes.NewErrorAcknowledgement(err)
 	}
@@ -191,7 +189,7 @@ func (im IBCModule) OnRecvPacket(
 	sender := tokenPacketData.Sender
 
 	// If the transfer was successful, then route to the corresponding module, if applicable
-	switch routingInfo := autopilotActionMetadata.RoutingInfo.(type) {
+	switch routingInfo := autopilotMetadata.RoutingInfo.(type) {
 	case types.StakeibcPacketMetadata:
 		// If stakeibc routing is inactive (but the packet had routing info in the memo) return an ack error
 		if !autopilotParams.StakeibcActive {
@@ -203,7 +201,7 @@ func (im IBCModule) OnRecvPacket(
 		switch routingInfo.Action {
 		case types.LiquidStake:
 			// Try to liquid stake - return an ack error if it fails, otherwise return the ack generated from the earlier packet propogation
-			if err := im.keeper.TryLiquidStaking(ctx, packet, newTokenPacketData, routingInfo); err != nil {
+			if err := im.keeper.TryLiquidStaking(ctx, packet, tokenPacketData, routingInfo); err != nil {
 				im.keeper.Logger(ctx).Error(fmt.Sprintf("Error liquid staking packet from autopilot for %s: %s", sender, err.Error()))
 				return channeltypes.NewErrorAcknowledgement(err)
 			}
@@ -220,7 +218,7 @@ func (im IBCModule) OnRecvPacket(
 		}
 		im.keeper.Logger(ctx).Info(fmt.Sprintf("Forwaring packet from %s to claim", sender))
 
-		if err := im.keeper.TryUpdateAirdropClaim(ctx, packet, newTokenPacketData); err != nil {
+		if err := im.keeper.TryUpdateAirdropClaim(ctx, packet, tokenPacketData); err != nil {
 			im.keeper.Logger(ctx).Error(fmt.Sprintf("Error updating airdrop claim from autopilot for %s: %s", sender, err.Error()))
 			return channeltypes.NewErrorAcknowledgement(err)
 		}

@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	errorsmod "cosmossdk.io/errors"
-
+	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	transfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
 	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
@@ -21,14 +21,20 @@ func (k Keeper) TryLiquidStaking(
 	ctx sdk.Context,
 	packet channeltypes.Packet,
 	transferMetadata transfertypes.FungibleTokenPacketData,
-	actionMetadata types.StakeibcPacketMetadata,
+	autopilotMetadata types.StakeibcPacketMetadata,
 ) error {
 	params := k.GetParams(ctx)
 	if !params.StakeibcActive {
 		return errorsmod.Wrapf(types.ErrPacketForwardingInactive, "autopilot stakeibc routing is inactive")
 	}
 
-	// In this case, we can't process a liquid staking transaction, because we're dealing with STRD tokens
+	// Verify the amount is valid
+	amount, ok := sdk.NewIntFromString(transferMetadata.Amount)
+	if !ok {
+		return errors.New("not a parsable amount field")
+	}
+
+	// In this case, we can't process a liquid staking transaction, because we're dealing with native tokens (e.g. STRD, stATOM)
 	if transfertypes.ReceiverChainIsSource(packet.GetSourcePort(), packet.GetSourceChannel(), transferMetadata.Denom) {
 		return errors.New("the native token is not supported for liquid staking")
 	}
@@ -49,22 +55,17 @@ func (k Keeper) TryLiquidStaking(
 		return fmt.Errorf("ibc denom %s is not equal to host zone ibc denom %s", ibcDenom, hostZone.IbcDenom)
 	}
 
-	return k.RunLiquidStake(ctx, transferMetadata, actionMetadata)
+	return k.RunLiquidStake(ctx, amount, transferMetadata, autopilotMetadata)
 }
 
-// Submits a LiquidStake message from the hashed receiver
+// Submits a LiquidStake message from the transfer receiver
 // If a forwarding recipient is specified, the stTokens are ibc transferred
-// If there is no forwarding recipient, they are bank sent to the original receiver
 func (k Keeper) RunLiquidStake(
 	ctx sdk.Context,
+	amount sdkmath.Int,
 	transferMetadata transfertypes.FungibleTokenPacketData,
-	actionMetadata types.StakeibcPacketMetadata,
+	autopilotMetadata types.StakeibcPacketMetadata,
 ) error {
-	amount, ok := sdk.NewIntFromString(transferMetadata.Amount)
-	if !ok {
-		return errors.New("not a parsable amount field")
-	}
-
 	msg := &stakeibctypes.MsgLiquidStake{
 		Creator:   transferMetadata.Receiver,
 		Amount:    amount,
@@ -85,12 +86,12 @@ func (k Keeper) RunLiquidStake(
 	}
 
 	// If the IBCReceiver is empty, there is no forwarding step
-	if actionMetadata.IbcReceiver == "" {
+	if autopilotMetadata.IbcReceiver == "" {
 		return nil
 	}
 
 	// Otherwise, if there is forwarding info, submit the IBC transfer
-	return k.IBCTransferStToken(ctx, msgResponse.StToken, transferMetadata, actionMetadata)
+	return k.IBCTransferStToken(ctx, msgResponse.StToken, transferMetadata, autopilotMetadata)
 }
 
 // Submits an IBC transfer of the stToken to a non-stride zone (either back to the host zone or to a different zone)
@@ -99,7 +100,7 @@ func (k Keeper) IBCTransferStToken(
 	ctx sdk.Context,
 	stToken sdk.Coin,
 	transferMetadata transfertypes.FungibleTokenPacketData,
-	actionMetadata types.StakeibcPacketMetadata,
+	autopilotMetadata types.StakeibcPacketMetadata,
 ) error {
 	hostZone, err := k.stakeibcKeeper.GetHostZoneFromHostDenom(ctx, transferMetadata.Denom)
 	if err != nil {
@@ -110,12 +111,13 @@ func (k Keeper) IBCTransferStToken(
 	timeoutTimestamp := uint64(ctx.BlockTime().UnixNano()) + transfertypes.DefaultRelativePacketTimeoutTimestamp
 
 	// If there's no channelID specified in the packet, default to the channel on the host zone
-	channelId := actionMetadata.TransferChannel
+	channelId := autopilotMetadata.TransferChannel
 	if channelId == "" {
 		channelId = hostZone.TransferChannelId
 	}
 
-	// Generate a hashed address for the sender to prevent impersonation at downstream zones
+	// Generate a hashed address for the sender to the next hop,
+	// to prevent impersonation at downstream zones
 	// Note: The channel ID here is different than the one used in PFM
 	// (we use the outbound channelID, they use the inbound channelID)
 	// DOUBLE CHECK ME that it shouldn't matter
@@ -129,7 +131,7 @@ func (k Keeper) IBCTransferStToken(
 		SourceChannel:    channelId,
 		Token:            stToken,
 		Sender:           hashedSender,
-		Receiver:         actionMetadata.IbcReceiver,
+		Receiver:         autopilotMetadata.IbcReceiver,
 		TimeoutTimestamp: timeoutTimestamp,
 		Memo:             "autopilot-liquid-stake-and-forward",
 	}

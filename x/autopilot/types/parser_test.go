@@ -184,7 +184,7 @@ func TestParsePacketMetadata(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			parsedData, actualErr := types.ParseAutopilotActionMetadata(tc.metadata)
+			parsedData, actualErr := types.ParseAutopilotMetadata(tc.metadata)
 
 			if tc.expectedErr == "" {
 				require.NoError(t, actualErr)

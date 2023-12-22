@@ -3,7 +3,6 @@ package types
 import (
 	fmt "fmt"
 
-	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/address"
 )
@@ -22,20 +21,9 @@ type RawPacketMetadata struct {
 	Forward *interface{} `json:"forward"`
 }
 
-// TokenPacketMetadata is meant to replicate transfertypes.FungibleTokenPacketData
-// but it drops the original sender (who is untrusted) and adds a hashed receiver
-// that can be used for any forwarding
-type AutopilotTransferMetadata struct {
-	Sender           string
-	OriginalReceiver string
-	HashedReceiver   string
-	Amount           sdkmath.Int
-	Denom            string
-}
-
 // AutopilotActionMetadata stores the metadata that's specific to the autopilot action
 // e.g. Fields required for LiquidStake
-type AutopilotActionMetadata struct {
+type AutopilotMetadata struct {
 	Receiver    string
 	RoutingInfo ModuleRoutingInfo
 }

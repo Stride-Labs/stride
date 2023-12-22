@@ -56,10 +56,10 @@ func (m ClaimPacketMetadata) Validate() error {
 
 // Parse packet metadata intended for autopilot
 // In the ICS-20 packet, the metadata can optionally indicate a module to route to (e.g. stakeibc)
-// The AutopilotActionMetadata returned from this function contains attributes for each autopilot supported module
+// The AutopilotMetadata returned from this function contains attributes for each autopilot supported module
 // It can only be forward to one module per packet
 // Returns nil if there was no autopilot metadata found
-func ParseAutopilotActionMetadata(metadata string) (*AutopilotActionMetadata, error) {
+func ParseAutopilotMetadata(metadata string) (*AutopilotMetadata, error) {
 	// If we can't unmarshal the metadata into a PacketMetadata struct,
 	// assume packet forwarding was no used and pass back nil so that autopilot is ignored
 	var raw RawPacketMetadata
@@ -109,7 +109,7 @@ func ParseAutopilotActionMetadata(metadata string) (*AutopilotActionMetadata, er
 		return nil, errorsmod.Wrapf(err, ErrInvalidPacketMetadata.Error())
 	}
 
-	return &AutopilotActionMetadata{
+	return &AutopilotMetadata{
 		Receiver:    raw.Autopilot.Receiver,
 		RoutingInfo: routingInfo,
 	}, nil
