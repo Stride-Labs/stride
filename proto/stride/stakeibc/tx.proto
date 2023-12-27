@@ -22,8 +22,8 @@ service Msg {
   rpc RebalanceValidators(MsgRebalanceValidators)
       returns (MsgRebalanceValidatorsResponse);
   rpc AddValidators(MsgAddValidators) returns (MsgAddValidatorsResponse);
-  rpc ChangeValidatorWeight(MsgChangeValidatorWeight)
-      returns (MsgChangeValidatorWeightResponse);
+  rpc ChangeValidatorWeight(MsgChangeValidatorWeights)
+      returns (MsgChangeValidatorWeightsResponse);
   rpc DeleteValidator(MsgDeleteValidator) returns (MsgDeleteValidatorResponse);
   rpc RestoreInterchainAccount(MsgRestoreInterchainAccount)
       returns (MsgRestoreInterchainAccountResponse);
@@ -158,13 +158,16 @@ message MsgAddValidators {
 }
 message MsgAddValidatorsResponse {}
 
-message MsgChangeValidatorWeight {
+message ValidatorWeight {
+  string address = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+  uint64 weight = 2;
+}
+message MsgChangeValidatorWeights {
   string creator = 1;
   string host_zone = 2;
-  string val_addr = 3 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
-  uint64 weight = 4;
+  repeated ValidatorWeight validator_weights = 3;
 }
-message MsgChangeValidatorWeightResponse {}
+message MsgChangeValidatorWeightsResponse {}
 
 message MsgDeleteValidator {
   string creator = 1;

@@ -9,7 +9,7 @@ import (
 	"github.com/Stride-Labs/stride/v16/x/stakeibc/types"
 )
 
-func (k msgServer) ChangeValidatorWeight(goCtx context.Context, msg *types.MsgChangeValidatorWeight) (*types.MsgChangeValidatorWeightResponse, error) {
+func (k msgServer) ChangeValidatorWeight(goCtx context.Context, msg *types.MsgChangeValidatorWeights) (*types.MsgChangeValidatorWeightsResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
 	hostZone, found := k.GetHostZone(ctx, msg.HostZone)
@@ -17,26 +17,28 @@ func (k msgServer) ChangeValidatorWeight(goCtx context.Context, msg *types.MsgCh
 		return nil, types.ErrInvalidHostZone
 	}
 
-	validators := hostZone.Validators
-	validatorFound := false
-	for _, validator := range validators {
-		if validator.Address == msg.ValAddr {
-			validatorFound = true
+	for _, weightChange := range msg.ValidatorWeights {
 
-			validator.Weight = msg.Weight
-			k.SetHostZone(ctx, hostZone)
+		validatorFound := false
+		for _, validator := range hostZone.Validators {
+			if validator.Address == weightChange.Address {
+				validator.Weight = weightChange.Weight
+				k.SetHostZone(ctx, hostZone)
 
-			break
+				validatorFound = true
+				break
+			}
+		}
+
+		if !validatorFound {
+			return nil, types.ErrValidatorNotFound
 		}
 	}
 
-	if !validatorFound {
-		return nil, types.ErrValidatorNotFound
-	}
-
+	// Confirm the new weights wouldn't cause any validator to exceed the weight cap
 	if err := k.CheckValidatorWeightsBelowCap(ctx, hostZone.Validators); err != nil {
 		return nil, errorsmod.Wrapf(err, "unable to change validator weight")
 	}
 
-	return &types.MsgChangeValidatorWeightResponse{}, nil
+	return &types.MsgChangeValidatorWeightsResponse{}, nil
 }
