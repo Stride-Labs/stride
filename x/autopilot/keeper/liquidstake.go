@@ -107,9 +107,6 @@ func (k Keeper) IBCTransferStToken(
 		return err
 	}
 
-	// Use the default transfer timeout of 10 minutes
-	timeoutTimestamp := uint64(ctx.BlockTime().UnixNano()) + transfertypes.DefaultRelativePacketTimeoutTimestamp
-
 	// If there's no channelID specified in the packet, default to the channel on the host zone
 	channelId := autopilotMetadata.TransferChannel
 	if channelId == "" {
@@ -121,21 +118,32 @@ func (k Keeper) IBCTransferStToken(
 	// Note: The channel ID here is different than the one used in PFM
 	// (we use the outbound channelID, they use the inbound channelID)
 	// DOUBLE CHECK ME that it shouldn't matter
-	hashedSender, err := types.GenerateHashedSender(channelId, transferMetadata.Sender)
+	hashedAddress, err := types.GenerateHashedSender(channelId, transferMetadata.Sender)
 	if err != nil {
 		return err
 	}
 
+	// First we need to bank send to the hashed address
+	originalReceiver := sdk.MustAccAddressFromBech32(transferMetadata.Receiver)
+	hashedAccount := sdk.MustAccAddressFromBech32(hashedAddress)
+	if err := k.bankKeeper.SendCoins(ctx, originalReceiver, hashedAccount, sdk.NewCoins(stToken)); err != nil {
+		return err
+	}
+
+	// Use the default transfer timeout of 10 minutes
+	timeoutTimestamp := uint64(ctx.BlockTime().UnixNano()) + transfertypes.DefaultRelativePacketTimeoutTimestamp
+
+	// Submit the transfer from the hashed sender
 	transferMsg := &transfertypes.MsgTransfer{
 		SourcePort:       transfertypes.PortID,
 		SourceChannel:    channelId,
 		Token:            stToken,
-		Sender:           hashedSender,
+		Sender:           hashedAddress,
 		Receiver:         autopilotMetadata.IbcReceiver,
 		TimeoutTimestamp: timeoutTimestamp,
 		Memo:             "autopilot-liquid-stake-and-forward",
 	}
-
 	_, err = k.transferKeeper.Transfer(sdk.WrapSDKContext(ctx), transferMsg)
+
 	return err
 }
