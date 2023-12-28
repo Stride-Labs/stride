@@ -41,7 +41,7 @@ type ModuleRoutingInfo interface {
 // when moving to the next hop (i.e. receiver of one hop, becomes sender of next)
 //
 // This function was borrowed from PFM
-func GenerateHashedSender(channelId, originalSender string) (string, error) {
+func GenerateHashedAddress(channelId, originalSender string) (string, error) {
 	senderStr := fmt.Sprintf("%s/%s", channelId, originalSender)
 	senderHash32 := address.Hash(ModuleName, []byte(senderStr))
 	sender := sdk.AccAddress(senderHash32[:20])

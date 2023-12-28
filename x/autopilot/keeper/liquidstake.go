@@ -118,22 +118,28 @@ func (k Keeper) IBCTransferStToken(
 	// Note: The channel ID here is different than the one used in PFM
 	// (we use the outbound channelID, they use the inbound channelID)
 	// DOUBLE CHECK ME that it shouldn't matter
-	hashedAddress, err := types.GenerateHashedSender(channelId, transferMetadata.Sender)
+	hashedAddress, err := types.GenerateHashedAddress(channelId, transferMetadata.Sender)
 	if err != nil {
 		return err
 	}
 
 	// First we need to bank send to the hashed address
-	originalReceiver := sdk.MustAccAddressFromBech32(transferMetadata.Receiver)
-	hashedAccount := sdk.MustAccAddressFromBech32(hashedAddress)
-	if err := k.bankKeeper.SendCoins(ctx, originalReceiver, hashedAccount, sdk.NewCoins(stToken)); err != nil {
+	originalReceiver, err := sdk.AccAddressFromBech32(transferMetadata.Receiver)
+	if err != nil {
+		return err
+	}
+	hashedSender, err := sdk.AccAddressFromBech32(hashedAddress)
+	if err != nil {
+		return err
+	}
+	if err := k.bankKeeper.SendCoins(ctx, originalReceiver, hashedSender, sdk.NewCoins(stToken)); err != nil {
 		return err
 	}
 
 	// Use the default transfer timeout of 10 minutes
 	timeoutTimestamp := uint64(ctx.BlockTime().UnixNano()) + transfertypes.DefaultRelativePacketTimeoutTimestamp
 
-	// Submit the transfer from the hashed sender
+	// Submit the transfer from the hashed address
 	transferMsg := &transfertypes.MsgTransfer{
 		SourcePort:       transfertypes.PortID,
 		SourceChannel:    channelId,
