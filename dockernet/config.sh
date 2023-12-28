@@ -407,6 +407,26 @@ WAIT_FOR_STRING() {
   ( tail -f -n0 $1 & ) | grep -q "$2"
 }
 
+# Helper function to ensure there's enough time left in the epoch for operations to complete
+# This will check how much time is remaining in the epoch, and if there's enough time,
+# it will do nothing, otherwise it will sleep until the next epoch begins
+# Ex: if you need at least 30 seconds in the day epoch to complete the test,
+#     you can run `AVOID_EPOCH_BOUNDARY day 30``
+AVOID_EPOCH_BOUNDARY() {
+  epoch_type="$1"
+  buffer_required="$2"
+
+  seconds_remaining_in_epoch=$($STRIDE_MAIN_CMD q epochs seconds-remaining $epoch_type)
+
+  # If there's enough time left, no need to sleep
+  if [[ $seconds_remaining_in_epoch -gt $buffer_required ]]; then
+    return
+  fi
+
+  # Otherwise, wait for the next epoch
+  sleep $((seconds_remaining_in_epoch+5))
+}
+
 # Sleep until the balance has changed
 # Optionally provide a minimum amount it must change by (to ignore interest)
 WAIT_FOR_BALANCE_CHANGE() {

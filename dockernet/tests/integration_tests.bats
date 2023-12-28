@@ -311,37 +311,40 @@ setup_file() {
 }
 
 @test "[INTEGRATION-BASIC-$CHAIN_NAME] autopilot redeem stake" {
+  # Over the next two tests, we will run two redemptions in a row and we want both to occur in the same epoch
+  # To ensure we don't accidentally cross the epoch boundary, we'll make sure there's enough of a buffer here
+  # between the two redemptions
+  AVOID_EPOCH_BOUNDARY day 15
+
   # get initial balances
   stibctoken_balance_start=$($HOST_MAIN_CMD q bank balances $HOST_VAL_ADDRESS --denom $IBC_STTOKEN | GETBAL)
 
-  redeem_amount=200
   memo='{ "autopilot": { "receiver": "'"$(STRIDE_ADDRESS)"'",  "stakeibc": { "action": "RedeemStake", "ibc_receiver": "'$HOST_RECEIVER_ADDRESS'" } } }'
 
   # do IBC transfer
   transfer_msg_prefix="$HOST_MAIN_CMD tx ibc-transfer transfer transfer $HOST_TRANSFER_CHANNEL"
   if [[ "$CHAIN_NAME" == "GAIA" ]]; then
     # For GAIA (ibc-v3), pass the memo into the receiver field
-    $transfer_msg_prefix "$memo" ${redeem_amount}${IBC_STTOKEN} --from $HOST_VAL -y 
+    $transfer_msg_prefix "$memo" ${REDEEM_AMOUNT}${IBC_STTOKEN} --from $HOST_VAL -y 
   elif [[ "$CHAIN_NAME" == "HOST" ]]; then
     # For HOST (ibc-v5), pass an address for a receiver and the memo in the --memo field
-    $transfer_msg_prefix $(STRIDE_ADDRESS)${redeem_amount}${IBC_STTOKEN} --memo "$memo" --from $HOST_VAL -y 
+    $transfer_msg_prefix $(STRIDE_ADDRESS)${REDEEM_AMOUNT}${IBC_STTOKEN} --memo "$memo" --from $HOST_VAL -y 
   else
     # For all other hosts, skip this test
     skip "Packet forward liquid stake test is only run on GAIA and HOST"
   fi
-
-  WAIT_FOR_BALANCE_CHANGE $CHAIN_NAME $HOST_VAL_ADDRESS $IBC_STTOKEN 
+  WAIT_FOR_BLOCK $STRIDE_LOGS 2
 
   # make sure stATOM balance decreased
   stibctoken_balance_end=$($HOST_MAIN_CMD q bank balances $HOST_VAL_ADDRESS --denom $IBC_STTOKEN | GETBAL)
   stibctoken_balance_diff=$(($stibctoken_balance_start-$stibctoken_balance_end))
-  assert_equal "$stibctoken_balance_diff" "$redeem_amount"
+  assert_equal "$stibctoken_balance_diff" "$REDEEM_AMOUNT"
 
   WAIT_FOR_BLOCK $STRIDE_LOGS 5
 
   # check that a user redemption record was created
-  AMOUNT=$($STRIDE_MAIN_CMD q records list-user-redemption-record  | grep -Fiw 'amount' | head -n 1 | grep -o -E '[0-9]+')
-  amount_positive=$(($AMOUNT > 0))
+  redemption_record_amount=$($STRIDE_MAIN_CMD q records list-user-redemption-record  | grep -Fiw 'amount' | head -n 1 | grep -o -E '[0-9]+')
+  amount_positive=$(($redemption_record_amount > 0))
   assert_equal "$amount_positive" "1"
 }
 
@@ -353,6 +356,20 @@ setup_file() {
   # call redeem-stake
   $STRIDE_MAIN_CMD tx stakeibc redeem-stake $REDEEM_AMOUNT $HOST_CHAIN_ID $HOST_RECEIVER_ADDRESS \
       --from $STRIDE_VAL --keyring-backend test --chain-id $STRIDE_CHAIN_ID -y
+  WAIT_FOR_BLOCK $STRIDE_LOGS 2
+
+  # Check that the redemption record created from the autopilot redeem above was incremented
+  # and that there is still only one record
+  num_records=$($STRIDE_MAIN_CMD q records list-user-redemption-record | grep -c "amount")
+  assert_equal "$num_records" "1"
+
+  # The amount in the redemption record is denominated in native tokens, but amount in the 
+  # redeem message is denominated in stTokens (and the redemption rate may be greater than 1)
+  # So when checking the amount, we make sure the amount in the record is greater than or
+  # equal to 2 * REDEEM_AMOUNT (since there were two redemptions - one from autopilot, one here)
+  redemption_record_amount=$($STRIDE_MAIN_CMD q records list-user-redemption-record  | grep -Fiw 'amount' | head -n 1 | grep -o -E '[0-9]+')
+  expected_record_minimum=$(echo "$REDEEM_AMOUNT * 2" | bc)
+  assert_equal "$(($redemption_record_amount > $expected_record_minimum))" "1"
 
   WAIT_FOR_STRING $STRIDE_LOGS "\[REDEMPTION] completed on $HOST_CHAIN_ID"
   WAIT_FOR_BLOCK $STRIDE_LOGS 2
