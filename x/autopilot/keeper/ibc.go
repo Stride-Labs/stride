@@ -46,10 +46,10 @@ func (k Keeper) BuildCoinFromTransferMetadata(transferMetadata transfertypes.Fun
 }
 
 // In the event of an ack error after a outbound transfer, we'll have to bank send to a fallback address
-func (k Keeper) SendToFallbackAddress(ctx sdk.Context, packet channeltypes.Packet, fallbackAddress string) error {
+func (k Keeper) SendToFallbackAddress(ctx sdk.Context, packetData []byte, fallbackAddress string) error {
 	// First unmarshal the transfer metadata to get the sender/reciever, and token amount/denom
 	var transferMetadata transfertypes.FungibleTokenPacketData
-	if err := transfertypes.ModuleCdc.UnmarshalJSON(packet.GetData(), &transferMetadata); err != nil {
+	if err := transfertypes.ModuleCdc.UnmarshalJSON(packetData, &transferMetadata); err != nil {
 		return err
 	}
 
@@ -57,11 +57,11 @@ func (k Keeper) SendToFallbackAddress(ctx sdk.Context, packet channeltypes.Packe
 	sender := transferMetadata.Sender
 	senderAccount, err := sdk.AccAddressFromBech32(sender)
 	if err != nil {
-		return err
+		return errorsmod.Wrapf(err, "invalid sender address")
 	}
 	fallbackAccount, err := sdk.AccAddressFromBech32(fallbackAddress)
 	if err != nil {
-		return err
+		return errorsmod.Wrapf(err, "invalid fallback address")
 	}
 
 	// Build the token from the transfer metadata
@@ -107,7 +107,7 @@ func (k Keeper) OnAcknowledgementPacket(ctx sdk.Context, packet channeltypes.Pac
 	}
 
 	// If the ack was an error, we'll need to bank send to the fallback address
-	return k.SendToFallbackAddress(ctx, packet, fallbackAddress)
+	return k.SendToFallbackAddress(ctx, packet.GetData(), fallbackAddress)
 }
 
 // If there's a timed out packet, we'll infinitely retry the transfer
