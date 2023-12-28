@@ -37,7 +37,7 @@ func (k Keeper) TryRedeemStake(
 
 	voucherPrefix := transfertypes.GetDenomPrefix(packet.GetSourcePort(), packet.GetSourceChannel())
 	stAssetDenom := transferPacketData.Denom[len(voucherPrefix):]
-	if !stakeibctypes.IsStAssetDenom(stAssetDenom) {
+	if !k.stakeibcKeeper.CheckIsStToken(ctx, stAssetDenom) {
 		return fmt.Errorf("not a liquid staking token")
 	}
 

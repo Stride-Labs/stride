@@ -32,10 +32,6 @@ func StAssetDenomFromHostZoneDenom(hostZoneDenom string) string {
 	return "st" + hostZoneDenom
 }
 
-func IsStAssetDenom(stAssetDenom string) bool {
-	return strings.HasPrefix(stAssetDenom, "st")
-}
-
 func HostZoneDenomFromStAssetDenom(stAssetDenom string) string {
 	return stAssetDenom[2:]
 }
