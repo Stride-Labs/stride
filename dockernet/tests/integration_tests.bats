@@ -339,7 +339,7 @@ setup_file() {
 
   WAIT_FOR_BLOCK $STRIDE_LOGS 5
 
-  # check that the tokens were transferred to the redemption account
+  # check that a user redemption record was created
   AMOUNT=$($STRIDE_MAIN_CMD q records list-user-redemption-record  | grep -Fiw 'amount' | head -n 1 | grep -o -E '[0-9]+')
   amount_positive=$(($AMOUNT > 0))
   assert_equal "$amount_positive" "1"
