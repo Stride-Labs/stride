@@ -124,7 +124,8 @@ func (k Keeper) IBCTransferStToken(
 	}
 
 	// First we need to bank send to the hashed address
-	originalReceiver, err := sdk.AccAddressFromBech32(transferMetadata.Receiver)
+	originalReceiverAddress := transferMetadata.Receiver
+	originalReceiver, err := sdk.AccAddressFromBech32(originalReceiverAddress)
 	if err != nil {
 		return err
 	}
@@ -149,7 +150,13 @@ func (k Keeper) IBCTransferStToken(
 		TimeoutTimestamp: timeoutTimestamp,
 		Memo:             "autopilot-liquid-stake-and-forward",
 	}
-	_, err = k.transferKeeper.Transfer(sdk.WrapSDKContext(ctx), transferMsg)
+	transferResponse, err := k.transferKeeper.Transfer(sdk.WrapSDKContext(ctx), transferMsg)
+	if err != nil {
+		return err
+	}
+
+	// Store the original receiver as the fallback address in case the transfer fails
+	k.SetTransferFallbackAddress(ctx, channelId, transferResponse.Sequence, originalReceiverAddress)
 
 	return err
 }
