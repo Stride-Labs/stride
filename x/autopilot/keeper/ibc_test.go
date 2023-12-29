@@ -5,16 +5,22 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	transfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
 	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
+	ibctesting "github.com/cosmos/ibc-go/v7/testing"
 )
 
-type OnAckPacketTestCase struct {
-	ChannelId       string
-	Sequence        uint64
-	Token           sdk.Coin
-	Packet          channeltypes.Packet
-	SenderAccount   sdk.AccAddress
-	FallbackAccount sdk.AccAddress
+type PacketCallbackTestCase struct {
+	ChannelId        string
+	OriginalSequence uint64
+	RetrySequence    uint64
+	Token            sdk.Coin
+	Packet           channeltypes.Packet
+	SenderAccount    sdk.AccAddress
+	FallbackAccount  sdk.AccAddress
 }
+
+// --------------------------------------------------------------
+//                    IBC Callback Helpers
+// --------------------------------------------------------------
 
 func (s *KeeperTestSuite) TestCheckAcknowledgementStatus() {
 	// Test with a successful ack
@@ -134,7 +140,11 @@ func (s *KeeperTestSuite) TestSendToFallbackAddress() {
 	s.Require().ErrorContains(err, "insufficient funds")
 }
 
-func (s *KeeperTestSuite) SetupTestOnAcknowledgementPacket() OnAckPacketTestCase {
+// --------------------------------------------------------------
+//                    OnAcknowledgementPacket
+// --------------------------------------------------------------
+
+func (s *KeeperTestSuite) SetupTestOnAcknowledgementPacket() PacketCallbackTestCase {
 	senderAccount := s.TestAccs[0]
 	fallbackAccount := s.TestAccs[1]
 
@@ -162,13 +172,13 @@ func (s *KeeperTestSuite) SetupTestOnAcknowledgementPacket() OnAckPacketTestCase
 		Data:          transfertypes.ModuleCdc.MustMarshalJSON(&transferMetadata),
 	}
 
-	return OnAckPacketTestCase{
-		ChannelId:       channelId,
-		Sequence:        sequence,
-		Token:           token,
-		Packet:          packet,
-		SenderAccount:   senderAccount,
-		FallbackAccount: fallbackAccount,
+	return PacketCallbackTestCase{
+		ChannelId:        channelId,
+		OriginalSequence: sequence,
+		Token:            token,
+		Packet:           packet,
+		SenderAccount:    senderAccount,
+		FallbackAccount:  fallbackAccount,
 	}
 }
 
@@ -187,7 +197,7 @@ func (s *KeeperTestSuite) TestOnAcknowledgementPacket_AckSuccess() {
 	s.Require().NoError(err, "no error expected during OnAckPacket")
 
 	// Confirm the fallback address was removed
-	_, found := s.App.AutopilotKeeper.GetTransferFallbackAddress(s.Ctx, tc.ChannelId, tc.Sequence)
+	_, found := s.App.AutopilotKeeper.GetTransferFallbackAddress(s.Ctx, tc.ChannelId, tc.OriginalSequence)
 	s.Require().False(found, "fallback address should have been removed")
 
 	// Confirm the fallback address has not received any coins
@@ -216,7 +226,7 @@ func (s *KeeperTestSuite) TestOnAcknowledgementPacket_AckFailure() {
 	s.CompareCoins(tc.Token, fallbackBalance, "fallback account should have received funds")
 
 	// Confirm the fallback address was removed
-	_, found := s.App.AutopilotKeeper.GetTransferFallbackAddress(s.Ctx, tc.ChannelId, tc.Sequence)
+	_, found := s.App.AutopilotKeeper.GetTransferFallbackAddress(s.Ctx, tc.ChannelId, tc.OriginalSequence)
 	s.Require().False(found, "fallback address should have been removed")
 }
 
@@ -239,7 +249,7 @@ func (s *KeeperTestSuite) TestOnAcknowledgementPacket_NoOp() {
 	tc := s.SetupTestOnAcknowledgementPacket()
 
 	// Remove the fallback address so that there is no action necessary in the callback
-	s.App.AutopilotKeeper.RemoveTransferFallbackAddress(s.Ctx, tc.ChannelId, tc.Sequence)
+	s.App.AutopilotKeeper.RemoveTransferFallbackAddress(s.Ctx, tc.ChannelId, tc.OriginalSequence)
 
 	// Call OnAckPacket and confirm there was no error
 	// The ack argument here doesn't matter cause the no-op check is upstream
@@ -254,6 +264,135 @@ func (s *KeeperTestSuite) TestOnAcknowledgementPacket_NoOp() {
 	s.CompareCoins(zeroCoin, fallbackBalance, "fallback account should have received funds")
 }
 
-func (s *KeeperTestSuite) TestOnTimeoutPacket() {
+// --------------------------------------------------------------
+//                        OnTimeoutPacket
+// --------------------------------------------------------------
 
+func (s *KeeperTestSuite) SetupTestOnTimeoutPacket() PacketCallbackTestCase {
+	senderAccount := s.TestAccs[0]
+	fallbackAccount := s.TestAccs[1]
+	receiverAccount := s.TestAccs[2]
+
+	chainId := "chain-0"
+	denom := "denom"
+	amount := sdk.NewInt(10000)
+	transferToken := sdk.NewCoin(denom, amount)
+
+	// Create transfer channel so the retry can be submitted
+	s.CreateTransferChannel(chainId)
+	channelId := ibctesting.FirstChannelID
+
+	// Determine the next sequence number along that channel (which will be the seqence number for the retry)
+	expectedRetrySequence, ok := s.App.IBCKeeper.ChannelKeeper.GetNextSequenceSend(s.Ctx, transfertypes.PortID, channelId)
+	s.Require().True(ok)
+
+	// Store a fallback address on the previous sequence number (from the original timed out transfer)
+	originalSequence := expectedRetrySequence - 1
+	s.App.AutopilotKeeper.SetTransferFallbackAddress(s.Ctx, channelId, originalSequence, fallbackAccount.String())
+
+	// Fund the sender address so they have sufficient tokens to re-submit a transfer
+	s.FundAccount(senderAccount, transferToken)
+
+	// Build the packet data
+	transferMetadata := transfertypes.FungibleTokenPacketData{
+		Sender:   senderAccount.String(),
+		Receiver: receiverAccount.String(),
+		Denom:    denom,
+		Amount:   amount.String(),
+	}
+	packetDataBz := transfertypes.ModuleCdc.MustMarshalJSON(&transferMetadata)
+	packet := channeltypes.Packet{
+		Sequence:      originalSequence,
+		SourceChannel: channelId,
+		Data:          packetDataBz,
+	}
+
+	return PacketCallbackTestCase{
+		ChannelId:        channelId,
+		OriginalSequence: originalSequence,
+		RetrySequence:    expectedRetrySequence,
+		Token:            transferToken,
+		Packet:           packet,
+		SenderAccount:    senderAccount,
+	}
+}
+
+func (s *KeeperTestSuite) TestOnTimeoutPacket_SuccessfulRetry() {
+	tc := s.SetupTestOnTimeoutPacket()
+
+	// Call OnTimeoutPacket
+	err := s.App.AutopilotKeeper.OnTimeoutPacket(s.Ctx, tc.Packet)
+	s.Require().NoError(err, "no error expected when calling OnTimeoutPacket")
+
+	// Check that the sender's funds were escrowed (from the retry)
+	zeroCoin := sdk.NewCoin(tc.Token.Denom, sdkmath.ZeroInt())
+	senderBalance := s.App.BankKeeper.GetBalance(s.Ctx, tc.SenderAccount, tc.Token.Denom)
+	s.CompareCoins(zeroCoin, senderBalance, "the sender should have no more funds after the retry")
+
+	escrowAddress := transfertypes.GetEscrowAddress(transfertypes.PortID, tc.ChannelId)
+	escrowBalance := s.App.BankKeeper.GetBalance(s.Ctx, escrowAddress, tc.Token.Denom)
+	s.CompareCoins(tc.Token, escrowBalance, "escrow balance should have increased")
+
+	// Check that the fallback address was moved to a new sequence number
+	_, found := s.App.AutopilotKeeper.GetTransferFallbackAddress(s.Ctx, tc.ChannelId, tc.OriginalSequence)
+	s.Require().False(found, "fallback address should no longer be on the old sequence number")
+
+	_, found = s.App.AutopilotKeeper.GetTransferFallbackAddress(s.Ctx, tc.ChannelId, tc.RetrySequence)
+	s.Require().True(found, "fallback address should now use the new sequence number")
+}
+
+func (s *KeeperTestSuite) TestOnTimeoutPacket_NoOp() {
+	tc := s.SetupTestOnTimeoutPacket()
+
+	// Remove the fallback address
+	s.App.AutopilotKeeper.RemoveTransferFallbackAddress(s.Ctx, tc.ChannelId, tc.OriginalSequence)
+
+	// Call OnTimeoutPacket - this should be a no-op since there's no fallback data
+	err := s.App.AutopilotKeeper.OnTimeoutPacket(s.Ctx, tc.Packet)
+	s.Require().NoError(err, "no error expected when calling OnTimeoutPacket")
+
+	// Confirm the sender still has his original tokens (since the retry was not submitted)
+	senderBalance := s.App.BankKeeper.GetBalance(s.Ctx, tc.SenderAccount, tc.Token.Denom)
+	s.CompareCoins(tc.Token, senderBalance, "the sender balance should not have changed")
+}
+
+func (s *KeeperTestSuite) TestOnTimeoutPacket_InvalidPacketData() {
+	tc := s.SetupTestOnTimeoutPacket()
+
+	// Modify the packet data so that it will fail unmarshalling
+	tc.Packet.Data = []byte{1, 2, 3}
+
+	err := s.App.AutopilotKeeper.OnTimeoutPacket(s.Ctx, tc.Packet)
+	s.Require().ErrorContains(err, "unable to unmarshal ICS-20 packet data")
+}
+
+func (s *KeeperTestSuite) TestOnTimeoutPacket_InvalidToken() {
+	tc := s.SetupTestOnTimeoutPacket()
+
+	// Modify the token in the packet data so that the amount is empty
+	transferMetadata := transfertypes.FungibleTokenPacketData{
+		Denom:  tc.Token.Denom,
+		Amount: "",
+	}
+	tc.Packet.Data = transfertypes.ModuleCdc.MustMarshalJSON(&transferMetadata)
+
+	// Call OnTimeoutPacket - it should fail
+	err := s.App.AutopilotKeeper.OnTimeoutPacket(s.Ctx, tc.Packet)
+	s.Require().ErrorContains(err, "unable to parse amount from transfer packet")
+}
+
+func (s *KeeperTestSuite) TestOnTimeoutPacket_FailedToRetry() {
+	tc := s.SetupTestOnTimeoutPacket()
+
+	// Modify the packet data so that the sender is an invalid address
+	transferMetadata := transfertypes.FungibleTokenPacketData{
+		Sender: "invalid_address",
+		Denom:  tc.Token.Denom,
+		Amount: tc.Token.Amount.String(),
+	}
+	tc.Packet.Data = transfertypes.ModuleCdc.MustMarshalJSON(&transferMetadata)
+
+	// Call OnTimeoutPacket - it should be unable to submit the retry
+	err := s.App.AutopilotKeeper.OnTimeoutPacket(s.Ctx, tc.Packet)
+	s.Require().ErrorContains(err, "unable to submit transfer retry")
 }

@@ -85,7 +85,7 @@ func (k Keeper) SendToFallbackAddress(ctx sdk.Context, packetData []byte, fallba
 func (k Keeper) OnAcknowledgementPacket(ctx sdk.Context, packet channeltypes.Packet, acknowledgement []byte) error {
 	// Retrieve the fallback address for the given packet
 	// We use the packet source channel here since this will correspond with the channel on Stride
-	channelId := packet.GetSourceChannel()
+	channelId := packet.SourceChannel
 	sequence := packet.Sequence
 	fallbackAddress, fallbackAddressFound := k.GetTransferFallbackAddress(ctx, channelId, sequence)
 
@@ -109,14 +109,14 @@ func (k Keeper) OnAcknowledgementPacket(ctx sdk.Context, packet channeltypes.Pac
 	}
 
 	// If the ack was an error, we'll need to bank send to the fallback address
-	return k.SendToFallbackAddress(ctx, packet.GetData(), fallbackAddress)
+	return k.SendToFallbackAddress(ctx, packet.Data, fallbackAddress)
 }
 
 // If there's a timed out packet, we'll infinitely retry the transfer
 func (k Keeper) OnTimeoutPacket(ctx sdk.Context, packet channeltypes.Packet) error {
 	// Retrieve the fallback address from the original packet
 	// We use the packet source channel here since this will correspond with the channel on Stride
-	channelId := packet.GetSourceChannel()
+	channelId := packet.SourceChannel
 	originalSequence := packet.Sequence
 	fallbackAddress, fallbackAddressFound := k.GetTransferFallbackAddress(ctx, channelId, originalSequence)
 
@@ -127,8 +127,8 @@ func (k Keeper) OnTimeoutPacket(ctx sdk.Context, packet channeltypes.Packet) err
 
 	// If this was from an autopilot action, unmarshal the transfer metadata to get the original transfer info
 	var transferMetadata transfertypes.FungibleTokenPacketData
-	if err := transfertypes.ModuleCdc.UnmarshalJSON(packet.GetData(), &transferMetadata); err != nil {
-		return err
+	if err := transfertypes.ModuleCdc.UnmarshalJSON(packet.Data, &transferMetadata); err != nil {
+		return errorsmod.Wrapf(err, "unable to unmarshal ICS-20 packet data")
 	}
 
 	// Build the token from the transfer metadata
@@ -150,7 +150,7 @@ func (k Keeper) OnTimeoutPacket(ctx sdk.Context, packet channeltypes.Packet) err
 	}
 	retryResponse, err := k.transferKeeper.Transfer(ctx, &msgTransfer)
 	if err != nil {
-		return err
+		return errorsmod.Wrapf(err, "unable to submit transfer retry of %+v", msgTransfer)
 	}
 
 	// Update the fallback address to use the new sequence number
