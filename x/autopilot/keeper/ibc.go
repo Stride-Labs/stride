@@ -94,15 +94,17 @@ func (k Keeper) OnAcknowledgementPacket(ctx sdk.Context, packet channeltypes.Pac
 		return nil
 	}
 
+	// Remove the fallback address since the packet is no longer pending
+	k.RemoveTransferFallbackAddress(ctx, channelId, sequence)
+
 	// Check whether the ack was successful or was an ack error
 	success, err := k.CheckAcknowledgementStatus(ctx, acknowledgement)
 	if err != nil {
 		return err
 	}
 
-	// If successful, remove the fallback address
+	// If successful, no additional action is necessary
 	if success {
-		k.RemoveTransferFallbackAddress(ctx, channelId, sequence)
 		return nil
 	}
 
