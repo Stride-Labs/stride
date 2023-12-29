@@ -254,7 +254,7 @@ func (im IBCModule) OnTimeoutPacket(
 	packet channeltypes.Packet,
 	relayer sdk.AccAddress,
 ) error {
-	im.keeper.Logger(ctx).Info(fmt.Sprintf("OnTimeoutPacket (Autopilot): Packet %v", packet))
+	im.keeper.Logger(ctx).Error(fmt.Sprintf("OnTimeoutPacket (Autopilot): Packet %v", packet))
 	// First pass the packet down the stack so that the tokens are refunded to the original sender
 	if err := im.app.OnTimeoutPacket(ctx, packet, relayer); err != nil {
 		return err
