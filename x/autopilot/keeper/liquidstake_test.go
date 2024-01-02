@@ -2,24 +2,19 @@ package keeper_test
 
 import (
 	"fmt"
-	"time"
 
 	sdkmath "cosmossdk.io/math"
-	"github.com/cometbft/cometbft/crypto/ed25519"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/ibc-go/v7/modules/apps/transfer"
 	transfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
 	clienttypes "github.com/cosmos/ibc-go/v7/modules/core/02-client/types"
 	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
 	ibctesting "github.com/cosmos/ibc-go/v7/testing"
 
-	recordsmodule "github.com/Stride-Labs/stride/v16/x/records"
-
-	sdk "github.com/cosmos/cosmos-sdk/types"
-
 	"github.com/Stride-Labs/stride/v16/x/autopilot"
 	"github.com/Stride-Labs/stride/v16/x/autopilot/types"
 	epochtypes "github.com/Stride-Labs/stride/v16/x/epochs/types"
-	minttypes "github.com/Stride-Labs/stride/v16/x/mint/types"
+	recordsmodule "github.com/Stride-Labs/stride/v16/x/records"
 	recordstypes "github.com/Stride-Labs/stride/v16/x/records/types"
 	stakeibctypes "github.com/Stride-Labs/stride/v16/x/stakeibc/types"
 )
@@ -46,6 +41,7 @@ func (s *KeeperTestSuite) SetupAutopilotLiquidStake(
 	strideToHostChannelId string,
 	depositAddress sdk.AccAddress,
 	liquidStaker sdk.AccAddress,
+	mockInboundTransfer bool,
 ) {
 	// Create a transfer channel on channel-0 for the outbound transfer
 	// Note: We pass a dummy chain ID cause all that matters here is
@@ -85,9 +81,11 @@ func (s *KeeperTestSuite) SetupAutopilotLiquidStake(
 		TransferChannelId: strideToHostChannelId,
 	})
 
-	// Fund the staker with ibc/atom so they can liquid stake
-	// (the function being tested is invoked downstream of the IBC transfer)
-	s.FundAccount(liquidStaker, sdk.NewCoin(ibcDenom, stakeAmount))
+	// If we're testing a fucntion that's downstream of the inbound IBC transfer,
+	// fund the staker with ibc/atom so they can liquid stake
+	if mockInboundTransfer {
+		s.FundAccount(liquidStaker, sdk.NewCoin(ibcDenom, stakeAmount))
+	}
 }
 
 func (s *KeeperTestSuite) CheckLiquidStakeSucceeded(
@@ -132,8 +130,6 @@ func (s *KeeperTestSuite) CheckLiquidStakeSucceeded(
 }
 
 func (s *KeeperTestSuite) TestTryLiquidStake() {
-	s.CreateTransferChannel(HostChainId)
-
 	liquidStakerOnStride := s.TestAccs[0]
 	depositAddress := s.TestAccs[1]
 	forwardRecipientOnHost := HostAddress
@@ -297,7 +293,7 @@ func (s *KeeperTestSuite) TestTryLiquidStake() {
 			}
 
 			s.SetupTest()
-			s.SetupAutopilotLiquidStake(tc.enabled, stakeAmount, tc.hostZoneChannelID, depositAddress, liquidStakerOnStride)
+			s.SetupAutopilotLiquidStake(tc.enabled, stakeAmount, tc.hostZoneChannelID, depositAddress, liquidStakerOnStride, true)
 
 			err := s.App.AutopilotKeeper.TryLiquidStaking(s.Ctx, packet, transferMetadata, tc.autopilotMetadata)
 
@@ -320,7 +316,11 @@ func (s *KeeperTestSuite) TestTryLiquidStake() {
 }
 
 func (s *KeeperTestSuite) TestOnRecvPacket_LiquidStake() {
-	now := time.Now()
+	liquidStakerOnStride := s.TestAccs[0]
+	depositAddress := s.TestAccs[1]
+	// forwardRecipientOnHost := HostAddress
+
+	stakeAmount := sdk.NewInt(1000000)
 
 	packet := channeltypes.Packet{
 		Sequence:           1,
@@ -343,14 +343,14 @@ func (s *KeeperTestSuite) TestOnRecvPacket_LiquidStake() {
 	prefixedDenom = transfertypes.GetPrefixedDenom(packet.GetSourcePort(), packet.GetSourceChannel(), strdDenom)
 	strdIbcDenom := transfertypes.ParseDenomTrace(prefixedDenom).IBCDenom()
 
-	addr1 := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address().Bytes())
 	testCases := []struct {
-		forwardingActive bool
-		recvDenom        string
-		packetData       transfertypes.FungibleTokenPacketData
-		destChannel      string
-		expSuccess       bool
-		expLiquidStake   bool
+		name           string
+		enabled        bool
+		recvDenom      string
+		packetData     transfertypes.FungibleTokenPacketData
+		destChannel    string
+		expSuccess     bool
+		expLiquidStake bool
 	}{
 		// successful liquid stake with metadata in receiver
 		// successful liquid stake with metadata in the memo
@@ -362,13 +362,14 @@ func (s *KeeperTestSuite) TestOnRecvPacket_LiquidStake() {
 		// failed because not a host denom
 		// failed because transfer channel does not exist
 
-		{ // params not enabled
-			forwardingActive: false,
+		{
+			name:    "params not enabled",
+			enabled: false,
 			packetData: transfertypes.FungibleTokenPacketData{
 				Denom:    "uatom",
 				Amount:   "1000000",
 				Sender:   "cosmos16plylpsgxechajltx9yeseqexzdzut9g8vla4k",
-				Receiver: getStakeibcPacketMetadata(addr1.String(), "LiquidStake"),
+				Receiver: getStakeibcPacketMetadata(liquidStakerOnStride.String(), "LiquidStake"),
 				Memo:     "",
 			},
 			destChannel:    "channel-0",
@@ -376,13 +377,14 @@ func (s *KeeperTestSuite) TestOnRecvPacket_LiquidStake() {
 			expSuccess:     false,
 			expLiquidStake: false,
 		},
-		{ // strd denom
-			forwardingActive: true,
+		{
+			name:    "strd denom",
+			enabled: true,
 			packetData: transfertypes.FungibleTokenPacketData{
 				Denom:    strdIbcDenom,
 				Amount:   "1000000",
 				Sender:   "cosmos16plylpsgxechajltx9yeseqexzdzut9g8vla4k",
-				Receiver: getStakeibcPacketMetadata(addr1.String(), "LiquidStake"),
+				Receiver: getStakeibcPacketMetadata(liquidStakerOnStride.String(), "LiquidStake"),
 				Memo:     "",
 			},
 			destChannel:    "channel-0",
@@ -390,13 +392,14 @@ func (s *KeeperTestSuite) TestOnRecvPacket_LiquidStake() {
 			expSuccess:     false,
 			expLiquidStake: false,
 		},
-		{ // all okay
-			forwardingActive: true,
+		{
+			name:    "all okay",
+			enabled: true,
 			packetData: transfertypes.FungibleTokenPacketData{
 				Denom:    "uatom",
 				Amount:   "1000000",
 				Sender:   "cosmos16plylpsgxechajltx9yeseqexzdzut9g8vla4k",
-				Receiver: getStakeibcPacketMetadata(addr1.String(), "LiquidStake"),
+				Receiver: getStakeibcPacketMetadata(liquidStakerOnStride.String(), "LiquidStake"),
 				Memo:     "",
 			},
 			destChannel:    "channel-0",
@@ -404,13 +407,14 @@ func (s *KeeperTestSuite) TestOnRecvPacket_LiquidStake() {
 			expSuccess:     true,
 			expLiquidStake: true,
 		},
-		{ // ibc denom uatom from different channel
-			forwardingActive: true,
+		{
+			name:    "ibc denom uatom from different channel",
+			enabled: true,
 			packetData: transfertypes.FungibleTokenPacketData{
 				Denom:    "uatom",
 				Amount:   "1000000",
 				Sender:   "cosmos16plylpsgxechajltx9yeseqexzdzut9g8vla4k",
-				Receiver: getStakeibcPacketMetadata(addr1.String(), "LiquidStake"),
+				Receiver: getStakeibcPacketMetadata(liquidStakerOnStride.String(), "LiquidStake"),
 				Memo:     "",
 			},
 			destChannel:    "channel-1000",
@@ -418,27 +422,29 @@ func (s *KeeperTestSuite) TestOnRecvPacket_LiquidStake() {
 			expSuccess:     false,
 			expLiquidStake: false,
 		},
-		{ // all okay with memo liquidstaking since ibc-go v5.1.0
-			forwardingActive: true,
+		{
+			name:    "all okay with memo liquidstaking since ibc-go v5.1.0",
+			enabled: true,
 			packetData: transfertypes.FungibleTokenPacketData{
 				Denom:    "uatom",
 				Amount:   "1000000",
 				Sender:   "cosmos16plylpsgxechajltx9yeseqexzdzut9g8vla4k",
-				Receiver: addr1.String(),
-				Memo:     getStakeibcPacketMetadata(addr1.String(), "LiquidStake"),
+				Receiver: liquidStakerOnStride.String(),
+				Memo:     getStakeibcPacketMetadata(liquidStakerOnStride.String(), "LiquidStake"),
 			},
 			destChannel:    "channel-0",
 			recvDenom:      atomIbcDenom,
 			expSuccess:     true,
 			expLiquidStake: true,
 		},
-		{ // all okay with no functional part
-			forwardingActive: true,
+		{
+			name:    "all okay with no functional part",
+			enabled: true,
 			packetData: transfertypes.FungibleTokenPacketData{
 				Denom:    "uatom",
 				Amount:   "1000000",
 				Sender:   "cosmos16plylpsgxechajltx9yeseqexzdzut9g8vla4k",
-				Receiver: addr1.String(),
+				Receiver: liquidStakerOnStride.String(),
 				Memo:     "",
 			},
 			destChannel:    "channel-0",
@@ -446,8 +452,9 @@ func (s *KeeperTestSuite) TestOnRecvPacket_LiquidStake() {
 			expSuccess:     true,
 			expLiquidStake: false,
 		},
-		{ // invalid stride address (receiver)
-			forwardingActive: true,
+		{
+			name:    "invalid stride address (receiver)",
+			enabled: true,
 			packetData: transfertypes.FungibleTokenPacketData{
 				Denom:    "uatom",
 				Amount:   "1000000",
@@ -460,13 +467,14 @@ func (s *KeeperTestSuite) TestOnRecvPacket_LiquidStake() {
 			expSuccess:     false,
 			expLiquidStake: false,
 		},
-		{ // invalid stride address (memo)
-			forwardingActive: true,
+		{
+			name:    "invalid stride address (memo)",
+			enabled: true,
 			packetData: transfertypes.FungibleTokenPacketData{
 				Denom:    "uatom",
 				Amount:   "1000000",
 				Sender:   "cosmos16plylpsgxechajltx9yeseqexzdzut9g8vla4k",
-				Receiver: addr1.String(),
+				Receiver: liquidStakerOnStride.String(),
 				Memo:     getStakeibcPacketMetadata("invalid_address", "LiquidStake"),
 			},
 			destChannel:    "channel-0",
@@ -476,73 +484,36 @@ func (s *KeeperTestSuite) TestOnRecvPacket_LiquidStake() {
 		},
 	}
 
-	for i, tc := range testCases {
-		s.Run(fmt.Sprintf("Case %d", i), func() {
+	for _, tc := range testCases {
+		s.Run(tc.name, func() {
+			s.SetupTest() // reset
+
+			s.SetupAutopilotLiquidStake(tc.enabled, stakeAmount, "channel-0", depositAddress, liquidStakerOnStride, false)
+
 			packet.DestinationChannel = tc.destChannel
 			packet.Data = transfertypes.ModuleCdc.MustMarshalJSON(&tc.packetData)
-
-			s.SetupTest() // reset
-			ctx := s.Ctx
-
-			s.App.AutopilotKeeper.SetParams(ctx, types.Params{StakeibcActive: tc.forwardingActive})
-
-			// set epoch tracker for env
-			s.App.StakeibcKeeper.SetEpochTracker(ctx, stakeibctypes.EpochTracker{
-				EpochIdentifier:    epochtypes.STRIDE_EPOCH,
-				EpochNumber:        1,
-				NextEpochStartTime: uint64(now.Unix()),
-				Duration:           43200,
-			})
-			// set deposit record for env
-			s.App.RecordsKeeper.SetDepositRecord(ctx, recordstypes.DepositRecord{
-				Id:                 1,
-				Amount:             sdk.NewInt(100),
-				Denom:              atomIbcDenom,
-				HostZoneId:         "hub-1",
-				Status:             recordstypes.DepositRecord_TRANSFER_QUEUE,
-				DepositEpochNumber: 1,
-				Source:             recordstypes.DepositRecord_STRIDE,
-			})
-			// set host zone for env
-			s.App.StakeibcKeeper.SetHostZone(ctx, stakeibctypes.HostZone{
-				ChainId:           "hub-1",
-				ConnectionId:      "connection-0",
-				Bech32Prefix:      "cosmos",
-				TransferChannelId: "channel-0",
-				IbcDenom:          atomIbcDenom,
-				HostDenom:         atomHostDenom,
-				RedemptionRate:    sdk.NewDec(1),
-				DepositAddress:    addr1.String(),
-			})
-
-			// mint coins to be spent on liquid staking
-			coins := sdk.Coins{sdk.NewInt64Coin(tc.recvDenom, 1000000)}
-			err := s.App.BankKeeper.MintCoins(ctx, minttypes.ModuleName, coins)
-			s.Require().NoError(err)
-			err = s.App.BankKeeper.SendCoinsFromModuleToAccount(ctx, minttypes.ModuleName, addr1, coins)
-			s.Require().NoError(err)
 
 			transferIBCModule := transfer.NewIBCModule(s.App.TransferKeeper)
 			recordsStack := recordsmodule.NewIBCModule(s.App.RecordsKeeper, transferIBCModule)
 			routerIBCModule := autopilot.NewIBCModule(s.App.AutopilotKeeper, recordsStack)
 			ack := routerIBCModule.OnRecvPacket(
-				ctx,
+				s.Ctx,
 				packet,
-				addr1,
+				liquidStakerOnStride,
 			)
+
 			if tc.expSuccess {
 				s.Require().True(ack.Success(), "ack should be successful - ack: %+v", string(ack.Acknowledgement()))
 
-				// Check funds were transferred
-				coin := s.App.BankKeeper.GetBalance(s.Ctx, addr1, tc.recvDenom)
-				s.Require().Equal("2000000", coin.Amount.String(), "balance should have updated after successful transfer")
-
 				// check minted balance for liquid staking
-				allBalance := s.App.BankKeeper.GetAllBalances(ctx, addr1)
-				liquidBalance := s.App.BankKeeper.GetBalance(ctx, addr1, "stuatom")
+				allBalance := s.App.BankKeeper.GetAllBalances(s.Ctx, liquidStakerOnStride)
+				nativeBalance := s.App.BankKeeper.GetBalance(s.Ctx, liquidStakerOnStride, tc.recvDenom)
+				liquidBalance := s.App.BankKeeper.GetBalance(s.Ctx, liquidStakerOnStride, "stuatom")
 				if tc.expLiquidStake {
+					s.Require().Zero(nativeBalance.Amount.Int64(), "balance should have updated after successful transfer")
 					s.Require().True(liquidBalance.Amount.IsPositive(), "liquid balance should be positive but was %s", allBalance.String())
 				} else {
+					s.Require().Equal(stakeAmount.Int64(), nativeBalance.Amount.Int64(), "balance should have updated after successful transfer")
 					s.Require().True(liquidBalance.Amount.IsZero(), "liquid balance should be zero but was %s", allBalance.String())
 				}
 			} else {
