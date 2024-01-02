@@ -489,21 +489,19 @@ func NewStrideApp(
 	app.PacketForwardKeeper = packetforwardkeeper.NewKeeper(
 		appCodec,
 		keys[packetforwardtypes.StoreKey],
-		// app.GetSubspace(packetforwardtypes.ModuleName), TODO: why is this in the integration docs but not in code?
 		app.TransferKeeper, // will be zero-value here, reference is set later on with SetTransferKeeper.
 		app.IBCKeeper.ChannelKeeper,
 		app.DistrKeeper,
 		app.BankKeeper,
-		app.IBCKeeper.ChannelKeeper,
-		authtypes.NewModuleAddress(govtypes.ModuleName).String(), // TODO: this is not in the integration docs, but a comment says the authority should be the gov module
+		app.RatelimitKeeper,
+		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
 
 	// Create Transfer Keepers
 	app.TransferKeeper = ibctransferkeeper.NewKeeper(
 		appCodec, keys[ibctransfertypes.StoreKey],
 		app.GetSubspace(ibctransfertypes.ModuleName),
-		// TODO: Do we need to import the app.PacketForwardKeeper here?
-		app.RatelimitKeeper, // ICS4Wrapper
+		app.PacketForwardKeeper, // ICS4Wrapper
 		app.IBCKeeper.ChannelKeeper,
 		&app.IBCKeeper.PortKeeper,
 		app.AccountKeeper,
@@ -724,12 +722,8 @@ func NewStrideApp(
 	icacallbacksStack = icaoracle.NewIBCMiddleware(icacallbacksStack, app.ICAOracleKeeper)
 	icacallbacksStack = icacontroller.NewIBCMiddleware(icacallbacksStack, app.ICAControllerKeeper)
 
-	// Create Transfer Stack
-	// SendPacket, since it is originating from the application to core IBC:
-	// transferKeeper.SendPacket -> packetforward.SendPacket -> channel.SendPacket
-
-	// RecvPacket, message that originates from core IBC and goes down to app, the flow is the other way
-	// channel.RecvPacket -> packetforward.OnRecvPacket -> transfer.OnRecvPacket
+	// SendPacket originates from the base app and work up the stack to core IBC
+	// RecvPacket originates from core IBC and goes down the stack
 
 	// Stack three contains
 	// - core ibc
@@ -798,7 +792,8 @@ func NewStrideApp(
 		ibc.NewAppModule(app.IBCKeeper),
 		params.NewAppModule(app.ParamsKeeper),
 		claim.NewAppModule(appCodec, app.ClaimKeeper),
-		packetforward.NewAppModule(app.PacketForwardKeeper, nil), // What should legacySubspace be set to and why is it required? https://github.com/cosmos/ibc-apps/issues/146
+		// technically, app.GetSubspace(packetforwardtypes.ModuleName) will never be run https://github.com/cosmos/ibc-apps/issues/146#issuecomment-1839242144
+		packetforward.NewAppModule(app.PacketForwardKeeper, app.GetSubspace(packetforwardtypes.ModuleName)),
 		transferModule,
 		// monitoringModule,
 		stakeibcModule,

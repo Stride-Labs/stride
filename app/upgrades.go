@@ -261,7 +261,7 @@ func (app *StrideApp) setupUpgradeHandlers(appOpts servertypes.AppOptions) {
 	// case "v17":
 	// 	storeUpgrades = &storetypes.StoreUpgrades{
 	// 		// Add PFM store key
-	// 		Added: []string{routertypes.ModuleName},
+	// 		Added: []string{packetforwardtypes.ModuleName},
 	// 	}
 
 	if storeUpgrades != nil {
