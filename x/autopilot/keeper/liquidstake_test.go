@@ -18,14 +18,14 @@ import (
 	stakeibctypes "github.com/Stride-Labs/stride/v16/x/stakeibc/types"
 )
 
-func getStakeibcPacketMetadata(address, action string) string {
+func getLiquidStakePacketMetadata(receiver, ibcReceiver, transferChannelId string) string {
 	return fmt.Sprintf(`
 		{
 			"autopilot": {
 				"receiver": "%[1]s",
-				"stakeibc": { "action": "%[2]s" } 
+				"stakeibc": { "action": "LiquidStake", "ibc_receiver": "%[2]s", "transfer_channel": "%[3]s" } 
 			}
-		}`, address, action)
+		}`, receiver, ibcReceiver, transferChannelId)
 }
 
 // Helper function to mock out all the state needed to test autopilot liquid stake
@@ -134,6 +134,7 @@ func (s *KeeperTestSuite) TestTryLiquidStake() {
 	forwardRecipientOnHost := HostAddress
 
 	stakeAmount := sdk.NewInt(1000000)
+	sourceChannelOnHost := "channel-1000"
 
 	// Building expected denom traces for the transfer packet data - this is all assuming the packet has been sent to stride
 	// (the FungibleTokenPacketData has an denom trace for the Denom field, instead of an IBC hash)
@@ -145,7 +146,7 @@ func (s *KeeperTestSuite) TestTryLiquidStake() {
 		atom: atom,
 		osmo: osmo,
 		// For strd, the hub's channel ID would have been appended to the denom trace
-		strd: transfertypes.GetPrefixedDenom(transfertypes.PortID, ibctesting.FirstChannelID, strd),
+		strd: transfertypes.GetPrefixedDenom(transfertypes.PortID, sourceChannelOnHost, strd),
 	}
 
 	testCases := []struct {
@@ -286,7 +287,7 @@ func (s *KeeperTestSuite) TestTryLiquidStake() {
 			}
 			packet := channeltypes.Packet{
 				SourcePort:         transfertypes.PortID,
-				SourceChannel:      ibctesting.FirstChannelID,
+				SourceChannel:      sourceChannelOnHost,
 				DestinationPort:    transfertypes.PortID,
 				DestinationChannel: tc.inboundTransferChannnelId,
 			}
@@ -317,111 +318,157 @@ func (s *KeeperTestSuite) TestTryLiquidStake() {
 func (s *KeeperTestSuite) TestOnRecvPacket_LiquidStake() {
 	liquidStakerOnStride := s.TestAccs[0]
 	depositAddress := s.TestAccs[1]
-	// forwardRecipientOnHost := HostAddress
+	fallbackAddress := liquidStakerOnStride
+	forwardRecipientOnHost := HostAddress
 
 	stakeAmount := sdk.NewInt(1000000)
+	sourceChannelOnHost := "channel-1000"
 
-	packet := channeltypes.Packet{
-		SourcePort:      "transfer",
-		SourceChannel:   "channel-0",
-		DestinationPort: "transfer",
+	// Building expected denom traces for the transfer packet data - this is all assuming the packet has been sent to stride
+	// (the FungibleTokenPacketData has an denom trace for the Denom field, instead of an IBC hash)
+	atom := "uatom"
+	strd := "ustrd"
+	osmo := "uosmo"
+	denomTraces := map[string]string{
+		// For host zone tokens, since stride is the first hop, there's no port/channel in the denom trace path
+		atom: atom,
+		osmo: osmo,
+		// For strd, the hub's channel ID would have been appended to the denom trace
+		strd: transfertypes.GetPrefixedDenom(transfertypes.PortID, ibctesting.FirstChannelID, strd),
 	}
 
 	testCases := []struct {
-		name             string
-		enabled          bool
-		liquidStakeDenom string
-		transferReceiver string
-		transferMemo     string
-
-		destChannel    string
-		expSuccess     bool
-		expLiquidStake bool
+		name                      string
+		enabled                   bool
+		liquidStakeDenom          string
+		transferReceiver          string
+		transferMemo              string
+		hostZoneChannelID         string // defaults to channel-0 if not specified
+		inboundTransferChannnelId string // defaults to channel-0 if not specified
+		expectedForwardChannelId  string // defaults to empty (no forwarding)
+		expSuccess                bool
+		expLiquidStake            bool
 	}{
-		// successful liquid stake with metadata in receiver
-		// successful liquid stake with metadata in the memo
-		// successful liquid stake and forward to default host
-		// successful liquid stake and forward to custom transfer channel
-
-		// failed because param not enabled
-		// failed because invalid stride address
-		// failed because not a host denom
-		// failed because transfer channel does not exist
-
 		{
-			name:             "params not enabled",
-			enabled:          false,
-			liquidStakeDenom: "uatom",
-			transferReceiver: getStakeibcPacketMetadata(liquidStakerOnStride.String(), "LiquidStake"),
-			transferMemo:     "",
-			destChannel:      "channel-0",
-			expSuccess:       false,
-		},
-		{
-			name:             "uosmo denom",
+			name:             "successful liquid stake with metadata in receiver",
 			enabled:          true,
-			liquidStakeDenom: "uosmo",
-			transferReceiver: getStakeibcPacketMetadata(liquidStakerOnStride.String(), "LiquidStake"),
+			liquidStakeDenom: atom,
+			transferReceiver: getLiquidStakePacketMetadata(liquidStakerOnStride.String(), "", ""),
 			transferMemo:     "",
-			destChannel:      "channel-0",
-			expSuccess:       false,
-		},
-		{
-			name:             "all okay",
-			enabled:          true,
-			liquidStakeDenom: "uatom",
-			transferReceiver: getStakeibcPacketMetadata(liquidStakerOnStride.String(), "LiquidStake"),
-			transferMemo:     "",
-			destChannel:      "channel-0",
 			expSuccess:       true,
 			expLiquidStake:   true,
 		},
 		{
-			name:             "ibc denom uatom from different channel",
+			name:             "successful liquid stake with metadata in the memo",
 			enabled:          true,
-			liquidStakeDenom: "uatom",
-			transferReceiver: getStakeibcPacketMetadata(liquidStakerOnStride.String(), "LiquidStake"),
-			transferMemo:     "",
-			destChannel:      "channel-1000",
-			expSuccess:       false,
-		},
-		{
-			name:             "all okay with memo liquidstaking since ibc-go v5.1.0",
-			enabled:          true,
-			liquidStakeDenom: "uatom",
+			liquidStakeDenom: atom,
 			transferReceiver: liquidStakerOnStride.String(),
-			transferMemo:     getStakeibcPacketMetadata(liquidStakerOnStride.String(), "LiquidStake"),
-			destChannel:      "channel-0",
+			transferMemo:     getLiquidStakePacketMetadata(liquidStakerOnStride.String(), "", ""),
 			expSuccess:       true,
 			expLiquidStake:   true,
 		},
 		{
-			name:             "all okay with no functional part",
+			name:                     "successful liquid stake and forward to default host (receiver)",
+			enabled:                  true,
+			liquidStakeDenom:         atom,
+			transferReceiver:         getLiquidStakePacketMetadata(liquidStakerOnStride.String(), forwardRecipientOnHost, ""),
+			transferMemo:             "",
+			expectedForwardChannelId: ibctesting.FirstChannelID,
+			expSuccess:               true,
+			expLiquidStake:           true,
+		},
+		{
+			name:                     "successful liquid stake and forward to default host (memo)",
+			enabled:                  true,
+			liquidStakeDenom:         atom,
+			transferReceiver:         liquidStakerOnStride.String(),
+			transferMemo:             getLiquidStakePacketMetadata(liquidStakerOnStride.String(), forwardRecipientOnHost, ""),
+			expectedForwardChannelId: ibctesting.FirstChannelID,
+			expSuccess:               true,
+			expLiquidStake:           true,
+		},
+		{
+			name:                      "successful liquid stake and forward to custom transfer channel (receiver)",
+			enabled:                   true,
+			liquidStakeDenom:          atom,
+			transferReceiver:          getLiquidStakePacketMetadata(liquidStakerOnStride.String(), forwardRecipientOnHost, "channel-0"),
+			transferMemo:              "",
+			hostZoneChannelID:         "channel-1",
+			inboundTransferChannnelId: "channel-1",
+			expectedForwardChannelId:  "channel-0", // different than host zone, specified in memo
+			expSuccess:                true,
+			expLiquidStake:            true,
+		},
+		{
+			name:                      "successful liquid stake and forward to custom transfer channel (memo)",
+			enabled:                   true,
+			liquidStakeDenom:          atom,
+			transferReceiver:          liquidStakerOnStride.String(),
+			transferMemo:              getLiquidStakePacketMetadata(liquidStakerOnStride.String(), forwardRecipientOnHost, "channel-0"),
+			hostZoneChannelID:         "channel-1",
+			inboundTransferChannnelId: "channel-1",
+			expectedForwardChannelId:  "channel-0", // different than host zone, specified in memo
+			expSuccess:                true,
+			expLiquidStake:            true,
+		},
+		{
+			name:             "normal transfer with no liquid stake",
 			enabled:          true,
-			liquidStakeDenom: "uatom",
+			liquidStakeDenom: atom,
 			transferReceiver: liquidStakerOnStride.String(),
 			transferMemo:     "",
-			destChannel:      "channel-0",
 			expSuccess:       true,
 			expLiquidStake:   false,
 		},
 		{
+			name:             "autopilot disabled",
+			enabled:          false,
+			liquidStakeDenom: atom,
+			transferReceiver: liquidStakerOnStride.String(),
+			transferMemo:     getLiquidStakePacketMetadata(liquidStakerOnStride.String(), "", ""),
+			expSuccess:       false,
+		},
+		{
 			name:             "invalid stride address (receiver)",
 			enabled:          true,
-			liquidStakeDenom: "uatom",
-			transferReceiver: getStakeibcPacketMetadata("invalid_address", "LiquidStake"),
+			liquidStakeDenom: osmo,
+			transferReceiver: getLiquidStakePacketMetadata("XXX", "", ""),
 			transferMemo:     "",
-			destChannel:      "channel-0",
 			expSuccess:       false,
 		},
 		{
 			name:             "invalid stride address (memo)",
 			enabled:          true,
-			liquidStakeDenom: "uatom",
+			liquidStakeDenom: osmo,
 			transferReceiver: liquidStakerOnStride.String(),
-			transferMemo:     getStakeibcPacketMetadata("invalid_address", "LiquidStake"),
-			destChannel:      "channel-0",
+			transferMemo:     getLiquidStakePacketMetadata("XXX", "", ""),
 			expSuccess:       false,
+		},
+		{
+			name:             "not host denom",
+			enabled:          true,
+			liquidStakeDenom: osmo,
+			transferReceiver: liquidStakerOnStride.String(),
+			transferMemo:     getLiquidStakePacketMetadata(liquidStakerOnStride.String(), "", ""),
+			expSuccess:       false,
+		},
+		{
+			name:             "failed to outbound transfer",
+			enabled:          true,
+			liquidStakeDenom: atom,
+			transferReceiver: getLiquidStakePacketMetadata(liquidStakerOnStride.String(), forwardRecipientOnHost, "channel-999"), // channel DNE
+			transferMemo:     "",
+			expSuccess:       false,
+		},
+		{
+			name:                      "valid uatom token from invalid channel",
+			enabled:                   true,
+			liquidStakeDenom:          atom,
+			transferReceiver:          getLiquidStakePacketMetadata(liquidStakerOnStride.String(), "", ""),
+			transferMemo:              "",
+			hostZoneChannelID:         "channel-0",
+			inboundTransferChannnelId: "channel-999", // channel DNE
+			expSuccess:                false,
 		},
 	}
 
@@ -429,18 +476,30 @@ func (s *KeeperTestSuite) TestOnRecvPacket_LiquidStake() {
 		s.Run(tc.name, func() {
 			s.SetupTest() // reset
 
-			s.SetupAutopilotLiquidStake(tc.enabled, stakeAmount, "channel-0", depositAddress, liquidStakerOnStride, false)
+			// Fill in the default channel ID's if they weren't specified
+			if tc.hostZoneChannelID == "" {
+				tc.hostZoneChannelID = ibctesting.FirstChannelID
+			}
+			if tc.inboundTransferChannnelId == "" {
+				tc.inboundTransferChannnelId = ibctesting.FirstChannelID
+			}
 
 			transferMetadata := transfertypes.FungibleTokenPacketData{
 				Sender:   HostAddress,
 				Receiver: tc.transferReceiver,
+				Denom:    denomTraces[tc.liquidStakeDenom],
 				Amount:   stakeAmount.String(),
 				Memo:     tc.transferMemo,
-				Denom:    tc.liquidStakeDenom, // this is actually the denom trace, but all tests are non-native tokens so the denom is the same
+			}
+			packet := channeltypes.Packet{
+				SourcePort:         transfertypes.PortID,
+				SourceChannel:      sourceChannelOnHost,
+				DestinationPort:    transfertypes.PortID,
+				DestinationChannel: tc.inboundTransferChannnelId,
+				Data:               transfertypes.ModuleCdc.MustMarshalJSON(&transferMetadata),
 			}
 
-			packet.DestinationChannel = tc.destChannel
-			packet.Data = transfertypes.ModuleCdc.MustMarshalJSON(&transferMetadata)
+			s.SetupAutopilotLiquidStake(tc.enabled, stakeAmount, tc.hostZoneChannelID, depositAddress, liquidStakerOnStride, false)
 
 			transferIBCModule := transfer.NewIBCModule(s.App.TransferKeeper)
 			recordsStack := recordsmodule.NewIBCModule(s.App.RecordsKeeper, transferIBCModule)
@@ -459,9 +518,9 @@ func (s *KeeperTestSuite) TestOnRecvPacket_LiquidStake() {
 						tc.liquidStakeDenom,
 						liquidStakerOnStride,
 						depositAddress,
-						"channel-0",
-						"",
-						transferMetadata.Receiver,
+						tc.hostZoneChannelID,
+						tc.expectedForwardChannelId,
+						fallbackAddress.String(),
 					)
 				}
 			} else {
