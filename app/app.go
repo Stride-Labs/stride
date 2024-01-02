@@ -724,12 +724,8 @@ func NewStrideApp(
 	icacallbacksStack = icaoracle.NewIBCMiddleware(icacallbacksStack, app.ICAOracleKeeper)
 	icacallbacksStack = icacontroller.NewIBCMiddleware(icacallbacksStack, app.ICAControllerKeeper)
 
-	// Create Transfer Stack
-	// SendPacket, since it is originating from the application to core IBC:
-	// transferKeeper.SendPacket -> packetforward.SendPacket -> channel.SendPacket
-
-	// RecvPacket, message that originates from core IBC and goes down to app, the flow is the other way
-	// channel.RecvPacket -> packetforward.OnRecvPacket -> transfer.OnRecvPacket
+	// SendPacket originates from the base app and work up the stack to core IBC
+	// RecvPacket originates from core IBC and goes down the stack 
 
 	// Stack three contains
 	// - core ibc
