@@ -99,188 +99,132 @@ func (s *KeeperTestSuite) TestTryLiquidStake() {
 
 	stakeAmount := sdk.NewInt(1000000)
 
-	strideToHubChannel := "channel-0"
-	hubToStrideChannel := "channel-1"
-
-	// The destination channel will be specified later by the test case
-	basePacket := channeltypes.Packet{
-		SourcePort:      transfertypes.PortID,
-		SourceChannel:   hubToStrideChannel,
-		DestinationPort: transfertypes.PortID,
-	}
-
 	// Building expected denom traces for the transfer packet data - this is all assuming the packet has been sent to stride
 	// (the FungibleTokenPacketData has an denom trace for the Denom field, instead of an IBC hash)
-
-	// For host zone tokens, since stride is the first hop, there's no port/channel in the denom trace path
 	atom := "uatom"
-	atomTrace := atom
-
-	// // For strd, the hub's channel ID would have been appended to the denom trace
 	strd := "ustrd"
-	strdTrace := transfertypes.GetPrefixedDenom(transfertypes.PortID, hubToStrideChannel, strd)
-
-	// Osmo will have a valid denom but no host zone
 	osmo := "uosmo"
-	osmoTrace := osmo
+	denomTraces := map[string]string{
+		// For host zone tokens, since stride is the first hop, there's no port/channel in the denom trace path
+		atom: atom,
+		osmo: osmo,
+		// For strd, the hub's channel ID would have been appended to the denom trace
+		strd: transfertypes.GetPrefixedDenom(transfertypes.PortID, ibctesting.FirstChannelID, strd),
+	}
 
 	testCases := []struct {
 		name                      string
 		enabled                   bool
 		liquidStakeDenom          string
-		transferMetadata          transfertypes.FungibleTokenPacketData
+		liquidStakeAmount         string
 		autopilotMetadata         types.StakeibcPacketMetadata
+		hostZoneChannelID         string // defaults to channel-0 if not specified
 		inboundTransferChannnelId string // defaults to channel-0 if not specified
-		strideToHostChannelId     string // defaults to channel-0 if not specified
-		forwardChannelId          string // also used to dictate whether there's a forwarding step
+		expectedForwardChannelId  string // defaults to empty (no forwarding)
 		expectedError             string
 	}{
 		{
 			// Normal autopilot liquid stake with no transfer
-			name:             "successful liquid stake with atom",
-			enabled:          true,
-			liquidStakeDenom: atom,
-			transferMetadata: transfertypes.FungibleTokenPacketData{
-				Denom:    atomTrace,
-				Amount:   stakeAmount.String(),
-				Receiver: liquidStakerOnStride.String(),
-			},
+			name:              "successful liquid stake with atom",
+			enabled:           true,
+			liquidStakeDenom:  atom,
+			liquidStakeAmount: stakeAmount.String(),
 		},
 		{
 			// Liquid stake and forward, using the default host channel ID
-			name:             "successful liquid stake and forward atom to the hub",
-			enabled:          true,
-			liquidStakeDenom: atom,
-			transferMetadata: transfertypes.FungibleTokenPacketData{
-				Denom:    atomTrace,
-				Amount:   stakeAmount.String(),
-				Receiver: liquidStakerOnStride.String(),
-			},
+			name:              "successful liquid stake and forward atom to the hub",
+			enabled:           true,
+			liquidStakeDenom:  atom,
+			liquidStakeAmount: stakeAmount.String(),
 			autopilotMetadata: types.StakeibcPacketMetadata{
 				IbcReceiver: forwardRecipientOnHost,
 			},
-			forwardChannelId: strideToHubChannel, // default for atom
+			expectedForwardChannelId: ibctesting.FirstChannelID, // default for host zone
 		},
 		{
 			// Liquid stake and forward, using a custom channel ID
-			name:             "successful liquid stake and forward atom to osmo",
-			enabled:          true,
-			liquidStakeDenom: atom,
-			transferMetadata: transfertypes.FungibleTokenPacketData{
-				Denom:    atomTrace,
-				Amount:   stakeAmount.String(),
-				Receiver: liquidStakerOnStride.String(),
-			},
+			// Host Zone Channel: channel-1, Outbound Transfer Channel: channel-0
+			name:              "successful liquid stake and forward atom to osmo",
+			enabled:           true,
+			liquidStakeDenom:  atom,
+			liquidStakeAmount: stakeAmount.String(),
 			autopilotMetadata: types.StakeibcPacketMetadata{
-				Action:          types.LiquidStake,
 				IbcReceiver:     forwardRecipientOnHost,
-				TransferChannel: strideToHubChannel, // custom channel (different than host channel)
+				TransferChannel: "channel-0", // custom channel (different than host channel below)
 			},
-			inboundTransferChannnelId: hubToStrideChannel,
-			strideToHostChannelId:     hubToStrideChannel,
-			forwardChannelId:          strideToHubChannel, // custom channel, determined by autopilot metadata
+			inboundTransferChannnelId: "channel-1",
+			hostZoneChannelID:         "channel-1",
+			expectedForwardChannelId:  "channel-0",
 		},
 		{
 			// Error caused by autopilot disabled
-			name:             "autopilot disabled",
-			enabled:          false,
-			liquidStakeDenom: atom,
-			transferMetadata: transfertypes.FungibleTokenPacketData{
-				Denom:    atomTrace,
-				Amount:   stakeAmount.String(),
-				Receiver: liquidStakerOnStride.String(),
-			},
-			expectedError: "autopilot stakeibc routing is inactive",
+			name:              "autopilot disabled",
+			enabled:           false,
+			liquidStakeDenom:  atom,
+			liquidStakeAmount: stakeAmount.String(),
+			expectedError:     "autopilot stakeibc routing is inactive",
 		},
 		{
 			// Error caused an invalid amount in the packet
-			name:             "invalid token amount",
-			enabled:          true,
-			liquidStakeDenom: atom,
-			transferMetadata: transfertypes.FungibleTokenPacketData{
-				Denom:    atomTrace,
-				Amount:   "",
-				Receiver: liquidStakerOnStride.String(),
-			},
-			expectedError: "not a parsable amount field",
+			name:              "invalid token amount",
+			enabled:           true,
+			liquidStakeDenom:  atom,
+			liquidStakeAmount: "",
+			expectedError:     "not a parsable amount field",
 		},
 		{
 			// Error caused by the transfer of a non-native token
 			// (i.e. a token that originated on stride)
-			name:             "unable to liquid stake native token",
-			enabled:          true,
-			liquidStakeDenom: atom,
-			transferMetadata: transfertypes.FungibleTokenPacketData{
-				Denom:    strdTrace,
-				Amount:   stakeAmount.String(),
-				Receiver: liquidStakerOnStride.String(),
-			},
-			expectedError: "native token is not supported for liquid staking",
+			name:              "unable to liquid stake native token",
+			enabled:           true,
+			liquidStakeDenom:  strd,
+			liquidStakeAmount: stakeAmount.String(),
+			expectedError:     "native token is not supported for liquid staking",
 		},
 		{
 			// Error caused by the transfer of non-host zone token
-			name:             "unable to liquid stake non-host zone token",
-			enabled:          true,
-			liquidStakeDenom: osmo,
-			transferMetadata: transfertypes.FungibleTokenPacketData{
-				Denom:    osmoTrace,
-				Amount:   stakeAmount.String(),
-				Receiver: liquidStakerOnStride.String(),
-			},
-			expectedError: "No HostZone for uosmo denom found",
+			name:              "unable to liquid stake non-host zone token",
+			enabled:           true,
+			liquidStakeDenom:  osmo,
+			liquidStakeAmount: stakeAmount.String(),
+			expectedError:     "No HostZone for uosmo denom found",
 		},
 		{
 			// Error caused by a mismatched IBC denom
 			// Invoked by specifiying a different host zone channel ID
-			name:             "ibc denom does not match host zone",
-			enabled:          true,
-			liquidStakeDenom: atom,
-			transferMetadata: transfertypes.FungibleTokenPacketData{
-				Denom:    atomTrace,
-				Amount:   stakeAmount.String(),
-				Receiver: liquidStakerOnStride.String(),
-			},
-			inboundTransferChannnelId: strideToHubChannel,
-			strideToHostChannelId:     hubToStrideChannel,
+			name:                      "ibc denom does not match host zone",
+			enabled:                   true,
+			liquidStakeDenom:          atom,
+			liquidStakeAmount:         stakeAmount.String(),
+			hostZoneChannelID:         "channel-0",
+			inboundTransferChannnelId: "channel-1", // Different than host zone
 			expectedError:             "is not equal to host zone ibc denom",
 		},
 		{
 			// Error caused by a failed validate basic before the liquid stake
 			// Invoked by passing a negative amount
-			name:             "failed liquid stake validate basic",
-			enabled:          true,
-			liquidStakeDenom: atom,
-			transferMetadata: transfertypes.FungibleTokenPacketData{
-				Denom:    atomTrace,
-				Amount:   "-10000",
-				Receiver: liquidStakerOnStride.String(),
-			},
-			expectedError: "amount liquid staked must be positive and nonzero",
+			name:              "failed liquid stake validate basic",
+			enabled:           true,
+			liquidStakeDenom:  atom,
+			liquidStakeAmount: "-10000",
+			expectedError:     "amount liquid staked must be positive and nonzero",
 		},
 		{
 			// Error caused by a failed liquid stake
 			// Invoked by trying to liquid stake more tokens than the staker has available
-			name:             "failed to liquid stake",
-			enabled:          true,
-			liquidStakeDenom: atom,
-			transferMetadata: transfertypes.FungibleTokenPacketData{
-				Denom:    atomTrace,
-				Amount:   stakeAmount.Add(sdkmath.NewInt(100000)).String(), // greater than balance
-				Receiver: liquidStakerOnStride.String(),
-			},
-			expectedError: "failed to liquid stake",
+			name:              "failed to liquid stake",
+			enabled:           true,
+			liquidStakeDenom:  atom,
+			liquidStakeAmount: stakeAmount.Add(sdkmath.NewInt(100000)).String(), // greater than balance
+			expectedError:     "failed to liquid stake",
 		},
 		{
 			// Failed to send transfer during forwarding step
 			// Invoked by specifying a non-existent channel ID
-			name:             "failed to forward transfer",
-			enabled:          true,
-			liquidStakeDenom: atom,
-			transferMetadata: transfertypes.FungibleTokenPacketData{
-				Denom:    atomTrace,
-				Amount:   stakeAmount.String(),
-				Receiver: liquidStakerOnStride.String(),
-			},
+			name:              "failed to forward transfer",
+			enabled:           true,
+			liquidStakeDenom:  atom,
+			liquidStakeAmount: stakeAmount.String(),
 			autopilotMetadata: types.StakeibcPacketMetadata{
 				IbcReceiver:     forwardRecipientOnHost,
 				TransferChannel: "channel-100", // does not exist
@@ -291,19 +235,30 @@ func (s *KeeperTestSuite) TestTryLiquidStake() {
 
 	for _, tc := range testCases {
 		s.Run(tc.name, func() {
-			if tc.strideToHostChannelId == "" {
-				tc.strideToHostChannelId = ibctesting.FirstChannelID
+			// Fill in the default channel ID's if they weren't specified
+			if tc.hostZoneChannelID == "" {
+				tc.hostZoneChannelID = ibctesting.FirstChannelID
 			}
 			if tc.inboundTransferChannnelId == "" {
 				tc.inboundTransferChannnelId = ibctesting.FirstChannelID
 			}
 
-			s.SetupTest()
-			s.SetupAutopilotLiquidStake(tc.enabled, stakeAmount, tc.strideToHostChannelId, depositAddress, liquidStakerOnStride)
+			transferMetadata := transfertypes.FungibleTokenPacketData{
+				Denom:    denomTraces[tc.liquidStakeDenom],
+				Amount:   tc.liquidStakeAmount,
+				Receiver: liquidStakerOnStride.String(),
+			}
+			packet := channeltypes.Packet{
+				SourcePort:         transfertypes.PortID,
+				SourceChannel:      ibctesting.FirstChannelID,
+				DestinationPort:    transfertypes.PortID,
+				DestinationChannel: tc.inboundTransferChannnelId,
+			}
 
-			packet := basePacket
-			packet.DestinationChannel = tc.inboundTransferChannnelId
-			err := s.App.AutopilotKeeper.TryLiquidStaking(s.Ctx, packet, tc.transferMetadata, tc.autopilotMetadata)
+			s.SetupTest()
+			s.SetupAutopilotLiquidStake(tc.enabled, stakeAmount, tc.hostZoneChannelID, depositAddress, liquidStakerOnStride)
+
+			err := s.App.AutopilotKeeper.TryLiquidStaking(s.Ctx, packet, transferMetadata, tc.autopilotMetadata)
 
 			if tc.expectedError == "" {
 				s.Require().NoError(err, "%s - no error expected when attempting liquid stake", tc.name)
@@ -311,8 +266,8 @@ func (s *KeeperTestSuite) TestTryLiquidStake() {
 				// If there was a forwarding step, the stTokens will end up in the escrow account
 				// Otherwise, they'll be in the liquid staker's account
 				stTokenRecipient := liquidStakerOnStride
-				if tc.forwardChannelId != "" {
-					escrowAddress := transfertypes.GetEscrowAddress(transfertypes.PortID, tc.forwardChannelId)
+				if tc.expectedForwardChannelId != "" {
+					escrowAddress := transfertypes.GetEscrowAddress(transfertypes.PortID, tc.expectedForwardChannelId)
 					stTokenRecipient = escrowAddress
 				}
 
@@ -325,9 +280,9 @@ func (s *KeeperTestSuite) TestTryLiquidStake() {
 				s.Require().Equal(stakeAmount.Int64(), recipientBalance.Amount.Int64(), "%s - st token recipient balance", tc.name)
 
 				// If there was a forwarding step, confirm the fallback address was stored
-				if tc.forwardChannelId != "" {
-					expectedFallbackAddress := tc.transferMetadata.Receiver
-					address, found := s.App.AutopilotKeeper.GetTransferFallbackAddress(s.Ctx, tc.forwardChannelId, 1)
+				if tc.expectedForwardChannelId != "" {
+					expectedFallbackAddress := transferMetadata.Receiver
+					address, found := s.App.AutopilotKeeper.GetTransferFallbackAddress(s.Ctx, tc.expectedForwardChannelId, 1)
 					s.Require().True(found, "%s - fallback address should have been found", tc.name)
 					s.Require().Equal(expectedFallbackAddress, address, "%s - fallback address", tc.name)
 				}
