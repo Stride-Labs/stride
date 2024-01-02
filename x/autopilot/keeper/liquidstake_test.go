@@ -90,6 +90,47 @@ func (s *KeeperTestSuite) SetupAutopilotLiquidStake(
 	s.FundAccount(liquidStaker, sdk.NewCoin(ibcDenom, stakeAmount))
 }
 
+func (s *KeeperTestSuite) CheckLiquidStakeSucceeded(
+	liquidStakeAmount sdkmath.Int,
+	nativeDenom string,
+	staker sdk.AccAddress,
+	depositAddress sdk.AccAddress,
+	strideToHostChannelId string,
+	expectedForwardChannelId string,
+	originalReceiver string,
+) {
+	// If there was a forwarding step, the stTokens will end up in the escrow account
+	// Otherwise, they'll be in the liquid staker's account
+	stTokenRecipient := staker
+	if expectedForwardChannelId != "" {
+		escrowAddress := transfertypes.GetEscrowAddress(transfertypes.PortID, expectedForwardChannelId)
+		stTokenRecipient = escrowAddress
+	}
+
+	prefixedNativeDenom := transfertypes.GetPrefixedDenom(transfertypes.PortID, strideToHostChannelId, HostDenom)
+	nativeIBCDenom := transfertypes.ParseDenomTrace(prefixedNativeDenom).IBCDenom()
+
+	// Confirm the liquid staker has lost his native tokens
+	stakerBalance := s.App.BankKeeper.GetBalance(s.Ctx, staker, nativeIBCDenom)
+	s.Require().Zero(stakerBalance.Amount.Int64(), "liquid staker should have lost host tokens")
+
+	// Confirm the deposit address now has the native tokens
+	depositBalance := s.App.BankKeeper.GetBalance(s.Ctx, depositAddress, nativeIBCDenom)
+	s.Require().Equal(liquidStakeAmount.Int64(), depositBalance.Amount.Int64(), "deposit address should have gained host tokens")
+
+	// Confirm the stToken's were minted and sent to the recipient
+	recipientBalance := s.App.BankKeeper.GetBalance(s.Ctx, stTokenRecipient, "st"+nativeDenom)
+	s.Require().Equal(liquidStakeAmount.Int64(), recipientBalance.Amount.Int64(), "st token recipient balance")
+
+	// If there was a forwarding step, confirm the fallback address was stored
+	if expectedForwardChannelId != "" {
+		expectedFallbackAddress := originalReceiver
+		address, found := s.App.AutopilotKeeper.GetTransferFallbackAddress(s.Ctx, expectedForwardChannelId, 1)
+		s.Require().True(found, "fallback address should have been found")
+		s.Require().Equal(expectedFallbackAddress, address, "fallback address")
+	}
+}
+
 func (s *KeeperTestSuite) TestTryLiquidStake() {
 	s.CreateTransferChannel(HostChainId)
 
@@ -262,30 +303,15 @@ func (s *KeeperTestSuite) TestTryLiquidStake() {
 
 			if tc.expectedError == "" {
 				s.Require().NoError(err, "%s - no error expected when attempting liquid stake", tc.name)
-
-				// If there was a forwarding step, the stTokens will end up in the escrow account
-				// Otherwise, they'll be in the liquid staker's account
-				stTokenRecipient := liquidStakerOnStride
-				if tc.expectedForwardChannelId != "" {
-					escrowAddress := transfertypes.GetEscrowAddress(transfertypes.PortID, tc.expectedForwardChannelId)
-					stTokenRecipient = escrowAddress
-				}
-
-				// Confirm the liquid staker has lost his native tokens
-				liquidStakerBalance := s.App.BankKeeper.GetBalance(s.Ctx, liquidStakerOnStride, tc.liquidStakeDenom)
-				s.Require().Zero(liquidStakerBalance.Amount.Int64(), "%s - liquid staker should have lost host tokens", tc.name)
-
-				// Confirm the stToken's were minted and sent to the recipient
-				recipientBalance := s.App.BankKeeper.GetBalance(s.Ctx, stTokenRecipient, "st"+tc.liquidStakeDenom)
-				s.Require().Equal(stakeAmount.Int64(), recipientBalance.Amount.Int64(), "%s - st token recipient balance", tc.name)
-
-				// If there was a forwarding step, confirm the fallback address was stored
-				if tc.expectedForwardChannelId != "" {
-					expectedFallbackAddress := transferMetadata.Receiver
-					address, found := s.App.AutopilotKeeper.GetTransferFallbackAddress(s.Ctx, tc.expectedForwardChannelId, 1)
-					s.Require().True(found, "%s - fallback address should have been found", tc.name)
-					s.Require().Equal(expectedFallbackAddress, address, "%s - fallback address", tc.name)
-				}
+				s.CheckLiquidStakeSucceeded(
+					stakeAmount,
+					tc.liquidStakeDenom,
+					liquidStakerOnStride,
+					depositAddress,
+					tc.hostZoneChannelID,
+					tc.expectedForwardChannelId,
+					transferMetadata.Receiver,
+				)
 			} else {
 				s.Require().ErrorContains(err, tc.expectedError, tc.name)
 			}
@@ -293,7 +319,7 @@ func (s *KeeperTestSuite) TestTryLiquidStake() {
 	}
 }
 
-func (s *KeeperTestSuite) TestLiquidStakeOnRecvPacket() {
+func (s *KeeperTestSuite) TestOnRecvPacket_LiquidStake() {
 	now := time.Now()
 
 	packet := channeltypes.Packet{
@@ -326,6 +352,16 @@ func (s *KeeperTestSuite) TestLiquidStakeOnRecvPacket() {
 		expSuccess       bool
 		expLiquidStake   bool
 	}{
+		// successful liquid stake with metadata in receiver
+		// successful liquid stake with metadata in the memo
+		// successful liquid stake and forward to default host
+		// successful liquid stake and forward to custom transfer channel
+
+		// failed because param not enabled
+		// failed because invalid stride address
+		// failed because not a host denom
+		// failed because transfer channel does not exist
+
 		{ // params not enabled
 			forwardingActive: false,
 			packetData: transfertypes.FungibleTokenPacketData{
