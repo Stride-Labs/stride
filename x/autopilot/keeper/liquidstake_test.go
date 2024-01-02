@@ -10,6 +10,7 @@ import (
 	transfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
 	clienttypes "github.com/cosmos/ibc-go/v7/modules/core/02-client/types"
 	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
+	ibctesting "github.com/cosmos/ibc-go/v7/testing"
 
 	recordsmodule "github.com/Stride-Labs/stride/v16/x/records"
 
@@ -33,8 +34,12 @@ func getStakeibcPacketMetadata(address, action string) string {
 		}`, address, action)
 }
 
-// Helper function to mock out all the state needed to test liquid stake
-// The state is mocked out with an atom host zone
+// Helper function to mock out all the state needed to test autopilot liquid stake
+// A transfer channel-0 is created, and the state is mocked out with an atom host zone
+//
+// Note: The testing framework is limited to one transfer channel per test, which is channel-0.
+// If there's an outbound transfer, it must be on channel-0. So when testing a transfer along
+// a non-host-zone channel, a different channel ID must be passed to this function
 func (s *KeeperTestSuite) SetupAutopilotLiquidStake(
 	featureEnabled bool,
 	stakeAmount sdkmath.Int,
@@ -42,6 +47,11 @@ func (s *KeeperTestSuite) SetupAutopilotLiquidStake(
 	depositAddress sdk.AccAddress,
 	liquidStaker sdk.AccAddress,
 ) {
+	// Create a transfer channel on channel-0 for the outbound transfer
+	// Note: We pass a dummy chain ID cause all that matters here is
+	// that channel-0 exists, it does not have to line up with the host zone
+	s.CreateTransferChannel("chain-0")
+
 	// Set whether the feature is active
 	params := s.App.AutopilotKeeper.GetParams(s.Ctx)
 	params.StakeibcActive = featureEnabled
@@ -91,13 +101,12 @@ func (s *KeeperTestSuite) TestTryLiquidStake() {
 
 	strideToHubChannel := "channel-0"
 	hubToStrideChannel := "channel-1"
-	strideToOsmoChannel := "channel-2"
 
-	packet := channeltypes.Packet{
-		SourcePort:         transfertypes.PortID,
-		SourceChannel:      hubToStrideChannel,
-		DestinationPort:    transfertypes.PortID,
-		DestinationChannel: strideToHubChannel,
+	// The destination channel will be specified later by the test case
+	basePacket := channeltypes.Packet{
+		SourcePort:      transfertypes.PortID,
+		SourceChannel:   hubToStrideChannel,
+		DestinationPort: transfertypes.PortID,
 	}
 
 	// Building expected denom traces for the transfer packet data - this is all assuming the packet has been sent to stride
@@ -116,13 +125,15 @@ func (s *KeeperTestSuite) TestTryLiquidStake() {
 	osmoTrace := osmo
 
 	testCases := []struct {
-		name              string
-		enabled           bool
-		liquidStakeDenom  string
-		transferMetadata  transfertypes.FungibleTokenPacketData
-		autopilotMetadata types.StakeibcPacketMetadata
-		forwardChannelID  string // also used to dictate whether there's a forwarding step
-		expectedError     string
+		name                      string
+		enabled                   bool
+		liquidStakeDenom          string
+		transferMetadata          transfertypes.FungibleTokenPacketData
+		autopilotMetadata         types.StakeibcPacketMetadata
+		inboundTransferChannnelId string // defaults to channel-0 if not specified
+		strideToHostChannelId     string // defaults to channel-0 if not specified
+		forwardChannelId          string // also used to dictate whether there's a forwarding step
+		expectedError             string
 	}{
 		{
 			// Normal autopilot liquid stake with no transfer
@@ -148,7 +159,7 @@ func (s *KeeperTestSuite) TestTryLiquidStake() {
 			autopilotMetadata: types.StakeibcPacketMetadata{
 				IbcReceiver: forwardRecipientOnHost,
 			},
-			forwardChannelID: strideToHubChannel, // default for atom
+			forwardChannelId: strideToHubChannel, // default for atom
 		},
 		{
 			// Liquid stake and forward, using a custom channel ID
@@ -163,9 +174,11 @@ func (s *KeeperTestSuite) TestTryLiquidStake() {
 			autopilotMetadata: types.StakeibcPacketMetadata{
 				Action:          types.LiquidStake,
 				IbcReceiver:     forwardRecipientOnHost,
-				TransferChannel: strideToOsmoChannel,
+				TransferChannel: strideToHubChannel, // custom channel (different than host channel)
 			},
-			forwardChannelID: strideToOsmoChannel, // determined by autopilot metadata
+			inboundTransferChannnelId: hubToStrideChannel,
+			strideToHostChannelId:     hubToStrideChannel,
+			forwardChannelId:          strideToHubChannel, // custom channel, determined by autopilot metadata
 		},
 		{
 			// Error caused by autopilot disabled
@@ -218,6 +231,7 @@ func (s *KeeperTestSuite) TestTryLiquidStake() {
 		},
 		{
 			// Error caused by a mismatched IBC denom
+			// Invoked by specifiying a different host zone channel ID
 			name:             "ibc denom does not match host zone",
 			enabled:          true,
 			liquidStakeDenom: atom,
@@ -226,7 +240,9 @@ func (s *KeeperTestSuite) TestTryLiquidStake() {
 				Amount:   stakeAmount.String(),
 				Receiver: liquidStakerOnStride.String(),
 			},
-			expectedError: "is not equal to host zone ibc denom",
+			inboundTransferChannnelId: strideToHubChannel,
+			strideToHostChannelId:     hubToStrideChannel,
+			expectedError:             "is not equal to host zone ibc denom",
 		},
 		{
 			// Error caused by a failed validate basic before the liquid stake
@@ -275,19 +291,28 @@ func (s *KeeperTestSuite) TestTryLiquidStake() {
 
 	for _, tc := range testCases {
 		s.Run(tc.name, func() {
-			s.SetupTest()
-			s.CreateTransferChannel(HostChainId)
-			s.SetupAutopilotLiquidStake(tc.enabled, stakeAmount, strideToHubChannel, depositAddress, liquidStakerOnStride)
+			if tc.strideToHostChannelId == "" {
+				tc.strideToHostChannelId = ibctesting.FirstChannelID
+			}
+			if tc.inboundTransferChannnelId == "" {
+				tc.inboundTransferChannnelId = ibctesting.FirstChannelID
+			}
 
+			s.SetupTest()
+			s.SetupAutopilotLiquidStake(tc.enabled, stakeAmount, tc.strideToHostChannelId, depositAddress, liquidStakerOnStride)
+
+			packet := basePacket
+			packet.DestinationChannel = tc.inboundTransferChannnelId
 			err := s.App.AutopilotKeeper.TryLiquidStaking(s.Ctx, packet, tc.transferMetadata, tc.autopilotMetadata)
+
 			if tc.expectedError == "" {
 				s.Require().NoError(err, "%s - no error expected when attempting liquid stake", tc.name)
 
 				// If there was a forwarding step, the stTokens will end up in the escrow account
 				// Otherwise, they'll be in the liquid staker's account
 				stTokenRecipient := liquidStakerOnStride
-				if tc.forwardChannelID != "" {
-					escrowAddress := transfertypes.GetEscrowAddress(transfertypes.PortID, tc.forwardChannelID)
+				if tc.forwardChannelId != "" {
+					escrowAddress := transfertypes.GetEscrowAddress(transfertypes.PortID, tc.forwardChannelId)
 					stTokenRecipient = escrowAddress
 				}
 
@@ -300,9 +325,9 @@ func (s *KeeperTestSuite) TestTryLiquidStake() {
 				s.Require().Equal(stakeAmount.Int64(), recipientBalance.Amount.Int64(), "%s - st token recipient balance", tc.name)
 
 				// If there was a forwarding step, confirm the fallback address was stored
-				if tc.forwardChannelID != "" {
+				if tc.forwardChannelId != "" {
 					expectedFallbackAddress := tc.transferMetadata.Receiver
-					address, found := s.App.AutopilotKeeper.GetTransferFallbackAddress(s.Ctx, packet.DestinationChannel, 1)
+					address, found := s.App.AutopilotKeeper.GetTransferFallbackAddress(s.Ctx, tc.forwardChannelId, 1)
 					s.Require().True(found, "%s - fallback address should have been found", tc.name)
 					s.Require().Equal(expectedFallbackAddress, address, "%s - fallback address", tc.name)
 				}
