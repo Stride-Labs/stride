@@ -293,7 +293,7 @@ func (s *KeeperTestSuite) TestTryLiquidStake() {
 	}
 }
 
-func (suite *KeeperTestSuite) TestLiquidStakeOnRecvPacket() {
+func (s *KeeperTestSuite) TestLiquidStakeOnRecvPacket() {
 	now := time.Now()
 
 	packet := channeltypes.Packet{
@@ -441,24 +441,24 @@ func (suite *KeeperTestSuite) TestLiquidStakeOnRecvPacket() {
 	}
 
 	for i, tc := range testCases {
-		suite.Run(fmt.Sprintf("Case %d", i), func() {
+		s.Run(fmt.Sprintf("Case %d", i), func() {
 			packet.DestinationChannel = tc.destChannel
 			packet.Data = transfertypes.ModuleCdc.MustMarshalJSON(&tc.packetData)
 
-			suite.SetupTest() // reset
-			ctx := suite.Ctx
+			s.SetupTest() // reset
+			ctx := s.Ctx
 
-			suite.App.AutopilotKeeper.SetParams(ctx, types.Params{StakeibcActive: tc.forwardingActive})
+			s.App.AutopilotKeeper.SetParams(ctx, types.Params{StakeibcActive: tc.forwardingActive})
 
 			// set epoch tracker for env
-			suite.App.StakeibcKeeper.SetEpochTracker(ctx, stakeibctypes.EpochTracker{
+			s.App.StakeibcKeeper.SetEpochTracker(ctx, stakeibctypes.EpochTracker{
 				EpochIdentifier:    epochtypes.STRIDE_EPOCH,
 				EpochNumber:        1,
 				NextEpochStartTime: uint64(now.Unix()),
 				Duration:           43200,
 			})
 			// set deposit record for env
-			suite.App.RecordsKeeper.SetDepositRecord(ctx, recordstypes.DepositRecord{
+			s.App.RecordsKeeper.SetDepositRecord(ctx, recordstypes.DepositRecord{
 				Id:                 1,
 				Amount:             sdk.NewInt(100),
 				Denom:              atomIbcDenom,
@@ -468,7 +468,7 @@ func (suite *KeeperTestSuite) TestLiquidStakeOnRecvPacket() {
 				Source:             recordstypes.DepositRecord_STRIDE,
 			})
 			// set host zone for env
-			suite.App.StakeibcKeeper.SetHostZone(ctx, stakeibctypes.HostZone{
+			s.App.StakeibcKeeper.SetHostZone(ctx, stakeibctypes.HostZone{
 				ChainId:           "hub-1",
 				ConnectionId:      "connection-0",
 				Bech32Prefix:      "cosmos",
@@ -481,36 +481,36 @@ func (suite *KeeperTestSuite) TestLiquidStakeOnRecvPacket() {
 
 			// mint coins to be spent on liquid staking
 			coins := sdk.Coins{sdk.NewInt64Coin(tc.recvDenom, 1000000)}
-			err := suite.App.BankKeeper.MintCoins(ctx, minttypes.ModuleName, coins)
-			suite.Require().NoError(err)
-			err = suite.App.BankKeeper.SendCoinsFromModuleToAccount(ctx, minttypes.ModuleName, addr1, coins)
-			suite.Require().NoError(err)
+			err := s.App.BankKeeper.MintCoins(ctx, minttypes.ModuleName, coins)
+			s.Require().NoError(err)
+			err = s.App.BankKeeper.SendCoinsFromModuleToAccount(ctx, minttypes.ModuleName, addr1, coins)
+			s.Require().NoError(err)
 
-			transferIBCModule := transfer.NewIBCModule(suite.App.TransferKeeper)
-			recordsStack := recordsmodule.NewIBCModule(suite.App.RecordsKeeper, transferIBCModule)
-			routerIBCModule := autopilot.NewIBCModule(suite.App.AutopilotKeeper, recordsStack)
+			transferIBCModule := transfer.NewIBCModule(s.App.TransferKeeper)
+			recordsStack := recordsmodule.NewIBCModule(s.App.RecordsKeeper, transferIBCModule)
+			routerIBCModule := autopilot.NewIBCModule(s.App.AutopilotKeeper, recordsStack)
 			ack := routerIBCModule.OnRecvPacket(
 				ctx,
 				packet,
 				addr1,
 			)
 			if tc.expSuccess {
-				suite.Require().True(ack.Success(), "ack should be successful - ack: %+v", string(ack.Acknowledgement()))
+				s.Require().True(ack.Success(), "ack should be successful - ack: %+v", string(ack.Acknowledgement()))
 
 				// Check funds were transferred
-				coin := suite.App.BankKeeper.GetBalance(suite.Ctx, addr1, tc.recvDenom)
-				suite.Require().Equal("2000000", coin.Amount.String(), "balance should have updated after successful transfer")
+				coin := s.App.BankKeeper.GetBalance(s.Ctx, addr1, tc.recvDenom)
+				s.Require().Equal("2000000", coin.Amount.String(), "balance should have updated after successful transfer")
 
 				// check minted balance for liquid staking
-				allBalance := suite.App.BankKeeper.GetAllBalances(ctx, addr1)
-				liquidBalance := suite.App.BankKeeper.GetBalance(ctx, addr1, "stuatom")
+				allBalance := s.App.BankKeeper.GetAllBalances(ctx, addr1)
+				liquidBalance := s.App.BankKeeper.GetBalance(ctx, addr1, "stuatom")
 				if tc.expLiquidStake {
-					suite.Require().True(liquidBalance.Amount.IsPositive(), "liquid balance should be positive but was %s", allBalance.String())
+					s.Require().True(liquidBalance.Amount.IsPositive(), "liquid balance should be positive but was %s", allBalance.String())
 				} else {
-					suite.Require().True(liquidBalance.Amount.IsZero(), "liquid balance should be zero but was %s", allBalance.String())
+					s.Require().True(liquidBalance.Amount.IsZero(), "liquid balance should be zero but was %s", allBalance.String())
 				}
 			} else {
-				suite.Require().False(ack.Success(), "ack should have failed - ack: %+v", string(ack.Acknowledgement()))
+				s.Require().False(ack.Success(), "ack should have failed - ack: %+v", string(ack.Acknowledgement()))
 			}
 		})
 	}
