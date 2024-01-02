@@ -47,10 +47,18 @@ func EpochTrackerKey(epochIdentifier string) []byte {
 	return key
 }
 
+// Definition for the store key format based on tradeRoute start and end denoms
+func TradeRouteKeyFromDenoms(rewardDenom, hostDenom string) (key []byte) {
+	return []byte(rewardDenom + "-" + hostDenom)
+}
+
 const (
 	// Host zone keys prefix the HostZone structs
 	HostZoneKey = "HostZone-value-"
 
 	// EpochTrackerKeyPrefix is the prefix to retrieve all EpochTracker
 	EpochTrackerKeyPrefix = "EpochTracker/value/"
+
+	// TradeRoute keys prefix to retrieve all TradeZones
+	TradeRouteKeyPrefix = "TradeRoute-value-"
 )
