@@ -7,7 +7,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/ibc-go/v7/modules/apps/transfer"
 	transfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
-	clienttypes "github.com/cosmos/ibc-go/v7/modules/core/02-client/types"
 	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
 	ibctesting "github.com/cosmos/ibc-go/v7/testing"
 
@@ -323,31 +322,18 @@ func (s *KeeperTestSuite) TestOnRecvPacket_LiquidStake() {
 	stakeAmount := sdk.NewInt(1000000)
 
 	packet := channeltypes.Packet{
-		Sequence:           1,
-		SourcePort:         "transfer",
-		SourceChannel:      "channel-0",
-		DestinationPort:    "transfer",
-		DestinationChannel: "channel-0",
-		Data:               []byte{},
-		TimeoutHeight:      clienttypes.Height{},
-		TimeoutTimestamp:   0,
+		SourcePort:      "transfer",
+		SourceChannel:   "channel-0",
+		DestinationPort: "transfer",
 	}
 
-	atomHostDenom := "uatom"
-	prefixedDenom := transfertypes.GetPrefixedDenom(packet.GetDestPort(), packet.GetDestChannel(), atomHostDenom)
-	atomIbcDenom := transfertypes.ParseDenomTrace(prefixedDenom).IBCDenom()
-	prefixedDenom2 := transfertypes.GetPrefixedDenom(packet.GetDestPort(), "channel-1000", atomHostDenom)
-	atomIbcDenom2 := transfertypes.ParseDenomTrace(prefixedDenom2).IBCDenom()
-
-	strdDenom := "ustrd"
-	prefixedDenom = transfertypes.GetPrefixedDenom(packet.GetSourcePort(), packet.GetSourceChannel(), strdDenom)
-	strdIbcDenom := transfertypes.ParseDenomTrace(prefixedDenom).IBCDenom()
-
 	testCases := []struct {
-		name           string
-		enabled        bool
-		recvDenom      string
-		packetData     transfertypes.FungibleTokenPacketData
+		name             string
+		enabled          bool
+		liquidStakeDenom string
+		transferReceiver string
+		transferMemo     string
+
 		destChannel    string
 		expSuccess     bool
 		expLiquidStake bool
@@ -363,124 +349,79 @@ func (s *KeeperTestSuite) TestOnRecvPacket_LiquidStake() {
 		// failed because transfer channel does not exist
 
 		{
-			name:    "params not enabled",
-			enabled: false,
-			packetData: transfertypes.FungibleTokenPacketData{
-				Denom:    "uatom",
-				Amount:   "1000000",
-				Sender:   "cosmos16plylpsgxechajltx9yeseqexzdzut9g8vla4k",
-				Receiver: getStakeibcPacketMetadata(liquidStakerOnStride.String(), "LiquidStake"),
-				Memo:     "",
-			},
-			destChannel:    "channel-0",
-			recvDenom:      atomIbcDenom,
-			expSuccess:     false,
-			expLiquidStake: false,
+			name:             "params not enabled",
+			enabled:          false,
+			liquidStakeDenom: "uatom",
+			transferReceiver: getStakeibcPacketMetadata(liquidStakerOnStride.String(), "LiquidStake"),
+			transferMemo:     "",
+			destChannel:      "channel-0",
+			expSuccess:       false,
 		},
 		{
-			name:    "strd denom",
-			enabled: true,
-			packetData: transfertypes.FungibleTokenPacketData{
-				Denom:    strdIbcDenom,
-				Amount:   "1000000",
-				Sender:   "cosmos16plylpsgxechajltx9yeseqexzdzut9g8vla4k",
-				Receiver: getStakeibcPacketMetadata(liquidStakerOnStride.String(), "LiquidStake"),
-				Memo:     "",
-			},
-			destChannel:    "channel-0",
-			recvDenom:      "ustrd",
-			expSuccess:     false,
-			expLiquidStake: false,
+			name:             "uosmo denom",
+			enabled:          true,
+			liquidStakeDenom: "uosmo",
+			transferReceiver: getStakeibcPacketMetadata(liquidStakerOnStride.String(), "LiquidStake"),
+			transferMemo:     "",
+			destChannel:      "channel-0",
+			expSuccess:       false,
 		},
 		{
-			name:    "all okay",
-			enabled: true,
-			packetData: transfertypes.FungibleTokenPacketData{
-				Denom:    "uatom",
-				Amount:   "1000000",
-				Sender:   "cosmos16plylpsgxechajltx9yeseqexzdzut9g8vla4k",
-				Receiver: getStakeibcPacketMetadata(liquidStakerOnStride.String(), "LiquidStake"),
-				Memo:     "",
-			},
-			destChannel:    "channel-0",
-			recvDenom:      atomIbcDenom,
-			expSuccess:     true,
-			expLiquidStake: true,
+			name:             "all okay",
+			enabled:          true,
+			liquidStakeDenom: "uatom",
+			transferReceiver: getStakeibcPacketMetadata(liquidStakerOnStride.String(), "LiquidStake"),
+			transferMemo:     "",
+			destChannel:      "channel-0",
+			expSuccess:       true,
+			expLiquidStake:   true,
 		},
 		{
-			name:    "ibc denom uatom from different channel",
-			enabled: true,
-			packetData: transfertypes.FungibleTokenPacketData{
-				Denom:    "uatom",
-				Amount:   "1000000",
-				Sender:   "cosmos16plylpsgxechajltx9yeseqexzdzut9g8vla4k",
-				Receiver: getStakeibcPacketMetadata(liquidStakerOnStride.String(), "LiquidStake"),
-				Memo:     "",
-			},
-			destChannel:    "channel-1000",
-			recvDenom:      atomIbcDenom2,
-			expSuccess:     false,
-			expLiquidStake: false,
+			name:             "ibc denom uatom from different channel",
+			enabled:          true,
+			liquidStakeDenom: "uatom",
+			transferReceiver: getStakeibcPacketMetadata(liquidStakerOnStride.String(), "LiquidStake"),
+			transferMemo:     "",
+			destChannel:      "channel-1000",
+			expSuccess:       false,
 		},
 		{
-			name:    "all okay with memo liquidstaking since ibc-go v5.1.0",
-			enabled: true,
-			packetData: transfertypes.FungibleTokenPacketData{
-				Denom:    "uatom",
-				Amount:   "1000000",
-				Sender:   "cosmos16plylpsgxechajltx9yeseqexzdzut9g8vla4k",
-				Receiver: liquidStakerOnStride.String(),
-				Memo:     getStakeibcPacketMetadata(liquidStakerOnStride.String(), "LiquidStake"),
-			},
-			destChannel:    "channel-0",
-			recvDenom:      atomIbcDenom,
-			expSuccess:     true,
-			expLiquidStake: true,
+			name:             "all okay with memo liquidstaking since ibc-go v5.1.0",
+			enabled:          true,
+			liquidStakeDenom: "uatom",
+			transferReceiver: liquidStakerOnStride.String(),
+			transferMemo:     getStakeibcPacketMetadata(liquidStakerOnStride.String(), "LiquidStake"),
+			destChannel:      "channel-0",
+			expSuccess:       true,
+			expLiquidStake:   true,
 		},
 		{
-			name:    "all okay with no functional part",
-			enabled: true,
-			packetData: transfertypes.FungibleTokenPacketData{
-				Denom:    "uatom",
-				Amount:   "1000000",
-				Sender:   "cosmos16plylpsgxechajltx9yeseqexzdzut9g8vla4k",
-				Receiver: liquidStakerOnStride.String(),
-				Memo:     "",
-			},
-			destChannel:    "channel-0",
-			recvDenom:      atomIbcDenom,
-			expSuccess:     true,
-			expLiquidStake: false,
+			name:             "all okay with no functional part",
+			enabled:          true,
+			liquidStakeDenom: "uatom",
+			transferReceiver: liquidStakerOnStride.String(),
+			transferMemo:     "",
+			destChannel:      "channel-0",
+			expSuccess:       true,
+			expLiquidStake:   false,
 		},
 		{
-			name:    "invalid stride address (receiver)",
-			enabled: true,
-			packetData: transfertypes.FungibleTokenPacketData{
-				Denom:    "uatom",
-				Amount:   "1000000",
-				Sender:   "cosmos16plylpsgxechajltx9yeseqexzdzut9g8vla4k",
-				Receiver: getStakeibcPacketMetadata("invalid_address", "LiquidStake"),
-				Memo:     "",
-			},
-			destChannel:    "channel-0",
-			recvDenom:      atomIbcDenom,
-			expSuccess:     false,
-			expLiquidStake: false,
+			name:             "invalid stride address (receiver)",
+			enabled:          true,
+			liquidStakeDenom: "uatom",
+			transferReceiver: getStakeibcPacketMetadata("invalid_address", "LiquidStake"),
+			transferMemo:     "",
+			destChannel:      "channel-0",
+			expSuccess:       false,
 		},
 		{
-			name:    "invalid stride address (memo)",
-			enabled: true,
-			packetData: transfertypes.FungibleTokenPacketData{
-				Denom:    "uatom",
-				Amount:   "1000000",
-				Sender:   "cosmos16plylpsgxechajltx9yeseqexzdzut9g8vla4k",
-				Receiver: liquidStakerOnStride.String(),
-				Memo:     getStakeibcPacketMetadata("invalid_address", "LiquidStake"),
-			},
-			destChannel:    "channel-0",
-			recvDenom:      atomIbcDenom,
-			expSuccess:     false,
-			expLiquidStake: false,
+			name:             "invalid stride address (memo)",
+			enabled:          true,
+			liquidStakeDenom: "uatom",
+			transferReceiver: liquidStakerOnStride.String(),
+			transferMemo:     getStakeibcPacketMetadata("invalid_address", "LiquidStake"),
+			destChannel:      "channel-0",
+			expSuccess:       false,
 		},
 	}
 
@@ -490,8 +431,16 @@ func (s *KeeperTestSuite) TestOnRecvPacket_LiquidStake() {
 
 			s.SetupAutopilotLiquidStake(tc.enabled, stakeAmount, "channel-0", depositAddress, liquidStakerOnStride, false)
 
+			transferMetadata := transfertypes.FungibleTokenPacketData{
+				Sender:   HostAddress,
+				Receiver: tc.transferReceiver,
+				Amount:   stakeAmount.String(),
+				Memo:     tc.transferMemo,
+				Denom:    tc.liquidStakeDenom, // this is actually the denom trace, but all tests are non-native tokens so the denom is the same
+			}
+
 			packet.DestinationChannel = tc.destChannel
-			packet.Data = transfertypes.ModuleCdc.MustMarshalJSON(&tc.packetData)
+			packet.Data = transfertypes.ModuleCdc.MustMarshalJSON(&transferMetadata)
 
 			transferIBCModule := transfer.NewIBCModule(s.App.TransferKeeper)
 			recordsStack := recordsmodule.NewIBCModule(s.App.RecordsKeeper, transferIBCModule)
@@ -499,22 +448,21 @@ func (s *KeeperTestSuite) TestOnRecvPacket_LiquidStake() {
 			ack := routerIBCModule.OnRecvPacket(
 				s.Ctx,
 				packet,
-				liquidStakerOnStride,
+				s.TestAccs[2],
 			)
 
 			if tc.expSuccess {
 				s.Require().True(ack.Success(), "ack should be successful - ack: %+v", string(ack.Acknowledgement()))
-
-				// check minted balance for liquid staking
-				allBalance := s.App.BankKeeper.GetAllBalances(s.Ctx, liquidStakerOnStride)
-				nativeBalance := s.App.BankKeeper.GetBalance(s.Ctx, liquidStakerOnStride, tc.recvDenom)
-				liquidBalance := s.App.BankKeeper.GetBalance(s.Ctx, liquidStakerOnStride, "stuatom")
 				if tc.expLiquidStake {
-					s.Require().Zero(nativeBalance.Amount.Int64(), "balance should have updated after successful transfer")
-					s.Require().True(liquidBalance.Amount.IsPositive(), "liquid balance should be positive but was %s", allBalance.String())
-				} else {
-					s.Require().Equal(stakeAmount.Int64(), nativeBalance.Amount.Int64(), "balance should have updated after successful transfer")
-					s.Require().True(liquidBalance.Amount.IsZero(), "liquid balance should be zero but was %s", allBalance.String())
+					s.CheckLiquidStakeSucceeded(
+						stakeAmount,
+						tc.liquidStakeDenom,
+						liquidStakerOnStride,
+						depositAddress,
+						"channel-0",
+						"",
+						transferMetadata.Receiver,
+					)
 				}
 			} else {
 				s.Require().False(ack.Success(), "ack should have failed - ack: %+v", string(ack.Acknowledgement()))
