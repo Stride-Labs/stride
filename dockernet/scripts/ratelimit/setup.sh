@@ -65,61 +65,97 @@ setup_channel_value() {
     printf "\nLiquid staking juno...\n"
     $STRIDE_MAIN_CMD tx stakeibc liquid-stake ${INITIAL_CHANNEL_VALUE} ujuno --from ${STRIDE_VAL_PREFIX}1 -y | TRIM_TX
     sleep 5
+
+    printf "\nLiquid staking osmo...\n"
+    $STRIDE_MAIN_CMD tx stakeibc liquid-stake ${INITIAL_CHANNEL_VALUE} uosmo --from ${STRIDE_VAL_PREFIX}1 -y | TRIM_TX
+    sleep 5
+
+    printf "\nLiquid staking atom...\n"
+    $STRIDE_MAIN_CMD tx stakeibc liquid-stake ${INITIAL_CHANNEL_VALUE} uatom --from ${STRIDE_VAL_PREFIX}1 -y | TRIM_TX
+    sleep 5
 }
 
 setup_rate_limits() {
     print_header "ADDING RATE LIMITS"
         
-    # ustrd channel-2
-    echo "ustrd on Stride <> Osmo Channel:"
-    submit_proposal_and_vote add-rate-limit add_ustrd.json
-    sleep 10
-
-    # ibc/uatom channel-0
-    echo "uatom on Stride <> Gaia Channel:"
-    submit_proposal_and_vote add-rate-limit add_uatom.json
-    sleep 10
-
-    # ibc/ujuno channel-1
-    echo "ujuno on Stride <> Juno Channel:"
-    submit_proposal_and_vote add-rate-limit add_ujuno.json
-    sleep 10
-
-    # ibc/uosmo channel-2
-    echo "uosmo on Stride <> Osmo Channel:"
-    submit_proposal_and_vote add-rate-limit add_uosmo.json
+    # stuatom channel-0
+    echo "stujuno on Stride <> Gaia Channel:"
+    submit_proposal_and_vote add-rate-limit add_atom_rate_limit.json
     sleep 10
 
     # stujuno channel-2
-    echo "stujuno on Stride <> Osmo Channel:"
-    submit_proposal_and_vote add-rate-limit add_stujuno.json
-    sleep 10
-
-    # traveler juno channel-1
-    echo "traveler-ujuno on Stride <> Juno Channel:"
-    submit_proposal_and_vote add-rate-limit add_traveler_ujuno_on_juno.json
-    sleep 10
-
-    echo "traveler-ujuno on Stride <> Osmo Channel:"
-    # traveler juno channel-2
-    submit_proposal_and_vote add-rate-limit add_traveler_ujuno_on_osmo.json
+    echo "stuosmo on Stride <> Osmosis Channel:"
+    submit_proposal_and_vote add-rate-limit add_osmo_rate_limit.json
     sleep 40
+
+    # # ustrd channel-2
+    # echo "ustrd on Stride <> Osmo Channel:"
+    # submit_proposal_and_vote add-rate-limit add_ustrd.json
+    # sleep 10
+
+    # # ibc/uatom channel-0
+    # echo "uatom on Stride <> Gaia Channel:"
+    # submit_proposal_and_vote add-rate-limit add_uatom.json
+    # sleep 10
+
+    # # ibc/ujuno channel-1
+    # echo "ujuno on Stride <> Juno Channel:"
+    # submit_proposal_and_vote add-rate-limit add_ujuno.json
+    # sleep 10
+
+    # # ibc/uosmo channel-2
+    # echo "uosmo on Stride <> Osmo Channel:"
+    # submit_proposal_and_vote add-rate-limit add_uosmo.json
+    # sleep 10
+
+    # # stujuno channel-2
+    # echo "stujuno on Stride <> Osmo Channel:"
+    # submit_proposal_and_vote add-rate-limit add_stujuno.json
+    # sleep 10
+
+    # # traveler juno channel-1
+    # echo "traveler-ujuno on Stride <> Juno Channel:"
+    # submit_proposal_and_vote add-rate-limit add_traveler_ujuno_on_juno.json
+    # sleep 10
+
+    # echo "traveler-ujuno on Stride <> Osmo Channel:"
+    # # traveler juno channel-2
+    # submit_proposal_and_vote add-rate-limit add_traveler_ujuno_on_osmo.json
+    # sleep 40
 
     # Confirm all rate limits were added
     num_rate_limits=$($STRIDE_MAIN_CMD q ratelimit list-rate-limits | grep path | wc -l | xargs)
-    if [[ "$num_rate_limits" != "7" ]]; then 
+    if [[ "$num_rate_limits" != "2" ]]; then 
         echo "ERROR: Not all rate limits were added. Exiting."
         exit 1
     fi
 
-    # Confirm there are 4 rate limits on osmo (this is to test out the rate-limits-by-chain query)
-    num_rate_limits=$($STRIDE_MAIN_CMD q ratelimit rate-limits-by-chain OSMO | grep path | wc -l | xargs)
-    if [[ "$num_rate_limits" != "4" ]]; then 
-        echo "ERROR: OSMO should have 4 rate limits (it had: $num_rate_limits)"
-        exit 1
-    fi
+    # # Confirm there are 4 rate limits on osmo (this is to test out the rate-limits-by-chain query)
+    # num_rate_limits=$($STRIDE_MAIN_CMD q ratelimit rate-limits-by-chain OSMO | grep path | wc -l | xargs)
+    # if [[ "$num_rate_limits" != "4" ]]; then 
+    #     echo "ERROR: OSMO should have 4 rate limits (it had: $num_rate_limits)"
+    #     exit 1
+    # fi
 }
 
 setup_juno_osmo_channel
 setup_channel_value
 setup_rate_limits
+
+print_header "FILLING CAPACITY"
+
+# Fill atom capacity to 80%
+# Total Capacity = 10% of 1,000,000,000 = 100,000,000
+# 80% of capacity = 80% of 100,000,000 = 80,000,000
+# Remaining Capacity: 20,000,000 stuatom
+echo ">>> stuatom"
+$STRIDE_MAIN_CMD tx ibc-transfer transfer transfer channel-0 $(GAIA_ADDRESS) 80000000stuatom --from ${STRIDE_VAL_PREFIX}1 -y | TRIM_TX
+sleep 5
+
+# Fill osmo capacity to 95%
+# Total Capacity = 10% of 1,000,000,000 = 100,000,000
+# 95% of capacity = 95% of 100,000,000 = 95,000,000
+# Remaining Capacity: 5,000,000 stuosmo
+echo ">>> stuosmo"
+$STRIDE_MAIN_CMD tx ibc-transfer transfer transfer channel-2 $(OSMO_ADDRESS) 95000000stuosmo --from ${STRIDE_VAL_PREFIX}1 -y | TRIM_TX
+sleep 5
