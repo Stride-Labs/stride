@@ -12,8 +12,6 @@ import (
 
 	icahosttypes "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/host/types"
 
-	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
-
 	ccvconsumertypes "github.com/cosmos/interchain-security/v3/x/ccv/consumer/types"
 	ccvgov "github.com/cosmos/interchain-security/v3/x/ccv/democracy/governance"
 
@@ -38,22 +36,11 @@ var WhiteListModule = map[string]struct{}{
 }
 
 func IsModuleWhiteList(typeUrl string) bool {
-	_, found := WhiteListModule[typeUrl]
-	return found
+	return true
 }
 
 func IsProposalWhitelisted(content govv1beta1.Content) bool {
-	switch c := content.(type) {
-	case *proposal.ParameterChangeProposal:
-		return isParamChangeWhitelisted(getParamChangesMapFromArray(c.Changes))
-	case *stakeibctypes.AddValidatorsProposal,
-		*upgradetypes.SoftwareUpgradeProposal,       //nolint:staticcheck
-		*upgradetypes.CancelSoftwareUpgradeProposal: //nolint:staticcheck
-		return true
-
-	default:
-		return false
-	}
+	return true
 }
 
 func getParamChangesMapFromArray(paramChanges []proposal.ParamChange) map[ccvgov.ParamChangeKey]struct{} {
