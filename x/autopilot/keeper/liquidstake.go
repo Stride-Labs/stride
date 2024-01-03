@@ -77,7 +77,7 @@ func (k Keeper) RunLiquidStake(ctx sdk.Context, addr sdk.AccAddress, token sdk.C
 		msg,
 	)
 	if err != nil {
-		return errorsmod.Wrapf(err, err.Error())
+		return err
 	}
 
 	if packetMetadata.IbcReceiver == "" {
