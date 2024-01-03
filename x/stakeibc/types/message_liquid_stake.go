@@ -1,8 +1,6 @@
 package types
 
 import (
-	"strings"
-
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
@@ -20,20 +18,6 @@ func NewMsgLiquidStake(creator string, amount sdkmath.Int, hostDenom string) *Ms
 		Amount:    amount,
 		HostDenom: hostDenom,
 	}
-}
-
-// isIBCToken checks if the token came from the IBC module
-// Each IBC token starts with an ibc/ denom, the check is rather simple
-func IsIBCToken(denom string) bool {
-	return strings.HasPrefix(denom, "ibc/")
-}
-
-func StAssetDenomFromHostZoneDenom(hostZoneDenom string) string {
-	return "st" + hostZoneDenom
-}
-
-func HostZoneDenomFromStAssetDenom(stAssetDenom string) string {
-	return stAssetDenom[2:]
 }
 
 func (msg *MsgLiquidStake) Route() string {
