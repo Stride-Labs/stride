@@ -122,7 +122,7 @@ func (k msgServer) RedeemStake(goCtx context.Context, msg *types.MsgRedeemStake)
 	}
 	hostZoneUnbonding.NativeTokenAmount = hostZoneUnbonding.NativeTokenAmount.Add(nativeAmount)
 	if !userHasRedeemedThisEpoch {
-		// Only append if a UserRedemptionRecord to the HZU if it wasn't previously appended
+		// Only append a UserRedemptionRecord to the HZU if it wasn't previously appended
 		hostZoneUnbonding.UserRedemptionRecords = append(hostZoneUnbonding.UserRedemptionRecords, userRedemptionRecord.Id)
 	}
 
