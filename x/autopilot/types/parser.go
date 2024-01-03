@@ -30,7 +30,6 @@ const RedeemStake = "RedeemStake"
 
 // Packet metadata info specific to Stakeibc (e.g. 1-click liquid staking)
 type StakeibcPacketMetadata struct {
-	// TODO: use a constant here
 	Action string `json:"action"`
 	// TODO: remove StrideAddress
 	StrideAddress   string
@@ -62,7 +61,6 @@ func (m StakeibcPacketMetadata) Validate() error {
 }
 
 // Validate claim packet metadata includes the stride address
-// TODO: remove this function
 func (m ClaimPacketMetadata) Validate() error {
 	_, err := sdk.AccAddressFromBech32(m.StrideAddress)
 	if err != nil {

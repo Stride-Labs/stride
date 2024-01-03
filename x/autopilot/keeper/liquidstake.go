@@ -100,17 +100,13 @@ func (k Keeper) IBCTransferStAsset(ctx sdk.Context, stAsset sdk.Coin, sender str
 		channelId = hostZone.TransferChannelId
 	}
 	transferMsg := &transfertypes.MsgTransfer{
-		SourcePort:    transfertypes.PortID,
-		SourceChannel: channelId,
-		Token:         stAsset,
-		// TODO: does this reintroduce the bug in PFM where senders can be spoofed?
-		// If so, should we instead call PFM directly to forward the packet?
-		// Or should we obfuscate the sender, making it a random address?
+		SourcePort:       transfertypes.PortID,
+		SourceChannel:    channelId,
+		Token:            stAsset,
 		Sender:           sender,
 		Receiver:         packetMetadata.IbcReceiver,
 		TimeoutTimestamp: timeoutTimestamp,
-		// TimeoutHeight:    clienttypes.Height{},
-		// Memo:             "stTokenIBCTransfer",
+		// TimeoutHeight and Memo are unused
 	}
 
 	_, err := k.transferKeeper.Transfer(sdk.WrapSDKContext(ctx), transferMsg)
