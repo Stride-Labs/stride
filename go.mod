@@ -185,9 +185,7 @@ replace (
 	// TODO - Remove this patch and update Tokens in a subsequent upgrade handler
 	github.com/cosmos/cosmos-sdk => github.com/Stride-Labs/cosmos-sdk v0.47.4-stride-distribution-fix-1
 
-	// Two changes
-	// (1) Testing infra
-	// (2) Fix bech32 bug
+	// Has changes for integration testing infra
 	github.com/cosmos/interchain-security/v3 => github.com/Stride-Labs/interchain-security/v3 v3.2.0-testing-infra
 
 	// Add additional verification check to ensure an account is a BaseAccount type before converting
