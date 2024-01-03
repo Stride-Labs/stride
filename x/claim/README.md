@@ -6,7 +6,7 @@ category: 6392913957c533007128548e
 
 # The Claim Module
 
-Users are required participate in core network activities to claim their airdrop. An Airdrop recipient is given 20% of the airdrop amount which is not in vesting, and then they have to perform the following activities to get the rest:
+Users are required to participate in core network activities to claim their airdrop. An Airdrop recipient is given 20% of the airdrop amount which is not in vesting, and then they have to perform the following activities to get the rest:
 
 * 20% vesting over 3 months by staking
 * 60% vesting over 3 months by liquid staking
@@ -23,7 +23,7 @@ ActionLiquidStake  Action = 0
 ActionDelegateStake Action = 1
 ```
 
-These actions are monitored by registring claim **hooks** to the stakeibc, and staking modules.
+These actions are monitored by registering claim **hooks** to the stakeibc, and staking modules.
 This means that when you perform an action, the claims module will immediately unlock those coins if they are applicable.
 These actions can be performed in any order.
 
@@ -45,7 +45,7 @@ So for example, `[true, true]` means that `ActionLiquidStake` and `ActionDelegat
 type ClaimRecord struct {
  // address of claim user
  Address string
- // weight that represent the portion from total allocation
+ // weight that represents the portion from total allocation
  Weight sdk.Dec
  // true if action is completed
  // index of bool in array refers to action enum #
@@ -122,7 +122,7 @@ message ClaimRecord {
   // address of claim user
   string address = 1 [ (gogoproto.moretags) = "yaml:\"address\"" ];
 
-  // weight that represent the portion from total allocations
+  // weight that represents the portion from total allocations
   double weight = 2;
 
   // true if action is completed
