@@ -10,4 +10,13 @@ enum ICAAccountType {
   REDEMPTION = 3;
   COMMUNITY_POOL_DEPOSIT = 4;
   COMMUNITY_POOL_RETURN = 5;
+  CONVERTER_UNWIND = 6;
+  CONVERTER_TRADE = 7;
+}
+
+message ICAAccount {
+  string chain_id = 1;
+  ICAAccountType type = 2;
+  string connection_id = 3;
+  string address = 4;
 }

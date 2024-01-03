@@ -8,28 +8,27 @@ import (
 	"github.com/Stride-Labs/stride/v16/utils"
 )
 
-const TypeMsgChangeValidatorWeight = "change_validator_weight"
+const TypeMsgChangeValidatorWeights = "change_validator_weight"
 
-var _ sdk.Msg = &MsgChangeValidatorWeight{}
+var _ sdk.Msg = &MsgChangeValidatorWeights{}
 
-func NewMsgChangeValidatorWeight(creator string, hostZone string, address string, weight uint64) *MsgChangeValidatorWeight {
-	return &MsgChangeValidatorWeight{
-		Creator:  creator,
-		HostZone: hostZone,
-		ValAddr:  address,
-		Weight:   weight,
+func NewMsgChangeValidatorWeights(creator, hostZone string, weights []*ValidatorWeight) *MsgChangeValidatorWeights {
+	return &MsgChangeValidatorWeights{
+		Creator:          creator,
+		HostZone:         hostZone,
+		ValidatorWeights: weights,
 	}
 }
 
-func (msg *MsgChangeValidatorWeight) Route() string {
+func (msg *MsgChangeValidatorWeights) Route() string {
 	return RouterKey
 }
 
-func (msg *MsgChangeValidatorWeight) Type() string {
-	return TypeMsgChangeValidatorWeight
+func (msg *MsgChangeValidatorWeights) Type() string {
+	return TypeMsgChangeValidatorWeights
 }
 
-func (msg *MsgChangeValidatorWeight) GetSigners() []sdk.AccAddress {
+func (msg *MsgChangeValidatorWeights) GetSigners() []sdk.AccAddress {
 	creator, err := sdk.AccAddressFromBech32(msg.Creator)
 	if err != nil {
 		panic(err)
@@ -37,18 +36,29 @@ func (msg *MsgChangeValidatorWeight) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{creator}
 }
 
-func (msg *MsgChangeValidatorWeight) GetSignBytes() []byte {
+func (msg *MsgChangeValidatorWeights) GetSignBytes() []byte {
 	bz := ModuleCdc.MustMarshalJSON(msg)
 	return sdk.MustSortJSON(bz)
 }
 
-func (msg *MsgChangeValidatorWeight) ValidateBasic() error {
+func (msg *MsgChangeValidatorWeights) ValidateBasic() error {
 	_, err := sdk.AccAddressFromBech32(msg.Creator)
 	if err != nil {
 		return errorsmod.Wrapf(sdkerrors.ErrInvalidAddress, "invalid creator address (%s)", err)
 	}
 	if err := utils.ValidateAdminAddress(msg.Creator); err != nil {
 		return err
+	}
+	if msg.HostZone == "" {
+		return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "host zone must be specified")
+	}
+	if len(msg.ValidatorWeights) < 1 {
+		return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "at least one validator must be specified")
+	}
+	for _, weightUpdate := range msg.ValidatorWeights {
+		if weightUpdate.Address == "" {
+			return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "validator address must be specified")
+		}
 	}
 	return nil
 }
