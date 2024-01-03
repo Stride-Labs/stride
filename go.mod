@@ -11,7 +11,7 @@ require (
 	github.com/cosmos/gogoproto v1.4.10
 	github.com/cosmos/ibc-go/v7 v7.2.0
 	github.com/cosmos/ics23/go v0.10.0
-	github.com/cosmos/interchain-security/v3 v3.1.0
+	github.com/cosmos/interchain-security/v3 v3.2.0
 	github.com/evmos/vesting v0.0.0-20230818101748-9ea561e4529c
 	github.com/gogo/protobuf v1.3.3
 	github.com/golang/protobuf v1.5.3
@@ -188,7 +188,7 @@ replace (
 	// Two changes
 	// (1) Testing infra
 	// (2) Fix bech32 bug
-	github.com/cosmos/interchain-security/v3 => github.com/Stride-Labs/interchain-security/v3 v3.1.0-remove-validation-bug-7d3d9d
+	github.com/cosmos/interchain-security/v3 => github.com/Stride-Labs/interchain-security/v3 v3.2.0-testing-infra
 
 	// Add additional verification check to ensure an account is a BaseAccount type before converting
 	// it to a vesting account: https://github.com/Stride-Labs/vesting/pull/1
