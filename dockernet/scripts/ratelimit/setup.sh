@@ -44,27 +44,27 @@ setup_channel_value() {
     $GAIA_MAIN_CMD tx ibc-transfer transfer transfer channel-0 $(STRIDE_ADDRESS) ${INITIAL_CHANNEL_VALUE}uatom --from ${GAIA_VAL_PREFIX}1 -y | TRIM_TX
     sleep 3
 
-    echo ">>> ujuno" # second transfer is for stujuno
-    $JUNO_MAIN_CMD tx ibc-transfer transfer transfer channel-0 $(STRIDE_ADDRESS) ${INITIAL_CHANNEL_VALUE}ujuno --from ${JUNO_VAL_PREFIX}1 -y | TRIM_TX
-    sleep 3
-    $JUNO_MAIN_CMD tx ibc-transfer transfer transfer channel-0 $(STRIDE_ADDRESS) ${INITIAL_CHANNEL_VALUE}ujuno --from ${JUNO_VAL_PREFIX}1 -y | TRIM_TX
-    sleep 3
+    # echo ">>> ujuno" # second transfer is for stujuno
+    # $JUNO_MAIN_CMD tx ibc-transfer transfer transfer channel-0 $(STRIDE_ADDRESS) ${INITIAL_CHANNEL_VALUE}ujuno --from ${JUNO_VAL_PREFIX}1 -y | TRIM_TX
+    # sleep 3
+    # $JUNO_MAIN_CMD tx ibc-transfer transfer transfer channel-0 $(STRIDE_ADDRESS) ${INITIAL_CHANNEL_VALUE}ujuno --from ${JUNO_VAL_PREFIX}1 -y | TRIM_TX
+    # sleep 3
 
     echo ">>> uosmo"
     $OSMO_MAIN_CMD tx ibc-transfer transfer transfer channel-0 $(STRIDE_ADDRESS) ${INITIAL_CHANNEL_VALUE}uosmo --from ${OSMO_VAL_PREFIX}1 -y | TRIM_TX
     sleep 10
     
-    echo ">>> traveler-ujuno"
-    juno_on_osmo='ibc/E5FD4F5963AA3CA00908DEA9BF29D35BA84183BBC0783A1224022BF55D348112'
-    $JUNO_MAIN_CMD tx ibc-transfer transfer transfer channel-7 $(OSMO_ADDRESS) ${INITIAL_CHANNEL_VALUE}ujuno --from ${JUNO_VAL_PREFIX}1 -y | TRIM_TX
-    sleep 10
-    $OSMO_MAIN_CMD tx ibc-transfer transfer transfer channel-0 $(STRIDE_ADDRESS) ${INITIAL_CHANNEL_VALUE}${juno_on_osmo} --from ${OSMO_VAL_PREFIX}1 -y | TRIM_TX
-    sleep 3
+    # echo ">>> traveler-ujuno"
+    # juno_on_osmo='ibc/E5FD4F5963AA3CA00908DEA9BF29D35BA84183BBC0783A1224022BF55D348112'
+    # $JUNO_MAIN_CMD tx ibc-transfer transfer transfer channel-7 $(OSMO_ADDRESS) ${INITIAL_CHANNEL_VALUE}ujuno --from ${JUNO_VAL_PREFIX}1 -y | TRIM_TX
+    # sleep 10
+    # $OSMO_MAIN_CMD tx ibc-transfer transfer transfer channel-0 $(STRIDE_ADDRESS) ${INITIAL_CHANNEL_VALUE}${juno_on_osmo} --from ${OSMO_VAL_PREFIX}1 -y | TRIM_TX
+    # sleep 3
 
-    # Liquid Stake
-    printf "\nLiquid staking juno...\n"
-    $STRIDE_MAIN_CMD tx stakeibc liquid-stake ${INITIAL_CHANNEL_VALUE} ujuno --from ${STRIDE_VAL_PREFIX}1 -y | TRIM_TX
-    sleep 5
+    # # Liquid Stake
+    # printf "\nLiquid staking juno...\n"
+    # $STRIDE_MAIN_CMD tx stakeibc liquid-stake ${INITIAL_CHANNEL_VALUE} ujuno --from ${STRIDE_VAL_PREFIX}1 -y | TRIM_TX
+    # sleep 5
 
     printf "\nLiquid staking osmo...\n"
     $STRIDE_MAIN_CMD tx stakeibc liquid-stake ${INITIAL_CHANNEL_VALUE} uosmo --from ${STRIDE_VAL_PREFIX}1 -y | TRIM_TX
@@ -138,7 +138,6 @@ setup_rate_limits() {
     # fi
 }
 
-setup_juno_osmo_channel
 setup_channel_value
 setup_rate_limits
 

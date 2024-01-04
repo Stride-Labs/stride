@@ -17,7 +17,7 @@ KEYS_LOGS=$DOCKERNET_HOME/logs/keys.log
 
 # List of hosts enabled 
 # HOST_CHAINS have liquid staking support, ACCESSORY_CHAINS do not
-HOST_CHAINS=(GAIA JUNO OSMO)
+HOST_CHAINS=(GAIA OSMO)
 ACCESSORY_CHAINS=() 
 
 # If no host zones are specified above:
