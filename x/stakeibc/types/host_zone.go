@@ -41,10 +41,12 @@ func IsIBCToken(denom string) bool {
 	return strings.HasPrefix(denom, "ibc/")
 }
 
+// Returns the stDenom from a native denom by appending a st prefix
 func StAssetDenomFromHostZoneDenom(hostZoneDenom string) string {
 	return "st" + hostZoneDenom
 }
 
+// Returns the native denom from an stDenom by removing the st prefix
 func HostZoneDenomFromStAssetDenom(stAssetDenom string) string {
 	return stAssetDenom[2:]
 }

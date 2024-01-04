@@ -314,7 +314,7 @@ setup_file() {
   # Over the next two tests, we will run two redemptions in a row and we want both to occur in the same epoch
   # To ensure we don't accidentally cross the epoch boundary, we'll make sure there's enough of a buffer here
   # between the two redemptions
-  AVOID_EPOCH_BOUNDARY day 15
+  AVOID_EPOCH_BOUNDARY day 25
 
   # get initial balances
   stibctoken_balance_start=$($HOST_MAIN_CMD q bank balances $HOST_VAL_ADDRESS --denom $IBC_STTOKEN | GETBAL)
@@ -336,8 +336,8 @@ setup_file() {
   WAIT_FOR_BLOCK $STRIDE_LOGS 2
 
   # make sure stATOM balance decreased
-  stibctoken_balance_end=$($HOST_MAIN_CMD q bank balances $HOST_VAL_ADDRESS --denom $IBC_STTOKEN | GETBAL)
-  stibctoken_balance_diff=$(($stibctoken_balance_start-$stibctoken_balance_end))
+  stibctoken_balance_mid=$($HOST_MAIN_CMD q bank balances $HOST_VAL_ADDRESS --denom $IBC_STTOKEN | GETBAL)
+  stibctoken_balance_diff=$(($stibctoken_balance_start-$stibctoken_balance_mid))
   assert_equal "$stibctoken_balance_diff" "$REDEEM_AMOUNT"
 
   WAIT_FOR_BLOCK $STRIDE_LOGS 5
@@ -346,6 +346,15 @@ setup_file() {
   redemption_record_amount=$($STRIDE_MAIN_CMD q records list-user-redemption-record  | grep -Fiw 'amount' | head -n 1 | grep -o -E '[0-9]+')
   amount_positive=$(($redemption_record_amount > 0))
   assert_equal "$amount_positive" "1"
+
+  # attempt to redeem with an invalid receiver address to invoke a failure
+  invalid_memo='{ "autopilot": { "receiver": "'"$(STRIDE_ADDRESS)"'",  "stakeibc": { "action": "RedeemStake", "ibc_receiver": "XXX" } } }'
+  $transfer_msg_prefix "$invalid_memo" ${REDEEM_AMOUNT}${IBC_STTOKEN} --from $HOST_VAL -y 
+  WAIT_FOR_BLOCK $STRIDE_LOGS 10
+
+  # Confirm the stATOM balance was refunded
+  stibctoken_balance_end=$($HOST_MAIN_CMD q bank balances $HOST_VAL_ADDRESS --denom $IBC_STTOKEN | GETBAL)
+  assert_equal "$stibctoken_balance_end" "$stibctoken_balance_mid"
 }
 
 # check that redemptions and claims work
