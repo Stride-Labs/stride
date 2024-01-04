@@ -44,7 +44,7 @@ func (k Keeper) TryRedeemStake(
 	hostZoneDenom := stakeibctypes.HostZoneDenomFromStAssetDenom(stAssetDenom)
 
 	amount, ok := sdk.NewIntFromString(transferPacketData.Amount)
-	if !ok || amount.IsNegative() {
+	if !ok {
 		return fmt.Errorf("not a parsable amount field")
 	}
 
