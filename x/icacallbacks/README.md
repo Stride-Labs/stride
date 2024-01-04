@@ -56,7 +56,7 @@ The middleware structure is as follows
 
 ## Keeper functions
 
-- `CallRegisteredICACallback()`: invokes the relevant callback asssociated with an ICA
+- `CallRegisteredICACallback()`: invokes the relevant callback associated with an ICA
 
 ## State
 
