@@ -1,6 +1,8 @@
 package types
 
 import (
+	"strings"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/address"
 )
@@ -31,4 +33,18 @@ func NewHostZoneDepositAddress(chainId string) sdk.AccAddress {
 func NewHostZoneModuleAddress(chainId string, accountAlias string) sdk.AccAddress {
 	key := append([]byte(chainId), []byte(accountAlias)...)
 	return address.Module(ModuleName, key)
+}
+
+// isIBCToken checks if the token came from the IBC module
+// Each IBC token starts with an ibc/ denom, the check is rather simple
+func IsIBCToken(denom string) bool {
+	return strings.HasPrefix(denom, "ibc/")
+}
+
+func StAssetDenomFromHostZoneDenom(hostZoneDenom string) string {
+	return "st" + hostZoneDenom
+}
+
+func HostZoneDenomFromStAssetDenom(stAssetDenom string) string {
+	return stAssetDenom[2:]
 }
