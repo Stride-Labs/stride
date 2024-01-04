@@ -35,7 +35,7 @@ func (s *KeeperTestSuite) SetupTestUnbondFromHostZone(
 	unbondAmount sdkmath.Int,
 	validators []*types.Validator,
 ) UnbondingTestCase {
-	delegationAccountOwner := types.FormatICAAccountOwner(HostChainId, types.ICAAccountType_DELEGATION)
+	delegationAccountOwner := types.FormatHostZoneICAOwner(HostChainId, types.ICAAccountType_DELEGATION)
 	delegationChannelID, delegationPortID := s.CreateICAChannel(delegationAccountOwner)
 
 	// Sanity checks:
@@ -189,12 +189,48 @@ func (s *KeeperTestSuite) TestUnbondFromHostZone_Successful_UnbondOnlyZeroWeight
 		{Address: "valG", Weight: 15, Delegation: sdkmath.NewInt(160)},
 	}
 
+	// TODO: Change back to two messages after 32+ validators are supported
 	expectedUnbondings := []ValidatorUnbonding{
-		// valC has #1 priority - unbond up to capacity at 40
-		{Validator: "valC", UnbondAmount: sdkmath.NewInt(40)},
-		// 50 - 40 = 10 unbond remaining
-		// valE has #2 priority - unbond up to remaining
-		{Validator: "valE", UnbondAmount: sdkmath.NewInt(10)},
+		// valF has the most capacity (80) so it takes the full unbonding
+		{Validator: "valF", UnbondAmount: sdkmath.NewInt(50)},
+	}
+
+	tc := s.SetupTestUnbondFromHostZone(totalWeight, totalStake, totalUnbondAmount, validators)
+	s.CheckUnbondingMessages(tc, expectedUnbondings)
+}
+
+func (s *KeeperTestSuite) TestUnbondFromHostZone_Successful_UnbondIgnoresSlashQueryInProgress() {
+	// Native Stake:       100
+	// LSM Stake:           0
+	// Total Stake:        100
+	//
+	// Slash Query In Progress Stake: 25
+	// Eligible Stake: 		75
+	//
+	// Unbond Amount:        20
+	// Stake After Unbond: 80
+	// Eligible Stake After Unbond 45
+	totalUnbondAmount := sdkmath.NewInt(20)
+	totalStake := sdkmath.NewInt(100)
+	totalWeight := int64(100)
+
+	validators := []*types.Validator{
+		// Current: 25, Weight: 15%, Balanced: (15/75) * 55= 11, Capacity: 25-11 = 14 > 0
+		{Address: "valA", Weight: 15, Delegation: sdkmath.NewInt(25)},
+		// Current: 25, Weight: 20%, Balanced: (20/75) * 55 = 14.66, Capacity: 25-14.66 = 10.44 > 0
+		{Address: "valB", Weight: 20, Delegation: sdkmath.NewInt(25)},
+		// Current: 25, Weight: 40%, Balanced: (40/75) * 55 = 29.33, Capacity: 25-29.33 < 0
+		{Address: "valC", Weight: 40, Delegation: sdkmath.NewInt(25)},
+		// Current: 25, Weight: 25%, Slash-Query-In-Progress so ignored
+		{Address: "valD", Weight: 25, Delegation: sdkmath.NewInt(25), SlashQueryInProgress: true},
+	}
+
+	expectedUnbondings := []ValidatorUnbonding{
+		// valA has #1 priority - unbond up to 14
+		{Validator: "valA", UnbondAmount: sdkmath.NewInt(14)},
+		// 20 - 14 = 6 unbond remaining
+		// valB has #2 priority - unbond up to remaining
+		{Validator: "valB", UnbondAmount: sdkmath.NewInt(6)},
 	}
 
 	tc := s.SetupTestUnbondFromHostZone(totalWeight, totalStake, totalUnbondAmount, validators)
@@ -236,15 +272,16 @@ func (s *KeeperTestSuite) TestUnbondFromHostZone_Successful_UnbondTotalLessThanT
 		{Address: "valG", Weight: 15, Delegation: sdkmath.NewInt(160)},
 	}
 
+	// TODO: Change back to two messages after 32+ validators are supported
 	expectedUnbondings := []ValidatorUnbonding{
-		// valC has #1 priority - unbond up to capacity at 40
+		// valF has highest capacity - 90
+		{Validator: "valF", UnbondAmount: sdkmath.NewInt(90)},
+		// 150 - 90 = 60 unbond remaining
+		// valC has next highest capacity - 40
 		{Validator: "valC", UnbondAmount: sdkmath.NewInt(40)},
-		// 150 - 40 = 110 unbond remaining
-		// valE has #2 priority - unbond up to capacity at 30
-		{Validator: "valE", UnbondAmount: sdkmath.NewInt(30)},
-		// 150 - 40 - 30 = 80 unbond remaining
-		// valF has #3 priority - unbond up to remaining
-		{Validator: "valF", UnbondAmount: sdkmath.NewInt(80)},
+		// 60 - 40 = 20 unbond remaining
+		// valB has next highest capacity - 35, unbond up to remainder of 20
+		{Validator: "valB", UnbondAmount: sdkmath.NewInt(20)},
 	}
 
 	tc := s.SetupTestUnbondFromHostZone(totalWeight, totalStake, totalUnbondAmount, validators)
@@ -286,26 +323,27 @@ func (s *KeeperTestSuite) TestUnbondFromHostZone_Successful_UnbondTotalGreaterTh
 		{Address: "valG", Weight: 15, Delegation: sdkmath.NewInt(160)},
 	}
 
+	// TODO: Change back to two messages after 32+ validators are supported
 	expectedUnbondings := []ValidatorUnbonding{
-		// valC has #1 priority - unbond up to capacity at 40
-		{Validator: "valC", UnbondAmount: sdkmath.NewInt(40)},
-		// 350 - 40 = 310 unbond remaining
-		// valE has #2 priority - unbond up to capacity at 30
-		{Validator: "valE", UnbondAmount: sdkmath.NewInt(30)},
-		// 310 - 30 = 280 unbond remaining
-		// valF has #3 priority - unbond up to capacity at 110
+		// valF has highest capacity - 110
 		{Validator: "valF", UnbondAmount: sdkmath.NewInt(110)},
-		// 280 - 110 = 170 unbond remaining
-		// valB has #4 priority - unbond up to capacity at 105
+		// 350 - 110 = 240 unbond remaining
+		// valB has next highest capacity - 105
 		{Validator: "valB", UnbondAmount: sdkmath.NewInt(105)},
-		// 170 - 105 = 65 unbond remaining
-		// valG has #5 priority - unbond up to capacity at 25
-		{Validator: "valG", UnbondAmount: sdkmath.NewInt(25)},
-		// 65 - 25 = 40 unbond remaining
-		// valD has #6 priority - unbond up to capacity at 30
+		// 240 - 105 = 135 unbond remaining
+		// valC has next highest capacity - 40
+		{Validator: "valC", UnbondAmount: sdkmath.NewInt(40)},
+		// 135 - 40 = 95 unbond remaining
+		// valD has next highest capacity - 30
 		{Validator: "valD", UnbondAmount: sdkmath.NewInt(30)},
-		// 40 - 30 = 10 unbond remaining
-		// valA has #7 priority - unbond up to remaining
+		// 95 - 30 = 65 unbond remaining
+		// valE has next highest capacity - 30
+		{Validator: "valE", UnbondAmount: sdkmath.NewInt(30)},
+		// 65 - 30 = 35 unbond remaining
+		// valG has next highest capacity - 25
+		{Validator: "valG", UnbondAmount: sdkmath.NewInt(25)},
+		// 35 - 25 = 10 unbond remaining
+		// valA covers the remainder up to it's capacity
 		{Validator: "valA", UnbondAmount: sdkmath.NewInt(10)},
 	}
 
@@ -598,44 +636,21 @@ func (s *KeeperTestSuite) TestGetValidatorUnbondCapacity() {
 
 func (s *KeeperTestSuite) TestSortUnbondingCapacityByPriority() {
 	// First we define what the ideal list will look like after sorting
+	// TODO: Change back to sorting by unbond ratio after 32+ validators are supported
 	expectedSortedCapacities := []keeper.ValidatorUnbondCapacity{
-		// Zero-weight validator's
-		{
-			// (1) Ratio: 0, Capacity: 100
-			ValidatorAddress:   "valE",
-			BalancedDelegation: sdkmath.NewInt(0),
-			CurrentDelegation:  sdkmath.NewInt(100), // ratio = 0/100
-			Capacity:           sdkmath.NewInt(100),
-		},
-		{
-			// (2) Ratio: 0, Capacity: 25
-			ValidatorAddress:   "valC",
-			BalancedDelegation: sdkmath.NewInt(0),
-			CurrentDelegation:  sdkmath.NewInt(25), // ratio = 0/25
-			Capacity:           sdkmath.NewInt(25),
-		},
-		{
-			// (3) Ratio: 0, Capacity: 25
-			// Same ratio and capacity as above but name is tie breaker
-			ValidatorAddress:   "valD",
-			BalancedDelegation: sdkmath.NewInt(0),
-			CurrentDelegation:  sdkmath.NewInt(25), // ratio = 0/25
-			Capacity:           sdkmath.NewInt(25),
-		},
-		// Non-zero-weight validator's
-		{
-			// (4) Ratio: 0.1
-			ValidatorAddress:   "valB",
-			BalancedDelegation: sdkmath.NewInt(1),
-			CurrentDelegation:  sdkmath.NewInt(10), // ratio = 1/10
-			Capacity:           sdkmath.NewInt(9),
-		},
 		{
 			// (5) Ratio: 0.25
 			ValidatorAddress:   "valH",
 			BalancedDelegation: sdkmath.NewInt(250),
 			CurrentDelegation:  sdkmath.NewInt(1000), // ratio = 250/1000
 			Capacity:           sdkmath.NewInt(750),
+		},
+		{
+			// (1) Ratio: 0, Capacity: 100
+			ValidatorAddress:   "valE",
+			BalancedDelegation: sdkmath.NewInt(0),
+			CurrentDelegation:  sdkmath.NewInt(100), // ratio = 0/100
+			Capacity:           sdkmath.NewInt(100),
 		},
 		{
 			// (6) Ratio: 0.5, Capacity: 100
@@ -659,6 +674,28 @@ func (s *KeeperTestSuite) TestSortUnbondingCapacityByPriority() {
 			BalancedDelegation: sdkmath.NewInt(50),
 			CurrentDelegation:  sdkmath.NewInt(100), // ratio = 50/100
 			Capacity:           sdkmath.NewInt(50),
+		},
+		{
+			// (2) Ratio: 0, Capacity: 25
+			ValidatorAddress:   "valC",
+			BalancedDelegation: sdkmath.NewInt(0),
+			CurrentDelegation:  sdkmath.NewInt(25), // ratio = 0/25
+			Capacity:           sdkmath.NewInt(25),
+		},
+		{
+			// (3) Ratio: 0, Capacity: 25
+			// Same ratio and capacity as above but name is tie breaker
+			ValidatorAddress:   "valD",
+			BalancedDelegation: sdkmath.NewInt(0),
+			CurrentDelegation:  sdkmath.NewInt(25), // ratio = 0/25
+			Capacity:           sdkmath.NewInt(25),
+		},
+		{
+			// (4) Ratio: 0.1
+			ValidatorAddress:   "valB",
+			BalancedDelegation: sdkmath.NewInt(1),
+			CurrentDelegation:  sdkmath.NewInt(10), // ratio = 1/10
+			Capacity:           sdkmath.NewInt(9),
 		},
 		{
 			// (9) Ratio: 0.6
@@ -732,11 +769,24 @@ func (s *KeeperTestSuite) TestGetUnbondingICAMessages() {
 		DelegationIcaAddress: delegationAddress,
 	}
 
+	batchSize := 4
 	validatorCapacities := []keeper.ValidatorUnbondCapacity{
 		{ValidatorAddress: "val1", Capacity: sdkmath.NewInt(100)},
 		{ValidatorAddress: "val2", Capacity: sdkmath.NewInt(200)},
 		{ValidatorAddress: "val3", Capacity: sdkmath.NewInt(300)},
 		{ValidatorAddress: "val4", Capacity: sdkmath.NewInt(400)},
+
+		// This validator will fall out of the batch and will be redistributed
+		{ValidatorAddress: "val5", Capacity: sdkmath.NewInt(1000)},
+	}
+
+	// Set the current delegation to 1000 + capacity so after their delegation
+	// after the first pass at unbonding is left at 1000
+	// This is so that we can simulate consolidating messages after reaching
+	// the capacity of the first four validators
+	for i, capacity := range validatorCapacities[:batchSize] {
+		capacity.CurrentDelegation = sdkmath.NewInt(1000).Add(capacity.Capacity)
+		validatorCapacities[i] = capacity
 	}
 
 	testCases := []struct {
@@ -804,8 +854,19 @@ func (s *KeeperTestSuite) TestGetUnbondingICAMessages() {
 			},
 		},
 		{
+			name:              "unbonding requires message consolidation",
+			totalUnbondAmount: sdkmath.NewInt(2000), // excess of 1000
+			expectedUnbondings: []ValidatorUnbonding{
+				// Redistributed excess denoted after plus sign
+				{Validator: "val1", UnbondAmount: sdkmath.NewInt(100 + 250)},
+				{Validator: "val2", UnbondAmount: sdkmath.NewInt(200 + 250)},
+				{Validator: "val3", UnbondAmount: sdkmath.NewInt(300 + 250)},
+				{Validator: "val4", UnbondAmount: sdkmath.NewInt(400 + 250)},
+			},
+		},
+		{
 			name:              "insufficient delegation",
-			totalUnbondAmount: sdkmath.NewInt(1001),
+			totalUnbondAmount: sdkmath.NewInt(2001),
 			expectedError:     "unable to unbond full amount",
 		},
 	}
@@ -817,6 +878,7 @@ func (s *KeeperTestSuite) TestGetUnbondingICAMessages() {
 				hostZone,
 				tc.totalUnbondAmount,
 				validatorCapacities,
+				batchSize,
 			)
 
 			// If this is an error test case, check the error message
@@ -849,4 +911,141 @@ func (s *KeeperTestSuite) TestGetUnbondingICAMessages() {
 			}
 		})
 	}
+}
+
+func (s *KeeperTestSuite) TestConsolidateUnbondingMessages_Success() {
+	batchSize := 4
+	totalUnbondAmount := int64(1501)
+	excessUnbondAmount := int64(101)
+
+	validatorMetadata := []struct {
+		address                    string
+		initialUnbondAmount        int64
+		remainingDelegation        int64
+		expectedDelegationIncrease int64
+	}{
+		// Total Remaining Portion: 1000 + 500 + 250 + 250 = 2000
+		// Excess Portion = Remaining Delegation / Total Remaining Portion
+
+		// Excess Portion: 1000 / 2000 = 50%
+		// Delegation Increase: 50% * 101 = 50
+		{address: "val1", initialUnbondAmount: 500, remainingDelegation: 1000, expectedDelegationIncrease: 50},
+		// Excess Portion: 500 / 2000 = 25%
+		// Delegation Increase: 25% * 101 = 25
+		{address: "val2", initialUnbondAmount: 400, remainingDelegation: 500, expectedDelegationIncrease: 25},
+		// Excess Portion: 250 / 2000 = 12.5%
+		// Delegation Increase: 12.5% * 101 = 12
+		{address: "val3", initialUnbondAmount: 300, remainingDelegation: 250, expectedDelegationIncrease: 12},
+		// Excess Portion: 250 / 2000 = 12.5% (gets overflow)
+		// Delegation Increase (overflow): 101 - 25 - 12 = 14
+		{address: "val4", initialUnbondAmount: 200, remainingDelegation: 250, expectedDelegationIncrease: 14},
+
+		// Total Excess: 51 + 50 = 101
+		{address: "val5", initialUnbondAmount: 51}, // excess
+		{address: "val6", initialUnbondAmount: 50}, // excess
+	}
+
+	// Validate test setup - amounts in the list should match the expected totals
+	totalCheck := int64(0)
+	excessCheckFromInitial := int64(0)
+	excessCheckFromExpected := int64(0)
+	for i, validator := range validatorMetadata {
+		totalCheck += validator.initialUnbondAmount
+		if i >= batchSize {
+			excessCheckFromInitial += validator.initialUnbondAmount
+			excessCheckFromExpected += validator.initialUnbondAmount
+		}
+	}
+	s.Require().Equal(totalUnbondAmount, totalCheck,
+		"mismatch in test case setup - sum of initial unbond amount does not match total")
+	s.Require().Equal(excessUnbondAmount, excessCheckFromInitial,
+		"mismatch in test case setup - sum of excess from initial unbond amount does not match total excess")
+	s.Require().Equal(excessUnbondAmount, excessCheckFromExpected,
+		"mismatch in test case setup - sum of excess from expected delegation increase does not match total excess")
+
+	// Retroactively build validator capacities and messages
+	// Also build the expected unbondings after the consolidation
+	initialUnbondings := []*types.SplitDelegation{}
+	expectedUnbondings := []*types.SplitDelegation{}
+	validatorCapacities := []keeper.ValidatorUnbondCapacity{}
+	for i, validator := range validatorMetadata {
+		// The "unbondings" are the initial unbond amounts
+		initialUnbondings = append(initialUnbondings, &types.SplitDelegation{
+			Validator: validator.address,
+			Amount:    sdkmath.NewInt(validator.initialUnbondAmount),
+		})
+
+		// The "capacity" should also be the initial unbond amount
+		//   (we're assuming all validators tried to unbond to capacity)
+		// The "current delegation" is their delegation before the unbonding,
+		// which equals the initial unbond amount + the remainder
+		validatorCapacities = append(validatorCapacities, keeper.ValidatorUnbondCapacity{
+			ValidatorAddress:  validator.address,
+			Capacity:          sdkmath.NewInt(validator.initialUnbondAmount),
+			CurrentDelegation: sdkmath.NewInt(validator.initialUnbondAmount + validator.remainingDelegation),
+		})
+
+		// The expected unbondings is their initial unbond amount plus the increase
+		if i < batchSize {
+			expectedUnbondings = append(expectedUnbondings, &types.SplitDelegation{
+				Validator: validator.address,
+				Amount:    sdkmath.NewInt(validator.initialUnbondAmount + validator.expectedDelegationIncrease),
+			})
+		}
+	}
+
+	// Call the consolidation function
+	finalUnbondings, err := s.App.StakeibcKeeper.ConsolidateUnbondingMessages(
+		sdkmath.NewInt(totalUnbondAmount),
+		initialUnbondings,
+		validatorCapacities,
+		batchSize,
+	)
+	s.Require().NoError(err, "no error expected when consolidating unbonding messages")
+
+	// Validate the final messages matched expectations
+	s.Require().Equal(batchSize, len(finalUnbondings), "number of consolidated unbondings")
+
+	for i := range finalUnbondings {
+		validator := validatorMetadata[i]
+		initialUnbonding := initialUnbondings[i]
+		expectedUnbonding := expectedUnbondings[i]
+		finalUnbonding := finalUnbondings[i]
+
+		s.Require().Equal(expectedUnbonding.Validator, finalUnbonding.Validator,
+			"validator address of output message - %d", i)
+		s.Require().Equal(expectedUnbonding.Amount.Int64(), finalUnbonding.Amount.Int64(),
+			"%s - validator final unbond amount should have increased by %d from %d",
+			expectedUnbonding.Validator, validator.expectedDelegationIncrease, initialUnbonding.Amount.Int64())
+	}
+}
+
+func (s *KeeperTestSuite) TestConsolidateUnbondingMessages_Failure() {
+	batchSize := 4
+	totalUnbondAmount := sdkmath.NewInt(1000)
+
+	// Setup the capacities such that after the first pass, there is 1 token remaining amongst the batch
+	capacities := []keeper.ValidatorUnbondCapacity{
+		{ValidatorAddress: "val1", Capacity: sdkmath.NewInt(100), CurrentDelegation: sdkmath.NewInt(100 + 1)}, // extra token
+		{ValidatorAddress: "val2", Capacity: sdkmath.NewInt(100), CurrentDelegation: sdkmath.NewInt(100)},
+		{ValidatorAddress: "val3", Capacity: sdkmath.NewInt(100), CurrentDelegation: sdkmath.NewInt(100)},
+		{ValidatorAddress: "val4", Capacity: sdkmath.NewInt(100), CurrentDelegation: sdkmath.NewInt(100)},
+
+		// Excess
+		{ValidatorAddress: "val5", Capacity: sdkmath.NewInt(600), CurrentDelegation: sdkmath.NewInt(600)},
+	}
+
+	// Create the unbondings such that they align with the above and each validtor unbonds their full amount
+	unbondings := []*types.SplitDelegation{}
+	for _, capacitiy := range capacities {
+		unbondings = append(unbondings, &types.SplitDelegation{
+			Validator: capacitiy.ValidatorAddress,
+			Amount:    capacitiy.Capacity,
+		})
+	}
+
+	// Call consolidate - it should fail because there is not enough remaining delegation
+	// on each validator to cover the excess
+	_, err := s.App.StakeibcKeeper.ConsolidateUnbondingMessages(totalUnbondAmount, unbondings, capacities, batchSize)
+	s.Require().ErrorContains(err, "not enough exisiting delegation in the batch to cover the excess")
 }

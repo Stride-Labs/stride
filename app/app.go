@@ -479,7 +479,6 @@ func NewStrideApp(
 		app.GetSubspace(ratelimitmoduletypes.ModuleName),
 		app.BankKeeper,
 		app.IBCKeeper.ChannelKeeper,
-		// TODO: Implement ICS4Wrapper in Records and pass records keeper here
 		app.IBCKeeper.ChannelKeeper, // ICS4Wrapper
 	)
 	ratelimitModule := ratelimitmodule.NewAppModule(appCodec, app.RatelimitKeeper)
@@ -493,7 +492,7 @@ func NewStrideApp(
 		app.IBCKeeper.ChannelKeeper,
 		app.DistrKeeper,
 		app.BankKeeper,
-		app.RatelimitKeeper,
+		app.RatelimitKeeper, // ICS4Wrapper
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
 
@@ -613,6 +612,7 @@ func NewStrideApp(
 		keys[stakeibcmoduletypes.StoreKey],
 		keys[stakeibcmoduletypes.MemStoreKey],
 		app.GetSubspace(stakeibcmoduletypes.ModuleName),
+		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 		app.AccountKeeper,
 		app.BankKeeper,
 		app.ICAControllerKeeper,
@@ -733,6 +733,8 @@ func NewStrideApp(
 	// - pfm
 	// - transfer
 	// - base app
+	// Note: Traffic up the stack does not pass through records or autopilot,
+	// as defined via the ICS4Wrappers of each keeper
 	var transferStack porttypes.IBCModule = transferIBCModule
 	transferStack = packetforward.NewIBCMiddleware(
 		transferStack,
