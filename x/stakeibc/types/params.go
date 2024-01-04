@@ -26,6 +26,7 @@ var (
 	DefaultMaxStakeICACallsPerEpoch     uint64 = 100
 	DefaultIBCTransferTimeoutNanos      uint64 = 1800000000000 // 30 minutes
 	DefaultValidatorSlashQueryThreshold uint64 = 1             // denominated in percentage of TVL (1 => 1%)
+	DefaultValidatorWeightCap           uint64 = 10            // percentage (10 => 10%)
 
 	// KeyDepositInterval is store's key for the DepositInterval option
 	KeyDepositInterval                   = []byte("DepositInterval")
@@ -45,6 +46,7 @@ var (
 	KeyMaxRedemptionRates                = []byte("MaxRedemptionRates")
 	KeyMinRedemptionRates                = []byte("MinRedemptionRates")
 	KeyValidatorSlashQueryThreshold      = []byte("ValidatorSlashQueryThreshold")
+	KeyValidatorWeightCap                = []byte("ValidatorWeightCap")
 )
 
 var _ paramtypes.ParamSet = (*Params)(nil)
@@ -71,6 +73,7 @@ func NewParams(
 	defaultMaxRedemptionRateThreshold uint64,
 	ibcTransferTimeoutNanos uint64,
 	validatorSlashQueryInterval uint64,
+	validatorWeightCap uint64,
 ) Params {
 	return Params{
 		DepositInterval:                   depositInterval,
@@ -88,6 +91,7 @@ func NewParams(
 		DefaultMaxRedemptionRateThreshold: defaultMaxRedemptionRateThreshold,
 		IbcTransferTimeoutNanos:           ibcTransferTimeoutNanos,
 		ValidatorSlashQueryThreshold:      validatorSlashQueryInterval,
+		ValidatorWeightCap:                validatorWeightCap,
 	}
 }
 
@@ -109,6 +113,7 @@ func DefaultParams() Params {
 		DefaultMaxRedemptionRateThreshold,
 		DefaultIBCTransferTimeoutNanos,
 		DefaultValidatorSlashQueryThreshold,
+		DefaultValidatorWeightCap,
 	)
 }
 
@@ -130,6 +135,7 @@ func (p *Params) ParamSetPairs() paramtypes.ParamSetPairs {
 		paramtypes.NewParamSetPair(KeyDefaultMaxRedemptionRateThreshold, &p.DefaultMaxRedemptionRateThreshold, validMaxRedemptionRateThreshold),
 		paramtypes.NewParamSetPair(KeyIBCTransferTimeoutNanos, &p.IbcTransferTimeoutNanos, validTimeoutNanos),
 		paramtypes.NewParamSetPair(KeyValidatorSlashQueryThreshold, &p.ValidatorSlashQueryThreshold, isPositive),
+		paramtypes.NewParamSetPair(KeyValidatorWeightCap, &p.ValidatorWeightCap, validValidatorWeightCap),
 	}
 }
 
@@ -181,6 +187,16 @@ func validMinRedemptionRateThreshold(i interface{}) error {
 	return nil
 }
 
+func validValidatorWeightCap(i interface{}) error {
+	if err := isPositive(i); err != nil {
+		return err
+	}
+	if err := isPercentage(i); err != nil {
+		return err
+	}
+	return nil
+}
+
 func isPositive(i interface{}) error {
 	ival, ok := i.(uint64)
 	if !ok {
@@ -189,6 +205,18 @@ func isPositive(i interface{}) error {
 
 	if ival <= 0 {
 		return fmt.Errorf("parameter must be positive: %d", ival)
+	}
+	return nil
+}
+
+func isPercentage(i interface{}) error {
+	ival, ok := i.(uint64)
+	if !ok {
+		return fmt.Errorf("parameter not accepted: %T", i)
+	}
+
+	if ival > 100 {
+		return fmt.Errorf("parameter must be between 0 and 100: %d", ival)
 	}
 	return nil
 }
@@ -247,6 +275,9 @@ func (p Params) Validate() error {
 		return err
 	}
 	if err := validTimeoutNanos(p.IbcTransferTimeoutNanos); err != nil {
+		return err
+	}
+	if err := isPercentage(p.ValidatorWeightCap); err != nil {
 		return err
 	}
 

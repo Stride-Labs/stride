@@ -17,6 +17,10 @@ import (
 	"github.com/Stride-Labs/stride/v16/x/stakeibc/types"
 )
 
+const (
+	MinValidatorsBeforeWeightCapCheck = 10
+)
+
 // SetHostZone set a specific hostZone in the store
 func (k Keeper) SetHostZone(ctx sdk.Context, hostZone types.HostZone) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefix(types.HostZoneKey))
@@ -272,6 +276,11 @@ func (k Keeper) AddValidatorToHostZone(ctx sdk.Context, chainId string, validato
 		SlashQueryCheckpoint:      checkpoint,
 	})
 
+	// Finally, confirm none of the validator's exceed the weight cap
+	if err := k.CheckValidatorWeightsBelowCap(ctx, hostZone.Validators); err != nil {
+		return err
+	}
+
 	k.SetHostZone(ctx, hostZone)
 
 	return nil
@@ -311,6 +320,43 @@ func (k Keeper) RemoveValidatorFromHostZone(ctx sdk.Context, chainId string, val
 	errMsg := fmt.Sprintf("Validator address (%s) not found on host zone (%s)", validatorAddress, chainId)
 	k.Logger(ctx).Error(errMsg)
 	return errorsmod.Wrapf(types.ErrValidatorNotFound, errMsg)
+}
+
+// Checks if any validator's portion of the weight is greater than the cap
+func (k Keeper) CheckValidatorWeightsBelowCap(ctx sdk.Context, validators []*types.Validator) error {
+	// If there's only a few validators, don't enforce this yet
+	if len(validators) < MinValidatorsBeforeWeightCapCheck {
+		return nil
+	}
+
+	// The weight cap in params is an int representing a percentage (e.g. 10 is 10%)
+	params := k.GetParams(ctx)
+	validatorWeightCap := float64(params.ValidatorWeightCap)
+
+	// Store a map of each validator weight, as well as the total
+	totalWeight := float64(0)
+	weightsByValidator := map[string]float64{}
+	for _, validator := range validators {
+		weightsByValidator[validator.Address] = float64(validator.Weight)
+		totalWeight += float64(validator.Weight)
+	}
+
+	// If the total validator weights are 0, exit prematurely
+	if totalWeight == 0 {
+		return nil
+	}
+
+	// Check if any validator exceeds the cap
+	for _, address := range utils.StringMapKeys[float64](weightsByValidator) {
+		weightPercentage := weightsByValidator[address] / totalWeight * 100
+		if weightPercentage > validatorWeightCap {
+			return errorsmod.Wrapf(types.ErrValidatorExceedsWeightCap,
+				"validator %s exceeds weight cap, has %v%% of the total weight when the cap is %v%%",
+				address, weightPercentage, validatorWeightCap)
+		}
+	}
+
+	return nil
 }
 
 // Get a validator and its index from a list of validators, by address
