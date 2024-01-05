@@ -2,6 +2,7 @@ package v17
 
 import (
 	"fmt"
+	"time"
 
 	errorsmod "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
@@ -14,7 +15,6 @@ import (
 	connectiontypes "github.com/cosmos/ibc-go/v7/modules/core/03-connection/types"
 
 	"github.com/Stride-Labs/stride/v16/utils"
-	epochstypes "github.com/Stride-Labs/stride/v16/x/epochs/types"
 	icqkeeper "github.com/Stride-Labs/stride/v16/x/interchainquery/keeper"
 	ratelimitkeeper "github.com/Stride-Labs/stride/v16/x/ratelimit/keeper"
 	ratelimittypes "github.com/Stride-Labs/stride/v16/x/ratelimit/types"
@@ -115,13 +115,6 @@ func CreateUpgradeHandler(
 func DisableTokenization(ctx sdk.Context, k stakeibckeeper.Keeper, chainId string) error {
 	for _, hostZone := range k.GetAllHostZone(ctx) {
 		if hostZone.ChainId == chainId {
-			// Timeout for ica tx is at end of epoch
-			strideEpochTracker, found := k.GetEpochTracker(ctx, epochstypes.STRIDE_EPOCH)
-				if !found {
-				return errorsmod.Wrapf(stakeibctypes.ErrEpochNotFound, epochstypes.STRIDE_EPOCH)
-			}
-			timeout := uint64(strideEpochTracker.NextEpochStartTime)
-
 			// Build the msg for the disable tokenization ICA tx
 			var msgs []proto.Message
 			msgs = append(msgs, &stakeibctypes.MsgDisableTokenizeShares{
@@ -129,8 +122,9 @@ func DisableTokenization(ctx sdk.Context, k stakeibckeeper.Keeper, chainId strin
 			})
 				
 			// Send the ICA tx to disable tokenization
+			timeoutTimestamp := uint64(time.Now().Add(24 * time.Hour).Nanosecond())
 			delegationOwner := stakeibctypes.FormatHostZoneICAOwner(hostZone.ChainId, stakeibctypes.ICAAccountType_DELEGATION)
-			err := k.SubmitICATxWithoutCallback(ctx, hostZone.ConnectionId, delegationOwner, msgs, timeout)
+			err := k.SubmitICATxWithoutCallback(ctx, hostZone.ConnectionId, delegationOwner, msgs, timeoutTimestamp)
 			if err != nil {
 				return errorsmod.Wrapf(err, "Failed to submit ICA tx to disable tokenization, Messages: %+v", msgs)
 			}
