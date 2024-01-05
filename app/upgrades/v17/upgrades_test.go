@@ -358,9 +358,9 @@ func (s *UpgradeTestSuite) SetupProp225BeforeUpgrade() func() {
 	s.FundAccount(communityPoolGrowthAddress, newCoin)
 	originalCommunityGrowthBalance := s.App.BankKeeper.GetBalance(s.Ctx, communityPoolGrowthAddress, v17.Ustrd)
 
-	// Grab the liquidity custodian address and balance
-	liquidityCustodianAddress := sdk.MustAccAddressFromBech32(v17.LiquidityCustodian)
-	originalLiquidityCustodianBalance := s.App.BankKeeper.GetBalance(s.Ctx, liquidityCustodianAddress, v17.Ustrd)
+	// Grab the liquidity receiver address and balance
+	liquidityReceiverAddress := sdk.MustAccAddressFromBech32(v17.LiquidityReceiver)
+	originalLiquidityReceiverBalance := s.App.BankKeeper.GetBalance(s.Ctx, liquidityReceiverAddress, v17.Ustrd)
 
 	// grab how much we want to transfer
 	transferAmount := v17.Prop225TransferAmount.Int64()
@@ -373,8 +373,8 @@ func (s *UpgradeTestSuite) SetupProp225BeforeUpgrade() func() {
 		s.Require().Equal(transferAmount, communityGrowthBalanceChange.Amount.Int64(), "community growth decreased by correct amount")
 
 		// verify funds entered liquidity custodian
-		newLiquidityCustodianBalance := s.App.BankKeeper.GetBalance(s.Ctx, liquidityCustodianAddress, v17.Ustrd)
-		liquidityCustodianBalanceChange := newLiquidityCustodianBalance.Sub(originalLiquidityCustodianBalance).Amount.Int64()
+		newLiquidityCustodianBalance := s.App.BankKeeper.GetBalance(s.Ctx, liquidityReceiverAddress, v17.Ustrd)
+		liquidityCustodianBalanceChange := newLiquidityCustodianBalance.Sub(originalLiquidityReceiverBalance).Amount.Int64()
 		s.Require().Equal(transferAmount, liquidityCustodianBalanceChange, "custodian balance increased by correct amount")
 	}
 }
