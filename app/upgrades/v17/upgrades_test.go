@@ -76,6 +76,7 @@ func (s *UpgradeTestSuite) TestUpgrade() {
 	checkRateLimitsAfterUpgrade := s.SetupRateLimitsBeforeUpgrade()
 	checkCommunityPoolTaxAfterUpgrade := s.SetupCommunityPoolTaxBeforeUpgrade()
 	checkQueriesAfterUpgrade := s.SetupQueriesBeforeUpgrade()
+	checkProp225AfterUpgrade := s.SetupProp225BeforeUpgrade()
 
 	// Submit upgrade and confirm handler succeeds
 	s.ConfirmUpgradeSucceededs("v17", dummyUpgradeHeight)
@@ -85,6 +86,7 @@ func (s *UpgradeTestSuite) TestUpgrade() {
 	checkRateLimitsAfterUpgrade()
 	checkCommunityPoolTaxAfterUpgrade()
 	checkQueriesAfterUpgrade()
+	checkProp225AfterUpgrade()
 }
 
 // Helper function to check that the community pool stake and redeem holding
@@ -345,6 +347,35 @@ func (s *UpgradeTestSuite) SetupQueriesBeforeUpgrade() func() {
 		// Confirm the other query is still there
 		_, found = s.App.InterchainqueryKeeper.GetQuery(s.Ctx, "query-2")
 		s.Require().True(found, "non-slash query should not have been removed")
+	}
+}
+
+func (s *UpgradeTestSuite) SetupProp225BeforeUpgrade() func() {
+	// Grab the community pool growth address and balance
+	communityPoolGrowthAddress := sdk.MustAccAddressFromBech32(v17.CommunityPoolGrowthAddress)
+	// Set the balance to 3x the amount that will be transferred
+	newCoin := sdk.NewCoin(v17.Ustrd, v17.Prop225TransferAmount.MulRaw(3))
+	s.FundAccount(communityPoolGrowthAddress, newCoin)
+	originalCommunityGrowthBalance := s.App.BankKeeper.GetBalance(s.Ctx, communityPoolGrowthAddress, v17.Ustrd)
+
+	// Grab the liquidity custodian address and balance
+	liquidityCustodianAddress := sdk.MustAccAddressFromBech32(v17.LiquidityCustodian)
+	originalLiquidityCustodianBalance := s.App.BankKeeper.GetBalance(s.Ctx, liquidityCustodianAddress, v17.Ustrd)
+
+	// grab how much we want to transfer
+	transferAmount := v17.Prop225TransferAmount.Int64()
+
+	// Return callback to check store after upgrade
+	return func() {
+		// verify funds left community growth
+		newCommunityGrowthBalance := s.App.BankKeeper.GetBalance(s.Ctx, communityPoolGrowthAddress, v17.Ustrd)
+		communityGrowthBalanceChange := originalCommunityGrowthBalance.Sub(newCommunityGrowthBalance)
+		s.Require().Equal(transferAmount, communityGrowthBalanceChange.Amount.Int64(), "community growth decreased by correct amount")
+
+		// verify funds entered liquidity custodian
+		newLiquidityCustodianBalance := s.App.BankKeeper.GetBalance(s.Ctx, liquidityCustodianAddress, v17.Ustrd)
+		liquidityCustodianBalanceChange := newLiquidityCustodianBalance.Sub(originalLiquidityCustodianBalance).Amount.Int64()
+		s.Require().Equal(transferAmount, liquidityCustodianBalanceChange, "custodian balance increased by correct amount")
 	}
 }
 

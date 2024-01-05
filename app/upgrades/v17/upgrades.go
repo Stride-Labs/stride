@@ -12,6 +12,8 @@ import (
 	icatypes "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/types"
 	connectiontypes "github.com/cosmos/ibc-go/v7/modules/core/03-connection/types"
 
+	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
+
 	"github.com/Stride-Labs/stride/v16/utils"
 	icqkeeper "github.com/Stride-Labs/stride/v16/x/interchainquery/keeper"
 	ratelimitkeeper "github.com/Stride-Labs/stride/v16/x/ratelimit/keeper"
@@ -60,6 +62,12 @@ var (
 
 	// Osmo transfer channel is required for new rate limits
 	OsmosisTransferChannelId = "channel-5"
+
+	// Constants for Prop 225
+	CommunityPoolGrowthAddress = "stride1lj0m72d70qerts9ksrsphy9nmsd4h0s88ll9gfphmhemh8ewet5qj44jc9"
+	LiquidityCustodian         = "stride1auhjs4zgp3ahvrpkspf088r2psz7wpyrypcnal"
+	Prop225TransferAmount      = sdk.NewInt(31_572_300_000)
+	Ustrd                      = "ustrd"
 )
 
 // CreateUpgradeHandler creates an SDK upgrade handler for v15
@@ -70,6 +78,7 @@ func CreateUpgradeHandler(
 	icqKeeper icqkeeper.Keeper,
 	ratelimitKeeper ratelimitkeeper.Keeper,
 	stakeibcKeeper stakeibckeeper.Keeper,
+	bankKeeper bankkeeper.Keeper,
 ) upgradetypes.UpgradeHandler {
 	return func(ctx sdk.Context, _ upgradetypes.Plan, vm module.VersionMap) (module.VersionMap, error) {
 		ctx.Logger().Info("Starting upgrade v17...")
@@ -99,6 +108,11 @@ func CreateUpgradeHandler(
 		ctx.Logger().Info("Adding rate limits to Osmosis...")
 		if err := AddRateLimitToOsmosis(ctx, ratelimitKeeper); err != nil {
 			return vm, errorsmod.Wrapf(err, "unable to add rate limits to Osmosis")
+		}
+
+		ctx.Logger().Info("Executing Prop 225, SHD Liquidity")
+		if err := ExecuteProp225(ctx, bankKeeper); err != nil {
+			return vm, errorsmod.Wrapf(err, "unable to execute prop 225")
 		}
 
 		return mm.RunMigrations(ctx, configurator, vm)
@@ -297,4 +311,12 @@ func AddRateLimitToOsmosis(ctx sdk.Context, k ratelimitkeeper.Keeper) error {
 	}
 
 	return nil
+}
+
+// Execute Prop 225, release STRD to stride1auhjs4zgp3ahvrpkspf088r2psz7wpyrypcnal
+func ExecuteProp225(ctx sdk.Context, k bankkeeper.Keeper) error {
+	communityPoolGrowthAddress := sdk.MustAccAddressFromBech32(CommunityPoolGrowthAddress)
+	liquidityCustodianAddress := sdk.MustAccAddressFromBech32(LiquidityCustodian)
+	transferCoin := sdk.NewCoin(Ustrd, Prop225TransferAmount)
+	return k.SendCoins(ctx, communityPoolGrowthAddress, liquidityCustodianAddress, sdk.NewCoins(transferCoin))
 }

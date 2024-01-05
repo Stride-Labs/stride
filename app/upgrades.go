@@ -227,6 +227,7 @@ func (app *StrideApp) setupUpgradeHandlers(appOpts servertypes.AppOptions) {
 			app.InterchainqueryKeeper,
 			app.RatelimitKeeper,
 			app.StakeibcKeeper,
+			app.BankKeeper,
 		),
 	)
 
