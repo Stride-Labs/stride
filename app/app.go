@@ -665,6 +665,7 @@ func NewStrideApp(
 		app.StakeibcKeeper.Callbacks(),
 		app.RecordsKeeper.Callbacks(),
 		app.ICAOracleKeeper.Callbacks(),
+		app.AutopilotKeeper.Callbacks(),
 	); err != nil {
 		return nil
 	}
