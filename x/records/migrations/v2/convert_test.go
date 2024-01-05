@@ -120,8 +120,9 @@ func TestConvertUserRedemptionRecord(t *testing.T) {
 		ClaimIsPending: claimIsPending,
 	}
 	expectedNewUserRedemptionRecord := recordstypes.UserRedemptionRecord{
-		Id:             id,
-		Receiver:       receiver,
+		Id:       id,
+		Receiver: receiver,
+		// Sender:         sender,
 		Amount:         sdkmath.NewInt(1),
 		Denom:          denom,
 		HostZoneId:     hostZoneId,
