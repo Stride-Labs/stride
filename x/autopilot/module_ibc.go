@@ -169,9 +169,31 @@ func (im IBCModule) OnRecvPacket(
 
 	//// At this point, we are officially dealing with an autopilot packet
 
-	// Modify the packet data by replacing the JSON metadata field with a receiver address
-	// to allow the packet to continue down the stack
-	tokenPacketData.Receiver = autopilotMetadata.Receiver
+	// Update the reciever in the packet data so that we can pass the packet down the stack
+	// (since the "receiver" may have technically been a full JSON memo)
+	switch routingInfo := autopilotMetadata.RoutingInfo.(type) {
+	case types.StakeibcPacketMetadata:
+		// For autopilot liquid stake and forward, we'll use a hashed receiver address instead
+		// that will also be used as the sender in the forwarding step
+		// This is to prevent impersonation at downstream zones
+		// We can identify the forwarding step by whether there's a non-empty IBC receiver field
+		if routingInfo.Action == types.LiquidStake && routingInfo.IbcReceiver != "" {
+			hashedReceiver, err := types.GenerateHashedAddress(packet.DestinationChannel, tokenPacketData.Sender)
+			if err != nil {
+				return channeltypes.NewErrorAcknowledgement(err)
+			}
+			tokenPacketData.Receiver = hashedReceiver
+		} else {
+			// For all other stakeibc actions, use the original receiver
+			tokenPacketData.Receiver = autopilotMetadata.Receiver
+		}
+	default:
+		// For non stakeibc autopilot actions, use the original receiver
+		tokenPacketData.Receiver = autopilotMetadata.Receiver
+	}
+
+	// Now that the receiver's been updated on the transfer metadata,
+	// modify the original packet so that we can send it down the stack
 	bz, err := transfertypes.ModuleCdc.MarshalJSON(&tokenPacketData)
 	if err != nil {
 		return channeltypes.NewErrorAcknowledgement(err)
