@@ -9,10 +9,12 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/module"
 	distributionkeeper "github.com/cosmos/cosmos-sdk/x/distribution/keeper"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
+	"github.com/cosmos/gogoproto/proto"
 	icatypes "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/types"
 	connectiontypes "github.com/cosmos/ibc-go/v7/modules/core/03-connection/types"
 
 	"github.com/Stride-Labs/stride/v16/utils"
+	epochstypes "github.com/Stride-Labs/stride/v16/x/epochs/types"
 	icqkeeper "github.com/Stride-Labs/stride/v16/x/interchainquery/keeper"
 	ratelimitkeeper "github.com/Stride-Labs/stride/v16/x/ratelimit/keeper"
 	ratelimittypes "github.com/Stride-Labs/stride/v16/x/ratelimit/types"
@@ -101,8 +103,40 @@ func CreateUpgradeHandler(
 			return vm, errorsmod.Wrapf(err, "unable to add rate limits to Osmosis")
 		}
 
+		ctx.Logger().Info("Disabling tokenization on the hub...")
+		DisableTokenization(ctx, stakeibcKeeper, "cosmoshub-4")
+
 		return mm.RunMigrations(ctx, configurator, vm)
 	}
+}
+
+// Sends the ICA message which disables LSM style tokenization of shares from the delegation
+// account for this chain as a security to prevent possibility of large/fast withdrawls
+func DisableTokenization(ctx sdk.Context, k stakeibckeeper.Keeper, chainId string) error {
+	for _, hostZone := range k.GetAllHostZone(ctx) {
+		if hostZone.ChainId == chainId {
+			// Timeout for ica tx is at end of epoch
+			strideEpochTracker, found := k.GetEpochTracker(ctx, epochstypes.STRIDE_EPOCH)
+				if !found {
+				return errorsmod.Wrapf(stakeibctypes.ErrEpochNotFound, epochstypes.STRIDE_EPOCH)
+			}
+			timeout := uint64(strideEpochTracker.NextEpochStartTime)
+
+			// Build the msg for the disable tokenization ICA tx
+			var msgs []proto.Message
+			msgs = append(msgs, &stakeibctypes.MsgDisableTokenizeShares{
+				DelegatorAddress: hostZone.DelegationIcaAddress,
+			})
+				
+			// Send the ICA tx to disable tokenization
+			delegationOwner := stakeibctypes.FormatHostZoneICAOwner(hostZone.ChainId, stakeibctypes.ICAAccountType_DELEGATION)
+			err := k.SubmitICATxWithoutCallback(ctx, hostZone.ConnectionId, delegationOwner, msgs, timeout)
+			if err != nil {
+				return errorsmod.Wrapf(err, "Failed to submit ICA tx to disable tokenization, Messages: %+v", msgs)
+			}
+		}
+	}
+	return nil
 }
 
 // Migrates the host zones to the new structure which supports community pool liquid staking

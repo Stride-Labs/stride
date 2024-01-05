@@ -1,6 +1,8 @@
 syntax = "proto3";
 package stride.stakeibc;
 
+import "gogoproto/gogo.proto";
+
 option go_package = "github.com/Stride-Labs/stride/v16/x/stakeibc/types";
 
 enum ICAAccountType {
@@ -19,4 +21,14 @@ message ICAAccount {
   ICAAccountType type = 2;
   string connection_id = 3;
   string address = 4;
+}
+
+// MsgDisableTokenizeShares prevents LSM tokenization of shares for a given
+// address
+message MsgDisableTokenizeShares {
+  option (gogoproto.equal) = false;
+  option (gogoproto.goproto_getters) = false;
+
+  string delegator_address = 1
+      [ (gogoproto.moretags) = "yaml:\"delegator_address\"" ];
 }
