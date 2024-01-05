@@ -4,9 +4,9 @@ WORKDIR /opt/
 
 RUN set -eux; apk add --no-cache ca-certificates build-base git linux-headers
 
-RUN git clone https://github.com/Stride-Labs/v4-chain.git \
+RUN git clone https://github.com/dydxprotocol/v4-chain.git \
     && cd v4-chain/protocol \
-    && git checkout fafd3a9e2083180d7f7809f5080897e714e52bec
+    && git checkout 8d7fe35d4c73e0b9dc85fa52c190538dea66d420
 
 WORKDIR /opt/v4-chain/protocol
 
@@ -23,4 +23,5 @@ WORKDIR /home/dydx
 
 EXPOSE 26657 26656 1317 9090
 
-CMD ["dydxprotocold", "start"]
+CMD dydxprotocold start \
+    --bridge-daemon-eth-rpc-endpoint https://eth-sepolia.g.alchemy.com/v2/demo

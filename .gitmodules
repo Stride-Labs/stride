@@ -31,9 +31,9 @@
 	url = https://github.com/evmos/evmos
 [submodule "deps/dydx"]
 	# TODO [DYDX]: Switch to official dydxprotocol release after ICA PR is merged
-	# Commit: fafd3a9e2083180d7f7809f5080897e714e52bec
+	# Commit: 8d7fe35d4c73e0b9dc85fa52c190538dea66d420
 	path = deps/dydx
-	url = https://github.com/Stride-Labs/v4-chain.git
+	url = https://github.com/dydxprotocol/v4-chain.git
 [submodule "deps/noble"]
 	# Commit: v3.1.0
 	path = deps/noble
