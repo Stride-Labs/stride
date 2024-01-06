@@ -5,11 +5,11 @@ import (
 )
 
 const (
-	ICACallbackID_TransferFallback = "transfer-fallback"
+	ICACallbackID_Transfer = "transfer"
 )
 
 func (k Keeper) Callbacks() icacallbackstypes.ModuleCallbacks {
 	return []icacallbackstypes.ICACallback{
-		{CallbackId: ICACallbackID_TransferFallback, CallbackFunc: icacallbackstypes.ICACallbackFunction(k.TransferFallbackCallback)},
+		{CallbackId: ICACallbackID_Transfer, CallbackFunc: icacallbackstypes.ICACallbackFunction(k.TransferCallback)},
 	}
 }

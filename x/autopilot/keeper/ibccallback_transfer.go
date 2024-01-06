@@ -12,7 +12,7 @@ import (
 	icacallbackstypes "github.com/Stride-Labs/stride/v16/x/icacallbacks/types"
 )
 
-func (k Keeper) TransferFallbackCallback(
+func (k Keeper) TransferCallback(
 	ctx sdk.Context,
 	packet channeltypes.Packet,
 	ackResponse *icacallbackstypes.AcknowledgementResponse,

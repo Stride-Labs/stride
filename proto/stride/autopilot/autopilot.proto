@@ -1,0 +1,6 @@
+syntax = "proto3";
+package stride.autopilot;
+
+option go_package = "github.com/Stride-Labs/stride/v16/x/autopilot/types";
+
+message TransferCallback { string fallback_address = 1; }
