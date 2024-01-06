@@ -7,10 +7,12 @@ import (
 	errorsmod "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/gogoproto/proto"
 	transfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
 	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
 
 	"github.com/Stride-Labs/stride/v16/x/autopilot/types"
+	icacallbacktypes "github.com/Stride-Labs/stride/v16/x/icacallbacks/types"
 	stakeibckeeper "github.com/Stride-Labs/stride/v16/x/stakeibc/keeper"
 	stakeibctypes "github.com/Stride-Labs/stride/v16/x/stakeibc/types"
 )
@@ -154,9 +156,26 @@ func (k Keeper) IBCTransferStToken(
 	if err != nil {
 		return errorsmod.Wrapf(err, "failed to submit transfer during autopilot liquid stake and forward")
 	}
+	sequence := transferResponse.Sequence
 
 	// Store the original receiver as the fallback address in case the transfer fails
-	k.SetTransferFallbackAddress(ctx, channelId, transferResponse.Sequence, originalReceiverAddress)
+	transferCallback := types.TransferCallback{
+		FallbackAddress: originalReceiverAddress,
+	}
+	transferCallbackBz, err := proto.Marshal(&transferCallback)
+	if err != nil {
+		return err
+	}
+
+	callbackData := icacallbacktypes.CallbackData{
+		CallbackKey:  icacallbacktypes.PacketID(transfertypes.PortID, channelId, sequence),
+		PortId:       transfertypes.PortID,
+		ChannelId:    channelId,
+		Sequence:     sequence,
+		CallbackId:   IBCCallbackID_Transfer,
+		CallbackArgs: transferCallbackBz,
+	}
+	k.ibccallbacksKeeper.SetCallbackData(ctx, callbackData)
 
 	return err
 }

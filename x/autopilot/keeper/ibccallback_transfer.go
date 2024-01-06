@@ -6,68 +6,39 @@ import (
 	errorsmod "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/gogoproto/proto"
 	transfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
 	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
 
-	icacallbackstypes "github.com/Stride-Labs/stride/v16/x/icacallbacks/types"
+	"github.com/Stride-Labs/stride/v16/x/autopilot/types"
+	icacallbacktypes "github.com/Stride-Labs/stride/v16/x/icacallbacks/types"
 )
 
-func (k Keeper) TransferCallback(
-	ctx sdk.Context,
-	packet channeltypes.Packet,
-	ackResponse *icacallbackstypes.AcknowledgementResponse,
-	args []byte,
-) error {
+func (k Keeper) TransferCallback(ctx sdk.Context, packet channeltypes.Packet, ackResponse *icacallbacktypes.AcknowledgementResponse, args []byte) error {
+	// Fetch callback args
+	var transferCallback types.TransferCallback
+	if err := proto.Unmarshal(args, &transferCallback); err != nil {
+		return errorsmod.Wrapf(err, "unable to unmarshal autopilot transfer callback")
+	}
+
+	// If the ack timed-out, retry the transfer
+	if ackResponse.Status == icacallbacktypes.AckResponseStatus_TIMEOUT {
+		k.Logger(ctx).Error(fmt.Sprintf("Autopilot outbound transfer timed out, retrying: %+v", packet))
+		return k.RetryTransfer(ctx, packet, transferCallback.FallbackAddress)
+	}
+
+	// if the ack failed, send to the fallback address
+	if ackResponse.Status == icacallbacktypes.AckResponseStatus_FAILURE {
+		k.Logger(ctx).Error(fmt.Sprintf("Autopilot outbound transfer failed, sending to fallback address: %+v", packet))
+		return k.SendToFallbackAddress(ctx, packet.Data, transferCallback.FallbackAddress)
+	}
+
+	// If the ack was successful, no action necessary
 	return nil
 }
 
-// If there was a failed ack from an outbound transfer of one of the autopilot actions,
-// we'll need to check if there was a fallback address. If one was stored, bank send
-// to that fallback address
-// If the ack was successful, we should delete the address (if it exists)
-func (k Keeper) OnAcknowledgementPacket(ctx sdk.Context, packet channeltypes.Packet, acknowledgement []byte) error {
-	// Retrieve the fallback address for the given packet
-	// We use the packet source channel here since this will correspond with the channel on Stride
-	channelId := packet.SourceChannel
-	sequence := packet.Sequence
-	fallbackAddress, fallbackAddressFound := k.GetTransferFallbackAddress(ctx, channelId, sequence)
-
-	// If there was no fallback address, there's nothing else to do
-	if !fallbackAddressFound {
-		return nil
-	}
-
-	// Remove the fallback address since the packet is no longer pending
-	k.RemoveTransferFallbackAddress(ctx, channelId, sequence)
-
-	// Check whether the ack was successful or was an ack error
-	success, err := k.CheckAcknowledgementStatus(ctx, acknowledgement)
-	if err != nil {
-		return err
-	}
-
-	// If successful, no additional action is necessary
-	if success {
-		return nil
-	}
-
-	// If the ack was an error, we'll need to bank send to the fallback address
-	return k.SendToFallbackAddress(ctx, packet.Data, fallbackAddress)
-}
-
 // If there's a timed out packet, we'll infinitely retry the transfer
-func (k Keeper) OnTimeoutPacket(ctx sdk.Context, packet channeltypes.Packet) error {
-	// Retrieve the fallback address from the original packet
-	// We use the packet source channel here since this will correspond with the channel on Stride
-	channelId := packet.SourceChannel
-	originalSequence := packet.Sequence
-	fallbackAddress, fallbackAddressFound := k.GetTransferFallbackAddress(ctx, channelId, originalSequence)
-
-	// If there was no fallback address, this packet was not from an autopilot action and there's no need to retry
-	if !fallbackAddressFound {
-		return nil
-	}
-
+func (k Keeper) RetryTransfer(ctx sdk.Context, packet channeltypes.Packet, fallbackAddress string) error {
 	// If this was from an autopilot action, unmarshal the transfer metadata to get the original transfer info
 	var transferMetadata transfertypes.FungibleTokenPacketData
 	if err := transfertypes.ModuleCdc.UnmarshalJSON(packet.Data, &transferMetadata); err != nil {
@@ -95,11 +66,26 @@ func (k Keeper) OnTimeoutPacket(ctx sdk.Context, packet channeltypes.Packet) err
 	if err != nil {
 		return errorsmod.Wrapf(err, "unable to submit transfer retry of %+v", msgTransfer)
 	}
+	sequence := retryResponse.Sequence
 
-	// Update the fallback address to use the new sequence number
-	updatedSequence := retryResponse.Sequence
-	k.RemoveTransferFallbackAddress(ctx, channelId, originalSequence)
-	k.SetTransferFallbackAddress(ctx, channelId, updatedSequence, fallbackAddress)
+	// Store the original receiver as the fallback address in case the transfer fails
+	transferCallback := types.TransferCallback{
+		FallbackAddress: fallbackAddress,
+	}
+	transferCallbackBz, err := proto.Marshal(&transferCallback)
+	if err != nil {
+		return err
+	}
+
+	callbackData := icacallbacktypes.CallbackData{
+		CallbackKey:  icacallbacktypes.PacketID(transfertypes.PortID, packet.SourceChannel, sequence),
+		PortId:       transfertypes.PortID,
+		ChannelId:    packet.SourceChannel,
+		Sequence:     sequence,
+		CallbackId:   IBCCallbackID_Transfer,
+		CallbackArgs: transferCallbackBz,
+	}
+	k.ibccallbacksKeeper.SetCallbackData(ctx, callbackData)
 
 	return nil
 }
