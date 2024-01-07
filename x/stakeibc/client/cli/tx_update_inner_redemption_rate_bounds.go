@@ -31,9 +31,7 @@ func CmdUpdateInnerRedemptionRateBounds() *cobra.Command {
 				minInnerRedemptionRate,
 				maxInnerRedemptionRate,
 			)
-			if err := msg.ValidateBasic(); err != nil {
-				return err
-			}
+
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
 		},
 	}

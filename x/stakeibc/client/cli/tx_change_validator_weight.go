@@ -70,9 +70,6 @@ func CmdChangeValidatorWeight() *cobra.Command {
 				hostZone,
 				weights,
 			)
-			if err := msg.ValidateBasic(); err != nil {
-				return err
-			}
 
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
 		},
@@ -126,9 +123,6 @@ func CmdChangeMultipleValidatorWeight() *cobra.Command {
 				hostZone,
 				weights,
 			)
-			if err := msg.ValidateBasic(); err != nil {
-				return err
-			}
 
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
 		},

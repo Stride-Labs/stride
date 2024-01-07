@@ -53,9 +53,6 @@ func submitProposal(clientCtx client.Context, cmd *cobra.Command, proposal govty
 	if err != nil {
 		return err
 	}
-	if err := msg.ValidateBasic(); err != nil {
-		return err
-	}
 
 	// Finally, broadcast the proposal tx
 	return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
