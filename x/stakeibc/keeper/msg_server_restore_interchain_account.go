@@ -6,8 +6,8 @@ import (
 
 	errorsmod "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	icatypes "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/types"
+	connectiontypes "github.com/cosmos/ibc-go/v7/modules/core/03-connection/types"
 
 	recordtypes "github.com/Stride-Labs/stride/v16/x/records/types"
 	"github.com/Stride-Labs/stride/v16/x/stakeibc/types"
@@ -16,52 +16,43 @@ import (
 func (k msgServer) RestoreInterchainAccount(goCtx context.Context, msg *types.MsgRestoreInterchainAccount) (*types.MsgRestoreInterchainAccountResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	// Confirm host zone exists
-	hostZone, found := k.GetHostZone(ctx, msg.ChainId)
-	if !found {
-		k.Logger(ctx).Error(fmt.Sprintf("Host Zone not found: %s", msg.ChainId))
-		return nil, types.ErrInvalidHostZone
-	}
-
 	// Get ConnectionEnd (for counterparty connection)
-	connectionEnd, found := k.IBCKeeper.ConnectionKeeper.GetConnection(ctx, hostZone.ConnectionId)
+	connectionEnd, found := k.IBCKeeper.ConnectionKeeper.GetConnection(ctx, msg.ConnectionId)
 	if !found {
-		errMsg := fmt.Sprintf("invalid connection id from host %s, %s not found", msg.ChainId, hostZone.ConnectionId)
-		k.Logger(ctx).Error(errMsg)
-		return nil, errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, errMsg)
+		return nil, errorsmod.Wrapf(connectiontypes.ErrConnectionNotFound, "connection %s not found", msg.ConnectionId)
 	}
 	counterpartyConnection := connectionEnd.Counterparty
 
 	// only allow restoring an account if it already exists
-	owner := types.FormatICAAccountOwner(msg.ChainId, msg.AccountType)
-	portID, err := icatypes.NewControllerPortID(owner)
+	portID, err := icatypes.NewControllerPortID(msg.AccountOwner)
 	if err != nil {
-		errMsg := fmt.Sprintf("could not create portID for ICA controller account address: %s", owner)
-		k.Logger(ctx).Error(errMsg)
 		return nil, err
 	}
-	_, exists := k.ICAControllerKeeper.GetInterchainAccountAddress(ctx, hostZone.ConnectionId, portID)
+	_, exists := k.ICAControllerKeeper.GetInterchainAccountAddress(ctx, msg.ConnectionId, portID)
 	if !exists {
-		errMsg := fmt.Sprintf("ICA controller account address not found: %s", owner)
-		k.Logger(ctx).Error(errMsg)
-		return nil, errorsmod.Wrapf(types.ErrInvalidInterchainAccountAddress, errMsg)
+		return nil, errorsmod.Wrapf(types.ErrInvalidInterchainAccountAddress,
+			"ICA controller account address not found: %s", msg.AccountOwner)
 	}
 
 	appVersion := string(icatypes.ModuleCdc.MustMarshalJSON(&icatypes.Metadata{
 		Version:                icatypes.Version,
-		ControllerConnectionId: hostZone.ConnectionId,
+		ControllerConnectionId: msg.ConnectionId,
 		HostConnectionId:       counterpartyConnection.ConnectionId,
 		Encoding:               icatypes.EncodingProtobuf,
 		TxType:                 icatypes.TxTypeSDKMultiMsg,
 	}))
 
-	if err := k.ICAControllerKeeper.RegisterInterchainAccount(ctx, hostZone.ConnectionId, owner, appVersion); err != nil {
-		k.Logger(ctx).Error(fmt.Sprintf("unable to register %s account : %s", msg.AccountType.String(), err))
-		return nil, err
+	if err := k.ICAControllerKeeper.RegisterInterchainAccount(ctx, msg.ConnectionId, msg.AccountOwner, appVersion); err != nil {
+		return nil, errorsmod.Wrapf(err, "unable to register account for owner %s", msg.AccountOwner)
 	}
 
 	// If we're restoring a delegation account, we also have to reset record state
-	if msg.AccountType == types.ICAAccountType_DELEGATION {
+	if msg.AccountOwner == types.FormatHostZoneICAOwner(msg.ChainId, types.ICAAccountType_DELEGATION) {
+		hostZone, found := k.GetHostZone(ctx, msg.ChainId)
+		if !found {
+			return nil, types.ErrHostZoneNotFound.Wrapf("delegation ICA supplied, but no associated host zone")
+		}
+
 		// revert DELEGATION_IN_PROGRESS records for the closed ICA channel (so that they can be staked)
 		depositRecords := k.RecordsKeeper.GetAllDepositRecord(ctx)
 		for _, depositRecord := range depositRecords {

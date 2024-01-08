@@ -107,7 +107,6 @@ func (k msgServer) RedeemStake(goCtx context.Context, msg *types.MsgRedeemStake)
 	}
 
 	// then add undelegation amount to epoch unbonding records
-	// ASSUMPTION: we don't need to update the EpochUnbondingRecord directly (only the HostZoneUnbonding)
 	epochUnbondingRecord, found := k.RecordsKeeper.GetEpochUnbondingRecord(ctx, epochTracker.EpochNumber)
 	if !found {
 		k.Logger(ctx).Error("latest epoch unbonding record not found")
@@ -120,7 +119,7 @@ func (k msgServer) RedeemStake(goCtx context.Context, msg *types.MsgRedeemStake)
 	}
 	hostZoneUnbonding.NativeTokenAmount = hostZoneUnbonding.NativeTokenAmount.Add(nativeAmount)
 	if !userHasRedeemedThisEpoch {
-		// Only append if a UserRedemptionRecord to the HZU if it wasn't previously appended
+		// Only append a UserRedemptionRecord to the HZU if it wasn't previously appended
 		hostZoneUnbonding.UserRedemptionRecords = append(hostZoneUnbonding.UserRedemptionRecords, userRedemptionRecord.Id)
 	}
 

@@ -20,9 +20,6 @@ func TestHostZoneQuerySingle(t *testing.T) {
 	keeper, ctx := keepertest.StakeibcKeeper(t)
 	wctx := sdk.WrapSDKContext(ctx)
 	msgs := createNHostZone(keeper, ctx, 2)
-	for _, msg := range msgs {
-		t.Log(msg.ChainId)
-	}
 	for _, tc := range []struct {
 		desc     string
 		request  *types.QueryGetHostZoneRequest

@@ -43,14 +43,6 @@ message UndelegateCallback {
   repeated uint64 epoch_unbonding_record_ids = 3;
 }
 
-message UndelegateHostCallback {
-  string amt = 1 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
-    (gogoproto.nullable) = false
-  ];
-  repeated SplitDelegation split_delegations = 2;
-}
-
 message RedemptionCallback {
   string host_zone_id = 1;
   repeated uint64 epoch_unbonding_record_ids = 2;
@@ -93,4 +85,9 @@ message DelegatorSharesQueryCallback {
 message CommunityPoolBalanceQueryCallback {
   ICAAccountType ica_type = 1;
   string denom = 2;
+}
+
+message TradeRouteCallback {
+  string reward_denom = 1;
+  string host_denom = 2;
 }

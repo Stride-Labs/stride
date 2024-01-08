@@ -165,9 +165,10 @@ func (s *KeeperTestSuite) SetupRestoreInterchainAccount(createDelegationICAChann
 	}
 
 	defaultMsg := types.MsgRestoreInterchainAccount{
-		Creator:     "creatoraddress",
-		ChainId:     HostChainId,
-		AccountType: types.ICAAccountType_DELEGATION,
+		Creator:      "creatoraddress",
+		ChainId:      HostChainId,
+		ConnectionId: ibctesting.FirstConnectionID,
+		AccountOwner: types.FormatHostZoneICAOwner(HostChainId, types.ICAAccountType_DELEGATION),
 	}
 
 	return RestoreInterchainAccountTestCase{
@@ -279,31 +280,34 @@ func (s *KeeperTestSuite) TestRestoreInterchainAccount_InvalidConnectionId() {
 	tc := s.SetupRestoreInterchainAccount(false)
 
 	// Update the connectionId on the host zone so that it doesn't exist
-	hostZone, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx, tc.validMsg.ChainId)
-	s.Require().True(found)
-	hostZone.ConnectionId = "fake_connection"
-	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
+	invalidMsg := tc.validMsg
+	invalidMsg.ConnectionId = "fake_connection"
 
-	_, err := s.GetMsgServer().RestoreInterchainAccount(sdk.WrapSDKContext(s.Ctx), &tc.validMsg)
-	s.Require().EqualError(err, "invalid connection id from host GAIA, fake_connection not found: invalid request")
+	_, err := s.GetMsgServer().RestoreInterchainAccount(sdk.WrapSDKContext(s.Ctx), &invalidMsg)
+	s.Require().ErrorContains(err, "connection fake_connection not found")
 }
 
 func (s *KeeperTestSuite) TestRestoreInterchainAccount_CannotRestoreNonExistentAcct() {
 	tc := s.SetupRestoreInterchainAccount(false)
+
+	// Attempt to restore an account that does not exist
 	msg := tc.validMsg
-	msg.AccountType = types.ICAAccountType_WITHDRAWAL
+	msg.AccountOwner = types.FormatHostZoneICAOwner(HostChainId, types.ICAAccountType_WITHDRAWAL)
 
 	_, err := s.GetMsgServer().RestoreInterchainAccount(sdk.WrapSDKContext(s.Ctx), &msg)
 	s.Require().ErrorContains(err, "ICA controller account address not found: GAIA.WITHDRAWAL")
 }
 
-func (s *KeeperTestSuite) TestRestoreInterchainAccount_FailsForIncorrectHostZone() {
-	tc := s.SetupRestoreInterchainAccount(false)
-	invalidMsg := tc.validMsg
-	invalidMsg.ChainId = "incorrectchainid"
+func (s *KeeperTestSuite) TestRestoreInterchainAccount_HostZoneNotFound() {
+	tc := s.SetupRestoreInterchainAccount(true)
+	s.closeICAChannel(tc.delegationPortID, tc.delegationChannelID)
 
-	_, err := s.GetMsgServer().RestoreInterchainAccount(sdk.WrapSDKContext(s.Ctx), &invalidMsg)
-	s.Require().ErrorContains(err, "host zone not registered")
+	// Delete the host zone so the lookup fails
+	// (this check only runs for the delegation channel)
+	s.App.StakeibcKeeper.RemoveHostZone(s.Ctx, HostChainId)
+
+	_, err := s.GetMsgServer().RestoreInterchainAccount(sdk.WrapSDKContext(s.Ctx), &tc.validMsg)
+	s.Require().ErrorContains(err, "delegation ICA supplied, but no associated host zone")
 }
 
 func (s *KeeperTestSuite) TestRestoreInterchainAccount_RevertDepositRecords_Failure() {
@@ -333,7 +337,7 @@ func (s *KeeperTestSuite) TestRestoreInterchainAccount_NoRecordChange_Success() 
 
 	// Restore the channel
 	msg := tc.validMsg
-	msg.AccountType = types.ICAAccountType_WITHDRAWAL
+	msg.AccountOwner = types.FormatHostZoneICAOwner(HostChainId, types.ICAAccountType_WITHDRAWAL)
 	s.restoreChannelAndVerifySuccess(msg, portID, channelID)
 
 	// Verify the record status' were NOT reverted
