@@ -18,15 +18,19 @@ type RedeemStakeState struct {
 	initialStTokenEpochUnbondingAmount sdkmath.Int
 }
 type RedeemStakeTestCase struct {
-	user         Account
-	hostZone     stakeibctypes.HostZone
-	zoneAccount  Account
-	initialState RedeemStakeState
-	validMsg     stakeibctypes.MsgRedeemStake
+	user                 Account
+	hostZone             stakeibctypes.HostZone
+	zoneAccount          Account
+	initialState         RedeemStakeState
+	validMsg             stakeibctypes.MsgRedeemStake
+	expectedNativeAmount sdkmath.Int
 }
 
 func (s *KeeperTestSuite) SetupRedeemStake() RedeemStakeTestCase {
 	redeemAmount := sdkmath.NewInt(1_000_000)
+	redemptionRate := sdk.MustNewDecFromStr("1.5")
+	expectedNativeAmount := sdkmath.NewInt(1_500_000)
+
 	user := Account{
 		acc:           s.TestAccs[0],
 		atomBalance:   sdk.NewInt64Coin("ibc/uatom", 10_000_000),
@@ -50,7 +54,7 @@ func (s *KeeperTestSuite) SetupRedeemStake() RedeemStakeTestCase {
 		ChainId:          HostChainId,
 		HostDenom:        "uatom",
 		Bech32Prefix:     "cosmos",
-		RedemptionRate:   sdk.NewDec(1.0),
+		RedemptionRate:   redemptionRate,
 		TotalDelegations: sdkmath.NewInt(1234567890),
 		DepositAddress:   depositAddress.String(),
 	}
@@ -78,9 +82,10 @@ func (s *KeeperTestSuite) SetupRedeemStake() RedeemStakeTestCase {
 	s.App.RecordsKeeper.SetEpochUnbondingRecord(s.Ctx, epochUnbondingRecord)
 
 	return RedeemStakeTestCase{
-		user:        user,
-		hostZone:    hostZone,
-		zoneAccount: zoneAccount,
+		user:                 user,
+		hostZone:             hostZone,
+		zoneAccount:          zoneAccount,
+		expectedNativeAmount: expectedNativeAmount,
 		initialState: RedeemStakeState{
 			epochNumber:                        epochTrackerDay.EpochNumber,
 			initialNativeEpochUnbondingAmount:  sdkmath.ZeroInt(),
@@ -131,14 +136,9 @@ func (s *KeeperTestSuite) TestRedeemStake_Successful() {
 	s.Require().True(found, "epoch unbonding record")
 	hostZoneUnbonding, found := s.App.RecordsKeeper.GetHostZoneUnbondingByChainId(s.Ctx, epochUnbondingRecord.EpochNumber, HostChainId)
 	s.Require().True(found, "host zone unbondings by chain ID")
-	hostZone, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx, msg.HostZone)
-	s.Require().True(found, "host zone")
 
-	nativeRedemptionAmount := redeemAmount.Mul(hostZone.RedemptionRate.TruncateInt())
-	stTokenBurnAmount := redeemAmount
-
-	expectedHostZoneUnbondingNativeAmount := initialState.initialNativeEpochUnbondingAmount.Add(nativeRedemptionAmount)
-	expectedHostZoneUnbondingStTokenAmount := initialState.initialStTokenEpochUnbondingAmount.Add(stTokenBurnAmount)
+	expectedHostZoneUnbondingNativeAmount := initialState.initialNativeEpochUnbondingAmount.Add(tc.expectedNativeAmount)
+	expectedHostZoneUnbondingStTokenAmount := initialState.initialStTokenEpochUnbondingAmount.Add(redeemAmount)
 
 	s.Require().Equal(expectedHostZoneUnbondingNativeAmount, hostZoneUnbonding.NativeTokenAmount, "host zone native unbonding amount")
 	s.Require().Equal(expectedHostZoneUnbondingStTokenAmount, hostZoneUnbonding.StTokenAmount, "host zone stToken burn amount")
@@ -150,7 +150,7 @@ func (s *KeeperTestSuite) TestRedeemStake_Successful() {
 	userRedemptionRecord, found := s.App.RecordsKeeper.GetUserRedemptionRecord(s.Ctx, userRedemptionRecordId)
 	s.Require().True(found)
 
-	s.Require().Equal(msg.Amount, userRedemptionRecord.Amount, "redemption record amount")
+	s.Require().Equal(tc.expectedNativeAmount, userRedemptionRecord.Amount, "redemption record amount")
 	s.Require().Equal(msg.Receiver, userRedemptionRecord.Receiver, "redemption record receiver")
 	s.Require().Equal(msg.HostZone, userRedemptionRecord.HostZoneId, "redemption record host zone")
 	s.Require().False(userRedemptionRecord.ClaimIsPending, "redemption record is not claimable")
