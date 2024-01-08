@@ -99,14 +99,14 @@ test_denom_sttoken() {
 ########################################################################
 __test_denom_receive_packet_sink_two_hops() {  # receive sink two hops
     # ujuno sent from Juno to Osmosis to Stride
-    #   Expected Denom: ibc/CD369927BBCE5198E0DC0D1A341C2F1DE51B1228BFD0633430055A39F58D229C
-    #                   (transfer/channel-2(juno)/transfer/channel-5(osmo)/ujuno)
+    #   Expected Denom: ibc/FDB2394AA02EA9AC7DF68BE86BBE54846065EB967165FE78262601FBCAFB1A8F
+    #                   (transfer/channel-2(juno)/transfer/channel-7(osmo)/ujuno)
     #   Expected Channel: channel-2
-    juno_on_osmo='ibc/448C1061CE97D86CC5E86374CD914870FB8EBA16C58661B5F1D3F46729A2422D'
-    traveler_juno_on_stride='ibc/CD369927BBCE5198E0DC0D1A341C2F1DE51B1228BFD0633430055A39F58D229C'
+    juno_on_osmo='ibc/E5FD4F5963AA3CA00908DEA9BF29D35BA84183BBC0783A1224022BF55D348112'
+    traveler_juno_on_stride='ibc/FDB2394AA02EA9AC7DF68BE86BBE54846065EB967165FE78262601FBCAFB1A8F'
 
     printf "\n>>> Transferring ujuno from Juno to Osmosis\n"
-    $JUNO_MAIN_CMD tx ibc-transfer transfer transfer channel-5 $(OSMO_ADDRESS) 10000000ujuno --from ${JUNO_VAL_PREFIX}1 -y | TRIM_TX
+    $JUNO_MAIN_CMD tx ibc-transfer transfer transfer channel-7 $(OSMO_ADDRESS) 10000000ujuno --from ${JUNO_VAL_PREFIX}1 -y | TRIM_TX
     sleep 10
 
     # Then transfer from osmo to stride 
@@ -115,20 +115,20 @@ __test_denom_receive_packet_sink_two_hops() {  # receive sink two hops
 
 __test_denom_send_packet_non_native_two_hops() { # send non-native (two hops)
     # ujuno (through Osmosis) sent from Stride to Juno  
-    #  Expected Denom: ibc/CD369927BBCE5198E0DC0D1A341C2F1DE51B1228BFD0633430055A39F58D229C
-    #                  (transfer/channel-2(juno)/transfer/channel-5(osmo)/ujuno)
+    #  Expected Denom: ibc/FDB2394AA02EA9AC7DF68BE86BBE54846065EB967165FE78262601FBCAFB1A8F
+    #                  (transfer/channel-2(juno)/transfer/channel-7(osmo)/ujuno)
     #  Expected Channel: channel-1
-    traveler_juno_on_stride='ibc/CD369927BBCE5198E0DC0D1A341C2F1DE51B1228BFD0633430055A39F58D229C'
+    traveler_juno_on_stride='ibc/FDB2394AA02EA9AC7DF68BE86BBE54846065EB967165FE78262601FBCAFB1A8F'
     check_transfer_status STRIDE JUNO channel-1 channel-1 10000000 $traveler_juno_on_stride $traveler_juno_on_stride true
 }
 
 __test_denom_receive_packet_source_non_native() { # receive source non-native
     # ujuno (through Osmosis, then Stride) sent from Juno to Stride
-    #  Expected Denom: ibc/CD369927BBCE5198E0DC0D1A341C2F1DE51B1228BFD0633430055A39F58D229C 
-    #                  (transfer/channel-2(juno)/transfer/channel-5(osmo)/ujuno)
+    #  Expected Denom: ibc/FDB2394AA02EA9AC7DF68BE86BBE54846065EB967165FE78262601FBCAFB1A8F 
+    #                  (transfer/channel-2(juno)/transfer/channel-7(osmo)/ujuno)
     #  Expected Channel: channel-1
-    traveler_juno_on_stride='ibc/CD369927BBCE5198E0DC0D1A341C2F1DE51B1228BFD0633430055A39F58D229C'
-    traveler_juno_on_juno='ibc/2EB68CA4364B52B62B24AFB26B5B74892F7ABD52899F27E04E31A030DD59B991'
+    traveler_juno_on_stride='ibc/FDB2394AA02EA9AC7DF68BE86BBE54846065EB967165FE78262601FBCAFB1A8F'
+    traveler_juno_on_juno='ibc/39A2ED50225EBC20C2C39737A8BB7CEAE0FF9F006C9A22DFF705126EA8E9EA4C'
     check_transfer_status JUNO STRIDE channel-0 channel-1 10000000 $traveler_juno_on_juno $traveler_juno_on_stride true
 }
 
