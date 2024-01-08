@@ -61,6 +61,7 @@ func (m StakeibcPacketMetadata) Validate() error {
 }
 
 // Validate claim packet metadata includes the stride address
+// TODO: remove this function
 func (m ClaimPacketMetadata) Validate() error {
 	_, err := sdk.AccAddressFromBech32(m.StrideAddress)
 	if err != nil {

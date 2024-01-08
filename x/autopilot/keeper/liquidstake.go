@@ -45,7 +45,7 @@ func (k Keeper) TryLiquidStaking(
 
 	hostZone, err := k.stakeibcKeeper.GetHostZoneFromHostDenom(ctx, token.Denom)
 	if err != nil {
-		return fmt.Errorf("host zone not found for denom (%s)", token.Denom)
+		return err
 	}
 
 	if hostZone.IbcDenom != ibcDenom {
@@ -77,7 +77,7 @@ func (k Keeper) RunLiquidStake(ctx sdk.Context, addr sdk.AccAddress, token sdk.C
 		msg,
 	)
 	if err != nil {
-		return err
+		return errorsmod.Wrapf(err, "failed to liquid stake")
 	}
 
 	if packetMetadata.IbcReceiver == "" {

@@ -102,6 +102,9 @@ IBC_DYDX_CHANNEL_1_DENOM='ibc/78B7A771A2ECBF5D10DC6AB35568A7AC4161DB21B3A848DA47
 IBC_DYDX_CHANNEL_2_DENOM='ibc/748465E0D883217048DB25F4C3825D03F682A06FE292E21072BF678E249DAC18'
 IBC_DYDX_CHANNEL_3_DENOM='ibc/6301148031C0AC9A392C2DDB1B2D1F11B3B9D0A3ECF20C6B5122685D9E4CC631'
 
+IBC_GAIA_STDENOM='ibc/054A44EC8D9B68B9A6F0D5708375E00A5569A28F21E0064FF12CADC3FEF1D04F'
+IBC_HOST_STDENOM='ibc/E3AF56419340E719710C088D3855F65C4717E1A0C3B405F0C1D16F2A54E89421'
+
 # COIN TYPES
 # Coin types can be found at https://github.com/satoshilabs/slips/blob/master/slip-0044.md
 COSMOS_COIN_TYPE=118
@@ -421,6 +424,26 @@ WAIT_FOR_STRING() {
   ( tail -f -n0 $1 & ) | grep -q "$2"
 }
 
+# Helper function to ensure there's enough time left in the epoch for operations to complete
+# This will check how much time is remaining in the epoch, and if there's enough time,
+# it will do nothing, otherwise it will sleep until the next epoch begins
+# Ex: if you need at least 30 seconds in the day epoch to complete the test,
+#     you can run `AVOID_EPOCH_BOUNDARY day 30``
+AVOID_EPOCH_BOUNDARY() {
+  epoch_type="$1"
+  buffer_required="$2"
+
+  seconds_remaining_in_epoch=$($STRIDE_MAIN_CMD q epochs seconds-remaining $epoch_type)
+
+  # If there's enough time left, no need to sleep
+  if [[ $seconds_remaining_in_epoch -gt $buffer_required ]]; then
+    return
+  fi
+
+  # Otherwise, wait for the next epoch
+  sleep $((seconds_remaining_in_epoch+5))
+}
+
 # Sleep until the balance has changed
 # Optionally provide a minimum amount it must change by (to ignore interest)
 WAIT_FOR_BALANCE_CHANGE() {
@@ -573,7 +596,7 @@ NUMBERS_ONLY() {
 }
 
 GETBAL() {
-  head -n 1 | grep -o -E '[0-9]+' || "0"
+  head -n 1 | grep -o -E '[0-9]+' || echo "0"
 }
 
 GETSTAKE() {
