@@ -18,7 +18,7 @@ import (
 	ibcexported "github.com/cosmos/ibc-go/v7/modules/core/exported"
 )
 
-const MaxMemoCharLength = 256
+const MaxMemoCharLength = 2000
 
 // IBC MODULE IMPLEMENTATION
 // IBCModule implements the ICS26 interface for transfer given the transfer keeper.
@@ -196,10 +196,14 @@ func (im IBCModule) OnRecvPacket(
 		}
 		im.keeper.Logger(ctx).Info(fmt.Sprintf("Forwaring packet from %s to stakeibc", newData.Sender))
 
-		// Try to liquid stake - return an ack error if it fails, otherwise return the ack generated from the earlier packet propogation
-		if err := im.keeper.TryLiquidStaking(ctx, packet, newData, routingInfo); err != nil {
-			im.keeper.Logger(ctx).Error(fmt.Sprintf("Error liquid staking packet from autopilot for %s: %s", newData.Sender, err.Error()))
-			return channeltypes.NewErrorAcknowledgement(err)
+		switch routingInfo.Action {
+		case types.LiquidStake:
+			// Try to liquid stake - return an ack error if it fails, otherwise return the ack generated from the earlier packet propogation
+			if err := im.keeper.TryLiquidStaking(ctx, packet, newData, routingInfo); err != nil {
+				im.keeper.Logger(ctx).Error(fmt.Sprintf("Error liquid staking packet from autopilot for %s: %s", newData.Sender, err.Error()))
+				return channeltypes.NewErrorAcknowledgement(err)
+			}
+			// case types.RedeemStake: TODO: add redeem stake logic
 		}
 
 		return ack
