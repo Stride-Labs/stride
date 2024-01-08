@@ -18,7 +18,7 @@ import (
 	ibcexported "github.com/cosmos/ibc-go/v7/modules/core/exported"
 )
 
-const MaxMemoCharLength = 512
+const MaxMemoCharLength = 2000
 
 // IBC MODULE IMPLEMENTATION
 // IBCModule implements the ICS26 interface for transfer given the transfer keeper.
