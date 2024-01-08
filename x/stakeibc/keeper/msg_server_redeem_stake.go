@@ -83,8 +83,7 @@ func (k msgServer) RedeemStake(goCtx context.Context, msg *types.MsgRedeemStake)
 
 	// ----------------- UNBONDING RECORD KEEPING -----------------
 	// Fetch the record
-	senderAddr := sender.String()
-	redemptionId := recordstypes.UserRedemptionRecordKeyFormatter(hostZone.ChainId, epochTracker.EpochNumber, senderAddr)
+	redemptionId := recordstypes.UserRedemptionRecordKeyFormatter(hostZone.ChainId, epochTracker.EpochNumber, msg.Receiver)
 	userRedemptionRecord, userHasRedeemedThisEpoch := k.RecordsKeeper.GetUserRedemptionRecord(ctx, redemptionId)
 	if userHasRedeemedThisEpoch {
 		k.Logger(ctx).Info(fmt.Sprintf("UserRedemptionRecord found for %s", redemptionId))
@@ -95,7 +94,6 @@ func (k msgServer) RedeemStake(goCtx context.Context, msg *types.MsgRedeemStake)
 		// First time a user is redeeming this epoch
 		userRedemptionRecord = recordstypes.UserRedemptionRecord{
 			Id:          redemptionId,
-			Sender:      senderAddr,
 			Receiver:    msg.Receiver,
 			Amount:      nativeAmount,
 			Denom:       hostZone.HostDenom,

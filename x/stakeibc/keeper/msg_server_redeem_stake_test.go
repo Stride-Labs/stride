@@ -151,7 +151,6 @@ func (s *KeeperTestSuite) TestRedeemStake_Successful() {
 	s.Require().True(found)
 
 	s.Require().Equal(msg.Amount, userRedemptionRecord.Amount, "redemption record amount")
-	s.Require().Equal(msg.Creator, userRedemptionRecord.Sender, "redemption record sender")
 	s.Require().Equal(msg.Receiver, userRedemptionRecord.Receiver, "redemption record receiver")
 	s.Require().Equal(msg.HostZone, userRedemptionRecord.HostZoneId, "redemption record host zone")
 	s.Require().False(userRedemptionRecord.ClaimIsPending, "redemption record is not claimable")
