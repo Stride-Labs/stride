@@ -59,13 +59,10 @@ done
 # Start each chain, create the transfer channels and start the relayers
 bash $SRC/start_chain.sh 
 
-# For some reason, the relayer throws an error when trying to create clients
-# the first time it's run: failed to create client on dst chain{DYDX}: client identifier event attribute not found
-# But the second time it's attempted it goes through - no idea why
-# Reached out to strangelove but in the meantime, attempting it twice here
-bash $SRC/start_relayers.sh &> /dev/null || sleep 5 # throws error, but is ignored
-rm -rf ${STATE}/relayer-dydx/*                      # resets
-bash $SRC/start_relayers.sh                         # should succeeed
+# Sleep a bit to let dydx get up and running before we create the channels
+sleep 30
+bash $SRC/start_relayers.sh   
+sleep 30
 
 # Create governors for chains running the stride binary
 for chain in STRIDE ${HOST_CHAINS[@]}; do

@@ -464,17 +464,7 @@ GET_VAL_ADDR() {
   val_index=$2
 
   MAIN_CMD=$(GET_VAR_VALUE ${chain}_MAIN_CMD)
-
-  # Try both queries to support SDK 50 if applicable
-  validator_address=""
-  if $MAIN_CMD q staking validators 2> /dev/null; then # only succeeds for < SDK 50
-    # Grab the relevant validator from the moniker in < SDK 50
-    validator_address=$($MAIN_CMD q staking validators | grep ${chain}_${val_index} -A 6 | grep address | awk '{print $2}')
-  else
-    # Grab the validator based on the ordering in SDK 50
-    validator_address=$($MAIN_CMD q comet-validator-set | grep address | sed -n "${val_index}p" | awk '{print $2}')
-  fi
-  echo $validator_address 
+  $MAIN_CMD q staking validators | grep ${chain}_${val_index} -A 6 | grep operator | awk '{print $2}'
 }
 
 GET_ICA_ADDR() {

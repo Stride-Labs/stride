@@ -6,7 +6,7 @@ RUN set -eux; apk add --no-cache ca-certificates build-base git linux-headers
 
 RUN git clone https://github.com/dydxprotocol/v4-chain.git \
     && cd v4-chain/protocol \
-    && git checkout 8d7fe35d4c73e0b9dc85fa52c190538dea66d420
+    && git checkout e5ccbaa1a822d66709f1f94d4a9b618c3584ad8e
 
 WORKDIR /opt/v4-chain/protocol
 
@@ -24,4 +24,7 @@ WORKDIR /home/dydx
 EXPOSE 26657 26656 1317 9090
 
 CMD dydxprotocold start \
-    --bridge-daemon-eth-rpc-endpoint https://eth-sepolia.g.alchemy.com/v2/demo
+    --price-daemon-enabled false \
+    --bridge-daemon-enabled false \
+    --liquidation-daemon-enabled false \
+    --bridge-daemon-eth-rpc-endpoint https://eth-sepolia.g.alchemy.com/v2/demo 
