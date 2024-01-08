@@ -95,7 +95,7 @@ AllQueries(ctx sdk.Context) []types.Query
 
 ```protobuf
 service Msg {
-  // SubmitQueryResponse defines a method for submiting query responses.
+  // SubmitQueryResponse defines a method for submitting query responses.
   rpc SubmitQueryResponse(MsgSubmitQueryResponse) returns (MsgSubmitQueryResponseResponse)
 }
 ```

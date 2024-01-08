@@ -14,6 +14,7 @@ import (
 )
 
 // Handles stakeibc transactions
+// TODO: Remove - no longer used since sdk 47
 func NewMessageHandler(k keeper.Keeper) sdk.Handler {
 	msgServer := keeper.NewMsgServerImpl(k)
 
@@ -46,7 +47,7 @@ func NewMessageHandler(k keeper.Keeper) sdk.Handler {
 		case *types.MsgAddValidators:
 			res, err := msgServer.AddValidators(sdk.WrapSDKContext(ctx), msg)
 			return sdk.WrapServiceResult(ctx, res, err)
-		case *types.MsgChangeValidatorWeight:
+		case *types.MsgChangeValidatorWeights:
 			res, err := msgServer.ChangeValidatorWeight(sdk.WrapSDKContext(ctx), msg)
 			return sdk.WrapServiceResult(ctx, res, err)
 		case *types.MsgDeleteValidator:
@@ -58,9 +59,6 @@ func NewMessageHandler(k keeper.Keeper) sdk.Handler {
 		case *types.MsgUpdateValidatorSharesExchRate:
 			res, err := msgServer.UpdateValidatorSharesExchRate(sdk.WrapSDKContext(ctx), msg)
 			return sdk.WrapServiceResult(ctx, res, err)
-		case *types.MsgUndelegateHost:
-			res, err := msgServer.UndelegateHost(sdk.WrapSDKContext(ctx), msg)
-			return sdk.WrapServiceResult(ctx, res, err)
 		case *types.MsgCalibrateDelegation:
 			res, err := msgServer.CalibrateDelegation(sdk.WrapSDKContext(ctx), msg)
 			return sdk.WrapServiceResult(ctx, res, err)
@@ -69,6 +67,15 @@ func NewMessageHandler(k keeper.Keeper) sdk.Handler {
 			return sdk.WrapServiceResult(ctx, res, err)
 		case *types.MsgResumeHostZone:
 			res, err := msgServer.ResumeHostZone(sdk.WrapSDKContext(ctx), msg)
+			return sdk.WrapServiceResult(ctx, res, err)
+		case *types.MsgCreateTradeRoute:
+			res, err := msgServer.CreateTradeRoute(sdk.WrapSDKContext(ctx), msg)
+			return sdk.WrapServiceResult(ctx, res, err)
+		case *types.MsgDeleteTradeRoute:
+			res, err := msgServer.DeleteTradeRoute(sdk.WrapSDKContext(ctx), msg)
+			return sdk.WrapServiceResult(ctx, res, err)
+		case *types.MsgUpdateTradeRoute:
+			res, err := msgServer.UpdateTradeRoute(sdk.WrapSDKContext(ctx), msg)
 			return sdk.WrapServiceResult(ctx, res, err)
 		default:
 			errMsg := fmt.Sprintf("unrecognized %s message type: %T", types.ModuleName, msg)

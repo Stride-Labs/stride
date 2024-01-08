@@ -45,7 +45,7 @@ func (k Keeper) TryLiquidStaking(
 
 	hostZone, err := k.stakeibcKeeper.GetHostZoneFromHostDenom(ctx, token.Denom)
 	if err != nil {
-		return fmt.Errorf("host zone not found for denom (%s)", token.Denom)
+		return err
 	}
 
 	if hostZone.IbcDenom != ibcDenom {
@@ -77,7 +77,7 @@ func (k Keeper) RunLiquidStake(ctx sdk.Context, addr sdk.AccAddress, token sdk.C
 		msg,
 	)
 	if err != nil {
-		return errorsmod.Wrapf(err, err.Error())
+		return errorsmod.Wrapf(err, "failed to liquid stake")
 	}
 
 	if packetMetadata.IbcReceiver == "" {
@@ -100,17 +100,13 @@ func (k Keeper) IBCTransferStAsset(ctx sdk.Context, stAsset sdk.Coin, sender str
 		channelId = hostZone.TransferChannelId
 	}
 	transferMsg := &transfertypes.MsgTransfer{
-		SourcePort:    transfertypes.PortID,
-		SourceChannel: channelId,
-		Token:         stAsset,
-		// TODO: does this reintroduce the bug in PFM where senders can be spoofed?
-		// If so, should we instead call PFM directly to forward the packet?
-		// Or should we obfuscate the sender, making it a random address?
+		SourcePort:       transfertypes.PortID,
+		SourceChannel:    channelId,
+		Token:            stAsset,
 		Sender:           sender,
 		Receiver:         packetMetadata.IbcReceiver,
 		TimeoutTimestamp: timeoutTimestamp,
-		// TimeoutHeight:    clienttypes.Height{},
-		// Memo:             "stTokenIBCTransfer",
+		// TimeoutHeight and Memo are unused
 	}
 
 	_, err := k.transferKeeper.Transfer(sdk.WrapSDKContext(ctx), transferMsg)

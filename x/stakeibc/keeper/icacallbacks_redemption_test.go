@@ -34,11 +34,11 @@ func (s *KeeperTestSuite) SetupRedemptionCallback() RedemptionCallbackTestCase {
 	epochNumber := uint64(1)
 
 	// individual userRedemptionRecords should be claimable, as long as the host zone unbonding allows for claims
-	recordId1 := recordtypes.UserRedemptionRecordKeyFormatter(HostChainId, epochNumber, "sender")
+	recordId1 := recordtypes.UserRedemptionRecordKeyFormatter(HostChainId, epochNumber, "receiver")
 	userRedemptionRecord1 := recordtypes.UserRedemptionRecord{
 		Id: recordId1,
 	}
-	recordId2 := recordtypes.UserRedemptionRecordKeyFormatter(HostChainId, epochNumber, "other_sender")
+	recordId2 := recordtypes.UserRedemptionRecordKeyFormatter(HostChainId, epochNumber, "other_receiver")
 	userRedemptionRecord2 := recordtypes.UserRedemptionRecord{
 		Id: recordId2,
 	}

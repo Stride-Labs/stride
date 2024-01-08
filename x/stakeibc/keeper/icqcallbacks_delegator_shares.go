@@ -60,11 +60,6 @@ func DelegatorSharesCallback(k Keeper, ctx sdk.Context, args []byte, query icqty
 		return errorsmod.Wrapf(types.ErrValidatorNotFound, "no registered validator for address (%s)", queriedDelegation.ValidatorAddress)
 	}
 
-	// Check if delegation is zero since this will affect measuring the slash amount
-	if validator.Delegation.IsZero() {
-		return errorsmod.Wrapf(types.ErrNoValidatorAmts, "Current delegation to validator is zero, unable to check slash magnitude %+v", validator)
-	}
-
 	// Check if the ICQ overlapped a delegation, undelegation, or detokenization ICA
 	// that would have modfied the number of delegated tokens
 	prevInternalDelegation := callbackData.InitialValidatorDelegation
