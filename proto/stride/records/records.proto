@@ -7,8 +7,7 @@ import "gogoproto/gogo.proto";
 option go_package = "github.com/Stride-Labs/stride/v16/x/records/types";
 
 message UserRedemptionRecord {
-  string id = 1; // {chain_id}.{epoch}.{sender}
-  string sender = 2;
+  string id = 1; // {chain_id}.{epoch}.{receiver}
   string receiver = 3;
   string amount = 4 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
@@ -18,6 +17,7 @@ message UserRedemptionRecord {
   string host_zone_id = 6;
   uint64 epoch_number = 7;
   bool claim_is_pending = 8;
+  reserved 2;
 }
 
 message DepositRecord {

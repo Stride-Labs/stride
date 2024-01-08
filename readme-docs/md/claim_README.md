@@ -22,7 +22,7 @@ ActionLiquidStake  Action = 0
 ActionDelegateStake Action = 1
 ```
 
-These actions are monitored by registring claim **hooks** to the stakeibc, and staking modules.
+These actions are monitored by registering claim **hooks** to the stakeibc, and staking modules.
 This means that when you perform an action, the claims module will immediately unlock those coins if they are applicable.
 These actions can be performed in any order.
 

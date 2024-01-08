@@ -55,8 +55,8 @@ setup_channel_value() {
     sleep 10
     
     echo ">>> traveler-ujuno"
-    juno_on_osmo='ibc/448C1061CE97D86CC5E86374CD914870FB8EBA16C58661B5F1D3F46729A2422D'
-    $JUNO_MAIN_CMD tx ibc-transfer transfer transfer channel-5 $(OSMO_ADDRESS) ${INITIAL_CHANNEL_VALUE}ujuno --from ${JUNO_VAL_PREFIX}1 -y | TRIM_TX
+    juno_on_osmo='ibc/E5FD4F5963AA3CA00908DEA9BF29D35BA84183BBC0783A1224022BF55D348112'
+    $JUNO_MAIN_CMD tx ibc-transfer transfer transfer channel-7 $(OSMO_ADDRESS) ${INITIAL_CHANNEL_VALUE}ujuno --from ${JUNO_VAL_PREFIX}1 -y | TRIM_TX
     sleep 10
     $OSMO_MAIN_CMD tx ibc-transfer transfer transfer channel-0 $(STRIDE_ADDRESS) ${INITIAL_CHANNEL_VALUE}${juno_on_osmo} --from ${OSMO_VAL_PREFIX}1 -y | TRIM_TX
     sleep 3
