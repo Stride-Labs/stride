@@ -213,7 +213,7 @@ func (s *KeeperTestSuite) TestTryRedeemStake() {
 				Action:      types.RedeemStake,
 				IbcReceiver: redeemerOnHost,
 			},
-			expectedError: "not a parsable amount field",
+			expectedError: "invalid amount",
 		},
 		{
 			name:        "not a host zone denom",
@@ -228,7 +228,7 @@ func (s *KeeperTestSuite) TestTryRedeemStake() {
 				Action:      types.RedeemStake,
 				IbcReceiver: redeemerOnHost,
 			},
-			expectedError: "No HostZone for uosmo found",
+			expectedError: "not a liquid staking token",
 		},
 		{
 			name:        "invalid stride address",
