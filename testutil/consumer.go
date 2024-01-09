@@ -6,7 +6,6 @@ import (
 	ibctypes "github.com/cosmos/ibc-go/v7/modules/core/02-client/types"
 	"github.com/cosmos/ibc-go/v7/modules/core/23-commitment/types"
 	ibctmtypes "github.com/cosmos/ibc-go/v7/modules/light-clients/07-tendermint"
-	ccvconsumertypes "github.com/cosmos/interchain-security/v3/x/ccv/consumer/types"
 	ccvprovidertypes "github.com/cosmos/interchain-security/v3/x/ccv/provider/types"
 	ccvtypes "github.com/cosmos/interchain-security/v3/x/ccv/types"
 )
@@ -14,8 +13,8 @@ import (
 // This function creates consumer module genesis state that is used as starting point for modifications
 // that allow Stride chain to be started locally without having to start the provider chain and the relayer.
 // It is also used in tests that are starting the chain node.
-func CreateMinimalConsumerTestGenesis() *ccvconsumertypes.GenesisState {
-	genesisState := ccvconsumertypes.DefaultGenesisState()
+func CreateMinimalConsumerTestGenesis() *ccvtypes.ConsumerGenesisState {
+	genesisState := ccvtypes.DefaultConsumerGenesisState()
 	genesisState.Params.Enabled = true
 	genesisState.NewChain = true
 	genesisState.ProviderClientState = ccvprovidertypes.DefaultParams().TemplateClient
