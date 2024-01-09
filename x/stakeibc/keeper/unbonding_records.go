@@ -74,6 +74,14 @@ func (k Keeper) CreateEpochUnbondingRecord(ctx sdk.Context, epochNumber uint64) 
 	return true
 }
 
+// Helper function to evaluate if a host zone unbonding record still needs to be initiated
+func (k Keeper) ShouldInitiateHostZoneUnbondingRecord(ctx sdk.Context, hostZoneRecord *recordstypes.HostZoneUnbonding) bool {
+	if hostZoneRecord.Status == recordstypes.HostZoneUnbonding_UNBONDING_QUEUE && hostZoneRecord.NativeTokenAmount.GT(sdkmath.ZeroInt()) {
+		return true
+	}
+	return false
+}
+
 // Gets the total unbonded amount for a host zone by looping through the epoch unbonding records
 // Also returns the epoch unbonding record ids
 func (k Keeper) GetTotalUnbondAmountAndRecordsIds(ctx sdk.Context, chainId string) (totalUnbonded sdkmath.Int, unbondingRecordIds []uint64) {
@@ -87,7 +95,7 @@ func (k Keeper) GetTotalUnbondAmountAndRecordsIds(ctx sdk.Context, chainId strin
 			epochUnbonding.EpochNumber, hostZoneRecord.Status, hostZoneRecord.NativeTokenAmount))
 
 		// We'll unbond all records that have status UNBONDING_QUEUE and have an amount g.t. zero
-		if hostZoneRecord.Status == recordstypes.HostZoneUnbonding_UNBONDING_QUEUE && hostZoneRecord.NativeTokenAmount.GT(sdkmath.ZeroInt()) {
+		if k.ShouldInitiateHostZoneUnbondingRecord(k, hostZoneRecord) {
 			totalUnbonded = totalUnbonded.Add(hostZoneRecord.NativeTokenAmount)
 			unbondingRecordIds = append(unbondingRecordIds, epochUnbonding.EpochNumber)
 			k.Logger(ctx).Info(utils.LogWithHostZone(chainId, "  %v%s included in total unbonding", hostZoneRecord.NativeTokenAmount, hostZoneRecord.Denom))
@@ -504,6 +512,51 @@ func (k Keeper) InitiateAllHostZoneUnbondings(ctx sdk.Context, dayNumber uint64)
 			k.Logger(ctx).Error(fmt.Sprintf("Error initiating host zone unbondings for host zone %s: %s", hostZone.ChainId, err.Error()))
 			continue
 		}
+	}
+}
+
+// this function iterates each host zone, and if it's the right time to
+// initiate an unbonding, it attempts to unbond all outstanding records
+func (k Keeper) UpdateRedemptionRatesForAllUnbondingRecords(ctx sdk.Context) {
+	k.Logger(ctx).Info(fmt.Sprintf("Updating all unbonding records redemption rates to reflect current values"))
+
+	for _, hostZone := range k.GetAllActiveHostZone(ctx) {
+		redemptionRate := hostZone.RedemptionRate
+		chainId := hostZone.GetChainId()
+		// Loop through host zone unbonding records
+		for _, epochUnbonding := range k.RecordsKeeper.GetAllEpochUnbondingRecord(ctx) {
+			hostZoneUnbondingRecord, found := k.RecordsKeeper.GetHostZoneUnbondingByChainId(ctx, epochUnbonding.EpochNumber, chainId)
+			if !found {
+				k.Logger(ctx).Info(utils.LogWithHostZone(chainId, "No unbonding records found for epoch %d", epochUnbonding.EpochNumber))
+				continue
+			}
+			if k.ShouldInitiateHostZoneUnbondingRecord(ctx, hostZoneUnbondingRecord) {
+				// loop through user redemption records for the host zone unbonding record
+				totalNativeAmount := sdkmath.ZeroInt()
+				for _, userRedemptionRecordId := range hostZoneUnbondingRecord.GetUserRedemptionRecords() {
+					// get user redemption record
+					userRedemptionRecord, found := k.RecordsKeeper.GetUserRedemptionRecord(ctx, userRedemptionRecordId)
+					if !found {
+						k.Logger(ctx).Info(utils.LogWithHostZone(chainId, "No user redemption record found for id %d", userRedemptionRecordId))
+						continue
+					}
+					// update the amount
+					nativeAmount := sdk.NewDecFromInt(userRedemptionRecord.StTokenAmount).Mul(redemptionRate).RoundInt()
+					userRedemptionRecord.Amount = nativeAmount
+					totalNativeAmount = totalNativeAmount.Add(nativeAmount)
+					k.RecordsKeeper.SetUserRedemptionRecord(ctx, userRedemptionRecord)
+				}
+				// update the host zone unbonding record
+				hostZoneUnbondingRecord.NativeTokenAmount = totalNativeAmount
+				updatedEpochUnbondingRecord, success := k.RecordsKeeper.AddHostZoneToEpochUnbondingRecord(ctx, epochUnbonding.EpochNumber, hostZone.ChainId, hostZoneUnbondingRecord)
+				if !success {
+					// TODO QUESTION: what should we do on failure? do we revert the userRedemptionRecord changes above?
+					k.Logger(ctx).Error(fmt.Sprintf("Failed to set host zone epoch unbonding record: epochNumber %d, chainId %s, hostZoneUnbonding %v", epochUnbonding.EpochNumber, hostZone.ChainId, hostZoneUnbondingRecord))
+				}
+				k.RecordsKeeper.SetEpochUnbondingRecord(ctx, *updatedEpochUnbondingRecord)
+			}
+		}
+
 	}
 }
 
