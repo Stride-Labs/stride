@@ -72,7 +72,7 @@ func (k Keeper) HandleFallbackAddress(ctx sdk.Context, packet channeltypes.Packe
 
 	// If the packet did not timeout, check whether the ack was successful or was an ack error
 	isICATx := false
-	ackResponse, err := icacallbacks.UnpackAcknowledgementResponse(ctx, k.Logger(ctx), packet.Data, isICATx)
+	ackResponse, err := icacallbacks.UnpackAcknowledgementResponse(ctx, k.Logger(ctx), acknowledgement, isICATx)
 	if err != nil {
 		return err
 	}
