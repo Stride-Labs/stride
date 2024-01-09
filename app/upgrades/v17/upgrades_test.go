@@ -36,8 +36,6 @@ type UpdateRedemptionRateBounds struct {
 	ChainId                        string
 	CurrentRedemptionRate          sdk.Dec
 	ExpectedMinOuterRedemptionRate sdk.Dec
-	ExpectedMinInnerRedemptionRate sdk.Dec
-	ExpectedMaxInnerRedemptionRate sdk.Dec
 	ExpectedMaxOuterRedemptionRate sdk.Dec
 }
 
@@ -179,18 +177,14 @@ func (s *UpgradeTestSuite) SetupHostZonesBeforeUpgrade() func() {
 		gaiaHostZone, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx, GaiaChainId)
 		s.Require().True(found)
 
-		s.Require().Equal(sdk.MustNewDecFromStr("1.045"), gaiaHostZone.MinRedemptionRate, "gaia min outer")      // 1.1 - 5% = 1.045
-		s.Require().Equal(sdk.MustNewDecFromStr("1.067"), gaiaHostZone.MinInnerRedemptionRate, "gaia min inner") // 1.1 - 3% = 1.067
-		s.Require().Equal(sdk.MustNewDecFromStr("1.155"), gaiaHostZone.MaxInnerRedemptionRate, "gaia max inner") // 1.1 + 5% = 1.155
-		s.Require().Equal(sdk.MustNewDecFromStr("1.210"), gaiaHostZone.MaxRedemptionRate, "gaia max outer")      // 1.1 + 10% = 1.21
+		s.Require().Equal(sdk.MustNewDecFromStr("1.045"), gaiaHostZone.MinRedemptionRate, "gaia min outer") // 1.1 - 5% = 1.045
+		s.Require().Equal(sdk.MustNewDecFromStr("1.210"), gaiaHostZone.MaxRedemptionRate, "gaia max outer") // 1.1 + 10% = 1.21
 
 		osmoHostZone, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx, "osmosis-1")
 		s.Require().True(found)
 
-		s.Require().Equal(sdk.MustNewDecFromStr("1.140"), osmoHostZone.MinRedemptionRate, "osmo min outer")      // 1.2 - 5% = 1.140
-		s.Require().Equal(sdk.MustNewDecFromStr("1.164"), osmoHostZone.MinInnerRedemptionRate, "osmo min inner") // 1.2 - 3% = 1.164
-		s.Require().Equal(sdk.MustNewDecFromStr("1.260"), osmoHostZone.MaxInnerRedemptionRate, "osmo max inner") // 1.2 + 5% = 1.260
-		s.Require().Equal(sdk.MustNewDecFromStr("1.344"), osmoHostZone.MaxRedemptionRate, "osmo max outer")      // 1.2 + 12% = 1.344
+		s.Require().Equal(sdk.MustNewDecFromStr("1.140"), osmoHostZone.MinRedemptionRate, "osmo min outer") // 1.2 - 5% = 1.140
+		s.Require().Equal(sdk.MustNewDecFromStr("1.344"), osmoHostZone.MaxRedemptionRate, "osmo max outer") // 1.2 + 12% = 1.344
 
 		// Check that there are no slash queries in progress
 		for _, hostZone := range s.App.StakeibcKeeper.GetAllHostZone(s.Ctx) {
@@ -471,16 +465,12 @@ func (s *UpgradeTestSuite) TestUpdateRedemptionRateBounds() {
 			ChainId:                        "chain-0",
 			CurrentRedemptionRate:          sdk.MustNewDecFromStr("1.0"),
 			ExpectedMinOuterRedemptionRate: sdk.MustNewDecFromStr("0.95"), // 1 - 5% = 0.95
-			ExpectedMinInnerRedemptionRate: sdk.MustNewDecFromStr("0.97"), // 1 - 3% = 0.97
-			ExpectedMaxInnerRedemptionRate: sdk.MustNewDecFromStr("1.05"), // 1 + 5% = 1.05
 			ExpectedMaxOuterRedemptionRate: sdk.MustNewDecFromStr("1.10"), // 1 + 10% = 1.1
 		},
 		{
 			ChainId:                        "chain-1",
 			CurrentRedemptionRate:          sdk.MustNewDecFromStr("1.1"),
 			ExpectedMinOuterRedemptionRate: sdk.MustNewDecFromStr("1.045"), // 1.1 - 5% = 1.045
-			ExpectedMinInnerRedemptionRate: sdk.MustNewDecFromStr("1.067"), // 1.1 - 3% = 1.067
-			ExpectedMaxInnerRedemptionRate: sdk.MustNewDecFromStr("1.155"), // 1.1 + 5% = 1.155
 			ExpectedMaxOuterRedemptionRate: sdk.MustNewDecFromStr("1.210"), // 1.1 + 10% = 1.21
 		},
 		{
@@ -488,8 +478,6 @@ func (s *UpgradeTestSuite) TestUpdateRedemptionRateBounds() {
 			ChainId:                        v17.OsmosisChainId,
 			CurrentRedemptionRate:          sdk.MustNewDecFromStr("1.25"),
 			ExpectedMinOuterRedemptionRate: sdk.MustNewDecFromStr("1.1875"), // 1.25 - 5% = 1.1875
-			ExpectedMinInnerRedemptionRate: sdk.MustNewDecFromStr("1.2125"), // 1.25 - 3% = 1.2125
-			ExpectedMaxInnerRedemptionRate: sdk.MustNewDecFromStr("1.3125"), // 1.25 + 5% = 1.3125
 			ExpectedMaxOuterRedemptionRate: sdk.MustNewDecFromStr("1.4000"), // 1.25 + 12% = 1.400
 		},
 	}
@@ -512,8 +500,6 @@ func (s *UpgradeTestSuite) TestUpdateRedemptionRateBounds() {
 		s.Require().True(found)
 
 		s.Require().Equal(tc.ExpectedMinOuterRedemptionRate, hostZone.MinRedemptionRate, "%s - min outer", tc.ChainId)
-		s.Require().Equal(tc.ExpectedMinInnerRedemptionRate, hostZone.MinInnerRedemptionRate, "%s - min inner", tc.ChainId)
-		s.Require().Equal(tc.ExpectedMaxInnerRedemptionRate, hostZone.MaxInnerRedemptionRate, "%s - max inner", tc.ChainId)
 		s.Require().Equal(tc.ExpectedMaxOuterRedemptionRate, hostZone.MaxRedemptionRate, "%s - max outer", tc.ChainId)
 	}
 }

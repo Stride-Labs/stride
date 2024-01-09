@@ -28,8 +28,6 @@ var (
 
 	// Redemption rate bounds updated to give ~3 months of slack on outer bounds
 	RedemptionRateOuterMinAdjustment = sdk.MustNewDecFromStr("0.05")
-	RedemptionRateInnerMinAdjustment = sdk.MustNewDecFromStr("0.03")
-	RedemptionRateInnerMaxAdjustment = sdk.MustNewDecFromStr("0.05")
 	RedemptionRateOuterMaxAdjustment = sdk.MustNewDecFromStr("0.10")
 
 	// Osmosis will have a slighly larger buffer with the redemption rate
@@ -205,18 +203,12 @@ func UpdateRedemptionRateBounds(ctx sdk.Context, k stakeibckeeper.Keeper) {
 		}
 
 		outerMinDelta := hostZone.RedemptionRate.Mul(RedemptionRateOuterMinAdjustment)
-		innerMinDelta := hostZone.RedemptionRate.Mul(RedemptionRateInnerMinAdjustment)
-		innerMaxDelta := hostZone.RedemptionRate.Mul(RedemptionRateInnerMaxAdjustment)
 		outerMaxDelta := hostZone.RedemptionRate.Mul(outerAdjustment)
 
 		outerMin := hostZone.RedemptionRate.Sub(outerMinDelta)
-		innerMin := hostZone.RedemptionRate.Sub(innerMinDelta)
-		innerMax := hostZone.RedemptionRate.Add(innerMaxDelta)
 		outerMax := hostZone.RedemptionRate.Add(outerMaxDelta)
 
 		hostZone.MinRedemptionRate = outerMin
-		hostZone.MinInnerRedemptionRate = innerMin
-		hostZone.MaxInnerRedemptionRate = innerMax
 		hostZone.MaxRedemptionRate = outerMax
 
 		k.SetHostZone(ctx, hostZone)
