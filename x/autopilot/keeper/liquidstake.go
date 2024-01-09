@@ -128,7 +128,8 @@ func (k Keeper) IBCTransferStToken(
 	// to prevent impersonation at downstream zones
 	// Note: The channel ID here is different than the one used in PFM
 	// (we use the outbound channelID, they use the inbound channelID)
-	// DOUBLE CHECK ME that it shouldn't matter
+	// However, the only thing that matters is that the address is obfuscated,
+	// the additional fields beyond sender just provide more collision resistance
 	hashedAddress, err := types.GenerateHashedAddress(channelId, transferMetadata.Sender)
 	if err != nil {
 		return err
