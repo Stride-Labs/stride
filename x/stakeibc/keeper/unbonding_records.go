@@ -97,7 +97,7 @@ func (k Keeper) GetTotalUnbondAmountAndRecordsIds(ctx sdk.Context, chainId strin
 		// We'll unbond all records that have status UNBONDING_QUEUE and have an amount g.t. zero
 		if k.ShouldInitiateHostZoneUnbondingRecord(ctx, hostZoneRecord) {
 			// Dynamically calculate the unbonding amount based on the current redemption rate
-			success := k.UpdateNativeTokensForHostZoneUnbondingRecord(ctx, epochUnbonding.EpochNumber, hostZoneRecord)
+			success := k.UpdateNativeTokensForHostZoneUnbondingRecord(ctx, epochUnbonding.EpochNumber, hostZoneRecord, false)
 			if !success {
 				k.Logger(ctx).Error(utils.LogWithHostZone(chainId, "Failed to update native tokens for host zone unbonding record in epoch %d", epochUnbonding.EpochNumber))
 				continue
@@ -112,8 +112,14 @@ func (k Keeper) GetTotalUnbondAmountAndRecordsIds(ctx sdk.Context, chainId strin
 }
 
 // Update Native Amounts in the Host Zone Unbonding Record (and associated User Redemption Records) to reflect the current redemption rate
-// If setToZero is true, then the native amounts are set to zero, ignoring the redemption rate. This should be used if the unbonding didn't succeed
-func (k Keeper) UpdateNativeTokensForHostZoneUnbondingRecord(ctx sdk.Context, epochNumber uint64, hostZoneUnbondingRecord *recordstypes.HostZoneUnbonding, setToZero bool) bool {
+// If setNativeAmountsToZero is true, then the native amounts are set to zero, ignoring the redemption rate. This should be used if the unbonding didn't succeed
+// Otherwise, the native amounts are set based on the current redemption rate
+func (k Keeper) UpdateNativeTokensForHostZoneUnbondingRecord(
+	ctx sdk.Context,
+	epochNumber uint64,
+	hostZoneUnbondingRecord *recordstypes.HostZoneUnbonding,
+	setNativeAmountsToZero bool,
+) bool {
 	totalNativeAmount := sdkmath.ZeroInt()
 	chainId := hostZoneUnbondingRecord.GetHostZoneId()
 	hostZone, found := k.GetHostZone(ctx, chainId)
@@ -131,7 +137,7 @@ func (k Keeper) UpdateNativeTokensForHostZoneUnbondingRecord(ctx sdk.Context, ep
 		}
 		// update the amount, based on the current redemption rate (or set to zero if desired)
 		nativeAmount := sdkmath.ZeroInt()
-		if !setToZero {
+		if !setNativeAmountsToZero {
 			nativeAmount = sdk.NewDecFromInt(userRedemptionRecord.StTokenAmount).Mul(redemptionRate).RoundInt()
 		}
 		userRedemptionRecord.Amount = nativeAmount
@@ -151,40 +157,26 @@ func (k Keeper) UpdateNativeTokensForHostZoneUnbondingRecord(ctx sdk.Context, ep
 	return true
 }
 
-// Update Native Amounts in the Host Zone Unbonding Record (and associated User Redemption Records) to reflect the current redemption rate
-func (k Keeper) SetNativeTokensToZeroInUnbondingRecords(ctx sdk.Context, epochNumber uint64, hostZoneUnbondingRecord *recordstypes.HostZoneUnbonding) bool {
-	totalNativeAmount := sdkmath.ZeroInt()
-	chainId := hostZoneUnbondingRecord.GetHostZoneId()
-	hostZone, found := k.GetHostZone(ctx, chainId)
-	if !found {
-		k.Logger(ctx).Info(utils.LogWithHostZone(chainId, "No host zone found for id %s, Not Updating Native Token Amounts", chainId))
-		return false
-	}
-	redemptionRate := hostZone.RedemptionRate
-	// loop through user redemption records for the host zone unbonding record, update each one
-	for _, userRedemptionRecordId := range hostZoneUnbondingRecord.GetUserRedemptionRecords() {
-		userRedemptionRecord, found := k.RecordsKeeper.GetUserRedemptionRecord(ctx, userRedemptionRecordId)
+// Update Native Amounts in the Host Zone Unbonding Record (and associated User Redemption Records) to 0
+// to reflect that the unbonding has NOT been finalized yet
+func (k Keeper) SetNativeTokensToZeroInUnbondingRecords(ctx sdk.Context, chainId string, epochUnbondingRecordIds []uint64) error {
+	for _, epochUnbondingRecordId := range epochUnbondingRecordIds {
+		k.Logger(ctx).Info(fmt.Sprintf("Updating native token amount on host zone unbondings on EpochUnbondingRecord %d to zero", epochUnbondingRecordId))
+		// fetch the host zone unbonding
+		hostZoneUnbonding, found := k.RecordsKeeper.GetHostZoneUnbondingByChainId(ctx, epochUnbondingRecordId, chainId)
 		if !found {
-			k.Logger(ctx).Info(utils.LogWithHostZone(chainId, "No user redemption record found for id %s", userRedemptionRecordId))
+			errMsg := fmt.Sprintf("Error fetching host zone unbonding record for epoch: %d, host zone: %s", epochUnbondingRecordId, chainId)
+			k.Logger(ctx).Error(errMsg)
+			return errorsmod.Wrapf(types.ErrHostZoneNotFound, errMsg)
+		}
+		success := k.UpdateNativeTokensForHostZoneUnbondingRecord(ctx, epochUnbondingRecordId, hostZoneUnbonding, true)
+		if !success {
+			errMsg := fmt.Sprintf("Error zeroing native token amount on host zone unbonding record for epoch: %d, host zone: %s", epochUnbondingRecordId, chainId)
+			k.Logger(ctx).Error(errMsg)
 			continue
 		}
-		// update the amount, based on the current redemption rate
-		nativeAmount := sdk.NewDecFromInt(userRedemptionRecord.StTokenAmount).Mul(redemptionRate).RoundInt()
-		userRedemptionRecord.Amount = nativeAmount
-		totalNativeAmount = totalNativeAmount.Add(nativeAmount)
-		k.RecordsKeeper.SetUserRedemptionRecord(ctx, userRedemptionRecord)
 	}
-	// update the host zone unbonding record
-	hostZoneUnbondingRecord.NativeTokenAmount = totalNativeAmount
-	updatedEpochUnbondingRecord, success := k.RecordsKeeper.AddHostZoneToEpochUnbondingRecord(ctx, epochNumber, chainId, hostZoneUnbondingRecord)
-	if !success {
-		// TODO QUESTION: what should we do on failure? do we revert the userRedemptionRecord changes above?
-		k.Logger(ctx).Error(fmt.Sprintf("Failed to set host zone epoch unbonding record: epochNumber %d, chainId %s, hostZoneUnbonding %v", epochNumber, hostZone.ChainId, hostZoneUnbondingRecord))
-		return false
-	}
-	k.RecordsKeeper.SetEpochUnbondingRecord(ctx, *updatedEpochUnbondingRecord)
-
-	return true
+	return nil
 }
 
 // Determine the unbonding capacity that each validator has

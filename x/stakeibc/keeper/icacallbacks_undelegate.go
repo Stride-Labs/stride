@@ -66,6 +66,11 @@ func (k Keeper) UndelegateCallback(ctx sdk.Context, packet channeltypes.Packet, 
 		k.Logger(ctx).Error(utils.LogICACallbackStatusWithHostZone(chainId, ICACallbackID_Undelegate,
 			icacallbackstypes.AckResponseStatus_FAILURE, packet))
 
+		// Set NativeTokenAmounts on these HZUs to 0
+		if err := k.SetNativeTokensToZeroInUnbondingRecords(ctx, chainId, undelegateCallback.EpochUnbondingRecordIds); err != nil {
+			return err
+		}
+
 		// Reset unbondings record status
 		if err := k.RecordsKeeper.SetHostZoneUnbondings(
 			ctx,
