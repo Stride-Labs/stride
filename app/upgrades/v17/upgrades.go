@@ -35,7 +35,7 @@ var (
 	RedemptionRateOuterMaxAdjustment = sdk.MustNewDecFromStr("0.10")
 
 	// Define the hub chainId for disabling tokenization
-	GaiaChainId              = "cosmoshub-4"
+	GaiaChainId = "cosmoshub-4"
 
 	// Osmosis will have a slighly larger buffer with the redemption rate
 	// since their yield is less predictable
@@ -111,31 +111,6 @@ func CreateUpgradeHandler(
 
 		return mm.RunMigrations(ctx, configurator, vm)
 	}
-}
-
-// Sends the ICA message which disables LSM style tokenization of shares from the delegation
-// account for this chain as a security to prevent possibility of large/fast withdrawls
-func DisableTokenization(ctx sdk.Context, k stakeibckeeper.Keeper, chainId string) error {
-	hostZone, found := k.GetHostZone(ctx, chainId)
-	if !found {
-		return errorsmod.Wrapf(stakeibctypes.ErrHostZoneNotFound, "Unable to find chainId %s to remove tokenization", chainId)		
-	}
-
-	// Build the msg for the disable tokenization ICA tx
-	var msgs []proto.Message
-	msgs = append(msgs, &stakeibctypes.MsgDisableTokenizeShares{
-		DelegatorAddress: hostZone.DelegationIcaAddress,
-	})
-		
-	// Send the ICA tx to disable tokenization
-	timeoutTimestamp := uint64(ctx.BlockTime().Add(24 * time.Hour).UnixNano())
-	delegationOwner := stakeibctypes.FormatHostZoneICAOwner(hostZone.ChainId, stakeibctypes.ICAAccountType_DELEGATION)
-	err := k.SubmitICATxWithoutCallback(ctx, hostZone.ConnectionId, delegationOwner, msgs, timeoutTimestamp)
-	if err != nil {
-		return errorsmod.Wrapf(err, "Failed to submit ICA tx to disable tokenization, Messages: %+v", msgs)
-	}
-
-	return nil
 }
 
 // Migrates the host zones to the new structure which supports community pool liquid staking
@@ -327,6 +302,31 @@ func AddRateLimitToOsmosis(ctx sdk.Context, k ratelimitkeeper.Keeper) error {
 			Quota: &quota,
 			Flow:  &flow,
 		})
+	}
+
+	return nil
+}
+
+// Sends the ICA message which disables LSM style tokenization of shares from the delegation
+// account for this chain as a security to prevent possibility of large/fast withdrawls
+func DisableTokenization(ctx sdk.Context, k stakeibckeeper.Keeper, chainId string) error {
+	hostZone, found := k.GetHostZone(ctx, chainId)
+	if !found {
+		return errorsmod.Wrapf(stakeibctypes.ErrHostZoneNotFound, "Unable to find chainId %s to remove tokenization", chainId)
+	}
+
+	// Build the msg for the disable tokenization ICA tx
+	var msgs []proto.Message
+	msgs = append(msgs, &stakeibctypes.MsgDisableTokenizeShares{
+		DelegatorAddress: hostZone.DelegationIcaAddress,
+	})
+
+	// Send the ICA tx to disable tokenization
+	timeoutTimestamp := uint64(ctx.BlockTime().Add(24 * time.Hour).UnixNano())
+	delegationOwner := stakeibctypes.FormatHostZoneICAOwner(hostZone.ChainId, stakeibctypes.ICAAccountType_DELEGATION)
+	err := k.SubmitICATxWithoutCallback(ctx, hostZone.ConnectionId, delegationOwner, msgs, timeoutTimestamp)
+	if err != nil {
+		return errorsmod.Wrapf(err, "Failed to submit ICA tx to disable tokenization, Messages: %+v", msgs)
 	}
 
 	return nil
