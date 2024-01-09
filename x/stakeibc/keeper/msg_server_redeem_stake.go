@@ -89,16 +89,17 @@ func (k msgServer) RedeemStake(goCtx context.Context, msg *types.MsgRedeemStake)
 		k.Logger(ctx).Info(fmt.Sprintf("UserRedemptionRecord found for %s", redemptionId))
 		// Add the unbonded amount to the UserRedemptionRecord
 		// The record is set below
-		userRedemptionRecord.Amount = userRedemptionRecord.Amount.Add(nativeAmount)
+		userRedemptionRecord.StTokenAmount = userRedemptionRecord.StTokenAmount.Add(msg.Amount)
 	} else {
 		// First time a user is redeeming this epoch
 		userRedemptionRecord = recordstypes.UserRedemptionRecord{
-			Id:          redemptionId,
-			Receiver:    msg.Receiver,
-			Amount:      nativeAmount,
-			Denom:       hostZone.HostDenom,
-			HostZoneId:  hostZone.ChainId,
-			EpochNumber: epochTracker.EpochNumber,
+			Id:            redemptionId,
+			Receiver:      msg.Receiver,
+			Amount:        sdk.ZeroInt(),
+			Denom:         hostZone.HostDenom,
+			HostZoneId:    hostZone.ChainId,
+			EpochNumber:   epochTracker.EpochNumber,
+			StTokenAmount: msg.Amount,
 			// claimIsPending represents whether a redemption is currently being claimed,
 			// contingent on the host zone unbonding having status CLAIMABLE
 			ClaimIsPending: false,
@@ -117,7 +118,6 @@ func (k msgServer) RedeemStake(goCtx context.Context, msg *types.MsgRedeemStake)
 	if !found {
 		return nil, errorsmod.Wrapf(types.ErrInvalidHostZone, "host zone not found in unbondings: %s", hostZone.ChainId)
 	}
-	hostZoneUnbonding.NativeTokenAmount = hostZoneUnbonding.NativeTokenAmount.Add(nativeAmount)
 	if !userHasRedeemedThisEpoch {
 		// Only append a UserRedemptionRecord to the HZU if it wasn't previously appended
 		hostZoneUnbonding.UserRedemptionRecords = append(hostZoneUnbonding.UserRedemptionRecords, userRedemptionRecord.Id)

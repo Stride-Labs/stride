@@ -26,8 +26,6 @@ func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochInfo epochstypes.EpochInf
 	}
 	// Day Epoch - Process Unbondings
 	if epochInfo.Identifier == epochstypes.DAY_EPOCH {
-		// Update unbonding records in each host zone to reflect current RRs
-		k.UpdateRedemptionRatesForAllUnbondingRecords(ctx)
 		// Initiate unbondings from any hostZone where it's appropriate
 		k.InitiateAllHostZoneUnbondings(ctx, epochNumber)
 		// Check previous epochs to see if unbondings finished, and sweep the tokens if so
