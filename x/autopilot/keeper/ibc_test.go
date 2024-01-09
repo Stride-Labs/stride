@@ -22,68 +22,6 @@ type PacketCallbackTestCase struct {
 //                    IBC Callback Helpers
 // --------------------------------------------------------------
 
-func (s *KeeperTestSuite) TestCheckAcknowledgementStatus() {
-	// Test with a successful ack
-	ackSuccess := transfertypes.ModuleCdc.MustMarshalJSON(&channeltypes.Acknowledgement{
-		Response: &channeltypes.Acknowledgement_Result{
-			Result: []byte{1}, // just has to be non-empty
-		},
-	})
-	success, err := s.App.AutopilotKeeper.CheckAcknowledgementStatus(s.Ctx, ackSuccess)
-	s.Require().True(success, "ack success should return true")
-	s.Require().NoError(err)
-
-	// Test with an ack error
-	// Success should be false, but there should be no error returned
-	errorString := "some error"
-	ackFailure := transfertypes.ModuleCdc.MustMarshalJSON(&channeltypes.Acknowledgement{
-		Response: &channeltypes.Acknowledgement_Error{
-			Error: errorString,
-		},
-	})
-	success, err = s.App.AutopilotKeeper.CheckAcknowledgementStatus(s.Ctx, ackFailure)
-	s.Require().False(success, "ack failure should return false")
-	s.Require().NoError(err)
-
-	// Test with an ack result that is missing the "result" field
-	// It should return an error
-	ackResultError := transfertypes.ModuleCdc.MustMarshalJSON(&channeltypes.Acknowledgement{
-		Response: &channeltypes.Acknowledgement_Result{
-			Result: []byte{}, // empty result throws an error
-		},
-	})
-	_, err = s.App.AutopilotKeeper.CheckAcknowledgementStatus(s.Ctx, ackResultError)
-	s.Require().ErrorContains(err, "acknowledgement result cannot be empty")
-
-	// Test with invalid ack data that can't be unmarshaled
-	randomBytes := []byte{1, 2, 3}
-	_, err = s.App.AutopilotKeeper.CheckAcknowledgementStatus(s.Ctx, randomBytes)
-	s.Require().ErrorContains(err, "cannot unmarshal ICS-20 transfer packet acknowledgement")
-}
-
-func (s *KeeperTestSuite) TestBuildCoinFromTransferMetadata() {
-	denom := "denom"
-	amount := sdk.NewInt(10000)
-
-	// Test with valid packet data
-	expectedToken := sdk.NewCoin(denom, amount)
-	transferMetadata := transfertypes.FungibleTokenPacketData{
-		Denom:  denom,
-		Amount: amount.String(),
-	}
-	actualToken, err := s.App.AutopilotKeeper.BuildCoinFromTransferMetadata(transferMetadata)
-	s.Require().NoError(err)
-	s.Require().Equal(expectedToken, actualToken, "token")
-
-	// Test with invalid packet data
-	invalidMetadata := transfertypes.FungibleTokenPacketData{
-		Denom:  denom,
-		Amount: "",
-	}
-	_, err = s.App.AutopilotKeeper.BuildCoinFromTransferMetadata(invalidMetadata)
-	s.Require().ErrorContains(err, "unable to parse amount from transfer packet")
-}
-
 func (s *KeeperTestSuite) TestSendToFallbackAddress() {
 	senderAccount := s.TestAccs[0]
 	fallbackAccount := s.TestAccs[1]
