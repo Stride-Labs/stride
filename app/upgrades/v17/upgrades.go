@@ -16,6 +16,7 @@ import (
 	icqkeeper "github.com/Stride-Labs/stride/v16/x/interchainquery/keeper"
 	ratelimitkeeper "github.com/Stride-Labs/stride/v16/x/ratelimit/keeper"
 	ratelimittypes "github.com/Stride-Labs/stride/v16/x/ratelimit/types"
+	recordtypes "github.com/Stride-Labs/stride/v16/x/records/types"
 	stakeibckeeper "github.com/Stride-Labs/stride/v16/x/stakeibc/keeper"
 	stakeibctypes "github.com/Stride-Labs/stride/v16/x/stakeibc/types"
 )
@@ -100,6 +101,11 @@ func CreateUpgradeHandler(
 		ctx.Logger().Info("Adding rate limits to Osmosis...")
 		if err := AddRateLimitToOsmosis(ctx, ratelimitKeeper); err != nil {
 			return vm, errorsmod.Wrapf(err, "unable to add rate limits to Osmosis")
+		}
+
+		ctx.Logger().Info("Migrating Unbonding Records...")
+		if err := MigrateUnbondingRecords(ctx, stakeibcKeeper); err != nil {
+			return vm, errorsmod.Wrapf(err, "unable to migrate unbonding records")
 		}
 
 		return mm.RunMigrations(ctx, configurator, vm)
@@ -299,6 +305,64 @@ func AddRateLimitToOsmosis(ctx sdk.Context, k ratelimitkeeper.Keeper) error {
 			Quota: &quota,
 			Flow:  &flow,
 		})
+	}
+
+	return nil
+}
+
+// Migrate the unbonding records
+// UserUnbondingRecords previously only used Native Token Amounts, we now want to use StTokenAmounts
+// Similarly, we should modify HostZoneUnbondingRecords to NOT use NativeTokenAmounts prior to unbonding being initiated
+func MigrateUnbondingRecords(ctx sdk.Context, k stakeibckeeper.Keeper) error {
+	for _, epochUnbondingRecord := range k.RecordsKeeper.GetAllEpochUnbondingRecord(ctx) {
+		for _, hostZoneUnbonding := range epochUnbondingRecord.GetHostZoneUnbondings() {
+			// if the tokens have unbonded, we don't want to modify the record
+			// this is because we won't be able to estimate a redemption rate
+			if hostZoneUnbonding.Status == recordtypes.HostZoneUnbonding_CLAIMABLE {
+				continue
+			}
+			// similarly, if there aren't any tokens to unbond, we don't want to modify the record
+			// as we won't be able to estimate a redemption rate
+			if hostZoneUnbonding.NativeTokenAmount == sdkmath.ZeroInt() {
+				continue
+			}
+
+			// Calculate the estimated redemption rate
+			nativeTokenAmountDec := sdk.NewDecFromInt(hostZoneUnbonding.NativeTokenAmount)
+			stTokenAmountDec := sdk.NewDecFromInt(hostZoneUnbonding.StTokenAmount)
+			// this estimated rate is the amount of stTokens that would be received for 1 native token
+			// e.g. if the rate is 0.5, then 1 native token would be worth 0.5 stTokens
+			estimatedStTokenConversionRate := stTokenAmountDec.Quo(nativeTokenAmountDec)
+
+			// store if the unbonding has not been initiated
+			unbondingNotInitiated := hostZoneUnbonding.Status == recordtypes.HostZoneUnbonding_UNBONDING_QUEUE
+
+			// Loop through User Redemption Records and insert an estimated stTokenAmount
+			for _, userRedemptionRecordId := range hostZoneUnbonding.GetUserRedemptionRecords() {
+				userRedemptionRecord, found := k.RecordsKeeper.GetUserRedemptionRecord(ctx, userRedemptionRecordId)
+				if !found {
+					// this would happen if the user has already claimed the unbonding, but given the status check above, this should never happen
+					k.Logger(ctx).Error(fmt.Sprintf("user redemption record %s not found", userRedemptionRecordId))
+					continue
+				}
+
+				userRedemptionRecord.StTokenAmount = estimatedStTokenConversionRate.Mul(sdkmath.LegacyDec(userRedemptionRecord.Amount)).RoundInt()
+
+				if unbondingNotInitiated {
+					userRedemptionRecord.Amount = sdkmath.ZeroInt()
+				}
+
+				k.RecordsKeeper.SetUserRedemptionRecord(ctx, userRedemptionRecord)
+			}
+
+			// if the unbonding has not been initiated, we want to set nativeTokenAmount to 0 for the whole HostZoneUnbonding
+			if unbondingNotInitiated {
+				hostZoneUnbonding.NativeTokenAmount = sdkmath.ZeroInt()
+
+			}
+		}
+
+		k.RecordsKeeper.SetEpochUnbondingRecord(ctx, epochUnbondingRecord)
 	}
 
 	return nil

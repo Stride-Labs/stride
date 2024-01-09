@@ -152,7 +152,7 @@ func (k Keeper) UpdateNativeTokensForHostZoneUnbondingRecord(ctx sdk.Context, ep
 }
 
 // Update Native Amounts in the Host Zone Unbonding Record (and associated User Redemption Records) to reflect the current redemption rate
-func (k Keeper) SetNativeTokensToZeroIn(ctx sdk.Context, epochNumber uint64, hostZoneUnbondingRecord *recordstypes.HostZoneUnbonding) bool {
+func (k Keeper) SetNativeTokensToZeroInUnbondingRecords(ctx sdk.Context, epochNumber uint64, hostZoneUnbondingRecord *recordstypes.HostZoneUnbonding) bool {
 	totalNativeAmount := sdkmath.ZeroInt()
 	chainId := hostZoneUnbondingRecord.GetHostZoneId()
 	hostZone, found := k.GetHostZone(ctx, chainId)
