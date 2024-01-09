@@ -74,11 +74,11 @@ var (
 func CreateUpgradeHandler(
 	mm *module.Manager,
 	configurator module.Configurator,
+	bankKeeper bankkeeper.Keeper,
 	distributionkeeper distributionkeeper.Keeper,
 	icqKeeper icqkeeper.Keeper,
 	ratelimitKeeper ratelimitkeeper.Keeper,
 	stakeibcKeeper stakeibckeeper.Keeper,
-	bankKeeper bankkeeper.Keeper,
 ) upgradetypes.UpgradeHandler {
 	return func(ctx sdk.Context, _ upgradetypes.Plan, vm module.VersionMap) (module.VersionMap, error) {
 		ctx.Logger().Info("Starting upgrade v17...")
@@ -316,7 +316,7 @@ func AddRateLimitToOsmosis(ctx sdk.Context, k ratelimitkeeper.Keeper) error {
 // Execute Prop 225, release STRD to stride1auhjs4zgp3ahvrpkspf088r2psz7wpyrypcnal
 func ExecuteProp225(ctx sdk.Context, k bankkeeper.Keeper) error {
 	communityPoolGrowthAddress := sdk.MustAccAddressFromBech32(CommunityPoolGrowthAddress)
-	liquidityReceivernAddress := sdk.MustAccAddressFromBech32(LiquidityReceiver)
+	liquidityReceiverAddress := sdk.MustAccAddressFromBech32(LiquidityReceiver)
 	transferCoin := sdk.NewCoin(Ustrd, Prop225TransferAmount)
-	return k.SendCoins(ctx, communityPoolGrowthAddress, liquidityReceivernAddress, sdk.NewCoins(transferCoin))
+	return k.SendCoins(ctx, communityPoolGrowthAddress, liquidityReceiverAddress, sdk.NewCoins(transferCoin))
 }

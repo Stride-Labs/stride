@@ -223,11 +223,11 @@ func (app *StrideApp) setupUpgradeHandlers(appOpts servertypes.AppOptions) {
 		v17.CreateUpgradeHandler(
 			app.mm,
 			app.configurator,
+			app.BankKeeper,
 			app.DistrKeeper,
 			app.InterchainqueryKeeper,
 			app.RatelimitKeeper,
 			app.StakeibcKeeper,
-			app.BankKeeper,
 		),
 	)
 
