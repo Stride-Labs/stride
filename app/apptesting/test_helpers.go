@@ -7,6 +7,7 @@ import (
 
 	abci "github.com/cometbft/cometbft/abci/types"
 	"github.com/cometbft/cometbft/crypto/ed25519"
+	tmencoding "github.com/cometbft/cometbft/crypto/encoding"
 	tmtypesproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	tmtypes "github.com/cometbft/cometbft/types"
 	"github.com/cosmos/cosmos-sdk/baseapp"
@@ -29,7 +30,7 @@ import (
 	appProvider "github.com/cosmos/interchain-security/v3/app/provider"
 	icstestingutils "github.com/cosmos/interchain-security/v3/testutil/ibc_testing"
 	e2e "github.com/cosmos/interchain-security/v3/testutil/integration"
-	ccvprovidertypes "github.com/cosmos/interchain-security/v3/x/ccv/provider/types"
+	testkeeper "github.com/cosmos/interchain-security/v3/testutil/keeper"
 	ccvtypes "github.com/cosmos/interchain-security/v3/x/ccv/types"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
@@ -144,8 +145,8 @@ func (s *AppTestHelper) SetupIBCChains(hostChainID string) {
 	s.ProviderApp = s.ProviderChain.App.(*appProvider.App)
 
 	// Initialize a stride testing app by casting a StrideApp -> TestingApp
-	ibctesting.DefaultTestingAppInit = app.InitStrideIBCTestingApp
-	s.StrideChain = ibctesting.NewTestChainWithValSet(s.T(), s.Coordinator, StrideChainID, s.ProviderChain.Vals, s.ProviderChain.Signers)
+	// s.StrideChain = ibctesting.NewTestChain(s.T(), s.Coordinator, StrideChainID)
+	// s.StrideChain = ibctesting.NewTestChainWithValSet(s.T(), s.Coordinator, StrideChainID, s.ProviderChain.Vals, s.ProviderChain.Signers)
 
 	// Initialize a host testing app using SimApp -> TestingApp
 	ibctesting.DefaultTestingAppInit = ibctesting.SetupTestingApp
@@ -153,16 +154,16 @@ func (s *AppTestHelper) SetupIBCChains(hostChainID string) {
 
 	// Update coordinator
 	s.Coordinator.Chains = map[string]*ibctesting.TestChain{
-		StrideChainID:   s.StrideChain,
+		// StrideChainID:   s.StrideChain,
 		hostChainID:     s.HostChain,
 		ProviderChainID: s.ProviderChain,
 	}
 	s.IbcEnabled = true
 
 	// valsets must match
-	providerValUpdates := tmtypes.TM2PB.ValidatorUpdates(s.ProviderChain.Vals)
-	strideValUpdates := tmtypes.TM2PB.ValidatorUpdates(s.StrideChain.Vals)
-	s.Require().True(len(providerValUpdates) == len(strideValUpdates), "initial valset not matching")
+	// providerValUpdates := tmtypes.TM2PB.ValidatorUpdates(s.ProviderChain.Vals)
+	// strideValUpdates := tmtypes.TM2PB.ValidatorUpdates(s.StrideChain.Vals)
+	// s.Require().True(len(providerValUpdates) == len(strideValUpdates), "initial valset not matching")
 
 	// for i := 0; i < len(providerValUpdates); i++ {
 	// 	addr1 := ccvutils.GetChangePubKeyAddress(providerValUpdates[i])
@@ -171,37 +172,70 @@ func (s *AppTestHelper) SetupIBCChains(hostChainID string) {
 	// }
 
 	// move chains to the next block
-	s.ProviderChain.NextBlock()
-	s.StrideChain.NextBlock()
-	s.HostChain.NextBlock()
+	// s.ProviderChain.NextBlock()
+	// s.StrideChain.NextBlock()
+	// s.HostChain.NextBlock()
 
 	providerKeeper := s.ProviderApp.GetProviderKeeper()
-	// create consumer client on provider chain and set as consumer client for consumer chainID in provider keeper.
+	// // create consumer client on provider chain and set as consumer client for consumer chainID in provider keeper.
+	// err := providerKeeper.CreateConsumerClient(
+	// 	s.ProviderChain.GetContext(),
+	// 	&ccvprovidertypes.ConsumerAdditionProposal{
+	// 		ChainId:                           s.StrideChain.ChainID,
+	// 		InitialHeight:                     s.StrideChain.LastHeader.GetHeight().(clienttypes.Height),
+	// 		BlocksPerDistributionTransmission: 50,
+	// 		CcvTimeoutPeriod:                  time.Hour,
+	// 		TransferTimeoutPeriod:             time.Hour,
+	// 		UnbondingPeriod:                   time.Hour * 504,
+	// 		ConsumerRedistributionFraction:    "0.75",
+	// 		HistoricalEntries:                 10000,
+	// 	},
+	// )
+	// s.Require().NoError(err)
+	prop := testkeeper.GetTestConsumerAdditionProp()
+	prop.ChainId = StrideChainID
+	prop.UnbondingPeriod = s.ProviderApp.GetTestStakingKeeper().UnbondingTime(s.ProviderChain.GetContext())
+	// NOTE: the initial height passed to CreateConsumerClient
+	// must be the height on the consumer when InitGenesis is called
+	prop.InitialHeight = clienttypes.Height{RevisionNumber: 0, RevisionHeight: 3}
 	err := providerKeeper.CreateConsumerClient(
 		s.ProviderChain.GetContext(),
-		&ccvprovidertypes.ConsumerAdditionProposal{
-			ChainId:                           s.StrideChain.ChainID,
-			InitialHeight:                     s.StrideChain.LastHeader.GetHeight().(clienttypes.Height),
-			BlocksPerDistributionTransmission: 50,
-			CcvTimeoutPeriod:                  time.Hour,
-			TransferTimeoutPeriod:             time.Hour,
-			UnbondingPeriod:                   time.Hour * 504,
-			ConsumerRedistributionFraction:    "0.75",
-			HistoricalEntries:                 10000,
-		},
+		prop,
 	)
 	s.Require().NoError(err)
 
 	// move provider to next block to commit the state
-	s.ProviderChain.NextBlock()
+	s.Coordinator.CommitBlock(s.ProviderChain)
 
 	// initialize the consumer chain with the genesis state stored on the provider
 	strideConsumerGenesis, found := providerKeeper.GetConsumerGenesis(
 		s.ProviderChain.GetContext(),
-		s.StrideChain.ChainID,
+		StrideChainID,
 	)
 	s.Require().True(found, "consumer genesis not found")
+
+	// use InitialValSet as the valset on the consumer
+	var valz []*tmtypes.Validator
+	for _, update := range strideConsumerGenesis.InitialValSet {
+		// tmPubKey update.PubKey
+		tmPubKey, err := tmencoding.PubKeyFromProto(update.PubKey)
+		s.Require().NoError(err)
+		valz = append(valz, &tmtypes.Validator{
+			PubKey:           tmPubKey,
+			VotingPower:      update.Power,
+			Address:          tmPubKey.Address(),
+			ProposerPriority: 0,
+		})
+	}
+
+	ibctesting.DefaultTestingAppInit = app.InitStrideIBCTestingApp(strideConsumerGenesis.InitialValSet)
+	s.StrideChain = ibctesting.NewTestChainWithValSet(s.T(), s.Coordinator, StrideChainID, tmtypes.NewValidatorSet(valz), s.ProviderChain.Signers)
 	s.StrideChain.App.(*app.StrideApp).GetConsumerKeeper().InitGenesis(s.StrideChain.GetContext(), &strideConsumerGenesis)
+	s.Coordinator.Chains[StrideChainID] = s.StrideChain
+
+	s.ProviderChain.NextBlock()
+	s.StrideChain.NextBlock()
+	s.HostChain.NextBlock()
 }
 
 // Creates clients, connections, and a transfer channel between stride and a host chain
