@@ -102,8 +102,8 @@ import (
 	ibcclienttypes "github.com/cosmos/ibc-go/v7/modules/core/02-client/types"
 	ibchost "github.com/cosmos/ibc-go/v7/modules/core/exported"
 	ibckeeper "github.com/cosmos/ibc-go/v7/modules/core/keeper"
-	ibctesting "github.com/cosmos/interchain-security/v3/legacy_ibc_testing/testing"
-	ccvstaking "github.com/cosmos/interchain-security/v3/x/ccv/democracy/staking"
+	ibctesting "github.com/cosmos/ibc-go/v7/testing"
+	ibctestingtypes "github.com/cosmos/ibc-go/v7/testing/types"
 	"github.com/spf13/cast"
 
 	ica "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts"
@@ -156,7 +156,6 @@ import (
 	ccvconsumertypes "github.com/cosmos/interchain-security/v3/x/ccv/consumer/types"
 
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
-	"github.com/cosmos/interchain-security/v3/legacy_ibc_testing/core"
 )
 
 const (
@@ -968,7 +967,7 @@ func (app *StrideApp) Name() string { return app.BaseApp.Name() }
 func (app *StrideApp) GetBaseApp() *baseapp.BaseApp { return app.BaseApp }
 
 // GetStakingKeeper implements the TestingApp interface.
-func (app *StrideApp) GetStakingKeeper() core.StakingKeeper {
+func (app *StrideApp) GetStakingKeeper() ibctestingtypes.StakingKeeper {
 	return app.StakingKeeper
 }
 

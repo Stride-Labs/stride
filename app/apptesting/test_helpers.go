@@ -24,10 +24,9 @@ import (
 	connectiontypes "github.com/cosmos/ibc-go/v7/modules/core/03-connection/types"
 	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
 	tendermint "github.com/cosmos/ibc-go/v7/modules/light-clients/07-tendermint"
+	ibctesting "github.com/cosmos/ibc-go/v7/testing"
 	"github.com/cosmos/ibc-go/v7/testing/simapp"
 	appProvider "github.com/cosmos/interchain-security/v3/app/provider"
-	ibctesting "github.com/cosmos/interchain-security/v3/legacy_ibc_testing/testing"
-	icstestingutils "github.com/cosmos/interchain-security/v3/testutil/ibc_testing"
 	e2e "github.com/cosmos/interchain-security/v3/testutil/integration"
 	ccvprovidertypes "github.com/cosmos/interchain-security/v3/x/ccv/provider/types"
 	ccvtypes "github.com/cosmos/interchain-security/v3/x/ccv/types"
@@ -139,15 +138,14 @@ func (s *AppTestHelper) SetupIBCChains(hostChainID string) {
 	s.Coordinator = ibctesting.NewCoordinator(s.T(), 0)
 
 	// Initialize a provider testing app
-	s.ProviderChain = ibctesting.NewTestChain(s.T(), s.Coordinator, icstestingutils.ProviderAppIniter, ProviderChainID)
+	s.ProviderChain = ibctesting.NewTestChain(s.T(), s.Coordinator, ProviderChainID)
 	s.ProviderApp = s.ProviderChain.App.(*appProvider.App)
 
 	// Initialize a stride testing app by casting a StrideApp -> TestingApp
-	s.StrideChain = ibctesting.NewTestChainWithValSet(s.T(), s.Coordinator, app.InitStrideIBCTestingApp, StrideChainID,
-		s.ProviderChain.Vals, s.ProviderChain.Signers)
+	s.StrideChain = ibctesting.NewTestChainWithValSet(s.T(), s.Coordinator, StrideChainID, s.ProviderChain.Vals, s.ProviderChain.Signers)
 
 	// Initialize a host testing app using SimApp -> TestingApp
-	s.HostChain = ibctesting.NewTestChain(s.T(), s.Coordinator, ibctesting.SetupTestingApp, hostChainID)
+	s.HostChain = ibctesting.NewTestChain(s.T(), s.Coordinator, hostChainID)
 
 	// Update coordinator
 	s.Coordinator.Chains = map[string]*ibctesting.TestChain{

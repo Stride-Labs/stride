@@ -24,7 +24,6 @@ require (
 	google.golang.org/genproto/googleapis/api v0.0.0-20230711160842-782d3b101e98
 	google.golang.org/grpc v1.58.2
 	gopkg.in/yaml.v2 v2.4.0
-
 )
 
 require github.com/linxGnu/grocksdb v1.7.16 // indirect
@@ -42,10 +41,8 @@ require (
 	github.com/kr/pretty v0.3.1 // indirect
 	github.com/kr/text v0.2.0 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
-	github.com/oxyno-zeta/gomock-extra-matcher v1.2.0 // indirect
 	github.com/rogpeppe/go-internal v1.11.0 // indirect
 	github.com/rs/zerolog v1.30.0 // indirect
-	go.uber.org/mock v0.2.0 // indirect
 	golang.org/x/sync v0.3.0 // indirect
 	google.golang.org/genproto v0.0.0-20230711160842-782d3b101e98 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20230711160842-782d3b101e98 // indirect
@@ -192,9 +189,6 @@ replace (
 	// fork SDK to fix SDKv0.47 Distribution Bug
 	// TODO - Remove this patch and update Tokens in a subsequent upgrade handler
 	github.com/cosmos/cosmos-sdk => github.com/Stride-Labs/cosmos-sdk v0.47.4-stride-distribution-fix-1
-
-	// Has changes for integration testing infra
-	github.com/cosmos/interchain-security/v3 => github.com/Stride-Labs/interchain-security/v3 v3.2.0-ibctesting-infra
 
 	// Add additional verification check to ensure an account is a BaseAccount type before converting
 	// it to a vesting account: https://github.com/Stride-Labs/vesting/pull/1
