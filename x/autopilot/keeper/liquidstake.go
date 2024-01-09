@@ -17,6 +17,12 @@ import (
 )
 
 const (
+	// If the forward transfer fails, the tokens are sent to the fallback address
+	// which is a less than ideal UX
+	// As a result, we decided to use a long timeout here such, even in the case
+	// of high activity, a timeout should be very unlikely to occur
+	// Empirically we found that times of high market stress took roughly
+	// 2 hours for transfers to complete
 	LiquidStakeForwardTransferTimeout = (time.Hour * 3)
 )
 
@@ -141,7 +147,7 @@ func (k Keeper) IBCTransferStToken(
 		return err
 	}
 
-	// Use a conservative timeout for the transfer
+	// Use a long timeout for the transfer
 	timeoutTimestamp := uint64(ctx.BlockTime().UnixNano() + LiquidStakeForwardTransferTimeout.Nanoseconds())
 
 	// Submit the transfer from the hashed address
