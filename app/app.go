@@ -154,6 +154,7 @@ import (
 	ccvconsumer "github.com/cosmos/interchain-security/v3/x/ccv/consumer"
 	ccvconsumerkeeper "github.com/cosmos/interchain-security/v3/x/ccv/consumer/keeper"
 	ccvconsumertypes "github.com/cosmos/interchain-security/v3/x/ccv/consumer/types"
+	ccvstaking "github.com/cosmos/interchain-security/v3/x/ccv/democracy/staking"
 
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 )
