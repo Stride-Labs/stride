@@ -79,7 +79,7 @@ func CreateUpgradeHandler(
 			return vm, errorsmod.Wrapf(err, "unable to register community pool addresses on host zones")
 		}
 
-		ctx.Logger().Info("Deleting all pending queries...")
+		ctx.Logger().Info("Deleting all pending slash queries...")
 		DeleteAllStaleQueries(ctx, icqKeeper)
 
 		ctx.Logger().Info("Reseting slash query in progress...")
