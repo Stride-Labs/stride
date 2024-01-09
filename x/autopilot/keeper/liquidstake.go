@@ -3,6 +3,7 @@ package keeper
 import (
 	"errors"
 	"fmt"
+	"time"
 
 	errorsmod "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
@@ -13,6 +14,10 @@ import (
 	"github.com/Stride-Labs/stride/v16/x/autopilot/types"
 	stakeibckeeper "github.com/Stride-Labs/stride/v16/x/stakeibc/keeper"
 	stakeibctypes "github.com/Stride-Labs/stride/v16/x/stakeibc/types"
+)
+
+const (
+	LiquidStakeForwardTransferTimeout = (time.Hour * 3)
 )
 
 // Attempts to do an autopilot liquid stake (and optional forward)
@@ -136,8 +141,8 @@ func (k Keeper) IBCTransferStToken(
 		return err
 	}
 
-	// Use the default transfer timeout of 10 minutes
-	timeoutTimestamp := uint64(ctx.BlockTime().UnixNano()) + transfertypes.DefaultRelativePacketTimeoutTimestamp
+	// Use a conservative timeout for the transfer
+	timeoutTimestamp := uint64(ctx.BlockTime().UnixNano() + LiquidStakeForwardTransferTimeout.Nanoseconds())
 
 	// Submit the transfer from the hashed address
 	transferMsg := &transfertypes.MsgTransfer{
