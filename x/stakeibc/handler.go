@@ -14,6 +14,7 @@ import (
 )
 
 // Handles stakeibc transactions
+// TODO: Remove - no longer used since sdk 47
 func NewMessageHandler(k keeper.Keeper) sdk.Handler {
 	msgServer := keeper.NewMsgServerImpl(k)
 
@@ -46,7 +47,7 @@ func NewMessageHandler(k keeper.Keeper) sdk.Handler {
 		case *types.MsgAddValidators:
 			res, err := msgServer.AddValidators(sdk.WrapSDKContext(ctx), msg)
 			return sdk.WrapServiceResult(ctx, res, err)
-		case *types.MsgChangeValidatorWeight:
+		case *types.MsgChangeValidatorWeights:
 			res, err := msgServer.ChangeValidatorWeight(sdk.WrapSDKContext(ctx), msg)
 			return sdk.WrapServiceResult(ctx, res, err)
 		case *types.MsgDeleteValidator:

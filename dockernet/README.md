@@ -22,7 +22,7 @@ while getopts sgojhir{z} flag; do
    ...
    z) build_local_and_docker {new-host-zone} deps/{new-host-zone} ;;  
 ```
-* Before moving on, test that you can build the binary and docker iamge by running
+* Before moving on, test that you can build the binary and docker image by running
 ```bash
 make build-docker build={z}
 ```
