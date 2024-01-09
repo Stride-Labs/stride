@@ -84,13 +84,10 @@ func TestParsePacketMetadata(t *testing.T) {
 	validStakeibcAction := "LiquidStake"
 
 	validParsedStakeibcPacketMetadata := types.StakeibcPacketMetadata{
-		StrideAddress: validAddress,
-		Action:        validStakeibcAction,
+		Action: validStakeibcAction,
 	}
 
-	validParsedClaimPacketMetadata := types.ClaimPacketMetadata{
-		StrideAddress: validAddress,
-	}
+	validParsedClaimPacketMetadata := types.ClaimPacketMetadata{}
 
 	testCases := []struct {
 		name                string
@@ -206,87 +203,6 @@ func TestParsePacketMetadata(t *testing.T) {
 			} else {
 				require.ErrorContains(t, actualErr, types.ErrInvalidPacketMetadata.Error(), "expected error type for %s", tc.name)
 				require.ErrorContains(t, actualErr, tc.expectedErr, "expected error for %s", tc.name)
-			}
-		})
-	}
-}
-
-func TestValidateStakeibcPacketMetadata(t *testing.T) {
-	validAddress, _ := apptesting.GenerateTestAddrs()
-	validAction := "LiquidStake"
-
-	testCases := []struct {
-		name        string
-		metadata    *types.StakeibcPacketMetadata
-		expectedErr string
-	}{
-		{
-			name: "valid Metadata data",
-			metadata: &types.StakeibcPacketMetadata{
-				StrideAddress: validAddress,
-				Action:        validAction,
-			},
-		},
-		{
-			name: "invalid address",
-			metadata: &types.StakeibcPacketMetadata{
-				StrideAddress: "bad_address",
-				Action:        validAction,
-			},
-			expectedErr: "decoding bech32 failed",
-		},
-		{
-			name: "invalid action",
-			metadata: &types.StakeibcPacketMetadata{
-				StrideAddress: validAddress,
-				Action:        "bad_action",
-			},
-			expectedErr: "unsupported stakeibc action",
-		},
-	}
-
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			actualErr := tc.metadata.Validate()
-			if tc.expectedErr == "" {
-				require.NoError(t, actualErr, "no error expected for %s", tc.name)
-			} else {
-				require.ErrorContains(t, actualErr, tc.expectedErr, "error expected for %s", tc.name)
-			}
-		})
-	}
-}
-
-func TestValidateClaimPacketMetadata(t *testing.T) {
-	validAddress, _ := apptesting.GenerateTestAddrs()
-
-	testCases := []struct {
-		name        string
-		metadata    *types.ClaimPacketMetadata
-		expectedErr string
-	}{
-		{
-			name: "valid metadata",
-			metadata: &types.ClaimPacketMetadata{
-				StrideAddress: validAddress,
-			},
-		},
-		{
-			name: "invalid address",
-			metadata: &types.ClaimPacketMetadata{
-				StrideAddress: "bad_address",
-			},
-			expectedErr: "decoding bech32 failed",
-		},
-	}
-
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			actualErr := tc.metadata.Validate()
-			if tc.expectedErr == "" {
-				require.NoError(t, actualErr, "no error expected for %s", tc.name)
-			} else {
-				require.ErrorContains(t, actualErr, tc.expectedErr, "error expected for %s", tc.name)
 			}
 		})
 	}
