@@ -22,7 +22,7 @@ while getopts sgojhir{z} flag; do
    ...
    z) build_local_and_docker {new-host-zone} deps/{new-host-zone} ;;  
 ```
-* Before moving on, test that you can build the binary and docker iamge by running
+* Before moving on, test that you can build the binary and docker image by running
 ```bash
 make build-docker build={z}
 ```
@@ -42,12 +42,10 @@ make build-docker build={z}
     volumes:
       - ./dockernet/state/{new-host-zone}2:/home/{new-host-zone}/.{new-host-zone}d
 
-    ...
-
-  {new-host-zone}5:
+  {new-host-zone}3:
     image: stridezone:{new-host-zone}
     volumes:
-      - ./dockernet/state/{new-host-zone}5:/home/{new-host-zone}/.{new-host-zone}d
+      - ./dockernet/state/{new-host-zone}3:/home/{new-host-zone}/.{new-host-zone}d
   ...
   relayer-{chain}:
     image: stridezone:relayer

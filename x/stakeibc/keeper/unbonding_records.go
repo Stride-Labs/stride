@@ -160,13 +160,7 @@ func SortUnbondingCapacityByPriority(validatorUnbondCapacity []ValidatorUnbondCa
 		validatorA := validatorUnbondCapacity[i]
 		validatorB := validatorUnbondCapacity[j]
 
-		balanceRatioValA, _ := validatorA.GetBalanceRatio()
-		balanceRatioValB, _ := validatorB.GetBalanceRatio()
-
-		// Sort by the balance ratio first - in ascending order - so the more unbalanced validators appear first
-		if !balanceRatioValA.Equal(balanceRatioValB) {
-			return balanceRatioValA.LT(balanceRatioValB)
-		}
+		// TODO: Once more than 32 validators are supported, change back to using balance ratio first
 
 		// If the ratio's are equal, use the capacity as a tie breaker
 		// where the larget capacity comes first
@@ -191,6 +185,7 @@ func (k Keeper) GetUnbondingICAMessages(
 	hostZone types.HostZone,
 	totalUnbondAmount sdkmath.Int,
 	prioritizedUnbondCapacity []ValidatorUnbondCapacity,
+	batchSize int,
 ) (msgs []proto.Message, unbondings []*types.SplitDelegation, err error) {
 	// Loop through each validator and unbond as much as possible
 	remainingUnbondAmount := totalUnbondAmount
@@ -208,21 +203,36 @@ func (k Keeper) GetUnbondingICAMessages(
 		} else {
 			unbondAmount = remainingUnbondAmount
 		}
-
 		remainingUnbondAmount = remainingUnbondAmount.Sub(unbondAmount)
-		unbondToken := sdk.NewCoin(hostZone.HostDenom, unbondAmount)
-
-		// Build the undelegate ICA messages
-		msgs = append(msgs, &stakingtypes.MsgUndelegate{
-			DelegatorAddress: hostZone.DelegationIcaAddress,
-			ValidatorAddress: validatorCapacity.ValidatorAddress,
-			Amount:           unbondToken,
-		})
 
 		// Build the validator splits for the callback
 		unbondings = append(unbondings, &types.SplitDelegation{
 			Validator: validatorCapacity.ValidatorAddress,
 			Amount:    unbondAmount,
+		})
+	}
+
+	// If the number of messages exceeds the batch size, shrink it down the the batch size
+	// by re-distributing the exceess
+	if len(unbondings) > batchSize {
+		unbondings, err = k.ConsolidateUnbondingMessages(totalUnbondAmount, unbondings, prioritizedUnbondCapacity, batchSize)
+		if err != nil {
+			return msgs, unbondings, errorsmod.Wrapf(err, "unable to consolidate unbonding messages")
+		}
+
+		// Sanity check that the number of messages is now under the batch size
+		if len(unbondings) > batchSize {
+			return msgs, unbondings, errorsmod.Wrapf(sdkerrors.ErrInvalidRequest,
+				fmt.Sprintf("too many undelegation messages (%d) for host zone %s", len(msgs), hostZone.ChainId))
+		}
+	}
+
+	// Build the undelegate ICA messages from the splits
+	for _, unbonding := range unbondings {
+		msgs = append(msgs, &stakingtypes.MsgUndelegate{
+			DelegatorAddress: hostZone.DelegationIcaAddress,
+			ValidatorAddress: unbonding.Validator,
+			Amount:           sdk.NewCoin(hostZone.HostDenom, unbonding.Amount),
 		})
 	}
 
@@ -233,6 +243,107 @@ func (k Keeper) GetUnbondingICAMessages(
 	}
 
 	return msgs, unbondings, nil
+}
+
+// In the event that the number of generated undelegate messages exceeds the batch size,
+// reduce the number of messages by dividing any excess amongst proportionally based on
+// the remaining delegation
+// This will no longer be necessary after undelegations to 32+ validators is supported
+// NOTE: This assumes unbondCapacities are stored in order of capacity
+func (k Keeper) ConsolidateUnbondingMessages(
+	totalUnbondAmount sdkmath.Int,
+	initialUnbondings []*types.SplitDelegation,
+	unbondCapacities []ValidatorUnbondCapacity,
+	batchSize int,
+) (finalUnbondings []*types.SplitDelegation, err error) {
+	// Grab the first {batch_size} number of messages from the list
+	// This will consist of the validators with the most capacity
+	unbondingsBatch := initialUnbondings[:batchSize]
+
+	// Calculate the amount that was initially meant to be unbonded from that batch,
+	// and determine the remainder that needs to be redistributed
+	initialUnbondAmountFromBatch := sdkmath.ZeroInt()
+	initialUnbondAmountFromBatchByVal := map[string]sdkmath.Int{}
+	for _, unbonding := range unbondingsBatch {
+		initialUnbondAmountFromBatch = initialUnbondAmountFromBatch.Add(unbonding.Amount)
+		initialUnbondAmountFromBatchByVal[unbonding.Validator] = unbonding.Amount
+	}
+	totalExcessAmount := totalUnbondAmount.Sub(initialUnbondAmountFromBatch)
+
+	// Store the delegation of each validator that was expected *after* the originally
+	// planned unbonding went through
+	// e.g. If the validator had 10 before unbonding, and in the first pass, 3 was
+	//      supposed to be unbonded, their delegation after the first pass is 7
+	totalRemainingDelegationsAcrossBatch := sdk.ZeroDec()
+	remainingDelegationsInBatchByVal := map[string]sdk.Dec{}
+	for _, capacity := range unbondCapacities {
+		// Only add validators that were in the initial unbonding plan
+		// The delegation after the first pass is calculated by taking the "current delegation"
+		// (aka delegation before unbonding) and subtracting the unbond amount
+		if initialUnbondAmount, ok := initialUnbondAmountFromBatchByVal[capacity.ValidatorAddress]; ok {
+			remainingDelegation := sdk.NewDecFromInt(capacity.CurrentDelegation.Sub(initialUnbondAmount))
+
+			remainingDelegationsInBatchByVal[capacity.ValidatorAddress] = remainingDelegation
+			totalRemainingDelegationsAcrossBatch = totalRemainingDelegationsAcrossBatch.Add(remainingDelegation)
+		}
+	}
+
+	// This is to protect against a division by zero error, but this would technically be possible
+	// if the 32 validators with the most capacity were all 0 weight and we wanted to unbond more
+	// than their combined delegation
+	if totalRemainingDelegationsAcrossBatch.IsZero() {
+		return finalUnbondings, errors.New("no delegations to redistribute during consolidation")
+	}
+
+	// Before we start dividing up the excess, make sure we have sufficient stake in the capped set to cover it
+	if sdk.NewDecFromInt(totalExcessAmount).GT(totalRemainingDelegationsAcrossBatch) {
+		return finalUnbondings, errors.New("not enough exisiting delegation in the batch to cover the excess")
+	}
+
+	// Loop through the original unbonding messages and proportionally divide out
+	// the excess amongst the validators in the set
+	excessRemaining := totalExcessAmount
+	for i := range unbondingsBatch {
+		unbonding := unbondingsBatch[i]
+		remainingDelegation, ok := remainingDelegationsInBatchByVal[unbonding.Validator]
+		if !ok {
+			return finalUnbondings, fmt.Errorf("validator %s not found in initial unbonding plan", unbonding.Validator)
+		}
+
+		var validatorUnbondIncrease sdkmath.Int
+		if i != len(unbondingsBatch)-1 {
+			// For all but the last validator, calculate their unbonding increase by
+			// splitting the excess proportionally in line with their remaining delegation
+			unbondIncreaseProportion := remainingDelegation.Quo(totalRemainingDelegationsAcrossBatch)
+			validatorUnbondIncrease = sdk.NewDecFromInt(totalExcessAmount).Mul(unbondIncreaseProportion).TruncateInt()
+
+			// Decrement excess
+			excessRemaining = excessRemaining.Sub(validatorUnbondIncrease)
+		} else {
+			// The last validator in the set should get any remainder from int truction
+			// First confirm the validator has sufficient remaining delegation to cover this
+			if sdk.NewDecFromInt(excessRemaining).GT(remainingDelegation) {
+				return finalUnbondings,
+					fmt.Errorf("validator %s does not have enough remaining delegation (%v) to cover the excess (%v)",
+						unbonding.Validator, remainingDelegation, excessRemaining)
+			}
+			validatorUnbondIncrease = excessRemaining
+		}
+
+		// Build the updated message with the new amount
+		finalUnbondings = append(finalUnbondings, &types.SplitDelegation{
+			Validator: unbonding.Validator,
+			Amount:    unbonding.Amount.Add(validatorUnbondIncrease),
+		})
+	}
+
+	// Sanity check that we've accounted for all the excess
+	if excessRemaining.IsZero() {
+		return finalUnbondings, fmt.Errorf("Unable to redistribute all excess - initial: %v, remaining: %v",
+			totalExcessAmount, excessRemaining)
+	}
+
+	return finalUnbondings, nil
 }
 
 // Submits undelegation ICA messages for a given host zone
@@ -267,7 +378,16 @@ func (k Keeper) UnbondFromHostZone(ctx sdk.Context, hostZone types.HostZone) err
 	// Determine the ideal balanced delegation for each validator after the unbonding
 	//   (as if we were to unbond and then rebalance)
 	// This will serve as the starting point for determining how much to unbond each validator
-	delegationAfterUnbonding := hostZone.TotalDelegations.Sub(totalUnbondAmount)
+	// first, get the total delegations _excluding_ validators with slash_query_in_progress
+	totalValidDelegationBeforeUnbonding := sdkmath.ZeroInt()
+	for _, validator := range hostZone.Validators {
+		if !validator.SlashQueryInProgress {
+			totalValidDelegationBeforeUnbonding = totalValidDelegationBeforeUnbonding.Add(validator.Delegation)
+		}
+	}
+	// then subtract out the amount to unbond
+	delegationAfterUnbonding := totalValidDelegationBeforeUnbonding.Sub(totalUnbondAmount)
+
 	balancedDelegationsAfterUnbonding, err := k.GetTargetValAmtsForHostZone(ctx, hostZone, delegationAfterUnbonding)
 	if err != nil {
 		return errorsmod.Wrapf(err, "unable to get target val amounts for host zone %s", hostZone.ChainId)
@@ -291,7 +411,12 @@ func (k Keeper) UnbondFromHostZone(ctx sdk.Context, hostZone types.HostZone) err
 	}
 
 	// Get the undelegation ICA messages and split delegations for the callback
-	msgs, unbondings, err := k.GetUnbondingICAMessages(hostZone, totalUnbondAmount, prioritizedUnbondCapacity)
+	msgs, unbondings, err := k.GetUnbondingICAMessages(
+		hostZone,
+		totalUnbondAmount,
+		prioritizedUnbondCapacity,
+		UndelegateICABatchSize,
+	)
 	if err != nil {
 		return err
 	}
@@ -299,10 +424,6 @@ func (k Keeper) UnbondFromHostZone(ctx sdk.Context, hostZone types.HostZone) err
 	// Shouldn't be possible, but if all the validator's had a target unbonding of zero, do not send an ICA
 	if len(msgs) == 0 {
 		return errorsmod.Wrap(sdkerrors.ErrInvalidRequest, "Target unbonded amount was 0 for each validator")
-	}
-
-	if len(msgs) > UndelegateICABatchSize {
-		return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, fmt.Sprintf("too many undelegation messages (%d) for host zone %s", len(msgs), hostZone.ChainId))
 	}
 
 	// Send the messages in batches so the gas limit isn't exceedeed

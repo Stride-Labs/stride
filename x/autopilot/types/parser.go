@@ -12,7 +12,6 @@ const RedeemStake = "RedeemStake"
 
 // Packet metadata info specific to Stakeibc (e.g. 1-click liquid staking)
 type StakeibcPacketMetadata struct {
-	// TODO: use a constant here
 	Action string `json:"action"`
 	// TODO: remove StrideAddress
 	StrideAddress   string

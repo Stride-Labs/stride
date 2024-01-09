@@ -3,6 +3,7 @@ package keeper
 import (
 	"errors"
 	"fmt"
+	"time"
 
 	errorsmod "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
@@ -13,6 +14,16 @@ import (
 	"github.com/Stride-Labs/stride/v16/x/autopilot/types"
 	stakeibckeeper "github.com/Stride-Labs/stride/v16/x/stakeibc/keeper"
 	stakeibctypes "github.com/Stride-Labs/stride/v16/x/stakeibc/types"
+)
+
+const (
+	// If the forward transfer fails, the tokens are sent to the fallback address
+	// which is a less than ideal UX
+	// As a result, we decided to use a long timeout here such, even in the case
+	// of high activity, a timeout should be very unlikely to occur
+	// Empirically we found that times of high market stress took roughly
+	// 2 hours for transfers to complete
+	LiquidStakeForwardTransferTimeout = (time.Hour * 3)
 )
 
 // Attempts to do an autopilot liquid stake (and optional forward)
@@ -117,7 +128,8 @@ func (k Keeper) IBCTransferStToken(
 	// to prevent impersonation at downstream zones
 	// Note: The channel ID here is different than the one used in PFM
 	// (we use the outbound channelID, they use the inbound channelID)
-	// DOUBLE CHECK ME that it shouldn't matter
+	// However, the only thing that matters is that the address is obfuscated,
+	// the additional fields beyond sender just provide more collision resistance
 	hashedAddress, err := types.GenerateHashedAddress(channelId, transferMetadata.Sender)
 	if err != nil {
 		return err
@@ -137,8 +149,8 @@ func (k Keeper) IBCTransferStToken(
 		return err
 	}
 
-	// Use the default transfer timeout of 10 minutes
-	timeoutTimestamp := uint64(ctx.BlockTime().UnixNano()) + transfertypes.DefaultRelativePacketTimeoutTimestamp
+	// Use a long timeout for the transfer
+	timeoutTimestamp := uint64(ctx.BlockTime().UnixNano() + LiquidStakeForwardTransferTimeout.Nanoseconds())
 
 	// Submit the transfer from the hashed address
 	transferMsg := &transfertypes.MsgTransfer{
@@ -150,6 +162,7 @@ func (k Keeper) IBCTransferStToken(
 		TimeoutTimestamp: timeoutTimestamp,
 		Memo:             "autopilot-liquid-stake-and-forward",
 	}
+
 	transferResponse, err := k.transferKeeper.Transfer(sdk.WrapSDKContext(ctx), transferMsg)
 	if err != nil {
 		return errorsmod.Wrapf(err, "failed to submit transfer during autopilot liquid stake and forward")

@@ -20,7 +20,8 @@
                     "/cosmos.distribution.v1beta1.MsgFundCommunityPool",
                     "/ibc.applications.transfer.v1.MsgTransfer",
                     "/cosmwasm.wasm.v1.MsgExecuteContract",
-                    "/cosmwasm.wasm.v1.MsgInstantiateContract"
+                    "/cosmwasm.wasm.v1.MsgInstantiateContract",
+                    "/osmosis.gamm.v1beta1.MsgSwapExactAmountIn"
                 ]
             }
         }

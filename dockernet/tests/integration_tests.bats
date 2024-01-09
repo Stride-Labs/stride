@@ -33,6 +33,12 @@ setup_file() {
   STRIDE_TRANSFER_CHANNEL="channel-${TRANSFER_CHANNEL_NUMBER}"
   HOST_TRANSFER_CHANNEL="channel-0"
 
+  # IBC sttoken is only needed for autopilot tests which run on GAIA and HOST
+  IBC_STTOKEN="N/A"
+  if [[ "$CHAIN_NAME" == "GAIA" || "$CHAIN_NAME" == "HOST" ]]; then
+    IBC_STTOKEN=$(GET_VAR_VALUE IBC_${CHAIN_NAME}_STDENOM)
+  fi
+
   TRANSFER_AMOUNT=50000000
   STAKE_AMOUNT=10000000
   REDEEM_AMOUNT=10000
@@ -86,7 +92,7 @@ setup_file() {
 ##############################################################################################
 
 
-@test "[INTEGRATION-BASIC-$CHAIN_NAME] ibc transfer updates all balances" {
+@test "[INTEGRATION-BASIC-$CHAIN_NAME] ibc transfer" {
   # get initial balances
   sval_strd_balance_start=$($STRIDE_MAIN_CMD  q bank balances $(STRIDE_ADDRESS) --denom $STRIDE_DENOM   | GETBAL)
   hval_strd_balance_start=$($HOST_MAIN_CMD    q bank balances $HOST_VAL_ADDRESS --denom $IBC_STRD_DENOM | GETBAL)
@@ -181,7 +187,7 @@ setup_file() {
 }
 
 # check that tokens on the host are staked
-@test "[INTEGRATION-BASIC-$CHAIN_NAME] tokens on $CHAIN_NAME were staked" {
+@test "[INTEGRATION-BASIC-$CHAIN_NAME] delegation on $CHAIN_NAME" {
   # wait for another epoch to pass so that tokens are staked
   WAIT_FOR_STRING $STRIDE_LOGS "\[DELEGATION\] success on $HOST_CHAIN_ID"
   WAIT_FOR_BLOCK $STRIDE_LOGS 4
@@ -275,7 +281,7 @@ setup_file() {
   assert_equal "$sttoken_balance_diff" "$STAKE_AMOUNT"
 }
 
-@test "[INTEGRATION-BASIC-$CHAIN_NAME] packet forwarding automatically liquid stakes" {
+@test "[INTEGRATION-BASIC-$CHAIN_NAME] autopilot liquid stake" {
   memo='{ "autopilot": { "receiver": "'"$(STRIDE_ADDRESS)"'",  "stakeibc": { "action": "LiquidStake" } } }'
 
   # get initial balances
@@ -303,14 +309,104 @@ setup_file() {
   assert_equal "$sttoken_balance_diff" "$PACKET_FORWARD_STAKE_AMOUNT"
 }
 
+@test "[INTEGRATION-BASIC-$CHAIN_NAME] autopilot liquid stake and transfer" {
+  if [[ "$CHAIN_NAME" != "GAIA" &&  "$CHAIN_NAME" != "HOST" ]]; then
+    skip "Packet forward liquid stake test is only run on GAIA and HOST"
+  fi
+
+  memo='{ "autopilot": { "receiver": "'"$(STRIDE_ADDRESS)"'",  "stakeibc": { "action": "LiquidStake", "ibc_receiver": "'$HOST_VAL_ADDRESS'" } } }'
+
+  # get initial balances
+  stibctoken_balance_start=$($HOST_MAIN_CMD q bank balances $HOST_VAL_ADDRESS --denom $IBC_STTOKEN 2>/dev/null | GETBAL)
+
+  # Send the IBC transfer with the JSON memo
+  transfer_msg_prefix="$HOST_MAIN_CMD tx ibc-transfer transfer transfer $HOST_TRANSFER_CHANNEL"
+  if [[ "$CHAIN_NAME" == "GAIA" ]]; then
+    # For GAIA (ibc-v3), pass the memo into the receiver field
+    $transfer_msg_prefix "$memo" ${PACKET_FORWARD_STAKE_AMOUNT}${HOST_DENOM} --from $HOST_VAL -y 
+  elif [[ "$CHAIN_NAME" == "HOST" ]]; then
+    # For HOST (ibc-v5), pass an address for a receiver and the memo in the --memo field
+    $transfer_msg_prefix $(STRIDE_ADDRESS) ${PACKET_FORWARD_STAKE_AMOUNT}${HOST_DENOM} --memo "$memo" --from $HOST_VAL -y 
+  fi
+
+  # Wait for the transfer to complete
+  WAIT_FOR_BALANCE_CHANGE $CHAIN_NAME $HOST_VAL_ADDRESS $IBC_STTOKEN
+
+  # make sure stATOM balance increased
+  stibctoken_balance_end=$($HOST_MAIN_CMD q bank balances $HOST_VAL_ADDRESS --denom $IBC_STTOKEN 2>/dev/null | GETBAL)
+  stibctoken_balance_diff=$(($stibctoken_balance_end-$stibctoken_balance_start))
+  assert_equal "$stibctoken_balance_diff" "$PACKET_FORWARD_STAKE_AMOUNT"
+}
+
+@test "[INTEGRATION-BASIC-$CHAIN_NAME] autopilot redeem stake" {
+  # Over the next two tests, we will run two redemptions in a row and we want both to occur in the same epoch
+  # To ensure we don't accidentally cross the epoch boundary, we'll make sure there's enough of a buffer here
+  # between the two redemptions
+  AVOID_EPOCH_BOUNDARY day 25
+
+  # get initial balances
+  stibctoken_balance_start=$($HOST_MAIN_CMD q bank balances $HOST_VAL_ADDRESS --denom $IBC_STTOKEN | GETBAL)
+
+  memo='{ "autopilot": { "receiver": "'"$(STRIDE_ADDRESS)"'",  "stakeibc": { "action": "RedeemStake", "ibc_receiver": "'$HOST_RECEIVER_ADDRESS'" } } }'
+
+  # do IBC transfer
+  transfer_msg_prefix="$HOST_MAIN_CMD tx ibc-transfer transfer transfer $HOST_TRANSFER_CHANNEL"
+  if [[ "$CHAIN_NAME" == "GAIA" ]]; then
+    # For GAIA (ibc-v3), pass the memo into the receiver field
+    $transfer_msg_prefix "$memo" ${REDEEM_AMOUNT}${IBC_STTOKEN} --from $HOST_VAL -y 
+  elif [[ "$CHAIN_NAME" == "HOST" ]]; then
+    # For HOST (ibc-v5), pass an address for a receiver and the memo in the --memo field
+    $transfer_msg_prefix $(STRIDE_ADDRESS)${REDEEM_AMOUNT}${IBC_STTOKEN} --memo "$memo" --from $HOST_VAL -y 
+  else
+    # For all other hosts, skip this test
+    skip "Packet forward liquid stake test is only run on GAIA and HOST"
+  fi
+  WAIT_FOR_BLOCK $STRIDE_LOGS 2
+
+  # make sure stATOM balance decreased
+  stibctoken_balance_mid=$($HOST_MAIN_CMD q bank balances $HOST_VAL_ADDRESS --denom $IBC_STTOKEN | GETBAL)
+  stibctoken_balance_diff=$(($stibctoken_balance_start-$stibctoken_balance_mid))
+  assert_equal "$stibctoken_balance_diff" "$REDEEM_AMOUNT"
+
+  WAIT_FOR_BLOCK $STRIDE_LOGS 5
+
+  # check that a user redemption record was created
+  redemption_record_amount=$($STRIDE_MAIN_CMD q records list-user-redemption-record  | grep -Fiw 'amount' | head -n 1 | grep -o -E '[0-9]+')
+  amount_positive=$(($redemption_record_amount > 0))
+  assert_equal "$amount_positive" "1"
+
+  # attempt to redeem with an invalid receiver address to invoke a failure
+  invalid_memo='{ "autopilot": { "receiver": "'"$(STRIDE_ADDRESS)"'",  "stakeibc": { "action": "RedeemStake", "ibc_receiver": "XXX" } } }'
+  $transfer_msg_prefix "$invalid_memo" ${REDEEM_AMOUNT}${IBC_STTOKEN} --from $HOST_VAL -y 
+  WAIT_FOR_BLOCK $STRIDE_LOGS 10
+
+  # Confirm the stATOM balance was refunded
+  stibctoken_balance_end=$($HOST_MAIN_CMD q bank balances $HOST_VAL_ADDRESS --denom $IBC_STTOKEN | GETBAL)
+  assert_equal "$stibctoken_balance_end" "$stibctoken_balance_mid"
+}
+
 # check that redemptions and claims work
-@test "[INTEGRATION-BASIC-$CHAIN_NAME] redemption works" {
+@test "[INTEGRATION-BASIC-$CHAIN_NAME] redemption and undelegation on $CHAIN_NAME" {
   # get initial balance of redemption ICA
   redemption_ica_balance_start=$($HOST_MAIN_CMD q bank balances $(GET_ICA_ADDR $HOST_CHAIN_ID redemption) --denom $HOST_DENOM | GETBAL)
 
   # call redeem-stake
   $STRIDE_MAIN_CMD tx stakeibc redeem-stake $REDEEM_AMOUNT $HOST_CHAIN_ID $HOST_RECEIVER_ADDRESS \
       --from $STRIDE_VAL --keyring-backend test --chain-id $STRIDE_CHAIN_ID -y
+  WAIT_FOR_BLOCK $STRIDE_LOGS 2
+
+  # Check that the redemption record created from the autopilot redeem above was incremented
+  # and that there is still only one record
+  num_records=$($STRIDE_MAIN_CMD q records list-user-redemption-record | grep -c "amount")
+  assert_equal "$num_records" "1"
+
+  # The amount in the redemption record is denominated in native tokens, but amount in the 
+  # redeem message is denominated in stTokens (and the redemption rate may be greater than 1)
+  # So when checking the amount, we make sure the amount in the record is greater than or
+  # equal to 2 * REDEEM_AMOUNT (since there were two redemptions - one from autopilot, one here)
+  redemption_record_amount=$($STRIDE_MAIN_CMD q records list-user-redemption-record  | grep -Fiw 'amount' | head -n 1 | grep -o -E '[0-9]+')
+  expected_record_minimum=$(echo "$REDEEM_AMOUNT * 2" | bc)
+  assert_equal "$(($redemption_record_amount > $expected_record_minimum))" "1"
 
   WAIT_FOR_STRING $STRIDE_LOGS "\[REDEMPTION] completed on $HOST_CHAIN_ID"
   WAIT_FOR_BLOCK $STRIDE_LOGS 2
@@ -321,7 +417,7 @@ setup_file() {
   assert_equal "$diff_positive" "1"
 }
 
-@test "[INTEGRATION-BASIC-$CHAIN_NAME] claimed tokens are properly distributed" {
+@test "[INTEGRATION-BASIC-$CHAIN_NAME] claim redeemed tokens" {
   # get balance before claim
   start_balance=$($HOST_MAIN_CMD q bank balances $HOST_RECEIVER_ADDRESS --denom $HOST_DENOM | GETBAL)
 
@@ -329,7 +425,7 @@ setup_file() {
   EPOCH=$($STRIDE_MAIN_CMD q records list-user-redemption-record  | grep -Fiw 'epoch_number' | head -n 1 | grep -o -E '[0-9]+')
 
   # claim the record (send to stride address)
-  $STRIDE_MAIN_CMD tx stakeibc claim-undelegated-tokens $HOST_CHAIN_ID $EPOCH $(STRIDE_ADDRESS) \
+  $STRIDE_MAIN_CMD tx stakeibc claim-undelegated-tokens $HOST_CHAIN_ID $EPOCH $HOST_RECEIVER_ADDRESS \
     --from $STRIDE_VAL --keyring-backend test --chain-id $STRIDE_CHAIN_ID -y
 
   WAIT_FOR_STRING $STRIDE_LOGS "\[CLAIM\] success on $HOST_CHAIN_ID"

@@ -31,16 +31,21 @@ import (
 	icatypes "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/types"
 )
 
+const (
+	ClaimRewardsICABatchSize = 10
+)
+
 func (k Keeper) DelegateOnHost(ctx sdk.Context, hostZone types.HostZone, amt sdk.Coin, depositRecord recordstypes.DepositRecord) error {
+	// TODO: Remove this block and use connection-id from host zone
 	// the relevant ICA is the delegate account
-	owner := types.FormatICAAccountOwner(hostZone.ChainId, types.ICAAccountType_DELEGATION)
+	owner := types.FormatHostZoneICAOwner(hostZone.ChainId, types.ICAAccountType_DELEGATION)
 	portID, err := icatypes.NewControllerPortID(owner)
 	if err != nil {
 		return errorsmod.Wrapf(sdkerrors.ErrInvalidAddress, "%s has no associated portId", owner)
 	}
-	connectionId, err := k.GetConnectionId(ctx, portID)
-	if err != nil {
-		return errorsmod.Wrapf(sdkerrors.ErrInvalidChainID, "%s has no associated connection", portID)
+	connectionId, found := k.GetConnectionIdFromICAPortId(ctx, portID)
+	if !found {
+		return errorsmod.Wrapf(types.ErrICAAccountNotFound, "unable to find ICA connection Id for port %s", portID)
 	}
 
 	// Fetch the relevant ICA
@@ -114,15 +119,16 @@ func (k Keeper) DelegateOnHost(ctx sdk.Context, hostZone types.HostZone, amt sdk
 }
 
 func (k Keeper) SetWithdrawalAddressOnHost(ctx sdk.Context, hostZone types.HostZone) error {
+	// TODO: Remove this block and use connection-id from host zone
 	// The relevant ICA is the delegate account
-	owner := types.FormatICAAccountOwner(hostZone.ChainId, types.ICAAccountType_DELEGATION)
+	owner := types.FormatHostZoneICAOwner(hostZone.ChainId, types.ICAAccountType_DELEGATION)
 	portID, err := icatypes.NewControllerPortID(owner)
 	if err != nil {
 		return errorsmod.Wrapf(sdkerrors.ErrInvalidAddress, "%s has no associated portId", owner)
 	}
-	connectionId, err := k.GetConnectionId(ctx, portID)
-	if err != nil {
-		return errorsmod.Wrapf(sdkerrors.ErrInvalidChainID, "%s has no associated connection", portID)
+	connectionId, found := k.GetConnectionIdFromICAPortId(ctx, portID)
+	if !found {
+		return errorsmod.Wrapf(types.ErrICAAccountNotFound, "unable to find ICA connection Id for port %s", portID)
 	}
 
 	// Fetch the relevant ICA
@@ -148,6 +154,52 @@ func (k Keeper) SetWithdrawalAddressOnHost(ctx sdk.Context, hostZone types.HostZ
 	_, err = k.SubmitTxsStrideEpoch(ctx, connectionId, msgs, types.ICAAccountType_DELEGATION, "", nil)
 	if err != nil {
 		return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "Failed to SubmitTxs for %s, %s, %s", connectionId, hostZone.ChainId, msgs)
+	}
+
+	return nil
+}
+
+func (k Keeper) ClaimAccruedStakingRewardsOnHost(ctx sdk.Context, hostZone types.HostZone) error {
+	// Fetch the relevant ICA
+	if hostZone.DelegationIcaAddress == "" {
+		return errorsmod.Wrapf(types.ErrICAAccountNotFound, "delegation ICA not found for %s", hostZone.ChainId)
+	}
+	if hostZone.WithdrawalIcaAddress == "" {
+		return errorsmod.Wrapf(types.ErrICAAccountNotFound, "withdrawal ICA not found for %s", hostZone.ChainId)
+	}
+	k.Logger(ctx).Info(utils.LogWithHostZone(hostZone.ChainId, "Withdrawal Address: %s, Delegator Address: %s",
+		hostZone.WithdrawalIcaAddress, hostZone.DelegationIcaAddress))
+
+	validators := hostZone.Validators
+
+	// Build multi-message transaction to withdraw rewards from each validator
+	// batching txs into groups of ClaimRewardsICABatchSize messages, to ensure they will fit in the host's blockSize
+	for start := 0; start < len(validators); start += ClaimRewardsICABatchSize {
+		end := start + ClaimRewardsICABatchSize
+		if end > len(validators) {
+			end = len(validators)
+		}
+		batch := validators[start:end]
+		msgs := []proto.Message{}
+		// Iterate over the items within the batch
+		for _, val := range batch {
+			// skip withdrawing rewards
+			if val.Delegation.IsZero() {
+				continue
+			}
+			msg := &distributiontypes.MsgWithdrawDelegatorReward{
+				DelegatorAddress: hostZone.DelegationIcaAddress,
+				ValidatorAddress: val.Address,
+			}
+			msgs = append(msgs, msg)
+		}
+
+		if len(msgs) > 0 {
+			_, err := k.SubmitTxsStrideEpoch(ctx, hostZone.ConnectionId, msgs, types.ICAAccountType_DELEGATION, "", nil)
+			if err != nil {
+				return errorsmod.Wrapf(err, "Failed to SubmitTxs for %s, %s, %s", hostZone.ConnectionId, hostZone.ChainId, msgs)
+			}
+		}
 	}
 
 	return nil
@@ -259,6 +311,7 @@ func (k Keeper) SubmitTxsEpoch(
 }
 
 // SubmitTxs submits an ICA transaction containing multiple messages
+// This function only supports messages to ICAs on the host zone
 func (k Keeper) SubmitTxs(
 	ctx sdk.Context,
 	connectionId string,
@@ -268,11 +321,11 @@ func (k Keeper) SubmitTxs(
 	callbackId string,
 	callbackArgs []byte,
 ) (uint64, error) {
-	chainId, err := k.GetChainID(ctx, connectionId)
+	chainId, err := k.GetChainIdFromConnectionId(ctx, connectionId)
 	if err != nil {
 		return 0, err
 	}
-	owner := types.FormatICAAccountOwner(chainId, icaAccountType)
+	owner := types.FormatHostZoneICAOwner(chainId, icaAccountType)
 	portID, err := icatypes.NewControllerPortID(owner)
 	if err != nil {
 		return 0, err
@@ -325,6 +378,35 @@ func (k Keeper) SubmitTxs(
 	}
 
 	return sequence, nil
+}
+
+func (k Keeper) SubmitICATxWithoutCallback(
+	ctx sdk.Context,
+	connectionId string,
+	icaAccountOwner string,
+	msgs []proto.Message,
+	timeoutTimestamp uint64,
+) error {
+	// Serialize tx messages
+	txBz, err := icatypes.SerializeCosmosTx(k.cdc, msgs)
+	if err != nil {
+		return errorsmod.Wrapf(err, "unable to serialize cosmos transaction")
+	}
+	packetData := icatypes.InterchainAccountPacketData{
+		Type: icatypes.EXECUTE_TX,
+		Data: txBz,
+	}
+	relativeTimeoutOffset := timeoutTimestamp - uint64(ctx.BlockTime().UnixNano())
+
+	// Submit ICA, no need to store callback data or register callback function
+	icaMsgServer := icacontrollerkeeper.NewMsgServerImpl(&k.ICAControllerKeeper)
+	msgSendTx := icacontrollertypes.NewMsgSendTx(icaAccountOwner, connectionId, relativeTimeoutOffset, packetData)
+	_, err = icaMsgServer.SendTx(ctx, msgSendTx)
+	if err != nil {
+		return errorsmod.Wrapf(err, "unable to send ICA tx")
+	}
+
+	return nil
 }
 
 func (k Keeper) GetLightClientHeightSafely(ctx sdk.Context, connectionID string) (uint64, error) {
@@ -500,7 +582,9 @@ func (k Keeper) SubmitCalibrationICQ(ctx sdk.Context, hostZone types.HostZone, v
 	if hostZone.DelegationIcaAddress == "" {
 		return errorsmod.Wrapf(types.ErrICAAccountNotFound, "no delegation address found for %s", hostZone.ChainId)
 	}
-	validator, valIndex, found := GetValidatorFromAddress(hostZone.Validators, validatorAddress)
+
+	// ensure the validator is in the set for this host
+	_, _, found := GetValidatorFromAddress(hostZone.Validators, validatorAddress)
 	if !found {
 		return errorsmod.Wrapf(types.ErrValidatorNotFound, "no registered validator for address (%s)", validatorAddress)
 	}
@@ -516,21 +600,6 @@ func (k Keeper) SubmitCalibrationICQ(ctx sdk.Context, hostZone types.HostZone, v
 	}
 	queryData := stakingtypes.GetDelegationKey(delegatorAddressBz, validatorAddressBz)
 
-	// Store the current validator's delegation in the callback data so we can determine if it changed
-	// while the query was in flight
-	callbackData := types.DelegatorSharesQueryCallback{
-		InitialValidatorDelegation: validator.Delegation,
-	}
-	callbackDataBz, err := proto.Marshal(&callbackData)
-	if err != nil {
-		return errorsmod.Wrapf(err, "unable to marshal delegator shares callback data")
-	}
-
-	// Update the validator to indicate that the slash query is in progress
-	validator.SlashQueryInProgress = true
-	hostZone.Validators[valIndex] = &validator
-	k.SetHostZone(ctx, hostZone)
-
 	// Submit delegator shares ICQ
 	query := icqtypes.Query{
 		ChainId:         hostZone.ChainId,
@@ -539,12 +608,11 @@ func (k Keeper) SubmitCalibrationICQ(ctx sdk.Context, hostZone types.HostZone, v
 		RequestData:     queryData,
 		CallbackModule:  types.ModuleName,
 		CallbackId:      ICQCallbackID_Calibrate,
-		CallbackData:    callbackDataBz,
+		CallbackData:    []byte{},
 		TimeoutDuration: time.Hour,
 		TimeoutPolicy:   icqtypes.TimeoutPolicy_RETRY_QUERY_REQUEST,
 	}
 	if err := k.InterchainQueryKeeper.SubmitICQRequest(ctx, query, false); err != nil {
-		k.Logger(ctx).Error(fmt.Sprintf("Error submitting ICQ for delegation, error : %s", err.Error()))
 		return err
 	}
 
