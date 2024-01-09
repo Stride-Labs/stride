@@ -60,7 +60,7 @@ var (
 	OsmosisTransferChannelId = "channel-5"
 )
 
-// CreateUpgradeHandler creates an SDK upgrade handler for v15
+// CreateUpgradeHandler creates an SDK upgrade handler for v17
 func CreateUpgradeHandler(
 	mm *module.Manager,
 	configurator module.Configurator,
