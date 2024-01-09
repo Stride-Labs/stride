@@ -18,15 +18,19 @@ type RedeemStakeState struct {
 	initialStTokenEpochUnbondingAmount sdkmath.Int
 }
 type RedeemStakeTestCase struct {
-	user         Account
-	hostZone     stakeibctypes.HostZone
-	zoneAccount  Account
-	initialState RedeemStakeState
-	validMsg     stakeibctypes.MsgRedeemStake
+	user                 Account
+	hostZone             stakeibctypes.HostZone
+	zoneAccount          Account
+	initialState         RedeemStakeState
+	validMsg             stakeibctypes.MsgRedeemStake
+	expectedNativeAmount sdkmath.Int
 }
 
 func (s *KeeperTestSuite) SetupRedeemStake() RedeemStakeTestCase {
 	redeemAmount := sdkmath.NewInt(1_000_000)
+	redemptionRate := sdk.MustNewDecFromStr("1.5")
+	expectedNativeAmount := sdkmath.NewInt(1_500_000)
+
 	user := Account{
 		acc:           s.TestAccs[0],
 		atomBalance:   sdk.NewInt64Coin("ibc/uatom", 10_000_000),
@@ -50,7 +54,7 @@ func (s *KeeperTestSuite) SetupRedeemStake() RedeemStakeTestCase {
 		ChainId:          HostChainId,
 		HostDenom:        "uatom",
 		Bech32Prefix:     "cosmos",
-		RedemptionRate:   sdk.NewDec(1.0),
+		RedemptionRate:   redemptionRate,
 		TotalDelegations: sdkmath.NewInt(1234567890),
 		DepositAddress:   depositAddress.String(),
 	}
@@ -78,9 +82,10 @@ func (s *KeeperTestSuite) SetupRedeemStake() RedeemStakeTestCase {
 	s.App.RecordsKeeper.SetEpochUnbondingRecord(s.Ctx, epochUnbondingRecord)
 
 	return RedeemStakeTestCase{
-		user:        user,
-		hostZone:    hostZone,
-		zoneAccount: zoneAccount,
+		user:                 user,
+		hostZone:             hostZone,
+		zoneAccount:          zoneAccount,
+		expectedNativeAmount: expectedNativeAmount,
 		initialState: RedeemStakeState{
 			epochNumber:                        epochTrackerDay.EpochNumber,
 			initialNativeEpochUnbondingAmount:  sdkmath.ZeroInt(),
@@ -104,9 +109,19 @@ func (s *KeeperTestSuite) TestRedeemStake_Successful() {
 	user := tc.user
 	redeemAmount := msg.Amount
 
-	// get the initial unbonding amount *before* calling liquid stake, so we can use it to calc expected vs actual in diff space
-	_, err := s.GetMsgServer().RedeemStake(sdk.WrapSDKContext(s.Ctx), &msg)
-	s.Require().NoError(err)
+	// Split the message amount in 2, and call redeem stake twice (each with half the amount)
+	// This will check that the same user can redeem multiple times
+	msg1 := msg
+	msg1.Amount = msg1.Amount.Quo(sdkmath.NewInt(2)) // half the amount
+
+	msg2 := msg
+	msg2.Amount = msg.Amount.Sub(msg1.Amount) // remaining half
+
+	_, err := s.GetMsgServer().RedeemStake(sdk.WrapSDKContext(s.Ctx), &msg1)
+	s.Require().NoError(err, "no error expected during first redemption")
+
+	_, err = s.GetMsgServer().RedeemStake(sdk.WrapSDKContext(s.Ctx), &msg2)
+	s.Require().NoError(err, "no error expected during second redemption")
 
 	// User STUATOM balance should have DECREASED by the amount to be redeemed
 	expectedUserStAtomBalance := user.stAtomBalance.SubAmount(redeemAmount)
@@ -121,14 +136,9 @@ func (s *KeeperTestSuite) TestRedeemStake_Successful() {
 	s.Require().True(found, "epoch unbonding record")
 	hostZoneUnbonding, found := s.App.RecordsKeeper.GetHostZoneUnbondingByChainId(s.Ctx, epochUnbondingRecord.EpochNumber, HostChainId)
 	s.Require().True(found, "host zone unbondings by chain ID")
-	hostZone, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx, msg.HostZone)
-	s.Require().True(found, "host zone")
 
-	nativeRedemptionAmount := redeemAmount.Mul(hostZone.RedemptionRate.TruncateInt())
-	stTokenBurnAmount := redeemAmount
-
-	expectedHostZoneUnbondingNativeAmount := initialState.initialNativeEpochUnbondingAmount.Add(nativeRedemptionAmount)
-	expectedHostZoneUnbondingStTokenAmount := initialState.initialStTokenEpochUnbondingAmount.Add(stTokenBurnAmount)
+	expectedHostZoneUnbondingNativeAmount := initialState.initialNativeEpochUnbondingAmount.Add(tc.expectedNativeAmount)
+	expectedHostZoneUnbondingStTokenAmount := initialState.initialStTokenEpochUnbondingAmount.Add(redeemAmount)
 
 	s.Require().Equal(expectedHostZoneUnbondingNativeAmount, hostZoneUnbonding.NativeTokenAmount, "host zone native unbonding amount")
 	s.Require().Equal(expectedHostZoneUnbondingStTokenAmount, hostZoneUnbonding.StTokenAmount, "host zone stToken burn amount")
@@ -139,15 +149,10 @@ func (s *KeeperTestSuite) TestRedeemStake_Successful() {
 	userRedemptionRecordId := userRedemptionRecords[0]
 	userRedemptionRecord, found := s.App.RecordsKeeper.GetUserRedemptionRecord(s.Ctx, userRedemptionRecordId)
 	s.Require().True(found)
-	// check amount
-	s.Require().Equal(expectedHostZoneUnbondingNativeAmount, userRedemptionRecord.Amount, "redemption record amount")
-	// check sender
-	s.Require().Equal(msg.Creator, userRedemptionRecord.Sender, "redemption record sender")
-	// check receiver
+
+	s.Require().Equal(tc.expectedNativeAmount, userRedemptionRecord.Amount, "redemption record amount")
 	s.Require().Equal(msg.Receiver, userRedemptionRecord.Receiver, "redemption record receiver")
-	// check host zone
 	s.Require().Equal(msg.HostZone, userRedemptionRecord.HostZoneId, "redemption record host zone")
-	// check claimIsPending
 	s.Require().False(userRedemptionRecord.ClaimIsPending, "redemption record is not claimable")
 	s.Require().NotEqual(hostZoneUnbonding.Status, recordtypes.HostZoneUnbonding_CLAIMABLE, "host zone unbonding should NOT be marked as CLAIMABLE")
 }
@@ -242,16 +247,6 @@ func (s *KeeperTestSuite) TestRedeemStake_NoEpochTrackerDay() {
 	_, err := s.GetMsgServer().RedeemStake(sdk.WrapSDKContext(s.Ctx), &invalidMsg)
 
 	s.Require().EqualError(err, "latest epoch unbonding record not found: epoch unbonding record not found")
-}
-
-func (s *KeeperTestSuite) TestRedeemStake_UserAlreadyRedeemedThisEpoch() {
-	tc := s.SetupRedeemStake()
-
-	invalidMsg := tc.validMsg
-	_, err := s.GetMsgServer().RedeemStake(sdk.WrapSDKContext(s.Ctx), &invalidMsg)
-	s.Require().NoError(err)
-	_, err = s.GetMsgServer().RedeemStake(sdk.WrapSDKContext(s.Ctx), &invalidMsg)
-	s.Require().EqualError(err, fmt.Sprintf("user already redeemed this epoch: GAIA.1.%s: redemption record already exists", s.TestAccs[0]))
 }
 
 func (s *KeeperTestSuite) TestRedeemStake_HostZoneNoUnbondings() {

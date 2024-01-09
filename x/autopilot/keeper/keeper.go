@@ -22,6 +22,7 @@ type (
 		paramstore     paramtypes.Subspace
 		stakeibcKeeper stakeibckeeper.Keeper
 		claimKeeper    claimkeeper.Keeper
+		transferKeeper types.IbcTransferKeeper
 	}
 )
 
@@ -31,6 +32,7 @@ func NewKeeper(
 	ps paramtypes.Subspace,
 	stakeibcKeeper stakeibckeeper.Keeper,
 	claimKeeper claimkeeper.Keeper,
+	transferKeeper types.IbcTransferKeeper,
 ) *Keeper {
 	// set KeyTable if it has not already been set
 	if !ps.HasKeyTable() {
@@ -43,6 +45,7 @@ func NewKeeper(
 		paramstore:     ps,
 		stakeibcKeeper: stakeibcKeeper,
 		claimKeeper:    claimKeeper,
+		transferKeeper: transferKeeper,
 	}
 }
 
