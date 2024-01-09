@@ -72,6 +72,9 @@ func CreateUpgradeHandler(
 	return func(ctx sdk.Context, _ upgradetypes.Plan, vm module.VersionMap) (module.VersionMap, error) {
 		ctx.Logger().Info("Starting upgrade v17...")
 
+		ctx.Logger().Info("Migrating stakeibc params...")
+		MigrateStakeibcParams(ctx, stakeibcKeeper)
+
 		ctx.Logger().Info("Migrating host zones...")
 		if err := RegisterCommunityPoolAddresses(ctx, stakeibcKeeper); err != nil {
 			return vm, errorsmod.Wrapf(err, "unable to register community pool addresses on host zones")
@@ -101,6 +104,16 @@ func CreateUpgradeHandler(
 
 		return mm.RunMigrations(ctx, configurator, vm)
 	}
+}
+
+// Migrate the stakeibc params to add the ValidatorWeightCap parameter
+//
+// NOTE: If a parameter is added, the old params cannot be unmarshalled
+// to the new schema. To get around this, we have to set each parameter explicitly
+// Considering all mainnet stakeibc params are set to the default, we can just use that
+func MigrateStakeibcParams(ctx sdk.Context, k stakeibckeeper.Keeper) {
+	params := stakeibctypes.DefaultParams()
+	k.SetParams(ctx, params)
 }
 
 // Migrates the host zones to the new structure which supports community pool liquid staking
