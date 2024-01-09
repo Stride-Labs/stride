@@ -22,9 +22,9 @@ var (
 	FallbackAddressChannelPrefixLength int = 16
 )
 
-// Builds the store key prefix for a fallback address, key'd by channel ID and sequence number
+// Builds the store key for a fallback address, key'd by channel ID and sequence number
 // The serialized channelId is set to a fixed array size to assist deserialization
-func GetTransferFallbackAddressKeyPrefix(channelId string, sequenceNumber uint64) []byte {
+func GetTransferFallbackAddressKey(channelId string, sequenceNumber uint64) []byte {
 	channelIdBz := make([]byte, FallbackAddressChannelPrefixLength)
 	copy(channelIdBz[:], channelId)
 

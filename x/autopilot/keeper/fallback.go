@@ -10,7 +10,7 @@ import (
 // Stores a fallback address for an outbound transfer
 func (k Keeper) SetTransferFallbackAddress(ctx sdk.Context, channelId string, sequence uint64, address string) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.TransferFallbackAddressPrefix)
-	key := types.GetTransferFallbackAddressKeyPrefix(channelId, sequence)
+	key := types.GetTransferFallbackAddressKey(channelId, sequence)
 	value := []byte(address)
 	store.Set(key, value)
 }
@@ -19,7 +19,7 @@ func (k Keeper) SetTransferFallbackAddress(ctx sdk.Context, channelId string, se
 // This is used after the ack or timeout for a packet has been received
 func (k Keeper) RemoveTransferFallbackAddress(ctx sdk.Context, channelId string, sequence uint64) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.TransferFallbackAddressPrefix)
-	key := types.GetTransferFallbackAddressKeyPrefix(channelId, sequence)
+	key := types.GetTransferFallbackAddressKey(channelId, sequence)
 	store.Delete(key)
 }
 
@@ -28,7 +28,7 @@ func (k Keeper) RemoveTransferFallbackAddress(ctx sdk.Context, channelId string,
 func (k Keeper) GetTransferFallbackAddress(ctx sdk.Context, channelId string, sequence uint64) (address string, found bool) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.TransferFallbackAddressPrefix)
 
-	key := types.GetTransferFallbackAddressKeyPrefix(channelId, sequence)
+	key := types.GetTransferFallbackAddressKey(channelId, sequence)
 	valueBz := store.Get(key)
 
 	if len(valueBz) == 0 {
