@@ -82,6 +82,7 @@ func (s *KeeperTestSuite) SetupRegisterHostZone() RegisterHostZoneTestCase {
 // This function 1) creates a new host zone and 2) returns what would be a successful register message
 func (s *KeeperTestSuite) createNewHostZoneMessage(chainID string, denom string, prefix string) stakeibctypes.MsgRegisterHostZone {
 	// Create a new test chain and connection ID
+	ibctesting.DefaultTestingAppInit = ibctesting.SetupTestingApp
 	osmoChain := ibctesting.NewTestChain(s.T(), s.Coordinator, chainID)
 	path := ibctesting.NewPath(s.StrideChain, osmoChain)
 	s.Coordinator.SetupConnections(path)
