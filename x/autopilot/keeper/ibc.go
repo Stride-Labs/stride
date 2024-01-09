@@ -8,32 +8,10 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	transfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
 	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
+
+	"github.com/Stride-Labs/stride/v16/x/icacallbacks"
+	icacallbacktypes "github.com/Stride-Labs/stride/v16/x/icacallbacks/types"
 )
-
-// Deserializes the acknowledgement and returns a bool indicating whether it was successful or was an ack error
-func (k Keeper) CheckAcknowledgementStatus(ctx sdk.Context, acknowledgementBz []byte) (success bool, err error) {
-	// Unmarshal the raw ack response
-	var acknowledgement channeltypes.Acknowledgement
-	if err := transfertypes.ModuleCdc.UnmarshalJSON(acknowledgementBz, &acknowledgement); err != nil {
-		return false, errorsmod.Wrapf(err, "cannot unmarshal ICS-20 transfer packet acknowledgement")
-	}
-
-	// The ack can come back as either AcknowledgementResult (success) or AcknowledgementError (failure)
-	switch response := acknowledgement.Response.(type) {
-	case *channeltypes.Acknowledgement_Result:
-		if len(response.Result) == 0 {
-			return false, errorsmod.Wrapf(channeltypes.ErrInvalidAcknowledgement, "acknowledgement result cannot be empty")
-		}
-		return true, nil
-
-	case *channeltypes.Acknowledgement_Error:
-		k.Logger(ctx).Error(fmt.Sprintf("autopilot acknowledgement error: %s", response.Error))
-		return false, nil
-
-	default:
-		return false, errorsmod.Wrapf(channeltypes.ErrInvalidAcknowledgement, "unsupported acknowledgement response field type %T", response)
-	}
-}
 
 // Build an sdk.Coin type from the transfer metadata which includes strings for the amount and denom
 func (k Keeper) BuildCoinFromTransferMetadata(transferMetadata transfertypes.FungibleTokenPacketData) (coin sdk.Coin, err error) {
@@ -98,13 +76,14 @@ func (k Keeper) OnAcknowledgementPacket(ctx sdk.Context, packet channeltypes.Pac
 	k.RemoveTransferFallbackAddress(ctx, channelId, sequence)
 
 	// Check whether the ack was successful or was an ack error
-	success, err := k.CheckAcknowledgementStatus(ctx, acknowledgement)
+	isICATx := false
+	ackResponse, err := icacallbacks.UnpackAcknowledgementResponse(ctx, k.Logger(ctx), packet.Data, isICATx)
 	if err != nil {
 		return err
 	}
 
 	// If successful, no additional action is necessary
-	if success {
+	if ackResponse.Status == icacallbacktypes.AckResponseStatus_SUCCESS {
 		return nil
 	}
 
