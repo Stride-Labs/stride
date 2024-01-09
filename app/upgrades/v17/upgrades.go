@@ -47,11 +47,11 @@ var (
 	//        > 50M: 10%
 	UpdatedRateLimits = map[string]sdkmath.Int{
 		"comdex-1":     sdkmath.ZeroInt(),  // TVL: ~150k |   <2.5M  | No rate limit
-		"cosmoshub-4":  sdkmath.NewInt(10), // TVL:  ~50M |    50M+  | 10% RL
+		"cosmoshub-4":  sdkmath.NewInt(15), // TVL:  ~45M |  40M-50M | 15% RL
 		"evmos_9001-2": sdkmath.NewInt(50), // TVL:   ~3M | 2.5M-10M | 50% RL
-		"injective-1":  sdkmath.NewInt(50), // TVL:   ~3M | 2.5M-10M | 50% RL
+		"injective-1":  sdkmath.ZeroInt(),  // TVL: ~1.5M |   <2.5M  | No rate limit
 		"juno-1":       sdkmath.NewInt(50), // TVL:   ~3M | 2.5M-10M | 50% RL
-		"osmosis-1":    sdkmath.NewInt(20), // TVL:  ~30M |  20M-40M | 20% RL
+		"osmosis-1":    sdkmath.NewInt(15), // TVL:  ~45M |  40M-50M | 15% RL
 		"phoenix-1":    sdkmath.ZeroInt(),  // TVL: ~200k |   <2.5M  | No rate limit
 		"sommelier-3":  sdkmath.ZeroInt(),  // TVL: ~500k |   <2.5M  | No rate limit
 		"stargaze-1":   sdkmath.ZeroInt(),  // TVL:  1.5M |   <2.5M  | No rate limit
