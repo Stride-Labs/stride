@@ -87,7 +87,7 @@ func (k Keeper) RunLiquidStake(
 		msg,
 	)
 	if err != nil {
-		return errorsmod.Wrapf(err, err.Error())
+		return errorsmod.Wrapf(err, "failed to liquid stake")
 	}
 
 	// If the IBCReceiver is empty, there is no forwarding step
@@ -155,6 +155,9 @@ func (k Keeper) IBCTransferStToken(
 		Memo:             "autopilot-liquid-stake-and-forward",
 	}
 	_, err = k.transferKeeper.Transfer(sdk.WrapSDKContext(ctx), transferMsg)
+	if err != nil {
+		return errorsmod.Wrapf(err, "failed to submit transfer during autopilot liquid stake and forward")
+	}
 
 	return err
 }

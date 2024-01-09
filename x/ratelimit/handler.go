@@ -16,6 +16,7 @@ import (
 )
 
 // NewMessageHandler returns ratelimit module messages
+// TODO: Remove - no longer used since sdk 47
 func NewMessageHandler(k keeper.Keeper) sdk.Handler {
 	return func(ctx sdk.Context, msg sdk.Msg) (*sdk.Result, error) {
 		_ = ctx.WithEventManager(sdk.NewEventManager())

@@ -17,7 +17,7 @@ import (
 	ibcexported "github.com/cosmos/ibc-go/v7/modules/core/exported"
 )
 
-const MaxMemoCharLength = 512
+const MaxMemoCharLength = 2000
 
 // IBC MODULE IMPLEMENTATION
 // IBCModule implements the ICS26 interface for transfer given the transfer keeper.
@@ -115,6 +115,8 @@ func (im IBCModule) OnChanCloseConfirm(
 // OnRecvPacket implements the IBCModule interface. A successful acknowledgement
 // is returned if the packet data is successfully decoded and the receive application
 // logic returns without error.
+// TODO: Move this to the keeper so there's more transparency into errors
+// Otherwise, it's difficult to debug tests and it's unclear when there are false positive test cases
 func (im IBCModule) OnRecvPacket(
 	ctx sdk.Context,
 	packet channeltypes.Packet,
@@ -179,7 +181,7 @@ func (im IBCModule) OnRecvPacket(
 	newPacket := packet
 	newPacket.Data = bz
 
-	// Pass the new packet down the middleware stack first
+	// Pass the new packet down the middleware stack first to complete the transfer
 	ack := im.app.OnRecvPacket(ctx, newPacket, relayer)
 	if !ack.Success() {
 		return ack
@@ -205,7 +207,12 @@ func (im IBCModule) OnRecvPacket(
 				im.keeper.Logger(ctx).Error(fmt.Sprintf("Error liquid staking packet from autopilot for %s: %s", sender, err.Error()))
 				return channeltypes.NewErrorAcknowledgement(err)
 			}
-			// case types.RedeemStake: TODO: add redeem stake logic
+		case types.RedeemStake:
+			// Try to redeem stake - return an ack error if it fails, otherwise return the ack generated from the earlier packet propogation
+			if err := im.keeper.TryRedeemStake(ctx, packet, tokenPacketData, routingInfo); err != nil {
+				im.keeper.Logger(ctx).Error(fmt.Sprintf("Error redeem staking packet from autopilot for %s: %s", sender, err.Error()))
+				return channeltypes.NewErrorAcknowledgement(err)
+			}
 		}
 
 		return ack

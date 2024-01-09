@@ -20,7 +20,7 @@ func TestMsgClaimUndelegatedTokens_ValidateBasic(t *testing.T) {
 			name: "success",
 			msg: MsgClaimUndelegatedTokens{
 				Creator:    sample.AccAddress(),
-				Sender:     sample.StrideAddress(),
+				Receiver:   sample.HostAddress(),
 				HostZoneId: "GAIA",
 				Epoch:      uint64(1),
 			},
@@ -29,7 +29,7 @@ func TestMsgClaimUndelegatedTokens_ValidateBasic(t *testing.T) {
 			name: "invalid address",
 			msg: MsgClaimUndelegatedTokens{
 				Creator:    "invalid_address",
-				Sender:     sample.StrideAddress(),
+				Receiver:   sample.HostAddress(),
 				HostZoneId: "GAIA",
 				Epoch:      uint64(1),
 			},
@@ -38,9 +38,9 @@ func TestMsgClaimUndelegatedTokens_ValidateBasic(t *testing.T) {
 		{
 			name: "no host zone",
 			msg: MsgClaimUndelegatedTokens{
-				Creator: sample.AccAddress(),
-				Sender:  sample.StrideAddress(),
-				Epoch:   uint64(1),
+				Creator:  sample.AccAddress(),
+				Receiver: sample.HostAddress(),
+				Epoch:    uint64(1),
 			},
 			err: ErrRequiredFieldEmpty,
 		},
@@ -48,7 +48,7 @@ func TestMsgClaimUndelegatedTokens_ValidateBasic(t *testing.T) {
 			name: "epoch max int",
 			msg: MsgClaimUndelegatedTokens{
 				Creator:    sample.AccAddress(),
-				Sender:     sample.StrideAddress(),
+				Receiver:   sample.HostAddress(),
 				HostZoneId: "GAIA",
 				Epoch:      math.MaxUint64,
 			},

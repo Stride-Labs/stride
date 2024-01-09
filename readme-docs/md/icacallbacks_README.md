@@ -49,7 +49,7 @@ The middleware structure is as follows
 - callback ids are unique within modules (they don't have to be unique between modules, because `CallICACallback` is scoped to a module)
 
 ## Keeper functions
-- `CallRegisteredICACallback()`: invokes the relevant callback asssociated with an ICA
+- `CallRegisteredICACallback()`: invokes the relevant callback associated with an ICA
 
 ## State
 - `CallbackData`: stores the callback type, arguments and associated packet
