@@ -182,6 +182,26 @@ func (k Keeper) ResetUnbondingNativeTokenAmounts(ctx sdk.Context, chainId string
 	return nil
 }
 
+// Given a list of relevant epoch unbonding record IDs and host zone unbonding records,
+// sets the native token amount across all epoch unbonding records, host zone unbonding records
+// and user redemption records
+func (k Keeper) SetUnbondingNativeTokenAmounts(
+	ctx sdk.Context,
+	epochUnbondingRecordIds []uint64,
+	hostZoneUnbondingRecords []recordstypes.HostZoneUnbonding,
+) error {
+	if len(epochUnbondingRecordIds) != len(hostZoneUnbondingRecords) {
+		return errors.New("epoch numbers do not line up with host zone unbonding records")
+	}
+	for i, epochNumber := range epochUnbondingRecordIds {
+		hostZoneUnbondingRecord := hostZoneUnbondingRecords[i]
+		if err := k.SetHostZoneUnbondingNativeTokenAmounts(ctx, epochNumber, hostZoneUnbondingRecord); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 // Determine the unbonding capacity that each validator has
 // The capacity is determined by the difference between their current delegation
 // and their fair portion of the total stake based on their weights
@@ -456,11 +476,8 @@ func (k Keeper) UnbondFromHostZone(ctx sdk.Context, hostZone types.HostZone) err
 
 	// Update the native unbond amount on all relevant records
 	// The native amount is calculated from the stTokens
-	for i, epochNumber := range epochUnbondingRecordIds {
-		hostZoneUnbondingRecord := hostZoneUnbondingRecords[i]
-		if err := k.SetHostZoneUnbondingNativeTokenAmounts(ctx, epochNumber, hostZoneUnbondingRecord); err != nil {
-			return errorsmod.Wrapf(err, "unable to set native token amount for epoch %d and chain %s", epochNumber, hostZone.ChainId)
-		}
+	if err := k.SetUnbondingNativeTokenAmounts(ctx, epochUnbondingRecordIds, hostZoneUnbondingRecords); err != nil {
+		return err
 	}
 
 	// Sum the total native unbond amount across all records

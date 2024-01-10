@@ -67,7 +67,7 @@ func (k Keeper) UndelegateCallback(ctx sdk.Context, packet channeltypes.Packet, 
 			icacallbackstypes.AckResponseStatus_FAILURE, packet))
 
 		// Set NativeTokenAmounts on these HZUs to 0
-		if err := k.SetNativeTokensToZeroInUnbondingRecords(ctx, chainId, undelegateCallback.EpochUnbondingRecordIds); err != nil {
+		if err := k.ResetUnbondingNativeTokenAmounts(ctx, chainId, undelegateCallback.EpochUnbondingRecordIds); err != nil {
 			return err
 		}
 
