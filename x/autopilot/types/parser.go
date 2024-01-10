@@ -89,6 +89,22 @@ func NewRedeemStakeMetadata(raw RawAutopilotMetadata) (metadata RedeemStakeMetad
 	return metadata, nil
 }
 
+// Validates the raw packet based on the action, and returns the relevant metadata
+func (r RawAutopilotMetadata) ParseActionMetadata() (interface{}, error) {
+	switch r.Action {
+	case LiquidStake:
+		return nil, nil
+	case LiquidStakeAndForward:
+		return NewLiquidStakeAndForwardMetadata(r)
+	case RedeemStake:
+		return NewRedeemStakeMetadata(r)
+	case Claim:
+		return nil, nil
+	default:
+		return nil, errorsmod.Wrapf(ErrInvalidPacketMetadata, "unrecognized action %s", r.Action)
+	}
+}
+
 // Parse packet metadata intended for autopilot
 // In the ICS-20 packet, the metadata can optionally indicate a module to route to (e.g. stakeibc)
 // The AutopilotMetadata returned from this function contains attributes for each autopilot supported module
@@ -119,30 +135,23 @@ func ParseAutopilotMetadata(metadata string) (*AutopilotMetadata, error) {
 		return nil, errorsmod.Wrapf(ErrInvalidPacketMetadata, ErrInvalidReceiverAddress.Error())
 	}
 
-	// Parse the packet info into the specific module type
-	// We increment the module count to ensure only one module type was provided
-	moduleCount := 0
-	var routingInfo ModuleRoutingInfo
-	if raw.Autopilot.Stakeibc != nil {
-		moduleCount++
-		routingInfo = *raw.Autopilot.Stakeibc
-	}
-	if raw.Autopilot.Claim != nil {
-		moduleCount++
-		routingInfo = *raw.Autopilot.Claim
-	}
-	if moduleCount != 1 {
-		return nil, errorsmod.Wrapf(ErrInvalidPacketMetadata, ErrInvalidModuleRoutes.Error())
+	// Check if the legacy API was used, and if so, use the legacy parser
+	isLegacyFormat := raw.Autopilot.Stakeibc != nil || raw.Autopilot.Claim != nil
+	if isLegacyFormat {
+		return LegacyParseAutopilotMetadata(raw)
 	}
 
-	// Validate the packet info according to the specific module type
-	if err := routingInfo.Validate(); err != nil {
-		return nil, errorsmod.Wrapf(err, ErrInvalidPacketMetadata.Error())
+	// Otherwise, pull out the action and parse the action metadata
+	action := raw.Autopilot.Action
+	actionMetadata, err := raw.Autopilot.ParseActionMetadata()
+	if err != nil {
+		return nil, err
 	}
 
 	return &AutopilotMetadata{
 		Receiver:    raw.Autopilot.Receiver,
-		RoutingInfo: routingInfo,
+		Action:      action,
+		RoutingInfo: actionMetadata,
 	}, nil
 }
 
@@ -152,18 +161,16 @@ func ParseAutopilotMetadata(metadata string) (*AutopilotMetadata, error) {
 // The AutopilotMetadata returned from this function contains attributes for each autopilot supported module
 // It can only be forward to one module per packet
 // Returns nil if there was no autopilot metadata found
-func LegacyParseAutopilotMetadata(raw RawPacketMetadata) (ModuleRoutingInfo, error) {
+func LegacyParseAutopilotMetadata(raw RawPacketMetadata) (*AutopilotMetadata, error) {
 	// Parse the packet info into the specific module type
 	// We increment the module count to ensure only one module type was provided
 	moduleCount := 0
 	var routingInfo ModuleRoutingInfo
 	if raw.Autopilot.Stakeibc != nil {
-		// override the stride address with the receiver address
 		moduleCount++
 		routingInfo = *raw.Autopilot.Stakeibc
 	}
 	if raw.Autopilot.Claim != nil {
-		// override the stride address with the receiver address
 		moduleCount++
 		routingInfo = *raw.Autopilot.Claim
 	}
@@ -176,7 +183,16 @@ func LegacyParseAutopilotMetadata(raw RawPacketMetadata) (ModuleRoutingInfo, err
 		return nil, errorsmod.Wrapf(err, ErrInvalidPacketMetadata.Error())
 	}
 
-	return routingInfo, nil
+	action, actionMetadata, err := ConvertLegacyAutopilotMetadata(routingInfo)
+	if err != nil {
+		return nil, err
+	}
+
+	return &AutopilotMetadata{
+		Receiver:    raw.Autopilot.Receiver,
+		Action:      action,
+		RoutingInfo: actionMetadata,
+	}, nil
 }
 
 // DEPRECATED: Remove in next release
