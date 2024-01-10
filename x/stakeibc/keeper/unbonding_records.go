@@ -76,7 +76,7 @@ func (k Keeper) CreateEpochUnbondingRecord(ctx sdk.Context, epochNumber uint64) 
 
 // Helper function to evaluate if a host zone unbonding record still needs to be initiated
 func (k Keeper) ShouldInitiateHostZoneUnbondingRecord(ctx sdk.Context, hostZoneRecord *recordstypes.HostZoneUnbonding) bool {
-	if hostZoneRecord.Status == recordstypes.HostZoneUnbonding_UNBONDING_QUEUE && hostZoneRecord.NativeTokenAmount.GT(sdkmath.ZeroInt()) {
+	if hostZoneRecord.Status == recordstypes.HostZoneUnbonding_UNBONDING_QUEUE && hostZoneRecord.StTokenAmount.GT(sdkmath.ZeroInt()) {
 		return true
 	}
 	return false

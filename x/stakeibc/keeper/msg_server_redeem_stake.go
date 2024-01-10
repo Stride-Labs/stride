@@ -63,11 +63,6 @@ func (k msgServer) RedeemStake(goCtx context.Context, msg *types.MsgRedeemStake)
 		return nil, errorsmod.Wrapf(types.ErrRedemptionRateOutsideSafetyBounds, errMsg)
 	}
 
-	coinString := nativeAmount.String() + stDenom
-	inCoin, err := sdk.ParseCoinNormalized(coinString)
-	if err != nil {
-		return nil, errorsmod.Wrapf(sdkerrors.ErrInvalidCoins, "could not parse inCoin: %s. err: %s", coinString, err.Error())
-	}
 	// safety checks on the coin
 	// 	- Redemption amount must be positive
 	if !nativeAmount.IsPositive() {
@@ -75,8 +70,8 @@ func (k msgServer) RedeemStake(goCtx context.Context, msg *types.MsgRedeemStake)
 	}
 	// 	- Creator owns at least "amount" stAssets
 	balance := k.bankKeeper.GetBalance(ctx, sender, stDenom)
-	k.Logger(ctx).Info(fmt.Sprintf("Redemption issuer IBCDenom balance: %v%s", balance.Amount, balance.Denom))
-	k.Logger(ctx).Info(fmt.Sprintf("Redemption requested redemotion amount: %v%s", inCoin.Amount, inCoin.Denom))
+	k.Logger(ctx).Info(fmt.Sprintf("Redemption issuer stDenom balance: %v%s", balance.Amount, balance.Denom))
+	k.Logger(ctx).Info(fmt.Sprintf("Redemption requested stDenom amount: %v%s", msg.Amount, stDenom))
 	if balance.Amount.LT(msg.Amount) {
 		return nil, errorsmod.Wrapf(sdkerrors.ErrInvalidCoins, "balance is lower than redemption amount. redemption amount: %v, balance %v: ", msg.Amount, balance.Amount)
 	}
