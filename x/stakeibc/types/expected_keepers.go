@@ -5,7 +5,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/auth/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 
-	ccvconsumertypes "github.com/cosmos/interchain-security/v3/x/ccv/consumer/types"
+	ccvtypes "github.com/cosmos/interchain-security/v3/x/ccv/types"
 
 	ratelimittypes "github.com/Stride-Labs/stride/v16/x/ratelimit/types"
 )
@@ -52,6 +52,6 @@ type RatelimitKeeper interface {
 }
 
 type ConsumerKeeper interface {
-	GetConsumerParams(ctx sdk.Context) ccvconsumertypes.Params
-	SetParams(ctx sdk.Context, params ccvconsumertypes.Params)
+	GetConsumerParams(ctx sdk.Context) ccvtypes.ConsumerParams
+	SetParams(ctx sdk.Context, params ccvtypes.ConsumerParams)
 }
