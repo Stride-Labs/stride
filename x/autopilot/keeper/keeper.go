@@ -20,6 +20,7 @@ type (
 		Cdc            codec.BinaryCodec
 		storeKey       storetypes.StoreKey
 		paramstore     paramtypes.Subspace
+		bankKeeper     types.BankKeeper
 		stakeibcKeeper stakeibckeeper.Keeper
 		claimKeeper    claimkeeper.Keeper
 		transferKeeper types.IbcTransferKeeper
@@ -30,6 +31,7 @@ func NewKeeper(
 	Cdc codec.BinaryCodec,
 	storeKey storetypes.StoreKey,
 	ps paramtypes.Subspace,
+	bankKeeper types.BankKeeper,
 	stakeibcKeeper stakeibckeeper.Keeper,
 	claimKeeper claimkeeper.Keeper,
 	transferKeeper types.IbcTransferKeeper,
@@ -43,6 +45,7 @@ func NewKeeper(
 		Cdc:            Cdc,
 		storeKey:       storeKey,
 		paramstore:     ps,
+		bankKeeper:     bankKeeper,
 		stakeibcKeeper: stakeibcKeeper,
 		claimKeeper:    claimKeeper,
 		transferKeeper: transferKeeper,
