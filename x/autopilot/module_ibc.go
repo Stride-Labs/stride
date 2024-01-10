@@ -186,55 +186,40 @@ func (im IBCModule) OnRecvPacket(
 	if !ack.Success() {
 		return ack
 	}
-
-	autopilotParams := im.keeper.GetParams(ctx)
 	sender := tokenPacketData.Sender
 
 	// If the transfer was successful, then route to the corresponding module, if applicable
-	switch routingInfo := autopilotMetadata.RoutingInfo.(type) {
-	case types.StakeibcPacketMetadata:
-		// If stakeibc routing is inactive (but the packet had routing info in the memo) return an ack error
-		if !autopilotParams.StakeibcActive {
-			im.keeper.Logger(ctx).Error(fmt.Sprintf("Packet from %s had stakeibc routing info but autopilot stakeibc routing is disabled", sender))
-			return channeltypes.NewErrorAcknowledgement(types.ErrPacketForwardingInactive)
+	switch autopilotMetadata.Action {
+	case types.LiquidStake:
+		// Try to liquid stake - return an ack error if it fails, otherwise return the ack generated from the earlier packet propogation
+		forward := false
+		if err := im.keeper.TryLiquidStaking(ctx, packet, tokenPacketData, forward, nil); err != nil {
+			im.keeper.Logger(ctx).Error(fmt.Sprintf("Error liquid staking packet from autopilot for %s: %s", sender, err.Error()))
+			return channeltypes.NewErrorAcknowledgement(err)
 		}
-		im.keeper.Logger(ctx).Info(fmt.Sprintf("Forwaring packet from %s to stakeibc", sender))
-
-		switch routingInfo.Action {
-		case types.LiquidStake:
-			// Try to liquid stake - return an ack error if it fails, otherwise return the ack generated from the earlier packet propogation
-			if err := im.keeper.TryLiquidStaking(ctx, packet, tokenPacketData, routingInfo); err != nil {
-				im.keeper.Logger(ctx).Error(fmt.Sprintf("Error liquid staking packet from autopilot for %s: %s", sender, err.Error()))
-				return channeltypes.NewErrorAcknowledgement(err)
-			}
-		case types.RedeemStake:
-			// Try to redeem stake - return an ack error if it fails, otherwise return the ack generated from the earlier packet propogation
-			if err := im.keeper.TryRedeemStake(ctx, packet, tokenPacketData, routingInfo); err != nil {
-				im.keeper.Logger(ctx).Error(fmt.Sprintf("Error redeem staking packet from autopilot for %s: %s", sender, err.Error()))
-				return channeltypes.NewErrorAcknowledgement(err)
-			}
+	case types.LiquidStakeAndForward:
+		forward := true
+		actionMetadata := autopilotMetadata.RoutingInfo.(*types.LiquidStakeAndForwardMetadata)
+		if err := im.keeper.TryLiquidStaking(ctx, packet, tokenPacketData, forward, actionMetadata); err != nil {
+			im.keeper.Logger(ctx).Error(fmt.Sprintf("Error liquid staking packet from autopilot for %s: %s", sender, err.Error()))
+			return channeltypes.NewErrorAcknowledgement(err)
 		}
-
-		return ack
-
-	case types.ClaimPacketMetadata:
-		// If claim routing is inactive (but the packet had routing info in the memo) return an ack error
-		if !autopilotParams.ClaimActive {
-			im.keeper.Logger(ctx).Error(fmt.Sprintf("Packet from %s had claim routing info but autopilot claim routing is disabled", sender))
-			return channeltypes.NewErrorAcknowledgement(types.ErrPacketForwardingInactive)
+	case types.RedeemStake:
+		// Try to redeem stake - return an ack error if it fails, otherwise return the ack generated from the earlier packet propogation
+		actionMetadata := autopilotMetadata.RoutingInfo.(types.RedeemStakeMetadata)
+		if err := im.keeper.TryRedeemStake(ctx, packet, tokenPacketData, actionMetadata); err != nil {
+			im.keeper.Logger(ctx).Error(fmt.Sprintf("Error redeem staking packet from autopilot for %s: %s", sender, err.Error()))
+			return channeltypes.NewErrorAcknowledgement(err)
 		}
-		im.keeper.Logger(ctx).Info(fmt.Sprintf("Forwaring packet from %s to claim", sender))
-
+	case types.Claim:
 		if err := im.keeper.TryUpdateAirdropClaim(ctx, packet, tokenPacketData); err != nil {
 			im.keeper.Logger(ctx).Error(fmt.Sprintf("Error updating airdrop claim from autopilot for %s: %s", sender, err.Error()))
 			return channeltypes.NewErrorAcknowledgement(err)
 		}
-
-		return ack
-
 	default:
-		return channeltypes.NewErrorAcknowledgement(errorsmod.Wrapf(types.ErrUnsupportedAutopilotRoute, "%T", routingInfo))
+		return channeltypes.NewErrorAcknowledgement(errorsmod.Wrapf(types.ErrUnsupportedAutopilotAction, autopilotMetadata.Action))
 	}
+	return ack
 }
 
 // OnAcknowledgementPacket implements the IBCModule interface

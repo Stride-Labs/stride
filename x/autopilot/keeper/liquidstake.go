@@ -32,7 +32,8 @@ func (k Keeper) TryLiquidStaking(
 	ctx sdk.Context,
 	packet channeltypes.Packet,
 	transferMetadata transfertypes.FungibleTokenPacketData,
-	autopilotMetadata types.StakeibcPacketMetadata,
+	forward bool,
+	autopilotMetadata *types.LiquidStakeAndForwardMetadata,
 ) error {
 	params := k.GetParams(ctx)
 	if !params.StakeibcActive {
@@ -66,7 +67,7 @@ func (k Keeper) TryLiquidStaking(
 		return fmt.Errorf("ibc denom %s is not equal to host zone ibc denom %s", ibcDenom, hostZone.IbcDenom)
 	}
 
-	return k.RunLiquidStake(ctx, amount, transferMetadata, autopilotMetadata)
+	return k.RunLiquidStake(ctx, amount, transferMetadata, forward, autopilotMetadata)
 }
 
 // Submits a LiquidStake message from the transfer receiver
@@ -75,7 +76,8 @@ func (k Keeper) RunLiquidStake(
 	ctx sdk.Context,
 	amount sdkmath.Int,
 	transferMetadata transfertypes.FungibleTokenPacketData,
-	autopilotMetadata types.StakeibcPacketMetadata,
+	forward bool,
+	autopilotMetadata *types.LiquidStakeAndForwardMetadata,
 ) error {
 	msg := &stakeibctypes.MsgLiquidStake{
 		Creator:   transferMetadata.Receiver,
@@ -96,8 +98,8 @@ func (k Keeper) RunLiquidStake(
 		return errorsmod.Wrapf(err, "failed to liquid stake")
 	}
 
-	// If the IBCReceiver is empty, there is no forwarding step
-	if autopilotMetadata.IbcReceiver == "" {
+	// If there is no forwarding step, exit
+	if !forward {
 		return nil
 	}
 
@@ -111,7 +113,7 @@ func (k Keeper) IBCTransferStToken(
 	ctx sdk.Context,
 	stToken sdk.Coin,
 	transferMetadata transfertypes.FungibleTokenPacketData,
-	autopilotMetadata types.StakeibcPacketMetadata,
+	autopilotMetadata *types.LiquidStakeAndForwardMetadata,
 ) error {
 	hostZone, err := k.stakeibcKeeper.GetHostZoneFromHostDenom(ctx, transferMetadata.Denom)
 	if err != nil {
@@ -158,7 +160,7 @@ func (k Keeper) IBCTransferStToken(
 		SourceChannel:    channelId,
 		Token:            stToken,
 		Sender:           hashedAddress,
-		Receiver:         autopilotMetadata.IbcReceiver,
+		Receiver:         autopilotMetadata.TransferReceiver,
 		TimeoutTimestamp: timeoutTimestamp,
 		Memo:             "autopilot-liquid-stake-and-forward",
 	}

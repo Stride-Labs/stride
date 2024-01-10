@@ -18,7 +18,7 @@ func (k Keeper) TryRedeemStake(
 	ctx sdk.Context,
 	packet channeltypes.Packet,
 	transferPacketData transfertypes.FungibleTokenPacketData,
-	autopilotMetadata types.StakeibcPacketMetadata,
+	autopilotMetadata types.RedeemStakeMetadata,
 ) error {
 	params := k.GetParams(ctx)
 	if !params.StakeibcActive {
@@ -49,7 +49,7 @@ func (k Keeper) TryRedeemStake(
 	}
 
 	strideAddress := transferPacketData.Receiver
-	redemptionReceiver := autopilotMetadata.IbcReceiver
+	redemptionReceiver := autopilotMetadata.RedemptionReceiver
 
 	return k.RunRedeemStake(ctx, strideAddress, redemptionReceiver, hostZoneDenom, amount)
 }
