@@ -10,24 +10,43 @@ import (
 // RawPacketMetadata defines the raw JSON memo that's used in an autopilot transfer
 // The PFM forward key is also used here to validate that the packet is not trying
 // to use autopilot and PFM at the same time
-// As a result, only the forward key is needed, cause the actual parsing of the PFM
-// packet will occur in the PFM module
+// As a result, only the forward key is needed. The actual parsing of the PFM section
+// will occur in the PFM module
 type RawPacketMetadata struct {
-	Autopilot *struct {
-		Receiver string                  `json:"receiver"`
-		Stakeibc *StakeibcPacketMetadata `json:"stakeibc,omitempty"`
-		Claim    *ClaimPacketMetadata    `json:"claim,omitempty"`
-	} `json:"autopilot"`
-	Forward *interface{} `json:"forward"`
+	Autopilot *RawAutopilotMetadata `json:"autopilot"`
+	Forward   *interface{}          `json:"forward"`
 }
 
+// This struct has all the possible autopilot fields across all actions
+type RawAutopilotMetadata struct {
+	// Address on stride that should receiver the transfer
+	Receiver string `json:"receiver"`
+	// The autopilot action
+	Action string `json:"action"`
+
+	// Fields for LiquidStakeAndForward - dictates the recipient of the outbound IBC transfer
+	TransferReceiver string `json:"transfer_receiver"`
+	TransferChannel  string `json:"transfer_channel"`
+
+	// Address on
+	RedemptionReceiver string `json:"redemption_receiver"`
+
+	// Legacy fields - will be deprecated
+	Stakeibc *StakeibcPacketMetadata `json:"stakeibc,omitempty"`
+	Claim    *ClaimPacketMetadata    `json:"claim,omitempty"`
+}
+
+// TODO [v17]: Rename to AutopilotActionMetadata
 // AutopilotActionMetadata stores the metadata that's specific to the autopilot action
 // e.g. Fields required for LiquidStake
 type AutopilotMetadata struct {
-	Receiver    string
-	RoutingInfo ModuleRoutingInfo
+	Receiver string
+	Action   string
+	// TODO [v17]: Rename to ActionMetadata
+	RoutingInfo interface{}
 }
 
+// DEPRECATED: Remove in future release
 // ModuleRoutingInfo defines the interface required for each autopilot action
 type ModuleRoutingInfo interface {
 	Validate() error

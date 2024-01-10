@@ -65,20 +65,6 @@ func getClaimAndStakeibcMemo(address, action string) string {
 		}`, address, action)
 }
 
-// Helper function to check the routingInfo with a switch statement
-// This isn't the most efficient way to check the type  (require.TypeOf could be used instead)
-// but it better aligns with how the routing info is checked in module_ibc
-func checkModuleRoutingInfoType(routingInfo types.ModuleRoutingInfo, expectedType string) bool {
-	switch routingInfo.(type) {
-	case types.StakeibcPacketMetadata:
-		return expectedType == "stakeibc"
-	case types.ClaimPacketMetadata:
-		return expectedType == "claim"
-	default:
-		return false
-	}
-}
-
 func TestParsePacketMetadata(t *testing.T) {
 	validAddress, invalidAddress := apptesting.GenerateTestAddrs()
 	validStakeibcAction := "LiquidStake"
@@ -189,12 +175,10 @@ func TestParsePacketMetadata(t *testing.T) {
 					require.Nil(t, parsedData, "parsed data response should be nil")
 				} else {
 					if tc.parsedStakeibc != nil {
-						checkModuleRoutingInfoType(parsedData.RoutingInfo, "stakeibc")
 						routingInfo, ok := parsedData.RoutingInfo.(types.StakeibcPacketMetadata)
 						require.True(t, ok, "routing info should be stakeibc")
 						require.Equal(t, *tc.parsedStakeibc, routingInfo, "parsed stakeibc value")
 					} else if tc.parsedClaim != nil {
-						checkModuleRoutingInfoType(parsedData.RoutingInfo, "claim")
 						routingInfo, ok := parsedData.RoutingInfo.(types.ClaimPacketMetadata)
 						require.True(t, ok, "routing info should be claim")
 						require.Equal(t, *tc.parsedClaim, routingInfo, "parsed claim value")

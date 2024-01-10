@@ -51,6 +51,44 @@ func (m ClaimPacketMetadata) Validate() error {
 	return nil
 }
 
+// Metadata for a liquid stake and forward action
+type LiquidStakeAndForwardMetadata struct {
+	// Recipient of outbound IBC transfer
+	TransferReceiver string
+	// Channel for outbound transfer (optional)
+	// Defaults to the host zone's channel if not specified
+	TransferChannel string
+}
+
+// Builds and validates a new LiquidStakeAndForwardMetadata struct from the raw fields
+// Only the receiver field is required
+func NewLiquidStakeAndForwardMetadata(raw RawAutopilotMetadata) (metadata LiquidStakeAndForwardMetadata, err error) {
+	if raw.TransferReceiver == "" {
+		return metadata, errorsmod.Wrapf(ErrInvalidPacketMetadata, "transfer_receiver must be included in a liquid stake and forward")
+	}
+	metadata = LiquidStakeAndForwardMetadata{
+		TransferReceiver: raw.TransferReceiver,
+		TransferChannel:  raw.TransferChannel,
+	}
+	return metadata, nil
+}
+
+// Metadata for a redeem stake action
+type RedeemStakeMetadata struct {
+	RedemptionReceiver string
+}
+
+// Builds and validates a new RedeemStakeMetadata struct from the raw fields
+func NewRedeemStakeMetadata(raw RawAutopilotMetadata) (metadata RedeemStakeMetadata, err error) {
+	if raw.RedemptionReceiver == "" {
+		return metadata, errorsmod.Wrapf(ErrInvalidPacketMetadata, "redemption_receiver must be included in a redeem stake")
+	}
+	metadata = RedeemStakeMetadata{
+		RedemptionReceiver: raw.RedemptionReceiver,
+	}
+	return metadata, nil
+}
+
 // Parse packet metadata intended for autopilot
 // In the ICS-20 packet, the metadata can optionally indicate a module to route to (e.g. stakeibc)
 // The AutopilotMetadata returned from this function contains attributes for each autopilot supported module
