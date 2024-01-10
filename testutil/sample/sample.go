@@ -15,3 +15,7 @@ func AccAddress() string {
 func StrideAddress() string {
 	return "stride1uk4ze0x4nvh4fk0xm4jdud58eqn4yxhrt52vv7"
 }
+
+func HostAddress() string {
+	return "cosmos1rq3pjmk9hr4xq99e8jx683rukjmxhcp4vtjhmy"
+}

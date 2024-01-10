@@ -113,6 +113,10 @@ test-integration-docker:
 ###                                DockerNet                                ###
 ###############################################################################
 
+sync:
+	@git submodule sync --recursive
+	@git submodule update --init --recursive
+
 build-docker:
 	@bash $(DOCKERNET_HOME)/build.sh -${build} ${BUILDDIR}
 

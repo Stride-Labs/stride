@@ -12,16 +12,15 @@ import (
 	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
 
 	"github.com/Stride-Labs/stride/v16/utils"
-	"github.com/Stride-Labs/stride/v16/x/autopilot/types"
 	claimtypes "github.com/Stride-Labs/stride/v16/x/claim/types"
 	stakeibctypes "github.com/Stride-Labs/stride/v16/x/stakeibc/types"
 )
 
+// Attempt to link a host address with a stride address to enable airdrop claims
 func (k Keeper) TryUpdateAirdropClaim(
 	ctx sdk.Context,
 	packet channeltypes.Packet,
-	data transfertypes.FungibleTokenPacketData,
-	packetMetadata types.ClaimPacketMetadata,
+	transferMetadata transfertypes.FungibleTokenPacketData,
 ) error {
 	params := k.GetParams(ctx)
 	if !params.ClaimActive {
@@ -39,11 +38,11 @@ func (k Keeper) TryUpdateAirdropClaim(
 	}
 
 	// grab relevant addresses
-	senderStrideAddress := utils.ConvertAddressToStrideAddress(data.Sender)
+	senderStrideAddress := utils.ConvertAddressToStrideAddress(transferMetadata.Sender)
 	if senderStrideAddress == "" {
-		return errorsmod.Wrapf(sdkerrors.ErrInvalidAddress, fmt.Sprintf("invalid sender address (%s)", data.Sender))
+		return errorsmod.Wrapf(sdkerrors.ErrInvalidAddress, fmt.Sprintf("invalid sender address (%s)", transferMetadata.Sender))
 	}
-	newStrideAddress := packetMetadata.StrideAddress
+	newStrideAddress := transferMetadata.Receiver
 
 	// find the airdrop for this host chain ID
 	airdrop, found := k.claimKeeper.GetAirdropByChainId(ctx, hostZone.ChainId)
@@ -56,7 +55,7 @@ func (k Keeper) TryUpdateAirdropClaim(
 
 	airdropId := airdrop.AirdropIdentifier
 	k.Logger(ctx).Info(fmt.Sprintf("updating airdrop address %s (orig %s) to %s for airdrop %s",
-		senderStrideAddress, data.Sender, newStrideAddress, airdropId))
+		senderStrideAddress, transferMetadata.Sender, newStrideAddress, airdropId))
 
 	return k.claimKeeper.UpdateAirdropAddress(ctx, senderStrideAddress, newStrideAddress, airdropId)
 }

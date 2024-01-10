@@ -4,34 +4,23 @@ import (
 	"encoding/json"
 
 	errorsmod "cosmossdk.io/errors"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-type RawPacketMetadata struct {
-	Autopilot *struct {
-		Receiver string                  `json:"receiver"`
-		Stakeibc *StakeibcPacketMetadata `json:"stakeibc,omitempty"`
-		Claim    *ClaimPacketMetadata    `json:"claim,omitempty"`
-	} `json:"autopilot"`
-}
-
-type PacketForwardMetadata struct {
-	Receiver    string
-	RoutingInfo ModuleRoutingInfo
-}
-
-type ModuleRoutingInfo interface {
-	Validate() error
-}
+const LiquidStake = "LiquidStake"
+const RedeemStake = "RedeemStake"
 
 // Packet metadata info specific to Stakeibc (e.g. 1-click liquid staking)
 type StakeibcPacketMetadata struct {
-	Action        string `json:"action"`
-	StrideAddress string
+	Action string `json:"action"`
+	// TODO: remove StrideAddress
+	StrideAddress   string
+	IbcReceiver     string `json:"ibc_receiver,omitempty"`
+	TransferChannel string `json:"transfer_channel,omitempty"`
 }
 
 // Packet metadata info specific to Claim (e.g. airdrops for non-118 coins)
+// TODO: remove this struct
 type ClaimPacketMetadata struct {
 	StrideAddress string
 }
@@ -43,7 +32,10 @@ func (m StakeibcPacketMetadata) Validate() error {
 	if err != nil {
 		return err
 	}
-	if m.Action != "LiquidStake" {
+	switch m.Action {
+	case LiquidStake:
+	case RedeemStake:
+	default:
 		return errorsmod.Wrapf(ErrUnsupportedStakeibcAction, "action %s is not supported", m.Action)
 	}
 
@@ -51,6 +43,7 @@ func (m StakeibcPacketMetadata) Validate() error {
 }
 
 // Validate claim packet metadata includes the stride address
+// TODO: remove this function
 func (m ClaimPacketMetadata) Validate() error {
 	_, err := sdk.AccAddressFromBech32(m.StrideAddress)
 	if err != nil {
@@ -62,10 +55,10 @@ func (m ClaimPacketMetadata) Validate() error {
 
 // Parse packet metadata intended for autopilot
 // In the ICS-20 packet, the metadata can optionally indicate a module to route to (e.g. stakeibc)
-// The PacketForwardMetadata returned from this function contains attributes for each autopilot supported module
+// The AutopilotMetadata returned from this function contains attributes for each autopilot supported module
 // It can only be forward to one module per packet
-// Returns nil if there was no metadata found
-func ParsePacketMetadata(metadata string) (*PacketForwardMetadata, error) {
+// Returns nil if there was no autopilot metadata found
+func ParseAutopilotMetadata(metadata string) (*AutopilotMetadata, error) {
 	// If we can't unmarshal the metadata into a PacketMetadata struct,
 	// assume packet forwarding was no used and pass back nil so that autopilot is ignored
 	var raw RawPacketMetadata
@@ -73,7 +66,14 @@ func ParsePacketMetadata(metadata string) (*PacketForwardMetadata, error) {
 		return nil, nil
 	}
 
-	// If no forwarding logic was used for autopilot, return the metadata with each disabled
+	// Packets cannot be used for both autopilot and PFM at the same time
+	// If both fields were provided, reject the packet
+	if raw.Autopilot != nil && raw.Forward != nil {
+		return nil, errorsmod.Wrapf(ErrInvalidPacketMetadata, "autopilot and pfm cannot both be used in the same packet")
+	}
+
+	// If no forwarding logic was used for autopilot, return nil to indicate that
+	// there's no autopilot action needed
 	if raw.Autopilot == nil {
 		return nil, nil
 	}
@@ -108,7 +108,7 @@ func ParsePacketMetadata(metadata string) (*PacketForwardMetadata, error) {
 		return nil, errorsmod.Wrapf(err, ErrInvalidPacketMetadata.Error())
 	}
 
-	return &PacketForwardMetadata{
+	return &AutopilotMetadata{
 		Receiver:    raw.Autopilot.Receiver,
 		RoutingInfo: routingInfo,
 	}, nil
