@@ -510,16 +510,16 @@ func (s *UpgradeTestSuite) TestUpdateRateLimitThresholds() {
 	// Define test cases consisting of an initial redemption rates and expected bounds
 	testCases := map[string]UpdateRateLimits{
 		"cosmoshub": {
-			// 10% threshold
+			// 15% threshold
 			ChainId:        "cosmoshub-4",
 			ChannelId:      "channel-0",
 			HostDenom:      "uatom",
 			RateLimitDenom: "stuatom",
 			Duration:       10,
-			Threshold:      sdkmath.NewInt(10),
+			Threshold:      sdkmath.NewInt(15),
 		},
 		"osmosis": {
-			// 10% threshold
+			// 20% threshold
 			ChainId:        "osmosis-1",
 			ChannelId:      "channel-1",
 			HostDenom:      "uosmo",

@@ -484,13 +484,21 @@ func (s *KeeperTestSuite) TestGetBalanceRatio() {
 	}
 }
 
-func (s *KeeperTestSuite) TestGetTotalUnbondAmountAndRecordsIds() {
+func (s *KeeperTestSuite) TestGetQueuedHostZoneUnbondingRecords() {
+	// This function returns a mapping of epoch unbonding record ID (i.e. epoch number) -> hostZoneUnbonding
+	// For the purposes of this test, the NativeTokenAmount is used in place of the host zone unbonding record
+	// for the purposes of validating the proper record was selected. In other words, after this function,
+	// we just verify that the native token amounts of the output line up with the expected map below
+	expectedEpochUnbondingRecordIds := []uint64{1, 2, 4}
+	expectedHostZoneUnbondingMap := map[uint64]int64{1: 1, 2: 3, 4: 8} // includes only the relevant records below
+
 	epochUnbondingRecords := []recordtypes.EpochUnbondingRecord{
 		{
+			// Has relevant host zone unbonding, so epoch number is included
 			EpochNumber: uint64(1),
 			HostZoneUnbondings: []*recordtypes.HostZoneUnbonding{
 				{
-					// Summed
+					// Included
 					HostZoneId:        HostChainId,
 					NativeTokenAmount: sdkmath.NewInt(1),
 					Status:            recordtypes.HostZoneUnbonding_UNBONDING_QUEUE,
@@ -504,10 +512,11 @@ func (s *KeeperTestSuite) TestGetTotalUnbondAmountAndRecordsIds() {
 			},
 		},
 		{
+			// Has relevant host zone unbonding, so epoch number is included
 			EpochNumber: uint64(2),
 			HostZoneUnbondings: []*recordtypes.HostZoneUnbonding{
 				{
-					// Summed
+					// Included
 					HostZoneId:        HostChainId,
 					NativeTokenAmount: sdkmath.NewInt(3),
 					Status:            recordtypes.HostZoneUnbonding_UNBONDING_QUEUE,
@@ -521,6 +530,7 @@ func (s *KeeperTestSuite) TestGetTotalUnbondAmountAndRecordsIds() {
 			},
 		},
 		{
+			// No relevant host zone unbonding, epoch number not included
 			EpochNumber: uint64(3),
 			HostZoneUnbondings: []*recordtypes.HostZoneUnbonding{
 				{
@@ -538,6 +548,7 @@ func (s *KeeperTestSuite) TestGetTotalUnbondAmountAndRecordsIds() {
 			},
 		},
 		{
+			// Has relevant host zone unbonding, so epoch number is included
 			EpochNumber: uint64(4),
 			HostZoneUnbondings: []*recordtypes.HostZoneUnbonding{
 				{
@@ -547,7 +558,7 @@ func (s *KeeperTestSuite) TestGetTotalUnbondAmountAndRecordsIds() {
 					Status:            recordtypes.HostZoneUnbonding_CLAIMABLE,
 				},
 				{
-					// Summed
+					// Included
 					HostZoneId:        HostChainId,
 					NativeTokenAmount: sdkmath.NewInt(8),
 					Status:            recordtypes.HostZoneUnbonding_UNBONDING_QUEUE,
@@ -560,12 +571,27 @@ func (s *KeeperTestSuite) TestGetTotalUnbondAmountAndRecordsIds() {
 		s.App.RecordsKeeper.SetEpochUnbondingRecord(s.Ctx, epochUnbondingRecord)
 	}
 
-	expectedUnbondAmount := int64(1 + 3 + 8)
-	expectedRecordIds := []uint64{1, 2, 4}
+	actualEpochIds, actualHostZoneMap := s.App.StakeibcKeeper.GetQueuedHostZoneUnbondingRecords(s.Ctx, HostChainId)
+	s.Require().Equal(expectedEpochUnbondingRecordIds, actualEpochIds, "epoch unbonding record IDs")
+	for epochNumber, actualHostZoneUnbonding := range actualHostZoneMap {
+		expectedHostZoneUnbonding := expectedHostZoneUnbondingMap[epochNumber]
+		s.Require().Equal(expectedHostZoneUnbonding, actualHostZoneUnbonding.NativeTokenAmount.Int64(), "host zone unbonding record")
+	}
+}
 
-	actualUnbondAmount, actualRecordIds := s.App.StakeibcKeeper.GetTotalUnbondAmountAndRecordsIds(s.Ctx, HostChainId)
-	s.Require().Equal(expectedUnbondAmount, actualUnbondAmount.Int64(), "unbonded amount")
-	s.Require().Equal(expectedRecordIds, actualRecordIds, "epoch unbonding record IDs")
+func (s *KeeperTestSuite) TestGetTotalUnbondAmount() {
+	hostZoneUnbondingRecords := map[uint64]recordtypes.HostZoneUnbonding{
+		1: {NativeTokenAmount: sdkmath.NewInt(1)},
+		2: {NativeTokenAmount: sdkmath.NewInt(2)},
+		3: {NativeTokenAmount: sdkmath.NewInt(3)},
+		4: {NativeTokenAmount: sdkmath.NewInt(4)},
+	}
+	expectedUnbondAmount := sdkmath.NewInt(1 + 2 + 3 + 4)
+	actualUnbondAmount := s.App.StakeibcKeeper.GetTotalUnbondAmount(s.Ctx, hostZoneUnbondingRecords)
+	s.Require().Equal(expectedUnbondAmount, actualUnbondAmount, "unbond amount")
+
+	emptyUnbondings := map[uint64]recordtypes.HostZoneUnbonding{}
+	s.Require().Zero(s.App.StakeibcKeeper.GetTotalUnbondAmount(s.Ctx, emptyUnbondings).Int64())
 }
 
 func (s *KeeperTestSuite) TestGetValidatorUnbondCapacity() {
