@@ -42,8 +42,8 @@ func convertToNewEpochUnbondingRecord(oldEpochUnbondingRecord oldrecordstypes.Ep
 
 func convertToNewUserRedemptionRecord(oldRedemptionRecord oldrecordstypes.UserRedemptionRecord) recordstypes.UserRedemptionRecord {
 	return recordstypes.UserRedemptionRecord{
-		Id:             oldRedemptionRecord.Id,
-		Sender:         oldRedemptionRecord.Sender,
+		Id: oldRedemptionRecord.Id,
+		// Sender:         oldRedemptionRecord.Sender,
 		Receiver:       oldRedemptionRecord.Receiver,
 		Amount:         sdkmath.NewIntFromUint64(oldRedemptionRecord.Amount),
 		Denom:          oldRedemptionRecord.Denom,

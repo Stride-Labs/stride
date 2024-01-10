@@ -112,6 +112,10 @@ test-integration-docker:
 ###                                DockerNet                                ###
 ###############################################################################
 
+sync:
+	@git submodule sync --recursive
+	@git submodule update --init --recursive
+
 build-docker:
 	@bash $(DOCKERNET_HOME)/build.sh -${build} ${BUILDDIR}
 
@@ -150,6 +154,12 @@ upgrade-integration-tests-part-1: start-docker-all start-upgrade-integration-tes
 
 setup-ics:
 	UPGRADE_HEIGHT=150 bash $(DOCKERNET_HOME)/upgrades/setup_ics.sh
+
+###############################################################################
+###                              LocalNet                                   ###
+###############################################################################
+start-local-node:
+	@bash scripts/start_local_node.sh
 
 ###############################################################################
 ###                           Local to Mainnet                              ###

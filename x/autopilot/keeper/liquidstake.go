@@ -3,6 +3,7 @@ package keeper
 import (
 	"errors"
 	"fmt"
+	"time"
 
 	errorsmod "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
@@ -13,6 +14,16 @@ import (
 	"github.com/Stride-Labs/stride/v16/x/autopilot/types"
 	stakeibckeeper "github.com/Stride-Labs/stride/v16/x/stakeibc/keeper"
 	stakeibctypes "github.com/Stride-Labs/stride/v16/x/stakeibc/types"
+)
+
+const (
+	// If the forward transfer fails, the tokens are sent to the fallback address
+	// which is a less than ideal UX
+	// As a result, we decided to use a long timeout here such, even in the case
+	// of high activity, a timeout should be very unlikely to occur
+	// Empirically we found that times of high market stress took roughly
+	// 2 hours for transfers to complete
+	LiquidStakeForwardTransferTimeout = (time.Hour * 3)
 )
 
 // Attempts to do an autopilot liquid stake (and optional forward)
@@ -82,7 +93,7 @@ func (k Keeper) RunLiquidStake(
 		msg,
 	)
 	if err != nil {
-		return errorsmod.Wrapf(err, err.Error())
+		return errorsmod.Wrapf(err, "failed to liquid stake")
 	}
 
 	// If the IBCReceiver is empty, there is no forwarding step
@@ -113,8 +124,8 @@ func (k Keeper) IBCTransferStToken(
 		channelId = hostZone.TransferChannelId
 	}
 
-	// Use the default transfer timeout of 10 minutes
-	timeoutTimestamp := uint64(ctx.BlockTime().UnixNano()) + transfertypes.DefaultRelativePacketTimeoutTimestamp
+	// Use a long timeout for the transfer
+	timeoutTimestamp := uint64(ctx.BlockTime().UnixNano() + LiquidStakeForwardTransferTimeout.Nanoseconds())
 
 	// Submit the transfer from the hashed address
 	transferMsg := &transfertypes.MsgTransfer{
@@ -127,6 +138,9 @@ func (k Keeper) IBCTransferStToken(
 		Memo:             "autopilot-liquid-stake-and-forward",
 	}
 	_, err = k.transferKeeper.Transfer(sdk.WrapSDKContext(ctx), transferMsg)
+	if err != nil {
+		return errorsmod.Wrapf(err, "failed to submit transfer during autopilot liquid stake and forward")
+	}
 
 	return err
 }

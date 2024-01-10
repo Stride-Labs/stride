@@ -1,39 +1,96 @@
-package types
+package types_test
 
 import (
 	"testing"
 
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/stretchr/testify/require"
 
-	"github.com/Stride-Labs/stride/v16/testutil/sample"
+	"github.com/Stride-Labs/stride/v16/app/apptesting"
+	"github.com/Stride-Labs/stride/v16/x/stakeibc/types"
 )
 
 func TestMsgChangeValidatorWeight_ValidateBasic(t *testing.T) {
+	validNonAdminAddress, invalidAddress := apptesting.GenerateTestAddrs()
+	adminAddress, ok := apptesting.GetAdminAddress()
+	require.True(t, ok)
+
+	validChainId := "chain-0"
+	validAddress := "val1"
+
 	tests := []struct {
-		name string
-		msg  MsgChangeValidatorWeight
-		err  error
+		name          string
+		msg           types.MsgChangeValidatorWeights
+		expectedError string
 	}{
 		{
+			name: "valid message",
+			msg: types.MsgChangeValidatorWeights{
+				Creator:  adminAddress,
+				HostZone: validChainId,
+				ValidatorWeights: []*types.ValidatorWeight{
+					{Address: validAddress, Weight: 1},
+				},
+			},
+		},
+		{
 			name: "invalid address",
-			msg: MsgChangeValidatorWeight{
-				Creator: "invalid_address",
+			msg: types.MsgChangeValidatorWeights{
+				Creator:  invalidAddress,
+				HostZone: validChainId,
+				ValidatorWeights: []*types.ValidatorWeight{
+					{Address: validAddress, Weight: 1},
+				},
 			},
-			err: sdkerrors.ErrInvalidAddress,
-		}, {
-			name: "valid address but not whitelisted",
-			msg: MsgChangeValidatorWeight{
-				Creator: sample.AccAddress(),
+			expectedError: "invalid creator address",
+		},
+		{
+			name: "non-admin address",
+			msg: types.MsgChangeValidatorWeights{
+				Creator:  validNonAdminAddress,
+				HostZone: validChainId,
+				ValidatorWeights: []*types.ValidatorWeight{
+					{Address: validAddress, Weight: 1},
+				},
 			},
-			err: sdkerrors.ErrInvalidAddress,
+			expectedError: "is not an admin",
+		},
+		{
+			name: "missing chain id",
+			msg: types.MsgChangeValidatorWeights{
+				Creator:  adminAddress,
+				HostZone: "",
+				ValidatorWeights: []*types.ValidatorWeight{
+					{Address: validAddress, Weight: 1},
+				},
+			},
+			expectedError: "host zone must be specified",
+		},
+		{
+			name: "no validators",
+			msg: types.MsgChangeValidatorWeights{
+				Creator:          adminAddress,
+				HostZone:         validChainId,
+				ValidatorWeights: []*types.ValidatorWeight{},
+			},
+			expectedError: "at least one validator must be specified",
+		},
+		{
+			name: "missing validator address",
+			msg: types.MsgChangeValidatorWeights{
+				Creator:  adminAddress,
+				HostZone: validChainId,
+				ValidatorWeights: []*types.ValidatorWeight{
+					{Address: "", Weight: 1},
+				},
+			},
+			expectedError: "validator address must be specified",
 		},
 	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			err := tt.msg.ValidateBasic()
-			if tt.err != nil {
-				require.ErrorIs(t, err, tt.err)
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			err := tc.msg.ValidateBasic()
+			if tc.expectedError != "" {
+				require.ErrorContains(t, err, tc.expectedError)
 				return
 			}
 			require.NoError(t, err)

@@ -1,7 +1,7 @@
 ## Community Pool Staking Integration Tests
 ### Liquid Staking and Redemptions
 * To test only liquid staking and redemptions from the community pool (without reinvestment), the setup is much simpler
-* Set `HOST_CHAINS` to `(DYDX)` in `config.sh`
+* Set `HOST_CHAINS` to either `(DYDX)` or `(GAIA)` in `config.sh`
 * Start dockernet
 ```bash
 make start-docker
@@ -27,7 +27,7 @@ bash dockernet/scripts/community-pool-staking/stake_proposal.sh
 
 ### Reinvestment
 * To test reinvestment, you must start up noble and osmosis as well
-    * Set `HOST_CHAINS` to `(DYDX)` in `config.sh`
+    * Set `HOST_CHAINS` to either `(DYDX)` or `(GAIA)` in `config.sh`
     * Set `ACCESSORY_CHAINS` to `(NOBLE OSMO)` in `config.sh
 * Start the network
 ```bash
@@ -41,7 +41,11 @@ bash dockernet/scripts/community-pool-staking/start_relayers.sh
 ```bash
 bash dockernet/scripts/community-pool-staking/create_pool.sh
 ```
-* Finally, test the reinvestment flow by sending USDC to the withdrawal address
+* Register the trade route to configure the conversion of reward tokens to host tokens
+```bash
+bash dockernet/scripts/community-pool-staking/add_trade_route.sh
+```
+* Finally, test the reinvestment flow by sending USDC to the withdrawal address. View `logs/balances.log` to watch the funds traverse the different accounts
 ```bash
 bash dockernet/scripts/community-pool-staking/reinvest.sh
 ```
