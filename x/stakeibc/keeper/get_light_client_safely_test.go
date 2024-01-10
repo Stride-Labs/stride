@@ -15,7 +15,7 @@ func (s *KeeperTestSuite) SetupGetLightClientSafely() GetLightClientSafelyTestCa
 	s.CreateTransferChannel("GAIA")
 
 	// note this time is Jan 2020, set in the ibc test setup
-	expectedLightClientTime := int64(1577923345000000000)
+	expectedLightClientTime := int64(1577923355000000000)
 	// note this is the block height post-setup in the ibc test setup (creating connections, channels etc advances the block)
 	//        this may change as we ament the setup, please update accordingly!
 	expectedLightClientHeight := int64(17)
