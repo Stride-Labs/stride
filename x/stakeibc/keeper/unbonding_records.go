@@ -80,8 +80,8 @@ func (k Keeper) CreateEpochUnbondingRecord(ctx sdk.Context, epochNumber uint64) 
 func (k Keeper) GetQueuedHostZoneUnbondingRecords(
 	ctx sdk.Context,
 	chainId string,
-) (epochNumbers []uint64, hostZoneUnbondingMap map[uint64]recordstypes.HostZoneUnbonding) {
-	hostZoneUnbondingMap = map[uint64]recordstypes.HostZoneUnbonding{}
+) (epochNumbers []uint64, epochToHostZoneUnbondingMap map[uint64]recordstypes.HostZoneUnbonding) {
+	epochToHostZoneUnbondingMap = map[uint64]recordstypes.HostZoneUnbonding{}
 	for _, epochUnbonding := range k.RecordsKeeper.GetAllEpochUnbondingRecord(ctx) {
 		hostZoneRecord, found := k.RecordsKeeper.GetHostZoneUnbondingByChainId(ctx, epochUnbonding.EpochNumber, chainId)
 		if !found {
@@ -92,10 +92,10 @@ func (k Keeper) GetQueuedHostZoneUnbondingRecords(
 
 		if hostZoneRecord.ShouldInitiateUnbonding() {
 			epochNumbers = append(epochNumbers, epochUnbonding.EpochNumber)
-			hostZoneUnbondingMap[epochUnbonding.EpochNumber] = *hostZoneRecord
+			epochToHostZoneUnbondingMap[epochUnbonding.EpochNumber] = *hostZoneRecord
 		}
 	}
-	return epochNumbers, hostZoneUnbondingMap
+	return epochNumbers, epochToHostZoneUnbondingMap
 }
 
 // Gets the total unbonded amount for a host zone by looping through the epoch unbonding records
@@ -108,17 +108,18 @@ func (k Keeper) GetTotalUnbondAmount(ctx sdk.Context, hostZoneUnbondingRecords m
 	return totalUnbonded
 }
 
-// Given a list of redemption record IDs and a redemption rate, sets the native token amount on each record and returns the total
-// The native amount is calculated using the redemption rate. If a zero redemption rate is passed, set the amount to zero
+// Given a list of user redemption record IDs and a redemption rate, sets the native token
+// amount on each record, calculated from the stAmount and redemption rate, and returns the
+// sum of all native token amounts across all user redemption records
 func (k Keeper) RefreshUserRedemptionRecordNativeAmounts(
 	ctx sdk.Context,
 	chainId string,
-	redemptionRecordIds []string,
+	userRedemptionRecordIds []string,
 	redemptionRate sdk.Dec,
 ) (totalNativeAmount sdkmath.Int) {
-	// Loop and set the native amount for each record, keeping track fo the total
+	// Loop and set the native amount for each record, keeping track of the total
 	totalNativeAmount = sdkmath.ZeroInt()
-	for _, userRedemptionRecordId := range redemptionRecordIds {
+	for _, userRedemptionRecordId := range userRedemptionRecordIds {
 		userRedemptionRecord, found := k.RecordsKeeper.GetUserRedemptionRecord(ctx, userRedemptionRecordId)
 		if !found {
 			k.Logger(ctx).Error(utils.LogWithHostZone(chainId, "No user redemption record found for id %s", userRedemptionRecordId))
@@ -137,7 +138,7 @@ func (k Keeper) RefreshUserRedemptionRecordNativeAmounts(
 }
 
 // Sets the native token amount unbonded on the host zone unbonding record and the associated user redemption records
-func (k Keeper) RefreshHostZoneUnbondingNativeTokenAmounts(
+func (k Keeper) RefreshHostZoneUnbondingNativeTokenAmount(
 	ctx sdk.Context,
 	epochNumber uint64,
 	hostZoneUnbondingRecord recordstypes.HostZoneUnbonding,
@@ -163,7 +164,7 @@ func (k Keeper) RefreshHostZoneUnbondingNativeTokenAmounts(
 // and user redemption records, using the most updated redemption rate
 func (k Keeper) RefreshUnbondingNativeTokenAmounts(ctx sdk.Context, hostZoneUnbondings map[uint64]recordstypes.HostZoneUnbonding) error {
 	for epochNumber, hostZoneUnbondingRecord := range hostZoneUnbondings {
-		if err := k.RefreshHostZoneUnbondingNativeTokenAmounts(ctx, epochNumber, hostZoneUnbondingRecord); err != nil {
+		if err := k.RefreshHostZoneUnbondingNativeTokenAmount(ctx, epochNumber, hostZoneUnbondingRecord); err != nil {
 			return err
 		}
 	}
