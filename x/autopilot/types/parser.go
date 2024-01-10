@@ -152,31 +152,7 @@ func ParseAutopilotMetadata(metadata string) (*AutopilotMetadata, error) {
 // The AutopilotMetadata returned from this function contains attributes for each autopilot supported module
 // It can only be forward to one module per packet
 // Returns nil if there was no autopilot metadata found
-func LegacyParseAutopilotMetadata(metadata string) (*AutopilotMetadata, error) {
-	// If we can't unmarshal the metadata into a PacketMetadata struct,
-	// assume packet forwarding was no used and pass back nil so that autopilot is ignored
-	var raw RawPacketMetadata
-	if err := json.Unmarshal([]byte(metadata), &raw); err != nil {
-		return nil, nil
-	}
-
-	// Packets cannot be used for both autopilot and PFM at the same time
-	// If both fields were provided, reject the packet
-	if raw.Autopilot != nil && raw.Forward != nil {
-		return nil, errorsmod.Wrapf(ErrInvalidPacketMetadata, "autopilot and pfm cannot both be used in the same packet")
-	}
-
-	// If no forwarding logic was used for autopilot, return nil to indicate that
-	// there's no autopilot action needed
-	if raw.Autopilot == nil {
-		return nil, nil
-	}
-
-	// Confirm a receiver address was supplied
-	if _, err := sdk.AccAddressFromBech32(raw.Autopilot.Receiver); err != nil {
-		return nil, errorsmod.Wrapf(ErrInvalidPacketMetadata, ErrInvalidReceiverAddress.Error())
-	}
-
+func LegacyParseAutopilotMetadata(raw RawPacketMetadata) (ModuleRoutingInfo, error) {
 	// Parse the packet info into the specific module type
 	// We increment the module count to ensure only one module type was provided
 	moduleCount := 0
@@ -200,8 +176,45 @@ func LegacyParseAutopilotMetadata(metadata string) (*AutopilotMetadata, error) {
 		return nil, errorsmod.Wrapf(err, ErrInvalidPacketMetadata.Error())
 	}
 
-	return &AutopilotMetadata{
-		Receiver:    raw.Autopilot.Receiver,
-		RoutingInfo: routingInfo,
-	}, nil
+	return routingInfo, nil
+}
+
+// DEPRECATED: Remove in next release
+func ConvertLegacyAutopilotMetadata(routingInfoGeneric ModuleRoutingInfo) (action string, metadata interface{}, err error) {
+	switch routingInfo := routingInfoGeneric.(type) {
+	case StakeibcPacketMetadata:
+		switch routingInfo.Action {
+
+		// The legacy liquid stake action included both with and without forwarding
+		case LegacyLiquidStake:
+			// Liquid stakes without forwarding (identified by an empty receiver) only require an action in the new schema
+			if routingInfo.IbcReceiver == "" {
+				return LiquidStake, nil, nil
+			}
+
+			// Liquid stakes with forwarding have a custom action and metadata fields to designate the receiver
+			metadata := LiquidStakeAndForwardMetadata{
+				TransferReceiver: routingInfo.IbcReceiver,
+				TransferChannel:  routingInfo.TransferChannel,
+			}
+			return LiquidStakeAndForward, metadata, nil
+
+		// Redeem stakes have a custom action to specify the redemption receiver
+		case LegacyRedeemStake:
+			metadata := RedeemStakeMetadata{
+				RedemptionReceiver: routingInfo.IbcReceiver,
+			}
+			return RedeemStake, metadata, nil
+
+		default:
+			return "", nil, errorsmod.Wrapf(ErrInvalidPacketMetadata, "unrecognized legacy autopilot stakeibc metadata")
+		}
+
+	// The claim action had it's own metadata and the updated schema only requires the action name
+	case ClaimPacketMetadata:
+		return Claim, nil, nil
+
+	default:
+		return "", nil, errorsmod.Wrapf(ErrInvalidPacketMetadata, "unrecognized legacy autopilot metadata")
+	}
 }
