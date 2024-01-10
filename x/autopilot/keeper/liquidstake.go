@@ -124,30 +124,6 @@ func (k Keeper) IBCTransferStToken(
 		channelId = hostZone.TransferChannelId
 	}
 
-	// Generate a hashed address for the sender to the next hop,
-	// to prevent impersonation at downstream zones
-	// Note: The channel ID here is different than the one used in PFM
-	// (we use the outbound channelID, they use the inbound channelID)
-	// However, the only thing that matters is that the address is obfuscated,
-	// the additional fields beyond sender just provide more collision resistance
-	hashedAddress, err := types.GenerateHashedAddress(channelId, transferMetadata.Sender)
-	if err != nil {
-		return err
-	}
-
-	// First we need to bank send to the hashed address
-	originalReceiver, err := sdk.AccAddressFromBech32(transferMetadata.Receiver)
-	if err != nil {
-		return err
-	}
-	hashedSender, err := sdk.AccAddressFromBech32(hashedAddress)
-	if err != nil {
-		return err
-	}
-	if err := k.bankKeeper.SendCoins(ctx, originalReceiver, hashedSender, sdk.NewCoins(stToken)); err != nil {
-		return err
-	}
-
 	// Use a long timeout for the transfer
 	timeoutTimestamp := uint64(ctx.BlockTime().UnixNano() + LiquidStakeForwardTransferTimeout.Nanoseconds())
 
@@ -156,7 +132,7 @@ func (k Keeper) IBCTransferStToken(
 		SourcePort:       transfertypes.PortID,
 		SourceChannel:    channelId,
 		Token:            stToken,
-		Sender:           hashedAddress,
+		Sender:           transferMetadata.Receiver,
 		Receiver:         autopilotMetadata.IbcReceiver,
 		TimeoutTimestamp: timeoutTimestamp,
 		Memo:             "autopilot-liquid-stake-and-forward",

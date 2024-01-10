@@ -171,9 +171,27 @@ func (im IBCModule) OnRecvPacket(
 
 	//// At this point, we are officially dealing with an autopilot packet
 
-	// Modify the packet data by replacing the JSON metadata field with a receiver address
-	// to allow the packet to continue down the stack
+	// Update the reciever in the packet data so that we can pass the packet down the stack
+	// (since the "receiver" may have technically been a full JSON memo)
 	tokenPacketData.Receiver = autopilotMetadata.Receiver
+
+	// For autopilot liquid stake and forward, we'll override the receiver with a hashed address
+	// The hashed address will also be the sender of the outbound transfer
+	// This is to prevent impersonation at downstream zones
+	// We can identify the forwarding step by whether there's a non-empty IBC receiver field
+	if routingInfo, ok := autopilotMetadata.RoutingInfo.(types.StakeibcPacketMetadata); ok &&
+		routingInfo.Action == types.LiquidStake && routingInfo.IbcReceiver != "" {
+
+		var err error
+		hashedReceiver, err := types.GenerateHashedAddress(packet.DestinationChannel, tokenPacketData.Sender)
+		if err != nil {
+			return channeltypes.NewErrorAcknowledgement(err)
+		}
+		tokenPacketData.Receiver = hashedReceiver
+	}
+
+	// Now that the receiver's been updated on the transfer metadata,
+	// modify the original packet so that we can send it down the stack
 	bz, err := transfertypes.ModuleCdc.MarshalJSON(&tokenPacketData)
 	if err != nil {
 		return channeltypes.NewErrorAcknowledgement(err)
