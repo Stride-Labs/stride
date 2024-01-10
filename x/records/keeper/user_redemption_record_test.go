@@ -19,7 +19,7 @@ func createNUserRedemptionRecord(keeper *keeper.Keeper, ctx sdk.Context, n int) 
 	items := make([]types.UserRedemptionRecord, n)
 	for i := range items {
 		items[i].Id = strconv.Itoa(i)
-		items[i].Amount = sdkmath.NewInt(int64(i))
+		items[i].NativeTokenAmount = sdkmath.NewInt(int64(i))
 		keeper.SetUserRedemptionRecord(ctx, items[i])
 	}
 	return items

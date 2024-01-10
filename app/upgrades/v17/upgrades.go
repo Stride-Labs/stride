@@ -346,10 +346,10 @@ func MigrateUnbondingRecords(ctx sdk.Context, k stakeibckeeper.Keeper) error {
 					continue
 				}
 
-				userRedemptionRecord.StTokenAmount = estimatedStTokenConversionRate.Mul(sdkmath.LegacyDec(userRedemptionRecord.Amount)).RoundInt()
+				userRedemptionRecord.StTokenAmount = estimatedStTokenConversionRate.Mul(sdkmath.LegacyDec(userRedemptionRecord.NativeTokenAmount)).RoundInt()
 
 				if unbondingNotInitiated {
-					userRedemptionRecord.Amount = sdkmath.ZeroInt()
+					userRedemptionRecord.NativeTokenAmount = sdkmath.ZeroInt()
 				}
 
 				k.RecordsKeeper.SetUserRedemptionRecord(ctx, userRedemptionRecord)

@@ -140,7 +140,7 @@ func (k Keeper) UpdateNativeTokensForHostZoneUnbondingRecord(
 		if !setNativeAmountsToZero {
 			nativeAmount = sdk.NewDecFromInt(userRedemptionRecord.StTokenAmount).Mul(redemptionRate).RoundInt()
 		}
-		userRedemptionRecord.Amount = nativeAmount
+		userRedemptionRecord.NativeTokenAmount = nativeAmount
 		totalNativeAmount = totalNativeAmount.Add(nativeAmount)
 		k.RecordsKeeper.SetUserRedemptionRecord(ctx, userRedemptionRecord)
 	}

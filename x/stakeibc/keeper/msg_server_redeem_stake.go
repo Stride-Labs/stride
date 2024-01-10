@@ -93,13 +93,13 @@ func (k msgServer) RedeemStake(goCtx context.Context, msg *types.MsgRedeemStake)
 	} else {
 		// First time a user is redeeming this epoch
 		userRedemptionRecord = recordstypes.UserRedemptionRecord{
-			Id:            redemptionId,
-			Receiver:      msg.Receiver,
-			Amount:        sdk.ZeroInt(),
-			Denom:         hostZone.HostDenom,
-			HostZoneId:    hostZone.ChainId,
-			EpochNumber:   epochTracker.EpochNumber,
-			StTokenAmount: msg.Amount,
+			Id:                redemptionId,
+			Receiver:          msg.Receiver,
+			NativeTokenAmount: sdk.ZeroInt(),
+			Denom:             hostZone.HostDenom,
+			HostZoneId:        hostZone.ChainId,
+			EpochNumber:       epochTracker.EpochNumber,
+			StTokenAmount:     msg.Amount,
 			// claimIsPending represents whether a redemption is currently being claimed,
 			// contingent on the host zone unbonding having status CLAIMABLE
 			ClaimIsPending: false,
