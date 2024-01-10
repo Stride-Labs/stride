@@ -312,7 +312,6 @@ func AddRateLimitToOsmosis(ctx sdk.Context, k ratelimitkeeper.Keeper) error {
 
 // Migrate the unbonding records
 // UserUnbondingRecords previously only used Native Token Amounts, we now want to use StTokenAmounts
-// Similarly, we should modify HostZoneUnbondingRecords to NOT use NativeTokenAmounts prior to unbonding being initiated
 func MigrateUnbondingRecords(ctx sdk.Context, k stakeibckeeper.Keeper) error {
 	for _, epochUnbondingRecord := range k.RecordsKeeper.GetAllEpochUnbondingRecord(ctx) {
 		for _, hostZoneUnbonding := range epochUnbondingRecord.GetHostZoneUnbondings() {
@@ -334,9 +333,6 @@ func MigrateUnbondingRecords(ctx sdk.Context, k stakeibckeeper.Keeper) error {
 			// e.g. if the rate is 0.5, then 1 native token would be worth 0.5 stTokens
 			estimatedStTokenConversionRate := stTokenAmountDec.Quo(nativeTokenAmountDec)
 
-			// store if the unbonding has not been initiated
-			unbondingNotInitiated := hostZoneUnbonding.Status == recordtypes.HostZoneUnbonding_UNBONDING_QUEUE
-
 			// Loop through User Redemption Records and insert an estimated stTokenAmount
 			for _, userRedemptionRecordId := range hostZoneUnbonding.GetUserRedemptionRecords() {
 				userRedemptionRecord, found := k.RecordsKeeper.GetUserRedemptionRecord(ctx, userRedemptionRecordId)
@@ -347,18 +343,7 @@ func MigrateUnbondingRecords(ctx sdk.Context, k stakeibckeeper.Keeper) error {
 				}
 
 				userRedemptionRecord.StTokenAmount = estimatedStTokenConversionRate.Mul(sdkmath.LegacyDec(userRedemptionRecord.Amount)).RoundInt()
-
-				if unbondingNotInitiated {
-					userRedemptionRecord.Amount = sdkmath.ZeroInt()
-				}
-
 				k.RecordsKeeper.SetUserRedemptionRecord(ctx, userRedemptionRecord)
-			}
-
-			// if the unbonding has not been initiated, we want to set nativeTokenAmount to 0 for the whole HostZoneUnbonding
-			if unbondingNotInitiated {
-				hostZoneUnbonding.NativeTokenAmount = sdkmath.ZeroInt()
-
 			}
 		}
 

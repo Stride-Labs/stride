@@ -125,8 +125,7 @@ func (k Keeper) RefreshUserRedemptionRecordNativeAmounts(
 			continue
 		}
 
-		// A zero redemption rate is used to indicate that the native amount should be set to zero
-		// If the redemption rate is non-zero, calculate the number of native tokens
+		// Calculate the number of native tokens using the redemption rate
 		nativeAmount := sdk.NewDecFromInt(userRedemptionRecord.StTokenAmount).Mul(redemptionRate).RoundInt()
 		totalNativeAmount = totalNativeAmount.Add(nativeAmount)
 
