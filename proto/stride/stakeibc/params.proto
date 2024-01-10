@@ -26,6 +26,7 @@ message Params {
   uint64 default_max_redemption_rate_threshold = 15;
   uint64 ibc_transfer_timeout_nanos = 16;
   uint64 validator_slash_query_threshold = 19;
+  uint64 validator_weight_cap = 20;
 
   reserved 8, 17, 18;
 }

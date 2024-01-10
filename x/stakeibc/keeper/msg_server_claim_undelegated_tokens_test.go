@@ -1,7 +1,6 @@
 package keeper_test
 
 import (
-	"fmt"
 	"strings"
 
 	sdkmath "cosmossdk.io/math"
@@ -37,7 +36,7 @@ func (s *KeeperTestSuite) SetupClaimUndelegatedTokens() ClaimUndelegatedTestCase
 	senderAddr := "stride_SENDER"
 	receiverAddr := "cosmos_RECEIVER"
 	redemptionAddr := s.IcaAddresses[redemptionIcaOwner]
-	redemptionRecordId := fmt.Sprintf("%s.%d.%s", HostChainId, epochNumber, senderAddr)
+	redemptionRecordId := recordtypes.UserRedemptionRecordKeyFormatter(HostChainId, epochNumber, receiverAddr)
 
 	hostZone := types.HostZone{
 		ChainId:              HostChainId,
@@ -49,7 +48,6 @@ func (s *KeeperTestSuite) SetupClaimUndelegatedTokens() ClaimUndelegatedTestCase
 		Id:             redemptionRecordId,
 		HostZoneId:     HostChainId,
 		EpochNumber:    epochNumber,
-		Sender:         senderAddr,
 		Receiver:       receiverAddr,
 		Denom:          "uatom",
 		ClaimIsPending: false,
@@ -84,7 +82,7 @@ func (s *KeeperTestSuite) SetupClaimUndelegatedTokens() ClaimUndelegatedTestCase
 			Creator:    senderAddr,
 			HostZoneId: HostChainId,
 			Epoch:      epochNumber,
-			Sender:     senderAddr,
+			Receiver:   receiverAddr,
 		},
 		initialState: ClaimUndelegatedState{
 			hostZone:           hostZone,
@@ -135,7 +133,7 @@ func (s *KeeperTestSuite) TestClaimUndelegatedTokens_NoUserRedemptionRecord() {
 	s.App.RecordsKeeper.RemoveUserRedemptionRecord(s.Ctx, tc.initialState.redemptionRecordId)
 
 	_, err := s.GetMsgServer().ClaimUndelegatedTokens(sdk.WrapSDKContext(s.Ctx), &tc.validMsg)
-	s.Require().EqualError(err, "unable to find claimable redemption record for msg: creator:\"stride_SENDER\" host_zone_id:\"GAIA\" epoch:1 sender:\"stride_SENDER\" , error User redemption record GAIA.1.stride_SENDER not found on host zone GAIA: user redemption record error: record not found")
+	s.Require().ErrorContains(err, "user redemption record error: record not found")
 }
 
 func (s *KeeperTestSuite) TestClaimUndelegatedTokens_RecordNotClaimable() {
@@ -146,7 +144,7 @@ func (s *KeeperTestSuite) TestClaimUndelegatedTokens_RecordNotClaimable() {
 	s.App.RecordsKeeper.SetUserRedemptionRecord(s.Ctx, alreadyClaimedRedemptionRecord)
 
 	_, err := s.GetMsgServer().ClaimUndelegatedTokens(sdk.WrapSDKContext(s.Ctx), &tc.validMsg)
-	s.Require().EqualError(err, "unable to find claimable redemption record for msg: creator:\"stride_SENDER\" host_zone_id:\"GAIA\" epoch:1 sender:\"stride_SENDER\" , error User redemption record GAIA.1.stride_SENDER is not claimable, pending ack: user redemption record error: record not found")
+	s.Require().ErrorContains(err, "User redemption record GAIA.1.cosmos_RECEIVER is not claimable")
 }
 
 func (s *KeeperTestSuite) TestClaimUndelegatedTokens_RecordNotFound() {
@@ -156,7 +154,7 @@ func (s *KeeperTestSuite) TestClaimUndelegatedTokens_RecordNotFound() {
 	invalidMsg.HostZoneId = "fake_host_zone"
 
 	_, err := s.GetMsgServer().ClaimUndelegatedTokens(sdk.WrapSDKContext(s.Ctx), &invalidMsg)
-	s.Require().EqualError(err, "unable to find claimable redemption record for msg: creator:\"stride_SENDER\" host_zone_id:\"fake_host_zone\" epoch:1 sender:\"stride_SENDER\" , error User redemption record fake_host_zone.1.stride_SENDER not found on host zone fake_host_zone: user redemption record error: record not found")
+	s.Require().ErrorContains(err, "User redemption record fake_host_zone.1.cosmos_RECEIVER not found on host zone fake_host_zone")
 }
 
 func (s *KeeperTestSuite) TestClaimUndelegatedTokens_HostZoneNotFound() {
@@ -208,5 +206,5 @@ func (s *KeeperTestSuite) TestClaimUndelegatedTokens_HzuNotStatusTransferred() {
 	s.App.RecordsKeeper.SetEpochUnbondingRecord(s.Ctx, *newEpochUnbondingRecord)
 
 	_, err := s.GetMsgServer().ClaimUndelegatedTokens(sdk.WrapSDKContext(s.Ctx), &tc.validMsg)
-	s.Require().EqualError(err, "unable to find claimable redemption record for msg: creator:\"stride_SENDER\" host_zone_id:\"GAIA\" epoch:1 sender:\"stride_SENDER\" , error User redemption record GAIA.1.stride_SENDER is not claimable, host zone unbonding has status: EXIT_TRANSFER_QUEUE, requires status CLAIMABLE: user redemption record error: record not found")
+	s.Require().ErrorContains(err, "host zone unbonding has status: EXIT_TRANSFER_QUEUE, requires status CLAIMABLE")
 }

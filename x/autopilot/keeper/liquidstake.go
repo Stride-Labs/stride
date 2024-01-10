@@ -40,12 +40,12 @@ func (k Keeper) TryLiquidStaking(
 	// Note: newData.denom is base denom e.g. uatom - not ibc/xxx
 	var token = sdk.NewCoin(newData.Denom, amount)
 
-	prefixedDenom := transfertypes.GetDenomPrefix(packet.GetDestPort(), packet.GetDestChannel()) + newData.Denom
+	prefixedDenom := transfertypes.GetPrefixedDenom(packet.GetDestPort(), packet.GetDestChannel(), newData.Denom)
 	ibcDenom := transfertypes.ParseDenomTrace(prefixedDenom).IBCDenom()
 
 	hostZone, err := k.stakeibcKeeper.GetHostZoneFromHostDenom(ctx, token.Denom)
 	if err != nil {
-		return fmt.Errorf("host zone not found for denom (%s)", token.Denom)
+		return err
 	}
 
 	if hostZone.IbcDenom != ibcDenom {
@@ -57,10 +57,10 @@ func (k Keeper) TryLiquidStaking(
 		return errorsmod.Wrapf(sdkerrors.ErrInvalidAddress, "invalid stride_address (%s) in autopilot memo", strideAddress)
 	}
 
-	return k.RunLiquidStake(ctx, strideAddress, token)
+	return k.RunLiquidStake(ctx, strideAddress, token, packetMetadata)
 }
 
-func (k Keeper) RunLiquidStake(ctx sdk.Context, addr sdk.AccAddress, token sdk.Coin) error {
+func (k Keeper) RunLiquidStake(ctx sdk.Context, addr sdk.AccAddress, token sdk.Coin, packetMetadata types.StakeibcPacketMetadata) error {
 	msg := &stakeibctypes.MsgLiquidStake{
 		Creator:   addr.String(),
 		Amount:    token.Amount,
@@ -72,12 +72,43 @@ func (k Keeper) RunLiquidStake(ctx sdk.Context, addr sdk.AccAddress, token sdk.C
 	}
 
 	msgServer := stakeibckeeper.NewMsgServerImpl(k.stakeibcKeeper)
-	_, err := msgServer.LiquidStake(
+	result, err := msgServer.LiquidStake(
 		sdk.WrapSDKContext(ctx),
 		msg,
 	)
 	if err != nil {
-		return errorsmod.Wrapf(sdkerrors.ErrInsufficientFunds, err.Error())
+		return errorsmod.Wrapf(err, "failed to liquid stake")
 	}
-	return nil
+
+	if packetMetadata.IbcReceiver == "" {
+		return nil
+	}
+
+	hostZone, err := k.stakeibcKeeper.GetHostZoneFromHostDenom(ctx, token.Denom)
+	if err != nil {
+		return err
+	}
+
+	return k.IBCTransferStAsset(ctx, result.StToken, addr.String(), hostZone, packetMetadata)
+}
+
+func (k Keeper) IBCTransferStAsset(ctx sdk.Context, stAsset sdk.Coin, sender string, hostZone *stakeibctypes.HostZone, packetMetadata types.StakeibcPacketMetadata) error {
+	ibcTransferTimeoutNanos := k.stakeibcKeeper.GetParam(ctx, stakeibctypes.KeyIBCTransferTimeoutNanos)
+	timeoutTimestamp := uint64(ctx.BlockTime().UnixNano()) + ibcTransferTimeoutNanos
+	channelId := packetMetadata.TransferChannel
+	if channelId == "" {
+		channelId = hostZone.TransferChannelId
+	}
+	transferMsg := &transfertypes.MsgTransfer{
+		SourcePort:       transfertypes.PortID,
+		SourceChannel:    channelId,
+		Token:            stAsset,
+		Sender:           sender,
+		Receiver:         packetMetadata.IbcReceiver,
+		TimeoutTimestamp: timeoutTimestamp,
+		// TimeoutHeight and Memo are unused
+	}
+
+	_, err := k.transferKeeper.Transfer(sdk.WrapSDKContext(ctx), transferMsg)
+	return err
 }

@@ -14,6 +14,8 @@ import (
 	icatypes "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/types"
 	connectiontypes "github.com/cosmos/ibc-go/v7/modules/core/03-connection/types"
 
+	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
+
 	"github.com/Stride-Labs/stride/v16/utils"
 	icqkeeper "github.com/Stride-Labs/stride/v16/x/interchainquery/keeper"
 	ratelimitkeeper "github.com/Stride-Labs/stride/v16/x/ratelimit/keeper"
@@ -30,8 +32,6 @@ var (
 
 	// Redemption rate bounds updated to give ~3 months of slack on outer bounds
 	RedemptionRateOuterMinAdjustment = sdk.MustNewDecFromStr("0.05")
-	RedemptionRateInnerMinAdjustment = sdk.MustNewDecFromStr("0.03")
-	RedemptionRateInnerMaxAdjustment = sdk.MustNewDecFromStr("0.05")
 	RedemptionRateOuterMaxAdjustment = sdk.MustNewDecFromStr("0.10")
 
 	// Define the hub chainId for disabling tokenization
@@ -52,11 +52,11 @@ var (
 	//        > 50M: 10%
 	UpdatedRateLimits = map[string]sdkmath.Int{
 		"comdex-1":     sdkmath.ZeroInt(),  // TVL: ~150k |   <2.5M  | No rate limit
-		"cosmoshub-4":  sdkmath.NewInt(10), // TVL:  ~50M |    50M+  | 10% RL
+		"cosmoshub-4":  sdkmath.NewInt(15), // TVL:  ~45M |  40M-50M | 15% RL
 		"evmos_9001-2": sdkmath.NewInt(50), // TVL:   ~3M | 2.5M-10M | 50% RL
-		"injective-1":  sdkmath.NewInt(50), // TVL:   ~3M | 2.5M-10M | 50% RL
+		"injective-1":  sdkmath.ZeroInt(),  // TVL: ~1.5M |   <2.5M  | No rate limit
 		"juno-1":       sdkmath.NewInt(50), // TVL:   ~3M | 2.5M-10M | 50% RL
-		"osmosis-1":    sdkmath.NewInt(20), // TVL:  ~30M |  20M-40M | 20% RL
+		"osmosis-1":    sdkmath.NewInt(15), // TVL:  ~45M |  40M-50M | 15% RL
 		"phoenix-1":    sdkmath.ZeroInt(),  // TVL: ~200k |   <2.5M  | No rate limit
 		"sommelier-3":  sdkmath.ZeroInt(),  // TVL: ~500k |   <2.5M  | No rate limit
 		"stargaze-1":   sdkmath.ZeroInt(),  // TVL:  1.5M |   <2.5M  | No rate limit
@@ -65,12 +65,19 @@ var (
 
 	// Osmo transfer channel is required for new rate limits
 	OsmosisTransferChannelId = "channel-5"
+
+	// Constants for Prop 225
+	CommunityPoolGrowthAddress = "stride1lj0m72d70qerts9ksrsphy9nmsd4h0s88ll9gfphmhemh8ewet5qj44jc9"
+	LiquidityReceiver          = "stride1auhjs4zgp3ahvrpkspf088r2psz7wpyrypcnal"
+	Prop225TransferAmount      = sdk.NewInt(31_572_300_000)
+	Ustrd                      = "ustrd"
 )
 
-// CreateUpgradeHandler creates an SDK upgrade handler for v15
+// CreateUpgradeHandler creates an SDK upgrade handler for v17
 func CreateUpgradeHandler(
 	mm *module.Manager,
 	configurator module.Configurator,
+	bankKeeper bankkeeper.Keeper,
 	distributionkeeper distributionkeeper.Keeper,
 	icqKeeper icqkeeper.Keeper,
 	ratelimitKeeper ratelimitkeeper.Keeper,
@@ -79,12 +86,15 @@ func CreateUpgradeHandler(
 	return func(ctx sdk.Context, _ upgradetypes.Plan, vm module.VersionMap) (module.VersionMap, error) {
 		ctx.Logger().Info("Starting upgrade v17...")
 
+		ctx.Logger().Info("Migrating stakeibc params...")
+		MigrateStakeibcParams(ctx, stakeibcKeeper)
+
 		ctx.Logger().Info("Migrating host zones...")
 		if err := RegisterCommunityPoolAddresses(ctx, stakeibcKeeper); err != nil {
 			return vm, errorsmod.Wrapf(err, "unable to register community pool addresses on host zones")
 		}
 
-		ctx.Logger().Info("Deleting all pending queries...")
+		ctx.Logger().Info("Deleting all pending slash queries...")
 		DeleteAllStaleQueries(ctx, icqKeeper)
 
 		ctx.Logger().Info("Reseting slash query in progress...")
@@ -109,8 +119,23 @@ func CreateUpgradeHandler(
 		ctx.Logger().Info("Disabling tokenization on the hub...")
 		DisableTokenization(ctx, stakeibcKeeper, GaiaChainId)
 
+		ctx.Logger().Info("Executing Prop 225, SHD Liquidity")
+		if err := ExecuteProp225(ctx, bankKeeper); err != nil {
+			return vm, errorsmod.Wrapf(err, "unable to execute prop 225")
+		}
+
 		return mm.RunMigrations(ctx, configurator, vm)
 	}
+}
+
+// Migrate the stakeibc params to add the ValidatorWeightCap parameter
+//
+// NOTE: If a parameter is added, the old params cannot be unmarshalled
+// to the new schema. To get around this, we have to set each parameter explicitly
+// Considering all mainnet stakeibc params are set to the default, we can just use that
+func MigrateStakeibcParams(ctx sdk.Context, k stakeibckeeper.Keeper) {
+	params := stakeibctypes.DefaultParams()
+	k.SetParams(ctx, params)
 }
 
 // Migrates the host zones to the new structure which supports community pool liquid staking
@@ -213,18 +238,12 @@ func UpdateRedemptionRateBounds(ctx sdk.Context, k stakeibckeeper.Keeper) {
 		}
 
 		outerMinDelta := hostZone.RedemptionRate.Mul(RedemptionRateOuterMinAdjustment)
-		innerMinDelta := hostZone.RedemptionRate.Mul(RedemptionRateInnerMinAdjustment)
-		innerMaxDelta := hostZone.RedemptionRate.Mul(RedemptionRateInnerMaxAdjustment)
 		outerMaxDelta := hostZone.RedemptionRate.Mul(outerAdjustment)
 
 		outerMin := hostZone.RedemptionRate.Sub(outerMinDelta)
-		innerMin := hostZone.RedemptionRate.Sub(innerMinDelta)
-		innerMax := hostZone.RedemptionRate.Add(innerMaxDelta)
 		outerMax := hostZone.RedemptionRate.Add(outerMaxDelta)
 
 		hostZone.MinRedemptionRate = outerMin
-		hostZone.MinInnerRedemptionRate = innerMin
-		hostZone.MaxInnerRedemptionRate = innerMax
 		hostZone.MaxRedemptionRate = outerMax
 
 		k.SetHostZone(ctx, hostZone)
@@ -330,4 +349,12 @@ func DisableTokenization(ctx sdk.Context, k stakeibckeeper.Keeper, chainId strin
 	}
 
 	return nil
+}
+
+// Execute Prop 225, release STRD to stride1auhjs4zgp3ahvrpkspf088r2psz7wpyrypcnal
+func ExecuteProp225(ctx sdk.Context, k bankkeeper.Keeper) error {
+	communityPoolGrowthAddress := sdk.MustAccAddressFromBech32(CommunityPoolGrowthAddress)
+	liquidityReceiverAddress := sdk.MustAccAddressFromBech32(LiquidityReceiver)
+	transferCoin := sdk.NewCoin(Ustrd, Prop225TransferAmount)
+	return k.SendCoins(ctx, communityPoolGrowthAddress, liquidityReceiverAddress, sdk.NewCoins(transferCoin))
 }
