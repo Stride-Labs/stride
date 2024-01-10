@@ -448,7 +448,7 @@ func (k Keeper) UnbondFromHostZone(ctx sdk.Context, hostZone types.HostZone) err
 		return err
 	}
 
-	// Sum the total native unbond amount across all records
+	// Sum the total number of native tokens that from the records above that are ready to unbond
 	totalUnbondAmount := k.GetTotalUnbondAmount(ctx, epochNumberToHostZoneUnbondingMap)
 	k.Logger(ctx).Info(utils.LogWithHostZone(hostZone.ChainId,
 		"Total unbonded amount: %v%s", totalUnbondAmount, hostZone.HostDenom))
