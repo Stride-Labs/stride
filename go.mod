@@ -1,6 +1,6 @@
 module github.com/Stride-Labs/stride/v16
 
-go 1.19
+go 1.21
 
 require (
 	cosmossdk.io/math v1.1.2
