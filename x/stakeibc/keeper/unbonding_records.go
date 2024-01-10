@@ -75,7 +75,7 @@ func (k Keeper) CreateEpochUnbondingRecord(ctx sdk.Context, epochNumber uint64) 
 }
 
 // Helper function to evaluate if a host zone unbonding record still needs to be initiated
-func (k Keeper) ShouldInitiateHostZoneUnbondingRecord(ctx sdk.Context, hostZoneRecord *recordstypes.HostZoneUnbonding) bool {
+func (k Keeper) ShouldHostZoneRecordUnbond(ctx sdk.Context, hostZoneRecord *recordstypes.HostZoneUnbonding) bool {
 	if hostZoneRecord.Status == recordstypes.HostZoneUnbonding_UNBONDING_QUEUE && hostZoneRecord.StTokenAmount.GT(sdkmath.ZeroInt()) {
 		return true
 	}
@@ -95,7 +95,7 @@ func (k Keeper) GetTotalUnbondAmountAndRecordsIds(ctx sdk.Context, chainId strin
 			epochUnbonding.EpochNumber, hostZoneRecord.Status, hostZoneRecord.NativeTokenAmount))
 
 		// We'll unbond all records that have status UNBONDING_QUEUE and have an amount g.t. zero
-		if k.ShouldInitiateHostZoneUnbondingRecord(ctx, hostZoneRecord) {
+		if k.ShouldHostZoneRecordUnbond(ctx, hostZoneRecord) {
 			// Dynamically calculate the unbonding amount based on the current redemption rate
 			success := k.UpdateNativeTokensForHostZoneUnbondingRecord(ctx, epochUnbonding.EpochNumber, hostZoneRecord, false)
 			if !success {
