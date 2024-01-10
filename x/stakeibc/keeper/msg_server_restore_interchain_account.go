@@ -93,7 +93,7 @@ func (k msgServer) RestoreInterchainAccount(goCtx context.Context, msg *types.Ms
 		// Set UNBONDING_IN_PROGRESS records NativeTokenAmounts to 0
 		err := k.SetNativeTokensToZeroInUnbondingRecords(ctx, hostZone.ChainId, epochNumberForPendingUnbondingRecords)
 		if err != nil {
-			errMsg := fmt.Sprintf("unable to set native token amounts to 0 for chainId: %s and epochUnbondingRecordIds: %v, err: %s")
+			errMsg := fmt.Sprintf("unable to set native token amounts to 0 for chainId: %s and epochUnbondingRecordIds: %v, err: %s", hostZone.ChainId, epochNumberForPendingUnbondingRecords, err)
 			k.Logger(ctx).Error(errMsg)
 			// TODO Question: should we return an error here, or just proceed?
 		}

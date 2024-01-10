@@ -89,6 +89,7 @@ func (k Keeper) GetTotalUnbondAmountAndRecordsIds(ctx sdk.Context, chainId strin
 	for _, epochUnbonding := range k.RecordsKeeper.GetAllEpochUnbondingRecord(ctx) {
 		hostZoneRecord, found := k.RecordsKeeper.GetHostZoneUnbondingByChainId(ctx, epochUnbonding.EpochNumber, chainId)
 		if !found {
+			k.Logger(ctx).Info(utils.LogWithHostZone(chainId, "No host zone unbonding record found for epoch %d", epochUnbonding.EpochNumber))
 			continue
 		}
 		k.Logger(ctx).Info(utils.LogWithHostZone(chainId, "Epoch %d - Status: %s, Amount: %v",
@@ -96,6 +97,7 @@ func (k Keeper) GetTotalUnbondAmountAndRecordsIds(ctx sdk.Context, chainId strin
 
 		// We'll unbond all records that have status UNBONDING_QUEUE and have an amount g.t. zero
 		if k.ShouldHostZoneRecordUnbond(ctx, hostZoneRecord) {
+			k.Logger(ctx).Info(utils.LogWithHostZone(chainId, "  %v%s included in total unbonding", hostZoneRecord.NativeTokenAmount, hostZoneRecord.Denom))
 			// Dynamically calculate the unbonding amount based on the current redemption rate
 			success := k.UpdateNativeTokensForHostZoneUnbondingRecord(ctx, epochUnbonding.EpochNumber, hostZoneRecord, false)
 			if !success {
@@ -562,7 +564,6 @@ func (k Keeper) UnbondFromHostZone(ctx sdk.Context, hostZone types.HostZone) err
 	}
 
 	EmitUndelegationEvent(ctx, hostZone, totalUnbondAmount)
-
 	return nil
 }
 

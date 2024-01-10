@@ -74,6 +74,7 @@ func (s *UpgradeTestSuite) TestUpgrade() {
 	checkRateLimitsAfterUpgrade := s.SetupRateLimitsBeforeUpgrade()
 	checkCommunityPoolTaxAfterUpgrade := s.SetupCommunityPoolTaxBeforeUpgrade()
 	checkQueriesAfterUpgrade := s.SetupQueriesBeforeUpgrade()
+	checkUnbondingRecordsAfterUpgrade := s.SetupUnbondingRecordsBeforeUpgrade()
 
 	// Submit upgrade and confirm handler succeeds
 	s.ConfirmUpgradeSucceededs("v17", dummyUpgradeHeight)
@@ -83,6 +84,7 @@ func (s *UpgradeTestSuite) TestUpgrade() {
 	checkRateLimitsAfterUpgrade()
 	checkCommunityPoolTaxAfterUpgrade()
 	checkQueriesAfterUpgrade()
+	checkUnbondingRecordsAfterUpgrade()
 }
 
 // Helper function to check that the community pool stake and redeem holding
@@ -339,6 +341,13 @@ func (s *UpgradeTestSuite) SetupQueriesBeforeUpgrade() func() {
 		// Confirm the other query is still there
 		_, found = s.App.InterchainqueryKeeper.GetQuery(s.Ctx, "query-2")
 		s.Require().True(found, "non-slash query should not have been removed")
+	}
+}
+
+func (s *UpgradeTestSuite) SetupUnbondingRecordsBeforeUpgrade() func() {
+	// Return callback to check unbonding records after upgrade
+	return func() {
+
 	}
 }
 
