@@ -90,15 +90,8 @@ func (k msgServer) RestoreInterchainAccount(goCtx context.Context, msg *types.Ms
 				epochNumberForPendingTransferRecords = append(epochNumberForPendingTransferRecords, epochUnbondingRecord.EpochNumber)
 			}
 		}
-		// Set UNBONDING_IN_PROGRESS records NativeTokenAmounts to 0
-		err := k.SetNativeTokensToZeroInUnbondingRecords(ctx, hostZone.ChainId, epochNumberForPendingUnbondingRecords)
-		if err != nil {
-			errMsg := fmt.Sprintf("unable to set native token amounts to 0 for chainId: %s and epochUnbondingRecordIds: %v, err: %s")
-			k.Logger(ctx).Error(errMsg)
-			// TODO Question: should we return an error here, or just proceed?
-		}
 		// Revert UNBONDING_IN_PROGRESS records to UNBONDING_QUEUE
-		err = k.RecordsKeeper.SetHostZoneUnbondings(ctx, hostZone.ChainId, epochNumberForPendingUnbondingRecords, recordtypes.HostZoneUnbonding_UNBONDING_QUEUE)
+		err := k.RecordsKeeper.SetHostZoneUnbondings(ctx, hostZone.ChainId, epochNumberForPendingUnbondingRecords, recordtypes.HostZoneUnbonding_UNBONDING_QUEUE)
 		if err != nil {
 			errMsg := fmt.Sprintf("unable to update host zone unbonding record status to %s for chainId: %s and epochUnbondingRecordIds: %v, err: %s",
 				recordtypes.HostZoneUnbonding_UNBONDING_QUEUE.String(), hostZone.ChainId, epochNumberForPendingUnbondingRecords, err)

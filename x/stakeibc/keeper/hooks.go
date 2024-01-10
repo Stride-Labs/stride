@@ -24,6 +24,7 @@ func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochInfo epochstypes.EpochInf
 		k.Logger(ctx).Error(fmt.Sprintf("Unable to update epoch tracker, err: %s", err.Error()))
 		return
 	}
+
 	// Day Epoch - Process Unbondings
 	if epochInfo.Identifier == epochstypes.DAY_EPOCH {
 		// Initiate unbondings from any hostZone where it's appropriate

@@ -70,8 +70,6 @@ func (k msgServer) RedeemStake(goCtx context.Context, msg *types.MsgRedeemStake)
 	}
 	// 	- Creator owns at least "amount" stAssets
 	balance := k.bankKeeper.GetBalance(ctx, sender, stDenom)
-	k.Logger(ctx).Info(fmt.Sprintf("Redemption issuer stDenom balance: %v%s", balance.Amount, balance.Denom))
-	k.Logger(ctx).Info(fmt.Sprintf("Redemption requested stDenom amount: %v%s", msg.Amount, stDenom))
 	if balance.Amount.LT(msg.Amount) {
 		return nil, errorsmod.Wrapf(sdkerrors.ErrInvalidCoins, "balance is lower than redemption amount. redemption amount: %v, balance %v: ", msg.Amount, balance.Amount)
 	}
@@ -85,12 +83,13 @@ func (k msgServer) RedeemStake(goCtx context.Context, msg *types.MsgRedeemStake)
 		// Add the unbonded amount to the UserRedemptionRecord
 		// The record is set below
 		userRedemptionRecord.StTokenAmount = userRedemptionRecord.StTokenAmount.Add(msg.Amount)
+		userRedemptionRecord.Amount = userRedemptionRecord.Amount.Add(nativeAmount)
 	} else {
 		// First time a user is redeeming this epoch
 		userRedemptionRecord = recordstypes.UserRedemptionRecord{
 			Id:            redemptionId,
 			Receiver:      msg.Receiver,
-			Amount:        sdk.ZeroInt(),
+			Amount:        nativeAmount,
 			Denom:         hostZone.HostDenom,
 			HostZoneId:    hostZone.ChainId,
 			EpochNumber:   epochTracker.EpochNumber,
@@ -113,6 +112,7 @@ func (k msgServer) RedeemStake(goCtx context.Context, msg *types.MsgRedeemStake)
 	if !found {
 		return nil, errorsmod.Wrapf(types.ErrInvalidHostZone, "host zone not found in unbondings: %s", hostZone.ChainId)
 	}
+	hostZoneUnbonding.NativeTokenAmount = hostZoneUnbonding.NativeTokenAmount.Add(nativeAmount)
 	if !userHasRedeemedThisEpoch {
 		// Only append a UserRedemptionRecord to the HZU if it wasn't previously appended
 		hostZoneUnbonding.UserRedemptionRecords = append(hostZoneUnbonding.UserRedemptionRecords, userRedemptionRecord.Id)
