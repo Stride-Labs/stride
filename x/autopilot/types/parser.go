@@ -12,7 +12,8 @@ const RedeemStake = "RedeemStake"
 
 // Packet metadata info specific to Stakeibc (e.g. 1-click liquid staking)
 type StakeibcPacketMetadata struct {
-	Action          string `json:"action"`
+	Action string `json:"action"`
+	// TODO [cleanup]: Rename to FallbackAddress
 	StrideAddress   string
 	IbcReceiver     string `json:"ibc_receiver,omitempty"`
 	TransferChannel string `json:"transfer_channel,omitempty"`

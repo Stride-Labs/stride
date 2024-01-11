@@ -170,7 +170,8 @@ func (s *KeeperTestSuite) TestTryLiquidStake() {
 			liquidStakeDenom:  Atom,
 			liquidStakeAmount: stakeAmount.String(),
 			autopilotMetadata: types.StakeibcPacketMetadata{
-				IbcReceiver: forwardRecipientOnHost,
+				StrideAddress: liquidStakerOnStride.String(), // fallback address
+				IbcReceiver:   forwardRecipientOnHost,
 			},
 			expectedForwardChannelId: ibctesting.FirstChannelID, // default for host zone
 		},
@@ -182,6 +183,7 @@ func (s *KeeperTestSuite) TestTryLiquidStake() {
 			liquidStakeDenom:  Atom,
 			liquidStakeAmount: stakeAmount.String(),
 			autopilotMetadata: types.StakeibcPacketMetadata{
+				StrideAddress:   liquidStakerOnStride.String(), // fallback address
 				IbcReceiver:     forwardRecipientOnHost,
 				TransferChannel: "channel-0", // custom channel (different than host channel below)
 			},
