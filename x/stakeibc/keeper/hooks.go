@@ -360,7 +360,7 @@ func (k Keeper) ReinvestRewards(ctx sdk.Context) {
 func (k Keeper) DisableHubTokenization(ctx sdk.Context) {
 	k.Logger(ctx).Info("Disabling LSM tokenization Gaia delegations")
 
-	chainId := "GAIA"
+	chainId := "cosmoshub-4"
 	hostZone, found := k.GetHostZone(ctx, chainId)
 	if !found {
 		k.Logger(ctx).Error("Gaia host zone not found, unable to disable tokenization")
