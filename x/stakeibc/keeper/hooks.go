@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"time"
 
-	errorsmod "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/gogoproto/proto"
@@ -105,7 +104,7 @@ func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochInfo epochstypes.EpochInf
 	// TODO [cleanup]: Remove after v17 upgrade
 	// Submit ICA to disable gaia tokenization (this only needs to be run once)
 	if epochInfo.Identifier == epochstypes.HOUR_EPOCH && epochNumber%10 == 0 {
-		k.DisableGaiaTokenization(ctx)
+		k.DisableHubTokenization(ctx)
 	}
 }
 
@@ -358,24 +357,26 @@ func (k Keeper) ReinvestRewards(ctx sdk.Context) {
 }
 
 // TODO [cleanup]: Remove after v17 upgrade
-func (k Keeper) DisableTokenization(ctx sdk.Context) {
+func (k Keeper) DisableHubTokenization(ctx sdk.Context) {
 	chainId := "cosmoshub-4"
 	hostZone, found := k.GetHostZone(ctx, chainId)
 	if !found {
-		return errorsmod.Wrapf(stakeibctypes.ErrHostZoneNotFound, "Unable to find chainId %s to remove tokenization", chainId)
+		k.Logger(ctx).Error("Gaia host zone not found, unable to disable tokenization")
+		return
 	}
 
 	// Build the msg for the disable tokenization ICA tx
 	var msgs []proto.Message
-	msgs = append(msgs, &stakeibctypes.MsgDisableTokenizeShares{
+	msgs = append(msgs, &types.MsgDisableTokenizeShares{
 		DelegatorAddress: hostZone.DelegationIcaAddress,
 	})
 
 	// Send the ICA tx to disable tokenization
 	timeoutTimestamp := uint64(ctx.BlockTime().Add(24 * time.Hour).UnixNano())
-	delegationOwner := stakeibctypes.FormatHostZoneICAOwner(hostZone.ChainId, stakeibctypes.ICAAccountType_DELEGATION)
+	delegationOwner := types.FormatHostZoneICAOwner(hostZone.ChainId, types.ICAAccountType_DELEGATION)
 	err := k.SubmitICATxWithoutCallback(ctx, hostZone.ConnectionId, delegationOwner, msgs, timeoutTimestamp)
 	if err != nil {
-		return errorsmod.Wrapf(err, "Failed to submit ICA tx to disable tokenization, Messages: %+v", msgs)
+		k.Logger(ctx).Error(fmt.Sprintf("Failed to submit ICA tx to disable tokenization for gaia: %s", err.Error()))
+		return
 	}
 }
