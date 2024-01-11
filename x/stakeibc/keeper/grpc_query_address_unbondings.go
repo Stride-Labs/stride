@@ -73,7 +73,7 @@ func (k Keeper) AddressUnbondings(c context.Context, req *types.QueryAddressUnbo
 						Address:                req.Address,
 						Receiver:               userRedemptionRecord.Receiver,
 						UnbondingEstimatedTime: unbondingTimeStr,
-						Amount:                 userRedemptionRecord.Amount,
+						Amount:                 userRedemptionRecord.NativeTokenAmount,
 						Denom:                  userRedemptionRecord.Denom,
 						ClaimIsPending:         userRedemptionRecord.ClaimIsPending,
 						EpochNumber:            userRedemptionRecord.EpochNumber,

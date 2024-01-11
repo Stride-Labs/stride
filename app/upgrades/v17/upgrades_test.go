@@ -71,17 +71,12 @@ func TestKeeperTestSuite(t *testing.T) {
 func (s *UpgradeTestSuite) TestUpgrade() {
 	dummyUpgradeHeight := int64(5)
 
-	// Create the gaia delegation channel
-	owner := stakeibctypes.FormatHostZoneICAOwner(v17.GaiaChainId, stakeibctypes.ICAAccountType_DELEGATION)
-	channelId, portId := s.CreateICAChannel(owner)
-
 	// Setup store before upgrade
 	checkHostZonesAfterUpgrade := s.SetupHostZonesBeforeUpgrade()
 	checkMigrateUnbondingRecords := s.SetupMigrateUnbondingRecords()
 	checkRateLimitsAfterUpgrade := s.SetupRateLimitsBeforeUpgrade()
 	checkCommunityPoolTaxAfterUpgrade := s.SetupCommunityPoolTaxBeforeUpgrade()
 	checkQueriesAfterUpgrade := s.SetupQueriesBeforeUpgrade()
-	checkDisableTokenizationICASubmitted := s.SetupTestDisableTokenization(channelId, portId)
 	checkProp225AfterUpgrade := s.SetupProp225BeforeUpgrade()
 
 	// Submit upgrade and confirm handler succeeds
@@ -93,7 +88,6 @@ func (s *UpgradeTestSuite) TestUpgrade() {
 	checkRateLimitsAfterUpgrade()
 	checkCommunityPoolTaxAfterUpgrade()
 	checkQueriesAfterUpgrade()
-	checkDisableTokenizationICASubmitted()
 	checkProp225AfterUpgrade()
 }
 
@@ -226,8 +220,8 @@ func (s *UpgradeTestSuite) SetupMigrateUnbondingRecords() func() {
 	for i := 1; i <= 6; i++ {
 		mockURRId := strconv.Itoa(i)
 		mockURR := recordtypes.UserRedemptionRecord{
-			Id:     mockURRId,
-			Amount: sdkmath.NewInt(URRAmount),
+			Id:                mockURRId,
+			NativeTokenAmount: sdkmath.NewInt(URRAmount),
 		}
 		s.App.RecordsKeeper.SetUserRedemptionRecord(s.Ctx, mockURR)
 	}
@@ -473,17 +467,6 @@ func (s *UpgradeTestSuite) SetupQueriesBeforeUpgrade() func() {
 		// Confirm the other query is still there
 		_, found = s.App.InterchainqueryKeeper.GetQuery(s.Ctx, "query-2")
 		s.Require().True(found, "non-slash query should not have been removed")
-	}
-}
-
-func (s *UpgradeTestSuite) SetupTestDisableTokenization(channelId, portId string) func() {
-	// Get the current sequence number (to check that it incremented)
-	startSequence := s.MustGetNextSequenceNumber(portId, channelId)
-
-	// Return callback to that the ICA was submitted
-	return func() {
-		endSequence := s.MustGetNextSequenceNumber(portId, channelId)
-		s.Require().Equal(startSequence+1, endSequence, "sequence number should have incremented from disabling detokenization")
 	}
 }
 
@@ -867,20 +850,4 @@ func (s *UpgradeTestSuite) TestAddRateLimitToOsmosis() {
 
 	err = v17.AddRateLimitToOsmosis(s.Ctx, s.App.RatelimitKeeper)
 	s.Require().ErrorContains(err, "channel value is zero")
-}
-
-func (s *UpgradeTestSuite) TestDisableTokenization() {
-	// Create the host zone and delegation channel
-	owner := stakeibctypes.FormatHostZoneICAOwner(v17.GaiaChainId, stakeibctypes.ICAAccountType_DELEGATION)
-	channelId, portId := s.CreateICAChannel(owner)
-
-	s.App.StakeibcKeeper.SetHostZone(s.Ctx, stakeibctypes.HostZone{
-		ChainId:      v17.GaiaChainId,
-		ConnectionId: ibctesting.FirstConnectionID,
-	})
-
-	// Call the disable function and confirm the sequence number incremented (indicating an ICA was submitted)
-	s.CheckICATxSubmitted(portId, channelId, func() error {
-		return v17.DisableTokenization(s.Ctx, s.App.StakeibcKeeper, v17.GaiaChainId)
-	})
 }

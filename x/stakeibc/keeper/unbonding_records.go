@@ -131,7 +131,7 @@ func (k Keeper) RefreshUserRedemptionRecordNativeAmounts(
 		totalNativeAmount = totalNativeAmount.Add(nativeAmount)
 
 		// Set the native amount on the record
-		userRedemptionRecord.Amount = nativeAmount
+		userRedemptionRecord.NativeTokenAmount = nativeAmount
 		k.RecordsKeeper.SetUserRedemptionRecord(ctx, userRedemptionRecord)
 	}
 	return totalNativeAmount
@@ -553,7 +553,7 @@ func (k Keeper) UnbondFromHostZone(ctx sdk.Context, hostZone types.HostZone) err
 	}
 
 	// Update the epoch unbonding record status
-	if err := k.RecordsKeeper.SetHostZoneUnbondings(
+	if err := k.RecordsKeeper.SetHostZoneUnbondingStatus(
 		ctx,
 		hostZone.ChainId,
 		epochUnbondingRecordIds,
@@ -715,7 +715,7 @@ func (k Keeper) SweepAllUnbondedTokensForHostZone(ctx sdk.Context, hostZone type
 	k.Logger(ctx).Info(utils.LogWithHostZone(hostZone.ChainId, "ICA MsgSend Successfully Sent"))
 
 	// Update the host zone unbonding records to status IN_PROGRESS
-	err = k.RecordsKeeper.SetHostZoneUnbondings(ctx, hostZone.ChainId, epochUnbondingRecordIds, recordstypes.HostZoneUnbonding_EXIT_TRANSFER_IN_PROGRESS)
+	err = k.RecordsKeeper.SetHostZoneUnbondingStatus(ctx, hostZone.ChainId, epochUnbondingRecordIds, recordstypes.HostZoneUnbonding_EXIT_TRANSFER_IN_PROGRESS)
 	if err != nil {
 		k.Logger(ctx).Error(err.Error())
 		return false, sdkmath.ZeroInt()

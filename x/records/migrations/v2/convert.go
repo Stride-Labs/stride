@@ -44,11 +44,11 @@ func convertToNewUserRedemptionRecord(oldRedemptionRecord oldrecordstypes.UserRe
 	return recordstypes.UserRedemptionRecord{
 		Id: oldRedemptionRecord.Id,
 		// Sender:         oldRedemptionRecord.Sender,
-		Receiver:       oldRedemptionRecord.Receiver,
-		Amount:         sdkmath.NewIntFromUint64(oldRedemptionRecord.Amount),
-		Denom:          oldRedemptionRecord.Denom,
-		HostZoneId:     oldRedemptionRecord.HostZoneId,
-		EpochNumber:    oldRedemptionRecord.EpochNumber,
-		ClaimIsPending: oldRedemptionRecord.ClaimIsPending,
+		Receiver:          oldRedemptionRecord.Receiver,
+		NativeTokenAmount: sdkmath.NewIntFromUint64(oldRedemptionRecord.Amount),
+		Denom:             oldRedemptionRecord.Denom,
+		HostZoneId:        oldRedemptionRecord.HostZoneId,
+		EpochNumber:       oldRedemptionRecord.EpochNumber,
+		ClaimIsPending:    oldRedemptionRecord.ClaimIsPending,
 	}
 }
