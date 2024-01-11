@@ -200,6 +200,7 @@ func (s *AppTestHelper) SetupIBCChains(hostChainID string) {
 
 	// Call InitGenesis on the consumer
 	s.StrideChain.App.(*app.StrideApp).GetConsumerKeeper().InitGenesis(s.StrideChain.GetContext(), &strideConsumerGenesis)
+	s.StrideChain.NextBlock()
 
 	// Update coordinator
 	s.Coordinator.Chains = map[string]*ibctesting.TestChain{
