@@ -10,6 +10,7 @@ import (
 	consensustypes "github.com/cosmos/cosmos-sdk/x/consensus/types"
 	crisistypes "github.com/cosmos/cosmos-sdk/x/crisis/types"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
+	packetforwardtypes "github.com/cosmos/ibc-apps/middleware/packet-forward-middleware/v7/packetforward/types"
 	consumertypes "github.com/cosmos/interchain-security/v3/x/ccv/consumer/types"
 	evmosvestingtypes "github.com/evmos/vesting/x/vesting/types"
 
@@ -20,6 +21,7 @@ import (
 	v14 "github.com/Stride-Labs/stride/v16/app/upgrades/v14"
 	v15 "github.com/Stride-Labs/stride/v16/app/upgrades/v15"
 	v16 "github.com/Stride-Labs/stride/v16/app/upgrades/v16"
+	v17 "github.com/Stride-Labs/stride/v16/app/upgrades/v17"
 	v2 "github.com/Stride-Labs/stride/v16/app/upgrades/v2"
 	v3 "github.com/Stride-Labs/stride/v16/app/upgrades/v3"
 	v4 "github.com/Stride-Labs/stride/v16/app/upgrades/v4"
@@ -216,6 +218,20 @@ func (app *StrideApp) setupUpgradeHandlers(appOpts servertypes.AppOptions) {
 		),
 	)
 
+	// v17 upgrade handler
+	app.UpgradeKeeper.SetUpgradeHandler(
+		v17.UpgradeName,
+		v17.CreateUpgradeHandler(
+			app.mm,
+			app.configurator,
+			app.BankKeeper,
+			app.DistrKeeper,
+			app.InterchainqueryKeeper,
+			app.RatelimitKeeper,
+			app.StakeibcKeeper,
+		),
+	)
+
 	upgradeInfo, err := app.UpgradeKeeper.ReadUpgradeInfoFromDisk()
 	if err != nil {
 		panic(fmt.Errorf("Failed to read upgrade info from disk: %w", err))
@@ -256,13 +272,12 @@ func (app *StrideApp) setupUpgradeHandlers(appOpts servertypes.AppOptions) {
 		storeUpgrades = &storetypes.StoreUpgrades{
 			Added: []string{evmosvestingtypes.ModuleName},
 		}
+	case "v17":
+		storeUpgrades = &storetypes.StoreUpgrades{
+			// Add PFM store key
+			Added: []string{packetforwardtypes.ModuleName},
+		}
 	}
-	// TODO: uncomment when v17 upgrade is ready
-	// case "v17":
-	// 	storeUpgrades = &storetypes.StoreUpgrades{
-	// 		// Add PFM store key
-	// 		Added: []string{packetforwardtypes.ModuleName},
-	// 	}
 
 	if storeUpgrades != nil {
 		app.SetStoreLoader(upgradetypes.UpgradeStoreLoader(upgradeInfo.Height, storeUpgrades))

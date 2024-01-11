@@ -199,6 +199,7 @@ func (s *AppTestHelper) SetupIBCChains(hostChainID string) {
 
 	// Call InitGenesis on the consumer
 	s.StrideChain.App.(*app.StrideApp).GetConsumerKeeper().InitGenesis(s.StrideChain.GetContext(), &strideConsumerGenesis)
+	s.StrideChain.NextBlock()
 
 	// Update coordinator
 	s.Coordinator.Chains = map[string]*ibctesting.TestChain{
@@ -526,7 +527,11 @@ func (s *AppTestHelper) MockICAChannel(connectionId, channelId, owner, address s
 
 func (s *AppTestHelper) ConfirmUpgradeSucceededs(upgradeName string, upgradeHeight int64) {
 	s.Ctx = s.Ctx.WithBlockHeight(upgradeHeight - 1)
-	plan := upgradetypes.Plan{Name: upgradeName, Height: upgradeHeight}
+	plan := upgradetypes.Plan{
+		Name:   upgradeName,
+		Height: upgradeHeight,
+	}
+
 	err := s.App.UpgradeKeeper.ScheduleUpgrade(s.Ctx, plan)
 	s.Require().NoError(err)
 	_, exists := s.App.UpgradeKeeper.GetUpgradePlan(s.Ctx)
