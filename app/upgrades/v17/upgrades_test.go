@@ -791,10 +791,15 @@ func (s *UpgradeTestSuite) SetupMigrateUnbondingRecords() func() {
 	s.App.RecordsKeeper.SetEpochUnbondingRecord(s.Ctx, epochUnbondingRecord3)
 
 	return func() {
-		// expectedRedemptionRate is nativeTokenAmount / stTokenAmount
-		expectedRedemptionRate := sdk.NewDec(nativeTokenAmount).Quo(sdk.NewDec(stTokenAmount))
-		// expectedStTokenAmount is expectedRedemptionRate * URRAmount
-		expectedStTokenAmount := expectedRedemptionRate.Mul(sdk.NewDec(URRAmount)).RoundInt()
+		// conversionRate is stTokenAmount / nativeTokenAmount
+		conversionRate := sdk.NewDec(stTokenAmount).Quo(sdk.NewDec(nativeTokenAmount))
+		// give me a dec that is 0.5
+		expectedConversionRate := sdk.NewDec(5).Quo(sdk.NewDec(10))
+		s.Require().Equal(expectedConversionRate, conversionRate, "expected conversion rate (1/redemption rate)")
+		// stTokenAmount is conversionRate * URRAmount
+		stTokenAmount := conversionRate.Mul(sdk.NewDec(URRAmount)).RoundInt()
+		expectedStTokenAmount := sdkmath.NewInt(250)
+		s.Require().Equal(stTokenAmount, expectedStTokenAmount, "expected st token amount")
 		// Verify URR stToken amounts are set correctly for records 1 through 4
 		for i := 1; i <= 4; i++ {
 			mockURRId := strconv.Itoa(i)
@@ -810,7 +815,7 @@ func (s *UpgradeTestSuite) SetupMigrateUnbondingRecords() func() {
 			mockURR, found := s.App.RecordsKeeper.GetUserRedemptionRecord(s.Ctx, mockURRId)
 			s.Require().True(found)
 			// verify the amount was not updated
-			s.Require().Equal(sdk.NewInt(URRAmount), mockURR.StTokenAmount, "URR %s - st token amount", mockURRId)
+			s.Require().Equal(sdk.NewInt(0), mockURR.StTokenAmount, "URR %s - st token amount", mockURRId)
 		}
 	}
 }
