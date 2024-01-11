@@ -594,6 +594,139 @@ func (s *KeeperTestSuite) TestGetTotalUnbondAmount() {
 	s.Require().Zero(s.App.StakeibcKeeper.GetTotalUnbondAmount(s.Ctx, emptyUnbondings).Int64())
 }
 
+func (s *KeeperTestSuite) TestRefreshUserRedemptionRecordNativeAmounts() {
+	// Define the expected redemption records after the function is called
+	redemptionRate := sdk.MustNewDecFromStr("1.999")
+	expectedUserRedemptionRecords := []recordtypes.UserRedemptionRecord{
+		// StTokenAmount: 1000 * 1.999 = 1999 Native
+		{Id: "A", StTokenAmount: sdkmath.NewInt(1000), Amount: sdkmath.NewInt(1999)},
+		// StTokenAmount: 999 * 1.999 = 1997.001, Rounded down to 1997 Native
+		{Id: "B", StTokenAmount: sdkmath.NewInt(999), Amount: sdkmath.NewInt(1997)},
+		// StTokenAmount: 100 * 1.999 = 199.9, Rounded up to 200 Native
+		{Id: "C", StTokenAmount: sdkmath.NewInt(100), Amount: sdkmath.NewInt(200)},
+	}
+	expectedTotalNativeAmount := sdkmath.NewInt(1999 + 1997 + 200)
+
+	// Create the initial records which do not have the end native amount
+	for _, expectedUserRedemptionRecord := range expectedUserRedemptionRecords {
+		initialUserRedemptionRecord := expectedUserRedemptionRecord
+		initialUserRedemptionRecord.Amount = sdkmath.ZeroInt()
+		s.App.RecordsKeeper.SetUserRedemptionRecord(s.Ctx, initialUserRedemptionRecord)
+	}
+
+	// Call the refresh user redemption record function
+	// Note: an extra ID ("D"), is passed into this function that will be ignored
+	// since there's not user redemption record for "D"
+	redemptionRecordIds := []string{"A", "B", "C", "D"}
+	actualTotalNativeAmount := s.App.StakeibcKeeper.RefreshUserRedemptionRecordNativeAmounts(
+		s.Ctx,
+		HostChainId,
+		redemptionRecordIds,
+		redemptionRate,
+	)
+
+	// Confirm the summation is correct and the user redemption records were updated
+	s.Require().Equal(expectedTotalNativeAmount.Int64(), actualTotalNativeAmount.Int64(), "total native amount")
+	for _, expectedRecord := range expectedUserRedemptionRecords {
+		actualRecord, found := s.App.RecordsKeeper.GetUserRedemptionRecord(s.Ctx, expectedRecord.Id)
+		s.Require().True(found, "record %s should have been found", expectedRecord.Id)
+		s.Require().Equal(expectedRecord.Amount.Int64(), actualRecord.Amount.Int64(),
+			"record %s native amount", expectedRecord.Id)
+	}
+}
+
+// Tests RefreshUnbondingNativeTokenAmounts which indirectly tests
+// RefreshHostZoneUnbondingNativeTokenAmount and RefreshUserRedemptionRecordNativeAmounts
+func (s *KeeperTestSuite) TestRefreshUnbondingNativeTokenAmounts() {
+	chainA := "chain-0"
+	chainB := "chain-1"
+	epochNumberA := uint64(1)
+	epochNumberB := uint64(2)
+
+	// Create the epoch unbonding records
+	// It doesn't need the host zone unbonding records since they'll be added
+	// in the tested function
+	s.App.RecordsKeeper.SetEpochUnbondingRecord(s.Ctx, recordtypes.EpochUnbondingRecord{
+		EpochNumber: epochNumberA,
+	})
+	s.App.RecordsKeeper.SetEpochUnbondingRecord(s.Ctx, recordtypes.EpochUnbondingRecord{
+		EpochNumber: epochNumberB,
+	})
+
+	// Create two host zones, with different redemption rates
+	s.App.StakeibcKeeper.SetHostZone(s.Ctx, types.HostZone{
+		ChainId:        chainA,
+		RedemptionRate: sdk.MustNewDecFromStr("1.5"),
+	})
+	s.App.StakeibcKeeper.SetHostZone(s.Ctx, types.HostZone{
+		ChainId:        chainB,
+		RedemptionRate: sdk.MustNewDecFromStr("2.0"),
+	})
+
+	// Create the user redemption records
+	userRedemptionRecords := []recordtypes.UserRedemptionRecord{
+		// chainA - Redemption Rate: 1.5
+		{Id: "A", StTokenAmount: sdkmath.NewInt(1000)}, // native: 1500
+		{Id: "B", StTokenAmount: sdkmath.NewInt(2000)}, // native: 3000
+		// chainB - Redemption Rate: 2.0
+		{Id: "C", StTokenAmount: sdkmath.NewInt(3000)}, // native: 6000
+		{Id: "D", StTokenAmount: sdkmath.NewInt(4000)}, // native: 8000
+	}
+	expectedUserNativeAmounts := map[string]sdkmath.Int{
+		"A": sdkmath.NewInt(1500),
+		"B": sdkmath.NewInt(3000),
+		"C": sdkmath.NewInt(6000),
+		"D": sdkmath.NewInt(8000),
+	}
+	for _, redemptionRecord := range userRedemptionRecords {
+		s.App.RecordsKeeper.SetUserRedemptionRecord(s.Ctx, redemptionRecord)
+	}
+
+	// Define the two host zone unbonding records
+	initialHostZoneUnbondingA := recordtypes.HostZoneUnbonding{
+		HostZoneId:            chainA,
+		UserRedemptionRecords: []string{"A", "B"},
+	}
+	expectedHostZoneUnbondAmountA := expectedUserNativeAmounts["A"].Add(expectedUserNativeAmounts["B"])
+
+	initialHostZoneUnbondingB := recordtypes.HostZoneUnbonding{
+		HostZoneId:            chainB,
+		UserRedemptionRecords: []string{"C", "D"},
+	}
+	expectedHostZoneUnbondAmountB := expectedUserNativeAmounts["C"].Add(expectedUserNativeAmounts["D"])
+
+	// Call refresh for both hosts
+	epochToHostZoneMap := map[uint64]recordtypes.HostZoneUnbonding{
+		epochNumberA: initialHostZoneUnbondingA,
+		epochNumberB: initialHostZoneUnbondingB,
+	}
+	err := s.App.StakeibcKeeper.RefreshUnbondingNativeTokenAmounts(s.Ctx, epochToHostZoneMap)
+	s.Require().NoError(err, "no error expected when refreshing unbond amount")
+
+	// Confirm the host zone unbonding records were updated
+	updatedHostZoneUnbondingA, found := s.App.RecordsKeeper.GetHostZoneUnbondingByChainId(s.Ctx, epochNumberA, chainA)
+	actualHostZoneUnbondAmountA := updatedHostZoneUnbondingA.NativeTokenAmount
+	s.Require().True(found, "host zone unbonding record for %s should have been found", chainA)
+	s.Require().Equal(expectedHostZoneUnbondAmountA, actualHostZoneUnbondAmountA, "host zone unbonding native amount A")
+
+	updatedHostZoneUnbondingB, found := s.App.RecordsKeeper.GetHostZoneUnbondingByChainId(s.Ctx, epochNumberB, chainB)
+	actualHostZoneUnbondAmountB := updatedHostZoneUnbondingB.NativeTokenAmount
+	s.Require().True(found, "host zone unbonding record for %s should have been found", chainB)
+	s.Require().Equal(expectedHostZoneUnbondAmountB, actualHostZoneUnbondAmountB, "host zone unbonding native amount B")
+
+	// Confirm all user redemption records were updated
+	for id, expectedNativeAmount := range expectedUserNativeAmounts {
+		record, found := s.App.RecordsKeeper.GetUserRedemptionRecord(s.Ctx, id)
+		s.Require().True(found, "user redemption record for %s should have been found", id)
+		s.Require().Equal(expectedNativeAmount, record.Amount, "user redemption record %s native amount", id)
+	}
+
+	// Remove one of the host zones and confirm it errors
+	s.App.StakeibcKeeper.RemoveHostZone(s.Ctx, chainA)
+	err = s.App.StakeibcKeeper.RefreshUnbondingNativeTokenAmounts(s.Ctx, epochToHostZoneMap)
+	s.Require().ErrorContains(err, "host zone not found")
+}
+
 func (s *KeeperTestSuite) TestGetValidatorUnbondCapacity() {
 	// Start with the expected returned list of validator capacities
 	expectedUnbondCapacity := []keeper.ValidatorUnbondCapacity{
