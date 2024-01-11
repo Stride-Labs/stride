@@ -20,6 +20,7 @@ import (
 	icqkeeper "github.com/Stride-Labs/stride/v16/x/interchainquery/keeper"
 	ratelimitkeeper "github.com/Stride-Labs/stride/v16/x/ratelimit/keeper"
 	ratelimittypes "github.com/Stride-Labs/stride/v16/x/ratelimit/types"
+	recordtypes "github.com/Stride-Labs/stride/v16/x/records/types"
 	stakeibckeeper "github.com/Stride-Labs/stride/v16/x/stakeibc/keeper"
 	stakeibctypes "github.com/Stride-Labs/stride/v16/x/stakeibc/types"
 )
@@ -89,6 +90,11 @@ func CreateUpgradeHandler(
 		ctx.Logger().Info("Migrating stakeibc params...")
 		MigrateStakeibcParams(ctx, stakeibcKeeper)
 
+		ctx.Logger().Info("Migrating Unbonding Records...")
+		if err := MigrateUnbondingRecords(ctx, stakeibcKeeper); err != nil {
+			return vm, errorsmod.Wrapf(err, "unable to migrate unbonding records")
+		}
+
 		ctx.Logger().Info("Migrating host zones...")
 		if err := RegisterCommunityPoolAddresses(ctx, stakeibcKeeper); err != nil {
 			return vm, errorsmod.Wrapf(err, "unable to register community pool addresses on host zones")
@@ -138,6 +144,54 @@ func CreateUpgradeHandler(
 func MigrateStakeibcParams(ctx sdk.Context, k stakeibckeeper.Keeper) {
 	params := stakeibctypes.DefaultParams()
 	k.SetParams(ctx, params)
+}
+
+// Migrate the user redemption records to add the stToken amount, calculated by estimating
+// the redemption rate from the corresponding host zone unbonding records
+// UserUnbondingRecords previously only used Native Token Amounts, we now want to use StTokenAmounts
+// We only really need to migrate records in status UNBONDING_QUEUE or UNBONDING_IN_PROGRESS
+// because the stToken amount is never used after unbonding is initiated
+func MigrateUnbondingRecords(ctx sdk.Context, k stakeibckeeper.Keeper) error {
+	for _, epochUnbondingRecord := range k.RecordsKeeper.GetAllEpochUnbondingRecord(ctx) {
+		for _, hostZoneUnbonding := range epochUnbondingRecord.HostZoneUnbondings {
+			// If a record is in state claimable, the native token amount can't be trusted
+			// since it gets decremented with each claim
+			// As a result, we can't accurately estimate the redemption rate for these
+			// user redemption records (but it also doesn't matter since the stToken
+			// amount on the records is not used)
+			if hostZoneUnbonding.Status == recordtypes.HostZoneUnbonding_CLAIMABLE {
+				continue
+			}
+			// similarly, if there aren't any tokens to unbond, we don't want to modify the record
+			// as we won't be able to estimate a redemption rate
+			if hostZoneUnbonding.NativeTokenAmount.IsZero() {
+				continue
+			}
+
+			// Calculate the estimated redemption rate
+			nativeTokenAmountDec := sdk.NewDecFromInt(hostZoneUnbonding.NativeTokenAmount)
+			stTokenAmountDec := sdk.NewDecFromInt(hostZoneUnbonding.StTokenAmount)
+			// this estimated rate is the amount of stTokens that would be received for 1 native token
+			// e.g. if the rate is 0.5, then 1 native token would be worth 0.5 stTokens
+			// estimatedStTokenConversionRate is 1 / redemption rate
+			estimatedStTokenConversionRate := stTokenAmountDec.Quo(nativeTokenAmountDec)
+
+			// Loop through User Redemption Records and insert an estimated stTokenAmount
+			for _, userRedemptionRecordId := range hostZoneUnbonding.UserRedemptionRecords {
+				userRedemptionRecord, found := k.RecordsKeeper.GetUserRedemptionRecord(ctx, userRedemptionRecordId)
+				if !found {
+					// this would happen if the user has already claimed the unbonding, but given the status check above, this should never happen
+					k.Logger(ctx).Error(fmt.Sprintf("user redemption record %s not found", userRedemptionRecordId))
+					continue
+				}
+
+				userRedemptionRecord.StTokenAmount = estimatedStTokenConversionRate.Mul(sdk.NewDecFromInt(userRedemptionRecord.Amount)).RoundInt()
+				k.RecordsKeeper.SetUserRedemptionRecord(ctx, userRedemptionRecord)
+			}
+		}
+	}
+
+	return nil
 }
 
 // Migrates the host zones to the new structure which supports community pool liquid staking

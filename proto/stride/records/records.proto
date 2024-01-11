@@ -18,6 +18,10 @@ message UserRedemptionRecord {
   uint64 epoch_number = 7;
   bool claim_is_pending = 8;
   reserved 2;
+  string st_token_amount = 9 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable) = false
+  ];
 }
 
 message DepositRecord {
