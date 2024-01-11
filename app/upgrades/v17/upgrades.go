@@ -2,6 +2,7 @@ package v17
 
 import (
 	"fmt"
+	"time"
 
 	errorsmod "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
@@ -9,6 +10,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/module"
 	distributionkeeper "github.com/cosmos/cosmos-sdk/x/distribution/keeper"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
+	"github.com/cosmos/gogoproto/proto"
 	icatypes "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/types"
 	connectiontypes "github.com/cosmos/ibc-go/v7/modules/core/03-connection/types"
 
@@ -31,6 +33,9 @@ var (
 	// Redemption rate bounds updated to give ~3 months of slack on outer bounds
 	RedemptionRateOuterMinAdjustment = sdk.MustNewDecFromStr("0.05")
 	RedemptionRateOuterMaxAdjustment = sdk.MustNewDecFromStr("0.10")
+
+	// Define the hub chainId for disabling tokenization
+	GaiaChainId = "cosmoshub-4"
 
 	// Osmosis will have a slighly larger buffer with the redemption rate
 	// since their yield is less predictable
@@ -110,6 +115,9 @@ func CreateUpgradeHandler(
 		if err := AddRateLimitToOsmosis(ctx, ratelimitKeeper); err != nil {
 			return vm, errorsmod.Wrapf(err, "unable to add rate limits to Osmosis")
 		}
+
+		ctx.Logger().Info("Disabling tokenization on the hub...")
+		DisableTokenization(ctx, stakeibcKeeper, GaiaChainId)
 
 		ctx.Logger().Info("Executing Prop 225, SHD Liquidity")
 		if err := ExecuteProp225(ctx, bankKeeper); err != nil {
@@ -313,6 +321,31 @@ func AddRateLimitToOsmosis(ctx sdk.Context, k ratelimitkeeper.Keeper) error {
 			Quota: &quota,
 			Flow:  &flow,
 		})
+	}
+
+	return nil
+}
+
+// Sends the ICA message which disables LSM style tokenization of shares from the delegation
+// account for this chain as a security to prevent possibility of large/fast withdrawls
+func DisableTokenization(ctx sdk.Context, k stakeibckeeper.Keeper, chainId string) error {
+	hostZone, found := k.GetHostZone(ctx, chainId)
+	if !found {
+		return errorsmod.Wrapf(stakeibctypes.ErrHostZoneNotFound, "Unable to find chainId %s to remove tokenization", chainId)
+	}
+
+	// Build the msg for the disable tokenization ICA tx
+	var msgs []proto.Message
+	msgs = append(msgs, &stakeibctypes.MsgDisableTokenizeShares{
+		DelegatorAddress: hostZone.DelegationIcaAddress,
+	})
+
+	// Send the ICA tx to disable tokenization
+	timeoutTimestamp := uint64(ctx.BlockTime().Add(24 * time.Hour).UnixNano())
+	delegationOwner := stakeibctypes.FormatHostZoneICAOwner(hostZone.ChainId, stakeibctypes.ICAAccountType_DELEGATION)
+	err := k.SubmitICATxWithoutCallback(ctx, hostZone.ConnectionId, delegationOwner, msgs, timeoutTimestamp)
+	if err != nil {
+		return errorsmod.Wrapf(err, "Failed to submit ICA tx to disable tokenization, Messages: %+v", msgs)
 	}
 
 	return nil

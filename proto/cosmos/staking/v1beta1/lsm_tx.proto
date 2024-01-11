@@ -28,3 +28,12 @@ message MsgRedeemTokensForShares {
 message MsgRedeemTokensForSharesResponse {
   cosmos.base.v1beta1.Coin amount = 1 [ (gogoproto.nullable) = false ];
 }
+
+// MsgDisableTokenizeShares prevents LSM tokenization of shares for address
+message MsgDisableTokenizeShares {
+  option (gogoproto.equal) = false;
+  option (gogoproto.goproto_getters) = false;
+
+  string delegator_address = 1
+      [ (gogoproto.moretags) = "yaml:\"delegator_address\"" ];
+}

@@ -7,6 +7,7 @@ import (
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	icatypes "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/types"
+	ibctesting "github.com/cosmos/ibc-go/v7/testing"
 	"github.com/stretchr/testify/suite"
 
 	icqtypes "github.com/Stride-Labs/stride/v16/x/interchainquery/types"
@@ -20,7 +21,6 @@ import (
 )
 
 const (
-	GaiaChainId      = "cosmoshub-4"
 	SommelierChainId = "sommelier-3"
 
 	Atom = "uatom"
@@ -69,11 +69,16 @@ func TestKeeperTestSuite(t *testing.T) {
 func (s *UpgradeTestSuite) TestUpgrade() {
 	dummyUpgradeHeight := int64(5)
 
+	// Create the gaia delegation channel
+	owner := stakeibctypes.FormatHostZoneICAOwner(v17.GaiaChainId, stakeibctypes.ICAAccountType_DELEGATION)
+	channelId, portId := s.CreateICAChannel(owner)
+
 	// Setup store before upgrade
 	checkHostZonesAfterUpgrade := s.SetupHostZonesBeforeUpgrade()
 	checkRateLimitsAfterUpgrade := s.SetupRateLimitsBeforeUpgrade()
 	checkCommunityPoolTaxAfterUpgrade := s.SetupCommunityPoolTaxBeforeUpgrade()
 	checkQueriesAfterUpgrade := s.SetupQueriesBeforeUpgrade()
+	checkDisableTokenizationICASubmitted := s.SetupTestDisableTokenization(channelId, portId)
 	checkProp225AfterUpgrade := s.SetupProp225BeforeUpgrade()
 
 	// Submit upgrade and confirm handler succeeds
@@ -84,6 +89,7 @@ func (s *UpgradeTestSuite) TestUpgrade() {
 	checkRateLimitsAfterUpgrade()
 	checkCommunityPoolTaxAfterUpgrade()
 	checkQueriesAfterUpgrade()
+	checkDisableTokenizationICASubmitted()
 	checkProp225AfterUpgrade()
 }
 
@@ -126,9 +132,9 @@ func (s *UpgradeTestSuite) checkCommunityPoolICAAccountsRegistered(chainId strin
 func (s *UpgradeTestSuite) SetupHostZonesBeforeUpgrade() func() {
 	hostZones := []stakeibctypes.HostZone{
 		{
-			ChainId:      GaiaChainId,
+			ChainId:      v17.GaiaChainId,
 			HostDenom:    Atom,
-			ConnectionId: "connection-1",
+			ConnectionId: ibctesting.FirstConnectionID, // must be connection-0 since an ICA will be submitted
 			Validators: []*stakeibctypes.Validator{
 				{Address: "val1", SlashQueryInProgress: false},
 				{Address: "val2", SlashQueryInProgress: true},
@@ -169,14 +175,14 @@ func (s *UpgradeTestSuite) SetupHostZonesBeforeUpgrade() func() {
 	// Return callback to check store after upgrade
 	return func() {
 		// Check that the module and ICA accounts were registered
-		s.checkCommunityPoolModuleAccountsRegistered(GaiaChainId)
+		s.checkCommunityPoolModuleAccountsRegistered(v17.GaiaChainId)
 		s.checkCommunityPoolModuleAccountsRegistered(v17.OsmosisChainId)
 
-		s.checkCommunityPoolICAAccountsRegistered(GaiaChainId)
+		s.checkCommunityPoolICAAccountsRegistered(v17.GaiaChainId)
 		s.checkCommunityPoolICAAccountsRegistered(v17.OsmosisChainId)
 
 		// Check that the redemption rate bounds were set
-		gaiaHostZone, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx, GaiaChainId)
+		gaiaHostZone, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx, v17.GaiaChainId)
 		s.Require().True(found)
 
 		s.Require().Equal(sdk.MustNewDecFromStr("1.045"), gaiaHostZone.MinRedemptionRate, "gaia min outer") // 1.1 - 5% = 1.045
@@ -274,7 +280,7 @@ func (s *UpgradeTestSuite) SetupRateLimitsBeforeUpgrade() func() {
 		stAtomToGaiaRateLimit, found := s.App.RatelimitKeeper.GetRateLimit(s.Ctx, StAtom, gaiaChannelId)
 		s.Require().True(found)
 
-		atomThreshold := v17.UpdatedRateLimits[GaiaChainId]
+		atomThreshold := v17.UpdatedRateLimits[v17.GaiaChainId]
 		s.Require().Equal(atomThreshold, stAtomToGaiaRateLimit.Quota.MaxPercentSend, "statom -> gaia max percent send")
 		s.Require().Equal(atomThreshold, stAtomToGaiaRateLimit.Quota.MaxPercentRecv, "statom -> gaia max percent recv")
 		s.Require().Equal(initialFlow, stAtomToGaiaRateLimit.Flow.Outflow, "statom -> gaia outflow")
@@ -341,6 +347,17 @@ func (s *UpgradeTestSuite) SetupQueriesBeforeUpgrade() func() {
 		// Confirm the other query is still there
 		_, found = s.App.InterchainqueryKeeper.GetQuery(s.Ctx, "query-2")
 		s.Require().True(found, "non-slash query should not have been removed")
+	}
+}
+
+func (s *UpgradeTestSuite) SetupTestDisableTokenization(channelId, portId string) func() {
+	// Get the current sequence number (to check that it incremented)
+	startSequence := s.MustGetNextSequenceNumber(portId, channelId)
+
+	// Return callback to that the ICA was submitted
+	return func() {
+		endSequence := s.MustGetNextSequenceNumber(portId, channelId)
+		s.Require().Equal(startSequence+1, endSequence, "sequence number should have incremented from disabling detokenization")
 	}
 }
 
@@ -724,4 +741,20 @@ func (s *UpgradeTestSuite) TestAddRateLimitToOsmosis() {
 
 	err = v17.AddRateLimitToOsmosis(s.Ctx, s.App.RatelimitKeeper)
 	s.Require().ErrorContains(err, "channel value is zero")
+}
+
+func (s *UpgradeTestSuite) TestDisableTokenization() {
+	// Create the host zone and delegation channel
+	owner := stakeibctypes.FormatHostZoneICAOwner(v17.GaiaChainId, stakeibctypes.ICAAccountType_DELEGATION)
+	channelId, portId := s.CreateICAChannel(owner)
+
+	s.App.StakeibcKeeper.SetHostZone(s.Ctx, stakeibctypes.HostZone{
+		ChainId:      v17.GaiaChainId,
+		ConnectionId: ibctesting.FirstConnectionID,
+	})
+
+	// Call the disable function and confirm the sequence number incremented (indicating an ICA was submitted)
+	s.CheckICATxSubmitted(portId, channelId, func() error {
+		return v17.DisableTokenization(s.Ctx, s.App.StakeibcKeeper, v17.GaiaChainId)
+	})
 }
