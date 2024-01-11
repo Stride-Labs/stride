@@ -211,16 +211,16 @@ func (s *UpgradeTestSuite) SetupRateLimitsBeforeUpgrade() func() {
 	initialChannelValue := sdkmath.NewInt(100)
 	updatedChannelValue := sdkmath.NewInt(200)
 
-	ratesLimits := []AddRateLimits{
+	rateLimits := []AddRateLimits{
 		{
 			// Gaia rate limit
-			// Treshold should be updated, new gaia RL added
+			// Threshold should be updated, new gaia RL added
 			Denom:     StAtom,
 			ChannelId: gaiaChannelId,
 		},
 		{
 			// Osmo rate limit
-			// Treshold should be updated, no new RL added
+			// Threshold should be updated, no new RL added
 			Denom:     StOsmo,
 			ChannelId: v17.OsmosisTransferChannelId,
 		},
@@ -234,7 +234,7 @@ func (s *UpgradeTestSuite) SetupRateLimitsBeforeUpgrade() func() {
 
 	// Add rate limits
 	// No need to register host zones since they're initialized in the setup host zone function
-	for _, rateLimit := range ratesLimits {
+	for _, rateLimit := range rateLimits {
 		s.App.RatelimitKeeper.SetRateLimit(s.Ctx, ratelimittypes.RateLimit{
 			Path: &ratelimittypes.Path{
 				Denom:     rateLimit.Denom,
