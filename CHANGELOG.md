@@ -46,11 +46,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [v17.0.0](https://github.com/Stride-Labs/stride/releases/tag/v17.0.0) - 2024-01-11
 
 ### On-Chain changes
-1. Send disable tokenization tx for delegation account on hub ([#1045](https://github.com/Stride-Labs/stride/pull/1045))
-2. Upgraded ICS to v3.2.0 ([#1043](https://github.com/Stride-Labs/stride/pull/1043))
-3. Hashed the sender for autopilot transactions ([#1038](https://github.com/Stride-Labs/stride/pull/1038))
+5. Add PFM ([#889](https://github.com/Stride-Labs/stride/pull/889))
+5. Support stDYDX ([#955](https://github.com/Stride-Labs/stride/pull/955))
+5. Claim rewards every epoch via ICA ([#961](https://github.com/Stride-Labs/stride/pull/961))
+5. Autopilot LS + Forward ([#996](https://github.com/Stride-Labs/stride/pull/996))
+5. Allow multiple redemptions per epoch for autopilot RedeemStake ([#1009](https://github.com/Stride-Labs/stride/pull/1009))
+5. Autopilot RedeemStake ([#1012](https://github.com/Stride-Labs/stride/pull/1012))
+5. Sort unbonding prioritization by validator capacity ([#1018](https://github.com/Stride-Labs/stride/pull/1018))
+5. Whitelist all types of Stride gov props ([#1028](https://github.com/Stride-Labs/stride/pull/1028))
+5. Cap the weight percentage that a single validator can have ([#1032](https://github.com/Stride-Labs/stride/pull/1032))
 4. Key the URR on the receiver address instead of the sender address ([#1035](https://github.com/Stride-Labs/stride/pull/1035))
-5. Caps the weight percentage that a single validator can have ([#1032](https://github.com/Stride-Labs/stride/pull/1032))
+3. Hash the sender for autopilot transactions ([#1038](https://github.com/Stride-Labs/stride/pull/1038))
+2. Upgrade ICS to v3.2.0 ([#1043](https://github.com/Stride-Labs/stride/pull/1043))
+1. Send disable tokenization tx for delegation account on CosmosHub ([#1045](https://github.com/Stride-Labs/stride/pull/1045))
 
 
 ## [v16.0.0](https://github.com/Stride-Labs/stride/releases/tag/v16.0.0) - 2023-10-14
