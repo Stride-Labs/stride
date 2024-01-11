@@ -65,12 +65,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 18. Add V17 upgrade handler ([#1029](https://github.com/Stride-Labs/stride/pull/1029))
 19. Dynamically update user redemption records during unbonding ([#1053](https://github.com/Stride-Labs/stride/pull/1053))
 20. V17 Import Paths ([#1061](https://github.com/Stride-Labs/stride/pull/1061))
+21. Disable tokenization on CosmosHub Delegation Account in Hooks ([#1066](https://github.com/Stride-Labs/stride/pull/1066))
+22. Update ICQ for compatibility with IBC v7.3.1 ([#1068](https://github.com/Stride-Labs/stride/pull/1068))
+23. Rename native amount and host zone unbonding status ([#1071](https://github.com/Stride-Labs/stride/pull/1071))
+
 
 ### Off-Chain changes
 1. Add security instructions ([#990](https://github.com/Stride-Labs/stride/pull/990))
-2. bump go 1.19 -> 1.21 ([#1052](https://github.com/Stride-Labs/stride/pull/1052))
-3. Fix bug in changelog script ([#1060](https://github.com/Stride-Labs/stride/pull/1060))
-4. Add PFM testing scripts ([#1054](https://github.com/Stride-Labs/stride/pull/1054))
+2. Bump go 1.19 -> 1.21 ([#1052](https://github.com/Stride-Labs/stride/pull/1052))
+3. Add PFM testing scripts ([#1054](https://github.com/Stride-Labs/stride/pull/1054))
+4. Fix bug in changelog script ([#1060](https://github.com/Stride-Labs/stride/pull/1060))
+5. Adjust testing scripts ([#1064](https://github.com/Stride-Labs/stride/pull/1064))
+
 
 
 ## [v16.0.0](https://github.com/Stride-Labs/stride/releases/tag/v16.0.0) - 2023-10-14
