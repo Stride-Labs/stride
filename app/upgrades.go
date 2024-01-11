@@ -257,6 +257,12 @@ func (app *StrideApp) setupUpgradeHandlers(appOpts servertypes.AppOptions) {
 			Added: []string{evmosvestingtypes.ModuleName},
 		}
 	}
+	// TODO: uncomment when v17 upgrade is ready
+	// case "v17":
+	// 	storeUpgrades = &storetypes.StoreUpgrades{
+	// 		// Add PFM store key
+	// 		Added: []string{packetforwardtypes.ModuleName},
+	// 	}
 
 	if storeUpgrades != nil {
 		app.SetStoreLoader(upgradetypes.UpgradeStoreLoader(upgradeInfo.Height, storeUpgrades))
