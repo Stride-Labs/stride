@@ -78,7 +78,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 5. Adjust testing scripts ([#1064](https://github.com/Stride-Labs/stride/pull/1064))
 
 
-
 ## [v16.0.0](https://github.com/Stride-Labs/stride/releases/tag/v16.0.0) - 2023-10-14
 
 ### On-Chain changes
