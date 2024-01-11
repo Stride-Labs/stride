@@ -164,7 +164,7 @@ func MigrateUnbondingRecords(ctx sdk.Context, k stakeibckeeper.Keeper) error {
 			}
 			// similarly, if there aren't any tokens to unbond, we don't want to modify the record
 			// as we won't be able to estimate a redemption rate
-			if hostZoneUnbonding.NativeTokenAmount == sdkmath.ZeroInt() {
+			if hostZoneUnbonding.NativeTokenAmount.IsZero() {
 				continue
 			}
 
@@ -173,6 +173,7 @@ func MigrateUnbondingRecords(ctx sdk.Context, k stakeibckeeper.Keeper) error {
 			stTokenAmountDec := sdk.NewDecFromInt(hostZoneUnbonding.StTokenAmount)
 			// this estimated rate is the amount of stTokens that would be received for 1 native token
 			// e.g. if the rate is 0.5, then 1 native token would be worth 0.5 stTokens
+			// estimatedStTokenConversionRate is 1 / redemption rate
 			estimatedStTokenConversionRate := stTokenAmountDec.Quo(nativeTokenAmountDec)
 
 			// Loop through User Redemption Records and insert an estimated stTokenAmount
@@ -184,7 +185,7 @@ func MigrateUnbondingRecords(ctx sdk.Context, k stakeibckeeper.Keeper) error {
 					continue
 				}
 
-				userRedemptionRecord.StTokenAmount = estimatedStTokenConversionRate.Mul(sdkmath.LegacyDec(userRedemptionRecord.Amount)).RoundInt()
+				userRedemptionRecord.StTokenAmount = estimatedStTokenConversionRate.Mul(sdk.NewDecFromInt(userRedemptionRecord.Amount)).RoundInt()
 				k.RecordsKeeper.SetUserRedemptionRecord(ctx, userRedemptionRecord)
 			}
 		}
