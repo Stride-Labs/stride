@@ -144,6 +144,9 @@ func (k Keeper) IBCTransferStToken(
 	}
 
 	// Store the original receiver as the fallback address in case the transfer fails
+	// autopilotMetadata.StrideAddress is never the hashed address, because the autopilotMetadata struct
+	// is parsed upstream of hashing the receiver
+	// So StrideAddress is used as the fallback (which is always the original receiver)
 	k.SetTransferFallbackAddress(ctx, channelId, transferResponse.Sequence, autopilotMetadata.StrideAddress)
 
 	return err
