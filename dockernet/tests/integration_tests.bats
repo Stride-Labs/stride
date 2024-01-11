@@ -406,7 +406,7 @@ setup_file() {
   # equal to 2 * REDEEM_AMOUNT (since there were two redemptions - one from autopilot, one here)
   redemption_record_amount=$($STRIDE_MAIN_CMD q records list-user-redemption-record  | grep -Fiw 'amount' | head -n 1 | grep -o -E '[0-9]+')
   expected_record_minimum=$(echo "$REDEEM_AMOUNT * 2" | bc)
-  assert_equal "$(($redemption_record_amount > $expected_record_minimum))" "1"
+  assert_equal "$(($redemption_record_amount >= $expected_record_minimum))" "1"
 
   WAIT_FOR_STRING $STRIDE_LOGS "\[REDEMPTION] completed on $HOST_CHAIN_ID"
   WAIT_FOR_BLOCK $STRIDE_LOGS 2
