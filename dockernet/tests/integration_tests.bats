@@ -371,8 +371,8 @@ setup_file() {
   WAIT_FOR_BLOCK $STRIDE_LOGS 5
 
   # check that a user redemption record was created
-  redemption_record_amount=$($STRIDE_MAIN_CMD q records list-user-redemption-record  | grep -Fiw 'amount' | head -n 1 | grep -o -E '[0-9]+')
-  amount_positive=$(($redemption_record_amount > 0))
+  redemption_record_native_amount=$($STRIDE_MAIN_CMD q records list-user-redemption-record  | grep -Fiw 'native_token_amount' | head -n 1 | grep -o -E '[0-9]+')
+  amount_positive=$(($redemption_record_native_amount > 0))
   assert_equal "$amount_positive" "1"
 
   # attempt to redeem with an invalid receiver address to invoke a failure
@@ -397,16 +397,12 @@ setup_file() {
 
   # Check that the redemption record created from the autopilot redeem above was incremented
   # and that there is still only one record
-  num_records=$($STRIDE_MAIN_CMD q records list-user-redemption-record | grep -c "amount")
+  num_records=$($STRIDE_MAIN_CMD q records list-user-redemption-record | grep -c "native_token_amount")
   assert_equal "$num_records" "1"
 
-  # The amount in the redemption record is denominated in native tokens, but amount in the 
-  # redeem message is denominated in stTokens (and the redemption rate may be greater than 1)
-  # So when checking the amount, we make sure the amount in the record is greater than or
-  # equal to 2 * REDEEM_AMOUNT (since there were two redemptions - one from autopilot, one here)
-  redemption_record_amount=$($STRIDE_MAIN_CMD q records list-user-redemption-record  | grep -Fiw 'amount' | head -n 1 | grep -o -E '[0-9]+')
+  redemption_record_st_amount=$($STRIDE_MAIN_CMD q records list-user-redemption-record  | grep -Fiw 'st_token_amount' | head -n 1 | grep -o -E '[0-9]+')
   expected_record_minimum=$(echo "$REDEEM_AMOUNT * 2" | bc)
-  assert_equal "$(($redemption_record_amount >= $expected_record_minimum))" "1"
+  assert_equal "$redemption_record_st_amount" "$expected_record_minimum"
 
   WAIT_FOR_STRING $STRIDE_LOGS "\[REDEMPTION] completed on $HOST_CHAIN_ID"
   WAIT_FOR_BLOCK $STRIDE_LOGS 2
