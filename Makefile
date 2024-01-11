@@ -70,6 +70,7 @@ BUILD_FLAGS := -tags "$(build_tags)" -ldflags '$(ldflags)'
 ###############################################################################
 
 build:
+	which go
 	mkdir -p $(BUILDDIR)/
 	go build -mod=readonly $(BUILD_FLAGS) -trimpath -o $(BUILDDIR) ./...;
 
