@@ -14,9 +14,9 @@ import (
 	"github.com/cosmos/gogoproto/proto"
 	"github.com/spf13/cast"
 
-	"github.com/Stride-Labs/stride/v16/utils"
-	recordstypes "github.com/Stride-Labs/stride/v16/x/records/types"
-	"github.com/Stride-Labs/stride/v16/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v17/utils"
+	recordstypes "github.com/Stride-Labs/stride/v17/x/records/types"
+	"github.com/Stride-Labs/stride/v17/x/stakeibc/types"
 )
 
 const (
@@ -74,10 +74,14 @@ func (k Keeper) CreateEpochUnbondingRecord(ctx sdk.Context, epochNumber uint64) 
 	return true
 }
 
-// Gets the total unbonded amount for a host zone by looping through the epoch unbonding records
-// Also returns the epoch unbonding record ids
-func (k Keeper) GetTotalUnbondAmountAndRecordsIds(ctx sdk.Context, chainId string) (totalUnbonded sdkmath.Int, unbondingRecordIds []uint64) {
-	totalUnbonded = sdk.ZeroInt()
+// Returns all the host zone unbonding records that should unbond this epoch
+// Records are returned as a mapping of epoch unbonding record ID to host zone unbonding record
+// Records ready to be unbonded are identified by status UNBONDING_QUEUE and a non-zero native amount
+func (k Keeper) GetQueuedHostZoneUnbondingRecords(
+	ctx sdk.Context,
+	chainId string,
+) (epochNumbers []uint64, epochToHostZoneUnbondingMap map[uint64]recordstypes.HostZoneUnbonding) {
+	epochToHostZoneUnbondingMap = map[uint64]recordstypes.HostZoneUnbonding{}
 	for _, epochUnbonding := range k.RecordsKeeper.GetAllEpochUnbondingRecord(ctx) {
 		hostZoneRecord, found := k.RecordsKeeper.GetHostZoneUnbondingByChainId(ctx, epochUnbonding.EpochNumber, chainId)
 		if !found {
@@ -86,14 +90,85 @@ func (k Keeper) GetTotalUnbondAmountAndRecordsIds(ctx sdk.Context, chainId strin
 		k.Logger(ctx).Info(utils.LogWithHostZone(chainId, "Epoch %d - Status: %s, Amount: %v",
 			epochUnbonding.EpochNumber, hostZoneRecord.Status, hostZoneRecord.NativeTokenAmount))
 
-		// We'll unbond all records that have status UNBONDING_QUEUE and have an amount g.t. zero
-		if hostZoneRecord.Status == recordstypes.HostZoneUnbonding_UNBONDING_QUEUE && hostZoneRecord.NativeTokenAmount.GT(sdkmath.ZeroInt()) {
-			totalUnbonded = totalUnbonded.Add(hostZoneRecord.NativeTokenAmount)
-			unbondingRecordIds = append(unbondingRecordIds, epochUnbonding.EpochNumber)
-			k.Logger(ctx).Info(utils.LogWithHostZone(chainId, "  %v%s included in total unbonding", hostZoneRecord.NativeTokenAmount, hostZoneRecord.Denom))
+		if hostZoneRecord.ShouldInitiateUnbonding() {
+			epochNumbers = append(epochNumbers, epochUnbonding.EpochNumber)
+			epochToHostZoneUnbondingMap[epochUnbonding.EpochNumber] = *hostZoneRecord
 		}
 	}
-	return totalUnbonded, unbondingRecordIds
+	return epochNumbers, epochToHostZoneUnbondingMap
+}
+
+// Gets the total unbonded amount for a host zone by looping through the epoch unbonding records
+// Also returns the epoch unbonding record ids
+func (k Keeper) GetTotalUnbondAmount(ctx sdk.Context, hostZoneUnbondingRecords map[uint64]recordstypes.HostZoneUnbonding) (totalUnbonded sdkmath.Int) {
+	totalUnbonded = sdk.ZeroInt()
+	for _, hostZoneRecord := range hostZoneUnbondingRecords {
+		totalUnbonded = totalUnbonded.Add(hostZoneRecord.NativeTokenAmount)
+	}
+	return totalUnbonded
+}
+
+// Given a list of user redemption record IDs and a redemption rate, sets the native token
+// amount on each record, calculated from the stAmount and redemption rate, and returns the
+// sum of all native token amounts across all user redemption records
+func (k Keeper) RefreshUserRedemptionRecordNativeAmounts(
+	ctx sdk.Context,
+	chainId string,
+	userRedemptionRecordIds []string,
+	redemptionRate sdk.Dec,
+) (totalNativeAmount sdkmath.Int) {
+	// Loop and set the native amount for each record, keeping track of the total
+	totalNativeAmount = sdkmath.ZeroInt()
+	for _, userRedemptionRecordId := range userRedemptionRecordIds {
+		userRedemptionRecord, found := k.RecordsKeeper.GetUserRedemptionRecord(ctx, userRedemptionRecordId)
+		if !found {
+			k.Logger(ctx).Error(utils.LogWithHostZone(chainId, "No user redemption record found for id %s", userRedemptionRecordId))
+			continue
+		}
+
+		// Calculate the number of native tokens using the redemption rate
+		nativeAmount := sdk.NewDecFromInt(userRedemptionRecord.StTokenAmount).Mul(redemptionRate).RoundInt()
+		totalNativeAmount = totalNativeAmount.Add(nativeAmount)
+
+		// Set the native amount on the record
+		userRedemptionRecord.Amount = nativeAmount
+		k.RecordsKeeper.SetUserRedemptionRecord(ctx, userRedemptionRecord)
+	}
+	return totalNativeAmount
+}
+
+// Sets the native token amount unbonded on the host zone unbonding record and the associated user redemption records
+func (k Keeper) RefreshHostZoneUnbondingNativeTokenAmount(
+	ctx sdk.Context,
+	epochNumber uint64,
+	hostZoneUnbondingRecord recordstypes.HostZoneUnbonding,
+) error {
+	// Grab the redemption rate from the host zone (to use in the native token calculation)
+	chainId := hostZoneUnbondingRecord.HostZoneId
+	hostZone, found := k.GetHostZone(ctx, chainId)
+	if !found {
+		return errorsmod.Wrapf(types.ErrHostZoneNotFound, "host zone %s not found", chainId)
+	}
+
+	// Set all native token amount on each user redemption record
+	redemptionRecordIds := hostZoneUnbondingRecord.UserRedemptionRecords
+	totalNativeAmount := k.RefreshUserRedemptionRecordNativeAmounts(ctx, chainId, redemptionRecordIds, hostZone.RedemptionRate)
+
+	// Then set the total on the host zone unbonding record
+	hostZoneUnbondingRecord.NativeTokenAmount = totalNativeAmount
+	return k.RecordsKeeper.SetHostZoneUnbondingRecord(ctx, epochNumber, chainId, hostZoneUnbondingRecord)
+}
+
+// Given a mapping of epoch unbonding record IDs to host zone unbonding records,
+// sets the native token amount across all epoch unbonding records, host zone unbonding records,
+// and user redemption records, using the most updated redemption rate
+func (k Keeper) RefreshUnbondingNativeTokenAmounts(ctx sdk.Context, hostZoneUnbondings map[uint64]recordstypes.HostZoneUnbonding) error {
+	for epochNumber, hostZoneUnbondingRecord := range hostZoneUnbondings {
+		if err := k.RefreshHostZoneUnbondingNativeTokenAmount(ctx, epochNumber, hostZoneUnbondingRecord); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 // Determine the unbonding capacity that each validator has
@@ -365,8 +440,17 @@ func (k Keeper) UnbondFromHostZone(ctx sdk.Context, hostZone types.HostZone) err
 		return errorsmod.Wrapf(types.ErrICAAccountNotFound, "no delegation account found for %s", hostZone.ChainId)
 	}
 
-	// Iterate through every unbonding record and sum the total amount to unbond for the given host zone
-	totalUnbondAmount, epochUnbondingRecordIds := k.GetTotalUnbondAmountAndRecordsIds(ctx, hostZone.ChainId)
+	// Get the list of relevant records that should unbond
+	epochUnbondingRecordIds, epochNumberToHostZoneUnbondingMap := k.GetQueuedHostZoneUnbondingRecords(ctx, hostZone.ChainId)
+
+	// Update the native unbond amount on all relevant records
+	// The native amount is calculated from the stTokens
+	if err := k.RefreshUnbondingNativeTokenAmounts(ctx, epochNumberToHostZoneUnbondingMap); err != nil {
+		return err
+	}
+
+	// Sum the total number of native tokens that from the records above that are ready to unbond
+	totalUnbondAmount := k.GetTotalUnbondAmount(ctx, epochNumberToHostZoneUnbondingMap)
 	k.Logger(ctx).Info(utils.LogWithHostZone(hostZone.ChainId,
 		"Total unbonded amount: %v%s", totalUnbondAmount, hostZone.HostDenom))
 
@@ -500,7 +584,10 @@ func (k Keeper) InitiateAllHostZoneUnbondings(ctx sdk.Context, dayNumber uint64)
 		}
 
 		// Get host zone unbonding message by summing up the unbonding records
-		if err := k.UnbondFromHostZone(ctx, hostZone); err != nil {
+		err := utils.ApplyFuncIfNoError(ctx, func(ctx sdk.Context) error {
+			return k.UnbondFromHostZone(ctx, hostZone)
+		})
+		if err != nil {
 			k.Logger(ctx).Error(fmt.Sprintf("Error initiating host zone unbondings for host zone %s: %s", hostZone.ChainId, err.Error()))
 			continue
 		}

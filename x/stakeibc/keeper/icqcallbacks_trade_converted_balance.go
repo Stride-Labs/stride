@@ -7,11 +7,11 @@ import (
 	errorsmod "cosmossdk.io/errors"
 	"github.com/cosmos/gogoproto/proto"
 
-	icqkeeper "github.com/Stride-Labs/stride/v16/x/interchainquery/keeper"
+	icqkeeper "github.com/Stride-Labs/stride/v17/x/interchainquery/keeper"
 
-	"github.com/Stride-Labs/stride/v16/utils"
-	icqtypes "github.com/Stride-Labs/stride/v16/x/interchainquery/types"
-	"github.com/Stride-Labs/stride/v16/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v17/utils"
+	icqtypes "github.com/Stride-Labs/stride/v17/x/interchainquery/types"
+	"github.com/Stride-Labs/stride/v17/x/stakeibc/types"
 )
 
 // TradeConvertedBalanceCallback is a callback handler for TradeConvertedBalance queries.

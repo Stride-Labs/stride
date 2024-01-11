@@ -4,14 +4,14 @@ import (
 	"context"
 	"fmt"
 
-	recordstypes "github.com/Stride-Labs/stride/v16/x/records/types"
-	"github.com/Stride-Labs/stride/v16/x/stakeibc/types"
+	recordstypes "github.com/Stride-Labs/stride/v17/x/records/types"
+	"github.com/Stride-Labs/stride/v17/x/stakeibc/types"
 
 	errorsmod "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
-	"github.com/Stride-Labs/stride/v16/utils"
+	"github.com/Stride-Labs/stride/v17/utils"
 )
 
 func (k msgServer) RedeemStake(goCtx context.Context, msg *types.MsgRedeemStake) (*types.MsgRedeemStakeResponse, error) {
@@ -62,11 +62,6 @@ func (k msgServer) RedeemStake(goCtx context.Context, msg *types.MsgRedeemStake)
 		return nil, errorsmod.Wrapf(types.ErrRedemptionRateOutsideSafetyBounds, errMsg)
 	}
 
-	coinString := nativeAmount.String() + stDenom
-	inCoin, err := sdk.ParseCoinNormalized(coinString)
-	if err != nil {
-		return nil, errorsmod.Wrapf(sdkerrors.ErrInvalidCoins, "could not parse inCoin: %s. err: %s", coinString, err.Error())
-	}
 	// safety checks on the coin
 	// 	- Redemption amount must be positive
 	if !nativeAmount.IsPositive() {
@@ -74,8 +69,6 @@ func (k msgServer) RedeemStake(goCtx context.Context, msg *types.MsgRedeemStake)
 	}
 	// 	- Creator owns at least "amount" stAssets
 	balance := k.bankKeeper.GetBalance(ctx, sender, stDenom)
-	k.Logger(ctx).Info(fmt.Sprintf("Redemption issuer IBCDenom balance: %v%s", balance.Amount, balance.Denom))
-	k.Logger(ctx).Info(fmt.Sprintf("Redemption requested redemotion amount: %v%s", inCoin.Amount, inCoin.Denom))
 	if balance.Amount.LT(msg.Amount) {
 		return nil, errorsmod.Wrapf(sdkerrors.ErrInvalidCoins, "balance is lower than redemption amount. redemption amount: %v, balance %v: ", msg.Amount, balance.Amount)
 	}
@@ -88,16 +81,18 @@ func (k msgServer) RedeemStake(goCtx context.Context, msg *types.MsgRedeemStake)
 		k.Logger(ctx).Info(fmt.Sprintf("UserRedemptionRecord found for %s", redemptionId))
 		// Add the unbonded amount to the UserRedemptionRecord
 		// The record is set below
+		userRedemptionRecord.StTokenAmount = userRedemptionRecord.StTokenAmount.Add(msg.Amount)
 		userRedemptionRecord.Amount = userRedemptionRecord.Amount.Add(nativeAmount)
 	} else {
 		// First time a user is redeeming this epoch
 		userRedemptionRecord = recordstypes.UserRedemptionRecord{
-			Id:          redemptionId,
-			Receiver:    msg.Receiver,
-			Amount:      nativeAmount,
-			Denom:       hostZone.HostDenom,
-			HostZoneId:  hostZone.ChainId,
-			EpochNumber: epochTracker.EpochNumber,
+			Id:            redemptionId,
+			Receiver:      msg.Receiver,
+			Amount:        nativeAmount,
+			Denom:         hostZone.HostDenom,
+			HostZoneId:    hostZone.ChainId,
+			EpochNumber:   epochTracker.EpochNumber,
+			StTokenAmount: msg.Amount,
 			// claimIsPending represents whether a redemption is currently being claimed,
 			// contingent on the host zone unbonding having status CLAIMABLE
 			ClaimIsPending: false,

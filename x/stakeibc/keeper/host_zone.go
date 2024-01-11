@@ -13,8 +13,8 @@ import (
 	errorsmod "cosmossdk.io/errors"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
-	"github.com/Stride-Labs/stride/v16/utils"
-	"github.com/Stride-Labs/stride/v16/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v17/utils"
+	"github.com/Stride-Labs/stride/v17/x/stakeibc/types"
 )
 
 const (
@@ -64,7 +64,7 @@ func (k Keeper) GetHostZoneFromHostDenom(ctx sdk.Context, denom string) (*types.
 	if matchZone.ChainId != "" {
 		return &matchZone, nil
 	}
-	return nil, errorsmod.Wrapf(sdkerrors.ErrUnknownRequest, "No HostZone for %s found", denom)
+	return nil, errorsmod.Wrapf(sdkerrors.ErrUnknownRequest, "No HostZone for %s denom found", denom)
 }
 
 // GetHostZoneFromTransferChannelID returns a HostZone from a transfer channel ID

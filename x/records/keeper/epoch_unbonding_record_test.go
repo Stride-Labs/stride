@@ -8,10 +8,10 @@ import (
 
 	sdkmath "cosmossdk.io/math"
 
-	keepertest "github.com/Stride-Labs/stride/v16/testutil/keeper"
-	"github.com/Stride-Labs/stride/v16/testutil/nullify"
-	"github.com/Stride-Labs/stride/v16/x/records/keeper"
-	"github.com/Stride-Labs/stride/v16/x/records/types"
+	keepertest "github.com/Stride-Labs/stride/v17/testutil/keeper"
+	"github.com/Stride-Labs/stride/v17/testutil/nullify"
+	"github.com/Stride-Labs/stride/v17/x/records/keeper"
+	"github.com/Stride-Labs/stride/v17/x/records/types"
 )
 
 func createNEpochUnbondingRecord(keeper *keeper.Keeper, ctx sdk.Context, n int) ([]types.EpochUnbondingRecord, map[string]types.HostZoneUnbonding) {
@@ -169,4 +169,62 @@ func TestSetHostZoneUnbondings(t *testing.T) {
 		expectedEpochUnbondingRecords,
 		actualEpochUnbondingRecord,
 	)
+}
+
+func (s *KeeperTestSuite) TestSetHostZoneUnbonding() {
+	initialAmount := sdkmath.NewInt(10)
+	updatedAmount := sdkmath.NewInt(99)
+
+	// Create two epoch unbonding records, each with two host zone unbondings
+	epochUnbondingRecords := []types.EpochUnbondingRecord{
+		{
+			EpochNumber: 1,
+			HostZoneUnbondings: []*types.HostZoneUnbonding{
+				{HostZoneId: "chain-0", NativeTokenAmount: initialAmount},
+				{HostZoneId: "chain-1", NativeTokenAmount: initialAmount},
+			},
+		},
+		{
+			EpochNumber: 2,
+			HostZoneUnbondings: []*types.HostZoneUnbonding{
+				{HostZoneId: "chain-0", NativeTokenAmount: initialAmount},
+				{HostZoneId: "chain-1", NativeTokenAmount: initialAmount},
+			},
+		},
+	}
+	for _, epochUnbondingRecord := range epochUnbondingRecords {
+		s.App.RecordsKeeper.SetEpochUnbondingRecord(s.Ctx, epochUnbondingRecord)
+	}
+
+	// Update the amount for (epoch-1, chain-0) and (epoch-2, chain-1)
+	updatedHostZoneUnbonding1 := types.HostZoneUnbonding{HostZoneId: "chain-0", NativeTokenAmount: updatedAmount}
+	err := s.App.RecordsKeeper.SetHostZoneUnbondingRecord(s.Ctx, 1, "chain-0", updatedHostZoneUnbonding1)
+	s.Require().NoError(err, "no error expected when setting amount for (epoch-1, chain-0)")
+
+	updatedHostZoneUnbonding2 := types.HostZoneUnbonding{HostZoneId: "chain-1", NativeTokenAmount: updatedAmount}
+	err = s.App.RecordsKeeper.SetHostZoneUnbondingRecord(s.Ctx, 2, "chain-1", updatedHostZoneUnbonding2)
+	s.Require().NoError(err, "no error expected when setting amount for (epoch-2, chain-1)")
+
+	// Create the mapping of expected native amounts
+	expectedAmountMapping := map[uint64]map[string]sdkmath.Int{
+		1: {
+			"chain-0": updatedAmount,
+			"chain-1": initialAmount,
+		},
+		2: {
+			"chain-0": initialAmount,
+			"chain-1": updatedAmount,
+		},
+	}
+
+	// Loop the records and check that the amounts match the updates
+	for _, epochUnbondingRecord := range s.App.RecordsKeeper.GetAllEpochUnbondingRecord(s.Ctx) {
+		s.Require().Len(epochUnbondingRecord.HostZoneUnbondings, 2, "there should be two host records per epoch record")
+
+		for _, hostZoneUnbondingRecord := range epochUnbondingRecord.HostZoneUnbondings {
+			expectedAmount := expectedAmountMapping[epochUnbondingRecord.EpochNumber][hostZoneUnbondingRecord.HostZoneId]
+			s.Require().Equal(expectedAmount.Int64(), hostZoneUnbondingRecord.NativeTokenAmount.Int64(), "updated record amount")
+		}
+	}
+
 }

@@ -19,7 +19,6 @@ import (
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 	"github.com/cosmos/gogoproto/proto"
 	icatypes "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/types"
-	ibctransfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
 	transfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
 	clienttypes "github.com/cosmos/ibc-go/v7/modules/core/02-client/types"
 	connectiontypes "github.com/cosmos/ibc-go/v7/modules/core/03-connection/types"
@@ -35,8 +34,8 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
-	"github.com/Stride-Labs/stride/v16/app"
-	"github.com/Stride-Labs/stride/v16/utils"
+	"github.com/Stride-Labs/stride/v17/app"
+	"github.com/Stride-Labs/stride/v17/utils"
 )
 
 var (
@@ -200,6 +199,7 @@ func (s *AppTestHelper) SetupIBCChains(hostChainID string) {
 
 	// Call InitGenesis on the consumer
 	s.StrideChain.App.(*app.StrideApp).GetConsumerKeeper().InitGenesis(s.StrideChain.GetContext(), &strideConsumerGenesis)
+	s.StrideChain.NextBlock()
 
 	// Update coordinator
 	s.Coordinator.Chains = map[string]*ibctesting.TestChain{
@@ -469,7 +469,7 @@ func (s *AppTestHelper) CreateAndStoreIBCDenom(baseDenom string) (ibcDenom strin
 }
 
 func (s *AppTestHelper) MarshalledICS20PacketData() sdk.AccAddress {
-	data := ibctransfertypes.FungibleTokenPacketData{}
+	data := transfertypes.FungibleTokenPacketData{}
 	return data.GetBytes()
 }
 
@@ -527,7 +527,11 @@ func (s *AppTestHelper) MockICAChannel(connectionId, channelId, owner, address s
 
 func (s *AppTestHelper) ConfirmUpgradeSucceededs(upgradeName string, upgradeHeight int64) {
 	s.Ctx = s.Ctx.WithBlockHeight(upgradeHeight - 1)
-	plan := upgradetypes.Plan{Name: upgradeName, Height: upgradeHeight}
+	plan := upgradetypes.Plan{
+		Name:   upgradeName,
+		Height: upgradeHeight,
+	}
+
 	err := s.App.UpgradeKeeper.ScheduleUpgrade(s.Ctx, plan)
 	s.Require().NoError(err)
 	_, exists := s.App.UpgradeKeeper.GetUpgradePlan(s.Ctx)

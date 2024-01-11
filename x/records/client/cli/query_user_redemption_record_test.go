@@ -14,12 +14,13 @@ import (
 
 	sdkmath "cosmossdk.io/math"
 
-	"github.com/Stride-Labs/stride/v16/testutil/network"
-	"github.com/Stride-Labs/stride/v16/testutil/nullify"
-	"github.com/Stride-Labs/stride/v16/x/records/client/cli"
-	"github.com/Stride-Labs/stride/v16/x/records/types"
+	"github.com/Stride-Labs/stride/v17/testutil/network"
+	"github.com/Stride-Labs/stride/v17/testutil/nullify"
+	"github.com/Stride-Labs/stride/v17/x/records/client/cli"
+	"github.com/Stride-Labs/stride/v17/x/records/types"
 )
 
+// TODO [cleanup] - Migrate to new CLI testing framework
 func networkWithUserRedemptionRecordObjects(t *testing.T, n int) (*network.Network, []types.UserRedemptionRecord) {
 	t.Helper()
 	cfg := network.DefaultConfig()
@@ -28,8 +29,9 @@ func networkWithUserRedemptionRecordObjects(t *testing.T, n int) (*network.Netwo
 
 	for i := 0; i < n; i++ {
 		userRedemptionRecord := types.UserRedemptionRecord{
-			Id:     strconv.Itoa(i),
-			Amount: sdkmath.NewInt(int64(i)),
+			Id:            strconv.Itoa(i),
+			Amount:        sdkmath.NewInt(int64(i)),
+			StTokenAmount: sdkmath.NewInt(int64(i)),
 		}
 		nullify.Fill(&userRedemptionRecord)
 		state.UserRedemptionRecordList = append(state.UserRedemptionRecordList, userRedemptionRecord)
