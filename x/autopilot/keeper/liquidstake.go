@@ -47,7 +47,7 @@ func (k Keeper) TryLiquidStaking(
 
 	// In this case, we can't process a liquid staking transaction, because we're dealing with native tokens (e.g. STRD, stATOM)
 	if transfertypes.ReceiverChainIsSource(packet.GetSourcePort(), packet.GetSourceChannel(), transferMetadata.Denom) {
-		return errors.New("the native token is not supported for liquid staking")
+		return fmt.Errorf("native token is not supported for liquid staking (%s)", transferMetadata.Denom)
 	}
 
 	// Note: the denom in the packet is the base denom e.g. uatom - not ibc/xxx
@@ -57,7 +57,7 @@ func (k Keeper) TryLiquidStaking(
 
 	hostZone, err := k.stakeibcKeeper.GetHostZoneFromHostDenom(ctx, transferMetadata.Denom)
 	if err != nil {
-		return fmt.Errorf("host zone not found for denom (%s)", transferMetadata.Denom)
+		return err
 	}
 
 	// Verify the IBC denom of the packet matches the host zone, to confirm the packet
@@ -137,10 +137,14 @@ func (k Keeper) IBCTransferStToken(
 		TimeoutTimestamp: timeoutTimestamp,
 		Memo:             "autopilot-liquid-stake-and-forward",
 	}
-	_, err = k.transferKeeper.Transfer(sdk.WrapSDKContext(ctx), transferMsg)
+
+	transferResponse, err := k.transferKeeper.Transfer(sdk.WrapSDKContext(ctx), transferMsg)
 	if err != nil {
 		return errorsmod.Wrapf(err, "failed to submit transfer during autopilot liquid stake and forward")
 	}
+
+	// Store the original receiver as the fallback address in case the transfer fails
+	k.SetTransferFallbackAddress(ctx, channelId, transferResponse.Sequence, autopilotMetadata.StrideAddress)
 
 	return err
 }
