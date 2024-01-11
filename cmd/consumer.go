@@ -16,6 +16,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/genutil"
 	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
 	ccvconsumertypes "github.com/cosmos/interchain-security/v3/x/ccv/consumer/types"
+	ccvtypes "github.com/cosmos/interchain-security/v3/x/ccv/types"
 	"github.com/spf13/cobra"
 
 	"github.com/Stride-Labs/stride/v16/testutil"
@@ -150,9 +151,9 @@ type GenesisData struct {
 	GenesisFile         string
 	GenDoc              *tmtypes.GenesisDoc
 	AppState            map[string]json.RawMessage
-	ConsumerModuleState *ccvconsumertypes.GenesisState
+	ConsumerModuleState *ccvtypes.ConsumerGenesisState
 }
 
-func NewGenesisData(genesisFile string, genDoc *tmtypes.GenesisDoc, appState map[string]json.RawMessage, consumerModuleState *ccvconsumertypes.GenesisState) *GenesisData {
+func NewGenesisData(genesisFile string, genDoc *tmtypes.GenesisDoc, appState map[string]json.RawMessage, consumerModuleState *ccvtypes.ConsumerGenesisState) *GenesisData {
 	return &GenesisData{GenesisFile: genesisFile, GenDoc: genDoc, AppState: appState, ConsumerModuleState: consumerModuleState}
 }
