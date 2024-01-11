@@ -6,6 +6,7 @@ import (
 
 	sdkmath "cosmossdk.io/math"
 	cometbftdb "github.com/cometbft/cometbft-db"
+	"github.com/cometbft/cometbft/abci/types"
 	abci "github.com/cometbft/cometbft/abci/types"
 	"github.com/cometbft/cometbft/crypto/secp256k1"
 	"github.com/cometbft/cometbft/libs/log"
@@ -18,12 +19,13 @@ import (
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
-	ibctesting "github.com/cosmos/interchain-security/v3/legacy_ibc_testing/testing"
+	ibctesting "github.com/cosmos/ibc-go/v7/testing"
+	appconsumer "github.com/cosmos/interchain-security/v3/app/consumer"
 	consumertypes "github.com/cosmos/interchain-security/v3/x/ccv/consumer/types"
-
-	testutil "github.com/Stride-Labs/stride/v16/testutil"
+	ccvtypes "github.com/cosmos/interchain-security/v3/x/ccv/types"
 
 	cmdcfg "github.com/Stride-Labs/stride/v16/cmd/strided/config"
+	testutil "github.com/Stride-Labs/stride/v16/testutil"
 )
 
 const Bech32Prefix = "stride"
@@ -174,7 +176,19 @@ func GenesisStateWithValSet(app *StrideApp) GenesisState {
 }
 
 // Initializes a new Stride App casted as a TestingApp for IBC support
-func InitStrideIBCTestingApp() (ibctesting.TestingApp, map[string]json.RawMessage) {
-	app := InitStrideTestApp(false)
-	return app, NewDefaultGenesisState()
+func InitStrideIBCTestingApp(initValPowers []types.ValidatorUpdate) func() (ibctesting.TestingApp, map[string]json.RawMessage) {
+	return func() (ibctesting.TestingApp, map[string]json.RawMessage) {
+		encoding := appconsumer.MakeTestEncodingConfig()
+		app := InitStrideTestApp(false)
+		genesisState := NewDefaultGenesisState()
+
+		// Feed consumer genesis with provider validators
+		var consumerGenesis ccvtypes.ConsumerGenesisState
+		encoding.Codec.MustUnmarshalJSON(genesisState[consumertypes.ModuleName], &consumerGenesis)
+		consumerGenesis.InitialValSet = initValPowers
+		consumerGenesis.Params.Enabled = true
+		genesisState[consumertypes.ModuleName] = encoding.Codec.MustMarshalJSON(&consumerGenesis)
+
+		return app, genesisState
+	}
 }

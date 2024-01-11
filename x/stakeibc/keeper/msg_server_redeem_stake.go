@@ -49,7 +49,6 @@ func (k msgServer) RedeemStake(goCtx context.Context, msg *types.MsgRedeemStake)
 
 	// construct desired unstaking amount from host zone
 	stDenom := types.StAssetDenomFromHostZoneDenom(hostZone.HostDenom)
-	// ASSUMPTION (CHECK ME): it doesn't matter that RRs can change _within_ an epoch (due to LSM)
 	nativeAmount := sdk.NewDecFromInt(msg.Amount).Mul(hostZone.RedemptionRate).RoundInt()
 
 	if nativeAmount.GT(hostZone.TotalDelegations) {
