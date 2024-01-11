@@ -226,8 +226,8 @@ func (s *UpgradeTestSuite) SetupMigrateUnbondingRecords() func() {
 	for i := 1; i <= 6; i++ {
 		mockURRId := strconv.Itoa(i)
 		mockURR := recordtypes.UserRedemptionRecord{
-			Id:     mockURRId,
-			Amount: sdkmath.NewInt(URRAmount),
+			Id:                mockURRId,
+			NativeTokenAmount: sdkmath.NewInt(URRAmount),
 		}
 		s.App.RecordsKeeper.SetUserRedemptionRecord(s.Ctx, mockURR)
 	}

@@ -329,7 +329,7 @@ func (s *UpgradeTestSuite) SetupOldRecordStore(codec codec.Codec) func() {
 		userRedemptionRecord, found := s.App.RecordsKeeper.GetUserRedemptionRecord(s.Ctx, userRedemptionRecordId)
 		s.Require().True(found, "redemption record found")
 		s.Require().Equal(userRedemptionRecord.Id, userRedemptionRecordId, "redemption record id")
-		s.Require().Equal(userRedemptionRecord.Amount, sdkmath.NewInt(1000000), "redemption record amount")
+		s.Require().Equal(userRedemptionRecord.NativeTokenAmount, sdkmath.NewInt(1000000), "redemption record amount")
 
 		epochUnbondingRecord, found := s.App.RecordsKeeper.GetEpochUnbondingRecord(s.Ctx, epochNumber)
 		s.Require().True(found, "epoch unbonding record found")

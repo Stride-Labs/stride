@@ -45,13 +45,13 @@ func (s *KeeperTestSuite) SetupClaimUndelegatedTokens() ClaimUndelegatedTestCase
 	}
 
 	redemptionRecord := recordtypes.UserRedemptionRecord{
-		Id:             redemptionRecordId,
-		HostZoneId:     HostChainId,
-		EpochNumber:    epochNumber,
-		Receiver:       receiverAddr,
-		Denom:          "uatom",
-		ClaimIsPending: false,
-		Amount:         sdkmath.NewInt(1000),
+		Id:                redemptionRecordId,
+		HostZoneId:        HostChainId,
+		EpochNumber:       epochNumber,
+		Receiver:          receiverAddr,
+		Denom:             "uatom",
+		ClaimIsPending:    false,
+		NativeTokenAmount: sdkmath.NewInt(1000),
 	}
 	redemptionAmount := sdk.NewCoins(sdk.NewCoin(redemptionRecord.Denom, sdkmath.NewInt(1000)))
 
@@ -112,7 +112,7 @@ func (s *KeeperTestSuite) TestClaimUndelegatedTokens_Successful() {
 	actualRedemptionRecord, found := s.App.RecordsKeeper.GetUserRedemptionRecord(s.Ctx, redemptionRecordId)
 	s.Require().True(found, "redemption record found")
 	s.Require().True(actualRedemptionRecord.ClaimIsPending, "redemption record should be pending")
-	s.Require().Equal(expectedRedemptionRecord.Amount, actualRedemptionRecord.Amount, "record has expected amount")
+	s.Require().Equal(expectedRedemptionRecord.NativeTokenAmount, actualRedemptionRecord.NativeTokenAmount, "record has expected amount")
 	// TODO: check callback data here
 }
 

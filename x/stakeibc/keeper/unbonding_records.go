@@ -131,7 +131,7 @@ func (k Keeper) RefreshUserRedemptionRecordNativeAmounts(
 		totalNativeAmount = totalNativeAmount.Add(nativeAmount)
 
 		// Set the native amount on the record
-		userRedemptionRecord.Amount = nativeAmount
+		userRedemptionRecord.NativeTokenAmount = nativeAmount
 		k.RecordsKeeper.SetUserRedemptionRecord(ctx, userRedemptionRecord)
 	}
 	return totalNativeAmount

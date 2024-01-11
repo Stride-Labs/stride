@@ -82,17 +82,17 @@ func (k msgServer) RedeemStake(goCtx context.Context, msg *types.MsgRedeemStake)
 		// Add the unbonded amount to the UserRedemptionRecord
 		// The record is set below
 		userRedemptionRecord.StTokenAmount = userRedemptionRecord.StTokenAmount.Add(msg.Amount)
-		userRedemptionRecord.Amount = userRedemptionRecord.Amount.Add(nativeAmount)
+		userRedemptionRecord.NativeTokenAmount = userRedemptionRecord.NativeTokenAmount.Add(nativeAmount)
 	} else {
 		// First time a user is redeeming this epoch
 		userRedemptionRecord = recordstypes.UserRedemptionRecord{
-			Id:            redemptionId,
-			Receiver:      msg.Receiver,
-			Amount:        nativeAmount,
-			Denom:         hostZone.HostDenom,
-			HostZoneId:    hostZone.ChainId,
-			EpochNumber:   epochTracker.EpochNumber,
-			StTokenAmount: msg.Amount,
+			Id:                redemptionId,
+			Receiver:          msg.Receiver,
+			NativeTokenAmount: nativeAmount,
+			Denom:             hostZone.HostDenom,
+			HostZoneId:        hostZone.ChainId,
+			EpochNumber:       epochTracker.EpochNumber,
+			StTokenAmount:     msg.Amount,
 			// claimIsPending represents whether a redemption is currently being claimed,
 			// contingent on the host zone unbonding having status CLAIMABLE
 			ClaimIsPending: false,
