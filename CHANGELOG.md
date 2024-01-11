@@ -42,6 +42,40 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <!-- GH ACTIONS TEMPLATE - INSERT NEW VERSION HERE -->
 
+## [v17.0.0](https://github.com/Stride-Labs/stride/releases/tag/v17.0.0) - 2024-01-11
+
+### On-Chain changes
+1. Fix some typos ([#962](https://github.com/Stride-Labs/stride/pull/962))
+2. Community Pool Liquid Staking - Phase 1/3 - Liquid Stake and Redeem ([#926](https://github.com/Stride-Labs/stride/pull/926))
+3. Properly Account for slash_query_in_progress in Unbondings ([#981](https://github.com/Stride-Labs/stride/pull/981))
+4. v14 cleanup ([#1017](https://github.com/Stride-Labs/stride/pull/1017))
+5. Add claim rewards ica ([#961](https://github.com/Stride-Labs/stride/pull/961))
+6. phase 2: auto-trade reward token revenue via routes in params ([#955](https://github.com/Stride-Labs/stride/pull/955))
+7. Cleanup v15 ([#950](https://github.com/Stride-Labs/stride/pull/950))
+8. removed zero error case in slash query ([#1025](https://github.com/Stride-Labs/stride/pull/1025))
+9. sort unbonding prioritization by validator capacity ([#1018](https://github.com/Stride-Labs/stride/pull/1018))
+10. add validator weight cap ([#1032](https://github.com/Stride-Labs/stride/pull/1032))
+11. whitelisted all gov proposals ([#1028](https://github.com/Stride-Labs/stride/pull/1028))
+12. Allow multiple redemptions per epoch ([#1009](https://github.com/Stride-Labs/stride/pull/1009))
+13. Refresh autopilot LS + forward ([#996](https://github.com/Stride-Labs/stride/pull/996))
+14. add RedeemStake to autopilot ([#1012](https://github.com/Stride-Labs/stride/pull/1012))
+15. upgraded to ics v3.2.0 ([#1043](https://github.com/Stride-Labs/stride/pull/1043))
+16. autopilot hashed sender ([#1038](https://github.com/Stride-Labs/stride/pull/1038))
+17. add pfm ([#889](https://github.com/Stride-Labs/stride/pull/889))
+18. autopilot fallback address ([#1039](https://github.com/Stride-Labs/stride/pull/1039))
+19. V17 upgrade handler ([#1029](https://github.com/Stride-Labs/stride/pull/1029))
+20. dynamically update user redemption records during unbonding ([#1053](https://github.com/Stride-Labs/stride/pull/1053))
+21. v17 Import Paths ([#1061](https://github.com/Stride-Labs/stride/pull/1061))
+
+### Off-Chain changes
+1. Add security instructions ([#990](https://github.com/Stride-Labs/stride/pull/990))
+2. fix typos ([#1022](https://github.com/Stride-Labs/stride/pull/1022))
+3. Bump tj-actions/changed-files from 32 to 41 in /.github/workflows ([#1040](https://github.com/Stride-Labs/stride/pull/1040))
+4. Fix rate limit integration tests ([#1042](https://github.com/Stride-Labs/stride/pull/1042))
+5. bump go 1.19 -> 1.21 ([#1052](https://github.com/Stride-Labs/stride/pull/1052))
+6. fix bug in changelog script ([#1060](https://github.com/Stride-Labs/stride/pull/1060))
+
+
 ## [v16.0.0](https://github.com/Stride-Labs/stride/releases/tag/v16.0.0) - 2023-10-14
 
 ### On-Chain changes
