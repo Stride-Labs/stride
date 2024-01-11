@@ -5,10 +5,9 @@
 # TODO [LSM]: Revert to cosmos relayer once they've merged 
 # the fix for the unbonding time query
 [submodule "deps/relayer"]
-	# Branch: sam/lsm-poc
-	# Commit: 0136134766142f133f263f3bba72d7077e7bc2c1
+	# Commit: v2.4.2
 	path = deps/relayer
-	url = https://github.com/Stride-Labs/relayer.git
+	url = https://github.com/cosmos/relayer.git
 [submodule "deps/gaia"]
 	# Commit: v12.0.0-rc0
 	path = deps/gaia
@@ -30,10 +29,9 @@
 	path = deps/evmos
 	url = https://github.com/evmos/evmos
 [submodule "deps/dydx"]
-	# TODO [DYDX]: Switch to official dydxprotocol release after ICA PR is merged
-	# Commit: fafd3a9e2083180d7f7809f5080897e714e52bec
+	# Commit: protocol/v3.0.0-rc1
 	path = deps/dydx
-	url = https://github.com/Stride-Labs/v4-chain.git
+	url = https://github.com/dydxprotocol/v4-chain.git
 [submodule "deps/noble"]
 	# Commit: v3.1.0
 	path = deps/noble
