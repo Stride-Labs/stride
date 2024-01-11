@@ -8,6 +8,7 @@ import (
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	icatypes "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/types"
+	ibctesting "github.com/cosmos/ibc-go/v7/testing"
 	"github.com/stretchr/testify/suite"
 
 	icqtypes "github.com/Stride-Labs/stride/v16/x/interchainquery/types"
@@ -22,7 +23,6 @@ import (
 )
 
 const (
-	GaiaChainId      = "cosmoshub-4"
 	SommelierChainId = "sommelier-3"
 
 	Atom = "uatom"
@@ -71,22 +71,30 @@ func TestKeeperTestSuite(t *testing.T) {
 func (s *UpgradeTestSuite) TestUpgrade() {
 	dummyUpgradeHeight := int64(5)
 
+	// Create the gaia delegation channel
+	owner := stakeibctypes.FormatHostZoneICAOwner(v17.GaiaChainId, stakeibctypes.ICAAccountType_DELEGATION)
+	channelId, portId := s.CreateICAChannel(owner)
+
 	// Setup store before upgrade
 	checkHostZonesAfterUpgrade := s.SetupHostZonesBeforeUpgrade()
+	checkMigrateUnbondingRecords := s.SetupMigrateUnbondingRecords()
 	checkRateLimitsAfterUpgrade := s.SetupRateLimitsBeforeUpgrade()
 	checkCommunityPoolTaxAfterUpgrade := s.SetupCommunityPoolTaxBeforeUpgrade()
 	checkQueriesAfterUpgrade := s.SetupQueriesBeforeUpgrade()
-	checkMigrateUnbondingRecords := s.SetupMigrateUnbondingRecords()
+	checkDisableTokenizationICASubmitted := s.SetupTestDisableTokenization(channelId, portId)
+	checkProp225AfterUpgrade := s.SetupProp225BeforeUpgrade()
 
 	// Submit upgrade and confirm handler succeeds
 	s.ConfirmUpgradeSucceededs("v17", dummyUpgradeHeight)
 
 	// Check state after upgrade
 	checkHostZonesAfterUpgrade()
+	checkMigrateUnbondingRecords()
 	checkRateLimitsAfterUpgrade()
 	checkCommunityPoolTaxAfterUpgrade()
 	checkQueriesAfterUpgrade()
-	checkMigrateUnbondingRecords()
+	checkDisableTokenizationICASubmitted()
+	checkProp225AfterUpgrade()
 }
 
 // Helper function to check that the community pool stake and redeem holding
@@ -128,9 +136,9 @@ func (s *UpgradeTestSuite) checkCommunityPoolICAAccountsRegistered(chainId strin
 func (s *UpgradeTestSuite) SetupHostZonesBeforeUpgrade() func() {
 	hostZones := []stakeibctypes.HostZone{
 		{
-			ChainId:      GaiaChainId,
+			ChainId:      v17.GaiaChainId,
 			HostDenom:    Atom,
-			ConnectionId: "connection-1",
+			ConnectionId: ibctesting.FirstConnectionID, // must be connection-0 since an ICA will be submitted
 			Validators: []*stakeibctypes.Validator{
 				{Address: "val1", SlashQueryInProgress: false},
 				{Address: "val2", SlashQueryInProgress: true},
@@ -171,14 +179,14 @@ func (s *UpgradeTestSuite) SetupHostZonesBeforeUpgrade() func() {
 	// Return callback to check store after upgrade
 	return func() {
 		// Check that the module and ICA accounts were registered
-		s.checkCommunityPoolModuleAccountsRegistered(GaiaChainId)
+		s.checkCommunityPoolModuleAccountsRegistered(v17.GaiaChainId)
 		s.checkCommunityPoolModuleAccountsRegistered(v17.OsmosisChainId)
 
-		s.checkCommunityPoolICAAccountsRegistered(GaiaChainId)
+		s.checkCommunityPoolICAAccountsRegistered(v17.GaiaChainId)
 		s.checkCommunityPoolICAAccountsRegistered(v17.OsmosisChainId)
 
 		// Check that the redemption rate bounds were set
-		gaiaHostZone, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx, GaiaChainId)
+		gaiaHostZone, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx, v17.GaiaChainId)
 		s.Require().True(found)
 
 		s.Require().Equal(sdk.MustNewDecFromStr("1.045"), gaiaHostZone.MinRedemptionRate, "gaia min outer") // 1.1 - 5% = 1.045
@@ -199,6 +207,128 @@ func (s *UpgradeTestSuite) SetupHostZonesBeforeUpgrade() func() {
 	}
 }
 
+func (s *UpgradeTestSuite) SetupMigrateUnbondingRecords() func() {
+	// Create EURs for two host zones
+	// 2 HZU on each host zone will trigger URR updates
+	//   - UNBONDING_QUEUE
+	//   - UNBONDING_IN_PROGRESS
+	//   - EXIT_TRANSFER_QUEUE
+	//   - EXIT_TRANSFER_IN_PROGRESS
+	// 2 HZU on each host zone will not trigger URR updates
+	//   - 1 HZU has 0 NativeTokenAmount
+	//   - 1 HZU has status CLAIMABLE
+
+	nativeTokenAmount := int64(2000000)
+	stTokenAmount := int64(1000000)
+	URRAmount := int64(500)
+
+	// create mockURRIds 1 through 6 and store the URRs
+	for i := 1; i <= 6; i++ {
+		mockURRId := strconv.Itoa(i)
+		mockURR := recordtypes.UserRedemptionRecord{
+			Id:     mockURRId,
+			Amount: sdkmath.NewInt(URRAmount),
+		}
+		s.App.RecordsKeeper.SetUserRedemptionRecord(s.Ctx, mockURR)
+	}
+
+	epochUnbondingRecord := recordtypes.EpochUnbondingRecord{
+		EpochNumber: 1,
+		HostZoneUnbondings: []*recordtypes.HostZoneUnbonding{
+			// HZUs that will trigger URR updates
+			{
+				HostZoneId:            v17.GaiaChainId,
+				NativeTokenAmount:     sdkmath.NewInt(nativeTokenAmount),
+				StTokenAmount:         sdkmath.NewInt(stTokenAmount),
+				Status:                recordtypes.HostZoneUnbonding_UNBONDING_QUEUE,
+				UserRedemptionRecords: []string{"1"},
+			},
+			{
+				HostZoneId:            SommelierChainId,
+				NativeTokenAmount:     sdkmath.NewInt(nativeTokenAmount),
+				StTokenAmount:         sdkmath.NewInt(stTokenAmount),
+				Status:                recordtypes.HostZoneUnbonding_EXIT_TRANSFER_QUEUE,
+				UserRedemptionRecords: []string{"2"},
+			},
+		},
+	}
+	epochUnbondingRecord2 := recordtypes.EpochUnbondingRecord{
+		EpochNumber: 2,
+		HostZoneUnbondings: []*recordtypes.HostZoneUnbonding{
+			// HZUs that will trigger URR updates
+			{
+				HostZoneId:            v17.GaiaChainId,
+				NativeTokenAmount:     sdkmath.NewInt(nativeTokenAmount),
+				StTokenAmount:         sdkmath.NewInt(stTokenAmount),
+				Status:                recordtypes.HostZoneUnbonding_UNBONDING_IN_PROGRESS,
+				UserRedemptionRecords: []string{"3"},
+			},
+			{
+				HostZoneId:            SommelierChainId,
+				NativeTokenAmount:     sdkmath.NewInt(nativeTokenAmount),
+				StTokenAmount:         sdkmath.NewInt(stTokenAmount),
+				Status:                recordtypes.HostZoneUnbonding_EXIT_TRANSFER_IN_PROGRESS,
+				UserRedemptionRecords: []string{"4"},
+			},
+		},
+	}
+	epochUnbondingRecord3 := recordtypes.EpochUnbondingRecord{
+		EpochNumber: 3,
+		HostZoneUnbondings: []*recordtypes.HostZoneUnbonding{
+			// HZUs that will not trigger URR updates
+			{
+				HostZoneId: v17.GaiaChainId,
+				// Will not trigger update because NativeTokenAmount is 0
+				NativeTokenAmount:     sdkmath.NewInt(0),
+				StTokenAmount:         sdkmath.NewInt(stTokenAmount),
+				Status:                recordtypes.HostZoneUnbonding_UNBONDING_QUEUE,
+				UserRedemptionRecords: []string{"5"},
+			},
+			{
+				HostZoneId:        v17.GaiaChainId,
+				NativeTokenAmount: sdkmath.NewInt(nativeTokenAmount),
+				StTokenAmount:     sdkmath.NewInt(stTokenAmount),
+				// Will not trigger update because status is CLAIMABLE
+				Status:                recordtypes.HostZoneUnbonding_CLAIMABLE,
+				UserRedemptionRecords: []string{"6"},
+			},
+		},
+	}
+	s.App.RecordsKeeper.SetEpochUnbondingRecord(s.Ctx, epochUnbondingRecord)
+	s.App.RecordsKeeper.SetEpochUnbondingRecord(s.Ctx, epochUnbondingRecord2)
+	s.App.RecordsKeeper.SetEpochUnbondingRecord(s.Ctx, epochUnbondingRecord3)
+
+	return func() {
+		// conversionRate is stTokenAmount / nativeTokenAmount
+		conversionRate := sdk.NewDec(stTokenAmount).Quo(sdk.NewDec(nativeTokenAmount))
+		expectedConversionRate := sdk.MustNewDecFromStr("0.5")
+		s.Require().Equal(expectedConversionRate, conversionRate, "expected conversion rate (1/redemption rate)")
+
+		// stTokenAmount is conversionRate * URRAmount
+		stTokenAmount := conversionRate.Mul(sdk.NewDec(URRAmount)).RoundInt()
+		expectedStTokenAmount := sdkmath.NewInt(250)
+		s.Require().Equal(stTokenAmount, expectedStTokenAmount, "expected st token amount")
+
+		// Verify URR stToken amounts are set correctly for records 1 through 4
+		for i := 1; i <= 4; i++ {
+			mockURRId := strconv.Itoa(i)
+			mockURR, found := s.App.RecordsKeeper.GetUserRedemptionRecord(s.Ctx, mockURRId)
+			s.Require().True(found)
+			s.Require().Equal(expectedStTokenAmount, mockURR.StTokenAmount, "URR %s - st token amount", mockURRId)
+		}
+
+		// Verify URRs with status CLAIMABLE are skipped (record 5)
+		// Verify HZUs with 0 NativeTokenAmount are skipped (record 6)
+		for i := 5; i <= 6; i++ {
+			mockURRId := strconv.Itoa(i)
+			mockURR, found := s.App.RecordsKeeper.GetUserRedemptionRecord(s.Ctx, mockURRId)
+			s.Require().True(found)
+			// verify the amount was not updated
+			s.Require().Equal(sdk.NewInt(0), mockURR.StTokenAmount, "URR %s - st token amount", mockURRId)
+		}
+	}
+}
+
 func (s *UpgradeTestSuite) SetupRateLimitsBeforeUpgrade() func() {
 	gaiaChannelId := "channel-0"
 
@@ -207,16 +337,16 @@ func (s *UpgradeTestSuite) SetupRateLimitsBeforeUpgrade() func() {
 	initialChannelValue := sdkmath.NewInt(100)
 	updatedChannelValue := sdkmath.NewInt(200)
 
-	ratesLimits := []AddRateLimits{
+	rateLimits := []AddRateLimits{
 		{
 			// Gaia rate limit
-			// Treshold should be updated, new gaia RL added
+			// Threshold should be updated, new gaia RL added
 			Denom:     StAtom,
 			ChannelId: gaiaChannelId,
 		},
 		{
 			// Osmo rate limit
-			// Treshold should be updated, no new RL added
+			// Threshold should be updated, no new RL added
 			Denom:     StOsmo,
 			ChannelId: v17.OsmosisTransferChannelId,
 		},
@@ -230,7 +360,7 @@ func (s *UpgradeTestSuite) SetupRateLimitsBeforeUpgrade() func() {
 
 	// Add rate limits
 	// No need to register host zones since they're initialized in the setup host zone function
-	for _, rateLimit := range ratesLimits {
+	for _, rateLimit := range rateLimits {
 		s.App.RatelimitKeeper.SetRateLimit(s.Ctx, ratelimittypes.RateLimit{
 			Path: &ratelimittypes.Path{
 				Denom:     rateLimit.Denom,
@@ -276,7 +406,7 @@ func (s *UpgradeTestSuite) SetupRateLimitsBeforeUpgrade() func() {
 		stAtomToGaiaRateLimit, found := s.App.RatelimitKeeper.GetRateLimit(s.Ctx, StAtom, gaiaChannelId)
 		s.Require().True(found)
 
-		atomThreshold := v17.UpdatedRateLimits[GaiaChainId]
+		atomThreshold := v17.UpdatedRateLimits[v17.GaiaChainId]
 		s.Require().Equal(atomThreshold, stAtomToGaiaRateLimit.Quota.MaxPercentSend, "statom -> gaia max percent send")
 		s.Require().Equal(atomThreshold, stAtomToGaiaRateLimit.Quota.MaxPercentRecv, "statom -> gaia max percent recv")
 		s.Require().Equal(initialFlow, stAtomToGaiaRateLimit.Flow.Outflow, "statom -> gaia outflow")
@@ -343,6 +473,46 @@ func (s *UpgradeTestSuite) SetupQueriesBeforeUpgrade() func() {
 		// Confirm the other query is still there
 		_, found = s.App.InterchainqueryKeeper.GetQuery(s.Ctx, "query-2")
 		s.Require().True(found, "non-slash query should not have been removed")
+	}
+}
+
+func (s *UpgradeTestSuite) SetupTestDisableTokenization(channelId, portId string) func() {
+	// Get the current sequence number (to check that it incremented)
+	startSequence := s.MustGetNextSequenceNumber(portId, channelId)
+
+	// Return callback to that the ICA was submitted
+	return func() {
+		endSequence := s.MustGetNextSequenceNumber(portId, channelId)
+		s.Require().Equal(startSequence+1, endSequence, "sequence number should have incremented from disabling detokenization")
+	}
+}
+
+func (s *UpgradeTestSuite) SetupProp225BeforeUpgrade() func() {
+	// Grab the community pool growth address and balance
+	communityPoolGrowthAddress := sdk.MustAccAddressFromBech32(v17.CommunityPoolGrowthAddress)
+	// Set the balance to 3x the amount that will be transferred
+	newCoin := sdk.NewCoin(v17.Ustrd, v17.Prop225TransferAmount.MulRaw(3))
+	s.FundAccount(communityPoolGrowthAddress, newCoin)
+	originalCommunityGrowthBalance := s.App.BankKeeper.GetBalance(s.Ctx, communityPoolGrowthAddress, v17.Ustrd)
+
+	// Grab the liquidity receiver address and balance
+	liquidityReceiverAddress := sdk.MustAccAddressFromBech32(v17.LiquidityReceiver)
+	originalLiquidityReceiverBalance := s.App.BankKeeper.GetBalance(s.Ctx, liquidityReceiverAddress, v17.Ustrd)
+
+	// grab how much we want to transfer
+	transferAmount := v17.Prop225TransferAmount.Int64()
+
+	// Return callback to check store after upgrade
+	return func() {
+		// verify funds left community growth
+		newCommunityGrowthBalance := s.App.BankKeeper.GetBalance(s.Ctx, communityPoolGrowthAddress, v17.Ustrd)
+		communityGrowthBalanceChange := originalCommunityGrowthBalance.Sub(newCommunityGrowthBalance)
+		s.Require().Equal(transferAmount, communityGrowthBalanceChange.Amount.Int64(), "community growth decreased by correct amount")
+
+		// verify funds entered liquidity custodian
+		newLiquidityCustodianBalance := s.App.BankKeeper.GetBalance(s.Ctx, liquidityReceiverAddress, v17.Ustrd)
+		liquidityCustodianBalanceChange := newLiquidityCustodianBalance.Sub(originalLiquidityReceiverBalance).Amount.Int64()
+		s.Require().Equal(transferAmount, liquidityCustodianBalanceChange, "custodian balance increased by correct amount")
 	}
 }
 
@@ -444,7 +614,7 @@ func (s *UpgradeTestSuite) TestResetSlashQueryInProgress() {
 	}
 }
 
-func (s *UpgradeTestSuite) TestIncreaseCommunityPoolTax() {
+func (s *UpgradeTestSuite) TestExecuteProp223() {
 	// Set initial community pool tax to 2%
 	initialTax := sdk.MustNewDecFromStr("0.02")
 	params := s.App.DistrKeeper.GetParams(s.Ctx)
@@ -453,7 +623,7 @@ func (s *UpgradeTestSuite) TestIncreaseCommunityPoolTax() {
 	s.Require().NoError(err, "no error expected when setting params")
 
 	// Increase the tax
-	err = v17.IncreaseCommunityPoolTax(s.Ctx, s.App.DistrKeeper)
+	err = v17.ExecuteProp223(s.Ctx, s.App.DistrKeeper)
 	s.Require().NoError(err, "no error expected when increasing community pool tax")
 
 	// Confirm it increased
@@ -528,7 +698,7 @@ func (s *UpgradeTestSuite) TestUpdateRateLimitThresholds() {
 			ChannelId:      "channel-1",
 			HostDenom:      "uosmo",
 			RateLimitDenom: "stuosmo",
-			Duration:       15,
+			Duration:       20,
 			Threshold:      sdkmath.NewInt(15),
 		},
 		"juno": {
@@ -699,124 +869,18 @@ func (s *UpgradeTestSuite) TestAddRateLimitToOsmosis() {
 	s.Require().ErrorContains(err, "channel value is zero")
 }
 
-func (s *UpgradeTestSuite) SetupMigrateUnbondingRecords() func() {
-	// Create EURs for two host zones
-	// 2 HZU on each host zone will trigger URR updates
-	//   - UNBONDING_QUEUE
-	//   - UNBONDING_IN_PROGRESS
-	//   - EXIT_TRANSFER_QUEUE
-	//   - EXIT_TRANSFER_IN_PROGRESS
-	// 2 HZU on each host zone will not trigger URR updates
-	//   - 1 HZU has 0 NativeTokenAmount
-	//   - 1 HZU has status CLAIMABLE
+func (s *UpgradeTestSuite) TestDisableTokenization() {
+	// Create the host zone and delegation channel
+	owner := stakeibctypes.FormatHostZoneICAOwner(v17.GaiaChainId, stakeibctypes.ICAAccountType_DELEGATION)
+	channelId, portId := s.CreateICAChannel(owner)
 
-	nativeTokenAmount := int64(2000000)
-	stTokenAmount := int64(1000000)
-	URRAmount := int64(500)
+	s.App.StakeibcKeeper.SetHostZone(s.Ctx, stakeibctypes.HostZone{
+		ChainId:      v17.GaiaChainId,
+		ConnectionId: ibctesting.FirstConnectionID,
+	})
 
-	// create mockURRIds 1 through 6 and store the URRs
-	for i := 1; i <= 6; i++ {
-		mockURRId := strconv.Itoa(i)
-		mockURR := recordtypes.UserRedemptionRecord{
-			Id:     mockURRId,
-			Amount: sdkmath.NewInt(URRAmount),
-		}
-		s.App.RecordsKeeper.SetUserRedemptionRecord(s.Ctx, mockURR)
-	}
-
-	epochUnbondingRecord := recordtypes.EpochUnbondingRecord{
-		EpochNumber: 1,
-		HostZoneUnbondings: []*recordtypes.HostZoneUnbonding{
-			// HZUs that will trigger URR updates
-			{
-				HostZoneId:            GaiaChainId,
-				NativeTokenAmount:     sdkmath.NewInt(nativeTokenAmount),
-				StTokenAmount:         sdkmath.NewInt(stTokenAmount),
-				Status:                recordtypes.HostZoneUnbonding_UNBONDING_QUEUE,
-				UserRedemptionRecords: []string{"1"},
-			},
-			{
-				HostZoneId:            SommelierChainId,
-				NativeTokenAmount:     sdkmath.NewInt(nativeTokenAmount),
-				StTokenAmount:         sdkmath.NewInt(stTokenAmount),
-				Status:                recordtypes.HostZoneUnbonding_EXIT_TRANSFER_QUEUE,
-				UserRedemptionRecords: []string{"2"},
-			},
-		},
-	}
-	epochUnbondingRecord2 := recordtypes.EpochUnbondingRecord{
-		EpochNumber: 2,
-		HostZoneUnbondings: []*recordtypes.HostZoneUnbonding{
-			// HZUs that will trigger URR updates
-			{
-				HostZoneId:            GaiaChainId,
-				NativeTokenAmount:     sdkmath.NewInt(nativeTokenAmount),
-				StTokenAmount:         sdkmath.NewInt(stTokenAmount),
-				Status:                recordtypes.HostZoneUnbonding_UNBONDING_IN_PROGRESS,
-				UserRedemptionRecords: []string{"3"},
-			},
-			{
-				HostZoneId:            SommelierChainId,
-				NativeTokenAmount:     sdkmath.NewInt(nativeTokenAmount),
-				StTokenAmount:         sdkmath.NewInt(stTokenAmount),
-				Status:                recordtypes.HostZoneUnbonding_EXIT_TRANSFER_IN_PROGRESS,
-				UserRedemptionRecords: []string{"4"},
-			},
-		},
-	}
-	epochUnbondingRecord3 := recordtypes.EpochUnbondingRecord{
-		EpochNumber: 3,
-		HostZoneUnbondings: []*recordtypes.HostZoneUnbonding{
-			// HZUs that will not trigger URR updates
-			{
-				HostZoneId: GaiaChainId,
-				// Will not trigger update because NativeTokenAmount is 0
-				NativeTokenAmount:     sdkmath.NewInt(0),
-				StTokenAmount:         sdkmath.NewInt(stTokenAmount),
-				Status:                recordtypes.HostZoneUnbonding_UNBONDING_QUEUE,
-				UserRedemptionRecords: []string{"5"},
-			},
-			{
-				HostZoneId:        GaiaChainId,
-				NativeTokenAmount: sdkmath.NewInt(nativeTokenAmount),
-				StTokenAmount:     sdkmath.NewInt(stTokenAmount),
-				// Will not trigger update because status is CLAIMABLE
-				Status:                recordtypes.HostZoneUnbonding_CLAIMABLE,
-				UserRedemptionRecords: []string{"6"},
-			},
-		},
-	}
-	s.App.RecordsKeeper.SetEpochUnbondingRecord(s.Ctx, epochUnbondingRecord)
-	s.App.RecordsKeeper.SetEpochUnbondingRecord(s.Ctx, epochUnbondingRecord2)
-	s.App.RecordsKeeper.SetEpochUnbondingRecord(s.Ctx, epochUnbondingRecord3)
-
-	return func() {
-		// conversionRate is stTokenAmount / nativeTokenAmount
-		conversionRate := sdk.NewDec(stTokenAmount).Quo(sdk.NewDec(nativeTokenAmount))
-		expectedConversionRate := sdk.MustNewDecFromStr("0.5")
-		s.Require().Equal(expectedConversionRate, conversionRate, "expected conversion rate (1/redemption rate)")
-
-		// stTokenAmount is conversionRate * URRAmount
-		stTokenAmount := conversionRate.Mul(sdk.NewDec(URRAmount)).RoundInt()
-		expectedStTokenAmount := sdkmath.NewInt(250)
-		s.Require().Equal(stTokenAmount, expectedStTokenAmount, "expected st token amount")
-
-		// Verify URR stToken amounts are set correctly for records 1 through 4
-		for i := 1; i <= 4; i++ {
-			mockURRId := strconv.Itoa(i)
-			mockURR, found := s.App.RecordsKeeper.GetUserRedemptionRecord(s.Ctx, mockURRId)
-			s.Require().True(found)
-			s.Require().Equal(expectedStTokenAmount, mockURR.StTokenAmount, "URR %s - st token amount", mockURRId)
-		}
-
-		// Verify URRs with status CLAIMABLE are skipped (record 5)
-		// Verify HZUs with 0 NativeTokenAmount are skipped (record 6)
-		for i := 5; i <= 6; i++ {
-			mockURRId := strconv.Itoa(i)
-			mockURR, found := s.App.RecordsKeeper.GetUserRedemptionRecord(s.Ctx, mockURRId)
-			s.Require().True(found)
-			// verify the amount was not updated
-			s.Require().Equal(sdk.NewInt(0), mockURR.StTokenAmount, "URR %s - st token amount", mockURRId)
-		}
-	}
+	// Call the disable function and confirm the sequence number incremented (indicating an ICA was submitted)
+	s.CheckICATxSubmitted(portId, channelId, func() error {
+		return v17.DisableTokenization(s.Ctx, s.App.StakeibcKeeper, v17.GaiaChainId)
+	})
 }

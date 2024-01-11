@@ -102,8 +102,8 @@ import (
 	ibcclienttypes "github.com/cosmos/ibc-go/v7/modules/core/02-client/types"
 	ibchost "github.com/cosmos/ibc-go/v7/modules/core/exported"
 	ibckeeper "github.com/cosmos/ibc-go/v7/modules/core/keeper"
-	ibctesting "github.com/cosmos/interchain-security/v3/legacy_ibc_testing/testing"
-	ccvstaking "github.com/cosmos/interchain-security/v3/x/ccv/democracy/staking"
+	ibctesting "github.com/cosmos/ibc-go/v7/testing"
+	ibctestingtypes "github.com/cosmos/ibc-go/v7/testing/types"
 	"github.com/spf13/cast"
 
 	ica "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts"
@@ -154,9 +154,12 @@ import (
 	ccvconsumer "github.com/cosmos/interchain-security/v3/x/ccv/consumer"
 	ccvconsumerkeeper "github.com/cosmos/interchain-security/v3/x/ccv/consumer/keeper"
 	ccvconsumertypes "github.com/cosmos/interchain-security/v3/x/ccv/consumer/types"
+	ccvstaking "github.com/cosmos/interchain-security/v3/x/ccv/democracy/staking"
 
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
-	"github.com/cosmos/interchain-security/v3/legacy_ibc_testing/core"
+	"github.com/cosmos/ibc-apps/middleware/packet-forward-middleware/v7/packetforward"
+	packetforwardkeeper "github.com/cosmos/ibc-apps/middleware/packet-forward-middleware/v7/packetforward/keeper"
+	packetforwardtypes "github.com/cosmos/ibc-apps/middleware/packet-forward-middleware/v7/packetforward/types"
 )
 
 const (
@@ -225,6 +228,7 @@ var (
 		autopilot.AppModuleBasic{},
 		icaoracle.AppModuleBasic{},
 		tendermint.AppModuleBasic{},
+		packetforward.AppModuleBasic{},
 		evmosvesting.AppModuleBasic{},
 	)
 
@@ -302,6 +306,7 @@ type StrideApp struct {
 	ICAHostKeeper       icahostkeeper.Keeper
 	ConsumerKeeper      ccvconsumerkeeper.Keeper
 	AutopilotKeeper     autopilotkeeper.Keeper
+	PacketForwardKeeper *packetforwardkeeper.Keeper
 
 	// make scoped keepers public for test purposes
 	ScopedIBCKeeper      capabilitykeeper.ScopedKeeper
@@ -369,6 +374,7 @@ func NewStrideApp(
 		ccvconsumertypes.StoreKey,
 		crisistypes.StoreKey,
 		consensusparamtypes.StoreKey,
+		packetforwardtypes.StoreKey,
 		evmosvestingtypes.StoreKey,
 	)
 	tkeys := sdk.NewTransientStoreKeys(paramstypes.TStoreKey)
@@ -473,22 +479,38 @@ func NewStrideApp(
 		app.GetSubspace(ratelimitmoduletypes.ModuleName),
 		app.BankKeeper,
 		app.IBCKeeper.ChannelKeeper,
-		// TODO: Implement ICS4Wrapper in Records and pass records keeper here
 		app.IBCKeeper.ChannelKeeper, // ICS4Wrapper
 	)
 	ratelimitModule := ratelimitmodule.NewAppModule(appCodec, app.RatelimitKeeper)
+
+	// Initialize the packet forward middleware Keeper
+	// It's important to note that the PFM Keeper must be initialized before the Transfer Keeper
+	app.PacketForwardKeeper = packetforwardkeeper.NewKeeper(
+		appCodec,
+		keys[packetforwardtypes.StoreKey],
+		nil, // will be zero-value here, reference is set later on with SetTransferKeeper.
+		app.IBCKeeper.ChannelKeeper,
+		app.DistrKeeper,
+		app.BankKeeper,
+		app.RatelimitKeeper, // ICS4Wrapper
+		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
+	)
 
 	// Create Transfer Keepers
 	app.TransferKeeper = ibctransferkeeper.NewKeeper(
 		appCodec, keys[ibctransfertypes.StoreKey],
 		app.GetSubspace(ibctransfertypes.ModuleName),
-		app.RatelimitKeeper, // ICS4Wrapper
+		app.PacketForwardKeeper, // ICS4Wrapper
 		app.IBCKeeper.ChannelKeeper,
 		&app.IBCKeeper.PortKeeper,
 		app.AccountKeeper,
 		app.BankKeeper,
 		scopedTransferKeeper,
 	)
+
+	// Set the TransferKeeper reference in the PacketForwardKeeper
+	app.PacketForwardKeeper.SetTransferKeeper(app.TransferKeeper)
+
 	transferModule := transfer.NewAppModule(app.TransferKeeper)
 	transferIBCModule := transfer.NewIBCModule(app.TransferKeeper)
 
@@ -613,6 +635,7 @@ func NewStrideApp(
 		appCodec,
 		keys[autopilottypes.StoreKey],
 		app.GetSubspace(autopilottypes.ModuleName),
+		app.BankKeeper,
 		app.StakeibcKeeper,
 		app.ClaimKeeper,
 		app.TransferKeeper,
@@ -702,14 +725,27 @@ func NewStrideApp(
 	icacallbacksStack = icaoracle.NewIBCMiddleware(icacallbacksStack, app.ICAOracleKeeper)
 	icacallbacksStack = icacontroller.NewIBCMiddleware(icacallbacksStack, app.ICAControllerKeeper)
 
+	// SendPacket originates from the base app and work up the stack to core IBC
+	// RecvPacket originates from core IBC and goes down the stack
+
 	// Stack three contains
-	// - IBC
+	// - core ibc
 	// - autopilot
 	// - records
 	// - ratelimit
+	// - pfm
 	// - transfer
 	// - base app
+	// Note: Traffic up the stack does not pass through records or autopilot,
+	// as defined via the ICS4Wrappers of each keeper
 	var transferStack porttypes.IBCModule = transferIBCModule
+	transferStack = packetforward.NewIBCMiddleware(
+		transferStack,
+		app.PacketForwardKeeper,
+		0, // retries on timeout
+		packetforwardkeeper.DefaultForwardTransferPacketTimeoutTimestamp, // forward timeout
+		packetforwardkeeper.DefaultRefundTransferPacketTimeoutTimestamp,  // refund timeout
+	)
 	transferStack = ratelimitmodule.NewIBCMiddleware(app.RatelimitKeeper, transferStack)
 	transferStack = recordsmodule.NewIBCModule(app.RecordsKeeper, transferStack)
 	transferStack = autopilot.NewIBCModule(app.AutopilotKeeper, transferStack)
@@ -761,6 +797,8 @@ func NewStrideApp(
 		ibc.NewAppModule(app.IBCKeeper),
 		params.NewAppModule(app.ParamsKeeper),
 		claim.NewAppModule(appCodec, app.ClaimKeeper),
+		// technically, app.GetSubspace(packetforwardtypes.ModuleName) will never be run https://github.com/cosmos/ibc-apps/issues/146#issuecomment-1839242144
+		packetforward.NewAppModule(app.PacketForwardKeeper, app.GetSubspace(packetforwardtypes.ModuleName)),
 		transferModule,
 		// monitoringModule,
 		stakeibcModule,
@@ -812,6 +850,7 @@ func NewStrideApp(
 		autopilottypes.ModuleName,
 		icaoracletypes.ModuleName,
 		consensusparamtypes.ModuleName,
+		packetforwardtypes.ModuleName,
 	)
 
 	app.mm.SetOrderEndBlockers(
@@ -847,6 +886,7 @@ func NewStrideApp(
 		autopilottypes.ModuleName,
 		icaoracletypes.ModuleName,
 		consensusparamtypes.ModuleName,
+		packetforwardtypes.ModuleName,
 	)
 
 	// NOTE: The genutils module must occur after staking so that pools are
@@ -887,6 +927,7 @@ func NewStrideApp(
 		autopilottypes.ModuleName,
 		icaoracletypes.ModuleName,
 		consensusparamtypes.ModuleName,
+		packetforwardtypes.ModuleName,
 	)
 
 	app.mm.RegisterInvariants(app.CrisisKeeper)
@@ -970,7 +1011,7 @@ func (app *StrideApp) Name() string { return app.BaseApp.Name() }
 func (app *StrideApp) GetBaseApp() *baseapp.BaseApp { return app.BaseApp }
 
 // GetStakingKeeper implements the TestingApp interface.
-func (app *StrideApp) GetStakingKeeper() core.StakingKeeper {
+func (app *StrideApp) GetStakingKeeper() ibctestingtypes.StakingKeeper {
 	return app.StakingKeeper
 }
 
@@ -1159,6 +1200,7 @@ func initParamsKeeper(appCodec codec.BinaryCodec, legacyAmino *codec.LegacyAmino
 	paramsKeeper.Subspace(icacallbacksmoduletypes.ModuleName)
 	paramsKeeper.Subspace(ccvconsumertypes.ModuleName)
 	paramsKeeper.Subspace(autopilottypes.ModuleName)
+	paramsKeeper.Subspace(packetforwardtypes.ModuleName).WithKeyTable(packetforwardtypes.ParamKeyTable())
 	paramsKeeper.Subspace(icaoracletypes.ModuleName)
 	paramsKeeper.Subspace(claimtypes.ModuleName)
 	return paramsKeeper

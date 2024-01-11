@@ -10,6 +10,7 @@ import (
 	consensustypes "github.com/cosmos/cosmos-sdk/x/consensus/types"
 	crisistypes "github.com/cosmos/cosmos-sdk/x/crisis/types"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
+	packetforwardtypes "github.com/cosmos/ibc-apps/middleware/packet-forward-middleware/v7/packetforward/types"
 	consumertypes "github.com/cosmos/interchain-security/v3/x/ccv/consumer/types"
 	evmosvestingtypes "github.com/evmos/vesting/x/vesting/types"
 
@@ -223,6 +224,7 @@ func (app *StrideApp) setupUpgradeHandlers(appOpts servertypes.AppOptions) {
 		v17.CreateUpgradeHandler(
 			app.mm,
 			app.configurator,
+			app.BankKeeper,
 			app.DistrKeeper,
 			app.InterchainqueryKeeper,
 			app.RatelimitKeeper,
@@ -269,6 +271,11 @@ func (app *StrideApp) setupUpgradeHandlers(appOpts servertypes.AppOptions) {
 	case "v14":
 		storeUpgrades = &storetypes.StoreUpgrades{
 			Added: []string{evmosvestingtypes.ModuleName},
+		}
+	case "v17":
+		storeUpgrades = &storetypes.StoreUpgrades{
+			// Add PFM store key
+			Added: []string{packetforwardtypes.ModuleName},
 		}
 	}
 

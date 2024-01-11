@@ -64,7 +64,7 @@ func (k Keeper) GetHostZoneFromHostDenom(ctx sdk.Context, denom string) (*types.
 	if matchZone.ChainId != "" {
 		return &matchZone, nil
 	}
-	return nil, errorsmod.Wrapf(sdkerrors.ErrUnknownRequest, "No HostZone for %s found", denom)
+	return nil, errorsmod.Wrapf(sdkerrors.ErrUnknownRequest, "No HostZone for %s denom found", denom)
 }
 
 // GetHostZoneFromTransferChannelID returns a HostZone from a transfer channel ID
