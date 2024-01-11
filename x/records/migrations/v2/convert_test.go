@@ -123,11 +123,11 @@ func TestConvertUserRedemptionRecord(t *testing.T) {
 		Id:       id,
 		Receiver: receiver,
 		// Sender:         sender,
-		Amount:         sdkmath.NewInt(1),
-		Denom:          denom,
-		HostZoneId:     hostZoneId,
-		EpochNumber:    epochNumber,
-		ClaimIsPending: claimIsPending,
+		NativeTokenAmount: sdkmath.NewInt(1),
+		Denom:             denom,
+		HostZoneId:        hostZoneId,
+		EpochNumber:       epochNumber,
+		ClaimIsPending:    claimIsPending,
 	}
 
 	actualNewUserRedemptionRecord := convertToNewUserRedemptionRecord(oldUserRedemptionRecord)

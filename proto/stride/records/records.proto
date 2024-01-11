@@ -9,7 +9,7 @@ option go_package = "github.com/Stride-Labs/stride/v16/x/records/types";
 message UserRedemptionRecord {
   string id = 1; // {chain_id}.{epoch}.{receiver}
   string receiver = 3;
-  string amount = 4 [
+  string native_token_amount = 4 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
     (gogoproto.nullable) = false
   ];

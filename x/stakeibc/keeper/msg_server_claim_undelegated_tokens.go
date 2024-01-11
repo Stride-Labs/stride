@@ -113,7 +113,7 @@ func (k Keeper) GetRedemptionTransferMsg(ctx sdk.Context, userRedemptionRecord *
 	}
 
 	var msgs []proto.Message
-	rrAmt := userRedemptionRecord.Amount
+	rrAmt := userRedemptionRecord.NativeTokenAmount
 	msgs = append(msgs, &bankTypes.MsgSend{
 		FromAddress: hostZone.RedemptionIcaAddress,
 		ToAddress:   userRedemptionRecord.Receiver,
