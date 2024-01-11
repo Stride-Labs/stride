@@ -7,13 +7,18 @@ import (
 	sdkmath "cosmossdk.io/math"
 	icatypes "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/types"
 
-	"github.com/Stride-Labs/stride/v16/utils"
-	epochtypes "github.com/Stride-Labs/stride/v16/x/epochs/types"
-	recordstypes "github.com/Stride-Labs/stride/v16/x/records/types"
-	"github.com/Stride-Labs/stride/v16/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v17/utils"
+	epochtypes "github.com/Stride-Labs/stride/v17/x/epochs/types"
+	recordstypes "github.com/Stride-Labs/stride/v17/x/records/types"
+	"github.com/Stride-Labs/stride/v17/x/stakeibc/types"
 
 	errorsmod "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+)
+
+const (
+	CommunityPoolStakeHoldingAddressKey  = "community-pool-stake"
+	CommunityPoolRedeemHoldingAddressKey = "community-pool-redeem"
 )
 
 func (k msgServer) RegisterHostZone(goCtx context.Context, msg *types.MsgRegisterHostZone) (*types.MsgRegisterHostZoneResponse, error) {
@@ -76,8 +81,8 @@ func (k msgServer) RegisterHostZone(goCtx context.Context, msg *types.MsgRegiste
 	}
 
 	// Create the host zone's community pool holding accounts
-	communityPoolStakeAddress := types.NewHostZoneModuleAddress(chainId, "community-pool-stake")
-	communityPoolRedeemAddress := types.NewHostZoneModuleAddress(chainId, "community-pool-redeem")
+	communityPoolStakeAddress := types.NewHostZoneModuleAddress(chainId, CommunityPoolStakeHoldingAddressKey)
+	communityPoolRedeemAddress := types.NewHostZoneModuleAddress(chainId, CommunityPoolRedeemHoldingAddressKey)
 	if err := utils.CreateModuleAccount(ctx, k.AccountKeeper, communityPoolStakeAddress); err != nil {
 		return nil, errorsmod.Wrapf(err, "unable to create community pool stake account for host zone %s", chainId)
 	}

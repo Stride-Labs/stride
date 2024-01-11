@@ -5,7 +5,7 @@ import "gogoproto/gogo.proto";
 
 import "cosmos/base/v1beta1/coin.proto";
 
-option go_package = "github.com/Stride-Labs/stride/v16/x/stakeibc/types";
+option go_package = "github.com/Stride-Labs/stride/v17/x/stakeibc/types";
 
 // Given SDK version conflicts between gaia with LSM and Stride,
 // we can't import the RedeemTokensForShares type
@@ -27,4 +27,13 @@ message MsgRedeemTokensForShares {
 // response type.
 message MsgRedeemTokensForSharesResponse {
   cosmos.base.v1beta1.Coin amount = 1 [ (gogoproto.nullable) = false ];
+}
+
+// MsgDisableTokenizeShares prevents LSM tokenization of shares for address
+message MsgDisableTokenizeShares {
+  option (gogoproto.equal) = false;
+  option (gogoproto.goproto_getters) = false;
+
+  string delegator_address = 1
+      [ (gogoproto.moretags) = "yaml:\"delegator_address\"" ];
 }

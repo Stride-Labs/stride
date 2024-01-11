@@ -61,11 +61,11 @@ modified_on_chain_file() {
   return 1 # false
 }
 
-# Gather the list of all commits between the new and old version
+# Gather the list of all commits between the old version and main
 # The output on each line will be in the format: {commit_hash} {commit_title}
 # The last line does not end with a new line character, so we have to append a new empty line
 # so that the full output is propogated into the while loop
-git log --pretty=format:"%H %s" ${OLD_VERSION}..${NEW_VERSION} --reverse > $TEMP_COMMITS
+git log --pretty=format:"%H %s" ${OLD_VERSION}..main --reverse > $TEMP_COMMITS
 echo "" >> $TEMP_COMMITS
 
 # Loop through the commits and build out the commit descriptions for the on-chain and off-chain sections

@@ -9,9 +9,9 @@ import (
 
 	errorsmod "cosmossdk.io/errors"
 
-	stakeibctypes "github.com/Stride-Labs/stride/v16/x/stakeibc/types"
+	stakeibctypes "github.com/Stride-Labs/stride/v17/x/stakeibc/types"
 
-	"github.com/Stride-Labs/stride/v16/x/records/types"
+	"github.com/Stride-Labs/stride/v17/x/records/types"
 )
 
 // SetEpochUnbondingRecord set a specific epochUnbondingRecord in the store
@@ -101,6 +101,7 @@ func (k Keeper) GetHostZoneUnbondingByChainId(ctx sdk.Context, epochNumber uint6
 }
 
 // Adds a HostZoneUnbonding to an EpochUnbondingRecord
+// TODO [cleanup]: Return error instead of success
 func (k Keeper) AddHostZoneToEpochUnbondingRecord(ctx sdk.Context, epochNumber uint64, chainId string, hzu *types.HostZoneUnbonding) (val *types.EpochUnbondingRecord, success bool) {
 	epochUnbondingRecord, found := k.GetEpochUnbondingRecord(ctx, epochNumber)
 	if !found {
@@ -121,7 +122,18 @@ func (k Keeper) AddHostZoneToEpochUnbondingRecord(ctx sdk.Context, epochNumber u
 	return &epochUnbondingRecord, true
 }
 
+// Stores a host zone unbonding record - set via an epoch unbonding record
+func (k Keeper) SetHostZoneUnbondingRecord(ctx sdk.Context, epochNumber uint64, chainId string, hostZoneUnbonding types.HostZoneUnbonding) error {
+	epochUnbondingRecord, success := k.AddHostZoneToEpochUnbondingRecord(ctx, epochNumber, chainId, &hostZoneUnbonding)
+	if !success {
+		return errorsmod.Wrapf(types.ErrEpochUnbondingRecordNotFound, "epoch unbonding record not found for epoch %d", epochNumber)
+	}
+	k.SetEpochUnbondingRecord(ctx, *epochUnbondingRecord)
+	return nil
+}
+
 // Updates the status for a given host zone across relevant epoch unbonding record IDs
+// TODO [cleanup]: Rename to SetHostZoneUnbondingStatus
 func (k Keeper) SetHostZoneUnbondings(ctx sdk.Context, chainId string, epochUnbondingRecordIds []uint64, status types.HostZoneUnbonding_Status) error {
 	for _, epochUnbondingRecordId := range epochUnbondingRecordIds {
 		k.Logger(ctx).Info(fmt.Sprintf("Updating host zone unbondings on EpochUnbondingRecord %d to status %s", epochUnbondingRecordId, status.String()))

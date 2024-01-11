@@ -6,18 +6,18 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
-	"github.com/Stride-Labs/stride/v16/app"
-	"github.com/Stride-Labs/stride/v16/app/apptesting"
-	v9 "github.com/Stride-Labs/stride/v16/app/upgrades/v9"
-	"github.com/Stride-Labs/stride/v16/utils"
+	"github.com/Stride-Labs/stride/v17/app"
+	"github.com/Stride-Labs/stride/v17/app/apptesting"
+	v9 "github.com/Stride-Labs/stride/v17/app/upgrades/v9"
+	"github.com/Stride-Labs/stride/v17/utils"
 
-	claimtypes "github.com/Stride-Labs/stride/v16/x/claim/types"
+	claimtypes "github.com/Stride-Labs/stride/v17/x/claim/types"
 
 	// This isn't the exact type host zone schema as the one that's will be in the store
 	// before the upgrade, but the only thing that matters, for the sake of the test,
 	// is that it doesn't have min/max redemption rate as attributes
-	"github.com/Stride-Labs/stride/v16/x/claim/migrations/v2/types"
-	oldclaimtypes "github.com/Stride-Labs/stride/v16/x/claim/migrations/v2/types"
+	"github.com/Stride-Labs/stride/v17/x/claim/migrations/v2/types"
+	oldclaimtypes "github.com/Stride-Labs/stride/v17/x/claim/migrations/v2/types"
 )
 
 type UpgradeTestSuite struct {

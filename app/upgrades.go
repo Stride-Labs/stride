@@ -10,31 +10,33 @@ import (
 	consensustypes "github.com/cosmos/cosmos-sdk/x/consensus/types"
 	crisistypes "github.com/cosmos/cosmos-sdk/x/crisis/types"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
+	packetforwardtypes "github.com/cosmos/ibc-apps/middleware/packet-forward-middleware/v7/packetforward/types"
 	consumertypes "github.com/cosmos/interchain-security/v3/x/ccv/consumer/types"
 	evmosvestingtypes "github.com/evmos/vesting/x/vesting/types"
 
-	v10 "github.com/Stride-Labs/stride/v16/app/upgrades/v10"
-	v11 "github.com/Stride-Labs/stride/v16/app/upgrades/v11"
-	v12 "github.com/Stride-Labs/stride/v16/app/upgrades/v12"
-	v13 "github.com/Stride-Labs/stride/v16/app/upgrades/v13"
-	v14 "github.com/Stride-Labs/stride/v16/app/upgrades/v14"
-	v15 "github.com/Stride-Labs/stride/v16/app/upgrades/v15"
-	v16 "github.com/Stride-Labs/stride/v16/app/upgrades/v16"
-	v2 "github.com/Stride-Labs/stride/v16/app/upgrades/v2"
-	v3 "github.com/Stride-Labs/stride/v16/app/upgrades/v3"
-	v4 "github.com/Stride-Labs/stride/v16/app/upgrades/v4"
-	v5 "github.com/Stride-Labs/stride/v16/app/upgrades/v5"
-	v6 "github.com/Stride-Labs/stride/v16/app/upgrades/v6"
-	v7 "github.com/Stride-Labs/stride/v16/app/upgrades/v7"
-	v8 "github.com/Stride-Labs/stride/v16/app/upgrades/v8"
-	v9 "github.com/Stride-Labs/stride/v16/app/upgrades/v9"
-	autopilottypes "github.com/Stride-Labs/stride/v16/x/autopilot/types"
-	claimtypes "github.com/Stride-Labs/stride/v16/x/claim/types"
-	icacallbacktypes "github.com/Stride-Labs/stride/v16/x/icacallbacks/types"
-	icaoracletypes "github.com/Stride-Labs/stride/v16/x/icaoracle/types"
-	ratelimittypes "github.com/Stride-Labs/stride/v16/x/ratelimit/types"
-	recordtypes "github.com/Stride-Labs/stride/v16/x/records/types"
-	stakeibctypes "github.com/Stride-Labs/stride/v16/x/stakeibc/types"
+	v10 "github.com/Stride-Labs/stride/v17/app/upgrades/v10"
+	v11 "github.com/Stride-Labs/stride/v17/app/upgrades/v11"
+	v12 "github.com/Stride-Labs/stride/v17/app/upgrades/v12"
+	v13 "github.com/Stride-Labs/stride/v17/app/upgrades/v13"
+	v14 "github.com/Stride-Labs/stride/v17/app/upgrades/v14"
+	v15 "github.com/Stride-Labs/stride/v17/app/upgrades/v15"
+	v16 "github.com/Stride-Labs/stride/v17/app/upgrades/v16"
+	v17 "github.com/Stride-Labs/stride/v17/app/upgrades/v17"
+	v2 "github.com/Stride-Labs/stride/v17/app/upgrades/v2"
+	v3 "github.com/Stride-Labs/stride/v17/app/upgrades/v3"
+	v4 "github.com/Stride-Labs/stride/v17/app/upgrades/v4"
+	v5 "github.com/Stride-Labs/stride/v17/app/upgrades/v5"
+	v6 "github.com/Stride-Labs/stride/v17/app/upgrades/v6"
+	v7 "github.com/Stride-Labs/stride/v17/app/upgrades/v7"
+	v8 "github.com/Stride-Labs/stride/v17/app/upgrades/v8"
+	v9 "github.com/Stride-Labs/stride/v17/app/upgrades/v9"
+	autopilottypes "github.com/Stride-Labs/stride/v17/x/autopilot/types"
+	claimtypes "github.com/Stride-Labs/stride/v17/x/claim/types"
+	icacallbacktypes "github.com/Stride-Labs/stride/v17/x/icacallbacks/types"
+	icaoracletypes "github.com/Stride-Labs/stride/v17/x/icaoracle/types"
+	ratelimittypes "github.com/Stride-Labs/stride/v17/x/ratelimit/types"
+	recordtypes "github.com/Stride-Labs/stride/v17/x/records/types"
+	stakeibctypes "github.com/Stride-Labs/stride/v17/x/stakeibc/types"
 )
 
 func (app *StrideApp) setupUpgradeHandlers(appOpts servertypes.AppOptions) {
@@ -216,6 +218,20 @@ func (app *StrideApp) setupUpgradeHandlers(appOpts servertypes.AppOptions) {
 		),
 	)
 
+	// v17 upgrade handler
+	app.UpgradeKeeper.SetUpgradeHandler(
+		v17.UpgradeName,
+		v17.CreateUpgradeHandler(
+			app.mm,
+			app.configurator,
+			app.BankKeeper,
+			app.DistrKeeper,
+			app.InterchainqueryKeeper,
+			app.RatelimitKeeper,
+			app.StakeibcKeeper,
+		),
+	)
+
 	upgradeInfo, err := app.UpgradeKeeper.ReadUpgradeInfoFromDisk()
 	if err != nil {
 		panic(fmt.Errorf("Failed to read upgrade info from disk: %w", err))
@@ -255,6 +271,11 @@ func (app *StrideApp) setupUpgradeHandlers(appOpts servertypes.AppOptions) {
 	case "v14":
 		storeUpgrades = &storetypes.StoreUpgrades{
 			Added: []string{evmosvestingtypes.ModuleName},
+		}
+	case "v17":
+		storeUpgrades = &storetypes.StoreUpgrades{
+			// Add PFM store key
+			Added: []string{packetforwardtypes.ModuleName},
 		}
 	}
 	// TODO: uncomment when v17 upgrade is ready
