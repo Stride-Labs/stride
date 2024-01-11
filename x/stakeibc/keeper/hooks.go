@@ -358,7 +358,7 @@ func (k Keeper) ReinvestRewards(ctx sdk.Context) {
 
 // TODO [cleanup]: Remove after v17 upgrade
 func (k Keeper) DisableHubTokenization(ctx sdk.Context) {
-	k.Logger(ctx).Info("Disabling LSM tokenization Gaia delegations")
+	k.Logger(ctx).Info("Disabling the ability to tokenize Gaia delegations")
 
 	chainId := "cosmoshub-4"
 	hostZone, found := k.GetHostZone(ctx, chainId)
