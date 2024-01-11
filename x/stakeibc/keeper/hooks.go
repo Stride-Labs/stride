@@ -103,7 +103,7 @@ func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochInfo epochstypes.EpochInf
 
 	// TODO [cleanup]: Remove after v17 upgrade
 	// Submit ICA to disable gaia tokenization (this only needs to be run once)
-	if epochInfo.Identifier == epochstypes.HOUR_EPOCH && epochNumber%10 == 0 {
+	if epochInfo.Identifier == epochstypes.HOUR_EPOCH {
 		k.DisableHubTokenization(ctx)
 	}
 }
@@ -358,6 +358,8 @@ func (k Keeper) ReinvestRewards(ctx sdk.Context) {
 
 // TODO [cleanup]: Remove after v17 upgrade
 func (k Keeper) DisableHubTokenization(ctx sdk.Context) {
+	k.Logger(ctx).Info("Disabling tokenization of LSM shares for Gaia")
+
 	chainId := "cosmoshub-4"
 	hostZone, found := k.GetHostZone(ctx, chainId)
 	if !found {
