@@ -133,7 +133,6 @@ func (k Keeper) SetHostZoneUnbondingRecord(ctx sdk.Context, epochNumber uint64, 
 }
 
 // Updates the status for a given host zone across relevant epoch unbonding record IDs
-// TODO [cleanup]: Rename to SetHostZoneUnbondingStatus
 func (k Keeper) SetHostZoneUnbondingStatus(ctx sdk.Context, chainId string, epochUnbondingRecordIds []uint64, status types.HostZoneUnbonding_Status) error {
 	for _, epochUnbondingRecordId := range epochUnbondingRecordIds {
 		k.Logger(ctx).Info(fmt.Sprintf("Updating host zone unbondings on EpochUnbondingRecord %d to status %s", epochUnbondingRecordId, status.String()))
