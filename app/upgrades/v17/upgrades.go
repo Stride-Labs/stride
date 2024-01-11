@@ -310,13 +310,19 @@ func AddRateLimitToOsmosis(ctx sdk.Context, k ratelimitkeeper.Keeper) error {
 	return nil
 }
 
-// Migrate the unbonding records
+// Migrate the user redemption records to add the stToken amount, calculated by estimating
+// the redemption rate from the corresponding host zone unbonding records
 // UserUnbondingRecords previously only used Native Token Amounts, we now want to use StTokenAmounts
+// We only really need to migrate records in status UNBONDING_QUEUE or UNBONDING_IN_PROGRESS
+// because the stToken amount is never used after unbonding is initiated
 func MigrateUnbondingRecords(ctx sdk.Context, k stakeibckeeper.Keeper) error {
 	for _, epochUnbondingRecord := range k.RecordsKeeper.GetAllEpochUnbondingRecord(ctx) {
 		for _, hostZoneUnbonding := range epochUnbondingRecord.HostZoneUnbondings {
-			// if the tokens have unbonded, we don't want to modify the record
-			// this is because we won't be able to estimate a redemption rate
+			// If a record is in state claimable, the native token amount can't be trusted
+			// since it gets decremented with each claim
+			// As a result, we can't accurately estimate the redemption rate for these
+			// user redemption records (but it also doesn't matter since the stToken
+			// amount on the records is not used)
 			if hostZoneUnbonding.Status == recordtypes.HostZoneUnbonding_CLAIMABLE {
 				continue
 			}
@@ -346,8 +352,6 @@ func MigrateUnbondingRecords(ctx sdk.Context, k stakeibckeeper.Keeper) error {
 				k.RecordsKeeper.SetUserRedemptionRecord(ctx, userRedemptionRecord)
 			}
 		}
-
-		k.RecordsKeeper.SetEpochUnbondingRecord(ctx, epochUnbondingRecord)
 	}
 
 	return nil
