@@ -97,11 +97,11 @@ func CreateUpgradeHandler(
 		ctx.Logger().Info("Deleting all pending slash queries...")
 		DeleteAllStaleQueries(ctx, icqKeeper)
 
-		ctx.Logger().Info("Reseting slash query in progress...")
+		ctx.Logger().Info("Resetting slash query in progress...")
 		ResetSlashQueryInProgress(ctx, stakeibcKeeper)
 
 		ctx.Logger().Info("Updating community pool tax...")
-		if err := IncreaseCommunityPoolTax(ctx, distributionkeeper); err != nil {
+		if err := ExecuteProp223(ctx, distributionkeeper); err != nil {
 			return vm, errorsmod.Wrapf(err, "unable to increase community pool tax")
 		}
 
@@ -117,7 +117,9 @@ func CreateUpgradeHandler(
 		}
 
 		ctx.Logger().Info("Disabling tokenization on the hub...")
-		DisableTokenization(ctx, stakeibcKeeper, GaiaChainId)
+		if err := DisableTokenization(ctx, stakeibcKeeper, GaiaChainId); err != nil {
+			return vm, errorsmod.Wrapf(err, "unable to submit disable tokenization transaction")
+		}
 
 		ctx.Logger().Info("Executing Prop 225, SHD Liquidity")
 		if err := ExecuteProp225(ctx, bankKeeper); err != nil {
@@ -222,7 +224,7 @@ func ResetSlashQueryInProgress(ctx sdk.Context, k stakeibckeeper.Keeper) {
 
 // Increases the community pool tax from 2 to 5%
 // This was from prop 223 which passed, but was deleted due to an ICS blacklist
-func IncreaseCommunityPoolTax(ctx sdk.Context, k distributionkeeper.Keeper) error {
+func ExecuteProp223(ctx sdk.Context, k distributionkeeper.Keeper) error {
 	params := k.GetParams(ctx)
 	params.CommunityTax = CommunityPoolTax
 	return k.SetParams(ctx, params)

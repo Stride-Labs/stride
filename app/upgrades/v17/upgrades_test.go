@@ -488,7 +488,7 @@ func (s *UpgradeTestSuite) TestResetSlashQueryInProgress() {
 	}
 }
 
-func (s *UpgradeTestSuite) TestIncreaseCommunityPoolTax() {
+func (s *UpgradeTestSuite) TestExecuteProp223() {
 	// Set initial community pool tax to 2%
 	initialTax := sdk.MustNewDecFromStr("0.02")
 	params := s.App.DistrKeeper.GetParams(s.Ctx)
@@ -497,7 +497,7 @@ func (s *UpgradeTestSuite) TestIncreaseCommunityPoolTax() {
 	s.Require().NoError(err, "no error expected when setting params")
 
 	// Increase the tax
-	err = v17.IncreaseCommunityPoolTax(s.Ctx, s.App.DistrKeeper)
+	err = v17.ExecuteProp223(s.Ctx, s.App.DistrKeeper)
 	s.Require().NoError(err, "no error expected when increasing community pool tax")
 
 	// Confirm it increased
