@@ -161,7 +161,7 @@ func TestSetHostZoneUnbondings(t *testing.T) {
 		}
 	}
 
-	err := keeper.SetHostZoneUnbondings(ctx, hostIdToUpdate, epochsToUpdate, newStatus)
+	err := keeper.SetHostZoneUnbondingStatus(ctx, hostIdToUpdate, epochsToUpdate, newStatus)
 	require.Nil(t, err)
 
 	actualEpochUnbondingRecord := keeper.GetAllEpochUnbondingRecord(ctx)

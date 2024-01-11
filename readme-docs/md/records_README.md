@@ -34,7 +34,7 @@ Epoch Unbonding Records
 - `GetAllPreviousEpochUnbondingRecords()`
 - `GetHostZoneUnbondingByChainId()`
 - `AddHostZoneToEpochUnbondingRecord()`
-- `SetHostZoneUnbondings()`
+- `SetHostZoneUnbondingStatus()`
 
 User Redemption Records
 - `SetUserRedemptionRecord()`
