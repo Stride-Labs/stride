@@ -599,18 +599,18 @@ func (s *KeeperTestSuite) TestRefreshUserRedemptionRecordNativeAmounts() {
 	redemptionRate := sdk.MustNewDecFromStr("1.999")
 	expectedUserRedemptionRecords := []recordtypes.UserRedemptionRecord{
 		// StTokenAmount: 1000 * 1.999 = 1999 Native
-		{Id: "A", StTokenAmount: sdkmath.NewInt(1000), Amount: sdkmath.NewInt(1999)},
+		{Id: "A", StTokenAmount: sdkmath.NewInt(1000), NativeTokenAmount: sdkmath.NewInt(1999)},
 		// StTokenAmount: 999 * 1.999 = 1997.001, Rounded down to 1997 Native
-		{Id: "B", StTokenAmount: sdkmath.NewInt(999), Amount: sdkmath.NewInt(1997)},
+		{Id: "B", StTokenAmount: sdkmath.NewInt(999), NativeTokenAmount: sdkmath.NewInt(1997)},
 		// StTokenAmount: 100 * 1.999 = 199.9, Rounded up to 200 Native
-		{Id: "C", StTokenAmount: sdkmath.NewInt(100), Amount: sdkmath.NewInt(200)},
+		{Id: "C", StTokenAmount: sdkmath.NewInt(100), NativeTokenAmount: sdkmath.NewInt(200)},
 	}
 	expectedTotalNativeAmount := sdkmath.NewInt(1999 + 1997 + 200)
 
 	// Create the initial records which do not have the end native amount
 	for _, expectedUserRedemptionRecord := range expectedUserRedemptionRecords {
 		initialUserRedemptionRecord := expectedUserRedemptionRecord
-		initialUserRedemptionRecord.Amount = sdkmath.ZeroInt()
+		initialUserRedemptionRecord.NativeTokenAmount = sdkmath.ZeroInt()
 		s.App.RecordsKeeper.SetUserRedemptionRecord(s.Ctx, initialUserRedemptionRecord)
 	}
 
@@ -630,7 +630,7 @@ func (s *KeeperTestSuite) TestRefreshUserRedemptionRecordNativeAmounts() {
 	for _, expectedRecord := range expectedUserRedemptionRecords {
 		actualRecord, found := s.App.RecordsKeeper.GetUserRedemptionRecord(s.Ctx, expectedRecord.Id)
 		s.Require().True(found, "record %s should have been found", expectedRecord.Id)
-		s.Require().Equal(expectedRecord.Amount.Int64(), actualRecord.Amount.Int64(),
+		s.Require().Equal(expectedRecord.NativeTokenAmount.Int64(), actualRecord.NativeTokenAmount.Int64(),
 			"record %s native amount", expectedRecord.Id)
 	}
 }
@@ -718,7 +718,7 @@ func (s *KeeperTestSuite) TestRefreshUnbondingNativeTokenAmounts() {
 	for id, expectedNativeAmount := range expectedUserNativeAmounts {
 		record, found := s.App.RecordsKeeper.GetUserRedemptionRecord(s.Ctx, id)
 		s.Require().True(found, "user redemption record for %s should have been found", id)
-		s.Require().Equal(expectedNativeAmount, record.Amount, "user redemption record %s native amount", id)
+		s.Require().Equal(expectedNativeAmount, record.NativeTokenAmount, "user redemption record %s native amount", id)
 	}
 
 	// Remove one of the host zones and confirm it errors

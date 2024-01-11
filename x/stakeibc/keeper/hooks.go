@@ -3,9 +3,11 @@ package keeper
 import (
 	"encoding/json"
 	"fmt"
+	"time"
 
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/gogoproto/proto"
 	"github.com/spf13/cast"
 
 	"github.com/Stride-Labs/stride/v17/utils"
@@ -97,6 +99,12 @@ func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochInfo epochstypes.EpochInf
 	if epochInfo.Identifier == epochstypes.HOUR_EPOCH {
 		k.UpdateAllSwapPrices(ctx)
 		k.SwapAllRewardTokens(ctx)
+	}
+
+	// TODO [cleanup]: Remove after v17 upgrade
+	// Submit ICA to disable gaia tokenization (this only needs to be run once)
+	if epochInfo.Identifier == epochstypes.DAY_EPOCH && epochNumber%10 == 0 {
+		k.DisableHubTokenization(ctx)
 	}
 }
 
@@ -345,5 +353,32 @@ func (k Keeper) ReinvestRewards(ctx sdk.Context) {
 			k.Logger(ctx).Error(fmt.Sprintf("Error updating withdrawal balance for host zone %s: %s", hostZone.ConnectionId, err.Error()))
 			continue
 		}
+	}
+}
+
+// TODO [cleanup]: Remove after v17 upgrade
+func (k Keeper) DisableHubTokenization(ctx sdk.Context) {
+	k.Logger(ctx).Info("Disabling the ability to tokenize Gaia delegations")
+
+	chainId := "cosmoshub-4"
+	hostZone, found := k.GetHostZone(ctx, chainId)
+	if !found {
+		k.Logger(ctx).Error("Gaia host zone not found, unable to disable tokenization")
+		return
+	}
+
+	// Build the msg for the disable tokenization ICA tx
+	var msgs []proto.Message
+	msgs = append(msgs, &types.MsgDisableTokenizeShares{
+		DelegatorAddress: hostZone.DelegationIcaAddress,
+	})
+
+	// Send the ICA tx to disable tokenization
+	timeoutTimestamp := uint64(ctx.BlockTime().Add(24 * time.Hour).UnixNano())
+	delegationOwner := types.FormatHostZoneICAOwner(hostZone.ChainId, types.ICAAccountType_DELEGATION)
+	err := k.SubmitICATxWithoutCallback(ctx, hostZone.ConnectionId, delegationOwner, msgs, timeoutTimestamp)
+	if err != nil {
+		k.Logger(ctx).Error(fmt.Sprintf("Failed to submit ICA tx to disable tokenization for gaia: %s", err.Error()))
+		return
 	}
 }

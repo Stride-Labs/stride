@@ -67,7 +67,7 @@ func (k Keeper) UndelegateCallback(ctx sdk.Context, packet channeltypes.Packet, 
 			icacallbackstypes.AckResponseStatus_FAILURE, packet))
 
 		// Reset unbondings record status
-		if err := k.RecordsKeeper.SetHostZoneUnbondings(
+		if err := k.RecordsKeeper.SetHostZoneUnbondingStatus(
 			ctx,
 			chainId,
 			undelegateCallback.EpochUnbondingRecordIds,
@@ -108,7 +108,7 @@ func (k Keeper) UndelegateCallback(ctx sdk.Context, packet channeltypes.Packet, 
 	}
 
 	// Upon success, add host zone unbondings to the exit transfer queue
-	err = k.RecordsKeeper.SetHostZoneUnbondings(ctx, chainId, undelegateCallback.EpochUnbondingRecordIds, recordstypes.HostZoneUnbonding_EXIT_TRANSFER_QUEUE)
+	err = k.RecordsKeeper.SetHostZoneUnbondingStatus(ctx, chainId, undelegateCallback.EpochUnbondingRecordIds, recordstypes.HostZoneUnbonding_EXIT_TRANSFER_QUEUE)
 	if err != nil {
 		return err
 	}

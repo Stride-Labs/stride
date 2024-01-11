@@ -3,7 +3,6 @@ package keeper
 import (
 	"context"
 	"fmt"
-	"net/url"
 	"sort"
 	"strings"
 
@@ -88,7 +87,7 @@ func (k Keeper) VerifyKeyProof(ctx sdk.Context, msg *types.MsgSubmitQueryRespons
 	var clientStateProof []*ics23.ProofSpec = tendermintClientState.ProofSpecs
 
 	// Get the merkle path and merkle proof
-	path := commitmenttypes.NewMerklePath([]string{pathParts[1], url.PathEscape(string(query.RequestData))}...)
+	path := commitmenttypes.NewMerklePath([]string{pathParts[1], string(query.RequestData)}...)
 	merkleProof, err := commitmenttypes.ConvertProofs(msg.ProofOps)
 	if err != nil {
 		return errorsmod.Wrapf(types.ErrInvalidICQProof, "Error converting proofs: %s", err.Error())

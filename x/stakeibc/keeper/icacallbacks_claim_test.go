@@ -37,8 +37,8 @@ func (s *KeeperTestSuite) SetupClaimCallback() ClaimCallbackTestCase {
 		Id: recordId1,
 		// after a user calls ClaimUndelegatedTokens, the record is set to claimIsPending = true
 		// to prevent double claims
-		ClaimIsPending: true,
-		Amount:         sdkmath.ZeroInt(),
+		ClaimIsPending:    true,
+		NativeTokenAmount: sdkmath.ZeroInt(),
 	}
 	recordId2 := recordtypes.UserRedemptionRecordKeyFormatter(HostChainId, epochNumber, "other_recevier")
 	userRedemptionRecord2 := recordtypes.UserRedemptionRecord{
@@ -99,7 +99,7 @@ func (s *KeeperTestSuite) SetupClaimCallback() ClaimCallbackTestCase {
 	callbackArgsBz, err := s.App.StakeibcKeeper.MarshalClaimCallbackArgs(s.Ctx, callbackArgs)
 	s.Require().NoError(err)
 
-	decrementAmount := userRedemptionRecord1.Amount
+	decrementAmount := userRedemptionRecord1.NativeTokenAmount
 
 	return ClaimCallbackTestCase{
 		initialState: ClaimCallbackState{
@@ -220,7 +220,7 @@ func (s *KeeperTestSuite) TestDecrementHostZoneUnbonding_Success() {
 	hzu1 := epochUnbondingRecord1.HostZoneUnbondings[0]
 
 	// check that hzu1 has a decremented amount
-	s.Require().Equal(hzu1.NativeTokenAmount.Sub(userRedemptionRecord.Amount), hzu1.NativeTokenAmount, "hzu1 amount decremented")
+	s.Require().Equal(hzu1.NativeTokenAmount.Sub(userRedemptionRecord.NativeTokenAmount), hzu1.NativeTokenAmount, "hzu1 amount decremented")
 }
 
 func (s *KeeperTestSuite) TestDecrementHostZoneUnbonding_HzuNotFound() {
