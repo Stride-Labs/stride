@@ -103,7 +103,7 @@ func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochInfo epochstypes.EpochInf
 
 	// TODO [cleanup]: Remove after v17 upgrade
 	// Submit ICA to disable gaia tokenization (this only needs to be run once)
-	if epochInfo.Identifier == epochstypes.HOUR_EPOCH {
+	if epochInfo.Identifier == epochstypes.HOUR_EPOCH && epochNumber%10 == 0 {
 		k.DisableHubTokenization(ctx)
 	}
 }
