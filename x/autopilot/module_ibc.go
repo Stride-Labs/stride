@@ -262,8 +262,15 @@ func (im IBCModule) OnAcknowledgementPacket(
 	acknowledgement []byte,
 	relayer sdk.AccAddress,
 ) error {
-	im.keeper.Logger(ctx).Info(fmt.Sprintf("[IBC-TRANSFER] OnAcknowledgementPacket  %v", packet))
-	return im.app.OnAcknowledgementPacket(ctx, packet, acknowledgement, relayer)
+	im.keeper.Logger(ctx).Info(fmt.Sprintf("OnAcknowledgementPacket (Autopilot): Packet %v, Acknowledgement %v", packet, acknowledgement))
+	// First pass the packet down the stack so that, in the event of an ack failure,
+	// the tokens are refunded to the original sender
+	if err := im.app.OnAcknowledgementPacket(ctx, packet, acknowledgement, relayer); err != nil {
+		return err
+	}
+	// Then process the autopilot-specific callback
+	// This will handle bank sending to a fallback address if the original transfer failed
+	return im.keeper.OnAcknowledgementPacket(ctx, packet, acknowledgement)
 }
 
 // OnTimeoutPacket implements the IBCModule interface
@@ -272,8 +279,14 @@ func (im IBCModule) OnTimeoutPacket(
 	packet channeltypes.Packet,
 	relayer sdk.AccAddress,
 ) error {
-	im.keeper.Logger(ctx).Error(fmt.Sprintf("[IBC-TRANSFER] OnTimeoutPacket  %v", packet))
-	return im.app.OnTimeoutPacket(ctx, packet, relayer)
+	im.keeper.Logger(ctx).Error(fmt.Sprintf("OnTimeoutPacket (Autopilot): Packet %v", packet))
+	// First pass the packet down the stack so that the tokens are refunded to the original sender
+	if err := im.app.OnTimeoutPacket(ctx, packet, relayer); err != nil {
+		return err
+	}
+	// Then process the autopilot-specific callback
+	// This will handle a retry in the event that there was a timeout during an autopilot action
+	return im.keeper.OnTimeoutPacket(ctx, packet)
 }
 
 // This is implemented by ICS4 and all middleware that are wrapping base application.

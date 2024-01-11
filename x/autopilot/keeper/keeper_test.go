@@ -14,6 +14,10 @@ const (
 	HostBechPrefix = "cosmos"
 	HostAddress    = "cosmos16plylpsgxechajltx9yeseqexzdzut9g8vla4k"
 	HostDenom      = "uatom"
+
+	Atom = "uatom"
+	Strd = "ustrd"
+	Osmo = "uosmo"
 )
 
 type KeeperTestSuite struct {
