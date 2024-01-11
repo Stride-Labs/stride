@@ -23,4 +23,5 @@ WORKDIR /home/dydx
 
 EXPOSE 26657 26656 1317 9090
 
-CMD ["dydxprotocold", "start"]
+CMD dydxprotocold start \
+    --bridge-daemon-eth-rpc-endpoint https://eth-sepolia.g.alchemy.com/v2/demo
