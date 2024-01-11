@@ -35,7 +35,7 @@ make start-docker
 ```
 * Start relayers between dydx, noble and osmosis
 ```bash
-bash dockernet/scripts/community-pool-staking/start_relayers.sh
+bash dockernet/scripts/community-pool-staking/setup_relayers.sh
 ```
 * Create a pool on osmosis to allow trades between dydx and noble
 ```bash
