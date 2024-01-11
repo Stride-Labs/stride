@@ -7,6 +7,7 @@ import (
 
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	ibctesting "github.com/cosmos/ibc-go/v7/testing"
 	"github.com/stretchr/testify/require"
 
 	keepertest "github.com/Stride-Labs/stride/v17/testutil/keeper"
@@ -495,4 +496,24 @@ func (s *KeeperTestSuite) TestCheckValidatorWeightsBelowCap() {
 			}
 		})
 	}
+}
+
+// TODO [cleanup]: Remove after v17 upgrade
+func (s *KeeperTestSuite) TestDisableHubTokenization() {
+	chainId := "cosmoshub-4"
+
+	// Create the host zone and delegation channel
+	owner := types.FormatHostZoneICAOwner(chainId, types.ICAAccountType_DELEGATION)
+	channelId, portId := s.CreateICAChannel(owner)
+
+	s.App.StakeibcKeeper.SetHostZone(s.Ctx, types.HostZone{
+		ChainId:      chainId,
+		ConnectionId: ibctesting.FirstConnectionID,
+	})
+
+	// Call the disable function and confirm the sequence number incremented (indicating an ICA was submitted)
+	s.CheckICATxSubmitted(portId, channelId, func() error {
+		s.App.StakeibcKeeper.DisableHubTokenization(s.Ctx)
+		return nil
+	})
 }
