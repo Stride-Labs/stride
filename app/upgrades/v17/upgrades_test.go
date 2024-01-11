@@ -793,13 +793,14 @@ func (s *UpgradeTestSuite) SetupMigrateUnbondingRecords() func() {
 	return func() {
 		// conversionRate is stTokenAmount / nativeTokenAmount
 		conversionRate := sdk.NewDec(stTokenAmount).Quo(sdk.NewDec(nativeTokenAmount))
-		// give me a dec that is 0.5
-		expectedConversionRate := sdk.NewDec(5).Quo(sdk.NewDec(10))
+		expectedConversionRate := sdk.MustNewDecFromStr("0.5")
 		s.Require().Equal(expectedConversionRate, conversionRate, "expected conversion rate (1/redemption rate)")
+
 		// stTokenAmount is conversionRate * URRAmount
 		stTokenAmount := conversionRate.Mul(sdk.NewDec(URRAmount)).RoundInt()
 		expectedStTokenAmount := sdkmath.NewInt(250)
 		s.Require().Equal(stTokenAmount, expectedStTokenAmount, "expected st token amount")
+
 		// Verify URR stToken amounts are set correctly for records 1 through 4
 		for i := 1; i <= 4; i++ {
 			mockURRId := strconv.Itoa(i)
