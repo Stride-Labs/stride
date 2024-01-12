@@ -318,7 +318,7 @@ setup_file() {
     $transfer_msg_prefix "$memo" ${REDEEM_AMOUNT}${IBC_STTOKEN} --from $HOST_VAL -y 
   else
     # For all other hosts (ibc-v5), pass an address for a receiver and the memo in the --memo field
-    $transfer_msg_prefix $(STRIDE_ADDRESS)${REDEEM_AMOUNT}${IBC_STTOKEN} --memo "$memo" --from $HOST_VAL -y 
+    $transfer_msg_prefix $(STRIDE_ADDRESS) ${REDEEM_AMOUNT}${IBC_STTOKEN} --memo "$memo" --from $HOST_VAL -y 
   fi
   WAIT_FOR_BLOCK $STRIDE_LOGS 2
 
