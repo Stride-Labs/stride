@@ -85,6 +85,8 @@ func CreateUpgradeHandler(
 	return func(ctx sdk.Context, _ upgradetypes.Plan, vm module.VersionMap) (module.VersionMap, error) {
 		ctx.Logger().Info("Starting upgrade v17...")
 
+		stakeibcKeeper.RemoveHostZone(ctx, "osmo-test-5")
+
 		ctx.Logger().Info("Migrating stakeibc params...")
 		MigrateStakeibcParams(ctx, stakeibcKeeper)
 
@@ -109,21 +111,21 @@ func CreateUpgradeHandler(
 			return vm, errorsmod.Wrapf(err, "unable to increase community pool tax")
 		}
 
-		ctx.Logger().Info("Updating redemption rate bounds...")
-		UpdateRedemptionRateBounds(ctx, stakeibcKeeper)
+		// ctx.Logger().Info("Updating redemption rate bounds...")
+		// UpdateRedemptionRateBounds(ctx, stakeibcKeeper)
 
-		ctx.Logger().Info("Update rate limits thresholds...")
-		UpdateRateLimitThresholds(ctx, stakeibcKeeper, ratelimitKeeper)
+		// ctx.Logger().Info("Update rate limits thresholds...")
+		// UpdateRateLimitThresholds(ctx, stakeibcKeeper, ratelimitKeeper)
 
-		ctx.Logger().Info("Adding rate limits to Osmosis...")
-		if err := AddRateLimitToOsmosis(ctx, ratelimitKeeper); err != nil {
-			return vm, errorsmod.Wrapf(err, "unable to add rate limits to Osmosis")
-		}
+		// ctx.Logger().Info("Adding rate limits to Osmosis...")
+		// if err := AddRateLimitToOsmosis(ctx, ratelimitKeeper); err != nil {
+		// 	return vm, errorsmod.Wrapf(err, "unable to add rate limits to Osmosis")
+		// }
 
-		ctx.Logger().Info("Executing Prop 225, SHD Liquidity")
-		if err := ExecuteProp225(ctx, bankKeeper); err != nil {
-			return vm, errorsmod.Wrapf(err, "unable to execute prop 225")
-		}
+		// ctx.Logger().Info("Executing Prop 225, SHD Liquidity")
+		// if err := ExecuteProp225(ctx, bankKeeper); err != nil {
+		// 	return vm, errorsmod.Wrapf(err, "unable to execute prop 225")
+		// }
 
 		return mm.RunMigrations(ctx, configurator, vm)
 	}
