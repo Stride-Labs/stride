@@ -42,6 +42,43 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <!-- GH ACTIONS TEMPLATE - INSERT NEW VERSION HERE -->
 
+## [v17.0.0](https://github.com/Stride-Labs/stride/releases/tag/v17.0.0) - 2024-01-11
+
+### On-Chain changes
+1. sDYDX: Phase 1/3 - LS & Redeem ([#926](https://github.com/Stride-Labs/stride/pull/926))
+2. Properly Account for slash_query_in_progress in Unbondings ([#981](https://github.com/Stride-Labs/stride/pull/981))
+3. Cleanup V14 (`DelegationChangesInProgress`) ([#1017](https://github.com/Stride-Labs/stride/pull/1017))
+4. Add claim rewards ICA ([#961](https://github.com/Stride-Labs/stride/pull/961))
+5. sDYDX: Phase 2/3 - Auto-trade reward token revenue ([#955](https://github.com/Stride-Labs/stride/pull/955))
+6. Cleanup v15 ([#950](https://github.com/Stride-Labs/stride/pull/950))
+7. Removed zero error case in slash query ([#1025](https://github.com/Stride-Labs/stride/pull/1025))
+8. Sort unbonding prioritization by validator capacity ([#1018](https://github.com/Stride-Labs/stride/pull/1018))
+9. Add validator weight cap ([#1032](https://github.com/Stride-Labs/stride/pull/1032))
+10. Whitelisted all gov proposals ([#1028](https://github.com/Stride-Labs/stride/pull/1028))
+11. Allow multiple redemptions per epoch ([#1009](https://github.com/Stride-Labs/stride/pull/1009))
+12. Refresh autopilot LS + forward ([#996](https://github.com/Stride-Labs/stride/pull/996))
+13. Add RedeemStake to autopilot ([#1012](https://github.com/Stride-Labs/stride/pull/1012))
+14. Upgraded to ics v3.2.0 ([#1043](https://github.com/Stride-Labs/stride/pull/1043))
+15. Autopilot hashed sender ([#1038](https://github.com/Stride-Labs/stride/pull/1038))
+16. Add pfm ([#889](https://github.com/Stride-Labs/stride/pull/889))
+17. Autopilot fallback address ([#1039](https://github.com/Stride-Labs/stride/pull/1039))
+18. Add V17 upgrade handler ([#1029](https://github.com/Stride-Labs/stride/pull/1029))
+19. Dynamically update user redemption records during unbonding ([#1053](https://github.com/Stride-Labs/stride/pull/1053))
+20. V17 Import Paths ([#1061](https://github.com/Stride-Labs/stride/pull/1061))
+21. Disable tokenization on CosmosHub Delegation Account in Hooks ([#1066](https://github.com/Stride-Labs/stride/pull/1066))
+22. Update ICQ for compatibility with IBC v7.3.1 ([#1068](https://github.com/Stride-Labs/stride/pull/1068))
+23. Rename native amount and host zone unbonding status ([#1071](https://github.com/Stride-Labs/stride/pull/1071))
+
+
+### Off-Chain changes
+1. Add security instructions ([#990](https://github.com/Stride-Labs/stride/pull/990))
+2. Bump go 1.19 -> 1.21 ([#1052](https://github.com/Stride-Labs/stride/pull/1052))
+3. Add PFM testing scripts ([#1054](https://github.com/Stride-Labs/stride/pull/1054))
+4. Fix bug in changelog script ([#1060](https://github.com/Stride-Labs/stride/pull/1060))
+5. Adjust testing scripts ([#1064](https://github.com/Stride-Labs/stride/pull/1064))
+6. Ignore host's check_go_version ([#1072](https://github.com/Stride-Labs/stride/pull/1072))
+7. upgrade integration tests for v17 ([#1073](https://github.com/Stride-Labs/stride/pull/1073))
+
 ## [v16.0.0](https://github.com/Stride-Labs/stride/releases/tag/v16.0.0) - 2023-10-14
 
 ### On-Chain changes
