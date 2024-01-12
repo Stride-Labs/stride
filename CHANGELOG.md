@@ -76,7 +76,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 3. Add PFM testing scripts ([#1054](https://github.com/Stride-Labs/stride/pull/1054))
 4. Fix bug in changelog script ([#1060](https://github.com/Stride-Labs/stride/pull/1060))
 5. Adjust testing scripts ([#1064](https://github.com/Stride-Labs/stride/pull/1064))
-
+6. Ignore host's check_go_version ([#1072](https://github.com/Stride-Labs/stride/pull/1072))
+7. upgrade integration tests for v17 ([#1073](https://github.com/Stride-Labs/stride/pull/1073))
 
 ## [v16.0.0](https://github.com/Stride-Labs/stride/releases/tag/v16.0.0) - 2023-10-14
 
