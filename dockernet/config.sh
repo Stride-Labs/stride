@@ -425,19 +425,6 @@ WAIT_FOR_STRING() {
   ( tail -f -n0 $1 & ) | grep -q "$2"
 }
 
-WAIT_N_DAY_EPOCHS() {
-  current_epoch=$(stridedl q epochs current-epoch "day" | awk -F'"' '{print $2}')
-  next_epoch=$((current_epoch + $1))
-  while true; do
-    output=$(stridedl q epochs current-epoch "day" | awk -F'"' '{print $2}')
-    if [ "$output" -eq "$next_epoch" ]; then
-      break
-    else
-      sleep 1
-    fi
-  done
-}
-
 # Helper function to ensure there's enough time left in the epoch for operations to complete
 # This will check how much time is remaining in the epoch, and if there's enough time,
 # it will do nothing, otherwise it will sleep until the next epoch begins
