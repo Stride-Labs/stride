@@ -52,7 +52,12 @@ func (s *KeeperTestSuite) SetupRestoreInterchainAccount(createDelegationICAChann
 	hostZone := types.HostZone{
 		ChainId:        HostChainId,
 		ConnectionId:   ibctesting.FirstConnectionID,
-		RedemptionRate: sdk.OneDec(), // if not yet, the beginblocker invariant panics
+		RedemptionRate: sdk.OneDec(), // if not set, the beginblocker invariant panics
+		Validators: []*types.Validator{
+			{Address: "valA", DelegationChangesInProgress: 1},
+			{Address: "valB", DelegationChangesInProgress: 2},
+			{Address: "valC", DelegationChangesInProgress: 3},
+		},
 	}
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
 
@@ -257,6 +262,17 @@ func (s *KeeperTestSuite) verifyLSMDepositStatus(expectedLSMDeposits []LSMTokenD
 	}
 }
 
+// Helper function to check that the delegation changes in progress field was reset to 0 for each validator
+func (s *KeeperTestSuite) verifyDelegationChangeInProgressReset() {
+	hostZone := s.MustGetHostZone(HostChainId)
+	s.Require().Len(hostZone.Validators, 3, "there should be 3 validators on this host zone")
+
+	for _, validator := range hostZone.Validators {
+		s.Require().Zero(validator.DelegationChangesInProgress,
+			"delegation change in progress should have been reset for validator %s", validator.Address)
+	}
+}
+
 func (s *KeeperTestSuite) TestRestoreInterchainAccount_Success() {
 	tc := s.SetupRestoreInterchainAccount(true)
 
@@ -274,6 +290,7 @@ func (s *KeeperTestSuite) TestRestoreInterchainAccount_Success() {
 	s.verifyDepositRecordsStatus(tc.depositRecordStatusUpdates, true)
 	s.verifyHostZoneUnbondingStatus(tc.unbondingRecordStatusUpdate, true)
 	s.verifyLSMDepositStatus(tc.lsmTokenDepositStatusUpdate, true)
+	s.verifyDelegationChangeInProgressReset()
 }
 
 func (s *KeeperTestSuite) TestRestoreInterchainAccount_InvalidConnectionId() {
