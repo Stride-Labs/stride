@@ -292,12 +292,9 @@ setup_file() {
   if [[ "$CHAIN_NAME" == "GAIA" ]]; then
     # For GAIA (ibc-v3), pass the memo into the receiver field
     $transfer_msg_prefix "$memo" ${PACKET_FORWARD_STAKE_AMOUNT}${HOST_DENOM} --from $HOST_VAL -y 
-  elif [[ "$CHAIN_NAME" == "HOST" ]]; then
-    # For HOST (ibc-v5), pass an address for a receiver and the memo in the --memo field
-    $transfer_msg_prefix $(STRIDE_ADDRESS) ${PACKET_FORWARD_STAKE_AMOUNT}${HOST_DENOM} --memo "$memo" --from $HOST_VAL -y 
   else
-    # For all other hosts, skip this test
-    skip "Packet forward liquid stake test is only run on GAIA and HOST"
+    # For all other hosts (ibc-v5), pass an address for a receiver and the memo in the --memo field
+    $transfer_msg_prefix $(STRIDE_ADDRESS) ${PACKET_FORWARD_STAKE_AMOUNT}${HOST_DENOM} --memo "$memo" --from $HOST_VAL -y 
   fi
 
   # Wait for the transfer to complete
@@ -310,10 +307,6 @@ setup_file() {
 }
 
 @test "[INTEGRATION-BASIC-$CHAIN_NAME] autopilot liquid stake and transfer" {
-  if [[ "$CHAIN_NAME" != "GAIA" &&  "$CHAIN_NAME" != "HOST" ]]; then
-    skip "Packet forward liquid stake test is only run on GAIA and HOST"
-  fi
-
   memo='{ "autopilot": { "receiver": "'"$(STRIDE_ADDRESS)"'",  "stakeibc": { "action": "LiquidStake", "ibc_receiver": "'$HOST_VAL_ADDRESS'" } } }'
 
   # get initial balances
@@ -324,8 +317,8 @@ setup_file() {
   if [[ "$CHAIN_NAME" == "GAIA" ]]; then
     # For GAIA (ibc-v3), pass the memo into the receiver field
     $transfer_msg_prefix "$memo" ${PACKET_FORWARD_STAKE_AMOUNT}${HOST_DENOM} --from $HOST_VAL -y 
-  elif [[ "$CHAIN_NAME" == "HOST" ]]; then
-    # For HOST (ibc-v5), pass an address for a receiver and the memo in the --memo field
+  else
+    # For all other hosts (ibc-v5), pass an address for a receiver and the memo in the --memo field
     $transfer_msg_prefix $(STRIDE_ADDRESS) ${PACKET_FORWARD_STAKE_AMOUNT}${HOST_DENOM} --memo "$memo" --from $HOST_VAL -y 
   fi
 
@@ -354,12 +347,9 @@ setup_file() {
   if [[ "$CHAIN_NAME" == "GAIA" ]]; then
     # For GAIA (ibc-v3), pass the memo into the receiver field
     $transfer_msg_prefix "$memo" ${REDEEM_AMOUNT}${IBC_STTOKEN} --from $HOST_VAL -y 
-  elif [[ "$CHAIN_NAME" == "HOST" ]]; then
-    # For HOST (ibc-v5), pass an address for a receiver and the memo in the --memo field
-    $transfer_msg_prefix $(STRIDE_ADDRESS)${REDEEM_AMOUNT}${IBC_STTOKEN} --memo "$memo" --from $HOST_VAL -y 
   else
-    # For all other hosts, skip this test
-    skip "Packet forward liquid stake test is only run on GAIA and HOST"
+    # For all other hosts (ibc-v5), pass an address for a receiver and the memo in the --memo field
+    $transfer_msg_prefix $(STRIDE_ADDRESS)${REDEEM_AMOUNT}${IBC_STTOKEN} --memo "$memo" --from $HOST_VAL -y 
   fi
   WAIT_FOR_BLOCK $STRIDE_LOGS 2
 
