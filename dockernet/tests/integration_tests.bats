@@ -34,10 +34,7 @@ setup_file() {
   HOST_TRANSFER_CHANNEL="channel-0"
 
   # IBC sttoken is only needed for autopilot tests which run on GAIA and HOST
-  IBC_STTOKEN="N/A"
-  if [[ "$CHAIN_NAME" == "GAIA" || "$CHAIN_NAME" == "HOST" ]]; then
-    IBC_STTOKEN=$(GET_VAR_VALUE IBC_${CHAIN_NAME}_STDENOM)
-  fi
+  IBC_STTOKEN=$(GET_VAR_VALUE IBC_${CHAIN_NAME}_STDENOM)
 
   TRANSFER_AMOUNT=50000000
   STAKE_AMOUNT=10000000
