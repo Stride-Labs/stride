@@ -50,8 +50,8 @@ func (k Keeper) AddressUnbondings(c context.Context, req *types.QueryAddressUnbo
 					continue
 				}
 				userRedemptionRecordAddress := userRedemptionRecordComponents[2]
-				//return nil, errors.New(userRedemptionRecordAddress)
-				// Check if the userRRAddress is one targeted by the address(es) in the query
+
+				// Check if the userRedemptionRecordAddress is one targeted by the address(es) in the query
 				targetAddress := false
 				for _, address := range addresses {
 					if userRedemptionRecordAddress == strings.TrimSpace(address) {
