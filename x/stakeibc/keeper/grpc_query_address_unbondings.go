@@ -27,6 +27,9 @@ func (k Keeper) AddressUnbondings(c context.Context, req *types.QueryAddressUnbo
 	}
 	ctx := sdk.UnwrapSDKContext(c)
 
+	// split req.Address on ","
+	allAddresses := strings.Split(req.Address, ",")
+
 	var addressUnbondings []types.AddressUnbonding
 
 	// get the relevant day
@@ -47,38 +50,40 @@ func (k Keeper) AddressUnbondings(c context.Context, req *types.QueryAddressUnbo
 					continue
 				}
 				userRedemptionRecordAddress := userRedemptionRecordComponents[2]
-				if userRedemptionRecordAddress == req.Address {
-					userRedemptionRecord, found := k.RecordsKeeper.GetUserRedemptionRecord(ctx, userRedemptionRecordId)
-					if !found {
-						continue // the record has already been claimed
-					}
-
-					// get the anticipated unbonding time
-					unbondingTime := hostZoneUnbonding.UnbondingTime
-					if unbondingTime == 0 {
-						hostZone, found := k.GetHostZone(ctx, hostZoneUnbonding.HostZoneId)
+				for _, address := range allAddresses {
+					if userRedemptionRecordAddress == address {
+						userRedemptionRecord, found := k.RecordsKeeper.GetUserRedemptionRecord(ctx, userRedemptionRecordId)
 						if !found {
-							return nil, sdkerrors.ErrKeyNotFound
+							continue // the record has already been claimed
 						}
-						unbondingFrequency := hostZone.GetUnbondingFrequency()
-						daysUntilUnbonding := unbondingFrequency - (currentDay % unbondingFrequency)
-						unbondingStartTime := dayEpochTracker.NextEpochStartTime + ((daysUntilUnbonding - 1) * nanosecondsInDay)
-						unbondingDurationEstimate := (unbondingFrequency - 1) * 7
-						unbondingTime = unbondingStartTime + (unbondingDurationEstimate * nanosecondsInDay)
-					}
-					unbondingTime = unbondingTime + nanosecondsInDay
-					unbondingTimeStr := time.Unix(0, int64(unbondingTime)).UTC().String()
 
-					addressUnbonding := types.AddressUnbonding{
-						Address:                req.Address,
-						Receiver:               userRedemptionRecord.Receiver,
-						UnbondingEstimatedTime: unbondingTimeStr,
-						Amount:                 userRedemptionRecord.NativeTokenAmount,
-						Denom:                  userRedemptionRecord.Denom,
-						ClaimIsPending:         userRedemptionRecord.ClaimIsPending,
-						EpochNumber:            userRedemptionRecord.EpochNumber,
+						// get the anticipated unbonding time
+						unbondingTime := hostZoneUnbonding.UnbondingTime
+						if unbondingTime == 0 {
+							hostZone, found := k.GetHostZone(ctx, hostZoneUnbonding.HostZoneId)
+							if !found {
+								return nil, sdkerrors.ErrKeyNotFound
+							}
+							unbondingFrequency := hostZone.GetUnbondingFrequency()
+							daysUntilUnbonding := unbondingFrequency - (currentDay % unbondingFrequency)
+							unbondingStartTime := dayEpochTracker.NextEpochStartTime + ((daysUntilUnbonding - 1) * nanosecondsInDay)
+							unbondingDurationEstimate := (unbondingFrequency - 1) * 7
+							unbondingTime = unbondingStartTime + (unbondingDurationEstimate * nanosecondsInDay)
+						}
+						unbondingTime = unbondingTime + nanosecondsInDay
+						unbondingTimeStr := time.Unix(0, int64(unbondingTime)).UTC().String()
+
+						addressUnbonding := types.AddressUnbonding{
+							Address:                address,
+							Receiver:               userRedemptionRecord.Receiver,
+							UnbondingEstimatedTime: unbondingTimeStr,
+							Amount:                 userRedemptionRecord.NativeTokenAmount,
+							Denom:                  userRedemptionRecord.Denom,
+							ClaimIsPending:         userRedemptionRecord.ClaimIsPending,
+							EpochNumber:            userRedemptionRecord.EpochNumber,
+						}
+						addressUnbondings = append(addressUnbondings, addressUnbonding)
 					}
-					addressUnbondings = append(addressUnbondings, addressUnbonding)
 				}
 			}
 		}
