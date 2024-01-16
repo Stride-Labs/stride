@@ -441,13 +441,16 @@ func (k Keeper) UnbondFromHostZone(ctx sdk.Context, hostZone types.HostZone) err
 	}
 
 	// Get the list of relevant records that should unbond
-	epochUnbondingRecordIds, epochNumberToHostZoneUnbondingMap := k.GetQueuedHostZoneUnbondingRecords(ctx, hostZone.ChainId)
+	_, epochNumberToHostZoneUnbondingMap := k.GetQueuedHostZoneUnbondingRecords(ctx, hostZone.ChainId)
 
 	// Update the native unbond amount on all relevant records
 	// The native amount is calculated from the stTokens
 	if err := k.RefreshUnbondingNativeTokenAmounts(ctx, epochNumberToHostZoneUnbondingMap); err != nil {
 		return err
 	}
+
+	// Fetch the records again with the updated values
+	epochUnbondingRecordIds, epochNumberToHostZoneUnbondingMap := k.GetQueuedHostZoneUnbondingRecords(ctx, hostZone.ChainId)
 
 	// Sum the total number of native tokens that from the records above that are ready to unbond
 	totalUnbondAmount := k.GetTotalUnbondAmount(ctx, epochNumberToHostZoneUnbondingMap)
