@@ -1,0 +1,19 @@
+syntax = "proto3";
+package stride.staketia;
+
+import "gogoproto/gogo.proto";
+
+option go_package = "github.com/Stride-Labs/stride/v17/x/staketia/types";
+
+// Params defines the staketia module parameters.
+message Params {}
+
+// GenesisState defines the staketia module's genesis state.
+message GenesisState {
+  Params params = 1 [
+    (gogoproto.moretags) = "yaml:\"params\"",
+    (gogoproto.nullable) = false
+  ];
+
+  // TODO [sttia]: Add data structures
+}

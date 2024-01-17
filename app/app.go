@@ -150,6 +150,9 @@ import (
 	stakeibcclient "github.com/Stride-Labs/stride/v17/x/stakeibc/client"
 	stakeibcmodulekeeper "github.com/Stride-Labs/stride/v17/x/stakeibc/keeper"
 	stakeibcmoduletypes "github.com/Stride-Labs/stride/v17/x/stakeibc/types"
+	staketia "github.com/Stride-Labs/stride/v17/x/staketia"
+	staketiakeeper "github.com/Stride-Labs/stride/v17/x/staketia/keeper"
+	staketiatypes "github.com/Stride-Labs/stride/v17/x/staketia/types"
 
 	ccvconsumer "github.com/cosmos/interchain-security/v3/x/ccv/consumer"
 	ccvconsumerkeeper "github.com/cosmos/interchain-security/v3/x/ccv/consumer/keeper"
@@ -230,6 +233,7 @@ var (
 		tendermint.AppModuleBasic{},
 		packetforward.AppModuleBasic{},
 		evmosvesting.AppModuleBasic{},
+		staketia.AppModuleBasic{},
 	)
 
 	// module account permissions
@@ -327,6 +331,7 @@ type StrideApp struct {
 	RatelimitKeeper       ratelimitmodulekeeper.Keeper
 	ClaimKeeper           claimkeeper.Keeper
 	ICAOracleKeeper       icaoraclekeeper.Keeper
+	StakeTiaKeeper        staketiakeeper.Keeper
 
 	mm           *module.Manager
 	sm           *module.SimulationManager
@@ -376,6 +381,7 @@ func NewStrideApp(
 		consensusparamtypes.StoreKey,
 		packetforwardtypes.StoreKey,
 		evmosvestingtypes.StoreKey,
+		staketiatypes.StoreKey,
 	)
 	tkeys := sdk.NewTransientStoreKeys(paramstypes.TStoreKey)
 	memKeys := sdk.NewMemoryStoreKeys(capabilitytypes.MemStoreKey)
@@ -642,6 +648,15 @@ func NewStrideApp(
 	)
 	autopilotModule := autopilot.NewAppModule(appCodec, app.AutopilotKeeper)
 
+	// StakeTia Keeper must be initialized after TransferKeeper
+	app.StakeTiaKeeper = *staketiakeeper.NewKeeper(
+		appCodec,
+		keys[staketiatypes.StoreKey],
+		app.BankKeeper,
+		app.TransferKeeper,
+	)
+	stakeTiaModule := staketia.NewAppModule(appCodec, app.StakeTiaKeeper)
+
 	app.VestingKeeper = evmosvestingkeeper.NewKeeper(
 		keys[evmosvestingtypes.StoreKey], authtypes.NewModuleAddress(govtypes.ModuleName), appCodec,
 		app.AccountKeeper, app.BankKeeper, app.DistrKeeper, app.StakingKeeper,
@@ -811,6 +826,7 @@ func NewStrideApp(
 		consumerModule,
 		autopilotModule,
 		icaoracleModule,
+		stakeTiaModule,
 	)
 
 	// During begin block slashing happens after distr.BeginBlocker so that
@@ -851,6 +867,7 @@ func NewStrideApp(
 		icaoracletypes.ModuleName,
 		consensusparamtypes.ModuleName,
 		packetforwardtypes.ModuleName,
+		staketiatypes.ModuleName,
 	)
 
 	app.mm.SetOrderEndBlockers(
@@ -887,6 +904,7 @@ func NewStrideApp(
 		icaoracletypes.ModuleName,
 		consensusparamtypes.ModuleName,
 		packetforwardtypes.ModuleName,
+		staketiatypes.ModuleName,
 	)
 
 	// NOTE: The genutils module must occur after staking so that pools are
@@ -928,6 +946,7 @@ func NewStrideApp(
 		icaoracletypes.ModuleName,
 		consensusparamtypes.ModuleName,
 		packetforwardtypes.ModuleName,
+		staketiatypes.ModuleName,
 	)
 
 	app.mm.RegisterInvariants(app.CrisisKeeper)
