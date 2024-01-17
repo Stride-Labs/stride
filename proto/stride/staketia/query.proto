@@ -1,0 +1,8 @@
+
+syntax = "proto3";
+package stride.staketia;
+
+option go_package = "github.com/Stride-Labs/stride/v17/x/staketia/types";
+
+// Query defines the gRPC querier service.
+service Query {}

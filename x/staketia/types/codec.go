@@ -19,8 +19,7 @@ func RegisterLegacyAminoCodec(cdc *codec.LegacyAmino) {
 func RegisterInterfaces(registry cdctypes.InterfaceRegistry) {
 	// TODO [sttia] [msgserver]: add implement sdk.Msg interface for message types
 	// registry.RegisterImplementations((*sdk.Msg)(nil), ...)
-	// msgservice.RegisterMsgServiceDesc(registry, &_Msg_serviceDesc)
-	_ = msgservice.E_Service // remove
+	msgservice.RegisterMsgServiceDesc(registry, &_Msg_serviceDesc)
 }
 
 var (
