@@ -36,8 +36,7 @@ func (server msgServer) RedeemStake(goCtx context.Context, msg *types.MsgRedeemS
 	return &types.MsgRedeemStakeResponse{}, nil
 }
 
-// Operator transaction to confirm a delegation was submitted
-// on the host chain
+// Operator transaction to confirm a delegation was submitted on the host chain
 func (server msgServer) ConfirmDelegation(goCtx context.Context, msg *types.MsgConfirmDelegation) (*types.MsgConfirmDelegationResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 	// TODO [sttia]
@@ -45,8 +44,7 @@ func (server msgServer) ConfirmDelegation(goCtx context.Context, msg *types.MsgC
 	return &types.MsgConfirmDelegationResponse{}, nil
 }
 
-// Operator transaction to confirm an undelegation was submitted
-// on the host chain
+// Operator transaction to confirm an undelegation was submitted on the host chain
 func (server msgServer) ConfirmUndelegation(goCtx context.Context, msg *types.MsgConfirmUndelegation) (*types.MsgConfirmUndelegationResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 	// TODO [sttia]
@@ -54,8 +52,7 @@ func (server msgServer) ConfirmUndelegation(goCtx context.Context, msg *types.Ms
 	return &types.MsgConfirmUndelegationResponse{}, nil
 }
 
-// Operator transaction to confirm unbonded tokens were transferred back to
-// stride
+// Operator transaction to confirm unbonded tokens were transferred back to stride
 func (server msgServer) ConfirmUnbondedTokenSweep(goCtx context.Context, msg *types.MsgConfirmUnbondedTokenSweep) (*types.MsgConfirmUnbondedTokenSweepResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 	// TODO [sttia]
@@ -63,8 +60,7 @@ func (server msgServer) ConfirmUnbondedTokenSweep(goCtx context.Context, msg *ty
 	return &types.MsgConfirmUnbondedTokenSweepResponse{}, nil
 }
 
-// Operator transaction to adjust the delegated balance after a validator was
-// slashed
+// Operator transaction to adjust the delegated balance after a validator was slashed
 func (server msgServer) AdjustDelegatedBalance(goCtx context.Context, msg *types.MsgAdjustDelegatedBalance) (*types.MsgAdjustDelegatedBalanceResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 	// TODO [sttia]

@@ -1,13 +1,25 @@
 package cli
 
 import (
+	"errors"
 	"fmt"
+	"strconv"
+	"strings"
 
+	sdkmath "cosmossdk.io/math"
+	"github.com/cosmos/cosmos-sdk/client"
+	"github.com/cosmos/cosmos-sdk/client/flags"
+	"github.com/cosmos/cosmos-sdk/client/tx"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/version"
 	"github.com/spf13/cobra"
 
-	"github.com/cosmos/cosmos-sdk/client"
-
 	"github.com/Stride-Labs/stride/v17/x/staketia/types"
+)
+
+const (
+	ArgIncrease = "increase"
+	ArgDecrease = "decrease"
 )
 
 // GetTxCmd returns the transaction commands for this module
@@ -19,6 +31,363 @@ func GetTxCmd() *cobra.Command {
 		SuggestionsMinimumDistance: 2,
 		RunE:                       client.ValidateCmd,
 	}
+
+	cmd.AddCommand(
+		CmdLiquidStake(),
+		CmdRedeemStake(),
+		CmdConfirmDelegation(),
+		CmdConfirmUndelegation(),
+		CmdConfirmUnbondedTokensSwept(),
+		CmdAdjustDelegatedBalance(),
+		CmdUpdateInnerRedemptionRateBounds(),
+		CmdResumeHostZone(),
+	)
+
+	return cmd
+}
+
+// User transaction to liquid stake native tokens into stTokens
+func CmdLiquidStake() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "liquid-stake [amount]",
+		Short: "Liquid stakes native tokens and receives stTokens",
+		Long: strings.TrimSpace(
+			fmt.Sprintf(`Liquid stakes native tokens and receives stTokens
+
+Example:
+  $ %[1]s tx %[2]s liquid-stake 10000
+`, version.AppName, types.ModuleName),
+		),
+		Args: cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			amount, ok := sdkmath.NewIntFromString(args[0])
+			if !ok {
+				return errors.New("unable to parse amount")
+			}
+
+			clientCtx, err := client.GetClientTxContext(cmd)
+			if err != nil {
+				return err
+			}
+
+			msg := types.NewMsgLiquidStake(
+				clientCtx.GetFromAddress().String(),
+				amount,
+			)
+
+			if err := msg.ValidateBasic(); err != nil {
+				return err
+			}
+
+			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
+		},
+	}
+
+	flags.AddTxFlagsToCmd(cmd)
+
+	return cmd
+}
+
+// User transaction to redeem stake stTokens into native tokens
+func CmdRedeemStake() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "redeem-stake [amount]",
+		Short: "Redeems stTokens tokens for native tokens",
+		Long: strings.TrimSpace(
+			fmt.Sprintf(`Redeems stTokens tokens for native tokens. 
+Native tokens will land in the redeeming address after they unbond
+
+Example:
+  $ %[1]s tx %[2]s redeem-stake 10000
+`, version.AppName, types.ModuleName),
+		),
+		Args: cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			amount, ok := sdkmath.NewIntFromString(args[0])
+			if !ok {
+				return errors.New("unable to parse amount")
+			}
+
+			clientCtx, err := client.GetClientTxContext(cmd)
+			if err != nil {
+				return err
+			}
+
+			msg := types.NewMsgRedeemStake(
+				clientCtx.GetFromAddress().String(),
+				amount,
+			)
+
+			if err := msg.ValidateBasic(); err != nil {
+				return err
+			}
+
+			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
+		},
+	}
+
+	flags.AddTxFlagsToCmd(cmd)
+
+	return cmd
+}
+
+// Operator transaction to confirm an delegation was submitted on the host chain
+func CmdConfirmDelegation() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "confirm-delegation [record-id] [tx-hash]",
+		Short: "Confirms that an delegation tx was submitted",
+		Long: strings.TrimSpace(
+			fmt.Sprintf(`Confirms that a delegation tx was submitted on the host zone
+The recordId corresponds with the delegation record, and the tx hash is the hash from the undelegation tx itself (used for logging purposes)
+
+Example:
+  $ %[1]s tx %[2]s confirm-delegation 100 XXXXX
+`, version.AppName, types.ModuleName),
+		),
+		Args: cobra.ExactArgs(2),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			recordId, err := strconv.ParseUint(args[0], 10, 64)
+			if err != nil {
+				return err
+			}
+			txHash := args[1]
+
+			clientCtx, err := client.GetClientTxContext(cmd)
+			if err != nil {
+				return err
+			}
+
+			msg := types.NewMsgConfirmDelegation(
+				clientCtx.GetFromAddress().String(),
+				recordId,
+				txHash,
+			)
+
+			if err := msg.ValidateBasic(); err != nil {
+				return err
+			}
+
+			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
+		},
+	}
+
+	flags.AddTxFlagsToCmd(cmd)
+
+	return cmd
+}
+
+// Operator transaction to confirm an undelegation was submitted on the host chain
+func CmdConfirmUndelegation() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "confirm-undelegation [record-id] [tx-hash]",
+		Short: "Confirms that an undelegation tx was submitted",
+		Long: strings.TrimSpace(
+			fmt.Sprintf(`Confirms that an undelegation tx was submitted on the host zone
+The recordId corresponds with the unbonding record, and the tx hash is the hash from the undelegation tx itself (used for logging purposes)
+
+Example:
+  $ %[1]s tx %[2]s confirm-undelegation 100 XXXXX
+`, version.AppName, types.ModuleName),
+		),
+		Args: cobra.ExactArgs(2),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			recordId, err := strconv.ParseUint(args[0], 10, 64)
+			if err != nil {
+				return err
+			}
+			txHash := args[1]
+
+			clientCtx, err := client.GetClientTxContext(cmd)
+			if err != nil {
+				return err
+			}
+
+			msg := types.NewMsgConfirmUndelegation(
+				clientCtx.GetFromAddress().String(),
+				recordId,
+				txHash,
+			)
+
+			if err := msg.ValidateBasic(); err != nil {
+				return err
+			}
+
+			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
+		},
+	}
+
+	flags.AddTxFlagsToCmd(cmd)
+
+	return cmd
+}
+
+// Operator transaction to confirm unbonded tokens were transferred back to stride
+func CmdConfirmUnbondedTokensSwept() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "confirm-sweep [record-id] [tx-hash]",
+		Short: "Confirms that unbonded tokens were swept back to stride",
+		Long: strings.TrimSpace(
+			fmt.Sprintf(`Confirms unbonded tokens were transferred back from the host zone to stride.
+The recordId corresponds with the unbonding record, and the tx hash is the hash from the ibc-transfer tx itself (used for logging purposes)
+
+Example:
+  $ %[1]s tx %[2]s confirm-sweep 100 XXXXX
+`, version.AppName, types.ModuleName),
+		),
+		Args: cobra.ExactArgs(2),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			recordId, err := strconv.ParseUint(args[0], 10, 64)
+			if err != nil {
+				return err
+			}
+			txHash := args[1]
+
+			clientCtx, err := client.GetClientTxContext(cmd)
+			if err != nil {
+				return err
+			}
+
+			msg := types.NewMsgConfirmUnbondedTokenSweep(
+				clientCtx.GetFromAddress().String(),
+				recordId,
+				txHash,
+			)
+
+			if err := msg.ValidateBasic(); err != nil {
+				return err
+			}
+
+			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
+		},
+	}
+
+	flags.AddTxFlagsToCmd(cmd)
+
+	return cmd
+}
+
+// Operator transaction to adjust the delegated balance after a validator was slashed
+func CmdAdjustDelegatedBalance() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "adjust-delegated-balance [increase|decrease] [delegation-offset] [validator]",
+		Short: "Adjust the host zone delegated balance",
+		Long: strings.TrimSpace(
+			fmt.Sprintf(`Adjust the host zone's delegated balance and logs the validator in a slash record.
+Note: You must specify whether the delegation should increase or decrease
+
+Example:
+  $ %[1]s tx %[2]s adjust-delegated-balance decrease 100000 XXXXX
+`, version.AppName, types.ModuleName),
+		),
+		Args: cobra.ExactArgs(3),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			direction := args[0]
+			delegationOffset, ok := sdkmath.NewIntFromString(args[1])
+			if !ok {
+				return errors.New("unable to parse delegation offset")
+			}
+			validatorAddress := args[2]
+
+			// Make the offset negative if the intention is to decrease the amount
+			if direction == ArgDecrease {
+				delegationOffset = delegationOffset.Neg()
+			} else if direction != ArgIncrease {
+				return fmt.Errorf("invalid direction specified, must be either %s or %s", ArgIncrease, ArgDecrease)
+			}
+
+			clientCtx, err := client.GetClientTxContext(cmd)
+			if err != nil {
+				return err
+			}
+
+			msg := types.NewMsgAdjustDelegatedBalance(
+				clientCtx.GetFromAddress().String(),
+				delegationOffset,
+				validatorAddress,
+			)
+
+			if err := msg.ValidateBasic(); err != nil {
+				return err
+			}
+
+			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
+		},
+	}
+
+	flags.AddTxFlagsToCmd(cmd)
+
+	return cmd
+}
+
+// Adjusts the inner redemption rate bounds on the host zone
+func CmdUpdateInnerRedemptionRateBounds() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "set-redemption-rate-bounds [min-bound] [max-bound]",
+		Short: "Sets the inner redemption rate bounds",
+		Args:  cobra.ExactArgs(2),
+		Long: strings.TrimSpace(
+			fmt.Sprintf(`Sets the inner redemption rate bounds on a host zone
+
+Example:
+  $ %[1]s tx %[2]s set-redemption-rate-bounds 1.10 1.20
+`, version.AppName, types.ModuleName),
+		),
+		RunE: func(cmd *cobra.Command, args []string) (err error) {
+			minInnerRedemptionRate := sdk.MustNewDecFromStr(args[0])
+			maxInnerRedemptionRate := sdk.MustNewDecFromStr(args[1])
+
+			clientCtx, err := client.GetClientTxContext(cmd)
+			if err != nil {
+				return err
+			}
+
+			msg := types.NewMsgUpdateInnerRedemptionRateBounds(
+				clientCtx.GetFromAddress().String(),
+				minInnerRedemptionRate,
+				maxInnerRedemptionRate,
+			)
+			if err := msg.ValidateBasic(); err != nil {
+				return err
+			}
+			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
+		},
+	}
+
+	flags.AddTxFlagsToCmd(cmd)
+
+	return cmd
+}
+
+// Unhalts the host zone if redemption rates were exceeded
+func CmdResumeHostZone() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "resume-host-zone",
+		Short: "Resumes a host zone after a halt",
+		Args:  cobra.ExactArgs(0),
+		Long: strings.TrimSpace(
+			fmt.Sprintf(`Resumes a host zone after it was halted
+
+Example:
+  $ %[1]s tx %[2]s resume-host-zone
+`, version.AppName, types.ModuleName),
+		),
+		RunE: func(cmd *cobra.Command, args []string) (err error) {
+			clientCtx, err := client.GetClientTxContext(cmd)
+			if err != nil {
+				return err
+			}
+
+			msg := types.NewMsgResumeHostZone(
+				clientCtx.GetFromAddress().String(),
+			)
+			if err := msg.ValidateBasic(); err != nil {
+				return err
+			}
+			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
+		},
+	}
+
+	flags.AddTxFlagsToCmd(cmd)
 
 	return cmd
 }
