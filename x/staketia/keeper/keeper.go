@@ -1,8 +1,12 @@
 package keeper
 
 import (
+	"fmt"
+
+	"github.com/cometbft/cometbft/libs/log"
 	"github.com/cosmos/cosmos-sdk/codec"
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/Stride-Labs/stride/v17/x/staketia/types"
 )
@@ -26,4 +30,8 @@ func NewKeeper(
 		bankKeeper:     bankKeeper,
 		transferKeeper: transferKeeper,
 	}
+}
+
+func (k Keeper) Logger(ctx sdk.Context) log.Logger {
+	return ctx.Logger().With("module", fmt.Sprintf("x/%s", types.ModuleName))
 }
