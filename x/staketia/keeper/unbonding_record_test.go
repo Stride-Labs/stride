@@ -62,7 +62,7 @@ func (s *KeeperTestSuite) TestGetAllUnbondingRecords() {
 
 func (s *KeeperTestSuite) TestUpdateUnbondingRecordStatus() {
 	statuses := []types.UnbondingRecordStatus{
-		types.TALLYING_REDEMPTIONS,
+		types.ACCUMULATING_REDEMPTIONS,
 		types.UNBONDING_QUEUE,
 		types.UNBONDING_IN_PROGRESS,
 		types.UNBONDED,
@@ -93,14 +93,14 @@ func (s *KeeperTestSuite) TestUpdateUnbondingRecordStatus() {
 	s.Require().ErrorContains(err, "unbonding record not found")
 }
 
-func (s *KeeperTestSuite) TestGetTallyingUnbondingRecord() {
+func (s *KeeperTestSuite) TestGetAccumulatingUnbondingRecord() {
 	expectedRecordId := uint64(3)
 
 	// Set a few records in the store
 	unbondingRecords := []types.UnbondingRecord{
 		{Id: 1, Status: types.UNBONDING_QUEUE},
 		{Id: 2, Status: types.UNBONDING_IN_PROGRESS},
-		{Id: 3, Status: types.TALLYING_REDEMPTIONS},
+		{Id: 3, Status: types.ACCUMULATING_REDEMPTIONS},
 		{Id: 4, Status: types.UNBONDED},
 	}
 	for _, unbondingRecord := range unbondingRecords {
@@ -108,24 +108,24 @@ func (s *KeeperTestSuite) TestGetTallyingUnbondingRecord() {
 	}
 
 	// Confirm we find the relevant one
-	actualTallyRecord, err := s.App.StakeTiaKeeper.GetTallyingUnbondingRecord(s.Ctx)
-	s.Require().NoError(err, "no error expected when grabbing tally record")
-	s.Require().Equal(expectedRecordId, actualTallyRecord.Id, "found different record than expected")
+	actualAccumulatingRecord, err := s.App.StakeTiaKeeper.GetAccumulatingUnbondingRecord(s.Ctx)
+	s.Require().NoError(err, "no error expected when grabbing accumulating record")
+	s.Require().Equal(expectedRecordId, actualAccumulatingRecord.Id, "found different record than expected")
 
-	// Create an extra tally record and check that it causes an error upon lookup
-	duplicateTallyRecordId := uint64(5)
+	// Create an extra ACCUMULATING record and check that it causes an error upon lookup
+	duplicateAccumulatingRecordId := uint64(5)
 	s.App.StakeTiaKeeper.SetUnbondingRecord(s.Ctx, types.UnbondingRecord{
-		Id:     duplicateTallyRecordId,
-		Status: types.TALLYING_REDEMPTIONS,
+		Id:     duplicateAccumulatingRecordId,
+		Status: types.ACCUMULATING_REDEMPTIONS,
 	})
 
-	_, err = s.App.StakeTiaKeeper.GetTallyingUnbondingRecord(s.Ctx)
+	_, err = s.App.StakeTiaKeeper.GetAccumulatingUnbondingRecord(s.Ctx)
 	s.Require().ErrorContains(err, "more than one record")
 
-	// Remove the tally records and confirm it errors
+	// Remove the ACCUMULATING records and confirm it errors
 	s.App.StakeTiaKeeper.RemoveUnbondingRecord(s.Ctx, expectedRecordId)
-	s.App.StakeTiaKeeper.RemoveUnbondingRecord(s.Ctx, duplicateTallyRecordId)
+	s.App.StakeTiaKeeper.RemoveUnbondingRecord(s.Ctx, duplicateAccumulatingRecordId)
 
-	_, err = s.App.StakeTiaKeeper.GetTallyingUnbondingRecord(s.Ctx)
+	_, err = s.App.StakeTiaKeeper.GetAccumulatingUnbondingRecord(s.Ctx)
 	s.Require().ErrorContains(err, "no unbonding record")
 }
