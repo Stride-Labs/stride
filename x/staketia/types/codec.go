@@ -11,14 +11,27 @@ import (
 )
 
 func RegisterLegacyAminoCodec(cdc *codec.LegacyAmino) {
-	// TODO [sttia] [msgserver]: register legacy amino for each msg
-	// legacy.RegisterAminoMsg(cdc, &MsgSomeMessage{}, "staketia/MsgSomeMessage")
-	_ = legacy.Cdc // remove
+	legacy.RegisterAminoMsg(cdc, &MsgLiquidStake{}, "stride/MsgLiquidStake")
+	legacy.RegisterAminoMsg(cdc, &MsgRedeemStake{}, "stride/MsgRedeemStake")
+	legacy.RegisterAminoMsg(cdc, &MsgConfirmDelegation{}, "stride/MsgConfirmDelegation")
+	legacy.RegisterAminoMsg(cdc, &MsgConfirmUndelegation{}, "stride/MsgConfirmUndelegation")
+	legacy.RegisterAminoMsg(cdc, &MsgConfirmUnbondedTokenSweep{}, "stride/MsgConfirmUnbondedTokenSweep")
+	legacy.RegisterAminoMsg(cdc, &MsgAdjustDelegatedBalance{}, "stride/MsgAdjustDelegatedBalance")
+	legacy.RegisterAminoMsg(cdc, &MsgUpdateInnerRedemptionRateBounds{}, "stride/MsgUpdateRedemptionRateBounds")
+	legacy.RegisterAminoMsg(cdc, &MsgResumeHostZone{}, "stride/MsgResumeHostZone")
 }
 
 func RegisterInterfaces(registry cdctypes.InterfaceRegistry) {
-	// TODO [sttia] [msgserver]: add implement sdk.Msg interface for message types
-	// registry.RegisterImplementations((*sdk.Msg)(nil), ...)
+	registry.RegisterImplementations((*sdk.Msg)(nil),
+		&MsgLiquidStake{},
+		&MsgRedeemStake{},
+		&MsgConfirmDelegation{},
+		&MsgConfirmUndelegation{},
+		&MsgConfirmUnbondedTokenSweep{},
+		&MsgAdjustDelegatedBalance{},
+		&MsgUpdateInnerRedemptionRateBounds{},
+		&MsgResumeHostZone{},
+	)
 	msgservice.RegisterMsgServiceDesc(registry, &_Msg_serviceDesc)
 }
 
