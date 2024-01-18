@@ -101,11 +101,6 @@ func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochInfo epochstypes.EpochInf
 		k.SwapAllRewardTokens(ctx)
 	}
 
-	// TODO [cleanup]: Remove after v17 upgrade
-	// Submit ICA to disable gaia tokenization (this only needs to be run once)
-	if epochInfo.Identifier == epochstypes.DAY_EPOCH && epochNumber%10 == 0 {
-		k.DisableHubTokenization(ctx)
-	}
 }
 
 func (k Keeper) AfterEpochEnd(ctx sdk.Context, epochInfo epochstypes.EpochInfo) {}
