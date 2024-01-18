@@ -108,7 +108,7 @@ enum UnbondingRecordStatus {
   // ready to be distributed to users
   CLAIMABLE = 4;
   // ARCHIVE indicates the full unbonding cycle has been completed
-  ARCHIVE = 5;
+  UNBONDING_ARCHIVE = 5;
 }
 
 // DelegationRecords track the aggregate liquid stakes and delegations

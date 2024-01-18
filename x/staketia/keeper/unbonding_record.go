@@ -80,6 +80,7 @@ func (k Keeper) UpdateUnbondingRecordStatus(ctx sdk.Context, recordId uint64, st
 
 // Gets the TALLYING unbonding record (there should only be one)
 func (k Keeper) GetTallyingUnbondingRecord(ctx sdk.Context) (unbondingRecord types.UnbondingRecord, err error) {
+	// QUESTION: This is kind of inefficient - do you think it's worth indexing instead of looping each time?
 	tallyRecords := k.GetAllUnbondingRecordsByStatus(ctx, types.TALLYING_REDEMPTIONS)
 	if len(tallyRecords) == 0 {
 		return unbondingRecord, errors.New("no unbonding record in status TALLYING")
