@@ -78,9 +78,9 @@ Example:
 func CmdQueryDelegationRecords() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "delegation-records",
-		Short: "Queries the delegation records",
+		Short: "Queries all delegation records",
 		Long: strings.TrimSpace(
-			fmt.Sprintf(`Queries the delegation records. Optionally including the archived records.
+			fmt.Sprintf(`Queries all delegation records. Optionally include archived records.
 Examples:
   $ %[1]s query %[2]s delegation-records
   $ %[1]s query %[2]s delegation-records --archive true
@@ -127,10 +127,10 @@ func CmdQueryUnbondingRecords() *cobra.Command {
 		Use:   "unbonding-records",
 		Short: "Queries the unbonding records",
 		Long: strings.TrimSpace(
-			fmt.Sprintf(`Queries the unbonding records. Optionally including the archived records.
+			fmt.Sprintf(`Queries all unbonding records. Optionally include archived records.
 Example:
-  $ %s query %s unbonding-records
-  $ %s query %s unbonding-records --archive true
+  $ %[1]s query %[2]s unbonding-records
+  $ %[1]s query %[2]s unbonding-records --archive true
 `, version.AppName, types.ModuleName),
 		),
 		Args: cobra.ExactArgs(0),
