@@ -2,7 +2,87 @@
 syntax = "proto3";
 package stride.staketia;
 
+import "stride/staketia/staketia.proto";
+import "gogoproto/gogo.proto";
+import "google/api/annotations.proto";
+
 option go_package = "github.com/Stride-Labs/stride/v17/x/staketia/types";
 
 // Query defines the gRPC querier service.
-service Query {}
+service Query {
+  // Queries the host zone struct
+  rpc HostZone(QueryHostZoneRequest) returns (QueryHostZoneResponse) {
+    option (google.api.http).get = "/Stride-Labs/stride/staketia/host_zone";
+  }
+
+  // Queries the delegation records with an optional to include archived records
+  rpc DelegationRecords(QueryDelegationRecordsRequest)
+      returns (QueryDelegationRecordsResponse) {
+    option (google.api.http).get =
+        "/Stride-Labs/stride/staketia/delegation_records";
+  }
+
+  // Queries the unbonding records with an optional to include archived records
+  rpc UnbondingRecords(QueryUnbondingRecordsRequest)
+      returns (QueryUnbondingRecordsResponse) {
+    option (google.api.http).get =
+        "/Stride-Labs/stride/staketia/unbonding_records";
+  }
+
+  // Queries a single user redemption record
+  rpc RedemptionRecord(QueryRedemptionRecord)
+      returns (QueryRedemptionRecordResponse) {
+    option (google.api.http).get =
+        "/Stride-Labs/stride/staketia/redemption_record";
+  }
+
+  // Queries all redemption records with an optional filter by address
+  // Ex:
+  // - /redemption_records
+  // - /redemption_records?address=strideXXX
+  rpc AllRedemptionRecords(QueryAllRedemptionRecords)
+      returns (QueryAllRedemptionRecordsResponse) {
+    option (google.api.http).get =
+        "/Stride-Labs/stride/staketia/redemption_records";
+  }
+
+  // Queries slash records
+  rpc SlashRecords(QuerySlashRecords) returns (QuerySlashRecordsResponse) {
+    option (google.api.http).get = "/Stride-Labs/stride/staketia/slash_records";
+  }
+}
+
+// Host Zone
+message QueryHostZoneRequest {};
+message QueryHostZoneResponse { HostZone host_zone = 1; }
+
+// All Delegation Records
+message QueryDelegationRecordsRequest {};
+message QueryDelegationRecordsResponse {
+  repeated DelegationRecord delegation_records = 1
+      [ (gogoproto.nullable) = false ];
+}
+
+// All Unbonding Records
+message QueryUnbondingRecordsRequest {};
+message QueryUnbondingRecordsResponse {
+  repeated UnbondingRecord unbonding_records = 1
+      [ (gogoproto.nullable) = false ];
+}
+
+// Single Redemption Record
+message QueryRedemptionRecord {};
+message QueryRedemptionRecordResponse {
+  RedemptionRecord redemption_record = 1;
+}
+
+// All Redemption Records
+message QueryAllRedemptionRecords {};
+message QueryAllRedemptionRecordsResponse {
+  RedemptionRecord redemption_record = 1;
+  string address = 2;
+}
+
+// All Slash Records
+message QuerySlashRecords {};
+message QuerySlashRecordsResponse { SlashRecord slash_records = 1; }

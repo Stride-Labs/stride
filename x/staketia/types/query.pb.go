@@ -6,10 +6,16 @@ package types
 import (
 	context "context"
 	fmt "fmt"
+	_ "github.com/cosmos/gogoproto/gogoproto"
 	grpc1 "github.com/cosmos/gogoproto/grpc"
 	proto "github.com/cosmos/gogoproto/proto"
+	_ "google.golang.org/genproto/googleapis/api/annotations"
 	grpc "google.golang.org/grpc"
+	codes "google.golang.org/grpc/codes"
+	status "google.golang.org/grpc/status"
+	io "io"
 	math "math"
+	math_bits "math/bits"
 )
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -23,19 +29,559 @@ var _ = math.Inf
 // proto package needs to be updated.
 const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 
+// Host Zone
+type QueryHostZoneRequest struct {
+}
+
+func (m *QueryHostZoneRequest) Reset()         { *m = QueryHostZoneRequest{} }
+func (m *QueryHostZoneRequest) String() string { return proto.CompactTextString(m) }
+func (*QueryHostZoneRequest) ProtoMessage()    {}
+func (*QueryHostZoneRequest) Descriptor() ([]byte, []int) {
+	return fileDescriptor_38d30838f2bbb0b1, []int{0}
+}
+func (m *QueryHostZoneRequest) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *QueryHostZoneRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_QueryHostZoneRequest.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *QueryHostZoneRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryHostZoneRequest.Merge(m, src)
+}
+func (m *QueryHostZoneRequest) XXX_Size() int {
+	return m.Size()
+}
+func (m *QueryHostZoneRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_QueryHostZoneRequest.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_QueryHostZoneRequest proto.InternalMessageInfo
+
+type QueryHostZoneResponse struct {
+	HostZone *HostZone `protobuf:"bytes,1,opt,name=host_zone,json=hostZone,proto3" json:"host_zone,omitempty"`
+}
+
+func (m *QueryHostZoneResponse) Reset()         { *m = QueryHostZoneResponse{} }
+func (m *QueryHostZoneResponse) String() string { return proto.CompactTextString(m) }
+func (*QueryHostZoneResponse) ProtoMessage()    {}
+func (*QueryHostZoneResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_38d30838f2bbb0b1, []int{1}
+}
+func (m *QueryHostZoneResponse) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *QueryHostZoneResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_QueryHostZoneResponse.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *QueryHostZoneResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryHostZoneResponse.Merge(m, src)
+}
+func (m *QueryHostZoneResponse) XXX_Size() int {
+	return m.Size()
+}
+func (m *QueryHostZoneResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_QueryHostZoneResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_QueryHostZoneResponse proto.InternalMessageInfo
+
+func (m *QueryHostZoneResponse) GetHostZone() *HostZone {
+	if m != nil {
+		return m.HostZone
+	}
+	return nil
+}
+
+// All Delegation Records
+type QueryDelegationRecordsRequest struct {
+}
+
+func (m *QueryDelegationRecordsRequest) Reset()         { *m = QueryDelegationRecordsRequest{} }
+func (m *QueryDelegationRecordsRequest) String() string { return proto.CompactTextString(m) }
+func (*QueryDelegationRecordsRequest) ProtoMessage()    {}
+func (*QueryDelegationRecordsRequest) Descriptor() ([]byte, []int) {
+	return fileDescriptor_38d30838f2bbb0b1, []int{2}
+}
+func (m *QueryDelegationRecordsRequest) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *QueryDelegationRecordsRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_QueryDelegationRecordsRequest.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *QueryDelegationRecordsRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryDelegationRecordsRequest.Merge(m, src)
+}
+func (m *QueryDelegationRecordsRequest) XXX_Size() int {
+	return m.Size()
+}
+func (m *QueryDelegationRecordsRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_QueryDelegationRecordsRequest.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_QueryDelegationRecordsRequest proto.InternalMessageInfo
+
+type QueryDelegationRecordsResponse struct {
+	DelegationRecords []DelegationRecord `protobuf:"bytes,1,rep,name=delegation_records,json=delegationRecords,proto3" json:"delegation_records"`
+}
+
+func (m *QueryDelegationRecordsResponse) Reset()         { *m = QueryDelegationRecordsResponse{} }
+func (m *QueryDelegationRecordsResponse) String() string { return proto.CompactTextString(m) }
+func (*QueryDelegationRecordsResponse) ProtoMessage()    {}
+func (*QueryDelegationRecordsResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_38d30838f2bbb0b1, []int{3}
+}
+func (m *QueryDelegationRecordsResponse) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *QueryDelegationRecordsResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_QueryDelegationRecordsResponse.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *QueryDelegationRecordsResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryDelegationRecordsResponse.Merge(m, src)
+}
+func (m *QueryDelegationRecordsResponse) XXX_Size() int {
+	return m.Size()
+}
+func (m *QueryDelegationRecordsResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_QueryDelegationRecordsResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_QueryDelegationRecordsResponse proto.InternalMessageInfo
+
+func (m *QueryDelegationRecordsResponse) GetDelegationRecords() []DelegationRecord {
+	if m != nil {
+		return m.DelegationRecords
+	}
+	return nil
+}
+
+// All Unbonding Records
+type QueryUnbondingRecordsRequest struct {
+}
+
+func (m *QueryUnbondingRecordsRequest) Reset()         { *m = QueryUnbondingRecordsRequest{} }
+func (m *QueryUnbondingRecordsRequest) String() string { return proto.CompactTextString(m) }
+func (*QueryUnbondingRecordsRequest) ProtoMessage()    {}
+func (*QueryUnbondingRecordsRequest) Descriptor() ([]byte, []int) {
+	return fileDescriptor_38d30838f2bbb0b1, []int{4}
+}
+func (m *QueryUnbondingRecordsRequest) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *QueryUnbondingRecordsRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_QueryUnbondingRecordsRequest.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *QueryUnbondingRecordsRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryUnbondingRecordsRequest.Merge(m, src)
+}
+func (m *QueryUnbondingRecordsRequest) XXX_Size() int {
+	return m.Size()
+}
+func (m *QueryUnbondingRecordsRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_QueryUnbondingRecordsRequest.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_QueryUnbondingRecordsRequest proto.InternalMessageInfo
+
+type QueryUnbondingRecordsResponse struct {
+	UnbondingRecords []UnbondingRecord `protobuf:"bytes,1,rep,name=unbonding_records,json=unbondingRecords,proto3" json:"unbonding_records"`
+}
+
+func (m *QueryUnbondingRecordsResponse) Reset()         { *m = QueryUnbondingRecordsResponse{} }
+func (m *QueryUnbondingRecordsResponse) String() string { return proto.CompactTextString(m) }
+func (*QueryUnbondingRecordsResponse) ProtoMessage()    {}
+func (*QueryUnbondingRecordsResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_38d30838f2bbb0b1, []int{5}
+}
+func (m *QueryUnbondingRecordsResponse) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *QueryUnbondingRecordsResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_QueryUnbondingRecordsResponse.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *QueryUnbondingRecordsResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryUnbondingRecordsResponse.Merge(m, src)
+}
+func (m *QueryUnbondingRecordsResponse) XXX_Size() int {
+	return m.Size()
+}
+func (m *QueryUnbondingRecordsResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_QueryUnbondingRecordsResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_QueryUnbondingRecordsResponse proto.InternalMessageInfo
+
+func (m *QueryUnbondingRecordsResponse) GetUnbondingRecords() []UnbondingRecord {
+	if m != nil {
+		return m.UnbondingRecords
+	}
+	return nil
+}
+
+// Single Redemption Record
+type QueryRedemptionRecord struct {
+}
+
+func (m *QueryRedemptionRecord) Reset()         { *m = QueryRedemptionRecord{} }
+func (m *QueryRedemptionRecord) String() string { return proto.CompactTextString(m) }
+func (*QueryRedemptionRecord) ProtoMessage()    {}
+func (*QueryRedemptionRecord) Descriptor() ([]byte, []int) {
+	return fileDescriptor_38d30838f2bbb0b1, []int{6}
+}
+func (m *QueryRedemptionRecord) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *QueryRedemptionRecord) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_QueryRedemptionRecord.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *QueryRedemptionRecord) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryRedemptionRecord.Merge(m, src)
+}
+func (m *QueryRedemptionRecord) XXX_Size() int {
+	return m.Size()
+}
+func (m *QueryRedemptionRecord) XXX_DiscardUnknown() {
+	xxx_messageInfo_QueryRedemptionRecord.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_QueryRedemptionRecord proto.InternalMessageInfo
+
+type QueryRedemptionRecordResponse struct {
+	RedemptionRecord *RedemptionRecord `protobuf:"bytes,1,opt,name=redemption_record,json=redemptionRecord,proto3" json:"redemption_record,omitempty"`
+}
+
+func (m *QueryRedemptionRecordResponse) Reset()         { *m = QueryRedemptionRecordResponse{} }
+func (m *QueryRedemptionRecordResponse) String() string { return proto.CompactTextString(m) }
+func (*QueryRedemptionRecordResponse) ProtoMessage()    {}
+func (*QueryRedemptionRecordResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_38d30838f2bbb0b1, []int{7}
+}
+func (m *QueryRedemptionRecordResponse) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *QueryRedemptionRecordResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_QueryRedemptionRecordResponse.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *QueryRedemptionRecordResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryRedemptionRecordResponse.Merge(m, src)
+}
+func (m *QueryRedemptionRecordResponse) XXX_Size() int {
+	return m.Size()
+}
+func (m *QueryRedemptionRecordResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_QueryRedemptionRecordResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_QueryRedemptionRecordResponse proto.InternalMessageInfo
+
+func (m *QueryRedemptionRecordResponse) GetRedemptionRecord() *RedemptionRecord {
+	if m != nil {
+		return m.RedemptionRecord
+	}
+	return nil
+}
+
+// All Redemption Records
+type QueryAllRedemptionRecords struct {
+}
+
+func (m *QueryAllRedemptionRecords) Reset()         { *m = QueryAllRedemptionRecords{} }
+func (m *QueryAllRedemptionRecords) String() string { return proto.CompactTextString(m) }
+func (*QueryAllRedemptionRecords) ProtoMessage()    {}
+func (*QueryAllRedemptionRecords) Descriptor() ([]byte, []int) {
+	return fileDescriptor_38d30838f2bbb0b1, []int{8}
+}
+func (m *QueryAllRedemptionRecords) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *QueryAllRedemptionRecords) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_QueryAllRedemptionRecords.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *QueryAllRedemptionRecords) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryAllRedemptionRecords.Merge(m, src)
+}
+func (m *QueryAllRedemptionRecords) XXX_Size() int {
+	return m.Size()
+}
+func (m *QueryAllRedemptionRecords) XXX_DiscardUnknown() {
+	xxx_messageInfo_QueryAllRedemptionRecords.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_QueryAllRedemptionRecords proto.InternalMessageInfo
+
+type QueryAllRedemptionRecordsResponse struct {
+	RedemptionRecord *RedemptionRecord `protobuf:"bytes,1,opt,name=redemption_record,json=redemptionRecord,proto3" json:"redemption_record,omitempty"`
+	Address          string            `protobuf:"bytes,2,opt,name=address,proto3" json:"address,omitempty"`
+}
+
+func (m *QueryAllRedemptionRecordsResponse) Reset()         { *m = QueryAllRedemptionRecordsResponse{} }
+func (m *QueryAllRedemptionRecordsResponse) String() string { return proto.CompactTextString(m) }
+func (*QueryAllRedemptionRecordsResponse) ProtoMessage()    {}
+func (*QueryAllRedemptionRecordsResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_38d30838f2bbb0b1, []int{9}
+}
+func (m *QueryAllRedemptionRecordsResponse) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *QueryAllRedemptionRecordsResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_QueryAllRedemptionRecordsResponse.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *QueryAllRedemptionRecordsResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryAllRedemptionRecordsResponse.Merge(m, src)
+}
+func (m *QueryAllRedemptionRecordsResponse) XXX_Size() int {
+	return m.Size()
+}
+func (m *QueryAllRedemptionRecordsResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_QueryAllRedemptionRecordsResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_QueryAllRedemptionRecordsResponse proto.InternalMessageInfo
+
+func (m *QueryAllRedemptionRecordsResponse) GetRedemptionRecord() *RedemptionRecord {
+	if m != nil {
+		return m.RedemptionRecord
+	}
+	return nil
+}
+
+func (m *QueryAllRedemptionRecordsResponse) GetAddress() string {
+	if m != nil {
+		return m.Address
+	}
+	return ""
+}
+
+// All Slash Records
+type QuerySlashRecords struct {
+}
+
+func (m *QuerySlashRecords) Reset()         { *m = QuerySlashRecords{} }
+func (m *QuerySlashRecords) String() string { return proto.CompactTextString(m) }
+func (*QuerySlashRecords) ProtoMessage()    {}
+func (*QuerySlashRecords) Descriptor() ([]byte, []int) {
+	return fileDescriptor_38d30838f2bbb0b1, []int{10}
+}
+func (m *QuerySlashRecords) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *QuerySlashRecords) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_QuerySlashRecords.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *QuerySlashRecords) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QuerySlashRecords.Merge(m, src)
+}
+func (m *QuerySlashRecords) XXX_Size() int {
+	return m.Size()
+}
+func (m *QuerySlashRecords) XXX_DiscardUnknown() {
+	xxx_messageInfo_QuerySlashRecords.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_QuerySlashRecords proto.InternalMessageInfo
+
+type QuerySlashRecordsResponse struct {
+	SlashRecords *SlashRecord `protobuf:"bytes,1,opt,name=slash_records,json=slashRecords,proto3" json:"slash_records,omitempty"`
+}
+
+func (m *QuerySlashRecordsResponse) Reset()         { *m = QuerySlashRecordsResponse{} }
+func (m *QuerySlashRecordsResponse) String() string { return proto.CompactTextString(m) }
+func (*QuerySlashRecordsResponse) ProtoMessage()    {}
+func (*QuerySlashRecordsResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_38d30838f2bbb0b1, []int{11}
+}
+func (m *QuerySlashRecordsResponse) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *QuerySlashRecordsResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_QuerySlashRecordsResponse.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *QuerySlashRecordsResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QuerySlashRecordsResponse.Merge(m, src)
+}
+func (m *QuerySlashRecordsResponse) XXX_Size() int {
+	return m.Size()
+}
+func (m *QuerySlashRecordsResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_QuerySlashRecordsResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_QuerySlashRecordsResponse proto.InternalMessageInfo
+
+func (m *QuerySlashRecordsResponse) GetSlashRecords() *SlashRecord {
+	if m != nil {
+		return m.SlashRecords
+	}
+	return nil
+}
+
+func init() {
+	proto.RegisterType((*QueryHostZoneRequest)(nil), "stride.staketia.QueryHostZoneRequest")
+	proto.RegisterType((*QueryHostZoneResponse)(nil), "stride.staketia.QueryHostZoneResponse")
+	proto.RegisterType((*QueryDelegationRecordsRequest)(nil), "stride.staketia.QueryDelegationRecordsRequest")
+	proto.RegisterType((*QueryDelegationRecordsResponse)(nil), "stride.staketia.QueryDelegationRecordsResponse")
+	proto.RegisterType((*QueryUnbondingRecordsRequest)(nil), "stride.staketia.QueryUnbondingRecordsRequest")
+	proto.RegisterType((*QueryUnbondingRecordsResponse)(nil), "stride.staketia.QueryUnbondingRecordsResponse")
+	proto.RegisterType((*QueryRedemptionRecord)(nil), "stride.staketia.QueryRedemptionRecord")
+	proto.RegisterType((*QueryRedemptionRecordResponse)(nil), "stride.staketia.QueryRedemptionRecordResponse")
+	proto.RegisterType((*QueryAllRedemptionRecords)(nil), "stride.staketia.QueryAllRedemptionRecords")
+	proto.RegisterType((*QueryAllRedemptionRecordsResponse)(nil), "stride.staketia.QueryAllRedemptionRecordsResponse")
+	proto.RegisterType((*QuerySlashRecords)(nil), "stride.staketia.QuerySlashRecords")
+	proto.RegisterType((*QuerySlashRecordsResponse)(nil), "stride.staketia.QuerySlashRecordsResponse")
+}
+
 func init() { proto.RegisterFile("stride/staketia/query.proto", fileDescriptor_38d30838f2bbb0b1) }
 
 var fileDescriptor_38d30838f2bbb0b1 = []byte{
-	// 136 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xe2, 0x92, 0x2e, 0x2e, 0x29, 0xca,
-	0x4c, 0x49, 0xd5, 0x2f, 0x2e, 0x49, 0xcc, 0x4e, 0x2d, 0xc9, 0x4c, 0xd4, 0x2f, 0x2c, 0x4d, 0x2d,
-	0xaa, 0xd4, 0x2b, 0x28, 0xca, 0x2f, 0xc9, 0x17, 0xe2, 0x87, 0x48, 0xea, 0xc1, 0x24, 0x8d, 0xd8,
-	0xb9, 0x58, 0x03, 0x41, 0xf2, 0x4e, 0x3e, 0x27, 0x1e, 0xc9, 0x31, 0x5e, 0x78, 0x24, 0xc7, 0xf8,
-	0xe0, 0x91, 0x1c, 0xe3, 0x84, 0xc7, 0x72, 0x0c, 0x17, 0x1e, 0xcb, 0x31, 0xdc, 0x78, 0x2c, 0xc7,
-	0x10, 0x65, 0x94, 0x9e, 0x59, 0x92, 0x51, 0x9a, 0xa4, 0x97, 0x9c, 0x9f, 0xab, 0x1f, 0x0c, 0xd6,
-	0xae, 0xeb, 0x93, 0x98, 0x54, 0xac, 0x0f, 0xb5, 0xa7, 0xcc, 0xd0, 0x5c, 0xbf, 0x02, 0x61, 0x5b,
-	0x49, 0x65, 0x41, 0x6a, 0x71, 0x12, 0x1b, 0xd8, 0x3a, 0x63, 0x40, 0x00, 0x00, 0x00, 0xff, 0xff,
-	0xac, 0x75, 0x21, 0x63, 0x8d, 0x00, 0x00, 0x00,
+	// 634 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xb4, 0x95, 0xcf, 0x6f, 0xd3, 0x30,
+	0x1c, 0xc5, 0xeb, 0xf1, 0x63, 0x9b, 0x37, 0x44, 0x6b, 0x0a, 0x74, 0x59, 0xc9, 0xba, 0x48, 0x4c,
+	0x55, 0xc5, 0x12, 0x16, 0xa4, 0xed, 0xbc, 0x89, 0x03, 0x87, 0x09, 0x44, 0x2a, 0x38, 0xec, 0xc0,
+	0x94, 0x2e, 0x56, 0x1a, 0xd1, 0xc5, 0x5d, 0xec, 0xa2, 0x8d, 0x23, 0x37, 0x0e, 0x48, 0x08, 0xfe,
+	0x03, 0x6e, 0x1c, 0x10, 0xff, 0xc6, 0x8e, 0x93, 0xb8, 0x20, 0x21, 0x21, 0xd4, 0xf2, 0x87, 0xa0,
+	0x3a, 0x4e, 0x16, 0xec, 0xa4, 0x2b, 0x07, 0x6e, 0xae, 0xbf, 0x2f, 0xef, 0x7d, 0x5a, 0xfb, 0xa5,
+	0x70, 0x99, 0xb2, 0x28, 0xf0, 0xb0, 0x45, 0x99, 0xfb, 0x12, 0xb3, 0xc0, 0xb5, 0x8e, 0x06, 0x38,
+	0x3a, 0x31, 0xfb, 0x11, 0x61, 0x04, 0x5d, 0x8f, 0x87, 0x66, 0x32, 0xd4, 0x74, 0x59, 0x9d, 0x2c,
+	0xe2, 0x07, 0xb4, 0xaa, 0x4f, 0x7c, 0xc2, 0x97, 0xd6, 0x78, 0x25, 0x76, 0xeb, 0x3e, 0x21, 0x7e,
+	0x0f, 0x5b, 0x6e, 0x3f, 0xb0, 0xdc, 0x30, 0x24, 0xcc, 0x65, 0x01, 0x09, 0x69, 0x3c, 0x35, 0x6e,
+	0xc1, 0xea, 0xd3, 0x71, 0xe6, 0x23, 0x42, 0xd9, 0x1e, 0x09, 0xb1, 0x83, 0x8f, 0x06, 0x98, 0x32,
+	0xe3, 0x09, 0xbc, 0x29, 0xed, 0xd3, 0x3e, 0x09, 0x29, 0x46, 0x9b, 0x70, 0xbe, 0x4b, 0x28, 0xdb,
+	0x7f, 0x4d, 0x42, 0x5c, 0x03, 0x0d, 0xd0, 0x5c, 0xb0, 0x97, 0x4c, 0x89, 0xd4, 0x4c, 0x9f, 0x9a,
+	0xeb, 0x8a, 0x95, 0xb1, 0x02, 0xef, 0x70, 0xc3, 0x87, 0xb8, 0x87, 0x7d, 0x8e, 0xe0, 0xe0, 0x03,
+	0x12, 0x79, 0x34, 0x49, 0x3c, 0x86, 0x7a, 0x91, 0x40, 0x44, 0x3f, 0x87, 0xc8, 0x4b, 0x87, 0xfb,
+	0x51, 0x3c, 0xad, 0x81, 0xc6, 0xa5, 0xe6, 0x82, 0xbd, 0xaa, 0x30, 0xc8, 0x3e, 0x3b, 0x97, 0x4f,
+	0x7f, 0xae, 0x94, 0x9c, 0x8a, 0x27, 0xfb, 0x1b, 0x3a, 0xac, 0xf3, 0xe4, 0x67, 0x61, 0x87, 0x84,
+	0x5e, 0x10, 0xfa, 0x12, 0x19, 0x13, 0xe8, 0xea, 0x5c, 0x80, 0xb5, 0x61, 0x65, 0x90, 0xcc, 0x24,
+	0xae, 0x86, 0xc2, 0x25, 0xb9, 0x08, 0xac, 0xf2, 0x40, 0x32, 0x37, 0x6e, 0x8b, 0x13, 0x70, 0xb0,
+	0x87, 0x0f, 0xfb, 0xe7, 0xbc, 0x06, 0x11, 0x38, 0xf2, 0x20, 0xc5, 0x79, 0x0c, 0x2b, 0x51, 0x3a,
+	0x13, 0x3c, 0xe2, 0xa8, 0xd4, 0x9f, 0x49, 0x71, 0x29, 0x47, 0x72, 0xe0, 0x32, 0x5c, 0xe2, 0x81,
+	0xdb, 0xbd, 0x9e, 0xac, 0xa6, 0xc6, 0x3b, 0x00, 0x57, 0x0b, 0xa7, 0xff, 0x0b, 0x09, 0xd5, 0xe0,
+	0xac, 0xeb, 0x79, 0x11, 0xa6, 0xb4, 0x36, 0xd3, 0x00, 0xcd, 0x79, 0x27, 0xf9, 0x68, 0xdc, 0x80,
+	0x15, 0x8e, 0xd3, 0xee, 0xb9, 0xb4, 0x9b, 0x40, 0xbe, 0x10, 0xdf, 0x20, 0xbb, 0x99, 0xb2, 0x6d,
+	0xc3, 0x6b, 0x74, 0xbc, 0x9f, 0x39, 0xb9, 0x31, 0x57, 0x5d, 0xe1, 0xca, 0x3c, 0xed, 0x2c, 0xd2,
+	0x8c, 0x95, 0xfd, 0x63, 0x16, 0x5e, 0xe1, 0x01, 0xe8, 0x2d, 0x80, 0x73, 0xc9, 0xed, 0x47, 0x77,
+	0x15, 0x8b, 0xbc, 0xae, 0x69, 0x6b, 0x17, 0xc9, 0x62, 0x50, 0xc3, 0x7c, 0xf3, 0xed, 0xf7, 0xc7,
+	0x99, 0x26, 0x5a, 0xb3, 0xda, 0x5c, 0xbf, 0xbe, 0xeb, 0x76, 0xa8, 0x25, 0xbf, 0x14, 0xd2, 0x76,
+	0xa2, 0x2f, 0x00, 0x56, 0x94, 0x36, 0x21, 0x33, 0x3f, 0xad, 0xa8, 0x97, 0x9a, 0x35, 0xb5, 0x5e,
+	0x60, 0x6e, 0x71, 0xcc, 0x0d, 0x64, 0x4d, 0xc4, 0x54, 0x9b, 0x8c, 0x3e, 0x03, 0x58, 0x96, 0x3b,
+	0x86, 0xd6, 0xf3, 0xe3, 0x0b, 0xba, 0xaa, 0x99, 0xd3, 0xca, 0x05, 0xec, 0x26, 0x87, 0xbd, 0x8f,
+	0xcc, 0x89, 0xb0, 0x4a, 0xbb, 0xd1, 0x27, 0x00, 0xcb, 0xf2, 0x3d, 0x45, 0x05, 0x07, 0x29, 0xeb,
+	0x8a, 0x20, 0x8b, 0x0a, 0x3d, 0x25, 0xa4, 0x52, 0x30, 0xf4, 0x15, 0xc0, 0x6a, 0x5e, 0x2d, 0x51,
+	0x2b, 0x1f, 0x20, 0x4f, 0xab, 0xd9, 0xd3, 0x6b, 0xff, 0xf1, 0x0a, 0x28, 0xc0, 0x14, 0x7d, 0x00,
+	0x70, 0x31, 0x5b, 0x52, 0x64, 0xe4, 0xa7, 0x67, 0x35, 0x5a, 0xeb, 0x62, 0x4d, 0x4a, 0x66, 0x73,
+	0xb2, 0x7b, 0xa8, 0x35, 0x91, 0xec, 0xaf, 0xf7, 0xc1, 0xce, 0xee, 0xe9, 0x50, 0x07, 0x67, 0x43,
+	0x1d, 0xfc, 0x1a, 0xea, 0xe0, 0xfd, 0x48, 0x2f, 0x9d, 0x8d, 0xf4, 0xd2, 0xf7, 0x91, 0x5e, 0xda,
+	0xb3, 0xfd, 0x80, 0x75, 0x07, 0x1d, 0xf3, 0x80, 0x1c, 0xe6, 0xf9, 0xbd, 0xda, 0xd8, 0xb2, 0x8e,
+	0xcf, 0x5d, 0xd9, 0x49, 0x1f, 0xd3, 0xce, 0x55, 0xfe, 0xc7, 0xfb, 0xe0, 0x4f, 0x00, 0x00, 0x00,
+	0xff, 0xff, 0x16, 0x2e, 0x7a, 0xb9, 0xfc, 0x07, 0x00, 0x00,
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -50,6 +596,21 @@ const _ = grpc.SupportPackageIsVersion4
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://godoc.org/google.golang.org/grpc#ClientConn.NewStream.
 type QueryClient interface {
+	// Queries the host zone struct
+	HostZone(ctx context.Context, in *QueryHostZoneRequest, opts ...grpc.CallOption) (*QueryHostZoneResponse, error)
+	// Queries the delegation records with an optional to include archived records
+	DelegationRecords(ctx context.Context, in *QueryDelegationRecordsRequest, opts ...grpc.CallOption) (*QueryDelegationRecordsResponse, error)
+	// Queries the unbonding records with an optional to include archived records
+	UnbondingRecords(ctx context.Context, in *QueryUnbondingRecordsRequest, opts ...grpc.CallOption) (*QueryUnbondingRecordsResponse, error)
+	// Queries a single user redemption record
+	RedemptionRecord(ctx context.Context, in *QueryRedemptionRecord, opts ...grpc.CallOption) (*QueryRedemptionRecordResponse, error)
+	// Queries all redemption records with an optional filter by address
+	// Ex:
+	// - /redemption_records
+	// - /redemption_records?address=strideXXX
+	AllRedemptionRecords(ctx context.Context, in *QueryAllRedemptionRecords, opts ...grpc.CallOption) (*QueryAllRedemptionRecordsResponse, error)
+	// Queries slash records
+	SlashRecords(ctx context.Context, in *QuerySlashRecords, opts ...grpc.CallOption) (*QuerySlashRecordsResponse, error)
 }
 
 type queryClient struct {
@@ -60,22 +621,1688 @@ func NewQueryClient(cc grpc1.ClientConn) QueryClient {
 	return &queryClient{cc}
 }
 
+func (c *queryClient) HostZone(ctx context.Context, in *QueryHostZoneRequest, opts ...grpc.CallOption) (*QueryHostZoneResponse, error) {
+	out := new(QueryHostZoneResponse)
+	err := c.cc.Invoke(ctx, "/stride.staketia.Query/HostZone", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *queryClient) DelegationRecords(ctx context.Context, in *QueryDelegationRecordsRequest, opts ...grpc.CallOption) (*QueryDelegationRecordsResponse, error) {
+	out := new(QueryDelegationRecordsResponse)
+	err := c.cc.Invoke(ctx, "/stride.staketia.Query/DelegationRecords", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *queryClient) UnbondingRecords(ctx context.Context, in *QueryUnbondingRecordsRequest, opts ...grpc.CallOption) (*QueryUnbondingRecordsResponse, error) {
+	out := new(QueryUnbondingRecordsResponse)
+	err := c.cc.Invoke(ctx, "/stride.staketia.Query/UnbondingRecords", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *queryClient) RedemptionRecord(ctx context.Context, in *QueryRedemptionRecord, opts ...grpc.CallOption) (*QueryRedemptionRecordResponse, error) {
+	out := new(QueryRedemptionRecordResponse)
+	err := c.cc.Invoke(ctx, "/stride.staketia.Query/RedemptionRecord", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *queryClient) AllRedemptionRecords(ctx context.Context, in *QueryAllRedemptionRecords, opts ...grpc.CallOption) (*QueryAllRedemptionRecordsResponse, error) {
+	out := new(QueryAllRedemptionRecordsResponse)
+	err := c.cc.Invoke(ctx, "/stride.staketia.Query/AllRedemptionRecords", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *queryClient) SlashRecords(ctx context.Context, in *QuerySlashRecords, opts ...grpc.CallOption) (*QuerySlashRecordsResponse, error) {
+	out := new(QuerySlashRecordsResponse)
+	err := c.cc.Invoke(ctx, "/stride.staketia.Query/SlashRecords", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // QueryServer is the server API for Query service.
 type QueryServer interface {
+	// Queries the host zone struct
+	HostZone(context.Context, *QueryHostZoneRequest) (*QueryHostZoneResponse, error)
+	// Queries the delegation records with an optional to include archived records
+	DelegationRecords(context.Context, *QueryDelegationRecordsRequest) (*QueryDelegationRecordsResponse, error)
+	// Queries the unbonding records with an optional to include archived records
+	UnbondingRecords(context.Context, *QueryUnbondingRecordsRequest) (*QueryUnbondingRecordsResponse, error)
+	// Queries a single user redemption record
+	RedemptionRecord(context.Context, *QueryRedemptionRecord) (*QueryRedemptionRecordResponse, error)
+	// Queries all redemption records with an optional filter by address
+	// Ex:
+	// - /redemption_records
+	// - /redemption_records?address=strideXXX
+	AllRedemptionRecords(context.Context, *QueryAllRedemptionRecords) (*QueryAllRedemptionRecordsResponse, error)
+	// Queries slash records
+	SlashRecords(context.Context, *QuerySlashRecords) (*QuerySlashRecordsResponse, error)
 }
 
 // UnimplementedQueryServer can be embedded to have forward compatible implementations.
 type UnimplementedQueryServer struct {
 }
 
+func (*UnimplementedQueryServer) HostZone(ctx context.Context, req *QueryHostZoneRequest) (*QueryHostZoneResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method HostZone not implemented")
+}
+func (*UnimplementedQueryServer) DelegationRecords(ctx context.Context, req *QueryDelegationRecordsRequest) (*QueryDelegationRecordsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DelegationRecords not implemented")
+}
+func (*UnimplementedQueryServer) UnbondingRecords(ctx context.Context, req *QueryUnbondingRecordsRequest) (*QueryUnbondingRecordsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UnbondingRecords not implemented")
+}
+func (*UnimplementedQueryServer) RedemptionRecord(ctx context.Context, req *QueryRedemptionRecord) (*QueryRedemptionRecordResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method RedemptionRecord not implemented")
+}
+func (*UnimplementedQueryServer) AllRedemptionRecords(ctx context.Context, req *QueryAllRedemptionRecords) (*QueryAllRedemptionRecordsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method AllRedemptionRecords not implemented")
+}
+func (*UnimplementedQueryServer) SlashRecords(ctx context.Context, req *QuerySlashRecords) (*QuerySlashRecordsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SlashRecords not implemented")
+}
+
 func RegisterQueryServer(s grpc1.Server, srv QueryServer) {
 	s.RegisterService(&_Query_serviceDesc, srv)
+}
+
+func _Query_HostZone_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(QueryHostZoneRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(QueryServer).HostZone(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/stride.staketia.Query/HostZone",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(QueryServer).HostZone(ctx, req.(*QueryHostZoneRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Query_DelegationRecords_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(QueryDelegationRecordsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(QueryServer).DelegationRecords(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/stride.staketia.Query/DelegationRecords",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(QueryServer).DelegationRecords(ctx, req.(*QueryDelegationRecordsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Query_UnbondingRecords_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(QueryUnbondingRecordsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(QueryServer).UnbondingRecords(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/stride.staketia.Query/UnbondingRecords",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(QueryServer).UnbondingRecords(ctx, req.(*QueryUnbondingRecordsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Query_RedemptionRecord_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(QueryRedemptionRecord)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(QueryServer).RedemptionRecord(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/stride.staketia.Query/RedemptionRecord",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(QueryServer).RedemptionRecord(ctx, req.(*QueryRedemptionRecord))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Query_AllRedemptionRecords_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(QueryAllRedemptionRecords)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(QueryServer).AllRedemptionRecords(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/stride.staketia.Query/AllRedemptionRecords",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(QueryServer).AllRedemptionRecords(ctx, req.(*QueryAllRedemptionRecords))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Query_SlashRecords_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(QuerySlashRecords)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(QueryServer).SlashRecords(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/stride.staketia.Query/SlashRecords",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(QueryServer).SlashRecords(ctx, req.(*QuerySlashRecords))
+	}
+	return interceptor(ctx, in, info, handler)
 }
 
 var _Query_serviceDesc = grpc.ServiceDesc{
 	ServiceName: "stride.staketia.Query",
 	HandlerType: (*QueryServer)(nil),
-	Methods:     []grpc.MethodDesc{},
-	Streams:     []grpc.StreamDesc{},
-	Metadata:    "stride/staketia/query.proto",
+	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "HostZone",
+			Handler:    _Query_HostZone_Handler,
+		},
+		{
+			MethodName: "DelegationRecords",
+			Handler:    _Query_DelegationRecords_Handler,
+		},
+		{
+			MethodName: "UnbondingRecords",
+			Handler:    _Query_UnbondingRecords_Handler,
+		},
+		{
+			MethodName: "RedemptionRecord",
+			Handler:    _Query_RedemptionRecord_Handler,
+		},
+		{
+			MethodName: "AllRedemptionRecords",
+			Handler:    _Query_AllRedemptionRecords_Handler,
+		},
+		{
+			MethodName: "SlashRecords",
+			Handler:    _Query_SlashRecords_Handler,
+		},
+	},
+	Streams:  []grpc.StreamDesc{},
+	Metadata: "stride/staketia/query.proto",
 }
+
+func (m *QueryHostZoneRequest) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *QueryHostZoneRequest) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *QueryHostZoneRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	return len(dAtA) - i, nil
+}
+
+func (m *QueryHostZoneResponse) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *QueryHostZoneResponse) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *QueryHostZoneResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if m.HostZone != nil {
+		{
+			size, err := m.HostZone.MarshalToSizedBuffer(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = encodeVarintQuery(dAtA, i, uint64(size))
+		}
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *QueryDelegationRecordsRequest) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *QueryDelegationRecordsRequest) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *QueryDelegationRecordsRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	return len(dAtA) - i, nil
+}
+
+func (m *QueryDelegationRecordsResponse) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *QueryDelegationRecordsResponse) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *QueryDelegationRecordsResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if len(m.DelegationRecords) > 0 {
+		for iNdEx := len(m.DelegationRecords) - 1; iNdEx >= 0; iNdEx-- {
+			{
+				size, err := m.DelegationRecords[iNdEx].MarshalToSizedBuffer(dAtA[:i])
+				if err != nil {
+					return 0, err
+				}
+				i -= size
+				i = encodeVarintQuery(dAtA, i, uint64(size))
+			}
+			i--
+			dAtA[i] = 0xa
+		}
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *QueryUnbondingRecordsRequest) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *QueryUnbondingRecordsRequest) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *QueryUnbondingRecordsRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	return len(dAtA) - i, nil
+}
+
+func (m *QueryUnbondingRecordsResponse) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *QueryUnbondingRecordsResponse) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *QueryUnbondingRecordsResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if len(m.UnbondingRecords) > 0 {
+		for iNdEx := len(m.UnbondingRecords) - 1; iNdEx >= 0; iNdEx-- {
+			{
+				size, err := m.UnbondingRecords[iNdEx].MarshalToSizedBuffer(dAtA[:i])
+				if err != nil {
+					return 0, err
+				}
+				i -= size
+				i = encodeVarintQuery(dAtA, i, uint64(size))
+			}
+			i--
+			dAtA[i] = 0xa
+		}
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *QueryRedemptionRecord) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *QueryRedemptionRecord) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *QueryRedemptionRecord) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	return len(dAtA) - i, nil
+}
+
+func (m *QueryRedemptionRecordResponse) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *QueryRedemptionRecordResponse) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *QueryRedemptionRecordResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if m.RedemptionRecord != nil {
+		{
+			size, err := m.RedemptionRecord.MarshalToSizedBuffer(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = encodeVarintQuery(dAtA, i, uint64(size))
+		}
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *QueryAllRedemptionRecords) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *QueryAllRedemptionRecords) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *QueryAllRedemptionRecords) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	return len(dAtA) - i, nil
+}
+
+func (m *QueryAllRedemptionRecordsResponse) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *QueryAllRedemptionRecordsResponse) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *QueryAllRedemptionRecordsResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if len(m.Address) > 0 {
+		i -= len(m.Address)
+		copy(dAtA[i:], m.Address)
+		i = encodeVarintQuery(dAtA, i, uint64(len(m.Address)))
+		i--
+		dAtA[i] = 0x12
+	}
+	if m.RedemptionRecord != nil {
+		{
+			size, err := m.RedemptionRecord.MarshalToSizedBuffer(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = encodeVarintQuery(dAtA, i, uint64(size))
+		}
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *QuerySlashRecords) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *QuerySlashRecords) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *QuerySlashRecords) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	return len(dAtA) - i, nil
+}
+
+func (m *QuerySlashRecordsResponse) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *QuerySlashRecordsResponse) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *QuerySlashRecordsResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if m.SlashRecords != nil {
+		{
+			size, err := m.SlashRecords.MarshalToSizedBuffer(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = encodeVarintQuery(dAtA, i, uint64(size))
+		}
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func encodeVarintQuery(dAtA []byte, offset int, v uint64) int {
+	offset -= sovQuery(v)
+	base := offset
+	for v >= 1<<7 {
+		dAtA[offset] = uint8(v&0x7f | 0x80)
+		v >>= 7
+		offset++
+	}
+	dAtA[offset] = uint8(v)
+	return base
+}
+func (m *QueryHostZoneRequest) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	return n
+}
+
+func (m *QueryHostZoneResponse) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if m.HostZone != nil {
+		l = m.HostZone.Size()
+		n += 1 + l + sovQuery(uint64(l))
+	}
+	return n
+}
+
+func (m *QueryDelegationRecordsRequest) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	return n
+}
+
+func (m *QueryDelegationRecordsResponse) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if len(m.DelegationRecords) > 0 {
+		for _, e := range m.DelegationRecords {
+			l = e.Size()
+			n += 1 + l + sovQuery(uint64(l))
+		}
+	}
+	return n
+}
+
+func (m *QueryUnbondingRecordsRequest) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	return n
+}
+
+func (m *QueryUnbondingRecordsResponse) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if len(m.UnbondingRecords) > 0 {
+		for _, e := range m.UnbondingRecords {
+			l = e.Size()
+			n += 1 + l + sovQuery(uint64(l))
+		}
+	}
+	return n
+}
+
+func (m *QueryRedemptionRecord) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	return n
+}
+
+func (m *QueryRedemptionRecordResponse) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if m.RedemptionRecord != nil {
+		l = m.RedemptionRecord.Size()
+		n += 1 + l + sovQuery(uint64(l))
+	}
+	return n
+}
+
+func (m *QueryAllRedemptionRecords) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	return n
+}
+
+func (m *QueryAllRedemptionRecordsResponse) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if m.RedemptionRecord != nil {
+		l = m.RedemptionRecord.Size()
+		n += 1 + l + sovQuery(uint64(l))
+	}
+	l = len(m.Address)
+	if l > 0 {
+		n += 1 + l + sovQuery(uint64(l))
+	}
+	return n
+}
+
+func (m *QuerySlashRecords) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	return n
+}
+
+func (m *QuerySlashRecordsResponse) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if m.SlashRecords != nil {
+		l = m.SlashRecords.Size()
+		n += 1 + l + sovQuery(uint64(l))
+	}
+	return n
+}
+
+func sovQuery(x uint64) (n int) {
+	return (math_bits.Len64(x|1) + 6) / 7
+}
+func sozQuery(x uint64) (n int) {
+	return sovQuery(uint64((x << 1) ^ uint64((int64(x) >> 63))))
+}
+func (m *QueryHostZoneRequest) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowQuery
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: QueryHostZoneRequest: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: QueryHostZoneRequest: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		default:
+			iNdEx = preIndex
+			skippy, err := skipQuery(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *QueryHostZoneResponse) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowQuery
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: QueryHostZoneResponse: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: QueryHostZoneResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field HostZone", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthQuery
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.HostZone == nil {
+				m.HostZone = &HostZone{}
+			}
+			if err := m.HostZone.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipQuery(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *QueryDelegationRecordsRequest) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowQuery
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: QueryDelegationRecordsRequest: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: QueryDelegationRecordsRequest: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		default:
+			iNdEx = preIndex
+			skippy, err := skipQuery(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *QueryDelegationRecordsResponse) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowQuery
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: QueryDelegationRecordsResponse: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: QueryDelegationRecordsResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field DelegationRecords", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthQuery
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.DelegationRecords = append(m.DelegationRecords, DelegationRecord{})
+			if err := m.DelegationRecords[len(m.DelegationRecords)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipQuery(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *QueryUnbondingRecordsRequest) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowQuery
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: QueryUnbondingRecordsRequest: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: QueryUnbondingRecordsRequest: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		default:
+			iNdEx = preIndex
+			skippy, err := skipQuery(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *QueryUnbondingRecordsResponse) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowQuery
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: QueryUnbondingRecordsResponse: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: QueryUnbondingRecordsResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field UnbondingRecords", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthQuery
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.UnbondingRecords = append(m.UnbondingRecords, UnbondingRecord{})
+			if err := m.UnbondingRecords[len(m.UnbondingRecords)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipQuery(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *QueryRedemptionRecord) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowQuery
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: QueryRedemptionRecord: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: QueryRedemptionRecord: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		default:
+			iNdEx = preIndex
+			skippy, err := skipQuery(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *QueryRedemptionRecordResponse) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowQuery
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: QueryRedemptionRecordResponse: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: QueryRedemptionRecordResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field RedemptionRecord", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthQuery
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.RedemptionRecord == nil {
+				m.RedemptionRecord = &RedemptionRecord{}
+			}
+			if err := m.RedemptionRecord.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipQuery(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *QueryAllRedemptionRecords) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowQuery
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: QueryAllRedemptionRecords: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: QueryAllRedemptionRecords: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		default:
+			iNdEx = preIndex
+			skippy, err := skipQuery(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *QueryAllRedemptionRecordsResponse) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowQuery
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: QueryAllRedemptionRecordsResponse: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: QueryAllRedemptionRecordsResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field RedemptionRecord", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthQuery
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.RedemptionRecord == nil {
+				m.RedemptionRecord = &RedemptionRecord{}
+			}
+			if err := m.RedemptionRecord.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Address", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthQuery
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Address = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipQuery(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *QuerySlashRecords) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowQuery
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: QuerySlashRecords: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: QuerySlashRecords: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		default:
+			iNdEx = preIndex
+			skippy, err := skipQuery(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *QuerySlashRecordsResponse) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowQuery
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: QuerySlashRecordsResponse: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: QuerySlashRecordsResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field SlashRecords", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthQuery
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.SlashRecords == nil {
+				m.SlashRecords = &SlashRecord{}
+			}
+			if err := m.SlashRecords.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipQuery(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func skipQuery(dAtA []byte) (n int, err error) {
+	l := len(dAtA)
+	iNdEx := 0
+	depth := 0
+	for iNdEx < l {
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return 0, ErrIntOverflowQuery
+			}
+			if iNdEx >= l {
+				return 0, io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= (uint64(b) & 0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		wireType := int(wire & 0x7)
+		switch wireType {
+		case 0:
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return 0, ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return 0, io.ErrUnexpectedEOF
+				}
+				iNdEx++
+				if dAtA[iNdEx-1] < 0x80 {
+					break
+				}
+			}
+		case 1:
+			iNdEx += 8
+		case 2:
+			var length int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return 0, ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return 0, io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				length |= (int(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if length < 0 {
+				return 0, ErrInvalidLengthQuery
+			}
+			iNdEx += length
+		case 3:
+			depth++
+		case 4:
+			if depth == 0 {
+				return 0, ErrUnexpectedEndOfGroupQuery
+			}
+			depth--
+		case 5:
+			iNdEx += 4
+		default:
+			return 0, fmt.Errorf("proto: illegal wireType %d", wireType)
+		}
+		if iNdEx < 0 {
+			return 0, ErrInvalidLengthQuery
+		}
+		if depth == 0 {
+			return iNdEx, nil
+		}
+	}
+	return 0, io.ErrUnexpectedEOF
+}
+
+var (
+	ErrInvalidLengthQuery        = fmt.Errorf("proto: negative length found during unmarshaling")
+	ErrIntOverflowQuery          = fmt.Errorf("proto: integer overflow")
+	ErrUnexpectedEndOfGroupQuery = fmt.Errorf("proto: unexpected end of group")
+)
