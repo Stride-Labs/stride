@@ -46,3 +46,7 @@
 [submodule "dockernet/tests/bats/bats-support"]
 	path = dockernet/tests/bats/bats-support
 	url = https://github.com/bats-core/bats-support.git
+[submodule "deps/celestia"]
+	# Commit: v1.6.0
+	path = deps/celestia
+	url = https://github.com/celestiaorg/celestia-app.git
