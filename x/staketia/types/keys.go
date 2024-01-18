@@ -1,5 +1,7 @@
 package types
 
+import "encoding/binary"
+
 const (
 	ModuleName = "staketia"
 
@@ -19,3 +21,15 @@ var (
 	SlashRecordsKeyPrefix               = []byte("slash-records")
 	TransferInProgressRecordIdKeyPrefix = []byte("transfer-in-progress")
 )
+
+// Serializes an string to use as a prefix when needed
+func StringKey(p string) []byte {
+	return []byte(p)
+}
+
+// Serializes an int to use as a prefix when needed
+func IntKey(i uint64) []byte {
+	bz := make([]byte, 8)
+	binary.BigEndian.PutUint64(bz, i)
+	return bz
+}
