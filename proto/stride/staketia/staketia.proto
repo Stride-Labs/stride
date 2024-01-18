@@ -3,7 +3,6 @@ package stride.staketia;
 
 import "cosmos_proto/cosmos.proto";
 import "gogoproto/gogo.proto";
-import "google/protobuf/timestamp.proto";
 
 option go_package = "github.com/Stride-Labs/stride/v17/x/staketia/types";
 
@@ -144,9 +143,8 @@ message UnbondingRecord {
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
     (gogoproto.nullable) = false
   ];
-  // The time at which the unbonding completes
-  google.protobuf.Timestamp unbonding_completion_time = 5
-      [ (gogoproto.nullable) = false, (gogoproto.stdtime) = true ];
+  // The Unix timestamp (in seconds) at which the unbonding completes
+  uint64 unbonding_completion_time = 5;
   // The tx hash of the undelegation on the host zone
   string undelegation_tx_hash = 6;
   // The tx hash of the unbonded token sweep on the host zone
@@ -155,8 +153,8 @@ message UnbondingRecord {
 
 // RedemptionRecords track an individual user's redemption claims
 message RedemptionRecord {
-  // Redemption record ID
-  uint64 id = 1;
+  // Unbonding record ID
+  uint64 unbonding_record_id = 1;
   // Redeemer
   string redeemer = 2;
   // The amount of stTokens that were redeemed
@@ -175,9 +173,13 @@ message RedemptionRecord {
 message SlashRecord {
   // The slash record monotonically increasing ID
   uint64 id = 1;
-  // The block time at which the slash adjustment was processed on stride
-  google.protobuf.Timestamp time = 2
-      [ (gogoproto.nullable) = false, (gogoproto.stdtime) = true ];
+  // The Unix timestamp (in seconds) when the slash adjustment was processed on stride
+  uint64 time = 2;
+  // The delta by which the total delegated amount changed from slash
+  string sttoken_amount = 3 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable) = false
+  ];
   // The address (or addresses) of the validator that was slashed
-  string validator_address = 3;
+  string validator_address = 4;
 }
