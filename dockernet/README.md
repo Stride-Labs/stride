@@ -153,7 +153,7 @@ CHAIN_NAME={NEW-HOST-ZONE} TRANSFER_CHANNEL_NUMBER=1 $BATS $INTEGRATION_TEST_FIL
 ```
 * Start the network as normal. Make sure to rebuild the new host zone when running for the first time. You can view the logs in `dockernet/logs/{new-host-zone}.log` to ensure the network started successfully.
 ```
-make build-docker build=n
+make build-docker build=z
 make start-docker
 ```
 * After the chain is running, run the integration tests to confirm the new host zone is compatible with Stride
