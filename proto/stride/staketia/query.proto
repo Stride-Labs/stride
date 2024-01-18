@@ -57,27 +57,30 @@ message QueryHostZoneRequest {};
 message QueryHostZoneResponse { HostZone host_zone = 1; }
 
 // All Delegation Records
-message QueryDelegationRecordsRequest {};
+message QueryDelegationRecordsRequest { bool archive = 1; };
 message QueryDelegationRecordsResponse {
   repeated DelegationRecord delegation_records = 1
       [ (gogoproto.nullable) = false ];
 }
 
 // All Unbonding Records
-message QueryUnbondingRecordsRequest {};
+message QueryUnbondingRecordsRequest { bool archive = 1; };
 message QueryUnbondingRecordsResponse {
   repeated UnbondingRecord unbonding_records = 1
       [ (gogoproto.nullable) = false ];
 }
 
 // Single Redemption Record
-message QueryRedemptionRecord {};
+message QueryRedemptionRecord {
+  uint64 unbonding_record_id = 1;
+  string address = 2;
+};
 message QueryRedemptionRecordResponse {
   RedemptionRecord redemption_record = 1;
 }
 
 // All Redemption Records
-message QueryAllRedemptionRecords {};
+message QueryAllRedemptionRecords { string address = 1; };
 message QueryAllRedemptionRecordsResponse {
   RedemptionRecord redemption_record = 1;
   string address = 2;
