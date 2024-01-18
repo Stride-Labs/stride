@@ -31,19 +31,19 @@ func GetQueryCmd() *cobra.Command {
 	}
 
 	cmd.AddCommand(
-		GetCmdQueryHostZone(),
-		GetCmdQueryDelegationRecords(),
-		GetCmdQueryUnbondingRecords(),
-		GetCmdQueryRedemptionRecord(),
-		GetCmdQueryAllRedemptionRecords(),
-		GetCmdQuerySlashRecords(),
+		CmdQueryHostZone(),
+		CmdQueryDelegationRecords(),
+		CmdQueryUnbondingRecords(),
+		CmdQueryRedemptionRecord(),
+		CmdQueryAllRedemptionRecords(),
+		CmdQuerySlashRecords(),
 	)
 
 	return cmd
 }
 
-// GetCmdQueryHostZone implements a command to query the host zone struct
-func GetCmdQueryHostZone() *cobra.Command {
+// CmdQueryHostZone implements a command to query the host zone struct
+func CmdQueryHostZone() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "host-zone",
 		Short: "Queries the host zone struct",
@@ -74,16 +74,16 @@ Example:
 	return cmd
 }
 
-// GetCmdQueryDelegationRecords implements a command to query the delegation records with
-// an optional to include archived records
-func GetCmdQueryDelegationRecords() *cobra.Command {
+// Queries delegation records with an option to include archive records
+func CmdQueryDelegationRecords() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "delegation-records",
 		Short: "Queries the delegation records",
 		Long: strings.TrimSpace(
 			fmt.Sprintf(`Queries the delegation records. Optionally including the archived records.
-Example:
-  $ %s query %s delegation-records
+Examples:
+  $ %[1]s query %[2]s delegation-records
+  $ %[1]s query %[2]s delegation-records --archive true
 `, version.AppName, types.ModuleName),
 		),
 		Args: cobra.ExactArgs(0),
@@ -121,16 +121,16 @@ Example:
 	return cmd
 }
 
-// GetCmdQueryUnbondingRecords implements a command to query the unbonding records with
-// an optional to include archived records
-func GetCmdQueryUnbondingRecords() *cobra.Command {
+// Queries unbonding records with an option to include archive records
+func CmdQueryUnbondingRecords() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "unbonding-records",
 		Short: "Queries the unbonding records",
 		Long: strings.TrimSpace(
 			fmt.Sprintf(`Queries the unbonding records. Optionally including the archived records.
 Example:
-  $ %s query %s unbonidng-records
+  $ %s query %s unbonding-records
+  $ %s query %s unbonding-records --archive true
 `, version.AppName, types.ModuleName),
 		),
 		Args: cobra.ExactArgs(0),
@@ -168,15 +168,15 @@ Example:
 	return cmd
 }
 
-// GetCmdQueryRedemptionRecord implements a command to query a single redemption record
-func GetCmdQueryRedemptionRecord() *cobra.Command {
+// Queries a single redemption record
+func CmdQueryRedemptionRecord() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "redemption-record [epoch-number] [address]",
 		Short: "Queries a single redemption record",
 		Long: strings.TrimSpace(
 			fmt.Sprintf(`Queries a single redemption record
 Example:
-  $ %s query %s redemption-record [epoch-number] [address]
+  $ %s query %s redemption-record 100 strideXXX
 `, version.AppName, types.ModuleName),
 		),
 		Args: cobra.ExactArgs(2),
@@ -209,9 +209,8 @@ Example:
 	return cmd
 }
 
-// GetCmdQueryAllRedemptionRecords implements a command to query all redemption records
-// with an optional address filter
-func GetCmdQueryAllRedemptionRecords() *cobra.Command {
+// Queries all redemption records with an optional address filter
+func CmdQueryAllRedemptionRecords() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "redemption-records",
 		Short: "Queries all redemption records with an optional address filter",
@@ -250,8 +249,8 @@ Examples:
 	return cmd
 }
 
-// GetCmdQuerySlashRecords implements a command to query all slash records
-func GetCmdQuerySlashRecords() *cobra.Command {
+// Queries all slash records
+func CmdQuerySlashRecords() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "slash-records",
 		Short: "Queries all slash records",
