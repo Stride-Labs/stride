@@ -2,6 +2,7 @@ package types
 
 import (
 	errorsmod "cosmossdk.io/errors"
+	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/x/auth/migrations/legacytx"
@@ -43,8 +44,11 @@ var (
 //               MsgLiquidStake
 // ----------------------------------------------
 
-func NewMsgLiquidStake() *MsgLiquidStake {
-	return &MsgLiquidStake{}
+func NewMsgLiquidStake(staker string, nativeAmount sdkmath.Int) *MsgLiquidStake {
+	return &MsgLiquidStake{
+		Staker:       staker,
+		NativeAmount: nativeAmount,
+	}
 }
 
 func (msg MsgLiquidStake) Type() string {
@@ -81,8 +85,11 @@ func (msg *MsgLiquidStake) ValidateBasic() error {
 //               MsgRedeemStake
 // ----------------------------------------------
 
-func NewMsgRedeemStake() *MsgRedeemStake {
-	return &MsgRedeemStake{}
+func NewMsgRedeemStake(redeemer string, stTokenAmount sdkmath.Int) *MsgRedeemStake {
+	return &MsgRedeemStake{
+		Redeemer:      redeemer,
+		StTokenAmount: stTokenAmount,
+	}
 }
 
 func (msg MsgRedeemStake) Type() string {
@@ -119,8 +126,12 @@ func (msg *MsgRedeemStake) ValidateBasic() error {
 //             MsgConfirmDelegation
 // ----------------------------------------------
 
-func NewMsgConfirmDelegation() *MsgConfirmDelegation {
-	return &MsgConfirmDelegation{}
+func NewMsgConfirmDelegation(operator string, recordId uint64, txHash string) *MsgConfirmDelegation {
+	return &MsgConfirmDelegation{
+		Operator: operator,
+		RecordId: recordId,
+		TxHash:   txHash,
+	}
 }
 
 func (msg MsgConfirmDelegation) Type() string {
@@ -157,8 +168,12 @@ func (msg *MsgConfirmDelegation) ValidateBasic() error {
 //            MsgConfirmUndelegation
 // ----------------------------------------------
 
-func NewMsgConfirmUndelegation() *MsgConfirmUndelegation {
-	return &MsgConfirmUndelegation{}
+func NewMsgConfirmUndelegation(operator string, recordId uint64, txHash string) *MsgConfirmUndelegation {
+	return &MsgConfirmUndelegation{
+		Operator: operator,
+		RecordId: recordId,
+		TxHash:   txHash,
+	}
 }
 
 func (msg MsgConfirmUndelegation) Type() string {
@@ -195,8 +210,12 @@ func (msg *MsgConfirmUndelegation) ValidateBasic() error {
 //          MsgConfirmUnbondedTokenSweep
 // ----------------------------------------------
 
-func NewMsgConfirmUnbondedTokenSweep() *MsgConfirmUnbondedTokenSweep {
-	return &MsgConfirmUnbondedTokenSweep{}
+func NewMsgConfirmUnbondedTokenSweep(operator string, recordId uint64, txHash string) *MsgConfirmUnbondedTokenSweep {
+	return &MsgConfirmUnbondedTokenSweep{
+		Operator: operator,
+		RecordId: recordId,
+		TxHash:   txHash,
+	}
 }
 
 func (msg MsgConfirmUnbondedTokenSweep) Type() string {
@@ -233,8 +252,12 @@ func (msg *MsgConfirmUnbondedTokenSweep) ValidateBasic() error {
 //          MsgAdjustDelegatedBalance
 // ----------------------------------------------
 
-func NewMsgAdjustDelegatedBalance() *MsgAdjustDelegatedBalance {
-	return &MsgAdjustDelegatedBalance{}
+func NewMsgAdjustDelegatedBalance(operator string, delegationOffset sdkmath.Int, validatorAddress string) *MsgAdjustDelegatedBalance {
+	return &MsgAdjustDelegatedBalance{
+		Operator:         operator,
+		DelegationOffset: delegationOffset,
+		ValidatorAddress: validatorAddress,
+	}
 }
 
 func (msg MsgAdjustDelegatedBalance) Type() string {
@@ -271,8 +294,12 @@ func (msg *MsgAdjustDelegatedBalance) ValidateBasic() error {
 //       MsgUpdateInnerRedemptionRateBounds
 // ----------------------------------------------
 
-func NewMsgUpdateInnerRedemptionRateBounds() *MsgUpdateInnerRedemptionRateBounds {
-	return &MsgUpdateInnerRedemptionRateBounds{}
+func NewMsgUpdateInnerRedemptionRateBounds(creator string, minRedemptionRate, maxRedemptionRate sdk.Dec) *MsgUpdateInnerRedemptionRateBounds {
+	return &MsgUpdateInnerRedemptionRateBounds{
+		Creator:                creator,
+		MinInnerRedemptionRate: minRedemptionRate,
+		MaxInnerRedemptionRate: maxRedemptionRate,
+	}
 }
 
 func (msg MsgUpdateInnerRedemptionRateBounds) Type() string {
@@ -309,8 +336,10 @@ func (msg *MsgUpdateInnerRedemptionRateBounds) ValidateBasic() error {
 //             MsgResumeHostZone
 // ----------------------------------------------
 
-func NewMsgResumeHostZone() *MsgResumeHostZone {
-	return &MsgResumeHostZone{}
+func NewMsgResumeHostZone(creator string) *MsgResumeHostZone {
+	return &MsgResumeHostZone{
+		Creator: creator,
+	}
 }
 
 func (msg MsgResumeHostZone) Type() string {
