@@ -19,3 +19,8 @@ var (
 	SlashRecordsKeyPrefix               = []byte("slash-records")
 	TransferInProgressRecordIdKeyPrefix = []byte("transfer-in-progress")
 )
+
+// Serializes a string for to use as a prefix
+func KeyPrefix(p string) []byte {
+	return []byte(p)
+}
