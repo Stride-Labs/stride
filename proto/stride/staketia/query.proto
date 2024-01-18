@@ -82,9 +82,12 @@ message QueryRedemptionRecordResponse {
 // All Redemption Records
 message QueryAllRedemptionRecords { string address = 1; };
 message QueryAllRedemptionRecordsResponse {
-  repeated RedemptionRecord redemption_record = 1;
+  repeated RedemptionRecord redemption_record = 1
+      [ (gogoproto.nullable) = false ];
 }
 
 // All Slash Records
 message QuerySlashRecords {};
-message QuerySlashRecordsResponse { SlashRecord slash_records = 1; }
+message QuerySlashRecordsResponse {
+  repeated SlashRecord slash_records = 1 [ (gogoproto.nullable) = false ];
+}
