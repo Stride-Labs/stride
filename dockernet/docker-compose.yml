@@ -182,7 +182,7 @@ services:
   celestia1:
     image: stridezone:celestia
     volumes:
-      - ./state/celestia1:/home/celestia/.celestia
+      - ./state/celestia1:/home/celestia/.celestia-app
     ports:
       - "25757:26657"
       - "1227:1317"
@@ -191,12 +191,12 @@ services:
   celestia2:
     image: stridezone:celestia
     volumes:
-      - ./state/celestia2:/home/celestia/.celestia
+      - ./state/celestia2:/home/celestia/.celestia-app
 
   celestia3:
     image: stridezone:celestia
     volumes:
-      - ./state/celestia3:/home/celestia/.celestia
+      - ./state/celestia3:/home/celestia/.celestia-app
 
   hermes:
     image: stridezone:hermes
