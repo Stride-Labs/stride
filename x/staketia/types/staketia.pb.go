@@ -119,11 +119,11 @@ type HostZone struct {
 	DelegationAddress string `protobuf:"bytes,4,opt,name=delegation_address,json=delegationAddress,proto3" json:"delegation_address,omitempty"`
 	// Operator controlled reward address on the host zone
 	RewardAddress string `protobuf:"bytes,5,opt,name=reward_address,json=rewardAddress,proto3" json:"reward_address,omitempty"`
-	// Deposit module address on stride
+	// Deposit address on stride
 	DepositAddress string `protobuf:"bytes,6,opt,name=deposit_address,json=depositAddress,proto3" json:"deposit_address,omitempty"`
-	// Redemption module address on stride
+	// Redemption address on stride
 	RedemptionAddress string `protobuf:"bytes,7,opt,name=redemption_address,json=redemptionAddress,proto3" json:"redemption_address,omitempty"`
-	// Claim module address on stride
+	// Claim address on stride
 	ClaimAddress string `protobuf:"bytes,8,opt,name=claim_address,json=claimAddress,proto3" json:"claim_address,omitempty"`
 	// Previous redemption rate
 	LastRedemptionRate github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,9,opt,name=last_redemption_rate,json=lastRedemptionRate,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"last_redemption_rate"`
@@ -455,7 +455,8 @@ func (m *RedemptionRecord) GetRedeemer() string {
 type SlashRecord struct {
 	// The slash record monotonically increasing ID
 	Id uint64 `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
-	// The Unix timestamp when the slash adjustment was processed on stride
+	// The Unix timestamp (in seconds) when the slash adjustment was processed on
+	// stride
 	Time uint64 `protobuf:"varint,2,opt,name=time,proto3" json:"time,omitempty"`
 	// The delta by which the total delegated amount changed from slash
 	SttokenAmount github_com_cosmos_cosmos_sdk_types.Int `protobuf:"bytes,3,opt,name=sttoken_amount,json=sttokenAmount,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Int" json:"sttoken_amount"`

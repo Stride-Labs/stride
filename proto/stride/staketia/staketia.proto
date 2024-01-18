@@ -173,7 +173,8 @@ message RedemptionRecord {
 message SlashRecord {
   // The slash record monotonically increasing ID
   uint64 id = 1;
-  // The Unix timestamp (in seconds) when the slash adjustment was processed on stride
+  // The Unix timestamp (in seconds) when the slash adjustment was processed on
+  // stride
   uint64 time = 2;
   // The delta by which the total delegated amount changed from slash
   string sttoken_amount = 3 [

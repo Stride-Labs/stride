@@ -82,8 +82,7 @@ message QueryRedemptionRecordResponse {
 // All Redemption Records
 message QueryAllRedemptionRecords { string address = 1; };
 message QueryAllRedemptionRecordsResponse {
-  RedemptionRecord redemption_record = 1;
-  string address = 2;
+  repeated RedemptionRecord redemption_record = 1;
 }
 
 // All Slash Records
