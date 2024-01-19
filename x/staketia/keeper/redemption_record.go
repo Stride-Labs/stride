@@ -56,12 +56,12 @@ func (k Keeper) GetAllRedemptionRecords(ctx sdk.Context) (redemptionRecords []ty
 }
 
 // Returns all redemption records for a given unbonding record
-func (k Keeper) GetAllRedemptionRecordsFromUnbondingId(ctx sdk.Context, unbondingRecordId uint64) (redemptionRecords []types.RedemptionRecord) {
+func (k Keeper) GetRedemptionRecordsFromUnbondingId(ctx sdk.Context, unbondingRecordId uint64) (redemptionRecords []types.RedemptionRecord) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.RedemptionRecordsKeyPrefix)
 
 	// Iterate though just the records that match the unbonding record ID prefix
 	unbondingRecordPrefix := types.IntKey(unbondingRecordId)
-	iterator := store.Iterator(unbondingRecordPrefix, nil)
+	iterator := sdk.KVStorePrefixIterator(store, unbondingRecordPrefix)
 	defer iterator.Close()
 
 	for ; iterator.Valid(); iterator.Next() {
