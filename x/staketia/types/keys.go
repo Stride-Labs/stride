@@ -17,6 +17,7 @@ var (
 	HostZoneKey                         = []byte("host-zone")
 	DelegationRecordsKeyPrefix          = []byte("delegation-records")
 	UnbondingRecordsKeyPrefix           = []byte("unbonding-records")
+	UnbondingRecordsArchiveKeyPrefix    = []byte("unbonding-records-archive")
 	RedemptionRecordsKeyPrefix          = []byte("redemption-records")
 	SlashRecordsKeyPrefix               = []byte("slash-records")
 	TransferInProgressRecordIdKeyPrefix = []byte("transfer-in-progress")
