@@ -67,17 +67,6 @@ func (k Keeper) GetAllUnbondingRecordsByStatus(ctx sdk.Context, status types.Unb
 	return unbondingRecords
 }
 
-// Updates the status on a unbonding record
-func (k Keeper) UpdateUnbondingRecordStatus(ctx sdk.Context, recordId uint64, status types.UnbondingRecordStatus) error {
-	unbondingRecord, found := k.GetUnbondingRecord(ctx, recordId)
-	if !found {
-		return types.ErrUnbondingRecordNotFound.Wrapf("unbonding record not found for %d", recordId)
-	}
-	unbondingRecord.Status = status
-	k.SetUnbondingRecord(ctx, unbondingRecord)
-	return nil
-}
-
 // Gets the ACCUMULATING unbonding record (there should only be one)
 func (k Keeper) GetAccumulatingUnbondingRecord(ctx sdk.Context) (unbondingRecord types.UnbondingRecord, err error) {
 	// QUESTION: This is kind of inefficient - do you think it's worth indexing instead of looping each time?

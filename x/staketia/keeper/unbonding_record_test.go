@@ -60,39 +60,6 @@ func (s *KeeperTestSuite) TestGetAllUnbondingRecords() {
 	s.Require().Equal(expectedRecords, actualRecords)
 }
 
-func (s *KeeperTestSuite) TestUpdateUnbondingRecordStatus() {
-	statuses := []types.UnbondingRecordStatus{
-		types.ACCUMULATING_REDEMPTIONS,
-		types.UNBONDING_QUEUE,
-		types.UNBONDING_IN_PROGRESS,
-		types.UNBONDED,
-		types.CLAIMABLE,
-		types.UNBONDING_ARCHIVE,
-	}
-
-	// Create an initial record
-	recordId := uint64(1)
-	s.App.StakeTiaKeeper.SetUnbondingRecord(s.Ctx, types.UnbondingRecord{
-		Id: recordId,
-	})
-
-	// Iterate through all records and confirm their status updates
-	for _, expectedStatus := range statuses {
-		err := s.App.StakeTiaKeeper.UpdateUnbondingRecordStatus(s.Ctx, recordId, expectedStatus)
-		s.Require().NoError(err, "no error expected when updating record status")
-
-		unbondingRecord, found := s.App.StakeTiaKeeper.GetUnbondingRecord(s.Ctx, recordId)
-		s.Require().True(found, "unbonding record should have been found")
-		s.Require().Equal(expectedStatus, unbondingRecord.Status,
-			"unbonding record status should have been updated to %s", expectedStatus.String())
-	}
-
-	// Check that an invalid ID errors
-	invalidRecordId := uint64(99)
-	err := s.App.StakeTiaKeeper.UpdateUnbondingRecordStatus(s.Ctx, invalidRecordId, types.UNBONDING_QUEUE)
-	s.Require().ErrorContains(err, "unbonding record not found")
-}
-
 func (s *KeeperTestSuite) TestGetAccumulatingUnbondingRecord() {
 	expectedRecordId := uint64(3)
 
