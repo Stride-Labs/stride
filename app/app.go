@@ -748,6 +748,7 @@ func NewStrideApp(
 	// - core ibc
 	// - autopilot
 	// - records
+	// - staketia
 	// - ratelimit
 	// - pfm
 	// - transfer
@@ -763,6 +764,7 @@ func NewStrideApp(
 		packetforwardkeeper.DefaultRefundTransferPacketTimeoutTimestamp,  // refund timeout
 	)
 	transferStack = ratelimitmodule.NewIBCMiddleware(app.RatelimitKeeper, transferStack)
+	transferStack = staketia.NewIBCMiddleware(app.StakeTiaKeeper, transferStack)
 	transferStack = recordsmodule.NewIBCModule(app.RecordsKeeper, transferStack)
 	transferStack = autopilot.NewIBCModule(app.AutopilotKeeper, transferStack)
 
