@@ -12,9 +12,9 @@ func (k Keeper) SetRedemptionRecord(ctx sdk.Context, redemptionRecord types.Rede
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.RedemptionRecordsKeyPrefix)
 
 	recordKey := types.RedemptionRecordKey(redemptionRecord.UnbondingRecordId, redemptionRecord.Redeemer)
-	recordValue := k.cdc.MustMarshal(&redemptionRecord)
+	recordBz := k.cdc.MustMarshal(&redemptionRecord)
 
-	store.Set(recordKey, recordValue)
+	store.Set(recordKey, recordBz)
 }
 
 // Reads a redemption record from the store
@@ -70,5 +70,15 @@ func (k Keeper) GetRedemptionRecordsFromUnbondingId(ctx sdk.Context, unbondingRe
 		redemptionRecords = append(redemptionRecords, redemptionRecord)
 	}
 
+	return redemptionRecords
+}
+
+// Returns all redemption records for a given address
+func (k Keeper) GetRedemptionRecordsFromAddress(ctx sdk.Context, address string) (redemptionRecords []types.RedemptionRecord) {
+	for _, redemptionRecord := range k.GetAllRedemptionRecords(ctx) {
+		if redemptionRecord.Redeemer == address {
+			redemptionRecords = append(redemptionRecords, redemptionRecord)
+		}
+	}
 	return redemptionRecords
 }
