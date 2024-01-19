@@ -219,6 +219,10 @@ func (im IBCModule) GetAppVersion(ctx sdk.Context, portID, channelID string) (st
 	return ibctransfertypes.Version, true // im.keeper.GetAppVersion(ctx, portID, channelID)
 }
 
+// TODO [cleanup]: We probably don't need these AppModule callbacks,
+// but we should dig into it more
+// before removing
+
 // APP MODULE IMPLEMENTATION
 // OnChanOpenInit implements the IBCModule interface
 func (am AppModule) OnChanOpenInit(
