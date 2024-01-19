@@ -331,7 +331,7 @@ type StrideApp struct {
 	RatelimitKeeper       ratelimitmodulekeeper.Keeper
 	ClaimKeeper           claimkeeper.Keeper
 	ICAOracleKeeper       icaoraclekeeper.Keeper
-	StakeTiaKeeper        staketiakeeper.Keeper
+	StaketiaKeeper        staketiakeeper.Keeper
 
 	mm           *module.Manager
 	sm           *module.SimulationManager
@@ -648,14 +648,14 @@ func NewStrideApp(
 	)
 	autopilotModule := autopilot.NewAppModule(appCodec, app.AutopilotKeeper)
 
-	// StakeTia Keeper must be initialized after TransferKeeper
-	app.StakeTiaKeeper = *staketiakeeper.NewKeeper(
+	// Staketia Keeper must be initialized after TransferKeeper
+	app.StaketiaKeeper = *staketiakeeper.NewKeeper(
 		appCodec,
 		keys[staketiatypes.StoreKey],
 		app.BankKeeper,
 		app.TransferKeeper,
 	)
-	stakeTiaModule := staketia.NewAppModule(appCodec, app.StakeTiaKeeper)
+	stakeTiaModule := staketia.NewAppModule(appCodec, app.StaketiaKeeper)
 
 	app.VestingKeeper = evmosvestingkeeper.NewKeeper(
 		keys[evmosvestingtypes.StoreKey], authtypes.NewModuleAddress(govtypes.ModuleName), appCodec,
