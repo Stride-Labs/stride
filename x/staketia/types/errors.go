@@ -3,6 +3,8 @@ package types
 import errorsmod "cosmossdk.io/errors"
 
 var (
-	ErrUnbondingRecordNotFound        = errorsmod.Register(ModuleName, 1902, "unbonding record not found")
-	ErrBrokenUnbondingRecordInvariant = errorsmod.Register(ModuleName, 1903, "broken unbonding record invariant")
+	ErrHostZoneNotFound               = errorsmod.Register(ModuleName, 1901, "host zone not found")
+	ErrDelegationRecordNotFound       = errorsmod.Register(ModuleName, 1902, "delegation record not found")
+	ErrUnbondingRecordNotFound        = errorsmod.Register(ModuleName, 1903, "unbonding record not found")
+	ErrBrokenUnbondingRecordInvariant = errorsmod.Register(ModuleName, 1904, "broken unbonding record invariant")
 )
