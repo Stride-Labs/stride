@@ -6,6 +6,8 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/x/auth/migrations/legacytx"
+
+	"github.com/Stride-Labs/stride/v17/utils"
 )
 
 const (
@@ -333,10 +335,16 @@ func (msg *MsgUpdateInnerRedemptionRateBounds) GetSignBytes() []byte {
 }
 
 func (msg *MsgUpdateInnerRedemptionRateBounds) ValidateBasic() error {
-	// TODO [sttia]
 	_, err := sdk.AccAddressFromBech32(msg.Creator)
 	if err != nil {
 		return errorsmod.Wrapf(sdkerrors.ErrInvalidAddress, "invalid address (%s)", err)
+	}
+	// Confirm the max is greater than the min
+	if msg.MaxInnerRedemptionRate.LTE(msg.MinInnerRedemptionRate) {
+		return errorsmod.Wrapf(ErrInvalidBounds, "Inner max safety threshold (%s) is less than inner min safety threshold (%s)", msg.MaxInnerRedemptionRate, msg.MinInnerRedemptionRate)
+	}
+	if err := utils.ValidateAdminAddress(msg.Creator); err != nil {
+		return err
 	}
 	return nil
 }

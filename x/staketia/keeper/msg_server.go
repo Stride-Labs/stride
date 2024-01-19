@@ -71,8 +71,34 @@ func (k msgServer) AdjustDelegatedBalance(goCtx context.Context, msg *types.MsgA
 // Adjusts the inner redemption rate bounds on the host zone
 func (k msgServer) UpdateInnerRedemptionRateBounds(goCtx context.Context, msg *types.MsgUpdateInnerRedemptionRateBounds) (*types.MsgUpdateInnerRedemptionRateBoundsResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
-	// TODO [sttia]
-	_ = ctx
+
+	// Fetch the zone
+	zone, err := k.GetHostZone(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	// Get the outer bounds
+	maxOuterBound := zone.MaxRedemptionRate
+	minOuterBound := zone.MinRedemptionRate
+
+	// Confirm the inner bounds are within the outer bounds
+	maxInnerBound := msg.MaxInnerRedemptionRate
+	minInnerBound := msg.MinInnerRedemptionRate
+	if maxInnerBound.GT(maxOuterBound) {
+		return nil, types.ErrInvalidBounds
+	}
+	if minInnerBound.LT(minOuterBound) {
+		return nil, types.ErrInvalidBounds
+	}
+
+	// Set the inner bounds on the host zone
+	zone.MinInnerRedemptionRate = minInnerBound
+	zone.MaxInnerRedemptionRate = maxInnerBound
+
+	// Update the host zone
+	k.SetHostZone(ctx, zone)
+
 	return &types.MsgUpdateInnerRedemptionRateBoundsResponse{}, nil
 }
 

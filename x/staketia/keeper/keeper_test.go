@@ -6,8 +6,8 @@ import (
 	"github.com/stretchr/testify/suite"
 
 	"github.com/Stride-Labs/stride/v17/app/apptesting"
-	"github.com/Stride-Labs/stride/v17/x/stakeibc/keeper"
-	"github.com/Stride-Labs/stride/v17/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v17/x/staketia/keeper"
+	"github.com/Stride-Labs/stride/v17/x/staketia/types"
 )
 
 type KeeperTestSuite struct {
@@ -24,7 +24,7 @@ func (s *KeeperTestSuite) SetupTest() {
 //	which can change depending on the type of test
 //	(e.g. tests with only one Stride chain vs tests with multiple chains and IBC support)
 func (s *KeeperTestSuite) GetMsgServer() types.MsgServer {
-	return keeper.NewMsgServerImpl(s.App.StakeibcKeeper)
+	return keeper.NewMsgServerImpl(s.App.StaketiaKeeper)
 }
 
 func TestKeeperTestSuite(t *testing.T) {
