@@ -2,6 +2,7 @@ package cli
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strconv"
 	"strings"
@@ -16,8 +17,9 @@ import (
 )
 
 const (
-	FlagArchive = "archive"
-	FlagAddress = "address"
+	FlagInlcudeArchived   = "include-archived"
+	FlagAddress           = "address"
+	FlagUnbondingRecordId = "unbonding-record-id"
 )
 
 // GetQueryCmd returns the cli query commands for this module.
@@ -35,7 +37,7 @@ func GetQueryCmd() *cobra.Command {
 		CmdQueryDelegationRecords(),
 		CmdQueryUnbondingRecords(),
 		CmdQueryRedemptionRecord(),
-		CmdQueryAllRedemptionRecords(),
+		CmdQueryRedemptionRecords(),
 		CmdQuerySlashRecords(),
 	)
 
@@ -83,19 +85,16 @@ func CmdQueryDelegationRecords() *cobra.Command {
 			fmt.Sprintf(`Queries all delegation records. Optionally include archived records.
 Examples:
   $ %[1]s query %[2]s delegation-records
-  $ %[1]s query %[2]s delegation-records --archive true
+  $ %[1]s query %[2]s delegation-records --include-archived true
 `, version.AppName, types.ModuleName),
 		),
 		Args: cobra.ExactArgs(0),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			archiveString, err := cmd.Flags().GetString(FlagArchive)
+			archiveString, err := cmd.Flags().GetString(FlagInlcudeArchived)
 			if err != nil {
 				return err
 			}
-			archiveBool, err := strconv.ParseBool(archiveString)
-			if err != nil {
-				return err
-			}
+			archiveBool, _ := strconv.ParseBool(archiveString)
 
 			clientCtx, err := client.GetClientQueryContext(cmd)
 			if err != nil {
@@ -104,7 +103,7 @@ Examples:
 			queryClient := types.NewQueryClient(clientCtx)
 
 			req := &types.QueryDelegationRecordsRequest{
-				Archive: archiveBool,
+				IncludeArchived: archiveBool,
 			}
 			res, err := queryClient.DelegationRecords(context.Background(), req)
 			if err != nil {
@@ -115,7 +114,7 @@ Examples:
 		},
 	}
 
-	cmd.Flags().String(FlagArchive, "", "Include archived records")
+	cmd.Flags().String(FlagInlcudeArchived, "", "Include archived records")
 	flags.AddQueryFlagsToCmd(cmd)
 
 	return cmd
@@ -125,24 +124,21 @@ Examples:
 func CmdQueryUnbondingRecords() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "unbonding-records",
-		Short: "Queries the unbonding records",
+		Short: "Queries all unbonding records",
 		Long: strings.TrimSpace(
 			fmt.Sprintf(`Queries all unbonding records. Optionally include archived records.
 Example:
   $ %[1]s query %[2]s unbonding-records
-  $ %[1]s query %[2]s unbonding-records --archive true
+  $ %[1]s query %[2]s unbonding-records --include-archived true
 `, version.AppName, types.ModuleName),
 		),
 		Args: cobra.ExactArgs(0),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			archiveString, err := cmd.Flags().GetString(FlagArchive)
+			archiveString, err := cmd.Flags().GetString(FlagInlcudeArchived)
 			if err != nil {
 				return err
 			}
-			archiveBool, err := strconv.ParseBool(archiveString)
-			if err != nil {
-				return err
-			}
+			archiveBool, _ := strconv.ParseBool(archiveString)
 
 			clientCtx, err := client.GetClientQueryContext(cmd)
 			if err != nil {
@@ -151,7 +147,7 @@ Example:
 			queryClient := types.NewQueryClient(clientCtx)
 
 			req := &types.QueryUnbondingRecordsRequest{
-				Archive: archiveBool,
+				IncludeArchived: archiveBool,
 			}
 			res, err := queryClient.UnbondingRecords(context.Background(), req)
 			if err != nil {
@@ -162,7 +158,7 @@ Example:
 		},
 	}
 
-	cmd.Flags().String(FlagArchive, "", "Include archived records")
+	cmd.Flags().String(FlagInlcudeArchived, "", "Include archived records")
 	flags.AddQueryFlagsToCmd(cmd)
 
 	return cmd
@@ -193,7 +189,7 @@ Example:
 			}
 			queryClient := types.NewQueryClient(clientCtx)
 
-			req := &types.QueryRedemptionRecord{
+			req := &types.QueryRedemptionRecordRequest{
 				UnbondingRecordId: unbondingRecordId,
 				Address:           address,
 			}
@@ -210,22 +206,31 @@ Example:
 }
 
 // Queries all redemption records with an optional address filter
-func CmdQueryAllRedemptionRecords() *cobra.Command {
+func CmdQueryRedemptionRecords() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "redemption-records",
-		Short: "Queries all redemption records with an optional address filter",
+		Short: "Queries all redemption records with a optional filters",
 		Long: strings.TrimSpace(
-			fmt.Sprintf(`Queries all redemption records with an optional address filter
+			fmt.Sprintf(`Queries all redemption records with an optional address or unbonding record ID filters
 Examples:
   $ %[1]s query %[2]s redemption-records
   $ %[1]s query %[1]s redemption-records --address strideXXX
+  $ %[1]s query %[1]s redemption-records --unbonding-record-id strideXXX
 `, version.AppName, types.ModuleName),
 		),
-		Args: cobra.ExactArgs(2),
+		Args: cobra.ExactArgs(0),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			address, err := cmd.Flags().GetString(FlagAddress)
 			if err != nil {
 				return err
+			}
+			unbondingRecordId, err := cmd.Flags().GetUint64(FlagUnbondingRecordId)
+			if err != nil {
+				return err
+			}
+
+			if address != "" && unbondingRecordId != 0 {
+				return errors.New("use redemption-rate query instead of redemption-rates query to filter by both unbonding record id and address")
 			}
 
 			clientCtx, err := client.GetClientQueryContext(cmd)
@@ -234,10 +239,11 @@ Examples:
 			}
 			queryClient := types.NewQueryClient(clientCtx)
 
-			req := &types.QueryAllRedemptionRecords{
-				Address: address,
+			req := &types.QueryRedemptionRecordsRequest{
+				Address:           address,
+				UnbondingRecordId: unbondingRecordId,
 			}
-			res, err := queryClient.AllRedemptionRecords(context.Background(), req)
+			res, err := queryClient.RedemptionRecords(context.Background(), req)
 			if err != nil {
 				return err
 			}
@@ -245,6 +251,10 @@ Examples:
 			return clientCtx.PrintProto(res)
 		},
 	}
+
+	cmd.Flags().String(FlagAddress, "", "Filter by redeemer address")
+	cmd.Flags().Uint64(FlagUnbondingRecordId, 0, "Filter by unbonding record ID")
+	flags.AddQueryFlagsToCmd(cmd)
 
 	return cmd
 }
@@ -260,7 +270,7 @@ Examples:
   $ %s query %s slash-records
 `, version.AppName, types.ModuleName),
 		),
-		Args: cobra.ExactArgs(2),
+		Args: cobra.ExactArgs(0),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx, err := client.GetClientQueryContext(cmd)
 			if err != nil {
@@ -268,7 +278,7 @@ Examples:
 			}
 			queryClient := types.NewQueryClient(clientCtx)
 
-			req := &types.QuerySlashRecords{}
+			req := &types.QuerySlashRecordsRequest{}
 			res, err := queryClient.SlashRecords(context.Background(), req)
 			if err != nil {
 				return err
