@@ -691,7 +691,7 @@ func NewStrideApp(
 			app.MintKeeper.Hooks(),
 			app.ClaimKeeper.Hooks(),
 			app.RatelimitKeeper.Hooks(),
-			app.StakeTiaKeeper.Hooks(),
+			app.StaketiaKeeper.Hooks(),
 		),
 	)
 	epochsModule := epochsmodule.NewAppModule(appCodec, app.EpochsKeeper)
