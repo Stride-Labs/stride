@@ -22,6 +22,8 @@ var (
 	RedemptionRecordsKeyPrefix          = []byte("redemption-records")
 	SlashRecordsKeyPrefix               = []byte("slash-records")
 	TransferInProgressRecordIdKeyPrefix = []byte("transfer-in-progress")
+
+	ChannelIdBufferFixedLength int = 16
 )
 
 // Serializes an string to use as a prefix when needed
@@ -39,4 +41,11 @@ func IntKey(i uint64) []byte {
 // Builds the redemption record key from an unbonding record ID and address
 func RedemptionRecordKey(unbondingRecordId uint64, redeemerAddress string) []byte {
 	return append(IntKey(unbondingRecordId), StringKey(redeemerAddress)...)
+}
+
+// Builds the transfer-in-progress record key from the channelId and sequence number
+func TransferInProgressRecordKey(channelId string, sequence uint64) []byte {
+	channelIdBz := make([]byte, ChannelIdBufferFixedLength)
+	copy(channelIdBz[:], channelId)
+	return append(channelIdBz, IntKey(sequence)...)
 }
