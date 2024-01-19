@@ -32,6 +32,7 @@ func (s *KeeperTestSuite) TestGetUnbondingRecord() {
 	}
 }
 
+// Tests RemoveUnbondingRecord and GetAllArchivedUnbondingRecords
 func (s *KeeperTestSuite) TestRemoveUnbondingRecord() {
 	unbondingRecords := s.addUnbondingRecords()
 
@@ -51,11 +52,18 @@ func (s *KeeperTestSuite) TestRemoveUnbondingRecord() {
 			s.Require().True(found, "record %d should have been removed after %d removal", checkedId, removedId)
 		}
 	}
+
+	// Check that they were all archived
+	archivedRecords := s.App.StakeTiaKeeper.GetAllArchivedUnbondingRecords(s.Ctx)
+	for i := 0; i < len(unbondingRecords); i++ {
+		expectedRecordId := unbondingRecords[i].Id
+		s.Require().Equal(expectedRecordId, archivedRecords[i].Id, "archived record %d", i)
+	}
 }
 
-func (s *KeeperTestSuite) TestGetAllUnbondingRecords() {
+func (s *KeeperTestSuite) TestGetAllActiveUnbondingRecords() {
 	expectedRecords := s.addUnbondingRecords()
-	actualRecords := s.App.StakeTiaKeeper.GetAllUnbondingRecords(s.Ctx)
+	actualRecords := s.App.StakeTiaKeeper.GetAllActiveUnbondingRecords(s.Ctx)
 	s.Require().Equal(len(expectedRecords), len(actualRecords), "number of unbonding records")
 	s.Require().Equal(expectedRecords, actualRecords)
 }

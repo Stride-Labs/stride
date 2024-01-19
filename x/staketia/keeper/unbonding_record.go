@@ -46,7 +46,13 @@ func (k Keeper) RemoveUnbondingRecord(ctx sdk.Context, recordId uint64) {
 		return
 	}
 
-	// First, write the the archive store
+	// Update the status to ARCHIVE
+	var unbondingRecord types.UnbondingRecord
+	k.cdc.MustUnmarshal(recordBz, &unbondingRecord)
+	unbondingRecord.Status = types.UNBONDING_ARCHIVE
+	recordBz = k.cdc.MustMarshal(&unbondingRecord)
+
+	// Write the archived record to the store
 	archiveStore.Set(recordKey, recordBz)
 
 	// Then remove from active store
@@ -70,7 +76,7 @@ func (k Keeper) GetAllActiveUnbondingRecords(ctx sdk.Context) (unbondingRecords 
 }
 
 // Returns all unbonding records that have been archived
-func (k Keeper) GetArchivedUnbondingRecords(ctx sdk.Context) (unbondingRecords []types.UnbondingRecord) {
+func (k Keeper) GetAllArchivedUnbondingRecords(ctx sdk.Context) (unbondingRecords []types.UnbondingRecord) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.UnbondingRecordsArchiveKeyPrefix)
 
 	iterator := store.Iterator(nil, nil)
@@ -98,7 +104,6 @@ func (k Keeper) GetAllUnbondingRecordsByStatus(ctx sdk.Context, status types.Unb
 
 // Gets the ACCUMULATING unbonding record (there should only be one)
 func (k Keeper) GetAccumulatingUnbondingRecord(ctx sdk.Context) (unbondingRecord types.UnbondingRecord, err error) {
-	// QUESTION: This is kind of inefficient - do you think it's worth indexing instead of looping each time?
 	accumulatingRecord := k.GetAllUnbondingRecordsByStatus(ctx, types.ACCUMULATING_REDEMPTIONS)
 	if len(accumulatingRecord) == 0 {
 		return unbondingRecord, types.ErrBrokenUnbondingRecordInvariant.Wrap("no unbonding record in status ACCUMULATING")
