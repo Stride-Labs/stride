@@ -67,7 +67,7 @@ func (s *KeeperTestSuite) TestGetAllRedemptionRecord() {
 	expectedRecords := s.addRedemptionRecords()
 	actualRecords := s.App.StakeTiaKeeper.GetAllRedemptionRecords(s.Ctx)
 	s.Require().Equal(len(expectedRecords), len(actualRecords), "number of redemption records")
-	s.Require().Equal(expectedRecords, actualRecords)
+	s.Require().ElementsMatch(expectedRecords, actualRecords)
 }
 
 func (s *KeeperTestSuite) TestGetAllRedemptionRecordsFromUnbondingId() {
@@ -106,6 +106,48 @@ func (s *KeeperTestSuite) TestGetAllRedemptionRecordsFromUnbondingId() {
 		for i, expectedRecord := range expectedRedemptionRecords {
 			actualRecord := actualRedemptionRecords[i]
 			s.Require().Equal(expectedRecord.Redeemer, actualRecord.Redeemer, "redemption record address")
+			s.Require().Equal(unbondingRecordId, actualRecord.UnbondingRecordId,
+				"redemption record unbonding ID for %s", expectedRecord.Redeemer)
+		}
+	}
+}
+
+func (s *KeeperTestSuite) TestGetRedemptionRecordsFromAddress() {
+	// Define a set of redemption records across different addresses
+	unbondingAddressToRecords := map[string][]types.RedemptionRecord{
+		"address-A": {
+			{UnbondingRecordId: 1, Redeemer: "address-A"},
+			{UnbondingRecordId: 2, Redeemer: "address-A"},
+			{UnbondingRecordId: 3, Redeemer: "address-A"},
+		},
+		"address-B": {
+			{UnbondingRecordId: 4, Redeemer: "address-B"},
+			{UnbondingRecordId: 5, Redeemer: "address-B"},
+			{UnbondingRecordId: 6, Redeemer: "address-B"},
+		},
+		"address-C": {
+			{UnbondingRecordId: 7, Redeemer: "address-C"},
+			{UnbondingRecordId: 8, Redeemer: "address-C"},
+			{UnbondingRecordId: 9, Redeemer: "address-C"},
+		},
+	}
+
+	// Store all the redemption records
+	for _, redemptionRecords := range unbondingAddressToRecords {
+		for _, redemptionRecord := range redemptionRecords {
+			s.App.StakeTiaKeeper.SetRedemptionRecord(s.Ctx, redemptionRecord)
+		}
+	}
+
+	// Lookup records by address and confirm it matches the expected list
+	for expectedAddress, expectedRedemptionRecords := range unbondingAddressToRecords {
+		actualRedemptionRecords := s.App.StakeTiaKeeper.GetRedemptionRecordsFromAddress(s.Ctx, expectedAddress)
+		s.Require().Equal(len(expectedRedemptionRecords), len(actualRedemptionRecords),
+			"number of redemption records for address %d", expectedAddress)
+
+		for i, expectedRecord := range expectedRedemptionRecords {
+			actualRecord := actualRedemptionRecords[i]
+			s.Require().Equal(expectedAddress, actualRecord.Redeemer, "redemption record address")
 			s.Require().Equal(expectedRecord.UnbondingRecordId, actualRecord.UnbondingRecordId,
 				"redemption record unbonding ID for %s", expectedRecord.Redeemer)
 		}
