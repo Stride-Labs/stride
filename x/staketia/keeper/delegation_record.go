@@ -17,7 +17,7 @@ func (k Keeper) SetDelegationRecord(ctx sdk.Context, delegationRecord types.Dele
 	store.Set(recordKey, recordBz)
 }
 
-// Reads a delegation record from the store
+// Reads a delegation record from the active store
 func (k Keeper) GetDelegationRecord(ctx sdk.Context, recordId uint64) (delegationRecord types.DelegationRecord, found bool) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.DelegationRecordsKeyPrefix)
 
@@ -33,15 +33,51 @@ func (k Keeper) GetDelegationRecord(ctx sdk.Context, recordId uint64) (delegatio
 }
 
 // Removes a delegation record from the store
+// To preserve history, we write it to the archive store
 func (k Keeper) RemoveDelegationRecord(ctx sdk.Context, recordId uint64) {
-	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.DelegationRecordsKeyPrefix)
+	activeStore := prefix.NewStore(ctx.KVStore(k.storeKey), types.DelegationRecordsKeyPrefix)
+	archiveStore := prefix.NewStore(ctx.KVStore(k.storeKey), types.DelegationRecordsArchiveKeyPrefix)
+
 	recordKey := types.IntKey(recordId)
-	store.Delete(recordKey)
+	recordBz := activeStore.Get(recordKey)
+
+	// No action necessary if the record doesn't exist
+	if len(recordBz) == 0 {
+		return
+	}
+
+	// Update the status to ARCHIVE
+	var delegationRecord types.DelegationRecord
+	k.cdc.MustUnmarshal(recordBz, &delegationRecord)
+	delegationRecord.Status = types.DELEGATION_ARCHIVE
+	recordBz = k.cdc.MustMarshal(&delegationRecord)
+
+	// Write the archived record to the store
+	archiveStore.Set(recordKey, recordBz)
+
+	// Then remove from active store
+	activeStore.Delete(recordKey)
 }
 
-// Returns all delegation records
-func (k Keeper) GetAllDelegationRecords(ctx sdk.Context) (delegationRecords []types.DelegationRecord) {
+// Returns all active delegation records
+func (k Keeper) GetAllActiveDelegationRecords(ctx sdk.Context) (delegationRecords []types.DelegationRecord) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.DelegationRecordsKeyPrefix)
+
+	iterator := store.Iterator(nil, nil)
+	defer iterator.Close()
+
+	for ; iterator.Valid(); iterator.Next() {
+		delegationRecord := types.DelegationRecord{}
+		k.cdc.MustUnmarshal(iterator.Value(), &delegationRecord)
+		delegationRecords = append(delegationRecords, delegationRecord)
+	}
+
+	return delegationRecords
+}
+
+// Returns all active delegation records
+func (k Keeper) GetAllArchivedDelegationRecords(ctx sdk.Context) (delegationRecords []types.DelegationRecord) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.DelegationRecordsArchiveKeyPrefix)
 
 	iterator := store.Iterator(nil, nil)
 	defer iterator.Close()

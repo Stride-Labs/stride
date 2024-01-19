@@ -31,6 +31,7 @@ func (s *KeeperTestSuite) TestGetDelegationRecord() {
 	}
 }
 
+// Tests RemoveDelegationRecord and GetAllArchivedDelegationRecords
 func (s *KeeperTestSuite) TestRemoveDelegationRecord() {
 	delegationRecords := s.addDelegationRecords()
 
@@ -50,11 +51,18 @@ func (s *KeeperTestSuite) TestRemoveDelegationRecord() {
 			s.Require().True(found, "record %d should still be here after %d removal", checkedId, removedId)
 		}
 	}
+
+	// Check that they were all archived
+	archivedRecords := s.App.StaketiaKeeper.GetAllArchivedDelegationRecords(s.Ctx)
+	for i := 0; i < len(delegationRecords); i++ {
+		expectedRecordId := delegationRecords[i].Id
+		s.Require().Equal(expectedRecordId, archivedRecords[i].Id, "archived record %d", i)
+	}
 }
 
-func (s *KeeperTestSuite) TestGetAllDelegationRecords() {
+func (s *KeeperTestSuite) TestGetAllActiveDelegationRecords() {
 	expectedRecords := s.addDelegationRecords()
-	actualRecords := s.App.StaketiaKeeper.GetAllDelegationRecords(s.Ctx)
+	actualRecords := s.App.StaketiaKeeper.GetAllActiveDelegationRecords(s.Ctx)
 	s.Require().Equal(len(expectedRecords), len(actualRecords), "number of delegation records")
 	s.Require().Equal(expectedRecords, actualRecords)
 }
