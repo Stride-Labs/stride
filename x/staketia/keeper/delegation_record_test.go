@@ -47,7 +47,7 @@ func (s *KeeperTestSuite) TestRemoveDelegationRecord() {
 		for checkedIndex := removedIndex + 1; checkedIndex < len(delegationRecords); checkedIndex++ {
 			checkedId := delegationRecords[checkedIndex].Id
 			_, found := s.App.StakeTiaKeeper.GetDelegationRecord(s.Ctx, checkedId)
-			s.Require().True(found, "record %d should have been removed after %d removal", checkedId, removedId)
+			s.Require().True(found, "record %d should still be here after %d removal", checkedId, removedId)
 		}
 	}
 }

@@ -12,9 +12,9 @@ func (k Keeper) SetDelegationRecord(ctx sdk.Context, delegationRecord types.Dele
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.DelegationRecordsKeyPrefix)
 
 	recordKey := types.IntKey(delegationRecord.Id)
-	recordValue := k.cdc.MustMarshal(&delegationRecord)
+	recordBz := k.cdc.MustMarshal(&delegationRecord)
 
-	store.Set(recordKey, recordValue)
+	store.Set(recordKey, recordBz)
 }
 
 // Reads a delegation record from the store
