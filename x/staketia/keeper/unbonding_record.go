@@ -62,23 +62,17 @@ func (k Keeper) RemoveUnbondingRecord(ctx sdk.Context, recordId uint64) {
 // Returns all active unbonding records
 func (k Keeper) GetAllActiveUnbondingRecords(ctx sdk.Context) (unbondingRecords []types.UnbondingRecord) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.UnbondingRecordsKeyPrefix)
-
-	iterator := store.Iterator(nil, nil)
-	defer iterator.Close()
-
-	for ; iterator.Valid(); iterator.Next() {
-		unbondingRecord := types.UnbondingRecord{}
-		k.cdc.MustUnmarshal(iterator.Value(), &unbondingRecord)
-		unbondingRecords = append(unbondingRecords, unbondingRecord)
-	}
-
-	return unbondingRecords
+	return k.getAllUnbondingRecords(store)
 }
 
 // Returns all unbonding records that have been archived
 func (k Keeper) GetAllArchivedUnbondingRecords(ctx sdk.Context) (unbondingRecords []types.UnbondingRecord) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.UnbondingRecordsArchiveKeyPrefix)
+	return k.getAllUnbondingRecords(store)
+}
 
+// Returns all unbonding records for a specified store (either active or archive)
+func (k Keeper) getAllUnbondingRecords(store prefix.Store) (unbondingRecords []types.UnbondingRecord) {
 	iterator := store.Iterator(nil, nil)
 	defer iterator.Close()
 

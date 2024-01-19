@@ -62,23 +62,17 @@ func (k Keeper) RemoveDelegationRecord(ctx sdk.Context, recordId uint64) {
 // Returns all active delegation records
 func (k Keeper) GetAllActiveDelegationRecords(ctx sdk.Context) (delegationRecords []types.DelegationRecord) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.DelegationRecordsKeyPrefix)
-
-	iterator := store.Iterator(nil, nil)
-	defer iterator.Close()
-
-	for ; iterator.Valid(); iterator.Next() {
-		delegationRecord := types.DelegationRecord{}
-		k.cdc.MustUnmarshal(iterator.Value(), &delegationRecord)
-		delegationRecords = append(delegationRecords, delegationRecord)
-	}
-
-	return delegationRecords
+	return k.getAllDelegationRecords(store)
 }
 
 // Returns all active delegation records
 func (k Keeper) GetAllArchivedDelegationRecords(ctx sdk.Context) (delegationRecords []types.DelegationRecord) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.DelegationRecordsArchiveKeyPrefix)
+	return k.getAllDelegationRecords(store)
+}
 
+// Returns all delegation records for a specified store (either active or archive)
+func (k Keeper) getAllDelegationRecords(store prefix.Store) (delegationRecords []types.DelegationRecord) {
 	iterator := store.Iterator(nil, nil)
 	defer iterator.Close()
 
