@@ -92,9 +92,9 @@ enum DelegationRecordStatus {
 enum UnbondingRecordStatus {
   option (gogoproto.goproto_enum_prefix) = false;
 
-  // TALLY_REDEMPTIONS indicates redemptions are still being accumulated on this
-  // record
-  TALLYING_REDEMPTIONS = 0;
+  // ACCUMULATING_REDEMPTIONS indicates redemptions are still being accumulated
+  // on this record
+  ACCUMULATING_REDEMPTIONS = 0;
   // UNBONDING_QUEUE indicates the unbond amount for this epoch has been froze
   // and the tokens are ready to be unbonded on the host zone
   UNBONDING_QUEUE = 1;
@@ -108,7 +108,7 @@ enum UnbondingRecordStatus {
   // ready to be distributed to users
   CLAIMABLE = 4;
   // ARCHIVE indicates the full unbonding cycle has been completed
-  ARCHIVE = 5;
+  UNBONDING_ARCHIVE = 5;
 }
 
 // DelegationRecords track the aggregate liquid stakes and delegations

@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/Stride-Labs/stride/v17/x/staketia/types"
@@ -8,39 +9,107 @@ import (
 
 // Writes a unbonding record to the store
 func (k Keeper) SetUnbondingRecord(ctx sdk.Context, unbondingRecord types.UnbondingRecord) {
-	// TODO [sttia]
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.UnbondingRecordsKeyPrefix)
+
+	recordKey := types.IntKey(unbondingRecord.Id)
+	recordValue := k.cdc.MustMarshal(&unbondingRecord)
+
+	store.Set(recordKey, recordValue)
 }
 
-// Reads a unbonding record from the store
+// Reads a unbonding record from the active store
 func (k Keeper) GetUnbondingRecord(ctx sdk.Context, recordId uint64) (unbondingRecord types.UnbondingRecord, found bool) {
-	// TODO [sttia]
-	return unbondingRecord, found
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.UnbondingRecordsKeyPrefix)
+
+	recordKey := types.IntKey(recordId)
+	recordBz := store.Get(recordKey)
+
+	if len(recordBz) == 0 {
+		return unbondingRecord, false
+	}
+
+	k.cdc.MustUnmarshal(recordBz, &unbondingRecord)
+	return unbondingRecord, true
 }
 
 // Removes a unbonding record from the store
+// To preserve history, we write it to the archive store
 func (k Keeper) RemoveUnbondingRecord(ctx sdk.Context, recordId uint64) {
-	// TODO [sttia]
+	activeStore := prefix.NewStore(ctx.KVStore(k.storeKey), types.UnbondingRecordsKeyPrefix)
+	archiveStore := prefix.NewStore(ctx.KVStore(k.storeKey), types.UnbondingRecordsArchiveKeyPrefix)
+
+	recordKey := types.IntKey(recordId)
+	recordBz := activeStore.Get(recordKey)
+
+	// No action necessary if the record doesn't exist
+	if len(recordBz) == 0 {
+		return
+	}
+
+	// Update the status to ARCHIVE
+	var unbondingRecord types.UnbondingRecord
+	k.cdc.MustUnmarshal(recordBz, &unbondingRecord)
+	unbondingRecord.Status = types.UNBONDING_ARCHIVE
+	recordBz = k.cdc.MustMarshal(&unbondingRecord)
+
+	// Write the archived record to the store
+	archiveStore.Set(recordKey, recordBz)
+
+	// Then remove the original record from the active store
+	activeStore.Delete(recordKey)
 }
 
-// Returns all unbonding records
-func (k Keeper) GetAllUnbondingRecords(ctx sdk.Context) (unbondingRecords []types.UnbondingRecord) {
-	// TODO [sttia]
+// Returns all active unbonding records
+func (k Keeper) GetAllActiveUnbondingRecords(ctx sdk.Context) (unbondingRecords []types.UnbondingRecord) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.UnbondingRecordsKeyPrefix)
+
+	iterator := store.Iterator(nil, nil)
+	defer iterator.Close()
+
+	for ; iterator.Valid(); iterator.Next() {
+		unbondingRecord := types.UnbondingRecord{}
+		k.cdc.MustUnmarshal(iterator.Value(), &unbondingRecord)
+		unbondingRecords = append(unbondingRecords, unbondingRecord)
+	}
+
+	return unbondingRecords
+}
+
+// Returns all unbonding records that have been archived
+func (k Keeper) GetAllArchivedUnbondingRecords(ctx sdk.Context) (unbondingRecords []types.UnbondingRecord) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.UnbondingRecordsArchiveKeyPrefix)
+
+	iterator := store.Iterator(nil, nil)
+	defer iterator.Close()
+
+	for ; iterator.Valid(); iterator.Next() {
+		unbondingRecord := types.UnbondingRecord{}
+		k.cdc.MustUnmarshal(iterator.Value(), &unbondingRecord)
+		unbondingRecords = append(unbondingRecords, unbondingRecord)
+	}
+
 	return unbondingRecords
 }
 
 // Returns all unbonding records with a specific status
+// Searches only active records
 func (k Keeper) GetAllUnbondingRecordsByStatus(ctx sdk.Context, status types.UnbondingRecordStatus) (unbondingRecords []types.UnbondingRecord) {
-	// TODO [sttia]
+	for _, unbondingRecord := range k.GetAllActiveUnbondingRecords(ctx) {
+		if unbondingRecord.Status == status {
+			unbondingRecords = append(unbondingRecords, unbondingRecord)
+		}
+	}
 	return unbondingRecords
 }
 
-// Updates the status on a unbonding record
-func (k Keeper) UpdateUnbondingRecordStatus(ctx sdk.Context, recordId uint64, status types.UnbondingRecordStatus) {
-	// TODO [sttia]
-}
-
-// Gets the queue unbonding record (there should only be one)
-func (k Keeper) GetQueueUnbondingRecord(ctx sdk.Context) (unbondingRecord types.UnbondingRecord, err error) {
-	// TODO [sttia]
-	return unbondingRecord, nil
+// Gets the ACCUMULATING unbonding record (there should only be one)
+func (k Keeper) GetAccumulatingUnbondingRecord(ctx sdk.Context) (unbondingRecord types.UnbondingRecord, err error) {
+	accumulatingRecord := k.GetAllUnbondingRecordsByStatus(ctx, types.ACCUMULATING_REDEMPTIONS)
+	if len(accumulatingRecord) == 0 {
+		return unbondingRecord, types.ErrBrokenUnbondingRecordInvariant.Wrap("no unbonding record in status ACCUMULATING")
+	}
+	if len(accumulatingRecord) != 1 {
+		return unbondingRecord, types.ErrBrokenUnbondingRecordInvariant.Wrap("more than one record in status ACCUMULATING")
+	}
+	return accumulatingRecord[0], nil
 }
