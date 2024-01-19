@@ -34,3 +34,8 @@ func IntKey(i uint64) []byte {
 	binary.BigEndian.PutUint64(bz, i)
 	return bz
 }
+
+// Builds the redemption record key from an unbonding record ID and address
+func RedemptionRecordKey(unbondingRecordId uint64, redeemerAddress string) []byte {
+	return append(IntKey(unbondingRecordId), StringKey(redeemerAddress)...)
+}
