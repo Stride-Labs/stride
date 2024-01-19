@@ -1,8 +1,6 @@
 package keeper
 
 import (
-	"errors"
-
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
@@ -72,10 +70,10 @@ func (k Keeper) GetAccumulatingUnbondingRecord(ctx sdk.Context) (unbondingRecord
 	// QUESTION: This is kind of inefficient - do you think it's worth indexing instead of looping each time?
 	accumulatingRecord := k.GetAllUnbondingRecordsByStatus(ctx, types.ACCUMULATING_REDEMPTIONS)
 	if len(accumulatingRecord) == 0 {
-		return unbondingRecord, errors.New("no unbonding record in status ACCUMULATING")
+		return unbondingRecord, types.ErrBrokenUnbondingRecordInvariant.Wrap("no unbonding record in status ACCUMULATING")
 	}
 	if len(accumulatingRecord) != 1 {
-		return unbondingRecord, errors.New("more than one record in status ACCUMULATING")
+		return unbondingRecord, types.ErrBrokenUnbondingRecordInvariant.Wrap("more than one record in status ACCUMULATING")
 	}
 	return accumulatingRecord[0], nil
 }
