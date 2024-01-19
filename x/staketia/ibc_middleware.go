@@ -77,7 +77,8 @@ func (im IBCMiddleware) OnChanCloseConfirm(
 	portID,
 	channelID string,
 ) error {
-	return nil
+	im.keeper.Logger(ctx).Info(fmt.Sprintf("OnChanCloseConfirm (Staketia): portID %s, channelID %s", portID, channelID))
+	return im.app.OnChanCloseConfirm(ctx, portID, channelID)
 }
 
 // OnAcknowledgementPacket must check the ack for outbound transfers of native tokens
