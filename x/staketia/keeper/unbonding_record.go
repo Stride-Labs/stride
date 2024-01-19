@@ -55,7 +55,7 @@ func (k Keeper) RemoveUnbondingRecord(ctx sdk.Context, recordId uint64) {
 	// Write the archived record to the store
 	archiveStore.Set(recordKey, recordBz)
 
-	// Then remove from active store
+	// Then remove the original record from the active store
 	activeStore.Delete(recordKey)
 }
 
