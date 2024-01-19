@@ -11,14 +11,14 @@ import (
 )
 
 func RegisterLegacyAminoCodec(cdc *codec.LegacyAmino) {
-	legacy.RegisterAminoMsg(cdc, &MsgLiquidStake{}, "stride/MsgLiquidStake")
-	legacy.RegisterAminoMsg(cdc, &MsgRedeemStake{}, "stride/MsgRedeemStake")
-	legacy.RegisterAminoMsg(cdc, &MsgConfirmDelegation{}, "stride/MsgConfirmDelegation")
-	legacy.RegisterAminoMsg(cdc, &MsgConfirmUndelegation{}, "stride/MsgConfirmUndelegation")
-	legacy.RegisterAminoMsg(cdc, &MsgConfirmUnbondedTokenSweep{}, "stride/MsgConfirmUnbondedTokenSweep")
-	legacy.RegisterAminoMsg(cdc, &MsgAdjustDelegatedBalance{}, "stride/MsgAdjustDelegatedBalance")
-	legacy.RegisterAminoMsg(cdc, &MsgUpdateInnerRedemptionRateBounds{}, "stride/MsgUpdateRedemptionRateBounds")
-	legacy.RegisterAminoMsg(cdc, &MsgResumeHostZone{}, "stride/MsgResumeHostZone")
+	legacy.RegisterAminoMsg(cdc, &MsgLiquidStake{}, "staketia/MsgLiquidStake")
+	legacy.RegisterAminoMsg(cdc, &MsgRedeemStake{}, "staketia/MsgRedeemStake")
+	legacy.RegisterAminoMsg(cdc, &MsgConfirmDelegation{}, "staketia/MsgConfirmDelegation")
+	legacy.RegisterAminoMsg(cdc, &MsgConfirmUndelegation{}, "staketia/MsgConfirmUndelegation")
+	legacy.RegisterAminoMsg(cdc, &MsgConfirmUnbondedTokenSweep{}, "staketia/MsgConfirmUnbondedTokenSweep")
+	legacy.RegisterAminoMsg(cdc, &MsgAdjustDelegatedBalance{}, "staketia/MsgAdjustDelegatedBalance")
+	legacy.RegisterAminoMsg(cdc, &MsgUpdateInnerRedemptionRateBounds{}, "staketia/MsgUpdateRedemptionRateBounds")
+	legacy.RegisterAminoMsg(cdc, &MsgResumeHostZone{}, "staketia/MsgResumeHostZone")
 }
 
 func RegisterInterfaces(registry cdctypes.InterfaceRegistry) {

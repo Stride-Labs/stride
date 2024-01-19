@@ -49,7 +49,7 @@ service Msg {
 // LiquidStake
 message MsgLiquidStake {
   option (cosmos.msg.v1.signer) = "staker";
-  option (amino.name) = "stride/MsgLiquidStake";
+  option (amino.name) = "staketia/MsgLiquidStake";
 
   string staker = 1;
   string native_amount = 2 [
@@ -67,7 +67,7 @@ message MsgLiquidStakeResponse {
 // RedeemStake
 message MsgRedeemStake {
   option (cosmos.msg.v1.signer) = "redeemer";
-  option (amino.name) = "stride/MsgRedeemStake";
+  option (amino.name) = "staketia/MsgRedeemStake";
 
   string redeemer = 1;
   string st_token_amount = 2 [
@@ -80,7 +80,7 @@ message MsgRedeemStakeResponse {}
 // ConfirmDelegation
 message MsgConfirmDelegation {
   option (cosmos.msg.v1.signer) = "operator";
-  option (amino.name) = "stride/MsgConfirmDelegation";
+  option (amino.name) = "staketia/MsgConfirmDelegation";
 
   string operator = 1;
   uint64 record_id = 2;
@@ -91,7 +91,7 @@ message MsgConfirmDelegationResponse {}
 // ConfirmUndelegation
 message MsgConfirmUndelegation {
   option (cosmos.msg.v1.signer) = "operator";
-  option (amino.name) = "stride/MsgConfirmUndelegation";
+  option (amino.name) = "staketia/MsgConfirmUndelegation";
 
   string operator = 1;
   uint64 record_id = 2;
@@ -102,7 +102,7 @@ message MsgConfirmUndelegationResponse {}
 // ConfirmUnbondedTokenSweep
 message MsgConfirmUnbondedTokenSweep {
   option (cosmos.msg.v1.signer) = "operator";
-  option (amino.name) = "stride/MsgConfirmUnbondedTokenSweep";
+  option (amino.name) = "staketia/MsgConfirmUnbondedTokenSweep";
 
   string operator = 1;
   uint64 record_id = 2;
@@ -113,7 +113,7 @@ message MsgConfirmUnbondedTokenSweepResponse {}
 // AdjustDelegatedBalance
 message MsgAdjustDelegatedBalance {
   option (cosmos.msg.v1.signer) = "operator";
-  option (amino.name) = "stride/MsgAdjustDelegatedBalance";
+  option (amino.name) = "staketia/MsgAdjustDelegatedBalance";
 
   string operator = 1;
   string delegation_offset = 2 [
@@ -127,7 +127,7 @@ message MsgAdjustDelegatedBalanceResponse {}
 // UpdateInnerRedemptionRate
 message MsgUpdateInnerRedemptionRateBounds {
   option (cosmos.msg.v1.signer) = "creator";
-  option (amino.name) = "stride/MsgUpdateRedemptionRateBounds";
+  option (amino.name) = "staketia/MsgUpdateRedemptionRateBounds";
 
   string creator = 1;
   string min_inner_redemption_rate = 2 [
@@ -146,7 +146,7 @@ message MsgUpdateInnerRedemptionRateBoundsResponse {}
 // ResumeHostZone
 message MsgResumeHostZone {
   option (cosmos.msg.v1.signer) = "creator";
-  option (amino.name) = "stride/MsgResumeHostZone";
+  option (amino.name) = "staketia/MsgResumeHostZone";
 
   string creator = 1;
 }
