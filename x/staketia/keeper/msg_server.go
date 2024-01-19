@@ -21,7 +21,7 @@ func NewMsgServerImpl(keeper Keeper) types.MsgServer {
 var _ types.MsgServer = msgServer{}
 
 // User transaction to liquid stake native tokens into stTokens
-func (server msgServer) LiquidStake(goCtx context.Context, msg *types.MsgLiquidStake) (*types.MsgLiquidStakeResponse, error) {
+func (k msgServer) LiquidStake(goCtx context.Context, msg *types.MsgLiquidStake) (*types.MsgLiquidStakeResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 	// TODO [sttia]
 	_ = ctx
@@ -29,7 +29,7 @@ func (server msgServer) LiquidStake(goCtx context.Context, msg *types.MsgLiquidS
 }
 
 // User transaction to redeem stake stTokens into native tokens
-func (server msgServer) RedeemStake(goCtx context.Context, msg *types.MsgRedeemStake) (*types.MsgRedeemStakeResponse, error) {
+func (k msgServer) RedeemStake(goCtx context.Context, msg *types.MsgRedeemStake) (*types.MsgRedeemStakeResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 	// TODO [sttia]
 	_ = ctx
@@ -37,7 +37,7 @@ func (server msgServer) RedeemStake(goCtx context.Context, msg *types.MsgRedeemS
 }
 
 // Operator transaction to confirm a delegation was submitted on the host chain
-func (server msgServer) ConfirmDelegation(goCtx context.Context, msg *types.MsgConfirmDelegation) (*types.MsgConfirmDelegationResponse, error) {
+func (k msgServer) ConfirmDelegation(goCtx context.Context, msg *types.MsgConfirmDelegation) (*types.MsgConfirmDelegationResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 	// TODO [sttia]
 	_ = ctx
@@ -45,7 +45,7 @@ func (server msgServer) ConfirmDelegation(goCtx context.Context, msg *types.MsgC
 }
 
 // Operator transaction to confirm an undelegation was submitted on the host chain
-func (server msgServer) ConfirmUndelegation(goCtx context.Context, msg *types.MsgConfirmUndelegation) (*types.MsgConfirmUndelegationResponse, error) {
+func (k msgServer) ConfirmUndelegation(goCtx context.Context, msg *types.MsgConfirmUndelegation) (*types.MsgConfirmUndelegationResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 	// TODO [sttia]
 	_ = ctx
@@ -53,7 +53,7 @@ func (server msgServer) ConfirmUndelegation(goCtx context.Context, msg *types.Ms
 }
 
 // Operator transaction to confirm unbonded tokens were transferred back to stride
-func (server msgServer) ConfirmUnbondedTokenSweep(goCtx context.Context, msg *types.MsgConfirmUnbondedTokenSweep) (*types.MsgConfirmUnbondedTokenSweepResponse, error) {
+func (k msgServer) ConfirmUnbondedTokenSweep(goCtx context.Context, msg *types.MsgConfirmUnbondedTokenSweep) (*types.MsgConfirmUnbondedTokenSweepResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 	// TODO [sttia]
 	_ = ctx
@@ -61,7 +61,7 @@ func (server msgServer) ConfirmUnbondedTokenSweep(goCtx context.Context, msg *ty
 }
 
 // Operator transaction to adjust the delegated balance after a validator was slashed
-func (server msgServer) AdjustDelegatedBalance(goCtx context.Context, msg *types.MsgAdjustDelegatedBalance) (*types.MsgAdjustDelegatedBalanceResponse, error) {
+func (k msgServer) AdjustDelegatedBalance(goCtx context.Context, msg *types.MsgAdjustDelegatedBalance) (*types.MsgAdjustDelegatedBalanceResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 	// TODO [sttia]
 	_ = ctx
@@ -69,7 +69,7 @@ func (server msgServer) AdjustDelegatedBalance(goCtx context.Context, msg *types
 }
 
 // Adjusts the inner redemption rate bounds on the host zone
-func (server msgServer) UpdateInnerRedemptionRateBounds(goCtx context.Context, msg *types.MsgUpdateInnerRedemptionRateBounds) (*types.MsgUpdateInnerRedemptionRateBoundsResponse, error) {
+func (k msgServer) UpdateInnerRedemptionRateBounds(goCtx context.Context, msg *types.MsgUpdateInnerRedemptionRateBounds) (*types.MsgUpdateInnerRedemptionRateBoundsResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 	// TODO [sttia]
 	_ = ctx
@@ -77,7 +77,7 @@ func (server msgServer) UpdateInnerRedemptionRateBounds(goCtx context.Context, m
 }
 
 // Unhalts the host zone if redemption rates were exceeded
-func (server msgServer) ResumeHostZone(goCtx context.Context, msg *types.MsgResumeHostZone) (*types.MsgResumeHostZoneResponse, error) {
+func (k msgServer) ResumeHostZone(goCtx context.Context, msg *types.MsgResumeHostZone) (*types.MsgResumeHostZoneResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 	// TODO [sttia]
 	_ = ctx
