@@ -208,6 +208,9 @@ func UpdateUnbondingRecords(ctx sdk.Context, k stakeibckeeper.Keeper, rk records
 				userRedemptionRecord.NativeTokenAmount = sdk.NewDecFromInt(userRedemptionRecord.StTokenAmount).Mul(impliedRedemptionRate).TruncateInt()
 				rk.SetUserRedemptionRecord(ctx, userRedemptionRecord)
 			}
+			// finally, update the hostZoneUnbonding record
+			return rk.SetHostZoneUnbondingRecord(ctx, epochUnbondingRecord.EpochNumber, hostZoneUnbonding.HostZoneId, *hostZoneUnbonding)
 		}
 	}
+	return nil
 }
