@@ -15,8 +15,9 @@ const (
 var (
 	// Prefix store keys
 	HostZoneKey                         = []byte("host-zone")
-	DelegationRecordsKeyPrefix          = []byte("delegation-records")
-	UnbondingRecordsKeyPrefix           = []byte("unbonding-records")
+	DelegationRecordsKeyPrefix          = []byte("delegation-records-active")
+	DelegationRecordsArchiveKeyPrefix   = []byte("delegation-records-archive")
+	UnbondingRecordsKeyPrefix           = []byte("unbonding-records-active")
 	UnbondingRecordsArchiveKeyPrefix    = []byte("unbonding-records-archive")
 	RedemptionRecordsKeyPrefix          = []byte("redemption-records")
 	SlashRecordsKeyPrefix               = []byte("slash-records")
