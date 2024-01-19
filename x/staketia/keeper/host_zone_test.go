@@ -1,7 +1,7 @@
 package keeper_test
 
 import (
-	sdk_types "github.com/cosmos/cosmos-sdk/types"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/Stride-Labs/stride/v17/x/staketia/types"
 )
@@ -17,13 +17,13 @@ func (s *KeeperTestSuite) initializeHostZone() types.HostZone {
 		DepositAddress: "stride8abb3e",
 		RedemptionAddress: "stride3400de1",
 		ClaimAddress: "stride00b1a83",
-		LastRedemptionRate: sdk_types.MustNewDecFromStr("1.0"),
-		RedemptionRate: sdk_types.MustNewDecFromStr("1.0"),
-		MinRedemptionRate: sdk_types.MustNewDecFromStr("0.95"),
-		MaxRedemptionRate: sdk_types.MustNewDecFromStr("1.10"),
-		MinInnerRedemptionRate: sdk_types.MustNewDecFromStr("0.97"),
-		MaxInnerRedemptionRate: sdk_types.MustNewDecFromStr("1.07"),
-		DelegatedBalance: sdk_types.NewInt(1_000_000),
+		LastRedemptionRate: sdk.MustNewDecFromStr("1.0"),
+		RedemptionRate: sdk.MustNewDecFromStr("1.0"),
+		MinRedemptionRate: sdk.MustNewDecFromStr("0.95"),
+		MaxRedemptionRate: sdk.MustNewDecFromStr("1.10"),
+		MinInnerRedemptionRate: sdk.MustNewDecFromStr("0.97"),
+		MaxInnerRedemptionRate: sdk.MustNewDecFromStr("1.07"),
+		DelegatedBalance: sdk.NewInt(1_000_000),
 		Halted: false,
 	}
 	s.App.StakeTiaKeeper.SetHostZone(s.Ctx, hostZone)
@@ -37,3 +37,14 @@ func (s *KeeperTestSuite) TestGetHostZone() {
 	s.Require().Equal(savedHostZone, loadedHostZone)
 }
 
+func (s *KeeperTestSuite) TestSetHostZone() {
+	hostZone := s.initializeHostZone()
+
+	hostZone.RedemptionRate = hostZone.RedemptionRate.Add(sdk.MustNewDecFromStr("0.1"))
+	hostZone.DelegatedBalance = hostZone.DelegatedBalance.Add(sdk.NewInt(100_000))
+	s.App.StakeTiaKeeper.SetHostZone(s.Ctx, hostZone)
+
+	loadedHostZone, err := s.App.StakeTiaKeeper.GetHostZone(s.Ctx)
+	s.Require().NoError(err, "HostZone failed to load")
+	s.Require().Equal(hostZone, loadedHostZone)	
+}
