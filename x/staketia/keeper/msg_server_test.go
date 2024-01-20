@@ -2,25 +2,35 @@ package keeper_test
 
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	_ "github.com/stretchr/testify/suite"
 
-	types "github.com/Stride-Labs/stride/v17/x/staketia/types"
+	"github.com/Stride-Labs/stride/v17/x/staketia/types"
 )
 
-const (
-	ChainId = "CELESTIA"
-)
+// More granular testing of liquid stake is done in the keeper function
+// This just tests the msg server wrapper
+func (s *KeeperTestSuite) TestMsgServerLiquidStake() {
+	tc := s.DefaultSetupTestLiquidStake()
 
-type UpdateInnerRedemptionRateBoundsTestCase struct {
-	initialMsg types.MsgUpdateInnerRedemptionRateBounds
-	updateMsg  types.MsgUpdateInnerRedemptionRateBounds
-	invalidMsg types.MsgUpdateInnerRedemptionRateBounds
+	// Attempt a successful liquid stake
+	validMsg := types.MsgLiquidStake{
+		Staker:       tc.stakerAddress.String(),
+		NativeAmount: tc.liquidStakeAmount,
+	}
+	resp, err := s.GetMsgServer().LiquidStake(sdk.UnwrapSDKContext(s.Ctx), &validMsg)
+	s.Require().NoError(err, "no error expected during liquid stake")
+	s.Require().Equal(tc.expectedStAmount.Int64(), resp.StToken.Amount.Int64(), "stToken amount")
+
+	s.ConfirmLiquidStakeTokenTransfer(tc)
+
+	// Attempt a liquid stake again, it should fail now that the staker is out of funds
+	_, err = s.GetMsgServer().LiquidStake(sdk.UnwrapSDKContext(s.Ctx), &validMsg)
+	s.Require().ErrorContains(err, "insufficient funds")
 }
 
-func (s *KeeperTestSuite) SetupUpdateInnerRedemptionRateBounds() UpdateInnerRedemptionRateBoundsTestCase {
+func (s *KeeperTestSuite) TestUpdateInnerRedemptionRateBounds() {
 	// Register a host zone
 	zone := types.HostZone{
-		ChainId: ChainId,
+		ChainId: HostChainId,
 		// Upper bound 1.5
 		MaxRedemptionRate: sdk.NewDec(3).Quo(sdk.NewDec(2)),
 		// Lower bound 0.9
@@ -47,40 +57,25 @@ func (s *KeeperTestSuite) SetupUpdateInnerRedemptionRateBounds() UpdateInnerRede
 		MaxInnerRedemptionRate: sdk.NewDec(2),
 	}
 
-	return UpdateInnerRedemptionRateBoundsTestCase{
-		initialMsg: initialMsg,
-		updateMsg:  updateMsg,
-		invalidMsg: invalidMsg,
-	}
-}
-
-// Verify that bounds can be set successfully
-func (s *KeeperTestSuite) TestUpdateInnerRedemptionRateBounds() {
-	tc := s.SetupUpdateInnerRedemptionRateBounds()
-
 	// Set the inner bounds on the host zone for the first time
-	_, err := s.GetMsgServer().UpdateInnerRedemptionRateBounds(s.Ctx, &tc.initialMsg)
+	_, err := s.GetMsgServer().UpdateInnerRedemptionRateBounds(s.Ctx, &initialMsg)
 	s.Require().NoError(err, "should not throw an error")
 
 	// Confirm the inner bounds were set
-	zone, err := s.App.StaketiaKeeper.GetHostZone(s.Ctx)
-	s.Require().NoError(err, "should not throw an error")
-
-	s.Require().Equal(tc.initialMsg.MinInnerRedemptionRate, zone.MinInnerRedemptionRate, "min inner redemption rate should be set")
-	s.Require().Equal(tc.initialMsg.MaxInnerRedemptionRate, zone.MaxInnerRedemptionRate, "max inner redemption rate should be set")
+	zone = s.MustGetHostZone()
+	s.Require().Equal(initialMsg.MinInnerRedemptionRate, zone.MinInnerRedemptionRate, "min inner redemption rate should be set")
+	s.Require().Equal(initialMsg.MaxInnerRedemptionRate, zone.MaxInnerRedemptionRate, "max inner redemption rate should be set")
 
 	// Update the inner bounds on the host zone
-	_, err = s.GetMsgServer().UpdateInnerRedemptionRateBounds(s.Ctx, &tc.updateMsg)
+	_, err = s.GetMsgServer().UpdateInnerRedemptionRateBounds(s.Ctx, &updateMsg)
 	s.Require().NoError(err, "should not throw an error")
 
 	// Confirm the inner bounds were set
-	zone, err = s.App.StaketiaKeeper.GetHostZone(s.Ctx)
-	s.Require().NoError(err, "should not throw an error")
-
-	s.Require().Equal(tc.updateMsg.MinInnerRedemptionRate, zone.MinInnerRedemptionRate, "min inner redemption rate should be set")
-	s.Require().Equal(tc.updateMsg.MaxInnerRedemptionRate, zone.MaxInnerRedemptionRate, "max inner redemption rate should be set")
+	zone = s.MustGetHostZone()
+	s.Require().Equal(updateMsg.MinInnerRedemptionRate, zone.MinInnerRedemptionRate, "min inner redemption rate should be set")
+	s.Require().Equal(updateMsg.MaxInnerRedemptionRate, zone.MaxInnerRedemptionRate, "max inner redemption rate should be set")
 
 	// Set the inner bounds on the host zone for the first time
-	_, err = s.GetMsgServer().UpdateInnerRedemptionRateBounds(s.Ctx, &tc.invalidMsg)
-	s.Require().ErrorContains(err, "invalid inner bounds")
+	_, err = s.GetMsgServer().UpdateInnerRedemptionRateBounds(s.Ctx, &invalidMsg)
+	s.Require().ErrorContains(err, "invalid host zone redemption rate inner bounds")
 }

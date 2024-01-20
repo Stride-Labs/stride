@@ -10,7 +10,8 @@ import (
 func (s *KeeperTestSuite) initializeHostZone() types.HostZone {
 	hostZone := types.HostZone{
 		ChainId:                "CELESTIA",
-		NativeDenom:            "utia",
+		NativeTokenDenom:       "utia",
+		NativeTokenIbcDenom:    "ibc/utia",
 		TransferChannelId:      "channel-05",
 		DelegationAddress:      "tia0384a",
 		RewardAddress:          "tia144f42e9",
@@ -32,8 +33,7 @@ func (s *KeeperTestSuite) initializeHostZone() types.HostZone {
 
 func (s *KeeperTestSuite) TestGetHostZone() {
 	savedHostZone := s.initializeHostZone()
-	loadedHostZone, err := s.App.StaketiaKeeper.GetHostZone(s.Ctx)
-	s.Require().NoError(err, "HostZone failed to load")
+	loadedHostZone := s.MustGetHostZone()
 	s.Require().Equal(savedHostZone, loadedHostZone)
 }
 
@@ -44,7 +44,33 @@ func (s *KeeperTestSuite) TestSetHostZone() {
 	hostZone.DelegatedBalance = hostZone.DelegatedBalance.Add(sdk.NewInt(100_000))
 	s.App.StaketiaKeeper.SetHostZone(s.Ctx, hostZone)
 
-	loadedHostZone, err := s.App.StaketiaKeeper.GetHostZone(s.Ctx)
-	s.Require().NoError(err, "HostZone failed to load")
+	loadedHostZone := s.MustGetHostZone()
 	s.Require().Equal(hostZone, loadedHostZone)
+}
+
+func (s *KeeperTestSuite) TestGetUnhaltedHostZone() {
+	initialHostZone := types.HostZone{
+		ChainId: "chain-0",
+	}
+
+	// Attempt to get a host zone when one has not been created yet - it should error
+	_, err := s.App.StaketiaKeeper.GetUnhaltedHostZone(s.Ctx)
+	s.Require().ErrorContains(err, "host zone not found")
+
+	// Set a non-halted zone
+	initialHostZone.Halted = false
+	s.App.StaketiaKeeper.SetHostZone(s.Ctx, initialHostZone)
+
+	// Confirm there's no error when fetching it
+	actualHostZone, err := s.App.StaketiaKeeper.GetUnhaltedHostZone(s.Ctx)
+	s.Require().NoError(err, "no error expected when host zone is active")
+	s.Require().Equal(initialHostZone.ChainId, actualHostZone.ChainId, "chain-id")
+
+	// Set a halted zone
+	initialHostZone.Halted = true
+	s.App.StaketiaKeeper.SetHostZone(s.Ctx, initialHostZone)
+
+	// Confirm there's a halt error
+	_, err = s.App.StaketiaKeeper.GetUnhaltedHostZone(s.Ctx)
+	s.Require().ErrorContains(err, "host zone is halted")
 }

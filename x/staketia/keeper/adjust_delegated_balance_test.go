@@ -41,8 +41,7 @@ func (s *KeeperTestSuite) TestAdjustDelegatedBalance() {
 		_, err := msgServer.AdjustDelegatedBalance(s.Ctx, &msg)
 		s.Require().NoError(err, "no error expected when adjusting delegated bal properly for %s", tc.address)
 
-		hostZone, err := s.App.StaketiaKeeper.GetHostZone(s.Ctx)
-		s.Require().NoError(err, "no error expected when getting host zone")
+		hostZone := s.MustGetHostZone()
 		s.Require().Equal(tc.endDelegation, hostZone.DelegatedBalance, "delegation after change for %s", tc.address)
 	}
 }

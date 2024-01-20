@@ -23,9 +23,11 @@ var _ types.MsgServer = msgServer{}
 // User transaction to liquid stake native tokens into stTokens
 func (k msgServer) LiquidStake(goCtx context.Context, msg *types.MsgLiquidStake) (*types.MsgLiquidStakeResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
-	// TODO [sttia]
-	_ = ctx
-	return &types.MsgLiquidStakeResponse{}, nil
+	stToken, err := k.Keeper.LiquidStake(ctx, msg.Staker, msg.NativeAmount)
+	if err != nil {
+		return &types.MsgLiquidStakeResponse{}, err
+	}
+	return &types.MsgLiquidStakeResponse{StToken: stToken}, nil
 }
 
 // User transaction to redeem stake stTokens into native tokens
@@ -105,10 +107,10 @@ func (k msgServer) UpdateInnerRedemptionRateBounds(goCtx context.Context, msg *t
 	maxInnerBound := msg.MaxInnerRedemptionRate
 	minInnerBound := msg.MinInnerRedemptionRate
 	if maxInnerBound.GT(maxOuterBound) {
-		return nil, types.ErrInvalidBounds
+		return nil, types.ErrInvalidRedemptionRateBounds
 	}
 	if minInnerBound.LT(minOuterBound) {
-		return nil, types.ErrInvalidBounds
+		return nil, types.ErrInvalidRedemptionRateBounds
 	}
 
 	// Set the inner bounds on the host zone

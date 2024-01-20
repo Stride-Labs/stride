@@ -278,3 +278,19 @@ func LogModuleMigration(ctx sdk.Context, versionMap module.VersionMap, moduleNam
 	currentVersion := versionMap[moduleName]
 	ctx.Logger().Info(fmt.Sprintf("migrating module %s from version %d to version %d", moduleName, currentVersion-1, currentVersion))
 }
+
+// isIBCToken checks if the token came from the IBC module
+// Each IBC token starts with an ibc/ denom, the check is rather simple
+func IsIBCToken(denom string) bool {
+	return strings.HasPrefix(denom, "ibc/")
+}
+
+// Returns the stDenom from a native denom by appending a st prefix
+func StAssetDenomFromHostZoneDenom(hostZoneDenom string) string {
+	return "st" + hostZoneDenom
+}
+
+// Returns the native denom from an stDenom by removing the st prefix
+func HostZoneDenomFromStAssetDenom(stAssetDenom string) string {
+	return stAssetDenom[2:]
+}

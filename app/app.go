@@ -253,6 +253,7 @@ var (
 		interchainquerytypes.ModuleName:               nil,
 		icatypes.ModuleName:                           nil,
 		stakeibcmoduletypes.RewardCollectorName:       nil,
+		staketiatypes.ModuleName:                      {authtypes.Minter, authtypes.Burner},
 	}
 )
 
@@ -1100,7 +1101,10 @@ func (app *StrideApp) BlacklistedModuleAccountAddrs() map[string]bool {
 	// DO NOT REMOVE: StringMapKeys fixes non-deterministic map iteration
 	for _, acc := range utils.StringMapKeys(maccPerms) {
 		// don't blacklist stakeibc module account, so that it can ibc transfer tokens
-		if acc == stakeibcmoduletypes.ModuleName || acc == stakeibcmoduletypes.RewardCollectorName || acc == ccvconsumertypes.ConsumerToSendToProviderName {
+		if acc == stakeibcmoduletypes.ModuleName ||
+			acc == stakeibcmoduletypes.RewardCollectorName ||
+			acc == ccvconsumertypes.ConsumerToSendToProviderName ||
+			acc == staketiatypes.ModuleName {
 			continue
 		}
 		modAccAddrs[authtypes.NewModuleAddress(acc).String()] = true

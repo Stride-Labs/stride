@@ -10,6 +10,13 @@ import (
 	"github.com/Stride-Labs/stride/v17/x/staketia/types"
 )
 
+const (
+	HostChainId     = "chain-0"
+	HostNativeDenom = "denom"
+	HostIBCDenom    = "ibc/denom"
+	StDenom         = "stdenom"
+)
+
 type KeeperTestSuite struct {
 	apptesting.AppTestHelper
 }
@@ -29,4 +36,11 @@ func (s *KeeperTestSuite) GetMsgServer() types.MsgServer {
 
 func TestKeeperTestSuite(t *testing.T) {
 	suite.Run(t, new(KeeperTestSuite))
+}
+
+// Helper function to get a host zone and confirm there's no error
+func (s *KeeperTestSuite) MustGetHostZone() types.HostZone {
+	hostZone, err := s.App.StaketiaKeeper.GetHostZone(s.Ctx)
+	s.Require().NoError(err, "no error expected when getting host zone")
+	return hostZone
 }

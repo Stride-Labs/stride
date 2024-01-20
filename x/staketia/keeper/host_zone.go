@@ -26,3 +26,15 @@ func (k Keeper) GetHostZone(ctx sdk.Context) (hostZone types.HostZone, err error
 	k.cdc.MustUnmarshal(hostZoneBz, &hostZone)
 	return hostZone, nil
 }
+
+// Reads a host zone from the store and errors if the host zone is halted
+func (k Keeper) GetUnhaltedHostZone(ctx sdk.Context) (hostZone types.HostZone, err error) {
+	hostZone, err = k.GetHostZone(ctx)
+	if err != nil {
+		return hostZone, err
+	}
+	if hostZone.Halted {
+		return hostZone, types.ErrHostZoneHalted.Wrapf("host zone %s is halted", hostZone.ChainId)
+	}
+	return hostZone, nil
+}
