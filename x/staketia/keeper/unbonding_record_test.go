@@ -32,14 +32,14 @@ func (s *KeeperTestSuite) TestGetUnbondingRecord() {
 	}
 }
 
-// Tests RemoveUnbondingRecord and GetAllArchivedUnbondingRecords
-func (s *KeeperTestSuite) TestRemoveUnbondingRecord() {
+// Tests ArchiveUnbondingRecord and GetAllArchivedUnbondingRecords
+func (s *KeeperTestSuite) TestArchiveUnbondingRecord() {
 	unbondingRecords := s.addUnbondingRecords()
 
 	for removedIndex := 0; removedIndex < len(unbondingRecords); removedIndex++ {
 		// Remove from removed index
 		removedId := unbondingRecords[removedIndex].Id
-		s.App.StaketiaKeeper.RemoveUnbondingRecord(s.Ctx, removedId)
+		s.App.StaketiaKeeper.ArchiveUnbondingRecord(s.Ctx, removedId)
 
 		// Confirm removed
 		_, found := s.App.StaketiaKeeper.GetUnbondingRecord(s.Ctx, removedId)
@@ -98,8 +98,8 @@ func (s *KeeperTestSuite) TestGetAccumulatingUnbondingRecord() {
 	s.Require().ErrorContains(err, "more than one record")
 
 	// Remove the ACCUMULATING records and confirm it errors
-	s.App.StaketiaKeeper.RemoveUnbondingRecord(s.Ctx, expectedRecordId)
-	s.App.StaketiaKeeper.RemoveUnbondingRecord(s.Ctx, duplicateAccumulatingRecordId)
+	s.App.StaketiaKeeper.ArchiveUnbondingRecord(s.Ctx, expectedRecordId)
+	s.App.StaketiaKeeper.ArchiveUnbondingRecord(s.Ctx, duplicateAccumulatingRecordId)
 
 	_, err = s.App.StaketiaKeeper.GetAccumulatingUnbondingRecord(s.Ctx)
 	s.Require().ErrorContains(err, "no unbonding record")

@@ -34,7 +34,7 @@ func (k Keeper) GetDelegationRecord(ctx sdk.Context, recordId uint64) (delegatio
 
 // Removes a delegation record from the store
 // To preserve history, we write it to the archive store
-func (k Keeper) RemoveDelegationRecord(ctx sdk.Context, recordId uint64) {
+func (k Keeper) ArchiveDelegationRecord(ctx sdk.Context, recordId uint64) {
 	activeStore := prefix.NewStore(ctx.KVStore(k.storeKey), types.DelegationRecordsKeyPrefix)
 	archiveStore := prefix.NewStore(ctx.KVStore(k.storeKey), types.DelegationRecordsArchiveKeyPrefix)
 

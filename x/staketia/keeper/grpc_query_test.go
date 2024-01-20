@@ -32,7 +32,7 @@ func (s *KeeperTestSuite) TestQueryDelegationRecords() {
 	archivedDelegationRecords := []types.DelegationRecord{}
 	for _, delegationRecord := range activeDelegationRecords {
 		// Archive (which removes from the active store, and writes to the archive store)
-		s.App.StaketiaKeeper.RemoveDelegationRecord(s.Ctx, delegationRecord.Id)
+		s.App.StaketiaKeeper.ArchiveDelegationRecord(s.Ctx, delegationRecord.Id)
 
 		// Set the original record back to the active store
 		s.App.StaketiaKeeper.SetDelegationRecord(s.Ctx, delegationRecord)
@@ -69,7 +69,7 @@ func (s *KeeperTestSuite) TestQueryUnbondingRecords() {
 	archivedUnbondingRecords := []types.UnbondingRecord{}
 	for _, unbondingRecord := range activeUnbondingRecords {
 		// Archive (which removes from the active store, and writes to the archive store)
-		s.App.StaketiaKeeper.RemoveUnbondingRecord(s.Ctx, unbondingRecord.Id)
+		s.App.StaketiaKeeper.ArchiveUnbondingRecord(s.Ctx, unbondingRecord.Id)
 
 		// Set the original record back to the active store
 		s.App.StaketiaKeeper.SetUnbondingRecord(s.Ctx, unbondingRecord)

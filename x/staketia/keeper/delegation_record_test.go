@@ -31,14 +31,14 @@ func (s *KeeperTestSuite) TestGetDelegationRecord() {
 	}
 }
 
-// Tests RemoveDelegationRecord and GetAllArchivedDelegationRecords
-func (s *KeeperTestSuite) TestRemoveDelegationRecord() {
+// Tests ArchiveDelegationRecord and GetAllArchivedDelegationRecords
+func (s *KeeperTestSuite) TestArchiveDelegationRecord() {
 	delegationRecords := s.addDelegationRecords()
 
 	for removedIndex := 0; removedIndex < len(delegationRecords); removedIndex++ {
 		// Remove from removed index
 		removedId := delegationRecords[removedIndex].Id
-		s.App.StaketiaKeeper.RemoveDelegationRecord(s.Ctx, removedId)
+		s.App.StaketiaKeeper.ArchiveDelegationRecord(s.Ctx, removedId)
 
 		// Confirm removed
 		_, found := s.App.StaketiaKeeper.GetDelegationRecord(s.Ctx, removedId)

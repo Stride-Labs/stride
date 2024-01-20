@@ -34,7 +34,7 @@ func (k Keeper) GetUnbondingRecord(ctx sdk.Context, recordId uint64) (unbondingR
 
 // Removes a unbonding record from the store
 // To preserve history, we write it to the archive store
-func (k Keeper) RemoveUnbondingRecord(ctx sdk.Context, recordId uint64) {
+func (k Keeper) ArchiveUnbondingRecord(ctx sdk.Context, recordId uint64) {
 	activeStore := prefix.NewStore(ctx.KVStore(k.storeKey), types.UnbondingRecordsKeyPrefix)
 	archiveStore := prefix.NewStore(ctx.KVStore(k.storeKey), types.UnbondingRecordsArchiveKeyPrefix)
 
