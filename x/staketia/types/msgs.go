@@ -383,10 +383,12 @@ func (msg *MsgResumeHostZone) GetSignBytes() []byte {
 }
 
 func (msg *MsgResumeHostZone) ValidateBasic() error {
-	// TODO [sttia]
 	_, err := sdk.AccAddressFromBech32(msg.Creator)
 	if err != nil {
 		return errorsmod.Wrapf(sdkerrors.ErrInvalidAddress, "invalid address (%s)", err)
+	}
+	if err := utils.ValidateAdminAddress(msg.Creator); err != nil {
+		return err
 	}
 	return nil
 }

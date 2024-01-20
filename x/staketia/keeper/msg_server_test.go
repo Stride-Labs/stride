@@ -6,6 +6,10 @@ import (
 	"github.com/Stride-Labs/stride/v17/x/staketia/types"
 )
 
+// ----------------------------------------------
+//        MsgLiquidStake
+// ----------------------------------------------
+
 // More granular testing of liquid stake is done in the keeper function
 // This just tests the msg server wrapper
 func (s *KeeperTestSuite) TestMsgServerLiquidStake() {
@@ -26,6 +30,52 @@ func (s *KeeperTestSuite) TestMsgServerLiquidStake() {
 	_, err = s.GetMsgServer().LiquidStake(sdk.UnwrapSDKContext(s.Ctx), &validMsg)
 	s.Require().ErrorContains(err, "insufficient funds")
 }
+
+// ----------------------------------------------
+//        MsgResumeHostZone
+// ----------------------------------------------
+
+// Test cases
+// - Zone is not halted
+// - Zone is halted - unhalt it
+func (s *KeeperTestSuite) TestResumeHostZone() {
+	// TODO [sttia]: verify denom blacklisting removal works
+
+	// Setup
+	zone := types.HostZone{Halted: false} // No data is required on the zone
+	s.App.StaketiaKeeper.SetHostZone(s.Ctx, zone)
+	msg := types.MsgResumeHostZone{
+		Creator: s.TestAccs[0].String(),
+	}
+
+	// TEST 1: Zone is not halted
+	// Try to unhalt the unhalted zone
+	_, err := s.GetMsgServer().ResumeHostZone(s.Ctx, &msg)
+	s.Require().ErrorContains(err, "zone is not halted")
+
+	// Confirm the zone is not halted
+	zone, err = s.App.StaketiaKeeper.GetHostZone(s.Ctx)
+	s.Require().NoError(err, "should not throw an error")
+	s.Require().False(zone.Halted, "zone should not be halted")
+
+	// TEST 2: Zone is halted
+	// Halt the zone
+	zone.Halted = true
+	s.App.StaketiaKeeper.SetHostZone(s.Ctx, zone)
+
+	// Try to unhalt the halted zone
+	_, err = s.GetMsgServer().ResumeHostZone(s.Ctx, &msg)
+	s.Require().NoError(err, "should not throw an error")
+
+	// Confirm the zone is not halted
+	zone, err = s.App.StaketiaKeeper.GetHostZone(s.Ctx)
+	s.Require().NoError(err, "should not throw an error")
+	s.Require().False(zone.Halted, "zone should not be halted")
+}
+
+// ----------------------------------------------
+//        MsgUpdateInnerRedemptionRateBounds
+// ----------------------------------------------
 
 func (s *KeeperTestSuite) TestUpdateInnerRedemptionRateBounds() {
 	// Register a host zone

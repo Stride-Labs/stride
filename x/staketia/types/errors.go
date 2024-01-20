@@ -12,4 +12,6 @@ var (
 	ErrInvalidRedemptionRateBounds       = errorsmod.Register(ModuleName, 1907, "invalid host zone redemption rate inner bounds")
 	ErrHostZoneHalted                    = errorsmod.Register(ModuleName, 1908, "host zone is halted")
 	ErrInvalidAmountBelowMinimum         = errorsmod.Register(ModuleName, 1909, "amount provided is too small")
+	ErrInvalidBounds                     = errorsmod.Register(ModuleName, 1910, "invalid inner bounds")
+	ErrHostZoneNotHalted                 = errorsmod.Register(ModuleName, 1911, "host zone is not halted")
 )

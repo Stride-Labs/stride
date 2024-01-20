@@ -16,6 +16,61 @@ import (
 )
 
 // ----------------------------------------------
+//        MsgResumeHostZone
+// ----------------------------------------------
+
+func TestMsgResumeHostZone(t *testing.T) {
+	apptesting.SetupConfig()
+
+	validNotAdminAddress, invalidAddress := apptesting.GenerateTestAddrs()
+	validAdminAddress, ok := apptesting.GetAdminAddress()
+	require.True(t, ok)
+
+	tests := []struct {
+		name string
+		msg  types.MsgResumeHostZone
+		err  string
+	}{
+		{
+			name: "successful message",
+			msg: types.MsgResumeHostZone{
+				Creator: validAdminAddress,
+			},
+		},
+		{
+			name: "invalid creator address",
+			msg: types.MsgResumeHostZone{
+				Creator: invalidAddress,
+			},
+			err: "invalid address",
+		},
+		{
+			name: "invalid admin address",
+			msg: types.MsgResumeHostZone{
+				Creator: validNotAdminAddress,
+			},
+			err: "not an admin: invalid address",
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			if test.err == "" {
+				require.NoError(t, test.msg.ValidateBasic(), "test: %v", test.name)
+
+				signers := test.msg.GetSigners()
+				require.Equal(t, len(signers), 1)
+				require.Equal(t, signers[0].String(), validAdminAddress)
+
+				require.Equal(t, test.msg.Type(), "resume_host_zone", "type")
+			} else {
+				require.ErrorContains(t, test.msg.ValidateBasic(), test.err, "test: %v", test.name)
+			}
+		})
+	}
+}
+
+// ----------------------------------------------
 //        MsgUpdateInnerRedemptionRateBounds
 // ----------------------------------------------
 

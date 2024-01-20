@@ -3,6 +3,7 @@ package keeper
 import (
 	"context"
 
+	errorsmod "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/Stride-Labs/stride/v17/x/staketia/types"
@@ -124,9 +125,28 @@ func (k msgServer) UpdateInnerRedemptionRateBounds(goCtx context.Context, msg *t
 }
 
 // Unhalts the host zone if redemption rates were exceeded
+// BOUNDS: verified in ValidateBasic
 func (k msgServer) ResumeHostZone(goCtx context.Context, msg *types.MsgResumeHostZone) (*types.MsgResumeHostZoneResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
-	// TODO [sttia]
-	_ = ctx
+
+	// Get Host Zone
+	zone, err := k.GetHostZone(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	// Check the zone is halted
+	if !zone.Halted {
+		return nil, errorsmod.Wrapf(types.ErrHostZoneNotHalted, "zone is not halted")
+	}
+
+	// TODO [sttia]: remove from blacklist
+	// stDenom := types.StAssetDenomFromHostZoneDenom(hostZone.HostDenom)
+	// k.RatelimitKeeper.RemoveDenomFromBlacklist(ctx, stDenom)
+
+	// Resume zone
+	zone.Halted = false
+	k.SetHostZone(ctx, zone)
+
 	return &types.MsgResumeHostZoneResponse{}, nil
 }
