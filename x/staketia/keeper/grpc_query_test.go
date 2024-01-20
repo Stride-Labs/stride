@@ -211,9 +211,9 @@ func (s *KeeperTestSuite) TestQueryAllRedemptionRecords_Pagination() {
 
 func (s *KeeperTestSuite) TestQuerySlashRecords() {
 	slashRecords := []types.SlashRecord{
-		{Id: 1, Time: 1, SttokenAmount: sdkmath.NewInt(1)},
-		{Id: 2, Time: 2, SttokenAmount: sdkmath.NewInt(2)},
-		{Id: 3, Time: 3, SttokenAmount: sdkmath.NewInt(3)},
+		{Id: 1, Time: 1, NativeTokenAmount: sdkmath.NewInt(1)},
+		{Id: 2, Time: 2, NativeTokenAmount: sdkmath.NewInt(2)},
+		{Id: 3, Time: 3, NativeTokenAmount: sdkmath.NewInt(3)},
 	}
 	for _, slashRecord := range slashRecords {
 		s.App.StaketiaKeeper.SetSlashRecord(s.Ctx, slashRecord)

@@ -60,11 +60,30 @@ func (k msgServer) ConfirmUnbondedTokenSweep(goCtx context.Context, msg *types.M
 	return &types.MsgConfirmUnbondedTokenSweepResponse{}, nil
 }
 
-// Operator transaction to adjust the delegated balance after a validator was slashed
-func (k msgServer) AdjustDelegatedBalance(goCtx context.Context, msg *types.MsgAdjustDelegatedBalance) (*types.MsgAdjustDelegatedBalanceResponse, error) {
+// SAFE transaction to adjust the delegated balance after a validator was slashed
+// - creates a slash record as a log
+// - allow negative amounts in case we want to fix our record keeping
+func (server msgServer) AdjustDelegatedBalance(goCtx context.Context, msg *types.MsgAdjustDelegatedBalance) (*types.MsgAdjustDelegatedBalanceResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
-	// TODO [sttia]
-	_ = ctx
+
+	// add offset to the delegated balance and write to host zone
+	hostZone, err := server.GetHostZone(ctx)
+	if err != nil {
+		return nil, err
+	}
+	hostZone.DelegatedBalance = hostZone.DelegatedBalance.Add(msg.DelegationOffset)
+	server.SetHostZone(ctx, hostZone)
+
+	// create a corresponding slash record
+	latestSlashRecordId := server.IncrementSlashRecordId(ctx)
+	slashRecord := types.SlashRecord{
+		Id:                latestSlashRecordId,
+		Time:              uint64(ctx.BlockTime().Unix()),
+		NativeTokenAmount: msg.DelegationOffset,
+		ValidatorAddress:  msg.ValidatorAddress,
+	}
+	server.SetSlashRecord(ctx, slashRecord)
+
 	return &types.MsgAdjustDelegatedBalanceResponse{}, nil
 }
 
