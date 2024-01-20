@@ -21,6 +21,7 @@ var (
 	UnbondingRecordsArchiveKeyPrefix    = []byte("unbonding-records-archive")
 	RedemptionRecordsKeyPrefix          = []byte("redemption-records")
 	SlashRecordsKeyPrefix               = []byte("slash-records")
+	SlashRecordStoreKeyPrefix           = []byte("slash-record-id")
 	TransferInProgressRecordIdKeyPrefix = []byte("transfer-in-progress")
 
 	ChannelIdBufferFixedLength int = 16
