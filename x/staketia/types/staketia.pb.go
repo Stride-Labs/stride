@@ -26,6 +26,9 @@ var _ = math.Inf
 const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 
 // Status fields for a delegation record
+// Note: There is an important assumption here that tokens in the deposit
+// account should not be tracked by these records. The record is created as soon
+// as the tokens leave stride
 type DelegationRecordStatus int32
 
 const (
@@ -268,6 +271,9 @@ func (m *HostZone) GetHalted() bool {
 
 // DelegationRecords track the aggregate liquid stakes and delegations
 // for a given epoch
+// Note: There is an important assumption here that tokens in the deposit
+// account should not be tracked by these records. The record is created as soon
+// as the tokens leave stride
 type DelegationRecord struct {
 	// Deposit record unique ID
 	Id uint64 `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`

@@ -46,7 +46,8 @@ service Msg {
   rpc ResumeHostZone(MsgResumeHostZone) returns (MsgResumeHostZoneResponse);
 
   // Sets the operator address
-  rpc SetOperatorAddress(MsgSetOperatorAddress) returns (MsgSetOperatorAddressResponse);
+  rpc SetOperatorAddress(MsgSetOperatorAddress)
+      returns (MsgSetOperatorAddressResponse);
 }
 
 // LiquidStake

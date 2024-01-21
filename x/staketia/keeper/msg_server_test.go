@@ -7,7 +7,7 @@ import (
 )
 
 // ----------------------------------------------
-//        MsgLiquidStake
+//                MsgLiquidStake
 // ----------------------------------------------
 
 // More granular testing of liquid stake is done in the keeper function
@@ -32,7 +32,7 @@ func (s *KeeperTestSuite) TestMsgServerLiquidStake() {
 }
 
 // ----------------------------------------------
-//        MsgResumeHostZone
+//             MsgResumeHostZone
 // ----------------------------------------------
 
 // Test cases
@@ -77,7 +77,7 @@ func (s *KeeperTestSuite) TestResumeHostZone() {
 }
 
 // ----------------------------------------------
-//        MsgUpdateInnerRedemptionRateBounds
+//      MsgUpdateInnerRedemptionRateBounds
 // ----------------------------------------------
 
 func (s *KeeperTestSuite) TestUpdateInnerRedemptionRateBounds() {
@@ -135,6 +135,10 @@ func (s *KeeperTestSuite) TestUpdateInnerRedemptionRateBounds() {
 	_, err = s.GetMsgServer().UpdateInnerRedemptionRateBounds(s.Ctx, &invalidMsg)
 	s.Require().ErrorContains(err, "invalid redemption rate bounds")
 }
+
+// ----------------------------------------------
+//            MsgSetOperatorAddress
+// ----------------------------------------------
 
 // Verify that operator address can be set successfully
 func (s *KeeperTestSuite) TestSetOperatorAddress() {

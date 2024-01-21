@@ -25,11 +25,12 @@ message HostZone {
   string deposit_address = 7 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
   // Redemption address on stride
   string redemption_address = 8
-  [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+      [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
   // Claim address on stride
   string claim_address = 9 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
   // OPERATOR address set by SAFE with admin permissions
-  string operator_address = 10 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+  string operator_address = 10
+      [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
   // SAFE admin address set upon host zone creation
   string safe_address = 11 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
 
@@ -38,7 +39,7 @@ message HostZone {
     (cosmos_proto.scalar) = "cosmos.Dec",
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false
-    ];
+  ];
   // Current redemption rate
   string redemption_rate = 13 [
     (cosmos_proto.scalar) = "cosmos.Dec",
@@ -81,6 +82,9 @@ message HostZone {
 }
 
 // Status fields for a delegation record
+// Note: There is an important assumption here that tokens in the deposit
+// account should not be tracked by these records. The record is created as soon
+// as the tokens leave stride
 enum DelegationRecordStatus {
   option (gogoproto.goproto_enum_prefix) = false;
 
@@ -119,6 +123,9 @@ enum UnbondingRecordStatus {
 
 // DelegationRecords track the aggregate liquid stakes and delegations
 // for a given epoch
+// Note: There is an important assumption here that tokens in the deposit
+// account should not be tracked by these records. The record is created as soon
+// as the tokens leave stride
 message DelegationRecord {
   // Deposit record unique ID
   uint64 id = 1;
