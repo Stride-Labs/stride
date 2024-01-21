@@ -79,7 +79,12 @@ message MsgRedeemStake {
     (gogoproto.nullable) = false
   ];
 }
-message MsgRedeemStakeResponse {}
+message MsgRedeemStakeResponse {
+  cosmos.base.v1beta1.Coin native_token = 1 [
+    (gogoproto.nullable) = false,
+    (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"
+  ];
+}
 
 // ConfirmDelegation
 message MsgConfirmDelegation {

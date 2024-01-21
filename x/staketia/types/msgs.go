@@ -125,7 +125,7 @@ func (msg *MsgRedeemStake) GetSignBytes() []byte {
 func (msg *MsgRedeemStake) ValidateBasic() error {
 	_, err := sdk.AccAddressFromBech32(msg.Redeemer)
 	if err != nil {
-		return errorsmod.Wrapf(sdkerrors.ErrInvalidAddress, "invalid address (%s)", err)
+		return errorsmod.Wrapf(sdkerrors.ErrInvalidAddress, "invalid address (%s)", msg.Redeemer)
 	}
 	// threshold of 0.1 stTIA or 100000 stutia avoids denial of service or record spamming
 	minThreshold := int64(100000)

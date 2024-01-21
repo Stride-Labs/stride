@@ -3,10 +3,314 @@ package keeper_test
 import (
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
 	"github.com/Stride-Labs/stride/v17/app/apptesting"
 	"github.com/Stride-Labs/stride/v17/x/staketia/types"
 )
+
+// ----------------------------------------------
+//          Testing RedeemStake
+// ----------------------------------------------
+
+type Account struct {
+	account      sdk.AccAddress
+	stTokens     sdk.Coin
+	nativeTokens sdk.Coin
+}
+
+type RedeemStakeTestCase struct {
+	testName string
+
+	userAccount      Account
+	hostZone         *types.HostZone
+	accUnbondRecord  *types.UnbondingRecord
+	redemptionRecord *types.RedemptionRecord
+	redeemMsg        types.MsgRedeemStake
+
+	expectedUnbondingRecord  *types.UnbondingRecord
+	expectedRedemptionRecord *types.RedemptionRecord
+	expectedErrorContains    string
+}
+
+// Create the correct amounts in accounts, setup the records in store
+func (s *KeeperTestSuite) SetupTestRedeemStake(
+	userAccount Account,
+	hostZone *types.HostZone,
+	accUnbondRecord *types.UnbondingRecord,
+	redemptionRecord *types.RedemptionRecord,
+) {
+	s.FundAccount(userAccount.account, userAccount.nativeTokens)
+	s.FundAccount(userAccount.account, userAccount.stTokens)
+
+	if hostZone != nil {
+		s.App.StaketiaKeeper.SetHostZone(s.Ctx, *hostZone)
+	}
+
+	if accUnbondRecord != nil {
+		s.App.StaketiaKeeper.SetUnbondingRecord(s.Ctx, *accUnbondRecord)
+	}
+
+	if hostZone != nil && accUnbondRecord != nil &&
+		accUnbondRecord.StTokenAmount.IsPositive() {
+		escrowAccount, err := sdk.AccAddressFromBech32(hostZone.RedemptionAddress)
+		if err == nil {
+			stTokens := sdk.NewInt64Coin(StDenom, accUnbondRecord.StTokenAmount.Int64())
+			s.FundAccount(escrowAccount, stTokens)
+		}
+	}
+
+	if redemptionRecord != nil {
+		s.App.StaketiaKeeper.SetRedemptionRecord(s.Ctx, *redemptionRecord)
+	}
+}
+
+// Default values for key variables, different tests will change 1-2 fields for setup
+func (s *KeeperTestSuite) getDefaultTestInputs() (
+	*Account,
+	*types.HostZone,
+	*types.UnbondingRecord,
+	*types.RedemptionRecord,
+	*types.MsgRedeemStake,
+) {
+	redeemerAccount := s.TestAccs[0]
+	redemptionAccount := s.TestAccs[1]
+
+	defaultUserAccount := Account{
+		account:      redeemerAccount,
+		nativeTokens: sdk.NewInt64Coin(HostNativeDenom, 10_000_000),
+		stTokens:     sdk.NewInt64Coin(StDenom, 10_000_000),
+	}
+
+	redemptionRate := sdk.MustNewDecFromStr("1.1")
+	defaultHostZone := types.HostZone{
+		NativeTokenDenom:       HostNativeDenom,
+		RedemptionAddress:      redemptionAccount.String(),
+		RedemptionRate:         redemptionRate,
+		MinRedemptionRate:      redemptionRate.Sub(sdk.MustNewDecFromStr("0.2")),
+		MinInnerRedemptionRate: redemptionRate.Sub(sdk.MustNewDecFromStr("0.1")),
+		MaxInnerRedemptionRate: redemptionRate.Add(sdk.MustNewDecFromStr("0.1")),
+		MaxRedemptionRate:      redemptionRate.Add(sdk.MustNewDecFromStr("0.2")),
+		DelegatedBalance:       sdkmath.NewInt(1_000_000_000),
+		Halted:                 false,
+	}
+
+	defaultAccUnbondingRecord := types.UnbondingRecord{
+		Id:            uint64(105),
+		Status:        types.ACCUMULATING_REDEMPTIONS,
+		StTokenAmount: sdk.NewInt(700_000),
+		NativeAmount:  sdk.NewInt(770_000),
+	}
+
+	// RR as it would exist for this default user and UnbondingRecord if had previously
+	// performed an RedeemStake action this epoch for 400_000 stTokens
+	defaultRedemptionRecord := types.RedemptionRecord{
+		UnbondingRecordId: defaultAccUnbondingRecord.Id,
+		Redeemer:          redeemerAccount.String(),
+		StTokenAmount:     sdk.NewInt(400_000),
+		NativeAmount:      sdk.NewInt(440_000),
+	}
+
+	defaultMsg := types.MsgRedeemStake{
+		Redeemer:      redeemerAccount.String(),
+		StTokenAmount: sdk.NewInt(1_000_000),
+	}
+
+	return &defaultUserAccount, &defaultHostZone, &defaultAccUnbondingRecord,
+		&defaultRedemptionRecord, &defaultMsg
+}
+
+func (s *KeeperTestSuite) TestRedeemStake() {
+	defaultUA, defaultHZ, defaultUR, defaultRR, defaultMsg := s.getDefaultTestInputs()
+
+	testCases := []RedeemStakeTestCase{
+		{
+			testName: "[Error] Can't find the HostZone",
+
+			userAccount: *defaultUA,
+			hostZone:    nil,
+
+			expectedErrorContains: types.ErrHostZoneNotFound.Error(),
+		},
+		{
+			testName: "[Error] Can't parse redemption address",
+
+			userAccount: *defaultUA,
+			hostZone: func() *types.HostZone {
+				_, hz, _, _, _ := s.getDefaultTestInputs()
+				hz.RedemptionAddress = "nonparsable-address"
+				return hz
+			}(),
+
+			expectedErrorContains: "could not bech32 decode redemption address",
+		},
+		{
+			testName: "[Error] HostZone is halted",
+
+			userAccount: *defaultUA,
+			hostZone: func() *types.HostZone {
+				_, hz, _, _, _ := s.getDefaultTestInputs()
+				hz.Halted = true
+				return hz
+			}(),
+
+			expectedErrorContains: types.ErrHostZoneHalted.Error(),
+		},
+		{
+			testName: "[Error] RedemptionRate outside of bounds",
+
+			userAccount: *defaultUA,
+			hostZone: func() *types.HostZone {
+				_, hz, _, _, _ := s.getDefaultTestInputs()
+				hz.RedemptionRate = sdk.MustNewDecFromStr("5.2")
+				return hz
+			}(),
+
+			expectedErrorContains: types.ErrRedemptionRateOutsideSafetyBounds.Error(),
+		},
+		{
+			testName: "[Error] No Accumulating UndondingRecord",
+
+			userAccount:     *defaultUA,
+			hostZone:        defaultHZ,
+			accUnbondRecord: nil,
+
+			expectedErrorContains: types.ErrBrokenUnbondingRecordInvariant.Error(),
+		},
+		{
+			testName: "[Error] Not enough tokens in wallet",
+
+			userAccount: func() Account {
+				acc, _, _, _, _ := s.getDefaultTestInputs()
+				acc.stTokens.Amount = sdk.NewInt(500_000)
+				return *acc
+			}(),
+			hostZone:        defaultHZ,
+			accUnbondRecord: defaultUR,
+			redeemMsg:       *defaultMsg, // attempt to redeem 1_000_000 stTokens
+
+			expectedErrorContains: sdkerrors.ErrInsufficientFunds.Error(),
+		},
+		{
+			testName: "[Error] Redeeming more than HostZone delegation total",
+
+			userAccount: func() Account {
+				acc, _, _, _, _ := s.getDefaultTestInputs()
+				acc.stTokens.Amount = sdk.NewInt(5_000_000_000)
+				return *acc
+			}(),
+			hostZone:        defaultHZ, // 1_000_000_000 total delegation
+			accUnbondRecord: defaultUR,
+			redeemMsg: func() types.MsgRedeemStake {
+				_, _, _, _, msg := s.getDefaultTestInputs()
+				msg.StTokenAmount = sdk.NewInt(5_000_000_000)
+				return *msg
+			}(),
+
+			expectedErrorContains: types.ErrUnbondAmountToLarge.Error(),
+		},
+		{
+			testName: "[Success] No RR exists yet, RedeemStake tx creates one",
+
+			userAccount:      *defaultUA,
+			hostZone:         defaultHZ,
+			accUnbondRecord:  defaultUR,
+			redemptionRecord: nil,
+			redeemMsg:        *defaultMsg, // redeem 1_000_000 stTokens
+
+			expectedUnbondingRecord: func() *types.UnbondingRecord {
+				_, hz, ur, _, msg := s.getDefaultTestInputs()
+				ur.StTokenAmount = ur.StTokenAmount.Add(msg.StTokenAmount)
+				nativeDiff := sdk.NewDecFromInt(msg.StTokenAmount).Mul(hz.RedemptionRate).RoundInt()
+				ur.NativeAmount = ur.NativeAmount.Add(nativeDiff)
+				return ur
+			}(),
+			expectedRedemptionRecord: &types.RedemptionRecord{
+				UnbondingRecordId: defaultUR.Id,
+				Redeemer:          defaultMsg.Redeemer,
+				StTokenAmount:     defaultMsg.StTokenAmount,
+				NativeAmount:      sdk.NewDecFromInt(defaultMsg.StTokenAmount).Mul(defaultHZ.RedemptionRate).RoundInt(),
+			},
+		},
+		{
+			testName: "[Success] RR exists already for redeemer, RedeemStake tx updates",
+
+			userAccount:      *defaultUA,
+			hostZone:         defaultHZ,
+			accUnbondRecord:  defaultUR,
+			redemptionRecord: defaultRR,   // previous redeemption of 400_000
+			redeemMsg:        *defaultMsg, // redeem 1_000_000 stTokens
+
+			expectedUnbondingRecord: func() *types.UnbondingRecord {
+				_, hz, ur, _, msg := s.getDefaultTestInputs()
+				ur.StTokenAmount = ur.StTokenAmount.Add(msg.StTokenAmount)
+				nativeDiff := sdk.NewDecFromInt(msg.StTokenAmount).Mul(hz.RedemptionRate).RoundInt()
+				ur.NativeAmount = ur.NativeAmount.Add(nativeDiff)
+				return ur
+			}(),
+			expectedRedemptionRecord: func() *types.RedemptionRecord {
+				_, hz, _, rr, msg := s.getDefaultTestInputs()
+				rr.StTokenAmount = rr.StTokenAmount.Add(msg.StTokenAmount)
+				nativeDiff := sdk.NewDecFromInt(msg.StTokenAmount).Mul(hz.RedemptionRate).RoundInt()
+				rr.NativeAmount = rr.NativeAmount.Add(nativeDiff)
+				return rr
+			}(),
+		},
+	}
+
+	for _, tc := range testCases {
+		s.Run(tc.testName, func() {
+			s.checkRedeemStakeTestCase(tc)
+		})
+	}
+
+}
+
+func (s *KeeperTestSuite) checkRedeemStakeTestCase(tc RedeemStakeTestCase) {
+	s.SetupTest() // reset state
+	s.SetupTestRedeemStake(tc.userAccount, tc.hostZone, tc.accUnbondRecord, tc.redemptionRecord)
+
+	startingStEscrowBalance := sdk.NewInt64Coin(StDenom, 0)
+	if tc.hostZone != nil {
+		escrowAccount, err := sdk.AccAddressFromBech32(tc.hostZone.RedemptionAddress)
+		if err == nil {
+			startingStEscrowBalance = s.App.BankKeeper.GetBalance(s.Ctx, escrowAccount, StDenom)
+		}
+	}
+
+	// Run the RedeemStake, verify expected errors returned or no errors with expected updates to records
+	_, err := s.App.StaketiaKeeper.RedeemStake(s.Ctx, tc.redeemMsg.Redeemer, tc.redeemMsg.StTokenAmount)
+	if tc.expectedErrorContains == "" {
+		// Successful Run Test Case
+		s.Require().NoError(err, "No error expected during redeem stake execution")
+
+		// check expected updates to Accumulating UnbondingRecord
+		currentAUR, err := s.App.StaketiaKeeper.GetAccumulatingUnbondingRecord(s.Ctx)
+		s.Require().NoError(err, "No error expected when getting UnbondingRecord")
+		s.Require().Equal(*tc.expectedUnbondingRecord, currentAUR, "Accumulating UnbondingRecord did not match expected")
+
+		// check expected updates to RedemptionRecord for this user and current UnbondingRecord
+		currentRR, found := s.App.StaketiaKeeper.GetRedemptionRecord(s.Ctx, currentAUR.Id, tc.redeemMsg.Redeemer)
+		s.Require().True(found, "No RedemptionRecord found after RedeemStake expected to have created one")
+		s.Require().Equal(*tc.expectedRedemptionRecord, currentRR, "RedemptionRecord did not match expected")
+
+		// In test setup the escrow acc was funded with the number of tokens on starting accumulating UnbondingRecord
+		// Verify that the redemption account now holds the increased escrowed stTokens matching final UnbondingRecord
+		escrowAccount, err := sdk.AccAddressFromBech32(tc.hostZone.RedemptionAddress)
+		s.Require().NoError(err, "No error expected when getting escrow account for successful test")
+		currentStEscrowBalance := s.App.BankKeeper.GetBalance(s.Ctx, escrowAccount, StDenom)
+		s.Require().NotEqual(startingStEscrowBalance, currentStEscrowBalance, "Escrowed balance should have changed")
+		s.Require().Equal(currentStEscrowBalance.Amount, currentAUR.StTokenAmount, "Escrowed balance does not match the UnbondingRecord")
+	} else {
+		// Expected Error Test Case
+		s.Require().Error(err, "Error expected to be returned but none found")
+		s.Require().ErrorContains(err, tc.expectedErrorContains, "Error did not contain expected message")
+	}
+}
+
+// ----------------------------------------------
+//          Testing DistributeClaims
+// ----------------------------------------------
 
 type DistributeClaimsTestCase struct {
 	claimAddress              sdk.AccAddress

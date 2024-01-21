@@ -36,9 +36,8 @@ func (k msgServer) LiquidStake(goCtx context.Context, msg *types.MsgLiquidStake)
 // User transaction to redeem stake stTokens into native tokens
 func (k msgServer) RedeemStake(goCtx context.Context, msg *types.MsgRedeemStake) (*types.MsgRedeemStakeResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
-	// TODO [sttia]
-	_ = ctx
-	return &types.MsgRedeemStakeResponse{}, nil
+	native_token, err := k.Keeper.RedeemStake(ctx, msg.Redeemer, msg.StTokenAmount)
+	return &types.MsgRedeemStakeResponse{NativeToken: native_token}, err
 }
 
 // Operator transaction to confirm a delegation was submitted on the host chain
