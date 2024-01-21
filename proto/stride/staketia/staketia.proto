@@ -157,7 +157,7 @@ message UnbondingRecord {
     (gogoproto.nullable) = false
   ];
   // The Unix timestamp (in seconds) at which the unbonding completes
-  uint64 unbonding_completion_time = 5;
+  uint64 unbonding_completion_time_seconds = 5;
   // The tx hash of the undelegation on the host zone
   string undelegation_tx_hash = 6;
   // The tx hash of the unbonded token sweep on the host zone

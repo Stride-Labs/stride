@@ -2,7 +2,6 @@ package keeper_test
 
 import (
 	sdkmath "cosmossdk.io/math"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/Stride-Labs/stride/v17/app/apptesting"
@@ -13,6 +12,49 @@ type DistributeClaimsTestCase struct {
 	claimAddress              sdk.AccAddress
 	claimableRecordIds        []uint64
 	expectedFinalClaimBalance sdkmath.Int
+}
+
+func (s *KeeperTestSuite) TestCheckUnbondingFinished() {
+	currentTime := uint64(s.Ctx.BlockTime().Unix())
+
+	// Set unbonding records across different statuses and times
+	finishedUnbondingIds := map[uint64]bool{7: true, 8: true, 9: true}
+	initialUnbondingRecords := []types.UnbondingRecord{
+		{Id: 1, Status: types.ACCUMULATING_REDEMPTIONS, UnbondingCompletionTimeSeconds: currentTime - 1},
+		{Id: 2, Status: types.ACCUMULATING_REDEMPTIONS, UnbondingCompletionTimeSeconds: currentTime},
+		{Id: 3, Status: types.ACCUMULATING_REDEMPTIONS, UnbondingCompletionTimeSeconds: currentTime + 1},
+
+		{Id: 4, Status: types.UNBONDING_QUEUE, UnbondingCompletionTimeSeconds: currentTime - 1},
+		{Id: 5, Status: types.UNBONDING_QUEUE, UnbondingCompletionTimeSeconds: currentTime},
+		{Id: 6, Status: types.UNBONDING_QUEUE, UnbondingCompletionTimeSeconds: currentTime + 1},
+
+		{Id: 7, Status: types.UNBONDING_IN_PROGRESS, UnbondingCompletionTimeSeconds: currentTime - 3}, // finished
+		{Id: 8, Status: types.UNBONDING_IN_PROGRESS, UnbondingCompletionTimeSeconds: currentTime - 2}, // finished
+		{Id: 9, Status: types.UNBONDING_IN_PROGRESS, UnbondingCompletionTimeSeconds: currentTime - 1}, // finished
+
+		{Id: 10, Status: types.UNBONDING_IN_PROGRESS, UnbondingCompletionTimeSeconds: currentTime},     // still unbonding
+		{Id: 11, Status: types.UNBONDING_IN_PROGRESS, UnbondingCompletionTimeSeconds: currentTime + 1}, // still unbonding
+
+		{Id: 12, Status: types.UNBONDED, UnbondingCompletionTimeSeconds: currentTime + 1},
+	}
+	for _, unbondingRecord := range initialUnbondingRecords {
+		s.App.StaketiaKeeper.SetUnbondingRecord(s.Ctx, unbondingRecord)
+	}
+
+	// Call check unbonding finished
+	s.App.StaketiaKeeper.CheckUnbondingFinished(s.Ctx)
+
+	// Check that the relevant records were updated
+	for i, actualUnbondingRecord := range s.App.StaketiaKeeper.GetAllActiveUnbondingRecords(s.Ctx) {
+		if _, ok := finishedUnbondingIds[actualUnbondingRecord.Id]; ok {
+			s.Require().Equal(actualUnbondingRecord.Status, types.UNBONDED,
+				"record %d should have been marked as unbonded", actualUnbondingRecord.Id)
+		} else {
+			initialRecord := initialUnbondingRecords[i]
+			s.Require().Equal(initialRecord.Status, actualUnbondingRecord.Status,
+				"record %d status should not have changed", actualUnbondingRecord.Id)
+		}
+	}
 }
 
 // Helper function to mock the state required to test distribute claims

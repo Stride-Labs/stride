@@ -18,9 +18,17 @@ func (k Keeper) PrepareUndelegation(ctx sdk.Context, epochNumber uint64) error {
 	return nil
 }
 
-// TODO [sttia]
-func (k Keeper) CheckUnbondingFinished(ctx sdk.Context) error {
-	return nil
+// Checks for any unbonding records that have finished unbonding,
+// identified by having status UNBONDING_IN_PROGRESS and an
+// unbonding that's older than the current time.
+// Records are annotated with a new status UNBONDED
+func (k Keeper) CheckUnbondingFinished(ctx sdk.Context) {
+	for _, unbondingRecord := range k.GetAllUnbondingRecordsByStatus(ctx, types.UNBONDING_IN_PROGRESS) {
+		if ctx.BlockTime().Unix() > int64(unbondingRecord.UnbondingCompletionTimeSeconds) {
+			unbondingRecord.Status = types.UNBONDED
+			k.SetUnbondingRecord(ctx, unbondingRecord)
+		}
+	}
 }
 
 // Iterates all unbonding records and distributes unbonded tokens to redeemers
