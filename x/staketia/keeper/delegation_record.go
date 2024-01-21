@@ -17,6 +17,15 @@ func (k Keeper) SetDelegationRecord(ctx sdk.Context, delegationRecord types.Dele
 	store.Set(recordKey, recordBz)
 }
 
+// Writes a delegation record to the store only if a record does not already exist for that ID
+func (k Keeper) SafelySetDelegationRecord(ctx sdk.Context, delegationRecord types.DelegationRecord) error {
+	if _, found := k.GetDelegationRecord(ctx, delegationRecord.Id); found {
+		return types.ErrDelegationRecordAlreadyExists.Wrapf("delegation record already exists for ID %d", delegationRecord.Id)
+	}
+	k.SetDelegationRecord(ctx, delegationRecord)
+	return nil
+}
+
 // Reads a delegation record from the active store
 func (k Keeper) GetDelegationRecord(ctx sdk.Context, recordId uint64) (delegationRecord types.DelegationRecord, found bool) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.DelegationRecordsKeyPrefix)

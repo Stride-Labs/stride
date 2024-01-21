@@ -15,4 +15,6 @@ var (
 	ErrInvalidRedemptionRateBounds       = errorsmod.Register(ModuleName, 1910, "invalid redemption rate bounds")
 	ErrHostZoneHalted                    = errorsmod.Register(ModuleName, 1911, "host zone is halted")
 	ErrHostZoneNotHalted                 = errorsmod.Register(ModuleName, 1912, "host zone is not halted")
+	ErrDelegationRecordAlreadyExists     = errorsmod.Register(ModuleName, 1913, "delegation record already exists")
+	ErrInvariantBroken                   = errorsmod.Register(ModuleName, 1914, "invariant broken")
 )

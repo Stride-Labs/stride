@@ -1,9 +1,13 @@
 package keeper
 
 import (
+	"time"
+
 	errorsmod "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	transfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
 
 	"github.com/Stride-Labs/stride/v17/utils"
 	stakeibctypes "github.com/Stride-Labs/stride/v17/x/stakeibc/types"
@@ -71,7 +75,57 @@ func (k Keeper) LiquidStake(ctx sdk.Context, liquidStaker string, nativeAmount s
 	return stToken, nil
 }
 
-// TODO [sttia]
-func (k Keeper) PrepareDelegation(ctx sdk.Context, epochNumber uint64) error {
+// IBC transfers all TIA in the deposit account and sends it to the delegation account
+func (k Keeper) PrepareDelegation(ctx sdk.Context, epochNumber uint64, epochDuration time.Duration) error {
+	// Only send the transfer if the host zone isn't halted
+	hostZone, err := k.GetUnhaltedHostZone(ctx)
+	if err != nil {
+		return err
+	}
+
+	// safety check: if any delegation records are in progress, do not allow another transfer
+	delegationRecords := k.GetAllActiveDelegationRecords(ctx)
+	for _, record := range delegationRecords {
+		if record.Status == types.TRANSFER_IN_PROGRESS {
+			return errorsmod.Wrapf(types.ErrInvariantBroken,
+				"cannot prepare delegation while a transfer is in progress, record ID %d", record.Id)
+		}
+	}
+
+	// Transfer the full deposit balance which will include new liquid stakes, as well as reinvestment
+	depositAddress := sdk.MustAccAddressFromBech32(hostZone.DepositAddress)
+	nativeCoins := k.bankKeeper.GetBalance(ctx, depositAddress, hostZone.NativeTokenIbcDenom)
+
+	// Create a new delgation record with status TRANSFER IN PROGRESS
+	delegationRecord := types.DelegationRecord{
+		Id:           epochNumber,
+		NativeAmount: nativeCoins.Amount,
+		Status:       types.TRANSFER_IN_PROGRESS,
+	}
+	err = k.SafelySetDelegationRecord(ctx, delegationRecord)
+	if err != nil {
+		return err
+	}
+
+	// Timeout the transfer at the end of the epoch
+	timeoutTimestamp := uint64(ctx.BlockTime().Add(epochDuration).UnixNano())
+
+	// Transfer the native tokens to the host chain
+	transferMsgDepositToDelegation := transfertypes.MsgTransfer{
+		SourcePort:       transfertypes.PortID,
+		SourceChannel:    hostZone.TransferChannelId,
+		Token:            nativeCoins,
+		Sender:           hostZone.DepositAddress,
+		Receiver:         hostZone.DelegationAddress,
+		TimeoutTimestamp: timeoutTimestamp,
+	}
+	msgResponse, err := k.transferKeeper.Transfer(ctx, &transferMsgDepositToDelegation)
+	if err != nil {
+		return errorsmod.Wrapf(err, "failed to submit transfer from deposit to delegation acct in PrepareDelegation")
+	}
+
+	// Store the record ID so that we can access it during the packet callback to update the record status
+	k.SetTransferInProgressRecordId(ctx, hostZone.TransferChannelId, msgResponse.Sequence, delegationRecord.Id)
+
 	return nil
 }

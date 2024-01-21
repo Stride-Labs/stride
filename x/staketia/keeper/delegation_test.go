@@ -1,8 +1,12 @@
 package keeper_test
 
 import (
+	"time"
+
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	transfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
+	ibctesting "github.com/cosmos/ibc-go/v7/testing"
 
 	"github.com/Stride-Labs/stride/v17/x/staketia/types"
 )
@@ -13,6 +17,10 @@ type LiquidStakeTestCase struct {
 	stakerAddress     sdk.AccAddress
 	depositAddress    sdk.AccAddress
 }
+
+// ----------------------------------------------------
+//                LiquidStake
+// ----------------------------------------------------
 
 // Helper function to mock relevant state before testing a liquid stake
 func (s *KeeperTestSuite) SetupTestLiquidStake(
@@ -219,4 +227,68 @@ func (s *KeeperTestSuite) TestLiquidStake_InsufficientFunds() {
 	_, err := s.App.StaketiaKeeper.LiquidStake(s.Ctx, tc.stakerAddress.String(), excessiveLiquidStakeAmount)
 	s.Require().ErrorContains(err, "failed to send tokens from liquid staker")
 	s.Require().ErrorContains(err, "insufficient funds")
+}
+
+// ----------------------------------------------------
+//	               PrepareDelegation
+// ----------------------------------------------------
+
+func (s *KeeperTestSuite) TestPrepareDelegation() {
+	s.CreateTransferChannel(HostChainId)
+
+	// Only the deposit address must be valid
+	depositAddress := s.TestAccs[0]
+	delegationAddress := "celestiaXXX"
+
+	// We must use a valid IBC denom for this test
+	nativeIbcDenom := s.CreateAndStoreIBCDenom(HostNativeDenom)
+
+	// Create the host zone with relevant addresses and an IBC denom
+	s.App.StaketiaKeeper.SetHostZone(s.Ctx, types.HostZone{
+		DepositAddress:      depositAddress.String(),
+		DelegationAddress:   delegationAddress,
+		NativeTokenIbcDenom: nativeIbcDenom,
+		TransferChannelId:   ibctesting.FirstChannelID,
+	})
+
+	// Fund the deposit account with tokens that will be transferred
+	depositAccountBalance := sdkmath.NewInt(1_000_000)
+	nativeTokensInDeposit := sdk.NewCoin(nativeIbcDenom, depositAccountBalance)
+	s.FundAccount(depositAddress, nativeTokensInDeposit)
+
+	// Get next sequence number to confirm IBC transfer
+	startSequence := s.MustGetNextSequenceNumber(transfertypes.PortID, ibctesting.FirstChannelID)
+
+	// submit prepare delegation
+	epochNumber := uint64(1)
+	epochDuration := time.Hour * 24
+	err := s.App.StaketiaKeeper.PrepareDelegation(s.Ctx, epochNumber, epochDuration)
+	s.Require().NoError(err, "no error expected when preparing delegation")
+
+	// check that a delegation record was created
+	delegationRecords := s.App.StaketiaKeeper.GetAllActiveDelegationRecords(s.Ctx)
+	s.Require().Equal(1, len(delegationRecords), "number of delegation records")
+
+	// check that the delegation record has the correct id, status, and amount
+	delegationRecord := delegationRecords[0]
+	s.Require().Equal(epochNumber, delegationRecord.Id, "delegation record epoch number")
+	s.Require().Equal(types.TRANSFER_IN_PROGRESS, delegationRecord.Status, "delegation record status")
+	s.Require().Equal(depositAccountBalance, delegationRecord.NativeAmount, "delegation record amount")
+
+	// check that the transfer in progress record was created
+	transferInProgressRecordId, found := s.App.StaketiaKeeper.GetTransferInProgressRecordId(s.Ctx, ibctesting.FirstChannelID, startSequence)
+	s.Require().True(found, "transfer in progress record should have been found")
+	s.Require().Equal(epochNumber, transferInProgressRecordId, "transfer in progress record ID")
+
+	// check that the tokens were burned and the sequence number was incremented
+	// (indicating that the transfer was submitted)
+	endSequence := s.MustGetNextSequenceNumber(transfertypes.PortID, ibctesting.FirstChannelID)
+	s.Require().Equal(startSequence+1, endSequence, "sequence number should have incremented")
+
+	nativeTokenSupply := s.App.BankKeeper.GetSupply(s.Ctx, nativeIbcDenom)
+	s.Require().Zero(nativeTokenSupply.Amount.Int64(), "ibc tokens should have been burned")
+
+	// Check that the deposit account is empty
+	depositAccountBalance = s.App.BankKeeper.GetBalance(s.Ctx, depositAddress, nativeIbcDenom).Amount
+	s.Require().Zero(depositAccountBalance.Int64(), "deposit account balance should be empty")
 }
