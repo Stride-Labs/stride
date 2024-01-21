@@ -19,7 +19,7 @@ import (
 const nanosecondsInDay = 86400000000000
 
 func (k Keeper) AddressUnbondings(c context.Context, req *types.QueryAddressUnbondings) (*types.QueryAddressUnbondingsResponse, error) {
-	// The function queries all the unbondings associated with a Stride address.
+	// The function queries all the unbondings associated with Stride addresses.
 	// This should provide more visiblity into the unbonding process for a user.
 
 	if req == nil || req.Address == "" {
@@ -27,7 +27,10 @@ func (k Keeper) AddressUnbondings(c context.Context, req *types.QueryAddressUnbo
 	}
 	ctx := sdk.UnwrapSDKContext(c)
 
-	var addressUnbondings []types.AddressUnbonding
+	// The address field can either be a single address or several comma separated
+	addresses := strings.Split(req.Address, ",")
+
+	addressUnbondings := []types.AddressUnbonding{}
 
 	// get the relevant day
 	dayEpochTracker, found := k.GetEpochTracker(ctx, epochtypes.DAY_EPOCH)
@@ -47,7 +50,16 @@ func (k Keeper) AddressUnbondings(c context.Context, req *types.QueryAddressUnbo
 					continue
 				}
 				userRedemptionRecordAddress := userRedemptionRecordComponents[2]
-				if userRedemptionRecordAddress == req.Address {
+
+				// Check if the userRedemptionRecordAddress is one targeted by the address(es) in the query
+				targetAddress := false
+				for _, address := range addresses {
+					if userRedemptionRecordAddress == strings.TrimSpace(address) {
+						targetAddress = true
+						break
+					}
+				}
+				if targetAddress {
 					userRedemptionRecord, found := k.RecordsKeeper.GetUserRedemptionRecord(ctx, userRedemptionRecordId)
 					if !found {
 						continue // the record has already been claimed
@@ -70,7 +82,7 @@ func (k Keeper) AddressUnbondings(c context.Context, req *types.QueryAddressUnbo
 					unbondingTimeStr := time.Unix(0, int64(unbondingTime)).UTC().String()
 
 					addressUnbonding := types.AddressUnbonding{
-						Address:                req.Address,
+						Address:                userRedemptionRecordAddress,
 						Receiver:               userRedemptionRecord.Receiver,
 						UnbondingEstimatedTime: unbondingTimeStr,
 						Amount:                 userRedemptionRecord.NativeTokenAmount,

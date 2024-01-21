@@ -31,7 +31,7 @@ build_local_and_docker() {
    # the binary if the machine's go version does not match exactly,
    # however, we can relax this constraint
    # The following command overrides the check_version using a temporary Makefile override
-   BUILDDIR=$BUILDDIR make -f Makefile -f <(echo -e 'check_version: ;') build --silent 
+   BUILDDIR=$BUILDDIR make -f Makefile -f <(echo -e 'check_version: ;\ncheck_go_version: ;') build --silent 
    local_build_succeeded=${PIPESTATUS[0]}
    cd $stride_home
 

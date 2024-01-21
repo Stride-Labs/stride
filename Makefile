@@ -143,7 +143,7 @@ submit-upgrade-immediately:
 	UPGRADE_HEIGHT=150 bash $(DOCKERNET_HOME)/upgrades/submit_upgrade.sh
 
 submit-upgrade-after-tests:
-	UPGRADE_HEIGHT=700 bash $(DOCKERNET_HOME)/upgrades/submit_upgrade.sh
+	UPGRADE_HEIGHT=500 bash $(DOCKERNET_HOME)/upgrades/submit_upgrade.sh
 
 start-upgrade-integration-tests:
 	PART=1 bash $(DOCKERNET_HOME)/tests/run_tests_upgrade.sh
