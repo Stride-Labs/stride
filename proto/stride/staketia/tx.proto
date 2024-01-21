@@ -44,6 +44,9 @@ service Msg {
 
   // Unhalts the host zone if redemption rates were exceeded
   rpc ResumeHostZone(MsgResumeHostZone) returns (MsgResumeHostZoneResponse);
+
+  // Sets the operator address
+  rpc SetOperatorAddress(MsgSetOperatorAddress) returns (MsgSetOperatorAddressResponse);
 }
 
 // LiquidStake
@@ -151,3 +154,13 @@ message MsgResumeHostZone {
   string creator = 1;
 }
 message MsgResumeHostZoneResponse {}
+
+// SetOperatorAddress
+message MsgSetOperatorAddress {
+  option (cosmos.msg.v1.signer) = "signer";
+  option (amino.name) = "staketia/MsgSetOperatorAddress";
+
+  string signer = 1;
+  string operator = 2;
+}
+message MsgSetOperatorAddressResponse {}

@@ -19,6 +19,7 @@ const (
 	TypeMsgAdjustDelegatedBalance          = "adjust_delegated_balance"
 	TypeMsgUpdateInnerRedemptionRateBounds = "redemption_rate_bounds"
 	TypeMsgResumeHostZone                  = "resume_host_zone"
+	TypeMsgSetOperatorAddress              = "set_operator_address"
 )
 
 var (
@@ -30,6 +31,7 @@ var (
 	_ sdk.Msg = &MsgAdjustDelegatedBalance{}
 	_ sdk.Msg = &MsgUpdateInnerRedemptionRateBounds{}
 	_ sdk.Msg = &MsgResumeHostZone{}
+	_ sdk.Msg = &MsgSetOperatorAddress{}
 
 	// Implement legacy interface for ledger support
 	_ legacytx.LegacyMsg = &MsgLiquidStake{}
@@ -40,6 +42,7 @@ var (
 	_ legacytx.LegacyMsg = &MsgAdjustDelegatedBalance{}
 	_ legacytx.LegacyMsg = &MsgUpdateInnerRedemptionRateBounds{}
 	_ legacytx.LegacyMsg = &MsgResumeHostZone{}
+	_ legacytx.LegacyMsg = &MsgSetOperatorAddress{}
 )
 
 // ----------------------------------------------
@@ -389,6 +392,51 @@ func (msg *MsgResumeHostZone) ValidateBasic() error {
 	}
 	if err := utils.ValidateAdminAddress(msg.Creator); err != nil {
 		return err
+	}
+	return nil
+}
+
+// ----------------------------------------------
+//             MsgSetOperatorAddress
+// ----------------------------------------------
+
+func NewMsgSetOperatorAddress(signer string, operator string) *MsgSetOperatorAddress {
+	return &MsgSetOperatorAddress{
+		Signer:   signer,
+		Operator: operator,
+	}
+}
+
+func (msg MsgSetOperatorAddress) Type() string {
+	return TypeMsgSetOperatorAddress
+}
+
+func (msg MsgSetOperatorAddress) Route() string {
+	return RouterKey
+}
+
+func (msg *MsgSetOperatorAddress) GetSigners() []sdk.AccAddress {
+	creator, err := sdk.AccAddressFromBech32(msg.Signer)
+	if err != nil {
+		panic(err)
+	}
+	return []sdk.AccAddress{creator}
+}
+
+func (msg *MsgSetOperatorAddress) GetSignBytes() []byte {
+	bz := ModuleCdc.MustMarshalJSON(msg)
+	return sdk.MustSortJSON(bz)
+}
+
+func (msg *MsgSetOperatorAddress) ValidateBasic() error {
+	// TODO [sttia]
+	_, err := sdk.AccAddressFromBech32(msg.Signer)
+	if err != nil {
+		return errorsmod.Wrapf(sdkerrors.ErrInvalidAddress, "invalid signer address (%s)", err)
+	}
+	_, err = sdk.AccAddressFromBech32(msg.Operator)
+	if err != nil {
+		return errorsmod.Wrapf(sdkerrors.ErrInvalidAddress, "invalid operator address (%s)", err)
 	}
 	return nil
 }

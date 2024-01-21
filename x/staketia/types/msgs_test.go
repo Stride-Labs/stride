@@ -123,7 +123,7 @@ func TestMsgUpdateInnerRedemptionRateBounds(t *testing.T) {
 				MaxInnerRedemptionRate: validUpperBound,
 				MinInnerRedemptionRate: invalidLowerBound,
 			},
-			err: "invalid host zone redemption rate inner bounds",
+			err: "invalid redemption rate bounds",
 		},
 	}
 
@@ -263,4 +263,56 @@ func TestMsgRedeemStake_GetSignBytes(t *testing.T) {
 
 	expected := `{"type":"staketia/MsgRedeemStake","value":{"redeemer":"stride1v9jxgu33kfsgr5","st_token_amount":"1000000"}}`
 	require.Equal(t, expected, string(res))
+}
+
+func TestMsgSetOperatorAddress(t *testing.T) {
+	apptesting.SetupConfig()
+
+	validAddress, invalidAddress := apptesting.GenerateTestAddrs()
+
+	tests := []struct {
+		name string
+		msg  types.MsgSetOperatorAddress
+		err  string
+	}{
+		{
+			name: "successful message",
+			msg: types.MsgSetOperatorAddress{
+				Signer:   validAddress,
+				Operator: validAddress,
+			},
+		},
+		{
+			name: "invalid signer address",
+			msg: types.MsgSetOperatorAddress{
+				Signer:   invalidAddress,
+				Operator: validAddress,
+			},
+			err: "invalid address",
+		},
+		{
+			name: "invalid operator address",
+			msg: types.MsgSetOperatorAddress{
+				Signer:   validAddress,
+				Operator: invalidAddress,
+			},
+			err: "invalid address",
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			if test.err == "" {
+				require.NoError(t, test.msg.ValidateBasic(), "test: %v", test.name)
+
+				signers := test.msg.GetSigners()
+				require.Equal(t, len(signers), 1)
+				require.Equal(t, signers[0].String(), validAddress)
+
+				require.Equal(t, test.msg.Type(), "set_operator_address", "type")
+			} else {
+				require.ErrorContains(t, test.msg.ValidateBasic(), test.err, "test: %v", test.name)
+			}
+		})
+	}
 }

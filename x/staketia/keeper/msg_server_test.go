@@ -40,12 +40,15 @@ func (s *KeeperTestSuite) TestMsgServerLiquidStake() {
 // - Zone is halted - unhalt it
 func (s *KeeperTestSuite) TestResumeHostZone() {
 	// TODO [sttia]: verify denom blacklisting removal works
+	// TODO [sttia]: verify this fails if issues by non-admin
 
-	// Setup
-	zone := types.HostZone{Halted: false} // No data is required on the zone
+	adminAddress := "stride1k8c2m5cn322akk5wy8lpt87dd2f4yh9azg7jlh" // admin address
+	zone := types.HostZone{
+		Halted: false,
+	}
 	s.App.StaketiaKeeper.SetHostZone(s.Ctx, zone)
 	msg := types.MsgResumeHostZone{
-		Creator: s.TestAccs[0].String(),
+		Creator: adminAddress,
 	}
 
 	// TEST 1: Zone is not halted
@@ -78,7 +81,10 @@ func (s *KeeperTestSuite) TestResumeHostZone() {
 // ----------------------------------------------
 
 func (s *KeeperTestSuite) TestUpdateInnerRedemptionRateBounds() {
+	// TODO [sttia]: verify this fails if issues by non-admin
+
 	// Register a host zone
+	adminAddress := "stride1k8c2m5cn322akk5wy8lpt87dd2f4yh9azg7jlh" // admin address
 	zone := types.HostZone{
 		ChainId: HostChainId,
 		// Upper bound 1.5
@@ -90,19 +96,19 @@ func (s *KeeperTestSuite) TestUpdateInnerRedemptionRateBounds() {
 	s.App.StaketiaKeeper.SetHostZone(s.Ctx, zone)
 
 	initialMsg := types.MsgUpdateInnerRedemptionRateBounds{
-		Creator:                s.TestAccs[0].String(),
+		Creator:                adminAddress,
 		MinInnerRedemptionRate: sdk.NewDec(90).Quo(sdk.NewDec(100)),
 		MaxInnerRedemptionRate: sdk.NewDec(105).Quo(sdk.NewDec(100)),
 	}
 
 	updateMsg := types.MsgUpdateInnerRedemptionRateBounds{
-		Creator:                s.TestAccs[0].String(),
+		Creator:                adminAddress,
 		MinInnerRedemptionRate: sdk.NewDec(95).Quo(sdk.NewDec(100)),
 		MaxInnerRedemptionRate: sdk.NewDec(11).Quo(sdk.NewDec(10)),
 	}
 
 	invalidMsg := types.MsgUpdateInnerRedemptionRateBounds{
-		Creator:                s.TestAccs[0].String(),
+		Creator:                adminAddress,
 		MinInnerRedemptionRate: sdk.NewDec(0),
 		MaxInnerRedemptionRate: sdk.NewDec(2),
 	}
@@ -127,5 +133,43 @@ func (s *KeeperTestSuite) TestUpdateInnerRedemptionRateBounds() {
 
 	// Set the inner bounds on the host zone for the first time
 	_, err = s.GetMsgServer().UpdateInnerRedemptionRateBounds(s.Ctx, &invalidMsg)
-	s.Require().ErrorContains(err, "invalid host zone redemption rate inner bounds")
+	s.Require().ErrorContains(err, "invalid redemption rate bounds")
+}
+
+// Verify that operator address can be set successfully
+func (s *KeeperTestSuite) TestSetOperatorAddress() {
+
+	safeAddress := s.TestAccs[0].String()
+	operatorAddress := s.TestAccs[1].String()
+	nonAdminAddress := s.TestAccs[2].String()
+
+	// set the host zone
+	zone := types.HostZone{
+		SafeAddress:     safeAddress,
+		OperatorAddress: operatorAddress,
+	}
+	s.App.StaketiaKeeper.SetHostZone(s.Ctx, zone)
+
+	// Set the operator address, signed by the SAFE address
+	msgSetOperatorAddress := types.MsgSetOperatorAddress{
+		Signer:   safeAddress,
+		Operator: nonAdminAddress,
+	}
+
+	_, err := s.GetMsgServer().SetOperatorAddress(s.Ctx, &msgSetOperatorAddress)
+	s.Require().NoError(err, "should not throw an error")
+
+	// Confirm the operator address was updated
+	zone, err = s.App.StaketiaKeeper.GetHostZone(s.Ctx)
+	s.Require().NoError(err, "should not throw an error")
+	s.Require().Equal(s.TestAccs[2].String(), zone.OperatorAddress, "operator address should be set")
+
+	// Confirm the operator address cannot be set by a non-safe address
+	msgSetOperatorAddressWrongSafe := types.MsgSetOperatorAddress{
+		Signer:   operatorAddress,
+		Operator: nonAdminAddress,
+	}
+	s.App.StaketiaKeeper.SetHostZone(s.Ctx, zone)
+	_, err = s.GetMsgServer().SetOperatorAddress(s.Ctx, &msgSetOperatorAddressWrongSafe)
+	s.Require().Error(err, "invalid safe address")
 }

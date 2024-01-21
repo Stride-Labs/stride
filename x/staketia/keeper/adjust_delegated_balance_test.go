@@ -9,14 +9,17 @@ import (
 )
 
 func (s *KeeperTestSuite) TestAdjustDelegatedBalance() {
+	// TODO [sttia]: verify this fails if issues by non-admin
 	msgServer := keeper.NewMsgServerImpl(s.App.StaketiaKeeper)
 
 	// First try to register the adjustment before the host zone is added, it should fail
 	_, err := msgServer.AdjustDelegatedBalance(s.Ctx, &types.MsgAdjustDelegatedBalance{})
 	s.Require().ErrorContains(err, "host zone not found")
 
+	safeAddress := "SAFEADDR"
 	// Create the host zone
 	s.App.StaketiaKeeper.SetHostZone(s.Ctx, types.HostZone{
+		SafeAddress:      safeAddress,
 		DelegatedBalance: sdk.NewInt(0),
 	})
 
@@ -34,7 +37,7 @@ func (s *KeeperTestSuite) TestAdjustDelegatedBalance() {
 	}
 	for _, tc := range testCases {
 		msg := types.MsgAdjustDelegatedBalance{
-			Operator:         "OPERATOR",
+			Operator:         safeAddress,
 			DelegationOffset: tc.offset,
 			ValidatorAddress: tc.address,
 		}

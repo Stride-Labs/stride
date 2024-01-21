@@ -6,6 +6,8 @@ import (
 	errorsmod "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
+	"github.com/Stride-Labs/stride/v17/utils"
+
 	"github.com/Stride-Labs/stride/v17/x/staketia/types"
 )
 
@@ -42,6 +44,12 @@ func (k msgServer) RedeemStake(goCtx context.Context, msg *types.MsgRedeemStake)
 // Operator transaction to confirm a delegation was submitted on the host chain
 func (k msgServer) ConfirmDelegation(goCtx context.Context, msg *types.MsgConfirmDelegation) (*types.MsgConfirmDelegationResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	// gate this transaction to either admin (SAFE or OPERATOR) address
+	if err := k.CheckIsSafeOrOperatorAddress(ctx, msg.Operator); err != nil {
+		return nil, err
+	}
+
 	// TODO [sttia]
 	_ = ctx
 	return &types.MsgConfirmDelegationResponse{}, nil
@@ -50,6 +58,12 @@ func (k msgServer) ConfirmDelegation(goCtx context.Context, msg *types.MsgConfir
 // Operator transaction to confirm an undelegation was submitted on the host chain
 func (k msgServer) ConfirmUndelegation(goCtx context.Context, msg *types.MsgConfirmUndelegation) (*types.MsgConfirmUndelegationResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	// gate this transaction to either admin (SAFE or OPERATOR) address
+	if err := k.CheckIsSafeOrOperatorAddress(ctx, msg.Operator); err != nil {
+		return nil, err
+	}
+
 	// TODO [sttia]
 	_ = ctx
 	return &types.MsgConfirmUndelegationResponse{}, nil
@@ -58,6 +72,12 @@ func (k msgServer) ConfirmUndelegation(goCtx context.Context, msg *types.MsgConf
 // Operator transaction to confirm unbonded tokens were transferred back to stride
 func (k msgServer) ConfirmUnbondedTokenSweep(goCtx context.Context, msg *types.MsgConfirmUnbondedTokenSweep) (*types.MsgConfirmUnbondedTokenSweepResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	// gate this transaction to either admin (SAFE or OPERATOR) address
+	if err := k.CheckIsSafeOrOperatorAddress(ctx, msg.Operator); err != nil {
+		return nil, err
+	}
+
 	// TODO [sttia]
 	_ = ctx
 	return &types.MsgConfirmUnbondedTokenSweepResponse{}, nil
@@ -66,26 +86,31 @@ func (k msgServer) ConfirmUnbondedTokenSweep(goCtx context.Context, msg *types.M
 // SAFE transaction to adjust the delegated balance after a validator was slashed
 // - creates a slash record as a log
 // - allow negative amounts in case we want to fix our record keeping
-func (server msgServer) AdjustDelegatedBalance(goCtx context.Context, msg *types.MsgAdjustDelegatedBalance) (*types.MsgAdjustDelegatedBalanceResponse, error) {
+func (k msgServer) AdjustDelegatedBalance(goCtx context.Context, msg *types.MsgAdjustDelegatedBalance) (*types.MsgAdjustDelegatedBalanceResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
+	// gate this transaction to only the SAFE address
+	if err := k.CheckIsSafeAddress(ctx, msg.Operator); err != nil {
+		return nil, err
+	}
+
 	// add offset to the delegated balance and write to host zone
-	hostZone, err := server.GetHostZone(ctx)
+	hostZone, err := k.GetHostZone(ctx)
 	if err != nil {
 		return nil, err
 	}
 	hostZone.DelegatedBalance = hostZone.DelegatedBalance.Add(msg.DelegationOffset)
-	server.SetHostZone(ctx, hostZone)
+	k.SetHostZone(ctx, hostZone)
 
 	// create a corresponding slash record
-	latestSlashRecordId := server.IncrementSlashRecordId(ctx)
+	latestSlashRecordId := k.IncrementSlashRecordId(ctx)
 	slashRecord := types.SlashRecord{
 		Id:                latestSlashRecordId,
 		Time:              uint64(ctx.BlockTime().Unix()),
 		NativeTokenAmount: msg.DelegationOffset,
 		ValidatorAddress:  msg.ValidatorAddress,
 	}
-	server.SetSlashRecord(ctx, slashRecord)
+	k.SetSlashRecord(ctx, slashRecord)
 
 	return &types.MsgAdjustDelegatedBalanceResponse{}, nil
 }
@@ -93,6 +118,11 @@ func (server msgServer) AdjustDelegatedBalance(goCtx context.Context, msg *types
 // Adjusts the inner redemption rate bounds on the host zone
 func (k msgServer) UpdateInnerRedemptionRateBounds(goCtx context.Context, msg *types.MsgUpdateInnerRedemptionRateBounds) (*types.MsgUpdateInnerRedemptionRateBoundsResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	// gate this transaction to the BOUNDS address
+	if err := utils.ValidateAdminAddress(msg.Creator); err != nil {
+		return nil, types.ErrInvalidAdmin
+	}
 
 	// Fetch the zone
 	zone, err := k.GetHostZone(ctx)
@@ -129,6 +159,11 @@ func (k msgServer) UpdateInnerRedemptionRateBounds(goCtx context.Context, msg *t
 func (k msgServer) ResumeHostZone(goCtx context.Context, msg *types.MsgResumeHostZone) (*types.MsgResumeHostZoneResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
+	// gate this transaction to the BOUNDS address
+	if err := utils.ValidateAdminAddress(msg.Creator); err != nil {
+		return nil, types.ErrInvalidAdmin
+	}
+
 	// Get Host Zone
 	zone, err := k.GetHostZone(ctx)
 	if err != nil {
@@ -149,4 +184,29 @@ func (k msgServer) ResumeHostZone(goCtx context.Context, msg *types.MsgResumeHos
 	k.SetHostZone(ctx, zone)
 
 	return &types.MsgResumeHostZoneResponse{}, nil
+}
+
+// Sets the OPERATOR address for the host zone
+// - only SAFE can execute this message
+func (k msgServer) SetOperatorAddress(goCtx context.Context, msg *types.MsgSetOperatorAddress) (*types.MsgSetOperatorAddressResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	// gate this transaction to only the SAFE address
+	if err := k.CheckIsSafeAddress(ctx, msg.Signer); err != nil {
+		return nil, err
+	}
+
+	// Fetch the zone
+	zone, err := k.GetHostZone(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	// set the operator field
+	zone.OperatorAddress = msg.Operator
+
+	// Update the host zone
+	k.SetHostZone(ctx, zone)
+
+	return &types.MsgSetOperatorAddressResponse{}, nil
 }
