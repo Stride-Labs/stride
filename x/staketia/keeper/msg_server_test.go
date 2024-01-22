@@ -178,6 +178,54 @@ func (s *KeeperTestSuite) TestSetOperatorAddress() {
 	s.Require().Error(err, "invalid safe address")
 }
 
+func (s *KeeperTestSuite) SetupDelegationRecordsAndHostZone() {
+	s.SetupDelegationRecords()
+
+	safeAddress := s.TestAccs[0].String()
+	operatorAddress := s.TestAccs[1].String()
+	hostZone := s.initializeHostZone()
+	hostZone.OperatorAddress = operatorAddress
+	hostZone.SafeAddress = safeAddress
+	s.App.StaketiaKeeper.SetHostZone(s.Ctx, hostZone)
+}
+
+// Verify that ConfirmDelegation succeeds, and non-admins cannot call it
+func (s *KeeperTestSuite) TestConfirmDelegation() {
+	safeAddress := s.TestAccs[0].String()
+	operatorAddress := s.TestAccs[1].String()
+	nonAdminAddress := s.TestAccs[2].String()
+
+	// Confirm that ConfirmDelegation can be called by the operator address
+	s.SetupDelegationRecordsAndHostZone()
+	msgConfirmDelegationOperator := types.MsgConfirmDelegation{
+		Operator: operatorAddress,
+		RecordId: 6,
+		TxHash:   ValidTxHashNew,
+	}
+	_, err := s.GetMsgServer().ConfirmDelegation(s.Ctx, &msgConfirmDelegationOperator)
+	s.Require().NoError(err, "operator should be able to confirm delegation")
+
+	// Confirm that ConfirmDelegation can be called by the safe address
+	s.SetupDelegationRecordsAndHostZone()
+	msgConfirmDelegationSafe := types.MsgConfirmDelegation{
+		Operator: safeAddress,
+		RecordId: 6,
+		TxHash:   ValidTxHashNew,
+	}
+	_, err = s.GetMsgServer().ConfirmDelegation(s.Ctx, &msgConfirmDelegationSafe)
+	s.Require().NoError(err, "safe should be able to confirm delegation")
+
+	// Confirm that ConfirmDelegation cannot be called by a non-admin address
+	s.SetupDelegationRecordsAndHostZone()
+	msgConfirmDelegationNonAdmin := types.MsgConfirmDelegation{
+		Operator: nonAdminAddress,
+		RecordId: 6,
+		TxHash:   ValidTxHashNew,
+	}
+	_, err = s.GetMsgServer().ConfirmDelegation(s.Ctx, &msgConfirmDelegationNonAdmin)
+	s.Require().Error(err, "non-admin should not be able to confirm delegation")
+}
+
 // ----------------------------------------------
 //         MsgConfirmUnbondingTokensSweep
 // ----------------------------------------------
@@ -185,9 +233,12 @@ func (s *KeeperTestSuite) TestSetOperatorAddress() {
 func (s *KeeperTestSuite) SetupUnbondingRecordsAndHostZone() {
 	s.SetupTestConfirmUnbondingTokens(DefaultClaimFundingAmount)
 
+	// ger relevant variables
 	safeAddress := s.TestAccs[0].String()
 	operatorAddress := s.TestAccs[1].String()
 	hostZone := s.MustGetHostZone()
+
+	// set host zone
 	hostZone.OperatorAddress = operatorAddress
 	hostZone.SafeAddress = safeAddress
 	s.App.StaketiaKeeper.SetHostZone(s.Ctx, hostZone)

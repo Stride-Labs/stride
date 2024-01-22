@@ -49,8 +49,10 @@ func (k msgServer) ConfirmDelegation(goCtx context.Context, msg *types.MsgConfir
 		return nil, err
 	}
 
-	// TODO [sttia]
-	_ = ctx
+	err := k.Keeper.ConfirmDelegation(ctx, msg.RecordId, msg.TxHash, msg.Operator)
+	if err != nil {
+		return &types.MsgConfirmDelegationResponse{}, err
+	}
 	return &types.MsgConfirmDelegationResponse{}, nil
 }
 

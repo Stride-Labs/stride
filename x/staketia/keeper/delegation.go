@@ -175,3 +175,40 @@ func (k Keeper) ConfirmUnbondedTokenSweep(ctx sdk.Context, recordId uint64, txHa
 	EmitSuccessfulConfirmUnbondedTokenSweepEvent(ctx, recordId, record.NativeAmount, txHash, sender)
 	return nil
 }
+
+func (k Keeper) ConfirmDelegation(ctx sdk.Context, recordId uint64, txHash string, sender string) (err error) {
+	// grab unbonding record, verify record is ready to be delegated, and a hash hasn't already been posted
+	delegationRecord, found := k.GetDelegationRecord(ctx, recordId)
+	if !found {
+		return types.ErrDelegationRecordNotFound.Wrapf("delegation record not found for %v", recordId)
+	}
+	if delegationRecord.Status != types.DELEGATION_QUEUE {
+		return types.ErrDelegationRecordInvalidState.Wrapf("delegation record %v is not in the correct state", recordId)
+	}
+	if delegationRecord.TxHash != "" {
+		return types.ErrDelegationRecordInvalidState.Wrapf("delegation record %v already has a txHash", recordId)
+	}
+
+	// note: we're intentionally not checking that the host zone is halted, because we still want to process this tx in that case
+	hostZone, err := k.GetHostZone(ctx)
+	if err != nil {
+		return err
+	}
+
+	// verify delegation record is nonzero
+	if !delegationRecord.NativeAmount.IsPositive() {
+		return types.ErrDelegationRecordInvalidState.Wrapf("delegation record %v has non positive delegation", recordId)
+	}
+
+	// update delegation record to archive it
+	delegationRecord.TxHash = txHash
+	k.SetDelegationRecord(ctx, delegationRecord)
+	k.ArchiveDelegationRecord(ctx, delegationRecord.Id)
+
+	// increment delegation on Host Zone
+	hostZone.DelegatedBalance = hostZone.DelegatedBalance.Add(delegationRecord.NativeAmount)
+	k.SetHostZone(ctx, hostZone)
+
+	EmitSuccessfulConfirmDelegationEvent(ctx, recordId, delegationRecord.NativeAmount, txHash, sender)
+	return nil
+}

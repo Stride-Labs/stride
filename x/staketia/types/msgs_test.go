@@ -316,6 +316,74 @@ func TestMsgSetOperatorAddress(t *testing.T) {
 }
 
 // ----------------------------------------------
+//               MsgConfirmDelegation
+// ----------------------------------------------
+
+func TestMsgConfirmDelegation_ValidateBasic(t *testing.T) {
+	tests := []struct {
+		name string
+		msg  types.MsgConfirmDelegation
+		err  error
+	}{
+		{
+			name: "success",
+			msg: types.MsgConfirmDelegation{
+				Operator: sample.AccAddress(),
+				RecordId: 35,
+				TxHash:   "BBD978ADDBF580AC2981E351A3EA34AA9D7B57631E9CE21C27C2C63A5B13BDA9",
+			},
+		},
+		{
+			name: "empty tx hash",
+			msg: types.MsgConfirmDelegation{
+				Operator: sample.AccAddress(),
+				RecordId: 35,
+				TxHash:   "",
+			},
+			err: sdkerrors.ErrTxDecode,
+		},
+		{
+			name: "invalid tx hash",
+			msg: types.MsgConfirmDelegation{
+				Operator: sample.AccAddress(),
+				RecordId: 35,
+				TxHash:   "invalid_tx_hash",
+			},
+			err: sdkerrors.ErrTxDecode,
+		},
+		{
+			name: "invalid sender",
+			msg: types.MsgConfirmDelegation{
+				Operator: "strideinvalid",
+				RecordId: 35,
+				TxHash:   "BBD978ADDBF580AC2981E351A3EA34AA9D7B57631E9CE21C27C2C63A5B13BDA9",
+			},
+			err: sdkerrors.ErrInvalidAddress,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := tt.msg.ValidateBasic()
+			if tt.err != nil {
+				require.ErrorIs(t, err, tt.err)
+				return
+			}
+			require.NoError(t, err)
+		})
+	}
+}
+
+func TestMsgConfirmDelegation_GetSignBytes(t *testing.T) {
+	addr := "stride1v9jxgu33kfsgr5"
+	msg := types.NewMsgConfirmDelegation(addr, 100, "valid_hash")
+	res := msg.GetSignBytes()
+
+	expected := `{"type":"staketia/MsgConfirmDelegation","value":{"operator":"stride1v9jxgu33kfsgr5","record_id":"100","tx_hash":"valid_hash"}}`
+	require.Equal(t, expected, string(res))
+}
+
+// ----------------------------------------------
 //               MsgConfirmUnbondedTokenSweep
 // ----------------------------------------------
 
@@ -340,7 +408,7 @@ func TestMsgConfirmUnbondedTokenSweep_ValidateBasic(t *testing.T) {
 				RecordId: 35,
 				TxHash:   "",
 			},
-			err: sdkerrors.ErrInvalidAddress,
+			err: sdkerrors.ErrTxDecode,
 		},
 		{
 			name: "invalid tx hash",
@@ -349,14 +417,14 @@ func TestMsgConfirmUnbondedTokenSweep_ValidateBasic(t *testing.T) {
 				RecordId: 35,
 				TxHash:   "invalid_tx-hash",
 			},
-			err: sdkerrors.ErrInvalidAddress,
+			err: sdkerrors.ErrTxDecode,
 		},
 		{
 			name: "invalid sender",
 			msg: types.MsgConfirmUnbondedTokenSweep{
 				Operator: "strideinvalid",
 				RecordId: 35,
-				TxHash:   "",
+				TxHash:   "BBD978ADDBF580AC2981E351A3EA34AA9D7B57631E9CE21C27C2C63A5B13BDA9",
 			},
 			err: sdkerrors.ErrInvalidAddress,
 		},

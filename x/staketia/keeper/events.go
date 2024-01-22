@@ -25,6 +25,20 @@ func EmitSuccessfulLiquidStakeEvent(ctx sdk.Context, staker string, hostZone typ
 	)
 }
 
+// Emits an event indicated the delegation record is correctly marked as done
+func EmitSuccessfulConfirmDelegationEvent(ctx sdk.Context, recordId uint64, delegationAmount sdkmath.Int, txHash string, sender string) {
+	ctx.EventManager().EmitEvent(
+		sdk.NewEvent(
+			types.EventTypeConfirmDelegationResponse,
+			sdk.NewAttribute(sdk.AttributeKeyModule, types.ModuleName),
+			sdk.NewAttribute(types.AttributeRecordId, strconv.FormatUint(recordId, 10)),
+			sdk.NewAttribute(types.AttributeDelegationNativeAmount, delegationAmount.String()),
+			sdk.NewAttribute(types.AttributeTxHash, txHash),
+			sdk.NewAttribute(types.AttributeSender, sender),
+		),
+	)
+}
+
 // Emits an event indicated the unbonding record is correctly marked as claimable
 func EmitSuccessfulConfirmUnbondedTokenSweepEvent(ctx sdk.Context, recordId uint64, nativeAmount sdkmath.Int, txHash string, sender string) {
 	ctx.EventManager().EmitEvent(
