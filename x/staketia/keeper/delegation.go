@@ -129,3 +129,42 @@ func (k Keeper) PrepareDelegation(ctx sdk.Context, epochNumber uint64, epochDura
 
 	return nil
 }
+
+func (k Keeper) ConfirmUnbondedTokenSweep(ctx sdk.Context, recordId uint64, txHash string, sender string) (err error) {
+	// grab unbonding record and verify the record is ready to be swept, and has not been swept yet
+	record, found := k.GetUnbondingRecord(ctx, recordId)
+	if !found {
+		return errorsmod.Wrapf(types.ErrUnbondingRecordNotFound, "couldn't find unbonding record with id: %d", recordId)
+	}
+	if record.Status != types.UNBONDED {
+		return errorsmod.Wrapf(types.ErrInvalidUnbondingRecord, "unbonding record with id: %d is not ready to be swept", recordId)
+	}
+	if record.UnbondedTokenSweepTxHash != "" {
+		return errorsmod.Wrapf(types.ErrInvalidUnbondingRecord, "unbonding record with id: %d already has a tx hash set", recordId)
+	}
+
+	// grab claim address from host zone
+	// note: we're intentionally not checking that the host zone is halted, because we still want to process this tx in that case
+	hostZone, err := k.GetHostZone(ctx)
+	if err != nil {
+		return err
+	}
+	claimAddress, err := sdk.AccAddressFromBech32(hostZone.ClaimAddress)
+	if err != nil {
+		return err
+	}
+
+	// verify the claim address has the same or more tokens than the record (necessary condition if sweep was successful)
+	claimAddressBalance := k.bankKeeper.GetBalance(ctx, claimAddress, hostZone.NativeTokenIbcDenom)
+	if claimAddressBalance.Amount.LT(record.NativeAmount) {
+		return errorsmod.Wrapf(types.ErrInsufficientFunds, "claim address %s has insufficient funds to confirm sweep unbonded tokens", hostZone.ClaimAddress)
+	}
+
+	// update record status to CLAIMABLE
+	record.Status = types.CLAIMABLE
+	record.UnbondedTokenSweepTxHash = txHash
+	k.SetUnbondingRecord(ctx, record)
+
+	EmitSuccessfulConfirmUnbondedTokenSweepEvent(ctx, recordId, record.NativeAmount, txHash, sender)
+	return nil
+}

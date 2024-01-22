@@ -177,3 +177,51 @@ func (s *KeeperTestSuite) TestSetOperatorAddress() {
 	_, err = s.GetMsgServer().SetOperatorAddress(s.Ctx, &msgSetOperatorAddressWrongSafe)
 	s.Require().Error(err, "invalid safe address")
 }
+
+func (s *KeeperTestSuite) SetupUnbondingRecordsAndHostZone() {
+	s.SetupUnbondingRecords(DefaultClaimFundingAmount)
+
+	safeAddress := s.TestAccs[0].String()
+	operatorAddress := s.TestAccs[1].String()
+	hostZone := s.MustGetHostZone()
+	hostZone.OperatorAddress = operatorAddress
+	hostZone.SafeAddress = safeAddress
+	s.App.StaketiaKeeper.SetHostZone(s.Ctx, hostZone)
+}
+
+// Verify that ConfirmUnbondingTokenSweep succeeds, and non-admins cannot call it
+func (s *KeeperTestSuite) TestConfirmUnbondingTokenSweep() {
+	safeAddress := s.TestAccs[0].String()
+	operatorAddress := s.TestAccs[1].String()
+	nonAdminAddress := s.TestAccs[2].String()
+
+	// Confirm that ConfirmDelegation can be called by the operator address
+	s.SetupUnbondingRecordsAndHostZone()
+	MsgConfirmUnbondedTokenSweepOperator := types.MsgConfirmUnbondedTokenSweep{
+		Operator: operatorAddress,
+		RecordId: 6,
+		TxHash:   ValidTxHashNew,
+	}
+	_, err := s.GetMsgServer().ConfirmUnbondedTokenSweep(s.Ctx, &MsgConfirmUnbondedTokenSweepOperator)
+	s.Require().NoError(err, "operator should be able to confirm unbonded token sweep")
+
+	// Confirm that ConfirmDelegation can be called by the safe address
+	s.SetupUnbondingRecordsAndHostZone()
+	msgConfirmUnbondedTokenSweepSafe := types.MsgConfirmUnbondedTokenSweep{
+		Operator: safeAddress,
+		RecordId: 6,
+		TxHash:   ValidTxHashNew,
+	}
+	_, err = s.GetMsgServer().ConfirmUnbondedTokenSweep(s.Ctx, &msgConfirmUnbondedTokenSweepSafe)
+	s.Require().NoError(err, "safe should be able to confirm unbonded token sweep")
+
+	// Confirm that ConfirmDelegation cannot be called by a non-admin address
+	s.SetupUnbondingRecordsAndHostZone()
+	msgConfirmUnbondedTokenSweepNonAdmin := types.MsgConfirmUnbondedTokenSweep{
+		Operator: nonAdminAddress,
+		RecordId: 6,
+		TxHash:   ValidTxHashNew,
+	}
+	_, err = s.GetMsgServer().ConfirmUnbondedTokenSweep(s.Ctx, &msgConfirmUnbondedTokenSweepNonAdmin)
+	s.Require().ErrorIs(err, types.ErrInvalidAdmin, "non-admin should not be able to confirm unbonded token sweep")
+}

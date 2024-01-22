@@ -1,6 +1,8 @@
 package keeper
 
 import (
+	"strconv"
+
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
@@ -19,6 +21,20 @@ func EmitSuccessfulLiquidStakeEvent(ctx sdk.Context, staker string, hostZone typ
 			sdk.NewAttribute(types.AttributeKeyNativeIBCDenom, hostZone.NativeTokenIbcDenom),
 			sdk.NewAttribute(types.AttributeKeyNativeAmount, nativeAmount.String()),
 			sdk.NewAttribute(types.AttributeKeyStTokenAmount, stAmount.String()),
+		),
+	)
+}
+
+// Emits an event indicated the unbonding record is correctly marked as claimable
+func EmitSuccessfulConfirmUnbondedTokenSweepEvent(ctx sdk.Context, recordId uint64, nativeAmount sdkmath.Int, txHash string, sender string) {
+	ctx.EventManager().EmitEvent(
+		sdk.NewEvent(
+			types.EventTypeConfirmUnbondedTokenSweep,
+			sdk.NewAttribute(sdk.AttributeKeyModule, types.ModuleName),
+			sdk.NewAttribute(types.AttributeRecordId, strconv.FormatUint(recordId, 10)),
+			sdk.NewAttribute(types.AttributeUndelegationNativeAmount, nativeAmount.String()),
+			sdk.NewAttribute(types.AttributeTxHash, txHash),
+			sdk.NewAttribute(types.AttributeSender, sender),
 		),
 	)
 }

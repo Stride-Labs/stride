@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"sort"
@@ -293,4 +294,16 @@ func StAssetDenomFromHostZoneDenom(hostZoneDenom string) string {
 // Returns the native denom from an stDenom by removing the st prefix
 func HostZoneDenomFromStAssetDenom(stAssetDenom string) string {
 	return stAssetDenom[2:]
+}
+
+// Verifies a tx hash is valid
+func VerifyTxHash(txHash string) (err error) {
+	if txHash == "" {
+		return errorsmod.Wrapf(sdkerrors.ErrTxDecode, fmt.Sprintf("tx hash is empty %s", txHash))
+	}
+	_, err = hex.DecodeString(txHash)
+	if err != nil {
+		return errorsmod.Wrapf(sdkerrors.ErrTxDecode, fmt.Sprintf("tx hash is invalid %s", txHash))
+	}
+	return nil
 }

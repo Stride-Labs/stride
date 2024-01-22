@@ -77,8 +77,10 @@ func (k msgServer) ConfirmUnbondedTokenSweep(goCtx context.Context, msg *types.M
 		return nil, err
 	}
 
-	// TODO [sttia]
-	_ = ctx
+	err := k.Keeper.ConfirmUnbondedTokenSweep(ctx, msg.RecordId, msg.TxHash, msg.Operator)
+	if err != nil {
+		return &types.MsgConfirmUnbondedTokenSweepResponse{}, err
+	}
 	return &types.MsgConfirmUnbondedTokenSweepResponse{}, nil
 }
 

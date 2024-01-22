@@ -318,6 +318,74 @@ func TestMsgSetOperatorAddress(t *testing.T) {
 }
 
 // ----------------------------------------------
+//               MsgConfirmUnbondedTokenSweep
+// ----------------------------------------------
+
+func TestMsgConfirmUnbondedTokenSweep_ValidateBasic(t *testing.T) {
+	tests := []struct {
+		name string
+		msg  types.MsgConfirmUnbondedTokenSweep
+		err  error
+	}{
+		{
+			name: "success",
+			msg: types.MsgConfirmUnbondedTokenSweep{
+				Operator: sample.AccAddress(),
+				RecordId: 35,
+				TxHash:   "BBD978ADDBF580AC2981E351A3EA34AA9D7B57631E9CE21C27C2C63A5B13BDA9",
+			},
+		},
+		{
+			name: "empty tx hash",
+			msg: types.MsgConfirmUnbondedTokenSweep{
+				Operator: sample.AccAddress(),
+				RecordId: 35,
+				TxHash:   "",
+			},
+			err: sdkerrors.ErrInvalidAddress,
+		},
+		{
+			name: "invalid tx hash",
+			msg: types.MsgConfirmUnbondedTokenSweep{
+				Operator: sample.AccAddress(),
+				RecordId: 35,
+				TxHash:   "invalid_tx-hash",
+			},
+			err: sdkerrors.ErrInvalidAddress,
+		},
+		{
+			name: "invalid sender",
+			msg: types.MsgConfirmUnbondedTokenSweep{
+				Operator: "strideinvalid",
+				RecordId: 35,
+				TxHash:   "",
+			},
+			err: sdkerrors.ErrInvalidAddress,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := tt.msg.ValidateBasic()
+			if tt.err != nil {
+				require.ErrorIs(t, err, tt.err)
+				return
+			}
+			require.NoError(t, err)
+		})
+	}
+}
+
+func TestMsgConfirmUnbondedTokenSweep_GetSignBytes(t *testing.T) {
+	addr := "stride1v9jxgu33kfsgr5"
+	msg := types.NewMsgConfirmUnbondedTokenSweep(addr, 100, "valid_hash")
+	res := msg.GetSignBytes()
+
+	expected := `{"type":"staketia/MsgConfirmUnbondedTokenSweep","value":{"operator":"stride1v9jxgu33kfsgr5","record_id":"100","tx_hash":"valid_hash"}}`
+	require.Equal(t, expected, string(res))
+}
+
+// ----------------------------------------------
 //               OverwriteDelegationRecord
 // ----------------------------------------------
 

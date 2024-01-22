@@ -266,9 +266,14 @@ func (msg *MsgConfirmUnbondedTokenSweep) GetSignBytes() []byte {
 }
 
 func (msg *MsgConfirmUnbondedTokenSweep) ValidateBasic() error {
-	// TODO [sttia]
 	_, err := sdk.AccAddressFromBech32(msg.Operator)
 	if err != nil {
+		return errorsmod.Wrapf(sdkerrors.ErrInvalidAddress, "invalid address (%s)", err)
+	}
+	// Note: We can't verify this is sent by the safe or operator in ValidateBasic, because it requires inspecting the HostZone
+	// Note: We can't verify recordId in ValidateBasic, because 0 is a valid record id
+	// and recordId is uint64 so can't be negative
+	if err := utils.VerifyTxHash(msg.TxHash); err != nil {
 		return errorsmod.Wrapf(sdkerrors.ErrInvalidAddress, "invalid address (%s)", err)
 	}
 	return nil

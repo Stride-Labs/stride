@@ -15,6 +15,10 @@ const (
 	HostNativeDenom = "denom"
 	HostIBCDenom    = "ibc/denom"
 	StDenom         = "stdenom"
+
+	ValidOperator      = "stride1njt6kn0c2a2w5ax8mlm9k0fmcc8tyjgh7s8hu8"
+	ValidTxHashDefault = "BBD978ADDBF580AC2981E351A3EA34AA9D7B57631E9CE21C27C2C63A5B13BDA9"
+	ValidTxHashNew     = "FEFC69DCDF00E2BF971A61D34944871F607C84787CA9A69715B360A767FE6862"
 )
 
 type KeeperTestSuite struct {
