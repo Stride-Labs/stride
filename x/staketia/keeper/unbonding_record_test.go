@@ -104,3 +104,24 @@ func (s *KeeperTestSuite) TestGetAccumulatingUnbondingRecord() {
 	_, err = s.App.StaketiaKeeper.GetAccumulatingUnbondingRecord(s.Ctx)
 	s.Require().ErrorContains(err, "no unbonding record")
 }
+
+func (s *KeeperTestSuite) TestSafelySetUnbondingRecord() {
+	// Set an unbonding record with ID 1
+	s.App.StaketiaKeeper.SetUnbondingRecord(s.Ctx, types.UnbondingRecord{Id: 1})
+
+	// Try to set another record at ID 1 using SafelySet - it should error
+	err := s.App.StaketiaKeeper.SafelySetUnbondingRecord(s.Ctx, types.UnbondingRecord{Id: 1})
+	s.Require().ErrorContains(err, "unbonding record already exists")
+
+	// Set a record at ID 2 - it should succeed
+	err = s.App.StaketiaKeeper.SafelySetUnbondingRecord(s.Ctx, types.UnbondingRecord{Id: 2})
+	s.Require().NoError(err, "no error expected when setting new record")
+
+	// Confirm there are two records
+	unbondingRecords := s.App.StaketiaKeeper.GetAllActiveUnbondingRecords(s.Ctx)
+	s.Require().Len(unbondingRecords, 2, "there should be two unbonding records")
+
+	expectedUnbondingRecordIds := []uint64{1, 2}
+	actualUnbondingRecordIds := []uint64{unbondingRecords[0].Id, unbondingRecords[1].Id}
+	s.Require().ElementsMatch(expectedUnbondingRecordIds, actualUnbondingRecordIds, "unbonding record Ids")
+}

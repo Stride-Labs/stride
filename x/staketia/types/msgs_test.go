@@ -123,7 +123,7 @@ func TestMsgUpdateInnerRedemptionRateBounds(t *testing.T) {
 				MaxInnerRedemptionRate: validUpperBound,
 				MinInnerRedemptionRate: invalidLowerBound,
 			},
-			err: "invalid redemption rate bounds",
+			err: "invalid host zone redemption rate inner bounds",
 		},
 	}
 

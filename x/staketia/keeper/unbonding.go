@@ -95,8 +95,54 @@ func (k Keeper) RedeemStake(ctx sdk.Context, redeemer string, stTokenAmount sdkm
 	return nativeToken, nil
 }
 
-// TODO [sttia]
+// Freezes the ACCUMULATING record by changing the status to UNBONDING_QUEUE
+// and updating the native token amounts on the unbonding and redemption records
 func (k Keeper) PrepareUndelegation(ctx sdk.Context, epochNumber uint64) error {
+	// Get the redemption record from the host zone (to calculate the native tokens)
+	hostZone, err := k.GetUnhaltedHostZone(ctx)
+	if err != nil {
+		return err
+	}
+	redemptionRate := hostZone.RedemptionRate
+
+	// Get the one accumulating record that has the redemptions for the past epoch
+	unbondingRecord, err := k.GetAccumulatingUnbondingRecord(ctx)
+	if err != nil {
+		return err
+	}
+
+	// Create the new accumulating record for this epoch
+	newUnbondingRecord := types.UnbondingRecord{
+		Id:            epochNumber,
+		Status:        types.ACCUMULATING_REDEMPTIONS,
+		StTokenAmount: sdkmath.ZeroInt(),
+		NativeAmount:  sdkmath.ZeroInt(),
+	}
+	if err := k.SafelySetUnbondingRecord(ctx, newUnbondingRecord); err != nil {
+		return err
+	}
+
+	// Update the number of native tokens for all the redemption records
+	// Keep track of the total for the unbonding record
+	totalNativeTokens := sdkmath.ZeroInt()
+	for _, redemptionRecord := range k.GetRedemptionRecordsFromUnbondingId(ctx, unbondingRecord.Id) {
+		nativeAmount := sdk.NewDecFromInt(redemptionRecord.StTokenAmount).Mul(redemptionRate).RoundInt()
+		redemptionRecord.NativeAmount = nativeAmount
+		k.SetRedemptionRecord(ctx, redemptionRecord)
+		totalNativeTokens = totalNativeTokens.Add(nativeAmount)
+	}
+
+	// If there were no unbondings this epoch, archive the current record
+	if totalNativeTokens.IsZero() {
+		k.ArchiveUnbondingRecord(ctx, unbondingRecord.Id)
+		return nil
+	}
+
+	// Update the total on the record and change the status to QUEUE
+	unbondingRecord.Status = types.UNBONDING_QUEUE
+	unbondingRecord.NativeAmount = totalNativeTokens
+	k.SetUnbondingRecord(ctx, unbondingRecord)
+
 	return nil
 }
 

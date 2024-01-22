@@ -133,7 +133,7 @@ func (s *KeeperTestSuite) TestUpdateInnerRedemptionRateBounds() {
 
 	// Set the inner bounds on the host zone for the first time
 	_, err = s.GetMsgServer().UpdateInnerRedemptionRateBounds(s.Ctx, &invalidMsg)
-	s.Require().ErrorContains(err, "invalid redemption rate bounds")
+	s.Require().ErrorContains(err, "invalid host zone redemption rate inner bounds")
 }
 
 // ----------------------------------------------

@@ -107,3 +107,12 @@ func (k Keeper) GetAccumulatingUnbondingRecord(ctx sdk.Context) (unbondingRecord
 	}
 	return accumulatingRecord[0], nil
 }
+
+// Sets the unbonding record only if a record does not already exist for that ID
+func (k Keeper) SafelySetUnbondingRecord(ctx sdk.Context, unbondingRecord types.UnbondingRecord) error {
+	if _, found := k.GetUnbondingRecord(ctx, unbondingRecord.Id); found {
+		return types.ErrUnbondingRecordAlreadyExists.Wrapf("unbonding record already exists for ID %d", unbondingRecord.Id)
+	}
+	k.SetUnbondingRecord(ctx, unbondingRecord)
+	return nil
+}

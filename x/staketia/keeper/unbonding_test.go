@@ -10,7 +10,7 @@ import (
 )
 
 // ----------------------------------------------
-//          Testing RedeemStake
+//               RedeemStake
 // ----------------------------------------------
 
 type Account struct {
@@ -309,7 +309,120 @@ func (s *KeeperTestSuite) checkRedeemStakeTestCase(tc RedeemStakeTestCase) {
 }
 
 // ----------------------------------------------
-//          Testing DistributeClaims
+//             PrepareUndelegation
+// ----------------------------------------------
+
+func (s *KeeperTestSuite) TestPrepareUndelegation() {
+	accumulatingUnbondingRecordId := uint64(4)
+	epochNumber := uint64(5)
+
+	// Create the accumulating unbonding record
+	s.App.StaketiaKeeper.SetUnbondingRecord(s.Ctx, types.UnbondingRecord{
+		Id:     accumulatingUnbondingRecordId,
+		Status: types.ACCUMULATING_REDEMPTIONS,
+	})
+
+	// Set a host zone with a 1.999 redemption rate
+	// (an uneven number is used to test rounding/truncation)
+	oldRedemptionRate := sdk.MustNewDecFromStr("1.9")
+	redemptionRate := sdk.MustNewDecFromStr("1.999")
+	s.App.StaketiaKeeper.SetHostZone(s.Ctx, types.HostZone{
+		RedemptionRate: redemptionRate,
+	})
+
+	// Define the expected redemption records after the function is called
+	expectedRedemptionRecords := []types.RedemptionRecord{
+		// StTokenAmount: 1000 * 1.999 = 1999 Native
+		{UnbondingRecordId: 4, Redeemer: "A", StTokenAmount: sdkmath.NewInt(1000), NativeAmount: sdkmath.NewInt(1999)},
+		// StTokenAmount: 999 * 1.999 = 1997.001, Rounded down to 1997 Native
+		{UnbondingRecordId: 4, Redeemer: "B", StTokenAmount: sdkmath.NewInt(999), NativeAmount: sdkmath.NewInt(1997)},
+		// StTokenAmount: 100 * 1.999 = 199.9, Rounded up to 200 Native
+		{UnbondingRecordId: 4, Redeemer: "C", StTokenAmount: sdkmath.NewInt(100), NativeAmount: sdkmath.NewInt(200)},
+
+		// Different unbonding records, should be excluded
+		{UnbondingRecordId: 1, Redeemer: "D", StTokenAmount: sdkmath.NewInt(100), NativeAmount: sdkmath.NewInt(100)},
+		{UnbondingRecordId: 2, Redeemer: "E", StTokenAmount: sdkmath.NewInt(200), NativeAmount: sdkmath.NewInt(200)},
+		{UnbondingRecordId: 3, Redeemer: "F", StTokenAmount: sdkmath.NewInt(300), NativeAmount: sdkmath.NewInt(300)},
+	}
+	expectedTotalNativeAmount := sdkmath.NewInt(1999 + 1997 + 200)
+
+	// Create the initial records, setting the native amount to be slightly less than expected
+	for _, expectedUserRedemptionRecord := range expectedRedemptionRecords {
+		initialRedemptionRecord := expectedUserRedemptionRecord
+		initialRedemptionRecord.NativeAmount = sdk.NewDecFromInt(initialRedemptionRecord.StTokenAmount).Mul(oldRedemptionRate).RoundInt()
+		s.App.StaketiaKeeper.SetRedemptionRecord(s.Ctx, initialRedemptionRecord)
+	}
+
+	// Call prepare undelegation
+	err := s.App.StaketiaKeeper.PrepareUndelegation(s.Ctx, epochNumber)
+	s.Require().NoError(err, "no error expected when calling prepare undelegation")
+
+	// Confirm the total and status was updated on the unbonding record
+	unbondingRecord, found := s.App.StaketiaKeeper.GetUnbondingRecord(s.Ctx, accumulatingUnbondingRecordId)
+	s.Require().True(found)
+	s.Require().Equal(unbondingRecord.Status, types.UNBONDING_QUEUE, "unbonding record status should have updated")
+	s.Require().Equal(expectedTotalNativeAmount.Int64(), unbondingRecord.NativeAmount.Int64(),
+		"total native tokens on unbonding record")
+
+	// Confirm the summation is correct and the redemption records were updated
+	for _, expectedRecord := range expectedRedemptionRecords {
+		if expectedRecord.UnbondingRecordId != accumulatingUnbondingRecordId {
+			continue
+		}
+
+		unbondingRecordId := expectedRecord.UnbondingRecordId
+		redeemer := expectedRecord.Redeemer
+		actualRecord, found := s.App.StaketiaKeeper.GetRedemptionRecord(s.Ctx, unbondingRecordId, redeemer)
+		s.Require().True(found, "record %d %s should have been found", unbondingRecordId, redeemer)
+		s.Require().Equal(expectedRecord.NativeAmount.Int64(), actualRecord.NativeAmount.Int64(),
+			"record %s %d native amount", unbondingRecordId, redeemer)
+	}
+
+	// Confirm a new record was created
+	newUnbondingRecord, found := s.App.StaketiaKeeper.GetUnbondingRecord(s.Ctx, epochNumber)
+	s.Require().True(found, "new unbonding record should have been created")
+	s.Require().Equal(newUnbondingRecord.Status, types.ACCUMULATING_REDEMPTIONS, "new unbonding record status")
+
+	// Call prepare undelegation again with the new unbonding record
+	// Since there are no new unbondings, the record should get archived immediately
+	err = s.App.StaketiaKeeper.PrepareUndelegation(s.Ctx, epochNumber+1)
+	s.Require().NoError(err, "no error expected during second undelegation")
+
+	archivedRecords := s.App.StaketiaKeeper.GetAllArchivedUnbondingRecords(s.Ctx)
+	s.Require().Len(archivedRecords, 1, "record should have been archived")
+	s.Require().Equal(epochNumber, archivedRecords[0].Id, "archived record ID")
+
+	// Create an unbonding record in non-ACCUMULATING Status
+	duplicateRecordId := uint64(10)
+	s.App.StaketiaKeeper.SetUnbondingRecord(s.Ctx, types.UnbondingRecord{
+		Id:     duplicateRecordId,
+		Status: types.UNBONDING_QUEUE,
+	})
+
+	// Check that if we tried to run prepare with that ID, it would error because the record already exists
+	err = s.App.StaketiaKeeper.PrepareUndelegation(s.Ctx, duplicateRecordId)
+	s.Require().ErrorContains(err, "unbonding record already exists")
+
+	// Create another accumulating record and check that this would break an invariant and error
+	s.App.StaketiaKeeper.SetUnbondingRecord(s.Ctx, types.UnbondingRecord{
+		Id:     99,
+		Status: types.ACCUMULATING_REDEMPTIONS,
+	})
+
+	err = s.App.StaketiaKeeper.PrepareUndelegation(s.Ctx, epochNumber+10) // any epoch in future
+	s.Require().ErrorContains(err, "more than one record in status ACCUMULATING")
+
+	// Halt the host zone and try again - it should fail
+	hostZone := s.MustGetHostZone()
+	hostZone.Halted = true
+	s.App.StaketiaKeeper.SetHostZone(s.Ctx, hostZone)
+
+	err = s.App.StaketiaKeeper.PrepareUndelegation(s.Ctx, epochNumber)
+	s.Require().ErrorContains(err, "host zone is halted")
+}
+
+// ----------------------------------------------
+//              DistributeClaims
 // ----------------------------------------------
 
 type DistributeClaimsTestCase struct {
