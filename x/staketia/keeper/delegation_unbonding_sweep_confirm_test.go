@@ -192,3 +192,31 @@ func (s *KeeperTestSuite) TestConfirmUnbondingTokenSweep_RecordIncorrectState() 
 		s.Require().ErrorIs(err, types.ErrInvalidUnbondingRecord, "should error when record is in incorrect state")
 	}
 }
+
+func (s *KeeperTestSuite) TestConfirmUnbondingTokenSweep_ZeroSweepAmount() {
+	s.SetupTestConfirmUnbondingTokens(DefaultClaimFundingAmount)
+
+	// update the sweep record so that the native amount is zero  
+	unbondingRecord, found := s.App.StaketiaKeeper.GetUnbondingRecord(s.Ctx, 6)
+	s.Require().True(found)
+	unbondingRecord.NativeAmount = sdk.NewInt(0)
+	s.App.StaketiaKeeper.SetUnbondingRecord(s.Ctx, unbondingRecord)
+
+	// try confirming with zero token amount on record
+	err := s.App.StaketiaKeeper.ConfirmUnbondedTokenSweep(s.Ctx, 6, ValidTxHashNew, ValidOperator)
+	s.Require().ErrorIs(err, types.ErrInvalidUnbondingRecord, "should error when record has zero sweep amount")
+}
+
+func (s *KeeperTestSuite) TestConfirmUnbondingTokenSweep_NegativeSweepAmount() {
+	s.SetupTestConfirmUnbondingTokens(DefaultClaimFundingAmount)
+
+	// update the sweep record so that the native amount is negative 
+	unbondingRecord, found := s.App.StaketiaKeeper.GetUnbondingRecord(s.Ctx, 6)
+	s.Require().True(found)
+	unbondingRecord.StTokenAmount = sdk.NewInt(-10)
+	s.App.StaketiaKeeper.SetUnbondingRecord(s.Ctx, unbondingRecord)
+
+	// try confirming with negative token amount on record
+	err := s.App.StaketiaKeeper.ConfirmUnbondedTokenSweep(s.Ctx, 6, ValidTxHashNew, ValidOperator)
+	s.Require().ErrorIs(err, types.ErrInvalidUnbondingRecord, "should error when record has zero sweep amount")
+}

@@ -150,6 +150,12 @@ func (k Keeper) ConfirmUnbondedTokenSweep(ctx sdk.Context, recordId uint64, txHa
 		return errorsmod.Wrapf(types.ErrInvalidUnbondingRecord, "unbonding record with id: %d already has a tx hash set", recordId)
 	}
 
+	// verify amount to sweep is positive
+	unbondingRecordIsNonPositive := !record.NativeAmount.IsPositive() || !record.StTokenAmount.IsPositive()
+	if unbondingRecordIsNonPositive {
+		return errorsmod.Wrapf(types.ErrInvalidUnbondingRecord, "unbonding record with id: %d has non positive amount to sweep", recordId)
+	}
+
 	// grab claim address from host zone
 	// note: we're intentionally not checking that the host zone is halted, because we still want to process this tx in that case
 	hostZone, err := k.GetHostZone(ctx)
