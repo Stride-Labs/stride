@@ -7,8 +7,17 @@ import "amino/amino.proto";
 import "gogoproto/gogo.proto";
 import "cosmos/base/v1beta1/coin.proto";
 import "cosmos_proto/cosmos.proto";
+import "stride/staketia/staketia.proto";
 
 option go_package = "github.com/Stride-Labs/stride/v17/x/staketia/types";
+
+enum OverwritableRecordType {
+  option (gogoproto.goproto_enum_prefix) = false;
+
+  RECORD_TYPE_DELEGATION = 0;
+  RECORD_TYPE_UNBONDING = 1;
+  RECORD_TYPE_REDEMPTION = 2;
+}
 
 // Msg defines the Msg service.
 service Msg {
@@ -44,6 +53,18 @@ service Msg {
 
   // Unhalts the host zone if redemption rates were exceeded
   rpc ResumeHostZone(MsgResumeHostZone) returns (MsgResumeHostZoneResponse);
+
+  // Trigger updating the redemption rate
+  rpc RefreshRedemptionRate(MsgRefreshRedemptionRate) returns (MsgRefreshRedemptionRateResponse);
+
+  // Overwrites a delegation record
+  rpc OverwriteDelegationRecord(MsgOverwriteDelegationRecord) returns (MsgOverwriteDelegationRecordResponse);
+
+  // Overwrites a unbonding record
+  rpc OverwriteUnbondingRecord(MsgOverwriteUnbondingRecord) returns (MsgOverwriteUnbondingRecordResponse);
+
+  // Overwrites a redemption record
+  rpc OverwriteRedemptionRecord(MsgOverwriteRedemptionRecord) returns (MsgOverwriteRedemptionRecordResponse);
 
   // Sets the operator address
   rpc SetOperatorAddress(MsgSetOperatorAddress)
@@ -160,6 +181,46 @@ message MsgResumeHostZone {
   string creator = 1;
 }
 message MsgResumeHostZoneResponse {}
+
+// RefreshRedemptionRate
+message MsgRefreshRedemptionRate {
+  option (cosmos.msg.v1.signer) = "creator";
+  option (amino.name) = "staketia/MsgRefreshRedemptionRate";
+
+  string creator = 1;
+}
+message MsgRefreshRedemptionRateResponse {}
+
+
+// OverwriteDelegationRecord
+message MsgOverwriteDelegationRecord {
+  option (cosmos.msg.v1.signer) = "creator";
+  option (amino.name) = "staketia/MsgOverwriteDelegationRecord";
+
+  string creator = 1;
+  DelegationRecord delegation_record = 2;
+}
+message MsgOverwriteDelegationRecordResponse {}
+
+// OverwriteUnbondingRecord
+message MsgOverwriteUnbondingRecord {
+  option (cosmos.msg.v1.signer) = "creator";
+  option (amino.name) = "staketia/MsgOverwriteUnbondingRecord";
+
+  string creator = 1;
+  UnbondingRecord unbonding_record = 2;
+}
+message MsgOverwriteUnbondingRecordResponse {}
+
+// OverwriteRedemptionRecord
+message MsgOverwriteRedemptionRecord {
+  option (cosmos.msg.v1.signer) = "creator";
+  option (amino.name) = "staketia/MsgOverwriteRedemptionRecord";
+
+  string creator = 1;
+  RedemptionRecord redemption_record = 2;
+}
+message MsgOverwriteRedemptionRecordResponse {}
 
 // SetOperatorAddress
 message MsgSetOperatorAddress {

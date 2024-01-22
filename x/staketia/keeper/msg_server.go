@@ -185,6 +185,62 @@ func (k msgServer) ResumeHostZone(goCtx context.Context, msg *types.MsgResumeHos
 	return &types.MsgResumeHostZoneResponse{}, nil
 }
 
+// trigger updating the redemption rate
+func (k msgServer) RefreshRedemptionRate(goCtx context.Context, msgTriggerRedemptionRate *types.MsgRefreshRedemptionRate) (*types.MsgRefreshRedemptionRateResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	// gate this transaction to only the SAFE address
+	if err := k.CheckIsSafeAddress(ctx, msgTriggerRedemptionRate.Creator); err != nil {
+		return nil, err
+	}
+
+	err := k.UpdateRedemptionRate(ctx)
+
+	return &types.MsgRefreshRedemptionRateResponse{}, err
+}
+
+// overwrite a delegation record
+func (k msgServer) OverwriteDelegationRecord(goCtx context.Context, msgOverwriteDelegationRecord *types.MsgOverwriteDelegationRecord) (*types.MsgOverwriteDelegationRecordResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	// gate this transaction to only the SAFE address
+	if err := k.CheckIsSafeAddress(ctx, msgOverwriteDelegationRecord.Creator); err != nil {
+		return nil, err
+	}
+
+	k.Keeper.SetDelegationRecord(ctx, *msgOverwriteDelegationRecord.DelegationRecord)
+
+	return &types.MsgOverwriteDelegationRecordResponse{}, nil
+}
+
+// overwrite a unbonding record
+func (k msgServer) OverwriteUnbondingRecord(goCtx context.Context, msgOverwriteUnbondingRecord *types.MsgOverwriteUnbondingRecord) (*types.MsgOverwriteUnbondingRecordResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	// gate this transaction to only the SAFE address
+	if err := k.CheckIsSafeAddress(ctx, msgOverwriteUnbondingRecord.Creator); err != nil {
+		return nil, err
+	}
+
+	k.Keeper.SetUnbondingRecord(ctx, *msgOverwriteUnbondingRecord.UnbondingRecord)
+
+	return &types.MsgOverwriteUnbondingRecordResponse{}, nil
+}
+
+// overwrite a redemption record
+func (k msgServer) OverwriteRedemptionRecord(goCtx context.Context, msgOverwriteRedemptionRecord *types.MsgOverwriteRedemptionRecord) (*types.MsgOverwriteRedemptionRecordResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	// gate this transaction to only the SAFE address
+	if err := k.CheckIsSafeAddress(ctx, msgOverwriteRedemptionRecord.Creator); err != nil {
+		return nil, err
+	}
+
+	k.Keeper.SetRedemptionRecord(ctx, *msgOverwriteRedemptionRecord.RedemptionRecord)
+
+	return &types.MsgOverwriteRedemptionRecordResponse{}, nil
+}
+
 // Sets the OPERATOR address for the host zone
 // - only SAFE can execute this message
 func (k msgServer) SetOperatorAddress(goCtx context.Context, msg *types.MsgSetOperatorAddress) (*types.MsgSetOperatorAddressResponse, error) {

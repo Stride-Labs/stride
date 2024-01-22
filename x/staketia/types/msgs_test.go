@@ -316,3 +316,299 @@ func TestMsgSetOperatorAddress(t *testing.T) {
 		})
 	}
 }
+
+// ----------------------------------------------
+//               OverwriteDelegationRecord
+// ----------------------------------------------
+
+func TestMsgOverwriteDelegationRecord(t *testing.T) {
+	apptesting.SetupConfig()
+
+	validAddress, invalidAddress := apptesting.GenerateTestAddrs()
+
+	tests := []struct {
+		name string
+		msg  types.MsgOverwriteDelegationRecord
+		err  string
+	}{
+		{
+			name: "successful message",
+			msg: types.MsgOverwriteDelegationRecord{
+				Creator: validAddress,
+				DelegationRecord: &types.DelegationRecord{
+					Id:           1,
+					NativeAmount: sdkmath.NewInt(1),
+					Status:       types.DELEGATION_QUEUE,
+					TxHash:       "TXHASH",
+				},
+			},
+		},
+		{
+			name: "invalid signer address",
+			msg: types.MsgOverwriteDelegationRecord{
+				Creator: invalidAddress,
+				DelegationRecord: &types.DelegationRecord{
+					Id:           1,
+					NativeAmount: sdkmath.NewInt(1),
+					Status:       types.DELEGATION_QUEUE,
+					TxHash:       "TXHASH",
+				},
+			},
+			err: "invalid address",
+		},
+		{
+			name: "invalid native amount",
+			msg: types.MsgOverwriteDelegationRecord{
+				Creator: validAddress,
+				DelegationRecord: &types.DelegationRecord{
+					Id:           1,
+					NativeAmount: sdkmath.NewInt(-1),
+					Status:       types.DELEGATION_QUEUE,
+					TxHash:       "TXHASH",
+				},
+			},
+			err: "amount < 0",
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			if test.err == "" {
+				require.NoError(t, test.msg.ValidateBasic(), "test: %v", test.name)
+
+				signers := test.msg.GetSigners()
+				require.Equal(t, len(signers), 1)
+				require.Equal(t, signers[0].String(), validAddress)
+
+				require.Equal(t, test.msg.Type(), "overwrite_delegation_record", "type")
+			} else {
+				require.ErrorContains(t, test.msg.ValidateBasic(), test.err, "test: %v", test.name)
+			}
+		})
+	}
+}
+
+// ----------------------------------------------
+//               OverwriteUnbondingRecord
+// ----------------------------------------------
+
+func TestMsgOverwriteUnbondingRecord(t *testing.T) {
+	apptesting.SetupConfig()
+
+	validAddress, invalidAddress := apptesting.GenerateTestAddrs()
+
+	tests := []struct {
+		name string
+		msg  types.MsgOverwriteUnbondingRecord
+		err  string
+	}{
+		{
+			name: "successful message",
+			msg: types.MsgOverwriteUnbondingRecord{
+				Creator: validAddress,
+				UnbondingRecord: &types.UnbondingRecord{
+					Id:                             1,
+					Status:                         types.UNBONDED,
+					StTokenAmount:                  sdkmath.NewInt(11),
+					NativeAmount:                   sdkmath.NewInt(10),
+					UnbondingCompletionTimeSeconds: 1705857114, // unixtime (1/21/24)
+					UndelegationTxHash:             "TXHASH1",
+					UnbondedTokenSweepTxHash:       "TXHASH2",
+				},
+			},
+		},
+		{
+			name: "invalid signer address",
+			msg: types.MsgOverwriteUnbondingRecord{
+				Creator: invalidAddress, // invalid
+				UnbondingRecord: &types.UnbondingRecord{
+					Id:                             1,
+					Status:                         types.UNBONDED,
+					StTokenAmount:                  sdkmath.NewInt(11),
+					NativeAmount:                   sdkmath.NewInt(10),
+					UnbondingCompletionTimeSeconds: 1705857114,
+					UndelegationTxHash:             "TXHASH1",
+					UnbondedTokenSweepTxHash:       "TXHASH2",
+				},
+			},
+			err: "invalid address",
+		},
+		{
+			name: "invalid native amount",
+			msg: types.MsgOverwriteUnbondingRecord{
+				Creator: validAddress,
+				UnbondingRecord: &types.UnbondingRecord{
+					Id:                             1,
+					Status:                         types.UNBONDED,
+					StTokenAmount:                  sdkmath.NewInt(11),
+					NativeAmount:                   sdkmath.NewInt(-1), // negative
+					UnbondingCompletionTimeSeconds: 1705857114,
+					UndelegationTxHash:             "TXHASH1",
+					UnbondedTokenSweepTxHash:       "TXHASH2",
+				},
+			},
+			err: "amount < 0",
+		},
+		{
+			name: "invalid sttoken amount",
+			msg: types.MsgOverwriteUnbondingRecord{
+				Creator: validAddress,
+				UnbondingRecord: &types.UnbondingRecord{
+					Id:                             1,
+					Status:                         types.UNBONDED,
+					StTokenAmount:                  sdkmath.NewInt(-1), // negative
+					NativeAmount:                   sdkmath.NewInt(10),
+					UnbondingCompletionTimeSeconds: 1705857114,
+					UndelegationTxHash:             "TXHASH1",
+					UnbondedTokenSweepTxHash:       "TXHASH2",
+				},
+			},
+			err: "amount < 0",
+		},
+		{
+			name: "invalid undelegation txhash",
+			msg: types.MsgOverwriteUnbondingRecord{
+				Creator: validAddress,
+				UnbondingRecord: &types.UnbondingRecord{
+					Id:                             1,
+					Status:                         types.UNBONDING_ARCHIVE, // should work
+					StTokenAmount:                  sdkmath.NewInt(11),
+					NativeAmount:                   sdkmath.NewInt(10),
+					UnbondingCompletionTimeSeconds: 1705857114,
+					UndelegationTxHash:             "",
+					UnbondedTokenSweepTxHash:       "TXHASH2",
+				},
+			},
+			err: "transaction hash cannot be empty",
+		},
+		{
+			name: "invalid unbonded sweep txhash",
+			msg: types.MsgOverwriteUnbondingRecord{
+				Creator: validAddress,
+				UnbondingRecord: &types.UnbondingRecord{
+					Id:                             1,
+					Status:                         types.UNBONDING_ARCHIVE, // should work
+					StTokenAmount:                  sdkmath.NewInt(11),
+					NativeAmount:                   sdkmath.NewInt(10),
+					UnbondingCompletionTimeSeconds: 1705857114,
+					UndelegationTxHash:             "TXHASH1",
+					UnbondedTokenSweepTxHash:       "",
+				},
+			},
+			err: "transaction hash cannot be empty",
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			if test.err == "" {
+				require.NoError(t, test.msg.ValidateBasic(), "test: %v", test.name)
+
+				signers := test.msg.GetSigners()
+				require.Equal(t, len(signers), 1)
+				require.Equal(t, signers[0].String(), validAddress)
+
+				require.Equal(t, test.msg.Type(), "overwrite_unbonding_record", "type")
+			} else {
+				require.ErrorContains(t, test.msg.ValidateBasic(), test.err, "test: %v", test.name)
+			}
+		})
+	}
+}
+
+// ----------------------------------------------
+//               OverwriteRedemptionRecord
+// ----------------------------------------------
+
+func TestMsgOverwriteRedemptionRecord(t *testing.T) {
+	apptesting.SetupConfig()
+
+	validAddress, invalidAddress := apptesting.GenerateTestAddrs()
+
+	tests := []struct {
+		name string
+		msg  types.MsgOverwriteRedemptionRecord
+		err  string
+	}{
+		{
+			name: "successful message",
+			msg: types.MsgOverwriteRedemptionRecord{
+				Creator: validAddress,
+				RedemptionRecord: &types.RedemptionRecord{
+					UnbondingRecordId: 1,
+					Redeemer:          validAddress,
+					StTokenAmount:     sdkmath.NewInt(11),
+					NativeAmount:      sdkmath.NewInt(10),
+				},
+			},
+		},
+		{
+			name: "invalid signer address",
+			msg: types.MsgOverwriteRedemptionRecord{
+				Creator: invalidAddress,
+				RedemptionRecord: &types.RedemptionRecord{
+					UnbondingRecordId: 1,
+					Redeemer:          validAddress,
+					StTokenAmount:     sdkmath.NewInt(11),
+					NativeAmount:      sdkmath.NewInt(10),
+				},
+			},
+			err: "invalid address",
+		},
+		{
+			name: "invalid redeemer address",
+			msg: types.MsgOverwriteRedemptionRecord{
+				Creator: validAddress,
+				RedemptionRecord: &types.RedemptionRecord{
+					UnbondingRecordId: 1,
+					Redeemer:          invalidAddress,
+					StTokenAmount:     sdkmath.NewInt(11),
+					NativeAmount:      sdkmath.NewInt(10),
+				},
+			},
+			err: "invalid address",
+		},
+		{
+			name: "invalid native amount",
+			msg: types.MsgOverwriteRedemptionRecord{
+				Creator: validAddress,
+				RedemptionRecord: &types.RedemptionRecord{
+					UnbondingRecordId: 1,
+					Redeemer:          validAddress,
+					StTokenAmount:     sdkmath.NewInt(11),
+					NativeAmount:      sdkmath.NewInt(-1),
+				},
+			},
+			err: "amount < 0",
+		},
+		{
+			name: "invalid sttoken amount",
+			msg: types.MsgOverwriteRedemptionRecord{
+				Creator: validAddress,
+				RedemptionRecord: &types.RedemptionRecord{
+					UnbondingRecordId: 1,
+					Redeemer:          validAddress,
+					StTokenAmount:     sdkmath.NewInt(-1),
+					NativeAmount:      sdkmath.NewInt(10),
+				},
+			},
+			err: "amount < 0",
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			if test.err == "" {
+				require.NoError(t, test.msg.ValidateBasic(), "test: %v", test.name)
+
+				signers := test.msg.GetSigners()
+				require.Equal(t, len(signers), 1)
+				require.Equal(t, signers[0].String(), validAddress)
+
+				require.Equal(t, test.msg.Type(), "overwrite_redemption_record", "type")
+			} else {
+				require.ErrorContains(t, test.msg.ValidateBasic(), test.err, "test: %v", test.name)
+			}
+		})
+	}
+}

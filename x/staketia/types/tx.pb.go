@@ -33,6 +33,34 @@ var _ = math.Inf
 // proto package needs to be updated.
 const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 
+type OverwritableRecordType int32
+
+const (
+	RECORD_TYPE_DELEGATION OverwritableRecordType = 0
+	RECORD_TYPE_UNBONDING  OverwritableRecordType = 1
+	RECORD_TYPE_REDEMPTION OverwritableRecordType = 2
+)
+
+var OverwritableRecordType_name = map[int32]string{
+	0: "RECORD_TYPE_DELEGATION",
+	1: "RECORD_TYPE_UNBONDING",
+	2: "RECORD_TYPE_REDEMPTION",
+}
+
+var OverwritableRecordType_value = map[string]int32{
+	"RECORD_TYPE_DELEGATION": 0,
+	"RECORD_TYPE_UNBONDING":  1,
+	"RECORD_TYPE_REDEMPTION": 2,
+}
+
+func (x OverwritableRecordType) String() string {
+	return proto.EnumName(OverwritableRecordType_name, int32(x))
+}
+
+func (OverwritableRecordType) EnumDescriptor() ([]byte, []int) {
+	return fileDescriptor_98ceebce67c1ff4c, []int{0}
+}
+
 // LiquidStake
 type MsgLiquidStake struct {
 	Staker       string                                 `protobuf:"bytes,1,opt,name=staker,proto3" json:"staker,omitempty"`
@@ -762,6 +790,354 @@ func (m *MsgResumeHostZoneResponse) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_MsgResumeHostZoneResponse proto.InternalMessageInfo
 
+// RefreshRedemptionRate
+type MsgRefreshRedemptionRate struct {
+	Creator string `protobuf:"bytes,1,opt,name=creator,proto3" json:"creator,omitempty"`
+}
+
+func (m *MsgRefreshRedemptionRate) Reset()         { *m = MsgRefreshRedemptionRate{} }
+func (m *MsgRefreshRedemptionRate) String() string { return proto.CompactTextString(m) }
+func (*MsgRefreshRedemptionRate) ProtoMessage()    {}
+func (*MsgRefreshRedemptionRate) Descriptor() ([]byte, []int) {
+	return fileDescriptor_98ceebce67c1ff4c, []int{16}
+}
+func (m *MsgRefreshRedemptionRate) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *MsgRefreshRedemptionRate) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_MsgRefreshRedemptionRate.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *MsgRefreshRedemptionRate) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MsgRefreshRedemptionRate.Merge(m, src)
+}
+func (m *MsgRefreshRedemptionRate) XXX_Size() int {
+	return m.Size()
+}
+func (m *MsgRefreshRedemptionRate) XXX_DiscardUnknown() {
+	xxx_messageInfo_MsgRefreshRedemptionRate.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_MsgRefreshRedemptionRate proto.InternalMessageInfo
+
+func (m *MsgRefreshRedemptionRate) GetCreator() string {
+	if m != nil {
+		return m.Creator
+	}
+	return ""
+}
+
+type MsgRefreshRedemptionRateResponse struct {
+}
+
+func (m *MsgRefreshRedemptionRateResponse) Reset()         { *m = MsgRefreshRedemptionRateResponse{} }
+func (m *MsgRefreshRedemptionRateResponse) String() string { return proto.CompactTextString(m) }
+func (*MsgRefreshRedemptionRateResponse) ProtoMessage()    {}
+func (*MsgRefreshRedemptionRateResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_98ceebce67c1ff4c, []int{17}
+}
+func (m *MsgRefreshRedemptionRateResponse) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *MsgRefreshRedemptionRateResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_MsgRefreshRedemptionRateResponse.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *MsgRefreshRedemptionRateResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MsgRefreshRedemptionRateResponse.Merge(m, src)
+}
+func (m *MsgRefreshRedemptionRateResponse) XXX_Size() int {
+	return m.Size()
+}
+func (m *MsgRefreshRedemptionRateResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_MsgRefreshRedemptionRateResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_MsgRefreshRedemptionRateResponse proto.InternalMessageInfo
+
+// OverwriteDelegationRecord
+type MsgOverwriteDelegationRecord struct {
+	Creator          string            `protobuf:"bytes,1,opt,name=creator,proto3" json:"creator,omitempty"`
+	DelegationRecord *DelegationRecord `protobuf:"bytes,2,opt,name=delegation_record,json=delegationRecord,proto3" json:"delegation_record,omitempty"`
+}
+
+func (m *MsgOverwriteDelegationRecord) Reset()         { *m = MsgOverwriteDelegationRecord{} }
+func (m *MsgOverwriteDelegationRecord) String() string { return proto.CompactTextString(m) }
+func (*MsgOverwriteDelegationRecord) ProtoMessage()    {}
+func (*MsgOverwriteDelegationRecord) Descriptor() ([]byte, []int) {
+	return fileDescriptor_98ceebce67c1ff4c, []int{18}
+}
+func (m *MsgOverwriteDelegationRecord) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *MsgOverwriteDelegationRecord) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_MsgOverwriteDelegationRecord.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *MsgOverwriteDelegationRecord) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MsgOverwriteDelegationRecord.Merge(m, src)
+}
+func (m *MsgOverwriteDelegationRecord) XXX_Size() int {
+	return m.Size()
+}
+func (m *MsgOverwriteDelegationRecord) XXX_DiscardUnknown() {
+	xxx_messageInfo_MsgOverwriteDelegationRecord.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_MsgOverwriteDelegationRecord proto.InternalMessageInfo
+
+func (m *MsgOverwriteDelegationRecord) GetCreator() string {
+	if m != nil {
+		return m.Creator
+	}
+	return ""
+}
+
+func (m *MsgOverwriteDelegationRecord) GetDelegationRecord() *DelegationRecord {
+	if m != nil {
+		return m.DelegationRecord
+	}
+	return nil
+}
+
+type MsgOverwriteDelegationRecordResponse struct {
+}
+
+func (m *MsgOverwriteDelegationRecordResponse) Reset()         { *m = MsgOverwriteDelegationRecordResponse{} }
+func (m *MsgOverwriteDelegationRecordResponse) String() string { return proto.CompactTextString(m) }
+func (*MsgOverwriteDelegationRecordResponse) ProtoMessage()    {}
+func (*MsgOverwriteDelegationRecordResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_98ceebce67c1ff4c, []int{19}
+}
+func (m *MsgOverwriteDelegationRecordResponse) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *MsgOverwriteDelegationRecordResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_MsgOverwriteDelegationRecordResponse.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *MsgOverwriteDelegationRecordResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MsgOverwriteDelegationRecordResponse.Merge(m, src)
+}
+func (m *MsgOverwriteDelegationRecordResponse) XXX_Size() int {
+	return m.Size()
+}
+func (m *MsgOverwriteDelegationRecordResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_MsgOverwriteDelegationRecordResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_MsgOverwriteDelegationRecordResponse proto.InternalMessageInfo
+
+// OverwriteUnbondingRecord
+type MsgOverwriteUnbondingRecord struct {
+	Creator         string           `protobuf:"bytes,1,opt,name=creator,proto3" json:"creator,omitempty"`
+	UnbondingRecord *UnbondingRecord `protobuf:"bytes,2,opt,name=unbonding_record,json=unbondingRecord,proto3" json:"unbonding_record,omitempty"`
+}
+
+func (m *MsgOverwriteUnbondingRecord) Reset()         { *m = MsgOverwriteUnbondingRecord{} }
+func (m *MsgOverwriteUnbondingRecord) String() string { return proto.CompactTextString(m) }
+func (*MsgOverwriteUnbondingRecord) ProtoMessage()    {}
+func (*MsgOverwriteUnbondingRecord) Descriptor() ([]byte, []int) {
+	return fileDescriptor_98ceebce67c1ff4c, []int{20}
+}
+func (m *MsgOverwriteUnbondingRecord) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *MsgOverwriteUnbondingRecord) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_MsgOverwriteUnbondingRecord.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *MsgOverwriteUnbondingRecord) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MsgOverwriteUnbondingRecord.Merge(m, src)
+}
+func (m *MsgOverwriteUnbondingRecord) XXX_Size() int {
+	return m.Size()
+}
+func (m *MsgOverwriteUnbondingRecord) XXX_DiscardUnknown() {
+	xxx_messageInfo_MsgOverwriteUnbondingRecord.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_MsgOverwriteUnbondingRecord proto.InternalMessageInfo
+
+func (m *MsgOverwriteUnbondingRecord) GetCreator() string {
+	if m != nil {
+		return m.Creator
+	}
+	return ""
+}
+
+func (m *MsgOverwriteUnbondingRecord) GetUnbondingRecord() *UnbondingRecord {
+	if m != nil {
+		return m.UnbondingRecord
+	}
+	return nil
+}
+
+type MsgOverwriteUnbondingRecordResponse struct {
+}
+
+func (m *MsgOverwriteUnbondingRecordResponse) Reset()         { *m = MsgOverwriteUnbondingRecordResponse{} }
+func (m *MsgOverwriteUnbondingRecordResponse) String() string { return proto.CompactTextString(m) }
+func (*MsgOverwriteUnbondingRecordResponse) ProtoMessage()    {}
+func (*MsgOverwriteUnbondingRecordResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_98ceebce67c1ff4c, []int{21}
+}
+func (m *MsgOverwriteUnbondingRecordResponse) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *MsgOverwriteUnbondingRecordResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_MsgOverwriteUnbondingRecordResponse.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *MsgOverwriteUnbondingRecordResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MsgOverwriteUnbondingRecordResponse.Merge(m, src)
+}
+func (m *MsgOverwriteUnbondingRecordResponse) XXX_Size() int {
+	return m.Size()
+}
+func (m *MsgOverwriteUnbondingRecordResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_MsgOverwriteUnbondingRecordResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_MsgOverwriteUnbondingRecordResponse proto.InternalMessageInfo
+
+// OverwriteRedemptionRecord
+type MsgOverwriteRedemptionRecord struct {
+	Creator          string            `protobuf:"bytes,1,opt,name=creator,proto3" json:"creator,omitempty"`
+	RedemptionRecord *RedemptionRecord `protobuf:"bytes,2,opt,name=redemption_record,json=redemptionRecord,proto3" json:"redemption_record,omitempty"`
+}
+
+func (m *MsgOverwriteRedemptionRecord) Reset()         { *m = MsgOverwriteRedemptionRecord{} }
+func (m *MsgOverwriteRedemptionRecord) String() string { return proto.CompactTextString(m) }
+func (*MsgOverwriteRedemptionRecord) ProtoMessage()    {}
+func (*MsgOverwriteRedemptionRecord) Descriptor() ([]byte, []int) {
+	return fileDescriptor_98ceebce67c1ff4c, []int{22}
+}
+func (m *MsgOverwriteRedemptionRecord) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *MsgOverwriteRedemptionRecord) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_MsgOverwriteRedemptionRecord.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *MsgOverwriteRedemptionRecord) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MsgOverwriteRedemptionRecord.Merge(m, src)
+}
+func (m *MsgOverwriteRedemptionRecord) XXX_Size() int {
+	return m.Size()
+}
+func (m *MsgOverwriteRedemptionRecord) XXX_DiscardUnknown() {
+	xxx_messageInfo_MsgOverwriteRedemptionRecord.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_MsgOverwriteRedemptionRecord proto.InternalMessageInfo
+
+func (m *MsgOverwriteRedemptionRecord) GetCreator() string {
+	if m != nil {
+		return m.Creator
+	}
+	return ""
+}
+
+func (m *MsgOverwriteRedemptionRecord) GetRedemptionRecord() *RedemptionRecord {
+	if m != nil {
+		return m.RedemptionRecord
+	}
+	return nil
+}
+
+type MsgOverwriteRedemptionRecordResponse struct {
+}
+
+func (m *MsgOverwriteRedemptionRecordResponse) Reset()         { *m = MsgOverwriteRedemptionRecordResponse{} }
+func (m *MsgOverwriteRedemptionRecordResponse) String() string { return proto.CompactTextString(m) }
+func (*MsgOverwriteRedemptionRecordResponse) ProtoMessage()    {}
+func (*MsgOverwriteRedemptionRecordResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_98ceebce67c1ff4c, []int{23}
+}
+func (m *MsgOverwriteRedemptionRecordResponse) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *MsgOverwriteRedemptionRecordResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_MsgOverwriteRedemptionRecordResponse.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *MsgOverwriteRedemptionRecordResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MsgOverwriteRedemptionRecordResponse.Merge(m, src)
+}
+func (m *MsgOverwriteRedemptionRecordResponse) XXX_Size() int {
+	return m.Size()
+}
+func (m *MsgOverwriteRedemptionRecordResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_MsgOverwriteRedemptionRecordResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_MsgOverwriteRedemptionRecordResponse proto.InternalMessageInfo
+
 // SetOperatorAddress
 type MsgSetOperatorAddress struct {
 	Signer   string `protobuf:"bytes,1,opt,name=signer,proto3" json:"signer,omitempty"`
@@ -772,7 +1148,7 @@ func (m *MsgSetOperatorAddress) Reset()         { *m = MsgSetOperatorAddress{} }
 func (m *MsgSetOperatorAddress) String() string { return proto.CompactTextString(m) }
 func (*MsgSetOperatorAddress) ProtoMessage()    {}
 func (*MsgSetOperatorAddress) Descriptor() ([]byte, []int) {
-	return fileDescriptor_98ceebce67c1ff4c, []int{16}
+	return fileDescriptor_98ceebce67c1ff4c, []int{24}
 }
 func (m *MsgSetOperatorAddress) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -822,7 +1198,7 @@ func (m *MsgSetOperatorAddressResponse) Reset()         { *m = MsgSetOperatorAdd
 func (m *MsgSetOperatorAddressResponse) String() string { return proto.CompactTextString(m) }
 func (*MsgSetOperatorAddressResponse) ProtoMessage()    {}
 func (*MsgSetOperatorAddressResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_98ceebce67c1ff4c, []int{17}
+	return fileDescriptor_98ceebce67c1ff4c, []int{25}
 }
 func (m *MsgSetOperatorAddressResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -852,6 +1228,7 @@ func (m *MsgSetOperatorAddressResponse) XXX_DiscardUnknown() {
 var xxx_messageInfo_MsgSetOperatorAddressResponse proto.InternalMessageInfo
 
 func init() {
+	proto.RegisterEnum("stride.staketia.OverwritableRecordType", OverwritableRecordType_name, OverwritableRecordType_value)
 	proto.RegisterType((*MsgLiquidStake)(nil), "stride.staketia.MsgLiquidStake")
 	proto.RegisterType((*MsgLiquidStakeResponse)(nil), "stride.staketia.MsgLiquidStakeResponse")
 	proto.RegisterType((*MsgRedeemStake)(nil), "stride.staketia.MsgRedeemStake")
@@ -868,6 +1245,14 @@ func init() {
 	proto.RegisterType((*MsgUpdateInnerRedemptionRateBoundsResponse)(nil), "stride.staketia.MsgUpdateInnerRedemptionRateBoundsResponse")
 	proto.RegisterType((*MsgResumeHostZone)(nil), "stride.staketia.MsgResumeHostZone")
 	proto.RegisterType((*MsgResumeHostZoneResponse)(nil), "stride.staketia.MsgResumeHostZoneResponse")
+	proto.RegisterType((*MsgRefreshRedemptionRate)(nil), "stride.staketia.MsgRefreshRedemptionRate")
+	proto.RegisterType((*MsgRefreshRedemptionRateResponse)(nil), "stride.staketia.MsgRefreshRedemptionRateResponse")
+	proto.RegisterType((*MsgOverwriteDelegationRecord)(nil), "stride.staketia.MsgOverwriteDelegationRecord")
+	proto.RegisterType((*MsgOverwriteDelegationRecordResponse)(nil), "stride.staketia.MsgOverwriteDelegationRecordResponse")
+	proto.RegisterType((*MsgOverwriteUnbondingRecord)(nil), "stride.staketia.MsgOverwriteUnbondingRecord")
+	proto.RegisterType((*MsgOverwriteUnbondingRecordResponse)(nil), "stride.staketia.MsgOverwriteUnbondingRecordResponse")
+	proto.RegisterType((*MsgOverwriteRedemptionRecord)(nil), "stride.staketia.MsgOverwriteRedemptionRecord")
+	proto.RegisterType((*MsgOverwriteRedemptionRecordResponse)(nil), "stride.staketia.MsgOverwriteRedemptionRecordResponse")
 	proto.RegisterType((*MsgSetOperatorAddress)(nil), "stride.staketia.MsgSetOperatorAddress")
 	proto.RegisterType((*MsgSetOperatorAddressResponse)(nil), "stride.staketia.MsgSetOperatorAddressResponse")
 }
@@ -875,73 +1260,92 @@ func init() {
 func init() { proto.RegisterFile("stride/staketia/tx.proto", fileDescriptor_98ceebce67c1ff4c) }
 
 var fileDescriptor_98ceebce67c1ff4c = []byte{
-	// 1048 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xb4, 0x57, 0xcf, 0x6f, 0x1b, 0x45,
-	0x14, 0xce, 0x36, 0xa8, 0x69, 0x27, 0xf4, 0x87, 0x97, 0x92, 0xd8, 0x5b, 0xba, 0x2e, 0x0b, 0x4d,
-	0x8a, 0x8b, 0x77, 0x71, 0x0a, 0xaa, 0x64, 0xb8, 0xc4, 0xcd, 0xa1, 0x91, 0x62, 0x55, 0xb2, 0x09,
-	0x95, 0xc2, 0x61, 0x19, 0x7b, 0x27, 0x9b, 0x25, 0xd9, 0x19, 0xb3, 0x33, 0x76, 0x8d, 0xb8, 0x00,
-	0x27, 0xc4, 0x09, 0x89, 0x13, 0x07, 0xae, 0x48, 0x70, 0xa1, 0x07, 0xfe, 0x88, 0x1e, 0x2b, 0x4e,
-	0x88, 0x43, 0x41, 0xc9, 0xa1, 0xe2, 0x2f, 0xe8, 0x15, 0xcd, 0xec, 0x78, 0xba, 0xb6, 0xc7, 0xb1,
-	0x5b, 0xc8, 0xc5, 0xde, 0x99, 0xf7, 0xcd, 0x7b, 0xdf, 0xfb, 0x66, 0xe6, 0xbd, 0x5d, 0x90, 0xa7,
-	0x2c, 0x89, 0x02, 0xe4, 0x51, 0x06, 0xf7, 0x11, 0x8b, 0xa0, 0xc7, 0xfa, 0x6e, 0x27, 0x21, 0x8c,
-	0x98, 0x17, 0x52, 0x8b, 0x3b, 0xb0, 0x58, 0xcb, 0x6d, 0x42, 0x63, 0x42, 0xbd, 0x98, 0x86, 0x5e,
-	0xaf, 0xc2, 0xff, 0x52, 0xa4, 0x95, 0x83, 0x71, 0x84, 0x89, 0x27, 0x7e, 0xe5, 0xd4, 0xa5, 0x90,
-	0x84, 0x44, 0x3c, 0x7a, 0xfc, 0x49, 0xce, 0xda, 0xd2, 0x43, 0x0b, 0x52, 0xe4, 0xf5, 0x2a, 0x2d,
-	0xc4, 0x60, 0xc5, 0x6b, 0x93, 0x08, 0x4b, 0x7b, 0x21, 0xb5, 0xfb, 0xe9, 0xc2, 0x74, 0x90, 0x9a,
-	0x9c, 0x9f, 0x0c, 0x70, 0xbe, 0x4e, 0xc3, 0xad, 0xe8, 0xb3, 0x6e, 0x14, 0x34, 0x39, 0x25, 0x73,
-	0x09, 0x9c, 0x16, 0xdc, 0x92, 0xbc, 0x71, 0xd5, 0xb8, 0x7e, 0xb6, 0x21, 0x47, 0x66, 0x13, 0x9c,
-	0xc3, 0x90, 0x45, 0x3d, 0xe4, 0xc3, 0x98, 0x74, 0x31, 0xcb, 0x9f, 0xe2, 0xe6, 0x9a, 0xfb, 0xf0,
-	0x71, 0x71, 0xee, 0xcf, 0xc7, 0xc5, 0x95, 0x30, 0x62, 0x7b, 0xdd, 0x96, 0xdb, 0x26, 0xb1, 0x0c,
-	0x21, 0xff, 0xca, 0x34, 0xd8, 0xf7, 0xd8, 0xe7, 0x1d, 0x44, 0xdd, 0x4d, 0xcc, 0x1a, 0x2f, 0xa7,
-	0x4e, 0xd6, 0x85, 0x8f, 0xea, 0xea, 0xd7, 0x4f, 0x1e, 0x94, 0x64, 0x84, 0x6f, 0x9f, 0x3c, 0x28,
-	0x2d, 0x2b, 0xc1, 0x86, 0x59, 0x39, 0x5f, 0x1a, 0x60, 0x69, 0x78, 0xaa, 0x81, 0x68, 0x87, 0x60,
-	0x8a, 0xcc, 0x5d, 0x70, 0x86, 0x32, 0x9f, 0x91, 0x7d, 0x84, 0x05, 0xe5, 0xc5, 0xb5, 0x82, 0x2b,
-	0x93, 0xe4, 0x8a, 0xb8, 0x52, 0x11, 0xf7, 0x36, 0x89, 0x70, 0xed, 0x1d, 0x4e, 0xf7, 0x97, 0xbf,
-	0x8a, 0xd7, 0x67, 0xa0, 0xcb, 0x17, 0xd0, 0xc6, 0x02, 0x65, 0x1f, 0x72, 0xdf, 0xce, 0xaf, 0xa9,
-	0x56, 0x0d, 0x14, 0x20, 0x14, 0xa7, 0x5a, 0x59, 0xe0, 0x4c, 0x22, 0x86, 0x4a, 0x2d, 0x35, 0x36,
-	0x3f, 0x02, 0x17, 0x06, 0xb4, 0xfe, 0x9b, 0x62, 0xe7, 0x24, 0x01, 0x29, 0xd9, 0x5b, 0x5c, 0x32,
-	0x15, 0x66, 0x4c, 0xb4, 0x0c, 0x3d, 0xe7, 0x9b, 0x54, 0xb4, 0xcc, 0x94, 0x12, 0x0d, 0x03, 0xb9,
-	0x11, 0x27, 0x27, 0xdc, 0x62, 0x1a, 0x20, 0x15, 0xef, 0x07, 0x03, 0x5c, 0xaa, 0xd3, 0xf0, 0x36,
-	0xc1, 0xbb, 0x51, 0x12, 0x6f, 0xa0, 0x03, 0x14, 0x42, 0x16, 0x11, 0xcc, 0x25, 0x24, 0x1d, 0x94,
-	0x40, 0x46, 0x94, 0x84, 0x83, 0xb1, 0x79, 0x19, 0x9c, 0x4d, 0x50, 0x9b, 0x24, 0x81, 0x1f, 0x05,
-	0x42, 0xbc, 0x97, 0xb8, 0xbe, 0x7c, 0x62, 0x33, 0x30, 0x97, 0xc1, 0x02, 0xeb, 0xfb, 0x7b, 0x90,
-	0xee, 0xe5, 0xe7, 0xd3, 0x83, 0xca, 0xfa, 0x77, 0x20, 0xdd, 0xab, 0x7a, 0x42, 0xa0, 0x81, 0x13,
-	0x2e, 0xd0, 0x95, 0xac, 0x40, 0x63, 0x14, 0x1c, 0x1b, 0xbc, 0xa6, 0x9b, 0x1f, 0x68, 0xe5, 0xfc,
-	0x98, 0xca, 0x28, 0x01, 0xdb, 0x38, 0x38, 0x49, 0xf6, 0x95, 0x31, 0xf6, 0x45, 0x0d, 0xfb, 0x2c,
-	0x09, 0xe7, 0x2a, 0xb0, 0xf5, 0x16, 0x95, 0xc1, 0xcf, 0x46, 0x36, 0xc5, 0x6d, 0xdc, 0x22, 0x38,
-	0x40, 0x81, 0xd8, 0x99, 0xe6, 0x7d, 0x84, 0x3a, 0x27, 0x90, 0xc7, 0xad, 0xb1, 0x3c, 0xae, 0x69,
-	0xf3, 0x18, 0xa5, 0xe2, 0xac, 0x80, 0x37, 0x8f, 0xb3, 0xab, 0x9c, 0x9e, 0x1a, 0xa0, 0x50, 0xa7,
-	0xe1, 0x7a, 0xf0, 0x69, 0x97, 0x32, 0xb9, 0x6b, 0x28, 0xa8, 0xc1, 0x03, 0x88, 0xdb, 0xe8, 0xd8,
-	0x84, 0x3e, 0x06, 0xb9, 0x67, 0x1a, 0xf9, 0x64, 0x77, 0x97, 0xa2, 0x17, 0xbd, 0x9b, 0x17, 0x9f,
-	0x39, 0xba, 0x2b, 0xfc, 0x98, 0x37, 0x40, 0xae, 0x07, 0x0f, 0xa2, 0x80, 0x47, 0xf2, 0x61, 0x10,
-	0x24, 0x88, 0x52, 0x29, 0xcd, 0x45, 0x65, 0x58, 0x4f, 0xe7, 0xab, 0xef, 0x8e, 0x89, 0xe4, 0x64,
-	0x45, 0xd2, 0xe7, 0xe6, 0xbc, 0x01, 0x5e, 0x9f, 0x68, 0x54, 0xf2, 0xfc, 0x73, 0x0a, 0x38, 0x75,
-	0x1a, 0x6e, 0x77, 0x02, 0xc8, 0xd0, 0x26, 0xc6, 0x28, 0xe1, 0x65, 0x20, 0xee, 0x88, 0x73, 0x01,
-	0x19, 0xaa, 0x91, 0x2e, 0x0e, 0xa8, 0x99, 0x07, 0x0b, 0xed, 0x04, 0x65, 0x64, 0x1a, 0x0c, 0xcd,
-	0xfb, 0xa0, 0x10, 0x47, 0xd8, 0x8f, 0xf8, 0x52, 0x3f, 0x51, 0x6b, 0xfd, 0x04, 0x32, 0x24, 0xd5,
-	0xfa, 0xe0, 0x39, 0xd4, 0xda, 0x40, 0xed, 0xdf, 0x7f, 0x2b, 0x03, 0x59, 0x5f, 0x36, 0x50, 0xbb,
-	0xb1, 0x14, 0x47, 0x58, 0x43, 0x4c, 0x04, 0x86, 0xfd, 0x09, 0x81, 0xe7, 0xff, 0x97, 0xc0, 0xb0,
-	0xaf, 0x09, 0x9c, 0x1e, 0xd9, 0x41, 0xfe, 0x7c, 0x33, 0x56, 0xb2, 0x9b, 0x91, 0x2a, 0xa9, 0x13,
-	0xd1, 0x79, 0x1b, 0x94, 0xa6, 0x4b, 0xad, 0x76, 0x66, 0x07, 0xe4, 0x44, 0x51, 0xa6, 0xdd, 0x18,
-	0xdd, 0x21, 0x94, 0xed, 0x10, 0x8c, 0x26, 0xef, 0x43, 0xf5, 0xc6, 0x28, 0x2b, 0x6b, 0xb8, 0xdc,
-	0x67, 0xdd, 0x38, 0x97, 0xc5, 0x9d, 0x18, 0x9e, 0x54, 0x81, 0xbf, 0x00, 0xaf, 0xd6, 0x69, 0xd8,
-	0x44, 0xec, 0xae, 0x3c, 0x70, 0xf2, 0x18, 0x8a, 0x96, 0x1f, 0x85, 0x38, 0xd3, 0xf2, 0xc5, 0x68,
-	0xe8, 0x12, 0x9d, 0x1a, 0xbe, 0x44, 0x55, 0x37, 0xed, 0xdc, 0x02, 0xc8, 0x59, 0xd9, 0x59, 0x56,
-	0xe3, 0x31, 0x9c, 0x22, 0xb8, 0xa2, 0x35, 0x0c, 0xd8, 0xad, 0x3d, 0x5d, 0x00, 0xf3, 0x75, 0x1a,
-	0x9a, 0xf7, 0xc0, 0x62, 0xf6, 0x75, 0xa4, 0xe8, 0x8e, 0xbc, 0x30, 0xb9, 0xc3, 0xaf, 0x01, 0xd6,
-	0xea, 0x14, 0x80, 0x6a, 0x79, 0xf7, 0xc0, 0x62, 0xb6, 0x77, 0x6b, 0x1d, 0x67, 0x00, 0x7a, 0xc7,
-	0xba, 0x5e, 0x1a, 0x81, 0xdc, 0x78, 0x5f, 0xbb, 0xa6, 0x5b, 0x3d, 0x06, 0xb3, 0xca, 0x33, 0xc1,
-	0x54, 0x28, 0x02, 0x5e, 0xd1, 0xb5, 0xa1, 0xd5, 0x63, 0xbc, 0x64, 0x81, 0x96, 0x37, 0x23, 0x50,
-	0x05, 0xfc, 0xca, 0x00, 0x85, 0xc9, 0x6d, 0xa3, 0x7c, 0xac, 0xbb, 0x51, 0xb8, 0xf5, 0xde, 0x73,
-	0xc1, 0x15, 0x87, 0x3e, 0x58, 0x9a, 0x50, 0xe5, 0x4b, 0x3a, 0x87, 0x7a, 0xac, 0xb5, 0x36, 0x3b,
-	0x56, 0x45, 0xfe, 0xde, 0x00, 0xc5, 0x69, 0x15, 0xf4, 0xa6, 0xce, 0xef, 0x94, 0x45, 0xd6, 0xfb,
-	0x2f, 0xb0, 0x48, 0xb1, 0xfa, 0x04, 0x9c, 0x1f, 0xa9, 0x1e, 0x8e, 0xfe, 0xa8, 0x66, 0x31, 0x56,
-	0x69, 0x3a, 0x46, 0x45, 0x38, 0x00, 0xa6, 0xa6, 0x4c, 0xac, 0xe8, 0x3c, 0x8c, 0xe3, 0x2c, 0x77,
-	0x36, 0xdc, 0x20, 0x5a, 0x6d, 0xeb, 0xe1, 0xa1, 0x6d, 0x3c, 0x3a, 0xb4, 0x8d, 0xbf, 0x0f, 0x6d,
-	0xe3, 0xbb, 0x23, 0x7b, 0xee, 0xd1, 0x91, 0x3d, 0xf7, 0xc7, 0x91, 0x3d, 0xb7, 0xb3, 0x96, 0xa9,
-	0xef, 0x4d, 0xe1, 0xb3, 0xbc, 0x05, 0x5b, 0xd4, 0x93, 0x5f, 0x57, 0xbd, 0xca, 0x2d, 0xaf, 0x9f,
-	0xf9, 0xc6, 0xe2, 0xf5, 0xbe, 0x75, 0x5a, 0x7c, 0xd9, 0xdc, 0xfc, 0x37, 0x00, 0x00, 0xff, 0xff,
-	0x90, 0x1c, 0x77, 0x5b, 0x83, 0x0d, 0x00, 0x00,
+	// 1354 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xb4, 0x58, 0xcf, 0x8f, 0xd3, 0x46,
+	0x14, 0x8e, 0x17, 0xc4, 0x8f, 0x49, 0x81, 0xac, 0x0b, 0x21, 0x31, 0x25, 0x59, 0x0c, 0x2c, 0x10,
+	0x58, 0xbb, 0x09, 0x50, 0xa4, 0xb4, 0x97, 0x0d, 0x89, 0x60, 0xd5, 0xcd, 0x06, 0x65, 0x77, 0x8b,
+	0x4a, 0x0f, 0xae, 0x13, 0xcf, 0x3a, 0x2e, 0x1b, 0x4f, 0xf0, 0x4c, 0x42, 0x50, 0xa5, 0xaa, 0xed,
+	0x09, 0xf5, 0x54, 0xa9, 0xa7, 0x1e, 0x7a, 0xaa, 0x54, 0xa9, 0xbd, 0x94, 0x43, 0x6f, 0xbd, 0xf4,
+	0xc8, 0x11, 0xf5, 0x54, 0xf5, 0x40, 0x2b, 0x38, 0xa0, 0xfe, 0x03, 0xed, 0xb5, 0xf2, 0x4f, 0xc6,
+	0xf6, 0x38, 0xc9, 0xd2, 0xee, 0x65, 0x13, 0xcf, 0xfb, 0xe6, 0xbd, 0xef, 0x7d, 0x6f, 0xfc, 0xe6,
+	0x6d, 0x40, 0x0e, 0x13, 0xcb, 0xd0, 0xa0, 0x8c, 0x89, 0x7a, 0x17, 0x12, 0x43, 0x95, 0xc9, 0x58,
+	0x1a, 0x58, 0x88, 0x20, 0xfe, 0x88, 0x6b, 0x91, 0x7c, 0x8b, 0x70, 0xbc, 0x8b, 0x70, 0x1f, 0x61,
+	0xb9, 0x8f, 0x75, 0x79, 0x54, 0xb6, 0x3f, 0x5c, 0xa4, 0x30, 0xaf, 0xf6, 0x0d, 0x13, 0xc9, 0xce,
+	0x5f, 0x6f, 0xe9, 0xa8, 0x8e, 0x74, 0xe4, 0x7c, 0x95, 0xed, 0x6f, 0xde, 0x6a, 0xc1, 0xf3, 0xd0,
+	0x51, 0x31, 0x94, 0x47, 0xe5, 0x0e, 0x24, 0x6a, 0x59, 0xee, 0x22, 0xc3, 0xf4, 0xec, 0x79, 0xd7,
+	0xae, 0xb8, 0x1b, 0xdd, 0x07, 0x7f, 0x6b, 0x94, 0xa7, 0xff, 0xc5, 0xb5, 0x8b, 0xdf, 0x71, 0xe0,
+	0x70, 0x13, 0xeb, 0xab, 0xc6, 0xbd, 0xa1, 0xa1, 0xad, 0xdb, 0x36, 0x3e, 0x0b, 0xf6, 0x39, 0x20,
+	0x2b, 0xc7, 0x2d, 0x70, 0xe7, 0x0f, 0xb6, 0xbd, 0x27, 0x7e, 0x1d, 0x1c, 0x32, 0x55, 0x62, 0x8c,
+	0xa0, 0xa2, 0xf6, 0xd1, 0xd0, 0x24, 0xb9, 0x39, 0xdb, 0x5c, 0x93, 0x1e, 0x3f, 0x2d, 0xa6, 0x7e,
+	0x7f, 0x5a, 0x5c, 0xd4, 0x0d, 0xd2, 0x1b, 0x76, 0xa4, 0x2e, 0xea, 0x7b, 0x14, 0xbc, 0x8f, 0x25,
+	0xac, 0xdd, 0x95, 0xc9, 0x83, 0x01, 0xc4, 0xd2, 0x8a, 0x49, 0xda, 0xaf, 0xb9, 0x4e, 0x96, 0x1d,
+	0x1f, 0xd5, 0x73, 0x9f, 0xbf, 0x78, 0x54, 0xf2, 0x22, 0x7c, 0xf1, 0xe2, 0x51, 0xe9, 0x78, 0x40,
+	0x34, 0xcc, 0x4a, 0xfc, 0x94, 0x03, 0xd9, 0xf0, 0x52, 0x1b, 0xe2, 0x01, 0x32, 0x31, 0xe4, 0xb7,
+	0xc0, 0x01, 0x4c, 0x14, 0x82, 0xee, 0x42, 0xd3, 0xa1, 0x9c, 0xae, 0xe4, 0x25, 0x4f, 0x04, 0x5b,
+	0x31, 0xc9, 0x53, 0x4c, 0xba, 0x8e, 0x0c, 0xb3, 0xf6, 0xa6, 0x4d, 0xf7, 0x87, 0x3f, 0x8a, 0xe7,
+	0x67, 0xa0, 0x6b, 0x6f, 0xc0, 0xed, 0xfd, 0x98, 0x6c, 0xd8, 0xbe, 0xc5, 0x1f, 0x5d, 0xad, 0xda,
+	0x50, 0x83, 0xb0, 0xef, 0x6a, 0x25, 0x80, 0x03, 0x96, 0xf3, 0x18, 0xa8, 0x15, 0x3c, 0xf3, 0xef,
+	0x81, 0x23, 0x3e, 0xad, 0xff, 0xa6, 0xd8, 0x21, 0x8f, 0x80, 0x27, 0xd9, 0x05, 0x5b, 0xb2, 0x20,
+	0x4c, 0x4c, 0x34, 0x8a, 0x9e, 0xf8, 0xd0, 0x15, 0x8d, 0x5a, 0x0a, 0x44, 0x33, 0x81, 0x57, 0x88,
+	0xdd, 0x13, 0x2e, 0xed, 0x06, 0x70, 0xc5, 0xfb, 0x9a, 0x03, 0x47, 0x9b, 0x58, 0xbf, 0x8e, 0xcc,
+	0x2d, 0xc3, 0xea, 0xd7, 0xe1, 0x36, 0xd4, 0x55, 0x62, 0x20, 0xd3, 0x96, 0x10, 0x0d, 0xa0, 0xa5,
+	0x12, 0x14, 0x48, 0xe8, 0x3f, 0xf3, 0x27, 0xc0, 0x41, 0x0b, 0x76, 0x91, 0xa5, 0x29, 0x86, 0xe6,
+	0x88, 0xb7, 0xd7, 0xd6, 0xd7, 0x5e, 0x58, 0xd1, 0xf8, 0xe3, 0x60, 0x3f, 0x19, 0x2b, 0x3d, 0x15,
+	0xf7, 0x72, 0x7b, 0xdc, 0x83, 0x4a, 0xc6, 0x37, 0x55, 0xdc, 0xab, 0xca, 0x8e, 0x40, 0xbe, 0x13,
+	0x5b, 0xa0, 0x93, 0xb4, 0x40, 0x31, 0x0a, 0x62, 0x01, 0xbc, 0xc1, 0x5a, 0xf7, 0xb5, 0x12, 0xbf,
+	0x71, 0x65, 0xf4, 0x00, 0x9b, 0xa6, 0xb6, 0x9b, 0xec, 0xcb, 0x31, 0xf6, 0x45, 0x06, 0x7b, 0x9a,
+	0x84, 0xb8, 0x00, 0x0a, 0x6c, 0x4b, 0x90, 0xc1, 0xf7, 0x1c, 0x9d, 0xe2, 0xa6, 0xd9, 0x41, 0xa6,
+	0x06, 0x35, 0xa7, 0x32, 0xeb, 0xf7, 0x21, 0x1c, 0xec, 0x42, 0x1e, 0xd7, 0x62, 0x79, 0x9c, 0x65,
+	0xe6, 0x11, 0xa5, 0x22, 0x2e, 0x82, 0x33, 0x93, 0xec, 0x41, 0x4e, 0xff, 0x70, 0x20, 0xdf, 0xc4,
+	0xfa, 0xb2, 0xf6, 0xd1, 0x10, 0x13, 0xaf, 0x6a, 0x50, 0xab, 0xa9, 0xdb, 0xaa, 0xd9, 0x85, 0x13,
+	0x13, 0xfa, 0x00, 0xcc, 0xbf, 0xd4, 0x48, 0x41, 0x5b, 0x5b, 0x18, 0xbe, 0xea, 0xbb, 0x99, 0x79,
+	0xe9, 0xa8, 0xe5, 0xf8, 0xe1, 0x2f, 0x82, 0xf9, 0x91, 0xba, 0x6d, 0x68, 0x76, 0x24, 0x45, 0xd5,
+	0x34, 0x0b, 0x62, 0xec, 0x49, 0x93, 0x09, 0x0c, 0xcb, 0xee, 0x7a, 0xf5, 0x4a, 0x4c, 0x24, 0x91,
+	0x16, 0x89, 0x9d, 0x9b, 0x78, 0x1a, 0x9c, 0x4a, 0x34, 0x06, 0xf2, 0xfc, 0x35, 0x07, 0xc4, 0x26,
+	0xd6, 0x37, 0x07, 0x9a, 0x4a, 0xe0, 0x8a, 0x69, 0x42, 0xcb, 0x6e, 0x03, 0xfd, 0x81, 0x73, 0x2e,
+	0x54, 0x02, 0x6b, 0x68, 0x68, 0x6a, 0x98, 0xcf, 0x81, 0xfd, 0x5d, 0x0b, 0x52, 0x32, 0xf9, 0x8f,
+	0xfc, 0x7d, 0x90, 0xef, 0x1b, 0xa6, 0x62, 0xd8, 0x5b, 0x15, 0x2b, 0xd8, 0xab, 0x58, 0x2a, 0x81,
+	0x9e, 0x5a, 0xef, 0xec, 0x40, 0xad, 0x3a, 0xec, 0xfe, 0xfa, 0xd3, 0x12, 0xf0, 0xfa, 0x4b, 0x1d,
+	0x76, 0xdb, 0xd9, 0xbe, 0x61, 0x32, 0x88, 0x39, 0x81, 0xd5, 0x71, 0x42, 0xe0, 0x3d, 0xff, 0x4b,
+	0x60, 0x75, 0xcc, 0x08, 0xec, 0x1e, 0x59, 0x3f, 0x7f, 0xbb, 0x18, 0x8b, 0x74, 0x31, 0x5c, 0x25,
+	0x59, 0x22, 0x8a, 0x97, 0x40, 0x69, 0xba, 0xd4, 0x41, 0x65, 0xee, 0x80, 0x79, 0xa7, 0x29, 0xe3,
+	0x61, 0x1f, 0xde, 0x44, 0x98, 0xdc, 0x41, 0x26, 0x4c, 0xae, 0x43, 0xf5, 0x62, 0x94, 0x95, 0x10,
+	0x6e, 0xf7, 0xb4, 0x1b, 0xf1, 0x84, 0xf3, 0x4e, 0x84, 0x17, 0x83, 0xc0, 0x3d, 0x90, 0x73, 0x8c,
+	0x5b, 0x16, 0xc4, 0xbd, 0x88, 0xe8, 0xc9, 0xf1, 0x2b, 0xd1, 0xf8, 0xa7, 0xc2, 0xf1, 0x19, 0xde,
+	0x44, 0x11, 0x2c, 0x24, 0xd9, 0x02, 0x36, 0xbf, 0xb8, 0x3d, 0xa9, 0x35, 0x82, 0xd6, 0x7d, 0xcb,
+	0x20, 0x90, 0x6e, 0xbc, 0x76, 0x73, 0x99, 0x70, 0x34, 0xd7, 0x42, 0x2f, 0xb0, 0xdb, 0x8b, 0x9c,
+	0x23, 0x99, 0xae, 0x9c, 0x92, 0x22, 0xf3, 0x97, 0x14, 0xf5, 0x4b, 0xbf, 0xb3, 0xee, 0x4a, 0xf5,
+	0xad, 0x68, 0x8a, 0xa1, 0x56, 0x95, 0xc8, 0xd0, 0x6b, 0x55, 0x89, 0xf6, 0x20, 0xd5, 0x9f, 0x39,
+	0x70, 0x82, 0x06, 0xba, 0x5d, 0xcd, 0x30, 0xf5, 0xa9, 0x99, 0xbe, 0x0b, 0x32, 0x43, 0x1f, 0x1c,
+	0x4e, 0x74, 0x21, 0x96, 0x68, 0xc4, 0x6b, 0xfb, 0xc8, 0x30, 0xbc, 0x50, 0xbd, 0x1a, 0x4d, 0xf3,
+	0x0c, 0x33, 0xcd, 0x88, 0x1f, 0xf1, 0x2c, 0x38, 0x3d, 0xc1, 0x9c, 0x58, 0x4f, 0xaa, 0xec, 0x33,
+	0xd4, 0x93, 0x7e, 0xcf, 0x27, 0xd7, 0x33, 0xea, 0xb7, 0x9d, 0xb1, 0x22, 0x2b, 0xb3, 0xd6, 0x33,
+	0xea, 0x29, 0x5a, 0xcf, 0x58, 0x24, 0x3f, 0xd5, 0x8f, 0xc1, 0xb1, 0x26, 0xd6, 0xd7, 0x21, 0x69,
+	0x79, 0x9d, 0xdb, 0xeb, 0xe7, 0xce, 0xec, 0x6c, 0xe8, 0x26, 0x35, 0x3b, 0x3b, 0x4f, 0xa1, 0xdb,
+	0x68, 0x2e, 0x7c, 0x1b, 0x55, 0x25, 0x77, 0x04, 0x76, 0x80, 0x36, 0xd7, 0x02, 0xcd, 0x35, 0x1e,
+	0x43, 0x2c, 0x82, 0x93, 0x4c, 0x83, 0xcf, 0xae, 0x74, 0x0f, 0x64, 0xfd, 0x14, 0xd4, 0xce, 0x36,
+	0x74, 0xb9, 0x6f, 0x3c, 0x18, 0xd8, 0x97, 0x62, 0xb6, 0xdd, 0xb8, 0xde, 0x6a, 0xd7, 0x95, 0x8d,
+	0xf7, 0x6f, 0x35, 0x94, 0x7a, 0x63, 0xb5, 0x71, 0x63, 0x79, 0x63, 0xa5, 0xb5, 0x96, 0x49, 0xf1,
+	0x79, 0x70, 0x8c, 0xb6, 0x6d, 0xae, 0xd5, 0x5a, 0x6b, 0xf5, 0x95, 0xb5, 0x1b, 0x19, 0x2e, 0xba,
+	0xad, 0xdd, 0xa8, 0x37, 0x9a, 0xb7, 0x9c, 0x6d, 0x73, 0xc2, 0xde, 0x87, 0xdf, 0x16, 0x52, 0x95,
+	0xbf, 0xd3, 0x60, 0x4f, 0x13, 0xeb, 0xfc, 0x6d, 0x90, 0xa6, 0xff, 0x95, 0x28, 0xc6, 0x8a, 0x17,
+	0x1e, 0xe1, 0x85, 0x73, 0x53, 0x00, 0xc1, 0xb8, 0x7a, 0x1b, 0xa4, 0xe9, 0xb9, 0x9b, 0xe9, 0x98,
+	0x02, 0xb0, 0x1d, 0xb3, 0xe6, 0x60, 0x03, 0xcc, 0xc7, 0x67, 0xd2, 0xb3, 0xac, 0xdd, 0x31, 0x98,
+	0xb0, 0x34, 0x13, 0x2c, 0x08, 0x85, 0xc0, 0xeb, 0xac, 0x11, 0xf2, 0xdc, 0x04, 0x2f, 0x34, 0x50,
+	0x90, 0x67, 0x04, 0x06, 0x01, 0x3f, 0xe3, 0x40, 0x3e, 0x79, 0xe4, 0x5b, 0x9a, 0xe8, 0x2e, 0x0a,
+	0x17, 0xae, 0xee, 0x08, 0x1e, 0x70, 0x18, 0x83, 0x6c, 0xc2, 0x84, 0x56, 0x62, 0x39, 0x64, 0x63,
+	0x85, 0xca, 0xec, 0xd8, 0x20, 0xf2, 0x57, 0x1c, 0x28, 0x4e, 0x9b, 0x7e, 0x2e, 0xb3, 0xfc, 0x4e,
+	0xd9, 0x24, 0xbc, 0xfd, 0x0a, 0x9b, 0x02, 0x56, 0x1f, 0x82, 0xc3, 0x91, 0x9b, 0x5f, 0x64, 0x1f,
+	0x55, 0x1a, 0x23, 0x94, 0xa6, 0x63, 0x82, 0x08, 0x43, 0x70, 0x8c, 0x7d, 0xc5, 0x5f, 0x60, 0x3b,
+	0x61, 0x40, 0x85, 0xf2, 0xcc, 0xd0, 0xd0, 0x61, 0x4b, 0xbe, 0xcb, 0x99, 0x87, 0x2d, 0x11, 0xce,
+	0x3e, 0x6c, 0x53, 0xef, 0x59, 0xfe, 0x13, 0x90, 0x4b, 0xbc, 0x63, 0x2f, 0x4d, 0x74, 0x19, 0x41,
+	0x0b, 0x57, 0x76, 0x82, 0x66, 0x6b, 0x10, 0xbb, 0xff, 0x26, 0x6b, 0x10, 0x85, 0x4f, 0xd1, 0x20,
+	0xe9, 0x6e, 0xe2, 0xb7, 0x01, 0xcf, 0xb8, 0x98, 0x16, 0x59, 0xce, 0xe2, 0x38, 0x41, 0x9a, 0x0d,
+	0xe7, 0x47, 0xab, 0xad, 0x3e, 0x7e, 0x56, 0xe0, 0x9e, 0x3c, 0x2b, 0x70, 0x7f, 0x3e, 0x2b, 0x70,
+	0x5f, 0x3e, 0x2f, 0xa4, 0x9e, 0x3c, 0x2f, 0xa4, 0x7e, 0x7b, 0x5e, 0x48, 0xdd, 0xa9, 0x50, 0xa3,
+	0xf9, 0xba, 0xe3, 0x73, 0x69, 0x55, 0xed, 0x60, 0xd9, 0xfb, 0x41, 0x6a, 0x54, 0xbe, 0x26, 0x8f,
+	0xa9, 0x9f, 0xcf, 0xec, 0x51, 0xbd, 0xb3, 0xcf, 0xf9, 0x51, 0xea, 0xf2, 0xbf, 0x01, 0x00, 0x00,
+	0xff, 0xff, 0x24, 0x81, 0xbc, 0x96, 0x5e, 0x13, 0x00, 0x00,
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -976,6 +1380,14 @@ type MsgClient interface {
 	UpdateInnerRedemptionRateBounds(ctx context.Context, in *MsgUpdateInnerRedemptionRateBounds, opts ...grpc.CallOption) (*MsgUpdateInnerRedemptionRateBoundsResponse, error)
 	// Unhalts the host zone if redemption rates were exceeded
 	ResumeHostZone(ctx context.Context, in *MsgResumeHostZone, opts ...grpc.CallOption) (*MsgResumeHostZoneResponse, error)
+	// Trigger updating the redemption rate
+	RefreshRedemptionRate(ctx context.Context, in *MsgRefreshRedemptionRate, opts ...grpc.CallOption) (*MsgRefreshRedemptionRateResponse, error)
+	// Overwrites a delegation record
+	OverwriteDelegationRecord(ctx context.Context, in *MsgOverwriteDelegationRecord, opts ...grpc.CallOption) (*MsgOverwriteDelegationRecordResponse, error)
+	// Overwrites a unbonding record
+	OverwriteUnbondingRecord(ctx context.Context, in *MsgOverwriteUnbondingRecord, opts ...grpc.CallOption) (*MsgOverwriteUnbondingRecordResponse, error)
+	// Overwrites a redemption record
+	OverwriteRedemptionRecord(ctx context.Context, in *MsgOverwriteRedemptionRecord, opts ...grpc.CallOption) (*MsgOverwriteRedemptionRecordResponse, error)
 	// Sets the operator address
 	SetOperatorAddress(ctx context.Context, in *MsgSetOperatorAddress, opts ...grpc.CallOption) (*MsgSetOperatorAddressResponse, error)
 }
@@ -1060,6 +1472,42 @@ func (c *msgClient) ResumeHostZone(ctx context.Context, in *MsgResumeHostZone, o
 	return out, nil
 }
 
+func (c *msgClient) RefreshRedemptionRate(ctx context.Context, in *MsgRefreshRedemptionRate, opts ...grpc.CallOption) (*MsgRefreshRedemptionRateResponse, error) {
+	out := new(MsgRefreshRedemptionRateResponse)
+	err := c.cc.Invoke(ctx, "/stride.staketia.Msg/RefreshRedemptionRate", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *msgClient) OverwriteDelegationRecord(ctx context.Context, in *MsgOverwriteDelegationRecord, opts ...grpc.CallOption) (*MsgOverwriteDelegationRecordResponse, error) {
+	out := new(MsgOverwriteDelegationRecordResponse)
+	err := c.cc.Invoke(ctx, "/stride.staketia.Msg/OverwriteDelegationRecord", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *msgClient) OverwriteUnbondingRecord(ctx context.Context, in *MsgOverwriteUnbondingRecord, opts ...grpc.CallOption) (*MsgOverwriteUnbondingRecordResponse, error) {
+	out := new(MsgOverwriteUnbondingRecordResponse)
+	err := c.cc.Invoke(ctx, "/stride.staketia.Msg/OverwriteUnbondingRecord", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *msgClient) OverwriteRedemptionRecord(ctx context.Context, in *MsgOverwriteRedemptionRecord, opts ...grpc.CallOption) (*MsgOverwriteRedemptionRecordResponse, error) {
+	out := new(MsgOverwriteRedemptionRecordResponse)
+	err := c.cc.Invoke(ctx, "/stride.staketia.Msg/OverwriteRedemptionRecord", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *msgClient) SetOperatorAddress(ctx context.Context, in *MsgSetOperatorAddress, opts ...grpc.CallOption) (*MsgSetOperatorAddressResponse, error) {
 	out := new(MsgSetOperatorAddressResponse)
 	err := c.cc.Invoke(ctx, "/stride.staketia.Msg/SetOperatorAddress", in, out, opts...)
@@ -1091,6 +1539,14 @@ type MsgServer interface {
 	UpdateInnerRedemptionRateBounds(context.Context, *MsgUpdateInnerRedemptionRateBounds) (*MsgUpdateInnerRedemptionRateBoundsResponse, error)
 	// Unhalts the host zone if redemption rates were exceeded
 	ResumeHostZone(context.Context, *MsgResumeHostZone) (*MsgResumeHostZoneResponse, error)
+	// Trigger updating the redemption rate
+	RefreshRedemptionRate(context.Context, *MsgRefreshRedemptionRate) (*MsgRefreshRedemptionRateResponse, error)
+	// Overwrites a delegation record
+	OverwriteDelegationRecord(context.Context, *MsgOverwriteDelegationRecord) (*MsgOverwriteDelegationRecordResponse, error)
+	// Overwrites a unbonding record
+	OverwriteUnbondingRecord(context.Context, *MsgOverwriteUnbondingRecord) (*MsgOverwriteUnbondingRecordResponse, error)
+	// Overwrites a redemption record
+	OverwriteRedemptionRecord(context.Context, *MsgOverwriteRedemptionRecord) (*MsgOverwriteRedemptionRecordResponse, error)
 	// Sets the operator address
 	SetOperatorAddress(context.Context, *MsgSetOperatorAddress) (*MsgSetOperatorAddressResponse, error)
 }
@@ -1122,6 +1578,18 @@ func (*UnimplementedMsgServer) UpdateInnerRedemptionRateBounds(ctx context.Conte
 }
 func (*UnimplementedMsgServer) ResumeHostZone(ctx context.Context, req *MsgResumeHostZone) (*MsgResumeHostZoneResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ResumeHostZone not implemented")
+}
+func (*UnimplementedMsgServer) RefreshRedemptionRate(ctx context.Context, req *MsgRefreshRedemptionRate) (*MsgRefreshRedemptionRateResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method RefreshRedemptionRate not implemented")
+}
+func (*UnimplementedMsgServer) OverwriteDelegationRecord(ctx context.Context, req *MsgOverwriteDelegationRecord) (*MsgOverwriteDelegationRecordResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method OverwriteDelegationRecord not implemented")
+}
+func (*UnimplementedMsgServer) OverwriteUnbondingRecord(ctx context.Context, req *MsgOverwriteUnbondingRecord) (*MsgOverwriteUnbondingRecordResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method OverwriteUnbondingRecord not implemented")
+}
+func (*UnimplementedMsgServer) OverwriteRedemptionRecord(ctx context.Context, req *MsgOverwriteRedemptionRecord) (*MsgOverwriteRedemptionRecordResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method OverwriteRedemptionRecord not implemented")
 }
 func (*UnimplementedMsgServer) SetOperatorAddress(ctx context.Context, req *MsgSetOperatorAddress) (*MsgSetOperatorAddressResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method SetOperatorAddress not implemented")
@@ -1275,6 +1743,78 @@ func _Msg_ResumeHostZone_Handler(srv interface{}, ctx context.Context, dec func(
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Msg_RefreshRedemptionRate_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MsgRefreshRedemptionRate)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MsgServer).RefreshRedemptionRate(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/stride.staketia.Msg/RefreshRedemptionRate",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MsgServer).RefreshRedemptionRate(ctx, req.(*MsgRefreshRedemptionRate))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Msg_OverwriteDelegationRecord_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MsgOverwriteDelegationRecord)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MsgServer).OverwriteDelegationRecord(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/stride.staketia.Msg/OverwriteDelegationRecord",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MsgServer).OverwriteDelegationRecord(ctx, req.(*MsgOverwriteDelegationRecord))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Msg_OverwriteUnbondingRecord_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MsgOverwriteUnbondingRecord)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MsgServer).OverwriteUnbondingRecord(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/stride.staketia.Msg/OverwriteUnbondingRecord",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MsgServer).OverwriteUnbondingRecord(ctx, req.(*MsgOverwriteUnbondingRecord))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Msg_OverwriteRedemptionRecord_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MsgOverwriteRedemptionRecord)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MsgServer).OverwriteRedemptionRecord(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/stride.staketia.Msg/OverwriteRedemptionRecord",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MsgServer).OverwriteRedemptionRecord(ctx, req.(*MsgOverwriteRedemptionRecord))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _Msg_SetOperatorAddress_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(MsgSetOperatorAddress)
 	if err := dec(in); err != nil {
@@ -1328,6 +1868,22 @@ var _Msg_serviceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ResumeHostZone",
 			Handler:    _Msg_ResumeHostZone_Handler,
+		},
+		{
+			MethodName: "RefreshRedemptionRate",
+			Handler:    _Msg_RefreshRedemptionRate_Handler,
+		},
+		{
+			MethodName: "OverwriteDelegationRecord",
+			Handler:    _Msg_OverwriteDelegationRecord_Handler,
+		},
+		{
+			MethodName: "OverwriteUnbondingRecord",
+			Handler:    _Msg_OverwriteUnbondingRecord_Handler,
+		},
+		{
+			MethodName: "OverwriteRedemptionRecord",
+			Handler:    _Msg_OverwriteRedemptionRecord_Handler,
 		},
 		{
 			MethodName: "SetOperatorAddress",
@@ -1875,6 +2431,254 @@ func (m *MsgResumeHostZoneResponse) MarshalToSizedBuffer(dAtA []byte) (int, erro
 	return len(dAtA) - i, nil
 }
 
+func (m *MsgRefreshRedemptionRate) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *MsgRefreshRedemptionRate) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *MsgRefreshRedemptionRate) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if len(m.Creator) > 0 {
+		i -= len(m.Creator)
+		copy(dAtA[i:], m.Creator)
+		i = encodeVarintTx(dAtA, i, uint64(len(m.Creator)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *MsgRefreshRedemptionRateResponse) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *MsgRefreshRedemptionRateResponse) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *MsgRefreshRedemptionRateResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	return len(dAtA) - i, nil
+}
+
+func (m *MsgOverwriteDelegationRecord) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *MsgOverwriteDelegationRecord) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *MsgOverwriteDelegationRecord) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if m.DelegationRecord != nil {
+		{
+			size, err := m.DelegationRecord.MarshalToSizedBuffer(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = encodeVarintTx(dAtA, i, uint64(size))
+		}
+		i--
+		dAtA[i] = 0x12
+	}
+	if len(m.Creator) > 0 {
+		i -= len(m.Creator)
+		copy(dAtA[i:], m.Creator)
+		i = encodeVarintTx(dAtA, i, uint64(len(m.Creator)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *MsgOverwriteDelegationRecordResponse) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *MsgOverwriteDelegationRecordResponse) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *MsgOverwriteDelegationRecordResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	return len(dAtA) - i, nil
+}
+
+func (m *MsgOverwriteUnbondingRecord) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *MsgOverwriteUnbondingRecord) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *MsgOverwriteUnbondingRecord) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if m.UnbondingRecord != nil {
+		{
+			size, err := m.UnbondingRecord.MarshalToSizedBuffer(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = encodeVarintTx(dAtA, i, uint64(size))
+		}
+		i--
+		dAtA[i] = 0x12
+	}
+	if len(m.Creator) > 0 {
+		i -= len(m.Creator)
+		copy(dAtA[i:], m.Creator)
+		i = encodeVarintTx(dAtA, i, uint64(len(m.Creator)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *MsgOverwriteUnbondingRecordResponse) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *MsgOverwriteUnbondingRecordResponse) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *MsgOverwriteUnbondingRecordResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	return len(dAtA) - i, nil
+}
+
+func (m *MsgOverwriteRedemptionRecord) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *MsgOverwriteRedemptionRecord) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *MsgOverwriteRedemptionRecord) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if m.RedemptionRecord != nil {
+		{
+			size, err := m.RedemptionRecord.MarshalToSizedBuffer(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = encodeVarintTx(dAtA, i, uint64(size))
+		}
+		i--
+		dAtA[i] = 0x12
+	}
+	if len(m.Creator) > 0 {
+		i -= len(m.Creator)
+		copy(dAtA[i:], m.Creator)
+		i = encodeVarintTx(dAtA, i, uint64(len(m.Creator)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *MsgOverwriteRedemptionRecordResponse) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *MsgOverwriteRedemptionRecordResponse) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *MsgOverwriteRedemptionRecordResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	return len(dAtA) - i, nil
+}
+
 func (m *MsgSetOperatorAddress) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
@@ -2153,6 +2957,106 @@ func (m *MsgResumeHostZone) Size() (n int) {
 }
 
 func (m *MsgResumeHostZoneResponse) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	return n
+}
+
+func (m *MsgRefreshRedemptionRate) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.Creator)
+	if l > 0 {
+		n += 1 + l + sovTx(uint64(l))
+	}
+	return n
+}
+
+func (m *MsgRefreshRedemptionRateResponse) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	return n
+}
+
+func (m *MsgOverwriteDelegationRecord) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.Creator)
+	if l > 0 {
+		n += 1 + l + sovTx(uint64(l))
+	}
+	if m.DelegationRecord != nil {
+		l = m.DelegationRecord.Size()
+		n += 1 + l + sovTx(uint64(l))
+	}
+	return n
+}
+
+func (m *MsgOverwriteDelegationRecordResponse) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	return n
+}
+
+func (m *MsgOverwriteUnbondingRecord) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.Creator)
+	if l > 0 {
+		n += 1 + l + sovTx(uint64(l))
+	}
+	if m.UnbondingRecord != nil {
+		l = m.UnbondingRecord.Size()
+		n += 1 + l + sovTx(uint64(l))
+	}
+	return n
+}
+
+func (m *MsgOverwriteUnbondingRecordResponse) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	return n
+}
+
+func (m *MsgOverwriteRedemptionRecord) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.Creator)
+	if l > 0 {
+		n += 1 + l + sovTx(uint64(l))
+	}
+	if m.RedemptionRecord != nil {
+		l = m.RedemptionRecord.Size()
+		n += 1 + l + sovTx(uint64(l))
+	}
+	return n
+}
+
+func (m *MsgOverwriteRedemptionRecordResponse) Size() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -3647,6 +4551,642 @@ func (m *MsgResumeHostZoneResponse) Unmarshal(dAtA []byte) error {
 		}
 		if fieldNum <= 0 {
 			return fmt.Errorf("proto: MsgResumeHostZoneResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		default:
+			iNdEx = preIndex
+			skippy, err := skipTx(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthTx
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *MsgRefreshRedemptionRate) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowTx
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: MsgRefreshRedemptionRate: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: MsgRefreshRedemptionRate: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Creator", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Creator = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipTx(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthTx
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *MsgRefreshRedemptionRateResponse) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowTx
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: MsgRefreshRedemptionRateResponse: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: MsgRefreshRedemptionRateResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		default:
+			iNdEx = preIndex
+			skippy, err := skipTx(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthTx
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *MsgOverwriteDelegationRecord) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowTx
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: MsgOverwriteDelegationRecord: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: MsgOverwriteDelegationRecord: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Creator", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Creator = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field DelegationRecord", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.DelegationRecord == nil {
+				m.DelegationRecord = &DelegationRecord{}
+			}
+			if err := m.DelegationRecord.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipTx(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthTx
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *MsgOverwriteDelegationRecordResponse) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowTx
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: MsgOverwriteDelegationRecordResponse: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: MsgOverwriteDelegationRecordResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		default:
+			iNdEx = preIndex
+			skippy, err := skipTx(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthTx
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *MsgOverwriteUnbondingRecord) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowTx
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: MsgOverwriteUnbondingRecord: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: MsgOverwriteUnbondingRecord: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Creator", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Creator = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field UnbondingRecord", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.UnbondingRecord == nil {
+				m.UnbondingRecord = &UnbondingRecord{}
+			}
+			if err := m.UnbondingRecord.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipTx(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthTx
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *MsgOverwriteUnbondingRecordResponse) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowTx
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: MsgOverwriteUnbondingRecordResponse: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: MsgOverwriteUnbondingRecordResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		default:
+			iNdEx = preIndex
+			skippy, err := skipTx(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthTx
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *MsgOverwriteRedemptionRecord) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowTx
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: MsgOverwriteRedemptionRecord: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: MsgOverwriteRedemptionRecord: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Creator", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Creator = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field RedemptionRecord", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.RedemptionRecord == nil {
+				m.RedemptionRecord = &RedemptionRecord{}
+			}
+			if err := m.RedemptionRecord.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipTx(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthTx
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *MsgOverwriteRedemptionRecordResponse) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowTx
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: MsgOverwriteRedemptionRecordResponse: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: MsgOverwriteRedemptionRecordResponse: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		default:

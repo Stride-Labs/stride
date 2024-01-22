@@ -19,4 +19,5 @@ var (
 	ErrInvariantBroken                   = errorsmod.Register(ModuleName, 1914, "invariant broken")
 	ErrUnbondAmountToLarge               = errorsmod.Register(ModuleName, 1915, "unbonding more than exists on host zone")
 	ErrInsufficientFunds                 = errorsmod.Register(ModuleName, 1916, "not enough tokens in wallet")
+	ErrInvalidRecordType                 = errorsmod.Register(ModuleName, 1917, "invalid record type")
 )

@@ -19,6 +19,10 @@ const (
 	TypeMsgAdjustDelegatedBalance          = "adjust_delegated_balance"
 	TypeMsgUpdateInnerRedemptionRateBounds = "redemption_rate_bounds"
 	TypeMsgResumeHostZone                  = "resume_host_zone"
+	TypeMsgRefreshRedemptionRate           = "refresh_redemption_rate"
+	TypeMsgOverwriteDelegationRecord       = "overwrite_delegation_record"
+	TypeMsgOverwriteUnbondingRecord        = "overwrite_unbonding_record"
+	TypeMsgOverwriteRedemptionRecord       = "overwrite_redemption_record"
 	TypeMsgSetOperatorAddress              = "set_operator_address"
 )
 
@@ -31,6 +35,10 @@ var (
 	_ sdk.Msg = &MsgAdjustDelegatedBalance{}
 	_ sdk.Msg = &MsgUpdateInnerRedemptionRateBounds{}
 	_ sdk.Msg = &MsgResumeHostZone{}
+	_ sdk.Msg = &MsgRefreshRedemptionRate{}
+	_ sdk.Msg = &MsgOverwriteDelegationRecord{}
+	_ sdk.Msg = &MsgOverwriteUnbondingRecord{}
+	_ sdk.Msg = &MsgOverwriteRedemptionRecord{}
 	_ sdk.Msg = &MsgSetOperatorAddress{}
 
 	// Implement legacy interface for ledger support
@@ -42,6 +50,10 @@ var (
 	_ legacytx.LegacyMsg = &MsgAdjustDelegatedBalance{}
 	_ legacytx.LegacyMsg = &MsgUpdateInnerRedemptionRateBounds{}
 	_ legacytx.LegacyMsg = &MsgResumeHostZone{}
+	_ legacytx.LegacyMsg = &MsgRefreshRedemptionRate{}
+	_ legacytx.LegacyMsg = &MsgOverwriteDelegationRecord{}
+	_ legacytx.LegacyMsg = &MsgOverwriteUnbondingRecord{}
+	_ legacytx.LegacyMsg = &MsgOverwriteRedemptionRecord{}
 	_ legacytx.LegacyMsg = &MsgSetOperatorAddress{}
 )
 
@@ -438,5 +450,216 @@ func (msg *MsgSetOperatorAddress) ValidateBasic() error {
 	if err != nil {
 		return errorsmod.Wrapf(sdkerrors.ErrInvalidAddress, "invalid operator address (%s)", err)
 	}
+	return nil
+}
+
+// ----------------------------------------------
+//       MsgRefreshRedemptionRate
+// ----------------------------------------------
+
+func NewMsgRefreshRedemptionRate(creator string) *MsgRefreshRedemptionRate {
+	return &MsgRefreshRedemptionRate{
+		Creator: creator,
+	}
+}
+
+func (msg MsgRefreshRedemptionRate) Type() string {
+	return TypeMsgRefreshRedemptionRate
+}
+
+func (msg MsgRefreshRedemptionRate) Route() string {
+	return RouterKey
+}
+
+func (msg *MsgRefreshRedemptionRate) GetSigners() []sdk.AccAddress {
+	creator, err := sdk.AccAddressFromBech32(msg.Creator)
+	if err != nil {
+		panic(err)
+	}
+	return []sdk.AccAddress{creator}
+}
+
+func (msg *MsgRefreshRedemptionRate) GetSignBytes() []byte {
+	bz := ModuleCdc.MustMarshalJSON(msg)
+	return sdk.MustSortJSON(bz)
+}
+
+func (msg *MsgRefreshRedemptionRate) ValidateBasic() error {
+	_, err := sdk.AccAddressFromBech32(msg.Creator)
+	if err != nil {
+		return errorsmod.Wrapf(sdkerrors.ErrInvalidAddress, "invalid address (%s)", err)
+	}
+	return nil
+}
+
+// ----------------------------------------------
+//       MsgOverwriteDelegationRecord
+// ----------------------------------------------
+
+func NewMsgOverwriteDelegationRecord(creator string, delegationRecord DelegationRecord) *MsgOverwriteDelegationRecord {
+	return &MsgOverwriteDelegationRecord{
+		Creator:          creator,
+		DelegationRecord: &delegationRecord,
+	}
+}
+
+func (msg MsgOverwriteDelegationRecord) Type() string {
+	return TypeMsgOverwriteDelegationRecord
+}
+
+func (msg MsgOverwriteDelegationRecord) Route() string {
+	return RouterKey
+}
+
+func (msg *MsgOverwriteDelegationRecord) GetSigners() []sdk.AccAddress {
+	creator, err := sdk.AccAddressFromBech32(msg.Creator)
+	if err != nil {
+		panic(err)
+	}
+	return []sdk.AccAddress{creator}
+}
+
+func (msg *MsgOverwriteDelegationRecord) GetSignBytes() []byte {
+	bz := ModuleCdc.MustMarshalJSON(msg)
+	return sdk.MustSortJSON(bz)
+}
+
+func (msg *MsgOverwriteDelegationRecord) ValidateBasic() error {
+	_, err := sdk.AccAddressFromBech32(msg.Creator)
+	if err != nil {
+		return errorsmod.Wrapf(sdkerrors.ErrInvalidAddress, "invalid address (%s)", err)
+	}
+
+	// Check the record's attributes
+	// - assert the nativeAmount is non-negative (zero is acceptable)
+	if msg.DelegationRecord.NativeAmount.LT(sdk.ZeroInt()) {
+		return errorsmod.Wrapf(ErrInvalidAmountBelowMinimum, "amount < 0")
+	}
+
+	// - assert the status is one of the acceptable statuses
+	if _, ok := DelegationRecordStatus_name[int32(msg.DelegationRecord.Status)]; !ok {
+		return errorsmod.Wrap(sdkerrors.ErrInvalidRequest, "record status doesn't match the enum")
+	}
+
+	return nil
+}
+
+// ----------------------------------------------
+//       MsgOverwriteUnbondingRecord
+// ----------------------------------------------
+
+func NewMsgOverwriteUnbondingRecord(creator string, unbondingRecord UnbondingRecord) *MsgOverwriteUnbondingRecord {
+	return &MsgOverwriteUnbondingRecord{
+		Creator:         creator,
+		UnbondingRecord: &unbondingRecord,
+	}
+}
+
+func (msg MsgOverwriteUnbondingRecord) Type() string {
+	return TypeMsgOverwriteUnbondingRecord
+}
+
+func (msg MsgOverwriteUnbondingRecord) Route() string {
+	return RouterKey
+}
+
+func (msg *MsgOverwriteUnbondingRecord) GetSigners() []sdk.AccAddress {
+	creator, err := sdk.AccAddressFromBech32(msg.Creator)
+	if err != nil {
+		panic(err)
+	}
+	return []sdk.AccAddress{creator}
+}
+
+func (msg *MsgOverwriteUnbondingRecord) GetSignBytes() []byte {
+	bz := ModuleCdc.MustMarshalJSON(msg)
+	return sdk.MustSortJSON(bz)
+}
+
+func (msg *MsgOverwriteUnbondingRecord) ValidateBasic() error {
+	_, err := sdk.AccAddressFromBech32(msg.Creator)
+	if err != nil {
+		return errorsmod.Wrapf(sdkerrors.ErrInvalidAddress, "invalid address (%s)", err)
+	}
+
+	// Check the record's attributes
+	// - assert the nativeAmount is non-negative (zero is acceptable)
+	if msg.UnbondingRecord.NativeAmount.LT(sdk.ZeroInt()) {
+		return errorsmod.Wrapf(ErrInvalidAmountBelowMinimum, "native amount < 0")
+	}
+	// - assert the stTokenAmount is non-negative (zero is acceptable)
+	if msg.UnbondingRecord.StTokenAmount.LT(sdk.ZeroInt()) {
+		return errorsmod.Wrapf(ErrInvalidAmountBelowMinimum, "sttoken amount < 0")
+	}
+
+	// - assert the status is one of the acceptable statuses
+	if _, ok := UnbondingRecordStatus_name[int32(msg.UnbondingRecord.Status)]; !ok {
+		return errorsmod.Wrap(sdkerrors.ErrInvalidRequest, "record status doesn't match the enum")
+	}
+	// - assert the tx hash is not empty
+	if msg.UnbondingRecord.UndelegationTxHash == "" {
+		return errorsmod.Wrap(sdkerrors.ErrInvalidRequest, "transaction hash cannot be empty")
+	}
+	// - assert the tx hash is not empty
+	if msg.UnbondingRecord.UnbondedTokenSweepTxHash == "" {
+		return errorsmod.Wrap(sdkerrors.ErrInvalidRequest, "transaction hash cannot be empty")
+	}
+
+	return nil
+}
+
+// ----------------------------------------------
+//       MsgOverwriteRedemptionRecord
+// ----------------------------------------------
+
+func NewMsgOverwriteRedemptionRecord(creator string, redemptionRecord RedemptionRecord) *MsgOverwriteRedemptionRecord {
+	return &MsgOverwriteRedemptionRecord{
+		Creator:          creator,
+		RedemptionRecord: &redemptionRecord,
+	}
+}
+
+func (msg MsgOverwriteRedemptionRecord) Type() string {
+	return TypeMsgOverwriteRedemptionRecord
+}
+
+func (msg MsgOverwriteRedemptionRecord) Route() string {
+	return RouterKey
+}
+
+func (msg *MsgOverwriteRedemptionRecord) GetSigners() []sdk.AccAddress {
+	creator, err := sdk.AccAddressFromBech32(msg.Creator)
+	if err != nil {
+		panic(err)
+	}
+	return []sdk.AccAddress{creator}
+}
+
+func (msg *MsgOverwriteRedemptionRecord) GetSignBytes() []byte {
+	bz := ModuleCdc.MustMarshalJSON(msg)
+	return sdk.MustSortJSON(bz)
+}
+
+func (msg *MsgOverwriteRedemptionRecord) ValidateBasic() error {
+	_, err := sdk.AccAddressFromBech32(msg.Creator)
+	if err != nil {
+		return errorsmod.Wrapf(sdkerrors.ErrInvalidAddress, "invalid address (%s)", err)
+	}
+
+	// Check the record's attributes
+	// - assert the redeemer is a valid address
+	_, err = sdk.AccAddressFromBech32(msg.RedemptionRecord.Redeemer)
+	if err != nil {
+		return errorsmod.Wrapf(sdkerrors.ErrInvalidAddress, "invalid address (%s)", err)
+	}
+	// - assert the nativeAmount is non-negative (zero is acceptable)
+	if msg.RedemptionRecord.NativeAmount.LT(sdk.ZeroInt()) {
+		return errorsmod.Wrapf(ErrInvalidAmountBelowMinimum, "amount < 0")
+	}
+	// - assert the stTokenAmount is non-negative (zero is acceptable)
+	if msg.RedemptionRecord.StTokenAmount.LT(sdk.ZeroInt()) {
+		return errorsmod.Wrapf(ErrInvalidAmountBelowMinimum, "amount < 0")
+	}
+
 	return nil
 }
