@@ -178,8 +178,12 @@ func (s *KeeperTestSuite) TestSetOperatorAddress() {
 	s.Require().Error(err, "invalid safe address")
 }
 
+// ----------------------------------------------
+//         MsgConfirmUnbondingTokensSweep
+// ----------------------------------------------
+
 func (s *KeeperTestSuite) SetupUnbondingRecordsAndHostZone() {
-	s.SetupUnbondingRecords(DefaultClaimFundingAmount)
+	s.SetupTestConfirmUnbondingTokens(DefaultClaimFundingAmount)
 
 	safeAddress := s.TestAccs[0].String()
 	operatorAddress := s.TestAccs[1].String()

@@ -7,13 +7,23 @@ import (
 	"github.com/Stride-Labs/stride/v17/x/staketia/types"
 )
 
-// Writes a unbonding record to the store
+// Writes an unbonding record to the store based on the status
+// If the status is archive, it writes to the archive store, otherwise it writes to the active store
 func (k Keeper) SetUnbondingRecord(ctx sdk.Context, unbondingRecord types.UnbondingRecord) {
-	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.UnbondingRecordsKeyPrefix)
+	activeStore := prefix.NewStore(ctx.KVStore(k.storeKey), types.UnbondingRecordsKeyPrefix)
+	archiveStore := prefix.NewStore(ctx.KVStore(k.storeKey), types.UnbondingRecordsArchiveKeyPrefix)
 
+	if unbondingRecord.Status == types.UNBONDING_ARCHIVE {
+		k.setUnbondingRecord(archiveStore, unbondingRecord)
+	} else {
+		k.setUnbondingRecord(activeStore, unbondingRecord)
+	}
+}
+
+// Writes an unbonding record to a specific store (either active or archive)
+func (k Keeper) setUnbondingRecord(store prefix.Store, unbondingRecord types.UnbondingRecord) {
 	recordKey := types.IntKey(unbondingRecord.Id)
 	recordValue := k.cdc.MustMarshal(&unbondingRecord)
-
 	store.Set(recordKey, recordValue)
 }
 
@@ -30,6 +40,14 @@ func (k Keeper) GetUnbondingRecord(ctx sdk.Context, recordId uint64) (unbondingR
 
 	k.cdc.MustUnmarshal(recordBz, &unbondingRecord)
 	return unbondingRecord, true
+}
+
+// Removes an unbonding record from the store
+// NOTE: This is only used for testing - records should be archived in practice
+func (k Keeper) RemoveUnbondingRecord(ctx sdk.Context, recordId uint64) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.UnbondingRecordsKeyPrefix)
+	recordKey := types.IntKey(recordId)
+	store.Delete(recordKey)
 }
 
 // Removes a unbonding record from the store

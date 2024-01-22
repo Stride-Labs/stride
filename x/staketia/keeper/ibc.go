@@ -65,10 +65,8 @@ func (k Keeper) OnAcknowledgementPacket(ctx sdk.Context, packet channeltypes.Pac
 
 	// If the ack was successful, update the record id to DELEGATION_QUEUE
 	if ackResponse.Status == icacallbacktypes.AckResponseStatus_SUCCESS {
-		err := k.UpdateDelegationRecordStatus(ctx, record.Id, types.DELEGATION_QUEUE)
-		if err != nil {
-			return err
-		}
+		record.Status = types.DELEGATION_QUEUE
+		k.SetDelegationRecord(ctx, record)
 	} else {
 		// Otherwise there must be an error, so archive the record
 		err := k.ArchiveFailedTransferRecord(ctx, recordId)

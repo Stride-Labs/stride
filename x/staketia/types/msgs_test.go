@@ -3,16 +3,14 @@ package types_test
 import (
 	"testing"
 
+	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/stretchr/testify/require"
 
 	"github.com/Stride-Labs/stride/v17/app/apptesting"
-	"github.com/Stride-Labs/stride/v17/x/staketia/types"
-
-	sdkmath "cosmossdk.io/math"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-
 	"github.com/Stride-Labs/stride/v17/testutil/sample"
+	"github.com/Stride-Labs/stride/v17/x/staketia/types"
 )
 
 // ----------------------------------------------

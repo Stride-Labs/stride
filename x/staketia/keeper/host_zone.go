@@ -27,6 +27,13 @@ func (k Keeper) GetHostZone(ctx sdk.Context) (hostZone types.HostZone, err error
 	return hostZone, nil
 }
 
+// Removes a host zone from the store
+// Note: This is only for testing - it should never be used elsewhere
+func (k Keeper) RemoveHostZone(ctx sdk.Context) {
+	store := ctx.KVStore(k.storeKey)
+	store.Delete(types.HostZoneKey)
+}
+
 // Reads a host zone from the store and errors if the host zone is halted
 func (k Keeper) GetUnhaltedHostZone(ctx sdk.Context) (hostZone types.HostZone, err error) {
 	hostZone, err = k.GetHostZone(ctx)

@@ -18,6 +18,32 @@ func (s *KeeperTestSuite) addDelegationRecords() (delegationRecords []types.Dele
 	return delegationRecords
 }
 
+// Tests that records are written to their respective stores based on the status
+func (s *KeeperTestSuite) TestSetDelegationRecord() {
+	delegationRecords := []types.DelegationRecord{
+		{Id: 1, Status: types.TRANSFER_IN_PROGRESS},
+		{Id: 2, Status: types.DELEGATION_QUEUE},
+		{Id: 3, Status: types.DELEGATION_ARCHIVE},
+		{Id: 4, Status: types.TRANSFER_IN_PROGRESS},
+		{Id: 5, Status: types.DELEGATION_QUEUE},
+		{Id: 6, Status: types.DELEGATION_ARCHIVE},
+	}
+	for _, delegationRecord := range delegationRecords {
+		s.App.StaketiaKeeper.SetDelegationRecord(s.Ctx, delegationRecord)
+	}
+
+	// Confirm the number of records in each store
+	s.Require().Len(s.App.StaketiaKeeper.GetAllActiveDelegationRecords(s.Ctx), 4, "records in active store")
+	s.Require().Len(s.App.StaketiaKeeper.GetAllArchivedDelegationRecords(s.Ctx), 2, "records in archive store")
+
+	// Check that only the non-archived records are found in the active store
+	for i, delegationRecord := range delegationRecords {
+		expectedFound := delegationRecord.Status != types.DELEGATION_ARCHIVE
+		_, actualFound := s.App.StaketiaKeeper.GetDelegationRecord(s.Ctx, delegationRecord.Id)
+		s.Require().Equal(expectedFound, actualFound, "record %d found in active store", i)
+	}
+}
+
 func (s *KeeperTestSuite) TestGetDelegationRecord() {
 	delegationRecords := s.addDelegationRecords()
 
@@ -65,34 +91,4 @@ func (s *KeeperTestSuite) TestGetAllActiveDelegationRecords() {
 	actualRecords := s.App.StaketiaKeeper.GetAllActiveDelegationRecords(s.Ctx)
 	s.Require().Equal(len(expectedRecords), len(actualRecords), "number of delegation records")
 	s.Require().Equal(expectedRecords, actualRecords)
-}
-
-func (s *KeeperTestSuite) TestUpdateDelegationRecordStatus() {
-	statuses := []types.DelegationRecordStatus{
-		types.TRANSFER_IN_PROGRESS,
-		types.DELEGATION_QUEUE,
-		types.DELEGATION_ARCHIVE,
-	}
-
-	// Create an initial record
-	recordId := uint64(1)
-	s.App.StaketiaKeeper.SetDelegationRecord(s.Ctx, types.DelegationRecord{
-		Id: recordId,
-	})
-
-	// Iterate through all records and confirm their status updates
-	for _, expectedStatus := range statuses {
-		err := s.App.StaketiaKeeper.UpdateDelegationRecordStatus(s.Ctx, recordId, expectedStatus)
-		s.Require().NoError(err, "no error expected when updating record status")
-
-		delegationRecord, found := s.App.StaketiaKeeper.GetDelegationRecord(s.Ctx, recordId)
-		s.Require().True(found, "delegation record should have been found")
-		s.Require().Equal(expectedStatus, delegationRecord.Status,
-			"delegation record status should have been updated to %s", expectedStatus.String())
-	}
-
-	// Check that an invalid ID errors
-	invalidRecordId := uint64(99)
-	err := s.App.StaketiaKeeper.UpdateDelegationRecordStatus(s.Ctx, invalidRecordId, types.DELEGATION_QUEUE)
-	s.Require().ErrorContains(err, "delegation record not found")
 }

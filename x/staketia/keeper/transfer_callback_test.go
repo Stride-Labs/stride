@@ -2,23 +2,25 @@ package keeper_test
 
 import (
 	"fmt"
+
+	"github.com/Stride-Labs/stride/v17/x/staketia/types"
 )
 
 type transferData struct {
-	channelId 	string
-	sequence	uint64
-	recordId	uint64
+	channelId string
+	sequence  uint64
+	recordId  uint64
 }
 
 func (s *KeeperTestSuite) addTransferRecords() (transferRecords []transferData) {
 	for i := 0; i <= 4; i++ {
-		transferRecord := transferData {
+		transferRecord := transferData{
 			channelId: fmt.Sprintf("channel-%d", i),
 			sequence:  uint64(i),
 			recordId:  uint64(i),
 		}
 		transferRecords = append(transferRecords, transferRecord)
-		s.App.StaketiaKeeper.SetTransferInProgressRecordId(s.Ctx, transferRecord.channelId, 
+		s.App.StaketiaKeeper.SetTransferInProgressRecordId(s.Ctx, transferRecord.channelId,
 			transferRecord.sequence, transferRecord.recordId)
 	}
 	return transferRecords
@@ -63,4 +65,32 @@ func (s *KeeperTestSuite) TestRemoveTransferInProgressRecordId() {
 				checkedRecordId, checkedChannelId, checkedSequence, removedRecordId, removedChannelId, removedSequence)
 		}
 	}
+}
+
+func (s *KeeperTestSuite) TestGetAllTransferInProgressIds() {
+	// Store 5 packets across two channels
+	expectedTransfers := []types.TransferInProgressRecordIds{}
+	for _, channelId := range []string{"channel-0", "channel-1"} {
+		for sequence := uint64(0); sequence < 5; sequence++ {
+			recordId := sequence * 100
+			s.App.StaketiaKeeper.SetTransferInProgressRecordId(s.Ctx, channelId, sequence, recordId)
+			expectedTransfers = append(expectedTransfers, types.TransferInProgressRecordIds{
+				ChannelId: channelId,
+				Sequence:  sequence,
+				RecordId:  recordId,
+			})
+		}
+	}
+
+	// Check that each transfer is found
+	for _, channelId := range []string{"channel-0", "channel-1"} {
+		for sequence := uint64(0); sequence < 5; sequence++ {
+			_, found := s.App.StaketiaKeeper.GetTransferInProgressRecordId(s.Ctx, channelId, sequence)
+			s.Require().True(found, "transfer should have been found - channel %s, sequence: %d", channelId, sequence)
+		}
+	}
+
+	// Check lookup of all transfers
+	actualTransfers := s.App.StaketiaKeeper.GetAllTransferInProgressId(s.Ctx)
+	s.Require().ElementsMatch(expectedTransfers, actualTransfers, "all transfers")
 }

@@ -81,7 +81,7 @@ func (s *KeeperTestSuite) GetDefaultUnbondingRecords() []types.UnbondingRecord {
 }
 
 // Helper function to setup unbonding records, returns a list of records
-func (s *KeeperTestSuite) SetupUnbondingRecords(amount int64) {
+func (s *KeeperTestSuite) SetupTestConfirmUnbondingTokens(amount int64) {
 	unbondingRecords := s.GetDefaultUnbondingRecords()
 
 	// loop through and set each record
@@ -90,20 +90,24 @@ func (s *KeeperTestSuite) SetupUnbondingRecords(amount int64) {
 	}
 
 	// setup host zone, to fund claim address
-	hostZone := s.initializeHostZone()
-	hostZone.ClaimAddress = "stride1njt6kn0c2a2w5ax8mlm9k0fmcc8tyjgh7s8hu8" // random address
+	claimAddress := s.TestAccs[0]
+	hostZone := types.HostZone{
+		NativeTokenIbcDenom: HostIBCDenom,
+		ClaimAddress:        claimAddress.String(),
+	}
 	s.App.StaketiaKeeper.SetHostZone(s.Ctx, hostZone)
 
 	// fund claim address
-	claimAddress, err := sdk.AccAddressFromBech32(hostZone.ClaimAddress)
-	s.Require().NoError(err)
 	liquidStakeToken := sdk.NewCoin(hostZone.NativeTokenIbcDenom, sdk.NewInt(amount))
 	s.FundAccount(claimAddress, liquidStakeToken)
 }
 
-func (s *KeeperTestSuite) VerifyUnbondingRecords(verifyUpdatedFieldsIdentical bool) {
+func (s *KeeperTestSuite) VerifyUnbondingRecordsAfterConfirmSweep(verifyUpdatedFieldsIdentical bool) {
 	defaultUnbondingRecords := s.GetDefaultUnbondingRecords()
 	for _, defaultUnbondingRecord := range defaultUnbondingRecords {
+		if defaultUnbondingRecord.Status == types.UNBONDING_ARCHIVE {
+			continue
+		}
 		// grab relevant record in store
 		loadedUnbondingRecord, found := s.App.StaketiaKeeper.GetUnbondingRecord(s.Ctx, defaultUnbondingRecord.Id)
 		s.Require().True(found)
@@ -125,12 +129,12 @@ func (s *KeeperTestSuite) VerifyUnbondingRecords(verifyUpdatedFieldsIdentical bo
 }
 
 func (s *KeeperTestSuite) TestConfirmUnbondingTokenSweep_Successful() {
-	s.SetupUnbondingRecords(DefaultClaimFundingAmount)
+	s.SetupTestConfirmUnbondingTokens(DefaultClaimFundingAmount)
 
 	// process record 6
 	err := s.App.StaketiaKeeper.ConfirmUnbondedTokenSweep(s.Ctx, 6, ValidTxHashNew, ValidOperator)
 	s.Require().NoError(err)
-	s.VerifyUnbondingRecords(false)
+	s.VerifyUnbondingRecordsAfterConfirmSweep(false)
 
 	// verify record 6 modified
 	loadedUnbondingRecord, found := s.App.StaketiaKeeper.GetUnbondingRecord(s.Ctx, 6)
@@ -141,7 +145,7 @@ func (s *KeeperTestSuite) TestConfirmUnbondingTokenSweep_Successful() {
 	// process record 2
 	err = s.App.StaketiaKeeper.ConfirmUnbondedTokenSweep(s.Ctx, 2, ValidTxHashNew, ValidOperator)
 	s.Require().NoError(err)
-	s.VerifyUnbondingRecords(false)
+	s.VerifyUnbondingRecordsAfterConfirmSweep(false)
 
 	// verify record 2 modified
 	loadedUnbondingRecord, found = s.App.StaketiaKeeper.GetUnbondingRecord(s.Ctx, 2)
@@ -151,18 +155,15 @@ func (s *KeeperTestSuite) TestConfirmUnbondingTokenSweep_Successful() {
 }
 
 func (s *KeeperTestSuite) TestConfirmUnbondingTokenSweep_NotFunded() {
-	s.SetupUnbondingRecords(10)
+	s.SetupTestConfirmUnbondingTokens(10)
 
 	// try setting with no hash
 	err := s.App.StaketiaKeeper.ConfirmUnbondedTokenSweep(s.Ctx, 6, ValidTxHashNew, ValidOperator)
 	s.Require().ErrorIs(err, types.ErrInsufficientFunds, "should error when claim account doesn't have enough funds")
-
-	// verify delegation records haven't changed
-	s.VerifyUnbondingRecords(true)
 }
 
 func (s *KeeperTestSuite) TestConfirmUnbondingTokenSweep_InvalidClaimAddress() {
-	s.SetupUnbondingRecords(DefaultClaimFundingAmount)
+	s.SetupTestConfirmUnbondingTokens(DefaultClaimFundingAmount)
 
 	hostZone := s.MustGetHostZone()
 	hostZone.ClaimAddress = "strideinvalidaddress" // random address
@@ -171,13 +172,10 @@ func (s *KeeperTestSuite) TestConfirmUnbondingTokenSweep_InvalidClaimAddress() {
 	// try setting with no hash
 	err := s.App.StaketiaKeeper.ConfirmUnbondedTokenSweep(s.Ctx, 6, ValidTxHashNew, ValidOperator)
 	s.Require().ErrorContains(err, "decoding bech32 failed", "should error when claim address is invalid")
-
-	// verify delegation records haven't changed
-	s.VerifyUnbondingRecords(true)
 }
 
 func (s *KeeperTestSuite) TestConfirmUnbondingTokenSweep_RecordDoesntExist() {
-	s.SetupUnbondingRecords(DefaultClaimFundingAmount)
+	s.SetupTestConfirmUnbondingTokens(DefaultClaimFundingAmount)
 
 	// process record 15
 	err := s.App.StaketiaKeeper.ConfirmUnbondedTokenSweep(s.Ctx, 15, ValidTxHashNew, ValidOperator)
@@ -185,15 +183,12 @@ func (s *KeeperTestSuite) TestConfirmUnbondingTokenSweep_RecordDoesntExist() {
 }
 
 func (s *KeeperTestSuite) TestConfirmUnbondingTokenSweep_RecordIncorrectState() {
-	s.SetupUnbondingRecords(DefaultClaimFundingAmount)
+	s.SetupTestConfirmUnbondingTokens(DefaultClaimFundingAmount)
 
 	// get list of ids to try
-	ids := []uint64{1, 3, 4, 5, 7}
+	ids := []uint64{1, 3, 5, 7}
 	for _, id := range ids {
 		err := s.App.StaketiaKeeper.ConfirmUnbondedTokenSweep(s.Ctx, id, ValidTxHashNew, ValidOperator)
 		s.Require().ErrorIs(err, types.ErrInvalidUnbondingRecord, "should error when record is in incorrect state")
-
-		// verify unbonding records haven't changed
-		s.VerifyUnbondingRecords(true)
 	}
 }

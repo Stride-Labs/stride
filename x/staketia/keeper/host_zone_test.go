@@ -37,6 +37,13 @@ func (s *KeeperTestSuite) TestGetHostZone() {
 	s.Require().Equal(savedHostZone, loadedHostZone)
 }
 
+func (s *KeeperTestSuite) TestRemoveHostZone() {
+	s.initializeHostZone()
+	s.App.StaketiaKeeper.RemoveHostZone(s.Ctx)
+	_, err := s.App.StaketiaKeeper.GetHostZone(s.Ctx)
+	s.Require().ErrorContains(err, "host zone not found")
+}
+
 func (s *KeeperTestSuite) TestSetHostZone() {
 	hostZone := s.initializeHostZone()
 

@@ -19,6 +19,36 @@ func (s *KeeperTestSuite) addUnbondingRecords() (unbondingRecords []types.Unbond
 	return unbondingRecords
 }
 
+// Tests that records are written to their respective stores based on the status
+func (s *KeeperTestSuite) TestSetUnbondingRecord() {
+	unbondingRecords := []types.UnbondingRecord{
+		{Id: 1, Status: types.ACCUMULATING_REDEMPTIONS},
+		{Id: 2, Status: types.UNBONDING_IN_PROGRESS},
+		{Id: 3, Status: types.UNBONDING_QUEUE},
+		{Id: 4, Status: types.UNBONDED},
+		{Id: 5, Status: types.UNBONDING_ARCHIVE},
+		{Id: 6, Status: types.ACCUMULATING_REDEMPTIONS},
+		{Id: 7, Status: types.UNBONDING_IN_PROGRESS},
+		{Id: 8, Status: types.UNBONDING_QUEUE},
+		{Id: 9, Status: types.UNBONDED},
+		{Id: 10, Status: types.UNBONDING_ARCHIVE},
+	}
+	for _, unbondingRecord := range unbondingRecords {
+		s.App.StaketiaKeeper.SetUnbondingRecord(s.Ctx, unbondingRecord)
+	}
+
+	// Confirm the number of records in each store
+	s.Require().Len(s.App.StaketiaKeeper.GetAllActiveUnbondingRecords(s.Ctx), 8, "records in acitve store")
+	s.Require().Len(s.App.StaketiaKeeper.GetAllArchivedUnbondingRecords(s.Ctx), 2, "records in archive store")
+
+	// Check that only the non-archvied records are found in the active store
+	for i, unbondingRecord := range unbondingRecords {
+		expectedFound := unbondingRecord.Status != types.UNBONDING_ARCHIVE
+		_, actualFound := s.App.StaketiaKeeper.GetUnbondingRecord(s.Ctx, unbondingRecord.Id)
+		s.Require().Equal(expectedFound, actualFound, "record %d found in active store", i)
+	}
+}
+
 func (s *KeeperTestSuite) TestGetUnbondingRecord() {
 	unbondingRecords := s.addUnbondingRecords()
 

@@ -7,13 +7,23 @@ import (
 	"github.com/Stride-Labs/stride/v17/x/staketia/types"
 )
 
-// Writes a delegation record to the store
+// Writes a delegation record to the store based on the status
+// If the status is archive, it writes to the archive store, otherwise it writes to the active store
 func (k Keeper) SetDelegationRecord(ctx sdk.Context, delegationRecord types.DelegationRecord) {
-	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.DelegationRecordsKeyPrefix)
+	activeStore := prefix.NewStore(ctx.KVStore(k.storeKey), types.DelegationRecordsKeyPrefix)
+	archiveStore := prefix.NewStore(ctx.KVStore(k.storeKey), types.DelegationRecordsArchiveKeyPrefix)
 
+	if delegationRecord.Status == types.DELEGATION_ARCHIVE {
+		k.setDelegationRecord(archiveStore, delegationRecord)
+	} else {
+		k.setDelegationRecord(activeStore, delegationRecord)
+	}
+}
+
+// Writes a delegation record to a specific store (either active or archive)
+func (k Keeper) setDelegationRecord(store prefix.Store, delegationRecord types.DelegationRecord) {
 	recordKey := types.IntKey(delegationRecord.Id)
 	recordBz := k.cdc.MustMarshal(&delegationRecord)
-
 	store.Set(recordKey, recordBz)
 }
 
@@ -107,15 +117,4 @@ func (k Keeper) getAllDelegationRecords(store prefix.Store) (delegationRecords [
 	}
 
 	return delegationRecords
-}
-
-// Updates the status on a delegation record
-func (k Keeper) UpdateDelegationRecordStatus(ctx sdk.Context, recordId uint64, status types.DelegationRecordStatus) error {
-	delegationRecord, found := k.GetDelegationRecord(ctx, recordId)
-	if !found {
-		return types.ErrDelegationRecordNotFound.Wrapf("delegation record not found for %d", recordId)
-	}
-	delegationRecord.Status = status
-	k.SetDelegationRecord(ctx, delegationRecord)
-	return nil
 }

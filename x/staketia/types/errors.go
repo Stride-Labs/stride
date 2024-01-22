@@ -23,4 +23,6 @@ var (
 	ErrUnbondAmountToLarge               = errorsmod.Register(ModuleName, 1918, "unbonding more than exists on host zone")
 	ErrUnbondingRecordAlreadyExists      = errorsmod.Register(ModuleName, 1919, "unbonding record already exists")
 	ErrInvalidRecordType                 = errorsmod.Register(ModuleName, 1920, "invalid record type")
+	ErrInvalidHostZone                   = errorsmod.Register(ModuleName, 1921, "invalid host zone during genesis")
+	ErrInvalidGenesisRecords             = errorsmod.Register(ModuleName, 1922, "invalid records during genesis")
 )
