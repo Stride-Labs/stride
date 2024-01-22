@@ -91,8 +91,11 @@ func (im IBCMiddleware) OnAcknowledgementPacket(
 ) error {
 	im.keeper.Logger(ctx).Info(fmt.Sprintf("OnAcknowledgementPacket (Staketia): SourcePort %s, SourceChannel %s, DestinationPort %s, DestinationChannel %s",
 		packet.SourcePort, packet.SourceChannel, packet.DestinationPort, packet.DestinationChannel))
-
-	// TODO [sttia]: Handle transfer OnAckPacket
+	// Handle staketia specific logic
+	if err := im.keeper.OnAcknowledgementPacket(ctx, packet, acknowledgement); err != nil {
+		im.keeper.Logger(ctx).Error(fmt.Sprintf("ICS20 staketia OnAckPacket failed: %s", err.Error()))
+		return err
+	}
 
 	return im.app.OnAcknowledgementPacket(ctx, packet, acknowledgement, relayer)
 }
@@ -101,8 +104,11 @@ func (im IBCMiddleware) OnAcknowledgementPacket(
 // and, if so, adjust record keeping
 func (im IBCMiddleware) OnTimeoutPacket(ctx sdk.Context, packet channeltypes.Packet, relayer sdk.AccAddress) error {
 	im.keeper.Logger(ctx).Info(fmt.Sprintf("OnTimeoutPacket (Staketia): packet %v, relayer %v", packet, relayer))
-
-	// TODO [sttia]: Handle transfer OnTimeoutPacket
+	// Handle staketia specific logic
+	if err := im.keeper.OnTimeoutPacket(ctx, packet); err != nil {
+		im.keeper.Logger(ctx).Error(fmt.Sprintf("ICS20 staketia OnTimeoutPacket failed: %s", err.Error()))
+		return err
+	}
 
 	return im.app.OnTimeoutPacket(ctx, packet, relayer)
 }

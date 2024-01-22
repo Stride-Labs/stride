@@ -41,6 +41,21 @@ func (k Keeper) GetDelegationRecord(ctx sdk.Context, recordId uint64) (delegatio
 	return delegationRecord, true
 }
 
+// Reads a delegation record from the archive store
+func (k Keeper) GetArchivedDelegationRecord(ctx sdk.Context, recordId uint64) (delegationRecord types.DelegationRecord, found bool) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.DelegationRecordsArchiveKeyPrefix)
+
+	recordKey := types.IntKey(recordId)
+	recordBz := store.Get(recordKey)
+
+	if len(recordBz) == 0 {
+		return delegationRecord, false
+	}
+
+	k.cdc.MustUnmarshal(recordBz, &delegationRecord)
+	return delegationRecord, true
+}
+
 // Removes a delegation record from the store
 // To preserve history, we write it to the archive store
 func (k Keeper) ArchiveDelegationRecord(ctx sdk.Context, recordId uint64) {
