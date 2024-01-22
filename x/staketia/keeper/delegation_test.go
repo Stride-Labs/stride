@@ -291,4 +291,17 @@ func (s *KeeperTestSuite) TestPrepareDelegation() {
 	// Check that the deposit account is empty
 	depositAccountBalance = s.App.BankKeeper.GetBalance(s.Ctx, depositAddress, nativeIbcDenom).Amount
 	s.Require().Zero(depositAccountBalance.Int64(), "deposit account balance should be empty")
+
+	// Check that if we ran this again immediately, it would error because there is a transfer record in progress already
+	err = s.App.StaketiaKeeper.PrepareDelegation(s.Ctx, epochNumber+1, epochDuration)
+	s.Require().ErrorContains(err, "cannot prepare delegation while a transfer is in progress")
+
+	// Remove the record and try to run it again
+	s.App.StaketiaKeeper.ArchiveDelegationRecord(s.Ctx, delegationRecord.Id)
+	err = s.App.StaketiaKeeper.PrepareDelegation(s.Ctx, epochNumber+1, epochDuration)
+	s.Require().NoError(err, "no error expected when preparing delegation again")
+
+	// It should not create a new record since there is nothing to delegate
+	delegationRecords = s.App.StaketiaKeeper.GetAllActiveDelegationRecords(s.Ctx)
+	s.Require().Equal(0, len(delegationRecords), "there should be no delegation records")
 }

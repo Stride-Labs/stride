@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	"fmt"
 	"time"
 
 	errorsmod "cosmossdk.io/errors"
@@ -94,12 +95,18 @@ func (k Keeper) PrepareDelegation(ctx sdk.Context, epochNumber uint64, epochDura
 
 	// Transfer the full deposit balance which will include new liquid stakes, as well as reinvestment
 	depositAddress := sdk.MustAccAddressFromBech32(hostZone.DepositAddress)
-	nativeCoins := k.bankKeeper.GetBalance(ctx, depositAddress, hostZone.NativeTokenIbcDenom)
+	nativeTokens := k.bankKeeper.GetBalance(ctx, depositAddress, hostZone.NativeTokenIbcDenom)
+
+	// If there's nothing to delegate, exit early - no need to create a new record
+	if nativeTokens.Amount.IsZero() {
+		k.Logger(ctx).Info(fmt.Sprintf("No new liquid stakes for epoch %d", epochNumber))
+		return nil
+	}
 
 	// Create a new delgation record with status TRANSFER IN PROGRESS
 	delegationRecord := types.DelegationRecord{
 		Id:           epochNumber,
-		NativeAmount: nativeCoins.Amount,
+		NativeAmount: nativeTokens.Amount,
 		Status:       types.TRANSFER_IN_PROGRESS,
 	}
 	err = k.SafelySetDelegationRecord(ctx, delegationRecord)
@@ -114,7 +121,7 @@ func (k Keeper) PrepareDelegation(ctx sdk.Context, epochNumber uint64, epochDura
 	transferMsgDepositToDelegation := transfertypes.MsgTransfer{
 		SourcePort:       transfertypes.PortID,
 		SourceChannel:    hostZone.TransferChannelId,
-		Token:            nativeCoins,
+		Token:            nativeTokens,
 		Sender:           hostZone.DepositAddress,
 		Receiver:         hostZone.DelegationAddress,
 		TimeoutTimestamp: timeoutTimestamp,
