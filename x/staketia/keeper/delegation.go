@@ -137,6 +137,13 @@ func (k Keeper) PrepareDelegation(ctx sdk.Context, epochNumber uint64, epochDura
 	return nil
 }
 
+// Runs prepare delegations with a cache context wrapper so revert any partial state changes
+func (k Keeper) SafelyPrepareDelegation(ctx sdk.Context, epochNumber uint64, epochDuration time.Duration) error {
+	return utils.ApplyFuncIfNoError(ctx, func(ctx sdk.Context) error {
+		return k.PrepareDelegation(ctx, epochNumber, epochDuration)
+	})
+}
+
 func (k Keeper) ConfirmUnbondedTokenSweep(ctx sdk.Context, recordId uint64, txHash string, sender string) (err error) {
 	// grab unbonding record and verify the record is ready to be swept, and has not been swept yet
 	record, found := k.GetUnbondingRecord(ctx, recordId)

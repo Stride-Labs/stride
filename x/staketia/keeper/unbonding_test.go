@@ -431,7 +431,7 @@ type DistributeClaimsTestCase struct {
 	expectedFinalClaimBalance sdkmath.Int
 }
 
-func (s *KeeperTestSuite) TestCheckUnbondingFinished() {
+func (s *KeeperTestSuite) TestMarkFinishedUnbondings() {
 	currentTime := uint64(s.Ctx.BlockTime().Unix())
 
 	// Set unbonding records across different statuses and times
@@ -459,7 +459,7 @@ func (s *KeeperTestSuite) TestCheckUnbondingFinished() {
 	}
 
 	// Call check unbonding finished
-	s.App.StaketiaKeeper.CheckUnbondingFinished(s.Ctx)
+	s.App.StaketiaKeeper.MarkFinishedUnbondings(s.Ctx)
 
 	// Check that the relevant records were updated
 	for i, actualUnbondingRecord := range s.App.StaketiaKeeper.GetAllActiveUnbondingRecords(s.Ctx) {

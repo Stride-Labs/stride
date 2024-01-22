@@ -150,7 +150,7 @@ func (k Keeper) PrepareUndelegation(ctx sdk.Context, epochNumber uint64) error {
 // identified by having status UNBONDING_IN_PROGRESS and an
 // unbonding that's older than the current time.
 // Records are annotated with a new status UNBONDED
-func (k Keeper) CheckUnbondingFinished(ctx sdk.Context) {
+func (k Keeper) MarkFinishedUnbondings(ctx sdk.Context) {
 	for _, unbondingRecord := range k.GetAllUnbondingRecordsByStatus(ctx, types.UNBONDING_IN_PROGRESS) {
 		if ctx.BlockTime().Unix() > int64(unbondingRecord.UnbondingCompletionTimeSeconds) {
 			unbondingRecord.Status = types.UNBONDED
@@ -211,4 +211,18 @@ func (k Keeper) DistributeClaimsForUnbondingRecord(
 		}
 	}
 	return nil
+}
+
+// Runs prepare undelegations with a cache context wrapper so revert any partial state changes
+func (k Keeper) SafelyPrepareUndelegation(ctx sdk.Context, epochNumber uint64) error {
+	return utils.ApplyFuncIfNoError(ctx, func(ctx sdk.Context) error {
+		return k.PrepareUndelegation(ctx, epochNumber)
+	})
+}
+
+// Runs distribute claims with a cache context wrapper so revert any partial state changes
+func (k Keeper) SafelyDistributeClaims(ctx sdk.Context) error {
+	return utils.ApplyFuncIfNoError(ctx, func(ctx sdk.Context) error {
+		return k.DistributeClaims(ctx)
+	})
 }
