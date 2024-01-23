@@ -299,11 +299,11 @@ func HostZoneDenomFromStAssetDenom(stAssetDenom string) string {
 // Verifies a tx hash is valid
 func VerifyTxHash(txHash string) (err error) {
 	if txHash == "" {
-		return errorsmod.Wrapf(sdkerrors.ErrTxDecode, fmt.Sprintf("tx hash is empty %s", txHash))
+		return errorsmod.Wrapf(sdkerrors.ErrTxDecode, "tx hash is empty")
 	}
 	_, err = hex.DecodeString(txHash)
 	if err != nil {
-		return errorsmod.Wrapf(sdkerrors.ErrTxDecode, fmt.Sprintf("tx hash is invalid %s", txHash))
+		return errorsmod.Wrapf(sdkerrors.ErrTxDecode, "tx hash is invalid %s", txHash)
 	}
 	return nil
 }

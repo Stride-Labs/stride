@@ -28,7 +28,7 @@ func (k msgServer) LiquidStake(goCtx context.Context, msg *types.MsgLiquidStake)
 	ctx := sdk.UnwrapSDKContext(goCtx)
 	stToken, err := k.Keeper.LiquidStake(ctx, msg.Staker, msg.NativeAmount)
 	if err != nil {
-		return &types.MsgLiquidStakeResponse{}, err
+		return nil, err
 	}
 	return &types.MsgLiquidStakeResponse{StToken: stToken}, nil
 }
@@ -36,8 +36,11 @@ func (k msgServer) LiquidStake(goCtx context.Context, msg *types.MsgLiquidStake)
 // User transaction to redeem stake stTokens into native tokens
 func (k msgServer) RedeemStake(goCtx context.Context, msg *types.MsgRedeemStake) (*types.MsgRedeemStakeResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
-	native_token, err := k.Keeper.RedeemStake(ctx, msg.Redeemer, msg.StTokenAmount)
-	return &types.MsgRedeemStakeResponse{NativeToken: native_token}, err
+	nativeToken, err := k.Keeper.RedeemStake(ctx, msg.Redeemer, msg.StTokenAmount)
+	if err != nil {
+		return nil, err
+	}
+	return &types.MsgRedeemStakeResponse{NativeToken: nativeToken}, nil
 }
 
 // Operator transaction to confirm a delegation was submitted on the host chain
@@ -51,8 +54,9 @@ func (k msgServer) ConfirmDelegation(goCtx context.Context, msg *types.MsgConfir
 
 	err := k.Keeper.ConfirmDelegation(ctx, msg.RecordId, msg.TxHash, msg.Operator)
 	if err != nil {
-		return &types.MsgConfirmDelegationResponse{}, err
+		return nil, err
 	}
+
 	return &types.MsgConfirmDelegationResponse{}, nil
 }
 
@@ -84,8 +88,9 @@ func (k msgServer) ConfirmUnbondedTokenSweep(goCtx context.Context, msg *types.M
 
 	err := k.Keeper.ConfirmUnbondedTokenSweep(ctx, msg.RecordId, msg.TxHash, msg.Operator)
 	if err != nil {
-		return &types.MsgConfirmUnbondedTokenSweepResponse{}, err
+		return nil, err
 	}
+
 	return &types.MsgConfirmUnbondedTokenSweepResponse{}, nil
 }
 
@@ -111,10 +116,10 @@ func (k msgServer) AdjustDelegatedBalance(goCtx context.Context, msg *types.MsgA
 	// create a corresponding slash record
 	latestSlashRecordId := k.IncrementSlashRecordId(ctx)
 	slashRecord := types.SlashRecord{
-		Id:                latestSlashRecordId,
-		Time:              uint64(ctx.BlockTime().Unix()),
-		NativeTokenAmount: msg.DelegationOffset,
-		ValidatorAddress:  msg.ValidatorAddress,
+		Id:               latestSlashRecordId,
+		Time:             uint64(ctx.BlockTime().Unix()),
+		NativeAmount:     msg.DelegationOffset,
+		ValidatorAddress: msg.ValidatorAddress,
 	}
 	k.SetSlashRecord(ctx, slashRecord)
 

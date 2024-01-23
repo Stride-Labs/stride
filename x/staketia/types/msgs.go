@@ -190,7 +190,7 @@ func (msg *MsgConfirmDelegation) ValidateBasic() error {
 	// Note: We can't verify recordId in ValidateBasic, because 0 is a valid record id
 	// and recordId is uint64 so can't be negative
 	if err := utils.VerifyTxHash(msg.TxHash); err != nil {
-		return errorsmod.Wrapf(sdkerrors.ErrTxDecode, "invalid address (%s)", err)
+		return err
 	}
 	return nil
 }
@@ -229,7 +229,6 @@ func (msg *MsgConfirmUndelegation) GetSignBytes() []byte {
 }
 
 func (msg *MsgConfirmUndelegation) ValidateBasic() error {
-	// TODO [sttia]
 	_, err := sdk.AccAddressFromBech32(msg.Operator)
 	if err != nil {
 		return errorsmod.Wrapf(sdkerrors.ErrInvalidAddress, "invalid address (%s)", err)
@@ -323,10 +322,15 @@ func (msg *MsgAdjustDelegatedBalance) GetSignBytes() []byte {
 }
 
 func (msg *MsgAdjustDelegatedBalance) ValidateBasic() error {
-	// TODO [sttia]
 	_, err := sdk.AccAddressFromBech32(msg.Operator)
 	if err != nil {
 		return errorsmod.Wrapf(sdkerrors.ErrInvalidAddress, "invalid address (%s)", err)
+	}
+	if msg.DelegationOffset.IsNil() {
+		return errorsmod.Wrap(sdkerrors.ErrInvalidRequest, "delegation offset must be specified")
+	}
+	if msg.ValidatorAddress == "" {
+		return errorsmod.Wrap(sdkerrors.ErrInvalidRequest, "validator address must be specified")
 	}
 	return nil
 }

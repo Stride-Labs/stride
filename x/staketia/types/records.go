@@ -61,7 +61,7 @@ func ValidateRedemptionRecordGenesis(redemptionRecords []RedemptionRecord) error
 func ValidateSlashRecordGenesis(slashRecords []SlashRecord) error {
 	ids := map[uint64]bool{}
 	for _, slashRecord := range slashRecords {
-		if slashRecord.NativeTokenAmount.IsNil() {
+		if slashRecord.NativeAmount.IsNil() {
 			return ErrInvalidGenesisRecords.Wrapf("uninitialized native amount in slash record %d", slashRecord.Id)
 		}
 		if _, ok := ids[slashRecord.Id]; ok {

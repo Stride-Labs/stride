@@ -14,137 +14,6 @@ import (
 )
 
 // ----------------------------------------------
-//        MsgResumeHostZone
-// ----------------------------------------------
-
-func TestMsgResumeHostZone(t *testing.T) {
-	apptesting.SetupConfig()
-
-	validNotAdminAddress, invalidAddress := apptesting.GenerateTestAddrs()
-	validAdminAddress, ok := apptesting.GetAdminAddress()
-	require.True(t, ok)
-
-	tests := []struct {
-		name string
-		msg  types.MsgResumeHostZone
-		err  string
-	}{
-		{
-			name: "successful message",
-			msg: types.MsgResumeHostZone{
-				Creator: validAdminAddress,
-			},
-		},
-		{
-			name: "invalid creator address",
-			msg: types.MsgResumeHostZone{
-				Creator: invalidAddress,
-			},
-			err: "invalid address",
-		},
-		{
-			name: "invalid admin address",
-			msg: types.MsgResumeHostZone{
-				Creator: validNotAdminAddress,
-			},
-			err: "not an admin: invalid address",
-		},
-	}
-
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			if test.err == "" {
-				require.NoError(t, test.msg.ValidateBasic(), "test: %v", test.name)
-
-				signers := test.msg.GetSigners()
-				require.Equal(t, len(signers), 1)
-				require.Equal(t, signers[0].String(), validAdminAddress)
-
-				require.Equal(t, test.msg.Type(), "resume_host_zone", "type")
-			} else {
-				require.ErrorContains(t, test.msg.ValidateBasic(), test.err, "test: %v", test.name)
-			}
-		})
-	}
-}
-
-// ----------------------------------------------
-//        MsgUpdateInnerRedemptionRateBounds
-// ----------------------------------------------
-
-func TestMsgUpdateInnerRedemptionRateBounds(t *testing.T) {
-	apptesting.SetupConfig()
-
-	validNotAdminAddress, invalidAddress := apptesting.GenerateTestAddrs()
-	validAdminAddress, ok := apptesting.GetAdminAddress()
-	require.True(t, ok)
-
-	validUpperBound := sdk.NewDec(2)
-	validLowerBound := sdk.NewDec(1)
-	invalidLowerBound := sdk.NewDec(2)
-
-	tests := []struct {
-		name string
-		msg  types.MsgUpdateInnerRedemptionRateBounds
-		err  string
-	}{
-		{
-			name: "successful message",
-			msg: types.MsgUpdateInnerRedemptionRateBounds{
-				Creator:                validAdminAddress,
-				MaxInnerRedemptionRate: validUpperBound,
-				MinInnerRedemptionRate: validLowerBound,
-			},
-		},
-		{
-			name: "invalid creator address",
-			msg: types.MsgUpdateInnerRedemptionRateBounds{
-				Creator:                invalidAddress,
-				MaxInnerRedemptionRate: validUpperBound,
-				MinInnerRedemptionRate: validLowerBound,
-			},
-			err: "invalid address",
-		},
-		{
-			name: "invalid admin address",
-			msg: types.MsgUpdateInnerRedemptionRateBounds{
-				Creator:                validNotAdminAddress,
-				MaxInnerRedemptionRate: validUpperBound,
-				MinInnerRedemptionRate: validLowerBound,
-			},
-			err: "not an admin: invalid address",
-		},
-		{
-			name: "invalid bounds",
-			msg: types.MsgUpdateInnerRedemptionRateBounds{
-				Creator:                validAdminAddress,
-				MaxInnerRedemptionRate: validUpperBound,
-				MinInnerRedemptionRate: invalidLowerBound,
-			},
-			err: "invalid host zone redemption rate inner bounds",
-		},
-	}
-
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			if test.err == "" {
-				require.NoError(t, test.msg.ValidateBasic(), "test: %v", test.name)
-
-				signers := test.msg.GetSigners()
-				require.Equal(t, len(signers), 1)
-				require.Equal(t, signers[0].String(), validAdminAddress)
-
-				require.Equal(t, test.msg.MaxInnerRedemptionRate, validUpperBound, "MaxInnerRedemptionRate")
-				require.Equal(t, test.msg.MinInnerRedemptionRate, validLowerBound, "MaxInnerRedemptionRate")
-				require.Equal(t, test.msg.Type(), "redemption_rate_bounds", "type")
-			} else {
-				require.ErrorContains(t, test.msg.ValidateBasic(), test.err, "test: %v", test.name)
-			}
-		})
-	}
-}
-
-// ----------------------------------------------
 //               MsgLiquidStake
 // ----------------------------------------------
 
@@ -263,58 +132,6 @@ func TestMsgRedeemStake_GetSignBytes(t *testing.T) {
 	require.Equal(t, expected, string(res))
 }
 
-func TestMsgSetOperatorAddress(t *testing.T) {
-	apptesting.SetupConfig()
-
-	validAddress, invalidAddress := apptesting.GenerateTestAddrs()
-
-	tests := []struct {
-		name string
-		msg  types.MsgSetOperatorAddress
-		err  string
-	}{
-		{
-			name: "successful message",
-			msg: types.MsgSetOperatorAddress{
-				Signer:   validAddress,
-				Operator: validAddress,
-			},
-		},
-		{
-			name: "invalid signer address",
-			msg: types.MsgSetOperatorAddress{
-				Signer:   invalidAddress,
-				Operator: validAddress,
-			},
-			err: "invalid address",
-		},
-		{
-			name: "invalid operator address",
-			msg: types.MsgSetOperatorAddress{
-				Signer:   validAddress,
-				Operator: invalidAddress,
-			},
-			err: "invalid address",
-		},
-	}
-
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			if test.err == "" {
-				require.NoError(t, test.msg.ValidateBasic(), "test: %v", test.name)
-
-				signers := test.msg.GetSigners()
-				require.Equal(t, len(signers), 1)
-				require.Equal(t, signers[0].String(), validAddress)
-
-				require.Equal(t, test.msg.Type(), "set_operator_address", "type")
-			} else {
-				require.ErrorContains(t, test.msg.ValidateBasic(), test.err, "test: %v", test.name)
-			}
-		})
-	}
-}
-
 // ----------------------------------------------
 //             MsgConfirmDelegation
 // ----------------------------------------------
@@ -388,6 +205,78 @@ func TestMsgConfirmDelegation_GetSignBytes(t *testing.T) {
 }
 
 // ----------------------------------------------
+//           MsgConfirmUndelegation
+// ----------------------------------------------
+
+func TestMsgConfirmUndelegation_ValidateBasic(t *testing.T) {
+	validTxHash := "BBD978ADDBF580AC2981E351A3EA34AA9D7B57631E9CE21C27C2C63A5B13BDA9"
+	validRecordId := uint64(35)
+	validAddress := sample.AccAddress()
+
+	tests := []struct {
+		name          string
+		msg           types.MsgConfirmUndelegation
+		expectedError string
+	}{
+		{
+			name: "success",
+			msg: types.MsgConfirmUndelegation{
+				Operator: validAddress,
+				RecordId: validRecordId,
+				TxHash:   validTxHash,
+			},
+		},
+		{
+			name: "empty tx hash",
+			msg: types.MsgConfirmUndelegation{
+				Operator: validAddress,
+				RecordId: validRecordId,
+				TxHash:   "",
+			},
+			expectedError: "tx hash is empty",
+		},
+		{
+			name: "invalid tx hash",
+			msg: types.MsgConfirmUndelegation{
+				Operator: validAddress,
+				RecordId: validRecordId,
+				TxHash:   "invalid_tx-hash",
+			},
+			expectedError: "tx hash is invalid",
+		},
+		{
+			name: "invalid sender",
+			msg: types.MsgConfirmUndelegation{
+				Operator: "strideinvalid",
+				RecordId: validRecordId,
+				TxHash:   validTxHash,
+			},
+			expectedError: "invalid address",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := tt.msg.ValidateBasic()
+			if tt.expectedError == "" {
+				require.NoError(t, err)
+			} else {
+				require.ErrorContains(t, err, tt.expectedError)
+			}
+		})
+	}
+}
+
+func TestMsgConfirmUndelegation_GetSignBytes(t *testing.T) {
+	addr := "stride1v9jxgu33kfsgr5"
+	msg := types.NewMsgConfirmUndelegation(addr, 100, "valid_hash")
+	res := msg.GetSignBytes()
+
+	expected := `{"type":"staketia/MsgConfirmUndelegation","value":{"operator":"stride1v9jxgu33kfsgr5","record_id":"100","tx_hash":"valid_hash"}}`
+	require.Equal(t, expected, string(res))
+}
+
+// ----------------------------------------------
 //               MsgConfirmUnbondedTokenSweep
 // ----------------------------------------------
 
@@ -456,10 +345,264 @@ func TestMsgConfirmUnbondedTokenSweep_GetSignBytes(t *testing.T) {
 }
 
 // ----------------------------------------------
-//               OverwriteDelegationRecord
+//         MsgAdjustDelegatedBalance
 // ----------------------------------------------
 
-func TestMsgOverwriteDelegationRecord(t *testing.T) {
+func TestMsgAdjustDelegatedBalance_ValidateBasic(t *testing.T) {
+	apptesting.SetupConfig()
+
+	validAddress, invalidAddress := apptesting.GenerateTestAddrs()
+	validValidatorAddress := "valoper"
+	validDelegationOffset := sdkmath.NewInt(10)
+
+	tests := []struct {
+		name string
+		msg  types.MsgAdjustDelegatedBalance
+		err  string
+	}{
+		{
+			name: "successful message",
+			msg: types.MsgAdjustDelegatedBalance{
+				Operator:         validAddress,
+				DelegationOffset: validDelegationOffset,
+				ValidatorAddress: validValidatorAddress,
+			},
+		},
+		{
+			name: "successful message, negative offset",
+			msg: types.MsgAdjustDelegatedBalance{
+				Operator:         validAddress,
+				DelegationOffset: sdkmath.NewInt(-1),
+				ValidatorAddress: validValidatorAddress,
+			},
+		},
+		{
+			name: "invalid signer address",
+			msg: types.MsgAdjustDelegatedBalance{
+				Operator:         invalidAddress,
+				DelegationOffset: validDelegationOffset,
+				ValidatorAddress: validValidatorAddress,
+			},
+			err: "invalid address",
+		},
+		{
+			name: "invalid delegation offset",
+			msg: types.MsgAdjustDelegatedBalance{
+				Operator:         validAddress,
+				ValidatorAddress: validValidatorAddress,
+			},
+			err: "delegation offset must be specified",
+		},
+		{
+			name: "invalid validator address",
+			msg: types.MsgAdjustDelegatedBalance{
+				Operator:         validAddress,
+				DelegationOffset: validDelegationOffset,
+				ValidatorAddress: "",
+			},
+			err: "validator address must be specified",
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			if test.err == "" {
+				require.NoError(t, test.msg.ValidateBasic(), "test: %v", test.name)
+
+				signers := test.msg.GetSigners()
+				require.Equal(t, len(signers), 1)
+				require.Equal(t, signers[0].String(), validAddress)
+
+				require.Equal(t, test.msg.Type(), "adjust_delegated_balance", "type")
+			} else {
+				require.ErrorContains(t, test.msg.ValidateBasic(), test.err, "test: %v", test.name)
+			}
+		})
+	}
+}
+
+// ----------------------------------------------
+//        MsgUpdateInnerRedemptionRateBounds
+// ----------------------------------------------
+
+func TestMsgUpdateInnerRedemptionRateBounds_ValidateBasic(t *testing.T) {
+	apptesting.SetupConfig()
+
+	validNotAdminAddress, invalidAddress := apptesting.GenerateTestAddrs()
+	validAdminAddress, ok := apptesting.GetAdminAddress()
+	require.True(t, ok)
+
+	validUpperBound := sdk.NewDec(2)
+	validLowerBound := sdk.NewDec(1)
+	invalidLowerBound := sdk.NewDec(2)
+
+	tests := []struct {
+		name string
+		msg  types.MsgUpdateInnerRedemptionRateBounds
+		err  string
+	}{
+		{
+			name: "successful message",
+			msg: types.MsgUpdateInnerRedemptionRateBounds{
+				Creator:                validAdminAddress,
+				MaxInnerRedemptionRate: validUpperBound,
+				MinInnerRedemptionRate: validLowerBound,
+			},
+		},
+		{
+			name: "invalid creator address",
+			msg: types.MsgUpdateInnerRedemptionRateBounds{
+				Creator:                invalidAddress,
+				MaxInnerRedemptionRate: validUpperBound,
+				MinInnerRedemptionRate: validLowerBound,
+			},
+			err: "invalid address",
+		},
+		{
+			name: "invalid admin address",
+			msg: types.MsgUpdateInnerRedemptionRateBounds{
+				Creator:                validNotAdminAddress,
+				MaxInnerRedemptionRate: validUpperBound,
+				MinInnerRedemptionRate: validLowerBound,
+			},
+			err: "not an admin: invalid address",
+		},
+		{
+			name: "invalid bounds",
+			msg: types.MsgUpdateInnerRedemptionRateBounds{
+				Creator:                validAdminAddress,
+				MaxInnerRedemptionRate: validUpperBound,
+				MinInnerRedemptionRate: invalidLowerBound,
+			},
+			err: "invalid host zone redemption rate inner bounds",
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			if test.err == "" {
+				require.NoError(t, test.msg.ValidateBasic(), "test: %v", test.name)
+
+				signers := test.msg.GetSigners()
+				require.Equal(t, len(signers), 1)
+				require.Equal(t, signers[0].String(), validAdminAddress)
+
+				require.Equal(t, test.msg.MaxInnerRedemptionRate, validUpperBound, "MaxInnerRedemptionRate")
+				require.Equal(t, test.msg.MinInnerRedemptionRate, validLowerBound, "MaxInnerRedemptionRate")
+				require.Equal(t, test.msg.Type(), "redemption_rate_bounds", "type")
+			} else {
+				require.ErrorContains(t, test.msg.ValidateBasic(), test.err, "test: %v", test.name)
+			}
+		})
+	}
+}
+
+// ----------------------------------------------
+//              MsgResumeHostZone
+// ----------------------------------------------
+
+func TestMsgResumeHostZone_ValidateBasic(t *testing.T) {
+	apptesting.SetupConfig()
+
+	validNotAdminAddress, invalidAddress := apptesting.GenerateTestAddrs()
+	validAdminAddress, ok := apptesting.GetAdminAddress()
+	require.True(t, ok)
+
+	tests := []struct {
+		name string
+		msg  types.MsgResumeHostZone
+		err  string
+	}{
+		{
+			name: "successful message",
+			msg: types.MsgResumeHostZone{
+				Creator: validAdminAddress,
+			},
+		},
+		{
+			name: "invalid creator address",
+			msg: types.MsgResumeHostZone{
+				Creator: invalidAddress,
+			},
+			err: "invalid address",
+		},
+		{
+			name: "invalid admin address",
+			msg: types.MsgResumeHostZone{
+				Creator: validNotAdminAddress,
+			},
+			err: "not an admin: invalid address",
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			if test.err == "" {
+				require.NoError(t, test.msg.ValidateBasic(), "test: %v", test.name)
+
+				signers := test.msg.GetSigners()
+				require.Equal(t, len(signers), 1)
+				require.Equal(t, signers[0].String(), validAdminAddress)
+
+				require.Equal(t, test.msg.Type(), "resume_host_zone", "type")
+			} else {
+				require.ErrorContains(t, test.msg.ValidateBasic(), test.err, "test: %v", test.name)
+			}
+		})
+	}
+}
+
+// ----------------------------------------------
+//          MsgRefreshRedemptionRate
+// ----------------------------------------------
+
+func TestMsgRefreshRedemptionRate_ValidateBasic(t *testing.T) {
+	apptesting.SetupConfig()
+
+	validAddress, invalidAddress := apptesting.GenerateTestAddrs()
+
+	tests := []struct {
+		name string
+		msg  types.MsgRefreshRedemptionRate
+		err  string
+	}{
+		{
+			name: "successful message",
+			msg: types.MsgRefreshRedemptionRate{
+				Creator: validAddress,
+			},
+		},
+		{
+			name: "invalid signer address",
+			msg: types.MsgRefreshRedemptionRate{
+				Creator: invalidAddress,
+			},
+			err: "invalid address",
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			if test.err == "" {
+				require.NoError(t, test.msg.ValidateBasic(), "test: %v", test.name)
+
+				signers := test.msg.GetSigners()
+				require.Equal(t, len(signers), 1)
+				require.Equal(t, signers[0].String(), validAddress)
+
+				require.Equal(t, test.msg.Type(), "refresh_redemption_rate", "type")
+			} else {
+				require.ErrorContains(t, test.msg.ValidateBasic(), test.err, "test: %v", test.name)
+			}
+		})
+	}
+}
+
+// ----------------------------------------------
+//          OverwriteDelegationRecord
+// ----------------------------------------------
+
+func TestMsgOverwriteDelegationRecord_ValidateBasic(t *testing.T) {
 	apptesting.SetupConfig()
 
 	validAddress, invalidAddress := apptesting.GenerateTestAddrs()
@@ -527,10 +670,10 @@ func TestMsgOverwriteDelegationRecord(t *testing.T) {
 }
 
 // ----------------------------------------------
-//               OverwriteUnbondingRecord
+//           OverwriteUnbondingRecord
 // ----------------------------------------------
 
-func TestMsgOverwriteUnbondingRecord(t *testing.T) {
+func TestMsgOverwriteUnbondingRecord_ValidateBasic(t *testing.T) {
 	apptesting.SetupConfig()
 
 	validAddress, invalidAddress := apptesting.GenerateTestAddrs()
@@ -655,10 +798,10 @@ func TestMsgOverwriteUnbondingRecord(t *testing.T) {
 }
 
 // ----------------------------------------------
-//               OverwriteRedemptionRecord
+//          OverwriteRedemptionRecord
 // ----------------------------------------------
 
-func TestMsgOverwriteRedemptionRecord(t *testing.T) {
+func TestMsgOverwriteRedemptionRecord_ValidateBasic(t *testing.T) {
 	apptesting.SetupConfig()
 
 	validAddress, invalidAddress := apptesting.GenerateTestAddrs()
@@ -744,6 +887,62 @@ func TestMsgOverwriteRedemptionRecord(t *testing.T) {
 				require.Equal(t, signers[0].String(), validAddress)
 
 				require.Equal(t, test.msg.Type(), "overwrite_redemption_record", "type")
+			} else {
+				require.ErrorContains(t, test.msg.ValidateBasic(), test.err, "test: %v", test.name)
+			}
+		})
+	}
+}
+
+// ----------------------------------------------
+//          MsgSetOperatorAddress
+// ----------------------------------------------
+
+func TestMsgSetOperatorAddress_ValidateBasic(t *testing.T) {
+	apptesting.SetupConfig()
+
+	validAddress, invalidAddress := apptesting.GenerateTestAddrs()
+
+	tests := []struct {
+		name string
+		msg  types.MsgSetOperatorAddress
+		err  string
+	}{
+		{
+			name: "successful message",
+			msg: types.MsgSetOperatorAddress{
+				Signer:   validAddress,
+				Operator: validAddress,
+			},
+		},
+		{
+			name: "invalid signer address",
+			msg: types.MsgSetOperatorAddress{
+				Signer:   invalidAddress,
+				Operator: validAddress,
+			},
+			err: "invalid address",
+		},
+		{
+			name: "invalid operator address",
+			msg: types.MsgSetOperatorAddress{
+				Signer:   validAddress,
+				Operator: invalidAddress,
+			},
+			err: "invalid address",
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			if test.err == "" {
+				require.NoError(t, test.msg.ValidateBasic(), "test: %v", test.name)
+
+				signers := test.msg.GetSigners()
+				require.Equal(t, len(signers), 1)
+				require.Equal(t, signers[0].String(), validAddress)
+
+				require.Equal(t, test.msg.Type(), "set_operator_address", "type")
 			} else {
 				require.ErrorContains(t, test.msg.ValidateBasic(), test.err, "test: %v", test.name)
 			}

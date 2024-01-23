@@ -10,6 +10,7 @@ const (
 
 	AttributeKeyHostZone              = "host_zone"
 	AttributeKeyLiquidStaker          = "liquid_staker"
+	AttributeKeyRedeemer              = "redeemer"
 	AttributeKeyNativeBaseDenom       = "native_base_denom"
 	AttributeKeyNativeIBCDenom        = "native_ibc_denom"
 	AttributeKeyNativeAmount          = "native_amount"

@@ -63,7 +63,8 @@ func (k Keeper) UpdateRedemptionRate(ctx sdk.Context) error {
 	}
 	redemptionRate := sdk.NewDecFromInt(nativeTokensLocked).Quo(sdk.NewDecFromInt(stTokenSupply))
 
-	// Set the redemption rate on the host zone
+	// Set the old and update redemption rate on the host
+	hostZone.LastRedemptionRate = hostZone.RedemptionRate
 	hostZone.RedemptionRate = redemptionRate
 	k.SetHostZone(ctx, hostZone)
 

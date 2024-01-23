@@ -19,10 +19,10 @@ func (s *KeeperTestSuite) createAndSetSlashRecords() []types.SlashRecord {
 	}
 	for i := 0; i < 5; i++ {
 		slashRecord := types.SlashRecord{
-			Id:                uint64(i),
-			Time:              uint64(s.Ctx.BlockTime().Unix()),
-			NativeTokenAmount: offsets[i],
-			ValidatorAddress:  valAddresses[i],
+			Id:               uint64(i),
+			Time:             uint64(s.Ctx.BlockTime().Unix()),
+			NativeAmount:     offsets[i],
+			ValidatorAddress: valAddresses[i],
 		}
 		SlashRecords = append(SlashRecords, slashRecord)
 		s.App.StaketiaKeeper.SetSlashRecord(s.Ctx, slashRecord)
@@ -41,10 +41,10 @@ func (s *KeeperTestSuite) TestSetSlashRecord() {
 	expectedSlashRecords := s.createAndSetSlashRecords()
 	// make a slash record with a NEW ID and set it, then make sure a new record was added
 	newSlashRecord := types.SlashRecord{
-		Id:                uint64(5),
-		Time:              uint64(s.Ctx.BlockTime().Unix()),
-		NativeTokenAmount: math.NewInt(1),
-		ValidatorAddress:  "valZ",
+		Id:               uint64(5),
+		Time:             uint64(s.Ctx.BlockTime().Unix()),
+		NativeAmount:     math.NewInt(1),
+		ValidatorAddress: "valZ",
 	}
 	s.App.StaketiaKeeper.SetSlashRecord(s.Ctx, newSlashRecord)
 	actualSlashRecords := s.App.StaketiaKeeper.GetAllSlashRecords(s.Ctx)
@@ -53,10 +53,10 @@ func (s *KeeperTestSuite) TestSetSlashRecord() {
 
 	// make a slash record with an existing ID and set it, then make sure no new record was added (just existing modified)
 	overwriteSlashRecord := types.SlashRecord{
-		Id:                uint64(0),
-		Time:              uint64(s.Ctx.BlockTime().Unix()),
-		NativeTokenAmount: math.NewInt(1),
-		ValidatorAddress:  "valZ",
+		Id:               uint64(0),
+		Time:             uint64(s.Ctx.BlockTime().Unix()),
+		NativeAmount:     math.NewInt(1),
+		ValidatorAddress: "valZ",
 	}
 	s.App.StaketiaKeeper.SetSlashRecord(s.Ctx, overwriteSlashRecord)
 	actualSlashRecords = s.App.StaketiaKeeper.GetAllSlashRecords(s.Ctx)

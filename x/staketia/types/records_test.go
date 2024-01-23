@@ -175,26 +175,26 @@ func TestValidateSlashRecordGenesis(t *testing.T) {
 		{
 			name: "valid records",
 			slashRecords: []types.SlashRecord{
-				{Id: 1, NativeTokenAmount: sdkmath.NewInt(1)},
-				{Id: 2, NativeTokenAmount: sdkmath.NewInt(2)},
-				{Id: 3, NativeTokenAmount: sdkmath.NewInt(3)},
+				{Id: 1, NativeAmount: sdkmath.NewInt(1)},
+				{Id: 2, NativeAmount: sdkmath.NewInt(2)},
+				{Id: 3, NativeAmount: sdkmath.NewInt(3)},
 			},
 		},
 		{
 			name: "duplicate records",
 			slashRecords: []types.SlashRecord{
-				{Id: 1, NativeTokenAmount: sdkmath.NewInt(1)},
-				{Id: 2, NativeTokenAmount: sdkmath.NewInt(2)},
-				{Id: 1, NativeTokenAmount: sdkmath.NewInt(3)},
+				{Id: 1, NativeAmount: sdkmath.NewInt(1)},
+				{Id: 2, NativeAmount: sdkmath.NewInt(2)},
+				{Id: 1, NativeAmount: sdkmath.NewInt(3)},
 			},
 			expectedError: "duplicate slash record 1",
 		},
 		{
 			name: "uninitialized native amount",
 			slashRecords: []types.SlashRecord{
-				{Id: 1, NativeTokenAmount: sdkmath.NewInt(1)},
+				{Id: 1, NativeAmount: sdkmath.NewInt(1)},
 				{Id: 2},
-				{Id: 3, NativeTokenAmount: sdkmath.NewInt(3)},
+				{Id: 3, NativeAmount: sdkmath.NewInt(3)},
 			},
 			expectedError: "uninitialized native amount in slash record 2",
 		},

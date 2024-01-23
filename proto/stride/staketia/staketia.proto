@@ -192,7 +192,7 @@ message SlashRecord {
   // stride
   uint64 time = 2;
   // The delta by which the total delegated amount changed from slash
-  string native_token_amount = 3 [
+  string native_amount = 3 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
     (gogoproto.nullable) = false
   ];

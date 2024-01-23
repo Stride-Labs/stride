@@ -25,6 +25,22 @@ func EmitSuccessfulLiquidStakeEvent(ctx sdk.Context, staker string, hostZone typ
 	)
 }
 
+// Emits a successful redeem stake event, and displays metadata such as the native amount
+func EmitSuccessfulRedeemStakeEvent(ctx sdk.Context, staker string, hostZone types.HostZone, nativeAmount, stAmount sdkmath.Int) {
+	ctx.EventManager().EmitEvent(
+		sdk.NewEvent(
+			types.EventTypeRedeemStakeRequest,
+			sdk.NewAttribute(sdk.AttributeKeyModule, types.ModuleName),
+			sdk.NewAttribute(types.AttributeKeyRedeemer, staker),
+			sdk.NewAttribute(types.AttributeKeyHostZone, hostZone.ChainId),
+			sdk.NewAttribute(types.AttributeKeyNativeBaseDenom, hostZone.NativeTokenDenom),
+			sdk.NewAttribute(types.AttributeKeyNativeIBCDenom, hostZone.NativeTokenIbcDenom),
+			sdk.NewAttribute(types.AttributeKeyNativeAmount, nativeAmount.String()),
+			sdk.NewAttribute(types.AttributeKeyStTokenAmount, stAmount.String()),
+		),
+	)
+}
+
 // Emits an event indicated the delegation record is correctly marked as done
 func EmitSuccessfulConfirmDelegationEvent(ctx sdk.Context, recordId uint64, delegationAmount sdkmath.Int, txHash string, sender string) {
 	ctx.EventManager().EmitEvent(

@@ -91,11 +91,13 @@ func (s *KeeperTestSuite) TestUpdateRedemptionRate() {
 			s.FundAccount(depositAddress, sdk.NewCoin(HostIBCDenom, tc.depositBalance))
 
 			// Create the host zone with the delegated balance and deposit address
+			initialRedemptionRate := sdk.MustNewDecFromStr("0.999")
 			s.App.StaketiaKeeper.SetHostZone(s.Ctx, types.HostZone{
 				NativeTokenDenom:    HostNativeDenom,
 				NativeTokenIbcDenom: HostIBCDenom,
 				DepositAddress:      depositAddress.String(),
 				DelegatedBalance:    tc.delegatedBalance,
+				RedemptionRate:      initialRedemptionRate,
 			})
 
 			// Set each delegation record
@@ -114,12 +116,15 @@ func (s *KeeperTestSuite) TestUpdateRedemptionRate() {
 			// Mint sttokens for the supply (fund account calls mint)
 			s.FundAccount(s.TestAccs[1], sdk.NewCoin(StDenom, tc.stTokenSupply))
 
-			// Finally, update the redemption rate and check that it matches
+			// Update the redemption rate and check that it matches
 			err := s.App.StaketiaKeeper.UpdateRedemptionRate(s.Ctx)
 			s.Require().NoError(err, "no error expected when calculating redemption rate")
 
 			hostZone := s.MustGetHostZone()
 			s.Require().Equal(tc.expectedRedemptionRate, hostZone.RedemptionRate, "redemption rate")
+
+			// Check that the last redemption rate was set
+			s.Require().Equal(initialRedemptionRate, hostZone.LastRedemptionRate, "redemption rate")
 		})
 
 	}
