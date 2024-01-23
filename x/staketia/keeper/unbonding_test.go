@@ -1,13 +1,18 @@
 package keeper_test
 
 import (
+	"time"
+
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
 	"github.com/Stride-Labs/stride/v17/app/apptesting"
+	"github.com/Stride-Labs/stride/v17/utils"
 	"github.com/Stride-Labs/stride/v17/x/staketia/types"
 )
+
+const DefaultClaimFundingAmount = 2600 // sum of NativeTokenAmount of records with status UNBONDED
 
 // ----------------------------------------------
 //               RedeemStake
@@ -419,6 +424,540 @@ func (s *KeeperTestSuite) TestPrepareUndelegation() {
 
 	err = s.App.StaketiaKeeper.PrepareUndelegation(s.Ctx, epochNumber)
 	s.Require().ErrorContains(err, "host zone is halted")
+}
+
+// ----------------------------------------------
+//             ConfirmUndelegation
+// ----------------------------------------------
+
+type ConfirmUndelegationTestCase struct {
+	operatorAddress          string
+	redemptionAddress        sdk.AccAddress
+	stTokenAmountToBurn      sdkmath.Int
+	unbondingRecord          types.UnbondingRecord
+	amountToUndelegate       sdkmath.Int
+	delegatedBalance         sdkmath.Int
+	redemptionAccountBalance sdkmath.Int
+	hostZone                 types.HostZone
+}
+
+// Helper function to mock relevant state before testing a confirm undelegation
+func (s *KeeperTestSuite) SetupTestConfirmUndelegation(amountToUndelegate sdkmath.Int) ConfirmUndelegationTestCase {
+	redemptionAddress := s.TestAccs[0]
+	operatorAddress := s.TestAccs[1]
+
+	redemptionAccountBalance := sdkmath.NewInt(500)
+	delegatedBalance := sdkmath.NewInt(1000)
+	unbondingPeriod := uint64(21)
+
+	// Create a host zone with delegatedBalance and RedemptionAddresses
+	hostZone := types.HostZone{
+		DelegatedBalance:  delegatedBalance,
+		RedemptionAddress: redemptionAddress.String(),
+		NativeTokenDenom:  HostNativeDenom,
+		UnbondingPeriod:   unbondingPeriod,
+		MinRedemptionRate: sdk.MustNewDecFromStr("0.9"),
+		MaxRedemptionRate: sdk.MustNewDecFromStr("1.2"),
+		RedemptionRate:    sdk.MustNewDecFromStr("1.1"),
+	}
+	s.App.StaketiaKeeper.SetHostZone(s.Ctx, hostZone)
+
+	// Fund the redemption account with tokens that will be burned
+	stTokensInRedemption := sdk.NewCoin(StDenom, redemptionAccountBalance)
+	s.FundAccount(redemptionAddress, stTokensInRedemption)
+
+	// create an unbonding record in status UNBONDING_QUEUE
+	// - stToken amount to burn as if the RR is 1.1
+	stTokenAmountToBurn := sdk.NewDecFromInt(amountToUndelegate).Mul(hostZone.RedemptionRate).TruncateInt()
+	unbondingRecord := types.UnbondingRecord{
+		Id:            1,
+		Status:        types.UNBONDING_QUEUE,
+		StTokenAmount: stTokenAmountToBurn,
+		NativeAmount:  amountToUndelegate,
+	}
+	s.App.StaketiaKeeper.SetUnbondingRecord(s.Ctx, unbondingRecord)
+
+	tc := ConfirmUndelegationTestCase{
+		redemptionAddress:        redemptionAddress,
+		operatorAddress:          operatorAddress.String(),
+		stTokenAmountToBurn:      stTokenAmountToBurn,
+		unbondingRecord:          unbondingRecord,
+		amountToUndelegate:       amountToUndelegate,
+		delegatedBalance:         delegatedBalance,
+		redemptionAccountBalance: redemptionAccountBalance,
+		hostZone:                 hostZone,
+	}
+	return tc
+}
+
+// unit test ConfirmUndelegation
+func (s *KeeperTestSuite) TestConfirmUndelegation_Success() {
+	amountToUndelegate := sdkmath.NewInt(100)
+	tc := s.SetupTestConfirmUndelegation(amountToUndelegate)
+
+	// confirm the tx was successful
+	err := s.App.StaketiaKeeper.ConfirmUndelegation(s.Ctx, tc.unbondingRecord.Id, ValidTxHashDefault, tc.operatorAddress)
+	s.Require().NoError(err)
+
+	// check that the unbonding record was updated
+	unbondingRecord, found := s.App.StaketiaKeeper.GetUnbondingRecord(s.Ctx, tc.unbondingRecord.Id)
+	s.Require().True(found, "unbonding record should have been found")
+	s.Require().Equal(types.UNBONDING_IN_PROGRESS, unbondingRecord.Status, "unbonding record status")
+	s.Require().Equal(ValidTxHashDefault, unbondingRecord.UndelegationTxHash, "unbonding record tx hash")
+
+	expectedUndelegationTime := uint64(s.Ctx.BlockTime().Add(time.Duration(tc.hostZone.UnbondingPeriod) * time.Hour * 24).Unix()) // now + 21 days
+	s.Require().Equal(expectedUndelegationTime, unbondingRecord.UnbondingCompletionTimeSeconds, "unbonding record completion time")
+
+	// check that the balance on the redemption account was updated
+	expectedRedemptionAccountBalance := tc.redemptionAccountBalance.Sub(tc.stTokenAmountToBurn)
+	actualRedemptionAccountBalance := s.App.BankKeeper.GetBalance(s.Ctx, tc.redemptionAddress, StDenom).Amount
+	s.Require().Equal(expectedRedemptionAccountBalance, actualRedemptionAccountBalance, "redemption account balance")
+
+	// check that delegated balance was updated
+	hostZone := s.MustGetHostZone()
+	s.Require().Equal(tc.delegatedBalance.Sub(tc.amountToUndelegate), hostZone.DelegatedBalance, "delegated balance")
+}
+
+// unit test ConfirmUndelegation with nothing to unbond
+func (s *KeeperTestSuite) TestConfirmUndelegation_Failure_NothingToUnbond() {
+	// test undelegating nothing
+	amountToUndelegate := sdkmath.ZeroInt()
+	tc := s.SetupTestConfirmUndelegation(amountToUndelegate)
+
+	// require both stTokenAmountToBurn and amountToUndelegate are 0
+	s.Require().Zero(tc.stTokenAmountToBurn.Int64())
+	s.Require().Zero(tc.amountToUndelegate.Int64())
+
+	txHash := "" // hash must be empty for nothing to unbond case
+	err := s.App.StaketiaKeeper.ConfirmUndelegation(s.Ctx, tc.unbondingRecord.Id, txHash, tc.operatorAddress)
+	s.Require().Error(err, "no tokens to unbond")
+}
+
+// unit test ConfirmUndelegation with nothing to unbond
+func (s *KeeperTestSuite) TestConfirmUndelegation_Failure_NegativeAmountToUnbond() {
+	// test undelegating nothing
+	amountToUndelegateNegative := sdkmath.ZeroInt().Sub(sdkmath.NewInt(1))
+	tc := s.SetupTestConfirmUndelegation(amountToUndelegateNegative)
+
+	// require both stTokenAmountToBurn and amountToUndelegate are -1
+	s.Require().Negative(tc.stTokenAmountToBurn.Int64())
+	s.Require().Negative(tc.amountToUndelegate.Int64())
+
+	txHash := "" // hash must be empty for nothing to unbond case
+	err := s.App.StaketiaKeeper.ConfirmUndelegation(s.Ctx, tc.unbondingRecord.Id, txHash, tc.operatorAddress)
+	s.Require().Error(err, "no tokens to unbond (or negative)")
+}
+
+func (s *KeeperTestSuite) TestConfirmUndelegation_Failure_RecordWasNotQueued() {
+	amountToUndelegate := sdkmath.NewInt(100)
+	tc := s.SetupTestConfirmUndelegation(amountToUndelegate)
+
+	// set the unbonding record status to something other than UNBONDING_QUEUE
+	tc.unbondingRecord.Status = types.UNBONDING_IN_PROGRESS
+	s.App.StaketiaKeeper.SetUnbondingRecord(s.Ctx, tc.unbondingRecord)
+
+	err := s.App.StaketiaKeeper.ConfirmUndelegation(s.Ctx, tc.unbondingRecord.Id, ValidTxHashDefault, tc.operatorAddress)
+	s.Require().Error(err, "not ready to be undelegated")
+}
+
+func (s *KeeperTestSuite) TestConfirmUndelegation_Failure_NoRecordWithId() {
+	amountToUndelegate := sdkmath.NewInt(100)
+	tc := s.SetupTestConfirmUndelegation(amountToUndelegate)
+
+	// archive the record (this is the only way to remove it from the active store)
+	tc.unbondingRecord.Status = types.UNBONDING_IN_PROGRESS
+	s.App.StaketiaKeeper.ArchiveUnbondingRecord(s.Ctx, tc.unbondingRecord.Id)
+
+	err := s.App.StaketiaKeeper.ConfirmUndelegation(s.Ctx, tc.unbondingRecord.Id, ValidTxHashDefault, tc.operatorAddress)
+	s.Require().Error(err, "couldn't find unbonding record")
+}
+
+func (s *KeeperTestSuite) TestConfirmUndelegation_Failure_RecordHashAlreadySet() {
+	amountToUndelegate := sdkmath.NewInt(100)
+	tc := s.SetupTestConfirmUndelegation(amountToUndelegate)
+
+	// set the unbonding record tx hash
+	tc.unbondingRecord.UndelegationTxHash = ValidTxHashDefault
+	s.App.StaketiaKeeper.SetUnbondingRecord(s.Ctx, tc.unbondingRecord)
+
+	err := s.App.StaketiaKeeper.ConfirmUndelegation(s.Ctx, tc.unbondingRecord.Id, ValidTxHashDefault, tc.operatorAddress)
+	s.Require().Error(err, "already has a tx hash set")
+}
+
+func (s *KeeperTestSuite) TestBurnRedeemedStTokens_Success() {
+
+	redemptionAddress := s.TestAccs[0]
+	redemptionAccountBalance := sdkmath.NewInt(500)
+
+	// Create a host zone with delegatedBalance and RedemptionAddresses
+	hostZone := types.HostZone{
+		RedemptionAddress: redemptionAddress.String(),
+		NativeTokenDenom:  HostNativeDenom,
+	}
+	s.App.StaketiaKeeper.SetHostZone(s.Ctx, hostZone)
+
+	// Fund the redemption account with tokens that will be burned
+	stTokensInRedemption := sdk.NewCoin(StDenom, redemptionAccountBalance)
+	s.FundAccount(redemptionAddress, stTokensInRedemption)
+
+	// Store down the stToken supply for checking against after burn
+	stTokenSupplyBefore := s.App.BankKeeper.GetSupply(s.Ctx, StDenom).Amount
+
+	stDenom := utils.StAssetDenomFromHostZoneDenom(hostZone.NativeTokenDenom)
+
+	// burn redeemed stTokens
+	tokensToBurn := sdk.NewCoin(stDenom, sdkmath.NewInt(100))
+	err := s.App.StaketiaKeeper.BurnRedeemedStTokens(s.Ctx, sdk.NewCoins(tokensToBurn), redemptionAddress.String())
+	s.Require().NoError(err)
+
+	// check that stTIA supply decremented
+	stTokenSupplyAfter := s.App.BankKeeper.GetSupply(s.Ctx, StDenom).Amount
+	s.Require().Equal(stTokenSupplyBefore.Sub(tokensToBurn.Amount), stTokenSupplyAfter, "stToken supply")
+
+	// check that the balance on the redemption account was updated
+	expectedRedemptionAccountBalance := redemptionAccountBalance.Sub(tokensToBurn.Amount)
+	actualRedemptionAccountBalance := s.App.BankKeeper.GetBalance(s.Ctx, redemptionAddress, StDenom).Amount
+	s.Require().Equal(expectedRedemptionAccountBalance, actualRedemptionAccountBalance, "redemption account balance")
+}
+
+func (s *KeeperTestSuite) TestBurnRedeemedStTokens_BadRedemptionAddress() {
+
+	redemptionAddress := "INVALID_ADDRESS"
+
+	// Create a host zone with delegatedBalance and RedemptionAddresses
+	hostZone := types.HostZone{
+		RedemptionAddress: redemptionAddress,
+		NativeTokenDenom:  HostNativeDenom,
+	}
+	s.App.StaketiaKeeper.SetHostZone(s.Ctx, hostZone)
+
+	stDenom := utils.StAssetDenomFromHostZoneDenom(hostZone.NativeTokenDenom)
+
+	// burn redeemed stTokens
+	tokensToBurn := sdk.NewCoin(stDenom, sdkmath.NewInt(100))
+	err := s.App.StaketiaKeeper.BurnRedeemedStTokens(s.Ctx, sdk.NewCoins(tokensToBurn), redemptionAddress)
+	s.Require().Error(err, "could not bech32 decode addres")
+}
+
+func (s *KeeperTestSuite) TestVerifyImpliedRedemptionRateFromUnbonding() {
+	minRRBound := sdk.MustNewDecFromStr("0.9")
+	maxRRBound := sdk.MustNewDecFromStr("1.1")
+
+	testCases := []struct {
+		name                   string
+		delegatedBalanceBefore sdkmath.Int
+		delegatedBalanceAfter  sdkmath.Int
+		stTokenSupplyBefore    sdkmath.Int
+		stTokenSupplyAfter     sdkmath.Int
+		expectedError          string
+	}{
+		{
+			// Undelegated: 1000, Burned: 1000, Implied Rate: 1.0
+			name:                   "valid implied rate - 1",
+			delegatedBalanceBefore: sdkmath.NewInt(5000),
+			delegatedBalanceAfter:  sdkmath.NewInt(4000), // 5000 - 4000 = 1000 undelegated
+			stTokenSupplyBefore:    sdkmath.NewInt(5000),
+			stTokenSupplyAfter:     sdkmath.NewInt(4000), // 5000 - 4000 = 1000 burned
+		},
+		{
+			// Undelegated: 950, Burned: 1000, Implied Rate: 0.95
+			name:                   "valid implied rate below 1",
+			delegatedBalanceBefore: sdkmath.NewInt(5000),
+			delegatedBalanceAfter:  sdkmath.NewInt(4050), // 5000 - 4050 = 950 undelegated
+			stTokenSupplyBefore:    sdkmath.NewInt(5000),
+			stTokenSupplyAfter:     sdkmath.NewInt(4000), // 5000 - 4000 = 1000 burned
+		},
+		{
+			// Undelegated: 1050, Burned: 1000, Implied Rate: 1.05
+			name:                   "valid implied rate above 1",
+			delegatedBalanceBefore: sdkmath.NewInt(5000),
+			delegatedBalanceAfter:  sdkmath.NewInt(3950), // 5000 - 3950 = 1050 undelegated
+			stTokenSupplyBefore:    sdkmath.NewInt(5000),
+			stTokenSupplyAfter:     sdkmath.NewInt(4000), // 5000 - 4000 = 1000 burned
+		},
+		{
+			// Undelegated: 900, Burned: 1000, Implied Rate: 0.9
+			name:                   "valid implied rate at min",
+			delegatedBalanceBefore: sdkmath.NewInt(5000),
+			delegatedBalanceAfter:  sdkmath.NewInt(4000), // 5000 - 4000 = 900 undelegated
+			stTokenSupplyBefore:    sdkmath.NewInt(5000),
+			stTokenSupplyAfter:     sdkmath.NewInt(4000), // 5000 - 4000 = 1000 burned
+		},
+		{
+			// Undelegated: 1100, Burned: 1000, Implied Rate: 1.1
+			name:                   "valid implied rate at max",
+			delegatedBalanceBefore: sdkmath.NewInt(5000),
+			delegatedBalanceAfter:  sdkmath.NewInt(3900), // 5000 - 3900 = 1100 undelegated
+			stTokenSupplyBefore:    sdkmath.NewInt(5000),
+			stTokenSupplyAfter:     sdkmath.NewInt(4000), // 5000 - 4000 = 1000 burned
+		},
+		{
+			// Undelegated: 899, Burned: 1000, Implied Rate: 0.899
+			name:                   "valid implied rate below min",
+			delegatedBalanceBefore: sdkmath.NewInt(5000),
+			delegatedBalanceAfter:  sdkmath.NewInt(4101), // 5000 - 4101 = 899 undelegated
+			stTokenSupplyBefore:    sdkmath.NewInt(5000),
+			stTokenSupplyAfter:     sdkmath.NewInt(4000), // 5000 - 4000 = 1000 burned
+			expectedError:          "redemption rate outside safety bounds",
+		},
+		{
+			// Undelegated: 1101, Burned: 1000, Implied Rate: 1.101
+			name:                   "valid implied rate above max",
+			delegatedBalanceBefore: sdkmath.NewInt(5000),
+			delegatedBalanceAfter:  sdkmath.NewInt(3899), // 5000 - 3899 = 1101 undelegated
+			stTokenSupplyBefore:    sdkmath.NewInt(5000),
+			stTokenSupplyAfter:     sdkmath.NewInt(4000), // 5000 - 4000 = 1000 burned
+			expectedError:          "redemption rate outside safety bounds",
+		},
+		{
+			name:                   "division by zero",
+			delegatedBalanceBefore: sdkmath.NewInt(1000),
+			delegatedBalanceAfter:  sdkmath.NewInt(2000),
+			stTokenSupplyBefore:    sdkmath.NewInt(4000),
+			stTokenSupplyAfter:     sdkmath.NewInt(4000), // same as before -> supply change is 0
+			expectedError:          "division by zero",
+		},
+	}
+
+	for _, tc := range testCases {
+		s.Run(tc.name, func() {
+			s.SetupTest() // reset state
+
+			// Mint stTokens to a random account to create supply
+			s.FundAccount(s.TestAccs[0], sdk.NewCoin(StDenom, tc.stTokenSupplyAfter))
+
+			// Set the delegated balance on the host zone
+			s.App.StaketiaKeeper.SetHostZone(s.Ctx, types.HostZone{
+				NativeTokenDenom:  HostNativeDenom,
+				DelegatedBalance:  tc.delegatedBalanceAfter,
+				MinRedemptionRate: minRRBound,
+				MaxRedemptionRate: maxRRBound,
+			})
+
+			// verify that the implied redemption rate is between the bounds
+			err := s.App.StaketiaKeeper.VerifyImpliedRedemptionRateFromUnbonding(s.Ctx, tc.stTokenSupplyBefore, tc.delegatedBalanceBefore)
+
+			if tc.expectedError == "" {
+				s.Require().NoError(err)
+			} else {
+				s.Require().ErrorContains(err, tc.expectedError)
+			}
+		})
+	}
+}
+
+// ----------------------------------------------
+//          ConfirmUnbondedTokensSwept
+// ----------------------------------------------
+
+func (s *KeeperTestSuite) GetDefaultUnbondingRecords() []types.UnbondingRecord {
+	unbondingRecords := []types.UnbondingRecord{ // verify no issue if these are out of order
+		{
+			Id:                             1,
+			Status:                         types.UNBONDING_QUEUE,
+			StTokenAmount:                  sdk.NewInt(100),
+			NativeAmount:                   sdk.NewInt(200),
+			UnbondingCompletionTimeSeconds: 0,
+			UndelegationTxHash:             "",
+			UnbondedTokenSweepTxHash:       "",
+		},
+		{
+			Id:                             7,
+			Status:                         types.CLAIMABLE,
+			StTokenAmount:                  sdk.NewInt(200),
+			NativeAmount:                   sdk.NewInt(400),
+			UnbondingCompletionTimeSeconds: 10,
+			UndelegationTxHash:             ValidTxHashDefault,
+			UnbondedTokenSweepTxHash:       ValidTxHashDefault,
+		},
+		{
+			Id:                             5,
+			Status:                         types.UNBONDING_IN_PROGRESS,
+			StTokenAmount:                  sdk.NewInt(500),
+			NativeAmount:                   sdk.NewInt(1000),
+			UnbondingCompletionTimeSeconds: 20,
+			UndelegationTxHash:             ValidTxHashDefault,
+			UnbondedTokenSweepTxHash:       "",
+		},
+		{
+			Id:                             3,
+			Status:                         types.ACCUMULATING_REDEMPTIONS,
+			StTokenAmount:                  sdk.NewInt(300),
+			NativeAmount:                   sdk.NewInt(600),
+			UnbondingCompletionTimeSeconds: 0,
+			UndelegationTxHash:             "",
+			UnbondedTokenSweepTxHash:       "",
+		},
+		{
+			Id:                             6,
+			Status:                         types.UNBONDED,
+			StTokenAmount:                  sdk.NewInt(600),
+			NativeAmount:                   sdk.NewInt(1200),
+			UnbondingCompletionTimeSeconds: 15,
+			UndelegationTxHash:             ValidTxHashDefault,
+			UnbondedTokenSweepTxHash:       "",
+		},
+		{
+			Id:                             4,
+			Status:                         types.UNBONDING_ARCHIVE,
+			StTokenAmount:                  sdk.NewInt(400),
+			NativeAmount:                   sdk.NewInt(800),
+			UnbondingCompletionTimeSeconds: 5,
+			UndelegationTxHash:             ValidTxHashDefault,
+			UnbondedTokenSweepTxHash:       ValidTxHashDefault,
+		},
+		{
+			Id:                             2,
+			Status:                         types.UNBONDED,
+			StTokenAmount:                  sdk.NewInt(700),
+			NativeAmount:                   sdk.NewInt(1400),
+			UnbondingCompletionTimeSeconds: 18,
+			UndelegationTxHash:             ValidTxHashDefault,
+			UnbondedTokenSweepTxHash:       "",
+		},
+	}
+	return unbondingRecords
+}
+
+// Helper function to setup unbonding records, returns a list of records
+func (s *KeeperTestSuite) SetupTestConfirmUnbondingTokens(amount int64) {
+	unbondingRecords := s.GetDefaultUnbondingRecords()
+
+	// loop through and set each record
+	for _, unbondingRecord := range unbondingRecords {
+		s.App.StaketiaKeeper.SetUnbondingRecord(s.Ctx, unbondingRecord)
+	}
+
+	// setup host zone, to fund claim address
+	claimAddress := s.TestAccs[0]
+	hostZone := types.HostZone{
+		NativeTokenIbcDenom: HostIBCDenom,
+		ClaimAddress:        claimAddress.String(),
+	}
+	s.App.StaketiaKeeper.SetHostZone(s.Ctx, hostZone)
+
+	// fund claim address
+	liquidStakeToken := sdk.NewCoin(hostZone.NativeTokenIbcDenom, sdk.NewInt(amount))
+	s.FundAccount(claimAddress, liquidStakeToken)
+}
+
+func (s *KeeperTestSuite) VerifyUnbondingRecordsAfterConfirmSweep(verifyUpdatedFieldsIdentical bool) {
+	defaultUnbondingRecords := s.GetDefaultUnbondingRecords()
+	for _, defaultUnbondingRecord := range defaultUnbondingRecords {
+		if defaultUnbondingRecord.Status == types.UNBONDING_ARCHIVE {
+			continue
+		}
+		// grab relevant record in store
+		loadedUnbondingRecord, found := s.App.StaketiaKeeper.GetUnbondingRecord(s.Ctx, defaultUnbondingRecord.Id)
+		s.Require().True(found)
+
+		// verify record is correct
+		s.Require().Equal(defaultUnbondingRecord.Id, loadedUnbondingRecord.Id)
+		s.Require().Equal(defaultUnbondingRecord.NativeAmount, loadedUnbondingRecord.NativeAmount)
+		s.Require().Equal(defaultUnbondingRecord.StTokenAmount, loadedUnbondingRecord.StTokenAmount)
+		s.Require().Equal(defaultUnbondingRecord.UnbondingCompletionTimeSeconds, loadedUnbondingRecord.UnbondingCompletionTimeSeconds)
+		s.Require().Equal(defaultUnbondingRecord.UndelegationTxHash, loadedUnbondingRecord.UndelegationTxHash)
+
+		// if relevant, verify status and tx hash
+		if (defaultUnbondingRecord.Status != types.UNBONDED) ||
+			verifyUpdatedFieldsIdentical {
+			s.Require().Equal(defaultUnbondingRecord.Status, loadedUnbondingRecord.Status)
+			s.Require().Equal(defaultUnbondingRecord.UnbondedTokenSweepTxHash, loadedUnbondingRecord.UnbondedTokenSweepTxHash)
+		}
+	}
+}
+
+func (s *KeeperTestSuite) TestConfirmUnbondingTokenSweep_Successful() {
+	s.SetupTestConfirmUnbondingTokens(DefaultClaimFundingAmount)
+
+	// process record 6
+	err := s.App.StaketiaKeeper.ConfirmUnbondedTokenSweep(s.Ctx, 6, ValidTxHashNew, ValidOperator)
+	s.Require().NoError(err)
+	s.VerifyUnbondingRecordsAfterConfirmSweep(false)
+
+	// verify record 6 modified
+	loadedUnbondingRecord, found := s.App.StaketiaKeeper.GetUnbondingRecord(s.Ctx, 6)
+	s.Require().True(found)
+	s.Require().Equal(types.CLAIMABLE, loadedUnbondingRecord.Status, "unbonding record should be updated to status CLAIMABLE")
+	s.Require().Equal(ValidTxHashNew, loadedUnbondingRecord.UnbondedTokenSweepTxHash, "unbonding record should be updated with token sweep txHash")
+
+	// process record 2
+	err = s.App.StaketiaKeeper.ConfirmUnbondedTokenSweep(s.Ctx, 2, ValidTxHashNew, ValidOperator)
+	s.Require().NoError(err)
+	s.VerifyUnbondingRecordsAfterConfirmSweep(false)
+
+	// verify record 2 modified
+	loadedUnbondingRecord, found = s.App.StaketiaKeeper.GetUnbondingRecord(s.Ctx, 2)
+	s.Require().True(found)
+	s.Require().Equal(types.CLAIMABLE, loadedUnbondingRecord.Status, "unbonding record should be updated to status CLAIMABLE")
+	s.Require().Equal(ValidTxHashNew, loadedUnbondingRecord.UnbondedTokenSweepTxHash, "unbonding record should be updated with token sweep txHash")
+}
+
+func (s *KeeperTestSuite) TestConfirmUnbondingTokenSweep_NotFunded() {
+	s.SetupTestConfirmUnbondingTokens(10)
+
+	// try setting with no hash
+	err := s.App.StaketiaKeeper.ConfirmUnbondedTokenSweep(s.Ctx, 6, ValidTxHashNew, ValidOperator)
+	s.Require().ErrorIs(err, types.ErrInsufficientFunds, "should error when claim account doesn't have enough funds")
+}
+
+func (s *KeeperTestSuite) TestConfirmUnbondingTokenSweep_InvalidClaimAddress() {
+	s.SetupTestConfirmUnbondingTokens(DefaultClaimFundingAmount)
+
+	hostZone := s.MustGetHostZone()
+	hostZone.ClaimAddress = "strideinvalidaddress" // random address
+	s.App.StaketiaKeeper.SetHostZone(s.Ctx, hostZone)
+
+	// try setting with no hash
+	err := s.App.StaketiaKeeper.ConfirmUnbondedTokenSweep(s.Ctx, 6, ValidTxHashNew, ValidOperator)
+	s.Require().ErrorContains(err, "decoding bech32 failed", "should error when claim address is invalid")
+}
+
+func (s *KeeperTestSuite) TestConfirmUnbondingTokenSweep_RecordDoesntExist() {
+	s.SetupTestConfirmUnbondingTokens(DefaultClaimFundingAmount)
+
+	// process record 15
+	err := s.App.StaketiaKeeper.ConfirmUnbondedTokenSweep(s.Ctx, 15, ValidTxHashNew, ValidOperator)
+	s.Require().ErrorIs(err, types.ErrUnbondingRecordNotFound, "should error when record doesn't exist")
+}
+
+func (s *KeeperTestSuite) TestConfirmUnbondingTokenSweep_RecordIncorrectState() {
+	s.SetupTestConfirmUnbondingTokens(DefaultClaimFundingAmount)
+
+	// get list of ids to try
+	ids := []uint64{1, 3, 5, 7}
+	for _, id := range ids {
+		err := s.App.StaketiaKeeper.ConfirmUnbondedTokenSweep(s.Ctx, id, ValidTxHashNew, ValidOperator)
+		s.Require().ErrorIs(err, types.ErrInvalidUnbondingRecord, "should error when record is in incorrect state")
+	}
+}
+
+func (s *KeeperTestSuite) TestConfirmUnbondingTokenSweep_ZeroSweepAmount() {
+	s.SetupTestConfirmUnbondingTokens(DefaultClaimFundingAmount)
+
+	// update the sweep record so that the native amount is zero
+	unbondingRecord, found := s.App.StaketiaKeeper.GetUnbondingRecord(s.Ctx, 6)
+	s.Require().True(found)
+	unbondingRecord.NativeAmount = sdk.NewInt(0)
+	s.App.StaketiaKeeper.SetUnbondingRecord(s.Ctx, unbondingRecord)
+
+	// try confirming with zero token amount on record
+	err := s.App.StaketiaKeeper.ConfirmUnbondedTokenSweep(s.Ctx, 6, ValidTxHashNew, ValidOperator)
+	s.Require().ErrorIs(err, types.ErrInvalidUnbondingRecord, "should error when record has zero sweep amount")
+}
+
+func (s *KeeperTestSuite) TestConfirmUnbondingTokenSweep_NegativeSweepAmount() {
+	s.SetupTestConfirmUnbondingTokens(DefaultClaimFundingAmount)
+
+	// update the sweep record so that the native amount is negative
+	unbondingRecord, found := s.App.StaketiaKeeper.GetUnbondingRecord(s.Ctx, 6)
+	s.Require().True(found)
+	unbondingRecord.StTokenAmount = sdk.NewInt(-10)
+	s.App.StaketiaKeeper.SetUnbondingRecord(s.Ctx, unbondingRecord)
+
+	// try confirming with negative token amount on record
+	err := s.App.StaketiaKeeper.ConfirmUnbondedTokenSweep(s.Ctx, 6, ValidTxHashNew, ValidOperator)
+	s.Require().ErrorIs(err, types.ErrInvalidUnbondingRecord, "should error when record has zero sweep amount")
 }
 
 // ----------------------------------------------

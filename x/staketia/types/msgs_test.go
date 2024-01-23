@@ -316,60 +316,64 @@ func TestMsgSetOperatorAddress(t *testing.T) {
 }
 
 // ----------------------------------------------
-//               MsgConfirmDelegation
+//             MsgConfirmDelegation
 // ----------------------------------------------
 
 func TestMsgConfirmDelegation_ValidateBasic(t *testing.T) {
+	validTxHash := "BBD978ADDBF580AC2981E351A3EA34AA9D7B57631E9CE21C27C2C63A5B13BDA9"
+	validRecordId := uint64(35)
+	validAddress := sample.AccAddress()
+
 	tests := []struct {
-		name string
-		msg  types.MsgConfirmDelegation
-		err  error
+		name          string
+		msg           types.MsgConfirmDelegation
+		expectedError string
 	}{
 		{
 			name: "success",
 			msg: types.MsgConfirmDelegation{
-				Operator: sample.AccAddress(),
-				RecordId: 35,
-				TxHash:   "BBD978ADDBF580AC2981E351A3EA34AA9D7B57631E9CE21C27C2C63A5B13BDA9",
+				Operator: validAddress,
+				RecordId: validRecordId,
+				TxHash:   validTxHash,
 			},
 		},
 		{
 			name: "empty tx hash",
 			msg: types.MsgConfirmDelegation{
-				Operator: sample.AccAddress(),
-				RecordId: 35,
+				Operator: validAddress,
+				RecordId: validRecordId,
 				TxHash:   "",
 			},
-			err: sdkerrors.ErrTxDecode,
+			expectedError: "tx hash is empty",
 		},
 		{
 			name: "invalid tx hash",
 			msg: types.MsgConfirmDelegation{
-				Operator: sample.AccAddress(),
-				RecordId: 35,
-				TxHash:   "invalid_tx_hash",
+				Operator: validAddress,
+				RecordId: validRecordId,
+				TxHash:   "invalid_tx-hash",
 			},
-			err: sdkerrors.ErrTxDecode,
+			expectedError: "tx hash is invalid",
 		},
 		{
 			name: "invalid sender",
 			msg: types.MsgConfirmDelegation{
 				Operator: "strideinvalid",
-				RecordId: 35,
-				TxHash:   "BBD978ADDBF580AC2981E351A3EA34AA9D7B57631E9CE21C27C2C63A5B13BDA9",
+				RecordId: validRecordId,
+				TxHash:   validTxHash,
 			},
-			err: sdkerrors.ErrInvalidAddress,
+			expectedError: "invalid address",
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			err := tt.msg.ValidateBasic()
-			if tt.err != nil {
-				require.ErrorIs(t, err, tt.err)
-				return
+			if tt.expectedError == "" {
+				require.NoError(t, err)
+			} else {
+				require.ErrorContains(t, err, tt.expectedError)
 			}
-			require.NoError(t, err)
 		})
 	}
 }

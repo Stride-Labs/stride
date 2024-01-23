@@ -1,6 +1,9 @@
 package keeper
 
 import (
+	"fmt"
+	"time"
+
 	errorsmod "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -157,6 +160,127 @@ func (k Keeper) MarkFinishedUnbondings(ctx sdk.Context) {
 			k.SetUnbondingRecord(ctx, unbondingRecord)
 		}
 	}
+}
+
+// Confirms that an undelegation has been completed on the host zone
+// Updates the record status to UNBONDING_IN_PROGRESS, decrements the delegated balance and burns stTokens
+func (k Keeper) ConfirmUndelegation(ctx sdk.Context, recordId uint64, txHash string, sender string) (err error) {
+	// grab unbonding record, verify it's in the right state, and no tx hash has been submitted yet
+	record, found := k.GetUnbondingRecord(ctx, recordId)
+	if !found {
+		return errorsmod.Wrapf(types.ErrUnbondingRecordNotFound, "couldn't find unbonding record with id: %d", recordId)
+	}
+	if record.Status != types.UNBONDING_QUEUE {
+		return errorsmod.Wrapf(types.ErrInvalidUnbondingRecord, "unbonding record with id: %d is not ready to be undelegated", recordId)
+	}
+	if record.UndelegationTxHash != "" {
+		return errorsmod.Wrapf(types.ErrInvalidUnbondingRecord, "unbonding record with id: %d already has a tx hash set", recordId)
+	}
+
+	// if there are no tokens to unbond (or negative on the record): throw an error!
+	noTokensUnbondedOrNegative := record.NativeAmount.LTE(sdk.ZeroInt()) || record.StTokenAmount.LTE(sdk.ZeroInt())
+	if noTokensUnbondedOrNegative {
+		return errorsmod.Wrapf(types.ErrInvalidUnbondingRecord, "unbonding record with id: %d has no tokens to unbond (or negative)", recordId)
+	}
+
+	hostZone, err := k.GetHostZone(ctx)
+	if err != nil {
+		return err
+	}
+
+	// sanity check: store down the stToken supply and DelegatedBalance for checking against after burn
+	stDenom := utils.StAssetDenomFromHostZoneDenom(hostZone.NativeTokenDenom)
+	stTokenSupplyBefore := k.bankKeeper.GetSupply(ctx, stDenom).Amount
+	delegatedBalanceBefore := hostZone.DelegatedBalance
+
+	// update the record's txhash, status, and unbonding completion time
+	unbondingLength := time.Duration(hostZone.UnbondingPeriod) * 24 * time.Hour    // 21 days
+	unbondingCompletionTime := uint64(ctx.BlockTime().Add(unbondingLength).Unix()) // now + 21 days
+
+	record.UndelegationTxHash = txHash
+	record.Status = types.UNBONDING_IN_PROGRESS
+	record.UnbondingCompletionTimeSeconds = unbondingCompletionTime
+	k.SetUnbondingRecord(ctx, record)
+
+	// update host zone struct's delegated balance
+	amountAddedToDelegation := record.NativeAmount
+	newDelegatedBalance := hostZone.DelegatedBalance.Sub(amountAddedToDelegation)
+
+	// sanity check: if the new balance is negative, throw an error
+	if newDelegatedBalance.IsNegative() {
+		return errorsmod.Wrapf(types.ErrNegativeNotAllowed, "host zone's delegated balance would be negative after undelegation")
+	}
+	hostZone.DelegatedBalance = newDelegatedBalance
+	k.SetHostZone(ctx, hostZone)
+
+	// burn the corresponding stTokens from the redemptionAddress
+	stTokensToBurn := sdk.NewCoins(sdk.NewCoin(stDenom, record.StTokenAmount))
+	if err := k.BurnRedeemedStTokens(ctx, stTokensToBurn, hostZone.RedemptionAddress); err != nil {
+		return errorsmod.Wrapf(err, "unable to burn stTokens in ConfirmUndelegation")
+	}
+
+	// sanity check: check that (DelegatedBalance increment / stToken supply decrement) is within outer bounds
+	if err := k.VerifyImpliedRedemptionRateFromUnbonding(ctx, stTokenSupplyBefore, delegatedBalanceBefore); err != nil {
+		return errorsmod.Wrap(err, "ratio of delegation change to burned tokens exceeds redemption rate bounds")
+	}
+
+	EmitSuccessfulConfirmUndelegationEvent(ctx, recordId, record.NativeAmount, txHash, sender)
+	return nil
+}
+
+// Burn stTokens from the redemption account
+// - this requires sending them to an module account first, then burning them from there.
+// - we use the staketia module account
+func (k Keeper) BurnRedeemedStTokens(ctx sdk.Context, stTokensToBurn sdk.Coins, redemptionAddress string) error {
+	acctAddressRedemption, err := sdk.AccAddressFromBech32(redemptionAddress)
+	if err != nil {
+		return fmt.Errorf("could not bech32 decode address %s", redemptionAddress)
+	}
+
+	// send tokens from the EOA to the staketia module account
+	err = k.bankKeeper.SendCoinsFromAccountToModule(ctx, acctAddressRedemption, types.ModuleName, stTokensToBurn)
+	if err != nil {
+		return errorsmod.Wrapf(err, "could not send coins from account %s to module %s. err: %s", redemptionAddress, types.ModuleName, err)
+	}
+
+	// burn the stTokens from the staketia module account
+	err = k.bankKeeper.BurnCoins(ctx, types.ModuleName, stTokensToBurn)
+	if err != nil {
+		return errorsmod.Wrapf(err, "couldn't burn %v tokens in module account", stTokensToBurn)
+	}
+
+	return nil
+}
+
+// Sanity check helper for checking diffs on delegated balance and stToken supply are within outer RR bounds
+func (k Keeper) VerifyImpliedRedemptionRateFromUnbonding(ctx sdk.Context, stTokenSupplyBefore sdkmath.Int, delegatedBalanceBefore sdkmath.Int) error {
+	hostZoneAfter, err := k.GetHostZone(ctx)
+	if err != nil {
+		return types.ErrHostZoneNotFound
+	}
+	stDenom := utils.StAssetDenomFromHostZoneDenom(hostZoneAfter.NativeTokenDenom)
+
+	// grab the delegated balance and token supply after the burn
+	delegatedBalanceAfter := hostZoneAfter.DelegatedBalance
+	stTokenSupplyAfter := k.bankKeeper.GetSupply(ctx, stDenom).Amount
+
+	// calculate the delta for both the delegated balance and stToken burn
+	delegatedBalanceDecremented := delegatedBalanceBefore.Sub(delegatedBalanceAfter)
+	stTokenSupplyBurned := stTokenSupplyBefore.Sub(stTokenSupplyAfter)
+
+	// It shouldn't be possible for this to be zero, but this will prevent a division by zero error
+	if stTokenSupplyBurned.IsZero() {
+		return types.ErrDivisionByZero
+	}
+
+	// calculate the ratio of delegated balance change to stToken burn - it should be close to the redemption rate
+	ratio := sdk.NewDecFromInt(delegatedBalanceDecremented).Quo(sdk.NewDecFromInt(stTokenSupplyBurned))
+
+	// check ratio against bounds
+	if ratio.LT(hostZoneAfter.MinRedemptionRate) || ratio.GT(hostZoneAfter.MaxRedemptionRate) {
+		return types.ErrRedemptionRateOutsideSafetyBounds
+	}
+	return nil
 }
 
 // Iterates all unbonding records and distributes unbonded tokens to redeemers

@@ -55,16 +55,20 @@ service Msg {
   rpc ResumeHostZone(MsgResumeHostZone) returns (MsgResumeHostZoneResponse);
 
   // Trigger updating the redemption rate
-  rpc RefreshRedemptionRate(MsgRefreshRedemptionRate) returns (MsgRefreshRedemptionRateResponse);
+  rpc RefreshRedemptionRate(MsgRefreshRedemptionRate)
+      returns (MsgRefreshRedemptionRateResponse);
 
   // Overwrites a delegation record
-  rpc OverwriteDelegationRecord(MsgOverwriteDelegationRecord) returns (MsgOverwriteDelegationRecordResponse);
+  rpc OverwriteDelegationRecord(MsgOverwriteDelegationRecord)
+      returns (MsgOverwriteDelegationRecordResponse);
 
   // Overwrites a unbonding record
-  rpc OverwriteUnbondingRecord(MsgOverwriteUnbondingRecord) returns (MsgOverwriteUnbondingRecordResponse);
+  rpc OverwriteUnbondingRecord(MsgOverwriteUnbondingRecord)
+      returns (MsgOverwriteUnbondingRecordResponse);
 
   // Overwrites a redemption record
-  rpc OverwriteRedemptionRecord(MsgOverwriteRedemptionRecord) returns (MsgOverwriteRedemptionRecordResponse);
+  rpc OverwriteRedemptionRecord(MsgOverwriteRedemptionRecord)
+      returns (MsgOverwriteRedemptionRecordResponse);
 
   // Sets the operator address
   rpc SetOperatorAddress(MsgSetOperatorAddress)
@@ -190,7 +194,6 @@ message MsgRefreshRedemptionRate {
   string creator = 1;
 }
 message MsgRefreshRedemptionRateResponse {}
-
 
 // OverwriteDelegationRecord
 message MsgOverwriteDelegationRecord {

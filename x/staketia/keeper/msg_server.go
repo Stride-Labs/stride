@@ -65,9 +65,12 @@ func (k msgServer) ConfirmUndelegation(goCtx context.Context, msg *types.MsgConf
 		return nil, err
 	}
 
-	// TODO [sttia]
-	_ = ctx
-	return &types.MsgConfirmUndelegationResponse{}, nil
+	err := k.Keeper.ConfirmUndelegation(ctx, msg.RecordId, msg.TxHash, msg.Operator)
+	if err != nil {
+		return nil, err
+	}
+
+	return &types.MsgConfirmUndelegationResponse{}, err
 }
 
 // Operator transaction to confirm unbonded tokens were transferred back to stride

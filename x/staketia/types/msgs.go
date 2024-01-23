@@ -234,6 +234,11 @@ func (msg *MsgConfirmUndelegation) ValidateBasic() error {
 	if err != nil {
 		return errorsmod.Wrapf(sdkerrors.ErrInvalidAddress, "invalid address (%s)", err)
 	}
+	// verify tx hash is valid
+	if err := utils.VerifyTxHash(msg.TxHash); err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -279,7 +284,7 @@ func (msg *MsgConfirmUnbondedTokenSweep) ValidateBasic() error {
 	// Note: We can't verify recordId in ValidateBasic, because 0 is a valid record id
 	// and recordId is uint64 so can't be negative
 	if err := utils.VerifyTxHash(msg.TxHash); err != nil {
-		return errorsmod.Wrapf(sdkerrors.ErrTxDecode, "invalid address (%s)", err)
+		return err
 	}
 	return nil
 }
