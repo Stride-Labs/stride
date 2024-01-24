@@ -17,9 +17,8 @@ func (k Keeper) ArchiveFailedTransferRecord(ctx sdk.Context, recordId uint64) er
 	if !found {
 		return types.ErrDelegationRecordNotFound.Wrapf("delegation record not found for %d", recordId)
 	}
-	delegationRecord.TxHash = types.FailedTxStatus
-	k.SetDelegationRecord(ctx, delegationRecord)
-	k.ArchiveDelegationRecord(ctx, recordId)
+	delegationRecord.Status = types.TRANSFER_FAILED
+	k.ArchiveDelegationRecord(ctx, delegationRecord)
 
 	return nil
 }

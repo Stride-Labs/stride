@@ -109,8 +109,7 @@ func (s *KeeperTestSuite) TestUpdateRedemptionRate() {
 			// We'll create these by first creating normal records and then removing them
 			for i := 0; i <= 5; i++ {
 				id := uint64(i * 1000)
-				s.App.StaketiaKeeper.SetDelegationRecord(s.Ctx, types.DelegationRecord{Id: id})
-				s.App.StaketiaKeeper.ArchiveDelegationRecord(s.Ctx, id)
+				s.App.StaketiaKeeper.SetArchivedDelegationRecord(s.Ctx, types.DelegationRecord{Id: id})
 			}
 
 			// Mint sttokens for the supply (fund account calls mint)

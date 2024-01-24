@@ -70,8 +70,7 @@ func (s *KeeperTestSuite) TestArchiveFailedTransferRecord() {
 	// Confirm it was updated
 	delegationRecord, found := s.App.StaketiaKeeper.GetArchivedDelegationRecord(s.Ctx, recordId)
 	s.Require().True(found, "delegation record should have been archived")
-	s.Require().Equal(types.DELEGATION_ARCHIVE, delegationRecord.Status, "delegation record status")
-	s.Require().Equal(types.FailedTxStatus, delegationRecord.TxHash, "delegation record hash")
+	s.Require().Equal(types.TRANSFER_FAILED, delegationRecord.Status, "delegation record status")
 
 	// Check that an invalid ID errors
 	invalidRecordId := uint64(99)
@@ -216,9 +215,8 @@ func (s *KeeperTestSuite) verifyDelegationRecordArchived(tc PacketCallbackTestCa
 	_, found = s.App.StaketiaKeeper.GetDelegationRecord(s.Ctx, tc.Record.Id)
 	s.Require().False(found, "record should have been removed from the store")
 
-	// Confirm the record is unchanged, except for the Status and TxHash
-	tc.Record.Status = types.DELEGATION_ARCHIVE
-	tc.Record.TxHash = types.FailedTxStatus
+	// Confirm the record is unchanged, except for the Status
+	tc.Record.Status = types.TRANSFER_FAILED
 	s.Require().Equal(tc.Record, archivedRecord, "record should have been archived")
 
 	// Confirm the transfer in progress was removed

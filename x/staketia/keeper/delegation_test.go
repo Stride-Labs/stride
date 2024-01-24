@@ -299,7 +299,7 @@ func (s *KeeperTestSuite) TestPrepareDelegation() {
 	s.Require().ErrorContains(err, "cannot prepare delegation while a transfer is in progress")
 
 	// Remove the record and try to run it again
-	s.App.StaketiaKeeper.ArchiveDelegationRecord(s.Ctx, delegationRecord.Id)
+	s.App.StaketiaKeeper.ArchiveDelegationRecord(s.Ctx, delegationRecord)
 	err = s.App.StaketiaKeeper.PrepareDelegation(s.Ctx, epochNumber+1, epochDuration)
 	s.Require().NoError(err, "no error expected when preparing delegation again")
 
@@ -335,7 +335,7 @@ func (s *KeeperTestSuite) GetDefaultDelegationRecords() []types.DelegationRecord
 		{
 			Id:           3,
 			NativeAmount: sdk.NewInt(3000),
-			Status:       types.DELEGATION_ARCHIVE,
+			Status:       types.TRANSFER_FAILED,
 			TxHash:       "",
 		},
 		{
@@ -347,7 +347,7 @@ func (s *KeeperTestSuite) GetDefaultDelegationRecords() []types.DelegationRecord
 		{
 			Id:           7,
 			NativeAmount: sdk.NewInt(7000),
-			Status:       types.DELEGATION_ARCHIVE,
+			Status:       types.TRANSFER_FAILED,
 			TxHash:       ValidTxHashDefault,
 		},
 	}
@@ -378,14 +378,10 @@ func (s *KeeperTestSuite) VerifyDelegationRecords(verifyIdentical bool, archiveI
 	for _, defaultDelegationRecord := range defaultDelegationRecords {
 		// check if record should be archived
 		shouldBeArchived := false
-		if defaultDelegationRecord.Status == types.DELEGATION_ARCHIVE {
-			shouldBeArchived = true
-		} else {
-			for _, archiveId := range archiveIds {
-				if defaultDelegationRecord.Id == archiveId {
-					shouldBeArchived = true
-					break
-				}
+		for _, archiveId := range archiveIds {
+			if defaultDelegationRecord.Id == archiveId {
+				shouldBeArchived = true
+				break
 			}
 		}
 
@@ -403,7 +399,7 @@ func (s *KeeperTestSuite) VerifyDelegationRecords(verifyIdentical bool, archiveI
 		s.Require().Equal(defaultDelegationRecord.NativeAmount, loadedDelegationRecord.NativeAmount)
 
 		// Verify status and txHash are correct, if needed
-		if (defaultDelegationRecord.Status == types.DELEGATION_ARCHIVE) ||
+		if (defaultDelegationRecord.Status == types.TRANSFER_FAILED) ||
 			(defaultDelegationRecord.Status == types.TRANSFER_IN_PROGRESS) ||
 			verifyIdentical {
 			s.Require().Equal(defaultDelegationRecord.Status, loadedDelegationRecord.Status)
@@ -429,7 +425,7 @@ func (s *KeeperTestSuite) TestConfirmDelegation_Successful() {
 	// verify record 6 modified
 	loadedDelegationRecord, found := s.App.StaketiaKeeper.GetArchivedDelegationRecord(s.Ctx, 6)
 	s.Require().True(found)
-	s.Require().Equal(types.DELEGATION_ARCHIVE, loadedDelegationRecord.Status, "delegation record should be updated to status DELEGATION_ARCHIVE")
+	s.Require().Equal(types.DELEGATION_COMPLETE, loadedDelegationRecord.Status, "delegation record should be updated to status DELEGATION_ARCHIVE")
 	s.Require().Equal(ValidTxHashNew, loadedDelegationRecord.TxHash, "delegation record should be updated with txHash")
 
 	// verify hostZone delegated balance is same as initial delegation + 6000
@@ -476,19 +472,10 @@ func (s *KeeperTestSuite) TestConfirmDelegation_RecordIncorrectState() {
 	s.SetupDelegationRecords()
 
 	// first verify records in wrong status
-	ids := []uint64{1, 5}
+	ids := []uint64{1, 3, 5, 7}
 	for _, id := range ids {
 		err := s.App.StaketiaKeeper.ConfirmDelegation(s.Ctx, id, ValidTxHashNew, ValidOperator)
 		s.Require().ErrorIs(err, types.ErrDelegationRecordInvalidState)
-		// verify delegation records haven't changed
-		s.VerifyDelegationRecords(true)
-	}
-
-	// then verify archived records
-	ids = []uint64{3, 7}
-	for _, id := range ids {
-		err := s.App.StaketiaKeeper.ConfirmDelegation(s.Ctx, id, ValidTxHashNew, ValidOperator)
-		s.Require().ErrorIs(err, types.ErrDelegationRecordNotFound)
 		// verify delegation records haven't changed
 		s.VerifyDelegationRecords(true)
 	}

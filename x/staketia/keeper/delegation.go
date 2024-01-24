@@ -165,8 +165,8 @@ func (k Keeper) ConfirmDelegation(ctx sdk.Context, recordId uint64, txHash strin
 
 	// update delegation record to archive it
 	delegationRecord.TxHash = txHash
-	k.SetDelegationRecord(ctx, delegationRecord)
-	k.ArchiveDelegationRecord(ctx, delegationRecord.Id)
+	delegationRecord.Status = types.DELEGATION_COMPLETE
+	k.ArchiveDelegationRecord(ctx, delegationRecord)
 
 	// increment delegation on Host Zone
 	hostZone.DelegatedBalance = hostZone.DelegatedBalance.Add(delegationRecord.NativeAmount)

@@ -18,30 +18,18 @@ func (s *KeeperTestSuite) addDelegationRecords() (delegationRecords []types.Dele
 	return delegationRecords
 }
 
-// Tests that records are written to their respective stores based on the status
-func (s *KeeperTestSuite) TestSetDelegationRecord() {
-	delegationRecords := []types.DelegationRecord{
-		{Id: 1, Status: types.TRANSFER_IN_PROGRESS},
-		{Id: 2, Status: types.DELEGATION_QUEUE},
-		{Id: 3, Status: types.DELEGATION_ARCHIVE},
-		{Id: 4, Status: types.TRANSFER_IN_PROGRESS},
-		{Id: 5, Status: types.DELEGATION_QUEUE},
-		{Id: 6, Status: types.DELEGATION_ARCHIVE},
-	}
-	for _, delegationRecord := range delegationRecords {
-		s.App.StaketiaKeeper.SetDelegationRecord(s.Ctx, delegationRecord)
-	}
+func (s *KeeperTestSuite) TestSafelySetDelegationRecord() {
+	// Set one record
+	err := s.App.StaketiaKeeper.SafelySetDelegationRecord(s.Ctx, types.DelegationRecord{Id: 1})
+	s.Require().NoError(err, "no error expected when setting record")
 
-	// Confirm the number of records in each store
-	s.Require().Len(s.App.StaketiaKeeper.GetAllActiveDelegationRecords(s.Ctx), 4, "records in active store")
-	s.Require().Len(s.App.StaketiaKeeper.GetAllArchivedDelegationRecords(s.Ctx), 2, "records in archive store")
+	// Attempt to set it again, it should fail
+	err = s.App.StaketiaKeeper.SafelySetDelegationRecord(s.Ctx, types.DelegationRecord{Id: 1})
+	s.Require().ErrorContains(err, "delegation record already exists")
 
-	// Check that only the non-archived records are found in the active store
-	for i, delegationRecord := range delegationRecords {
-		expectedFound := delegationRecord.Status != types.DELEGATION_ARCHIVE
-		_, actualFound := s.App.StaketiaKeeper.GetDelegationRecord(s.Ctx, delegationRecord.Id)
-		s.Require().Equal(expectedFound, actualFound, "record %d found in active store", i)
-	}
+	// Set a new ID, it should succeed
+	err = s.App.StaketiaKeeper.SafelySetDelegationRecord(s.Ctx, types.DelegationRecord{Id: 2})
+	s.Require().NoError(err, "no error expected when setting new ID")
 }
 
 func (s *KeeperTestSuite) TestGetDelegationRecord() {
@@ -62,19 +50,23 @@ func (s *KeeperTestSuite) TestArchiveDelegationRecord() {
 	delegationRecords := s.addDelegationRecords()
 
 	for removedIndex := 0; removedIndex < len(delegationRecords); removedIndex++ {
-		// Remove from removed index
-		removedId := delegationRecords[removedIndex].Id
-		s.App.StaketiaKeeper.ArchiveDelegationRecord(s.Ctx, removedId)
+		// Archive from removed index
+		removedRecord := delegationRecords[removedIndex]
+		s.App.StaketiaKeeper.ArchiveDelegationRecord(s.Ctx, removedRecord)
 
-		// Confirm removed
-		_, found := s.App.StaketiaKeeper.GetDelegationRecord(s.Ctx, removedId)
-		s.Require().False(found, "record %d should have been removed", removedId)
+		// Confirm removed from active
+		_, found := s.App.StaketiaKeeper.GetDelegationRecord(s.Ctx, removedRecord.Id)
+		s.Require().False(found, "record %d should have been removed", removedRecord.Id)
+
+		// Confirm placed in archive
+		_, found = s.App.StaketiaKeeper.GetArchivedDelegationRecord(s.Ctx, removedRecord.Id)
+		s.Require().True(found, "record %d should have been moved to the archive store", removedRecord.Id)
 
 		// Check all other records are still there
 		for checkedIndex := removedIndex + 1; checkedIndex < len(delegationRecords); checkedIndex++ {
 			checkedId := delegationRecords[checkedIndex].Id
 			_, found := s.App.StaketiaKeeper.GetDelegationRecord(s.Ctx, checkedId)
-			s.Require().True(found, "record %d should still be here after %d removal", checkedId, removedId)
+			s.Require().True(found, "record %d should still be here after %d removal", checkedId, removedRecord.Id)
 		}
 	}
 

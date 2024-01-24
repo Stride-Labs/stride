@@ -93,11 +93,14 @@ enum DelegationRecordStatus {
   // TRANSFER_IN_PROGRESS indicates the native tokens are being sent from the
   // deposit account to the delegation account
   TRANSFER_IN_PROGRESS = 0;
+  // TRANSFER_FAILED indicates that the transfer either timed out or was an ack
+  // failure
+  TRANSFER_FAILED = 1;
   // DELEGATION_QUEUE indicates the tokens have landed on the host zone and are
   // ready to be delegated
-  DELEGATION_QUEUE = 1;
-  // ARCHIVE indicates the delegation has been completed
-  DELEGATION_ARCHIVE = 2;
+  DELEGATION_QUEUE = 2;
+  // DELEGATION_COMPLETE indicates the delegation has been completed
+  DELEGATION_COMPLETE = 3;
 }
 
 // Status fields for an unbonding record

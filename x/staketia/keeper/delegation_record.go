@@ -7,23 +7,23 @@ import (
 	"github.com/Stride-Labs/stride/v17/x/staketia/types"
 )
 
-// Writes a delegation record to the store based on the status
-// If the status is archive, it writes to the archive store, otherwise it writes to the active store
+// Writes a delegation record to the active store
 func (k Keeper) SetDelegationRecord(ctx sdk.Context, delegationRecord types.DelegationRecord) {
-	activeStore := prefix.NewStore(ctx.KVStore(k.storeKey), types.DelegationRecordsKeyPrefix)
-	archiveStore := prefix.NewStore(ctx.KVStore(k.storeKey), types.DelegationRecordsArchiveKeyPrefix)
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.DelegationRecordsKeyPrefix)
 
-	if delegationRecord.Status == types.DELEGATION_ARCHIVE {
-		k.setDelegationRecord(archiveStore, delegationRecord)
-	} else {
-		k.setDelegationRecord(activeStore, delegationRecord)
-	}
-}
-
-// Writes a delegation record to a specific store (either active or archive)
-func (k Keeper) setDelegationRecord(store prefix.Store, delegationRecord types.DelegationRecord) {
 	recordKey := types.IntKey(delegationRecord.Id)
 	recordBz := k.cdc.MustMarshal(&delegationRecord)
+
+	store.Set(recordKey, recordBz)
+}
+
+// Writes a delegation record to the archive store
+func (k Keeper) SetArchivedDelegationRecord(ctx sdk.Context, delegationRecord types.DelegationRecord) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.DelegationRecordsArchiveKeyPrefix)
+
+	recordKey := types.IntKey(delegationRecord.Id)
+	recordBz := k.cdc.MustMarshal(&delegationRecord)
+
 	store.Set(recordKey, recordBz)
 }
 
@@ -66,31 +66,18 @@ func (k Keeper) GetArchivedDelegationRecord(ctx sdk.Context, recordId uint64) (d
 	return delegationRecord, true
 }
 
-// Removes a delegation record from the store
-// To preserve history, we write it to the archive store
-func (k Keeper) ArchiveDelegationRecord(ctx sdk.Context, recordId uint64) {
-	activeStore := prefix.NewStore(ctx.KVStore(k.storeKey), types.DelegationRecordsKeyPrefix)
-	archiveStore := prefix.NewStore(ctx.KVStore(k.storeKey), types.DelegationRecordsArchiveKeyPrefix)
-
+// Removes a delegation record from the active store
+func (k Keeper) RemoveDelegationRecord(ctx sdk.Context, recordId uint64) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.DelegationRecordsKeyPrefix)
 	recordKey := types.IntKey(recordId)
-	recordBz := activeStore.Get(recordKey)
+	store.Delete(recordKey)
+}
 
-	// No action necessary if the record doesn't exist
-	if len(recordBz) == 0 {
-		return
-	}
-
-	// Update the status to ARCHIVE
-	var delegationRecord types.DelegationRecord
-	k.cdc.MustUnmarshal(recordBz, &delegationRecord)
-	delegationRecord.Status = types.DELEGATION_ARCHIVE
-	recordBz = k.cdc.MustMarshal(&delegationRecord)
-
-	// Write the archived record to the store
-	archiveStore.Set(recordKey, recordBz)
-
-	// Then remove from active store
-	activeStore.Delete(recordKey)
+// Removes a delegation record from the active store and writes it to the archive store,
+// to preserve history
+func (k Keeper) ArchiveDelegationRecord(ctx sdk.Context, delegationRecord types.DelegationRecord) {
+	k.RemoveDelegationRecord(ctx, delegationRecord.Id)
+	k.SetArchivedDelegationRecord(ctx, delegationRecord)
 }
 
 // Returns all active delegation records

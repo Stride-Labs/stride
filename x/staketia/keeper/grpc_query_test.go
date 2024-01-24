@@ -25,21 +25,24 @@ func (s *KeeperTestSuite) TestQueryHostZone() {
 
 func (s *KeeperTestSuite) TestQueryDelegationRecords() {
 	// Create active delegation records
-	activeDelegationRecords := s.addDelegationRecords()
+	initialDelegationRecords := s.addDelegationRecords()
 
-	// Create an archived version of each of the above records by removing
-	// the record (i.e. archiving it) and then recreating it
+	// Create an archived version of each of the above records by archiving
+	// the record and then recreating it in the new store
 	archivedDelegationRecords := []types.DelegationRecord{}
-	for _, delegationRecord := range activeDelegationRecords {
-		// Archive (which removes from the active store, and writes to the archive store)
-		s.App.StaketiaKeeper.ArchiveDelegationRecord(s.Ctx, delegationRecord.Id)
+	activeDelegationRecords := []types.DelegationRecord{}
+	for _, delegationRecord := range initialDelegationRecords {
+		// Update the status and archive teh record
+		// (which removes from the active store, and writes to the archive store)
+		archivedRecord := delegationRecord
+		archivedRecord.Status = types.DELEGATION_COMPLETE
+		s.App.StaketiaKeeper.ArchiveDelegationRecord(s.Ctx, archivedRecord)
+		archivedDelegationRecords = append(archivedDelegationRecords, archivedRecord)
 
 		// Set the original record back to the active store
+		delegationRecord.Status = types.TRANSFER_IN_PROGRESS
 		s.App.StaketiaKeeper.SetDelegationRecord(s.Ctx, delegationRecord)
-
-		archivedRecord := delegationRecord
-		archivedRecord.Status = types.DELEGATION_ARCHIVE
-		archivedDelegationRecords = append(archivedDelegationRecords, archivedRecord)
+		activeDelegationRecords = append(activeDelegationRecords, delegationRecord)
 	}
 	allDelegationRecords := append(activeDelegationRecords, archivedDelegationRecords...)
 
