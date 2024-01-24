@@ -11,8 +11,6 @@ import (
 	"github.com/Stride-Labs/stride/v17/x/staketia/types"
 )
 
-// TODO [sttia]: add events for all functions
-
 type Keeper struct {
 	cdc            codec.BinaryCodec
 	storeKey       storetypes.StoreKey

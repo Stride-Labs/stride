@@ -460,7 +460,6 @@ func (msg *MsgSetOperatorAddress) GetSignBytes() []byte {
 }
 
 func (msg *MsgSetOperatorAddress) ValidateBasic() error {
-	// TODO [sttia]
 	_, err := sdk.AccAddressFromBech32(msg.Signer)
 	if err != nil {
 		return errorsmod.Wrapf(sdkerrors.ErrInvalidAddress, "invalid signer address (%s)", err)

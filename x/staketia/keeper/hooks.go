@@ -39,7 +39,7 @@ func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochInfo epochstypes.EpochInf
 
 		// Every few days (depending on the unbonding frequency) prepare undelegations which
 		// freezes the accumulating unbonding record and refreshes the native token amount
-		// TODO [sttia]: replace with unbonding frequency
+		// TODO [cleanup]: replace with unbonding frequency
 		if epochInfo.CurrentEpoch%4 == 0 {
 			if err := k.SafelyPrepareUndelegation(ctx, epochNumber); err != nil {
 				k.Logger(ctx).Error(fmt.Sprintf("Unable to prepare undelegations for epoch %d: %s", epochNumber, err.Error()))
