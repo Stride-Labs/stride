@@ -137,7 +137,7 @@ func (k Keeper) PrepareUndelegation(ctx sdk.Context, epochNumber uint64) error {
 
 	// If there were no unbondings this epoch, archive the current record
 	if totalNativeTokens.IsZero() {
-		k.ArchiveUnbondingRecord(ctx, unbondingRecord.Id)
+		k.ArchiveUnbondingRecord(ctx, unbondingRecord)
 		return nil
 	}
 
@@ -355,7 +355,8 @@ func (k Keeper) DistributeClaims(ctx sdk.Context) error {
 		}
 
 		// Once all claims have been distributed for a record, archive the record
-		k.ArchiveUnbondingRecord(ctx, unbondingRecord.Id)
+		unbondingRecord.Status = types.CLAIMED
+		k.ArchiveUnbondingRecord(ctx, unbondingRecord)
 	}
 
 	return nil

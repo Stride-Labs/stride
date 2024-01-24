@@ -567,7 +567,7 @@ func (s *KeeperTestSuite) TestConfirmUndelegation_Failure_NoRecordWithId() {
 
 	// archive the record (this is the only way to remove it from the active store)
 	tc.unbondingRecord.Status = types.UNBONDING_IN_PROGRESS
-	s.App.StaketiaKeeper.ArchiveUnbondingRecord(s.Ctx, tc.unbondingRecord.Id)
+	s.App.StaketiaKeeper.ArchiveUnbondingRecord(s.Ctx, tc.unbondingRecord)
 
 	err := s.App.StaketiaKeeper.ConfirmUndelegation(s.Ctx, tc.unbondingRecord.Id, ValidTxHashDefault, tc.operatorAddress)
 	s.Require().Error(err, "couldn't find unbonding record")
@@ -800,7 +800,7 @@ func (s *KeeperTestSuite) GetDefaultUnbondingRecords() []types.UnbondingRecord {
 		},
 		{
 			Id:                             4,
-			Status:                         types.UNBONDING_ARCHIVE,
+			Status:                         types.CLAIMABLE,
 			StTokenAmount:                  sdk.NewInt(400),
 			NativeAmount:                   sdk.NewInt(800),
 			UnbondingCompletionTimeSeconds: 5,
@@ -845,9 +845,6 @@ func (s *KeeperTestSuite) SetupTestConfirmUnbondingTokens(amount int64) {
 func (s *KeeperTestSuite) VerifyUnbondingRecordsAfterConfirmSweep(verifyUpdatedFieldsIdentical bool) {
 	defaultUnbondingRecords := s.GetDefaultUnbondingRecords()
 	for _, defaultUnbondingRecord := range defaultUnbondingRecords {
-		if defaultUnbondingRecord.Status == types.UNBONDING_ARCHIVE {
-			continue
-		}
 		// grab relevant record in store
 		loadedUnbondingRecord, found := s.App.StaketiaKeeper.GetUnbondingRecord(s.Ctx, defaultUnbondingRecord.Id)
 		s.Require().True(found)

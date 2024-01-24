@@ -122,8 +122,8 @@ enum UnbondingRecordStatus {
   // CLAIMABLE indicates the unbonded tokens have been swept to stride and are
   // ready to be distributed to users
   CLAIMABLE = 4;
-  // ARCHIVE indicates the full unbonding cycle has been completed
-  UNBONDING_ARCHIVE = 5;
+  // CLAIMED indicates the full unbonding cycle has been completed
+  CLAIMED = 5;
 }
 
 // DelegationRecords track the aggregate liquid stakes and delegations

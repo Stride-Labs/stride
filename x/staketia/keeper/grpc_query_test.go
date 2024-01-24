@@ -65,21 +65,23 @@ func (s *KeeperTestSuite) TestQueryDelegationRecords() {
 
 func (s *KeeperTestSuite) TestQueryUnbondingRecords() {
 	// Create active unbondin records
-	activeUnbondingRecords := s.addUnbondingRecords()
+	initialUnbondingRecords := s.addUnbondingRecords()
 
-	// Create an archived version of each of the above records by removing
-	// the record (i.e. archiving it) and then recreating it
+	// Create an archived version of each of the above records by archiving the record
+	// and then recreating it in the new store
 	archivedUnbondingRecords := []types.UnbondingRecord{}
-	for _, unbondingRecord := range activeUnbondingRecords {
+	activeUnbondingRecords := []types.UnbondingRecord{}
+	for _, unbondingRecord := range initialUnbondingRecords {
 		// Archive (which removes from the active store, and writes to the archive store)
-		s.App.StaketiaKeeper.ArchiveUnbondingRecord(s.Ctx, unbondingRecord.Id)
+		archivedRecord := unbondingRecord
+		archivedRecord.Status = types.CLAIMED
+		s.App.StaketiaKeeper.ArchiveUnbondingRecord(s.Ctx, archivedRecord)
+		archivedUnbondingRecords = append(archivedUnbondingRecords, archivedRecord)
 
 		// Set the original record back to the active store
+		unbondingRecord.Status = types.UNBONDING_QUEUE
 		s.App.StaketiaKeeper.SetUnbondingRecord(s.Ctx, unbondingRecord)
-
-		archivedRecord := unbondingRecord
-		archivedRecord.Status = types.UNBONDING_ARCHIVE
-		archivedUnbondingRecords = append(archivedUnbondingRecords, archivedRecord)
+		activeUnbondingRecords = append(activeUnbondingRecords, unbondingRecord)
 	}
 	allUnbondingRecords := append(activeUnbondingRecords, archivedUnbondingRecords...)
 

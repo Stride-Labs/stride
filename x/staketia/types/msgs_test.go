@@ -752,7 +752,7 @@ func TestMsgOverwriteUnbondingRecord_ValidateBasic(t *testing.T) {
 				Creator: validAddress,
 				UnbondingRecord: &types.UnbondingRecord{
 					Id:                             1,
-					Status:                         types.UNBONDING_ARCHIVE, // should work
+					Status:                         types.CLAIMABLE,
 					StTokenAmount:                  sdkmath.NewInt(11),
 					NativeAmount:                   sdkmath.NewInt(10),
 					UnbondingCompletionTimeSeconds: 1705857114,
@@ -768,7 +768,7 @@ func TestMsgOverwriteUnbondingRecord_ValidateBasic(t *testing.T) {
 				Creator: validAddress,
 				UnbondingRecord: &types.UnbondingRecord{
 					Id:                             1,
-					Status:                         types.UNBONDING_ARCHIVE, // should work
+					Status:                         types.CLAIMABLE,
 					StTokenAmount:                  sdkmath.NewInt(11),
 					NativeAmount:                   sdkmath.NewInt(10),
 					UnbondingCompletionTimeSeconds: 1705857114,

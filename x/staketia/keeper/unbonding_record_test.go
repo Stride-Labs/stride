@@ -19,36 +19,6 @@ func (s *KeeperTestSuite) addUnbondingRecords() (unbondingRecords []types.Unbond
 	return unbondingRecords
 }
 
-// Tests that records are written to their respective stores based on the status
-func (s *KeeperTestSuite) TestSetUnbondingRecord() {
-	unbondingRecords := []types.UnbondingRecord{
-		{Id: 1, Status: types.ACCUMULATING_REDEMPTIONS},
-		{Id: 2, Status: types.UNBONDING_IN_PROGRESS},
-		{Id: 3, Status: types.UNBONDING_QUEUE},
-		{Id: 4, Status: types.UNBONDED},
-		{Id: 5, Status: types.UNBONDING_ARCHIVE},
-		{Id: 6, Status: types.ACCUMULATING_REDEMPTIONS},
-		{Id: 7, Status: types.UNBONDING_IN_PROGRESS},
-		{Id: 8, Status: types.UNBONDING_QUEUE},
-		{Id: 9, Status: types.UNBONDED},
-		{Id: 10, Status: types.UNBONDING_ARCHIVE},
-	}
-	for _, unbondingRecord := range unbondingRecords {
-		s.App.StaketiaKeeper.SetUnbondingRecord(s.Ctx, unbondingRecord)
-	}
-
-	// Confirm the number of records in each store
-	s.Require().Len(s.App.StaketiaKeeper.GetAllActiveUnbondingRecords(s.Ctx), 8, "records in acitve store")
-	s.Require().Len(s.App.StaketiaKeeper.GetAllArchivedUnbondingRecords(s.Ctx), 2, "records in archive store")
-
-	// Check that only the non-archvied records are found in the active store
-	for i, unbondingRecord := range unbondingRecords {
-		expectedFound := unbondingRecord.Status != types.UNBONDING_ARCHIVE
-		_, actualFound := s.App.StaketiaKeeper.GetUnbondingRecord(s.Ctx, unbondingRecord.Id)
-		s.Require().Equal(expectedFound, actualFound, "record %d found in active store", i)
-	}
-}
-
 func (s *KeeperTestSuite) TestGetUnbondingRecord() {
 	unbondingRecords := s.addUnbondingRecords()
 
@@ -67,19 +37,23 @@ func (s *KeeperTestSuite) TestArchiveUnbondingRecord() {
 	unbondingRecords := s.addUnbondingRecords()
 
 	for removedIndex := 0; removedIndex < len(unbondingRecords); removedIndex++ {
-		// Remove from removed index
-		removedId := unbondingRecords[removedIndex].Id
-		s.App.StaketiaKeeper.ArchiveUnbondingRecord(s.Ctx, removedId)
+		// Archive from removed index
+		removedRecord := unbondingRecords[removedIndex]
+		s.App.StaketiaKeeper.ArchiveUnbondingRecord(s.Ctx, removedRecord)
 
-		// Confirm removed
-		_, found := s.App.StaketiaKeeper.GetUnbondingRecord(s.Ctx, removedId)
-		s.Require().False(found, "record %d should have been removed", removedId)
+		// Confirm removed from the active store
+		_, found := s.App.StaketiaKeeper.GetUnbondingRecord(s.Ctx, removedRecord.Id)
+		s.Require().False(found, "record %d should have been removed", removedRecord.Id)
+
+		// Confirm moved to the archive store
+		_, found = s.App.StaketiaKeeper.GetArchivedUnbondingRecord(s.Ctx, removedRecord.Id)
+		s.Require().True(found, "record %d should have been moved to the archive store", removedRecord.Id)
 
 		// Check all other records are still there
 		for checkedIndex := removedIndex + 1; checkedIndex < len(unbondingRecords); checkedIndex++ {
 			checkedId := unbondingRecords[checkedIndex].Id
 			_, found := s.App.StaketiaKeeper.GetUnbondingRecord(s.Ctx, checkedId)
-			s.Require().True(found, "record %d should have been removed after %d removal", checkedId, removedId)
+			s.Require().True(found, "record %d should have been removed after %d removal", checkedId, removedRecord.Id)
 		}
 	}
 
@@ -128,8 +102,8 @@ func (s *KeeperTestSuite) TestGetAccumulatingUnbondingRecord() {
 	s.Require().ErrorContains(err, "more than one record")
 
 	// Remove the ACCUMULATING records and confirm it errors
-	s.App.StaketiaKeeper.ArchiveUnbondingRecord(s.Ctx, expectedRecordId)
-	s.App.StaketiaKeeper.ArchiveUnbondingRecord(s.Ctx, duplicateAccumulatingRecordId)
+	s.App.StaketiaKeeper.RemoveUnbondingRecord(s.Ctx, expectedRecordId)
+	s.App.StaketiaKeeper.RemoveUnbondingRecord(s.Ctx, duplicateAccumulatingRecordId)
 
 	_, err = s.App.StaketiaKeeper.GetAccumulatingUnbondingRecord(s.Ctx)
 	s.Require().ErrorContains(err, "no unbonding record")

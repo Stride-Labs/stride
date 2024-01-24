@@ -7,23 +7,23 @@ import (
 	"github.com/Stride-Labs/stride/v17/x/staketia/types"
 )
 
-// Writes an unbonding record to the store based on the status
-// If the status is archive, it writes to the archive store, otherwise it writes to the active store
+// Writes an unbonding record to the active store
 func (k Keeper) SetUnbondingRecord(ctx sdk.Context, unbondingRecord types.UnbondingRecord) {
-	activeStore := prefix.NewStore(ctx.KVStore(k.storeKey), types.UnbondingRecordsKeyPrefix)
-	archiveStore := prefix.NewStore(ctx.KVStore(k.storeKey), types.UnbondingRecordsArchiveKeyPrefix)
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.UnbondingRecordsKeyPrefix)
 
-	if unbondingRecord.Status == types.UNBONDING_ARCHIVE {
-		k.setUnbondingRecord(archiveStore, unbondingRecord)
-	} else {
-		k.setUnbondingRecord(activeStore, unbondingRecord)
-	}
-}
-
-// Writes an unbonding record to a specific store (either active or archive)
-func (k Keeper) setUnbondingRecord(store prefix.Store, unbondingRecord types.UnbondingRecord) {
 	recordKey := types.IntKey(unbondingRecord.Id)
 	recordValue := k.cdc.MustMarshal(&unbondingRecord)
+
+	store.Set(recordKey, recordValue)
+}
+
+// Writes an unbonding record to the archive store
+func (k Keeper) SetArchivedUnbondingRecord(ctx sdk.Context, unbondingRecord types.UnbondingRecord) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.UnbondingRecordsArchiveKeyPrefix)
+
+	recordKey := types.IntKey(unbondingRecord.Id)
+	recordValue := k.cdc.MustMarshal(&unbondingRecord)
+
 	store.Set(recordKey, recordValue)
 }
 
@@ -42,39 +42,33 @@ func (k Keeper) GetUnbondingRecord(ctx sdk.Context, recordId uint64) (unbondingR
 	return unbondingRecord, true
 }
 
-// Removes an unbonding record from the store
-// NOTE: This is only used for testing - records should be archived in practice
+// Reads a unbonding record from the archive store
+func (k Keeper) GetArchivedUnbondingRecord(ctx sdk.Context, recordId uint64) (unbondingRecord types.UnbondingRecord, found bool) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.UnbondingRecordsArchiveKeyPrefix)
+
+	recordKey := types.IntKey(recordId)
+	recordBz := store.Get(recordKey)
+
+	if len(recordBz) == 0 {
+		return unbondingRecord, false
+	}
+
+	k.cdc.MustUnmarshal(recordBz, &unbondingRecord)
+	return unbondingRecord, true
+}
+
+// Removes an unbonding record from the active store
 func (k Keeper) RemoveUnbondingRecord(ctx sdk.Context, recordId uint64) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.UnbondingRecordsKeyPrefix)
 	recordKey := types.IntKey(recordId)
 	store.Delete(recordKey)
 }
 
-// Removes a unbonding record from the store
-// To preserve history, we write it to the archive store
-func (k Keeper) ArchiveUnbondingRecord(ctx sdk.Context, recordId uint64) {
-	activeStore := prefix.NewStore(ctx.KVStore(k.storeKey), types.UnbondingRecordsKeyPrefix)
-	archiveStore := prefix.NewStore(ctx.KVStore(k.storeKey), types.UnbondingRecordsArchiveKeyPrefix)
-
-	recordKey := types.IntKey(recordId)
-	recordBz := activeStore.Get(recordKey)
-
-	// No action necessary if the record doesn't exist
-	if len(recordBz) == 0 {
-		return
-	}
-
-	// Update the status to ARCHIVE
-	var unbondingRecord types.UnbondingRecord
-	k.cdc.MustUnmarshal(recordBz, &unbondingRecord)
-	unbondingRecord.Status = types.UNBONDING_ARCHIVE
-	recordBz = k.cdc.MustMarshal(&unbondingRecord)
-
-	// Write the archived record to the store
-	archiveStore.Set(recordKey, recordBz)
-
-	// Then remove the original record from the active store
-	activeStore.Delete(recordKey)
+// Removes a unbonding record from the active store, and writes it to the archive store
+// to preserve history
+func (k Keeper) ArchiveUnbondingRecord(ctx sdk.Context, unbondingRecord types.UnbondingRecord) {
+	k.RemoveUnbondingRecord(ctx, unbondingRecord.Id)
+	k.SetArchivedUnbondingRecord(ctx, unbondingRecord)
 }
 
 // Returns all active unbonding records
