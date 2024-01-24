@@ -439,6 +439,7 @@ type ConfirmUndelegationTestCase struct {
 	delegatedBalance         sdkmath.Int
 	redemptionAccountBalance sdkmath.Int
 	hostZone                 types.HostZone
+	expectedUnbondingTime    uint64
 }
 
 // Helper function to mock relevant state before testing a confirm undelegation
@@ -448,17 +449,18 @@ func (s *KeeperTestSuite) SetupTestConfirmUndelegation(amountToUndelegate sdkmat
 
 	redemptionAccountBalance := sdkmath.NewInt(500)
 	delegatedBalance := sdkmath.NewInt(1000)
-	unbondingPeriod := uint64(21)
+	unbondingPeriodSeconds := uint64(120) // 2 minutes
+	expectedUnbondingTime := uint64(s.Ctx.BlockTime().Add(time.Minute * 2).Unix())
 
 	// Create a host zone with delegatedBalance and RedemptionAddresses
 	hostZone := types.HostZone{
-		DelegatedBalance:  delegatedBalance,
-		RedemptionAddress: redemptionAddress.String(),
-		NativeTokenDenom:  HostNativeDenom,
-		UnbondingPeriod:   unbondingPeriod,
-		MinRedemptionRate: sdk.MustNewDecFromStr("0.9"),
-		MaxRedemptionRate: sdk.MustNewDecFromStr("1.2"),
-		RedemptionRate:    sdk.MustNewDecFromStr("1.1"),
+		DelegatedBalance:       delegatedBalance,
+		RedemptionAddress:      redemptionAddress.String(),
+		NativeTokenDenom:       HostNativeDenom,
+		UnbondingPeriodSeconds: unbondingPeriodSeconds,
+		MinRedemptionRate:      sdk.MustNewDecFromStr("0.9"),
+		MaxRedemptionRate:      sdk.MustNewDecFromStr("1.2"),
+		RedemptionRate:         sdk.MustNewDecFromStr("1.1"),
 	}
 	s.App.StaketiaKeeper.SetHostZone(s.Ctx, hostZone)
 
@@ -486,6 +488,7 @@ func (s *KeeperTestSuite) SetupTestConfirmUndelegation(amountToUndelegate sdkmat
 		delegatedBalance:         delegatedBalance,
 		redemptionAccountBalance: redemptionAccountBalance,
 		hostZone:                 hostZone,
+		expectedUnbondingTime:    expectedUnbondingTime,
 	}
 	return tc
 }
@@ -504,9 +507,7 @@ func (s *KeeperTestSuite) TestConfirmUndelegation_Success() {
 	s.Require().True(found, "unbonding record should have been found")
 	s.Require().Equal(types.UNBONDING_IN_PROGRESS, unbondingRecord.Status, "unbonding record status")
 	s.Require().Equal(ValidTxHashDefault, unbondingRecord.UndelegationTxHash, "unbonding record tx hash")
-
-	expectedUndelegationTime := uint64(s.Ctx.BlockTime().Add(time.Duration(tc.hostZone.UnbondingPeriod) * time.Hour * 24).Unix()) // now + 21 days
-	s.Require().Equal(expectedUndelegationTime, unbondingRecord.UnbondingCompletionTimeSeconds, "unbonding record completion time")
+	s.Require().Equal(tc.expectedUnbondingTime, unbondingRecord.UnbondingCompletionTimeSeconds, "unbonding record completion time")
 
 	// check that the balance on the redemption account was updated
 	expectedRedemptionAccountBalance := tc.redemptionAccountBalance.Sub(tc.stTokenAmountToBurn)
@@ -1171,7 +1172,7 @@ func (s *KeeperTestSuite) TestDistributeClaimsForUnbondingRecord() {
 	s.Require().Equal(expectedFinalClaimBalance.Int64(), actualClaimBalance.Amount.Int64(),
 		"claim balance should have been depleted")
 
-	// Loop again and confirm all users received their tokens
+	// Loop again, confirm all users received their tokens, and that all redemption records were removed
 	for i, redemption := range redemptionRecords {
 		if redemption.UnbondingRecordId != distributedUnbondingId {
 			continue
@@ -1180,6 +1181,10 @@ func (s *KeeperTestSuite) TestDistributeClaimsForUnbondingRecord() {
 		userBalance := s.App.BankKeeper.GetBalance(s.Ctx, redeemer, HostIBCDenom)
 		s.Require().Equal(redemption.NativeAmount.Int64(), userBalance.Amount.Int64(),
 			"user %d should have received their native tokens", i)
+
+		_, found := s.App.StaketiaKeeper.GetRedemptionRecord(s.Ctx, redemption.UnbondingRecordId, redemption.Redeemer)
+		s.Require().False(found, "redemption record for unbonding record %d should have been removed",
+			redemption.UnbondingRecordId)
 	}
 
 	// Add a record with an amount that would exceed the claim account's remaining balance

@@ -11,10 +11,11 @@ import (
 func DefaultGenesis() *GenesisState {
 	return &GenesisState{
 		HostZone: HostZone{
-			ChainId:             CelestiaChainId,
-			NativeTokenDenom:    CelestiaNativeTokenDenom,
-			NativeTokenIbcDenom: CelestiaNativeTokenIBCDenom,
-			TransferChannelId:   CelestiaChannelId,
+			ChainId:                CelestiaChainId,
+			NativeTokenDenom:       CelestiaNativeTokenDenom,
+			NativeTokenIbcDenom:    CelestiaNativeTokenIBCDenom,
+			TransferChannelId:      CelestiaChannelId,
+			UnbondingPeriodSeconds: CelestiaUnbondingPeriodSeconds,
 
 			DelegationAddress: CelestiaDelegationAddress,
 			RewardAddress:     CelestiaRewardsAddress,

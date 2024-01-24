@@ -149,19 +149,6 @@ func (k Keeper) PrepareUndelegation(ctx sdk.Context, epochNumber uint64) error {
 	return nil
 }
 
-// Checks for any unbonding records that have finished unbonding,
-// identified by having status UNBONDING_IN_PROGRESS and an
-// unbonding that's older than the current time.
-// Records are annotated with a new status UNBONDED
-func (k Keeper) MarkFinishedUnbondings(ctx sdk.Context) {
-	for _, unbondingRecord := range k.GetAllUnbondingRecordsByStatus(ctx, types.UNBONDING_IN_PROGRESS) {
-		if ctx.BlockTime().Unix() > int64(unbondingRecord.UnbondingCompletionTimeSeconds) {
-			unbondingRecord.Status = types.UNBONDED
-			k.SetUnbondingRecord(ctx, unbondingRecord)
-		}
-	}
-}
-
 // Confirms that an undelegation has been completed on the host zone
 // Updates the record status to UNBONDING_IN_PROGRESS, decrements the delegated balance and burns stTokens
 func (k Keeper) ConfirmUndelegation(ctx sdk.Context, recordId uint64, txHash string, sender string) (err error) {
@@ -194,8 +181,8 @@ func (k Keeper) ConfirmUndelegation(ctx sdk.Context, recordId uint64, txHash str
 	delegatedBalanceBefore := hostZone.DelegatedBalance
 
 	// update the record's txhash, status, and unbonding completion time
-	unbondingLength := time.Duration(hostZone.UnbondingPeriod) * 24 * time.Hour    // 21 days
-	unbondingCompletionTime := uint64(ctx.BlockTime().Add(unbondingLength).Unix()) // now + 21 days
+	unbondingLength := time.Duration(hostZone.UnbondingPeriodSeconds) * time.Second // 21 days
+	unbondingCompletionTime := uint64(ctx.BlockTime().Add(unbondingLength).Unix())  // now + 21 days
 
 	record.UndelegationTxHash = txHash
 	record.Status = types.UNBONDING_IN_PROGRESS
@@ -283,6 +270,19 @@ func (k Keeper) VerifyImpliedRedemptionRateFromUnbonding(ctx sdk.Context, stToke
 	return nil
 }
 
+// Checks for any unbonding records that have finished unbonding,
+// identified by having status UNBONDING_IN_PROGRESS and an
+// unbonding that's older than the current time.
+// Records are annotated with a new status UNBONDED
+func (k Keeper) MarkFinishedUnbondings(ctx sdk.Context) {
+	for _, unbondingRecord := range k.GetAllUnbondingRecordsByStatus(ctx, types.UNBONDING_IN_PROGRESS) {
+		if ctx.BlockTime().Unix() > int64(unbondingRecord.UnbondingCompletionTimeSeconds) {
+			unbondingRecord.Status = types.UNBONDED
+			k.SetUnbondingRecord(ctx, unbondingRecord)
+		}
+	}
+}
+
 // Confirms that unbonded tokens have been sent back to stride and marks the unbonding record CLAIMABLE
 func (k Keeper) ConfirmUnbondedTokenSweep(ctx sdk.Context, recordId uint64, txHash string, sender string) (err error) {
 	// grab unbonding record and verify the record is ready to be swept, and has not been swept yet
@@ -368,7 +368,7 @@ func (k Keeper) DistributeClaimsForUnbondingRecord(
 	claimAddress sdk.AccAddress,
 	unbondingRecordId uint64,
 ) error {
-	// For each redemption record, bank send from the claim address to the user address
+	// For each redemption record, bank send from the claim address to the user address and then delete the record
 	for _, redemptionRecord := range k.GetRedemptionRecordsFromUnbondingId(ctx, unbondingRecordId) {
 		userAddress, err := sdk.AccAddressFromBech32(redemptionRecord.Redeemer)
 		if err != nil {
@@ -379,6 +379,8 @@ func (k Keeper) DistributeClaimsForUnbondingRecord(
 		if err := k.bankKeeper.SendCoins(ctx, claimAddress, userAddress, sdk.NewCoins(nativeTokens)); err != nil {
 			return errorsmod.Wrapf(err, "unable to send %v from claim address to %s", nativeTokens, redemptionRecord.Redeemer)
 		}
+
+		k.RemoveRedemptionRecord(ctx, unbondingRecordId, redemptionRecord.Redeemer)
 	}
 	return nil
 }

@@ -121,8 +121,8 @@ IBC_STARS_DENOM=$IBC_STARS_CHANNEL_3_DENOM
 # CHAIN PARAMS
 BLOCK_TIME='1s'
 STRIDE_HOUR_EPOCH_DURATION="60s"
-STRIDE_DAY_EPOCH_DURATION="140s"
-STRIDE_EPOCH_EPOCH_DURATION="35s"
+STRIDE_DAY_EPOCH_DURATION="40s"
+STRIDE_EPOCH_EPOCH_DURATION="10s"
 STRIDE_MINT_EPOCH_DURATION="20s"
 HOST_DAY_EPOCH_DURATION="60s"
 HOST_HOUR_EPOCH_DURATION="60s"
@@ -161,6 +161,20 @@ VAL_MNEMONICS=(
 REV_MNEMONIC="tonight bonus finish chaos orchard plastic view nurse salad regret pause awake link bacon process core talent whale million hope luggage sauce card weasel"
 USER_MNEMONIC="brief play describe burden half aim soccer carbon hope wait output play vacuum joke energy crucial output mimic cruise brother document rail anger leaf"
 USER_ACCT=user
+
+# stTIA MNEMONICS
+## On Stride
+DEPOSIT_MNEMONIC="alpha annual multiply search scene gospel wood empower video estate erosion sister legend title man bicycle find adjust conduct exercise jewel great state park"
+REDEMPTION_MNEMONIC="frame noodle guilt clinic laugh pink own reflect clog lady slice execute renew excess ranch face praise knife spare accident catch figure pony feel"
+CLAIM_MNEMONIC="boat caution burst hybrid melody input kitten account pull explain couch pact educate omit inmate area drastic town sugar rail spare nothing matrix gate"
+SAFE_MNEMONIC="chat mechanic patient palm screen response beef cactus report rebuild equal cargo essay craft rigid injury rocket below monster boost clay charge toss debate"
+OPERATOR_MNEMONIC="equal fetch soccer crouch dash similar dinosaur divide video polar fork banana engine tomorrow thought web ramp slight stumble throw kid ridge today afford"
+
+## On Host Chain
+DELEGATION_ADDRESS="cosmos1n4reqytr7arvpk5z2ute274h2yukcss8dtxjyd"
+REWARD_ADDRESS="cosmos1atchlrd8m4868t5ep2fywxhl2u9c3qg0grnt0e"
+DELEGATION_MNEMONIC="arrange indicate grass click bulk wage vivid strong evil uncover raven solar stone hole strategy about rate negative word inch enforce alley never wealth"
+REWARD_MNEMONIC="drive someone knee omit disease clerk stand rebel asthma lift valid era armed ticket any undo increase magnet rabbit improve rude fortune afraid soon"
 
 # STRIDE 
 STRIDE_CHAIN_ID=STRIDE
