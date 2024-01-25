@@ -1,4 +1,4 @@
-package v17
+package v18
 
 import (
 	"fmt"
@@ -118,7 +118,7 @@ var (
 	}
 )
 
-// CreateUpgradeHandler creates an SDK upgrade handler for v17
+// CreateUpgradeHandler creates an SDK upgrade handler for v18
 func CreateUpgradeHandler(
 	mm *module.Manager,
 	configurator module.Configurator,
@@ -164,15 +164,17 @@ func UpdateRedemptionRateBounds(ctx sdk.Context, k stakeibckeeper.Keeper) {
 }
 
 // Modify HostZoneUnbonding and UserRedemptionRecords NativeTokenAmount to reflect new data structs
-func UpdateUnbondingRecords(ctx sdk.Context, k stakeibckeeper.Keeper, rk recordskeeper.Keeper) error {
+func UpdateUnbondingRecords(ctx sdk.Context, sk stakeibckeeper.Keeper, rk recordskeeper.Keeper) error {
+	// loop over host zone unbonding records
 	for _, epochUnbondingRecord := range rk.GetAllEpochUnbondingRecord(ctx) {
-		// loop over host zone unbonding records
-		for _, hostZoneUnbonding := range epochUnbondingRecord.GetHostZoneUnbondings() {
-			recordStatus := hostZoneUnbonding.Status
-			if recordStatus != recordtypes.HostZoneUnbonding_EXIT_TRANSFER_QUEUE {
-				continue // can ignore this record, as it's not unbonding
+		for _, hostZoneUnbonding := range epochUnbondingRecord.HostZoneUnbondings {
+
+			// we can ignore any record that's not currently unbonding
+			if hostZoneUnbonding.Status != recordtypes.HostZoneUnbonding_EXIT_TRANSFER_QUEUE {
+				continue
 			}
 			amountUnbonded := sdkmath.ZeroInt()
+
 			// check if the unbond amount is stored in cache above
 			allAmountsUnbondedForHost, found := TotalAmountUnbonded[hostZoneUnbonding.HostZoneId]
 			if !found {
@@ -185,10 +187,11 @@ func UpdateUnbondingRecords(ctx sdk.Context, k stakeibckeeper.Keeper, rk records
 					}
 				}
 			}
+
 			// if we can't find unbonding amount, then we use an estimated redemption rate
 			if amountUnbonded.IsZero() {
 				initialRedemptionRate := InitialRedemptionRates[hostZoneUnbonding.HostZoneId]
-				hostZone, found := k.GetHostZone(ctx, hostZoneUnbonding.HostZoneId)
+				hostZone, found := sk.GetHostZone(ctx, hostZoneUnbonding.HostZoneId)
 				if !found {
 					return errorsmod.Wrapf(stakeibctypes.ErrHostZoneNotFound, "unable to find host zone with chain-id %s", hostZoneUnbonding.HostZoneId)
 				}
@@ -197,10 +200,12 @@ func UpdateUnbondingRecords(ctx sdk.Context, k stakeibckeeper.Keeper, rk records
 				amountUnbonded = sdk.NewDecFromInt(hostZoneUnbonding.StTokenAmount).Mul(blendedRedemptionRate).TruncateInt()
 			}
 			hostZoneUnbonding.NativeTokenAmount = amountUnbonded
+
 			// get implied redemption rate, based on the amount unbonded and stTokens burned
 			impliedRedemptionRate := sdk.NewDecFromInt(amountUnbonded).Quo(sdk.NewDecFromInt(hostZoneUnbonding.StTokenAmount))
+
 			// now update all userRedemptionRecords
-			for _, userRedemptionRecordId := range hostZoneUnbonding.GetUserRedemptionRecords() {
+			for _, userRedemptionRecordId := range hostZoneUnbonding.UserRedemptionRecords {
 				userRedemptionRecord, found := rk.GetUserRedemptionRecord(ctx, userRedemptionRecordId)
 				if !found {
 					return errorsmod.Wrapf(recordtypes.ErrHostUnbondingRecordNotFound, "unable to find user redemption record with id %s", userRedemptionRecordId)
@@ -208,6 +213,7 @@ func UpdateUnbondingRecords(ctx sdk.Context, k stakeibckeeper.Keeper, rk records
 				userRedemptionRecord.NativeTokenAmount = sdk.NewDecFromInt(userRedemptionRecord.StTokenAmount).Mul(impliedRedemptionRate).TruncateInt()
 				rk.SetUserRedemptionRecord(ctx, userRedemptionRecord)
 			}
+
 			// finally, update the hostZoneUnbonding record
 			return rk.SetHostZoneUnbondingRecord(ctx, epochUnbondingRecord.EpochNumber, hostZoneUnbonding.HostZoneId, *hostZoneUnbonding)
 		}
