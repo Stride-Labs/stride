@@ -86,7 +86,7 @@ message QueryRedemptionRecordRequest {
   string address = 2;
 };
 message QueryRedemptionRecordResponse {
-  RedemptionRecord redemption_record = 1;
+  RedemptionRecordResponse redemption_record_response = 1;
 }
 
 // All Redemption Records
@@ -96,7 +96,7 @@ message QueryRedemptionRecordsRequest {
   cosmos.base.query.v1beta1.PageRequest pagination = 3;
 };
 message QueryRedemptionRecordsResponse {
-  repeated RedemptionRecord redemption_records = 1
+  repeated RedemptionRecordResponse redemption_record_responses = 1
       [ (gogoproto.nullable) = false ];
   cosmos.base.query.v1beta1.PageResponse pagination = 2;
 }
@@ -105,4 +105,14 @@ message QueryRedemptionRecordsResponse {
 message QuerySlashRecordsRequest {};
 message QuerySlashRecordsResponse {
   repeated SlashRecord slash_records = 1 [ (gogoproto.nullable) = false ];
+}
+
+// Data structure for frontend to consume
+message RedemptionRecordResponse {
+  // Redemption record
+  RedemptionRecord redemption_record = 1;
+
+  // The Unix timestamp (in seconds) at which the unbonding for the UR
+  // associated with this RR completes
+  uint64 unbonding_completion_time_seconds = 2;
 }

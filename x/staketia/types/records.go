@@ -1,6 +1,8 @@
 package types
 
-import fmt "fmt"
+import (
+	fmt "fmt"
+)
 
 // Confirm there are no duplicate delegation record Ids and that the amounts are not nil
 func ValidateDelegationRecordGenesis(delegationRecords []DelegationRecord) error {
@@ -70,4 +72,12 @@ func ValidateSlashRecordGenesis(slashRecords []SlashRecord) error {
 		ids[slashRecord.Id] = true
 	}
 	return nil
+}
+
+// Returns a RedemptionRecordResponse, which is a RedemptionRecord with the unbonding time
+func NewRedemptionRecordResponse(redemptionRecord RedemptionRecord, unbondingTime uint64) RedemptionRecordResponse {
+	return RedemptionRecordResponse{
+		RedemptionRecord:               &redemptionRecord,
+		UnbondingCompletionTimeSeconds: unbondingTime,
+	}
 }

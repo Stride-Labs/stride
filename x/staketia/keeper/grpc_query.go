@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"context"
+	"time"
 
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -72,7 +73,14 @@ func (k Keeper) RedemptionRecord(c context.Context, req *types.QueryRedemptionRe
 			"no redemption record found for unbonding ID %d and address %s", req.UnbondingRecordId, req.Address)
 	}
 
-	return &types.QueryRedemptionRecordResponse{RedemptionRecord: &redemptionRecord}, nil
+	// Get the unbonding time from the unbonding record
+	unbondingRecord, found := k.GetUnbondingRecord(ctx, req.UnbondingRecordId)
+	if !found {
+		return &types.QueryRedemptionRecordResponse{}, types.ErrUnbondingRecordNotFound
+	}
+
+	redemptionRecordResponse := types.NewRedemptionRecordResponse(redemptionRecord, unbondingRecord.UnbondingCompletionTimeSeconds)
+	return &types.QueryRedemptionRecordResponse{RedemptionRecordResponse: &redemptionRecordResponse}, nil
 }
 
 // Queries all redemption records with an optional filter by address
@@ -82,23 +90,55 @@ func (k Keeper) RedemptionRecords(c context.Context, req *types.QueryRedemptionR
 	}
 
 	ctx := sdk.UnwrapSDKContext(c)
-	redemptionRecords := []types.RedemptionRecord{}
+	redemptionRecordResponses := []types.RedemptionRecordResponse{}
+
+	// Create a map of estimated unbonding time by UnbondingRecord
+	unbondingTimeMap := map[uint64]uint64{}
+	unbondingRecords := k.GetAllActiveUnbondingRecords(ctx)
+	zone, err := k.GetHostZone(ctx)
+	if err != nil {
+		return &types.QueryRedemptionRecordsResponse{}, types.ErrHostZoneNotFound
+	}
+	fourDays := time.Duration(4) * time.Hour * 24
+	unbondingLength := time.Duration(zone.UnbondingPeriodSeconds) * time.Second                 // 21 days
+	estimatedUnbondingTime := uint64(ctx.BlockTime().Add(unbondingLength).Add(fourDays).Unix()) // 21 days from now + 4 day buffer
+	for _, unbondingRecord := range unbondingRecords {
+		// Edge case: a user has submitted a redemption, but the corresponding unbonding record has not been confirmed, meaning
+		// the unbonding completion time is 0. Give a rough estimate.
+		if unbondingRecord.UnbondingCompletionTimeSeconds == 0 {
+			unbondingTimeMap[unbondingRecord.Id] = estimatedUnbondingTime
+			continue
+		}
+		unbondingTimeMap[unbondingRecord.Id] = unbondingRecord.UnbondingCompletionTimeSeconds
+	}
 
 	// If they specify an address, search for that address and only return the matches
 	if req.Address != "" {
 		redemptionRecords := k.GetRedemptionRecordsFromAddress(ctx, req.Address)
+		// Iterate records and create response objects
+		redemptionRecordResponses := []types.RedemptionRecordResponse{}
+		for _, redemptionRecord := range redemptionRecords {
+			unbondingTime := unbondingTimeMap[redemptionRecord.UnbondingRecordId]
+			redemptionRecordResponses = append(redemptionRecordResponses, types.NewRedemptionRecordResponse(redemptionRecord, unbondingTime))
+		}
 		return &types.QueryRedemptionRecordsResponse{
-			RedemptionRecords: redemptionRecords,
-			Pagination:        nil,
+			RedemptionRecordResponses: redemptionRecordResponses,
+			Pagination:                nil,
 		}, nil
 	}
 
 	// If they specify an unbonding record ID, grab just the records for that ID
 	if req.UnbondingRecordId != 0 {
+		unbondingTime := unbondingTimeMap[req.UnbondingRecordId]
 		redemptionRecords := k.GetRedemptionRecordsFromUnbondingId(ctx, req.UnbondingRecordId)
+		redemptionRecordResponses := []types.RedemptionRecordResponse{}
+		// Iterate records and create response objects
+		for _, redemptionRecord := range redemptionRecords {
+			redemptionRecordResponses = append(redemptionRecordResponses, types.NewRedemptionRecordResponse(redemptionRecord, unbondingTime))
+		}
 		return &types.QueryRedemptionRecordsResponse{
-			RedemptionRecords: redemptionRecords,
-			Pagination:        nil,
+			RedemptionRecordResponses: redemptionRecordResponses,
+			Pagination:                nil,
 		}, nil
 	}
 
@@ -112,7 +152,10 @@ func (k Keeper) RedemptionRecords(c context.Context, req *types.QueryRedemptionR
 			return err
 		}
 
-		redemptionRecords = append(redemptionRecords, redemptionRecord)
+		unbondingTime := unbondingTimeMap[redemptionRecord.UnbondingRecordId]
+		redemptionRecordResponse := types.NewRedemptionRecordResponse(redemptionRecord, unbondingTime)
+
+		redemptionRecordResponses = append(redemptionRecordResponses, redemptionRecordResponse)
 		return nil
 	})
 	if err != nil {
@@ -120,8 +163,8 @@ func (k Keeper) RedemptionRecords(c context.Context, req *types.QueryRedemptionR
 	}
 
 	return &types.QueryRedemptionRecordsResponse{
-		RedemptionRecords: redemptionRecords,
-		Pagination:        pageRes,
+		RedemptionRecordResponses: redemptionRecordResponses,
+		Pagination:                pageRes,
 	}, nil
 }
 

@@ -106,6 +106,21 @@ func (s *KeeperTestSuite) TestQueryRedemptionRecord() {
 	queriedUnbondingRecordId := uint64(2)
 	queriedAddress := "address-B"
 
+	unbondingRecords := []types.UnbondingRecord{
+		{Id: 1, UnbondingCompletionTimeSeconds: 12345},
+		{Id: 2, UnbondingCompletionTimeSeconds: 12346},
+		{Id: 3, UnbondingCompletionTimeSeconds: 12347},
+		{Id: 4, UnbondingCompletionTimeSeconds: 12348},
+	}
+	for _, unbondingRecord := range unbondingRecords {
+		s.App.StaketiaKeeper.SetUnbondingRecord(s.Ctx, unbondingRecord)
+	}
+	// map unbonding record id to unbonding time
+	unbondingTimeMap := map[uint64]uint64{}
+	for _, unbondingRecord := range unbondingRecords {
+		unbondingTimeMap[unbondingRecord.Id] = unbondingRecord.UnbondingCompletionTimeSeconds
+	}
+
 	redemptionRecords := []types.RedemptionRecord{
 		{UnbondingRecordId: 1, Redeemer: "address-A"},
 		{UnbondingRecordId: 2, Redeemer: "address-B"},
@@ -122,13 +137,17 @@ func (s *KeeperTestSuite) TestQueryRedemptionRecord() {
 	resp, err := s.App.StaketiaKeeper.RedemptionRecord(sdk.WrapSDKContext(s.Ctx), req)
 	s.Require().NoError(err, "no error expected when querying redemption record")
 
-	s.Require().Equal(queriedUnbondingRecordId, resp.RedemptionRecord.UnbondingRecordId, "redemption record unbonding ID")
-	s.Require().Equal(queriedAddress, resp.RedemptionRecord.Redeemer, "redemption record address")
+	s.Require().Equal(queriedUnbondingRecordId, resp.RedemptionRecordResponse.RedemptionRecord.UnbondingRecordId, "redemption record unbonding ID")
+	s.Require().Equal(queriedAddress, resp.RedemptionRecordResponse.RedemptionRecord.Redeemer, "redemption record address")
+	s.Require().Equal(unbondingTimeMap[queriedUnbondingRecordId], resp.RedemptionRecordResponse.UnbondingCompletionTimeSeconds, "redemption record unbonding time")
 }
 
 func (s *KeeperTestSuite) TestQueryAllRedemptionRecords_Address() {
 	queriedAddress := "address-B"
 	expectedUnbondingRecordIds := []uint64{2, 4}
+	s.App.StaketiaKeeper.SetHostZone(s.Ctx, types.HostZone{
+		UnbondingPeriodSeconds: 10000,
+	})
 	allRedemptionRecords := []types.RedemptionRecord{
 		{UnbondingRecordId: 1, Redeemer: "address-A"},
 		{UnbondingRecordId: 2, Redeemer: "address-B"},
@@ -147,13 +166,16 @@ func (s *KeeperTestSuite) TestQueryAllRedemptionRecords_Address() {
 	s.Require().Nil(resp.Pagination, "pagination should be nil since it all fits on one page")
 
 	actualUnbondingRecordIds := []uint64{}
-	for _, record := range resp.RedemptionRecords {
-		actualUnbondingRecordIds = append(actualUnbondingRecordIds, record.UnbondingRecordId)
+	for _, resp := range resp.RedemptionRecordResponses {
+		actualUnbondingRecordIds = append(actualUnbondingRecordIds, resp.RedemptionRecord.UnbondingRecordId)
 	}
 	s.Require().ElementsMatch(expectedUnbondingRecordIds, actualUnbondingRecordIds)
 }
 
 func (s *KeeperTestSuite) TestQueryAllRedemptionRecords_UnbondingRecordId() {
+	s.App.StaketiaKeeper.SetHostZone(s.Ctx, types.HostZone{
+		UnbondingPeriodSeconds: 10000,
+	})
 	queriedUnbondingRecordId := uint64(2)
 	expectedAddresss := []string{"address-B", "address-D"}
 	allRedemptionRecords := []types.RedemptionRecord{
@@ -174,13 +196,17 @@ func (s *KeeperTestSuite) TestQueryAllRedemptionRecords_UnbondingRecordId() {
 	s.Require().Nil(resp.Pagination, "pagination should be nil since it all fits on one page")
 
 	actualAddresss := []string{}
-	for _, record := range resp.RedemptionRecords {
-		actualAddresss = append(actualAddresss, record.Redeemer)
+	for _, response := range resp.RedemptionRecordResponses {
+		actualAddresss = append(actualAddresss, response.RedemptionRecord.Redeemer)
 	}
 	s.Require().ElementsMatch(expectedAddresss, actualAddresss)
 }
 
 func (s *KeeperTestSuite) TestQueryAllRedemptionRecords_Pagination() {
+	s.App.StaketiaKeeper.SetHostZone(s.Ctx, types.HostZone{
+		UnbondingPeriodSeconds: 10000,
+	})
+
 	// Set more records than what will fit on one page
 	pageLimit := 50
 	numExcessRecords := 10
@@ -201,7 +227,7 @@ func (s *KeeperTestSuite) TestQueryAllRedemptionRecords_Pagination() {
 	s.Require().NoError(err, "no error expected when querying all redemption records")
 
 	// Confirm only the first page was returned
-	s.Require().Equal(pageLimit, len(resp.RedemptionRecords), "only the first page should be returned")
+	s.Require().Equal(pageLimit, len(resp.RedemptionRecordResponses), "only the first page should be returned")
 
 	// Attempt one more page, and it should get the remainder
 	req = &types.QueryRedemptionRecordsRequest{
@@ -211,7 +237,7 @@ func (s *KeeperTestSuite) TestQueryAllRedemptionRecords_Pagination() {
 	}
 	resp, err = s.App.StaketiaKeeper.RedemptionRecords(sdk.WrapSDKContext(s.Ctx), req)
 	s.Require().NoError(err, "no error expected when querying all redemption records on second page")
-	s.Require().Equal(numExcessRecords, len(resp.RedemptionRecords), "only the remainder should be returned")
+	s.Require().Equal(numExcessRecords, len(resp.RedemptionRecordResponses), "only the remainder should be returned")
 }
 
 func (s *KeeperTestSuite) TestQuerySlashRecords() {
