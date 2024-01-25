@@ -98,7 +98,7 @@ func UpdateUnbondingRecords(
 				recordRedemptionRate = redemptionRateDuringProp.Add(redemptionRateDuringUpgrade).Quo(sdk.NewDec(2))
 			}
 
-			// now update all userRedemptionRecords
+			// now update all userRedemptionRecords by using the redemption rate to set the native token amount
 			for _, userRedemptionRecordId := range hostZoneUnbonding.UserRedemptionRecords {
 				userRedemptionRecord, found := rk.GetUserRedemptionRecord(ctx, userRedemptionRecordId)
 				if !found {
