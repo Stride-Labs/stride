@@ -445,7 +445,7 @@ func (k Keeper) UnbondFromHostZone(ctx sdk.Context, hostZone types.HostZone) err
 
 	// Update the native unbond amount on all relevant records
 	// The native amount is calculated from the stTokens
-	if err := k.RefreshUnbondingNativeTokenAmounts(ctx, iniitalEpochNumberToHostZoneUnbondingMap); err != nil {
+	if err := k.RefreshUnbondingNativeTokenAmounts(ctx, initialEpochNumberToHostZoneUnbondingMap); err != nil {
 		return err
 	}
 
