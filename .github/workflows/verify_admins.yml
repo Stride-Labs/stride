@@ -3,10 +3,10 @@ name: Verify no Admins change
 on:
   push:
     branches:
-      - main
+      - sttia
   pull_request:
     branches:
-      - main
+      - sttia
 
 jobs:
   build:

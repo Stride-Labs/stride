@@ -2,9 +2,9 @@ name: Compile Stride
 
 on:
   push:
-    branches: ["main"]
+    branches: ["sttia"]
   pull_request:
-    branches: ["main"]
+    branches: ["sttia"]
 
 # This workflow makes x86_64 binaries for mac, windows, and linux.
 jobs:

@@ -53,6 +53,24 @@ set_stride_genesis() {
     jq "del(.app_state.interchain_accounts)" $genesis_config > json.tmp && mv json.tmp $genesis_config
     interchain_accts=$(cat $DOCKERNET_HOME/config/ica_controller.json)
     jq ".app_state += $interchain_accts" $genesis_config > json.tmp && mv json.tmp $genesis_config
+
+    # set the staketia accounts in the staketia host zone
+    deposit_address=$($MAIN_CMD    keys show -a deposit)
+    redemption_address=$($MAIN_CMD keys show -a redemption)
+    claim_address=$($MAIN_CMD      keys show -a claim)
+    safe_address=$($MAIN_CMD       keys show -a safe)
+    operator_address=$($MAIN_CMD   keys show -a operator)
+
+    jq '.app_state.staketia.host_zone.deposit_address = $newVal'    --arg newVal "$deposit_address"    $genesis_config > json.tmp && mv json.tmp $genesis_config
+    jq '.app_state.staketia.host_zone.redemption_address = $newVal' --arg newVal "$redemption_address" $genesis_config > json.tmp && mv json.tmp $genesis_config
+    jq '.app_state.staketia.host_zone.claim_address = $newVal'      --arg newVal "$claim_address"      $genesis_config > json.tmp && mv json.tmp $genesis_config
+    jq '.app_state.staketia.host_zone.safe_address = $newVal'       --arg newVal "$safe_address"       $genesis_config > json.tmp && mv json.tmp $genesis_config
+    jq '.app_state.staketia.host_zone.operator_address = $newVal'   --arg newVal "$operator_address"   $genesis_config > json.tmp && mv json.tmp $genesis_config
+
+    jq '.app_state.staketia.host_zone.delegation_address = $newVal' --arg newVal "$DELEGATION_ADDRESS" $genesis_config > json.tmp && mv json.tmp $genesis_config
+    jq '.app_state.staketia.host_zone.reward_address = $newVal'     --arg newVal "$REWARD_ADDRESS"     $genesis_config > json.tmp && mv json.tmp $genesis_config
+
+    jq '.app_state.staketia.host_zone.unbonding_period_seconds = $newVal' --arg newVal "${UNBONDING_TIME//s/}" $genesis_config > json.tmp && mv json.tmp $genesis_config
 }
 
 set_host_genesis() {
@@ -106,13 +124,20 @@ set_consumer_genesis() {
     jq '.app_state.ccvconsumer.params.unbonding_period = $newVal' --arg newVal "$UNBONDING_TIME" $genesis_config > json.tmp && mv json.tmp $genesis_config
 }
 
-add_relayer_account() {
-    relayer_acct="$1"
-    relayer_mnemonic="$2"
+create_account() {
+    account_name="$1"
+    mnemonic="$2"
+    echo "$mnemonic" | $MAIN_CMD keys add $account_name --recover --keyring-backend=test >> $KEYS_LOGS 2>&1
+}
 
-    echo "$relayer_mnemonic" | $MAIN_CMD keys add $relayer_acct --recover --keyring-backend=test >> $KEYS_LOGS 2>&1
-    relayer_address=$($MAIN_CMD keys show $relayer_acct --keyring-backend test -a | tr -cd '[:alnum:]._-')
-    $MAIN_CMD add-genesis-account ${relayer_address} ${VAL_TOKENS}${DENOM}
+add_genesis_account() {
+    account_name="$1"
+    amount="$2"
+    mnemonic="$3"
+
+    create_account "$account_name" "$mnemonic"
+    address=$($MAIN_CMD keys show $account_name --keyring-backend test -a | tr -cd '[:alnum:]._-')
+    $MAIN_CMD add-genesis-account ${address} ${amount}${DENOM}
 }
 
 MAIN_ID=1 # Node responsible for genesis and persistent_peers
@@ -220,16 +245,22 @@ done
 
 if [ "$CHAIN" == "STRIDE" ]; then 
     # add the stride admin account
-    echo "$STRIDE_ADMIN_MNEMONIC" | $MAIN_CMD keys add $STRIDE_ADMIN_ACCT --recover --keyring-backend=test >> $KEYS_LOGS 2>&1
-    STRIDE_ADMIN_ADDRESS=$($MAIN_CMD keys show $STRIDE_ADMIN_ACCT --keyring-backend test -a)
-    $MAIN_CMD add-genesis-account ${STRIDE_ADMIN_ADDRESS} ${ADMIN_TOKENS}${DENOM}
+    add_genesis_account "$STRIDE_ADMIN_ACCT" "${ADMIN_TOKENS}" "$STRIDE_ADMIN_MNEMONIC"
+
+    # Add accounts for staketia (none should have an initial balance)
+    create_account "deposit"    "$DEPOSIT_MNEMONIC"
+    create_account "redemption" "$REDEMPTION_MNEMONIC"
+    create_account "claim"      "$CLAIM_MNEMONIC"
+
+    add_genesis_account "safe"     "1000000" "$SAFE_MNEMONIC"
+    add_genesis_account "operator" "1000000" "$OPERATOR_MNEMONIC"
 
     # add relayer accounts
     for i in "${!STRIDE_RELAYER_ACCTS[@]}"; do
         relayer_acct="${STRIDE_RELAYER_ACCTS[i]}"
         relayer_mnemonic="${STRIDE_RELAYER_MNEMONICS[i]}"
 
-        add_relayer_account "$relayer_acct" "$relayer_mnemonic"
+        add_genesis_account "$relayer_acct" "${VAL_TOKENS}" "$relayer_mnemonic"
     done
 else 
     # add a revenue account
@@ -245,19 +276,19 @@ else
             relayer_acct=$(GET_VAR_VALUE     RELAYER_${CHAIN}_ACCT)
             relayer_mnemonic=$(GET_VAR_VALUE RELAYER_${CHAIN}_MNEMONIC)
 
-            add_relayer_account "$relayer_acct" "$relayer_mnemonic"
+            add_genesis_account "$relayer_acct" "${VAL_TOKENS}" "$relayer_mnemonic"
             break
         fi
     done
 
     # gaia ICS and noble have a different config setup, so we handle them explicitly here
     if [ "$CHAIN" == "GAIA" ]; then 
-        add_relayer_account "$RELAYER_GAIA_ICS_ACCT" "$RELAYER_GAIA_ICS_MNEMONIC"
+        add_genesis_account "$RELAYER_GAIA_ICS_ACCT" "${VAL_TOKENS}" "$RELAYER_GAIA_ICS_MNEMONIC"
     fi
     if [ "$CHAIN" == "NOBLE" ]; then 
-        add_relayer_account stride-noble "$RELAYER_NOBLE_STRIDE_MNEMONIC"
-        add_relayer_account noble-dydx "$RELAYER_NOBLE_DYDX_MNEMONIC"
-        add_relayer_account noble-osmo "$RELAYER_NOBLE_OSMO_MNEMONIC"
+        add_genesis_account stride-noble "${VAL_TOKENS}" "$RELAYER_NOBLE_STRIDE_MNEMONIC"
+        add_genesis_account noble-dydx "${VAL_TOKENS}" "$RELAYER_NOBLE_DYDX_MNEMONIC"
+        add_genesis_account noble-osmo "${VAL_TOKENS}" "$RELAYER_NOBLE_OSMO_MNEMONIC"
     fi
 
     # For noble, add a param authority account and set a minting denom so that IBC transfers are allowed
@@ -270,6 +301,10 @@ else
         sed -i -E 's|"mintingDenom": null|"mintingDenom":{"denom":"'${DENOM}'"}|g' $genesis_json  
         sed -i -E 's|"denom_metadata": \[\]|"denom_metadata":\[{"name": "Token", "base": "'${DENOM}'"}\]|g' $genesis_json  
     fi
+
+    # Add accounts for staketia (none should have an initial balance)
+    create_account "delegation" "$DELEGATION_MNEMONIC"
+    create_account "reward"     "$REWARD_MNEMONIC"
 fi
 
 # add a staker account for integration tests

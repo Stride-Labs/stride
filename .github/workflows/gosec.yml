@@ -1,9 +1,9 @@
 name: Gosec
 on:
   push:
-    branches: [ "main" ]
+    branches: [ "sttia" ]
   pull_request:
-    branches: [ "main" ]
+    branches: [ "sttia" ]
 jobs:
   tests:
     runs-on: ubuntu-latest

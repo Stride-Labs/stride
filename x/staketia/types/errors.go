@@ -1,0 +1,32 @@
+package types
+
+import errorsmod "cosmossdk.io/errors"
+
+var (
+	ErrHostZoneNotFound                  = errorsmod.Register(ModuleName, 1901, "host zone not found")
+	ErrInvalidHostZone                   = errorsmod.Register(ModuleName, 1902, "invalid host zone during genesis")
+	ErrHostZoneHalted                    = errorsmod.Register(ModuleName, 1903, "host zone is halted")
+	ErrHostZoneNotHalted                 = errorsmod.Register(ModuleName, 1904, "host zone is not halted")
+	ErrInvalidBounds                     = errorsmod.Register(ModuleName, 1905, "invalid inner bounds")
+	ErrRedemptionRateOutsideSafetyBounds = errorsmod.Register(ModuleName, 1906, "host zone redemption rate outside safety bounds")
+	ErrInvalidRedemptionRateBounds       = errorsmod.Register(ModuleName, 1907, "invalid host zone redemption rate inner bounds")
+	ErrDelegationRecordNotFound          = errorsmod.Register(ModuleName, 1908, "delegation record not found")
+	ErrDelegationRecordInvalidState      = errorsmod.Register(ModuleName, 1909, "delegation record in incorrect state")
+	ErrDelegationRecordAlreadyExists     = errorsmod.Register(ModuleName, 1910, "delegation record already exists")
+	ErrUnbondingRecordNotFound           = errorsmod.Register(ModuleName, 1911, "unbonding record not found")
+	ErrUnbondingRecordAlreadyExists      = errorsmod.Register(ModuleName, 1912, "unbonding record already exists")
+	ErrBrokenUnbondingRecordInvariant    = errorsmod.Register(ModuleName, 1913, "broken unbonding record invariant")
+	ErrInvalidUnbondingRecord            = errorsmod.Register(ModuleName, 1914, "unbonding record in incorrect state")
+	ErrRedemptionRecordNotFound          = errorsmod.Register(ModuleName, 1915, "redemption record not found")
+	ErrUnbondAmountToLarge               = errorsmod.Register(ModuleName, 1916, "unbonding more than exists on host zone")
+	ErrInvalidAmountBelowMinimum         = errorsmod.Register(ModuleName, 1917, "amount provided is too small")
+	ErrNegativeNotAllowed                = errorsmod.Register(ModuleName, 1918, "negative value not allowed")
+	ErrInsufficientFunds                 = errorsmod.Register(ModuleName, 1919, "not enough funds")
+	ErrInvalidTxHash                     = errorsmod.Register(ModuleName, 1920, "tx hash is invalid")
+	ErrInvalidAdmin                      = errorsmod.Register(ModuleName, 1921, "signer is not an admin")
+	ErrInvalidArgument                   = errorsmod.Register(ModuleName, 1922, "argument is not valid")
+	ErrInvariantBroken                   = errorsmod.Register(ModuleName, 1923, "invariant broken")
+	ErrDivisionByZero                    = errorsmod.Register(ModuleName, 1924, "division by zero")
+	ErrInvalidRecordType                 = errorsmod.Register(ModuleName, 1925, "invalid record type")
+	ErrInvalidGenesisRecords             = errorsmod.Register(ModuleName, 1926, "invalid records during genesis")
+)
