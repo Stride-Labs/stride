@@ -36,7 +36,7 @@ func DefaultGenesis() *GenesisState {
 		},
 		UnbondingRecords: []UnbondingRecord{
 			{
-				Id:            0,
+				Id:            1,
 				Status:        ACCUMULATING_REDEMPTIONS,
 				NativeAmount:  sdkmath.ZeroInt(),
 				StTokenAmount: sdkmath.ZeroInt(),

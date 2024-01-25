@@ -92,7 +92,9 @@ func (s *AppTestHelper) Setup() {
 	// Remove host zone and accumulating record for staketia, by default,
 	// since the tests will override it directly if needed
 	s.App.StaketiaKeeper.RemoveHostZone(s.Ctx)
-	s.App.StaketiaKeeper.RemoveUnbondingRecord(s.Ctx, 0)
+	for _, unbondingRecord := range s.App.StaketiaKeeper.GetAllActiveUnbondingRecords(s.Ctx) {
+		s.App.StaketiaKeeper.RemoveUnbondingRecord(s.Ctx, unbondingRecord.Id)
+	}
 }
 
 // Instantiates an TestHelper without the test suite
