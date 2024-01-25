@@ -212,8 +212,15 @@ func (s *KeeperTestSuite) TestAdjustDelegatedBalance() {
 		s.Require().Equal(tc.endDelegation, hostZone.DelegatedBalance, "delegation after change for %s", tc.address)
 	}
 
-	// Attempt to call it from a different address, it should fail
+	// Attempt to call it with an amount that would make it negative, it should fail
 	_, err := s.GetMsgServer().AdjustDelegatedBalance(s.Ctx, &types.MsgAdjustDelegatedBalance{
+		Operator:         safeAddress,
+		DelegationOffset: sdk.NewInt(-10000),
+	})
+	s.Require().ErrorContains(err, "offset would cause the delegated balance to be negative")
+
+	// Attempt to call it from a different address, it should fail
+	_, err = s.GetMsgServer().AdjustDelegatedBalance(s.Ctx, &types.MsgAdjustDelegatedBalance{
 		Operator: s.TestAccs[0].String(),
 	})
 	s.Require().ErrorContains(err, "invalid safe address")

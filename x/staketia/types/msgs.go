@@ -97,7 +97,7 @@ func (msg *MsgLiquidStake) ValidateBasic() error {
 	// threshold of 0.1 TIA or 100000 utia avoids denial of service or record spamming
 	minThreshold := int64(100000)
 	if msg.NativeAmount.LT(sdkmath.NewInt(minThreshold)) {
-		return errorsmod.Wrapf(ErrInvalidAmountBelowMinimum, "amount liquid staked must be positive and nonzero")
+		return errorsmod.Wrapf(ErrInvalidAmountBelowMinimum, "amount (%v) is below 0.1 TIA minimum", msg.NativeAmount)
 	}
 	return nil
 }
@@ -142,7 +142,7 @@ func (msg *MsgRedeemStake) ValidateBasic() error {
 	// threshold of 0.1 stTIA or 100000 stutia avoids denial of service or record spamming
 	minThreshold := int64(100000)
 	if msg.StTokenAmount.LT(sdkmath.NewInt(minThreshold)) {
-		return errorsmod.Wrapf(ErrInvalidAmountBelowMinimum, "amount (%v) < 0.1 stTIA", msg.StTokenAmount)
+		return errorsmod.Wrapf(ErrInvalidAmountBelowMinimum, "amount (%v) is below 0.1 stTIA minimum", msg.StTokenAmount)
 	}
 
 	return nil

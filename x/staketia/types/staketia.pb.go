@@ -29,6 +29,9 @@ const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 // Note: There is an important assumption here that tokens in the deposit
 // account should not be tracked by these records. The record is created as soon
 // as the tokens leave stride
+// Additionally, the redemption rate checks records based on the status,
+// so if a new status is added, it might be necessary to update the redemption
+// rate equation
 type DelegationRecordStatus int32
 
 const (

@@ -111,6 +111,11 @@ func (k msgServer) AdjustDelegatedBalance(goCtx context.Context, msg *types.MsgA
 		return nil, err
 	}
 	hostZone.DelegatedBalance = hostZone.DelegatedBalance.Add(msg.DelegationOffset)
+
+	// safety check that this will not cause the delegated balance to be negative
+	if hostZone.DelegatedBalance.IsNegative() {
+		return nil, types.ErrNegativeNotAllowed.Wrapf("offset would cause the delegated balance to be negative")
+	}
 	k.SetHostZone(ctx, hostZone)
 
 	// create a corresponding slash record

@@ -53,7 +53,9 @@ func (k Keeper) UpdateRedemptionRate(ctx sdk.Context) error {
 	// and the record is deleted once the tokens are delegated
 	undelegatedBalance := sdkmath.ZeroInt()
 	for _, delegationRecord := range k.GetAllActiveDelegationRecords(ctx) {
-		undelegatedBalance = undelegatedBalance.Add(delegationRecord.NativeAmount)
+		if delegationRecord.Status == types.TRANSFER_IN_PROGRESS || delegationRecord.Status == types.DELEGATION_QUEUE {
+			undelegatedBalance = undelegatedBalance.Add(delegationRecord.NativeAmount)
+		}
 	}
 
 	// Finally, calculated the redemption rate as the native tokens locked divided by the stTokens

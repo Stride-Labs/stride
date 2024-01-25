@@ -11,6 +11,7 @@ func (s *KeeperTestSuite) addDelegationRecords() (delegationRecords []types.Dele
 		delegationRecord := types.DelegationRecord{
 			Id:           uint64(i),
 			NativeAmount: sdkmath.NewInt(int64(i) * 1000),
+			TxHash:       "hash",
 		}
 		delegationRecords = append(delegationRecords, delegationRecord)
 		s.App.StaketiaKeeper.SetDelegationRecord(s.Ctx, delegationRecord)
