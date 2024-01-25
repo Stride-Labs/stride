@@ -52,6 +52,9 @@ func (h HostZone) ValidateGenesis() error {
 	if h.ClaimAddress == "" {
 		return ErrInvalidHostZone.Wrap("claim address must be specified")
 	}
+	if h.FeeAddress == "" {
+		return ErrInvalidHostZone.Wrap("fee address must be specified")
+	}
 	if h.OperatorAddress == "" {
 		return ErrInvalidHostZone.Wrap("operator address must be specified")
 	}
@@ -69,6 +72,9 @@ func (h HostZone) ValidateGenesis() error {
 	if _, err := sdk.AccAddressFromBech32(h.ClaimAddress); err != nil {
 		return errorsmod.Wrapf(err, "invalid claim address")
 	}
+	if _, err := sdk.AccAddressFromBech32(h.FeeAddress); err != nil {
+		return errorsmod.Wrapf(err, "invalid fee address")
+	}
 	if _, err := sdk.AccAddressFromBech32(h.OperatorAddress); err != nil {
 		return errorsmod.Wrapf(err, "invalid operator address")
 	}
@@ -82,6 +88,11 @@ func (h HostZone) ValidateGenesis() error {
 	}
 	if err := h.ValidateRedemptionRateBoundsInitalized(); err != nil {
 		return err
+	}
+
+	// Validate unbonding period is set
+	if h.UnbondingPeriodSeconds == 0 {
+		return ErrInvalidHostZone.Wrap("unbonding period must be set")
 	}
 
 	return nil

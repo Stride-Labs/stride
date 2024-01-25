@@ -6,8 +6,8 @@ import (
 
 	errorsmod "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	transfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
 
 	"github.com/Stride-Labs/stride/v17/utils"
@@ -176,9 +176,52 @@ func (k Keeper) ConfirmDelegation(ctx sdk.Context, recordId uint64, txHash strin
 	return nil
 }
 
+// Liquid stakes tokens in the fee account and distributes them to the fee collector
+func (k Keeper) LiquidStakeAndDistributeFees(ctx sdk.Context) error {
+	// Get the fee address from the host zone
+	hostZone, err := k.GetUnhaltedHostZone(ctx)
+	if err != nil {
+		return err
+	}
+
+	feeAccount, err := sdk.AccAddressFromBech32(hostZone.FeeAddress)
+	if err != nil {
+		return errorsmod.Wrapf(err, "invalid fee address")
+	}
+
+	// Get the balance of native tokens in the fee address, if there are no tokens, no action is necessary
+	feesBalance := k.bankKeeper.GetBalance(ctx, feeAccount, hostZone.NativeTokenIbcDenom)
+	if feesBalance.IsZero() {
+		k.Logger(ctx).Info("No fees generated this epoch")
+		return nil
+	}
+
+	// Liquid stake those native tokens
+	stTokens, err := k.LiquidStake(ctx, hostZone.FeeAddress, feesBalance.Amount)
+	if err != nil {
+		return errorsmod.Wrapf(err, "unable to liquid stake fees")
+	}
+
+	// Send the stTokens to the fee collector
+	err = k.bankKeeper.SendCoinsFromAccountToModule(ctx, feeAccount, authtypes.FeeCollectorName, sdk.NewCoins(stTokens))
+	if err != nil {
+		return errorsmod.Wrapf(err, "unable to send liquid staked tokens to fee collector")
+	}
+	k.Logger(ctx).Info(fmt.Sprintf("Sent %v to fee collector", stTokens))
+
+	return nil
+}
+
 // Runs prepare delegations with a cache context wrapper so revert any partial state changes
 func (k Keeper) SafelyPrepareDelegation(ctx sdk.Context, epochNumber uint64, epochDuration time.Duration) error {
 	return utils.ApplyFuncIfNoError(ctx, func(ctx sdk.Context) error {
 		return k.PrepareDelegation(ctx, epochNumber, epochDuration)
+	})
+}
+
+// Liquid stakes fees with a cache context wrapper so revert any partial state changes
+func (k Keeper) SafelyLiquidStakeAndDistributeFees(ctx sdk.Context) error {
+	return utils.ApplyFuncIfNoError(ctx, func(ctx sdk.Context) error {
+		return k.LiquidStakeAndDistributeFees(ctx)
 	})
 }

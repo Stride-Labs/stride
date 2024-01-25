@@ -23,6 +23,7 @@ var (
 	SlashRecordsKeyPrefix               = []byte("slash-records")
 	SlashRecordStoreKeyPrefix           = []byte("slash-record-id")
 	TransferInProgressRecordIdKeyPrefix = []byte("transfer-in-progress")
+	FeeAddressKey                       = []byte("fee-address")
 
 	ChannelIdBufferFixedLength int = 16
 )

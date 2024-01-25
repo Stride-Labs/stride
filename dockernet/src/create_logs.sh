@@ -106,10 +106,12 @@ while true; do
     deposit_address=$($STRIDE_MAIN_CMD keys show -a deposit)
     redemption_address=$($STRIDE_MAIN_CMD keys show -a redemption)
     claim_address=$($STRIDE_MAIN_CMD keys show -a claim)
+    fee_address=$($STRIDE_MAIN_CMD q staketia host-zone | grep fee_address | awk '{print $2}')
 
     print_stride_balance $deposit_address    "DEPOSIT" 
     print_stride_balance $redemption_address "REDEMPTION" 
     print_stride_balance $claim_address      "CLAIM" 
+    print_stride_balance $fee_address        "FEE" 
 
     # Log staketia balance on host chain
     print_separator "STAKETIA HOST" $balances

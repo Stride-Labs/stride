@@ -47,7 +47,7 @@ func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochInfo epochstypes.EpochInf
 		}
 	}
 
-	// Every hour, check for and annotate finished unbondings, and distribute claims
+	// Every hour, annotate finished unbondings and distribute claims
 	// The hourly epoch is meant for actions that should be executed asap, but have a
 	// relaxed SLA. It makes it slightly less expensive than running every block
 	if epochInfo.Identifier == epochstypes.HOUR_EPOCH {
@@ -55,6 +55,13 @@ func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochInfo epochstypes.EpochInf
 
 		if err := k.SafelyDistributeClaims(ctx); err != nil {
 			k.Logger(ctx).Error(fmt.Sprintf("Unable to distribute claims for epoch %d: %s", epochNumber, err.Error()))
+		}
+	}
+
+	// Every mint epoch, liquid stake fees and distribute to fee collector
+	if epochInfo.Identifier == epochstypes.MINT_EPOCH {
+		if err := k.SafelyLiquidStakeAndDistributeFees(ctx); err != nil {
+			k.Logger(ctx).Error(fmt.Sprintf("Unable to liquid stake and distribute fees this epoch %d: %s", epochNumber, err.Error()))
 		}
 	}
 }

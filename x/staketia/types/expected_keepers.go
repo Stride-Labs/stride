@@ -4,6 +4,7 @@ import (
 	context "context"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	transfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
 )
 
@@ -21,4 +22,11 @@ type BankKeeper interface {
 // Required TransferKeeper functions
 type TransferKeeper interface {
 	Transfer(goCtx context.Context, msg *transfertypes.MsgTransfer) (*transfertypes.MsgTransferResponse, error)
+}
+
+// Required AccountKeeper functions
+type AccountKeeper interface {
+	NewAccount(sdk.Context, authtypes.AccountI) authtypes.AccountI
+	GetAccount(ctx sdk.Context, addr sdk.AccAddress) authtypes.AccountI
+	SetAccount(ctx sdk.Context, acc authtypes.AccountI)
 }

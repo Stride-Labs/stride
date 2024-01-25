@@ -653,6 +653,7 @@ func NewStrideApp(
 	app.StaketiaKeeper = *staketiakeeper.NewKeeper(
 		appCodec,
 		keys[staketiatypes.StoreKey],
+		app.AccountKeeper,
 		app.BankKeeper,
 		app.TransferKeeper,
 	)

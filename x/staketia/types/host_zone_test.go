@@ -12,7 +12,8 @@ import (
 )
 
 const (
-	Uninitialized = "uninitialized"
+	Uninitialized    = "uninitialized"
+	UninitializedInt = 999
 )
 
 // Helper function to fill in individual fields
@@ -48,6 +49,7 @@ func fillDefaultHostZone(hostZone types.HostZone) types.HostZone {
 	hostZone.DepositAddress = fillDefaultValue(hostZone.DepositAddress, validAddress)
 	hostZone.RedemptionAddress = fillDefaultValue(hostZone.RedemptionAddress, validAddress)
 	hostZone.ClaimAddress = fillDefaultValue(hostZone.ClaimAddress, validAddress)
+	hostZone.FeeAddress = fillDefaultValue(hostZone.FeeAddress, validAddress)
 	hostZone.OperatorAddress = fillDefaultValue(hostZone.OperatorAddress, validAddress)
 	hostZone.SafeAddress = fillDefaultValue(hostZone.SafeAddress, validAddress)
 
@@ -57,6 +59,12 @@ func fillDefaultHostZone(hostZone types.HostZone) types.HostZone {
 		hostZone.MinInnerRedemptionRate = sdk.MustNewDecFromStr("0.9")
 		hostZone.MaxInnerRedemptionRate = sdk.MustNewDecFromStr("1.1")
 		hostZone.MaxRedemptionRate = sdk.MustNewDecFromStr("1.2")
+	}
+
+	if hostZone.UnbondingPeriodSeconds == UninitializedInt {
+		hostZone.UnbondingPeriodSeconds = 0 // invalid
+	} else {
+		hostZone.UnbondingPeriodSeconds = 21 // valid
 	}
 
 	return hostZone
@@ -145,6 +153,13 @@ func TestValidateHostZoneGenesis(t *testing.T) {
 			expectedError: "claim address must be specified",
 		},
 		{
+			name: "missing fee address",
+			hostZone: types.HostZone{
+				FeeAddress: Uninitialized,
+			},
+			expectedError: "fee address must be specified",
+		},
+		{
 			name: "missing operator address",
 			hostZone: types.HostZone{
 				OperatorAddress: Uninitialized,
@@ -180,6 +195,13 @@ func TestValidateHostZoneGenesis(t *testing.T) {
 			expectedError: "invalid claim address",
 		},
 		{
+			name: "invalid fee address",
+			hostZone: types.HostZone{
+				FeeAddress: "invalid_address",
+			},
+			expectedError: "invalid fee address",
+		},
+		{
 			name: "invalid operator address",
 			hostZone: types.HostZone{
 				OperatorAddress: "invalid_address",
@@ -208,6 +230,13 @@ func TestValidateHostZoneGenesis(t *testing.T) {
 				MinInnerRedemptionRate: sdk.MustNewDecFromStr("0.9"),
 			},
 			expectedError: "invalid host zone redemption rate inner bounds",
+		},
+		{
+			name: "missing unbonding period",
+			hostZone: types.HostZone{
+				UnbondingPeriodSeconds: UninitializedInt,
+			},
+			expectedError: "unbonding period must be set",
 		},
 	}
 

@@ -28,59 +28,61 @@ message HostZone {
       [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
   // Claim address on stride
   string claim_address = 9 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+  // Fee address on stride
+  string fee_address = 10 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
   // OPERATOR address set by SAFE with admin permissions
-  string operator_address = 10
+  string operator_address = 11
       [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
   // SAFE admin address set upon host zone creation
-  string safe_address = 11 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+  string safe_address = 12 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
 
   // Previous redemption rate
-  string last_redemption_rate = 12 [
+  string last_redemption_rate = 13 [
     (cosmos_proto.scalar) = "cosmos.Dec",
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false
   ];
   // Current redemption rate
-  string redemption_rate = 13 [
+  string redemption_rate = 14 [
     (cosmos_proto.scalar) = "cosmos.Dec",
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false
   ];
   // Min outer redemption rate - adjusted by governance
-  string min_redemption_rate = 14 [
+  string min_redemption_rate = 15 [
     (cosmos_proto.scalar) = "cosmos.Dec",
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false
   ];
   // Max outer redemption rate - adjusted by governance
-  string max_redemption_rate = 15 [
+  string max_redemption_rate = 16 [
     (cosmos_proto.scalar) = "cosmos.Dec",
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false
   ];
   // Min inner redemption rate - adjusted by controller
-  string min_inner_redemption_rate = 16 [
+  string min_inner_redemption_rate = 17 [
     (cosmos_proto.scalar) = "cosmos.Dec",
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false
   ];
   // Max inner redemption rate - adjusted by controller
-  string max_inner_redemption_rate = 17 [
+  string max_inner_redemption_rate = 18 [
     (cosmos_proto.scalar) = "cosmos.Dec",
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false
   ];
 
   // Total delegated balance on the host zone delegation account
-  string delegated_balance = 18 [
+  string delegated_balance = 19 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
     (gogoproto.nullable) = false
   ];
 
   // The undelegation period for Celestia in days
-  uint64 unbonding_period_seconds = 19;
+  uint64 unbonding_period_seconds = 20;
   // Indicates whether the host zone has been halted
-  bool halted = 20;
+  bool halted = 21;
 }
 
 // Status fields for a delegation record
