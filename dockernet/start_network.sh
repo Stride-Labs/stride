@@ -58,7 +58,10 @@ done
 
 # Start each chain, create the transfer channels and start the relayers
 bash $SRC/start_chain.sh 
+
+sleep 30
 bash $SRC/start_relayers.sh 
+sleep 30
 
 # Create governors for chains running the stride binary
 for chain in STRIDE ${HOST_CHAINS[@]}; do

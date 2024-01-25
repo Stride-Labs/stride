@@ -4,9 +4,9 @@ WORKDIR /opt/
 
 RUN set -eux; apk add --no-cache ca-certificates build-base git linux-headers
 
-RUN git clone https://github.com/dydxprotocol/v4-chain.git \
+RUN git clone https://github.com/Stride-Labs/v4-chain.git \
     && cd v4-chain/protocol \
-    && git checkout protocol/v3.0.0-rc1
+    && git checkout ccd15de4aa572ea7350651bc838aaa01adf3527c
 
 WORKDIR /opt/v4-chain/protocol
 

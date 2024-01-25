@@ -125,6 +125,7 @@ chains:
       debug: false
       timeout: 20s
       output-format: json
+      min-loop-duration: 1s
       sign-mode: direct
   # {new-host-zone}:
   #   type: cosmos

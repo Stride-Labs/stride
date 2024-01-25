@@ -29,9 +29,9 @@
 	path = deps/evmos
 	url = https://github.com/evmos/evmos
 [submodule "deps/dydx"]
-	# Commit: protocol/v3.0.0-rc1
+	# Commit: ccd15de4aa572ea7350651bc838aaa01adf3527c
 	path = deps/dydx
-	url = https://github.com/dydxprotocol/v4-chain.git
+	url = https://github.com/Stride-Labs/v4-chain.git
 [submodule "deps/noble"]
 	# Commit: v3.1.0
 	path = deps/noble
