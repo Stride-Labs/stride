@@ -45,7 +45,8 @@ func GetTxCmd() *cobra.Command {
 		CmdUpdateInnerRedemptionRateBounds(),
 		CmdResumeHostZone(),
 		CmdOverwriteRecord(),
-		CmgRefreshRedemptionRate(),
+		CmdRefreshRedemptionRate(),
+		CmdSetupOperatorAddress(),
 	)
 
 	return cmd
@@ -400,42 +401,42 @@ Example:
 // SAFE multisig overwrites record
 func CmdOverwriteRecord() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "overwrite-record [recordtype] [json-file]",
+		Use:   "overwrite-record [delegation|unbonding|redemption] [json-file]",
 		Short: "overwrites a record",
 		Long: strings.TrimSpace(
 			fmt.Sprint(`Submit an overwrite record tx. The record must be supplied via a JSON file.
 			
-			Example:
-			$ tx staketia overwrite-record <path/to/file.json> --from=<key_or_address>
-			
-			Where file.json contains either...
-			
-			Delegation Record (recordtype=0)
-			{
-				"id": 4,
-				"native_amount": "100",
-				"DelegationRecordStatus": "DELEGATION_QUEUE",
-				"tx_hash": "C8C3CFF223CF4711E14F3E3918A3E82ED8BAA010445A4519BD0B2AFDB45897FE"
-			}
-			
-			Unbonding Record (recordtype=1)
-			{
-				"id": 4,
-				"native_amount": "100",
-				"UnbondingRecordStatus": "DELEGATION_QUEUE",
-				"unbonding_completion_time": 1705802815
-				"undelegation_tx_hash": "C8C3CFF223CF4711E14F3E3918A3E82ED8BAA010445A4519BD0B2AFDB45897FE",
-				"unbonding_token_swap_tx_hash": "C8C3CFF223CF4711E14F3E3918A3E82ED8BAA010445A4519BD0B2AFDB45897FE"
-			}
-			
-			Redemption Record (recordtype=2)
-			{
-				"unbonding_record_id": 4
-				"native_amount": "100",
-				"st_token_amount": "107",
-				"redeemer": "stride1zlu2l3lx5tqvzspvjwsw9u0e907kelhqae3yhk"
-			}
-			
+Example:
+$ tx staketia overwrite-record [delegation|unbonding|redemption] <path/to/file.json> --from=<key_or_address>
+
+Where file.json contains either...
+
+Delegation Record (recordtype=delegation)
+{
+	"id": "4",
+	"native_amount": "100",
+	"status": "DELEGATION_QUEUE",
+	"tx_hash": "C8C3CFF223CF4711E14F3E3918A3E82ED8BAA010445A4519BD0B2AFDB45897FE"
+}
+
+Unbonding Record (recordtype=unbonding)
+{
+	"id": "4",
+	"native_amount": "100",
+	"st_token_amount": "94",
+	"UnbondingRecordStatus": "UNBONDING_QUEUE",
+	"unbonding_completion_time": "1705802815"
+	"undelegation_tx_hash": "C8C3CFF223CF4711E14F3E3918A3E82ED8BAA010445A4519BD0B2AFDB45897FE",
+	"unbonding_token_swap_tx_hash": "C8C3CFF223CF4711E14F3E3918A3E82ED8BAA010445A4519BD0B2AFDB45897FE"
+}
+
+Redemption Record (recordtype=redemption)
+{
+	"unbonding_record_id": "4"
+	"native_amount": "100",
+	"st_token_amount": "107",
+	"redeemer": "stride1zlu2l3lx5tqvzspvjwsw9u0e907kelhqae3yhk"
+}
 			
 			`, version.AppName)),
 		Args: cobra.ExactArgs(2),
@@ -467,7 +468,7 @@ func CmdOverwriteRecord() *cobra.Command {
 }
 
 // triggers the redemption rate update
-func CmgRefreshRedemptionRate() *cobra.Command {
+func CmdRefreshRedemptionRate() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "trigger-update-redemption-rate",
 		Short: "triggers an update to the redemption rate",
@@ -475,8 +476,8 @@ func CmgRefreshRedemptionRate() *cobra.Command {
 		Long: strings.TrimSpace(
 			fmt.Sprintf(`Triggers an updated redemption rate calculation for the host zone
 			
-			Example:
-			$ %[1]s tx %[2]s trigger-update-redemption-rate
+Example:
+$ %[1]s tx %[2]s trigger-update-redemption-rate
 			`, version.AppName, types.ModuleName),
 		),
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
@@ -487,6 +488,43 @@ func CmgRefreshRedemptionRate() *cobra.Command {
 
 			msg := types.NewMsgRefreshRedemptionRate(
 				clientCtx.GetFromAddress().String(),
+			)
+			if err := msg.ValidateBasic(); err != nil {
+				return err
+			}
+			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
+		},
+	}
+
+	flags.AddTxFlagsToCmd(cmd)
+
+	return cmd
+}
+
+// triggers the redemption rate update
+func CmdSetupOperatorAddress() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "setup-operator-address [operator-address]",
+		Short: "sets the operator address on the host zone record",
+		Args:  cobra.ExactArgs(1),
+		Long: strings.TrimSpace(
+			fmt.Sprintf(`Triggers an updated redemption rate calculation for the host zone
+			
+Example:
+$ %[1]s tx %[2]s setup-operator-address stride1265uqtckmd3kt7jek2pv0vrp04j0d74jj8ahq5
+			`, version.AppName, types.ModuleName),
+		),
+		RunE: func(cmd *cobra.Command, args []string) (err error) {
+			operatorAddress := args[0]
+
+			clientCtx, err := client.GetClientTxContext(cmd)
+			if err != nil {
+				return err
+			}
+
+			msg := types.NewMsgSetOperatorAddress(
+				clientCtx.GetFromAddress().String(),
+				operatorAddress,
 			)
 			if err := msg.ValidateBasic(); err != nil {
 				return err

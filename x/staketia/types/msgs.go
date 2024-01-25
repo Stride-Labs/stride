@@ -614,14 +614,6 @@ func (msg *MsgOverwriteUnbondingRecord) ValidateBasic() error {
 	if _, ok := UnbondingRecordStatus_name[int32(msg.UnbondingRecord.Status)]; !ok {
 		return errorsmod.Wrap(sdkerrors.ErrInvalidRequest, "record status doesn't match the enum")
 	}
-	// - assert the tx hash is not empty
-	if msg.UnbondingRecord.UndelegationTxHash == "" {
-		return errorsmod.Wrap(sdkerrors.ErrInvalidRequest, "transaction hash cannot be empty")
-	}
-	// - assert the tx hash is not empty
-	if msg.UnbondingRecord.UnbondedTokenSweepTxHash == "" {
-		return errorsmod.Wrap(sdkerrors.ErrInvalidRequest, "transaction hash cannot be empty")
-	}
 
 	return nil
 }

@@ -6,6 +6,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/tx"
 	"github.com/cosmos/cosmos-sdk/codec"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/gogo/protobuf/proto"
 	"github.com/spf13/cobra"
 
@@ -20,7 +21,16 @@ import (
 func parseOverwriteDelegationRecordFile(cdc codec.JSONCodec,
 	parseOverWriteRecordFile string,
 	delegationRecord proto.Message,
-) error {
+) (err error) {
+	// Defer with a recover to set the error,
+	// if an expected sdk.Int field is not included in the JSON
+	// will panic and the CLI can SEGFAULT
+	defer func() {
+		if r := recover(); r != nil {
+			err = sdkerrors.ErrInvalidRequest
+		}
+	}()
+
 	contents, err := os.ReadFile(parseOverWriteRecordFile)
 	if err != nil {
 		return err
@@ -30,14 +40,23 @@ func parseOverwriteDelegationRecordFile(cdc codec.JSONCodec,
 		return err
 	}
 
-	return nil
+	return err
 }
 
 // Parse the overwrite unbondingrecord json file into a proto message
 func parseOverwriteUnbondingRecordFile(cdc codec.JSONCodec,
 	parseOverWriteRecordFile string,
 	unbondingRecord proto.Message,
-) error {
+) (err error) {
+	// Defer with a recover to set the error,
+	// if an expected sdk.Int field is not included in the JSON
+	// will panic and the CLI can SEGFAULT
+	defer func() {
+		if r := recover(); r != nil {
+			err = sdkerrors.ErrInvalidRequest
+		}
+	}()
+
 	contents, err := os.ReadFile(parseOverWriteRecordFile)
 	if err != nil {
 		return err
@@ -47,14 +66,23 @@ func parseOverwriteUnbondingRecordFile(cdc codec.JSONCodec,
 		return err
 	}
 
-	return nil
+	return err
 }
 
 // Parse the overwrite redemptionrecord json file into a proto message
 func parseOverwriteRedemptionRecordFile(cdc codec.JSONCodec,
 	parseOverWriteRecordFile string,
 	redemptionRecord proto.Message,
-) error {
+) (err error) {
+	// Defer with a recover to set the error,
+	// if an expected sdk.Int field is not included in the JSON
+	// will panic and the CLI can SEGFAULT
+	defer func() {
+		if r := recover(); r != nil {
+			err = sdkerrors.ErrInvalidRequest
+		}
+	}()
+
 	contents, err := os.ReadFile(parseOverWriteRecordFile)
 	if err != nil {
 		return err
@@ -64,7 +92,7 @@ func parseOverwriteRedemptionRecordFile(cdc codec.JSONCodec,
 		return err
 	}
 
-	return nil
+	return err
 }
 
 //////////////////////////////////////////////

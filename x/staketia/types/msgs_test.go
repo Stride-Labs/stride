@@ -605,6 +605,7 @@ func TestMsgRefreshRedemptionRate_ValidateBasic(t *testing.T) {
 func TestMsgOverwriteDelegationRecord_ValidateBasic(t *testing.T) {
 	apptesting.SetupConfig()
 
+	validTxHash := "69650DCD2D68BBC9310BA4B980187483BFC81452EC99C39DA45633F077157911"
 	validAddress, invalidAddress := apptesting.GenerateTestAddrs()
 
 	tests := []struct {
@@ -620,7 +621,19 @@ func TestMsgOverwriteDelegationRecord_ValidateBasic(t *testing.T) {
 					Id:           1,
 					NativeAmount: sdkmath.NewInt(1),
 					Status:       types.DELEGATION_QUEUE,
-					TxHash:       "TXHASH",
+					TxHash:       validTxHash,
+				},
+			},
+		},
+		{
+			name: "successful message with blank tx hash",
+			msg: types.MsgOverwriteDelegationRecord{
+				Creator: validAddress,
+				DelegationRecord: &types.DelegationRecord{
+					Id:           1,
+					NativeAmount: sdkmath.NewInt(1),
+					Status:       types.DELEGATION_QUEUE,
+					TxHash:       "",
 				},
 			},
 		},
@@ -632,7 +645,7 @@ func TestMsgOverwriteDelegationRecord_ValidateBasic(t *testing.T) {
 					Id:           1,
 					NativeAmount: sdkmath.NewInt(1),
 					Status:       types.DELEGATION_QUEUE,
-					TxHash:       "TXHASH",
+					TxHash:       validTxHash,
 				},
 			},
 			err: "invalid address",
@@ -645,7 +658,7 @@ func TestMsgOverwriteDelegationRecord_ValidateBasic(t *testing.T) {
 					Id:           1,
 					NativeAmount: sdkmath.NewInt(-1),
 					Status:       types.DELEGATION_QUEUE,
-					TxHash:       "TXHASH",
+					TxHash:       validTxHash,
 				},
 			},
 			err: "amount < 0",
@@ -676,6 +689,8 @@ func TestMsgOverwriteDelegationRecord_ValidateBasic(t *testing.T) {
 func TestMsgOverwriteUnbondingRecord_ValidateBasic(t *testing.T) {
 	apptesting.SetupConfig()
 
+	validTxHash1 := "69650DCD2D68BBC9310BA4B980187483BFC81452EC99C39DA45633F077157911"
+	validTxHash2 := "2B1B1D6C4975E1CE562DBF6C2C4D6BEF543A71D6036A0664C9B4EE2C108E6AF8"
 	validAddress, invalidAddress := apptesting.GenerateTestAddrs()
 
 	tests := []struct {
@@ -693,11 +708,27 @@ func TestMsgOverwriteUnbondingRecord_ValidateBasic(t *testing.T) {
 					StTokenAmount:                  sdkmath.NewInt(11),
 					NativeAmount:                   sdkmath.NewInt(10),
 					UnbondingCompletionTimeSeconds: 1705857114, // unixtime (1/21/24)
-					UndelegationTxHash:             "TXHASH1",
-					UnbondedTokenSweepTxHash:       "TXHASH2",
+					UndelegationTxHash:             validTxHash1,
+					UnbondedTokenSweepTxHash:       validTxHash2,
 				},
 			},
 		},
+		{
+			name: "successful message with blank tx hashes",
+			msg: types.MsgOverwriteUnbondingRecord{
+				Creator: validAddress,
+				UnbondingRecord: &types.UnbondingRecord{
+					Id:                             1,
+					Status:                         types.UNBONDED,
+					StTokenAmount:                  sdkmath.NewInt(11),
+					NativeAmount:                   sdkmath.NewInt(10),
+					UnbondingCompletionTimeSeconds: 1705857114, // unixtime (1/21/24)
+					UndelegationTxHash:             "",
+					UnbondedTokenSweepTxHash:       "",
+				},
+			},
+		},
+
 		{
 			name: "invalid signer address",
 			msg: types.MsgOverwriteUnbondingRecord{
@@ -708,8 +739,8 @@ func TestMsgOverwriteUnbondingRecord_ValidateBasic(t *testing.T) {
 					StTokenAmount:                  sdkmath.NewInt(11),
 					NativeAmount:                   sdkmath.NewInt(10),
 					UnbondingCompletionTimeSeconds: 1705857114,
-					UndelegationTxHash:             "TXHASH1",
-					UnbondedTokenSweepTxHash:       "TXHASH2",
+					UndelegationTxHash:             validTxHash1,
+					UnbondedTokenSweepTxHash:       validTxHash2,
 				},
 			},
 			err: "invalid address",
@@ -724,8 +755,8 @@ func TestMsgOverwriteUnbondingRecord_ValidateBasic(t *testing.T) {
 					StTokenAmount:                  sdkmath.NewInt(11),
 					NativeAmount:                   sdkmath.NewInt(-1), // negative
 					UnbondingCompletionTimeSeconds: 1705857114,
-					UndelegationTxHash:             "TXHASH1",
-					UnbondedTokenSweepTxHash:       "TXHASH2",
+					UndelegationTxHash:             validTxHash1,
+					UnbondedTokenSweepTxHash:       validTxHash2,
 				},
 			},
 			err: "amount < 0",
@@ -740,43 +771,11 @@ func TestMsgOverwriteUnbondingRecord_ValidateBasic(t *testing.T) {
 					StTokenAmount:                  sdkmath.NewInt(-1), // negative
 					NativeAmount:                   sdkmath.NewInt(10),
 					UnbondingCompletionTimeSeconds: 1705857114,
-					UndelegationTxHash:             "TXHASH1",
-					UnbondedTokenSweepTxHash:       "TXHASH2",
+					UndelegationTxHash:             validTxHash1,
+					UnbondedTokenSweepTxHash:       validTxHash2,
 				},
 			},
 			err: "amount < 0",
-		},
-		{
-			name: "invalid undelegation txhash",
-			msg: types.MsgOverwriteUnbondingRecord{
-				Creator: validAddress,
-				UnbondingRecord: &types.UnbondingRecord{
-					Id:                             1,
-					Status:                         types.CLAIMABLE,
-					StTokenAmount:                  sdkmath.NewInt(11),
-					NativeAmount:                   sdkmath.NewInt(10),
-					UnbondingCompletionTimeSeconds: 1705857114,
-					UndelegationTxHash:             "",
-					UnbondedTokenSweepTxHash:       "TXHASH2",
-				},
-			},
-			err: "transaction hash cannot be empty",
-		},
-		{
-			name: "invalid unbonded sweep txhash",
-			msg: types.MsgOverwriteUnbondingRecord{
-				Creator: validAddress,
-				UnbondingRecord: &types.UnbondingRecord{
-					Id:                             1,
-					Status:                         types.CLAIMABLE,
-					StTokenAmount:                  sdkmath.NewInt(11),
-					NativeAmount:                   sdkmath.NewInt(10),
-					UnbondingCompletionTimeSeconds: 1705857114,
-					UndelegationTxHash:             "TXHASH1",
-					UnbondedTokenSweepTxHash:       "",
-				},
-			},
-			err: "transaction hash cannot be empty",
 		},
 	}
 

@@ -161,7 +161,10 @@ func (k Keeper) ConfirmUndelegation(ctx sdk.Context, recordId uint64, txHash str
 		return errorsmod.Wrapf(types.ErrInvalidUnbondingRecord, "unbonding record with id: %d is not ready to be undelegated", recordId)
 	}
 	if record.UndelegationTxHash != "" {
-		return errorsmod.Wrapf(types.ErrInvalidUnbondingRecord, "unbonding record with id: %d already has a tx hash set", recordId)
+		return errorsmod.Wrapf(types.ErrInvalidUnbondingRecord, "unbonding record with id: %d already has undelegation tx hash set", recordId)
+	}
+	if record.UnbondedTokenSweepTxHash != "" {
+		return errorsmod.Wrapf(types.ErrInvalidUnbondingRecord, "unbonding record with id: %d already has token sweep tx hash set", recordId)
 	}
 
 	// if there are no tokens to unbond (or negative on the record): throw an error!
