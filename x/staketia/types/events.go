@@ -9,6 +9,7 @@ const (
 	EventTypeConfirmUndelegation       = "confirm_undelegation"
 
 	AttributeKeyHostZone              = "host_zone"
+	AttributeKeyRedemptionRate        = "redemption_rate"
 	AttributeKeyLiquidStaker          = "liquid_staker"
 	AttributeKeyRedeemer              = "redeemer"
 	AttributeKeyNativeBaseDenom       = "native_base_denom"
@@ -20,4 +21,5 @@ const (
 	AttributeUndelegationNativeAmount = "undelegation_native_amount"
 	AttributeTxHash                   = "tx_hash"
 	AttributeSender                   = "sender"
+	EventTypeHostZoneHalt             = "host_zone_halt"
 )

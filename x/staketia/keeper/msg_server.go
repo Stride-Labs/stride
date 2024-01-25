@@ -106,6 +106,7 @@ func (k msgServer) AdjustDelegatedBalance(goCtx context.Context, msg *types.MsgA
 	}
 
 	// add offset to the delegated balance and write to host zone
+	// Note: we're intentionally not checking the zone is halted
 	hostZone, err := k.GetHostZone(ctx)
 	if err != nil {
 		return nil, err
@@ -180,7 +181,7 @@ func (k msgServer) ResumeHostZone(goCtx context.Context, msg *types.MsgResumeHos
 		return nil, types.ErrInvalidAdmin
 	}
 
-	// Get Host Zone
+	// Note: of course we don't want to fail this if the zone is halted!
 	zone, err := k.GetHostZone(ctx)
 	if err != nil {
 		return nil, err
@@ -191,9 +192,8 @@ func (k msgServer) ResumeHostZone(goCtx context.Context, msg *types.MsgResumeHos
 		return nil, errorsmod.Wrapf(types.ErrHostZoneNotHalted, "zone is not halted")
 	}
 
-	// TODO [sttia]: remove from blacklist
-	// stDenom := types.StAssetDenomFromHostZoneDenom(hostZone.HostDenom)
-	// k.RatelimitKeeper.RemoveDenomFromBlacklist(ctx, stDenom)
+	stDenom := utils.StAssetDenomFromHostZoneDenom(zone.NativeTokenDenom)
+	k.ratelimitKeeper.RemoveDenomFromBlacklist(ctx, stDenom)
 
 	// Resume zone
 	zone.Halted = false
@@ -269,6 +269,7 @@ func (k msgServer) SetOperatorAddress(goCtx context.Context, msg *types.MsgSetOp
 	}
 
 	// Fetch the zone
+	// Note: we're intentionally not checking the zone is halted
 	zone, err := k.GetHostZone(ctx)
 	if err != nil {
 		return nil, err

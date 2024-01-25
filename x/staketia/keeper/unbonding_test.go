@@ -493,10 +493,12 @@ func (s *KeeperTestSuite) SetupTestConfirmUndelegation(amountToUndelegate sdkmat
 	return tc
 }
 
-// unit test ConfirmUndelegation
 func (s *KeeperTestSuite) TestConfirmUndelegation_Success() {
 	amountToUndelegate := sdkmath.NewInt(100)
 	tc := s.SetupTestConfirmUndelegation(amountToUndelegate)
+
+	// we're halting the zone to test that the tx works even when the host zone is halted
+	s.App.StaketiaKeeper.HaltZone(s.Ctx)
 
 	// confirm the tx was successful
 	err := s.App.StaketiaKeeper.ConfirmUndelegation(s.Ctx, tc.unbondingRecord.Id, ValidTxHashDefault, tc.operatorAddress)
@@ -868,6 +870,9 @@ func (s *KeeperTestSuite) VerifyUnbondingRecordsAfterConfirmSweep(verifyUpdatedF
 func (s *KeeperTestSuite) TestConfirmUnbondingTokenSweep_Successful() {
 	s.SetupTestConfirmUnbondingTokens(DefaultClaimFundingAmount)
 
+	// we're halting the zone to test that the tx works even when the host zone is halted
+	s.App.StaketiaKeeper.HaltZone(s.Ctx)
+
 	// process record 6
 	err := s.App.StaketiaKeeper.ConfirmUnbondedTokenSweep(s.Ctx, 6, ValidTxHashNew, ValidOperator)
 	s.Require().NoError(err)
@@ -889,6 +894,7 @@ func (s *KeeperTestSuite) TestConfirmUnbondingTokenSweep_Successful() {
 	s.Require().True(found)
 	s.Require().Equal(types.CLAIMABLE, loadedUnbondingRecord.Status, "unbonding record should be updated to status CLAIMABLE")
 	s.Require().Equal(ValidTxHashNew, loadedUnbondingRecord.UnbondedTokenSweepTxHash, "unbonding record should be updated with token sweep txHash")
+
 }
 
 func (s *KeeperTestSuite) TestConfirmUnbondingTokenSweep_NotFunded() {

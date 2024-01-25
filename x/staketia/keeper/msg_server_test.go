@@ -179,6 +179,7 @@ func (s *KeeperTestSuite) TestConfirmUnbondingTokenSweep() {
 // ----------------------------------------------
 
 func (s *KeeperTestSuite) TestAdjustDelegatedBalance() {
+
 	safeAddress := "safe"
 
 	// Create the host zone
@@ -186,6 +187,9 @@ func (s *KeeperTestSuite) TestAdjustDelegatedBalance() {
 		SafeAddress:      safeAddress,
 		DelegatedBalance: sdk.NewInt(0),
 	})
+
+	// we're halting the zone to test that the tx works even when the host zone is halted
+	s.App.StaketiaKeeper.HaltZone(s.Ctx)
 
 	// Call adjust for each test case and confirm the ending delegation
 	testCases := []struct {
@@ -229,6 +233,7 @@ func (s *KeeperTestSuite) TestAdjustDelegatedBalance() {
 	s.App.StaketiaKeeper.RemoveHostZone(s.Ctx)
 	_, err = s.GetMsgServer().AdjustDelegatedBalance(s.Ctx, &types.MsgAdjustDelegatedBalance{})
 	s.Require().ErrorContains(err, "host zone not found")
+
 }
 
 // ----------------------------------------------
@@ -249,6 +254,8 @@ func (s *KeeperTestSuite) TestUpdateInnerRedemptionRateBounds() {
 	}
 
 	s.App.StaketiaKeeper.SetHostZone(s.Ctx, zone)
+	// we're halting the zone to test that the tx works even when the host zone is halted
+	s.App.StaketiaKeeper.HaltZone(s.Ctx)
 
 	initialMsg := types.MsgUpdateInnerRedemptionRateBounds{
 		Creator:                adminAddress,
@@ -315,9 +322,13 @@ func (s *KeeperTestSuite) TestResumeHostZone() {
 	s.Require().True(ok)
 
 	zone := types.HostZone{
-		Halted: false,
+		ChainId:          HostChainId,
+		RedemptionRate:   sdk.NewDec(1),
+		Halted:           false,
+		NativeTokenDenom: HostNativeDenom,
 	}
 	s.App.StaketiaKeeper.SetHostZone(s.Ctx, zone)
+
 	msg := types.MsgResumeHostZone{
 		Creator: adminAddress,
 	}
@@ -327,6 +338,10 @@ func (s *KeeperTestSuite) TestResumeHostZone() {
 	_, err := s.GetMsgServer().ResumeHostZone(s.Ctx, &msg)
 	s.Require().ErrorContains(err, "zone is not halted")
 
+	// Verify the denom is not in the blacklist
+	blacklist := s.App.RatelimitKeeper.GetAllBlacklistedDenoms(s.Ctx)
+	s.Require().NotContains(blacklist, StDenom, "denom should not be blacklisted")
+
 	// Confirm the zone is not halted
 	zone, err = s.App.StaketiaKeeper.GetHostZone(s.Ctx)
 	s.Require().NoError(err, "should not throw an error")
@@ -334,8 +349,11 @@ func (s *KeeperTestSuite) TestResumeHostZone() {
 
 	// TEST 2: Zone is halted
 	// Halt the zone
-	zone.Halted = true
-	s.App.StaketiaKeeper.SetHostZone(s.Ctx, zone)
+	s.App.StaketiaKeeper.HaltZone(s.Ctx)
+
+	// Verify the denom is in the blacklist
+	blacklist = s.App.RatelimitKeeper.GetAllBlacklistedDenoms(s.Ctx)
+	s.Require().Contains(blacklist, StDenom, "denom should be blacklisted")
 
 	// Try to unhalt the halted zone
 	_, err = s.GetMsgServer().ResumeHostZone(s.Ctx, &msg)
@@ -345,6 +363,10 @@ func (s *KeeperTestSuite) TestResumeHostZone() {
 	zone, err = s.App.StaketiaKeeper.GetHostZone(s.Ctx)
 	s.Require().NoError(err, "should not throw an error")
 	s.Require().False(zone.Halted, "zone should not be halted")
+
+	// Verify the denom is not in the blacklist
+	blacklist = s.App.RatelimitKeeper.GetAllBlacklistedDenoms(s.Ctx)
+	s.Require().NotContains(blacklist, StDenom, "denom should not be blacklisted")
 
 	// Attempt to resume with a non-admin address, it should fail
 	_, err = s.GetMsgServer().ResumeHostZone(s.Ctx, &types.MsgResumeHostZone{

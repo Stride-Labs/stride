@@ -74,6 +74,7 @@ func (k Keeper) UpdateRedemptionRate(ctx sdk.Context) error {
 }
 
 // Checks whether the redemption rate has exceeded the inner or outer safety bounds
+// and returns an error if so
 func (k Keeper) CheckRedemptionRateExceedsBounds(ctx sdk.Context) error {
 	hostZone, err := k.GetHostZone(ctx)
 	if err != nil {

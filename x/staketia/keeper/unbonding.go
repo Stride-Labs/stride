@@ -173,6 +173,7 @@ func (k Keeper) ConfirmUndelegation(ctx sdk.Context, recordId uint64, txHash str
 		return errorsmod.Wrapf(types.ErrInvalidUnbondingRecord, "unbonding record with id: %d has no tokens to unbond (or negative)", recordId)
 	}
 
+	// Note: we're intentionally not checking that the host zone is halted, because we still want to process this tx in that case
 	hostZone, err := k.GetHostZone(ctx)
 	if err != nil {
 		return err

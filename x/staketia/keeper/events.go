@@ -83,3 +83,14 @@ func EmitSuccessfulConfirmUnbondedTokenSweepEvent(ctx sdk.Context, recordId uint
 		),
 	)
 }
+
+// Emits an event indicating a zone was halted
+func EmitHaltZoneEvent(ctx sdk.Context, hostZone types.HostZone) {
+	ctx.EventManager().EmitEvent(
+		sdk.NewEvent(
+			types.EventTypeHostZoneHalt,
+			sdk.NewAttribute(types.AttributeKeyHostZone, hostZone.ChainId),
+			sdk.NewAttribute(types.AttributeKeyRedemptionRate, hostZone.RedemptionRate.String()),
+		),
+	)
+}

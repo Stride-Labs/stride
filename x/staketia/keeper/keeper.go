@@ -12,11 +12,12 @@ import (
 )
 
 type Keeper struct {
-	cdc            codec.BinaryCodec
-	storeKey       storetypes.StoreKey
-	accountKeeper  types.AccountKeeper
-	bankKeeper     types.BankKeeper
-	transferKeeper types.TransferKeeper
+	cdc             codec.BinaryCodec
+	storeKey        storetypes.StoreKey
+	accountKeeper   types.AccountKeeper
+	bankKeeper      types.BankKeeper
+	transferKeeper  types.TransferKeeper
+	ratelimitKeeper types.RatelimitKeeper
 }
 
 func NewKeeper(
@@ -25,13 +26,15 @@ func NewKeeper(
 	accountKeeper types.AccountKeeper,
 	bankKeeper types.BankKeeper,
 	transferKeeper types.TransferKeeper,
+	ratelimitKeeper types.RatelimitKeeper,
 ) *Keeper {
 	return &Keeper{
-		cdc:            cdc,
-		storeKey:       storeKey,
-		accountKeeper:  accountKeeper,
-		bankKeeper:     bankKeeper,
-		transferKeeper: transferKeeper,
+		cdc:             cdc,
+		storeKey:        storeKey,
+		accountKeeper:   accountKeeper,
+		bankKeeper:      bankKeeper,
+		transferKeeper:  transferKeeper,
+		ratelimitKeeper: ratelimitKeeper,
 	}
 }
 

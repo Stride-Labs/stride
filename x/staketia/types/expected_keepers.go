@@ -8,6 +8,13 @@ import (
 	transfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
 )
 
+// Required AccountKeeper functions
+type AccountKeeper interface {
+	NewAccount(sdk.Context, authtypes.AccountI) authtypes.AccountI
+	GetAccount(ctx sdk.Context, addr sdk.AccAddress) authtypes.AccountI
+	SetAccount(ctx sdk.Context, acc authtypes.AccountI)
+}
+
 // Required BankKeeper functions
 type BankKeeper interface {
 	MintCoins(ctx sdk.Context, moduleName string, amt sdk.Coins) error
@@ -24,9 +31,8 @@ type TransferKeeper interface {
 	Transfer(goCtx context.Context, msg *transfertypes.MsgTransfer) (*transfertypes.MsgTransferResponse, error)
 }
 
-// Required AccountKeeper functions
-type AccountKeeper interface {
-	NewAccount(sdk.Context, authtypes.AccountI) authtypes.AccountI
-	GetAccount(ctx sdk.Context, addr sdk.AccAddress) authtypes.AccountI
-	SetAccount(ctx sdk.Context, acc authtypes.AccountI)
+// Required RatelimitKeeper functions
+type RatelimitKeeper interface {
+	AddDenomToBlacklist(ctx sdk.Context, denom string)
+	RemoveDenomFromBlacklist(ctx sdk.Context, denom string)
 }

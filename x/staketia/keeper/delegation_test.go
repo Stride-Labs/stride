@@ -307,6 +307,11 @@ func (s *KeeperTestSuite) TestPrepareDelegation() {
 	// It should not create a new record since there is nothing to delegate
 	delegationRecords = s.App.StaketiaKeeper.GetAllActiveDelegationRecords(s.Ctx)
 	s.Require().Equal(0, len(delegationRecords), "there should be no delegation records")
+
+	// Halt zone
+	s.App.StaketiaKeeper.HaltZone(s.Ctx)
+	err = s.App.StaketiaKeeper.PrepareDelegation(s.Ctx, epochNumber, epochDuration)
+	s.Require().ErrorContains(err, "host zone is halted")
 }
 
 // ----------------------------------------------------
@@ -417,6 +422,9 @@ func (s *KeeperTestSuite) VerifyDelegationRecords(verifyIdentical bool, archiveI
 
 func (s *KeeperTestSuite) TestConfirmDelegation_Successful() {
 	s.SetupDelegationRecords()
+
+	// we're halting the zone to test that the tx works even when the host zone is halted
+	s.App.StaketiaKeeper.HaltZone(s.Ctx)
 
 	// try setting valid delegation queue
 	err := s.App.StaketiaKeeper.ConfirmDelegation(s.Ctx, 6, ValidTxHashNew, ValidOperator)
