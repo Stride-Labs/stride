@@ -52,6 +52,9 @@ var (
 			501: sdk.MustNewDecFromStr("1.4161495546072012"),
 			503: sdk.MustNewDecFromStr("1.4161495546072012"),
 			504: sdk.MustNewDecFromStr("1.4161495546072012"),
+			505: sdk.MustNewDecFromStr("1.417724248601981"),
+			507: sdk.MustNewDecFromStr("1.417724248601981"),
+			508: sdk.MustNewDecFromStr("1.417724248601981"),
 		},
 		"phoenix-1": {
 			496: sdk.MustNewDecFromStr("1.1740619020285001"),
@@ -73,6 +76,10 @@ var (
 			502: sdk.MustNewDecFromStr("1.025236900070852"),
 			503: sdk.MustNewDecFromStr("1.025236900070852"),
 			504: sdk.MustNewDecFromStr("1.025236900070852"),
+			505: sdk.MustNewDecFromStr("1.0259008616651284"),
+			507: sdk.MustNewDecFromStr("1.0259008616651284"),
+			508: sdk.MustNewDecFromStr("1.0259008616651284"),
+			509: sdk.MustNewDecFromStr("1.0259008616651284"),
 		},
 		"cosmoshub-4": {
 			496: sdk.MustNewDecFromStr("1.2938404518607025"),
@@ -147,6 +154,8 @@ var (
 			503: sdk.MustNewDecFromStr("1.490098715761824"),
 			504: sdk.MustNewDecFromStr("1.4910458236916064"),
 			505: sdk.MustNewDecFromStr("1.4910458236916064"),
+			507: sdk.MustNewDecFromStr("1.4918520366929944"),
+			508: sdk.MustNewDecFromStr("1.4918520366929944"),
 		},
 		"osmosis-1": {
 			498: sdk.MustNewDecFromStr("1.1984190041836773"),
@@ -158,6 +167,9 @@ var (
 			504: sdk.MustNewDecFromStr("1.2003177583397713"),
 			505: sdk.MustNewDecFromStr("1.2003177583397713"),
 			506: sdk.MustNewDecFromStr("1.2003177583397713"),
+			507: sdk.MustNewDecFromStr("1.2011986371246357"),
+			508: sdk.MustNewDecFromStr("1.2011986371246357"),
+			509: sdk.MustNewDecFromStr("1.2011986371246357"),
 		},
 		"stargaze-1": {
 			498: sdk.MustNewDecFromStr("1.4246347073913794"),
@@ -169,6 +181,9 @@ var (
 			504: sdk.MustNewDecFromStr("1.4279528400269015"),
 			505: sdk.MustNewDecFromStr("1.4279528400269015"),
 			506: sdk.MustNewDecFromStr("1.4279528400269015"),
+			507: sdk.MustNewDecFromStr("1.430136789416802"),
+			508: sdk.MustNewDecFromStr("1.430136789416802"),
+			509: sdk.MustNewDecFromStr("1.430136789416802"),
 		},
 		"umee-1": {
 			505: sdk.MustNewDecFromStr("1.1266406527137283"),
