@@ -1,0 +1,27 @@
+{
+    "title": "ParamChange: Change Consensus Params",
+    "metadata": "Change Consensus Params",
+    "summary": "Change Consensus",
+    "messages":[
+       {
+          "@type": "/cosmos.gov.v1.MsgUpdateParams",
+          "authority": "stride10d07y265gmmuvt4z0w9aw880jnsr700jefnezl",
+          "params": {
+            "min_deposit": [{
+               "amount": "10000000",
+               "denom": "ustrd"
+            }],
+            "max_deposit_period": "3600s",
+            "voting_period": "600s",
+            "quorum": "0.334000000000000000",
+            "threshold": "0.500000000000000000",
+            "veto_threshold": "0.334000000000000000",
+            "min_initial_deposit_ratio": "0.500000000000000000",
+            "burn_vote_quorum": false,
+            "burn_proposal_deposit_prevote": false,
+            "burn_vote_veto": true
+          }
+       }
+    ],
+    "deposit": "2000000000ustrd"
+ }
