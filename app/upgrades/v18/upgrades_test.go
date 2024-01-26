@@ -15,6 +15,13 @@ import (
 	stakeibctypes "github.com/Stride-Labs/stride/v17/x/stakeibc/types"
 )
 
+type UpdateRedemptionRateBounds struct {
+	ChainId                        string
+	CurrentRedemptionRate          sdk.Dec
+	ExpectedMinOuterRedemptionRate sdk.Dec
+	ExpectedMaxOuterRedemptionRate sdk.Dec
+}
+
 type UserRedemptionRecordTestCases struct {
 	Id          string
 	EpochNumber uint64
@@ -62,9 +69,93 @@ func (s *UpgradeTestSuite) SetupTest() {
 func (s *UpgradeTestSuite) TestUpgrade() {
 	dummyUpgradeHeight := int64(5)
 
-	checkStoreAfterUpgrade := s.SetupTestUnbondingRecords()
+	// Setup store before upgrade
+	checkDelegationsAfterUpgrade := s.SetupTestResetDelegationChanges()
+	checkUnbondingsAfterUpgrade := s.SetupTestUnbondingRecords()
+	checkRedemptionRatesAfterUpgrade := s.SetupTestUpdateRedemptionRateBounds()
+
+	// Run through upgrade
 	s.ConfirmUpgradeSucceededs("v18", dummyUpgradeHeight)
-	checkStoreAfterUpgrade()
+
+	// Check store after upgrade
+	checkDelegationsAfterUpgrade()
+	checkRedemptionRatesAfterUpgrade()
+	checkUnbondingsAfterUpgrade()
+}
+
+func (s *UpgradeTestSuite) SetupTestResetDelegationChanges() func() {
+	validators := []*stakeibctypes.Validator{
+		{DelegationChangesInProgress: 3},
+		{DelegationChangesInProgress: 3},
+		{DelegationChangesInProgress: 3},
+	}
+	s.App.StakeibcKeeper.SetHostZone(s.Ctx, stakeibctypes.HostZone{
+		ChainId:    v18.TerraChainId,
+		Validators: validators,
+	})
+	s.App.StakeibcKeeper.SetHostZone(s.Ctx, stakeibctypes.HostZone{
+		ChainId:    "different-host",
+		Validators: validators,
+	})
+
+	// Return callback to check store after upgrade
+	return func() {
+		for _, hostZone := range s.App.StakeibcKeeper.GetAllHostZone(s.Ctx) {
+			expected := int64(3)
+			if hostZone.ChainId == v18.TerraChainId {
+				expected = 0
+			}
+			for _, validator := range hostZone.Validators {
+				s.Require().Equal(expected, validator.DelegationChangesInProgress)
+			}
+		}
+	}
+}
+
+func (s *UpgradeTestSuite) SetupTestUpdateRedemptionRateBounds() func() {
+	// Define test cases consisting of an initial redemption rate and expected bounds
+	testCases := []UpdateRedemptionRateBounds{
+		{
+			ChainId:                        "chain-0",
+			CurrentRedemptionRate:          sdk.MustNewDecFromStr("1.0"),
+			ExpectedMinOuterRedemptionRate: sdk.MustNewDecFromStr("0.95"), // 1 - 5% = 0.95
+			ExpectedMaxOuterRedemptionRate: sdk.MustNewDecFromStr("1.10"), // 1 + 10% = 1.1
+		},
+		{
+			ChainId:                        "chain-1",
+			CurrentRedemptionRate:          sdk.MustNewDecFromStr("1.1"),
+			ExpectedMinOuterRedemptionRate: sdk.MustNewDecFromStr("1.045"), // 1.1 - 5% = 1.045
+			ExpectedMaxOuterRedemptionRate: sdk.MustNewDecFromStr("1.210"), // 1.1 + 10% = 1.21
+		},
+		{
+			// Max outer for osmo uses 12% instead of 10%
+			ChainId:                        v18.OsmosisChainId,
+			CurrentRedemptionRate:          sdk.MustNewDecFromStr("1.25"),
+			ExpectedMinOuterRedemptionRate: sdk.MustNewDecFromStr("1.1875"), // 1.25 - 5% = 1.1875
+			ExpectedMaxOuterRedemptionRate: sdk.MustNewDecFromStr("1.4000"), // 1.25 + 12% = 1.400
+		},
+	}
+
+	// Create a host zone for each test case
+	for _, tc := range testCases {
+		hostZone := stakeibctypes.HostZone{
+			ChainId:        tc.ChainId,
+			RedemptionRate: tc.CurrentRedemptionRate,
+		}
+		s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
+	}
+
+	// Return callback to check store after upgrade
+	return func() {
+		// Confirm they were all updated
+		for _, tc := range testCases {
+			hostZone, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx, tc.ChainId)
+			s.Require().True(found)
+
+			s.Require().Equal(tc.ExpectedMinOuterRedemptionRate, hostZone.MinRedemptionRate, "%s - min outer", tc.ChainId)
+			s.Require().Equal(tc.ExpectedMaxOuterRedemptionRate, hostZone.MaxRedemptionRate, "%s - max outer", tc.ChainId)
+		}
+	}
 }
 
 func (s *UpgradeTestSuite) SetupTestUnbondingRecords() func() {
