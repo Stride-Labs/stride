@@ -29,6 +29,9 @@ func CreateUpgradeHandler(
 		ctx.Logger().Info("Updating redemption rate bounds...")
 		UpdateRedemptionRateBounds(ctx, stakeibcKeeper)
 
+		ctx.Logger().Info("Resetting delegation changes in progress...")
+		DecrementTerraDelegationChangesInProgress(ctx, stakeibcKeeper)
+
 		ctx.Logger().Info("Updating unbonding records...")
 		err := UpdateUnbondingRecords(
 			ctx,
@@ -78,14 +81,13 @@ func DecrementTerraDelegationChangesInProgress(
 ) error {
 
 	// grab the terra host zone
-	terra_chainid := "phoenix-1"
-	hostZone, found := sk.GetHostZone(ctx, terra_chainid)
+	hostZone, found := sk.GetHostZone(ctx, TerraChainId)
 	if !found {
-		return types.ErrHostZoneNotFound
+		return types.ErrHostZoneNotFound.Wrapf("failed to fetch %s", TerraChainId)
 	}
 
 	// iterate the validators
-	for _, val := range hostZone.GetValidators() {
+	for _, val := range hostZone.Validators {
 
 		// subtract 3, flooring at 0
 		if val.DelegationChangesInProgress < 3 {

@@ -261,9 +261,6 @@ func (s *UpgradeTestSuite) TestUpdateUnbondingRecords() {
 }
 
 func (s *UpgradeTestSuite) TestDecrementTerraDelegationChangesInProgress() {
-	// Create host zone with a few validators
-	actualChainId := "phoenix-1"
-
 	// Create list of validators
 	validators := []*types.Validator{}
 	for i := 0; i < 5; i++ {
@@ -273,7 +270,7 @@ func (s *UpgradeTestSuite) TestDecrementTerraDelegationChangesInProgress() {
 
 	// set the host zone
 	hostZone1 := stakeibctypes.HostZone{
-		ChainId:    actualChainId,
+		ChainId:    v18.TerraChainId,
 		Validators: validators,
 	}
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone1)
@@ -281,7 +278,7 @@ func (s *UpgradeTestSuite) TestDecrementTerraDelegationChangesInProgress() {
 	err := v18.DecrementTerraDelegationChangesInProgress(s.Ctx, s.App.StakeibcKeeper)
 	s.Require().NoError(err, "no error decrementing terra delegation changes in progress")
 
-	hostZoneAfter, err := s.App.StakeibcKeeper.GetActiveHostZone(s.Ctx, actualChainId)
+	hostZoneAfter, err := s.App.StakeibcKeeper.GetActiveHostZone(s.Ctx, v18.TerraChainId)
 	s.Require().NoError(err, "get host zone")
 
 	// check each val
@@ -292,7 +289,6 @@ func (s *UpgradeTestSuite) TestDecrementTerraDelegationChangesInProgress() {
 }
 
 func (s *UpgradeTestSuite) TestDecrementTerraDelegationChangesInProgress_ZoneNotFound() {
-
 	// test host zone not found
 	hostZoneWrongChainId := stakeibctypes.HostZone{
 		ChainId: "not-terra",
@@ -301,5 +297,4 @@ func (s *UpgradeTestSuite) TestDecrementTerraDelegationChangesInProgress_ZoneNot
 
 	err := v18.DecrementTerraDelegationChangesInProgress(s.Ctx, s.App.StakeibcKeeper)
 	s.Require().Error(err, "host zone not found")
-
 }
