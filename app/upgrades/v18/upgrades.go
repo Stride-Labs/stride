@@ -1,6 +1,8 @@
 package v18
 
 import (
+	"fmt"
+
 	errorsmod "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -27,7 +29,14 @@ func CreateUpgradeHandler(
 		UpdateRedemptionRateBounds(ctx, stakeibcKeeper)
 
 		ctx.Logger().Info("Updating unbonding records...")
-		err := UpdateUnbondingRecords(ctx, stakeibcKeeper, recordsKeeper, RedemptionRatesBeforeProp, RedemptionRatesAtTimeOfProp)
+		err := UpdateUnbondingRecords(
+			ctx,
+			stakeibcKeeper,
+			recordsKeeper,
+			StartingEstimateEpoch,
+			RedemptionRatesBeforeProp,
+			RedemptionRatesAtTimeOfProp,
+		)
 		if err != nil {
 			return vm, err
 		}
@@ -63,6 +72,7 @@ func UpdateUnbondingRecords(
 	ctx sdk.Context,
 	sk stakeibckeeper.Keeper,
 	rk recordskeeper.Keeper,
+	startingEstimateEpoch uint64,
 	redemptionRatesBeforeProp map[string]map[uint64]sdk.Dec,
 	redemptionRatesAtTimeOfProp map[string]sdk.Dec,
 ) error {
@@ -81,13 +91,19 @@ func UpdateUnbondingRecords(
 			// across all the epochs that unbonded
 			hostZoneRRBeforeProp, ok := redemptionRatesBeforeProp[hostZoneUnbonding.HostZoneId]
 			if !ok {
-				ctx.Logger().Error("Host zone from unbonding record not included in redemption rate mapping")
+				ctx.Logger().Error(fmt.Sprintf("Host zone %s from not included in redemption rate mapping", chainId))
 				continue
 			}
 
 			// Grab the redemption rate for this specific epoch
 			// If it's not found, that means the unbonding for this epoch occurred after the prop was live
 			recordRedemptionRate, recordUnbondedBeforeProp := hostZoneRRBeforeProp[epochUnbondingRecord.EpochNumber]
+
+			if !recordUnbondedBeforeProp && (epochNumber < startingEstimateEpoch) {
+				ctx.Logger().Info(fmt.Sprintf("Skipping unbonding record adjustment for chain %s epoch %d",
+					chainId, epochNumber))
+				continue
+			}
 
 			// If we don't have the redemption rate, estimate it
 			if !recordUnbondedBeforeProp {

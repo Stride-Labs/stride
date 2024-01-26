@@ -109,8 +109,6 @@ func (s *UpgradeTestSuite) TestUpdateUnbondingRecords() {
 		},
 	}
 
-	// Save down the redemption rates from before unbonding records that
-
 	// Define all user redemption records across each of the host zone unbondings
 	// We store just the redemption rate now, but will set native amount when setting them
 	userRedemptionRecordTestCases := []UserRedemptionRecordTestCases{
@@ -230,10 +228,12 @@ func (s *UpgradeTestSuite) TestUpdateUnbondingRecords() {
 	}
 
 	// Run the migration
+	startingEpochNumber := uint64(1)
 	err := v18.UpdateUnbondingRecords(
 		s.Ctx,
 		s.App.StakeibcKeeper,
 		s.App.RecordsKeeper,
+		startingEpochNumber,
 		redemptionRatesBeforeProp,
 		redemptionRatesAtTimeOfProp,
 	)
