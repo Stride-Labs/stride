@@ -1,6 +1,8 @@
 package keeper_test
 
 import (
+	"fmt"
+
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/gogoproto/proto"
@@ -58,21 +60,33 @@ func (s *KeeperTestSuite) SetupTestUnbondFromHostZone(
 		DelegationIcaAddress: "cosmos_DELEGATION",
 		Validators:           validators,
 		TotalDelegations:     totalStake,
+		RedemptionRate:       sdk.OneDec(),
 	}
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
 
 	// Store the total unbond amount across two epoch unbonding records
+	// and create a user redemption record for each
 	halfUnbondAmount := unbondAmount.Quo(sdkmath.NewInt(2))
 	for i := uint64(1); i <= 2; i++ {
+		redemptionRecordId := fmt.Sprintf("id-%d", i)
+
 		s.App.RecordsKeeper.SetEpochUnbondingRecord(s.Ctx, recordtypes.EpochUnbondingRecord{
 			EpochNumber: i,
 			HostZoneUnbondings: []*recordtypes.HostZoneUnbonding{
 				{
-					HostZoneId:        HostChainId,
-					Status:            recordtypes.HostZoneUnbonding_UNBONDING_QUEUE,
-					NativeTokenAmount: halfUnbondAmount,
+					HostZoneId:            HostChainId,
+					Status:                recordtypes.HostZoneUnbonding_UNBONDING_QUEUE,
+					StTokenAmount:         halfUnbondAmount,
+					NativeTokenAmount:     halfUnbondAmount,
+					UserRedemptionRecords: []string{redemptionRecordId},
 				},
 			},
+		})
+
+		s.App.RecordsKeeper.SetUserRedemptionRecord(s.Ctx, recordtypes.UserRedemptionRecord{
+			Id:                redemptionRecordId,
+			StTokenAmount:     halfUnbondAmount,
+			NativeTokenAmount: halfUnbondAmount,
 		})
 	}
 
@@ -348,6 +362,42 @@ func (s *KeeperTestSuite) TestUnbondFromHostZone_Successful_UnbondTotalGreaterTh
 	}
 
 	tc := s.SetupTestUnbondFromHostZone(totalWeight, totalStake, totalUnbondAmount, validators)
+	s.CheckUnbondingMessages(tc, expectedUnbondings)
+}
+
+func (s *KeeperTestSuite) TestUnbondFromHostZone_Successful_RefreshedNativeAmount() {
+	// Total Stake: 1000
+	//
+	// Unbond Amount with old redemption rate (RR = 1): 100
+	// Unbond Amount with new redemption rate (RR = 1.5): 150
+	//
+	// Stake After Unbond: 850
+	updatedRedemptionRate := sdk.MustNewDecFromStr("1.5")
+	unbondAmountWithOldRate := sdkmath.NewInt(100)
+	unbondAmountWithNewRate := sdkmath.NewInt(150)
+	totalStake := sdkmath.NewInt(1000)
+	totalWeight := int64(100)
+
+	// Since this test is only intended to check the native token refresh,
+	// we don't need more than 1 validator
+	// That validator should unbond the full amount with the new redemption rate
+	validators := []*types.Validator{
+		{Address: "valA", Weight: 100, Delegation: totalStake},
+	}
+	expectedUnbondings := []ValidatorUnbonding{
+		{Validator: "valA", UnbondAmount: unbondAmountWithNewRate},
+	}
+
+	// Setup using default, and then override the redemption rate value to update it from 1.0 to 1.5
+	tc := s.SetupTestUnbondFromHostZone(totalWeight, totalStake, unbondAmountWithOldRate, validators)
+
+	hostZone := s.MustGetHostZone(HostChainId)
+	hostZone.RedemptionRate = updatedRedemptionRate
+	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
+
+	// Finally check that the unbondings matched - mostly checking that there was a greater amount
+	// unbonded than was originally in the host zone unbonding record
+	tc.totalUnbondAmount = unbondAmountWithNewRate
 	s.CheckUnbondingMessages(tc, expectedUnbondings)
 }
 

@@ -22,6 +22,7 @@ import (
 	v15 "github.com/Stride-Labs/stride/v17/app/upgrades/v15"
 	v16 "github.com/Stride-Labs/stride/v17/app/upgrades/v16"
 	v17 "github.com/Stride-Labs/stride/v17/app/upgrades/v17"
+	v18 "github.com/Stride-Labs/stride/v17/app/upgrades/v18"
 	v2 "github.com/Stride-Labs/stride/v17/app/upgrades/v2"
 	v3 "github.com/Stride-Labs/stride/v17/app/upgrades/v3"
 	v4 "github.com/Stride-Labs/stride/v17/app/upgrades/v4"
@@ -37,6 +38,7 @@ import (
 	ratelimittypes "github.com/Stride-Labs/stride/v17/x/ratelimit/types"
 	recordtypes "github.com/Stride-Labs/stride/v17/x/records/types"
 	stakeibctypes "github.com/Stride-Labs/stride/v17/x/stakeibc/types"
+	staketiatypes "github.com/Stride-Labs/stride/v17/x/staketia/types"
 )
 
 func (app *StrideApp) setupUpgradeHandlers(appOpts servertypes.AppOptions) {
@@ -232,6 +234,19 @@ func (app *StrideApp) setupUpgradeHandlers(appOpts servertypes.AppOptions) {
 		),
 	)
 
+	// v18 upgrade handler
+	app.UpgradeKeeper.SetUpgradeHandler(
+		v18.UpgradeName,
+		v18.CreateUpgradeHandler(
+			app.mm,
+			app.configurator,
+			app.BankKeeper,
+			app.GovKeeper,
+			app.RecordsKeeper,
+			app.StakeibcKeeper,
+		),
+	)
+
 	upgradeInfo, err := app.UpgradeKeeper.ReadUpgradeInfoFromDisk()
 	if err != nil {
 		panic(fmt.Errorf("Failed to read upgrade info from disk: %w", err))
@@ -276,6 +291,10 @@ func (app *StrideApp) setupUpgradeHandlers(appOpts servertypes.AppOptions) {
 		storeUpgrades = &storetypes.StoreUpgrades{
 			// Add PFM store key
 			Added: []string{packetforwardtypes.ModuleName},
+		}
+	case "v18":
+		storeUpgrades = &storetypes.StoreUpgrades{
+			Added: []string{staketiatypes.ModuleName},
 		}
 	}
 
