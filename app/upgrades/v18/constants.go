@@ -1,6 +1,9 @@
 package v18
 
-import sdk "github.com/cosmos/cosmos-sdk/types"
+import (
+	sdkmath "cosmossdk.io/math"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+)
 
 var (
 	UpgradeName = "v18"
@@ -16,6 +19,13 @@ var (
 
 	// Terra chain ID for delegation changes in progress
 	TerraChainId = "phoenix-1"
+
+	// Prop 228 info
+	Strd                       = "ustrd"
+	Prop228ProposalId          = uint64(228)
+	Prop228SendAmount          = sdkmath.NewInt(9_000_000_000_000)
+	IncentiveProgramAddress    = "stride1tlxk4as9sgpqkh42cfaxqja0mdj6qculqshy0gg3glazmrnx3y8s8gsvqk"
+	StrideFoundationAddress_F4 = "stride1yz3mp7c2m739nftfrv5r3h6j64aqp95f3degpf"
 
 	// Get Initial Redemption Rates for Unbonding Records Migration
 	RedemptionRatesAtTimeOfProp = map[string]sdk.Dec{

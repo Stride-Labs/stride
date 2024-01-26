@@ -7,6 +7,9 @@ import (
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
+	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
+	govkeeper "github.com/cosmos/cosmos-sdk/x/gov/keeper"
+	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 
 	recordskeeper "github.com/Stride-Labs/stride/v17/x/records/keeper"
@@ -20,8 +23,10 @@ import (
 func CreateUpgradeHandler(
 	mm *module.Manager,
 	configurator module.Configurator,
-	stakeibcKeeper stakeibckeeper.Keeper,
+	bankKeeper bankkeeper.Keeper,
+	govKeeper govkeeper.Keeper,
 	recordsKeeper recordskeeper.Keeper,
+	stakeibcKeeper stakeibckeeper.Keeper,
 ) upgradetypes.UpgradeHandler {
 	return func(ctx sdk.Context, _ upgradetypes.Plan, vm module.VersionMap) (module.VersionMap, error) {
 		ctx.Logger().Info("Starting upgrade v18...")
@@ -45,6 +50,12 @@ func CreateUpgradeHandler(
 		)
 		if err != nil {
 			return vm, errorsmod.Wrapf(err, "unable to update unbonding records")
+		}
+
+		ctx.Logger().Info(fmt.Sprintf("Checking on prop %d status...", Prop228ProposalId))
+		if err := ExecuteProp228IfPassed(ctx, bankKeeper, govKeeper); err != nil {
+			ctx.Logger().Error(fmt.Sprintf("Failed to check on or execute prop %d: %s",
+				Prop228ProposalId, err.Error()))
 		}
 
 		return mm.RunMigrations(ctx, configurator, vm)
@@ -151,9 +162,9 @@ func UpdateUnbondingRecords(
 						"unable to find host zone with chain-id %s", hostZoneUnbonding.HostZoneId)
 				}
 
-				redemptionRateDuringProp := redemptionRatesAtTimeOfProp[hostZoneUnbonding.HostZoneId]
+				redemptionRateAtTimeOfProp := redemptionRatesAtTimeOfProp[hostZoneUnbonding.HostZoneId]
 				redemptionRateDuringUpgrade := hostZone.RedemptionRate
-				recordRedemptionRate = redemptionRateDuringProp.Add(redemptionRateDuringUpgrade).Quo(sdk.NewDec(2))
+				recordRedemptionRate = redemptionRateAtTimeOfProp.Add(redemptionRateDuringUpgrade).Quo(sdk.NewDec(2))
 			}
 
 			// now update all userRedemptionRecords by using the redemption rate to set the native token amount
@@ -181,4 +192,33 @@ func UpdateUnbondingRecords(
 		}
 	}
 	return nil
+}
+
+// Executes the bank send for prop 228 if it passed
+func ExecuteProp228IfPassed(ctx sdk.Context, bk bankkeeper.Keeper, gk govkeeper.Keeper) error {
+	// Grab proposal from gov store
+	proposal, found := gk.GetProposal(ctx, Prop228ProposalId)
+	if !found {
+		return fmt.Errorf("Prop %d not found", Prop228ProposalId)
+	}
+
+	// Check if it passed - if it didn't do nothing
+	if proposal.Status != govtypes.ProposalStatus_PROPOSAL_STATUS_PASSED {
+		ctx.Logger().Info(fmt.Sprintf("Prop %d did not pass", Prop228ProposalId))
+		return nil
+	}
+	ctx.Logger().Info(fmt.Sprintf("Prop %d passed - executing corresponding bank send", Prop228ProposalId))
+
+	// Transfer from incentive program address to F4
+	fromAddress, err := sdk.AccAddressFromBech32(IncentiveProgramAddress)
+	if err != nil {
+		return errorsmod.Wrap(err, "invalid prop sender address")
+	}
+
+	toAddress, err := sdk.AccAddressFromBech32(StrideFoundationAddress_F4)
+	if err != nil {
+		return errorsmod.Wrap(err, "invalid prop recipient address")
+	}
+
+	return bk.SendCoins(ctx, fromAddress, toAddress, sdk.NewCoins(sdk.NewCoin(Strd, Prop228SendAmount)))
 }
