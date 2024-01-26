@@ -49,7 +49,6 @@ func fillDefaultHostZone(hostZone types.HostZone) types.HostZone {
 	hostZone.DepositAddress = fillDefaultValue(hostZone.DepositAddress, validAddress)
 	hostZone.RedemptionAddress = fillDefaultValue(hostZone.RedemptionAddress, validAddress)
 	hostZone.ClaimAddress = fillDefaultValue(hostZone.ClaimAddress, validAddress)
-	hostZone.FeeAddress = fillDefaultValue(hostZone.FeeAddress, validAddress)
 	hostZone.OperatorAddressOnStride = fillDefaultValue(hostZone.OperatorAddressOnStride, validAddress)
 	hostZone.SafeAddressOnStride = fillDefaultValue(hostZone.SafeAddressOnStride, validAddress)
 
@@ -153,13 +152,6 @@ func TestValidateHostZoneGenesis(t *testing.T) {
 			expectedError: "claim address must be specified",
 		},
 		{
-			name: "missing fee address",
-			hostZone: types.HostZone{
-				FeeAddress: Uninitialized,
-			},
-			expectedError: "fee address must be specified",
-		},
-		{
 			name: "missing operator address",
 			hostZone: types.HostZone{
 				OperatorAddressOnStride: Uninitialized,
@@ -193,13 +185,6 @@ func TestValidateHostZoneGenesis(t *testing.T) {
 				ClaimAddress: "invalid_address",
 			},
 			expectedError: "invalid claim address",
-		},
-		{
-			name: "invalid fee address",
-			hostZone: types.HostZone{
-				FeeAddress: "invalid_address",
-			},
-			expectedError: "invalid fee address",
 		},
 		{
 			name: "invalid operator address",
