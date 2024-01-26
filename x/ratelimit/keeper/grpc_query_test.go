@@ -11,7 +11,7 @@ import (
 	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
 	ibctmtypes "github.com/cosmos/ibc-go/v7/modules/light-clients/07-tendermint"
 
-	"github.com/Stride-Labs/stride/v17/x/ratelimit/types"
+	"github.com/Stride-Labs/stride/v18/x/ratelimit/types"
 )
 
 // Add three rate limits on different channels

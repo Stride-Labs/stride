@@ -10,11 +10,11 @@ import (
 
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
 
-	"github.com/Stride-Labs/stride/v17/app/apptesting"
-	v18 "github.com/Stride-Labs/stride/v17/app/upgrades/v18"
-	recordtypes "github.com/Stride-Labs/stride/v17/x/records/types"
-	"github.com/Stride-Labs/stride/v17/x/stakeibc/types"
-	stakeibctypes "github.com/Stride-Labs/stride/v17/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v18/app/apptesting"
+	v18 "github.com/Stride-Labs/stride/v18/app/upgrades/v18"
+	recordtypes "github.com/Stride-Labs/stride/v18/x/records/types"
+	"github.com/Stride-Labs/stride/v18/x/stakeibc/types"
+	stakeibctypes "github.com/Stride-Labs/stride/v18/x/stakeibc/types"
 )
 
 type UpdateRedemptionRateBounds struct {

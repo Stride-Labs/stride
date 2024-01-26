@@ -8,7 +8,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/spf13/cobra"
 
-	"github.com/Stride-Labs/stride/v17/x/records/types"
+	"github.com/Stride-Labs/stride/v18/x/records/types"
 )
 
 func CmdListEpochUnbondingRecord() *cobra.Command {

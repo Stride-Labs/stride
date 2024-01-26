@@ -14,9 +14,9 @@ import (
 	"github.com/cosmos/gogoproto/proto"
 	"github.com/spf13/cast"
 
-	"github.com/Stride-Labs/stride/v17/utils"
-	recordstypes "github.com/Stride-Labs/stride/v17/x/records/types"
-	"github.com/Stride-Labs/stride/v17/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v18/utils"
+	recordstypes "github.com/Stride-Labs/stride/v18/x/records/types"
+	"github.com/Stride-Labs/stride/v18/x/stakeibc/types"
 )
 
 const (

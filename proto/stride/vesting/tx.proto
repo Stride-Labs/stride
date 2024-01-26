@@ -1,7 +1,7 @@
 syntax = "proto3";
 package stride.vesting;
 
-option go_package = "github.com/Stride-Labs/stride/v17/x/claim/vesting/types";
+option go_package = "github.com/Stride-Labs/stride/v18/x/claim/vesting/types";
 
 // Msg defines the bank Msg service.
 service Msg {}

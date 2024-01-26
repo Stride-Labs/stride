@@ -6,7 +6,7 @@ import (
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/Stride-Labs/stride/v17/x/staketia/types"
+	"github.com/Stride-Labs/stride/v18/x/staketia/types"
 )
 
 func (s *KeeperTestSuite) TestUpdateRedemptionRate() {

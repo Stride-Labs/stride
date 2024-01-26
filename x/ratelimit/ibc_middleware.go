@@ -3,7 +3,7 @@ package ratelimit
 import (
 	"fmt"
 
-	"github.com/Stride-Labs/stride/v17/x/ratelimit/keeper"
+	"github.com/Stride-Labs/stride/v18/x/ratelimit/keeper"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	capabilitytypes "github.com/cosmos/cosmos-sdk/x/capability/types"

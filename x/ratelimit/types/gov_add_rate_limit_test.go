@@ -6,8 +6,8 @@ import (
 	sdkmath "cosmossdk.io/math"
 	"github.com/stretchr/testify/require"
 
-	"github.com/Stride-Labs/stride/v17/app/apptesting"
-	"github.com/Stride-Labs/stride/v17/x/ratelimit/types"
+	"github.com/Stride-Labs/stride/v18/app/apptesting"
+	"github.com/Stride-Labs/stride/v18/x/ratelimit/types"
 )
 
 func TestGovAddRateLimit(t *testing.T) {

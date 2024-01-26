@@ -5,7 +5,7 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
-	"github.com/Stride-Labs/stride/v17/app/apptesting"
+	"github.com/Stride-Labs/stride/v18/app/apptesting"
 )
 
 type UpgradeTestSuite struct {

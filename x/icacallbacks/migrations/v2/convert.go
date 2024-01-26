@@ -5,9 +5,9 @@ import (
 	sdkmath "cosmossdk.io/math"
 	"github.com/golang/protobuf/proto" //nolint:staticcheck
 
-	icacallbacktypes "github.com/Stride-Labs/stride/v17/x/icacallbacks/types"
-	oldstakeibctypes "github.com/Stride-Labs/stride/v17/x/stakeibc/migrations/v2/types"
-	stakeibctypes "github.com/Stride-Labs/stride/v17/x/stakeibc/types"
+	icacallbacktypes "github.com/Stride-Labs/stride/v18/x/icacallbacks/types"
+	oldstakeibctypes "github.com/Stride-Labs/stride/v18/x/stakeibc/migrations/v2/types"
+	stakeibctypes "github.com/Stride-Labs/stride/v18/x/stakeibc/types"
 )
 
 const (

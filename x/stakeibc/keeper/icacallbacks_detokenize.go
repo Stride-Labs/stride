@@ -8,10 +8,10 @@ import (
 	"github.com/cosmos/gogoproto/proto"
 	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
 
-	"github.com/Stride-Labs/stride/v17/utils"
-	icacallbackstypes "github.com/Stride-Labs/stride/v17/x/icacallbacks/types"
-	recordstypes "github.com/Stride-Labs/stride/v17/x/records/types"
-	"github.com/Stride-Labs/stride/v17/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v18/utils"
+	icacallbackstypes "github.com/Stride-Labs/stride/v18/x/icacallbacks/types"
+	recordstypes "github.com/Stride-Labs/stride/v18/x/records/types"
+	"github.com/Stride-Labs/stride/v18/x/stakeibc/types"
 )
 
 // ICACallback after an LSM token is detokenized into native stake

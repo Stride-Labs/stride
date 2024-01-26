@@ -10,11 +10,11 @@ import (
 	"github.com/cosmos/gogoproto/proto"
 	"github.com/spf13/cast"
 
-	"github.com/Stride-Labs/stride/v17/utils"
-	epochstypes "github.com/Stride-Labs/stride/v17/x/epochs/types"
-	icaoracletypes "github.com/Stride-Labs/stride/v17/x/icaoracle/types"
-	recordstypes "github.com/Stride-Labs/stride/v17/x/records/types"
-	"github.com/Stride-Labs/stride/v17/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v18/utils"
+	epochstypes "github.com/Stride-Labs/stride/v18/x/epochs/types"
+	icaoracletypes "github.com/Stride-Labs/stride/v18/x/icaoracle/types"
+	recordstypes "github.com/Stride-Labs/stride/v18/x/records/types"
+	"github.com/Stride-Labs/stride/v18/x/stakeibc/types"
 )
 
 const StrideEpochsPerDayEpoch = uint64(4)
