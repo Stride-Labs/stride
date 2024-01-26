@@ -167,16 +167,16 @@ func (s *UpgradeTestSuite) SetupTestUnbondingRecords() func() {
 	stTokenAmount := sdkmath.NewInt(1_000_000)
 
 	// Unbonding #1 (before prop)
-	redemptionRateUnbonded := sdk.MustNewDecFromStr("1.0256449837573494") // Rate used when unbonding occurred
-	redemptionRateRecords := sdk.MustNewDecFromStr("1.0257449837673494")  // Rate that was on record at the time (+0.0001)
+	redemptionRateUnbonded := sdk.MustNewDecFromStr("1.025236900070852") // Rate used when unbonding occurred
+	redemptionRateRecords := sdk.MustNewDecFromStr("1.025136900070852")  // Rate that was on record at the time (+0.0001)
 
 	s.Require().Equal(redemptionRateUnbonded.String(), v18.RedemptionRatesBeforeProp[chainId][epochNumberBefore].String(),
 		"example redemption rate from before prop does not match constants - update the test")
 
 	// Unbonding #2 (after prop)
-	redemptionRateAtPropTime := sdk.MustNewDecFromStr("1.025900883208774724") // Rate at prop time
+	redemptionRateAtPropTime := sdk.MustNewDecFromStr("1.025900897761638723") // Rate at prop time
 	redemptionRateAtUpgradeTime := sdk.MustNewDecFromStr("1.03")              // Rate at upgrade time
-	estimatedRedemptionRate := sdk.MustNewDecFromStr("1.027950441604387362")  // Estimated rate used to update record
+	estimatedRedemptionRate := sdk.MustNewDecFromStr("1.027950448880819361")  // Estimated rate used to update record
 	unknownRedemptionRate := sdk.MustNewDecFromStr("1.029")                   // Rate that was used in unbonding
 
 	s.Require().Equal(redemptionRateAtPropTime.String(), v18.RedemptionRatesAtTimeOfProp[chainId].String(),
