@@ -101,6 +101,8 @@ func (k Keeper) RedeemStake(ctx sdk.Context, redeemer string, stTokenAmount sdkm
 // Freezes the ACCUMULATING record by changing the status to UNBONDING_QUEUE
 // and updating the native token amounts on the unbonding and redemption records
 func (k Keeper) PrepareUndelegation(ctx sdk.Context, epochNumber uint64) error {
+	k.Logger(ctx).Info(utils.LogWithHostZone(types.CelestiaChainId, "Preparing undelegation for epoch %d", epochNumber))
+
 	// Get the redemption record from the host zone (to calculate the native tokens)
 	hostZone, err := k.GetUnhaltedHostZone(ctx)
 	if err != nil {
@@ -373,6 +375,9 @@ func (k Keeper) DistributeClaimsForUnbondingRecord(
 	claimAddress sdk.AccAddress,
 	unbondingRecordId uint64,
 ) error {
+	k.Logger(ctx).Info(utils.LogWithHostZone(types.CelestiaChainId,
+		"Distributing claims for unbonding record %d", unbondingRecordId))
+
 	// For each redemption record, bank send from the claim address to the user address and then delete the record
 	for _, redemptionRecord := range k.GetRedemptionRecordsFromUnbondingId(ctx, unbondingRecordId) {
 		userAddress, err := sdk.AccAddressFromBech32(redemptionRecord.Redeemer)
@@ -382,7 +387,8 @@ func (k Keeper) DistributeClaimsForUnbondingRecord(
 
 		nativeTokens := sdk.NewCoin(hostNativeIbcDenom, redemptionRecord.NativeAmount)
 		if err := k.bankKeeper.SendCoins(ctx, claimAddress, userAddress, sdk.NewCoins(nativeTokens)); err != nil {
-			return errorsmod.Wrapf(err, "unable to send %v from claim address to %s", nativeTokens, redemptionRecord.Redeemer)
+			return errorsmod.Wrapf(err, "unable to send %v from claim address to %s",
+				nativeTokens, redemptionRecord.Redeemer)
 		}
 
 		k.RemoveRedemptionRecord(ctx, unbondingRecordId, redemptionRecord.Redeemer)
