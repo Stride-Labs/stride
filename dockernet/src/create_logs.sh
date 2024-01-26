@@ -106,7 +106,7 @@ while true; do
     deposit_address=$($STRIDE_MAIN_CMD keys show -a deposit)
     redemption_address=$($STRIDE_MAIN_CMD keys show -a redemption)
     claim_address=$($STRIDE_MAIN_CMD keys show -a claim)
-    fee_address=$($STRIDE_MAIN_CMD q staketia host-zone | grep fee_address | awk '{print $2}')
+    fee_address=$($STRIDE_MAIN_CMD q auth module-account staketia_fee_address | grep "address:" | awk '{print $2}')
 
     print_stride_balance $deposit_address    "DEPOSIT" 
     print_stride_balance $redemption_address "REDEMPTION" 

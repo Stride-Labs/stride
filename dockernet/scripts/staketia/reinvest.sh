@@ -9,7 +9,7 @@ HOST_DENOM=$(GET_VAR_VALUE      ${HOST_CHAIN}_DENOM)
 
 reward_address=$($HOST_MAIN_CMD keys show -a reward)
 deposit_address=$($STRIDE_MAIN_CMD keys show -a deposit)
-fee_address=$($STRIDE_MAIN_CMD q staketia host-zone | grep fee_address | awk '{print $2}')
+fee_address=$($STRIDE_MAIN_CMD q auth module-account staketia_fee_address | grep "address:" | awk '{print $2}')
 
 echo ">>> Claiming outstanding rewards records..."
 $HOST_MAIN_CMD tx distribution withdraw-all-rewards --from delegation -y | TRIM_TX
