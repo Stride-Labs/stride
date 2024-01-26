@@ -8,6 +8,8 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/suite"
 
+	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
+
 	"github.com/Stride-Labs/stride/v17/app/apptesting"
 	v18 "github.com/Stride-Labs/stride/v17/app/upgrades/v18"
 	recordtypes "github.com/Stride-Labs/stride/v17/x/records/types"
@@ -562,4 +564,51 @@ func (s *UpgradeTestSuite) TestDecrementTerraDelegationChangesInProgress_ZoneNot
 
 	err := v18.DecrementTerraDelegationChangesInProgress(s.Ctx, s.App.StakeibcKeeper)
 	s.Require().Error(err, "host zone not found")
+}
+
+func (s *UpgradeTestSuite) TestExecuteProp228IfPassed() {
+	sender := sdk.MustAccAddressFromBech32(v18.IncentiveProgramAddress)
+	receiver := sdk.MustAccAddressFromBech32(v18.StrideFoundationAddress_F4)
+
+	// Fund the sender
+	s.FundAccount(sender, sdk.NewCoin(v18.Strd, v18.Prop228SendAmount))
+
+	// Attempt to run when the prop has not been created yet - it should error
+	err := v18.ExecuteProp228IfPassed(s.Ctx, s.App.BankKeeper, s.App.GovKeeper)
+	s.Require().ErrorContains(err, "Prop 228 not found")
+
+	// Store the prop in status rejected
+	s.App.GovKeeper.SetProposal(s.Ctx, govtypes.Proposal{
+		Id:     v18.Prop228ProposalId,
+		Status: govtypes.ProposalStatus_PROPOSAL_STATUS_REJECTED,
+	})
+
+	// Attempt to run when it's been rejected, it should not error but no funds
+	// should be sent
+	err = v18.ExecuteProp228IfPassed(s.Ctx, s.App.BankKeeper, s.App.GovKeeper)
+	s.Require().NoError(err, "no error expected after rejected prop")
+
+	senderBalance := s.App.BankKeeper.GetBalance(s.Ctx, sender, v18.Strd).Amount
+	receiverBalance := s.App.BankKeeper.GetBalance(s.Ctx, receiver, v18.Strd).Amount
+
+	s.Require().Zero(receiverBalance.Int64(), "receiver balance should not have changed")
+	s.Require().Equal(v18.Prop228SendAmount.Int64(), senderBalance.Int64(),
+		"sender balance should not have changed")
+
+	// Update the prop to be successful
+	s.App.GovKeeper.SetProposal(s.Ctx, govtypes.Proposal{
+		Id:     v18.Prop228ProposalId,
+		Status: govtypes.ProposalStatus_PROPOSAL_STATUS_PASSED,
+	})
+
+	// Execute the prop again and confirm balances were updated
+	err = v18.ExecuteProp228IfPassed(s.Ctx, s.App.BankKeeper, s.App.GovKeeper)
+	s.Require().NoError(err, "no error expected after passed prop")
+
+	senderBalance = s.App.BankKeeper.GetBalance(s.Ctx, sender, v18.Strd).Amount
+	receiverBalance = s.App.BankKeeper.GetBalance(s.Ctx, receiver, v18.Strd).Amount
+
+	s.Require().Zero(senderBalance.Int64(), "sender balance should be zero")
+	s.Require().Equal(v18.Prop228SendAmount.Int64(), receiverBalance.Int64(),
+		"receiver address should have recieved prop funds")
 }
