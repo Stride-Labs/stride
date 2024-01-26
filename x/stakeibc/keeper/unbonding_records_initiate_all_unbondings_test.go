@@ -2,6 +2,7 @@ package keeper_test
 
 import (
 	sdkmath "cosmossdk.io/math"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	ibctesting "github.com/cosmos/ibc-go/v7/testing"
 	_ "github.com/stretchr/testify/suite"
 
@@ -9,18 +10,14 @@ import (
 	"github.com/Stride-Labs/stride/v17/x/stakeibc/types"
 )
 
-type InitiateAllHostZoneUnbondingsTestCase struct {
-	epochUnbondingRecords []recordtypes.EpochUnbondingRecord
-	hostZones             []types.HostZone
-}
-
-func (s *KeeperTestSuite) SetupInitiateAllHostZoneUnbondings() InitiateAllHostZoneUnbondingsTestCase {
+func (s *KeeperTestSuite) SetupInitiateAllHostZoneUnbondings() {
 	s.CreateICAChannel("GAIA.DELEGATION")
 
 	gaiaValAddr := "cosmos_VALIDATOR"
 	osmoValAddr := "osmo_VALIDATOR"
 	gaiaDelegationAddr := "cosmos_DELEGATION"
 	osmoDelegationAddr := "osmo_DELEGATION"
+
 	//  define the host zone with total delegation and validators with staked amounts
 	gaiaValidators := []*types.Validator{
 		{
@@ -51,6 +48,7 @@ func (s *KeeperTestSuite) SetupInitiateAllHostZoneUnbondings() InitiateAllHostZo
 			DelegationIcaAddress: gaiaDelegationAddr,
 			TotalDelegations:     sdkmath.NewInt(5_000_000),
 			ConnectionId:         ibctesting.FirstConnectionID,
+			RedemptionRate:       sdk.OneDec(),
 		},
 		{
 			ChainId:              OsmoChainId,
@@ -61,38 +59,55 @@ func (s *KeeperTestSuite) SetupInitiateAllHostZoneUnbondings() InitiateAllHostZo
 			DelegationIcaAddress: osmoDelegationAddr,
 			TotalDelegations:     sdkmath.NewInt(5_000_000),
 			ConnectionId:         ibctesting.FirstConnectionID,
+			RedemptionRate:       sdk.OneDec(),
 		},
 	}
-	// list of epoch unbonding records
-	default_unbonding := []*recordtypes.HostZoneUnbonding{
-		{
-			HostZoneId:        HostChainId,
-			StTokenAmount:     sdkmath.NewInt(1_900_000),
-			NativeTokenAmount: sdkmath.NewInt(2_000_000),
-			Denom:             Atom,
-			Status:            recordtypes.HostZoneUnbonding_UNBONDING_QUEUE,
-		},
-		{
-			HostZoneId:        OsmoChainId,
-			StTokenAmount:     sdkmath.NewInt(2_800_000),
-			NativeTokenAmount: sdkmath.NewInt(3),
-			Denom:             Osmo,
-			Status:            recordtypes.HostZoneUnbonding_UNBONDING_QUEUE,
-		},
-	}
-	epochUnbondingRecords := []recordtypes.EpochUnbondingRecord{}
-	for _, epochNumber := range []uint64{5} {
-		epochUnbondingRecord := recordtypes.EpochUnbondingRecord{
-			EpochNumber:        epochNumber,
-			HostZoneUnbondings: default_unbonding,
-		}
-		epochUnbondingRecords = append(epochUnbondingRecords, epochUnbondingRecord)
-		s.App.RecordsKeeper.SetEpochUnbondingRecord(s.Ctx, epochUnbondingRecord)
-	}
-
 	for _, hostZone := range hostZones {
 		s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
 	}
+
+	// list of epoch unbonding records
+	epochNumber := uint64(5)
+
+	redemptionRecordId1 := recordtypes.UserRedemptionRecordKeyFormatter(HostChainId, epochNumber, "receiver")
+	redemptionRecordId2 := recordtypes.UserRedemptionRecordKeyFormatter(OsmoChainId, epochNumber, "receiver")
+
+	epochUnbondingRecord := recordtypes.EpochUnbondingRecord{
+		EpochNumber: epochNumber,
+		HostZoneUnbondings: []*recordtypes.HostZoneUnbonding{
+			{
+				HostZoneId:            HostChainId,
+				StTokenAmount:         sdkmath.NewInt(1_900_000),
+				NativeTokenAmount:     sdkmath.NewInt(2_000_000),
+				Denom:                 Atom,
+				Status:                recordtypes.HostZoneUnbonding_UNBONDING_QUEUE,
+				UserRedemptionRecords: []string{redemptionRecordId1},
+			},
+			{
+				HostZoneId:            OsmoChainId,
+				StTokenAmount:         sdkmath.NewInt(2_800_000),
+				NativeTokenAmount:     sdkmath.NewInt(3),
+				Denom:                 Osmo,
+				Status:                recordtypes.HostZoneUnbonding_UNBONDING_QUEUE,
+				UserRedemptionRecords: []string{redemptionRecordId2},
+			},
+		},
+	}
+	s.App.RecordsKeeper.SetEpochUnbondingRecord(s.Ctx, epochUnbondingRecord)
+
+	s.App.RecordsKeeper.SetUserRedemptionRecord(s.Ctx, recordtypes.UserRedemptionRecord{
+		Id:            redemptionRecordId1,
+		HostZoneId:    HostChainId,
+		EpochNumber:   epochNumber,
+		StTokenAmount: epochUnbondingRecord.HostZoneUnbondings[0].StTokenAmount,
+	})
+
+	s.App.RecordsKeeper.SetUserRedemptionRecord(s.Ctx, recordtypes.UserRedemptionRecord{
+		Id:            redemptionRecordId2,
+		HostZoneId:    OsmoChainId,
+		EpochNumber:   epochNumber,
+		StTokenAmount: epochUnbondingRecord.HostZoneUnbondings[1].StTokenAmount,
+	})
 
 	s.App.StakeibcKeeper.SetEpochTracker(s.Ctx, types.EpochTracker{
 		EpochIdentifier:    "day",
@@ -100,11 +115,6 @@ func (s *KeeperTestSuite) SetupInitiateAllHostZoneUnbondings() InitiateAllHostZo
 		NextEpochStartTime: uint64(2661750006000000000), // arbitrary time in the future, year 2056 I believe
 		Duration:           uint64(1000000000000),       // 16 min 40 sec
 	})
-
-	return InitiateAllHostZoneUnbondingsTestCase{
-		epochUnbondingRecords: epochUnbondingRecords,
-		hostZones:             hostZones,
-	}
 }
 
 func (s *KeeperTestSuite) TestInitiateAllHostZoneUnbondings_Successful() {
