@@ -12,6 +12,7 @@ import (
 	recordskeeper "github.com/Stride-Labs/stride/v17/x/records/keeper"
 	recordtypes "github.com/Stride-Labs/stride/v17/x/records/types"
 	stakeibckeeper "github.com/Stride-Labs/stride/v17/x/stakeibc/keeper"
+	"github.com/Stride-Labs/stride/v17/x/stakeibc/types"
 	stakeibctypes "github.com/Stride-Labs/stride/v17/x/stakeibc/types"
 )
 
@@ -27,6 +28,9 @@ func CreateUpgradeHandler(
 
 		ctx.Logger().Info("Updating redemption rate bounds...")
 		UpdateRedemptionRateBounds(ctx, stakeibcKeeper)
+
+		ctx.Logger().Info("Resetting delegation changes in progress...")
+		DecrementTerraDelegationChangesInProgress(ctx, stakeibcKeeper)
 
 		ctx.Logger().Info("Updating unbonding records...")
 		err := UpdateUnbondingRecords(
@@ -65,6 +69,38 @@ func UpdateRedemptionRateBounds(ctx sdk.Context, k stakeibckeeper.Keeper) {
 
 		k.SetHostZone(ctx, hostZone)
 	}
+}
+
+// Decrement DelegationChangesInProgress on Terra vals by 3
+// - Fetches terra host zone
+// - Loops validators
+// - Decrements each validator's DelegationChangeInProgress by 3
+func DecrementTerraDelegationChangesInProgress(
+	ctx sdk.Context,
+	sk stakeibckeeper.Keeper,
+) error {
+
+	// grab the terra host zone
+	hostZone, found := sk.GetHostZone(ctx, TerraChainId)
+	if !found {
+		return types.ErrHostZoneNotFound.Wrapf("failed to fetch %s", TerraChainId)
+	}
+
+	// iterate the validators
+	for _, val := range hostZone.Validators {
+
+		// subtract 3, flooring at 0
+		if val.DelegationChangesInProgress < 3 {
+			val.DelegationChangesInProgress = 0
+		} else {
+			val.DelegationChangesInProgress = val.DelegationChangesInProgress - 3
+		}
+	}
+
+	// set the host zone
+	sk.SetHostZone(ctx, hostZone)
+
+	return nil
 }
 
 // Modify HostZoneUnbonding and UserRedemptionRecords NativeTokenAmount to reflect new data structs

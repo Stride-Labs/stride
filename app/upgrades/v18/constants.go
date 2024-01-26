@@ -14,6 +14,9 @@ var (
 	OsmosisChainId              = "osmosis-1"
 	OsmosisRedemptionRateBuffer = sdk.MustNewDecFromStr("0.02")
 
+	// Terra chain ID for delegation changes in progress
+	TerraChainId = "phoenix-1"
+
 	// Get Initial Redemption Rates for Unbonding Records Migration
 	RedemptionRatesAtTimeOfProp = map[string]sdk.Dec{
 		"comdex-1":     sdk.MustNewDecFromStr("1.204404927372203376"),

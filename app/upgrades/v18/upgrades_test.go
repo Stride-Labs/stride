@@ -1,6 +1,7 @@
 package v18_test
 
 import (
+	"fmt"
 	"testing"
 
 	sdkmath "cosmossdk.io/math"
@@ -10,6 +11,7 @@ import (
 	"github.com/Stride-Labs/stride/v17/app/apptesting"
 	v18 "github.com/Stride-Labs/stride/v17/app/upgrades/v18"
 	recordtypes "github.com/Stride-Labs/stride/v17/x/records/types"
+	"github.com/Stride-Labs/stride/v17/x/stakeibc/types"
 	stakeibctypes "github.com/Stride-Labs/stride/v17/x/stakeibc/types"
 )
 
@@ -399,4 +401,43 @@ func (s *UpgradeTestSuite) TestUpdateUnbondingRecords() {
 				"host zone unbonding native amount for epoch %d and host zone %s", epochNumber, chainId)
 		}
 	}
+}
+
+func (s *UpgradeTestSuite) TestDecrementTerraDelegationChangesInProgress() {
+	// Create list of validators
+	validators := []*types.Validator{}
+	for i := 0; i < 5; i++ {
+		address := fmt.Sprintf("val-%d", i)
+		validators = append(validators, &types.Validator{Address: address, DelegationChangesInProgress: int64(i)})
+	}
+
+	// set the host zone
+	hostZone1 := stakeibctypes.HostZone{
+		ChainId:    v18.TerraChainId,
+		Validators: validators,
+	}
+	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone1)
+
+	err := v18.DecrementTerraDelegationChangesInProgress(s.Ctx, s.App.StakeibcKeeper)
+	s.Require().NoError(err, "no error decrementing terra delegation changes in progress")
+
+	hostZoneAfter, err := s.App.StakeibcKeeper.GetActiveHostZone(s.Ctx, v18.TerraChainId)
+	s.Require().NoError(err, "get host zone")
+
+	// check each val
+	expectedVals := []int64{0, 0, 0, 0, 1, 2}
+	for i := 0; i < 5; i++ {
+		s.Require().Equal(expectedVals[i], hostZoneAfter.Validators[i].DelegationChangesInProgress)
+	}
+}
+
+func (s *UpgradeTestSuite) TestDecrementTerraDelegationChangesInProgress_ZoneNotFound() {
+	// test host zone not found
+	hostZoneWrongChainId := stakeibctypes.HostZone{
+		ChainId: "not-terra",
+	}
+	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZoneWrongChainId)
+
+	err := v18.DecrementTerraDelegationChangesInProgress(s.Ctx, s.App.StakeibcKeeper)
+	s.Require().Error(err, "host zone not found")
 }
