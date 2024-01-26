@@ -52,10 +52,10 @@ func CreateUpgradeHandler(
 			return vm, errorsmod.Wrapf(err, "unable to update unbonding records")
 		}
 
-		ctx.Logger().Info(fmt.Sprintf("Checking on prop %d status...", PropXXXProposalId))
-		if err := ExecutePropXXXIfPassed(ctx, bankKeeper, govKeeper); err != nil {
+		ctx.Logger().Info(fmt.Sprintf("Checking on prop %d status...", Prop228ProposalId))
+		if err := ExecuteProp228IfPassed(ctx, bankKeeper, govKeeper); err != nil {
 			ctx.Logger().Error(fmt.Sprintf("Failed to check on or execute prop %d: %s",
-				PropXXXProposalId, err.Error()))
+				Prop228ProposalId, err.Error()))
 		}
 
 		return mm.RunMigrations(ctx, configurator, vm)
@@ -194,33 +194,31 @@ func UpdateUnbondingRecords(
 	return nil
 }
 
-// Executes the bank send for prop XXX if it passed
-func ExecutePropXXXIfPassed(ctx sdk.Context, bk bankkeeper.Keeper, gk govkeeper.Keeper) error {
+// Executes the bank send for prop 228 if it passed
+func ExecuteProp228IfPassed(ctx sdk.Context, bk bankkeeper.Keeper, gk govkeeper.Keeper) error {
 	// Grab proposal from gov store
-	proposal, found := gk.GetProposal(ctx, PropXXXProposalId)
+	proposal, found := gk.GetProposal(ctx, Prop228ProposalId)
 	if !found {
-		return fmt.Errorf("Prop %d not found", PropXXXProposalId)
+		return fmt.Errorf("Prop %d not found", Prop228ProposalId)
 	}
 
 	// Check if it passed - if it didn't do nothing
 	if proposal.Status != govtypes.ProposalStatus_PROPOSAL_STATUS_PASSED {
-		ctx.Logger().Info(fmt.Sprintf("Prop %d did not pass", PropXXXProposalId))
+		ctx.Logger().Info(fmt.Sprintf("Prop %d did not pass", Prop228ProposalId))
 		return nil
 	}
+	ctx.Logger().Info(fmt.Sprintf("Prop %d passed - executing corresponding bank send", Prop228ProposalId))
 
-	ctx.Logger().Info(fmt.Sprintf("Prop %d passed - executing corresponding bank send", PropXXXProposalId))
-
-	fromAddress, err := sdk.AccAddressFromBech32(PropXXXSender)
+	// Transfer from incentive program address to F4
+	fromAddress, err := sdk.AccAddressFromBech32(IncentiveProgramAddress)
 	if err != nil {
 		return errorsmod.Wrap(err, "invalid prop sender address")
 	}
 
-	toAddress, err := sdk.AccAddressFromBech32(PropXXXRecipient)
+	toAddress, err := sdk.AccAddressFromBech32(StrideFoundationAddress_F4)
 	if err != nil {
 		return errorsmod.Wrap(err, "invalid prop recipient address")
 	}
 
-	tokens := sdk.NewCoin(Strd, PropXXXAmount)
-
-	return bk.SendCoins(ctx, fromAddress, toAddress, sdk.NewCoins(tokens))
+	return bk.SendCoins(ctx, fromAddress, toAddress, sdk.NewCoins(sdk.NewCoin(Strd, Prop228SendAmount)))
 }
