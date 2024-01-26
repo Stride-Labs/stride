@@ -51,12 +51,155 @@ type UpgradeTestSuite struct {
 	apptesting.AppTestHelper
 }
 
+func TestKeeperTestSuite(t *testing.T) {
+	suite.Run(t, new(UpgradeTestSuite))
+}
+
 func (s *UpgradeTestSuite) SetupTest() {
 	s.Setup()
 }
 
-func TestKeeperTestSuite(t *testing.T) {
-	suite.Run(t, new(UpgradeTestSuite))
+func (s *UpgradeTestSuite) TestUpgrade() {
+	dummyUpgradeHeight := int64(5)
+
+	checkStoreAfterUpgrade := s.SetupTestUnbondingRecords()
+	s.ConfirmUpgradeSucceededs("v18", dummyUpgradeHeight)
+	checkStoreAfterUpgrade()
+}
+
+func (s *UpgradeTestSuite) SetupTestUnbondingRecords() func() {
+	chainId := "sommelier-3"
+	epochNumberBefore := uint64(501)
+	epochNumberAfter := uint64(510)
+	stTokenAmount := sdkmath.NewInt(1_000_000)
+
+	// Unbonding #1 (before prop)
+	redemptionRateUnbonded := sdk.MustNewDecFromStr("1.0256449837573494") // Rate used when unbonding occurred
+	redemptionRateRecords := sdk.MustNewDecFromStr("1.0257449837673494")  // Rate that was on record at the time (+0.0001)
+
+	s.Require().Equal(redemptionRateUnbonded.String(), v18.RedemptionRatesBeforeProp[chainId][epochNumberBefore].String(),
+		"example redemption rate from before prop does not match constants - update the test")
+
+	// Unbonding #2 (after prop)
+	redemptionRateAtPropTime := sdk.MustNewDecFromStr("1.025900883208774724") // Rate at prop time
+	redemptionRateAtUpgradeTime := sdk.MustNewDecFromStr("1.03")              // Rate at upgrade time
+	estimatedRedemptionRate := sdk.MustNewDecFromStr("1.027950441604387362")  // Estimated rate used to update record
+	unknownRedemptionRate := sdk.MustNewDecFromStr("1.029")                   // Rate that was used in unbonding
+
+	s.Require().Equal(redemptionRateAtPropTime.String(), v18.RedemptionRatesAtTimeOfProp[chainId].String(),
+		"example redemption rate from time of prop does not match constants - update the test")
+
+	// Calculate native token in the records before the upgrade
+	initialNativeAmount1 := sdk.NewDecFromInt(stTokenAmount).Mul(redemptionRateRecords).TruncateInt()
+	initialNativeAmount2 := sdk.NewDecFromInt(stTokenAmount).Mul(unknownRedemptionRate).TruncateInt()
+
+	// Calculate expected native amounts after upgrade
+	expectedNativeAmount1 := sdk.NewDecFromInt(stTokenAmount).Mul(redemptionRateUnbonded).TruncateInt()
+	expectedNativeAmount2 := sdk.NewDecFromInt(stTokenAmount).Mul(estimatedRedemptionRate).TruncateInt()
+
+	// Create the host zone with redemption rate at time of upgrade
+	s.App.StakeibcKeeper.SetHostZone(s.Ctx, stakeibctypes.HostZone{
+		ChainId:        chainId,
+		RedemptionRate: redemptionRateAtUpgradeTime,
+	})
+
+	// Create redemption records - one before and one after the prop
+	s.App.RecordsKeeper.SetUserRedemptionRecord(s.Ctx, recordtypes.UserRedemptionRecord{
+		Id:                "A",
+		EpochNumber:       epochNumberBefore,
+		HostZoneId:        chainId,
+		StTokenAmount:     stTokenAmount,
+		NativeTokenAmount: initialNativeAmount1,
+	})
+	s.App.RecordsKeeper.SetUserRedemptionRecord(s.Ctx, recordtypes.UserRedemptionRecord{
+		Id:                "B",
+		EpochNumber:       epochNumberAfter,
+		HostZoneId:        chainId,
+		StTokenAmount:     stTokenAmount,
+		NativeTokenAmount: initialNativeAmount2,
+	})
+
+	// Create epoch unbonding records
+	s.App.RecordsKeeper.SetEpochUnbondingRecord(s.Ctx, recordtypes.EpochUnbondingRecord{
+		EpochNumber: epochNumberBefore,
+		HostZoneUnbondings: []*recordtypes.HostZoneUnbonding{
+			{
+				HostZoneId:            chainId,
+				Status:                recordtypes.HostZoneUnbonding_EXIT_TRANSFER_QUEUE,
+				StTokenAmount:         stTokenAmount,
+				NativeTokenAmount:     initialNativeAmount1,
+				UserRedemptionRecords: []string{"A"},
+			},
+		},
+	})
+	s.App.RecordsKeeper.SetEpochUnbondingRecord(s.Ctx, recordtypes.EpochUnbondingRecord{
+		EpochNumber: epochNumberAfter,
+		HostZoneUnbondings: []*recordtypes.HostZoneUnbonding{
+			{
+				HostZoneId:            chainId,
+				Status:                recordtypes.HostZoneUnbonding_EXIT_TRANSFER_QUEUE,
+				StTokenAmount:         stTokenAmount,
+				NativeTokenAmount:     initialNativeAmount2,
+				UserRedemptionRecords: []string{"B"},
+			},
+		},
+	})
+
+	// Add a record that should be ignored because the epoch number is too low
+	epochNumberIgnore := uint64(3)
+	nativeAmountIgnored := stTokenAmount
+	s.App.RecordsKeeper.SetUserRedemptionRecord(s.Ctx, recordtypes.UserRedemptionRecord{
+		Id:                "C",
+		EpochNumber:       epochNumberIgnore,
+		HostZoneId:        chainId,
+		StTokenAmount:     stTokenAmount,
+		NativeTokenAmount: nativeAmountIgnored,
+	})
+	s.App.RecordsKeeper.SetEpochUnbondingRecord(s.Ctx, recordtypes.EpochUnbondingRecord{
+		EpochNumber: epochNumberIgnore,
+		HostZoneUnbondings: []*recordtypes.HostZoneUnbonding{
+			{
+				HostZoneId:            chainId,
+				Status:                recordtypes.HostZoneUnbonding_EXIT_TRANSFER_QUEUE,
+				StTokenAmount:         stTokenAmount,
+				NativeTokenAmount:     nativeAmountIgnored,
+				UserRedemptionRecords: []string{"C"},
+			},
+		},
+	})
+
+	// Return callback to check store after upgrade
+	return func() {
+		// Check the user redemption record amount for unbonding 1
+		actualRedemptionRecord1, found := s.App.RecordsKeeper.GetUserRedemptionRecord(s.Ctx, "A")
+		s.Require().True(found, "record from first unbonding should have been found")
+		s.Require().Equal(expectedNativeAmount1.Int64(), actualRedemptionRecord1.NativeTokenAmount.Int64(),
+			"native amount on record from first unbonding")
+
+		// Check the user redemption record amount for unbonding 2
+		actualRedemptionRecord2, found := s.App.RecordsKeeper.GetUserRedemptionRecord(s.Ctx, "B")
+		s.Require().True(found, "record from second unbonding should have been found")
+		s.Require().Equal(expectedNativeAmount2.Int64(), actualRedemptionRecord2.NativeTokenAmount.Int64(),
+			"native amount on record from second unbonding")
+
+		// Check the host zone unbonding amount for unbonding 1
+		actualHostZoneUnbonding1, found := s.App.RecordsKeeper.GetHostZoneUnbondingByChainId(s.Ctx, epochNumberBefore, chainId)
+		s.Require().True(found, "host zone unbonding should have been found for second unbonding")
+		s.Require().Equal(expectedNativeAmount1.Int64(), actualHostZoneUnbonding1.NativeTokenAmount.Int64(),
+			"host zone native amount from first unbonding")
+
+		// Check the host zone unbonding amount for unbonding 2
+		actualHostZoneUnbonding2, found := s.App.RecordsKeeper.GetHostZoneUnbondingByChainId(s.Ctx, epochNumberAfter, chainId)
+		s.Require().True(found, "host zone unbonding should have been found for second unbonding")
+		s.Require().Equal(expectedNativeAmount2.Int64(), actualHostZoneUnbonding2.NativeTokenAmount.Int64(),
+			"host zone native amount from first unbonding")
+
+		// Check that the ignored record did not change
+		ignoredRecord, found := s.App.RecordsKeeper.GetUserRedemptionRecord(s.Ctx, "C")
+		s.Require().True(found, "ignored record should have been found")
+		s.Require().Equal(nativeAmountIgnored.Int64(), ignoredRecord.NativeTokenAmount.Int64(),
+			"native amount on ignored record should not have changed")
+	}
 }
 
 func (s *UpgradeTestSuite) TestUpdateUnbondingRecords() {

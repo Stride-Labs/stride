@@ -35,17 +35,20 @@ func NewHostZoneModuleAddress(chainId string, accountAlias string) sdk.AccAddres
 	return address.Module(ModuleName, key)
 }
 
+// TODO [cleanup]: Remove this function and use the one from utils
 // isIBCToken checks if the token came from the IBC module
 // Each IBC token starts with an ibc/ denom, the check is rather simple
 func IsIBCToken(denom string) bool {
 	return strings.HasPrefix(denom, "ibc/")
 }
 
+// TODO [cleanup]: Remove this function and use the one from utils
 // Returns the stDenom from a native denom by appending a st prefix
 func StAssetDenomFromHostZoneDenom(hostZoneDenom string) string {
 	return "st" + hostZoneDenom
 }
 
+// TODO [cleanup]: Remove this function and use the one from utils
 // Returns the native denom from an stDenom by removing the st prefix
 func HostZoneDenomFromStAssetDenom(stAssetDenom string) string {
 	return stAssetDenom[2:]

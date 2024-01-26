@@ -53,6 +53,13 @@ func (k msgServer) RestoreInterchainAccount(goCtx context.Context, msg *types.Ms
 			return nil, types.ErrHostZoneNotFound.Wrapf("delegation ICA supplied, but no associated host zone")
 		}
 
+		// Since any ICAs along the original channel will never get relayed,
+		// we have to reset the delegation_changes_in_progress field on each validator
+		for _, validator := range hostZone.Validators {
+			validator.DelegationChangesInProgress = 0
+		}
+		k.SetHostZone(ctx, hostZone)
+
 		// revert DELEGATION_IN_PROGRESS records for the closed ICA channel (so that they can be staked)
 		depositRecords := k.RecordsKeeper.GetAllDepositRecord(ctx)
 		for _, depositRecord := range depositRecords {
