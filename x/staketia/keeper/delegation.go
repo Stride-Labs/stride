@@ -186,26 +186,22 @@ func (k Keeper) LiquidStakeAndDistributeFees(ctx sdk.Context) error {
 		return err
 	}
 
-	feeAccount, err := sdk.AccAddressFromBech32(hostZone.FeeAddress)
-	if err != nil {
-		return errorsmod.Wrapf(err, "invalid fee address")
-	}
-
 	// Get the balance of native tokens in the fee address, if there are no tokens, no action is necessary
-	feesBalance := k.bankKeeper.GetBalance(ctx, feeAccount, hostZone.NativeTokenIbcDenom)
+	feeAddress := k.accountKeeper.GetModuleAddress(types.FeeAddress)
+	feesBalance := k.bankKeeper.GetBalance(ctx, feeAddress, hostZone.NativeTokenIbcDenom)
 	if feesBalance.IsZero() {
 		k.Logger(ctx).Info("No fees generated this epoch")
 		return nil
 	}
 
 	// Liquid stake those native tokens
-	stTokens, err := k.LiquidStake(ctx, hostZone.FeeAddress, feesBalance.Amount)
+	stTokens, err := k.LiquidStake(ctx, feeAddress.String(), feesBalance.Amount)
 	if err != nil {
 		return errorsmod.Wrapf(err, "unable to liquid stake fees")
 	}
 
 	// Send the stTokens to the fee collector
-	err = k.bankKeeper.SendCoinsFromAccountToModule(ctx, feeAccount, authtypes.FeeCollectorName, sdk.NewCoins(stTokens))
+	err = k.bankKeeper.SendCoinsFromModuleToModule(ctx, types.FeeAddress, authtypes.FeeCollectorName, sdk.NewCoins(stTokens))
 	if err != nil {
 		return errorsmod.Wrapf(err, "unable to send liquid staked tokens to fee collector")
 	}

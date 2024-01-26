@@ -254,6 +254,7 @@ var (
 		icatypes.ModuleName:                           nil,
 		stakeibcmoduletypes.RewardCollectorName:       nil,
 		staketiatypes.ModuleName:                      {authtypes.Minter, authtypes.Burner},
+		staketiatypes.FeeAddress:                      nil,
 	}
 )
 
@@ -1106,7 +1107,8 @@ func (app *StrideApp) BlacklistedModuleAccountAddrs() map[string]bool {
 		if acc == stakeibcmoduletypes.ModuleName ||
 			acc == stakeibcmoduletypes.RewardCollectorName ||
 			acc == ccvconsumertypes.ConsumerToSendToProviderName ||
-			acc == staketiatypes.ModuleName {
+			acc == staketiatypes.ModuleName ||
+			acc == staketiatypes.FeeAddress {
 			continue
 		}
 		modAccAddrs[authtypes.NewModuleAddress(acc).String()] = true
