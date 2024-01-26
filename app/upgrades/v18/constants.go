@@ -32,7 +32,7 @@ var (
 	}
 
 	// Get Amount Unbonded for each HostZone for Unbonding Records Migration
-	StartingEstimateEpoch     = uint64(509)
+	StartingEstimateEpoch     = uint64(507)
 	RedemptionRatesBeforeProp = map[string]map[uint64]sdk.Dec{
 		"juno-1": {
 			495: sdk.MustNewDecFromStr("1.412164551270598"),
