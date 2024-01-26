@@ -14,16 +14,21 @@ func DefaultGenesis() *GenesisState {
 			ChainId:                CelestiaChainId,
 			NativeTokenDenom:       CelestiaNativeTokenDenom,
 			NativeTokenIbcDenom:    CelestiaNativeTokenIBCDenom,
-			TransferChannelId:      CelestiaChannelId,
+			TransferChannelId:      StrideToCelestiaTransferChannelId,
 			UnbondingPeriodSeconds: CelestiaUnbondingPeriodSeconds,
 
-			DelegationAddress:       CelestiaDelegationAddress,
-			RewardAddress:           CelestiaRewardsAddress,
-			DepositAddress:          CelestiaDepositAddress,
-			RedemptionAddress:       CelestiaRedemptionAddress,
-			ClaimAddress:            CelestiaClaimAddress,
-			OperatorAddressOnStride: CelestiaOperatorAddress,
-			SafeAddressOnStride:     CelestiaSafeAddress,
+			// on celestia
+			DelegationAddress: DelegationAddress,
+			RewardAddress:     RewardAddress,
+
+			// functional accounts on stride
+			DepositAddress:    DepositAddress,
+			RedemptionAddress: RedemptionAddress,
+			ClaimAddress:      ClaimAddress,
+
+			// management accounts on stride
+			SafeAddressOnStride:     SafeAddressOnStride,
+			OperatorAddressOnStride: OperatorAddressOnStride,
 
 			RedemptionRate:         sdk.OneDec(),
 			LastRedemptionRate:     sdk.OneDec(),

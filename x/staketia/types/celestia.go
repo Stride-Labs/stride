@@ -2,18 +2,19 @@
 package types
 
 const (
-	// TODO [sttia]: Fill these out
-	// Using gaia for now until we have all these values
-	CelestiaChainId                = "GAIA"
-	CelestiaChannelId              = "channel-0"
-	CelestiaNativeTokenDenom       = "uatom"
-	CelestiaNativeTokenIBCDenom    = "ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2"
-	CelestiaDelegationAddress      = "cosmosXXX"
-	CelestiaRewardsAddress         = "cosmosXXX"
-	CelestiaDepositAddress         = "stride1uk4ze0x4nvh4fk0xm4jdud58eqn4yxhrt52vv7"
-	CelestiaRedemptionAddress      = "stride1uk4ze0x4nvh4fk0xm4jdud58eqn4yxhrt52vv7"
-	CelestiaClaimAddress           = "stride1uk4ze0x4nvh4fk0xm4jdud58eqn4yxhrt52vv7"
-	CelestiaOperatorAddress        = "stride1uk4ze0x4nvh4fk0xm4jdud58eqn4yxhrt52vv7"
-	CelestiaSafeAddress            = "stride1uk4ze0x4nvh4fk0xm4jdud58eqn4yxhrt52vv7"
-	CelestiaUnbondingPeriodSeconds = uint64(21 * 24 * 60 * 60) // 21 days
+	CelestiaChainId                   = "celestia"
+	StrideToCelestiaTransferChannelId = "channel-162"
+	CelestiaNativeTokenDenom          = "utia"
+	CelestiaNativeTokenIBCDenom       = "ibc/BF3B4F53F3694B66E13C23107C84B6485BD2B96296BB7EC680EA77BBA75B4801"
+
+	DelegationAddress = "celestia1d6ntc7s8gs86tpdyn422vsqc6uaz9cejnxz5p5" // C0
+	RewardAddress     = "celestia15up3hegy8zuqhy0p9m8luh0c984ptu2g5p4xpf" // C1
+
+	DepositAddress    = "stride1d6ntc7s8gs86tpdyn422vsqc6uaz9cejp8nc04" // S0
+	RedemptionAddress = "stride15up3hegy8zuqhy0p9m8luh0c984ptu2gxqy20g" // S1
+	ClaimAddress      = "stride13nw9fm4ua8pwzmsx9kdrhefl4puz0tp7ge3gxd" // S2
+
+	SafeAddressOnStride            = "stride18p7xg4hj2u3zpk0v9gq68pjyuuua5wa387sjjc" // S3
+	OperatorAddressOnStride        = "stride1ghhu67ttgmxrsyxljfl2tysyayswklvxs7pepw" // OP-STRIDE
+	CelestiaUnbondingPeriodSeconds = uint64(21 * 24 * 60 * 60)                       // 21 days
 )
