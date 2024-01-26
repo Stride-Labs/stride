@@ -13,7 +13,7 @@ import (
 func (k msgServer) UpdateInnerRedemptionRateBounds(goCtx context.Context, msg *types.MsgUpdateInnerRedemptionRateBounds) (*types.MsgUpdateInnerRedemptionRateBoundsResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	// Confirm host zone exists
+	// Note: we're intentionally not checking the zone is halted
 	zone, found := k.GetHostZone(ctx, msg.ChainId)
 	if !found {
 		k.Logger(ctx).Error(fmt.Sprintf("Host Zone not found: %s", msg.ChainId))
