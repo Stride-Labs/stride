@@ -496,8 +496,8 @@ func (s *KeeperTestSuite) TestConfirmDelegation_RecordIncorrectState() {
 
 func (s *KeeperTestSuite) TestLiquidStakeAndDistributeFees() {
 	// Create relevant addresses
-	feeAddress := s.TestAccs[0]
-	depositAddress := s.TestAccs[1]
+	depositAddress := s.TestAccs[0]
+	feeAddress := s.App.AccountKeeper.GetModuleAddress(types.FeeAddress)
 
 	// Liquid stake 1000 with a RR of 2, should return 500 tokens
 	liquidStakeAmount := sdkmath.NewInt(1000)
@@ -510,7 +510,6 @@ func (s *KeeperTestSuite) TestLiquidStakeAndDistributeFees() {
 		NativeTokenDenom:       HostNativeDenom,
 		NativeTokenIbcDenom:    HostIBCDenom,
 		DepositAddress:         depositAddress.String(),
-		FeeAddress:             feeAddress.String(),
 		RedemptionRate:         redemptionRate,
 		MinRedemptionRate:      redemptionRate.Sub(sdk.MustNewDecFromStr("0.2")),
 		MinInnerRedemptionRate: redemptionRate.Sub(sdk.MustNewDecFromStr("0.1")),
@@ -540,14 +539,6 @@ func (s *KeeperTestSuite) TestLiquidStakeAndDistributeFees() {
 	feeCollectorBalance = s.App.BankKeeper.GetBalance(s.Ctx, feeCollectorAddress, StDenom)
 	s.Require().Equal(expectedStTokens.Int64(), feeCollectorBalance.Amount.Int64(),
 		"fee collector should not have changed")
-
-	// Test that if an invalid fee address is provided, it will error
-	invalidHostZone := hostZone
-	invalidHostZone.FeeAddress = "invalid_address"
-	s.App.StaketiaKeeper.SetHostZone(s.Ctx, invalidHostZone)
-
-	err = s.App.StaketiaKeeper.LiquidStakeAndDistributeFees(s.Ctx)
-	s.Require().ErrorContains(err, "invalid fee address")
 
 	// Test that if the host zone is halted, it will error
 	haltedHostZone := hostZone
