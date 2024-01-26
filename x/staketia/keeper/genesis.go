@@ -1,29 +1,20 @@
 package keeper
 
 import (
-	"fmt"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/cosmos/cosmos-sdk/types/address"
-
-	"github.com/Stride-Labs/stride/v17/utils"
 	"github.com/Stride-Labs/stride/v17/x/staketia/types"
 )
 
 // Initializes the genesis state in the store
 func (k Keeper) InitGenesis(ctx sdk.Context, genState types.GenesisState) {
-	// Create the fee address on the host zone
-	var feeAddress sdk.AccAddress = address.Module(types.ModuleName, types.FeeAddressKey)
-	if err := utils.CreateModuleAccount(ctx, k.accountKeeper, feeAddress); err != nil {
-		panic(fmt.Sprintf("unable to create fee address for host zone, %s", err))
-	}
-	genState.HostZone.FeeAddress = feeAddress.String()
-
 	// Validate that all required fields are specified
 	if err := genState.Validate(); err != nil {
 		panic(err)
 	}
+
+	// Create fee module account
+	k.accountKeeper.GetModuleAccount(ctx, types.FeeAddress)
 
 	// Set the main host zone config
 	k.SetHostZone(ctx, genState.HostZone)

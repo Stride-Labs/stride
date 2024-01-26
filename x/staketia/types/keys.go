@@ -10,6 +10,9 @@ const (
 
 	// RouterKey defines the routing key
 	RouterKey = ModuleName
+
+	// Module Account for Fee Collection
+	FeeAddress = "staketia_fee_address"
 )
 
 var (
@@ -23,7 +26,6 @@ var (
 	SlashRecordsKeyPrefix               = []byte("slash-records")
 	SlashRecordStoreKeyPrefix           = []byte("slash-record-id")
 	TransferInProgressRecordIdKeyPrefix = []byte("transfer-in-progress")
-	FeeAddressKey                       = []byte("fee-address")
 
 	ChannelIdBufferFixedLength int = 16
 )
