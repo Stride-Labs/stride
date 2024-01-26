@@ -240,8 +240,10 @@ func (app *StrideApp) setupUpgradeHandlers(appOpts servertypes.AppOptions) {
 		v18.CreateUpgradeHandler(
 			app.mm,
 			app.configurator,
-			app.StakeibcKeeper,
+			app.BankKeeper,
+			app.GovKeeper,
 			app.RecordsKeeper,
+			app.StakeibcKeeper,
 		),
 	)
 
