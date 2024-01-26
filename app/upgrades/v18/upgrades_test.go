@@ -146,17 +146,17 @@ func (s *UpgradeTestSuite) SetupTestUnbondingRecords() func() {
 	})
 
 	// Add a record that should be ignored because the epoch number is too low
-	epochNumberIgnore := uint64(3)
+	epochNumberIgnore1 := uint64(3)
 	nativeAmountIgnored := stTokenAmount
 	s.App.RecordsKeeper.SetUserRedemptionRecord(s.Ctx, recordtypes.UserRedemptionRecord{
 		Id:                "C",
-		EpochNumber:       epochNumberIgnore,
+		EpochNumber:       epochNumberIgnore1,
 		HostZoneId:        chainId,
 		StTokenAmount:     stTokenAmount,
 		NativeTokenAmount: nativeAmountIgnored,
 	})
 	s.App.RecordsKeeper.SetEpochUnbondingRecord(s.Ctx, recordtypes.EpochUnbondingRecord{
-		EpochNumber: epochNumberIgnore,
+		EpochNumber: epochNumberIgnore1,
 		HostZoneUnbondings: []*recordtypes.HostZoneUnbonding{
 			{
 				HostZoneId:            chainId,
@@ -164,6 +164,31 @@ func (s *UpgradeTestSuite) SetupTestUnbondingRecords() func() {
 				StTokenAmount:         stTokenAmount,
 				NativeTokenAmount:     nativeAmountIgnored,
 				UserRedemptionRecords: []string{"C"},
+			},
+		},
+	})
+
+	// Add another record that should be ignored - this one because the status is not EXIT_TRANSFER_IN_QUEUE
+	epochNumberIgnore2 := uint64(505) // should be in constants
+	_, ok := v18.RedemptionRatesBeforeProp[chainId][epochNumberIgnore2]
+	s.Require().True(ok, "example epoch should be in redemption rate map - update the test")
+
+	s.App.RecordsKeeper.SetUserRedemptionRecord(s.Ctx, recordtypes.UserRedemptionRecord{
+		Id:                "D",
+		EpochNumber:       epochNumberIgnore2,
+		HostZoneId:        chainId,
+		StTokenAmount:     stTokenAmount,
+		NativeTokenAmount: nativeAmountIgnored,
+	})
+	s.App.RecordsKeeper.SetEpochUnbondingRecord(s.Ctx, recordtypes.EpochUnbondingRecord{
+		EpochNumber: epochNumberIgnore2,
+		HostZoneUnbondings: []*recordtypes.HostZoneUnbonding{
+			{
+				HostZoneId:            chainId,
+				Status:                recordtypes.HostZoneUnbonding_UNBONDING_QUEUE,
+				StTokenAmount:         stTokenAmount,
+				NativeTokenAmount:     nativeAmountIgnored,
+				UserRedemptionRecords: []string{"D"},
 			},
 		},
 	})
@@ -194,10 +219,16 @@ func (s *UpgradeTestSuite) SetupTestUnbondingRecords() func() {
 		s.Require().Equal(expectedNativeAmount2.Int64(), actualHostZoneUnbonding2.NativeTokenAmount.Int64(),
 			"host zone native amount from first unbonding")
 
-		// Check that the ignored record did not change
-		ignoredRecord, found := s.App.RecordsKeeper.GetUserRedemptionRecord(s.Ctx, "C")
+		// Check that the ignored record 1 did not change
+		ignoredRecord1, found := s.App.RecordsKeeper.GetUserRedemptionRecord(s.Ctx, "C")
 		s.Require().True(found, "ignored record should have been found")
-		s.Require().Equal(nativeAmountIgnored.Int64(), ignoredRecord.NativeTokenAmount.Int64(),
+		s.Require().Equal(nativeAmountIgnored.Int64(), ignoredRecord1.NativeTokenAmount.Int64(),
+			"native amount on ignored record should not have changed")
+
+		// Check that the ignored record 2 did not change
+		ignoredRecord2, found := s.App.RecordsKeeper.GetUserRedemptionRecord(s.Ctx, "D")
+		s.Require().True(found, "ignored record should have been found")
+		s.Require().Equal(nativeAmountIgnored.Int64(), ignoredRecord2.NativeTokenAmount.Int64(),
 			"native amount on ignored record should not have changed")
 	}
 }
