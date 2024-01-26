@@ -151,9 +151,9 @@ func UpdateUnbondingRecords(
 						"unable to find host zone with chain-id %s", hostZoneUnbonding.HostZoneId)
 				}
 
-				redemptionRateDuringProp := redemptionRatesAtTimeOfProp[hostZoneUnbonding.HostZoneId]
+				redemptionRateAtTimeOfProp := redemptionRatesAtTimeOfProp[hostZoneUnbonding.HostZoneId]
 				redemptionRateDuringUpgrade := hostZone.RedemptionRate
-				recordRedemptionRate = redemptionRateDuringProp.Add(redemptionRateDuringUpgrade).Quo(sdk.NewDec(2))
+				recordRedemptionRate = redemptionRateAtTimeOfProp.Add(redemptionRateDuringUpgrade).Quo(sdk.NewDec(2))
 			}
 
 			// now update all userRedemptionRecords by using the redemption rate to set the native token amount
