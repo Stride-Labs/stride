@@ -78,6 +78,8 @@ func (k Keeper) LiquidStake(ctx sdk.Context, liquidStaker string, nativeAmount s
 
 // IBC transfers all TIA in the deposit account and sends it to the delegation account
 func (k Keeper) PrepareDelegation(ctx sdk.Context, epochNumber uint64, epochDuration time.Duration) error {
+	k.Logger(ctx).Info(utils.LogWithHostZone(types.CelestiaChainId, "Preparing delegation for epoch %d", epochNumber))
+
 	// Only send the transfer if the host zone isn't halted
 	hostZone, err := k.GetUnhaltedHostZone(ctx)
 	if err != nil {
@@ -99,7 +101,7 @@ func (k Keeper) PrepareDelegation(ctx sdk.Context, epochNumber uint64, epochDura
 
 	// If there's nothing to delegate, exit early - no need to create a new record
 	if nativeTokens.Amount.IsZero() {
-		k.Logger(ctx).Info(fmt.Sprintf("No new liquid stakes for epoch %d", epochNumber))
+		k.Logger(ctx).Info(utils.LogWithHostZone(types.CelestiaChainId, "No new liquid stakes for epoch %d", epochNumber))
 		return nil
 	}
 
@@ -207,7 +209,7 @@ func (k Keeper) LiquidStakeAndDistributeFees(ctx sdk.Context) error {
 	if err != nil {
 		return errorsmod.Wrapf(err, "unable to send liquid staked tokens to fee collector")
 	}
-	k.Logger(ctx).Info(fmt.Sprintf("Sent %v to fee collector", stTokens))
+	k.Logger(ctx).Info(fmt.Sprintf("Liquid staked and sent %v to fee collector", stTokens))
 
 	return nil
 }

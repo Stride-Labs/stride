@@ -64,13 +64,21 @@ set_stride_genesis() {
     jq '.app_state.staketia.host_zone.deposit_address = $newVal'    --arg newVal "$deposit_address"    $genesis_config > json.tmp && mv json.tmp $genesis_config
     jq '.app_state.staketia.host_zone.redemption_address = $newVal' --arg newVal "$redemption_address" $genesis_config > json.tmp && mv json.tmp $genesis_config
     jq '.app_state.staketia.host_zone.claim_address = $newVal'      --arg newVal "$claim_address"      $genesis_config > json.tmp && mv json.tmp $genesis_config
-    jq '.app_state.staketia.host_zone.safe_address = $newVal'       --arg newVal "$safe_address"       $genesis_config > json.tmp && mv json.tmp $genesis_config
-    jq '.app_state.staketia.host_zone.operator_address = $newVal'   --arg newVal "$operator_address"   $genesis_config > json.tmp && mv json.tmp $genesis_config
+    jq '.app_state.staketia.host_zone.safe_address_on_stride = $newVal'       --arg newVal "$safe_address"       $genesis_config > json.tmp && mv json.tmp $genesis_config
+    jq '.app_state.staketia.host_zone.operator_address_on_stride = $newVal'   --arg newVal "$operator_address"   $genesis_config > json.tmp && mv json.tmp $genesis_config
 
     jq '.app_state.staketia.host_zone.delegation_address = $newVal' --arg newVal "$DELEGATION_ADDRESS" $genesis_config > json.tmp && mv json.tmp $genesis_config
     jq '.app_state.staketia.host_zone.reward_address = $newVal'     --arg newVal "$REWARD_ADDRESS"     $genesis_config > json.tmp && mv json.tmp $genesis_config
 
+    host_chain="${HOST_CHAINS[0]}"
+    host_denom=$(GET_VAR_VALUE     ${host_chain}_DENOM)
+    host_chain_id=$(GET_VAR_VALUE  ${host_chain}_CHAIN_ID)
+    host_ibc_denom=$(GET_VAR_VALUE IBC_${host_chain}_CHANNEL_0_DENOM)
+    jq '.app_state.staketia.host_zone.chain_id = $newVal' --arg newVal "${host_chain_id}" $genesis_config > json.tmp && mv json.tmp $genesis_config
     jq '.app_state.staketia.host_zone.unbonding_period_seconds = $newVal' --arg newVal "${UNBONDING_TIME//s/}" $genesis_config > json.tmp && mv json.tmp $genesis_config
+    jq '.app_state.staketia.host_zone.transfer_channel_id = $newVal' --arg newVal "channel-0" $genesis_config > json.tmp && mv json.tmp $genesis_config
+    jq '.app_state.staketia.host_zone.native_token_denom = $newVal' --arg newVal "${host_denom}" $genesis_config > json.tmp && mv json.tmp $genesis_config
+    jq '.app_state.staketia.host_zone.native_token_ibc_denom = $newVal' --arg newVal "${host_ibc_denom}" $genesis_config > json.tmp && mv json.tmp $genesis_config
 }
 
 set_host_genesis() {

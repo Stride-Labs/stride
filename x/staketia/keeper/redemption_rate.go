@@ -28,6 +28,8 @@ import (
 //
 // Note: Reinvested tokens are sent to the deposit account and are automatically included in this formula
 func (k Keeper) UpdateRedemptionRate(ctx sdk.Context) error {
+	k.Logger(ctx).Info(utils.LogWithHostZone(types.CelestiaChainId, "Updating redemption rate"))
+
 	hostZone, err := k.GetHostZone(ctx)
 	if err != nil {
 		return err
@@ -67,6 +69,12 @@ func (k Keeper) UpdateRedemptionRate(ctx sdk.Context) error {
 	hostZone.LastRedemptionRate = hostZone.RedemptionRate
 	hostZone.RedemptionRate = redemptionRate
 	k.SetHostZone(ctx, hostZone)
+
+	k.Logger(ctx).Info(utils.LogWithHostZone(types.CelestiaChainId, "Redemption rate updated from %v to %v",
+		hostZone.LastRedemptionRate, hostZone.RedemptionRate))
+	k.Logger(ctx).Info(utils.LogWithHostZone(types.CelestiaChainId,
+		"Deposit Account Balance: %v, Undelegated Balance: %v, Delegated Balance: %v, StToken Supply: %v",
+		depositAccountBalance.Amount, undelegatedBalance, hostZone.DelegatedBalance, stTokenSupply))
 
 	return nil
 }
