@@ -30,7 +30,9 @@ func CreateUpgradeHandler(
 		UpdateRedemptionRateBounds(ctx, stakeibcKeeper)
 
 		ctx.Logger().Info("Resetting delegation changes in progress...")
-		DecrementTerraDelegationChangesInProgress(ctx, stakeibcKeeper)
+		if err := DecrementTerraDelegationChangesInProgress(ctx, stakeibcKeeper); err != nil {
+			return vm, errorsmod.Wrapf(err, "unable to reset delegation changes in progress")
+		}
 
 		ctx.Logger().Info("Updating unbonding records...")
 		err := UpdateUnbondingRecords(
@@ -42,7 +44,7 @@ func CreateUpgradeHandler(
 			RedemptionRatesAtTimeOfProp,
 		)
 		if err != nil {
-			return vm, err
+			return vm, errorsmod.Wrapf(err, "unable to update unbonding records")
 		}
 
 		return mm.RunMigrations(ctx, configurator, vm)
