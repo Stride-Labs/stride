@@ -129,7 +129,7 @@ func UpdateUnbondingRecords(
 			// across all the epochs that unbonded
 			hostZoneRRBeforeProp, ok := redemptionRatesBeforeProp[hostZoneUnbonding.HostZoneId]
 			if !ok {
-				ctx.Logger().Error(fmt.Sprintf("Host zone %s from not included in redemption rate mapping", chainId))
+				ctx.Logger().Error(fmt.Sprintf("Host zone %s not included in redemption rate mapping", chainId))
 				continue
 			}
 
