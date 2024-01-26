@@ -7,6 +7,9 @@ import (
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
+	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
+	govkeeper "github.com/cosmos/cosmos-sdk/x/gov/keeper"
+	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 
 	recordskeeper "github.com/Stride-Labs/stride/v17/x/records/keeper"
@@ -20,8 +23,10 @@ import (
 func CreateUpgradeHandler(
 	mm *module.Manager,
 	configurator module.Configurator,
-	stakeibcKeeper stakeibckeeper.Keeper,
+	bankKeeper bankkeeper.Keeper,
+	govKeeper govkeeper.Keeper,
 	recordsKeeper recordskeeper.Keeper,
+	stakeibcKeeper stakeibckeeper.Keeper,
 ) upgradetypes.UpgradeHandler {
 	return func(ctx sdk.Context, _ upgradetypes.Plan, vm module.VersionMap) (module.VersionMap, error) {
 		ctx.Logger().Info("Starting upgrade v18...")
@@ -45,6 +50,12 @@ func CreateUpgradeHandler(
 		)
 		if err != nil {
 			return vm, errorsmod.Wrapf(err, "unable to update unbonding records")
+		}
+
+		ctx.Logger().Info(fmt.Sprintf("Checking on prop %d status...", PropXXXProposalId))
+		if err := ExecutePropXXXIfPassed(ctx, bankKeeper, govKeeper); err != nil {
+			ctx.Logger().Error(fmt.Sprintf("Failed to check on or execute prop %d: %s",
+				PropXXXProposalId, err.Error()))
 		}
 
 		return mm.RunMigrations(ctx, configurator, vm)
@@ -181,4 +192,35 @@ func UpdateUnbondingRecords(
 		}
 	}
 	return nil
+}
+
+// Executes the bank send for prop XXX if it passed
+func ExecutePropXXXIfPassed(ctx sdk.Context, bk bankkeeper.Keeper, gk govkeeper.Keeper) error {
+	// Grab proposal from gov store
+	proposal, found := gk.GetProposal(ctx, PropXXXProposalId)
+	if !found {
+		return fmt.Errorf("Prop %d not found", PropXXXProposalId)
+	}
+
+	// Check if it passed - if it didn't do nothing
+	if proposal.Status != govtypes.ProposalStatus_PROPOSAL_STATUS_PASSED {
+		ctx.Logger().Info(fmt.Sprintf("Prop %d did not pass", PropXXXProposalId))
+		return nil
+	}
+
+	ctx.Logger().Info(fmt.Sprintf("Prop %d passed - executing corresponding bank send", PropXXXProposalId))
+
+	fromAddress, err := sdk.AccAddressFromBech32(PropXXXSender)
+	if err != nil {
+		return errorsmod.Wrap(err, "invalid prop sender address")
+	}
+
+	toAddress, err := sdk.AccAddressFromBech32(PropXXXRecipient)
+	if err != nil {
+		return errorsmod.Wrap(err, "invalid prop recipient address")
+	}
+
+	tokens := sdk.NewCoin(Strd, PropXXXAmount)
+
+	return bk.SendCoins(ctx, fromAddress, toAddress, sdk.NewCoins(tokens))
 }
