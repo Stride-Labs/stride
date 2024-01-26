@@ -37,6 +37,7 @@ import (
 	ratelimittypes "github.com/Stride-Labs/stride/v17/x/ratelimit/types"
 	recordtypes "github.com/Stride-Labs/stride/v17/x/records/types"
 	stakeibctypes "github.com/Stride-Labs/stride/v17/x/stakeibc/types"
+	staketiatypes "github.com/Stride-Labs/stride/v17/x/staketia/types"
 )
 
 func (app *StrideApp) setupUpgradeHandlers(appOpts servertypes.AppOptions) {
@@ -276,6 +277,10 @@ func (app *StrideApp) setupUpgradeHandlers(appOpts servertypes.AppOptions) {
 		storeUpgrades = &storetypes.StoreUpgrades{
 			// Add PFM store key
 			Added: []string{packetforwardtypes.ModuleName},
+		}
+	case "v18":
+		storeUpgrades = &storetypes.StoreUpgrades{
+			Added: []string{staketiatypes.ModuleName},
 		}
 	}
 
