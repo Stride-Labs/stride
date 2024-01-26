@@ -64,7 +64,7 @@ func UpdateUnbondingRecords(
 	sk stakeibckeeper.Keeper,
 	rk recordskeeper.Keeper,
 	redemptionRatesBeforeProp map[string]map[uint64]sdk.Dec,
-	redemptionRatesDuringProp map[string]sdk.Dec,
+	redemptionRatesAtTimeOfProp map[string]sdk.Dec,
 ) error {
 	// loop over host zone unbonding records
 	for _, epochUnbondingRecord := range rk.GetAllEpochUnbondingRecord(ctx) {
@@ -97,7 +97,7 @@ func UpdateUnbondingRecords(
 						"unable to find host zone with chain-id %s", hostZoneUnbonding.HostZoneId)
 				}
 
-				redemptionRateDuringProp := redemptionRatesDuringProp[hostZoneUnbonding.HostZoneId]
+				redemptionRateDuringProp := redemptionRatesAtTimeOfProp[hostZoneUnbonding.HostZoneId]
 				redemptionRateDuringUpgrade := hostZone.RedemptionRate
 				recordRedemptionRate = redemptionRateDuringProp.Add(redemptionRateDuringUpgrade).Quo(sdk.NewDec(2))
 			}
