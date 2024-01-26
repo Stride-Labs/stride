@@ -6,14 +6,14 @@ import (
 	"github.com/Stride-Labs/stride/v17/x/staketia/types"
 )
 
-// CheckIsOperatorAddress checks if the given address is the operator admin address
+// CheckIsOperatorAddress checks if the given address is the operator address
 func isOperatorAddress(hostZone types.HostZone, address string) bool {
-	return address == hostZone.OperatorAddress
+	return address == hostZone.OperatorAddressOnStride
 }
 
-// CheckIsSafeAddress checks if the given address is the safe admin address
+// CheckIsSafeAddress checks if the given address is the safe address
 func isSafeAddress(hostZone types.HostZone, address string) bool {
-	return address == hostZone.SafeAddress
+	return address == hostZone.SafeAddressOnStride
 }
 
 // CheckIsOperatorAddress checks if the given address is EITHER the safe admin OR operator admin address
