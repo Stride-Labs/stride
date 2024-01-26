@@ -2,9 +2,9 @@ name: Tests & Code Coverage
 
 on:
   push:
-    branches: ["sttia"]
+    branches: ["main"]
   pull_request:
-    branches: ["sttia"]
+    branches: ["main"]
 
 jobs:
   should_run_unit_tests:

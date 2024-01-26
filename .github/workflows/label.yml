@@ -1,9 +1,9 @@
 name: Labeler
 on:
   push:
-    branches: [ "sttia" ]
+    branches: [ "main" ]
   pull_request:
-    branches: [ "sttia" ]
+    branches: [ "main" ]
 
 permissions:
   contents: read

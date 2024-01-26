@@ -17,13 +17,13 @@ func DefaultGenesis() *GenesisState {
 			TransferChannelId:      CelestiaChannelId,
 			UnbondingPeriodSeconds: CelestiaUnbondingPeriodSeconds,
 
-			DelegationAddress: CelestiaDelegationAddress,
-			RewardAddress:     CelestiaRewardsAddress,
-			DepositAddress:    CelestiaDepositAddress,
-			RedemptionAddress: CelestiaRedemptionAddress,
-			ClaimAddress:      CelestiaClaimAddress,
-			OperatorAddress:   CelestiaOperatorAddress,
-			SafeAddress:       CelestiaSafeAddress,
+			DelegationAddress:       CelestiaDelegationAddress,
+			RewardAddress:           CelestiaRewardsAddress,
+			DepositAddress:          CelestiaDepositAddress,
+			RedemptionAddress:       CelestiaRedemptionAddress,
+			ClaimAddress:            CelestiaClaimAddress,
+			OperatorAddressOnStride: CelestiaOperatorAddress,
+			SafeAddressOnStride:     CelestiaSafeAddress,
 
 			RedemptionRate:         sdk.OneDec(),
 			LastRedemptionRate:     sdk.OneDec(),
@@ -36,7 +36,7 @@ func DefaultGenesis() *GenesisState {
 		},
 		UnbondingRecords: []UnbondingRecord{
 			{
-				Id:            0,
+				Id:            1,
 				Status:        ACCUMULATING_REDEMPTIONS,
 				NativeAmount:  sdkmath.ZeroInt(),
 				StTokenAmount: sdkmath.ZeroInt(),

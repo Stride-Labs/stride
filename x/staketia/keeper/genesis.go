@@ -13,14 +13,12 @@ import (
 
 // Initializes the genesis state in the store
 func (k Keeper) InitGenesis(ctx sdk.Context, genState types.GenesisState) {
-	// Create the fee address on the host zone if it hasn't been created yet
-	if genState.HostZone.FeeAddress == "" {
-		var feeAddress sdk.AccAddress = address.Module(types.ModuleName, types.FeeAddressKey)
-		if err := utils.CreateModuleAccount(ctx, k.accountKeeper, feeAddress); err != nil {
-			panic(fmt.Sprintf("unable to create fee address for host zone, %s", err))
-		}
-		genState.HostZone.FeeAddress = feeAddress.String()
+	// Create the fee address on the host zone
+	var feeAddress sdk.AccAddress = address.Module(types.ModuleName, types.FeeAddressKey)
+	if err := utils.CreateModuleAccount(ctx, k.accountKeeper, feeAddress); err != nil {
+		panic(fmt.Sprintf("unable to create fee address for host zone, %s", err))
 	}
+	genState.HostZone.FeeAddress = feeAddress.String()
 
 	// Validate that all required fields are specified
 	if err := genState.Validate(); err != nil {

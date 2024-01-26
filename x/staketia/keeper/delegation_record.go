@@ -83,7 +83,16 @@ func (k Keeper) ArchiveDelegationRecord(ctx sdk.Context, delegationRecord types.
 // Returns all active delegation records
 func (k Keeper) GetAllActiveDelegationRecords(ctx sdk.Context) (delegationRecords []types.DelegationRecord) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.DelegationRecordsKeyPrefix)
-	return k.getAllDelegationRecords(store)
+	delegationRecordsInActiveStore := k.getAllDelegationRecords(store)
+
+	// There should only be TRANSFER_IN_PROGRESS or DELEGATION_QUEUE records in this store
+	// up we'll add the check here to be safe
+	for _, delegationRecord := range delegationRecordsInActiveStore {
+		if delegationRecord.Status == types.TRANSFER_IN_PROGRESS || delegationRecord.Status == types.DELEGATION_QUEUE {
+			delegationRecords = append(delegationRecords, delegationRecord)
+		}
+	}
+	return delegationRecords
 }
 
 // Returns all active delegation records

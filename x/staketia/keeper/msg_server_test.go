@@ -43,8 +43,8 @@ func (s *KeeperTestSuite) SetupDelegationRecordsAndHostZone() {
 	safeAddress := s.TestAccs[0].String()
 	operatorAddress := s.TestAccs[1].String()
 	hostZone := s.initializeHostZone()
-	hostZone.OperatorAddress = operatorAddress
-	hostZone.SafeAddress = safeAddress
+	hostZone.OperatorAddressOnStride = operatorAddress
+	hostZone.SafeAddressOnStride = safeAddress
 	s.App.StaketiaKeeper.SetHostZone(s.Ctx, hostZone)
 }
 
@@ -98,7 +98,7 @@ func (s *KeeperTestSuite) TestConfirmUndelegation() {
 
 	// Store the operator address on the host zone
 	hostZone := s.MustGetHostZone()
-	hostZone.OperatorAddress = "operator"
+	hostZone.OperatorAddressOnStride = "operator"
 	s.App.StaketiaKeeper.SetHostZone(s.Ctx, hostZone)
 
 	validMsg := types.MsgConfirmUndelegation{
@@ -132,8 +132,8 @@ func (s *KeeperTestSuite) SetupUnbondingRecordsAndHostZone() {
 	hostZone := s.MustGetHostZone()
 
 	// set host zone
-	hostZone.OperatorAddress = operatorAddress
-	hostZone.SafeAddress = safeAddress
+	hostZone.OperatorAddressOnStride = operatorAddress
+	hostZone.SafeAddressOnStride = safeAddress
 	s.App.StaketiaKeeper.SetHostZone(s.Ctx, hostZone)
 }
 
@@ -184,8 +184,8 @@ func (s *KeeperTestSuite) TestAdjustDelegatedBalance() {
 
 	// Create the host zone
 	s.App.StaketiaKeeper.SetHostZone(s.Ctx, types.HostZone{
-		SafeAddress:      safeAddress,
-		DelegatedBalance: sdk.NewInt(0),
+		SafeAddressOnStride: safeAddress,
+		DelegatedBalance:    sdk.NewInt(0),
 	})
 
 	// we're halting the zone to test that the tx works even when the host zone is halted
@@ -395,7 +395,7 @@ func (s *KeeperTestSuite) TestRefreshRedemptionRate() {
 		RedemptionRate:      initialRedemptionRate,
 		NativeTokenDenom:    HostNativeDenom,
 		NativeTokenIbcDenom: HostIBCDenom,
-		SafeAddress:         safeAddress,
+		SafeAddressOnStride: safeAddress,
 		DepositAddress:      depositAddress.String(),
 	})
 
@@ -429,7 +429,7 @@ func (s *KeeperTestSuite) TestOverwriteDelegationRecord() {
 
 	// Create a host zone with a safe admin
 	s.App.StaketiaKeeper.SetHostZone(s.Ctx, types.HostZone{
-		SafeAddress: safeAddress,
+		SafeAddressOnStride: safeAddress,
 	})
 
 	// Create an initial delegation record, and a record to be overridden
@@ -484,7 +484,7 @@ func (s *KeeperTestSuite) TestOverwriteUnbondingRecord() {
 
 	// Create a host zone with a safe admin
 	s.App.StaketiaKeeper.SetHostZone(s.Ctx, types.HostZone{
-		SafeAddress: safeAddress,
+		SafeAddressOnStride: safeAddress,
 	})
 
 	// Create an initial unbonding record, and a record to be overridden
@@ -546,7 +546,7 @@ func (s *KeeperTestSuite) TestOverwriteRedemptionRecord() {
 
 	// Create a host zone with a safe admin
 	s.App.StaketiaKeeper.SetHostZone(s.Ctx, types.HostZone{
-		SafeAddress: safeAddress,
+		SafeAddressOnStride: safeAddress,
 	})
 
 	// Create an initial redemption record, and a record to be overridden
@@ -604,8 +604,8 @@ func (s *KeeperTestSuite) TestSetOperatorAddress() {
 
 	// set the host zone
 	zone := types.HostZone{
-		SafeAddress:     safeAddress,
-		OperatorAddress: operatorAddress,
+		SafeAddressOnStride:     safeAddress,
+		OperatorAddressOnStride: operatorAddress,
 	}
 	s.App.StaketiaKeeper.SetHostZone(s.Ctx, zone)
 
@@ -621,7 +621,7 @@ func (s *KeeperTestSuite) TestSetOperatorAddress() {
 	// Confirm the operator address was updated
 	zone, err = s.App.StaketiaKeeper.GetHostZone(s.Ctx)
 	s.Require().NoError(err, "should not throw an error")
-	s.Require().Equal(s.TestAccs[2].String(), zone.OperatorAddress, "operator address should be set")
+	s.Require().Equal(s.TestAccs[2].String(), zone.OperatorAddressOnStride, "operator address should be set")
 
 	// Confirm the operator address cannot be set by a non-safe address
 	msgSetOperatorAddressWrongSafe := types.MsgSetOperatorAddress{

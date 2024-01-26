@@ -55,10 +55,10 @@ func (h HostZone) ValidateGenesis() error {
 	if h.FeeAddress == "" {
 		return ErrInvalidHostZone.Wrap("fee address must be specified")
 	}
-	if h.OperatorAddress == "" {
+	if h.OperatorAddressOnStride == "" {
 		return ErrInvalidHostZone.Wrap("operator address must be specified")
 	}
-	if h.SafeAddress == "" {
+	if h.SafeAddressOnStride == "" {
 		return ErrInvalidHostZone.Wrap("safe address must be specified")
 	}
 
@@ -75,10 +75,10 @@ func (h HostZone) ValidateGenesis() error {
 	if _, err := sdk.AccAddressFromBech32(h.FeeAddress); err != nil {
 		return errorsmod.Wrapf(err, "invalid fee address")
 	}
-	if _, err := sdk.AccAddressFromBech32(h.OperatorAddress); err != nil {
+	if _, err := sdk.AccAddressFromBech32(h.OperatorAddressOnStride); err != nil {
 		return errorsmod.Wrapf(err, "invalid operator address")
 	}
-	if _, err := sdk.AccAddressFromBech32(h.SafeAddress); err != nil {
+	if _, err := sdk.AccAddressFromBech32(h.SafeAddressOnStride); err != nil {
 		return errorsmod.Wrapf(err, "invalid safe address")
 	}
 

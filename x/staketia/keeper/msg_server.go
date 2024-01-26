@@ -276,7 +276,7 @@ func (k msgServer) SetOperatorAddress(goCtx context.Context, msg *types.MsgSetOp
 	}
 
 	// set the operator field
-	zone.OperatorAddress = msg.Operator
+	zone.OperatorAddressOnStride = msg.Operator
 
 	// Update the host zone
 	k.SetHostZone(ctx, zone)

@@ -2,9 +2,9 @@ name: Lint
 
 on:
   push:
-    branches: ["sttia"]
+    branches: ["main"]
   pull_request:
-    branches: ["sttia"]
+    branches: ["main"]
 
 jobs:
   golangci:

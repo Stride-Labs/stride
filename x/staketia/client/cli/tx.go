@@ -46,7 +46,7 @@ func GetTxCmd() *cobra.Command {
 		CmdResumeHostZone(),
 		CmdOverwriteRecord(),
 		CmdRefreshRedemptionRate(),
-		CmdSetupOperatorAddress(),
+		CmdSetOperatorAddress(),
 	)
 
 	return cmd
@@ -502,7 +502,7 @@ $ %[1]s tx %[2]s trigger-update-redemption-rate
 }
 
 // triggers the redemption rate update
-func CmdSetupOperatorAddress() *cobra.Command {
+func CmdSetOperatorAddress() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "setup-operator-address [operator-address]",
 		Short: "sets the operator address on the host zone record",

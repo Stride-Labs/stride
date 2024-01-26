@@ -13,8 +13,8 @@ func (s *KeeperTestSuite) TestIsAddressHelpers() {
 
 	// Create a host zone with an operator and safe
 	zone := types.HostZone{
-		OperatorAddress: operatorAddress,
-		SafeAddress:     safeAddress,
+		OperatorAddressOnStride: operatorAddress,
+		SafeAddressOnStride:     safeAddress,
 	}
 
 	s.App.StaketiaKeeper.SetHostZone(s.Ctx, zone)

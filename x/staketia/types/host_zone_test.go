@@ -50,8 +50,8 @@ func fillDefaultHostZone(hostZone types.HostZone) types.HostZone {
 	hostZone.RedemptionAddress = fillDefaultValue(hostZone.RedemptionAddress, validAddress)
 	hostZone.ClaimAddress = fillDefaultValue(hostZone.ClaimAddress, validAddress)
 	hostZone.FeeAddress = fillDefaultValue(hostZone.FeeAddress, validAddress)
-	hostZone.OperatorAddress = fillDefaultValue(hostZone.OperatorAddress, validAddress)
-	hostZone.SafeAddress = fillDefaultValue(hostZone.SafeAddress, validAddress)
+	hostZone.OperatorAddressOnStride = fillDefaultValue(hostZone.OperatorAddressOnStride, validAddress)
+	hostZone.SafeAddressOnStride = fillDefaultValue(hostZone.SafeAddressOnStride, validAddress)
 
 	if hostZone.RedemptionRate.IsNil() {
 		hostZone.RedemptionRate = sdk.OneDec()
@@ -162,14 +162,14 @@ func TestValidateHostZoneGenesis(t *testing.T) {
 		{
 			name: "missing operator address",
 			hostZone: types.HostZone{
-				OperatorAddress: Uninitialized,
+				OperatorAddressOnStride: Uninitialized,
 			},
 			expectedError: "operator address must be specified",
 		},
 		{
 			name: "missing safe address",
 			hostZone: types.HostZone{
-				SafeAddress: Uninitialized,
+				SafeAddressOnStride: Uninitialized,
 			},
 			expectedError: "safe address must be specified",
 		},
@@ -204,14 +204,14 @@ func TestValidateHostZoneGenesis(t *testing.T) {
 		{
 			name: "invalid operator address",
 			hostZone: types.HostZone{
-				OperatorAddress: "invalid_address",
+				OperatorAddressOnStride: "invalid_address",
 			},
 			expectedError: "invalid operator address",
 		},
 		{
 			name: "invalid safe address",
 			hostZone: types.HostZone{
-				SafeAddress: "invalid_address",
+				SafeAddressOnStride: "invalid_address",
 			},
 			expectedError: "invalid safe address",
 		},
