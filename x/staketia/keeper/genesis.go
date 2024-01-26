@@ -13,7 +13,7 @@ func (k Keeper) InitGenesis(ctx sdk.Context, genState types.GenesisState) {
 		panic(err)
 	}
 
-	// Create fee module account
+	// Create fee module account (calling GetModuleAccount will set it for the first time)
 	k.accountKeeper.GetModuleAccount(ctx, types.FeeAddress)
 
 	// Set the main host zone config
