@@ -18,8 +18,8 @@ func DefaultGenesis() *GenesisState {
 			UnbondingPeriodSeconds: CelestiaUnbondingPeriodSeconds,
 
 			// on celestia
-			DelegationAddress: DelegationAddress,
-			RewardAddress:     RewardAddress,
+			DelegationAddress: DelegationAddressOnCelestia,
+			RewardAddress:     RewardAddressOnCelestia,
 
 			// functional accounts on stride
 			DepositAddress:    DepositAddress,
