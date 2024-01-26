@@ -11,15 +11,15 @@ import (
 	ibctesting "github.com/cosmos/ibc-go/v7/testing"
 	"github.com/stretchr/testify/suite"
 
-	icqtypes "github.com/Stride-Labs/stride/v17/x/interchainquery/types"
-	ratelimittypes "github.com/Stride-Labs/stride/v17/x/ratelimit/types"
-	recordtypes "github.com/Stride-Labs/stride/v17/x/records/types"
+	icqtypes "github.com/Stride-Labs/stride/v18/x/interchainquery/types"
+	ratelimittypes "github.com/Stride-Labs/stride/v18/x/ratelimit/types"
+	recordtypes "github.com/Stride-Labs/stride/v18/x/records/types"
 
-	"github.com/Stride-Labs/stride/v17/app/apptesting"
-	v17 "github.com/Stride-Labs/stride/v17/app/upgrades/v17"
-	"github.com/Stride-Labs/stride/v17/x/stakeibc/keeper"
-	stakeibckeeper "github.com/Stride-Labs/stride/v17/x/stakeibc/keeper"
-	stakeibctypes "github.com/Stride-Labs/stride/v17/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v18/app/apptesting"
+	v17 "github.com/Stride-Labs/stride/v18/app/upgrades/v17"
+	"github.com/Stride-Labs/stride/v18/x/stakeibc/keeper"
+	stakeibckeeper "github.com/Stride-Labs/stride/v18/x/stakeibc/keeper"
+	stakeibctypes "github.com/Stride-Labs/stride/v18/x/stakeibc/types"
 )
 
 const (

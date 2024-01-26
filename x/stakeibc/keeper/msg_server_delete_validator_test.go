@@ -6,7 +6,7 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	stakeibctypes "github.com/Stride-Labs/stride/v17/x/stakeibc/types"
+	stakeibctypes "github.com/Stride-Labs/stride/v18/x/stakeibc/types"
 )
 
 type DeleteValidatorTestCase struct {

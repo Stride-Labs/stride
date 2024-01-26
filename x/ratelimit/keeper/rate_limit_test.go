@@ -7,9 +7,9 @@ import (
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	minttypes "github.com/Stride-Labs/stride/v17/x/mint/types"
-	"github.com/Stride-Labs/stride/v17/x/ratelimit/keeper"
-	"github.com/Stride-Labs/stride/v17/x/ratelimit/types"
+	minttypes "github.com/Stride-Labs/stride/v18/x/mint/types"
+	"github.com/Stride-Labs/stride/v18/x/ratelimit/keeper"
+	"github.com/Stride-Labs/stride/v18/x/ratelimit/types"
 )
 
 const (

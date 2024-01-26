@@ -6,8 +6,8 @@ import (
 	ibctesting "github.com/cosmos/ibc-go/v7/testing"
 	_ "github.com/stretchr/testify/suite"
 
-	recordtypes "github.com/Stride-Labs/stride/v17/x/records/types"
-	"github.com/Stride-Labs/stride/v17/x/stakeibc/types"
+	recordtypes "github.com/Stride-Labs/stride/v18/x/records/types"
+	"github.com/Stride-Labs/stride/v18/x/stakeibc/types"
 )
 
 func (s *KeeperTestSuite) SetupInitiateAllHostZoneUnbondings() {

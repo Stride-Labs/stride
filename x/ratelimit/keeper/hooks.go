@@ -5,7 +5,7 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	epochstypes "github.com/Stride-Labs/stride/v17/x/epochs/types"
+	epochstypes "github.com/Stride-Labs/stride/v18/x/epochs/types"
 )
 
 // Before each hour epoch, check if any of the rate limits have expired,

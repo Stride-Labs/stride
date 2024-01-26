@@ -12,11 +12,11 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/Stride-Labs/stride/v17/utils"
-	"github.com/Stride-Labs/stride/v17/x/autopilot"
-	"github.com/Stride-Labs/stride/v17/x/autopilot/types"
-	claimtypes "github.com/Stride-Labs/stride/v17/x/claim/types"
-	stakeibctypes "github.com/Stride-Labs/stride/v17/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v18/utils"
+	"github.com/Stride-Labs/stride/v18/x/autopilot"
+	"github.com/Stride-Labs/stride/v18/x/autopilot/types"
+	claimtypes "github.com/Stride-Labs/stride/v18/x/claim/types"
+	stakeibctypes "github.com/Stride-Labs/stride/v18/x/stakeibc/types"
 )
 
 // TODO: Separate out tests cases that are not necessarily Claim or Stakeibc related,

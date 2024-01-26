@@ -5,7 +5,7 @@ import "gogoproto/gogo.proto";
 import "stride/ratelimit/params.proto";
 import "stride/ratelimit/ratelimit.proto";
 
-option go_package = "github.com/Stride-Labs/stride/v17/x/ratelimit/types";
+option go_package = "github.com/Stride-Labs/stride/v18/x/ratelimit/types";
 
 // GenesisState defines the ratelimit module's genesis state.
 message GenesisState {

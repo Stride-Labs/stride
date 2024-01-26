@@ -8,10 +8,10 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	keepertest "github.com/Stride-Labs/stride/v17/testutil/keeper"
-	epochtypes "github.com/Stride-Labs/stride/v17/x/epochs/types"
-	recordtypes "github.com/Stride-Labs/stride/v17/x/records/types"
-	"github.com/Stride-Labs/stride/v17/x/stakeibc/types"
+	keepertest "github.com/Stride-Labs/stride/v18/testutil/keeper"
+	epochtypes "github.com/Stride-Labs/stride/v18/x/epochs/types"
+	recordtypes "github.com/Stride-Labs/stride/v18/x/records/types"
+	"github.com/Stride-Labs/stride/v18/x/stakeibc/types"
 )
 
 func TestAddressUnbondings(t *testing.T) {

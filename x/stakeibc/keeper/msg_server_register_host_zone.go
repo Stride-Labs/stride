@@ -7,10 +7,10 @@ import (
 	sdkmath "cosmossdk.io/math"
 	icatypes "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/types"
 
-	"github.com/Stride-Labs/stride/v17/utils"
-	epochtypes "github.com/Stride-Labs/stride/v17/x/epochs/types"
-	recordstypes "github.com/Stride-Labs/stride/v17/x/records/types"
-	"github.com/Stride-Labs/stride/v17/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v18/utils"
+	epochtypes "github.com/Stride-Labs/stride/v18/x/epochs/types"
+	recordstypes "github.com/Stride-Labs/stride/v18/x/records/types"
+	"github.com/Stride-Labs/stride/v18/x/stakeibc/types"
 
 	errorsmod "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"

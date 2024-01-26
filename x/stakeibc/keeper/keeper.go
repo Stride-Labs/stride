@@ -19,11 +19,11 @@ import (
 	ibctmtypes "github.com/cosmos/ibc-go/v7/modules/light-clients/07-tendermint"
 	"github.com/spf13/cast"
 
-	epochstypes "github.com/Stride-Labs/stride/v17/x/epochs/types"
-	icacallbackskeeper "github.com/Stride-Labs/stride/v17/x/icacallbacks/keeper"
-	icqkeeper "github.com/Stride-Labs/stride/v17/x/interchainquery/keeper"
-	recordsmodulekeeper "github.com/Stride-Labs/stride/v17/x/records/keeper"
-	"github.com/Stride-Labs/stride/v17/x/stakeibc/types"
+	epochstypes "github.com/Stride-Labs/stride/v18/x/epochs/types"
+	icacallbackskeeper "github.com/Stride-Labs/stride/v18/x/icacallbacks/keeper"
+	icqkeeper "github.com/Stride-Labs/stride/v18/x/interchainquery/keeper"
+	recordsmodulekeeper "github.com/Stride-Labs/stride/v18/x/records/keeper"
+	"github.com/Stride-Labs/stride/v18/x/stakeibc/types"
 )
 
 type (
