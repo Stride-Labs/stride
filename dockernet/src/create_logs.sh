@@ -20,6 +20,14 @@ state=$TEMP_LOGS_DIR/$STATE_LOG
 balances=$TEMP_LOGS_DIR/$BALANCES_LOG
 channels=$TEMP_LOGS_DIR/$CHANNELS_LOG
 
+print_chain_divider() {
+    chain_id="$1"
+    file_name="$2"
+    printf '\n\n%s\n' "==============================================================================" >> $file_name
+    echo "===                                  $chain                                  ===" >> $file_name
+    printf '%s\n' "==============================================================================" >> $file_name
+}
+
 print_separator() {
     header="$1"
     file_name="$2"
@@ -97,6 +105,7 @@ while true; do
     print_separator "VALIDATORS" $balances
     host_chain="${HOST_CHAINS[0]}"
     host_val_address="$(${host_chain}_ADDRESS)"
+    host_cmd=$(GET_VAR_VALUE ${host_chain}_MAIN_CMD)
     print_stride_balance $(STRIDE_ADDRESS) "STRIDE" 
     print_host_balance $host_chain $host_val_address $host_chain
 
@@ -115,17 +124,17 @@ while true; do
 
     # Log staketia balance on host chain
     print_separator "STAKETIA HOST" $balances
-    print_host_balance "${HOST_CHAINS[0]}" $DELEGATION_ADDRESS  "DELEGATION CONTROLLER" 
-    print_host_balance "${HOST_CHAINS[0]}" $REWARD_ADDRESS "REWARD CONTROLLER" 
+    print_host_balance "$host_chain" $DELEGATION_ADDRESS  "DELEGATION CONTROLLER" 
+    print_host_balance "$host_chain" $REWARD_ADDRESS "REWARD CONTROLLER" 
 
     # Log staketia delegations/undelegations
     print_separator "STAKETIA STAKING" $balances
     delegation_address=$($STRIDE_MAIN_CMD q staketia host-zone | grep "delegation_address" | awk '{print $2}')
 
-    print_header "DELEGATIONS $chain" $balances
-    $HOST_MAIN_CMD q staking delegations $delegation_address | grep -vE "pagination|total|next_key" >> $balances
-    print_header "UNBONDING-DELEGATIONS $chain" $balances
-    $HOST_MAIN_CMD q staking unbonding-delegations $delegation_address | grep -vE "pagination|total|next_key" >> $balances
+    print_header "DELEGATIONS $host_chain" $balances
+    $host_cmd q staking delegations $delegation_address | grep -vE "pagination|total|next_key" >> $balances
+    print_header "UNBONDING-DELEGATIONS $host_chain" $balances
+    $host_cmd q staking unbonding-delegations $delegation_address | grep -vE "pagination|total|next_key" >> $balances
 
     # Log stride channels
     print_separator "STRIDE" $channels
@@ -145,6 +154,8 @@ while true; do
 
         community_pool_stake_address=$(GET_HOST_ZONE_FIELD $HOST_CHAIN_ID community_pool_stake_holding_address)
         community_pool_redeem_address=$(GET_HOST_ZONE_FIELD $HOST_CHAIN_ID community_pool_redeem_holding_address)
+
+        print_chain_divider $chain $balances
 
         # Log delegations/undelegations
         print_separator "STAKEIBC STAKING" $balances
