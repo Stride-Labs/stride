@@ -109,6 +109,9 @@ test-cover:
 test-integration-docker:
 	bash $(DOCKERNET_HOME)/tests/run_all_tests.sh
 
+test-integration-docker-all:
+	@ALL_HOST_CHAINS=true bash $(DOCKERNET_HOME)/tests/run_all_tests.sh
+
 ###############################################################################
 ###                                DockerNet                                ###
 ###############################################################################
