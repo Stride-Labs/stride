@@ -7,8 +7,5 @@ BATS=${SCRIPT_DIR}/bats/bats-core/bin/bats
 INTEGRATION_TEST_FILE=${SCRIPT_DIR}/integration_tests.bats 
 
 for i in ${!HOST_CHAINS[@]}; do
-    if [[ "$i" == "0" ]]; then
-        continue
-    fi
     CHAIN_NAME=${HOST_CHAINS[i]} TRANSFER_CHANNEL_NUMBER=$i $BATS $INTEGRATION_TEST_FILE
 done
