@@ -34,29 +34,29 @@ func CreateUpgradeHandler(
 		ctx.Logger().Info("Updating redemption rate bounds...")
 		UpdateRedemptionRateBounds(ctx, stakeibcKeeper)
 
-		ctx.Logger().Info("Resetting delegation changes in progress...")
-		if err := DecrementTerraDelegationChangesInProgress(ctx, stakeibcKeeper); err != nil {
-			return vm, errorsmod.Wrapf(err, "unable to reset delegation changes in progress")
-		}
+		// ctx.Logger().Info("Resetting delegation changes in progress...")
+		// if err := DecrementTerraDelegationChangesInProgress(ctx, stakeibcKeeper); err != nil {
+		// 	return vm, errorsmod.Wrapf(err, "unable to reset delegation changes in progress")
+		// }
 
-		ctx.Logger().Info("Updating unbonding records...")
-		err := UpdateUnbondingRecords(
-			ctx,
-			stakeibcKeeper,
-			recordsKeeper,
-			StartingEstimateEpoch,
-			RedemptionRatesBeforeProp,
-			RedemptionRatesAtTimeOfProp,
-		)
-		if err != nil {
-			return vm, errorsmod.Wrapf(err, "unable to update unbonding records")
-		}
+		// ctx.Logger().Info("Updating unbonding records...")
+		// err := UpdateUnbondingRecords(
+		// 	ctx,
+		// 	stakeibcKeeper,
+		// 	recordsKeeper,
+		// 	StartingEstimateEpoch,
+		// 	RedemptionRatesBeforeProp,
+		// 	RedemptionRatesAtTimeOfProp,
+		// )
+		// if err != nil {
+		// 	return vm, errorsmod.Wrapf(err, "unable to update unbonding records")
+		// }
 
-		ctx.Logger().Info(fmt.Sprintf("Checking on prop %d status...", Prop228ProposalId))
-		if err := ExecuteProp228IfPassed(ctx, bankKeeper, govKeeper); err != nil {
-			ctx.Logger().Error(fmt.Sprintf("Failed to check on or execute prop %d: %s",
-				Prop228ProposalId, err.Error()))
-		}
+		// ctx.Logger().Info(fmt.Sprintf("Checking on prop %d status...", Prop228ProposalId))
+		// if err := ExecuteProp228IfPassed(ctx, bankKeeper, govKeeper); err != nil {
+		// 	ctx.Logger().Error(fmt.Sprintf("Failed to check on or execute prop %d: %s",
+		// 		Prop228ProposalId, err.Error()))
+		// }
 
 		return mm.RunMigrations(ctx, configurator, vm)
 	}
