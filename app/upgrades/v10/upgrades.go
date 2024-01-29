@@ -25,14 +25,17 @@ import (
 	"github.com/cosmos/ibc-go/v7/modules/core/exported"
 	ibctmmigrations "github.com/cosmos/ibc-go/v7/modules/light-clients/07-tendermint/migrations"
 
+	ratelimittypes "github.com/Stride-Labs/ibc-rate-limiting/ratelimit/types"
+
+	ratelimitkeeper "github.com/Stride-Labs/ibc-rate-limiting/ratelimit/keeper"
+
+	ratelimitgov "github.com/Stride-Labs/ibc-rate-limiting/ratelimit/keeper/gov"
+
 	claimkeeper "github.com/Stride-Labs/stride/v18/x/claim/keeper"
 	claimtypes "github.com/Stride-Labs/stride/v18/x/claim/types"
 	icacallbackskeeper "github.com/Stride-Labs/stride/v18/x/icacallbacks/keeper"
 	mintkeeper "github.com/Stride-Labs/stride/v18/x/mint/keeper"
 	minttypes "github.com/Stride-Labs/stride/v18/x/mint/types"
-	ratelimitkeeper "github.com/Stride-Labs/stride/v18/x/ratelimit/keeper"
-	ratelimitgov "github.com/Stride-Labs/stride/v18/x/ratelimit/keeper/gov"
-	ratelimittypes "github.com/Stride-Labs/stride/v18/x/ratelimit/types"
 	recordskeeper "github.com/Stride-Labs/stride/v18/x/records/keeper"
 	recordstypes "github.com/Stride-Labs/stride/v18/x/records/types"
 	stakeibckeeper "github.com/Stride-Labs/stride/v18/x/stakeibc/keeper"

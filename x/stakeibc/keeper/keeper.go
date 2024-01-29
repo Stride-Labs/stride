@@ -86,9 +86,9 @@ func NewKeeper(
 		RecordsKeeper:         RecordsKeeper,
 		StakingKeeper:         StakingKeeper,
 		ICACallbacksKeeper:    ICACallbacksKeeper,
-		RatelimitKeeper:       RatelimitKeeper,
-		ICAOracleKeeper:       icaOracleKeeper,
-		ConsumerKeeper:        ConsumerKeeper,
+		// RatelimitKeeper:       RatelimitKeeper,
+		ICAOracleKeeper: icaOracleKeeper,
+		ConsumerKeeper:  ConsumerKeeper,
 	}
 }
 
