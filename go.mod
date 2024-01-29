@@ -44,7 +44,6 @@ require (
 	github.com/99designs/go-keychain v0.0.0-20191008050251-8e49817e8af4 // indirect
 	github.com/99designs/keyring v1.2.1 // indirect
 	github.com/ChainSafe/go-schnorrkel v0.0.0-20200405005733-88cbf1b4c40d // indirect
-	github.com/Stride-Labs/stride/v17 v17.0.2 // indirect
 	github.com/armon/go-metrics v0.4.1 // indirect
 	github.com/aws/aws-sdk-go v1.44.203 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
@@ -186,7 +185,8 @@ replace (
 	// Use the keyring specified by the cosmos-sdk
 	github.com/99designs/keyring => github.com/cosmos/keyring v1.2.0
 
-	github.com/Stride-Labs/ibc-rate-limiting => github.com/Stride-Labs/ibc-rate-limiting v1.0.0-debug-prepare-v1-1
+	github.com/Stride-Labs/ibc-rate-limiting => github.com/Stride-Labs/ibc-rate-limiting v1.0.0-debug-prepare-v1-3
+
 	github.com/btcsuite/btcd => github.com/btcsuite/btcd v0.22.2 //indirect
 	// fork SDK to fix SDKv0.47 Distribution Bug
 	// TODO - Remove this patch and update Tokens in a subsequent upgrade handler
