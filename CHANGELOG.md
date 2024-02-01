@@ -42,6 +42,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <!-- GH ACTIONS TEMPLATE - INSERT NEW VERSION HERE -->
 
+## [v18.0.0](https://github.com/Stride-Labs/stride/releases/tag/v18.0.0) - 2024-01-26
+
+### On-Chain changes
+1. Query redemption records for multiple addresses ([#1075](https://github.com/Stride-Labs/stride/pull/1075))
+2. Remove address validation from query ([#1079](https://github.com/Stride-Labs/stride/pull/1079))
+3. reset delegation change in progress to 0 when a channel is restored ([#1074](https://github.com/Stride-Labs/stride/pull/1074))
+4. Feature ([#1087](https://github.com/Stride-Labs/stride/pull/1087))
+5. feature fee address ([#1091](https://github.com/Stride-Labs/stride/pull/1091))
+6. V18 Upgrade Migrations ([#1084](https://github.com/Stride-Labs/stride/pull/1084))
+7. v18 Import Paths ([#1093](https://github.com/Stride-Labs/stride/pull/1093))
+
+
 ## [v17.0.0](https://github.com/Stride-Labs/stride/releases/tag/v17.0.0) - 2024-01-11
 
 ### On-Chain changes

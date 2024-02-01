@@ -5,7 +5,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/Stride-Labs/stride/v17/testutil/sample"
+	"github.com/Stride-Labs/stride/v18/testutil/sample"
 )
 
 func TestMsgRestoreInterchainAccount_ValidateBasic(t *testing.T) {

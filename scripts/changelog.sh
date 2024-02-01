@@ -97,13 +97,13 @@ done
 echo -e "\n## [$NEW_VERSION](https://github.com/Stride-Labs/stride/releases/tag/$NEW_VERSION) - $CURRENT_DATE" > $TEMP_MAIN_CHANGELOG
 
 # If there were on-chain changes, add the "On-Chain" section
-if [[ -n "$TEMP_ON_CHAIN_CHANGELOG" ]]; then
+if [[ -s "$TEMP_ON_CHAIN_CHANGELOG" ]]; then
   echo -e "\n### On-Chain changes" >> $TEMP_MAIN_CHANGELOG
   cat "$TEMP_ON_CHAIN_CHANGELOG" >> $TEMP_MAIN_CHANGELOG
 fi
 
 # If there were off-chain changes, add the "Off-Chain" section
-if [[ -n "$TEMP_OFF_CHAIN_CHANGELOG" ]]; then
+if [[ -s "$TEMP_OFF_CHAIN_CHANGELOG" ]]; then
   echo -e "\n### Off-Chain changes" >> $TEMP_MAIN_CHANGELOG
   cat "$TEMP_OFF_CHAIN_CHANGELOG" >> $TEMP_MAIN_CHANGELOG
 fi
@@ -113,7 +113,7 @@ echo "" >> $TEMP_MAIN_CHANGELOG
 sed -i -e "/$MAIN_CHANGELOG_INSERT_STATEMENT/r $TEMP_MAIN_CHANGELOG" $MAIN_CHANGELOG
 
 # Finally, cleanup all the temp files
-rm $TEMP_COMMITS
-rm $TEMP_MAIN_CHANGELOG
-rm $TEMP_ON_CHAIN_CHANGELOG
-rm $TEMP_OFF_CHAIN_CHANGELOG
+rm -f $TEMP_COMMITS
+rm -f $TEMP_MAIN_CHANGELOG
+rm -f $TEMP_ON_CHAIN_CHANGELOG
+rm -f $TEMP_OFF_CHAIN_CHANGELOG

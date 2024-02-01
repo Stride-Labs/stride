@@ -8,10 +8,10 @@ import (
 	"github.com/cosmos/gogoproto/proto"
 	transfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
 
-	"github.com/Stride-Labs/stride/v17/utils"
-	icacallbackstypes "github.com/Stride-Labs/stride/v17/x/icacallbacks/types"
+	"github.com/Stride-Labs/stride/v18/utils"
+	icacallbackstypes "github.com/Stride-Labs/stride/v18/x/icacallbacks/types"
 
-	"github.com/Stride-Labs/stride/v17/x/records/types"
+	"github.com/Stride-Labs/stride/v18/x/records/types"
 )
 
 var (

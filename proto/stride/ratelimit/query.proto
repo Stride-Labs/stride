@@ -5,7 +5,7 @@ import "stride/ratelimit/ratelimit.proto";
 import "google/api/annotations.proto";
 import "gogoproto/gogo.proto";
 
-option go_package = "github.com/Stride-Labs/stride/v17/x/ratelimit/types";
+option go_package = "github.com/Stride-Labs/stride/v18/x/ratelimit/types";
 
 // Query defines the gRPC querier service.
 service Query {

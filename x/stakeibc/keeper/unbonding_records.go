@@ -14,9 +14,9 @@ import (
 	"github.com/cosmos/gogoproto/proto"
 	"github.com/spf13/cast"
 
-	"github.com/Stride-Labs/stride/v17/utils"
-	recordstypes "github.com/Stride-Labs/stride/v17/x/records/types"
-	"github.com/Stride-Labs/stride/v17/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v18/utils"
+	recordstypes "github.com/Stride-Labs/stride/v18/x/records/types"
+	"github.com/Stride-Labs/stride/v18/x/stakeibc/types"
 )
 
 const (
@@ -441,13 +441,16 @@ func (k Keeper) UnbondFromHostZone(ctx sdk.Context, hostZone types.HostZone) err
 	}
 
 	// Get the list of relevant records that should unbond
-	epochUnbondingRecordIds, epochNumberToHostZoneUnbondingMap := k.GetQueuedHostZoneUnbondingRecords(ctx, hostZone.ChainId)
+	_, initialEpochNumberToHostZoneUnbondingMap := k.GetQueuedHostZoneUnbondingRecords(ctx, hostZone.ChainId)
 
 	// Update the native unbond amount on all relevant records
 	// The native amount is calculated from the stTokens
-	if err := k.RefreshUnbondingNativeTokenAmounts(ctx, epochNumberToHostZoneUnbondingMap); err != nil {
+	if err := k.RefreshUnbondingNativeTokenAmounts(ctx, initialEpochNumberToHostZoneUnbondingMap); err != nil {
 		return err
 	}
+
+	// Fetch the records again with the updated native amounts
+	epochUnbondingRecordIds, epochNumberToHostZoneUnbondingMap := k.GetQueuedHostZoneUnbondingRecords(ctx, hostZone.ChainId)
 
 	// Sum the total number of native tokens that from the records above that are ready to unbond
 	totalUnbondAmount := k.GetTotalUnbondAmount(ctx, epochNumberToHostZoneUnbondingMap)

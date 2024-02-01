@@ -10,10 +10,10 @@ import (
 	ibctesting "github.com/cosmos/ibc-go/v7/testing"
 	"github.com/stretchr/testify/require"
 
-	keepertest "github.com/Stride-Labs/stride/v17/testutil/keeper"
-	"github.com/Stride-Labs/stride/v17/testutil/nullify"
-	"github.com/Stride-Labs/stride/v17/x/stakeibc/keeper"
-	"github.com/Stride-Labs/stride/v17/x/stakeibc/types"
+	keepertest "github.com/Stride-Labs/stride/v18/testutil/keeper"
+	"github.com/Stride-Labs/stride/v18/testutil/nullify"
+	"github.com/Stride-Labs/stride/v18/x/stakeibc/keeper"
+	"github.com/Stride-Labs/stride/v18/x/stakeibc/types"
 )
 
 func createNHostZone(keeper *keeper.Keeper, ctx sdk.Context, n int) []types.HostZone {

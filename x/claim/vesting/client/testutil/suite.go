@@ -3,7 +3,7 @@ package testutil
 import (
 	"github.com/stretchr/testify/suite"
 
-	"github.com/Stride-Labs/stride/v17/testutil/network"
+	"github.com/Stride-Labs/stride/v18/testutil/network"
 )
 
 type IntegrationTestSuite struct {

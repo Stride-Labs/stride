@@ -5,10 +5,10 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	keepertest "github.com/Stride-Labs/stride/v17/testutil/keeper"
-	"github.com/Stride-Labs/stride/v17/testutil/nullify"
-	"github.com/Stride-Labs/stride/v17/x/stakeibc"
-	"github.com/Stride-Labs/stride/v17/x/stakeibc/types"
+	keepertest "github.com/Stride-Labs/stride/v18/testutil/keeper"
+	"github.com/Stride-Labs/stride/v18/testutil/nullify"
+	"github.com/Stride-Labs/stride/v18/x/stakeibc"
+	"github.com/Stride-Labs/stride/v18/x/stakeibc/types"
 )
 
 func TestGenesis(t *testing.T) {
