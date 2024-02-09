@@ -36,6 +36,10 @@
 	# Commit: v3.1.0
 	path = deps/noble
 	url = https://github.com/strangelove-ventures/noble.git
+[submodule "deps/haqq"]
+    # Commit: v1.7.1
+	path = deps/haqq
+	url = https://github.com/haqq-network/haqq.git
 # bats
 [submodule "dockernet/tests/bats/bats-core"]
 	path = dockernet/tests/bats/bats-core

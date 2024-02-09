@@ -33,9 +33,9 @@ ACCESSORY_CHAINS=()
 #  - DYDX
 #  - NOBLE (only runs as an accessory chain - does not have liquid staking functionality)
 if [[ "${ALL_HOST_CHAINS:-false}" == "true" ]]; then 
-  HOST_CHAINS=(GAIA EVMOS HOST)
+  HOST_CHAINS=(GAIA HAQQ HOST)
 elif [[ "${#HOST_CHAINS[@]}" == "0" ]]; then 
-  HOST_CHAINS=(GAIA)
+  HOST_CHAINS=(HAQQ)
 fi
 REWARD_CONVERTER_HOST_ZONE=${HOST_CHAINS[0]}
 
@@ -47,6 +47,7 @@ OSMO_DENOM="uosmo"
 STARS_DENOM="ustars"
 WALK_DENOM="uwalk"
 EVMOS_DENOM="aevmos"
+HAQQ_DENOM="aISLM"
 DYDX_DENOM="udydx"
 NOBLE_DENOM="utoken"
 USDC_DENOM="uusdc"
@@ -56,6 +57,7 @@ STOSMO_DENOM="stuosmo"
 STSTARS_DENOM="stustars"
 STWALK_DENOM="stuwalk"
 STEVMOS_DENOM="staevmos"
+STHAQQ_DENOM="staISLM"
 STDYDX_DENOM="studydx"
 
 IBC_GAIA_CHANNEL_0_STATOM_DENOM='ibc/054A44EC8D9B68B9A6F0D5708375E00A5569A28F21E0064FF12CADC3FEF1D04F'
@@ -102,9 +104,15 @@ IBC_DYDX_CHANNEL_1_DENOM='ibc/78B7A771A2ECBF5D10DC6AB35568A7AC4161DB21B3A848DA47
 IBC_DYDX_CHANNEL_2_DENOM='ibc/748465E0D883217048DB25F4C3825D03F682A06FE292E21072BF678E249DAC18'
 IBC_DYDX_CHANNEL_3_DENOM='ibc/6301148031C0AC9A392C2DDB1B2D1F11B3B9D0A3ECF20C6B5122685D9E4CC631'
 
+IBC_HAQQ_CHANNEL_0_DENOM='ibc/AA33B2F28F9AFA0102FEB71F58D8BCB9ECFEB3EFEB308969C2261124BD7882BE'
+IBC_HAQQ_CHANNEL_1_DENOM='ibc/DC093CC85ECD02A9DBFA5230B641C6A84CA6B0A4FA3FD89DA1B963B744A8A7BD'
+IBC_HAQQ_CHANNEL_2_DENOM='ibc/3E0822281FE9FA2C4B848BCA6EED52A6FB38590A5BB27D3B6B9411C41EF7052C'
+IBC_HAQQ_CHANNEL_3_DENOM='ibc/665206DEC8A49B9E03706453A7496DB3E1337649A885ABC5F3A951D8D7CFE560'
+
 IBC_GAIA_STDENOM='ibc/054A44EC8D9B68B9A6F0D5708375E00A5569A28F21E0064FF12CADC3FEF1D04F'
 IBC_HOST_STDENOM='ibc/E3AF56419340E719710C088D3855F65C4717E1A0C3B405F0C1D16F2A54E89421'
 IBC_EVMOS_STDENOM='ibc/04CDA5EBB8A7E94BB60879B7F43EF0EDD2604990D8AB5BA18ADCB173F66FF874'
+IBC_HAQQ_STDENOM='ibc/F0144EE664942C339406C72A40804E5D92978D5E07257D74AE906A7F6EC447ED'
 
 # COIN TYPES
 # Coin types can be found at https://github.com/satoshilabs/slips/blob/master/slip-0044.md
@@ -171,10 +179,10 @@ SAFE_MNEMONIC="chat mechanic patient palm screen response beef cactus report reb
 OPERATOR_MNEMONIC="equal fetch soccer crouch dash similar dinosaur divide video polar fork banana engine tomorrow thought web ramp slight stumble throw kid ridge today afford"
 
 ## On Host Chain
-DELEGATION_ADDRESS="cosmos1n4reqytr7arvpk5z2ute274h2yukcss8dtxjyd"
-REWARD_ADDRESS="cosmos1atchlrd8m4868t5ep2fywxhl2u9c3qg0grnt0e"
-DELEGATION_MNEMONIC="arrange indicate grass click bulk wage vivid strong evil uncover raven solar stone hole strategy about rate negative word inch enforce alley never wealth"
-REWARD_MNEMONIC="drive someone knee omit disease clerk stand rebel asthma lift valid era armed ticket any undo increase magnet rabbit improve rude fortune afraid soon"
+DELEGATION_ADDRESS="haqq1ru779uy8pwqc3f6q4wugx5p0su3zqgm9wrc54h"
+REWARD_ADDRESS="haqq1rflt3kdkhefxzhkt94cwknmdfvpps39cpr55m0"
+DELEGATION_MNEMONIC="mercy spot unique finger universe drive correct frozen twin expect banana club juice obtain brisk size window arrow able people you seminar remain anxiety"
+REWARD_MNEMONIC="wage resemble enlist cherry staff onion party priority guitar cluster ginger wine cake scatter lawsuit truth route grace bench grab april verify swallow educate"
 
 # STRIDE 
 STRIDE_CHAIN_ID=STRIDE
@@ -280,6 +288,20 @@ EVMOS_MAIN_CMD="$EVMOS_BINARY --home $DOCKERNET_HOME/state/${EVMOS_NODE_PREFIX}1
 EVMOS_RECEIVER_ADDRESS='evmos123z469cfejeusvk87ufrs5520wmdxmmlc7qzuw'
 EVMOS_MICRO_DENOM_UNITS="000000000000000000000000"
 
+# HAQQ
+HAQQ_CHAIN_ID=haqq_121799-1
+HAQQ_NODE_PREFIX=haqq
+HAQQ_NUM_NODES=1
+HAQQ_BINARY="$DOCKERNET_HOME/../build/haqqd"
+HAQQ_VAL_PREFIX=hval
+HAQQ_ADDRESS_PREFIX=haqq
+HAQQ_REV_ACCT=hrev1
+HAQQ_DENOM=$HAQQ_DENOM
+HAQQ_RPC_PORT=25757
+HAQQ_MAIN_CMD="$HAQQ_BINARY --home $DOCKERNET_HOME/state/${HAQQ_NODE_PREFIX}1"
+HAQQ_RECEIVER_ADDRESS='haqq1dt3afw9d5vh5nqpn32a2f2w5yln8eedha2q5gm'
+HAQQ_MICRO_DENOM_UNITS="000000000000000000"
+
 # DYDX
 DYDX_CHAIN_ID=DYDX
 DYDX_NODE_PREFIX=dydx
@@ -318,6 +340,7 @@ RELAYER_OSMO_EXEC="$DOCKER_COMPOSE run --rm relayer-osmo"
 RELAYER_STARS_EXEC="$DOCKER_COMPOSE run --rm relayer-stars"
 RELAYER_HOST_EXEC="$DOCKER_COMPOSE run --rm relayer-host"
 RELAYER_EVMOS_EXEC="$DOCKER_COMPOSE run --rm relayer-evmos"
+RELAYER_HAQQ_EXEC="$DOCKER_COMPOSE run --rm relayer-haqq"
 RELAYER_DYDX_EXEC="$DOCKER_COMPOSE run --rm relayer-dydx"
 RELAYER_NOBLE_EXEC="$DOCKER_COMPOSE run --rm relayer-noble"
 
@@ -332,6 +355,7 @@ RELAYER_EVMOS_ACCT=rly7
 RELAYER_STRIDE_ICS_ACCT=rly8
 RELAYER_GAIA_ICS_ACCT=rly9
 RELAYER_DYDX_ACCT=rly10
+RELAYER_HAQQ_ACCT=rly11
 STRIDE_RELAYER_ACCTS=(
   $RELAYER_GAIA_ACCT 
   $RELAYER_JUNO_ACCT 
@@ -341,6 +365,7 @@ STRIDE_RELAYER_ACCTS=(
   $RELAYER_EVMOS_ACCT
   $RELAYER_GAIA_ICS_ACCT
   $RELAYER_DYDX_ACCT
+  $RELAYER_HAQQ_ACCT
 )
 
 # Mnemonics for connections with stride
@@ -352,6 +377,7 @@ RELAYER_HOST_MNEMONIC="renew umbrella teach spoon have razor knee sock divert in
 RELAYER_GAIA_ICS_MNEMONIC="size chimney clog job robot thunder gaze vapor economy smooth kit denial alter merit produce front force eager outside mansion believe fan tonight detect"
 RELAYER_EVMOS_MNEMONIC="science depart where tell bus ski laptop follow child bronze rebel recall brief plug razor ship degree labor human series today embody fury harvest"
 RELAYER_DYDX_MNEMONIC="mother depth nature rapid draw west afraid depend allow fee siren useful catalog sun biology cabbage busy science front smile nurse balcony medal burst"
+RELAYER_HAQQ_MNEMONIC="verify small mouse trophy gym umbrella desk actual toss valid similar cluster update agent mutual special lottery kitten correct gallery purity biology monkey spirit"
 STRIDE_RELAYER_MNEMONICS=(
   "$RELAYER_GAIA_MNEMONIC"
   "$RELAYER_JUNO_MNEMONIC"
@@ -361,6 +387,7 @@ STRIDE_RELAYER_MNEMONICS=(
   "$RELAYER_EVMOS_MNEMONIC"
   "$RELAYER_GAIA_ICS_MNEMONIC"
   "$RELAYER_DYDX_MNEMONIC"
+  "$RELAYER_HAQQ_MNEMONIC"
 )
 # Mnemonics for connections between accessory chains
 RELAYER_STRIDE_OSMO_MNEMONIC="father october lonely ticket leave regret pudding buffalo return asthma plastic piano beef orient ill clip right phone ready pottery helmet hip solid galaxy"
@@ -403,7 +430,10 @@ HOST_ADDRESS() {
 EVMOS_ADDRESS() { 
   $EVMOS_MAIN_CMD keys show ${EVMOS_VAL_PREFIX}1 --keyring-backend test -a 
 }
-DYDX_ADDRESS() { 
+HAQQ_ADDRESS() {
+  $HAQQ_MAIN_CMD keys show ${HAQQ_VAL_PREFIX}1 --keyring-backend test -a
+}
+DYDX_ADDRESS() {
   $DYDX_MAIN_CMD keys show ${DYDX_VAL_PREFIX}1 --keyring-backend test -a 
 }
 NOBLE_ADDRESS() { 
@@ -467,7 +497,7 @@ WAIT_FOR_BALANCE_CHANGE() {
   denom=$3
   minimum_change=${4:-1} # defaults to 1
 
-  max_blocks=30
+  max_blocks=100
 
   main_cmd=$(GET_VAR_VALUE ${chain}_MAIN_CMD)
   initial_balance=$($main_cmd q bank balances $address --denom $denom | grep amount | NUMBERS_ONLY)

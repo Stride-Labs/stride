@@ -111,6 +111,23 @@ chains:
       sign-mode: direct
       extra-codecs:
         - ethermint
+  haqq:
+    type: cosmos
+    value:
+      key: rly11
+      chain-id: haqq_121799-1
+      rpc-addr: http://haqq1:26657
+      account-prefix: haqq
+      keyring-backend: test
+      gas-adjustment: 2.5
+      gas-prices: 30000000000aISLM
+      coin-type: 60
+      debug: false
+      timeout: 20s
+      output-format: json
+      sign-mode: direct
+      extra-codecs:
+        - ethermint
   dydx:
     type: cosmos
     value:
@@ -198,6 +215,14 @@ paths:
       chain-id: STRIDE
     dst:
       chain-id: evmos_9001-2
+    src-channel-filter:
+      rule: ""
+      channel-list: []
+  stride-haqq:
+    src:
+      chain-id: STRIDE
+    dst:
+      chain-id: haqq_121799-1
     src-channel-filter:
       rule: ""
       channel-list: []

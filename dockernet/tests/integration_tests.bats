@@ -363,7 +363,7 @@ setup_file() {
   expected_record_minimum=$(echo "$REDEEM_AMOUNT * 2" | bc)
   assert_equal "$redemption_record_st_amount" "$expected_record_minimum"
 
-  WAIT_FOR_STRING $STRIDE_LOGS "\[REDEMPTION] completed on $HOST_CHAIN_ID"
+  WAIT_FOR_STRING $STRIDE_LOGS "\[REDEMPTION\] completed on $HOST_CHAIN_ID"
   WAIT_FOR_BLOCK $STRIDE_LOGS 2
 
   # check that the tokens were transferred to the redemption account

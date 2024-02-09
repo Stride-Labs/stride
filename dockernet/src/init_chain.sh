@@ -122,6 +122,14 @@ set_host_genesis() {
         jq '.app_state.staking.params.validator_liquid_staking_cap = $newVal' --arg newVal "$LSM_VALIDATOR_LIQUID_STAKING_CAP" $genesis_config > json.tmp && mv json.tmp $genesis_config
         jq '.app_state.staking.params.global_liquid_staking_cap = $newVal' --arg newVal "$LSM_GLOBAL_LIQUID_STAKING_CAP" $genesis_config > json.tmp && mv json.tmp $genesis_config
     fi
+
+    # HAQQ CONSENSUS PARAMS
+    if [[ "$CHAIN" == "HAQQ" ]]; then
+        echo "change consensus_params.block.max_gas value"
+        jq '.consensus_params.block.max_gas = $newVal' --arg newVal "40000000" $genesis_config > json.tmp && mv json.tmp $genesis_config
+        # Disable gas price calculations for tests
+        jq '.app_state.feemarket.params.no_base_fee = true' $genesis_config > json.tmp && mv json.tmp $genesis_config
+    fi
 }
 
 set_consumer_genesis() {

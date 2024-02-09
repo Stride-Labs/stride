@@ -178,6 +178,25 @@ services:
     volumes:
       - ./state/noble3:/home/noble/.noble
 
+  haqq1:
+    image: stridezone:haqq
+    volumes:
+      - ./state/haqq1:/home/haqq/.haqqd
+    ports:
+      - "25757:26657"
+      - "1227:1317"
+      - "9000:9090"
+
+  haqq2:
+    image: stridezone:haqq
+    volumes:
+      - ./state/haqq2:/home/haqq/.haqqd
+
+  haqq3:
+    image: stridezone:haqq
+    volumes:
+      - ./state/haqq3:/home/haqq/.haqqd
+
   # Fill in new host zone being tested here
 
   hermes:
@@ -243,6 +262,13 @@ services:
       - ./state/relayer-dydx:/home/relayer/.relayer
     restart: always
     command: [ "bash", "start.sh", "stride-dydx" ]
+
+  relayer-haqq:
+    image: stridezone:relayer
+    volumes:
+      - ./state/relayer-haqq:/home/relayer/.relayer
+    restart: always
+    command: [ "bash", "start.sh", "stride-haqq" ]
 
   # Relayers for rate limiter tests
   relayer-juno-osmo:

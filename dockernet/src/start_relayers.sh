@@ -20,12 +20,20 @@ for chain in ${HOST_CHAINS[@]}; do
     chmod -R 777 $STATE/relayer-${chain_name}
     cp ${DOCKERNET_HOME}/config/relayer_config_stride.yaml $relayer_config/config.yaml
 
-    printf "STRIDE <> $chain - Adding relayer keys..."
-    $relayer_exec rly keys restore stride $RELAYER_STRIDE_ACCT "$mnemonic" >> $relayer_logs 2>&1
-    $relayer_exec rly keys restore $chain_name $account_name "$mnemonic" >> $relayer_logs 2>&1
+    echo "STRIDE <> $chain - Adding relayer keys..."
+    printf "STRIDE relayer key... "
+    relayer_address_1=$($relayer_exec rly keys restore stride $RELAYER_STRIDE_ACCT "$mnemonic")
+    echo $relayer_address_1 >> $relayer_logs 2>&1
+    echo $relayer_address_1
+
+    printf  "$chain_name relayer key... "
+    relayer_address_2=$($relayer_exec rly keys restore $chain_name $account_name "$mnemonic")
+    echo $relayer_address_2 >> $relayer_logs 2>&1
+    echo $relayer_address_2
+
     echo "Done"
 
-    printf "STRIDE <> $chain - Creating client, connection, and transfer channel..." | tee -a $relayer_logs
+    printf "STRIDE <> $chain - Creating client, connection, and transfer channel... " | tee -a $relayer_logs
     $relayer_exec rly transact link stride-${chain_name} >> $relayer_logs 2>&1
     echo "Done"
 

@@ -19,7 +19,7 @@ for chain_id in STRIDE ${HOST_CHAINS[@]} ${ACCESSORY_CHAINS[@]:-}; do
 done
 
 for chain_id in STRIDE ${HOST_CHAINS[@]} ${ACCESSORY_CHAINS[@]:-}; do
-    printf "Waiting for $chain_id to start..."
+    printf "Waiting for $chain_id to start... "
 
     node_prefix=$(GET_VAR_VALUE ${chain_id}_NODE_PREFIX)
     log_file=$DOCKERNET_HOME/logs/${node_prefix}.log
