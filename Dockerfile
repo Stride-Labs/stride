@@ -6,7 +6,7 @@ ARG RUNNER_IMAGE="alpine:3.16"
 FROM golang:${GO_VERSION}-alpine as builder
 
 WORKDIR /opt
-RUN apk add --no-cache make git gcc musl-dev openssl-dev linux-headers
+RUN apk add --no-cache make git gcc musl-dev openssl-dev linux-headers ca-certificates build-base
 
 COPY go.mod .
 COPY go.sum .
@@ -15,10 +15,13 @@ RUN --mount=type=cache,target=/root/.cache/go-build \
     --mount=type=cache,target=/root/go/pkg/mod \
     go mod download
 
-# Copy the remaining files
+RUN WASMVM_VERSION=$(cat go.mod | grep github.com/CosmWasm/wasmvm | awk '{print $2}') \
+    && wget https://github.com/CosmWasm/wasmvm/releases/download/$WASMVM_VERSION/libwasmvm_muslc.$(uname -m).a \
+    -O /lib/libwasmvm_muslc.a
+
 COPY . .
 
-RUN LINK_STATICALLY=true make build
+RUN BUILD_TAGS=muslc LINK_STATICALLY=true make build
 
 # Add to a distroless container
 FROM ${RUNNER_IMAGE}
