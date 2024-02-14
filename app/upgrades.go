@@ -24,6 +24,7 @@ import (
 	v16 "github.com/Stride-Labs/stride/v18/app/upgrades/v16"
 	v17 "github.com/Stride-Labs/stride/v18/app/upgrades/v17"
 	v18 "github.com/Stride-Labs/stride/v18/app/upgrades/v18"
+	v19 "github.com/Stride-Labs/stride/v18/app/upgrades/v19"
 	v2 "github.com/Stride-Labs/stride/v18/app/upgrades/v2"
 	v3 "github.com/Stride-Labs/stride/v18/app/upgrades/v3"
 	v4 "github.com/Stride-Labs/stride/v18/app/upgrades/v4"
@@ -245,6 +246,17 @@ func (app *StrideApp) setupUpgradeHandlers(appOpts servertypes.AppOptions) {
 			app.GovKeeper,
 			app.RecordsKeeper,
 			app.StakeibcKeeper,
+		),
+	)
+
+	// v19 upgrade handler
+	app.UpgradeKeeper.SetUpgradeHandler(
+		v19.UpgradeName,
+		v19.CreateUpgradeHandler(
+			app.mm,
+			app.configurator,
+			app.appCodec,
+			app.WasmKeeper,
 		),
 	)
 
