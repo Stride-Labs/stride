@@ -1208,8 +1208,6 @@ func (app *StrideApp) RegisterAPIRoutes(apiSvr *api.Server, apiConfig config.API
 
 	ModuleBasics.RegisterGRPCGatewayRoutes(clientCtx, apiSvr.GRPCGatewayRouter)
 	nodeservice.RegisterGRPCGatewayRoutes(clientCtx, apiSvr.GRPCGatewayRouter)
-
-	// TODO [CW]: Test that we can query REST wasm contracts without needing to add routes here
 }
 
 // RegisterTxService implements the Application.RegisterTxService method.
