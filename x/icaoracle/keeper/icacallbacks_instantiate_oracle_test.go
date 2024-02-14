@@ -1,6 +1,7 @@
 package keeper_test
 
 import (
+	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	"github.com/cosmos/gogoproto/proto"
 	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
 
@@ -28,7 +29,7 @@ func (s *KeeperTestSuite) SetupTestInstantiateOracleCallback() InstantiateOracle
 
 	// Build ack response
 	contractAddress := "contract_address"
-	icaResponse := types.MsgInstantiateContractResponse{
+	icaResponse := wasmtypes.MsgInstantiateContractResponse{
 		Address: contractAddress,
 	}
 	icaResponseBz, err := proto.Marshal(&icaResponse)
@@ -154,7 +155,7 @@ func (s *KeeperTestSuite) TestInstantiateOracleCallback_NoContractAddressInICARe
 	tc := s.SetupTestInstantiateOracleCallback()
 
 	// Create an ack response that does not contain a contract address
-	responseWithNoContract := types.MsgInstantiateContractResponse{}
+	responseWithNoContract := wasmtypes.MsgInstantiateContractResponse{}
 	responseWithNoContractBz, err := proto.Marshal(&responseWithNoContract)
 	s.Require().NoError(err, "no error expected when marshalling contract response")
 
