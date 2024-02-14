@@ -7,6 +7,7 @@ import (
 	"time"
 
 	errorsmod "cosmossdk.io/errors"
+	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 	cometbftdb "github.com/cometbft/cometbft-db"
 	types1 "github.com/cometbft/cometbft/abci/types"
 	cometbftrand "github.com/cometbft/cometbft/libs/rand"
@@ -78,9 +79,16 @@ func DefaultConfig() network.Config {
 			}
 
 			return app.NewStrideApp(
-				val.GetCtx().Logger, cometbftdb.NewMemDB(), nil, true, map[int64]bool{}, val.GetCtx().Config.RootDir, 0,
+				val.GetCtx().Logger,
+				cometbftdb.NewMemDB(),
+				nil,
+				true,
+				map[int64]bool{},
+				val.GetCtx().Config.RootDir,
+				0,
 				encoding,
 				simtestutil.EmptyAppOptions{},
+				[]wasmkeeper.Option{},
 				baseapp.SetPruning(pruningtypes.NewPruningOptionsFromString(val.GetAppConfig().Pruning)),
 				baseapp.SetMinGasPrices(val.GetAppConfig().MinGasPrices),
 				baseapp.SetChainID(chainId),

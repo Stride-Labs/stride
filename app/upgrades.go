@@ -3,6 +3,7 @@ package app
 import (
 	"fmt"
 
+	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	servertypes "github.com/cosmos/cosmos-sdk/server/types"
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	authz "github.com/cosmos/cosmos-sdk/x/authz"
@@ -295,6 +296,10 @@ func (app *StrideApp) setupUpgradeHandlers(appOpts servertypes.AppOptions) {
 	case "v18":
 		storeUpgrades = &storetypes.StoreUpgrades{
 			Added: []string{staketiatypes.ModuleName},
+		}
+	case "v19":
+		storeUpgrades = &storetypes.StoreUpgrades{
+			Added: []string{wasmtypes.ModuleName},
 		}
 	}
 
