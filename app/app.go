@@ -645,7 +645,7 @@ func NewStrideApp(
 
 	// Add wasm keeper
 	// QUESTION: do we need any custom opts, stargate, or ICS20 wasm hooks? Assuming no to all
-	wasmCapabilities := "iterator,staking,cosmwasm_1_1,cosmwasm_1_2,cosmwasm_1_3,cosmwasm_1_4"
+	wasmCapabilities := "iterator,staking,stargate,cosmwasm_1_1,cosmwasm_1_2,cosmwasm_1_3,cosmwasm_1_4"
 	wasmDir := filepath.Join(homePath, "wasm")
 	wasmConfig, err := wasm.ReadWasmConfig(appOpts)
 	if err != nil {
