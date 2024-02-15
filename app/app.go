@@ -1019,6 +1019,7 @@ func NewStrideApp(
 			ConsumerKeeper:    app.ConsumerKeeper,
 			WasmConfig:        &wasmConfig,
 			TXCounterStoreKey: keys[wasmtypes.StoreKey],
+			WasmKeeper:        &app.WasmKeeper,
 		},
 	)
 	if err != nil {

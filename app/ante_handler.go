@@ -22,6 +22,7 @@ type HandlerOptions struct {
 	IBCKeeper         *ibckeeper.Keeper
 	ConsumerKeeper    ccvconsumerkeeper.Keeper
 	WasmConfig        *wasmtypes.WasmConfig
+	WasmKeeper        *wasmkeeper.Keeper
 	TXCounterStoreKey storetypes.StoreKey
 }
 
@@ -51,6 +52,7 @@ func NewAnteHandler(options HandlerOptions) (sdk.AnteHandler, error) {
 		ante.NewSetUpContextDecorator(),
 		wasmkeeper.NewLimitSimulationGasDecorator(options.WasmConfig.SimulationGasLimit),
 		wasmkeeper.NewCountTXDecorator(options.TXCounterStoreKey),
+		wasmkeeper.NewGasRegisterDecorator(options.WasmKeeper.GetGasRegister()),
 		ante.NewExtensionOptionsDecorator(options.ExtensionOptionChecker),
 		// temporarily disabled so that chain can be tested locally without the provider chain running
 		consumerante.NewDisabledModulesDecorator("/cosmos.evidence", "/cosmos.slashing"),
