@@ -226,10 +226,8 @@ github.com/Stride-Labs/cast v0.0.3 h1:eM3n/t3hSxb+iw9LDo3r/uGBp3w4U7wPv40GKMtJ1d
 github.com/Stride-Labs/cast v0.0.3/go.mod h1:SpXXQ5YoyJw6s3/6cMTQuxvgRl3PCJiyaX9p6b155UU=
 github.com/Stride-Labs/cosmos-sdk v0.47.5-stride-distribution-fix-0 h1:vFiTvB2FwOWvTmHM8WQ4rS3dV/wniIRYYQ3dkS/ZikA=
 github.com/Stride-Labs/cosmos-sdk v0.47.5-stride-distribution-fix-0/go.mod h1:EHwCeN9IXonsjKcjpS12MqeStdZvIdxt3VYXhus3G3c=
-github.com/Stride-Labs/ibc-rate-limiting v1.0.0-debug-prepare-v1-3 h1:HYgTEzDt59n8RFI5AIdlssUBFstHAzjeUfafgQNFtp0=
-github.com/Stride-Labs/ibc-rate-limiting v1.0.0-debug-prepare-v1-3/go.mod h1:xDS8I/NKxYIyCYFWIFaY/mEkdXyC0JAIo+cVjJArNBQ=
-github.com/Stride-Labs/stride/v17 v17.0.2 h1:sRPew1u73/DCRdd+3fOWuPw7SAsTBe/qbnjIGLQdflU=
-github.com/Stride-Labs/stride/v17 v17.0.2/go.mod h1:jbTRL2qCflAZCWTserHHBQ35+zzzYW6HfvyGluNSvqg=
+github.com/Stride-Labs/ibc-rate-limiting v1.0.0-rc1 h1:fkc5O8beTGpXND/0jPQGHwGntZMe1kIAOcsaJ1dYF/I=
+github.com/Stride-Labs/ibc-rate-limiting v1.0.0-rc1/go.mod h1:2Yws7FxMXtIjRYJMEIrb+tR3wiCEzIVVv+A534H8lDk=
 github.com/Stride-Labs/vesting v1.0.0-check-base-account h1:eFlSH1itTVb0y4DKIlukSzawfwi2XidQ8+gcwZJRxnA=
 github.com/Stride-Labs/vesting v1.0.0-check-base-account/go.mod h1:sR5uUxxee8EhXEyqTmq06y5j2Nku1u9l4GJbxeRjlpw=
 github.com/VividCortex/gohistogram v1.0.0 h1:6+hBz+qvs0JOrrNhhmR7lFxo5sINxBCGXrdtl/UvroE=

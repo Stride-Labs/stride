@@ -36,6 +36,13 @@ set_stride_epochs() {
     jq '(.app_state.epochs.epochs[] | select(.identifier=="hour") ).duration = $epochLen' --arg epochLen $STRIDE_HOUR_EPOCH_DURATION $genesis_config > json.tmp && mv json.tmp $genesis_config
     jq '(.app_state.epochs.epochs[] | select(.identifier=="stride_epoch") ).duration = $epochLen' --arg epochLen $STRIDE_EPOCH_EPOCH_DURATION $genesis_config > json.tmp && mv json.tmp $genesis_config
     jq '(.app_state.epochs.epochs[] | select(.identifier=="mint") ).duration = $epochLen' --arg epochLen $STRIDE_MINT_EPOCH_DURATION $genesis_config > json.tmp && mv json.tmp $genesis_config
+
+    # Make sure hour epoch starts on the hour
+    start_time=$(date -u +"%Y-%m-%dT%H"):00:00Z
+    jq '(.app_state.epochs.epochs[] | select(.identifier=="hour") ).start_time = $epochLen' --arg epochLen $start_time $genesis_config > json.tmp && mv json.tmp $genesis_config
+
+    # Set the hour epoch in the rate limit module
+    jq '.app_state.ratelimit.hour_epoch.duration = $newVal' --arg newVal "$STRIDE_HOUR_EPOCH_DURATION" $genesis_config > json.tmp && mv json.tmp $genesis_config
 }
 
 set_stride_genesis() {

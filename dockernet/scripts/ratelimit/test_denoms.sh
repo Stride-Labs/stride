@@ -120,6 +120,7 @@ __test_denom_send_packet_non_native_two_hops() { # send non-native (two hops)
     #  Expected Channel: channel-1
     traveler_juno_on_stride='ibc/FDB2394AA02EA9AC7DF68BE86BBE54846065EB967165FE78262601FBCAFB1A8F'
     check_transfer_status STRIDE JUNO channel-1 channel-1 10000000 $traveler_juno_on_stride $traveler_juno_on_stride true
+    sleep 10
 }
 
 __test_denom_receive_packet_source_non_native() { # receive source non-native
