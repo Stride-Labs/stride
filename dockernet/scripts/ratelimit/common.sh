@@ -133,11 +133,10 @@ check_transfer_status() {
 }
 
 submit_proposal_and_vote() {
-    proposal_type=$1
-    proposal_file=$2
+    proposal_file=$1
 
     echo ">>> Submitting proposal for: $proposal_file"
-    $STRIDE_MAIN_CMD tx gov submit-legacy-proposal $proposal_type ${CURRENT_DIR}/proposals/${proposal_file} \
+    $STRIDE_MAIN_CMD tx gov submit-proposal ${CURRENT_DIR}/proposals/${proposal_file} \
         --from ${STRIDE_VAL_PREFIX}1 -y --gas 1000000 | TRIM_TX
     sleep 3
 

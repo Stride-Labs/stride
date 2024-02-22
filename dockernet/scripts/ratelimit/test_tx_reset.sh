@@ -19,7 +19,7 @@ test_tx_reset_atom_from_gaia_to_stride() {
 
     # Reset the rate limit manually
     printf "\n>>> Resetting rate limit...\n"
-    submit_proposal_and_vote reset-rate-limit reset_uatom.json
+    submit_proposal_and_vote reset_uatom.json
     sleep 30
 
     # Then successfully transfer after the reset 
@@ -60,7 +60,7 @@ test_tx_reset_atom_from_stride_to_gaia() {
 
     # Reset the rate limit manually
     printf "\n>>> Resetting rate limit...\n"
-    submit_proposal_and_vote reset-rate-limit reset_uatom.json
+    submit_proposal_and_vote reset_uatom.json
     sleep 30
 
     # Then successfully transfer after the reset 
