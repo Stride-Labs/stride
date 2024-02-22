@@ -11,12 +11,10 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
-	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
 	capabilitykeeper "github.com/cosmos/cosmos-sdk/x/capability/keeper"
 	consensusparamkeeper "github.com/cosmos/cosmos-sdk/x/consensus/keeper"
 	govkeeper "github.com/cosmos/cosmos-sdk/x/gov/keeper"
-	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	paramskeeper "github.com/cosmos/cosmos-sdk/x/params/keeper"
 	paramstypes "github.com/cosmos/cosmos-sdk/x/params/types"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
@@ -333,8 +331,7 @@ func EnableRateLimits(
 		denom := stakeibctypes.StAssetDenomFromHostZoneDenom(hostZone.HostDenom)
 		channelId := hostZone.TransferChannelId
 
-		addRateLimit := &ratelimittypes.MsgAddRateLimit{
-			Authority:      authtypes.NewModuleAddress(govtypes.ModuleName).String(),
+		addRateLimitMsg := &ratelimittypes.MsgAddRateLimit{
 			Denom:          denom,
 			ChannelId:      channelId,
 			MaxPercentSend: threshold,
@@ -342,8 +339,7 @@ func EnableRateLimits(
 			DurationHours:  RateLimitDurationHours,
 		}
 
-		msgServer := ratelimitkeeper.NewMsgServerImpl(ratelimitKeeper)
-		if _, err := msgServer.AddRateLimit(ctx, addRateLimit); err != nil {
+		if err := ratelimitKeeper.AddRateLimit(ctx, addRateLimitMsg); err != nil {
 			return errorsmod.Wrapf(err, "unable to add rate limit for %s", denom)
 		}
 
