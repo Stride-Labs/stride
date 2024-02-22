@@ -188,6 +188,8 @@ require (
 replace (
 	// Use the keyring specified by the cosmos-sdk
 	github.com/99designs/keyring => github.com/cosmos/keyring v1.2.0
+
+	github.com/CosmWasm/wasmvm => github.com/Stride-Labs/wasmvm v1.5.2-debug-store-code-2
 	github.com/btcsuite/btcd => github.com/btcsuite/btcd v0.22.2 //indirect
 	// fork SDK to fix SDKv0.47 Distribution Bug
 	// TODO - Remove this patch and update Tokens in a subsequent upgrade handler

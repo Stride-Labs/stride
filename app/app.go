@@ -654,6 +654,13 @@ func NewStrideApp(
 
 	scopedWasmKeeper := app.CapabilityKeeper.ScopeToModule(wasmtypes.ModuleName)
 
+	wasmOpts = append(
+		wasmOpts,
+		wasmkeeper.WithQueryPlugins(&wasmkeeper.QueryPlugins{
+			Stargate: wasmkeeper.AcceptListStargateQuerier(wasmkeeper.AcceptedStargateQueries{}, app.GRPCQueryRouter(), appCodec),
+		}),
+	)
+
 	app.WasmKeeper = wasmkeeper.NewKeeper(
 		appCodec,
 		keys[wasmtypes.StoreKey],

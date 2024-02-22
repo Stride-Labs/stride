@@ -16,6 +16,7 @@ RUN --mount=type=cache,target=/root/.cache/go-build \
     go mod download
 
 RUN WASMVM_VERSION=$(cat go.mod | grep github.com/CosmWasm/wasmvm | awk '{print $2}') \
+    && WASMVM_VERSION=v1.5.2 \
     && wget https://github.com/CosmWasm/wasmvm/releases/download/$WASMVM_VERSION/libwasmvm_muslc.$(uname -m).a \
     -O /lib/libwasmvm_muslc.a
 
