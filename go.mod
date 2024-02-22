@@ -185,7 +185,7 @@ replace (
 	// Use the keyring specified by the cosmos-sdk
 	github.com/99designs/keyring => github.com/cosmos/keyring v1.2.0
 
-	github.com/Stride-Labs/ibc-rate-limiting => github.com/Stride-Labs/ibc-rate-limiting v1.0.0-rc1
+	github.com/Stride-Labs/ibc-rate-limiting => github.com/Stride-Labs/ibc-rate-limiting v1.0.0-rc2
 
 	github.com/btcsuite/btcd => github.com/btcsuite/btcd v0.22.2 //indirect
 	// fork SDK to fix SDKv0.47 Distribution Bug

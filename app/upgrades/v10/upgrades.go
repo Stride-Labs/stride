@@ -11,10 +11,12 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
 	capabilitykeeper "github.com/cosmos/cosmos-sdk/x/capability/keeper"
 	consensusparamkeeper "github.com/cosmos/cosmos-sdk/x/consensus/keeper"
 	govkeeper "github.com/cosmos/cosmos-sdk/x/gov/keeper"
+	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	paramskeeper "github.com/cosmos/cosmos-sdk/x/params/keeper"
 	paramstypes "github.com/cosmos/cosmos-sdk/x/params/types"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
@@ -25,11 +27,8 @@ import (
 	"github.com/cosmos/ibc-go/v7/modules/core/exported"
 	ibctmmigrations "github.com/cosmos/ibc-go/v7/modules/light-clients/07-tendermint/migrations"
 
-	ratelimittypes "github.com/Stride-Labs/ibc-rate-limiting/ratelimit/types"
-
 	ratelimitkeeper "github.com/Stride-Labs/ibc-rate-limiting/ratelimit/keeper"
-
-	ratelimitgov "github.com/Stride-Labs/ibc-rate-limiting/ratelimit/keeper/gov"
+	ratelimittypes "github.com/Stride-Labs/ibc-rate-limiting/ratelimit/types"
 
 	claimkeeper "github.com/Stride-Labs/stride/v18/x/claim/keeper"
 	claimtypes "github.com/Stride-Labs/stride/v18/x/claim/types"
@@ -334,7 +333,8 @@ func EnableRateLimits(
 		denom := stakeibctypes.StAssetDenomFromHostZoneDenom(hostZone.HostDenom)
 		channelId := hostZone.TransferChannelId
 
-		addRateLimit := &ratelimittypes.AddRateLimitProposal{
+		addRateLimit := &ratelimittypes.MsgAddRateLimit{
+			Authority:      authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 			Denom:          denom,
 			ChannelId:      channelId,
 			MaxPercentSend: threshold,
@@ -342,7 +342,8 @@ func EnableRateLimits(
 			DurationHours:  RateLimitDurationHours,
 		}
 
-		if err := ratelimitgov.AddRateLimit(ctx, ratelimitKeeper, channelKeeper, addRateLimit); err != nil {
+		msgServer := ratelimitkeeper.NewMsgServerImpl(ratelimitKeeper)
+		if _, err := msgServer.AddRateLimit(ctx, addRateLimit); err != nil {
 			return errorsmod.Wrapf(err, "unable to add rate limit for %s", denom)
 		}
 

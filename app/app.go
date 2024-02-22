@@ -131,7 +131,6 @@ import (
 	autopilottypes "github.com/Stride-Labs/stride/v18/x/autopilot/types"
 
 	"github.com/Stride-Labs/ibc-rate-limiting/ratelimit"
-	ratelimitclient "github.com/Stride-Labs/ibc-rate-limiting/ratelimit/client"
 	ratelimitkeeper "github.com/Stride-Labs/ibc-rate-limiting/ratelimit/keeper"
 	ratelimittypes "github.com/Stride-Labs/ibc-rate-limiting/ratelimit/types"
 
@@ -182,10 +181,6 @@ func getGovProposalHandlers() []govclient.ProposalHandler {
 		ibcclientclient.UpgradeProposalHandler,
 		stakeibcclient.AddValidatorsProposalHandler,
 		stakeibcclient.ToggleLSMProposalHandler,
-		ratelimitclient.AddRateLimitProposalHandler,
-		ratelimitclient.UpdateRateLimitProposalHandler,
-		ratelimitclient.RemoveRateLimitProposalHandler,
-		ratelimitclient.ResetRateLimitProposalHandler,
 		evmosvestingclient.RegisterClawbackProposalHandler,
 	)
 
@@ -486,6 +481,7 @@ func NewStrideApp(
 		appCodec,
 		keys[ratelimittypes.StoreKey],
 		app.GetSubspace(ratelimittypes.ModuleName),
+		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 		app.BankKeeper,
 		app.IBCKeeper.ChannelKeeper,
 		app.IBCKeeper.ChannelKeeper, // ICS4Wrapper
@@ -674,7 +670,6 @@ func NewStrideApp(
 		AddRoute(upgradetypes.RouterKey, upgrade.NewSoftwareUpgradeProposalHandler(app.UpgradeKeeper)).
 		AddRoute(ibcclienttypes.RouterKey, ibcclient.NewClientProposalHandler(app.IBCKeeper.ClientKeeper)).
 		AddRoute(stakeibcmoduletypes.RouterKey, stakeibcmodule.NewStakeibcProposalHandler(app.StakeibcKeeper)).
-		AddRoute(ratelimittypes.RouterKey, ratelimit.NewRateLimitProposalHandler(app.RatelimitKeeper, app.IBCKeeper.ChannelKeeper)).
 		AddRoute(evmosvestingtypes.RouterKey, evmosvesting.NewVestingProposalHandler(&app.VestingKeeper))
 
 	govKeeper := govkeeper.NewKeeper(
