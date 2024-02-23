@@ -1,9 +1,9 @@
 # syntax = docker/dockerfile:1
 
 ARG GO_VERSION="1.21"
-ARG RUNNER_IMAGE="alpine:3.16"
+ARG RUNNER_IMAGE_VERSION="3.17"
 
-FROM golang:${GO_VERSION}-alpine as builder
+FROM golang:${GO_VERSION}-alpine${RUNNER_IMAGE_VERSION} as builder
 
 WORKDIR /opt
 RUN apk add --no-cache make git gcc musl-dev openssl-dev linux-headers ca-certificates build-base
@@ -24,10 +24,10 @@ COPY . .
 RUN BUILD_TAGS=muslc LINK_STATICALLY=true make build
 
 # Add to a distroless container
-FROM ${RUNNER_IMAGE}
+FROM alpine:${RUNNER_IMAGE_VERSION}
 
 COPY --from=builder /opt/build/strided /usr/local/bin/strided
-RUN apk add bash vim sudo dasel \
+RUN apk add bash vim sudo dasel jq \
     && addgroup -g 1000 stride \
     && adduser -S -h /home/stride -D stride -u 1000 -G stride 
 
