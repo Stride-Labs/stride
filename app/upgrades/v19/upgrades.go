@@ -31,7 +31,6 @@ func CreateUpgradeHandler(
 		}
 
 		// Update wasm params so that contracts can only be uploaded through governance
-		// QUESTION: Should we set an admin address for instantiation?
 		wasmParams := wasmKeeper.GetParams(ctx)
 		wasmParams.CodeUploadAccess = wasmtypes.AccessConfig{
 			Permission: wasmtypes.AccessTypeNobody,
