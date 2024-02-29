@@ -9,6 +9,7 @@ import (
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
+	"github.com/Stride-Labs/stride/v18/utils"
 	"github.com/Stride-Labs/stride/v18/x/stakeibc/types"
 )
 
@@ -111,4 +112,53 @@ func (k Keeper) RemoveValidatorFromHostZone(ctx sdk.Context, chainId string, val
 	errMsg := fmt.Sprintf("Validator address (%s) not found on host zone (%s)", validatorAddress, chainId)
 	k.Logger(ctx).Error(errMsg)
 	return errorsmod.Wrapf(types.ErrValidatorNotFound, errMsg)
+}
+
+// Updates a validator's individual delegation, and the corresponding total delegation on the host zone
+// Note: This modifies the original host zone struct. The calling function must Set this host zone
+// for changes to persist
+func (k Keeper) AddDelegationToValidator(
+	ctx sdk.Context,
+	hostZone *types.HostZone,
+	validatorAddress string,
+	amount sdkmath.Int,
+	callbackId string,
+) error {
+	for _, validator := range hostZone.Validators {
+		if validator.Address == validatorAddress {
+			k.Logger(ctx).Info(utils.LogICACallbackWithHostZone(hostZone.ChainId, callbackId,
+				"  Validator %s, Current Delegation: %v, Delegation Change: %v", validator.Address, validator.Delegation, amount))
+
+			// If the delegation change is negative, make sure it wont cause the delegation to fall below zero
+			if amount.IsNegative() {
+				if amount.Abs().GT(validator.Delegation) {
+					return errorsmod.Wrapf(types.ErrValidatorDelegationChg,
+						"Delegation change (%v) is greater than validator (%s) delegation %v",
+						amount.Abs(), validatorAddress, validator.Delegation)
+				}
+				if amount.Abs().GT(hostZone.TotalDelegations) {
+					return errorsmod.Wrapf(types.ErrValidatorDelegationChg,
+						"Delegation change (%v) is greater than total delegation amount on host %s (%v)",
+						amount.Abs(), hostZone.ChainId, hostZone.TotalDelegations)
+				}
+			}
+
+			validator.Delegation = validator.Delegation.Add(amount)
+			hostZone.TotalDelegations = hostZone.TotalDelegations.Add(amount)
+
+			return nil
+		}
+	}
+
+	return errorsmod.Wrapf(types.ErrValidatorNotFound,
+		"Could not find validator %s on host zone %s", validatorAddress, hostZone.ChainId)
+}
+
+// Sum the total weights across each validator for a host zone
+func (k Keeper) GetTotalValidatorWeight(validators []types.Validator) uint64 {
+	totalWeight := uint64(0)
+	for _, validator := range validators {
+		totalWeight += validator.Weight
+	}
+	return totalWeight
 }

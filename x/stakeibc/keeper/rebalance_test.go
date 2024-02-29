@@ -415,18 +415,3 @@ func (s *KeeperTestSuite) TestGetTargetValAmtsForHostZone() {
 	_, err = s.App.StakeibcKeeper.GetTargetValAmtsForHostZone(s.Ctx, types.HostZone{}, sdkmath.NewInt(1))
 	s.Require().ErrorContains(err, "No non-zero validators found for host zone")
 }
-
-func (s *KeeperTestSuite) TestGetTotalValidatorWeight() {
-	validators := []types.Validator{
-		{Address: "val1", Weight: 1},
-		{Address: "val2", Weight: 2},
-		{Address: "val3", Weight: 3},
-		{Address: "val4", Weight: 4},
-		{Address: "val5", Weight: 5},
-	}
-	expectedTotalWeights := int64(1 + 2 + 3 + 4 + 5)
-
-	actualTotalWeight := s.App.StakeibcKeeper.GetTotalValidatorWeight(validators)
-
-	s.Require().Equal(expectedTotalWeights, int64(actualTotalWeight))
-}

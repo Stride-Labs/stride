@@ -312,12 +312,3 @@ func (k Keeper) GetTargetValAmtsForHostZone(ctx sdk.Context, hostZone types.Host
 
 	return targetUnbondingsByValidator, nil
 }
-
-// Sum the total weights across each validator for a host zone
-func (k Keeper) GetTotalValidatorWeight(validators []types.Validator) uint64 {
-	totalWeight := uint64(0)
-	for _, validator := range validators {
-		totalWeight += validator.Weight
-	}
-	return totalWeight
-}
