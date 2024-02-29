@@ -62,6 +62,22 @@ func (k Keeper) GetHostZoneFromHostDenom(ctx sdk.Context, denom string) (*types.
 	return nil, errorsmod.Wrapf(sdkerrors.ErrUnknownRequest, "No HostZone for %s denom found", denom)
 }
 
+// GetHostZoneFromIBCDenom returns a HostZone from a IBCDenom
+func (k Keeper) GetHostZoneFromIBCDenom(ctx sdk.Context, denom string) (*types.HostZone, error) {
+	var matchZone types.HostZone
+	k.IterateHostZones(ctx, func(ctx sdk.Context, index int64, zoneInfo types.HostZone) error {
+		if zoneInfo.IbcDenom == denom {
+			matchZone = zoneInfo
+			return nil
+		}
+		return nil
+	})
+	if matchZone.ChainId != "" {
+		return &matchZone, nil
+	}
+	return nil, errorsmod.Wrapf(sdkerrors.ErrUnknownRequest, "No HostZone for %s found", denom)
+}
+
 // GetHostZoneFromTransferChannelID returns a HostZone from a transfer channel ID
 func (k Keeper) GetHostZoneFromTransferChannelID(ctx sdk.Context, channelID string) (hostZone types.HostZone, found bool) {
 	for _, hostZone := range k.GetAllActiveHostZone(ctx) {
@@ -112,22 +128,6 @@ func (k Keeper) GetAllActiveHostZone(ctx sdk.Context) (list []types.HostZone) {
 	return
 }
 
-// GetHostZoneFromIBCDenom returns a HostZone from a IBCDenom
-func (k Keeper) GetHostZoneFromIBCDenom(ctx sdk.Context, denom string) (*types.HostZone, error) {
-	var matchZone types.HostZone
-	k.IterateHostZones(ctx, func(ctx sdk.Context, index int64, zoneInfo types.HostZone) error {
-		if zoneInfo.IbcDenom == denom {
-			matchZone = zoneInfo
-			return nil
-		}
-		return nil
-	})
-	if matchZone.ChainId != "" {
-		return &matchZone, nil
-	}
-	return nil, errorsmod.Wrapf(sdkerrors.ErrUnknownRequest, "No HostZone for %s found", denom)
-}
-
 // Validate whether a denom is a supported liquid staking token
 func (k Keeper) CheckIsStToken(ctx sdk.Context, denom string) bool {
 	for _, hostZone := range k.GetAllHostZone(ctx) {
@@ -139,6 +139,7 @@ func (k Keeper) CheckIsStToken(ctx sdk.Context, denom string) bool {
 }
 
 // IterateHostZones iterates zones
+// TODO [cleanup]: Remove this in favor of GetAllHostZones
 func (k Keeper) IterateHostZones(ctx sdk.Context, fn func(ctx sdk.Context, index int64, zoneInfo types.HostZone) error) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefix(types.HostZoneKey))
 
