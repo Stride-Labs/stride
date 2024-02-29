@@ -2,13 +2,15 @@ package keeper
 
 import (
 	"fmt"
-
-	"github.com/cosmos/cosmos-sdk/store/prefix"
-	sdk "github.com/cosmos/cosmos-sdk/types"
+	"sort"
 
 	errorsmod "cosmossdk.io/errors"
+	sdkmath "cosmossdk.io/math"
+	"github.com/cosmos/cosmos-sdk/store/prefix"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
+	"github.com/Stride-Labs/stride/v18/utils"
 	"github.com/Stride-Labs/stride/v18/x/stakeibc/types"
 )
 
@@ -160,4 +162,56 @@ func (k Keeper) IterateHostZones(ctx sdk.Context, fn func(ctx sdk.Context, index
 		}
 		i++
 	}
+}
+
+// This will split a total delegation amount across validators, according to weights
+// It returns a map of each portion, key'd on validator address
+// Validator's with a slash query in progress are excluded
+func (k Keeper) GetTargetValAmtsForHostZone(ctx sdk.Context, hostZone types.HostZone, totalDelegation sdkmath.Int) (map[string]sdkmath.Int, error) {
+	// Confirm the expected delegation amount is greater than 0
+	if !totalDelegation.IsPositive() {
+		return nil, errorsmod.Wrapf(sdkerrors.ErrInvalidRequest,
+			"Cannot calculate target delegation if final amount is less than or equal to zero (%v)", totalDelegation)
+	}
+
+	// Ignore any validators with a slash query in progress
+	validators := []types.Validator{}
+	for _, validator := range hostZone.Validators {
+		if !validator.SlashQueryInProgress {
+			validators = append(validators, *validator)
+		}
+	}
+
+	// Sum the total weight across all validators
+	totalWeight := k.GetTotalValidatorWeight(validators)
+	if totalWeight == 0 {
+		return nil, errorsmod.Wrapf(types.ErrNoValidatorWeights,
+			"No non-zero validators found for host zone %s", hostZone.ChainId)
+	}
+	k.Logger(ctx).Info(utils.LogWithHostZone(hostZone.ChainId, "Total Validator Weight: %d", totalWeight))
+
+	// sort validators by weight ascending
+	sort.SliceStable(validators, func(i, j int) bool { // Do not use `Slice` here, it is stochastic
+		if validators[i].Weight != validators[j].Weight {
+			return validators[i].Weight < validators[j].Weight
+		}
+		// use name for tie breaker if weights are equal
+		return validators[i].Address < validators[j].Address
+	})
+
+	// Assign each validator their portion of the delegation (and give any overflow to the last validator)
+	targetUnbondingsByValidator := make(map[string]sdkmath.Int)
+	totalAllocated := sdkmath.ZeroInt()
+	for i, validator := range validators {
+		// For the last element, we need to make sure that the totalAllocated is equal to the finalDelegation
+		if i == len(validators)-1 {
+			targetUnbondingsByValidator[validator.Address] = totalDelegation.Sub(totalAllocated)
+		} else {
+			delegateAmt := sdkmath.NewIntFromUint64(validator.Weight).Mul(totalDelegation).Quo(sdkmath.NewIntFromUint64(totalWeight))
+			totalAllocated = totalAllocated.Add(delegateAmt)
+			targetUnbondingsByValidator[validator.Address] = delegateAmt
+		}
+	}
+
+	return targetUnbondingsByValidator, nil
 }
