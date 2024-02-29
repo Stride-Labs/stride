@@ -19,7 +19,6 @@ import (
 	ibctmtypes "github.com/cosmos/ibc-go/v7/modules/light-clients/07-tendermint"
 	"github.com/spf13/cast"
 
-	epochstypes "github.com/Stride-Labs/stride/v18/x/epochs/types"
 	icacallbackskeeper "github.com/Stride-Labs/stride/v18/x/icacallbacks/keeper"
 	icqkeeper "github.com/Stride-Labs/stride/v18/x/interchainquery/keeper"
 	recordsmodulekeeper "github.com/Stride-Labs/stride/v18/x/records/keeper"
@@ -162,52 +161,6 @@ func (k Keeper) GetConnectionIdFromICAPortId(ctx sdk.Context, portId string) (co
 		}
 	}
 	return "", false
-}
-
-// helper to get what share of the curr epoch we're through
-func (k Keeper) GetStrideEpochElapsedShare(ctx sdk.Context) (sdk.Dec, error) {
-	// Get the current stride epoch
-	epochTracker, found := k.GetEpochTracker(ctx, epochstypes.STRIDE_EPOCH)
-	if !found {
-		errMsg := fmt.Sprintf("Failed to get epoch tracker for %s", epochstypes.STRIDE_EPOCH)
-		k.Logger(ctx).Error(errMsg)
-		return sdk.ZeroDec(), errorsmod.Wrapf(sdkerrors.ErrNotFound, errMsg)
-	}
-
-	// Get epoch start time, end time, and duration
-	epochDuration, err := cast.ToInt64E(epochTracker.Duration)
-	if err != nil {
-		errMsg := fmt.Sprintf("unable to convert epoch duration to int64, err: %s", err.Error())
-		k.Logger(ctx).Error(errMsg)
-		return sdk.ZeroDec(), errorsmod.Wrapf(types.ErrIntCast, errMsg)
-	}
-	epochEndTime, err := cast.ToInt64E(epochTracker.NextEpochStartTime)
-	if err != nil {
-		errMsg := fmt.Sprintf("unable to convert next epoch start time to int64, err: %s", err.Error())
-		k.Logger(ctx).Error(errMsg)
-		return sdk.ZeroDec(), errorsmod.Wrapf(types.ErrIntCast, errMsg)
-	}
-	epochStartTime := epochEndTime - epochDuration
-
-	// Confirm the current block time is inside the current epoch's start and end times
-	currBlockTime := ctx.BlockTime().UnixNano()
-	if currBlockTime < epochStartTime || currBlockTime > epochEndTime {
-		errMsg := fmt.Sprintf("current block time %d is not within current epoch (ending at %d)", currBlockTime, epochTracker.NextEpochStartTime)
-		k.Logger(ctx).Error(errMsg)
-		return sdk.ZeroDec(), errorsmod.Wrapf(types.ErrInvalidEpoch, errMsg)
-	}
-
-	// Get elapsed share
-	elapsedTime := currBlockTime - epochStartTime
-	elapsedShare := sdk.NewDec(elapsedTime).Quo(sdk.NewDec(epochDuration))
-	if elapsedShare.LT(sdk.ZeroDec()) || elapsedShare.GT(sdk.OneDec()) {
-		errMsg := fmt.Sprintf("elapsed share (%s) for epoch is not between 0 and 1", elapsedShare)
-		k.Logger(ctx).Error(errMsg)
-		return sdk.ZeroDec(), errorsmod.Wrapf(types.ErrInvalidEpoch, errMsg)
-	}
-
-	k.Logger(ctx).Info(fmt.Sprintf("Epoch elapsed share: %v (Block Time: %d, Epoch End Time: %d)", elapsedShare, currBlockTime, epochEndTime))
-	return elapsedShare, nil
 }
 
 // helper to check whether ICQs are valid in this portion of the epoch
