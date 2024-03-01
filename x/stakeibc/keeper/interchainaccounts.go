@@ -336,23 +336,3 @@ func (k Keeper) GetLightClientHeightSafely(ctx sdk.Context, connectionID string)
 		return latestHeightHostZone, nil
 	}
 }
-
-func (k Keeper) GetLightClientTimeSafely(ctx sdk.Context, connectionID string) (uint64, error) {
-	// get light client's latest height
-	conn, found := k.IBCKeeper.ConnectionKeeper.GetConnection(ctx, connectionID)
-	if !found {
-		errMsg := fmt.Sprintf("invalid connection id, %s not found", connectionID)
-		k.Logger(ctx).Error(errMsg)
-		return 0, fmt.Errorf(errMsg)
-	}
-	// TODO(TEST-112) make sure to update host LCs here!
-	latestConsensusClientState, found := k.IBCKeeper.ClientKeeper.GetLatestClientConsensusState(ctx, conn.ClientId)
-	if !found {
-		errMsg := fmt.Sprintf("client id %s not found for connection %s", conn.ClientId, connectionID)
-		k.Logger(ctx).Error(errMsg)
-		return 0, fmt.Errorf(errMsg)
-	} else {
-		latestTime := latestConsensusClientState.GetTimestamp()
-		return latestTime, nil
-	}
-}
