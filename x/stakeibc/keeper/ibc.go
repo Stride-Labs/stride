@@ -5,6 +5,7 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	icatypes "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/types"
+	"github.com/spf13/cast"
 
 	ratelimittypes "github.com/Stride-Labs/stride/v18/x/ratelimit/types"
 	"github.com/Stride-Labs/stride/v18/x/stakeibc/types"
@@ -210,5 +211,29 @@ func (k Keeper) GetLightClientTimeSafely(ctx sdk.Context, connectionID string) (
 	} else {
 		latestTime := latestConsensusClientState.GetTimestamp()
 		return latestTime, nil
+	}
+}
+
+func (k Keeper) GetLightClientHeightSafely(ctx sdk.Context, connectionID string) (uint64, error) {
+	// get light client's latest height
+	conn, found := k.IBCKeeper.ConnectionKeeper.GetConnection(ctx, connectionID)
+	if !found {
+		errMsg := fmt.Sprintf("invalid connection id, %s not found", connectionID)
+		k.Logger(ctx).Error(errMsg)
+		return 0, fmt.Errorf(errMsg)
+	}
+	clientState, found := k.IBCKeeper.ClientKeeper.GetClientState(ctx, conn.ClientId)
+	if !found {
+		errMsg := fmt.Sprintf("client id %s not found for connection %s", conn.ClientId, connectionID)
+		k.Logger(ctx).Error(errMsg)
+		return 0, fmt.Errorf(errMsg)
+	} else {
+		latestHeightHostZone, err := cast.ToUint64E(clientState.GetLatestHeight().GetRevisionHeight())
+		if err != nil {
+			errMsg := fmt.Sprintf("error casting latest height to int64: %s", err.Error())
+			k.Logger(ctx).Error(errMsg)
+			return 0, fmt.Errorf(errMsg)
+		}
+		return latestHeightHostZone, nil
 	}
 }
