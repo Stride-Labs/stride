@@ -207,6 +207,7 @@ func (s *AppTestHelper) SetupIBCChains(hostChainID string) {
 
 	// Call InitGenesis on the consumer
 	genesisState := consumertypes.DefaultGenesisState()
+	genesisState.Params = strideConsumerGenesis.Params
 	genesisState.Provider = strideConsumerGenesis.Provider
 	s.StrideChain.App.(*app.StrideApp).GetConsumerKeeper().InitGenesis(s.StrideChain.GetContext(), genesisState)
 	s.StrideChain.NextBlock()
