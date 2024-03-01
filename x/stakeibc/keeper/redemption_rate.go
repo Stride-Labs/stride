@@ -3,6 +3,7 @@ package keeper
 import (
 	"fmt"
 
+	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/Stride-Labs/stride/v18/utils"
@@ -76,4 +77,21 @@ func (k Keeper) UpdateRedemptionRateForHostZone(ctx sdk.Context, hostZone types.
 		k.Logger(ctx).Error(fmt.Sprintf("Unable to send redemption rate to oracle: %s", err.Error()))
 		return
 	}
+}
+
+// Determine the deposit account balance, representing native tokens that have been deposited
+// from liquid stakes, but have not yet been transferred to the host
+func (k Keeper) GetDepositAccountBalance(chainId string, depositRecords []recordstypes.DepositRecord) sdk.Dec {
+	// sum on deposit records with status TRANSFER_QUEUE or TRANSFER_IN_PROGRESS
+	totalAmount := sdkmath.ZeroInt()
+	for _, depositRecord := range depositRecords {
+		transferStatus := (depositRecord.Status == recordstypes.DepositRecord_TRANSFER_QUEUE ||
+			depositRecord.Status == recordstypes.DepositRecord_TRANSFER_IN_PROGRESS)
+
+		if depositRecord.HostZoneId == chainId && transferStatus {
+			totalAmount = totalAmount.Add(depositRecord.Amount)
+		}
+	}
+
+	return sdk.NewDecFromInt(totalAmount)
 }

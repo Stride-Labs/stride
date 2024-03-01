@@ -147,23 +147,6 @@ func (k Keeper) ClaimAccruedStakingRewards(ctx sdk.Context) {
 	}
 }
 
-// Determine the deposit account balance, representing native tokens that have been deposited
-// from liquid stakes, but have not yet been transferred to the host
-func (k Keeper) GetDepositAccountBalance(chainId string, depositRecords []recordstypes.DepositRecord) sdk.Dec {
-	// sum on deposit records with status TRANSFER_QUEUE or TRANSFER_IN_PROGRESS
-	totalAmount := sdkmath.ZeroInt()
-	for _, depositRecord := range depositRecords {
-		transferStatus := (depositRecord.Status == recordstypes.DepositRecord_TRANSFER_QUEUE ||
-			depositRecord.Status == recordstypes.DepositRecord_TRANSFER_IN_PROGRESS)
-
-		if depositRecord.HostZoneId == chainId && transferStatus {
-			totalAmount = totalAmount.Add(depositRecord.Amount)
-		}
-	}
-
-	return sdk.NewDecFromInt(totalAmount)
-}
-
 // Determine the undelegated balance from the deposit records queued for staking
 func (k Keeper) GetUndelegatedBalance(chainId string, depositRecords []recordstypes.DepositRecord) sdk.Dec {
 	// sum on deposit records with status DELEGATION_QUEUE or DELEGATION_IN_PROGRESS
