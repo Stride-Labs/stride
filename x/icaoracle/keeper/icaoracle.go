@@ -6,6 +6,7 @@ import (
 	"time"
 
 	errorsmod "cosmossdk.io/errors"
+	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	proto "github.com/cosmos/gogoproto/proto"
 
@@ -57,7 +58,7 @@ func (k Keeper) SubmitMetricUpdate(ctx sdk.Context, oracle types.Oracle, metric 
 	}
 
 	// Build ICA message to execute the CW contract
-	msgs := []proto.Message{&types.MsgExecuteContract{
+	msgs := []proto.Message{&wasmtypes.MsgExecuteContract{
 		Sender:   oracle.IcaAddress,
 		Contract: oracle.ContractAddress,
 		Msg:      contractMsgBz,
