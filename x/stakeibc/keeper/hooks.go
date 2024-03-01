@@ -296,32 +296,6 @@ func (k Keeper) PostRedemptionRateToOracles(ctx sdk.Context, hostDenom string, r
 	return nil
 }
 
-func (k Keeper) ReinvestRewards(ctx sdk.Context) {
-	k.Logger(ctx).Info("Reinvesting tokens...")
-
-	for _, hostZone := range k.GetAllActiveHostZone(ctx) {
-		// only process host zones once withdrawal accounts are registered
-		if hostZone.WithdrawalIcaAddress == "" {
-			k.Logger(ctx).Info(utils.LogWithHostZone(hostZone.ChainId, "Withdrawal account not registered for host zone"))
-			continue
-		}
-
-		// read clock time on host zone
-		blockTime, err := k.GetLightClientTimeSafely(ctx, hostZone.ConnectionId)
-		if err != nil {
-			k.Logger(ctx).Error(fmt.Sprintf("Could not find blockTime for host zone %s, err: %s", hostZone.ConnectionId, err.Error()))
-			continue
-		}
-		k.Logger(ctx).Info(utils.LogWithHostZone(hostZone.ChainId, "BlockTime for host zone: %d", blockTime))
-
-		err = k.UpdateWithdrawalBalance(ctx, hostZone)
-		if err != nil {
-			k.Logger(ctx).Error(fmt.Sprintf("Error updating withdrawal balance for host zone %s: %s", hostZone.ConnectionId, err.Error()))
-			continue
-		}
-	}
-}
-
 // TODO [cleanup]: Remove after v17 upgrade
 func (k Keeper) DisableHubTokenization(ctx sdk.Context) {
 	k.Logger(ctx).Info("Disabling the ability to tokenize Gaia delegations")
