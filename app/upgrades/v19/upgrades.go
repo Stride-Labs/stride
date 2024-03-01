@@ -39,14 +39,8 @@ func CreateUpgradeHandler(
 		}
 
 		// Update wasm params so that contracts can only be uploaded through governance
-		wasmParams := wasmKeeper.GetParams(ctx)
-		wasmParams.CodeUploadAccess = wasmtypes.AccessConfig{
-			Permission: wasmtypes.AccessTypeNobody,
-			Addresses:  []string{},
-		}
-		wasmParams.InstantiateDefaultPermission = wasmtypes.AccessTypeNobody
-		if err := wasmKeeper.SetParams(ctx, wasmParams); err != nil {
-			return newVm, err
+		if err := SetWasmPermissions(ctx, wasmKeeper); err != nil {
+			return newVm, errorsmod.Wrapf(err, "unable to set wasm permissions")
 		}
 
 		return newVm, nil
@@ -69,5 +63,19 @@ func MigrateICSOutstandingDowntime(ctx sdk.Context, ck ccvconsumerkeeper.Keeper)
 
 	ctx.Logger().Info("Finished ICS outstanding downtime")
 
+	return nil
+}
+
+// Update wasm params so that contracts can only be uploaded through governance
+func SetWasmPermissions(ctx sdk.Context, wk wasmkeeper.Keeper) error {
+	wasmParams := wk.GetParams(ctx)
+	wasmParams.CodeUploadAccess = wasmtypes.AccessConfig{
+		Permission: wasmtypes.AccessTypeNobody,
+		Addresses:  []string{},
+	}
+	wasmParams.InstantiateDefaultPermission = wasmtypes.AccessTypeNobody
+	if err := wk.SetParams(ctx, wasmParams); err != nil {
+		return err
+	}
 	return nil
 }
