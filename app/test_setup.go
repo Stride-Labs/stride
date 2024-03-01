@@ -21,9 +21,9 @@ import (
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	ibctesting "github.com/cosmos/ibc-go/v7/testing"
-	appconsumer "github.com/cosmos/interchain-security/v3/app/consumer"
-	consumertypes "github.com/cosmos/interchain-security/v3/x/ccv/consumer/types"
-	ccvtypes "github.com/cosmos/interchain-security/v3/x/ccv/types"
+	appconsumer "github.com/cosmos/interchain-security/v4/app/consumer"
+	consumertypes "github.com/cosmos/interchain-security/v4/x/ccv/consumer/types"
+	ccvtypes "github.com/cosmos/interchain-security/v4/x/ccv/types"
 
 	cmdcfg "github.com/Stride-Labs/stride/v18/cmd/strided/config"
 	testutil "github.com/Stride-Labs/stride/v18/testutil"
