@@ -36,3 +36,8 @@ type RatelimitKeeper interface {
 	AddDenomToBlacklist(ctx sdk.Context, denom string)
 	RemoveDenomFromBlacklist(ctx sdk.Context, denom string)
 }
+
+// Required ICAOracleKeeper functions
+type ICAOracleKeeper interface {
+	QueueMetricUpdate(ctx sdk.Context, key, value, metricType, attributes string)
+}
