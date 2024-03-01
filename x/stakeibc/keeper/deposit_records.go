@@ -3,91 +3,13 @@ package keeper
 import (
 	"fmt"
 
-	sdkmath "cosmossdk.io/math"
-	ibctransfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	ibctypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
-	clienttypes "github.com/cosmos/ibc-go/v7/modules/core/02-client/types"
 	"github.com/spf13/cast"
 
 	"github.com/Stride-Labs/stride/v18/utils"
 	recordstypes "github.com/Stride-Labs/stride/v18/x/records/types"
 	"github.com/Stride-Labs/stride/v18/x/stakeibc/types"
 )
-
-// Iterate each deposit record marked TRANSFER_QUEUE and IBC transfer tokens from the Stride controller account to the delegation ICAs on each host zone
-func (k Keeper) TransferExistingDepositsToHostZones(ctx sdk.Context, epochNumber uint64, depositRecords []recordstypes.DepositRecord) {
-	k.Logger(ctx).Info("Transfering deposit records...")
-
-	transferDepositRecords := utils.FilterDepositRecords(depositRecords, func(record recordstypes.DepositRecord) (condition bool) {
-		isTransferRecord := record.Status == recordstypes.DepositRecord_TRANSFER_QUEUE
-		isBeforeCurrentEpoch := record.DepositEpochNumber < epochNumber
-		return isTransferRecord && isBeforeCurrentEpoch
-	})
-
-	ibcTransferTimeoutNanos := k.GetParam(ctx, types.KeyIBCTransferTimeoutNanos)
-
-	for _, depositRecord := range transferDepositRecords {
-		k.Logger(ctx).Info(utils.LogWithHostZone(depositRecord.HostZoneId,
-			"Processing deposit record %d: %v%s", depositRecord.Id, depositRecord.Amount, depositRecord.Denom))
-
-		// if a TRANSFER_QUEUE record has 0 balance and was created in the previous epoch, it's safe to remove since it will never be updated or used
-		if depositRecord.Amount.LTE(sdkmath.ZeroInt()) && depositRecord.DepositEpochNumber < epochNumber {
-			k.Logger(ctx).Info(utils.LogWithHostZone(depositRecord.HostZoneId, "Empty deposit record - Removing."))
-			k.RecordsKeeper.RemoveDepositRecord(ctx, depositRecord.Id)
-			continue
-		}
-
-		hostZone, hostZoneFound := k.GetHostZone(ctx, depositRecord.HostZoneId)
-		if !hostZoneFound {
-			k.Logger(ctx).Error(fmt.Sprintf("[TransferExistingDepositsToHostZones] Host zone not found for deposit record id %d", depositRecord.Id))
-			continue
-		}
-
-		if hostZone.Halted {
-			k.Logger(ctx).Error(fmt.Sprintf("[TransferExistingDepositsToHostZones] Host zone halted for deposit record id %d", depositRecord.Id))
-			continue
-		}
-
-		if hostZone.DelegationIcaAddress == "" {
-			k.Logger(ctx).Error(fmt.Sprintf("[TransferExistingDepositsToHostZones] Zone %s is missing a delegation address!", hostZone.ChainId))
-			continue
-		}
-
-		k.Logger(ctx).Info(utils.LogWithHostZone(depositRecord.HostZoneId, "Transferring %v%s", depositRecord.Amount, hostZone.HostDenom))
-		transferCoin := sdk.NewCoin(hostZone.IbcDenom, depositRecord.Amount)
-
-		// timeout 30 min in the future
-		// NOTE: this assumes no clock drift between chains, which tendermint guarantees
-		// if we onboard non-tendermint chains, we need to use the time on the host chain to
-		// calculate the timeout
-		// https://github.com/cometbft/cometbft/blob/v0.34.x/spec/consensus/bft-time.md
-		timeoutTimestamp := uint64(ctx.BlockTime().UnixNano()) + ibcTransferTimeoutNanos
-		msg := ibctypes.NewMsgTransfer(
-			ibctransfertypes.PortID,
-			hostZone.TransferChannelId,
-			transferCoin,
-			hostZone.DepositAddress,
-			hostZone.DelegationIcaAddress,
-			clienttypes.Height{},
-			timeoutTimestamp,
-			"",
-		)
-		k.Logger(ctx).Info(utils.LogWithHostZone(depositRecord.HostZoneId, "Transfer Msg: %+v", msg))
-
-		// transfer the deposit record and update its status to TRANSFER_IN_PROGRESS
-		err := k.RecordsKeeper.IBCTransferNativeTokens(ctx, msg, depositRecord)
-		if err != nil {
-			k.Logger(ctx).Error(fmt.Sprintf("[TransferExistingDepositsToHostZones] Failed to initiate IBC transfer to host zone, HostZone: %v, Channel: %v, Amount: %v, ModuleAddress: %v, DelegateAddress: %v, Timeout: %v",
-				hostZone.ChainId, hostZone.TransferChannelId, transferCoin, hostZone.DepositAddress, hostZone.DelegationIcaAddress, timeoutTimestamp))
-			k.Logger(ctx).Error(fmt.Sprintf("[TransferExistingDepositsToHostZones] err {%s}", err.Error()))
-			continue
-		}
-
-		k.Logger(ctx).Info(utils.LogWithHostZone(hostZone.ChainId, "Successfully submitted transfer"))
-	}
-}
 
 // Iterate each deposit record marked DELEGATION_QUEUE and use the delegation ICA to delegate on the host zone
 func (k Keeper) StakeExistingDepositsOnHostZones(ctx sdk.Context, epochNumber uint64, depositRecords []recordstypes.DepositRecord) {
