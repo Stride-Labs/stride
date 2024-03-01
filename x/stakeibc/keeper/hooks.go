@@ -8,7 +8,6 @@ import (
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/gogoproto/proto"
-	"github.com/spf13/cast"
 
 	"github.com/Stride-Labs/stride/v18/utils"
 	epochstypes "github.com/Stride-Labs/stride/v18/x/epochs/types"
@@ -123,34 +122,6 @@ func (h Hooks) BeforeEpochStart(ctx sdk.Context, epochInfo epochstypes.EpochInfo
 
 func (h Hooks) AfterEpochEnd(ctx sdk.Context, epochInfo epochstypes.EpochInfo) {
 	h.k.AfterEpochEnd(ctx, epochInfo)
-}
-
-// Update the epoch information in the stakeibc epoch tracker
-func (k Keeper) UpdateEpochTracker(ctx sdk.Context, epochInfo epochstypes.EpochInfo) (epochNumber uint64, err error) {
-	epochNumber, err = cast.ToUint64E(epochInfo.CurrentEpoch)
-	if err != nil {
-		k.Logger(ctx).Error(fmt.Sprintf("Could not convert epoch number to uint64: %v", err))
-		return 0, err
-	}
-	epochDurationNano, err := cast.ToUint64E(epochInfo.Duration.Nanoseconds())
-	if err != nil {
-		k.Logger(ctx).Error(fmt.Sprintf("Could not convert epoch duration to uint64: %v", err))
-		return 0, err
-	}
-	nextEpochStartTime, err := cast.ToUint64E(epochInfo.CurrentEpochStartTime.Add(epochInfo.Duration).UnixNano())
-	if err != nil {
-		k.Logger(ctx).Error(fmt.Sprintf("Could not convert epoch duration to uint64: %v", err))
-		return 0, err
-	}
-	epochTracker := types.EpochTracker{
-		EpochIdentifier:    epochInfo.Identifier,
-		EpochNumber:        epochNumber,
-		Duration:           epochDurationNano,
-		NextEpochStartTime: nextEpochStartTime,
-	}
-	k.SetEpochTracker(ctx, epochTracker)
-
-	return epochNumber, nil
 }
 
 // Set the withdrawal account address for each host zone

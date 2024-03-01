@@ -249,16 +249,6 @@ func (k Keeper) UpdateWithdrawalBalance(ctx sdk.Context, hostZone types.HostZone
 	return nil
 }
 
-// helper to get time at which next epoch begins, in unix nano units
-func (k Keeper) GetStartTimeNextEpoch(ctx sdk.Context, epochType string) (uint64, error) {
-	epochTracker, found := k.GetEpochTracker(ctx, epochType)
-	if !found {
-		k.Logger(ctx).Error(fmt.Sprintf("Failed to get epoch tracker for %s", epochType))
-		return 0, errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "Failed to get epoch tracker for %s", epochType)
-	}
-	return epochTracker.NextEpochStartTime, nil
-}
-
 func (k Keeper) SubmitTxsDayEpoch(
 	ctx sdk.Context,
 	connectionId string,

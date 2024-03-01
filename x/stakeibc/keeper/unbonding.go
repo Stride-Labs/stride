@@ -12,7 +12,6 @@ import (
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/cosmos/gogoproto/proto"
-	"github.com/spf13/cast"
 
 	"github.com/Stride-Labs/stride/v18/utils"
 	recordstypes "github.com/Stride-Labs/stride/v18/x/records/types"
@@ -45,33 +44,6 @@ func (c *ValidatorUnbondCapacity) GetBalanceRatio() (sdk.Dec, error) {
 		return sdk.ZeroDec(), errors.New(errMsg)
 	}
 	return sdk.NewDecFromInt(c.BalancedDelegation).Quo(sdk.NewDecFromInt(c.CurrentDelegation)), nil
-}
-
-// Creates a new epoch unbonding record for the epoch
-func (k Keeper) CreateEpochUnbondingRecord(ctx sdk.Context, epochNumber uint64) bool {
-	k.Logger(ctx).Info(fmt.Sprintf("Creating Epoch Unbonding Records for Epoch %d", epochNumber))
-
-	hostZoneUnbondings := []*recordstypes.HostZoneUnbonding{}
-
-	for _, hostZone := range k.GetAllActiveHostZone(ctx) {
-		k.Logger(ctx).Info(utils.LogWithHostZone(hostZone.ChainId, "Creating Epoch Unbonding Record"))
-
-		hostZoneUnbonding := recordstypes.HostZoneUnbonding{
-			NativeTokenAmount: sdkmath.ZeroInt(),
-			StTokenAmount:     sdkmath.ZeroInt(),
-			Denom:             hostZone.HostDenom,
-			HostZoneId:        hostZone.ChainId,
-			Status:            recordstypes.HostZoneUnbonding_UNBONDING_QUEUE,
-		}
-		hostZoneUnbondings = append(hostZoneUnbondings, &hostZoneUnbonding)
-	}
-
-	epochUnbondingRecord := recordstypes.EpochUnbondingRecord{
-		EpochNumber:        cast.ToUint64(epochNumber),
-		HostZoneUnbondings: hostZoneUnbondings,
-	}
-	k.RecordsKeeper.SetEpochUnbondingRecord(ctx, epochUnbondingRecord)
-	return true
 }
 
 // Returns all the host zone unbonding records that should unbond this epoch
@@ -595,33 +567,6 @@ func (k Keeper) InitiateAllHostZoneUnbondings(ctx sdk.Context, dayNumber uint64)
 			continue
 		}
 	}
-}
-
-// Deletes any epoch unbonding records that have had all unbondings claimed
-func (k Keeper) CleanupEpochUnbondingRecords(ctx sdk.Context, epochNumber uint64) bool {
-	k.Logger(ctx).Info("Cleaning Claimed Epoch Unbonding Records...")
-
-	for _, epochUnbondingRecord := range k.RecordsKeeper.GetAllEpochUnbondingRecord(ctx) {
-		shouldDeleteEpochUnbondingRecord := true
-		hostZoneUnbondings := epochUnbondingRecord.HostZoneUnbondings
-
-		for _, hostZoneUnbonding := range hostZoneUnbondings {
-			// if an EpochUnbondingRecord has any HostZoneUnbonding with non-zero balances, we don't delete the EpochUnbondingRecord
-			// because it has outstanding tokens that need to be claimed
-			if !hostZoneUnbonding.NativeTokenAmount.Equal(sdkmath.ZeroInt()) {
-				shouldDeleteEpochUnbondingRecord = false
-				break
-			}
-		}
-		if shouldDeleteEpochUnbondingRecord {
-			k.Logger(ctx).Info(fmt.Sprintf("  EpochUnbondingRecord %d - All unbondings claimed, removing record", epochUnbondingRecord.EpochNumber))
-			k.RecordsKeeper.RemoveEpochUnbondingRecord(ctx, epochUnbondingRecord.EpochNumber)
-		} else {
-			k.Logger(ctx).Info(fmt.Sprintf("  EpochUnbondingRecord %d - Has unclaimed unbondings", epochUnbondingRecord.EpochNumber))
-		}
-	}
-
-	return true
 }
 
 // Batch transfers any unbonded tokens from the delegation account to the redemption account
