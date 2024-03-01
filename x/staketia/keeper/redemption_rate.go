@@ -1,7 +1,9 @@
 package keeper
 
 import (
+	"encoding/json"
 	"errors"
+	"fmt"
 
 	errorsmod "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
@@ -102,6 +104,25 @@ func (k Keeper) CheckRedemptionRateExceedsBounds(ctx sdk.Context) error {
 	if redemptionRate.LT(hostZone.MinInnerRedemptionRate) || redemptionRate.GT(hostZone.MaxInnerRedemptionRate) {
 		return types.ErrRedemptionRateOutsideSafetyBounds.Wrapf("redemption rate outside inner safety bounds")
 	}
+
+	return nil
+}
+
+// Pushes a redemption rate update to the ICA oracle
+func (k Keeper) PostRedemptionRateToOracles(ctx sdk.Context, hostDenom string, redemptionRate sdk.Dec) error {
+	stDenom := types.StAssetDenomFromHostZoneDenom(hostDenom)
+	attributes, err := json.Marshal(icaoracletypes.RedemptionRateAttributes{
+		SttokenDenom: stDenom,
+	})
+	if err != nil {
+		return err
+	}
+
+	// Metric Key is of format: {stToken}_redemption_rate
+	metricKey := fmt.Sprintf("%s_%s", stDenom, icaoracletypes.MetricType_RedemptionRate)
+	metricValue := redemptionRate.String()
+	metricType := icaoracletypes.MetricType_RedemptionRate
+	k.ICAOracleKeeper.QueueMetricUpdate(ctx, metricKey, metricValue, metricType, string(attributes))
 
 	return nil
 }
