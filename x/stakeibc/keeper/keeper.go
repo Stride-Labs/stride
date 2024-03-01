@@ -13,10 +13,7 @@ import (
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
 	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 	icacontrollerkeeper "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/controller/keeper"
-	clienttypes "github.com/cosmos/ibc-go/v7/modules/core/02-client/types"
-	connectiontypes "github.com/cosmos/ibc-go/v7/modules/core/03-connection/types"
 	ibckeeper "github.com/cosmos/ibc-go/v7/modules/core/keeper"
-	ibctmtypes "github.com/cosmos/ibc-go/v7/modules/light-clients/07-tendermint"
 	"github.com/spf13/cast"
 
 	icacallbackskeeper "github.com/Stride-Labs/stride/v18/x/icacallbacks/keeper"
@@ -109,24 +106,6 @@ func (k *Keeper) SetHooks(gh types.StakeIBCHooks) *Keeper {
 // GetAuthority returns the x/stakeibc module's authority.
 func (k Keeper) GetAuthority() string {
 	return k.authority
-}
-
-// Lookup a chain ID from a connection ID by looking up the client state
-func (k Keeper) GetChainIdFromConnectionId(ctx sdk.Context, connectionID string) (string, error) {
-	connection, found := k.IBCKeeper.ConnectionKeeper.GetConnection(ctx, connectionID)
-	if !found {
-		return "", errorsmod.Wrapf(connectiontypes.ErrConnectionNotFound, "connection %s not found", connectionID)
-	}
-	clientState, found := k.IBCKeeper.ClientKeeper.GetClientState(ctx, connection.ClientId)
-	if !found {
-		return "", errorsmod.Wrapf(clienttypes.ErrClientNotFound, "client %s not found", connection.ClientId)
-	}
-	client, ok := clientState.(*ibctmtypes.ClientState)
-	if !ok {
-		return "", types.ErrClientStateNotTendermint
-	}
-
-	return client.ChainId, nil
 }
 
 // Searches all interchain accounts and finds the connection ID that corresponds with a given port ID

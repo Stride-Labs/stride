@@ -3,8 +3,12 @@ package keeper
 import (
 	"fmt"
 
+	errorsmod "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	icatypes "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/types"
+	clienttypes "github.com/cosmos/ibc-go/v7/modules/core/02-client/types"
+	connectiontypes "github.com/cosmos/ibc-go/v7/modules/core/03-connection/types"
+	ibctmtypes "github.com/cosmos/ibc-go/v7/modules/light-clients/07-tendermint"
 	"github.com/spf13/cast"
 
 	ratelimittypes "github.com/Stride-Labs/stride/v18/x/ratelimit/types"
@@ -240,4 +244,22 @@ func (k Keeper) GetLightClientHeightSafely(ctx sdk.Context, connectionID string)
 		}
 		return latestHeightHostZone, nil
 	}
+}
+
+// Lookup a chain ID from a connection ID by looking up the client state
+func (k Keeper) GetChainIdFromConnectionId(ctx sdk.Context, connectionID string) (string, error) {
+	connection, found := k.IBCKeeper.ConnectionKeeper.GetConnection(ctx, connectionID)
+	if !found {
+		return "", errorsmod.Wrapf(connectiontypes.ErrConnectionNotFound, "connection %s not found", connectionID)
+	}
+	clientState, found := k.IBCKeeper.ClientKeeper.GetClientState(ctx, connection.ClientId)
+	if !found {
+		return "", errorsmod.Wrapf(clienttypes.ErrClientNotFound, "client %s not found", connection.ClientId)
+	}
+	client, ok := clientState.(*ibctmtypes.ClientState)
+	if !ok {
+		return "", types.ErrClientStateNotTendermint
+	}
+
+	return client.ChainId, nil
 }
