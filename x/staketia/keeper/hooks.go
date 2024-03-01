@@ -32,6 +32,11 @@ func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochInfo epochstypes.EpochInf
 			return
 		}
 
+		// Post the redemption rate to the oracle (if it doesn't exceed the bounds)
+		if err := k.PostRedemptionRateToOracles(ctx); err != nil {
+			k.Logger(ctx).Error(fmt.Sprintf("Unable to post redemption rate to oracle: %s", err.Error()))
+		}
+
 		// Prepare delegations by transferring the deposited tokens to the host zone
 		if err := k.SafelyPrepareDelegation(ctx, epochNumber, epochInfo.Duration); err != nil {
 			k.Logger(ctx).Error(fmt.Sprintf("Unable to prepare delegation for epoch %d: %s", epochNumber, err.Error()))
