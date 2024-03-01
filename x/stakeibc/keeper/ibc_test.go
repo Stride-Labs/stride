@@ -292,3 +292,7 @@ func (s *KeeperTestSuite) TestStoreTradeRouteIcaAddress() {
 
 	s.checkTradeRouteAddressStored(-1) // checks no matches
 }
+
+// ------------------------------------------
+//         GetLightClientTimeSafely
+// ------------------------------------------
