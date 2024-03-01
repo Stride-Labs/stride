@@ -194,6 +194,8 @@ func (k Keeper) StoreTradeRouteIcaAddress(ctx sdk.Context, callbackChainId, call
 	return nil
 }
 
+// TODO [cleanup]: Cleanup error messages, and rename to GetLightClientTime
+// Retrieves the light client time for a given connection
 func (k Keeper) GetLightClientTimeSafely(ctx sdk.Context, connectionID string) (uint64, error) {
 	// get light client's latest height
 	conn, found := k.IBCKeeper.ConnectionKeeper.GetConnection(ctx, connectionID)
@@ -214,6 +216,8 @@ func (k Keeper) GetLightClientTimeSafely(ctx sdk.Context, connectionID string) (
 	}
 }
 
+// TODO [cleanup]: Cleanup error messages, and rename to GetLightClientHeight
+// Retrieves the light client time for a given connection
 func (k Keeper) GetLightClientHeightSafely(ctx sdk.Context, connectionID string) (uint64, error) {
 	// get light client's latest height
 	conn, found := k.IBCKeeper.ConnectionKeeper.GetConnection(ctx, connectionID)
