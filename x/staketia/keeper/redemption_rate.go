@@ -10,6 +10,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/Stride-Labs/stride/v18/utils"
+	icaoracletypes "github.com/Stride-Labs/stride/v18/x/icaoracle/types"
 	"github.com/Stride-Labs/stride/v18/x/staketia/types"
 )
 
@@ -110,7 +111,7 @@ func (k Keeper) CheckRedemptionRateExceedsBounds(ctx sdk.Context) error {
 
 // Pushes a redemption rate update to the ICA oracle
 func (k Keeper) PostRedemptionRateToOracles(ctx sdk.Context, hostDenom string, redemptionRate sdk.Dec) error {
-	stDenom := types.StAssetDenomFromHostZoneDenom(hostDenom)
+	stDenom := utils.StAssetDenomFromHostZoneDenom(hostDenom)
 	attributes, err := json.Marshal(icaoracletypes.RedemptionRateAttributes{
 		SttokenDenom: stDenom,
 	})
@@ -122,7 +123,7 @@ func (k Keeper) PostRedemptionRateToOracles(ctx sdk.Context, hostDenom string, r
 	metricKey := fmt.Sprintf("%s_%s", stDenom, icaoracletypes.MetricType_RedemptionRate)
 	metricValue := redemptionRate.String()
 	metricType := icaoracletypes.MetricType_RedemptionRate
-	k.ICAOracleKeeper.QueueMetricUpdate(ctx, metricKey, metricValue, metricType, string(attributes))
+	k.icaOracleKeeper.QueueMetricUpdate(ctx, metricKey, metricValue, metricType, string(attributes))
 
 	return nil
 }
