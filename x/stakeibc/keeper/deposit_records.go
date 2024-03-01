@@ -16,24 +16,6 @@ import (
 	"github.com/Stride-Labs/stride/v18/x/stakeibc/types"
 )
 
-// Create a new deposit record for each host zone for the given epoch
-func (k Keeper) CreateDepositRecordsForEpoch(ctx sdk.Context, epochNumber uint64) {
-	k.Logger(ctx).Info(fmt.Sprintf("Creating Deposit Records for Epoch %d", epochNumber))
-
-	for _, hostZone := range k.GetAllActiveHostZone(ctx) {
-		k.Logger(ctx).Info(utils.LogWithHostZone(hostZone.ChainId, "Creating Deposit Record"))
-
-		depositRecord := recordstypes.DepositRecord{
-			Amount:             sdkmath.ZeroInt(),
-			Denom:              hostZone.HostDenom,
-			HostZoneId:         hostZone.ChainId,
-			Status:             recordstypes.DepositRecord_TRANSFER_QUEUE,
-			DepositEpochNumber: epochNumber,
-		}
-		k.RecordsKeeper.AppendDepositRecord(ctx, depositRecord)
-	}
-}
-
 // Iterate each deposit record marked TRANSFER_QUEUE and IBC transfer tokens from the Stride controller account to the delegation ICAs on each host zone
 func (k Keeper) TransferExistingDepositsToHostZones(ctx sdk.Context, epochNumber uint64, depositRecords []recordstypes.DepositRecord) {
 	k.Logger(ctx).Info("Transfering deposit records...")

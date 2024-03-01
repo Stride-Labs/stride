@@ -19,7 +19,6 @@ import (
 	ibctmtypes "github.com/cosmos/ibc-go/v7/modules/light-clients/07-tendermint"
 	"github.com/spf13/cast"
 
-	epochstypes "github.com/Stride-Labs/stride/v18/x/epochs/types"
 	icacallbackskeeper "github.com/Stride-Labs/stride/v18/x/icacallbacks/keeper"
 	icqkeeper "github.com/Stride-Labs/stride/v18/x/interchainquery/keeper"
 	recordsmodulekeeper "github.com/Stride-Labs/stride/v18/x/records/keeper"
@@ -130,29 +129,6 @@ func (k Keeper) GetChainIdFromConnectionId(ctx sdk.Context, connectionID string)
 	return client.ChainId, nil
 }
 
-func (k Keeper) GetCounterpartyChainId(ctx sdk.Context, connectionID string) (string, error) {
-	conn, found := k.IBCKeeper.ConnectionKeeper.GetConnection(ctx, connectionID)
-	if !found {
-		errMsg := fmt.Sprintf("invalid connection id, %s not found", connectionID)
-		k.Logger(ctx).Error(errMsg)
-		return "", fmt.Errorf(errMsg)
-	}
-	counterPartyClientState, found := k.IBCKeeper.ClientKeeper.GetClientState(ctx, conn.Counterparty.ClientId)
-	if !found {
-		errMsg := fmt.Sprintf("counterparty client id %s not found for connection %s", conn.Counterparty.ClientId, connectionID)
-		k.Logger(ctx).Error(errMsg)
-		return "", fmt.Errorf(errMsg)
-	}
-	counterpartyClient, ok := counterPartyClientState.(*ibctmtypes.ClientState)
-	if !ok {
-		errMsg := fmt.Sprintf("invalid client state for client %s on connection %s", conn.Counterparty.ClientId, connectionID)
-		k.Logger(ctx).Error(errMsg)
-		return "", fmt.Errorf(errMsg)
-	}
-
-	return counterpartyClient.ChainId, nil
-}
-
 // Searches all interchain accounts and finds the connection ID that corresponds with a given port ID
 func (k Keeper) GetConnectionIdFromICAPortId(ctx sdk.Context, portId string) (connectionId string, found bool) {
 	icas := k.ICAControllerKeeper.GetAllInterchainAccounts(ctx)
@@ -162,71 +138,6 @@ func (k Keeper) GetConnectionIdFromICAPortId(ctx sdk.Context, portId string) (co
 		}
 	}
 	return "", false
-}
-
-// helper to get what share of the curr epoch we're through
-func (k Keeper) GetStrideEpochElapsedShare(ctx sdk.Context) (sdk.Dec, error) {
-	// Get the current stride epoch
-	epochTracker, found := k.GetEpochTracker(ctx, epochstypes.STRIDE_EPOCH)
-	if !found {
-		errMsg := fmt.Sprintf("Failed to get epoch tracker for %s", epochstypes.STRIDE_EPOCH)
-		k.Logger(ctx).Error(errMsg)
-		return sdk.ZeroDec(), errorsmod.Wrapf(sdkerrors.ErrNotFound, errMsg)
-	}
-
-	// Get epoch start time, end time, and duration
-	epochDuration, err := cast.ToInt64E(epochTracker.Duration)
-	if err != nil {
-		errMsg := fmt.Sprintf("unable to convert epoch duration to int64, err: %s", err.Error())
-		k.Logger(ctx).Error(errMsg)
-		return sdk.ZeroDec(), errorsmod.Wrapf(types.ErrIntCast, errMsg)
-	}
-	epochEndTime, err := cast.ToInt64E(epochTracker.NextEpochStartTime)
-	if err != nil {
-		errMsg := fmt.Sprintf("unable to convert next epoch start time to int64, err: %s", err.Error())
-		k.Logger(ctx).Error(errMsg)
-		return sdk.ZeroDec(), errorsmod.Wrapf(types.ErrIntCast, errMsg)
-	}
-	epochStartTime := epochEndTime - epochDuration
-
-	// Confirm the current block time is inside the current epoch's start and end times
-	currBlockTime := ctx.BlockTime().UnixNano()
-	if currBlockTime < epochStartTime || currBlockTime > epochEndTime {
-		errMsg := fmt.Sprintf("current block time %d is not within current epoch (ending at %d)", currBlockTime, epochTracker.NextEpochStartTime)
-		k.Logger(ctx).Error(errMsg)
-		return sdk.ZeroDec(), errorsmod.Wrapf(types.ErrInvalidEpoch, errMsg)
-	}
-
-	// Get elapsed share
-	elapsedTime := currBlockTime - epochStartTime
-	elapsedShare := sdk.NewDec(elapsedTime).Quo(sdk.NewDec(epochDuration))
-	if elapsedShare.LT(sdk.ZeroDec()) || elapsedShare.GT(sdk.OneDec()) {
-		errMsg := fmt.Sprintf("elapsed share (%s) for epoch is not between 0 and 1", elapsedShare)
-		k.Logger(ctx).Error(errMsg)
-		return sdk.ZeroDec(), errorsmod.Wrapf(types.ErrInvalidEpoch, errMsg)
-	}
-
-	k.Logger(ctx).Info(fmt.Sprintf("Epoch elapsed share: %v (Block Time: %d, Epoch End Time: %d)", elapsedShare, currBlockTime, epochEndTime))
-	return elapsedShare, nil
-}
-
-// helper to check whether ICQs are valid in this portion of the epoch
-func (k Keeper) IsWithinBufferWindow(ctx sdk.Context) (bool, error) {
-	elapsedShareOfEpoch, err := k.GetStrideEpochElapsedShare(ctx)
-	if err != nil {
-		return false, err
-	}
-	bufferSize, err := cast.ToInt64E(k.GetParam(ctx, types.KeyBufferSize))
-	if err != nil {
-		return false, err
-	}
-	epochShareThresh := sdk.NewDec(1).Sub(sdk.NewDec(1).Quo(sdk.NewDec(bufferSize)))
-
-	inWindow := elapsedShareOfEpoch.GT(epochShareThresh)
-	if !inWindow {
-		k.Logger(ctx).Error(fmt.Sprintf("Outside ICQ Callback Window. We're %d pct through the epoch, ICQ cutoff is %d", elapsedShareOfEpoch, epochShareThresh))
-	}
-	return inWindow, nil
 }
 
 func (k Keeper) GetICATimeoutNanos(ctx sdk.Context, epochType string) (uint64, error) {
