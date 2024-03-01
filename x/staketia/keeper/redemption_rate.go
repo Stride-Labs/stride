@@ -110,8 +110,18 @@ func (k Keeper) CheckRedemptionRateExceedsBounds(ctx sdk.Context) error {
 }
 
 // Pushes a redemption rate update to the ICA oracle
-func (k Keeper) PostRedemptionRateToOracles(ctx sdk.Context, hostDenom string, redemptionRate sdk.Dec) error {
-	stDenom := utils.StAssetDenomFromHostZoneDenom(hostDenom)
+func (k Keeper) PostRedemptionRateToOracles(ctx sdk.Context) error {
+	if err := k.CheckRedemptionRateExceedsBounds(ctx); err != nil {
+		return errorsmod.Wrapf(err, "preventing oracle update since redemption rate exceeded bounds")
+	}
+
+	hostZone, err := k.GetHostZone(ctx)
+	if err != nil {
+		return err
+	}
+	redemptionRate := hostZone.RedemptionRate
+
+	stDenom := utils.StAssetDenomFromHostZoneDenom(hostZone.NativeTokenDenom)
 	attributes, err := json.Marshal(icaoracletypes.RedemptionRateAttributes{
 		SttokenDenom: stDenom,
 	})
