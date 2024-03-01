@@ -2,10 +2,8 @@ package keeper
 
 import (
 	"fmt"
-	"time"
 
 	errorsmod "cosmossdk.io/errors"
-	"github.com/cosmos/cosmos-sdk/types/bech32"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/gogoproto/proto"
 
@@ -14,12 +12,9 @@ import (
 
 	"github.com/Stride-Labs/stride/v18/x/stakeibc/types"
 
-	bankTypes "github.com/cosmos/cosmos-sdk/x/bank/types"
-
 	distributiontypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
 
 	epochstypes "github.com/Stride-Labs/stride/v18/x/epochs/types"
-	icqtypes "github.com/Stride-Labs/stride/v18/x/interchainquery/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	icacontrollerkeeper "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/controller/keeper"
@@ -113,50 +108,6 @@ func (k Keeper) ClaimAccruedStakingRewardsOnHost(ctx sdk.Context, hostZone types
 				return errorsmod.Wrapf(err, "Failed to SubmitTxs for %s, %s, %s", hostZone.ConnectionId, hostZone.ChainId, msgs)
 			}
 		}
-	}
-
-	return nil
-}
-
-// Submits an ICQ for the withdrawal account balance
-func (k Keeper) UpdateWithdrawalBalance(ctx sdk.Context, hostZone types.HostZone) error {
-	k.Logger(ctx).Info(utils.LogWithHostZone(hostZone.ChainId, "Submitting ICQ for withdrawal account balance"))
-
-	// Get the withdrawal account address from the host zone
-	if hostZone.WithdrawalIcaAddress == "" {
-		return errorsmod.Wrapf(types.ErrICAAccountNotFound, "no withdrawal account found for %s", hostZone.ChainId)
-	}
-
-	// Encode the withdrawal account address for the query request
-	// The query request consists of the withdrawal account address and denom
-	_, withdrawalAddressBz, err := bech32.DecodeAndConvert(hostZone.WithdrawalIcaAddress)
-	if err != nil {
-		return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "invalid withdrawal account address, could not decode (%s)", err.Error())
-	}
-	queryData := append(bankTypes.CreateAccountBalancesPrefix(withdrawalAddressBz), []byte(hostZone.HostDenom)...)
-
-	// Timeout query at end of epoch
-	strideEpochTracker, found := k.GetEpochTracker(ctx, epochstypes.STRIDE_EPOCH)
-	if !found {
-		return errorsmod.Wrapf(types.ErrEpochNotFound, epochstypes.STRIDE_EPOCH)
-	}
-	timeout := time.Unix(0, int64(strideEpochTracker.NextEpochStartTime))
-	timeoutDuration := timeout.Sub(ctx.BlockTime())
-
-	// Submit the ICQ for the withdrawal account balance
-	query := icqtypes.Query{
-		ChainId:         hostZone.ChainId,
-		ConnectionId:    hostZone.ConnectionId,
-		QueryType:       icqtypes.BANK_STORE_QUERY_WITH_PROOF,
-		RequestData:     queryData,
-		CallbackModule:  types.ModuleName,
-		CallbackId:      ICQCallbackID_WithdrawalBalance,
-		TimeoutDuration: timeoutDuration,
-		TimeoutPolicy:   icqtypes.TimeoutPolicy_REJECT_QUERY_RESPONSE,
-	}
-	if err := k.InterchainQueryKeeper.SubmitICQRequest(ctx, query, false); err != nil {
-		k.Logger(ctx).Error(fmt.Sprintf("Error querying for withdrawal balance, error: %s", err.Error()))
-		return err
 	}
 
 	return nil
