@@ -15,7 +15,6 @@ import (
 	ibckeeper "github.com/cosmos/ibc-go/v7/modules/core/keeper"
 	ccvconsumerkeeper "github.com/cosmos/interchain-security/v4/x/ccv/consumer/keeper"
 	consumertypes "github.com/cosmos/interchain-security/v4/x/ccv/consumer/types"
-	ccvtypes "github.com/cosmos/interchain-security/v4/x/ccv/types"
 	"github.com/spf13/cast"
 )
 
@@ -50,7 +49,7 @@ func CreateUpgradeHandler(
 			return fromVM, fmt.Errorf("failed to unmarshal genesis state: %w", err)
 		}
 
-		var consumerGenesis = ccvtypes.ConsumerGenesisState{}
+		var consumerGenesis = consumertypes.GenesisState{}
 		cdc.MustUnmarshalJSON(appState[consumertypes.ModuleName], &consumerGenesis)
 
 		consumerGenesis.PreCCV = true
