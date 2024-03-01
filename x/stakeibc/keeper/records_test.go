@@ -4,18 +4,103 @@ import (
 	sdkmath "cosmossdk.io/math"
 	_ "github.com/stretchr/testify/suite"
 
+	recordstypes "github.com/Stride-Labs/stride/v18/x/records/types"
 	recordtypes "github.com/Stride-Labs/stride/v18/x/records/types"
 
-	stakeibc "github.com/Stride-Labs/stride/v18/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v18/x/stakeibc/types"
 )
 
+func (s *KeeperTestSuite) TestCreateDepositRecordsForEpoch_Successful() {
+	// Set host zones
+	hostZones := []types.HostZone{
+		{
+			ChainId:   "HOST1",
+			HostDenom: "denom1",
+		},
+		{
+			ChainId:   "HOST2",
+			HostDenom: "denom2",
+		},
+		{
+			ChainId:   "HOST3",
+			HostDenom: "denom3",
+		},
+	}
+	for _, hostZone := range hostZones {
+		s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
+	}
+
+	// Create depoist records for two epochs
+	s.App.StakeibcKeeper.CreateDepositRecordsForEpoch(s.Ctx, 1)
+	s.App.StakeibcKeeper.CreateDepositRecordsForEpoch(s.Ctx, 2)
+
+	expectedDepositRecords := []recordstypes.DepositRecord{
+		// Epoch 1
+		{
+			Id:                 0,
+			Amount:             sdkmath.ZeroInt(),
+			Denom:              "denom1",
+			HostZoneId:         "HOST1",
+			Status:             recordstypes.DepositRecord_TRANSFER_QUEUE,
+			DepositEpochNumber: 1,
+		},
+		{
+			Id:                 1,
+			Amount:             sdkmath.ZeroInt(),
+			Denom:              "denom2",
+			HostZoneId:         "HOST2",
+			Status:             recordstypes.DepositRecord_TRANSFER_QUEUE,
+			DepositEpochNumber: 1,
+		},
+		{
+			Id:                 2,
+			Amount:             sdkmath.ZeroInt(),
+			Denom:              "denom3",
+			HostZoneId:         "HOST3",
+			Status:             recordstypes.DepositRecord_TRANSFER_QUEUE,
+			DepositEpochNumber: 1,
+		},
+		// Epoch 2
+		{
+			Id:                 3,
+			Amount:             sdkmath.ZeroInt(),
+			Denom:              "denom1",
+			HostZoneId:         "HOST1",
+			Status:             recordstypes.DepositRecord_TRANSFER_QUEUE,
+			DepositEpochNumber: 2,
+		},
+		{
+			Id:                 4,
+			Amount:             sdkmath.ZeroInt(),
+			Denom:              "denom2",
+			HostZoneId:         "HOST2",
+			Status:             recordstypes.DepositRecord_TRANSFER_QUEUE,
+			DepositEpochNumber: 2,
+		},
+		{
+			Id:                 5,
+			Amount:             sdkmath.ZeroInt(),
+			Denom:              "denom3",
+			HostZoneId:         "HOST3",
+			Status:             recordstypes.DepositRecord_TRANSFER_QUEUE,
+			DepositEpochNumber: 2,
+		},
+	}
+
+	// Confirm deposit records
+	actualDepositRecords := s.App.RecordsKeeper.GetAllDepositRecord(s.Ctx)
+	s.Require().Equal(len(expectedDepositRecords), len(actualDepositRecords), "number of deposit records")
+	s.Require().Equal(expectedDepositRecords, actualDepositRecords, "deposit records")
+}
+
+// TODO [cleanup]: Combine this all into one test
 type CleanupEpochUnbondingRecordsTestCase struct {
 	epochUnbondingRecords []recordtypes.EpochUnbondingRecord
-	hostZones             []stakeibc.HostZone
+	hostZones             []types.HostZone
 }
 
 func (s *KeeperTestSuite) SetupCleanupEpochUnbondingRecords() CleanupEpochUnbondingRecordsTestCase {
-	hostZones := []stakeibc.HostZone{
+	hostZones := []types.HostZone{
 		{
 			ChainId:      HostChainId,
 			HostDenom:    Atom,
