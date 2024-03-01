@@ -71,8 +71,8 @@ func AddConsumerSectionCmd(defaultNodeHome string) *cobra.Command {
 					return errorsmod.Wrap(err, "could not convert val updates to validator set")
 				}
 
-				genesisState.InitialValSet = initialValset
-				genesisState.ProviderConsensusState.NextValidatorsHash = tmtypes.NewValidatorSet(vals).Hash()
+				genesisState.Provider.InitialValSet = initialValset
+				genesisState.Provider.ConsensusState.NextValidatorsHash = tmtypes.NewValidatorSet(vals).Hash()
 
 				state.ConsumerModuleState = genesisState
 				return nil

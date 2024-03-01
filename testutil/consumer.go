@@ -17,17 +17,17 @@ func CreateMinimalConsumerTestGenesis() *ccvtypes.ConsumerGenesisState {
 	genesisState := ccvtypes.DefaultConsumerGenesisState()
 	genesisState.Params.Enabled = true
 	genesisState.NewChain = true
-	genesisState.ProviderClientState = ccvprovidertypes.DefaultParams().TemplateClient
-	genesisState.ProviderClientState.ChainId = "stride"
-	genesisState.ProviderClientState.LatestHeight = ibctypes.Height{RevisionNumber: 0, RevisionHeight: 1}
+	genesisState.Provider.ClientState = ccvprovidertypes.DefaultParams().TemplateClient
+	genesisState.Provider.ClientState.ChainId = "stride"
+	genesisState.Provider.ClientState.LatestHeight = ibctypes.Height{RevisionNumber: 0, RevisionHeight: 1}
 	trustPeriod, err := ccvtypes.CalculateTrustPeriod(genesisState.Params.UnbondingPeriod, ccvprovidertypes.DefaultTrustingPeriodFraction)
 	if err != nil {
 		panic("provider client trusting period error")
 	}
-	genesisState.ProviderClientState.TrustingPeriod = trustPeriod
-	genesisState.ProviderClientState.UnbondingPeriod = genesisState.Params.UnbondingPeriod
-	genesisState.ProviderClientState.MaxClockDrift = ccvprovidertypes.DefaultMaxClockDrift
-	genesisState.ProviderConsensusState = &ibctmtypes.ConsensusState{
+	genesisState.Provider.ClientState.TrustingPeriod = trustPeriod
+	genesisState.Provider.ClientState.UnbondingPeriod = genesisState.Params.UnbondingPeriod
+	genesisState.Provider.ClientState.MaxClockDrift = ccvprovidertypes.DefaultMaxClockDrift
+	genesisState.Provider.ConsensusState = &ibctmtypes.ConsensusState{
 		Timestamp: time.Now().UTC(),
 		Root:      types.MerkleRoot{Hash: []byte("dummy")},
 	}

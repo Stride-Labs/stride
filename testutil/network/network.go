@@ -130,8 +130,8 @@ func modifyConsumerGenesis(val network.Validator) error {
 	}
 
 	consumerGenesisState := testutil.CreateMinimalConsumerTestGenesis()
-	consumerGenesisState.InitialValSet = initialValset
-	consumerGenesisState.ProviderConsensusState.NextValidatorsHash = tmtypes.NewValidatorSet(vals).Hash()
+	consumerGenesisState.Provider.InitialValSet = initialValset
+	consumerGenesisState.Provider.ConsensusState.NextValidatorsHash = tmtypes.NewValidatorSet(vals).Hash()
 
 	if err := consumerGenesisState.Validate(); err != nil {
 		return errorsmod.Wrap(err, "invalid consumer genesis")
