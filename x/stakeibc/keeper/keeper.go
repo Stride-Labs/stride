@@ -129,29 +129,6 @@ func (k Keeper) GetChainIdFromConnectionId(ctx sdk.Context, connectionID string)
 	return client.ChainId, nil
 }
 
-func (k Keeper) GetCounterpartyChainId(ctx sdk.Context, connectionID string) (string, error) {
-	conn, found := k.IBCKeeper.ConnectionKeeper.GetConnection(ctx, connectionID)
-	if !found {
-		errMsg := fmt.Sprintf("invalid connection id, %s not found", connectionID)
-		k.Logger(ctx).Error(errMsg)
-		return "", fmt.Errorf(errMsg)
-	}
-	counterPartyClientState, found := k.IBCKeeper.ClientKeeper.GetClientState(ctx, conn.Counterparty.ClientId)
-	if !found {
-		errMsg := fmt.Sprintf("counterparty client id %s not found for connection %s", conn.Counterparty.ClientId, connectionID)
-		k.Logger(ctx).Error(errMsg)
-		return "", fmt.Errorf(errMsg)
-	}
-	counterpartyClient, ok := counterPartyClientState.(*ibctmtypes.ClientState)
-	if !ok {
-		errMsg := fmt.Sprintf("invalid client state for client %s on connection %s", conn.Counterparty.ClientId, connectionID)
-		k.Logger(ctx).Error(errMsg)
-		return "", fmt.Errorf(errMsg)
-	}
-
-	return counterpartyClient.ChainId, nil
-}
-
 // Searches all interchain accounts and finds the connection ID that corresponds with a given port ID
 func (k Keeper) GetConnectionIdFromICAPortId(ctx sdk.Context, portId string) (connectionId string, found bool) {
 	icas := k.ICAControllerKeeper.GetAllInterchainAccounts(ctx)
@@ -161,25 +138,6 @@ func (k Keeper) GetConnectionIdFromICAPortId(ctx sdk.Context, portId string) (co
 		}
 	}
 	return "", false
-}
-
-// helper to check whether ICQs are valid in this portion of the epoch
-func (k Keeper) IsWithinBufferWindow(ctx sdk.Context) (bool, error) {
-	elapsedShareOfEpoch, err := k.GetStrideEpochElapsedShare(ctx)
-	if err != nil {
-		return false, err
-	}
-	bufferSize, err := cast.ToInt64E(k.GetParam(ctx, types.KeyBufferSize))
-	if err != nil {
-		return false, err
-	}
-	epochShareThresh := sdk.NewDec(1).Sub(sdk.NewDec(1).Quo(sdk.NewDec(bufferSize)))
-
-	inWindow := elapsedShareOfEpoch.GT(epochShareThresh)
-	if !inWindow {
-		k.Logger(ctx).Error(fmt.Sprintf("Outside ICQ Callback Window. We're %d pct through the epoch, ICQ cutoff is %d", elapsedShareOfEpoch, epochShareThresh))
-	}
-	return inWindow, nil
 }
 
 func (k Keeper) GetICATimeoutNanos(ctx sdk.Context, epochType string) (uint64, error) {
