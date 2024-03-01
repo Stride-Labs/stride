@@ -147,22 +147,6 @@ func (k Keeper) ClaimAccruedStakingRewards(ctx sdk.Context) {
 	}
 }
 
-// Determine the undelegated balance from the deposit records queued for staking
-func (k Keeper) GetUndelegatedBalance(chainId string, depositRecords []recordstypes.DepositRecord) sdk.Dec {
-	// sum on deposit records with status DELEGATION_QUEUE or DELEGATION_IN_PROGRESS
-	totalAmount := sdkmath.ZeroInt()
-	for _, depositRecord := range depositRecords {
-		delegationStatus := (depositRecord.Status == recordstypes.DepositRecord_DELEGATION_QUEUE ||
-			depositRecord.Status == recordstypes.DepositRecord_DELEGATION_IN_PROGRESS)
-
-		if depositRecord.HostZoneId == chainId && delegationStatus {
-			totalAmount = totalAmount.Add(depositRecord.Amount)
-		}
-	}
-
-	return sdk.NewDecFromInt(totalAmount)
-}
-
 // Returns the total delegated balance that's stored in LSM tokens
 // This is used for the redemption rate calculation
 //
