@@ -18,7 +18,6 @@ import (
 	bankTypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 
 	distributiontypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
-	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
 	epochstypes "github.com/Stride-Labs/stride/v18/x/epochs/types"
 	icqtypes "github.com/Stride-Labs/stride/v18/x/interchainquery/types"
@@ -356,48 +355,4 @@ func (k Keeper) GetLightClientTimeSafely(ctx sdk.Context, connectionID string) (
 		latestTime := latestConsensusClientState.GetTimestamp()
 		return latestTime, nil
 	}
-}
-
-// Submits an ICQ to get a validator's delegations
-// This is called after the validator's sharesToTokens rate is determined
-// The timeoutDuration parameter represents the length of the timeout (not to be confused with an actual timestamp)
-func (k Keeper) SubmitCalibrationICQ(ctx sdk.Context, hostZone types.HostZone, validatorAddress string) error {
-	if hostZone.DelegationIcaAddress == "" {
-		return errorsmod.Wrapf(types.ErrICAAccountNotFound, "no delegation address found for %s", hostZone.ChainId)
-	}
-
-	// ensure the validator is in the set for this host
-	_, _, found := GetValidatorFromAddress(hostZone.Validators, validatorAddress)
-	if !found {
-		return errorsmod.Wrapf(types.ErrValidatorNotFound, "no registered validator for address (%s)", validatorAddress)
-	}
-
-	// Get the validator and delegator encoded addresses to form the query request
-	_, validatorAddressBz, err := bech32.DecodeAndConvert(validatorAddress)
-	if err != nil {
-		return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "invalid validator address, could not decode (%s)", err.Error())
-	}
-	_, delegatorAddressBz, err := bech32.DecodeAndConvert(hostZone.DelegationIcaAddress)
-	if err != nil {
-		return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "invalid delegator address, could not decode (%s)", err.Error())
-	}
-	queryData := stakingtypes.GetDelegationKey(delegatorAddressBz, validatorAddressBz)
-
-	// Submit delegator shares ICQ
-	query := icqtypes.Query{
-		ChainId:         hostZone.ChainId,
-		ConnectionId:    hostZone.ConnectionId,
-		QueryType:       icqtypes.STAKING_STORE_QUERY_WITH_PROOF,
-		RequestData:     queryData,
-		CallbackModule:  types.ModuleName,
-		CallbackId:      ICQCallbackID_Calibrate,
-		CallbackData:    []byte{},
-		TimeoutDuration: time.Hour,
-		TimeoutPolicy:   icqtypes.TimeoutPolicy_RETRY_QUERY_REQUEST,
-	}
-	if err := k.InterchainQueryKeeper.SubmitICQRequest(ctx, query, false); err != nil {
-		return err
-	}
-
-	return nil
 }
