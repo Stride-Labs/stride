@@ -115,3 +115,35 @@ func (k Keeper) SweepAllUnbondedTokensForHostZone(ctx sdk.Context, hostZone type
 
 	return true, totalAmtTransferToRedemptionAcct
 }
+
+// Sends all unbonded tokens to the redemption account
+// returns:
+//   - success indicator if all chains succeeded
+//   - list of successful chains
+//   - list of tokens swept
+//   - list of failed chains
+func (k Keeper) SweepAllUnbondedTokens(ctx sdk.Context) (success bool, successfulSweeps []string, sweepAmounts []sdkmath.Int, failedSweeps []string) {
+	// this function returns true if all chains succeeded, false otherwise
+	// it also returns a list of successful chains (arg 2), tokens swept (arg 3), and failed chains (arg 4)
+	k.Logger(ctx).Info("Sweeping All Unbonded Tokens...")
+
+	success = true
+	successfulSweeps = []string{}
+	sweepAmounts = []sdkmath.Int{}
+	failedSweeps = []string{}
+	hostZones := k.GetAllActiveHostZone(ctx)
+
+	epochUnbondingRecords := k.RecordsKeeper.GetAllEpochUnbondingRecord(ctx)
+	for _, hostZone := range hostZones {
+		hostZoneSuccess, sweepAmount := k.SweepAllUnbondedTokensForHostZone(ctx, hostZone, epochUnbondingRecords)
+		if hostZoneSuccess {
+			successfulSweeps = append(successfulSweeps, hostZone.ChainId)
+			sweepAmounts = append(sweepAmounts, sweepAmount)
+		} else {
+			success = false
+			failedSweeps = append(failedSweeps, hostZone.ChainId)
+		}
+	}
+
+	return success, successfulSweeps, sweepAmounts, failedSweeps
+}
