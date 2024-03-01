@@ -1,7 +1,6 @@
 package keeper
 
 import (
-	"encoding/json"
 	"fmt"
 	"time"
 
@@ -9,7 +8,6 @@ import (
 	"github.com/cosmos/gogoproto/proto"
 
 	epochstypes "github.com/Stride-Labs/stride/v18/x/epochs/types"
-	icaoracletypes "github.com/Stride-Labs/stride/v18/x/icaoracle/types"
 	"github.com/Stride-Labs/stride/v18/x/stakeibc/types"
 )
 
@@ -143,25 +141,6 @@ func (k Keeper) ClaimAccruedStakingRewards(ctx sdk.Context) {
 			k.Logger(ctx).Error(fmt.Sprintf("Unable to claim accrued staking rewards on %s, err: %s", hostZone.ChainId, err))
 		}
 	}
-}
-
-// Pushes a redemption rate update to the ICA oracle
-func (k Keeper) PostRedemptionRateToOracles(ctx sdk.Context, hostDenom string, redemptionRate sdk.Dec) error {
-	stDenom := types.StAssetDenomFromHostZoneDenom(hostDenom)
-	attributes, err := json.Marshal(icaoracletypes.RedemptionRateAttributes{
-		SttokenDenom: stDenom,
-	})
-	if err != nil {
-		return err
-	}
-
-	// Metric Key is of format: {stToken}_redemption_rate
-	metricKey := fmt.Sprintf("%s_%s", stDenom, icaoracletypes.MetricType_RedemptionRate)
-	metricValue := redemptionRate.String()
-	metricType := icaoracletypes.MetricType_RedemptionRate
-	k.ICAOracleKeeper.QueueMetricUpdate(ctx, metricKey, metricValue, metricType, string(attributes))
-
-	return nil
 }
 
 // TODO [cleanup]: Remove after v17 upgrade

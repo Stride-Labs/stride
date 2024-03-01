@@ -1,12 +1,14 @@
 package keeper
 
 import (
+	"encoding/json"
 	"fmt"
 
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/Stride-Labs/stride/v18/utils"
+	icaoracletypes "github.com/Stride-Labs/stride/v18/x/icaoracle/types"
 	recordstypes "github.com/Stride-Labs/stride/v18/x/records/types"
 	"github.com/Stride-Labs/stride/v18/x/stakeibc/types"
 )
@@ -138,4 +140,23 @@ func (k Keeper) GetTotalTokenizedDelegations(ctx sdk.Context, hostZone types.Hos
 	}
 
 	return sdk.NewDecFromInt(total)
+}
+
+// Pushes a redemption rate update to the ICA oracle
+func (k Keeper) PostRedemptionRateToOracles(ctx sdk.Context, hostDenom string, redemptionRate sdk.Dec) error {
+	stDenom := types.StAssetDenomFromHostZoneDenom(hostDenom)
+	attributes, err := json.Marshal(icaoracletypes.RedemptionRateAttributes{
+		SttokenDenom: stDenom,
+	})
+	if err != nil {
+		return err
+	}
+
+	// Metric Key is of format: {stToken}_redemption_rate
+	metricKey := fmt.Sprintf("%s_%s", stDenom, icaoracletypes.MetricType_RedemptionRate)
+	metricValue := redemptionRate.String()
+	metricType := icaoracletypes.MetricType_RedemptionRate
+	k.ICAOracleKeeper.QueueMetricUpdate(ctx, metricKey, metricValue, metricType, string(attributes))
+
+	return nil
 }
