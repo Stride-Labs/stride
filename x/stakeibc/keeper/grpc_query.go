@@ -94,6 +94,17 @@ func (k Keeper) Validators(c context.Context, req *types.QueryGetValidatorsReque
 	return &types.QueryGetValidatorsResponse{Validators: hostZone.Validators}, nil
 }
 
+func (k Keeper) AllTradeRoutes(c context.Context, req *types.QueryAllTradeRoutes) (*types.QueryAllTradeRoutesResponse, error) {
+	if req == nil {
+		return nil, status.Error(codes.InvalidArgument, "invalid request")
+	}
+	ctx := sdk.UnwrapSDKContext(c)
+
+	routes := k.GetAllTradeRoutes(ctx)
+
+	return &types.QueryAllTradeRoutesResponse{TradeRoutes: routes}, nil
+}
+
 // InterchainAccountFromAddress implements the Query/InterchainAccountFromAddress gRPC method
 func (k Keeper) InterchainAccountFromAddress(goCtx context.Context, req *types.QueryInterchainAccountFromAddressRequest) (*types.QueryInterchainAccountFromAddressResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
@@ -123,15 +134,4 @@ func (k Keeper) NextPacketSequence(c context.Context, req *types.QueryGetNextPac
 	}
 
 	return &types.QueryGetNextPacketSequenceResponse{Sequence: sequence}, nil
-}
-
-func (k Keeper) AllTradeRoutes(c context.Context, req *types.QueryAllTradeRoutes) (*types.QueryAllTradeRoutesResponse, error) {
-	if req == nil {
-		return nil, status.Error(codes.InvalidArgument, "invalid request")
-	}
-	ctx := sdk.UnwrapSDKContext(c)
-
-	routes := k.GetAllTradeRoutes(ctx)
-
-	return &types.QueryAllTradeRoutesResponse{TradeRoutes: routes}, nil
 }
