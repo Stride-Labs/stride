@@ -56,3 +56,17 @@ func (k Keeper) HostZone(c context.Context, req *types.QueryGetHostZoneRequest) 
 
 	return &types.QueryGetHostZoneResponse{HostZone: hostZone}, nil
 }
+
+func (k Keeper) Validators(c context.Context, req *types.QueryGetValidatorsRequest) (*types.QueryGetValidatorsResponse, error) {
+	if req == nil || req.ChainId == "" {
+		return nil, status.Error(codes.InvalidArgument, "invalid request")
+	}
+	ctx := sdk.UnwrapSDKContext(c)
+
+	hostZone, found := k.GetHostZone(ctx, req.ChainId)
+	if !found {
+		return nil, sdkerrors.ErrKeyNotFound
+	}
+
+	return &types.QueryGetValidatorsResponse{Validators: hostZone.Validators}, nil
+}
