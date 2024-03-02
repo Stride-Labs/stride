@@ -11,7 +11,9 @@ import (
 	"github.com/Stride-Labs/stride/v18/x/stakeibc/types"
 )
 
-// ================================ 1: QueryValidatorSharesToTokensRate =============================================
+// -----------------------------------------------------------
+//	           QueryValidatorSharesToTokensRate
+// -----------------------------------------------------------
 
 type QueryValidatorSharesToTokensRateTestCase struct {
 	hostZone types.HostZone
@@ -83,7 +85,9 @@ func (s *KeeperTestSuite) TestQueryValidatorSharesToTokensRate_MissingConnection
 	s.Require().ErrorContains(err, "connection-id cannot be empty")
 }
 
-// ================================== 2: SubmitDelegationICQ ==========================================
+// -----------------------------------------------------------
+//	                 SubmitDelegationICQ
+// -----------------------------------------------------------
 
 func (s *KeeperTestSuite) SetupSubmitDelegationICQ() (types.HostZone, types.Validator) {
 	// set up IBC

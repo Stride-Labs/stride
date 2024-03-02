@@ -13,10 +13,7 @@ import (
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
 	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 	icacontrollerkeeper "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/controller/keeper"
-	clienttypes "github.com/cosmos/ibc-go/v7/modules/core/02-client/types"
-	connectiontypes "github.com/cosmos/ibc-go/v7/modules/core/03-connection/types"
 	ibckeeper "github.com/cosmos/ibc-go/v7/modules/core/keeper"
-	ibctmtypes "github.com/cosmos/ibc-go/v7/modules/light-clients/07-tendermint"
 	"github.com/spf13/cast"
 
 	icacallbackskeeper "github.com/Stride-Labs/stride/v18/x/icacallbacks/keeper"
@@ -111,24 +108,6 @@ func (k Keeper) GetAuthority() string {
 	return k.authority
 }
 
-// Lookup a chain ID from a connection ID by looking up the client state
-func (k Keeper) GetChainIdFromConnectionId(ctx sdk.Context, connectionID string) (string, error) {
-	connection, found := k.IBCKeeper.ConnectionKeeper.GetConnection(ctx, connectionID)
-	if !found {
-		return "", errorsmod.Wrapf(connectiontypes.ErrConnectionNotFound, "connection %s not found", connectionID)
-	}
-	clientState, found := k.IBCKeeper.ClientKeeper.GetClientState(ctx, connection.ClientId)
-	if !found {
-		return "", errorsmod.Wrapf(clienttypes.ErrClientNotFound, "client %s not found", connection.ClientId)
-	}
-	client, ok := clientState.(*ibctmtypes.ClientState)
-	if !ok {
-		return "", types.ErrClientStateNotTendermint
-	}
-
-	return client.ChainId, nil
-}
-
 // Searches all interchain accounts and finds the connection ID that corresponds with a given port ID
 func (k Keeper) GetConnectionIdFromICAPortId(ctx sdk.Context, portId string) (connectionId string, found bool) {
 	icas := k.ICAControllerKeeper.GetAllInterchainAccounts(ctx)
@@ -161,33 +140,6 @@ func (k Keeper) GetICATimeoutNanos(ctx sdk.Context, epochType string) (uint64, e
 		return 0, errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "Failed to convert timeoutNanos to uint64, error: %s", err.Error())
 	}
 	return timeoutNanosUint64, nil
-}
-
-// safety check: ensure the redemption rate is NOT below our min safety threshold && NOT above our max safety threshold on host zone
-func (k Keeper) IsRedemptionRateWithinSafetyBounds(ctx sdk.Context, zone types.HostZone) (bool, error) {
-	// Get the wide bounds
-	minSafetyThreshold, maxSafetyThreshold := k.GetOuterSafetyBounds(ctx, zone)
-
-	redemptionRate := zone.RedemptionRate
-
-	if redemptionRate.LT(minSafetyThreshold) || redemptionRate.GT(maxSafetyThreshold) {
-		errMsg := fmt.Sprintf("IsRedemptionRateWithinSafetyBounds check failed %s is outside safety bounds [%s, %s]", redemptionRate.String(), minSafetyThreshold.String(), maxSafetyThreshold.String())
-		k.Logger(ctx).Error(errMsg)
-		return false, errorsmod.Wrapf(types.ErrRedemptionRateOutsideSafetyBounds, errMsg)
-	}
-
-	// Verify the redemption rate is within the inner safety bounds
-	// The inner safety bounds should always be within the safety bounds, but
-	// the redundancy above is cheap.
-	// There is also one scenario where the outer bounds go within the inner bounds - if they're updated as part of a param change proposal.
-	minInnerSafetyThreshold, maxInnerSafetyThreshold := k.GetInnerSafetyBounds(ctx, zone)
-	if redemptionRate.LT(minInnerSafetyThreshold) || redemptionRate.GT(maxInnerSafetyThreshold) {
-		errMsg := fmt.Sprintf("IsRedemptionRateWithinSafetyBounds check failed %s is outside inner safety bounds [%s, %s]", redemptionRate.String(), minInnerSafetyThreshold.String(), maxInnerSafetyThreshold.String())
-		k.Logger(ctx).Error(errMsg)
-		return false, errorsmod.Wrapf(types.ErrRedemptionRateOutsideSafetyBounds, errMsg)
-	}
-
-	return true, nil
 }
 
 func (k Keeper) GetOuterSafetyBounds(ctx sdk.Context, zone types.HostZone) (sdk.Dec, sdk.Dec) {
