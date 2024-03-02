@@ -99,6 +99,20 @@ func (k Keeper) InterchainAccountFromAddress(goCtx context.Context, req *types.Q
 	return types.NewQueryInterchainAccountResponse(addr), nil
 }
 
+func (k Keeper) NextPacketSequence(c context.Context, req *types.QueryGetNextPacketSequenceRequest) (*types.QueryGetNextPacketSequenceResponse, error) {
+	if req == nil || req.ChannelId == "" || req.PortId == "" {
+		return nil, status.Error(codes.InvalidArgument, "invalid request")
+	}
+
+	ctx := sdk.UnwrapSDKContext(c)
+	sequence, found := k.IBCKeeper.ChannelKeeper.GetNextSequenceSend(ctx, req.PortId, req.ChannelId)
+	if !found {
+		return nil, status.Error(codes.InvalidArgument, "channel and port combination not found")
+	}
+
+	return &types.QueryGetNextPacketSequenceResponse{Sequence: sequence}, nil
+}
+
 func (k Keeper) AllTradeRoutes(c context.Context, req *types.QueryAllTradeRoutes) (*types.QueryAllTradeRoutesResponse, error) {
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "invalid request")
