@@ -18,6 +18,10 @@ import (
 	stakeibctypes "github.com/Stride-Labs/stride/v18/x/stakeibc/types"
 )
 
+// ----------------------------------------------------
+//	               RegisterHostZone
+// ----------------------------------------------------
+
 type RegisterHostZoneTestCase struct {
 	validMsg                   stakeibctypes.MsgRegisterHostZone
 	epochUnbondingRecordNumber uint64
@@ -770,6 +774,10 @@ func (s *KeeperTestSuite) TestClearBalance_ParseCoinError() {
 	s.Require().EqualError(err, "failed to parse coin (1000000:): invalid decimal coin expression: 1000000:")
 }
 
+// ----------------------------------------------------
+//	                 LiquidStake
+// ----------------------------------------------------
+
 type Account struct {
 	acc           sdk.AccAddress
 	atomBalance   sdk.Coin
@@ -914,10 +922,6 @@ func (s *KeeperTestSuite) TestLiquidStake_DifferentRedemptionRates() {
 		s.Require().Equal(expectedStAtomMinted, actualStAtomMinted, testDescription)
 	}
 }
-
-// ----------------------------------------------------
-//	                   LiquidStake
-// ----------------------------------------------------
 
 func (s *KeeperTestSuite) TestLiquidStake_HostZoneNotFound() {
 	tc := s.SetupLiquidStake()
