@@ -331,6 +331,16 @@ func (k msgServer) ChangeValidatorWeight(goCtx context.Context, msg *types.MsgCh
 	return &types.MsgChangeValidatorWeightsResponse{}, nil
 }
 
+func (k msgServer) RebalanceValidators(goCtx context.Context, msg *types.MsgRebalanceValidators) (*types.MsgRebalanceValidatorsResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+	k.Logger(ctx).Info(fmt.Sprintf("RebalanceValidators executing %v", msg))
+
+	if err := k.RebalanceDelegationsForHostZone(ctx, msg.HostZone); err != nil {
+		return nil, err
+	}
+	return &types.MsgRebalanceValidatorsResponse{}, nil
+}
+
 func (k msgServer) ClearBalance(goCtx context.Context, msg *types.MsgClearBalance) (*types.MsgClearBalanceResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
