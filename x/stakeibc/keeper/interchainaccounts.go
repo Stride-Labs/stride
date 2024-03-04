@@ -4,22 +4,19 @@ import (
 	"fmt"
 
 	errorsmod "cosmossdk.io/errors"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	"github.com/cosmos/gogoproto/proto"
-
-	"github.com/Stride-Labs/stride/v18/utils"
-	icacallbackstypes "github.com/Stride-Labs/stride/v18/x/icacallbacks/types"
-
-	"github.com/Stride-Labs/stride/v18/x/stakeibc/types"
-
-	distributiontypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
-
-	epochstypes "github.com/Stride-Labs/stride/v18/x/epochs/types"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	distributiontypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
+	"github.com/cosmos/gogoproto/proto"
 	icacontrollerkeeper "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/controller/keeper"
 	icacontrollertypes "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/controller/types"
 	icatypes "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/types"
+	connectiontypes "github.com/cosmos/ibc-go/v7/modules/core/03-connection/types"
+
+	"github.com/Stride-Labs/stride/v18/utils"
+	epochstypes "github.com/Stride-Labs/stride/v18/x/epochs/types"
+	icacallbackstypes "github.com/Stride-Labs/stride/v18/x/icacallbacks/types"
+	"github.com/Stride-Labs/stride/v18/x/stakeibc/types"
 )
 
 const (
@@ -261,4 +258,67 @@ func (k Keeper) SubmitICATxWithoutCallback(
 	}
 
 	return nil
+}
+
+// Registers a new TradeRoute ICAAccount, given the type
+// Stores down the connection and chainId now, and the address upon callback
+func (k Keeper) RegisterTradeRouteICAAccount(
+	ctx sdk.Context,
+	tradeRouteId string,
+	connectionId string,
+	icaAccountType types.ICAAccountType,
+) (account types.ICAAccount, err error) {
+	// Get the chain ID and counterparty connection-id from the connection ID on Stride
+	chainId, err := k.GetChainIdFromConnectionId(ctx, connectionId)
+	if err != nil {
+		return account, err
+	}
+	connection, found := k.IBCKeeper.ConnectionKeeper.GetConnection(ctx, connectionId)
+	if !found {
+		return account, errorsmod.Wrap(connectiontypes.ErrConnectionNotFound, connectionId)
+	}
+	counterpartyConnectionId := connection.Counterparty.ConnectionId
+
+	// Build the appVersion, owner, and portId needed for registration
+	appVersion := string(icatypes.ModuleCdc.MustMarshalJSON(&icatypes.Metadata{
+		Version:                icatypes.Version,
+		ControllerConnectionId: connectionId,
+		HostConnectionId:       counterpartyConnectionId,
+		Encoding:               icatypes.EncodingProtobuf,
+		TxType:                 icatypes.TxTypeSDKMultiMsg,
+	}))
+	owner := types.FormatTradeRouteICAOwnerFromRouteId(chainId, tradeRouteId, icaAccountType)
+	portID, err := icatypes.NewControllerPortID(owner)
+	if err != nil {
+		return account, err
+	}
+
+	// Create the associate ICAAccount object
+	account = types.ICAAccount{
+		ChainId:      chainId,
+		Type:         icaAccountType,
+		ConnectionId: connectionId,
+	}
+
+	// Check if an ICA account has already been created
+	// (in the event that this trade route was removed and then added back)
+	// If so, there's no need to register a new ICA
+	_, channelFound := k.ICAControllerKeeper.GetOpenActiveChannel(ctx, connectionId, portID)
+	icaAddress, icaFound := k.ICAControllerKeeper.GetInterchainAccountAddress(ctx, connectionId, portID)
+	if channelFound && icaFound {
+		account = types.ICAAccount{
+			ChainId:      chainId,
+			Type:         icaAccountType,
+			ConnectionId: connectionId,
+			Address:      icaAddress,
+		}
+		return account, nil
+	}
+
+	// Otherwise, if there's no account already, register a new one
+	if err := k.ICAControllerKeeper.RegisterInterchainAccount(ctx, connectionId, owner, appVersion); err != nil {
+		return account, err
+	}
+
+	return account, nil
 }
