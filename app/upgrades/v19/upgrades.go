@@ -12,6 +12,8 @@ import (
 
 const (
 	UpgradeName = "v19"
+
+	WasmAdmin = "TODO"
 )
 
 // CreateUpgradeHandler creates an SDK upgrade handler for v19
@@ -43,8 +45,8 @@ func CreateUpgradeHandler(
 func SetWasmPermissions(ctx sdk.Context, wk wasmkeeper.Keeper) error {
 	wasmParams := wk.GetParams(ctx)
 	wasmParams.CodeUploadAccess = wasmtypes.AccessConfig{
-		Permission: wasmtypes.AccessTypeNobody,
-		Addresses:  []string{},
+		Permission: wasmtypes.AccessTypeAnyOfAddresses,
+		Addresses:  []string{WasmAdmin},
 	}
 	wasmParams.InstantiateDefaultPermission = wasmtypes.AccessTypeNobody
 	if err := wk.SetParams(ctx, wasmParams); err != nil {
