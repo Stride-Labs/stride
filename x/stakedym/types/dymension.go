@@ -3,18 +3,18 @@ package types
 
 const (
 	DymensionChainId                   = "dymension_1100-1"
-	StrideToDymensionTransferChannelId = "channel-197"
+	StrideToDymensionTransferChannelId = "channel-7"
 	DymensionNativeTokenDenom          = "adym"
-	DymensionNativeTokenIBCDenom       = "ibc/E1C22332C083574F3418481359733BA8887D171E76C80AD9237422AEABB66018" // #nosec G101
+	DymensionNativeTokenIBCDenom       = "ibc/5ED35C6A57ECC3C4050CE5F79FF4DD8BFA5152E6F49AC8C17C506AB19E4A682B" // #nosec G101
 
-	DelegationAddressOnDymension = "dym1d6ntc7s8gs86tpdyn422vsqc6uaz9cejnxz5p5" // C0
-	RewardAddressOnDymension     = "dym15up3hegy8zuqhy0p9m8luh0c984ptu2g5p4xpf" // C1
+	DelegationAddressOnDymension = "dym1nwpk5ekw74tl9eswvumvnwr3y7wwg99d8m0vzj" // C0
+	RewardAddressOnDymension     = "dym1exfargyp2lpe2yscpe0406zzj4vfedqn5uvw72" // C1
 
-	DepositAddress    = "stride1d6ntc7s8gs86tpdyn422vsqc6uaz9cejp8nc04" // S0
-	RedemptionAddress = "stride15up3hegy8zuqhy0p9m8luh0c984ptu2gxqy20g" // S1
+	DepositAddress    = "stride1z9n8gk3837pagnnqv23ukruh8t606d0aj8u784" // S0
+	RedemptionAddress = "stride10vmnxwgf4647nqxd9a6sh4qlyeytk5tpy2wtku" // S1
 	ClaimAddress      = "stride13nw9fm4ua8pwzmsx9kdrhefl4puz0tp7ge3gxd" // S2
 
-	SafeAddressOnStride             = "stride18p7xg4hj2u3zpk0v9gq68pjyuuua5wa387sjjc" // S3
-	OperatorAddressOnStride         = "stride1ghhu67ttgmxrsyxljfl2tysyayswklvxs7pepw" // OP-STRIDE
+	SafeAddressOnStride             = "stride1gatmguzwv9p6y8amz32457094z8hjevezlfp4m" // S3
+	OperatorAddressOnStride         = "stride15s6xjemlhg3dqqeqhyu273ucfv56fss7l5tgf7" // OP-STRIDE
 	DymensionUnbondingPeriodSeconds = uint64(21 * 24 * 60 * 60)                       // 21 days
 )
