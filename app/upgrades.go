@@ -256,6 +256,7 @@ func (app *StrideApp) setupUpgradeHandlers(appOpts servertypes.AppOptions) {
 			app.mm,
 			app.configurator,
 			app.appCodec,
+			app.StakeibcKeeper,
 			app.WasmKeeper,
 		),
 	)
