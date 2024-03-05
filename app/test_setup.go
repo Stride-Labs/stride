@@ -5,6 +5,7 @@ import (
 	"time"
 
 	sdkmath "cosmossdk.io/math"
+	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 	cometbftdb "github.com/cometbft/cometbft-db"
 	"github.com/cometbft/cometbft/abci/types"
 	abci "github.com/cometbft/cometbft/abci/types"
@@ -56,6 +57,7 @@ func InitStrideTestApp(initChain bool) *StrideApp {
 		5,
 		MakeEncodingConfig(),
 		simtestutil.EmptyAppOptions{},
+		[]wasmkeeper.Option{},
 	)
 	if initChain {
 		genesisState := GenesisStateWithValSet(app)

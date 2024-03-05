@@ -7,7 +7,7 @@ services:
     build:
       context: ../../../
       args:
-        RUNNER_IMAGE: alpine:3.16
+        RUNNER_IMAGE_VERSION: 3.17
         GO_VERSION: 1.21
     volumes:
       - ./scripts/start.sh:/home/stride/start.sh

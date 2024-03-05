@@ -3,6 +3,7 @@ package app
 import (
 	"fmt"
 
+	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	servertypes "github.com/cosmos/cosmos-sdk/server/types"
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	authz "github.com/cosmos/cosmos-sdk/x/authz"
@@ -25,6 +26,7 @@ import (
 	v16 "github.com/Stride-Labs/stride/v18/app/upgrades/v16"
 	v17 "github.com/Stride-Labs/stride/v18/app/upgrades/v17"
 	v18 "github.com/Stride-Labs/stride/v18/app/upgrades/v18"
+	v19 "github.com/Stride-Labs/stride/v18/app/upgrades/v19"
 	v2 "github.com/Stride-Labs/stride/v18/app/upgrades/v2"
 	v3 "github.com/Stride-Labs/stride/v18/app/upgrades/v3"
 	v4 "github.com/Stride-Labs/stride/v18/app/upgrades/v4"
@@ -248,6 +250,17 @@ func (app *StrideApp) setupUpgradeHandlers(appOpts servertypes.AppOptions) {
 		),
 	)
 
+	// v19 upgrade handler
+	app.UpgradeKeeper.SetUpgradeHandler(
+		v19.UpgradeName,
+		v19.CreateUpgradeHandler(
+			app.mm,
+			app.configurator,
+			app.appCodec,
+			app.WasmKeeper,
+		),
+	)
+
 	upgradeInfo, err := app.UpgradeKeeper.ReadUpgradeInfoFromDisk()
 	if err != nil {
 		panic(fmt.Errorf("Failed to read upgrade info from disk: %w", err))
@@ -296,6 +309,10 @@ func (app *StrideApp) setupUpgradeHandlers(appOpts servertypes.AppOptions) {
 	case "v18":
 		storeUpgrades = &storetypes.StoreUpgrades{
 			Added: []string{staketiatypes.ModuleName},
+		}
+	case "v19":
+		storeUpgrades = &storetypes.StoreUpgrades{
+			Added: []string{wasmtypes.ModuleName},
 		}
 	}
 
