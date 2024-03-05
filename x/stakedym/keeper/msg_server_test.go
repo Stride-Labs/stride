@@ -5,7 +5,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/Stride-Labs/stride/v18/app/apptesting"
-	"github.com/Stride-Labs/stride/v18/x/staketia/types"
+	"github.com/Stride-Labs/stride/v18/x/stakedym/types"
 )
 
 // ----------------------------------------------
@@ -45,7 +45,7 @@ func (s *KeeperTestSuite) SetupDelegationRecordsAndHostZone() {
 	hostZone := s.initializeHostZone()
 	hostZone.OperatorAddressOnStride = operatorAddress
 	hostZone.SafeAddressOnStride = safeAddress
-	s.App.StaketiaKeeper.SetHostZone(s.Ctx, hostZone)
+	s.App.StakedymKeeper.SetHostZone(s.Ctx, hostZone)
 }
 
 // Verify that ConfirmDelegation succeeds, and non-admins cannot call it
@@ -99,7 +99,7 @@ func (s *KeeperTestSuite) TestConfirmUndelegation() {
 	// Store the operator address on the host zone
 	hostZone := s.MustGetHostZone()
 	hostZone.OperatorAddressOnStride = "operator"
-	s.App.StaketiaKeeper.SetHostZone(s.Ctx, hostZone)
+	s.App.StakedymKeeper.SetHostZone(s.Ctx, hostZone)
 
 	validMsg := types.MsgConfirmUndelegation{
 		Operator: operatorAddress,
@@ -134,7 +134,7 @@ func (s *KeeperTestSuite) SetupUnbondingRecordsAndHostZone() {
 	// set host zone
 	hostZone.OperatorAddressOnStride = operatorAddress
 	hostZone.SafeAddressOnStride = safeAddress
-	s.App.StaketiaKeeper.SetHostZone(s.Ctx, hostZone)
+	s.App.StakedymKeeper.SetHostZone(s.Ctx, hostZone)
 }
 
 // Verify that ConfirmUnbondingTokenSweep succeeds, and non-admins cannot call it
@@ -183,13 +183,13 @@ func (s *KeeperTestSuite) TestAdjustDelegatedBalance() {
 	safeAddress := "safe"
 
 	// Create the host zone
-	s.App.StaketiaKeeper.SetHostZone(s.Ctx, types.HostZone{
+	s.App.StakedymKeeper.SetHostZone(s.Ctx, types.HostZone{
 		SafeAddressOnStride: safeAddress,
 		DelegatedBalance:    sdk.NewInt(0),
 	})
 
 	// we're halting the zone to test that the tx works even when the host zone is halted
-	s.App.StaketiaKeeper.HaltZone(s.Ctx)
+	s.App.StakedymKeeper.HaltZone(s.Ctx)
 
 	// Call adjust for each test case and confirm the ending delegation
 	testCases := []struct {
@@ -230,7 +230,7 @@ func (s *KeeperTestSuite) TestAdjustDelegatedBalance() {
 	s.Require().ErrorContains(err, "invalid safe address")
 
 	// Remove the host zone and try again, it should fail
-	s.App.StaketiaKeeper.RemoveHostZone(s.Ctx)
+	s.App.StakedymKeeper.RemoveHostZone(s.Ctx)
 	_, err = s.GetMsgServer().AdjustDelegatedBalance(s.Ctx, &types.MsgAdjustDelegatedBalance{})
 	s.Require().ErrorContains(err, "host zone not found")
 
@@ -253,9 +253,9 @@ func (s *KeeperTestSuite) TestUpdateInnerRedemptionRateBounds() {
 		MinRedemptionRate: sdk.NewDec(9).Quo(sdk.NewDec(10)),
 	}
 
-	s.App.StaketiaKeeper.SetHostZone(s.Ctx, zone)
+	s.App.StakedymKeeper.SetHostZone(s.Ctx, zone)
 	// we're halting the zone to test that the tx works even when the host zone is halted
-	s.App.StaketiaKeeper.HaltZone(s.Ctx)
+	s.App.StakedymKeeper.HaltZone(s.Ctx)
 
 	initialMsg := types.MsgUpdateInnerRedemptionRateBounds{
 		Creator:                adminAddress,
@@ -316,7 +316,7 @@ func (s *KeeperTestSuite) TestUpdateInnerRedemptionRateBounds() {
 // - Zone is not halted
 // - Zone is halted - unhalt it
 func (s *KeeperTestSuite) TestResumeHostZone() {
-	// TODO [sttia]: verify denom blacklisting removal works
+	// TODO [stdym]: verify denom blacklisting removal works
 
 	adminAddress, ok := apptesting.GetAdminAddress()
 	s.Require().True(ok)
@@ -327,7 +327,7 @@ func (s *KeeperTestSuite) TestResumeHostZone() {
 		Halted:           false,
 		NativeTokenDenom: HostNativeDenom,
 	}
-	s.App.StaketiaKeeper.SetHostZone(s.Ctx, zone)
+	s.App.StakedymKeeper.SetHostZone(s.Ctx, zone)
 
 	msg := types.MsgResumeHostZone{
 		Creator: adminAddress,
@@ -343,13 +343,13 @@ func (s *KeeperTestSuite) TestResumeHostZone() {
 	s.Require().NotContains(blacklist, StDenom, "denom should not be blacklisted")
 
 	// Confirm the zone is not halted
-	zone, err = s.App.StaketiaKeeper.GetHostZone(s.Ctx)
+	zone, err = s.App.StakedymKeeper.GetHostZone(s.Ctx)
 	s.Require().NoError(err, "should not throw an error")
 	s.Require().False(zone.Halted, "zone should not be halted")
 
 	// TEST 2: Zone is halted
 	// Halt the zone
-	s.App.StaketiaKeeper.HaltZone(s.Ctx)
+	s.App.StakedymKeeper.HaltZone(s.Ctx)
 
 	// Verify the denom is in the blacklist
 	blacklist = s.App.RatelimitKeeper.GetAllBlacklistedDenoms(s.Ctx)
@@ -360,7 +360,7 @@ func (s *KeeperTestSuite) TestResumeHostZone() {
 	s.Require().NoError(err, "should not throw an error")
 
 	// Confirm the zone is not halted
-	zone, err = s.App.StaketiaKeeper.GetHostZone(s.Ctx)
+	zone, err = s.App.StakedymKeeper.GetHostZone(s.Ctx)
 	s.Require().NoError(err, "should not throw an error")
 	s.Require().False(zone.Halted, "zone should not be halted")
 
@@ -390,7 +390,7 @@ func (s *KeeperTestSuite) TestRefreshRedemptionRate() {
 	initialRedemptionRate := sdk.OneDec()
 	expectedRedemptionRate := sdk.NewDec(2)
 
-	s.App.StaketiaKeeper.SetHostZone(s.Ctx, types.HostZone{
+	s.App.StakedymKeeper.SetHostZone(s.Ctx, types.HostZone{
 		DelegatedBalance:    sdkmath.NewInt(1000),
 		RedemptionRate:      initialRedemptionRate,
 		NativeTokenDenom:    HostNativeDenom,
@@ -428,7 +428,7 @@ func (s *KeeperTestSuite) TestOverwriteDelegationRecord() {
 	recordId := uint64(1)
 
 	// Create a host zone with a safe admin
-	s.App.StaketiaKeeper.SetHostZone(s.Ctx, types.HostZone{
+	s.App.StakedymKeeper.SetHostZone(s.Ctx, types.HostZone{
 		SafeAddressOnStride: safeAddress,
 	})
 
@@ -445,7 +445,7 @@ func (s *KeeperTestSuite) TestOverwriteDelegationRecord() {
 		Status:       types.DELEGATION_QUEUE,
 		TxHash:       "override-hash",
 	}
-	s.App.StaketiaKeeper.SetDelegationRecord(s.Ctx, initialDelegationRecord)
+	s.App.StakedymKeeper.SetDelegationRecord(s.Ctx, initialDelegationRecord)
 
 	// Attempt to override the delegation record from a non-safe address - it should fail
 	msg := types.MsgOverwriteDelegationRecord{
@@ -456,7 +456,7 @@ func (s *KeeperTestSuite) TestOverwriteDelegationRecord() {
 	s.Require().ErrorContains(err, "invalid safe address")
 
 	// Check that the record was not updated
-	recordAfterFailedTx, found := s.App.StaketiaKeeper.GetDelegationRecord(s.Ctx, recordId)
+	recordAfterFailedTx, found := s.App.StakedymKeeper.GetDelegationRecord(s.Ctx, recordId)
 	s.Require().True(found, "record should not have been removed")
 	s.Require().Equal(initialDelegationRecord, recordAfterFailedTx, "record should not have been overridden")
 
@@ -469,7 +469,7 @@ func (s *KeeperTestSuite) TestOverwriteDelegationRecord() {
 	s.Require().NoError(err, "no error expected when overriding record")
 
 	// Check that the record was updated
-	recordAfterSuccessfulTx, found := s.App.StaketiaKeeper.GetDelegationRecord(s.Ctx, recordId)
+	recordAfterSuccessfulTx, found := s.App.StakedymKeeper.GetDelegationRecord(s.Ctx, recordId)
 	s.Require().True(found, "record should not have been removed")
 	s.Require().Equal(overrideDelegationRecord, recordAfterSuccessfulTx, "record should have been overridden")
 }
@@ -483,7 +483,7 @@ func (s *KeeperTestSuite) TestOverwriteUnbondingRecord() {
 	recordId := uint64(1)
 
 	// Create a host zone with a safe admin
-	s.App.StaketiaKeeper.SetHostZone(s.Ctx, types.HostZone{
+	s.App.StakedymKeeper.SetHostZone(s.Ctx, types.HostZone{
 		SafeAddressOnStride: safeAddress,
 	})
 
@@ -506,7 +506,7 @@ func (s *KeeperTestSuite) TestOverwriteUnbondingRecord() {
 		UndelegationTxHash:             "override-hash-1",
 		UnbondedTokenSweepTxHash:       "override-hash-2",
 	}
-	s.App.StaketiaKeeper.SetUnbondingRecord(s.Ctx, initialUnbondingRecord)
+	s.App.StakedymKeeper.SetUnbondingRecord(s.Ctx, initialUnbondingRecord)
 
 	// Attempt to override the unbonding record from a non-safe address - it should fail
 	msg := types.MsgOverwriteUnbondingRecord{
@@ -517,7 +517,7 @@ func (s *KeeperTestSuite) TestOverwriteUnbondingRecord() {
 	s.Require().ErrorContains(err, "invalid safe address")
 
 	// Check that the record was not updated
-	recordAfterFailedTx, found := s.App.StaketiaKeeper.GetUnbondingRecord(s.Ctx, recordId)
+	recordAfterFailedTx, found := s.App.StakedymKeeper.GetUnbondingRecord(s.Ctx, recordId)
 	s.Require().True(found, "record should not have been removed")
 	s.Require().Equal(initialUnbondingRecord, recordAfterFailedTx, "record should not have been overridden")
 
@@ -530,7 +530,7 @@ func (s *KeeperTestSuite) TestOverwriteUnbondingRecord() {
 	s.Require().NoError(err, "no error expected when overriding record")
 
 	// Check that the record was updated
-	recordAfterSuccessfulTx, found := s.App.StaketiaKeeper.GetUnbondingRecord(s.Ctx, recordId)
+	recordAfterSuccessfulTx, found := s.App.StakedymKeeper.GetUnbondingRecord(s.Ctx, recordId)
 	s.Require().True(found, "record should not have been removed")
 	s.Require().Equal(overrideUnbondingRecord, recordAfterSuccessfulTx, "record should have been overridden")
 }
@@ -545,7 +545,7 @@ func (s *KeeperTestSuite) TestOverwriteRedemptionRecord() {
 	redeemer := "redeemer"
 
 	// Create a host zone with a safe admin
-	s.App.StaketiaKeeper.SetHostZone(s.Ctx, types.HostZone{
+	s.App.StakedymKeeper.SetHostZone(s.Ctx, types.HostZone{
 		SafeAddressOnStride: safeAddress,
 	})
 
@@ -562,7 +562,7 @@ func (s *KeeperTestSuite) TestOverwriteRedemptionRecord() {
 		NativeAmount:      sdkmath.NewInt(2000),
 		StTokenAmount:     sdkmath.NewInt(2000),
 	}
-	s.App.StaketiaKeeper.SetRedemptionRecord(s.Ctx, initialRedemptionRecord)
+	s.App.StakedymKeeper.SetRedemptionRecord(s.Ctx, initialRedemptionRecord)
 
 	// Attempt to override the redemption record from a non-safe address - it should fail
 	msg := types.MsgOverwriteRedemptionRecord{
@@ -573,7 +573,7 @@ func (s *KeeperTestSuite) TestOverwriteRedemptionRecord() {
 	s.Require().ErrorContains(err, "invalid safe address")
 
 	// Check that the record was not updated
-	recordAfterFailedTx, found := s.App.StaketiaKeeper.GetRedemptionRecord(s.Ctx, recordId, redeemer)
+	recordAfterFailedTx, found := s.App.StakedymKeeper.GetRedemptionRecord(s.Ctx, recordId, redeemer)
 	s.Require().True(found, "record should not have been removed")
 	s.Require().Equal(initialRedemptionRecord, recordAfterFailedTx, "record should not have been overridden")
 
@@ -586,7 +586,7 @@ func (s *KeeperTestSuite) TestOverwriteRedemptionRecord() {
 	s.Require().NoError(err, "no error expected when overriding record")
 
 	// Check that the record was updated
-	recordAfterSuccessfulTx, found := s.App.StaketiaKeeper.GetRedemptionRecord(s.Ctx, recordId, redeemer)
+	recordAfterSuccessfulTx, found := s.App.StakedymKeeper.GetRedemptionRecord(s.Ctx, recordId, redeemer)
 	s.Require().True(found, "record should not have been removed")
 	s.Require().Equal(overrideRedemptionRecord, recordAfterSuccessfulTx, "record should have been overridden")
 }
@@ -607,7 +607,7 @@ func (s *KeeperTestSuite) TestSetOperatorAddress() {
 		SafeAddressOnStride:     safeAddress,
 		OperatorAddressOnStride: operatorAddress,
 	}
-	s.App.StaketiaKeeper.SetHostZone(s.Ctx, zone)
+	s.App.StakedymKeeper.SetHostZone(s.Ctx, zone)
 
 	// Set the operator address, signed by the SAFE address
 	msgSetOperatorAddress := types.MsgSetOperatorAddress{
@@ -619,7 +619,7 @@ func (s *KeeperTestSuite) TestSetOperatorAddress() {
 	s.Require().NoError(err, "should not throw an error")
 
 	// Confirm the operator address was updated
-	zone, err = s.App.StaketiaKeeper.GetHostZone(s.Ctx)
+	zone, err = s.App.StakedymKeeper.GetHostZone(s.Ctx)
 	s.Require().NoError(err, "should not throw an error")
 	s.Require().Equal(s.TestAccs[2].String(), zone.OperatorAddressOnStride, "operator address should be set")
 
@@ -628,7 +628,7 @@ func (s *KeeperTestSuite) TestSetOperatorAddress() {
 		Signer:   operatorAddress,
 		Operator: nonAdminAddress,
 	}
-	s.App.StaketiaKeeper.SetHostZone(s.Ctx, zone)
+	s.App.StakedymKeeper.SetHostZone(s.Ctx, zone)
 	_, err = s.GetMsgServer().SetOperatorAddress(s.Ctx, &msgSetOperatorAddressWrongSafe)
 	s.Require().Error(err, "invalid safe address")
 }

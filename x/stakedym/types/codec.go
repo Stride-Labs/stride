@@ -11,19 +11,19 @@ import (
 )
 
 func RegisterLegacyAminoCodec(cdc *codec.LegacyAmino) {
-	legacy.RegisterAminoMsg(cdc, &MsgLiquidStake{}, "staketia/MsgLiquidStake")
-	legacy.RegisterAminoMsg(cdc, &MsgRedeemStake{}, "staketia/MsgRedeemStake")
-	legacy.RegisterAminoMsg(cdc, &MsgConfirmDelegation{}, "staketia/MsgConfirmDelegation")
-	legacy.RegisterAminoMsg(cdc, &MsgConfirmUndelegation{}, "staketia/MsgConfirmUndelegation")
-	legacy.RegisterAminoMsg(cdc, &MsgConfirmUnbondedTokenSweep{}, "staketia/MsgConfirmUnbondedTokenSweep")
-	legacy.RegisterAminoMsg(cdc, &MsgAdjustDelegatedBalance{}, "staketia/MsgAdjustDelegatedBalance")
-	legacy.RegisterAminoMsg(cdc, &MsgUpdateInnerRedemptionRateBounds{}, "staketia/MsgUpdateRedemptionRateBounds")
-	legacy.RegisterAminoMsg(cdc, &MsgResumeHostZone{}, "staketia/MsgResumeHostZone")
-	legacy.RegisterAminoMsg(cdc, &MsgRefreshRedemptionRate{}, "staketia/MsgRefreshRedemptionRate")
-	legacy.RegisterAminoMsg(cdc, &MsgOverwriteDelegationRecord{}, "staketia/MsgOverwriteDelegationRecord")
-	legacy.RegisterAminoMsg(cdc, &MsgOverwriteUnbondingRecord{}, "staketia/MsgOverwriteUnbondingRecord")
-	legacy.RegisterAminoMsg(cdc, &MsgOverwriteRedemptionRecord{}, "staketia/MsgOverwriteRedemptionRecord")
-	legacy.RegisterAminoMsg(cdc, &MsgSetOperatorAddress{}, "staketia/MsgSetOperatorAddress")
+	legacy.RegisterAminoMsg(cdc, &MsgLiquidStake{}, "stakedym/MsgLiquidStake")
+	legacy.RegisterAminoMsg(cdc, &MsgRedeemStake{}, "stakedym/MsgRedeemStake")
+	legacy.RegisterAminoMsg(cdc, &MsgConfirmDelegation{}, "stakedym/MsgConfirmDelegation")
+	legacy.RegisterAminoMsg(cdc, &MsgConfirmUndelegation{}, "stakedym/MsgConfirmUndelegation")
+	legacy.RegisterAminoMsg(cdc, &MsgConfirmUnbondedTokenSweep{}, "stakedym/MsgConfirmUnbondedTokenSweep")
+	legacy.RegisterAminoMsg(cdc, &MsgAdjustDelegatedBalance{}, "stakedym/MsgAdjustDelegatedBalance")
+	legacy.RegisterAminoMsg(cdc, &MsgUpdateInnerRedemptionRateBounds{}, "stakedym/MsgUpdateRedemptionRateBounds")
+	legacy.RegisterAminoMsg(cdc, &MsgResumeHostZone{}, "stakedym/MsgResumeHostZone")
+	legacy.RegisterAminoMsg(cdc, &MsgRefreshRedemptionRate{}, "stakedym/MsgRefreshRedemptionRate")
+	legacy.RegisterAminoMsg(cdc, &MsgOverwriteDelegationRecord{}, "stakedym/MsgOverwriteDelegationRecord")
+	legacy.RegisterAminoMsg(cdc, &MsgOverwriteUnbondingRecord{}, "stakedym/MsgOverwriteUnbondingRecord")
+	legacy.RegisterAminoMsg(cdc, &MsgOverwriteRedemptionRecord{}, "stakedym/MsgOverwriteRedemptionRecord")
+	legacy.RegisterAminoMsg(cdc, &MsgSetOperatorAddress{}, "stakedym/MsgSetOperatorAddress")
 
 }
 

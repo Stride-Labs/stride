@@ -11,8 +11,8 @@ import (
 	transfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
 
 	"github.com/Stride-Labs/stride/v18/utils"
+	"github.com/Stride-Labs/stride/v18/x/stakedym/types"
 	stakeibctypes "github.com/Stride-Labs/stride/v18/x/stakeibc/types"
-	"github.com/Stride-Labs/stride/v18/x/staketia/types"
 )
 
 // Liquid stakes native tokens and returns stTokens to the user
@@ -76,9 +76,9 @@ func (k Keeper) LiquidStake(ctx sdk.Context, liquidStaker string, nativeAmount s
 	return stToken, nil
 }
 
-// IBC transfers all TIA in the deposit account and sends it to the delegation account
+// IBC transfers all DYM in the deposit account and sends it to the delegation account
 func (k Keeper) PrepareDelegation(ctx sdk.Context, epochNumber uint64, epochDuration time.Duration) error {
-	k.Logger(ctx).Info(utils.LogWithHostZone(types.CelestiaChainId, "Preparing delegation for epoch %d", epochNumber))
+	k.Logger(ctx).Info(utils.LogWithHostZone(types.DymensionChainId, "Preparing delegation for epoch %d", epochNumber))
 
 	// Only send the transfer if the host zone isn't halted
 	hostZone, err := k.GetUnhaltedHostZone(ctx)
@@ -101,7 +101,7 @@ func (k Keeper) PrepareDelegation(ctx sdk.Context, epochNumber uint64, epochDura
 
 	// If there's nothing to delegate, exit early - no need to create a new record
 	if nativeTokens.Amount.IsZero() {
-		k.Logger(ctx).Info(utils.LogWithHostZone(types.CelestiaChainId, "No new liquid stakes for epoch %d", epochNumber))
+		k.Logger(ctx).Info(utils.LogWithHostZone(types.DymensionChainId, "No new liquid stakes for epoch %d", epochNumber))
 		return nil
 	}
 

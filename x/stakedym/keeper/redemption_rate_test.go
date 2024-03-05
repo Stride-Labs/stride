@@ -6,7 +6,7 @@ import (
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/Stride-Labs/stride/v18/x/staketia/types"
+	"github.com/Stride-Labs/stride/v18/x/stakedym/types"
 )
 
 func (s *KeeperTestSuite) TestUpdateRedemptionRate() {
@@ -92,7 +92,7 @@ func (s *KeeperTestSuite) TestUpdateRedemptionRate() {
 
 			// Create the host zone with the delegated balance and deposit address
 			initialRedemptionRate := sdk.MustNewDecFromStr("0.999")
-			s.App.StaketiaKeeper.SetHostZone(s.Ctx, types.HostZone{
+			s.App.StakedymKeeper.SetHostZone(s.Ctx, types.HostZone{
 				NativeTokenDenom:    HostNativeDenom,
 				NativeTokenIbcDenom: HostIBCDenom,
 				DepositAddress:      depositAddress.String(),
@@ -102,21 +102,21 @@ func (s *KeeperTestSuite) TestUpdateRedemptionRate() {
 
 			// Set each delegation record
 			for _, delegationRecord := range tc.delegationRecords {
-				s.App.StaketiaKeeper.SetDelegationRecord(s.Ctx, delegationRecord)
+				s.App.StakedymKeeper.SetDelegationRecord(s.Ctx, delegationRecord)
 			}
 
 			// Add some archive delegation records that should be excluded
 			// We'll create these by first creating normal records and then removing them
 			for i := 0; i <= 5; i++ {
 				id := uint64(i * 1000)
-				s.App.StaketiaKeeper.SetArchivedDelegationRecord(s.Ctx, types.DelegationRecord{Id: id})
+				s.App.StakedymKeeper.SetArchivedDelegationRecord(s.Ctx, types.DelegationRecord{Id: id})
 			}
 
 			// Mint sttokens for the supply (fund account calls mint)
 			s.FundAccount(s.TestAccs[1], sdk.NewCoin(StDenom, tc.stTokenSupply))
 
 			// Update the redemption rate and check that it matches
-			err := s.App.StaketiaKeeper.UpdateRedemptionRate(s.Ctx)
+			err := s.App.StakedymKeeper.UpdateRedemptionRate(s.Ctx)
 			s.Require().NoError(err, "no error expected when calculating redemption rate")
 
 			hostZone := s.MustGetHostZone()
@@ -133,7 +133,7 @@ func (s *KeeperTestSuite) TestUpdateRedemptionRate_NoTokens() {
 	depositAddress := s.TestAccs[0]
 
 	// Create the host zone with no delegated balance
-	s.App.StaketiaKeeper.SetHostZone(s.Ctx, types.HostZone{
+	s.App.StakedymKeeper.SetHostZone(s.Ctx, types.HostZone{
 		NativeTokenDenom:    HostNativeDenom,
 		NativeTokenIbcDenom: HostIBCDenom,
 		DepositAddress:      depositAddress.String(),
@@ -142,7 +142,7 @@ func (s *KeeperTestSuite) TestUpdateRedemptionRate_NoTokens() {
 	})
 
 	// Check that the update funtion returns nil, since there are no stTokens
-	err := s.App.StaketiaKeeper.UpdateRedemptionRate(s.Ctx)
+	err := s.App.StakedymKeeper.UpdateRedemptionRate(s.Ctx)
 	s.Require().NoError(err, "no error when there are no stTokens")
 
 	// Check that the redemption rate was not updated
@@ -153,7 +153,7 @@ func (s *KeeperTestSuite) TestUpdateRedemptionRate_NoTokens() {
 	s.FundAccount(s.TestAccs[1], sdk.NewCoin(StDenom, sdkmath.NewInt(1000)))
 
 	// Try to update again, now it should error since there's stTokens but no native tokens
-	err = s.App.StaketiaKeeper.UpdateRedemptionRate(s.Ctx)
+	err = s.App.StakedymKeeper.UpdateRedemptionRate(s.Ctx)
 	s.Require().ErrorContains(err, "Non-zero stToken supply, yet the zero delegated and undelegated balance")
 }
 
@@ -222,8 +222,8 @@ func (s *KeeperTestSuite) TestCheckRedemptionRateExceedsBounds() {
 
 	for _, tc := range testCases {
 		s.Run(tc.name, func() {
-			s.App.StaketiaKeeper.SetHostZone(s.Ctx, tc.hostZone)
-			err := s.App.StaketiaKeeper.CheckRedemptionRateExceedsBounds(s.Ctx)
+			s.App.StakedymKeeper.SetHostZone(s.Ctx, tc.hostZone)
+			err := s.App.StakedymKeeper.CheckRedemptionRateExceedsBounds(s.Ctx)
 			if tc.exceedsBounds {
 				s.Require().ErrorIs(err, types.ErrRedemptionRateOutsideSafetyBounds)
 			} else {

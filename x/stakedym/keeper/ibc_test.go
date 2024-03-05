@@ -5,7 +5,7 @@ import (
 	transfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
 	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
 
-	"github.com/Stride-Labs/stride/v18/x/staketia/types"
+	"github.com/Stride-Labs/stride/v18/x/stakedym/types"
 )
 
 type PacketCallbackTestCase struct {
@@ -32,10 +32,10 @@ func (s *KeeperTestSuite) SetupTestHandleRecordUpdatePacket() PacketCallbackTest
 	}
 
 	// Write record to store
-	s.App.StaketiaKeeper.SetDelegationRecord(s.Ctx, record)
+	s.App.StakedymKeeper.SetDelegationRecord(s.Ctx, record)
 
 	// Add the pending record to the store
-	s.App.StaketiaKeeper.SetTransferInProgressRecordId(s.Ctx, channelId, sequence, record.Id)
+	s.App.StakedymKeeper.SetTransferInProgressRecordId(s.Ctx, channelId, sequence, record.Id)
 
 	// Build the IBC packet
 	transferMetadata := transfertypes.FungibleTokenPacketData{
@@ -59,22 +59,22 @@ func (s *KeeperTestSuite) SetupTestHandleRecordUpdatePacket() PacketCallbackTest
 func (s *KeeperTestSuite) TestArchiveFailedTransferRecord() {
 	// Create an initial record
 	recordId := uint64(1)
-	s.App.StaketiaKeeper.SetDelegationRecord(s.Ctx, types.DelegationRecord{
+	s.App.StakedymKeeper.SetDelegationRecord(s.Ctx, types.DelegationRecord{
 		Id: recordId,
 	})
 
 	// Update the hash to failed
-	err := s.App.StaketiaKeeper.ArchiveFailedTransferRecord(s.Ctx, recordId)
+	err := s.App.StakedymKeeper.ArchiveFailedTransferRecord(s.Ctx, recordId)
 	s.Require().NoError(err, "no error expected when archiving transfer record")
 
 	// Confirm it was updated
-	delegationRecord, found := s.App.StaketiaKeeper.GetArchivedDelegationRecord(s.Ctx, recordId)
+	delegationRecord, found := s.App.StakedymKeeper.GetArchivedDelegationRecord(s.Ctx, recordId)
 	s.Require().True(found, "delegation record should have been archived")
 	s.Require().Equal(types.TRANSFER_FAILED, delegationRecord.Status, "delegation record status")
 
 	// Check that an invalid ID errors
 	invalidRecordId := uint64(99)
-	err = s.App.StaketiaKeeper.ArchiveFailedTransferRecord(s.Ctx, invalidRecordId)
+	err = s.App.StakedymKeeper.ArchiveFailedTransferRecord(s.Ctx, invalidRecordId)
 	s.Require().ErrorContains(err, "delegation record not found")
 }
 
@@ -86,7 +86,7 @@ func (s *KeeperTestSuite) TestOnTimeoutPacket_Successful() {
 	tc := s.SetupTestHandleRecordUpdatePacket()
 
 	// Call OnTimeoutPacket
-	err := s.App.StaketiaKeeper.OnTimeoutPacket(s.Ctx, tc.Packet)
+	err := s.App.StakedymKeeper.OnTimeoutPacket(s.Ctx, tc.Packet)
 	s.Require().NoError(err, "no error expected when calling OnTimeoutPacket")
 
 	s.verifyDelegationRecordArchived(tc)
@@ -99,10 +99,10 @@ func (s *KeeperTestSuite) TestOnTimeoutPacket_NoOp() {
 	recordsBefore := s.getAllRecords(tc)
 
 	// Remove the callback data
-	s.App.StaketiaKeeper.RemoveTransferInProgressRecordId(s.Ctx, tc.ChannelId, tc.OriginalSequence)
+	s.App.StakedymKeeper.RemoveTransferInProgressRecordId(s.Ctx, tc.ChannelId, tc.OriginalSequence)
 
 	// Should be a no-op since there's no callback data
-	err := s.App.StaketiaKeeper.OnTimeoutPacket(s.Ctx, tc.Packet)
+	err := s.App.StakedymKeeper.OnTimeoutPacket(s.Ctx, tc.Packet)
 	s.Require().NoError(err, "no error expected when calling OnTimeoutPacket")
 
 	s.verifyNoRecordsChanged(tc, recordsBefore)
@@ -123,7 +123,7 @@ func (s *KeeperTestSuite) TestOnAcknowledgementPacket_AckSuccess() {
 	})
 
 	// Call OnAckPacket with the successful ack
-	err := s.App.StaketiaKeeper.OnAcknowledgementPacket(s.Ctx, tc.Packet, ackSuccess)
+	err := s.App.StakedymKeeper.OnAcknowledgementPacket(s.Ctx, tc.Packet, ackSuccess)
 	s.Require().NoError(err, "no error expected during OnAckPacket")
 
 	s.verifyDelegationRecordQueued(tc)
@@ -138,7 +138,7 @@ func (s *KeeperTestSuite) TestOnAcknowledgementPacket_AckFailure() {
 	})
 
 	// Call OnAckPacket with the successful ack
-	err := s.App.StaketiaKeeper.OnAcknowledgementPacket(s.Ctx, tc.Packet, ackFailure)
+	err := s.App.StakedymKeeper.OnAcknowledgementPacket(s.Ctx, tc.Packet, ackFailure)
 	s.Require().NoError(err, "no error expected during OnAckPacket")
 
 	s.verifyDelegationRecordArchived(tc)
@@ -158,7 +158,7 @@ func (s *KeeperTestSuite) TestOnAcknowledgementPacket_InvalidAck() {
 	})
 
 	// Call OnAckPacket with the invalid ack
-	err := s.App.StaketiaKeeper.OnAcknowledgementPacket(s.Ctx, tc.Packet, invalidAck)
+	err := s.App.StakedymKeeper.OnAcknowledgementPacket(s.Ctx, tc.Packet, invalidAck)
 	s.Require().ErrorContains(err, "invalid acknowledgement")
 
 	// Verify store is unchanged
@@ -173,11 +173,11 @@ func (s *KeeperTestSuite) TestOnAcknowledgementPacket_NoOp() {
 	recordsBefore := s.getAllRecords(tc)
 
 	// Remove the record id so that there is no action necessary in the callback
-	s.App.StaketiaKeeper.RemoveTransferInProgressRecordId(s.Ctx, tc.ChannelId, tc.OriginalSequence)
+	s.App.StakedymKeeper.RemoveTransferInProgressRecordId(s.Ctx, tc.ChannelId, tc.OriginalSequence)
 
 	// Call OnAckPacket and confirm there was no error
 	// The ack argument here doesn't matter cause the no-op check is upstream
-	err := s.App.StaketiaKeeper.OnAcknowledgementPacket(s.Ctx, tc.Packet, []byte{})
+	err := s.App.StakedymKeeper.OnAcknowledgementPacket(s.Ctx, tc.Packet, []byte{})
 	s.Require().NoError(err, "no error expected during on ack packet")
 
 	// Verify store is unchanged
@@ -191,10 +191,10 @@ func (s *KeeperTestSuite) TestOnAcknowledgementPacket_NoOp() {
 // Helper function to verify the record was updated after a successful transfer
 func (s *KeeperTestSuite) verifyDelegationRecordQueued(tc PacketCallbackTestCase) {
 	// Confirm the DelegationRecord is still in the active store
-	record, found := s.App.StaketiaKeeper.GetDelegationRecord(s.Ctx, tc.Record.Id)
+	record, found := s.App.StakedymKeeper.GetDelegationRecord(s.Ctx, tc.Record.Id)
 	s.Require().True(found, "record should have been found")
 	// Confirm the record was not archived
-	_, found = s.App.StaketiaKeeper.GetArchivedDelegationRecord(s.Ctx, tc.Record.Id)
+	_, found = s.App.StakedymKeeper.GetArchivedDelegationRecord(s.Ctx, tc.Record.Id)
 	s.Require().False(found, "record should not be archived")
 
 	// Confirm the record is unchanged, except for the status
@@ -202,17 +202,17 @@ func (s *KeeperTestSuite) verifyDelegationRecordQueued(tc PacketCallbackTestCase
 	s.Require().Equal(tc.Record, record, "record should have been archived")
 
 	// Confirm the transfer in progress was removed
-	_, found = s.App.StaketiaKeeper.GetTransferInProgressRecordId(s.Ctx, tc.ChannelId, tc.OriginalSequence)
+	_, found = s.App.StakedymKeeper.GetTransferInProgressRecordId(s.Ctx, tc.ChannelId, tc.OriginalSequence)
 	s.Require().False(found, "transfer in progress should have been removed")
 }
 
 // Helper function to verify record was archived after a failed or timed out transfer
 func (s *KeeperTestSuite) verifyDelegationRecordArchived(tc PacketCallbackTestCase) {
 	// Confirm the DelegationRecord was archived
-	archivedRecord, found := s.App.StaketiaKeeper.GetArchivedDelegationRecord(s.Ctx, tc.Record.Id)
+	archivedRecord, found := s.App.StakedymKeeper.GetArchivedDelegationRecord(s.Ctx, tc.Record.Id)
 	s.Require().True(found, "record should have been found in the archive store")
 	// Confirm the record is no longer in the active store
-	_, found = s.App.StaketiaKeeper.GetDelegationRecord(s.Ctx, tc.Record.Id)
+	_, found = s.App.StakedymKeeper.GetDelegationRecord(s.Ctx, tc.Record.Id)
 	s.Require().False(found, "record should have been removed from the store")
 
 	// Confirm the record is unchanged, except for the Status
@@ -220,15 +220,15 @@ func (s *KeeperTestSuite) verifyDelegationRecordArchived(tc PacketCallbackTestCa
 	s.Require().Equal(tc.Record, archivedRecord, "record should have been archived")
 
 	// Confirm the transfer in progress was removed
-	_, found = s.App.StaketiaKeeper.GetTransferInProgressRecordId(s.Ctx, tc.ChannelId, tc.OriginalSequence)
+	_, found = s.App.StakedymKeeper.GetTransferInProgressRecordId(s.Ctx, tc.ChannelId, tc.OriginalSequence)
 	s.Require().False(found, "transfer in progress should have been removed")
 }
 
 // Helper function to grab both active and archived delegation records
 func (s *KeeperTestSuite) getAllRecords(tc PacketCallbackTestCase) (allRecords []types.DelegationRecord) {
 	// Get all delegation records
-	activeRecords := s.App.StaketiaKeeper.GetAllActiveDelegationRecords(s.Ctx)
-	archiveRecords := s.App.StaketiaKeeper.GetAllArchivedDelegationRecords(s.Ctx)
+	activeRecords := s.App.StakedymKeeper.GetAllActiveDelegationRecords(s.Ctx)
+	archiveRecords := s.App.StakedymKeeper.GetAllArchivedDelegationRecords(s.Ctx)
 	// append the records
 	allRecords = append(activeRecords, archiveRecords...)
 	return allRecords

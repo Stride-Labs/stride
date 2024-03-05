@@ -1,4 +1,4 @@
-package staketia
+package stakedym
 
 import (
 	"context"
@@ -15,9 +15,9 @@ import (
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 	"github.com/spf13/cobra"
 
-	"github.com/Stride-Labs/stride/v18/x/staketia/client/cli"
-	"github.com/Stride-Labs/stride/v18/x/staketia/keeper"
-	"github.com/Stride-Labs/stride/v18/x/staketia/types"
+	"github.com/Stride-Labs/stride/v18/x/stakedym/client/cli"
+	"github.com/Stride-Labs/stride/v18/x/stakedym/keeper"
+	"github.com/Stride-Labs/stride/v18/x/stakedym/types"
 )
 
 var (

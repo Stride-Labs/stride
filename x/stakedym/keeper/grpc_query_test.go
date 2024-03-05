@@ -7,7 +7,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/query"
 
-	"github.com/Stride-Labs/stride/v18/x/staketia/types"
+	"github.com/Stride-Labs/stride/v18/x/stakedym/types"
 )
 
 func (s *KeeperTestSuite) TestQueryHostZone() {
@@ -15,10 +15,10 @@ func (s *KeeperTestSuite) TestQueryHostZone() {
 	hostZone := types.HostZone{
 		ChainId: chainId,
 	}
-	s.App.StaketiaKeeper.SetHostZone(s.Ctx, hostZone)
+	s.App.StakedymKeeper.SetHostZone(s.Ctx, hostZone)
 
 	req := &types.QueryHostZoneRequest{}
-	resp, err := s.App.StaketiaKeeper.HostZone(sdk.WrapSDKContext(s.Ctx), req)
+	resp, err := s.App.StakedymKeeper.HostZone(sdk.WrapSDKContext(s.Ctx), req)
 	s.Require().NoError(err, "no error expected when querying host zone")
 	s.Require().Equal(chainId, resp.HostZone.ChainId, "host zone chain-id from query")
 }
@@ -36,19 +36,19 @@ func (s *KeeperTestSuite) TestQueryDelegationRecords() {
 		// (which removes from the active store, and writes to the archive store)
 		archivedRecord := delegationRecord
 		archivedRecord.Status = types.DELEGATION_COMPLETE
-		s.App.StaketiaKeeper.ArchiveDelegationRecord(s.Ctx, archivedRecord)
+		s.App.StakedymKeeper.ArchiveDelegationRecord(s.Ctx, archivedRecord)
 		archivedDelegationRecords = append(archivedDelegationRecords, archivedRecord)
 
 		// Set the original record back to the active store
 		delegationRecord.Status = types.TRANSFER_IN_PROGRESS
-		s.App.StaketiaKeeper.SetDelegationRecord(s.Ctx, delegationRecord)
+		s.App.StakedymKeeper.SetDelegationRecord(s.Ctx, delegationRecord)
 		activeDelegationRecords = append(activeDelegationRecords, delegationRecord)
 	}
 	allDelegationRecords := append(activeDelegationRecords, archivedDelegationRecords...)
 
 	// Test a query with no archived records
 	activeReq := &types.QueryDelegationRecordsRequest{IncludeArchived: false}
-	activeResp, err := s.App.StaketiaKeeper.DelegationRecords(sdk.WrapSDKContext(s.Ctx), activeReq)
+	activeResp, err := s.App.StakedymKeeper.DelegationRecords(sdk.WrapSDKContext(s.Ctx), activeReq)
 	s.Require().NoError(err, "no error expected when querying active records")
 
 	s.Require().Equal(len(activeDelegationRecords), len(activeResp.DelegationRecords), "number of active records")
@@ -56,7 +56,7 @@ func (s *KeeperTestSuite) TestQueryDelegationRecords() {
 
 	// Test a query with all records (including archived records)
 	allReq := &types.QueryDelegationRecordsRequest{IncludeArchived: true}
-	allResp, err := s.App.StaketiaKeeper.DelegationRecords(sdk.WrapSDKContext(s.Ctx), allReq)
+	allResp, err := s.App.StakedymKeeper.DelegationRecords(sdk.WrapSDKContext(s.Ctx), allReq)
 	s.Require().NoError(err, "no error expected when querying all records")
 
 	s.Require().Equal(len(allDelegationRecords), len(allResp.DelegationRecords), "all records")
@@ -75,19 +75,19 @@ func (s *KeeperTestSuite) TestQueryUnbondingRecords() {
 		// Archive (which removes from the active store, and writes to the archive store)
 		archivedRecord := unbondingRecord
 		archivedRecord.Status = types.CLAIMED
-		s.App.StaketiaKeeper.ArchiveUnbondingRecord(s.Ctx, archivedRecord)
+		s.App.StakedymKeeper.ArchiveUnbondingRecord(s.Ctx, archivedRecord)
 		archivedUnbondingRecords = append(archivedUnbondingRecords, archivedRecord)
 
 		// Set the original record back to the active store
 		unbondingRecord.Status = types.UNBONDING_QUEUE
-		s.App.StaketiaKeeper.SetUnbondingRecord(s.Ctx, unbondingRecord)
+		s.App.StakedymKeeper.SetUnbondingRecord(s.Ctx, unbondingRecord)
 		activeUnbondingRecords = append(activeUnbondingRecords, unbondingRecord)
 	}
 	allUnbondingRecords := append(activeUnbondingRecords, archivedUnbondingRecords...)
 
 	// Test a query with no archived records
 	activeReq := &types.QueryUnbondingRecordsRequest{IncludeArchived: false}
-	activeResp, err := s.App.StaketiaKeeper.UnbondingRecords(sdk.WrapSDKContext(s.Ctx), activeReq)
+	activeResp, err := s.App.StakedymKeeper.UnbondingRecords(sdk.WrapSDKContext(s.Ctx), activeReq)
 	s.Require().NoError(err, "no error expected when querying active records")
 
 	s.Require().Equal(len(activeUnbondingRecords), len(activeResp.UnbondingRecords), "number of active records")
@@ -95,7 +95,7 @@ func (s *KeeperTestSuite) TestQueryUnbondingRecords() {
 
 	// Test a query with no all records
 	allReq := &types.QueryUnbondingRecordsRequest{IncludeArchived: true}
-	allResp, err := s.App.StaketiaKeeper.UnbondingRecords(sdk.WrapSDKContext(s.Ctx), allReq)
+	allResp, err := s.App.StakedymKeeper.UnbondingRecords(sdk.WrapSDKContext(s.Ctx), allReq)
 	s.Require().NoError(err, "no error expected when querying all records")
 
 	s.Require().Equal(len(allUnbondingRecords), len(allResp.UnbondingRecords), "all records")
@@ -113,7 +113,7 @@ func (s *KeeperTestSuite) TestQueryRedemptionRecord() {
 		{Id: 4, UnbondingCompletionTimeSeconds: 12348},
 	}
 	for _, unbondingRecord := range unbondingRecords {
-		s.App.StaketiaKeeper.SetUnbondingRecord(s.Ctx, unbondingRecord)
+		s.App.StakedymKeeper.SetUnbondingRecord(s.Ctx, unbondingRecord)
 	}
 	// map unbonding record id to unbonding time
 	unbondingTimeMap := map[uint64]uint64{}
@@ -127,14 +127,14 @@ func (s *KeeperTestSuite) TestQueryRedemptionRecord() {
 		{UnbondingRecordId: 3, Redeemer: "address-C"},
 	}
 	for _, redemptionRecord := range redemptionRecords {
-		s.App.StaketiaKeeper.SetRedemptionRecord(s.Ctx, redemptionRecord)
+		s.App.StakedymKeeper.SetRedemptionRecord(s.Ctx, redemptionRecord)
 	}
 
 	req := &types.QueryRedemptionRecordRequest{
 		UnbondingRecordId: queriedUnbondingRecordId,
 		Address:           queriedAddress,
 	}
-	resp, err := s.App.StaketiaKeeper.RedemptionRecord(sdk.WrapSDKContext(s.Ctx), req)
+	resp, err := s.App.StakedymKeeper.RedemptionRecord(sdk.WrapSDKContext(s.Ctx), req)
 	s.Require().NoError(err, "no error expected when querying redemption record")
 
 	s.Require().Equal(queriedUnbondingRecordId, resp.RedemptionRecordResponse.RedemptionRecord.UnbondingRecordId, "redemption record unbonding ID")
@@ -145,7 +145,7 @@ func (s *KeeperTestSuite) TestQueryRedemptionRecord() {
 func (s *KeeperTestSuite) TestQueryAllRedemptionRecords_Address() {
 	queriedAddress := "address-B"
 	expectedUnbondingRecordIds := []uint64{2, 4}
-	s.App.StaketiaKeeper.SetHostZone(s.Ctx, types.HostZone{
+	s.App.StakedymKeeper.SetHostZone(s.Ctx, types.HostZone{
 		UnbondingPeriodSeconds: 10000,
 	})
 	allRedemptionRecords := []types.RedemptionRecord{
@@ -155,13 +155,13 @@ func (s *KeeperTestSuite) TestQueryAllRedemptionRecords_Address() {
 		{UnbondingRecordId: 4, Redeemer: "address-B"},
 	}
 	for _, redemptionRecord := range allRedemptionRecords {
-		s.App.StaketiaKeeper.SetRedemptionRecord(s.Ctx, redemptionRecord)
+		s.App.StakedymKeeper.SetRedemptionRecord(s.Ctx, redemptionRecord)
 	}
 
 	req := &types.QueryRedemptionRecordsRequest{
 		Address: queriedAddress,
 	}
-	resp, err := s.App.StaketiaKeeper.RedemptionRecords(sdk.WrapSDKContext(s.Ctx), req)
+	resp, err := s.App.StakedymKeeper.RedemptionRecords(sdk.WrapSDKContext(s.Ctx), req)
 	s.Require().NoError(err, "no error expected when querying redemption records")
 	s.Require().Nil(resp.Pagination, "pagination should be nil since it all fits on one page")
 
@@ -173,7 +173,7 @@ func (s *KeeperTestSuite) TestQueryAllRedemptionRecords_Address() {
 }
 
 func (s *KeeperTestSuite) TestQueryAllRedemptionRecords_UnbondingRecordId() {
-	s.App.StaketiaKeeper.SetHostZone(s.Ctx, types.HostZone{
+	s.App.StakedymKeeper.SetHostZone(s.Ctx, types.HostZone{
 		UnbondingPeriodSeconds: 10000,
 	})
 	queriedUnbondingRecordId := uint64(2)
@@ -185,13 +185,13 @@ func (s *KeeperTestSuite) TestQueryAllRedemptionRecords_UnbondingRecordId() {
 		{UnbondingRecordId: 2, Redeemer: "address-D"},
 	}
 	for _, redemptionRecord := range allRedemptionRecords {
-		s.App.StaketiaKeeper.SetRedemptionRecord(s.Ctx, redemptionRecord)
+		s.App.StakedymKeeper.SetRedemptionRecord(s.Ctx, redemptionRecord)
 	}
 
 	req := &types.QueryRedemptionRecordsRequest{
 		UnbondingRecordId: queriedUnbondingRecordId,
 	}
-	resp, err := s.App.StaketiaKeeper.RedemptionRecords(sdk.WrapSDKContext(s.Ctx), req)
+	resp, err := s.App.StakedymKeeper.RedemptionRecords(sdk.WrapSDKContext(s.Ctx), req)
 	s.Require().NoError(err, "no error expected when querying redemption records")
 	s.Require().Nil(resp.Pagination, "pagination should be nil since it all fits on one page")
 
@@ -203,7 +203,7 @@ func (s *KeeperTestSuite) TestQueryAllRedemptionRecords_UnbondingRecordId() {
 }
 
 func (s *KeeperTestSuite) TestQueryAllRedemptionRecords_Pagination() {
-	s.App.StaketiaKeeper.SetHostZone(s.Ctx, types.HostZone{
+	s.App.StakedymKeeper.SetHostZone(s.Ctx, types.HostZone{
 		UnbondingPeriodSeconds: 10000,
 	})
 
@@ -211,7 +211,7 @@ func (s *KeeperTestSuite) TestQueryAllRedemptionRecords_Pagination() {
 	pageLimit := 50
 	numExcessRecords := 10
 	for i := 0; i < pageLimit+numExcessRecords; i++ {
-		s.App.StaketiaKeeper.SetRedemptionRecord(s.Ctx, types.RedemptionRecord{
+		s.App.StakedymKeeper.SetRedemptionRecord(s.Ctx, types.RedemptionRecord{
 			UnbondingRecordId: uint64(i),
 			Redeemer:          fmt.Sprintf("address-%d", i),
 		})
@@ -223,7 +223,7 @@ func (s *KeeperTestSuite) TestQueryAllRedemptionRecords_Pagination() {
 			Limit: uint64(pageLimit),
 		},
 	}
-	resp, err := s.App.StaketiaKeeper.RedemptionRecords(sdk.WrapSDKContext(s.Ctx), req)
+	resp, err := s.App.StakedymKeeper.RedemptionRecords(sdk.WrapSDKContext(s.Ctx), req)
 	s.Require().NoError(err, "no error expected when querying all redemption records")
 
 	// Confirm only the first page was returned
@@ -235,7 +235,7 @@ func (s *KeeperTestSuite) TestQueryAllRedemptionRecords_Pagination() {
 			Key: resp.Pagination.NextKey,
 		},
 	}
-	resp, err = s.App.StaketiaKeeper.RedemptionRecords(sdk.WrapSDKContext(s.Ctx), req)
+	resp, err = s.App.StakedymKeeper.RedemptionRecords(sdk.WrapSDKContext(s.Ctx), req)
 	s.Require().NoError(err, "no error expected when querying all redemption records on second page")
 	s.Require().Equal(numExcessRecords, len(resp.RedemptionRecordResponses), "only the remainder should be returned")
 }
@@ -247,11 +247,11 @@ func (s *KeeperTestSuite) TestQuerySlashRecords() {
 		{Id: 3, Time: 3, NativeAmount: sdkmath.NewInt(3)},
 	}
 	for _, slashRecord := range slashRecords {
-		s.App.StaketiaKeeper.SetSlashRecord(s.Ctx, slashRecord)
+		s.App.StakedymKeeper.SetSlashRecord(s.Ctx, slashRecord)
 	}
 
 	req := &types.QuerySlashRecordsRequest{}
-	resp, err := s.App.StaketiaKeeper.SlashRecords(sdk.WrapSDKContext(s.Ctx), req)
+	resp, err := s.App.StakedymKeeper.SlashRecords(sdk.WrapSDKContext(s.Ctx), req)
 	s.Require().NoError(err, "no error expected when querying slash records")
 	s.Require().Equal(slashRecords, resp.SlashRecords, "slash records")
 }

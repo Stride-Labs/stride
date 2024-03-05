@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/Stride-Labs/stride/v18/app/apptesting"
-	"github.com/Stride-Labs/stride/v18/x/staketia/types"
+	"github.com/Stride-Labs/stride/v18/x/stakedym/types"
 )
 
 const (
@@ -42,8 +42,8 @@ func fillDefaultHostZone(hostZone types.HostZone) types.HostZone {
 	defaultIbcDenom := transfertypes.ParseDenomTrace(ibcDenomTracePrefix + validDenom).IBCDenom()
 	hostZone.NativeTokenIbcDenom = fillDefaultValue(hostZone.NativeTokenIbcDenom, defaultIbcDenom)
 
-	hostZone.DelegationAddress = fillDefaultValue(hostZone.DelegationAddress, "celestiaXXX")
-	hostZone.RewardAddress = fillDefaultValue(hostZone.RewardAddress, "celestiaXXX")
+	hostZone.DelegationAddress = fillDefaultValue(hostZone.DelegationAddress, "dymXXX")
+	hostZone.RewardAddress = fillDefaultValue(hostZone.RewardAddress, "dymXXX")
 
 	validAddress := apptesting.CreateRandomAccounts(1)[0].String()
 	hostZone.DepositAddress = fillDefaultValue(hostZone.DepositAddress, validAddress)

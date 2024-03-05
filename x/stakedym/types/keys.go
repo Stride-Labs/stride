@@ -3,7 +3,7 @@ package types
 import "encoding/binary"
 
 const (
-	ModuleName = "staketia"
+	ModuleName = "stakedym"
 
 	// StoreKey defines the primary module store key
 	StoreKey = ModuleName
@@ -12,7 +12,7 @@ const (
 	RouterKey = ModuleName
 
 	// Module Account for Fee Collection
-	FeeAddress = "staketia_fee_address"
+	FeeAddress = "stakedym_fee_address"
 )
 
 var (

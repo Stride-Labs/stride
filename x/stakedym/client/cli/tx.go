@@ -14,7 +14,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/version"
 	"github.com/spf13/cobra"
 
-	"github.com/Stride-Labs/stride/v18/x/staketia/types"
+	"github.com/Stride-Labs/stride/v18/x/stakedym/types"
 )
 
 const (
@@ -407,7 +407,7 @@ func CmdOverwriteRecord() *cobra.Command {
 			fmt.Sprint(`Submit an overwrite record tx. The record must be supplied via a JSON file.
 			
 Example:
-$ tx staketia overwrite-record [delegation|unbonding|redemption] <path/to/file.json> --from=<key_or_address>
+$ tx stakedym overwrite-record [delegation|unbonding|redemption] <path/to/file.json> --from=<key_or_address>
 
 Where file.json contains either...
 

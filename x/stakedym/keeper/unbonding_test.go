@@ -9,7 +9,7 @@ import (
 
 	"github.com/Stride-Labs/stride/v18/app/apptesting"
 	"github.com/Stride-Labs/stride/v18/utils"
-	"github.com/Stride-Labs/stride/v18/x/staketia/types"
+	"github.com/Stride-Labs/stride/v18/x/stakedym/types"
 )
 
 const DefaultClaimFundingAmount = 2600 // sum of NativeTokenAmount of records with status UNBONDED
@@ -49,11 +49,11 @@ func (s *KeeperTestSuite) SetupTestRedeemStake(
 	s.FundAccount(userAccount.account, userAccount.stTokens)
 
 	if hostZone != nil {
-		s.App.StaketiaKeeper.SetHostZone(s.Ctx, *hostZone)
+		s.App.StakedymKeeper.SetHostZone(s.Ctx, *hostZone)
 	}
 
 	if accUnbondRecord != nil {
-		s.App.StaketiaKeeper.SetUnbondingRecord(s.Ctx, *accUnbondRecord)
+		s.App.StakedymKeeper.SetUnbondingRecord(s.Ctx, *accUnbondRecord)
 	}
 
 	if hostZone != nil && accUnbondRecord != nil &&
@@ -66,7 +66,7 @@ func (s *KeeperTestSuite) SetupTestRedeemStake(
 	}
 
 	if redemptionRecord != nil {
-		s.App.StaketiaKeeper.SetRedemptionRecord(s.Ctx, *redemptionRecord)
+		s.App.StakedymKeeper.SetRedemptionRecord(s.Ctx, *redemptionRecord)
 	}
 }
 
@@ -284,18 +284,18 @@ func (s *KeeperTestSuite) checkRedeemStakeTestCase(tc RedeemStakeTestCase) {
 	}
 
 	// Run the RedeemStake, verify expected errors returned or no errors with expected updates to records
-	_, err := s.App.StaketiaKeeper.RedeemStake(s.Ctx, tc.redeemMsg.Redeemer, tc.redeemMsg.StTokenAmount)
+	_, err := s.App.StakedymKeeper.RedeemStake(s.Ctx, tc.redeemMsg.Redeemer, tc.redeemMsg.StTokenAmount)
 	if tc.expectedErrorContains == "" {
 		// Successful Run Test Case
 		s.Require().NoError(err, "No error expected during redeem stake execution")
 
 		// check expected updates to Accumulating UnbondingRecord
-		currentAUR, err := s.App.StaketiaKeeper.GetAccumulatingUnbondingRecord(s.Ctx)
+		currentAUR, err := s.App.StakedymKeeper.GetAccumulatingUnbondingRecord(s.Ctx)
 		s.Require().NoError(err, "No error expected when getting UnbondingRecord")
 		s.Require().Equal(*tc.expectedUnbondingRecord, currentAUR, "Accumulating UnbondingRecord did not match expected")
 
 		// check expected updates to RedemptionRecord for this user and current UnbondingRecord
-		currentRR, found := s.App.StaketiaKeeper.GetRedemptionRecord(s.Ctx, currentAUR.Id, tc.redeemMsg.Redeemer)
+		currentRR, found := s.App.StakedymKeeper.GetRedemptionRecord(s.Ctx, currentAUR.Id, tc.redeemMsg.Redeemer)
 		s.Require().True(found, "No RedemptionRecord found after RedeemStake expected to have created one")
 		s.Require().Equal(*tc.expectedRedemptionRecord, currentRR, "RedemptionRecord did not match expected")
 
@@ -322,7 +322,7 @@ func (s *KeeperTestSuite) TestPrepareUndelegation() {
 	epochNumber := uint64(5)
 
 	// Create the accumulating unbonding record
-	s.App.StaketiaKeeper.SetUnbondingRecord(s.Ctx, types.UnbondingRecord{
+	s.App.StakedymKeeper.SetUnbondingRecord(s.Ctx, types.UnbondingRecord{
 		Id:     accumulatingUnbondingRecordId,
 		Status: types.ACCUMULATING_REDEMPTIONS,
 	})
@@ -331,7 +331,7 @@ func (s *KeeperTestSuite) TestPrepareUndelegation() {
 	// (an uneven number is used to test rounding/truncation)
 	oldRedemptionRate := sdk.MustNewDecFromStr("1.9")
 	redemptionRate := sdk.MustNewDecFromStr("1.999")
-	s.App.StaketiaKeeper.SetHostZone(s.Ctx, types.HostZone{
+	s.App.StakedymKeeper.SetHostZone(s.Ctx, types.HostZone{
 		RedemptionRate: redemptionRate,
 	})
 
@@ -355,15 +355,15 @@ func (s *KeeperTestSuite) TestPrepareUndelegation() {
 	for _, expectedUserRedemptionRecord := range expectedRedemptionRecords {
 		initialRedemptionRecord := expectedUserRedemptionRecord
 		initialRedemptionRecord.NativeAmount = sdk.NewDecFromInt(initialRedemptionRecord.StTokenAmount).Mul(oldRedemptionRate).RoundInt()
-		s.App.StaketiaKeeper.SetRedemptionRecord(s.Ctx, initialRedemptionRecord)
+		s.App.StakedymKeeper.SetRedemptionRecord(s.Ctx, initialRedemptionRecord)
 	}
 
 	// Call prepare undelegation
-	err := s.App.StaketiaKeeper.PrepareUndelegation(s.Ctx, epochNumber)
+	err := s.App.StakedymKeeper.PrepareUndelegation(s.Ctx, epochNumber)
 	s.Require().NoError(err, "no error expected when calling prepare undelegation")
 
 	// Confirm the total and status was updated on the unbonding record
-	unbondingRecord, found := s.App.StaketiaKeeper.GetUnbondingRecord(s.Ctx, accumulatingUnbondingRecordId)
+	unbondingRecord, found := s.App.StakedymKeeper.GetUnbondingRecord(s.Ctx, accumulatingUnbondingRecordId)
 	s.Require().True(found)
 	s.Require().Equal(unbondingRecord.Status, types.UNBONDING_QUEUE, "unbonding record status should have updated")
 	s.Require().Equal(expectedTotalNativeAmount.Int64(), unbondingRecord.NativeAmount.Int64(),
@@ -377,52 +377,52 @@ func (s *KeeperTestSuite) TestPrepareUndelegation() {
 
 		unbondingRecordId := expectedRecord.UnbondingRecordId
 		redeemer := expectedRecord.Redeemer
-		actualRecord, found := s.App.StaketiaKeeper.GetRedemptionRecord(s.Ctx, unbondingRecordId, redeemer)
+		actualRecord, found := s.App.StakedymKeeper.GetRedemptionRecord(s.Ctx, unbondingRecordId, redeemer)
 		s.Require().True(found, "record %d %s should have been found", unbondingRecordId, redeemer)
 		s.Require().Equal(expectedRecord.NativeAmount.Int64(), actualRecord.NativeAmount.Int64(),
 			"record %s %d native amount", unbondingRecordId, redeemer)
 	}
 
 	// Confirm a new record was created
-	newUnbondingRecord, found := s.App.StaketiaKeeper.GetUnbondingRecord(s.Ctx, epochNumber)
+	newUnbondingRecord, found := s.App.StakedymKeeper.GetUnbondingRecord(s.Ctx, epochNumber)
 	s.Require().True(found, "new unbonding record should have been created")
 	s.Require().Equal(newUnbondingRecord.Status, types.ACCUMULATING_REDEMPTIONS, "new unbonding record status")
 
 	// Call prepare undelegation again with the new unbonding record
 	// Since there are no new unbondings, the record should get archived immediately
-	err = s.App.StaketiaKeeper.PrepareUndelegation(s.Ctx, epochNumber+1)
+	err = s.App.StakedymKeeper.PrepareUndelegation(s.Ctx, epochNumber+1)
 	s.Require().NoError(err, "no error expected during second undelegation")
 
-	archivedRecords := s.App.StaketiaKeeper.GetAllArchivedUnbondingRecords(s.Ctx)
+	archivedRecords := s.App.StakedymKeeper.GetAllArchivedUnbondingRecords(s.Ctx)
 	s.Require().Len(archivedRecords, 1, "record should have been archived")
 	s.Require().Equal(epochNumber, archivedRecords[0].Id, "archived record ID")
 
 	// Create an unbonding record in non-ACCUMULATING Status
 	duplicateRecordId := uint64(10)
-	s.App.StaketiaKeeper.SetUnbondingRecord(s.Ctx, types.UnbondingRecord{
+	s.App.StakedymKeeper.SetUnbondingRecord(s.Ctx, types.UnbondingRecord{
 		Id:     duplicateRecordId,
 		Status: types.UNBONDING_QUEUE,
 	})
 
 	// Check that if we tried to run prepare with that ID, it would error because the record already exists
-	err = s.App.StaketiaKeeper.PrepareUndelegation(s.Ctx, duplicateRecordId)
+	err = s.App.StakedymKeeper.PrepareUndelegation(s.Ctx, duplicateRecordId)
 	s.Require().ErrorContains(err, "unbonding record already exists")
 
 	// Create another accumulating record and check that this would break an invariant and error
-	s.App.StaketiaKeeper.SetUnbondingRecord(s.Ctx, types.UnbondingRecord{
+	s.App.StakedymKeeper.SetUnbondingRecord(s.Ctx, types.UnbondingRecord{
 		Id:     99,
 		Status: types.ACCUMULATING_REDEMPTIONS,
 	})
 
-	err = s.App.StaketiaKeeper.PrepareUndelegation(s.Ctx, epochNumber+10) // any epoch in future
+	err = s.App.StakedymKeeper.PrepareUndelegation(s.Ctx, epochNumber+10) // any epoch in future
 	s.Require().ErrorContains(err, "more than one record in status ACCUMULATING")
 
 	// Halt the host zone and try again - it should fail
 	hostZone := s.MustGetHostZone()
 	hostZone.Halted = true
-	s.App.StaketiaKeeper.SetHostZone(s.Ctx, hostZone)
+	s.App.StakedymKeeper.SetHostZone(s.Ctx, hostZone)
 
-	err = s.App.StaketiaKeeper.PrepareUndelegation(s.Ctx, epochNumber)
+	err = s.App.StakedymKeeper.PrepareUndelegation(s.Ctx, epochNumber)
 	s.Require().ErrorContains(err, "host zone is halted")
 }
 
@@ -462,7 +462,7 @@ func (s *KeeperTestSuite) SetupTestConfirmUndelegation(amountToUndelegate sdkmat
 		MaxRedemptionRate:      sdk.MustNewDecFromStr("1.2"),
 		RedemptionRate:         sdk.MustNewDecFromStr("1.1"),
 	}
-	s.App.StaketiaKeeper.SetHostZone(s.Ctx, hostZone)
+	s.App.StakedymKeeper.SetHostZone(s.Ctx, hostZone)
 
 	// Fund the redemption account with tokens that will be burned
 	stTokensInRedemption := sdk.NewCoin(StDenom, redemptionAccountBalance)
@@ -477,7 +477,7 @@ func (s *KeeperTestSuite) SetupTestConfirmUndelegation(amountToUndelegate sdkmat
 		StTokenAmount: stTokenAmountToBurn,
 		NativeAmount:  amountToUndelegate,
 	}
-	s.App.StaketiaKeeper.SetUnbondingRecord(s.Ctx, unbondingRecord)
+	s.App.StakedymKeeper.SetUnbondingRecord(s.Ctx, unbondingRecord)
 
 	tc := ConfirmUndelegationTestCase{
 		redemptionAddress:        redemptionAddress,
@@ -498,14 +498,14 @@ func (s *KeeperTestSuite) TestConfirmUndelegation_Success() {
 	tc := s.SetupTestConfirmUndelegation(amountToUndelegate)
 
 	// we're halting the zone to test that the tx works even when the host zone is halted
-	s.App.StaketiaKeeper.HaltZone(s.Ctx)
+	s.App.StakedymKeeper.HaltZone(s.Ctx)
 
 	// confirm the tx was successful
-	err := s.App.StaketiaKeeper.ConfirmUndelegation(s.Ctx, tc.unbondingRecord.Id, ValidTxHashDefault, tc.operatorAddress)
+	err := s.App.StakedymKeeper.ConfirmUndelegation(s.Ctx, tc.unbondingRecord.Id, ValidTxHashDefault, tc.operatorAddress)
 	s.Require().NoError(err)
 
 	// check that the unbonding record was updated
-	unbondingRecord, found := s.App.StaketiaKeeper.GetUnbondingRecord(s.Ctx, tc.unbondingRecord.Id)
+	unbondingRecord, found := s.App.StakedymKeeper.GetUnbondingRecord(s.Ctx, tc.unbondingRecord.Id)
 	s.Require().True(found, "unbonding record should have been found")
 	s.Require().Equal(types.UNBONDING_IN_PROGRESS, unbondingRecord.Status, "unbonding record status")
 	s.Require().Equal(ValidTxHashDefault, unbondingRecord.UndelegationTxHash, "unbonding record tx hash")
@@ -532,7 +532,7 @@ func (s *KeeperTestSuite) TestConfirmUndelegation_Failure_NothingToUnbond() {
 	s.Require().Zero(tc.amountToUndelegate.Int64())
 
 	txHash := "" // hash must be empty for nothing to unbond case
-	err := s.App.StaketiaKeeper.ConfirmUndelegation(s.Ctx, tc.unbondingRecord.Id, txHash, tc.operatorAddress)
+	err := s.App.StakedymKeeper.ConfirmUndelegation(s.Ctx, tc.unbondingRecord.Id, txHash, tc.operatorAddress)
 	s.Require().Error(err, "no tokens to unbond")
 }
 
@@ -547,7 +547,7 @@ func (s *KeeperTestSuite) TestConfirmUndelegation_Failure_NegativeAmountToUnbond
 	s.Require().Negative(tc.amountToUndelegate.Int64())
 
 	txHash := "" // hash must be empty for nothing to unbond case
-	err := s.App.StaketiaKeeper.ConfirmUndelegation(s.Ctx, tc.unbondingRecord.Id, txHash, tc.operatorAddress)
+	err := s.App.StakedymKeeper.ConfirmUndelegation(s.Ctx, tc.unbondingRecord.Id, txHash, tc.operatorAddress)
 	s.Require().Error(err, "no tokens to unbond (or negative)")
 }
 
@@ -557,9 +557,9 @@ func (s *KeeperTestSuite) TestConfirmUndelegation_Failure_RecordWasNotQueued() {
 
 	// set the unbonding record status to something other than UNBONDING_QUEUE
 	tc.unbondingRecord.Status = types.UNBONDING_IN_PROGRESS
-	s.App.StaketiaKeeper.SetUnbondingRecord(s.Ctx, tc.unbondingRecord)
+	s.App.StakedymKeeper.SetUnbondingRecord(s.Ctx, tc.unbondingRecord)
 
-	err := s.App.StaketiaKeeper.ConfirmUndelegation(s.Ctx, tc.unbondingRecord.Id, ValidTxHashDefault, tc.operatorAddress)
+	err := s.App.StakedymKeeper.ConfirmUndelegation(s.Ctx, tc.unbondingRecord.Id, ValidTxHashDefault, tc.operatorAddress)
 	s.Require().Error(err, "not ready to be undelegated")
 }
 
@@ -569,9 +569,9 @@ func (s *KeeperTestSuite) TestConfirmUndelegation_Failure_NoRecordWithId() {
 
 	// archive the record (this is the only way to remove it from the active store)
 	tc.unbondingRecord.Status = types.UNBONDING_IN_PROGRESS
-	s.App.StaketiaKeeper.ArchiveUnbondingRecord(s.Ctx, tc.unbondingRecord)
+	s.App.StakedymKeeper.ArchiveUnbondingRecord(s.Ctx, tc.unbondingRecord)
 
-	err := s.App.StaketiaKeeper.ConfirmUndelegation(s.Ctx, tc.unbondingRecord.Id, ValidTxHashDefault, tc.operatorAddress)
+	err := s.App.StakedymKeeper.ConfirmUndelegation(s.Ctx, tc.unbondingRecord.Id, ValidTxHashDefault, tc.operatorAddress)
 	s.Require().Error(err, "couldn't find unbonding record")
 }
 
@@ -581,9 +581,9 @@ func (s *KeeperTestSuite) TestConfirmUndelegation_Failure_RecordHashAlreadySet()
 
 	// set the unbonding record tx hash
 	tc.unbondingRecord.UndelegationTxHash = ValidTxHashDefault
-	s.App.StaketiaKeeper.SetUnbondingRecord(s.Ctx, tc.unbondingRecord)
+	s.App.StakedymKeeper.SetUnbondingRecord(s.Ctx, tc.unbondingRecord)
 
-	err := s.App.StaketiaKeeper.ConfirmUndelegation(s.Ctx, tc.unbondingRecord.Id, ValidTxHashDefault, tc.operatorAddress)
+	err := s.App.StakedymKeeper.ConfirmUndelegation(s.Ctx, tc.unbondingRecord.Id, ValidTxHashDefault, tc.operatorAddress)
 	s.Require().Error(err, "already has a tx hash set")
 }
 
@@ -597,7 +597,7 @@ func (s *KeeperTestSuite) TestBurnRedeemedStTokens_Success() {
 		RedemptionAddress: redemptionAddress.String(),
 		NativeTokenDenom:  HostNativeDenom,
 	}
-	s.App.StaketiaKeeper.SetHostZone(s.Ctx, hostZone)
+	s.App.StakedymKeeper.SetHostZone(s.Ctx, hostZone)
 
 	// Fund the redemption account with tokens that will be burned
 	stTokensInRedemption := sdk.NewCoin(StDenom, redemptionAccountBalance)
@@ -610,10 +610,10 @@ func (s *KeeperTestSuite) TestBurnRedeemedStTokens_Success() {
 
 	// burn redeemed stTokens
 	tokensToBurn := sdk.NewCoin(stDenom, sdkmath.NewInt(100))
-	err := s.App.StaketiaKeeper.BurnRedeemedStTokens(s.Ctx, sdk.NewCoins(tokensToBurn), redemptionAddress.String())
+	err := s.App.StakedymKeeper.BurnRedeemedStTokens(s.Ctx, sdk.NewCoins(tokensToBurn), redemptionAddress.String())
 	s.Require().NoError(err)
 
-	// check that stTIA supply decremented
+	// check that stDYM supply decremented
 	stTokenSupplyAfter := s.App.BankKeeper.GetSupply(s.Ctx, StDenom).Amount
 	s.Require().Equal(stTokenSupplyBefore.Sub(tokensToBurn.Amount), stTokenSupplyAfter, "stToken supply")
 
@@ -632,13 +632,13 @@ func (s *KeeperTestSuite) TestBurnRedeemedStTokens_BadRedemptionAddress() {
 		RedemptionAddress: redemptionAddress,
 		NativeTokenDenom:  HostNativeDenom,
 	}
-	s.App.StaketiaKeeper.SetHostZone(s.Ctx, hostZone)
+	s.App.StakedymKeeper.SetHostZone(s.Ctx, hostZone)
 
 	stDenom := utils.StAssetDenomFromHostZoneDenom(hostZone.NativeTokenDenom)
 
 	// burn redeemed stTokens
 	tokensToBurn := sdk.NewCoin(stDenom, sdkmath.NewInt(100))
-	err := s.App.StaketiaKeeper.BurnRedeemedStTokens(s.Ctx, sdk.NewCoins(tokensToBurn), redemptionAddress)
+	err := s.App.StakedymKeeper.BurnRedeemedStTokens(s.Ctx, sdk.NewCoins(tokensToBurn), redemptionAddress)
 	s.Require().Error(err, "could not bech32 decode addres")
 }
 
@@ -730,7 +730,7 @@ func (s *KeeperTestSuite) TestVerifyImpliedRedemptionRateFromUnbonding() {
 			s.FundAccount(s.TestAccs[0], sdk.NewCoin(StDenom, tc.stTokenSupplyAfter))
 
 			// Set the delegated balance on the host zone
-			s.App.StaketiaKeeper.SetHostZone(s.Ctx, types.HostZone{
+			s.App.StakedymKeeper.SetHostZone(s.Ctx, types.HostZone{
 				NativeTokenDenom:  HostNativeDenom,
 				DelegatedBalance:  tc.delegatedBalanceAfter,
 				MinRedemptionRate: minRRBound,
@@ -738,7 +738,7 @@ func (s *KeeperTestSuite) TestVerifyImpliedRedemptionRateFromUnbonding() {
 			})
 
 			// verify that the implied redemption rate is between the bounds
-			err := s.App.StaketiaKeeper.VerifyImpliedRedemptionRateFromUnbonding(s.Ctx, tc.stTokenSupplyBefore, tc.delegatedBalanceBefore)
+			err := s.App.StakedymKeeper.VerifyImpliedRedemptionRateFromUnbonding(s.Ctx, tc.stTokenSupplyBefore, tc.delegatedBalanceBefore)
 
 			if tc.expectedError == "" {
 				s.Require().NoError(err)
@@ -828,7 +828,7 @@ func (s *KeeperTestSuite) SetupTestConfirmUnbondingTokens(amount int64) {
 
 	// loop through and set each record
 	for _, unbondingRecord := range unbondingRecords {
-		s.App.StaketiaKeeper.SetUnbondingRecord(s.Ctx, unbondingRecord)
+		s.App.StakedymKeeper.SetUnbondingRecord(s.Ctx, unbondingRecord)
 	}
 
 	// setup host zone, to fund claim address
@@ -837,7 +837,7 @@ func (s *KeeperTestSuite) SetupTestConfirmUnbondingTokens(amount int64) {
 		NativeTokenIbcDenom: HostIBCDenom,
 		ClaimAddress:        claimAddress.String(),
 	}
-	s.App.StaketiaKeeper.SetHostZone(s.Ctx, hostZone)
+	s.App.StakedymKeeper.SetHostZone(s.Ctx, hostZone)
 
 	// fund claim address
 	liquidStakeToken := sdk.NewCoin(hostZone.NativeTokenIbcDenom, sdk.NewInt(amount))
@@ -848,7 +848,7 @@ func (s *KeeperTestSuite) VerifyUnbondingRecordsAfterConfirmSweep(verifyUpdatedF
 	defaultUnbondingRecords := s.GetDefaultUnbondingRecords()
 	for _, defaultUnbondingRecord := range defaultUnbondingRecords {
 		// grab relevant record in store
-		loadedUnbondingRecord, found := s.App.StaketiaKeeper.GetUnbondingRecord(s.Ctx, defaultUnbondingRecord.Id)
+		loadedUnbondingRecord, found := s.App.StakedymKeeper.GetUnbondingRecord(s.Ctx, defaultUnbondingRecord.Id)
 		s.Require().True(found)
 
 		// verify record is correct
@@ -871,26 +871,26 @@ func (s *KeeperTestSuite) TestConfirmUnbondingTokenSweep_Successful() {
 	s.SetupTestConfirmUnbondingTokens(DefaultClaimFundingAmount)
 
 	// we're halting the zone to test that the tx works even when the host zone is halted
-	s.App.StaketiaKeeper.HaltZone(s.Ctx)
+	s.App.StakedymKeeper.HaltZone(s.Ctx)
 
 	// process record 6
-	err := s.App.StaketiaKeeper.ConfirmUnbondedTokenSweep(s.Ctx, 6, ValidTxHashNew, ValidOperator)
+	err := s.App.StakedymKeeper.ConfirmUnbondedTokenSweep(s.Ctx, 6, ValidTxHashNew, ValidOperator)
 	s.Require().NoError(err)
 	s.VerifyUnbondingRecordsAfterConfirmSweep(false)
 
 	// verify record 6 modified
-	loadedUnbondingRecord, found := s.App.StaketiaKeeper.GetUnbondingRecord(s.Ctx, 6)
+	loadedUnbondingRecord, found := s.App.StakedymKeeper.GetUnbondingRecord(s.Ctx, 6)
 	s.Require().True(found)
 	s.Require().Equal(types.CLAIMABLE, loadedUnbondingRecord.Status, "unbonding record should be updated to status CLAIMABLE")
 	s.Require().Equal(ValidTxHashNew, loadedUnbondingRecord.UnbondedTokenSweepTxHash, "unbonding record should be updated with token sweep txHash")
 
 	// process record 2
-	err = s.App.StaketiaKeeper.ConfirmUnbondedTokenSweep(s.Ctx, 2, ValidTxHashNew, ValidOperator)
+	err = s.App.StakedymKeeper.ConfirmUnbondedTokenSweep(s.Ctx, 2, ValidTxHashNew, ValidOperator)
 	s.Require().NoError(err)
 	s.VerifyUnbondingRecordsAfterConfirmSweep(false)
 
 	// verify record 2 modified
-	loadedUnbondingRecord, found = s.App.StaketiaKeeper.GetUnbondingRecord(s.Ctx, 2)
+	loadedUnbondingRecord, found = s.App.StakedymKeeper.GetUnbondingRecord(s.Ctx, 2)
 	s.Require().True(found)
 	s.Require().Equal(types.CLAIMABLE, loadedUnbondingRecord.Status, "unbonding record should be updated to status CLAIMABLE")
 	s.Require().Equal(ValidTxHashNew, loadedUnbondingRecord.UnbondedTokenSweepTxHash, "unbonding record should be updated with token sweep txHash")
@@ -901,7 +901,7 @@ func (s *KeeperTestSuite) TestConfirmUnbondingTokenSweep_NotFunded() {
 	s.SetupTestConfirmUnbondingTokens(10)
 
 	// try setting with no hash
-	err := s.App.StaketiaKeeper.ConfirmUnbondedTokenSweep(s.Ctx, 6, ValidTxHashNew, ValidOperator)
+	err := s.App.StakedymKeeper.ConfirmUnbondedTokenSweep(s.Ctx, 6, ValidTxHashNew, ValidOperator)
 	s.Require().ErrorIs(err, types.ErrInsufficientFunds, "should error when claim account doesn't have enough funds")
 }
 
@@ -910,10 +910,10 @@ func (s *KeeperTestSuite) TestConfirmUnbondingTokenSweep_InvalidClaimAddress() {
 
 	hostZone := s.MustGetHostZone()
 	hostZone.ClaimAddress = "strideinvalidaddress" // random address
-	s.App.StaketiaKeeper.SetHostZone(s.Ctx, hostZone)
+	s.App.StakedymKeeper.SetHostZone(s.Ctx, hostZone)
 
 	// try setting with no hash
-	err := s.App.StaketiaKeeper.ConfirmUnbondedTokenSweep(s.Ctx, 6, ValidTxHashNew, ValidOperator)
+	err := s.App.StakedymKeeper.ConfirmUnbondedTokenSweep(s.Ctx, 6, ValidTxHashNew, ValidOperator)
 	s.Require().ErrorContains(err, "decoding bech32 failed", "should error when claim address is invalid")
 }
 
@@ -921,7 +921,7 @@ func (s *KeeperTestSuite) TestConfirmUnbondingTokenSweep_RecordDoesntExist() {
 	s.SetupTestConfirmUnbondingTokens(DefaultClaimFundingAmount)
 
 	// process record 15
-	err := s.App.StaketiaKeeper.ConfirmUnbondedTokenSweep(s.Ctx, 15, ValidTxHashNew, ValidOperator)
+	err := s.App.StakedymKeeper.ConfirmUnbondedTokenSweep(s.Ctx, 15, ValidTxHashNew, ValidOperator)
 	s.Require().ErrorIs(err, types.ErrUnbondingRecordNotFound, "should error when record doesn't exist")
 }
 
@@ -931,7 +931,7 @@ func (s *KeeperTestSuite) TestConfirmUnbondingTokenSweep_RecordIncorrectState() 
 	// get list of ids to try
 	ids := []uint64{1, 3, 5, 7}
 	for _, id := range ids {
-		err := s.App.StaketiaKeeper.ConfirmUnbondedTokenSweep(s.Ctx, id, ValidTxHashNew, ValidOperator)
+		err := s.App.StakedymKeeper.ConfirmUnbondedTokenSweep(s.Ctx, id, ValidTxHashNew, ValidOperator)
 		s.Require().ErrorIs(err, types.ErrInvalidUnbondingRecord, "should error when record is in incorrect state")
 	}
 }
@@ -940,13 +940,13 @@ func (s *KeeperTestSuite) TestConfirmUnbondingTokenSweep_ZeroSweepAmount() {
 	s.SetupTestConfirmUnbondingTokens(DefaultClaimFundingAmount)
 
 	// update the sweep record so that the native amount is zero
-	unbondingRecord, found := s.App.StaketiaKeeper.GetUnbondingRecord(s.Ctx, 6)
+	unbondingRecord, found := s.App.StakedymKeeper.GetUnbondingRecord(s.Ctx, 6)
 	s.Require().True(found)
 	unbondingRecord.NativeAmount = sdk.NewInt(0)
-	s.App.StaketiaKeeper.SetUnbondingRecord(s.Ctx, unbondingRecord)
+	s.App.StakedymKeeper.SetUnbondingRecord(s.Ctx, unbondingRecord)
 
 	// try confirming with zero token amount on record
-	err := s.App.StaketiaKeeper.ConfirmUnbondedTokenSweep(s.Ctx, 6, ValidTxHashNew, ValidOperator)
+	err := s.App.StakedymKeeper.ConfirmUnbondedTokenSweep(s.Ctx, 6, ValidTxHashNew, ValidOperator)
 	s.Require().ErrorIs(err, types.ErrInvalidUnbondingRecord, "should error when record has zero sweep amount")
 }
 
@@ -954,13 +954,13 @@ func (s *KeeperTestSuite) TestConfirmUnbondingTokenSweep_NegativeSweepAmount() {
 	s.SetupTestConfirmUnbondingTokens(DefaultClaimFundingAmount)
 
 	// update the sweep record so that the native amount is negative
-	unbondingRecord, found := s.App.StaketiaKeeper.GetUnbondingRecord(s.Ctx, 6)
+	unbondingRecord, found := s.App.StakedymKeeper.GetUnbondingRecord(s.Ctx, 6)
 	s.Require().True(found)
 	unbondingRecord.StTokenAmount = sdk.NewInt(-10)
-	s.App.StaketiaKeeper.SetUnbondingRecord(s.Ctx, unbondingRecord)
+	s.App.StakedymKeeper.SetUnbondingRecord(s.Ctx, unbondingRecord)
 
 	// try confirming with negative token amount on record
-	err := s.App.StaketiaKeeper.ConfirmUnbondedTokenSweep(s.Ctx, 6, ValidTxHashNew, ValidOperator)
+	err := s.App.StakedymKeeper.ConfirmUnbondedTokenSweep(s.Ctx, 6, ValidTxHashNew, ValidOperator)
 	s.Require().ErrorIs(err, types.ErrInvalidUnbondingRecord, "should error when record has zero sweep amount")
 }
 
@@ -998,14 +998,14 @@ func (s *KeeperTestSuite) TestMarkFinishedUnbondings() {
 		{Id: 12, Status: types.UNBONDED, UnbondingCompletionTimeSeconds: currentTime + 1},
 	}
 	for _, unbondingRecord := range initialUnbondingRecords {
-		s.App.StaketiaKeeper.SetUnbondingRecord(s.Ctx, unbondingRecord)
+		s.App.StakedymKeeper.SetUnbondingRecord(s.Ctx, unbondingRecord)
 	}
 
 	// Call check unbonding finished
-	s.App.StaketiaKeeper.MarkFinishedUnbondings(s.Ctx)
+	s.App.StakedymKeeper.MarkFinishedUnbondings(s.Ctx)
 
 	// Check that the relevant records were updated
-	for i, actualUnbondingRecord := range s.App.StaketiaKeeper.GetAllActiveUnbondingRecords(s.Ctx) {
+	for i, actualUnbondingRecord := range s.App.StakedymKeeper.GetAllActiveUnbondingRecords(s.Ctx) {
 		if _, ok := finishedUnbondingIds[actualUnbondingRecord.Id]; ok {
 			s.Require().Equal(actualUnbondingRecord.Status, types.UNBONDED,
 				"record %d should have been marked as unbonded", actualUnbondingRecord.Id)
@@ -1029,7 +1029,7 @@ func (s *KeeperTestSuite) SetupTestDistributeClaims() DistributeClaimsTestCase {
 		ClaimAddress:        claimAddress.String(),
 		NativeTokenIbcDenom: HostIBCDenom,
 	}
-	s.App.StaketiaKeeper.SetHostZone(s.Ctx, hostZone)
+	s.App.StakedymKeeper.SetHostZone(s.Ctx, hostZone)
 
 	// Define unbonding records with different statuses
 	claimableRecordIds := []uint64{1, 3}
@@ -1040,7 +1040,7 @@ func (s *KeeperTestSuite) SetupTestDistributeClaims() DistributeClaimsTestCase {
 		{Id: 4, Status: types.UNBONDING_QUEUE},
 	}
 	for _, unbondingRecord := range unbondingRecords {
-		s.App.StaketiaKeeper.SetUnbondingRecord(s.Ctx, unbondingRecord)
+		s.App.StakedymKeeper.SetUnbondingRecord(s.Ctx, unbondingRecord)
 	}
 
 	// Define redmeption records across different unbonding records
@@ -1061,7 +1061,7 @@ func (s *KeeperTestSuite) SetupTestDistributeClaims() DistributeClaimsTestCase {
 	// Create a record for each redemption
 	for i, redemptionRecord := range redemptionRecords {
 		redemptionRecord.Redeemer = accounts[i].String()
-		s.App.StaketiaKeeper.SetRedemptionRecord(s.Ctx, redemptionRecord)
+		s.App.StakedymKeeper.SetRedemptionRecord(s.Ctx, redemptionRecord)
 	}
 
 	return DistributeClaimsTestCase{
@@ -1076,7 +1076,7 @@ func (s *KeeperTestSuite) TestDistributeClaims_Success() {
 	tc := s.SetupTestDistributeClaims()
 
 	// Call distribute again, it should succeed
-	err := s.App.StaketiaKeeper.DistributeClaims(s.Ctx)
+	err := s.App.StakedymKeeper.DistributeClaims(s.Ctx)
 	s.Require().NoError(err, "no error expected during claim")
 
 	// Confirm the claim balance was depleted
@@ -1085,8 +1085,8 @@ func (s *KeeperTestSuite) TestDistributeClaims_Success() {
 		"claim balance should have been depleted")
 
 	// Confirm the CLAIMABLE records were archived
-	activeRecords := s.App.StaketiaKeeper.GetAllActiveUnbondingRecords(s.Ctx)
-	archivedRecords := s.App.StaketiaKeeper.GetAllArchivedUnbondingRecords(s.Ctx)
+	activeRecords := s.App.StakedymKeeper.GetAllActiveUnbondingRecords(s.Ctx)
+	archivedRecords := s.App.StakedymKeeper.GetAllArchivedUnbondingRecords(s.Ctx)
 	s.Require().Len(activeRecords, 2, "there should only be two remaining active records")
 	s.Require().Len(archivedRecords, 2, "there should be two archived records")
 
@@ -1100,9 +1100,9 @@ func (s *KeeperTestSuite) TestDistributeClaims_HostHalted() {
 	// Halt the host zone, then attempt to call distribute claims, it should fail
 	hostZone := s.MustGetHostZone()
 	hostZone.Halted = true
-	s.App.StaketiaKeeper.SetHostZone(s.Ctx, hostZone)
+	s.App.StakedymKeeper.SetHostZone(s.Ctx, hostZone)
 
-	err := s.App.StaketiaKeeper.DistributeClaims(s.Ctx)
+	err := s.App.StakedymKeeper.DistributeClaims(s.Ctx)
 	s.Require().ErrorContains(err, "host zone is halted")
 }
 
@@ -1110,13 +1110,13 @@ func (s *KeeperTestSuite) TestDistributeClaims_InsufficientFunds() {
 	s.SetupTestDistributeClaims()
 
 	// Pass through the records again and make them all claimable
-	for _, unbondingRecord := range s.App.StaketiaKeeper.GetAllActiveUnbondingRecords(s.Ctx) {
+	for _, unbondingRecord := range s.App.StakedymKeeper.GetAllActiveUnbondingRecords(s.Ctx) {
 		unbondingRecord.Status = types.CLAIMABLE
-		s.App.StaketiaKeeper.SetUnbondingRecord(s.Ctx, unbondingRecord)
+		s.App.StakedymKeeper.SetUnbondingRecord(s.Ctx, unbondingRecord)
 	}
 
 	// Attempt to distribute, it will error cause there will not be enough funds to cover all records
-	err := s.App.StaketiaKeeper.DistributeClaims(s.Ctx)
+	err := s.App.StakedymKeeper.DistributeClaims(s.Ctx)
 	s.Require().ErrorContains(err, "insufficient funds")
 }
 
@@ -1126,9 +1126,9 @@ func (s *KeeperTestSuite) TestDistributeClaims_InvalidClaimAddress() {
 	// Update the claim address so that it is invalid
 	invalidHostZone := s.MustGetHostZone()
 	invalidHostZone.ClaimAddress = "invalid_address"
-	s.App.StaketiaKeeper.SetHostZone(s.Ctx, invalidHostZone)
+	s.App.StakedymKeeper.SetHostZone(s.Ctx, invalidHostZone)
 
-	err := s.App.StaketiaKeeper.DistributeClaims(s.Ctx)
+	err := s.App.StakedymKeeper.DistributeClaims(s.Ctx)
 	s.Require().ErrorContains(err, "invalid host zone claim address invalid_address")
 }
 
@@ -1158,11 +1158,11 @@ func (s *KeeperTestSuite) TestDistributeClaimsForUnbondingRecord() {
 	// Create a record for each redemption
 	for i, redemptionRecord := range redemptionRecords {
 		redemptionRecord.Redeemer = accounts[i].String()
-		s.App.StaketiaKeeper.SetRedemptionRecord(s.Ctx, redemptionRecord)
+		s.App.StakedymKeeper.SetRedemptionRecord(s.Ctx, redemptionRecord)
 	}
 
 	// Call distribute on the unbonding record in question
-	err := s.App.StaketiaKeeper.DistributeClaimsForUnbondingRecord(
+	err := s.App.StakedymKeeper.DistributeClaimsForUnbondingRecord(
 		s.Ctx,
 		HostIBCDenom,
 		claimAddress,
@@ -1185,14 +1185,14 @@ func (s *KeeperTestSuite) TestDistributeClaimsForUnbondingRecord() {
 		s.Require().Equal(redemption.NativeAmount.Int64(), userBalance.Amount.Int64(),
 			"user %d should have received their native tokens", i)
 
-		_, found := s.App.StaketiaKeeper.GetRedemptionRecord(s.Ctx, redemption.UnbondingRecordId, redemption.Redeemer)
+		_, found := s.App.StakedymKeeper.GetRedemptionRecord(s.Ctx, redemption.UnbondingRecordId, redemption.Redeemer)
 		s.Require().False(found, "redemption record for unbonding record %d should have been removed",
 			redemption.UnbondingRecordId)
 	}
 
 	// Add a record with an amount that would exceed the claim account's remaining balance
 	exceedBalanceUnbondingId := uint64(100)
-	s.App.StaketiaKeeper.SetRedemptionRecord(s.Ctx, types.RedemptionRecord{
+	s.App.StakedymKeeper.SetRedemptionRecord(s.Ctx, types.RedemptionRecord{
 		UnbondingRecordId: exceedBalanceUnbondingId,
 		Redeemer:          redeemerAddress.String(),
 		NativeAmount:      initialClaimBalance,
@@ -1200,14 +1200,14 @@ func (s *KeeperTestSuite) TestDistributeClaimsForUnbondingRecord() {
 
 	// Add a record with an invalid address
 	invalidAddressUnbondingId := uint64(200)
-	s.App.StaketiaKeeper.SetRedemptionRecord(s.Ctx, types.RedemptionRecord{
+	s.App.StakedymKeeper.SetRedemptionRecord(s.Ctx, types.RedemptionRecord{
 		UnbondingRecordId: invalidAddressUnbondingId,
 		Redeemer:          "invalid_address",
 		NativeAmount:      initialClaimBalance,
 	})
 
 	// Attempt to distribute for that record, it should fail
-	err = s.App.StaketiaKeeper.DistributeClaimsForUnbondingRecord(
+	err = s.App.StakedymKeeper.DistributeClaimsForUnbondingRecord(
 		s.Ctx,
 		HostIBCDenom,
 		claimAddress,
@@ -1216,7 +1216,7 @@ func (s *KeeperTestSuite) TestDistributeClaimsForUnbondingRecord() {
 	s.Require().ErrorContains(err, "insufficient funds")
 
 	// Attempt to distribute for that record, it should fail
-	err = s.App.StaketiaKeeper.DistributeClaimsForUnbondingRecord(
+	err = s.App.StakedymKeeper.DistributeClaimsForUnbondingRecord(
 		s.Ctx,
 		HostIBCDenom,
 		claimAddress,

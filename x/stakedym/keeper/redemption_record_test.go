@@ -5,7 +5,7 @@ import (
 
 	sdkmath "cosmossdk.io/math"
 
-	"github.com/Stride-Labs/stride/v18/x/staketia/types"
+	"github.com/Stride-Labs/stride/v18/x/stakedym/types"
 )
 
 func (s *KeeperTestSuite) addRedemptionRecords() (redemptionRecords []types.RedemptionRecord) {
@@ -17,7 +17,7 @@ func (s *KeeperTestSuite) addRedemptionRecords() (redemptionRecords []types.Rede
 			Redeemer:          fmt.Sprintf("address-%d", i),
 		}
 		redemptionRecords = append(redemptionRecords, redemptionRecord)
-		s.App.StaketiaKeeper.SetRedemptionRecord(s.Ctx, redemptionRecord)
+		s.App.StakedymKeeper.SetRedemptionRecord(s.Ctx, redemptionRecord)
 	}
 	return redemptionRecords
 }
@@ -30,7 +30,7 @@ func (s *KeeperTestSuite) TestGetRedemptionRecord() {
 		unbondingRecordId := expectedRecord.UnbondingRecordId
 		redeemer := expectedRecord.Redeemer
 
-		actualRecord, found := s.App.StaketiaKeeper.GetRedemptionRecord(s.Ctx, unbondingRecordId, redeemer)
+		actualRecord, found := s.App.StakedymKeeper.GetRedemptionRecord(s.Ctx, unbondingRecordId, redeemer)
 		s.Require().True(found, "redemption record %d should have been found", i)
 		s.Require().Equal(expectedRecord, actualRecord)
 	}
@@ -44,10 +44,10 @@ func (s *KeeperTestSuite) TestRemoveRedemptionRecord() {
 		removedRecord := redemptionRecords[removedIndex]
 		removedUnbondingId := removedRecord.UnbondingRecordId
 		removedRedeemer := removedRecord.Redeemer
-		s.App.StaketiaKeeper.RemoveRedemptionRecord(s.Ctx, removedUnbondingId, removedRedeemer)
+		s.App.StakedymKeeper.RemoveRedemptionRecord(s.Ctx, removedUnbondingId, removedRedeemer)
 
 		// Confirm removed
-		_, found := s.App.StaketiaKeeper.GetRedemptionRecord(s.Ctx, removedUnbondingId, removedRedeemer)
+		_, found := s.App.StakedymKeeper.GetRedemptionRecord(s.Ctx, removedUnbondingId, removedRedeemer)
 		s.Require().False(found, "record %d %s should have been removed", removedUnbondingId, removedRedeemer)
 
 		// Check all other records are still there
@@ -56,7 +56,7 @@ func (s *KeeperTestSuite) TestRemoveRedemptionRecord() {
 			checkedUnbondingId := checkedRecord.UnbondingRecordId
 			checkedRedeemer := checkedRecord.Redeemer
 
-			_, found := s.App.StaketiaKeeper.GetRedemptionRecord(s.Ctx, checkedUnbondingId, checkedRedeemer)
+			_, found := s.App.StakedymKeeper.GetRedemptionRecord(s.Ctx, checkedUnbondingId, checkedRedeemer)
 			s.Require().True(found, "record %d %s should have been removed after %d %s removal",
 				checkedUnbondingId, checkedRedeemer, removedUnbondingId, removedRedeemer)
 		}
@@ -65,7 +65,7 @@ func (s *KeeperTestSuite) TestRemoveRedemptionRecord() {
 
 func (s *KeeperTestSuite) TestGetAllRedemptionRecord() {
 	expectedRecords := s.addRedemptionRecords()
-	actualRecords := s.App.StaketiaKeeper.GetAllRedemptionRecords(s.Ctx)
+	actualRecords := s.App.StakedymKeeper.GetAllRedemptionRecords(s.Ctx)
 	s.Require().Equal(len(expectedRecords), len(actualRecords), "number of redemption records")
 	s.Require().ElementsMatch(expectedRecords, actualRecords)
 }
@@ -93,13 +93,13 @@ func (s *KeeperTestSuite) TestGetAllRedemptionRecordsFromUnbondingId() {
 	// Store all the redemption records
 	for _, redemptionRecords := range unbondingIdToRecords {
 		for _, redemptionRecord := range redemptionRecords {
-			s.App.StaketiaKeeper.SetRedemptionRecord(s.Ctx, redemptionRecord)
+			s.App.StakedymKeeper.SetRedemptionRecord(s.Ctx, redemptionRecord)
 		}
 	}
 
 	// Lookup records by unbonding Id and confirm it matches the expected list
 	for unbondingRecordId, expectedRedemptionRecords := range unbondingIdToRecords {
-		actualRedemptionRecords := s.App.StaketiaKeeper.GetRedemptionRecordsFromUnbondingId(s.Ctx, unbondingRecordId)
+		actualRedemptionRecords := s.App.StakedymKeeper.GetRedemptionRecordsFromUnbondingId(s.Ctx, unbondingRecordId)
 		s.Require().Equal(len(expectedRedemptionRecords), len(actualRedemptionRecords),
 			"number of redemption records for unbonding id %d", unbondingRecordId)
 
@@ -135,13 +135,13 @@ func (s *KeeperTestSuite) TestGetRedemptionRecordsFromAddress() {
 	// Store all the redemption records
 	for _, redemptionRecords := range unbondingAddressToRecords {
 		for _, redemptionRecord := range redemptionRecords {
-			s.App.StaketiaKeeper.SetRedemptionRecord(s.Ctx, redemptionRecord)
+			s.App.StakedymKeeper.SetRedemptionRecord(s.Ctx, redemptionRecord)
 		}
 	}
 
 	// Lookup records by address and confirm it matches the expected list
 	for expectedAddress, expectedRedemptionRecords := range unbondingAddressToRecords {
-		actualRedemptionRecords := s.App.StaketiaKeeper.GetRedemptionRecordsFromAddress(s.Ctx, expectedAddress)
+		actualRedemptionRecords := s.App.StakedymKeeper.GetRedemptionRecordsFromAddress(s.Ctx, expectedAddress)
 		s.Require().Equal(len(expectedRedemptionRecords), len(actualRedemptionRecords),
 			"number of redemption records for address %d", expectedAddress)
 

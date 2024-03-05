@@ -8,7 +8,7 @@ import (
 
 	"github.com/Stride-Labs/stride/v18/utils"
 
-	"github.com/Stride-Labs/stride/v18/x/staketia/types"
+	"github.com/Stride-Labs/stride/v18/x/stakedym/types"
 )
 
 type msgServer struct {

@@ -1,4 +1,4 @@
-package staketia
+package stakedym
 
 import (
 	"fmt"
@@ -10,7 +10,7 @@ import (
 	porttypes "github.com/cosmos/ibc-go/v7/modules/core/05-port/types"
 	ibcexported "github.com/cosmos/ibc-go/v7/modules/core/exported"
 
-	"github.com/Stride-Labs/stride/v18/x/staketia/keeper"
+	"github.com/Stride-Labs/stride/v18/x/stakedym/keeper"
 )
 
 var _ porttypes.Middleware = &IBCMiddleware{}
@@ -39,7 +39,7 @@ func (im IBCMiddleware) OnChanOpenInit(
 	counterparty channeltypes.Counterparty,
 	version string,
 ) (string, error) {
-	im.keeper.Logger(ctx).Info(fmt.Sprintf("OnChanOpenAck (Staketia): portID %s, channelID %s", portID, channelID))
+	im.keeper.Logger(ctx).Info(fmt.Sprintf("OnChanOpenAck (Stakedym): portID %s, channelID %s", portID, channelID))
 	return im.app.OnChanOpenInit(
 		ctx,
 		order,
@@ -60,7 +60,7 @@ func (im IBCMiddleware) OnChanOpenAck(
 	counterpartyChannelID string,
 	counterpartyVersion string,
 ) error {
-	im.keeper.Logger(ctx).Info(fmt.Sprintf("OnChanOpenAck (Staketia): portID %s, channelID %s, counterpartyChannelID %s, counterpartyVersion %s",
+	im.keeper.Logger(ctx).Info(fmt.Sprintf("OnChanOpenAck (Stakedym): portID %s, channelID %s, counterpartyChannelID %s, counterpartyVersion %s",
 		portID, channelID, counterpartyChannelID, counterpartyVersion))
 	return im.app.OnChanOpenAck(
 		ctx,
@@ -77,7 +77,7 @@ func (im IBCMiddleware) OnChanCloseConfirm(
 	portID,
 	channelID string,
 ) error {
-	im.keeper.Logger(ctx).Info(fmt.Sprintf("OnChanCloseConfirm (Staketia): portID %s, channelID %s", portID, channelID))
+	im.keeper.Logger(ctx).Info(fmt.Sprintf("OnChanCloseConfirm (Stakedym): portID %s, channelID %s", portID, channelID))
 	return im.app.OnChanCloseConfirm(ctx, portID, channelID)
 }
 
@@ -89,11 +89,11 @@ func (im IBCMiddleware) OnAcknowledgementPacket(
 	acknowledgement []byte,
 	relayer sdk.AccAddress,
 ) error {
-	im.keeper.Logger(ctx).Info(fmt.Sprintf("OnAcknowledgementPacket (Staketia): SourcePort %s, SourceChannel %s, DestinationPort %s, DestinationChannel %s",
+	im.keeper.Logger(ctx).Info(fmt.Sprintf("OnAcknowledgementPacket (Stakedym): SourcePort %s, SourceChannel %s, DestinationPort %s, DestinationChannel %s",
 		packet.SourcePort, packet.SourceChannel, packet.DestinationPort, packet.DestinationChannel))
-	// Handle staketia specific logic
+	// Handle stakedym specific logic
 	if err := im.keeper.OnAcknowledgementPacket(ctx, packet, acknowledgement); err != nil {
-		im.keeper.Logger(ctx).Error(fmt.Sprintf("ICS20 staketia OnAckPacket failed: %s", err.Error()))
+		im.keeper.Logger(ctx).Error(fmt.Sprintf("ICS20 stakedym OnAckPacket failed: %s", err.Error()))
 		return err
 	}
 
@@ -103,10 +103,10 @@ func (im IBCMiddleware) OnAcknowledgementPacket(
 // OnTimeoutPacket must check if an outbound transfer of native tokens timed out,
 // and, if so, adjust record keeping
 func (im IBCMiddleware) OnTimeoutPacket(ctx sdk.Context, packet channeltypes.Packet, relayer sdk.AccAddress) error {
-	im.keeper.Logger(ctx).Info(fmt.Sprintf("OnTimeoutPacket (Staketia): packet %v, relayer %v", packet, relayer))
-	// Handle staketia specific logic
+	im.keeper.Logger(ctx).Info(fmt.Sprintf("OnTimeoutPacket (Stakedym): packet %v, relayer %v", packet, relayer))
+	// Handle stakedym specific logic
 	if err := im.keeper.OnTimeoutPacket(ctx, packet); err != nil {
-		im.keeper.Logger(ctx).Error(fmt.Sprintf("ICS20 staketia OnTimeoutPacket failed: %s", err.Error()))
+		im.keeper.Logger(ctx).Error(fmt.Sprintf("ICS20 stakedym OnTimeoutPacket failed: %s", err.Error()))
 		return err
 	}
 
@@ -164,7 +164,7 @@ func (im IBCMiddleware) OnRecvPacket(
 }
 
 // Send implements the ICS4Wrapper interface
-// Staketia sits above where ICS4 traffic routes in the transfer stack
+// Stakedym sits above where ICS4 traffic routes in the transfer stack
 // so this should never get called
 func (im IBCMiddleware) SendPacket(
 	ctx sdk.Context,
@@ -175,11 +175,11 @@ func (im IBCMiddleware) SendPacket(
 	timeoutTimestamp uint64,
 	data []byte,
 ) (sequence uint64, err error) {
-	panic("Unexpected ICS4Wrapper route to staketia module")
+	panic("Unexpected ICS4Wrapper route to stakedym module")
 }
 
 // WriteAcknowledgement implements the ICS4Wrapper interface
-// Staketia sits above where ICS4 traffic routes in the transfer stack
+// Stakedym sits above where ICS4 traffic routes in the transfer stack
 // so this should never get called
 func (im IBCMiddleware) WriteAcknowledgement(
 	ctx sdk.Context,
@@ -187,12 +187,12 @@ func (im IBCMiddleware) WriteAcknowledgement(
 	packet ibcexported.PacketI,
 	ack ibcexported.Acknowledgement,
 ) error {
-	panic("Unexpected ICS4Wrapper route to staketia module")
+	panic("Unexpected ICS4Wrapper route to stakedym module")
 }
 
 // GetAppVersion implements the ICS4Wrapper interface
-// Staketia sits above where ICS4 traffic routes in the transfer stack
+// Stakedym sits above where ICS4 traffic routes in the transfer stack
 // so this should never get called
 func (im IBCMiddleware) GetAppVersion(ctx sdk.Context, portID, channelID string) (string, bool) {
-	panic("Unexpected ICS4Wrapper route to staketia module")
+	panic("Unexpected ICS4Wrapper route to stakedym module")
 }

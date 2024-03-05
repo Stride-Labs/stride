@@ -3,7 +3,7 @@ package keeper_test
 import (
 	"fmt"
 
-	"github.com/Stride-Labs/stride/v18/x/staketia/types"
+	"github.com/Stride-Labs/stride/v18/x/stakedym/types"
 )
 
 type transferData struct {
@@ -20,7 +20,7 @@ func (s *KeeperTestSuite) addTransferRecords() (transferRecords []transferData) 
 			recordId:  uint64(i),
 		}
 		transferRecords = append(transferRecords, transferRecord)
-		s.App.StaketiaKeeper.SetTransferInProgressRecordId(s.Ctx, transferRecord.channelId,
+		s.App.StakedymKeeper.SetTransferInProgressRecordId(s.Ctx, transferRecord.channelId,
 			transferRecord.sequence, transferRecord.recordId)
 	}
 	return transferRecords
@@ -34,7 +34,7 @@ func (s *KeeperTestSuite) TestGetTransferInProgressRecordId() {
 		channelId := transferRecords[i].channelId
 		sequence := transferRecords[i].sequence
 
-		actualRecordId, found := s.App.StaketiaKeeper.GetTransferInProgressRecordId(s.Ctx, channelId, sequence)
+		actualRecordId, found := s.App.StakedymKeeper.GetTransferInProgressRecordId(s.Ctx, channelId, sequence)
 		s.Require().True(found, "redemption record %d should have been found", i)
 		s.Require().Equal(expectedRecordId, actualRecordId)
 	}
@@ -48,10 +48,10 @@ func (s *KeeperTestSuite) TestRemoveTransferInProgressRecordId() {
 		removedRecordId := transferRecords[removedIndex].recordId
 		removedChannelId := transferRecords[removedIndex].channelId
 		removedSequence := transferRecords[removedIndex].sequence
-		s.App.StaketiaKeeper.RemoveTransferInProgressRecordId(s.Ctx, removedChannelId, removedSequence)
+		s.App.StakedymKeeper.RemoveTransferInProgressRecordId(s.Ctx, removedChannelId, removedSequence)
 
 		// Confirm removed
-		_, found := s.App.StaketiaKeeper.GetTransferInProgressRecordId(s.Ctx, removedChannelId, removedSequence)
+		_, found := s.App.StakedymKeeper.GetTransferInProgressRecordId(s.Ctx, removedChannelId, removedSequence)
 		s.Require().False(found, "recordId %d for %s %d should have been removed", removedRecordId, removedChannelId, removedSequence)
 
 		// Check all other recordIds are still there
@@ -60,7 +60,7 @@ func (s *KeeperTestSuite) TestRemoveTransferInProgressRecordId() {
 			checkedChannelId := transferRecords[checkedIndex].channelId
 			checkedSequence := transferRecords[checkedIndex].sequence
 
-			_, found := s.App.StaketiaKeeper.GetTransferInProgressRecordId(s.Ctx, checkedChannelId, checkedSequence)
+			_, found := s.App.StakedymKeeper.GetTransferInProgressRecordId(s.Ctx, checkedChannelId, checkedSequence)
 			s.Require().True(found, "recordId %d with %s %d should have been found after %d with %s %d removal",
 				checkedRecordId, checkedChannelId, checkedSequence, removedRecordId, removedChannelId, removedSequence)
 		}
@@ -73,7 +73,7 @@ func (s *KeeperTestSuite) TestGetAllTransferInProgressIds() {
 	for _, channelId := range []string{"channel-0", "channel-1"} {
 		for sequence := uint64(0); sequence < 5; sequence++ {
 			recordId := sequence * 100
-			s.App.StaketiaKeeper.SetTransferInProgressRecordId(s.Ctx, channelId, sequence, recordId)
+			s.App.StakedymKeeper.SetTransferInProgressRecordId(s.Ctx, channelId, sequence, recordId)
 			expectedTransfers = append(expectedTransfers, types.TransferInProgressRecordIds{
 				ChannelId: channelId,
 				Sequence:  sequence,
@@ -85,12 +85,12 @@ func (s *KeeperTestSuite) TestGetAllTransferInProgressIds() {
 	// Check that each transfer is found
 	for _, channelId := range []string{"channel-0", "channel-1"} {
 		for sequence := uint64(0); sequence < 5; sequence++ {
-			_, found := s.App.StaketiaKeeper.GetTransferInProgressRecordId(s.Ctx, channelId, sequence)
+			_, found := s.App.StakedymKeeper.GetTransferInProgressRecordId(s.Ctx, channelId, sequence)
 			s.Require().True(found, "transfer should have been found - channel %s, sequence: %d", channelId, sequence)
 		}
 	}
 
 	// Check lookup of all transfers
-	actualTransfers := s.App.StaketiaKeeper.GetAllTransferInProgressId(s.Ctx)
+	actualTransfers := s.App.StakedymKeeper.GetAllTransferInProgressId(s.Ctx)
 	s.Require().ElementsMatch(expectedTransfers, actualTransfers, "all transfers")
 }

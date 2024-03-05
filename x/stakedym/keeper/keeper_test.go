@@ -6,8 +6,8 @@ import (
 	"github.com/stretchr/testify/suite"
 
 	"github.com/Stride-Labs/stride/v18/app/apptesting"
-	"github.com/Stride-Labs/stride/v18/x/staketia/keeper"
-	"github.com/Stride-Labs/stride/v18/x/staketia/types"
+	"github.com/Stride-Labs/stride/v18/x/stakedym/keeper"
+	"github.com/Stride-Labs/stride/v18/x/stakedym/types"
 )
 
 const (
@@ -35,7 +35,7 @@ func (s *KeeperTestSuite) SetupTest() {
 //	which can change depending on the type of test
 //	(e.g. tests with only one Stride chain vs tests with multiple chains and IBC support)
 func (s *KeeperTestSuite) GetMsgServer() types.MsgServer {
-	return keeper.NewMsgServerImpl(s.App.StaketiaKeeper)
+	return keeper.NewMsgServerImpl(s.App.StakedymKeeper)
 }
 
 func TestKeeperTestSuite(t *testing.T) {
@@ -44,7 +44,7 @@ func TestKeeperTestSuite(t *testing.T) {
 
 // Helper function to get a host zone and confirm there's no error
 func (s *KeeperTestSuite) MustGetHostZone() types.HostZone {
-	hostZone, err := s.App.StaketiaKeeper.GetHostZone(s.Ctx)
+	hostZone, err := s.App.StakedymKeeper.GetHostZone(s.Ctx)
 	s.Require().NoError(err, "no error expected when getting host zone")
 	return hostZone
 }

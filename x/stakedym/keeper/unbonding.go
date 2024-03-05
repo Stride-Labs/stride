@@ -10,7 +10,7 @@ import (
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
 	"github.com/Stride-Labs/stride/v18/utils"
-	"github.com/Stride-Labs/stride/v18/x/staketia/types"
+	"github.com/Stride-Labs/stride/v18/x/stakedym/types"
 )
 
 // Takes custody of staked tokens in an escrow account, updates the current
@@ -41,7 +41,7 @@ func (k Keeper) RedeemStake(ctx sdk.Context, redeemer string, stTokenAmount sdkm
 		return nativeToken, err
 	}
 
-	// Check redeemer owns at least stTokenAmount of stutia
+	// Check redeemer owns at least stTokenAmount of stadym
 	stDenom := utils.StAssetDenomFromHostZoneDenom(hostZone.NativeTokenDenom)
 	redeemerAccount, err := sdk.AccAddressFromBech32(redeemer)
 	if err != nil {
@@ -87,7 +87,7 @@ func (k Keeper) RedeemStake(ctx sdk.Context, redeemer string, stTokenAmount sdkm
 	redeemCoins := sdk.NewCoins(sdk.NewCoin(stDenom, stTokenAmount))
 	err = k.bankKeeper.SendCoins(ctx, redeemerAccount, escrowAccount, redeemCoins)
 	if err != nil {
-		return nativeToken, errorsmod.Wrapf(err, "couldn't send %v stutia. err: %s", stTokenAmount, err.Error())
+		return nativeToken, errorsmod.Wrapf(err, "couldn't send %v stadym. err: %s", stTokenAmount, err.Error())
 	}
 
 	// Now that escrow succeeded, actually set the updated records in the store
@@ -101,7 +101,7 @@ func (k Keeper) RedeemStake(ctx sdk.Context, redeemer string, stTokenAmount sdkm
 // Freezes the ACCUMULATING record by changing the status to UNBONDING_QUEUE
 // and updating the native token amounts on the unbonding and redemption records
 func (k Keeper) PrepareUndelegation(ctx sdk.Context, epochNumber uint64) error {
-	k.Logger(ctx).Info(utils.LogWithHostZone(types.CelestiaChainId, "Preparing undelegation for epoch %d", epochNumber))
+	k.Logger(ctx).Info(utils.LogWithHostZone(types.DymensionChainId, "Preparing undelegation for epoch %d", epochNumber))
 
 	// Get the redemption record from the host zone (to calculate the native tokens)
 	hostZone, err := k.GetUnhaltedHostZone(ctx)
@@ -223,20 +223,20 @@ func (k Keeper) ConfirmUndelegation(ctx sdk.Context, recordId uint64, txHash str
 
 // Burn stTokens from the redemption account
 // - this requires sending them to an module account first, then burning them from there.
-// - we use the staketia module account
+// - we use the stakedym module account
 func (k Keeper) BurnRedeemedStTokens(ctx sdk.Context, stTokensToBurn sdk.Coins, redemptionAddress string) error {
 	acctAddressRedemption, err := sdk.AccAddressFromBech32(redemptionAddress)
 	if err != nil {
 		return fmt.Errorf("could not bech32 decode address %s", redemptionAddress)
 	}
 
-	// send tokens from the EOA to the staketia module account
+	// send tokens from the EOA to the stakedym module account
 	err = k.bankKeeper.SendCoinsFromAccountToModule(ctx, acctAddressRedemption, types.ModuleName, stTokensToBurn)
 	if err != nil {
 		return errorsmod.Wrapf(err, "could not send coins from account %s to module %s. err: %s", redemptionAddress, types.ModuleName, err)
 	}
 
-	// burn the stTokens from the staketia module account
+	// burn the stTokens from the stakedym module account
 	err = k.bankKeeper.BurnCoins(ctx, types.ModuleName, stTokensToBurn)
 	if err != nil {
 		return errorsmod.Wrapf(err, "couldn't burn %v tokens in module account", stTokensToBurn)
@@ -375,7 +375,7 @@ func (k Keeper) DistributeClaimsForUnbondingRecord(
 	claimAddress sdk.AccAddress,
 	unbondingRecordId uint64,
 ) error {
-	k.Logger(ctx).Info(utils.LogWithHostZone(types.CelestiaChainId,
+	k.Logger(ctx).Info(utils.LogWithHostZone(types.DymensionChainId,
 		"Distributing claims for unbonding record %d", unbondingRecordId))
 
 	// For each redemption record, bank send from the claim address to the user address and then delete the record

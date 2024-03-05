@@ -1,18 +1,18 @@
 package keeper_test
 
 import (
-	"github.com/Stride-Labs/stride/v18/x/staketia/types"
+	"github.com/Stride-Labs/stride/v18/x/stakedym/types"
 )
 
 func (s *KeeperTestSuite) TestHaltZone() {
 	// Set a non-halted host zone
-	s.App.StaketiaKeeper.SetHostZone(s.Ctx, types.HostZone{
+	s.App.StakedymKeeper.SetHostZone(s.Ctx, types.HostZone{
 		NativeTokenDenom: HostNativeDenom,
 		Halted:           false,
 	})
 
 	// Halt the zone
-	s.App.StaketiaKeeper.HaltZone(s.Ctx)
+	s.App.StakedymKeeper.HaltZone(s.Ctx)
 
 	// Confirm it's halted
 	hostZone := s.MustGetHostZone()

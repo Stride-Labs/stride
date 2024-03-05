@@ -3,7 +3,7 @@ package keeper_test
 import (
 	math "cosmossdk.io/math"
 
-	"github.com/Stride-Labs/stride/v18/x/staketia/types"
+	"github.com/Stride-Labs/stride/v18/x/stakedym/types"
 )
 
 // Helper function to create and set 5 slashRecord objects with various attributes
@@ -25,14 +25,14 @@ func (s *KeeperTestSuite) createAndSetSlashRecords() []types.SlashRecord {
 			ValidatorAddress: valAddresses[i],
 		}
 		SlashRecords = append(SlashRecords, slashRecord)
-		s.App.StaketiaKeeper.SetSlashRecord(s.Ctx, slashRecord)
+		s.App.StakedymKeeper.SetSlashRecord(s.Ctx, slashRecord)
 	}
 	return SlashRecords
 }
 
 func (s *KeeperTestSuite) TestGetAllSlashRecords() {
 	expectedSlashRecords := s.createAndSetSlashRecords()
-	actualSlashRecords := s.App.StaketiaKeeper.GetAllSlashRecords(s.Ctx)
+	actualSlashRecords := s.App.StakedymKeeper.GetAllSlashRecords(s.Ctx)
 	s.Require().Len(actualSlashRecords, len(expectedSlashRecords), "number of SlashRecords")
 	s.Require().ElementsMatch(expectedSlashRecords, actualSlashRecords, "contents of SlashRecords")
 }
@@ -46,8 +46,8 @@ func (s *KeeperTestSuite) TestSetSlashRecord() {
 		NativeAmount:     math.NewInt(1),
 		ValidatorAddress: "valZ",
 	}
-	s.App.StaketiaKeeper.SetSlashRecord(s.Ctx, newSlashRecord)
-	actualSlashRecords := s.App.StaketiaKeeper.GetAllSlashRecords(s.Ctx)
+	s.App.StakedymKeeper.SetSlashRecord(s.Ctx, newSlashRecord)
+	actualSlashRecords := s.App.StakedymKeeper.GetAllSlashRecords(s.Ctx)
 	s.Require().Len(actualSlashRecords, len(expectedSlashRecords)+1, "number of SlashRecords with new slashRecord added")
 	s.Require().Equal(newSlashRecord, actualSlashRecords[5], "contents of newly added SlashRecord")
 
@@ -58,16 +58,16 @@ func (s *KeeperTestSuite) TestSetSlashRecord() {
 		NativeAmount:     math.NewInt(1),
 		ValidatorAddress: "valZ",
 	}
-	s.App.StaketiaKeeper.SetSlashRecord(s.Ctx, overwriteSlashRecord)
-	actualSlashRecords = s.App.StaketiaKeeper.GetAllSlashRecords(s.Ctx)
+	s.App.StakedymKeeper.SetSlashRecord(s.Ctx, overwriteSlashRecord)
+	actualSlashRecords = s.App.StakedymKeeper.GetAllSlashRecords(s.Ctx)
 	s.Require().Len(actualSlashRecords, len(expectedSlashRecords)+1, "number of SlashRecords same as before overwriting")
 	s.Require().Equal(overwriteSlashRecord, actualSlashRecords[0], "contents of newly added SlashRecord")
 }
 
 func (s *KeeperTestSuite) TestIncrementSlashRecordId() {
-	prevSlashRecordId := s.App.StaketiaKeeper.IncrementSlashRecordId(s.Ctx)
-	currSlashRecordId := s.App.StaketiaKeeper.IncrementSlashRecordId(s.Ctx)
-	nextSlashRecordId := s.App.StaketiaKeeper.IncrementSlashRecordId(s.Ctx)
+	prevSlashRecordId := s.App.StakedymKeeper.IncrementSlashRecordId(s.Ctx)
+	currSlashRecordId := s.App.StakedymKeeper.IncrementSlashRecordId(s.Ctx)
+	nextSlashRecordId := s.App.StakedymKeeper.IncrementSlashRecordId(s.Ctx)
 	s.Require().Equal(prevSlashRecordId+1, currSlashRecordId, "incremented slash record id (tests incrementing)")
 	s.Require().Equal(currSlashRecordId+1, nextSlashRecordId, "incremented slash record id again (test storing incremented val)")
 }

@@ -11,15 +11,15 @@ import (
 func DefaultGenesis() *GenesisState {
 	return &GenesisState{
 		HostZone: HostZone{
-			ChainId:                CelestiaChainId,
-			NativeTokenDenom:       CelestiaNativeTokenDenom,
-			NativeTokenIbcDenom:    CelestiaNativeTokenIBCDenom,
-			TransferChannelId:      StrideToCelestiaTransferChannelId,
-			UnbondingPeriodSeconds: CelestiaUnbondingPeriodSeconds,
+			ChainId:                DymensionChainId,
+			NativeTokenDenom:       DymensionNativeTokenDenom,
+			NativeTokenIbcDenom:    DymensionNativeTokenIBCDenom,
+			TransferChannelId:      StrideToDymensionTransferChannelId,
+			UnbondingPeriodSeconds: DymensionUnbondingPeriodSeconds,
 
-			// on celestia
-			DelegationAddress: DelegationAddressOnCelestia,
-			RewardAddress:     RewardAddressOnCelestia,
+			// on dymension
+			DelegationAddress: DelegationAddressOnDymension,
+			RewardAddress:     RewardAddressOnDymension,
 
 			// functional accounts on stride
 			DepositAddress:    DepositAddress,

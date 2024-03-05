@@ -94,10 +94,11 @@ func (msg *MsgLiquidStake) ValidateBasic() error {
 	if err != nil {
 		return errorsmod.Wrapf(sdkerrors.ErrInvalidAddress, "invalid address (%s)", err)
 	}
-	// threshold of 0.1 TIA or 100000 utia avoids denial of service or record spamming
-	minThreshold := int64(100000)
+	// threshold of 0.1 DYM or 1e17 adym avoids denial of service or record spamming
+	// minThreshold := int64(100_000_000_000_000_000)
+	minThreshold := int64(100_000)
 	if msg.NativeAmount.LT(sdkmath.NewInt(minThreshold)) {
-		return errorsmod.Wrapf(ErrInvalidAmountBelowMinimum, "amount (%v) is below 0.1 TIA minimum", msg.NativeAmount)
+		return errorsmod.Wrapf(ErrInvalidAmountBelowMinimum, "amount (%v) is below 0.1 DYM minimum", msg.NativeAmount)
 	}
 	return nil
 }
@@ -139,10 +140,10 @@ func (msg *MsgRedeemStake) ValidateBasic() error {
 	if err != nil {
 		return errorsmod.Wrapf(sdkerrors.ErrInvalidAddress, "invalid address (%s)", msg.Redeemer)
 	}
-	// threshold of 0.1 stTIA or 100000 stutia avoids denial of service or record spamming
+	// threshold of 0.1 stDYM or 100000 stadym avoids denial of service or record spamming
 	minThreshold := int64(100000)
 	if msg.StTokenAmount.LT(sdkmath.NewInt(minThreshold)) {
-		return errorsmod.Wrapf(ErrInvalidAmountBelowMinimum, "amount (%v) is below 0.1 stTIA minimum", msg.StTokenAmount)
+		return errorsmod.Wrapf(ErrInvalidAmountBelowMinimum, "amount (%v) is below 0.1 stDYM minimum", msg.StTokenAmount)
 	}
 
 	return nil

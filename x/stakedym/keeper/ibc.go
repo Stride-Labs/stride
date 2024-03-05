@@ -6,7 +6,7 @@ import (
 	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
 
 	icacallbacktypes "github.com/Stride-Labs/stride/v18/x/icacallbacks/types"
-	"github.com/Stride-Labs/stride/v18/x/staketia/types"
+	"github.com/Stride-Labs/stride/v18/x/stakedym/types"
 
 	"github.com/Stride-Labs/stride/v18/x/icacallbacks"
 )

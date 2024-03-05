@@ -11,7 +11,7 @@ import (
 
 	"github.com/Stride-Labs/stride/v18/utils"
 	icaoracletypes "github.com/Stride-Labs/stride/v18/x/icaoracle/types"
-	"github.com/Stride-Labs/stride/v18/x/staketia/types"
+	"github.com/Stride-Labs/stride/v18/x/stakedym/types"
 )
 
 // Updates the redemption rate for each host zone
@@ -31,7 +31,7 @@ import (
 //
 // Note: Reinvested tokens are sent to the deposit account and are automatically included in this formula
 func (k Keeper) UpdateRedemptionRate(ctx sdk.Context) error {
-	k.Logger(ctx).Info(utils.LogWithHostZone(types.CelestiaChainId, "Updating redemption rate"))
+	k.Logger(ctx).Info(utils.LogWithHostZone(types.DymensionChainId, "Updating redemption rate"))
 
 	hostZone, err := k.GetHostZone(ctx)
 	if err != nil {
@@ -73,9 +73,9 @@ func (k Keeper) UpdateRedemptionRate(ctx sdk.Context) error {
 	hostZone.RedemptionRate = redemptionRate
 	k.SetHostZone(ctx, hostZone)
 
-	k.Logger(ctx).Info(utils.LogWithHostZone(types.CelestiaChainId, "Redemption rate updated from %v to %v",
+	k.Logger(ctx).Info(utils.LogWithHostZone(types.DymensionChainId, "Redemption rate updated from %v to %v",
 		hostZone.LastRedemptionRate, hostZone.RedemptionRate))
-	k.Logger(ctx).Info(utils.LogWithHostZone(types.CelestiaChainId,
+	k.Logger(ctx).Info(utils.LogWithHostZone(types.DymensionChainId,
 		"Deposit Account Balance: %v, Undelegated Balance: %v, Delegated Balance: %v, StToken Supply: %v",
 		depositAccountBalance.Amount, undelegatedBalance, hostZone.DelegatedBalance, stTokenSupply))
 
