@@ -17,10 +17,6 @@ import (
 	"github.com/Stride-Labs/stride/v18/x/stakeibc/types"
 )
 
-const (
-	UndelegateICABatchSize = 32
-)
-
 type ValidatorUnbondCapacity struct {
 	ValidatorAddress   string
 	CurrentDelegation  sdkmath.Int
@@ -206,7 +202,13 @@ func SortUnbondingCapacityByPriority(validatorUnbondCapacity []ValidatorUnbondCa
 		validatorA := validatorUnbondCapacity[i]
 		validatorB := validatorUnbondCapacity[j]
 
-		// TODO: Once more than 32 validators are supported, change back to using balance ratio first
+		balanceRatioValA, _ := validatorA.GetBalanceRatio()
+		balanceRatioValB, _ := validatorB.GetBalanceRatio()
+
+		// Sort by the balance ratio first - in ascending order - so the more unbalanced validators appear first
+		if !balanceRatioValA.Equal(balanceRatioValB) {
+			return balanceRatioValA.LT(balanceRatioValB)
+		}
 
 		// If the ratio's are equal, use the capacity as a tie breaker
 		// where the larget capacity comes first
@@ -469,11 +471,12 @@ func (k Keeper) UnbondFromHostZone(ctx sdk.Context, hostZone types.HostZone) err
 	}
 
 	// Get the undelegation ICA messages and split delegations for the callback
+	undelegateBatchSize := int(k.GetParams(ctx).MaxIcaMessagesPerTx)
 	msgs, unbondings, err := k.GetUnbondingICAMessages(
 		hostZone,
 		totalUnbondAmount,
 		prioritizedUnbondCapacity,
-		UndelegateICABatchSize,
+		undelegateBatchSize,
 	)
 	if err != nil {
 		return err
@@ -485,8 +488,8 @@ func (k Keeper) UnbondFromHostZone(ctx sdk.Context, hostZone types.HostZone) err
 	}
 
 	// Send the messages in batches so the gas limit isn't exceedeed
-	for start := 0; start < len(msgs); start += UndelegateICABatchSize {
-		end := start + UndelegateICABatchSize
+	for start := 0; start < len(msgs); start += undelegateBatchSize {
+		end := start + undelegateBatchSize
 		if end > len(msgs) {
 			end = len(msgs)
 		}
