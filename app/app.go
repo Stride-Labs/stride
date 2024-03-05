@@ -146,6 +146,9 @@ import (
 	recordsmodule "github.com/Stride-Labs/stride/v18/x/records"
 	recordsmodulekeeper "github.com/Stride-Labs/stride/v18/x/records/keeper"
 	recordsmoduletypes "github.com/Stride-Labs/stride/v18/x/records/types"
+	stakedym "github.com/Stride-Labs/stride/v18/x/stakedym"
+	stakedymkeeper "github.com/Stride-Labs/stride/v18/x/stakedym/keeper"
+	stakedymtypes "github.com/Stride-Labs/stride/v18/x/stakedym/types"
 	stakeibcmodule "github.com/Stride-Labs/stride/v18/x/stakeibc"
 	stakeibcclient "github.com/Stride-Labs/stride/v18/x/stakeibc/client"
 	stakeibcmodulekeeper "github.com/Stride-Labs/stride/v18/x/stakeibc/keeper"
@@ -223,6 +226,7 @@ var (
 		packetforward.AppModuleBasic{},
 		evmosvesting.AppModuleBasic{},
 		staketia.AppModuleBasic{},
+		stakedym.AppModuleBasic{},
 		wasm.AppModuleBasic{},
 	)
 
@@ -245,6 +249,8 @@ var (
 		stakeibcmoduletypes.RewardCollectorName:       nil,
 		staketiatypes.ModuleName:                      {authtypes.Minter, authtypes.Burner},
 		staketiatypes.FeeAddress:                      nil,
+		stakedymtypes.ModuleName:                      {authtypes.Minter, authtypes.Burner},
+		stakedymtypes.FeeAddress:                      nil,
 		wasmtypes.ModuleName:                          {authtypes.Burner},
 	}
 )
@@ -326,6 +332,7 @@ type StrideApp struct {
 	ClaimKeeper           claimkeeper.Keeper
 	ICAOracleKeeper       icaoraclekeeper.Keeper
 	StaketiaKeeper        staketiakeeper.Keeper
+	StakedymKeeper        stakedymkeeper.Keeper
 
 	mm           *module.Manager
 	sm           *module.SimulationManager
@@ -377,6 +384,7 @@ func NewStrideApp(
 		packetforwardtypes.StoreKey,
 		evmosvestingtypes.StoreKey,
 		staketiatypes.StoreKey,
+		stakedymtypes.StoreKey,
 		wasmtypes.StoreKey,
 	)
 	tkeys := sdk.NewTransientStoreKeys(paramstypes.TStoreKey)
@@ -639,6 +647,18 @@ func NewStrideApp(
 	)
 	stakeTiaModule := staketia.NewAppModule(appCodec, app.StaketiaKeeper)
 
+	// Stakedym Keeper must be initialized after TransferKeeper
+	app.StakedymKeeper = *stakedymkeeper.NewKeeper(
+		appCodec,
+		keys[stakedymtypes.StoreKey],
+		app.AccountKeeper,
+		app.BankKeeper,
+		app.ICAOracleKeeper,
+		app.RatelimitKeeper,
+		app.TransferKeeper,
+	)
+	stakeDymModule := stakedym.NewAppModule(appCodec, app.StakedymKeeper)
+
 	app.VestingKeeper = evmosvestingkeeper.NewKeeper(
 		keys[evmosvestingtypes.StoreKey], authtypes.NewModuleAddress(govtypes.ModuleName), appCodec,
 		app.AccountKeeper, app.BankKeeper, app.DistrKeeper, app.StakingKeeper,
@@ -707,6 +727,7 @@ func NewStrideApp(
 			app.ClaimKeeper.Hooks(),
 			app.RatelimitKeeper.Hooks(),
 			app.StaketiaKeeper.Hooks(),
+			app.StakedymKeeper.Hooks(),
 		),
 	)
 	epochsModule := epochsmodule.NewAppModule(appCodec, app.EpochsKeeper)
@@ -764,6 +785,7 @@ func NewStrideApp(
 	// - autopilot
 	// - records
 	// - staketia
+	// - stakedym
 	// - ratelimit
 	// - pfm
 	// - transfer
@@ -780,6 +802,7 @@ func NewStrideApp(
 	)
 	transferStack = ratelimitmodule.NewIBCMiddleware(app.RatelimitKeeper, transferStack)
 	transferStack = staketia.NewIBCMiddleware(app.StaketiaKeeper, transferStack)
+	transferStack = stakedym.NewIBCMiddleware(app.StakedymKeeper, transferStack)
 	transferStack = recordsmodule.NewIBCModule(app.RecordsKeeper, transferStack)
 	transferStack = autopilot.NewIBCModule(app.AutopilotKeeper, transferStack)
 
@@ -846,6 +869,7 @@ func NewStrideApp(
 		autopilotModule,
 		icaoracleModule,
 		stakeTiaModule,
+		stakeDymModule,
 	)
 
 	// During begin block slashing happens after distr.BeginBlocker so that
@@ -886,6 +910,7 @@ func NewStrideApp(
 		consensusparamtypes.ModuleName,
 		packetforwardtypes.ModuleName,
 		staketiatypes.ModuleName,
+		stakedymtypes.ModuleName,
 		wasmtypes.ModuleName,
 	)
 
@@ -923,6 +948,7 @@ func NewStrideApp(
 		consensusparamtypes.ModuleName,
 		packetforwardtypes.ModuleName,
 		staketiatypes.ModuleName,
+		stakedymtypes.ModuleName,
 		wasmtypes.ModuleName,
 	)
 
@@ -965,6 +991,7 @@ func NewStrideApp(
 		consensusparamtypes.ModuleName,
 		packetforwardtypes.ModuleName,
 		staketiatypes.ModuleName,
+		stakedymtypes.ModuleName,
 		wasmtypes.ModuleName,
 	)
 
@@ -1139,7 +1166,9 @@ func (app *StrideApp) BlacklistedModuleAccountAddrs() map[string]bool {
 			acc == stakeibcmoduletypes.RewardCollectorName ||
 			acc == ccvconsumertypes.ConsumerToSendToProviderName ||
 			acc == staketiatypes.ModuleName ||
-			acc == staketiatypes.FeeAddress {
+			acc == staketiatypes.FeeAddress ||
+			acc == stakedymtypes.ModuleName ||
+			acc == stakedymtypes.FeeAddress {
 			continue
 		}
 		modAccAddrs[authtypes.NewModuleAddress(acc).String()] = true
