@@ -1,15 +1,15 @@
 syntax = "proto3";
-package stride.staketia;
+package stride.stakedym;
 
 import "cosmos_proto/cosmos.proto";
 import "gogoproto/gogo.proto";
 
-option go_package = "github.com/Stride-Labs/stride/v18/x/staketia/types";
+option go_package = "github.com/Stride-Labs/stride/v18/x/stakedym/types";
 
 message HostZone {
   // Chain ID
   string chain_id = 1;
-  // Native token denom on the host zone (e.g. utia)
+  // Native token denom on the host zone (e.g. adym)
   string native_token_denom = 2;
   // IBC denom of the native token as it lives on stride (e.g. ibc/...)
   string native_token_ibc_denom = 3;
@@ -78,7 +78,7 @@ message HostZone {
     (gogoproto.nullable) = false
   ];
 
-  // The undelegation period for Celestia in days
+  // The undelegation period for Dymension in days
   uint64 unbonding_period_seconds = 19;
   // Indicates whether the host zone has been halted
   bool halted = 20;

@@ -1,12 +1,12 @@
 syntax = "proto3";
-package stride.staketia;
+package stride.stakedym;
 
 import "gogoproto/gogo.proto";
-import "stride/staketia/staketia.proto";
+import "stride/stakedym/stakedym.proto";
 
-option go_package = "github.com/Stride-Labs/stride/v18/x/staketia/types";
+option go_package = "github.com/Stride-Labs/stride/v18/x/stakedym/types";
 
-// Params defines the staketia module parameters.
+// Params defines the stakedym module parameters.
 message Params {}
 
 // TransferInProgressRecordIds stores record IDs for delegation records
@@ -17,7 +17,7 @@ message TransferInProgressRecordIds {
   uint64 record_id = 3;
 }
 
-// GenesisState defines the staketia module's genesis state.
+// GenesisState defines the stakedym module's genesis state.
 message GenesisState {
   Params params = 1 [
     (gogoproto.moretags) = "yaml:\"params\"",

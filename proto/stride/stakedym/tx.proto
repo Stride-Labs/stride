@@ -1,15 +1,15 @@
 
 syntax = "proto3";
-package stride.staketia;
+package stride.stakedym;
 
 import "cosmos/msg/v1/msg.proto";
 import "amino/amino.proto";
 import "gogoproto/gogo.proto";
 import "cosmos/base/v1beta1/coin.proto";
 import "cosmos_proto/cosmos.proto";
-import "stride/staketia/staketia.proto";
+import "stride/stakedym/stakedym.proto";
 
-option go_package = "github.com/Stride-Labs/stride/v18/x/staketia/types";
+option go_package = "github.com/Stride-Labs/stride/v18/x/stakedym/types";
 
 enum OverwritableRecordType {
   option (gogoproto.goproto_enum_prefix) = false;
@@ -78,7 +78,7 @@ service Msg {
 // LiquidStake
 message MsgLiquidStake {
   option (cosmos.msg.v1.signer) = "staker";
-  option (amino.name) = "staketia/MsgLiquidStake";
+  option (amino.name) = "stakedym/MsgLiquidStake";
 
   string staker = 1;
   string native_amount = 2 [
@@ -96,7 +96,7 @@ message MsgLiquidStakeResponse {
 // RedeemStake
 message MsgRedeemStake {
   option (cosmos.msg.v1.signer) = "redeemer";
-  option (amino.name) = "staketia/MsgRedeemStake";
+  option (amino.name) = "stakedym/MsgRedeemStake";
 
   string redeemer = 1;
   string st_token_amount = 2 [
@@ -114,7 +114,7 @@ message MsgRedeemStakeResponse {
 // ConfirmDelegation
 message MsgConfirmDelegation {
   option (cosmos.msg.v1.signer) = "operator";
-  option (amino.name) = "staketia/MsgConfirmDelegation";
+  option (amino.name) = "stakedym/MsgConfirmDelegation";
 
   string operator = 1;
   uint64 record_id = 2;
@@ -125,7 +125,7 @@ message MsgConfirmDelegationResponse {}
 // ConfirmUndelegation
 message MsgConfirmUndelegation {
   option (cosmos.msg.v1.signer) = "operator";
-  option (amino.name) = "staketia/MsgConfirmUndelegation";
+  option (amino.name) = "stakedym/MsgConfirmUndelegation";
 
   string operator = 1;
   uint64 record_id = 2;
@@ -136,7 +136,7 @@ message MsgConfirmUndelegationResponse {}
 // ConfirmUnbondedTokenSweep
 message MsgConfirmUnbondedTokenSweep {
   option (cosmos.msg.v1.signer) = "operator";
-  option (amino.name) = "staketia/MsgConfirmUnbondedTokenSweep";
+  option (amino.name) = "stakedym/MsgConfirmUnbondedTokenSweep";
 
   string operator = 1;
   uint64 record_id = 2;
@@ -147,7 +147,7 @@ message MsgConfirmUnbondedTokenSweepResponse {}
 // AdjustDelegatedBalance
 message MsgAdjustDelegatedBalance {
   option (cosmos.msg.v1.signer) = "operator";
-  option (amino.name) = "staketia/MsgAdjustDelegatedBalance";
+  option (amino.name) = "stakedym/MsgAdjustDelegatedBalance";
 
   string operator = 1;
   string delegation_offset = 2 [
@@ -161,7 +161,7 @@ message MsgAdjustDelegatedBalanceResponse {}
 // UpdateInnerRedemptionRate
 message MsgUpdateInnerRedemptionRateBounds {
   option (cosmos.msg.v1.signer) = "creator";
-  option (amino.name) = "staketia/MsgUpdateRedemptionRateBounds";
+  option (amino.name) = "stakedym/MsgUpdateRedemptionRateBounds";
 
   string creator = 1;
   string min_inner_redemption_rate = 2 [
@@ -180,7 +180,7 @@ message MsgUpdateInnerRedemptionRateBoundsResponse {}
 // ResumeHostZone
 message MsgResumeHostZone {
   option (cosmos.msg.v1.signer) = "creator";
-  option (amino.name) = "staketia/MsgResumeHostZone";
+  option (amino.name) = "stakedym/MsgResumeHostZone";
 
   string creator = 1;
 }
@@ -189,7 +189,7 @@ message MsgResumeHostZoneResponse {}
 // RefreshRedemptionRate
 message MsgRefreshRedemptionRate {
   option (cosmos.msg.v1.signer) = "creator";
-  option (amino.name) = "staketia/MsgRefreshRedemptionRate";
+  option (amino.name) = "stakedym/MsgRefreshRedemptionRate";
 
   string creator = 1;
 }
@@ -198,7 +198,7 @@ message MsgRefreshRedemptionRateResponse {}
 // OverwriteDelegationRecord
 message MsgOverwriteDelegationRecord {
   option (cosmos.msg.v1.signer) = "creator";
-  option (amino.name) = "staketia/MsgOverwriteDelegationRecord";
+  option (amino.name) = "stakedym/MsgOverwriteDelegationRecord";
 
   string creator = 1;
   DelegationRecord delegation_record = 2;
@@ -208,7 +208,7 @@ message MsgOverwriteDelegationRecordResponse {}
 // OverwriteUnbondingRecord
 message MsgOverwriteUnbondingRecord {
   option (cosmos.msg.v1.signer) = "creator";
-  option (amino.name) = "staketia/MsgOverwriteUnbondingRecord";
+  option (amino.name) = "stakedym/MsgOverwriteUnbondingRecord";
 
   string creator = 1;
   UnbondingRecord unbonding_record = 2;
@@ -218,7 +218,7 @@ message MsgOverwriteUnbondingRecordResponse {}
 // OverwriteRedemptionRecord
 message MsgOverwriteRedemptionRecord {
   option (cosmos.msg.v1.signer) = "creator";
-  option (amino.name) = "staketia/MsgOverwriteRedemptionRecord";
+  option (amino.name) = "stakedym/MsgOverwriteRedemptionRecord";
 
   string creator = 1;
   RedemptionRecord redemption_record = 2;
@@ -228,7 +228,7 @@ message MsgOverwriteRedemptionRecordResponse {}
 // SetOperatorAddress
 message MsgSetOperatorAddress {
   option (cosmos.msg.v1.signer) = "signer";
-  option (amino.name) = "staketia/MsgSetOperatorAddress";
+  option (amino.name) = "stakedym/MsgSetOperatorAddress";
 
   string signer = 1;
   string operator = 2;

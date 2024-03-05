@@ -1,19 +1,19 @@
 
 syntax = "proto3";
-package stride.staketia;
+package stride.stakedym;
 
-import "stride/staketia/staketia.proto";
+import "stride/stakedym/stakedym.proto";
 import "gogoproto/gogo.proto";
 import "google/api/annotations.proto";
 import "cosmos/base/query/v1beta1/pagination.proto";
 
-option go_package = "github.com/Stride-Labs/stride/v18/x/staketia/types";
+option go_package = "github.com/Stride-Labs/stride/v18/x/stakedym/types";
 
 // Query defines the gRPC querier service.
 service Query {
   // Queries the host zone struct
   rpc HostZone(QueryHostZoneRequest) returns (QueryHostZoneResponse) {
-    option (google.api.http).get = "/Stride-Labs/stride/staketia/host_zone";
+    option (google.api.http).get = "/Stride-Labs/stride/stakedym/host_zone";
   }
 
   // Queries the delegation records with an optional to include archived records
@@ -23,7 +23,7 @@ service Query {
   rpc DelegationRecords(QueryDelegationRecordsRequest)
       returns (QueryDelegationRecordsResponse) {
     option (google.api.http).get =
-        "/Stride-Labs/stride/staketia/delegation_records";
+        "/Stride-Labs/stride/stakedym/delegation_records";
   }
 
   // Queries the unbonding records with an optional to include archived records
@@ -33,14 +33,14 @@ service Query {
   rpc UnbondingRecords(QueryUnbondingRecordsRequest)
       returns (QueryUnbondingRecordsResponse) {
     option (google.api.http).get =
-        "/Stride-Labs/stride/staketia/unbonding_records";
+        "/Stride-Labs/stride/stakedym/unbonding_records";
   }
 
   // Queries a single user redemption record
   rpc RedemptionRecord(QueryRedemptionRecordRequest)
       returns (QueryRedemptionRecordResponse) {
     option (google.api.http).get =
-        "/Stride-Labs/stride/staketia/redemption_record/{unbonding_record_id}/"
+        "/Stride-Labs/stride/stakedym/redemption_record/{unbonding_record_id}/"
         "{address}";
   }
 
@@ -52,13 +52,13 @@ service Query {
   rpc RedemptionRecords(QueryRedemptionRecordsRequest)
       returns (QueryRedemptionRecordsResponse) {
     option (google.api.http).get =
-        "/Stride-Labs/stride/staketia/redemption_records";
+        "/Stride-Labs/stride/stakedym/redemption_records";
   }
 
   // Queries slash records
   rpc SlashRecords(QuerySlashRecordsRequest)
       returns (QuerySlashRecordsResponse) {
-    option (google.api.http).get = "/Stride-Labs/stride/staketia/slash_records";
+    option (google.api.http).get = "/Stride-Labs/stride/stakedym/slash_records";
   }
 }
 
