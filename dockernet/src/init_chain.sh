@@ -41,7 +41,7 @@ set_stride_epochs() {
     start_time=$(date -u +"%Y-%m-%dT%H"):00:00Z
     jq '(.app_state.epochs.epochs[] | select(.identifier=="hour") ).start_time = $epochLen' --arg epochLen $start_time $genesis_config > json.tmp && mv json.tmp $genesis_config
 
-    # Set the hour epoch in the rate limit module
+    # Set the hour epoch duration in the rate limit module
     jq '.app_state.ratelimit.hour_epoch.duration = $newVal' --arg newVal "$STRIDE_HOUR_EPOCH_DURATION" $genesis_config > json.tmp && mv json.tmp $genesis_config
 }
 
