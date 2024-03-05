@@ -27,6 +27,7 @@ message Params {
   uint64 ibc_transfer_timeout_nanos = 16;
   uint64 validator_slash_query_threshold = 19;
   uint64 validator_weight_cap = 20;
+  uint64 max_ica_messages_per_tx = 21;
 
   reserved 8, 17, 18;
 }

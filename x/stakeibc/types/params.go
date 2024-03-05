@@ -27,6 +27,7 @@ var (
 	DefaultIBCTransferTimeoutNanos      uint64 = 1800000000000 // 30 minutes
 	DefaultValidatorSlashQueryThreshold uint64 = 1             // denominated in percentage of TVL (1 => 1%)
 	DefaultValidatorWeightCap           uint64 = 10            // percentage (10 => 10%)
+	DefaultMaxICAMessagesPerTx          uint64 = 100           // percentage (10 => 10%)
 
 	// KeyDepositInterval is store's key for the DepositInterval option
 	KeyDepositInterval                   = []byte("DepositInterval")
@@ -47,6 +48,7 @@ var (
 	KeyMinRedemptionRates                = []byte("MinRedemptionRates")
 	KeyValidatorSlashQueryThreshold      = []byte("ValidatorSlashQueryThreshold")
 	KeyValidatorWeightCap                = []byte("ValidatorWeightCap")
+	KeyMaxICAMessagesPerTx               = []byte("MaxICAMessagesPerTx")
 )
 
 var _ paramtypes.ParamSet = (*Params)(nil)
@@ -74,6 +76,7 @@ func NewParams(
 	ibcTransferTimeoutNanos uint64,
 	validatorSlashQueryInterval uint64,
 	validatorWeightCap uint64,
+	maxIcaMessagesPerTx uint64,
 ) Params {
 	return Params{
 		DepositInterval:                   depositInterval,
@@ -92,6 +95,7 @@ func NewParams(
 		IbcTransferTimeoutNanos:           ibcTransferTimeoutNanos,
 		ValidatorSlashQueryThreshold:      validatorSlashQueryInterval,
 		ValidatorWeightCap:                validatorWeightCap,
+		MaxIcaMessagesPerTx:               maxIcaMessagesPerTx,
 	}
 }
 
@@ -114,6 +118,7 @@ func DefaultParams() Params {
 		DefaultIBCTransferTimeoutNanos,
 		DefaultValidatorSlashQueryThreshold,
 		DefaultValidatorWeightCap,
+		DefaultMaxICAMessagesPerTx,
 	)
 }
 
@@ -136,6 +141,7 @@ func (p *Params) ParamSetPairs() paramtypes.ParamSetPairs {
 		paramtypes.NewParamSetPair(KeyIBCTransferTimeoutNanos, &p.IbcTransferTimeoutNanos, validTimeoutNanos),
 		paramtypes.NewParamSetPair(KeyValidatorSlashQueryThreshold, &p.ValidatorSlashQueryThreshold, isPositive),
 		paramtypes.NewParamSetPair(KeyValidatorWeightCap, &p.ValidatorWeightCap, validValidatorWeightCap),
+		paramtypes.NewParamSetPair(KeyMaxICAMessagesPerTx, &p.MaxIcaMessagesPerTx, isPositive),
 	}
 }
 
@@ -278,6 +284,9 @@ func (p Params) Validate() error {
 		return err
 	}
 	if err := isPercentage(p.ValidatorWeightCap); err != nil {
+		return err
+	}
+	if err := isPositive(p.MaxIcaMessagesPerTx); err != nil {
 		return err
 	}
 
