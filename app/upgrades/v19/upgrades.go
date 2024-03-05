@@ -13,7 +13,7 @@ import (
 const (
 	UpgradeName = "v19"
 
-	WasmAdmin = "TODO"
+	WasmAdmin = "stride159smvptpq6evq0x6jmca6t8y7j8xmwj6kxapyh"
 )
 
 // CreateUpgradeHandler creates an SDK upgrade handler for v19
