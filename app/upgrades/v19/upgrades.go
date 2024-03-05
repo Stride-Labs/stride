@@ -55,7 +55,7 @@ func CreateUpgradeHandler(
 // can remain unchanged
 // The only required change is to create the new epoch type
 // that's used instead of the epochs module
-func MigrateRateLimitModule(ctx sdk.Context, rk ratelimitkeeper.Keeper) {
+func MigrateRateLimitModule(ctx sdk.Context, k ratelimitkeeper.Keeper) {
 	// Initialize the hour epoch so that the epoch number matches
 	// the current hour and the start time is precisely on the hour
 	genesisState := ratelimittypes.DefaultGenesis()
@@ -63,5 +63,5 @@ func MigrateRateLimitModule(ctx sdk.Context, rk ratelimitkeeper.Keeper) {
 	hourEpoch.EpochNumber = uint64(ctx.BlockTime().Hour())
 	hourEpoch.EpochStartTime = ctx.BlockTime().Truncate(time.Hour)
 	hourEpoch.EpochStartHeight = ctx.BlockHeight()
-	rk.SetHourEpoch(ctx, hourEpoch)
+	k.SetHourEpoch(ctx, hourEpoch)
 }
