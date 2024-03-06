@@ -5,19 +5,15 @@ import (
 
 	sdkmath "cosmossdk.io/math"
 
+	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	ratelimittypes "github.com/Stride-Labs/ibc-rate-limiting/ratelimit/types"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	"github.com/stretchr/testify/suite"
 
-	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
-	"github.com/stretchr/testify/suite"
-
 	"github.com/Stride-Labs/stride/v18/app"
 	"github.com/Stride-Labs/stride/v18/app/apptesting"
-	legacyratelimittypes "github.com/Stride-Labs/stride/v18/app/upgrades/v19/legacyratelimit/types"
-
-	"github.com/Stride-Labs/stride/v18/app/apptesting"
 	v19 "github.com/Stride-Labs/stride/v18/app/upgrades/v19"
+	legacyratelimittypes "github.com/Stride-Labs/stride/v18/app/upgrades/v19/legacyratelimit/types"
 )
 
 type UpgradeTestSuite struct {
