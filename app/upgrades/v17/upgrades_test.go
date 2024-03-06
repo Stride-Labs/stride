@@ -11,8 +11,9 @@ import (
 	ibctesting "github.com/cosmos/ibc-go/v7/testing"
 	"github.com/stretchr/testify/suite"
 
+	ratelimittypes "github.com/Stride-Labs/ibc-rate-limiting/ratelimit/types"
+
 	icqtypes "github.com/Stride-Labs/stride/v18/x/interchainquery/types"
-	ratelimittypes "github.com/Stride-Labs/stride/v18/x/ratelimit/types"
 	recordtypes "github.com/Stride-Labs/stride/v18/x/records/types"
 
 	"github.com/Stride-Labs/stride/v18/app/apptesting"
