@@ -4,6 +4,9 @@ import (
 	"testing"
 
 	sdkmath "cosmossdk.io/math"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	transfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
+	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
 
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	ratelimittypes "github.com/Stride-Labs/ibc-rate-limiting/ratelimit/types"
@@ -14,6 +17,10 @@ import (
 	"github.com/Stride-Labs/stride/v18/app/apptesting"
 	v19 "github.com/Stride-Labs/stride/v18/app/upgrades/v19"
 	legacyratelimittypes "github.com/Stride-Labs/stride/v18/app/upgrades/v19/legacyratelimit/types"
+)
+
+var (
+	StTiaSupply = sdkmath.NewInt(1000)
 )
 
 type UpgradeTestSuite struct {
@@ -32,17 +39,19 @@ func (s *UpgradeTestSuite) TestUpgrade() {
 	dummyUpgradeHeight := int64(5)
 
 	// Setup state before upgrade
-	checkRateLimitsAfterUpgrade := s.SetupRateLimitsBeforeUpgrade()
+	checkMigratedRateLimits := s.SetupRateLimitMigration()
+	checkStTiaRateLimits := s.SetupStTiaRateLimits()
 
 	// Run through upgrade
 	s.ConfirmUpgradeSucceededs("v19", dummyUpgradeHeight)
 
 	// Check state after upgrade
-	checkRateLimitsAfterUpgrade()
+	checkMigratedRateLimits()
+	checkStTiaRateLimits()
 	s.CheckWasmPerms()
 }
 
-func (s *UpgradeTestSuite) SetupRateLimitsBeforeUpgrade() func() {
+func (s *UpgradeTestSuite) SetupRateLimitMigration() func() {
 	rateLimitStore := s.Ctx.KVStore(s.App.GetKey(ratelimittypes.StoreKey))
 	cdc := app.MakeEncodingConfig().Marshaler
 
@@ -91,10 +100,87 @@ func (s *UpgradeTestSuite) SetupRateLimitsBeforeUpgrade() func() {
 	hostzoneStore := prefix.NewStore(rateLimitStore, ratelimittypes.RateLimitKeyPrefix)
 	hostzoneStore.Set(ratelimittypes.GetRateLimitItemKey(denom, channelId), initialRateLimitBz)
 
+	// Return a callback to check the state after the upgrade
 	return func() {
 		actualRateLimit, found := s.App.RatelimitKeeper.GetRateLimit(s.Ctx, denom, channelId)
 		s.Require().True(found, "rate limit should have been found")
 		s.Require().Equal(expectedRateLimit, actualRateLimit, "rate limit after upgrade")
+	}
+}
+
+func (s *UpgradeTestSuite) SetupStTiaRateLimits() func() {
+	// mint sttia so that there is a channel value
+	s.FundAccount(s.TestAccs[0], sdk.NewCoin(v19.StTiaDenom, StTiaSupply))
+
+	// Mock out a channel for osmosis and celstia
+	s.App.IBCKeeper.ChannelKeeper.SetChannel(s.Ctx, transfertypes.PortID, v19.CelestiaTransferChannelId, channeltypes.Channel{})
+	s.App.IBCKeeper.ChannelKeeper.SetChannel(s.Ctx, transfertypes.PortID, v19.OsmosisTransferChannelId, channeltypes.Channel{})
+	s.App.IBCKeeper.ChannelKeeper.SetChannel(s.Ctx, transfertypes.PortID, v19.NeutronTransferChannelId, channeltypes.Channel{})
+
+	// Return a callback to check the rate limits were added after the upgrade
+	return func() {
+		expectedRateLimitToCelestia := ratelimittypes.RateLimit{
+			Path: &ratelimittypes.Path{
+				Denom:     v19.StTiaDenom,
+				ChannelId: v19.CelestiaTransferChannelId,
+			},
+			Flow: &ratelimittypes.Flow{
+				Inflow:       sdkmath.NewInt(0),
+				Outflow:      sdkmath.NewInt(0),
+				ChannelValue: StTiaSupply,
+			},
+			Quota: &ratelimittypes.Quota{
+				MaxPercentSend: sdkmath.NewInt(10),
+				MaxPercentRecv: sdkmath.NewInt(10),
+				DurationHours:  24,
+			},
+		}
+
+		expectedRateLimitToOsmosis := ratelimittypes.RateLimit{
+			Path: &ratelimittypes.Path{
+				Denom:     v19.StTiaDenom,
+				ChannelId: v19.OsmosisTransferChannelId,
+			},
+			Flow: &ratelimittypes.Flow{
+				Inflow:       sdkmath.NewInt(0),
+				Outflow:      sdkmath.NewInt(0),
+				ChannelValue: StTiaSupply,
+			},
+			Quota: &ratelimittypes.Quota{
+				MaxPercentSend: sdkmath.NewInt(10),
+				MaxPercentRecv: sdkmath.NewInt(10),
+				DurationHours:  24,
+			},
+		}
+
+		expectedRateLimitToNeutron := ratelimittypes.RateLimit{
+			Path: &ratelimittypes.Path{
+				Denom:     v19.StTiaDenom,
+				ChannelId: v19.NeutronTransferChannelId,
+			},
+			Flow: &ratelimittypes.Flow{
+				Inflow:       sdkmath.NewInt(0),
+				Outflow:      sdkmath.NewInt(0),
+				ChannelValue: StTiaSupply,
+			},
+			Quota: &ratelimittypes.Quota{
+				MaxPercentSend: sdkmath.NewInt(10),
+				MaxPercentRecv: sdkmath.NewInt(10),
+				DurationHours:  24,
+			},
+		}
+
+		actualCelestiaRateLimit, found := s.App.RatelimitKeeper.GetRateLimit(s.Ctx, v19.StTiaDenom, v19.CelestiaTransferChannelId)
+		s.Require().True(found, "rate limit to celestia should have been found")
+		s.Require().Equal(expectedRateLimitToCelestia, actualCelestiaRateLimit)
+
+		actualOsmosisRateLimit, found := s.App.RatelimitKeeper.GetRateLimit(s.Ctx, v19.StTiaDenom, v19.OsmosisTransferChannelId)
+		s.Require().True(found, "rate limit to osmosis should have been found")
+		s.Require().Equal(expectedRateLimitToOsmosis, actualOsmosisRateLimit)
+
+		actualRateLimitToNeutron, found := s.App.RatelimitKeeper.GetRateLimit(s.Ctx, v19.StTiaDenom, v19.NeutronTransferChannelId)
+		s.Require().True(found, "rate limit to osmosis should have been found")
+		s.Require().Equal(expectedRateLimitToNeutron, actualRateLimitToNeutron)
 	}
 }
 

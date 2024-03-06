@@ -18,6 +18,12 @@ import (
 const (
 	UpgradeName = "v19"
 
+	StTiaDenom                = "stutia"
+	RateLimitDurationHours    = 24
+	CelestiaTransferChannelId = "channel-162"
+	OsmosisTransferChannelId  = "channel-5"
+	NeutronTransferChannelId  = "channel-123"
+
 	WasmAdmin = "stride159smvptpq6evq0x6jmca6t8y7j8xmwj6kxapyh"
 )
 
@@ -45,12 +51,17 @@ func CreateUpgradeHandler(
 			return newVm, errorsmod.Wrapf(err, "unable to migrate ICS to v14")
 		}
 
-		// Migrate to open sourced rate limiter
-		MigrateRateLimitModule(ctx, ratelimitKeeper)
-
 		// Update wasm upload permissions
 		if err := SetWasmPermissions(ctx, wasmKeeper); err != nil {
 			return newVm, errorsmod.Wrapf(err, "unable to set wasm permissions")
+		}
+
+		// Migrate to open sourced rate limiter
+		MigrateRateLimitModule(ctx, ratelimitKeeper)
+
+		// Add stTIA rate limits to Celestia and Osmosis
+		if err := AddStTiaRateLimit(ctx, ratelimitKeeper); err != nil {
+			return newVm, err
 		}
 
 		return newVm, nil
@@ -89,6 +100,27 @@ func MigrateRateLimitModule(ctx sdk.Context, k ratelimitkeeper.Keeper) {
 	hourEpoch.EpochStartTime = ctx.BlockTime().Truncate(time.Hour)
 	hourEpoch.EpochStartHeight = ctx.BlockHeight()
 	k.SetHourEpoch(ctx, hourEpoch)
+}
+
+// Add a 10% rate limit for stTIA to Celestia and Osmosis
+func AddStTiaRateLimit(ctx sdk.Context, k ratelimitkeeper.Keeper) error {
+	addRateLimitMsgTemplate := ratelimittypes.MsgAddRateLimit{
+		Denom:          StTiaDenom,
+		MaxPercentSend: sdk.NewInt(10),
+		MaxPercentRecv: sdk.NewInt(10),
+		DurationHours:  RateLimitDurationHours,
+	}
+
+	for _, channelId := range []string{CelestiaTransferChannelId, OsmosisTransferChannelId, NeutronTransferChannelId} {
+		addMsg := addRateLimitMsgTemplate
+		addMsg.ChannelId = channelId
+
+		if err := k.AddRateLimit(ctx, &addMsg); err != nil {
+			return errorsmod.Wrapf(err, "unable to add stTIA rate limit to %s", channelId)
+		}
+	}
+
+	return nil
 }
 
 // Update wasm params so that contracts can only be uploaded through governance
