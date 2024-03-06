@@ -8,6 +8,7 @@ import (
 	transfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
 	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
 
+	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	ratelimittypes "github.com/Stride-Labs/ibc-rate-limiting/ratelimit/types"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	"github.com/stretchr/testify/suite"
@@ -47,6 +48,7 @@ func (s *UpgradeTestSuite) TestUpgrade() {
 	// Check state after upgrade
 	checkMigratedRateLimits()
 	checkStTiaRateLimits()
+	s.CheckWasmPerms()
 }
 
 func (s *UpgradeTestSuite) SetupRateLimitMigration() func() {
@@ -158,4 +160,11 @@ func (s *UpgradeTestSuite) SetupStTiaRateLimits() func() {
 		s.Require().True(found, "rate limit to osmosis should have been found")
 		s.Require().Equal(expectedRateLimitToOsmosis, actualOsmosisRateLimit)
 	}
+}
+
+func (s *UpgradeTestSuite) CheckWasmPerms() {
+	wasmParams := s.App.WasmKeeper.GetParams(s.Ctx)
+	s.Require().Equal(wasmtypes.AccessTypeAnyOfAddresses, wasmParams.CodeUploadAccess.Permission, "upload permission")
+	s.Require().Equal(v19.WasmAdmin, wasmParams.CodeUploadAccess.Addresses[0], "upload address")
+	s.Require().Equal(wasmtypes.AccessTypeNobody, wasmParams.InstantiateDefaultPermission, "instantiate permission")
 }

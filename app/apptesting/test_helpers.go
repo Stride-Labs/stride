@@ -26,11 +26,12 @@ import (
 	tendermint "github.com/cosmos/ibc-go/v7/modules/light-clients/07-tendermint"
 	ibctesting "github.com/cosmos/ibc-go/v7/testing"
 	"github.com/cosmos/ibc-go/v7/testing/simapp"
-	appProvider "github.com/cosmos/interchain-security/v3/app/provider"
-	icstestingutils "github.com/cosmos/interchain-security/v3/testutil/ibc_testing"
-	e2e "github.com/cosmos/interchain-security/v3/testutil/integration"
-	testkeeper "github.com/cosmos/interchain-security/v3/testutil/keeper"
-	ccvtypes "github.com/cosmos/interchain-security/v3/x/ccv/types"
+	appProvider "github.com/cosmos/interchain-security/v4/app/provider"
+	icstestingutils "github.com/cosmos/interchain-security/v4/testutil/ibc_testing"
+	e2e "github.com/cosmos/interchain-security/v4/testutil/integration"
+	testkeeper "github.com/cosmos/interchain-security/v4/testutil/keeper"
+	consumertypes "github.com/cosmos/interchain-security/v4/x/ccv/consumer/types"
+	ccvtypes "github.com/cosmos/interchain-security/v4/x/ccv/types"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
@@ -183,7 +184,7 @@ func (s *AppTestHelper) SetupIBCChains(hostChainID string) {
 
 	// use the initial validator set from the consumer genesis as the stride chain's initial set
 	var strideValSet []*tmtypes.Validator
-	for _, update := range strideConsumerGenesis.InitialValSet {
+	for _, update := range strideConsumerGenesis.Provider.InitialValSet {
 		tmPubKey, err := tmencoding.PubKeyFromProto(update.PubKey)
 		s.Require().NoError(err)
 		strideValSet = append(strideValSet, &tmtypes.Validator{
@@ -195,7 +196,7 @@ func (s *AppTestHelper) SetupIBCChains(hostChainID string) {
 	}
 
 	// Initialize the stride consumer chain, casted as a TestingApp
-	ibctesting.DefaultTestingAppInit = app.InitStrideIBCTestingApp(strideConsumerGenesis.InitialValSet)
+	ibctesting.DefaultTestingAppInit = app.InitStrideIBCTestingApp(strideConsumerGenesis.Provider.InitialValSet)
 	s.StrideChain = ibctesting.NewTestChainWithValSet(
 		s.T(),
 		s.Coordinator,
@@ -205,7 +206,10 @@ func (s *AppTestHelper) SetupIBCChains(hostChainID string) {
 	)
 
 	// Call InitGenesis on the consumer
-	s.StrideChain.App.(*app.StrideApp).GetConsumerKeeper().InitGenesis(s.StrideChain.GetContext(), &strideConsumerGenesis)
+	genesisState := consumertypes.DefaultGenesisState()
+	genesisState.Params = strideConsumerGenesis.Params
+	genesisState.Provider = strideConsumerGenesis.Provider
+	s.StrideChain.App.(*app.StrideApp).GetConsumerKeeper().InitGenesis(s.StrideChain.GetContext(), genesisState)
 	s.StrideChain.NextBlock()
 
 	// Update coordinator
@@ -236,7 +240,7 @@ func (s *AppTestHelper) CreateTransferChannel(hostChainID string) {
 	s.Ctx = s.StrideChain.GetContext()
 
 	// Finally confirm the channel was setup properly
-	s.Require().Equal("07-tendermint-1", s.TransferPath.EndpointA.ClientID, "stride clientID")
+	s.Require().Equal("07-tendermint-0", s.TransferPath.EndpointA.ClientID, "stride clientID")
 	s.Require().Equal(ibctesting.FirstConnectionID, s.TransferPath.EndpointA.ConnectionID, "stride connectionID")
 	s.Require().Equal(ibctesting.FirstChannelID, s.TransferPath.EndpointA.ChannelID, "stride transfer channelID")
 }

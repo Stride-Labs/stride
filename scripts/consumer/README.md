@@ -4,7 +4,7 @@
 
 Binaries:
 
-- interchain-security-pd - [Interchain security](https://github.com/cosmos/interchain-security/v3) version: v0.2.1
+- interchain-security-pd - [Interchain security](https://github.com/cosmos/interchain-security/v4) version: v4.0.0
 - strided
 - hermes(version: v0.15.0)
 
