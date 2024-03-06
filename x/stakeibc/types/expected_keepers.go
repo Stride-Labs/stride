@@ -7,7 +7,7 @@ import (
 
 	ccvtypes "github.com/cosmos/interchain-security/v4/x/ccv/types"
 
-	ratelimittypes "github.com/Stride-Labs/stride/v18/x/ratelimit/types"
+	ratelimittypes "github.com/Stride-Labs/ibc-rate-limiting/ratelimit/types"
 )
 
 // AccountKeeper defines the expected account keeper used for simulations (noalias)

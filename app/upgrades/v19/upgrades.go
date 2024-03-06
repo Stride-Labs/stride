@@ -1,9 +1,13 @@
 package v19
 
 import (
+	"time"
+
 	errorsmod "cosmossdk.io/errors"
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
+	ratelimitkeeper "github.com/Stride-Labs/ibc-rate-limiting/ratelimit/keeper"
+	ratelimittypes "github.com/Stride-Labs/ibc-rate-limiting/ratelimit/types"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
@@ -23,6 +27,7 @@ func CreateUpgradeHandler(
 	configurator module.Configurator,
 	cdc codec.Codec,
 	consumerKeeper ccvconsumerkeeper.Keeper,
+	ratelimitKeeper ratelimitkeeper.Keeper,
 	wasmKeeper wasmkeeper.Keeper,
 ) upgradetypes.UpgradeHandler {
 	return func(ctx sdk.Context, _ upgradetypes.Plan, vm module.VersionMap) (module.VersionMap, error) {
@@ -40,6 +45,10 @@ func CreateUpgradeHandler(
 			return newVm, errorsmod.Wrapf(err, "unable to migrate ICS to v14")
 		}
 
+		// Migrate to open sourced rate limiter
+		MigrateRateLimitModule(ctx, ratelimitKeeper)
+
+		// Update wasm upload permissions
 		if err := SetWasmPermissions(ctx, wasmKeeper); err != nil {
 			return newVm, errorsmod.Wrapf(err, "unable to set wasm permissions")
 		}
@@ -64,6 +73,22 @@ func MigrateICSOutstandingDowntime(ctx sdk.Context, ck ccvconsumerkeeper.Keeper)
 
 	ctx.Logger().Info("Finished ICS outstanding downtime")
 	return nil
+}
+
+// Migrate the rate limit module to the open sourced version
+// The module has the same store key so all the rate limit types
+// can remain unchanged
+// The only required change is to create the new epoch type
+// that's used instead of the epochs module
+func MigrateRateLimitModule(ctx sdk.Context, k ratelimitkeeper.Keeper) {
+	// Initialize the hour epoch so that the epoch number matches
+	// the current hour and the start time is precisely on the hour
+	genesisState := ratelimittypes.DefaultGenesis()
+	hourEpoch := genesisState.HourEpoch
+	hourEpoch.EpochNumber = uint64(ctx.BlockTime().Hour())
+	hourEpoch.EpochStartTime = ctx.BlockTime().Truncate(time.Hour)
+	hourEpoch.EpochStartHeight = ctx.BlockHeight()
+	k.SetHourEpoch(ctx, hourEpoch)
 }
 
 // Update wasm params so that contracts can only be uploaded through governance

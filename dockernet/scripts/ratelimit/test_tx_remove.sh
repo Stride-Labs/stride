@@ -12,7 +12,7 @@ test_remove_rate_limit() {
 
     # Remove the rate limit
     printf "\n>>> Removing rate limit...\n"
-    submit_proposal_and_vote remove-rate-limit remove_uatom.json
+    submit_proposal_and_vote remove_uatom.json
     sleep 30
 
     # Then successfully transfer a large amount the removal 

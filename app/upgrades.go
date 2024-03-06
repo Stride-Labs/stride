@@ -15,6 +15,8 @@ import (
 	consumertypes "github.com/cosmos/interchain-security/v4/x/ccv/consumer/types"
 	evmosvestingtypes "github.com/evmos/vesting/x/vesting/types"
 
+	ratelimittypes "github.com/Stride-Labs/ibc-rate-limiting/ratelimit/types"
+
 	v10 "github.com/Stride-Labs/stride/v18/app/upgrades/v10"
 	v11 "github.com/Stride-Labs/stride/v18/app/upgrades/v11"
 	v12 "github.com/Stride-Labs/stride/v18/app/upgrades/v12"
@@ -37,7 +39,6 @@ import (
 	claimtypes "github.com/Stride-Labs/stride/v18/x/claim/types"
 	icacallbacktypes "github.com/Stride-Labs/stride/v18/x/icacallbacks/types"
 	icaoracletypes "github.com/Stride-Labs/stride/v18/x/icaoracle/types"
-	ratelimittypes "github.com/Stride-Labs/stride/v18/x/ratelimit/types"
 	recordtypes "github.com/Stride-Labs/stride/v18/x/records/types"
 	stakeibctypes "github.com/Stride-Labs/stride/v18/x/stakeibc/types"
 	staketiatypes "github.com/Stride-Labs/stride/v18/x/staketia/types"
@@ -257,6 +258,7 @@ func (app *StrideApp) setupUpgradeHandlers(appOpts servertypes.AppOptions) {
 			app.configurator,
 			app.appCodec,
 			app.ConsumerKeeper,
+			app.RatelimitKeeper,
 			app.WasmKeeper,
 		),
 	)

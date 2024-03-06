@@ -72,37 +72,37 @@ setup_rate_limits() {
         
     # ustrd channel-2
     echo "ustrd on Stride <> Osmo Channel:"
-    submit_proposal_and_vote add-rate-limit add_ustrd.json
+    submit_proposal_and_vote add_ustrd.json
     sleep 10
 
     # ibc/uatom channel-0
     echo "uatom on Stride <> Gaia Channel:"
-    submit_proposal_and_vote add-rate-limit add_uatom.json
+    submit_proposal_and_vote add_uatom.json
     sleep 10
 
     # ibc/ujuno channel-1
     echo "ujuno on Stride <> Juno Channel:"
-    submit_proposal_and_vote add-rate-limit add_ujuno.json
+    submit_proposal_and_vote add_ujuno.json
     sleep 10
 
     # ibc/uosmo channel-2
     echo "uosmo on Stride <> Osmo Channel:"
-    submit_proposal_and_vote add-rate-limit add_uosmo.json
+    submit_proposal_and_vote add_uosmo.json
     sleep 10
 
     # stujuno channel-2
     echo "stujuno on Stride <> Osmo Channel:"
-    submit_proposal_and_vote add-rate-limit add_stujuno.json
+    submit_proposal_and_vote add_stujuno.json
     sleep 10
 
     # traveler juno channel-1
     echo "traveler-ujuno on Stride <> Juno Channel:"
-    submit_proposal_and_vote add-rate-limit add_traveler_ujuno_on_juno.json
+    submit_proposal_and_vote add_traveler_ujuno_on_juno.json
     sleep 10
 
     echo "traveler-ujuno on Stride <> Osmo Channel:"
     # traveler juno channel-2
-    submit_proposal_and_vote add-rate-limit add_traveler_ujuno_on_osmo.json
+    submit_proposal_and_vote add_traveler_ujuno_on_osmo.json
     sleep 40
 
     # Confirm all rate limits were added
