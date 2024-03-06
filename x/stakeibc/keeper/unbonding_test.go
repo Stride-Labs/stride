@@ -203,12 +203,10 @@ func (s *KeeperTestSuite) TestUnbondFromHostZone_Successful_UnbondOnlyZeroWeight
 		{Address: "valG", Weight: 15, Delegation: sdkmath.NewInt(160)},
 	}
 
+	// TODO: Change back to two messages after 32+ validators are supported
 	expectedUnbondings := []ValidatorUnbonding{
-		// valC has #1 priority - unbond up to capacity at 40
-		{Validator: "valC", UnbondAmount: sdkmath.NewInt(40)},
-		// 50 - 40 = 10 unbond remaining
-		// valE has #2 priority - unbond up to remaining
-		{Validator: "valE", UnbondAmount: sdkmath.NewInt(10)},
+		// valF has the most capacity (80) so it takes the full unbonding
+		{Validator: "valF", UnbondAmount: sdkmath.NewInt(50)},
 	}
 
 	tc := s.SetupTestUnbondFromHostZone(totalWeight, totalStake, totalUnbondAmount, validators)
@@ -288,15 +286,16 @@ func (s *KeeperTestSuite) TestUnbondFromHostZone_Successful_UnbondTotalLessThanT
 		{Address: "valG", Weight: 15, Delegation: sdkmath.NewInt(160)},
 	}
 
+	// TODO: Change back to two messages after 32+ validators are supported
 	expectedUnbondings := []ValidatorUnbonding{
-		// valC has #1 priority - unbond up to capacity at 40
+		// valF has highest capacity - 90
+		{Validator: "valF", UnbondAmount: sdkmath.NewInt(90)},
+		// 150 - 90 = 60 unbond remaining
+		// valC has next highest capacity - 40
 		{Validator: "valC", UnbondAmount: sdkmath.NewInt(40)},
-		// 150 - 40 = 110 unbond remaining
-		// valE has #2 priority - unbond up to capacity at 30
-		{Validator: "valE", UnbondAmount: sdkmath.NewInt(30)},
-		// 150 - 40 - 30 = 80 unbond remaining
-		// valF has #3 priority - unbond up to remaining
-		{Validator: "valF", UnbondAmount: sdkmath.NewInt(80)},
+		// 60 - 40 = 20 unbond remaining
+		// valB has next highest capacity - 35, unbond up to remainder of 20
+		{Validator: "valB", UnbondAmount: sdkmath.NewInt(20)},
 	}
 
 	tc := s.SetupTestUnbondFromHostZone(totalWeight, totalStake, totalUnbondAmount, validators)
@@ -338,26 +337,27 @@ func (s *KeeperTestSuite) TestUnbondFromHostZone_Successful_UnbondTotalGreaterTh
 		{Address: "valG", Weight: 15, Delegation: sdkmath.NewInt(160)},
 	}
 
+	// TODO: Change back to two messages after 32+ validators are supported
 	expectedUnbondings := []ValidatorUnbonding{
-		// valC has #1 priority - unbond up to capacity at 40
-		{Validator: "valC", UnbondAmount: sdkmath.NewInt(40)},
-		// 350 - 40 = 310 unbond remaining
-		// valE has #2 priority - unbond up to capacity at 30
-		{Validator: "valE", UnbondAmount: sdkmath.NewInt(30)},
-		// 310 - 30 = 280 unbond remaining
-		// valF has #3 priority - unbond up to capacity at 110
+		// valF has highest capacity - 110
 		{Validator: "valF", UnbondAmount: sdkmath.NewInt(110)},
-		// 280 - 110 = 170 unbond remaining
-		// valB has #4 priority - unbond up to capacity at 105
+		// 350 - 110 = 240 unbond remaining
+		// valB has next highest capacity - 105
 		{Validator: "valB", UnbondAmount: sdkmath.NewInt(105)},
-		// 170 - 105 = 65 unbond remaining
-		// valG has #5 priority - unbond up to capacity at 25
-		{Validator: "valG", UnbondAmount: sdkmath.NewInt(25)},
-		// 65 - 25 = 40 unbond remaining
-		// valD has #6 priority - unbond up to capacity at 30
+		// 240 - 105 = 135 unbond remaining
+		// valC has next highest capacity - 40
+		{Validator: "valC", UnbondAmount: sdkmath.NewInt(40)},
+		// 135 - 40 = 95 unbond remaining
+		// valD has next highest capacity - 30
 		{Validator: "valD", UnbondAmount: sdkmath.NewInt(30)},
-		// 40 - 30 = 10 unbond remaining
-		// valA has #7 priority - unbond up to remaining
+		// 95 - 30 = 65 unbond remaining
+		// valE has next highest capacity - 30
+		{Validator: "valE", UnbondAmount: sdkmath.NewInt(30)},
+		// 65 - 30 = 35 unbond remaining
+		// valG has next highest capacity - 25
+		{Validator: "valG", UnbondAmount: sdkmath.NewInt(25)},
+		// 35 - 25 = 10 unbond remaining
+		// valA covers the remainder up to it's capacity
 		{Validator: "valA", UnbondAmount: sdkmath.NewInt(10)},
 	}
 
@@ -845,44 +845,21 @@ func (s *KeeperTestSuite) TestGetValidatorUnbondCapacity() {
 
 func (s *KeeperTestSuite) TestSortUnbondingCapacityByPriority() {
 	// First we define what the ideal list will look like after sorting
+	// TODO: Change back to sorting by unbond ratio after 32+ validators are supported
 	expectedSortedCapacities := []keeper.ValidatorUnbondCapacity{
-		// Zero-weight validator's
-		{
-			// (1) Ratio: 0, Capacity: 100
-			ValidatorAddress:   "valE",
-			BalancedDelegation: sdkmath.NewInt(0),
-			CurrentDelegation:  sdkmath.NewInt(100), // ratio = 0/100
-			Capacity:           sdkmath.NewInt(100),
-		},
-		{
-			// (2) Ratio: 0, Capacity: 25
-			ValidatorAddress:   "valC",
-			BalancedDelegation: sdkmath.NewInt(0),
-			CurrentDelegation:  sdkmath.NewInt(25), // ratio = 0/25
-			Capacity:           sdkmath.NewInt(25),
-		},
-		{
-			// (3) Ratio: 0, Capacity: 25
-			// Same ratio and capacity as above but name is tie breaker
-			ValidatorAddress:   "valD",
-			BalancedDelegation: sdkmath.NewInt(0),
-			CurrentDelegation:  sdkmath.NewInt(25), // ratio = 0/25
-			Capacity:           sdkmath.NewInt(25),
-		},
-		// Non-zero-weight validator's
-		{
-			// (4) Ratio: 0.1
-			ValidatorAddress:   "valB",
-			BalancedDelegation: sdkmath.NewInt(1),
-			CurrentDelegation:  sdkmath.NewInt(10), // ratio = 1/10
-			Capacity:           sdkmath.NewInt(9),
-		},
 		{
 			// (5) Ratio: 0.25
 			ValidatorAddress:   "valH",
 			BalancedDelegation: sdkmath.NewInt(250),
 			CurrentDelegation:  sdkmath.NewInt(1000), // ratio = 250/1000
 			Capacity:           sdkmath.NewInt(750),
+		},
+		{
+			// (1) Ratio: 0, Capacity: 100
+			ValidatorAddress:   "valE",
+			BalancedDelegation: sdkmath.NewInt(0),
+			CurrentDelegation:  sdkmath.NewInt(100), // ratio = 0/100
+			Capacity:           sdkmath.NewInt(100),
 		},
 		{
 			// (6) Ratio: 0.5, Capacity: 100
@@ -906,6 +883,28 @@ func (s *KeeperTestSuite) TestSortUnbondingCapacityByPriority() {
 			BalancedDelegation: sdkmath.NewInt(50),
 			CurrentDelegation:  sdkmath.NewInt(100), // ratio = 50/100
 			Capacity:           sdkmath.NewInt(50),
+		},
+		{
+			// (2) Ratio: 0, Capacity: 25
+			ValidatorAddress:   "valC",
+			BalancedDelegation: sdkmath.NewInt(0),
+			CurrentDelegation:  sdkmath.NewInt(25), // ratio = 0/25
+			Capacity:           sdkmath.NewInt(25),
+		},
+		{
+			// (3) Ratio: 0, Capacity: 25
+			// Same ratio and capacity as above but name is tie breaker
+			ValidatorAddress:   "valD",
+			BalancedDelegation: sdkmath.NewInt(0),
+			CurrentDelegation:  sdkmath.NewInt(25), // ratio = 0/25
+			Capacity:           sdkmath.NewInt(25),
+		},
+		{
+			// (4) Ratio: 0.1
+			ValidatorAddress:   "valB",
+			BalancedDelegation: sdkmath.NewInt(1),
+			CurrentDelegation:  sdkmath.NewInt(10), // ratio = 1/10
+			Capacity:           sdkmath.NewInt(9),
 		},
 		{
 			// (9) Ratio: 0.6
