@@ -19,9 +19,10 @@ const (
 	UpgradeName = "v19"
 
 	StTiaDenom                = "stutia"
+	RateLimitDurationHours    = 24
 	CelestiaTransferChannelId = "channel-162"
 	OsmosisTransferChannelId  = "channel-5"
-	RateLimitDurationHours    = 24
+	NeutronTransferChannelId  = "channel-123"
 
 	WasmAdmin = "stride159smvptpq6evq0x6jmca6t8y7j8xmwj6kxapyh"
 )
@@ -110,17 +111,13 @@ func AddStTiaRateLimit(ctx sdk.Context, k ratelimitkeeper.Keeper) error {
 		DurationHours:  RateLimitDurationHours,
 	}
 
-	addCelestiaMsg := addRateLimitMsgTemplate
-	addCelestiaMsg.ChannelId = CelestiaTransferChannelId
+	for _, channelId := range []string{CelestiaTransferChannelId, OsmosisTransferChannelId, NeutronTransferChannelId} {
+		addMsg := addRateLimitMsgTemplate
+		addMsg.ChannelId = channelId
 
-	addOsmosisMsg := addRateLimitMsgTemplate
-	addOsmosisMsg.ChannelId = OsmosisTransferChannelId
-
-	if err := k.AddRateLimit(ctx, &addCelestiaMsg); err != nil {
-		return errorsmod.Wrapf(err, "unable to add stTIA rate limit to celestia")
-	}
-	if err := k.AddRateLimit(ctx, &addOsmosisMsg); err != nil {
-		return errorsmod.Wrapf(err, "unable to add stTIA rate limit to celestia")
+		if err := k.AddRateLimit(ctx, &addMsg); err != nil {
+			return errorsmod.Wrapf(err, "unable to add stTIA rate limit to %s", channelId)
+		}
 	}
 
 	return nil

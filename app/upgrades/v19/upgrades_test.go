@@ -115,6 +115,7 @@ func (s *UpgradeTestSuite) SetupStTiaRateLimits() func() {
 	// Mock out a channel for osmosis and celstia
 	s.App.IBCKeeper.ChannelKeeper.SetChannel(s.Ctx, transfertypes.PortID, v19.CelestiaTransferChannelId, channeltypes.Channel{})
 	s.App.IBCKeeper.ChannelKeeper.SetChannel(s.Ctx, transfertypes.PortID, v19.OsmosisTransferChannelId, channeltypes.Channel{})
+	s.App.IBCKeeper.ChannelKeeper.SetChannel(s.Ctx, transfertypes.PortID, v19.NeutronTransferChannelId, channeltypes.Channel{})
 
 	// Return a callback to check the rate limits were added after the upgrade
 	return func() {
@@ -152,6 +153,23 @@ func (s *UpgradeTestSuite) SetupStTiaRateLimits() func() {
 			},
 		}
 
+		expectedRateLimitToNeutron := ratelimittypes.RateLimit{
+			Path: &ratelimittypes.Path{
+				Denom:     v19.StTiaDenom,
+				ChannelId: v19.NeutronTransferChannelId,
+			},
+			Flow: &ratelimittypes.Flow{
+				Inflow:       sdkmath.NewInt(0),
+				Outflow:      sdkmath.NewInt(0),
+				ChannelValue: StTiaSupply,
+			},
+			Quota: &ratelimittypes.Quota{
+				MaxPercentSend: sdkmath.NewInt(10),
+				MaxPercentRecv: sdkmath.NewInt(10),
+				DurationHours:  24,
+			},
+		}
+
 		actualCelestiaRateLimit, found := s.App.RatelimitKeeper.GetRateLimit(s.Ctx, v19.StTiaDenom, v19.CelestiaTransferChannelId)
 		s.Require().True(found, "rate limit to celestia should have been found")
 		s.Require().Equal(expectedRateLimitToCelestia, actualCelestiaRateLimit)
@@ -159,6 +177,10 @@ func (s *UpgradeTestSuite) SetupStTiaRateLimits() func() {
 		actualOsmosisRateLimit, found := s.App.RatelimitKeeper.GetRateLimit(s.Ctx, v19.StTiaDenom, v19.OsmosisTransferChannelId)
 		s.Require().True(found, "rate limit to osmosis should have been found")
 		s.Require().Equal(expectedRateLimitToOsmosis, actualOsmosisRateLimit)
+
+		actualRateLimitToNeutron, found := s.App.RatelimitKeeper.GetRateLimit(s.Ctx, v19.StTiaDenom, v19.NeutronTransferChannelId)
+		s.Require().True(found, "rate limit to osmosis should have been found")
+		s.Require().Equal(expectedRateLimitToNeutron, actualRateLimitToNeutron)
 	}
 }
 
