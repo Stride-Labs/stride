@@ -3,6 +3,7 @@ package v19
 import (
 	"time"
 
+	errorsmod "cosmossdk.io/errors"
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	ratelimitkeeper "github.com/Stride-Labs/ibc-rate-limiting/ratelimit/keeper"
@@ -15,6 +16,11 @@ import (
 
 const (
 	UpgradeName = "v19"
+
+	StTiaDenom                = "stutia"
+	CelestiaTransferChannelId = "channel-162"
+	OsmosisTransferChannelId  = "channel-5"
+	RateLimitDurationHours    = 24
 )
 
 // CreateUpgradeHandler creates an SDK upgrade handler for v19
@@ -46,6 +52,11 @@ func CreateUpgradeHandler(
 			return newVm, err
 		}
 
+		// Add stTIA rate limits to Celestia and Osmosis
+		if err := AddStTiaRateLimit(ctx, ratelimitKeeper); err != nil {
+			return newVm, err
+		}
+
 		return newVm, nil
 	}
 }
@@ -64,4 +75,29 @@ func MigrateRateLimitModule(ctx sdk.Context, k ratelimitkeeper.Keeper) {
 	hourEpoch.EpochStartTime = ctx.BlockTime().Truncate(time.Hour)
 	hourEpoch.EpochStartHeight = ctx.BlockHeight()
 	k.SetHourEpoch(ctx, hourEpoch)
+}
+
+// Add a 10% rate limit for stTIA to Celestia and Osmosis
+func AddStTiaRateLimit(ctx sdk.Context, k ratelimitkeeper.Keeper) error {
+	addRateLimitMsgTemplate := ratelimittypes.MsgAddRateLimit{
+		Denom:          StTiaDenom,
+		MaxPercentSend: sdk.NewInt(10),
+		MaxPercentRecv: sdk.NewInt(10),
+		DurationHours:  RateLimitDurationHours,
+	}
+
+	addCelestiaMsg := addRateLimitMsgTemplate
+	addCelestiaMsg.ChannelId = CelestiaTransferChannelId
+
+	addOsmosisMsg := addRateLimitMsgTemplate
+	addOsmosisMsg.ChannelId = OsmosisTransferChannelId
+
+	if err := k.AddRateLimit(ctx, &addCelestiaMsg); err != nil {
+		return errorsmod.Wrapf(err, "unable to add stTIA rate limit to celestia")
+	}
+	if err := k.AddRateLimit(ctx, &addOsmosisMsg); err != nil {
+		return errorsmod.Wrapf(err, "unable to add stTIA rate limit to celestia")
+	}
+
+	return nil
 }
