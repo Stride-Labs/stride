@@ -202,13 +202,7 @@ func SortUnbondingCapacityByPriority(validatorUnbondCapacity []ValidatorUnbondCa
 		validatorA := validatorUnbondCapacity[i]
 		validatorB := validatorUnbondCapacity[j]
 
-		balanceRatioValA, _ := validatorA.GetBalanceRatio()
-		balanceRatioValB, _ := validatorB.GetBalanceRatio()
-
-		// Sort by the balance ratio first - in ascending order - so the more unbalanced validators appear first
-		if !balanceRatioValA.Equal(balanceRatioValB) {
-			return balanceRatioValA.LT(balanceRatioValB)
-		}
+		// TODO: Once more than 32 validators are supported, change back to using balance ratio first
 
 		// If the ratio's are equal, use the capacity as a tie breaker
 		// where the larget capacity comes first
