@@ -7,11 +7,11 @@ import (
 	errorsmod "cosmossdk.io/errors"
 	"github.com/cosmos/gogoproto/proto"
 
-	icqkeeper "github.com/Stride-Labs/stride/v18/x/interchainquery/keeper"
+	icqkeeper "github.com/Stride-Labs/stride/v19/x/interchainquery/keeper"
 
-	"github.com/Stride-Labs/stride/v18/utils"
-	icqtypes "github.com/Stride-Labs/stride/v18/x/interchainquery/types"
-	"github.com/Stride-Labs/stride/v18/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v19/utils"
+	icqtypes "github.com/Stride-Labs/stride/v19/x/interchainquery/types"
+	"github.com/Stride-Labs/stride/v19/x/stakeibc/types"
 )
 
 // WithdrawalRewardBalanceCallback is a callback handler for WithdrawalRewardBalance queries.

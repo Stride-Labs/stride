@@ -12,16 +12,16 @@ import (
 	authz "github.com/cosmos/cosmos-sdk/x/authz"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 
-	claimmigration "github.com/Stride-Labs/stride/v18/x/claim/migrations/v2"
-	claimtypes "github.com/Stride-Labs/stride/v18/x/claim/types"
-	icacallbacksmigration "github.com/Stride-Labs/stride/v18/x/icacallbacks/migrations/v2"
-	icacallbacktypes "github.com/Stride-Labs/stride/v18/x/icacallbacks/types"
-	interchainquerykeeper "github.com/Stride-Labs/stride/v18/x/interchainquery/keeper"
-	recordsmigration "github.com/Stride-Labs/stride/v18/x/records/migrations/v2"
-	recordtypes "github.com/Stride-Labs/stride/v18/x/records/types"
-	stakeibckeeper "github.com/Stride-Labs/stride/v18/x/stakeibc/keeper"
-	stakeibcmigration "github.com/Stride-Labs/stride/v18/x/stakeibc/migrations/v2"
-	stakeibctypes "github.com/Stride-Labs/stride/v18/x/stakeibc/types"
+	claimmigration "github.com/Stride-Labs/stride/v19/x/claim/migrations/v2"
+	claimtypes "github.com/Stride-Labs/stride/v19/x/claim/types"
+	icacallbacksmigration "github.com/Stride-Labs/stride/v19/x/icacallbacks/migrations/v2"
+	icacallbacktypes "github.com/Stride-Labs/stride/v19/x/icacallbacks/types"
+	interchainquerykeeper "github.com/Stride-Labs/stride/v19/x/interchainquery/keeper"
+	recordsmigration "github.com/Stride-Labs/stride/v19/x/records/migrations/v2"
+	recordtypes "github.com/Stride-Labs/stride/v19/x/records/types"
+	stakeibckeeper "github.com/Stride-Labs/stride/v19/x/stakeibc/keeper"
+	stakeibcmigration "github.com/Stride-Labs/stride/v19/x/stakeibc/migrations/v2"
+	stakeibctypes "github.com/Stride-Labs/stride/v19/x/stakeibc/types"
 )
 
 // Note: ensure these values are properly set before running upgrade
