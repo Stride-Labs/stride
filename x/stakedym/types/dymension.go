@@ -5,7 +5,7 @@ const (
 	DymensionChainId                   = "dymension_1100-1"
 	StrideToDymensionTransferChannelId = "channel-197"
 	DymensionNativeTokenDenom          = "adym"
-	DymensionNativeTokenIBCDenom       = "ibc/FF6C2E86490C1C4FBBD24F55032831D2415B9D7882F85C3CC9C2401D79362BEA" // #nosec G101
+	DymensionNativeTokenIBCDenom       = "ibc/E1C22332C083574F3418481359733BA8887D171E76C80AD9237422AEABB66018" // #nosec G101
 
 	DelegationAddressOnDymension = "dym1gl9j2hyyukqvlmzzcxl99mqfgu4y4frgzlv3zz" // C0
 	RewardAddressOnDymension     = "dym1ww3m6h5e3dk2musft9w8f2zu4rkuxgh6zwu0d0" // C1

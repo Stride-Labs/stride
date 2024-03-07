@@ -39,6 +39,7 @@ import (
 	icaoracletypes "github.com/Stride-Labs/stride/v18/x/icaoracle/types"
 	ratelimittypes "github.com/Stride-Labs/stride/v18/x/ratelimit/types"
 	recordtypes "github.com/Stride-Labs/stride/v18/x/records/types"
+	stakedymtypes "github.com/Stride-Labs/stride/v18/x/stakedym/types"
 	stakeibctypes "github.com/Stride-Labs/stride/v18/x/stakeibc/types"
 	staketiatypes "github.com/Stride-Labs/stride/v18/x/staketia/types"
 )
@@ -311,7 +312,7 @@ func (app *StrideApp) setupUpgradeHandlers(appOpts servertypes.AppOptions) {
 		}
 	case "v19":
 		storeUpgrades = &storetypes.StoreUpgrades{
-			Added: []string{wasmtypes.ModuleName},
+			Added: []string{wasmtypes.ModuleName, stakedymtypes.ModuleName},
 		}
 	}
 
