@@ -3,7 +3,7 @@ package keeper
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/Stride-Labs/stride/v18/x/icacallbacks/types"
+	"github.com/Stride-Labs/stride/v19/x/icacallbacks/types"
 )
 
 // GetParams get all parameters as types.Params
