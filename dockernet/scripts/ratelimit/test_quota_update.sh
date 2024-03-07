@@ -21,7 +21,7 @@ test_quota_update() {
 
     # Relax the send quota threshold (this will reset the flow)
     printf "\n>>> Updating rate limit...\n"
-    submit_proposal_and_vote update-rate-limit update_uosmo.json
+    submit_proposal_and_vote update_uosmo.json
     sleep 30
 
     # Try the two transfers again, this time the second one should succeed

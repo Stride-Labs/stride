@@ -5,9 +5,9 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/auth/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 
-	ccvtypes "github.com/cosmos/interchain-security/v3/x/ccv/types"
+	ccvtypes "github.com/cosmos/interchain-security/v4/x/ccv/types"
 
-	ratelimittypes "github.com/Stride-Labs/stride/v18/x/ratelimit/types"
+	ratelimittypes "github.com/Stride-Labs/ibc-rate-limiting/ratelimit/types"
 )
 
 // AccountKeeper defines the expected account keeper used for simulations (noalias)

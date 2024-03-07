@@ -1,7 +1,14 @@
 {
     "title": "Remove uatom Rate Limit",
-    "description": "Proposal to disable rate limiting on uatom for Stride <> Gaia",
-    "denom": "ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2",
-    "channel_id": "channel-0",
+    "metadata": "Proposal to disable rate limiting on uatom for Stride <> Gaia",
+    "summary": "Proposal to disable rate limiting on uatom for Stride <> Gaia",
+    "messages": [
+        {
+            "@type": "/ratelimit.v1.MsgRemoveRateLimit",
+            "authority": "stride10d07y265gmmuvt4z0w9aw880jnsr700jefnezl",
+            "denom": "ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2",
+            "channel_id": "channel-0"
+        }
+    ],
     "deposit": "10000000ustrd"
 }
