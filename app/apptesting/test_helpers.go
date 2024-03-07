@@ -96,6 +96,13 @@ func (s *AppTestHelper) Setup() {
 	for _, unbondingRecord := range s.App.StaketiaKeeper.GetAllActiveUnbondingRecords(s.Ctx) {
 		s.App.StaketiaKeeper.RemoveUnbondingRecord(s.Ctx, unbondingRecord.Id)
 	}
+
+	// Remove host zone and accumulating record for stakedym, by default,
+	// since the tests will override it directly if needed
+	s.App.StakedymKeeper.RemoveHostZone(s.Ctx)
+	for _, unbondingRecord := range s.App.StakedymKeeper.GetAllActiveUnbondingRecords(s.Ctx) {
+		s.App.StakedymKeeper.RemoveUnbondingRecord(s.Ctx, unbondingRecord.Id)
+	}
 }
 
 // Instantiates an TestHelper without the test suite
