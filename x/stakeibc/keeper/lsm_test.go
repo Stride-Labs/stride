@@ -9,9 +9,9 @@ import (
 	transfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
 	ibctesting "github.com/cosmos/ibc-go/v7/testing"
 
-	recordstypes "github.com/Stride-Labs/stride/v18/x/records/types"
-	"github.com/Stride-Labs/stride/v18/x/stakeibc/keeper"
-	"github.com/Stride-Labs/stride/v18/x/stakeibc/types"
+	recordstypes "github.com/Stride-Labs/stride/v19/x/records/types"
+	"github.com/Stride-Labs/stride/v19/x/stakeibc/keeper"
+	"github.com/Stride-Labs/stride/v19/x/stakeibc/types"
 
 	"github.com/cosmos/gogoproto/proto"
 )

@@ -18,11 +18,11 @@ import (
 
 	ratelimitkeeper "github.com/Stride-Labs/ibc-rate-limiting/ratelimit/keeper"
 
-	"github.com/Stride-Labs/stride/v18/utils"
-	icqkeeper "github.com/Stride-Labs/stride/v18/x/interchainquery/keeper"
-	recordtypes "github.com/Stride-Labs/stride/v18/x/records/types"
-	stakeibckeeper "github.com/Stride-Labs/stride/v18/x/stakeibc/keeper"
-	stakeibctypes "github.com/Stride-Labs/stride/v18/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v19/utils"
+	icqkeeper "github.com/Stride-Labs/stride/v19/x/interchainquery/keeper"
+	recordtypes "github.com/Stride-Labs/stride/v19/x/records/types"
+	stakeibckeeper "github.com/Stride-Labs/stride/v19/x/stakeibc/keeper"
+	stakeibctypes "github.com/Stride-Labs/stride/v19/x/stakeibc/types"
 )
 
 var (

@@ -7,9 +7,9 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/gogoproto/proto"
 
-	"github.com/Stride-Labs/stride/v18/utils"
-	icqtypes "github.com/Stride-Labs/stride/v18/x/interchainquery/types"
-	"github.com/Stride-Labs/stride/v18/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v19/utils"
+	icqtypes "github.com/Stride-Labs/stride/v19/x/interchainquery/types"
+	"github.com/Stride-Labs/stride/v19/x/stakeibc/types"
 )
 
 // PoolPriceCallback is a callback handler for PoolPrice query.

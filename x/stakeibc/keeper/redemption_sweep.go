@@ -8,9 +8,9 @@ import (
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/cosmos/gogoproto/proto"
 
-	"github.com/Stride-Labs/stride/v18/utils"
-	recordstypes "github.com/Stride-Labs/stride/v18/x/records/types"
-	"github.com/Stride-Labs/stride/v18/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v19/utils"
+	recordstypes "github.com/Stride-Labs/stride/v19/x/records/types"
+	"github.com/Stride-Labs/stride/v19/x/stakeibc/types"
 )
 
 // Batch transfers any unbonded tokens from the delegation account to the redemption account

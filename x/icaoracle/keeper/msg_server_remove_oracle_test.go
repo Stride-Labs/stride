@@ -3,7 +3,7 @@ package keeper_test
 import (
 	"fmt"
 
-	"github.com/Stride-Labs/stride/v18/x/icaoracle/types"
+	"github.com/Stride-Labs/stride/v19/x/icaoracle/types"
 )
 
 func (s *KeeperTestSuite) TestGovRemoveOracle() {
