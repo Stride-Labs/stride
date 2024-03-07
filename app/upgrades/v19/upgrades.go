@@ -13,6 +13,9 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/module"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 	ccvconsumerkeeper "github.com/cosmos/interchain-security/v4/x/ccv/consumer/keeper"
+
+	stakeibckeeper "github.com/Stride-Labs/stride/v19/x/stakeibc/keeper"
+	stakeibctypes "github.com/Stride-Labs/stride/v19/x/stakeibc/types"
 )
 
 const (
@@ -24,7 +27,7 @@ const (
 	OsmosisTransferChannelId  = "channel-5"
 	NeutronTransferChannelId  = "channel-123"
 
-	WasmAdmin = "stride159smvptpq6evq0x6jmca6t8y7j8xmwj6kxapyh"
+	WasmAdmin = "stride1gmqp293g968dyemvk9j640e0xqeghravjjwpms"
 )
 
 // CreateUpgradeHandler creates an SDK upgrade handler for v19
@@ -35,6 +38,7 @@ func CreateUpgradeHandler(
 	consumerKeeper ccvconsumerkeeper.Keeper,
 	ratelimitKeeper ratelimitkeeper.Keeper,
 	wasmKeeper wasmkeeper.Keeper,
+	stakeibcKeeper stakeibckeeper.Keeper,
 ) upgradetypes.UpgradeHandler {
 	return func(ctx sdk.Context, _ upgradetypes.Plan, vm module.VersionMap) (module.VersionMap, error) {
 		ctx.Logger().Info("Starting upgrade v19...")
@@ -61,6 +65,11 @@ func CreateUpgradeHandler(
 
 		// Add stTIA rate limits to Celestia and Osmosis
 		if err := AddStTiaRateLimit(ctx, ratelimitKeeper); err != nil {
+			return newVm, err
+		}
+
+		// Remove `dydx-testnet-4` as a host zone on testnet
+		if err := RemoveDydxTestnetHostZone(ctx, stakeibcKeeper); err != nil {
 			return newVm, err
 		}
 
@@ -134,5 +143,15 @@ func SetWasmPermissions(ctx sdk.Context, wk wasmkeeper.Keeper) error {
 	if err := wk.SetParams(ctx, wasmParams); err != nil {
 		return err
 	}
+	return nil
+}
+
+// Remove dydx-testnet-4 as a host zone on testnet
+func RemoveDydxTestnetHostZone(ctx sdk.Context, sk stakeibckeeper.Keeper) error {
+	_, found := sk.GetHostZone(ctx, "dydx-testnet-4")
+	if !found {
+		return errorsmod.Wrapf(stakeibctypes.ErrHostZoneNotFound, "host zone dydx-testnet-4 not found")
+	}
+	sk.RemoveHostZone(ctx, "dydx-testnet-4")
 	return nil
 }

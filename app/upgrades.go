@@ -261,6 +261,7 @@ func (app *StrideApp) setupUpgradeHandlers(appOpts servertypes.AppOptions) {
 			app.ConsumerKeeper,
 			app.RatelimitKeeper,
 			app.WasmKeeper,
+			app.StakeibcKeeper,
 		),
 	)
 
