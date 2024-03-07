@@ -9,6 +9,9 @@ import (
 	"github.com/CosmWasm/wasmd/x/wasm"
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
+	"github.com/Stride-Labs/ibc-rate-limiting/ratelimit"
+	ratelimitkeeper "github.com/Stride-Labs/ibc-rate-limiting/ratelimit/keeper"
+	ratelimittypes "github.com/Stride-Labs/ibc-rate-limiting/ratelimit/types"
 	dbm "github.com/cometbft/cometbft-db"
 	abci "github.com/cometbft/cometbft/abci/types"
 	tmjson "github.com/cometbft/cometbft/libs/json"
@@ -103,12 +106,12 @@ import (
 	tendermint "github.com/cosmos/ibc-go/v7/modules/light-clients/07-tendermint"
 	ibctesting "github.com/cosmos/ibc-go/v7/testing"
 	ibctestingtypes "github.com/cosmos/ibc-go/v7/testing/types"
-	ccvconsumer "github.com/cosmos/interchain-security/v3/x/ccv/consumer"
-	ccvconsumerkeeper "github.com/cosmos/interchain-security/v3/x/ccv/consumer/keeper"
-	ccvconsumertypes "github.com/cosmos/interchain-security/v3/x/ccv/consumer/types"
-	ccvdistr "github.com/cosmos/interchain-security/v3/x/ccv/democracy/distribution"
-	ccvgov "github.com/cosmos/interchain-security/v3/x/ccv/democracy/governance"
-	ccvstaking "github.com/cosmos/interchain-security/v3/x/ccv/democracy/staking"
+	ccvconsumer "github.com/cosmos/interchain-security/v4/x/ccv/consumer"
+	ccvconsumerkeeper "github.com/cosmos/interchain-security/v4/x/ccv/consumer/keeper"
+	ccvconsumertypes "github.com/cosmos/interchain-security/v4/x/ccv/consumer/types"
+	ccvdistr "github.com/cosmos/interchain-security/v4/x/ccv/democracy/distribution"
+	ccvgov "github.com/cosmos/interchain-security/v4/x/ccv/democracy/governance"
+	ccvstaking "github.com/cosmos/interchain-security/v4/x/ccv/democracy/staking"
 	evmosvesting "github.com/evmos/vesting/x/vesting"
 	evmosvestingclient "github.com/evmos/vesting/x/vesting/client"
 	evmosvestingkeeper "github.com/evmos/vesting/x/vesting/keeper"
@@ -139,10 +142,6 @@ import (
 	"github.com/Stride-Labs/stride/v18/x/mint"
 	mintkeeper "github.com/Stride-Labs/stride/v18/x/mint/keeper"
 	minttypes "github.com/Stride-Labs/stride/v18/x/mint/types"
-	ratelimitmodule "github.com/Stride-Labs/stride/v18/x/ratelimit"
-	ratelimitclient "github.com/Stride-Labs/stride/v18/x/ratelimit/client"
-	ratelimitmodulekeeper "github.com/Stride-Labs/stride/v18/x/ratelimit/keeper"
-	ratelimitmoduletypes "github.com/Stride-Labs/stride/v18/x/ratelimit/types"
 	recordsmodule "github.com/Stride-Labs/stride/v18/x/records"
 	recordsmodulekeeper "github.com/Stride-Labs/stride/v18/x/records/keeper"
 	recordsmoduletypes "github.com/Stride-Labs/stride/v18/x/records/types"
@@ -171,10 +170,6 @@ func getGovProposalHandlers() []govclient.ProposalHandler {
 		ibcclientclient.UpgradeProposalHandler,
 		stakeibcclient.AddValidatorsProposalHandler,
 		stakeibcclient.ToggleLSMProposalHandler,
-		ratelimitclient.AddRateLimitProposalHandler,
-		ratelimitclient.UpdateRateLimitProposalHandler,
-		ratelimitclient.RemoveRateLimitProposalHandler,
-		ratelimitclient.ResetRateLimitProposalHandler,
 		evmosvestingclient.RegisterClawbackProposalHandler,
 	)
 
@@ -213,7 +208,7 @@ var (
 		interchainquery.AppModuleBasic{},
 		ica.AppModuleBasic{},
 		recordsmodule.AppModuleBasic{},
-		ratelimitmodule.AppModuleBasic{},
+		ratelimit.AppModuleBasic{},
 		icacallbacksmodule.AppModuleBasic{},
 		claim.AppModuleBasic{},
 		ccvconsumer.AppModuleBasic{},
@@ -322,7 +317,7 @@ type StrideApp struct {
 	RecordsKeeper         recordsmodulekeeper.Keeper
 	IcacallbacksKeeper    icacallbacksmodulekeeper.Keeper
 	ScopedratelimitKeeper capabilitykeeper.ScopedKeeper
-	RatelimitKeeper       ratelimitmodulekeeper.Keeper
+	RatelimitKeeper       ratelimitkeeper.Keeper
 	ClaimKeeper           claimkeeper.Keeper
 	ICAOracleKeeper       icaoraclekeeper.Keeper
 	StaketiaKeeper        staketiakeeper.Keeper
@@ -367,7 +362,7 @@ func NewStrideApp(
 		interchainquerytypes.StoreKey,
 		icacontrollertypes.StoreKey, icahosttypes.StoreKey,
 		recordsmoduletypes.StoreKey,
-		ratelimitmoduletypes.StoreKey,
+		ratelimittypes.StoreKey,
 		icacallbacksmoduletypes.StoreKey,
 		claimtypes.StoreKey,
 		icaoracletypes.StoreKey,
@@ -473,17 +468,18 @@ func NewStrideApp(
 	)
 
 	// Create Ratelimit Keeper
-	scopedratelimitKeeper := app.CapabilityKeeper.ScopeToModule(ratelimitmoduletypes.ModuleName)
+	scopedratelimitKeeper := app.CapabilityKeeper.ScopeToModule(ratelimittypes.ModuleName)
 	app.ScopedratelimitKeeper = scopedratelimitKeeper
-	app.RatelimitKeeper = *ratelimitmodulekeeper.NewKeeper(
+	app.RatelimitKeeper = *ratelimitkeeper.NewKeeper(
 		appCodec,
-		keys[ratelimitmoduletypes.StoreKey],
-		app.GetSubspace(ratelimitmoduletypes.ModuleName),
+		keys[ratelimittypes.StoreKey],
+		app.GetSubspace(ratelimittypes.ModuleName),
+		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 		app.BankKeeper,
 		app.IBCKeeper.ChannelKeeper,
 		app.IBCKeeper.ChannelKeeper, // ICS4Wrapper
 	)
-	ratelimitModule := ratelimitmodule.NewAppModule(appCodec, app.RatelimitKeeper)
+	ratelimitModule := ratelimit.NewAppModule(appCodec, app.RatelimitKeeper)
 
 	// Initialize the packet forward middleware Keeper
 	// It's important to note that the PFM Keeper must be initialized before the Transfer Keeper
@@ -684,7 +680,6 @@ func NewStrideApp(
 		AddRoute(upgradetypes.RouterKey, upgrade.NewSoftwareUpgradeProposalHandler(app.UpgradeKeeper)).
 		AddRoute(ibcclienttypes.RouterKey, ibcclient.NewClientProposalHandler(app.IBCKeeper.ClientKeeper)).
 		AddRoute(stakeibcmoduletypes.RouterKey, stakeibcmodule.NewStakeibcProposalHandler(app.StakeibcKeeper)).
-		AddRoute(ratelimitmoduletypes.RouterKey, ratelimitmodule.NewRateLimitProposalHandler(app.RatelimitKeeper, app.IBCKeeper.ChannelKeeper)).
 		AddRoute(evmosvestingtypes.RouterKey, evmosvesting.NewVestingProposalHandler(&app.VestingKeeper))
 
 	govKeeper := govkeeper.NewKeeper(
@@ -705,7 +700,6 @@ func NewStrideApp(
 			app.StakeibcKeeper.Hooks(),
 			app.MintKeeper.Hooks(),
 			app.ClaimKeeper.Hooks(),
-			app.RatelimitKeeper.Hooks(),
 			app.StaketiaKeeper.Hooks(),
 		),
 	)
@@ -778,7 +772,7 @@ func NewStrideApp(
 		packetforwardkeeper.DefaultForwardTransferPacketTimeoutTimestamp, // forward timeout
 		packetforwardkeeper.DefaultRefundTransferPacketTimeoutTimestamp,  // refund timeout
 	)
-	transferStack = ratelimitmodule.NewIBCMiddleware(app.RatelimitKeeper, transferStack)
+	transferStack = ratelimit.NewIBCMiddleware(app.RatelimitKeeper, transferStack)
 	transferStack = staketia.NewIBCMiddleware(app.StaketiaKeeper, transferStack)
 	transferStack = recordsmodule.NewIBCModule(app.RecordsKeeper, transferStack)
 	transferStack = autopilot.NewIBCModule(app.AutopilotKeeper, transferStack)
@@ -877,7 +871,7 @@ func NewStrideApp(
 		epochsmoduletypes.ModuleName,
 		interchainquerytypes.ModuleName,
 		recordsmoduletypes.ModuleName,
-		ratelimitmoduletypes.ModuleName,
+		ratelimittypes.ModuleName,
 		icacallbacksmoduletypes.ModuleName,
 		claimtypes.ModuleName,
 		ccvconsumertypes.ModuleName,
@@ -914,7 +908,7 @@ func NewStrideApp(
 		epochsmoduletypes.ModuleName,
 		interchainquerytypes.ModuleName,
 		recordsmoduletypes.ModuleName,
-		ratelimitmoduletypes.ModuleName,
+		ratelimittypes.ModuleName,
 		icacallbacksmoduletypes.ModuleName,
 		claimtypes.ModuleName,
 		ccvconsumertypes.ModuleName,
@@ -956,7 +950,7 @@ func NewStrideApp(
 		epochsmoduletypes.ModuleName,
 		interchainquerytypes.ModuleName,
 		recordsmoduletypes.ModuleName,
-		ratelimitmoduletypes.ModuleName,
+		ratelimittypes.ModuleName,
 		icacallbacksmoduletypes.ModuleName,
 		claimtypes.ModuleName,
 		ccvconsumertypes.ModuleName,
@@ -1256,7 +1250,7 @@ func initParamsKeeper(appCodec codec.BinaryCodec, legacyAmino *codec.LegacyAmino
 	paramsKeeper.Subspace(icacontrollertypes.SubModuleName)
 	paramsKeeper.Subspace(icahosttypes.SubModuleName)
 	paramsKeeper.Subspace(recordsmoduletypes.ModuleName)
-	paramsKeeper.Subspace(ratelimitmoduletypes.ModuleName)
+	paramsKeeper.Subspace(ratelimittypes.ModuleName)
 	paramsKeeper.Subspace(icacallbacksmoduletypes.ModuleName)
 	paramsKeeper.Subspace(ccvconsumertypes.ModuleName)
 	paramsKeeper.Subspace(autopilottypes.ModuleName)

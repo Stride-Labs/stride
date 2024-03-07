@@ -5,7 +5,8 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/module"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 
-	ratelimitkeeper "github.com/Stride-Labs/stride/v18/x/ratelimit/keeper"
+	ratelimitkeeper "github.com/Stride-Labs/ibc-rate-limiting/ratelimit/keeper"
+
 	stakeibckeeper "github.com/Stride-Labs/stride/v18/x/stakeibc/keeper"
 	stakeibctypes "github.com/Stride-Labs/stride/v18/x/stakeibc/types"
 )

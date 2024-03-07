@@ -14,10 +14,12 @@ import (
 
 	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
 
+	ratelimittypes "github.com/Stride-Labs/ibc-rate-limiting/ratelimit/types"
+
+	ratelimitkeeper "github.com/Stride-Labs/ibc-rate-limiting/ratelimit/keeper"
+
 	"github.com/Stride-Labs/stride/v18/utils"
 	icqkeeper "github.com/Stride-Labs/stride/v18/x/interchainquery/keeper"
-	ratelimitkeeper "github.com/Stride-Labs/stride/v18/x/ratelimit/keeper"
-	ratelimittypes "github.com/Stride-Labs/stride/v18/x/ratelimit/types"
 	recordtypes "github.com/Stride-Labs/stride/v18/x/records/types"
 	stakeibckeeper "github.com/Stride-Labs/stride/v18/x/stakeibc/keeper"
 	stakeibctypes "github.com/Stride-Labs/stride/v18/x/stakeibc/types"
