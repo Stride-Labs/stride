@@ -25,18 +25,18 @@ import (
 	"github.com/cosmos/ibc-go/v7/modules/core/exported"
 	ibctmmigrations "github.com/cosmos/ibc-go/v7/modules/light-clients/07-tendermint/migrations"
 
-	claimkeeper "github.com/Stride-Labs/stride/v18/x/claim/keeper"
-	claimtypes "github.com/Stride-Labs/stride/v18/x/claim/types"
-	icacallbackskeeper "github.com/Stride-Labs/stride/v18/x/icacallbacks/keeper"
-	mintkeeper "github.com/Stride-Labs/stride/v18/x/mint/keeper"
-	minttypes "github.com/Stride-Labs/stride/v18/x/mint/types"
-	ratelimitkeeper "github.com/Stride-Labs/stride/v18/x/ratelimit/keeper"
-	ratelimitgov "github.com/Stride-Labs/stride/v18/x/ratelimit/keeper/gov"
-	ratelimittypes "github.com/Stride-Labs/stride/v18/x/ratelimit/types"
-	recordskeeper "github.com/Stride-Labs/stride/v18/x/records/keeper"
-	recordstypes "github.com/Stride-Labs/stride/v18/x/records/types"
-	stakeibckeeper "github.com/Stride-Labs/stride/v18/x/stakeibc/keeper"
-	stakeibctypes "github.com/Stride-Labs/stride/v18/x/stakeibc/types"
+	ratelimitkeeper "github.com/Stride-Labs/ibc-rate-limiting/ratelimit/keeper"
+	ratelimittypes "github.com/Stride-Labs/ibc-rate-limiting/ratelimit/types"
+
+	claimkeeper "github.com/Stride-Labs/stride/v19/x/claim/keeper"
+	claimtypes "github.com/Stride-Labs/stride/v19/x/claim/types"
+	icacallbackskeeper "github.com/Stride-Labs/stride/v19/x/icacallbacks/keeper"
+	mintkeeper "github.com/Stride-Labs/stride/v19/x/mint/keeper"
+	minttypes "github.com/Stride-Labs/stride/v19/x/mint/types"
+	recordskeeper "github.com/Stride-Labs/stride/v19/x/records/keeper"
+	recordstypes "github.com/Stride-Labs/stride/v19/x/records/types"
+	stakeibckeeper "github.com/Stride-Labs/stride/v19/x/stakeibc/keeper"
+	stakeibctypes "github.com/Stride-Labs/stride/v19/x/stakeibc/types"
 
 	cosmosproto "github.com/cosmos/gogoproto/proto"
 	deprecatedproto "github.com/golang/protobuf/proto" //nolint:staticcheck
@@ -331,7 +331,7 @@ func EnableRateLimits(
 		denom := stakeibctypes.StAssetDenomFromHostZoneDenom(hostZone.HostDenom)
 		channelId := hostZone.TransferChannelId
 
-		addRateLimit := &ratelimittypes.AddRateLimitProposal{
+		addRateLimitMsg := &ratelimittypes.MsgAddRateLimit{
 			Denom:          denom,
 			ChannelId:      channelId,
 			MaxPercentSend: threshold,
@@ -339,7 +339,7 @@ func EnableRateLimits(
 			DurationHours:  RateLimitDurationHours,
 		}
 
-		if err := ratelimitgov.AddRateLimit(ctx, ratelimitKeeper, channelKeeper, addRateLimit); err != nil {
+		if err := ratelimitKeeper.AddRateLimit(ctx, addRateLimitMsg); err != nil {
 			return errorsmod.Wrapf(err, "unable to add rate limit for %s", denom)
 		}
 

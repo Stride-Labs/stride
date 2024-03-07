@@ -1,14 +1,17 @@
 package keeper
 
 import (
+	"encoding/json"
 	"errors"
+	"fmt"
 
 	errorsmod "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/Stride-Labs/stride/v18/utils"
-	"github.com/Stride-Labs/stride/v18/x/staketia/types"
+	"github.com/Stride-Labs/stride/v19/utils"
+	icaoracletypes "github.com/Stride-Labs/stride/v19/x/icaoracle/types"
+	"github.com/Stride-Labs/stride/v19/x/staketia/types"
 )
 
 // Updates the redemption rate for each host zone
@@ -102,6 +105,35 @@ func (k Keeper) CheckRedemptionRateExceedsBounds(ctx sdk.Context) error {
 	if redemptionRate.LT(hostZone.MinInnerRedemptionRate) || redemptionRate.GT(hostZone.MaxInnerRedemptionRate) {
 		return types.ErrRedemptionRateOutsideSafetyBounds.Wrapf("redemption rate outside inner safety bounds")
 	}
+
+	return nil
+}
+
+// Pushes a redemption rate update to the ICA oracle
+func (k Keeper) PostRedemptionRateToOracles(ctx sdk.Context) error {
+	if err := k.CheckRedemptionRateExceedsBounds(ctx); err != nil {
+		return errorsmod.Wrapf(err, "preventing oracle update since redemption rate exceeded bounds")
+	}
+
+	hostZone, err := k.GetHostZone(ctx)
+	if err != nil {
+		return err
+	}
+	redemptionRate := hostZone.RedemptionRate
+
+	stDenom := utils.StAssetDenomFromHostZoneDenom(hostZone.NativeTokenDenom)
+	attributes, err := json.Marshal(icaoracletypes.RedemptionRateAttributes{
+		SttokenDenom: stDenom,
+	})
+	if err != nil {
+		return err
+	}
+
+	// Metric Key is of format: {stToken}_redemption_rate
+	metricKey := fmt.Sprintf("%s_%s", stDenom, icaoracletypes.MetricType_RedemptionRate)
+	metricValue := redemptionRate.String()
+	metricType := icaoracletypes.MetricType_RedemptionRate
+	k.icaOracleKeeper.QueueMetricUpdate(ctx, metricKey, metricValue, metricType, string(attributes))
 
 	return nil
 }

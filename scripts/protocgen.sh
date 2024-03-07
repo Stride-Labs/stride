@@ -19,7 +19,6 @@ cd proto
 
 generate_protos "./stride"
 generate_protos "./cosmos"
-generate_protos "./cosmwasm"
 generate_protos "./osmosis"
 
 cd ..
@@ -27,5 +26,5 @@ cd ..
 # move proto files to the right places
 #
 # Note: Proto files are suffixed with the current binary version.
-cp -r github.com/Stride-Labs/stride/v18/* ./
+cp -r github.com/Stride-Labs/stride/v19/* ./
 rm -rf github.com

@@ -10,8 +10,8 @@ import (
 	icacontrollertypes "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/controller/types"
 	icatypes "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/types"
 
-	icacallbacktypes "github.com/Stride-Labs/stride/v18/x/icacallbacks/types"
-	"github.com/Stride-Labs/stride/v18/x/icaoracle/types"
+	icacallbacktypes "github.com/Stride-Labs/stride/v19/x/icacallbacks/types"
+	"github.com/Stride-Labs/stride/v19/x/icaoracle/types"
 )
 
 func (k Keeper) OnChanOpenAck(ctx sdk.Context, portID, channelID string) error {

@@ -10,10 +10,10 @@ import (
 	ibctesting "github.com/cosmos/ibc-go/v7/testing"
 	"github.com/stretchr/testify/require"
 
-	keepertest "github.com/Stride-Labs/stride/v18/testutil/keeper"
-	"github.com/Stride-Labs/stride/v18/testutil/nullify"
-	"github.com/Stride-Labs/stride/v18/x/stakeibc/keeper"
-	"github.com/Stride-Labs/stride/v18/x/stakeibc/types"
+	keepertest "github.com/Stride-Labs/stride/v19/testutil/keeper"
+	"github.com/Stride-Labs/stride/v19/testutil/nullify"
+	"github.com/Stride-Labs/stride/v19/x/stakeibc/keeper"
+	"github.com/Stride-Labs/stride/v19/x/stakeibc/types"
 )
 
 func createNHostZone(keeper *keeper.Keeper, ctx sdk.Context, n int) []types.HostZone {
@@ -516,4 +516,54 @@ func (s *KeeperTestSuite) TestDisableHubTokenization() {
 		s.App.StakeibcKeeper.DisableHubTokenization(s.Ctx)
 		return nil
 	})
+}
+
+func (s *KeeperTestSuite) TestGetTargetValAmtsForHostZone() {
+	validators := []*types.Validator{
+		{Address: "val1", Weight: 20},
+		{Address: "val2", Weight: 40},
+		{Address: "val3", Weight: 30},
+		{Address: "val6", Weight: 5},
+		{Address: "val5", Weight: 0},
+		{Address: "val4", Weight: 5},
+	}
+
+	// Get targets with an even 100 total delegated - no overflow to last validator
+	totalDelegation := sdkmath.NewInt(100)
+	hostZone := types.HostZone{ChainId: HostChainId, Validators: validators}
+	actualTargets, err := s.App.StakeibcKeeper.GetTargetValAmtsForHostZone(s.Ctx, hostZone, totalDelegation)
+	s.Require().NoError(err, "no error expected when getting target weights for total delegation of 100")
+
+	// Confirm target - should equal the validator's weight
+	for _, validator := range validators {
+		s.Require().Equal(int64(validator.Weight), actualTargets[validator.Address].Int64(),
+			"validator %s target for total delegation of 100", validator.Address)
+	}
+
+	// Get targets with an uneven amount delegated - 77 - over flow to last validator
+	totalDelegation = sdkmath.NewInt(77)
+	expectedTargets := map[string]int64{
+		"val5": 0,  // 0%  of 77 = 0
+		"val4": 3,  // 5%  of 77 = 3.85 -> 3
+		"val6": 3,  // 5%  of 77 = 3.85 -> 3
+		"val1": 15, // 20% of 77 = 15.4 -> 15
+		"val3": 23, // 30% of 77 = 23.1 -> 23
+		"val2": 33, // Gets all overflow: 77 - 3 - 3 - 15 - 23 = 33
+	}
+	actualTargets, err = s.App.StakeibcKeeper.GetTargetValAmtsForHostZone(s.Ctx, hostZone, totalDelegation)
+	s.Require().NoError(err, "no error expected when getting target weights for total delegation of 77")
+
+	// Confirm target amounts again
+	for validatorAddress, expectedTarget := range expectedTargets {
+		s.Require().Equal(expectedTarget, actualTargets[validatorAddress].Int64(),
+			"validator %s target for total delegation of 77", validatorAddress)
+	}
+
+	// Check zero delegations throws an error
+	_, err = s.App.StakeibcKeeper.GetTargetValAmtsForHostZone(s.Ctx, hostZone, sdkmath.ZeroInt())
+	s.Require().ErrorContains(err, "Cannot calculate target delegation if final amount is less than or equal to zero")
+
+	// Check zero weights throws an error
+	_, err = s.App.StakeibcKeeper.GetTargetValAmtsForHostZone(s.Ctx, types.HostZone{}, sdkmath.NewInt(1))
+	s.Require().ErrorContains(err, "No non-zero validators found for host zone")
 }

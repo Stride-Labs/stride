@@ -5,6 +5,7 @@ import (
 	"time"
 
 	sdkmath "cosmossdk.io/math"
+	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 	cometbftdb "github.com/cometbft/cometbft-db"
 	"github.com/cometbft/cometbft/abci/types"
 	abci "github.com/cometbft/cometbft/abci/types"
@@ -20,12 +21,12 @@ import (
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	ibctesting "github.com/cosmos/ibc-go/v7/testing"
-	appconsumer "github.com/cosmos/interchain-security/v3/app/consumer"
-	consumertypes "github.com/cosmos/interchain-security/v3/x/ccv/consumer/types"
-	ccvtypes "github.com/cosmos/interchain-security/v3/x/ccv/types"
+	appconsumer "github.com/cosmos/interchain-security/v4/app/consumer"
+	consumertypes "github.com/cosmos/interchain-security/v4/x/ccv/consumer/types"
+	ccvtypes "github.com/cosmos/interchain-security/v4/x/ccv/types"
 
-	cmdcfg "github.com/Stride-Labs/stride/v18/cmd/strided/config"
-	testutil "github.com/Stride-Labs/stride/v18/testutil"
+	cmdcfg "github.com/Stride-Labs/stride/v19/cmd/strided/config"
+	testutil "github.com/Stride-Labs/stride/v19/testutil"
 )
 
 const Bech32Prefix = "stride"
@@ -56,6 +57,7 @@ func InitStrideTestApp(initChain bool) *StrideApp {
 		5,
 		MakeEncodingConfig(),
 		simtestutil.EmptyAppOptions{},
+		[]wasmkeeper.Option{},
 	)
 	if initChain {
 		genesisState := GenesisStateWithValSet(app)
@@ -167,8 +169,8 @@ func GenesisStateWithValSet(app *StrideApp) GenesisState {
 	}
 
 	consumerGenesisState := testutil.CreateMinimalConsumerTestGenesis()
-	consumerGenesisState.InitialValSet = initValPowers
-	consumerGenesisState.ProviderConsensusState.NextValidatorsHash = tmtypes.NewValidatorSet(vals).Hash()
+	consumerGenesisState.Provider.InitialValSet = initValPowers
+	consumerGenesisState.Provider.ConsensusState.NextValidatorsHash = tmtypes.NewValidatorSet(vals).Hash()
 	consumerGenesisState.Params.Enabled = true
 	genesisState[consumertypes.ModuleName] = app.AppCodec().MustMarshalJSON(consumerGenesisState)
 
@@ -185,7 +187,7 @@ func InitStrideIBCTestingApp(initValPowers []types.ValidatorUpdate) func() (ibct
 		// Feed consumer genesis with provider validators
 		var consumerGenesis ccvtypes.ConsumerGenesisState
 		encoding.Codec.MustUnmarshalJSON(genesisState[consumertypes.ModuleName], &consumerGenesis)
-		consumerGenesis.InitialValSet = initValPowers
+		consumerGenesis.Provider.InitialValSet = initValPowers
 		consumerGenesis.Params.Enabled = true
 		genesisState[consumertypes.ModuleName] = encoding.Codec.MustMarshalJSON(&consumerGenesis)
 

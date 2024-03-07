@@ -15,11 +15,11 @@ import (
 	"github.com/cosmos/cosmos-sdk/server"
 	"github.com/cosmos/cosmos-sdk/x/genutil"
 	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
-	ccvconsumertypes "github.com/cosmos/interchain-security/v3/x/ccv/consumer/types"
-	ccvtypes "github.com/cosmos/interchain-security/v3/x/ccv/types"
+	ccvconsumertypes "github.com/cosmos/interchain-security/v4/x/ccv/consumer/types"
+	ccvtypes "github.com/cosmos/interchain-security/v4/x/ccv/types"
 	"github.com/spf13/cobra"
 
-	"github.com/Stride-Labs/stride/v18/testutil"
+	"github.com/Stride-Labs/stride/v19/testutil"
 )
 
 func AddConsumerSectionCmd(defaultNodeHome string) *cobra.Command {
@@ -71,8 +71,8 @@ func AddConsumerSectionCmd(defaultNodeHome string) *cobra.Command {
 					return errorsmod.Wrap(err, "could not convert val updates to validator set")
 				}
 
-				genesisState.InitialValSet = initialValset
-				genesisState.ProviderConsensusState.NextValidatorsHash = tmtypes.NewValidatorSet(vals).Hash()
+				genesisState.Provider.InitialValSet = initialValset
+				genesisState.Provider.ConsensusState.NextValidatorsHash = tmtypes.NewValidatorSet(vals).Hash()
 
 				state.ConsumerModuleState = genesisState
 				return nil

@@ -7,6 +7,7 @@ import (
 	"time"
 
 	errorsmod "cosmossdk.io/errors"
+	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 	cometbftdb "github.com/cometbft/cometbft-db"
 	types1 "github.com/cometbft/cometbft/abci/types"
 	cometbftrand "github.com/cometbft/cometbft/libs/rand"
@@ -23,10 +24,10 @@ import (
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	genutil "github.com/cosmos/cosmos-sdk/x/genutil"
 	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
-	ccvconsumertypes "github.com/cosmos/interchain-security/v3/x/ccv/consumer/types"
+	ccvconsumertypes "github.com/cosmos/interchain-security/v4/x/ccv/consumer/types"
 
-	"github.com/Stride-Labs/stride/v18/app"
-	testutil "github.com/Stride-Labs/stride/v18/testutil"
+	"github.com/Stride-Labs/stride/v19/app"
+	testutil "github.com/Stride-Labs/stride/v19/testutil"
 )
 
 type (
@@ -78,9 +79,16 @@ func DefaultConfig() network.Config {
 			}
 
 			return app.NewStrideApp(
-				val.GetCtx().Logger, cometbftdb.NewMemDB(), nil, true, map[int64]bool{}, val.GetCtx().Config.RootDir, 0,
+				val.GetCtx().Logger,
+				cometbftdb.NewMemDB(),
+				nil,
+				true,
+				map[int64]bool{},
+				val.GetCtx().Config.RootDir,
+				0,
 				encoding,
 				simtestutil.EmptyAppOptions{},
+				[]wasmkeeper.Option{},
 				baseapp.SetPruning(pruningtypes.NewPruningOptionsFromString(val.GetAppConfig().Pruning)),
 				baseapp.SetMinGasPrices(val.GetAppConfig().MinGasPrices),
 				baseapp.SetChainID(chainId),
@@ -122,8 +130,8 @@ func modifyConsumerGenesis(val network.Validator) error {
 	}
 
 	consumerGenesisState := testutil.CreateMinimalConsumerTestGenesis()
-	consumerGenesisState.InitialValSet = initialValset
-	consumerGenesisState.ProviderConsensusState.NextValidatorsHash = tmtypes.NewValidatorSet(vals).Hash()
+	consumerGenesisState.Provider.InitialValSet = initialValset
+	consumerGenesisState.Provider.ConsensusState.NextValidatorsHash = tmtypes.NewValidatorSet(vals).Hash()
 
 	if err := consumerGenesisState.Validate(); err != nil {
 		return errorsmod.Wrap(err, "invalid consumer genesis")

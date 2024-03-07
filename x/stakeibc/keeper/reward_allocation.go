@@ -8,7 +8,7 @@ import (
 
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 
-	"github.com/Stride-Labs/stride/v18/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v19/x/stakeibc/types"
 )
 
 // Liquid Stake Reward Collector Balance

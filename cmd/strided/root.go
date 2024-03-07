@@ -9,20 +9,14 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/cosmos/cosmos-sdk/snapshots"
-	"gopkg.in/yaml.v2"
-
-	"github.com/Stride-Labs/stride/v18/utils"
-
+	"github.com/CosmWasm/wasmd/x/wasm"
+	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
+	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	cometbftdb "github.com/cometbft/cometbft-db"
+	tmcfg "github.com/cometbft/cometbft/config"
 	"github.com/cometbft/cometbft/libs/cli"
 	tmcli "github.com/cometbft/cometbft/libs/cli"
 	"github.com/cometbft/cometbft/libs/log"
-	"github.com/spf13/cast"
-	"github.com/spf13/cobra"
-	"github.com/spf13/pflag"
-
-	tmcfg "github.com/cometbft/cometbft/config"
 	tmtypes "github.com/cometbft/cometbft/types"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/client"
@@ -34,6 +28,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/server"
 	serverconfig "github.com/cosmos/cosmos-sdk/server/config"
 	servertypes "github.com/cosmos/cosmos-sdk/server/types"
+	"github.com/cosmos/cosmos-sdk/snapshots"
 	snapshottypes "github.com/cosmos/cosmos-sdk/snapshots/types"
 	"github.com/cosmos/cosmos-sdk/store"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -46,8 +41,14 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/genutil"
 	genutilcli "github.com/cosmos/cosmos-sdk/x/genutil/client/cli"
 	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/spf13/cast"
+	"github.com/spf13/cobra"
+	"github.com/spf13/pflag"
+	"gopkg.in/yaml.v2"
 
-	"github.com/Stride-Labs/stride/v18/app"
+	"github.com/Stride-Labs/stride/v19/app"
+	"github.com/Stride-Labs/stride/v19/utils"
 )
 
 var ChainID string
@@ -120,21 +121,10 @@ func initTendermintConfig() *tmcfg.Config {
 // initAppConfig helps to override default appConfig template and configs.
 // return "", nil if no custom configuration is required for the application.
 func initAppConfig() (string, interface{}) {
-	// The following code snippet is just for reference.
-
-	// WASMConfig defines configuration for the wasm module.
-	type WASMConfig struct {
-		// This is the maximum sdk gas (wasm and storage) that we allow for any x/wasm "smart" queries
-		QueryGasLimit uint64 `mapstructure:"query_gas_limit"`
-
-		// Address defines the gRPC-web server to listen on
-		LruSize uint64 `mapstructure:"lru_size"`
-	}
-
 	type CustomAppConfig struct {
 		serverconfig.Config
 
-		WASM WASMConfig `mapstructure:"wasm"`
+		Wasm wasmtypes.WasmConfig `mapstructure:"wasm"`
 	}
 
 	// Optionally allow the chain developer to overwrite the SDK's default
@@ -161,12 +151,10 @@ func initAppConfig() (string, interface{}) {
 	// This ensures that upgraded nodes will use iavl fast node.
 	//srvCfg.IAVLDisableFastNode = false
 
+	// TODO [CW]: Confirm these defaults are fine
 	customAppConfig := CustomAppConfig{
 		Config: *srvCfg,
-		WASM: WASMConfig{
-			LruSize:       1,
-			QueryGasLimit: 300000,
-		},
+		Wasm:   wasmtypes.DefaultWasmConfig(),
 	}
 
 	customAppTemplate := serverconfig.DefaultConfigTemplate + `
@@ -196,7 +184,6 @@ func initRootCmd(rootCmd *cobra.Command, encodingConfig app.EncodingConfig) {
 		tmcli.NewCompletionCmd(rootCmd, true),
 		debug.Cmd(),
 		config.Cmd(),
-		// this line is used by starport scaffolding # stargate/root/commands
 	)
 
 	a := appCreator{encodingConfig}
@@ -214,7 +201,7 @@ func initRootCmd(rootCmd *cobra.Command, encodingConfig app.EncodingConfig) {
 
 func addModuleInitFlags(startCmd *cobra.Command) {
 	crisis.AddModuleInitFlags(startCmd)
-	// this line is used by starport scaffolding # stargate/root/initFlags
+	wasm.AddModuleInitFlags(startCmd)
 }
 
 func queryCommand() *cobra.Command {
@@ -348,11 +335,15 @@ func (a appCreator) newApp(logger log.Logger, db cometbftdb.DB, traceStore io.Wr
 	if err != nil {
 		panic(err)
 	}
-
 	snapshotOptions := snapshottypes.NewSnapshotOptions(
 		cast.ToUint64(appOpts.Get(server.FlagStateSyncSnapshotInterval)),
 		cast.ToUint32(appOpts.Get(server.FlagStateSyncSnapshotKeepRecent)),
 	)
+
+	var wasmOpts []wasmkeeper.Option
+	if cast.ToBool(appOpts.Get("telemetry.enabled")) {
+		wasmOpts = append(wasmOpts, wasmkeeper.WithVMCacheMetrics(prometheus.DefaultRegisterer))
+	}
 
 	homeDir := cast.ToString(appOpts.Get(flags.FlagHome))
 	chainID := cast.ToString(appOpts.Get(flags.FlagChainID))
@@ -373,6 +364,7 @@ func (a appCreator) newApp(logger log.Logger, db cometbftdb.DB, traceStore io.Wr
 		a.encCfg,
 		// this line is used by starport scaffolding # stargate/root/appArgument
 		appOpts,
+		wasmOpts,
 		baseapp.SetPruning(pruningOpts),
 		baseapp.SetMinGasPrices(cast.ToString(appOpts.Get(server.FlagMinGasPrices))),
 		baseapp.SetMinRetainBlocks(cast.ToUint64(appOpts.Get(server.FlagMinRetainBlocks))),
@@ -411,6 +403,7 @@ func (a appCreator) appExport(
 			uint(1),
 			a.encCfg,
 			appOpts,
+			[]wasmkeeper.Option{},
 		)
 
 		if err := anApp.LoadHeight(height); err != nil {
@@ -427,6 +420,7 @@ func (a appCreator) appExport(
 			uint(1),
 			a.encCfg,
 			appOpts,
+			[]wasmkeeper.Option{},
 		)
 	}
 

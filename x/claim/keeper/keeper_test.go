@@ -12,9 +12,9 @@ import (
 
 	sdkmath "cosmossdk.io/math"
 
-	"github.com/Stride-Labs/stride/v18/app"
-	"github.com/Stride-Labs/stride/v18/x/claim/types"
-	minttypes "github.com/Stride-Labs/stride/v18/x/mint/types"
+	"github.com/Stride-Labs/stride/v19/app"
+	"github.com/Stride-Labs/stride/v19/x/claim/types"
+	minttypes "github.com/Stride-Labs/stride/v19/x/mint/types"
 )
 
 type KeeperTestSuite struct {
