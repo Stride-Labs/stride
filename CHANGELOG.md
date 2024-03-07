@@ -42,6 +42,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <!-- GH ACTIONS TEMPLATE - INSERT NEW VERSION HERE -->
 
+## [v19.0.0](https://github.com/Stride-Labs/stride/releases/tag/v19.0.0) - 2024-03-07
+
+### On-Chain changes
+1. fixed vscode settings ([#1111](https://github.com/Stride-Labs/stride/pull/1111))
+2. stakeibc re-org part 1 (keepers) ([#1112](https://github.com/Stride-Labs/stride/pull/1112))
+3. Add cosmwasm ([#1103](https://github.com/Stride-Labs/stride/pull/1103))
+4. send staketia redemption rate to oracle ([#1115](https://github.com/Stride-Labs/stride/pull/1115))
+5. stakeibc file re-org part 2 (epochly functions) ([#1113](https://github.com/Stride-Labs/stride/pull/1113))
+6. stakeibc file re-org part 3 (ibc, ica, icq, and utilities) ([#1116](https://github.com/Stride-Labs/stride/pull/1116))
+7. stakeibc file re-org part 4 (grpc query) ([#1117](https://github.com/Stride-Labs/stride/pull/1117))
+8. stakeibc file re-org part 5 (msg_server) ([#1120](https://github.com/Stride-Labs/stride/pull/1120))
+9. set wasm permissions ([#1125](https://github.com/Stride-Labs/stride/pull/1125))
+10. Upgrade to ICS v4.0.0 and sdk v0.47.10 ([#1114](https://github.com/Stride-Labs/stride/pull/1114))
+11. switched to open sourced rate limit module ([#1123](https://github.com/Stride-Labs/stride/pull/1123))
+12. added sttia rate limit ([#1127](https://github.com/Stride-Labs/stride/pull/1127))
+13. Add x/stakedym ([#1126](https://github.com/Stride-Labs/stride/pull/1126))
+
+### Off-Chain changes
+1. chore(dev-deps): upgrade ledger dependencies ([#1099](https://github.com/Stride-Labs/stride/pull/1099))
+2. switched to stride fork of sdk for v0.47.10 ([#1128](https://github.com/Stride-Labs/stride/pull/1128))
+3. upgraded pfm ([#1122](https://github.com/Stride-Labs/stride/pull/1122))
+
+
 ## [v18.0.0](https://github.com/Stride-Labs/stride/releases/tag/v18.0.0) - 2024-01-26
 
 ### On-Chain changes
