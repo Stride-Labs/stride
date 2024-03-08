@@ -258,7 +258,6 @@ func (app *StrideApp) setupUpgradeHandlers(appOpts servertypes.AppOptions) {
 			app.mm,
 			app.configurator,
 			app.appCodec,
-			app.ConsumerKeeper,
 			app.RatelimitKeeper,
 			app.WasmKeeper,
 		),
