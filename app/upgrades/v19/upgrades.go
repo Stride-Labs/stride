@@ -64,9 +64,9 @@ func CreateUpgradeHandler(
 		MigrateRateLimitModule(ctx, ratelimitKeeper)
 
 		// Add stTIA rate limits to Celestia and Osmosis
-		if err := AddStTiaRateLimit(ctx, ratelimitKeeper); err != nil {
-			return newVm, err
-		}
+		// if err := AddStTiaRateLimit(ctx, ratelimitKeeper); err != nil {
+		// 	return newVm, err
+		// }
 
 		// Remove `dydx-testnet-4` as a host zone on testnet
 		if err := RemoveDydxTestnetHostZone(ctx, stakeibcKeeper); err != nil {
