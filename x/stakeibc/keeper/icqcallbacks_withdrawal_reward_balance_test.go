@@ -21,6 +21,10 @@ func (s *KeeperTestSuite) SetupWithdrawalRewardBalanceCallbackTestCase() Balance
 	withdrawalAccountOwner := types.FormatHostZoneICAOwner(HostChainId, types.ICAAccountType_WITHDRAWAL)
 	withdrawalChannelId, withdrawalPortId := s.CreateICAChannel(withdrawalAccountOwner)
 
+	s.App.StakeibcKeeper.SetHostZone(s.Ctx, types.HostZone{
+		ChainId: HostChainId,
+	})
+
 	route := types.TradeRoute{
 		RewardDenomOnRewardZone: RewardDenom,
 		HostDenomOnHostZone:     HostDenom,
@@ -59,7 +63,10 @@ func (s *KeeperTestSuite) SetupWithdrawalRewardBalanceCallbackTestCase() Balance
 		RewardDenom: RewardDenom,
 		HostDenom:   HostDenom,
 	})
-	query := icqtypes.Query{CallbackData: callbackDataBz}
+	query := icqtypes.Query{
+		ChainId:      HostChainId,
+		CallbackData: callbackDataBz,
+	}
 	queryResponse := s.CreateBalanceQueryResponse(balance.Int64(), route.RewardDenomOnHostZone)
 
 	return BalanceQueryCallbackTestCase{
