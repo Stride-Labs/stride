@@ -1103,3 +1103,24 @@ func (k msgServer) ResumeHostZone(goCtx context.Context, msg *types.MsgResumeHos
 
 	return &types.MsgResumeHostZoneResponse{}, nil
 }
+
+// Registers a community pool rebate, configuring the rebate percentage and liquid stake amount
+func (k msgServer) RegisterCommunityPoolRebate(
+	goCtx context.Context,
+	msg *types.MsgRegisterCommunityPoolRebate,
+) (*types.MsgRegisterCommunityPoolRebateResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	hostZone, found := k.GetHostZone(ctx, msg.ChainId)
+	if !found {
+		return nil, types.ErrHostZoneNotFound.Wrapf("host zone %s not found", msg.ChainId)
+	}
+
+	hostZone.CommunityPoolRebate = &types.CommunityPoolRebate{
+		LiquidStakeAmount: msg.LiquidStakeAmount,
+		RebatePercentage:  msg.RebatePercentage,
+	}
+	k.SetHostZone(ctx, hostZone)
+
+	return &types.MsgRegisterCommunityPoolRebateResponse{}, nil
+}

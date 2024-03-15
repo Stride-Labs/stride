@@ -2575,3 +2575,37 @@ func (s *KeeperTestSuite) TestResumeHostZone_UnhaltedZones() {
 	expectedErrorMsg := fmt.Sprintf("invalid chain id, zone for %s not halted: host zone is not halted", HostChainId)
 	s.Require().Equal(expectedErrorMsg, err.Error(), "should return correct error msg")
 }
+
+// ----------------------------------------------------
+//	           RegisterCommunityPoolRebate
+// ----------------------------------------------------
+
+func (s *KeeperTestSuite) TestRegisterCommunityPoolRebate() {
+	rebateInfo := types.CommunityPoolRebate{
+		LiquidStakeAmount: sdk.NewInt(1000),
+		RebatePercentage:  sdk.MustNewDecFromStr("0.5"),
+	}
+
+	// Set host zone with no rebate
+	hostZone := types.HostZone{
+		ChainId: HostChainId,
+	}
+	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
+
+	// Submit a message to create the rebate
+	msg := types.MsgRegisterCommunityPoolRebate{
+		ChainId:           HostChainId,
+		RebatePercentage:  rebateInfo.RebatePercentage,
+		LiquidStakeAmount: rebateInfo.LiquidStakeAmount,
+	}
+	_, err := s.GetMsgServer().RegisterCommunityPoolRebate(s.Ctx, &msg)
+	s.Require().NoError(err, "no error expected when registering rebate")
+
+	// Confirm the rebate was updated
+	actualHostZone := s.MustGetHostZone(HostChainId)
+	s.Require().Equal(rebateInfo, *actualHostZone.CommunityPoolRebate, "rebate")
+
+	// Confirm a message with an invalid chain ID would cause an error
+	_, err = s.GetMsgServer().RegisterCommunityPoolRebate(s.Ctx, &types.MsgRegisterCommunityPoolRebate{ChainId: "invalid"})
+	s.Require().ErrorContains(err, "host zone not found")
+}
