@@ -323,7 +323,7 @@ message MsgRegisterCommunityPoolRebate {
   option (cosmos.msg.v1.signer) = "creator";
   option (amino.name) = "stride/x/stakeibc/MsgRegisterCommunityPoolRebate";
 
-  // Message signer
+  // Message signer (admin only)
   string creator = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
   // Chain ID of the community pool
   string chain_id = 2;
