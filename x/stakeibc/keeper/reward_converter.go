@@ -51,6 +51,52 @@ type ForwardMetadata struct {
 // and the normal staking and distribution flow will continue from there.
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+// Checks if a rebate exists for the given host zone
+// If so, splits the rewardCoin into a portion for the rebate and a portion that should get reinvested
+//
+// The rebate percentage is determined by: (% of total TVL contributed by commuity pool) * (rebate percentage)
+//
+// E.g. Community pool liquid staked 1M, TVL is 10M, rebate is 50%
+// Total rewards this epoch are 1000, and the stride fee is 10%
+// => Then the rebate is 1000 rewards * 10% stride fee * (1M / 10M) * 50% rebate = 5
+func (k Keeper) CheckForCommunityPoolRebate(
+	ctx sdk.Context,
+	chainId string,
+	rewardAmount sdkmath.Int,
+) (rebateAmount sdkmath.Int, reinvestAmount sdkmath.Int, err error) {
+	hostZone, err := k.GetActiveHostZone(ctx, chainId)
+	if err != nil {
+		return sdkmath.ZeroInt(), sdkmath.ZeroInt(), err
+	}
+
+	// Get the rebate info from the host zone if applicable
+	// If there's no rebate, return 0 rebate coin and reinvest the full reward
+	rebateInfo, chainHasRebate := hostZone.SafelyGetCommunityPoolRebate()
+	if !chainHasRebate {
+		return sdkmath.ZeroInt(), rewardAmount, nil
+	}
+
+	// Get the fee percentage from params
+	strideFee := sdk.NewIntFromUint64(k.GetParams(ctx).StrideCommission)
+	strideFeePct := sdk.NewDecFromInt(strideFee).Quo(sdk.NewDec(100))
+
+	// It shouldn't be possible to have 0 delegations (since there are rewards and there was a community pool stake)
+	// This will also prevent a division by 0 error
+	if hostZone.TotalDelegations.IsZero() {
+		return sdkmath.ZeroInt(), sdkmath.ZeroInt(), errorsmod.Wrapf(types.ErrDivisionByZero,
+			"unable to calculate rebate amount for %s since total delegations are 0", chainId)
+	}
+
+	// The rebate amount is determined by the contribution of the community pool stake towards the total TVL,
+	// multiplied by the rebate fee percentage
+	contributePercentage := sdk.NewDecFromInt(rebateInfo.LiquidStakeAmount).Quo(sdk.NewDecFromInt(hostZone.TotalDelegations))
+	totalFeesAmount := sdk.NewDecFromInt(rewardAmount).Mul(strideFeePct)
+	rebateAmount = totalFeesAmount.Mul(contributePercentage).Mul(rebateInfo.RebatePercentage).TruncateInt()
+	reinvestAmount = rewardAmount.Sub(rebateAmount)
+
+	return rebateAmount, reinvestAmount, nil
+}
+
 // Builds a PFM transfer message to send reward tokens from the host zone,
 // through the reward zone (to unwind) and finally to the trade zone
 func (k Keeper) BuildHostToTradeTransferMsg(
