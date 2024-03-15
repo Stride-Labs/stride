@@ -226,7 +226,12 @@ func (k Keeper) RedeemCommunityPoolTokens(ctx sdk.Context, hostZone types.HostZo
 
 // Using tokens in the CommunityPoolReturnIcaAddress, trigger ICA tx to fund community pool
 // Note: The denom of the passed in token has to be the denom which exists on the hostZone not Stride
-func (k Keeper) FundCommunityPool(ctx sdk.Context, hostZone types.HostZone, token sdk.Coin) error {
+func (k Keeper) FundCommunityPool(
+	ctx sdk.Context,
+	hostZone types.HostZone,
+	token sdk.Coin,
+	senderAccountType types.ICAAccountType,
+) error {
 	fundCoins := sdk.NewCoins(token)
 
 	var msgs []proto.Message
@@ -250,7 +255,7 @@ func (k Keeper) FundCommunityPool(ctx sdk.Context, hostZone types.HostZone, toke
 	_, err := k.SubmitTxs(ctx,
 		hostZone.ConnectionId,
 		msgs,
-		types.ICAAccountType_COMMUNITY_POOL_RETURN,
+		senderAccountType,
 		timeoutTimestamp,
 		icaCallbackId,
 		icaCallbackData)
