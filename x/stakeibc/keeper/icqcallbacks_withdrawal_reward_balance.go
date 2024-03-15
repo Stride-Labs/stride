@@ -58,7 +58,7 @@ func WithdrawalRewardBalanceCallback(k Keeper, ctx sdk.Context, args []byte, que
 	k.Logger(ctx).Info(utils.LogICQCallbackWithHostZone(chainId, ICQCallbackID_WithdrawalRewardBalance,
 		"Query response - Withdrawal Reward Balance: %v %s", withdrawalRewardBalanceAmount, tradeRoute.RewardDenomOnHostZone))
 
-	// Split the withdrawal amount into a rebate and reinvest portion
+	// Split the withdrawal amount into a rebate, stride fee, and reinvest portion
 	feeInfo, err := k.CheckForCommunityPoolRebate(ctx, chainId, withdrawalRewardBalanceAmount)
 	if err != nil {
 		return err

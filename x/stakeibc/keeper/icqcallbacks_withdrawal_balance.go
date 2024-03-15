@@ -1,16 +1,12 @@
 package keeper
 
 import (
-	"fmt"
-
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	errorsmod "cosmossdk.io/errors"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/cosmos/gogoproto/proto"
-	"github.com/spf13/cast"
 
 	icqkeeper "github.com/Stride-Labs/stride/v19/x/interchainquery/keeper"
 
@@ -62,32 +58,15 @@ func WithdrawalBalanceCallback(k Keeper, ctx sdk.Context, args []byte, query icq
 		return errorsmod.Wrapf(types.ErrICAAccountNotFound, "no fee account found for %s", chainId)
 	}
 
-	// Determine the stride commission rate to the relevant portion can be sent to the fee account
-	params := k.GetParams(ctx)
-	strideCommissionInt, err := cast.ToInt64E(params.StrideCommission)
+	// Split the withdrawal amount into a rebate, stride fee, and reinvest portion
+	feeInfo, err := k.CheckForCommunityPoolRebate(ctx, chainId, withdrawalBalanceAmount)
 	if err != nil {
 		return err
 	}
 
-	// check that stride commission is between 0 and 1
-	strideCommission := sdk.NewDec(strideCommissionInt).Quo(sdk.NewDec(100))
-	if strideCommission.LT(sdk.ZeroDec()) || strideCommission.GT(sdk.OneDec()) {
-		return errorsmod.Wrap(sdkerrors.ErrInvalidRequest, "Aborting withdrawal balance callback -- Stride commission must be between 0 and 1!")
-	}
-
-	// Split out the reinvestment amount from the fee amount
-	feeAmount := strideCommission.Mul(sdk.NewDecFromInt(withdrawalBalanceAmount)).TruncateInt()
-	reinvestAmount := withdrawalBalanceAmount.Sub(feeAmount)
-
-	// Safety check, balances should add to original amount
-	if !feeAmount.Add(reinvestAmount).Equal(withdrawalBalanceAmount) {
-		k.Logger(ctx).Error(fmt.Sprintf("Error with withdraw logic: %v, Fee Portion: %v, Reinvest Portion %v", withdrawalBalanceAmount, feeAmount, reinvestAmount))
-		return errorsmod.Wrap(sdkerrors.ErrInvalidRequest, "Failed to subdivide rewards to commission and delegationAccount")
-	}
-
 	// Prepare MsgSends from the withdrawal account
-	feeCoin := sdk.NewCoin(hostZone.HostDenom, feeAmount)
-	reinvestCoin := sdk.NewCoin(hostZone.HostDenom, reinvestAmount)
+	feeCoin := sdk.NewCoin(hostZone.HostDenom, feeInfo.StrideFeeAmount)
+	reinvestCoin := sdk.NewCoin(hostZone.HostDenom, feeInfo.ReinvestAmount)
 
 	var msgs []proto.Message
 	if feeCoin.Amount.GT(sdk.ZeroInt()) {
