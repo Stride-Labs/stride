@@ -41,6 +41,8 @@ service Msg {
       returns (MsgDeleteTradeRouteResponse);
   rpc UpdateTradeRoute(MsgUpdateTradeRoute)
       returns (MsgUpdateTradeRouteResponse);
+  rpc RegisterCommunityPoolRebate(MsgRegisterCommunityPoolRebate)
+      returns (MsgRegisterCommunityPoolRebateResponse);
 }
 
 message MsgUpdateInnerRedemptionRateBounds {
@@ -314,3 +316,26 @@ message MsgUpdateTradeRoute {
   ];
 }
 message MsgUpdateTradeRouteResponse {}
+
+// Registers a community pool rebate by specifying the amount of the liquid
+// stake
+message MsgRegisterCommunityPoolRebate {
+  option (cosmos.msg.v1.signer) = "creator";
+  option (amino.name) = "stride/x/stakeibc/MsgRegisterCommunityPoolRebate";
+
+  // Message signer
+  string creator = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+  // Chain ID of the community pool
+  string chain_id = 2;
+  // Rebate percentage (e.g. 0.5 for 50%)
+  string rebate_percentage = 3 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
+  // Magnitude of the community pool liquid stake associated with the rebate
+  string liquid_stake_amount = 4 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable) = false
+  ];
+}
+message MsgRegisterCommunityPoolRebateResponse {}
