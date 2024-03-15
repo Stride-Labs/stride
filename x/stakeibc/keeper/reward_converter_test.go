@@ -34,6 +34,178 @@ type TransferRewardHostToTradeTestCase struct {
 }
 
 // --------------------------------------------------------------
+//                 CheckForCommunityPoolRebate
+// --------------------------------------------------------------
+
+func (s *KeeperTestSuite) TestCheckForCommunityPoolRebate() {
+	testCases := []struct {
+		name                     string
+		communityPoolLiquidStake sdkmath.Int
+		totalDelegations         sdkmath.Int
+		rewardAmount             sdkmath.Int
+		strideFee                uint64
+		rebatePercentage         sdk.Dec
+		expectedRebateAmount     sdkmath.Int
+		expectedReinvestAmount   sdkmath.Int
+		expectedError            string
+	}{
+		{
+			// 10 CP Liquid Stake, 100 TVL => 10% contribution
+			// 1000 rewards, 10% stride fee => 100 total fees
+			// 100 total fees * 10% contribution * 50% rebate
+			// => 5 rebate, 995 reinvest
+			name:                     "case 1",
+			communityPoolLiquidStake: sdk.NewInt(10),
+			totalDelegations:         sdkmath.NewInt(100),
+			rewardAmount:             sdkmath.NewInt(1000),
+			strideFee:                10,
+			rebatePercentage:         sdk.MustNewDecFromStr("0.5"),
+
+			expectedRebateAmount:   sdkmath.NewInt(5),
+			expectedReinvestAmount: sdkmath.NewInt(995),
+		},
+		{
+			// (Example #1 but with a 2x bigger liquid stake)
+			// 20 CP Liquid Stake, 100 TVL => 20% contribution
+			// 1000 rewards, 10% stride fee => 100 total fees
+			// 100 total fees * 20% contribution * 50% rebate
+			// => 10 rebate, 990 reinvest
+			name:                     "case 2",
+			communityPoolLiquidStake: sdk.NewInt(20),
+			totalDelegations:         sdkmath.NewInt(100),
+			rewardAmount:             sdkmath.NewInt(1000),
+			strideFee:                10,
+			rebatePercentage:         sdk.MustNewDecFromStr("0.5"),
+
+			expectedRebateAmount:   sdkmath.NewInt(10),
+			expectedReinvestAmount: sdkmath.NewInt(990),
+		},
+		{
+			// (Example #1 but with a 2x larger TVL)
+			// 10 CP Liquid Stake, 200 TVL => 5% contribution
+			// 1000 rewards, 10% stride fee => 100 total fees
+			// 100 total fees * 5% contribution * 50% rebate
+			// => 2.5 rebate (truncated to 2), 998 reinvest
+			name:                     "case 3",
+			communityPoolLiquidStake: sdk.NewInt(10),
+			totalDelegations:         sdkmath.NewInt(200),
+			rewardAmount:             sdkmath.NewInt(1000),
+			strideFee:                10,
+			rebatePercentage:         sdk.MustNewDecFromStr("0.5"),
+
+			expectedRebateAmount:   sdkmath.NewInt(2),
+			expectedReinvestAmount: sdkmath.NewInt(998),
+		},
+		{
+			// (Example #1 but with a 2x larger fee)
+			// 10 CP Liquid Stake, 100 TVL => 10% contribution
+			// 1000 rewards, 20% stride fee => 200 total fees
+			// 200 total fees * 10% contribution * 50% rebate
+			// => 10 rebate, 990 reinvest
+			name:                     "case 4",
+			communityPoolLiquidStake: sdk.NewInt(10),
+			totalDelegations:         sdkmath.NewInt(100),
+			rewardAmount:             sdkmath.NewInt(1000),
+			strideFee:                20,
+			rebatePercentage:         sdk.MustNewDecFromStr("0.5"),
+
+			expectedRebateAmount:   sdkmath.NewInt(10),
+			expectedReinvestAmount: sdkmath.NewInt(990),
+		},
+		{
+			// (Example #1 but with a smaller rebate)
+			// 10 CP Liquid Stake, 100 TVL => 10% contribution
+			// 1000 rewards, 10% stride fee => 100 total fees
+			// 100 total fees * 10% contribution * 20% rebate
+			// => 2 rebate, 998 reinvest
+			name:                     "case 5",
+			communityPoolLiquidStake: sdk.NewInt(10),
+			totalDelegations:         sdkmath.NewInt(100),
+			rewardAmount:             sdkmath.NewInt(1000),
+			strideFee:                10,
+			rebatePercentage:         sdk.MustNewDecFromStr("0.2"),
+
+			expectedRebateAmount:   sdkmath.NewInt(2),
+			expectedReinvestAmount: sdkmath.NewInt(998),
+		},
+		{
+			// (Example #1 but with a larger rebate)
+			// 10 CP Liquid Stake, 100 TVL => 10% contribution
+			// 1000 rewards, 10% stride fee => 100 total fees
+			// 100 total fees * 10% contribution * 79% rebate
+			// => 7.9 rebate (truncated to 7), 993 reinvest
+			name:                     "case 6",
+			communityPoolLiquidStake: sdk.NewInt(10),
+			totalDelegations:         sdkmath.NewInt(100),
+			rewardAmount:             sdkmath.NewInt(1000),
+			strideFee:                10,
+			rebatePercentage:         sdk.MustNewDecFromStr("0.79"),
+
+			expectedRebateAmount:   sdkmath.NewInt(7),
+			expectedReinvestAmount: sdkmath.NewInt(993),
+		},
+		{
+			// No rebate - all should be reinvested
+			name:             "no rebate",
+			totalDelegations: sdkmath.NewInt(100),
+			rewardAmount:     sdkmath.NewInt(1000),
+			strideFee:        10,
+
+			expectedRebateAmount:   sdkmath.NewInt(0),
+			expectedReinvestAmount: sdkmath.NewInt(1000),
+		},
+		{
+			// No tvl - shoudl error
+			name:                     "case 1",
+			communityPoolLiquidStake: sdk.NewInt(10),
+			totalDelegations:         sdkmath.NewInt(0),
+			rewardAmount:             sdkmath.NewInt(1000),
+			strideFee:                10,
+			rebatePercentage:         sdk.MustNewDecFromStr("0.5"),
+
+			expectedError: "unable to calculate rebate amount",
+		},
+	}
+
+	for _, tc := range testCases {
+		s.Run(tc.name, func() {
+			// Build out the host zone - only add the rebate struct if one of the rebate fields was provided
+			hostZone := types.HostZone{
+				ChainId:          chainId,
+				TotalDelegations: tc.totalDelegations,
+			}
+			if !tc.communityPoolLiquidStake.IsNil() {
+				hostZone.CommunityPoolRebate = &types.CommunityPoolRebate{
+					RebatePercentage:  tc.rebatePercentage,
+					LiquidStakeAmount: tc.communityPoolLiquidStake,
+				}
+			}
+			s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
+
+			// Store the fee as a param
+			params := types.DefaultParams()
+			params.StrideCommission = tc.strideFee
+			s.App.StakeibcKeeper.SetParams(s.Ctx, params)
+
+			// Call the tested function to get the expected amounts
+			actualRebateAmount, actualReinvestAmount, actualError := s.App.StakeibcKeeper.CheckForCommunityPoolRebate(
+				s.Ctx,
+				chainId,
+				tc.rewardAmount,
+			)
+
+			// Confirm the amounts and error
+			if tc.expectedError != "" {
+				s.Require().ErrorContains(actualError, tc.expectedError, "error expected")
+			} else {
+				s.Require().Equal(tc.expectedRebateAmount.Int64(), actualRebateAmount.Int64(), "rebate amount")
+				s.Require().Equal(tc.expectedReinvestAmount.Int64(), actualReinvestAmount.Int64(), "reinvest amount")
+			}
+		})
+	}
+}
+
+// --------------------------------------------------------------
 //                   Transfer Host to Trade
 // --------------------------------------------------------------
 
