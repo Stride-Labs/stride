@@ -40,6 +40,7 @@ func GetTxCmd() *cobra.Command {
 	cmd.AddCommand(CmdClearBalance())
 	cmd.AddCommand(CmdUpdateInnerRedemptionRateBounds())
 	cmd.AddCommand(CmdResumeHostZone())
+	cmd.AddCommand(CmdRegisterCommunityPoolRebate())
 
 	return cmd
 }

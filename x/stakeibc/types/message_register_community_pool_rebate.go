@@ -18,11 +18,13 @@ var _ sdk.Msg = &MsgRegisterCommunityPoolRebate{}
 
 func NewMsgRegisterCommunityPoolRebate(
 	creator string,
+	chainId string,
 	rebatePercentage sdk.Dec,
 	liquidStakeAmount sdkmath.Int,
 ) *MsgRegisterCommunityPoolRebate {
 	return &MsgRegisterCommunityPoolRebate{
 		Creator:           creator,
+		ChainId:           chainId,
 		RebatePercentage:  rebatePercentage,
 		LiquidStakeAmount: liquidStakeAmount,
 	}
