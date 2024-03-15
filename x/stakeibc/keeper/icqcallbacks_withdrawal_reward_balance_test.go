@@ -22,7 +22,8 @@ func (s *KeeperTestSuite) SetupWithdrawalRewardBalanceCallbackTestCase() Balance
 	withdrawalChannelId, withdrawalPortId := s.CreateICAChannel(withdrawalAccountOwner)
 
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, types.HostZone{
-		ChainId: HostChainId,
+		ChainId:      HostChainId,
+		ConnectionId: ibctesting.FirstConnectionID,
 	})
 
 	route := types.TradeRoute{
@@ -105,6 +106,25 @@ func (s *KeeperTestSuite) TestWithdrawalRewardBalanceCallback_SuccessfulNoTransf
 
 	// ICA inside of TransferRewardTokensHostToTrade should not actually execute because of min_swap_amount
 	s.CheckICATxNotSubmitted(tc.PortID, tc.ChannelID, func() error {
+		return keeper.WithdrawalRewardBalanceCallback(s.App.StakeibcKeeper, s.Ctx, tc.Response.CallbackArgs, tc.Response.Query)
+	})
+}
+
+// Verify that if the amount returned by the ICQ response is less than the min_swap_amount, no transfer happens
+func (s *KeeperTestSuite) TestWithdrawalRewardBalanceCallback_SuccessfulWithRebate() {
+	tc := s.SetupWithdrawalRewardBalanceCallbackTestCase()
+
+	// Update the host zone to have a rebate
+	hostZone := s.MustGetHostZone(HostChainId)
+	hostZone.TotalDelegations = sdkmath.NewInt(10_000_000)
+	hostZone.CommunityPoolRebate = &types.CommunityPoolRebate{
+		RebatePercentage:  sdk.MustNewDecFromStr("0.5"),
+		LiquidStakeAmount: sdkmath.NewInt(1_000_000),
+	}
+	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
+
+	// ICA inside of TransferRewardTokensHostToTrade should not actually execute because of min_swap_amount
+	s.CheckMulitpleICATxSubmitted(tc.PortID, tc.ChannelID, func() error {
 		return keeper.WithdrawalRewardBalanceCallback(s.App.StakeibcKeeper, s.Ctx, tc.Response.CallbackArgs, tc.Response.Query)
 	})
 }
