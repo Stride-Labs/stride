@@ -228,6 +228,22 @@ func (s *KeeperTestSuite) TestWithdrawalBalanceCallback_NoFeeAccount() {
 	s.Require().EqualError(err, "no fee account found for GAIA: ICA acccount not found on host zone")
 }
 
+func (s *KeeperTestSuite) TestWithdrawalBalanceCallback_FailedToCheckForRebate() {
+	tc := s.SetupWithdrawalBalanceCallbackTest()
+
+	// Add a rebate to the host zone and set the total delegations to 0 so the check fails
+	hostZone := s.MustGetHostZone(HostChainId)
+	hostZone.CommunityPoolRebate = &types.CommunityPoolRebate{
+		RebatePercentage:  sdk.MustNewDecFromStr("0.5"),
+		LiquidStakeAmount: sdkmath.NewInt(1),
+	}
+	hostZone.TotalDelegations = sdkmath.ZeroInt()
+	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
+
+	err := keeper.WithdrawalBalanceCallback(s.App.StakeibcKeeper, s.Ctx, tc.validArgs.callbackArgs, tc.validArgs.query)
+	s.Require().ErrorContains(err, "unable to check for community pool rebate")
+}
+
 func (s *KeeperTestSuite) TestWithdrawalBalanceCallback_FailedSubmitTx() {
 	tc := s.SetupWithdrawalBalanceCallbackTest()
 

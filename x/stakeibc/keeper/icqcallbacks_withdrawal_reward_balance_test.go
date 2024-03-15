@@ -177,6 +177,22 @@ func (s *KeeperTestSuite) TestWithdrawalRewardBalanceCallback_TradeRouteNotFound
 	s.Require().ErrorContains(err, "trade route not found")
 }
 
+func (s *KeeperTestSuite) TestWithdrawalRewardBalanceCallback_FailedToCheckForRebate() {
+	tc := s.SetupWithdrawalRewardBalanceCallbackTestCase()
+
+	// Add a rebate to the host zone and set the total delegations to 0 so the check fails
+	hostZone := s.MustGetHostZone(HostChainId)
+	hostZone.CommunityPoolRebate = &types.CommunityPoolRebate{
+		RebatePercentage:  sdk.MustNewDecFromStr("0.5"),
+		LiquidStakeAmount: sdkmath.NewInt(1),
+	}
+	hostZone.TotalDelegations = sdkmath.ZeroInt()
+	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
+
+	err := keeper.WithdrawalRewardBalanceCallback(s.App.StakeibcKeeper, s.Ctx, tc.Response.CallbackArgs, tc.Response.Query)
+	s.Require().ErrorContains(err, "unable to check for community pool rebate")
+}
+
 func (s *KeeperTestSuite) TestWithdrawalRewardBalanceCallback_FailedSubmitTx() {
 	tc := s.SetupWithdrawalRewardBalanceCallbackTestCase()
 
