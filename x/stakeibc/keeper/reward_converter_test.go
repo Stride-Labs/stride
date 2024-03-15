@@ -46,6 +46,7 @@ func (s *KeeperTestSuite) TestCheckForCommunityPoolRebate() {
 		strideFee                uint64
 		rebatePercentage         sdk.Dec
 		expectedRebateAmount     sdkmath.Int
+		expectedStrideFeeAmount  sdkmath.Int
 		expectedReinvestAmount   sdkmath.Int
 		expectedError            string
 	}{
@@ -53,7 +54,7 @@ func (s *KeeperTestSuite) TestCheckForCommunityPoolRebate() {
 			// 10 CP Liquid Stake, 100 TVL => 10% contribution
 			// 1000 rewards, 10% stride fee => 100 total fees
 			// 100 total fees * 10% contribution * 50% rebate
-			// => 5 rebate, 995 reinvest
+			// => 5 rebate, 95 stride fee, 900 reinvest
 			name:                     "case 1",
 			communityPoolLiquidStake: sdk.NewInt(10),
 			totalDelegations:         sdkmath.NewInt(100),
@@ -61,15 +62,16 @@ func (s *KeeperTestSuite) TestCheckForCommunityPoolRebate() {
 			strideFee:                10,
 			rebatePercentage:         sdk.MustNewDecFromStr("0.5"),
 
-			expectedRebateAmount:   sdkmath.NewInt(5),
-			expectedReinvestAmount: sdkmath.NewInt(995),
+			expectedRebateAmount:    sdkmath.NewInt(5),
+			expectedStrideFeeAmount: sdkmath.NewInt(95),
+			expectedReinvestAmount:  sdkmath.NewInt(900),
 		},
 		{
 			// (Example #1 but with a 2x bigger liquid stake)
 			// 20 CP Liquid Stake, 100 TVL => 20% contribution
 			// 1000 rewards, 10% stride fee => 100 total fees
 			// 100 total fees * 20% contribution * 50% rebate
-			// => 10 rebate, 990 reinvest
+			// => 10 rebate, 90 stride fee, 900 reinvest
 			name:                     "case 2",
 			communityPoolLiquidStake: sdk.NewInt(20),
 			totalDelegations:         sdkmath.NewInt(100),
@@ -77,15 +79,16 @@ func (s *KeeperTestSuite) TestCheckForCommunityPoolRebate() {
 			strideFee:                10,
 			rebatePercentage:         sdk.MustNewDecFromStr("0.5"),
 
-			expectedRebateAmount:   sdkmath.NewInt(10),
-			expectedReinvestAmount: sdkmath.NewInt(990),
+			expectedRebateAmount:    sdkmath.NewInt(10),
+			expectedStrideFeeAmount: sdkmath.NewInt(90),
+			expectedReinvestAmount:  sdkmath.NewInt(900),
 		},
 		{
 			// (Example #1 but with a 2x larger TVL)
 			// 10 CP Liquid Stake, 200 TVL => 5% contribution
 			// 1000 rewards, 10% stride fee => 100 total fees
 			// 100 total fees * 5% contribution * 50% rebate
-			// => 2.5 rebate (truncated to 2), 998 reinvest
+			// => 2.5 rebate (truncated to 2), 98 stride fee, 998 reinvest
 			name:                     "case 3",
 			communityPoolLiquidStake: sdk.NewInt(10),
 			totalDelegations:         sdkmath.NewInt(200),
@@ -93,15 +96,16 @@ func (s *KeeperTestSuite) TestCheckForCommunityPoolRebate() {
 			strideFee:                10,
 			rebatePercentage:         sdk.MustNewDecFromStr("0.5"),
 
-			expectedRebateAmount:   sdkmath.NewInt(2),
-			expectedReinvestAmount: sdkmath.NewInt(998),
+			expectedRebateAmount:    sdkmath.NewInt(2),
+			expectedStrideFeeAmount: sdkmath.NewInt(98),
+			expectedReinvestAmount:  sdkmath.NewInt(900),
 		},
 		{
 			// (Example #1 but with a 2x larger fee)
 			// 10 CP Liquid Stake, 100 TVL => 10% contribution
 			// 1000 rewards, 20% stride fee => 200 total fees
 			// 200 total fees * 10% contribution * 50% rebate
-			// => 10 rebate, 990 reinvest
+			// => 10 rebate, 190 stride fee, 800 reinvest
 			name:                     "case 4",
 			communityPoolLiquidStake: sdk.NewInt(10),
 			totalDelegations:         sdkmath.NewInt(100),
@@ -109,15 +113,16 @@ func (s *KeeperTestSuite) TestCheckForCommunityPoolRebate() {
 			strideFee:                20,
 			rebatePercentage:         sdk.MustNewDecFromStr("0.5"),
 
-			expectedRebateAmount:   sdkmath.NewInt(10),
-			expectedReinvestAmount: sdkmath.NewInt(990),
+			expectedRebateAmount:    sdkmath.NewInt(10),
+			expectedStrideFeeAmount: sdkmath.NewInt(190),
+			expectedReinvestAmount:  sdkmath.NewInt(800),
 		},
 		{
 			// (Example #1 but with a smaller rebate)
 			// 10 CP Liquid Stake, 100 TVL => 10% contribution
 			// 1000 rewards, 10% stride fee => 100 total fees
 			// 100 total fees * 10% contribution * 20% rebate
-			// => 2 rebate, 998 reinvest
+			// => 2 rebate, 98 stride fee, 998 reinvest
 			name:                     "case 5",
 			communityPoolLiquidStake: sdk.NewInt(10),
 			totalDelegations:         sdkmath.NewInt(100),
@@ -125,15 +130,16 @@ func (s *KeeperTestSuite) TestCheckForCommunityPoolRebate() {
 			strideFee:                10,
 			rebatePercentage:         sdk.MustNewDecFromStr("0.2"),
 
-			expectedRebateAmount:   sdkmath.NewInt(2),
-			expectedReinvestAmount: sdkmath.NewInt(998),
+			expectedRebateAmount:    sdkmath.NewInt(2),
+			expectedStrideFeeAmount: sdkmath.NewInt(98),
+			expectedReinvestAmount:  sdkmath.NewInt(900),
 		},
 		{
 			// (Example #1 but with a larger rebate)
 			// 10 CP Liquid Stake, 100 TVL => 10% contribution
 			// 1000 rewards, 10% stride fee => 100 total fees
 			// 100 total fees * 10% contribution * 79% rebate
-			// => 7.9 rebate (truncated to 7), 993 reinvest
+			// => 7.9 rebate (truncated to 7), 93 stride fee, 993 reinvest
 			name:                     "case 6",
 			communityPoolLiquidStake: sdk.NewInt(10),
 			totalDelegations:         sdkmath.NewInt(100),
@@ -141,21 +147,24 @@ func (s *KeeperTestSuite) TestCheckForCommunityPoolRebate() {
 			strideFee:                10,
 			rebatePercentage:         sdk.MustNewDecFromStr("0.79"),
 
-			expectedRebateAmount:   sdkmath.NewInt(7),
-			expectedReinvestAmount: sdkmath.NewInt(993),
+			expectedRebateAmount:    sdkmath.NewInt(7),
+			expectedStrideFeeAmount: sdkmath.NewInt(93),
+			expectedReinvestAmount:  sdkmath.NewInt(900),
 		},
 		{
 			// No rebate - all should be reinvested
+			// All stride commission goes to stride (10% of 1000 = 100)
 			name:             "no rebate",
 			totalDelegations: sdkmath.NewInt(100),
 			rewardAmount:     sdkmath.NewInt(1000),
 			strideFee:        10,
 
-			expectedRebateAmount:   sdkmath.NewInt(0),
-			expectedReinvestAmount: sdkmath.NewInt(1000),
+			expectedRebateAmount:    sdkmath.NewInt(0),
+			expectedStrideFeeAmount: sdkmath.NewInt(100),
+			expectedReinvestAmount:  sdkmath.NewInt(900),
 		},
 		{
-			// No tvl - shoudl error
+			// No tvl - should error
 			name:                     "case 1",
 			communityPoolLiquidStake: sdk.NewInt(10),
 			totalDelegations:         sdkmath.NewInt(0),
@@ -188,18 +197,15 @@ func (s *KeeperTestSuite) TestCheckForCommunityPoolRebate() {
 			s.App.StakeibcKeeper.SetParams(s.Ctx, params)
 
 			// Call the tested function to get the expected amounts
-			actualRebateAmount, actualReinvestAmount, actualError := s.App.StakeibcKeeper.CheckForCommunityPoolRebate(
-				s.Ctx,
-				chainId,
-				tc.rewardAmount,
-			)
+			feeInfo, actualError := s.App.StakeibcKeeper.CheckForCommunityPoolRebate(s.Ctx, chainId, tc.rewardAmount)
 
 			// Confirm the amounts and error
 			if tc.expectedError != "" {
 				s.Require().ErrorContains(actualError, tc.expectedError, "error expected")
 			} else {
-				s.Require().Equal(tc.expectedRebateAmount.Int64(), actualRebateAmount.Int64(), "rebate amount")
-				s.Require().Equal(tc.expectedReinvestAmount.Int64(), actualReinvestAmount.Int64(), "reinvest amount")
+				s.Require().Equal(tc.expectedRebateAmount.Int64(), feeInfo.RebateAmount.Int64(), "rebate amount")
+				// s.Require().Equal(tc.expectedStrideFeeAmount.Int64(), feeInfo.StrideFeeAmount.Int64(), "stride fee amount")
+				s.Require().Equal(tc.expectedReinvestAmount.Int64(), feeInfo.ReinvestAmount.Int64(), "reinvest amount")
 			}
 		})
 	}
