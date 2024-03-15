@@ -23,6 +23,17 @@ func (h HostZone) GetUnbondingFrequency() uint64 {
 	return (h.UnbondingPeriod / MaxUnbondingEntries) + 1
 }
 
+// Gets the rebate struct if it exists on the host zone
+func (h HostZone) SafelyGetCommunityPoolRebate() (rebate CommunityPoolRebate, exists bool) {
+	if h.CommunityPoolRebate == nil {
+		return CommunityPoolRebate{}, false
+	}
+	if h.CommunityPoolRebate.LiquidStakeAmount.IsNil() || h.CommunityPoolRebate.RebatePercentage.IsNil() {
+		return CommunityPoolRebate{}, false
+	}
+	return *h.CommunityPoolRebate, true
+}
+
 // Generates a new stride-side address on the host zone to escrow deposits
 func NewHostZoneDepositAddress(chainId string) sdk.AccAddress {
 	key := append([]byte("zone"), []byte(chainId)...)
