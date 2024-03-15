@@ -7,6 +7,19 @@ import "cosmos_proto/cosmos.proto";
 
 option go_package = "github.com/Stride-Labs/stride/v19/x/stakeibc/types";
 
+// CommunityPoolRebate stores the size of the community pool liquid stake
+// and the rebate percentage
+message CommunityPoolRebate {
+  string rebate_percentage = 1 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
+  string liquid_stake_amount = 2 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable) = false
+  ];
+}
+
 message HostZone {
   string chain_id = 1;
   string bech32prefix = 17;
@@ -70,6 +83,7 @@ message HostZone {
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false
   ];
+  CommunityPoolRebate community_pool_rebate = 34;
   bool lsm_liquid_stake_enabled = 27;
   bool halted = 19;
   reserved 4, 5, 6, 7, 14, 15, 16;
