@@ -61,7 +61,7 @@ func WithdrawalRewardBalanceCallback(k Keeper, ctx sdk.Context, args []byte, que
 	// Split the withdrawal amount into a rebate, stride fee, and reinvest portion
 	feeInfo, err := k.CheckForCommunityPoolRebate(ctx, chainId, withdrawalRewardBalanceAmount)
 	if err != nil {
-		return err
+		return errorsmod.Wrapf(err, "unable to check for community pool rebate")
 	}
 
 	// If there's a rebate portion, fund the community pool with that amount
