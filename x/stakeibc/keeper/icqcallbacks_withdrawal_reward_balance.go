@@ -59,31 +59,33 @@ func WithdrawalRewardBalanceCallback(k Keeper, ctx sdk.Context, args []byte, que
 		"Query response - Withdrawal Reward Balance: %v %s", withdrawalRewardBalanceAmount, tradeRoute.RewardDenomOnHostZone))
 
 	// Split the withdrawal amount into a rebate and reinvest portion
-	rebateAmount, reinvestAmount, err := k.CheckForCommunityPoolRebate(ctx, chainId, withdrawalRewardBalanceAmount)
+	feeInfo, err := k.CheckForCommunityPoolRebate(ctx, chainId, withdrawalRewardBalanceAmount)
 	if err != nil {
 		return err
 	}
 
 	// If there's a rebate portion, fund the community pool with that amount
-	if rebateAmount.GT(sdkmath.ZeroInt()) {
-		rebateToken := sdk.NewCoin(tradeRouteCallback.RewardDenom, rebateAmount)
+	if feeInfo.RebateAmount.GT(sdkmath.ZeroInt()) {
+		rebateToken := sdk.NewCoin(tradeRouteCallback.RewardDenom, feeInfo.RebateAmount)
 		if err := k.FundCommunityPool(ctx, hostZone, rebateToken, types.ICAAccountType_WITHDRAWAL); err != nil {
 			return errorsmod.Wrapf(err, "unable to submit fund community pool ICA")
 		}
 
 		k.Logger(ctx).Info(utils.LogICQCallbackWithHostZone(chainId, ICQCallbackID_WithdrawalRewardBalance,
 			"Sending rebate tokens %v %s to community pool",
-			rebateAmount, tradeRoute.RewardDenomOnHostZone))
+			feeInfo.RebateAmount, tradeRoute.RewardDenomOnHostZone))
 	}
 
 	// Transfer the amount leftover after to the rebate to the trade zone so it can be swapped for the native token
-	if err := k.TransferRewardTokensHostToTrade(ctx, reinvestAmount, tradeRoute); err != nil {
+	// We transfer both the amount to be reinvested, and the amount for the stride fee
+	tradeAmount := feeInfo.ReinvestAmount.Add(feeInfo.StrideFeeAmount)
+	if err := k.TransferRewardTokensHostToTrade(ctx, tradeAmount, tradeRoute); err != nil {
 		return errorsmod.Wrapf(err, "initiating transfer of reward tokens to trade ICA failed")
 	}
 
 	k.Logger(ctx).Info(utils.LogICQCallbackWithHostZone(chainId, ICQCallbackID_WithdrawalRewardBalance,
 		"Sending discovered reward tokens %v %s from hostZone to tradeZone",
-		reinvestAmount, tradeRoute.RewardDenomOnHostZone))
+		feeInfo.ReinvestAmount, tradeRoute.RewardDenomOnHostZone))
 
 	return nil
 }

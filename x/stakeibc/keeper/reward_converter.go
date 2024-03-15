@@ -32,6 +32,12 @@ type ForwardMetadata struct {
 	Retries  int64  `json:"retries"`
 }
 
+type FeeInfo struct {
+	RebateAmount    sdkmath.Int
+	StrideFeeAmount sdkmath.Int
+	ReinvestAmount  sdkmath.Int
+}
+
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // The goal of this code is to allow certain reward token types to be automatically traded into other types
 // This happens before the rest of the staking, allocation, distribution etc. would continue as normal
@@ -53,6 +59,7 @@ type ForwardMetadata struct {
 
 // Checks if a rebate exists for the given host zone
 // If so, splits the rewardCoin into a portion for the rebate and a portion that should get reinvested
+// Returns the rebate amount, the stride fee amount, and the reinvestment amount
 //
 // The rebate percentage is determined by: (% of total TVL contributed by commuity pool) * (rebate percentage)
 //
@@ -63,38 +70,52 @@ func (k Keeper) CheckForCommunityPoolRebate(
 	ctx sdk.Context,
 	chainId string,
 	rewardAmount sdkmath.Int,
-) (rebateAmount sdkmath.Int, reinvestAmount sdkmath.Int, err error) {
+) (feeInfo FeeInfo, err error) {
 	hostZone, err := k.GetActiveHostZone(ctx, chainId)
 	if err != nil {
-		return sdkmath.ZeroInt(), sdkmath.ZeroInt(), err
-	}
-
-	// Get the rebate info from the host zone if applicable
-	// If there's no rebate, return 0 rebate coin and reinvest the full reward
-	rebateInfo, chainHasRebate := hostZone.SafelyGetCommunityPoolRebate()
-	if !chainHasRebate {
-		return sdkmath.ZeroInt(), rewardAmount, nil
+		return FeeInfo{}, err
 	}
 
 	// Get the fee percentage from params
 	strideFee := sdk.NewIntFromUint64(k.GetParams(ctx).StrideCommission)
 	strideFeePct := sdk.NewDecFromInt(strideFee).Quo(sdk.NewDec(100))
 
+	// Get the total fee amount from the fee percentage
+	totalFeesAmount := sdk.NewDecFromInt(rewardAmount).Mul(strideFeePct).TruncateInt()
+	reinvestAmount := rewardAmount.Sub(totalFeesAmount)
+
+	// Get the rebate info from the host zone if applicable
+	// If there's no rebate, return 0 rebate and reinvest the full reward
+	rebateInfo, chainHasRebate := hostZone.SafelyGetCommunityPoolRebate()
+	if !chainHasRebate {
+		feeInfo = FeeInfo{
+			RebateAmount:    sdkmath.ZeroInt(),
+			StrideFeeAmount: totalFeesAmount,
+			ReinvestAmount:  reinvestAmount,
+		}
+		return feeInfo, nil
+	}
+
 	// It shouldn't be possible to have 0 delegations (since there are rewards and there was a community pool stake)
 	// This will also prevent a division by 0 error
 	if hostZone.TotalDelegations.IsZero() {
-		return sdkmath.ZeroInt(), sdkmath.ZeroInt(), errorsmod.Wrapf(types.ErrDivisionByZero,
+		return feeInfo, errorsmod.Wrapf(types.ErrDivisionByZero,
 			"unable to calculate rebate amount for %s since total delegations are 0", chainId)
 	}
 
 	// The rebate amount is determined by the contribution of the community pool stake towards the total TVL,
 	// multiplied by the rebate fee percentage
 	contributePercentage := sdk.NewDecFromInt(rebateInfo.LiquidStakeAmount).Quo(sdk.NewDecFromInt(hostZone.TotalDelegations))
-	totalFeesAmount := sdk.NewDecFromInt(rewardAmount).Mul(strideFeePct)
-	rebateAmount = totalFeesAmount.Mul(contributePercentage).Mul(rebateInfo.RebatePercentage).TruncateInt()
-	reinvestAmount = rewardAmount.Sub(rebateAmount)
+	rebateAmount := sdk.NewDecFromInt(totalFeesAmount).Mul(contributePercentage).Mul(rebateInfo.RebatePercentage).TruncateInt()
+	strideFeeAmount := totalFeesAmount.Sub(rebateAmount)
 
-	return rebateAmount, reinvestAmount, nil
+	feeInfo = FeeInfo{
+		RebateAmount:    rebateAmount,
+		StrideFeeAmount: strideFeeAmount,
+		ReinvestAmount:  reinvestAmount,
+	}
+
+	return feeInfo, nil
 }
 
 // Builds a PFM transfer message to send reward tokens from the host zone,
