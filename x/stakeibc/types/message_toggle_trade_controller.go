@@ -15,9 +15,10 @@ const TypeMsgToggleTradeController = "toggle_trade_controller"
 
 var _ sdk.Msg = &MsgToggleTradeController{}
 
-func NewMsgToggleTradeController(creator string, permissionChange AuthzPermissionChange, address string) *MsgToggleTradeController {
+func NewMsgToggleTradeController(creator, chainId string, permissionChange AuthzPermissionChange, address string) *MsgToggleTradeController {
 	return &MsgToggleTradeController{
 		Creator:          creator,
+		ChainId:          chainId,
 		PermissionChange: permissionChange,
 		Address:          address,
 	}
@@ -51,6 +52,9 @@ func (msg *MsgToggleTradeController) ValidateBasic() error {
 	}
 	if err := utils.ValidateAdminAddress(msg.Creator); err != nil {
 		return err
+	}
+	if msg.ChainId == "" {
+		return errors.New("chain ID must be specified")
 	}
 	if msg.Address == "" {
 		return errors.New("trade controller address must be specified")

@@ -14,12 +14,13 @@ import (
 
 func CmdToggleTradeController() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "toggle-trade-controller [grant|revoke] [address]",
+		Use:   "toggle-trade-controller [chain-id] [grant|revoke] [address]",
 		Short: "Submits an ICA tx to grant or revoke permissions to trade on behalf of the trade ICA",
-		Args:  cobra.ExactArgs(2),
+		Args:  cobra.ExactArgs(3),
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
-			permissionChangeString := args[0]
-			address := args[1]
+			chainId := args[0]
+			permissionChangeString := args[1]
+			address := args[2]
 
 			permissionChangeInt, ok := types.AuthzPermissionChange_value[strings.ToUpper(permissionChangeString)]
 			if !ok {
@@ -34,6 +35,7 @@ func CmdToggleTradeController() *cobra.Command {
 
 			msg := types.NewMsgToggleTradeController(
 				clientCtx.GetFromAddress().String(),
+				chainId,
 				permissionChange,
 				address,
 			)

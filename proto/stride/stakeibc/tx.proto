@@ -331,9 +331,11 @@ message MsgToggleTradeController {
 
   // Message signer (admin only)
   string creator = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+  // Chain ID of the trade account
+  string chain_id = 2;
   // Permission change (either grant or revoke)
-  AuthzPermissionChange permission_change = 2;
+  AuthzPermissionChange permission_change = 3;
   // Address of controller
-  string address = 3;
+  string address = 4;
 }
 message MsgToggleTradeControllerResponse {}

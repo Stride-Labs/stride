@@ -17,6 +17,7 @@ func TestMsgToggleTradeController(t *testing.T) {
 	require.True(t, ok)
 
 	validAddress := "cosmosXXX"
+	validChainId := "chain-0"
 	validPermissionChange := types.AuthzPermissionChange_GRANT
 
 	tests := []struct {
@@ -28,6 +29,7 @@ func TestMsgToggleTradeController(t *testing.T) {
 			name: "valid message",
 			msg: types.MsgToggleTradeController{
 				Creator:          validAdminAddress,
+				ChainId:          validChainId,
 				PermissionChange: validPermissionChange,
 				Address:          validAddress,
 			},
@@ -36,6 +38,7 @@ func TestMsgToggleTradeController(t *testing.T) {
 			name: "invalid address",
 			msg: types.MsgToggleTradeController{
 				Creator:          invalidAddress,
+				ChainId:          validChainId,
 				PermissionChange: validPermissionChange,
 				Address:          validAddress,
 			},
@@ -45,6 +48,7 @@ func TestMsgToggleTradeController(t *testing.T) {
 			name: "not admin address",
 			msg: types.MsgToggleTradeController{
 				Creator:          validNotAdminAddress,
+				ChainId:          validChainId,
 				PermissionChange: validPermissionChange,
 				Address:          validAddress,
 			},
@@ -54,10 +58,21 @@ func TestMsgToggleTradeController(t *testing.T) {
 			name: "invalid address",
 			msg: types.MsgToggleTradeController{
 				Creator:          validAdminAddress,
+				ChainId:          validChainId,
 				PermissionChange: validPermissionChange,
 				Address:          "",
 			},
 			err: "address must be specified",
+		},
+		{
+			name: "invalid chain ID",
+			msg: types.MsgToggleTradeController{
+				Creator:          validAdminAddress,
+				ChainId:          "",
+				PermissionChange: validPermissionChange,
+				Address:          validAddress,
+			},
+			err: "chain ID must be specified",
 		},
 	}
 
