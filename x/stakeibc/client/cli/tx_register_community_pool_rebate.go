@@ -16,8 +16,8 @@ import (
 
 func CmdRegisterCommunityPoolRebate() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "register-rebate [chain-id] [rebate-percentage] [liquid-stake-amount]",
-		Short: "Broadcast message register-rebate",
+		Use:   "register-rebate [chain-id] [rebate-percentage] [liquid-staked-amount]",
+		Short: "Registers a community pool rebate",
 		Args:  cobra.ExactArgs(3),
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
 			chainId := args[0]
