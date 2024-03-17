@@ -1121,6 +1121,7 @@ func (k msgServer) ToggleTradeController(
 		return nil, types.ErrTradeRouteNotFound.Wrapf("trade route not found for chain ID %s", msg.ChainId)
 	}
 
+	// Get the swap msg type URL from the proto
 	swapMsgTypeUrl := "/" + proto.MessageName(&types.SwapAmountInRoute{})
 
 	// Build the authz message, depending on whether permissions are granted or revoked
@@ -1129,12 +1130,15 @@ func (k msgServer) ToggleTradeController(
 	var authzMsg []proto.Message
 	switch msg.PermissionChange {
 	case types.AuthzPermissionChange_GRANT:
+		authorization := authz.NewGenericAuthorization(swapMsgTypeUrl)
+		grant, err := authz.NewGrant(ctx.BlockTime(), authorization, nil)
+		if err != nil {
+			return nil, errorsmod.Wrapf(err, "unable to build grant struct")
+		}
 		authzMsg = []proto.Message{&authz.MsgGrant{
 			Granter: tradeRoute.TradeAccount.Address,
 			Grantee: msg.Address,
-			Grant:   authz.Grant{
-				// TODO [rebate]
-			},
+			Grant:   grant,
 		}}
 	case types.AuthzPermissionChange_REVOKE:
 		authzMsg = []proto.Message{&authz.MsgRevoke{
