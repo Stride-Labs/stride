@@ -2594,9 +2594,9 @@ func (s *KeeperTestSuite) TestRegisterCommunityPoolRebate() {
 
 	// Submit a message to create the rebate
 	msg := types.MsgRegisterCommunityPoolRebate{
-		ChainId:           HostChainId,
-		RebatePercentage:  rebateInfo.RebatePercentage,
-		LiquidStakeAmount: rebateInfo.LiquidStakeAmount,
+		ChainId:            HostChainId,
+		RebatePercentage:   rebateInfo.RebatePercentage,
+		LiquidStakedAmount: rebateInfo.LiquidStakeAmount,
 	}
 	_, err := s.GetMsgServer().RegisterCommunityPoolRebate(s.Ctx, &msg)
 	s.Require().NoError(err, "no error expected when registering rebate")
@@ -2604,6 +2604,17 @@ func (s *KeeperTestSuite) TestRegisterCommunityPoolRebate() {
 	// Confirm the rebate was updated
 	actualHostZone := s.MustGetHostZone(HostChainId)
 	s.Require().Equal(rebateInfo, *actualHostZone.CommunityPoolRebate, "rebate")
+
+	// Submit a 0 LS amount which should delete the rebate
+	removeMsg := types.MsgRegisterCommunityPoolRebate{
+		ChainId:            HostChainId,
+		LiquidStakedAmount: sdk.ZeroInt(),
+	}
+	_, err = s.GetMsgServer().RegisterCommunityPoolRebate(s.Ctx, &removeMsg)
+	s.Require().NoError(err, "no error expected when registering 0 rebate")
+
+	actualHostZone = s.MustGetHostZone(HostChainId)
+	s.Require().Nil(actualHostZone.CommunityPoolRebate, "rebate")
 
 	// Confirm a message with an invalid chain ID would cause an error
 	_, err = s.GetMsgServer().RegisterCommunityPoolRebate(s.Ctx, &types.MsgRegisterCommunityPoolRebate{ChainId: "invalid"})

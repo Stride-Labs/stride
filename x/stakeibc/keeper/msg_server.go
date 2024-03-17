@@ -1116,10 +1116,17 @@ func (k msgServer) RegisterCommunityPoolRebate(
 		return nil, types.ErrHostZoneNotFound.Wrapf("host zone %s not found", msg.ChainId)
 	}
 
-	hostZone.CommunityPoolRebate = &types.CommunityPoolRebate{
-		LiquidStakeAmount: msg.LiquidStakeAmount,
-		RebatePercentage:  msg.RebatePercentage,
+	// If a zero rebate is specified, set the rebate to nil
+	// Otherwise, update the struct
+	if msg.LiquidStakedAmount.IsZero() {
+		hostZone.CommunityPoolRebate = nil
+	} else {
+		hostZone.CommunityPoolRebate = &types.CommunityPoolRebate{
+			LiquidStakeAmount: msg.LiquidStakedAmount,
+			RebatePercentage:  msg.RebatePercentage,
+		}
 	}
+
 	k.SetHostZone(ctx, hostZone)
 
 	return &types.MsgRegisterCommunityPoolRebateResponse{}, nil

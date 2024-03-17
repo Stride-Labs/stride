@@ -325,15 +325,16 @@ message MsgRegisterCommunityPoolRebate {
 
   // Message signer (admin only)
   string creator = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
-  // Chain ID of the community pool
+  // Chain id of the chain whose community pool has a liquid staking rebate
+  // arrangement with stride
   string chain_id = 2;
   // Rebate percentage (e.g. 0.5 for 50%)
   string rebate_percentage = 3 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false
   ];
-  // Magnitude of the community pool liquid stake associated with the rebate
-  string liquid_stake_amount = 4 [
+  // Number of native tokens staked by the community pool
+  string liquid_staked_amount = 4 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
     (gogoproto.nullable) = false
   ];

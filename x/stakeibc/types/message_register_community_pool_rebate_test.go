@@ -21,7 +21,7 @@ func TestMsgRegisterCommunityPoolRebate(t *testing.T) {
 
 	validChainId := "chain-0"
 	validRebatePercentage := sdk.MustNewDecFromStr("0.1")
-	validLiquidStakeAmount := sdk.NewInt(1000)
+	validLiquidStakedAmount := sdk.NewInt(1000)
 
 	tests := []struct {
 		name string
@@ -31,88 +31,87 @@ func TestMsgRegisterCommunityPoolRebate(t *testing.T) {
 		{
 			name: "valid message",
 			msg: types.MsgRegisterCommunityPoolRebate{
-				Creator:           validAdminAddress,
-				ChainId:           validChainId,
-				RebatePercentage:  validRebatePercentage,
-				LiquidStakeAmount: validLiquidStakeAmount,
+				Creator:            validAdminAddress,
+				ChainId:            validChainId,
+				RebatePercentage:   validRebatePercentage,
+				LiquidStakedAmount: validLiquidStakedAmount,
 			},
 		},
 		{
 			name: "invalid address",
 			msg: types.MsgRegisterCommunityPoolRebate{
-				Creator:           invalidAddress,
-				ChainId:           validChainId,
-				RebatePercentage:  validRebatePercentage,
-				LiquidStakeAmount: validLiquidStakeAmount,
+				Creator:            invalidAddress,
+				ChainId:            validChainId,
+				RebatePercentage:   validRebatePercentage,
+				LiquidStakedAmount: validLiquidStakedAmount,
 			},
 			err: "invalid creator address",
 		},
 		{
 			name: "not admin address",
 			msg: types.MsgRegisterCommunityPoolRebate{
-				Creator:           validNotAdminAddress,
-				ChainId:           validChainId,
-				RebatePercentage:  validRebatePercentage,
-				LiquidStakeAmount: validLiquidStakeAmount,
+				Creator:            validNotAdminAddress,
+				ChainId:            validChainId,
+				RebatePercentage:   validRebatePercentage,
+				LiquidStakedAmount: validLiquidStakedAmount,
 			},
 			err: "not an admin",
 		},
 		{
 			name: "invalid chain ID",
 			msg: types.MsgRegisterCommunityPoolRebate{
-				Creator:           validAdminAddress,
-				ChainId:           "",
-				RebatePercentage:  validRebatePercentage,
-				LiquidStakeAmount: validLiquidStakeAmount,
+				Creator:            validAdminAddress,
+				ChainId:            "",
+				RebatePercentage:   validRebatePercentage,
+				LiquidStakedAmount: validLiquidStakedAmount,
 			},
 			err: "chain ID must be specified",
 		},
 		{
 			name: "invalid rebate percentage - nil",
 			msg: types.MsgRegisterCommunityPoolRebate{
-				Creator:           validAdminAddress,
-				ChainId:           validChainId,
-				LiquidStakeAmount: validLiquidStakeAmount,
+				Creator:            validAdminAddress,
+				ChainId:            validChainId,
+				LiquidStakedAmount: validLiquidStakedAmount,
 			},
-			err: "rebate percentage, must be between [0, 1)",
+			err: "rebate percentage, must be between 0 and 1 (inclusive)",
 		},
 		{
 			name: "invalid rebate percentage - less than 0",
 			msg: types.MsgRegisterCommunityPoolRebate{
-				Creator:           validAdminAddress,
-				ChainId:           validChainId,
-				RebatePercentage:  sdk.MustNewDecFromStr("0.5").Neg(),
-				LiquidStakeAmount: validLiquidStakeAmount,
+				Creator:            validAdminAddress,
+				ChainId:            validChainId,
+				RebatePercentage:   sdk.MustNewDecFromStr("0.5").Neg(),
+				LiquidStakedAmount: validLiquidStakedAmount,
 			},
-			err: "rebate percentage, must be between [0, 1)",
+			err: "rebate percentage, must be between 0 and 1 (inclusive)",
 		},
 		{
-			name: "invalid rebate percentage - one",
+			name: "valid rebate percentage - one",
 			msg: types.MsgRegisterCommunityPoolRebate{
-				Creator:           validAdminAddress,
-				ChainId:           validChainId,
-				RebatePercentage:  sdk.OneDec(),
-				LiquidStakeAmount: validLiquidStakeAmount,
+				Creator:            validAdminAddress,
+				ChainId:            validChainId,
+				RebatePercentage:   sdk.OneDec(),
+				LiquidStakedAmount: validLiquidStakedAmount,
 			},
-			err: "rebate percentage, must be between [0, 1)",
 		},
 		{
 			name: "invalid rebate percentage - greater than one",
 			msg: types.MsgRegisterCommunityPoolRebate{
-				Creator:           validAdminAddress,
-				ChainId:           validChainId,
-				RebatePercentage:  sdk.MustNewDecFromStr("1.1"),
-				LiquidStakeAmount: validLiquidStakeAmount,
+				Creator:            validAdminAddress,
+				ChainId:            validChainId,
+				RebatePercentage:   sdk.MustNewDecFromStr("1.1"),
+				LiquidStakedAmount: validLiquidStakedAmount,
 			},
-			err: "rebate percentage, must be between [0, 1)",
+			err: "rebate percentage, must be between 0 and 1 (inclusive)",
 		},
 		{
 			name: "valid zero rebate",
 			msg: types.MsgRegisterCommunityPoolRebate{
-				Creator:           validAdminAddress,
-				ChainId:           validChainId,
-				RebatePercentage:  sdk.ZeroDec(),
-				LiquidStakeAmount: validLiquidStakeAmount,
+				Creator:            validAdminAddress,
+				ChainId:            validChainId,
+				RebatePercentage:   sdk.ZeroDec(),
+				LiquidStakedAmount: validLiquidStakedAmount,
 			},
 		},
 		{
@@ -122,27 +121,26 @@ func TestMsgRegisterCommunityPoolRebate(t *testing.T) {
 				ChainId:          validChainId,
 				RebatePercentage: validRebatePercentage,
 			},
-			err: "invalid liquid stake amount, must be greater than 0",
+			err: "invalid liquid stake amount, must be greater than or equal to 0",
 		},
 		{
 			name: "invalid liquid stake amount - less than 0",
 			msg: types.MsgRegisterCommunityPoolRebate{
-				Creator:           validAdminAddress,
-				ChainId:           validChainId,
-				RebatePercentage:  validRebatePercentage,
-				LiquidStakeAmount: sdkmath.NewInt(1).Neg(),
+				Creator:            validAdminAddress,
+				ChainId:            validChainId,
+				RebatePercentage:   validRebatePercentage,
+				LiquidStakedAmount: sdkmath.NewInt(1).Neg(),
 			},
-			err: "invalid liquid stake amount, must be greater than 0",
+			err: "invalid liquid stake amount, must be greater than or equal to 0",
 		},
 		{
-			name: "invalid liquid stake amount - zero",
+			name: "valid liquid stake amount - zero",
 			msg: types.MsgRegisterCommunityPoolRebate{
-				Creator:           validAdminAddress,
-				ChainId:           validChainId,
-				RebatePercentage:  validRebatePercentage,
-				LiquidStakeAmount: sdkmath.ZeroInt(),
+				Creator:            validAdminAddress,
+				ChainId:            validChainId,
+				RebatePercentage:   validRebatePercentage,
+				LiquidStakedAmount: sdkmath.ZeroInt(),
 			},
-			err: "invalid liquid stake amount, must be greater than 0",
 		},
 	}
 

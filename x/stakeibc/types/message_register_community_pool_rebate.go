@@ -20,13 +20,13 @@ func NewMsgRegisterCommunityPoolRebate(
 	creator string,
 	chainId string,
 	rebatePercentage sdk.Dec,
-	liquidStakeAmount sdkmath.Int,
+	liquidStakedAmount sdkmath.Int,
 ) *MsgRegisterCommunityPoolRebate {
 	return &MsgRegisterCommunityPoolRebate{
-		Creator:           creator,
-		ChainId:           chainId,
-		RebatePercentage:  rebatePercentage,
-		LiquidStakeAmount: liquidStakeAmount,
+		Creator:            creator,
+		ChainId:            chainId,
+		RebatePercentage:   rebatePercentage,
+		LiquidStakedAmount: liquidStakedAmount,
 	}
 }
 
@@ -62,11 +62,11 @@ func (msg *MsgRegisterCommunityPoolRebate) ValidateBasic() error {
 	if msg.ChainId == "" {
 		return errors.New("chain ID must be specified")
 	}
-	if msg.RebatePercentage.IsNil() || msg.RebatePercentage.LT(sdk.ZeroDec()) || msg.RebatePercentage.GTE(sdk.OneDec()) {
-		return errors.New("invalid rebate percentage, must be between [0, 1)")
+	if msg.RebatePercentage.IsNil() || msg.RebatePercentage.LT(sdk.ZeroDec()) || msg.RebatePercentage.GT(sdk.OneDec()) {
+		return errors.New("invalid rebate percentage, must be between 0 and 1 (inclusive)")
 	}
-	if msg.LiquidStakeAmount.IsNil() || msg.LiquidStakeAmount.LTE(sdkmath.ZeroInt()) {
-		return errors.New("invalid liquid stake amount, must be greater than 0")
+	if msg.LiquidStakedAmount.IsNil() || msg.LiquidStakedAmount.LT(sdkmath.ZeroInt()) {
+		return errors.New("invalid liquid stake amount, must be greater than or equal to zero")
 	}
 
 	return nil
