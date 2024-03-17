@@ -74,6 +74,16 @@ func TestMsgToggleTradeController(t *testing.T) {
 			},
 			err: "chain ID must be specified",
 		},
+		{
+			name: "invalid permission change",
+			msg: types.MsgToggleTradeController{
+				Creator:          validAdminAddress,
+				ChainId:          validChainId,
+				PermissionChange: 100,
+				Address:          validAddress,
+			},
+			err: "invalid permission change enum value",
+		},
 	}
 
 	for _, test := range tests {

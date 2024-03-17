@@ -59,6 +59,9 @@ func (msg *MsgToggleTradeController) ValidateBasic() error {
 	if msg.Address == "" {
 		return errors.New("trade controller address must be specified")
 	}
+	if _, ok := AuthzPermissionChange_name[int32(msg.PermissionChange)]; !ok {
+		return errors.New("invalid permission change enum value")
+	}
 
 	return nil
 }

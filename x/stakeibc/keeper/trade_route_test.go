@@ -124,4 +124,8 @@ func (s *KeeperTestSuite) TestGetTradeRouteFromTradeChainId() {
 		s.Require().Equal(actualRoute.RewardDenomOnRewardZone, rewardDenom, "reward denom")
 		s.Require().Equal(actualRoute.HostDenomOnHostZone, hostDenom, "host denom")
 	}
+
+	// Search for a chainId without a trade route
+	_, found := s.App.StakeibcKeeper.GetTradeRouteFromTradeChainId(s.Ctx, "chain-4")
+	s.Require().False(found, "trade route should not have been found")
 }
