@@ -2575,3 +2575,63 @@ func (s *KeeperTestSuite) TestResumeHostZone_UnhaltedZones() {
 	expectedErrorMsg := fmt.Sprintf("invalid chain id, zone for %s not halted: host zone is not halted", HostChainId)
 	s.Require().Equal(expectedErrorMsg, err.Error(), "should return correct error msg")
 }
+
+// ----------------------------------------------------
+//	              ToggleTradeController
+// ----------------------------------------------------
+
+func (s *KeeperTestSuite) TestToggleTradeController() {
+	tradeICAOwner := types.FormatTradeRouteICAOwner(HostChainId, RewardDenom, HostDenom, types.ICAAccountType_CONVERTER_TRADE)
+	channelId, portId := s.CreateICAChannel(tradeICAOwner)
+
+	tradeControllerAddress := "trade-controller"
+
+	// Create a trade route
+	tradeRoute := types.TradeRoute{
+		RewardDenomOnRewardZone: RewardDenom,
+		HostDenomOnHostZone:     HostDenom,
+		TradeAccount: types.ICAAccount{
+			ChainId:      HostChainId,
+			ConnectionId: ibctesting.FirstConnectionID,
+		},
+	}
+	s.App.StakeibcKeeper.SetTradeRoute(s.Ctx, tradeRoute)
+
+	// Test granting permissions
+	grantMsg := types.MsgToggleTradeController{
+		ChainId:          HostChainId,
+		PermissionChange: types.AuthzPermissionChange_GRANT,
+		Address:          tradeControllerAddress,
+	}
+	s.CheckICATxSubmitted(portId, channelId, func() error {
+		_, err := s.GetMsgServer().ToggleTradeController(s.Ctx, &grantMsg)
+		return err
+	})
+
+	// Test revoking permissions
+	revokeMsg := types.MsgToggleTradeController{
+		ChainId:          HostChainId,
+		PermissionChange: types.AuthzPermissionChange_REVOKE,
+		Address:          tradeControllerAddress,
+	}
+	s.CheckICATxSubmitted(portId, channelId, func() error {
+		_, err := s.GetMsgServer().ToggleTradeController(s.Ctx, &revokeMsg)
+		return err
+	})
+
+	// Test with an invalid chain ID - it should fail because the trade route cant be found
+	invalidMsg := &types.MsgToggleTradeController{ChainId: "invalid-chain"}
+	_, err := s.GetMsgServer().ToggleTradeController(s.Ctx, invalidMsg)
+	s.Require().ErrorContains(err, "trade route not found")
+
+	// Test failing to build an authz message by passing an invalid permission change
+	invalidMsg = &types.MsgToggleTradeController{ChainId: HostChainId, PermissionChange: 100}
+	_, err = s.GetMsgServer().ToggleTradeController(s.Ctx, invalidMsg)
+	s.Require().ErrorContains(err, "invalid permission change")
+
+	// Remove the connection ID from the trade route so the ICA submission fails
+	tradeRoute.TradeAccount.ConnectionId = ""
+	s.App.StakeibcKeeper.SetTradeRoute(s.Ctx, tradeRoute)
+	_, err = s.GetMsgServer().ToggleTradeController(s.Ctx, &grantMsg)
+	s.Require().ErrorContains(err, "unable to send ICA tx")
+}
