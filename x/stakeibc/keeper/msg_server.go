@@ -2,7 +2,6 @@ package keeper
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"time"
 
@@ -10,7 +9,6 @@ import (
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	authz "github.com/cosmos/cosmos-sdk/x/authz"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	proto "github.com/cosmos/gogoproto/proto"
 	icatypes "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/types"
@@ -1121,33 +1119,10 @@ func (k msgServer) ToggleTradeController(
 		return nil, types.ErrTradeRouteNotFound.Wrapf("trade route not found for chain ID %s", msg.ChainId)
 	}
 
-	// Get the swap msg type URL from the proto
-	swapMsgTypeUrl := "/" + proto.MessageName(&types.SwapAmountInRoute{})
-
-	// Build the authz message, depending on whether permissions are granted or revoked
-	// The granter will always be the trade ICA and the grantee will be the address
-	// specified in the message
-	var authzMsg []proto.Message
-	switch msg.PermissionChange {
-	case types.AuthzPermissionChange_GRANT:
-		authorization := authz.NewGenericAuthorization(swapMsgTypeUrl)
-		grant, err := authz.NewGrant(ctx.BlockTime(), authorization, nil)
-		if err != nil {
-			return nil, errorsmod.Wrapf(err, "unable to build grant struct")
-		}
-		authzMsg = []proto.Message{&authz.MsgGrant{
-			Granter: tradeRoute.TradeAccount.Address,
-			Grantee: msg.Address,
-			Grant:   grant,
-		}}
-	case types.AuthzPermissionChange_REVOKE:
-		authzMsg = []proto.Message{&authz.MsgRevoke{
-			Granter:    tradeRoute.TradeAccount.Address,
-			Grantee:    msg.Address,
-			MsgTypeUrl: swapMsgTypeUrl,
-		}}
-	default:
-		return nil, errors.New("invalid permission change")
+	// Build the authz message that grants or revokes trade permissions to the specified address
+	authzMsg, err := k.BuildTradeAuthzMsg(ctx, tradeRoute, msg.PermissionChange, msg.Address)
+	if err != nil {
+		return nil, err
 	}
 
 	// Build the ICA channel owner from the trade route
@@ -1160,7 +1135,7 @@ func (k msgServer) ToggleTradeController(
 	// Submit the ICA tx from the trade ICA account
 	// Timeout the ICA at 1 hour
 	timeoutTimestamp := uint64(ctx.BlockTime().Add(time.Hour).UnixNano())
-	err := k.SubmitICATxWithoutCallback(
+	err = k.SubmitICATxWithoutCallback(
 		ctx,
 		tradeRoute.TradeAccount.ConnectionId,
 		tradeRouteAccountOwner,
