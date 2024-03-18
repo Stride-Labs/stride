@@ -103,11 +103,22 @@ func (k Keeper) CheckForCommunityPoolRebate(
 			"unable to calculate rebate amount for %s since total delegations are 0", chainId)
 	}
 
+	// It also shouldn't be possible for the liquid stake amount to be greater than the full TVL
+	if rebateInfo.LiquidStakeAmount.GT(hostZone.TotalDelegations) {
+		return feeInfo, errorsmod.Wrapf(types.ErrFeeSplitInvariantFailed,
+			"community pool liquid staked amount greater than total delegations")
+	}
+
 	// The rebate amount is determined by the contribution of the community pool stake towards the total TVL,
 	// multiplied by the rebate fee percentage
 	contributePercentage := sdk.NewDecFromInt(rebateInfo.LiquidStakeAmount).Quo(sdk.NewDecFromInt(hostZone.TotalDelegations))
 	rebateAmount := sdk.NewDecFromInt(totalFeesAmount).Mul(contributePercentage).Mul(rebateInfo.RebatePercentage).TruncateInt()
 	strideFeeAmount := totalFeesAmount.Sub(rebateAmount)
+
+	// Sanity check calculation
+	if !rebateAmount.Add(strideFeeAmount).Add(reinvestAmount).Equal(rewardAmount) {
+		return feeInfo, errorsmod.Wrapf(types.ErrFeeSplitInvariantFailed, "fee info compontents do not sum to rewards")
+	}
 
 	feeInfo = FeeInfo{
 		RebateAmount:    rebateAmount,
