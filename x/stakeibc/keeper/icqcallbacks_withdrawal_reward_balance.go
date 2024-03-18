@@ -73,7 +73,7 @@ func WithdrawalRewardBalanceCallback(k Keeper, ctx sdk.Context, args []byte, que
 
 		k.Logger(ctx).Info(utils.LogICQCallbackWithHostZone(chainId, ICQCallbackID_WithdrawalRewardBalance,
 			"Sending rebate tokens %v %s to community pool",
-			rebateAmount, tradeRoute.RewardDenomOnHostZone))
+			rebateAmount, tradeRoute.RewardDenomOnRewardZone))
 	}
 
 	// Transfer the amount leftover after to the rebate to the trade zone so it can be swapped for the native token
@@ -84,7 +84,7 @@ func WithdrawalRewardBalanceCallback(k Keeper, ctx sdk.Context, args []byte, que
 
 	k.Logger(ctx).Info(utils.LogICQCallbackWithHostZone(chainId, ICQCallbackID_WithdrawalRewardBalance,
 		"Sending discovered reward tokens %v %s from hostZone to tradeZone",
-		tradeAmount, tradeRoute.RewardDenomOnHostZone))
+		tradeAmount, tradeRoute.RewardDenomOnRewardZone))
 
 	return nil
 }

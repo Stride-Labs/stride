@@ -234,10 +234,22 @@ func (k Keeper) FundCommunityPool(
 ) error {
 	fundCoins := sdk.NewCoins(token)
 
+	// Get the depositor ICA address based on the account type
+	var depositor string
+	switch senderAccountType {
+	case types.ICAAccountType_COMMUNITY_POOL_RETURN:
+		depositor = hostZone.CommunityPoolReturnIcaAddress
+	case types.ICAAccountType_WITHDRAWAL:
+		depositor = hostZone.WithdrawalIcaAddress
+	default:
+		return errorsmod.Wrapf(types.ErrICATxFailed,
+			"fund community pool ICA can only be initiated from either the community pool return or withdrawal ICA account")
+	}
+
 	var msgs []proto.Message
 	msgs = append(msgs, &disttypes.MsgFundCommunityPool{
 		Amount:    fundCoins,
-		Depositor: hostZone.CommunityPoolReturnIcaAddress,
+		Depositor: depositor,
 	})
 
 	// Timeout the ICA at the end of the epoch
