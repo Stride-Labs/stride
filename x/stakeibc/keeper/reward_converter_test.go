@@ -34,10 +34,10 @@ type TransferRewardHostToTradeTestCase struct {
 }
 
 // --------------------------------------------------------------
-//                 CheckForCommunityPoolRebate
+//                   CalculateRewardSplit
 // --------------------------------------------------------------
 
-func (s *KeeperTestSuite) TestCheckForCommunityPoolRebate() {
+func (s *KeeperTestSuite) TestCalculateRewardSplit() {
 	testCases := []struct {
 		name                     string
 		communityPoolLiquidStake sdkmath.Int
@@ -284,7 +284,7 @@ func (s *KeeperTestSuite) TestCheckForCommunityPoolRebate() {
 			s.App.StakeibcKeeper.SetParams(s.Ctx, params)
 
 			// Call the tested function to get the expected amounts
-			feeInfo, actualError := s.App.StakeibcKeeper.CheckForCommunityPoolRebate(s.Ctx, chainId, tc.rewardAmount)
+			feeInfo, actualError := s.App.StakeibcKeeper.CalculateRewardSplit(s.Ctx, chainId, tc.rewardAmount)
 
 			// Confirm the amounts and error
 			if tc.expectedError != "" {

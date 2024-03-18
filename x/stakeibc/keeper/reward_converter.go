@@ -57,8 +57,7 @@ type FeeInfo struct {
 // and the normal staking and distribution flow will continue from there.
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-// Checks if a rebate exists for the given host zone
-// If so, splits the rewardCoin into a portion for the rebate and a portion that should get reinvested
+// Breaks down the accumulated rewards into the portions intended for reinvestment, stride commission, or a rebate
 // Returns the rebate amount, the stride fee amount, and the reinvestment amount
 //
 // The rebate percentage is determined by: (% of total TVL contributed by commuity pool) * (rebate percentage)
@@ -66,7 +65,7 @@ type FeeInfo struct {
 // E.g. Community pool liquid staked 1M, TVL is 10M, rebate is 50%
 // Total rewards this epoch are 1000, and the stride fee is 10%
 // => Then the rebate is 1000 rewards * 10% stride fee * (1M / 10M) * 50% rebate = 5
-func (k Keeper) CheckForCommunityPoolRebate(
+func (k Keeper) CalculateRewardSplit(
 	ctx sdk.Context,
 	chainId string,
 	rewardAmount sdkmath.Int,
