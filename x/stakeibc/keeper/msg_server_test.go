@@ -2577,10 +2577,10 @@ func (s *KeeperTestSuite) TestResumeHostZone_UnhaltedZones() {
 }
 
 // ----------------------------------------------------
-//	           RegisterCommunityPoolRebate
+//	           SetCommunityPoolRebate
 // ----------------------------------------------------
 
-func (s *KeeperTestSuite) TestRegisterCommunityPoolRebate() {
+func (s *KeeperTestSuite) TestSetCommunityPoolRebate() {
 	rebateInfo := types.CommunityPoolRebate{
 		LiquidStakeAmount: sdk.NewInt(1000),
 		RebatePercentage:  sdk.MustNewDecFromStr("0.5"),
@@ -2593,12 +2593,12 @@ func (s *KeeperTestSuite) TestRegisterCommunityPoolRebate() {
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
 
 	// Submit a message to create the rebate
-	msg := types.MsgRegisterCommunityPoolRebate{
+	msg := types.MsgSetCommunityPoolRebate{
 		ChainId:            HostChainId,
 		RebatePercentage:   rebateInfo.RebatePercentage,
 		LiquidStakedAmount: rebateInfo.LiquidStakeAmount,
 	}
-	_, err := s.GetMsgServer().RegisterCommunityPoolRebate(s.Ctx, &msg)
+	_, err := s.GetMsgServer().SetCommunityPoolRebate(s.Ctx, &msg)
 	s.Require().NoError(err, "no error expected when registering rebate")
 
 	// Confirm the rebate was updated
@@ -2606,17 +2606,17 @@ func (s *KeeperTestSuite) TestRegisterCommunityPoolRebate() {
 	s.Require().Equal(rebateInfo, *actualHostZone.CommunityPoolRebate, "rebate")
 
 	// Submit a 0 LS amount which should delete the rebate
-	removeMsg := types.MsgRegisterCommunityPoolRebate{
+	removeMsg := types.MsgSetCommunityPoolRebate{
 		ChainId:            HostChainId,
 		LiquidStakedAmount: sdk.ZeroInt(),
 	}
-	_, err = s.GetMsgServer().RegisterCommunityPoolRebate(s.Ctx, &removeMsg)
+	_, err = s.GetMsgServer().SetCommunityPoolRebate(s.Ctx, &removeMsg)
 	s.Require().NoError(err, "no error expected when registering 0 rebate")
 
 	actualHostZone = s.MustGetHostZone(HostChainId)
 	s.Require().Nil(actualHostZone.CommunityPoolRebate, "rebate")
 
 	// Confirm a message with an invalid chain ID would cause an error
-	_, err = s.GetMsgServer().RegisterCommunityPoolRebate(s.Ctx, &types.MsgRegisterCommunityPoolRebate{ChainId: "invalid"})
+	_, err = s.GetMsgServer().SetCommunityPoolRebate(s.Ctx, &types.MsgSetCommunityPoolRebate{ChainId: "invalid"})
 	s.Require().ErrorContains(err, "host zone not found")
 }

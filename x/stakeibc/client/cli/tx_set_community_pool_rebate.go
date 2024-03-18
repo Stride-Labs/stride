@@ -14,10 +14,10 @@ import (
 	"github.com/Stride-Labs/stride/v19/x/stakeibc/types"
 )
 
-func CmdRegisterCommunityPoolRebate() *cobra.Command {
+func CmdSetCommunityPoolRebate() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "register-rebate [chain-id] [rebate-percentage] [liquid-staked-amount]",
-		Short: "Registers a community pool rebate",
+		Use:   "set-rebate [chain-id] [rebate-percentage] [liquid-staked-amount]",
+		Short: "Registers or updates a community pool rebate",
 		Args:  cobra.ExactArgs(3),
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
 			chainId := args[0]
@@ -35,7 +35,7 @@ func CmdRegisterCommunityPoolRebate() *cobra.Command {
 				return err
 			}
 
-			msg := types.NewMsgRegisterCommunityPoolRebate(
+			msg := types.NewMsgSetCommunityPoolRebate(
 				clientCtx.GetFromAddress().String(),
 				chainId,
 				rebatePercentage,

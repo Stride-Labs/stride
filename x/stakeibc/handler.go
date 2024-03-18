@@ -77,8 +77,8 @@ func NewMessageHandler(k keeper.Keeper) sdk.Handler {
 		case *types.MsgUpdateTradeRoute:
 			res, err := msgServer.UpdateTradeRoute(sdk.WrapSDKContext(ctx), msg)
 			return sdk.WrapServiceResult(ctx, res, err)
-		case *types.MsgRegisterCommunityPoolRebate:
-			res, err := msgServer.RegisterCommunityPoolRebate(sdk.WrapSDKContext(ctx), msg)
+		case *types.MsgSetCommunityPoolRebate:
+			res, err := msgServer.SetCommunityPoolRebate(sdk.WrapSDKContext(ctx), msg)
 			return sdk.WrapServiceResult(ctx, res, err)
 		default:
 			errMsg := fmt.Sprintf("unrecognized %s message type: %T", types.ModuleName, msg)

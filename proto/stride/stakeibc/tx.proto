@@ -41,8 +41,8 @@ service Msg {
       returns (MsgDeleteTradeRouteResponse);
   rpc UpdateTradeRoute(MsgUpdateTradeRoute)
       returns (MsgUpdateTradeRouteResponse);
-  rpc RegisterCommunityPoolRebate(MsgRegisterCommunityPoolRebate)
-      returns (MsgRegisterCommunityPoolRebateResponse);
+  rpc SetCommunityPoolRebate(MsgSetCommunityPoolRebate)
+      returns (MsgSetCommunityPoolRebateResponse);
 }
 
 message MsgUpdateInnerRedemptionRateBounds {
@@ -317,11 +317,11 @@ message MsgUpdateTradeRoute {
 }
 message MsgUpdateTradeRouteResponse {}
 
-// Registers a community pool rebate by specifying the amount of the liquid
-// stake
-message MsgRegisterCommunityPoolRebate {
+// Registers or updates a community pool rebate by specifying the amount liquid
+// staked
+message MsgSetCommunityPoolRebate {
   option (cosmos.msg.v1.signer) = "creator";
-  option (amino.name) = "stride/x/stakeibc/MsgRegisterCommunityPoolRebate";
+  option (amino.name) = "stride/x/stakeibc/MsgSetCommunityPoolRebate";
 
   // Message signer (admin only)
   string creator = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
@@ -339,4 +339,4 @@ message MsgRegisterCommunityPoolRebate {
     (gogoproto.nullable) = false
   ];
 }
-message MsgRegisterCommunityPoolRebateResponse {}
+message MsgSetCommunityPoolRebateResponse {}

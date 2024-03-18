@@ -12,17 +12,17 @@ import (
 	"github.com/Stride-Labs/stride/v19/utils"
 )
 
-const TypeMsgRegisterCommunityPoolRebate = "register_community_pool_rebate"
+const TypeMsgSetCommunityPoolRebate = "register_community_pool_rebate"
 
-var _ sdk.Msg = &MsgRegisterCommunityPoolRebate{}
+var _ sdk.Msg = &MsgSetCommunityPoolRebate{}
 
-func NewMsgRegisterCommunityPoolRebate(
+func NewMsgSetCommunityPoolRebate(
 	creator string,
 	chainId string,
 	rebatePercentage sdk.Dec,
 	liquidStakedAmount sdkmath.Int,
-) *MsgRegisterCommunityPoolRebate {
-	return &MsgRegisterCommunityPoolRebate{
+) *MsgSetCommunityPoolRebate {
+	return &MsgSetCommunityPoolRebate{
 		Creator:            creator,
 		ChainId:            chainId,
 		RebatePercentage:   rebatePercentage,
@@ -30,15 +30,15 @@ func NewMsgRegisterCommunityPoolRebate(
 	}
 }
 
-func (msg *MsgRegisterCommunityPoolRebate) Route() string {
+func (msg *MsgSetCommunityPoolRebate) Route() string {
 	return RouterKey
 }
 
-func (msg *MsgRegisterCommunityPoolRebate) Type() string {
-	return TypeMsgRegisterCommunityPoolRebate
+func (msg *MsgSetCommunityPoolRebate) Type() string {
+	return TypeMsgSetCommunityPoolRebate
 }
 
-func (msg *MsgRegisterCommunityPoolRebate) GetSigners() []sdk.AccAddress {
+func (msg *MsgSetCommunityPoolRebate) GetSigners() []sdk.AccAddress {
 	creator, err := sdk.AccAddressFromBech32(msg.Creator)
 	if err != nil {
 		panic(err)
@@ -46,12 +46,12 @@ func (msg *MsgRegisterCommunityPoolRebate) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{creator}
 }
 
-func (msg *MsgRegisterCommunityPoolRebate) GetSignBytes() []byte {
+func (msg *MsgSetCommunityPoolRebate) GetSignBytes() []byte {
 	bz := ModuleCdc.MustMarshalJSON(msg)
 	return sdk.MustSortJSON(bz)
 }
 
-func (msg *MsgRegisterCommunityPoolRebate) ValidateBasic() error {
+func (msg *MsgSetCommunityPoolRebate) ValidateBasic() error {
 	_, err := sdk.AccAddressFromBech32(msg.Creator)
 	if err != nil {
 		return errorsmod.Wrapf(sdkerrors.ErrInvalidAddress, "invalid creator address (%s)", err)

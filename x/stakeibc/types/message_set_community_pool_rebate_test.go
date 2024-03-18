@@ -12,7 +12,7 @@ import (
 	"github.com/Stride-Labs/stride/v19/x/stakeibc/types"
 )
 
-func TestMsgRegisterCommunityPoolRebate(t *testing.T) {
+func TestMsgSetCommunityPoolRebate(t *testing.T) {
 	apptesting.SetupConfig()
 
 	validNotAdminAddress, invalidAddress := apptesting.GenerateTestAddrs()
@@ -25,12 +25,12 @@ func TestMsgRegisterCommunityPoolRebate(t *testing.T) {
 
 	tests := []struct {
 		name string
-		msg  types.MsgRegisterCommunityPoolRebate
+		msg  types.MsgSetCommunityPoolRebate
 		err  string
 	}{
 		{
 			name: "valid message",
-			msg: types.MsgRegisterCommunityPoolRebate{
+			msg: types.MsgSetCommunityPoolRebate{
 				Creator:            validAdminAddress,
 				ChainId:            validChainId,
 				RebatePercentage:   validRebatePercentage,
@@ -39,7 +39,7 @@ func TestMsgRegisterCommunityPoolRebate(t *testing.T) {
 		},
 		{
 			name: "invalid address",
-			msg: types.MsgRegisterCommunityPoolRebate{
+			msg: types.MsgSetCommunityPoolRebate{
 				Creator:            invalidAddress,
 				ChainId:            validChainId,
 				RebatePercentage:   validRebatePercentage,
@@ -49,7 +49,7 @@ func TestMsgRegisterCommunityPoolRebate(t *testing.T) {
 		},
 		{
 			name: "not admin address",
-			msg: types.MsgRegisterCommunityPoolRebate{
+			msg: types.MsgSetCommunityPoolRebate{
 				Creator:            validNotAdminAddress,
 				ChainId:            validChainId,
 				RebatePercentage:   validRebatePercentage,
@@ -59,7 +59,7 @@ func TestMsgRegisterCommunityPoolRebate(t *testing.T) {
 		},
 		{
 			name: "invalid chain ID",
-			msg: types.MsgRegisterCommunityPoolRebate{
+			msg: types.MsgSetCommunityPoolRebate{
 				Creator:            validAdminAddress,
 				ChainId:            "",
 				RebatePercentage:   validRebatePercentage,
@@ -69,7 +69,7 @@ func TestMsgRegisterCommunityPoolRebate(t *testing.T) {
 		},
 		{
 			name: "invalid rebate percentage - nil",
-			msg: types.MsgRegisterCommunityPoolRebate{
+			msg: types.MsgSetCommunityPoolRebate{
 				Creator:            validAdminAddress,
 				ChainId:            validChainId,
 				LiquidStakedAmount: validLiquidStakedAmount,
@@ -78,7 +78,7 @@ func TestMsgRegisterCommunityPoolRebate(t *testing.T) {
 		},
 		{
 			name: "invalid rebate percentage - less than 0",
-			msg: types.MsgRegisterCommunityPoolRebate{
+			msg: types.MsgSetCommunityPoolRebate{
 				Creator:            validAdminAddress,
 				ChainId:            validChainId,
 				RebatePercentage:   sdk.MustNewDecFromStr("0.5").Neg(),
@@ -88,7 +88,7 @@ func TestMsgRegisterCommunityPoolRebate(t *testing.T) {
 		},
 		{
 			name: "valid rebate percentage - one",
-			msg: types.MsgRegisterCommunityPoolRebate{
+			msg: types.MsgSetCommunityPoolRebate{
 				Creator:            validAdminAddress,
 				ChainId:            validChainId,
 				RebatePercentage:   sdk.OneDec(),
@@ -97,7 +97,7 @@ func TestMsgRegisterCommunityPoolRebate(t *testing.T) {
 		},
 		{
 			name: "invalid rebate percentage - greater than one",
-			msg: types.MsgRegisterCommunityPoolRebate{
+			msg: types.MsgSetCommunityPoolRebate{
 				Creator:            validAdminAddress,
 				ChainId:            validChainId,
 				RebatePercentage:   sdk.MustNewDecFromStr("1.1"),
@@ -107,7 +107,7 @@ func TestMsgRegisterCommunityPoolRebate(t *testing.T) {
 		},
 		{
 			name: "valid zero rebate",
-			msg: types.MsgRegisterCommunityPoolRebate{
+			msg: types.MsgSetCommunityPoolRebate{
 				Creator:            validAdminAddress,
 				ChainId:            validChainId,
 				RebatePercentage:   sdk.ZeroDec(),
@@ -116,7 +116,7 @@ func TestMsgRegisterCommunityPoolRebate(t *testing.T) {
 		},
 		{
 			name: "invalid liquid stake amount - nil",
-			msg: types.MsgRegisterCommunityPoolRebate{
+			msg: types.MsgSetCommunityPoolRebate{
 				Creator:          validAdminAddress,
 				ChainId:          validChainId,
 				RebatePercentage: validRebatePercentage,
@@ -125,7 +125,7 @@ func TestMsgRegisterCommunityPoolRebate(t *testing.T) {
 		},
 		{
 			name: "invalid liquid stake amount - less than 0",
-			msg: types.MsgRegisterCommunityPoolRebate{
+			msg: types.MsgSetCommunityPoolRebate{
 				Creator:            validAdminAddress,
 				ChainId:            validChainId,
 				RebatePercentage:   validRebatePercentage,
@@ -135,7 +135,7 @@ func TestMsgRegisterCommunityPoolRebate(t *testing.T) {
 		},
 		{
 			name: "valid liquid stake amount - zero",
-			msg: types.MsgRegisterCommunityPoolRebate{
+			msg: types.MsgSetCommunityPoolRebate{
 				Creator:            validAdminAddress,
 				ChainId:            validChainId,
 				RebatePercentage:   validRebatePercentage,
