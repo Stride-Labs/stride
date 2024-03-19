@@ -59,32 +59,6 @@ type FeeInfo struct {
 // and the normal staking and distribution flow will continue from there.
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-// TODO [rebate]: Update when switching to stDYDX
-// Calculates the portion of fees that were contributed to from the community pool liquid stake
-// This is determined by dividing community pool's liquid stake size by the total TVL
-func (k Keeper) GetRebateEligibleFeeRate(
-	ctx sdk.Context,
-	hostZone types.HostZone,
-	rebateInfo types.CommunityPoolRebate,
-) (contributionRate sdk.Dec, err error) {
-	// It shouldn't be possible to have 0 delegations (since there are rewards and there was a community pool stake)
-	// This will also prevent a division by 0 error
-	if hostZone.TotalDelegations.IsZero() {
-		return sdk.ZeroDec(), errorsmod.Wrapf(types.ErrDivisionByZero,
-			"unable to calculate rebate amount for %s since total delegations are 0", hostZone.ChainId)
-	}
-
-	// It also shouldn't be possible for the liquid stake amount to be greater than the full TVL
-	if rebateInfo.LiquidStakeAmount.GT(hostZone.TotalDelegations) {
-		return sdk.ZeroDec(), errorsmod.Wrapf(types.ErrFeeSplitInvariantFailed,
-			"community pool liquid staked amount greater than total delegations")
-	}
-
-	contributionRate = sdk.NewDecFromInt(rebateInfo.LiquidStakeAmount).Quo(sdk.NewDecFromInt(hostZone.TotalDelegations))
-
-	return contributionRate, nil
-}
-
 // Breaks down the split of non-native-denom rewards into the portions intended for a rebate vs the remainder
 // that's used for fees and reinvestment
 // For instance, in the case of dYdX, this is used on the USDC that has not been pushed through the trade route
@@ -97,9 +71,14 @@ func (k Keeper) GetRebateEligibleFeeRate(
 // => Then the rebate is 1000 rewards * 10% stride fee * (1M / 10M) * 20% rebate = 2
 func (k Keeper) CalculateRewardsSplitBeforeRebate(
 	ctx sdk.Context,
-	hostZone types.HostZone,
+	chainId string,
 	rewardAmount sdkmath.Int,
 ) (rebateAmount sdkmath.Int, remainingAmount sdkmath.Int, err error) {
+	hostZone, err := k.GetActiveHostZone(ctx, chainId)
+	if err != nil {
+		return sdkmath.ZeroInt(), sdkmath.ZeroInt(), err
+	}
+
 	// Get the rebate info from the host zone if applicable
 	// If there's no rebate, return 0 rebate and the full reward as the remainder
 	rebateInfo, chainHasRebate := hostZone.SafelyGetCommunityPoolRebate()
@@ -108,17 +87,25 @@ func (k Keeper) CalculateRewardsSplitBeforeRebate(
 	}
 
 	// Get the fee rate from params (e.g. 0.1 for a 10% fee)
-	strideFeeRate := k.GetParams(ctx).GetStrideCommissionRate()
+	strideFee := sdk.NewIntFromUint64(k.GetParams(ctx).StrideCommission)
+	strideFeeRate := sdk.NewDecFromInt(strideFee).Quo(sdk.NewDec(100))
 
-	// Calculate the portion of fees that are rebate-eligible
-	// (equal to the % of TVL attributable to the community pool's liquid stake)
-	contributionRate, err := k.GetRebateEligibleFeeRate(ctx, hostZone, rebateInfo)
-	if err != nil {
-		return sdkmath.ZeroInt(), sdkmath.ZeroInt(), err
+	// It shouldn't be possible to have 0 delegations (since there are rewards and there was a community pool stake)
+	// This will also prevent a division by 0 error
+	if hostZone.TotalDelegations.IsZero() {
+		return sdkmath.ZeroInt(), sdkmath.ZeroInt(), errorsmod.Wrapf(types.ErrDivisionByZero,
+			"unable to calculate rebate amount for %s since total delegations are 0", chainId)
+	}
+
+	// It also shouldn't be possible for the liquid stake amount to be greater than the full TVL
+	if rebateInfo.LiquidStakeAmount.GT(hostZone.TotalDelegations) {
+		return sdkmath.ZeroInt(), sdkmath.ZeroInt(), errorsmod.Wrapf(types.ErrFeeSplitInvariantFailed,
+			"community pool liquid staked amount greater than total delegations")
 	}
 
 	// The rebate amount is determined by the contribution of the community pool stake towards the total TVL,
 	// multiplied by the rebate fee percentage
+	contributionRate := sdk.NewDecFromInt(rebateInfo.LiquidStakeAmount).Quo(sdk.NewDecFromInt(hostZone.TotalDelegations))
 	totalFeesAmount := sdk.NewDecFromInt(rewardAmount).Mul(strideFeeRate).TruncateInt()
 	rebateAmount = sdk.NewDecFromInt(totalFeesAmount).Mul(contributionRate).Mul(rebateInfo.RebatePercentage).TruncateInt()
 	remainingAmount = rewardAmount.Sub(rebateAmount)
@@ -153,25 +140,33 @@ func (k Keeper) CalculateRewardsSplitAfterRebate(
 	rewardsAmount sdkmath.Int,
 ) (strideFeeAmount sdkmath.Int, reinvestAmount sdkmath.Int, err error) {
 	// Get the fee rate and total fees from params (e.g. 0.1 for 10% fee)
-	totalFeeRate := k.GetParams(ctx).GetStrideCommissionRate()
+	strideFee := sdk.NewIntFromUint64(k.GetParams(ctx).StrideCommission)
+	totalFeeRate := sdk.NewDecFromInt(strideFee).Quo(sdk.NewDec(100))
 
 	// Check if the chain has a rebate
 	rebateInfo, chainHasRebate := hostZone.SafelyGetCommunityPoolRebate()
 
 	// If there's no rebate, the fee split just uses the commission
-	// Otherwise, the rebate must be considered in the fee split
 	if !chainHasRebate {
 		strideFeeAmount = sdk.NewDecFromInt(rewardsAmount).Mul(totalFeeRate).TruncateInt()
 	} else {
-		// Calculate the portion of fees that are rebate-eligible
-		// (equal to the % of TVL attributable to the community pool's liquid stake)
-		contributionRate, err := k.GetRebateEligibleFeeRate(ctx, hostZone, rebateInfo)
-		if err != nil {
-			return sdkmath.ZeroInt(), sdkmath.ZeroInt(), err
+		// It shouldn't be possible to have 0 delegations (since there are rewards and there was a community pool stake)
+		// This will also prevent a division by 0 error
+		if hostZone.TotalDelegations.IsZero() {
+			return sdkmath.ZeroInt(), sdkmath.ZeroInt(), errorsmod.Wrapf(types.ErrDivisionByZero,
+				"unable to calculate rebate amount for %s since total delegations are 0", hostZone.ChainId)
 		}
 
-		// The effective rebate rate is the portion of TVL contributed to by the liquid stake * the rebate percentage
-		// The effective stride fee poriton is the remaining percentage
+		// It also shouldn't be possible for the liquid stake amount to be greater than the full TVL
+		if rebateInfo.LiquidStakeAmount.GT(hostZone.TotalDelegations) {
+			return sdkmath.ZeroInt(), sdkmath.ZeroInt(), errorsmod.Wrapf(types.ErrFeeSplitInvariantFailed,
+				"community pool liquid staked amount greater than total delegations")
+		}
+
+		// Otherwise, the rebate must be considered in the fee split
+		// The rebate portion is the portion of TVL contributed to by the liquid stake * the rebate percentage
+		// The stride fee poriton is the remaining percentage
+		contributionRate := sdk.NewDecFromInt(rebateInfo.LiquidStakeAmount).Quo(sdk.NewDecFromInt(hostZone.TotalDelegations))
 		effectiveRebateRate := totalFeeRate.Mul(contributionRate).Mul(rebateInfo.RebatePercentage)
 		effectiveStrideFeeRate := totalFeeRate.Sub(effectiveRebateRate)
 

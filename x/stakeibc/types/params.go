@@ -3,7 +3,6 @@ package types
 import (
 	fmt "fmt"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
 	"gopkg.in/yaml.v2"
 )
@@ -138,12 +137,6 @@ func (p *Params) ParamSetPairs() paramtypes.ParamSetPairs {
 		paramtypes.NewParamSetPair(KeyValidatorSlashQueryThreshold, &p.ValidatorSlashQueryThreshold, isPositive),
 		paramtypes.NewParamSetPair(KeyValidatorWeightCap, &p.ValidatorWeightCap, validValidatorWeightCap),
 	}
-}
-
-// Get's the stride commission rate as a decimal
-// e.g. if stride commission is 10, returns 0.1
-func (p Params) GetStrideCommissionRate() sdk.Dec {
-	return sdk.NewDecFromInt(sdk.NewIntFromUint64(p.StrideCommission)).Quo(sdk.NewDec(100))
 }
 
 func validTimeoutNanos(i interface{}) error {

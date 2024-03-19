@@ -59,7 +59,7 @@ func WithdrawalRewardBalanceCallback(k Keeper, ctx sdk.Context, args []byte, que
 		"Query response - Withdrawal Reward Balance: %v %s", withdrawalRewardBalanceAmount, tradeRoute.RewardDenomOnHostZone))
 
 	// Split the withdrawal amount into a rebate, stride fee, and reinvest portion
-	rebateAmount, tradeAmount, err := k.CalculateRewardsSplitBeforeRebate(ctx, hostZone, withdrawalRewardBalanceAmount)
+	rebateAmount, tradeAmount, err := k.CalculateRewardsSplitBeforeRebate(ctx, chainId, withdrawalRewardBalanceAmount)
 	if err != nil {
 		return errorsmod.Wrapf(err, "unable to check for rebate amount")
 	}
