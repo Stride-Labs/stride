@@ -67,7 +67,7 @@ type FeeInfo struct {
 // E.g. Community pool liquid staked 1M, TVL is 10M, rebate is 20%
 // Total rewards this epoch are 1000, and the stride fee is 10%
 // => Then the rebate is 1000 rewards * 10% stride fee * (1M / 10M) * 20% rebate = 2
-func (k Keeper) CalculateRewardsSplitRewardDenom(
+func (k Keeper) CalculateRewardsSplitBeforeRebate(
 	ctx sdk.Context,
 	chainId string,
 	rewardAmount sdkmath.Int,
@@ -111,18 +111,28 @@ func (k Keeper) CalculateRewardsSplitRewardDenom(
 	return rebateAmount, remainingAmount, nil
 }
 
-// Given the native-denom (i.e. "host denom") reward balance from an ICQ, calculates the portions intended
-// as a stride fee vs for reinvestment
-// This is used on the host zone's native denom, either from traditional staking rewards in most case, or
-// from rewards that have been traded in order to convert them into the native denom
+// Given the native-denom reward balance from an ICQ, calculates the relevant portions earmarked as a
+// stride fee vs for reinvestment
+// This is called *after* a rebate has been issued (if there is one to begin with)
+// The reward amount is denominated in the host zone's native denom - this is either directly from
+// staking rewards, or, in the case of a host zone with a trade route, this is called with the converted tokens
 // For instance, with dYdX, this is applied to the DYDX tokens that were converted from USDC
 //
 // If the chain doesn't have a rebate in place, the split is decided entirely from the stride commission percent
-// However, if the chain does have a rebate, we need to factor that into the calculation
+// However, if the chain does have a rebate, we need to factor that into the calculation, by scaling
+// up the rewards to find the amount before the rebate
 //
-// For instance, if 100 rewards were collected and 5 were sent as a rebate, then the stride fee should be based
-// on the original 100 rewards instead of the remaining 95
-func (k Keeper) CalculateRewardsSplitHostDenom(
+// For instance, if 1000 rewards were collected and 2 were sent as a rebate, then the stride fee should be based
+// on the original 1000 rewards instead of the remaining 998 in the query response:
+//
+//	Community pool liquid staked 1M, TVL is 10M, rebate is 20%, stride fee is 10%
+//	If 998 native tokens were queried, we have to scale that up to 1000 original reward tokens
+//
+//	Effective Rebate Pct = 10% fees * (1M LS / 10M TVL) * 20% rebate = 0.20% (aka 0.002)
+//	Effective Stride Fee Pct = 10% fees - 0.20% effective rebate = 9.8%
+//	Original Reward Amount = 998 Queried Rewards / (1 - 0.002 effective rebate rate) = 1000 original rewards
+//	Then stride fees are 9.8% of that 1000 original rewards = 98
+func (k Keeper) CalculateRewardsSplitAfterRebate(
 	ctx sdk.Context,
 	hostZone types.HostZone,
 	rewardsAmount sdkmath.Int,

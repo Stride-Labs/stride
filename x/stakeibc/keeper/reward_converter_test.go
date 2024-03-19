@@ -34,10 +34,10 @@ type TransferRewardHostToTradeTestCase struct {
 }
 
 // --------------------------------------------------------------
-//               CalculateRewardsSplitRewardDenom
+//               CalculateRewardsSplitBeforeRebate
 // --------------------------------------------------------------
 
-func (s *KeeperTestSuite) TestCalculateRewardsSplitRewardDenom() {
+func (s *KeeperTestSuite) TestCalculateRewardsSplitBeforeRebate() {
 	testCases := []struct {
 		name                     string
 		communityPoolLiquidStake sdkmath.Int
@@ -269,7 +269,7 @@ func (s *KeeperTestSuite) TestCalculateRewardsSplitRewardDenom() {
 			s.App.StakeibcKeeper.SetParams(s.Ctx, params)
 
 			// Call the tested function to get the expected amounts
-			actualRebateAmount, actualRemainingAmount, actualError := s.App.StakeibcKeeper.CalculateRewardsSplitRewardDenom(
+			actualRebateAmount, actualRemainingAmount, actualError := s.App.StakeibcKeeper.CalculateRewardsSplitBeforeRebate(
 				s.Ctx,
 				chainId,
 				tc.rewardAmount,
@@ -287,10 +287,10 @@ func (s *KeeperTestSuite) TestCalculateRewardsSplitRewardDenom() {
 }
 
 // --------------------------------------------------------------
-//               CalculateRewardsSplitHostDenom
+//               CalculateRewardsSplitAfterRebate
 // --------------------------------------------------------------
 
-func (s *KeeperTestSuite) TestCalculateRewardsSplitHostDenom() {
+func (s *KeeperTestSuite) TestCalculateRewardsSplitAfterRebate() {
 	testCases := []struct {
 		name                     string
 		communityPoolLiquidStake sdkmath.Int
@@ -548,7 +548,7 @@ func (s *KeeperTestSuite) TestCalculateRewardsSplitHostDenom() {
 			s.App.StakeibcKeeper.SetParams(s.Ctx, params)
 
 			// Call the tested function to get the expected amounts
-			actualStrideFeeAmount, actualReinvestAmount, actualError := s.App.StakeibcKeeper.CalculateRewardsSplitHostDenom(
+			actualStrideFeeAmount, actualReinvestAmount, actualError := s.App.StakeibcKeeper.CalculateRewardsSplitAfterRebate(
 				s.Ctx,
 				hostZone,
 				tc.rewardAmount,
