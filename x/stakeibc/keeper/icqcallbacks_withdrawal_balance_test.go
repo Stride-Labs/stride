@@ -241,7 +241,7 @@ func (s *KeeperTestSuite) TestWithdrawalBalanceCallback_FailedToCheckForRebate()
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
 
 	err := keeper.WithdrawalBalanceCallback(s.App.StakeibcKeeper, s.Ctx, tc.validArgs.callbackArgs, tc.validArgs.query)
-	s.Require().ErrorContains(err, "unable to check for community pool rebate")
+	s.Require().ErrorContains(err, "unable to split reward amount into fee and reinvest amounts")
 }
 
 func (s *KeeperTestSuite) TestWithdrawalBalanceCallback_FailedSubmitTx() {
