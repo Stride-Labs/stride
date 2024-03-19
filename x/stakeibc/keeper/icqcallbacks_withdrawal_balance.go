@@ -59,7 +59,10 @@ func WithdrawalBalanceCallback(k Keeper, ctx sdk.Context, args []byte, query icq
 	}
 
 	// Split the withdrawal amount into a rebate, stride fee, and reinvest portion
-	feeAmount, reinvestAmount := k.CalculateRewardsFeeSplit(ctx, hostZone, withdrawalBalanceAmount)
+	feeAmount, reinvestAmount, err := k.CalculateRewardsSplitHostDenom(ctx, hostZone, withdrawalBalanceAmount)
+	if err != nil {
+		return errorsmod.Wrapf(err, "unable to check split reward amount into fee and reinvest amounts")
+	}
 
 	// Prepare MsgSends from the withdrawal account
 	feeCoin := sdk.NewCoin(hostZone.HostDenom, feeAmount)

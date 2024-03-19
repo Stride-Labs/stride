@@ -34,10 +34,10 @@ type TransferRewardHostToTradeTestCase struct {
 }
 
 // --------------------------------------------------------------
-//                   CalculateRewardSplit
+//               CalculateRewardsSplitRewardDenom
 // --------------------------------------------------------------
 
-func (s *KeeperTestSuite) TestCalculateRewardSplit() {
+func (s *KeeperTestSuite) TestCalculateRewardsSplitRewardDenom() {
 	testCases := []struct {
 		name                     string
 		communityPoolLiquidStake sdkmath.Int
@@ -46,15 +46,14 @@ func (s *KeeperTestSuite) TestCalculateRewardSplit() {
 		strideFee                uint64
 		rebatePercentage         sdk.Dec
 		expectedRebateAmount     sdkmath.Int
-		expectedStrideFeeAmount  sdkmath.Int
-		expectedReinvestAmount   sdkmath.Int
+		expectedRemainingAmount  sdkmath.Int
 		expectedError            string
 	}{
 		{
 			// 10 CP Liquid Stake, 100 TVL => 10% contribution
 			// 1000 rewards, 10% stride fee => 100 total fees
 			// 100 total fees * 10% contribution * 50% rebate
-			// => 5 rebate, 95 stride fee, 900 reinvest
+			// => 5 rebate, 995 remaining
 			name:                     "case 1",
 			communityPoolLiquidStake: sdkmath.NewInt(10),
 			totalDelegations:         sdkmath.NewInt(100),
@@ -63,15 +62,14 @@ func (s *KeeperTestSuite) TestCalculateRewardSplit() {
 			rebatePercentage:         sdk.MustNewDecFromStr("0.5"),
 
 			expectedRebateAmount:    sdkmath.NewInt(5),
-			expectedStrideFeeAmount: sdkmath.NewInt(95),
-			expectedReinvestAmount:  sdkmath.NewInt(900),
+			expectedRemainingAmount: sdkmath.NewInt(995),
 		},
 		{
 			// (Example #1 but with a 2x bigger liquid stake)
 			// 20 CP Liquid Stake, 100 TVL => 20% contribution
 			// 1000 rewards, 10% stride fee => 100 total fees
 			// 100 total fees * 20% contribution * 50% rebate
-			// => 10 rebate, 90 stride fee, 900 reinvest
+			// => 10 rebate, 990 remaining
 			name:                     "case 2",
 			communityPoolLiquidStake: sdkmath.NewInt(20),
 			totalDelegations:         sdkmath.NewInt(100),
@@ -80,15 +78,14 @@ func (s *KeeperTestSuite) TestCalculateRewardSplit() {
 			rebatePercentage:         sdk.MustNewDecFromStr("0.5"),
 
 			expectedRebateAmount:    sdkmath.NewInt(10),
-			expectedStrideFeeAmount: sdkmath.NewInt(90),
-			expectedReinvestAmount:  sdkmath.NewInt(900),
+			expectedRemainingAmount: sdkmath.NewInt(990),
 		},
 		{
 			// (Example #1 but with a 2x larger TVL)
 			// 10 CP Liquid Stake, 200 TVL => 5% contribution
 			// 1000 rewards, 10% stride fee => 100 total fees
 			// 100 total fees * 5% contribution * 50% rebate
-			// => 2.5 rebate (truncated to 2), 98 stride fee, 900 reinvest
+			// => 2.5 rebate (truncated to 2), 998 remaining
 			name:                     "case 3",
 			communityPoolLiquidStake: sdkmath.NewInt(10),
 			totalDelegations:         sdkmath.NewInt(200),
@@ -97,15 +94,14 @@ func (s *KeeperTestSuite) TestCalculateRewardSplit() {
 			rebatePercentage:         sdk.MustNewDecFromStr("0.5"),
 
 			expectedRebateAmount:    sdkmath.NewInt(2),
-			expectedStrideFeeAmount: sdkmath.NewInt(98),
-			expectedReinvestAmount:  sdkmath.NewInt(900),
+			expectedRemainingAmount: sdkmath.NewInt(998),
 		},
 		{
 			// (Example #1 but with a 2x larger fee)
 			// 10 CP Liquid Stake, 100 TVL => 10% contribution
 			// 1000 rewards, 20% stride fee => 200 total fees
 			// 200 total fees * 10% contribution * 50% rebate
-			// => 10 rebate, 190 stride fee, 800 reinvest
+			// => 10 rebate, 990 remaining
 			name:                     "case 4",
 			communityPoolLiquidStake: sdkmath.NewInt(10),
 			totalDelegations:         sdkmath.NewInt(100),
@@ -114,15 +110,14 @@ func (s *KeeperTestSuite) TestCalculateRewardSplit() {
 			rebatePercentage:         sdk.MustNewDecFromStr("0.5"),
 
 			expectedRebateAmount:    sdkmath.NewInt(10),
-			expectedStrideFeeAmount: sdkmath.NewInt(190),
-			expectedReinvestAmount:  sdkmath.NewInt(800),
+			expectedRemainingAmount: sdkmath.NewInt(990),
 		},
 		{
 			// (Example #1 but with a smaller rebate)
 			// 10 CP Liquid Stake, 100 TVL => 10% contribution
 			// 1000 rewards, 10% stride fee => 100 total fees
 			// 100 total fees * 10% contribution * 20% rebate
-			// => 2 rebate, 98 stride fee, 900 reinvest
+			// => 2 rebate, 998 remaining
 			name:                     "case 5",
 			communityPoolLiquidStake: sdkmath.NewInt(10),
 			totalDelegations:         sdkmath.NewInt(100),
@@ -131,15 +126,14 @@ func (s *KeeperTestSuite) TestCalculateRewardSplit() {
 			rebatePercentage:         sdk.MustNewDecFromStr("0.2"),
 
 			expectedRebateAmount:    sdkmath.NewInt(2),
-			expectedStrideFeeAmount: sdkmath.NewInt(98),
-			expectedReinvestAmount:  sdkmath.NewInt(900),
+			expectedRemainingAmount: sdkmath.NewInt(998),
 		},
 		{
 			// (Example #1 but with a larger rebate)
 			// 10 CP Liquid Stake, 100 TVL => 10% contribution
 			// 1000 rewards, 10% stride fee => 100 total fees
 			// 100 total fees * 10% contribution * 79% rebate
-			// => 7.9 rebate (truncated to 7), 93 stride fee, 900 reinvest
+			// => 7.9 rebate (truncated to 7), 993 remaining
 			name:                     "case 6",
 			communityPoolLiquidStake: sdkmath.NewInt(10),
 			totalDelegations:         sdkmath.NewInt(100),
@@ -148,40 +142,35 @@ func (s *KeeperTestSuite) TestCalculateRewardSplit() {
 			rebatePercentage:         sdk.MustNewDecFromStr("0.79"),
 
 			expectedRebateAmount:    sdkmath.NewInt(7),
-			expectedStrideFeeAmount: sdkmath.NewInt(93),
-			expectedReinvestAmount:  sdkmath.NewInt(900),
+			expectedRemainingAmount: sdkmath.NewInt(993),
 		},
 		{
-			// No rebate - all should be reinvested
-			// All stride commission goes to stride (10% of 1000 = 100)
-			name:             "no rebate",
+			// No rebate - all should be included as "remaining"
+			name:             "nil rebate",
 			totalDelegations: sdkmath.NewInt(100),
 			rewardAmount:     sdkmath.NewInt(1000),
 			strideFee:        10,
 
 			expectedRebateAmount:    sdkmath.NewInt(0),
-			expectedStrideFeeAmount: sdkmath.NewInt(100),
-			expectedReinvestAmount:  sdkmath.NewInt(900),
+			expectedRemainingAmount: sdkmath.NewInt(1000),
 		},
 		{
-			// 0% rebate - all should be reinvested
-			// All stride commission goes to stride (10% of 1000 = 100)
-			name:             "no rebate",
+			// 0% rebate - all should included as "remaining"
+			name:             "zero rebate",
 			totalDelegations: sdkmath.NewInt(100),
 			rewardAmount:     sdkmath.NewInt(1000),
 			strideFee:        10,
 			rebatePercentage: sdk.ZeroDec(),
 
 			expectedRebateAmount:    sdkmath.NewInt(0),
-			expectedStrideFeeAmount: sdkmath.NewInt(100),
-			expectedReinvestAmount:  sdkmath.NewInt(900),
+			expectedRemainingAmount: sdkmath.NewInt(1000),
 		},
 		{
 			// 100% rebate
 			// 10 CP Liquid Stake, 100 TVL => 10% contribution
 			// 1000 rewards, 10% stride fee => 100 total fees
 			// 100 total fees * 10% contribution * 100% rebate
-			// => 10 rebate, 90 stride fee, 900 reinvest
+			// => 10 rebate, 990 remaining
 			name:                     "full rebate",
 			communityPoolLiquidStake: sdkmath.NewInt(10),
 			totalDelegations:         sdkmath.NewInt(100),
@@ -190,12 +179,11 @@ func (s *KeeperTestSuite) TestCalculateRewardSplit() {
 			rebatePercentage:         sdk.OneDec(),
 
 			expectedRebateAmount:    sdkmath.NewInt(10),
-			expectedStrideFeeAmount: sdkmath.NewInt(90),
-			expectedReinvestAmount:  sdkmath.NewInt(900),
+			expectedRemainingAmount: sdkmath.NewInt(990),
 		},
 		{
 			// Liquid staked amount 0
-			// All stride commission goes to community pool (10% of 1000 = 100)
+			// Effectively the same as no rebate
 			name:                     "zero liquid staked",
 			communityPoolLiquidStake: sdkmath.NewInt(0),
 			totalDelegations:         sdkmath.NewInt(100),
@@ -204,8 +192,7 @@ func (s *KeeperTestSuite) TestCalculateRewardSplit() {
 			rebatePercentage:         sdk.MustNewDecFromStr("0.50"), // ignored since 0 LS'd
 
 			expectedRebateAmount:    sdkmath.NewInt(0),
-			expectedStrideFeeAmount: sdkmath.NewInt(100),
-			expectedReinvestAmount:  sdkmath.NewInt(900),
+			expectedRemainingAmount: sdkmath.NewInt(1000),
 		},
 		{
 			// Liquid stake represents all of TVL
@@ -213,7 +200,7 @@ func (s *KeeperTestSuite) TestCalculateRewardSplit() {
 			// 100 CP Liquid Stake, 100 TVL => 100% contribution
 			// 1000 rewards, 10% stride fee => 100 total fees
 			// 100 total fees * 100% contribution * 50% rebate
-			// => 50 rebate, 50 stride fee, 900 reinvest
+			// => 50 rebate, 950 reinvest
 			name:                     "liquid stake represents full TVL",
 			communityPoolLiquidStake: sdkmath.NewInt(100),
 			totalDelegations:         sdkmath.NewInt(100),
@@ -222,12 +209,11 @@ func (s *KeeperTestSuite) TestCalculateRewardSplit() {
 			rebatePercentage:         sdk.MustNewDecFromStr("0.50"),
 
 			expectedRebateAmount:    sdkmath.NewInt(50),
-			expectedStrideFeeAmount: sdkmath.NewInt(50),
-			expectedReinvestAmount:  sdkmath.NewInt(900),
+			expectedRemainingAmount: sdkmath.NewInt(950),
 		},
 		{
 			// 100% contribution, 100% rebate
-			// Community pool gets all fees
+			// Community pool gets all fees (100), 900 remaining
 			name:                     "liquid stake represents full TVL and full rebate",
 			communityPoolLiquidStake: sdkmath.NewInt(100),
 			totalDelegations:         sdkmath.NewInt(100),
@@ -236,8 +222,7 @@ func (s *KeeperTestSuite) TestCalculateRewardSplit() {
 			rebatePercentage:         sdk.OneDec(),
 
 			expectedRebateAmount:    sdkmath.NewInt(100),
-			expectedStrideFeeAmount: sdkmath.NewInt(0),
-			expectedReinvestAmount:  sdkmath.NewInt(900),
+			expectedRemainingAmount: sdkmath.NewInt(900),
 		},
 		{
 			// No tvl - should error
@@ -284,15 +269,297 @@ func (s *KeeperTestSuite) TestCalculateRewardSplit() {
 			s.App.StakeibcKeeper.SetParams(s.Ctx, params)
 
 			// Call the tested function to get the expected amounts
-			feeInfo, actualError := s.App.StakeibcKeeper.CalculateRewardSplit(s.Ctx, chainId, tc.rewardAmount)
+			actualRebateAmount, actualRemainingAmount, actualError := s.App.StakeibcKeeper.CalculateRewardsSplitRewardDenom(
+				s.Ctx,
+				chainId,
+				tc.rewardAmount,
+			)
 
 			// Confirm the amounts and error
 			if tc.expectedError != "" {
 				s.Require().ErrorContains(actualError, tc.expectedError, "error expected")
 			} else {
-				s.Require().Equal(tc.expectedRebateAmount.Int64(), feeInfo.RebateAmount.Int64(), "rebate amount")
-				s.Require().Equal(tc.expectedStrideFeeAmount.Int64(), feeInfo.StrideFeeAmount.Int64(), "stride fee amount")
-				s.Require().Equal(tc.expectedReinvestAmount.Int64(), feeInfo.ReinvestAmount.Int64(), "reinvest amount")
+				s.Require().Equal(tc.expectedRebateAmount.Int64(), actualRebateAmount.Int64(), "rebate amount")
+				s.Require().Equal(tc.expectedRemainingAmount.Int64(), actualRemainingAmount.Int64(), "remaining amount")
+			}
+		})
+	}
+}
+
+// --------------------------------------------------------------
+//               CalculateRewardsSplitHostDenom
+// --------------------------------------------------------------
+
+func (s *KeeperTestSuite) TestCalculateRewardsSplitHostDenom() {
+	testCases := []struct {
+		name                     string
+		communityPoolLiquidStake sdkmath.Int
+		totalDelegations         sdkmath.Int
+		rewardAmount             sdkmath.Int
+		strideFee                uint64
+		rebateRate               sdk.Dec
+		expectedStrideFeeAmount  sdkmath.Int
+		expectedReinvestAmount   sdkmath.Int
+		expectedError            string
+	}{
+		{
+			// 10 CP Liquid Stake, 100 TVL => 10% contribution
+			// 1000 original rewards, 10% stride fee => 100 total fees
+			// 100 total fees * 10% contribution * 50% rebate => 5 rebate
+			//
+			// 1000 original rewards - 5 rebate = 995 current rewards (test input)
+			// 1000 original rewards - 100 total fees = 900 reinvest
+			// 100 total fees - 5 rebate = 95 stride fees
+			name:                     "case 1",
+			communityPoolLiquidStake: sdkmath.NewInt(10),
+			totalDelegations:         sdkmath.NewInt(100),
+			rewardAmount:             sdkmath.NewInt(995),
+			strideFee:                10,
+			rebateRate:               sdk.MustNewDecFromStr("0.5"),
+
+			expectedStrideFeeAmount: sdkmath.NewInt(95),
+			expectedReinvestAmount:  sdkmath.NewInt(900),
+		},
+		{
+			// (Example #1 but with a 2x bigger liquid stake)
+			// 20 CP Liquid Stake, 100 TVL => 20% contribution
+			// 1000 original rewards, 10% stride fee => 100 total fees
+			// 100 total fees * 20% contribution * 50% rebate = 10 rebate
+			//
+			// 1000 original rewards - 10 rebate = 990 current rewards (test input)
+			// 1000 original rewards - 100 total fees = 900 reinvest
+			// 100 total fees - 10 rebate = 90 stride fees
+			name:                     "case 2",
+			communityPoolLiquidStake: sdkmath.NewInt(20),
+			totalDelegations:         sdkmath.NewInt(100),
+			rewardAmount:             sdkmath.NewInt(990),
+			strideFee:                10,
+			rebateRate:               sdk.MustNewDecFromStr("0.5"),
+
+			expectedStrideFeeAmount: sdkmath.NewInt(90),
+			expectedReinvestAmount:  sdkmath.NewInt(900),
+		},
+		{
+			// (Example #1 but with a 2x larger TVL)
+			// 10 CP Liquid Stake, 200 TVL => 5% contribution
+			// 1000 original rewards, 10% stride fee => 100 total fees
+			// 100 total fees * 5% contribution * 50% rebate = 2.5 rebated (truncated to 2)
+			//
+			// 1000 original rewards - 2 rebate = 998 current rewards (test input)
+			// 1000 original rewards - 100 total fees = 900 reinvest
+			// 100 total fees - 2 rebate = 98 stride fees
+			name:                     "case 3",
+			communityPoolLiquidStake: sdkmath.NewInt(10),
+			totalDelegations:         sdkmath.NewInt(200),
+			rewardAmount:             sdkmath.NewInt(998),
+			strideFee:                10,
+			rebateRate:               sdk.MustNewDecFromStr("0.5"),
+
+			expectedStrideFeeAmount: sdkmath.NewInt(98),
+			expectedReinvestAmount:  sdkmath.NewInt(900),
+		},
+		{
+			// (Example #1 but with a 2x larger fee)
+			// 10 CP Liquid Stake, 100 TVL => 10% contribution
+			// 1000 original rewards, 20% stride fee => 200 total fees
+			// 200 total fees * 10% contribution * 50% rebate => 10 rebate
+			//
+			// 1000 original rewards - 10 rebate = 990 current rewards (test input)
+			// 1000 original rewards - 200 total fees = 800 reinvest
+			// 200 total fees - 10 rebate = 190 stride fees
+			name:                     "case 4",
+			communityPoolLiquidStake: sdkmath.NewInt(10),
+			totalDelegations:         sdkmath.NewInt(100),
+			rewardAmount:             sdkmath.NewInt(990),
+			strideFee:                20,
+			rebateRate:               sdk.MustNewDecFromStr("0.5"),
+
+			expectedStrideFeeAmount: sdkmath.NewInt(190),
+			expectedReinvestAmount:  sdkmath.NewInt(800),
+		},
+		{
+			// (Example #1 but with a smaller rebate)
+			// 10 CP Liquid Stake, 100 TVL => 10% contribution
+			// 1000 original rewards, 10% stride fee => 100 total fees
+			// 100 total fees * 10% contribution * 20% rebate => 2 rebate
+			//
+			// 1000 original rewards - 2 rebate = 998 current rewards (test input)
+			// 1000 original rewards - 100 total fees = 900 reinvest
+			// 100 total fees - 2 rebate = 98 stride fees
+			name:                     "case 5",
+			communityPoolLiquidStake: sdkmath.NewInt(10),
+			totalDelegations:         sdkmath.NewInt(100),
+			rewardAmount:             sdkmath.NewInt(998),
+			strideFee:                10,
+			rebateRate:               sdk.MustNewDecFromStr("0.2"),
+
+			expectedStrideFeeAmount: sdkmath.NewInt(98),
+			expectedReinvestAmount:  sdkmath.NewInt(900),
+		},
+		{
+			// (Example #1 but with a larger rebate)
+			// 10 CP Liquid Stake, 100 TVL => 10% contribution
+			// 1000 original rewards, 10% stride fee => 100 total fees
+			// 100 total fees * 10% contribution * 79% rebate => 7.9 rebate (truncated to 7)
+			//
+			// 1000 original rewards - 7 rebate = 993 current rewards (test input)
+			// 1000 original rewards - 100 total fees = 900 reinvest
+			// 100 total fees - 7 rebate = 93 stride fees
+			name:                     "case 6",
+			communityPoolLiquidStake: sdkmath.NewInt(10),
+			totalDelegations:         sdkmath.NewInt(100),
+			rewardAmount:             sdkmath.NewInt(993),
+			strideFee:                10,
+			rebateRate:               sdk.MustNewDecFromStr("0.79"),
+
+			expectedStrideFeeAmount: sdkmath.NewInt(93),
+			expectedReinvestAmount:  sdkmath.NewInt(900),
+		},
+		{
+			// No rebate - all fees go to stride
+			// 10% fees off 1000 rewards = 100 stride fees, 900 reinvest
+			name:             "nil rebate",
+			totalDelegations: sdkmath.NewInt(100),
+			rewardAmount:     sdkmath.NewInt(1000),
+			strideFee:        10,
+
+			expectedStrideFeeAmount: sdkmath.NewInt(100),
+			expectedReinvestAmount:  sdkmath.NewInt(900),
+		},
+		{
+			// 0% rebate - all fees go to stride
+			// 10% fees off 1000 rewards = 100 stride fees, 900 reinvest
+			name:             "zero rebate",
+			totalDelegations: sdkmath.NewInt(100),
+			rewardAmount:     sdkmath.NewInt(1000),
+			strideFee:        10,
+			rebateRate:       sdk.ZeroDec(),
+
+			expectedStrideFeeAmount: sdkmath.NewInt(100),
+			expectedReinvestAmount:  sdkmath.NewInt(900),
+		},
+		{
+			// 100% rebate
+			// 10 CP Liquid Stake, 100 TVL => 10% contribution
+			// 1000 original rewards, 10% stride fee => 100 total fees
+			// 100 total fees * 10% contribution * 100% rebate => 10 rebate
+			//
+			// 1000 original rewards - 10 rebate = 990 current rewards (test input)
+			// 1000 original rewards - 100 total fees = 900 reinvest
+			// 100 total fees - 10 rebate = 90 stride fees
+			name:                     "full rebate",
+			communityPoolLiquidStake: sdkmath.NewInt(10),
+			totalDelegations:         sdkmath.NewInt(100),
+			rewardAmount:             sdkmath.NewInt(990),
+			strideFee:                10,
+			rebateRate:               sdk.OneDec(),
+
+			expectedStrideFeeAmount: sdkmath.NewInt(90),
+			expectedReinvestAmount:  sdkmath.NewInt(900),
+		},
+		{
+			// Liquid staked amount 0 - effectively the same as no rebate
+			// 10% fees off 1000 rewards = 100 stride fees, 900 reinvest
+			name:                     "zero liquid staked",
+			communityPoolLiquidStake: sdkmath.NewInt(0),
+			totalDelegations:         sdkmath.NewInt(100),
+			rewardAmount:             sdkmath.NewInt(1000),
+			strideFee:                10,
+			rebateRate:               sdk.MustNewDecFromStr("0.50"), // ignored since 0 LS'd
+
+			expectedStrideFeeAmount: sdkmath.NewInt(100),
+			expectedReinvestAmount:  sdkmath.NewInt(900),
+		},
+		{
+			// Liquid stake represents all of TVL
+			// Community pool liquid stake represents full TVL
+			// 100 CP Liquid Stake, 100 TVL => 100% contribution
+			// 1000 original rewards, 10% stride fee => 100 total fees
+			// 100 total fees * 100% contribution * 50% rebate => 50 rebate
+			//
+			// 1000 original rewards - 50 rebate = 950 current rewards (test input)
+			// 1000 original rewards - 100 total fees = 900 reinvest
+			// 100 total fees - 50 rebate = 50 stride fees
+			name:                     "liquid stake represents full TVL",
+			communityPoolLiquidStake: sdkmath.NewInt(100),
+			totalDelegations:         sdkmath.NewInt(100),
+			rewardAmount:             sdkmath.NewInt(950),
+			strideFee:                10,
+			rebateRate:               sdk.MustNewDecFromStr("0.50"),
+
+			expectedStrideFeeAmount: sdkmath.NewInt(50),
+			expectedReinvestAmount:  sdkmath.NewInt(900),
+		},
+		{
+			// 100% contribution, 100% rebate
+			// Community pool gets all fees
+			// 1000 original rewards => 100 rebate, 900 reinvest (test input)
+			name:                     "liquid stake represents full TVL and full rebate",
+			communityPoolLiquidStake: sdkmath.NewInt(100),
+			totalDelegations:         sdkmath.NewInt(100),
+			rewardAmount:             sdkmath.NewInt(900),
+			strideFee:                10,
+			rebateRate:               sdk.OneDec(),
+
+			expectedStrideFeeAmount: sdkmath.NewInt(0),
+			expectedReinvestAmount:  sdkmath.NewInt(900),
+		},
+		{
+			// No tvl - should error
+			name:                     "no tvl",
+			communityPoolLiquidStake: sdk.NewInt(10),
+			totalDelegations:         sdkmath.NewInt(0),
+			rewardAmount:             sdkmath.NewInt(1000),
+			strideFee:                10,
+			rebateRate:               sdk.MustNewDecFromStr("0.5"),
+
+			expectedError: "unable to calculate rebate amount",
+		},
+		{
+			// Liquid staked amount is greater than the TVL - should error
+			name:                     "liquid staked more than tvl",
+			communityPoolLiquidStake: sdk.NewInt(1001),
+			totalDelegations:         sdkmath.NewInt(1000),
+			rewardAmount:             sdkmath.NewInt(100),
+			strideFee:                10,
+			rebateRate:               sdk.MustNewDecFromStr("0.5"),
+
+			expectedError: "community pool liquid staked amount greater than total delegations",
+		},
+	}
+
+	for _, tc := range testCases {
+		s.Run(tc.name, func() {
+			// Build out the host zone - only add the rebate struct if one of the rebate fields was provided
+			hostZone := types.HostZone{
+				ChainId:          chainId,
+				TotalDelegations: tc.totalDelegations,
+			}
+			if !tc.communityPoolLiquidStake.IsNil() {
+				hostZone.CommunityPoolRebate = &types.CommunityPoolRebate{
+					RebatePercentage:  tc.rebateRate,
+					LiquidStakeAmount: tc.communityPoolLiquidStake,
+				}
+			}
+
+			// Store the fee as a param
+			params := types.DefaultParams()
+			params.StrideCommission = tc.strideFee
+			s.App.StakeibcKeeper.SetParams(s.Ctx, params)
+
+			// Call the tested function to get the expected amounts
+			actualStrideFeeAmount, actualReinvestAmount, actualError := s.App.StakeibcKeeper.CalculateRewardsSplitHostDenom(
+				s.Ctx,
+				hostZone,
+				tc.rewardAmount,
+			)
+
+			// Confirm the amounts
+			if tc.expectedError != "" {
+				s.Require().ErrorContains(actualError, tc.expectedError, "error expected")
+			} else {
+				s.Require().Equal(tc.expectedStrideFeeAmount.Int64(), actualStrideFeeAmount.Int64(), "stride fee amount")
+				s.Require().Equal(tc.expectedReinvestAmount.Int64(), actualReinvestAmount.Int64(), "reinvest amount")
 			}
 		})
 	}
