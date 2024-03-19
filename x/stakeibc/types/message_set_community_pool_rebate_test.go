@@ -68,26 +68,26 @@ func TestMsgSetCommunityPoolRebate(t *testing.T) {
 			err: "chain ID must be specified",
 		},
 		{
-			name: "invalid rebate percentage - nil",
+			name: "invalid rebate rate - nil",
 			msg: types.MsgSetCommunityPoolRebate{
 				Creator:            validAdminAddress,
 				ChainId:            validChainId,
 				LiquidStakedAmount: validLiquidStakedAmount,
 			},
-			err: "rebate percentage, must be between 0 and 1 (inclusive)",
+			err: "rebate rate, must be a decimal between 0 and 1 (inclusive)",
 		},
 		{
-			name: "invalid rebate percentage - less than 0",
+			name: "invalid rebate rate - less than 0",
 			msg: types.MsgSetCommunityPoolRebate{
 				Creator:            validAdminAddress,
 				ChainId:            validChainId,
 				RebateRate:         sdk.MustNewDecFromStr("0.5").Neg(),
 				LiquidStakedAmount: validLiquidStakedAmount,
 			},
-			err: "rebate percentage, must be between 0 and 1 (inclusive)",
+			err: "rebate rate, must be a decimal between 0 and 1 (inclusive)",
 		},
 		{
-			name: "valid rebate percentage - one",
+			name: "valid rebate rate - one",
 			msg: types.MsgSetCommunityPoolRebate{
 				Creator:            validAdminAddress,
 				ChainId:            validChainId,
@@ -96,14 +96,14 @@ func TestMsgSetCommunityPoolRebate(t *testing.T) {
 			},
 		},
 		{
-			name: "invalid rebate percentage - greater than one",
+			name: "invalid rebate rate - greater than one",
 			msg: types.MsgSetCommunityPoolRebate{
 				Creator:            validAdminAddress,
 				ChainId:            validChainId,
 				RebateRate:         sdk.MustNewDecFromStr("1.1"),
 				LiquidStakedAmount: validLiquidStakedAmount,
 			},
-			err: "rebate percentage, must be between 0 and 1 (inclusive)",
+			err: "rebate rate, must be a decimal between 0 and 1 (inclusive)",
 		},
 		{
 			name: "valid zero rebate",
@@ -121,7 +121,7 @@ func TestMsgSetCommunityPoolRebate(t *testing.T) {
 				ChainId:    validChainId,
 				RebateRate: validRebateRate,
 			},
-			err: "invalid liquid stake amount, must be greater than or equal to 0",
+			err: "invalid liquid stake amount, must be greater than or equal to zero",
 		},
 		{
 			name: "invalid liquid stake amount - less than 0",
@@ -131,7 +131,7 @@ func TestMsgSetCommunityPoolRebate(t *testing.T) {
 				RebateRate:         validRebateRate,
 				LiquidStakedAmount: sdkmath.NewInt(1).Neg(),
 			},
-			err: "invalid liquid stake amount, must be greater than or equal to 0",
+			err: "invalid liquid stake amount, must be greater than or equal to zero",
 		},
 		{
 			name: "valid liquid stake amount - zero",
