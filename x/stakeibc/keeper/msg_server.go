@@ -1123,8 +1123,8 @@ func (k msgServer) SetCommunityPoolRebate(
 		hostZone.CommunityPoolRebate = nil
 	} else {
 		hostZone.CommunityPoolRebate = &types.CommunityPoolRebate{
-			LiquidStakeAmount: msg.LiquidStakedStTokenAmount,
-			RebatePercentage:  msg.RebateRate,
+			LiquidStakedStTokenAmount: msg.LiquidStakedStTokenAmount,
+			RebateRate:                msg.RebateRate,
 		}
 	}
 

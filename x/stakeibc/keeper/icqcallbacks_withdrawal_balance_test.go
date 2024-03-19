@@ -234,8 +234,8 @@ func (s *KeeperTestSuite) TestWithdrawalBalanceCallback_FailedToCheckForRebate()
 	// Add a rebate to the host zone and set the total delegations to 0 so the check fails
 	hostZone := s.MustGetHostZone(HostChainId)
 	hostZone.CommunityPoolRebate = &types.CommunityPoolRebate{
-		RebatePercentage:  sdk.MustNewDecFromStr("0.5"),
-		LiquidStakeAmount: sdkmath.NewInt(1),
+		RebateRate:                sdk.MustNewDecFromStr("0.5"),
+		LiquidStakedStTokenAmount: sdkmath.NewInt(1),
 	}
 	hostZone.TotalDelegations = sdkmath.ZeroInt()
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)

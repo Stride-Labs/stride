@@ -2582,8 +2582,8 @@ func (s *KeeperTestSuite) TestResumeHostZone_UnhaltedZones() {
 
 func (s *KeeperTestSuite) TestSetCommunityPoolRebate() {
 	rebateInfo := types.CommunityPoolRebate{
-		LiquidStakeAmount: sdk.NewInt(1000),
-		RebatePercentage:  sdk.MustNewDecFromStr("0.5"),
+		RebateRate:                sdk.MustNewDecFromStr("0.5"),
+		LiquidStakedStTokenAmount: sdk.NewInt(1000),
 	}
 
 	// Set host zone with no rebate
@@ -2595,8 +2595,8 @@ func (s *KeeperTestSuite) TestSetCommunityPoolRebate() {
 	// Submit a message to create the rebate
 	msg := types.MsgSetCommunityPoolRebate{
 		ChainId:                   HostChainId,
-		RebateRate:                rebateInfo.RebatePercentage,
-		LiquidStakedStTokenAmount: rebateInfo.LiquidStakeAmount,
+		RebateRate:                rebateInfo.RebateRate,
+		LiquidStakedStTokenAmount: rebateInfo.LiquidStakedStTokenAmount,
 	}
 	_, err := s.GetMsgServer().SetCommunityPoolRebate(s.Ctx, &msg)
 	s.Require().NoError(err, "no error expected when registering rebate")

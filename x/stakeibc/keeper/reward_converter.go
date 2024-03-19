@@ -93,16 +93,16 @@ func (k Keeper) CalculateRewardsSplitBeforeRebate(
 	}
 
 	// It also shouldn't be possible for the liquid stake amount to be greater than the full TVL
-	if rebateInfo.LiquidStakeAmount.GT(hostZone.TotalDelegations) {
+	if rebateInfo.LiquidStakedStTokenAmount.GT(hostZone.TotalDelegations) {
 		return sdkmath.ZeroInt(), sdkmath.ZeroInt(), errorsmod.Wrapf(types.ErrFeeSplitInvariantFailed,
 			"community pool liquid staked amount greater than total delegations")
 	}
 
 	// The rebate amount is determined by the contribution of the community pool stake towards the total TVL,
 	// multiplied by the rebate fee percentage
-	contributionRate := sdk.NewDecFromInt(rebateInfo.LiquidStakeAmount).Quo(sdk.NewDecFromInt(hostZone.TotalDelegations))
+	contributionRate := sdk.NewDecFromInt(rebateInfo.LiquidStakedStTokenAmount).Quo(sdk.NewDecFromInt(hostZone.TotalDelegations))
 	totalFeesAmount := sdk.NewDecFromInt(rewardAmount).Mul(strideFeeRate).TruncateInt()
-	rebateAmount = sdk.NewDecFromInt(totalFeesAmount).Mul(contributionRate).Mul(rebateInfo.RebatePercentage).TruncateInt()
+	rebateAmount = sdk.NewDecFromInt(totalFeesAmount).Mul(contributionRate).Mul(rebateInfo.RebateRate).TruncateInt()
 	remainingAmount = rewardAmount.Sub(rebateAmount)
 
 	return rebateAmount, remainingAmount, nil
@@ -153,7 +153,7 @@ func (k Keeper) CalculateRewardsSplitAfterRebate(
 		}
 
 		// It also shouldn't be possible for the liquid stake amount to be greater than the full TVL
-		if rebateInfo.LiquidStakeAmount.GT(hostZone.TotalDelegations) {
+		if rebateInfo.LiquidStakedStTokenAmount.GT(hostZone.TotalDelegations) {
 			return sdkmath.ZeroInt(), sdkmath.ZeroInt(), errorsmod.Wrapf(types.ErrFeeSplitInvariantFailed,
 				"community pool liquid staked amount greater than total delegations")
 		}
@@ -161,8 +161,8 @@ func (k Keeper) CalculateRewardsSplitAfterRebate(
 		// Otherwise, the rebate must be considered in the fee split
 		// The rebate portion is the portion of TVL contributed to by the liquid stake * the rebate percentage
 		// The stride fee poriton is the remaining percentage
-		contributionRate := sdk.NewDecFromInt(rebateInfo.LiquidStakeAmount).Quo(sdk.NewDecFromInt(hostZone.TotalDelegations))
-		effectiveRebateRate := totalFeeRate.Mul(contributionRate).Mul(rebateInfo.RebatePercentage)
+		contributionRate := sdk.NewDecFromInt(rebateInfo.LiquidStakedStTokenAmount).Quo(sdk.NewDecFromInt(hostZone.TotalDelegations))
+		effectiveRebateRate := totalFeeRate.Mul(contributionRate).Mul(rebateInfo.RebateRate)
 		effectiveStrideFeeRate := totalFeeRate.Sub(effectiveRebateRate)
 
 		// Before calculating the fee, we have to scale up the rewards amount to the amount before the rebate
