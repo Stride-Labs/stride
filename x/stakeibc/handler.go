@@ -77,6 +77,9 @@ func NewMessageHandler(k keeper.Keeper) sdk.Handler {
 		case *types.MsgUpdateTradeRoute:
 			res, err := msgServer.UpdateTradeRoute(sdk.WrapSDKContext(ctx), msg)
 			return sdk.WrapServiceResult(ctx, res, err)
+		case *types.MsgSetCommunityPoolRebate:
+			res, err := msgServer.SetCommunityPoolRebate(sdk.WrapSDKContext(ctx), msg)
+			return sdk.WrapServiceResult(ctx, res, err)
 		case *types.MsgToggleTradeController:
 			res, err := msgServer.ToggleTradeController(sdk.WrapSDKContext(ctx), msg)
 			return sdk.WrapServiceResult(ctx, res, err)

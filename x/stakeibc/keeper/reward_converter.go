@@ -300,6 +300,7 @@ func (k Keeper) BuildSwapMsg(rewardAmount sdkmath.Int, route types.TradeRoute) (
 	return msg, nil
 }
 
+// DEPRECATED: The on-chain swap has been deprecated in favor of an authz controller
 // Trade reward tokens in the Trade ICA for the host denom tokens using ICA remote tx on trade zone
 // The amount represents the total amount of the reward token in the trade ICA found by the calling ICQ
 func (k Keeper) SwapRewardTokens(ctx sdk.Context, rewardAmount sdkmath.Int, route types.TradeRoute) error {
@@ -497,6 +498,7 @@ func (k Keeper) TradeConvertedBalanceQuery(ctx sdk.Context, route types.TradeRou
 	return nil
 }
 
+// DEPRECATED: The on-chain swap has been deprecated in favor of an authz controller. Price is no longer needed
 // Kick off ICQ for the spot price on the pool given the input and output denoms implied by the given TradeRoute
 // the callback for this query is responsible for updating the returned spot price on the keeper data
 func (k Keeper) PoolPriceQuery(ctx sdk.Context, route types.TradeRoute) error {
