@@ -3,6 +3,7 @@ package cli
 import (
 	"errors"
 	"fmt"
+	"strings"
 
 	sdkmath "cosmossdk.io/math"
 	"github.com/cosmos/cosmos-sdk/client"
@@ -18,7 +19,12 @@ func CmdSetCommunityPoolRebate() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "set-rebate [chain-id] [rebate-percentage] [liquid-staked-amount]",
 		Short: "Registers or updates a community pool rebate",
-		Args:  cobra.ExactArgs(3),
+		Long: strings.TrimSpace(`Registers a community pool rebate by specifying the rebate percentage (as a decimal)
+and the amount liquid staked.
+
+If a 0% rebate or 0 token liquid stake is specified, the rebate will be deleted.
+		`),
+		Args: cobra.ExactArgs(3),
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
 			chainId := args[0]
 			rebatePercentage, err := sdk.NewDecFromStr(args[1])

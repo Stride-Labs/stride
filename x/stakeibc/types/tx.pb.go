@@ -1968,7 +1968,7 @@ type MsgSetCommunityPoolRebate struct {
 	// Chain id of the chain whose community pool has a liquid staking rebate
 	// arrangement with stride
 	ChainId string `protobuf:"bytes,2,opt,name=chain_id,json=chainId,proto3" json:"chain_id,omitempty"`
-	// Rebate percentage (e.g. 0.5 for 50%)
+	// Rebate percentage (e.g. 0.2 for 20%)
 	RebatePercentage github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,3,opt,name=rebate_percentage,json=rebatePercentage,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"rebate_percentage"`
 	// Number of native tokens staked by the community pool
 	LiquidStakedAmount github_com_cosmos_cosmos_sdk_types.Int `protobuf:"bytes,4,opt,name=liquid_staked_amount,json=liquidStakedAmount,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Int" json:"liquid_staked_amount"`

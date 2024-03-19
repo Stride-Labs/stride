@@ -2603,7 +2603,7 @@ func (s *KeeperTestSuite) TestSetCommunityPoolRebate() {
 
 	// Confirm the rebate was updated
 	actualHostZone := s.MustGetHostZone(HostChainId)
-	s.Require().Equal(rebateInfo, *actualHostZone.CommunityPoolRebate, "rebate")
+	s.Require().Equal(rebateInfo, *actualHostZone.CommunityPoolRebate, "rebate was updated on host zone")
 
 	// Submit a 0 LS amount which should delete the rebate
 	removeMsg := types.MsgSetCommunityPoolRebate{
@@ -2614,7 +2614,7 @@ func (s *KeeperTestSuite) TestSetCommunityPoolRebate() {
 	s.Require().NoError(err, "no error expected when registering 0 rebate")
 
 	actualHostZone = s.MustGetHostZone(HostChainId)
-	s.Require().Nil(actualHostZone.CommunityPoolRebate, "rebate")
+	s.Require().Nil(actualHostZone.CommunityPoolRebate, "rebate was removed from host zone")
 
 	// Confirm a message with an invalid chain ID would cause an error
 	_, err = s.GetMsgServer().SetCommunityPoolRebate(s.Ctx, &types.MsgSetCommunityPoolRebate{ChainId: "invalid"})
