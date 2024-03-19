@@ -71,14 +71,9 @@ type FeeInfo struct {
 // => Then the rebate is 1000 rewards * 10% stride fee * (1M / 10M) * 20% rebate = 2
 func (k Keeper) CalculateRewardsSplitBeforeRebate(
 	ctx sdk.Context,
-	chainId string,
+	hostZone types.HostZone,
 	rewardAmount sdkmath.Int,
 ) (rebateAmount sdkmath.Int, remainingAmount sdkmath.Int, err error) {
-	hostZone, err := k.GetActiveHostZone(ctx, chainId)
-	if err != nil {
-		return sdkmath.ZeroInt(), sdkmath.ZeroInt(), err
-	}
-
 	// Get the rebate info from the host zone if applicable
 	// If there's no rebate, return 0 rebate and the full reward as the remainder
 	rebateInfo, chainHasRebate := hostZone.SafelyGetCommunityPoolRebate()
@@ -94,7 +89,7 @@ func (k Keeper) CalculateRewardsSplitBeforeRebate(
 	// This will also prevent a division by 0 error
 	if hostZone.TotalDelegations.IsZero() {
 		return sdkmath.ZeroInt(), sdkmath.ZeroInt(), errorsmod.Wrapf(types.ErrDivisionByZero,
-			"unable to calculate rebate amount for %s since total delegations are 0", chainId)
+			"unable to calculate rebate amount for %s since total delegations are 0", hostZone.ChainId)
 	}
 
 	// It also shouldn't be possible for the liquid stake amount to be greater than the full TVL

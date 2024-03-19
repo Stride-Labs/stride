@@ -262,7 +262,6 @@ func (s *KeeperTestSuite) TestCalculateRewardsSplitBeforeRebate() {
 					LiquidStakeAmount: tc.communityPoolLiquidStake,
 				}
 			}
-			s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
 
 			// Store the fee as a param
 			params := types.DefaultParams()
@@ -272,7 +271,7 @@ func (s *KeeperTestSuite) TestCalculateRewardsSplitBeforeRebate() {
 			// Call the tested function to get the expected amounts
 			actualRebateAmount, actualRemainingAmount, actualError := s.App.StakeibcKeeper.CalculateRewardsSplitBeforeRebate(
 				s.Ctx,
-				chainId,
+				hostZone,
 				tc.rewardAmount,
 			)
 
