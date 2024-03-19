@@ -3,6 +3,7 @@ package keeper
 import (
 	"context"
 	"fmt"
+	"time"
 
 	errorsmod "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
@@ -1102,4 +1103,76 @@ func (k msgServer) ResumeHostZone(goCtx context.Context, msg *types.MsgResumeHos
 	k.SetHostZone(ctx, hostZone)
 
 	return &types.MsgResumeHostZoneResponse{}, nil
+}
+
+// Registers or updates a community pool rebate, configuring the rebate percentage and liquid stake amount
+func (k msgServer) SetCommunityPoolRebate(
+	goCtx context.Context,
+	msg *types.MsgSetCommunityPoolRebate,
+) (*types.MsgSetCommunityPoolRebateResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	hostZone, found := k.GetHostZone(ctx, msg.ChainId)
+	if !found {
+		return nil, types.ErrHostZoneNotFound.Wrapf("host zone %s not found", msg.ChainId)
+	}
+
+	// If a zero rebate is specified, set the rebate to nil
+	// Otherwise, update the struct
+	if msg.LiquidStakedAmount.IsZero() || msg.RebateRate.IsZero() {
+		hostZone.CommunityPoolRebate = nil
+	} else {
+		hostZone.CommunityPoolRebate = &types.CommunityPoolRebate{
+			LiquidStakeAmount: msg.LiquidStakedAmount,
+			RebatePercentage:  msg.RebateRate,
+		}
+	}
+
+	k.SetHostZone(ctx, hostZone)
+
+	return &types.MsgSetCommunityPoolRebateResponse{}, nil
+}
+
+// Submits an ICA tx to either grant or revoke authz permisssions to an address
+// to execute trades on behalf of the trade ICA
+func (k msgServer) ToggleTradeController(
+	goCtx context.Context,
+	msg *types.MsgToggleTradeController,
+) (*types.MsgToggleTradeControllerResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	// Fetch the trade ICA which will be the granter
+	tradeRoute, found := k.GetTradeRouteFromTradeAccountChainId(ctx, msg.ChainId)
+	if !found {
+		return nil, types.ErrTradeRouteNotFound.Wrapf("trade route not found for chain ID %s", msg.ChainId)
+	}
+
+	// Build the authz message that grants or revokes trade permissions to the specified address
+	authzMsg, err := k.BuildTradeAuthzMsg(ctx, tradeRoute, msg.PermissionChange, msg.Address)
+	if err != nil {
+		return nil, err
+	}
+
+	// Build the ICA channel owner from the trade route
+	tradeRouteAccountOwner := types.FormatTradeRouteICAOwnerFromRouteId(
+		msg.ChainId,
+		tradeRoute.GetRouteId(),
+		types.ICAAccountType_CONVERTER_TRADE,
+	)
+
+	// Submit the ICA tx from the trade ICA account
+	// Timeout the ICA at 1 hour
+	timeoutTimestamp := uint64(ctx.BlockTime().Add(time.Hour).UnixNano())
+	err = k.SubmitICATxWithoutCallback(
+		ctx,
+		tradeRoute.TradeAccount.ConnectionId,
+		tradeRouteAccountOwner,
+		authzMsg,
+		timeoutTimestamp,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return &types.MsgToggleTradeControllerResponse{}, nil
 }

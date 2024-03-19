@@ -6,6 +6,7 @@ import (
 
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/x/authz"
 	"github.com/cosmos/gogoproto/proto"
 	transfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
 	ibctesting "github.com/cosmos/ibc-go/v7/testing"
@@ -563,6 +564,53 @@ func (s *KeeperTestSuite) TestCalculateRewardsSplitAfterRebate() {
 			}
 		})
 	}
+}
+
+// --------------------------------------------------------------
+//                   BuildTradeAuthzMsg
+// --------------------------------------------------------------
+
+func (s *KeeperTestSuite) TestBuildTradeAuthzMsg() {
+	granterAddress := "trade_ica"
+	granteeAddress := "trade_controller"
+
+	tradeRoute := types.TradeRoute{
+		TradeAccount: types.ICAAccount{
+			Address: granterAddress,
+		},
+	}
+
+	expectedTypeUrl := "/osmosis.gamm.v1beta1.MsgSwapExactAmountIn"
+
+	// Test granting trade permissions
+	msgs, err := s.App.StakeibcKeeper.BuildTradeAuthzMsg(s.Ctx, tradeRoute, types.AuthzPermissionChange_GRANT, granteeAddress)
+	s.Require().NoError(err, "no error expected when building grant message")
+	s.Require().Len(msgs, 1, "there should be one message")
+
+	grantMsg, ok := msgs[0].(*authz.MsgGrant)
+	s.Require().True(ok, "message should be of type grant")
+	s.Require().Equal(granterAddress, grantMsg.Granter, "granter of grant message")
+	s.Require().Equal(granteeAddress, grantMsg.Grantee, "grantee of grant message")
+
+	authorization, err := grantMsg.Grant.GetAuthorization()
+	s.Require().NoError(err)
+	s.Require().Equal(expectedTypeUrl, authorization.MsgTypeURL(), "grant msg type url")
+	s.Require().Nil(grantMsg.Grant.Expiration, "expiration should be nil")
+
+	// Test revoking trade permissions
+	msgs, err = s.App.StakeibcKeeper.BuildTradeAuthzMsg(s.Ctx, tradeRoute, types.AuthzPermissionChange_REVOKE, granteeAddress)
+	s.Require().NoError(err, "no error expected when building revoke message")
+	s.Require().Len(msgs, 1, "there should be one message")
+
+	revokeMsg, ok := msgs[0].(*authz.MsgRevoke)
+	s.Require().True(ok, "message should be of type revoke")
+	s.Require().Equal(granterAddress, revokeMsg.Granter, "granter of revoke message")
+	s.Require().Equal(granteeAddress, revokeMsg.Grantee, "grantee of revoke message")
+	s.Require().Equal(expectedTypeUrl, revokeMsg.MsgTypeUrl, "revoke msg type url")
+
+	// Test invalid permissions
+	_, err = s.App.StakeibcKeeper.BuildTradeAuthzMsg(s.Ctx, tradeRoute, 100, granteeAddress)
+	s.Require().ErrorContains(err, "invalid permission change")
 }
 
 // --------------------------------------------------------------

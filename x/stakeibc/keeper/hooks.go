@@ -89,12 +89,6 @@ func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochInfo epochstypes.EpochInf
 	if epochInfo.Identifier == epochstypes.MINT_EPOCH {
 		k.AllocateHostZoneReward(ctx)
 	}
-	// At the hour epoch, query the swap price on each trade route and initiate the token swap
-	if epochInfo.Identifier == epochstypes.HOUR_EPOCH {
-		k.UpdateAllSwapPrices(ctx)
-		k.SwapAllRewardTokens(ctx)
-	}
-
 }
 
 func (k Keeper) AfterEpochEnd(ctx sdk.Context, epochInfo epochstypes.EpochInfo) {}

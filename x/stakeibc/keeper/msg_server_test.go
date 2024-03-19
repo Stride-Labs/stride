@@ -2575,3 +2575,108 @@ func (s *KeeperTestSuite) TestResumeHostZone_UnhaltedZones() {
 	expectedErrorMsg := fmt.Sprintf("invalid chain id, zone for %s not halted: host zone is not halted", HostChainId)
 	s.Require().Equal(expectedErrorMsg, err.Error(), "should return correct error msg")
 }
+
+// ----------------------------------------------------
+//	           SetCommunityPoolRebate
+// ----------------------------------------------------
+
+func (s *KeeperTestSuite) TestSetCommunityPoolRebate() {
+	rebateInfo := types.CommunityPoolRebate{
+		LiquidStakeAmount: sdk.NewInt(1000),
+		RebatePercentage:  sdk.MustNewDecFromStr("0.5"),
+	}
+
+	// Set host zone with no rebate
+	hostZone := types.HostZone{
+		ChainId: HostChainId,
+	}
+	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
+
+	// Submit a message to create the rebate
+	msg := types.MsgSetCommunityPoolRebate{
+		ChainId:            HostChainId,
+		RebateRate:         rebateInfo.RebatePercentage,
+		LiquidStakedAmount: rebateInfo.LiquidStakeAmount,
+	}
+	_, err := s.GetMsgServer().SetCommunityPoolRebate(s.Ctx, &msg)
+	s.Require().NoError(err, "no error expected when registering rebate")
+
+	// Confirm the rebate was updated
+	actualHostZone := s.MustGetHostZone(HostChainId)
+	s.Require().Equal(rebateInfo, *actualHostZone.CommunityPoolRebate, "rebate was updated on host zone")
+
+	// Submit a 0 LS amount which should delete the rebate
+	removeMsg := types.MsgSetCommunityPoolRebate{
+		ChainId:            HostChainId,
+		LiquidStakedAmount: sdk.ZeroInt(),
+	}
+	_, err = s.GetMsgServer().SetCommunityPoolRebate(s.Ctx, &removeMsg)
+	s.Require().NoError(err, "no error expected when registering 0 rebate")
+
+	actualHostZone = s.MustGetHostZone(HostChainId)
+	s.Require().Nil(actualHostZone.CommunityPoolRebate, "rebate was removed from host zone")
+
+	// Confirm a message with an invalid chain ID would cause an error
+	_, err = s.GetMsgServer().SetCommunityPoolRebate(s.Ctx, &types.MsgSetCommunityPoolRebate{ChainId: "invalid"})
+	s.Require().ErrorContains(err, "host zone not found")
+}
+
+// ----------------------------------------------------
+//	              ToggleTradeController
+// ----------------------------------------------------
+
+func (s *KeeperTestSuite) TestToggleTradeController() {
+	tradeICAOwner := types.FormatTradeRouteICAOwner(HostChainId, RewardDenom, HostDenom, types.ICAAccountType_CONVERTER_TRADE)
+	channelId, portId := s.CreateICAChannel(tradeICAOwner)
+
+	tradeControllerAddress := "trade-controller"
+
+	// Create a trade route
+	tradeRoute := types.TradeRoute{
+		RewardDenomOnRewardZone: RewardDenom,
+		HostDenomOnHostZone:     HostDenom,
+		TradeAccount: types.ICAAccount{
+			ChainId:      HostChainId,
+			ConnectionId: ibctesting.FirstConnectionID,
+		},
+	}
+	s.App.StakeibcKeeper.SetTradeRoute(s.Ctx, tradeRoute)
+
+	// Test granting permissions
+	grantMsg := types.MsgToggleTradeController{
+		ChainId:          HostChainId,
+		PermissionChange: types.AuthzPermissionChange_GRANT,
+		Address:          tradeControllerAddress,
+	}
+	s.CheckICATxSubmitted(portId, channelId, func() error {
+		_, err := s.GetMsgServer().ToggleTradeController(s.Ctx, &grantMsg)
+		return err
+	})
+
+	// Test revoking permissions
+	revokeMsg := types.MsgToggleTradeController{
+		ChainId:          HostChainId,
+		PermissionChange: types.AuthzPermissionChange_REVOKE,
+		Address:          tradeControllerAddress,
+	}
+	s.CheckICATxSubmitted(portId, channelId, func() error {
+		_, err := s.GetMsgServer().ToggleTradeController(s.Ctx, &revokeMsg)
+		return err
+	})
+
+	// Test with an invalid chain ID - it should fail because the trade route cant be found
+	invalidMsg := &types.MsgToggleTradeController{ChainId: "invalid-chain"}
+	_, err := s.GetMsgServer().ToggleTradeController(s.Ctx, invalidMsg)
+	s.Require().ErrorContains(err, "trade route not found")
+
+	// Test failing to build an authz message by passing an invalid permission change
+	invalidMsg = &types.MsgToggleTradeController{ChainId: HostChainId, PermissionChange: 100}
+	_, err = s.GetMsgServer().ToggleTradeController(s.Ctx, invalidMsg)
+	s.Require().ErrorContains(err, "invalid permission change")
+
+	// Remove the connection ID from the trade route so the ICA submission fails
+	tradeRoute.TradeAccount.ConnectionId = ""
+	s.App.StakeibcKeeper.SetTradeRoute(s.Ctx, tradeRoute)
+	_, err = s.GetMsgServer().ToggleTradeController(s.Ctx, &grantMsg)
+	s.Require().ErrorContains(err, "unable to send ICA tx")
+}

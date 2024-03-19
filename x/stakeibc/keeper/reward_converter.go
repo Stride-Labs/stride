@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"time"
 
@@ -9,6 +10,7 @@ import (
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/bech32"
+	"github.com/cosmos/cosmos-sdk/x/authz"
 	bankTypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/cosmos/gogoproto/proto"
 
@@ -178,6 +180,40 @@ func (k Keeper) CalculateRewardsSplitAfterRebate(
 	reinvestAmount = rewardsAmount.Sub(strideFeeAmount)
 
 	return strideFeeAmount, reinvestAmount, nil
+}
+
+// Builds an authz MsgGrant or MsgRevoke to grant an account trade capabilties on behalf of the trade ICA
+func (k Keeper) BuildTradeAuthzMsg(
+	ctx sdk.Context,
+	tradeRoute types.TradeRoute,
+	permissionChange types.AuthzPermissionChange,
+	grantee string,
+) (authzMsg []proto.Message, err error) {
+	swapMsgTypeUrl := "/" + proto.MessageName(&types.MsgSwapExactAmountIn{})
+
+	switch permissionChange {
+	case types.AuthzPermissionChange_GRANT:
+		authorization := authz.NewGenericAuthorization(swapMsgTypeUrl)
+		grant, err := authz.NewGrant(ctx.BlockTime(), authorization, nil)
+		if err != nil {
+			return nil, errorsmod.Wrapf(err, "unable to build grant struct")
+		}
+		authzMsg = []proto.Message{&authz.MsgGrant{
+			Granter: tradeRoute.TradeAccount.Address,
+			Grantee: grantee,
+			Grant:   grant,
+		}}
+	case types.AuthzPermissionChange_REVOKE:
+		authzMsg = []proto.Message{&authz.MsgRevoke{
+			Granter:    tradeRoute.TradeAccount.Address,
+			Grantee:    grantee,
+			MsgTypeUrl: swapMsgTypeUrl,
+		}}
+	default:
+		return nil, errors.New("invalid permission change")
+	}
+
+	return authzMsg, nil
 }
 
 // Builds a PFM transfer message to send reward tokens from the host zone,
@@ -393,6 +429,7 @@ func (k Keeper) BuildSwapMsg(rewardAmount sdkmath.Int, route types.TradeRoute) (
 	return msg, nil
 }
 
+// DEPRECATED: The on-chain swap has been deprecated in favor of an authz controller
 // Trade reward tokens in the Trade ICA for the host denom tokens using ICA remote tx on trade zone
 // The amount represents the total amount of the reward token in the trade ICA found by the calling ICQ
 func (k Keeper) SwapRewardTokens(ctx sdk.Context, rewardAmount sdkmath.Int, route types.TradeRoute) error {
@@ -590,6 +627,7 @@ func (k Keeper) TradeConvertedBalanceQuery(ctx sdk.Context, route types.TradeRou
 	return nil
 }
 
+// DEPRECATED: The on-chain swap has been deprecated in favor of an authz controller. Price is no longer needed
 // Kick off ICQ for the spot price on the pool given the input and output denoms implied by the given TradeRoute
 // the callback for this query is responsible for updating the returned spot price on the keeper data
 func (k Keeper) PoolPriceQuery(ctx sdk.Context, route types.TradeRoute) error {
