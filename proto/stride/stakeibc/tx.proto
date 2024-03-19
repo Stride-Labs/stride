@@ -328,8 +328,8 @@ message MsgSetCommunityPoolRebate {
   // Chain id of the chain whose community pool has a liquid staking rebate
   // arrangement with stride
   string chain_id = 2;
-  // Rebate percentage (e.g. 0.2 for 20%)
-  string rebate_percentage = 3 [
+  // Rebate percentage represented as a decimal (e.g. 0.2 for 20%)
+  string rebate_rate = 3 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false
   ];

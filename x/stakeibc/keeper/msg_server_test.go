@@ -2595,7 +2595,7 @@ func (s *KeeperTestSuite) TestSetCommunityPoolRebate() {
 	// Submit a message to create the rebate
 	msg := types.MsgSetCommunityPoolRebate{
 		ChainId:            HostChainId,
-		RebatePercentage:   rebateInfo.RebatePercentage,
+		RebateRate:         rebateInfo.RebatePercentage,
 		LiquidStakedAmount: rebateInfo.LiquidStakeAmount,
 	}
 	_, err := s.GetMsgServer().SetCommunityPoolRebate(s.Ctx, &msg)

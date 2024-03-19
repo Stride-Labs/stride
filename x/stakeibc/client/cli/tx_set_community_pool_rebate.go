@@ -17,12 +17,13 @@ import (
 
 func CmdSetCommunityPoolRebate() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "set-rebate [chain-id] [rebate-percentage] [liquid-staked-amount]",
+		Use:   "set-rebate [chain-id] [rebate-rate] [liquid-staked-amount]",
 		Short: "Registers or updates a community pool rebate",
 		Long: strings.TrimSpace(`Registers a community pool rebate by specifying the rebate percentage (as a decimal)
-and the amount liquid staked.
+and the amount liquid staked. 
+E.g. to specify a 20% rebate, the rebate rate should be 0.2
 
-If a 0% rebate or 0 token liquid stake is specified, the rebate will be deleted.
+If a 0.0 rebate or 0 token liquid stake is specified, the rebate will be deleted.
 		`),
 		Args: cobra.ExactArgs(3),
 		RunE: func(cmd *cobra.Command, args []string) (err error) {

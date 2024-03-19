@@ -20,7 +20,7 @@ func TestMsgSetCommunityPoolRebate(t *testing.T) {
 	require.True(t, ok)
 
 	validChainId := "chain-0"
-	validRebatePercentage := sdk.MustNewDecFromStr("0.1")
+	validRebateRate := sdk.MustNewDecFromStr("0.1")
 	validLiquidStakedAmount := sdk.NewInt(1000)
 
 	tests := []struct {
@@ -33,7 +33,7 @@ func TestMsgSetCommunityPoolRebate(t *testing.T) {
 			msg: types.MsgSetCommunityPoolRebate{
 				Creator:            validAdminAddress,
 				ChainId:            validChainId,
-				RebatePercentage:   validRebatePercentage,
+				RebateRate:         validRebateRate,
 				LiquidStakedAmount: validLiquidStakedAmount,
 			},
 		},
@@ -42,7 +42,7 @@ func TestMsgSetCommunityPoolRebate(t *testing.T) {
 			msg: types.MsgSetCommunityPoolRebate{
 				Creator:            invalidAddress,
 				ChainId:            validChainId,
-				RebatePercentage:   validRebatePercentage,
+				RebateRate:         validRebateRate,
 				LiquidStakedAmount: validLiquidStakedAmount,
 			},
 			err: "invalid creator address",
@@ -52,7 +52,7 @@ func TestMsgSetCommunityPoolRebate(t *testing.T) {
 			msg: types.MsgSetCommunityPoolRebate{
 				Creator:            validNotAdminAddress,
 				ChainId:            validChainId,
-				RebatePercentage:   validRebatePercentage,
+				RebateRate:         validRebateRate,
 				LiquidStakedAmount: validLiquidStakedAmount,
 			},
 			err: "not an admin",
@@ -62,7 +62,7 @@ func TestMsgSetCommunityPoolRebate(t *testing.T) {
 			msg: types.MsgSetCommunityPoolRebate{
 				Creator:            validAdminAddress,
 				ChainId:            "",
-				RebatePercentage:   validRebatePercentage,
+				RebateRate:         validRebateRate,
 				LiquidStakedAmount: validLiquidStakedAmount,
 			},
 			err: "chain ID must be specified",
@@ -81,7 +81,7 @@ func TestMsgSetCommunityPoolRebate(t *testing.T) {
 			msg: types.MsgSetCommunityPoolRebate{
 				Creator:            validAdminAddress,
 				ChainId:            validChainId,
-				RebatePercentage:   sdk.MustNewDecFromStr("0.5").Neg(),
+				RebateRate:         sdk.MustNewDecFromStr("0.5").Neg(),
 				LiquidStakedAmount: validLiquidStakedAmount,
 			},
 			err: "rebate percentage, must be between 0 and 1 (inclusive)",
@@ -91,7 +91,7 @@ func TestMsgSetCommunityPoolRebate(t *testing.T) {
 			msg: types.MsgSetCommunityPoolRebate{
 				Creator:            validAdminAddress,
 				ChainId:            validChainId,
-				RebatePercentage:   sdk.OneDec(),
+				RebateRate:         sdk.OneDec(),
 				LiquidStakedAmount: validLiquidStakedAmount,
 			},
 		},
@@ -100,7 +100,7 @@ func TestMsgSetCommunityPoolRebate(t *testing.T) {
 			msg: types.MsgSetCommunityPoolRebate{
 				Creator:            validAdminAddress,
 				ChainId:            validChainId,
-				RebatePercentage:   sdk.MustNewDecFromStr("1.1"),
+				RebateRate:         sdk.MustNewDecFromStr("1.1"),
 				LiquidStakedAmount: validLiquidStakedAmount,
 			},
 			err: "rebate percentage, must be between 0 and 1 (inclusive)",
@@ -110,16 +110,16 @@ func TestMsgSetCommunityPoolRebate(t *testing.T) {
 			msg: types.MsgSetCommunityPoolRebate{
 				Creator:            validAdminAddress,
 				ChainId:            validChainId,
-				RebatePercentage:   sdk.ZeroDec(),
+				RebateRate:         sdk.ZeroDec(),
 				LiquidStakedAmount: validLiquidStakedAmount,
 			},
 		},
 		{
 			name: "invalid liquid stake amount - nil",
 			msg: types.MsgSetCommunityPoolRebate{
-				Creator:          validAdminAddress,
-				ChainId:          validChainId,
-				RebatePercentage: validRebatePercentage,
+				Creator:    validAdminAddress,
+				ChainId:    validChainId,
+				RebateRate: validRebateRate,
 			},
 			err: "invalid liquid stake amount, must be greater than or equal to 0",
 		},
@@ -128,7 +128,7 @@ func TestMsgSetCommunityPoolRebate(t *testing.T) {
 			msg: types.MsgSetCommunityPoolRebate{
 				Creator:            validAdminAddress,
 				ChainId:            validChainId,
-				RebatePercentage:   validRebatePercentage,
+				RebateRate:         validRebateRate,
 				LiquidStakedAmount: sdkmath.NewInt(1).Neg(),
 			},
 			err: "invalid liquid stake amount, must be greater than or equal to 0",
@@ -138,7 +138,7 @@ func TestMsgSetCommunityPoolRebate(t *testing.T) {
 			msg: types.MsgSetCommunityPoolRebate{
 				Creator:            validAdminAddress,
 				ChainId:            validChainId,
-				RebatePercentage:   validRebatePercentage,
+				RebateRate:         validRebateRate,
 				LiquidStakedAmount: sdkmath.ZeroInt(),
 			},
 		},
