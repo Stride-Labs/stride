@@ -28,7 +28,7 @@ func (h HostZone) SafelyGetCommunityPoolRebate() (rebate CommunityPoolRebate, ex
 	if h.CommunityPoolRebate == nil {
 		return CommunityPoolRebate{}, false
 	}
-	if h.CommunityPoolRebate.LiquidStakedStTokenAmount.IsNil() || h.CommunityPoolRebate.LiquidStakedStTokenAmount.IsNil() {
+	if h.CommunityPoolRebate.LiquidStakedStTokenAmount.IsNil() || h.CommunityPoolRebate.RebateRate.IsNil() {
 		return CommunityPoolRebate{}, false
 	}
 	return *h.CommunityPoolRebate, true

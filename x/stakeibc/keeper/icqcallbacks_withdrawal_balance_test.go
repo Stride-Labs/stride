@@ -231,13 +231,12 @@ func (s *KeeperTestSuite) TestWithdrawalBalanceCallback_NoFeeAccount() {
 func (s *KeeperTestSuite) TestWithdrawalBalanceCallback_FailedToCheckForRebate() {
 	tc := s.SetupWithdrawalBalanceCallbackTest()
 
-	// Add a rebate to the host zone and set the total delegations to 0 so the check fails
+	// Add a rebate to the host zone - since there are no stTokens in supply, the test will fail
 	hostZone := s.MustGetHostZone(HostChainId)
 	hostZone.CommunityPoolRebate = &types.CommunityPoolRebate{
 		RebateRate:                sdk.MustNewDecFromStr("0.5"),
 		LiquidStakedStTokenAmount: sdkmath.NewInt(1),
 	}
-	hostZone.TotalDelegations = sdkmath.ZeroInt()
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
 
 	err := keeper.WithdrawalBalanceCallback(s.App.StakeibcKeeper, s.Ctx, tc.validArgs.callbackArgs, tc.validArgs.query)
