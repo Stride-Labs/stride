@@ -58,7 +58,7 @@ func WithdrawalBalanceCallback(k Keeper, ctx sdk.Context, args []byte, query icq
 		return errorsmod.Wrapf(types.ErrICAAccountNotFound, "no fee account found for %s", chainId)
 	}
 
-	// Split the withdrawal amount into a rebate, stride fee, and reinvest portion
+	// Split the withdrawal amount into the stride fee and reinvest portion
 	feeAmount, reinvestAmount, err := k.CalculateRewardsSplitHostDenom(ctx, hostZone, withdrawalBalanceAmount)
 	if err != nil {
 		return errorsmod.Wrapf(err, "unable to check split reward amount into fee and reinvest amounts")

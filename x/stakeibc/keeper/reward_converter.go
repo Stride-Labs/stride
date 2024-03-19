@@ -64,9 +64,9 @@ type FeeInfo struct {
 //
 // The rebate percentage is determined by: (% of total TVL contributed by commuity pool) * (rebate percentage)
 //
-// E.g. Community pool liquid staked 1M, TVL is 10M, rebate is 50%
+// E.g. Community pool liquid staked 1M, TVL is 10M, rebate is 20%
 // Total rewards this epoch are 1000, and the stride fee is 10%
-// => Then the rebate is 1000 rewards * 10% stride fee * (1M / 10M) * 50% rebate = 5
+// => Then the rebate is 1000 rewards * 10% stride fee * (1M / 10M) * 20% rebate = 2
 func (k Keeper) CalculateRewardsSplitRewardDenom(
 	ctx sdk.Context,
 	chainId string,
