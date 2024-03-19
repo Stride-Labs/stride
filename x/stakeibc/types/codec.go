@@ -26,7 +26,7 @@ func RegisterCodec(cdc *codec.LegacyAmino) {
 	cdc.RegisterConcrete(&MsgCalibrateDelegation{}, "stakeibc/CalibrateDelegation", nil)
 	cdc.RegisterConcrete(&MsgUpdateInnerRedemptionRateBounds{}, "stakeibc/UpdateInnerRedemptionRateBounds", nil)
 	cdc.RegisterConcrete(&MsgResumeHostZone{}, "stakeibc/ResumeHostZone", nil)
-	// this line is used by starport scaffolding # 2
+	cdc.RegisterConcrete(&MsgSetCommunityPoolRebate{}, "stakeibc/SetCommunityPoolRebate", nil)
 }
 
 func RegisterInterfaces(registry cdctypes.InterfaceRegistry) {
@@ -45,14 +45,13 @@ func RegisterInterfaces(registry cdctypes.InterfaceRegistry) {
 		&MsgCalibrateDelegation{},
 		&MsgUpdateInnerRedemptionRateBounds{},
 		&MsgResumeHostZone{},
+		&MsgSetCommunityPoolRebate{},
 	)
 
 	registry.RegisterImplementations((*govtypes.Content)(nil),
 		&AddValidatorsProposal{},
 		&ToggleLSMProposal{},
 	)
-
-	// this line is used by starport scaffolding # 3
 
 	msgservice.RegisterMsgServiceDesc(registry, &_Msg_serviceDesc)
 }

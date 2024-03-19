@@ -41,6 +41,8 @@ service Msg {
       returns (MsgDeleteTradeRouteResponse);
   rpc UpdateTradeRoute(MsgUpdateTradeRoute)
       returns (MsgUpdateTradeRouteResponse);
+  rpc SetCommunityPoolRebate(MsgSetCommunityPoolRebate)
+      returns (MsgSetCommunityPoolRebateResponse);
 }
 
 message MsgUpdateInnerRedemptionRateBounds {
@@ -314,3 +316,27 @@ message MsgUpdateTradeRoute {
   ];
 }
 message MsgUpdateTradeRouteResponse {}
+
+// Registers or updates a community pool rebate by specifying the amount liquid
+// staked
+message MsgSetCommunityPoolRebate {
+  option (cosmos.msg.v1.signer) = "creator";
+  option (amino.name) = "stride/x/stakeibc/MsgSetCommunityPoolRebate";
+
+  // Message signer (admin only)
+  string creator = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+  // Chain id of the chain whose community pool has a liquid staking rebate
+  // arrangement with stride
+  string chain_id = 2;
+  // Rebate percentage represented as a decimal (e.g. 0.2 for 20%)
+  string rebate_rate = 3 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
+  // Number of native tokens staked by the community pool
+  string liquid_staked_amount = 4 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable) = false
+  ];
+}
+message MsgSetCommunityPoolRebateResponse {}
