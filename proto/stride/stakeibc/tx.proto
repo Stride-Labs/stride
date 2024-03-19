@@ -43,6 +43,8 @@ service Msg {
       returns (MsgUpdateTradeRouteResponse);
   rpc SetCommunityPoolRebate(MsgSetCommunityPoolRebate)
       returns (MsgSetCommunityPoolRebateResponse);
+  rpc ToggleTradeController(MsgToggleTradeController)
+      returns (MsgToggleTradeControllerResponse);
 }
 
 message MsgUpdateInnerRedemptionRateBounds {
@@ -340,3 +342,26 @@ message MsgSetCommunityPoolRebate {
   ];
 }
 message MsgSetCommunityPoolRebateResponse {}
+
+enum AuthzPermissionChange {
+  // Grant the address trade permissions
+  GRANT = 0;
+  // Revoke trade permissions from the address
+  REVOKE = 1;
+}
+
+// Grants or revokes trade permissions to a given address via authz
+message MsgToggleTradeController {
+  option (cosmos.msg.v1.signer) = "creator";
+  option (amino.name) = "stride/x/stakeibc/MsgToggleTradeController";
+
+  // Message signer (admin only)
+  string creator = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+  // Chain ID of the trade account
+  string chain_id = 2;
+  // Permission change (either grant or revoke)
+  AuthzPermissionChange permission_change = 3;
+  // Address of trade operator
+  string address = 4;
+}
+message MsgToggleTradeControllerResponse {}

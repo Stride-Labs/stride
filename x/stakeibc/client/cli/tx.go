@@ -41,6 +41,7 @@ func GetTxCmd() *cobra.Command {
 	cmd.AddCommand(CmdUpdateInnerRedemptionRateBounds())
 	cmd.AddCommand(CmdResumeHostZone())
 	cmd.AddCommand(CmdSetCommunityPoolRebate())
+	cmd.AddCommand(CmdToggleTradeController())
 
 	return cmd
 }

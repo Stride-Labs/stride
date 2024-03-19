@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"time"
 
@@ -9,6 +10,7 @@ import (
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/bech32"
+	"github.com/cosmos/cosmos-sdk/x/authz"
 	bankTypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/cosmos/gogoproto/proto"
 
@@ -50,6 +52,40 @@ type ForwardMetadata struct {
 // Normal staking flow continues from there. So the host denom tokens will land on the original host zone
 // and the normal staking and distribution flow will continue from there.
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+// Builds an authz MsgGrant or MsgRevoke to grant an account trade capabilties on behalf of the trade ICA
+func (k Keeper) BuildTradeAuthzMsg(
+	ctx sdk.Context,
+	tradeRoute types.TradeRoute,
+	permissionChange types.AuthzPermissionChange,
+	grantee string,
+) (authzMsg []proto.Message, err error) {
+	swapMsgTypeUrl := "/" + proto.MessageName(&types.MsgSwapExactAmountIn{})
+
+	switch permissionChange {
+	case types.AuthzPermissionChange_GRANT:
+		authorization := authz.NewGenericAuthorization(swapMsgTypeUrl)
+		grant, err := authz.NewGrant(ctx.BlockTime(), authorization, nil)
+		if err != nil {
+			return nil, errorsmod.Wrapf(err, "unable to build grant struct")
+		}
+		authzMsg = []proto.Message{&authz.MsgGrant{
+			Granter: tradeRoute.TradeAccount.Address,
+			Grantee: grantee,
+			Grant:   grant,
+		}}
+	case types.AuthzPermissionChange_REVOKE:
+		authzMsg = []proto.Message{&authz.MsgRevoke{
+			Granter:    tradeRoute.TradeAccount.Address,
+			Grantee:    grantee,
+			MsgTypeUrl: swapMsgTypeUrl,
+		}}
+	default:
+		return nil, errors.New("invalid permission change")
+	}
+
+	return authzMsg, nil
+}
 
 // Builds a PFM transfer message to send reward tokens from the host zone,
 // through the reward zone (to unwind) and finally to the trade zone

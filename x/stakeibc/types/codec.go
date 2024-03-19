@@ -27,6 +27,7 @@ func RegisterCodec(cdc *codec.LegacyAmino) {
 	cdc.RegisterConcrete(&MsgUpdateInnerRedemptionRateBounds{}, "stakeibc/UpdateInnerRedemptionRateBounds", nil)
 	cdc.RegisterConcrete(&MsgResumeHostZone{}, "stakeibc/ResumeHostZone", nil)
 	cdc.RegisterConcrete(&MsgSetCommunityPoolRebate{}, "stakeibc/SetCommunityPoolRebate", nil)
+	cdc.RegisterConcrete(&MsgToggleTradeController{}, "stakeibc/ToggleTradeController", nil)
 }
 
 func RegisterInterfaces(registry cdctypes.InterfaceRegistry) {
@@ -46,6 +47,7 @@ func RegisterInterfaces(registry cdctypes.InterfaceRegistry) {
 		&MsgUpdateInnerRedemptionRateBounds{},
 		&MsgResumeHostZone{},
 		&MsgSetCommunityPoolRebate{},
+		&MsgToggleTradeController{},
 	)
 
 	registry.RegisterImplementations((*govtypes.Content)(nil),
