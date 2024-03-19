@@ -1114,7 +1114,7 @@ func (k msgServer) ToggleTradeController(
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
 	// Fetch the trade ICA which will be the granter
-	tradeRoute, found := k.GetTradeRouteFromTradeChainId(ctx, msg.ChainId)
+	tradeRoute, found := k.GetTradeRouteFromTradeAccountChainId(ctx, msg.ChainId)
 	if !found {
 		return nil, types.ErrTradeRouteNotFound.Wrapf("trade route not found for chain ID %s", msg.ChainId)
 	}

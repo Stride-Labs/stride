@@ -335,7 +335,7 @@ message MsgToggleTradeController {
   string chain_id = 2;
   // Permission change (either grant or revoke)
   AuthzPermissionChange permission_change = 3;
-  // Address of controller
+  // Address of trade operator
   string address = 4;
 }
 message MsgToggleTradeControllerResponse {}

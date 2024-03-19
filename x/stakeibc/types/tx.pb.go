@@ -1995,7 +1995,7 @@ type MsgToggleTradeController struct {
 	ChainId string `protobuf:"bytes,2,opt,name=chain_id,json=chainId,proto3" json:"chain_id,omitempty"`
 	// Permission change (either grant or revoke)
 	PermissionChange AuthzPermissionChange `protobuf:"varint,3,opt,name=permission_change,json=permissionChange,proto3,enum=stride.stakeibc.AuthzPermissionChange" json:"permission_change,omitempty"`
-	// Address of controller
+	// Address of trade operator
 	Address string `protobuf:"bytes,4,opt,name=address,proto3" json:"address,omitempty"`
 }
 

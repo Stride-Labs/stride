@@ -53,7 +53,7 @@ func (k Keeper) GetAllTradeRoutes(ctx sdk.Context) (list []types.TradeRoute) {
 }
 
 // Searches for a trade route by the trade account chain ID
-func (k Keeper) GetTradeRouteFromTradeChainId(ctx sdk.Context, chainId string) (tradeRoute types.TradeRoute, found bool) {
+func (k Keeper) GetTradeRouteFromTradeAccountChainId(ctx sdk.Context, chainId string) (tradeRoute types.TradeRoute, found bool) {
 	for _, tradeRoute := range k.GetAllTradeRoutes(ctx) {
 		if tradeRoute.TradeAccount.ChainId == chainId {
 			return tradeRoute, true
