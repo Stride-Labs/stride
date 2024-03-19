@@ -1119,11 +1119,11 @@ func (k msgServer) SetCommunityPoolRebate(
 
 	// If a zero rebate is specified, set the rebate to nil
 	// Otherwise, update the struct
-	if msg.LiquidStakedAmount.IsZero() || msg.RebateRate.IsZero() {
+	if msg.LiquidStakedStTokenAmount.IsZero() || msg.RebateRate.IsZero() {
 		hostZone.CommunityPoolRebate = nil
 	} else {
 		hostZone.CommunityPoolRebate = &types.CommunityPoolRebate{
-			LiquidStakeAmount: msg.LiquidStakedAmount,
+			LiquidStakeAmount: msg.LiquidStakedStTokenAmount,
 			RebatePercentage:  msg.RebateRate,
 		}
 	}

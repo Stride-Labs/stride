@@ -17,10 +17,10 @@ import (
 
 func CmdSetCommunityPoolRebate() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "set-rebate [chain-id] [rebate-rate] [liquid-staked-amount]",
+		Use:   "set-rebate [chain-id] [rebate-rate] [liquid-staked-sttoken-amount]",
 		Short: "Registers or updates a community pool rebate",
 		Long: strings.TrimSpace(`Registers a community pool rebate by specifying the rebate percentage (as a decimal)
-and the amount liquid staked. 
+and the amount liquid staked, denominated in the number of stTokens received. 
 E.g. to specify a 20% rebate, the rebate rate should be 0.2
 
 If a 0.0 rebate or 0 token liquid stake is specified, the rebate will be deleted.
@@ -32,7 +32,7 @@ If a 0.0 rebate or 0 token liquid stake is specified, the rebate will be deleted
 			if err != nil {
 				return fmt.Errorf("unable to parse rebate percentage: %s", err.Error())
 			}
-			liquidStakeAmount, ok := sdkmath.NewIntFromString(args[2])
+			liquidStakedStTokenAmount, ok := sdkmath.NewIntFromString(args[2])
 			if !ok {
 				return errors.New("unable to parse liquid stake amount")
 			}
@@ -46,7 +46,7 @@ If a 0.0 rebate or 0 token liquid stake is specified, the rebate will be deleted
 				clientCtx.GetFromAddress().String(),
 				chainId,
 				rebatePercentage,
-				liquidStakeAmount,
+				liquidStakedStTokenAmount,
 			)
 			if err := msg.ValidateBasic(); err != nil {
 				return err

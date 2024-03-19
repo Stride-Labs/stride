@@ -2594,9 +2594,9 @@ func (s *KeeperTestSuite) TestSetCommunityPoolRebate() {
 
 	// Submit a message to create the rebate
 	msg := types.MsgSetCommunityPoolRebate{
-		ChainId:            HostChainId,
-		RebateRate:         rebateInfo.RebatePercentage,
-		LiquidStakedAmount: rebateInfo.LiquidStakeAmount,
+		ChainId:                   HostChainId,
+		RebateRate:                rebateInfo.RebatePercentage,
+		LiquidStakedStTokenAmount: rebateInfo.LiquidStakeAmount,
 	}
 	_, err := s.GetMsgServer().SetCommunityPoolRebate(s.Ctx, &msg)
 	s.Require().NoError(err, "no error expected when registering rebate")
@@ -2607,8 +2607,8 @@ func (s *KeeperTestSuite) TestSetCommunityPoolRebate() {
 
 	// Submit a 0 LS amount which should delete the rebate
 	removeMsg := types.MsgSetCommunityPoolRebate{
-		ChainId:            HostChainId,
-		LiquidStakedAmount: sdk.ZeroInt(),
+		ChainId:                   HostChainId,
+		LiquidStakedStTokenAmount: sdk.ZeroInt(),
 	}
 	_, err = s.GetMsgServer().SetCommunityPoolRebate(s.Ctx, &removeMsg)
 	s.Require().NoError(err, "no error expected when registering 0 rebate")

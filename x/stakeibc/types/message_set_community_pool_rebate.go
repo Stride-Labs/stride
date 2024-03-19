@@ -12,7 +12,7 @@ import (
 	"github.com/Stride-Labs/stride/v19/utils"
 )
 
-const TypeMsgSetCommunityPoolRebate = "register_community_pool_rebate"
+const TypeMsgSetCommunityPoolRebate = "set_community_pool_rebate"
 
 var _ sdk.Msg = &MsgSetCommunityPoolRebate{}
 
@@ -20,13 +20,13 @@ func NewMsgSetCommunityPoolRebate(
 	creator string,
 	chainId string,
 	rebateRate sdk.Dec,
-	liquidStakedAmount sdkmath.Int,
+	liquidStakedStTokenAmount sdkmath.Int,
 ) *MsgSetCommunityPoolRebate {
 	return &MsgSetCommunityPoolRebate{
-		Creator:            creator,
-		ChainId:            chainId,
-		RebateRate:         rebateRate,
-		LiquidStakedAmount: liquidStakedAmount,
+		Creator:                   creator,
+		ChainId:                   chainId,
+		RebateRate:                rebateRate,
+		LiquidStakedStTokenAmount: liquidStakedStTokenAmount,
 	}
 }
 
@@ -65,7 +65,7 @@ func (msg *MsgSetCommunityPoolRebate) ValidateBasic() error {
 	if msg.RebateRate.IsNil() || msg.RebateRate.LT(sdk.ZeroDec()) || msg.RebateRate.GT(sdk.OneDec()) {
 		return errors.New("invalid rebate rate, must be a decimal between 0 and 1 (inclusive)")
 	}
-	if msg.LiquidStakedAmount.IsNil() || msg.LiquidStakedAmount.LT(sdkmath.ZeroInt()) {
+	if msg.LiquidStakedStTokenAmount.IsNil() || msg.LiquidStakedStTokenAmount.LT(sdkmath.ZeroInt()) {
 		return errors.New("invalid liquid stake amount, must be greater than or equal to zero")
 	}
 
