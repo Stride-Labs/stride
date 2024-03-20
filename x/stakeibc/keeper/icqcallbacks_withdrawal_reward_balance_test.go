@@ -125,7 +125,7 @@ func (s *KeeperTestSuite) TestWithdrawalRewardBalanceCallback_SuccessfulWithReba
 	}
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
 
-	// Mint stTokens so there the supply matches the liquid staked amount
+	// Mint stTokens so that the supply matches the liquid staked amount
 	s.FundAccount(s.TestAccs[0], sdk.NewCoin(types.StAssetDenomFromHostZoneDenom(hostZone.HostDenom), stTokenSupply))
 
 	// ICA inside of TransferRewardTokensHostToTrade should not actually execute because of min_swap_amount
