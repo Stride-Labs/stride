@@ -19,7 +19,7 @@ import (
 	legacyratelimittypes "github.com/Stride-Labs/stride/v19/app/upgrades/v19/legacyratelimit/types"
 )
 
-// test change
+// test change2
 
 var (
 	StTiaSupply = sdkmath.NewInt(1000)
