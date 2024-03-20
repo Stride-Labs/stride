@@ -112,6 +112,14 @@ func (k msgServer) RegisterHostZone(goCtx context.Context, msg *types.MsgRegiste
 		return nil, errorsmod.Wrapf(err, "unable to create community pool redeem account for host zone %s", chainId)
 	}
 
+	// Validate the community pool treasury address if it's non-empty
+	if msg.CommunityPoolTreasuryAddress != "" {
+		_, err := utils.AccAddressFromBech32(msg.CommunityPoolTreasuryAddress, msg.Bech32Prefix)
+		if err != nil {
+			return nil, errorsmod.Wrapf(err, "invalid community pool treasury address (%s)", msg.CommunityPoolTreasuryAddress)
+		}
+	}
+
 	params := k.GetParams(ctx)
 	if msg.MinRedemptionRate.IsNil() || msg.MinRedemptionRate.IsZero() {
 		msg.MinRedemptionRate = sdk.NewDecWithPrec(int64(params.DefaultMinRedemptionRateThreshold), 2)
