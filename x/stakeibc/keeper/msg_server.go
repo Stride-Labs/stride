@@ -112,6 +112,14 @@ func (k msgServer) RegisterHostZone(goCtx context.Context, msg *types.MsgRegiste
 		return nil, errorsmod.Wrapf(err, "unable to create community pool redeem account for host zone %s", chainId)
 	}
 
+	// Validate the community pool treasury address if it's non-empty
+	if msg.CommunityPoolTreasuryAddress != "" {
+		_, err := utils.AccAddressFromBech32(msg.CommunityPoolTreasuryAddress, msg.Bech32Prefix)
+		if err != nil {
+			return nil, errorsmod.Wrapf(err, "invalid community pool treasury address (%s)", msg.CommunityPoolTreasuryAddress)
+		}
+	}
+
 	params := k.GetParams(ctx)
 	if msg.MinRedemptionRate.IsNil() || msg.MinRedemptionRate.IsZero() {
 		msg.MinRedemptionRate = sdk.NewDecWithPrec(int64(params.DefaultMinRedemptionRateThreshold), 2)
@@ -138,9 +146,10 @@ func (k msgServer) RegisterHostZone(goCtx context.Context, msg *types.MsgRegiste
 		MinRedemptionRate:                 msg.MinRedemptionRate,
 		MaxRedemptionRate:                 msg.MaxRedemptionRate,
 		// Default the inner bounds to the outer bounds
-		MinInnerRedemptionRate: msg.MinRedemptionRate,
-		MaxInnerRedemptionRate: msg.MaxRedemptionRate,
-		LsmLiquidStakeEnabled:  msg.LsmLiquidStakeEnabled,
+		MinInnerRedemptionRate:       msg.MinRedemptionRate,
+		MaxInnerRedemptionRate:       msg.MaxRedemptionRate,
+		LsmLiquidStakeEnabled:        msg.LsmLiquidStakeEnabled,
+		CommunityPoolTreasuryAddress: msg.CommunityPoolTreasuryAddress,
 	}
 	// write the zone back to the store
 	k.SetHostZone(ctx, zone)
@@ -1117,14 +1126,22 @@ func (k msgServer) SetCommunityPoolRebate(
 		return nil, types.ErrHostZoneNotFound.Wrapf("host zone %s not found", msg.ChainId)
 	}
 
-	// If a zero rebate is specified, set the rebate to nil
+	// Get the current stToken supply and confirm it's greater than or equal to the liquid staked amount
+	stDenom := utils.StAssetDenomFromHostZoneDenom(hostZone.HostDenom)
+	stTokenSupply := k.bankKeeper.GetSupply(ctx, stDenom).Amount
+	if msg.LiquidStakedStTokenAmount.GT(stTokenSupply) {
+		return nil, types.ErrFailedToRegisterRebate.Wrapf("liquid staked stToken amount (%v) is greater than current supply (%v)",
+			msg.LiquidStakedStTokenAmount, stTokenSupply)
+	}
+
+	// If a zero rebate rate or zero LiquidStakedStTokenAmount is specified, set the rebate to nil
 	// Otherwise, update the struct
-	if msg.LiquidStakedAmount.IsZero() || msg.RebateRate.IsZero() {
+	if msg.LiquidStakedStTokenAmount.IsZero() || msg.RebateRate.IsZero() {
 		hostZone.CommunityPoolRebate = nil
 	} else {
 		hostZone.CommunityPoolRebate = &types.CommunityPoolRebate{
-			LiquidStakeAmount: msg.LiquidStakedAmount,
-			RebatePercentage:  msg.RebateRate,
+			LiquidStakedStTokenAmount: msg.LiquidStakedStTokenAmount,
+			RebateRate:                msg.RebateRate,
 		}
 	}
 

@@ -65,4 +65,6 @@ var (
 	ErrClientStateNotTendermint            = errorsmod.Register(ModuleName, 1558, "Client state not tendermint")
 	ErrTradeRouteNotFound                  = errorsmod.Register(ModuleName, 1559, "trade route not found")
 	ErrValidatorExceedsWeightCap           = errorsmod.Register(ModuleName, 1560, "validator exceeds weight cap")
+	ErrFeeSplitInvariantFailed             = errorsmod.Register(ModuleName, 1561, "failed to calculate fee split")
+	ErrFailedToRegisterRebate              = errorsmod.Register(ModuleName, 1562, "failed to register rebate")
 )

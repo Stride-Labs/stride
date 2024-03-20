@@ -24,6 +24,10 @@ func WithdrawalRewardBalanceCallback(k Keeper, ctx sdk.Context, args []byte, que
 		"Starting withdrawal reward balance callback, QueryId: %vs, QueryType: %s, Connection: %s", query.Id, query.QueryType, query.ConnectionId))
 
 	chainId := query.ChainId
+	hostZone, err := k.GetActiveHostZone(ctx, chainId)
+	if err != nil {
+		return err
+	}
 
 	// Unmarshal the query response args to determine the balance
 	withdrawalRewardBalanceAmount, err := icqkeeper.UnmarshalAmountFromBalanceQuery(k.cdc, args)
@@ -54,14 +58,33 @@ func WithdrawalRewardBalanceCallback(k Keeper, ctx sdk.Context, args []byte, que
 	k.Logger(ctx).Info(utils.LogICQCallbackWithHostZone(chainId, ICQCallbackID_WithdrawalRewardBalance,
 		"Query response - Withdrawal Reward Balance: %v %s", withdrawalRewardBalanceAmount, tradeRoute.RewardDenomOnHostZone))
 
-	// Using ICA commands on the withdrawal address, transfer the found reward tokens from the host zone to the trade zone
-	if err := k.TransferRewardTokensHostToTrade(ctx, withdrawalRewardBalanceAmount, tradeRoute); err != nil {
+	// Split the withdrawal amount into a rebate, stride fee, and reinvest portion
+	rebateAmount, tradeAmount, err := k.CalculateRewardsSplitBeforeRebate(ctx, hostZone, withdrawalRewardBalanceAmount)
+	if err != nil {
+		return errorsmod.Wrapf(err, "unable to check for rebate amount")
+	}
+
+	// If there's a rebate portion, fund the community pool with that amount
+	if rebateAmount.GT(sdkmath.ZeroInt()) {
+		rebateToken := sdk.NewCoin(tradeRouteCallback.RewardDenom, rebateAmount)
+		if err := k.FundCommunityPool(ctx, hostZone, rebateToken, types.ICAAccountType_WITHDRAWAL); err != nil {
+			return errorsmod.Wrapf(err, "unable to submit fund community pool ICA")
+		}
+
+		k.Logger(ctx).Info(utils.LogICQCallbackWithHostZone(chainId, ICQCallbackID_WithdrawalRewardBalance,
+			"Sending rebate tokens %v %s to community pool",
+			rebateAmount, tradeRoute.RewardDenomOnRewardZone))
+	}
+
+	// Transfer the amount leftover after to the rebate to the trade zone so it can be swapped for the native token
+	// We transfer both the amount to be reinvested, and the amount for the stride fee
+	if err := k.TransferRewardTokensHostToTrade(ctx, tradeAmount, tradeRoute); err != nil {
 		return errorsmod.Wrapf(err, "initiating transfer of reward tokens to trade ICA failed")
 	}
 
 	k.Logger(ctx).Info(utils.LogICQCallbackWithHostZone(chainId, ICQCallbackID_WithdrawalRewardBalance,
 		"Sending discovered reward tokens %v %s from hostZone to tradeZone",
-		withdrawalRewardBalanceAmount, tradeRoute.RewardDenomOnHostZone))
+		tradeAmount, tradeRoute.RewardDenomOnRewardZone))
 
 	return nil
 }

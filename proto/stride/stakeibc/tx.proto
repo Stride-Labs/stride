@@ -136,6 +136,7 @@ message MsgRegisterHostZone {
     (gogoproto.nullable) = false
   ];
   bool lsm_liquid_stake_enabled = 15;
+  string community_pool_treasury_address = 16;
 }
 message MsgRegisterHostZoneResponse {}
 
@@ -335,8 +336,8 @@ message MsgSetCommunityPoolRebate {
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false
   ];
-  // Number of native tokens staked by the community pool
-  string liquid_staked_amount = 4 [
+  // Number of stTokens recieved by the community pool after liquid staking
+  string liquid_staked_st_token_amount = 4 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
     (gogoproto.nullable) = false
   ];
