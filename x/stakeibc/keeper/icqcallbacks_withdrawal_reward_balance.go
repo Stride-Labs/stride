@@ -15,7 +15,8 @@ import (
 )
 
 // WithdrawalRewardBalanceCallback is a callback handler for WithdrawalRewardBalance queries.
-// The query response will return the withdrawal account balance for a specific (foreign ibc) denom
+// The query response will return the withdrawal account balance for the reward denom in the case
+// of a host zone with a trade route (e.g. USDC in the case of the dYdX trade route)
 // If the balance is non-zero, ICA MsgSends are submitted to transfer the discovered balance to the tradeZone
 //
 // Note: for now, to get proofs in your ICQs, you need to query the entire store on the host zone! e.g. "store/bank/key"
