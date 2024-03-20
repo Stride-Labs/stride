@@ -6,6 +6,7 @@ import (
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+	disttypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
 	"github.com/cosmos/gogoproto/proto"
 	ibctesting "github.com/cosmos/ibc-go/v7/testing"
 
@@ -437,4 +438,96 @@ func (s *KeeperTestSuite) TestRedeemCommunityPoolTokens_Failure_NotEnoughDelegat
 
 	err := s.App.StakeibcKeeper.RedeemCommunityPoolTokens(s.Ctx, invalidHostZone)
 	s.Require().ErrorContains(err, "invalid amount")
+}
+
+// ----------------------------------------------------------
+//               BuildFundCommunityPoolMsg
+// ----------------------------------------------------------
+
+func (s *KeeperTestSuite) TestBuildFundCommunityPoolMsg() {
+	withdrawalICA := "withdrawal_ica"
+	communityPoolReturnICA := "community_pool_return_ica"
+	communityPoolTreasuryAddress := "community_pool_treasury"
+
+	testCases := []struct {
+		name             string
+		senderAccoutType types.ICAAccountType
+		sendToTreasury   bool
+		expectedSender   string
+		expectedReceiver string
+		expectedError    string
+	}{
+		{
+			name:             "community pool return ICA to main community pool",
+			senderAccoutType: types.ICAAccountType_COMMUNITY_POOL_RETURN,
+			sendToTreasury:   false,
+			expectedSender:   communityPoolReturnICA,
+		},
+		{
+			name:             "community pool return ICA to treasury",
+			senderAccoutType: types.ICAAccountType_COMMUNITY_POOL_RETURN,
+			sendToTreasury:   true,
+			expectedSender:   communityPoolReturnICA,
+			expectedReceiver: communityPoolTreasuryAddress,
+		},
+		{
+			name:             "withdrawal ICA to main community pool",
+			senderAccoutType: types.ICAAccountType_WITHDRAWAL,
+			sendToTreasury:   false,
+			expectedSender:   withdrawalICA,
+		},
+		{
+			name:             "withdrawal ICA to treasury",
+			senderAccoutType: types.ICAAccountType_WITHDRAWAL,
+			sendToTreasury:   true,
+			expectedSender:   withdrawalICA,
+			expectedReceiver: communityPoolTreasuryAddress,
+		},
+		{
+			name:             "invalid sender",
+			senderAccoutType: types.ICAAccountType_DELEGATION,
+			expectedError:    "fund community pool ICA can only be initiated from",
+		},
+	}
+
+	for _, tc := range testCases {
+		s.Run(tc.name, func() {
+			// Define the sending tokens and input host zone struct
+			// If the test case sends to the treasury, we have to set the community pool treasury
+			// address to be non-empty
+			tokens := sdk.NewCoins(sdk.NewCoin(HostDenom, sdk.NewInt(1000)))
+			hostZone := types.HostZone{
+				CommunityPoolReturnIcaAddress: communityPoolReturnICA,
+				WithdrawalIcaAddress:          withdrawalICA,
+			}
+			if tc.sendToTreasury {
+				hostZone.CommunityPoolTreasuryAddress = communityPoolTreasuryAddress
+			}
+
+			// Build the fund msg
+			actualMsg, actualErr := s.App.StakeibcKeeper.BuildFundCommunityPoolMsg(s.Ctx, hostZone, tokens, tc.senderAccoutType)
+
+			// If there's not error expected, validate the underlying message
+			if tc.expectedError == "" {
+				s.Require().Len(actualMsg, 1, "there should be one message")
+
+				// If the recipient was the treasury, confirm it was a valid bank send
+				if tc.sendToTreasury {
+					bankSendMsg, ok := actualMsg[0].(*banktypes.MsgSend)
+					s.Require().True(ok, "ICA message should have been a bank send")
+					s.Require().Equal(tokens, bankSendMsg.Amount, "bank send amount")
+					s.Require().Equal(tc.expectedSender, bankSendMsg.FromAddress, "bank send from address")
+					s.Require().Equal(tc.expectedReceiver, bankSendMsg.ToAddress, "bank send to address")
+				} else {
+					fundCommunityPoolMsg, ok := actualMsg[0].(*disttypes.MsgFundCommunityPool)
+					s.Require().True(ok, "ICA message should have been a fund community pool message")
+					s.Require().Equal(tokens, fundCommunityPoolMsg.Amount, "fund community pool amount")
+					s.Require().Equal(tc.expectedSender, fundCommunityPoolMsg.Depositor, "bank send from address")
+				}
+			} else {
+				// If there was an expected error, confirm the error message
+				s.Require().ErrorContains(actualErr, tc.expectedError)
+			}
+		})
+	}
 }
