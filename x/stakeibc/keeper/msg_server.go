@@ -1117,7 +1117,7 @@ func (k msgServer) SetCommunityPoolRebate(
 		return nil, types.ErrHostZoneNotFound.Wrapf("host zone %s not found", msg.ChainId)
 	}
 
-	// If a zero rebate is specified, set the rebate to nil
+	// If a zero rebate rate or zero LiquidStakedStTokenAmount is specified, set the rebate to nil
 	// Otherwise, update the struct
 	if msg.LiquidStakedStTokenAmount.IsZero() || msg.RebateRate.IsZero() {
 		hostZone.CommunityPoolRebate = nil
