@@ -1,16 +1,12 @@
 package keeper
 
 import (
-	"fmt"
-
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	errorsmod "cosmossdk.io/errors"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/cosmos/gogoproto/proto"
-	"github.com/spf13/cast"
 
 	icqkeeper "github.com/Stride-Labs/stride/v19/x/interchainquery/keeper"
 
@@ -19,14 +15,14 @@ import (
 	"github.com/Stride-Labs/stride/v19/x/stakeibc/types"
 )
 
-// WithdrawalBalanceCallback is a callback handler for WithdrawalBalance queries.
-// The query response will return the withdrawal account balance
+// WithdrawalHostBalanceCallback is a callback handler for WithdrawalBalance queries.
+// The query response will return the withdrawal account balance for the native denom (i.e. "host denom")
 // If the balance is non-zero, ICA MsgSends are submitted to transfer from the withdrawal account
 // to the delegation account (for reinvestment) and fee account (for commission)
 //
 // Note: for now, to get proofs in your ICQs, you need to query the entire store on the host zone! e.g. "store/bank/key"
-func WithdrawalBalanceCallback(k Keeper, ctx sdk.Context, args []byte, query icqtypes.Query) error {
-	k.Logger(ctx).Info(utils.LogICQCallbackWithHostZone(query.ChainId, ICQCallbackID_WithdrawalBalance,
+func WithdrawalHostBalanceCallback(k Keeper, ctx sdk.Context, args []byte, query icqtypes.Query) error {
+	k.Logger(ctx).Info(utils.LogICQCallbackWithHostZone(query.ChainId, ICQCallbackID_WithdrawalHostBalance,
 		"Starting withdrawal balance callback, QueryId: %vs, QueryType: %s, Connection: %s", query.Id, query.QueryType, query.ConnectionId))
 
 	// Confirm host exists
@@ -41,12 +37,12 @@ func WithdrawalBalanceCallback(k Keeper, ctx sdk.Context, args []byte, query icq
 	if err != nil {
 		return errorsmod.Wrap(err, "unable to determine balance from query response")
 	}
-	k.Logger(ctx).Info(utils.LogICQCallbackWithHostZone(chainId, ICQCallbackID_WithdrawalBalance,
+	k.Logger(ctx).Info(utils.LogICQCallbackWithHostZone(chainId, ICQCallbackID_WithdrawalHostBalance,
 		"Query response - Withdrawal Balance: %v %s", withdrawalBalanceAmount, hostZone.HostDenom))
 
 	// Confirm the balance is greater than zero
 	if withdrawalBalanceAmount.LTE(sdkmath.ZeroInt()) {
-		k.Logger(ctx).Info(utils.LogICQCallbackWithHostZone(chainId, ICQCallbackID_WithdrawalBalance,
+		k.Logger(ctx).Info(utils.LogICQCallbackWithHostZone(chainId, ICQCallbackID_WithdrawalHostBalance,
 			"No balance to transfer for address: %s, balance: %v", hostZone.WithdrawalIcaAddress, withdrawalBalanceAmount))
 		return nil
 	}
@@ -62,27 +58,10 @@ func WithdrawalBalanceCallback(k Keeper, ctx sdk.Context, args []byte, query icq
 		return errorsmod.Wrapf(types.ErrICAAccountNotFound, "no fee account found for %s", chainId)
 	}
 
-	// Determine the stride commission rate to the relevant portion can be sent to the fee account
-	params := k.GetParams(ctx)
-	strideCommissionInt, err := cast.ToInt64E(params.StrideCommission)
+	// Split the withdrawal amount into the stride fee and reinvest portion
+	feeAmount, reinvestAmount, err := k.CalculateRewardsSplitAfterRebate(ctx, hostZone, withdrawalBalanceAmount)
 	if err != nil {
-		return err
-	}
-
-	// check that stride commission is between 0 and 1
-	strideCommission := sdk.NewDec(strideCommissionInt).Quo(sdk.NewDec(100))
-	if strideCommission.LT(sdk.ZeroDec()) || strideCommission.GT(sdk.OneDec()) {
-		return errorsmod.Wrap(sdkerrors.ErrInvalidRequest, "Aborting withdrawal balance callback -- Stride commission must be between 0 and 1!")
-	}
-
-	// Split out the reinvestment amount from the fee amount
-	feeAmount := strideCommission.Mul(sdk.NewDecFromInt(withdrawalBalanceAmount)).TruncateInt()
-	reinvestAmount := withdrawalBalanceAmount.Sub(feeAmount)
-
-	// Safety check, balances should add to original amount
-	if !feeAmount.Add(reinvestAmount).Equal(withdrawalBalanceAmount) {
-		k.Logger(ctx).Error(fmt.Sprintf("Error with withdraw logic: %v, Fee Portion: %v, Reinvest Portion %v", withdrawalBalanceAmount, feeAmount, reinvestAmount))
-		return errorsmod.Wrap(sdkerrors.ErrInvalidRequest, "Failed to subdivide rewards to commission and delegationAccount")
+		return errorsmod.Wrapf(err, "unable to split reward amount into fee and reinvest amounts")
 	}
 
 	// Prepare MsgSends from the withdrawal account
@@ -96,7 +75,7 @@ func WithdrawalBalanceCallback(k Keeper, ctx sdk.Context, args []byte, query icq
 			ToAddress:   hostZone.FeeIcaAddress,
 			Amount:      sdk.NewCoins(feeCoin),
 		})
-		k.Logger(ctx).Info(utils.LogICQCallbackWithHostZone(chainId, ICQCallbackID_WithdrawalBalance,
+		k.Logger(ctx).Info(utils.LogICQCallbackWithHostZone(chainId, ICQCallbackID_WithdrawalHostBalance,
 			"Preparing MsgSends of %v from the withdrawal account to the fee account (for commission)", feeCoin.String()))
 	}
 	if reinvestCoin.Amount.GT(sdk.ZeroInt()) {
@@ -105,7 +84,7 @@ func WithdrawalBalanceCallback(k Keeper, ctx sdk.Context, args []byte, query icq
 			ToAddress:   hostZone.DelegationIcaAddress,
 			Amount:      sdk.NewCoins(reinvestCoin),
 		})
-		k.Logger(ctx).Info(utils.LogICQCallbackWithHostZone(chainId, ICQCallbackID_WithdrawalBalance,
+		k.Logger(ctx).Info(utils.LogICQCallbackWithHostZone(chainId, ICQCallbackID_WithdrawalHostBalance,
 			"Preparing MsgSends of %v from the withdrawal account to the delegation account (for reinvestment)", reinvestCoin.String()))
 	}
 
@@ -114,7 +93,7 @@ func WithdrawalBalanceCallback(k Keeper, ctx sdk.Context, args []byte, query icq
 		ReinvestAmount: reinvestCoin,
 		HostZoneId:     hostZone.ChainId,
 	}
-	k.Logger(ctx).Info(utils.LogICQCallbackWithHostZone(chainId, ICQCallbackID_WithdrawalBalance, "Marshalling ReinvestCallback args: %v", reinvestCallback))
+	k.Logger(ctx).Info(utils.LogICQCallbackWithHostZone(chainId, ICQCallbackID_WithdrawalHostBalance, "Marshalling ReinvestCallback args: %v", reinvestCallback))
 	marshalledCallbackArgs, err := k.MarshalReinvestCallbackArgs(ctx, reinvestCallback)
 	if err != nil {
 		return err

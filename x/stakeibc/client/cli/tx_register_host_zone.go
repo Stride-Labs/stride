@@ -13,8 +13,9 @@ import (
 )
 
 const (
-	FlagMinRedemptionRate = "min-redemption-rate"
-	FlagMaxRedemptionRate = "max-redemption-rate"
+	FlagMinRedemptionRate            = "min-redemption-rate"
+	FlagMaxRedemptionRate            = "max-redemption-rate"
+	FlagCommunityPoolTreasuryAddress = "community-pool-treasury-address"
 )
 
 var _ = strconv.Itoa(0)
@@ -68,6 +69,11 @@ func CmdRegisterHostZone() *cobra.Command {
 				}
 			}
 
+			communityPoolTreasuryAddress, err := cmd.Flags().GetString(FlagCommunityPoolTreasuryAddress)
+			if err != nil {
+				return err
+			}
+
 			msg := types.NewMsgRegisterHostZone(
 				clientCtx.GetFromAddress().String(),
 				connectionId,
@@ -79,6 +85,7 @@ func CmdRegisterHostZone() *cobra.Command {
 				minRedemptionRate,
 				maxRedemptionRate,
 				lsmEnabled,
+				communityPoolTreasuryAddress,
 			)
 
 			if err := msg.ValidateBasic(); err != nil {
@@ -92,6 +99,7 @@ func CmdRegisterHostZone() *cobra.Command {
 	flags.AddTxFlagsToCmd(cmd)
 	cmd.Flags().String(FlagMinRedemptionRate, "", "minimum redemption rate")
 	cmd.Flags().String(FlagMaxRedemptionRate, "", "maximum redemption rate")
+	cmd.Flags().String(FlagCommunityPoolTreasuryAddress, "", "community pool treasury address")
 
 	return cmd
 }

@@ -124,7 +124,7 @@ func (s *UpgradeTestSuite) SetupQueriesBeforeUpgrade() func() {
 		{Id: "1", CallbackId: stakeibckeeper.ICQCallbackID_Validator},
 		{Id: "2", CallbackId: stakeibckeeper.ICQCallbackID_Delegation}, // deleted
 		{Id: "3", CallbackId: stakeibckeeper.ICQCallbackID_Delegation}, // deleted
-		{Id: "4", CallbackId: stakeibckeeper.ICQCallbackID_WithdrawalBalance},
+		{Id: "4", CallbackId: stakeibckeeper.ICQCallbackID_WithdrawalHostBalance},
 	}
 	expectedQueriesAfterUpgrade := []string{"1", "4"}
 

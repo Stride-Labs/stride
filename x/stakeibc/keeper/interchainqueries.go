@@ -186,9 +186,8 @@ func (k Keeper) SubmitCalibrationICQ(ctx sdk.Context, hostZone types.HostZone, v
 	return nil
 }
 
-// TODO [cleanup]: Rename to SubmitWithdrawalBalanceICQ
 // Submits an ICQ for the withdrawal account balance
-func (k Keeper) UpdateWithdrawalBalance(ctx sdk.Context, hostZone types.HostZone) error {
+func (k Keeper) SubmitWithdrawalHostBalanceICQ(ctx sdk.Context, hostZone types.HostZone) error {
 	k.Logger(ctx).Info(utils.LogWithHostZone(hostZone.ChainId, "Submitting ICQ for withdrawal account balance"))
 
 	// Get the withdrawal account address from the host zone
@@ -219,7 +218,7 @@ func (k Keeper) UpdateWithdrawalBalance(ctx sdk.Context, hostZone types.HostZone
 		QueryType:       icqtypes.BANK_STORE_QUERY_WITH_PROOF,
 		RequestData:     queryData,
 		CallbackModule:  types.ModuleName,
-		CallbackId:      ICQCallbackID_WithdrawalBalance,
+		CallbackId:      ICQCallbackID_WithdrawalHostBalance,
 		TimeoutDuration: timeoutDuration,
 		TimeoutPolicy:   icqtypes.TimeoutPolicy_REJECT_QUERY_RESPONSE,
 	}
