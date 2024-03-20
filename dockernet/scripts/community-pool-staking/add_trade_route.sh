@@ -82,7 +82,7 @@ $NOBLE_MAIN_CMD tx ibc-transfer transfer transfer $noble_to_osmo_channel $(OSMO_
 sleep 15
 
 echo -e "\nTransferring $HOST_DENOM to OSMO to create ibc denom..."
-$HOST_MAIN_CMD tx ibc-transfer transfer transfer $host_to_osmo_channel $(OSMO_ADDRESS) 10000${HOST_DENOM} \
+$HOST_MAIN_CMD tx ibc-transfer transfer transfer $host_to_osmo_channel $(OSMO_ADDRESS) 10000000${HOST_DENOM} \
     --from ${HOST_VAL_PREFIX}1 -y | TRIM_TX
 sleep 15
 
