@@ -79,7 +79,7 @@ func TestSafelyGetCommunityPoolRebate(t *testing.T) {
 			hostZone: types.HostZone{
 				ChainId: chainId,
 				CommunityPoolRebate: &types.CommunityPoolRebate{
-					LiquidStakeAmount: sdkmath.NewInt(1),
+					LiquidStakedStTokenAmount: sdkmath.NewInt(1),
 				},
 			},
 			expectedRebate: false,
@@ -89,7 +89,7 @@ func TestSafelyGetCommunityPoolRebate(t *testing.T) {
 			hostZone: types.HostZone{
 				ChainId: chainId,
 				CommunityPoolRebate: &types.CommunityPoolRebate{
-					RebatePercentage: sdk.OneDec(),
+					RebateRate: sdk.OneDec(),
 				},
 			},
 			expectedRebate: false,
@@ -99,8 +99,8 @@ func TestSafelyGetCommunityPoolRebate(t *testing.T) {
 			hostZone: types.HostZone{
 				ChainId: chainId,
 				CommunityPoolRebate: &types.CommunityPoolRebate{
-					RebatePercentage:  sdk.OneDec(),
-					LiquidStakeAmount: sdkmath.NewInt(1),
+					RebateRate:                sdk.OneDec(),
+					LiquidStakedStTokenAmount: sdkmath.NewInt(1),
 				},
 			},
 			expectedRebate: true,

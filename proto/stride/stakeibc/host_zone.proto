@@ -8,13 +8,15 @@ import "cosmos_proto/cosmos.proto";
 option go_package = "github.com/Stride-Labs/stride/v19/x/stakeibc/types";
 
 // CommunityPoolRebate stores the size of the community pool liquid stake
-// and the rebate percentage
+// (denominated in stTokens) and the rebate rate as a decimal
 message CommunityPoolRebate {
-  string rebate_percentage = 1 [
+  // Rebate percentage as a decimal (e.g. 0.2 for 20%)
+  string rebate_rate = 1 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false
   ];
-  string liquid_stake_amount = 2 [
+  // Number of stTokens received from the community pool liquid stake
+  string liquid_staked_st_token_amount = 2 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
     (gogoproto.nullable) = false
   ];

@@ -23,6 +23,7 @@ func (s *KeeperTestSuite) SetupWithdrawalRewardBalanceCallbackTestCase() Balance
 
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, types.HostZone{
 		ChainId:      HostChainId,
+		HostDenom:    HostDenom,
 		ConnectionId: ibctesting.FirstConnectionID,
 	})
 
@@ -115,13 +116,17 @@ func (s *KeeperTestSuite) TestWithdrawalRewardBalanceCallback_SuccessfulWithReba
 	tc := s.SetupWithdrawalRewardBalanceCallbackTestCase()
 
 	// Update the host zone to have a rebate
+	stTokenSupply := sdkmath.NewInt(1_000_000)
 	hostZone := s.MustGetHostZone(HostChainId)
 	hostZone.TotalDelegations = sdkmath.NewInt(10_000_000)
 	hostZone.CommunityPoolRebate = &types.CommunityPoolRebate{
-		RebatePercentage:  sdk.MustNewDecFromStr("0.5"),
-		LiquidStakeAmount: sdkmath.NewInt(1_000_000),
+		RebateRate:                sdk.MustNewDecFromStr("0.5"),
+		LiquidStakedStTokenAmount: stTokenSupply,
 	}
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
+
+	// Mint stTokens so that the supply matches the liquid staked amount
+	s.FundAccount(s.TestAccs[0], sdk.NewCoin(types.StAssetDenomFromHostZoneDenom(hostZone.HostDenom), stTokenSupply))
 
 	// ICA inside of TransferRewardTokensHostToTrade should not actually execute because of min_swap_amount
 	s.CheckMulitpleICATxSubmitted(tc.PortID, tc.ChannelID, func() error {
@@ -183,8 +188,8 @@ func (s *KeeperTestSuite) TestWithdrawalRewardBalanceCallback_FailedToCheckForRe
 	// Add a rebate to the host zone and set the total delegations to 0 so the check fails
 	hostZone := s.MustGetHostZone(HostChainId)
 	hostZone.CommunityPoolRebate = &types.CommunityPoolRebate{
-		RebatePercentage:  sdk.MustNewDecFromStr("0.5"),
-		LiquidStakeAmount: sdkmath.NewInt(1),
+		RebateRate:                sdk.MustNewDecFromStr("0.5"),
+		LiquidStakedStTokenAmount: sdkmath.NewInt(1),
 	}
 	hostZone.TotalDelegations = sdkmath.ZeroInt()
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
