@@ -258,7 +258,7 @@ func LogICACallbackStatusWithHostZone(chainId string, callbackId string, status 
 // Returns a log string with a chain Id and icqcallback as a prefix
 // Ex:
 //
-//	| COSMOSHUB-4   |  WITHDRAWALBALANCE ICQCALLBACK  |  string
+//	| COSMOSHUB-4   |  WITHDRAWALHOSTBALANCE ICQCALLBACK  |  string
 func LogICQCallbackWithHostZone(chainId string, callbackId string, s string, a ...any) string {
 	return logCallbackWithHostZone(chainId, callbackId, "ICQCALLBACK", s, a...)
 }
