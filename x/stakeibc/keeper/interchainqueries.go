@@ -219,7 +219,7 @@ func (k Keeper) UpdateWithdrawalBalance(ctx sdk.Context, hostZone types.HostZone
 		QueryType:       icqtypes.BANK_STORE_QUERY_WITH_PROOF,
 		RequestData:     queryData,
 		CallbackModule:  types.ModuleName,
-		CallbackId:      ICQCallbackID_WithdrawalBalance,
+		CallbackId:      ICQCallbackID_WithdrawalHostBalance,
 		TimeoutDuration: timeoutDuration,
 		TimeoutPolicy:   icqtypes.TimeoutPolicy_REJECT_QUERY_RESPONSE,
 	}

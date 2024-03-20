@@ -39,7 +39,7 @@ func (s *KeeperTestSuite) CreateBalanceQueryResponse(amount int64, denom string)
 	return coinBz
 }
 
-func (s *KeeperTestSuite) SetupWithdrawalBalanceCallbackTest() WithdrawalBalanceICQCallbackTestCase {
+func (s *KeeperTestSuite) SetupWithdrawalHostBalanceCallbackTest() WithdrawalBalanceICQCallbackTestCase {
 	delegationAccountOwner := fmt.Sprintf("%s.%s", HostChainId, "DELEGATION")
 	s.CreateICAChannel(delegationAccountOwner)
 	delegationAddress := s.IcaAddresses[delegationAccountOwner]
@@ -97,8 +97,8 @@ func (s *KeeperTestSuite) SetupWithdrawalBalanceCallbackTest() WithdrawalBalance
 	}
 }
 
-func (s *KeeperTestSuite) TestWithdrawalBalanceCallback_Successful() {
-	tc := s.SetupWithdrawalBalanceCallbackTest()
+func (s *KeeperTestSuite) TestWithdrawalHostBalanceCallback_Successful() {
+	tc := s.SetupWithdrawalHostBalanceCallbackTest()
 
 	// Get the sequence number before the ICA is submitted to confirm it incremented
 	withdrawalChannel := tc.initialState.withdrawalChannel
@@ -109,7 +109,7 @@ func (s *KeeperTestSuite) TestWithdrawalBalanceCallback_Successful() {
 	s.Require().True(found, "sequence number not found before reinvestment")
 
 	// Call the ICQ callback
-	err := keeper.WithdrawalBalanceCallback(s.App.StakeibcKeeper, s.Ctx, tc.validArgs.callbackArgs, tc.validArgs.query)
+	err := keeper.WithdrawalHostBalanceCallback(s.App.StakeibcKeeper, s.Ctx, tc.validArgs.callbackArgs, tc.validArgs.query)
 	s.Require().NoError(err)
 
 	// Confirm ICA reinvestment callback data was stored
@@ -131,105 +131,105 @@ func (s *KeeperTestSuite) TestWithdrawalBalanceCallback_Successful() {
 	s.Require().Equal(endSequence, startSequence+1, "sequence number after reinvestment")
 }
 
-func (s *KeeperTestSuite) TestWithdrawalBalanceCallback_EmptyCallbackArgs() {
-	tc := s.SetupWithdrawalBalanceCallbackTest()
+func (s *KeeperTestSuite) TestWithdrawalHostBalanceCallback_EmptyCallbackArgs() {
+	tc := s.SetupWithdrawalHostBalanceCallbackTest()
 
 	// Replace the query response an empty byte array (this happens when the account has not been registered yet)
 	emptyCallbackArgs := []byte{}
 
-	err := keeper.WithdrawalBalanceCallback(s.App.StakeibcKeeper, s.Ctx, emptyCallbackArgs, tc.validArgs.query)
+	err := keeper.WithdrawalHostBalanceCallback(s.App.StakeibcKeeper, s.Ctx, emptyCallbackArgs, tc.validArgs.query)
 	s.Require().NoError(err)
 
 	// Confirm revinvestment callback was not created
 	s.Require().Len(s.App.IcacallbacksKeeper.GetAllCallbackData(s.Ctx), 0, "number of callbacks found")
 }
 
-func (s *KeeperTestSuite) TestWithdrawalBalanceCallback_ZeroBalance() {
-	tc := s.SetupWithdrawalBalanceCallbackTest()
+func (s *KeeperTestSuite) TestWithdrawalHostBalanceCallback_ZeroBalance() {
+	tc := s.SetupWithdrawalHostBalanceCallbackTest()
 
 	// Replace the query response with a coin that has a nil amount
 	tc.validArgs.callbackArgs = s.CreateBalanceQueryResponse(0, Atom)
 
-	err := keeper.WithdrawalBalanceCallback(s.App.StakeibcKeeper, s.Ctx, tc.validArgs.callbackArgs, tc.validArgs.query)
+	err := keeper.WithdrawalHostBalanceCallback(s.App.StakeibcKeeper, s.Ctx, tc.validArgs.callbackArgs, tc.validArgs.query)
 	s.Require().NoError(err)
 
 	// Confirm revinvestment callback was not created
 	s.Require().Len(s.App.IcacallbacksKeeper.GetAllCallbackData(s.Ctx), 0, "number of callbacks found")
 }
 
-func (s *KeeperTestSuite) TestWithdrawalBalanceCallback_ZeroBalanceImplied() {
-	tc := s.SetupWithdrawalBalanceCallbackTest()
+func (s *KeeperTestSuite) TestWithdrawalHostBalanceCallback_ZeroBalanceImplied() {
+	tc := s.SetupWithdrawalHostBalanceCallbackTest()
 
 	// Replace the query response with a coin that has a nil amount
 	coin := sdk.Coin{}
 	coinBz := s.App.RecordsKeeper.Cdc.MustMarshal(&coin)
 	tc.validArgs.callbackArgs = coinBz
 
-	err := keeper.WithdrawalBalanceCallback(s.App.StakeibcKeeper, s.Ctx, tc.validArgs.callbackArgs, tc.validArgs.query)
+	err := keeper.WithdrawalHostBalanceCallback(s.App.StakeibcKeeper, s.Ctx, tc.validArgs.callbackArgs, tc.validArgs.query)
 	s.Require().NoError(err)
 
 	// Confirm revinvestment callback was not created
 	s.Require().Len(s.App.IcacallbacksKeeper.GetAllCallbackData(s.Ctx), 0, "number of callbacks found")
 }
 
-func (s *KeeperTestSuite) TestWithdrawalBalanceCallback_HostZoneNotFound() {
-	tc := s.SetupWithdrawalBalanceCallbackTest()
+func (s *KeeperTestSuite) TestWithdrawalHostBalanceCallback_HostZoneNotFound() {
+	tc := s.SetupWithdrawalHostBalanceCallbackTest()
 
 	// Submit callback with incorrect host zone
 	invalidQuery := tc.validArgs.query
 	invalidQuery.ChainId = "fake_host_zone"
-	err := keeper.WithdrawalBalanceCallback(s.App.StakeibcKeeper, s.Ctx, tc.validArgs.callbackArgs, invalidQuery)
+	err := keeper.WithdrawalHostBalanceCallback(s.App.StakeibcKeeper, s.Ctx, tc.validArgs.callbackArgs, invalidQuery)
 	s.Require().EqualError(err, "no registered zone for queried chain ID (fake_host_zone): host zone not found")
 }
 
-func (s *KeeperTestSuite) TestWithdrawalBalanceCallback_InvalidArgs() {
-	tc := s.SetupWithdrawalBalanceCallbackTest()
+func (s *KeeperTestSuite) TestWithdrawalHostBalanceCallback_InvalidArgs() {
+	tc := s.SetupWithdrawalHostBalanceCallbackTest()
 
 	// Submit callback with invalid callback args (so that it can't unmarshal into a coin)
 	invalidArgs := []byte("random bytes")
-	err := keeper.WithdrawalBalanceCallback(s.App.StakeibcKeeper, s.Ctx, invalidArgs, tc.validArgs.query)
+	err := keeper.WithdrawalHostBalanceCallback(s.App.StakeibcKeeper, s.Ctx, invalidArgs, tc.validArgs.query)
 
 	s.Require().ErrorContains(err, "unable to determine balance from query response")
 }
 
-func (s *KeeperTestSuite) TestWithdrawalBalanceCallback_NoWithdrawalAccount() {
-	tc := s.SetupWithdrawalBalanceCallbackTest()
+func (s *KeeperTestSuite) TestWithdrawalHostBalanceCallback_NoWithdrawalAccount() {
+	tc := s.SetupWithdrawalHostBalanceCallbackTest()
 
 	// Remove the withdrawal account
 	badHostZone := tc.initialState.hostZone
 	badHostZone.WithdrawalIcaAddress = ""
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, badHostZone)
 
-	err := keeper.WithdrawalBalanceCallback(s.App.StakeibcKeeper, s.Ctx, tc.validArgs.callbackArgs, tc.validArgs.query)
+	err := keeper.WithdrawalHostBalanceCallback(s.App.StakeibcKeeper, s.Ctx, tc.validArgs.callbackArgs, tc.validArgs.query)
 	s.Require().EqualError(err, "no withdrawal account found for GAIA: ICA acccount not found on host zone")
 }
 
-func (s *KeeperTestSuite) TestWithdrawalBalanceCallback_NoDelegationAccount() {
-	tc := s.SetupWithdrawalBalanceCallbackTest()
+func (s *KeeperTestSuite) TestWithdrawalHostBalanceCallback_NoDelegationAccount() {
+	tc := s.SetupWithdrawalHostBalanceCallbackTest()
 
 	// Remove the delegation account
 	badHostZone := tc.initialState.hostZone
 	badHostZone.DelegationIcaAddress = ""
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, badHostZone)
 
-	err := keeper.WithdrawalBalanceCallback(s.App.StakeibcKeeper, s.Ctx, tc.validArgs.callbackArgs, tc.validArgs.query)
+	err := keeper.WithdrawalHostBalanceCallback(s.App.StakeibcKeeper, s.Ctx, tc.validArgs.callbackArgs, tc.validArgs.query)
 	s.Require().EqualError(err, "no delegation account found for GAIA: ICA acccount not found on host zone")
 }
 
-func (s *KeeperTestSuite) TestWithdrawalBalanceCallback_NoFeeAccount() {
-	tc := s.SetupWithdrawalBalanceCallbackTest()
+func (s *KeeperTestSuite) TestWithdrawalHostBalanceCallback_NoFeeAccount() {
+	tc := s.SetupWithdrawalHostBalanceCallbackTest()
 
 	// Remove the fee account
 	badHostZone := tc.initialState.hostZone
 	badHostZone.FeeIcaAddress = ""
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, badHostZone)
 
-	err := keeper.WithdrawalBalanceCallback(s.App.StakeibcKeeper, s.Ctx, tc.validArgs.callbackArgs, tc.validArgs.query)
+	err := keeper.WithdrawalHostBalanceCallback(s.App.StakeibcKeeper, s.Ctx, tc.validArgs.callbackArgs, tc.validArgs.query)
 	s.Require().EqualError(err, "no fee account found for GAIA: ICA acccount not found on host zone")
 }
 
-func (s *KeeperTestSuite) TestWithdrawalBalanceCallback_FailedToCheckForRebate() {
-	tc := s.SetupWithdrawalBalanceCallbackTest()
+func (s *KeeperTestSuite) TestWithdrawalHostBalanceCallback_FailedToCheckForRebate() {
+	tc := s.SetupWithdrawalHostBalanceCallbackTest()
 
 	// Add a rebate to the host zone - since there are no stTokens in supply, the test will fail
 	hostZone := s.MustGetHostZone(HostChainId)
@@ -239,19 +239,19 @@ func (s *KeeperTestSuite) TestWithdrawalBalanceCallback_FailedToCheckForRebate()
 	}
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
 
-	err := keeper.WithdrawalBalanceCallback(s.App.StakeibcKeeper, s.Ctx, tc.validArgs.callbackArgs, tc.validArgs.query)
+	err := keeper.WithdrawalHostBalanceCallback(s.App.StakeibcKeeper, s.Ctx, tc.validArgs.callbackArgs, tc.validArgs.query)
 	s.Require().ErrorContains(err, "unable to split reward amount into fee and reinvest amounts")
 }
 
-func (s *KeeperTestSuite) TestWithdrawalBalanceCallback_FailedSubmitTx() {
-	tc := s.SetupWithdrawalBalanceCallbackTest()
+func (s *KeeperTestSuite) TestWithdrawalHostBalanceCallback_FailedSubmitTx() {
+	tc := s.SetupWithdrawalHostBalanceCallbackTest()
 
 	// Remove connectionId from host zone so the ICA tx fails
 	badHostZone := tc.initialState.hostZone
 	badHostZone.ConnectionId = "connection-X"
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, badHostZone)
 
-	err := keeper.WithdrawalBalanceCallback(s.App.StakeibcKeeper, s.Ctx, tc.validArgs.callbackArgs, tc.validArgs.query)
+	err := keeper.WithdrawalHostBalanceCallback(s.App.StakeibcKeeper, s.Ctx, tc.validArgs.callbackArgs, tc.validArgs.query)
 	s.Require().ErrorContains(err, "Failed to SubmitTxs")
 	s.Require().ErrorContains(err, "connection connection-X not found")
 }
