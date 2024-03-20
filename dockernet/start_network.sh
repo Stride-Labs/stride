@@ -57,8 +57,16 @@ done
 
 
 # Start each chain, create the transfer channels and start the relayers
+# For dydx, sleep before and after the relayers are setup to get it some time to startup
+# since it's a computationally expensive chain
 bash $SRC/start_chain.sh 
+if [[ "$chain" == "DYDX" ]]; then
+    sleep 30
+fi
 bash $SRC/start_relayers.sh 
+if [[ "$chain" == "DYDX" ]]; then
+    sleep 30
+fi
 
 # Create governors for chains running the stride binary
 for chain in STRIDE ${HOST_CHAINS[@]}; do

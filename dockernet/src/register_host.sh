@@ -25,7 +25,7 @@ fi
 
 COMMUNITY_POOL_TREASURY_ADDRESS=""
 if [[ "$CHAIN" == "DYDX" ]]; then
-    COMMUNITY_POOL_TREASURY_ADDRESS="--community-pool-treasury-address XXX"
+    COMMUNITY_POOL_TREASURY_ADDRESS="--community-pool-treasury-address dydx15ztc7xy42tn2ukkc0qjthkucw9ac63pgp70urn"
 fi
 
 echo "$CHAIN - Registering host zone..."
