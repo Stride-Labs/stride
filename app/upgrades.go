@@ -12,7 +12,7 @@ import (
 	crisistypes "github.com/cosmos/cosmos-sdk/x/crisis/types"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 	packetforwardtypes "github.com/cosmos/ibc-apps/middleware/packet-forward-middleware/v7/packetforward/types"
-	consumertypes "github.com/cosmos/interchain-security/v4/x/ccv/consumer/types"
+	consumertypes "github.com/cosmos/interchain-security/v3/x/ccv/consumer/types"
 	evmosvestingtypes "github.com/evmos/vesting/x/vesting/types"
 
 	ratelimittypes "github.com/Stride-Labs/ibc-rate-limiting/ratelimit/types"
@@ -258,7 +258,6 @@ func (app *StrideApp) setupUpgradeHandlers(appOpts servertypes.AppOptions) {
 			app.mm,
 			app.configurator,
 			app.appCodec,
-			app.ConsumerKeeper,
 			app.RatelimitKeeper,
 			app.WasmKeeper,
 		),

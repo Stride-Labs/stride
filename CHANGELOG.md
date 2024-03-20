@@ -54,10 +54,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 7. stakeibc file re-org part 4 (grpc query) ([#1117](https://github.com/Stride-Labs/stride/pull/1117))
 8. stakeibc file re-org part 5 (msg_server) ([#1120](https://github.com/Stride-Labs/stride/pull/1120))
 9. set wasm permissions ([#1125](https://github.com/Stride-Labs/stride/pull/1125))
-10. Upgrade to ICS v4.0.0 and sdk v0.47.10 ([#1114](https://github.com/Stride-Labs/stride/pull/1114))
-11. switched to open sourced rate limit module ([#1123](https://github.com/Stride-Labs/stride/pull/1123))
-12. added sttia rate limit ([#1127](https://github.com/Stride-Labs/stride/pull/1127))
-13. Add x/stakedym ([#1126](https://github.com/Stride-Labs/stride/pull/1126))
+10. switched to open sourced rate limit module ([#1123](https://github.com/Stride-Labs/stride/pull/1123))
+11. added sttia rate limit ([#1127](https://github.com/Stride-Labs/stride/pull/1127))
+12. Add x/stakedym ([#1126](https://github.com/Stride-Labs/stride/pull/1126))
 
 ### Off-Chain changes
 1. chore(dev-deps): upgrade ledger dependencies ([#1099](https://github.com/Stride-Labs/stride/pull/1099))
