@@ -23,9 +23,14 @@ if [[ "$CHAIN" == "GAIA" ]]; then
     LSM_ENABLED="true"
 fi
 
+COMMUNITY_POOL_TREASURY_ADDRESS=""
+if [[ "$CHAIN" == "DYDX" ]]; then
+    COMMUNITY_POOL_TREASURY_ADDRESS="--community-pool-treasury-address XXX"
+fi
+
 echo "$CHAIN - Registering host zone..."
 $STRIDE_MAIN_CMD tx stakeibc register-host-zone \
-    $CONNECTION $HOST_DENOM $ADDRESS_PREFIX $IBC_DENOM $CHANNEL 1 $LSM_ENABLED \
+    $CONNECTION $HOST_DENOM $ADDRESS_PREFIX $IBC_DENOM $CHANNEL 1 $LSM_ENABLED $COMMUNITY_POOL_TREASURY_ADDRESS \
     --gas 1000000 --from $STRIDE_ADMIN_ACCT --home $DOCKERNET_HOME/state/stride1 -y | TRIM_TX
 sleep 10
 

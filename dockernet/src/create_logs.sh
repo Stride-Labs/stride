@@ -184,21 +184,25 @@ while true; do
         print_stride_balance $community_pool_stake_address "COMMUNITY POOL STAKE HOLDING ACCT BALANCE" 
         print_stride_balance $community_pool_redeem_address "COMMUNITY POOL REDEEM HOLDING ACCT BALANCE" 
 
+        community_pool_treasury=$($STRIDE_MAIN_CMD q stakeibc show-host-zone $HOST_CHAIN_ID | grep community_pool_treasury | awk '{print $2}' | tr -d '"')
+        if [[ "$community_pool_treasury" != "" ]]; then
+            print_host_balance $chain $community_pool_treasury "COMMUNITY POOL TREASURY ADDRESS" 
+        fi
+
         # Log host channels
         print_separator "$chain" $channels
         $HOST_MAIN_CMD q ibc channel channels | grep -E "channel_id|port|state" >> $channels || true
     done
 
-
     TRADE_ICA_ADDR=$($STRIDE_MAIN_CMD q stakeibc list-trade-routes | grep trade_account -A 2 | grep address | awk '{print $2}')
     if [[ "$TRADE_ICA_ADDR" == "$OSMO_ADDRESS_PREFIX"* ]]; then
-        print_header "TRADE ACCT BALANCE" >> $balances
+        print_header "TRADE ACCT BALANCE" $balances
         $OSMO_MAIN_CMD q bank balances $TRADE_ICA_ADDR >> $balances
     fi
 
     for chain in ${ACCESSORY_CHAINS[@]:-}; do
         ACCESSORY_MAIN_CMD=$(GET_VAR_VALUE ${chain}_MAIN_CMD)
-        print_header "==========================  $chain  =============================" >> $channels
+        print_header "==========================  $chain  =============================" $channels
         $ACCESSORY_MAIN_CMD q ibc channel channels | grep -E "channel_id|port|state" >> $channels || true
     done
 

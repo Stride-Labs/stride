@@ -21,6 +21,10 @@ host_to_noble_client=$(GET_CLIENT_ID_FROM_CHAIN_ID $HOST_CHAIN NOBLE)
 host_to_noble_connection=$(GET_CONNECTION_ID_FROM_CLIENT_ID $HOST_CHAIN $host_to_noble_client)
 host_to_noble_channel=$(GET_TRANSFER_CHANNEL_ID_FROM_CONNECTION_ID $HOST_CHAIN $host_to_noble_connection)
 
+host_to_osmo_client=$(GET_CLIENT_ID_FROM_CHAIN_ID $HOST_CHAIN OSMO)
+host_to_osmo_connection=$(GET_CONNECTION_ID_FROM_CLIENT_ID $HOST_CHAIN $host_to_osmo_client)
+host_to_osmo_channel=$(GET_TRANSFER_CHANNEL_ID_FROM_CONNECTION_ID $HOST_CHAIN $host_to_osmo_connection)
+
 noble_to_host_client=$(GET_CLIENT_ID_FROM_CHAIN_ID NOBLE $HOST_CHAIN)
 noble_to_host_connection=$(GET_CONNECTION_ID_FROM_CLIENT_ID NOBLE $noble_to_host_client)
 noble_to_host_channel=$(GET_TRANSFER_CHANNEL_ID_FROM_CONNECTION_ID NOBLE $noble_to_host_connection)
@@ -60,9 +64,24 @@ echo "  Client: $osmo_to_host_client"
 echo "  Connection: $osmo_to_host_connection"
 echo "  Transfer Channel: $osmo_to_host_channel"
 
-echo -e "\nTransferring $USDC_DENOM to $HOST_DENOM to create ibc denom..."
+echo -e "\n$HOST_CHAIN -> OSMO:"
+echo "  Client: $host_to_osmo_client"
+echo "  Connection: $host_to_osmo_connection"
+echo "  Transfer Channel: $host_to_osmo_channel"
+
+echo -e "\nTransferring $USDC_DENOM to $HOST_CHAIN to create ibc denom..."
 $NOBLE_MAIN_CMD tx ibc-transfer transfer transfer $noble_to_host_channel $HOST_VAL_ADDRESS 10000${USDC_DENOM} \
     --from ${NOBLE_VAL_PREFIX}1 -y | TRIM_TX
+sleep 15
+
+echo -e "\nTransferring $USDC_DENOM to OSMO to create ibc denom..."
+$NOBLE_MAIN_CMD tx ibc-transfer transfer transfer $noble_to_osmo_channel $(OSMO_ADDRESS) 10000${USDC_DENOM} \
+    --from ${NOBLE_VAL_PREFIX}1 -y | TRIM_TX
+sleep 15
+
+echo -e "\nTransferring $HOST_DENOM to OSMO to create ibc denom..."
+$HOST_MAIN_CMD tx ibc-transfer transfer transfer $host_to_osmo_channel $(OSMO_ADDRESS) 10000${HOST_DENOM} \
+    --from ${HOST_VAL_PREFIX}1 -y | TRIM_TX
 sleep 15
 
 echo -e "\nDetermining IBC Denoms..."
