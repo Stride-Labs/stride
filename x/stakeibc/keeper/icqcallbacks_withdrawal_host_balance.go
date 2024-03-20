@@ -16,7 +16,7 @@ import (
 )
 
 // WithdrawalHostBalanceCallback is a callback handler for WithdrawalBalance queries.
-// The query response will return the withdrawal account balance
+// The query response will return the withdrawal account balance for the native denom (i.e. "host denom")
 // If the balance is non-zero, ICA MsgSends are submitted to transfer from the withdrawal account
 // to the delegation account (for reinvestment) and fee account (for commission)
 //
