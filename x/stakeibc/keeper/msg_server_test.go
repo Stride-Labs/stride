@@ -13,6 +13,7 @@ import (
 	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
 	ibctesting "github.com/cosmos/ibc-go/v7/testing"
 
+	"github.com/Stride-Labs/stride/v19/utils"
 	epochtypes "github.com/Stride-Labs/stride/v19/x/epochs/types"
 	icqtypes "github.com/Stride-Labs/stride/v19/x/interchainquery/types"
 	recordstypes "github.com/Stride-Labs/stride/v19/x/records/types"
@@ -2581,34 +2582,47 @@ func (s *KeeperTestSuite) TestResumeHostZone_UnhaltedZones() {
 // ----------------------------------------------------
 
 func (s *KeeperTestSuite) TestSetCommunityPoolRebate() {
+	stTokenSupply := sdk.NewInt(2000)
 	rebateInfo := types.CommunityPoolRebate{
-		LiquidStakeAmount: sdk.NewInt(1000),
-		RebatePercentage:  sdk.MustNewDecFromStr("0.5"),
+		RebateRate:                sdk.MustNewDecFromStr("0.5"),
+		LiquidStakedStTokenAmount: sdk.NewInt(1000),
 	}
+
+	// Mint stTokens so the supply is populated
+	s.FundAccount(s.TestAccs[0], sdk.NewCoin(utils.StAssetDenomFromHostZoneDenom(HostDenom), stTokenSupply))
 
 	// Set host zone with no rebate
 	hostZone := types.HostZone{
-		ChainId: HostChainId,
+		ChainId:   HostChainId,
+		HostDenom: HostDenom,
 	}
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
 
 	// Submit a message to create the rebate
-	msg := types.MsgSetCommunityPoolRebate{
-		ChainId:            HostChainId,
-		RebateRate:         rebateInfo.RebatePercentage,
-		LiquidStakedAmount: rebateInfo.LiquidStakeAmount,
+	registerMsg := types.MsgSetCommunityPoolRebate{
+		ChainId:                   HostChainId,
+		RebateRate:                rebateInfo.RebateRate,
+		LiquidStakedStTokenAmount: rebateInfo.LiquidStakedStTokenAmount,
 	}
-	_, err := s.GetMsgServer().SetCommunityPoolRebate(s.Ctx, &msg)
+	_, err := s.GetMsgServer().SetCommunityPoolRebate(s.Ctx, &registerMsg)
 	s.Require().NoError(err, "no error expected when registering rebate")
 
 	// Confirm the rebate was updated
 	actualHostZone := s.MustGetHostZone(HostChainId)
 	s.Require().Equal(rebateInfo, *actualHostZone.CommunityPoolRebate, "rebate was updated on host zone")
 
+	// Attempt to update the rebate with a large liquid stake amount, it should fail
+	invalidMsg := types.MsgSetCommunityPoolRebate{
+		ChainId:                   HostChainId,
+		LiquidStakedStTokenAmount: sdk.NewInt(1_000_000),
+	}
+	_, err = s.GetMsgServer().SetCommunityPoolRebate(s.Ctx, &invalidMsg)
+	s.Require().ErrorContains(err, "liquid staked stToken amount (1000000) is greater than current supply (2000)")
+
 	// Submit a 0 LS amount which should delete the rebate
 	removeMsg := types.MsgSetCommunityPoolRebate{
-		ChainId:            HostChainId,
-		LiquidStakedAmount: sdk.ZeroInt(),
+		ChainId:                   HostChainId,
+		LiquidStakedStTokenAmount: sdk.ZeroInt(),
 	}
 	_, err = s.GetMsgServer().SetCommunityPoolRebate(s.Ctx, &removeMsg)
 	s.Require().NoError(err, "no error expected when registering 0 rebate")
