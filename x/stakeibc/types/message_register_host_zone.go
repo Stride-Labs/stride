@@ -27,18 +27,20 @@ func NewMsgRegisterHostZone(
 	minRedemptionRate sdk.Dec,
 	maxRedemptionRate sdk.Dec,
 	lsmLiquidStakeEnabled bool,
+	communityPoolTreasuryAddress string,
 ) *MsgRegisterHostZone {
 	return &MsgRegisterHostZone{
-		Creator:               creator,
-		ConnectionId:          connectionId,
-		Bech32Prefix:          bech32prefix,
-		HostDenom:             hostDenom,
-		IbcDenom:              ibcDenom,
-		TransferChannelId:     transferChannelId,
-		UnbondingPeriod:       unbondingPeriod,
-		MinRedemptionRate:     minRedemptionRate,
-		MaxRedemptionRate:     maxRedemptionRate,
-		LsmLiquidStakeEnabled: lsmLiquidStakeEnabled,
+		Creator:                      creator,
+		ConnectionId:                 connectionId,
+		Bech32Prefix:                 bech32prefix,
+		HostDenom:                    hostDenom,
+		IbcDenom:                     ibcDenom,
+		TransferChannelId:            transferChannelId,
+		UnbondingPeriod:              unbondingPeriod,
+		MinRedemptionRate:            minRedemptionRate,
+		MaxRedemptionRate:            maxRedemptionRate,
+		LsmLiquidStakeEnabled:        lsmLiquidStakeEnabled,
+		CommunityPoolTreasuryAddress: communityPoolTreasuryAddress,
 	}
 }
 

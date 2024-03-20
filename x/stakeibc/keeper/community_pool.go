@@ -224,6 +224,45 @@ func (k Keeper) RedeemCommunityPoolTokens(ctx sdk.Context, hostZone types.HostZo
 	return nil
 }
 
+// Builds a msg to send funds to a community pool
+// If the community pool treasury address is specified on the host zone, the tokens are bank sent there
+// Otherwise, a MsgFundCommunityPool is used to send tokens to the default community pool address
+func (k Keeper) BuildFundCommunityPoolMsg(
+	ctx sdk.Context,
+	hostZone types.HostZone,
+	tokens sdk.Coins,
+	senderAccountType types.ICAAccountType,
+) (fundMsg []proto.Message, err error) {
+	// Get the sender ICA address based on the account type
+	var sender string
+	switch senderAccountType {
+	case types.ICAAccountType_COMMUNITY_POOL_RETURN:
+		sender = hostZone.CommunityPoolReturnIcaAddress
+	case types.ICAAccountType_WITHDRAWAL:
+		sender = hostZone.WithdrawalIcaAddress
+	default:
+		return nil, errorsmod.Wrapf(types.ErrICATxFailed,
+			"fund community pool ICA can only be initiated from either the community pool return or withdrawal ICA account")
+	}
+
+	// If the community pool treasury address is specified, bank send there
+	if hostZone.CommunityPoolTreasuryAddress != "" {
+		fundMsg = []proto.Message{&banktypes.MsgSend{
+			FromAddress: sender,
+			ToAddress:   hostZone.CommunityPoolTreasuryAddress,
+			Amount:      tokens,
+		}}
+	} else {
+		// Otherwise, call MsgFundCommunityPool
+		fundMsg = []proto.Message{&disttypes.MsgFundCommunityPool{
+			Amount:    tokens,
+			Depositor: sender,
+		}}
+	}
+
+	return fundMsg, nil
+}
+
 // Using tokens in the CommunityPoolReturnIcaAddress, trigger ICA tx to fund community pool
 // Note: The denom of the passed in token has to be the denom which exists on the hostZone not Stride
 func (k Keeper) FundCommunityPool(
@@ -232,25 +271,10 @@ func (k Keeper) FundCommunityPool(
 	token sdk.Coin,
 	senderAccountType types.ICAAccountType,
 ) error {
-	fundCoins := sdk.NewCoins(token)
-
-	// Get the depositor ICA address based on the account type
-	var depositor string
-	switch senderAccountType {
-	case types.ICAAccountType_COMMUNITY_POOL_RETURN:
-		depositor = hostZone.CommunityPoolReturnIcaAddress
-	case types.ICAAccountType_WITHDRAWAL:
-		depositor = hostZone.WithdrawalIcaAddress
-	default:
-		return errorsmod.Wrapf(types.ErrICATxFailed,
-			"fund community pool ICA can only be initiated from either the community pool return or withdrawal ICA account")
+	msgs, err := k.BuildFundCommunityPoolMsg(ctx, hostZone, sdk.NewCoins(token), senderAccountType)
+	if err != nil {
+		return err
 	}
-
-	var msgs []proto.Message
-	msgs = append(msgs, &disttypes.MsgFundCommunityPool{
-		Amount:    fundCoins,
-		Depositor: depositor,
-	})
 
 	// Timeout the ICA at the end of the epoch
 	strideEpochTracker, found := k.GetEpochTracker(ctx, epochstypes.STRIDE_EPOCH)
@@ -264,7 +288,7 @@ func (k Keeper) FundCommunityPool(
 	var icaCallbackData []byte
 
 	// Send the transaction through SubmitTx to kick off ICA command
-	_, err := k.SubmitTxs(ctx,
+	_, err = k.SubmitTxs(ctx,
 		hostZone.ConnectionId,
 		msgs,
 		senderAccountType,

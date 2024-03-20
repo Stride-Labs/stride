@@ -136,6 +136,7 @@ message MsgRegisterHostZone {
     (gogoproto.nullable) = false
   ];
   bool lsm_liquid_stake_enabled = 15;
+  string community_pool_treasury_address = 16;
 }
 message MsgRegisterHostZoneResponse {}
 

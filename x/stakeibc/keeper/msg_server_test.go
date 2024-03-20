@@ -170,6 +170,21 @@ func (s *KeeperTestSuite) TestRegisterHostZone_Success() {
 	s.Require().Equal(expectedDepositRecord, depositRecords[0], "deposit record")
 }
 
+func (s *KeeperTestSuite) TestRegisterHostZone_Success_SetCommunityPoolTreasuryAddress() {
+	tc := s.SetupRegisterHostZone()
+
+	// Sets the community pool treasury address to a valid address
+	msg := tc.validMsg
+	msg.CommunityPoolTreasuryAddress = ValidHostAddress
+
+	_, err := s.GetMsgServer().RegisterHostZone(sdk.WrapSDKContext(s.Ctx), &msg)
+	s.Require().NoError(err, "no error expected when registering host with valid treasury address")
+
+	// Confirm treasury address was set
+	hostZone := s.MustGetHostZone(HostChainId)
+	s.Require().Equal(ValidHostAddress, hostZone.CommunityPoolTreasuryAddress, "treasury address")
+}
+
 func (s *KeeperTestSuite) TestRegisterHostZone_InvalidConnectionId() {
 	tc := s.SetupRegisterHostZone()
 	msg := tc.validMsg
@@ -382,6 +397,17 @@ func (s *KeeperTestSuite) TestRegisterHostZone_CannotRegisterRedemptionAccount()
 	expectedErrMsg += "on connection connection-0: active channel already set for this owner: "
 	expectedErrMsg += "failed to register host zone"
 	s.Require().EqualError(err, expectedErrMsg, "can't register redemption account")
+}
+
+func (s *KeeperTestSuite) TestRegisterHostZone_InvalidCommunityPoolTreasuryAddress() {
+	// tests for a failure if the community pool treasury address is invalid
+	tc := s.SetupRegisterHostZone()
+
+	invalidMsg := tc.validMsg
+	invalidMsg.CommunityPoolTreasuryAddress = "invalid_address"
+
+	_, err := s.GetMsgServer().RegisterHostZone(sdk.WrapSDKContext(s.Ctx), &invalidMsg)
+	s.Require().ErrorContains(err, "invalid community pool treasury address")
 }
 
 // ----------------------------------------------------
