@@ -1117,6 +1117,14 @@ func (k msgServer) SetCommunityPoolRebate(
 		return nil, types.ErrHostZoneNotFound.Wrapf("host zone %s not found", msg.ChainId)
 	}
 
+	// Get the current stToken supply and confirm it's greater than or equal to the liquid staked amount
+	stDenom := utils.StAssetDenomFromHostZoneDenom(hostZone.HostDenom)
+	stTokenSupply := k.bankKeeper.GetSupply(ctx, stDenom).Amount
+	if msg.LiquidStakedStTokenAmount.GT(stTokenSupply) {
+		return nil, types.ErrFailedToRegisterRebate.Wrapf("liquid staked stToken amount (%v) is greater than current supply (%v)",
+			msg.LiquidStakedStTokenAmount, stTokenSupply)
+	}
+
 	// If a zero rebate rate or zero LiquidStakedStTokenAmount is specified, set the rebate to nil
 	// Otherwise, update the struct
 	if msg.LiquidStakedStTokenAmount.IsZero() || msg.RebateRate.IsZero() {
