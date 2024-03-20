@@ -138,9 +138,10 @@ func (k msgServer) RegisterHostZone(goCtx context.Context, msg *types.MsgRegiste
 		MinRedemptionRate:                 msg.MinRedemptionRate,
 		MaxRedemptionRate:                 msg.MaxRedemptionRate,
 		// Default the inner bounds to the outer bounds
-		MinInnerRedemptionRate: msg.MinRedemptionRate,
-		MaxInnerRedemptionRate: msg.MaxRedemptionRate,
-		LsmLiquidStakeEnabled:  msg.LsmLiquidStakeEnabled,
+		MinInnerRedemptionRate:       msg.MinRedemptionRate,
+		MaxInnerRedemptionRate:       msg.MaxRedemptionRate,
+		LsmLiquidStakeEnabled:        msg.LsmLiquidStakeEnabled,
+		CommunityPoolTreasuryAddress: msg.CommunityPoolTreasuryAddress,
 	}
 	// write the zone back to the store
 	k.SetHostZone(ctx, zone)
