@@ -45,6 +45,10 @@ bash dockernet/scripts/community-pool-staking/create_pool.sh
 ```bash
 bash dockernet/scripts/community-pool-staking/add_trade_route.sh
 ```
+* Liquid stake to create TVL 
+```bash
+bash dockernet/scripts/community-pool-staking/stake.sh
+```
 * Finally, test the reinvestment flow by sending USDC to the withdrawal address. View `logs/balances.log` to watch the funds traverse the different accounts
 ```bash
 bash dockernet/scripts/community-pool-staking/reinvest.sh
