@@ -296,12 +296,6 @@ func (k Keeper) TransferRewardTokensHostToTrade(ctx sdk.Context, amount sdkmath.
 		return nil
 	}
 
-	// Similarly, if there's no price on the trade route yet, don't initiate the transfer because
-	// we know the swap will not be submitted
-	if route.TradeConfig.SwapPrice.IsZero() {
-		return nil
-	}
-
 	// Build the PFM transfer message from host to trade zone
 	msg, err := k.BuildHostToTradeTransferMsg(ctx, amount, route)
 	if err != nil {
