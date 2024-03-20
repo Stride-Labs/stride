@@ -230,7 +230,7 @@ func (k Keeper) RedeemCommunityPoolTokens(ctx sdk.Context, hostZone types.HostZo
 func (k Keeper) BuildFundCommunityPoolMsg(
 	ctx sdk.Context,
 	hostZone types.HostZone,
-	token sdk.Coin,
+	tokens sdk.Coins,
 	senderAccountType types.ICAAccountType,
 ) (fundMsg []proto.Message, err error) {
 	// Get the sender ICA address based on the account type
@@ -245,12 +245,22 @@ func (k Keeper) BuildFundCommunityPoolMsg(
 			"fund community pool ICA can only be initiated from either the community pool return or withdrawal ICA account")
 	}
 
-	msgs := []proto.Message{&disttypes.MsgFundCommunityPool{
-		Amount:    sdk.NewCoins(token),
-		Depositor: sender,
-	}}
+	// If the community pool treasury address is specified, bank send there
+	if hostZone.CommunityPoolTreasuryAddress != "" {
+		fundMsg = []proto.Message{&banktypes.MsgSend{
+			FromAddress: sender,
+			ToAddress:   hostZone.CommunityPoolTreasuryAddress,
+			Amount:      tokens,
+		}}
+	} else {
+		// Otherwise, call MsgFundCommunityPool
+		fundMsg = []proto.Message{&disttypes.MsgFundCommunityPool{
+			Amount:    tokens,
+			Depositor: sender,
+		}}
+	}
 
-	return msgs, nil
+	return fundMsg, nil
 }
 
 // Using tokens in the CommunityPoolReturnIcaAddress, trigger ICA tx to fund community pool
@@ -261,7 +271,7 @@ func (k Keeper) FundCommunityPool(
 	token sdk.Coin,
 	senderAccountType types.ICAAccountType,
 ) error {
-	msgs, err := k.BuildFundCommunityPoolMsg(ctx, hostZone, token, senderAccountType)
+	msgs, err := k.BuildFundCommunityPoolMsg(ctx, hostZone, sdk.NewCoins(token), senderAccountType)
 	if err != nil {
 		return err
 	}
