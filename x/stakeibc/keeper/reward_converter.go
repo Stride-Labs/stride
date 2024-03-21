@@ -34,12 +34,6 @@ type ForwardMetadata struct {
 	Retries  int64  `json:"retries"`
 }
 
-type FeeInfo struct {
-	RebateAmount    sdkmath.Int
-	StrideFeeAmount sdkmath.Int
-	ReinvestAmount  sdkmath.Int
-}
-
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // The goal of this code is to allow certain reward token types to be automatically traded into other types
 // This happens before the rest of the staking, allocation, distribution etc. would continue as normal
