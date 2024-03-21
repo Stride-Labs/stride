@@ -5,7 +5,7 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
-	"github.com/Stride-Labs/stride/v19/app/apptesting"
+	"github.com/Stride-Labs/stride/v20/app/apptesting"
 )
 
 var (

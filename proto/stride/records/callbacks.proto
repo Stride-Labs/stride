@@ -3,7 +3,7 @@ package stride.records;
 
 import "stride/records/records.proto";
 
-option go_package = "github.com/Stride-Labs/stride/v19/x/records/types";
+option go_package = "github.com/Stride-Labs/stride/v20/x/records/types";
 
 message TransferCallback { uint64 deposit_record_id = 1; }
 

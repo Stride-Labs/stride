@@ -10,7 +10,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	"github.com/Stride-Labs/stride/v19/x/stakedym/types"
+	"github.com/Stride-Labs/stride/v20/x/stakedym/types"
 )
 
 var _ types.QueryServer = Keeper{}

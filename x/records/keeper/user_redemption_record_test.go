@@ -9,10 +9,10 @@ import (
 
 	sdkmath "cosmossdk.io/math"
 
-	keepertest "github.com/Stride-Labs/stride/v19/testutil/keeper"
-	"github.com/Stride-Labs/stride/v19/testutil/nullify"
-	"github.com/Stride-Labs/stride/v19/x/records/keeper"
-	"github.com/Stride-Labs/stride/v19/x/records/types"
+	keepertest "github.com/Stride-Labs/stride/v20/testutil/keeper"
+	"github.com/Stride-Labs/stride/v20/testutil/nullify"
+	"github.com/Stride-Labs/stride/v20/x/records/keeper"
+	"github.com/Stride-Labs/stride/v20/x/records/types"
 )
 
 // TODO [cleanup]: Migrate to new KeeperTestSuite framework and remove use of nullify

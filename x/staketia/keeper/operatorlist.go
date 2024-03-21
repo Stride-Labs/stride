@@ -3,7 +3,7 @@ package keeper
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/Stride-Labs/stride/v19/x/staketia/types"
+	"github.com/Stride-Labs/stride/v20/x/staketia/types"
 )
 
 // CheckIsOperatorAddress checks if the given address is the operator address

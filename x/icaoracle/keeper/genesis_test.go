@@ -1,7 +1,7 @@
 package keeper_test
 
 import (
-	"github.com/Stride-Labs/stride/v19/x/icaoracle/types"
+	"github.com/Stride-Labs/stride/v20/x/icaoracle/types"
 )
 
 func (s *KeeperTestSuite) TestGenesis() {

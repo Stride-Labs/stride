@@ -1,7 +1,7 @@
 package keeper_test
 
 import (
-	"github.com/Stride-Labs/stride/v19/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v20/x/stakeibc/types"
 )
 
 func (s *KeeperTestSuite) TestGetTotalValidatorWeight() {

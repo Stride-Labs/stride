@@ -4,7 +4,7 @@ package stride.records;
 import "cosmos/base/v1beta1/coin.proto";
 import "gogoproto/gogo.proto";
 
-option go_package = "github.com/Stride-Labs/stride/v19/x/records/types";
+option go_package = "github.com/Stride-Labs/stride/v20/x/records/types";
 
 message UserRedemptionRecord {
   string id = 1; // {chain_id}.{epoch}.{receiver}

@@ -4,7 +4,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/Stride-Labs/stride/v19/x/icacallbacks/types"
+	"github.com/Stride-Labs/stride/v20/x/icacallbacks/types"
 )
 
 // SetCallbackData set a specific callbackData in the store from its index

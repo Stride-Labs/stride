@@ -4,7 +4,7 @@ package stride.autopilot;
 import "gogoproto/gogo.proto";
 import "stride/autopilot/params.proto";
 
-option go_package = "github.com/Stride-Labs/stride/v19/x/autopilot/types";
+option go_package = "github.com/Stride-Labs/stride/v20/x/autopilot/types";
 
 // GenesisState defines the claim module's genesis state.
 message GenesisState {

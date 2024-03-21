@@ -13,10 +13,10 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/bech32"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
-	icqtypes "github.com/Stride-Labs/stride/v19/x/interchainquery/types"
-	recordstypes "github.com/Stride-Labs/stride/v19/x/records/types"
-	"github.com/Stride-Labs/stride/v19/x/stakeibc/keeper"
-	"github.com/Stride-Labs/stride/v19/x/stakeibc/types"
+	icqtypes "github.com/Stride-Labs/stride/v20/x/interchainquery/types"
+	recordstypes "github.com/Stride-Labs/stride/v20/x/records/types"
+	"github.com/Stride-Labs/stride/v20/x/stakeibc/keeper"
+	"github.com/Stride-Labs/stride/v20/x/stakeibc/types"
 )
 
 type ValidatorICQCallbackState struct {

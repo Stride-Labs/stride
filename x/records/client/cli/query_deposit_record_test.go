@@ -11,10 +11,10 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	"github.com/Stride-Labs/stride/v19/testutil/network"
-	"github.com/Stride-Labs/stride/v19/testutil/nullify"
-	"github.com/Stride-Labs/stride/v19/x/records/client/cli"
-	"github.com/Stride-Labs/stride/v19/x/records/types"
+	"github.com/Stride-Labs/stride/v20/testutil/network"
+	"github.com/Stride-Labs/stride/v20/testutil/nullify"
+	"github.com/Stride-Labs/stride/v20/x/records/client/cli"
+	"github.com/Stride-Labs/stride/v20/x/records/types"
 )
 
 func networkWithDepositRecordObjects(t *testing.T, n int) (*network.Network, []types.DepositRecord) {

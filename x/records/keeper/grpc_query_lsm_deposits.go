@@ -8,7 +8,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	"github.com/Stride-Labs/stride/v19/x/records/types"
+	"github.com/Stride-Labs/stride/v20/x/records/types"
 )
 
 func (k Keeper) LSMDeposit(c context.Context, req *types.QueryLSMDepositRequest) (*types.QueryLSMDepositResponse, error) {
