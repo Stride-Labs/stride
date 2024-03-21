@@ -44,7 +44,7 @@ func CreateUpgradeHandler(
 
 		ctx.Logger().Info("Adding DYDX Community Pool Treasury Address...")
 		if err := SetDydxCommunityPoolTreasuryAddress(ctx, stakeibcKeeper); err != nil {
-			return vm, err
+			return newVm, err
 		}
 
 		return newVm, nil
