@@ -129,7 +129,7 @@ func (s *KeeperTestSuite) TestWithdrawalRewardBalanceCallback_SuccessfulWithReba
 	s.FundAccount(s.TestAccs[0], sdk.NewCoin(types.StAssetDenomFromHostZoneDenom(hostZone.HostDenom), stTokenSupply))
 
 	// ICA inside of TransferRewardTokensHostToTrade should not actually execute because of min_swap_amount
-	s.CheckMulitpleICATxSubmitted(tc.PortID, tc.ChannelID, func() error {
+	s.CheckMultipleICATxSubmitted(tc.PortID, tc.ChannelID, func() error {
 		return keeper.WithdrawalRewardBalanceCallback(s.App.StakeibcKeeper, s.Ctx, tc.Response.CallbackArgs, tc.Response.Query)
 	})
 }

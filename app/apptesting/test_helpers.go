@@ -413,7 +413,7 @@ func (s *AppTestHelper) CheckICATxNotSubmitted(portId, channelId string, icaFunc
 
 // Helper function to check if multiple ICA txs were submitted by seeing if the sequence number
 // incremented by more than 1
-func (s *AppTestHelper) CheckMulitpleICATxSubmitted(portId, channelId string, icaFunction func() error) {
+func (s *AppTestHelper) CheckMultipleICATxSubmitted(portId, channelId string, icaFunction func() error) {
 	// Get the sequence before the tested funciton is run
 	startSequence := s.MustGetNextSequenceNumber(portId, channelId)
 
