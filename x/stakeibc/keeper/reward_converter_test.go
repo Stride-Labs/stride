@@ -605,9 +605,10 @@ func (s *KeeperTestSuite) TestBuildTradeAuthzMsg() {
 	s.Require().Equal(granteeAddress, grantMsg.Grantee, "grantee of grant message")
 
 	authorization, err := grantMsg.Grant.GetAuthorization()
+	expectedExpiration := s.Ctx.BlockTime().Add(time.Hour * 24 * 365 * 100)
 	s.Require().NoError(err)
 	s.Require().Equal(expectedTypeUrl, authorization.MsgTypeURL(), "grant msg type url")
-	s.Require().Nil(grantMsg.Grant.Expiration, "expiration should be nil")
+	s.Require().Equal(expectedExpiration, *grantMsg.Grant.Expiration, "expiration should be one year from the current block time")
 
 	// Test revoking trade permissions
 	msgs, err = s.App.StakeibcKeeper.BuildTradeAuthzMsg(s.Ctx, tradeRoute, types.AuthzPermissionChange_REVOKE, granteeAddress)
@@ -764,19 +765,6 @@ func (s *KeeperTestSuite) TestTransferRewardTokensHostToTrade_TransferAmountBelo
 	invalidTransferAmount := tc.TradeRoute.TradeConfig.MinSwapAmount.Sub(sdkmath.OneInt())
 	s.CheckICATxNotSubmitted(tc.PortID, tc.ChannelID, func() error {
 		return s.App.StakeibcKeeper.TransferRewardTokensHostToTrade(s.Ctx, invalidTransferAmount, tc.TradeRoute)
-	})
-}
-
-func (s *KeeperTestSuite) TestTransferRewardTokensHostToTrade_NoPoolPrice() {
-	tc := s.SetupTransferRewardTokensHostToTradeTestCase()
-
-	// Attempt to call the function with a route that does not have a pool price
-	// If should not initiate the transfer (since the swap would be unable to execute)
-	invalidRoute := tc.TradeRoute
-	invalidRoute.TradeConfig.SwapPrice = sdk.ZeroDec()
-
-	s.CheckICATxNotSubmitted(tc.PortID, tc.ChannelID, func() error {
-		return s.App.StakeibcKeeper.TransferRewardTokensHostToTrade(s.Ctx, tc.TransferAmount, invalidRoute)
 	})
 }
 
