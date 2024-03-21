@@ -3,8 +3,19 @@ set -eu
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 source ${SCRIPT_DIR}/../../config.sh
 
-# Simulates a trade by sending the native token to the trade account
-# We'll send the amount that should have been sent from the ICA, which has the rebate excluded
+TRADE_AMOUNT=997500
+
 trade_account=$($STRIDE_MAIN_CMD q stakeibc list-trade-routes | grep trade_account -A 3 | grep address | awk '{print $2}')
 host_denom_on_trade=$($STRIDE_MAIN_CMD q stakeibc list-trade-routes | grep host_denom_on_trade | awk '{print $2}')
-$OSMO_MAIN_CMD tx bank send ${OSMO_VAL_PREFIX}1 $trade_account 997500${host_denom_on_trade} --from ${OSMO_VAL_PREFIX}1 -y
+reward_denom_on_trade=$($STRIDE_MAIN_CMD q stakeibc list-trade-routes | grep reward_denom_on_trade | awk '{print $2}')
+
+tx_file=${STATE}/${OSMO_NODE_PREFIX}1/swap_tx.json
+$OSMO_MAIN_CMD tx gamm swap-exact-amount-in ${TRADE_AMOUNT}${reward_denom_on_trade} 1 \
+    --swap-route-pool-ids 1 --swap-route-denoms $host_denom_on_trade \
+    --from $trade_account --generate-only > $tx_file
+sleep 5
+
+echo "Executing swap through authz..."
+$OSMO_MAIN_CMD tx authz exec $tx_file --from ${OSMO_VAL_PREFIX}1 -y | TRIM_TX
+sleep 1
+rm -f $tx_file

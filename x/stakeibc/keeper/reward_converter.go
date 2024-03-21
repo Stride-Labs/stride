@@ -197,7 +197,9 @@ func (k Keeper) BuildTradeAuthzMsg(
 	switch permissionChange {
 	case types.AuthzPermissionChange_GRANT:
 		authorization := authz.NewGenericAuthorization(swapMsgTypeUrl)
-		grant, err := authz.NewGrant(ctx.BlockTime(), authorization, nil)
+		expiration := ctx.BlockTime().Add(time.Hour * 24 * 365 * 100) // 100 years
+
+		grant, err := authz.NewGrant(ctx.BlockTime(), authorization, &expiration)
 		if err != nil {
 			return nil, errorsmod.Wrapf(err, "unable to build grant struct")
 		}
@@ -206,12 +208,14 @@ func (k Keeper) BuildTradeAuthzMsg(
 			Grantee: grantee,
 			Grant:   grant,
 		}}
+
 	case types.AuthzPermissionChange_REVOKE:
 		authzMsg = []proto.Message{&authz.MsgRevoke{
 			Granter:    tradeRoute.TradeAccount.Address,
 			Grantee:    grantee,
 			MsgTypeUrl: swapMsgTypeUrl,
 		}}
+
 	default:
 		return nil, errors.New("invalid permission change")
 	}
