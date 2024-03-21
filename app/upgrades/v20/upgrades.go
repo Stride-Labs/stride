@@ -1,8 +1,6 @@
 package v20
 
 import (
-	"fmt"
-
 	errorsmod "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
@@ -11,12 +9,13 @@ import (
 	ccvtypes "github.com/cosmos/interchain-security/v4/x/ccv/types"
 
 	stakeibckeeper "github.com/Stride-Labs/stride/v19/x/stakeibc/keeper"
+	stakeibctypes "github.com/Stride-Labs/stride/v19/x/stakeibc/types"
 )
 
 const (
-	UpgradeName           = "v20"
-	dydxCPTreasuryAddress = "dydx15ztc7xy42tn2ukkc0qjthkucw9ac63pgp70urn"
-	dydxChainId           = "dydx-mainnet-1"
+	UpgradeName                      = "v20"
+	DydxCommunityPoolTreasuryAddress = "dydx15ztc7xy42tn2ukkc0qjthkucw9ac63pgp70urn"
+	DydxChainId                      = "dydx-mainnet-1"
 )
 
 // CreateUpgradeHandler creates an SDK upgrade handler for v20
@@ -24,7 +23,7 @@ func CreateUpgradeHandler(
 	mm *module.Manager,
 	configurator module.Configurator,
 	consumerKeeper ccvconsumerkeeper.Keeper,
-	stakeIbcKeeper stakeibckeeper.Keeper,
+	stakeibcKeeper stakeibckeeper.Keeper,
 ) upgradetypes.UpgradeHandler {
 	return func(ctx sdk.Context, _ upgradetypes.Plan, vm module.VersionMap) (module.VersionMap, error) {
 		ctx.Logger().Info("Starting upgrade v20...")
@@ -44,7 +43,7 @@ func CreateUpgradeHandler(
 		MigrateICSParams(ctx, consumerKeeper)
 
 		ctx.Logger().Info("Adding DYDX Community Pool Treasury Address...")
-		if err := SetDydxCommunityPoolTreasuryAddress(ctx, stakeIbcKeeper); err != nil {
+		if err := SetDydxCommunityPoolTreasuryAddress(ctx, stakeibcKeeper); err != nil {
 			return vm, err
 		}
 
@@ -53,19 +52,18 @@ func CreateUpgradeHandler(
 }
 
 // Write the Community Pool Treasury Address to the DYDX host_zone struct
-func SetDydxCommunityPoolTreasuryAddress(ctx sdk.Context, stakeIbcKeeper stakeibckeeper.Keeper) error {
-
+func SetDydxCommunityPoolTreasuryAddress(ctx sdk.Context, k stakeibckeeper.Keeper) error {
 	// Get the dydx host_zone
-	hostZone, found := stakeIbcKeeper.GetHostZone(ctx, dydxChainId)
+	hostZone, found := k.GetHostZone(ctx, DydxChainId)
 	if !found {
-		return fmt.Errorf("dydx host_zone not found")
+		return stakeibctypes.ErrHostZoneNotFound.Wrapf("dydx host zone not found")
 	}
 
 	// Set the treasury address
-	hostZone.CommunityPoolTreasuryAddress = dydxCPTreasuryAddress
+	hostZone.CommunityPoolTreasuryAddress = DydxCommunityPoolTreasuryAddress
 
 	// Save the dydx host_zone
-	stakeIbcKeeper.SetHostZone(ctx, hostZone)
+	k.SetHostZone(ctx, hostZone)
 
 	return nil
 }
