@@ -105,7 +105,8 @@ func MigrateICSParams(ctx sdk.Context, ck ccvconsumerkeeper.Keeper) {
 	params.HistoricalEntries = 10000
 	params.UnbondingPeriod = time.Second * 1209600
 	params.SoftOptOutThreshold = "0.05"
-	params.RewardDenoms = []string{"stucmdx",
+	params.RewardDenoms = []string{
+		"stucmdx",
 		"stuatom",
 		"staevmos",
 		"stinj",
@@ -116,7 +117,10 @@ func MigrateICSParams(ctx sdk.Context, ck ccvconsumerkeeper.Keeper) {
 		"stustars",
 		"stuumee",
 		"ustrd",
-		"stadydx"}
+		"stadydx",
+		"stutia",
+		"stadym",
+	}
 	params.ProviderRewardDenoms = []string{}
 	// Set the new params
 	ck.SetParams(ctx, params)
