@@ -18,7 +18,7 @@ import (
 	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
 	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
-	ccvconsumerkeeper "github.com/cosmos/interchain-security/v3/x/ccv/consumer/keeper"
+	ccvconsumerkeeper "github.com/cosmos/interchain-security/v4/x/ccv/consumer/keeper"
 	evmosvestingkeeper "github.com/evmos/vesting/x/vesting/keeper"
 	"github.com/evmos/vesting/x/vesting/types"
 	evmosvestingtypes "github.com/evmos/vesting/x/vesting/types"
