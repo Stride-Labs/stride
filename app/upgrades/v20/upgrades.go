@@ -1,6 +1,8 @@
 package v20
 
 import (
+	"time"
+
 	errorsmod "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
@@ -84,7 +86,33 @@ func MigrateICSOutstandingDowntime(ctx sdk.Context, ck ccvconsumerkeeper.Keeper)
 
 // Migrates ICS Params to add the new RetryDelayParam
 func MigrateICSParams(ctx sdk.Context, ck ccvconsumerkeeper.Keeper) {
-	params := ck.GetConsumerParams(ctx)
+	// Get default consumer params and set the new RetryDelayPeriod
+	params := ccvtypes.DefaultParams()
 	params.RetryDelayPeriod = ccvtypes.DefaultRetryDelayPeriod
+	// Modify to the correct params values
+	params.Enabled = true
+	params.BlocksPerDistributionTransmission = 1000
+	params.DistributionTransmissionChannel = "channel-0"
+	params.ProviderFeePoolAddrStr = "cosmos1ap0mh6xzfn8943urr84q6ae7zfnar48am2erhd"
+	params.CcvTimeoutPeriod = time.Second * 2419200
+	params.TransferTimeoutPeriod = time.Second * 3600
+	params.ConsumerRedistributionFraction = "0.85"
+	params.HistoricalEntries = 10000
+	params.UnbondingPeriod = time.Second * 1209600
+	params.SoftOptOutThreshold = "0.05"
+	params.RewardDenoms = []string{"stucmdx",
+		"stuatom",
+		"staevmos",
+		"stinj",
+		"stujuno",
+		"stuosmo",
+		"stuluna",
+		"stusomm",
+		"stustars",
+		"stuumee",
+		"ustrd",
+		"stadydx"}
+	params.ProviderRewardDenoms = []string{}
+	// Set the new params
 	ck.SetParams(ctx, params)
 }
