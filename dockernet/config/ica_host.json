@@ -22,7 +22,6 @@
                     "/cosmos.authz.v1beta1.MsgGrant",
                     "/cosmos.authz.v1beta1.MsgRevoke",
                     "/ibc.applications.transfer.v1.MsgTransfer",
-                    "/cosmos.bank.v1beta1.MsgMultiSend",
                     "/cosmwasm.wasm.v1.MsgExecuteContract",
                     "/cosmwasm.wasm.v1.MsgInstantiateContract",
                     "/osmosis.gamm.v1beta1.MsgSwapExactAmountIn"
