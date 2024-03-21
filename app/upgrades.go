@@ -270,6 +270,7 @@ func (app *StrideApp) setupUpgradeHandlers(appOpts servertypes.AppOptions) {
 		v20.CreateUpgradeHandler(
 			app.mm,
 			app.configurator,
+			app.ConsumerKeeper,
 			app.StakeibcKeeper,
 		),
 	)
