@@ -85,6 +85,11 @@ func MigrateICSOutstandingDowntime(ctx sdk.Context, ck ccvconsumerkeeper.Keeper)
 }
 
 // Migrates ICS Params to add the new RetryDelayParam
+// Because RetryDelayPeriod isn't in the store yet, we can't call
+// ck.GetConsumerParams(ctx) and modify the RetryDelayPeriod,
+// as calling ck.GetConsumerParams(ctx) will panic if the param isn't in the store.
+// Instead, we get the DefaultParams and modify each value to
+// their value directly before the v20 upgrade
 func MigrateICSParams(ctx sdk.Context, ck ccvconsumerkeeper.Keeper) {
 	// Get default consumer params and set the new RetryDelayPeriod
 	params := ccvtypes.DefaultParams()
