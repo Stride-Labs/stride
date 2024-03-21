@@ -1,7 +1,7 @@
 package client
 
 import (
-	"github.com/Stride-Labs/stride/v19/x/stakeibc/client/cli"
+	"github.com/Stride-Labs/stride/v20/x/stakeibc/client/cli"
 
 	govclient "github.com/cosmos/cosmos-sdk/x/gov/client"
 )

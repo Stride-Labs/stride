@@ -10,9 +10,9 @@ import (
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	transfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
 
-	"github.com/Stride-Labs/stride/v19/utils"
-	"github.com/Stride-Labs/stride/v19/x/stakedym/types"
-	stakeibctypes "github.com/Stride-Labs/stride/v19/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v20/utils"
+	"github.com/Stride-Labs/stride/v20/x/stakedym/types"
+	stakeibctypes "github.com/Stride-Labs/stride/v20/x/stakeibc/types"
 )
 
 // Liquid stakes native tokens and returns stTokens to the user

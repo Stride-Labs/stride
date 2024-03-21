@@ -9,7 +9,7 @@ import (
 	sdkmath "cosmossdk.io/math"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
-	"github.com/Stride-Labs/stride/v19/utils"
+	"github.com/Stride-Labs/stride/v20/utils"
 )
 
 const TypeMsgSetCommunityPoolRebate = "set_community_pool_rebate"

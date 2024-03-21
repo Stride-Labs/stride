@@ -7,11 +7,11 @@ import (
 	errorsmod "cosmossdk.io/errors"
 	"github.com/cosmos/gogoproto/proto"
 
-	icqkeeper "github.com/Stride-Labs/stride/v19/x/interchainquery/keeper"
+	icqkeeper "github.com/Stride-Labs/stride/v20/x/interchainquery/keeper"
 
-	"github.com/Stride-Labs/stride/v19/utils"
-	icqtypes "github.com/Stride-Labs/stride/v19/x/interchainquery/types"
-	"github.com/Stride-Labs/stride/v19/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v20/utils"
+	icqtypes "github.com/Stride-Labs/stride/v20/x/interchainquery/types"
+	"github.com/Stride-Labs/stride/v20/x/stakeibc/types"
 )
 
 // TradeRewardBalanceCallback is a callback handler for TradeRewardBalance queries.

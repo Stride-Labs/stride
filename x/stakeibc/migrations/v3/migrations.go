@@ -8,8 +8,8 @@ import (
 	errorsmod "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	oldstakeibctypes "github.com/Stride-Labs/stride/v19/x/stakeibc/migrations/v3/types"
-	stakeibctypes "github.com/Stride-Labs/stride/v19/x/stakeibc/types"
+	oldstakeibctypes "github.com/Stride-Labs/stride/v20/x/stakeibc/migrations/v3/types"
+	stakeibctypes "github.com/Stride-Labs/stride/v20/x/stakeibc/types"
 )
 
 func migrateHostZone(store sdk.KVStore, cdc codec.BinaryCodec) error {

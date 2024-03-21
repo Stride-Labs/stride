@@ -5,7 +5,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/module"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 
-	stakeibckeeper "github.com/Stride-Labs/stride/v19/x/stakeibc/keeper"
+	stakeibckeeper "github.com/Stride-Labs/stride/v20/x/stakeibc/keeper"
 )
 
 var (

@@ -10,7 +10,7 @@ import (
 	// "github.com/cosmos/cosmos-sdk/client/flags"
 	// sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/Stride-Labs/stride/v19/x/records/types"
+	"github.com/Stride-Labs/stride/v20/x/records/types"
 )
 
 // GetQueryCmd returns the cli query commands for this module

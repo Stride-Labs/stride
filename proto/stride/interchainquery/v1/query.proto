@@ -5,7 +5,7 @@ import "stride/interchainquery/v1/genesis.proto";
 import "google/api/annotations.proto";
 import "gogoproto/gogo.proto";
 
-option go_package = "github.com/Stride-Labs/stride/v19/x/interchainquery/types";
+option go_package = "github.com/Stride-Labs/stride/v20/x/interchainquery/types";
 
 service QueryService {
   rpc PendingQueries(QueryPendingQueriesRequest)

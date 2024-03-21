@@ -7,8 +7,8 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/gogoproto/proto"
 
-	epochstypes "github.com/Stride-Labs/stride/v19/x/epochs/types"
-	"github.com/Stride-Labs/stride/v19/x/stakeibc/types"
+	epochstypes "github.com/Stride-Labs/stride/v20/x/epochs/types"
+	"github.com/Stride-Labs/stride/v20/x/stakeibc/types"
 )
 
 const StrideEpochsPerDayEpoch = uint64(4)

@@ -11,12 +11,12 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	keepertest "github.com/Stride-Labs/stride/v19/testutil/keeper"
-	testkeeper "github.com/Stride-Labs/stride/v19/testutil/keeper"
-	"github.com/Stride-Labs/stride/v19/testutil/nullify"
-	epochtypes "github.com/Stride-Labs/stride/v19/x/epochs/types"
-	recordtypes "github.com/Stride-Labs/stride/v19/x/records/types"
-	"github.com/Stride-Labs/stride/v19/x/stakeibc/types"
+	keepertest "github.com/Stride-Labs/stride/v20/testutil/keeper"
+	testkeeper "github.com/Stride-Labs/stride/v20/testutil/keeper"
+	"github.com/Stride-Labs/stride/v20/testutil/nullify"
+	epochtypes "github.com/Stride-Labs/stride/v20/x/epochs/types"
+	recordtypes "github.com/Stride-Labs/stride/v20/x/records/types"
+	"github.com/Stride-Labs/stride/v20/x/stakeibc/types"
 )
 
 func TestParamsQuery(t *testing.T) {
