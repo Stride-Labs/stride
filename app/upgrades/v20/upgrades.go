@@ -36,18 +36,18 @@ func CreateUpgradeHandler(
 			return newVm, errorsmod.Wrapf(err, "unable to run module migrations")
 		}
 
-		ctx.Logger().Info("Migrating ICS outstanding downtime...")
-		if err := MigrateICSOutstandingDowntime(ctx, consumerKeeper); err != nil {
-			return newVm, errorsmod.Wrapf(err, "unable to migrate ICS downtime for v4")
-		}
+		// ctx.Logger().Info("Migrating ICS outstanding downtime...")
+		// if err := MigrateICSOutstandingDowntime(ctx, consumerKeeper); err != nil {
+		// 	return newVm, errorsmod.Wrapf(err, "unable to migrate ICS downtime for v4")
+		// }
 
 		ctx.Logger().Info("Migrating ICS params...")
 		MigrateICSParams(ctx, consumerKeeper)
 
-		ctx.Logger().Info("Adding DYDX Community Pool Treasury Address...")
-		if err := SetDydxCommunityPoolTreasuryAddress(ctx, stakeibcKeeper); err != nil {
-			return newVm, err
-		}
+		// ctx.Logger().Info("Adding DYDX Community Pool Treasury Address...")
+		// if err := SetDydxCommunityPoolTreasuryAddress(ctx, stakeibcKeeper); err != nil {
+		// 	return newVm, err
+		// }
 
 		return newVm, nil
 	}
