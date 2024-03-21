@@ -35,7 +35,7 @@ func (s *UpgradeTestSuite) TestUpgrade() {
 
 	// Confirm the treasury address was added to dydx
 	hostZone, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx, v20.DydxChainId)
-	s.Require().True(found, "host ozne should have been found")
+	s.Require().True(found, "host zone should have been found")
 	s.Require().Equal(v20.DydxCommunityPoolTreasuryAddress, hostZone.CommunityPoolTreasuryAddress,
 		"community pool treasury address")
 }
