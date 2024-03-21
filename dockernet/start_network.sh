@@ -57,6 +57,8 @@ done
 
 
 # Start each chain, create the transfer channels and start the relayers
+# For dydx, sleep before and after the relayers are setup to get it some time to startup
+# since it's a computationally expensive chain
 bash $SRC/start_chain.sh 
 bash $SRC/start_relayers.sh 
 

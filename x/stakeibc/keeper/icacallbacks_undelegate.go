@@ -187,7 +187,7 @@ func (k Keeper) UpdateHostZoneUnbondings(
 		if !success {
 			k.Logger(ctx).Error(fmt.Sprintf("Failed to set host zone epoch unbonding record: epochNumber %d, chainId %s, hostZoneUnbonding %+v",
 				epochUnbondingRecord.EpochNumber, chainId, hostZoneUnbonding))
-			return sdkmath.ZeroInt(), errorsmod.Wrapf(types.ErrEpochNotFound, "couldn't set host zone epoch unbonding record. err: %s", err.Error())
+			return sdkmath.ZeroInt(), errorsmod.Wrapf(types.ErrEpochNotFound, "couldn't set host zone epoch unbonding record")
 		}
 		k.RecordsKeeper.SetEpochUnbondingRecord(ctx, *updatedEpochUnbondingRecord)
 

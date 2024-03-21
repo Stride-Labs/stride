@@ -13,6 +13,7 @@ import (
 	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
 	ibctesting "github.com/cosmos/ibc-go/v7/testing"
 
+	"github.com/Stride-Labs/stride/v19/utils"
 	epochtypes "github.com/Stride-Labs/stride/v19/x/epochs/types"
 	icqtypes "github.com/Stride-Labs/stride/v19/x/interchainquery/types"
 	recordstypes "github.com/Stride-Labs/stride/v19/x/records/types"
@@ -167,6 +168,21 @@ func (s *KeeperTestSuite) TestRegisterHostZone_Success() {
 	depositRecords := s.App.RecordsKeeper.GetAllDepositRecord(s.Ctx)
 	s.Require().Len(depositRecords, 1, "number of deposit records")
 	s.Require().Equal(expectedDepositRecord, depositRecords[0], "deposit record")
+}
+
+func (s *KeeperTestSuite) TestRegisterHostZone_Success_SetCommunityPoolTreasuryAddress() {
+	tc := s.SetupRegisterHostZone()
+
+	// Sets the community pool treasury address to a valid address
+	msg := tc.validMsg
+	msg.CommunityPoolTreasuryAddress = ValidHostAddress
+
+	_, err := s.GetMsgServer().RegisterHostZone(sdk.WrapSDKContext(s.Ctx), &msg)
+	s.Require().NoError(err, "no error expected when registering host with valid treasury address")
+
+	// Confirm treasury address was set
+	hostZone := s.MustGetHostZone(HostChainId)
+	s.Require().Equal(ValidHostAddress, hostZone.CommunityPoolTreasuryAddress, "treasury address")
 }
 
 func (s *KeeperTestSuite) TestRegisterHostZone_InvalidConnectionId() {
@@ -381,6 +397,17 @@ func (s *KeeperTestSuite) TestRegisterHostZone_CannotRegisterRedemptionAccount()
 	expectedErrMsg += "on connection connection-0: active channel already set for this owner: "
 	expectedErrMsg += "failed to register host zone"
 	s.Require().EqualError(err, expectedErrMsg, "can't register redemption account")
+}
+
+func (s *KeeperTestSuite) TestRegisterHostZone_InvalidCommunityPoolTreasuryAddress() {
+	// tests for a failure if the community pool treasury address is invalid
+	tc := s.SetupRegisterHostZone()
+
+	invalidMsg := tc.validMsg
+	invalidMsg.CommunityPoolTreasuryAddress = "invalid_address"
+
+	_, err := s.GetMsgServer().RegisterHostZone(sdk.WrapSDKContext(s.Ctx), &invalidMsg)
+	s.Require().ErrorContains(err, "invalid community pool treasury address")
 }
 
 // ----------------------------------------------------
@@ -2574,4 +2601,122 @@ func (s *KeeperTestSuite) TestResumeHostZone_UnhaltedZones() {
 	s.Require().Error(err, "shouldn't be able to call tx on unhalted zones")
 	expectedErrorMsg := fmt.Sprintf("invalid chain id, zone for %s not halted: host zone is not halted", HostChainId)
 	s.Require().Equal(expectedErrorMsg, err.Error(), "should return correct error msg")
+}
+
+// ----------------------------------------------------
+//	           SetCommunityPoolRebate
+// ----------------------------------------------------
+
+func (s *KeeperTestSuite) TestSetCommunityPoolRebate() {
+	stTokenSupply := sdk.NewInt(2000)
+	rebateInfo := types.CommunityPoolRebate{
+		RebateRate:                sdk.MustNewDecFromStr("0.5"),
+		LiquidStakedStTokenAmount: sdk.NewInt(1000),
+	}
+
+	// Mint stTokens so the supply is populated
+	s.FundAccount(s.TestAccs[0], sdk.NewCoin(utils.StAssetDenomFromHostZoneDenom(HostDenom), stTokenSupply))
+
+	// Set host zone with no rebate
+	hostZone := types.HostZone{
+		ChainId:   HostChainId,
+		HostDenom: HostDenom,
+	}
+	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
+
+	// Submit a message to create the rebate
+	registerMsg := types.MsgSetCommunityPoolRebate{
+		ChainId:                   HostChainId,
+		RebateRate:                rebateInfo.RebateRate,
+		LiquidStakedStTokenAmount: rebateInfo.LiquidStakedStTokenAmount,
+	}
+	_, err := s.GetMsgServer().SetCommunityPoolRebate(s.Ctx, &registerMsg)
+	s.Require().NoError(err, "no error expected when registering rebate")
+
+	// Confirm the rebate was updated
+	actualHostZone := s.MustGetHostZone(HostChainId)
+	s.Require().Equal(rebateInfo, *actualHostZone.CommunityPoolRebate, "rebate was updated on host zone")
+
+	// Attempt to update the rebate with a large liquid stake amount, it should fail
+	invalidMsg := types.MsgSetCommunityPoolRebate{
+		ChainId:                   HostChainId,
+		LiquidStakedStTokenAmount: sdk.NewInt(1_000_000),
+	}
+	_, err = s.GetMsgServer().SetCommunityPoolRebate(s.Ctx, &invalidMsg)
+	s.Require().ErrorContains(err, "liquid staked stToken amount (1000000) is greater than current supply (2000)")
+
+	// Submit a 0 LS amount which should delete the rebate
+	removeMsg := types.MsgSetCommunityPoolRebate{
+		ChainId:                   HostChainId,
+		LiquidStakedStTokenAmount: sdk.ZeroInt(),
+	}
+	_, err = s.GetMsgServer().SetCommunityPoolRebate(s.Ctx, &removeMsg)
+	s.Require().NoError(err, "no error expected when registering 0 rebate")
+
+	actualHostZone = s.MustGetHostZone(HostChainId)
+	s.Require().Nil(actualHostZone.CommunityPoolRebate, "rebate was removed from host zone")
+
+	// Confirm a message with an invalid chain ID would cause an error
+	_, err = s.GetMsgServer().SetCommunityPoolRebate(s.Ctx, &types.MsgSetCommunityPoolRebate{ChainId: "invalid"})
+	s.Require().ErrorContains(err, "host zone not found")
+}
+
+// ----------------------------------------------------
+//	              ToggleTradeController
+// ----------------------------------------------------
+
+func (s *KeeperTestSuite) TestToggleTradeController() {
+	tradeICAOwner := types.FormatTradeRouteICAOwner(HostChainId, RewardDenom, HostDenom, types.ICAAccountType_CONVERTER_TRADE)
+	channelId, portId := s.CreateICAChannel(tradeICAOwner)
+
+	tradeControllerAddress := "trade-controller"
+
+	// Create a trade route
+	tradeRoute := types.TradeRoute{
+		RewardDenomOnRewardZone: RewardDenom,
+		HostDenomOnHostZone:     HostDenom,
+		TradeAccount: types.ICAAccount{
+			ChainId:      HostChainId,
+			ConnectionId: ibctesting.FirstConnectionID,
+		},
+	}
+	s.App.StakeibcKeeper.SetTradeRoute(s.Ctx, tradeRoute)
+
+	// Test granting permissions
+	grantMsg := types.MsgToggleTradeController{
+		ChainId:          HostChainId,
+		PermissionChange: types.AuthzPermissionChange_GRANT,
+		Address:          tradeControllerAddress,
+	}
+	s.CheckICATxSubmitted(portId, channelId, func() error {
+		_, err := s.GetMsgServer().ToggleTradeController(s.Ctx, &grantMsg)
+		return err
+	})
+
+	// Test revoking permissions
+	revokeMsg := types.MsgToggleTradeController{
+		ChainId:          HostChainId,
+		PermissionChange: types.AuthzPermissionChange_REVOKE,
+		Address:          tradeControllerAddress,
+	}
+	s.CheckICATxSubmitted(portId, channelId, func() error {
+		_, err := s.GetMsgServer().ToggleTradeController(s.Ctx, &revokeMsg)
+		return err
+	})
+
+	// Test with an invalid chain ID - it should fail because the trade route cant be found
+	invalidMsg := &types.MsgToggleTradeController{ChainId: "invalid-chain"}
+	_, err := s.GetMsgServer().ToggleTradeController(s.Ctx, invalidMsg)
+	s.Require().ErrorContains(err, "trade route not found")
+
+	// Test failing to build an authz message by passing an invalid permission change
+	invalidMsg = &types.MsgToggleTradeController{ChainId: HostChainId, PermissionChange: 100}
+	_, err = s.GetMsgServer().ToggleTradeController(s.Ctx, invalidMsg)
+	s.Require().ErrorContains(err, "invalid permission change")
+
+	// Remove the connection ID from the trade route so the ICA submission fails
+	tradeRoute.TradeAccount.ConnectionId = ""
+	s.App.StakeibcKeeper.SetTradeRoute(s.Ctx, tradeRoute)
+	_, err = s.GetMsgServer().ToggleTradeController(s.Ctx, &grantMsg)
+	s.Require().ErrorContains(err, "unable to send ICA tx")
 }

@@ -75,7 +75,7 @@ func CommunityPoolIcaBalanceCallback(k Keeper, ctx sdk.Context, args []byte, que
 	} else if icaType == types.ICAAccountType_COMMUNITY_POOL_RETURN {
 		// Send ICA msg to FundCommunityPool with token found in return ICA
 		err := utils.ApplyFuncIfNoError(ctx, func(c sdk.Context) error {
-			return k.FundCommunityPool(ctx, hostZone, token)
+			return k.FundCommunityPool(ctx, hostZone, token, icaType)
 		})
 		if err != nil {
 			k.Logger(ctx).Error(utils.LogICQCallbackWithHostZone(chainId, ICQCallbackID_CommunityPoolIcaBalance,

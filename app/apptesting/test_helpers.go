@@ -411,6 +411,21 @@ func (s *AppTestHelper) CheckICATxNotSubmitted(portId, channelId string, icaFunc
 	s.Require().Equal(startSequence, endSequence, "sequence number should NOT have incremented from tested function")
 }
 
+// Helper function to check if multiple ICA txs were submitted by seeing if the sequence number
+// incremented by more than 1
+func (s *AppTestHelper) CheckMultipleICATxSubmitted(portId, channelId string, icaFunction func() error) {
+	// Get the sequence before the tested funciton is run
+	startSequence := s.MustGetNextSequenceNumber(portId, channelId)
+
+	// Run the test function and confirm there's no error
+	err := icaFunction()
+	s.Require().NoError(err, "no error expected executing tested function")
+
+	// Check that the sequence number incremented
+	endSequence := s.MustGetNextSequenceNumber(portId, channelId)
+	s.Require().Greater(endSequence, startSequence+1, "sequence number should have incremented twice from tested function")
+}
+
 // Constructs an ICA Packet Acknowledgement compatible with ibc-go v5+
 func ICAPacketAcknowledgement(t *testing.T, msgType string, msgResponses []proto.Message) channeltypes.Acknowledgement {
 	txMsgData := &sdk.TxMsgData{

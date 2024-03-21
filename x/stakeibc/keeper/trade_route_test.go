@@ -96,3 +96,36 @@ func (s *KeeperTestSuite) TestGetAllTradeRoutes() {
 	actualRoutes := s.App.StakeibcKeeper.GetAllTradeRoutes(s.Ctx)
 	s.Require().ElementsMatch(expectedRoutes, actualRoutes)
 }
+
+func (s *KeeperTestSuite) TestGetTradeRouteFromTradeAccountChainId() {
+	// Store 3 trade routes
+	for i := 1; i <= 3; i++ {
+		rewardDenom := fmt.Sprintf("reward-%d", i)
+		hostDenom := fmt.Sprintf("host-%d", i)
+		chainId := fmt.Sprintf("chain-%d", i)
+
+		s.App.StakeibcKeeper.SetTradeRoute(s.Ctx, types.TradeRoute{
+			RewardDenomOnRewardZone: rewardDenom,
+			HostDenomOnHostZone:     hostDenom,
+			TradeAccount: types.ICAAccount{
+				ChainId: chainId,
+			},
+		})
+	}
+
+	// Search for each of them by chain ID
+	for i := 1; i <= 3; i++ {
+		rewardDenom := fmt.Sprintf("reward-%d", i)
+		hostDenom := fmt.Sprintf("host-%d", i)
+		chainId := fmt.Sprintf("chain-%d", i)
+
+		actualRoute, found := s.App.StakeibcKeeper.GetTradeRouteFromTradeAccountChainId(s.Ctx, chainId)
+		s.Require().True(found, "trade route 1 should have been found")
+		s.Require().Equal(actualRoute.RewardDenomOnRewardZone, rewardDenom, "reward denom")
+		s.Require().Equal(actualRoute.HostDenomOnHostZone, hostDenom, "host denom")
+	}
+
+	// Search for a chainId without a trade route
+	_, found := s.App.StakeibcKeeper.GetTradeRouteFromTradeAccountChainId(s.Ctx, "chain-4")
+	s.Require().False(found, "trade route should not have been found")
+}

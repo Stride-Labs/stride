@@ -41,6 +41,10 @@ service Msg {
       returns (MsgDeleteTradeRouteResponse);
   rpc UpdateTradeRoute(MsgUpdateTradeRoute)
       returns (MsgUpdateTradeRouteResponse);
+  rpc SetCommunityPoolRebate(MsgSetCommunityPoolRebate)
+      returns (MsgSetCommunityPoolRebateResponse);
+  rpc ToggleTradeController(MsgToggleTradeController)
+      returns (MsgToggleTradeControllerResponse);
 }
 
 message MsgUpdateInnerRedemptionRateBounds {
@@ -132,6 +136,7 @@ message MsgRegisterHostZone {
     (gogoproto.nullable) = false
   ];
   bool lsm_liquid_stake_enabled = 15;
+  string community_pool_treasury_address = 16;
 }
 message MsgRegisterHostZoneResponse {}
 
@@ -314,3 +319,50 @@ message MsgUpdateTradeRoute {
   ];
 }
 message MsgUpdateTradeRouteResponse {}
+
+// Registers or updates a community pool rebate by specifying the amount liquid
+// staked
+message MsgSetCommunityPoolRebate {
+  option (cosmos.msg.v1.signer) = "creator";
+  option (amino.name) = "stride/x/stakeibc/MsgSetCommunityPoolRebate";
+
+  // Message signer (admin only)
+  string creator = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+  // Chain id of the chain whose community pool has a liquid staking rebate
+  // arrangement with stride
+  string chain_id = 2;
+  // Rebate percentage represented as a decimal (e.g. 0.2 for 20%)
+  string rebate_rate = 3 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
+  // Number of stTokens recieved by the community pool after liquid staking
+  string liquid_staked_st_token_amount = 4 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable) = false
+  ];
+}
+message MsgSetCommunityPoolRebateResponse {}
+
+enum AuthzPermissionChange {
+  // Grant the address trade permissions
+  GRANT = 0;
+  // Revoke trade permissions from the address
+  REVOKE = 1;
+}
+
+// Grants or revokes trade permissions to a given address via authz
+message MsgToggleTradeController {
+  option (cosmos.msg.v1.signer) = "creator";
+  option (amino.name) = "stride/x/stakeibc/MsgToggleTradeController";
+
+  // Message signer (admin only)
+  string creator = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+  // Chain ID of the trade account
+  string chain_id = 2;
+  // Permission change (either grant or revoke)
+  AuthzPermissionChange permission_change = 3;
+  // Address of trade operator
+  string address = 4;
+}
+message MsgToggleTradeControllerResponse {}

@@ -49,11 +49,6 @@ func (k Keeper) SweepAllUnbondedTokensForHostZone(ctx sdk.Context, hostZone type
 		if inTransferQueue && validUnbondingTime {
 			k.Logger(ctx).Info(utils.LogWithHostZone(hostZone.ChainId, "  %v%s included in sweep", hostZoneUnbonding.NativeTokenAmount, hostZoneUnbonding.Denom))
 
-			if err != nil {
-				errMsg := fmt.Sprintf("Could not convert native token amount to int64 | %s", err.Error())
-				k.Logger(ctx).Error(errMsg)
-				continue
-			}
 			totalAmtTransferToRedemptionAcct = totalAmtTransferToRedemptionAcct.Add(hostZoneUnbonding.NativeTokenAmount)
 			epochUnbondingRecordIds = append(epochUnbondingRecordIds, epochUnbondingRecord.EpochNumber)
 		}
