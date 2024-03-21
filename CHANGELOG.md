@@ -42,6 +42,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <!-- GH ACTIONS TEMPLATE - INSERT NEW VERSION HERE -->
 
+## [v20.0.0](https://github.com/Stride-Labs/stride/releases/tag/v20.0.0) - 2024-03-21
+
+### On-Chain changes
+1. v20 upgrade handler scaffolding ([#1148](https://github.com/Stride-Labs/stride/pull/1148))
+2. Upgraded ICS to 4.0 ([#1153](https://github.com/Stride-Labs/stride/pull/1153))
+3. add community pool rebate feature ([#1135](https://github.com/Stride-Labs/stride/pull/1135))
+4. v20 Import Paths ([#1155](https://github.com/Stride-Labs/stride/pull/1155))
+
+### Off-Chain changes
+1. fixing init_chain script to not clobber new params ([#1139](https://github.com/Stride-Labs/stride/pull/1139))
+2. added wasm to cosmovisor upgrade image ([#1158](https://github.com/Stride-Labs/stride/pull/1158))
+
+
 ## [v19.0.0](https://github.com/Stride-Labs/stride/releases/tag/v19.0.0) - 2024-03-07
 
 ### On-Chain changes
