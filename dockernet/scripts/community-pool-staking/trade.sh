@@ -9,6 +9,10 @@ trade_account=$($STRIDE_MAIN_CMD q stakeibc list-trade-routes | grep trade_accou
 host_denom_on_trade=$($STRIDE_MAIN_CMD q stakeibc list-trade-routes | grep host_denom_on_trade | awk '{print $2}')
 reward_denom_on_trade=$($STRIDE_MAIN_CMD q stakeibc list-trade-routes | grep reward_denom_on_trade | awk '{print $2}')
 
+echo "Granting authz permissions..."
+$STRIDE_MAIN_CMD tx stakeibc toggle-trade-controller $OSMO_CHAIN_ID grant $(OSMO_ADDRESS) --from admin -y
+sleep 15
+
 tx_file=${STATE}/${OSMO_NODE_PREFIX}1/swap_tx.json
 $OSMO_MAIN_CMD tx gamm swap-exact-amount-in ${TRADE_AMOUNT}${reward_denom_on_trade} 1 \
     --swap-route-pool-ids 1 --swap-route-denoms $host_denom_on_trade \
