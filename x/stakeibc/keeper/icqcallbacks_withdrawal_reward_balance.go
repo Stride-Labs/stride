@@ -67,7 +67,7 @@ func WithdrawalRewardBalanceCallback(k Keeper, ctx sdk.Context, args []byte, que
 
 	// If there's a rebate portion, fund the community pool with that amount
 	if rebateAmount.GT(sdkmath.ZeroInt()) {
-		rebateToken := sdk.NewCoin(tradeRouteCallback.RewardDenom, rebateAmount)
+		rebateToken := sdk.NewCoin(tradeRoute.RewardDenomOnHostZone, rebateAmount)
 		if err := k.FundCommunityPool(ctx, hostZone, rebateToken, types.ICAAccountType_WITHDRAWAL); err != nil {
 			return errorsmod.Wrapf(err, "unable to submit fund community pool ICA")
 		}

@@ -88,53 +88,57 @@ while true; do
     print_header "TRADE ROUTES" $state
     $STRIDE_MAIN_CMD q stakeibc list-trade-routes >> $state
 
-    print_separator "STAKETIA" $state
+    host_chain="${HOST_CHAINS[0]}"
+    if [[ "$host_chain" == "GAIA" ]]; then
+        print_separator "STAKETIA" $state
 
-    print_header "HOST ZONE" $state
-    $STRIDE_MAIN_CMD q staketia host-zone >> $state
-    print_header "DELEGATION RECORDS" $state
-    $STRIDE_MAIN_CMD q staketia delegation-records >> $state
-    print_header "UNBONDING RECORDS" $state
-    $STRIDE_MAIN_CMD q staketia unbonding-records >> $state
-    print_header "REDEMPTION RECORDS" $state
-    $STRIDE_MAIN_CMD q staketia redemption-records >> $state
-    print_header "SLASH RECORDS" $state
-    $STRIDE_MAIN_CMD q staketia slash-records >> $state
+        print_header "HOST ZONE" $state
+        $STRIDE_MAIN_CMD q staketia host-zone >> $state
+        print_header "DELEGATION RECORDS" $state
+        $STRIDE_MAIN_CMD q staketia delegation-records >> $state
+        print_header "UNBONDING RECORDS" $state
+        $STRIDE_MAIN_CMD q staketia unbonding-records >> $state
+        print_header "REDEMPTION RECORDS" $state
+        $STRIDE_MAIN_CMD q staketia redemption-records >> $state
+        print_header "SLASH RECORDS" $state
+        $STRIDE_MAIN_CMD q staketia slash-records >> $state
+    fi
 
     # Log stride stakeibc balances
     print_separator "VALIDATORS" $balances
-    host_chain="${HOST_CHAINS[0]}"
     host_val_address="$(${host_chain}_ADDRESS)"
     host_cmd=$(GET_VAR_VALUE ${host_chain}_MAIN_CMD)
     print_stride_balance $(STRIDE_ADDRESS) "STRIDE" 
     print_host_balance $host_chain $host_val_address $host_chain
 
-    # Log stride staketia balances
-    print_separator "STAKETIA STRIDE" $balances
+    if [[ "$host_chain" == "GAIA" ]]; then
+        # Log stride staketia balances
+        print_separator "STAKETIA STRIDE" $balances
 
-    deposit_address=$($STRIDE_MAIN_CMD keys show -a deposit)
-    redemption_address=$($STRIDE_MAIN_CMD keys show -a redemption)
-    claim_address=$($STRIDE_MAIN_CMD keys show -a claim)
-    fee_address=$($STRIDE_MAIN_CMD q auth module-account staketia_fee_address | grep "address:" | awk '{print $2}')
+        deposit_address=$($STRIDE_MAIN_CMD keys show -a deposit)
+        redemption_address=$($STRIDE_MAIN_CMD keys show -a redemption)
+        claim_address=$($STRIDE_MAIN_CMD keys show -a claim)
+        fee_address=$($STRIDE_MAIN_CMD q auth module-account staketia_fee_address | grep "address:" | awk '{print $2}')
 
-    print_stride_balance $deposit_address    "DEPOSIT" 
-    print_stride_balance $redemption_address "REDEMPTION" 
-    print_stride_balance $claim_address      "CLAIM" 
-    print_stride_balance $fee_address        "FEE" 
+        print_stride_balance $deposit_address    "DEPOSIT" 
+        print_stride_balance $redemption_address "REDEMPTION" 
+        print_stride_balance $claim_address      "CLAIM" 
+        print_stride_balance $fee_address        "FEE" 
 
-    # Log staketia balance on host chain
-    print_separator "STAKETIA HOST" $balances
-    print_host_balance "$host_chain" $DELEGATION_ADDRESS  "DELEGATION CONTROLLER" 
-    print_host_balance "$host_chain" $REWARD_ADDRESS "REWARD CONTROLLER" 
+        # Log staketia balance on host chain
+        print_separator "STAKETIA HOST" $balances
+        print_host_balance "$host_chain" $DELEGATION_ADDRESS  "DELEGATION CONTROLLER" 
+        print_host_balance "$host_chain" $REWARD_ADDRESS "REWARD CONTROLLER" 
 
-    # Log staketia delegations/undelegations
-    print_separator "STAKETIA STAKING" $balances
-    delegation_address=$($STRIDE_MAIN_CMD q staketia host-zone | grep "delegation_address" | awk '{print $2}')
+        # Log staketia delegations/undelegations
+        print_separator "STAKETIA STAKING" $balances
+        delegation_address=$($STRIDE_MAIN_CMD q staketia host-zone | grep "delegation_address" | awk '{print $2}')
 
-    print_header "DELEGATIONS $host_chain" $balances
-    $host_cmd q staking delegations $delegation_address | grep -vE "pagination|total|next_key" >> $balances
-    print_header "UNBONDING-DELEGATIONS $host_chain" $balances
-    $host_cmd q staking unbonding-delegations $delegation_address | grep -vE "pagination|total|next_key" >> $balances
+        print_header "DELEGATIONS $host_chain" $balances
+        $host_cmd q staking delegations $delegation_address | grep -vE "pagination|total|next_key" >> $balances
+        print_header "UNBONDING-DELEGATIONS $host_chain" $balances
+        $host_cmd q staking unbonding-delegations $delegation_address | grep -vE "pagination|total|next_key" >> $balances
+    fi
 
     # Log stride channels
     print_separator "STRIDE" $channels
@@ -184,21 +188,25 @@ while true; do
         print_stride_balance $community_pool_stake_address "COMMUNITY POOL STAKE HOLDING ACCT BALANCE" 
         print_stride_balance $community_pool_redeem_address "COMMUNITY POOL REDEEM HOLDING ACCT BALANCE" 
 
+        community_pool_treasury=$($STRIDE_MAIN_CMD q stakeibc show-host-zone $HOST_CHAIN_ID | grep community_pool_treasury | awk '{print $2}' | tr -d '"')
+        if [[ "$community_pool_treasury" != "" ]]; then
+            print_host_balance $chain $community_pool_treasury "COMMUNITY POOL TREASURY ADDRESS" 
+        fi
+
         # Log host channels
         print_separator "$chain" $channels
         $HOST_MAIN_CMD q ibc channel channels | grep -E "channel_id|port|state" >> $channels || true
     done
 
-
     TRADE_ICA_ADDR=$($STRIDE_MAIN_CMD q stakeibc list-trade-routes | grep trade_account -A 2 | grep address | awk '{print $2}')
     if [[ "$TRADE_ICA_ADDR" == "$OSMO_ADDRESS_PREFIX"* ]]; then
-        print_header "TRADE ACCT BALANCE" >> $balances
+        print_header "TRADE ACCT BALANCE" $balances
         $OSMO_MAIN_CMD q bank balances $TRADE_ICA_ADDR >> $balances
     fi
 
     for chain in ${ACCESSORY_CHAINS[@]:-}; do
         ACCESSORY_MAIN_CMD=$(GET_VAR_VALUE ${chain}_MAIN_CMD)
-        print_header "==========================  $chain  =============================" >> $channels
+        print_header "==========================  $chain  =============================" $channels
         $ACCESSORY_MAIN_CMD q ibc channel channels | grep -E "channel_id|port|state" >> $channels || true
     done
 
