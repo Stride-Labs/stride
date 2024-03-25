@@ -45,19 +45,30 @@ bash dockernet/scripts/community-pool-staking/create_pool.sh
 ```bash
 bash dockernet/scripts/community-pool-staking/add_trade_route.sh
 ```
+* Finally, test the reinvestment flow by sending USDC to the withdrawal address. View `logs/balances.log` to watch the funds traverse the different accounts
+```bash
+bash dockernet/scripts/community-pool-staking/reinvest_reward.sh
+```
+
+### Rebate
+* Set `HOST_CHAINS` to either `(DYDX)` or `(GAIA)` in `config.sh`
+* Start the network
+```bash
+make start-docker
+```
 * Liquid stake to create TVL 
 ```bash
 bash dockernet/scripts/community-pool-staking/stake.sh
 ```
-* Finally, test the reinvestment flow by sending USDC to the withdrawal address. View `logs/balances.log` to watch the funds traverse the different accounts
-```bash
-bash dockernet/scripts/community-pool-staking/reinvest.sh
-```
-* To register a rebate, run the following script. 
+* Register a rebate
 ```bash
 bash dockernet/scripts/community-pool-staking/rebate.sh
 ```
-* Then trigger reinvestment again. This time, you should notice USDC goes straight from the withdrawal account to the relevant community pool account. For Gaia, this account is the standard community pool, and for dYdX, the account is the community pool treasury. 
-```bash
-bash dockernet/scripts/community-pool-staking/reinvest.sh
-```
+* Watch `balances.log` to verify the rewards were distributed correctly
+* If running with `GAIA`, wait for the reinvestment cycle to occur naturally
+* If running with `DYDX`:
+    * The delegation channels often close when running dYdX from dockernet.
+    * To allow testing even when the channel is closed, you can run `reinvest_native.sh` to send funds directly to the withdrawal account (instead of waiting for a delegation to complete)
+* Notice the rewards start in the withdrawal account, then 0.25% get sent to the community pool, 9.75% get sent to the fee account and 90% get sent to the delegation account.
+* In the case of `GAIA`, the rebate is sent to the community pool and it can be hard to distinguish the rebate from the tokens that are already in the community pool.
+* In the case of `DYDX`, the rebate is sent to the community pool treasury so it should be easy to identify.
