@@ -59,17 +59,18 @@ func WithdrawalHostBalanceCallback(k Keeper, ctx sdk.Context, args []byte, query
 	}
 
 	// Split the withdrawal amount into the stride fee and reinvest portion
-	feeAmount, reinvestAmount, err := k.CalculateRewardsSplitAfterRebate(ctx, hostZone, withdrawalBalanceAmount)
+	rewardsSplit, err := k.CalculateRewardsSplit(ctx, hostZone, withdrawalBalanceAmount)
 	if err != nil {
 		return errorsmod.Wrapf(err, "unable to split reward amount into fee and reinvest amounts")
 	}
 
 	// Prepare MsgSends from the withdrawal account
-	feeCoin := sdk.NewCoin(hostZone.HostDenom, feeAmount)
-	reinvestCoin := sdk.NewCoin(hostZone.HostDenom, reinvestAmount)
+	feeCoin := sdk.NewCoin(hostZone.HostDenom, rewardsSplit.StrideFeeAmount)
+	reinvestCoin := sdk.NewCoin(hostZone.HostDenom, rewardsSplit.ReinvestAmount)
+	rebateCoin := sdk.NewCoin(hostZone.HostDenom, rewardsSplit.RebateAmount)
 
 	var msgs []proto.Message
-	if feeCoin.Amount.GT(sdk.ZeroInt()) {
+	if feeCoin.Amount.GT(sdkmath.ZeroInt()) {
 		msgs = append(msgs, &banktypes.MsgSend{
 			FromAddress: hostZone.WithdrawalIcaAddress,
 			ToAddress:   hostZone.FeeIcaAddress,
@@ -78,7 +79,7 @@ func WithdrawalHostBalanceCallback(k Keeper, ctx sdk.Context, args []byte, query
 		k.Logger(ctx).Info(utils.LogICQCallbackWithHostZone(chainId, ICQCallbackID_WithdrawalHostBalance,
 			"Preparing MsgSends of %v from the withdrawal account to the fee account (for commission)", feeCoin.String()))
 	}
-	if reinvestCoin.Amount.GT(sdk.ZeroInt()) {
+	if reinvestCoin.Amount.GT(sdkmath.ZeroInt()) {
 		msgs = append(msgs, &banktypes.MsgSend{
 			FromAddress: hostZone.WithdrawalIcaAddress,
 			ToAddress:   hostZone.DelegationIcaAddress,
@@ -86,6 +87,15 @@ func WithdrawalHostBalanceCallback(k Keeper, ctx sdk.Context, args []byte, query
 		})
 		k.Logger(ctx).Info(utils.LogICQCallbackWithHostZone(chainId, ICQCallbackID_WithdrawalHostBalance,
 			"Preparing MsgSends of %v from the withdrawal account to the delegation account (for reinvestment)", reinvestCoin.String()))
+	}
+	if rebateCoin.Amount.GT(sdkmath.ZeroInt()) {
+		fundMsg, err := k.BuildFundCommunityPoolMsg(ctx, hostZone, sdk.NewCoins(rebateCoin), types.ICAAccountType_WITHDRAWAL)
+		if err != nil {
+			return err
+		}
+		msgs = append(msgs, fundMsg...)
+		k.Logger(ctx).Info(utils.LogICQCallbackWithHostZone(chainId, ICQCallbackID_WithdrawalHostBalance,
+			"Preparing MsgFundCommunityPool of %v from the withdrawal account", rebateCoin.String()))
 	}
 
 	// add callback data before calling reinvestment ICA
