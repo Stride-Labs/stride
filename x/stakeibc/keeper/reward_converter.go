@@ -34,6 +34,12 @@ type ForwardMetadata struct {
 	Retries  int64  `json:"retries"`
 }
 
+type RewardsSplit struct {
+	RebateAmount    sdkmath.Int
+	StrideFeeAmount sdkmath.Int
+	ReinvestAmount  sdkmath.Int
+}
+
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // The goal of this code is to allow certain reward token types to be automatically traded into other types
 // This happens before the rest of the staking, allocation, distribution etc. would continue as normal
@@ -53,31 +59,42 @@ type ForwardMetadata struct {
 // and the normal staking and distribution flow will continue from there.
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-// Breaks down the split of non-native-denom rewards into the portions intended for a rebate vs the remainder
-// that's used for fees and reinvestment
-// For instance, in the case of dYdX, this is used on the USDC that has not been pushed through the trade route
-// yet, and has not yet been converted to DYDX
+// Breaks down the split of native rewards into the portions intended for (a) a rebate, (b) stride commission,
+// and (c) reinvestment
+// For most host zones, the rewards here were generated from normal staking rewards, but in the case of dYdX,
+// this is called on the rewards that were converted from USDC to DYDX during the trade route
 //
 // The rebate percentage is determined by: (% of total TVL contributed by commuity pool) * (rebate percentage)
 //
 // E.g. Community pool liquid staked 1M, TVL is 10M, rebate is 20%
 // Total rewards this epoch are 1000, and the stride fee is 10%
-// => Then the rebate is 1000 rewards * 10% stride fee * (1M / 10M) * 20% rebate = 2
-func (k Keeper) CalculateRewardsSplitBeforeRebate(
+// => Then the rebate is 1000 rewards * 10% stride fee * (1M / 10M) * 20% rebate = 2 tokens
+// => Stride fee is 1000 rewards * 10% stride fee - 2 rebate = 98 tokens
+// => Reinvestment is 1000 rewards * (100% - 10% stride fee) = 900 tokens
+func (k Keeper) CalculateRewardsSplit(
 	ctx sdk.Context,
 	hostZone types.HostZone,
-	rewardAmount sdkmath.Int,
-) (rebateAmount sdkmath.Int, remainingAmount sdkmath.Int, err error) {
-	// Get the rebate info from the host zone if applicable
-	// If there's no rebate, return 0 rebate and the full reward as the remainder
+	rewardsAmount sdkmath.Int,
+) (rewardSplit RewardsSplit, err error) {
+	// Get the fee rate and total fees from params (e.g. 0.1 for 10% fee)
+	strideFeeParam := sdk.NewIntFromUint64(k.GetParams(ctx).StrideCommission)
+	totalFeeRate := sdk.NewDecFromInt(strideFeeParam).Quo(sdk.NewDec(100))
+
+	// Get the total fee amount from the fee percentage
+	totalFeesAmount := sdk.NewDecFromInt(rewardsAmount).Mul(totalFeeRate).TruncateInt()
+	reinvestAmount := rewardsAmount.Sub(totalFeesAmount)
+
+	// Check if the chain has a rebate
+	// If there's no rebate, return 0 rebate and send all fees as stride commission
 	rebateInfo, chainHasRebate := hostZone.SafelyGetCommunityPoolRebate()
 	if !chainHasRebate {
-		return sdkmath.ZeroInt(), rewardAmount, nil
+		rewardSplit = RewardsSplit{
+			RebateAmount:    sdkmath.ZeroInt(),
+			StrideFeeAmount: totalFeesAmount,
+			ReinvestAmount:  reinvestAmount,
+		}
+		return rewardSplit, nil
 	}
-
-	// Get the fee rate from params (e.g. 0.1 for a 10% fee)
-	strideFee := sdk.NewIntFromUint64(k.GetParams(ctx).StrideCommission)
-	strideFeeRate := sdk.NewDecFromInt(strideFee).Quo(sdk.NewDec(100))
 
 	// Get supply of stTokens to determine the portion of TVL that the community pool liquid stake makes up
 	stDenom := utils.StAssetDenomFromHostZoneDenom(hostZone.HostDenom)
@@ -86,97 +103,29 @@ func (k Keeper) CalculateRewardsSplitBeforeRebate(
 	// It shouldn't be possible to have 0 token supply (since there are rewards and there was a community pool stake)
 	// This will also prevent a division by 0 error
 	if stTokenSupply.IsZero() {
-		return sdkmath.ZeroInt(), sdkmath.ZeroInt(), errorsmod.Wrapf(types.ErrDivisionByZero,
+		return rewardSplit, errorsmod.Wrapf(types.ErrDivisionByZero,
 			"unable to calculate rebate amount for %s since total delegations are 0", hostZone.ChainId)
 	}
 
 	// It also shouldn't be possible for the liquid stake amount to be greater than the full TVL
 	if rebateInfo.LiquidStakedStTokenAmount.GT(stTokenSupply) {
-		return sdkmath.ZeroInt(), sdkmath.ZeroInt(), errorsmod.Wrapf(types.ErrFeeSplitInvariantFailed,
+		return rewardSplit, errorsmod.Wrapf(types.ErrFeeSplitInvariantFailed,
 			"community pool liquid staked amount greater than total delegations")
 	}
 
 	// The rebate amount is determined by the contribution of the community pool stake towards the total TVL,
 	// multiplied by the rebate fee percentage
 	contributionRate := sdk.NewDecFromInt(rebateInfo.LiquidStakedStTokenAmount).Quo(sdk.NewDecFromInt(stTokenSupply))
-	totalFeesAmount := sdk.NewDecFromInt(rewardAmount).Mul(strideFeeRate).TruncateInt()
-	rebateAmount = sdk.NewDecFromInt(totalFeesAmount).Mul(contributionRate).Mul(rebateInfo.RebateRate).TruncateInt()
-	remainingAmount = rewardAmount.Sub(rebateAmount)
+	rebateAmount := sdk.NewDecFromInt(totalFeesAmount).Mul(contributionRate).Mul(rebateInfo.RebateRate).TruncateInt()
+	strideFeeAmount := totalFeesAmount.Sub(rebateAmount)
 
-	return rebateAmount, remainingAmount, nil
-}
-
-// Given the native-denom reward balance from an ICQ, calculates the relevant portions earmarked as a
-// stride fee vs for reinvestment
-// This is called *after* a rebate has been issued (if there is one to begin with)
-// The reward amount is denominated in the host zone's native denom - this is either directly from
-// staking rewards, or, in the case of a host zone with a trade route, this is called with the converted tokens
-// For instance, with dYdX, this is applied to the DYDX tokens that were converted from USDC
-//
-// If the chain doesn't have a rebate in place, the split is decided entirely from the stride commission percent
-// However, if the chain does have a rebate, we need to factor that into the calculation, by scaling
-// up the rewards to find the amount before the rebate
-//
-// For instance, if 1000 rewards were collected and 2 were sent as a rebate, then the stride fee should be based
-// on the original 1000 rewards instead of the remaining 998 in the query response:
-//
-//	Community pool liquid staked 1M, TVL is 10M, rebate is 20%, stride fee is 10%
-//	If 998 native tokens were queried, we have to scale that up to 1000 original reward tokens
-//
-//	Effective Rebate Pct = 10% fees * (1M LS / 10M TVL) * 20% rebate = 0.20% (aka 0.002)
-//	Effective Stride Fee Pct = 10% fees - 0.20% effective rebate = 9.8%
-//	Original Reward Amount = 998 Queried Rewards / (1 - 0.002 effective rebate rate) = 1000 original rewards
-//	Then stride fees are 9.8% of that 1000 original rewards = 98
-func (k Keeper) CalculateRewardsSplitAfterRebate(
-	ctx sdk.Context,
-	hostZone types.HostZone,
-	rewardsAmount sdkmath.Int,
-) (strideFeeAmount sdkmath.Int, reinvestAmount sdkmath.Int, err error) {
-	// Get the fee rate and total fees from params (e.g. 0.1 for 10% fee)
-	strideFee := sdk.NewIntFromUint64(k.GetParams(ctx).StrideCommission)
-	totalFeeRate := sdk.NewDecFromInt(strideFee).Quo(sdk.NewDec(100))
-
-	// Check if the chain has a rebate
-	rebateInfo, chainHasRebate := hostZone.SafelyGetCommunityPoolRebate()
-
-	// If there's no rebate, the fee split just uses the commission
-	if !chainHasRebate {
-		strideFeeAmount = sdk.NewDecFromInt(rewardsAmount).Mul(totalFeeRate).TruncateInt()
-	} else {
-		// Get supply of stTokens to determine the portion of TVL that the community pool liquid stake makes up
-		stDenom := utils.StAssetDenomFromHostZoneDenom(hostZone.HostDenom)
-		stTokenSupply := k.bankKeeper.GetSupply(ctx, stDenom).Amount
-
-		// It shouldn't be possible to have 0 token supply (since there are rewards and there was a community pool stake)
-		// This will also prevent a division by 0 error
-		if stTokenSupply.IsZero() {
-			return sdkmath.ZeroInt(), sdkmath.ZeroInt(), errorsmod.Wrapf(types.ErrDivisionByZero,
-				"unable to calculate rebate amount for %s since total delegations are 0", hostZone.ChainId)
-		}
-
-		// It also shouldn't be possible for the liquid stake amount to be greater than the full TVL
-		if rebateInfo.LiquidStakedStTokenAmount.GT(stTokenSupply) {
-			return sdkmath.ZeroInt(), sdkmath.ZeroInt(), errorsmod.Wrapf(types.ErrFeeSplitInvariantFailed,
-				"community pool liquid staked amount greater than total delegations")
-		}
-
-		// Otherwise, the rebate must be considered in the fee split
-		// The rebate portion is the portion of TVL contributed to by the liquid stake * the rebate percentage
-		// The stride fee poriton is the remaining percentage
-		contributionRate := sdk.NewDecFromInt(rebateInfo.LiquidStakedStTokenAmount).Quo(sdk.NewDecFromInt(stTokenSupply))
-		effectiveRebateRate := totalFeeRate.Mul(contributionRate).Mul(rebateInfo.RebateRate)
-		effectiveStrideFeeRate := totalFeeRate.Sub(effectiveRebateRate)
-
-		// Before calculating the fee, we have to scale up the rewards amount to the amount before the rebate
-		originalRewardScalingFactor := sdk.OneDec().Sub(effectiveRebateRate)
-		originalRewardsAmount := sdk.NewDecFromInt(rewardsAmount).Quo(originalRewardScalingFactor).TruncateDec()
-		strideFeeAmount = originalRewardsAmount.Mul(effectiveStrideFeeRate).Ceil().TruncateInt() // ceiling since rebate was truncated
+	rewardSplit = RewardsSplit{
+		RebateAmount:    rebateAmount,
+		StrideFeeAmount: strideFeeAmount,
+		ReinvestAmount:  reinvestAmount,
 	}
 
-	// Using the strideFeeAmount, back into the reinvest amount
-	reinvestAmount = rewardsAmount.Sub(strideFeeAmount)
-
-	return strideFeeAmount, reinvestAmount, nil
+	return rewardSplit, nil
 }
 
 // Builds an authz MsgGrant or MsgRevoke to grant an account trade capabilties on behalf of the trade ICA
