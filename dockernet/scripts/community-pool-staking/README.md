@@ -51,7 +51,9 @@ bash dockernet/scripts/community-pool-staking/reinvest_reward.sh
 ```
 
 ### Rebate
-* Set `HOST_CHAINS` to either `(DYDX)` or `(GAIA)` in `config.sh`
+* Use the default host zone setup of just `GAIA`
+* To test sending a rebate to the treasury, there is no need to change anything.
+* If you want to send a rebate to the community pool instead, comment out the `GAIA_TREASURY_ADDRESS` in `config.sh`
 * Start the network
 ```bash
 make start-docker
@@ -64,11 +66,6 @@ bash dockernet/scripts/community-pool-staking/stake.sh
 ```bash
 bash dockernet/scripts/community-pool-staking/rebate.sh
 ```
-* Watch `balances.log` to verify the rewards were distributed correctly
-* If running with `GAIA`, wait for the reinvestment cycle to occur naturally
-* If running with `DYDX`:
-    * The delegation channels often close when running dYdX from dockernet.
-    * To allow testing even when the channel is closed, you can run `reinvest_native.sh` to send funds directly to the withdrawal account (instead of waiting for a delegation to complete)
+* Watch `balances.log` to verify the rewards were distributed correctly. The reinvestment cycle will kick off automatically.
 * Notice the rewards start in the withdrawal account, then 0.25% get sent to the community pool, 9.75% get sent to the fee account and 90% get sent to the delegation account.
-* In the case of `GAIA`, the rebate is sent to the community pool and it can be hard to distinguish the rebate from the tokens that are already in the community pool.
-* In the case of `DYDX`, the rebate is sent to the community pool treasury so it should be easy to identify.
+* Depending on the setup from above, the community pool portion will either go to the main community pool or the treasury. Note: if it goes to the main community pool, it is difficult to distinguish the rebate tokens from the tokens that were already in the account.
