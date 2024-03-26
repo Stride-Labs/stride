@@ -185,6 +185,23 @@ func (s *KeeperTestSuite) TestRegisterHostZone_Success_SetCommunityPoolTreasuryA
 	s.Require().Equal(ValidHostAddress, hostZone.CommunityPoolTreasuryAddress, "treasury address")
 }
 
+func (s *KeeperTestSuite) TestRegisterHostZone_Success_Unregister() {
+	tc := s.SetupRegisterHostZone()
+	msg := tc.validMsg
+
+	// Register the host zone with the valid message
+	_, err := s.GetMsgServer().RegisterHostZone(sdk.WrapSDKContext(s.Ctx), &msg)
+	s.Require().NoError(err, "no error expected when registering host")
+
+	// Unregister the host zone
+	err = s.App.StakeibcKeeper.UnregisterHostZone(s.Ctx, HostChainId)
+	s.Require().NoError(err, "no error expected when unregistering host zone")
+
+	// Attempt to re-register, it should succeed
+	_, err = s.GetMsgServer().RegisterHostZone(sdk.WrapSDKContext(s.Ctx), &msg)
+	s.Require().NoError(err, "no error expected when re-registering host")
+}
+
 func (s *KeeperTestSuite) TestRegisterHostZone_InvalidConnectionId() {
 	tc := s.SetupRegisterHostZone()
 	msg := tc.validMsg
