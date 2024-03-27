@@ -8,13 +8,13 @@ import (
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 
-	icqtypes "github.com/Stride-Labs/stride/v20/x/interchainquery/types"
+	icqtypes "github.com/Stride-Labs/stride/v21/x/interchainquery/types"
 
-	"github.com/Stride-Labs/stride/v20/utils"
-	epochtypes "github.com/Stride-Labs/stride/v20/x/epochs/types"
-	icacallbackstypes "github.com/Stride-Labs/stride/v20/x/icacallbacks/types"
-	recordstypes "github.com/Stride-Labs/stride/v20/x/records/types"
-	"github.com/Stride-Labs/stride/v20/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v21/utils"
+	epochtypes "github.com/Stride-Labs/stride/v21/x/epochs/types"
+	icacallbackstypes "github.com/Stride-Labs/stride/v21/x/icacallbacks/types"
+	recordstypes "github.com/Stride-Labs/stride/v21/x/records/types"
+	"github.com/Stride-Labs/stride/v21/x/stakeibc/types"
 
 	errorsmod "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"

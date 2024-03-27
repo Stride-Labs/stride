@@ -7,8 +7,8 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
 
-	"github.com/Stride-Labs/stride/v20/x/stakeibc/keeper"
-	"github.com/Stride-Labs/stride/v20/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v21/x/stakeibc/keeper"
+	"github.com/Stride-Labs/stride/v21/x/stakeibc/types"
 )
 
 func SimulateMsgClaimUndelegatedTokens(

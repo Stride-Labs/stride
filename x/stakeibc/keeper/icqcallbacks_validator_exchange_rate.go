@@ -9,9 +9,9 @@ import (
 
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
-	"github.com/Stride-Labs/stride/v20/utils"
-	icqtypes "github.com/Stride-Labs/stride/v20/x/interchainquery/types"
-	"github.com/Stride-Labs/stride/v20/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v21/utils"
+	icqtypes "github.com/Stride-Labs/stride/v21/x/interchainquery/types"
+	"github.com/Stride-Labs/stride/v21/x/stakeibc/types"
 )
 
 // ValidatorCallback is a callback handler for validator queries.

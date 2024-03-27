@@ -10,9 +10,9 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	keepertest "github.com/Stride-Labs/stride/v20/testutil/keeper"
-	"github.com/Stride-Labs/stride/v20/testutil/nullify"
-	"github.com/Stride-Labs/stride/v20/x/icacallbacks/types"
+	keepertest "github.com/Stride-Labs/stride/v21/testutil/keeper"
+	"github.com/Stride-Labs/stride/v21/testutil/nullify"
+	"github.com/Stride-Labs/stride/v21/x/icacallbacks/types"
 )
 
 // Prevent strconv unused error

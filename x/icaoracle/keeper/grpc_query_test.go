@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/Stride-Labs/stride/v20/x/icaoracle/types"
+	"github.com/Stride-Labs/stride/v21/x/icaoracle/types"
 )
 
 func (s *KeeperTestSuite) TestQueryOracle() {

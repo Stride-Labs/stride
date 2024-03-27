@@ -16,7 +16,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 
-	"github.com/Stride-Labs/stride/v20/x/interchainquery/types"
+	"github.com/Stride-Labs/stride/v21/x/interchainquery/types"
 )
 
 // Generates a query ID based on the request information

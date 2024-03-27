@@ -8,10 +8,10 @@ import (
 	"github.com/cosmos/gogoproto/proto"
 	ibctesting "github.com/cosmos/ibc-go/v7/testing"
 
-	epochtypes "github.com/Stride-Labs/stride/v20/x/epochs/types"
-	icqtypes "github.com/Stride-Labs/stride/v20/x/interchainquery/types"
-	"github.com/Stride-Labs/stride/v20/x/stakeibc/keeper"
-	"github.com/Stride-Labs/stride/v20/x/stakeibc/types"
+	epochtypes "github.com/Stride-Labs/stride/v21/x/epochs/types"
+	icqtypes "github.com/Stride-Labs/stride/v21/x/interchainquery/types"
+	"github.com/Stride-Labs/stride/v21/x/stakeibc/keeper"
+	"github.com/Stride-Labs/stride/v21/x/stakeibc/types"
 )
 
 // WithdrawalRewardBalanceCallback will trigger TransferRewardTokensHostToTrade

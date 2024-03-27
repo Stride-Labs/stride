@@ -5,8 +5,8 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/Stride-Labs/stride/v20/app/apptesting"
-	"github.com/Stride-Labs/stride/v20/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v21/app/apptesting"
+	"github.com/Stride-Labs/stride/v21/x/stakeibc/types"
 )
 
 func TestMsgChangeValidatorWeight_ValidateBasic(t *testing.T) {

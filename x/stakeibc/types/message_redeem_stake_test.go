@@ -8,7 +8,7 @@ import (
 
 	sdkmath "cosmossdk.io/math"
 
-	"github.com/Stride-Labs/stride/v20/testutil/sample"
+	"github.com/Stride-Labs/stride/v21/testutil/sample"
 )
 
 func TestMsgRedeemStake_ValidateBasic(t *testing.T) {

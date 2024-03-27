@@ -7,7 +7,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/Stride-Labs/stride/v20/x/records/types"
+	"github.com/Stride-Labs/stride/v21/x/records/types"
 )
 
 func TestShouldInitiateUnbonding(t *testing.T) {
