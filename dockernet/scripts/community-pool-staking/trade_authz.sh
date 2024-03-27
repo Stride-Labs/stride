@@ -3,7 +3,7 @@ set -eu
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 source ${SCRIPT_DIR}/../../config.sh
 
-TRADE_AMOUNT=997500
+TRADE_AMOUNT=1000000
 
 trade_account=$($STRIDE_MAIN_CMD q stakeibc list-trade-routes | grep trade_account -A 3 | grep address | awk '{print $2}')
 host_denom_on_trade=$($STRIDE_MAIN_CMD q stakeibc list-trade-routes | grep host_denom_on_trade | awk '{print $2}')

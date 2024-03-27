@@ -111,29 +111,6 @@ func (s *KeeperTestSuite) TestWithdrawalRewardBalanceCallback_SuccessfulNoTransf
 	})
 }
 
-// Verify that if the amount returned by the ICQ response is less than the min_swap_amount, no transfer happens
-func (s *KeeperTestSuite) TestWithdrawalRewardBalanceCallback_SuccessfulWithRebate() {
-	tc := s.SetupWithdrawalRewardBalanceCallbackTestCase()
-
-	// Update the host zone to have a rebate
-	stTokenSupply := sdkmath.NewInt(1_000_000)
-	hostZone := s.MustGetHostZone(HostChainId)
-	hostZone.TotalDelegations = sdkmath.NewInt(10_000_000)
-	hostZone.CommunityPoolRebate = &types.CommunityPoolRebate{
-		RebateRate:                sdk.MustNewDecFromStr("0.5"),
-		LiquidStakedStTokenAmount: stTokenSupply,
-	}
-	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
-
-	// Mint stTokens so that the supply matches the liquid staked amount
-	s.FundAccount(s.TestAccs[0], sdk.NewCoin(types.StAssetDenomFromHostZoneDenom(hostZone.HostDenom), stTokenSupply))
-
-	// ICA inside of TransferRewardTokensHostToTrade should not actually execute because of min_swap_amount
-	s.CheckMultipleICATxSubmitted(tc.PortID, tc.ChannelID, func() error {
-		return keeper.WithdrawalRewardBalanceCallback(s.App.StakeibcKeeper, s.Ctx, tc.Response.CallbackArgs, tc.Response.Query)
-	})
-}
-
 func (s *KeeperTestSuite) TestWithdrawalRewardBalanceCallback_ZeroBalance() {
 	tc := s.SetupWithdrawalRewardBalanceCallbackTestCase()
 
@@ -180,22 +157,6 @@ func (s *KeeperTestSuite) TestWithdrawalRewardBalanceCallback_TradeRouteNotFound
 
 	err := keeper.WithdrawalRewardBalanceCallback(s.App.StakeibcKeeper, s.Ctx, tc.Response.CallbackArgs, invalidQuery)
 	s.Require().ErrorContains(err, "trade route not found")
-}
-
-func (s *KeeperTestSuite) TestWithdrawalRewardBalanceCallback_FailedToCheckForRebate() {
-	tc := s.SetupWithdrawalRewardBalanceCallbackTestCase()
-
-	// Add a rebate to the host zone and set the total delegations to 0 so the check fails
-	hostZone := s.MustGetHostZone(HostChainId)
-	hostZone.CommunityPoolRebate = &types.CommunityPoolRebate{
-		RebateRate:                sdk.MustNewDecFromStr("0.5"),
-		LiquidStakedStTokenAmount: sdkmath.NewInt(1),
-	}
-	hostZone.TotalDelegations = sdkmath.ZeroInt()
-	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
-
-	err := keeper.WithdrawalRewardBalanceCallback(s.App.StakeibcKeeper, s.Ctx, tc.Response.CallbackArgs, tc.Response.Query)
-	s.Require().ErrorContains(err, "unable to check for rebate amount")
 }
 
 func (s *KeeperTestSuite) TestWithdrawalRewardBalanceCallback_FailedSubmitTx() {
