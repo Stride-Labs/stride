@@ -1,6 +1,8 @@
 package keeper
 
 import (
+	"fmt"
+	"strings"
 	"time"
 
 	errorsmod "cosmossdk.io/errors"
@@ -244,6 +246,7 @@ func (k Keeper) BuildFundCommunityPoolMsg(
 		return nil, errorsmod.Wrapf(types.ErrICATxFailed,
 			"fund community pool ICA can only be initiated from either the community pool return or withdrawal ICA account")
 	}
+	senderAccountString := strings.ToLower(senderAccountType.String())
 
 	// If the community pool treasury address is specified, bank send there
 	if hostZone.CommunityPoolTreasuryAddress != "" {
@@ -252,12 +255,16 @@ func (k Keeper) BuildFundCommunityPoolMsg(
 			ToAddress:   hostZone.CommunityPoolTreasuryAddress,
 			Amount:      tokens,
 		}}
+		k.Logger(ctx).Info(fmt.Sprintf("Preparing MsgBankSend of %v from the %s ICA account to the community pool treasury",
+			tokens.String(), senderAccountString))
 	} else {
 		// Otherwise, call MsgFundCommunityPool
 		fundMsg = []proto.Message{&disttypes.MsgFundCommunityPool{
 			Amount:    tokens,
 			Depositor: sender,
 		}}
+		k.Logger(ctx).Info(fmt.Sprintf("Preparing MsgFundCommunityPool of %v from the %s ICA account",
+			tokens.String(), senderAccountString))
 	}
 
 	return fundMsg, nil
