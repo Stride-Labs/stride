@@ -12,9 +12,9 @@ import (
 
 	icatypes "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/types"
 
-	"github.com/Stride-Labs/stride/v20/utils"
-	recordstypes "github.com/Stride-Labs/stride/v20/x/records/types"
-	"github.com/Stride-Labs/stride/v20/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v21/utils"
+	recordstypes "github.com/Stride-Labs/stride/v21/x/records/types"
+	"github.com/Stride-Labs/stride/v21/x/stakeibc/types"
 )
 
 func (k Keeper) DelegateOnHost(ctx sdk.Context, hostZone types.HostZone, amt sdk.Coin, depositRecord recordstypes.DepositRecord) error {

@@ -5,7 +5,7 @@ import "gogoproto/gogo.proto";
 
 import "cosmos/base/v1beta1/coin.proto";
 
-option go_package = "github.com/Stride-Labs/stride/v20/x/stakeibc/types";
+option go_package = "github.com/Stride-Labs/stride/v21/x/stakeibc/types";
 
 // Given SDK version conflicts between gaia with LSM and Stride,
 // we can't import the RedeemTokensForShares type

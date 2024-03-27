@@ -11,7 +11,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 
-	"github.com/Stride-Labs/stride/v20/x/claim/vesting/types"
+	"github.com/Stride-Labs/stride/v21/x/claim/vesting/types"
 )
 
 var (

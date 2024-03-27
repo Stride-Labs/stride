@@ -11,10 +11,10 @@ import (
 
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
-	epochstypes "github.com/Stride-Labs/stride/v20/x/epochs/types"
-	recordtypes "github.com/Stride-Labs/stride/v20/x/records/types"
-	"github.com/Stride-Labs/stride/v20/x/stakeibc/keeper"
-	"github.com/Stride-Labs/stride/v20/x/stakeibc/types"
+	epochstypes "github.com/Stride-Labs/stride/v21/x/epochs/types"
+	recordtypes "github.com/Stride-Labs/stride/v21/x/records/types"
+	"github.com/Stride-Labs/stride/v21/x/stakeibc/keeper"
+	"github.com/Stride-Labs/stride/v21/x/stakeibc/types"
 )
 
 type ValidatorUnbonding struct {

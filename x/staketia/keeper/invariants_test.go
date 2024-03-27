@@ -1,7 +1,7 @@
 package keeper_test
 
 import (
-	"github.com/Stride-Labs/stride/v20/x/staketia/types"
+	"github.com/Stride-Labs/stride/v21/x/staketia/types"
 )
 
 func (s *KeeperTestSuite) TestHaltZone() {

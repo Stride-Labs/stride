@@ -12,9 +12,9 @@ import (
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/cosmos/gogoproto/proto"
 
-	"github.com/Stride-Labs/stride/v20/utils"
-	recordstypes "github.com/Stride-Labs/stride/v20/x/records/types"
-	"github.com/Stride-Labs/stride/v20/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v21/utils"
+	recordstypes "github.com/Stride-Labs/stride/v21/x/records/types"
+	"github.com/Stride-Labs/stride/v21/x/stakeibc/types"
 )
 
 const (

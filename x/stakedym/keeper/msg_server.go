@@ -6,9 +6,9 @@ import (
 	errorsmod "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/Stride-Labs/stride/v20/utils"
+	"github.com/Stride-Labs/stride/v21/utils"
 
-	"github.com/Stride-Labs/stride/v20/x/stakedym/types"
+	"github.com/Stride-Labs/stride/v21/x/stakedym/types"
 )
 
 type msgServer struct {

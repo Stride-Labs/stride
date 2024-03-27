@@ -4,9 +4,9 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/gogoproto/proto"
 
-	icqtypes "github.com/Stride-Labs/stride/v20/x/interchainquery/types"
-	"github.com/Stride-Labs/stride/v20/x/stakeibc/keeper"
-	"github.com/Stride-Labs/stride/v20/x/stakeibc/types"
+	icqtypes "github.com/Stride-Labs/stride/v21/x/interchainquery/types"
+	"github.com/Stride-Labs/stride/v21/x/stakeibc/keeper"
+	"github.com/Stride-Labs/stride/v21/x/stakeibc/types"
 )
 
 type PoolPriceQueryCallbackTestCase struct {

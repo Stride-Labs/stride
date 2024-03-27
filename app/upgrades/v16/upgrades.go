@@ -7,8 +7,8 @@ import (
 
 	ratelimitkeeper "github.com/Stride-Labs/ibc-rate-limiting/ratelimit/keeper"
 
-	stakeibckeeper "github.com/Stride-Labs/stride/v20/x/stakeibc/keeper"
-	stakeibctypes "github.com/Stride-Labs/stride/v20/x/stakeibc/types"
+	stakeibckeeper "github.com/Stride-Labs/stride/v21/x/stakeibc/keeper"
+	stakeibctypes "github.com/Stride-Labs/stride/v21/x/stakeibc/types"
 )
 
 var (
