@@ -42,6 +42,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <!-- GH ACTIONS TEMPLATE - INSERT NEW VERSION HERE -->
 
+## [v21.0.0](https://github.com/Stride-Labs/stride/releases/tag/v21.0.0) - 2024-03-27
+
+### On-Chain changes
+1. added help info to toggle command ([#1163](https://github.com/Stride-Labs/stride/pull/1163))
+2. added v21 upgrade handler ([#1165](https://github.com/Stride-Labs/stride/pull/1165))
+3. updated rebate to use native denom instead of reward denom ([#1162](https://github.com/Stride-Labs/stride/pull/1162))
+4. added function to unregister host zone ([#1166](https://github.com/Stride-Labs/stride/pull/1166))
+5. v21 Import Paths ([#1167](https://github.com/Stride-Labs/stride/pull/1167))
+
+
 ## [v20.0.0](https://github.com/Stride-Labs/stride/releases/tag/v20.0.0) - 2024-03-21
 
 ### On-Chain changes
