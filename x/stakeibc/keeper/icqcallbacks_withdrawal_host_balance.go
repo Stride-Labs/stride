@@ -94,8 +94,6 @@ func WithdrawalHostBalanceCallback(k Keeper, ctx sdk.Context, args []byte, query
 			return err
 		}
 		msgs = append(msgs, fundMsg...)
-		k.Logger(ctx).Info(utils.LogICQCallbackWithHostZone(chainId, ICQCallbackID_WithdrawalHostBalance,
-			"Preparing MsgFundCommunityPool of %v from the withdrawal account", rebateCoin.String()))
 	}
 
 	// add callback data before calling reinvestment ICA
