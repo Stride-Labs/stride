@@ -11,6 +11,7 @@ import (
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
 	"github.com/Stride-Labs/stride/v20/utils"
+	recordstypes "github.com/Stride-Labs/stride/v20/x/records/types"
 	"github.com/Stride-Labs/stride/v20/x/stakeibc/types"
 )
 
@@ -110,6 +111,55 @@ func (k Keeper) GetAllHostZone(ctx sdk.Context) (list []types.HostZone) {
 	}
 
 	return
+}
+
+// Unregisters a host zone, including removing the module accounts and records
+func (k Keeper) UnregisterHostZone(ctx sdk.Context, chainId string) error {
+	hostZone, found := k.GetHostZone(ctx, chainId)
+	if !found {
+		return types.ErrHostZoneNotFound.Wrapf("host zone %s not found", chainId)
+	}
+
+	// Remove module accounts
+	depositAddress := types.NewHostZoneDepositAddress(chainId)
+	communityPoolStakeAddress := types.NewHostZoneModuleAddress(chainId, CommunityPoolStakeHoldingAddressKey)
+	communityPoolRedeemAddress := types.NewHostZoneModuleAddress(chainId, CommunityPoolRedeemHoldingAddressKey)
+
+	k.AccountKeeper.RemoveAccount(ctx, k.AccountKeeper.GetAccount(ctx, depositAddress))
+	k.AccountKeeper.RemoveAccount(ctx, k.AccountKeeper.GetAccount(ctx, communityPoolStakeAddress))
+	k.AccountKeeper.RemoveAccount(ctx, k.AccountKeeper.GetAccount(ctx, communityPoolRedeemAddress))
+
+	// Remove all deposit records for the host zone
+	for _, depositRecord := range k.RecordsKeeper.GetAllDepositRecord(ctx) {
+		if depositRecord.HostZoneId == chainId {
+			k.RecordsKeeper.RemoveDepositRecord(ctx, depositRecord.Id)
+		}
+	}
+
+	// Remove all epoch unbonding records for the host zone
+	for _, epochUnbondingRecord := range k.RecordsKeeper.GetAllEpochUnbondingRecord(ctx) {
+		updatedHostZoneUnbondings := []*recordstypes.HostZoneUnbonding{}
+		for _, hostZoneUnbonding := range epochUnbondingRecord.HostZoneUnbondings {
+			if hostZoneUnbonding.HostZoneId != chainId {
+				updatedHostZoneUnbondings = append(updatedHostZoneUnbondings, hostZoneUnbonding)
+			}
+		}
+		epochUnbondingRecord.HostZoneUnbondings = updatedHostZoneUnbondings
+		k.RecordsKeeper.SetEpochUnbondingRecord(ctx, epochUnbondingRecord)
+	}
+
+	// Remove whitelisted address pairs from rate limit module
+	rewardCollectorAddress := k.AccountKeeper.GetModuleAccount(ctx, types.RewardCollectorName).GetAddress()
+	k.RatelimitKeeper.RemoveWhitelistedAddressPair(ctx, hostZone.DepositAddress, hostZone.DelegationIcaAddress)
+	k.RatelimitKeeper.RemoveWhitelistedAddressPair(ctx, hostZone.FeeIcaAddress, rewardCollectorAddress.String())
+	k.RatelimitKeeper.RemoveWhitelistedAddressPair(ctx, hostZone.CommunityPoolDepositIcaAddress, hostZone.CommunityPoolStakeHoldingAddress)
+	k.RatelimitKeeper.RemoveWhitelistedAddressPair(ctx, hostZone.CommunityPoolDepositIcaAddress, hostZone.CommunityPoolRedeemHoldingAddress)
+	k.RatelimitKeeper.RemoveWhitelistedAddressPair(ctx, hostZone.CommunityPoolStakeHoldingAddress, hostZone.CommunityPoolReturnIcaAddress)
+
+	// Finally, remove the host zone struct
+	k.RemoveHostZone(ctx, chainId)
+
+	return nil
 }
 
 // GetAllActiveHostZone returns all hostZones that are active (halted = false)

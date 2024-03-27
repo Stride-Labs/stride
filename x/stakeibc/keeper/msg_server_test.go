@@ -185,6 +185,60 @@ func (s *KeeperTestSuite) TestRegisterHostZone_Success_SetCommunityPoolTreasuryA
 	s.Require().Equal(ValidHostAddress, hostZone.CommunityPoolTreasuryAddress, "treasury address")
 }
 
+func (s *KeeperTestSuite) TestRegisterHostZone_Success_Unregister() {
+	tc := s.SetupRegisterHostZone()
+	msg := tc.validMsg
+
+	// Register the host zone with the valid message
+	_, err := s.GetMsgServer().RegisterHostZone(sdk.WrapSDKContext(s.Ctx), &msg)
+	s.Require().NoError(err, "no error expected when registering host")
+
+	// Confirm accounts were created
+	depositAddress := types.NewHostZoneDepositAddress(chainId)
+	communityPoolStakeAddress := types.NewHostZoneModuleAddress(chainId, keeper.CommunityPoolStakeHoldingAddressKey)
+	communityPoolRedeemAddress := types.NewHostZoneModuleAddress(chainId, keeper.CommunityPoolRedeemHoldingAddressKey)
+
+	depositAccount := s.App.AccountKeeper.GetAccount(s.Ctx, depositAddress)
+	communityPoolStakeAccount := s.App.AccountKeeper.GetAccount(s.Ctx, communityPoolStakeAddress)
+	communityPoolRedeemAccount := s.App.AccountKeeper.GetAccount(s.Ctx, communityPoolRedeemAddress)
+
+	s.Require().NotNil(depositAccount, "deposit account should exist")
+	s.Require().NotNil(communityPoolStakeAccount, "community pool stake account should exist")
+	s.Require().NotNil(communityPoolRedeemAccount, "community pool redeem account should exist")
+
+	// Confirm records were created
+	depositRecords := s.App.RecordsKeeper.GetAllDepositRecord(s.Ctx)
+	s.Require().Len(depositRecords, 1, "there should be one deposit record")
+
+	epochUnbondingRecords := s.App.RecordsKeeper.GetAllEpochUnbondingRecord(s.Ctx)
+	s.Require().Len(epochUnbondingRecords, 1, "there should be one epoch unbonding record")
+	s.Require().Len(epochUnbondingRecords[0].HostZoneUnbondings, 1, "there should be one host zone unbonding record")
+
+	// Unregister the host zone
+	err = s.App.StakeibcKeeper.UnregisterHostZone(s.Ctx, HostChainId)
+	s.Require().NoError(err, "no error expected when unregistering host zone")
+
+	// Confirm accounts were deleted
+	depositAccount = s.App.AccountKeeper.GetAccount(s.Ctx, depositAddress)
+	communityPoolStakeAccount = s.App.AccountKeeper.GetAccount(s.Ctx, communityPoolStakeAddress)
+	communityPoolRedeemAccount = s.App.AccountKeeper.GetAccount(s.Ctx, communityPoolRedeemAddress)
+
+	s.Require().Nil(depositAccount, "deposit account should have been deleted")
+	s.Require().Nil(communityPoolStakeAccount, "community pool stake account should have been deleted")
+	s.Require().Nil(communityPoolRedeemAccount, "community pool redeem account should have been deleted")
+
+	// Confirm records were deleted
+	depositRecords = s.App.RecordsKeeper.GetAllDepositRecord(s.Ctx)
+	s.Require().Empty(depositRecords, "deposit records should have been deleted")
+
+	epochUnbondingRecords = s.App.RecordsKeeper.GetAllEpochUnbondingRecord(s.Ctx)
+	s.Require().Empty(epochUnbondingRecords[0].HostZoneUnbondings, "host zone unbonding record should have been deleted")
+
+	// Attempt to re-register, it should succeed
+	_, err = s.GetMsgServer().RegisterHostZone(sdk.WrapSDKContext(s.Ctx), &msg)
+	s.Require().NoError(err, "no error expected when re-registering host")
+}
+
 func (s *KeeperTestSuite) TestRegisterHostZone_InvalidConnectionId() {
 	tc := s.SetupRegisterHostZone()
 	msg := tc.validMsg
