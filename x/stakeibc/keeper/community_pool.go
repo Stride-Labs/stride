@@ -255,7 +255,7 @@ func (k Keeper) BuildFundCommunityPoolMsg(
 			ToAddress:   hostZone.CommunityPoolTreasuryAddress,
 			Amount:      tokens,
 		}}
-		k.Logger(ctx).Info(fmt.Sprintf("Preparing MsgBankSend of %v from the %s account to the community pool treasury",
+		k.Logger(ctx).Info(fmt.Sprintf("Preparing MsgBankSend of %v from the %s ICA account to the community pool treasury",
 			tokens.String(), senderAccountString))
 	} else {
 		// Otherwise, call MsgFundCommunityPool
@@ -263,7 +263,7 @@ func (k Keeper) BuildFundCommunityPoolMsg(
 			Amount:    tokens,
 			Depositor: sender,
 		}}
-		k.Logger(ctx).Info(fmt.Sprintf("Preparing MsgFundCommunityPool of %v from the %s account",
+		k.Logger(ctx).Info(fmt.Sprintf("Preparing MsgFundCommunityPool of %v from the %s ICA account",
 			tokens.String(), senderAccountString))
 	}
 
