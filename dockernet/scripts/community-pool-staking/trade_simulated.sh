@@ -3,7 +3,7 @@ set -eu
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 source ${SCRIPT_DIR}/../../config.sh
 
-TRADE_AMOUNT=997500
+TRADE_AMOUNT=1000000
 
 # Simulates a trade by sending the native token to the trade account
 # We'll send the amount that should have been sent from the ICA, which has the rebate excluded
