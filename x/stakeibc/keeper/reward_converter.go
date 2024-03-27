@@ -240,6 +240,8 @@ func (k Keeper) TransferRewardTokensHostToTrade(ctx sdk.Context, amount sdkmath.
 	//  then if the min swap amount is greater than the current amount, do nothing this epoch to avoid small transfers
 	//  Particularly important for the PFM hop if the reward chain has frictional transfer fees (like noble chain)
 	if route.TradeConfig.MinSwapAmount.GT(amount) {
+		k.Logger(ctx).Info(fmt.Sprintf("Balance of %v is below trade minimum of %v, skipping transfer",
+			amount, route.TradeConfig.MinSwapAmount))
 		return nil
 	}
 
