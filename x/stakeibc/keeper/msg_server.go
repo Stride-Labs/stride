@@ -291,6 +291,11 @@ func (k msgServer) AddValidators(goCtx context.Context, msg *types.MsgAddValidat
 		}
 	}
 
+	// Confirm none of the validator's exceed the weight cap
+	if err := k.CheckValidatorWeightsBelowCap(ctx, msg.HostZone); err != nil {
+		return nil, err
+	}
+
 	return &types.MsgAddValidatorsResponse{}, nil
 }
 
@@ -334,7 +339,7 @@ func (k msgServer) ChangeValidatorWeight(goCtx context.Context, msg *types.MsgCh
 	}
 
 	// Confirm the new weights wouldn't cause any validator to exceed the weight cap
-	if err := k.CheckValidatorWeightsBelowCap(ctx, hostZone.Validators); err != nil {
+	if err := k.CheckValidatorWeightsBelowCap(ctx, msg.HostZone); err != nil {
 		return nil, errorsmod.Wrapf(err, "unable to change validator weight")
 	}
 
