@@ -68,11 +68,6 @@ func (k Keeper) AddValidatorToHostZone(ctx sdk.Context, chainId string, validato
 		SlashQueryCheckpoint:      checkpoint,
 	})
 
-	// Finally, confirm none of the validator's exceed the weight cap
-	if err := k.CheckValidatorWeightsBelowCap(ctx, hostZone.Validators); err != nil {
-		return err
-	}
-
 	k.SetHostZone(ctx, hostZone)
 
 	return nil
@@ -238,7 +233,13 @@ func (k Keeper) DecrementValidatorDelegationChangesInProgress(hostZone *types.Ho
 }
 
 // Checks if any validator's portion of the weight is greater than the cap
-func (k Keeper) CheckValidatorWeightsBelowCap(ctx sdk.Context, validators []*types.Validator) error {
+func (k Keeper) CheckValidatorWeightsBelowCap(ctx sdk.Context, chainId string) error {
+	hostZone, found := k.GetHostZone(ctx, chainId)
+	if !found {
+		return types.ErrHostZoneNotFound.Wrapf("host zone %s not found", chainId)
+	}
+	validators := hostZone.Validators
+
 	// If there's only a few validators, don't enforce this yet
 	if len(validators) < MinValidatorsBeforeWeightCapCheck {
 		return nil

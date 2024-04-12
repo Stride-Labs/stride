@@ -488,7 +488,13 @@ func (s *KeeperTestSuite) TestCheckValidatorWeightsBelowCap() {
 			params.ValidatorWeightCap = tc.weightCap
 			s.App.StakeibcKeeper.SetParams(s.Ctx, params)
 
-			err := s.App.StakeibcKeeper.CheckValidatorWeightsBelowCap(s.Ctx, tc.validators)
+			hostZone := types.HostZone{
+				ChainId:    HostChainId,
+				Validators: tc.validators,
+			}
+			s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
+
+			err := s.App.StakeibcKeeper.CheckValidatorWeightsBelowCap(s.Ctx, HostChainId)
 			if !tc.exceedsCap {
 				s.Require().NoError(err, "set should not have exceeded cap")
 			} else {

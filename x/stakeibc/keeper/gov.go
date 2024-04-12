@@ -13,6 +13,11 @@ func (k Keeper) AddValidatorsProposal(ctx sdk.Context, msg *types.AddValidatorsP
 		}
 	}
 
+	// Confirm none of the validator's exceed the weight cap
+	if err := k.CheckValidatorWeightsBelowCap(ctx, msg.HostZone); err != nil {
+		return err
+	}
+
 	return nil
 }
 
