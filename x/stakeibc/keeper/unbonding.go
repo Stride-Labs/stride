@@ -482,6 +482,9 @@ func (k Keeper) UnbondFromHostZone(ctx sdk.Context, hostZone types.HostZone) err
 	}
 
 	// Send the messages in batches so the gas limit isn't exceedeed
+	// NOTE: With the current implementation, an error is thrown upstream if there are
+	// more messages than undelegateBatchSize - so there should only be one iteration in this loop
+	// This is because the undelegation callback is not currently setup to handle multiple batches
 	for start := 0; start < len(msgs); start += undelegateBatchSize {
 		end := start + undelegateBatchSize
 		if end > len(msgs) {
