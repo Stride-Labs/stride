@@ -313,7 +313,7 @@ type StrideApp struct {
 	IBCHooksKeeper        ibchookskeeper.Keeper
 
 	// Middleware for IBCHooks
-	Ics20WasmHooks   *ibchooks.WasmHooks
+	Ics20WasmHooks   *RestrictedWasmHooks
 	HooksICS4Wrapper ibchooks.ICS4Middleware
 
 	// make scoped keepers public for test purposes
@@ -490,8 +490,7 @@ func NewStrideApp(
 		keys[ibchookstypes.StoreKey],
 	)
 	wasmHooks := ibchooks.NewWasmHooks(&app.IBCHooksKeeper, nil, AccountAddressPrefix) // the contract keeper is set later
-	app.Ics20WasmHooks = &wasmHooks
-	app.Ics20WasmHooks.ContractKeeper = &app.WasmKeeper // wasm keeper initialized below
+	wasmHooks.ContractKeeper = &app.WasmKeeper                                         // wasm keeper initialized below
 
 	// Create Ratelimit Keeper
 	scopedratelimitKeeper := app.CapabilityKeeper.ScopeToModule(ratelimittypes.ModuleName)
@@ -506,6 +505,11 @@ func NewStrideApp(
 		app.IBCKeeper.ChannelKeeper, // ICS4Wrapper
 	)
 	ratelimitModule := ratelimit.NewAppModule(appCodec, app.RatelimitKeeper)
+
+	// Define the stricted wasm hooks - which removes all overrides besides OnRecvPacket
+	// since contract callbacks are not needed
+	restrictedWasmHooks := NewRestrictedWasmHooks(&wasmHooks, app.RatelimitKeeper) // rate limit is ICS4Wrapper
+	app.Ics20WasmHooks = &restrictedWasmHooks
 
 	// Create the ICS4 wrapper which routes up the stack from ibchooks -> ratelimit
 	// (see full stack definition below)
