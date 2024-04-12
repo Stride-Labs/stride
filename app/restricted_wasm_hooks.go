@@ -33,21 +33,49 @@ func (h RestrictedWasmHooks) ProperlyConfigured() bool {
 }
 
 // The RestrictedWasmHooks OnRecvPacketOverride is the same as the WasmHooks OnRecvPacket
-func (h RestrictedWasmHooks) OnRecvPacketOverride(im ibchooks.IBCMiddleware, ctx sdk.Context, packet channeltypes.Packet, relayer sdk.AccAddress) ibcexported.Acknowledgement {
+func (h RestrictedWasmHooks) OnRecvPacketOverride(
+	im ibchooks.IBCMiddleware,
+	ctx sdk.Context,
+	packet channeltypes.Packet,
+	relayer sdk.AccAddress,
+) ibcexported.Acknowledgement {
 	return h.wasmHooks.OnRecvPacketOverride(im, ctx, packet, relayer)
 }
 
-// There is no SendPacketOverride for the RestrictedWasmHooks - it passes directly to the next module in the stack
-func (h RestrictedWasmHooks) SendPacketOverride(i ibchooks.ICS4Middleware, ctx sdk.Context, chanCap *capabilitytypes.Capability, sourcePort string, sourceChannel string, timeoutHeight ibcclienttypes.Height, timeoutTimestamp uint64, data []byte) (sequence uint64, err error) {
-	return h.ics4Wrapper.SendPacket(ctx, chanCap, sourcePort, sourceChannel, timeoutHeight, timeoutTimestamp, data) // continue
+// There is no SendPacketOverride for the RestrictedWasmHooks
+// It passes directly to the next module in the stack
+func (h RestrictedWasmHooks) SendPacketOverride(
+	i ibchooks.ICS4Middleware,
+	ctx sdk.Context,
+	chanCap *capabilitytypes.Capability,
+	sourcePort string,
+	sourceChannel string,
+	timeoutHeight ibcclienttypes.Height,
+	timeoutTimestamp uint64,
+	data []byte,
+) (sequence uint64, err error) {
+	return h.ics4Wrapper.SendPacket(ctx, chanCap, sourcePort, sourceChannel, timeoutHeight, timeoutTimestamp, data)
 }
 
-// There is no OnAcknowledgementPacketOverride for the RestrictedWasmHooks - it passes directly to the next module in the stack
-func (h RestrictedWasmHooks) OnAcknowledgementPacketOverride(im ibchooks.IBCMiddleware, ctx sdk.Context, packet channeltypes.Packet, acknowledgement []byte, relayer sdk.AccAddress) error {
+// There is no OnAcknowledgementPacketOverride for the RestrictedWasmHooks
+// It passes directly to the next module in the stack
+func (h RestrictedWasmHooks) OnAcknowledgementPacketOverride(
+	im ibchooks.IBCMiddleware,
+	ctx sdk.Context,
+	packet channeltypes.Packet,
+	acknowledgement []byte,
+	relayer sdk.AccAddress,
+) error {
 	return im.App.OnAcknowledgementPacket(ctx, packet, acknowledgement, relayer)
 }
 
-// There is no OnTimeoutPacketOverride for the RestrictedWasmHooks - it passes directly to the next module in the stack
-func (h RestrictedWasmHooks) OnTimeoutPacketOverride(im ibchooks.IBCMiddleware, ctx sdk.Context, packet channeltypes.Packet, relayer sdk.AccAddress) error {
+// There is no OnTimeoutPacketOverride for the RestrictedWasmHooks
+// It passes directly to the next module in the stack
+func (h RestrictedWasmHooks) OnTimeoutPacketOverride(
+	im ibchooks.IBCMiddleware,
+	ctx sdk.Context,
+	packet channeltypes.Packet,
+	relayer sdk.AccAddress,
+) error {
 	return im.App.OnTimeoutPacket(ctx, packet, relayer)
 }
