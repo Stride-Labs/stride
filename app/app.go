@@ -85,6 +85,9 @@ import (
 	"github.com/cosmos/ibc-apps/middleware/packet-forward-middleware/v7/packetforward"
 	packetforwardkeeper "github.com/cosmos/ibc-apps/middleware/packet-forward-middleware/v7/packetforward/keeper"
 	packetforwardtypes "github.com/cosmos/ibc-apps/middleware/packet-forward-middleware/v7/packetforward/types"
+	ibchooks "github.com/cosmos/ibc-apps/modules/ibc-hooks/v7"
+	ibchookskeeper "github.com/cosmos/ibc-apps/modules/ibc-hooks/v7/keeper"
+	ibchookstypes "github.com/cosmos/ibc-apps/modules/ibc-hooks/v7/types"
 	ica "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts"
 	icacontroller "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/controller"
 	icacontrollerkeeper "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/controller/keeper"
@@ -223,6 +226,7 @@ var (
 		staketia.AppModuleBasic{},
 		stakedym.AppModuleBasic{},
 		wasm.AppModuleBasic{},
+		ibchooks.AppModuleBasic{},
 	)
 
 	// module account permissions
@@ -306,6 +310,11 @@ type StrideApp struct {
 	PacketForwardKeeper   *packetforwardkeeper.Keeper
 	WasmKeeper            wasmkeeper.Keeper
 	ContractKeeper        *wasmkeeper.PermissionedKeeper
+	IBCHooksKeeper        ibchookskeeper.Keeper
+
+	// Middleware for IBCHooks
+	Ics20WasmHooks   *ibchooks.WasmHooks
+	HooksICS4Wrapper ibchooks.ICS4Middleware
 
 	// make scoped keepers public for test purposes
 	ScopedIBCKeeper           capabilitykeeper.ScopedKeeper
@@ -381,6 +390,7 @@ func NewStrideApp(
 		staketiatypes.StoreKey,
 		stakedymtypes.StoreKey,
 		wasmtypes.StoreKey,
+		ibchookstypes.StoreKey,
 	)
 	tkeys := sdk.NewTransientStoreKeys(paramstypes.TStoreKey)
 	memKeys := sdk.NewMemoryStoreKeys(capabilitytypes.MemStoreKey)
@@ -458,13 +468,44 @@ func NewStrideApp(
 		stakingtypes.NewMultiStakingHooks(app.DistrKeeper.Hooks(), app.ClaimKeeper.Hooks()),
 	)
 
-	// ... other modules keepers
+	// Add wasm keeper
+	wasmCapabilities := "iterator,staking,stargate,cosmwasm_1_1,cosmwasm_1_2,cosmwasm_1_3,cosmwasm_1_4"
+	wasmDir := filepath.Join(homePath, "wasm")
+	wasmConfig, err := wasm.ReadWasmConfig(appOpts)
+	if err != nil {
+		panic(fmt.Sprintf("error while reading wasm config: %s", err))
+	}
 
+	scopedWasmKeeper := app.CapabilityKeeper.ScopeToModule(wasmtypes.ModuleName)
+	app.WasmKeeper = wasmkeeper.NewKeeper(
+		appCodec,
+		keys[wasmtypes.StoreKey],
+		app.AccountKeeper,
+		app.BankKeeper,
+		app.StakingKeeper,
+		distrkeeper.NewQuerier(app.DistrKeeper),
+		app.IBCKeeper.ChannelKeeper, // ICS4Wrapper
+		app.IBCKeeper.ChannelKeeper,
+		&app.IBCKeeper.PortKeeper,
+		scopedWasmKeeper,
+		app.TransferKeeper,
+		app.MsgServiceRouter(),
+		app.GRPCQueryRouter(),
+		wasmDir,
+		wasmConfig,
+		wasmCapabilities,
+		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
+		wasmOpts...,
+	)
+	app.ContractKeeper = wasmkeeper.NewDefaultPermissionKeeper(app.WasmKeeper)
+
+	// Add ICS Consumer Keeper
 	app.ConsumerKeeper = ccvconsumerkeeper.NewNonZeroKeeper(
 		appCodec,
 		keys[ccvconsumertypes.StoreKey],
 		app.GetSubspace(ccvconsumertypes.ModuleName),
 	)
+
 	// Create IBC Keeper
 	app.IBCKeeper = ibckeeper.NewKeeper(
 		appCodec,
@@ -474,6 +515,14 @@ func NewStrideApp(
 		app.UpgradeKeeper,
 		scopedIBCKeeper,
 	)
+
+	// Create IBC Hooks Keeper (must be defined after the wasmKeeper is created)
+	app.IBCHooksKeeper = ibchookskeeper.NewKeeper(
+		keys[ibchookstypes.StoreKey],
+	)
+	wasmHooks := ibchooks.NewWasmHooks(&app.IBCHooksKeeper, nil, AccountAddressPrefix) // the contract keeper is set later
+	app.Ics20WasmHooks = &wasmHooks
+	app.Ics20WasmHooks.ContractKeeper = &app.WasmKeeper // wasm keeper initialized below
 
 	// Create Ratelimit Keeper
 	scopedratelimitKeeper := app.CapabilityKeeper.ScopeToModule(ratelimittypes.ModuleName)
@@ -489,6 +538,13 @@ func NewStrideApp(
 	)
 	ratelimitModule := ratelimit.NewAppModule(appCodec, app.RatelimitKeeper)
 
+	// Create the ICS4 wrapper which routes up the stack from ibchooks -> ratelimit
+	// (see full stack definition below)
+	app.HooksICS4Wrapper = ibchooks.NewICS4Middleware(
+		app.RatelimitKeeper, // ICS4Wrapper
+		app.Ics20WasmHooks,
+	)
+
 	// Initialize the packet forward middleware Keeper
 	// It's important to note that the PFM Keeper must be initialized before the Transfer Keeper
 	app.PacketForwardKeeper = packetforwardkeeper.NewKeeper(
@@ -498,7 +554,7 @@ func NewStrideApp(
 		app.IBCKeeper.ChannelKeeper,
 		app.DistrKeeper,
 		app.BankKeeper,
-		app.RatelimitKeeper, // ICS4Wrapper
+		app.HooksICS4Wrapper, // ICS4Wrapper
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
 
@@ -660,39 +716,6 @@ func NewStrideApp(
 		app.AccountKeeper, app.BankKeeper, app.DistrKeeper, app.StakingKeeper,
 	)
 
-	// Add wasm keeper
-	wasmCapabilities := "iterator,staking,stargate,cosmwasm_1_1,cosmwasm_1_2,cosmwasm_1_3,cosmwasm_1_4"
-	wasmDir := filepath.Join(homePath, "wasm")
-	wasmConfig, err := wasm.ReadWasmConfig(appOpts)
-	if err != nil {
-		panic(fmt.Sprintf("error while reading wasm config: %s", err))
-	}
-
-	scopedWasmKeeper := app.CapabilityKeeper.ScopeToModule(wasmtypes.ModuleName)
-
-	app.WasmKeeper = wasmkeeper.NewKeeper(
-		appCodec,
-		keys[wasmtypes.StoreKey],
-		app.AccountKeeper,
-		app.BankKeeper,
-		app.StakingKeeper,
-		distrkeeper.NewQuerier(app.DistrKeeper),
-		app.IBCKeeper.ChannelKeeper, // ICS4Wrapper
-		app.IBCKeeper.ChannelKeeper,
-		&app.IBCKeeper.PortKeeper,
-		scopedWasmKeeper,
-		app.TransferKeeper,
-		app.MsgServiceRouter(),
-		app.GRPCQueryRouter(),
-		wasmDir,
-		wasmConfig,
-		wasmCapabilities,
-		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
-		wasmOpts...,
-	)
-
-	app.ContractKeeper = wasmkeeper.NewDefaultPermissionKeeper(app.WasmKeeper)
-
 	// Register Gov (must be registered after stakeibc)
 	govRouter := govtypesv1beta1.NewRouter()
 	govRouter.AddRoute(govtypes.RouterKey, govtypesv1beta1.ProposalHandler).
@@ -781,6 +804,7 @@ func NewStrideApp(
 	// - staketia
 	// - stakedym
 	// - ratelimit
+	// - ibchooks
 	// - pfm
 	// - transfer
 	// - base app
@@ -794,6 +818,7 @@ func NewStrideApp(
 		packetforwardkeeper.DefaultForwardTransferPacketTimeoutTimestamp, // forward timeout
 		packetforwardkeeper.DefaultRefundTransferPacketTimeoutTimestamp,  // refund timeout
 	)
+	transferStack = ibchooks.NewIBCMiddleware(transferStack, &app.HooksICS4Wrapper)
 	transferStack = ratelimit.NewIBCMiddleware(app.RatelimitKeeper, transferStack)
 	transferStack = staketia.NewIBCMiddleware(app.StaketiaKeeper, transferStack)
 	transferStack = stakedym.NewIBCMiddleware(app.StakedymKeeper, transferStack)
@@ -850,6 +875,7 @@ func NewStrideApp(
 		// technically, app.GetSubspace(packetforwardtypes.ModuleName) will never be run https://github.com/cosmos/ibc-apps/issues/146#issuecomment-1839242144
 		packetforward.NewAppModule(app.PacketForwardKeeper, app.GetSubspace(packetforwardtypes.ModuleName)),
 		wasm.NewAppModule(appCodec, &app.WasmKeeper, app.StakingKeeper, app.AccountKeeper, app.BankKeeper, app.BaseApp.MsgServiceRouter(), app.GetSubspace(wasmtypes.ModuleName)),
+		ibchooks.NewAppModule(app.AccountKeeper),
 		transferModule,
 		// monitoringModule,
 		stakeibcModule,
@@ -906,6 +932,7 @@ func NewStrideApp(
 		staketiatypes.ModuleName,
 		stakedymtypes.ModuleName,
 		wasmtypes.ModuleName,
+		ibchookstypes.ModuleName,
 	)
 
 	app.mm.SetOrderEndBlockers(
@@ -944,6 +971,7 @@ func NewStrideApp(
 		staketiatypes.ModuleName,
 		stakedymtypes.ModuleName,
 		wasmtypes.ModuleName,
+		ibchookstypes.ModuleName,
 	)
 
 	// NOTE: The genutils module must occur after staking so that pools are
@@ -987,6 +1015,7 @@ func NewStrideApp(
 		staketiatypes.ModuleName,
 		stakedymtypes.ModuleName,
 		wasmtypes.ModuleName,
+		ibchookstypes.ModuleName,
 	)
 
 	app.mm.RegisterInvariants(app.CrisisKeeper)
