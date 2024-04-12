@@ -168,6 +168,9 @@ func (s *KeeperTestSuite) TestRegisterHostZone_Success() {
 	depositRecords := s.App.RecordsKeeper.GetAllDepositRecord(s.Ctx)
 	s.Require().Len(depositRecords, 1, "number of deposit records")
 	s.Require().Equal(expectedDepositRecord, depositRecords[0], "deposit record")
+
+	// Confirm max ICA messages was set to default
+	s.Require().Equal(keeper.DefaultMaxMessagesPerIcaTx, hostZone.MaxMessagesPerIcaTx, "max messages per ica tx")
 }
 
 func (s *KeeperTestSuite) TestRegisterHostZone_Success_SetCommunityPoolTreasuryAddress() {
@@ -183,6 +186,22 @@ func (s *KeeperTestSuite) TestRegisterHostZone_Success_SetCommunityPoolTreasuryA
 	// Confirm treasury address was set
 	hostZone := s.MustGetHostZone(HostChainId)
 	s.Require().Equal(ValidHostAddress, hostZone.CommunityPoolTreasuryAddress, "treasury address")
+}
+
+func (s *KeeperTestSuite) TestRegisterHostZone_Success_SetMaxIcaMessagesPerTx() {
+	tc := s.SetupRegisterHostZone()
+
+	// Set the max number of ICA messages
+	maxMessages := uint64(100)
+	msg := tc.validMsg
+	msg.MaxMessagesPerIcaTx = maxMessages
+
+	_, err := s.GetMsgServer().RegisterHostZone(sdk.WrapSDKContext(s.Ctx), &msg)
+	s.Require().NoError(err, "no error expected when registering host with max messages")
+
+	// Confirm max number of messages was set
+	hostZone := s.MustGetHostZone(HostChainId)
+	s.Require().Equal(maxMessages, hostZone.MaxMessagesPerIcaTx, "max messages per ica tx")
 }
 
 func (s *KeeperTestSuite) TestRegisterHostZone_Success_Unregister() {
