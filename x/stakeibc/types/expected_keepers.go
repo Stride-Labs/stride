@@ -16,6 +16,7 @@ type AccountKeeper interface {
 	NewAccount(sdk.Context, authtypes.AccountI) authtypes.AccountI
 	SetAccount(ctx sdk.Context, acc authtypes.AccountI)
 	GetAccount(ctx sdk.Context, addr sdk.AccAddress) types.AccountI
+	GetAllAccounts(ctx sdk.Context) []types.AccountI
 	GetModuleAccount(ctx sdk.Context, moduleName string) types.ModuleAccountI
 	RemoveAccount(ctx sdk.Context, acc authtypes.AccountI)
 }

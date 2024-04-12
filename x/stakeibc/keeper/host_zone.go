@@ -120,6 +120,19 @@ func (k Keeper) UnregisterHostZone(ctx sdk.Context, chainId string) error {
 		return types.ErrHostZoneNotFound.Wrapf("host zone %s not found", chainId)
 	}
 
+	// Burn all outstanding stTokens
+	stTokenDenom := utils.StAssetDenomFromHostZoneDenom(hostZone.HostDenom)
+	for _, account := range k.AccountKeeper.GetAllAccounts(ctx) {
+		stTokenBalance := k.bankKeeper.GetBalance(ctx, account.GetAddress(), stTokenDenom)
+		stTokensToBurn := sdk.NewCoins(stTokenBalance)
+		if err := k.bankKeeper.SendCoinsFromAccountToModule(ctx, account.GetAddress(), types.ModuleName, stTokensToBurn); err != nil {
+			return err
+		}
+		if err := k.bankKeeper.BurnCoins(ctx, types.ModuleName, stTokensToBurn); err != nil {
+			return err
+		}
+	}
+
 	// Remove module accounts
 	depositAddress := types.NewHostZoneDepositAddress(chainId)
 	communityPoolStakeAddress := types.NewHostZoneModuleAddress(chainId, CommunityPoolStakeHoldingAddressKey)
@@ -146,6 +159,13 @@ func (k Keeper) UnregisterHostZone(ctx sdk.Context, chainId string) error {
 		}
 		epochUnbondingRecord.HostZoneUnbondings = updatedHostZoneUnbondings
 		k.RecordsKeeper.SetEpochUnbondingRecord(ctx, epochUnbondingRecord)
+	}
+
+	// Remove all user redemption records for the host zone
+	for _, userRedemptionRecord := range k.RecordsKeeper.GetAllUserRedemptionRecord(ctx) {
+		if userRedemptionRecord.HostZoneId == chainId {
+			k.RecordsKeeper.RemoveUserRedemptionRecord(ctx, userRedemptionRecord.Id)
+		}
 	}
 
 	// Remove whitelisted address pairs from rate limit module
