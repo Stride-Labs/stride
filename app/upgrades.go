@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
+	ratelimittypes "github.com/Stride-Labs/ibc-rate-limiting/ratelimit/types"
 	servertypes "github.com/cosmos/cosmos-sdk/server/types"
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	authz "github.com/cosmos/cosmos-sdk/x/authz"
@@ -12,10 +13,9 @@ import (
 	crisistypes "github.com/cosmos/cosmos-sdk/x/crisis/types"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 	packetforwardtypes "github.com/cosmos/ibc-apps/middleware/packet-forward-middleware/v7/packetforward/types"
+	ibchookstypes "github.com/cosmos/ibc-apps/modules/ibc-hooks/v7/types"
 	consumertypes "github.com/cosmos/interchain-security/v4/x/ccv/consumer/types"
 	evmosvestingtypes "github.com/evmos/vesting/x/vesting/types"
-
-	ratelimittypes "github.com/Stride-Labs/ibc-rate-limiting/ratelimit/types"
 
 	v10 "github.com/Stride-Labs/stride/v21/app/upgrades/v10"
 	v11 "github.com/Stride-Labs/stride/v21/app/upgrades/v11"
@@ -337,6 +337,10 @@ func (app *StrideApp) setupUpgradeHandlers(appOpts servertypes.AppOptions) {
 	case "v19":
 		storeUpgrades = &storetypes.StoreUpgrades{
 			Added: []string{wasmtypes.ModuleName, stakedymtypes.ModuleName},
+		}
+	case "v22":
+		storeUpgrades = &storetypes.StoreUpgrades{
+			Added: []string{ibchookstypes.ModuleName},
 		}
 	}
 
