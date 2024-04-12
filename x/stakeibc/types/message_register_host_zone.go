@@ -28,6 +28,7 @@ func NewMsgRegisterHostZone(
 	maxRedemptionRate sdk.Dec,
 	lsmLiquidStakeEnabled bool,
 	communityPoolTreasuryAddress string,
+	maxMessagePerIcaTx uint64,
 ) *MsgRegisterHostZone {
 	return &MsgRegisterHostZone{
 		Creator:                      creator,
@@ -41,6 +42,7 @@ func NewMsgRegisterHostZone(
 		MaxRedemptionRate:            maxRedemptionRate,
 		LsmLiquidStakeEnabled:        lsmLiquidStakeEnabled,
 		CommunityPoolTreasuryAddress: communityPoolTreasuryAddress,
+		MaxMessagesPerIcaTx:          maxMessagePerIcaTx,
 	}
 }
 

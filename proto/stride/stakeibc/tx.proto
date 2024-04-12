@@ -137,6 +137,7 @@ message MsgRegisterHostZone {
   ];
   bool lsm_liquid_stake_enabled = 15;
   string community_pool_treasury_address = 16;
+  uint64 max_messages_per_ica_tx = 17;
 }
 message MsgRegisterHostZoneResponse {}
 
