@@ -10,26 +10,12 @@ import (
 	"github.com/cosmos/gogoproto/proto"
 	"github.com/spf13/cast"
 
-	icatypes "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/types"
-
 	"github.com/Stride-Labs/stride/v21/utils"
 	recordstypes "github.com/Stride-Labs/stride/v21/x/records/types"
 	"github.com/Stride-Labs/stride/v21/x/stakeibc/types"
 )
 
 func (k Keeper) DelegateOnHost(ctx sdk.Context, hostZone types.HostZone, amt sdk.Coin, depositRecord recordstypes.DepositRecord) error {
-	// TODO: Remove this block and use connection-id from host zone
-	// the relevant ICA is the delegate account
-	owner := types.FormatHostZoneICAOwner(hostZone.ChainId, types.ICAAccountType_DELEGATION)
-	portID, err := icatypes.NewControllerPortID(owner)
-	if err != nil {
-		return errorsmod.Wrapf(sdkerrors.ErrInvalidAddress, "%s has no associated portId", owner)
-	}
-	connectionId, found := k.GetConnectionIdFromICAPortId(ctx, portID)
-	if !found {
-		return errorsmod.Wrapf(types.ErrICAAccountNotFound, "unable to find ICA connection Id for port %s", portID)
-	}
-
 	// Fetch the relevant ICA
 	if hostZone.DelegationIcaAddress == "" {
 		return errorsmod.Wrapf(types.ErrICAAccountNotFound, "no delegation account found for %s", hostZone.ChainId)
@@ -79,9 +65,9 @@ func (k Keeper) DelegateOnHost(ctx sdk.Context, hostZone types.HostZone, amt sdk
 	}
 
 	// Send the transaction through SubmitTx
-	_, err = k.SubmitTxsStrideEpoch(ctx, connectionId, msgs, types.ICAAccountType_DELEGATION, ICACallbackID_Delegate, marshalledCallbackArgs)
+	_, err = k.SubmitTxsStrideEpoch(ctx, hostZone.ConnectionId, msgs, types.ICAAccountType_DELEGATION, ICACallbackID_Delegate, marshalledCallbackArgs)
 	if err != nil {
-		return errorsmod.Wrapf(err, "Failed to SubmitTxs for connectionId %s on %s. Messages: %s", connectionId, hostZone.ChainId, msgs)
+		return errorsmod.Wrapf(err, "Failed to SubmitTxs for connectionId %s on %s. Messages: %s", hostZone.ConnectionId, hostZone.ChainId, msgs)
 	}
 	k.Logger(ctx).Info(utils.LogWithHostZone(hostZone.ChainId, "ICA MsgDelegates Successfully Sent"))
 

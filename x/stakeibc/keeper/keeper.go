@@ -108,17 +108,6 @@ func (k Keeper) GetAuthority() string {
 	return k.authority
 }
 
-// Searches all interchain accounts and finds the connection ID that corresponds with a given port ID
-func (k Keeper) GetConnectionIdFromICAPortId(ctx sdk.Context, portId string) (connectionId string, found bool) {
-	icas := k.ICAControllerKeeper.GetAllInterchainAccounts(ctx)
-	for _, ica := range icas {
-		if ica.PortId == portId {
-			return ica.ConnectionId, true
-		}
-	}
-	return "", false
-}
-
 func (k Keeper) GetICATimeoutNanos(ctx sdk.Context, epochType string) (uint64, error) {
 	epochTracker, found := k.GetEpochTracker(ctx, epochType)
 	if !found {

@@ -17,11 +17,10 @@ import (
 )
 
 func (k Keeper) OnChanOpenAck(ctx sdk.Context, portID, channelID string) error {
-	// Lookup the ICA address and chainId from the port and connection
-	controllerConnectionId, found := k.GetConnectionIdFromICAPortId(ctx, portID)
-	if !found {
-		k.Logger(ctx).Info(fmt.Sprintf("portId %s has no associated ICA account", portID))
-		return nil
+	// Lookup connection ID, counterparty chain ID, and ICA address from the channel ID
+	controllerConnectionId, _, err := k.IBCKeeper.ChannelKeeper.GetChannelConnection(ctx, portID, channelID)
+	if err != nil {
+		return err
 	}
 	address, found := k.ICAControllerKeeper.GetInterchainAccountAddress(ctx, controllerConnectionId, portID)
 	if !found {
