@@ -485,6 +485,52 @@ func (s *KeeperTestSuite) TestRegisterHostZone_InvalidCommunityPoolTreasuryAddre
 }
 
 // ----------------------------------------------------
+//	             UpdateHostZoneParams
+// ----------------------------------------------------
+
+func (s *KeeperTestSuite) TestUpdateHostZoneParams() {
+	initialMessages := uint64(32)
+	updatedMessages := uint64(100)
+
+	// Create a host zone
+	s.App.StakeibcKeeper.SetHostZone(s.Ctx, types.HostZone{
+		ChainId:             HostChainId,
+		MaxMessagesPerIcaTx: initialMessages,
+	})
+
+	// Submit the message to update the params
+	validUpdateMsg := types.MsgUpdateHostZoneParams{
+		Authority:           Authority,
+		ChainId:             HostChainId,
+		MaxMessagesPerIcaTx: updatedMessages,
+	}
+	_, err := s.GetMsgServer().UpdateHostZoneParams(sdk.WrapSDKContext(s.Ctx), &validUpdateMsg)
+	s.Require().NoError(err, "no error expected when updating host zone params")
+
+	// Check that the max messages was updated
+	hostZone := s.MustGetHostZone(HostChainId)
+	s.Require().Equal(updatedMessages, hostZone.MaxMessagesPerIcaTx, "max messages")
+
+	// Attempt it again with an invalid chain ID, it should fail
+	invalidUpdateMsg := types.MsgUpdateHostZoneParams{
+		Authority:           Authority,
+		ChainId:             "missing-host",
+		MaxMessagesPerIcaTx: updatedMessages,
+	}
+	_, err = s.GetMsgServer().UpdateHostZoneParams(sdk.WrapSDKContext(s.Ctx), &invalidUpdateMsg)
+	s.Require().ErrorContains(err, "host zone not found")
+
+	// Finally attempt again with an invalid authority, it should also fail
+	invalidUpdateMsg = types.MsgUpdateHostZoneParams{
+		Authority:           "invalid-authority",
+		ChainId:             HostChainId,
+		MaxMessagesPerIcaTx: updatedMessages,
+	}
+	_, err = s.GetMsgServer().UpdateHostZoneParams(sdk.WrapSDKContext(s.Ctx), &invalidUpdateMsg)
+	s.Require().ErrorContains(err, "invalid authority")
+}
+
+// ----------------------------------------------------
 //	                  AddValidator
 // ----------------------------------------------------
 

@@ -285,6 +285,23 @@ func (k msgServer) RegisterHostZone(goCtx context.Context, msg *types.MsgRegiste
 	return &types.MsgRegisterHostZoneResponse{}, nil
 }
 
+func (ms msgServer) UpdateHostZoneParams(goCtx context.Context, msg *types.MsgUpdateHostZoneParams) (*types.MsgUpdateHostZoneParamsResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+	if ms.authority != msg.Authority {
+		return nil, errorsmod.Wrapf(govtypes.ErrInvalidSigner, "invalid authority; expected %s, got %s", ms.authority, msg.Authority)
+	}
+
+	hostZone, found := ms.Keeper.GetHostZone(ctx, msg.ChainId)
+	if !found {
+		return nil, types.ErrHostZoneNotFound.Wrapf("host zone %s not found", msg.ChainId)
+	}
+
+	hostZone.MaxMessagesPerIcaTx = msg.MaxMessagesPerIcaTx
+	ms.Keeper.SetHostZone(ctx, hostZone)
+
+	return &types.MsgUpdateHostZoneParamsResponse{}, nil
+}
+
 func (k msgServer) AddValidators(goCtx context.Context, msg *types.MsgAddValidators) (*types.MsgAddValidatorsResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
