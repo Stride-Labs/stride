@@ -239,12 +239,6 @@ func (s *KeeperTestSuite) TestRegisterHostZone_Success_Unregister() {
 	s.Require().NoError(err, "no error expected when re-registering host")
 }
 
-func (s *KeeperTestSuite) TestT() {
-	s.FundAccount(s.TestAccs[0], sdk.NewCoin("denom", sdk.NewInt(1000)))
-	err := s.App.BankKeeper.BurnCoins(s.Ctx, stakeibctypes.ModuleName, sdk.NewCoins(sdk.NewCoin("denom", sdk.NewInt(1000))))
-	fmt.Println(err.Error())
-}
-
 func (s *KeeperTestSuite) TestRegisterHostZone_InvalidConnectionId() {
 	tc := s.SetupRegisterHostZone()
 	msg := tc.validMsg
