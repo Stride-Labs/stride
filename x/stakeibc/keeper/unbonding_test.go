@@ -61,6 +61,7 @@ func (s *KeeperTestSuite) SetupTestUnbondFromHostZone(
 		Validators:           validators,
 		TotalDelegations:     totalStake,
 		RedemptionRate:       sdk.OneDec(),
+		MaxMessagesPerIcaTx:  32,
 	}
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
 
@@ -1298,6 +1299,7 @@ func (s *KeeperTestSuite) SetupInitiateAllHostZoneUnbondings() {
 			TotalDelegations:     sdkmath.NewInt(5_000_000),
 			ConnectionId:         ibctesting.FirstConnectionID,
 			RedemptionRate:       sdk.OneDec(),
+			MaxMessagesPerIcaTx:  32,
 		},
 		{
 			ChainId:              OsmoChainId,
@@ -1309,6 +1311,7 @@ func (s *KeeperTestSuite) SetupInitiateAllHostZoneUnbondings() {
 			TotalDelegations:     sdkmath.NewInt(5_000_000),
 			ConnectionId:         ibctesting.FirstConnectionID,
 			RedemptionRate:       sdk.OneDec(),
+			MaxMessagesPerIcaTx:  32,
 		},
 	}
 	for _, hostZone := range hostZones {
