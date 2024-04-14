@@ -296,7 +296,11 @@ func (ms msgServer) UpdateHostZoneParams(goCtx context.Context, msg *types.MsgUp
 		return nil, types.ErrHostZoneNotFound.Wrapf("host zone %s not found", msg.ChainId)
 	}
 
-	hostZone.MaxMessagesPerIcaTx = msg.MaxMessagesPerIcaTx
+	maxMessagesPerTx := msg.MaxMessagesPerIcaTx
+	if maxMessagesPerTx == 0 {
+		maxMessagesPerTx = DefaultMaxMessagesPerIcaTx
+	}
+	hostZone.MaxMessagesPerIcaTx = maxMessagesPerTx
 	ms.Keeper.SetHostZone(ctx, hostZone)
 
 	return &types.MsgUpdateHostZoneParamsResponse{}, nil

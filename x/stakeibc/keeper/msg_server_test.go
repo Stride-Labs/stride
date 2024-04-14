@@ -511,6 +511,19 @@ func (s *KeeperTestSuite) TestUpdateHostZoneParams() {
 	hostZone := s.MustGetHostZone(HostChainId)
 	s.Require().Equal(updatedMessages, hostZone.MaxMessagesPerIcaTx, "max messages")
 
+	// Update it again, setting it to the default value
+	validUpdateMsg = types.MsgUpdateHostZoneParams{
+		Authority:           Authority,
+		ChainId:             HostChainId,
+		MaxMessagesPerIcaTx: 0,
+	}
+	_, err = s.GetMsgServer().UpdateHostZoneParams(sdk.WrapSDKContext(s.Ctx), &validUpdateMsg)
+	s.Require().NoError(err, "no error expected when updating host zone params again")
+
+	// Check that the max messages was updated
+	hostZone = s.MustGetHostZone(HostChainId)
+	s.Require().Equal(keeper.DefaultMaxMessagesPerIcaTx, hostZone.MaxMessagesPerIcaTx, "max messages")
+
 	// Attempt it again with an invalid chain ID, it should fail
 	invalidUpdateMsg := types.MsgUpdateHostZoneParams{
 		Authority:           Authority,
