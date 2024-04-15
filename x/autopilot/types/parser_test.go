@@ -148,7 +148,22 @@ func TestParsePacketMetadata(t *testing.T) {
 		{
 			name:        "both autopilot and pfm in the memo",
 			metadata:    `{"autopilot": {}, "forward": {}}`,
-			expectedErr: "autopilot and pfm cannot both be used in the same packet",
+			expectedErr: "only one of autopilot, pfm, and wasm can both be used in the same packet",
+		},
+		{
+			name:        "both autopilot and wasm in the memo",
+			metadata:    `{"autopilot": {}, "wasm": {}}`,
+			expectedErr: "only one of autopilot, pfm, and wasm can both be used in the same packet",
+		},
+		{
+			name:        "both pfm and wasm in the memo",
+			metadata:    `{"forward": {}, "wasm": {}}`,
+			expectedErr: "only one of autopilot, pfm, and wasm can both be used in the same packet",
+		},
+		{
+			name:        "autopilot, pfm, and wasm in the memo",
+			metadata:    `{"autopilot": {}, "pfm": {}, "wasm": {}}`,
+			expectedErr: "only one of autopilot, pfm, and wasm can both be used in the same packet",
 		},
 		{
 			name:        "empty receiver address",
