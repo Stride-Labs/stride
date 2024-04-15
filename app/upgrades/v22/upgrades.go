@@ -32,6 +32,11 @@ func CreateUpgradeHandler(
 		ctx.Logger().Info("Migrating host zones...")
 		MigrateHostZones(ctx, stakeibcKeeper)
 
+		ctx.Logger().Info("Unregistering DYDX...")
+		if err := stakeibcKeeper.UnregisterHostZone(ctx, "dydx-testnet-4"); err != nil {
+			return vm, err
+		}
+
 		ctx.Logger().Info("Running module migrations...")
 		return mm.RunMigrations(ctx, configurator, vm)
 	}
