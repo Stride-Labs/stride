@@ -45,6 +45,8 @@ service Msg {
       returns (MsgSetCommunityPoolRebateResponse);
   rpc ToggleTradeController(MsgToggleTradeController)
       returns (MsgToggleTradeControllerResponse);
+  rpc UpdateHostZoneParams(MsgUpdateHostZoneParams)
+      returns (MsgUpdateHostZoneParamsResponse);
 }
 
 message MsgUpdateInnerRedemptionRateBounds {
@@ -137,6 +139,7 @@ message MsgRegisterHostZone {
   ];
   bool lsm_liquid_stake_enabled = 15;
   string community_pool_treasury_address = 16;
+  uint64 max_messages_per_ica_tx = 17;
 }
 message MsgRegisterHostZoneResponse {}
 
@@ -366,3 +369,18 @@ message MsgToggleTradeController {
   string address = 4;
 }
 message MsgToggleTradeControllerResponse {}
+
+// Updates host zone params
+message MsgUpdateHostZoneParams {
+  option (cosmos.msg.v1.signer) = "authority";
+  option (amino.name) = "stride/x/stakeibc/MsgUpdateHostZoneParams";
+
+  // authority is the address that controls the module (defaults to x/gov unless
+  // overwritten).
+  string authority = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+  // Chain ID of the host zone
+  string chain_id = 2;
+  // Max messages that can be sent in a single ICA message
+  uint64 max_messages_per_ica_tx = 3;
+}
+message MsgUpdateHostZoneParamsResponse {}

@@ -29,6 +29,7 @@ var (
 
 	DefaultMaxAllowedSwapLossRate = "0.05"
 	DefaultMaxSwapAmount          = sdkmath.NewIntWithDecimal(10, 24) // 10e24
+	DefaultMaxMessagesPerIcaTx    = uint64(32)
 )
 
 type msgServer struct {
@@ -128,6 +129,12 @@ func (k msgServer) RegisterHostZone(goCtx context.Context, msg *types.MsgRegiste
 		msg.MaxRedemptionRate = sdk.NewDecWithPrec(int64(params.DefaultMaxRedemptionRateThreshold), 2)
 	}
 
+	// Set the max messages per ICA tx to the default value if it's not specified
+	maxMessagesPerIcaTx := msg.MaxMessagesPerIcaTx
+	if maxMessagesPerIcaTx == 0 {
+		maxMessagesPerIcaTx = DefaultMaxMessagesPerIcaTx
+	}
+
 	// set the zone
 	zone := types.HostZone{
 		ChainId:           chainId,
@@ -150,6 +157,7 @@ func (k msgServer) RegisterHostZone(goCtx context.Context, msg *types.MsgRegiste
 		MaxInnerRedemptionRate:       msg.MaxRedemptionRate,
 		LsmLiquidStakeEnabled:        msg.LsmLiquidStakeEnabled,
 		CommunityPoolTreasuryAddress: msg.CommunityPoolTreasuryAddress,
+		MaxMessagesPerIcaTx:          maxMessagesPerIcaTx,
 	}
 	// write the zone back to the store
 	k.SetHostZone(ctx, zone)
@@ -275,6 +283,27 @@ func (k msgServer) RegisterHostZone(goCtx context.Context, msg *types.MsgRegiste
 	)
 
 	return &types.MsgRegisterHostZoneResponse{}, nil
+}
+
+func (ms msgServer) UpdateHostZoneParams(goCtx context.Context, msg *types.MsgUpdateHostZoneParams) (*types.MsgUpdateHostZoneParamsResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+	if ms.authority != msg.Authority {
+		return nil, errorsmod.Wrapf(govtypes.ErrInvalidSigner, "invalid authority; expected %s, got %s", ms.authority, msg.Authority)
+	}
+
+	hostZone, found := ms.Keeper.GetHostZone(ctx, msg.ChainId)
+	if !found {
+		return nil, types.ErrHostZoneNotFound.Wrapf("host zone %s not found", msg.ChainId)
+	}
+
+	maxMessagesPerTx := msg.MaxMessagesPerIcaTx
+	if maxMessagesPerTx == 0 {
+		maxMessagesPerTx = DefaultMaxMessagesPerIcaTx
+	}
+	hostZone.MaxMessagesPerIcaTx = maxMessagesPerTx
+	ms.Keeper.SetHostZone(ctx, hostZone)
+
+	return &types.MsgUpdateHostZoneParamsResponse{}, nil
 }
 
 func (k msgServer) AddValidators(goCtx context.Context, msg *types.MsgAddValidators) (*types.MsgAddValidatorsResponse, error) {
