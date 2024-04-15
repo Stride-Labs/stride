@@ -549,9 +549,11 @@ func (s *AppTestHelper) MockICAChannel(connectionId, channelId, owner, address s
 	// Create an open channel with the ICA port
 	portId, _ := icatypes.NewControllerPortID(owner)
 	channel := channeltypes.Channel{
-		State: channeltypes.OPEN,
+		State:          channeltypes.OPEN,
+		ConnectionHops: []string{connectionId},
 	}
 	s.App.IBCKeeper.ChannelKeeper.SetChannel(s.Ctx, portId, channelId, channel)
+	s.App.IBCKeeper.ConnectionKeeper.SetConnection(s.Ctx, connectionId, connectiontypes.ConnectionEnd{})
 
 	// Then set the address and make the channel active
 	s.App.ICAControllerKeeper.SetInterchainAccountAddress(s.Ctx, connectionId, portId, address)

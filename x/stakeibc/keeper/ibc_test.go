@@ -46,11 +46,10 @@ func (s *KeeperTestSuite) TestOnChanOpenAck() {
 	tradeOwner := types.FormatTradeRouteICAOwner(tradeChainId, RewardDenom, HostDenom, types.ICAAccountType_CONVERTER_TRADE)
 	tradePortId, _ := icatypes.NewControllerPortID(tradeOwner)
 
-	// Mock out an ICA address for each
-	s.App.ICAControllerKeeper.SetInterchainAccountAddress(s.Ctx, delegationConnectionId, delegationPortId, delegationAddress)
-	s.App.ICAControllerKeeper.SetInterchainAccountAddress(s.Ctx, tradeConnectionId, tradePortId, tradeAddress)
+	// Mock out the relevant clients, channels, and ICA addresses so the callback can map back to the relevant info
+	s.MockICAChannel(delegationConnectionId, delegationChannelId, delegationOwner, delegationAddress)
+	s.MockICAChannel(tradeConnectionId, tradeChannelId, tradeOwner, tradeAddress)
 
-	// Mock out a client and connection for each channel so the callback can map back from portId to chainId
 	s.MockClientAndConnection(delegationChainId, delegationClientId, delegationConnectionId)
 	s.MockClientAndConnection(tradeChainId, tradeClientId, tradeConnectionId)
 
