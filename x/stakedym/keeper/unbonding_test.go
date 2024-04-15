@@ -226,7 +226,7 @@ func (s *KeeperTestSuite) TestRedeemStake() {
 			expectedUnbondingRecord: func() *types.UnbondingRecord {
 				_, hz, ur, _, msg := s.getDefaultTestInputs()
 				ur.StTokenAmount = ur.StTokenAmount.Add(msg.StTokenAmount)
-				nativeDiff := sdk.NewDecFromInt(msg.StTokenAmount).Mul(hz.RedemptionRate).RoundInt()
+				nativeDiff := sdk.NewDecFromInt(msg.StTokenAmount).Mul(hz.RedemptionRate).TruncateInt()
 				ur.NativeAmount = ur.NativeAmount.Add(nativeDiff)
 				return ur
 			}(),
@@ -234,7 +234,7 @@ func (s *KeeperTestSuite) TestRedeemStake() {
 				UnbondingRecordId: defaultUR.Id,
 				Redeemer:          defaultMsg.Redeemer,
 				StTokenAmount:     defaultMsg.StTokenAmount,
-				NativeAmount:      sdk.NewDecFromInt(defaultMsg.StTokenAmount).Mul(defaultHZ.RedemptionRate).RoundInt(),
+				NativeAmount:      sdk.NewDecFromInt(defaultMsg.StTokenAmount).Mul(defaultHZ.RedemptionRate).TruncateInt(),
 			},
 		},
 		{
@@ -249,14 +249,14 @@ func (s *KeeperTestSuite) TestRedeemStake() {
 			expectedUnbondingRecord: func() *types.UnbondingRecord {
 				_, hz, ur, _, msg := s.getDefaultTestInputs()
 				ur.StTokenAmount = ur.StTokenAmount.Add(msg.StTokenAmount)
-				nativeDiff := sdk.NewDecFromInt(msg.StTokenAmount).Mul(hz.RedemptionRate).RoundInt()
+				nativeDiff := sdk.NewDecFromInt(msg.StTokenAmount).Mul(hz.RedemptionRate).TruncateInt()
 				ur.NativeAmount = ur.NativeAmount.Add(nativeDiff)
 				return ur
 			}(),
 			expectedRedemptionRecord: func() *types.RedemptionRecord {
 				_, hz, _, rr, msg := s.getDefaultTestInputs()
 				rr.StTokenAmount = rr.StTokenAmount.Add(msg.StTokenAmount)
-				nativeDiff := sdk.NewDecFromInt(msg.StTokenAmount).Mul(hz.RedemptionRate).RoundInt()
+				nativeDiff := sdk.NewDecFromInt(msg.StTokenAmount).Mul(hz.RedemptionRate).TruncateInt()
 				rr.NativeAmount = rr.NativeAmount.Add(nativeDiff)
 				return rr
 			}(),
@@ -354,7 +354,7 @@ func (s *KeeperTestSuite) TestPrepareUndelegation() {
 	// Create the initial records, setting the native amount to be slightly less than expected
 	for _, expectedUserRedemptionRecord := range expectedRedemptionRecords {
 		initialRedemptionRecord := expectedUserRedemptionRecord
-		initialRedemptionRecord.NativeAmount = sdk.NewDecFromInt(initialRedemptionRecord.StTokenAmount).Mul(oldRedemptionRate).RoundInt()
+		initialRedemptionRecord.NativeAmount = sdk.NewDecFromInt(initialRedemptionRecord.StTokenAmount).Mul(oldRedemptionRate).TruncateInt()
 		s.App.StakedymKeeper.SetRedemptionRecord(s.Ctx, initialRedemptionRecord)
 	}
 
