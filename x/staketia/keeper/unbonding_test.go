@@ -339,17 +339,17 @@ func (s *KeeperTestSuite) TestPrepareUndelegation() {
 	expectedRedemptionRecords := []types.RedemptionRecord{
 		// StTokenAmount: 1000 * 1.999 = 1999 Native
 		{UnbondingRecordId: 4, Redeemer: "A", StTokenAmount: sdkmath.NewInt(1000), NativeAmount: sdkmath.NewInt(1999)},
-		// StTokenAmount: 999 * 1.999 = 1997.001, Rounded down to 1997 Native
+		// StTokenAmount: 999 * 1.999 = 1997.001, Truncated to 1997 Native
 		{UnbondingRecordId: 4, Redeemer: "B", StTokenAmount: sdkmath.NewInt(999), NativeAmount: sdkmath.NewInt(1997)},
-		// StTokenAmount: 100 * 1.999 = 199.9, Rounded up to 200 Native
-		{UnbondingRecordId: 4, Redeemer: "C", StTokenAmount: sdkmath.NewInt(100), NativeAmount: sdkmath.NewInt(200)},
+		// StTokenAmount: 100 * 1.999 = 199.9, Truncated to 199 Native
+		{UnbondingRecordId: 4, Redeemer: "C", StTokenAmount: sdkmath.NewInt(100), NativeAmount: sdkmath.NewInt(199)},
 
 		// Different unbonding records, should be excluded
 		{UnbondingRecordId: 1, Redeemer: "D", StTokenAmount: sdkmath.NewInt(100), NativeAmount: sdkmath.NewInt(100)},
 		{UnbondingRecordId: 2, Redeemer: "E", StTokenAmount: sdkmath.NewInt(200), NativeAmount: sdkmath.NewInt(200)},
 		{UnbondingRecordId: 3, Redeemer: "F", StTokenAmount: sdkmath.NewInt(300), NativeAmount: sdkmath.NewInt(300)},
 	}
-	expectedTotalNativeAmount := sdkmath.NewInt(1999 + 1997 + 200)
+	expectedTotalNativeAmount := sdkmath.NewInt(1999 + 1997 + 199)
 
 	// Create the initial records, setting the native amount to be slightly less than expected
 	for _, expectedUserRedemptionRecord := range expectedRedemptionRecords {
