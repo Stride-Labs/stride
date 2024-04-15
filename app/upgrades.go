@@ -13,6 +13,7 @@ import (
 	crisistypes "github.com/cosmos/cosmos-sdk/x/crisis/types"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 	packetforwardtypes "github.com/cosmos/ibc-apps/middleware/packet-forward-middleware/v7/packetforward/types"
+	ibchookstypes "github.com/cosmos/ibc-apps/modules/ibc-hooks/v7/types"
 	consumertypes "github.com/cosmos/interchain-security/v4/x/ccv/consumer/types"
 	evmosvestingtypes "github.com/evmos/vesting/x/vesting/types"
 
@@ -347,6 +348,10 @@ func (app *StrideApp) setupUpgradeHandlers(appOpts servertypes.AppOptions) {
 	case "v19":
 		storeUpgrades = &storetypes.StoreUpgrades{
 			Added: []string{wasmtypes.ModuleName, stakedymtypes.ModuleName},
+		}
+	case "v22":
+		storeUpgrades = &storetypes.StoreUpgrades{
+			Added: []string{ibchookstypes.ModuleName},
 		}
 	}
 
