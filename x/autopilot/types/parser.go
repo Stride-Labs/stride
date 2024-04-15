@@ -66,10 +66,21 @@ func ParseAutopilotMetadata(metadata string) (*AutopilotMetadata, error) {
 		return nil, nil
 	}
 
-	// Packets cannot be used for both autopilot and PFM at the same time
-	// If both fields were provided, reject the packet
-	if raw.Autopilot != nil && raw.Forward != nil {
-		return nil, errorsmod.Wrapf(ErrInvalidPacketMetadata, "autopilot and pfm cannot both be used in the same packet")
+	// Packets cannot be used for more than one of autopilot, pfm, or wasmhooks at the same time
+	// If more than one module key was provided, reject the packet
+	middlewareModulesEnabled := 0
+	if raw.Autopilot != nil {
+		middlewareModulesEnabled++
+	}
+	if raw.Forward != nil {
+		middlewareModulesEnabled++
+	}
+	if raw.Wasm != nil {
+		middlewareModulesEnabled++
+	}
+	if middlewareModulesEnabled > 1 {
+		return nil, errorsmod.Wrapf(ErrInvalidPacketMetadata,
+			"only one of autopilot, pfm, and wasm can both be used in the same packet")
 	}
 
 	// If no forwarding logic was used for autopilot, return nil to indicate that
