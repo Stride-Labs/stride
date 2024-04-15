@@ -10,9 +10,9 @@ import (
 	"github.com/cosmos/gogoproto/proto"
 	"github.com/spf13/cast"
 
-	"github.com/Stride-Labs/stride/v21/utils"
-	recordstypes "github.com/Stride-Labs/stride/v21/x/records/types"
-	"github.com/Stride-Labs/stride/v21/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v22/utils"
+	recordstypes "github.com/Stride-Labs/stride/v22/x/records/types"
+	"github.com/Stride-Labs/stride/v22/x/stakeibc/types"
 )
 
 func (k Keeper) DelegateOnHost(ctx sdk.Context, hostZone types.HostZone, amt sdk.Coin, depositRecord recordstypes.DepositRecord) error {

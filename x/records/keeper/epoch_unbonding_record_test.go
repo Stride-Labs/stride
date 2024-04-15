@@ -8,10 +8,10 @@ import (
 
 	sdkmath "cosmossdk.io/math"
 
-	keepertest "github.com/Stride-Labs/stride/v21/testutil/keeper"
-	"github.com/Stride-Labs/stride/v21/testutil/nullify"
-	"github.com/Stride-Labs/stride/v21/x/records/keeper"
-	"github.com/Stride-Labs/stride/v21/x/records/types"
+	keepertest "github.com/Stride-Labs/stride/v22/testutil/keeper"
+	"github.com/Stride-Labs/stride/v22/testutil/nullify"
+	"github.com/Stride-Labs/stride/v22/x/records/keeper"
+	"github.com/Stride-Labs/stride/v22/x/records/types"
 )
 
 func createNEpochUnbondingRecord(keeper *keeper.Keeper, ctx sdk.Context, n int) ([]types.EpochUnbondingRecord, map[string]types.HostZoneUnbonding) {

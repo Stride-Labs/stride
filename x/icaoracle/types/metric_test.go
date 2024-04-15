@@ -7,7 +7,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 
-	"github.com/Stride-Labs/stride/v21/x/icaoracle/types"
+	"github.com/Stride-Labs/stride/v22/x/icaoracle/types"
 )
 
 // Tests NewMetric and GetMetricID

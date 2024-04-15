@@ -9,8 +9,8 @@ import (
 	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
 	ibctesting "github.com/cosmos/ibc-go/v7/testing"
 
-	icacallbackstypes "github.com/Stride-Labs/stride/v21/x/icacallbacks/types"
-	"github.com/Stride-Labs/stride/v21/x/records/types"
+	icacallbackstypes "github.com/Stride-Labs/stride/v22/x/icacallbacks/types"
+	"github.com/Stride-Labs/stride/v22/x/records/types"
 )
 
 var (

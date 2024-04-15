@@ -5,7 +5,7 @@ import "gogoproto/gogo.proto";
 import "stride/stakeibc/ica_account.proto";
 import "cosmos_proto/cosmos.proto";
 
-option go_package = "github.com/Stride-Labs/stride/v21/x/stakeibc/types";
+option go_package = "github.com/Stride-Labs/stride/v22/x/stakeibc/types";
 
 // Stores pool information needed to execute the swap along a trade route
 message TradeConfig {

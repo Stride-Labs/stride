@@ -5,7 +5,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
-	"github.com/Stride-Labs/stride/v21/utils"
+	"github.com/Stride-Labs/stride/v22/utils"
 )
 
 const TypeMsgChangeValidatorWeights = "change_validator_weight"

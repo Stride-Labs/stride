@@ -23,13 +23,13 @@ import (
 	"github.com/evmos/vesting/x/vesting/types"
 	evmosvestingtypes "github.com/evmos/vesting/x/vesting/types"
 
-	"github.com/Stride-Labs/stride/v21/utils"
-	claimkeeper "github.com/Stride-Labs/stride/v21/x/claim/keeper"
-	claimtypes "github.com/Stride-Labs/stride/v21/x/claim/types"
-	icqkeeper "github.com/Stride-Labs/stride/v21/x/interchainquery/keeper"
-	stakeibckeeper "github.com/Stride-Labs/stride/v21/x/stakeibc/keeper"
-	stakeibcmigration "github.com/Stride-Labs/stride/v21/x/stakeibc/migrations/v3"
-	stakeibctypes "github.com/Stride-Labs/stride/v21/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v22/utils"
+	claimkeeper "github.com/Stride-Labs/stride/v22/x/claim/keeper"
+	claimtypes "github.com/Stride-Labs/stride/v22/x/claim/types"
+	icqkeeper "github.com/Stride-Labs/stride/v22/x/interchainquery/keeper"
+	stakeibckeeper "github.com/Stride-Labs/stride/v22/x/stakeibc/keeper"
+	stakeibcmigration "github.com/Stride-Labs/stride/v22/x/stakeibc/migrations/v3"
+	stakeibctypes "github.com/Stride-Labs/stride/v22/x/stakeibc/types"
 )
 
 var (

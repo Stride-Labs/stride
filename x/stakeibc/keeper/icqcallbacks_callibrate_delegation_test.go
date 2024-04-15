@@ -5,9 +5,9 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	icqtypes "github.com/Stride-Labs/stride/v21/x/interchainquery/types"
-	"github.com/Stride-Labs/stride/v21/x/stakeibc/keeper"
-	"github.com/Stride-Labs/stride/v21/x/stakeibc/types"
+	icqtypes "github.com/Stride-Labs/stride/v22/x/interchainquery/types"
+	"github.com/Stride-Labs/stride/v22/x/stakeibc/keeper"
+	"github.com/Stride-Labs/stride/v22/x/stakeibc/types"
 )
 
 func (s *KeeperTestSuite) TestCalibrateDelegation_Success() {

@@ -9,7 +9,7 @@ import (
 	"github.com/cosmos/ibc-go/v7/modules/core/exported"
 	ibcexported "github.com/cosmos/ibc-go/v7/modules/core/exported"
 
-	icacallbackstypes "github.com/Stride-Labs/stride/v21/x/icacallbacks/types"
+	icacallbackstypes "github.com/Stride-Labs/stride/v22/x/icacallbacks/types"
 )
 
 // ClientKeeper defines the expected IBC client keeper

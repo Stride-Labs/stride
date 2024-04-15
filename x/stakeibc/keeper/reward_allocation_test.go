@@ -15,9 +15,9 @@ import (
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	_ "github.com/stretchr/testify/suite"
 
-	epochtypes "github.com/Stride-Labs/stride/v21/x/epochs/types"
-	recordtypes "github.com/Stride-Labs/stride/v21/x/records/types"
-	stakeibctypes "github.com/Stride-Labs/stride/v21/x/stakeibc/types"
+	epochtypes "github.com/Stride-Labs/stride/v22/x/epochs/types"
+	recordtypes "github.com/Stride-Labs/stride/v22/x/records/types"
+	stakeibctypes "github.com/Stride-Labs/stride/v22/x/stakeibc/types"
 )
 
 func (s *KeeperTestSuite) SetupTestRewardAllocation() {

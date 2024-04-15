@@ -3,7 +3,7 @@ package stride.autopilot;
 
 import "gogoproto/gogo.proto";
 
-option go_package = "github.com/Stride-Labs/stride/v21/x/autopilot/types";
+option go_package = "github.com/Stride-Labs/stride/v22/x/autopilot/types";
 
 // Params defines the parameters for the module.
 // next id: 1

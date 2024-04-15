@@ -9,8 +9,8 @@ import (
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/spf13/cast"
 
-	epochstypes "github.com/Stride-Labs/stride/v21/x/epochs/types"
-	"github.com/Stride-Labs/stride/v21/x/stakeibc/types"
+	epochstypes "github.com/Stride-Labs/stride/v22/x/epochs/types"
+	"github.com/Stride-Labs/stride/v22/x/stakeibc/types"
 )
 
 // SetEpochTracker set a specific epochTracker in the store from its index
