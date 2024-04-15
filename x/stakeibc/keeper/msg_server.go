@@ -563,9 +563,8 @@ func (k msgServer) RedeemStake(goCtx context.Context, msg *types.MsgRedeemStake)
 	}
 
 	// construct desired unstaking amount from host zone
-	// TODO [cleanup]: Consider changing to truncate int
 	stDenom := types.StAssetDenomFromHostZoneDenom(hostZone.HostDenom)
-	nativeAmount := sdk.NewDecFromInt(msg.Amount).Mul(hostZone.RedemptionRate).RoundInt()
+	nativeAmount := sdk.NewDecFromInt(msg.Amount).Mul(hostZone.RedemptionRate).TruncateInt()
 
 	if nativeAmount.GT(hostZone.TotalDelegations) {
 		return nil, errorsmod.Wrapf(types.ErrInvalidAmount, "cannot unstake an amount g.t. staked balance on host zone: %v", msg.Amount)
@@ -665,6 +664,8 @@ func (k msgServer) RedeemStake(goCtx context.Context, msg *types.MsgRedeemStake)
 	k.RecordsKeeper.SetEpochUnbondingRecord(ctx, *updatedEpochUnbondingRecord)
 
 	k.Logger(ctx).Info(fmt.Sprintf("executed redeem stake: %s", msg.String()))
+	EmitSuccessfulRedeemStakeEvent(ctx, msg, hostZone, nativeAmount, msg.Amount)
+
 	return &types.MsgRedeemStakeResponse{}, nil
 }
 

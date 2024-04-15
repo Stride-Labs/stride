@@ -24,6 +24,23 @@ func EmitSuccessfulLiquidStakeEvent(ctx sdk.Context, msg *types.MsgLiquidStake, 
 	)
 }
 
+// Emits a successful redeem stake event, and displays metadata such as the native amount
+func EmitSuccessfulRedeemStakeEvent(ctx sdk.Context, msg *types.MsgRedeemStake, hostZone types.HostZone, nativeAmount, stAmount sdkmath.Int) {
+	ctx.EventManager().EmitEvent(
+		sdk.NewEvent(
+			types.EventTypeRedeemStakeRequest,
+			sdk.NewAttribute(sdk.AttributeKeyModule, types.ModuleName),
+			sdk.NewAttribute(types.AttributeKeyRedeemer, msg.Creator),
+			sdk.NewAttribute(types.AttributeKeyReceiver, msg.Receiver),
+			sdk.NewAttribute(types.AttributeKeyHostZone, hostZone.ChainId),
+			sdk.NewAttribute(types.AttributeKeyNativeBaseDenom, hostZone.HostDenom),
+			sdk.NewAttribute(types.AttributeKeyNativeIBCDenom, hostZone.IbcDenom),
+			sdk.NewAttribute(types.AttributeKeyNativeAmount, nativeAmount.String()),
+			sdk.NewAttribute(types.AttributeKeyStTokenAmount, stAmount.String()),
+		),
+	)
+}
+
 // Builds common LSM liquid stake attribute for the event emission
 func getLSMLiquidStakeEventAttributes(hostZone types.HostZone, lsmTokenDeposit recordstypes.LSMTokenDeposit) []sdk.Attribute {
 	return []sdk.Attribute{

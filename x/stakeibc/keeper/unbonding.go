@@ -94,7 +94,7 @@ func (k Keeper) RefreshUserRedemptionRecordNativeAmounts(
 		}
 
 		// Calculate the number of native tokens using the redemption rate
-		nativeAmount := sdk.NewDecFromInt(userRedemptionRecord.StTokenAmount).Mul(redemptionRate).RoundInt()
+		nativeAmount := sdk.NewDecFromInt(userRedemptionRecord.StTokenAmount).Mul(redemptionRate).TruncateInt()
 		totalNativeAmount = totalNativeAmount.Add(nativeAmount)
 
 		// Set the native amount on the record

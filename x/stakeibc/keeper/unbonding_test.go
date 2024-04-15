@@ -651,12 +651,12 @@ func (s *KeeperTestSuite) TestRefreshUserRedemptionRecordNativeAmounts() {
 	expectedUserRedemptionRecords := []recordtypes.UserRedemptionRecord{
 		// StTokenAmount: 1000 * 1.999 = 1999 Native
 		{Id: "A", StTokenAmount: sdkmath.NewInt(1000), NativeTokenAmount: sdkmath.NewInt(1999)},
-		// StTokenAmount: 999 * 1.999 = 1997.001, Rounded down to 1997 Native
+		// StTokenAmount: 999 * 1.999 = 1997.001, Truncated to 1997 Native
 		{Id: "B", StTokenAmount: sdkmath.NewInt(999), NativeTokenAmount: sdkmath.NewInt(1997)},
-		// StTokenAmount: 100 * 1.999 = 199.9, Rounded up to 200 Native
-		{Id: "C", StTokenAmount: sdkmath.NewInt(100), NativeTokenAmount: sdkmath.NewInt(200)},
+		// StTokenAmount: 100 * 1.999 = 199.9, Truncated to 199 Native
+		{Id: "C", StTokenAmount: sdkmath.NewInt(100), NativeTokenAmount: sdkmath.NewInt(199)},
 	}
-	expectedTotalNativeAmount := sdkmath.NewInt(1999 + 1997 + 200)
+	expectedTotalNativeAmount := sdkmath.NewInt(1999 + 1997 + 199)
 
 	// Create the initial records which do not have the end native amount
 	for _, expectedUserRedemptionRecord := range expectedUserRedemptionRecords {

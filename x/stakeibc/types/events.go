@@ -14,6 +14,7 @@ const (
 	EventTypeRegisterZone                      = "register_zone"
 	EventTypeRedemptionRequest                 = "request_redemption"
 	EventTypeLiquidStakeRequest                = "liquid_stake"
+	EventTypeRedeemStakeRequest                = "redeem_stake"
 	EventTypeLSMLiquidStakeRequest             = "lsm_liquid_stake"
 	EventTypeHostZoneHalt                      = "halt_zone"
 	EventTypeValidatorSharesToTokensRateChange = "validator_shares_to_tokens_rate_change"
@@ -31,6 +32,8 @@ const (
 	AttributeKeyRedemptionRate = "redemption_rate"
 
 	AttributeKeyLiquidStaker       = "liquid_staker"
+	AttributeKeyRedeemer           = "redeemer"
+	AttributeKeyReceiver           = "receiver"
 	AttributeKeyNativeBaseDenom    = "native_base_denom"
 	AttributeKeyNativeIBCDenom     = "native_ibc_denom"
 	AttributeKeyTotalUnbondAmount  = "total_unbond_amount"
