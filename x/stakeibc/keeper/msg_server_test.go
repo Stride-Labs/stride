@@ -1994,14 +1994,14 @@ func (s *KeeperTestSuite) SetupTestCreateTradeRoute() (msg types.MsgCreateTradeR
 	minSwapAmount := sdkmath.NewInt(100)
 	maxSwapAmount := sdkmath.NewInt(1_000)
 
-	// Mock out connections for the reward an trade chain so that an ICA registration can be submitted
-	s.MockClientAndConnection(rewardChainId, "07-tendermint-0", rewardConnectionId)
-	s.MockClientAndConnection(tradeChainId, "07-tendermint-1", tradeConnectionId)
-
 	// Register an exisiting ICA account for the unwind ICA to test that
 	// existing accounts are re-used
 	owner := types.FormatTradeRouteICAOwner(rewardChainId, RewardDenom, HostDenom, types.ICAAccountType_CONVERTER_UNWIND)
 	s.MockICAChannel(rewardConnectionId, "channel-0", owner, unwindAddress)
+
+	// Mock out connections for the reward an trade chain so that an ICA registration can be submitted
+	s.MockClientAndConnection(rewardChainId, "07-tendermint-0", rewardConnectionId)
+	s.MockClientAndConnection(tradeChainId, "07-tendermint-1", tradeConnectionId)
 
 	// Create a host zone with an exisiting withdrawal address
 	hostZone := types.HostZone{

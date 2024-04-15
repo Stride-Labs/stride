@@ -24,18 +24,6 @@ const (
 )
 
 func (k Keeper) SetWithdrawalAddressOnHost(ctx sdk.Context, hostZone types.HostZone) error {
-	// TODO: Remove this block and use connection-id from host zone
-	// The relevant ICA is the delegate account
-	owner := types.FormatHostZoneICAOwner(hostZone.ChainId, types.ICAAccountType_DELEGATION)
-	portID, err := icatypes.NewControllerPortID(owner)
-	if err != nil {
-		return errorsmod.Wrapf(sdkerrors.ErrInvalidAddress, "%s has no associated portId", owner)
-	}
-	connectionId, found := k.GetConnectionIdFromICAPortId(ctx, portID)
-	if !found {
-		return errorsmod.Wrapf(types.ErrICAAccountNotFound, "unable to find ICA connection Id for port %s", portID)
-	}
-
 	// Fetch the relevant ICA
 	if hostZone.DelegationIcaAddress == "" {
 		k.Logger(ctx).Error(fmt.Sprintf("Zone %s is missing a delegation address!", hostZone.ChainId))
@@ -56,9 +44,9 @@ func (k Keeper) SetWithdrawalAddressOnHost(ctx sdk.Context, hostZone types.HostZ
 			WithdrawAddress:  hostZone.WithdrawalIcaAddress,
 		},
 	}
-	_, err = k.SubmitTxsStrideEpoch(ctx, connectionId, msgs, types.ICAAccountType_DELEGATION, "", nil)
+	_, err := k.SubmitTxsStrideEpoch(ctx, hostZone.ConnectionId, msgs, types.ICAAccountType_DELEGATION, "", nil)
 	if err != nil {
-		return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "Failed to SubmitTxs for %s, %s, %s", connectionId, hostZone.ChainId, msgs)
+		return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "Failed to SubmitTxs for %s, %s, %s", hostZone.ConnectionId, hostZone.ChainId, msgs)
 	}
 
 	return nil
