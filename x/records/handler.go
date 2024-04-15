@@ -7,8 +7,8 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
-	"github.com/Stride-Labs/stride/v21/x/records/keeper"
-	"github.com/Stride-Labs/stride/v21/x/records/types"
+	"github.com/Stride-Labs/stride/v22/x/records/keeper"
+	"github.com/Stride-Labs/stride/v22/x/records/types"
 )
 
 // NewHandler ...

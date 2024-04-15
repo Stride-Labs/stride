@@ -11,9 +11,9 @@ import (
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	ibctesting "github.com/cosmos/ibc-go/v7/testing"
 
-	epochtypes "github.com/Stride-Labs/stride/v21/x/epochs/types"
-	"github.com/Stride-Labs/stride/v21/x/stakeibc/keeper"
-	"github.com/Stride-Labs/stride/v21/x/stakeibc/types"
+	epochtypes "github.com/Stride-Labs/stride/v22/x/epochs/types"
+	"github.com/Stride-Labs/stride/v22/x/stakeibc/keeper"
+	"github.com/Stride-Labs/stride/v22/x/stakeibc/types"
 )
 
 type RebalanceDelegationsForHostZoneTestCase struct {

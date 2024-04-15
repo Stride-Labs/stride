@@ -6,10 +6,10 @@ import (
 	"github.com/cosmos/gogoproto/proto"
 	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
 
-	icacallbackstypes "github.com/Stride-Labs/stride/v21/x/icacallbacks/types"
-	icacallbacktypes "github.com/Stride-Labs/stride/v21/x/icacallbacks/types"
-	recordstypes "github.com/Stride-Labs/stride/v21/x/records/types"
-	"github.com/Stride-Labs/stride/v21/x/stakeibc/types"
+	icacallbackstypes "github.com/Stride-Labs/stride/v22/x/icacallbacks/types"
+	icacallbacktypes "github.com/Stride-Labs/stride/v22/x/icacallbacks/types"
+	recordstypes "github.com/Stride-Labs/stride/v22/x/records/types"
+	"github.com/Stride-Labs/stride/v22/x/stakeibc/types"
 )
 
 type DetokenizeCallbackTestCase struct {

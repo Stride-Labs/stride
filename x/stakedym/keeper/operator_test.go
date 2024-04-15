@@ -1,7 +1,7 @@
 package keeper_test
 
 import (
-	"github.com/Stride-Labs/stride/v21/x/stakedym/types"
+	"github.com/Stride-Labs/stride/v22/x/stakedym/types"
 )
 
 // test that the admin address helpers work as expected

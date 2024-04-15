@@ -9,9 +9,9 @@ import (
 
 	errorsmod "cosmossdk.io/errors"
 
-	stakeibctypes "github.com/Stride-Labs/stride/v21/x/stakeibc/types"
+	stakeibctypes "github.com/Stride-Labs/stride/v22/x/stakeibc/types"
 
-	"github.com/Stride-Labs/stride/v21/x/records/types"
+	"github.com/Stride-Labs/stride/v22/x/records/types"
 )
 
 // SetEpochUnbondingRecord set a specific epochUnbondingRecord in the store

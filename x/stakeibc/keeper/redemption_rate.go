@@ -7,10 +7,10 @@ import (
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/Stride-Labs/stride/v21/utils"
-	icaoracletypes "github.com/Stride-Labs/stride/v21/x/icaoracle/types"
-	recordstypes "github.com/Stride-Labs/stride/v21/x/records/types"
-	"github.com/Stride-Labs/stride/v21/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v22/utils"
+	icaoracletypes "github.com/Stride-Labs/stride/v22/x/icaoracle/types"
+	recordstypes "github.com/Stride-Labs/stride/v22/x/records/types"
+	"github.com/Stride-Labs/stride/v22/x/stakeibc/types"
 )
 
 // Updates the redemption rate for each host zone

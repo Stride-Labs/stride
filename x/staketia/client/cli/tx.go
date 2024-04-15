@@ -14,7 +14,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/version"
 	"github.com/spf13/cobra"
 
-	"github.com/Stride-Labs/stride/v21/x/staketia/types"
+	"github.com/Stride-Labs/stride/v22/x/staketia/types"
 )
 
 const (
