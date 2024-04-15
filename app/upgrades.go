@@ -351,7 +351,7 @@ func (app *StrideApp) setupUpgradeHandlers(appOpts servertypes.AppOptions) {
 		}
 	case "v22":
 		storeUpgrades = &storetypes.StoreUpgrades{
-			Added: []string{ibchookstypes.ModuleName},
+			Added: []string{ibchookstypes.StoreKey},
 		}
 	}
 
