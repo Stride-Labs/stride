@@ -17,10 +17,6 @@ import (
 	"github.com/Stride-Labs/stride/v21/x/stakeibc/types"
 )
 
-const (
-	UndelegateICABatchSize = 32
-)
-
 type ValidatorUnbondCapacity struct {
 	ValidatorAddress   string
 	CurrentDelegation  sdkmath.Int
@@ -469,11 +465,12 @@ func (k Keeper) UnbondFromHostZone(ctx sdk.Context, hostZone types.HostZone) err
 	}
 
 	// Get the undelegation ICA messages and split delegations for the callback
+	undelegateBatchSize := int(hostZone.MaxMessagesPerIcaTx)
 	msgs, unbondings, err := k.GetUnbondingICAMessages(
 		hostZone,
 		totalUnbondAmount,
 		prioritizedUnbondCapacity,
-		UndelegateICABatchSize,
+		undelegateBatchSize,
 	)
 	if err != nil {
 		return err
@@ -485,8 +482,11 @@ func (k Keeper) UnbondFromHostZone(ctx sdk.Context, hostZone types.HostZone) err
 	}
 
 	// Send the messages in batches so the gas limit isn't exceedeed
-	for start := 0; start < len(msgs); start += UndelegateICABatchSize {
-		end := start + UndelegateICABatchSize
+	// NOTE: With the current implementation, an error is thrown upstream if there are
+	// more messages than undelegateBatchSize - so there should only be one iteration in this loop
+	// This is because the undelegation callback is not currently setup to handle multiple batches
+	for start := 0; start < len(msgs); start += undelegateBatchSize {
+		end := start + undelegateBatchSize
 		if end > len(msgs) {
 			end = len(msgs)
 		}
