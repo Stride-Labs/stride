@@ -11,14 +11,12 @@ import (
 var (
 	UpgradeName = "v22"
 
-	CosmosHubChainId = "cosmoshub-4"
-	OsmosisChainId   = "osmosis-1"
-	DydxChainId      = "dydx-mainnet-1"
+	OsmosisChainId = "osmosis-1"
+	DydxChainId    = "dydx-mainnet-1"
 
 	MaxMessagesPerIcaByHost = map[string]uint64{
-		CosmosHubChainId: 180,
-		OsmosisChainId:   150,
-		DydxChainId:      60,
+		OsmosisChainId: 150,
+		DydxChainId:    60,
 	}
 )
 

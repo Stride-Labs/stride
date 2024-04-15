@@ -29,7 +29,6 @@ func (s *UpgradeTestSuite) TestUpgrade() {
 
 	// Create three host zones
 	chainIds := []string{
-		v22.CosmosHubChainId,
 		v22.OsmosisChainId,
 		v22.DydxChainId,
 		otherHostChainId,
