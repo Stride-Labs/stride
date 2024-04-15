@@ -13,6 +13,7 @@ import (
 	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
 	ibctesting "github.com/cosmos/ibc-go/v7/testing"
 
+	"github.com/Stride-Labs/stride/v21/app/apptesting"
 	"github.com/Stride-Labs/stride/v21/utils"
 	epochtypes "github.com/Stride-Labs/stride/v21/x/epochs/types"
 	icqtypes "github.com/Stride-Labs/stride/v21/x/interchainquery/types"
@@ -624,6 +625,91 @@ func (s *KeeperTestSuite) TestAddValidators_NameAlreadyExists() {
 	expectedError := fmt.Sprintf("Validator name (%s) already exists on Host Zone (GAIA)", duplicateName)
 	_, err := s.GetMsgServer().AddValidators(sdk.WrapSDKContext(s.Ctx), &tc.validMsg)
 	s.Require().ErrorContains(err, expectedError)
+}
+
+func (s *KeeperTestSuite) TestAddValidators_SuccessfulManyValidators() {
+	s.App.StakeibcKeeper.SetHostZone(s.Ctx, types.HostZone{
+		ChainId:      HostChainId,
+		ConnectionId: ibctesting.FirstConnectionID,
+	})
+	s.MockClientLatestHeight(1)
+
+	// Setup validators in a top-heavy order so that *if* the weight cap
+	// was checked after each validator, it would fail midway
+	// However, the addition of last validator causes the highest weight
+	// validator to be below 10%
+	validators := []*types.Validator{
+		{Name: "val1", Weight: 10},
+		{Name: "val2", Weight: 10},
+		{Name: "val3", Weight: 9},
+		{Name: "val4", Weight: 9},
+		{Name: "val5", Weight: 8},
+		{Name: "val6", Weight: 8},
+		{Name: "val7", Weight: 7},
+		{Name: "val8", Weight: 7},
+		{Name: "val9", Weight: 6},
+		{Name: "val10", Weight: 6},
+		{Name: "val11", Weight: 5},
+		{Name: "val12", Weight: 5},
+		{Name: "val13", Weight: 4},
+		{Name: "val14", Weight: 4},
+		{Name: "val15", Weight: 3},
+	}
+
+	// Assign an address for each
+	addresses := apptesting.CreateRandomAccounts(len(validators))
+	for i, validator := range validators {
+		validator.Address = addresses[i].String()
+	}
+
+	// Submit the add validator message - it should succeed
+	addValidatorMsg := types.MsgAddValidators{
+		HostZone:   HostChainId,
+		Validators: validators,
+	}
+	_, err := s.GetMsgServer().AddValidators(sdk.WrapSDKContext(s.Ctx), &addValidatorMsg)
+	s.Require().NoError(err, "no error expected when adding validators")
+}
+
+func (s *KeeperTestSuite) TestAddValidators_ValidatorWeightCapExceeded() {
+	s.App.StakeibcKeeper.SetHostZone(s.Ctx, types.HostZone{
+		ChainId:      HostChainId,
+		ConnectionId: ibctesting.FirstConnectionID,
+	})
+	s.MockClientLatestHeight(1)
+
+	// The distribution below will lead to the first two validators owning more
+	// than a 10% share
+	validators := []*types.Validator{
+		{Name: "val1", Weight: 10},
+		{Name: "val2", Weight: 10},
+		{Name: "val3", Weight: 9},
+		{Name: "val4", Weight: 9},
+		{Name: "val5", Weight: 8},
+		{Name: "val6", Weight: 8},
+		{Name: "val7", Weight: 7},
+		{Name: "val8", Weight: 7},
+		{Name: "val9", Weight: 6},
+		{Name: "val10", Weight: 6},
+		{Name: "val11", Weight: 5},
+		{Name: "val12", Weight: 5},
+		{Name: "val13", Weight: 4},
+		{Name: "val14", Weight: 4},
+	}
+
+	// Assign an address for each
+	addresses := apptesting.CreateRandomAccounts(len(validators))
+	for i, validator := range validators {
+		validator.Address = addresses[i].String()
+	}
+
+	// Submit the add validator message - it should error
+	addValidatorMsg := types.MsgAddValidators{
+		HostZone:   HostChainId,
+		Validators: validators,
+	}
+	_, err := s.GetMsgServer().AddValidators(sdk.WrapSDKContext(s.Ctx), &addValidatorMsg)
+	s.Require().ErrorContains(err, "validator exceeds weight cap")
 }
 
 // ----------------------------------------------------
