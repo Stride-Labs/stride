@@ -42,6 +42,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <!-- GH ACTIONS TEMPLATE - INSERT NEW VERSION HERE -->
 
+## [v22.0.0](https://github.com/Stride-Labs/stride/releases/tag/v22.0.0) - 2024-04-16
+
+### On-Chain changes
+1. added v22 upgrade handler ([#1174](https://github.com/Stride-Labs/stride/pull/1174))
+2. Fix validator weight check ([#1176](https://github.com/Stride-Labs/stride/pull/1176))
+3. added stToken burn to unregister host zone function ([#1175](https://github.com/Stride-Labs/stride/pull/1175))
+4. added ibc-hooks ([#1173](https://github.com/Stride-Labs/stride/pull/1173))
+5. added event for redeem stake ([#1182](https://github.com/Stride-Labs/stride/pull/1182))
+6. parameterize max messages per ICA tx on host zone ([#1177](https://github.com/Stride-Labs/stride/pull/1177))
+7. remove GetConnectionIdFromICAPort, use connection ID from host zone ([#1179](https://github.com/Stride-Labs/stride/pull/1179))
+8. v22 Import Paths ([#1183](https://github.com/Stride-Labs/stride/pull/1183))
+9. fixed ibc hooks store key ([#1184](https://github.com/Stride-Labs/stride/pull/1184))
+
+### Off-Chain changes
+1. v21 Changelog ([#1168](https://github.com/Stride-Labs/stride/pull/1168))
+
+
 ## [v21.0.0](https://github.com/Stride-Labs/stride/releases/tag/v21.0.0) - 2024-03-27
 
 ### On-Chain changes
