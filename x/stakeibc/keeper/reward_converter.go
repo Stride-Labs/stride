@@ -432,57 +432,6 @@ func (k Keeper) WithdrawalRewardBalanceQuery(ctx sdk.Context, route types.TradeR
 	return nil
 }
 
-// Kick off ICQ for how many reward tokens are in the trade ICA associated with this host zone
-func (k Keeper) TradeRewardBalanceQuery(ctx sdk.Context, route types.TradeRoute) error {
-	tradeAccount := route.TradeAccount
-	k.Logger(ctx).Info(utils.LogWithHostZone(tradeAccount.ChainId, "Submitting ICQ for reward denom in trade ICA account"))
-
-	// Encode the trade account address for the query request
-	// The query request consists of the trade account address and reward denom
-	// keep in mind this ICA address actually exists on trade zone but is associated with trades performed for host zone
-	_, tradeAddressBz, err := bech32.DecodeAndConvert(tradeAccount.Address)
-	if err != nil {
-		return errorsmod.Wrapf(err, "invalid trade account address (%s), could not decode", tradeAccount.Address)
-	}
-	queryData := append(bankTypes.CreateAccountBalancesPrefix(tradeAddressBz), []byte(route.RewardDenomOnTradeZone)...)
-
-	// Timeout query at end of epoch
-	hourEpochTracker, found := k.GetEpochTracker(ctx, epochstypes.HOUR_EPOCH)
-	if !found {
-		return errorsmod.Wrapf(types.ErrEpochNotFound, epochstypes.HOUR_EPOCH)
-	}
-	timeout := time.Unix(0, int64(hourEpochTracker.NextEpochStartTime))
-	timeoutDuration := timeout.Sub(ctx.BlockTime())
-
-	// We need the trade route keys in the callback to look up the tradeRoute struct
-	callbackData := types.TradeRouteCallback{
-		RewardDenom: route.RewardDenomOnRewardZone,
-		HostDenom:   route.HostDenomOnHostZone,
-	}
-	callbackDataBz, err := proto.Marshal(&callbackData)
-	if err != nil {
-		return errorsmod.Wrapf(err, "unable to marshal TradeRewardBalanceQuery callback data")
-	}
-
-	// Submit the ICQ for the withdrawal account balance
-	query := icqtypes.Query{
-		ChainId:         tradeAccount.ChainId,
-		ConnectionId:    tradeAccount.ConnectionId, // query needs to go to the trade zone, not the host zone
-		QueryType:       icqtypes.BANK_STORE_QUERY_WITH_PROOF,
-		RequestData:     queryData,
-		CallbackModule:  types.ModuleName,
-		CallbackId:      ICQCallbackID_TradeRewardBalance,
-		CallbackData:    callbackDataBz,
-		TimeoutDuration: timeoutDuration,
-		TimeoutPolicy:   icqtypes.TimeoutPolicy_REJECT_QUERY_RESPONSE,
-	}
-	if err := k.InterchainQueryKeeper.SubmitICQRequest(ctx, query, false); err != nil {
-		return err
-	}
-
-	return nil
-}
-
 // Kick off ICQ for how many converted tokens are in the trade ICA associated with this host zone
 func (k Keeper) TradeConvertedBalanceQuery(ctx sdk.Context, route types.TradeRoute) error {
 	tradeAccount := route.TradeAccount
@@ -555,16 +504,6 @@ func (k Keeper) TransferAllRewardTokens(ctx sdk.Context) {
 		// Step 3: ICQ converted tokens in trade ICA, transfer funds back to hostZone withdrawal ICA
 		if err := k.TradeConvertedBalanceQuery(ctx, route); err != nil {
 			k.Logger(ctx).Error(fmt.Sprintf("Unable to submit query for converted balance in trade ICA: %s", err))
-		}
-	}
-}
-
-// Helper function to be run hourly, kicks off query which will kick off actual swaps to happen
-func (k Keeper) SwapAllRewardTokens(ctx sdk.Context) {
-	for _, route := range k.GetAllTradeRoutes(ctx) {
-		// Step 2: ICQ reward balance in trade ICA, swap tokens according to limiting rules
-		if err := k.TradeRewardBalanceQuery(ctx, route); err != nil {
-			k.Logger(ctx).Error(fmt.Sprintf("Unable to submit query for reward balance in trade ICA: %s", err))
 		}
 	}
 }
