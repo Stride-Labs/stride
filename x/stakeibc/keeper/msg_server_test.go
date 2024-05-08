@@ -1989,10 +1989,7 @@ func (s *KeeperTestSuite) SetupTestCreateTradeRoute() (msg types.MsgCreateTradeR
 	withdrawalAddress := "withdrawal-address"
 	unwindAddress := "unwind-address"
 
-	poolId := uint64(100)
-	maxAllowedSwapLossRate := "0.05"
-	minSwapAmount := sdkmath.NewInt(100)
-	maxSwapAmount := sdkmath.NewInt(1_000)
+	minTransferAmount := sdkmath.NewInt(100)
 
 	// Register an exisiting ICA account for the unwind ICA to test that
 	// existing accounts are re-used
@@ -2029,10 +2026,7 @@ func (s *KeeperTestSuite) SetupTestCreateTradeRoute() (msg types.MsgCreateTradeR
 		HostDenomOnTrade:    hostDenomOnTrade,
 		HostDenomOnHost:     hostDenomOnHost,
 
-		PoolId:                 poolId,
-		MaxAllowedSwapLossRate: maxAllowedSwapLossRate,
-		MinSwapAmount:          minSwapAmount,
-		MaxSwapAmount:          maxSwapAmount,
+		MinTransferAmount: minTransferAmount,
 	}
 
 	// Build out the expected trade route given the above
@@ -2065,15 +2059,7 @@ func (s *KeeperTestSuite) SetupTestCreateTradeRoute() (msg types.MsgCreateTradeR
 		RewardToTradeChannelId: rewardToTradeChannelId,
 		TradeToHostChannelId:   tradeToHostChannelId,
 
-		TradeConfig: types.TradeConfig{
-			PoolId:               poolId,
-			SwapPrice:            sdk.ZeroDec(),
-			PriceUpdateTimestamp: 0,
-
-			MaxAllowedSwapLossRate: sdk.MustNewDecFromStr(maxAllowedSwapLossRate),
-			MinSwapAmount:          minSwapAmount,
-			MaxSwapAmount:          maxSwapAmount,
-		},
+		MinTransferAmount: minTransferAmount,
 	}
 
 	return msg, expectedTradeRoute
@@ -2092,21 +2078,6 @@ func (s *KeeperTestSuite) submitCreateTradeRouteAndValidate(msg types.MsgCreateT
 // Tests a successful trade route creation
 func (s *KeeperTestSuite) TestCreateTradeRoute_Success() {
 	msg, expectedRoute := s.SetupTestCreateTradeRoute()
-	s.submitCreateTradeRouteAndValidate(msg, expectedRoute)
-}
-
-// Tests creating a trade route that uses the default pool config values
-func (s *KeeperTestSuite) TestCreateTradeRoute_Success_DefaultPoolConfig() {
-	msg, expectedRoute := s.SetupTestCreateTradeRoute()
-
-	// Update the message and remove some trade config parameters
-	// so that the defaults are used
-	msg.MaxSwapAmount = sdk.ZeroInt()
-	msg.MaxAllowedSwapLossRate = ""
-
-	expectedRoute.TradeConfig.MaxAllowedSwapLossRate = sdk.MustNewDecFromStr(keeper.DefaultMaxAllowedSwapLossRate)
-	expectedRoute.TradeConfig.MaxSwapAmount = keeper.DefaultMaxSwapAmount
-
 	s.submitCreateTradeRouteAndValidate(msg, expectedRoute)
 }
 
@@ -2201,10 +2172,7 @@ func (s *KeeperTestSuite) submitUpdateTradeRouteAndValidate(msg types.MsgUpdateT
 }
 
 func (s *KeeperTestSuite) TestUpdateTradeRoute() {
-	poolId := uint64(100)
-	maxAllowedSwapLossRate := "0.05"
-	minSwapAmount := sdkmath.NewInt(100)
-	maxSwapAmount := sdkmath.NewInt(1_000)
+	minTransferAmount := sdkmath.NewInt(100)
 
 	// Create a trade route with no parameters
 	initialRoute := types.TradeRoute{
@@ -2215,41 +2183,18 @@ func (s *KeeperTestSuite) TestUpdateTradeRoute() {
 
 	// Define a valid message given the parameters above
 	msg := types.MsgUpdateTradeRoute{
-		Authority: Authority,
-
-		RewardDenom: RewardDenom,
-		HostDenom:   HostDenom,
-
-		PoolId:                 poolId,
-		MaxAllowedSwapLossRate: maxAllowedSwapLossRate,
-		MinSwapAmount:          minSwapAmount,
-		MaxSwapAmount:          maxSwapAmount,
+		Authority:         Authority,
+		RewardDenom:       RewardDenom,
+		HostDenom:         HostDenom,
+		MinTransferAmount: minTransferAmount,
 	}
 
 	// Build out the expected trade route given the above
 	expectedRoute := initialRoute
-	expectedRoute.TradeConfig = types.TradeConfig{
-		PoolId:               poolId,
-		SwapPrice:            sdk.ZeroDec(),
-		PriceUpdateTimestamp: 0,
-
-		MaxAllowedSwapLossRate: sdk.MustNewDecFromStr(maxAllowedSwapLossRate),
-		MinSwapAmount:          minSwapAmount,
-		MaxSwapAmount:          maxSwapAmount,
-	}
+	expectedRoute.MinTransferAmount = minTransferAmount
 
 	// Update the route and confirm the changes persisted
 	s.submitUpdateTradeRouteAndValidate(msg, expectedRoute)
-
-	// Update it again, this time using default args
-	defaultMsg := msg
-	defaultMsg.MaxAllowedSwapLossRate = ""
-	defaultMsg.MaxSwapAmount = sdkmath.ZeroInt()
-
-	expectedRoute.TradeConfig.MaxAllowedSwapLossRate = sdk.MustNewDecFromStr(keeper.DefaultMaxAllowedSwapLossRate)
-	expectedRoute.TradeConfig.MaxSwapAmount = keeper.DefaultMaxSwapAmount
-
-	s.submitUpdateTradeRouteAndValidate(defaultMsg, expectedRoute)
 
 	// Test that an error is thrown if the correct authority is not specified
 	invalidMsg := msg
