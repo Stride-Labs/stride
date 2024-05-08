@@ -236,12 +236,10 @@ func (k Keeper) BuildHostToTradeTransferMsg(
 // ICA tx will kick off transfering the reward tokens from the hostZone withdrawl ICA to the tradeZone trade ICA
 // This will be two hops to unwind the ibc denom through the rewardZone using pfm in the transfer memo
 func (k Keeper) TransferRewardTokensHostToTrade(ctx sdk.Context, amount sdkmath.Int, route types.TradeRoute) error {
-	// If the min swap amount was not set it would be ZeroInt, if positive we need to compare to the amount given
-	//  then if the min swap amount is greater than the current amount, do nothing this epoch to avoid small transfers
-	//  Particularly important for the PFM hop if the reward chain has frictional transfer fees (like noble chain)
-	if route.TradeConfig.MinSwapAmount.GT(amount) {
-		k.Logger(ctx).Info(fmt.Sprintf("Balance of %v is below trade minimum of %v, skipping transfer",
-			amount, route.TradeConfig.MinSwapAmount))
+	// Confirm the reward amount exceeds the transfer threshold, otherwise exit prematurely
+	if route.MinTransferAmount.GT(amount) {
+		k.Logger(ctx).Info(fmt.Sprintf("Balance of %v is below transfer minimum of %v, skipping transfer",
+			amount, route.MinTransferAmount))
 		return nil
 	}
 
