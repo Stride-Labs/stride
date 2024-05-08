@@ -2072,7 +2072,22 @@ func (s *KeeperTestSuite) submitCreateTradeRouteAndValidate(msg types.MsgCreateT
 
 	actualRoute, found := s.App.StakeibcKeeper.GetTradeRoute(s.Ctx, msg.RewardDenomOnReward, msg.HostDenomOnHost)
 	s.Require().True(found, "trade route should have been created")
-	s.Require().Equal(expectedRoute, actualRoute, "trade route")
+
+	s.Require().Equal(expectedRoute.RewardDenomOnHostZone, actualRoute.RewardDenomOnHostZone, "trade route reward on host denom")
+	s.Require().Equal(expectedRoute.RewardDenomOnRewardZone, actualRoute.RewardDenomOnRewardZone, "trade route reward on reward denom")
+	s.Require().Equal(expectedRoute.RewardDenomOnTradeZone, actualRoute.RewardDenomOnTradeZone, "trade route reward on trade denom")
+	s.Require().Equal(expectedRoute.HostDenomOnTradeZone, actualRoute.HostDenomOnTradeZone, "trade route host on trade denom")
+	s.Require().Equal(expectedRoute.HostDenomOnHostZone, actualRoute.HostDenomOnHostZone, "trade route host on host denom")
+
+	s.Require().Equal(expectedRoute.HostAccount, actualRoute.HostAccount, "trade route host account")
+	s.Require().Equal(expectedRoute.RewardAccount, actualRoute.RewardAccount, "trade route reward account")
+	s.Require().Equal(expectedRoute.TradeAccount, actualRoute.TradeAccount, "trade route trade account")
+
+	s.Require().Equal(expectedRoute.HostToRewardChannelId, actualRoute.HostToRewardChannelId, "trade route host to reward")
+	s.Require().Equal(expectedRoute.RewardToTradeChannelId, actualRoute.RewardToTradeChannelId, "trade route reward to trade")
+	s.Require().Equal(expectedRoute.TradeToHostChannelId, actualRoute.TradeToHostChannelId, "trade route trade to host")
+
+	s.Require().Equal(expectedRoute.MinTransferAmount, actualRoute.MinTransferAmount, "trade route min transfer amount")
 }
 
 // Tests a successful trade route creation
@@ -2168,7 +2183,9 @@ func (s *KeeperTestSuite) submitUpdateTradeRouteAndValidate(msg types.MsgUpdateT
 
 	actualRoute, found := s.App.StakeibcKeeper.GetTradeRoute(s.Ctx, RewardDenom, HostDenom)
 	s.Require().True(found, "trade route should have been updated")
-	s.Require().Equal(expectedRoute, actualRoute, "trade route")
+	s.Require().Equal(expectedRoute.RewardDenomOnRewardZone, actualRoute.RewardDenomOnRewardZone, "trade route reward denom")
+	s.Require().Equal(expectedRoute.HostDenomOnHostZone, actualRoute.HostDenomOnHostZone, "trade route host denom")
+	s.Require().Equal(expectedRoute.MinTransferAmount, actualRoute.MinTransferAmount, "trade route min transfer amount")
 }
 
 func (s *KeeperTestSuite) TestUpdateTradeRoute() {

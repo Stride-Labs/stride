@@ -388,7 +388,7 @@ func (s *KeeperTestSuite) SetupTransferRewardTokensHostToTradeTestCase() Transfe
 
 	transferAmount := sdk.NewInt(1000)
 	transferToken := sdk.NewCoin(rewardDenomOnHostZone, transferAmount)
-	minSwapAmount := sdk.NewInt(500)
+	minTransferAmount := sdk.NewInt(500)
 
 	currentTime := s.Ctx.BlockTime()
 	epochLength := time.Second * 10                               // 10 seconds
@@ -417,10 +417,7 @@ func (s *KeeperTestSuite) SetupTransferRewardTokensHostToTradeTestCase() Transfe
 			Address: tradeAddress,
 		},
 
-		TradeConfig: types.TradeConfig{
-			SwapPrice:     sdk.OneDec(),
-			MinSwapAmount: minSwapAmount,
-		},
+		MinTransferAmount: minTransferAmount,
 	}
 
 	// Create an epoch tracker to dictate the timeout
@@ -502,7 +499,7 @@ func (s *KeeperTestSuite) TestTransferRewardTokensHostToTrade_TransferAmountBelo
 
 	// Attempt to call the function with an transfer amount below the min,
 	// it should not submit an ICA
-	invalidTransferAmount := tc.TradeRoute.TradeConfig.MinSwapAmount.Sub(sdkmath.OneInt())
+	invalidTransferAmount := tc.TradeRoute.MinTransferAmount.Sub(sdkmath.OneInt())
 	s.CheckICATxNotSubmitted(tc.PortID, tc.ChannelID, func() error {
 		return s.App.StakeibcKeeper.TransferRewardTokensHostToTrade(s.Ctx, invalidTransferAmount, tc.TradeRoute)
 	})

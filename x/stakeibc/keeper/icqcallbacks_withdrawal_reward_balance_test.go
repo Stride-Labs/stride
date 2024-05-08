@@ -48,10 +48,7 @@ func (s *KeeperTestSuite) SetupWithdrawalRewardBalanceCallbackTestCase() Balance
 			Address: "trade-address",
 		},
 
-		TradeConfig: types.TradeConfig{
-			MinSwapAmount: sdk.ZeroInt(),
-			SwapPrice:     sdk.OneDec(),
-		},
+		MinTransferAmount: sdk.ZeroInt(),
 	}
 	s.App.StakeibcKeeper.SetTradeRoute(s.Ctx, route)
 
@@ -100,9 +97,9 @@ func (s *KeeperTestSuite) TestWithdrawalRewardBalanceCallback_Successful() {
 func (s *KeeperTestSuite) TestWithdrawalRewardBalanceCallback_SuccessfulNoTransfer() {
 	tc := s.SetupWithdrawalRewardBalanceCallbackTestCase()
 
-	// Set min swap amount to be greater than the transfer amount
+	// Set min transfer amount to be greater than the transfer amount
 	route := tc.TradeRoute
-	route.TradeConfig.MinSwapAmount = tc.Balance.Add(sdkmath.OneInt())
+	route.MinTransferAmount = tc.Balance.Add(sdkmath.OneInt())
 	s.App.StakeibcKeeper.SetTradeRoute(s.Ctx, route)
 
 	// ICA inside of TransferRewardTokensHostToTrade should not actually execute because of min_swap_amount
