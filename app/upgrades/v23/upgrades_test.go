@@ -32,7 +32,7 @@ func (s *UpgradeTestSuite) TestUpgrade() {
 		HostDenomOnHostZone:     "host-denom",
 		RewardDenomOnRewardZone: "reward-denom",
 
-		TradeConfig: stakeibctypes.TradeConfig{
+		TradeConfig: stakeibctypes.TradeConfig{ //nolint:staticcheck
 			MinSwapAmount: minTransferAmount,
 		},
 	}

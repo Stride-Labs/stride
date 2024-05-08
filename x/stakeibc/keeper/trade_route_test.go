@@ -56,7 +56,7 @@ func (s *KeeperTestSuite) CreateTradeRoutes() (routes []types.TradeRoute) {
 
 			// TradeConfig is deprecated but we include it so that we can compare with Equals
 			// which would fail otherwise due to uninitialized types
-			TradeConfig: types.TradeConfig{
+			TradeConfig: types.TradeConfig{ //nolint:staticcheck
 				SwapPrice:              sdk.ZeroDec(),
 				MaxAllowedSwapLossRate: sdk.ZeroDec(),
 				MinSwapAmount:          sdkmath.ZeroInt(),
