@@ -738,10 +738,7 @@ func (k msgServer) LSMLiquidStake(goCtx context.Context, msg *types.MsgLSMLiquid
 //				 "host_denom_on_trade": "ibc/hostTokenZZZ",
 //				 "host_denom_on_host": "hostToken",
 //
-//				 "pool_id": 1,
-//				 "max_allowed_swap_loss_rate": "0.05"
-//				 "min_swap_amount": "10000000",
-//				 "max_swap_amount": "1000000000"
+//				 "min_transfer_amount": "10000000",
 //			  }
 //		   ],
 //		   "deposit": "2000000000ustrd"
@@ -854,23 +851,19 @@ func (ms msgServer) DeleteTradeRoute(goCtx context.Context, msg *types.MsgDelete
 	return &types.MsgDeleteTradeRouteResponse{}, nil
 }
 
-// Gov tx to update the trade config of a trade route
+// Gov tx to update the trade route
 //
 // Example proposal:
 //
 //		{
-//		   "title": "Update a the trade config for host chain X",
-//		   "metadata": "Update a the trade config for host chain X",
-//		   "summary": "Update a the trade config for host chain X",
+//		   "title": "Update a the trade route for host chain X",
+//		   "metadata": "Update a the trade route for host chain X",
+//		   "summary": "Update a the trade route for host chain X",
 //		   "messages":[
 //		      {
 //		         "@type": "/stride.stakeibc.MsgUpdateTradeRoute",
 //		         "authority": "stride10d07y265gmmuvt4z0w9aw880jnsr700jefnezl",
-//
-//				 "pool_id": 1,
-//				 "max_allowed_swap_loss_rate": "0.05",
-//				 "min_swap_amount": "10000000",
-//				 "max_swap_amount": "1000000000"
+//				 "min_transfer_amount": "10000000",
 //			  }
 //		   ],
 //		   "deposit": "2000000000ustrd"
