@@ -7,6 +7,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/auth/migrations/legacytx"
 
 	errorsmod "cosmossdk.io/errors"
+	sdkmath "cosmossdk.io/math"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
 
@@ -46,8 +47,8 @@ func (msg *MsgUpdateTradeRoute) ValidateBasic() error {
 		return errorsmod.Wrapf(sdkerrors.ErrNotFound, "missing reward denom")
 	}
 
-	if msg.MinTransferAmount.IsNil() {
-		return errors.New("Min transfer amount must be set")
+	if msg.MinTransferAmount.IsNil() || msg.MinTransferAmount.LT(sdkmath.ZeroInt()) {
+		return errors.New("min transfer amount must be greater than or equal to zero")
 	}
 
 	return nil

@@ -9,6 +9,7 @@ import (
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
 	errorsmod "cosmossdk.io/errors"
+	sdkmath "cosmossdk.io/math"
 	"github.com/cosmos/cosmos-sdk/x/auth/migrations/legacytx"
 )
 
@@ -85,8 +86,8 @@ func (msg *MsgCreateTradeRoute) ValidateBasic() error {
 		return errorsmod.Wrap(err, "invalid host denom on host")
 	}
 
-	if msg.MinTransferAmount.IsNil() {
-		return errors.New("Min transfer amount must be set")
+	if msg.MinTransferAmount.IsNil() || msg.MinTransferAmount.LT(sdkmath.ZeroInt()) {
+		return errors.New("min transfer amount must be greater than or equal to zero")
 	}
 
 	return nil
