@@ -50,8 +50,7 @@ type RewardsSplit struct {
 //
 //  1. Epochly check the reward denom balance in the withdrawal address
 //     on callback, send all this reward denom from withdrawl ICA to trade ICA on the trade zone (OSMOSIS)
-//  2. Epochly check the reward denom balance in trade ICA
-//     on callback, trade all reward denom for host denom defined by pool and routes in params
+//  2. Off-chain swaps of reward denom to host denom
 //  3. Epochly check the host denom balance in trade ICA
 //     on callback, transfer these host denom tokens from trade ICA to withdrawal ICA on original host zone
 //
@@ -316,66 +315,9 @@ func (k Keeper) TransferConvertedTokensTradeToHost(ctx sdk.Context, amount sdkma
 	return nil
 }
 
-// Builds the Osmosis swap message to trade reward tokens for host tokens
-// Depending on min and max swap amounts set in the route, it is possible not the full amount given will swap
-// The minimum amount of tokens that can come out of the trade is calculated using a price from the pool
-func (k Keeper) BuildSwapMsg(rewardAmount sdkmath.Int, route types.TradeRoute) (msg types.MsgSwapExactAmountIn, err error) {
-	// Validate the trade ICA was registered
-	tradeIcaAddress := route.TradeAccount.Address
-	if tradeIcaAddress == "" {
-		return msg, errorsmod.Wrapf(types.ErrICAAccountNotFound, "no trade account found for %s", route.Description())
-	}
-
-	// If the max swap amount was not set it would be ZeroInt, if positive we need to compare to the amount given
-	//  then if max swap amount is LTE to amount full swap is possible so amount is fine, otherwise set amount to max
-	tradeConfig := route.TradeConfig
-	if tradeConfig.MaxSwapAmount.IsPositive() && rewardAmount.GT(tradeConfig.MaxSwapAmount) {
-		rewardAmount = tradeConfig.MaxSwapAmount
-	}
-
-	// See if pool swap price has been set to a valid ratio
-	// The only time this should not be set is right after the pool is added,
-	// before an ICQ has been submitted for the price
-	if tradeConfig.SwapPrice.IsZero() {
-		return msg, fmt.Errorf("Price not found for pool %d", tradeConfig.PoolId)
-	}
-
-	// If there is a valid price, use it to set a floor for the acceptable minimum output tokens
-	// minOut is the minimum number of HostDenom tokens we must receive or the swap will fail
-	//
-	// To calculate minOut, we first convert the rewardAmount into units of HostDenom,
-	//   and then we multiply by (1 - MaxAllowedSwapLossRate)
-	//
-	// The price on the trade route represents the ratio of host denom to reward denom
-	// So, to convert from units of RewardTokens to units of HostTokens,
-	// we multiply the reward amount by the price:
-	//   AmountInHost = AmountInReward * SwapPrice
-	rewardAmountConverted := sdk.NewDecFromInt(rewardAmount).Mul(tradeConfig.SwapPrice)
-	minOutPercentage := sdk.OneDec().Sub(tradeConfig.MaxAllowedSwapLossRate)
-	minOut := rewardAmountConverted.Mul(minOutPercentage).TruncateInt()
-
-	tradeTokens := sdk.NewCoin(route.RewardDenomOnTradeZone, rewardAmount)
-
-	// Prepare Osmosis GAMM module MsgSwapExactAmountIn from the trade account to perform the trade
-	// If we want to generalize in the future, write swap message generation funcs for each DEX type,
-	// decide which msg generation function to call based on check of which tradeZone was passed in
-	routes := []types.SwapAmountInRoute{{
-		PoolId:        tradeConfig.PoolId,
-		TokenOutDenom: route.HostDenomOnTradeZone,
-	}}
-	msg = types.MsgSwapExactAmountIn{
-		Sender:            tradeIcaAddress,
-		Routes:            routes,
-		TokenIn:           tradeTokens,
-		TokenOutMinAmount: minOut,
-	}
-
-	return msg, nil
-}
-
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // ICQ calls for remote ICA balances
-// There is a single trade zone (hardcoded as Osmosis for now but maybe additional DEXes allowed in the future)
+// There is a single trade zone
 // We have to initialize a single hostZone object for the trade zone once in initialization and
 // then it can be used in all these calls
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -481,18 +423,12 @@ func (k Keeper) TradeConvertedBalanceQuery(ctx sdk.Context, route types.TradeRou
 	return nil
 }
 
-////////////////////////////////////////////////////////////////////////////////////////////////////
+// Main epochly trigger for the trade route tokens swap
+//
 // The current design assumes foreign reward tokens start and end in the hostZone withdrawal address
 // Step 1: transfer reward tokens to trade chain
-// Step 2: perform the swap with as many reward tokens as possible
+// Step 2: (off-chain) perform the swap in small batches
 // Step 3: return the swapped tokens to the withdrawal ICA on hostZone
-// Independently there is an ICQ to get the swap price and update it in the keeper state
-//
-// Because the swaps have limits on how many tokens can be used to avoid slippage,
-// the swaps and price checks happen on a faster (hourly) cadence than the transfers (stride epochly)
-////////////////////////////////////////////////////////////////////////////////////////////////////
-
-// Helper function to be run stride epochly, kicks off queries on specific denoms on route
 func (k Keeper) TransferAllRewardTokens(ctx sdk.Context) {
 	for _, route := range k.GetAllTradeRoutes(ctx) {
 		// Step 1: ICQ reward balance on hostZone, transfer funds with unwinding to trade chain
