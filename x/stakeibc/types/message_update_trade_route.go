@@ -1,11 +1,12 @@
 package types
 
 import (
+	"errors"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/auth/migrations/legacytx"
 
 	errorsmod "cosmossdk.io/errors"
-	sdkmath "cosmossdk.io/math"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
 
@@ -45,18 +46,8 @@ func (msg *MsgUpdateTradeRoute) ValidateBasic() error {
 		return errorsmod.Wrapf(sdkerrors.ErrNotFound, "missing reward denom")
 	}
 
-	if msg.PoolId < 1 {
-		return errorsmod.Wrap(sdkerrors.ErrInvalidRequest, "invalid pool id")
-	}
-	if msg.MaxSwapAmount.GT(sdkmath.ZeroInt()) && msg.MinSwapAmount.GT(msg.MaxSwapAmount) {
-		return errorsmod.Wrap(sdkerrors.ErrInvalidRequest, "min swap amount cannot be greater than max swap amount")
-	}
-	maxAllowedSwapLossRate, err := sdk.NewDecFromStr(msg.MaxAllowedSwapLossRate)
-	if err != nil {
-		return errorsmod.Wrapf(err, "unable to cast max allowed swap loss rate to a decimal")
-	}
-	if maxAllowedSwapLossRate.LT(sdk.ZeroDec()) || maxAllowedSwapLossRate.GT(sdk.OneDec()) {
-		return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "max allowed swap loss rate must be between 0 and 1")
+	if msg.MinTransferAmount.IsNil() {
+		return errors.New("Min transfer amount must be set")
 	}
 
 	return nil
