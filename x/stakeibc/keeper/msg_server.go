@@ -27,9 +27,7 @@ var (
 	CommunityPoolStakeHoldingAddressKey  = "community-pool-stake"
 	CommunityPoolRedeemHoldingAddressKey = "community-pool-redeem"
 
-	DefaultMaxAllowedSwapLossRate = "0.05"
-	DefaultMaxSwapAmount          = sdkmath.NewIntWithDecimal(10, 24) // 10e24
-	DefaultMaxMessagesPerIcaTx    = uint64(32)
+	DefaultMaxMessagesPerIcaTx = uint64(32)
 )
 
 type msgServer struct {
@@ -740,10 +738,7 @@ func (k msgServer) LSMLiquidStake(goCtx context.Context, msg *types.MsgLSMLiquid
 //				 "host_denom_on_trade": "ibc/hostTokenZZZ",
 //				 "host_denom_on_host": "hostToken",
 //
-//				 "pool_id": 1,
-//				 "max_allowed_swap_loss_rate": "0.05"
-//				 "min_swap_amount": "10000000",
-//				 "max_swap_amount": "1000000000"
+//				 "min_transfer_amount": "10000000",
 //			  }
 //		   ],
 //		   "deposit": "2000000000ustrd"
@@ -795,27 +790,6 @@ func (ms msgServer) CreateTradeRoute(goCtx context.Context, msg *types.MsgCreate
 		return nil, errorsmod.Wrapf(err, "unable to register the trade ICA account")
 	}
 
-	// If a max allowed swap loss is not provided, use the default
-	maxAllowedSwapLossRate := msg.MaxAllowedSwapLossRate
-	if maxAllowedSwapLossRate == "" {
-		maxAllowedSwapLossRate = DefaultMaxAllowedSwapLossRate
-	}
-	maxSwapAmount := msg.MaxSwapAmount
-	if maxSwapAmount.IsZero() {
-		maxSwapAmount = DefaultMaxSwapAmount
-	}
-
-	// Create the trade config to specify parameters needed for the swap
-	tradeConfig := types.TradeConfig{
-		PoolId:               msg.PoolId,
-		SwapPrice:            sdk.ZeroDec(), // this should only ever be set by ICQ so initialize to blank
-		PriceUpdateTimestamp: 0,
-
-		MaxAllowedSwapLossRate: sdk.MustNewDecFromStr(maxAllowedSwapLossRate),
-		MinSwapAmount:          msg.MinSwapAmount,
-		MaxSwapAmount:          maxSwapAmount,
-	}
-
 	// Finally build and store the main trade route
 	tradeRoute := types.TradeRoute{
 		RewardDenomOnHostZone:   msg.RewardDenomOnHost,
@@ -832,7 +806,7 @@ func (ms msgServer) CreateTradeRoute(goCtx context.Context, msg *types.MsgCreate
 		RewardToTradeChannelId: msg.RewardToTradeTransferChannelId,
 		TradeToHostChannelId:   msg.TradeToHostTransferChannelId,
 
-		TradeConfig: tradeConfig,
+		MinTransferAmount: msg.MinTransferAmount,
 	}
 
 	ms.Keeper.SetTradeRoute(ctx, tradeRoute)
@@ -877,23 +851,19 @@ func (ms msgServer) DeleteTradeRoute(goCtx context.Context, msg *types.MsgDelete
 	return &types.MsgDeleteTradeRouteResponse{}, nil
 }
 
-// Gov tx to update the trade config of a trade route
+// Gov tx to update the trade route
 //
 // Example proposal:
 //
 //		{
-//		   "title": "Update a the trade config for host chain X",
-//		   "metadata": "Update a the trade config for host chain X",
-//		   "summary": "Update a the trade config for host chain X",
+//		   "title": "Update a the trade route for host chain X",
+//		   "metadata": "Update a the trade route for host chain X",
+//		   "summary": "Update a the trade route for host chain X",
 //		   "messages":[
 //		      {
 //		         "@type": "/stride.stakeibc.MsgUpdateTradeRoute",
 //		         "authority": "stride10d07y265gmmuvt4z0w9aw880jnsr700jefnezl",
-//
-//				 "pool_id": 1,
-//				 "max_allowed_swap_loss_rate": "0.05",
-//				 "min_swap_amount": "10000000",
-//				 "max_swap_amount": "1000000000"
+//				 "min_transfer_amount": "10000000",
 //			  }
 //		   ],
 //		   "deposit": "2000000000ustrd"
@@ -912,27 +882,7 @@ func (ms msgServer) UpdateTradeRoute(goCtx context.Context, msg *types.MsgUpdate
 			"no trade route for rewardDenom %s and hostDenom %s", msg.RewardDenom, msg.HostDenom)
 	}
 
-	maxAllowedSwapLossRate := msg.MaxAllowedSwapLossRate
-	if maxAllowedSwapLossRate == "" {
-		maxAllowedSwapLossRate = DefaultMaxAllowedSwapLossRate
-	}
-	maxSwapAmount := msg.MaxSwapAmount
-	if maxSwapAmount.IsZero() {
-		maxSwapAmount = DefaultMaxSwapAmount
-	}
-
-	updatedConfig := types.TradeConfig{
-		PoolId: msg.PoolId,
-
-		SwapPrice:            sdk.ZeroDec(),
-		PriceUpdateTimestamp: 0,
-
-		MaxAllowedSwapLossRate: sdk.MustNewDecFromStr(maxAllowedSwapLossRate),
-		MinSwapAmount:          msg.MinSwapAmount,
-		MaxSwapAmount:          maxSwapAmount,
-	}
-
-	route.TradeConfig = updatedConfig
+	route.MinTransferAmount = msg.MinTransferAmount
 	ms.Keeper.SetTradeRoute(ctx, route)
 
 	return &types.MsgUpdateTradeRouteResponse{}, nil

@@ -18,10 +18,7 @@ func TestMsgUpdateTradeRoute(t *testing.T) {
 	authority := authtypes.NewModuleAddress(govtypes.ModuleName).String()
 
 	validDenom := "denom"
-	validPoolId := uint64(1)
-	validMaxAllowedSwapLossRate := "0.05"
-	validMinSwapAmount := sdkmath.NewInt(100)
-	validMaxSwapAmount := sdkmath.NewInt(10000)
+	validMinTransferAmount := sdkmath.NewInt(100)
 
 	tests := []struct {
 		name string
@@ -31,118 +28,60 @@ func TestMsgUpdateTradeRoute(t *testing.T) {
 		{
 			name: "successful message",
 			msg: types.MsgUpdateTradeRoute{
-				Authority:              authority,
-				HostDenom:              validDenom,
-				RewardDenom:            validDenom,
-				PoolId:                 validPoolId,
-				MaxAllowedSwapLossRate: validMaxAllowedSwapLossRate,
-				MinSwapAmount:          validMinSwapAmount,
-				MaxSwapAmount:          validMaxSwapAmount,
+				Authority:         authority,
+				HostDenom:         validDenom,
+				RewardDenom:       validDenom,
+				MinTransferAmount: validMinTransferAmount,
 			},
 		},
 		{
 			name: "invalid authority",
 			msg: types.MsgUpdateTradeRoute{
-				Authority:              "",
-				HostDenom:              validDenom,
-				RewardDenom:            validDenom,
-				PoolId:                 validPoolId,
-				MaxAllowedSwapLossRate: validMaxAllowedSwapLossRate,
-				MinSwapAmount:          validMinSwapAmount,
-				MaxSwapAmount:          validMaxSwapAmount,
+				Authority:         "",
+				HostDenom:         validDenom,
+				RewardDenom:       validDenom,
+				MinTransferAmount: validMinTransferAmount,
 			},
 			err: "invalid authority address",
 		},
 		{
 			name: "invalid host denom",
 			msg: types.MsgUpdateTradeRoute{
-				Authority:              authority,
-				HostDenom:              "",
-				RewardDenom:            validDenom,
-				PoolId:                 validPoolId,
-				MaxAllowedSwapLossRate: validMaxAllowedSwapLossRate,
-				MinSwapAmount:          validMinSwapAmount,
-				MaxSwapAmount:          validMaxSwapAmount,
+				Authority:         authority,
+				HostDenom:         "",
+				RewardDenom:       validDenom,
+				MinTransferAmount: validMinTransferAmount,
 			},
 			err: "missing host denom",
 		},
 		{
 			name: "invalid reward denom",
 			msg: types.MsgUpdateTradeRoute{
-				Authority:              authority,
-				HostDenom:              validDenom,
-				RewardDenom:            "",
-				PoolId:                 validPoolId,
-				MaxAllowedSwapLossRate: validMaxAllowedSwapLossRate,
-				MinSwapAmount:          validMinSwapAmount,
-				MaxSwapAmount:          validMaxSwapAmount,
+				Authority:         authority,
+				HostDenom:         validDenom,
+				RewardDenom:       "",
+				MinTransferAmount: validMinTransferAmount,
 			},
 			err: "missing reward denom",
 		},
 		{
-			name: "invalid pool id",
+			name: "invalid min transfer amount - nil",
 			msg: types.MsgUpdateTradeRoute{
-				Authority:              authority,
-				HostDenom:              validDenom,
-				RewardDenom:            validDenom,
-				PoolId:                 0,
-				MaxAllowedSwapLossRate: validMaxAllowedSwapLossRate,
-				MinSwapAmount:          validMinSwapAmount,
-				MaxSwapAmount:          validMaxSwapAmount,
+				Authority:   authority,
+				HostDenom:   validDenom,
+				RewardDenom: validDenom,
 			},
-			err: "invalid pool id",
+			err: "min transfer amount must be greater than or equal to zero",
 		},
 		{
-			name: "invalid swap loss rate - negative",
+			name: "invalid min transfer amount - negative",
 			msg: types.MsgUpdateTradeRoute{
-				Authority:              authority,
-				HostDenom:              validDenom,
-				RewardDenom:            validDenom,
-				PoolId:                 validPoolId,
-				MaxAllowedSwapLossRate: "-0.01",
-				MinSwapAmount:          validMinSwapAmount,
-				MaxSwapAmount:          validMaxSwapAmount,
+				Authority:         authority,
+				HostDenom:         validDenom,
+				RewardDenom:       validDenom,
+				MinTransferAmount: sdkmath.OneInt().Neg(),
 			},
-			err: "max allowed swap loss rate must be between 0 and 1",
-		},
-		{
-			name: "invalid swap loss rate - greater than 1",
-			msg: types.MsgUpdateTradeRoute{
-				Authority:              authority,
-				HostDenom:              validDenom,
-				RewardDenom:            validDenom,
-				PoolId:                 validPoolId,
-				MaxAllowedSwapLossRate: "1.01",
-				MinSwapAmount:          validMinSwapAmount,
-				MaxSwapAmount:          validMaxSwapAmount,
-			},
-			err: "max allowed swap loss rate must be between 0 and 1",
-		},
-		{
-			name: "invalid swap loss rate - can't cast",
-			msg: types.MsgUpdateTradeRoute{
-				Authority:              authority,
-				HostDenom:              validDenom,
-				RewardDenom:            validDenom,
-				PoolId:                 validPoolId,
-				MaxAllowedSwapLossRate: "",
-				MinSwapAmount:          validMinSwapAmount,
-				MaxSwapAmount:          validMaxSwapAmount,
-			},
-			err: "unable to cast max allowed swap loss rate to a decimal",
-		},
-		{
-			name: "invalid min/max swap amount",
-			msg: types.MsgUpdateTradeRoute{
-				Authority:              authority,
-				HostDenom:              validDenom,
-				RewardDenom:            validDenom,
-				PoolId:                 validPoolId,
-				MaxAllowedSwapLossRate: validMaxAllowedSwapLossRate,
-				MinSwapAmount:          sdkmath.NewInt(10),
-				MaxSwapAmount:          sdkmath.NewInt(5),
-			},
-			err: "min swap amount cannot be greater than max swap amount",
+			err: "min transfer amount must be greater than or equal to zero",
 		},
 	}
 

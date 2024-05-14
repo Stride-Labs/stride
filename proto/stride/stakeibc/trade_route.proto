@@ -7,8 +7,13 @@ import "cosmos_proto/cosmos.proto";
 
 option go_package = "github.com/Stride-Labs/stride/v22/x/stakeibc/types";
 
+// Deprecated, this configuration is no longer needed since swaps
+// are executed off-chain via authz
+//
 // Stores pool information needed to execute the swap along a trade route
 message TradeConfig {
+  option deprecated = true;
+
   // Currently Osmosis is the only trade chain so this is an osmosis pool id
   uint64 pool_id = 1;
 
@@ -84,7 +89,18 @@ message TradeRoute {
   // zone, back to the host zone. This is the channel ID on the trade zone side
   string trade_to_host_channel_id = 11;
 
+  // Minimum amount of reward token that must be accumulated before
+  // the tokens are transferred to the trade ICA
+  string min_transfer_amount = 13 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable) = false
+  ];
+
+  // Deprecated, the trades are now executed off-chain via authz
+  // so the trade configuration is no longer needed
+  //
   // specifies the configuration needed to execute the swap
   // such as pool_id, slippage, min trade amount, etc.
-  TradeConfig trade_config = 12 [ (gogoproto.nullable) = false ];
+  TradeConfig trade_config = 12
+      [ deprecated = true, (gogoproto.nullable) = false ];
 }

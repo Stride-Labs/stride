@@ -245,24 +245,39 @@ message MsgCreateTradeRoute {
   // the host zone's native denom (e.g. dydx on dYdX)
   string host_denom_on_host = 12;
 
+  // Deprecated, the trades are now executed off-chain via authz
+  //
   // The osmosis pool ID
-  uint64 pool_id = 13;
+  uint64 pool_id = 13 [ deprecated = true ];
 
+  // Deprecated, the trades are now executed off-chain via authz
+  //
   // Threshold defining the percentage of tokens that could be lost in the trade
   // This captures both the loss from slippage and from a stale price on stride
   // "0.05" means the output from the trade can be no less than a 5% deviation
   // from the current value
-  string max_allowed_swap_loss_rate = 14;
+  string max_allowed_swap_loss_rate = 14 [ deprecated = true ];
 
+  // Deprecated, the trades are now executed off-chain via authz
+  //
   // minimum amount of reward tokens to initate a swap
   // if not provided, defaults to 0
   string min_swap_amount = 15 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
     (gogoproto.nullable) = false
   ];
+  // Deprecated, the trades are now executed off-chain via authz
+  //
   // maximum amount of reward tokens in a single swap
   // if not provided, defaults to 10e24
   string max_swap_amount = 16 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable) = false
+  ];
+
+  // Minimum amount of reward token that must be accumulated before
+  // the tokens are transferred to the trade ICA
+  string min_transfer_amount = 17 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
     (gogoproto.nullable) = false
   ];
@@ -299,24 +314,41 @@ message MsgUpdateTradeRoute {
   // The host zone's denom in it's native form (e.g. dydx)
   string host_denom = 3;
 
+  // Deprecated, the trades are now executed off-chain via authz
+  //
   // The osmosis pool ID
-  uint64 pool_id = 4;
+  uint64 pool_id = 4 [ deprecated = true ];
 
+  // Deprecated, the trades are now executed off-chain via authz
+  //
   // Threshold defining the percentage of tokens that could be lost in the trade
   // This captures both the loss from slippage and from a stale price on stride
   // "0.05" means the output from the trade can be no less than a 5% deviation
   // from the current value
-  string max_allowed_swap_loss_rate = 5;
+  string max_allowed_swap_loss_rate = 5 [ deprecated = true ];
 
+  // Deprecated, the trades are now executed off-chain via authz
+  //
   // minimum amount of reward tokens to initate a swap
   // if not provided, defaults to 0
   string min_swap_amount = 6 [
+    deprecated = true,
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
     (gogoproto.nullable) = false
   ];
+  // Deprecated, the trades are now executed off-chain via authz
+  //
   // maximum amount of reward tokens in a single swap
   // if not provided, defaults to 10e24
   string max_swap_amount = 7 [
+    deprecated = true,
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable) = false
+  ];
+
+  // Minimum amount of reward token that must be accumulated before
+  // the tokens are transferred to the trade ICA
+  string min_transfer_amount = 17 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
     (gogoproto.nullable) = false
   ];
