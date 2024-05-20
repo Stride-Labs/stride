@@ -249,7 +249,6 @@ func (k Keeper) GetUnbondingICAMessages(
 	totalNativeAmount sdkmath.Int,
 	totalStAmount sdkmath.Int,
 	prioritizedUnbondCapacity []ValidatorUnbondCapacity,
-	batchSize int,
 ) (msgs []proto.Message, unbondings []*types.SplitUndelegation, err error) {
 	// Calculate the implied redmeption rate from the totals
 	impliedRedemptionRate := sdk.NewDecFromInt(totalNativeAmount).Quo(sdk.NewDecFromInt(totalStAmount))
@@ -390,7 +389,6 @@ func (k Keeper) UnbondFromHostZone(ctx sdk.Context, hostZone types.HostZone) (er
 		totalNativeUnbondAmount,
 		totalStBurnAmount,
 		prioritizedUnbondCapacity,
-		undelegateBatchSize,
 	)
 	if err != nil {
 		return err
@@ -402,9 +400,6 @@ func (k Keeper) UnbondFromHostZone(ctx sdk.Context, hostZone types.HostZone) (er
 	}
 
 	// Send the messages in batches so the gas limit isn't exceedeed
-	// NOTE: With the current implementation, an error is thrown upstream if there are
-	// more messages than undelegateBatchSize - so there should only be one iteration in this loop
-	// This is because the undelegation callback is not currently setup to handle multiple batches
 	for start := 0; start < len(msgs); start += undelegateBatchSize {
 		end := start + undelegateBatchSize
 		if end > len(msgs) {

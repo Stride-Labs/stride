@@ -18,8 +18,10 @@ import (
 )
 
 type ValidatorUnbonding struct {
-	Validator    string
+	Validator string
+	// TODO: Rename to NativeAmount
 	UnbondAmount sdkmath.Int
+	StAmount     sdkmath.Int
 }
 
 type UnbondingTestCase struct {
@@ -1004,104 +1006,98 @@ func (s *KeeperTestSuite) TestGetUnbondingICAMessages() {
 		DelegationIcaAddress: delegationAddress,
 	}
 
-	batchSize := 4
 	validatorCapacities := []keeper.ValidatorUnbondCapacity{
 		{ValidatorAddress: "val1", Capacity: sdkmath.NewInt(100)},
 		{ValidatorAddress: "val2", Capacity: sdkmath.NewInt(200)},
 		{ValidatorAddress: "val3", Capacity: sdkmath.NewInt(300)},
 		{ValidatorAddress: "val4", Capacity: sdkmath.NewInt(400)},
-
-		// This validator will fall out of the batch and will be redistributed
-		{ValidatorAddress: "val5", Capacity: sdkmath.NewInt(1000)},
-	}
-
-	// Set the current delegation to 1000 + capacity so after their delegation
-	// after the first pass at unbonding is left at 1000
-	// This is so that we can simulate consolidating messages after reaching
-	// the capacity of the first four validators
-	for i, capacity := range validatorCapacities[:batchSize] {
-		capacity.CurrentDelegation = sdkmath.NewInt(1000).Add(capacity.Capacity)
-		validatorCapacities[i] = capacity
 	}
 
 	testCases := []struct {
 		name               string
-		totalUnbondAmount  sdkmath.Int
+		totalNativeAmount  sdkmath.Int
+		totalStAmount      sdkmath.Int
 		expectedUnbondings []ValidatorUnbonding
 		expectedError      string
 	}{
 		{
 			name:              "unbond val1 partially",
-			totalUnbondAmount: sdkmath.NewInt(50),
+			totalNativeAmount: sdkmath.NewInt(50),
+			totalStAmount:     sdkmath.NewInt(50), // RR: 1.0
 			expectedUnbondings: []ValidatorUnbonding{
-				{Validator: "val1", UnbondAmount: sdkmath.NewInt(50)},
+				{Validator: "val1", UnbondAmount: sdkmath.NewInt(50), StAmount: sdkmath.NewInt(50)},
 			},
 		},
 		{
 			name:              "unbond val1 fully",
-			totalUnbondAmount: sdkmath.NewInt(100),
+			totalNativeAmount: sdkmath.NewInt(100),
+			totalStAmount:     sdkmath.NewInt(50), // RR: 2.0
 			expectedUnbondings: []ValidatorUnbonding{
-				{Validator: "val1", UnbondAmount: sdkmath.NewInt(100)},
+				{Validator: "val1", UnbondAmount: sdkmath.NewInt(100), StAmount: sdkmath.NewInt(50)},
 			},
 		},
 		{
 			name:              "unbond val1 fully and val2 partially",
-			totalUnbondAmount: sdkmath.NewInt(200),
+			totalNativeAmount: sdkmath.NewInt(200),
+			totalStAmount:     sdkmath.NewInt(200), // RR: 1.0
 			expectedUnbondings: []ValidatorUnbonding{
-				{Validator: "val1", UnbondAmount: sdkmath.NewInt(100)},
-				{Validator: "val2", UnbondAmount: sdkmath.NewInt(100)},
+				{Validator: "val1", UnbondAmount: sdkmath.NewInt(100), StAmount: sdkmath.NewInt(100)},
+				{Validator: "val2", UnbondAmount: sdkmath.NewInt(100), StAmount: sdkmath.NewInt(100)},
+			},
+		},
+		{
+			name:              "unbond val1 fully and val2 carry over",
+			totalNativeAmount: sdkmath.NewInt(200),
+			totalStAmount:     sdkmath.NewInt(201), // RR: 0.99, will have carry over
+			expectedUnbondings: []ValidatorUnbonding{
+				{Validator: "val1", UnbondAmount: sdkmath.NewInt(100)}, // 100 / (200 / 201) = 100.5 => 100
+				{Validator: "val2", UnbondAmount: sdkmath.NewInt(101)}, // Remainder: 201 - 100 = 101
 			},
 		},
 		{
 			name:              "unbond val1 val2 fully",
-			totalUnbondAmount: sdkmath.NewInt(300),
+			totalNativeAmount: sdkmath.NewInt(300),
+			totalStAmount:     sdkmath.NewInt(200), // RR: 1.5
 			expectedUnbondings: []ValidatorUnbonding{
-				{Validator: "val1", UnbondAmount: sdkmath.NewInt(100)},
-				{Validator: "val2", UnbondAmount: sdkmath.NewInt(200)},
+				{Validator: "val1", UnbondAmount: sdkmath.NewInt(100), StAmount: sdkmath.NewInt(66)},
+				{Validator: "val2", UnbondAmount: sdkmath.NewInt(200), StAmount: sdkmath.NewInt(132)},
 			},
 		},
 		{
 			name:              "unbond val1 val2 fully and val3 partially",
-			totalUnbondAmount: sdkmath.NewInt(450),
+			totalNativeAmount: sdkmath.NewInt(450),
+			totalStAmount:     sdkmath.NewInt(200), // RR: 2.25
 			expectedUnbondings: []ValidatorUnbonding{
-				{Validator: "val1", UnbondAmount: sdkmath.NewInt(100)},
-				{Validator: "val2", UnbondAmount: sdkmath.NewInt(200)},
-				{Validator: "val3", UnbondAmount: sdkmath.NewInt(150)},
+				{Validator: "val1", UnbondAmount: sdkmath.NewInt(100), StAmount: sdkmath.NewInt(44)}, // 100 / 2.25 = 44.4 => 44
+				{Validator: "val2", UnbondAmount: sdkmath.NewInt(200), StAmount: sdkmath.NewInt(88)}, // 100 / 2.25 = 88.8 => 88
+				{Validator: "val3", UnbondAmount: sdkmath.NewInt(150), StAmount: sdkmath.NewInt(68)}, // 200 - 44 - 88 = 68
 			},
 		},
 		{
 			name:              "unbond val1 val2 and val3 fully",
-			totalUnbondAmount: sdkmath.NewInt(600),
+			totalNativeAmount: sdkmath.NewInt(600),
+			totalStAmount:     sdkmath.NewInt(600), // RR: 1.0
 			expectedUnbondings: []ValidatorUnbonding{
-				{Validator: "val1", UnbondAmount: sdkmath.NewInt(100)},
-				{Validator: "val2", UnbondAmount: sdkmath.NewInt(200)},
-				{Validator: "val3", UnbondAmount: sdkmath.NewInt(300)},
+				{Validator: "val1", UnbondAmount: sdkmath.NewInt(100), StAmount: sdkmath.NewInt(100)},
+				{Validator: "val2", UnbondAmount: sdkmath.NewInt(200), StAmount: sdkmath.NewInt(200)},
+				{Validator: "val3", UnbondAmount: sdkmath.NewInt(300), StAmount: sdkmath.NewInt(300)},
 			},
 		},
 		{
 			name:              "full unbonding",
-			totalUnbondAmount: sdkmath.NewInt(1000),
+			totalNativeAmount: sdkmath.NewInt(1000),
+			totalStAmount:     sdkmath.NewInt(500), // RR: 2.0
 			expectedUnbondings: []ValidatorUnbonding{
-				{Validator: "val1", UnbondAmount: sdkmath.NewInt(100)},
-				{Validator: "val2", UnbondAmount: sdkmath.NewInt(200)},
-				{Validator: "val3", UnbondAmount: sdkmath.NewInt(300)},
-				{Validator: "val4", UnbondAmount: sdkmath.NewInt(400)},
-			},
-		},
-		{
-			name:              "unbonding requires message consolidation",
-			totalUnbondAmount: sdkmath.NewInt(2000), // excess of 1000
-			expectedUnbondings: []ValidatorUnbonding{
-				// Redistributed excess denoted after plus sign
-				{Validator: "val1", UnbondAmount: sdkmath.NewInt(100 + 250)},
-				{Validator: "val2", UnbondAmount: sdkmath.NewInt(200 + 250)},
-				{Validator: "val3", UnbondAmount: sdkmath.NewInt(300 + 250)},
-				{Validator: "val4", UnbondAmount: sdkmath.NewInt(400 + 250)},
+				{Validator: "val1", UnbondAmount: sdkmath.NewInt(100), StAmount: sdkmath.NewInt(200)},
+				{Validator: "val2", UnbondAmount: sdkmath.NewInt(200), StAmount: sdkmath.NewInt(400)},
+				{Validator: "val3", UnbondAmount: sdkmath.NewInt(300), StAmount: sdkmath.NewInt(600)},
+				{Validator: "val4", UnbondAmount: sdkmath.NewInt(400), StAmount: sdkmath.NewInt(800)},
 			},
 		},
 		{
 			name:              "insufficient delegation",
-			totalUnbondAmount: sdkmath.NewInt(2001),
+			totalNativeAmount: sdkmath.NewInt(1001),
+			totalStAmount:     sdkmath.NewInt(1001),
 			expectedError:     "unable to unbond full amount",
 		},
 	}
@@ -1111,9 +1107,9 @@ func (s *KeeperTestSuite) TestGetUnbondingICAMessages() {
 			// Get the unbonding ICA messages for the test case
 			actualMessages, actualSplits, actualError := s.App.StakeibcKeeper.GetUnbondingICAMessages(
 				hostZone,
-				tc.totalUnbondAmount,
+				tc.totalNativeAmount,
+				tc.totalStAmount,
 				validatorCapacities,
-				batchSize,
 			)
 
 			// If this is an error test case, check the error message
@@ -1123,7 +1119,7 @@ func (s *KeeperTestSuite) TestGetUnbondingICAMessages() {
 			}
 
 			// For the success case, check the error number of unbondings
-			s.Require().NoError(actualError, "no error expected when unbonding %v", tc.totalUnbondAmount)
+			s.Require().NoError(actualError, "no error expected when unbonding %v", tc.totalNativeAmount)
 			s.Require().Len(actualMessages, len(tc.expectedUnbondings), "number of undelegate messages")
 			s.Require().Len(actualSplits, len(tc.expectedUnbondings), "number of validator splits")
 
@@ -1142,7 +1138,8 @@ func (s *KeeperTestSuite) TestGetUnbondingICAMessages() {
 
 				// Check the callback
 				s.Require().Equal(expected.Validator, actualSplit.Validator, "callback validator for %s", valAddress)
-				s.Require().Equal(expected.UnbondAmount.Int64(), actualSplit.Amount.Int64(), "callback amount %s", valAddress)
+				s.Require().Equal(expected.UnbondAmount.Int64(), actualSplit.NativeTokenAmount.Int64(), "callback native amount %s", valAddress)
+				s.Require().Equal(expected.StAmount.Int64(), actualSplit.StTokenAmount.Int64(), "callback st amount %s", valAddress)
 			}
 		})
 	}
