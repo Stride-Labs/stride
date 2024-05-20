@@ -1149,6 +1149,82 @@ func (s *KeeperTestSuite) TestGetUnbondingICAMessages() {
 	}
 }
 
+func (s *KeeperTestSuite) TestBatchSubmitUndelegateICAMessages() {
+	// The test will submit ICA's across 10 validators, in batches of 3
+	// There should be 4 ICA's submitted
+	batchSize := 3
+	numValidators := 10
+	expectedNumberOfIcas := 4
+	epochUnbondingRecordIds := []uint64{1}
+
+	// Create the delegation ICA channel
+	delegationAccountOwner := types.FormatHostZoneICAOwner(HostChainId, types.ICAAccountType_DELEGATION)
+	delegationChannelID, delegationPortID := s.CreateICAChannel(delegationAccountOwner)
+
+	// Create a host zone
+	hostZone := types.HostZone{
+		ChainId:              HostChainId,
+		ConnectionId:         ibctesting.FirstConnectionID,
+		HostDenom:            Atom,
+		DelegationIcaAddress: "cosmos_DELEGATION",
+	}
+
+	// Build the ICA messages and callback for each validator
+	var validators []*types.Validator
+	var undelegateMsgs []proto.Message
+	var unbondings []*types.SplitUndelegation
+	for i := 0; i < numValidators; i++ {
+		validatorAddress := fmt.Sprintf("val%d", i)
+		validators = append(validators, &types.Validator{Address: validatorAddress})
+
+		undelegateMsgs = append(undelegateMsgs, &stakingtypes.MsgUndelegate{
+			DelegatorAddress: hostZone.DelegationIcaAddress,
+			ValidatorAddress: validatorAddress,
+			Amount:           sdk.NewCoin(hostZone.HostDenom, sdkmath.NewInt(100)),
+		})
+
+		unbondings = append(unbondings, &types.SplitUndelegation{
+			Validator:         validatorAddress,
+			StTokenAmount:     sdkmath.NewInt(100),
+			NativeTokenAmount: sdkmath.NewInt(100),
+		})
+	}
+
+	// Store the validators on the host zone
+	hostZone.Validators = validators
+	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
+
+	// Mock the epoch tracker to timeout 90% through the epoch
+	strideEpochTracker := types.EpochTracker{
+		EpochIdentifier:    epochstypes.DAY_EPOCH,
+		Duration:           10_000_000_000,                                                // 10 second epochs
+		NextEpochStartTime: uint64(s.Coordinator.CurrentTime.UnixNano() + 30_000_000_000), // dictates timeout
+	}
+	s.App.StakeibcKeeper.SetEpochTracker(s.Ctx, strideEpochTracker)
+
+	// Get tx seq number before the ICA was submitted to check whether an ICA was submitted
+	startSequence := s.MustGetNextSequenceNumber(delegationPortID, delegationChannelID)
+
+	// Submit the unbondings
+	err := s.App.StakeibcKeeper.BatchSubmitUndelegateICAMessages(
+		s.Ctx,
+		hostZone,
+		epochUnbondingRecordIds,
+		undelegateMsgs,
+		unbondings,
+		batchSize,
+	)
+	s.Require().NoError(err, "no error expected when submitting batches")
+
+	// Confirm the sequence number iterated by the expected number of ICAs
+	endSequence := s.MustGetNextSequenceNumber(delegationPortID, delegationChannelID)
+	s.Require().Equal(startSequence+uint64(expectedNumberOfIcas), endSequence, "expected number of ICA submissions")
+
+	// Confirm the number of callback data's matches the expected number of ICAs
+	callbackData := s.App.IcacallbacksKeeper.GetAllCallbackData(s.Ctx)
+	s.Require().Equal(expectedNumberOfIcas, len(callbackData), "number of callback datas")
+}
+
 func (s *KeeperTestSuite) SetupInitiateAllHostZoneUnbondings() {
 	s.CreateICAChannel("GAIA.DELEGATION")
 
