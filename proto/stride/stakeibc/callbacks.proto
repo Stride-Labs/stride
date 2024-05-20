@@ -17,6 +17,18 @@ message SplitDelegation {
   ];
 }
 
+message SplitUndelegation {
+  string validator = 1;
+  string st_token_amount = 2 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable) = false
+  ];
+  string native_token_amount = 3 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable) = false
+  ];
+}
+
 message DelegateCallback {
   string host_zone_id = 1;
   uint64 deposit_record_id = 2;
@@ -39,7 +51,7 @@ message ReinvestCallback {
 
 message UndelegateCallback {
   string host_zone_id = 1;
-  repeated SplitDelegation split_delegations = 2;
+  repeated SplitUndelegation split_undelegations = 2;
   repeated uint64 epoch_unbonding_record_ids = 3;
 }
 
