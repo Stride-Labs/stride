@@ -43,7 +43,8 @@ func (c *ValidatorUnbondCapacity) GetBalanceRatio() (sdk.Dec, error) {
 
 // Returns all the host zone unbonding records that should unbond this epoch
 // Records are returned as a mapping of epoch unbonding record ID to host zone unbonding record
-// Records ready to be unbonded are identified by status UNBONDING_QUEUE and a non-zero native amount
+// Records ready to be unbonded are identified by status UNBONDING_QUEUE or UNBONDING_FAILED
+// and a non-zero native amount
 func (k Keeper) GetQueuedHostZoneUnbondingRecords(
 	ctx sdk.Context,
 	chainId string,
@@ -65,14 +66,18 @@ func (k Keeper) GetQueuedHostZoneUnbondingRecords(
 	return epochNumbers, epochToHostZoneUnbondingMap
 }
 
-// Gets the total unbonded amount for a host zone by looping through the epoch unbonding records
-// Also returns the epoch unbonding record ids
-func (k Keeper) GetTotalUnbondAmount(ctx sdk.Context, hostZoneUnbondingRecords map[uint64]recordstypes.HostZoneUnbonding) (totalUnbonded sdkmath.Int) {
-	totalUnbonded = sdk.ZeroInt()
+// Loops through each epoch unbonding record and returns the total number of native tokens
+// that should be unbonded, and the total number of stTokens that should be burned
+func (k Keeper) GetTotalUnbondAmount(
+	hostZoneUnbondingRecords map[uint64]recordstypes.HostZoneUnbonding,
+) (totalNativeAmount sdkmath.Int, totalStAmount sdkmath.Int) {
+	totalNativeAmount = sdk.ZeroInt()
+	totalStAmount = sdk.ZeroInt()
 	for _, hostZoneRecord := range hostZoneUnbondingRecords {
-		totalUnbonded = totalUnbonded.Add(hostZoneRecord.NativeTokenAmount)
+		totalNativeAmount = totalNativeAmount.Add(hostZoneRecord.NativeTokensToUnbond)
+		totalStAmount = totalStAmount.Add(hostZoneRecord.StTokensToBurn)
 	}
-	return totalUnbonded
+	return totalNativeAmount, totalStAmount
 }
 
 // Given a list of user redemption record IDs and a redemption rate, sets the native token
@@ -123,19 +128,35 @@ func (k Keeper) RefreshHostZoneUnbondingNativeTokenAmount(
 
 	// Then set the total on the host zone unbonding record
 	hostZoneUnbondingRecord.NativeTokenAmount = totalNativeAmount
+	hostZoneUnbondingRecord.NativeTokensToUnbond = totalNativeAmount
+	hostZoneUnbondingRecord.StTokensToBurn = hostZoneUnbondingRecord.StTokenAmount
 	return k.RecordsKeeper.SetHostZoneUnbondingRecord(ctx, epochNumber, chainId, hostZoneUnbondingRecord)
 }
 
 // Given a mapping of epoch unbonding record IDs to host zone unbonding records,
 // sets the native token amount across all epoch unbonding records, host zone unbonding records,
 // and user redemption records, using the most updated redemption rate
-func (k Keeper) RefreshUnbondingNativeTokenAmounts(ctx sdk.Context, hostZoneUnbondings map[uint64]recordstypes.HostZoneUnbonding) error {
+// Returns an updated mapping with the refreshed amounts
+func (k Keeper) RefreshUnbondingNativeTokenAmounts(
+	ctx sdk.Context,
+	chainId string,
+	hostZoneUnbondings map[uint64]recordstypes.HostZoneUnbonding,
+) (refreshedHostZoneUnbondings map[uint64]recordstypes.HostZoneUnbonding, err error) {
+	// Refresh the amount for all records in status UNBONDING_QUEUE
+	// We don't want to refresh the failed unbonding records
 	for epochNumber, hostZoneUnbondingRecord := range hostZoneUnbondings {
+		if hostZoneUnbondingRecord.Status != recordstypes.HostZoneUnbonding_UNBONDING_QUEUE {
+			continue
+		}
 		if err := k.RefreshHostZoneUnbondingNativeTokenAmount(ctx, epochNumber, hostZoneUnbondingRecord); err != nil {
-			return err
+			return nil, err
 		}
 	}
-	return nil
+
+	// Once the values have been refreshed, return an updated map
+	_, refreshedHostZoneUnbondings = k.GetQueuedHostZoneUnbondingRecords(ctx, chainId)
+
+	return refreshedHostZoneUnbondings, nil
 }
 
 // Determine the unbonding capacity that each validator has
@@ -225,12 +246,17 @@ func SortUnbondingCapacityByPriority(validatorUnbondCapacity []ValidatorUnbondCa
 // Returns the list of messages and the callback data for the ICA
 func (k Keeper) GetUnbondingICAMessages(
 	hostZone types.HostZone,
-	totalUnbondAmount sdkmath.Int,
+	totalNativeAmount sdkmath.Int,
+	totalStAmount sdkmath.Int,
 	prioritizedUnbondCapacity []ValidatorUnbondCapacity,
 	batchSize int,
-) (msgs []proto.Message, unbondings []*types.SplitDelegation, err error) {
+) (msgs []proto.Message, unbondings []*types.SplitUndelegation, err error) {
+	// Calculate the implied redmeption rate from the totals
+	impliedRedemptionRate := sdk.NewDecFromInt(totalNativeAmount).Quo(sdk.NewDecFromInt(totalStAmount))
+
 	// Loop through each validator and unbond as much as possible
-	remainingUnbondAmount := totalUnbondAmount
+	remainingUnbondAmount := totalNativeAmount
+	remainingStAmount := totalStAmount
 	for _, validatorCapacity := range prioritizedUnbondCapacity {
 		// Break once all unbonding has been accounted for
 		if remainingUnbondAmount.IsZero() {
@@ -247,26 +273,23 @@ func (k Keeper) GetUnbondingICAMessages(
 		}
 		remainingUnbondAmount = remainingUnbondAmount.Sub(unbondAmount)
 
+		// Calculate the associated stToken amount
+		// There may be some precision error so the last validator should
+		// get all the remaining stTokens
+		var stAmount sdkmath.Int
+		if remainingUnbondAmount.IsZero() {
+			stAmount = remainingStAmount
+		} else {
+			stAmount = sdk.NewDecFromInt(unbondAmount).Quo(impliedRedemptionRate).TruncateInt()
+		}
+		remainingStAmount = remainingStAmount.Sub(stAmount)
+
 		// Build the validator splits for the callback
-		unbondings = append(unbondings, &types.SplitDelegation{
-			Validator: validatorCapacity.ValidatorAddress,
-			Amount:    unbondAmount,
+		unbondings = append(unbondings, &types.SplitUndelegation{
+			Validator:         validatorCapacity.ValidatorAddress,
+			NativeTokenAmount: unbondAmount,
+			StTokenAmount:     stAmount,
 		})
-	}
-
-	// If the number of messages exceeds the batch size, shrink it down the the batch size
-	// by re-distributing the exceess
-	if len(unbondings) > batchSize {
-		unbondings, err = k.ConsolidateUnbondingMessages(totalUnbondAmount, unbondings, prioritizedUnbondCapacity, batchSize)
-		if err != nil {
-			return msgs, unbondings, errorsmod.Wrapf(err, "unable to consolidate unbonding messages")
-		}
-
-		// Sanity check that the number of messages is now under the batch size
-		if len(unbondings) > batchSize {
-			return msgs, unbondings, errorsmod.Wrapf(sdkerrors.ErrInvalidRequest,
-				fmt.Sprintf("too many undelegation messages (%d) for host zone %s", len(msgs), hostZone.ChainId))
-		}
 	}
 
 	// Build the undelegate ICA messages from the splits
@@ -274,118 +297,17 @@ func (k Keeper) GetUnbondingICAMessages(
 		msgs = append(msgs, &stakingtypes.MsgUndelegate{
 			DelegatorAddress: hostZone.DelegationIcaAddress,
 			ValidatorAddress: unbonding.Validator,
-			Amount:           sdk.NewCoin(hostZone.HostDenom, unbonding.Amount),
+			Amount:           sdk.NewCoin(hostZone.HostDenom, unbonding.NativeTokenAmount),
 		})
 	}
 
 	// Sanity check that we had enough capacity to unbond
 	if !remainingUnbondAmount.IsZero() {
 		return msgs, unbondings,
-			fmt.Errorf("unable to unbond full amount (%v) from %v", totalUnbondAmount, hostZone.ChainId)
+			fmt.Errorf("unable to unbond full amount (%v) from %v", totalNativeAmount, hostZone.ChainId)
 	}
 
 	return msgs, unbondings, nil
-}
-
-// In the event that the number of generated undelegate messages exceeds the batch size,
-// reduce the number of messages by dividing any excess amongst proportionally based on
-// the remaining delegation
-// This will no longer be necessary after undelegations to 32+ validators is supported
-// NOTE: This assumes unbondCapacities are stored in order of capacity
-func (k Keeper) ConsolidateUnbondingMessages(
-	totalUnbondAmount sdkmath.Int,
-	initialUnbondings []*types.SplitDelegation,
-	unbondCapacities []ValidatorUnbondCapacity,
-	batchSize int,
-) (finalUnbondings []*types.SplitDelegation, err error) {
-	// Grab the first {batch_size} number of messages from the list
-	// This will consist of the validators with the most capacity
-	unbondingsBatch := initialUnbondings[:batchSize]
-
-	// Calculate the amount that was initially meant to be unbonded from that batch,
-	// and determine the remainder that needs to be redistributed
-	initialUnbondAmountFromBatch := sdkmath.ZeroInt()
-	initialUnbondAmountFromBatchByVal := map[string]sdkmath.Int{}
-	for _, unbonding := range unbondingsBatch {
-		initialUnbondAmountFromBatch = initialUnbondAmountFromBatch.Add(unbonding.Amount)
-		initialUnbondAmountFromBatchByVal[unbonding.Validator] = unbonding.Amount
-	}
-	totalExcessAmount := totalUnbondAmount.Sub(initialUnbondAmountFromBatch)
-
-	// Store the delegation of each validator that was expected *after* the originally
-	// planned unbonding went through
-	// e.g. If the validator had 10 before unbonding, and in the first pass, 3 was
-	//      supposed to be unbonded, their delegation after the first pass is 7
-	totalRemainingDelegationsAcrossBatch := sdk.ZeroDec()
-	remainingDelegationsInBatchByVal := map[string]sdk.Dec{}
-	for _, capacity := range unbondCapacities {
-		// Only add validators that were in the initial unbonding plan
-		// The delegation after the first pass is calculated by taking the "current delegation"
-		// (aka delegation before unbonding) and subtracting the unbond amount
-		if initialUnbondAmount, ok := initialUnbondAmountFromBatchByVal[capacity.ValidatorAddress]; ok {
-			remainingDelegation := sdk.NewDecFromInt(capacity.CurrentDelegation.Sub(initialUnbondAmount))
-
-			remainingDelegationsInBatchByVal[capacity.ValidatorAddress] = remainingDelegation
-			totalRemainingDelegationsAcrossBatch = totalRemainingDelegationsAcrossBatch.Add(remainingDelegation)
-		}
-	}
-
-	// This is to protect against a division by zero error, but this would technically be possible
-	// if the 32 validators with the most capacity were all 0 weight and we wanted to unbond more
-	// than their combined delegation
-	if totalRemainingDelegationsAcrossBatch.IsZero() {
-		return finalUnbondings, errors.New("no delegations to redistribute during consolidation")
-	}
-
-	// Before we start dividing up the excess, make sure we have sufficient stake in the capped set to cover it
-	if sdk.NewDecFromInt(totalExcessAmount).GT(totalRemainingDelegationsAcrossBatch) {
-		return finalUnbondings, errors.New("not enough exisiting delegation in the batch to cover the excess")
-	}
-
-	// Loop through the original unbonding messages and proportionally divide out
-	// the excess amongst the validators in the set
-	excessRemaining := totalExcessAmount
-	for i := range unbondingsBatch {
-		unbonding := unbondingsBatch[i]
-		remainingDelegation, ok := remainingDelegationsInBatchByVal[unbonding.Validator]
-		if !ok {
-			return finalUnbondings, fmt.Errorf("validator %s not found in initial unbonding plan", unbonding.Validator)
-		}
-
-		var validatorUnbondIncrease sdkmath.Int
-		if i != len(unbondingsBatch)-1 {
-			// For all but the last validator, calculate their unbonding increase by
-			// splitting the excess proportionally in line with their remaining delegation
-			unbondIncreaseProportion := remainingDelegation.Quo(totalRemainingDelegationsAcrossBatch)
-			validatorUnbondIncrease = sdk.NewDecFromInt(totalExcessAmount).Mul(unbondIncreaseProportion).TruncateInt()
-
-			// Decrement excess
-			excessRemaining = excessRemaining.Sub(validatorUnbondIncrease)
-		} else {
-			// The last validator in the set should get any remainder from int truction
-			// First confirm the validator has sufficient remaining delegation to cover this
-			if sdk.NewDecFromInt(excessRemaining).GT(remainingDelegation) {
-				return finalUnbondings,
-					fmt.Errorf("validator %s does not have enough remaining delegation (%v) to cover the excess (%v)",
-						unbonding.Validator, remainingDelegation, excessRemaining)
-			}
-			validatorUnbondIncrease = excessRemaining
-		}
-
-		// Build the updated message with the new amount
-		finalUnbondings = append(finalUnbondings, &types.SplitDelegation{
-			Validator: unbonding.Validator,
-			Amount:    unbonding.Amount.Add(validatorUnbondIncrease),
-		})
-	}
-
-	// Sanity check that we've accounted for all the excess
-	if excessRemaining.IsZero() {
-		return finalUnbondings, fmt.Errorf("Unable to redistribute all excess - initial: %v, remaining: %v",
-			totalExcessAmount, excessRemaining)
-	}
-
-	return finalUnbondings, nil
 }
 
 // Submits undelegation ICA messages for a given host zone
@@ -398,7 +320,7 @@ func (k Keeper) ConsolidateUnbondingMessages(
 //
 // Context: Over time, as LSM Liquid stakes are accepted, the total stake managed by the protocol becomes unbalanced
 // as liquid stakes are not aligned with the validator weights. This is only rebalanced once per unbonding period
-func (k Keeper) UnbondFromHostZone(ctx sdk.Context, hostZone types.HostZone) error {
+func (k Keeper) UnbondFromHostZone(ctx sdk.Context, hostZone types.HostZone) (err error) {
 	k.Logger(ctx).Info(utils.LogWithHostZone(hostZone.ChainId,
 		"Preparing MsgUndelegates from the delegation account to each validator"))
 
@@ -408,40 +330,37 @@ func (k Keeper) UnbondFromHostZone(ctx sdk.Context, hostZone types.HostZone) err
 	}
 
 	// Get the list of relevant records that should unbond
-	_, initialEpochNumberToHostZoneUnbondingMap := k.GetQueuedHostZoneUnbondingRecords(ctx, hostZone.ChainId)
+	epochUnbondingRecordIds, epochNumberToHostZoneUnbonding := k.GetQueuedHostZoneUnbondingRecords(ctx, hostZone.ChainId)
 
 	// Update the native unbond amount on all relevant records
 	// The native amount is calculated from the stTokens
-	if err := k.RefreshUnbondingNativeTokenAmounts(ctx, initialEpochNumberToHostZoneUnbondingMap); err != nil {
+	epochNumberToHostZoneUnbonding, err = k.RefreshUnbondingNativeTokenAmounts(ctx, hostZone.ChainId, epochNumberToHostZoneUnbonding)
+	if err != nil {
 		return err
 	}
 
-	// Fetch the records again with the updated native amounts
-	epochUnbondingRecordIds, epochNumberToHostZoneUnbondingMap := k.GetQueuedHostZoneUnbondingRecords(ctx, hostZone.ChainId)
-
 	// Sum the total number of native tokens that from the records above that are ready to unbond
-	totalUnbondAmount := k.GetTotalUnbondAmount(ctx, epochNumberToHostZoneUnbondingMap)
+	totalNativeUnbondAmount, totalStBurnAmount := k.GetTotalUnbondAmount(epochNumberToHostZoneUnbonding)
 	k.Logger(ctx).Info(utils.LogWithHostZone(hostZone.ChainId,
-		"Total unbonded amount: %v%s", totalUnbondAmount, hostZone.HostDenom))
+		"Total unbonded amount: %v%s, Total burn amount: %vst%s",
+		totalNativeUnbondAmount, hostZone.HostDenom, totalStBurnAmount, hostZone.HostDenom))
 
 	// If there's nothing to unbond, return and move on to the next host zone
-	if totalUnbondAmount.IsZero() {
+	if totalNativeUnbondAmount.IsZero() {
 		return nil
 	}
 
-	// Determine the ideal balanced delegation for each validator after the unbonding
-	//   (as if we were to unbond and then rebalance)
-	// This will serve as the starting point for determining how much to unbond each validator
-	// first, get the total delegations _excluding_ validators with slash_query_in_progress
+	// Determine the total eligible unbond amount - excluding delegations to validators with a slash query in progress
 	totalValidDelegationBeforeUnbonding := sdkmath.ZeroInt()
 	for _, validator := range hostZone.Validators {
 		if !validator.SlashQueryInProgress {
 			totalValidDelegationBeforeUnbonding = totalValidDelegationBeforeUnbonding.Add(validator.Delegation)
 		}
 	}
-	// then subtract out the amount to unbond
-	delegationAfterUnbonding := totalValidDelegationBeforeUnbonding.Sub(totalUnbondAmount)
 
+	// Determine the ideal balanced delegation for each validator after the unbonding
+	//   (as if we were to unbond and then rebalance)
+	delegationAfterUnbonding := totalValidDelegationBeforeUnbonding.Sub(totalNativeUnbondAmount)
 	balancedDelegationsAfterUnbonding, err := k.GetTargetValAmtsForHostZone(ctx, hostZone, delegationAfterUnbonding)
 	if err != nil {
 		return errorsmod.Wrapf(err, "unable to get target val amounts for host zone %s", hostZone.ChainId)
@@ -468,7 +387,8 @@ func (k Keeper) UnbondFromHostZone(ctx sdk.Context, hostZone types.HostZone) err
 	undelegateBatchSize := int(hostZone.MaxMessagesPerIcaTx)
 	msgs, unbondings, err := k.GetUnbondingICAMessages(
 		hostZone,
-		totalUnbondAmount,
+		totalNativeUnbondAmount,
+		totalStBurnAmount,
 		prioritizedUnbondCapacity,
 		undelegateBatchSize,
 	)
@@ -497,7 +417,7 @@ func (k Keeper) UnbondFromHostZone(ctx sdk.Context, hostZone types.HostZone) err
 		// Store the callback data
 		undelegateCallback := types.UndelegateCallback{
 			HostZoneId:              hostZone.ChainId,
-			SplitDelegations:        unbondingsBatch,
+			SplitUndelegations:      unbondingsBatch,
 			EpochUnbondingRecordIds: epochUnbondingRecordIds,
 		}
 		callbackArgsBz, err := proto.Marshal(&undelegateCallback)
@@ -536,7 +456,7 @@ func (k Keeper) UnbondFromHostZone(ctx sdk.Context, hostZone types.HostZone) err
 		return err
 	}
 
-	EmitUndelegationEvent(ctx, hostZone, totalUnbondAmount)
+	EmitUndelegationEvent(ctx, hostZone, totalNativeUnbondAmount)
 
 	return nil
 }
