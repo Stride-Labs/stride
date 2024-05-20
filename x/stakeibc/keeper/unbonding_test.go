@@ -1155,7 +1155,7 @@ func (s *KeeperTestSuite) TestBatchSubmitUndelegateICAMessages() {
 	batchSize := 3
 	numValidators := 10
 	expectedNumberOfIcas := 4
-	epochUnbondingRecordIds := []uint64{1}
+	epochUnbondingRecordIds := []uint64{1} // arbitrary
 
 	// Create the delegation ICA channel
 	delegationAccountOwner := types.FormatHostZoneICAOwner(HostChainId, types.ICAAccountType_DELEGATION)
