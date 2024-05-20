@@ -742,33 +742,47 @@ func (s *KeeperTestSuite) TestRefreshUnbondingNativeTokenAmounts() {
 	initialHostZoneUnbondingA := recordtypes.HostZoneUnbonding{
 		HostZoneId:            chainA,
 		UserRedemptionRecords: []string{"A", "B"},
+		StTokenAmount:         sdkmath.NewInt(10_000),
 	}
 	expectedHostZoneUnbondAmountA := expectedUserNativeAmounts["A"].Add(expectedUserNativeAmounts["B"])
+	expectedStToBurnAmountA := initialHostZoneUnbondingA.StTokenAmount
 
 	initialHostZoneUnbondingB := recordtypes.HostZoneUnbonding{
 		HostZoneId:            chainB,
 		UserRedemptionRecords: []string{"C", "D"},
+		StTokenAmount:         sdkmath.NewInt(20_000),
 	}
 	expectedHostZoneUnbondAmountB := expectedUserNativeAmounts["C"].Add(expectedUserNativeAmounts["D"])
+	expectedStToBurnAmountB := initialHostZoneUnbondingB.StTokenAmount
 
 	// Call refresh for both hosts
 	epochToHostZoneMap := map[uint64]recordtypes.HostZoneUnbonding{
 		epochNumberA: initialHostZoneUnbondingA,
 		epochNumberB: initialHostZoneUnbondingB,
 	}
-	err := s.App.StakeibcKeeper.RefreshUnbondingNativeTokenAmounts(s.Ctx, epochToHostZoneMap)
+	refreshedEpochToHostZoneMap, err := s.App.StakeibcKeeper.RefreshUnbondingNativeTokenAmounts(s.Ctx, chainA, epochToHostZoneMap)
 	s.Require().NoError(err, "no error expected when refreshing unbond amount")
 
 	// Confirm the host zone unbonding records were updated
 	updatedHostZoneUnbondingA, found := s.App.RecordsKeeper.GetHostZoneUnbondingByChainId(s.Ctx, epochNumberA, chainA)
-	actualHostZoneUnbondAmountA := updatedHostZoneUnbondingA.NativeTokenAmount
 	s.Require().True(found, "host zone unbonding record for %s should have been found", chainA)
-	s.Require().Equal(expectedHostZoneUnbondAmountA, actualHostZoneUnbondAmountA, "host zone unbonding native amount A")
+
+	actualNativeAmountA := updatedHostZoneUnbondingA.NativeTokenAmount
+	actualNativeToUnbondAmountA := updatedHostZoneUnbondingA.NativeTokensToUnbond
+	actualStToBurnA := updatedHostZoneUnbondingA.StTokensToBurn
+	s.Require().Equal(expectedHostZoneUnbondAmountA, actualNativeAmountA, "host zone unbonding native amount A")
+	s.Require().Equal(expectedHostZoneUnbondAmountA, actualNativeToUnbondAmountA, "host zone unbonding amount to unbond A")
+	s.Require().Equal(expectedStToBurnAmountA, actualStToBurnA, "host zone unbonding amount to burn A")
 
 	updatedHostZoneUnbondingB, found := s.App.RecordsKeeper.GetHostZoneUnbondingByChainId(s.Ctx, epochNumberB, chainB)
-	actualHostZoneUnbondAmountB := updatedHostZoneUnbondingB.NativeTokenAmount
 	s.Require().True(found, "host zone unbonding record for %s should have been found", chainB)
-	s.Require().Equal(expectedHostZoneUnbondAmountB, actualHostZoneUnbondAmountB, "host zone unbonding native amount B")
+
+	actualNativeAmountB := updatedHostZoneUnbondingB.NativeTokenAmount
+	actualNativeToUnbondAmountB := updatedHostZoneUnbondingB.NativeTokensToUnbond
+	actualStToBurnB := updatedHostZoneUnbondingB.StTokensToBurn
+	s.Require().Equal(expectedHostZoneUnbondAmountB, actualNativeAmountB, "host zone unbonding native amount B")
+	s.Require().Equal(expectedHostZoneUnbondAmountB, actualNativeToUnbondAmountB, "host zone unbonding amount to unbond B")
+	s.Require().Equal(expectedStToBurnAmountB, actualStToBurnB, "host zone unbonding amount to burn B")
 
 	// Confirm all user redemption records were updated
 	for id, expectedNativeAmount := range expectedUserNativeAmounts {
@@ -777,9 +791,15 @@ func (s *KeeperTestSuite) TestRefreshUnbondingNativeTokenAmounts() {
 		s.Require().Equal(expectedNativeAmount, record.NativeTokenAmount, "user redemption record %s native amount", id)
 	}
 
+	// Confirm the returned map also has the updated values
+	*updatedHostZoneUnbondingA = refreshedEpochToHostZoneMap[epochNumberA]
+	*updatedHostZoneUnbondingB = refreshedEpochToHostZoneMap[epochNumberB]
+	s.Require().Equal(expectedHostZoneUnbondAmountA, updatedHostZoneUnbondingA.NativeTokenAmount, "returned map native amount A")
+	s.Require().Equal(expectedHostZoneUnbondAmountB, updatedHostZoneUnbondingB.NativeTokenAmount, "returned map native amount B")
+
 	// Remove one of the host zones and confirm it errors
 	s.App.StakeibcKeeper.RemoveHostZone(s.Ctx, chainA)
-	err = s.App.StakeibcKeeper.RefreshUnbondingNativeTokenAmounts(s.Ctx, epochToHostZoneMap)
+	_, err = s.App.StakeibcKeeper.RefreshUnbondingNativeTokenAmounts(s.Ctx, chainA, epochToHostZoneMap)
 	s.Require().ErrorContains(err, "host zone not found")
 }
 
