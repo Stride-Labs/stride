@@ -309,6 +309,60 @@ func (k Keeper) GetUnbondingICAMessages(
 	return msgs, unbondings, nil
 }
 
+// Submit undelegate ICA messages in small batches to reduce the gas size per tx
+func (k Keeper) BatchSubmitUndelegateICAMessages(
+	ctx sdk.Context,
+	hostZone types.HostZone,
+	epochUnbondingRecordIds []uint64,
+	msgs []proto.Message,
+	unbondings []*types.SplitUndelegation,
+	batchSize int,
+) error {
+	// Iterate the full list of messages and submit in batches
+	for start := 0; start < len(msgs); start += batchSize {
+		end := start + batchSize
+		if end > len(msgs) {
+			end = len(msgs)
+		}
+
+		msgsBatch := msgs[start:end]
+		unbondingsBatch := unbondings[start:end]
+
+		// Store the callback data
+		undelegateCallback := types.UndelegateCallback{
+			HostZoneId:              hostZone.ChainId,
+			SplitUndelegations:      unbondingsBatch,
+			EpochUnbondingRecordIds: epochUnbondingRecordIds,
+		}
+		callbackArgsBz, err := proto.Marshal(&undelegateCallback)
+		if err != nil {
+			return errorsmod.Wrap(err, "unable to marshal undelegate callback args")
+		}
+
+		// Submit the undelegation ICA
+		if _, err := k.SubmitTxsDayEpoch(
+			ctx,
+			hostZone.ConnectionId,
+			msgsBatch,
+			types.ICAAccountType_DELEGATION,
+			ICACallbackID_Undelegate,
+			callbackArgsBz,
+		); err != nil {
+			return errorsmod.Wrapf(err, "unable to submit unbonding ICA for %s", hostZone.ChainId)
+		}
+
+		// flag the delegation change in progress on each validator
+		for _, unbonding := range unbondingsBatch {
+			if err := k.IncrementValidatorDelegationChangesInProgress(&hostZone, unbonding.Validator); err != nil {
+				return err
+			}
+		}
+		k.SetHostZone(ctx, hostZone)
+	}
+
+	return nil
+}
+
 // Submits undelegation ICA messages for a given host zone
 //
 // First, the total unbond amount is determined from the epoch unbonding records
@@ -400,45 +454,9 @@ func (k Keeper) UnbondFromHostZone(ctx sdk.Context, hostZone types.HostZone) (er
 	}
 
 	// Send the messages in batches so the gas limit isn't exceedeed
-	for start := 0; start < len(msgs); start += undelegateBatchSize {
-		end := start + undelegateBatchSize
-		if end > len(msgs) {
-			end = len(msgs)
-		}
-
-		msgsBatch := msgs[start:end]
-		unbondingsBatch := unbondings[start:end]
-
-		// Store the callback data
-		undelegateCallback := types.UndelegateCallback{
-			HostZoneId:              hostZone.ChainId,
-			SplitUndelegations:      unbondingsBatch,
-			EpochUnbondingRecordIds: epochUnbondingRecordIds,
-		}
-		callbackArgsBz, err := proto.Marshal(&undelegateCallback)
-		if err != nil {
-			return errorsmod.Wrap(err, "unable to marshal undelegate callback args")
-		}
-
-		// Submit the undelegation ICA
-		if _, err := k.SubmitTxsDayEpoch(
-			ctx,
-			hostZone.ConnectionId,
-			msgsBatch,
-			types.ICAAccountType_DELEGATION,
-			ICACallbackID_Undelegate,
-			callbackArgsBz,
-		); err != nil {
-			return errorsmod.Wrapf(err, "unable to submit unbonding ICA for %s", hostZone.ChainId)
-		}
-
-		// flag the delegation change in progress on each validator
-		for _, unbonding := range unbondingsBatch {
-			if err := k.IncrementValidatorDelegationChangesInProgress(&hostZone, unbonding.Validator); err != nil {
-				return err
-			}
-		}
-		k.SetHostZone(ctx, hostZone)
+	err = k.BatchSubmitUndelegateICAMessages(ctx, hostZone, epochUnbondingRecordIds, msgs, unbondings, undelegateBatchSize)
+	if err != nil {
+		return err
 	}
 
 	// Update the epoch unbonding record status
