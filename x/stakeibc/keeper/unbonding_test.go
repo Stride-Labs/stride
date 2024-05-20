@@ -601,7 +601,7 @@ func (s *KeeperTestSuite) TestGetQueuedHostZoneUnbondingRecords() {
 			},
 		},
 		{
-			// Has relevant host zone unbonding (the failed one), so epoch number is included
+			// Has relevant host zone unbonding (the retry one), so epoch number is included
 			EpochNumber: uint64(4),
 			HostZoneUnbondings: []*recordtypes.HostZoneUnbonding{
 				{
@@ -614,7 +614,7 @@ func (s *KeeperTestSuite) TestGetQueuedHostZoneUnbondingRecords() {
 					// Included
 					HostZoneId:        HostChainId,
 					NativeTokenAmount: sdkmath.NewInt(8),
-					Status:            recordtypes.HostZoneUnbonding_UNBONDING_FAILED,
+					Status:            recordtypes.HostZoneUnbonding_UNBONDING_RETRY_QUEUE,
 				},
 			},
 		},

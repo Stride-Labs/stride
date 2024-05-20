@@ -43,7 +43,7 @@ func (c *ValidatorUnbondCapacity) GetBalanceRatio() (sdk.Dec, error) {
 
 // Returns all the host zone unbonding records that should unbond this epoch
 // Records are returned as a mapping of epoch unbonding record ID to host zone unbonding record
-// Records ready to be unbonded are identified by status UNBONDING_QUEUE or UNBONDING_FAILED
+// Records ready to be unbonded are identified by status UNBONDING_QUEUE or UNBONDING_RETRY_QUEUE
 // and a non-zero native amount
 func (k Keeper) GetQueuedHostZoneUnbondingRecords(
 	ctx sdk.Context,
