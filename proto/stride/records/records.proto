@@ -59,8 +59,8 @@ message HostZoneUnbonding {
     UNBONDING_QUEUE = 0;
     // unbonding ICA has been submitted
     UNBONDING_IN_PROGRESS = 3;
-    // unbonding ICA failed for at least one batch
-    UNBONDING_FAILED = 5;
+    // unbonding ICA failed for at least one batch and need to be retried
+    UNBONDING_RETRY_QUEUE = 5;
     // unbonding completed on delegate account
     EXIT_TRANSFER_QUEUE = 1;
     // redemption sweep has been submitted
