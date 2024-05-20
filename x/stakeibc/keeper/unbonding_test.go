@@ -632,17 +632,22 @@ func (s *KeeperTestSuite) TestGetQueuedHostZoneUnbondingRecords() {
 
 func (s *KeeperTestSuite) TestGetTotalUnbondAmount() {
 	hostZoneUnbondingRecords := map[uint64]recordtypes.HostZoneUnbonding{
-		1: {NativeTokenAmount: sdkmath.NewInt(1)},
-		2: {NativeTokenAmount: sdkmath.NewInt(2)},
-		3: {NativeTokenAmount: sdkmath.NewInt(3)},
-		4: {NativeTokenAmount: sdkmath.NewInt(4)},
+		1: {NativeTokensToUnbond: sdkmath.NewInt(1), StTokensToBurn: sdkmath.NewInt(5)},
+		2: {NativeTokensToUnbond: sdkmath.NewInt(2), StTokensToBurn: sdkmath.NewInt(6)},
+		3: {NativeTokensToUnbond: sdkmath.NewInt(3), StTokensToBurn: sdkmath.NewInt(7)},
+		4: {NativeTokensToUnbond: sdkmath.NewInt(4), StTokensToBurn: sdkmath.NewInt(8)},
 	}
 	expectedUnbondAmount := sdkmath.NewInt(1 + 2 + 3 + 4)
-	actualUnbondAmount := s.App.StakeibcKeeper.GetTotalUnbondAmount(s.Ctx, hostZoneUnbondingRecords)
+	expectedBurnAmount := sdkmath.NewInt(5 + 6 + 7 + 8)
+
+	actualUnbondAmount, actualBurnAmount := s.App.StakeibcKeeper.GetTotalUnbondAmount(hostZoneUnbondingRecords)
 	s.Require().Equal(expectedUnbondAmount, actualUnbondAmount, "unbond amount")
+	s.Require().Equal(expectedBurnAmount, actualBurnAmount, "burn amount")
 
 	emptyUnbondings := map[uint64]recordtypes.HostZoneUnbonding{}
-	s.Require().Zero(s.App.StakeibcKeeper.GetTotalUnbondAmount(s.Ctx, emptyUnbondings).Int64())
+	actualUnbondAmount, actualBurnAmount = s.App.StakeibcKeeper.GetTotalUnbondAmount(emptyUnbondings)
+	s.Require().Zero(actualUnbondAmount, "expected zero unbondings")
+	s.Require().Zero(actualBurnAmount, "expected zero burn")
 }
 
 func (s *KeeperTestSuite) TestRefreshUserRedemptionRecordNativeAmounts() {
