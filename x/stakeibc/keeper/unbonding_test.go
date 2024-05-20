@@ -140,11 +140,11 @@ func (s *KeeperTestSuite) CheckUnbondingMessages(tc UnbondingTestCase, expectedU
 	s.Require().Equal(tc.expectedUnbondingRecordIds, actualCallback.EpochUnbondingRecordIds, "unbonding record id's on callback")
 
 	// Check splits from callback data align with expected unbondings
-	s.Require().Len(actualCallback.SplitDelegations, len(expectedUnbondings), "number of unbonding messages")
+	s.Require().Len(actualCallback.SplitUndelegations, len(expectedUnbondings), "number of unbonding messages")
 	for i, expected := range expectedUnbondings {
-		actualSplit := actualCallback.SplitDelegations[i]
+		actualSplit := actualCallback.SplitUndelegations[i]
 		s.Require().Equal(expected.Validator, actualSplit.Validator, "callback message validator - index %d", i)
-		s.Require().Equal(expected.UnbondAmount.Int64(), actualSplit.Amount.Int64(), "callback message amount - index %d", i)
+		s.Require().Equal(expected.UnbondAmount.Int64(), actualSplit.NativeTokenAmount.Int64(), "callback message amount - index %d", i)
 	}
 
 	// Check the delegation change in progress was incremented from each that had an unbonding
@@ -601,7 +601,7 @@ func (s *KeeperTestSuite) TestGetQueuedHostZoneUnbondingRecords() {
 			},
 		},
 		{
-			// Has relevant host zone unbonding, so epoch number is included
+			// Has relevant host zone unbonding (the failed one), so epoch number is included
 			EpochNumber: uint64(4),
 			HostZoneUnbondings: []*recordtypes.HostZoneUnbonding{
 				{
@@ -614,7 +614,7 @@ func (s *KeeperTestSuite) TestGetQueuedHostZoneUnbondingRecords() {
 					// Included
 					HostZoneId:        HostChainId,
 					NativeTokenAmount: sdkmath.NewInt(8),
-					Status:            recordtypes.HostZoneUnbonding_UNBONDING_QUEUE,
+					Status:            recordtypes.HostZoneUnbonding_UNBONDING_FAILED,
 				},
 			},
 		},
@@ -648,8 +648,8 @@ func (s *KeeperTestSuite) TestGetTotalUnbondAmount() {
 
 	emptyUnbondings := map[uint64]recordtypes.HostZoneUnbonding{}
 	actualUnbondAmount, actualBurnAmount = s.App.StakeibcKeeper.GetTotalUnbondAmount(emptyUnbondings)
-	s.Require().Zero(actualUnbondAmount, "expected zero unbondings")
-	s.Require().Zero(actualBurnAmount, "expected zero burn")
+	s.Require().Zero(actualUnbondAmount.Int64(), "expected zero unbondings")
+	s.Require().Zero(actualBurnAmount.Int64(), "expected zero burn")
 }
 
 func (s *KeeperTestSuite) TestRefreshUserRedemptionRecordNativeAmounts() {
@@ -745,33 +745,37 @@ func (s *KeeperTestSuite) TestRefreshUnbondingNativeTokenAmounts() {
 		HostZoneId:            chainA,
 		UserRedemptionRecords: []string{"A", "B"},
 		StTokenAmount:         sdkmath.NewInt(10_000),
+		Status:                recordtypes.HostZoneUnbonding_UNBONDING_QUEUE,
 	}
-	expectedHostZoneUnbondAmountA := expectedUserNativeAmounts["A"].Add(expectedUserNativeAmounts["B"])
-	expectedStToBurnAmountA := initialHostZoneUnbondingA.StTokenAmount
+	expectedHostZoneUnbondAmountA := expectedUserNativeAmounts["A"].Add(expectedUserNativeAmounts["B"]).Int64()
+	expectedStToBurnAmountA := initialHostZoneUnbondingA.StTokenAmount.Int64()
 
 	initialHostZoneUnbondingB := recordtypes.HostZoneUnbonding{
 		HostZoneId:            chainB,
 		UserRedemptionRecords: []string{"C", "D"},
 		StTokenAmount:         sdkmath.NewInt(20_000),
+		Status:                recordtypes.HostZoneUnbonding_UNBONDING_QUEUE,
 	}
-	expectedHostZoneUnbondAmountB := expectedUserNativeAmounts["C"].Add(expectedUserNativeAmounts["D"])
-	expectedStToBurnAmountB := initialHostZoneUnbondingB.StTokenAmount
+	expectedHostZoneUnbondAmountB := expectedUserNativeAmounts["C"].Add(expectedUserNativeAmounts["D"]).Int64()
+	expectedStToBurnAmountB := initialHostZoneUnbondingB.StTokenAmount.Int64()
 
 	// Call refresh for both hosts
 	epochToHostZoneMap := map[uint64]recordtypes.HostZoneUnbonding{
 		epochNumberA: initialHostZoneUnbondingA,
 		epochNumberB: initialHostZoneUnbondingB,
 	}
-	refreshedEpochToHostZoneMap, err := s.App.StakeibcKeeper.RefreshUnbondingNativeTokenAmounts(s.Ctx, chainA, epochToHostZoneMap)
+	refreshedEpochToHostZoneMapA, err := s.App.StakeibcKeeper.RefreshUnbondingNativeTokenAmounts(s.Ctx, chainA, epochToHostZoneMap)
+	s.Require().NoError(err, "no error expected when refreshing unbond amount")
+	refreshedEpochToHostZoneMapB, err := s.App.StakeibcKeeper.RefreshUnbondingNativeTokenAmounts(s.Ctx, chainB, epochToHostZoneMap)
 	s.Require().NoError(err, "no error expected when refreshing unbond amount")
 
 	// Confirm the host zone unbonding records were updated
 	updatedHostZoneUnbondingA, found := s.App.RecordsKeeper.GetHostZoneUnbondingByChainId(s.Ctx, epochNumberA, chainA)
 	s.Require().True(found, "host zone unbonding record for %s should have been found", chainA)
 
-	actualNativeAmountA := updatedHostZoneUnbondingA.NativeTokenAmount
-	actualNativeToUnbondAmountA := updatedHostZoneUnbondingA.NativeTokensToUnbond
-	actualStToBurnA := updatedHostZoneUnbondingA.StTokensToBurn
+	actualNativeAmountA := updatedHostZoneUnbondingA.NativeTokenAmount.Int64()
+	actualNativeToUnbondAmountA := updatedHostZoneUnbondingA.NativeTokensToUnbond.Int64()
+	actualStToBurnA := updatedHostZoneUnbondingA.StTokensToBurn.Int64()
 	s.Require().Equal(expectedHostZoneUnbondAmountA, actualNativeAmountA, "host zone unbonding native amount A")
 	s.Require().Equal(expectedHostZoneUnbondAmountA, actualNativeToUnbondAmountA, "host zone unbonding amount to unbond A")
 	s.Require().Equal(expectedStToBurnAmountA, actualStToBurnA, "host zone unbonding amount to burn A")
@@ -779,9 +783,9 @@ func (s *KeeperTestSuite) TestRefreshUnbondingNativeTokenAmounts() {
 	updatedHostZoneUnbondingB, found := s.App.RecordsKeeper.GetHostZoneUnbondingByChainId(s.Ctx, epochNumberB, chainB)
 	s.Require().True(found, "host zone unbonding record for %s should have been found", chainB)
 
-	actualNativeAmountB := updatedHostZoneUnbondingB.NativeTokenAmount
-	actualNativeToUnbondAmountB := updatedHostZoneUnbondingB.NativeTokensToUnbond
-	actualStToBurnB := updatedHostZoneUnbondingB.StTokensToBurn
+	actualNativeAmountB := updatedHostZoneUnbondingB.NativeTokenAmount.Int64()
+	actualNativeToUnbondAmountB := updatedHostZoneUnbondingB.NativeTokensToUnbond.Int64()
+	actualStToBurnB := updatedHostZoneUnbondingB.StTokensToBurn.Int64()
 	s.Require().Equal(expectedHostZoneUnbondAmountB, actualNativeAmountB, "host zone unbonding native amount B")
 	s.Require().Equal(expectedHostZoneUnbondAmountB, actualNativeToUnbondAmountB, "host zone unbonding amount to unbond B")
 	s.Require().Equal(expectedStToBurnAmountB, actualStToBurnB, "host zone unbonding amount to burn B")
@@ -794,10 +798,10 @@ func (s *KeeperTestSuite) TestRefreshUnbondingNativeTokenAmounts() {
 	}
 
 	// Confirm the returned map also has the updated values
-	*updatedHostZoneUnbondingA = refreshedEpochToHostZoneMap[epochNumberA]
-	*updatedHostZoneUnbondingB = refreshedEpochToHostZoneMap[epochNumberB]
-	s.Require().Equal(expectedHostZoneUnbondAmountA, updatedHostZoneUnbondingA.NativeTokenAmount, "returned map native amount A")
-	s.Require().Equal(expectedHostZoneUnbondAmountB, updatedHostZoneUnbondingB.NativeTokenAmount, "returned map native amount B")
+	returnedNativeAmountA := refreshedEpochToHostZoneMapA[epochNumberA].NativeTokensToUnbond.Int64()
+	returnedNativeAmountB := refreshedEpochToHostZoneMapB[epochNumberB].NativeTokensToUnbond.Int64()
+	s.Require().Equal(expectedHostZoneUnbondAmountA, returnedNativeAmountA, "returned map native amount A")
+	s.Require().Equal(expectedHostZoneUnbondAmountB, returnedNativeAmountB, "returned map native amount B")
 
 	// Remove one of the host zones and confirm it errors
 	s.App.StakeibcKeeper.RemoveHostZone(s.Ctx, chainA)
@@ -1050,8 +1054,8 @@ func (s *KeeperTestSuite) TestGetUnbondingICAMessages() {
 			totalNativeAmount: sdkmath.NewInt(200),
 			totalStAmount:     sdkmath.NewInt(201), // RR: 0.99, will have carry over
 			expectedUnbondings: []ValidatorUnbonding{
-				{Validator: "val1", UnbondAmount: sdkmath.NewInt(100)}, // 100 / (200 / 201) = 100.5 => 100
-				{Validator: "val2", UnbondAmount: sdkmath.NewInt(101)}, // Remainder: 201 - 100 = 101
+				{Validator: "val1", UnbondAmount: sdkmath.NewInt(100), StAmount: sdkmath.NewInt(100)}, // 100 / (200 / 201) = 100.5 => 100
+				{Validator: "val2", UnbondAmount: sdkmath.NewInt(100), StAmount: sdkmath.NewInt(101)}, // Remainder: 201 - 100 = 101
 			},
 		},
 		{
@@ -1059,8 +1063,8 @@ func (s *KeeperTestSuite) TestGetUnbondingICAMessages() {
 			totalNativeAmount: sdkmath.NewInt(300),
 			totalStAmount:     sdkmath.NewInt(200), // RR: 1.5
 			expectedUnbondings: []ValidatorUnbonding{
-				{Validator: "val1", UnbondAmount: sdkmath.NewInt(100), StAmount: sdkmath.NewInt(66)},
-				{Validator: "val2", UnbondAmount: sdkmath.NewInt(200), StAmount: sdkmath.NewInt(132)},
+				{Validator: "val1", UnbondAmount: sdkmath.NewInt(100), StAmount: sdkmath.NewInt(66)},  // 200 / 1.5 = 66
+				{Validator: "val2", UnbondAmount: sdkmath.NewInt(200), StAmount: sdkmath.NewInt(134)}, // 200 - 66 = 134
 			},
 		},
 		{
@@ -1088,10 +1092,10 @@ func (s *KeeperTestSuite) TestGetUnbondingICAMessages() {
 			totalNativeAmount: sdkmath.NewInt(1000),
 			totalStAmount:     sdkmath.NewInt(500), // RR: 2.0
 			expectedUnbondings: []ValidatorUnbonding{
-				{Validator: "val1", UnbondAmount: sdkmath.NewInt(100), StAmount: sdkmath.NewInt(200)},
-				{Validator: "val2", UnbondAmount: sdkmath.NewInt(200), StAmount: sdkmath.NewInt(400)},
-				{Validator: "val3", UnbondAmount: sdkmath.NewInt(300), StAmount: sdkmath.NewInt(600)},
-				{Validator: "val4", UnbondAmount: sdkmath.NewInt(400), StAmount: sdkmath.NewInt(800)},
+				{Validator: "val1", UnbondAmount: sdkmath.NewInt(100), StAmount: sdkmath.NewInt(50)},
+				{Validator: "val2", UnbondAmount: sdkmath.NewInt(200), StAmount: sdkmath.NewInt(100)},
+				{Validator: "val3", UnbondAmount: sdkmath.NewInt(300), StAmount: sdkmath.NewInt(150)},
+				{Validator: "val4", UnbondAmount: sdkmath.NewInt(400), StAmount: sdkmath.NewInt(200)},
 			},
 		},
 		{
