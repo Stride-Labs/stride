@@ -105,17 +105,17 @@ func (s *KeeperTestSuite) SetupUndelegateCallback() UndelegateCallbackTestCase {
 	}
 
 	// Mock callback args
-	val1SplitDelegation := types.SplitDelegation{
-		Validator: val1.Address,
-		Amount:    val1UndelegationAmount,
+	val1SplitDelegation := types.SplitUndelegation{
+		Validator:         val1.Address,
+		NativeTokenAmount: val1UndelegationAmount,
 	}
-	val2SplitDelegation := types.SplitDelegation{
-		Validator: val2.Address,
-		Amount:    val2UndelegationAmount,
+	val2SplitDelegation := types.SplitUndelegation{
+		Validator:         val2.Address,
+		NativeTokenAmount: val2UndelegationAmount,
 	}
 	callbackArgs := types.UndelegateCallback{
 		HostZoneId:              HostChainId,
-		SplitDelegations:        []*types.SplitDelegation{&val1SplitDelegation, &val2SplitDelegation},
+		SplitUndelegations:      []*types.SplitUndelegation{&val1SplitDelegation, &val2SplitDelegation},
 		EpochUnbondingRecordIds: []uint64{epochNumber},
 	}
 	callbackArgsBz, err := proto.Marshal(&callbackArgs)

@@ -45,7 +45,7 @@ func (k Keeper) UndelegateCallback(ctx sdk.Context, packet channeltypes.Packet, 
 	if !found {
 		return errorsmod.Wrapf(sdkerrors.ErrKeyNotFound, "Host zone not found: %s", undelegateCallback.HostZoneId)
 	}
-	for _, splitDelegation := range undelegateCallback.SplitDelegations {
+	for _, splitDelegation := range undelegateCallback.SplitUndelegations {
 		if err := k.DecrementValidatorDelegationChangesInProgress(&hostZone, splitDelegation.Validator); err != nil {
 			return err
 		}
@@ -119,8 +119,8 @@ func (k Keeper) UndelegateCallback(ctx sdk.Context, packet channeltypes.Packet, 
 // Decrement the delegation field on the host zone and each validator's delegations after a successful unbonding ICA
 func (k Keeper) UpdateDelegationBalances(ctx sdk.Context, hostZone types.HostZone, undelegateCallback types.UndelegateCallback) error {
 	// Undelegate from each validator and update host zone staked balance, if successful
-	for _, undelegation := range undelegateCallback.SplitDelegations {
-		err := k.AddDelegationToValidator(ctx, &hostZone, undelegation.Validator, undelegation.Amount.Neg(), ICACallbackID_Undelegate)
+	for _, undelegation := range undelegateCallback.SplitUndelegations {
+		err := k.AddDelegationToValidator(ctx, &hostZone, undelegation.Validator, undelegation.NativeTokenAmount.Neg(), ICACallbackID_Undelegate)
 		if err != nil {
 			return err
 		}
