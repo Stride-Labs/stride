@@ -1206,7 +1206,7 @@ func (s *KeeperTestSuite) TestBatchSubmitUndelegateICAMessages() {
 	startSequence := s.MustGetNextSequenceNumber(delegationPortID, delegationChannelID)
 
 	// Submit the unbondings
-	err := s.App.StakeibcKeeper.BatchSubmitUndelegateICAMessages(
+	numTxsSubmitted, err := s.App.StakeibcKeeper.BatchSubmitUndelegateICAMessages(
 		s.Ctx,
 		hostZone,
 		epochUnbondingRecordIds,
@@ -1215,6 +1215,7 @@ func (s *KeeperTestSuite) TestBatchSubmitUndelegateICAMessages() {
 		batchSize,
 	)
 	s.Require().NoError(err, "no error expected when submitting batches")
+	s.Require().Equal(numTxsSubmitted, uint64(expectedNumberOfIcas), "returned number of txs submitted")
 
 	// Confirm the sequence number iterated by the expected number of ICAs
 	endSequence := s.MustGetNextSequenceNumber(delegationPortID, delegationChannelID)

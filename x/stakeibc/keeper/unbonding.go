@@ -317,7 +317,7 @@ func (k Keeper) BatchSubmitUndelegateICAMessages(
 	msgs []proto.Message,
 	unbondings []*types.SplitUndelegation,
 	batchSize int,
-) error {
+) (numTxsSubmitted uint64, err error) {
 	// Iterate the full list of messages and submit in batches
 	for start := 0; start < len(msgs); start += batchSize {
 		end := start + batchSize
@@ -336,7 +336,7 @@ func (k Keeper) BatchSubmitUndelegateICAMessages(
 		}
 		callbackArgsBz, err := proto.Marshal(&undelegateCallback)
 		if err != nil {
-			return errorsmod.Wrap(err, "unable to marshal undelegate callback args")
+			return numTxsSubmitted, errorsmod.Wrap(err, "unable to marshal undelegate callback args")
 		}
 
 		// Submit the undelegation ICA
@@ -348,19 +348,20 @@ func (k Keeper) BatchSubmitUndelegateICAMessages(
 			ICACallbackID_Undelegate,
 			callbackArgsBz,
 		); err != nil {
-			return errorsmod.Wrapf(err, "unable to submit unbonding ICA for %s", hostZone.ChainId)
+			return numTxsSubmitted, errorsmod.Wrapf(err, "unable to submit unbonding ICA for %s", hostZone.ChainId)
 		}
+		numTxsSubmitted += 1
 
 		// flag the delegation change in progress on each validator
 		for _, unbonding := range unbondingsBatch {
 			if err := k.IncrementValidatorDelegationChangesInProgress(&hostZone, unbonding.Validator); err != nil {
-				return err
+				return numTxsSubmitted, err
 			}
 		}
 		k.SetHostZone(ctx, hostZone)
 	}
 
-	return nil
+	return numTxsSubmitted, nil
 }
 
 // Submits undelegation ICA messages for a given host zone
@@ -454,19 +455,26 @@ func (k Keeper) UnbondFromHostZone(ctx sdk.Context, hostZone types.HostZone) (er
 	}
 
 	// Send the messages in batches so the gas limit isn't exceedeed
-	err = k.BatchSubmitUndelegateICAMessages(ctx, hostZone, epochUnbondingRecordIds, msgs, unbondings, undelegateBatchSize)
+	numTxsSubmitted, err := k.BatchSubmitUndelegateICAMessages(
+		ctx,
+		hostZone,
+		epochUnbondingRecordIds,
+		msgs,
+		unbondings,
+		undelegateBatchSize,
+	)
 	if err != nil {
 		return err
 	}
 
-	// Update the epoch unbonding record status
-	if err := k.RecordsKeeper.SetHostZoneUnbondingStatus(
-		ctx,
-		hostZone.ChainId,
-		epochUnbondingRecordIds,
-		recordstypes.HostZoneUnbonding_UNBONDING_IN_PROGRESS,
-	); err != nil {
-		return err
+	// Update the epoch unbonding record status and number of undelegation ICAs
+	for epochNumber, hostZoneUnbonding := range epochNumberToHostZoneUnbonding {
+		hostZoneUnbonding.Status = recordstypes.HostZoneUnbonding_UNBONDING_IN_PROGRESS
+		hostZoneUnbonding.UndelegationTxsInProgress += numTxsSubmitted
+		err := k.RecordsKeeper.SetHostZoneUnbondingRecord(ctx, epochNumber, hostZone.ChainId, hostZoneUnbonding)
+		if err != nil {
+			return err
+		}
 	}
 
 	EmitUndelegationEvent(ctx, hostZone, totalNativeUnbondAmount)
