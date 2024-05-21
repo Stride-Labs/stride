@@ -19,7 +19,7 @@ import (
 
 type ValidatorUnbonding struct {
 	Validator string
-	// TODO: Rename to NativeAmount
+	// TODO [undelegate]: Rename to NativeAmount
 	UnbondAmount sdkmath.Int
 	StAmount     sdkmath.Int
 }
