@@ -29,7 +29,7 @@ import (
 //	If timeout:
 //	  * Does nothing
 //	If failure:
-//	  * Reverts epoch unbonding record status
+//	  * Sets epoch unbonding record status to RETRY
 func (k Keeper) UndelegateCallback(ctx sdk.Context, packet channeltypes.Packet, ackResponse *icacallbackstypes.AcknowledgementResponse, args []byte) error {
 	// Fetch callback args
 	var undelegateCallback types.UndelegateCallback
@@ -66,12 +66,12 @@ func (k Keeper) UndelegateCallback(ctx sdk.Context, packet channeltypes.Packet, 
 		k.Logger(ctx).Error(utils.LogICACallbackStatusWithHostZone(chainId, ICACallbackID_Undelegate,
 			icacallbackstypes.AckResponseStatus_FAILURE, packet))
 
-		// Reset unbondings record status
+		// Set the unbonding status to RETRY
 		if err := k.RecordsKeeper.SetHostZoneUnbondingStatus(
 			ctx,
 			chainId,
 			undelegateCallback.EpochUnbondingRecordIds,
-			recordstypes.HostZoneUnbonding_UNBONDING_QUEUE,
+			recordstypes.HostZoneUnbonding_UNBONDING_RETRY_QUEUE,
 		); err != nil {
 			return err
 		}
@@ -81,35 +81,38 @@ func (k Keeper) UndelegateCallback(ctx sdk.Context, packet channeltypes.Packet, 
 	k.Logger(ctx).Info(utils.LogICACallbackStatusWithHostZone(chainId, ICACallbackID_Undelegate,
 		icacallbackstypes.AckResponseStatus_SUCCESS, packet))
 
-	// Update delegation balances
-	err := k.UpdateDelegationBalances(ctx, hostZone, undelegateCallback)
-	if err != nil {
-		k.Logger(ctx).Error(fmt.Sprintf("UndelegateCallback | %s", err.Error()))
-		return err
-	}
-
-	// Get the latest transaction completion time (to determine the unbonding time)
+	// Calculate the stTokens that should be burned from the batch and get the latest
+	// completion time from the ack response
+	nativeTokensUnbonded, stTokensToBurn := k.CalculateTokensFromBatch(undelegateCallback.SplitUndelegations)
 	latestCompletionTime, err := k.GetLatestCompletionTime(ctx, ackResponse.MsgResponses)
 	if err != nil {
 		k.Logger(ctx).Error(fmt.Sprintf("UndelegateCallback | %s", err.Error()))
 		return err
 	}
 
-	// Burn the stTokens
-	stTokenBurnAmount, err := k.UpdateHostZoneUnbondings(ctx, *latestCompletionTime, chainId, undelegateCallback)
-	if err != nil {
-		k.Logger(ctx).Error(fmt.Sprintf("UndelegateCallback | %s", err.Error()))
-		return err
-	}
-	err = k.BurnTokens(ctx, hostZone, stTokenBurnAmount)
+	// Update delegation balances on the validators and host zone
+	err = k.UpdateDelegationBalances(ctx, hostZone, undelegateCallback)
 	if err != nil {
 		k.Logger(ctx).Error(fmt.Sprintf("UndelegateCallback | %s", err.Error()))
 		return err
 	}
 
-	// Upon success, add host zone unbondings to the exit transfer queue
-	err = k.RecordsKeeper.SetHostZoneUnbondingStatus(ctx, chainId, undelegateCallback.EpochUnbondingRecordIds, recordstypes.HostZoneUnbonding_EXIT_TRANSFER_QUEUE)
-	if err != nil {
+	// Update the accounting on the host zone unbondings
+	if err := k.UpdateHostZoneUnbondingsAfterUndelegation(
+		ctx,
+		chainId,
+		undelegateCallback.EpochUnbondingRecordIds,
+		nativeTokensUnbonded,
+		stTokensToBurn,
+		latestCompletionTime,
+	); err != nil {
+		k.Logger(ctx).Error(fmt.Sprintf("UndelegateCallback | %s", err.Error()))
+		return err
+	}
+
+	// Burn the stTokens from the batch
+	if err := k.BurnStTokensAfterUndelegation(ctx, hostZone, stTokensToBurn); err != nil {
+		k.Logger(ctx).Error(fmt.Sprintf("UndelegateCallback | %s", err.Error()))
 		return err
 	}
 
@@ -129,9 +132,20 @@ func (k Keeper) UpdateDelegationBalances(ctx sdk.Context, hostZone types.HostZon
 	return nil
 }
 
+// Calculates the tokens unbonded and stTokens that should be burned for this batch by summing from each validator
+func (k Keeper) CalculateTokensFromBatch(undelegations []*types.SplitUndelegation) (nativeTokens sdkmath.Int, stTokens sdkmath.Int) {
+	nativeTokens = sdkmath.ZeroInt()
+	stTokens = sdkmath.ZeroInt()
+	for _, undelegation := range undelegations {
+		nativeTokens = nativeTokens.Add(undelegation.NativeTokenAmount)
+		stTokens = stTokens.Add(undelegation.StTokenAmount)
+	}
+	return nativeTokens, stTokens
+}
+
 // Get the latest completion time across each MsgUndelegate in the ICA transaction
-// The time is used to set the
-func (k Keeper) GetLatestCompletionTime(ctx sdk.Context, msgResponses [][]byte) (*time.Time, error) {
+// The time is later stored on the unbonding record
+func (k Keeper) GetLatestCompletionTime(ctx sdk.Context, msgResponses [][]byte) (time.Time, error) {
 	// Update the completion time using the latest completion time across each message within the transaction
 	latestCompletionTime := time.Time{}
 
@@ -140,7 +154,7 @@ func (k Keeper) GetLatestCompletionTime(ctx sdk.Context, msgResponses [][]byte) 
 		var undelegateResponse stakingtypes.MsgUndelegateResponse
 		err := proto.Unmarshal(msgResponse, &undelegateResponse)
 		if err != nil {
-			return nil, errorsmod.Wrapf(types.ErrUnmarshalFailure, "Unable to unmarshal undelegation tx response: %s", err.Error())
+			return time.Time{}, errorsmod.Wrapf(types.ErrUnmarshalFailure, "Unable to unmarshal undelegation tx response: %s", err.Error())
 		}
 		if undelegateResponse.CompletionTime.After(latestCompletionTime) {
 			latestCompletionTime = undelegateResponse.CompletionTime
@@ -148,64 +162,69 @@ func (k Keeper) GetLatestCompletionTime(ctx sdk.Context, msgResponses [][]byte) 
 	}
 
 	if latestCompletionTime.IsZero() {
-		return nil, errorsmod.Wrapf(types.ErrInvalidPacketCompletionTime, "Invalid completion time (%s) from txMsg", latestCompletionTime.String())
+		return time.Time{}, errorsmod.Wrapf(types.ErrInvalidPacketCompletionTime, "Invalid completion time (%s) from txMsg", latestCompletionTime.String())
 	}
-	return &latestCompletionTime, nil
+	return latestCompletionTime, nil
 }
 
-// UpdateHostZoneUnbondings does two things:
-//  1. Update the time of each hostZoneUnbonding on each epochUnbondingRecord
-//  2. Return the number of stTokens that need to be burned
-func (k Keeper) UpdateHostZoneUnbondings(
+// Updates the host zone unbonding records after a successful undelegation batch
+// The StTokensToBurn and the NativeTokensToUnbond amounts on the records are
+// decremented in a cascading fashion starting from the earliest record
+// The latest completion times is also set on each record if the time from the
+// batch is later than what's currently on the record
+func (k Keeper) UpdateHostZoneUnbondingsAfterUndelegation(
 	ctx sdk.Context,
-	latestCompletionTime time.Time,
 	chainId string,
-	undelegateCallback types.UndelegateCallback,
-) (stTokenBurnAmount sdkmath.Int, err error) {
-	stTokenBurnAmount = sdkmath.ZeroInt()
-	for _, epochNumber := range undelegateCallback.EpochUnbondingRecordIds {
-		epochUnbondingRecord, found := k.RecordsKeeper.GetEpochUnbondingRecord(ctx, epochNumber)
+	epochUnbondingRecordIds []uint64,
+	totalStTokensToBurn sdkmath.Int,
+	totalNativeTokensUnbonded sdkmath.Int,
+	latestCompletionTime time.Time,
+) error {
+	// Loop each epoch unbonding record starting from the earliest
+	for _, epochNumber := range epochUnbondingRecordIds {
+		hostZoneUnbonding, found := k.RecordsKeeper.GetHostZoneUnbondingByChainId(ctx, epochNumber, chainId)
 		if !found {
-			errMsg := fmt.Sprintf("Unable to find epoch unbonding record for epoch: %d", epochNumber)
-			k.Logger(ctx).Error(errMsg)
-			return sdkmath.ZeroInt(), errorsmod.Wrapf(sdkerrors.ErrKeyNotFound, errMsg)
-		}
-		hostZoneUnbonding, found := k.RecordsKeeper.GetHostZoneUnbondingByChainId(ctx, epochUnbondingRecord.EpochNumber, chainId)
-		if !found {
-			errMsg := fmt.Sprintf("Host zone unbonding not found (%s) in epoch unbonding record: %d", chainId, epochNumber)
-			k.Logger(ctx).Error(errMsg)
-			return sdkmath.ZeroInt(), errorsmod.Wrapf(sdkerrors.ErrKeyNotFound, errMsg)
+			return errorsmod.Wrapf(recordstypes.ErrHostUnbondingRecordNotFound,
+				"host zone unbonding not found for epoch %d and %s", epochNumber, chainId)
 		}
 
-		// Keep track of the stTokens that need to be burned
-		stTokenAmount := hostZoneUnbonding.StTokenAmount
-		stTokenBurnAmount = stTokenBurnAmount.Add(stTokenAmount)
+		// Update the unbonding time if the time from this batch is later than what's on the record
+		latestCompletionTimeUnix := cast.ToUint64(latestCompletionTime.UnixNano())
+		if latestCompletionTimeUnix > hostZoneUnbonding.UnbondingTime {
+			hostZoneUnbonding.UnbondingTime = latestCompletionTimeUnix
+		}
 
-		// Update the bonded time
-		hostZoneUnbonding.UnbondingTime = cast.ToUint64(latestCompletionTime.UnixNano())
-		updatedEpochUnbondingRecord, success := k.RecordsKeeper.AddHostZoneToEpochUnbondingRecord(ctx, epochUnbondingRecord.EpochNumber, chainId, hostZoneUnbonding)
+		// Decrement the token amounts on the record if there are any remaining
+		stTokensToBurn := sdkmath.MinInt(hostZoneUnbonding.StTokensToBurn, totalStTokensToBurn)
+		nativeTokensToUnbond := sdkmath.MinInt(hostZoneUnbonding.NativeTokensToUnbond, totalNativeTokensUnbonded)
+		hostZoneUnbonding.StTokensToBurn = hostZoneUnbonding.StTokensToBurn.Sub(stTokensToBurn)
+		hostZoneUnbonding.NativeTokensToUnbond = hostZoneUnbonding.NativeTokenAmount.Sub(nativeTokensToUnbond)
+
+		// If there are no more tokens to burn after this batch, iterate the record to the next status
+		if hostZoneUnbonding.StTokensToBurn.IsZero() {
+			hostZoneUnbonding.Status = recordstypes.HostZoneUnbonding_EXIT_TRANSFER_QUEUE
+		}
+
+		// Persist the record changes
+		updatedEpochUnbondingRecord, success := k.RecordsKeeper.AddHostZoneToEpochUnbondingRecord(ctx, epochNumber, chainId, hostZoneUnbonding)
 		if !success {
 			k.Logger(ctx).Error(fmt.Sprintf("Failed to set host zone epoch unbonding record: epochNumber %d, chainId %s, hostZoneUnbonding %+v",
-				epochUnbondingRecord.EpochNumber, chainId, hostZoneUnbonding))
-			return sdkmath.ZeroInt(), errorsmod.Wrapf(types.ErrEpochNotFound, "couldn't set host zone epoch unbonding record")
+				epochNumber, chainId, hostZoneUnbonding))
+			return errorsmod.Wrapf(types.ErrEpochNotFound, "couldn't set host zone epoch unbonding record")
 		}
 		k.RecordsKeeper.SetEpochUnbondingRecord(ctx, *updatedEpochUnbondingRecord)
 
 		k.Logger(ctx).Info(utils.LogICACallbackWithHostZone(chainId, ICACallbackID_Undelegate,
 			"Epoch Unbonding Record: %d - Seting unbonding time to %s", epochNumber, latestCompletionTime.String()))
 	}
-	return stTokenBurnAmount, nil
+	return nil
 }
 
 // Burn stTokens after they've been unbonded
-func (k Keeper) BurnTokens(ctx sdk.Context, hostZone types.HostZone, stTokenBurnAmount sdkmath.Int) error {
+func (k Keeper) BurnStTokensAfterUndelegation(ctx sdk.Context, hostZone types.HostZone, stTokenBurnAmount sdkmath.Int) error {
 	// Build the coin from the stDenom on the host zone
 	stCoinDenom := types.StAssetDenomFromHostZoneDenom(hostZone.HostDenom)
-	stCoinString := stTokenBurnAmount.String() + stCoinDenom
-	stCoin, err := sdk.ParseCoinNormalized(stCoinString)
-	if err != nil {
-		return errorsmod.Wrapf(sdkerrors.ErrInvalidCoins, "could not parse burnCoin: %s. err: %s", stCoinString, err.Error())
-	}
+	stCoin := sdk.NewCoin(stCoinDenom, stTokenBurnAmount)
 
 	// Send the stTokens from the host zone module account to the stakeibc module account
 	depositAddress, err := sdk.AccAddressFromBech32(hostZone.DepositAddress)
