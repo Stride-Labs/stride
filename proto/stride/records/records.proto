@@ -88,6 +88,7 @@ message HostZoneUnbonding {
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
     (gogoproto.nullable) = false
   ];
+  uint64 undelegation_txs_in_progress = 11;
   string denom = 3;
   string host_zone_id = 4;
   uint64 unbonding_time = 5;
