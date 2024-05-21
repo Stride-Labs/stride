@@ -58,7 +58,7 @@ func (k Keeper) GetQueuedHostZoneUnbondingRecords(
 		k.Logger(ctx).Info(utils.LogWithHostZone(chainId, "Epoch %d - Status: %s, Amount: %v",
 			epochUnbonding.EpochNumber, hostZoneRecord.Status, hostZoneRecord.NativeTokenAmount))
 
-		if hostZoneRecord.ShouldInitiateUnbonding() {
+		if hostZoneRecord.ShouldInitiateUnbonding() || hostZoneRecord.ShouldRetryUnbonding() {
 			epochNumbers = append(epochNumbers, epochUnbonding.EpochNumber)
 			epochToHostZoneUnbondingMap[epochUnbonding.EpochNumber] = *hostZoneRecord
 		}

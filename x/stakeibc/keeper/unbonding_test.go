@@ -554,12 +554,14 @@ func (s *KeeperTestSuite) TestGetQueuedHostZoneUnbondingRecords() {
 					// Included
 					HostZoneId:        HostChainId,
 					NativeTokenAmount: sdkmath.NewInt(1),
+					StTokenAmount:     sdkmath.NewInt(1),
 					Status:            recordtypes.HostZoneUnbonding_UNBONDING_QUEUE,
 				},
 				{
 					// Different host zone
 					HostZoneId:        OsmoChainId,
 					NativeTokenAmount: sdkmath.NewInt(2),
+					StTokenAmount:     sdkmath.NewInt(2),
 					Status:            recordtypes.HostZoneUnbonding_UNBONDING_QUEUE,
 				},
 			},
@@ -572,12 +574,14 @@ func (s *KeeperTestSuite) TestGetQueuedHostZoneUnbondingRecords() {
 					// Included
 					HostZoneId:        HostChainId,
 					NativeTokenAmount: sdkmath.NewInt(3),
+					StTokenAmount:     sdkmath.NewInt(3),
 					Status:            recordtypes.HostZoneUnbonding_UNBONDING_QUEUE,
 				},
 				{
 					// Different host zone
 					HostZoneId:        OsmoChainId,
 					NativeTokenAmount: sdkmath.NewInt(4),
+					StTokenAmount:     sdkmath.NewInt(4),
 					Status:            recordtypes.HostZoneUnbonding_UNBONDING_QUEUE,
 				},
 			},
@@ -590,12 +594,14 @@ func (s *KeeperTestSuite) TestGetQueuedHostZoneUnbondingRecords() {
 					// Different Status
 					HostZoneId:        HostChainId,
 					NativeTokenAmount: sdkmath.NewInt(5),
+					StTokenAmount:     sdkmath.NewInt(5),
 					Status:            recordtypes.HostZoneUnbonding_UNBONDING_IN_PROGRESS,
 				},
 				{
 					// Different Status
 					HostZoneId:        OsmoChainId,
 					NativeTokenAmount: sdkmath.NewInt(6),
+					StTokenAmount:     sdkmath.NewInt(6),
 					Status:            recordtypes.HostZoneUnbonding_UNBONDING_IN_PROGRESS,
 				},
 			},
@@ -608,13 +614,36 @@ func (s *KeeperTestSuite) TestGetQueuedHostZoneUnbondingRecords() {
 					// Different Host and Status
 					HostZoneId:        OsmoChainId,
 					NativeTokenAmount: sdkmath.NewInt(7),
+					StTokenAmount:     sdkmath.NewInt(7),
 					Status:            recordtypes.HostZoneUnbonding_CLAIMABLE,
 				},
 				{
 					// Included
-					HostZoneId:        HostChainId,
-					NativeTokenAmount: sdkmath.NewInt(8),
-					Status:            recordtypes.HostZoneUnbonding_UNBONDING_RETRY_QUEUE,
+					HostZoneId:                HostChainId,
+					NativeTokenAmount:         sdkmath.NewInt(8),
+					NativeTokensToUnbond:      sdkmath.NewInt(8),
+					Status:                    recordtypes.HostZoneUnbonding_UNBONDING_RETRY_QUEUE,
+					UndelegationTxsInProgress: 0,
+				},
+			},
+		},
+		{
+			// Has no relevant unbondings
+			EpochNumber: uint64(5),
+			HostZoneUnbondings: []*recordtypes.HostZoneUnbonding{
+				{
+					// Different Host and Status
+					HostZoneId:    OsmoChainId,
+					StTokenAmount: sdkmath.NewInt(9),
+					Status:        recordtypes.HostZoneUnbonding_CLAIMABLE,
+				},
+				{
+					// Retry record, but has an undelegation in progress
+					HostZoneId:                HostChainId,
+					NativeTokensToUnbond:      sdkmath.NewInt(10),
+					NativeTokenAmount:         sdkmath.NewInt(10),
+					Status:                    recordtypes.HostZoneUnbonding_UNBONDING_RETRY_QUEUE,
+					UndelegationTxsInProgress: 1,
 				},
 			},
 		},
