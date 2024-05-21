@@ -36,21 +36,21 @@ func (k Keeper) UndelegateCallback(ctx sdk.Context, packet channeltypes.Packet, 
 	if err := proto.Unmarshal(args, &undelegateCallback); err != nil {
 		return errorsmod.Wrapf(types.ErrUnmarshalFailure, fmt.Sprintf("Unable to unmarshal undelegate callback args: %s", err.Error()))
 	}
+
+	// Fetch the relevant host zone
 	chainId := undelegateCallback.HostZoneId
 	k.Logger(ctx).Info(utils.LogICACallbackWithHostZone(chainId, ICACallbackID_Undelegate,
 		"Starting undelegate callback for Epoch Unbonding Records: %+v", undelegateCallback.EpochUnbondingRecordIds))
 
-	// Regardless of failure/success/timeout, indicate that this ICA has completed
 	hostZone, found := k.GetHostZone(ctx, undelegateCallback.HostZoneId)
 	if !found {
 		return errorsmod.Wrapf(sdkerrors.ErrKeyNotFound, "Host zone not found: %s", undelegateCallback.HostZoneId)
 	}
-	for _, splitDelegation := range undelegateCallback.SplitUndelegations {
-		if err := k.DecrementValidatorDelegationChangesInProgress(&hostZone, splitDelegation.Validator); err != nil {
-			return err
-		}
+
+	// Mark that the ICA completed on the validators and host zone unbonding records
+	if err := k.MarkUndelegationAckReceived(ctx, undelegateCallback, hostZone); err != nil {
+		return err
 	}
-	k.SetHostZone(ctx, hostZone)
 
 	// Check for timeout (ack nil)
 	// No need to reset the unbonding record status since it will get reverted when the channel is restored
@@ -114,6 +114,32 @@ func (k Keeper) UndelegateCallback(ctx sdk.Context, packet channeltypes.Packet, 
 	if err := k.BurnStTokensAfterUndelegation(ctx, hostZone, stTokensToBurn); err != nil {
 		k.Logger(ctx).Error(fmt.Sprintf("UndelegateCallback | %s", err.Error()))
 		return err
+	}
+
+	return nil
+}
+
+// Regardless of failure/success/timeout, indicate that this ICA has completed on each validator
+// on the host zone, and on the epoch unbonding record
+func (k Keeper) MarkUndelegationAckReceived(ctx sdk.Context, undelegateCallback types.UndelegateCallback, hostZone types.HostZone) error {
+	// Indicate that this ICA has completed on each validator
+	for _, splitDelegation := range undelegateCallback.SplitUndelegations {
+		if err := k.DecrementValidatorDelegationChangesInProgress(&hostZone, splitDelegation.Validator); err != nil {
+			return err
+		}
+	}
+	k.SetHostZone(ctx, hostZone)
+
+	// Indicate that the ICA has completed on the epoch unbonding record
+	for _, epochNumber := range undelegateCallback.EpochUnbondingRecordIds {
+		hostZoneUnbonding, found := k.RecordsKeeper.GetHostZoneUnbondingByChainId(ctx, epochNumber, hostZone.ChainId)
+		if !found {
+			return recordstypes.ErrHostUnbondingRecordNotFound.Wrapf("epoch number %d, chain %s", epochNumber, hostZone.ChainId)
+		}
+		hostZoneUnbonding.UndelegationTxsInProgress -= 1
+		if err := k.RecordsKeeper.SetHostZoneUnbondingRecord(ctx, epochNumber, hostZone.ChainId, *hostZoneUnbonding); err != nil {
+			return err
+		}
 	}
 
 	return nil
