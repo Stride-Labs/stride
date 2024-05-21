@@ -80,10 +80,20 @@ func (k Keeper) RedemptionCallback(ctx sdk.Context, packet channeltypes.Packet, 
 		return errorsmod.Wrapf(sdkerrors.ErrKeyNotFound, "Host zone not found: %s", chainId)
 	}
 
-	// Upon success, update the unbonding record status to CLAIMABLE
-	err = k.RecordsKeeper.SetHostZoneUnbondingStatus(ctx, chainId, redemptionCallback.EpochUnbondingRecordIds, recordstypes.HostZoneUnbonding_CLAIMABLE)
-	if err != nil {
-		return err
+	// Upon success, update the unbonding record status to CLAIMABLE and set the number of
+	// claimable tokens for each epoch unbonding record
+	for _, epochNumber := range redemptionCallback.EpochUnbondingRecordIds {
+		hostZoneUnbonding, found := k.RecordsKeeper.GetHostZoneUnbondingByChainId(ctx, epochNumber, chainId)
+		if !found {
+			return recordstypes.ErrHostUnbondingRecordNotFound.Wrapf("record not found for epoch %d and chain %s",
+				epochNumber, chainId)
+		}
+
+		hostZoneUnbonding.ClaimableNativeTokens = hostZoneUnbonding.NativeTokenAmount
+		hostZoneUnbonding.Status = recordstypes.HostZoneUnbonding_CLAIMABLE
+		if err := k.RecordsKeeper.SetHostZoneUnbondingRecord(ctx, epochNumber, chainId, *hostZoneUnbonding); err != nil {
+			return err
+		}
 	}
 
 	k.Logger(ctx).Info(fmt.Sprintf("[REDEMPTION] completed on %s", chainId))

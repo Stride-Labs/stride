@@ -60,7 +60,7 @@ func (k Keeper) CreateEpochUnbondingRecord(ctx sdk.Context, epochNumber uint64) 
 }
 
 // Deletes any epoch unbonding records that have had all unbondings claimed
-func (k Keeper) CleanupEpochUnbondingRecords(ctx sdk.Context, epochNumber uint64) bool {
+func (k Keeper) CleanupEpochUnbondingRecords(ctx sdk.Context, epochNumber uint64) {
 	k.Logger(ctx).Info("Cleaning Claimed Epoch Unbonding Records...")
 
 	for _, epochUnbondingRecord := range k.RecordsKeeper.GetAllEpochUnbondingRecord(ctx) {
@@ -70,18 +70,15 @@ func (k Keeper) CleanupEpochUnbondingRecords(ctx sdk.Context, epochNumber uint64
 		for _, hostZoneUnbonding := range hostZoneUnbondings {
 			// if an EpochUnbondingRecord has any HostZoneUnbonding with non-zero balances, we don't delete the EpochUnbondingRecord
 			// because it has outstanding tokens that need to be claimed
-			if !hostZoneUnbonding.NativeTokenAmount.Equal(sdkmath.ZeroInt()) {
+			notClaimable := hostZoneUnbonding.Status != recordstypes.HostZoneUnbonding_CLAIMABLE
+			hasUnclaimedTokens := !hostZoneUnbonding.ClaimableNativeTokens.Equal(sdkmath.ZeroInt())
+			if notClaimable || hasUnclaimedTokens {
 				shouldDeleteEpochUnbondingRecord = false
 				break
 			}
 		}
 		if shouldDeleteEpochUnbondingRecord {
-			k.Logger(ctx).Info(fmt.Sprintf("  EpochUnbondingRecord %d - All unbondings claimed, removing record", epochUnbondingRecord.EpochNumber))
 			k.RecordsKeeper.RemoveEpochUnbondingRecord(ctx, epochUnbondingRecord.EpochNumber)
-		} else {
-			k.Logger(ctx).Info(fmt.Sprintf("  EpochUnbondingRecord %d - Has unclaimed unbondings", epochUnbondingRecord.EpochNumber))
 		}
 	}
-
-	return true
 }
