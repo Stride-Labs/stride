@@ -579,17 +579,40 @@ func (s *KeeperTestSuite) TestUpdateHostZoneUnbondingsAfterUndelegation() {
 			},
 		},
 		{
-			// One record, native decremented to 0, stTokens has remainder
-			// This should not be possible, but tests that the record status doesn't change
-			name:                      "native and sttoken mismatch",
-			totalNativeUnbonded:       sdkmath.NewInt(1000),
-			totalStBurned:             sdkmath.NewInt(499),
+			// Three records, built from different redemption rates
+			// Native amount should cover the first two records but the second
+			// record should not change status since it will still have sttokens
+			name:                      "blended redemption rate partial",
+			totalNativeUnbonded:       sdkmath.NewInt(2500),
+			totalStBurned:             sdkmath.NewInt(1666), // RR: 1.5
 			unbondingTimeFromResponse: 2,
 			initialRecords: []HostZoneUnbonding{
-				{Native: 1000, StToken: 500, UnbondingTime: 2, Status: statusInProgress},
+				{Native: 1000, StToken: 1000, UnbondingTime: 1, Status: statusInProgress}, // RR: 1
+				{Native: 1500, StToken: 1000, UnbondingTime: 1, Status: statusInProgress}, // RR: 1.5
+				{Native: 2000, StToken: 1000, UnbondingTime: 1, Status: statusInProgress}, // RR: 2.0
 			},
 			finalRecords: []HostZoneUnbonding{
-				{Native: 0, StToken: 1, UnbondingTime: 2, Status: statusInProgress},
+				{Native: 0, StToken: 0, UnbondingTime: 2, Status: statusComplete},         // RR: 1
+				{Native: 0, StToken: 334, UnbondingTime: 2, Status: statusInProgress},     // RR: 1.5
+				{Native: 2000, StToken: 1000, UnbondingTime: 2, Status: statusInProgress}, // RR: 2.0
+			},
+		},
+		{
+			// Three records, built from different redemption rates
+			// The records will iterate at different times, but will eventually all update status
+			name:                      "blended redemption rate full",
+			totalNativeUnbonded:       sdkmath.NewInt(4500),
+			totalStBurned:             sdkmath.NewInt(3000), // RR: 1.5
+			unbondingTimeFromResponse: 1,
+			initialRecords: []HostZoneUnbonding{
+				{Native: 1000, StToken: 1000, UnbondingTime: 2, Status: statusInProgress}, // RR: 1
+				{Native: 1500, StToken: 1000, UnbondingTime: 2, Status: statusInProgress}, // RR: 1.5
+				{Native: 2000, StToken: 1000, UnbondingTime: 2, Status: statusInProgress}, // RR: 2.0
+			},
+			finalRecords: []HostZoneUnbonding{
+				{Native: 0, StToken: 0, UnbondingTime: 2, Status: statusComplete}, // RR: 1
+				{Native: 0, StToken: 0, UnbondingTime: 2, Status: statusComplete}, // RR: 1.5
+				{Native: 0, StToken: 0, UnbondingTime: 2, Status: statusComplete}, // RR: 2.0
 			},
 		},
 	}
