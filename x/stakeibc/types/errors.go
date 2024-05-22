@@ -67,4 +67,5 @@ var (
 	ErrValidatorExceedsWeightCap           = errorsmod.Register(ModuleName, 1560, "validator exceeds weight cap")
 	ErrFeeSplitInvariantFailed             = errorsmod.Register(ModuleName, 1561, "failed to calculate fee split")
 	ErrFailedToRegisterRebate              = errorsmod.Register(ModuleName, 1562, "failed to register rebate")
+	ErrInvalidUndelegationsInProgress      = errorsmod.Register(ModuleName, 1563, "invalid undelegation changes in progress")
 )

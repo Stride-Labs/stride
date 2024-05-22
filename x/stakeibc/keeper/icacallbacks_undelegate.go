@@ -46,7 +46,7 @@ func (k Keeper) UndelegateCallback(ctx sdk.Context, packet channeltypes.Packet, 
 	}
 
 	// Mark that the ICA completed on the validators and host zone unbonding records
-	if err := k.MarkUndelegationAckReceived(ctx, undelegateCallback, hostZone); err != nil {
+	if err := k.MarkUndelegationAckReceived(ctx, hostZone, undelegateCallback); err != nil {
 		return err
 	}
 
@@ -119,7 +119,7 @@ func (k Keeper) UndelegateCallback(ctx sdk.Context, packet channeltypes.Packet, 
 
 // Regardless of failure/success/timeout, indicate that this ICA has completed on each validator
 // on the host zone, and on the epoch unbonding record
-func (k Keeper) MarkUndelegationAckReceived(ctx sdk.Context, undelegateCallback types.UndelegateCallback, hostZone types.HostZone) error {
+func (k Keeper) MarkUndelegationAckReceived(ctx sdk.Context, hostZone types.HostZone, undelegateCallback types.UndelegateCallback) error {
 	// Indicate that this ICA has completed on each validator
 	for _, splitDelegation := range undelegateCallback.SplitUndelegations {
 		if err := k.DecrementValidatorDelegationChangesInProgress(&hostZone, splitDelegation.Validator); err != nil {
@@ -134,7 +134,12 @@ func (k Keeper) MarkUndelegationAckReceived(ctx sdk.Context, undelegateCallback 
 		if !found {
 			return recordstypes.ErrHostUnbondingRecordNotFound.Wrapf("epoch number %d, chain %s", epochNumber, hostZone.ChainId)
 		}
+
+		if hostZoneUnbonding.UndelegationTxsInProgress == 0 {
+			return types.ErrInvalidUndelegationsInProgress.Wrapf("undelegation changes in progress is already 0 and can't be decremented")
+		}
 		hostZoneUnbonding.UndelegationTxsInProgress -= 1
+
 		if err := k.RecordsKeeper.SetHostZoneUnbondingRecord(ctx, epochNumber, hostZone.ChainId, *hostZoneUnbonding); err != nil {
 			return err
 		}

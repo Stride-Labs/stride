@@ -82,18 +82,20 @@ func (s *KeeperTestSuite) SetupUndelegateCallback() UndelegateCallbackTestCase {
 	completionTimeFromThisBatch := time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC)                    // 2024-01-01
 	completionTimeFromPrevBatch := uint64(time.Date(2024, 1, 2, 0, 0, 0, 0, time.UTC).UnixNano()) // 2024-01-02
 	hostZoneUnbonding1 := recordtypes.HostZoneUnbonding{
-		HostZoneId:           HostChainId,
-		Status:               recordtypes.HostZoneUnbonding_UNBONDING_IN_PROGRESS,
-		NativeTokensToUnbond: totalUndelegated,
-		StTokensToBurn:       totalUndelegated,
-		UnbondingTime:        uint64(0),
+		HostZoneId:                HostChainId,
+		Status:                    recordtypes.HostZoneUnbonding_UNBONDING_IN_PROGRESS,
+		NativeTokensToUnbond:      totalUndelegated,
+		StTokensToBurn:            totalUndelegated,
+		UnbondingTime:             uint64(0),
+		UndelegationTxsInProgress: 1,
 	}
 	hostZoneUnbonding2 := recordtypes.HostZoneUnbonding{
-		HostZoneId:           HostChainId,
-		Status:               recordtypes.HostZoneUnbonding_UNBONDING_IN_PROGRESS,
-		NativeTokensToUnbond: totalUndelegated,
-		StTokensToBurn:       totalUndelegated,
-		UnbondingTime:        completionTimeFromPrevBatch,
+		HostZoneId:                HostChainId,
+		Status:                    recordtypes.HostZoneUnbonding_UNBONDING_IN_PROGRESS,
+		NativeTokensToUnbond:      totalUndelegated,
+		StTokensToBurn:            totalUndelegated,
+		UnbondingTime:             completionTimeFromPrevBatch,
+		UndelegationTxsInProgress: 1,
 	}
 
 	// Create the epoch unbonding records with the host zone unbonding records
@@ -208,7 +210,7 @@ func (s *KeeperTestSuite) TestUndelegateCallback_Successful() {
 	s.Require().Equal(tc.totalUndelegated, initialState.zoneAccountBalance.Sub(depositBalance), "tokens are burned")
 }
 
-func (s *KeeperTestSuite) checkStateIfUndelegateCallbackFailed(tc UndelegateCallbackTestCase) {
+func (s *KeeperTestSuite) checkStateIfUndelegateCallbackFailed(tc UndelegateCallbackTestCase, status icacallbacktypes.AckResponseStatus) {
 	initialState := tc.initialState
 
 	// Check that total delegation has NOT decreased on the host zone
@@ -226,10 +228,15 @@ func (s *KeeperTestSuite) checkStateIfUndelegateCallbackFailed(tc UndelegateCall
 	s.Require().Equal(0, int(val2.DelegationChangesInProgress), "val2 delegation changes in progress")
 
 	// Check that the host zone unbonding records have not been updated
+	expectedStatus := recordtypes.HostZoneUnbonding_UNBONDING_IN_PROGRESS
+	if status == icacallbacktypes.AckResponseStatus_FAILURE {
+		expectedStatus = recordtypes.HostZoneUnbonding_UNBONDING_RETRY_QUEUE
+	}
 	for _, epochNumber := range initialState.epochNumbers {
 		hzu := s.MustGetHostZoneUnbonding(epochNumber, HostChainId)
 		s.Require().Equal(int64(0), int64(hzu.UnbondingTime), "completion time is NOT set on the hzu")
-		s.Require().Equal(recordtypes.HostZoneUnbonding_UNBONDING_IN_PROGRESS, hzu.Status, "hzu status was not changed")
+		s.Require().Equal(expectedStatus, hzu.Status, "hzu status was not changed")
+		s.Require().Zero(hzu.UndelegationTxsInProgress, "hzu undelegations in progress")
 	}
 
 	// Confirm stTokens were NOT burned
@@ -238,7 +245,7 @@ func (s *KeeperTestSuite) checkStateIfUndelegateCallbackFailed(tc UndelegateCall
 	s.Require().Equal(initialState.zoneAccountBalance, depositBalance, "tokens were not burned")
 }
 
-func (s *KeeperTestSuite) TestUndelegateCallback_UndelegateCallbackTimeout() {
+func (s *KeeperTestSuite) TestUndelegateCallback_AckTimeout() {
 	tc := s.SetupUndelegateCallback()
 
 	// Update the ack response to indicate a timeout
@@ -247,10 +254,10 @@ func (s *KeeperTestSuite) TestUndelegateCallback_UndelegateCallbackTimeout() {
 
 	err := s.App.StakeibcKeeper.UndelegateCallback(s.Ctx, invalidArgs.packet, invalidArgs.ackResponse, invalidArgs.args)
 	s.Require().NoError(err, "undelegate callback succeeds on timeout")
-	s.checkStateIfUndelegateCallbackFailed(tc)
+	s.checkStateIfUndelegateCallbackFailed(tc, invalidArgs.ackResponse.Status)
 }
 
-func (s *KeeperTestSuite) TestUndelegateCallback_UndelegateCallbackErrorOnHost() {
+func (s *KeeperTestSuite) TestUndelegateCallback_AckFailure() {
 	tc := s.SetupUndelegateCallback()
 
 	// an error ack means the tx failed on the host
@@ -259,7 +266,7 @@ func (s *KeeperTestSuite) TestUndelegateCallback_UndelegateCallbackErrorOnHost()
 
 	err := s.App.StakeibcKeeper.UndelegateCallback(s.Ctx, invalidArgs.packet, invalidArgs.ackResponse, invalidArgs.args)
 	s.Require().NoError(err, "undelegate callback succeeds with error on host")
-	s.checkStateIfUndelegateCallbackFailed(tc)
+	s.checkStateIfUndelegateCallbackFailed(tc, invalidArgs.ackResponse.Status)
 }
 
 func (s *KeeperTestSuite) TestUndelegateCallback_WrongCallbackArgs() {
@@ -283,7 +290,71 @@ func (s *KeeperTestSuite) TestUndelegateCallback_HostNotFound() {
 }
 
 func (s *KeeperTestSuite) TestMarkUndelegationAckReceived() {
+	// Setup 3 validators, two of which will have their delegation changes decremented
+	initialHostZone := types.HostZone{
+		ChainId: HostChainId,
+		Validators: []*types.Validator{
+			{Address: "val1", DelegationChangesInProgress: 1},
+			{Address: "val2", DelegationChangesInProgress: 2},
+			{Address: "val3", DelegationChangesInProgress: 3},
+		},
+	}
+	splitUndelegations := []*types.SplitUndelegation{
+		{Validator: "val2"},
+		{Validator: "val3"},
+	}
+	expectedFinalValidators := []*types.Validator{
+		{Address: "val1", DelegationChangesInProgress: 1},
+		{Address: "val2", DelegationChangesInProgress: 1}, // decremented
+		{Address: "val3", DelegationChangesInProgress: 2}, // decremented
+	}
 
+	// Create three host zone unbonding records, two of which will have the counter decremented
+	initialHostZoneUnbondings := []recordtypes.HostZoneUnbonding{
+		{HostZoneId: HostChainId, UndelegationTxsInProgress: 1},
+		{HostZoneId: HostChainId, UndelegationTxsInProgress: 2},
+		{HostZoneId: HostChainId, UndelegationTxsInProgress: 3},
+	}
+	allEpochs := []uint64{0, 1, 2}
+	ackedEpochs := []uint64{1, 2}
+	for i, epochNumber := range allEpochs {
+		s.App.RecordsKeeper.SetEpochUnbondingRecord(s.Ctx, recordtypes.EpochUnbondingRecord{
+			EpochNumber: epochNumber,
+			HostZoneUnbondings: []*recordtypes.HostZoneUnbonding{
+				&initialHostZoneUnbondings[i],
+			},
+		})
+	}
+	expectedFinalUnbondings := []recordtypes.HostZoneUnbonding{
+		{UndelegationTxsInProgress: 1},
+		{UndelegationTxsInProgress: 1}, // decremented
+		{UndelegationTxsInProgress: 2}, // decremented
+	}
+
+	// Call MarkAckReceived
+	callback := types.UndelegateCallback{
+		SplitUndelegations:      splitUndelegations,
+		EpochUnbondingRecordIds: ackedEpochs,
+	}
+	err := s.App.StakeibcKeeper.MarkUndelegationAckReceived(s.Ctx, initialHostZone, callback)
+	s.Require().NoError(err)
+
+	// Check validator counts against expectations
+	hostZone := s.MustGetHostZone(HostChainId)
+	actualValidators := hostZone.Validators
+	for i, actualValidator := range actualValidators {
+		expectedValidator := expectedFinalValidators[i]
+		s.Require().Equal(expectedValidator.DelegationChangesInProgress,
+			actualValidator.DelegationChangesInProgress, "validator delegation changs in progress")
+	}
+
+	// Check host zone unbonding counts against expectations
+	for i, epochNumber := range allEpochs {
+		actualHostZoneUnbonding := s.MustGetHostZoneUnbonding(epochNumber, HostChainId)
+		expectedHostZoneUnbonding := expectedFinalUnbondings[i]
+		s.Require().Equal(expectedHostZoneUnbonding.UndelegationTxsInProgress,
+			actualHostZoneUnbonding.UndelegationTxsInProgress, "hzu undelegation txs in progress")
+	}
 }
 
 func (s *KeeperTestSuite) TestUpdateDelegationBalances() {
@@ -303,7 +374,22 @@ func (s *KeeperTestSuite) TestUpdateDelegationBalances() {
 }
 
 func (s *KeeperTestSuite) TestCalculateTokensFromBatch() {
+	splitUndelegations := []*types.SplitUndelegation{
+		{NativeTokenAmount: sdkmath.NewInt(10), StTokenAmount: sdkmath.NewInt(100)},
+		{NativeTokenAmount: sdkmath.NewInt(20), StTokenAmount: sdkmath.NewInt(200)},
+		{NativeTokenAmount: sdkmath.NewInt(30), StTokenAmount: sdkmath.NewInt(300)},
+	}
+	expectedNativeAmount := sdkmath.NewInt(10 + 20 + 30)
+	expectedStAmount := sdkmath.NewInt(100 + 200 + 300)
 
+	actualNativeAmount, actualStAmount := s.App.StakeibcKeeper.CalculateTokensFromBatch(splitUndelegations)
+	s.Require().Equal(expectedNativeAmount, actualNativeAmount, "native total")
+	s.Require().Equal(expectedStAmount, actualStAmount, "sttoken total")
+
+	// Zero case
+	actualNativeAmount, actualStAmount = s.App.StakeibcKeeper.CalculateTokensFromBatch([]*types.SplitUndelegation{})
+	s.Require().Zero(actualNativeAmount.Int64(), "native zero")
+	s.Require().Zero(actualStAmount.Int64(), "sttoken zero")
 }
 
 func (s *KeeperTestSuite) TestGetLatestUnbondingCompletionTime() {
