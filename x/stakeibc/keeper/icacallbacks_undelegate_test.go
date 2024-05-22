@@ -36,7 +36,7 @@ type UndelegateCallbackTestCase struct {
 	validArgs              UndelegateCallbackArgs
 	val1UndelegationAmount sdkmath.Int
 	val2UndelegationAmount sdkmath.Int
-	balanceToUnstake       sdkmath.Int
+	totalUndelegated       sdkmath.Int
 }
 
 func (s *KeeperTestSuite) SetupUndelegateCallback() UndelegateCallbackTestCase {
@@ -54,9 +54,9 @@ func (s *KeeperTestSuite) SetupUndelegateCallback() UndelegateCallbackTestCase {
 	initialVal1Delegation := sdkmath.NewInt(400_000)
 	initialVal2Delegation := sdkmath.NewInt(600_000)
 
-	totalUnbonded := sdkmath.NewInt(500_000)
-	unbondedFromVal1 := sdkmath.NewInt(100_000)
-	unbondedFromVal2 := sdkmath.NewInt(400_000)
+	totalUndelegated := sdkmath.NewInt(500_000)
+	val1UndelegationAmount := sdkmath.NewInt(100_000)
+	val2UndelegationAmount := sdkmath.NewInt(400_000)
 
 	initialDepositAccountBalance := sdkmath.NewInt(600_000)
 
@@ -84,15 +84,15 @@ func (s *KeeperTestSuite) SetupUndelegateCallback() UndelegateCallbackTestCase {
 	hostZoneUnbonding1 := recordtypes.HostZoneUnbonding{
 		HostZoneId:           HostChainId,
 		Status:               recordtypes.HostZoneUnbonding_UNBONDING_IN_PROGRESS,
-		NativeTokensToUnbond: totalUnbonded,
-		StTokensToBurn:       totalUnbonded,
+		NativeTokensToUnbond: totalUndelegated,
+		StTokensToBurn:       totalUndelegated,
 		UnbondingTime:        uint64(0),
 	}
 	hostZoneUnbonding2 := recordtypes.HostZoneUnbonding{
 		HostZoneId:           HostChainId,
 		Status:               recordtypes.HostZoneUnbonding_UNBONDING_IN_PROGRESS,
-		NativeTokensToUnbond: totalUnbonded,
-		StTokensToBurn:       totalUnbonded,
+		NativeTokensToUnbond: totalUndelegated,
+		StTokensToBurn:       totalUndelegated,
 		UnbondingTime:        completionTimeFromPrevBatch,
 	}
 
@@ -131,13 +131,13 @@ func (s *KeeperTestSuite) SetupUndelegateCallback() UndelegateCallbackTestCase {
 	// Build the callback args for each validator
 	val1SplitDelegation := types.SplitUndelegation{
 		Validator:         validators[0].Address,
-		NativeTokenAmount: unbondedFromVal1,
-		StTokenAmount:     unbondedFromVal1,
+		NativeTokenAmount: val1UndelegationAmount,
+		StTokenAmount:     val1UndelegationAmount,
 	}
 	val2SplitDelegation := types.SplitUndelegation{
 		Validator:         validators[1].Address,
-		NativeTokenAmount: unbondedFromVal2,
-		StTokenAmount:     unbondedFromVal2,
+		NativeTokenAmount: val2UndelegationAmount,
+		StTokenAmount:     val2UndelegationAmount,
 	}
 	callbackArgs := types.UndelegateCallback{
 		HostZoneId: HostChainId,
@@ -151,9 +151,9 @@ func (s *KeeperTestSuite) SetupUndelegateCallback() UndelegateCallbackTestCase {
 	s.Require().NoError(err, "callback args unmarshalled")
 
 	return UndelegateCallbackTestCase{
-		val1UndelegationAmount: unbondedFromVal1,
-		val2UndelegationAmount: unbondedFromVal2,
-		balanceToUnstake:       totalUnbonded,
+		val1UndelegationAmount: val1UndelegationAmount,
+		val2UndelegationAmount: val2UndelegationAmount,
+		totalUndelegated:       totalUndelegated,
 		initialState: UndelegateCallbackState{
 			callbackArgs:       callbackArgs,
 			totalDelegations:   initialTotalDelegations,
@@ -181,7 +181,8 @@ func (s *KeeperTestSuite) TestUndelegateCallback_Successful() {
 
 	// Check that total delegation has decreased on the host zone
 	hostZone := s.MustGetHostZone(HostChainId)
-	s.Require().Equal(hostZone.TotalDelegations, initialState.totalDelegations.Sub(tc.balanceToUnstake), "total delegation has decreased on the host zone")
+	expectedTotalDelegation := initialState.totalDelegations.Sub(tc.totalUndelegated)
+	s.Require().Equal(expectedTotalDelegation, hostZone.TotalDelegations, "total delegation has decreased on the host zone")
 
 	// Check that Delegations on validators have decreased
 	val1 := hostZone.Validators[0]
@@ -204,7 +205,7 @@ func (s *KeeperTestSuite) TestUndelegateCallback_Successful() {
 	// Confirm stTokens were removed from the deposit account
 	depositAccount := sdk.MustAccAddressFromBech32(hostZone.DepositAddress)
 	depositBalance := s.App.BankKeeper.GetBalance(s.Ctx, depositAccount, StAtom).Amount
-	s.Require().Equal(tc.balanceToUnstake, initialState.zoneAccountBalance.Sub(depositBalance), "tokens are burned")
+	s.Require().Equal(tc.totalUndelegated, initialState.zoneAccountBalance.Sub(depositBalance), "tokens are burned")
 }
 
 func (s *KeeperTestSuite) checkStateIfUndelegateCallbackFailed(tc UndelegateCallbackTestCase) {
