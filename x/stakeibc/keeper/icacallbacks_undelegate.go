@@ -2,10 +2,8 @@ package keeper
 
 import (
 	"fmt"
-	"time"
 
 	sdkmath "cosmossdk.io/math"
-	"github.com/spf13/cast"
 
 	"github.com/Stride-Labs/stride/v22/utils"
 	icacallbackstypes "github.com/Stride-Labs/stride/v22/x/icacallbacks/types"
@@ -84,7 +82,7 @@ func (k Keeper) UndelegateCallback(ctx sdk.Context, packet channeltypes.Packet, 
 	// Calculate the stTokens that should be burned from the batch and get the latest
 	// completion time from the ack response
 	nativeTokensUnbonded, stTokensToBurn := k.CalculateTokensFromBatch(undelegateCallback.SplitUndelegations)
-	latestCompletionTime, err := k.GetLatestCompletionTime(ctx, ackResponse.MsgResponses)
+	unbondingTime, err := k.GetLatestUnbondingCompletionTime(ctx, ackResponse.MsgResponses)
 	if err != nil {
 		k.Logger(ctx).Error(fmt.Sprintf("UndelegateCallback | %s", err.Error()))
 		return err
@@ -104,7 +102,7 @@ func (k Keeper) UndelegateCallback(ctx sdk.Context, packet channeltypes.Packet, 
 		undelegateCallback.EpochUnbondingRecordIds,
 		nativeTokensUnbonded,
 		stTokensToBurn,
-		latestCompletionTime,
+		unbondingTime,
 	); err != nil {
 		k.Logger(ctx).Error(fmt.Sprintf("UndelegateCallback | %s", err.Error()))
 		return err
@@ -171,24 +169,23 @@ func (k Keeper) CalculateTokensFromBatch(undelegations []*types.SplitUndelegatio
 
 // Get the latest completion time across each MsgUndelegate in the ICA transaction
 // The time is later stored on the unbonding record
-func (k Keeper) GetLatestCompletionTime(ctx sdk.Context, msgResponses [][]byte) (time.Time, error) {
+func (k Keeper) GetLatestUnbondingCompletionTime(ctx sdk.Context, msgResponses [][]byte) (latestCompletionTime uint64, err error) {
 	// Update the completion time using the latest completion time across each message within the transaction
-	latestCompletionTime := time.Time{}
-
 	for _, msgResponse := range msgResponses {
 		// unmarshall the ack response into a MsgUndelegateResponse and grab the completion time
 		var undelegateResponse stakingtypes.MsgUndelegateResponse
 		err := proto.Unmarshal(msgResponse, &undelegateResponse)
 		if err != nil {
-			return time.Time{}, errorsmod.Wrapf(types.ErrUnmarshalFailure, "Unable to unmarshal undelegation tx response: %s", err.Error())
+			return 0, errorsmod.Wrapf(types.ErrUnmarshalFailure, "Unable to unmarshal undelegation tx response: %s", err.Error())
 		}
-		if undelegateResponse.CompletionTime.After(latestCompletionTime) {
-			latestCompletionTime = undelegateResponse.CompletionTime
+		responseCompletionTime := uint64(undelegateResponse.CompletionTime.UnixNano())
+		if responseCompletionTime > latestCompletionTime {
+			latestCompletionTime = responseCompletionTime
 		}
 	}
 
-	if latestCompletionTime.IsZero() {
-		return time.Time{}, errorsmod.Wrapf(types.ErrInvalidPacketCompletionTime, "Invalid completion time (%s) from txMsg", latestCompletionTime.String())
+	if latestCompletionTime == 0 {
+		return 0, errorsmod.Wrapf(types.ErrInvalidPacketCompletionTime, "Invalid completion time 0 from txMsg")
 	}
 	return latestCompletionTime, nil
 }
@@ -204,7 +201,7 @@ func (k Keeper) UpdateHostZoneUnbondingsAfterUndelegation(
 	epochUnbondingRecordIds []uint64,
 	totalStTokensToBurn sdkmath.Int,
 	totalNativeTokensUnbonded sdkmath.Int,
-	latestCompletionTime time.Time,
+	unbondingTime uint64,
 ) error {
 	// Loop each epoch unbonding record starting from the earliest
 	for _, epochNumber := range epochUnbondingRecordIds {
@@ -214,21 +211,26 @@ func (k Keeper) UpdateHostZoneUnbondingsAfterUndelegation(
 				"host zone unbonding not found for epoch %d and %s", epochNumber, chainId)
 		}
 
-		// Update the unbonding time if the time from this batch is later than what's on the record
-		latestCompletionTimeUnix := cast.ToUint64(latestCompletionTime.UnixNano())
-		if latestCompletionTimeUnix > hostZoneUnbonding.UnbondingTime {
-			hostZoneUnbonding.UnbondingTime = latestCompletionTimeUnix
-		}
-
-		// Decrement the token amounts on the record if there are any remaining
+		// Determine the amount to decrement from each record, flooring at 0
 		stTokensToBurn := sdkmath.MinInt(hostZoneUnbonding.StTokensToBurn, totalStTokensToBurn)
-		nativeTokensToUnbond := sdkmath.MinInt(hostZoneUnbonding.NativeTokensToUnbond, totalNativeTokensUnbonded)
+		nativeTokensUnbonded := sdkmath.MinInt(hostZoneUnbonding.NativeTokensToUnbond, totalNativeTokensUnbonded)
+
+		// Decrement the records
 		hostZoneUnbonding.StTokensToBurn = hostZoneUnbonding.StTokensToBurn.Sub(stTokensToBurn)
-		hostZoneUnbonding.NativeTokensToUnbond = hostZoneUnbonding.NativeTokenAmount.Sub(nativeTokensToUnbond)
+		hostZoneUnbonding.NativeTokensToUnbond = hostZoneUnbonding.NativeTokensToUnbond.Sub(nativeTokensUnbonded)
+
+		// Update the totals for the next loop
+		totalStTokensToBurn = totalStTokensToBurn.Sub(stTokensToBurn)
+		totalNativeTokensUnbonded = totalNativeTokensUnbonded.Sub(nativeTokensUnbonded)
 
 		// If there are no more tokens to burn after this batch, iterate the record to the next status
-		if hostZoneUnbonding.StTokensToBurn.IsZero() {
+		if hostZoneUnbonding.StTokensToBurn.IsZero() && hostZoneUnbonding.NativeTokensToUnbond.IsZero() {
 			hostZoneUnbonding.Status = recordstypes.HostZoneUnbonding_EXIT_TRANSFER_QUEUE
+		}
+
+		// Update the unbonding time if the time from this batch is later than what's on the record
+		if unbondingTime > hostZoneUnbonding.UnbondingTime {
+			hostZoneUnbonding.UnbondingTime = unbondingTime
 		}
 
 		// Persist the record changes
@@ -241,7 +243,7 @@ func (k Keeper) UpdateHostZoneUnbondingsAfterUndelegation(
 		k.RecordsKeeper.SetEpochUnbondingRecord(ctx, *updatedEpochUnbondingRecord)
 
 		k.Logger(ctx).Info(utils.LogICACallbackWithHostZone(chainId, ICACallbackID_Undelegate,
-			"Epoch Unbonding Record: %d - Seting unbonding time to %s", epochNumber, latestCompletionTime.String()))
+			"Epoch Unbonding Record: %d - Seting unbonding time to %d", epochNumber, unbondingTime))
 	}
 	return nil
 }
