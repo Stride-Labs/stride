@@ -8,7 +8,6 @@ import (
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/cosmos/gogoproto/proto"
-	"github.com/spf13/cast"
 
 	"github.com/Stride-Labs/stride/v22/utils"
 	recordstypes "github.com/Stride-Labs/stride/v22/x/records/types"
@@ -101,39 +100,23 @@ func (k Keeper) StakeExistingDepositsOnHostZones(ctx sdk.Context, epochNumber ui
 		return
 	}
 
-	// limit the number of staking deposits to process per epoch
-	maxDepositRecordsToStake := utils.Min(len(stakeDepositRecords), cast.ToInt(k.GetParam(ctx, types.KeyMaxStakeICACallsPerEpoch)))
-	if maxDepositRecordsToStake < len(stakeDepositRecords) {
-		k.Logger(ctx).Info(fmt.Sprintf("  MaxStakeICACallsPerEpoch limit reached - Only staking %d out of %d deposit records", maxDepositRecordsToStake, len(stakeDepositRecords)))
-	}
-
-	for _, depositRecord := range stakeDepositRecords[:maxDepositRecordsToStake] {
+	for _, depositRecord := range stakeDepositRecords {
 		if depositRecord.Amount.IsZero() {
 			continue
 		}
 		k.Logger(ctx).Info(utils.LogWithHostZone(depositRecord.HostZoneId,
 			"Processing deposit record %d: %v%s", depositRecord.Id, depositRecord.Amount, depositRecord.Denom))
 
-		hostZone, hostZoneFound := k.GetHostZone(ctx, depositRecord.HostZoneId)
-		if !hostZoneFound {
-			k.Logger(ctx).Error(fmt.Sprintf("[StakeExistingDepositsOnHostZones] Host zone not found for deposit record {%d}", depositRecord.Id))
-			continue
-		}
-
-		if hostZone.Halted {
-			k.Logger(ctx).Error(fmt.Sprintf("[StakeExistingDepositsOnHostZones] Host zone halted for deposit record {%d}", depositRecord.Id))
-			continue
-		}
-
-		if hostZone.DelegationIcaAddress == "" {
-			k.Logger(ctx).Error(fmt.Sprintf("[StakeExistingDepositsOnHostZones] Zone %s is missing a delegation address!", hostZone.ChainId))
+		hostZone, err := k.GetActiveHostZone(ctx, depositRecord.HostZoneId)
+		if err != nil {
+			k.Logger(ctx).Error(fmt.Sprintf("[StakeExistingDepositsOnHostZones] Not processing %d, %s", depositRecord.Id, err.Error()))
 			continue
 		}
 
 		k.Logger(ctx).Info(utils.LogWithHostZone(depositRecord.HostZoneId, "Staking %v%s", depositRecord.Amount, hostZone.HostDenom))
 		stakeAmount := sdk.NewCoin(hostZone.HostDenom, depositRecord.Amount)
 
-		err := k.DelegateOnHost(ctx, hostZone, stakeAmount, depositRecord)
+		err = k.DelegateOnHost(ctx, hostZone, stakeAmount, depositRecord)
 		if err != nil {
 			k.Logger(ctx).Error(fmt.Sprintf("Did not stake %s on %s | err: %s", stakeAmount.String(), hostZone.ChainId, err.Error()))
 			continue
