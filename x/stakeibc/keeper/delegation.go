@@ -65,37 +65,46 @@ func (k Keeper) BatchSubmitDelegationICAMessages(
 	depositRecord recordstypes.DepositRecord,
 	msgs []proto.Message,
 	delegations []*types.SplitDelegation,
+	batchSize int,
 ) (numTxsSubmitted uint64, err error) {
-	// add callback data
-	delegateCallback := types.DelegateCallback{
-		HostZoneId:       hostZone.ChainId,
-		DepositRecordId:  depositRecord.Id,
-		SplitDelegations: delegations,
-	}
-	k.Logger(ctx).Info(utils.LogWithHostZone(hostZone.ChainId, "Marshalling DelegateCallback args: %+v", delegateCallback))
-	marshalledCallbackArgs, err := k.MarshalDelegateCallbackArgs(ctx, delegateCallback)
-	if err != nil {
-		return 0, err
-	}
+	// Iterate the full list of messages and submit in batches
+	for start := 0; start < len(msgs); start += batchSize {
+		end := start + batchSize
+		if end > len(msgs) {
+			end = len(msgs)
+		}
 
-	// Send the transaction through SubmitTx
-	_, err = k.SubmitTxsStrideEpoch(ctx, hostZone.ConnectionId, msgs, types.ICAAccountType_DELEGATION, ICACallbackID_Delegate, marshalledCallbackArgs)
-	if err != nil {
-		return 0, errorsmod.Wrapf(err, "Failed to SubmitTxs for connectionId %s on %s. Messages: %s", hostZone.ConnectionId, hostZone.ChainId, msgs)
-	}
-	k.Logger(ctx).Info(utils.LogWithHostZone(hostZone.ChainId, "ICA MsgDelegates Successfully Sent"))
+		msgBatch := msgs[start:end]
+		delegationsBatch := delegations[start:end]
 
-	// flag the delegation change in progress on each validator
-	for _, delegation := range delegations {
-		if err := k.IncrementValidatorDelegationChangesInProgress(&hostZone, delegation.Validator); err != nil {
+		// Store the callback data
+		delegateCallback := types.DelegateCallback{
+			HostZoneId:       hostZone.ChainId,
+			DepositRecordId:  depositRecord.Id,
+			SplitDelegations: delegationsBatch,
+		}
+		marshalledCallbackArgs, err := k.MarshalDelegateCallbackArgs(ctx, delegateCallback)
+		if err != nil {
 			return 0, err
 		}
-	}
-	k.SetHostZone(ctx, hostZone)
 
-	// update the record state to DELEGATION_IN_PROGRESS
-	depositRecord.Status = recordstypes.DepositRecord_DELEGATION_IN_PROGRESS
-	k.RecordsKeeper.SetDepositRecord(ctx, depositRecord)
+		// Send the transaction through SubmitTx
+		_, err = k.SubmitTxsStrideEpoch(ctx, hostZone.ConnectionId, msgBatch, types.ICAAccountType_DELEGATION, ICACallbackID_Delegate, marshalledCallbackArgs)
+		if err != nil {
+			return 0, errorsmod.Wrapf(err, "Failed to SubmitTxs for connectionId %s on %s. Messages: %s", hostZone.ConnectionId, hostZone.ChainId, msgs)
+		}
+		k.Logger(ctx).Info(utils.LogWithHostZone(hostZone.ChainId, "ICA MsgDelegates Successfully Sent"))
+
+		// flag the delegation change in progress on each validator
+		for _, delegation := range delegationsBatch {
+			if err := k.IncrementValidatorDelegationChangesInProgress(&hostZone, delegation.Validator); err != nil {
+				return 0, err
+			}
+		}
+		k.SetHostZone(ctx, hostZone)
+
+		numTxsSubmitted += 1
+	}
 
 	return numTxsSubmitted, nil
 }
@@ -132,12 +141,25 @@ func (k Keeper) StakeExistingDepositsOnHostZones(ctx sdk.Context, epochNumber ui
 		k.Logger(ctx).Info(utils.LogWithHostZone(depositRecord.HostZoneId, "Staking %v%s", depositRecord.Amount, hostZone.HostDenom))
 		stakeAmount := sdk.NewCoin(hostZone.HostDenom, depositRecord.Amount)
 
-		err = k.DelegateOnHost(ctx, hostZone, stakeAmount, depositRecord)
+		// Build the list of delegation messages for each validator
+		msgs, delegations, err := k.GetDelegationICAMessages(ctx, hostZone, stakeAmount, depositRecord)
 		if err != nil {
 			k.Logger(ctx).Error(fmt.Sprintf("Did not stake %s on %s | err: %s", stakeAmount.String(), hostZone.ChainId, err.Error()))
 			continue
 		}
+
+		// Submit the delegation messages in batchs
+		delegateBatchSize := int(hostZone.MaxMessagesPerIcaTx)
+		numTxsSubmitted, err := k.BatchSubmitDelegationICAMessages(ctx, hostZone, depositRecord, msgs, delegations, delegateBatchSize)
+		if err != nil {
+			k.Logger(ctx).Error(fmt.Sprintf("Faild to submit delegation ICAs: %s", err.Error()))
+		}
 		k.Logger(ctx).Info(utils.LogWithHostZone(hostZone.ChainId, "Successfully submitted stake"))
+
+		// Increment the number of tx sin progress on the record and update the status
+		depositRecord.Status = recordstypes.DepositRecord_DELEGATION_IN_PROGRESS
+		depositRecord.DelegationTxsInProgress += numTxsSubmitted
+		k.RecordsKeeper.SetDepositRecord(ctx, depositRecord)
 
 		ctx.EventManager().EmitEvent(
 			sdk.NewEvent(
