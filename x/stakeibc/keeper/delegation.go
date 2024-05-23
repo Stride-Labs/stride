@@ -14,21 +14,25 @@ import (
 	"github.com/Stride-Labs/stride/v22/x/stakeibc/types"
 )
 
-func (k Keeper) DelegateOnHost(ctx sdk.Context, hostZone types.HostZone, amt sdk.Coin, depositRecord recordstypes.DepositRecord) error {
+// Builds the delegation ICA messags for a given deposit record
+// Each validator has a portion of the total amount on the record based on their weight
+func (k Keeper) GetDelegationICAMessages(
+	ctx sdk.Context,
+	hostZone types.HostZone,
+	amt sdk.Coin, depositRecord recordstypes.DepositRecord,
+) (msgs []proto.Message, delegations []*types.SplitDelegation, err error) {
 	// Fetch the relevant ICA
 	if hostZone.DelegationIcaAddress == "" {
-		return errorsmod.Wrapf(types.ErrICAAccountNotFound, "no delegation account found for %s", hostZone.ChainId)
+		return msgs, delegations, errorsmod.Wrapf(types.ErrICAAccountNotFound, "no delegation account found for %s", hostZone.ChainId)
 	}
 
 	// Construct the transaction
 	targetDelegatedAmts, err := k.GetTargetValAmtsForHostZone(ctx, hostZone, amt.Amount)
 	if err != nil {
 		k.Logger(ctx).Error(fmt.Sprintf("Error getting target delegation amounts for host zone %s", hostZone.ChainId))
-		return err
+		return msgs, delegations, err
 	}
 
-	var splitDelegations []*types.SplitDelegation
-	var msgs []proto.Message
 	for _, validator := range hostZone.Validators {
 		relativeAmount, ok := targetDelegatedAmts[validator.Address]
 		if !ok || !relativeAmount.IsPositive() {
@@ -40,7 +44,7 @@ func (k Keeper) DelegateOnHost(ctx sdk.Context, hostZone types.HostZone, amt sdk
 			ValidatorAddress: validator.Address,
 			Amount:           sdk.NewCoin(amt.Denom, relativeAmount),
 		})
-		splitDelegations = append(splitDelegations, &types.SplitDelegation{
+		delegations = append(delegations, &types.SplitDelegation{
 			Validator: validator.Address,
 			Amount:    relativeAmount,
 		})
@@ -48,32 +52,43 @@ func (k Keeper) DelegateOnHost(ctx sdk.Context, hostZone types.HostZone, amt sdk
 	k.Logger(ctx).Info(utils.LogWithHostZone(hostZone.ChainId, "Preparing MsgDelegates from the delegation account to each validator"))
 
 	if len(msgs) == 0 {
-		return errorsmod.Wrap(sdkerrors.ErrInvalidRequest, "Target delegation amount was 0 for each validator")
+		return msgs, delegations, errorsmod.Wrap(sdkerrors.ErrInvalidRequest, "Target delegation amount was 0 for each validator")
 	}
 
+	return msgs, delegations, nil
+}
+
+// Submit undelegate ICA messages in small batches to reduce the gas size per tx
+func (k Keeper) BatchSubmitDelegationICAMessages(
+	ctx sdk.Context,
+	hostZone types.HostZone,
+	depositRecord recordstypes.DepositRecord,
+	msgs []proto.Message,
+	delegations []*types.SplitDelegation,
+) (numTxsSubmitted uint64, err error) {
 	// add callback data
 	delegateCallback := types.DelegateCallback{
 		HostZoneId:       hostZone.ChainId,
 		DepositRecordId:  depositRecord.Id,
-		SplitDelegations: splitDelegations,
+		SplitDelegations: delegations,
 	}
 	k.Logger(ctx).Info(utils.LogWithHostZone(hostZone.ChainId, "Marshalling DelegateCallback args: %+v", delegateCallback))
 	marshalledCallbackArgs, err := k.MarshalDelegateCallbackArgs(ctx, delegateCallback)
 	if err != nil {
-		return err
+		return 0, err
 	}
 
 	// Send the transaction through SubmitTx
 	_, err = k.SubmitTxsStrideEpoch(ctx, hostZone.ConnectionId, msgs, types.ICAAccountType_DELEGATION, ICACallbackID_Delegate, marshalledCallbackArgs)
 	if err != nil {
-		return errorsmod.Wrapf(err, "Failed to SubmitTxs for connectionId %s on %s. Messages: %s", hostZone.ConnectionId, hostZone.ChainId, msgs)
+		return 0, errorsmod.Wrapf(err, "Failed to SubmitTxs for connectionId %s on %s. Messages: %s", hostZone.ConnectionId, hostZone.ChainId, msgs)
 	}
 	k.Logger(ctx).Info(utils.LogWithHostZone(hostZone.ChainId, "ICA MsgDelegates Successfully Sent"))
 
 	// flag the delegation change in progress on each validator
-	for _, splitDelegation := range splitDelegations {
-		if err := k.IncrementValidatorDelegationChangesInProgress(&hostZone, splitDelegation.Validator); err != nil {
-			return err
+	for _, delegation := range delegations {
+		if err := k.IncrementValidatorDelegationChangesInProgress(&hostZone, delegation.Validator); err != nil {
+			return 0, err
 		}
 	}
 	k.SetHostZone(ctx, hostZone)
@@ -82,7 +97,7 @@ func (k Keeper) DelegateOnHost(ctx sdk.Context, hostZone types.HostZone, amt sdk
 	depositRecord.Status = recordstypes.DepositRecord_DELEGATION_IN_PROGRESS
 	k.RecordsKeeper.SetDepositRecord(ctx, depositRecord)
 
-	return nil
+	return numTxsSubmitted, nil
 }
 
 // Iterate each deposit record marked DELEGATION_QUEUE and use the delegation ICA to delegate on the host zone
@@ -92,7 +107,8 @@ func (k Keeper) StakeExistingDepositsOnHostZones(ctx sdk.Context, epochNumber ui
 	stakeDepositRecords := utils.FilterDepositRecords(depositRecords, func(record recordstypes.DepositRecord) (condition bool) {
 		isStakeRecord := record.Status == recordstypes.DepositRecord_DELEGATION_QUEUE
 		isBeforeCurrentEpoch := record.DepositEpochNumber < epochNumber
-		return isStakeRecord && isBeforeCurrentEpoch
+		isNotInProgress := record.DelegationTxsInProgress == 0
+		return isStakeRecord && isBeforeCurrentEpoch && isNotInProgress
 	})
 
 	if len(stakeDepositRecords) == 0 {
