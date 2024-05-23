@@ -49,6 +49,7 @@ message DepositRecord {
   Status status = 6;
   uint64 deposit_epoch_number = 7;
   Source source = 8;
+  uint64 delegation_txs_in_progress = 9;
 
   reserved 5;
 }

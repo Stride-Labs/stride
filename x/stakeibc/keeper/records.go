@@ -19,11 +19,12 @@ func (k Keeper) CreateDepositRecordsForEpoch(ctx sdk.Context, epochNumber uint64
 		k.Logger(ctx).Info(utils.LogWithHostZone(hostZone.ChainId, "Creating Deposit Record"))
 
 		depositRecord := recordstypes.DepositRecord{
-			Amount:             sdkmath.ZeroInt(),
-			Denom:              hostZone.HostDenom,
-			HostZoneId:         hostZone.ChainId,
-			Status:             recordstypes.DepositRecord_TRANSFER_QUEUE,
-			DepositEpochNumber: epochNumber,
+			Amount:                  sdkmath.ZeroInt(),
+			Denom:                   hostZone.HostDenom,
+			HostZoneId:              hostZone.ChainId,
+			Status:                  recordstypes.DepositRecord_TRANSFER_QUEUE,
+			DepositEpochNumber:      epochNumber,
+			DelegationTxsInProgress: 0,
 		}
 		k.RecordsKeeper.AppendDepositRecord(ctx, depositRecord)
 	}
