@@ -21,11 +21,6 @@ func (k Keeper) GetDelegationICAMessages(
 	hostZone types.HostZone,
 	depositRecord recordstypes.DepositRecord,
 ) (msgs []proto.Message, delegations []*types.SplitDelegation, err error) {
-	// Fetch the relevant ICA
-	if hostZone.DelegationIcaAddress == "" {
-		return msgs, delegations, errorsmod.Wrapf(types.ErrICAAccountNotFound, "no delegation account found for %s", hostZone.ChainId)
-	}
-
 	// Construct the transaction
 	targetDelegationsByValidator, err := k.GetTargetValAmtsForHostZone(ctx, hostZone, depositRecord.Amount)
 	if err != nil {
@@ -135,6 +130,11 @@ func (k Keeper) StakeExistingDepositsOnHostZones(ctx sdk.Context, epochNumber ui
 		hostZone, err := k.GetActiveHostZone(ctx, depositRecord.HostZoneId)
 		if err != nil {
 			k.Logger(ctx).Error(fmt.Sprintf("[StakeExistingDepositsOnHostZones] Not processing %d, %s", depositRecord.Id, err.Error()))
+			continue
+		}
+
+		if hostZone.DelegationIcaAddress == "" {
+			k.Logger(ctx).Error(fmt.Sprintf("[StakeExistingDepositsOnHostZones] no delegation account found for %s", hostZone.ChainId))
 			continue
 		}
 

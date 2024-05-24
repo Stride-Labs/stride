@@ -56,79 +56,87 @@ func (s *KeeperTestSuite) GetInitialDepositRecords(currentEpoch uint64) TestDepo
 	priorEpoch := currentEpoch - 1
 	emptyDepositRecords := []recordstypes.DepositRecord{
 		{
-			Id:                 1,
-			Amount:             sdkmath.ZeroInt(),
-			Denom:              Atom,
-			HostZoneId:         HostChainId,
-			Status:             recordstypes.DepositRecord_TRANSFER_QUEUE,
-			DepositEpochNumber: priorEpoch,
+			Id:                      1,
+			Amount:                  sdkmath.ZeroInt(),
+			Denom:                   Atom,
+			HostZoneId:              HostChainId,
+			Status:                  recordstypes.DepositRecord_TRANSFER_QUEUE,
+			DepositEpochNumber:      priorEpoch,
+			DelegationTxsInProgress: 0,
 		},
 		{
-			Id:                 2,
-			Amount:             sdkmath.ZeroInt(),
-			Denom:              Atom,
-			HostZoneId:         HostChainId,
-			Status:             recordstypes.DepositRecord_TRANSFER_QUEUE,
-			DepositEpochNumber: priorEpoch,
+			Id:                      2,
+			Amount:                  sdkmath.ZeroInt(),
+			Denom:                   Atom,
+			HostZoneId:              HostChainId,
+			Status:                  recordstypes.DepositRecord_TRANSFER_QUEUE,
+			DepositEpochNumber:      priorEpoch,
+			DelegationTxsInProgress: 0,
 		},
 	}
 
 	recordsToBeTransfered := []recordstypes.DepositRecord{
 		{
-			Id:                 3,
-			Amount:             sdkmath.NewInt(3000),
-			Denom:              Atom,
-			HostZoneId:         HostChainId,
-			Status:             recordstypes.DepositRecord_TRANSFER_QUEUE,
-			DepositEpochNumber: priorEpoch,
+			Id:                      3,
+			Amount:                  sdkmath.NewInt(3000),
+			Denom:                   Atom,
+			HostZoneId:              HostChainId,
+			Status:                  recordstypes.DepositRecord_TRANSFER_QUEUE,
+			DepositEpochNumber:      priorEpoch,
+			DelegationTxsInProgress: 0,
 		},
 		{
-			Id:                 4,
-			Amount:             sdkmath.NewInt(4000),
-			Denom:              Atom,
-			HostZoneId:         HostChainId,
-			Status:             recordstypes.DepositRecord_TRANSFER_QUEUE,
-			DepositEpochNumber: priorEpoch,
+			Id:                      4,
+			Amount:                  sdkmath.NewInt(4000),
+			Denom:                   Atom,
+			HostZoneId:              HostChainId,
+			Status:                  recordstypes.DepositRecord_TRANSFER_QUEUE,
+			DepositEpochNumber:      priorEpoch,
+			DelegationTxsInProgress: 0,
 		},
 	}
 	transferAmount := sdkmath.NewInt(3000 + 4000)
 
 	recordsToBeStaked := []recordstypes.DepositRecord{
 		{
-			Id:                 5,
-			Amount:             sdkmath.NewInt(5000),
-			Denom:              Atom,
-			HostZoneId:         HostChainId,
-			Status:             recordstypes.DepositRecord_DELEGATION_QUEUE,
-			DepositEpochNumber: priorEpoch,
+			Id:                      5,
+			Amount:                  sdkmath.NewInt(5000),
+			Denom:                   Atom,
+			HostZoneId:              HostChainId,
+			Status:                  recordstypes.DepositRecord_DELEGATION_QUEUE,
+			DepositEpochNumber:      priorEpoch,
+			DelegationTxsInProgress: 0,
 		},
 		{
-			Id:                 6,
-			Amount:             sdkmath.NewInt(6000),
-			Denom:              Atom,
-			HostZoneId:         HostChainId,
-			Status:             recordstypes.DepositRecord_DELEGATION_QUEUE,
-			DepositEpochNumber: priorEpoch,
+			Id:                      6,
+			Amount:                  sdkmath.NewInt(6000),
+			Denom:                   Atom,
+			HostZoneId:              HostChainId,
+			Status:                  recordstypes.DepositRecord_DELEGATION_QUEUE,
+			DepositEpochNumber:      priorEpoch,
+			DelegationTxsInProgress: 0,
 		},
 	}
 	stakeAmount := sdkmath.NewInt(5000 + 6000)
 
 	recordsInCurrentEpoch := []recordstypes.DepositRecord{
 		{
-			Id:                 7,
-			Amount:             sdkmath.NewInt(7000),
-			Denom:              Atom,
-			HostZoneId:         HostChainId,
-			Status:             recordstypes.DepositRecord_DELEGATION_QUEUE,
-			DepositEpochNumber: currentEpoch,
+			Id:                      7,
+			Amount:                  sdkmath.NewInt(7000),
+			Denom:                   Atom,
+			HostZoneId:              HostChainId,
+			Status:                  recordstypes.DepositRecord_DELEGATION_QUEUE,
+			DepositEpochNumber:      currentEpoch,
+			DelegationTxsInProgress: 0,
 		},
 		{
-			Id:                 8,
-			Amount:             sdkmath.NewInt(8000),
-			Denom:              Atom,
-			HostZoneId:         HostChainId,
-			Status:             recordstypes.DepositRecord_DELEGATION_QUEUE,
-			DepositEpochNumber: currentEpoch,
+			Id:                      8,
+			Amount:                  sdkmath.NewInt(8000),
+			Denom:                   Atom,
+			HostZoneId:              HostChainId,
+			Status:                  recordstypes.DepositRecord_DELEGATION_QUEUE,
+			DepositEpochNumber:      currentEpoch,
+			DelegationTxsInProgress: 0,
 		},
 	}
 
@@ -176,6 +184,7 @@ func (s *KeeperTestSuite) SetupDepositRecords() DepositRecordsTestCase {
 		HostDenom:            Atom,
 		IbcDenom:             ibcDenomTrace.IBCDenom(),
 		Validators:           validators,
+		MaxMessagesPerIcaTx:  10,
 	}
 
 	currentEpoch := uint64(2)
@@ -216,8 +225,7 @@ func (s *KeeperTestSuite) CheckStateAfterTransferringDepositRecords(tc DepositRe
 	// Get tx seq number before transfer to confirm that it gets incremented
 	transferPortID := tc.TransferChannel.PortID
 	transferChannelID := tc.TransferChannel.ChannelID
-	startSequence, found := s.App.IBCKeeper.ChannelKeeper.GetNextSequenceSend(s.Ctx, transferPortID, transferChannelID)
-	s.Require().True(found, "sequence number not found before transfer")
+	startSequence := s.MustGetNextSequenceNumber(transferPortID, transferChannelID)
 
 	// Transfer deposit records
 	s.App.StakeibcKeeper.TransferExistingDepositsToHostZones(s.Ctx, tc.epochNumber, tc.initialDepositRecords.GetAllRecords())
@@ -226,8 +234,7 @@ func (s *KeeperTestSuite) CheckStateAfterTransferringDepositRecords(tc DepositRe
 	numTransferAttempts := len(tc.initialDepositRecords.recordsToBeTransfered)
 	numSuccessfulTransfers := uint64(numTransferAttempts - numTransfersFailed)
 
-	endSequence, found := s.App.IBCKeeper.ChannelKeeper.GetNextSequenceSend(s.Ctx, transferPortID, transferChannelID)
-	s.Require().True(found, "sequence number not found after transfer")
+	endSequence := s.MustGetNextSequenceNumber(transferPortID, transferChannelID)
 	s.Require().Equal(startSequence+numSuccessfulTransfers, endSequence, "tx sequence number after transfer")
 
 	// Confirm the callback data was stored for each transfer packet EXCLUDING the failed packets
@@ -307,8 +314,7 @@ func (s *KeeperTestSuite) CheckStateAfterStakingDepositRecords(tc DepositRecords
 	// Get tx seq number before delegation to confirm it incremented
 	delegationPortID := tc.DelegationChannel.PortID
 	delegationChannelID := tc.DelegationChannel.ChannelID
-	startSequence, found := s.App.IBCKeeper.ChannelKeeper.GetNextSequenceSend(s.Ctx, delegationPortID, delegationChannelID)
-	s.Require().True(found, "sequence number not found before delegation")
+	startSequence := s.MustGetNextSequenceNumber(delegationPortID, delegationChannelID)
 
 	// Stake deposit records
 	s.App.StakeibcKeeper.StakeExistingDepositsOnHostZones(s.Ctx, tc.epochNumber, tc.initialDepositRecords.GetAllRecords())
@@ -317,8 +323,7 @@ func (s *KeeperTestSuite) CheckStateAfterStakingDepositRecords(tc DepositRecords
 	numDelegationAttempts := len(tc.initialDepositRecords.recordsToBeStaked)
 	numSuccessfulDelegations := uint64(numDelegationAttempts - numDelegationsFailed)
 
-	endSequence, found := s.App.IBCKeeper.ChannelKeeper.GetNextSequenceSend(s.Ctx, delegationPortID, delegationChannelID)
-	s.Require().True(found, "sequence number not found after delegation")
+	endSequence := s.MustGetNextSequenceNumber(delegationPortID, delegationChannelID)
 	s.Require().Equal(startSequence+numSuccessfulDelegations, endSequence, "tx sequence number after delegation")
 
 	// Confirm the callback data was stored for each delegation packet EXCLUDING the failed packets
@@ -365,19 +370,6 @@ func (s *KeeperTestSuite) TestStakeDepositRecords_Successful() {
 	tc := s.SetupDepositRecords()
 
 	numFailures := 0
-	s.CheckStateAfterStakingDepositRecords(tc, numFailures)
-}
-
-func (s *KeeperTestSuite) TestStakeDepositRecords_SuccessfulCapped() {
-	tc := s.SetupDepositRecords()
-
-	// Set the cap on the number of deposit records processed to 1
-	params := s.App.StakeibcKeeper.GetParams(s.Ctx)
-	params.MaxStakeIcaCallsPerEpoch = 1
-	s.App.StakeibcKeeper.SetParams(s.Ctx, params)
-
-	// The cap should cause the last record to not get processed
-	numFailures := 1
 	s.CheckStateAfterStakingDepositRecords(tc, numFailures)
 }
 
