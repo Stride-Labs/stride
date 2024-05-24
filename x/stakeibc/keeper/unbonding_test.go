@@ -1224,6 +1224,19 @@ func (s *KeeperTestSuite) TestBatchSubmitUndelegateICAMessages() {
 	// Confirm the number of callback data's matches the expected number of ICAs
 	callbackData := s.App.IcacallbacksKeeper.GetAllCallbackData(s.Ctx)
 	s.Require().Equal(expectedNumberOfIcas, len(callbackData), "number of callback datas")
+
+	// Remove the connection ID from the host zone and try again, it should fail
+	invalidHostZone := hostZone
+	invalidHostZone.ConnectionId = ""
+	_, err = s.App.StakeibcKeeper.BatchSubmitUndelegateICAMessages(
+		s.Ctx,
+		invalidHostZone,
+		epochUnbondingRecordIds,
+		undelegateMsgs,
+		unbondings,
+		batchSize,
+	)
+	s.Require().ErrorContains(err, "unable to submit unbonding ICA")
 }
 
 func (s *KeeperTestSuite) SetupInitiateAllHostZoneUnbondings() {
