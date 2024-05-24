@@ -3,8 +3,6 @@ package keeper
 import (
 	"fmt"
 
-	"github.com/spf13/cast"
-
 	"github.com/Stride-Labs/stride/v22/utils"
 	recordstypes "github.com/Stride-Labs/stride/v22/x/records/types"
 	"github.com/Stride-Labs/stride/v22/x/stakeibc/types"
@@ -12,6 +10,7 @@ import (
 	icacallbackstypes "github.com/Stride-Labs/stride/v22/x/icacallbacks/types"
 
 	errorsmod "cosmossdk.io/errors"
+	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/gogoproto/proto"
@@ -63,11 +62,21 @@ func (k Keeper) DelegateCallback(ctx sdk.Context, packet channeltypes.Packet, ac
 		return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "deposit record not found %d", recordId)
 	}
 
-	// Regardless of failure/success/timeout, indicate that this ICA has completed
+	// Regardless of failure/success/timeout, indicate that this ICA has completed on the deposit record
+	if depositRecord.DelegationTxsInProgress == 0 {
+		return types.ErrInvalidDelegationsInProgress.Wrapf("delegation changes in progress is already 0 and can't be decremented")
+	}
+	depositRecord.DelegationTxsInProgress -= 1
+	k.RecordsKeeper.SetDepositRecord(ctx, depositRecord)
+
+	// Regardless of failure/success/timeout, indicate that this ICA has completed on each validator
+	// Sum up the total delegated in the process
+	totalDelegatedInBatch := sdkmath.ZeroInt()
 	for _, splitDelegation := range delegateCallback.SplitDelegations {
 		if err := k.DecrementValidatorDelegationChangesInProgress(&hostZone, splitDelegation.Validator); err != nil {
 			return err
 		}
+		totalDelegatedInBatch = totalDelegatedInBatch.Add(splitDelegation.Amount)
 	}
 	k.SetHostZone(ctx, hostZone)
 
@@ -94,7 +103,16 @@ func (k Keeper) DelegateCallback(ctx sdk.Context, packet channeltypes.Packet, ac
 	k.Logger(ctx).Info(utils.LogICACallbackStatusWithHostZone(chainId, ICACallbackID_Delegate,
 		icacallbackstypes.AckResponseStatus_SUCCESS, packet))
 
-	// Update delegations on the host zone
+	// Decrement the amount on the deposit record
+	// If there's nothing left on the deposit record, remove it
+	depositRecord.Amount = depositRecord.Amount.Sub(totalDelegatedInBatch)
+	if depositRecord.Amount.IsZero() {
+		k.RecordsKeeper.RemoveDepositRecord(ctx, recordId)
+	} else {
+		k.RecordsKeeper.SetDepositRecord(ctx, depositRecord)
+	}
+
+	// Update delegations on the validators and host zone
 	for _, splitDelegation := range delegateCallback.SplitDelegations {
 		err := k.AddDelegationToValidator(ctx, &hostZone, splitDelegation.Validator, splitDelegation.Amount, ICACallbackID_Delegate)
 		if err != nil {
@@ -103,7 +121,6 @@ func (k Keeper) DelegateCallback(ctx sdk.Context, packet channeltypes.Packet, ac
 	}
 	k.SetHostZone(ctx, hostZone)
 
-	k.RecordsKeeper.RemoveDepositRecord(ctx, cast.ToUint64(recordId))
 	k.Logger(ctx).Info(fmt.Sprintf("[DELEGATION] success on %s", chainId))
 	return nil
 }
