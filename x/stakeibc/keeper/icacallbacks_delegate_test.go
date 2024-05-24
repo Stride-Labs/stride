@@ -63,11 +63,12 @@ func (s *KeeperTestSuite) SetupDelegateCallback() DelegateCallbackTestCase {
 		TotalDelegations: totalDelegation,
 	}
 	depositRecord := recordtypes.DepositRecord{
-		Id:                 1,
-		DepositEpochNumber: 1,
-		HostZoneId:         HostChainId,
-		Amount:             balanceToStake,
-		Status:             recordtypes.DepositRecord_DELEGATION_QUEUE,
+		Id:                      1,
+		DepositEpochNumber:      1,
+		HostZoneId:              HostChainId,
+		Amount:                  balanceToStake,
+		Status:                  recordtypes.DepositRecord_DELEGATION_QUEUE,
+		DelegationTxsInProgress: 1,
 	}
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
 	s.App.RecordsKeeper.SetDepositRecord(s.Ctx, depositRecord)
@@ -121,8 +122,7 @@ func (s *KeeperTestSuite) TestDelegateCallback_Successful() {
 	s.Require().NoError(err)
 
 	// Confirm total delegation has increased
-	hostZone, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx, HostChainId)
-	s.Require().True(found)
+	hostZone := s.MustGetHostZone(HostChainId)
 	s.Require().Equal(initialState.totalDelegation.Add(initialState.balanceToStake), hostZone.TotalDelegations, "total delegation should have increased")
 
 	// Confirm delegations have been added to validators and number delegation changes in progress was reduced
@@ -155,6 +155,7 @@ func (s *KeeperTestSuite) checkDelegateStateIfCallbackFailed(tc DelegateCallback
 	s.Require().Len(records, 1, "number of deposit records")
 	record := records[0]
 	s.Require().Equal(recordtypes.DepositRecord_DELEGATION_QUEUE, record.Status, "deposit record status should not have changed")
+	s.Require().Zero(record.DelegationTxsInProgress, "record delegation changes in progress should have reset")
 }
 
 func (s *KeeperTestSuite) TestDelegateCallback_DelegateCallbackTimeout() {
