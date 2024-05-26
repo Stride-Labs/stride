@@ -2,12 +2,22 @@ package types
 
 import sdkmath "cosmossdk.io/math"
 
-// Helper function to evaluate if a host zone unbonding record still needs
-// the unbonding to be initiated
-// This includes records either in the normal queue or the retry queue
+// Helper function to evaluate if a host zone unbonding record should
+// have it's unbonding initiated
+// This is indicated by a record in status UNBONDING_QUEUE with a non-zero
+// st token amount
 func (r HostZoneUnbonding) ShouldInitiateUnbonding() bool {
 	notYetUnbonding := r.Status == HostZoneUnbonding_UNBONDING_QUEUE
-	hasFailedUnbonding := r.Status == HostZoneUnbonding_UNBONDING_RETRY_QUEUE
-	hasAtLeastOneRecord := r.NativeTokenAmount.GT(sdkmath.ZeroInt())
-	return (notYetUnbonding || hasFailedUnbonding) && hasAtLeastOneRecord
+	hasAtLeastOneRedemption := r.StTokenAmount.GT(sdkmath.ZeroInt())
+	return notYetUnbonding && hasAtLeastOneRedemption
+}
+
+// Helper function to evaluate if a host zone unbonding record should
+// have it's unbonding retried
+// This is indicated by a record in status UNBONDING_RETRY_QUEUE and
+// 0 undelegations in progress
+func (r HostZoneUnbonding) ShouldRetryUnbonding() bool {
+	shouldRetryUnbonding := r.Status == HostZoneUnbonding_UNBONDING_RETRY_QUEUE
+	hasNoPendingICAs := r.UndelegationTxsInProgress == 0
+	return shouldRetryUnbonding && hasNoPendingICAs
 }
