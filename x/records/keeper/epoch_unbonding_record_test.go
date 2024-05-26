@@ -17,22 +17,31 @@ import (
 func createNEpochUnbondingRecord(keeper *keeper.Keeper, ctx sdk.Context, n int) ([]types.EpochUnbondingRecord, map[string]types.HostZoneUnbonding) {
 	hostZoneUnbondingsList := []types.HostZoneUnbonding{
 		{
-			HostZoneId:        "host-A",
-			Status:            types.HostZoneUnbonding_UNBONDING_QUEUE,
-			StTokenAmount:     sdkmath.ZeroInt(),
-			NativeTokenAmount: sdkmath.ZeroInt(),
+			HostZoneId:            "host-A",
+			Status:                types.HostZoneUnbonding_UNBONDING_QUEUE,
+			StTokenAmount:         sdkmath.ZeroInt(),
+			NativeTokenAmount:     sdkmath.ZeroInt(),
+			NativeTokensToUnbond:  sdkmath.ZeroInt(),
+			StTokensToBurn:        sdkmath.ZeroInt(),
+			ClaimableNativeTokens: sdkmath.ZeroInt(),
 		},
 		{
-			HostZoneId:        "host-B",
-			Status:            types.HostZoneUnbonding_UNBONDING_QUEUE,
-			StTokenAmount:     sdkmath.ZeroInt(),
-			NativeTokenAmount: sdkmath.ZeroInt(),
+			HostZoneId:            "host-B",
+			Status:                types.HostZoneUnbonding_UNBONDING_QUEUE,
+			StTokenAmount:         sdkmath.ZeroInt(),
+			NativeTokenAmount:     sdkmath.ZeroInt(),
+			NativeTokensToUnbond:  sdkmath.ZeroInt(),
+			StTokensToBurn:        sdkmath.ZeroInt(),
+			ClaimableNativeTokens: sdkmath.ZeroInt(),
 		},
 		{
-			HostZoneId:        "host-C",
-			Status:            types.HostZoneUnbonding_UNBONDING_QUEUE,
-			StTokenAmount:     sdkmath.ZeroInt(),
-			NativeTokenAmount: sdkmath.ZeroInt(),
+			HostZoneId:            "host-C",
+			Status:                types.HostZoneUnbonding_UNBONDING_QUEUE,
+			StTokenAmount:         sdkmath.ZeroInt(),
+			NativeTokenAmount:     sdkmath.ZeroInt(),
+			NativeTokensToUnbond:  sdkmath.ZeroInt(),
+			StTokensToBurn:        sdkmath.ZeroInt(),
+			ClaimableNativeTokens: sdkmath.ZeroInt(),
 		},
 	}
 	hostZoneUnbondingsMap := make(map[string]types.HostZoneUnbonding)

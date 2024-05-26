@@ -31,7 +31,7 @@ func TestShouldInitiateUnbonding(t *testing.T) {
 		},
 		{
 			name:         "zero amount",
-			status:       types.HostZoneUnbonding_CLAIMABLE,
+			status:       types.HostZoneUnbonding_UNBONDING_QUEUE,
 			amount:       sdkmath.ZeroInt(),
 			shouldUnbond: false,
 		},
@@ -40,10 +40,60 @@ func TestShouldInitiateUnbonding(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			record := types.HostZoneUnbonding{
-				Status:            tc.status,
-				NativeTokenAmount: tc.amount,
+				Status:        tc.status,
+				StTokenAmount: tc.amount,
 			}
 			require.Equal(t, tc.shouldUnbond, record.ShouldInitiateUnbonding())
+		})
+	}
+}
+
+func TestShouldRetryUnbonding(t *testing.T) {
+	testCases := []struct {
+		name         string
+		status       types.HostZoneUnbonding_Status
+		amount       sdkmath.Int
+		txInProgress uint64
+		shouldUnbond bool
+	}{
+		{
+			name:         "should retry",
+			status:       types.HostZoneUnbonding_UNBONDING_RETRY_QUEUE,
+			txInProgress: 0,
+			amount:       sdkmath.OneInt(),
+			shouldUnbond: true,
+		},
+		{
+			name:         "not in retry status",
+			status:       types.HostZoneUnbonding_CLAIMABLE,
+			txInProgress: 0,
+			amount:       sdkmath.OneInt(),
+			shouldUnbond: false,
+		},
+		{
+			name:         "undelegations still processing",
+			status:       types.HostZoneUnbonding_UNBONDING_RETRY_QUEUE,
+			txInProgress: 1,
+			amount:       sdkmath.OneInt(),
+			shouldUnbond: false,
+		},
+		{
+			name:         "zero amount",
+			status:       types.HostZoneUnbonding_UNBONDING_RETRY_QUEUE,
+			txInProgress: 0,
+			amount:       sdkmath.ZeroInt(),
+			shouldUnbond: false,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			record := types.HostZoneUnbonding{
+				Status:                    tc.status,
+				UndelegationTxsInProgress: tc.txInProgress,
+				StTokenAmount:             tc.amount,
+			}
+			require.Equal(t, tc.shouldUnbond, record.ShouldRetryUnbonding())
 		})
 	}
 }

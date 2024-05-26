@@ -18,8 +18,10 @@ import (
 )
 
 type ValidatorUnbonding struct {
-	Validator    string
+	Validator string
+	// TODO [undelegate]: Rename to NativeAmount
 	UnbondAmount sdkmath.Int
+	StAmount     sdkmath.Int
 }
 
 type UnbondingTestCase struct {
@@ -138,11 +140,11 @@ func (s *KeeperTestSuite) CheckUnbondingMessages(tc UnbondingTestCase, expectedU
 	s.Require().Equal(tc.expectedUnbondingRecordIds, actualCallback.EpochUnbondingRecordIds, "unbonding record id's on callback")
 
 	// Check splits from callback data align with expected unbondings
-	s.Require().Len(actualCallback.SplitDelegations, len(expectedUnbondings), "number of unbonding messages")
+	s.Require().Len(actualCallback.SplitUndelegations, len(expectedUnbondings), "number of unbonding messages")
 	for i, expected := range expectedUnbondings {
-		actualSplit := actualCallback.SplitDelegations[i]
+		actualSplit := actualCallback.SplitUndelegations[i]
 		s.Require().Equal(expected.Validator, actualSplit.Validator, "callback message validator - index %d", i)
-		s.Require().Equal(expected.UnbondAmount.Int64(), actualSplit.Amount.Int64(), "callback message amount - index %d", i)
+		s.Require().Equal(expected.UnbondAmount.Int64(), actualSplit.NativeTokenAmount.Int64(), "callback message amount - index %d", i)
 	}
 
 	// Check the delegation change in progress was incremented from each that had an unbonding
@@ -204,10 +206,12 @@ func (s *KeeperTestSuite) TestUnbondFromHostZone_Successful_UnbondOnlyZeroWeight
 		{Address: "valG", Weight: 15, Delegation: sdkmath.NewInt(160)},
 	}
 
-	// TODO: Change back to two messages after 32+ validators are supported
 	expectedUnbondings := []ValidatorUnbonding{
-		// valF has the most capacity (80) so it takes the full unbonding
-		{Validator: "valF", UnbondAmount: sdkmath.NewInt(50)},
+		// valC has #1 priority - unbond up to capacity at 40
+		{Validator: "valC", UnbondAmount: sdkmath.NewInt(40)},
+		// 50 - 40 = 10 unbond remaining
+		// valE has #2 priority - unbond up to remaining
+		{Validator: "valE", UnbondAmount: sdkmath.NewInt(10)},
 	}
 
 	tc := s.SetupTestUnbondFromHostZone(totalWeight, totalStake, totalUnbondAmount, validators)
@@ -287,16 +291,15 @@ func (s *KeeperTestSuite) TestUnbondFromHostZone_Successful_UnbondTotalLessThanT
 		{Address: "valG", Weight: 15, Delegation: sdkmath.NewInt(160)},
 	}
 
-	// TODO: Change back to two messages after 32+ validators are supported
 	expectedUnbondings := []ValidatorUnbonding{
-		// valF has highest capacity - 90
-		{Validator: "valF", UnbondAmount: sdkmath.NewInt(90)},
-		// 150 - 90 = 60 unbond remaining
-		// valC has next highest capacity - 40
+		// valC has #1 priority - unbond up to capacity at 40
 		{Validator: "valC", UnbondAmount: sdkmath.NewInt(40)},
-		// 60 - 40 = 20 unbond remaining
-		// valB has next highest capacity - 35, unbond up to remainder of 20
-		{Validator: "valB", UnbondAmount: sdkmath.NewInt(20)},
+		// 150 - 40 = 110 unbond remaining
+		// valE has #2 priority - unbond up to capacity at 30
+		{Validator: "valE", UnbondAmount: sdkmath.NewInt(30)},
+		// 150 - 40 - 30 = 80 unbond remaining
+		// valF has #3 priority - unbond up to remaining
+		{Validator: "valF", UnbondAmount: sdkmath.NewInt(80)},
 	}
 
 	tc := s.SetupTestUnbondFromHostZone(totalWeight, totalStake, totalUnbondAmount, validators)
@@ -338,27 +341,26 @@ func (s *KeeperTestSuite) TestUnbondFromHostZone_Successful_UnbondTotalGreaterTh
 		{Address: "valG", Weight: 15, Delegation: sdkmath.NewInt(160)},
 	}
 
-	// TODO: Change back to two messages after 32+ validators are supported
 	expectedUnbondings := []ValidatorUnbonding{
-		// valF has highest capacity - 110
-		{Validator: "valF", UnbondAmount: sdkmath.NewInt(110)},
-		// 350 - 110 = 240 unbond remaining
-		// valB has next highest capacity - 105
-		{Validator: "valB", UnbondAmount: sdkmath.NewInt(105)},
-		// 240 - 105 = 135 unbond remaining
-		// valC has next highest capacity - 40
+		// valC has #1 priority - unbond up to capacity at 40
 		{Validator: "valC", UnbondAmount: sdkmath.NewInt(40)},
-		// 135 - 40 = 95 unbond remaining
-		// valD has next highest capacity - 30
-		{Validator: "valD", UnbondAmount: sdkmath.NewInt(30)},
-		// 95 - 30 = 65 unbond remaining
-		// valE has next highest capacity - 30
+		// 350 - 40 = 310 unbond remaining
+		// valE has #2 priority - unbond up to capacity at 30
 		{Validator: "valE", UnbondAmount: sdkmath.NewInt(30)},
-		// 65 - 30 = 35 unbond remaining
-		// valG has next highest capacity - 25
+		// 310 - 30 = 280 unbond remaining
+		// valF has #3 priority - unbond up to capacity at 110
+		{Validator: "valF", UnbondAmount: sdkmath.NewInt(110)},
+		// 280 - 110 = 170 unbond remaining
+		// valB has #4 priority - unbond up to capacity at 105
+		{Validator: "valB", UnbondAmount: sdkmath.NewInt(105)},
+		// 170 - 105 = 65 unbond remaining
+		// valG has #5 priority - unbond up to capacity at 25
 		{Validator: "valG", UnbondAmount: sdkmath.NewInt(25)},
-		// 35 - 25 = 10 unbond remaining
-		// valA covers the remainder up to it's capacity
+		// 65 - 25 = 40 unbond remaining
+		// valD has #6 priority - unbond up to capacity at 30
+		{Validator: "valD", UnbondAmount: sdkmath.NewInt(30)},
+		// 40 - 30 = 10 unbond remaining
+		// valA has #7 priority - unbond up to remaining
 		{Validator: "valA", UnbondAmount: sdkmath.NewInt(10)},
 	}
 
@@ -550,15 +552,15 @@ func (s *KeeperTestSuite) TestGetQueuedHostZoneUnbondingRecords() {
 			HostZoneUnbondings: []*recordtypes.HostZoneUnbonding{
 				{
 					// Included
-					HostZoneId:        HostChainId,
-					NativeTokenAmount: sdkmath.NewInt(1),
-					Status:            recordtypes.HostZoneUnbonding_UNBONDING_QUEUE,
+					HostZoneId:    HostChainId,
+					StTokenAmount: sdkmath.NewInt(1),
+					Status:        recordtypes.HostZoneUnbonding_UNBONDING_QUEUE,
 				},
 				{
 					// Different host zone
-					HostZoneId:        OsmoChainId,
-					NativeTokenAmount: sdkmath.NewInt(2),
-					Status:            recordtypes.HostZoneUnbonding_UNBONDING_QUEUE,
+					HostZoneId:    OsmoChainId,
+					StTokenAmount: sdkmath.NewInt(2),
+					Status:        recordtypes.HostZoneUnbonding_UNBONDING_QUEUE,
 				},
 			},
 		},
@@ -568,15 +570,15 @@ func (s *KeeperTestSuite) TestGetQueuedHostZoneUnbondingRecords() {
 			HostZoneUnbondings: []*recordtypes.HostZoneUnbonding{
 				{
 					// Included
-					HostZoneId:        HostChainId,
-					NativeTokenAmount: sdkmath.NewInt(3),
-					Status:            recordtypes.HostZoneUnbonding_UNBONDING_QUEUE,
+					HostZoneId:    HostChainId,
+					StTokenAmount: sdkmath.NewInt(3),
+					Status:        recordtypes.HostZoneUnbonding_UNBONDING_QUEUE,
 				},
 				{
 					// Different host zone
-					HostZoneId:        OsmoChainId,
-					NativeTokenAmount: sdkmath.NewInt(4),
-					Status:            recordtypes.HostZoneUnbonding_UNBONDING_QUEUE,
+					HostZoneId:    OsmoChainId,
+					StTokenAmount: sdkmath.NewInt(4),
+					Status:        recordtypes.HostZoneUnbonding_UNBONDING_QUEUE,
 				},
 			},
 		},
@@ -586,33 +588,53 @@ func (s *KeeperTestSuite) TestGetQueuedHostZoneUnbondingRecords() {
 			HostZoneUnbondings: []*recordtypes.HostZoneUnbonding{
 				{
 					// Different Status
-					HostZoneId:        HostChainId,
-					NativeTokenAmount: sdkmath.NewInt(5),
-					Status:            recordtypes.HostZoneUnbonding_UNBONDING_IN_PROGRESS,
+					HostZoneId:    HostChainId,
+					StTokenAmount: sdkmath.NewInt(5),
+					Status:        recordtypes.HostZoneUnbonding_UNBONDING_IN_PROGRESS,
 				},
 				{
 					// Different Status
-					HostZoneId:        OsmoChainId,
-					NativeTokenAmount: sdkmath.NewInt(6),
-					Status:            recordtypes.HostZoneUnbonding_UNBONDING_IN_PROGRESS,
+					HostZoneId:    OsmoChainId,
+					StTokenAmount: sdkmath.NewInt(6),
+					Status:        recordtypes.HostZoneUnbonding_UNBONDING_IN_PROGRESS,
 				},
 			},
 		},
 		{
-			// Has relevant host zone unbonding, so epoch number is included
+			// Has relevant host zone unbonding (the retry one), so epoch number is included
 			EpochNumber: uint64(4),
 			HostZoneUnbondings: []*recordtypes.HostZoneUnbonding{
 				{
 					// Different Host and Status
-					HostZoneId:        OsmoChainId,
-					NativeTokenAmount: sdkmath.NewInt(7),
-					Status:            recordtypes.HostZoneUnbonding_CLAIMABLE,
+					HostZoneId:    OsmoChainId,
+					StTokenAmount: sdkmath.NewInt(7),
+					Status:        recordtypes.HostZoneUnbonding_CLAIMABLE,
 				},
 				{
 					// Included
-					HostZoneId:        HostChainId,
-					NativeTokenAmount: sdkmath.NewInt(8),
-					Status:            recordtypes.HostZoneUnbonding_UNBONDING_QUEUE,
+					HostZoneId:                HostChainId,
+					StTokenAmount:             sdkmath.NewInt(8),
+					Status:                    recordtypes.HostZoneUnbonding_UNBONDING_RETRY_QUEUE,
+					UndelegationTxsInProgress: 0,
+				},
+			},
+		},
+		{
+			// Has no relevant unbondings
+			EpochNumber: uint64(5),
+			HostZoneUnbondings: []*recordtypes.HostZoneUnbonding{
+				{
+					// Different Host and Status
+					HostZoneId:    OsmoChainId,
+					StTokenAmount: sdkmath.NewInt(9),
+					Status:        recordtypes.HostZoneUnbonding_CLAIMABLE,
+				},
+				{
+					// Retry record, but has an undelegation in progress
+					HostZoneId:                HostChainId,
+					StTokenAmount:             sdkmath.NewInt(10),
+					Status:                    recordtypes.HostZoneUnbonding_UNBONDING_RETRY_QUEUE,
+					UndelegationTxsInProgress: 1,
 				},
 			},
 		},
@@ -626,23 +648,26 @@ func (s *KeeperTestSuite) TestGetQueuedHostZoneUnbondingRecords() {
 	s.Require().Equal(expectedEpochUnbondingRecordIds, actualEpochIds, "epoch unbonding record IDs")
 	for epochNumber, actualHostZoneUnbonding := range actualHostZoneMap {
 		expectedHostZoneUnbonding := expectedHostZoneUnbondingMap[epochNumber]
-		s.Require().Equal(expectedHostZoneUnbonding, actualHostZoneUnbonding.NativeTokenAmount.Int64(), "host zone unbonding record")
+		s.Require().Equal(expectedHostZoneUnbonding, actualHostZoneUnbonding.StTokenAmount.Int64(),
+			"host zone unbonding record sttoken amount")
 	}
 }
 
 func (s *KeeperTestSuite) TestGetTotalUnbondAmount() {
 	hostZoneUnbondingRecords := map[uint64]recordtypes.HostZoneUnbonding{
-		1: {NativeTokenAmount: sdkmath.NewInt(1)},
-		2: {NativeTokenAmount: sdkmath.NewInt(2)},
-		3: {NativeTokenAmount: sdkmath.NewInt(3)},
-		4: {NativeTokenAmount: sdkmath.NewInt(4)},
+		1: {NativeTokensToUnbond: sdkmath.NewInt(1)},
+		2: {NativeTokensToUnbond: sdkmath.NewInt(2)},
+		3: {NativeTokensToUnbond: sdkmath.NewInt(3)},
+		4: {NativeTokensToUnbond: sdkmath.NewInt(4)},
 	}
 	expectedUnbondAmount := sdkmath.NewInt(1 + 2 + 3 + 4)
-	actualUnbondAmount := s.App.StakeibcKeeper.GetTotalUnbondAmount(s.Ctx, hostZoneUnbondingRecords)
+
+	actualUnbondAmount := s.App.StakeibcKeeper.GetTotalUnbondAmount(hostZoneUnbondingRecords)
 	s.Require().Equal(expectedUnbondAmount, actualUnbondAmount, "unbond amount")
 
 	emptyUnbondings := map[uint64]recordtypes.HostZoneUnbonding{}
-	s.Require().Zero(s.App.StakeibcKeeper.GetTotalUnbondAmount(s.Ctx, emptyUnbondings).Int64())
+	actualUnbondAmount = s.App.StakeibcKeeper.GetTotalUnbondAmount(emptyUnbondings)
+	s.Require().Zero(actualUnbondAmount.Int64(), "expected zero unbondings")
 }
 
 func (s *KeeperTestSuite) TestRefreshUserRedemptionRecordNativeAmounts() {
@@ -737,33 +762,51 @@ func (s *KeeperTestSuite) TestRefreshUnbondingNativeTokenAmounts() {
 	initialHostZoneUnbondingA := recordtypes.HostZoneUnbonding{
 		HostZoneId:            chainA,
 		UserRedemptionRecords: []string{"A", "B"},
+		StTokenAmount:         sdkmath.NewInt(10_000),
+		Status:                recordtypes.HostZoneUnbonding_UNBONDING_QUEUE,
 	}
-	expectedHostZoneUnbondAmountA := expectedUserNativeAmounts["A"].Add(expectedUserNativeAmounts["B"])
+	expectedHostZoneUnbondAmountA := expectedUserNativeAmounts["A"].Add(expectedUserNativeAmounts["B"]).Int64()
+	expectedStToBurnAmountA := initialHostZoneUnbondingA.StTokenAmount.Int64()
 
 	initialHostZoneUnbondingB := recordtypes.HostZoneUnbonding{
 		HostZoneId:            chainB,
 		UserRedemptionRecords: []string{"C", "D"},
+		StTokenAmount:         sdkmath.NewInt(20_000),
+		Status:                recordtypes.HostZoneUnbonding_UNBONDING_QUEUE,
 	}
-	expectedHostZoneUnbondAmountB := expectedUserNativeAmounts["C"].Add(expectedUserNativeAmounts["D"])
+	expectedHostZoneUnbondAmountB := expectedUserNativeAmounts["C"].Add(expectedUserNativeAmounts["D"]).Int64()
+	expectedStToBurnAmountB := initialHostZoneUnbondingB.StTokenAmount.Int64()
 
 	// Call refresh for both hosts
 	epochToHostZoneMap := map[uint64]recordtypes.HostZoneUnbonding{
 		epochNumberA: initialHostZoneUnbondingA,
 		epochNumberB: initialHostZoneUnbondingB,
 	}
-	err := s.App.StakeibcKeeper.RefreshUnbondingNativeTokenAmounts(s.Ctx, epochToHostZoneMap)
+	refreshedEpochToHostZoneMapA, err := s.App.StakeibcKeeper.RefreshUnbondingNativeTokenAmounts(s.Ctx, chainA, epochToHostZoneMap)
+	s.Require().NoError(err, "no error expected when refreshing unbond amount")
+	refreshedEpochToHostZoneMapB, err := s.App.StakeibcKeeper.RefreshUnbondingNativeTokenAmounts(s.Ctx, chainB, epochToHostZoneMap)
 	s.Require().NoError(err, "no error expected when refreshing unbond amount")
 
 	// Confirm the host zone unbonding records were updated
 	updatedHostZoneUnbondingA, found := s.App.RecordsKeeper.GetHostZoneUnbondingByChainId(s.Ctx, epochNumberA, chainA)
-	actualHostZoneUnbondAmountA := updatedHostZoneUnbondingA.NativeTokenAmount
 	s.Require().True(found, "host zone unbonding record for %s should have been found", chainA)
-	s.Require().Equal(expectedHostZoneUnbondAmountA, actualHostZoneUnbondAmountA, "host zone unbonding native amount A")
+
+	actualNativeAmountA := updatedHostZoneUnbondingA.NativeTokenAmount.Int64()
+	actualNativeToUnbondAmountA := updatedHostZoneUnbondingA.NativeTokensToUnbond.Int64()
+	actualStToBurnA := updatedHostZoneUnbondingA.StTokensToBurn.Int64()
+	s.Require().Equal(expectedHostZoneUnbondAmountA, actualNativeAmountA, "host zone unbonding native amount A")
+	s.Require().Equal(expectedHostZoneUnbondAmountA, actualNativeToUnbondAmountA, "host zone unbonding amount to unbond A")
+	s.Require().Equal(expectedStToBurnAmountA, actualStToBurnA, "host zone unbonding amount to burn A")
 
 	updatedHostZoneUnbondingB, found := s.App.RecordsKeeper.GetHostZoneUnbondingByChainId(s.Ctx, epochNumberB, chainB)
-	actualHostZoneUnbondAmountB := updatedHostZoneUnbondingB.NativeTokenAmount
 	s.Require().True(found, "host zone unbonding record for %s should have been found", chainB)
-	s.Require().Equal(expectedHostZoneUnbondAmountB, actualHostZoneUnbondAmountB, "host zone unbonding native amount B")
+
+	actualNativeAmountB := updatedHostZoneUnbondingB.NativeTokenAmount.Int64()
+	actualNativeToUnbondAmountB := updatedHostZoneUnbondingB.NativeTokensToUnbond.Int64()
+	actualStToBurnB := updatedHostZoneUnbondingB.StTokensToBurn.Int64()
+	s.Require().Equal(expectedHostZoneUnbondAmountB, actualNativeAmountB, "host zone unbonding native amount B")
+	s.Require().Equal(expectedHostZoneUnbondAmountB, actualNativeToUnbondAmountB, "host zone unbonding amount to unbond B")
+	s.Require().Equal(expectedStToBurnAmountB, actualStToBurnB, "host zone unbonding amount to burn B")
 
 	// Confirm all user redemption records were updated
 	for id, expectedNativeAmount := range expectedUserNativeAmounts {
@@ -772,9 +815,15 @@ func (s *KeeperTestSuite) TestRefreshUnbondingNativeTokenAmounts() {
 		s.Require().Equal(expectedNativeAmount, record.NativeTokenAmount, "user redemption record %s native amount", id)
 	}
 
+	// Confirm the returned map also has the updated values
+	returnedNativeAmountA := refreshedEpochToHostZoneMapA[epochNumberA].NativeTokensToUnbond.Int64()
+	returnedNativeAmountB := refreshedEpochToHostZoneMapB[epochNumberB].NativeTokensToUnbond.Int64()
+	s.Require().Equal(expectedHostZoneUnbondAmountA, returnedNativeAmountA, "returned map native amount A")
+	s.Require().Equal(expectedHostZoneUnbondAmountB, returnedNativeAmountB, "returned map native amount B")
+
 	// Remove one of the host zones and confirm it errors
 	s.App.StakeibcKeeper.RemoveHostZone(s.Ctx, chainA)
-	err = s.App.StakeibcKeeper.RefreshUnbondingNativeTokenAmounts(s.Ctx, epochToHostZoneMap)
+	_, err = s.App.StakeibcKeeper.RefreshUnbondingNativeTokenAmounts(s.Ctx, chainA, epochToHostZoneMap)
 	s.Require().ErrorContains(err, "host zone not found")
 }
 
@@ -846,21 +895,44 @@ func (s *KeeperTestSuite) TestGetValidatorUnbondCapacity() {
 
 func (s *KeeperTestSuite) TestSortUnbondingCapacityByPriority() {
 	// First we define what the ideal list will look like after sorting
-	// TODO: Change back to sorting by unbond ratio after 32+ validators are supported
 	expectedSortedCapacities := []keeper.ValidatorUnbondCapacity{
-		{
-			// (5) Ratio: 0.25
-			ValidatorAddress:   "valH",
-			BalancedDelegation: sdkmath.NewInt(250),
-			CurrentDelegation:  sdkmath.NewInt(1000), // ratio = 250/1000
-			Capacity:           sdkmath.NewInt(750),
-		},
+		// Zero-weight validator's
 		{
 			// (1) Ratio: 0, Capacity: 100
 			ValidatorAddress:   "valE",
 			BalancedDelegation: sdkmath.NewInt(0),
 			CurrentDelegation:  sdkmath.NewInt(100), // ratio = 0/100
 			Capacity:           sdkmath.NewInt(100),
+		},
+		{
+			// (2) Ratio: 0, Capacity: 25
+			ValidatorAddress:   "valC",
+			BalancedDelegation: sdkmath.NewInt(0),
+			CurrentDelegation:  sdkmath.NewInt(25), // ratio = 0/25
+			Capacity:           sdkmath.NewInt(25),
+		},
+		{
+			// (3) Ratio: 0, Capacity: 25
+			// Same ratio and capacity as above but name is tie breaker
+			ValidatorAddress:   "valD",
+			BalancedDelegation: sdkmath.NewInt(0),
+			CurrentDelegation:  sdkmath.NewInt(25), // ratio = 0/25
+			Capacity:           sdkmath.NewInt(25),
+		},
+		// Non-zero-weight validator's
+		{
+			// (4) Ratio: 0.1
+			ValidatorAddress:   "valB",
+			BalancedDelegation: sdkmath.NewInt(1),
+			CurrentDelegation:  sdkmath.NewInt(10), // ratio = 1/10
+			Capacity:           sdkmath.NewInt(9),
+		},
+		{
+			// (5) Ratio: 0.25
+			ValidatorAddress:   "valH",
+			BalancedDelegation: sdkmath.NewInt(250),
+			CurrentDelegation:  sdkmath.NewInt(1000), // ratio = 250/1000
+			Capacity:           sdkmath.NewInt(750),
 		},
 		{
 			// (6) Ratio: 0.5, Capacity: 100
@@ -884,28 +956,6 @@ func (s *KeeperTestSuite) TestSortUnbondingCapacityByPriority() {
 			BalancedDelegation: sdkmath.NewInt(50),
 			CurrentDelegation:  sdkmath.NewInt(100), // ratio = 50/100
 			Capacity:           sdkmath.NewInt(50),
-		},
-		{
-			// (2) Ratio: 0, Capacity: 25
-			ValidatorAddress:   "valC",
-			BalancedDelegation: sdkmath.NewInt(0),
-			CurrentDelegation:  sdkmath.NewInt(25), // ratio = 0/25
-			Capacity:           sdkmath.NewInt(25),
-		},
-		{
-			// (3) Ratio: 0, Capacity: 25
-			// Same ratio and capacity as above but name is tie breaker
-			ValidatorAddress:   "valD",
-			BalancedDelegation: sdkmath.NewInt(0),
-			CurrentDelegation:  sdkmath.NewInt(25), // ratio = 0/25
-			Capacity:           sdkmath.NewInt(25),
-		},
-		{
-			// (4) Ratio: 0.1
-			ValidatorAddress:   "valB",
-			BalancedDelegation: sdkmath.NewInt(1),
-			CurrentDelegation:  sdkmath.NewInt(10), // ratio = 1/10
-			Capacity:           sdkmath.NewInt(9),
 		},
 		{
 			// (9) Ratio: 0.6
@@ -979,24 +1029,11 @@ func (s *KeeperTestSuite) TestGetUnbondingICAMessages() {
 		DelegationIcaAddress: delegationAddress,
 	}
 
-	batchSize := 4
 	validatorCapacities := []keeper.ValidatorUnbondCapacity{
 		{ValidatorAddress: "val1", Capacity: sdkmath.NewInt(100)},
 		{ValidatorAddress: "val2", Capacity: sdkmath.NewInt(200)},
 		{ValidatorAddress: "val3", Capacity: sdkmath.NewInt(300)},
 		{ValidatorAddress: "val4", Capacity: sdkmath.NewInt(400)},
-
-		// This validator will fall out of the batch and will be redistributed
-		{ValidatorAddress: "val5", Capacity: sdkmath.NewInt(1000)},
-	}
-
-	// Set the current delegation to 1000 + capacity so after their delegation
-	// after the first pass at unbonding is left at 1000
-	// This is so that we can simulate consolidating messages after reaching
-	// the capacity of the first four validators
-	for i, capacity := range validatorCapacities[:batchSize] {
-		capacity.CurrentDelegation = sdkmath.NewInt(1000).Add(capacity.Capacity)
-		validatorCapacities[i] = capacity
 	}
 
 	testCases := []struct {
@@ -1064,19 +1101,8 @@ func (s *KeeperTestSuite) TestGetUnbondingICAMessages() {
 			},
 		},
 		{
-			name:              "unbonding requires message consolidation",
-			totalUnbondAmount: sdkmath.NewInt(2000), // excess of 1000
-			expectedUnbondings: []ValidatorUnbonding{
-				// Redistributed excess denoted after plus sign
-				{Validator: "val1", UnbondAmount: sdkmath.NewInt(100 + 250)},
-				{Validator: "val2", UnbondAmount: sdkmath.NewInt(200 + 250)},
-				{Validator: "val3", UnbondAmount: sdkmath.NewInt(300 + 250)},
-				{Validator: "val4", UnbondAmount: sdkmath.NewInt(400 + 250)},
-			},
-		},
-		{
 			name:              "insufficient delegation",
-			totalUnbondAmount: sdkmath.NewInt(2001),
+			totalUnbondAmount: sdkmath.NewInt(1001),
 			expectedError:     "unable to unbond full amount",
 		},
 	}
@@ -1088,7 +1114,6 @@ func (s *KeeperTestSuite) TestGetUnbondingICAMessages() {
 				hostZone,
 				tc.totalUnbondAmount,
 				validatorCapacities,
-				batchSize,
 			)
 
 			// If this is an error test case, check the error message
@@ -1117,147 +1142,99 @@ func (s *KeeperTestSuite) TestGetUnbondingICAMessages() {
 
 				// Check the callback
 				s.Require().Equal(expected.Validator, actualSplit.Validator, "callback validator for %s", valAddress)
-				s.Require().Equal(expected.UnbondAmount.Int64(), actualSplit.Amount.Int64(), "callback amount %s", valAddress)
+				s.Require().Equal(expected.UnbondAmount.Int64(), actualSplit.NativeTokenAmount.Int64(), "callback native amount %s", valAddress)
 			}
 		})
 	}
 }
 
-func (s *KeeperTestSuite) TestConsolidateUnbondingMessages_Success() {
-	batchSize := 4
-	totalUnbondAmount := int64(1501)
-	excessUnbondAmount := int64(101)
+func (s *KeeperTestSuite) TestBatchSubmitUndelegateICAMessages() {
+	// The test will submit ICA's across 10 validators, in batches of 3
+	// There should be 4 ICA's submitted
+	batchSize := 3
+	numValidators := 10
+	expectedNumberOfIcas := 4
+	epochUnbondingRecordIds := []uint64{1} // arbitrary
 
-	validatorMetadata := []struct {
-		address                    string
-		initialUnbondAmount        int64
-		remainingDelegation        int64
-		expectedDelegationIncrease int64
-	}{
-		// Total Remaining Portion: 1000 + 500 + 250 + 250 = 2000
-		// Excess Portion = Remaining Delegation / Total Remaining Portion
+	// Create the delegation ICA channel
+	delegationAccountOwner := types.FormatHostZoneICAOwner(HostChainId, types.ICAAccountType_DELEGATION)
+	delegationChannelID, delegationPortID := s.CreateICAChannel(delegationAccountOwner)
 
-		// Excess Portion: 1000 / 2000 = 50%
-		// Delegation Increase: 50% * 101 = 50
-		{address: "val1", initialUnbondAmount: 500, remainingDelegation: 1000, expectedDelegationIncrease: 50},
-		// Excess Portion: 500 / 2000 = 25%
-		// Delegation Increase: 25% * 101 = 25
-		{address: "val2", initialUnbondAmount: 400, remainingDelegation: 500, expectedDelegationIncrease: 25},
-		// Excess Portion: 250 / 2000 = 12.5%
-		// Delegation Increase: 12.5% * 101 = 12
-		{address: "val3", initialUnbondAmount: 300, remainingDelegation: 250, expectedDelegationIncrease: 12},
-		// Excess Portion: 250 / 2000 = 12.5% (gets overflow)
-		// Delegation Increase (overflow): 101 - 25 - 12 = 14
-		{address: "val4", initialUnbondAmount: 200, remainingDelegation: 250, expectedDelegationIncrease: 14},
-
-		// Total Excess: 51 + 50 = 101
-		{address: "val5", initialUnbondAmount: 51}, // excess
-		{address: "val6", initialUnbondAmount: 50}, // excess
+	// Create a host zone
+	hostZone := types.HostZone{
+		ChainId:              HostChainId,
+		ConnectionId:         ibctesting.FirstConnectionID,
+		HostDenom:            Atom,
+		DelegationIcaAddress: "cosmos_DELEGATION",
 	}
 
-	// Validate test setup - amounts in the list should match the expected totals
-	totalCheck := int64(0)
-	excessCheckFromInitial := int64(0)
-	excessCheckFromExpected := int64(0)
-	for i, validator := range validatorMetadata {
-		totalCheck += validator.initialUnbondAmount
-		if i >= batchSize {
-			excessCheckFromInitial += validator.initialUnbondAmount
-			excessCheckFromExpected += validator.initialUnbondAmount
-		}
-	}
-	s.Require().Equal(totalUnbondAmount, totalCheck,
-		"mismatch in test case setup - sum of initial unbond amount does not match total")
-	s.Require().Equal(excessUnbondAmount, excessCheckFromInitial,
-		"mismatch in test case setup - sum of excess from initial unbond amount does not match total excess")
-	s.Require().Equal(excessUnbondAmount, excessCheckFromExpected,
-		"mismatch in test case setup - sum of excess from expected delegation increase does not match total excess")
+	// Build the ICA messages and callback for each validator
+	var validators []*types.Validator
+	var undelegateMsgs []proto.Message
+	var unbondings []*types.SplitUndelegation
+	for i := 0; i < numValidators; i++ {
+		validatorAddress := fmt.Sprintf("val%d", i)
+		validators = append(validators, &types.Validator{Address: validatorAddress})
 
-	// Retroactively build validator capacities and messages
-	// Also build the expected unbondings after the consolidation
-	initialUnbondings := []*types.SplitDelegation{}
-	expectedUnbondings := []*types.SplitDelegation{}
-	validatorCapacities := []keeper.ValidatorUnbondCapacity{}
-	for i, validator := range validatorMetadata {
-		// The "unbondings" are the initial unbond amounts
-		initialUnbondings = append(initialUnbondings, &types.SplitDelegation{
-			Validator: validator.address,
-			Amount:    sdkmath.NewInt(validator.initialUnbondAmount),
+		undelegateMsgs = append(undelegateMsgs, &stakingtypes.MsgUndelegate{
+			DelegatorAddress: hostZone.DelegationIcaAddress,
+			ValidatorAddress: validatorAddress,
+			Amount:           sdk.NewCoin(hostZone.HostDenom, sdkmath.NewInt(100)),
 		})
 
-		// The "capacity" should also be the initial unbond amount
-		//   (we're assuming all validators tried to unbond to capacity)
-		// The "current delegation" is their delegation before the unbonding,
-		// which equals the initial unbond amount + the remainder
-		validatorCapacities = append(validatorCapacities, keeper.ValidatorUnbondCapacity{
-			ValidatorAddress:  validator.address,
-			Capacity:          sdkmath.NewInt(validator.initialUnbondAmount),
-			CurrentDelegation: sdkmath.NewInt(validator.initialUnbondAmount + validator.remainingDelegation),
+		unbondings = append(unbondings, &types.SplitUndelegation{
+			Validator:         validatorAddress,
+			NativeTokenAmount: sdkmath.NewInt(100),
 		})
-
-		// The expected unbondings is their initial unbond amount plus the increase
-		if i < batchSize {
-			expectedUnbondings = append(expectedUnbondings, &types.SplitDelegation{
-				Validator: validator.address,
-				Amount:    sdkmath.NewInt(validator.initialUnbondAmount + validator.expectedDelegationIncrease),
-			})
-		}
 	}
 
-	// Call the consolidation function
-	finalUnbondings, err := s.App.StakeibcKeeper.ConsolidateUnbondingMessages(
-		sdkmath.NewInt(totalUnbondAmount),
-		initialUnbondings,
-		validatorCapacities,
+	// Store the validators on the host zone
+	hostZone.Validators = validators
+	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
+
+	// Mock the epoch tracker to timeout 90% through the epoch
+	strideEpochTracker := types.EpochTracker{
+		EpochIdentifier:    epochstypes.DAY_EPOCH,
+		Duration:           10_000_000_000,                                                // 10 second epochs
+		NextEpochStartTime: uint64(s.Coordinator.CurrentTime.UnixNano() + 30_000_000_000), // dictates timeout
+	}
+	s.App.StakeibcKeeper.SetEpochTracker(s.Ctx, strideEpochTracker)
+
+	// Get tx seq number before the ICA was submitted to check whether an ICA was submitted
+	startSequence := s.MustGetNextSequenceNumber(delegationPortID, delegationChannelID)
+
+	// Submit the unbondings
+	numTxsSubmitted, err := s.App.StakeibcKeeper.BatchSubmitUndelegateICAMessages(
+		s.Ctx,
+		hostZone,
+		epochUnbondingRecordIds,
+		undelegateMsgs,
+		unbondings,
 		batchSize,
 	)
-	s.Require().NoError(err, "no error expected when consolidating unbonding messages")
+	s.Require().NoError(err, "no error expected when submitting batches")
+	s.Require().Equal(numTxsSubmitted, uint64(expectedNumberOfIcas), "returned number of txs submitted")
 
-	// Validate the final messages matched expectations
-	s.Require().Equal(batchSize, len(finalUnbondings), "number of consolidated unbondings")
+	// Confirm the sequence number iterated by the expected number of ICAs
+	endSequence := s.MustGetNextSequenceNumber(delegationPortID, delegationChannelID)
+	s.Require().Equal(startSequence+uint64(expectedNumberOfIcas), endSequence, "expected number of ICA submissions")
 
-	for i := range finalUnbondings {
-		validator := validatorMetadata[i]
-		initialUnbonding := initialUnbondings[i]
-		expectedUnbonding := expectedUnbondings[i]
-		finalUnbonding := finalUnbondings[i]
+	// Confirm the number of callback data's matches the expected number of ICAs
+	callbackData := s.App.IcacallbacksKeeper.GetAllCallbackData(s.Ctx)
+	s.Require().Equal(expectedNumberOfIcas, len(callbackData), "number of callback datas")
 
-		s.Require().Equal(expectedUnbonding.Validator, finalUnbonding.Validator,
-			"validator address of output message - %d", i)
-		s.Require().Equal(expectedUnbonding.Amount.Int64(), finalUnbonding.Amount.Int64(),
-			"%s - validator final unbond amount should have increased by %d from %d",
-			expectedUnbonding.Validator, validator.expectedDelegationIncrease, initialUnbonding.Amount.Int64())
-	}
-}
-
-func (s *KeeperTestSuite) TestConsolidateUnbondingMessages_Failure() {
-	batchSize := 4
-	totalUnbondAmount := sdkmath.NewInt(1000)
-
-	// Setup the capacities such that after the first pass, there is 1 token remaining amongst the batch
-	capacities := []keeper.ValidatorUnbondCapacity{
-		{ValidatorAddress: "val1", Capacity: sdkmath.NewInt(100), CurrentDelegation: sdkmath.NewInt(100 + 1)}, // extra token
-		{ValidatorAddress: "val2", Capacity: sdkmath.NewInt(100), CurrentDelegation: sdkmath.NewInt(100)},
-		{ValidatorAddress: "val3", Capacity: sdkmath.NewInt(100), CurrentDelegation: sdkmath.NewInt(100)},
-		{ValidatorAddress: "val4", Capacity: sdkmath.NewInt(100), CurrentDelegation: sdkmath.NewInt(100)},
-
-		// Excess
-		{ValidatorAddress: "val5", Capacity: sdkmath.NewInt(600), CurrentDelegation: sdkmath.NewInt(600)},
-	}
-
-	// Create the unbondings such that they align with the above and each validtor unbonds their full amount
-	unbondings := []*types.SplitDelegation{}
-	for _, capacitiy := range capacities {
-		unbondings = append(unbondings, &types.SplitDelegation{
-			Validator: capacitiy.ValidatorAddress,
-			Amount:    capacitiy.Capacity,
-		})
-	}
-
-	// Call consolidate - it should fail because there is not enough remaining delegation
-	// on each validator to cover the excess
-	_, err := s.App.StakeibcKeeper.ConsolidateUnbondingMessages(totalUnbondAmount, unbondings, capacities, batchSize)
-	s.Require().ErrorContains(err, "not enough exisiting delegation in the batch to cover the excess")
+	// Remove the connection ID from the host zone and try again, it should fail
+	invalidHostZone := hostZone
+	invalidHostZone.ConnectionId = ""
+	_, err = s.App.StakeibcKeeper.BatchSubmitUndelegateICAMessages(
+		s.Ctx,
+		invalidHostZone,
+		epochUnbondingRecordIds,
+		undelegateMsgs,
+		unbondings,
+		batchSize,
+	)
+	s.Require().ErrorContains(err, "unable to submit unbonding ICA")
 }
 
 func (s *KeeperTestSuite) SetupInitiateAllHostZoneUnbondings() {

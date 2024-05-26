@@ -1,8 +1,7 @@
 package keeper_test
 
 import (
-	"fmt"
-
+	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
 	_ "github.com/stretchr/testify/suite"
@@ -17,6 +16,7 @@ type RedemptionCallbackState struct {
 	epochUnbondingNumbers   []uint64
 	userRedemptionRecordIds []string
 	epochNumber             uint64
+	nativeTokenAmount       sdkmath.Int
 }
 
 type RedemptionCallbackArgs struct {
@@ -45,9 +45,11 @@ func (s *KeeperTestSuite) SetupRedemptionCallback() RedemptionCallbackTestCase {
 
 	// the hostZoneUnbonding should have HostZoneUnbonding_EXIT_TRANSFER_QUEUE - meaning unbonding has completed, but the tokens
 	// have not yet been transferred to the redemption account
+	nativeTokenAmount := sdkmath.NewInt(1000)
 	hostZoneUnbonding := recordtypes.HostZoneUnbonding{
 		HostZoneId:            HostChainId,
 		Status:                recordtypes.HostZoneUnbonding_EXIT_TRANSFER_QUEUE,
+		NativeTokenAmount:     nativeTokenAmount,
 		UserRedemptionRecords: []string{recordId1, recordId2},
 	}
 
@@ -80,6 +82,7 @@ func (s *KeeperTestSuite) SetupRedemptionCallback() RedemptionCallbackTestCase {
 			epochUnbondingNumbers:   []uint64{epochNumber},
 			userRedemptionRecordIds: []string{userRedemptionRecord1.Id, userRedemptionRecord2.Id},
 			epochNumber:             epochNumber,
+			nativeTokenAmount:       nativeTokenAmount,
 		},
 		validArgs: RedemptionCallbackArgs{
 			packet:      packet,
@@ -105,6 +108,7 @@ func (s *KeeperTestSuite) TestRedemptionCallback_Successful() {
 			// check that the status is CLAIMABLE
 			if hzu.HostZoneId == HostChainId {
 				s.Require().Equal(recordtypes.HostZoneUnbonding_CLAIMABLE, hzu.Status, "host zone unbonding status is CLAIMABLE")
+				s.Require().Equal(hzu.ClaimableNativeTokens, tc.initialState.nativeTokenAmount, "claimable native tokens")
 			}
 		}
 	}
@@ -172,8 +176,7 @@ func (s *KeeperTestSuite) TestRedemptionCallback_EpochUnbondingRecordNotFound() 
 	s.Require().NoError(err)
 
 	err = s.App.StakeibcKeeper.RedemptionCallback(s.Ctx, tc.validArgs.packet, tc.validArgs.ackResponse, invalidCallbackArgs)
-	expectedErr := fmt.Sprintf("Error fetching host zone unbonding record for epoch: %d, host zone: GAIA: host zone not found", tc.initialState.epochNumber+1)
-	s.Require().EqualError(err, expectedErr)
+	s.Require().ErrorContains(err, "host zone unbonding record not found on epoch unbonding record")
 	s.checkRedemptionStateIfCallbackFailed(tc)
 }
 
@@ -187,6 +190,6 @@ func (s *KeeperTestSuite) TestRedemptionCallback_HostZoneUnbondingNotFound() {
 	s.App.RecordsKeeper.SetEpochUnbondingRecord(s.Ctx, epochUnbondingRecord)
 
 	err := s.App.StakeibcKeeper.RedemptionCallback(s.Ctx, tc.validArgs.packet, tc.validArgs.ackResponse, tc.validArgs.args)
-	s.Require().EqualError(err, fmt.Sprintf("Error fetching host zone unbonding record for epoch: %d, host zone: GAIA: host zone not found", tc.initialState.epochNumber))
+	s.Require().ErrorContains(err, "host zone unbonding record not found on epoch unbonding record")
 	s.checkRedemptionStateIfCallbackFailed(tc)
 }

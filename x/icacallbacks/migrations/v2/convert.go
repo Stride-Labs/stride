@@ -44,8 +44,8 @@ func convertUndelegateCallback(oldUndelegateCallback oldstakeibctypes.Undelegate
 	}
 
 	return stakeibctypes.UndelegateCallback{
-		HostZoneId:              oldUndelegateCallback.HostZoneId,
-		SplitDelegations:        newSplitDelegations,
+		HostZoneId: oldUndelegateCallback.HostZoneId,
+		// SplitDelegations:        newSplitDelegations,
 		EpochUnbondingRecordIds: oldUndelegateCallback.EpochUnbondingRecordIds,
 	}
 }

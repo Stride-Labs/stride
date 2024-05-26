@@ -19,11 +19,7 @@ message SplitDelegation {
 
 message SplitUndelegation {
   string validator = 1;
-  string st_token_amount = 2 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
-    (gogoproto.nullable) = false
-  ];
-  string native_token_amount = 3 [
+  string native_token_amount = 2 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
     (gogoproto.nullable) = false
   ];
