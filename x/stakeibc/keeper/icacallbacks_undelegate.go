@@ -247,7 +247,7 @@ func (k Keeper) UpdateHostZoneUnbondingsAfterUndelegation(
 		}
 
 		k.Logger(ctx).Info(utils.LogICACallbackWithHostZone(chainId, ICACallbackID_Undelegate,
-			"Epoch Unbonding Record: %d - Seting unbonding time to %d", epochNumber, unbondingTime))
+			"Epoch Unbonding Record: %d - Setting unbonding time to %d", epochNumber, unbondingTime))
 	}
 	return totalStTokensToBurn, nil
 }
@@ -273,6 +273,6 @@ func (k Keeper) BurnStTokensAfterUndelegation(ctx sdk.Context, hostZone types.Ho
 	if err != nil {
 		return errorsmod.Wrapf(err, "unable to burn %v%s tokens", stTokenBurnAmount, stCoinDenom)
 	}
-	k.Logger(ctx).Info(fmt.Sprintf("Total supply %s", k.bankKeeper.GetSupply(ctx, stCoinDenom)))
+	k.Logger(ctx).Info(utils.LogICACallbackWithHostZone(hostZone.ChainId, ICACallbackID_Undelegate, "Burned %v", stCoin))
 	return nil
 }
