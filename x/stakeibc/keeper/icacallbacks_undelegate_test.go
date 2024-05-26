@@ -84,6 +84,8 @@ func (s *KeeperTestSuite) SetupUndelegateCallback() UndelegateCallbackTestCase {
 	hostZoneUnbonding1 := recordtypes.HostZoneUnbonding{
 		HostZoneId:                HostChainId,
 		Status:                    recordtypes.HostZoneUnbonding_UNBONDING_IN_PROGRESS,
+		NativeTokenAmount:         sdkmath.NewInt(1_000_000),
+		StTokenAmount:             sdkmath.NewInt(1_000_000), // Implied RR: 1.0
 		NativeTokensToUnbond:      totalUndelegated,
 		StTokensToBurn:            totalUndelegated,
 		UnbondingTime:             uint64(0),
@@ -92,6 +94,8 @@ func (s *KeeperTestSuite) SetupUndelegateCallback() UndelegateCallbackTestCase {
 	hostZoneUnbonding2 := recordtypes.HostZoneUnbonding{
 		HostZoneId:                HostChainId,
 		Status:                    recordtypes.HostZoneUnbonding_UNBONDING_IN_PROGRESS,
+		NativeTokenAmount:         sdkmath.NewInt(1_000_000),
+		StTokenAmount:             sdkmath.NewInt(1_000_000), // Implied RR: 2.0
 		NativeTokensToUnbond:      totalUndelegated,
 		StTokensToBurn:            totalUndelegated,
 		UnbondingTime:             completionTimeFromPrevBatch,
@@ -134,12 +138,10 @@ func (s *KeeperTestSuite) SetupUndelegateCallback() UndelegateCallbackTestCase {
 	val1SplitDelegation := types.SplitUndelegation{
 		Validator:         validators[0].Address,
 		NativeTokenAmount: val1UndelegationAmount,
-		StTokenAmount:     val1UndelegationAmount,
 	}
 	val2SplitDelegation := types.SplitUndelegation{
 		Validator:         validators[1].Address,
 		NativeTokenAmount: val2UndelegationAmount,
-		StTokenAmount:     val2UndelegationAmount,
 	}
 	callbackArgs := types.UndelegateCallback{
 		HostZoneId: HostChainId,
@@ -373,23 +375,20 @@ func (s *KeeperTestSuite) TestUpdateDelegationBalances() {
 	s.Require().Equal(val2.Delegation, tc.initialState.val2Bal.Sub(tc.val2UndelegationAmount), "val2 delegation has decreased")
 }
 
-func (s *KeeperTestSuite) TestCalculateTokensFromBatch() {
+func (s *KeeperTestSuite) TestCalculateTotalUnbondedInBatch() {
 	splitUndelegations := []*types.SplitUndelegation{
-		{NativeTokenAmount: sdkmath.NewInt(10), StTokenAmount: sdkmath.NewInt(100)},
-		{NativeTokenAmount: sdkmath.NewInt(20), StTokenAmount: sdkmath.NewInt(200)},
-		{NativeTokenAmount: sdkmath.NewInt(30), StTokenAmount: sdkmath.NewInt(300)},
+		{NativeTokenAmount: sdkmath.NewInt(10)},
+		{NativeTokenAmount: sdkmath.NewInt(20)},
+		{NativeTokenAmount: sdkmath.NewInt(30)},
 	}
 	expectedNativeAmount := sdkmath.NewInt(10 + 20 + 30)
-	expectedStAmount := sdkmath.NewInt(100 + 200 + 300)
 
-	actualNativeAmount, actualStAmount := s.App.StakeibcKeeper.CalculateTokensFromBatch(splitUndelegations)
+	actualNativeAmount := s.App.StakeibcKeeper.CalculateTotalUnbondedInBatch(splitUndelegations)
 	s.Require().Equal(expectedNativeAmount, actualNativeAmount, "native total")
-	s.Require().Equal(expectedStAmount, actualStAmount, "sttoken total")
 
 	// Zero case
-	actualNativeAmount, actualStAmount = s.App.StakeibcKeeper.CalculateTokensFromBatch([]*types.SplitUndelegation{})
+	actualNativeAmount = s.App.StakeibcKeeper.CalculateTotalUnbondedInBatch([]*types.SplitUndelegation{})
 	s.Require().Zero(actualNativeAmount.Int64(), "native zero")
-	s.Require().Zero(actualStAmount.Int64(), "sttoken zero")
 }
 
 func (s *KeeperTestSuite) TestGetLatestUnbondingCompletionTime() {
@@ -423,196 +422,202 @@ func (s *KeeperTestSuite) TestGetLatestUnbondingCompletionTime() {
 func (s *KeeperTestSuite) TestUpdateHostZoneUnbondingsAfterUndelegation() {
 	// Abbreviated struct and statues for readability
 	type HostZoneUnbonding struct {
-		Native        int64
-		StToken       int64
-		UnbondingTime uint64
-		Status        recordtypes.HostZoneUnbonding_Status
+		RecordNative     int64
+		RecordStToken    int64
+		RemainingNative  int64
+		RemainingStToken int64
+		UnbondTime       uint64
+		Status           recordtypes.HostZoneUnbonding_Status
 	}
-	statusInProgress := recordtypes.HostZoneUnbonding_UNBONDING_IN_PROGRESS
-	statusComplete := recordtypes.HostZoneUnbonding_EXIT_TRANSFER_QUEUE
+	inProgress := recordtypes.HostZoneUnbonding_UNBONDING_IN_PROGRESS
+	complete := recordtypes.HostZoneUnbonding_EXIT_TRANSFER_QUEUE
 
 	testCases := []struct {
-		name                      string
-		totalNativeUnbonded       sdkmath.Int
-		totalStBurned             sdkmath.Int
-		unbondingTimeFromResponse uint64
-		initialRecords            []HostZoneUnbonding
-		finalRecords              []HostZoneUnbonding
+		name                        string
+		batchNativeUnbonded         sdkmath.Int
+		expectedBatchStTokensBurned sdkmath.Int
+		unbondingTimeFromResponse   uint64
+		initialRecords              []HostZoneUnbonding
+		finalRecords                []HostZoneUnbonding
 	}{
 		{
-			// One Record, full unbonding, time updated
-			// Both amounts decrement to 0, unbonding time is updated to 2
-			// Status updates to EXIT_TRANSFER_QUEUE
-			name:                      "one unbonding record full amount",
-			totalNativeUnbonded:       sdkmath.NewInt(1000),
-			totalStBurned:             sdkmath.NewInt(500),
-			unbondingTimeFromResponse: 2,
+			// One Record, full unbonding
+			// 1000 total native, 1000 total sttoken, implied RR of 1.0
+			// Both remaining amounts decrement to 0,
+			// Unbonding time is updated to 2, Status updates to EXIT_TRANSFER_QUEUE
+			name:                        "one unbonding record full amount",
+			batchNativeUnbonded:         sdkmath.NewInt(1000),
+			expectedBatchStTokensBurned: sdkmath.NewInt(1000),
+			unbondingTimeFromResponse:   2,
 			initialRecords: []HostZoneUnbonding{
-				{Native: 1000, StToken: 500, UnbondingTime: 1, Status: statusInProgress},
+				{RecordNative: 1000, RecordStToken: 1000, UnbondTime: 1, Status: inProgress},
 			},
 			finalRecords: []HostZoneUnbonding{
-				{Native: 0, StToken: 0, UnbondingTime: 2, Status: statusComplete},
+				{RemainingNative: 0, RemainingStToken: 0, UnbondTime: 2, Status: complete},
 			},
 		},
 		{
-			// One Record, parital unbonding, time not updated
-			// Both amounts decrement paritally, unbonding time is updated to 2
-			// Status doesn't change
-			name:                      "one unbonding record parital amount",
-			totalNativeUnbonded:       sdkmath.NewInt(500),
-			totalStBurned:             sdkmath.NewInt(250),
-			unbondingTimeFromResponse: 1,
+			// One Record, parital unbonding
+			// 2000 total native, 1000 total sttoken, implied RR of 2.0
+			// Batch 1000 native decremented from record, implies 500 sttokens burned
+			// Unbonding time is updated to 2, Status doesn't change
+			name:                        "one unbonding record parital amount",
+			batchNativeUnbonded:         sdkmath.NewInt(1000),
+			expectedBatchStTokensBurned: sdkmath.NewInt(500),
+			unbondingTimeFromResponse:   1,
 			initialRecords: []HostZoneUnbonding{
-				{Native: 1000, StToken: 500, UnbondingTime: 2, Status: statusInProgress},
+				{RecordNative: 2000, RecordStToken: 1000, UnbondTime: 2, Status: inProgress},
 			},
 			finalRecords: []HostZoneUnbonding{
-				{Native: 500, StToken: 250, UnbondingTime: 2, Status: statusInProgress},
+				{RemainingNative: 1000, RemainingStToken: 500, UnbondTime: 2, Status: inProgress},
 			},
 		},
 		{
-			// Two records, parital unbonding on first, time updated
-			// First record decremented, second record untouched
-			// Both records have time updated
-			// Status doesn't change
-			name:                      "two unbonding records partial on first",
-			totalNativeUnbonded:       sdkmath.NewInt(500),
-			totalStBurned:             sdkmath.NewInt(250),
-			unbondingTimeFromResponse: 2,
+			// Two records, parital unbonding on first
+			// Record 1: 1000 total native, 1000 total st, implied RR of 1.0
+			// Record 2: 2000 total native, 1000 total st, implied RR of 2.0
+			// Record 1: Batch 400 native decremented, implies 400 sttokens burned
+			// Record 2: Untouched
+			// Unbonding time updated, Status doesn't change
+			name:                        "two unbonding records partial on first",
+			batchNativeUnbonded:         sdkmath.NewInt(400),
+			expectedBatchStTokensBurned: sdkmath.NewInt(400),
+			unbondingTimeFromResponse:   2,
 			initialRecords: []HostZoneUnbonding{
-				{Native: 1000, StToken: 500, UnbondingTime: 1, Status: statusInProgress},
-				{Native: 1000, StToken: 500, UnbondingTime: 1, Status: statusInProgress},
+				{RecordNative: 1000, RecordStToken: 1000, UnbondTime: 1, Status: inProgress},
+				{RecordNative: 2000, RecordStToken: 1000, UnbondTime: 1, Status: inProgress},
 			},
 			finalRecords: []HostZoneUnbonding{
-				{Native: 500, StToken: 250, UnbondingTime: 2, Status: statusInProgress},
-				{Native: 1000, StToken: 500, UnbondingTime: 2, Status: statusInProgress},
+				{RemainingNative: 600, RemainingStToken: 600, UnbondTime: 2, Status: inProgress},
+				{RemainingNative: 2000, RemainingStToken: 1000, UnbondTime: 2, Status: inProgress},
 			},
 		},
 		{
-			// Two records, full unbond on first, time not updated
-			// First record decremented to 0, second record untouched
-			// First record status updated
-			name:                      "two unbonding records full on first",
-			totalNativeUnbonded:       sdkmath.NewInt(1000),
-			totalStBurned:             sdkmath.NewInt(500),
-			unbondingTimeFromResponse: 1,
+			// Two records, full unbonding on first
+			// Record 1: 1000 total native, 1000 total st, implied RR of 1.0
+			// Record 2: 2000 total native, 1000 total st, implied RR of 2.0
+			// Record 1: Batch 1000 native decremented, implies 1000 sttokens burned
+			// Record 2: Untouched
+			// Unbonding time not changed, Status changes on first record
+			name:                        "two unbonding records partial on first",
+			batchNativeUnbonded:         sdkmath.NewInt(1000),
+			expectedBatchStTokensBurned: sdkmath.NewInt(1000),
+			unbondingTimeFromResponse:   1,
 			initialRecords: []HostZoneUnbonding{
-				{Native: 1000, StToken: 500, UnbondingTime: 2, Status: statusInProgress},
-				{Native: 1000, StToken: 500, UnbondingTime: 2, Status: statusInProgress},
+				{RecordNative: 1000, RecordStToken: 1000, UnbondTime: 2, Status: inProgress},
+				{RecordNative: 2000, RecordStToken: 1000, UnbondTime: 2, Status: inProgress},
 			},
 			finalRecords: []HostZoneUnbonding{
-				{Native: 0, StToken: 0, UnbondingTime: 2, Status: statusComplete},
-				{Native: 1000, StToken: 500, UnbondingTime: 2, Status: statusInProgress},
+				{RemainingNative: 0, RemainingStToken: 0, UnbondTime: 2, Status: complete},
+				{RemainingNative: 2000, RemainingStToken: 1000, UnbondTime: 2, Status: inProgress},
 			},
 		},
 		{
-			// Two records, full unbond on first, partial on second, time updated
-			// First record decremented to 0, second record decremented partially
-			// First record status updated
-			name:                      "two unbonding records full on first",
-			totalNativeUnbonded:       sdkmath.NewInt(1500),
-			totalStBurned:             sdkmath.NewInt(750),
-			unbondingTimeFromResponse: 2,
+			// Two records, full unbonding on first, parital on second
+			// Record 1: 1000 total native, 1000 total st, implied RR of 1.0
+			// Record 2: 2000 total native, 1000 total st, implied RR of 2.0
+			// Total batch unbonded: 2200
+			// Record 1: Batch 1000 native decremented, implies 1000 sttokens burned
+			// Record 2: Batch 1200 native decremented, implies 600 sttokens burned
+			// Unbonding time updated, Status changes on first record
+			name:                        "two unbonding records partial on first",
+			batchNativeUnbonded:         sdkmath.NewInt(1000 + 1200),
+			expectedBatchStTokensBurned: sdkmath.NewInt(1000 + 600),
+			unbondingTimeFromResponse:   2,
 			initialRecords: []HostZoneUnbonding{
-				{Native: 1000, StToken: 500, UnbondingTime: 1, Status: statusInProgress},
-				{Native: 1000, StToken: 500, UnbondingTime: 1, Status: statusInProgress},
+				{RecordNative: 1000, RecordStToken: 1000, UnbondTime: 1, Status: inProgress},
+				{RecordNative: 2000, RecordStToken: 1000, UnbondTime: 1, Status: inProgress},
 			},
 			finalRecords: []HostZoneUnbonding{
-				{Native: 0, StToken: 0, UnbondingTime: 2, Status: statusComplete},
-				{Native: 500, StToken: 250, UnbondingTime: 2, Status: statusInProgress},
+				{RemainingNative: 0, RemainingStToken: 0, UnbondTime: 2, Status: complete},
+				{RemainingNative: 800, RemainingStToken: 400, UnbondTime: 2, Status: inProgress},
 			},
 		},
 		{
-			// Two records, full unbond on both, time not updated
-			// Both records decremented to 0
-			// Both records status updated
-			name:                      "two unbonding records full on both",
-			totalNativeUnbonded:       sdkmath.NewInt(2000),
-			totalStBurned:             sdkmath.NewInt(1000),
-			unbondingTimeFromResponse: 1,
+			// Two records, full unbonding on both
+			// Record 1: 1000 total native, 1000 total st, implied RR of 1.0
+			// Record 2: 2000 total native, 1000 total st, implied RR of 2.0
+			// Total batch unbonded: 3000
+			// Record 1: Batch 1000 native decremented, implies 1000 sttokens burned
+			// Record 2: Batch 2000 native decremented, implies 1000 sttokens burned
+			// Unbonding time not changed, Status changes on both records
+			name:                        "two unbonding records partial on first",
+			batchNativeUnbonded:         sdkmath.NewInt(1000 + 2000),
+			expectedBatchStTokensBurned: sdkmath.NewInt(1000 + 1000),
+			unbondingTimeFromResponse:   1,
 			initialRecords: []HostZoneUnbonding{
-				{Native: 1000, StToken: 500, UnbondingTime: 2, Status: statusInProgress},
-				{Native: 1000, StToken: 500, UnbondingTime: 2, Status: statusInProgress},
+				{RecordNative: 1000, RecordStToken: 1000, UnbondTime: 2, Status: inProgress},
+				{RecordNative: 2000, RecordStToken: 1000, UnbondTime: 2, Status: inProgress},
 			},
 			finalRecords: []HostZoneUnbonding{
-				{Native: 0, StToken: 0, UnbondingTime: 2, Status: statusComplete},
-				{Native: 0, StToken: 0, UnbondingTime: 2, Status: statusComplete},
+				{RemainingNative: 0, RemainingStToken: 0, UnbondTime: 2, Status: complete},
+				{RemainingNative: 0, RemainingStToken: 0, UnbondTime: 2, Status: complete},
 			},
 		},
 		{
-			// Three records, full unbond on all, time not updated
-			// All records decremented to 0
-			// ALl records status updated
-			name:                      "three unbonding records full on all",
-			totalNativeUnbonded:       sdkmath.NewInt(3000),
-			totalStBurned:             sdkmath.NewInt(1500),
-			unbondingTimeFromResponse: 1,
+			// Two records, partial starting point, batch finishes
+			// Record 1: 1000 total native, 1000 total st, implied RR of 1.0
+			// Record 2: 2000 total native, 1000 total st, implied RR of 2.0
+			// Previously unbonded 800, now unbonding remaining 2200
+			// Record 1: Decrements 200 down to 0, implies 200 sttokens burned
+			// Record 2: Decrements 2000, implies 1000 sttokens burned
+			// Unbonding time updated, Status changes on both records
+			name:                        "two unbonding records partial on first",
+			batchNativeUnbonded:         sdkmath.NewInt(200 + 2000),
+			expectedBatchStTokensBurned: sdkmath.NewInt(200 + 1000),
+			unbondingTimeFromResponse:   2,
 			initialRecords: []HostZoneUnbonding{
-				{Native: 1000, StToken: 500, UnbondingTime: 2, Status: statusInProgress},
-				{Native: 1000, StToken: 500, UnbondingTime: 2, Status: statusInProgress},
-				{Native: 1000, StToken: 500, UnbondingTime: 2, Status: statusInProgress},
+				{RecordNative: 1000, RecordStToken: 1000, RemainingNative: 200, RemainingStToken: 200, UnbondTime: 1, Status: inProgress},
+				{RecordNative: 2000, RecordStToken: 1000, RemainingNative: 2000, RemainingStToken: 1000, UnbondTime: 1, Status: inProgress},
 			},
 			finalRecords: []HostZoneUnbonding{
-				{Native: 0, StToken: 0, UnbondingTime: 2, Status: statusComplete},
-				{Native: 0, StToken: 0, UnbondingTime: 2, Status: statusComplete},
-				{Native: 0, StToken: 0, UnbondingTime: 2, Status: statusComplete},
+				{RemainingNative: 0, RemainingStToken: 0, UnbondTime: 2, Status: complete},
+				{RemainingNative: 0, RemainingStToken: 0, UnbondTime: 2, Status: complete},
 			},
 		},
 		{
-			// Four records records, full unbond on three, partial on last, time updated
+			// Three records, full unbond on all, precision error
+			// All records decremented to 0, All records status updated
+			// Record 1: 1000 native, 1000 sttokens, implied RR of 1.0
+			// Record 2: 1500 native, 1000 sttokens, implied RR of 1.5
+			// Record 3: 2000 native, 1000 sttokens, implied RR of 2.0
+			// Each record will start with an extra sttoken remaining, to test that it gets rounded down to 0
+			// when the native amount goes to 0
+			name:                        "three unbonding records full on all with precision error",
+			batchNativeUnbonded:         sdkmath.NewInt(1000 + 1500 + 2000),
+			expectedBatchStTokensBurned: sdkmath.NewInt(1001 + 1001 + 1001),
+			unbondingTimeFromResponse:   2,
+			initialRecords: []HostZoneUnbonding{
+				{RecordNative: 1000, RecordStToken: 1000, RemainingStToken: 1001, UnbondTime: 1, Status: inProgress},
+				{RecordNative: 1500, RecordStToken: 1000, RemainingStToken: 1001, UnbondTime: 1, Status: inProgress},
+				{RecordNative: 2000, RecordStToken: 1000, RemainingStToken: 1001, UnbondTime: 1, Status: inProgress},
+			},
+			finalRecords: []HostZoneUnbonding{
+				{RemainingNative: 0, RemainingStToken: 0, UnbondTime: 2, Status: complete},
+				{RemainingNative: 0, RemainingStToken: 0, UnbondTime: 2, Status: complete},
+				{RemainingNative: 0, RemainingStToken: 0, UnbondTime: 2, Status: complete},
+			},
+		},
+		{
+			// Four records records, full unbond on three, 1 remaining on last
+			// Random sttoken values to similate random redemption rates
 			// First three records decremented to 0, last record partially decremented
 			// Status update on first three records
-			name:                      "four unbonding records partial on last",
-			totalNativeUnbonded:       sdkmath.NewInt(3999),
-			totalStBurned:             sdkmath.NewInt(1999),
-			unbondingTimeFromResponse: 2,
+			name:                        "four unbonding records partial on last",
+			batchNativeUnbonded:         sdkmath.NewInt(834 + 234 + 1093 + 2379 - 1),
+			expectedBatchStTokensBurned: sdkmath.NewInt(923 + 389 + 654 + 2379 - 1),
+			unbondingTimeFromResponse:   2,
 			initialRecords: []HostZoneUnbonding{
-				{Native: 1000, StToken: 500, UnbondingTime: 1, Status: statusInProgress},
-				{Native: 1000, StToken: 500, UnbondingTime: 1, Status: statusInProgress},
-				{Native: 1000, StToken: 500, UnbondingTime: 1, Status: statusInProgress},
-				{Native: 1000, StToken: 500, UnbondingTime: 1, Status: statusInProgress},
+				{RecordNative: 834, RecordStToken: 923, UnbondTime: 1, Status: inProgress},
+				{RecordNative: 234, RecordStToken: 389, UnbondTime: 1, Status: inProgress},
+				{RecordNative: 1093, RecordStToken: 654, UnbondTime: 1, Status: inProgress},
+				{RecordNative: 2379, RecordStToken: 2379, UnbondTime: 1, Status: inProgress},
 			},
 			finalRecords: []HostZoneUnbonding{
-				{Native: 0, StToken: 0, UnbondingTime: 2, Status: statusComplete},
-				{Native: 0, StToken: 0, UnbondingTime: 2, Status: statusComplete},
-				{Native: 0, StToken: 0, UnbondingTime: 2, Status: statusComplete},
-				{Native: 1, StToken: 1, UnbondingTime: 2, Status: statusInProgress},
-			},
-		},
-		{
-			// Three records, built from different redemption rates
-			// Native amount should cover the first two records but the second
-			// record should not change status since it will still have sttokens
-			name:                      "blended redemption rate partial",
-			totalNativeUnbonded:       sdkmath.NewInt(2500),
-			totalStBurned:             sdkmath.NewInt(1666), // RR: 1.5
-			unbondingTimeFromResponse: 2,
-			initialRecords: []HostZoneUnbonding{
-				{Native: 1000, StToken: 1000, UnbondingTime: 1, Status: statusInProgress}, // RR: 1
-				{Native: 1500, StToken: 1000, UnbondingTime: 1, Status: statusInProgress}, // RR: 1.5
-				{Native: 2000, StToken: 1000, UnbondingTime: 1, Status: statusInProgress}, // RR: 2.0
-			},
-			finalRecords: []HostZoneUnbonding{
-				{Native: 0, StToken: 0, UnbondingTime: 2, Status: statusComplete},         // RR: 1
-				{Native: 0, StToken: 334, UnbondingTime: 2, Status: statusInProgress},     // RR: 1.5
-				{Native: 2000, StToken: 1000, UnbondingTime: 2, Status: statusInProgress}, // RR: 2.0
-			},
-		},
-		{
-			// Three records, built from different redemption rates
-			// The records will iterate at different times, but will eventually all update status
-			name:                      "blended redemption rate full",
-			totalNativeUnbonded:       sdkmath.NewInt(4500),
-			totalStBurned:             sdkmath.NewInt(3000), // RR: 1.5
-			unbondingTimeFromResponse: 1,
-			initialRecords: []HostZoneUnbonding{
-				{Native: 1000, StToken: 1000, UnbondingTime: 2, Status: statusInProgress}, // RR: 1
-				{Native: 1500, StToken: 1000, UnbondingTime: 2, Status: statusInProgress}, // RR: 1.5
-				{Native: 2000, StToken: 1000, UnbondingTime: 2, Status: statusInProgress}, // RR: 2.0
-			},
-			finalRecords: []HostZoneUnbonding{
-				{Native: 0, StToken: 0, UnbondingTime: 2, Status: statusComplete}, // RR: 1
-				{Native: 0, StToken: 0, UnbondingTime: 2, Status: statusComplete}, // RR: 1.5
-				{Native: 0, StToken: 0, UnbondingTime: 2, Status: statusComplete}, // RR: 2.0
+				{RemainingNative: 0, RemainingStToken: 0, UnbondTime: 2, Status: complete},
+				{RemainingNative: 0, RemainingStToken: 0, UnbondTime: 2, Status: complete},
+				{RemainingNative: 0, RemainingStToken: 0, UnbondTime: 2, Status: complete},
+				{RemainingNative: 1, RemainingStToken: 1, UnbondTime: 2, Status: inProgress},
 			},
 		},
 	}
@@ -625,14 +630,27 @@ func (s *KeeperTestSuite) TestUpdateHostZoneUnbondingsAfterUndelegation() {
 				epochNumber := uint64(i)
 				epochUnbondingRecordIds = append(epochUnbondingRecordIds, epochNumber)
 
+				// For brevity, the remaining amount was excluded on certain records where
+				// the remaining was equal to the full record amount
+				remainingNative := hostZoneUnbondingTc.RemainingNative
+				remainingStToken := hostZoneUnbondingTc.RemainingStToken
+				if hostZoneUnbondingTc.RemainingNative == 0 {
+					remainingNative = hostZoneUnbondingTc.RecordNative
+				}
+				if hostZoneUnbondingTc.RemainingStToken == 0 {
+					remainingStToken = hostZoneUnbondingTc.RecordStToken
+				}
+
 				s.App.RecordsKeeper.SetEpochUnbondingRecord(s.Ctx, recordtypes.EpochUnbondingRecord{
 					EpochNumber: epochNumber,
 					HostZoneUnbondings: []*recordtypes.HostZoneUnbonding{
 						{
 							HostZoneId:           HostChainId,
-							NativeTokensToUnbond: sdkmath.NewInt(hostZoneUnbondingTc.Native),
-							StTokensToBurn:       sdkmath.NewInt(hostZoneUnbondingTc.StToken),
-							UnbondingTime:        hostZoneUnbondingTc.UnbondingTime,
+							NativeTokenAmount:    sdkmath.NewInt(hostZoneUnbondingTc.RecordNative),
+							NativeTokensToUnbond: sdkmath.NewInt(remainingNative),
+							StTokenAmount:        sdkmath.NewInt(hostZoneUnbondingTc.RecordStToken),
+							StTokensToBurn:       sdkmath.NewInt(remainingStToken),
+							UnbondingTime:        hostZoneUnbondingTc.UnbondTime,
 							Status:               hostZoneUnbondingTc.Status,
 						},
 					},
@@ -640,15 +658,15 @@ func (s *KeeperTestSuite) TestUpdateHostZoneUnbondingsAfterUndelegation() {
 			}
 
 			// Call the Update function
-			err := s.App.StakeibcKeeper.UpdateHostZoneUnbondingsAfterUndelegation(
+			actualStTokensBurned, err := s.App.StakeibcKeeper.UpdateHostZoneUnbondingsAfterUndelegation(
 				s.Ctx,
 				HostChainId,
 				epochUnbondingRecordIds,
-				tc.totalStBurned,
-				tc.totalNativeUnbonded,
+				tc.batchNativeUnbonded,
 				tc.unbondingTimeFromResponse,
 			)
 			s.Require().NoError(err, "no error expected during update")
+			s.Require().Equal(tc.expectedBatchStTokensBurned.Int64(), actualStTokensBurned.Int64(), "total sttokens burned")
 
 			// Confirm the new host zone unbonding records match expectations
 			for i, epochNumber := range epochUnbondingRecordIds {
@@ -657,11 +675,11 @@ func (s *KeeperTestSuite) TestUpdateHostZoneUnbondingsAfterUndelegation() {
 
 				s.Require().Equal(expectedHostZoneUnbonding.Status, actualHostZoneUnbonding.Status,
 					"status for record %d", i)
-				s.Require().Equal(expectedHostZoneUnbonding.Native, actualHostZoneUnbonding.NativeTokensToUnbond.Int64(),
+				s.Require().Equal(expectedHostZoneUnbonding.RemainingNative, actualHostZoneUnbonding.NativeTokensToUnbond.Int64(),
 					"native tokens for record %d", i)
-				s.Require().Equal(expectedHostZoneUnbonding.StToken, actualHostZoneUnbonding.StTokensToBurn.Int64(),
+				s.Require().Equal(expectedHostZoneUnbonding.RemainingStToken, actualHostZoneUnbonding.StTokensToBurn.Int64(),
 					"sttokens for record %d", i)
-				s.Require().Equal(expectedHostZoneUnbonding.UnbondingTime, actualHostZoneUnbonding.UnbondingTime,
+				s.Require().Equal(expectedHostZoneUnbonding.UnbondTime, actualHostZoneUnbonding.UnbondingTime,
 					"unbonding time for record %d", i)
 			}
 		})
