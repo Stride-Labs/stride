@@ -248,13 +248,9 @@ func (k Keeper) UpdateHostZoneUnbondingsAfterUndelegation(
 		}
 
 		// Persist the record changes
-		updatedEpochUnbondingRecord, success := k.RecordsKeeper.AddHostZoneToEpochUnbondingRecord(ctx, epochNumber, chainId, hostZoneUnbonding)
-		if !success {
-			k.Logger(ctx).Error(fmt.Sprintf("Failed to set host zone epoch unbonding record: epochNumber %d, chainId %s, hostZoneUnbonding %+v",
-				epochNumber, chainId, hostZoneUnbonding))
-			return totalStTokensToBurn, errorsmod.Wrapf(types.ErrEpochNotFound, "couldn't set host zone epoch unbonding record")
+		if err := k.RecordsKeeper.SetHostZoneUnbondingRecord(ctx, epochNumber, chainId, *hostZoneUnbonding); err != nil {
+			return totalStTokensToBurn, err
 		}
-		k.RecordsKeeper.SetEpochUnbondingRecord(ctx, *updatedEpochUnbondingRecord)
 
 		k.Logger(ctx).Info(utils.LogICACallbackWithHostZone(chainId, ICACallbackID_Undelegate,
 			"Epoch Unbonding Record: %d - Seting unbonding time to %d", epochNumber, unbondingTime))

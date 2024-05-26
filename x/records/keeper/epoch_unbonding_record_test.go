@@ -122,28 +122,41 @@ func TestGetHostZoneUnbondingByChainId(t *testing.T) {
 	)
 }
 
-func TestAddHostZoneToEpochUnbondingRecord(t *testing.T) {
-	keeper, ctx := keepertest.RecordsKeeper(t)
-	epochUnbondingRecords, _ := createNEpochUnbondingRecord(keeper, ctx, 3)
+func (s *KeeperTestSuite) TestAddHostZoneToEpochUnbondingRecord() {
+	epochUnbondingRecords, _ := createNEpochUnbondingRecord(&s.App.RecordsKeeper, s.Ctx, 3)
 
-	epochNumber := 0
-	initialEpochUnbondingRecord := epochUnbondingRecords[epochNumber]
+	epochNumber := uint64(0)
+	initialEpochUnbondingRecord := epochUnbondingRecords[int(epochNumber)]
+
+	// Update host zone unbonding for host-C
+	updatedHostZoneUnbonding := types.HostZoneUnbonding{
+		HostZoneId: "host-C",
+		Status:     types.HostZoneUnbonding_UNBONDING_IN_PROGRESS,
+	}
+
+	expectedEpochUnbondingRecord := initialEpochUnbondingRecord
+	expectedEpochUnbondingRecord.HostZoneUnbondings[2] = &updatedHostZoneUnbonding
+
+	updatedEpochUnbonding, err := s.App.RecordsKeeper.AddHostZoneToEpochUnbondingRecord(s.Ctx, epochNumber, "host-C", &updatedHostZoneUnbonding)
+	s.App.RecordsKeeper.SetEpochUnbondingRecord(s.Ctx, *updatedEpochUnbonding)
+	s.Require().NoError(err, "no error expected when updating host-C")
+	s.Require().Equal(expectedEpochUnbondingRecord, *updatedEpochUnbonding, "EUR after host-C update")
 
 	// Add new host zone to initial epoch unbonding records
-	newHostZone := types.HostZoneUnbonding{
-		HostZoneId: "host-D",
-		Status:     types.HostZoneUnbonding_UNBONDING_QUEUE,
+	newHostZoneUnbonding := types.HostZoneUnbonding{
+		HostZoneId:            "host-D",
+		Status:                types.HostZoneUnbonding_UNBONDING_QUEUE,
+		StTokenAmount:         sdkmath.ZeroInt(),
+		NativeTokenAmount:     sdkmath.ZeroInt(),
+		NativeTokensToUnbond:  sdkmath.ZeroInt(),
+		StTokensToBurn:        sdkmath.ZeroInt(),
+		ClaimableNativeTokens: sdkmath.ZeroInt(),
 	}
-	expectedEpochUnbondingRecord := initialEpochUnbondingRecord
-	expectedEpochUnbondingRecord.HostZoneUnbondings = append(expectedEpochUnbondingRecord.HostZoneUnbondings, &newHostZone)
+	expectedEpochUnbondingRecord.HostZoneUnbondings = append(expectedEpochUnbondingRecord.HostZoneUnbondings, &newHostZoneUnbonding)
 
-	actualEpochUnbondingRecord, success := keeper.AddHostZoneToEpochUnbondingRecord(ctx, uint64(epochNumber), "host-D", &newHostZone)
-
-	require.True(t, success)
-	require.Equal(t,
-		expectedEpochUnbondingRecord,
-		*actualEpochUnbondingRecord,
-	)
+	updatedEpochUnbonding, err = s.App.RecordsKeeper.AddHostZoneToEpochUnbondingRecord(s.Ctx, epochNumber, "host-D", &newHostZoneUnbonding)
+	s.Require().NoError(err, "no error expected when adding host-D")
+	s.Require().Equal(expectedEpochUnbondingRecord, *updatedEpochUnbonding, "EUR after host-D addition")
 }
 
 func TestSetHostZoneUnbondingStatus(t *testing.T) {

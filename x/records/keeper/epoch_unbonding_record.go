@@ -9,8 +9,6 @@ import (
 
 	errorsmod "cosmossdk.io/errors"
 
-	stakeibctypes "github.com/Stride-Labs/stride/v22/x/stakeibc/types"
-
 	"github.com/Stride-Labs/stride/v22/x/records/types"
 )
 
@@ -101,32 +99,39 @@ func (k Keeper) GetHostZoneUnbondingByChainId(ctx sdk.Context, epochNumber uint6
 }
 
 // Adds a HostZoneUnbonding to an EpochUnbondingRecord
-// TODO [cleanup]: Return error instead of success
-func (k Keeper) AddHostZoneToEpochUnbondingRecord(ctx sdk.Context, epochNumber uint64, chainId string, hzu *types.HostZoneUnbonding) (val *types.EpochUnbondingRecord, success bool) {
+func (k Keeper) AddHostZoneToEpochUnbondingRecord(
+	ctx sdk.Context,
+	epochNumber uint64,
+	chainId string,
+	hzu *types.HostZoneUnbonding,
+) (eur *types.EpochUnbondingRecord, err error) {
 	epochUnbondingRecord, found := k.GetEpochUnbondingRecord(ctx, epochNumber)
 	if !found {
-		return nil, false
+		return nil, types.ErrEpochUnbondingRecordNotFound.Wrapf("epoch number %d", epochNumber)
 	}
-	wasSet := false
+
+	// Check if the hzu is already in the epoch unbonding record - if so, replace it
+	hzuAlreadyExists := false
 	for i, hostZoneUnbonding := range epochUnbondingRecord.HostZoneUnbondings {
-		if hostZoneUnbonding.GetHostZoneId() == chainId {
+		if hostZoneUnbonding.HostZoneId == chainId {
 			epochUnbondingRecord.HostZoneUnbondings[i] = hzu
-			wasSet = true
+			hzuAlreadyExists = true
 			break
 		}
 	}
-	if !wasSet {
-		// add new host zone unbonding record
+
+	// If the hzu didn't already exist, add a new record
+	if !hzuAlreadyExists {
 		epochUnbondingRecord.HostZoneUnbondings = append(epochUnbondingRecord.HostZoneUnbondings, hzu)
 	}
-	return &epochUnbondingRecord, true
+	return &epochUnbondingRecord, nil
 }
 
 // Stores a host zone unbonding record - set via an epoch unbonding record
 func (k Keeper) SetHostZoneUnbondingRecord(ctx sdk.Context, epochNumber uint64, chainId string, hostZoneUnbonding types.HostZoneUnbonding) error {
-	epochUnbondingRecord, success := k.AddHostZoneToEpochUnbondingRecord(ctx, epochNumber, chainId, &hostZoneUnbonding)
-	if !success {
-		return errorsmod.Wrapf(types.ErrEpochUnbondingRecordNotFound, "epoch unbonding record not found for epoch %d", epochNumber)
+	epochUnbondingRecord, err := k.AddHostZoneToEpochUnbondingRecord(ctx, epochNumber, chainId, &hostZoneUnbonding)
+	if err != nil {
+		return err
 	}
 	k.SetEpochUnbondingRecord(ctx, *epochUnbondingRecord)
 	return nil
@@ -136,20 +141,19 @@ func (k Keeper) SetHostZoneUnbondingRecord(ctx sdk.Context, epochNumber uint64, 
 func (k Keeper) SetHostZoneUnbondingStatus(ctx sdk.Context, chainId string, epochUnbondingRecordIds []uint64, status types.HostZoneUnbonding_Status) error {
 	for _, epochUnbondingRecordId := range epochUnbondingRecordIds {
 		k.Logger(ctx).Info(fmt.Sprintf("Updating host zone unbondings on EpochUnbondingRecord %d to status %s", epochUnbondingRecordId, status.String()))
+
 		// fetch the host zone unbonding
 		hostZoneUnbonding, found := k.GetHostZoneUnbondingByChainId(ctx, epochUnbondingRecordId, chainId)
 		if !found {
-			errMsg := fmt.Sprintf("Error fetching host zone unbonding record for epoch: %d, host zone: %s", epochUnbondingRecordId, chainId)
-			k.Logger(ctx).Error(errMsg)
-			return errorsmod.Wrapf(stakeibctypes.ErrHostZoneNotFound, errMsg)
+			return errorsmod.Wrapf(types.ErrHostUnbondingRecordNotFound, "epoch number %d, chain %s",
+				epochUnbondingRecordId, chainId)
 		}
 		hostZoneUnbonding.Status = status
+
 		// save the updated hzu on the epoch unbonding record
-		updatedRecord, success := k.AddHostZoneToEpochUnbondingRecord(ctx, epochUnbondingRecordId, chainId, hostZoneUnbonding)
-		if !success {
-			errMsg := fmt.Sprintf("Error adding host zone unbonding record to epoch unbonding record: %d, host zone: %s", epochUnbondingRecordId, chainId)
-			k.Logger(ctx).Error(errMsg)
-			return errorsmod.Wrap(types.ErrAddingHostZone, errMsg)
+		updatedRecord, err := k.AddHostZoneToEpochUnbondingRecord(ctx, epochUnbondingRecordId, chainId, hostZoneUnbonding)
+		if err != nil {
+			return err
 		}
 		k.SetEpochUnbondingRecord(ctx, *updatedRecord)
 	}
