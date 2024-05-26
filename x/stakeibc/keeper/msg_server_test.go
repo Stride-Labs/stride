@@ -2322,7 +2322,7 @@ func (s *KeeperTestSuite) SetupRestoreInterchainAccount(createDelegationICAChann
 		{
 			// Status gets reverted from IN_PROGRESS to QUEUE
 			initialStatus:  recordtypes.HostZoneUnbonding_UNBONDING_IN_PROGRESS,
-			revertedStatus: recordtypes.HostZoneUnbonding_UNBONDING_QUEUE,
+			revertedStatus: recordtypes.HostZoneUnbonding_UNBONDING_RETRY_QUEUE,
 		},
 		{
 			// Status doesn't change
@@ -2341,12 +2341,14 @@ func (s *KeeperTestSuite) SetupRestoreInterchainAccount(createDelegationICAChann
 			HostZoneUnbondings: []*recordtypes.HostZoneUnbonding{
 				// The first unbonding record will get reverted, the other one will not
 				{
-					HostZoneId: HostChainId,
-					Status:     hostZoneUnbonding.initialStatus,
+					HostZoneId:                HostChainId,
+					Status:                    hostZoneUnbonding.initialStatus,
+					UndelegationTxsInProgress: 4,
 				},
 				{
-					HostZoneId: "different_host_zone",
-					Status:     hostZoneUnbonding.initialStatus,
+					HostZoneId:                "different_host_zone",
+					Status:                    hostZoneUnbonding.initialStatus,
+					UndelegationTxsInProgress: 5,
 				},
 			},
 		})
@@ -2495,6 +2497,22 @@ func (s *KeeperTestSuite) verifyDelegationChangeInProgressReset() {
 	}
 }
 
+// Helper function to check that the undelegation changes in progress field was reset to 0
+// for each host zone unbonding record
+func (s *KeeperTestSuite) verifyUndelegationChangeInProgressReset() {
+	for _, epochUnbondingRecord := range s.App.RecordsKeeper.GetAllEpochUnbondingRecord(s.Ctx) {
+		for _, hostZoneUnbondingRecord := range epochUnbondingRecord.HostZoneUnbondings {
+			if hostZoneUnbondingRecord.HostZoneId == HostChainId {
+				s.Require().Zero(hostZoneUnbondingRecord.UndelegationTxsInProgress,
+					"undelegation changes should have been reset for epoch %d", epochUnbondingRecord.EpochNumber)
+			} else {
+				s.Require().NotZero(hostZoneUnbondingRecord.UndelegationTxsInProgress,
+					"undelegation changes should not have been reset for epoch %d", epochUnbondingRecord.EpochNumber)
+			}
+		}
+	}
+}
+
 func (s *KeeperTestSuite) TestRestoreInterchainAccount_Success() {
 	tc := s.SetupRestoreInterchainAccount(true)
 
@@ -2513,6 +2531,7 @@ func (s *KeeperTestSuite) TestRestoreInterchainAccount_Success() {
 	s.verifyHostZoneUnbondingStatus(tc.unbondingRecordStatusUpdate, true)
 	s.verifyLSMDepositStatus(tc.lsmTokenDepositStatusUpdate, true)
 	s.verifyDelegationChangeInProgressReset()
+	s.verifyUndelegationChangeInProgressReset()
 }
 
 func (s *KeeperTestSuite) TestRestoreInterchainAccount_InvalidConnectionId() {
