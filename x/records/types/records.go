@@ -17,7 +17,8 @@ func (r HostZoneUnbonding) ShouldInitiateUnbonding() bool {
 // This is indicated by a record in status UNBONDING_RETRY_QUEUE and
 // 0 undelegations in progress
 func (r HostZoneUnbonding) ShouldRetryUnbonding() bool {
+	hasAtLeastOneRedemption := r.StTokenAmount.GT(sdkmath.ZeroInt())
 	shouldRetryUnbonding := r.Status == HostZoneUnbonding_UNBONDING_RETRY_QUEUE
 	hasNoPendingICAs := r.UndelegationTxsInProgress == 0
-	return shouldRetryUnbonding && hasNoPendingICAs
+	return hasAtLeastOneRedemption && shouldRetryUnbonding && hasNoPendingICAs
 }

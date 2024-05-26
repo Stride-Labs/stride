@@ -79,9 +79,9 @@ func (k Keeper) UndelegateCallback(ctx sdk.Context, packet channeltypes.Packet, 
 	k.Logger(ctx).Info(utils.LogICACallbackStatusWithHostZone(chainId, ICACallbackID_Undelegate,
 		icacallbackstypes.AckResponseStatus_SUCCESS, packet))
 
-	// Calculate the stTokens that should be burned from the batch and get the latest
+	// Calculate the native tokens that were unbonded from the batch and get the latest
 	// completion time from the ack response
-	nativeTokensUnbonded, stTokensToBurn := k.CalculateTokensFromBatch(undelegateCallback.SplitUndelegations)
+	nativeTokensUnbonded := k.CalculateTotalUnbondedInBatch(undelegateCallback.SplitUndelegations)
 	unbondingTime, err := k.GetLatestUnbondingCompletionTime(ctx, ackResponse.MsgResponses)
 	if err != nil {
 		k.Logger(ctx).Error(fmt.Sprintf("UndelegateCallback | %s", err.Error()))
@@ -96,14 +96,14 @@ func (k Keeper) UndelegateCallback(ctx sdk.Context, packet channeltypes.Packet, 
 	}
 
 	// Update the accounting on the host zone unbondings
-	if err := k.UpdateHostZoneUnbondingsAfterUndelegation(
+	stTokensToBurn, err := k.UpdateHostZoneUnbondingsAfterUndelegation(
 		ctx,
 		chainId,
 		undelegateCallback.EpochUnbondingRecordIds,
 		nativeTokensUnbonded,
-		stTokensToBurn,
 		unbondingTime,
-	); err != nil {
+	)
+	if err != nil {
 		k.Logger(ctx).Error(fmt.Sprintf("UndelegateCallback | %s", err.Error()))
 		return err
 	}
@@ -161,15 +161,13 @@ func (k Keeper) UpdateDelegationBalances(ctx sdk.Context, hostZone types.HostZon
 	return nil
 }
 
-// Calculates the tokens unbonded and stTokens that should be burned for this batch by summing from each validator
-func (k Keeper) CalculateTokensFromBatch(undelegations []*types.SplitUndelegation) (nativeTokens sdkmath.Int, stTokens sdkmath.Int) {
+// Calculates the tokens unbonded for this batch by summing from each validator
+func (k Keeper) CalculateTotalUnbondedInBatch(undelegations []*types.SplitUndelegation) (nativeTokens sdkmath.Int) {
 	nativeTokens = sdkmath.ZeroInt()
-	stTokens = sdkmath.ZeroInt()
 	for _, undelegation := range undelegations {
 		nativeTokens = nativeTokens.Add(undelegation.NativeTokenAmount)
-		stTokens = stTokens.Add(undelegation.StTokenAmount)
 	}
-	return nativeTokens, stTokens
+	return nativeTokens
 }
 
 // Get the latest completion time across each MsgUndelegate in the ICA transaction
@@ -204,31 +202,42 @@ func (k Keeper) UpdateHostZoneUnbondingsAfterUndelegation(
 	ctx sdk.Context,
 	chainId string,
 	epochUnbondingRecordIds []uint64,
-	totalStTokensToBurn sdkmath.Int,
 	totalNativeTokensUnbonded sdkmath.Int,
 	unbondingTime uint64,
-) error {
+) (totalStTokensToBurn sdkmath.Int, err error) {
+	// As we process the accounting changes, keep track of the stTokens that should be burned later
+	totalStTokensToBurn = sdkmath.ZeroInt()
+
 	// Loop each epoch unbonding record starting from the earliest
 	for _, epochNumber := range epochUnbondingRecordIds {
 		hostZoneUnbonding, found := k.RecordsKeeper.GetHostZoneUnbondingByChainId(ctx, epochNumber, chainId)
 		if !found {
-			return errorsmod.Wrapf(recordstypes.ErrHostUnbondingRecordNotFound,
+			return totalStTokensToBurn, errorsmod.Wrapf(recordstypes.ErrHostUnbondingRecordNotFound,
 				"host zone unbonding not found for epoch %d and %s", epochNumber, chainId)
 		}
 
-		// Determine the amount to decrement from each record, flooring at 0
-		stTokensToBurn := sdkmath.MinInt(hostZoneUnbonding.StTokensToBurn, totalStTokensToBurn)
+		// Determine the native amount to decrement from the record, capping at the amount in the record
+		// Also decrement the total for the next loop
 		nativeTokensUnbonded := sdkmath.MinInt(hostZoneUnbonding.NativeTokensToUnbond, totalNativeTokensUnbonded)
-
-		// Decrement the records
-		hostZoneUnbonding.StTokensToBurn = hostZoneUnbonding.StTokensToBurn.Sub(stTokensToBurn)
 		hostZoneUnbonding.NativeTokensToUnbond = hostZoneUnbonding.NativeTokensToUnbond.Sub(nativeTokensUnbonded)
-
-		// Update the totals for the next loop
-		totalStTokensToBurn = totalStTokensToBurn.Sub(stTokensToBurn)
 		totalNativeTokensUnbonded = totalNativeTokensUnbonded.Sub(nativeTokensUnbonded)
 
-		// If there are no more tokens to burn after this batch, iterate the record to the next status
+		// Calculate the relative stToken portion using the implied RR from the record
+		// If the native amount has already been decremented to 0, just use the full stToken remainder
+		// from the record to prevent any precision error
+		var stTokensToBurn sdkmath.Int
+		if hostZoneUnbonding.NativeTokensToUnbond.IsZero() {
+			stTokensToBurn = hostZoneUnbonding.StTokensToBurn
+		} else {
+			impliedRedemptionRate := sdk.NewDecFromInt(hostZoneUnbonding.NativeTokenAmount).Quo(sdk.NewDecFromInt(hostZoneUnbonding.StTokenAmount))
+			stTokensToBurn = sdk.NewDecFromInt(nativeTokensUnbonded).Quo(impliedRedemptionRate).TruncateInt()
+		}
+
+		// Decrement st amount on the record and increment the tota
+		hostZoneUnbonding.StTokensToBurn = hostZoneUnbonding.StTokensToBurn.Sub(stTokensToBurn)
+		totalStTokensToBurn = totalStTokensToBurn.Add(stTokensToBurn)
+
+		// If there are no more tokens to unbond or burn after this batch, iterate the record to the next status
 		if hostZoneUnbonding.StTokensToBurn.IsZero() && hostZoneUnbonding.NativeTokensToUnbond.IsZero() {
 			hostZoneUnbonding.Status = recordstypes.HostZoneUnbonding_EXIT_TRANSFER_QUEUE
 		}
@@ -243,14 +252,14 @@ func (k Keeper) UpdateHostZoneUnbondingsAfterUndelegation(
 		if !success {
 			k.Logger(ctx).Error(fmt.Sprintf("Failed to set host zone epoch unbonding record: epochNumber %d, chainId %s, hostZoneUnbonding %+v",
 				epochNumber, chainId, hostZoneUnbonding))
-			return errorsmod.Wrapf(types.ErrEpochNotFound, "couldn't set host zone epoch unbonding record")
+			return totalStTokensToBurn, errorsmod.Wrapf(types.ErrEpochNotFound, "couldn't set host zone epoch unbonding record")
 		}
 		k.RecordsKeeper.SetEpochUnbondingRecord(ctx, *updatedEpochUnbondingRecord)
 
 		k.Logger(ctx).Info(utils.LogICACallbackWithHostZone(chainId, ICACallbackID_Undelegate,
 			"Epoch Unbonding Record: %d - Seting unbonding time to %d", epochNumber, unbondingTime))
 	}
-	return nil
+	return totalStTokensToBurn, nil
 }
 
 // Burn stTokens after they've been unbonded
