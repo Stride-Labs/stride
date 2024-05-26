@@ -39,14 +39,15 @@ func (k Keeper) CreateEpochUnbondingRecord(ctx sdk.Context, epochNumber uint64) 
 		k.Logger(ctx).Info(utils.LogWithHostZone(hostZone.ChainId, "Creating Epoch Unbonding Record"))
 
 		hostZoneUnbonding := recordstypes.HostZoneUnbonding{
-			NativeTokenAmount:     sdkmath.ZeroInt(),
-			StTokenAmount:         sdkmath.ZeroInt(),
-			StTokensToBurn:        sdkmath.ZeroInt(),
-			NativeTokensToUnbond:  sdkmath.ZeroInt(),
-			ClaimableNativeTokens: sdkmath.ZeroInt(),
-			Denom:                 hostZone.HostDenom,
-			HostZoneId:            hostZone.ChainId,
-			Status:                recordstypes.HostZoneUnbonding_UNBONDING_QUEUE,
+			NativeTokenAmount:         sdkmath.ZeroInt(),
+			StTokenAmount:             sdkmath.ZeroInt(),
+			StTokensToBurn:            sdkmath.ZeroInt(),
+			NativeTokensToUnbond:      sdkmath.ZeroInt(),
+			ClaimableNativeTokens:     sdkmath.ZeroInt(),
+			Denom:                     hostZone.HostDenom,
+			HostZoneId:                hostZone.ChainId,
+			Status:                    recordstypes.HostZoneUnbonding_UNBONDING_QUEUE,
+			UndelegationTxsInProgress: 0,
 		}
 		hostZoneUnbondings = append(hostZoneUnbondings, &hostZoneUnbonding)
 	}
