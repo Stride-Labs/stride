@@ -201,10 +201,10 @@ func (s *KeeperTestSuite) TestClaimUndelegatedTokens_HzuNotStatusTransferred() {
 	s.Require().True(found, "epoch unbonding record found")
 	updatedHzu := epochUnbondingRecord.HostZoneUnbondings[0]
 	updatedHzu.Status = recordtypes.HostZoneUnbonding_EXIT_TRANSFER_QUEUE
-	newEpochUnbondingRecord, success := s.App.RecordsKeeper.AddHostZoneToEpochUnbondingRecord(s.Ctx, tc.validMsg.Epoch, tc.validMsg.HostZoneId, updatedHzu)
-	s.Require().True(success, "epoch unbonding record updated")
+	newEpochUnbondingRecord, err := s.App.RecordsKeeper.AddHostZoneToEpochUnbondingRecord(s.Ctx, tc.validMsg.Epoch, tc.validMsg.HostZoneId, updatedHzu)
+	s.Require().NoError(err, "epoch unbonding record updated")
 	s.App.RecordsKeeper.SetEpochUnbondingRecord(s.Ctx, *newEpochUnbondingRecord)
 
-	_, err := s.GetMsgServer().ClaimUndelegatedTokens(sdk.WrapSDKContext(s.Ctx), &tc.validMsg)
+	_, err = s.GetMsgServer().ClaimUndelegatedTokens(sdk.WrapSDKContext(s.Ctx), &tc.validMsg)
 	s.Require().ErrorContains(err, "host zone unbonding has status: EXIT_TRANSFER_QUEUE, requires status CLAIMABLE")
 }

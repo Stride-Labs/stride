@@ -84,14 +84,12 @@ func (k Keeper) UndelegateCallback(ctx sdk.Context, packet channeltypes.Packet, 
 	nativeTokensUnbonded := k.CalculateTotalUnbondedInBatch(undelegateCallback.SplitUndelegations)
 	unbondingTime, err := k.GetLatestUnbondingCompletionTime(ctx, ackResponse.MsgResponses)
 	if err != nil {
-		k.Logger(ctx).Error(fmt.Sprintf("UndelegateCallback | %s", err.Error()))
 		return err
 	}
 
 	// Update delegation balances on the validators and host zone
 	err = k.UpdateDelegationBalances(ctx, hostZone, undelegateCallback)
 	if err != nil {
-		k.Logger(ctx).Error(fmt.Sprintf("UndelegateCallback | %s", err.Error()))
 		return err
 	}
 
@@ -104,13 +102,11 @@ func (k Keeper) UndelegateCallback(ctx sdk.Context, packet channeltypes.Packet, 
 		unbondingTime,
 	)
 	if err != nil {
-		k.Logger(ctx).Error(fmt.Sprintf("UndelegateCallback | %s", err.Error()))
 		return err
 	}
 
 	// Burn the stTokens from the batch
 	if err := k.BurnStTokensAfterUndelegation(ctx, hostZone, stTokensToBurn); err != nil {
-		k.Logger(ctx).Error(fmt.Sprintf("UndelegateCallback | %s", err.Error()))
 		return err
 	}
 
@@ -173,14 +169,12 @@ func (k Keeper) CalculateTotalUnbondedInBatch(undelegations []*types.SplitUndele
 // Get the latest completion time across each MsgUndelegate in the ICA transaction
 // The time is later stored on the unbonding record
 func (k Keeper) GetLatestUnbondingCompletionTime(ctx sdk.Context, msgResponses [][]byte) (latestCompletionTime uint64, err error) {
-	// Update the completion time using the latest completion time across each message within the transaction
 	for _, msgResponse := range msgResponses {
-		// unmarshall the ack response into a MsgUndelegateResponse and grab the completion time
 		var undelegateResponse stakingtypes.MsgUndelegateResponse
-		err := proto.Unmarshal(msgResponse, &undelegateResponse)
-		if err != nil {
+		if err := proto.Unmarshal(msgResponse, &undelegateResponse); err != nil {
 			return 0, errorsmod.Wrapf(types.ErrUnmarshalFailure, "Unable to unmarshal undelegation tx response: %s", err.Error())
 		}
+
 		responseCompletionTime := uint64(undelegateResponse.CompletionTime.UnixNano())
 		if responseCompletionTime > latestCompletionTime {
 			latestCompletionTime = responseCompletionTime
@@ -248,16 +242,12 @@ func (k Keeper) UpdateHostZoneUnbondingsAfterUndelegation(
 		}
 
 		// Persist the record changes
-		updatedEpochUnbondingRecord, success := k.RecordsKeeper.AddHostZoneToEpochUnbondingRecord(ctx, epochNumber, chainId, hostZoneUnbonding)
-		if !success {
-			k.Logger(ctx).Error(fmt.Sprintf("Failed to set host zone epoch unbonding record: epochNumber %d, chainId %s, hostZoneUnbonding %+v",
-				epochNumber, chainId, hostZoneUnbonding))
-			return totalStTokensToBurn, errorsmod.Wrapf(types.ErrEpochNotFound, "couldn't set host zone epoch unbonding record")
+		if err := k.RecordsKeeper.SetHostZoneUnbondingRecord(ctx, epochNumber, chainId, *hostZoneUnbonding); err != nil {
+			return totalStTokensToBurn, err
 		}
-		k.RecordsKeeper.SetEpochUnbondingRecord(ctx, *updatedEpochUnbondingRecord)
 
 		k.Logger(ctx).Info(utils.LogICACallbackWithHostZone(chainId, ICACallbackID_Undelegate,
-			"Epoch Unbonding Record: %d - Seting unbonding time to %d", epochNumber, unbondingTime))
+			"Epoch Unbonding Record: %d - Setting unbonding time to %d", epochNumber, unbondingTime))
 	}
 	return totalStTokensToBurn, nil
 }
@@ -271,19 +261,18 @@ func (k Keeper) BurnStTokensAfterUndelegation(ctx sdk.Context, hostZone types.Ho
 	// Send the stTokens from the host zone module account to the stakeibc module account
 	depositAddress, err := sdk.AccAddressFromBech32(hostZone.DepositAddress)
 	if err != nil {
-		return fmt.Errorf("could not bech32 decode address %s of zone with id: %s", hostZone.DepositAddress, hostZone.ChainId)
+		return errorsmod.Wrapf(err, "unable to convert deposit address")
 	}
 	err = k.bankKeeper.SendCoinsFromAccountToModule(ctx, depositAddress, types.ModuleName, sdk.NewCoins(stCoin))
 	if err != nil {
-		return fmt.Errorf("could not send coins from account %s to module %s. err: %s", hostZone.DepositAddress, types.ModuleName, err.Error())
+		return errorsmod.Wrapf(err, "unable to send sttokens from deposit account for burning")
 	}
 
 	// Finally burn the stTokens
 	err = k.bankKeeper.BurnCoins(ctx, types.ModuleName, sdk.NewCoins(stCoin))
 	if err != nil {
-		k.Logger(ctx).Error(fmt.Sprintf("Failed to burn stAssets upon successful unbonding %s", err.Error()))
-		return errorsmod.Wrapf(types.ErrInsufficientFunds, "couldn't burn %v%s tokens in module account. err: %s", stTokenBurnAmount, stCoinDenom, err.Error())
+		return errorsmod.Wrapf(err, "unable to burn %v%s tokens", stTokenBurnAmount, stCoinDenom)
 	}
-	k.Logger(ctx).Info(fmt.Sprintf("Total supply %s", k.bankKeeper.GetSupply(ctx, stCoinDenom)))
+	k.Logger(ctx).Info(utils.LogICACallbackWithHostZone(hostZone.ChainId, ICACallbackID_Undelegate, "Burned %v", stCoin))
 	return nil
 }

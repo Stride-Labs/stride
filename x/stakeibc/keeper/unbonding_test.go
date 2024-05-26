@@ -18,10 +18,8 @@ import (
 )
 
 type ValidatorUnbonding struct {
-	Validator string
-	// TODO [undelegate]: Rename to NativeAmount
+	Validator    string
 	UnbondAmount sdkmath.Int
-	StAmount     sdkmath.Int
 }
 
 type UnbondingTestCase struct {
