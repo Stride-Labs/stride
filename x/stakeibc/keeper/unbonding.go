@@ -67,17 +67,13 @@ func (k Keeper) GetQueuedHostZoneUnbondingRecords(
 }
 
 // Loops through each epoch unbonding record and returns the total number of native tokens
-// that should be unbonded, and the total number of stTokens that should be burned
-func (k Keeper) GetTotalUnbondAmount(
-	hostZoneUnbondingRecords map[uint64]recordstypes.HostZoneUnbonding,
-) (totalNativeAmount sdkmath.Int, totalStAmount sdkmath.Int) {
-	totalNativeAmount = sdk.ZeroInt()
-	totalStAmount = sdk.ZeroInt()
+// that should be unbonded
+func (k Keeper) GetTotalUnbondAmount(hostZoneUnbondingRecords map[uint64]recordstypes.HostZoneUnbonding) sdkmath.Int {
+	totalNativeAmount := sdk.ZeroInt()
 	for _, hostZoneRecord := range hostZoneUnbondingRecords {
 		totalNativeAmount = totalNativeAmount.Add(hostZoneRecord.NativeTokensToUnbond)
-		totalStAmount = totalStAmount.Add(hostZoneRecord.StTokensToBurn)
 	}
-	return totalNativeAmount, totalStAmount
+	return totalNativeAmount
 }
 
 // Given a list of user redemption record IDs and a redemption rate, sets the native token
@@ -247,15 +243,10 @@ func SortUnbondingCapacityByPriority(validatorUnbondCapacity []ValidatorUnbondCa
 func (k Keeper) GetUnbondingICAMessages(
 	hostZone types.HostZone,
 	totalNativeAmount sdkmath.Int,
-	totalStAmount sdkmath.Int,
 	prioritizedUnbondCapacity []ValidatorUnbondCapacity,
 ) (msgs []proto.Message, unbondings []*types.SplitUndelegation, err error) {
-	// Calculate the implied redmeption rate from the totals
-	impliedRedemptionRate := sdk.NewDecFromInt(totalNativeAmount).Quo(sdk.NewDecFromInt(totalStAmount))
-
 	// Loop through each validator and unbond as much as possible
 	remainingUnbondAmount := totalNativeAmount
-	remainingStAmount := totalStAmount
 	for _, validatorCapacity := range prioritizedUnbondCapacity {
 		// Break once all unbonding has been accounted for
 		if remainingUnbondAmount.IsZero() {
@@ -272,22 +263,10 @@ func (k Keeper) GetUnbondingICAMessages(
 		}
 		remainingUnbondAmount = remainingUnbondAmount.Sub(unbondAmount)
 
-		// Calculate the associated stToken amount
-		// There may be some precision error so the last validator should
-		// get all the remaining stTokens
-		var stAmount sdkmath.Int
-		if remainingUnbondAmount.IsZero() {
-			stAmount = remainingStAmount
-		} else {
-			stAmount = sdk.NewDecFromInt(unbondAmount).Quo(impliedRedemptionRate).TruncateInt()
-		}
-		remainingStAmount = remainingStAmount.Sub(stAmount)
-
 		// Build the validator splits for the callback
 		unbondings = append(unbondings, &types.SplitUndelegation{
 			Validator:         validatorCapacity.ValidatorAddress,
 			NativeTokenAmount: unbondAmount,
-			StTokenAmount:     stAmount,
 		})
 	}
 
@@ -393,14 +372,13 @@ func (k Keeper) UnbondFromHostZone(ctx sdk.Context, hostZone types.HostZone) (er
 		return err
 	}
 
-	// Sum the total number of native tokens that from the records above that are ready to unbond
-	totalNativeUnbondAmount, totalStBurnAmount := k.GetTotalUnbondAmount(epochNumberToHostZoneUnbonding)
+	// Sum the total number of native tokens from the records above that are ready to unbond
+	totalUnbondAmount := k.GetTotalUnbondAmount(epochNumberToHostZoneUnbonding)
 	k.Logger(ctx).Info(utils.LogWithHostZone(hostZone.ChainId,
-		"Total unbonded amount: %v%s, Total burn amount: %vst%s",
-		totalNativeUnbondAmount, hostZone.HostDenom, totalStBurnAmount, hostZone.HostDenom))
+		"Total unbonded amount: %v%s", totalUnbondAmount, hostZone.HostDenom))
 
 	// If there's nothing to unbond, return and move on to the next host zone
-	if totalNativeUnbondAmount.IsZero() {
+	if totalUnbondAmount.IsZero() {
 		return nil
 	}
 
@@ -414,7 +392,7 @@ func (k Keeper) UnbondFromHostZone(ctx sdk.Context, hostZone types.HostZone) (er
 
 	// Determine the ideal balanced delegation for each validator after the unbonding
 	//   (as if we were to unbond and then rebalance)
-	delegationAfterUnbonding := totalValidDelegationBeforeUnbonding.Sub(totalNativeUnbondAmount)
+	delegationAfterUnbonding := totalValidDelegationBeforeUnbonding.Sub(totalUnbondAmount)
 	balancedDelegationsAfterUnbonding, err := k.GetTargetValAmtsForHostZone(ctx, hostZone, delegationAfterUnbonding)
 	if err != nil {
 		return errorsmod.Wrapf(err, "unable to get target val amounts for host zone %s", hostZone.ChainId)
@@ -441,8 +419,7 @@ func (k Keeper) UnbondFromHostZone(ctx sdk.Context, hostZone types.HostZone) (er
 	undelegateBatchSize := int(hostZone.MaxMessagesPerIcaTx)
 	msgs, unbondings, err := k.GetUnbondingICAMessages(
 		hostZone,
-		totalNativeUnbondAmount,
-		totalStBurnAmount,
+		totalUnbondAmount,
 		prioritizedUnbondCapacity,
 	)
 	if err != nil {
@@ -477,7 +454,7 @@ func (k Keeper) UnbondFromHostZone(ctx sdk.Context, hostZone types.HostZone) (er
 		}
 	}
 
-	EmitUndelegationEvent(ctx, hostZone, totalNativeUnbondAmount)
+	EmitUndelegationEvent(ctx, hostZone, totalUnbondAmount)
 
 	return nil
 }
