@@ -552,17 +552,15 @@ func (s *KeeperTestSuite) TestGetQueuedHostZoneUnbondingRecords() {
 			HostZoneUnbondings: []*recordtypes.HostZoneUnbonding{
 				{
 					// Included
-					HostZoneId:        HostChainId,
-					NativeTokenAmount: sdkmath.NewInt(1),
-					StTokenAmount:     sdkmath.NewInt(1),
-					Status:            recordtypes.HostZoneUnbonding_UNBONDING_QUEUE,
+					HostZoneId:    HostChainId,
+					StTokenAmount: sdkmath.NewInt(1),
+					Status:        recordtypes.HostZoneUnbonding_UNBONDING_QUEUE,
 				},
 				{
 					// Different host zone
-					HostZoneId:        OsmoChainId,
-					NativeTokenAmount: sdkmath.NewInt(2),
-					StTokenAmount:     sdkmath.NewInt(2),
-					Status:            recordtypes.HostZoneUnbonding_UNBONDING_QUEUE,
+					HostZoneId:    OsmoChainId,
+					StTokenAmount: sdkmath.NewInt(2),
+					Status:        recordtypes.HostZoneUnbonding_UNBONDING_QUEUE,
 				},
 			},
 		},
@@ -572,17 +570,15 @@ func (s *KeeperTestSuite) TestGetQueuedHostZoneUnbondingRecords() {
 			HostZoneUnbondings: []*recordtypes.HostZoneUnbonding{
 				{
 					// Included
-					HostZoneId:        HostChainId,
-					NativeTokenAmount: sdkmath.NewInt(3),
-					StTokenAmount:     sdkmath.NewInt(3),
-					Status:            recordtypes.HostZoneUnbonding_UNBONDING_QUEUE,
+					HostZoneId:    HostChainId,
+					StTokenAmount: sdkmath.NewInt(3),
+					Status:        recordtypes.HostZoneUnbonding_UNBONDING_QUEUE,
 				},
 				{
 					// Different host zone
-					HostZoneId:        OsmoChainId,
-					NativeTokenAmount: sdkmath.NewInt(4),
-					StTokenAmount:     sdkmath.NewInt(4),
-					Status:            recordtypes.HostZoneUnbonding_UNBONDING_QUEUE,
+					HostZoneId:    OsmoChainId,
+					StTokenAmount: sdkmath.NewInt(4),
+					Status:        recordtypes.HostZoneUnbonding_UNBONDING_QUEUE,
 				},
 			},
 		},
@@ -592,17 +588,15 @@ func (s *KeeperTestSuite) TestGetQueuedHostZoneUnbondingRecords() {
 			HostZoneUnbondings: []*recordtypes.HostZoneUnbonding{
 				{
 					// Different Status
-					HostZoneId:        HostChainId,
-					NativeTokenAmount: sdkmath.NewInt(5),
-					StTokenAmount:     sdkmath.NewInt(5),
-					Status:            recordtypes.HostZoneUnbonding_UNBONDING_IN_PROGRESS,
+					HostZoneId:    HostChainId,
+					StTokenAmount: sdkmath.NewInt(5),
+					Status:        recordtypes.HostZoneUnbonding_UNBONDING_IN_PROGRESS,
 				},
 				{
 					// Different Status
-					HostZoneId:        OsmoChainId,
-					NativeTokenAmount: sdkmath.NewInt(6),
-					StTokenAmount:     sdkmath.NewInt(6),
-					Status:            recordtypes.HostZoneUnbonding_UNBONDING_IN_PROGRESS,
+					HostZoneId:    OsmoChainId,
+					StTokenAmount: sdkmath.NewInt(6),
+					Status:        recordtypes.HostZoneUnbonding_UNBONDING_IN_PROGRESS,
 				},
 			},
 		},
@@ -612,16 +606,14 @@ func (s *KeeperTestSuite) TestGetQueuedHostZoneUnbondingRecords() {
 			HostZoneUnbondings: []*recordtypes.HostZoneUnbonding{
 				{
 					// Different Host and Status
-					HostZoneId:        OsmoChainId,
-					NativeTokenAmount: sdkmath.NewInt(7),
-					StTokenAmount:     sdkmath.NewInt(7),
-					Status:            recordtypes.HostZoneUnbonding_CLAIMABLE,
+					HostZoneId:    OsmoChainId,
+					StTokenAmount: sdkmath.NewInt(7),
+					Status:        recordtypes.HostZoneUnbonding_CLAIMABLE,
 				},
 				{
 					// Included
 					HostZoneId:                HostChainId,
-					NativeTokenAmount:         sdkmath.NewInt(8),
-					NativeTokensToUnbond:      sdkmath.NewInt(8),
+					StTokenAmount:             sdkmath.NewInt(8),
 					Status:                    recordtypes.HostZoneUnbonding_UNBONDING_RETRY_QUEUE,
 					UndelegationTxsInProgress: 0,
 				},
@@ -640,8 +632,7 @@ func (s *KeeperTestSuite) TestGetQueuedHostZoneUnbondingRecords() {
 				{
 					// Retry record, but has an undelegation in progress
 					HostZoneId:                HostChainId,
-					NativeTokensToUnbond:      sdkmath.NewInt(10),
-					NativeTokenAmount:         sdkmath.NewInt(10),
+					StTokenAmount:             sdkmath.NewInt(10),
 					Status:                    recordtypes.HostZoneUnbonding_UNBONDING_RETRY_QUEUE,
 					UndelegationTxsInProgress: 1,
 				},
@@ -657,28 +648,26 @@ func (s *KeeperTestSuite) TestGetQueuedHostZoneUnbondingRecords() {
 	s.Require().Equal(expectedEpochUnbondingRecordIds, actualEpochIds, "epoch unbonding record IDs")
 	for epochNumber, actualHostZoneUnbonding := range actualHostZoneMap {
 		expectedHostZoneUnbonding := expectedHostZoneUnbondingMap[epochNumber]
-		s.Require().Equal(expectedHostZoneUnbonding, actualHostZoneUnbonding.NativeTokenAmount.Int64(), "host zone unbonding record")
+		s.Require().Equal(expectedHostZoneUnbonding, actualHostZoneUnbonding.StTokenAmount.Int64(),
+			"host zone unbonding record sttoken amount")
 	}
 }
 
 func (s *KeeperTestSuite) TestGetTotalUnbondAmount() {
 	hostZoneUnbondingRecords := map[uint64]recordtypes.HostZoneUnbonding{
-		1: {NativeTokensToUnbond: sdkmath.NewInt(1), StTokensToBurn: sdkmath.NewInt(5)},
-		2: {NativeTokensToUnbond: sdkmath.NewInt(2), StTokensToBurn: sdkmath.NewInt(6)},
-		3: {NativeTokensToUnbond: sdkmath.NewInt(3), StTokensToBurn: sdkmath.NewInt(7)},
-		4: {NativeTokensToUnbond: sdkmath.NewInt(4), StTokensToBurn: sdkmath.NewInt(8)},
+		1: {NativeTokensToUnbond: sdkmath.NewInt(1)},
+		2: {NativeTokensToUnbond: sdkmath.NewInt(2)},
+		3: {NativeTokensToUnbond: sdkmath.NewInt(3)},
+		4: {NativeTokensToUnbond: sdkmath.NewInt(4)},
 	}
 	expectedUnbondAmount := sdkmath.NewInt(1 + 2 + 3 + 4)
-	expectedBurnAmount := sdkmath.NewInt(5 + 6 + 7 + 8)
 
-	actualUnbondAmount, actualBurnAmount := s.App.StakeibcKeeper.GetTotalUnbondAmount(hostZoneUnbondingRecords)
+	actualUnbondAmount := s.App.StakeibcKeeper.GetTotalUnbondAmount(hostZoneUnbondingRecords)
 	s.Require().Equal(expectedUnbondAmount, actualUnbondAmount, "unbond amount")
-	s.Require().Equal(expectedBurnAmount, actualBurnAmount, "burn amount")
 
 	emptyUnbondings := map[uint64]recordtypes.HostZoneUnbonding{}
-	actualUnbondAmount, actualBurnAmount = s.App.StakeibcKeeper.GetTotalUnbondAmount(emptyUnbondings)
+	actualUnbondAmount = s.App.StakeibcKeeper.GetTotalUnbondAmount(emptyUnbondings)
 	s.Require().Zero(actualUnbondAmount.Int64(), "expected zero unbondings")
-	s.Require().Zero(actualBurnAmount.Int64(), "expected zero burn")
 }
 
 func (s *KeeperTestSuite) TestRefreshUserRedemptionRecordNativeAmounts() {
@@ -1048,89 +1037,71 @@ func (s *KeeperTestSuite) TestGetUnbondingICAMessages() {
 
 	testCases := []struct {
 		name               string
-		totalNativeAmount  sdkmath.Int
-		totalStAmount      sdkmath.Int
+		totalUnbondAmount  sdkmath.Int
 		expectedUnbondings []ValidatorUnbonding
 		expectedError      string
 	}{
 		{
 			name:              "unbond val1 partially",
-			totalNativeAmount: sdkmath.NewInt(50),
-			totalStAmount:     sdkmath.NewInt(50), // RR: 1.0
+			totalUnbondAmount: sdkmath.NewInt(50),
 			expectedUnbondings: []ValidatorUnbonding{
-				{Validator: "val1", UnbondAmount: sdkmath.NewInt(50), StAmount: sdkmath.NewInt(50)},
+				{Validator: "val1", UnbondAmount: sdkmath.NewInt(50)},
 			},
 		},
 		{
 			name:              "unbond val1 fully",
-			totalNativeAmount: sdkmath.NewInt(100),
-			totalStAmount:     sdkmath.NewInt(50), // RR: 2.0
+			totalUnbondAmount: sdkmath.NewInt(100),
 			expectedUnbondings: []ValidatorUnbonding{
-				{Validator: "val1", UnbondAmount: sdkmath.NewInt(100), StAmount: sdkmath.NewInt(50)},
+				{Validator: "val1", UnbondAmount: sdkmath.NewInt(100)},
 			},
 		},
 		{
 			name:              "unbond val1 fully and val2 partially",
-			totalNativeAmount: sdkmath.NewInt(200),
-			totalStAmount:     sdkmath.NewInt(200), // RR: 1.0
+			totalUnbondAmount: sdkmath.NewInt(200),
 			expectedUnbondings: []ValidatorUnbonding{
-				{Validator: "val1", UnbondAmount: sdkmath.NewInt(100), StAmount: sdkmath.NewInt(100)},
-				{Validator: "val2", UnbondAmount: sdkmath.NewInt(100), StAmount: sdkmath.NewInt(100)},
-			},
-		},
-		{
-			name:              "unbond val1 fully and val2 carry over",
-			totalNativeAmount: sdkmath.NewInt(200),
-			totalStAmount:     sdkmath.NewInt(201), // RR: 0.99, will have carry over
-			expectedUnbondings: []ValidatorUnbonding{
-				{Validator: "val1", UnbondAmount: sdkmath.NewInt(100), StAmount: sdkmath.NewInt(100)}, // 100 / (200 / 201) = 100.5 => 100
-				{Validator: "val2", UnbondAmount: sdkmath.NewInt(100), StAmount: sdkmath.NewInt(101)}, // Remainder: 201 - 100 = 101
+				{Validator: "val1", UnbondAmount: sdkmath.NewInt(100)},
+				{Validator: "val2", UnbondAmount: sdkmath.NewInt(100)},
 			},
 		},
 		{
 			name:              "unbond val1 val2 fully",
-			totalNativeAmount: sdkmath.NewInt(300),
-			totalStAmount:     sdkmath.NewInt(200), // RR: 1.5
+			totalUnbondAmount: sdkmath.NewInt(300),
 			expectedUnbondings: []ValidatorUnbonding{
-				{Validator: "val1", UnbondAmount: sdkmath.NewInt(100), StAmount: sdkmath.NewInt(66)},  // 200 / 1.5 = 66
-				{Validator: "val2", UnbondAmount: sdkmath.NewInt(200), StAmount: sdkmath.NewInt(134)}, // 200 - 66 = 134
+				{Validator: "val1", UnbondAmount: sdkmath.NewInt(100)},
+				{Validator: "val2", UnbondAmount: sdkmath.NewInt(200)},
 			},
 		},
 		{
 			name:              "unbond val1 val2 fully and val3 partially",
-			totalNativeAmount: sdkmath.NewInt(450),
-			totalStAmount:     sdkmath.NewInt(200), // RR: 2.25
+			totalUnbondAmount: sdkmath.NewInt(450),
 			expectedUnbondings: []ValidatorUnbonding{
-				{Validator: "val1", UnbondAmount: sdkmath.NewInt(100), StAmount: sdkmath.NewInt(44)}, // 100 / 2.25 = 44.4 => 44
-				{Validator: "val2", UnbondAmount: sdkmath.NewInt(200), StAmount: sdkmath.NewInt(88)}, // 100 / 2.25 = 88.8 => 88
-				{Validator: "val3", UnbondAmount: sdkmath.NewInt(150), StAmount: sdkmath.NewInt(68)}, // 200 - 44 - 88 = 68
+				{Validator: "val1", UnbondAmount: sdkmath.NewInt(100)},
+				{Validator: "val2", UnbondAmount: sdkmath.NewInt(200)},
+				{Validator: "val3", UnbondAmount: sdkmath.NewInt(150)},
 			},
 		},
 		{
 			name:              "unbond val1 val2 and val3 fully",
-			totalNativeAmount: sdkmath.NewInt(600),
-			totalStAmount:     sdkmath.NewInt(600), // RR: 1.0
+			totalUnbondAmount: sdkmath.NewInt(600),
 			expectedUnbondings: []ValidatorUnbonding{
-				{Validator: "val1", UnbondAmount: sdkmath.NewInt(100), StAmount: sdkmath.NewInt(100)},
-				{Validator: "val2", UnbondAmount: sdkmath.NewInt(200), StAmount: sdkmath.NewInt(200)},
-				{Validator: "val3", UnbondAmount: sdkmath.NewInt(300), StAmount: sdkmath.NewInt(300)},
+				{Validator: "val1", UnbondAmount: sdkmath.NewInt(100)},
+				{Validator: "val2", UnbondAmount: sdkmath.NewInt(200)},
+				{Validator: "val3", UnbondAmount: sdkmath.NewInt(300)},
 			},
 		},
 		{
 			name:              "full unbonding",
-			totalNativeAmount: sdkmath.NewInt(1000),
-			totalStAmount:     sdkmath.NewInt(500), // RR: 2.0
+			totalUnbondAmount: sdkmath.NewInt(1000),
 			expectedUnbondings: []ValidatorUnbonding{
-				{Validator: "val1", UnbondAmount: sdkmath.NewInt(100), StAmount: sdkmath.NewInt(50)},
-				{Validator: "val2", UnbondAmount: sdkmath.NewInt(200), StAmount: sdkmath.NewInt(100)},
-				{Validator: "val3", UnbondAmount: sdkmath.NewInt(300), StAmount: sdkmath.NewInt(150)},
-				{Validator: "val4", UnbondAmount: sdkmath.NewInt(400), StAmount: sdkmath.NewInt(200)},
+				{Validator: "val1", UnbondAmount: sdkmath.NewInt(100)},
+				{Validator: "val2", UnbondAmount: sdkmath.NewInt(200)},
+				{Validator: "val3", UnbondAmount: sdkmath.NewInt(300)},
+				{Validator: "val4", UnbondAmount: sdkmath.NewInt(400)},
 			},
 		},
 		{
 			name:              "insufficient delegation",
-			totalNativeAmount: sdkmath.NewInt(1001),
-			totalStAmount:     sdkmath.NewInt(1001),
+			totalUnbondAmount: sdkmath.NewInt(1001),
 			expectedError:     "unable to unbond full amount",
 		},
 	}
@@ -1140,8 +1111,7 @@ func (s *KeeperTestSuite) TestGetUnbondingICAMessages() {
 			// Get the unbonding ICA messages for the test case
 			actualMessages, actualSplits, actualError := s.App.StakeibcKeeper.GetUnbondingICAMessages(
 				hostZone,
-				tc.totalNativeAmount,
-				tc.totalStAmount,
+				tc.totalUnbondAmount,
 				validatorCapacities,
 			)
 
@@ -1152,7 +1122,7 @@ func (s *KeeperTestSuite) TestGetUnbondingICAMessages() {
 			}
 
 			// For the success case, check the error number of unbondings
-			s.Require().NoError(actualError, "no error expected when unbonding %v", tc.totalNativeAmount)
+			s.Require().NoError(actualError, "no error expected when unbonding %v", tc.totalUnbondAmount)
 			s.Require().Len(actualMessages, len(tc.expectedUnbondings), "number of undelegate messages")
 			s.Require().Len(actualSplits, len(tc.expectedUnbondings), "number of validator splits")
 
@@ -1172,7 +1142,6 @@ func (s *KeeperTestSuite) TestGetUnbondingICAMessages() {
 				// Check the callback
 				s.Require().Equal(expected.Validator, actualSplit.Validator, "callback validator for %s", valAddress)
 				s.Require().Equal(expected.UnbondAmount.Int64(), actualSplit.NativeTokenAmount.Int64(), "callback native amount %s", valAddress)
-				s.Require().Equal(expected.StAmount.Int64(), actualSplit.StTokenAmount.Int64(), "callback st amount %s", valAddress)
 			}
 		})
 	}
@@ -1214,7 +1183,6 @@ func (s *KeeperTestSuite) TestBatchSubmitUndelegateICAMessages() {
 
 		unbondings = append(unbondings, &types.SplitUndelegation{
 			Validator:         validatorAddress,
-			StTokenAmount:     sdkmath.NewInt(100),
 			NativeTokenAmount: sdkmath.NewInt(100),
 		})
 	}
