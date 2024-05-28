@@ -14,35 +14,25 @@ import (
 	"github.com/Stride-Labs/stride/v22/x/records/types"
 )
 
+// Helper function to create a new host zone unbonding record, filling in the sdkmath.Int's
+// so that they can be compared
+func newHostZoneUnbonding(chainId string, status types.HostZoneUnbonding_Status) types.HostZoneUnbonding {
+	return types.HostZoneUnbonding{
+		HostZoneId:            chainId,
+		Status:                status,
+		StTokenAmount:         sdkmath.ZeroInt(),
+		NativeTokenAmount:     sdkmath.ZeroInt(),
+		NativeTokensToUnbond:  sdkmath.ZeroInt(),
+		StTokensToBurn:        sdkmath.ZeroInt(),
+		ClaimableNativeTokens: sdkmath.ZeroInt(),
+	}
+}
+
 func createNEpochUnbondingRecord(keeper *keeper.Keeper, ctx sdk.Context, n int) ([]types.EpochUnbondingRecord, map[string]types.HostZoneUnbonding) {
 	hostZoneUnbondingsList := []types.HostZoneUnbonding{
-		{
-			HostZoneId:            "host-A",
-			Status:                types.HostZoneUnbonding_UNBONDING_QUEUE,
-			StTokenAmount:         sdkmath.ZeroInt(),
-			NativeTokenAmount:     sdkmath.ZeroInt(),
-			NativeTokensToUnbond:  sdkmath.ZeroInt(),
-			StTokensToBurn:        sdkmath.ZeroInt(),
-			ClaimableNativeTokens: sdkmath.ZeroInt(),
-		},
-		{
-			HostZoneId:            "host-B",
-			Status:                types.HostZoneUnbonding_UNBONDING_QUEUE,
-			StTokenAmount:         sdkmath.ZeroInt(),
-			NativeTokenAmount:     sdkmath.ZeroInt(),
-			NativeTokensToUnbond:  sdkmath.ZeroInt(),
-			StTokensToBurn:        sdkmath.ZeroInt(),
-			ClaimableNativeTokens: sdkmath.ZeroInt(),
-		},
-		{
-			HostZoneId:            "host-C",
-			Status:                types.HostZoneUnbonding_UNBONDING_QUEUE,
-			StTokenAmount:         sdkmath.ZeroInt(),
-			NativeTokenAmount:     sdkmath.ZeroInt(),
-			NativeTokensToUnbond:  sdkmath.ZeroInt(),
-			StTokensToBurn:        sdkmath.ZeroInt(),
-			ClaimableNativeTokens: sdkmath.ZeroInt(),
-		},
+		newHostZoneUnbonding("host-A", types.HostZoneUnbonding_UNBONDING_QUEUE),
+		newHostZoneUnbonding("host-B", types.HostZoneUnbonding_UNBONDING_QUEUE),
+		newHostZoneUnbonding("host-C", types.HostZoneUnbonding_UNBONDING_QUEUE),
 	}
 	hostZoneUnbondingsMap := make(map[string]types.HostZoneUnbonding)
 	for _, hostZoneUnbonding := range hostZoneUnbondingsList {
@@ -129,34 +119,27 @@ func (s *KeeperTestSuite) TestAddHostZoneToEpochUnbondingRecord() {
 	initialEpochUnbondingRecord := epochUnbondingRecords[int(epochNumber)]
 
 	// Update host zone unbonding for host-C
-	updatedHostZoneUnbonding := types.HostZoneUnbonding{
-		HostZoneId: "host-C",
-		Status:     types.HostZoneUnbonding_UNBONDING_IN_PROGRESS,
-	}
+	updatedHostZoneUnbonding := newHostZoneUnbonding("host-C", types.HostZoneUnbonding_UNBONDING_IN_PROGRESS)
 
 	expectedEpochUnbondingRecord := initialEpochUnbondingRecord
 	expectedEpochUnbondingRecord.HostZoneUnbondings[2] = &updatedHostZoneUnbonding
 
-	updatedEpochUnbonding, err := s.App.RecordsKeeper.AddHostZoneToEpochUnbondingRecord(s.Ctx, epochNumber, "host-C", &updatedHostZoneUnbonding)
-	s.App.RecordsKeeper.SetEpochUnbondingRecord(s.Ctx, *updatedEpochUnbonding)
+	updatedEpochUnbonding, err := s.App.RecordsKeeper.AddHostZoneToEpochUnbondingRecord(s.Ctx, epochNumber, "host-C", updatedHostZoneUnbonding)
+	s.App.RecordsKeeper.SetEpochUnbondingRecord(s.Ctx, updatedEpochUnbonding)
 	s.Require().NoError(err, "no error expected when updating host-C")
-	s.Require().Equal(expectedEpochUnbondingRecord, *updatedEpochUnbonding, "EUR after host-C update")
+	for i := 0; i < len(expectedEpochUnbondingRecord.HostZoneUnbondings); i++ {
+		expectedHostZoneUnbonding := *expectedEpochUnbondingRecord.HostZoneUnbondings[i]
+		actualHostZoneUnbonding := *updatedEpochUnbonding.HostZoneUnbondings[i]
+		s.Require().Equal(expectedHostZoneUnbonding, actualHostZoneUnbonding, "HZU %d after host-C update", i)
+	}
 
 	// Add new host zone to initial epoch unbonding records
-	newHostZoneUnbonding := types.HostZoneUnbonding{
-		HostZoneId:            "host-D",
-		Status:                types.HostZoneUnbonding_UNBONDING_QUEUE,
-		StTokenAmount:         sdkmath.ZeroInt(),
-		NativeTokenAmount:     sdkmath.ZeroInt(),
-		NativeTokensToUnbond:  sdkmath.ZeroInt(),
-		StTokensToBurn:        sdkmath.ZeroInt(),
-		ClaimableNativeTokens: sdkmath.ZeroInt(),
-	}
+	newHostZoneUnbonding := newHostZoneUnbonding("host-D", types.HostZoneUnbonding_UNBONDING_QUEUE)
 	expectedEpochUnbondingRecord.HostZoneUnbondings = append(expectedEpochUnbondingRecord.HostZoneUnbondings, &newHostZoneUnbonding)
 
-	updatedEpochUnbonding, err = s.App.RecordsKeeper.AddHostZoneToEpochUnbondingRecord(s.Ctx, epochNumber, "host-D", &newHostZoneUnbonding)
+	updatedEpochUnbonding, err = s.App.RecordsKeeper.AddHostZoneToEpochUnbondingRecord(s.Ctx, epochNumber, "host-D", newHostZoneUnbonding)
 	s.Require().NoError(err, "no error expected when adding host-D")
-	s.Require().Equal(expectedEpochUnbondingRecord, *updatedEpochUnbonding, "EUR after host-D addition")
+	s.Require().Equal(expectedEpochUnbondingRecord, updatedEpochUnbonding, "EUR after host-D addition")
 }
 
 func TestSetHostZoneUnbondingStatus(t *testing.T) {

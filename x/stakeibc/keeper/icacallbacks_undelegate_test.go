@@ -716,14 +716,14 @@ func (s *KeeperTestSuite) TestBurnStTokensAfterUndelegation() {
 			depositAccount: "invalid-account",
 			initialBalance: sdkmath.NewInt(10_000),
 			burnAmount:     sdkmath.NewInt(10_000),
-			expectedError:  "could not bech32 decode address",
+			expectedError:  "unable to convert deposit address",
 		},
 		{
 			name:           "insufficient funds",
 			depositAccount: validDepositAccount.String(),
 			initialBalance: sdkmath.NewInt(10_000),
 			burnAmount:     sdkmath.NewInt(10_001),
-			expectedError:  "could not send coins from account",
+			expectedError:  "unable to send sttokens from deposit account for burning",
 		},
 	}
 
