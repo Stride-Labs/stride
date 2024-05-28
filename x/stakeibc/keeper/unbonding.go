@@ -248,11 +248,11 @@ func SortUnbondingCapacityByPriority(validatorUnbondCapacity []ValidatorUnbondCa
 // Returns the list of messages and the callback data for the ICA
 func (k Keeper) GetUnbondingICAMessages(
 	hostZone types.HostZone,
-	totalNativeAmount sdkmath.Int,
+	totalUnbondAmount sdkmath.Int,
 	prioritizedUnbondCapacity []ValidatorUnbondCapacity,
 ) (msgs []proto.Message, unbondings []*types.SplitUndelegation, err error) {
 	// Loop through each validator and unbond as much as possible
-	remainingUnbondAmount := totalNativeAmount
+	remainingUnbondAmount := totalUnbondAmount
 	for _, validatorCapacity := range prioritizedUnbondCapacity {
 		// Break once all unbonding has been accounted for
 		if remainingUnbondAmount.IsZero() {
@@ -288,7 +288,7 @@ func (k Keeper) GetUnbondingICAMessages(
 	// Sanity check that we had enough capacity to unbond
 	if !remainingUnbondAmount.IsZero() {
 		return msgs, unbondings,
-			fmt.Errorf("unable to unbond full amount (%v) from %v", totalNativeAmount, hostZone.ChainId)
+			fmt.Errorf("unable to unbond full amount (%v) from %v", totalUnbondAmount, hostZone.ChainId)
 	}
 
 	return msgs, unbondings, nil
@@ -369,22 +369,22 @@ func (k Keeper) UnbondFromHostZone(ctx sdk.Context, hostZone types.HostZone) (er
 	}
 
 	// Get the list of relevant records that should unbond
-	epochUnbondingRecordIds, epochNumberToHostZoneUnbonding := k.GetQueuedHostZoneUnbondingRecords(ctx, hostZone.ChainId)
+	epochUnbondingRecordIds, epochNumbersToHostZoneUnbondings := k.GetQueuedHostZoneUnbondingRecords(ctx, hostZone.ChainId)
 
 	// Update the native unbond amount on all relevant records
 	// The native amount is calculated from the stTokens
-	epochNumberToHostZoneUnbonding, err = k.RefreshUnbondingNativeTokenAmounts(ctx, hostZone.ChainId, epochNumberToHostZoneUnbonding)
+	epochNumbersToHostZoneUnbondings, err = k.RefreshUnbondingNativeTokenAmounts(ctx, hostZone.ChainId, epochNumbersToHostZoneUnbondings)
 	if err != nil {
 		return err
 	}
 
 	// Sum the total number of native tokens from the records above that are ready to unbond
-	totalUnbondAmount := k.GetTotalUnbondAmount(epochNumberToHostZoneUnbonding)
+	totalNativeUnbondAmount := k.GetTotalUnbondAmount(epochNumbersToHostZoneUnbondings)
 	k.Logger(ctx).Info(utils.LogWithHostZone(hostZone.ChainId,
-		"Total unbonded amount: %v%s", totalUnbondAmount, hostZone.HostDenom))
+		"Total unbonded amount: %v%s", totalNativeUnbondAmount, hostZone.HostDenom))
 
 	// If there's nothing to unbond, return and move on to the next host zone
-	if totalUnbondAmount.IsZero() {
+	if totalNativeUnbondAmount.IsZero() {
 		return nil
 	}
 
@@ -398,7 +398,7 @@ func (k Keeper) UnbondFromHostZone(ctx sdk.Context, hostZone types.HostZone) (er
 
 	// Determine the ideal balanced delegation for each validator after the unbonding
 	//   (as if we were to unbond and then rebalance)
-	delegationAfterUnbonding := totalValidDelegationBeforeUnbonding.Sub(totalUnbondAmount)
+	delegationAfterUnbonding := totalValidDelegationBeforeUnbonding.Sub(totalNativeUnbondAmount)
 	balancedDelegationsAfterUnbonding, err := k.GetTargetValAmtsForHostZone(ctx, hostZone, delegationAfterUnbonding)
 	if err != nil {
 		return errorsmod.Wrapf(err, "unable to get target val amounts for host zone %s", hostZone.ChainId)
@@ -425,7 +425,7 @@ func (k Keeper) UnbondFromHostZone(ctx sdk.Context, hostZone types.HostZone) (er
 	undelegateBatchSize := int(hostZone.MaxMessagesPerIcaTx)
 	msgs, unbondings, err := k.GetUnbondingICAMessages(
 		hostZone,
-		totalUnbondAmount,
+		totalNativeUnbondAmount,
 		prioritizedUnbondCapacity,
 	)
 	if err != nil {
@@ -451,7 +451,7 @@ func (k Keeper) UnbondFromHostZone(ctx sdk.Context, hostZone types.HostZone) (er
 	}
 
 	// Update the epoch unbonding record status and number of undelegation ICAs
-	for epochNumber, hostZoneUnbonding := range epochNumberToHostZoneUnbonding {
+	for epochNumber, hostZoneUnbonding := range epochNumbersToHostZoneUnbondings {
 		hostZoneUnbonding.Status = recordstypes.HostZoneUnbonding_UNBONDING_IN_PROGRESS
 		hostZoneUnbonding.UndelegationTxsInProgress += numTxsSubmitted
 		err := k.RecordsKeeper.SetHostZoneUnbondingRecord(ctx, epochNumber, hostZone.ChainId, hostZoneUnbonding)
@@ -460,7 +460,7 @@ func (k Keeper) UnbondFromHostZone(ctx sdk.Context, hostZone types.HostZone) (er
 		}
 	}
 
-	EmitUndelegationEvent(ctx, hostZone, totalUnbondAmount)
+	EmitUndelegationEvent(ctx, hostZone, totalNativeUnbondAmount)
 
 	return nil
 }
