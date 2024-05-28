@@ -34,14 +34,14 @@ func convertDelegateCallback(oldDelegateCallback oldstakeibctypes.DelegateCallba
 }
 
 func convertUndelegateCallback(oldUndelegateCallback oldstakeibctypes.UndelegateCallback) stakeibctypes.UndelegateCallback {
-	newSplitDelegations := []*stakeibctypes.SplitDelegation{}
-	for _, oldSplitDelegation := range oldUndelegateCallback.SplitDelegations {
-		newSplitDelegation := stakeibctypes.SplitDelegation{
-			Validator: oldSplitDelegation.Validator,
-			Amount:    sdkmath.NewIntFromUint64(oldSplitDelegation.Amount),
-		}
-		newSplitDelegations = append(newSplitDelegations, &newSplitDelegation)
-	}
+	// newSplitDelegations := []*stakeibctypes.SplitDelegation{}
+	// for _, oldSplitDelegation := range oldUndelegateCallback.SplitDelegations {
+	// 	newSplitDelegation := stakeibctypes.SplitDelegation{
+	// 		Validator: oldSplitDelegation.Validator,
+	// 		Amount:    sdkmath.NewIntFromUint64(oldSplitDelegation.Amount),
+	// 	}
+	// 	newSplitDelegations = append(newSplitDelegations, &newSplitDelegation)
+	// }
 
 	return stakeibctypes.UndelegateCallback{
 		HostZoneId: oldUndelegateCallback.HostZoneId,
