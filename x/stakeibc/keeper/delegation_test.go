@@ -339,7 +339,8 @@ func (s *KeeperTestSuite) CheckStateAfterStakingDepositRecords(tc DepositRecords
 		s.Require().Equal("delegate", callbackData.CallbackId, "callback ID")
 
 		// Confirm callback args
-		callbackArgs, err := s.App.StakeibcKeeper.UnmarshalDelegateCallbackArgs(s.Ctx, callbackData.CallbackArgs)
+		callbackArgs := types.DelegateCallback{}
+		err := proto.Unmarshal(callbackData.CallbackArgs, &callbackArgs)
 		s.Require().NoError(err, "unmarshalling callback args error for callback key (%s)", callbackKey)
 		s.Require().Equal(depositRecord.Id, callbackArgs.DepositRecordId, "deposit record ID in callback args (%s)", callbackKey)
 		s.Require().Equal(tc.hostZone.ChainId, callbackArgs.HostZoneId, "host zone in callback args (%s)", callbackKey)

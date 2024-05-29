@@ -78,7 +78,7 @@ func (k Keeper) BatchSubmitDelegationICAMessages(
 			DepositRecordId:  depositRecord.Id,
 			SplitDelegations: delegationsBatch,
 		}
-		marshalledCallbackArgs, err := k.MarshalDelegateCallbackArgs(ctx, delegateCallback)
+		marshalledCallbackArgs, err := proto.Marshal(&delegateCallback)
 		if err != nil {
 			return 0, err
 		}
