@@ -59,21 +59,13 @@ func (k Keeper) UndelegateCallback(ctx sdk.Context, packet channeltypes.Packet, 
 	}
 
 	// Check for a failed transaction (ack error)
-	// Reset the unbonding record status upon failure
+	// Set the status to RETRY_QUEUE if it fails
 	if ackResponse.Status == icacallbackstypes.AckResponseStatus_FAILURE {
 		k.Logger(ctx).Error(utils.LogICACallbackStatusWithHostZone(chainId, ICACallbackID_Undelegate,
 			icacallbackstypes.AckResponseStatus_FAILURE, packet))
 
-		// Set the unbonding status to RETRY
-		if err := k.RecordsKeeper.SetHostZoneUnbondingStatus(
-			ctx,
-			chainId,
-			undelegateCallback.EpochUnbondingRecordIds,
-			recordstypes.HostZoneUnbonding_UNBONDING_RETRY_QUEUE,
-		); err != nil {
-			return err
-		}
-		return nil
+		// Set any IN_PROGRESS records to RETRY_QUEUE
+		return k.HandleFailedUndelegation(ctx, chainId, undelegateCallback.EpochUnbondingRecordIds)
 	}
 
 	k.Logger(ctx).Info(utils.LogICACallbackStatusWithHostZone(chainId, ICACallbackID_Undelegate,
@@ -141,6 +133,31 @@ func (k Keeper) MarkUndelegationAckReceived(ctx sdk.Context, hostZone types.Host
 		}
 	}
 
+	return nil
+}
+
+// If the undelegation failed, set the unbonding status to RETRY_QUEUE, but only
+// for records that are currently in status UNBONDING_IN_PROGRESS
+// There may be some epoch numbers in this batch from records that have already had a full unbonding
+// and have moved onto status EXIT_TRANSFER_QUEUE
+func (k Keeper) HandleFailedUndelegation(ctx sdk.Context, chainId string, epochNumbers []uint64) error {
+	for _, epochNumber := range epochNumbers {
+		hostZoneUnbonding, found := k.RecordsKeeper.GetHostZoneUnbondingByChainId(ctx, epochNumber, chainId)
+		if !found {
+			return errorsmod.Wrapf(recordstypes.ErrHostUnbondingRecordNotFound, "epoch number %d, chain %s",
+				epochNumber, chainId)
+		}
+
+		if hostZoneUnbonding.Status != recordstypes.HostZoneUnbonding_UNBONDING_IN_PROGRESS {
+			continue
+		}
+		hostZoneUnbonding.Status = recordstypes.HostZoneUnbonding_UNBONDING_RETRY_QUEUE
+
+		err := k.RecordsKeeper.SetHostZoneUnbondingRecord(ctx, epochNumber, chainId, *hostZoneUnbonding)
+		if err != nil {
+			return err
+		}
+	}
 	return nil
 }
 

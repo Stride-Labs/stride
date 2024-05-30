@@ -359,6 +359,47 @@ func (s *KeeperTestSuite) TestMarkUndelegationAckReceived() {
 	}
 }
 
+func (s *KeeperTestSuite) TestHandleFailedUndelegation() {
+	// Create two HZU records
+	// One should be in EXIT_TRANSFER_QUEUE (because it's already submitted the full undelegation)
+	// And the other should be in status IN_PROGRESS
+	initialStatuses := []recordtypes.HostZoneUnbonding_Status{
+		recordtypes.HostZoneUnbonding_EXIT_TRANSFER_QUEUE,
+		recordtypes.HostZoneUnbonding_UNBONDING_IN_PROGRESS,
+	}
+
+	// After the failed undelegation, only the second record should be set to RETRY_QUEUE
+	expectedStatuses := []recordtypes.HostZoneUnbonding_Status{
+		recordtypes.HostZoneUnbonding_EXIT_TRANSFER_QUEUE,
+		recordtypes.HostZoneUnbonding_UNBONDING_RETRY_QUEUE,
+	}
+
+	// Create the initial records
+	epochNumbers := []uint64{}
+	for i, initialStatus := range initialStatuses {
+		epochNumbers = append(epochNumbers, uint64(i))
+
+		s.App.RecordsKeeper.SetEpochUnbondingRecord(s.Ctx, recordtypes.EpochUnbondingRecord{
+			EpochNumber: uint64(i),
+			HostZoneUnbondings: []*recordtypes.HostZoneUnbonding{{
+				HostZoneId: HostChainId,
+				Status:     initialStatus,
+			}},
+		})
+	}
+
+	// Call HandleFailedUndelegation
+	err := s.App.StakeibcKeeper.HandleFailedUndelegation(s.Ctx, HostChainId, epochNumbers)
+	s.Require().NoError(err, "no error expected when handling undelegation")
+
+	// Check that the status of the second record was set to RETRY_QUEUE
+	for _, epochNumber := range epochNumbers {
+		hostZoneUnbonding := s.MustGetHostZoneUnbonding(epochNumber, HostChainId)
+		expectedStatus := expectedStatuses[int(epochNumber)]
+		s.Require().Equal(expectedStatus, hostZoneUnbonding.Status, "status after update")
+	}
+}
+
 func (s *KeeperTestSuite) TestUpdateDelegationBalances() {
 	tc := s.SetupUndelegateCallback()
 

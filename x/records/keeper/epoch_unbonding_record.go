@@ -151,11 +151,9 @@ func (k Keeper) SetHostZoneUnbondingStatus(ctx sdk.Context, chainId string, epoc
 		hostZoneUnbonding.Status = status
 
 		// save the updated hzu on the epoch unbonding record
-		updatedRecord, err := k.AddHostZoneToEpochUnbondingRecord(ctx, epochUnbondingRecordId, chainId, *hostZoneUnbonding)
-		if err != nil {
+		if err := k.SetHostZoneUnbondingRecord(ctx, epochUnbondingRecordId, chainId, *hostZoneUnbonding); err != nil {
 			return err
 		}
-		k.SetEpochUnbondingRecord(ctx, updatedRecord)
 	}
 	return nil
 }
