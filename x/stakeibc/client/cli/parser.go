@@ -2,7 +2,10 @@ package cli
 
 import (
 	"encoding/json"
+	"fmt"
 	"os"
+
+	"github.com/cosmos/cosmos-sdk/codec"
 
 	"github.com/Stride-Labs/stride/v22/x/stakeibc/types"
 )
@@ -56,4 +59,38 @@ func parseChangeValidatorWeightsFile(validatorsFile string) (weights []*types.Va
 	}
 
 	return weightsList.ValidatorWeights, nil
+}
+
+func parseAddValidatorsProposalFile(cdc codec.JSONCodec, proposalFile string) (proposal types.AddValidatorsProposal, err error) {
+	contents, err := os.ReadFile(proposalFile)
+	if err != nil {
+		return proposal, err
+	}
+
+	if err = cdc.UnmarshalJSON(contents, &proposal); err != nil {
+		return proposal, err
+	}
+
+	proposal.Title = fmt.Sprintf("Add validators to %s", proposal.HostZone)
+
+	return proposal, nil
+}
+
+func parseToggleLSMProposalFile(cdc codec.JSONCodec, proposalFile string) (proposal types.ToggleLSMProposal, err error) {
+	contents, err := os.ReadFile(proposalFile)
+	if err != nil {
+		return proposal, err
+	}
+
+	if err = cdc.UnmarshalJSON(contents, &proposal); err != nil {
+		return proposal, err
+	}
+
+	action := "Disable"
+	if proposal.Enabled {
+		action = "Enable"
+	}
+	proposal.Title = fmt.Sprintf("%s LSMLiquidStakes for %s", action, proposal.HostZone)
+
+	return proposal, nil
 }

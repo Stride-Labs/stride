@@ -2,41 +2,18 @@ package cli
 
 import (
 	"fmt"
-	"os"
 	"strings"
 
 	errorsmod "cosmossdk.io/errors"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/tx"
-	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/version"
 	govcli "github.com/cosmos/cosmos-sdk/x/gov/client/cli"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
 	"github.com/spf13/cobra"
-
-	"github.com/Stride-Labs/stride/v22/x/stakeibc/types"
 )
-
-func parseToggleLSMProposalFile(cdc codec.JSONCodec, proposalFile string) (proposal types.ToggleLSMProposal, err error) {
-	contents, err := os.ReadFile(proposalFile)
-	if err != nil {
-		return proposal, err
-	}
-
-	if err = cdc.UnmarshalJSON(contents, &proposal); err != nil {
-		return proposal, err
-	}
-
-	action := "Disable"
-	if proposal.Enabled {
-		action = "Enable"
-	}
-	proposal.Title = fmt.Sprintf("%s LSMLiquidStakes for %s", action, proposal.HostZone)
-
-	return proposal, nil
-}
 
 func CmdToggleLSMProposal() *cobra.Command {
 	cmd := &cobra.Command{

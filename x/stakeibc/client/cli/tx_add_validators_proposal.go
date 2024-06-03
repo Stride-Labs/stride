@@ -2,10 +2,7 @@ package cli
 
 import (
 	"fmt"
-	"os"
 	"strings"
-
-	"github.com/cosmos/cosmos-sdk/codec"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/tx"
@@ -17,24 +14,7 @@ import (
 	govcli "github.com/cosmos/cosmos-sdk/x/gov/client/cli"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
 	"github.com/spf13/cobra"
-
-	"github.com/Stride-Labs/stride/v22/x/stakeibc/types"
 )
-
-func parseAddValidatorsProposalFile(cdc codec.JSONCodec, proposalFile string) (proposal types.AddValidatorsProposal, err error) {
-	contents, err := os.ReadFile(proposalFile)
-	if err != nil {
-		return proposal, err
-	}
-
-	if err = cdc.UnmarshalJSON(contents, &proposal); err != nil {
-		return proposal, err
-	}
-
-	proposal.Title = fmt.Sprintf("Add validators to %s", proposal.HostZone)
-
-	return proposal, nil
-}
 
 func CmdAddValidatorsProposal() *cobra.Command {
 	cmd := &cobra.Command{
