@@ -150,3 +150,91 @@ func CmdShowHostZone() *cobra.Command {
 
 	return cmd
 }
+
+func CmdModuleAddress() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "module-address [name]",
+		Short: "Query module-address",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) (err error) {
+			reqName := args[0]
+
+			clientCtx, err := client.GetClientTxContext(cmd)
+			if err != nil {
+				return err
+			}
+
+			queryClient := types.NewQueryClient(clientCtx)
+
+			params := &types.QueryModuleAddressRequest{
+				Name: reqName,
+			}
+
+			res, err := queryClient.ModuleAddress(cmd.Context(), params)
+			if err != nil {
+				return err
+			}
+
+			return clientCtx.PrintProto(res)
+		},
+	}
+
+	flags.AddQueryFlagsToCmd(cmd)
+
+	return cmd
+}
+
+func CmdListEpochTracker() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "list-epoch-tracker",
+		Short: "list all epoch-tracker",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx := client.GetClientContextFromCmd(cmd)
+
+			queryClient := types.NewQueryClient(clientCtx)
+
+			params := &types.QueryAllEpochTrackerRequest{}
+
+			res, err := queryClient.EpochTrackerAll(context.Background(), params)
+			if err != nil {
+				return err
+			}
+
+			return clientCtx.PrintProto(res)
+		},
+	}
+
+	flags.AddQueryFlagsToCmd(cmd)
+
+	return cmd
+}
+
+func CmdShowEpochTracker() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "show-epoch-tracker [epoch-identifier]",
+		Short: "shows a epoch-tracker",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) (err error) {
+			clientCtx := client.GetClientContextFromCmd(cmd)
+
+			queryClient := types.NewQueryClient(clientCtx)
+
+			argEpochIdentifier := args[0]
+
+			params := &types.QueryGetEpochTrackerRequest{
+				EpochIdentifier: argEpochIdentifier,
+			}
+
+			res, err := queryClient.EpochTracker(context.Background(), params)
+			if err != nil {
+				return err
+			}
+
+			return clientCtx.PrintProto(res)
+		},
+	}
+
+	flags.AddQueryFlagsToCmd(cmd)
+
+	return cmd
+}
