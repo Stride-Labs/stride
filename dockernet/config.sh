@@ -29,6 +29,7 @@ ACCESSORY_CHAINS=()
 #  - OSMO
 #  - STARS
 #  - EVMOS
+#  - HAQQ
 #  - HOST (Stride chain enabled as a host zone)
 #  - DYDX
 #  - NOBLE (only runs as an accessory chain - does not have liquid staking functionality)

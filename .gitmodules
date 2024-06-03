@@ -37,7 +37,7 @@
 	path = deps/noble
 	url = https://github.com/strangelove-ventures/noble.git
 [submodule "deps/haqq"]
-    # Commit: v1.7.1
+    # Commit: v1.7.5
 	path = deps/haqq
 	url = https://github.com/haqq-network/haqq.git
 # bats
