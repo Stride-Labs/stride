@@ -184,6 +184,31 @@ func CmdModuleAddress() *cobra.Command {
 	return cmd
 }
 
+func CmdShowInterchainAccount() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:  "interchainaccounts [connection-id] [owner-account]",
+		Args: cobra.ExactArgs(2),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, err := client.GetClientTxContext(cmd)
+			if err != nil {
+				return err
+			}
+
+			queryClient := types.NewQueryClient(clientCtx)
+			res, err := queryClient.InterchainAccountFromAddress(cmd.Context(), types.NewQueryInterchainAccountRequest(args[0], args[1]))
+			if err != nil {
+				return err
+			}
+
+			return clientCtx.PrintProto(res)
+		},
+	}
+
+	flags.AddQueryFlagsToCmd(cmd)
+
+	return cmd
+}
+
 func CmdListEpochTracker() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "list-epoch-tracker",
