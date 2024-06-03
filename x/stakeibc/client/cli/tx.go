@@ -252,3 +252,39 @@ func CmdRedeemStake() *cobra.Command {
 
 	return cmd
 }
+
+func CmdClaimUndelegatedTokens() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "claim-undelegated-tokens [host-zone] [epoch] [receiver]",
+		Short: "Broadcast message claimUndelegatedTokens",
+		Args:  cobra.ExactArgs(3),
+		RunE: func(cmd *cobra.Command, args []string) (err error) {
+			argHostZone := args[0]
+			argEpoch, err := cast.ToUint64E(args[1])
+			if err != nil {
+				return err
+			}
+			argReceiver := args[2]
+
+			clientCtx, err := client.GetClientTxContext(cmd)
+			if err != nil {
+				return err
+			}
+
+			msg := types.NewMsgClaimUndelegatedTokens(
+				clientCtx.GetFromAddress().String(),
+				argHostZone,
+				argEpoch,
+				argReceiver,
+			)
+			if err := msg.ValidateBasic(); err != nil {
+				return err
+			}
+			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
+		},
+	}
+
+	flags.AddTxFlagsToCmd(cmd)
+
+	return cmd
+}
