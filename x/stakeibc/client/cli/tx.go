@@ -3,6 +3,7 @@ package cli
 import (
 	"fmt"
 	"strconv"
+	"strings"
 	"time"
 
 	errorsmod "cosmossdk.io/errors"
@@ -313,6 +314,141 @@ func CmdRebalanceValidators() *cobra.Command {
 			if err := msg.ValidateBasic(); err != nil {
 				return err
 			}
+			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
+		},
+	}
+
+	flags.AddTxFlagsToCmd(cmd)
+
+	return cmd
+}
+
+func CmdAddValidators() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "add-validators [host-zone] [validator-list-file]",
+		Short: "Broadcast message add-validators",
+		Args:  cobra.ExactArgs(2),
+		RunE: func(cmd *cobra.Command, args []string) (err error) {
+			hostZone := args[0]
+			validatorListProposalFile := args[1]
+
+			validators, err := parseAddValidatorsFile(validatorListProposalFile)
+			if err != nil {
+				return err
+			}
+
+			clientCtx, err := client.GetClientTxContext(cmd)
+			if err != nil {
+				return err
+			}
+
+			msg := types.NewMsgAddValidators(
+				clientCtx.GetFromAddress().String(),
+				hostZone,
+				validators.Validators,
+			)
+			if err := msg.ValidateBasic(); err != nil {
+				return err
+			}
+			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
+		},
+	}
+
+	flags.AddTxFlagsToCmd(cmd)
+
+	return cmd
+}
+
+// Updates the weight for a single validator
+func CmdChangeValidatorWeight() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "change-validator-weight [host-zone] [address] [weight]",
+		Short: "Broadcast message change-validator-weight to update the weight for a single validator",
+		Args:  cobra.ExactArgs(3),
+		RunE: func(cmd *cobra.Command, args []string) (err error) {
+			hostZone := args[0]
+			valAddress := args[1]
+			weight, err := cast.ToUint64E(args[2])
+			if err != nil {
+				return err
+			}
+			weights := []*types.ValidatorWeight{
+				{
+					Address: valAddress,
+					Weight:  weight,
+				},
+			}
+
+			clientCtx, err := client.GetClientTxContext(cmd)
+			if err != nil {
+				return err
+			}
+
+			msg := types.NewMsgChangeValidatorWeights(
+				clientCtx.GetFromAddress().String(),
+				hostZone,
+				weights,
+			)
+			if err := msg.ValidateBasic(); err != nil {
+				return err
+			}
+
+			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
+		},
+	}
+
+	flags.AddTxFlagsToCmd(cmd)
+
+	return cmd
+}
+
+// Updates the weight for multiple validators
+//
+// Accepts a file in the following format:
+//
+//	{
+//		"validator_weights": [
+//		     {"address": "cosmosXXX", "weight": 1},
+//			 {"address": "cosmosXXX", "weight": 2}
+//	    ]
+//	}
+func CmdChangeMultipleValidatorWeight() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "change-validator-weights [host-zone] [validator-weight-file]",
+		Short: "Broadcast message change-validator-weights to update the weights for multiple validators",
+		Long: strings.TrimSpace(
+			`Changes multiple validator weights at once, using a JSON file in the following format
+	{
+		"validator_weights": [
+			{"address": "cosmosXXX", "weight": 1},
+			{"address": "cosmosXXX", "weight": 2}
+		]
+	}	
+`),
+		Args: cobra.ExactArgs(2),
+		RunE: func(cmd *cobra.Command, args []string) (err error) {
+			hostZone := args[0]
+			validatorWeightChangeFile := args[1]
+
+			clientCtx, err := client.GetClientTxContext(cmd)
+			if err != nil {
+				return err
+			}
+
+			weights, err := parseChangeValidatorWeightsFile(validatorWeightChangeFile)
+			if err != nil {
+				return err
+			}
+
+			msg := types.NewMsgChangeValidatorWeights(
+				clientCtx.GetFromAddress().String(),
+				hostZone,
+				weights,
+			)
+			if err := msg.ValidateBasic(); err != nil {
+				return err
+			}
+
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
 		},
 	}
