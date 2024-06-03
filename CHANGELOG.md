@@ -42,6 +42,68 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <!-- GH ACTIONS TEMPLATE - INSERT NEW VERSION HERE -->
 
+## [v22.0.0](https://github.com/Stride-Labs/stride/releases/tag/v22.0.0) - 2024-04-16
+
+### On-Chain changes
+1. added v22 upgrade handler ([#1174](https://github.com/Stride-Labs/stride/pull/1174))
+2. Fix validator weight check ([#1176](https://github.com/Stride-Labs/stride/pull/1176))
+3. added stToken burn to unregister host zone function ([#1175](https://github.com/Stride-Labs/stride/pull/1175))
+4. added ibc-hooks ([#1173](https://github.com/Stride-Labs/stride/pull/1173))
+5. added event for redeem stake ([#1182](https://github.com/Stride-Labs/stride/pull/1182))
+6. parameterize max messages per ICA tx on host zone ([#1177](https://github.com/Stride-Labs/stride/pull/1177))
+7. remove GetConnectionIdFromICAPort, use connection ID from host zone ([#1179](https://github.com/Stride-Labs/stride/pull/1179))
+8. v22 Import Paths ([#1183](https://github.com/Stride-Labs/stride/pull/1183))
+9. fixed ibc hooks store key ([#1184](https://github.com/Stride-Labs/stride/pull/1184))
+
+### Off-Chain changes
+1. v21 Changelog ([#1168](https://github.com/Stride-Labs/stride/pull/1168))
+
+
+## [v21.0.0](https://github.com/Stride-Labs/stride/releases/tag/v21.0.0) - 2024-03-27
+
+### On-Chain changes
+1. added help info to toggle command ([#1163](https://github.com/Stride-Labs/stride/pull/1163))
+2. added v21 upgrade handler ([#1165](https://github.com/Stride-Labs/stride/pull/1165))
+3. updated rebate to use native denom instead of reward denom ([#1162](https://github.com/Stride-Labs/stride/pull/1162))
+4. added function to unregister host zone ([#1166](https://github.com/Stride-Labs/stride/pull/1166))
+5. v21 Import Paths ([#1167](https://github.com/Stride-Labs/stride/pull/1167))
+
+
+## [v20.0.0](https://github.com/Stride-Labs/stride/releases/tag/v20.0.0) - 2024-03-21
+
+### On-Chain changes
+1. v20 upgrade handler scaffolding ([#1148](https://github.com/Stride-Labs/stride/pull/1148))
+2. Upgraded ICS to 4.0 ([#1153](https://github.com/Stride-Labs/stride/pull/1153),[#1157](https://github.com/Stride-Labs/stride/pull/1157))
+3. add community pool rebate feature ([#1135](https://github.com/Stride-Labs/stride/pull/1135))
+4. v20 Import Paths ([#1155](https://github.com/Stride-Labs/stride/pull/1155))
+
+### Off-Chain changes
+1. fixing init_chain script to not clobber new params ([#1139](https://github.com/Stride-Labs/stride/pull/1139))
+2. added wasm to cosmovisor upgrade image ([#1158](https://github.com/Stride-Labs/stride/pull/1158))
+3. added dockernet scripts to test rebate ([#1156](https://github.com/Stride-Labs/stride/pull/1156))
+
+## [v19.0.0](https://github.com/Stride-Labs/stride/releases/tag/v19.0.0) - 2024-03-07
+
+### On-Chain changes
+1. fixed vscode settings ([#1111](https://github.com/Stride-Labs/stride/pull/1111))
+2. stakeibc re-org part 1 (keepers) ([#1112](https://github.com/Stride-Labs/stride/pull/1112))
+3. Add cosmwasm ([#1103](https://github.com/Stride-Labs/stride/pull/1103))
+4. send staketia redemption rate to oracle ([#1115](https://github.com/Stride-Labs/stride/pull/1115))
+5. stakeibc file re-org part 2 (epochly functions) ([#1113](https://github.com/Stride-Labs/stride/pull/1113))
+6. stakeibc file re-org part 3 (ibc, ica, icq, and utilities) ([#1116](https://github.com/Stride-Labs/stride/pull/1116))
+7. stakeibc file re-org part 4 (grpc query) ([#1117](https://github.com/Stride-Labs/stride/pull/1117))
+8. stakeibc file re-org part 5 (msg_server) ([#1120](https://github.com/Stride-Labs/stride/pull/1120))
+9. set wasm permissions ([#1125](https://github.com/Stride-Labs/stride/pull/1125))
+10. switched to open sourced rate limit module ([#1123](https://github.com/Stride-Labs/stride/pull/1123))
+11. added sttia rate limit ([#1127](https://github.com/Stride-Labs/stride/pull/1127))
+12. Add x/stakedym ([#1126](https://github.com/Stride-Labs/stride/pull/1126))
+
+### Off-Chain changes
+1. chore(dev-deps): upgrade ledger dependencies ([#1099](https://github.com/Stride-Labs/stride/pull/1099))
+2. switched to stride fork of sdk for v0.47.10 ([#1128](https://github.com/Stride-Labs/stride/pull/1128))
+3. upgraded pfm ([#1122](https://github.com/Stride-Labs/stride/pull/1122))
+
+
 ## [v18.0.0](https://github.com/Stride-Labs/stride/releases/tag/v18.0.0) - 2024-01-26
 
 ### On-Chain changes

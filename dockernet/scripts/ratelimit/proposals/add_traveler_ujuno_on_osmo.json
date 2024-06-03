@@ -1,10 +1,17 @@
 {
     "title": "Add Rate Limit to traveler juno on Stride <> Osmo Channel",
-    "description": "Proposal to enable rate limiting on traveler juno for Stride <> Osmo",
-    "denom": "ibc/FDB2394AA02EA9AC7DF68BE86BBE54846065EB967165FE78262601FBCAFB1A8F",
-    "channel_id": "channel-2",
-    "max_percent_send": "10",
-    "max_percent_recv": "10",
-    "duration_hours": "1",
+    "metadata": "Proposal to enable rate limiting on traveler juno for Stride <> Osmo",
+    "summary": "Proposal to enable rate limiting on traveler juno for Stride <> Osmo",
+    "messages": [
+        {
+            "@type": "/ratelimit.v1.MsgAddRateLimit",
+            "authority": "stride10d07y265gmmuvt4z0w9aw880jnsr700jefnezl",
+            "denom": "ibc/FDB2394AA02EA9AC7DF68BE86BBE54846065EB967165FE78262601FBCAFB1A8F",
+            "channel_id": "channel-2",
+            "max_percent_send": "10",
+            "max_percent_recv": "10",
+            "duration_hours": "1"
+        }
+    ],
     "deposit": "10000000ustrd"
 }

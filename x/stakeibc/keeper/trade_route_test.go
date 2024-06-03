@@ -3,9 +3,10 @@ package keeper_test
 import (
 	"fmt"
 
+	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/Stride-Labs/stride/v18/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v22/x/stakeibc/types"
 )
 
 func (s *KeeperTestSuite) CreateTradeRoutes() (routes []types.TradeRoute) {
@@ -33,15 +34,6 @@ func (s *KeeperTestSuite) CreateTradeRoutes() (routes []types.TradeRoute) {
 			Address:      "trade_ica_address",
 		}
 
-		tradeConfig := types.TradeConfig{
-			PoolId:                 uint64(i * 100),
-			SwapPrice:              sdk.OneDec(),
-			MaxAllowedSwapLossRate: sdk.MustNewDecFromStr("0.05"),
-
-			MinSwapAmount: sdk.ZeroInt(),
-			MaxSwapAmount: sdk.NewInt(1_000_000_000),
-		}
-
 		hostDenom := fmt.Sprintf("host-denom-%d", i)
 		rewardDenom := fmt.Sprintf("reward-denom-%d", i)
 
@@ -60,7 +52,16 @@ func (s *KeeperTestSuite) CreateTradeRoutes() (routes []types.TradeRoute) {
 			RewardToTradeChannelId: fmt.Sprintf("channel-1%d", i),
 			TradeToHostChannelId:   fmt.Sprintf("channel-2%d", i),
 
-			TradeConfig: tradeConfig,
+			MinTransferAmount: sdk.ZeroInt(),
+
+			// TradeConfig is deprecated but we include it so that we can compare with Equals
+			// which would fail otherwise due to uninitialized types
+			TradeConfig: types.TradeConfig{ //nolint:staticcheck
+				SwapPrice:              sdk.ZeroDec(),
+				MaxAllowedSwapLossRate: sdk.ZeroDec(),
+				MinSwapAmount:          sdkmath.ZeroInt(),
+				MaxSwapAmount:          sdkmath.ZeroInt(),
+			},
 		}
 		routes = append(routes, route)
 
@@ -95,4 +96,37 @@ func (s *KeeperTestSuite) TestGetAllTradeRoutes() {
 	expectedRoutes := s.CreateTradeRoutes()
 	actualRoutes := s.App.StakeibcKeeper.GetAllTradeRoutes(s.Ctx)
 	s.Require().ElementsMatch(expectedRoutes, actualRoutes)
+}
+
+func (s *KeeperTestSuite) TestGetTradeRouteFromTradeAccountChainId() {
+	// Store 3 trade routes
+	for i := 1; i <= 3; i++ {
+		rewardDenom := fmt.Sprintf("reward-%d", i)
+		hostDenom := fmt.Sprintf("host-%d", i)
+		chainId := fmt.Sprintf("chain-%d", i)
+
+		s.App.StakeibcKeeper.SetTradeRoute(s.Ctx, types.TradeRoute{
+			RewardDenomOnRewardZone: rewardDenom,
+			HostDenomOnHostZone:     hostDenom,
+			TradeAccount: types.ICAAccount{
+				ChainId: chainId,
+			},
+		})
+	}
+
+	// Search for each of them by chain ID
+	for i := 1; i <= 3; i++ {
+		rewardDenom := fmt.Sprintf("reward-%d", i)
+		hostDenom := fmt.Sprintf("host-%d", i)
+		chainId := fmt.Sprintf("chain-%d", i)
+
+		actualRoute, found := s.App.StakeibcKeeper.GetTradeRouteFromTradeAccountChainId(s.Ctx, chainId)
+		s.Require().True(found, "trade route 1 should have been found")
+		s.Require().Equal(actualRoute.RewardDenomOnRewardZone, rewardDenom, "reward denom")
+		s.Require().Equal(actualRoute.HostDenomOnHostZone, hostDenom, "host denom")
+	}
+
+	// Search for a chainId without a trade route
+	_, found := s.App.StakeibcKeeper.GetTradeRouteFromTradeAccountChainId(s.Ctx, "chain-4")
+	s.Require().False(found, "trade route should not have been found")
 }

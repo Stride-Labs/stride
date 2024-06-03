@@ -47,5 +47,25 @@ bash dockernet/scripts/community-pool-staking/add_trade_route.sh
 ```
 * Finally, test the reinvestment flow by sending USDC to the withdrawal address. View `logs/balances.log` to watch the funds traverse the different accounts
 ```bash
-bash dockernet/scripts/community-pool-staking/reinvest.sh
+bash dockernet/scripts/community-pool-staking/reinvest_reward.sh
 ```
+
+### Rebate
+* Use the default host zone setup of just `GAIA`
+* To test sending a rebate to the treasury, there is no need to change anything.
+* If you want to send a rebate to the community pool instead, comment out the `GAIA_TREASURY_ADDRESS` in `config.sh`
+* Start the network
+```bash
+make start-docker
+```
+* Liquid stake to create TVL 
+```bash
+bash dockernet/scripts/community-pool-staking/stake.sh
+```
+* Register a rebate
+```bash
+bash dockernet/scripts/community-pool-staking/rebate.sh
+```
+* Watch `balances.log` to verify the rewards were distributed correctly. The reinvestment cycle will kick off automatically.
+* Notice the rewards start in the withdrawal account, then 0.25% get sent to the community pool, 9.75% get sent to the fee account and 90% get sent to the delegation account.
+* Depending on the setup from above, the community pool portion will either go to the main community pool or the treasury. Note: if it goes to the main community pool, it is difficult to distinguish the rebate tokens from the tokens that were already in the account.

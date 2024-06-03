@@ -7,9 +7,9 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
-	"github.com/Stride-Labs/stride/v18/app/apptesting"
-	"github.com/Stride-Labs/stride/v18/utils"
-	"github.com/Stride-Labs/stride/v18/x/staketia/types"
+	"github.com/Stride-Labs/stride/v22/app/apptesting"
+	"github.com/Stride-Labs/stride/v22/utils"
+	"github.com/Stride-Labs/stride/v22/x/staketia/types"
 )
 
 const DefaultClaimFundingAmount = 2600 // sum of NativeTokenAmount of records with status UNBONDED
@@ -226,7 +226,7 @@ func (s *KeeperTestSuite) TestRedeemStake() {
 			expectedUnbondingRecord: func() *types.UnbondingRecord {
 				_, hz, ur, _, msg := s.getDefaultTestInputs()
 				ur.StTokenAmount = ur.StTokenAmount.Add(msg.StTokenAmount)
-				nativeDiff := sdk.NewDecFromInt(msg.StTokenAmount).Mul(hz.RedemptionRate).RoundInt()
+				nativeDiff := sdk.NewDecFromInt(msg.StTokenAmount).Mul(hz.RedemptionRate).TruncateInt()
 				ur.NativeAmount = ur.NativeAmount.Add(nativeDiff)
 				return ur
 			}(),
@@ -234,7 +234,7 @@ func (s *KeeperTestSuite) TestRedeemStake() {
 				UnbondingRecordId: defaultUR.Id,
 				Redeemer:          defaultMsg.Redeemer,
 				StTokenAmount:     defaultMsg.StTokenAmount,
-				NativeAmount:      sdk.NewDecFromInt(defaultMsg.StTokenAmount).Mul(defaultHZ.RedemptionRate).RoundInt(),
+				NativeAmount:      sdk.NewDecFromInt(defaultMsg.StTokenAmount).Mul(defaultHZ.RedemptionRate).TruncateInt(),
 			},
 		},
 		{
@@ -249,14 +249,14 @@ func (s *KeeperTestSuite) TestRedeemStake() {
 			expectedUnbondingRecord: func() *types.UnbondingRecord {
 				_, hz, ur, _, msg := s.getDefaultTestInputs()
 				ur.StTokenAmount = ur.StTokenAmount.Add(msg.StTokenAmount)
-				nativeDiff := sdk.NewDecFromInt(msg.StTokenAmount).Mul(hz.RedemptionRate).RoundInt()
+				nativeDiff := sdk.NewDecFromInt(msg.StTokenAmount).Mul(hz.RedemptionRate).TruncateInt()
 				ur.NativeAmount = ur.NativeAmount.Add(nativeDiff)
 				return ur
 			}(),
 			expectedRedemptionRecord: func() *types.RedemptionRecord {
 				_, hz, _, rr, msg := s.getDefaultTestInputs()
 				rr.StTokenAmount = rr.StTokenAmount.Add(msg.StTokenAmount)
-				nativeDiff := sdk.NewDecFromInt(msg.StTokenAmount).Mul(hz.RedemptionRate).RoundInt()
+				nativeDiff := sdk.NewDecFromInt(msg.StTokenAmount).Mul(hz.RedemptionRate).TruncateInt()
 				rr.NativeAmount = rr.NativeAmount.Add(nativeDiff)
 				return rr
 			}(),
@@ -339,22 +339,22 @@ func (s *KeeperTestSuite) TestPrepareUndelegation() {
 	expectedRedemptionRecords := []types.RedemptionRecord{
 		// StTokenAmount: 1000 * 1.999 = 1999 Native
 		{UnbondingRecordId: 4, Redeemer: "A", StTokenAmount: sdkmath.NewInt(1000), NativeAmount: sdkmath.NewInt(1999)},
-		// StTokenAmount: 999 * 1.999 = 1997.001, Rounded down to 1997 Native
+		// StTokenAmount: 999 * 1.999 = 1997.001, Truncated to 1997 Native
 		{UnbondingRecordId: 4, Redeemer: "B", StTokenAmount: sdkmath.NewInt(999), NativeAmount: sdkmath.NewInt(1997)},
-		// StTokenAmount: 100 * 1.999 = 199.9, Rounded up to 200 Native
-		{UnbondingRecordId: 4, Redeemer: "C", StTokenAmount: sdkmath.NewInt(100), NativeAmount: sdkmath.NewInt(200)},
+		// StTokenAmount: 100 * 1.999 = 199.9, Truncated to 199 Native
+		{UnbondingRecordId: 4, Redeemer: "C", StTokenAmount: sdkmath.NewInt(100), NativeAmount: sdkmath.NewInt(199)},
 
 		// Different unbonding records, should be excluded
 		{UnbondingRecordId: 1, Redeemer: "D", StTokenAmount: sdkmath.NewInt(100), NativeAmount: sdkmath.NewInt(100)},
 		{UnbondingRecordId: 2, Redeemer: "E", StTokenAmount: sdkmath.NewInt(200), NativeAmount: sdkmath.NewInt(200)},
 		{UnbondingRecordId: 3, Redeemer: "F", StTokenAmount: sdkmath.NewInt(300), NativeAmount: sdkmath.NewInt(300)},
 	}
-	expectedTotalNativeAmount := sdkmath.NewInt(1999 + 1997 + 200)
+	expectedTotalNativeAmount := sdkmath.NewInt(1999 + 1997 + 199)
 
 	// Create the initial records, setting the native amount to be slightly less than expected
 	for _, expectedUserRedemptionRecord := range expectedRedemptionRecords {
 		initialRedemptionRecord := expectedUserRedemptionRecord
-		initialRedemptionRecord.NativeAmount = sdk.NewDecFromInt(initialRedemptionRecord.StTokenAmount).Mul(oldRedemptionRate).RoundInt()
+		initialRedemptionRecord.NativeAmount = sdk.NewDecFromInt(initialRedemptionRecord.StTokenAmount).Mul(oldRedemptionRate).TruncateInt()
 		s.App.StaketiaKeeper.SetRedemptionRecord(s.Ctx, initialRedemptionRecord)
 	}
 

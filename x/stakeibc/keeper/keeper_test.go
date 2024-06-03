@@ -4,17 +4,16 @@ import (
 	"testing"
 	"time"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	ibctesting "github.com/cosmos/ibc-go/v7/testing"
 	"github.com/stretchr/testify/suite"
 
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 
-	"github.com/Stride-Labs/stride/v18/app/apptesting"
-	icqtypes "github.com/Stride-Labs/stride/v18/x/interchainquery/types"
-	"github.com/Stride-Labs/stride/v18/x/stakeibc/keeper"
-	"github.com/Stride-Labs/stride/v18/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v22/app/apptesting"
+	icqtypes "github.com/Stride-Labs/stride/v22/x/interchainquery/types"
+	"github.com/Stride-Labs/stride/v22/x/stakeibc/keeper"
+	"github.com/Stride-Labs/stride/v22/x/stakeibc/types"
 )
 
 var (
@@ -34,6 +33,7 @@ var (
 	HostDenom   = "udenom"
 	RewardDenom = "ureward"
 
+	ValidHostAddress  = "cosmos1uk4ze0x4nvh4fk0xm4jdud58eqn4yxhrgl2scj"
 	ValAddress        = "cosmosvaloper1uk4ze0x4nvh4fk0xm4jdud58eqn4yxhrdt795p"
 	StrideICAAddress  = "stride1gcx4yeplccq9nk6awzmm0gq8jf7yet80qj70tkwy0mz7pg87nepsen0l38"
 	HostICAAddress    = "cosmos1gcx4yeplccq9nk6awzmm0gq8jf7yet80qj70tkwy0mz7pg87nepswn2dj8"
@@ -122,105 +122,4 @@ func (s *KeeperTestSuite) ValidateQuerySubmission(
 	s.Require().Equal(icqtypes.TimeoutPolicy_REJECT_QUERY_RESPONSE, query.TimeoutPolicy, "query timeout policy")
 
 	return query
-}
-
-func (s *KeeperTestSuite) TestIsRedemptionRateWithinSafetyBounds() {
-	params := s.App.StakeibcKeeper.GetParams(s.Ctx)
-	params.DefaultMinRedemptionRateThreshold = 75
-	params.DefaultMaxRedemptionRateThreshold = 150
-	hostZones := make(map[string]types.HostZone)
-	hostZones["gaia-1"] = types.HostZone{
-		ChainId:           "gaia-1",
-		MinRedemptionRate: sdk.NewDecWithPrec(15, 1), // 1.5
-		MaxRedemptionRate: sdk.NewDecWithPrec(25, 1), // 2.5
-	}
-	hostZones["osmosis-1"] = types.HostZone{
-		ChainId:           "osmosis-1",
-		MinRedemptionRate: sdk.NewDecWithPrec(3, 1),  // 0.3
-		MaxRedemptionRate: sdk.NewDecWithPrec(20, 1), // 2
-	}
-	s.App.StakeibcKeeper.SetParams(s.Ctx, params)
-
-	for _, tc := range []struct {
-		chainId        string
-		redemptionRate sdk.Dec
-		expSafe        bool
-	}{
-		{
-			chainId:        "osmosis-1",
-			redemptionRate: sdk.NewDecWithPrec(1, 1), // 0.1
-			expSafe:        false,
-		},
-		{
-			chainId:        "osmosis-1",
-			redemptionRate: sdk.NewDecWithPrec(3, 1), // 0.3
-			expSafe:        true,
-		},
-		{
-			chainId:        "osmosis-1",
-			redemptionRate: sdk.NewDecWithPrec(15, 1), // 1.5
-			expSafe:        true,
-		},
-		{
-			chainId:        "osmosis-1",
-			redemptionRate: sdk.NewDecWithPrec(25, 1), // 2.5
-			expSafe:        false,
-		},
-		{
-			chainId:        "gaia-1",
-			redemptionRate: sdk.NewDecWithPrec(1, 1), // 0.1
-			expSafe:        false,
-		},
-		{
-			chainId:        "gaia-1",
-			redemptionRate: sdk.NewDecWithPrec(3, 1), // 0.3
-			expSafe:        false,
-		},
-		{
-			chainId:        "gaia-1",
-			redemptionRate: sdk.NewDecWithPrec(15, 1), // 1.5
-			expSafe:        true,
-		},
-		{
-			chainId:        "gaia-1",
-			redemptionRate: sdk.NewDecWithPrec(25, 1), // 2.5
-			expSafe:        true,
-		},
-		{
-			chainId:        "stars-1",
-			redemptionRate: sdk.NewDecWithPrec(1, 1), // 0.1
-			expSafe:        false,
-		},
-		{
-			chainId:        "stars-1",
-			redemptionRate: sdk.NewDecWithPrec(3, 1), // 0.3
-			expSafe:        false,
-		},
-		{
-			chainId:        "stars-1",
-			redemptionRate: sdk.NewDecWithPrec(15, 1), // 1.5
-			expSafe:        true,
-		},
-		{
-			chainId:        "stars-1",
-			redemptionRate: sdk.NewDecWithPrec(25, 1), // 2.5
-			expSafe:        false,
-		},
-	} {
-		hostZone, ok := hostZones[tc.chainId]
-		if !ok {
-			hostZone = types.HostZone{
-				ChainId: tc.chainId,
-			}
-		}
-		hostZone.RedemptionRate = tc.redemptionRate
-		rrSafe, err := s.App.StakeibcKeeper.IsRedemptionRateWithinSafetyBounds(s.Ctx, hostZone)
-		if tc.expSafe {
-			s.Require().NoError(err)
-			s.Require().True(rrSafe)
-		} else {
-			s.Require().Error(err)
-			s.Require().False(rrSafe)
-		}
-	}
 }

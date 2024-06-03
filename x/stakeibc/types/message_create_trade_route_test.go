@@ -8,8 +8,8 @@ import (
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	"github.com/stretchr/testify/require"
 
-	"github.com/Stride-Labs/stride/v18/app/apptesting"
-	"github.com/Stride-Labs/stride/v18/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v22/app/apptesting"
+	"github.com/Stride-Labs/stride/v22/x/stakeibc/types"
 )
 
 func TestMsgCreateTradeRoute(t *testing.T) {
@@ -27,10 +27,7 @@ func TestMsgCreateTradeRoute(t *testing.T) {
 	validNativeDenom := "denom"
 	validIBCDenom := "ibc/denom"
 
-	validPoolId := uint64(1)
-	validMaxAllowedSwapLossRate := "0.05"
-	validMinSwapAmount := sdkmath.NewInt(100)
-	validMaxSwapAmount := sdkmath.NewInt(10000)
+	validMinTransferAmount := sdkmath.NewInt(100)
 
 	validMessage := types.MsgCreateTradeRoute{
 		Authority: authority,
@@ -49,10 +46,7 @@ func TestMsgCreateTradeRoute(t *testing.T) {
 		HostDenomOnTrade:    validIBCDenom,
 		HostDenomOnHost:     validNativeDenom,
 
-		PoolId:                 validPoolId,
-		MaxAllowedSwapLossRate: validMaxAllowedSwapLossRate,
-		MinSwapAmount:          validMinSwapAmount,
-		MaxSwapAmount:          validMaxSwapAmount,
+		MinTransferAmount: validMinTransferAmount,
 	}
 
 	// Validate successful message
@@ -119,25 +113,12 @@ func TestMsgCreateTradeRoute(t *testing.T) {
 
 	// Set invalid pool configurations - confirm invalid
 	invalidMessage = validMessage
-	invalidMessage.PoolId = 0
-	require.ErrorContains(t, invalidMessage.ValidateBasic(), "invalid pool id")
+	invalidMessage.MinTransferAmount = sdkmath.Int{}
+	require.ErrorContains(t, invalidMessage.ValidateBasic(), "min transfer amount must be greater than or equal to zero")
 
 	invalidMessage = validMessage
-	invalidMessage.MinSwapAmount = sdkmath.NewInt(10)
-	invalidMessage.MaxSwapAmount = sdkmath.NewInt(9)
-	require.ErrorContains(t, invalidMessage.ValidateBasic(), "min swap amount cannot be greater than max swap amount")
-
-	invalidMessage = validMessage
-	invalidMessage.MaxAllowedSwapLossRate = ""
-	require.ErrorContains(t, invalidMessage.ValidateBasic(), "unable to cast max allowed swap loss rate to a decimal")
-
-	invalidMessage = validMessage
-	invalidMessage.MaxAllowedSwapLossRate = "-0.01"
-	require.ErrorContains(t, invalidMessage.ValidateBasic(), "max allowed swap loss rate must be between 0 and 1")
-
-	invalidMessage = validMessage
-	invalidMessage.MaxAllowedSwapLossRate = "1.01"
-	require.ErrorContains(t, invalidMessage.ValidateBasic(), "max allowed swap loss rate must be between 0 and 1")
+	invalidMessage.MinTransferAmount = sdkmath.OneInt().Neg()
+	require.ErrorContains(t, invalidMessage.ValidateBasic(), "min transfer amount must be greater than or equal to zero")
 }
 
 func TestValidateConnectionId(t *testing.T) {

@@ -8,10 +8,10 @@ import (
 	"github.com/cosmos/gogoproto/proto"
 	ibctesting "github.com/cosmos/ibc-go/v7/testing"
 
-	epochtypes "github.com/Stride-Labs/stride/v18/x/epochs/types"
-	icqtypes "github.com/Stride-Labs/stride/v18/x/interchainquery/types"
-	"github.com/Stride-Labs/stride/v18/x/stakeibc/keeper"
-	"github.com/Stride-Labs/stride/v18/x/stakeibc/types"
+	epochtypes "github.com/Stride-Labs/stride/v22/x/epochs/types"
+	icqtypes "github.com/Stride-Labs/stride/v22/x/interchainquery/types"
+	"github.com/Stride-Labs/stride/v22/x/stakeibc/keeper"
+	"github.com/Stride-Labs/stride/v22/x/stakeibc/types"
 )
 
 // WithdrawalRewardBalanceCallback will trigger TransferRewardTokensHostToTrade
@@ -20,6 +20,12 @@ func (s *KeeperTestSuite) SetupWithdrawalRewardBalanceCallbackTestCase() Balance
 	// Create the connection between Stride and HostChain with the withdrawal account initialized
 	withdrawalAccountOwner := types.FormatHostZoneICAOwner(HostChainId, types.ICAAccountType_WITHDRAWAL)
 	withdrawalChannelId, withdrawalPortId := s.CreateICAChannel(withdrawalAccountOwner)
+
+	s.App.StakeibcKeeper.SetHostZone(s.Ctx, types.HostZone{
+		ChainId:      HostChainId,
+		HostDenom:    HostDenom,
+		ConnectionId: ibctesting.FirstConnectionID,
+	})
 
 	route := types.TradeRoute{
 		RewardDenomOnRewardZone: RewardDenom,
@@ -42,10 +48,7 @@ func (s *KeeperTestSuite) SetupWithdrawalRewardBalanceCallbackTestCase() Balance
 			Address: "trade-address",
 		},
 
-		TradeConfig: types.TradeConfig{
-			MinSwapAmount: sdk.ZeroInt(),
-			SwapPrice:     sdk.OneDec(),
-		},
+		MinTransferAmount: sdk.ZeroInt(),
 	}
 	s.App.StakeibcKeeper.SetTradeRoute(s.Ctx, route)
 
@@ -59,7 +62,10 @@ func (s *KeeperTestSuite) SetupWithdrawalRewardBalanceCallbackTestCase() Balance
 		RewardDenom: RewardDenom,
 		HostDenom:   HostDenom,
 	})
-	query := icqtypes.Query{CallbackData: callbackDataBz}
+	query := icqtypes.Query{
+		ChainId:      HostChainId,
+		CallbackData: callbackDataBz,
+	}
 	queryResponse := s.CreateBalanceQueryResponse(balance.Int64(), route.RewardDenomOnHostZone)
 
 	return BalanceQueryCallbackTestCase{
@@ -91,9 +97,9 @@ func (s *KeeperTestSuite) TestWithdrawalRewardBalanceCallback_Successful() {
 func (s *KeeperTestSuite) TestWithdrawalRewardBalanceCallback_SuccessfulNoTransfer() {
 	tc := s.SetupWithdrawalRewardBalanceCallbackTestCase()
 
-	// Set min swap amount to be greater than the transfer amount
+	// Set min transfer amount to be greater than the transfer amount
 	route := tc.TradeRoute
-	route.TradeConfig.MinSwapAmount = tc.Balance.Add(sdkmath.OneInt())
+	route.MinTransferAmount = tc.Balance.Add(sdkmath.OneInt())
 	s.App.StakeibcKeeper.SetTradeRoute(s.Ctx, route)
 
 	// ICA inside of TransferRewardTokensHostToTrade should not actually execute because of min_swap_amount

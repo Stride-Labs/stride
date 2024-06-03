@@ -3,20 +3,18 @@ package keeper
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	icqtypes "github.com/Stride-Labs/stride/v18/x/interchainquery/types"
+	icqtypes "github.com/Stride-Labs/stride/v22/x/interchainquery/types"
 )
 
 const (
-	ICQCallbackID_WithdrawalBalance       = "withdrawalbalance"
+	ICQCallbackID_WithdrawalHostBalance   = "withdrawalbalance"
 	ICQCallbackID_FeeBalance              = "feebalance"
 	ICQCallbackID_Delegation              = "delegation"
 	ICQCallbackID_Validator               = "validator"
 	ICQCallbackID_Calibrate               = "calibrate"
 	ICQCallbackID_CommunityPoolIcaBalance = "communitypoolicabalance"
 	ICQCallbackID_WithdrawalRewardBalance = "withdrawalrewardbalance"
-	ICQCallbackID_TradeRewardBalance      = "traderewardbalance"
 	ICQCallbackID_TradeConvertedBalance   = "tradeconvertedbalance"
-	ICQCallbackID_PoolPrice               = "poolprice"
 )
 
 // ICQCallbacks wrapper struct for stakeibc keeper
@@ -49,14 +47,12 @@ func (c ICQCallbacks) AddICQCallback(id string, fn interface{}) icqtypes.QueryCa
 
 func (c ICQCallbacks) RegisterICQCallbacks() icqtypes.QueryCallbacks {
 	return c.
-		AddICQCallback(ICQCallbackID_WithdrawalBalance, ICQCallback(WithdrawalBalanceCallback)).
+		AddICQCallback(ICQCallbackID_WithdrawalHostBalance, ICQCallback(WithdrawalHostBalanceCallback)).
 		AddICQCallback(ICQCallbackID_FeeBalance, ICQCallback(FeeBalanceCallback)).
 		AddICQCallback(ICQCallbackID_Delegation, ICQCallback(DelegatorSharesCallback)).
 		AddICQCallback(ICQCallbackID_Validator, ICQCallback(ValidatorSharesToTokensRateCallback)).
 		AddICQCallback(ICQCallbackID_Calibrate, ICQCallback(CalibrateDelegationCallback)).
 		AddICQCallback(ICQCallbackID_CommunityPoolIcaBalance, ICQCallback(CommunityPoolIcaBalanceCallback)).
 		AddICQCallback(ICQCallbackID_WithdrawalRewardBalance, ICQCallback(WithdrawalRewardBalanceCallback)).
-		AddICQCallback(ICQCallbackID_TradeRewardBalance, ICQCallback(TradeRewardBalanceCallback)).
-		AddICQCallback(ICQCallbackID_TradeConvertedBalance, ICQCallback(TradeConvertedBalanceCallback)).
-		AddICQCallback(ICQCallbackID_PoolPrice, ICQCallback(PoolPriceCallback))
+		AddICQCallback(ICQCallbackID_TradeConvertedBalance, ICQCallback(TradeConvertedBalanceCallback))
 }

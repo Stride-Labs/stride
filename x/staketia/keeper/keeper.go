@@ -8,7 +8,7 @@ import (
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/Stride-Labs/stride/v18/x/staketia/types"
+	"github.com/Stride-Labs/stride/v22/x/staketia/types"
 )
 
 type Keeper struct {
@@ -16,8 +16,9 @@ type Keeper struct {
 	storeKey        storetypes.StoreKey
 	accountKeeper   types.AccountKeeper
 	bankKeeper      types.BankKeeper
-	transferKeeper  types.TransferKeeper
+	icaOracleKeeper types.ICAOracleKeeper
 	ratelimitKeeper types.RatelimitKeeper
+	transferKeeper  types.TransferKeeper
 }
 
 func NewKeeper(
@@ -25,16 +26,18 @@ func NewKeeper(
 	storeKey storetypes.StoreKey,
 	accountKeeper types.AccountKeeper,
 	bankKeeper types.BankKeeper,
-	transferKeeper types.TransferKeeper,
+	icaOracleKeeper types.ICAOracleKeeper,
 	ratelimitKeeper types.RatelimitKeeper,
+	transferKeeper types.TransferKeeper,
 ) *Keeper {
 	return &Keeper{
 		cdc:             cdc,
 		storeKey:        storeKey,
 		accountKeeper:   accountKeeper,
 		bankKeeper:      bankKeeper,
-		transferKeeper:  transferKeeper,
+		icaOracleKeeper: icaOracleKeeper,
 		ratelimitKeeper: ratelimitKeeper,
+		transferKeeper:  transferKeeper,
 	}
 }
 

@@ -7,10 +7,10 @@ import (
 	sdkmath "cosmossdk.io/math"
 	"github.com/spf13/cast"
 
-	"github.com/Stride-Labs/stride/v18/utils"
-	icacallbackstypes "github.com/Stride-Labs/stride/v18/x/icacallbacks/types"
-	recordstypes "github.com/Stride-Labs/stride/v18/x/records/types"
-	"github.com/Stride-Labs/stride/v18/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v22/utils"
+	icacallbackstypes "github.com/Stride-Labs/stride/v22/x/icacallbacks/types"
+	recordstypes "github.com/Stride-Labs/stride/v22/x/records/types"
+	"github.com/Stride-Labs/stride/v22/x/stakeibc/types"
 
 	errorsmod "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -187,7 +187,7 @@ func (k Keeper) UpdateHostZoneUnbondings(
 		if !success {
 			k.Logger(ctx).Error(fmt.Sprintf("Failed to set host zone epoch unbonding record: epochNumber %d, chainId %s, hostZoneUnbonding %+v",
 				epochUnbondingRecord.EpochNumber, chainId, hostZoneUnbonding))
-			return sdkmath.ZeroInt(), errorsmod.Wrapf(types.ErrEpochNotFound, "couldn't set host zone epoch unbonding record. err: %s", err.Error())
+			return sdkmath.ZeroInt(), errorsmod.Wrapf(types.ErrEpochNotFound, "couldn't set host zone epoch unbonding record")
 		}
 		k.RecordsKeeper.SetEpochUnbondingRecord(ctx, *updatedEpochUnbondingRecord)
 

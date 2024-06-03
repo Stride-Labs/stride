@@ -3,7 +3,7 @@ package keeper_test
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/Stride-Labs/stride/v18/x/staketia/types"
+	"github.com/Stride-Labs/stride/v22/x/staketia/types"
 )
 
 // Helper function to create the singleton HostZone with attributes

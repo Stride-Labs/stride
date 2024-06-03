@@ -3,14 +3,14 @@ package keeper
 import (
 	errorsmod "cosmossdk.io/errors"
 
-	"github.com/Stride-Labs/stride/v18/utils"
-	"github.com/Stride-Labs/stride/v18/x/icaoracle/types"
-
-	icacallbackstypes "github.com/Stride-Labs/stride/v18/x/icacallbacks/types"
-
+	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/gogoproto/proto"
 	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
+
+	"github.com/Stride-Labs/stride/v22/utils"
+	icacallbackstypes "github.com/Stride-Labs/stride/v22/x/icacallbacks/types"
+	"github.com/Stride-Labs/stride/v22/x/icaoracle/types"
 )
 
 // Callback after an instantiating an oracle's CW contract
@@ -48,7 +48,7 @@ func (k Keeper) InstantiateOracleCallback(ctx sdk.Context, packet channeltypes.P
 		return errorsmod.Wrapf(types.ErrInvalidICAResponse,
 			"tx response from CW contract instantiation should have 1 message (%d found)", len(ackResponse.MsgResponses))
 	}
-	var instantiateContractResponse types.MsgInstantiateContractResponse
+	var instantiateContractResponse wasmtypes.MsgInstantiateContractResponse
 	if err := proto.Unmarshal(ackResponse.MsgResponses[0], &instantiateContractResponse); err != nil {
 		return errorsmod.Wrapf(err, "unable to unmarshal instantiate contract response")
 	}

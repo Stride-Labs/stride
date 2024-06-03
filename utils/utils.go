@@ -18,9 +18,9 @@ import (
 
 	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
 
-	config "github.com/Stride-Labs/stride/v18/cmd/strided/config"
-	icacallbacktypes "github.com/Stride-Labs/stride/v18/x/icacallbacks/types"
-	recordstypes "github.com/Stride-Labs/stride/v18/x/records/types"
+	config "github.com/Stride-Labs/stride/v22/cmd/strided/config"
+	icacallbacktypes "github.com/Stride-Labs/stride/v22/x/icacallbacks/types"
+	recordstypes "github.com/Stride-Labs/stride/v22/x/records/types"
 )
 
 func FilterDepositRecords(arr []recordstypes.DepositRecord, condition func(recordstypes.DepositRecord) bool) (ret []recordstypes.DepositRecord) {
@@ -258,7 +258,7 @@ func LogICACallbackStatusWithHostZone(chainId string, callbackId string, status 
 // Returns a log string with a chain Id and icqcallback as a prefix
 // Ex:
 //
-//	| COSMOSHUB-4   |  WITHDRAWALBALANCE ICQCALLBACK  |  string
+//	| COSMOSHUB-4   |  WITHDRAWALHOSTBALANCE ICQCALLBACK  |  string
 func LogICQCallbackWithHostZone(chainId string, callbackId string, s string, a ...any) string {
 	return logCallbackWithHostZone(chainId, callbackId, "ICQCALLBACK", s, a...)
 }

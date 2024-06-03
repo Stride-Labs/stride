@@ -221,6 +221,7 @@ GAIA_DENOM=$ATOM_DENOM
 GAIA_RPC_PORT=26557
 GAIA_MAIN_CMD="$GAIA_BINARY --home $DOCKERNET_HOME/state/${GAIA_NODE_PREFIX}1"
 GAIA_RECEIVER_ADDRESS='cosmos1g6qdx6kdhpf000afvvpte7hp0vnpzapuyxp8uf'
+GAIA_TREASURY_ADDRESS='cosmos1vm4z7wmrfdakyh9vd3l9ghepang2jvddjtkqds'
 
 # JUNO 
 JUNO_CHAIN_ID=JUNO
@@ -314,6 +315,7 @@ DYDX_DENOM=$DYDX_DENOM
 DYDX_RPC_PORT=25957
 DYDX_MAIN_CMD="$DYDX_BINARY --home $DOCKERNET_HOME/state/${DYDX_NODE_PREFIX}1"
 DYDX_RECEIVER_ADDRESS='dydx1q9caajs6wrfu2yhytvkqd2csxycx6revdcme9y'
+DYDX_TREASURY_ADDRESS='dydx15ztc7xy42tn2ukkc0qjthkucw9ac63pgp70urn'
 # The micro denom is actually the same as default cosmos chains but there's a 
 # minimum stake amount so this effectively gets the validator over the minimum
 DYDX_MICRO_DENOM_UNITS="000000000000000" 

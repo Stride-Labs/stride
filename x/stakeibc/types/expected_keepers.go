@@ -5,9 +5,9 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/auth/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 
-	ccvtypes "github.com/cosmos/interchain-security/v3/x/ccv/types"
+	ccvtypes "github.com/cosmos/interchain-security/v4/x/ccv/types"
 
-	ratelimittypes "github.com/Stride-Labs/stride/v18/x/ratelimit/types"
+	ratelimittypes "github.com/Stride-Labs/ibc-rate-limiting/ratelimit/types"
 )
 
 // AccountKeeper defines the expected account keeper used for simulations (noalias)
@@ -16,7 +16,9 @@ type AccountKeeper interface {
 	NewAccount(sdk.Context, authtypes.AccountI) authtypes.AccountI
 	SetAccount(ctx sdk.Context, acc authtypes.AccountI)
 	GetAccount(ctx sdk.Context, addr sdk.AccAddress) types.AccountI
+	GetAllAccounts(ctx sdk.Context) []types.AccountI
 	GetModuleAccount(ctx sdk.Context, moduleName string) types.ModuleAccountI
+	RemoveAccount(ctx sdk.Context, acc authtypes.AccountI)
 }
 
 // BankKeeper defines the expected interface needed to retrieve account balances.
@@ -49,6 +51,7 @@ type RatelimitKeeper interface {
 	AddDenomToBlacklist(ctx sdk.Context, denom string)
 	RemoveDenomFromBlacklist(ctx sdk.Context, denom string)
 	SetWhitelistedAddressPair(ctx sdk.Context, whitelist ratelimittypes.WhitelistedAddressPair)
+	RemoveWhitelistedAddressPair(ctx sdk.Context, sender, receiver string)
 }
 
 type ConsumerKeeper interface {

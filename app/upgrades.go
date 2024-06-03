@@ -3,6 +3,8 @@ package app
 import (
 	"fmt"
 
+	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
+	ratelimittypes "github.com/Stride-Labs/ibc-rate-limiting/ratelimit/types"
 	servertypes "github.com/cosmos/cosmos-sdk/server/types"
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	authz "github.com/cosmos/cosmos-sdk/x/authz"
@@ -11,34 +13,40 @@ import (
 	crisistypes "github.com/cosmos/cosmos-sdk/x/crisis/types"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 	packetforwardtypes "github.com/cosmos/ibc-apps/middleware/packet-forward-middleware/v7/packetforward/types"
-	consumertypes "github.com/cosmos/interchain-security/v3/x/ccv/consumer/types"
+	ibchookstypes "github.com/cosmos/ibc-apps/modules/ibc-hooks/v7/types"
+	consumertypes "github.com/cosmos/interchain-security/v4/x/ccv/consumer/types"
 	evmosvestingtypes "github.com/evmos/vesting/x/vesting/types"
 
-	v10 "github.com/Stride-Labs/stride/v18/app/upgrades/v10"
-	v11 "github.com/Stride-Labs/stride/v18/app/upgrades/v11"
-	v12 "github.com/Stride-Labs/stride/v18/app/upgrades/v12"
-	v13 "github.com/Stride-Labs/stride/v18/app/upgrades/v13"
-	v14 "github.com/Stride-Labs/stride/v18/app/upgrades/v14"
-	v15 "github.com/Stride-Labs/stride/v18/app/upgrades/v15"
-	v16 "github.com/Stride-Labs/stride/v18/app/upgrades/v16"
-	v17 "github.com/Stride-Labs/stride/v18/app/upgrades/v17"
-	v18 "github.com/Stride-Labs/stride/v18/app/upgrades/v18"
-	v2 "github.com/Stride-Labs/stride/v18/app/upgrades/v2"
-	v3 "github.com/Stride-Labs/stride/v18/app/upgrades/v3"
-	v4 "github.com/Stride-Labs/stride/v18/app/upgrades/v4"
-	v5 "github.com/Stride-Labs/stride/v18/app/upgrades/v5"
-	v6 "github.com/Stride-Labs/stride/v18/app/upgrades/v6"
-	v7 "github.com/Stride-Labs/stride/v18/app/upgrades/v7"
-	v8 "github.com/Stride-Labs/stride/v18/app/upgrades/v8"
-	v9 "github.com/Stride-Labs/stride/v18/app/upgrades/v9"
-	autopilottypes "github.com/Stride-Labs/stride/v18/x/autopilot/types"
-	claimtypes "github.com/Stride-Labs/stride/v18/x/claim/types"
-	icacallbacktypes "github.com/Stride-Labs/stride/v18/x/icacallbacks/types"
-	icaoracletypes "github.com/Stride-Labs/stride/v18/x/icaoracle/types"
-	ratelimittypes "github.com/Stride-Labs/stride/v18/x/ratelimit/types"
-	recordtypes "github.com/Stride-Labs/stride/v18/x/records/types"
-	stakeibctypes "github.com/Stride-Labs/stride/v18/x/stakeibc/types"
-	staketiatypes "github.com/Stride-Labs/stride/v18/x/staketia/types"
+	v10 "github.com/Stride-Labs/stride/v22/app/upgrades/v10"
+	v11 "github.com/Stride-Labs/stride/v22/app/upgrades/v11"
+	v12 "github.com/Stride-Labs/stride/v22/app/upgrades/v12"
+	v13 "github.com/Stride-Labs/stride/v22/app/upgrades/v13"
+	v14 "github.com/Stride-Labs/stride/v22/app/upgrades/v14"
+	v15 "github.com/Stride-Labs/stride/v22/app/upgrades/v15"
+	v16 "github.com/Stride-Labs/stride/v22/app/upgrades/v16"
+	v17 "github.com/Stride-Labs/stride/v22/app/upgrades/v17"
+	v18 "github.com/Stride-Labs/stride/v22/app/upgrades/v18"
+	v19 "github.com/Stride-Labs/stride/v22/app/upgrades/v19"
+	v2 "github.com/Stride-Labs/stride/v22/app/upgrades/v2"
+	v20 "github.com/Stride-Labs/stride/v22/app/upgrades/v20"
+	v21 "github.com/Stride-Labs/stride/v22/app/upgrades/v21"
+	v22 "github.com/Stride-Labs/stride/v22/app/upgrades/v22"
+	v23 "github.com/Stride-Labs/stride/v22/app/upgrades/v23"
+	v3 "github.com/Stride-Labs/stride/v22/app/upgrades/v3"
+	v4 "github.com/Stride-Labs/stride/v22/app/upgrades/v4"
+	v5 "github.com/Stride-Labs/stride/v22/app/upgrades/v5"
+	v6 "github.com/Stride-Labs/stride/v22/app/upgrades/v6"
+	v7 "github.com/Stride-Labs/stride/v22/app/upgrades/v7"
+	v8 "github.com/Stride-Labs/stride/v22/app/upgrades/v8"
+	v9 "github.com/Stride-Labs/stride/v22/app/upgrades/v9"
+	autopilottypes "github.com/Stride-Labs/stride/v22/x/autopilot/types"
+	claimtypes "github.com/Stride-Labs/stride/v22/x/claim/types"
+	icacallbacktypes "github.com/Stride-Labs/stride/v22/x/icacallbacks/types"
+	icaoracletypes "github.com/Stride-Labs/stride/v22/x/icaoracle/types"
+	recordtypes "github.com/Stride-Labs/stride/v22/x/records/types"
+	stakedymtypes "github.com/Stride-Labs/stride/v22/x/stakedym/types"
+	stakeibctypes "github.com/Stride-Labs/stride/v22/x/stakeibc/types"
+	staketiatypes "github.com/Stride-Labs/stride/v22/x/staketia/types"
 )
 
 func (app *StrideApp) setupUpgradeHandlers(appOpts servertypes.AppOptions) {
@@ -247,6 +255,58 @@ func (app *StrideApp) setupUpgradeHandlers(appOpts servertypes.AppOptions) {
 		),
 	)
 
+	// v19 upgrade handler
+	app.UpgradeKeeper.SetUpgradeHandler(
+		v19.UpgradeName,
+		v19.CreateUpgradeHandler(
+			app.mm,
+			app.configurator,
+			app.appCodec,
+			app.RatelimitKeeper,
+			app.WasmKeeper,
+		),
+	)
+
+	// v20 upgrade handler
+	app.UpgradeKeeper.SetUpgradeHandler(
+		v20.UpgradeName,
+		v20.CreateUpgradeHandler(
+			app.mm,
+			app.configurator,
+			app.ConsumerKeeper,
+			app.StakeibcKeeper,
+		),
+	)
+
+	// v21 upgrade handler
+	app.UpgradeKeeper.SetUpgradeHandler(
+		v21.UpgradeName,
+		v21.CreateUpgradeHandler(
+			app.mm,
+			app.configurator,
+		),
+	)
+
+	// v22 upgrade handler
+	app.UpgradeKeeper.SetUpgradeHandler(
+		v22.UpgradeName,
+		v22.CreateUpgradeHandler(
+			app.mm,
+			app.configurator,
+			app.StakeibcKeeper,
+		),
+	)
+
+	// v23 upgrade handler
+	app.UpgradeKeeper.SetUpgradeHandler(
+		v23.UpgradeName,
+		v23.CreateUpgradeHandler(
+			app.mm,
+			app.configurator,
+			app.StakeibcKeeper,
+		),
+	)
+
 	upgradeInfo, err := app.UpgradeKeeper.ReadUpgradeInfoFromDisk()
 	if err != nil {
 		panic(fmt.Errorf("Failed to read upgrade info from disk: %w", err))
@@ -295,6 +355,14 @@ func (app *StrideApp) setupUpgradeHandlers(appOpts servertypes.AppOptions) {
 	case "v18":
 		storeUpgrades = &storetypes.StoreUpgrades{
 			Added: []string{staketiatypes.ModuleName},
+		}
+	case "v19":
+		storeUpgrades = &storetypes.StoreUpgrades{
+			Added: []string{wasmtypes.ModuleName, stakedymtypes.ModuleName},
+		}
+	case "v22":
+		storeUpgrades = &storetypes.StoreUpgrades{
+			Added: []string{ibchookstypes.StoreKey},
 		}
 	}
 

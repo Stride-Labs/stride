@@ -8,10 +8,10 @@ import (
 )
 
 // RawPacketMetadata defines the raw JSON memo that's used in an autopilot transfer
-// The PFM forward key is also used here to validate that the packet is not trying
-// to use autopilot and PFM at the same time
-// As a result, only the forward key is needed, cause the actual parsing of the PFM
-// packet will occur in the PFM module
+// The PFM forward key and wasm keys are also used here to validate that the packet
+// was not trying to use more than one of autopilot PFM, and wasm at the same time
+// As a result, only the key is needed, cause the actual parsing of the PFM/wasm
+// packet will occur in the respective module
 type RawPacketMetadata struct {
 	Autopilot *struct {
 		Receiver string                  `json:"receiver"`
@@ -19,6 +19,7 @@ type RawPacketMetadata struct {
 		Claim    *ClaimPacketMetadata    `json:"claim,omitempty"`
 	} `json:"autopilot"`
 	Forward *interface{} `json:"forward"`
+	Wasm    *interface{} `json:"wasm"`
 }
 
 // AutopilotActionMetadata stores the metadata that's specific to the autopilot action

@@ -1,6 +1,8 @@
 package keeper
 
 import (
+	"fmt"
+	"strings"
 	"time"
 
 	errorsmod "cosmossdk.io/errors"
@@ -13,10 +15,10 @@ import (
 
 	"github.com/cosmos/gogoproto/proto"
 
-	"github.com/Stride-Labs/stride/v18/utils"
-	epochstypes "github.com/Stride-Labs/stride/v18/x/epochs/types"
-	icqtypes "github.com/Stride-Labs/stride/v18/x/interchainquery/types"
-	"github.com/Stride-Labs/stride/v18/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v22/utils"
+	epochstypes "github.com/Stride-Labs/stride/v22/x/epochs/types"
+	icqtypes "github.com/Stride-Labs/stride/v22/x/interchainquery/types"
+	"github.com/Stride-Labs/stride/v22/x/stakeibc/types"
 )
 
 // For each hostZone with a valid community pool, trigger the ICQs and ICAs to transfer tokens from DepositICA or back to ReturnICA
@@ -224,16 +226,62 @@ func (k Keeper) RedeemCommunityPoolTokens(ctx sdk.Context, hostZone types.HostZo
 	return nil
 }
 
+// Builds a msg to send funds to a community pool
+// If the community pool treasury address is specified on the host zone, the tokens are bank sent there
+// Otherwise, a MsgFundCommunityPool is used to send tokens to the default community pool address
+func (k Keeper) BuildFundCommunityPoolMsg(
+	ctx sdk.Context,
+	hostZone types.HostZone,
+	tokens sdk.Coins,
+	senderAccountType types.ICAAccountType,
+) (fundMsg []proto.Message, err error) {
+	// Get the sender ICA address based on the account type
+	var sender string
+	switch senderAccountType {
+	case types.ICAAccountType_COMMUNITY_POOL_RETURN:
+		sender = hostZone.CommunityPoolReturnIcaAddress
+	case types.ICAAccountType_WITHDRAWAL:
+		sender = hostZone.WithdrawalIcaAddress
+	default:
+		return nil, errorsmod.Wrapf(types.ErrICATxFailed,
+			"fund community pool ICA can only be initiated from either the community pool return or withdrawal ICA account")
+	}
+	senderAccountString := strings.ToLower(senderAccountType.String())
+
+	// If the community pool treasury address is specified, bank send there
+	if hostZone.CommunityPoolTreasuryAddress != "" {
+		fundMsg = []proto.Message{&banktypes.MsgSend{
+			FromAddress: sender,
+			ToAddress:   hostZone.CommunityPoolTreasuryAddress,
+			Amount:      tokens,
+		}}
+		k.Logger(ctx).Info(fmt.Sprintf("Preparing MsgBankSend of %v from the %s ICA account to the community pool treasury",
+			tokens.String(), senderAccountString))
+	} else {
+		// Otherwise, call MsgFundCommunityPool
+		fundMsg = []proto.Message{&disttypes.MsgFundCommunityPool{
+			Amount:    tokens,
+			Depositor: sender,
+		}}
+		k.Logger(ctx).Info(fmt.Sprintf("Preparing MsgFundCommunityPool of %v from the %s ICA account",
+			tokens.String(), senderAccountString))
+	}
+
+	return fundMsg, nil
+}
+
 // Using tokens in the CommunityPoolReturnIcaAddress, trigger ICA tx to fund community pool
 // Note: The denom of the passed in token has to be the denom which exists on the hostZone not Stride
-func (k Keeper) FundCommunityPool(ctx sdk.Context, hostZone types.HostZone, token sdk.Coin) error {
-	fundCoins := sdk.NewCoins(token)
-
-	var msgs []proto.Message
-	msgs = append(msgs, &disttypes.MsgFundCommunityPool{
-		Amount:    fundCoins,
-		Depositor: hostZone.CommunityPoolReturnIcaAddress,
-	})
+func (k Keeper) FundCommunityPool(
+	ctx sdk.Context,
+	hostZone types.HostZone,
+	token sdk.Coin,
+	senderAccountType types.ICAAccountType,
+) error {
+	msgs, err := k.BuildFundCommunityPoolMsg(ctx, hostZone, sdk.NewCoins(token), senderAccountType)
+	if err != nil {
+		return err
+	}
 
 	// Timeout the ICA at the end of the epoch
 	strideEpochTracker, found := k.GetEpochTracker(ctx, epochstypes.STRIDE_EPOCH)
@@ -247,10 +295,10 @@ func (k Keeper) FundCommunityPool(ctx sdk.Context, hostZone types.HostZone, toke
 	var icaCallbackData []byte
 
 	// Send the transaction through SubmitTx to kick off ICA command
-	_, err := k.SubmitTxs(ctx,
+	_, err = k.SubmitTxs(ctx,
 		hostZone.ConnectionId,
 		msgs,
-		types.ICAAccountType_COMMUNITY_POOL_RETURN,
+		senderAccountType,
 		timeoutTimestamp,
 		icaCallbackId,
 		icaCallbackData)

@@ -4,7 +4,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/Stride-Labs/stride/v18/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v22/x/stakeibc/types"
 )
 
 // SetTradeRoute set a specific tradeRoute in the store
@@ -50,4 +50,14 @@ func (k Keeper) GetAllTradeRoutes(ctx sdk.Context) (list []types.TradeRoute) {
 	}
 
 	return
+}
+
+// Searches for a trade route by the trade account chain ID
+func (k Keeper) GetTradeRouteFromTradeAccountChainId(ctx sdk.Context, chainId string) (tradeRoute types.TradeRoute, found bool) {
+	for _, tradeRoute := range k.GetAllTradeRoutes(ctx) {
+		if tradeRoute.TradeAccount.ChainId == chainId {
+			return tradeRoute, true
+		}
+	}
+	return tradeRoute, false
 }

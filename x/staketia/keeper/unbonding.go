@@ -9,8 +9,8 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
-	"github.com/Stride-Labs/stride/v18/utils"
-	"github.com/Stride-Labs/stride/v18/x/staketia/types"
+	"github.com/Stride-Labs/stride/v22/utils"
+	"github.com/Stride-Labs/stride/v22/x/staketia/types"
 )
 
 // Takes custody of staked tokens in an escrow account, updates the current
@@ -56,7 +56,7 @@ func (k Keeper) RedeemStake(ctx sdk.Context, redeemer string, stTokenAmount sdkm
 
 	// Estimate a placeholder native amount with current RedemptionRate
 	// this estimate will be updated when the Undelegation record is finalized
-	nativeAmount := sdk.NewDecFromInt(stTokenAmount).Mul(hostZone.RedemptionRate).RoundInt()
+	nativeAmount := sdk.NewDecFromInt(stTokenAmount).Mul(hostZone.RedemptionRate).TruncateInt()
 	if nativeAmount.GT(hostZone.DelegatedBalance) {
 		return nativeToken, errorsmod.Wrapf(types.ErrUnbondAmountToLarge,
 			"cannot unstake an amount g.t. total staked balance: %v > %v", nativeAmount, hostZone.DelegatedBalance)
@@ -131,7 +131,7 @@ func (k Keeper) PrepareUndelegation(ctx sdk.Context, epochNumber uint64) error {
 	// Keep track of the total for the unbonding record
 	totalNativeTokens := sdkmath.ZeroInt()
 	for _, redemptionRecord := range k.GetRedemptionRecordsFromUnbondingId(ctx, unbondingRecord.Id) {
-		nativeAmount := sdk.NewDecFromInt(redemptionRecord.StTokenAmount).Mul(redemptionRate).RoundInt()
+		nativeAmount := sdk.NewDecFromInt(redemptionRecord.StTokenAmount).Mul(redemptionRate).TruncateInt()
 		redemptionRecord.NativeAmount = nativeAmount
 		k.SetRedemptionRecord(ctx, redemptionRecord)
 		totalNativeTokens = totalNativeTokens.Add(nativeAmount)

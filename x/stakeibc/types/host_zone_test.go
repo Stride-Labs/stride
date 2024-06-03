@@ -3,9 +3,11 @@ package types_test
 import (
 	"testing"
 
+	sdkmath "cosmossdk.io/math"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 
-	"github.com/Stride-Labs/stride/v18/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v22/x/stakeibc/types"
 )
 
 func TestHostZoneUnbondingFrequency(t *testing.T) {
@@ -56,5 +58,63 @@ func TestHostZoneUnbondingFrequency(t *testing.T) {
 			UnbondingPeriod: tc.unbondingPeriod,
 		}
 		require.Equal(t, tc.unbondingFrequency, hostZone.GetUnbondingFrequency(), "unbonding frequency")
+	}
+}
+
+func TestSafelyGetCommunityPoolRebate(t *testing.T) {
+	chainId := "chain-0"
+
+	testCases := []struct {
+		name           string
+		hostZone       types.HostZone
+		expectedRebate bool
+	}{
+		{
+			name:           "no rebate",
+			hostZone:       types.HostZone{ChainId: chainId},
+			expectedRebate: false,
+		},
+		{
+			name: "rebate but empty percentage field",
+			hostZone: types.HostZone{
+				ChainId: chainId,
+				CommunityPoolRebate: &types.CommunityPoolRebate{
+					LiquidStakedStTokenAmount: sdkmath.NewInt(1),
+				},
+			},
+			expectedRebate: false,
+		},
+		{
+			name: "rebate but empty liquid stake amount",
+			hostZone: types.HostZone{
+				ChainId: chainId,
+				CommunityPoolRebate: &types.CommunityPoolRebate{
+					RebateRate: sdk.OneDec(),
+				},
+			},
+			expectedRebate: false,
+		},
+		{
+			name: "valid rebate",
+			hostZone: types.HostZone{
+				ChainId: chainId,
+				CommunityPoolRebate: &types.CommunityPoolRebate{
+					RebateRate:                sdk.OneDec(),
+					LiquidStakedStTokenAmount: sdkmath.NewInt(1),
+				},
+			},
+			expectedRebate: true,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			actualRebate, hasRebate := tc.hostZone.SafelyGetCommunityPoolRebate()
+			require.Equal(t, tc.expectedRebate, hasRebate, "has rebate bool")
+
+			if tc.expectedRebate {
+				require.Equal(t, *tc.hostZone.CommunityPoolRebate, actualRebate, "rebate")
+			}
+		})
 	}
 }

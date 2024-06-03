@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 
 	errorsmod "cosmossdk.io/errors"
+	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
@@ -12,7 +13,7 @@ import (
 	icatypes "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/types"
 	ibctmtypes "github.com/cosmos/ibc-go/v7/modules/light-clients/07-tendermint"
 
-	"github.com/Stride-Labs/stride/v18/x/icaoracle/types"
+	"github.com/Stride-Labs/stride/v22/x/icaoracle/types"
 )
 
 type msgServer struct {
@@ -138,7 +139,7 @@ func (k msgServer) InstantiateOracle(goCtx context.Context, msg *types.MsgInstan
 	}
 
 	// Build the ICA message to instantiate the contract
-	msgs := []proto.Message{&types.MsgInstantiateContract{
+	msgs := []proto.Message{&wasmtypes.MsgInstantiateContract{
 		Sender: oracle.IcaAddress,
 		Admin:  oracle.IcaAddress,
 		CodeID: msg.ContractCodeId,

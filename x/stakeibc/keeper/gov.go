@@ -3,7 +3,7 @@ package keeper
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/Stride-Labs/stride/v18/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v22/x/stakeibc/types"
 )
 
 func (k Keeper) AddValidatorsProposal(ctx sdk.Context, msg *types.AddValidatorsProposal) error {
@@ -11,6 +11,11 @@ func (k Keeper) AddValidatorsProposal(ctx sdk.Context, msg *types.AddValidatorsP
 		if err := k.AddValidatorToHostZone(ctx, msg.HostZone, *validator, true); err != nil {
 			return err
 		}
+	}
+
+	// Confirm none of the validator's exceed the weight cap
+	if err := k.CheckValidatorWeightsBelowCap(ctx, msg.HostZone); err != nil {
+		return err
 	}
 
 	return nil

@@ -118,7 +118,7 @@ test-integration-docker-all:
 
 sync:
 	@git submodule sync --recursive
-	@git submodule update --init --recursive
+	@git submodule update --init --recursive --depth 1
 
 build-docker:
 	@bash $(DOCKERNET_HOME)/build.sh -${build} ${BUILDDIR}

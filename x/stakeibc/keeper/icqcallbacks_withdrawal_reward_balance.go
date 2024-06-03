@@ -7,15 +7,16 @@ import (
 	errorsmod "cosmossdk.io/errors"
 	"github.com/cosmos/gogoproto/proto"
 
-	icqkeeper "github.com/Stride-Labs/stride/v18/x/interchainquery/keeper"
+	icqkeeper "github.com/Stride-Labs/stride/v22/x/interchainquery/keeper"
 
-	"github.com/Stride-Labs/stride/v18/utils"
-	icqtypes "github.com/Stride-Labs/stride/v18/x/interchainquery/types"
-	"github.com/Stride-Labs/stride/v18/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v22/utils"
+	icqtypes "github.com/Stride-Labs/stride/v22/x/interchainquery/types"
+	"github.com/Stride-Labs/stride/v22/x/stakeibc/types"
 )
 
 // WithdrawalRewardBalanceCallback is a callback handler for WithdrawalRewardBalance queries.
-// The query response will return the withdrawal account balance for a specific (foreign ibc) denom
+// The query response will return the withdrawal account balance for the reward denom in the case
+// of a host zone with a trade route (e.g. USDC in the case of the dYdX trade route)
 // If the balance is non-zero, ICA MsgSends are submitted to transfer the discovered balance to the tradeZone
 //
 // Note: for now, to get proofs in your ICQs, you need to query the entire store on the host zone! e.g. "store/bank/key"
@@ -54,14 +55,14 @@ func WithdrawalRewardBalanceCallback(k Keeper, ctx sdk.Context, args []byte, que
 	k.Logger(ctx).Info(utils.LogICQCallbackWithHostZone(chainId, ICQCallbackID_WithdrawalRewardBalance,
 		"Query response - Withdrawal Reward Balance: %v %s", withdrawalRewardBalanceAmount, tradeRoute.RewardDenomOnHostZone))
 
-	// Using ICA commands on the withdrawal address, transfer the found reward tokens from the host zone to the trade zone
+	// Transfer the reward amount to the trade zone so it can be swapped for the native token
 	if err := k.TransferRewardTokensHostToTrade(ctx, withdrawalRewardBalanceAmount, tradeRoute); err != nil {
 		return errorsmod.Wrapf(err, "initiating transfer of reward tokens to trade ICA failed")
 	}
 
 	k.Logger(ctx).Info(utils.LogICQCallbackWithHostZone(chainId, ICQCallbackID_WithdrawalRewardBalance,
 		"Sending discovered reward tokens %v %s from hostZone to tradeZone",
-		withdrawalRewardBalanceAmount, tradeRoute.RewardDenomOnHostZone))
+		withdrawalRewardBalanceAmount, tradeRoute.RewardDenomOnRewardZone))
 
 	return nil
 }

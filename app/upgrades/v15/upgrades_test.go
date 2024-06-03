@@ -8,11 +8,11 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/Stride-Labs/stride/v18/app/apptesting"
-	v15 "github.com/Stride-Labs/stride/v18/app/upgrades/v15"
-	icqtypes "github.com/Stride-Labs/stride/v18/x/interchainquery/types"
-	stakeibckeeper "github.com/Stride-Labs/stride/v18/x/stakeibc/keeper"
-	stakeibctypes "github.com/Stride-Labs/stride/v18/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v22/app/apptesting"
+	v15 "github.com/Stride-Labs/stride/v22/app/upgrades/v15"
+	icqtypes "github.com/Stride-Labs/stride/v22/x/interchainquery/types"
+	stakeibckeeper "github.com/Stride-Labs/stride/v22/x/stakeibc/keeper"
+	stakeibctypes "github.com/Stride-Labs/stride/v22/x/stakeibc/types"
 )
 
 type UpgradeTestSuite struct {
@@ -124,7 +124,7 @@ func (s *UpgradeTestSuite) SetupQueriesBeforeUpgrade() func() {
 		{Id: "1", CallbackId: stakeibckeeper.ICQCallbackID_Validator},
 		{Id: "2", CallbackId: stakeibckeeper.ICQCallbackID_Delegation}, // deleted
 		{Id: "3", CallbackId: stakeibckeeper.ICQCallbackID_Delegation}, // deleted
-		{Id: "4", CallbackId: stakeibckeeper.ICQCallbackID_WithdrawalBalance},
+		{Id: "4", CallbackId: stakeibckeeper.ICQCallbackID_WithdrawalHostBalance},
 	}
 	expectedQueriesAfterUpgrade := []string{"1", "4"}
 

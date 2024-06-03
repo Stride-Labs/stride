@@ -26,16 +26,17 @@ import (
 	tendermint "github.com/cosmos/ibc-go/v7/modules/light-clients/07-tendermint"
 	ibctesting "github.com/cosmos/ibc-go/v7/testing"
 	"github.com/cosmos/ibc-go/v7/testing/simapp"
-	appProvider "github.com/cosmos/interchain-security/v3/app/provider"
-	icstestingutils "github.com/cosmos/interchain-security/v3/testutil/ibc_testing"
-	e2e "github.com/cosmos/interchain-security/v3/testutil/integration"
-	testkeeper "github.com/cosmos/interchain-security/v3/testutil/keeper"
-	ccvtypes "github.com/cosmos/interchain-security/v3/x/ccv/types"
+	appProvider "github.com/cosmos/interchain-security/v4/app/provider"
+	icstestingutils "github.com/cosmos/interchain-security/v4/testutil/ibc_testing"
+	e2e "github.com/cosmos/interchain-security/v4/testutil/integration"
+	testkeeper "github.com/cosmos/interchain-security/v4/testutil/keeper"
+	consumertypes "github.com/cosmos/interchain-security/v4/x/ccv/consumer/types"
+	ccvtypes "github.com/cosmos/interchain-security/v4/x/ccv/types"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
-	"github.com/Stride-Labs/stride/v18/app"
-	"github.com/Stride-Labs/stride/v18/utils"
+	"github.com/Stride-Labs/stride/v22/app"
+	"github.com/Stride-Labs/stride/v22/utils"
 )
 
 var (
@@ -94,6 +95,13 @@ func (s *AppTestHelper) Setup() {
 	s.App.StaketiaKeeper.RemoveHostZone(s.Ctx)
 	for _, unbondingRecord := range s.App.StaketiaKeeper.GetAllActiveUnbondingRecords(s.Ctx) {
 		s.App.StaketiaKeeper.RemoveUnbondingRecord(s.Ctx, unbondingRecord.Id)
+	}
+
+	// Remove host zone and accumulating record for stakedym, by default,
+	// since the tests will override it directly if needed
+	s.App.StakedymKeeper.RemoveHostZone(s.Ctx)
+	for _, unbondingRecord := range s.App.StakedymKeeper.GetAllActiveUnbondingRecords(s.Ctx) {
+		s.App.StakedymKeeper.RemoveUnbondingRecord(s.Ctx, unbondingRecord.Id)
 	}
 }
 
@@ -183,7 +191,7 @@ func (s *AppTestHelper) SetupIBCChains(hostChainID string) {
 
 	// use the initial validator set from the consumer genesis as the stride chain's initial set
 	var strideValSet []*tmtypes.Validator
-	for _, update := range strideConsumerGenesis.InitialValSet {
+	for _, update := range strideConsumerGenesis.Provider.InitialValSet {
 		tmPubKey, err := tmencoding.PubKeyFromProto(update.PubKey)
 		s.Require().NoError(err)
 		strideValSet = append(strideValSet, &tmtypes.Validator{
@@ -195,7 +203,7 @@ func (s *AppTestHelper) SetupIBCChains(hostChainID string) {
 	}
 
 	// Initialize the stride consumer chain, casted as a TestingApp
-	ibctesting.DefaultTestingAppInit = app.InitStrideIBCTestingApp(strideConsumerGenesis.InitialValSet)
+	ibctesting.DefaultTestingAppInit = app.InitStrideIBCTestingApp(strideConsumerGenesis.Provider.InitialValSet)
 	s.StrideChain = ibctesting.NewTestChainWithValSet(
 		s.T(),
 		s.Coordinator,
@@ -205,7 +213,10 @@ func (s *AppTestHelper) SetupIBCChains(hostChainID string) {
 	)
 
 	// Call InitGenesis on the consumer
-	s.StrideChain.App.(*app.StrideApp).GetConsumerKeeper().InitGenesis(s.StrideChain.GetContext(), &strideConsumerGenesis)
+	genesisState := consumertypes.DefaultGenesisState()
+	genesisState.Params = strideConsumerGenesis.Params
+	genesisState.Provider = strideConsumerGenesis.Provider
+	s.StrideChain.App.(*app.StrideApp).GetConsumerKeeper().InitGenesis(s.StrideChain.GetContext(), genesisState)
 	s.StrideChain.NextBlock()
 
 	// Update coordinator
@@ -236,7 +247,7 @@ func (s *AppTestHelper) CreateTransferChannel(hostChainID string) {
 	s.Ctx = s.StrideChain.GetContext()
 
 	// Finally confirm the channel was setup properly
-	s.Require().Equal("07-tendermint-1", s.TransferPath.EndpointA.ClientID, "stride clientID")
+	s.Require().Equal("07-tendermint-0", s.TransferPath.EndpointA.ClientID, "stride clientID")
 	s.Require().Equal(ibctesting.FirstConnectionID, s.TransferPath.EndpointA.ConnectionID, "stride connectionID")
 	s.Require().Equal(ibctesting.FirstChannelID, s.TransferPath.EndpointA.ChannelID, "stride transfer channelID")
 }
@@ -400,6 +411,21 @@ func (s *AppTestHelper) CheckICATxNotSubmitted(portId, channelId string, icaFunc
 	s.Require().Equal(startSequence, endSequence, "sequence number should NOT have incremented from tested function")
 }
 
+// Helper function to check if multiple ICA txs were submitted by seeing if the sequence number
+// incremented by more than 1
+func (s *AppTestHelper) CheckMultipleICATxSubmitted(portId, channelId string, icaFunction func() error) {
+	// Get the sequence before the tested funciton is run
+	startSequence := s.MustGetNextSequenceNumber(portId, channelId)
+
+	// Run the test function and confirm there's no error
+	err := icaFunction()
+	s.Require().NoError(err, "no error expected executing tested function")
+
+	// Check that the sequence number incremented
+	endSequence := s.MustGetNextSequenceNumber(portId, channelId)
+	s.Require().Greater(endSequence, startSequence+1, "sequence number should have incremented twice from tested function")
+}
+
 // Constructs an ICA Packet Acknowledgement compatible with ibc-go v5+
 func ICAPacketAcknowledgement(t *testing.T, msgType string, msgResponses []proto.Message) channeltypes.Acknowledgement {
 	txMsgData := &sdk.TxMsgData{
@@ -523,9 +549,11 @@ func (s *AppTestHelper) MockICAChannel(connectionId, channelId, owner, address s
 	// Create an open channel with the ICA port
 	portId, _ := icatypes.NewControllerPortID(owner)
 	channel := channeltypes.Channel{
-		State: channeltypes.OPEN,
+		State:          channeltypes.OPEN,
+		ConnectionHops: []string{connectionId},
 	}
 	s.App.IBCKeeper.ChannelKeeper.SetChannel(s.Ctx, portId, channelId, channel)
+	s.App.IBCKeeper.ConnectionKeeper.SetConnection(s.Ctx, connectionId, connectiontypes.ConnectionEnd{})
 
 	// Then set the address and make the channel active
 	s.App.ICAControllerKeeper.SetInterchainAccountAddress(s.Ctx, connectionId, portId, address)

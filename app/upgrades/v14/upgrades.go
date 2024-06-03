@@ -18,18 +18,18 @@ import (
 	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
 	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
-	ccvconsumerkeeper "github.com/cosmos/interchain-security/v3/x/ccv/consumer/keeper"
+	ccvconsumerkeeper "github.com/cosmos/interchain-security/v4/x/ccv/consumer/keeper"
 	evmosvestingkeeper "github.com/evmos/vesting/x/vesting/keeper"
 	"github.com/evmos/vesting/x/vesting/types"
 	evmosvestingtypes "github.com/evmos/vesting/x/vesting/types"
 
-	"github.com/Stride-Labs/stride/v18/utils"
-	claimkeeper "github.com/Stride-Labs/stride/v18/x/claim/keeper"
-	claimtypes "github.com/Stride-Labs/stride/v18/x/claim/types"
-	icqkeeper "github.com/Stride-Labs/stride/v18/x/interchainquery/keeper"
-	stakeibckeeper "github.com/Stride-Labs/stride/v18/x/stakeibc/keeper"
-	stakeibcmigration "github.com/Stride-Labs/stride/v18/x/stakeibc/migrations/v3"
-	stakeibctypes "github.com/Stride-Labs/stride/v18/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v22/utils"
+	claimkeeper "github.com/Stride-Labs/stride/v22/x/claim/keeper"
+	claimtypes "github.com/Stride-Labs/stride/v22/x/claim/types"
+	icqkeeper "github.com/Stride-Labs/stride/v22/x/interchainquery/keeper"
+	stakeibckeeper "github.com/Stride-Labs/stride/v22/x/stakeibc/keeper"
+	stakeibcmigration "github.com/Stride-Labs/stride/v22/x/stakeibc/migrations/v3"
+	stakeibctypes "github.com/Stride-Labs/stride/v22/x/stakeibc/types"
 )
 
 var (

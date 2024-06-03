@@ -23,10 +23,17 @@ if [[ "$CHAIN" == "GAIA" ]]; then
     LSM_ENABLED="true"
 fi
 
+COMMUNITY_POOL_TREASURY_ADDRESS_FLAG=""
+TREASURY_ADDRESS_VAR="${CHAIN}_TREASURY_ADDRESS"
+TREASURY_ADDRESS="${!TREASURY_ADDRESS_VAR:-}"
+if [[ "${TREASURY_ADDRESS}" != "" ]]; then
+    COMMUNITY_POOL_TREASURY_ADDRESS_FLAG="--community-pool-treasury-address ${TREASURY_ADDRESS}"
+fi
+
 echo "$CHAIN - Registering host zone..."
 $STRIDE_MAIN_CMD tx stakeibc register-host-zone \
-    $CONNECTION $HOST_DENOM $ADDRESS_PREFIX $IBC_DENOM $CHANNEL 1 $LSM_ENABLED \
-    --gas 1000000 --from $STRIDE_ADMIN_ACCT --home $DOCKERNET_HOME/state/stride1 -y | TRIM_TX
+    $CONNECTION $HOST_DENOM $ADDRESS_PREFIX $IBC_DENOM $CHANNEL 1 $LSM_ENABLED $COMMUNITY_POOL_TREASURY_ADDRESS_FLAG \
+    --gas 2000000 --from $STRIDE_ADMIN_ACCT --home $DOCKERNET_HOME/state/stride1 -y | TRIM_TX
 sleep 10
 
 # Build array of validators of the form:

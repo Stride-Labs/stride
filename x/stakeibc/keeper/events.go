@@ -4,8 +4,8 @@ import (
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	recordstypes "github.com/Stride-Labs/stride/v18/x/records/types"
-	"github.com/Stride-Labs/stride/v18/x/stakeibc/types"
+	recordstypes "github.com/Stride-Labs/stride/v22/x/records/types"
+	"github.com/Stride-Labs/stride/v22/x/stakeibc/types"
 )
 
 // Emits a successful liquid stake event, and displays metadata such as the stToken amount
@@ -19,6 +19,23 @@ func EmitSuccessfulLiquidStakeEvent(ctx sdk.Context, msg *types.MsgLiquidStake, 
 			sdk.NewAttribute(types.AttributeKeyNativeBaseDenom, msg.HostDenom),
 			sdk.NewAttribute(types.AttributeKeyNativeIBCDenom, hostZone.IbcDenom),
 			sdk.NewAttribute(types.AttributeKeyNativeAmount, msg.Amount.String()),
+			sdk.NewAttribute(types.AttributeKeyStTokenAmount, stAmount.String()),
+		),
+	)
+}
+
+// Emits a successful redeem stake event, and displays metadata such as the native amount
+func EmitSuccessfulRedeemStakeEvent(ctx sdk.Context, msg *types.MsgRedeemStake, hostZone types.HostZone, nativeAmount, stAmount sdkmath.Int) {
+	ctx.EventManager().EmitEvent(
+		sdk.NewEvent(
+			types.EventTypeRedeemStakeRequest,
+			sdk.NewAttribute(sdk.AttributeKeyModule, types.ModuleName),
+			sdk.NewAttribute(types.AttributeKeyRedeemer, msg.Creator),
+			sdk.NewAttribute(types.AttributeKeyReceiver, msg.Receiver),
+			sdk.NewAttribute(types.AttributeKeyHostZone, hostZone.ChainId),
+			sdk.NewAttribute(types.AttributeKeyNativeBaseDenom, hostZone.HostDenom),
+			sdk.NewAttribute(types.AttributeKeyNativeIBCDenom, hostZone.IbcDenom),
+			sdk.NewAttribute(types.AttributeKeyNativeAmount, nativeAmount.String()),
 			sdk.NewAttribute(types.AttributeKeyStTokenAmount, stAmount.String()),
 		),
 	)

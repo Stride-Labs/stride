@@ -9,7 +9,7 @@ import (
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	ibctransfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
 
-	"github.com/Stride-Labs/stride/v18/utils"
+	"github.com/Stride-Labs/stride/v22/utils"
 )
 
 const TypeMsgRegisterHostZone = "register_host_zone"
@@ -27,18 +27,22 @@ func NewMsgRegisterHostZone(
 	minRedemptionRate sdk.Dec,
 	maxRedemptionRate sdk.Dec,
 	lsmLiquidStakeEnabled bool,
+	communityPoolTreasuryAddress string,
+	maxMessagePerIcaTx uint64,
 ) *MsgRegisterHostZone {
 	return &MsgRegisterHostZone{
-		Creator:               creator,
-		ConnectionId:          connectionId,
-		Bech32Prefix:          bech32prefix,
-		HostDenom:             hostDenom,
-		IbcDenom:              ibcDenom,
-		TransferChannelId:     transferChannelId,
-		UnbondingPeriod:       unbondingPeriod,
-		MinRedemptionRate:     minRedemptionRate,
-		MaxRedemptionRate:     maxRedemptionRate,
-		LsmLiquidStakeEnabled: lsmLiquidStakeEnabled,
+		Creator:                      creator,
+		ConnectionId:                 connectionId,
+		Bech32Prefix:                 bech32prefix,
+		HostDenom:                    hostDenom,
+		IbcDenom:                     ibcDenom,
+		TransferChannelId:            transferChannelId,
+		UnbondingPeriod:              unbondingPeriod,
+		MinRedemptionRate:            minRedemptionRate,
+		MaxRedemptionRate:            maxRedemptionRate,
+		LsmLiquidStakeEnabled:        lsmLiquidStakeEnabled,
+		CommunityPoolTreasuryAddress: communityPoolTreasuryAddress,
+		MaxMessagesPerIcaTx:          maxMessagePerIcaTx,
 	}
 }
 
