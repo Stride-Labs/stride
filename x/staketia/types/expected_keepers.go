@@ -6,6 +6,8 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	transfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
+
+	stakeibctypes "github.com/Stride-Labs/stride/v22/x/stakeibc/types"
 )
 
 // Required AccountKeeper functions
@@ -40,4 +42,9 @@ type RatelimitKeeper interface {
 // Required ICAOracleKeeper functions
 type ICAOracleKeeper interface {
 	QueueMetricUpdate(ctx sdk.Context, key, value, metricType, attributes string)
+}
+
+// Required StakeibcKeeper functions
+type StakeibcKeeper interface {
+	GetHostZone(ctx sdk.Context, chainId string) (val stakeibctypes.HostZone, found bool)
 }
