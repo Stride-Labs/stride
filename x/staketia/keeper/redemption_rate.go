@@ -9,16 +9,11 @@ import (
 // Checks whether the redemption rate has exceeded the inner or outer safety bounds
 // and returns an error if so
 func (k Keeper) CheckRedemptionRateExceedsBounds(ctx sdk.Context) error {
-	hostZone, err := k.GetHostZone(ctx)
-	if err != nil {
-		return err
+	hostZone, found := k.stakeibcKeeper.GetHostZone(ctx, types.CelestiaChainId)
+	if !found {
+		return types.ErrHostZoneNotFound
 	}
 	redemptionRate := hostZone.RedemptionRate
-
-	// Validate the safety bounds (e.g. that the inner is inside the outer)
-	if err := hostZone.ValidateRedemptionRateBoundsInitalized(); err != nil {
-		return err
-	}
 
 	// Check if the redemption rate is outside the outer bounds
 	if redemptionRate.LT(hostZone.MinRedemptionRate) || redemptionRate.GT(hostZone.MaxRedemptionRate) {

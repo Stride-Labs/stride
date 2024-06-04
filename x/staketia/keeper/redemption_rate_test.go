@@ -3,7 +3,7 @@ package keeper_test
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/Stride-Labs/stride/v22/x/staketia/types"
+	"github.com/Stride-Labs/stride/v22/x/stakeibc/types"
 )
 
 func (s *KeeperTestSuite) TestCheckRedemptionRateExceedsBounds() {
@@ -71,7 +71,7 @@ func (s *KeeperTestSuite) TestCheckRedemptionRateExceedsBounds() {
 
 	for _, tc := range testCases {
 		s.Run(tc.name, func() {
-			s.App.StaketiaKeeper.SetHostZone(s.Ctx, tc.hostZone)
+			s.App.StakeibcKeeper.SetHostZone(s.Ctx, tc.hostZone)
 			err := s.App.StaketiaKeeper.CheckRedemptionRateExceedsBounds(s.Ctx)
 			if tc.exceedsBounds {
 				s.Require().ErrorIs(err, types.ErrRedemptionRateOutsideSafetyBounds)
