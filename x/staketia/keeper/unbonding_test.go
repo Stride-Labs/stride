@@ -332,7 +332,8 @@ func (s *KeeperTestSuite) TestPrepareUndelegation() {
 	// (an uneven number is used to test rounding/truncation)
 	oldRedemptionRate := sdk.MustNewDecFromStr("1.9")
 	redemptionRate := sdk.MustNewDecFromStr("1.999")
-	s.App.StaketiaKeeper.SetHostZone(s.Ctx, types.HostZone{
+	s.App.StakeibcKeeper.SetHostZone(s.Ctx, stakeibctypes.HostZone{
+		ChainId:        HostChainId,
 		RedemptionRate: redemptionRate,
 	})
 
@@ -459,8 +460,6 @@ func (s *KeeperTestSuite) SetupTestConfirmUndelegation(amountToUndelegate sdkmat
 		RedemptionAddress:      redemptionAddress.String(),
 		NativeTokenDenom:       HostNativeDenom,
 		UnbondingPeriodSeconds: unbondingPeriodSeconds,
-		MinRedemptionRate:      sdk.MustNewDecFromStr("0.9"),
-		MaxRedemptionRate:      sdk.MustNewDecFromStr("1.2"),
 	}
 	s.App.StaketiaKeeper.SetHostZone(s.Ctx, staketiaHostZone)
 

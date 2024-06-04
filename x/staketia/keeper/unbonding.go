@@ -24,6 +24,10 @@ func (k Keeper) RedeemStake(ctx sdk.Context, redeemer string, stTokenAmount sdkm
 	if err != nil {
 		return nativeToken, err
 	}
+	stakeibcHostZone, err := k.stakeibcKeeper.GetActiveHostZone(ctx, types.CelestiaChainId)
+	if err != nil {
+		return nativeToken, err
+	}
 
 	escrowAccount, err := sdk.AccAddressFromBech32(hostZone.RedemptionAddress)
 	if err != nil {
@@ -56,10 +60,10 @@ func (k Keeper) RedeemStake(ctx sdk.Context, redeemer string, stTokenAmount sdkm
 
 	// Estimate a placeholder native amount with current RedemptionRate
 	// this estimate will be updated when the Undelegation record is finalized
-	nativeAmount := sdk.NewDecFromInt(stTokenAmount).Mul(hostZone.RedemptionRate).TruncateInt()
-	if nativeAmount.GT(hostZone.DelegatedBalance) {
+	nativeAmount := sdk.NewDecFromInt(stTokenAmount).Mul(stakeibcHostZone.RedemptionRate).TruncateInt()
+	if nativeAmount.GT(stakeibcHostZone.TotalDelegations) {
 		return nativeToken, errorsmod.Wrapf(types.ErrUnbondAmountToLarge,
-			"cannot unstake an amount g.t. total staked balance: %v > %v", nativeAmount, hostZone.DelegatedBalance)
+			"cannot unstake an amount g.t. total staked balance: %v > %v", nativeAmount, stakeibcHostZone.TotalDelegations)
 	}
 
 	// Update the accumulating UnbondingRecord with the undelegation amounts
@@ -104,11 +108,11 @@ func (k Keeper) PrepareUndelegation(ctx sdk.Context, epochNumber uint64) error {
 	k.Logger(ctx).Info(utils.LogWithHostZone(types.CelestiaChainId, "Preparing undelegation for epoch %d", epochNumber))
 
 	// Get the redemption record from the host zone (to calculate the native tokens)
-	hostZone, err := k.GetUnhaltedHostZone(ctx)
+	stakeibcHostZone, err := k.stakeibcKeeper.GetActiveHostZone(ctx, types.CelestiaChainId)
 	if err != nil {
 		return err
 	}
-	redemptionRate := hostZone.RedemptionRate
+	redemptionRate := stakeibcHostZone.RedemptionRate
 
 	// Get the one accumulating record that has the redemptions for the past epoch
 	unbondingRecord, err := k.GetAccumulatingUnbondingRecord(ctx)
