@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	"errors"
 	"fmt"
 	"time"
 
@@ -10,13 +11,19 @@ import (
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
 	"github.com/Stride-Labs/stride/v22/utils"
+	stakeibctypes "github.com/Stride-Labs/stride/v22/x/stakeibc/types"
 	"github.com/Stride-Labs/stride/v22/x/staketia/types"
 )
 
 // Takes custody of staked tokens in an escrow account, updates the current
 // accumulating UnbondingRecord with the amount taken, and creates or updates
 // the RedemptionRecord for this user
-func (k Keeper) RedeemStake(ctx sdk.Context, redeemer string, stTokenAmount sdkmath.Int) (nativeToken sdk.Coin, err error) {
+func (k Keeper) RedeemStake(
+	ctx sdk.Context,
+	redeemer string,
+	receiver string,
+	stTokenAmount sdkmath.Int,
+) (nativeToken sdk.Coin, err error) {
 	// Validate Basic already has ensured redeemer is legal address, stTokenAmount is above min threshold
 
 	// Check HostZone exists, has legal redemption address for escrow, is not halted, has RR in bounds
@@ -27,6 +34,12 @@ func (k Keeper) RedeemStake(ctx sdk.Context, redeemer string, stTokenAmount sdkm
 	stakeibcHostZone, err := k.stakeibcKeeper.GetActiveHostZone(ctx, types.CelestiaChainId)
 	if err != nil {
 		return nativeToken, err
+	}
+
+	// If the remaining delegated balance for staketia is 0, that means we've undelegated
+	// all the stake in the MS account and the redemptions should be switched over to stakeibc
+	if hostZone.RemainingDelegatedBalance.IsZero() {
+		return nativeToken, errors.New("Redemptions are no longer enabled with staketia")
 	}
 
 	escrowAccount, err := sdk.AccAddressFromBech32(hostZone.RedemptionAddress)
@@ -61,9 +74,32 @@ func (k Keeper) RedeemStake(ctx sdk.Context, redeemer string, stTokenAmount sdkm
 	// Estimate a placeholder native amount with current RedemptionRate
 	// this estimate will be updated when the Undelegation record is finalized
 	nativeAmount := sdk.NewDecFromInt(stTokenAmount).Mul(stakeibcHostZone.RedemptionRate).TruncateInt()
+
+	// When checking if there's enough delegated TIA to handle the request,
+	// use the value from stakeibc instead of staketia
 	if nativeAmount.GT(stakeibcHostZone.TotalDelegations) {
 		return nativeToken, errorsmod.Wrapf(types.ErrUnbondAmountToLarge,
 			"cannot unstake an amount g.t. total staked balance: %v > %v", nativeAmount, stakeibcHostZone.TotalDelegations)
+	}
+
+	// Check if the requested unbonding is greater than what's in the multisig account
+	// If so, handle the spillover by calling stakeibc's redeem stake and then enable
+	// redemptions for staketia
+	if nativeAmount.GT(hostZone.RemainingDelegatedBalance) {
+		// TODO [stTIA]: Enable redemptions in stakeibc
+
+		nativeAmount, stTokenAmount, err = k.HandleRedemptionSpillover(
+			ctx,
+			redeemer,
+			receiver,
+			nativeAmount,
+			stTokenAmount,
+			hostZone.RemainingDelegatedBalance,
+			stakeibcHostZone.RedemptionRate,
+		)
+		if err != nil {
+			return nativeToken, err
+		}
 	}
 
 	// Update the accumulating UnbondingRecord with the undelegation amounts
@@ -100,6 +136,38 @@ func (k Keeper) RedeemStake(ctx sdk.Context, redeemer string, stTokenAmount sdkm
 
 	EmitSuccessfulRedeemStakeEvent(ctx, redeemer, hostZone, nativeAmount, stTokenAmount)
 	return nativeToken, nil
+}
+
+// Calls redeem stake for any requested redemption amount that exceeds what's in the staketia account
+// Returns the updated native and stTokens amounts that should be used in staketia
+func (k Keeper) HandleRedemptionSpillover(
+	ctx sdk.Context,
+	redeemer string,
+	receiver string,
+	requestedNativeAmount sdkmath.Int,
+	requestedStTokenAmount sdkmath.Int,
+	remainingDelegatedBalance sdkmath.Int,
+	redemptionRate sdk.Dec,
+) (staketiaNativeAmount, staketiaStTokenAmount sdkmath.Int, err error) {
+	// Converts the spillover amount so that it's denominated in stTokens
+	stakeibcNativeAmount := requestedNativeAmount.Sub(remainingDelegatedBalance)
+	stakeibcStAmount := sdk.NewDecFromInt(stakeibcNativeAmount).Quo(redemptionRate).TruncateInt()
+
+	// Call stakeibc's redeem stake for the excess
+	stakeibcRedeemMessage := stakeibctypes.MsgRedeemStake{
+		Creator:  redeemer,
+		Amount:   stakeibcStAmount,
+		HostZone: types.CelestiaChainId,
+		Receiver: receiver,
+	}
+	if _, err = k.stakeibcKeeper.RedeemStake(ctx, &stakeibcRedeemMessage); err != nil {
+		return sdkmath.ZeroInt(), sdkmath.ZeroInt(), err
+	}
+
+	// Return the updated staketia portion back to the staketia redeem stake
+	staketiaNativeAmount = requestedNativeAmount.Sub(stakeibcNativeAmount)
+	staketiaStTokenAmount = requestedStTokenAmount.Sub(staketiaStTokenAmount)
+	return stakeibcNativeAmount, stakeibcStAmount, nil
 }
 
 // Freezes the ACCUMULATING record by changing the status to UNBONDING_QUEUE
