@@ -184,8 +184,8 @@ func (s *KeeperTestSuite) TestAdjustDelegatedBalance() {
 
 	// Create the host zone
 	s.App.StaketiaKeeper.SetHostZone(s.Ctx, types.HostZone{
-		SafeAddressOnStride: safeAddress,
-		DelegatedBalance:    sdk.NewInt(0),
+		SafeAddressOnStride:       safeAddress,
+		RemainingDelegatedBalance: sdk.NewInt(0),
 	})
 
 	// we're halting the zone to test that the tx works even when the host zone is halted
@@ -213,7 +213,7 @@ func (s *KeeperTestSuite) TestAdjustDelegatedBalance() {
 		s.Require().NoError(err, "no error expected when adjusting delegated bal properly for %s", tc.address)
 
 		hostZone := s.MustGetHostZone()
-		s.Require().Equal(tc.endDelegation, hostZone.DelegatedBalance, "delegation after change for %s", tc.address)
+		s.Require().Equal(tc.endDelegation, hostZone.RemainingDelegatedBalance, "delegation after change for %s", tc.address)
 	}
 
 	// Attempt to call it with an amount that would make it negative, it should fail
@@ -233,7 +233,6 @@ func (s *KeeperTestSuite) TestAdjustDelegatedBalance() {
 	s.App.StaketiaKeeper.RemoveHostZone(s.Ctx)
 	_, err = s.GetMsgServer().AdjustDelegatedBalance(s.Ctx, &types.MsgAdjustDelegatedBalance{})
 	s.Require().ErrorContains(err, "host zone not found")
-
 }
 
 // ----------------------------------------------

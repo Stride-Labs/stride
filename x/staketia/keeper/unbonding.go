@@ -176,17 +176,21 @@ func (k Keeper) ConfirmUndelegation(ctx sdk.Context, recordId uint64, txHash str
 	}
 
 	// Note: we're intentionally not checking that the host zone is halted, because we still want to process this tx in that case
-	hostZone, err := k.GetHostZone(ctx)
+	staketiaHostZone, err := k.GetHostZone(ctx)
 	if err != nil {
 		return err
 	}
+	stakeibcHostZone, found := k.stakeibcKeeper.GetHostZone(ctx, types.CelestiaChainId)
+	if !found {
+		return types.ErrHostZoneNotFound.Wrapf("host zone not found from stakeibc")
+	}
 
 	// sanity check: store down the stToken supply and DelegatedBalance for checking against after burn
-	stDenom := utils.StAssetDenomFromHostZoneDenom(hostZone.NativeTokenDenom)
+	stDenom := utils.StAssetDenomFromHostZoneDenom(staketiaHostZone.NativeTokenDenom)
 
 	// update the record's txhash, status, and unbonding completion time
-	unbondingLength := time.Duration(hostZone.UnbondingPeriodSeconds) * time.Second // 21 days
-	unbondingCompletionTime := uint64(ctx.BlockTime().Add(unbondingLength).Unix())  // now + 21 days
+	unbondingLength := time.Duration(staketiaHostZone.UnbondingPeriodSeconds) * time.Second // 21 days
+	unbondingCompletionTime := uint64(ctx.BlockTime().Add(unbondingLength).Unix())          // now + 21 days
 
 	record.UndelegationTxHash = txHash
 	record.Status = types.UNBONDING_IN_PROGRESS
@@ -195,18 +199,18 @@ func (k Keeper) ConfirmUndelegation(ctx sdk.Context, recordId uint64, txHash str
 
 	// update host zone struct's delegated balance
 	amountAddedToDelegation := record.NativeAmount
-	newDelegatedBalance := hostZone.DelegatedBalance.Sub(amountAddedToDelegation)
+	newDelegatedBalance := stakeibcHostZone.TotalDelegations.Sub(amountAddedToDelegation)
 
 	// sanity check: if the new balance is negative, throw an error
 	if newDelegatedBalance.IsNegative() {
 		return errorsmod.Wrapf(types.ErrNegativeNotAllowed, "host zone's delegated balance would be negative after undelegation")
 	}
-	hostZone.DelegatedBalance = newDelegatedBalance
-	k.SetHostZone(ctx, hostZone)
+	stakeibcHostZone.TotalDelegations = newDelegatedBalance
+	k.stakeibcKeeper.SetHostZone(ctx, stakeibcHostZone)
 
 	// burn the corresponding stTokens from the redemptionAddress
 	stTokensToBurn := sdk.NewCoins(sdk.NewCoin(stDenom, record.StTokenAmount))
-	if err := k.BurnRedeemedStTokens(ctx, stTokensToBurn, hostZone.RedemptionAddress); err != nil {
+	if err := k.BurnRedeemedStTokens(ctx, stTokensToBurn, staketiaHostZone.RedemptionAddress); err != nil {
 		return errorsmod.Wrapf(err, "unable to burn stTokens in ConfirmUndelegation")
 	}
 

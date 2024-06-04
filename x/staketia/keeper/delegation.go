@@ -171,7 +171,7 @@ func (k Keeper) ConfirmDelegation(ctx sdk.Context, recordId uint64, txHash strin
 	k.ArchiveDelegationRecord(ctx, delegationRecord)
 
 	// increment delegation on Host Zone
-	hostZone.DelegatedBalance = hostZone.DelegatedBalance.Add(delegationRecord.NativeAmount)
+	hostZone.RemainingDelegatedBalance = hostZone.RemainingDelegatedBalance.Add(delegationRecord.NativeAmount)
 	k.SetHostZone(ctx, hostZone)
 
 	EmitSuccessfulConfirmDelegationEvent(ctx, recordId, delegationRecord.NativeAmount, txHash, sender)

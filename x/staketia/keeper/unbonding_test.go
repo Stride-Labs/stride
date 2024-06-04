@@ -9,6 +9,7 @@ import (
 
 	"github.com/Stride-Labs/stride/v22/app/apptesting"
 	"github.com/Stride-Labs/stride/v22/utils"
+	stakeibctypes "github.com/Stride-Labs/stride/v22/x/stakeibc/types"
 	"github.com/Stride-Labs/stride/v22/x/staketia/types"
 )
 
@@ -438,7 +439,8 @@ type ConfirmUndelegationTestCase struct {
 	amountToUndelegate       sdkmath.Int
 	delegatedBalance         sdkmath.Int
 	redemptionAccountBalance sdkmath.Int
-	hostZone                 types.HostZone
+	staketiaHostZone         types.HostZone
+	stakeibcHostZone         stakeibctypes.HostZone
 	expectedUnbondingTime    uint64
 }
 
@@ -453,16 +455,21 @@ func (s *KeeperTestSuite) SetupTestConfirmUndelegation(amountToUndelegate sdkmat
 	expectedUnbondingTime := uint64(s.Ctx.BlockTime().Add(time.Minute * 2).Unix())
 
 	// Create a host zone with delegatedBalance and RedemptionAddresses
-	hostZone := types.HostZone{
-		DelegatedBalance:       delegatedBalance,
+	staketiaHostZone := types.HostZone{
 		RedemptionAddress:      redemptionAddress.String(),
 		NativeTokenDenom:       HostNativeDenom,
 		UnbondingPeriodSeconds: unbondingPeriodSeconds,
 		MinRedemptionRate:      sdk.MustNewDecFromStr("0.9"),
 		MaxRedemptionRate:      sdk.MustNewDecFromStr("1.2"),
-		RedemptionRate:         sdk.MustNewDecFromStr("1.1"),
 	}
-	s.App.StaketiaKeeper.SetHostZone(s.Ctx, hostZone)
+	s.App.StaketiaKeeper.SetHostZone(s.Ctx, staketiaHostZone)
+
+	stakeibcHostZone := stakeibctypes.HostZone{
+		ChainId:          HostChainId,
+		RedemptionRate:   sdk.MustNewDecFromStr("1.1"),
+		TotalDelegations: delegatedBalance,
+	}
+	s.App.StakeibcKeeper.SetHostZone(s.Ctx, stakeibcHostZone)
 
 	// Fund the redemption account with tokens that will be burned
 	stTokensInRedemption := sdk.NewCoin(StDenom, redemptionAccountBalance)
@@ -470,7 +477,7 @@ func (s *KeeperTestSuite) SetupTestConfirmUndelegation(amountToUndelegate sdkmat
 
 	// create an unbonding record in status UNBONDING_QUEUE
 	// - stToken amount to burn as if the RR is 1.1
-	stTokenAmountToBurn := sdk.NewDecFromInt(amountToUndelegate).Mul(hostZone.RedemptionRate).TruncateInt()
+	stTokenAmountToBurn := sdk.NewDecFromInt(amountToUndelegate).Mul(stakeibcHostZone.RedemptionRate).TruncateInt()
 	unbondingRecord := types.UnbondingRecord{
 		Id:            1,
 		Status:        types.UNBONDING_QUEUE,
@@ -487,7 +494,8 @@ func (s *KeeperTestSuite) SetupTestConfirmUndelegation(amountToUndelegate sdkmat
 		amountToUndelegate:       amountToUndelegate,
 		delegatedBalance:         delegatedBalance,
 		redemptionAccountBalance: redemptionAccountBalance,
-		hostZone:                 hostZone,
+		stakeibcHostZone:         stakeibcHostZone,
+		staketiaHostZone:         staketiaHostZone,
 		expectedUnbondingTime:    expectedUnbondingTime,
 	}
 	return tc
@@ -517,8 +525,9 @@ func (s *KeeperTestSuite) TestConfirmUndelegation_Success() {
 	s.Require().Equal(expectedRedemptionAccountBalance, actualRedemptionAccountBalance, "redemption account balance")
 
 	// check that delegated balance was updated
-	hostZone := s.MustGetHostZone()
-	s.Require().Equal(tc.delegatedBalance.Sub(tc.amountToUndelegate), hostZone.DelegatedBalance, "delegated balance")
+	stakeibcHostZone, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx, HostChainId)
+	s.Require().True(found)
+	s.Require().Equal(tc.delegatedBalance.Sub(tc.amountToUndelegate), stakeibcHostZone.TotalDelegations, "delegated balance")
 }
 
 // unit test ConfirmUndelegation with nothing to unbond
