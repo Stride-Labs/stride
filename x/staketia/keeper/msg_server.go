@@ -211,9 +211,7 @@ func (k msgServer) RefreshRedemptionRate(goCtx context.Context, msgTriggerRedemp
 		return nil, err
 	}
 
-	err := k.UpdateRedemptionRate(ctx)
-
-	return &types.MsgRefreshRedemptionRateResponse{}, err
+	return &types.MsgRefreshRedemptionRateResponse{}, nil
 }
 
 // overwrite a delegation record

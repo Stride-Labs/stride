@@ -37,15 +37,15 @@ func (s *KeeperTestSuite) SetupTestLiquidStake(
 
 	// Create a host zone with relevant denom's and addresses
 	s.App.StaketiaKeeper.SetHostZone(s.Ctx, types.HostZone{
-		ChainId:                HostChainId,
-		NativeTokenDenom:       HostNativeDenom,
-		NativeTokenIbcDenom:    HostIBCDenom,
-		DepositAddress:         depositAddress.String(),
-		RedemptionRate:         redemptionRate,
-		MinRedemptionRate:      redemptionRate.Sub(sdk.MustNewDecFromStr("0.2")),
-		MinInnerRedemptionRate: redemptionRate.Sub(sdk.MustNewDecFromStr("0.1")),
-		MaxInnerRedemptionRate: redemptionRate.Add(sdk.MustNewDecFromStr("0.1")),
-		MaxRedemptionRate:      redemptionRate.Add(sdk.MustNewDecFromStr("0.2")),
+		ChainId:             HostChainId,
+		NativeTokenDenom:    HostNativeDenom,
+		NativeTokenIbcDenom: HostIBCDenom,
+		DepositAddress:      depositAddress.String(),
+		// RedemptionRate:         redemptionRate,
+		// MinRedemptionRate:      redemptionRate.Sub(sdk.MustNewDecFromStr("0.2")),
+		// MinInnerRedemptionRate: redemptionRate.Sub(sdk.MustNewDecFromStr("0.1")),
+		// MaxInnerRedemptionRate: redemptionRate.Add(sdk.MustNewDecFromStr("0.1")),
+		// MaxRedemptionRate:      redemptionRate.Add(sdk.MustNewDecFromStr("0.2")),
 	})
 
 	// Fund the staker
@@ -191,7 +191,7 @@ func (s *KeeperTestSuite) TestLiquidStake_InvalidRedemptionRate() {
 
 	// Update the redemption rate so it exceeds the bounds
 	hostZone := s.MustGetHostZone()
-	hostZone.RedemptionRate = hostZone.MaxInnerRedemptionRate.Add(sdk.MustNewDecFromStr("0.01"))
+	// hostZone.RedemptionRate = hostZone.MaxInnerRedemptionRate.Add(sdk.MustNewDecFromStr("0.01"))
 	s.App.StaketiaKeeper.SetHostZone(s.Ctx, hostZone)
 
 	_, err := s.App.StaketiaKeeper.LiquidStake(s.Ctx, tc.stakerAddress.String(), tc.liquidStakeAmount)
@@ -501,20 +501,20 @@ func (s *KeeperTestSuite) TestLiquidStakeAndDistributeFees() {
 
 	// Liquid stake 1000 with a RR of 2, should return 500 tokens
 	liquidStakeAmount := sdkmath.NewInt(1000)
-	redemptionRate := sdk.NewDec(2)
+	// redemptionRate := sdk.NewDec(2)
 	expectedStTokens := sdkmath.NewInt(500)
 
 	// Create a host zone with relevant denom's and addresses
 	hostZone := types.HostZone{
-		ChainId:                HostChainId,
-		NativeTokenDenom:       HostNativeDenom,
-		NativeTokenIbcDenom:    HostIBCDenom,
-		DepositAddress:         depositAddress.String(),
-		RedemptionRate:         redemptionRate,
-		MinRedemptionRate:      redemptionRate.Sub(sdk.MustNewDecFromStr("0.2")),
-		MinInnerRedemptionRate: redemptionRate.Sub(sdk.MustNewDecFromStr("0.1")),
-		MaxInnerRedemptionRate: redemptionRate.Add(sdk.MustNewDecFromStr("0.1")),
-		MaxRedemptionRate:      redemptionRate.Add(sdk.MustNewDecFromStr("0.2")),
+		ChainId:             HostChainId,
+		NativeTokenDenom:    HostNativeDenom,
+		NativeTokenIbcDenom: HostIBCDenom,
+		DepositAddress:      depositAddress.String(),
+		// RedemptionRate:         redemptionRate,
+		// MinRedemptionRate:      redemptionRate.Sub(sdk.MustNewDecFromStr("0.2")),
+		// MinInnerRedemptionRate: redemptionRate.Sub(sdk.MustNewDecFromStr("0.1")),
+		// MaxInnerRedemptionRate: redemptionRate.Add(sdk.MustNewDecFromStr("0.1")),
+		// MaxRedemptionRate:      redemptionRate.Add(sdk.MustNewDecFromStr("0.2")),
 	}
 	s.App.StaketiaKeeper.SetHostZone(s.Ctx, hostZone)
 

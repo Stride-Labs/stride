@@ -49,7 +49,7 @@ func (k Keeper) LiquidStake(ctx sdk.Context, liquidStaker string, nativeAmount s
 	}
 
 	// Determine the amount of stTokens to mint using the redemption rate
-	stAmount := (sdk.NewDecFromInt(nativeAmount).Quo(hostZone.RedemptionRate)).TruncateInt()
+	stAmount := sdkmath.ZeroInt() // temporary to prevent lint error - this full function is removed in a different PR
 	if stAmount.IsZero() {
 		return stToken, errorsmod.Wrapf(stakeibctypes.ErrInsufficientLiquidStake,
 			"Liquid stake of %s%s would return 0 stTokens", nativeAmount.String(), hostZone.NativeTokenDenom)

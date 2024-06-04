@@ -180,9 +180,9 @@ func (k Keeper) ConfirmUndelegation(ctx sdk.Context, recordId uint64, txHash str
 	if err != nil {
 		return err
 	}
-	stakeibcHostZone, found := k.stakeibcKeeper.GetHostZone(ctx, types.CelestiaChainId)
-	if !found {
-		return types.ErrHostZoneNotFound.Wrapf("host zone not found from stakeibc")
+	stakeibcHostZone, err := k.stakeibcKeeper.GetActiveHostZone(ctx, types.CelestiaChainId)
+	if err != nil {
+		return err
 	}
 
 	// sanity check: store down the stToken supply and DelegatedBalance for checking against after burn

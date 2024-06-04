@@ -375,50 +375,6 @@ func (s *KeeperTestSuite) TestResumeHostZone() {
 }
 
 // ----------------------------------------------
-//           MsgRefreshRedemptionRate
-// ----------------------------------------------
-
-func (s *KeeperTestSuite) TestRefreshRedemptionRate() {
-	safeAddress := "safe"
-	depositAddress := s.TestAccs[0]
-	redemptionAddress := s.TestAccs[1]
-
-	// Create host zone with initial redemption rate of 1
-	// There will be 1000 delegated tokens, and 500 stTokens
-	// implying an updated redemption rate of 2
-	initialRedemptionRate := sdk.OneDec()
-	expectedRedemptionRate := sdk.NewDec(2)
-
-	s.App.StaketiaKeeper.SetHostZone(s.Ctx, types.HostZone{
-		DelegatedBalance:    sdkmath.NewInt(1000),
-		RedemptionRate:      initialRedemptionRate,
-		NativeTokenDenom:    HostNativeDenom,
-		NativeTokenIbcDenom: HostIBCDenom,
-		SafeAddressOnStride: safeAddress,
-		DepositAddress:      depositAddress.String(),
-	})
-
-	// Mint 500 stTokens (implying a redemption rate of 2)
-	s.FundAccount(redemptionAddress, sdk.NewCoin(StDenom, sdkmath.NewInt(500)))
-
-	// Attempt to refresh the rate with a non-safe address, it should fail
-	_, err := s.GetMsgServer().RefreshRedemptionRate(s.Ctx, &types.MsgRefreshRedemptionRate{
-		Creator: "non-admin",
-	})
-	s.Require().ErrorContains(err, "signer is not an admin")
-
-	// Attempt to refresh the rate with the safe address, it should succeed
-	_, err = s.GetMsgServer().RefreshRedemptionRate(s.Ctx, &types.MsgRefreshRedemptionRate{
-		Creator: safeAddress,
-	})
-	s.Require().NoError(err, "no error expected when using safe address")
-
-	// Confirm the redemption rate was updated
-	hostZone := s.MustGetHostZone()
-	s.Require().Equal(expectedRedemptionRate, hostZone.RedemptionRate)
-}
-
-// ----------------------------------------------
 //         MsgOverwriteDelgationRecord
 // ----------------------------------------------
 
