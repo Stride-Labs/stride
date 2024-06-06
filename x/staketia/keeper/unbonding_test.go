@@ -30,6 +30,7 @@ type RedeemStakeTestCase struct {
 
 	userAccount      Account
 	hostZone         *types.HostZone
+	stakeibcHostZone *stakeibctypes.HostZone
 	accUnbondRecord  *types.UnbondingRecord
 	redemptionRecord *types.RedemptionRecord
 	redeemMsg        types.MsgRedeemStake
@@ -43,6 +44,7 @@ type RedeemStakeTestCase struct {
 func (s *KeeperTestSuite) SetupTestRedeemStake(
 	userAccount Account,
 	hostZone *types.HostZone,
+	stakeibcHostZone *stakeibctypes.HostZone,
 	accUnbondRecord *types.UnbondingRecord,
 	redemptionRecord *types.RedemptionRecord,
 ) {
@@ -51,6 +53,10 @@ func (s *KeeperTestSuite) SetupTestRedeemStake(
 
 	if hostZone != nil {
 		s.App.StaketiaKeeper.SetHostZone(s.Ctx, *hostZone)
+	}
+
+	if stakeibcHostZone != nil {
+		s.App.StakeibcKeeper.SetHostZone(s.Ctx, *stakeibcHostZone)
 	}
 
 	if accUnbondRecord != nil {
@@ -75,6 +81,7 @@ func (s *KeeperTestSuite) SetupTestRedeemStake(
 func (s *KeeperTestSuite) getDefaultTestInputs() (
 	*Account,
 	*types.HostZone,
+	*stakeibctypes.HostZone,
 	*types.UnbondingRecord,
 	*types.RedemptionRecord,
 	*types.MsgRedeemStake,
@@ -89,16 +96,20 @@ func (s *KeeperTestSuite) getDefaultTestInputs() (
 	}
 
 	redemptionRate := sdk.MustNewDecFromStr("1.1")
-	defaultHostZone := types.HostZone{
-		NativeTokenDenom:       HostNativeDenom,
-		RedemptionAddress:      redemptionAccount.String(),
+	defaultStaketiaHostZone := types.HostZone{
+		NativeTokenDenom:          HostNativeDenom,
+		RedemptionAddress:         redemptionAccount.String(),
+		RemainingDelegatedBalance: sdkmath.NewInt(1_000_000_000),
+		Halted:                    false,
+	}
+	defaultStakeibcHostZone := stakeibctypes.HostZone{
+		ChainId:                types.CelestiaChainId,
 		RedemptionRate:         redemptionRate,
 		MinRedemptionRate:      redemptionRate.Sub(sdk.MustNewDecFromStr("0.2")),
 		MinInnerRedemptionRate: redemptionRate.Sub(sdk.MustNewDecFromStr("0.1")),
 		MaxInnerRedemptionRate: redemptionRate.Add(sdk.MustNewDecFromStr("0.1")),
 		MaxRedemptionRate:      redemptionRate.Add(sdk.MustNewDecFromStr("0.2")),
-		DelegatedBalance:       sdkmath.NewInt(1_000_000_000),
-		Halted:                 false,
+		TotalDelegations:       sdkmath.NewInt(1_000_000_000),
 	}
 
 	defaultAccUnbondingRecord := types.UnbondingRecord{
@@ -122,19 +133,29 @@ func (s *KeeperTestSuite) getDefaultTestInputs() (
 		StTokenAmount: sdk.NewInt(1_000_000),
 	}
 
-	return &defaultUserAccount, &defaultHostZone, &defaultAccUnbondingRecord,
-		&defaultRedemptionRecord, &defaultMsg
+	return &defaultUserAccount, &defaultStaketiaHostZone, &defaultStakeibcHostZone,
+		&defaultAccUnbondingRecord, &defaultRedemptionRecord, &defaultMsg
 }
 
 func (s *KeeperTestSuite) TestRedeemStake() {
-	defaultUA, defaultHZ, defaultUR, defaultRR, defaultMsg := s.getDefaultTestInputs()
+	defaultUA, defaultMsHZ, defaultIcaHZ, defaultUR, defaultRR, defaultMsg := s.getDefaultTestInputs()
 
 	testCases := []RedeemStakeTestCase{
 		{
 			testName: "[Error] Can't find the HostZone",
 
-			userAccount: *defaultUA,
-			hostZone:    nil,
+			userAccount:      *defaultUA,
+			hostZone:         nil,
+			stakeibcHostZone: defaultIcaHZ,
+
+			expectedErrorContains: types.ErrHostZoneNotFound.Error(),
+		},
+		{
+			testName: "[Error] Can't find the stakeibc HostZone",
+
+			userAccount:      *defaultUA,
+			hostZone:         defaultMsHZ,
+			stakeibcHostZone: nil,
 
 			expectedErrorContains: types.ErrHostZoneNotFound.Error(),
 		},
@@ -143,10 +164,11 @@ func (s *KeeperTestSuite) TestRedeemStake() {
 
 			userAccount: *defaultUA,
 			hostZone: func() *types.HostZone {
-				_, hz, _, _, _ := s.getDefaultTestInputs()
+				_, hz, _, _, _, _ := s.getDefaultTestInputs()
 				hz.RedemptionAddress = "nonparsable-address"
 				return hz
 			}(),
+			stakeibcHostZone: defaultIcaHZ,
 
 			expectedErrorContains: "could not bech32 decode redemption address",
 		},
@@ -155,10 +177,11 @@ func (s *KeeperTestSuite) TestRedeemStake() {
 
 			userAccount: *defaultUA,
 			hostZone: func() *types.HostZone {
-				_, hz, _, _, _ := s.getDefaultTestInputs()
+				_, hz, _, _, _, _ := s.getDefaultTestInputs()
 				hz.Halted = true
 				return hz
 			}(),
+			stakeibcHostZone: defaultIcaHZ,
 
 			expectedErrorContains: types.ErrHostZoneHalted.Error(),
 		},
@@ -166,8 +189,9 @@ func (s *KeeperTestSuite) TestRedeemStake() {
 			testName: "[Error] RedemptionRate outside of bounds",
 
 			userAccount: *defaultUA,
-			hostZone: func() *types.HostZone {
-				_, hz, _, _, _ := s.getDefaultTestInputs()
+			hostZone:    defaultMsHZ,
+			stakeibcHostZone: func() *stakeibctypes.HostZone {
+				_, _, hz, _, _, _ := s.getDefaultTestInputs()
 				hz.RedemptionRate = sdk.MustNewDecFromStr("5.2")
 				return hz
 			}(),
@@ -177,9 +201,10 @@ func (s *KeeperTestSuite) TestRedeemStake() {
 		{
 			testName: "[Error] No Accumulating UndondingRecord",
 
-			userAccount:     *defaultUA,
-			hostZone:        defaultHZ,
-			accUnbondRecord: nil,
+			userAccount:      *defaultUA,
+			hostZone:         defaultMsHZ,
+			stakeibcHostZone: defaultIcaHZ,
+			accUnbondRecord:  nil,
 
 			expectedErrorContains: types.ErrBrokenUnbondingRecordInvariant.Error(),
 		},
@@ -187,13 +212,14 @@ func (s *KeeperTestSuite) TestRedeemStake() {
 			testName: "[Error] Not enough tokens in wallet",
 
 			userAccount: func() Account {
-				acc, _, _, _, _ := s.getDefaultTestInputs()
+				acc, _, _, _, _, _ := s.getDefaultTestInputs()
 				acc.stTokens.Amount = sdk.NewInt(500_000)
 				return *acc
 			}(),
-			hostZone:        defaultHZ,
-			accUnbondRecord: defaultUR,
-			redeemMsg:       *defaultMsg, // attempt to redeem 1_000_000 stTokens
+			hostZone:         defaultMsHZ,
+			stakeibcHostZone: defaultIcaHZ,
+			accUnbondRecord:  defaultUR,
+			redeemMsg:        *defaultMsg, // attempt to redeem 1_000_000 stTokens
 
 			expectedErrorContains: sdkerrors.ErrInsufficientFunds.Error(),
 		},
@@ -201,14 +227,15 @@ func (s *KeeperTestSuite) TestRedeemStake() {
 			testName: "[Error] Redeeming more than HostZone delegation total",
 
 			userAccount: func() Account {
-				acc, _, _, _, _ := s.getDefaultTestInputs()
+				acc, _, _, _, _, _ := s.getDefaultTestInputs()
 				acc.stTokens.Amount = sdk.NewInt(5_000_000_000)
 				return *acc
 			}(),
-			hostZone:        defaultHZ, // 1_000_000_000 total delegation
-			accUnbondRecord: defaultUR,
+			hostZone:         defaultMsHZ, // 1_000_000_000 total delegation
+			stakeibcHostZone: defaultIcaHZ,
+			accUnbondRecord:  defaultUR,
 			redeemMsg: func() types.MsgRedeemStake {
-				_, _, _, _, msg := s.getDefaultTestInputs()
+				_, _, _, _, _, msg := s.getDefaultTestInputs()
 				msg.StTokenAmount = sdk.NewInt(5_000_000_000)
 				return *msg
 			}(),
@@ -219,13 +246,14 @@ func (s *KeeperTestSuite) TestRedeemStake() {
 			testName: "[Success] No RR exists yet, RedeemStake tx creates one",
 
 			userAccount:      *defaultUA,
-			hostZone:         defaultHZ,
+			hostZone:         defaultMsHZ,
+			stakeibcHostZone: defaultIcaHZ,
 			accUnbondRecord:  defaultUR,
 			redemptionRecord: nil,
 			redeemMsg:        *defaultMsg, // redeem 1_000_000 stTokens
 
 			expectedUnbondingRecord: func() *types.UnbondingRecord {
-				_, hz, ur, _, msg := s.getDefaultTestInputs()
+				_, _, hz, ur, _, msg := s.getDefaultTestInputs()
 				ur.StTokenAmount = ur.StTokenAmount.Add(msg.StTokenAmount)
 				nativeDiff := sdk.NewDecFromInt(msg.StTokenAmount).Mul(hz.RedemptionRate).TruncateInt()
 				ur.NativeAmount = ur.NativeAmount.Add(nativeDiff)
@@ -235,27 +263,28 @@ func (s *KeeperTestSuite) TestRedeemStake() {
 				UnbondingRecordId: defaultUR.Id,
 				Redeemer:          defaultMsg.Redeemer,
 				StTokenAmount:     defaultMsg.StTokenAmount,
-				NativeAmount:      sdk.NewDecFromInt(defaultMsg.StTokenAmount).Mul(defaultHZ.RedemptionRate).TruncateInt(),
+				NativeAmount:      sdk.NewDecFromInt(defaultMsg.StTokenAmount).Mul(defaultIcaHZ.RedemptionRate).TruncateInt(),
 			},
 		},
 		{
 			testName: "[Success] RR exists already for redeemer, RedeemStake tx updates",
 
 			userAccount:      *defaultUA,
-			hostZone:         defaultHZ,
+			hostZone:         defaultMsHZ,
+			stakeibcHostZone: defaultIcaHZ,
 			accUnbondRecord:  defaultUR,
 			redemptionRecord: defaultRR,   // previous redeemption of 400_000
 			redeemMsg:        *defaultMsg, // redeem 1_000_000 stTokens
 
 			expectedUnbondingRecord: func() *types.UnbondingRecord {
-				_, hz, ur, _, msg := s.getDefaultTestInputs()
+				_, _, hz, ur, _, msg := s.getDefaultTestInputs()
 				ur.StTokenAmount = ur.StTokenAmount.Add(msg.StTokenAmount)
 				nativeDiff := sdk.NewDecFromInt(msg.StTokenAmount).Mul(hz.RedemptionRate).TruncateInt()
 				ur.NativeAmount = ur.NativeAmount.Add(nativeDiff)
 				return ur
 			}(),
 			expectedRedemptionRecord: func() *types.RedemptionRecord {
-				_, hz, _, rr, msg := s.getDefaultTestInputs()
+				_, _, hz, _, rr, msg := s.getDefaultTestInputs()
 				rr.StTokenAmount = rr.StTokenAmount.Add(msg.StTokenAmount)
 				nativeDiff := sdk.NewDecFromInt(msg.StTokenAmount).Mul(hz.RedemptionRate).TruncateInt()
 				rr.NativeAmount = rr.NativeAmount.Add(nativeDiff)
@@ -274,7 +303,7 @@ func (s *KeeperTestSuite) TestRedeemStake() {
 
 func (s *KeeperTestSuite) checkRedeemStakeTestCase(tc RedeemStakeTestCase) {
 	s.SetupTest() // reset state
-	s.SetupTestRedeemStake(tc.userAccount, tc.hostZone, tc.accUnbondRecord, tc.redemptionRecord)
+	s.SetupTestRedeemStake(tc.userAccount, tc.hostZone, tc.stakeibcHostZone, tc.accUnbondRecord, tc.redemptionRecord)
 
 	startingStEscrowBalance := sdk.NewInt64Coin(StDenom, 0)
 	if tc.hostZone != nil {
@@ -285,7 +314,7 @@ func (s *KeeperTestSuite) checkRedeemStakeTestCase(tc RedeemStakeTestCase) {
 	}
 
 	// Run the RedeemStake, verify expected errors returned or no errors with expected updates to records
-	_, err := s.App.StaketiaKeeper.RedeemStake(s.Ctx, tc.redeemMsg.Redeemer, tc.redeemMsg.StTokenAmount)
+	_, err := s.App.StaketiaKeeper.RedeemStake(s.Ctx, tc.redeemMsg.Redeemer, "", tc.redeemMsg.StTokenAmount)
 	if tc.expectedErrorContains == "" {
 		// Successful Run Test Case
 		s.Require().NoError(err, "No error expected during redeem stake execution")
