@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"context"
+	"errors"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
@@ -22,12 +23,7 @@ var _ types.MsgServer = msgServer{}
 
 // User transaction to liquid stake native tokens into stTokens
 func (k msgServer) LiquidStake(goCtx context.Context, msg *types.MsgLiquidStake) (*types.MsgLiquidStakeResponse, error) {
-	ctx := sdk.UnwrapSDKContext(goCtx)
-	stToken, err := k.Keeper.LiquidStake(ctx, msg.Staker, msg.NativeAmount)
-	if err != nil {
-		return nil, err
-	}
-	return &types.MsgLiquidStakeResponse{StToken: stToken}, nil
+	return nil, errors.New("Liquid staking is no longer enabled in staketia")
 }
 
 // User transaction to redeem stake stTokens into native tokens

@@ -48,13 +48,6 @@ func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochInfo epochstypes.EpochInf
 			k.Logger(ctx).Error(fmt.Sprintf("Unable to distribute claims for epoch %d: %s", epochNumber, err.Error()))
 		}
 	}
-
-	// Every mint epoch, liquid stake fees and distribute to fee collector
-	if epochInfo.Identifier == epochstypes.MINT_EPOCH {
-		if err := k.SafelyLiquidStakeAndDistributeFees(ctx); err != nil {
-			k.Logger(ctx).Error(fmt.Sprintf("Unable to liquid stake and distribute fees this epoch %d: %s", epochNumber, err.Error()))
-		}
-	}
 }
 
 type Hooks struct {
