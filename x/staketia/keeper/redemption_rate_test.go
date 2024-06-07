@@ -3,18 +3,19 @@ package keeper_test
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/Stride-Labs/stride/v22/x/stakeibc/types"
+	stakeibctypes "github.com/Stride-Labs/stride/v22/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v22/x/staketia/types"
 )
 
 func (s *KeeperTestSuite) TestCheckRedemptionRateExceedsBounds() {
 	testCases := []struct {
 		name          string
-		hostZone      types.HostZone
+		hostZone      stakeibctypes.HostZone
 		exceedsBounds bool
 	}{
 		{
 			name: "valid bounds",
-			hostZone: types.HostZone{
+			hostZone: stakeibctypes.HostZone{
 				MinRedemptionRate:      sdk.MustNewDecFromStr("0.8"),
 				MinInnerRedemptionRate: sdk.MustNewDecFromStr("0.9"),
 				RedemptionRate:         sdk.MustNewDecFromStr("1.0"), // <--
@@ -25,7 +26,7 @@ func (s *KeeperTestSuite) TestCheckRedemptionRateExceedsBounds() {
 		},
 		{
 			name: "outside min inner",
-			hostZone: types.HostZone{
+			hostZone: stakeibctypes.HostZone{
 				MinRedemptionRate:      sdk.MustNewDecFromStr("0.8"),
 				RedemptionRate:         sdk.MustNewDecFromStr("0.9"), // <--
 				MinInnerRedemptionRate: sdk.MustNewDecFromStr("1.0"),
@@ -36,7 +37,7 @@ func (s *KeeperTestSuite) TestCheckRedemptionRateExceedsBounds() {
 		},
 		{
 			name: "outside max inner",
-			hostZone: types.HostZone{
+			hostZone: stakeibctypes.HostZone{
 				MinRedemptionRate:      sdk.MustNewDecFromStr("0.8"),
 				MinInnerRedemptionRate: sdk.MustNewDecFromStr("0.9"),
 				MaxInnerRedemptionRate: sdk.MustNewDecFromStr("1.0"),
@@ -47,7 +48,7 @@ func (s *KeeperTestSuite) TestCheckRedemptionRateExceedsBounds() {
 		},
 		{
 			name: "outside min outer",
-			hostZone: types.HostZone{
+			hostZone: stakeibctypes.HostZone{
 				RedemptionRate:         sdk.MustNewDecFromStr("0.8"), // <--
 				MinRedemptionRate:      sdk.MustNewDecFromStr("0.9"),
 				MinInnerRedemptionRate: sdk.MustNewDecFromStr("1.0"),
@@ -58,7 +59,7 @@ func (s *KeeperTestSuite) TestCheckRedemptionRateExceedsBounds() {
 		},
 		{
 			name: "outside max outer",
-			hostZone: types.HostZone{
+			hostZone: stakeibctypes.HostZone{
 				MinRedemptionRate:      sdk.MustNewDecFromStr("0.8"),
 				MinInnerRedemptionRate: sdk.MustNewDecFromStr("0.9"),
 				MaxInnerRedemptionRate: sdk.MustNewDecFromStr("1.0"),
@@ -71,7 +72,10 @@ func (s *KeeperTestSuite) TestCheckRedemptionRateExceedsBounds() {
 
 	for _, tc := range testCases {
 		s.Run(tc.name, func() {
-			s.App.StakeibcKeeper.SetHostZone(s.Ctx, tc.hostZone)
+			hostZone := tc.hostZone
+			hostZone.ChainId = types.CelestiaChainId
+			s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
+
 			err := s.App.StaketiaKeeper.CheckRedemptionRateExceedsBounds(s.Ctx)
 			if tc.exceedsBounds {
 				s.Require().ErrorIs(err, types.ErrRedemptionRateOutsideSafetyBounds)

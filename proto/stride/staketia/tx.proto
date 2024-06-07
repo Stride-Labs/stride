@@ -107,6 +107,9 @@ message MsgRedeemStake {
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
     (gogoproto.nullable) = false
   ];
+  // The receiver field is a celestia address
+  // It is only used in the case where the redemption spills over to stakeibc
+  string receiver = 3;
 }
 message MsgRedeemStakeResponse {
   cosmos.base.v1beta1.Coin native_token = 1 [

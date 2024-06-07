@@ -29,7 +29,7 @@ func (k msgServer) LiquidStake(goCtx context.Context, msg *types.MsgLiquidStake)
 // User transaction to redeem stake stTokens into native tokens
 func (k msgServer) RedeemStake(goCtx context.Context, msg *types.MsgRedeemStake) (*types.MsgRedeemStakeResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
-	nativeToken, err := k.Keeper.RedeemStake(ctx, msg.Redeemer, msg.StTokenAmount)
+	nativeToken, err := k.Keeper.RedeemStake(ctx, msg.Redeemer, msg.Receiver, msg.StTokenAmount)
 	if err != nil {
 		return nil, err
 	}

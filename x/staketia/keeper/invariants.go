@@ -24,7 +24,7 @@ func (k Keeper) HaltZone(ctx sdk.Context) {
 	stDenom := utils.StAssetDenomFromHostZoneDenom(hostZone.NativeTokenDenom)
 	k.ratelimitKeeper.AddDenomToBlacklist(ctx, stDenom)
 
-	k.Logger(ctx).Error(fmt.Sprintf("[INVARIANT BROKEN!!!] %s's RR is %s.", hostZone.GetChainId()))
+	k.Logger(ctx).Error("[INVARIANT BROKEN!!!] %s's RR is %s.", hostZone.GetChainId())
 
 	EmitHaltZoneEvent(ctx, hostZone)
 }
