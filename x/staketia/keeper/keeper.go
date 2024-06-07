@@ -18,6 +18,7 @@ type Keeper struct {
 	bankKeeper      types.BankKeeper
 	icaOracleKeeper types.ICAOracleKeeper
 	ratelimitKeeper types.RatelimitKeeper
+	recordsKeeper   types.RecordsKeeper
 	stakeibcKeeper  types.StakeibcKeeper
 	transferKeeper  types.TransferKeeper
 }
@@ -29,6 +30,7 @@ func NewKeeper(
 	bankKeeper types.BankKeeper,
 	icaOracleKeeper types.ICAOracleKeeper,
 	ratelimitKeeper types.RatelimitKeeper,
+	recordsKeeper types.RecordsKeeper,
 	stakeibcKeeper types.StakeibcKeeper,
 	transferKeeper types.TransferKeeper,
 ) *Keeper {
@@ -39,6 +41,7 @@ func NewKeeper(
 		bankKeeper:      bankKeeper,
 		icaOracleKeeper: icaOracleKeeper,
 		ratelimitKeeper: ratelimitKeeper,
+		recordsKeeper:   recordsKeeper,
 		stakeibcKeeper:  stakeibcKeeper,
 		transferKeeper:  transferKeeper,
 	}

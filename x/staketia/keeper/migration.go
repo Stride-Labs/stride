@@ -7,6 +7,7 @@ import (
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
+	recordtypes "github.com/Stride-Labs/stride/v22/x/records/types"
 	stakeibctypes "github.com/Stride-Labs/stride/v22/x/stakeibc/types"
 	oldtypes "github.com/Stride-Labs/stride/v22/x/staketia/legacytypes"
 	"github.com/Stride-Labs/stride/v22/x/staketia/types"
@@ -32,7 +33,7 @@ func (k Keeper) UpdateStakeibcHostZone(ctx sdk.Context, legacyHostZone oldtypes.
 	// Grab the newly created stakeibc host zone
 	stakeibcHostZone, found := k.stakeibcKeeper.GetHostZone(ctx, types.CelestiaChainId)
 	if !found {
-		return errors.New("celestia host zone not found in stakeibc after registration")
+		return stakeibctypes.HostZone{}, errors.New("celestia host zone not found in stakeibc after registration")
 	}
 
 	// Disable redemptions and set the redemption rate to the one from stakeibc
@@ -50,7 +51,7 @@ func (k Keeper) UpdateStakeibcHostZone(ctx sdk.Context, legacyHostZone oldtypes.
 	stakeibcHostZone.TotalDelegations = legacyHostZone.DelegatedBalance.Add(pendingDelegations)
 	k.stakeibcKeeper.SetHostZone(ctx, stakeibcHostZone)
 
-	return stakeibcKeeper, nil
+	return stakeibcHostZone, nil
 }
 
 // Migrates the protocol owned accounts (deposit and fee) to their stakeibc counterparts
@@ -60,7 +61,6 @@ func (k Keeper) MigrateProtocolOwnedAccounts(
 	stakeibcHostZone stakeibctypes.HostZone,
 ) error {
 	// Transfer tokens from the staketia deposit account to the stakeibc deposit account
-	// and add that amount to the new stakeibc deposit record (in status TRANSFER_QUEUE)
 	ctx.Logger().Info("Migrating the deposit account...")
 	staketiaDepositAddress, err := sdk.AccAddressFromBech32(legacyHostZone.DepositAddress)
 	if err != nil {
@@ -76,6 +76,22 @@ func (k Keeper) MigrateProtocolOwnedAccounts(
 	if err != nil {
 		return errorsmod.Wrapf(err, "unable to transfer deposit accounts")
 	}
+
+	// Add that deposit amount to the new stakeibc deposit record (in status TRANSFER_QUEUE)
+	celestiaDepositRecords := []recordtypes.DepositRecord{}
+	for _, depositRecord := range k.recordsKeeper.GetAllDepositRecord(ctx) {
+		if depositRecord.HostZoneId == types.CelestiaChainId {
+			celestiaDepositRecords = append(celestiaDepositRecords, depositRecord)
+		}
+	}
+
+	if len(celestiaDepositRecords) != 1 || celestiaDepositRecords[0].Status != recordtypes.DepositRecord_TRANSFER_QUEUE {
+		return errors.New("there should only be one celestia deposit record in status TRANSFER_QUEUE")
+	}
+
+	depositRecord := celestiaDepositRecords[0]
+	depositRecord.Amount = depositBalance.Amount
+	k.recordsKeeper.SetDepositRecord(ctx, depositRecord)
 
 	// Transfer tokens from the staketia fee account to the stakeibc reward collector
 	ctx.Logger().Info("Migrating the fee account...")

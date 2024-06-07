@@ -692,6 +692,7 @@ func NewStrideApp(
 		app.BankKeeper,
 		app.ICAOracleKeeper,
 		app.RatelimitKeeper,
+		app.RecordsKeeper,
 		app.StakeibcKeeper,
 		app.TransferKeeper,
 	)

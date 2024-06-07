@@ -7,6 +7,7 @@ import (
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	transfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
 
+	recordtypes "github.com/Stride-Labs/stride/v22/x/records/types"
 	stakeibctypes "github.com/Stride-Labs/stride/v22/x/stakeibc/types"
 )
 
@@ -52,4 +53,10 @@ type StakeibcKeeper interface {
 	RedeemStake(ctx sdk.Context, msg *stakeibctypes.MsgRedeemStake) (*stakeibctypes.MsgRedeemStakeResponse, error)
 	EnableRedemptions(ctx sdk.Context, chainId string) error
 	RegisterHostZone(ctx sdk.Context, msg *stakeibctypes.MsgRegisterHostZone) (*stakeibctypes.MsgRegisterHostZoneResponse, error)
+}
+
+// Required RecordsKeeper functions
+type RecordsKeeper interface {
+	GetAllDepositRecord(ctx sdk.Context) (list []recordtypes.DepositRecord)
+	SetDepositRecord(ctx sdk.Context, depositRecord recordtypes.DepositRecord)
 }
