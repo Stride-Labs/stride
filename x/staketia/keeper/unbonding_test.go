@@ -10,6 +10,7 @@ import (
 	"github.com/Stride-Labs/stride/v22/app/apptesting"
 	"github.com/Stride-Labs/stride/v22/utils"
 	epochtypes "github.com/Stride-Labs/stride/v22/x/epochs/types"
+	recordtypes "github.com/Stride-Labs/stride/v22/x/records/types"
 	stakeibctypes "github.com/Stride-Labs/stride/v22/x/stakeibc/types"
 	"github.com/Stride-Labs/stride/v22/x/staketia/types"
 )
@@ -36,9 +37,10 @@ type RedeemStakeTestCase struct {
 	redemptionRecord *types.RedemptionRecord
 	redeemMsg        types.MsgRedeemStake
 
-	expectedUnbondingRecord  *types.UnbondingRecord
-	expectedRedemptionRecord *types.RedemptionRecord
-	expectedErrorContains    string
+	expectedUnbondingRecord          *types.UnbondingRecord
+	expectedRedemptionRecord         *types.RedemptionRecord
+	expectedStakeibcRedemptionAmount sdkmath.Int
+	expectedErrorContains            string
 }
 
 // Create the correct amounts in accounts, setup the records in store
@@ -77,8 +79,22 @@ func (s *KeeperTestSuite) SetupTestRedeemStake(
 		s.App.StaketiaKeeper.SetRedemptionRecord(s.Ctx, *redemptionRecord)
 	}
 
+	// Prepare stakeibc for a redemption
+	epochNumber := uint64(1)
 	s.App.StakeibcKeeper.SetEpochTracker(s.Ctx, stakeibctypes.EpochTracker{
 		EpochIdentifier: epochtypes.DAY_EPOCH,
+		EpochNumber:     epochNumber,
+	})
+
+	s.App.RecordsKeeper.SetEpochUnbondingRecord(s.Ctx, recordtypes.EpochUnbondingRecord{
+		EpochNumber: epochNumber,
+		HostZoneUnbondings: []*recordtypes.HostZoneUnbonding{
+			{
+				HostZoneId:        types.CelestiaChainId,
+				StTokenAmount:     sdkmath.ZeroInt(),
+				NativeTokenAmount: sdkmath.ZeroInt(),
+			},
+		},
 	})
 }
 
@@ -94,6 +110,7 @@ func (s *KeeperTestSuite) getDefaultTestInputs() (
 	redeemerAccount := s.TestAccs[0]
 	redemptionAccount := s.TestAccs[1]
 	receiverAddress := s.TestAccs[2].String()
+	depositAddress := s.TestAccs[3].String()
 
 	defaultUserAccount := Account{
 		account:      redeemerAccount,
@@ -110,6 +127,9 @@ func (s *KeeperTestSuite) getDefaultTestInputs() (
 	}
 	defaultStakeibcHostZone := stakeibctypes.HostZone{
 		ChainId:                types.CelestiaChainId,
+		HostDenom:              HostNativeDenom,
+		Bech32Prefix:           "stride",
+		DepositAddress:         depositAddress,
 		RedemptionRate:         redemptionRate,
 		MinRedemptionRate:      redemptionRate.Sub(sdk.MustNewDecFromStr("0.2")),
 		MinInnerRedemptionRate: redemptionRate.Sub(sdk.MustNewDecFromStr("0.1")),
@@ -265,6 +285,30 @@ func (s *KeeperTestSuite) TestRedeemStake() {
 			expectedErrorContains: types.ErrRedemptionsDisabled.Error(),
 		},
 		{
+			testName: "[Error] Spillover fails in stakeibc",
+
+			userAccount: *defaultUA,
+			hostZone: func() *types.HostZone {
+				_, hz, _, _, _, msg := s.getDefaultTestInputs()
+				hz.RemainingDelegatedBalance = msg.StTokenAmount.Sub(sdkmath.OneInt()) // subtract 1 so there's excess
+				return hz
+			}(),
+			stakeibcHostZone: func() *stakeibctypes.HostZone {
+				_, _, hz, _, _, _ := s.getDefaultTestInputs()
+				hz.RedemptionRate = sdk.OneDec()
+				return hz
+			}(),
+			accUnbondRecord: defaultUR,
+			redeemMsg: func() types.MsgRedeemStake {
+				// Make receiver address invalid so stakeibc fails
+				_, _, _, _, _, msg := s.getDefaultTestInputs()
+				msg.Receiver = ""
+				return *msg
+			}(),
+
+			expectedErrorContains: "unable to execute stakeibc redeem stake",
+		},
+		{
 			testName: "[Success] No RR exists yet, RedeemStake tx creates one",
 
 			userAccount:      *defaultUA,
@@ -341,6 +385,37 @@ func (s *KeeperTestSuite) TestRedeemStake() {
 				NativeAmount:      sdk.NewDecFromInt(defaultMsg.StTokenAmount).Mul(defaultIcaHZ.RedemptionRate).TruncateInt(),
 			},
 		},
+		{
+			testName: "[Success] Redeems with stakeibc spillover",
+
+			userAccount: *defaultUA,
+			hostZone: func() *types.HostZone {
+				_, hz, _, _, _, msg := s.getDefaultTestInputs()
+				hz.RemainingDelegatedBalance = msg.StTokenAmount.Sub(sdkmath.OneInt()) // subtract 1 so there's excess
+				return hz
+			}(),
+			stakeibcHostZone: func() *stakeibctypes.HostZone {
+				_, _, hz, _, _, _ := s.getDefaultTestInputs()
+				hz.RedemptionRate = sdk.OneDec()
+				return hz
+			}(),
+			accUnbondRecord: defaultUR,
+			redeemMsg:       *defaultMsg,
+
+			expectedUnbondingRecord: func() *types.UnbondingRecord {
+				_, _, _, ur, _, msg := s.getDefaultTestInputs()
+				ur.StTokenAmount = ur.StTokenAmount.Add(msg.StTokenAmount).Sub(sdkmath.OneInt())
+				ur.NativeAmount = ur.NativeAmount.Add(msg.StTokenAmount).Sub(sdkmath.OneInt())
+				return ur
+			}(),
+			expectedRedemptionRecord: &types.RedemptionRecord{
+				UnbondingRecordId: defaultUR.Id,
+				Redeemer:          defaultMsg.Redeemer,
+				StTokenAmount:     defaultMsg.StTokenAmount.Sub(sdkmath.OneInt()),
+				NativeAmount:      defaultMsg.StTokenAmount.Sub(sdkmath.OneInt()),
+			},
+			expectedStakeibcRedemptionAmount: sdkmath.OneInt(),
+		},
 	}
 
 	for _, tc := range testCases {
@@ -364,7 +439,7 @@ func (s *KeeperTestSuite) checkRedeemStakeTestCase(tc RedeemStakeTestCase) {
 	}
 
 	// Run the RedeemStake, verify expected errors returned or no errors with expected updates to records
-	_, err := s.App.StaketiaKeeper.RedeemStake(s.Ctx, tc.redeemMsg.Redeemer, "", tc.redeemMsg.StTokenAmount)
+	_, err := s.App.StaketiaKeeper.RedeemStake(s.Ctx, tc.redeemMsg.Redeemer, tc.redeemMsg.Receiver, tc.redeemMsg.StTokenAmount)
 	if tc.expectedErrorContains == "" {
 		// Successful Run Test Case
 		s.Require().NoError(err, "No error expected during redeem stake execution")
@@ -386,6 +461,14 @@ func (s *KeeperTestSuite) checkRedeemStakeTestCase(tc RedeemStakeTestCase) {
 		currentStEscrowBalance := s.App.BankKeeper.GetBalance(s.Ctx, escrowAccount, StDenom)
 		s.Require().NotEqual(startingStEscrowBalance, currentStEscrowBalance, "Escrowed balance should have changed")
 		s.Require().Equal(currentStEscrowBalance.Amount, currentAUR.StTokenAmount, "Escrowed balance does not match the UnbondingRecord")
+
+		// If there's stakeibc spillover, check that the amount was stored in the user redemption record
+		if !tc.expectedStakeibcRedemptionAmount.IsNil() {
+			userRedemptionRecords := s.App.RecordsKeeper.GetAllUserRedemptionRecord(s.Ctx)
+			s.Require().Len(userRedemptionRecords, 1, "there should be a stakeibc user redemption record")
+			s.Require().Equal(tc.expectedStakeibcRedemptionAmount.Int64(), userRedemptionRecords[0].StTokenAmount.Int64(),
+				"stakeibc user redemption record amount")
+		}
 	} else {
 		// Expected Error Test Case
 		s.Require().Error(err, "Error expected to be returned but none found")

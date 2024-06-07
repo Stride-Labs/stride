@@ -150,23 +150,23 @@ func (k Keeper) HandleRedemptionSpillover(
 ) (staketiaNativeAmount, staketiaStTokenAmount sdkmath.Int, err error) {
 	// Converts the spillover amount so that it's denominated in stTokens
 	stakeibcNativeAmount := requestedNativeAmount.Sub(remainingDelegatedBalance)
-	stakeibcStAmount := sdk.NewDecFromInt(stakeibcNativeAmount).Quo(redemptionRate).TruncateInt()
+	stakeibcStTokenAmount := sdk.NewDecFromInt(stakeibcNativeAmount).Quo(redemptionRate).TruncateInt()
 
 	// Call stakeibc's redeem stake for the excess
 	stakeibcRedeemMessage := stakeibctypes.MsgRedeemStake{
 		Creator:  redeemer,
-		Amount:   stakeibcStAmount,
+		Amount:   stakeibcStTokenAmount,
 		HostZone: types.CelestiaChainId,
 		Receiver: receiver,
 	}
 	if _, err = k.stakeibcKeeper.RedeemStake(ctx, &stakeibcRedeemMessage); err != nil {
-		return sdkmath.ZeroInt(), sdkmath.ZeroInt(), err
+		return sdkmath.ZeroInt(), sdkmath.ZeroInt(), errorsmod.Wrapf(err, "unable to execute stakeibc redeem stake")
 	}
 
 	// Return the updated staketia portion back to the staketia redeem stake
 	staketiaNativeAmount = requestedNativeAmount.Sub(stakeibcNativeAmount)
-	staketiaStTokenAmount = requestedStTokenAmount.Sub(staketiaStTokenAmount)
-	return stakeibcNativeAmount, stakeibcStAmount, nil
+	staketiaStTokenAmount = requestedStTokenAmount.Sub(stakeibcStTokenAmount)
+	return staketiaNativeAmount, staketiaStTokenAmount, nil
 }
 
 // Freezes the ACCUMULATING record by changing the status to UNBONDING_QUEUE

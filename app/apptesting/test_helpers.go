@@ -86,7 +86,7 @@ func (s *AppTestHelper) Setup() {
 		GRPCQueryRouter: s.App.GRPCQueryRouter(),
 		Ctx:             s.Ctx,
 	}
-	s.TestAccs = CreateRandomAccounts(3)
+	s.TestAccs = CreateRandomAccounts(4)
 	s.IbcEnabled = false
 	s.IcaAddresses = make(map[string]string)
 
