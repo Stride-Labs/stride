@@ -687,7 +687,7 @@ func (s *KeeperTestSuite) TestConfirmUndelegation_Success() {
 	s.Require().Equal(expectedRedemptionAccountBalance, actualRedemptionAccountBalance, "redemption account balance")
 
 	// check that delegated balance was updated
-	stakeibcHostZone, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx, HostChainId)
+	stakeibcHostZone, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx, types.CelestiaChainId)
 	s.Require().True(found)
 	s.Require().Equal(tc.delegatedBalance.Sub(tc.amountToUndelegate), stakeibcHostZone.TotalDelegations, "delegated balance")
 }
