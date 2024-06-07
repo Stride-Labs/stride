@@ -8,31 +8,6 @@ import (
 )
 
 // ----------------------------------------------
-//                MsgLiquidStake
-// ----------------------------------------------
-
-// More granular testing of liquid stake is done in the keeper function
-// This just tests the msg server wrapper
-func (s *KeeperTestSuite) TestMsgServerLiquidStake() {
-	tc := s.DefaultSetupTestLiquidStake()
-
-	// Attempt a successful liquid stake
-	validMsg := types.MsgLiquidStake{
-		Staker:       tc.stakerAddress.String(),
-		NativeAmount: tc.liquidStakeAmount,
-	}
-	resp, err := s.GetMsgServer().LiquidStake(sdk.UnwrapSDKContext(s.Ctx), &validMsg)
-	s.Require().NoError(err, "no error expected during liquid stake")
-	s.Require().Equal(tc.expectedStAmount.Int64(), resp.StToken.Amount.Int64(), "stToken amount")
-
-	s.ConfirmLiquidStakeTokenTransfer(tc)
-
-	// Attempt a liquid stake again, it should fail now that the staker is out of funds
-	_, err = s.GetMsgServer().LiquidStake(sdk.UnwrapSDKContext(s.Ctx), &validMsg)
-	s.Require().ErrorContains(err, "insufficient funds")
-}
-
-// ----------------------------------------------
 //            MsgConfirmDelegation
 // ----------------------------------------------
 
