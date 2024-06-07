@@ -133,6 +133,7 @@ func (k Keeper) RegisterHostZone(ctx sdk.Context, msg *types.MsgRegisterHostZone
 		LsmLiquidStakeEnabled:        msg.LsmLiquidStakeEnabled,
 		CommunityPoolTreasuryAddress: msg.CommunityPoolTreasuryAddress,
 		MaxMessagesPerIcaTx:          maxMessagesPerIcaTx,
+		RedemptionsEnabled:           true,
 	}
 	// write the zone back to the store
 	k.SetHostZone(ctx, zone)
