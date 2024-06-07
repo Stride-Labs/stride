@@ -24,6 +24,10 @@ func (k Keeper) RedeemStake(ctx sdk.Context, redeemer string, stTokenAmount sdkm
 	if err != nil {
 		return nativeToken, err
 	}
+	stakeibcHostZone, err := k.stakeibcKeeper.GetActiveHostZone(ctx, types.CelestiaChainId)
+	if err != nil {
+		return nativeToken, err
+	}
 
 	escrowAccount, err := sdk.AccAddressFromBech32(hostZone.RedemptionAddress)
 	if err != nil {
@@ -56,10 +60,10 @@ func (k Keeper) RedeemStake(ctx sdk.Context, redeemer string, stTokenAmount sdkm
 
 	// Estimate a placeholder native amount with current RedemptionRate
 	// this estimate will be updated when the Undelegation record is finalized
-	nativeAmount := sdk.NewDecFromInt(stTokenAmount).Mul(hostZone.RedemptionRate).TruncateInt()
-	if nativeAmount.GT(hostZone.DelegatedBalance) {
+	nativeAmount := sdk.NewDecFromInt(stTokenAmount).Mul(stakeibcHostZone.RedemptionRate).TruncateInt()
+	if nativeAmount.GT(stakeibcHostZone.TotalDelegations) {
 		return nativeToken, errorsmod.Wrapf(types.ErrUnbondAmountToLarge,
-			"cannot unstake an amount g.t. total staked balance: %v > %v", nativeAmount, hostZone.DelegatedBalance)
+			"cannot unstake an amount g.t. total staked balance: %v > %v", nativeAmount, stakeibcHostZone.TotalDelegations)
 	}
 
 	// Update the accumulating UnbondingRecord with the undelegation amounts
@@ -104,11 +108,11 @@ func (k Keeper) PrepareUndelegation(ctx sdk.Context, epochNumber uint64) error {
 	k.Logger(ctx).Info(utils.LogWithHostZone(types.CelestiaChainId, "Preparing undelegation for epoch %d", epochNumber))
 
 	// Get the redemption record from the host zone (to calculate the native tokens)
-	hostZone, err := k.GetUnhaltedHostZone(ctx)
+	stakeibcHostZone, err := k.stakeibcKeeper.GetActiveHostZone(ctx, types.CelestiaChainId)
 	if err != nil {
 		return err
 	}
-	redemptionRate := hostZone.RedemptionRate
+	redemptionRate := stakeibcHostZone.RedemptionRate
 
 	// Get the one accumulating record that has the redemptions for the past epoch
 	unbondingRecord, err := k.GetAccumulatingUnbondingRecord(ctx)
@@ -176,19 +180,21 @@ func (k Keeper) ConfirmUndelegation(ctx sdk.Context, recordId uint64, txHash str
 	}
 
 	// Note: we're intentionally not checking that the host zone is halted, because we still want to process this tx in that case
-	hostZone, err := k.GetHostZone(ctx)
+	staketiaHostZone, err := k.GetHostZone(ctx)
+	if err != nil {
+		return err
+	}
+	stakeibcHostZone, err := k.stakeibcKeeper.GetActiveHostZone(ctx, types.CelestiaChainId)
 	if err != nil {
 		return err
 	}
 
 	// sanity check: store down the stToken supply and DelegatedBalance for checking against after burn
-	stDenom := utils.StAssetDenomFromHostZoneDenom(hostZone.NativeTokenDenom)
-	stTokenSupplyBefore := k.bankKeeper.GetSupply(ctx, stDenom).Amount
-	delegatedBalanceBefore := hostZone.DelegatedBalance
+	stDenom := utils.StAssetDenomFromHostZoneDenom(staketiaHostZone.NativeTokenDenom)
 
 	// update the record's txhash, status, and unbonding completion time
-	unbondingLength := time.Duration(hostZone.UnbondingPeriodSeconds) * time.Second // 21 days
-	unbondingCompletionTime := uint64(ctx.BlockTime().Add(unbondingLength).Unix())  // now + 21 days
+	unbondingLength := time.Duration(staketiaHostZone.UnbondingPeriodSeconds) * time.Second // 21 days
+	unbondingCompletionTime := uint64(ctx.BlockTime().Add(unbondingLength).Unix())          // now + 21 days
 
 	record.UndelegationTxHash = txHash
 	record.Status = types.UNBONDING_IN_PROGRESS
@@ -197,24 +203,19 @@ func (k Keeper) ConfirmUndelegation(ctx sdk.Context, recordId uint64, txHash str
 
 	// update host zone struct's delegated balance
 	amountAddedToDelegation := record.NativeAmount
-	newDelegatedBalance := hostZone.DelegatedBalance.Sub(amountAddedToDelegation)
+	newDelegatedBalance := stakeibcHostZone.TotalDelegations.Sub(amountAddedToDelegation)
 
 	// sanity check: if the new balance is negative, throw an error
 	if newDelegatedBalance.IsNegative() {
 		return errorsmod.Wrapf(types.ErrNegativeNotAllowed, "host zone's delegated balance would be negative after undelegation")
 	}
-	hostZone.DelegatedBalance = newDelegatedBalance
-	k.SetHostZone(ctx, hostZone)
+	stakeibcHostZone.TotalDelegations = newDelegatedBalance
+	k.stakeibcKeeper.SetHostZone(ctx, stakeibcHostZone)
 
 	// burn the corresponding stTokens from the redemptionAddress
 	stTokensToBurn := sdk.NewCoins(sdk.NewCoin(stDenom, record.StTokenAmount))
-	if err := k.BurnRedeemedStTokens(ctx, stTokensToBurn, hostZone.RedemptionAddress); err != nil {
+	if err := k.BurnRedeemedStTokens(ctx, stTokensToBurn, staketiaHostZone.RedemptionAddress); err != nil {
 		return errorsmod.Wrapf(err, "unable to burn stTokens in ConfirmUndelegation")
-	}
-
-	// sanity check: check that (DelegatedBalance increment / stToken supply decrement) is within outer bounds
-	if err := k.VerifyImpliedRedemptionRateFromUnbonding(ctx, stTokenSupplyBefore, delegatedBalanceBefore); err != nil {
-		return errorsmod.Wrap(err, "ratio of delegation change to burned tokens exceeds redemption rate bounds")
 	}
 
 	EmitSuccessfulConfirmUndelegationEvent(ctx, recordId, record.NativeAmount, txHash, sender)
@@ -242,37 +243,6 @@ func (k Keeper) BurnRedeemedStTokens(ctx sdk.Context, stTokensToBurn sdk.Coins, 
 		return errorsmod.Wrapf(err, "couldn't burn %v tokens in module account", stTokensToBurn)
 	}
 
-	return nil
-}
-
-// Sanity check helper for checking diffs on delegated balance and stToken supply are within outer RR bounds
-func (k Keeper) VerifyImpliedRedemptionRateFromUnbonding(ctx sdk.Context, stTokenSupplyBefore sdkmath.Int, delegatedBalanceBefore sdkmath.Int) error {
-	hostZoneAfter, err := k.GetHostZone(ctx)
-	if err != nil {
-		return types.ErrHostZoneNotFound
-	}
-	stDenom := utils.StAssetDenomFromHostZoneDenom(hostZoneAfter.NativeTokenDenom)
-
-	// grab the delegated balance and token supply after the burn
-	delegatedBalanceAfter := hostZoneAfter.DelegatedBalance
-	stTokenSupplyAfter := k.bankKeeper.GetSupply(ctx, stDenom).Amount
-
-	// calculate the delta for both the delegated balance and stToken burn
-	delegatedBalanceDecremented := delegatedBalanceBefore.Sub(delegatedBalanceAfter)
-	stTokenSupplyBurned := stTokenSupplyBefore.Sub(stTokenSupplyAfter)
-
-	// It shouldn't be possible for this to be zero, but this will prevent a division by zero error
-	if stTokenSupplyBurned.IsZero() {
-		return types.ErrDivisionByZero
-	}
-
-	// calculate the ratio of delegated balance change to stToken burn - it should be close to the redemption rate
-	ratio := sdk.NewDecFromInt(delegatedBalanceDecremented).Quo(sdk.NewDecFromInt(stTokenSupplyBurned))
-
-	// check ratio against bounds
-	if ratio.LT(hostZoneAfter.MinRedemptionRate) || ratio.GT(hostZoneAfter.MaxRedemptionRate) {
-		return types.ErrRedemptionRateOutsideSafetyBounds
-	}
 	return nil
 }
 

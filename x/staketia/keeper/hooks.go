@@ -23,20 +23,6 @@ func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochInfo epochstypes.EpochInf
 	// Every day, refresh the redemption rate and prepare delegations
 	// Every 4 days, prepare undelegations
 	if epochInfo.Identifier == epochstypes.DAY_EPOCH {
-		// Update the redemption rate
-		// If this fails, do not proceed to the delegation or undelegation step
-		// Note: This must be run first because it is used when refreshing the native token
-		// balance in prepare undelegation
-		if err := k.UpdateRedemptionRate(ctx); err != nil {
-			k.Logger(ctx).Error(fmt.Sprintf("Unable update redemption rate: %s", err.Error()))
-			return
-		}
-
-		// Post the redemption rate to the oracle (if it doesn't exceed the bounds)
-		if err := k.PostRedemptionRateToOracles(ctx); err != nil {
-			k.Logger(ctx).Error(fmt.Sprintf("Unable to post redemption rate to oracle: %s", err.Error()))
-		}
-
 		// Prepare delegations by transferring the deposited tokens to the host zone
 		if err := k.SafelyPrepareDelegation(ctx, epochNumber, epochInfo.Duration); err != nil {
 			k.Logger(ctx).Error(fmt.Sprintf("Unable to prepare delegation for epoch %d: %s", epochNumber, err.Error()))

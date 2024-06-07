@@ -153,7 +153,7 @@ func (s *KeeperTestSuite) SetupDelegationRecords() {
 
 	// Set HostZone
 	hostZone := s.initializeHostZone()
-	hostZone.DelegatedBalance = InitialDelegation
+	hostZone.RemainingDelegatedBalance = InitialDelegation
 	s.App.StaketiaKeeper.SetHostZone(s.Ctx, hostZone)
 }
 
@@ -196,7 +196,7 @@ func (s *KeeperTestSuite) VerifyDelegationRecords(verifyIdentical bool, archiveI
 		// if nothing should have changed, verify that host zone balance is unmodified
 		if verifyIdentical {
 			// verify hostZone delegated balance is same as initial delegation
-			s.Require().Equal(InitialDelegation.Int64(), hostZone.DelegatedBalance.Int64(), "hostZone delegated balance should not have changed")
+			s.Require().Equal(InitialDelegation.Int64(), hostZone.RemainingDelegatedBalance.Int64(), "hostZone delegated balance should not have changed")
 		}
 	}
 }
@@ -220,7 +220,7 @@ func (s *KeeperTestSuite) TestConfirmDelegation_Successful() {
 
 	// verify hostZone delegated balance is same as initial delegation + 6000
 	hostZone := s.MustGetHostZone()
-	s.Require().Equal(InitialDelegation.Int64()+6000, hostZone.DelegatedBalance.Int64(), "hostZone delegated balance should have increased by 6000")
+	s.Require().Equal(InitialDelegation.Int64()+6000, hostZone.RemainingDelegatedBalance.Int64(), "hostZone delegated balance should have increased by 6000")
 }
 
 func (s *KeeperTestSuite) TestConfirmDelegation_DelegationZero() {

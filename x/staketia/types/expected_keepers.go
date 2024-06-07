@@ -47,4 +47,6 @@ type ICAOracleKeeper interface {
 // Required StakeibcKeeper functions
 type StakeibcKeeper interface {
 	GetHostZone(ctx sdk.Context, chainId string) (val stakeibctypes.HostZone, found bool)
+	GetActiveHostZone(ctx sdk.Context, chainId string) (hostZone stakeibctypes.HostZone, err error)
+	SetHostZone(ctx sdk.Context, hostZone stakeibctypes.HostZone)
 }

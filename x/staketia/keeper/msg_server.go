@@ -4,10 +4,7 @@ import (
 	"context"
 	"errors"
 
-	errorsmod "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-
-	"github.com/Stride-Labs/stride/v22/utils"
 
 	"github.com/Stride-Labs/stride/v22/x/staketia/types"
 )
@@ -107,10 +104,10 @@ func (k msgServer) AdjustDelegatedBalance(goCtx context.Context, msg *types.MsgA
 	if err != nil {
 		return nil, err
 	}
-	hostZone.DelegatedBalance = hostZone.DelegatedBalance.Add(msg.DelegationOffset)
+	hostZone.RemainingDelegatedBalance = hostZone.RemainingDelegatedBalance.Add(msg.DelegationOffset)
 
 	// safety check that this will not cause the delegated balance to be negative
-	if hostZone.DelegatedBalance.IsNegative() {
+	if hostZone.RemainingDelegatedBalance.IsNegative() {
 		return nil, types.ErrNegativeNotAllowed.Wrapf("offset would cause the delegated balance to be negative")
 	}
 	k.SetHostZone(ctx, hostZone)
@@ -130,71 +127,14 @@ func (k msgServer) AdjustDelegatedBalance(goCtx context.Context, msg *types.MsgA
 
 // Adjusts the inner redemption rate bounds on the host zone
 func (k msgServer) UpdateInnerRedemptionRateBounds(goCtx context.Context, msg *types.MsgUpdateInnerRedemptionRateBounds) (*types.MsgUpdateInnerRedemptionRateBoundsResponse, error) {
-	ctx := sdk.UnwrapSDKContext(goCtx)
-
-	// gate this transaction to the BOUNDS address
-	if err := utils.ValidateAdminAddress(msg.Creator); err != nil {
-		return nil, types.ErrInvalidAdmin
-	}
-
-	// Fetch the zone
-	zone, err := k.GetHostZone(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	// Get the outer bounds
-	maxOuterBound := zone.MaxRedemptionRate
-	minOuterBound := zone.MinRedemptionRate
-
-	// Confirm the inner bounds are within the outer bounds
-	maxInnerBound := msg.MaxInnerRedemptionRate
-	minInnerBound := msg.MinInnerRedemptionRate
-	if maxInnerBound.GT(maxOuterBound) {
-		return nil, types.ErrInvalidRedemptionRateBounds
-	}
-	if minInnerBound.LT(minOuterBound) {
-		return nil, types.ErrInvalidRedemptionRateBounds
-	}
-
-	// Set the inner bounds on the host zone
-	zone.MinInnerRedemptionRate = minInnerBound
-	zone.MaxInnerRedemptionRate = maxInnerBound
-
-	// Update the host zone
-	k.SetHostZone(ctx, zone)
-
+	_ = sdk.UnwrapSDKContext(goCtx)
 	return &types.MsgUpdateInnerRedemptionRateBoundsResponse{}, nil
 }
 
 // Unhalts the host zone if redemption rates were exceeded
 // BOUNDS: verified in ValidateBasic
 func (k msgServer) ResumeHostZone(goCtx context.Context, msg *types.MsgResumeHostZone) (*types.MsgResumeHostZoneResponse, error) {
-	ctx := sdk.UnwrapSDKContext(goCtx)
-
-	// gate this transaction to the BOUNDS address
-	if err := utils.ValidateAdminAddress(msg.Creator); err != nil {
-		return nil, types.ErrInvalidAdmin
-	}
-
-	// Note: of course we don't want to fail this if the zone is halted!
-	zone, err := k.GetHostZone(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	// Check the zone is halted
-	if !zone.Halted {
-		return nil, errorsmod.Wrapf(types.ErrHostZoneNotHalted, "zone is not halted")
-	}
-
-	stDenom := utils.StAssetDenomFromHostZoneDenom(zone.NativeTokenDenom)
-	k.ratelimitKeeper.RemoveDenomFromBlacklist(ctx, stDenom)
-
-	// Resume zone
-	zone.Halted = false
-	k.SetHostZone(ctx, zone)
-
+	_ = sdk.UnwrapSDKContext(goCtx)
 	return &types.MsgResumeHostZoneResponse{}, nil
 }
 
@@ -207,9 +147,7 @@ func (k msgServer) RefreshRedemptionRate(goCtx context.Context, msgTriggerRedemp
 		return nil, err
 	}
 
-	err := k.UpdateRedemptionRate(ctx)
-
-	return &types.MsgRefreshRedemptionRateResponse{}, err
+	return &types.MsgRefreshRedemptionRateResponse{}, nil
 }
 
 // overwrite a delegation record
