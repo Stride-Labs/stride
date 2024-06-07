@@ -495,7 +495,7 @@ func (s *KeeperTestSuite) TestPrepareUndelegation() {
 	oldRedemptionRate := sdk.MustNewDecFromStr("1.9")
 	redemptionRate := sdk.MustNewDecFromStr("1.999")
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, stakeibctypes.HostZone{
-		ChainId:        HostChainId,
+		ChainId:        types.CelestiaChainId,
 		RedemptionRate: redemptionRate,
 	})
 
@@ -582,12 +582,13 @@ func (s *KeeperTestSuite) TestPrepareUndelegation() {
 	s.Require().ErrorContains(err, "more than one record in status ACCUMULATING")
 
 	// Halt the host zone and try again - it should fail
-	hostZone := s.MustGetHostZone()
+	hostZone, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx, types.CelestiaChainId)
+	s.Require().True(found)
 	hostZone.Halted = true
-	s.App.StaketiaKeeper.SetHostZone(s.Ctx, hostZone)
+	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
 
 	err = s.App.StaketiaKeeper.PrepareUndelegation(s.Ctx, epochNumber)
-	s.Require().ErrorContains(err, "host zone is halted")
+	s.Require().ErrorContains(err, "host zone celestia is halted")
 }
 
 // ----------------------------------------------
@@ -626,7 +627,7 @@ func (s *KeeperTestSuite) SetupTestConfirmUndelegation(amountToUndelegate sdkmat
 	s.App.StaketiaKeeper.SetHostZone(s.Ctx, staketiaHostZone)
 
 	stakeibcHostZone := stakeibctypes.HostZone{
-		ChainId:          HostChainId,
+		ChainId:          types.CelestiaChainId,
 		RedemptionRate:   sdk.MustNewDecFromStr("1.1"),
 		TotalDelegations: delegatedBalance,
 	}
