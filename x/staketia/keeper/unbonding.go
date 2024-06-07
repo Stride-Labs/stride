@@ -1,7 +1,6 @@
 package keeper
 
 import (
-	"errors"
 	"fmt"
 	"time"
 
@@ -38,8 +37,8 @@ func (k Keeper) RedeemStake(
 
 	// If the remaining delegated balance for staketia is 0, that means we've undelegated
 	// all the stake in the MS account and the redemptions should be switched over to stakeibc
-	if hostZone.RemainingDelegatedBalance.IsZero() {
-		return nativeToken, errors.New("Redemptions are no longer enabled with staketia")
+	if hostZone.RemainingDelegatedBalance.LTE(sdkmath.ZeroInt()) {
+		return nativeToken, types.ErrRedemptionsDisabled
 	}
 
 	escrowAccount, err := sdk.AccAddressFromBech32(hostZone.RedemptionAddress)

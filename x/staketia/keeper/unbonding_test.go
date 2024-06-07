@@ -9,6 +9,7 @@ import (
 
 	"github.com/Stride-Labs/stride/v22/app/apptesting"
 	"github.com/Stride-Labs/stride/v22/utils"
+	epochtypes "github.com/Stride-Labs/stride/v22/x/epochs/types"
 	stakeibctypes "github.com/Stride-Labs/stride/v22/x/stakeibc/types"
 	"github.com/Stride-Labs/stride/v22/x/staketia/types"
 )
@@ -75,6 +76,10 @@ func (s *KeeperTestSuite) SetupTestRedeemStake(
 	if redemptionRecord != nil {
 		s.App.StaketiaKeeper.SetRedemptionRecord(s.Ctx, *redemptionRecord)
 	}
+
+	s.App.StakeibcKeeper.SetEpochTracker(s.Ctx, stakeibctypes.EpochTracker{
+		EpochIdentifier: epochtypes.DAY_EPOCH,
+	})
 }
 
 // Default values for key variables, different tests will change 1-2 fields for setup
@@ -88,6 +93,7 @@ func (s *KeeperTestSuite) getDefaultTestInputs() (
 ) {
 	redeemerAccount := s.TestAccs[0]
 	redemptionAccount := s.TestAccs[1]
+	receiverAddress := s.TestAccs[2].String()
 
 	defaultUserAccount := Account{
 		account:      redeemerAccount,
@@ -131,6 +137,7 @@ func (s *KeeperTestSuite) getDefaultTestInputs() (
 	defaultMsg := types.MsgRedeemStake{
 		Redeemer:      redeemerAccount.String(),
 		StTokenAmount: sdk.NewInt(1_000_000),
+		Receiver:      receiverAddress,
 	}
 
 	return &defaultUserAccount, &defaultStaketiaHostZone, &defaultStakeibcHostZone,
@@ -243,6 +250,21 @@ func (s *KeeperTestSuite) TestRedeemStake() {
 			expectedErrorContains: types.ErrUnbondAmountToLarge.Error(),
 		},
 		{
+			testName: "[Error] Redeeming is disabled",
+
+			userAccount: *defaultUA,
+			hostZone: func() *types.HostZone {
+				_, hz, _, _, _, _ := s.getDefaultTestInputs()
+				hz.RemainingDelegatedBalance = sdkmath.ZeroInt()
+				return hz
+			}(),
+			stakeibcHostZone: defaultIcaHZ,
+			accUnbondRecord:  defaultUR,
+			redeemMsg:        *defaultMsg,
+
+			expectedErrorContains: types.ErrRedemptionsDisabled.Error(),
+		},
+		{
 			testName: "[Success] No RR exists yet, RedeemStake tx creates one",
 
 			userAccount:      *defaultUA,
@@ -290,6 +312,34 @@ func (s *KeeperTestSuite) TestRedeemStake() {
 				rr.NativeAmount = rr.NativeAmount.Add(nativeDiff)
 				return rr
 			}(),
+		},
+		{
+			testName: "[Success] Redeems all remaining balance",
+
+			userAccount: *defaultUA,
+			hostZone: func() *types.HostZone {
+				_, msHz, icaHz, _, _, msg := s.getDefaultTestInputs()
+				nativeRedeemAmount := sdk.NewDecFromInt(msg.StTokenAmount).Mul(icaHz.RedemptionRate).TruncateInt()
+				msHz.RemainingDelegatedBalance = nativeRedeemAmount
+				return msHz
+			}(),
+			stakeibcHostZone: defaultIcaHZ,
+			accUnbondRecord:  defaultUR,
+			redeemMsg:        *defaultMsg,
+
+			expectedUnbondingRecord: func() *types.UnbondingRecord {
+				_, _, hz, ur, _, msg := s.getDefaultTestInputs()
+				ur.StTokenAmount = ur.StTokenAmount.Add(msg.StTokenAmount)
+				nativeDiff := sdk.NewDecFromInt(msg.StTokenAmount).Mul(hz.RedemptionRate).TruncateInt()
+				ur.NativeAmount = ur.NativeAmount.Add(nativeDiff)
+				return ur
+			}(),
+			expectedRedemptionRecord: &types.RedemptionRecord{
+				UnbondingRecordId: defaultUR.Id,
+				Redeemer:          defaultMsg.Redeemer,
+				StTokenAmount:     defaultMsg.StTokenAmount,
+				NativeAmount:      sdk.NewDecFromInt(defaultMsg.StTokenAmount).Mul(defaultIcaHZ.RedemptionRate).TruncateInt(),
+			},
 		},
 	}
 
