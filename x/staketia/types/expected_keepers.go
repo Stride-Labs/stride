@@ -50,4 +50,5 @@ type StakeibcKeeper interface {
 	GetActiveHostZone(ctx sdk.Context, chainId string) (hostZone stakeibctypes.HostZone, err error)
 	SetHostZone(ctx sdk.Context, hostZone stakeibctypes.HostZone)
 	RedeemStake(ctx sdk.Context, msg *stakeibctypes.MsgRedeemStake) (*stakeibctypes.MsgRedeemStakeResponse, error)
+	EnableRedemptions(ctx sdk.Context, chainId string) error
 }

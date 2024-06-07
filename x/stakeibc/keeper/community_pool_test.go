@@ -352,6 +352,7 @@ func (s *KeeperTestSuite) SetupRedeemCommunityPoolTokens() RedeemCommunityPoolTo
 		DepositAddress:                    depositAddress.String(),
 		TotalDelegations:                  initialStTokens, // at least as much as we are trying to redeem
 		RedemptionRate:                    sdk.OneDec(),
+		RedemptionsEnabled:                true,
 	}
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
 

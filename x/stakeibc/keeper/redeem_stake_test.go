@@ -50,12 +50,13 @@ func (s *KeeperTestSuite) SetupRedeemStake() RedeemStakeTestCase {
 
 	// TODO define the host zone with total delegation and validators with staked amounts
 	hostZone := stakeibctypes.HostZone{
-		ChainId:          HostChainId,
-		HostDenom:        "uatom",
-		Bech32Prefix:     "cosmos",
-		RedemptionRate:   redemptionRate,
-		TotalDelegations: sdkmath.NewInt(1234567890),
-		DepositAddress:   depositAddress.String(),
+		ChainId:            HostChainId,
+		HostDenom:          "uatom",
+		Bech32Prefix:       "cosmos",
+		RedemptionRate:     redemptionRate,
+		TotalDelegations:   sdkmath.NewInt(1234567890),
+		DepositAddress:     depositAddress.String(),
+		RedemptionsEnabled: true,
 	}
 
 	epochTrackerDay := stakeibctypes.EpochTracker{
@@ -292,4 +293,16 @@ func (s *KeeperTestSuite) TestRedeemStake_HaltedZone() {
 
 	_, err := s.GetMsgServer().RedeemStake(sdk.WrapSDKContext(s.Ctx), &tc.validMsg)
 	s.Require().EqualError(err, "halted host zone found for zone (GAIA): Halted host zone found")
+}
+
+func (s *KeeperTestSuite) TestRedeemStake_RedemptionsDisabled() {
+	tc := s.SetupRedeemStake()
+
+	// Update hostzone with halted
+	haltedHostZone, _ := s.App.StakeibcKeeper.GetHostZone(s.Ctx, tc.validMsg.HostZone)
+	haltedHostZone.RedemptionsEnabled = false
+	s.App.StakeibcKeeper.SetHostZone(s.Ctx, haltedHostZone)
+
+	_, err := s.GetMsgServer().RedeemStake(sdk.WrapSDKContext(s.Ctx), &tc.validMsg)
+	s.Require().ErrorContains(err, "redemptions disabled")
 }

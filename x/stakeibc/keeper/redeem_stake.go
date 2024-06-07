@@ -32,6 +32,10 @@ func (k Keeper) RedeemStake(ctx sdk.Context, msg *types.MsgRedeemStake) (*types.
 		return nil, errorsmod.Wrapf(types.ErrHaltedHostZone, "halted host zone found for zone (%s)", msg.HostZone)
 	}
 
+	if !hostZone.RedemptionsEnabled {
+		return nil, errorsmod.Wrapf(types.ErrRedemptionsDisabled, "redemptions disabled for %s", msg.HostZone)
+	}
+
 	// first construct a user redemption record
 	epochTracker, found := k.GetEpochTracker(ctx, "day")
 	if !found {
