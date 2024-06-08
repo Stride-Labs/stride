@@ -28,6 +28,14 @@ func (k Keeper) GetLegacyHostZone(ctx sdk.Context) (hostZone oldtypes.HostZone, 
 	return hostZone, nil
 }
 
+// Helper to deserialize store a host zone with the old type definition
+// (only used for tests)
+func (k Keeper) SetLegacyHostZone(ctx sdk.Context, hostZone oldtypes.HostZone) {
+	store := ctx.KVStore(k.storeKey)
+	hostZoneBz := k.cdc.MustMarshal(&hostZone)
+	store.Set(types.HostZoneKey, hostZoneBz)
+}
+
 // Update the newly created stakeibc host zone with the accounting values from staketia
 func (k Keeper) UpdateStakeibcHostZone(ctx sdk.Context, legacyHostZone oldtypes.HostZone) (stakeibctypes.HostZone, error) {
 	// Grab the newly created stakeibc host zone
@@ -38,7 +46,7 @@ func (k Keeper) UpdateStakeibcHostZone(ctx sdk.Context, legacyHostZone oldtypes.
 
 	// Disable redemptions and set the redemption rate to the one from stakeibc
 	stakeibcHostZone.RedemptionsEnabled = false
-	stakeibcHostZone.RedemptionRate = legacyHostZone.LastRedemptionRate
+	stakeibcHostZone.RedemptionRate = legacyHostZone.RedemptionRate
 
 	// Set the total delegations to the sum of the staketia total, plus any delegation records
 	// This is so we don't have to trigger any stakeibc account changes when delegations are

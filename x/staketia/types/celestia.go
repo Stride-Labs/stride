@@ -19,6 +19,8 @@ const (
 	CelestiaUnbondingPeriodDays    = 21
 	CelestiaUnbondingPeriodSeconds = uint64(CelestiaUnbondingPeriodDays * 24 * 60 * 60) // 21 days
 
-	CelestiaConnectionId = "connection-125"
-	CelestiaBechPrefix   = "celestia"
+	CelestiaBechPrefix = "celestia"
 )
+
+// The connection ID is stored as a var so it can be overriden in tests
+var CelestiaConnectionId = "connection-125"
