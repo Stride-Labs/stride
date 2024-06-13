@@ -4,6 +4,7 @@ import (
 	"os"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/Stride-Labs/stride/v22/x/stakeibc/client/cli"
@@ -32,7 +33,13 @@ func TestCmdLSMLiquidStake(t *testing.T) {
 func TestCmdRegisterHostZone(t *testing.T) {
 	t.Run("unbonding-period not a number", func(t *testing.T) {
 		args := []string{
-			"[connection-id]", "[host-denom]", "[bech32prefix]", "[ibc-denom]", "[channel-id]", "[unbonding-period]", "1",
+			"[connection-id]",
+			"[host-denom]",
+			"[bech32prefix]",
+			"[ibc-denom]",
+			"[channel-id]",
+			"[unbonding-period]",
+			"1",
 		}
 
 		cmd := cli.CmdRegisterHostZone()
@@ -41,7 +48,13 @@ func TestCmdRegisterHostZone(t *testing.T) {
 
 	t.Run("lsm-enabled not a boolean", func(t *testing.T) {
 		args := []string{
-			"[connection-id]", "[host-denom]", "[bech32prefix]", "[ibc-denom]", "[channel-id]", "0", "2",
+			"[connection-id]",
+			"[host-denom]",
+			"[bech32prefix]",
+			"[ibc-denom]",
+			"[channel-id]",
+			"0",
+			"2",
 		}
 
 		cmd := cli.CmdRegisterHostZone()
@@ -51,7 +64,9 @@ func TestCmdRegisterHostZone(t *testing.T) {
 
 func TestCmdRedeemStake(t *testing.T) {
 	args := []string{
-		"[amount]", "[hostZoneID]", "[receiver]",
+		"[amount]",
+		"[hostZoneID]",
+		"[receiver]",
 	}
 
 	cmd := cli.CmdRedeemStake()
@@ -60,7 +75,9 @@ func TestCmdRedeemStake(t *testing.T) {
 
 func TestCmdClaimUndelegatedTokens(t *testing.T) {
 	args := []string{
-		"[host-zone]", "[epoch]", "[receiver]",
+		"[host-zone]",
+		"[epoch]",
+		"[receiver]",
 	}
 
 	cmd := cli.CmdClaimUndelegatedTokens()
@@ -69,7 +86,8 @@ func TestCmdClaimUndelegatedTokens(t *testing.T) {
 
 func TestCmdRebalanceValidators(t *testing.T) {
 	args := []string{
-		"[host-zone]", "[num-to-rebalance]",
+		"[host-zone]",
+		"[num-to-rebalance]",
 	}
 
 	cmd := cli.CmdRebalanceValidators()
@@ -79,7 +97,8 @@ func TestCmdRebalanceValidators(t *testing.T) {
 func TestCmdAddValidators(t *testing.T) {
 	t.Run("no file", func(t *testing.T) {
 		args := []string{
-			"[host-zone]", "[validator-list-file]",
+			"[host-zone]",
+			"[validator-list-file]",
 		}
 
 		cmd := cli.CmdAddValidators()
@@ -92,14 +111,14 @@ func TestCmdAddValidators(t *testing.T) {
 		defer f.Close()
 
 		args := []string{
-			"[host-zone]", f.Name(),
+			"[host-zone]",
+			f.Name(),
 		}
 
 		cmd := cli.CmdAddValidators()
 		ExecuteCLIExpectError(t, cmd, args, `unexpected end of JSON input`)
 	})
-	t.Run("non-JSON file", func(t *testing.T) {
-		// pass a temp file with non-JSON content
+	t.Run("non json file", func(t *testing.T) {
 		f, err := os.CreateTemp("", "")
 		require.NoError(t, err)
 		defer f.Close()
@@ -107,17 +126,35 @@ func TestCmdAddValidators(t *testing.T) {
 		require.NoError(t, err)
 
 		args := []string{
-			"[host-zone]", f.Name(),
+			"[host-zone]",
+			f.Name(),
 		}
 
 		cmd := cli.CmdAddValidators()
 		ExecuteCLIExpectError(t, cmd, args, `invalid character 'T' looking for beginning of value`)
 	})
+	t.Run("wrong json format", func(t *testing.T) {
+		f, err := os.CreateTemp("", "")
+		require.NoError(t, err)
+		defer f.Close()
+		_, err = f.WriteString(`{"blabla_validator_weights":[{"address":"cosmosXXX","weight":1}]}`)
+		require.NoError(t, err)
+
+		args := []string{
+			"[host-zone]",
+			f.Name(),
+		}
+
+		cmd := cli.CmdAddValidators()
+		ExecuteCLIExpectError(t, cmd, args, `invalid creator address (empty address string is not allowed): invalid address`)
+	})
 }
 
 func TestCmdChangeValidatorWeight(t *testing.T) {
 	args := []string{
-		"[host-zone]", "[address]", "[weight]",
+		"[host-zone]",
+		"[address]",
+		"[weight]",
 	}
 
 	cmd := cli.CmdChangeValidatorWeight()
@@ -127,7 +164,8 @@ func TestCmdChangeValidatorWeight(t *testing.T) {
 func TestCmdChangeMultipleValidatorWeight(t *testing.T) {
 	t.Run("no file", func(t *testing.T) {
 		args := []string{
-			"[host-zone]", "[validator-list-file]",
+			"[host-zone]",
+			"[validator-list-file]",
 		}
 
 		cmd := cli.CmdChangeMultipleValidatorWeight()
@@ -140,14 +178,14 @@ func TestCmdChangeMultipleValidatorWeight(t *testing.T) {
 		defer f.Close()
 
 		args := []string{
-			"[host-zone]", f.Name(),
+			"[host-zone]",
+			f.Name(),
 		}
 
 		cmd := cli.CmdChangeMultipleValidatorWeight()
 		ExecuteCLIExpectError(t, cmd, args, `unexpected end of JSON input`)
 	})
-	t.Run("non-JSON file", func(t *testing.T) {
-		// pass a temp file with non-JSON content
+	t.Run("non json file", func(t *testing.T) {
 		f, err := os.CreateTemp("", "")
 		require.NoError(t, err)
 		defer f.Close()
@@ -155,58 +193,51 @@ func TestCmdChangeMultipleValidatorWeight(t *testing.T) {
 		require.NoError(t, err)
 
 		args := []string{
-			"[host-zone]", f.Name(),
+			"[host-zone]",
+			f.Name(),
 		}
 
 		cmd := cli.CmdChangeMultipleValidatorWeight()
 		ExecuteCLIExpectError(t, cmd, args, `invalid character 'T' looking for beginning of value`)
 	})
+	t.Run("wrong json format", func(t *testing.T) {
+		f, err := os.CreateTemp("", "")
+		require.NoError(t, err)
+		defer f.Close()
+		_, err = f.WriteString(`{"blabla_validator_weights":[{"address":"cosmosXXX","weight":1}]}`)
+		require.NoError(t, err)
+
+		args := []string{
+			"[host-zone]",
+			f.Name(),
+		}
+
+		cmd := cli.CmdChangeMultipleValidatorWeight()
+		ExecuteCLIExpectError(t, cmd, args, `invalid creator address (empty address string is not allowed): invalid address`)
+	})
 }
 
 func TestCmdDeleteValidator(t *testing.T) {
-	args := []string{
-		"1",
-		"utia",
-	}
-
-	cmd := cli.CmdDeleteValidator()
-	ExecuteCLIExpectError(t, cmd, args, `can not convert string to int: invalid type`)
+	// no input parsing to test
 }
 
 func TestCmdRestoreInterchainAccount(t *testing.T) {
-	args := []string{
-		"1",
-		"utia",
-	}
-
-	cmd := cli.CmdRestoreInterchainAccount()
-	ExecuteCLIExpectError(t, cmd, args, `can not convert string to int: invalid type`)
+	// no input parsing to test
 }
 
 func TestCmdUpdateValidatorSharesExchRate(t *testing.T) {
-	args := []string{
-		"1",
-		"utia",
-	}
-
-	cmd := cli.CmdUpdateValidatorSharesExchRate()
-	ExecuteCLIExpectError(t, cmd, args, `can not convert string to int: invalid type`)
+	// no input parsing to test
 }
 
 func TestCmdCalibrateDelegation(t *testing.T) {
-	args := []string{
-		"1",
-		"utia",
-	}
-
-	cmd := cli.CmdCalibrateDelegation()
-	ExecuteCLIExpectError(t, cmd, args, `can not convert string to int: invalid type`)
+	// no input parsing to test
 }
 
 func TestCmdClearBalance(t *testing.T) {
 	args := []string{
-		"1",
-		"utia",
+		"[chain-id]",
+		"[amount]",
+		"[channel-id]",
 	}
 
 	cmd := cli.CmdClearBalance()
@@ -214,41 +245,66 @@ func TestCmdClearBalance(t *testing.T) {
 }
 
 func TestCmdUpdateInnerRedemptionRateBounds(t *testing.T) {
-	args := []string{
-		"1",
-		"utia",
-	}
+	t.Run("invalid min-bound", func(t *testing.T) {
+		args := []string{
+			"[chainid]",
+			"[min-bound]",
+			"[max-bound]",
+		}
 
-	cmd := cli.CmdUpdateInnerRedemptionRateBounds()
-	ExecuteCLIExpectError(t, cmd, args, `can not convert string to int: invalid type`)
+		cmd := cli.CmdUpdateInnerRedemptionRateBounds()
+		assert.PanicsWithError(t, "failed to set decimal string with base 10: [min-bound]000000000000000000", func() {
+			ExecuteCLIExpectError(t, cmd, args, "")
+		})
+	})
+	t.Run("invalid max-bound", func(t *testing.T) {
+		args := []string{
+			"[chainid]",
+			"0.123",
+			"[max-bound]",
+		}
+
+		cmd := cli.CmdUpdateInnerRedemptionRateBounds()
+		assert.PanicsWithError(t, "failed to set decimal string with base 10: [max-bound]000000000000000000", func() {
+			ExecuteCLIExpectError(t, cmd, args, "")
+		})
+	})
 }
 
 func TestCmdResumeHostZone(t *testing.T) {
-	args := []string{
-		"1",
-		"utia",
-	}
-
-	cmd := cli.CmdResumeHostZone()
-	ExecuteCLIExpectError(t, cmd, args, `can not convert string to int: invalid type`)
+	// no input parsing to test
 }
 
 func TestCmdSetCommunityPoolRebate(t *testing.T) {
-	args := []string{
-		"1",
-		"utia",
-	}
+	t.Run("invalid rebate-rate", func(t *testing.T) {
+		args := []string{
+			"[chain-id]",
+			"[rebate-rate]",
+			"[liquid-staked-sttoken-amount]",
+		}
 
-	cmd := cli.CmdSetCommunityPoolRebate()
-	ExecuteCLIExpectError(t, cmd, args, `can not convert string to int: invalid type`)
+		cmd := cli.CmdSetCommunityPoolRebate()
+		ExecuteCLIExpectError(t, cmd, args, `unable to parse rebate percentage: failed to set decimal string with base 10: [rebate-rate]000000000000000000`)
+	})
+	t.Run("invalid liquid-staked-sttoken-amount", func(t *testing.T) {
+		args := []string{
+			"[chain-id]",
+			"0.123456789",
+			"[liquid-staked-sttoken-amount]",
+		}
+
+		cmd := cli.CmdSetCommunityPoolRebate()
+		ExecuteCLIExpectError(t, cmd, args, `unable to parse liquid stake amount`)
+	})
 }
 
 func TestCmdToggleTradeController(t *testing.T) {
 	args := []string{
-		"1",
-		"utia",
+		"[trade-chain-id]",
+		"[grant|revoke]",
+		"[address]",
 	}
 
 	cmd := cli.CmdToggleTradeController()
-	ExecuteCLIExpectError(t, cmd, args, `can not convert string to int: invalid type`)
+	ExecuteCLIExpectError(t, cmd, args, `invalid permission change, must be either 'grant' or 'revoke'`)
 }
