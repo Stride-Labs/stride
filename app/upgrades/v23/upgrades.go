@@ -1,6 +1,7 @@
 package v23
 
 import (
+	errorsmod "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
@@ -9,6 +10,7 @@ import (
 	recordskeeper "github.com/Stride-Labs/stride/v22/x/records/keeper"
 	recordstypes "github.com/Stride-Labs/stride/v22/x/records/types"
 	stakeibckeeper "github.com/Stride-Labs/stride/v22/x/stakeibc/keeper"
+	staketiakeeper "github.com/Stride-Labs/stride/v22/x/staketia/keeper"
 )
 
 var (
@@ -20,19 +22,21 @@ func CreateUpgradeHandler(
 	mm *module.Manager,
 	configurator module.Configurator,
 	stakeibcKeeper stakeibckeeper.Keeper,
+	staketiaKeeper staketiakeeper.Keeper,
 	recordsKeeper recordskeeper.Keeper,
 ) upgradetypes.UpgradeHandler {
 	return func(ctx sdk.Context, _ upgradetypes.Plan, vm module.VersionMap) (module.VersionMap, error) {
 		ctx.Logger().Info("Starting upgrade v23...")
 
-		ctx.Logger().Info("Migrating trade routes...")
+		// Migrate data structures
 		MigrateTradeRoutes(ctx, stakeibcKeeper)
-
-		ctx.Logger().Info("Migrating epoch unbonding records...")
 		MigrateEpochUnbondingRecords(ctx, recordsKeeper)
-
-		ctx.Logger().Info("Migrating host zones...")
 		MigrateHostZones(ctx, stakeibcKeeper)
+
+		// Migrate staketia to stakeibc
+		if err := staketiakeeper.InitiateMigration(staketiaKeeper, ctx); err != nil {
+			return vm, errorsmod.Wrapf(err, "unable to migrate staketia to stakeibc")
+		}
 
 		ctx.Logger().Info("Running module migrations...")
 		return mm.RunMigrations(ctx, configurator, vm)
@@ -42,6 +46,8 @@ func CreateUpgradeHandler(
 // Migration to deprecate the trade config
 // The min transfer amount can be set from the min swap amount
 func MigrateTradeRoutes(ctx sdk.Context, k stakeibckeeper.Keeper) {
+	ctx.Logger().Info("Migrating trade routes...")
+
 	for _, tradeRoute := range k.GetAllTradeRoutes(ctx) {
 		tradeRoute.MinTransferAmount = tradeRoute.TradeConfig.MinSwapAmount
 		k.SetTradeRoute(ctx, tradeRoute)
@@ -86,6 +92,8 @@ func MigrateHostZoneUnbondingRecords(hostZoneUnbonding *recordstypes.HostZoneUnb
 // Migrate epoch unbonding records to accomodate the batched undelegations code changes,
 // adding the new accounting fields to the host zone unbonding records
 func MigrateEpochUnbondingRecords(ctx sdk.Context, k recordskeeper.Keeper) {
+	ctx.Logger().Info("Migrating epoch unbonding records...")
+
 	for _, epochUnbondingRecord := range k.GetAllEpochUnbondingRecord(ctx) {
 		for i, oldHostZoneUnbondingRecord := range epochUnbondingRecord.HostZoneUnbondings {
 			updatedHostZoneUnbondingRecord := MigrateHostZoneUnbondingRecords(oldHostZoneUnbondingRecord)
@@ -98,6 +106,8 @@ func MigrateEpochUnbondingRecords(ctx sdk.Context, k recordskeeper.Keeper) {
 // Migrate host zones to accomodate the staketia migration changes, adding a
 // redemptions enabled field to each host zone
 func MigrateHostZones(ctx sdk.Context, k stakeibckeeper.Keeper) {
+	ctx.Logger().Info("Migrating host zones...")
+
 	for _, hostZone := range k.GetAllHostZone(ctx) {
 		hostZone.RedemptionsEnabled = true
 		k.SetHostZone(ctx, hostZone)
