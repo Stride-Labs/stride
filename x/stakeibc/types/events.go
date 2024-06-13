@@ -20,6 +20,7 @@ const (
 	EventTypeValidatorSharesToTokensRateChange = "validator_shares_to_tokens_rate_change"
 	EventTypeValidatorSlash                    = "validator_slash"
 	EventTypeUndelegation                      = "undelegation"
+	EventTypeRedemptionSweep                   = "redemption_sweep"
 
 	AttributeKeyHostZone         = "host_zone"
 	AttributeKeyConnectionId     = "connection_id"

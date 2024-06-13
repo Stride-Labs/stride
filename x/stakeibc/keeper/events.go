@@ -160,7 +160,7 @@ func EmitUndelegationEvent(ctx sdk.Context, hostZone types.HostZone, totalUnbond
 func EmitRedemptionSweepEvent(ctx sdk.Context, hostZone types.HostZone, sweptAmount sdkmath.Int) {
 	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(
-			types.EventTypeUndelegation,
+			types.EventTypeRedemptionSweep,
 			sdk.NewAttribute(sdk.AttributeKeyModule, types.ModuleName),
 			sdk.NewAttribute(types.AttributeKeyHostZone, hostZone.ChainId),
 			sdk.NewAttribute(types.AttributeKeyNativeBaseDenom, hostZone.HostDenom),
