@@ -12,7 +12,7 @@ import (
 
 	"github.com/Stride-Labs/stride/v22/app/apptesting"
 	icqtypes "github.com/Stride-Labs/stride/v22/x/interchainquery/types"
-	recordstypes "github.com/Stride-Labs/stride/v22/x/records/types"
+	recordtypes "github.com/Stride-Labs/stride/v22/x/records/types"
 	"github.com/Stride-Labs/stride/v22/x/stakeibc/keeper"
 	"github.com/Stride-Labs/stride/v22/x/stakeibc/types"
 )
@@ -43,6 +43,8 @@ var (
 	DepositAddress                    = "deposit"
 	CommunityPoolStakeHoldingAddress  = "staking-holding"
 	CommunityPoolRedeemHoldingAddress = "redeem-holding"
+
+	DepositRecordId = uint64(1)
 
 	Authority = authtypes.NewModuleAddress(govtypes.ModuleName).String()
 )
@@ -80,8 +82,15 @@ func (s *KeeperTestSuite) MustGetHostZone(chainId string) types.HostZone {
 	return hostZone
 }
 
+// Helper function to get a deposit record and confirm it was found
+func (s *KeeperTestSuite) MustGetDepositRecord(depositRecordId uint64) recordtypes.DepositRecord {
+	depositRecord, found := s.App.RecordsKeeper.GetDepositRecord(s.Ctx, depositRecordId)
+	s.Require().True(found, "deposit record should have been found")
+	return depositRecord
+}
+
 // Helper function to get a host zone unbonding record and confirm it was found
-func (s *KeeperTestSuite) MustGetHostZoneUnbonding(epochNumber uint64, chainId string) recordstypes.HostZoneUnbonding {
+func (s *KeeperTestSuite) MustGetHostZoneUnbonding(epochNumber uint64, chainId string) recordtypes.HostZoneUnbonding {
 	hostZoneUnbonding, found := s.App.RecordsKeeper.GetHostZoneUnbondingByChainId(s.Ctx, epochNumber, chainId)
 	s.Require().True(found, "host zone unbonding should have been found")
 	return *hostZoneUnbonding
