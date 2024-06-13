@@ -127,6 +127,8 @@ message HostZone {
   // The max number of messages that can be sent in a delegation
   // or undelegation ICA tx
   uint64 max_messages_per_ica_tx = 36;
+  // Indicates whether redemptions are allowed through this module
+  bool redemptions_enabled = 37;
   // An optional fee rebate
   // If there is no rebate for the host zone, this will be nil
   CommunityPoolRebate community_pool_rebate = 34;
