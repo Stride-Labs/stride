@@ -303,7 +303,9 @@ func (app *StrideApp) setupUpgradeHandlers(appOpts servertypes.AppOptions) {
 		v23.CreateUpgradeHandler(
 			app.mm,
 			app.configurator,
+			app.RecordsKeeper,
 			app.StakeibcKeeper,
+			app.StaketiaKeeper,
 		),
 	)
 

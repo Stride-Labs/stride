@@ -13,8 +13,6 @@ import (
 	"github.com/Stride-Labs/stride/v22/x/staketia/types"
 )
 
-// TODO [UPGRADE HANDLER]: Migrate stakeibc host zone (set redemptions enabled to true on each host zone)
-
 // Helper to deserialize the host zone with the old types
 func (k Keeper) GetLegacyHostZone(ctx sdk.Context) (hostZone oldtypes.HostZone, err error) {
 	store := ctx.KVStore(k.storeKey)
