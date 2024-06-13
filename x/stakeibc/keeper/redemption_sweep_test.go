@@ -1,6 +1,8 @@
 package keeper_test
 
 import (
+	"time"
+
 	sdkmath "cosmossdk.io/math"
 	ibctesting "github.com/cosmos/ibc-go/v7/testing"
 	_ "github.com/stretchr/testify/suite"
@@ -191,4 +193,110 @@ func (s *KeeperTestSuite) TestSweepUnbondedTokens_DelegationAccountAddressMissin
 	s.Require().Len(failedSweeps, 1, "sweep all tokens fails for 1 host zone")
 	s.Require().Equal("OSMO", failedSweeps[0], "sweep all tokens fails for osmo")
 	s.Require().Equal([]sdkmath.Int{sdkmath.NewInt(2_000_000)}, sweepAmounts, "correct amount of tokens swept for each host zone")
+}
+
+func (s *KeeperTestSuite) TestGetTotalRedemptionSweepAmountAndRecordsIds() {
+	hostBlockTime := time.Date(2023, 1, 1, 0, 0, 0, 0, time.UTC)
+	validUnbondTime := uint64(hostBlockTime.Add(-1 * time.Minute).UnixNano())
+
+	epochUnbondingRecords := []recordtypes.EpochUnbondingRecord{
+		{
+			EpochNumber: uint64(1),
+			HostZoneUnbondings: []*recordtypes.HostZoneUnbonding{
+				{
+					// Summed
+					HostZoneId:        HostChainId,
+					NativeTokenAmount: sdkmath.NewInt(1),
+					Status:            recordtypes.HostZoneUnbonding_EXIT_TRANSFER_QUEUE,
+					UnbondingTime:     validUnbondTime,
+				},
+				{
+					// Different host zone
+					HostZoneId:        "different",
+					NativeTokenAmount: sdkmath.NewInt(2),
+					Status:            recordtypes.HostZoneUnbonding_EXIT_TRANSFER_QUEUE,
+					UnbondingTime:     validUnbondTime,
+				},
+			},
+		},
+		{
+			EpochNumber: uint64(2),
+			HostZoneUnbondings: []*recordtypes.HostZoneUnbonding{
+				{
+					// Different host zone
+					HostZoneId:        "different",
+					NativeTokenAmount: sdkmath.NewInt(3),
+					Status:            recordtypes.HostZoneUnbonding_EXIT_TRANSFER_QUEUE,
+					UnbondingTime:     validUnbondTime,
+				},
+				{
+					// Summed
+					HostZoneId:        HostChainId,
+					NativeTokenAmount: sdkmath.NewInt(4),
+					Status:            recordtypes.HostZoneUnbonding_EXIT_TRANSFER_QUEUE,
+					UnbondingTime:     validUnbondTime,
+				},
+			},
+		},
+		{
+			EpochNumber: uint64(3),
+			HostZoneUnbondings: []*recordtypes.HostZoneUnbonding{
+				{
+					// Different Status
+					HostZoneId:        HostChainId,
+					NativeTokenAmount: sdkmath.NewInt(5),
+					Status:            recordtypes.HostZoneUnbonding_UNBONDING_QUEUE,
+					UnbondingTime:     validUnbondTime,
+				},
+			},
+		},
+		{
+			EpochNumber: uint64(4),
+			HostZoneUnbondings: []*recordtypes.HostZoneUnbonding{
+				{
+					// Unbonding time not set
+					HostZoneId:        HostChainId,
+					NativeTokenAmount: sdkmath.NewInt(6),
+					Status:            recordtypes.HostZoneUnbonding_EXIT_TRANSFER_QUEUE,
+					UnbondingTime:     0,
+				},
+			},
+		},
+		{
+			EpochNumber: uint64(5),
+			HostZoneUnbondings: []*recordtypes.HostZoneUnbonding{
+				{
+					// Unbonding time after block time
+					HostZoneId:        HostChainId,
+					NativeTokenAmount: sdkmath.NewInt(7),
+					Status:            recordtypes.HostZoneUnbonding_EXIT_TRANSFER_QUEUE,
+					UnbondingTime:     uint64(hostBlockTime.Add(time.Minute).UnixNano()),
+				},
+			},
+		},
+		{
+			EpochNumber: uint64(6),
+			HostZoneUnbondings: []*recordtypes.HostZoneUnbonding{
+				{
+					// Summed
+					HostZoneId:        HostChainId,
+					NativeTokenAmount: sdkmath.NewInt(8),
+					Status:            recordtypes.HostZoneUnbonding_EXIT_TRANSFER_QUEUE,
+					UnbondingTime:     validUnbondTime,
+				},
+			},
+		},
+	}
+
+	for _, epochUnbondingRecord := range epochUnbondingRecords {
+		s.App.RecordsKeeper.SetEpochUnbondingRecord(s.Ctx, epochUnbondingRecord)
+	}
+
+	expectedUnbondAmount := int64(1 + 4 + 8)
+	expectedRecordIds := []uint64{1, 2, 6}
+
+	hostBlockTimeNano := uint64(hostBlockTime.UnixNano())
+	actualUnbondAmount, actualRecordIds := s.App.StakeibcKeeper.GetTotalRedemptionSweepAmountAndRecordIds(s.Ctx, HostChainId, hostBlockTimeNano)
+	s.Require().Equal(expectedUnbondAmount, actualUnbondAmount.Int64(), "unbonded amount")
+	s.Require().Equal(expectedRecordIds, actualRecordIds, "epoch unbonding record IDs")
 }
