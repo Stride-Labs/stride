@@ -557,13 +557,13 @@ func (m *SlashRecord) GetValidatorAddress() string {
 }
 
 func init() {
-	proto.RegisterEnum("stride.staketia.legacy.DelegationRecordStatus", DelegationRecordStatus_name, DelegationRecordStatus_value)
-	proto.RegisterEnum("stride.staketia.legacy.UnbondingRecordStatus", UnbondingRecordStatus_name, UnbondingRecordStatus_value)
-	proto.RegisterType((*HostZone)(nil), "stride.staketia.legacy.HostZone")
-	proto.RegisterType((*DelegationRecord)(nil), "stride.staketia.legacy.DelegationRecord")
-	proto.RegisterType((*UnbondingRecord)(nil), "stride.staketia.legacy.UnbondingRecord")
-	proto.RegisterType((*RedemptionRecord)(nil), "stride.staketia.legacy.RedemptionRecord")
-	proto.RegisterType((*SlashRecord)(nil), "stride.staketia.legacy.SlashRecord")
+	proto.RegisterEnum("stride.staketia.DelegationRecordStatus", DelegationRecordStatus_name, DelegationRecordStatus_value)
+	proto.RegisterEnum("stride.staketia.UnbondingRecordStatus", UnbondingRecordStatus_name, UnbondingRecordStatus_value)
+	proto.RegisterType((*HostZone)(nil), "stride.staketia.HostZone")
+	proto.RegisterType((*DelegationRecord)(nil), "stride.staketia.DelegationRecord")
+	proto.RegisterType((*UnbondingRecord)(nil), "stride.staketia.UnbondingRecord")
+	proto.RegisterType((*RedemptionRecord)(nil), "stride.staketia.RedemptionRecord")
+	proto.RegisterType((*SlashRecord)(nil), "stride.staketia.SlashRecord")
 }
 
 func init() { proto.RegisterFile("stride/staketia/staketia.proto", fileDescriptor_d306d9365b78f7b2) }
