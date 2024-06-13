@@ -31,6 +31,9 @@ func CreateUpgradeHandler(
 		ctx.Logger().Info("Migrating epoch unbonding records...")
 		MigrateEpochUnbondingRecords(ctx, recordsKeeper)
 
+		ctx.Logger().Info("Migrating host zones...")
+		MigrateHostZones(ctx, stakeibcKeeper)
+
 		ctx.Logger().Info("Running module migrations...")
 		return mm.RunMigrations(ctx, configurator, vm)
 	}
@@ -80,7 +83,8 @@ func MigrateHostZoneUnbondingRecords(hostZoneUnbonding *recordstypes.HostZoneUnb
 	return hostZoneUnbonding
 }
 
-// Migrate epoch unbonding records to add the new fields from the batched undelegations code
+// Migrate epoch unbonding records to accomodate the batched undelegations code changes,
+// adding the new accounting fields to the host zone unbonding records
 func MigrateEpochUnbondingRecords(ctx sdk.Context, k recordskeeper.Keeper) {
 	for _, epochUnbondingRecord := range k.GetAllEpochUnbondingRecord(ctx) {
 		for i, oldHostZoneUnbondingRecord := range epochUnbondingRecord.HostZoneUnbondings {
@@ -88,5 +92,14 @@ func MigrateEpochUnbondingRecords(ctx sdk.Context, k recordskeeper.Keeper) {
 			epochUnbondingRecord.HostZoneUnbondings[i] = updatedHostZoneUnbondingRecord
 		}
 		k.SetEpochUnbondingRecord(ctx, epochUnbondingRecord)
+	}
+}
+
+// Migrate host zones to accomodate the staketia migration changes, adding a
+// redemptions enabled field to each host zone
+func MigrateHostZones(ctx sdk.Context, k stakeibckeeper.Keeper) {
+	for _, hostZone := range k.GetAllHostZone(ctx) {
+		hostZone.RedemptionsEnabled = true
+		k.SetHostZone(ctx, hostZone)
 	}
 }
