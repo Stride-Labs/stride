@@ -68,4 +68,5 @@ var (
 	ErrFeeSplitInvariantFailed             = errorsmod.Register(ModuleName, 1561, "failed to calculate fee split")
 	ErrFailedToRegisterRebate              = errorsmod.Register(ModuleName, 1562, "failed to register rebate")
 	ErrInvalidDelegationsInProgress        = errorsmod.Register(ModuleName, 1563, "invalid delegation changes in progress")
+	ErrInvalidUndelegationsInProgress      = errorsmod.Register(ModuleName, 1564, "invalid undelegation changes in progress")
 )

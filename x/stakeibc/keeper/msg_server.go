@@ -225,21 +225,17 @@ func (k msgServer) RegisterHostZone(goCtx context.Context, msg *types.MsgRegiste
 		k.Logger(ctx).Error(errMsg)
 		return nil, errorsmod.Wrapf(recordstypes.ErrEpochUnbondingRecordNotFound, errMsg)
 	}
-	hostZoneUnbonding := &recordstypes.HostZoneUnbonding{
+	hostZoneUnbonding := recordstypes.HostZoneUnbonding{
 		NativeTokenAmount: sdkmath.ZeroInt(),
 		StTokenAmount:     sdkmath.ZeroInt(),
 		Denom:             zone.HostDenom,
 		HostZoneId:        zone.ChainId,
 		Status:            recordstypes.HostZoneUnbonding_UNBONDING_QUEUE,
 	}
-	updatedEpochUnbondingRecord, success := k.RecordsKeeper.AddHostZoneToEpochUnbondingRecord(ctx, epochUnbondingRecord.EpochNumber, chainId, hostZoneUnbonding)
-	if !success {
-		errMsg := fmt.Sprintf("Failed to set host zone epoch unbonding record: epochNumber %d, chainId %s, hostZoneUnbonding %v",
-			epochUnbondingRecord.EpochNumber, chainId, hostZoneUnbonding)
-		k.Logger(ctx).Error(errMsg)
-		return nil, errorsmod.Wrapf(types.ErrEpochNotFound, errMsg)
+	err = k.RecordsKeeper.SetHostZoneUnbondingRecord(ctx, epochUnbondingRecord.EpochNumber, chainId, hostZoneUnbonding)
+	if err != nil {
+		return nil, err
 	}
-	k.RecordsKeeper.SetEpochUnbondingRecord(ctx, *updatedEpochUnbondingRecord)
 
 	// create an empty deposit record for the host zone
 	strideEpochTracker, found := k.GetEpochTracker(ctx, epochtypes.STRIDE_EPOCH)
@@ -654,12 +650,9 @@ func (k msgServer) RedeemStake(goCtx context.Context, msg *types.MsgRedeemStake)
 		hostZoneUnbondings = []*recordstypes.HostZoneUnbonding{}
 		epochUnbondingRecord.HostZoneUnbondings = hostZoneUnbondings
 	}
-	updatedEpochUnbondingRecord, success := k.RecordsKeeper.AddHostZoneToEpochUnbondingRecord(ctx, epochUnbondingRecord.EpochNumber, hostZone.ChainId, hostZoneUnbonding)
-	if !success {
-		k.Logger(ctx).Error(fmt.Sprintf("Failed to set host zone epoch unbonding record: epochNumber %d, chainId %s, hostZoneUnbonding %v", epochUnbondingRecord.EpochNumber, hostZone.ChainId, hostZoneUnbonding))
-		return nil, errorsmod.Wrapf(types.ErrEpochNotFound, "couldn't set host zone epoch unbonding record")
+	if err := k.RecordsKeeper.SetHostZoneUnbondingRecord(ctx, epochUnbondingRecord.EpochNumber, hostZone.ChainId, *hostZoneUnbonding); err != nil {
+		return nil, err
 	}
-	k.RecordsKeeper.SetEpochUnbondingRecord(ctx, *updatedEpochUnbondingRecord)
 
 	k.Logger(ctx).Info(fmt.Sprintf("executed redeem stake: %s", msg.String()))
 	EmitSuccessfulRedeemStakeEvent(ctx, msg, hostZone, nativeAmount, msg.Amount)
@@ -948,8 +941,6 @@ func (k msgServer) RestoreInterchainAccount(goCtx context.Context, msg *types.Ms
 
 		// revert epoch unbonding records for the closed ICA channel
 		epochUnbondingRecords := k.RecordsKeeper.GetAllEpochUnbondingRecord(ctx)
-		epochNumberForPendingUnbondingRecords := []uint64{}
-		epochNumberForPendingTransferRecords := []uint64{}
 		for _, epochUnbondingRecord := range epochUnbondingRecords {
 			// only revert records for the select host zone
 			hostZoneUnbonding, found := k.RecordsKeeper.GetHostZoneUnbondingByChainId(ctx, epochUnbondingRecord.EpochNumber, hostZone.ChainId)
@@ -958,36 +949,28 @@ func (k msgServer) RestoreInterchainAccount(goCtx context.Context, msg *types.Ms
 				continue
 			}
 
-			// Revert UNBONDING_IN_PROGRESS and EXIT_TRANSFER_IN_PROGRESS records
+			// Reset the number of undelegation txs in progress
+			hostZoneUnbonding.UndelegationTxsInProgress = 0
+
+			// Revert UNBONDING_IN_PROGRESS records to UNBONDING_RETRY_QUEUE
+			// and EXIT_TRANSFER_IN_PROGRESS records to EXIT_TRANSFER_QUEUE
 			if hostZoneUnbonding.Status == recordtypes.HostZoneUnbonding_UNBONDING_IN_PROGRESS {
 				k.Logger(ctx).Info(fmt.Sprintf("HostZoneUnbonding for %s at EpochNumber %d is stuck in status %s",
 					hostZone.ChainId, epochUnbondingRecord.EpochNumber, recordtypes.HostZoneUnbonding_UNBONDING_IN_PROGRESS.String(),
 				))
-				epochNumberForPendingUnbondingRecords = append(epochNumberForPendingUnbondingRecords, epochUnbondingRecord.EpochNumber)
+				hostZoneUnbonding.Status = recordstypes.HostZoneUnbonding_UNBONDING_RETRY_QUEUE
 
 			} else if hostZoneUnbonding.Status == recordtypes.HostZoneUnbonding_EXIT_TRANSFER_IN_PROGRESS {
 				k.Logger(ctx).Info(fmt.Sprintf("HostZoneUnbonding for %s at EpochNumber %d to in status %s",
 					hostZone.ChainId, epochUnbondingRecord.EpochNumber, recordtypes.HostZoneUnbonding_EXIT_TRANSFER_IN_PROGRESS.String(),
 				))
-				epochNumberForPendingTransferRecords = append(epochNumberForPendingTransferRecords, epochUnbondingRecord.EpochNumber)
+				hostZoneUnbonding.Status = recordstypes.HostZoneUnbonding_EXIT_TRANSFER_QUEUE
 			}
-		}
-		// Revert UNBONDING_IN_PROGRESS records to UNBONDING_QUEUE
-		err := k.RecordsKeeper.SetHostZoneUnbondingStatus(ctx, hostZone.ChainId, epochNumberForPendingUnbondingRecords, recordtypes.HostZoneUnbonding_UNBONDING_QUEUE)
-		if err != nil {
-			errMsg := fmt.Sprintf("unable to update host zone unbonding record status to %s for chainId: %s and epochUnbondingRecordIds: %v, err: %s",
-				recordtypes.HostZoneUnbonding_UNBONDING_QUEUE.String(), hostZone.ChainId, epochNumberForPendingUnbondingRecords, err)
-			k.Logger(ctx).Error(errMsg)
-			return nil, err
-		}
 
-		// Revert EXIT_TRANSFER_IN_PROGRESS records to EXIT_TRANSFER_QUEUE
-		err = k.RecordsKeeper.SetHostZoneUnbondingStatus(ctx, hostZone.ChainId, epochNumberForPendingTransferRecords, recordtypes.HostZoneUnbonding_EXIT_TRANSFER_QUEUE)
-		if err != nil {
-			errMsg := fmt.Sprintf("unable to update host zone unbonding record status to %s for chainId: %s and epochUnbondingRecordIds: %v, err: %s",
-				recordtypes.HostZoneUnbonding_EXIT_TRANSFER_QUEUE.String(), hostZone.ChainId, epochNumberForPendingTransferRecords, err)
-			k.Logger(ctx).Error(errMsg)
-			return nil, err
+			err := k.RecordsKeeper.SetHostZoneUnbondingRecord(ctx, epochUnbondingRecord.EpochNumber, hostZone.ChainId, *hostZoneUnbonding)
+			if err != nil {
+				return nil, err
+			}
 		}
 
 		// Revert all pending LSM Detokenizations from status DETOKENIZATION_IN_PROGRESS to status DETOKENIZATION_QUEUE

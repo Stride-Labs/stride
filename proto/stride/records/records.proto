@@ -58,9 +58,13 @@ message HostZoneUnbonding {
   enum Status {
     // tokens bonded on delegate account
     UNBONDING_QUEUE = 0;
+    // unbonding ICA has been submitted
     UNBONDING_IN_PROGRESS = 3;
+    // unbonding ICA failed for at least one batch and need to be retried
+    UNBONDING_RETRY_QUEUE = 5;
     // unbonding completed on delegate account
     EXIT_TRANSFER_QUEUE = 1;
+    // redemption sweep has been submitted
     EXIT_TRANSFER_IN_PROGRESS = 4;
     // transfer success
     CLAIMABLE = 2;
@@ -73,6 +77,19 @@ message HostZoneUnbonding {
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
     (gogoproto.nullable) = false
   ];
+  string st_tokens_to_burn = 8 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable) = false
+  ];
+  string native_tokens_to_unbond = 9 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable) = false
+  ];
+  string claimable_native_tokens = 10 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable) = false
+  ];
+  uint64 undelegation_txs_in_progress = 11;
   string denom = 3;
   string host_zone_id = 4;
   uint64 unbonding_time = 5;

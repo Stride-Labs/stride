@@ -89,6 +89,13 @@ func (s *KeeperTestSuite) MustGetDepositRecord(depositRecordId uint64) recordtyp
 	return depositRecord
 }
 
+// Helper function to get a host zone unbonding record and confirm it was found
+func (s *KeeperTestSuite) MustGetHostZoneUnbonding(epochNumber uint64, chainId string) recordtypes.HostZoneUnbonding {
+	hostZoneUnbonding, found := s.App.RecordsKeeper.GetHostZoneUnbondingByChainId(s.Ctx, epochNumber, chainId)
+	s.Require().True(found, "host zone unbonding should have been found")
+	return *hostZoneUnbonding
+}
+
 // Helper function to create an epoch tracker that dictates the timeout
 func (s *KeeperTestSuite) CreateEpochForICATimeout(epochType string, timeoutDuration time.Duration) {
 	epochEndTime := uint64(s.Ctx.BlockTime().Add(timeoutDuration).UnixNano())
