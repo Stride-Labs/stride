@@ -21,17 +21,17 @@ var (
 func CreateUpgradeHandler(
 	mm *module.Manager,
 	configurator module.Configurator,
+	recordsKeeper recordskeeper.Keeper,
 	stakeibcKeeper stakeibckeeper.Keeper,
 	staketiaKeeper staketiakeeper.Keeper,
-	recordsKeeper recordskeeper.Keeper,
 ) upgradetypes.UpgradeHandler {
 	return func(ctx sdk.Context, _ upgradetypes.Plan, vm module.VersionMap) (module.VersionMap, error) {
 		ctx.Logger().Info("Starting upgrade v23...")
 
 		// Migrate data structures
 		MigrateTradeRoutes(ctx, stakeibcKeeper)
-		MigrateEpochUnbondingRecords(ctx, recordsKeeper)
 		MigrateHostZones(ctx, stakeibcKeeper)
+		MigrateEpochUnbondingRecords(ctx, recordsKeeper)
 
 		// Migrate staketia to stakeibc
 		if err := staketiakeeper.InitiateMigration(staketiaKeeper, ctx); err != nil {
@@ -51,6 +51,17 @@ func MigrateTradeRoutes(ctx sdk.Context, k stakeibckeeper.Keeper) {
 	for _, tradeRoute := range k.GetAllTradeRoutes(ctx) {
 		tradeRoute.MinTransferAmount = tradeRoute.TradeConfig.MinSwapAmount
 		k.SetTradeRoute(ctx, tradeRoute)
+	}
+}
+
+// Migrate host zones to accomodate the staketia migration changes, adding a
+// redemptions enabled field to each host zone
+func MigrateHostZones(ctx sdk.Context, k stakeibckeeper.Keeper) {
+	ctx.Logger().Info("Migrating host zones...")
+
+	for _, hostZone := range k.GetAllHostZone(ctx) {
+		hostZone.RedemptionsEnabled = true
+		k.SetHostZone(ctx, hostZone)
 	}
 }
 
@@ -100,16 +111,5 @@ func MigrateEpochUnbondingRecords(ctx sdk.Context, k recordskeeper.Keeper) {
 			epochUnbondingRecord.HostZoneUnbondings[i] = updatedHostZoneUnbondingRecord
 		}
 		k.SetEpochUnbondingRecord(ctx, epochUnbondingRecord)
-	}
-}
-
-// Migrate host zones to accomodate the staketia migration changes, adding a
-// redemptions enabled field to each host zone
-func MigrateHostZones(ctx sdk.Context, k stakeibckeeper.Keeper) {
-	ctx.Logger().Info("Migrating host zones...")
-
-	for _, hostZone := range k.GetAllHostZone(ctx) {
-		hostZone.RedemptionsEnabled = true
-		k.SetHostZone(ctx, hostZone)
 	}
 }
