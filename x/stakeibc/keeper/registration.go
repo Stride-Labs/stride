@@ -203,21 +203,17 @@ func (k Keeper) RegisterHostZone(ctx sdk.Context, msg *types.MsgRegisterHostZone
 		k.Logger(ctx).Error(errMsg)
 		return nil, errorsmod.Wrapf(recordstypes.ErrEpochUnbondingRecordNotFound, errMsg)
 	}
-	hostZoneUnbonding := &recordstypes.HostZoneUnbonding{
+	hostZoneUnbonding := recordstypes.HostZoneUnbonding{
 		NativeTokenAmount: sdkmath.ZeroInt(),
 		StTokenAmount:     sdkmath.ZeroInt(),
 		Denom:             zone.HostDenom,
 		HostZoneId:        zone.ChainId,
 		Status:            recordstypes.HostZoneUnbonding_UNBONDING_QUEUE,
 	}
-	updatedEpochUnbondingRecord, success := k.RecordsKeeper.AddHostZoneToEpochUnbondingRecord(ctx, epochUnbondingRecord.EpochNumber, chainId, hostZoneUnbonding)
-	if !success {
-		errMsg := fmt.Sprintf("Failed to set host zone epoch unbonding record: epochNumber %d, chainId %s, hostZoneUnbonding %v",
-			epochUnbondingRecord.EpochNumber, chainId, hostZoneUnbonding)
-		k.Logger(ctx).Error(errMsg)
-		return nil, errorsmod.Wrapf(types.ErrEpochNotFound, errMsg)
+	err = k.RecordsKeeper.SetHostZoneUnbondingRecord(ctx, epochUnbondingRecord.EpochNumber, chainId, hostZoneUnbonding)
+	if err != nil {
+		return nil, err
 	}
-	k.RecordsKeeper.SetEpochUnbondingRecord(ctx, *updatedEpochUnbondingRecord)
 
 	// create an empty deposit record for the host zone
 	strideEpochTracker, found := k.GetEpochTracker(ctx, epochtypes.STRIDE_EPOCH)

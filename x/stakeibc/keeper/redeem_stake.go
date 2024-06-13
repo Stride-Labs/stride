@@ -142,12 +142,9 @@ func (k Keeper) RedeemStake(ctx sdk.Context, msg *types.MsgRedeemStake) (*types.
 		hostZoneUnbondings = []*recordstypes.HostZoneUnbonding{}
 		epochUnbondingRecord.HostZoneUnbondings = hostZoneUnbondings
 	}
-	updatedEpochUnbondingRecord, success := k.RecordsKeeper.AddHostZoneToEpochUnbondingRecord(ctx, epochUnbondingRecord.EpochNumber, hostZone.ChainId, hostZoneUnbonding)
-	if !success {
-		k.Logger(ctx).Error(fmt.Sprintf("Failed to set host zone epoch unbonding record: epochNumber %d, chainId %s, hostZoneUnbonding %v", epochUnbondingRecord.EpochNumber, hostZone.ChainId, hostZoneUnbonding))
-		return nil, errorsmod.Wrapf(types.ErrEpochNotFound, "couldn't set host zone epoch unbonding record")
+	if err := k.RecordsKeeper.SetHostZoneUnbondingRecord(ctx, epochUnbondingRecord.EpochNumber, hostZone.ChainId, *hostZoneUnbonding); err != nil {
+		return nil, err
 	}
-	k.RecordsKeeper.SetEpochUnbondingRecord(ctx, *updatedEpochUnbondingRecord)
 
 	k.Logger(ctx).Info(fmt.Sprintf("executed redeem stake: %s", msg.String()))
 	EmitSuccessfulRedeemStakeEvent(ctx, msg, hostZone, nativeAmount, msg.Amount)
