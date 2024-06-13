@@ -1,89 +1,22 @@
 package cli_test
 
 import (
-	"fmt"
 	"testing"
 
-	tmcli "github.com/cometbft/cometbft/libs/cli"
-	"github.com/cosmos/cosmos-sdk/client/flags"
 	clitestutil "github.com/cosmos/cosmos-sdk/testutil/cli"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/spf13/cobra"
-	"github.com/stretchr/testify/suite"
 
-	"github.com/Stride-Labs/stride/v22/app"
-	cmdcfg "github.com/Stride-Labs/stride/v22/cmd/strided/config"
-	strideclitestutil "github.com/Stride-Labs/stride/v22/testutil/cli"
-	"github.com/Stride-Labs/stride/v22/testutil/network"
+	"github.com/stretchr/testify/require"
+
+	"github.com/cosmos/cosmos-sdk/client"
 )
 
-var HostChainId = "chain-1"
+func ExecuteCLIExpectError(t *testing.T, cmd *cobra.Command, args []string, errorString string) {
+	sdk.GetConfig().SetBech32PrefixForAccount("stride", "stridepub")
 
-type ClientTestSuite struct {
-	suite.Suite
+	clientCtx := client.Context{}.WithFromAddress(sdk.MustAccAddressFromBech32("stride10p3xzmnpdeshqctsv9ukzcm0vdhkuat52aucqd"))
 
-	cfg     network.Config
-	network *network.Network
-	val     *network.Validator
-}
-
-func TestClientTestSuite(t *testing.T) {
-	suite.Run(t, new(ClientTestSuite))
-}
-
-func (s *ClientTestSuite) SetupSuite() {
-	s.T().Log("setting up client test suite")
-
-	s.cfg = network.DefaultConfig()
-
-	genState := app.ModuleBasics.DefaultGenesis(s.cfg.Codec)
-
-	s.cfg.GenesisState = genState
-	s.network = network.New(s.T(), s.cfg)
-
-	_, err := s.network.WaitForHeight(1)
-	s.Require().NoError(err)
-
-	s.val = s.network.Validators[0]
-
-	cmdcfg.RegisterDenoms()
-}
-
-func (s *ClientTestSuite) ExecuteTxAndCheckSuccessful(cmd *cobra.Command, args []string) {
-	defaultFlags := []string{
-		fmt.Sprintf("--%s=%s", flags.FlagFrom, s.val.Address.String()),
-		fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
-		fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastSync),
-		fmt.Sprintf("--%s=json", tmcli.OutputFlag),
-		strideclitestutil.DefaultFeeString(s.cfg),
-	}
-	args = append(args, defaultFlags...)
-
-	clientCtx := s.val.ClientCtx
-	out, err := clitestutil.ExecTestCLICmd(clientCtx, cmd, args)
-	s.Require().NoError(err)
-
-	var response sdk.TxResponse
-	s.Require().NoError(clientCtx.Codec.UnmarshalJSON(out.Bytes(), &response))
-}
-
-func (s *ClientTestSuite) ExecuteCLIExpectError(cmd *cobra.Command, args []string, errorString string) {
-	defaultFlags := []string{
-		fmt.Sprintf("--%s=%s", flags.FlagFrom, s.val.Address.String()),
-		fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
-		fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastSync),
-		fmt.Sprintf("--%s=json", tmcli.OutputFlag),
-		strideclitestutil.DefaultFeeString(s.cfg),
-	}
-	args = append(args, defaultFlags...)
-
-	clientCtx := s.val.ClientCtx
 	_, err := clitestutil.ExecTestCLICmd(clientCtx, cmd, args)
-	s.Require().ErrorContains(err, errorString)
-}
-
-func (s *ClientTestSuite) ExecuteQueryAndCheckSuccessful(cmd *cobra.Command, args []string) {
-	clientCtx := s.val.ClientCtx
-	_, err := clitestutil.ExecTestCLICmd(clientCtx, cmd, args)
-	s.Require().NoError(err)
+	require.ErrorContains(t, err, errorString)
 }

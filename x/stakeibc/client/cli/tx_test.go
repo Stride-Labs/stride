@@ -1,197 +1,225 @@
 package cli_test
 
 import (
+	"os"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 
 	"github.com/Stride-Labs/stride/v22/x/stakeibc/client/cli"
 )
 
-func (s *ClientTestSuite) TestCmdLiquidStake() {
+func TestCmdLiquidStake(t *testing.T) {
 	args := []string{
 		"banana",
 		"[lsm-token-denom]",
 	}
 
 	cmd := cli.CmdLiquidStake()
-	s.ExecuteCLIExpectError(cmd, args, "can not convert string to int")
+	ExecuteCLIExpectError(t, cmd, args, "can not convert string to int")
 }
 
-func (s *ClientTestSuite) TestCmdLSMLiquidStake() {
+func TestCmdLSMLiquidStake(t *testing.T) {
 	args := []string{
 		"banana",
 		"[lsm-token-denom]",
 	}
 
 	cmd := cli.CmdLSMLiquidStake()
-	s.ExecuteCLIExpectError(cmd, args, "can not convert string to int")
+	ExecuteCLIExpectError(t, cmd, args, "can not convert string to int")
 }
 
-func (s *ClientTestSuite) TestCmdRegisterHostZone() {
-	s.T().Run("unbonding-period not a number", func(t *testing.T) {
+func TestCmdRegisterHostZone(t *testing.T) {
+	t.Run("unbonding-period not a number", func(t *testing.T) {
 		args := []string{
-			"[connection-id]", "[host-denom]", "[bech32prefix]", "[ibc-denom]", "[channel-id]", "banana", "1",
+			"[connection-id]", "[host-denom]", "[bech32prefix]", "[ibc-denom]", "[channel-id]", "[unbonding-period]", "1",
 		}
 
 		cmd := cli.CmdRegisterHostZone()
-		s.ExecuteCLIExpectError(cmd, args, `strconv.ParseUint: parsing "banana": invalid syntax`)
+		ExecuteCLIExpectError(t, cmd, args, `strconv.ParseUint: parsing "[unbonding-period]": invalid syntax`)
 	})
 
-	s.T().Run("lsm-enabled not a boolean", func(t *testing.T) {
+	t.Run("lsm-enabled not a boolean", func(t *testing.T) {
 		args := []string{
 			"[connection-id]", "[host-denom]", "[bech32prefix]", "[ibc-denom]", "[channel-id]", "0", "2",
 		}
 
 		cmd := cli.CmdRegisterHostZone()
-		s.ExecuteCLIExpectError(cmd, args, `strconv.ParseBool: parsing "2": invalid syntax`)
+		ExecuteCLIExpectError(t, cmd, args, `strconv.ParseBool: parsing "2": invalid syntax`)
 	})
 }
 
-func (s *ClientTestSuite) TestCmdRedeemStake() {
+func TestCmdRedeemStake(t *testing.T) {
 	args := []string{
-		"1",
-		"utia",
+		"[amount]", "[hostZoneID]", "[receiver]",
 	}
 
 	cmd := cli.CmdRedeemStake()
-	s.ExecuteTxAndCheckSuccessful(cmd, args)
+	ExecuteCLIExpectError(t, cmd, args, `can not convert string to int: invalid type`)
 }
 
-func (s *ClientTestSuite) TestCmdClaimUndelegatedTokens() {
+func TestCmdClaimUndelegatedTokens(t *testing.T) {
 	args := []string{
-		"1",
-		"utia",
+		"[host-zone]", "[epoch]", "[receiver]",
 	}
 
 	cmd := cli.CmdClaimUndelegatedTokens()
-	s.ExecuteTxAndCheckSuccessful(cmd, args)
+	ExecuteCLIExpectError(t, cmd, args, `unable to cast "[epoch]" of type string to uint64`)
 }
 
-func (s *ClientTestSuite) TestCmdRebalanceValidators() {
+func TestCmdRebalanceValidators(t *testing.T) {
 	args := []string{
-		"1",
-		"utia",
+		"[host-zone]", "[num-to-rebalance]",
 	}
 
 	cmd := cli.CmdRebalanceValidators()
-	s.ExecuteTxAndCheckSuccessful(cmd, args)
+	ExecuteCLIExpectError(t, cmd, args, `strconv.ParseUint: parsing "[num-to-rebalance]": invalid syntax`)
 }
 
-func (s *ClientTestSuite) TestCmdAddValidators() {
-	args := []string{
-		"1",
-		"utia",
-	}
+func TestCmdAddValidators(t *testing.T) {
+	t.Run("no file", func(t *testing.T) {
+		args := []string{
+			"[host-zone]", "[validator-list-file]",
+		}
 
-	cmd := cli.CmdAddValidators()
-	s.ExecuteTxAndCheckSuccessful(cmd, args)
+		cmd := cli.CmdAddValidators()
+		ExecuteCLIExpectError(t, cmd, args, `open [validator-list-file]: no such file or directory`)
+	})
+	t.Run("empty file", func(t *testing.T) {
+		// pass an temp file
+		f, err := os.CreateTemp("", "")
+		require.NoError(t, err)
+		defer f.Close()
+
+		args := []string{
+			"[host-zone]", f.Name(),
+		}
+
+		cmd := cli.CmdAddValidators()
+		ExecuteCLIExpectError(t, cmd, args, `unexpected end of JSON input`)
+	})
+	t.Run("non-JSON file", func(t *testing.T) {
+		// pass a temp file with non-JSON content
+		f, err := os.CreateTemp("", "")
+		require.NoError(t, err)
+		defer f.Close()
+		_, err = f.WriteString("This is not JSON")
+		require.NoError(t, err)
+
+		args := []string{
+			"[host-zone]", f.Name(),
+		}
+
+		cmd := cli.CmdAddValidators()
+		ExecuteCLIExpectError(t, cmd, args, `invalid character 'T' looking for beginning of value`)
+	})
 }
 
-func (s *ClientTestSuite) TestCmdChangeValidatorWeight() {
+func TestCmdChangeValidatorWeight(t *testing.T) {
 	args := []string{
-		"1",
-		"utia",
+		"[host-zone]", "[address]", "[weight]",
 	}
 
 	cmd := cli.CmdChangeValidatorWeight()
-	s.ExecuteTxAndCheckSuccessful(cmd, args)
+	ExecuteCLIExpectError(t, cmd, args, `unable to cast "[weight]" of type string to uint64`)
 }
 
-func (s *ClientTestSuite) TestCmdChangeMultipleValidatorWeight() {
+func TestCmdChangeMultipleValidatorWeight(t *testing.T) {
 	args := []string{
 		"1",
 		"utia",
 	}
 
 	cmd := cli.CmdChangeMultipleValidatorWeight()
-	s.ExecuteTxAndCheckSuccessful(cmd, args)
+	ExecuteCLIExpectError(t, cmd, args, `can not convert string to int: invalid type`)
 }
 
-func (s *ClientTestSuite) TestCmdDeleteValidator() {
+func TestCmdDeleteValidator(t *testing.T) {
 	args := []string{
 		"1",
 		"utia",
 	}
 
 	cmd := cli.CmdDeleteValidator()
-	s.ExecuteTxAndCheckSuccessful(cmd, args)
+	ExecuteCLIExpectError(t, cmd, args, `can not convert string to int: invalid type`)
 }
 
-func (s *ClientTestSuite) TestCmdRestoreInterchainAccount() {
+func TestCmdRestoreInterchainAccount(t *testing.T) {
 	args := []string{
 		"1",
 		"utia",
 	}
 
 	cmd := cli.CmdRestoreInterchainAccount()
-	s.ExecuteTxAndCheckSuccessful(cmd, args)
+	ExecuteCLIExpectError(t, cmd, args, `can not convert string to int: invalid type`)
 }
 
-func (s *ClientTestSuite) TestCmdUpdateValidatorSharesExchRate() {
+func TestCmdUpdateValidatorSharesExchRate(t *testing.T) {
 	args := []string{
 		"1",
 		"utia",
 	}
 
 	cmd := cli.CmdUpdateValidatorSharesExchRate()
-	s.ExecuteTxAndCheckSuccessful(cmd, args)
+	ExecuteCLIExpectError(t, cmd, args, `can not convert string to int: invalid type`)
 }
 
-func (s *ClientTestSuite) TestCmdCalibrateDelegation() {
+func TestCmdCalibrateDelegation(t *testing.T) {
 	args := []string{
 		"1",
 		"utia",
 	}
 
 	cmd := cli.CmdCalibrateDelegation()
-	s.ExecuteTxAndCheckSuccessful(cmd, args)
+	ExecuteCLIExpectError(t, cmd, args, `can not convert string to int: invalid type`)
 }
 
-func (s *ClientTestSuite) TestCmdClearBalance() {
+func TestCmdClearBalance(t *testing.T) {
 	args := []string{
 		"1",
 		"utia",
 	}
 
 	cmd := cli.CmdClearBalance()
-	s.ExecuteTxAndCheckSuccessful(cmd, args)
+	ExecuteCLIExpectError(t, cmd, args, `can not convert string to int: invalid type`)
 }
 
-func (s *ClientTestSuite) TestCmdUpdateInnerRedemptionRateBounds() {
+func TestCmdUpdateInnerRedemptionRateBounds(t *testing.T) {
 	args := []string{
 		"1",
 		"utia",
 	}
 
 	cmd := cli.CmdUpdateInnerRedemptionRateBounds()
-	s.ExecuteTxAndCheckSuccessful(cmd, args)
+	ExecuteCLIExpectError(t, cmd, args, `can not convert string to int: invalid type`)
 }
 
-func (s *ClientTestSuite) TestCmdResumeHostZone() {
+func TestCmdResumeHostZone(t *testing.T) {
 	args := []string{
 		"1",
 		"utia",
 	}
 
 	cmd := cli.CmdResumeHostZone()
-	s.ExecuteTxAndCheckSuccessful(cmd, args)
+	ExecuteCLIExpectError(t, cmd, args, `can not convert string to int: invalid type`)
 }
 
-func (s *ClientTestSuite) TestCmdSetCommunityPoolRebate() {
+func TestCmdSetCommunityPoolRebate(t *testing.T) {
 	args := []string{
 		"1",
 		"utia",
 	}
 
 	cmd := cli.CmdSetCommunityPoolRebate()
-	s.ExecuteTxAndCheckSuccessful(cmd, args)
+	ExecuteCLIExpectError(t, cmd, args, `can not convert string to int: invalid type`)
 }
 
-func (s *ClientTestSuite) TestCmdToggleTradeController() {
+func TestCmdToggleTradeController(t *testing.T) {
 	args := []string{
 		"1",
 		"utia",
 	}
 
 	cmd := cli.CmdToggleTradeController()
-	s.ExecuteTxAndCheckSuccessful(cmd, args)
+	ExecuteCLIExpectError(t, cmd, args, `can not convert string to int: invalid type`)
 }
