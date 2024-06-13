@@ -22,6 +22,7 @@ type SweepUnbondedTokensTestCase struct {
 func (s *KeeperTestSuite) SetupSweepUnbondedTokens() SweepUnbondedTokensTestCase {
 	delegationChannelId, delegationPortId := s.CreateICAChannel("GAIA.DELEGATION")
 
+	// Add gaia and osmo host zones
 	hostZones := []types.HostZone{
 		{
 			ChainId:              HostChainId,
@@ -32,18 +33,21 @@ func (s *KeeperTestSuite) SetupSweepUnbondedTokens() SweepUnbondedTokensTestCase
 			ConnectionId:         ibctesting.FirstConnectionID,
 		},
 		{
+			// the same connection is used for osmo so we don't have to
+			// mock out a separate channel
 			ChainId:              OsmoChainId,
 			HostDenom:            Osmo,
 			UnbondingPeriod:      21,
 			DelegationIcaAddress: "osmo_DELEGATION",
 			RedemptionIcaAddress: "osmo_REDEMPTION",
-			ConnectionId:         "connection-2",
+			ConnectionId:         ibctesting.FirstConnectionID,
 		},
 	}
 	for _, hostZone := range hostZones {
 		s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
 	}
 
+	// Add epoch tracker to determine ICA timeout
 	dayEpochTracker := types.EpochTracker{
 		EpochIdentifier:    epochtypes.DAY_EPOCH,
 		EpochNumber:        1,
@@ -51,6 +55,7 @@ func (s *KeeperTestSuite) SetupSweepUnbondedTokens() SweepUnbondedTokensTestCase
 	}
 	s.App.StakeibcKeeper.SetEpochTracker(s.Ctx, dayEpochTracker)
 
+	// Add epoch unbonding records that finished unbonding 1 minute ago
 	unbondingTime := uint64(s.Ctx.BlockTime().Add(-1 * time.Minute).UnixNano())
 	epochUnbondingRecords := []recordtypes.EpochUnbondingRecord{
 		{
@@ -103,64 +108,6 @@ func (s *KeeperTestSuite) SetupSweepUnbondedTokens() SweepUnbondedTokensTestCase
 		delegationPortID:      delegationPortId,
 		channelStartSequence:  startSequence,
 	}
-}
-
-func (s *KeeperTestSuite) TestSweepUnbondedTokens_Successful() {
-	s.SetupSweepUnbondedTokens()
-	success, successfulSweeps, sweepAmounts, failedSweeps := s.App.StakeibcKeeper.SweepAllUnbondedTokens(s.Ctx)
-	s.Require().True(success, "sweep all tokens succeeds")
-	s.Require().Len(successfulSweeps, 2, "sweep all tokens succeeds for 2 host zones")
-	s.Require().Len(sweepAmounts, 2, "sweep all tokens succeeds for 2 host zones")
-	s.Require().Len(failedSweeps, 0, "sweep all tokens fails for no host zone")
-	s.Require().Equal([]sdkmath.Int{sdkmath.NewInt(2_000_000), sdkmath.NewInt(3_000_000)}, sweepAmounts, "correct amount of tokens swept for each host zone")
-}
-
-func (s *KeeperTestSuite) TestSweepUnbondedTokens_HostZoneUnbondingMissing() {
-	// If Osmo is missing, make sure that the function still succeeds
-	s.SetupSweepUnbondedTokens()
-	epochUnbondingRecords := s.App.RecordsKeeper.GetAllEpochUnbondingRecord(s.Ctx)
-	for _, epochUnbonding := range epochUnbondingRecords {
-		epochUnbonding.HostZoneUnbondings = []*recordtypes.HostZoneUnbonding{
-			epochUnbonding.HostZoneUnbondings[0],
-		}
-		s.App.RecordsKeeper.SetEpochUnbondingRecord(s.Ctx, epochUnbonding)
-	}
-	success, successfulSweeps, sweepAmounts, failedSweeps := s.App.StakeibcKeeper.SweepAllUnbondedTokens(s.Ctx)
-	s.Require().True(success, "sweep all tokens succeeded if osmo missing")
-	s.Require().Len(successfulSweeps, 2, "sweep all tokens succeeds for 2 host zones")
-	s.Require().Len(sweepAmounts, 2, "sweep all tokens succeeds for 2 host zone")
-	s.Require().Len(failedSweeps, 0, "sweep all tokens fails for 0 host zone")
-	s.Require().Equal([]sdkmath.Int{sdkmath.NewInt(2_000_000), sdkmath.ZeroInt()}, sweepAmounts, "correct amount of tokens swept for each host zone")
-}
-
-func (s *KeeperTestSuite) TestSweepUnbondedTokens_RedemptionAccountMissing() {
-	s.SetupSweepUnbondedTokens()
-	hostZone, _ := s.App.StakeibcKeeper.GetHostZone(s.Ctx, "GAIA")
-	hostZone.RedemptionIcaAddress = ""
-	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
-	success, successfulSweeps, sweepAmounts, failedSweeps := s.App.StakeibcKeeper.SweepAllUnbondedTokens(s.Ctx)
-	s.Require().Equal(success, false, "sweep all tokens failed if osmo missing")
-	s.Require().Len(successfulSweeps, 1, "sweep all tokens succeeds for 1 host zone")
-	s.Require().Equal("OSMO", successfulSweeps[0], "sweep all tokens succeeds for osmo")
-	s.Require().Len(sweepAmounts, 1, "sweep all tokens succeeds for 1 host zone")
-	s.Require().Len(failedSweeps, 1, "sweep all tokens fails for 1 host zone")
-	s.Require().Equal("GAIA", failedSweeps[0], "sweep all tokens fails for gaia")
-	s.Require().Equal([]sdkmath.Int{sdkmath.NewInt(3_000_000)}, sweepAmounts, "correct amount of tokens swept for each host zone")
-}
-
-func (s *KeeperTestSuite) TestSweepUnbondedTokens_DelegationAccountAddressMissing() {
-	s.SetupSweepUnbondedTokens()
-	hostZone, _ := s.App.StakeibcKeeper.GetHostZone(s.Ctx, "OSMO")
-	hostZone.DelegationIcaAddress = ""
-	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
-	success, successfulSweeps, sweepAmounts, failedSweeps := s.App.StakeibcKeeper.SweepAllUnbondedTokens(s.Ctx)
-	s.Require().False(success, "sweep all tokens failed if gaia missing")
-	s.Require().Len(successfulSweeps, 1, "sweep all tokens succeeds for 1 host zone")
-	s.Require().Equal("GAIA", successfulSweeps[0], "sweep all tokens succeeds for gaia")
-	s.Require().Len(sweepAmounts, 1, "sweep all tokens succeeds for 1 host zone")
-	s.Require().Len(failedSweeps, 1, "sweep all tokens fails for 1 host zone")
-	s.Require().Equal("OSMO", failedSweeps[0], "sweep all tokens fails for osmo")
-	s.Require().Equal([]sdkmath.Int{sdkmath.NewInt(2_000_000)}, sweepAmounts, "correct amount of tokens swept for each host zone")
 }
 
 func (s *KeeperTestSuite) TestSweepUnbondedTokensForHostZone_Successful() {
@@ -220,7 +167,7 @@ func (s *KeeperTestSuite) TestSweepUnbondedTokensForHostZone_MissingRedemptionAc
 	hostZone := tc.hostZones[0]
 
 	// Remove the redemption account from the host chain, it should cause the redemption to fail
-	hostZone.DelegationIcaAddress = ""
+	hostZone.RedemptionIcaAddress = ""
 	err := s.App.StakeibcKeeper.SweepUnbondedTokensForHostZone(s.Ctx, hostZone)
 	s.Require().ErrorContains(err, "no redemption account found")
 }
@@ -234,6 +181,72 @@ func (s *KeeperTestSuite) TestSweepUnbondedTokensForHostZone_FailedToGetLightCli
 	hostZone.ConnectionId = "invalid-connection-id"
 	err := s.App.StakeibcKeeper.SweepUnbondedTokensForHostZone(s.Ctx, hostZone)
 	s.Require().ErrorContains(err, "could not get light client block time for host zone")
+}
+
+func (s *KeeperTestSuite) TestSweepUnbondedTokensAllHostZones_Successful() {
+	// tests a successful sweep to both gaia and osmo
+	s.SetupSweepUnbondedTokens()
+
+	// Sweep for both hosts
+	s.App.StakeibcKeeper.SweepUnbondedTokensAllHostZones(s.Ctx)
+
+	// An event should be emitted for each if they were successful
+	s.CheckEventValueEmitted(types.EventTypeRedemptionSweep, types.AttributeKeyHostZone, HostChainId)
+	s.CheckEventValueEmitted(types.EventTypeRedemptionSweep, types.AttributeKeyHostZone, OsmoChainId)
+}
+
+func (s *KeeperTestSuite) TestSweepUnbondedTokensAllHostZones_GaiaSuccessful() {
+	s.SetupSweepUnbondedTokens()
+
+	// Remove the osmo epoch unbonding records so that there is nothing to sweep
+	for _, epochUnbondingRecord := range s.App.RecordsKeeper.GetAllEpochUnbondingRecord(s.Ctx) {
+		for _, hostZoneUnbondingRecord := range epochUnbondingRecord.HostZoneUnbondings {
+			if hostZoneUnbondingRecord.HostZoneId == OsmoChainId {
+				hostZoneUnbondingRecord.NativeTokenAmount = sdkmath.ZeroInt()
+			}
+		}
+		s.App.RecordsKeeper.SetEpochUnbondingRecord(s.Ctx, epochUnbondingRecord)
+	}
+
+	// Sweep for both hosts (only gaia should submit an ICA)
+	s.App.StakeibcKeeper.SweepUnbondedTokensAllHostZones(s.Ctx)
+
+	// An event should only be emitted for Gaia
+	s.CheckEventValueEmitted(types.EventTypeRedemptionSweep, types.AttributeKeyHostZone, HostChainId)
+	s.CheckEventValueNotEmitted(types.EventTypeRedemptionSweep, types.AttributeKeyHostZone, OsmoChainId)
+}
+
+func (s *KeeperTestSuite) TestSweepUnbondedTokensAllHostZones_GaiaFailed() {
+	s.SetupSweepUnbondedTokens()
+
+	// Remove the gaia epoch unbonding records so that there is nothing to sweep
+	for _, epochUnbondingRecord := range s.App.RecordsKeeper.GetAllEpochUnbondingRecord(s.Ctx) {
+		for _, hostZoneUnbondingRecord := range epochUnbondingRecord.HostZoneUnbondings {
+			if hostZoneUnbondingRecord.HostZoneId == HostChainId {
+				hostZoneUnbondingRecord.NativeTokenAmount = sdkmath.ZeroInt()
+			}
+		}
+		s.App.RecordsKeeper.SetEpochUnbondingRecord(s.Ctx, epochUnbondingRecord)
+	}
+
+	// Sweep for both hosts (only osmo should submit an ICA)
+	s.App.StakeibcKeeper.SweepUnbondedTokensAllHostZones(s.Ctx)
+
+	// An event should only be emitted for Osmo
+	s.CheckEventValueNotEmitted(types.EventTypeRedemptionSweep, types.AttributeKeyHostZone, HostChainId)
+	s.CheckEventValueEmitted(types.EventTypeRedemptionSweep, types.AttributeKeyHostZone, OsmoChainId)
+}
+
+func (s *KeeperTestSuite) TestSweepUnbondedTokensAllHostZones_NoneSuccessful() {
+	s.SetupSweepUnbondedTokens()
+
+	// Remove all epoch unbonding records so no ICAs are submitted
+	s.App.RecordsKeeper.RemoveEpochUnbondingRecord(s.Ctx, 1)
+	s.App.RecordsKeeper.RemoveEpochUnbondingRecord(s.Ctx, 2)
+
+	// No event should be emitted for either host
+	s.CheckEventValueNotEmitted(types.EventTypeRedemptionSweep, types.AttributeKeyHostZone, HostChainId)
+	s.CheckEventValueNotEmitted(types.EventTypeRedemptionSweep, types.AttributeKeyHostZone, OsmoChainId)
 }
 
 func (s *KeeperTestSuite) TestGetTotalRedemptionSweepAmountAndRecordsIds() {

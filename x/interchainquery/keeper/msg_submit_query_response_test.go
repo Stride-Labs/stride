@@ -30,7 +30,7 @@ func (s *KeeperTestSuite) SetupMsgSubmitQueryResponse() MsgSubmitQueryResponseTe
 
 	// define the query
 	goCtx := sdk.WrapSDKContext(s.Ctx)
-	h, err := s.App.StakeibcKeeper.GetLightClientHeightSafely(s.Ctx, s.TransferPath.EndpointA.ConnectionID)
+	h, err := s.App.StakeibcKeeper.GetLightClientHeight(s.Ctx, s.TransferPath.EndpointA.ConnectionID)
 	s.Require().NoError(err)
 	height := int64(h - 1) // start at the (LC height) - 1  height, which is the height the query executes at!
 	result := []byte("result-example")
