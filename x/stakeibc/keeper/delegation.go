@@ -162,7 +162,7 @@ func (k Keeper) ReinvestRewards(ctx sdk.Context) {
 		}
 
 		// read clock time on host zone
-		blockTime, err := k.GetLightClientTimeSafely(ctx, hostZone.ConnectionId)
+		blockTime, err := k.GetLightClientTime(ctx, hostZone.ConnectionId)
 		if err != nil {
 			k.Logger(ctx).Error(fmt.Sprintf("Could not find blockTime for host zone %s, err: %s", hostZone.ConnectionId, err.Error()))
 			continue

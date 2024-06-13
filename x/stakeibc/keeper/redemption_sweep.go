@@ -66,7 +66,7 @@ func (k Keeper) SweepUnbondedTokensForHostZone(ctx sdk.Context, hostZone types.H
 	}
 
 	// Get latest blockTime from light client
-	hostBlockTime, err := k.GetLightClientTimeSafely(ctx, hostZone.ConnectionId)
+	hostBlockTime, err := k.GetLightClientTime(ctx, hostZone.ConnectionId)
 	if err != nil {
 		return errorsmod.Wrapf(err, "could not get light client block time for host zone")
 	}
