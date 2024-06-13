@@ -125,13 +125,42 @@ func TestCmdChangeValidatorWeight(t *testing.T) {
 }
 
 func TestCmdChangeMultipleValidatorWeight(t *testing.T) {
-	args := []string{
-		"1",
-		"utia",
-	}
+	t.Run("no file", func(t *testing.T) {
+		args := []string{
+			"[host-zone]", "[validator-list-file]",
+		}
 
-	cmd := cli.CmdChangeMultipleValidatorWeight()
-	ExecuteCLIExpectError(t, cmd, args, `can not convert string to int: invalid type`)
+		cmd := cli.CmdChangeMultipleValidatorWeight()
+		ExecuteCLIExpectError(t, cmd, args, `open [validator-list-file]: no such file or directory`)
+	})
+	t.Run("empty file", func(t *testing.T) {
+		// pass an temp file
+		f, err := os.CreateTemp("", "")
+		require.NoError(t, err)
+		defer f.Close()
+
+		args := []string{
+			"[host-zone]", f.Name(),
+		}
+
+		cmd := cli.CmdChangeMultipleValidatorWeight()
+		ExecuteCLIExpectError(t, cmd, args, `unexpected end of JSON input`)
+	})
+	t.Run("non-JSON file", func(t *testing.T) {
+		// pass a temp file with non-JSON content
+		f, err := os.CreateTemp("", "")
+		require.NoError(t, err)
+		defer f.Close()
+		_, err = f.WriteString("This is not JSON")
+		require.NoError(t, err)
+
+		args := []string{
+			"[host-zone]", f.Name(),
+		}
+
+		cmd := cli.CmdChangeMultipleValidatorWeight()
+		ExecuteCLIExpectError(t, cmd, args, `invalid character 'T' looking for beginning of value`)
+	})
 }
 
 func TestCmdDeleteValidator(t *testing.T) {
