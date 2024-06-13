@@ -26,7 +26,7 @@ func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochInfo epochstypes.EpochInf
 		// Initiate unbondings from any hostZone where it's appropriate
 		k.InitiateAllHostZoneUnbondings(ctx, epochNumber)
 		// Check previous epochs to see if unbondings finished, and sweep the tokens if so
-		k.SweepAllUnbondedTokens(ctx)
+		k.SweepUnbondedTokensAllHostZones(ctx)
 		// Cleanup any records that are no longer needed
 		k.CleanupEpochUnbondingRecords(ctx, epochNumber)
 		// Create an empty unbonding record for this epoch
