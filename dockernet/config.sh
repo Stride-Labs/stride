@@ -8,7 +8,7 @@ LOGS=$DOCKERNET_HOME/logs
 UPGRADES=$DOCKERNET_HOME/upgrades
 SRC=$DOCKERNET_HOME/src
 PEER_PORT=26656
-DOCKER_COMPOSE="docker-compose -f $DOCKERNET_HOME/docker-compose.yml"
+DOCKER_COMPOSE="docker compose -f $DOCKERNET_HOME/docker-compose.yml"
 
 # Logs
 STRIDE_LOGS=$LOGS/stride.log
