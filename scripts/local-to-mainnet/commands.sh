@@ -9,11 +9,11 @@ echo "$HOT_WALLET_1_MNEMONIC" | build/gaiad keys add hot --recover --keyring-bac
 #### START RELAYER
 # NOTE: CREATING CONNECTIONS WITH THE GO RELAYER 
 # Create connections and channels
-docker-compose -f scripts/local-to-mainnet/docker-compose.yml run --rm relayer rly transact link stride-host 
+docker compose -f scripts/local-to-mainnet/docker-compose.yml run --rm relayer rly transact link stride-host 
 
 # (OR) If the go relayer isn't working, use hermes (NOTE: you'll have to add the connections to the relayer config in `scripts/state/relayer/config/config.yaml`)
-# docker-compose -f scripts/local-to-mainnet/docker-compose.yml run --rm hermes hermes create connection --a-chain cosmoshub-4 --b-chain local-test-1
-# docker-compose -f scripts/local-to-mainnet/docker-compose.yml run --rm hermes hermes create channel --a-chain local-test-1 --a-connection connection-0 --a-port transfer --b-port transfer
+# docker compose -f scripts/local-to-mainnet/docker-compose.yml run --rm hermes hermes create connection --a-chain cosmoshub-4 --b-chain local-test-1
+# docker compose -f scripts/local-to-mainnet/docker-compose.yml run --rm hermes hermes create channel --a-chain local-test-1 --a-connection connection-0 --a-port transfer --b-port transfer
 
 # Ensure Relayer Config is updated (`scripts/local-to-mainnet/state/relayer/config/config.yaml`)
 #    paths:
@@ -32,8 +32,8 @@ build/strided --home scripts/state/stride1 q ibc channel channels
 transfer_channel=$(build/strided --home scripts/state/stride1 q ibc channel channels | grep channel-0 -A 4 | grep counterparty -A 1 | grep channel | awk '{print $2}') && echo $transfer_channel
 
 # Start Go Relayer 
-docker-compose -f scripts/local-to-mainnet/docker-compose.yml up -d relayer
-docker-compose -f scripts/local-to-mainnet/docker-compose.yml logs -f relayer | sed -r -u "s/\x1B\[([0-9]{1,3}(;[0-9]{1,2})?)?[mGK]//g" >> scripts/logs/relayer.log 2>&1 &
+docker compose -f scripts/local-to-mainnet/docker-compose.yml up -d relayer
+docker compose -f scripts/local-to-mainnet/docker-compose.yml logs -f relayer | sed -r -u "s/\x1B\[([0-9]{1,3}(;[0-9]{1,2})?)?[mGK]//g" >> scripts/logs/relayer.log 2>&1 &
 
 
 #### REGISTER HOST
