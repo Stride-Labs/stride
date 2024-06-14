@@ -1,28 +1,45 @@
 package cli_test
 
-// func (s *ClientTestSuite) TestCmdQueryOracle() {
-// 	args := []string{
-// 		HostChainId,
-// 	}
+import (
+	"testing"
+)
 
-// 	cmd := cli.GetCmdQueryOracle()
-// 	s.ExecuteQueryAndCheckSuccessful(cmd, args, "query oracle")
-// }
+func TestQueryParams(t *testing.T) {
+	// no input parsing to test
+}
 
-// func (s *ClientTestSuite) TestCmdQueryOracles() {
-// 	cmd := cli.GetCmdQueryOracles()
-// 	s.ExecuteQueryAndCheckSuccessful(cmd, []string{}, "query oracles")
-// 	s.ExecuteQueryAndCheckSuccessful(cmd, []string{"--active", "true"}, "query active oracles")
-// 	s.ExecuteQueryAndCheckSuccessful(cmd, []string{"--active", "false"}, "query inactive oracles")
-// }
+func TestShowValidators(t *testing.T) {
+	// no input parsing to test
+}
 
-// func (s *ClientTestSuite) TestCmdQueryPendingMetricUpdates() {
-// 	byMetric := []string{"--metric-key", "key"}
-// 	byOracle := []string{"--oracle-chain-id", HostChainId}
+func TestListHostZone(t *testing.T) {
+	// no input parsing to test
+}
 
-// 	cmd := cli.GetCmdQueryMetrics()
-// 	s.ExecuteQueryAndCheckSuccessful(cmd, []string{}, "query pending metric updates")
-// 	s.ExecuteQueryAndCheckSuccessful(cmd, byMetric, "query pending metric updates by metric")
-// 	s.ExecuteQueryAndCheckSuccessful(cmd, byOracle, "query pending metric updates by oracle")
-// 	s.ExecuteQueryAndCheckSuccessful(cmd, append(byMetric, byOracle...), "query pending metric updates by metric and oracle")
-// }
+func TestShowHostZone(t *testing.T) {
+	// no input parsing to test
+}
+
+func TestModuleAddress(t *testing.T) {
+	// no input parsing to test
+}
+
+func TestShowInterchainAccount(t *testing.T) {
+	// no input parsing to test
+}
+
+func TestListEpochTracker(t *testing.T) {
+	// no input parsing to test
+}
+
+func TestShowEpochTracker(t *testing.T) {
+	// no input parsing to test
+}
+
+func TestNextPacketSequence(t *testing.T) {
+	// no input parsing to test
+}
+
+func TestListTradeRoutes(t *testing.T) {
+	// no input parsing to test
+}
