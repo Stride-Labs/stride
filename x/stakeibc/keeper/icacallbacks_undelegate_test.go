@@ -661,6 +661,22 @@ func (s *KeeperTestSuite) TestUpdateHostZoneUnbondingsAfterUndelegation() {
 				{RemainingNative: 1, RemainingStToken: 1, UnbondTime: 2, Status: inProgress},
 			},
 		},
+		{
+			// Two records, first one already finished
+			// Time should only update on the last record
+			name:                        "first record completed in previous callback",
+			batchNativeUnbonded:         sdkmath.NewInt(500),
+			expectedBatchStTokensBurned: sdkmath.NewInt(500),
+			unbondingTimeFromResponse:   2,
+			initialRecords: []HostZoneUnbonding{
+				{RecordNative: 1000, RecordStToken: 1000, UnbondTime: 1, Status: complete},
+				{RecordNative: 1000, RecordStToken: 1000, UnbondTime: 1, Status: inProgress},
+			},
+			finalRecords: []HostZoneUnbonding{
+				{RemainingNative: 0, RemainingStToken: 0, UnbondTime: 1, Status: complete},
+				{RemainingNative: 500, RemainingStToken: 500, UnbondTime: 2, Status: inProgress},
+			},
+		},
 	}
 
 	for _, tc := range testCases {
@@ -675,10 +691,10 @@ func (s *KeeperTestSuite) TestUpdateHostZoneUnbondingsAfterUndelegation() {
 				// the remaining was equal to the full record amount
 				remainingNative := hostZoneUnbondingTc.RemainingNative
 				remainingStToken := hostZoneUnbondingTc.RemainingStToken
-				if hostZoneUnbondingTc.RemainingNative == 0 {
+				if hostZoneUnbondingTc.RemainingNative == 0 && hostZoneUnbondingTc.Status == inProgress {
 					remainingNative = hostZoneUnbondingTc.RecordNative
 				}
-				if hostZoneUnbondingTc.RemainingStToken == 0 {
+				if hostZoneUnbondingTc.RemainingStToken == 0 && hostZoneUnbondingTc.Status == inProgress {
 					remainingStToken = hostZoneUnbondingTc.RecordStToken
 				}
 

@@ -227,6 +227,11 @@ func (k Keeper) UpdateHostZoneUnbondingsAfterUndelegation(
 				"host zone unbonding not found for epoch %d and %s", epochNumber, chainId)
 		}
 
+		// If the record was already completed by a previous callback, continue to the next record
+		if hostZoneUnbonding.Status == recordstypes.HostZoneUnbonding_EXIT_TRANSFER_QUEUE {
+			continue
+		}
+
 		// Determine the native amount to decrement from the record, capping at the amount in the record
 		// Also decrement the total for the next loop
 		nativeTokensUnbonded := sdkmath.MinInt(hostZoneUnbonding.NativeTokensToUnbond, totalNativeTokensUnbonded)
