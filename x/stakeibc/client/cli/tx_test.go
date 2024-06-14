@@ -105,7 +105,6 @@ func TestCmdAddValidators(t *testing.T) {
 		ExecuteCLIExpectError(t, cmd, args, `open [validator-list-file]: no such file or directory`)
 	})
 	t.Run("empty file", func(t *testing.T) {
-		// pass an temp file
 		f, err := os.CreateTemp("", "")
 		require.NoError(t, err)
 		defer f.Close()
@@ -172,7 +171,6 @@ func TestCmdChangeMultipleValidatorWeight(t *testing.T) {
 		ExecuteCLIExpectError(t, cmd, args, `open [validator-list-file]: no such file or directory`)
 	})
 	t.Run("empty file", func(t *testing.T) {
-		// pass an temp file
 		f, err := os.CreateTemp("", "")
 		require.NoError(t, err)
 		defer f.Close()
