@@ -38,6 +38,8 @@ func CreateUpgradeHandler(
 			return vm, errorsmod.Wrapf(err, "unable to migrate staketia to stakeibc")
 		}
 
+		// TODO: add celestia validator set
+
 		ctx.Logger().Info("Running module migrations...")
 		return mm.RunMigrations(ctx, configurator, vm)
 	}
