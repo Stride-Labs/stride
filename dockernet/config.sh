@@ -32,6 +32,7 @@ ACCESSORY_CHAINS=()
 #  - HOST (Stride chain enabled as a host zone)
 #  - DYDX
 #  - NOBLE (only runs as an accessory chain - does not have liquid staking functionality)
+#  - CELESTIA (only runs as an accessory chain - does not have liquid staking functionality)
 if [[ "${ALL_HOST_CHAINS:-false}" == "true" ]]; then 
   HOST_CHAINS=(GAIA EVMOS HOST)
 elif [[ "${#HOST_CHAINS[@]}" == "0" ]]; then 
@@ -49,6 +50,7 @@ WALK_DENOM="uwalk"
 EVMOS_DENOM="aevmos"
 DYDX_DENOM="udydx"
 NOBLE_DENOM="utoken"
+CELESTIA_DENOM="utia"
 USDC_DENOM="uusdc"
 STATOM_DENOM="stuatom"
 STJUNO_DENOM="stujuno"
@@ -312,6 +314,20 @@ NOBLE_MAIN_CMD="$NOBLE_BINARY --home $DOCKERNET_HOME/state/${NOBLE_NODE_PREFIX}1
 NOBLE_RECEIVER_ADDRESS='noble1dd9sxkz3wr723lsf65h549ykdh4npxzh5qawmg'
 NOBLE_AUTHORITHY_MNEMONIC="giant screen unit high agree swing impact switch lend universe sand myself conduct sustain august barely misery lawsuit honey social version window demise palace"
 
+# CELESTIA
+CELESTIA_CHAIN_ID=CELESTIA
+CELESTIA_NODE_PREFIX=celestia
+CELESTIA_NUM_NODES=1
+CELESTIA_BINARY="$DOCKERNET_HOME/../build/celestia-appd"
+CELESTIA_VAL_PREFIX=val
+CELESTIA_ADDRESS_PREFIX=celestia
+CELESTIA_REV_ACCT=rev
+CELESTIA_DENOM=$CELESTIA_DENOM
+CELESTIA_RPC_PORT=25757
+CELESTIA_MAIN_CMD="$CELESTIA_BINARY --home $DOCKERNET_HOME/state/${CELESTIA_NODE_PREFIX}1"
+CELESTIA_RECEIVER_ADDRESS='celestia1dd9sxkz3wr723lsf65h549ykdh4npxzhdfeket'
+CELESTIA_AUTHORITHY_MNEMONIC="giant screen unit high agree swing impact switch lend universe sand myself conduct sustain august barely misery lawsuit honey social version window demise palace"
+
 # RELAYER
 RELAYER_GAIA_EXEC="$DOCKER_COMPOSE run --rm relayer-gaia"
 RELAYER_GAIA_ICS_EXEC="$DOCKER_COMPOSE run --rm relayer-gaia-ics"
@@ -322,6 +338,7 @@ RELAYER_HOST_EXEC="$DOCKER_COMPOSE run --rm relayer-host"
 RELAYER_EVMOS_EXEC="$DOCKER_COMPOSE run --rm relayer-evmos"
 RELAYER_DYDX_EXEC="$DOCKER_COMPOSE run --rm relayer-dydx"
 RELAYER_NOBLE_EXEC="$DOCKER_COMPOSE run --rm relayer-noble"
+RELAYER_CELESTIA_EXEC="$DOCKER_COMPOSE run --rm relayer-celestia"
 
 # Accounts for relay paths with stride
 RELAYER_STRIDE_ACCT=rly1
@@ -369,6 +386,8 @@ RELAYER_STRIDE_OSMO_MNEMONIC="father october lonely ticket leave regret pudding 
 RELAYER_OSMO_STRIDE_MNEMONIC="narrow assist come feel canyon anxiety three reason satoshi inspire region little attend impulse what student dog armor economy faculty dutch distance upon calm"
 RELAYER_STRIDE_NOBLE_MNEMONIC="absent confirm lumber hobby glide alter remain yard mixed fiscal series kitchen effort protect pistol hire bless police year struggle near hour wisdom jewel"
 RELAYER_NOBLE_STRIDE_MNEMONIC="jar point equal question fatigue frog disorder wasp labor obtain head print orbit entire frown high sadness dash retire idea coffee rubber rough until"
+RELAYER_STRIDE_CELESTIA_MNEMONIC="absent confirm lumber hobby glide alter remain yard mixed fiscal series kitchen effort protect pistol hire bless police year struggle near hour wisdom jewel"
+RELAYER_CELESTIA_STRIDE_MNEMONIC="jar point equal question fatigue frog disorder wasp labor obtain head print orbit entire frown high sadness dash retire idea coffee rubber rough until"
 RELAYER_NOBLE_OSMO_MNEMONIC="actual field visual wage orbit add human unit happy rich evil chair entire person february cactus deputy impact gasp elbow sunset brand possible fly"
 RELAYER_OSMO_NOBLE_MNEMONIC="obey clinic miss grunt inflict laugh sell moral kitchen tumble gold song flavor rather horn exhaust state amazing poverty differ approve spike village device"
 # Mnemonics between host zone and accessory chains when running with GAIA as the host
@@ -410,6 +429,9 @@ DYDX_ADDRESS() {
 }
 NOBLE_ADDRESS() { 
   $NOBLE_MAIN_CMD keys show ${NOBLE_VAL_PREFIX}1 --keyring-backend test -a 
+}
+CELESTIA_ADDRESS() { 
+  $CELESTIA_MAIN_CMD keys show ${CELESTIA_VAL_PREFIX}1 --keyring-backend test -a 
 }
 
 CSLEEP() {

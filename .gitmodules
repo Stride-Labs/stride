@@ -36,6 +36,10 @@
 	# Commit: v3.1.0
 	path = deps/noble
 	url = https://github.com/strangelove-ventures/noble.git
+[submodule "deps/celestia"]
+	# Commit: v1.11.0
+	path = deps/celestia
+	url = https://github.com/celestiaorg/celestia-app
 # bats
 [submodule "dockernet/tests/bats/bats-core"]
 	path = dockernet/tests/bats/bats-core

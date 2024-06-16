@@ -101,6 +101,7 @@ while getopts sgojtednhrz flag; do
       e) build_local_and_docker evmos deps/evmos ;;
       d) build_local_and_docker dydx deps/dydx/protocol ;;
       n) build_local_and_docker noble deps/noble ;;
+      c) build_local_and_docker celestia deps/celestia ;;
       z) continue ;; # build_local_and_docker {new-host-zone} deps/{new-host-zone} ;;
       r) build_local_and_docker relayer deps/relayer ;;  
       h) echo "Building Hermes Docker... ";

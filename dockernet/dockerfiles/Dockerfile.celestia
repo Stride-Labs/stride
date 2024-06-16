@@ -1,0 +1,25 @@
+FROM golang:1.21-alpine AS builder
+
+WORKDIR /opt/
+
+RUN set -eux; apk add --no-cache ca-certificates build-base git linux-headers
+
+RUN git clone --branch v1.11.0 --depth 1 https://github.com/celestiaorg/celestia-app.git \
+    && cd celestia-appd
+
+WORKDIR /opt/celestia-appd
+
+RUN make build
+
+FROM alpine:3.16
+COPY --from=builder /opt/celestia-appd/bin/celestia-appd /usr/local/bin/
+RUN apk add bash vim \
+    && addgroup -g 1000 celestia \
+    && adduser -S -h /home/celestia -D celestia -u 1000 -G celestia
+
+USER 1000
+WORKDIR /home/celestia
+
+EXPOSE 26657 26656 1317 9090
+
+CMD ["celestia-appd", "start"]
