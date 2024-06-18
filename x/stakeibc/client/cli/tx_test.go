@@ -215,22 +215,6 @@ func TestCmdChangeMultipleValidatorWeight(t *testing.T) {
 	})
 }
 
-func TestCmdDeleteValidator(t *testing.T) {
-	// no input parsing to test
-}
-
-func TestCmdRestoreInterchainAccount(t *testing.T) {
-	// no input parsing to test
-}
-
-func TestCmdUpdateValidatorSharesExchRate(t *testing.T) {
-	// no input parsing to test
-}
-
-func TestCmdCalibrateDelegation(t *testing.T) {
-	// no input parsing to test
-}
-
 func TestCmdClearBalance(t *testing.T) {
 	args := []string{
 		"[chain-id]",
@@ -267,10 +251,6 @@ func TestCmdUpdateInnerRedemptionRateBounds(t *testing.T) {
 			ExecuteCLIExpectError(t, cmd, args, "")
 		})
 	})
-}
-
-func TestCmdResumeHostZone(t *testing.T) {
-	// no input parsing to test
 }
 
 func TestCmdSetCommunityPoolRebate(t *testing.T) {
