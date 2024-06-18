@@ -23,7 +23,7 @@ HOT_WALLET_1_ADDRESS=cosmos1c37n9aywapx2v0s6vk2yedydkkhq65zzeupe92
 STATE=$SCRIPT_DIR/../state
 LOGS=$SCRIPT_DIR/../logs
 STRIDE_LOGS=$LOGS/stride.log
-DOCKER_COMPOSE="docker-compose -f $SCRIPT_DIR/docker-compose.yml"
+DOCKER_COMPOSE="docker compose -f $SCRIPT_DIR/docker-compose.yml"
 
 HERMES_STRIDE_MNEMONIC="alter old invest friend relief slot swear pioneer syrup economy vendor tray focus hedgehog artist legend antenna hair almost donkey spice protect sustain increase"
 RELAYER_STRIDE_MNEMONIC="pride narrow breeze fitness sign bounce dose smart squirrel spell length federal replace coral lunar thunder vital push nuclear crouch fun accident hood need"
@@ -83,7 +83,7 @@ $RELAYER_CMD keys restore host rly2 "$HOT_WALLET_3_MNEMONIC"
 # Update commands template
 COMMANDS_FILE=${SCRIPT_DIR}/commands.sh
 cp ${SCRIPT_DIR}/templates/commands.sh $COMMANDS_FILE
-DOCKER_COMPOSE_RELATIVE="docker-compose -f scripts/local-to-mainnet/docker-compose.yml"
+DOCKER_COMPOSE_RELATIVE="docker compose -f scripts/local-to-mainnet/docker-compose.yml"
 SCRIPTS_RELATIVE=scripts
 STATE_RELATIVE=$SCRIPTS_RELATIVE/state
 LOGS_RELATIVE=$SCRIPTS_RELATIVE/logs

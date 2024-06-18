@@ -69,7 +69,7 @@ ST{CHAIN}_DENOM="st{min_denom}"
 {CHAIN}_ADDRESS_PREFIX=stars
 {CHAIN}_REV_ACCT={n}rev1
 {CHAIN}_DENOM=${CHAIN}_DENOM
-{CHAIN}_RPC_PORT={the one included in the docker-compose above}
+{CHAIN}_RPC_PORT={the one included in the docker compose above}
 {CHAIN}_MAIN_CMD="${CHAIN}_CMD --home $DOCKERNET_HOME/state/${${CHAIN}_NODE_PREFIX}1"
 {CHAIN}_RECEIVER_ADDRESS={any random address on the chain}
 
@@ -80,7 +80,7 @@ ST{CHAIN}_DENOM="st{min_denom}"
 {CHAIN}_MICRO_DENOM_UNITS=000000000000000000
 
 # Add *below* the RELAYER section!
-RELAYER_{CHAIN}_EXEC="docker-compose run --rm relayer-{new-host-zone}"
+RELAYER_{CHAIN}_EXEC="docker compose run --rm relayer-{new-host-zone}"
 RELAYER_{CHAIN}_ACCT=rly{add one since the account from the last host zone}
 
 # NOTE: Update the STRIDE_RELAYER_ACCTS variable directly!
