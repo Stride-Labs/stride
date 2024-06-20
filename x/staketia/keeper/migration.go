@@ -45,6 +45,8 @@ func (k Keeper) UpdateStakeibcHostZone(ctx sdk.Context, legacyHostZone oldtypes.
 	// Disable redemptions and set the redemption rate to the one from stakeibc
 	stakeibcHostZone.RedemptionsEnabled = false
 	stakeibcHostZone.RedemptionRate = legacyHostZone.RedemptionRate
+	stakeibcHostZone.MinInnerRedemptionRate = legacyHostZone.MinInnerRedemptionRate
+	stakeibcHostZone.MaxInnerRedemptionRate = legacyHostZone.MaxInnerRedemptionRate
 
 	// Set the total delegations to the sum of the staketia total, plus any delegation records
 	// This is so we don't have to trigger any stakeibc account changes when delegations are
