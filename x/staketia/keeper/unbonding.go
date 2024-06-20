@@ -104,6 +104,10 @@ func (k Keeper) RedeemStake(
 		}
 	}
 
+	// Decrement the remaining delegation - if there was spillover, this will get set to 0
+	hostZone.RemainingDelegatedBalance = hostZone.RemainingDelegatedBalance.Sub(nativeAmount)
+	k.SetHostZone(ctx, hostZone)
+
 	// Update the accumulating UnbondingRecord with the undelegation amounts
 	accUnbondingRecord.StTokenAmount = accUnbondingRecord.StTokenAmount.Add(stTokenAmount)
 	accUnbondingRecord.NativeAmount = accUnbondingRecord.NativeAmount.Add(nativeAmount)

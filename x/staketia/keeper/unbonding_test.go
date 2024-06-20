@@ -444,6 +444,13 @@ func (s *KeeperTestSuite) checkRedeemStakeTestCase(tc RedeemStakeTestCase) {
 		// Successful Run Test Case
 		s.Require().NoError(err, "No error expected during redeem stake execution")
 
+		// Check the remaining delegated amount was decremented (and should never go below 0)
+		hostZone := s.MustGetHostZone()
+		redeemAmount := sdk.NewDecFromInt(tc.redeemMsg.StTokenAmount).Mul(tc.stakeibcHostZone.RedemptionRate).TruncateInt()
+		expectedRemainingDelegation := tc.hostZone.RemainingDelegatedBalance.Sub(redeemAmount)
+		expectedRemainingDelegation = sdkmath.MaxInt(expectedRemainingDelegation, sdkmath.ZeroInt())
+		s.Require().Equal(expectedRemainingDelegation.Int64(), hostZone.RemainingDelegatedBalance.Int64(), "remaining delegated balance")
+
 		// check expected updates to Accumulating UnbondingRecord
 		currentAUR, err := s.App.StaketiaKeeper.GetAccumulatingUnbondingRecord(s.Ctx)
 		s.Require().NoError(err, "No error expected when getting UnbondingRecord")
