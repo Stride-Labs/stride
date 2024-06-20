@@ -14,22 +14,14 @@ import (
 )
 
 func (s *KeeperTestSuite) TestUpdateStakeibcHostZone() {
-	// Create deposit records with amounts 100 and 200 respectively
-	delegationRecords := []types.DelegationRecord{
-		{Id: 1, Status: types.TRANSFER_IN_PROGRESS, NativeAmount: sdk.NewInt(100)},
-		{Id: 2, Status: types.DELEGATION_QUEUE, NativeAmount: sdk.NewInt(200)},
-	}
-	for _, delegationRecord := range delegationRecords {
-		s.App.StaketiaKeeper.SetDelegationRecord(s.Ctx, delegationRecord)
-	}
-
 	// Create a host zone with a delegated balance of 1000
+	totalDelegations := sdk.NewInt(1_000)
 	redemptionRate := sdk.NewDec(2)
 	minInnerRedemptionRate := sdk.MustNewDecFromStr("1.9")
 	maxInnerRedemptionRate := sdk.MustNewDecFromStr("2.1")
 	legacyHostZone := oldtypes.HostZone{
 		RedemptionRate:         redemptionRate,
-		DelegatedBalance:       sdk.NewInt(1_000),
+		DelegatedBalance:       totalDelegations,
 		MinInnerRedemptionRate: minInnerRedemptionRate,
 		MaxInnerRedemptionRate: maxInnerRedemptionRate,
 	}
@@ -39,16 +31,12 @@ func (s *KeeperTestSuite) TestUpdateStakeibcHostZone() {
 	s.App.StaketiaKeeper.SetLegacyHostZone(s.Ctx, legacyHostZone)
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, stakeibcHostZone)
 
-	// The expected stakeibc host zone should have total delegations
-	// equal to 1000 + 100 + 200 = 1300
-	expectedStakeibcTotalDelegations := sdkmath.NewInt(1_000 + 100 + 200)
-
 	// Call the update host zone function and confirm against expectations
 	actualStakeibcHostZone, err := s.App.StaketiaKeeper.UpdateStakeibcHostZone(s.Ctx, legacyHostZone)
 	s.Require().NoError(err, "no error expected when updating host zone")
 
 	s.Require().Equal(types.CelestiaChainId, actualStakeibcHostZone.ChainId, "chain ID")
-	s.Require().Equal(expectedStakeibcTotalDelegations, actualStakeibcHostZone.TotalDelegations, "total delegations")
+	s.Require().Equal(totalDelegations, actualStakeibcHostZone.TotalDelegations, "total delegations")
 	s.Require().Equal(redemptionRate, actualStakeibcHostZone.RedemptionRate, "redemption rate")
 	s.Require().Equal(minInnerRedemptionRate, actualStakeibcHostZone.MinInnerRedemptionRate, "min redemption rate")
 	s.Require().Equal(maxInnerRedemptionRate, actualStakeibcHostZone.MaxInnerRedemptionRate, "max redemption rate")
@@ -128,6 +116,7 @@ func (s *KeeperTestSuite) TestInitiateMigration() {
 	// Fund the staketia deposit and fee accounts
 	depositBalance := sdkmath.NewInt(1000)
 	feeBalance := sdkmath.NewInt(2000)
+	totalDelegations := sdk.NewInt(1000)
 	s.FundAccount(staketiaDepositAccount, sdk.NewCoin(HostIBCDenom, depositBalance))
 	s.FundModuleAccount(staketiaFeeModuleName, sdk.NewCoin(HostIBCDenom, feeBalance))
 
@@ -141,18 +130,9 @@ func (s *KeeperTestSuite) TestInitiateMigration() {
 		MinRedemptionRate:   sdk.MustNewDecFromStr("0.90"),
 		MaxRedemptionRate:   sdk.MustNewDecFromStr("1.5"),
 		RedemptionRate:      sdk.MustNewDecFromStr("1.2"),
-		DelegatedBalance:    sdk.NewInt(1000),
+		DelegatedBalance:    totalDelegations,
 	}
 	s.App.StaketiaKeeper.SetLegacyHostZone(s.Ctx, legacyHostZone)
-
-	// Create a delegation record that will be used in the delegated balance migration
-	delegationRecord := types.DelegationRecord{
-		Id:           1,
-		Status:       types.DELEGATION_QUEUE,
-		NativeAmount: sdk.NewInt(100),
-	}
-	s.App.StaketiaKeeper.SetDelegationRecord(s.Ctx, delegationRecord)
-	expectedTotalDelegations := legacyHostZone.DelegatedBalance.Add(delegationRecord.NativeAmount)
 
 	// Create epoch trackers and EURs which are needed for the stakeibc registration
 	s.App.StakeibcKeeper.SetEpochTracker(s.Ctx, stakeibctypes.EpochTracker{
@@ -196,7 +176,7 @@ func (s *KeeperTestSuite) TestInitiateMigration() {
 	s.Require().Equal(uint64(types.CelestiaUnbondingPeriodDays), hostZone.UnbondingPeriod, "unbonding period")
 
 	s.Require().False(hostZone.RedemptionsEnabled, "redemptions enabled")
-	s.Require().Equal(expectedTotalDelegations, hostZone.TotalDelegations, "total delegations")
+	s.Require().Equal(totalDelegations, hostZone.TotalDelegations, "total delegations")
 
 	// Confirm balances were transferred
 	stakeibcDepositAccount := sdk.MustAccAddressFromBech32(hostZone.DepositAddress)

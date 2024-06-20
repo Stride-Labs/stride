@@ -8,6 +8,7 @@ import (
 	transfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
 	ibctesting "github.com/cosmos/ibc-go/v7/testing"
 
+	stakeibctypes "github.com/Stride-Labs/stride/v22/x/stakeibc/types"
 	"github.com/Stride-Labs/stride/v22/x/staketia/types"
 )
 
@@ -151,10 +152,18 @@ func (s *KeeperTestSuite) SetupDelegationRecords() {
 		s.App.StaketiaKeeper.SetDelegationRecord(s.Ctx, delegationRecord)
 	}
 
-	// Set HostZone
+	// Set staketia hostZone
 	hostZone := s.initializeHostZone()
 	hostZone.RemainingDelegatedBalance = InitialDelegation
 	s.App.StaketiaKeeper.SetHostZone(s.Ctx, hostZone)
+
+	// Set stakeibc host zone with the same total delegation
+	stakeibcHostZone := stakeibctypes.HostZone{
+		ChainId:          types.CelestiaChainId,
+		TotalDelegations: InitialDelegation,
+		Halted:           false,
+	}
+	s.App.StakeibcKeeper.SetHostZone(s.Ctx, stakeibcHostZone)
 }
 
 func (s *KeeperTestSuite) VerifyDelegationRecords(verifyIdentical bool, archiveIds ...uint64) {
@@ -219,8 +228,14 @@ func (s *KeeperTestSuite) TestConfirmDelegation_Successful() {
 	s.Require().Equal(ValidTxHashNew, loadedDelegationRecord.TxHash, "delegation record should be updated with txHash")
 
 	// verify hostZone delegated balance is same as initial delegation + 6000
+	expectedDelegation := InitialDelegation.Int64() + 6000
+
 	hostZone := s.MustGetHostZone()
-	s.Require().Equal(InitialDelegation.Int64()+6000, hostZone.RemainingDelegatedBalance.Int64(), "hostZone delegated balance should have increased by 6000")
+	s.Require().Equal(expectedDelegation, hostZone.RemainingDelegatedBalance.Int64(), "staketia remaining delegated balance")
+
+	stakeibcHostZone, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx, types.CelestiaChainId)
+	s.Require().True(found)
+	s.Require().Equal(expectedDelegation, stakeibcHostZone.TotalDelegations.Int64(), "stakeibc total delegations")
 }
 
 func (s *KeeperTestSuite) TestConfirmDelegation_DelegationZero() {

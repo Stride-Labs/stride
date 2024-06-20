@@ -4,7 +4,6 @@ import (
 	"errors"
 
 	errorsmod "cosmossdk.io/errors"
-	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	recordtypes "github.com/Stride-Labs/stride/v22/x/records/types"
@@ -48,15 +47,8 @@ func (k Keeper) UpdateStakeibcHostZone(ctx sdk.Context, legacyHostZone oldtypes.
 	stakeibcHostZone.MinInnerRedemptionRate = legacyHostZone.MinInnerRedemptionRate
 	stakeibcHostZone.MaxInnerRedemptionRate = legacyHostZone.MaxInnerRedemptionRate
 
-	// Set the total delegations to the sum of the staketia total, plus any delegation records
-	// This is so we don't have to trigger any stakeibc account changes when delegations are
-	// confirmed from staketia
-	// In practice, if timed right, there should be no delegation records
-	pendingDelegations := sdkmath.ZeroInt()
-	for _, delegationRecord := range k.GetAllActiveDelegationRecords(ctx) {
-		pendingDelegations = pendingDelegations.Add(delegationRecord.NativeAmount)
-	}
-	stakeibcHostZone.TotalDelegations = legacyHostZone.DelegatedBalance.Add(pendingDelegations)
+	// Set the total delegations to the sum of the staketia total
+	stakeibcHostZone.TotalDelegations = legacyHostZone.DelegatedBalance
 	k.stakeibcKeeper.SetHostZone(ctx, stakeibcHostZone)
 
 	return stakeibcHostZone, nil

@@ -94,6 +94,10 @@ func (k Keeper) ConfirmDelegation(ctx sdk.Context, recordId uint64, txHash strin
 	if err != nil {
 		return err
 	}
+	stakeibcHostZone, err := k.stakeibcKeeper.GetActiveHostZone(ctx, types.CelestiaChainId)
+	if err != nil {
+		return err
+	}
 
 	// verify delegation record is nonzero
 	if !delegationRecord.NativeAmount.IsPositive() {
@@ -107,7 +111,9 @@ func (k Keeper) ConfirmDelegation(ctx sdk.Context, recordId uint64, txHash strin
 
 	// increment delegation on Host Zone
 	hostZone.RemainingDelegatedBalance = hostZone.RemainingDelegatedBalance.Add(delegationRecord.NativeAmount)
+	stakeibcHostZone.TotalDelegations = stakeibcHostZone.TotalDelegations.Add(delegationRecord.NativeAmount)
 	k.SetHostZone(ctx, hostZone)
+	k.stakeibcKeeper.SetHostZone(ctx, stakeibcHostZone)
 
 	EmitSuccessfulConfirmDelegationEvent(ctx, recordId, delegationRecord.NativeAmount, txHash, sender)
 	return nil
