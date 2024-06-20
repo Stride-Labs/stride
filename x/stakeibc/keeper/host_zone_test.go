@@ -573,3 +573,16 @@ func (s *KeeperTestSuite) TestGetTargetValAmtsForHostZone() {
 	_, err = s.App.StakeibcKeeper.GetTargetValAmtsForHostZone(s.Ctx, types.HostZone{}, sdkmath.NewInt(1))
 	s.Require().ErrorContains(err, "No non-zero validators found for host zone")
 }
+
+func (s *KeeperTestSuite) TestEnableRedemptions() {
+	s.App.StakeibcKeeper.SetHostZone(s.Ctx, types.HostZone{
+		ChainId:            HostChainId,
+		RedemptionsEnabled: false,
+	})
+
+	err := s.App.StakeibcKeeper.EnableRedemptions(s.Ctx, HostChainId)
+	s.Require().NoError(err)
+
+	hostZone := s.MustGetHostZone(HostChainId)
+	s.Require().True(hostZone.RedemptionsEnabled, "redemptions should have been enabled")
+}
