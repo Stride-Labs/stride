@@ -9,6 +9,7 @@ import (
 	"github.com/CosmWasm/wasmd/x/wasm"
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
+	wasmvm "github.com/CosmWasm/wasmvm"
 	"github.com/Stride-Labs/ibc-rate-limiting/ratelimit"
 	ratelimitkeeper "github.com/Stride-Labs/ibc-rate-limiting/ratelimit/keeper"
 	ratelimittypes "github.com/Stride-Labs/ibc-rate-limiting/ratelimit/types"
@@ -88,6 +89,9 @@ import (
 	ibchooks "github.com/cosmos/ibc-apps/modules/ibc-hooks/v7"
 	ibchookskeeper "github.com/cosmos/ibc-apps/modules/ibc-hooks/v7/keeper"
 	ibchookstypes "github.com/cosmos/ibc-apps/modules/ibc-hooks/v7/types"
+	ibcwasm "github.com/cosmos/ibc-go/modules/light-clients/08-wasm"
+	ibcwasmkeeper "github.com/cosmos/ibc-go/modules/light-clients/08-wasm/keeper"
+	ibcwasmtypes "github.com/cosmos/ibc-go/modules/light-clients/08-wasm/types"
 	ica "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts"
 	icacontroller "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/controller"
 	icacontrollerkeeper "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/controller/keeper"
@@ -227,6 +231,7 @@ var (
 		stakedym.AppModuleBasic{},
 		wasm.AppModuleBasic{},
 		ibchooks.AppModuleBasic{},
+		ibcwasm.AppModuleBasic{},
 	)
 
 	// module account permissions
@@ -311,6 +316,7 @@ type StrideApp struct {
 	WasmKeeper            wasmkeeper.Keeper
 	ContractKeeper        *wasmkeeper.PermissionedKeeper
 	IBCHooksKeeper        ibchookskeeper.Keeper
+	WasmClientKeeper      ibcwasmkeeper.Keeper
 
 	// Middleware for IBCHooks
 	Ics20WasmHooks   *ibchooks.WasmHooks
@@ -391,6 +397,7 @@ func NewStrideApp(
 		stakedymtypes.StoreKey,
 		wasmtypes.StoreKey,
 		ibchookstypes.StoreKey,
+		ibcwasmtypes.StoreKey,
 	)
 	tkeys := sdk.NewTransientStoreKeys(paramstypes.TStoreKey)
 	memKeys := sdk.NewMemoryStoreKeys(capabilitytypes.MemStoreKey)
@@ -542,13 +549,26 @@ func NewStrideApp(
 	// Set the TransferKeeper reference in the PacketForwardKeeper
 	app.PacketForwardKeeper.SetTransferKeeper(app.TransferKeeper)
 
-	// Add wasm keeper (must be after IBCKeeper and TransferKeeper)
+	// Add wasm keeper and wasm client keeper (must be after IBCKeeper and TransferKeeper)
+	wasmContractMemoryLimit := uint32(32)
 	wasmCapabilities := "iterator,staking,stargate,cosmwasm_1_1,cosmwasm_1_2,cosmwasm_1_3,cosmwasm_1_4"
 	wasmDir := filepath.Join(homePath, "wasm")
 	wasmConfig, err := wasm.ReadWasmConfig(appOpts)
 	if err != nil {
 		panic(fmt.Sprintf("error while reading wasm config: %s", err))
 	}
+
+	wasmer, err := wasmvm.NewVM(
+		wasmDir,
+		wasmCapabilities,
+		wasmContractMemoryLimit,
+		wasmConfig.ContractDebugMode,
+		wasmConfig.MemoryCacheSize,
+	)
+	if err != nil {
+		panic(err)
+	}
+	wasmOpts = append(wasmOpts, wasmkeeper.WithWasmEngine(wasmer))
 
 	scopedWasmKeeper := app.CapabilityKeeper.ScopeToModule(wasmtypes.ModuleName)
 	app.WasmKeeper = wasmkeeper.NewKeeper(
@@ -572,6 +592,15 @@ func NewStrideApp(
 		wasmOpts...,
 	)
 	app.ContractKeeper = wasmkeeper.NewDefaultPermissionKeeper(app.WasmKeeper)
+
+	app.WasmClientKeeper = ibcwasmkeeper.NewKeeperWithVM(
+		appCodec,
+		keys[ibcwasmtypes.StoreKey],
+		app.IBCKeeper.ClientKeeper,
+		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
+		wasmer,
+		app.GRPCQueryRouter(),
+	)
 
 	// Create evidence Keeper for to register the IBC light client misbehaviour evidence route
 	evidenceKeeper := evidencekeeper.NewKeeper(
@@ -874,6 +903,7 @@ func NewStrideApp(
 		wasm.NewAppModule(appCodec, &app.WasmKeeper, app.StakingKeeper, app.AccountKeeper, app.BankKeeper, app.BaseApp.MsgServiceRouter(), app.GetSubspace(wasmtypes.ModuleName)),
 		ibchooks.NewAppModule(app.AccountKeeper),
 		transfer.NewAppModule(app.TransferKeeper),
+		ibcwasm.NewAppModule(app.WasmClientKeeper),
 		// monitoringModule,
 		stakeibcModule,
 		epochsModule,
@@ -930,6 +960,7 @@ func NewStrideApp(
 		stakedymtypes.ModuleName,
 		wasmtypes.ModuleName,
 		ibchookstypes.ModuleName,
+		ibcwasmtypes.ModuleName,
 	)
 
 	app.mm.SetOrderEndBlockers(
@@ -969,6 +1000,7 @@ func NewStrideApp(
 		stakedymtypes.ModuleName,
 		wasmtypes.ModuleName,
 		ibchookstypes.ModuleName,
+		ibcwasmtypes.ModuleName,
 	)
 
 	// NOTE: The genutils module must occur after staking so that pools are
@@ -1013,6 +1045,7 @@ func NewStrideApp(
 		stakedymtypes.ModuleName,
 		wasmtypes.ModuleName,
 		ibchookstypes.ModuleName,
+		ibcwasmtypes.ModuleName,
 	)
 
 	app.mm.RegisterInvariants(app.CrisisKeeper)

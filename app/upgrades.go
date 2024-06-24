@@ -14,6 +14,7 @@ import (
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 	packetforwardtypes "github.com/cosmos/ibc-apps/middleware/packet-forward-middleware/v7/packetforward/types"
 	ibchookstypes "github.com/cosmos/ibc-apps/modules/ibc-hooks/v7/types"
+	ibcwasmtypes "github.com/cosmos/ibc-go/modules/light-clients/08-wasm/types"
 	consumertypes "github.com/cosmos/interchain-security/v4/x/ccv/consumer/types"
 	evmosvestingtypes "github.com/evmos/vesting/x/vesting/types"
 
@@ -303,6 +304,7 @@ func (app *StrideApp) setupUpgradeHandlers(appOpts servertypes.AppOptions) {
 		v23.CreateUpgradeHandler(
 			app.mm,
 			app.configurator,
+			app.IBCKeeper.ClientKeeper,
 			app.StakeibcKeeper,
 		),
 	)
@@ -363,6 +365,10 @@ func (app *StrideApp) setupUpgradeHandlers(appOpts servertypes.AppOptions) {
 	case "v22":
 		storeUpgrades = &storetypes.StoreUpgrades{
 			Added: []string{ibchookstypes.StoreKey},
+		}
+	case "v23":
+		storeUpgrades = &storetypes.StoreUpgrades{
+			Added: []string{ibcwasmtypes.ModuleName},
 		}
 	}
 
