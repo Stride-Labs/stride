@@ -1,4 +1,3 @@
-version: "3"
 services:
   # Stride nodes
   stride1:
