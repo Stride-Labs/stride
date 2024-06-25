@@ -1,4 +1,4 @@
-package v23
+package v22_1
 
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -11,7 +11,7 @@ import (
 )
 
 var (
-	UpgradeName = "v23"
+	UpgradeName = "v22_1"
 )
 
 // CreateUpgradeHandler creates an SDK upgrade handler for v23
@@ -22,7 +22,7 @@ func CreateUpgradeHandler(
 	stakeibcKeeper stakeibckeeper.Keeper,
 ) upgradetypes.UpgradeHandler {
 	return func(ctx sdk.Context, _ upgradetypes.Plan, vm module.VersionMap) (module.VersionMap, error) {
-		ctx.Logger().Info("Starting upgrade v23...")
+		ctx.Logger().Info("Starting upgrade v22_1 ...")
 
 		ctx.Logger().Info("Adding wasm client...")
 		AddWasmAllowedClient(ctx, clientKeeper)
