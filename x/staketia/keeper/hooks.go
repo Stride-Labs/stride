@@ -23,11 +23,6 @@ func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochInfo epochstypes.EpochInf
 	// Every day, refresh the redemption rate and prepare delegations
 	// Every 4 days, prepare undelegations
 	if epochInfo.Identifier == epochstypes.DAY_EPOCH {
-		// Prepare delegations by transferring the deposited tokens to the host zone
-		if err := k.SafelyPrepareDelegation(ctx, epochNumber, epochInfo.Duration); err != nil {
-			k.Logger(ctx).Error(fmt.Sprintf("Unable to prepare delegation for epoch %d: %s", epochNumber, err.Error()))
-		}
-
 		// Every few days (depending on the unbonding frequency) prepare undelegations which
 		// freezes the accumulating unbonding record and refreshes the native token amount
 		// TODO [cleanup]: replace with unbonding frequency

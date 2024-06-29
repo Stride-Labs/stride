@@ -25,7 +25,7 @@ func (k Keeper) RedeemStake(
 ) (nativeToken sdk.Coin, err error) {
 	// Validate Basic already has ensured redeemer is legal address, stTokenAmount is above min threshold
 
-	// Check HostZone exists, has legal redemption address for escrow, is not halted, has RR in bounds
+	// Check HostZone exists, and that the stakeibc host zone is not halted
 	hostZone, err := k.GetUnhaltedHostZone(ctx)
 	if err != nil {
 		return nativeToken, err
@@ -41,6 +41,7 @@ func (k Keeper) RedeemStake(
 		return nativeToken, types.ErrRedemptionsDisabled
 	}
 
+	// Check that the redemption address exists as the escrow account
 	escrowAccount, err := sdk.AccAddressFromBech32(hostZone.RedemptionAddress)
 	if err != nil {
 		return nativeToken, errorsmod.Wrapf(err, "could not bech32 decode redemption address %s on stride", hostZone.RedemptionAddress)
@@ -386,7 +387,12 @@ func (k Keeper) ConfirmUnbondedTokenSweep(ctx sdk.Context, recordId uint64, txHa
 func (k Keeper) DistributeClaims(ctx sdk.Context) error {
 	// Get the claim address which will be the sender
 	// The token denom will be the native host zone token in it's IBC form as it lives on stride
+	// We check the stakeibc host zone as well to confirm there's no halt
 	hostZone, err := k.GetUnhaltedHostZone(ctx)
+	if err != nil {
+		return err
+	}
+	_, err = k.stakeibcKeeper.GetActiveHostZone(ctx, types.CelestiaChainId)
 	if err != nil {
 		return err
 	}

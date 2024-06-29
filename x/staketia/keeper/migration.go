@@ -46,6 +46,7 @@ func (k Keeper) UpdateStakeibcHostZone(ctx sdk.Context, legacyHostZone oldtypes.
 	stakeibcHostZone.RedemptionRate = legacyHostZone.RedemptionRate
 	stakeibcHostZone.MinInnerRedemptionRate = legacyHostZone.MinInnerRedemptionRate
 	stakeibcHostZone.MaxInnerRedemptionRate = legacyHostZone.MaxInnerRedemptionRate
+	stakeibcHostZone.Halted = legacyHostZone.Halted
 
 	// Set the total delegations to the sum of the staketia total
 	stakeibcHostZone.TotalDelegations = legacyHostZone.DelegatedBalance

@@ -15,6 +15,7 @@ import (
 
 func (s *KeeperTestSuite) TestUpdateStakeibcHostZone() {
 	// Create a host zone with a delegated balance of 1000
+	halted := true
 	totalDelegations := sdk.NewInt(1_000)
 	redemptionRate := sdk.NewDec(2)
 	minInnerRedemptionRate := sdk.MustNewDecFromStr("1.9")
@@ -24,6 +25,7 @@ func (s *KeeperTestSuite) TestUpdateStakeibcHostZone() {
 		DelegatedBalance:       totalDelegations,
 		MinInnerRedemptionRate: minInnerRedemptionRate,
 		MaxInnerRedemptionRate: maxInnerRedemptionRate,
+		Halted:                 halted,
 	}
 	stakeibcHostZone := stakeibctypes.HostZone{
 		ChainId: types.CelestiaChainId,
@@ -40,6 +42,7 @@ func (s *KeeperTestSuite) TestUpdateStakeibcHostZone() {
 	s.Require().Equal(redemptionRate, actualStakeibcHostZone.RedemptionRate, "redemption rate")
 	s.Require().Equal(minInnerRedemptionRate, actualStakeibcHostZone.MinInnerRedemptionRate, "min redemption rate")
 	s.Require().Equal(maxInnerRedemptionRate, actualStakeibcHostZone.MaxInnerRedemptionRate, "max redemption rate")
+	s.Require().Equal(halted, actualStakeibcHostZone.Halted, "halted")
 
 	// Remove the host zone and try again, it should fail
 	s.App.StakeibcKeeper.RemoveHostZone(s.Ctx, types.CelestiaChainId)

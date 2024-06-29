@@ -1102,6 +1102,11 @@ func (s *KeeperTestSuite) SetupTestDistributeClaims() DistributeClaimsTestCase {
 	}
 	s.App.StaketiaKeeper.SetHostZone(s.Ctx, hostZone)
 
+	// Create unhalted stakeibc host zone
+	s.App.StakeibcKeeper.SetHostZone(s.Ctx, stakeibctypes.HostZone{
+		ChainId: types.CelestiaChainId,
+	})
+
 	// Define unbonding records with different statuses
 	claimableRecordIds := []uint64{1, 3}
 	unbondingRecords := []types.UnbondingRecord{
