@@ -59,7 +59,7 @@ func DefaultConfig() network.Config {
 	// app doesn't have this module anymore, but we need them for test setup, which uses gentx
 	app.ModuleBasics[genutiltypes.ModuleName] = genutil.AppModuleBasic{}
 	encoding := app.MakeEncodingConfig()
-	chainId := "stride-" + cometbftrand.NewRand().Str(6)
+	chainId := fmt.Sprintf("stride-%d", cometbftrand.NewRand().Uint64())
 	return network.Config{
 		Codec:             encoding.Marshaler,
 		TxConfig:          encoding.TxConfig,

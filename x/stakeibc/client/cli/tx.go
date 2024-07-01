@@ -329,7 +329,16 @@ func CmdAddValidators() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "add-validators [host-zone] [validator-list-file]",
 		Short: "Broadcast message add-validators",
-		Args:  cobra.ExactArgs(2),
+		Long: strings.TrimSpace(
+			`Add validators and weights using a JSON file in the following format
+	{
+		"validator_weights": [
+			{"address": "cosmosXXX", "weight": 1},
+			{"address": "cosmosXXX", "weight": 2}
+		]
+	}	
+`),
+		Args: cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
 			hostZone := args[0]
 			validatorListProposalFile := args[1]
