@@ -553,13 +553,14 @@ func NewStrideApp(
 	wasmContractMemoryLimit := uint32(32)
 	wasmCapabilities := "iterator,staking,stargate,cosmwasm_1_1,cosmwasm_1_2,cosmwasm_1_3,cosmwasm_1_4"
 	wasmDir := filepath.Join(homePath, "wasm")
+	wasmVmDir := filepath.Join(homePath, "wasm", "wasm")
 	wasmConfig, err := wasm.ReadWasmConfig(appOpts)
 	if err != nil {
 		panic(fmt.Sprintf("error while reading wasm config: %s", err))
 	}
 
 	wasmer, err := wasmvm.NewVM(
-		wasmDir,
+		wasmVmDir,
 		wasmCapabilities,
 		wasmContractMemoryLimit,
 		wasmConfig.ContractDebugMode,
