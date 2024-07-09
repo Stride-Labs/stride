@@ -4,6 +4,7 @@ import (
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
+	stakeibctypes "github.com/Stride-Labs/stride/v22/x/stakeibc/types"
 	"github.com/Stride-Labs/stride/v22/x/staketia/types"
 )
 
@@ -156,10 +157,14 @@ func (s *KeeperTestSuite) TestAdjustDelegatedBalance() {
 
 	safeAddress := "safe"
 
-	// Create the host zone
+	// Create the host zones
 	s.App.StaketiaKeeper.SetHostZone(s.Ctx, types.HostZone{
 		SafeAddressOnStride:       safeAddress,
 		RemainingDelegatedBalance: sdk.NewInt(0),
+	})
+	s.App.StakeibcKeeper.SetHostZone(s.Ctx, stakeibctypes.HostZone{
+		ChainId:          types.CelestiaChainId,
+		TotalDelegations: sdk.NewInt(0),
 	})
 
 	// we're halting the zone to test that the tx works even when the host zone is halted
@@ -187,7 +192,11 @@ func (s *KeeperTestSuite) TestAdjustDelegatedBalance() {
 		s.Require().NoError(err, "no error expected when adjusting delegated bal properly for %s", tc.address)
 
 		hostZone := s.MustGetHostZone()
-		s.Require().Equal(tc.endDelegation, hostZone.RemainingDelegatedBalance, "delegation after change for %s", tc.address)
+		s.Require().Equal(tc.endDelegation, hostZone.RemainingDelegatedBalance, "remaining delegation after change for %s", tc.address)
+
+		stakeibcHostZone, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx, types.CelestiaChainId)
+		s.Require().True(found)
+		s.Require().Equal(tc.endDelegation, stakeibcHostZone.TotalDelegations, "total delegation after change for %s", tc.address)
 	}
 
 	// Attempt to call it with an amount that would make it negative, it should fail

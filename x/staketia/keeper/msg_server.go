@@ -112,6 +112,18 @@ func (k msgServer) AdjustDelegatedBalance(goCtx context.Context, msg *types.MsgA
 	}
 	k.SetHostZone(ctx, hostZone)
 
+	// Repeat the same thing on the stakeibc host zone
+	stakeibcHostZone, found := k.stakeibcKeeper.GetHostZone(ctx, types.CelestiaChainId)
+	if !found {
+		return nil, errors.New("celestia host zone not found in stakeibc")
+	}
+	stakeibcHostZone.TotalDelegations = stakeibcHostZone.TotalDelegations.Add(msg.DelegationOffset)
+
+	if stakeibcHostZone.TotalDelegations.IsNegative() {
+		return nil, types.ErrNegativeNotAllowed.Wrapf("offset would cause the delegated balance to be negative")
+	}
+	k.stakeibcKeeper.SetHostZone(ctx, stakeibcHostZone)
+
 	// create a corresponding slash record
 	latestSlashRecordId := k.IncrementSlashRecordId(ctx)
 	slashRecord := types.SlashRecord{
