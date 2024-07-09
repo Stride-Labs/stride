@@ -37,10 +37,11 @@ type RedeemStakeTestCase struct {
 	redemptionRecord *types.RedemptionRecord
 	redeemMsg        types.MsgRedeemStake
 
-	expectedUnbondingRecord          *types.UnbondingRecord
-	expectedRedemptionRecord         *types.RedemptionRecord
-	expectedStakeibcRedemptionAmount sdkmath.Int
-	expectedErrorContains            string
+	expectedUnbondingRecord            *types.UnbondingRecord
+	expectedRedemptionRecord           *types.RedemptionRecord
+	expectedStakeibcRedemptionAmount   sdkmath.Int
+	expectedStakeibcRedemptionsEnabled bool
+	expectedErrorContains              string
 }
 
 // Create the correct amounts in accounts, setup the records in store
@@ -384,6 +385,7 @@ func (s *KeeperTestSuite) TestRedeemStake() {
 				StTokenAmount:     defaultMsg.StTokenAmount,
 				NativeAmount:      sdk.NewDecFromInt(defaultMsg.StTokenAmount).Mul(defaultIcaHZ.RedemptionRate).TruncateInt(),
 			},
+			expectedStakeibcRedemptionsEnabled: true,
 		},
 		{
 			testName: "[Success] Redeems with stakeibc spillover",
@@ -414,7 +416,8 @@ func (s *KeeperTestSuite) TestRedeemStake() {
 				StTokenAmount:     defaultMsg.StTokenAmount.Sub(sdkmath.OneInt()),
 				NativeAmount:      defaultMsg.StTokenAmount.Sub(sdkmath.OneInt()),
 			},
-			expectedStakeibcRedemptionAmount: sdkmath.OneInt(),
+			expectedStakeibcRedemptionAmount:   sdkmath.OneInt(),
+			expectedStakeibcRedemptionsEnabled: true,
 		},
 	}
 
@@ -468,6 +471,11 @@ func (s *KeeperTestSuite) checkRedeemStakeTestCase(tc RedeemStakeTestCase) {
 		currentStEscrowBalance := s.App.BankKeeper.GetBalance(s.Ctx, escrowAccount, StDenom)
 		s.Require().NotEqual(startingStEscrowBalance, currentStEscrowBalance, "Escrowed balance should have changed")
 		s.Require().Equal(currentStEscrowBalance.Amount, currentAUR.StTokenAmount, "Escrowed balance does not match the UnbondingRecord")
+
+		// If all the remaining amount was unbonded, check that redemptions were enabled
+		stakeibcHostZone, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx, types.CelestiaChainId)
+		s.Require().True(found)
+		s.Require().Equal(tc.expectedStakeibcRedemptionsEnabled, stakeibcHostZone.RedemptionsEnabled, "stakeibc redemptions enabled")
 
 		// If there's stakeibc spillover, check that the amount was stored in the user redemption record
 		if !tc.expectedStakeibcRedemptionAmount.IsNil() {

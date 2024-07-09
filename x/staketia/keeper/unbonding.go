@@ -82,15 +82,18 @@ func (k Keeper) RedeemStake(
 			"cannot unstake an amount g.t. total staked balance: %v > %v", nativeAmount, stakeibcHostZone.TotalDelegations)
 	}
 
-	// Check if the requested unbonding is greater than what's in the multisig account
-	// If so, handle the spillover via stakeibc
-	if nativeAmount.GT(hostZone.RemainingDelegatedBalance) {
-		// First, eable redemptions in stakeibc
+	// If the requested unbonding amount is greater than or equal to what's in the multisig account,
+	// this will be the last staketia redemption and we should enable redemptions in stakeibc
+	if nativeAmount.GTE(hostZone.RemainingDelegatedBalance) {
 		if err := k.stakeibcKeeper.EnableRedemptions(ctx, types.CelestiaChainId); err != nil {
 			return nativeToken, errorsmod.Wrapf(err, "unable to enable redemptions")
 		}
+	}
 
-		// Then pass the spillover to stakeibc, returning the remaining amount back to be processed in staketia
+	// If the requested unbonding is greater than what's in the multisig account
+	// we need to handle the spillover in stakeibc
+	// This will return the remaining amount back to be processed in staketia
+	if nativeAmount.GT(hostZone.RemainingDelegatedBalance) {
 		nativeAmount, stTokenAmount, err = k.HandleRedemptionSpillover(
 			ctx,
 			redeemer,
