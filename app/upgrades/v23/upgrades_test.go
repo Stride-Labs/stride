@@ -68,16 +68,60 @@ func (s *UpgradeTestSuite) TestMigrateHostZones() {
 	}
 }
 
+func (s *UpgradeTestSuite) TestMigrateDepositRecords() {
+	// Create initial deposit records across each status
+	testCases := []struct {
+		status                          recordstypes.DepositRecord_Status
+		expectedDelegationTxsInProgress uint64
+	}{
+		{
+			status:                          recordstypes.DepositRecord_TRANSFER_QUEUE,
+			expectedDelegationTxsInProgress: 0,
+		},
+		{
+			status:                          recordstypes.DepositRecord_TRANSFER_IN_PROGRESS,
+			expectedDelegationTxsInProgress: 0,
+		},
+		{
+			status:                          recordstypes.DepositRecord_DELEGATION_QUEUE,
+			expectedDelegationTxsInProgress: 0,
+		},
+		{
+			status:                          recordstypes.DepositRecord_DELEGATION_IN_PROGRESS,
+			expectedDelegationTxsInProgress: 1,
+		},
+	}
+
+	for id, tc := range testCases {
+		s.App.RecordsKeeper.SetDepositRecord(s.Ctx, recordstypes.DepositRecord{
+			Id:     uint64(id),
+			Status: tc.status,
+		})
+	}
+
+	// Migrate the records
+	v23.MigrateDepositRecords(s.Ctx, s.App.RecordsKeeper)
+
+	// Confirm the expected status for each
+	for id, tc := range testCases {
+		depositRecord, found := s.App.RecordsKeeper.GetDepositRecord(s.Ctx, uint64(id))
+		s.Require().True(found, "deposit record %d should have been found", id)
+		s.Require().Equal(tc.expectedDelegationTxsInProgress, depositRecord.DelegationTxsInProgress,
+			"delegation txs in progress for record %d", id)
+	}
+}
+
 func (s *UpgradeTestSuite) TestMigrateEpochUnbondingRecords() {
 	recordTestCases := []struct {
-		epochNumber                   uint64
-		chainId                       string
-		status                        recordstypes.HostZoneUnbonding_Status
-		stTokenAmount                 int64
-		nativeTokenAmount             int64
-		expectedStTokensToBurn        int64
-		expectedNativeTokensToUnbond  int64
-		expectedClaimableNativeTokens int64
+		epochNumber                       uint64
+		chainId                           string
+		status                            recordstypes.HostZoneUnbonding_Status
+		stTokenAmount                     int64
+		nativeTokenAmount                 int64
+		expectedStTokensToBurn            int64
+		expectedNativeTokensToUnbond      int64
+		expectedClaimableNativeTokens     int64
+		expectedUndelegationTxsInProgress uint64
 	}{
 		{
 			epochNumber: 1,
@@ -87,9 +131,10 @@ func (s *UpgradeTestSuite) TestMigrateEpochUnbondingRecords() {
 			stTokenAmount:     1,
 			nativeTokenAmount: 2,
 
-			expectedStTokensToBurn:        0,
-			expectedNativeTokensToUnbond:  0,
-			expectedClaimableNativeTokens: 0,
+			expectedStTokensToBurn:            0,
+			expectedNativeTokensToUnbond:      0,
+			expectedClaimableNativeTokens:     0,
+			expectedUndelegationTxsInProgress: 0,
 		},
 		{
 			epochNumber: 1,
@@ -99,9 +144,10 @@ func (s *UpgradeTestSuite) TestMigrateEpochUnbondingRecords() {
 			stTokenAmount:     3,
 			nativeTokenAmount: 4,
 
-			expectedStTokensToBurn:        3,
-			expectedNativeTokensToUnbond:  4,
-			expectedClaimableNativeTokens: 0,
+			expectedStTokensToBurn:            3,
+			expectedNativeTokensToUnbond:      4,
+			expectedClaimableNativeTokens:     0,
+			expectedUndelegationTxsInProgress: 1,
 		},
 		{
 			epochNumber: 2,
@@ -111,9 +157,10 @@ func (s *UpgradeTestSuite) TestMigrateEpochUnbondingRecords() {
 			stTokenAmount:     5,
 			nativeTokenAmount: 6,
 
-			expectedStTokensToBurn:        0,
-			expectedNativeTokensToUnbond:  0,
-			expectedClaimableNativeTokens: 0,
+			expectedStTokensToBurn:            0,
+			expectedNativeTokensToUnbond:      0,
+			expectedClaimableNativeTokens:     0,
+			expectedUndelegationTxsInProgress: 0,
 		},
 		{
 			epochNumber: 2,
@@ -123,9 +170,10 @@ func (s *UpgradeTestSuite) TestMigrateEpochUnbondingRecords() {
 			stTokenAmount:     7,
 			nativeTokenAmount: 8,
 
-			expectedStTokensToBurn:        0,
-			expectedNativeTokensToUnbond:  0,
-			expectedClaimableNativeTokens: 0,
+			expectedStTokensToBurn:            0,
+			expectedNativeTokensToUnbond:      0,
+			expectedClaimableNativeTokens:     0,
+			expectedUndelegationTxsInProgress: 0,
 		},
 		{
 			epochNumber: 4,
@@ -135,9 +183,10 @@ func (s *UpgradeTestSuite) TestMigrateEpochUnbondingRecords() {
 			stTokenAmount:     9,
 			nativeTokenAmount: 10,
 
-			expectedStTokensToBurn:        0,
-			expectedNativeTokensToUnbond:  0,
-			expectedClaimableNativeTokens: 10,
+			expectedStTokensToBurn:            0,
+			expectedNativeTokensToUnbond:      0,
+			expectedClaimableNativeTokens:     10,
+			expectedUndelegationTxsInProgress: 0,
 		},
 	}
 
@@ -173,5 +222,7 @@ func (s *UpgradeTestSuite) TestMigrateEpochUnbondingRecords() {
 			"%s native to unbond", tc.chainId)
 		s.Require().Equal(tc.expectedClaimableNativeTokens, hostZoneUnbonding.ClaimableNativeTokens.Int64(),
 			"%s claimable native", tc.chainId)
+		s.Require().Equal(tc.expectedUndelegationTxsInProgress, hostZoneUnbonding.UndelegationTxsInProgress,
+			"%s undelegation txs in progress", tc.chainId)
 	}
 }

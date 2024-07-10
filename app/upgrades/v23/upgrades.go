@@ -67,6 +67,21 @@ func MigrateHostZones(ctx sdk.Context, k stakeibckeeper.Keeper) {
 	}
 }
 
+// Migrates the deposit records to set the DelegationTxsInProgress field
+// which should be 1 if the status was DELEGATION_IN_PROGRESS, and 0 otherwise
+func MigrateDepositRecords(ctx sdk.Context, k recordskeeper.Keeper) {
+	ctx.Logger().Info("Migrating deposit records...")
+
+	for _, depositRecord := range k.GetAllDepositRecord(ctx) {
+		if depositRecord.Status == recordstypes.DepositRecord_DELEGATION_IN_PROGRESS {
+			depositRecord.DelegationTxsInProgress = 1
+		} else {
+			depositRecord.DelegationTxsInProgress = 0
+		}
+		k.SetDepositRecord(ctx, depositRecord)
+	}
+}
+
 // Migrates a single host zone unbonding record to add the new fields: StTokensToBurn,
 // NativeTokensToUnbond, and ClaimableNativeTokens
 //
@@ -79,6 +94,9 @@ func MigrateHostZones(ctx sdk.Context, k stakeibckeeper.Keeper) {
 //
 // If the record is in status CLAIMABLE,
 // set StTokensToBurn and NativeTokensToUnbond to 0, and set ClaimableNativeTokens to the value of NativeTokenAmount
+//
+// If the record is in status UNBONDING_IN_PROGRESS, we need to also set UndelegationTxsInProgress to 1;
+// otherwise, it should be set to 0
 func MigrateHostZoneUnbondingRecords(hostZoneUnbonding *recordstypes.HostZoneUnbonding) *recordstypes.HostZoneUnbonding {
 	if hostZoneUnbonding.Status == recordstypes.HostZoneUnbonding_UNBONDING_QUEUE ||
 		hostZoneUnbonding.Status == recordstypes.HostZoneUnbonding_EXIT_TRANSFER_QUEUE ||
@@ -87,16 +105,19 @@ func MigrateHostZoneUnbondingRecords(hostZoneUnbonding *recordstypes.HostZoneUnb
 		hostZoneUnbonding.StTokensToBurn = sdkmath.ZeroInt()
 		hostZoneUnbonding.NativeTokensToUnbond = sdkmath.ZeroInt()
 		hostZoneUnbonding.ClaimableNativeTokens = sdkmath.ZeroInt()
+		hostZoneUnbonding.UndelegationTxsInProgress = 0
 
 	} else if hostZoneUnbonding.Status == recordstypes.HostZoneUnbonding_UNBONDING_IN_PROGRESS {
 		hostZoneUnbonding.StTokensToBurn = hostZoneUnbonding.StTokenAmount
 		hostZoneUnbonding.NativeTokensToUnbond = hostZoneUnbonding.NativeTokenAmount
 		hostZoneUnbonding.ClaimableNativeTokens = sdkmath.ZeroInt()
+		hostZoneUnbonding.UndelegationTxsInProgress = 1
 
 	} else if hostZoneUnbonding.Status == recordstypes.HostZoneUnbonding_CLAIMABLE {
 		hostZoneUnbonding.StTokensToBurn = sdkmath.ZeroInt()
 		hostZoneUnbonding.NativeTokensToUnbond = sdkmath.ZeroInt()
 		hostZoneUnbonding.ClaimableNativeTokens = hostZoneUnbonding.NativeTokenAmount
+		hostZoneUnbonding.UndelegationTxsInProgress = 0
 	}
 
 	return hostZoneUnbonding

@@ -221,12 +221,13 @@ func (k Keeper) RegisterHostZone(ctx sdk.Context, msg *types.MsgRegisterHostZone
 		return nil, errorsmod.Wrapf(types.ErrEpochNotFound, "epoch tracker (%s) not found", epochtypes.STRIDE_EPOCH)
 	}
 	depositRecord := recordstypes.DepositRecord{
-		Id:                 0,
-		Amount:             sdkmath.ZeroInt(),
-		Denom:              zone.HostDenom,
-		HostZoneId:         zone.ChainId,
-		Status:             recordstypes.DepositRecord_TRANSFER_QUEUE,
-		DepositEpochNumber: strideEpochTracker.EpochNumber,
+		Id:                      0,
+		Amount:                  sdkmath.ZeroInt(),
+		Denom:                   zone.HostDenom,
+		HostZoneId:              zone.ChainId,
+		Status:                  recordstypes.DepositRecord_TRANSFER_QUEUE,
+		DepositEpochNumber:      strideEpochTracker.EpochNumber,
+		DelegationTxsInProgress: 0,
 	}
 	k.RecordsKeeper.AppendDepositRecord(ctx, depositRecord)
 
