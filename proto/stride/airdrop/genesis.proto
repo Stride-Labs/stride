@@ -9,7 +9,7 @@ option go_package = "github.com/Stride-Labs/stride/v22/x/airdrop/types";
 // GenesisState defines the airdrop module's genesis state.
 message GenesisState {
   // All airdrop config records
-  repeated AirdropConfigRecord airdrop_records = 2 [
+  repeated AirdropRecord airdrop_records = 2 [
     (gogoproto.moretags) = "yaml:\"airdrop_records\"",
     (gogoproto.nullable) = false
   ];

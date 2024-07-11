@@ -93,11 +93,11 @@ message QueryAirdropsRequest {
   cosmos.base.query.v1beta1.PageRequest pagination = 1;
 };
 message QueryAirdropsResponse {
-  repeated AirdropConfigRecord airdrop_config_records = 1
+  repeated AirdropRecord airdrop_config_records = 1
       [ (gogoproto.nullable) = false ];
   cosmos.base.query.v1beta1.PageResponse pagination = 2;
 }
 
 // Airdrop
 message QueryAirdropRequest { uint64 id = 1; };
-message QueryAirdropResponse { AirdropConfigRecord airdrop_config_record = 1; }
+message QueryAirdropResponse { AirdropRecord airdrop_config_record = 1; }

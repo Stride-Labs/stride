@@ -79,3 +79,11 @@ func (k Keeper) ClaimEarly(ctx sdk.Context, claimer string) error {
 
 	return nil
 }
+
+func (k Keeper) SetAirdropRecords(ctx sdk.Context, airdrop_record []types.AirdropRecord) error {
+	return nil
+}
+
+func (k Keeper) SetAllocationRecords(ctx sdk.Context, allocation_record []types.AllocationRecord) error {
+	return nil
+}

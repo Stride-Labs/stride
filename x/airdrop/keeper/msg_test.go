@@ -11,7 +11,6 @@ import (
 
 func TestMsgClaim(t *testing.T) {
 	k, ms, ctx := setupMsgServer(t)
-	k = k // TODO remove this, just put it here to ignore the "k declared and not used" error
 
 	// TODO init state
 	// params := types.DefaultParams()
@@ -60,7 +59,6 @@ func TestMsgClaim(t *testing.T) {
 
 func TestMsgClaimAndStake(t *testing.T) {
 	k, ms, ctx := setupMsgServer(t)
-	k = k // TODO remove this, just put it here to ignore the "k declared and not used" error
 
 	// TODO init state
 	// params := types.DefaultParams()
@@ -109,7 +107,6 @@ func TestMsgClaimAndStake(t *testing.T) {
 
 func TestMsgClaimEarly(t *testing.T) {
 	k, ms, ctx := setupMsgServer(t)
-	k = k // TODO remove this, just put it here to ignore the "k declared and not used" error
 
 	// TODO init state
 	// params := types.DefaultParams()

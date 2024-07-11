@@ -64,8 +64,8 @@ message AllocationRecord {
   ClaimType claim_type = 5;
 }
 
-// AirdropConfigRecord track the aggregate unbondings across an epoch
-message AirdropConfigRecord {
+// AirdropRecord track the aggregate unbondings across an epoch
+message AirdropRecord {
   // Airdrop ID
   uint64 id = 1;
 
