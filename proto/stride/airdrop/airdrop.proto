@@ -71,28 +71,29 @@ message AirdropRecord {
   // Airdrop ID
   uint64 id = 1;
 
-  // Distribution start date
+  // The first date that claiming begins and rewards are distributed
   google.protobuf.Timestamp distribution_start_date = 2
       [ (gogoproto.stdtime) = true ];
 
-  // Distribution end date
+  // The last date for rewards to be distributed. Immediately after this date
+  // the rewards can no longer be claimed, but rewards have not been clawed back yet
   google.protobuf.Timestamp distribution_end_date = 3
       [ (gogoproto.stdtime) = true ];
 
-  // Clawback date
+  // Date with which the rewards are clawed back (occurs after the distribution end date)
   google.protobuf.Timestamp clawback_date = 4 [ (gogoproto.stdtime) = true ];
 
-  // Claim type deadline date
+  // Deadline for the user to make a decision on their claim type
   google.protobuf.Timestamp claim_type_deadline_date = 5
       [ (gogoproto.stdtime) = true ];
 
-  // Early claim penalty
+  // Penalty for claiming rewards early - e.g. 0.5 means claiming early will result in losing 50% of rewards
   string early_claim_penalty = 6 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false
   ];
 
-  // Distribution account
+  // Account that holds the total reward balance and distributes to users
   string distribution_account = 7
       [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
 }
