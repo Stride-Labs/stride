@@ -42,7 +42,7 @@ service Query {
   }
 
   // Queries all airdrop configurations
-  rpc Airdrops(QueryAirdropsRequest) returns (QueryAirdropsResponse) {
+  rpc Airdrops(QueryAllAirdropsRequest) returns (QueryAllAirdropsResponse) {
     option (google.api.http).get = "/Stride-Labs/stride/airdrop/airdrops";
   }
 
