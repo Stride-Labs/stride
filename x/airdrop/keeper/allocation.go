@@ -7,31 +7,52 @@ import (
 	"github.com/Stride-Labs/stride/v22/x/airdrop/types"
 )
 
-func (k Keeper) GetAllocationRecords(ctx sdk.Context) []types.AirdropRecord {
-	// TODO[airdrop] add pagination?
-	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.AllocationRecordsKeyPrefix)
+// Writes a user allocation record to the store
+func (k Keeper) SetUserAllocation(ctx sdk.Context, userAllocation types.UserAllocation) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.UserAllocationKeyPrefix)
+
+	key := types.UserAllocationKey(userAllocation.AirdropId, userAllocation.Address)
+	value := k.cdc.MustMarshal(&userAllocation)
+
+	store.Set(key, value)
+}
+
+// Retrieves a user allocation record from the store
+func (k Keeper) GetUserAllocation(ctx sdk.Context, airdropId, address string) (allocation types.UserAllocation, found bool) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.UserAllocationKeyPrefix)
+
+	key := types.UserAllocationKey(airdropId, address)
+	allocationBz := store.Get(key)
+
+	if len(allocationBz) == 0 {
+		return allocation, false
+	}
+
+	k.cdc.MustUnmarshal(allocationBz, &allocation)
+	return allocation, true
+}
+
+// Removes a user allocation record from the store
+func (k Keeper) RemoveUserAllocation(ctx sdk.Context, airdropId, address string) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.UserAllocationKeyPrefix)
+	key := types.UserAllocationKey(airdropId, address)
+	store.Delete(key)
+}
+
+// Retrieves all user allocations across all airdrops
+func (k Keeper) GetAllUserAllocations(ctx sdk.Context) []types.UserAllocation {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.UserAllocationKeyPrefix)
 
 	iterator := store.Iterator(nil, nil)
 	defer iterator.Close()
 
-	allAllocations := []types.AirdropRecord{}
+	allUserAllocations := []types.UserAllocation{}
 	for ; iterator.Valid(); iterator.Next() {
 
-		airdrop := types.AirdropRecord{}
-		k.cdc.MustUnmarshal(iterator.Value(), &airdrop)
-		allAllocations = append(allAllocations, airdrop)
+		allocation := types.UserAllocation{}
+		k.cdc.MustUnmarshal(iterator.Value(), &allocation)
+		allUserAllocations = append(allUserAllocations, allocation)
 	}
 
-	return allAllocations
-}
-
-func (k Keeper) SetAllocationRecords(ctx sdk.Context, allocationRecord []types.AllocationRecord) {
-	for _, allocation := range allocationRecord {
-		store := prefix.NewStore(ctx.KVStore(k.storeKey), types.AllocationRecordsKeyPrefix)
-
-		key := types.AllocationRecordKeyPrefix(allocation.AirdropId, allocation.UserAddress)
-		value := k.cdc.MustMarshal(&allocation)
-
-		store.Set(key, value)
-	}
+	return allUserAllocations
 }

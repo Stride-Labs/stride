@@ -31,7 +31,7 @@ message UserAllocation {
   // Address of the account that is receiving the airdrop allocation
   // The address does not have to be a stride address - but non-stride addresses
   // must be linked and merged into a stride address before claiming
-  string user_address = 2 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+  string address = 2 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
 
   // The total amount of tokens that have already been claimed
   string claimed = 3 [

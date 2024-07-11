@@ -25,6 +25,6 @@ func KeyPrefix(p string) []byte {
 	return []byte(p)
 }
 
-func UserAllocationKey(airdropId uint64, userAddress string) []byte {
-	return KeyPrefix(fmt.Sprintf("%d/%s", airdropId, userAddress))
+func UserAllocationKey(airdropId string, userAddress string) []byte {
+	return KeyPrefix(fmt.Sprintf("%s/%s", airdropId, userAddress))
 }
