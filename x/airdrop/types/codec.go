@@ -11,8 +11,8 @@ import (
 
 func RegisterLegacyAminoCodec(cdc *codec.LegacyAmino) {
 	legacy.RegisterAminoMsg(cdc, &MsgClaim{}, "airdrop/MsgClaim")
-	legacy.RegisterAminoMsg(cdc, &MsgClaim{}, "airdrop/MsgClaimEarly")
-	legacy.RegisterAminoMsg(cdc, &MsgClaim{}, "airdrop/MsgClaimAndStake")
+	legacy.RegisterAminoMsg(cdc, &MsgClaimEarly{}, "airdrop/MsgClaimEarly")
+	legacy.RegisterAminoMsg(cdc, &MsgClaimAndStake{}, "airdrop/MsgClaimAndStake")
 	// TODO[airdrop]: add admin messages
 }
 
