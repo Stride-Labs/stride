@@ -93,7 +93,7 @@ message QueryAllAirdropsRequest {
   cosmos.base.query.v1beta1.PageRequest pagination = 1;
 };
 message QueryAllAirdropsResponse {
-  repeated AirdropRecord airdrop_config_records = 1
+  repeated AirdropRecord airdrops = 1
       [ (gogoproto.nullable) = false ];
   cosmos.base.query.v1beta1.PageResponse pagination = 2;
 }
