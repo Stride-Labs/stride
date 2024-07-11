@@ -29,7 +29,7 @@ service Msg {
   rpc ClaimEarly(MsgClaimEarly) returns (MsgClaimEarlyResponse);
 
   // User transaction to claim and automatically lock stake their whole airdrop
-  // amount now The funds can be unstaked by the user once the airdrop is over
+  // amount now. The funds can be unstaked by the user once the airdrop is over
   rpc ClaimAndStake(MsgClaimAndStake) returns (MsgClaimAndStakeResponse);
 
   // Admin facing messages:
