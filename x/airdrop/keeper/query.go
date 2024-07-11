@@ -14,34 +14,30 @@ import (
 
 var _ types.QueryServer = Keeper{}
 
-// Queries all allocations across all addresses
-func (k Keeper) AllAllocations(goCtx context.Context, req *types.QueryAllAllocationsRequest) (*types.QueryAllAllocationsResponse, error) {
+// Queries the configuration for a given airdrop
+func (k Keeper) Airdrop(goCtx context.Context, req *types.QueryAirdropRequest) (*types.QueryAirdropResponse, error) {
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "invalid request")
 	}
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	store := ctx.KVStore(k.storeKey)
-	allocationsStore := prefix.NewStore(store, types.UserAllocationKeyPrefix)
-
-	allocationsOnPage := []types.UserAllocation{}
-	pageRes, err := query.Paginate(allocationsStore, req.Pagination, func(key []byte, value []byte) error {
-		var userAllocation types.UserAllocation
-		if err := k.cdc.Unmarshal(value, &userAllocation); err != nil {
-			return err
-		}
-
-		allocationsOnPage = append(allocationsOnPage, userAllocation)
-		return nil
-	})
-	if err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
+	airdrop, found := k.GetAirdrop(ctx, req.Id)
+	if !found {
+		return nil, status.Errorf(codes.NotFound, "airdrop %s not found", airdrop.Id)
 	}
 
-	return &types.QueryAllAllocationsResponse{
-		UserAllocation: allocationsOnPage,
-		Pagination:     pageRes,
-	}, nil
+	return &types.QueryAirdropResponse{Airdrop: &airdrop}, nil
+}
+
+// Queries all airdrop configurations
+func (k Keeper) AllAirdrops(goCtx context.Context, req *types.QueryAllAirdropsRequest) (*types.QueryAllAirdropsResponse, error) {
+	if req == nil {
+		return nil, status.Error(codes.InvalidArgument, "invalid request")
+	}
+	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	airdrops := k.GetAllAirdrops(ctx)
+	return &types.QueryAllAirdropsResponse{Airdrops: airdrops}, nil
 }
 
 // Queries the allocation for a given user for an airdrop
@@ -71,6 +67,36 @@ func (k Keeper) UserAllocations(goCtx context.Context, req *types.QueryUserAlloc
 	return &types.QueryUserAllocationsResponse{UserAllocations: allocations}, nil
 }
 
+// Queries all allocations across all addresses
+func (k Keeper) AllAllocations(goCtx context.Context, req *types.QueryAllAllocationsRequest) (*types.QueryAllAllocationsResponse, error) {
+	if req == nil {
+		return nil, status.Error(codes.InvalidArgument, "invalid request")
+	}
+	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	store := ctx.KVStore(k.storeKey)
+	allocationsStore := prefix.NewStore(store, types.UserAllocationKeyPrefix)
+
+	allocationsOnPage := []types.UserAllocation{}
+	pageRes, err := query.Paginate(allocationsStore, req.Pagination, func(key []byte, value []byte) error {
+		var userAllocation types.UserAllocation
+		if err := k.cdc.Unmarshal(value, &userAllocation); err != nil {
+			return err
+		}
+
+		allocationsOnPage = append(allocationsOnPage, userAllocation)
+		return nil
+	})
+	if err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+
+	return &types.QueryAllAllocationsResponse{
+		Allocations: allocationsOnPage,
+		Pagination:  pageRes,
+	}, nil
+}
+
 // Queries the state of an address for an airdrop (daily claim, claim & stake,
 // upfront)
 func (k Keeper) UserSummary(goCtx context.Context, req *types.QueryUserSummaryRequest) (*types.QueryUserSummaryResponse, error) {
@@ -91,30 +117,4 @@ func (k Keeper) UserSummary(goCtx context.Context, req *types.QueryUserSummaryRe
 	}
 
 	return summary, nil
-}
-
-// Queries all airdrop configurations
-func (k Keeper) AllAirdrops(goCtx context.Context, req *types.QueryAllAirdropsRequest) (*types.QueryAllAirdropsResponse, error) {
-	if req == nil {
-		return nil, status.Error(codes.InvalidArgument, "invalid request")
-	}
-	ctx := sdk.UnwrapSDKContext(goCtx)
-
-	airdrops := k.GetAllAirdrops(ctx)
-	return &types.QueryAllAirdropsResponse{Airdrops: airdrops}, nil
-}
-
-// Queries the configuration for a given airdrop
-func (k Keeper) Airdrop(goCtx context.Context, req *types.QueryAirdropRequest) (*types.QueryAirdropResponse, error) {
-	if req == nil {
-		return nil, status.Error(codes.InvalidArgument, "invalid request")
-	}
-	ctx := sdk.UnwrapSDKContext(goCtx)
-
-	airdrop, found := k.GetAirdrop(ctx, req.Id)
-	if !found {
-		return nil, status.Errorf(codes.NotFound, "airdrop %s not found", airdrop.Id)
-	}
-
-	return &types.QueryAirdropResponse{Airdrop: &airdrop}, nil
 }

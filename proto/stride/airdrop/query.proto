@@ -12,11 +12,14 @@ option go_package = "github.com/Stride-Labs/stride/v22/x/airdrop/types";
 
 // Query defines the gRPC querier service.
 service Query {
-  // Queries all allocations across all addresses
-  rpc AllAllocations(QueryAllAllocationsRequest)
-      returns (QueryAllAllocationsResponse) {
-    option (google.api.http).get =
-        "/Stride-Labs/stride/airdrop/all_allocations/{id}";
+  // Queries the configuration for a given airdrop
+  rpc Airdrop(QueryAirdropRequest) returns (QueryAirdropResponse) {
+    option (google.api.http).get = "/Stride-Labs/stride/airdrop/airdrop/{id}";
+  }
+
+  // Queries all airdrop configurations
+  rpc AllAirdrops(QueryAllAirdropsRequest) returns (QueryAllAirdropsResponse) {
+    option (google.api.http).get = "/Stride-Labs/stride/airdrop/airdrops";
   }
 
   // Queries the allocation for a given user for an airdrop
@@ -33,32 +36,29 @@ service Query {
         "/Stride-Labs/stride/airdrop/user_allocations/{address}";
   }
 
+  // Queries all allocations across all addresses
+  rpc AllAllocations(QueryAllAllocationsRequest)
+      returns (QueryAllAllocationsResponse) {
+    option (google.api.http).get =
+        "/Stride-Labs/stride/airdrop/all_allocations/{airdrop_id}";
+  }
+
   // Queries the state of an address for an airdrop including the claim type,
   // amount claimed so far, and unclaimed amount
   rpc UserSummary(QueryUserSummaryRequest) returns (QueryUserSummaryResponse) {
     option (google.api.http).get =
         "/Stride-Labs/stride/airdrop/user_summary/{airdrop_id}/{address}";
   }
-
-  // Queries all airdrop configurations
-  rpc AllAirdrops(QueryAllAirdropsRequest) returns (QueryAllAirdropsResponse) {
-    option (google.api.http).get = "/Stride-Labs/stride/airdrop/airdrops";
-  }
-
-  // Queries the configuration for a given airdrop
-  rpc Airdrop(QueryAirdropRequest) returns (QueryAirdropResponse) {
-    option (google.api.http).get = "/Stride-Labs/stride/airdrop/airdrop/{id}";
-  }
 }
 
-// AllAllocations
-message QueryAllAllocationsRequest {
-  string id = 1;
-  cosmos.base.query.v1beta1.PageRequest pagination = 2;
-};
-message QueryAllAllocationsResponse {
-  repeated UserAllocation user_allocation = 1 [ (gogoproto.nullable) = false ];
-  cosmos.base.query.v1beta1.PageResponse pagination = 2;
+// Airdrop
+message QueryAirdropRequest { string id = 1; };
+message QueryAirdropResponse { Airdrop airdrop = 1; }
+
+// Airdrops
+message QueryAllAirdropsRequest {};
+message QueryAllAirdropsResponse {
+  repeated Airdrop airdrops = 1 [ (gogoproto.nullable) = false ];
 }
 
 // UserAllocation
@@ -74,6 +74,16 @@ message QueryUserAllocationsRequest {
 };
 message QueryUserAllocationsResponse {
   repeated UserAllocation user_allocations = 1 [ (gogoproto.nullable) = false ];
+}
+
+// AllAllocations
+message QueryAllAllocationsRequest {
+  string airdrop_id = 1;
+  cosmos.base.query.v1beta1.PageRequest pagination = 2;
+};
+message QueryAllAllocationsResponse {
+  repeated UserAllocation allocations = 1 [ (gogoproto.nullable) = false ];
+  cosmos.base.query.v1beta1.PageResponse pagination = 2;
 }
 
 // UserSummary
@@ -92,13 +102,3 @@ message QueryUserSummaryResponse {
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int"
   ];
 }
-
-// Airdrops
-message QueryAllAirdropsRequest {};
-message QueryAllAirdropsResponse {
-  repeated Airdrop airdrops = 1 [ (gogoproto.nullable) = false ];
-}
-
-// Airdrop
-message QueryAirdropRequest { string id = 1; };
-message QueryAirdropResponse { Airdrop airdrop = 1; }
