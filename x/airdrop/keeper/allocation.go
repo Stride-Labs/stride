@@ -8,7 +8,7 @@ import (
 )
 
 func (k Keeper) GetAllocationRecords(ctx sdk.Context) []types.AirdropRecord {
-	// TODO add pagination?
+	// TODO[airdrop] add pagination?
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.AllocationRecordsKeyPrefix)
 
 	iterator := store.Iterator(nil, nil)

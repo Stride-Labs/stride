@@ -12,7 +12,7 @@ func (k Keeper) Claim(ctx sdk.Context, claimer string) error {
 		return errorsmod.Wrapf(sdkerrors.ErrInvalidAddress, "invalid address (%s)", claimer)
 	}
 
-	// TODO implement logic
+	// TODO[airdrop] implement logic
 
 	return nil
 }
@@ -23,7 +23,7 @@ func (k Keeper) ClaimAndStake(ctx sdk.Context, claimer string) error {
 		return errorsmod.Wrapf(sdkerrors.ErrInvalidAddress, "invalid address (%s)", claimer)
 	}
 
-	// TODO implement logic
+	// TODO[airdrop] implement logic
 
 	return nil
 }
@@ -34,7 +34,7 @@ func (k Keeper) ClaimEarly(ctx sdk.Context, claimer string) error {
 		return errorsmod.Wrapf(sdkerrors.ErrInvalidAddress, "invalid address (%s)", claimer)
 	}
 
-	// TODO implement logic
+	// TODO[airdrop] implement logic
 
 	return nil
 }

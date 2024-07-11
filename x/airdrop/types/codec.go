@@ -12,7 +12,7 @@ func RegisterCodec(cdc *codec.LegacyAmino) {
 	cdc.RegisterConcrete(&MsgClaim{}, "airdrop/MsgClaim", nil)
 	cdc.RegisterConcrete(&MsgClaimEarly{}, "airdrop/MsgClaimEarly", nil)
 	cdc.RegisterConcrete(&MsgClaimAndStake{}, "airdrop/MsgClaimAndStake", nil)
-	// TODO: add admin messages
+	// TODO[airdrop]: add admin messages
 }
 
 func RegisterInterfaces(registry cdctypes.InterfaceRegistry) {
@@ -20,7 +20,7 @@ func RegisterInterfaces(registry cdctypes.InterfaceRegistry) {
 		&MsgClaim{},
 		&MsgClaimEarly{},
 		&MsgClaimAndStake{},
-		// TODO: add admin messages
+		// TODO[airdrop]: add admin messages
 	)
 
 	msgservice.RegisterMsgServiceDesc(registry, &_Msg_serviceDesc)

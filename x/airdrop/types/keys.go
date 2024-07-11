@@ -2,7 +2,6 @@ package types
 
 import (
 	fmt "fmt"
-	"strconv"
 )
 
 const (
@@ -14,9 +13,6 @@ const (
 
 	// RouterKey defines the routing key
 	RouterKey = ModuleName
-
-	// Module Account for Fee Collection
-	FeeAddress = "staketia_fee_address"
 )
 
 var (
@@ -29,10 +25,6 @@ func KeyPrefix(p string) []byte {
 	return []byte(p)
 }
 
-func AirdropRecordKeyPrefix(airdropId uint64) []byte {
-	return KeyPrefix(strconv.FormatUint(airdropId, 10))
-}
-
 func AllocationRecordKeyPrefix(airdropId uint64, userAddress string) []byte {
-	return KeyPrefix(fmt.Sprintf("/%d/%s", airdropId, userAddress))
+	return KeyPrefix(fmt.Sprintf("%d/%s", airdropId, userAddress))
 }
