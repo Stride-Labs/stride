@@ -100,4 +100,4 @@ message QueryAllAirdropsResponse {
 
 // Airdrop
 message QueryAirdropRequest { uint64 id = 1; };
-message QueryAirdropResponse { AirdropRecord airdrop_config_record = 1; }
+message QueryAirdropResponse { AirdropRecord airdrop = 1; }
