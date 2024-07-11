@@ -62,7 +62,7 @@ func (k Keeper) UserAllocations(goCtx context.Context, req *types.QueryUserAlloc
 	}
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	allocations := k.GetUserAllocationsForAirdrop(ctx, req.Address)
+	allocations := k.GetUserAllocationsForAddress(ctx, req.Address)
 
 	return &types.QueryUserAllocationsResponse{UserAllocations: allocations}, nil
 }

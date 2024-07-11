@@ -10,6 +10,11 @@ import (
 	"github.com/Stride-Labs/stride/v22/x/airdrop/types"
 )
 
+const (
+	UserAddress = "address"
+	AirdropId   = "airdrop"
+)
+
 type KeeperTestSuite struct {
 	apptesting.AppTestHelper
 }
