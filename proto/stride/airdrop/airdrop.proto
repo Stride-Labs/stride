@@ -26,7 +26,7 @@ enum ClaimType {
 // airdrop
 message AllocationRecord {
   // ID of the airdrop
-  uint64 airdrop_id = 1;
+  string airdrop_id = 1;
 
   // Address of the account that is receiving the airdrop allocation
   // The address does not have to be a stride address - but non-stride addresses must 

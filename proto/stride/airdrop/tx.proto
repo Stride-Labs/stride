@@ -9,14 +9,6 @@ import "cosmos_proto/cosmos.proto";
 
 option go_package = "github.com/Stride-Labs/stride/v22/x/airdrop/types";
 
-enum OverwritableRecordType {
-  option (gogoproto.goproto_enum_prefix) = false;
-
-  RECORD_TYPE_DELEGATION = 0;
-  RECORD_TYPE_UNBONDING = 1;
-  RECORD_TYPE_REDEMPTION = 2;
-}
-
 // Msg defines the Msg service.
 service Msg {
   // User facing messages:
