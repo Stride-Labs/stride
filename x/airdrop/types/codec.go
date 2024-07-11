@@ -2,16 +2,17 @@ package types
 
 import (
 	"github.com/cosmos/cosmos-sdk/codec"
+	"github.com/cosmos/cosmos-sdk/codec/legacy"
 	cdctypes "github.com/cosmos/cosmos-sdk/codec/types"
 	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/msgservice"
 )
 
-func RegisterCodec(cdc *codec.LegacyAmino) {
-	cdc.RegisterConcrete(&MsgClaim{}, "airdrop/MsgClaim", nil)
-	cdc.RegisterConcrete(&MsgClaimEarly{}, "airdrop/MsgClaimEarly", nil)
-	cdc.RegisterConcrete(&MsgClaimAndStake{}, "airdrop/MsgClaimAndStake", nil)
+func RegisterLegacyAminoCodec(cdc *codec.LegacyAmino) {
+	legacy.RegisterAminoMsg(cdc, &MsgClaim{}, "airdrop/MsgClaim")
+	legacy.RegisterAminoMsg(cdc, &MsgClaim{}, "airdrop/MsgClaimEarly")
+	legacy.RegisterAminoMsg(cdc, &MsgClaim{}, "airdrop/MsgClaimAndStake")
 	// TODO[airdrop]: add admin messages
 }
 
@@ -32,7 +33,7 @@ var (
 )
 
 func init() {
-	RegisterCodec(Amino)
+	RegisterLegacyAminoCodec(Amino)
 	cryptocodec.RegisterCrypto(Amino)
 	sdk.RegisterLegacyAminoCodec(Amino)
 }
