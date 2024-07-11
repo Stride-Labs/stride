@@ -89,10 +89,10 @@ message QueryUserClaimTypeRequest {
 message QueryUserClaimTypeResponse { ClaimType claim_type = 1; }
 
 // Airdrops
-message QueryAirdropsRequest {
+message QueryAllAirdropsRequest {
   cosmos.base.query.v1beta1.PageRequest pagination = 1;
 };
-message QueryAirdropsResponse {
+message QueryAllAirdropsResponse {
   repeated AirdropRecord airdrop_config_records = 1
       [ (gogoproto.nullable) = false ];
   cosmos.base.query.v1beta1.PageResponse pagination = 2;
