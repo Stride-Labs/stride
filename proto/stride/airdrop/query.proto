@@ -57,8 +57,7 @@ message QueryAllAllocationsRequest {
   cosmos.base.query.v1beta1.PageRequest pagination = 2;
 };
 message QueryAllAllocationsResponse {
-  repeated AllocationRecord allocation_records = 1
-      [ (gogoproto.nullable) = false ];
+  repeated UserAllocation user_allocation = 1 [ (gogoproto.nullable) = false ];
   cosmos.base.query.v1beta1.PageResponse pagination = 2;
 }
 
@@ -67,7 +66,7 @@ message QueryUserAllocationRequest {
   string airdrop_id = 1;
   string address = 2 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
 };
-message QueryUserAllocationResponse { AllocationRecord allocation_record = 1; }
+message QueryUserAllocationResponse { UserAllocation user_allocation = 1; }
 
 // UserAllocations
 message QueryUserAllocationsRequest {
@@ -75,8 +74,7 @@ message QueryUserAllocationsRequest {
   cosmos.base.query.v1beta1.PageRequest pagination = 2;
 };
 message QueryUserAllocationsResponse {
-  repeated AllocationRecord allocation_records = 1
-      [ (gogoproto.nullable) = false ];
+  repeated UserAllocation user_allocations = 1 [ (gogoproto.nullable) = false ];
   cosmos.base.query.v1beta1.PageResponse pagination = 2;
 }
 
@@ -102,10 +100,10 @@ message QueryAllAirdropsRequest {
   cosmos.base.query.v1beta1.PageRequest pagination = 1;
 };
 message QueryAllAirdropsResponse {
-  repeated AirdropRecord airdrops = 1 [ (gogoproto.nullable) = false ];
+  repeated Airdrop airdrops = 1 [ (gogoproto.nullable) = false ];
   cosmos.base.query.v1beta1.PageResponse pagination = 2;
 }
 
 // Airdrop
 message QueryAirdropRequest { string id = 1; };
-message QueryAirdropResponse { AirdropRecord airdrop = 1; }
+message QueryAirdropResponse { Airdrop airdrop = 1; }

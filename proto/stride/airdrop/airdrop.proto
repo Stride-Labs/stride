@@ -22,9 +22,9 @@ enum ClaimType {
   CLAIM_EARLY = 2;
 }
 
-// AllocationRecord tracks the status of an allocation for a user on a specific
+// UserAllocation tracks the status of an allocation for a user on a specific
 // airdrop
-message AllocationRecord {
+message UserAllocation {
   // ID of the airdrop
   string airdrop_id = 1;
 
@@ -66,8 +66,8 @@ message AllocationRecord {
   ClaimType claim_type = 5;
 }
 
-// AirdropRecord track the aggregate unbondings across an epoch
-message AirdropRecord {
+// Airdrop track the aggregate unbondings across an epoch
+message Airdrop {
   // Airdrop ID
   string id = 1;
 
