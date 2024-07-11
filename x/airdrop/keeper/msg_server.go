@@ -46,7 +46,7 @@ func (ms msgServer) ClaimEarly(goCtx context.Context, msg *types.MsgClaimEarly) 
 }
 
 // User transaction to claim and automatically lock stake their whole airdrop
-// amount now The funds can be unstaked by the user once the airdrop is over
+// amount now. The funds can be unstaked by the user once the airdrop is over
 func (ms msgServer) ClaimAndStake(goCtx context.Context, msg *types.MsgClaimAndStake) (*types.MsgClaimAndStakeResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
