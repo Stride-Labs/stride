@@ -40,19 +40,17 @@ func (k Keeper) RemoveAirdrop(ctx sdk.Context, airdropId string) {
 }
 
 // Retrieves all airdrop configurations from the store
-func (k Keeper) GetAllAirdrops(ctx sdk.Context) []types.Airdrop {
+func (k Keeper) GetAllAirdrops(ctx sdk.Context) (airdrops []types.Airdrop) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.AirdropKeyPrefix)
 
 	iterator := store.Iterator(nil, nil)
 	defer iterator.Close()
 
-	allAirdrops := []types.Airdrop{}
 	for ; iterator.Valid(); iterator.Next() {
-
 		airdrop := types.Airdrop{}
 		k.cdc.MustUnmarshal(iterator.Value(), &airdrop)
-		allAirdrops = append(allAirdrops, airdrop)
+		airdrops = append(airdrops, airdrop)
 	}
 
-	return allAirdrops
+	return airdrops
 }

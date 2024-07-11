@@ -8,13 +8,22 @@ import (
 	"github.com/Stride-Labs/stride/v22/x/airdrop/types"
 )
 
+// Creates a user allocation using the specified Ids and filling in default values
+// for pointers
+func newUserAllocation(airdropId, address string) types.UserAllocation {
+	return types.UserAllocation{
+		AirdropId: airdropId,
+		Address:   address,
+		Claimed:   sdkmath.ZeroInt(),
+	}
+}
+
 func (s *KeeperTestSuite) addUserAllocations() (userAllocations []types.UserAllocation) {
 	for i := 0; i <= 4; i++ {
-		userAllocation := types.UserAllocation{
-			AirdropId: fmt.Sprintf("airdrop-%d", i),
-			Address:   fmt.Sprintf("stride%d", i),
-			Claimed:   sdkmath.ZeroInt(),
-		}
+		airdropId := fmt.Sprintf("airdrop-%d", i)
+		address := fmt.Sprintf("stride%d", i)
+		userAllocation := newUserAllocation(airdropId, address)
+
 		userAllocations = append(userAllocations, userAllocation)
 		s.App.AirdropKeeper.SetUserAllocation(s.Ctx, userAllocation)
 	}
@@ -60,4 +69,71 @@ func (s *KeeperTestSuite) TestGetAllUserAllocations() {
 	actualUserAllocations := s.App.AirdropKeeper.GetAllUserAllocations(s.Ctx)
 	s.Require().Equal(len(expectedUserAllocations), len(actualUserAllocations), "number of user allocatinos")
 	s.Require().ElementsMatch(expectedUserAllocations, actualUserAllocations)
+}
+
+func (s *KeeperTestSuite) TestGetUserAllocationsForAirdrop() {
+	// Define the expected allocations for each airdrop
+	expectedAllocationsByAirdrop := map[string][]types.UserAllocation{
+		"airdrop-1": {
+			newUserAllocation("airdrop-1", "address-1"),
+			newUserAllocation("airdrop-1", "address-2"),
+			newUserAllocation("airdrop-1", "address-3"),
+		},
+		"airdrop-2": {
+			newUserAllocation("airdrop-2", "address-1"),
+			newUserAllocation("airdrop-2", "address-3"),
+		},
+		"airdrop-3": {
+			newUserAllocation("airdrop-3", "address-1"),
+			newUserAllocation("airdrop-3", "address-3"),
+			newUserAllocation("airdrop-3", "address-4"),
+		},
+	}
+
+	// Create each allocation
+	for _, expectedAllocations := range expectedAllocationsByAirdrop {
+		for _, expectedAllocation := range expectedAllocations {
+			s.App.AirdropKeeper.SetUserAllocation(s.Ctx, expectedAllocation)
+		}
+	}
+
+	// Grab the allocations for each airdrop
+	for airdropId, expectedAllocations := range expectedAllocationsByAirdrop {
+		actualAllocations := s.App.AirdropKeeper.GetUserAllocationsForAirdrop(s.Ctx, airdropId)
+		s.Require().Equal(expectedAllocations, actualAllocations, "allocations for %s", airdropId)
+	}
+}
+
+func (s *KeeperTestSuite) TestGetUserAllocationsForAddress() {
+	// Define the expected allocations for each address
+	expectedAllocationsByAddress := map[string][]types.UserAllocation{
+		"address-1": {
+			newUserAllocation("airdrop-1", "address-1"),
+			newUserAllocation("airdrop-2", "address-1"),
+			newUserAllocation("airdrop-3", "address-1"),
+		},
+		"address-2": {
+			newUserAllocation("airdrop-1", "address-2"),
+			newUserAllocation("airdrop-3", "address-2"),
+		},
+		"address-3": {
+			newUserAllocation("airdrop-1", "address-3"),
+			newUserAllocation("airdrop-3", "address-3"),
+			newUserAllocation("airdrop-4", "address-3"),
+		},
+	}
+
+	// Create each allocation and airdrop
+	for _, allocations := range expectedAllocationsByAddress {
+		for _, expectedAllocation := range allocations {
+			s.App.AirdropKeeper.SetAirdrop(s.Ctx, types.Airdrop{Id: expectedAllocation.AirdropId})
+			s.App.AirdropKeeper.SetUserAllocation(s.Ctx, expectedAllocation)
+		}
+	}
+
+	// Grab the allocations for each address
+	for address, expectedAllocations := range expectedAllocationsByAddress {
+		actualAllocations := s.App.AirdropKeeper.GetUserAllocationsForAddress(s.Ctx, address)
+		s.Require().Equal(expectedAllocations, actualAllocations, "allocations for %s", address)
+	}
 }

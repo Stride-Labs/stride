@@ -40,19 +40,44 @@ func (k Keeper) RemoveUserAllocation(ctx sdk.Context, airdropId, address string)
 }
 
 // Retrieves all user allocations across all airdrops
-func (k Keeper) GetAllUserAllocations(ctx sdk.Context) []types.UserAllocation {
+func (k Keeper) GetAllUserAllocations(ctx sdk.Context) (userAllocations []types.UserAllocation) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.UserAllocationKeyPrefix)
 
 	iterator := store.Iterator(nil, nil)
 	defer iterator.Close()
 
-	allUserAllocations := []types.UserAllocation{}
 	for ; iterator.Valid(); iterator.Next() {
-
 		allocation := types.UserAllocation{}
 		k.cdc.MustUnmarshal(iterator.Value(), &allocation)
-		allUserAllocations = append(allUserAllocations, allocation)
+		userAllocations = append(userAllocations, allocation)
 	}
 
-	return allUserAllocations
+	return userAllocations
+}
+
+// Retrieves all the user allocations for a given airdrop
+func (k Keeper) GetUserAllocationsForAirdrop(ctx sdk.Context, airdropId string) (userAllocations []types.UserAllocation) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.UserAllocationKeyPrefix)
+
+	iterator := sdk.KVStorePrefixIterator(store, types.KeyPrefix(airdropId))
+	defer iterator.Close()
+
+	for ; iterator.Valid(); iterator.Next() {
+		allocation := types.UserAllocation{}
+		k.cdc.MustUnmarshal(iterator.Value(), &allocation)
+		userAllocations = append(userAllocations, allocation)
+	}
+
+	return userAllocations
+}
+
+// Retreives all user allocations for a given address
+func (k Keeper) GetUserAllocationsForAddress(ctx sdk.Context, address string) (userAllocations []types.UserAllocation) {
+	for _, airdrop := range k.GetAllAirdrops(ctx) {
+		allocation, found := k.GetUserAllocation(ctx, airdrop.Id, address)
+		if found {
+			userAllocations = append(userAllocations, allocation)
+		}
+	}
+	return userAllocations
 }
