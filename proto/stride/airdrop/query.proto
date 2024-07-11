@@ -1,0 +1,103 @@
+
+syntax = "proto3";
+package stride.airdrop;
+
+import "stride/airdrop/airdrop.proto";
+import "gogoproto/gogo.proto";
+import "google/api/annotations.proto";
+import "cosmos/base/query/v1beta1/pagination.proto";
+import "cosmos_proto/cosmos.proto";
+
+option go_package = "github.com/Stride-Labs/stride/v22/x/airdrop/types";
+
+// Query defines the gRPC querier service.
+service Query {
+  // Queries all allocations across all addresses
+  rpc AllAllocations(QueryAllAllocationsRequest)
+      returns (QueryAllAllocationsResponse) {
+    option (google.api.http).get =
+        "/Stride-Labs/stride/airdrop/all_allocations/{id}";
+  }
+
+  // Queries the allocation for a given user for an airdrop
+  rpc UserAllocation(QueryUserAllocationRequest)
+      returns (QueryUserAllocationResponse) {
+    option (google.api.http).get =
+        "/Stride-Labs/stride/airdrop/user_allocation/{id}/{address}";
+  }
+
+  // Queries the allocations for a given user across all airdrops
+  rpc UserAllocations(QueryUserAllocationsRequest)
+      returns (QueryUserAllocationsResponse) {
+    option (google.api.http).get =
+        "/Stride-Labs/stride/airdrop/user_allocations/{address}";
+  }
+
+  // Queries the state of an address for an airdrop (daily claim, claim & stake,
+  // upfront)
+  rpc UserClaimType(QueryUserClaimTypeRequest)
+      returns (QueryUserClaimTypeResponse) {
+    option (google.api.http).get =
+        "/Stride-Labs/stride/airdrop/user_claim_type/{id}/{address}";
+  }
+
+  // Queries all airdrop configurations
+  rpc Airdrops(QueryAirdropsRequest) returns (QueryAirdropsResponse) {
+    option (google.api.http).get = "/Stride-Labs/stride/airdrop/airdrops";
+  }
+
+  // Queries the configuration for a given airdrop
+  rpc Airdrop(QueryAirdropRequest) returns (QueryAirdropResponse) {
+    option (google.api.http).get = "/Stride-Labs/stride/airdrop/airdrop/{id}";
+  }
+}
+
+// AllAllocations
+message QueryAllAllocationsRequest {
+  uint64 id = 1;
+  cosmos.base.query.v1beta1.PageRequest pagination = 2;
+};
+message QueryAllAllocationsResponse {
+  repeated AllocationRecord allocation_records = 1
+      [ (gogoproto.nullable) = false ];
+  cosmos.base.query.v1beta1.PageResponse pagination = 2;
+}
+
+// UserAllocation
+message QueryUserAllocationRequest {
+  uint64 id = 1;
+  string address = 2 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+};
+message QueryUserAllocationResponse { AllocationRecord allocation_record = 1; }
+
+// UserAllocations
+message QueryUserAllocationsRequest {
+  string address = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+  cosmos.base.query.v1beta1.PageRequest pagination = 2;
+};
+message QueryUserAllocationsResponse {
+  repeated AllocationRecord allocation_records = 1
+      [ (gogoproto.nullable) = false ];
+  cosmos.base.query.v1beta1.PageResponse pagination = 2;
+}
+
+// UserClaimType
+message QueryUserClaimTypeRequest {
+  uint64 id = 1;
+  string address = 2 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+};
+message QueryUserClaimTypeResponse { ClaimType claim_type = 1; }
+
+// Airdrops
+message QueryAirdropsRequest {
+  cosmos.base.query.v1beta1.PageRequest pagination = 1;
+};
+message QueryAirdropsResponse {
+  repeated AirdropConfigRecord airdrop_config_records = 1
+      [ (gogoproto.nullable) = false ];
+  cosmos.base.query.v1beta1.PageResponse pagination = 2;
+}
+
+// Airdrop
+message QueryAirdropRequest { uint64 id = 1; };
+message QueryAirdropResponse { AirdropConfigRecord airdrop_config_record = 1; }
