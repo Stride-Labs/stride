@@ -4,7 +4,6 @@ package stride.airdrop;
 
 import "cosmos/msg/v1/msg.proto";
 import "amino/amino.proto";
-import "gogoproto/gogo.proto";
 import "cosmos_proto/cosmos.proto";
 
 option go_package = "github.com/Stride-Labs/stride/v22/x/airdrop/types";

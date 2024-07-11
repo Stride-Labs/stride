@@ -28,13 +28,13 @@ func (k Keeper) UserAllocations(ctx context.Context, req *types.QueryUserAllocat
 
 // Queries the state of an address for an airdrop (daily claim, claim & stake,
 // upfront)
-func (k Keeper) UserClaimType(ctx context.Context, req *types.QueryUserClaimTypeRequest) (*types.QueryUserClaimTypeResponse, error) {
+func (k Keeper) UserSummary(ctx context.Context, req *types.QueryUserSummaryRequest) (*types.QueryUserSummaryResponse, error) {
 	// TODO[airdrop] implement logic
 	return nil, nil
 }
 
 // Queries all airdrop configurations
-func (k Keeper) AllAirdrops(ctx context.Context, req *types.QueryAirdropsRequest) (*types.QueryAirdropsResponse, error) {
+func (k Keeper) AllAirdrops(ctx context.Context, req *types.QueryAllAirdropsRequest) (*types.QueryAllAirdropsResponse, error) {
 	// TODO[airdrop] implement logic
 	return nil, nil
 }

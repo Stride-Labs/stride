@@ -23,7 +23,7 @@ service Query {
   rpc UserAllocation(QueryUserAllocationRequest)
       returns (QueryUserAllocationResponse) {
     option (google.api.http).get =
-        "/Stride-Labs/stride/airdrop/user_allocation/{id}/{address}";
+        "/Stride-Labs/stride/airdrop/user_allocation/{airdrop_id}/{address}";
   }
 
   // Queries the allocations for a given user across all airdrops
@@ -33,16 +33,15 @@ service Query {
         "/Stride-Labs/stride/airdrop/user_allocations/{address}";
   }
 
-  // Queries the state of an address for an airdrop (daily claim, claim & stake,
-  // upfront)
-  rpc UserClaimType(QueryUserClaimTypeRequest)
-      returns (QueryUserClaimTypeResponse) {
+  // Queries the state of an address for an airdrop including the claim type,
+  // amount claimed so far, and unclaimed amount
+  rpc UserSummary(QueryUserSummaryRequest) returns (QueryUserSummaryResponse) {
     option (google.api.http).get =
-        "/Stride-Labs/stride/airdrop/user_claim_type/{id}/{address}";
+        "/Stride-Labs/stride/airdrop/user_summary/{airdrop_id}/{address}";
   }
 
   // Queries all airdrop configurations
-  rpc Airdrops(QueryAllAirdropsRequest) returns (QueryAllAirdropsResponse) {
+  rpc AllAirdrops(QueryAllAirdropsRequest) returns (QueryAllAirdropsResponse) {
     option (google.api.http).get = "/Stride-Labs/stride/airdrop/airdrops";
   }
 
@@ -54,7 +53,7 @@ service Query {
 
 // AllAllocations
 message QueryAllAllocationsRequest {
-  uint64 id = 1;
+  string id = 1;
   cosmos.base.query.v1beta1.PageRequest pagination = 2;
 };
 message QueryAllAllocationsResponse {
@@ -65,7 +64,7 @@ message QueryAllAllocationsResponse {
 
 // UserAllocation
 message QueryUserAllocationRequest {
-  uint64 id = 1;
+  string airdrop_id = 1;
   string address = 2 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
 };
 message QueryUserAllocationResponse { AllocationRecord allocation_record = 1; }
@@ -81,23 +80,32 @@ message QueryUserAllocationsResponse {
   cosmos.base.query.v1beta1.PageResponse pagination = 2;
 }
 
-// UserClaimType
-message QueryUserClaimTypeRequest {
-  uint64 id = 1;
+// UserSummary
+message QueryUserSummaryRequest {
+  string airdrop_id = 1;
   string address = 2 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
 };
-message QueryUserClaimTypeResponse { ClaimType claim_type = 1; }
+message QueryUserSummaryResponse {
+  string claim_type = 1;
+  string claimed = 2 [
+    (gogoproto.nullable) = false,
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int"
+  ];
+  string remaining = 3 [
+    (gogoproto.nullable) = false,
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int"
+  ];
+}
 
 // Airdrops
 message QueryAllAirdropsRequest {
   cosmos.base.query.v1beta1.PageRequest pagination = 1;
 };
 message QueryAllAirdropsResponse {
-  repeated AirdropRecord airdrops = 1
-      [ (gogoproto.nullable) = false ];
+  repeated AirdropRecord airdrops = 1 [ (gogoproto.nullable) = false ];
   cosmos.base.query.v1beta1.PageResponse pagination = 2;
 }
 
 // Airdrop
-message QueryAirdropRequest { uint64 id = 1; };
+message QueryAirdropRequest { string id = 1; };
 message QueryAirdropResponse { AirdropRecord airdrop = 1; }
