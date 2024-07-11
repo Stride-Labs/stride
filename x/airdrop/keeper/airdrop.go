@@ -7,31 +7,52 @@ import (
 	"github.com/Stride-Labs/stride/v22/x/airdrop/types"
 )
 
-func (k Keeper) GetAirdropRecords(ctx sdk.Context) []types.AirdropRecord {
-	// TODO[airdrop] add pagination?
-	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.AirdropRecordsKeyPrefix)
+// Writes an airdrop configuration to the store
+func (k Keeper) SetAirdrop(ctx sdk.Context, airdrop types.Airdrop) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.AirdropKeyPrefix)
+
+	key := types.KeyPrefix(airdrop.Id)
+	value := k.cdc.MustMarshal(&airdrop)
+
+	store.Set(key, value)
+}
+
+// Retrieves an airdrop configuration from the store
+func (k Keeper) GetAirdrop(ctx sdk.Context, airdropId string) (airdrop types.Airdrop, found bool) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.AirdropKeyPrefix)
+
+	key := types.KeyPrefix(airdropId)
+	airdropBz := store.Get(key)
+
+	if len(airdropBz) == 0 {
+		return airdrop, false
+	}
+
+	k.cdc.MustUnmarshal(airdropBz, &airdrop)
+	return airdrop, true
+}
+
+// Removes an airdrop configuration from the store
+func (k Keeper) RemoveAirdrop(ctx sdk.Context, airdropId string) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.AirdropKeyPrefix)
+	key := types.KeyPrefix(airdropId)
+	store.Delete(key)
+}
+
+// Retrieves all airdrop configurations from the store
+func (k Keeper) GetAllAirdrops(ctx sdk.Context) []types.Airdrop {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.AirdropKeyPrefix)
 
 	iterator := store.Iterator(nil, nil)
 	defer iterator.Close()
 
-	allAirdrops := []types.AirdropRecord{}
+	allAirdrops := []types.Airdrop{}
 	for ; iterator.Valid(); iterator.Next() {
 
-		airdrop := types.AirdropRecord{}
+		airdrop := types.Airdrop{}
 		k.cdc.MustUnmarshal(iterator.Value(), &airdrop)
 		allAirdrops = append(allAirdrops, airdrop)
 	}
 
 	return allAirdrops
-}
-
-func (k Keeper) SetAirdropRecords(ctx sdk.Context, airdropRecords []types.AirdropRecord) {
-	for _, airdrop := range airdropRecords {
-		store := prefix.NewStore(ctx.KVStore(k.storeKey), types.AirdropRecordsKeyPrefix)
-
-		key := types.AirdropRecordKeyPrefix(airdrop.Id)
-		value := k.cdc.MustMarshal(&airdrop)
-
-		store.Set(key, value)
-	}
 }

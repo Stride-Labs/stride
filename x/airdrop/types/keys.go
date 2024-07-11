@@ -16,8 +16,8 @@ const (
 )
 
 var (
-	AirdropRecordsKeyPrefix    = KeyPrefix("airdrop-records")
-	AllocationRecordsKeyPrefix = KeyPrefix("allocation-records")
+	AirdropKeyPrefix        = KeyPrefix("airdrops")
+	UserAllocationKeyPrefix = KeyPrefix("user-allocations")
 )
 
 // Generates a key byte prefix from a string
@@ -25,6 +25,6 @@ func KeyPrefix(p string) []byte {
 	return []byte(p)
 }
 
-func AllocationRecordKeyPrefix(airdropId uint64, userAddress string) []byte {
+func UserAllocationKey(airdropId uint64, userAddress string) []byte {
 	return KeyPrefix(fmt.Sprintf("%d/%s", airdropId, userAddress))
 }
