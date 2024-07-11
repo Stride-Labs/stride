@@ -4,10 +4,11 @@ import (
 	"fmt"
 
 	"cosmossdk.io/core/store"
+	errorsmod "cosmossdk.io/errors"
 	"cosmossdk.io/log"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-    
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
 	"github.com/Stride-Labs/stride/v22/x/airdrop/types"
 )
@@ -18,43 +19,27 @@ type (
 		storeService store.KVStoreService
 		logger       log.Logger
 
-        // the address capable of executing a MsgUpdateParams message. Typically, this
-        // should be the x/gov module account.
-        authority string
-        
-		
-        accountKeeper types.AccountKeeper
-        bankKeeper types.BankKeeper
+		accountKeeper types.AccountKeeper
+		bankKeeper    types.BankKeeper
 	}
 )
 
 func NewKeeper(
-    cdc codec.BinaryCodec,
+	cdc codec.BinaryCodec,
 	storeService store.KVStoreService,
-    logger log.Logger,
-	authority string,
-    
-    accountKeeper types.AccountKeeper,
-    bankKeeper types.BankKeeper,
-) Keeper {
-	if _, err := sdk.AccAddressFromBech32(authority); err != nil {
-		panic(fmt.Sprintf("invalid authority address: %s", authority))
-	}
+	logger log.Logger,
 
+	accountKeeper types.AccountKeeper,
+	bankKeeper types.BankKeeper,
+) Keeper {
 	return Keeper{
 		cdc:          cdc,
 		storeService: storeService,
-		authority:    authority,
 		logger:       logger,
-		
-		accountKeeper: accountKeeper,
-		bankKeeper: bankKeeper,
-	}
-}
 
-// GetAuthority returns the module's authority.
-func (k Keeper) GetAuthority() string {
-	return k.authority
+		accountKeeper: accountKeeper,
+		bankKeeper:    bankKeeper,
+	}
 }
 
 // Logger returns a module-specific logger.
@@ -62,4 +47,35 @@ func (k Keeper) Logger() log.Logger {
 	return k.logger.With("module", fmt.Sprintf("x/%s", types.ModuleName))
 }
 
+func (k Keeper) Claim(ctx sdk.Context, claimer string) error {
+	claimerAccount, err := sdk.AccAddressFromBech32(claimer)
+	if err != nil {
+		return errorsmod.Wrapf(sdkerrors.ErrInvalidAddress, "invalid address (%s)", claimer)
+	}
 
+	// TODO implement logic
+
+	return nil
+}
+
+func (k Keeper) ClaimAndStake(ctx sdk.Context, claimer string) error {
+	claimerAccount, err := sdk.AccAddressFromBech32(claimer)
+	if err != nil {
+		return errorsmod.Wrapf(sdkerrors.ErrInvalidAddress, "invalid address (%s)", claimer)
+	}
+
+	// TODO implement logic
+
+	return nil
+}
+
+func (k Keeper) ClaimEarly(ctx sdk.Context, claimer string) error {
+	claimerAccount, err := sdk.AccAddressFromBech32(claimer)
+	if err != nil {
+		return errorsmod.Wrapf(sdkerrors.ErrInvalidAddress, "invalid address (%s)", claimer)
+	}
+
+	// TODO implement logic
+
+	return nil
+}

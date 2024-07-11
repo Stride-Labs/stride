@@ -1,21 +1,38 @@
 package types
 
 import (
-    
+	"github.com/cosmos/cosmos-sdk/codec"
 	cdctypes "github.com/cosmos/cosmos-sdk/codec/types"
+	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/msgservice"
-
-	// this line is used by starport scaffolding # 1
 )
 
-func RegisterInterfaces(registry cdctypes.InterfaceRegistry) {
-	// this line is used by starport scaffolding # 3
+func RegisterCodec(cdc *codec.LegacyAmino) {
+	cdc.RegisterConcrete(&MsgClaim{}, "airdrop/MsgClaim", nil)
+	cdc.RegisterConcrete(&MsgClaimEarly{}, "airdrop/MsgClaimEarly", nil)
+	cdc.RegisterConcrete(&MsgClaimAndStake{}, "airdrop/MsgClaimAndStake", nil)
+	// TODO: add admin messages
+}
 
+func RegisterInterfaces(registry cdctypes.InterfaceRegistry) {
 	registry.RegisterImplementations((*sdk.Msg)(nil),
-		&MsgUpdateParams{},
+		&MsgClaim{},
+		&MsgClaimEarly{},
+		&MsgClaimAndStake{},
+		// TODO: add admin messages
 	)
+
 	msgservice.RegisterMsgServiceDesc(registry, &_Msg_serviceDesc)
 }
 
+var (
+	Amino     = codec.NewLegacyAmino()
+	ModuleCdc = codec.NewAminoCodec(Amino)
+)
 
+func init() {
+	RegisterCodec(Amino)
+	cryptocodec.RegisterCrypto(Amino)
+	sdk.RegisterLegacyAminoCodec(Amino)
+}

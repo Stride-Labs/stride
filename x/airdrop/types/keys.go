@@ -7,18 +7,13 @@ const (
 	// StoreKey defines the primary module store key
 	StoreKey = ModuleName
 
-	// MemStoreKey defines the in-memory store key
-	MemStoreKey = "mem_airdrop"
+	// RouterKey defines the routing key
+	RouterKey = ModuleName
 
-    
+	// Module Account for Fee Collection
+	FeeAddress = "staketia_fee_address"
 )
-
-var (
-	ParamsKey = []byte("p_airdrop")
-)
-
-
 
 func KeyPrefix(p string) []byte {
-    return []byte(p)
+	return []byte(p)
 }
