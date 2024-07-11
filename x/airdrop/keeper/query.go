@@ -67,7 +67,7 @@ func (k Keeper) UserAllocations(goCtx context.Context, req *types.QueryUserAlloc
 	return &types.QueryUserAllocationsResponse{UserAllocations: allocations}, nil
 }
 
-// Queries all allocations across all addresses
+// Queries all allocations for a given airdrop
 func (k Keeper) AllAllocations(goCtx context.Context, req *types.QueryAllAllocationsRequest) (*types.QueryAllAllocationsResponse, error) {
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "invalid request")
@@ -97,8 +97,8 @@ func (k Keeper) AllAllocations(goCtx context.Context, req *types.QueryAllAllocat
 	}, nil
 }
 
-// Queries the state of an address for an airdrop (daily claim, claim & stake,
-// upfront)
+// Queries the state of an address for an airdrop (daily claim, claim & stake, upfront)
+// and the amount claimed and remaining
 func (k Keeper) UserSummary(goCtx context.Context, req *types.QueryUserSummaryRequest) (*types.QueryUserSummaryResponse, error) {
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "invalid request")
