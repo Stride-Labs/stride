@@ -56,3 +56,43 @@ func (ms msgServer) ClaimAndStake(goCtx context.Context, msg *types.MsgClaimAndS
 
 	return &types.MsgClaimAndStakeResponse{}, nil
 }
+
+// Admin transaction to create a new airdrop
+func (ms msgServer) CreateAirdrop(goCtx context.Context, msg *types.MsgCreateAirdrop) (*types.MsgCreateAirdropResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+	_ = ctx
+
+	return &types.MsgCreateAirdropResponse{}, nil
+}
+
+// Admin transaction to update an existing airdrop
+func (ms msgServer) UpdateAirdrop(goCtx context.Context, msg *types.MsgUpdateAirdrop) (*types.MsgUpdateAirdropResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+	_ = ctx
+
+	return &types.MsgUpdateAirdropResponse{}, nil
+}
+
+// Admin transaction to add user allocations
+func (ms msgServer) AddAllocations(goCtx context.Context, msg *types.MsgAddAllocations) (*types.MsgAddAllocationsResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+	_ = ctx
+
+	return &types.MsgAddAllocationsResponse{}, nil
+}
+
+// Admin transaction to update a user's allocations
+func (ms msgServer) UpdateUserAllocation(goCtx context.Context, msg *types.MsgUpdateUserAllocation) (*types.MsgUpdateUserAllocationResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+	_ = ctx
+
+	return &types.MsgUpdateUserAllocationResponse{}, nil
+}
+
+// Admin address to link a stride and non-stride address, merging their allocations
+func (ms msgServer) LinkAddresses(goCtx context.Context, msg *types.MsgLinkAddresses) (*types.MsgLinkAddressesResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+	_ = ctx
+
+	return &types.MsgLinkAddressesResponse{}, nil
+}
