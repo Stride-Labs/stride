@@ -31,7 +31,7 @@ func (k Keeper) ClaimDaily(ctx sdk.Context, airdropId, claimer string) error {
 	}
 
 	// Confirm the user has not elected the non-daily claim types
-	if userAllocation.ClaimType != types.UNSPECIFIED && userAllocation.ClaimType != types.DAILY {
+	if userAllocation.ClaimType != types.UNSPECIFIED && userAllocation.ClaimType != types.CLAIM_DAILY {
 		return types.ErrClaimTypeUnavailable.Wrapf("user has already elected claim option %s",
 			userAllocation.ClaimType.String())
 	}
@@ -61,7 +61,7 @@ func (k Keeper) ClaimDaily(ctx sdk.Context, airdropId, claimer string) error {
 
 	// If this is their first time claiming, flag their decision
 	if userAllocation.ClaimType == types.UNSPECIFIED {
-		userAllocation.ClaimType = types.DAILY
+		userAllocation.ClaimType = types.CLAIM_DAILY
 	}
 
 	// Distribute rewards from the distributor
@@ -104,7 +104,7 @@ func (k Keeper) ClaimEarly(ctx sdk.Context, airdropId, claimer string) error {
 	}
 
 	// Confirm the user has not elected the non-daily claim types
-	if userAllocation.ClaimType != types.UNSPECIFIED && userAllocation.ClaimType != types.DAILY {
+	if userAllocation.ClaimType != types.UNSPECIFIED && userAllocation.ClaimType != types.CLAIM_DAILY {
 		return types.ErrClaimTypeUnavailable.Wrapf("user has already elected claim option %s",
 			userAllocation.ClaimType.String())
 	}

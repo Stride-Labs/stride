@@ -83,7 +83,7 @@ func (s *KeeperTestSuite) TestClaimDaily() {
 			initialClaimed:      100,
 			expectedClaimed:     100 + 10,
 			expectedNewRewards:  10,
-			initialClaimType:    types.DAILY,
+			initialClaimType:    types.CLAIM_DAILY,
 		},
 		{
 			// Claimer already chose claim early
@@ -186,7 +186,7 @@ func (s *KeeperTestSuite) TestClaimDaily() {
 			userAllocation := s.MustGetUserAllocation(AirdropId, claimer.String())
 			s.Require().Equal(tc.expectedAllocations, allocationsToInt64(userAllocation.Allocations), "allocations")
 			s.Require().Equal(tc.expectedClaimed, userAllocation.Claimed.Int64(), "claimed")
-			s.Require().Equal(types.DAILY, userAllocation.ClaimType, "claim types")
+			s.Require().Equal(types.CLAIM_DAILY, userAllocation.ClaimType, "claim types")
 
 			// Confirm funds were decremented from the distributor
 			expectedDistributorBalance := initialDistributorBalance.Sub(sdkmath.NewInt(tc.expectedNewRewards))
@@ -244,7 +244,7 @@ func (s *KeeperTestSuite) TestClaimEarly() {
 			initialClaimed:     100,
 			expectedClaimed:    100 + 30,
 			expectedNewRewards: 15,
-			initialClaimType:   types.DAILY,
+			initialClaimType:   types.CLAIM_DAILY,
 		},
 		{
 			// Claimer already chose claim early

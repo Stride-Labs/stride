@@ -15,10 +15,10 @@ enum ClaimType {
   // UNSPECIFIED indicates that the user has not yet selected an option or
   // claimed daily
   UNSPECIFIED = 0;
-  // DAILY indicates that the airdrop rewards are accumulated daily
+  // CLAIM_DAILY indicates that the airdrop rewards are accumulated daily
   // A user can claim daily up front and change their decision within the
   // deadline window
-  DAILY = 1;
+  CLAIM_DAILY = 1;
   // CLAIM_AND_STAKE indicates that the airdrop rewards have been claimed but
   // are lock-staked until at least when the airdrop is over
   CLAIM_AND_STAKE = 2;
