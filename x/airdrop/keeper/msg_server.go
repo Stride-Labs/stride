@@ -20,16 +20,16 @@ func NewMsgServerImpl(keeper Keeper) types.MsgServer {
 
 var _ types.MsgServer = msgServer{}
 
-// User transaction to claim all the pending daily airdrop rewards
-func (ms msgServer) Claim(goCtx context.Context, msg *types.MsgClaim) (*types.MsgClaimResponse, error) {
+// User transaction to claim all the pending airdrop rewards up to the current day
+func (ms msgServer) ClaimDaily(goCtx context.Context, msg *types.MsgClaimDaily) (*types.MsgClaimDailyResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	err := ms.Keeper.Claim(ctx, msg.Claimer)
+	err := ms.Keeper.ClaimDaily(ctx, msg.Claimer)
 	if err != nil {
 		return nil, err
 	}
 
-	return &types.MsgClaimResponse{}, nil
+	return &types.MsgClaimDailyResponse{}, nil
 }
 
 // User transaction to claim half of their total amount now, and forfeit the
