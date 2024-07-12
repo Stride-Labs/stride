@@ -25,6 +25,9 @@ const (
 	FlagClaimAndStakeBonus    = "claim-and-stake-bonus"
 	FlagDistributionAddress   = "distribution-address"
 
+	FlagRewardDenom    = "reward-denom"
+	DefaultRewardDenom = "ustrd"
+
 	DateLayout = "2006-01-02"
 )
 
@@ -199,6 +202,11 @@ Example:
 		RunE: func(cmd *cobra.Command, args []string) error {
 			airdropId := args[0]
 
+			denom, err := cmd.Flags().GetString(FlagRewardDenom)
+			if err != nil {
+				return errorsmod.Wrapf(err, "unable to parse denom")
+			}
+
 			distributionStartDateString, err := cmd.Flags().GetString(FlagDistributionStartDate)
 			if err != nil {
 				return errorsmod.Wrapf(err, "unable to parse distribution start date")
@@ -263,6 +271,7 @@ Example:
 			msg := types.NewMsgCreateAirdrop(
 				clientCtx.GetFromAddress().String(),
 				airdropId,
+				denom,
 				&distributionStartDate,
 				&distributionEndDate,
 				&clawbackDate,
@@ -280,6 +289,7 @@ Example:
 		},
 	}
 
+	cmd.Flags().String(FlagRewardDenom, DefaultRewardDenom, "Reward denom for the airdrop")
 	cmd.Flags().String(FlagDistributionStartDate, "", "Start date when rewards are distributed")
 	cmd.Flags().String(FlagDistributionEndDate, "", "Last date that rewards are distributed")
 	cmd.Flags().String(FlagClawbackDate, "", "Date when rewards are clawed back (after distribution end date)")
@@ -331,6 +341,11 @@ Example:
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			airdropId := args[0]
+
+			denom, err := cmd.Flags().GetString(FlagRewardDenom)
+			if err != nil {
+				return errorsmod.Wrapf(err, "unable to parse denom")
+			}
 
 			distributionStartDateString, err := cmd.Flags().GetString(FlagDistributionStartDate)
 			if err != nil {
@@ -396,6 +411,7 @@ Example:
 			msg := types.NewMsgUpdateAirdrop(
 				clientCtx.GetFromAddress().String(),
 				airdropId,
+				denom,
 				&distributionStartDate,
 				&distributionEndDate,
 				&clawbackDate,
@@ -412,6 +428,8 @@ Example:
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
 		},
 	}
+
+	cmd.Flags().String(FlagRewardDenom, DefaultRewardDenom, "Reward denom for the airdrop")
 
 	cmd.Flags().String(FlagDistributionStartDate, "", "Start date when rewards are distributed")
 	cmd.Flags().String(FlagDistributionEndDate, "", "Last date that rewards are distributed")
