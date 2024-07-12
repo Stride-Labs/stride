@@ -3,6 +3,7 @@ package keeper
 import (
 	"context"
 
+	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/Stride-Labs/stride/v22/x/airdrop/types"
@@ -60,7 +61,22 @@ func (ms msgServer) ClaimAndStake(goCtx context.Context, msg *types.MsgClaimAndS
 // Admin transaction to create a new airdrop
 func (ms msgServer) CreateAirdrop(goCtx context.Context, msg *types.MsgCreateAirdrop) (*types.MsgCreateAirdropResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
-	_ = ctx
+
+	if _, found := ms.Keeper.GetAirdrop(ctx, msg.AirdropId); found {
+		return nil, types.ErrAirdropAlreadyExists.Wrapf("airdrop %s", msg.AirdropId)
+	}
+
+	airdrop := types.Airdrop{
+		Id:                    msg.AirdropId,
+		DistributionStartDate: msg.DistributionStartDate,
+		DistributionEndDate:   msg.DistributionEndDate,
+		ClawbackDate:          msg.ClawbackDate,
+		ClaimTypeDeadlineDate: msg.ClaimTypeDeadlineDate,
+		EarlyClaimPenalty:     msg.EarlyClaimPenalty,
+		ClaimAndStakeBonus:    msg.ClaimAndStakeBonus,
+		DistributionAddress:   msg.DistributionAddress,
+	}
+	ms.Keeper.SetAirdrop(ctx, airdrop)
 
 	return &types.MsgCreateAirdropResponse{}, nil
 }
@@ -68,7 +84,22 @@ func (ms msgServer) CreateAirdrop(goCtx context.Context, msg *types.MsgCreateAir
 // Admin transaction to update an existing airdrop
 func (ms msgServer) UpdateAirdrop(goCtx context.Context, msg *types.MsgUpdateAirdrop) (*types.MsgUpdateAirdropResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
-	_ = ctx
+
+	if _, found := ms.Keeper.GetAirdrop(ctx, msg.AirdropId); !found {
+		return nil, types.ErrAirdropNotFound.Wrapf("airdrop %s", msg.AirdropId)
+	}
+
+	airdrop := types.Airdrop{
+		Id:                    msg.AirdropId,
+		DistributionStartDate: msg.DistributionStartDate,
+		DistributionEndDate:   msg.DistributionEndDate,
+		ClawbackDate:          msg.ClawbackDate,
+		ClaimTypeDeadlineDate: msg.ClaimTypeDeadlineDate,
+		EarlyClaimPenalty:     msg.EarlyClaimPenalty,
+		ClaimAndStakeBonus:    msg.ClaimAndStakeBonus,
+		DistributionAddress:   msg.DistributionAddress,
+	}
+	ms.Keeper.SetAirdrop(ctx, airdrop)
 
 	return &types.MsgUpdateAirdropResponse{}, nil
 }
@@ -76,7 +107,26 @@ func (ms msgServer) UpdateAirdrop(goCtx context.Context, msg *types.MsgUpdateAir
 // Admin transaction to add user allocations
 func (ms msgServer) AddAllocations(goCtx context.Context, msg *types.MsgAddAllocations) (*types.MsgAddAllocationsResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
-	_ = ctx
+
+	if _, found := ms.Keeper.GetAirdrop(ctx, msg.AirdropId); !found {
+		return nil, types.ErrAirdropNotFound.Wrapf("airdrop %s", msg.AirdropId)
+	}
+
+	for _, rawAllocation := range msg.Allocations {
+		if _, found := ms.Keeper.GetUserAllocation(ctx, msg.AirdropId, rawAllocation.UserAddress); found {
+			return nil, types.ErrUserAllocationAlreadyExists.Wrapf("user %s", rawAllocation.UserAddress)
+		}
+
+		userAllocation := types.UserAllocation{
+			AirdropId:        msg.AirdropId,
+			Address:          rawAllocation.UserAddress,
+			Claimed:          sdkmath.ZeroInt(),
+			Allocations:      rawAllocation.Allocations,
+			ClaimType:        types.UNSPECIFIED,
+			ValidatorAddress: "",
+		}
+		ms.Keeper.SetUserAllocation(ctx, userAllocation)
+	}
 
 	return &types.MsgAddAllocationsResponse{}, nil
 }
@@ -84,7 +134,17 @@ func (ms msgServer) AddAllocations(goCtx context.Context, msg *types.MsgAddAlloc
 // Admin transaction to update a user's allocations
 func (ms msgServer) UpdateUserAllocation(goCtx context.Context, msg *types.MsgUpdateUserAllocation) (*types.MsgUpdateUserAllocationResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
-	_ = ctx
+
+	if _, found := ms.Keeper.GetAirdrop(ctx, msg.AirdropId); !found {
+		return nil, types.ErrAirdropNotFound.Wrapf("airdrop %s", msg.AirdropId)
+	}
+
+	userAllocation, found := ms.Keeper.GetUserAllocation(ctx, msg.AirdropId, msg.UserAddress)
+	if !found {
+		return nil, types.ErrUserAllocationNotFound.Wrapf("user %s", msg.UserAddress)
+	}
+	userAllocation.Allocations = msg.Allocations
+	ms.Keeper.SetUserAllocation(ctx, userAllocation)
 
 	return &types.MsgUpdateUserAllocationResponse{}, nil
 }
