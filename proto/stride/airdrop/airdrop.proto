@@ -106,7 +106,8 @@ message Airdrop {
     (gogoproto.nullable) = false
   ];
 
-  // Bonus rewards for choosing to claim and stake
+  // Bonus rewards for choosing to claim and stake - e.g. 0.05 means stakers
+  // will receive a 5% bonus
   string claim_and_stake_bonus = 7 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false

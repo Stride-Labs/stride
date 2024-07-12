@@ -188,7 +188,8 @@ type Airdrop struct {
 	// Penalty for claiming rewards early - e.g. 0.5 means claiming early will
 	// result in losing 50% of rewards
 	EarlyClaimPenalty github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,6,opt,name=early_claim_penalty,json=earlyClaimPenalty,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"early_claim_penalty"`
-	// Bonus rewards for choosing to claim and stake
+	// Bonus rewards for choosing to claim and stake - e.g. 0.05 means stakers
+	// will receive a 5% bonus
 	ClaimAndStakeBonus github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,7,opt,name=claim_and_stake_bonus,json=claimAndStakeBonus,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"claim_and_stake_bonus"`
 	// Account that holds the total reward balance and distributes to users
 	DistributionAccount string `protobuf:"bytes,8,opt,name=distribution_account,json=distributionAccount,proto3" json:"distribution_account,omitempty"`
