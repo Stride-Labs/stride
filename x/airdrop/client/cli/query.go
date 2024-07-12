@@ -8,7 +8,6 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/cosmos/cosmos-sdk/client"
-	"github.com/cosmos/cosmos-sdk/version"
 
 	"github.com/Stride-Labs/stride/v22/x/airdrop/types"
 )
@@ -38,15 +37,9 @@ func GetQueryCmd() *cobra.Command {
 // Queries the configuration for a given airdrop
 func CmdQueryAirdrop() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "airdrop",
+		Use:   "airdrop [airdrop-id]",
 		Short: "Queries an airdrop's configuration",
-		Long: strings.TrimSpace(
-			fmt.Sprintf(`Queries an airdrop configuration
-Example:
-  $ %s query %s airdrop [airdrop-id]
-`, version.AppName, types.ModuleName),
-		),
-		Args: cobra.ExactArgs(1),
+		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			airdropId := args[0]
 
@@ -76,13 +69,7 @@ func CmdQueryAllAirdrops() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "airdrops",
 		Short: "Queries all airdrop configurations",
-		Long: strings.TrimSpace(
-			fmt.Sprintf(`Queries all airdrop configurations
-Example:
-  $ %s query %s airdrops
-`, version.AppName, types.ModuleName),
-		),
-		Args: cobra.ExactArgs(0),
+		Args:  cobra.ExactArgs(0),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx, err := client.GetClientQueryContext(cmd)
 			if err != nil {
@@ -106,15 +93,9 @@ Example:
 // Queries the allocation for a given user for an airdrop
 func CmdQueryUserAllocation() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "user-allocation",
-		Short: "Queries a user allocation for a given airdrop",
-		Long: strings.TrimSpace(
-			fmt.Sprintf(`Queries a user allocation for a given airdrop
-Example:
-  $ %s query %s user-allocation [airdrop-id] [user-address]
-`, version.AppName, types.ModuleName),
-		),
-		Args: cobra.ExactArgs(2),
+		Use:   "user-allocation [airdrop-id] [user-address]",
+		Short: "Queries a user's allocation for a given airdrop",
+		Args:  cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			airdropId := args[0]
 			address := args[1]
@@ -144,15 +125,9 @@ Example:
 // Queries the allocations for a given user across all airdrops
 func CmdQueryUserAllocations() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "user-allocations",
-		Short: "Queries user allocations across all airdrops",
-		Long: strings.TrimSpace(
-			fmt.Sprintf(`Queries user allocations across all airdrops
-Example:
-  $ %s query %s user-allocation [user-address]
-`, version.AppName, types.ModuleName),
-		),
-		Args: cobra.ExactArgs(1),
+		Use:   "user-allocations [user-address]",
+		Short: "Queries a user's allocations across all airdrops",
+		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			address := args[0]
 
@@ -180,15 +155,9 @@ Example:
 // Queries all allocations for a given airdrop
 func CmdQueryAllAllocations() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "all-allocations",
+		Use:   "all-allocations [airdrop-id]",
 		Short: "Queries all allocations for a given airdrop",
-		Long: strings.TrimSpace(
-			fmt.Sprintf(`Queries all allocations for a given airdrop
-Example:
-  $ %s query %s all-allocations [airdrop-id]
-`, version.AppName, types.ModuleName),
-		),
-		Args: cobra.ExactArgs(1),
+		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			airdropId := args[0]
 
@@ -220,12 +189,7 @@ func CmdQueryUserSummary() *cobra.Command {
 		Use:   "user-summary",
 		Short: "Queries the summary for a user",
 		Long: strings.TrimSpace(
-			fmt.Sprintf(`Queries a user's claimed and remaining reward amounts, as well as their
-claim status (daily, claim & stake, claim early)
-
-Example:
-  $ %s query %s user-summary [address]
-`, version.AppName, types.ModuleName),
+			`Queries airdrop summary info for a user including their total claimed, amount remaining, and claim type`,
 		),
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
