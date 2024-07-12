@@ -12,14 +12,19 @@ option go_package = "github.com/Stride-Labs/stride/v22/x/airdrop/types";
 enum ClaimType {
   option (gogoproto.goproto_enum_prefix) = false;
 
+  // UNSPECIFIED indicates that the user has not yet selected an option or
+  // claimed daily
+  UNSPECIFIED = 0;
   // DAILY indicates that the airdrop rewards are accumulated daily
-  DAILY = 0;
+  // A user can claim daily up front and change their decision within the
+  // deadline window
+  DAILY = 1;
   // CLAIM_AND_STAKE indicates that the airdrop rewards have been claimed but
   // are lock-staked until at least when the airdrop is over
-  CLAIM_AND_STAKE = 1;
+  CLAIM_AND_STAKE = 2;
   // CLAIM_EARLY indicates that the airdrop rewards have been claimed early,
   // with half going to the user and half being clawed back
-  CLAIM_EARLY = 2;
+  CLAIM_EARLY = 3;
 }
 
 // UserAllocation tracks the status of an allocation for a user on a specific
