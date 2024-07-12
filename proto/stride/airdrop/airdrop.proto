@@ -68,7 +68,12 @@ message UserAllocation {
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int"
   ];
 
+  // The claim type (claim daily, claim early, claim and stake)
   ClaimType claim_type = 5;
+
+  // If the user decides to claim and stake, this will hold the validator
+  // address that they will evenually stake to
+  string validator_address = 6;
 }
 
 // Airdrop track the aggregate unbondings across an epoch
@@ -101,7 +106,13 @@ message Airdrop {
     (gogoproto.nullable) = false
   ];
 
+  // Bonus rewards for choosing to claim and stake
+  string claim_and_stake_bonus = 7 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
+
   // Account that holds the total reward balance and distributes to users
-  string distribution_account = 7
+  string distribution_account = 8
       [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
 }
