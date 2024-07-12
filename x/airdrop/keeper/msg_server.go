@@ -25,7 +25,7 @@ var _ types.MsgServer = msgServer{}
 func (ms msgServer) ClaimDaily(goCtx context.Context, msg *types.MsgClaimDaily) (*types.MsgClaimDailyResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	err := ms.Keeper.ClaimDaily(ctx, msg.Claimer)
+	err := ms.Keeper.ClaimDaily(ctx, msg.AirdropId, msg.Claimer)
 	if err != nil {
 		return nil, err
 	}

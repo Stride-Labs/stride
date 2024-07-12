@@ -1,11 +1,77 @@
 package keeper
 
 import (
+	errorsmod "cosmossdk.io/errors"
+	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	"github.com/Stride-Labs/stride/v22/x/airdrop/types"
 )
 
-func (k Keeper) ClaimDaily(ctx sdk.Context, claimer string) error {
-	// TODO[airdrop] implement logic
+// User transaction to claim all the pending airdrop rewards up to the current day
+func (k Keeper) ClaimDaily(ctx sdk.Context, airdropId, claimer string) error {
+	// Fetch the airdrop and user's allocations
+	airdrop, found := k.GetAirdrop(ctx, airdropId)
+	if !found {
+		return types.ErrAirdropNotFound.Wrapf("airdrop %s", airdropId)
+	}
+	userAllocation, found := k.GetUserAllocation(ctx, airdropId, claimer)
+	if !found {
+		return types.ErrUserAllocationNotFound.Wrapf("user %s for airdrop %s", claimer, airdropId)
+	}
+
+	// Confirm the distributor and claimer are valid addresses
+	distributorAccount, err := sdk.AccAddressFromBech32(airdrop.DistributionAddress)
+	if err != nil {
+		return errorsmod.Wrapf(err, "invalid distributor address")
+	}
+	claimerAccount, err := sdk.AccAddressFromBech32(userAllocation.Address)
+	if err != nil {
+		return errorsmod.Wrapf(err, "invalid claimer address")
+	}
+
+	// Confirm the user has not elected the non-daily claim types
+	if userAllocation.ClaimType != types.UNSPECIFIED && userAllocation.ClaimType != types.DAILY {
+		return types.ErrClaimTypeUnavailable.Wrapf("user has already elected claim option %s",
+			userAllocation.ClaimType.String())
+	}
+
+	// Get the index in the allocations array from the current date
+	// E.g. on the 10th day of distribution, this will map to the 9th index in the list
+	todaysIndex, err := airdrop.GetCurrentDateIndex(ctx)
+	if err != nil {
+		return err
+	}
+
+	// Sum the rewards up to that date and 0 them out in the process
+	todaysRewards := sdkmath.ZeroInt()
+	for i := 0; i <= todaysIndex; i++ {
+		rewardsOnDate := userAllocation.Allocations[i]
+		todaysRewards = todaysRewards.Add(rewardsOnDate)
+		userAllocation.Allocations[i] = sdkmath.ZeroInt()
+	}
+
+	// If there are no rewards, alert the user with an error
+	if todaysRewards.IsZero() {
+		return types.ErrNoUnclaimedRewards
+	}
+
+	// Update the amount claimed on the allocation record
+	userAllocation.Claimed = userAllocation.Claimed.Add(todaysRewards)
+
+	// If this is their first time claiming, flag their decision
+	if userAllocation.ClaimType == types.UNSPECIFIED {
+		userAllocation.ClaimType = types.DAILY
+	}
+
+	// Distribute rewards from the distributor
+	rewardsCoin := sdk.NewCoin(airdrop.RewardDenom, todaysRewards)
+	if err := k.bankKeeper.SendCoins(ctx, distributorAccount, claimerAccount, sdk.NewCoins(rewardsCoin)); err != nil {
+		return errorsmod.Wrapf(err, "unable to distribute rewards")
+	}
+
+	// Update the reward record for to mark the progress
+	k.SetUserAllocation(ctx, userAllocation)
 
 	return nil
 }
