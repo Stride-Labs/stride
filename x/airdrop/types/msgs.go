@@ -66,6 +66,47 @@ func (msg *MsgClaimDaily) ValidateBasic() error {
 }
 
 // ----------------------------------------------
+//               MsgClaimEarly
+// ----------------------------------------------
+
+func NewMsgClaimEarly(claimer, airdropId string) *MsgClaimEarly {
+	return &MsgClaimEarly{
+		Claimer:   claimer,
+		AirdropId: airdropId,
+	}
+}
+
+func (msg MsgClaimEarly) Type() string {
+	return TypeMsgClaimEarly
+}
+
+func (msg MsgClaimEarly) Route() string {
+	return RouterKey
+}
+
+func (msg *MsgClaimEarly) GetSigners() []sdk.AccAddress {
+	claimer, err := sdk.AccAddressFromBech32(msg.Claimer)
+	if err != nil {
+		panic(err)
+	}
+	return []sdk.AccAddress{claimer}
+}
+
+func (msg *MsgClaimEarly) GetSignBytes() []byte {
+	bz := ModuleCdc.MustMarshalJSON(msg)
+	return sdk.MustSortJSON(bz)
+}
+
+func (msg *MsgClaimEarly) ValidateBasic() error {
+	_, err := sdk.AccAddressFromBech32(msg.Claimer)
+	if err != nil {
+		return errorsmod.Wrapf(sdkerrors.ErrInvalidAddress, "invalid address (%s)", err)
+	}
+
+	return nil
+}
+
+// ----------------------------------------------
 //               MsgClaimAndStake
 // ----------------------------------------------
 
@@ -99,47 +140,6 @@ func (msg *MsgClaimAndStake) GetSignBytes() []byte {
 }
 
 func (msg *MsgClaimAndStake) ValidateBasic() error {
-	_, err := sdk.AccAddressFromBech32(msg.Claimer)
-	if err != nil {
-		return errorsmod.Wrapf(sdkerrors.ErrInvalidAddress, "invalid address (%s)", err)
-	}
-
-	return nil
-}
-
-// ----------------------------------------------
-//               MsgClaimEarly
-// ----------------------------------------------
-
-func NewMsgClaimEarly(claimer, airdropId string) *MsgClaimEarly {
-	return &MsgClaimEarly{
-		Claimer:   claimer,
-		AirdropId: airdropId,
-	}
-}
-
-func (msg MsgClaimEarly) Type() string {
-	return TypeMsgClaimEarly
-}
-
-func (msg MsgClaimEarly) Route() string {
-	return RouterKey
-}
-
-func (msg *MsgClaimEarly) GetSigners() []sdk.AccAddress {
-	claimer, err := sdk.AccAddressFromBech32(msg.Claimer)
-	if err != nil {
-		panic(err)
-	}
-	return []sdk.AccAddress{claimer}
-}
-
-func (msg *MsgClaimEarly) GetSignBytes() []byte {
-	bz := ModuleCdc.MustMarshalJSON(msg)
-	return sdk.MustSortJSON(bz)
-}
-
-func (msg *MsgClaimEarly) ValidateBasic() error {
 	_, err := sdk.AccAddressFromBech32(msg.Claimer)
 	if err != nil {
 		return errorsmod.Wrapf(sdkerrors.ErrInvalidAddress, "invalid address (%s)", err)
