@@ -32,8 +32,7 @@ func (ms msgServer) ClaimDaily(goCtx context.Context, msg *types.MsgClaimDaily) 
 	return &types.MsgClaimDailyResponse{}, nil
 }
 
-// User transaction to claim half of their total amount now, and forfeit the
-// other half to be clawed back
+// User transaction to claim half of their total amount now, and forfeit the other half to be clawed back
 func (ms msgServer) ClaimEarly(goCtx context.Context, msg *types.MsgClaimEarly) (*types.MsgClaimEarlyResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
@@ -45,8 +44,8 @@ func (ms msgServer) ClaimEarly(goCtx context.Context, msg *types.MsgClaimEarly) 
 	return &types.MsgClaimEarlyResponse{}, nil
 }
 
-// User transaction to claim and automatically lock stake their whole airdrop
-// amount now. The funds can be unstaked by the user once the airdrop is over
+// User transaction to claim and stake the full airdrop amount
+// The rewards will be locked until the end of the distribution period, but will recieve rewards throughout this time
 func (ms msgServer) ClaimAndStake(goCtx context.Context, msg *types.MsgClaimAndStake) (*types.MsgClaimAndStakeResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 

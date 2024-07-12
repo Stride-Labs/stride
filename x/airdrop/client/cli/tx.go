@@ -23,7 +23,11 @@ func GetTxCmd() *cobra.Command {
 		RunE:                       client.ValidateCmd,
 	}
 
-	cmd.AddCommand()
+	cmd.AddCommand(
+		CmdClaimDaily(),
+		CmdClaimEarly(),
+		CmdClaimAndStake(),
+	)
 
 	return cmd
 }
@@ -53,6 +57,89 @@ Example:
 			msg := types.NewMsgClaimDaily(
 				clientCtx.GetFromAddress().String(),
 				airdropId,
+			)
+
+			if err := msg.ValidateBasic(); err != nil {
+				return err
+			}
+
+			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
+		},
+	}
+
+	flags.AddTxFlagsToCmd(cmd)
+
+	return cmd
+}
+
+// User transaction to claim half of their total amount now, and forfeit the other half to be clawed back
+func CmdClaimEarly() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "claim-early [airdrop-id]",
+		Short: "Claims rewards immediately, but with a early claim penalty",
+		Long: strings.TrimSpace(
+			fmt.Sprintf(`Claims rewards immediately (including for future days), but with an early
+claim penalty causing a portion of the total to be clawed back.
+
+Example:
+  $ %[1]s tx %[2]s claim-early airdrop-1 --from user
+`, version.AppName, types.ModuleName),
+		),
+		Args: cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			airdropId := args[0]
+
+			clientCtx, err := client.GetClientTxContext(cmd)
+			if err != nil {
+				return err
+			}
+
+			msg := types.NewMsgClaimEarly(
+				clientCtx.GetFromAddress().String(),
+				airdropId,
+			)
+
+			if err := msg.ValidateBasic(); err != nil {
+				return err
+			}
+
+			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
+		},
+	}
+
+	flags.AddTxFlagsToCmd(cmd)
+
+	return cmd
+}
+
+// User transaction to claim and stake the full airdrop amount
+// The rewards will be locked until the end of the distribution period, but will recieve rewards throughout this time
+func CmdClaimAndStake() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "claim-and-stake [airdrop-id] [validator-address]",
+		Short: "Claims and stakes the total reward amount",
+		Long: strings.TrimSpace(
+			fmt.Sprintf(`Claims and stakes the full airdrop amount.
+The rewards will be locked until the end of the distribution period, but will accrue rewards throughout this time
+
+Example:
+  $ %[1]s tx %[2]s claim-early airdrop-1 stridevaloperX --from user
+`, version.AppName, types.ModuleName),
+		),
+		Args: cobra.ExactArgs(2),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			airdropId := args[0]
+			vaildatorAddress := args[1]
+
+			clientCtx, err := client.GetClientTxContext(cmd)
+			if err != nil {
+				return err
+			}
+
+			msg := types.NewMsgClaimAndStake(
+				clientCtx.GetFromAddress().String(),
+				airdropId,
+				vaildatorAddress,
 			)
 
 			if err := msg.ValidateBasic(); err != nil {
