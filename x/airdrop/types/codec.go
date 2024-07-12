@@ -13,7 +13,11 @@ func RegisterLegacyAminoCodec(cdc *codec.LegacyAmino) {
 	legacy.RegisterAminoMsg(cdc, &MsgClaimDaily{}, "airdrop/MsgClaimDaily")
 	legacy.RegisterAminoMsg(cdc, &MsgClaimEarly{}, "airdrop/MsgClaimEarly")
 	legacy.RegisterAminoMsg(cdc, &MsgClaimAndStake{}, "airdrop/MsgClaimAndStake")
-	// TODO[airdrop]: add admin messages
+	legacy.RegisterAminoMsg(cdc, &MsgCreateAirdrop{}, "airdrop/MsgCreateAirdrop")
+	legacy.RegisterAminoMsg(cdc, &MsgUpdateAirdrop{}, "airdrop/MsgUpdateAirdrop")
+	legacy.RegisterAminoMsg(cdc, &MsgAddAllocations{}, "airdrop/MsgAddAllocations")
+	legacy.RegisterAminoMsg(cdc, &MsgUpdateUserAllocation{}, "airdrop/MsgUpdateUserAllocation")
+	legacy.RegisterAminoMsg(cdc, &MsgLinkAddresses{}, "airdrop/MsgLinkAddresses")
 }
 
 func RegisterInterfaces(registry cdctypes.InterfaceRegistry) {
@@ -21,7 +25,11 @@ func RegisterInterfaces(registry cdctypes.InterfaceRegistry) {
 		&MsgClaimDaily{},
 		&MsgClaimEarly{},
 		&MsgClaimAndStake{},
-		// TODO[airdrop]: add admin messages
+		&MsgCreateAirdrop{},
+		&MsgUpdateAirdrop{},
+		&MsgAddAllocations{},
+		&MsgUpdateUserAllocation{},
+		&MsgLinkAddresses{},
 	)
 
 	msgservice.RegisterMsgServiceDesc(registry, &_Msg_serviceDesc)
