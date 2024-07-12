@@ -30,23 +30,23 @@ var _ = math.Inf
 // proto package needs to be updated.
 const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 
-// Claim
-type MsgClaim struct {
+// ClaimDaily
+type MsgClaimDaily struct {
 	Claimer string `protobuf:"bytes,1,opt,name=claimer,proto3" json:"claimer,omitempty"`
 }
 
-func (m *MsgClaim) Reset()         { *m = MsgClaim{} }
-func (m *MsgClaim) String() string { return proto.CompactTextString(m) }
-func (*MsgClaim) ProtoMessage()    {}
-func (*MsgClaim) Descriptor() ([]byte, []int) {
+func (m *MsgClaimDaily) Reset()         { *m = MsgClaimDaily{} }
+func (m *MsgClaimDaily) String() string { return proto.CompactTextString(m) }
+func (*MsgClaimDaily) ProtoMessage()    {}
+func (*MsgClaimDaily) Descriptor() ([]byte, []int) {
 	return fileDescriptor_40a6837f542f43b8, []int{0}
 }
-func (m *MsgClaim) XXX_Unmarshal(b []byte) error {
+func (m *MsgClaimDaily) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *MsgClaim) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *MsgClaimDaily) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_MsgClaim.Marshal(b, m, deterministic)
+		return xxx_messageInfo_MsgClaimDaily.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalToSizedBuffer(b)
@@ -56,40 +56,40 @@ func (m *MsgClaim) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 		return b[:n], nil
 	}
 }
-func (m *MsgClaim) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_MsgClaim.Merge(m, src)
+func (m *MsgClaimDaily) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MsgClaimDaily.Merge(m, src)
 }
-func (m *MsgClaim) XXX_Size() int {
+func (m *MsgClaimDaily) XXX_Size() int {
 	return m.Size()
 }
-func (m *MsgClaim) XXX_DiscardUnknown() {
-	xxx_messageInfo_MsgClaim.DiscardUnknown(m)
+func (m *MsgClaimDaily) XXX_DiscardUnknown() {
+	xxx_messageInfo_MsgClaimDaily.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_MsgClaim proto.InternalMessageInfo
+var xxx_messageInfo_MsgClaimDaily proto.InternalMessageInfo
 
-func (m *MsgClaim) GetClaimer() string {
+func (m *MsgClaimDaily) GetClaimer() string {
 	if m != nil {
 		return m.Claimer
 	}
 	return ""
 }
 
-type MsgClaimResponse struct {
+type MsgClaimDailyResponse struct {
 }
 
-func (m *MsgClaimResponse) Reset()         { *m = MsgClaimResponse{} }
-func (m *MsgClaimResponse) String() string { return proto.CompactTextString(m) }
-func (*MsgClaimResponse) ProtoMessage()    {}
-func (*MsgClaimResponse) Descriptor() ([]byte, []int) {
+func (m *MsgClaimDailyResponse) Reset()         { *m = MsgClaimDailyResponse{} }
+func (m *MsgClaimDailyResponse) String() string { return proto.CompactTextString(m) }
+func (*MsgClaimDailyResponse) ProtoMessage()    {}
+func (*MsgClaimDailyResponse) Descriptor() ([]byte, []int) {
 	return fileDescriptor_40a6837f542f43b8, []int{1}
 }
-func (m *MsgClaimResponse) XXX_Unmarshal(b []byte) error {
+func (m *MsgClaimDailyResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *MsgClaimResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *MsgClaimDailyResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_MsgClaimResponse.Marshal(b, m, deterministic)
+		return xxx_messageInfo_MsgClaimDailyResponse.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalToSizedBuffer(b)
@@ -99,17 +99,17 @@ func (m *MsgClaimResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, er
 		return b[:n], nil
 	}
 }
-func (m *MsgClaimResponse) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_MsgClaimResponse.Merge(m, src)
+func (m *MsgClaimDailyResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MsgClaimDailyResponse.Merge(m, src)
 }
-func (m *MsgClaimResponse) XXX_Size() int {
+func (m *MsgClaimDailyResponse) XXX_Size() int {
 	return m.Size()
 }
-func (m *MsgClaimResponse) XXX_DiscardUnknown() {
-	xxx_messageInfo_MsgClaimResponse.DiscardUnknown(m)
+func (m *MsgClaimDailyResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_MsgClaimDailyResponse.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_MsgClaimResponse proto.InternalMessageInfo
+var xxx_messageInfo_MsgClaimDailyResponse proto.InternalMessageInfo
 
 // ClaimEarly
 type MsgClaimEarly struct {
@@ -274,8 +274,8 @@ func (m *MsgClaimAndStakeResponse) XXX_DiscardUnknown() {
 var xxx_messageInfo_MsgClaimAndStakeResponse proto.InternalMessageInfo
 
 func init() {
-	proto.RegisterType((*MsgClaim)(nil), "stride.airdrop.MsgClaim")
-	proto.RegisterType((*MsgClaimResponse)(nil), "stride.airdrop.MsgClaimResponse")
+	proto.RegisterType((*MsgClaimDaily)(nil), "stride.airdrop.MsgClaimDaily")
+	proto.RegisterType((*MsgClaimDailyResponse)(nil), "stride.airdrop.MsgClaimDailyResponse")
 	proto.RegisterType((*MsgClaimEarly)(nil), "stride.airdrop.MsgClaimEarly")
 	proto.RegisterType((*MsgClaimEarlyResponse)(nil), "stride.airdrop.MsgClaimEarlyResponse")
 	proto.RegisterType((*MsgClaimAndStake)(nil), "stride.airdrop.MsgClaimAndStake")
@@ -285,31 +285,30 @@ func init() {
 func init() { proto.RegisterFile("stride/airdrop/tx.proto", fileDescriptor_40a6837f542f43b8) }
 
 var fileDescriptor_40a6837f542f43b8 = []byte{
-	// 372 bytes of a gzipped FileDescriptorProto
+	// 366 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xe2, 0x12, 0x2f, 0x2e, 0x29, 0xca,
 	0x4c, 0x49, 0xd5, 0x4f, 0xcc, 0x2c, 0x4a, 0x29, 0xca, 0x2f, 0xd0, 0x2f, 0xa9, 0xd0, 0x2b, 0x28,
 	0xca, 0x2f, 0xc9, 0x17, 0xe2, 0x83, 0x48, 0xe8, 0x41, 0x25, 0xa4, 0xc4, 0x93, 0xf3, 0x8b, 0x73,
 	0xf3, 0x8b, 0xf5, 0x73, 0x8b, 0xd3, 0xf5, 0xcb, 0x0c, 0x41, 0x14, 0x44, 0xa1, 0x94, 0x60, 0x62,
 	0x6e, 0x66, 0x5e, 0xbe, 0x3e, 0x98, 0x84, 0x0a, 0x49, 0x42, 0xd4, 0xc6, 0x83, 0x79, 0xfa, 0x10,
-	0x0e, 0x44, 0x4a, 0x29, 0x91, 0x8b, 0xc3, 0xb7, 0x38, 0xdd, 0x39, 0x27, 0x31, 0x33, 0x57, 0xc8,
-	0x88, 0x8b, 0x3d, 0x19, 0xc4, 0x48, 0x2d, 0x92, 0x60, 0x54, 0x60, 0xd4, 0xe0, 0x74, 0x92, 0xb8,
-	0xb4, 0x45, 0x57, 0x04, 0xaa, 0xdc, 0x31, 0x25, 0xa5, 0x28, 0xb5, 0xb8, 0x38, 0xb8, 0xa4, 0x28,
-	0x33, 0x2f, 0x3d, 0x08, 0xa6, 0xd0, 0x4a, 0xb1, 0xe9, 0xf9, 0x06, 0x2d, 0x18, 0xaf, 0xeb, 0xf9,
-	0x06, 0x2d, 0x01, 0x98, 0xcb, 0x61, 0xc6, 0x2a, 0x09, 0x71, 0x09, 0xc0, 0xd8, 0x41, 0xa9, 0xc5,
-	0x05, 0xf9, 0x79, 0xc5, 0xa9, 0x4a, 0xd9, 0x5c, 0xbc, 0x30, 0x31, 0xd7, 0xc4, 0xa2, 0x9c, 0x4a,
-	0xb2, 0xec, 0x56, 0x43, 0xb7, 0x5b, 0x14, 0xdd, 0x6e, 0xb0, 0xd9, 0x4a, 0xe2, 0x5c, 0xa2, 0x28,
-	0x02, 0x70, 0x57, 0x14, 0x22, 0x5c, 0xe6, 0x98, 0x97, 0x12, 0x5c, 0x92, 0x98, 0x9d, 0x4a, 0x96,
-	0x43, 0x34, 0xd1, 0x1d, 0x22, 0x81, 0xee, 0x10, 0x98, 0xf1, 0x4a, 0x52, 0x5c, 0x12, 0xe8, 0x62,
-	0x30, 0xe7, 0x18, 0xfd, 0x66, 0xe4, 0x62, 0xf6, 0x2d, 0x4e, 0x17, 0x72, 0xe6, 0x62, 0x85, 0x44,
-	0x88, 0x84, 0x1e, 0x6a, 0xa4, 0xeb, 0xc1, 0xb4, 0x4a, 0x29, 0xe0, 0x92, 0x81, 0x19, 0x26, 0x14,
-	0xc4, 0xc5, 0x85, 0x14, 0xbc, 0xb2, 0xb8, 0xd4, 0x83, 0xa5, 0xa5, 0x54, 0xf1, 0x4a, 0xc3, 0xcd,
-	0x8c, 0xe6, 0xe2, 0x45, 0x0d, 0x2c, 0x9c, 0xce, 0x80, 0xa9, 0x90, 0xd2, 0x20, 0xa4, 0x02, 0x66,
-	0xb8, 0x93, 0xf7, 0x89, 0x47, 0x72, 0x8c, 0x17, 0x1e, 0xc9, 0x31, 0x3e, 0x78, 0x24, 0xc7, 0x38,
-	0xe1, 0xb1, 0x1c, 0xc3, 0x85, 0xc7, 0x72, 0x0c, 0x37, 0x1e, 0xcb, 0x31, 0x44, 0x19, 0xa6, 0x67,
-	0x96, 0x64, 0x94, 0x26, 0xe9, 0x25, 0xe7, 0xe7, 0xea, 0x07, 0x83, 0x4d, 0xd3, 0xf5, 0x49, 0x4c,
-	0x2a, 0xd6, 0x87, 0x66, 0x95, 0x32, 0x23, 0x23, 0xfd, 0x0a, 0x44, 0x86, 0xa9, 0x2c, 0x48, 0x2d,
-	0x4e, 0x62, 0x03, 0xa7, 0x6e, 0x63, 0x40, 0x00, 0x00, 0x00, 0xff, 0xff, 0x60, 0x2e, 0x72, 0x51,
-	0x4f, 0x03, 0x00, 0x00,
+	0x0e, 0x44, 0x4a, 0x29, 0x9b, 0x8b, 0xd7, 0xb7, 0x38, 0xdd, 0x39, 0x27, 0x31, 0x33, 0xd7, 0x25,
+	0x31, 0x33, 0xa7, 0x52, 0xc8, 0x88, 0x8b, 0x3d, 0x19, 0xc4, 0x4b, 0x2d, 0x92, 0x60, 0x54, 0x60,
+	0xd4, 0xe0, 0x74, 0x92, 0xb8, 0xb4, 0x45, 0x57, 0x04, 0xaa, 0xc7, 0x31, 0x25, 0xa5, 0x28, 0xb5,
+	0xb8, 0x38, 0xb8, 0xa4, 0x28, 0x33, 0x2f, 0x3d, 0x08, 0xa6, 0xd0, 0x4a, 0xad, 0xe9, 0xf9, 0x06,
+	0x2d, 0x18, 0xaf, 0xeb, 0xf9, 0x06, 0x2d, 0x51, 0x98, 0xf3, 0x51, 0xcc, 0x56, 0x12, 0xe7, 0x12,
+	0x45, 0x11, 0x08, 0x4a, 0x2d, 0x2e, 0xc8, 0xcf, 0x2b, 0x4e, 0x45, 0x76, 0x85, 0x6b, 0x62, 0x11,
+	0xcd, 0x5c, 0x01, 0x36, 0x1b, 0xd9, 0x15, 0x60, 0x01, 0xb8, 0x2b, 0x0a, 0xb9, 0x04, 0x60, 0x12,
+	0x8e, 0x79, 0x29, 0xc1, 0x25, 0x89, 0xd9, 0xa9, 0x64, 0x39, 0x44, 0x13, 0xdd, 0x21, 0x12, 0xe8,
+	0x0e, 0x81, 0x19, 0xaf, 0x24, 0xc5, 0x25, 0x81, 0x2e, 0x06, 0x73, 0x8e, 0x51, 0x2b, 0x13, 0x17,
+	0xb3, 0x6f, 0x71, 0xba, 0x90, 0x2f, 0x17, 0x2b, 0x58, 0x81, 0x90, 0xac, 0x1e, 0x6a, 0x1a, 0xd0,
+	0x43, 0x09, 0x4c, 0x29, 0x55, 0xbc, 0xd2, 0x30, 0x63, 0x85, 0x82, 0xb8, 0xb8, 0x90, 0x02, 0x1a,
+	0xa7, 0x99, 0x60, 0x69, 0xdc, 0x66, 0xa2, 0x84, 0x9c, 0x50, 0x34, 0x17, 0x2f, 0x6a, 0xb0, 0x29,
+	0xe0, 0xd2, 0x07, 0x53, 0x21, 0xa5, 0x41, 0x48, 0x05, 0xcc, 0x70, 0x27, 0xef, 0x13, 0x8f, 0xe4,
+	0x18, 0x2f, 0x3c, 0x92, 0x63, 0x7c, 0xf0, 0x48, 0x8e, 0x71, 0xc2, 0x63, 0x39, 0x86, 0x0b, 0x8f,
+	0xe5, 0x18, 0x6e, 0x3c, 0x96, 0x63, 0x88, 0x32, 0x4c, 0xcf, 0x2c, 0xc9, 0x28, 0x4d, 0xd2, 0x4b,
+	0xce, 0xcf, 0xd5, 0x0f, 0x06, 0x9b, 0xa6, 0xeb, 0x93, 0x98, 0x54, 0xac, 0x0f, 0xcd, 0x43, 0x65,
+	0x46, 0x46, 0xfa, 0x15, 0x88, 0x9c, 0x54, 0x59, 0x90, 0x5a, 0x9c, 0xc4, 0x06, 0x4e, 0xf6, 0xc6,
+	0x80, 0x00, 0x00, 0x00, 0xff, 0xff, 0x9c, 0xf3, 0x79, 0xed, 0x68, 0x03, 0x00, 0x00,
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -325,7 +324,7 @@ const _ = grpc.SupportPackageIsVersion4
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://godoc.org/google.golang.org/grpc#ClientConn.NewStream.
 type MsgClient interface {
 	// User transaction to claim all the pending daily airdrop rewards
-	Claim(ctx context.Context, in *MsgClaim, opts ...grpc.CallOption) (*MsgClaimResponse, error)
+	Claim(ctx context.Context, in *MsgClaimDaily, opts ...grpc.CallOption) (*MsgClaimDailyResponse, error)
 	// User transaction to claim half of their total amount now, and forfeit the
 	// other half to be clawed back
 	ClaimEarly(ctx context.Context, in *MsgClaimEarly, opts ...grpc.CallOption) (*MsgClaimEarlyResponse, error)
@@ -342,8 +341,8 @@ func NewMsgClient(cc grpc1.ClientConn) MsgClient {
 	return &msgClient{cc}
 }
 
-func (c *msgClient) Claim(ctx context.Context, in *MsgClaim, opts ...grpc.CallOption) (*MsgClaimResponse, error) {
-	out := new(MsgClaimResponse)
+func (c *msgClient) Claim(ctx context.Context, in *MsgClaimDaily, opts ...grpc.CallOption) (*MsgClaimDailyResponse, error) {
+	out := new(MsgClaimDailyResponse)
 	err := c.cc.Invoke(ctx, "/stride.airdrop.Msg/Claim", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -372,7 +371,7 @@ func (c *msgClient) ClaimAndStake(ctx context.Context, in *MsgClaimAndStake, opt
 // MsgServer is the server API for Msg service.
 type MsgServer interface {
 	// User transaction to claim all the pending daily airdrop rewards
-	Claim(context.Context, *MsgClaim) (*MsgClaimResponse, error)
+	Claim(context.Context, *MsgClaimDaily) (*MsgClaimDailyResponse, error)
 	// User transaction to claim half of their total amount now, and forfeit the
 	// other half to be clawed back
 	ClaimEarly(context.Context, *MsgClaimEarly) (*MsgClaimEarlyResponse, error)
@@ -385,7 +384,7 @@ type MsgServer interface {
 type UnimplementedMsgServer struct {
 }
 
-func (*UnimplementedMsgServer) Claim(ctx context.Context, req *MsgClaim) (*MsgClaimResponse, error) {
+func (*UnimplementedMsgServer) Claim(ctx context.Context, req *MsgClaimDaily) (*MsgClaimDailyResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Claim not implemented")
 }
 func (*UnimplementedMsgServer) ClaimEarly(ctx context.Context, req *MsgClaimEarly) (*MsgClaimEarlyResponse, error) {
@@ -400,7 +399,7 @@ func RegisterMsgServer(s grpc1.Server, srv MsgServer) {
 }
 
 func _Msg_Claim_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(MsgClaim)
+	in := new(MsgClaimDaily)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -412,7 +411,7 @@ func _Msg_Claim_Handler(srv interface{}, ctx context.Context, dec func(interface
 		FullMethod: "/stride.airdrop.Msg/Claim",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(MsgServer).Claim(ctx, req.(*MsgClaim))
+		return srv.(MsgServer).Claim(ctx, req.(*MsgClaimDaily))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -474,7 +473,7 @@ var _Msg_serviceDesc = grpc.ServiceDesc{
 	Metadata: "stride/airdrop/tx.proto",
 }
 
-func (m *MsgClaim) Marshal() (dAtA []byte, err error) {
+func (m *MsgClaimDaily) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalToSizedBuffer(dAtA[:size])
@@ -484,12 +483,12 @@ func (m *MsgClaim) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *MsgClaim) MarshalTo(dAtA []byte) (int, error) {
+func (m *MsgClaimDaily) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
-func (m *MsgClaim) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+func (m *MsgClaimDaily) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
@@ -504,7 +503,7 @@ func (m *MsgClaim) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	return len(dAtA) - i, nil
 }
 
-func (m *MsgClaimResponse) Marshal() (dAtA []byte, err error) {
+func (m *MsgClaimDailyResponse) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalToSizedBuffer(dAtA[:size])
@@ -514,12 +513,12 @@ func (m *MsgClaimResponse) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *MsgClaimResponse) MarshalTo(dAtA []byte) (int, error) {
+func (m *MsgClaimDailyResponse) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
-func (m *MsgClaimResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+func (m *MsgClaimDailyResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
@@ -644,7 +643,7 @@ func encodeVarintTx(dAtA []byte, offset int, v uint64) int {
 	dAtA[offset] = uint8(v)
 	return base
 }
-func (m *MsgClaim) Size() (n int) {
+func (m *MsgClaimDaily) Size() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -657,7 +656,7 @@ func (m *MsgClaim) Size() (n int) {
 	return n
 }
 
-func (m *MsgClaimResponse) Size() (n int) {
+func (m *MsgClaimDailyResponse) Size() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -716,7 +715,7 @@ func sovTx(x uint64) (n int) {
 func sozTx(x uint64) (n int) {
 	return sovTx(uint64((x << 1) ^ uint64((int64(x) >> 63))))
 }
-func (m *MsgClaim) Unmarshal(dAtA []byte) error {
+func (m *MsgClaimDaily) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -739,10 +738,10 @@ func (m *MsgClaim) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: MsgClaim: wiretype end group for non-group")
+			return fmt.Errorf("proto: MsgClaimDaily: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: MsgClaim: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: MsgClaimDaily: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
@@ -798,7 +797,7 @@ func (m *MsgClaim) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *MsgClaimResponse) Unmarshal(dAtA []byte) error {
+func (m *MsgClaimDailyResponse) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -821,10 +820,10 @@ func (m *MsgClaimResponse) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: MsgClaimResponse: wiretype end group for non-group")
+			return fmt.Errorf("proto: MsgClaimDailyResponse: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: MsgClaimResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: MsgClaimDailyResponse: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		default:

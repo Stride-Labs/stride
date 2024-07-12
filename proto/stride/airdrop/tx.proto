@@ -13,7 +13,7 @@ service Msg {
   // User facing messages:
 
   // User transaction to claim all the pending daily airdrop rewards
-  rpc Claim(MsgClaim) returns (MsgClaimResponse);
+  rpc Claim(MsgClaimDaily) returns (MsgClaimDailyResponse);
 
   // User transaction to claim half of their total amount now, and forfeit the
   // other half to be clawed back
@@ -28,14 +28,14 @@ service Msg {
   // TODO
 }
 
-// Claim
-message MsgClaim {
+// ClaimDaily
+message MsgClaimDaily {
   option (cosmos.msg.v1.signer) = "claimer";
-  option (amino.name) = "airdrop/MsgClaim";
+  option (amino.name) = "airdrop/MsgClaimDaily";
 
   string claimer = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
 }
-message MsgClaimResponse {}
+message MsgClaimDailyResponse {}
 
 // ClaimEarly
 message MsgClaimEarly {
