@@ -2,6 +2,7 @@ package keeper_test
 
 import (
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/suite"
 
@@ -10,9 +11,14 @@ import (
 	"github.com/Stride-Labs/stride/v22/x/airdrop/types"
 )
 
-const (
+var (
 	UserAddress = "address"
 	AirdropId   = "airdrop"
+
+	DistributionStartDate = time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC)
+	DistributionEndDate   = time.Date(2024, 6, 1, 0, 0, 0, 0, time.UTC)
+	ClawbackDate          = time.Date(2024, 7, 1, 0, 0, 0, 0, time.UTC)
+	DeadlineDate          = time.Date(2024, 2, 1, 0, 0, 0, 0, time.UTC)
 )
 
 type KeeperTestSuite struct {

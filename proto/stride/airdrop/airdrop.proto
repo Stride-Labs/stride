@@ -114,6 +114,6 @@ message Airdrop {
   ];
 
   // Account that holds the total reward balance and distributes to users
-  string distribution_account = 8
+  string distribution_address = 8
       [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
 }
