@@ -4,7 +4,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-func (k Keeper) Claim(ctx sdk.Context, claimer string) error {
+func (k Keeper) ClaimDaily(ctx sdk.Context, claimer string) error {
 	// TODO[airdrop] implement logic
 
 	return nil

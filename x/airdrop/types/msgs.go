@@ -1,6 +1,8 @@
 package types
 
 import (
+	"errors"
+
 	errorsmod "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -8,18 +10,18 @@ import (
 )
 
 const (
-	TypeMsgClaim         = "claim"
+	TypeMsgClaim         = "claim_daily"
 	TypeMsgClaimAndStake = "claim_and_stake"
 	TypeMsgClaimEarly    = "claim_early"
 )
 
 var (
-	_ sdk.Msg = &MsgClaim{}
+	_ sdk.Msg = &MsgClaimDaily{}
 	_ sdk.Msg = &MsgClaimAndStake{}
 	_ sdk.Msg = &MsgClaimEarly{}
 
 	// Implement legacy interface for ledger support
-	_ legacytx.LegacyMsg = &MsgClaim{}
+	_ legacytx.LegacyMsg = &MsgClaimDaily{}
 	_ legacytx.LegacyMsg = &MsgClaimAndStake{}
 	_ legacytx.LegacyMsg = &MsgClaimEarly{}
 )
@@ -28,21 +30,22 @@ var (
 //               MsgClaim
 // ----------------------------------------------
 
-func NewMsgClaim(claimer string) *MsgClaim {
-	return &MsgClaim{
-		Claimer: claimer,
+func NewMsgClaimDaily(claimer, airdropId string) *MsgClaimDaily {
+	return &MsgClaimDaily{
+		Claimer:   claimer,
+		AirdropId: airdropId,
 	}
 }
 
-func (msg MsgClaim) Type() string {
+func (msg MsgClaimDaily) Type() string {
 	return TypeMsgClaim
 }
 
-func (msg MsgClaim) Route() string {
+func (msg MsgClaimDaily) Route() string {
 	return RouterKey
 }
 
-func (msg *MsgClaim) GetSigners() []sdk.AccAddress {
+func (msg *MsgClaimDaily) GetSigners() []sdk.AccAddress {
 	claimer, err := sdk.AccAddressFromBech32(msg.Claimer)
 	if err != nil {
 		panic(err)
@@ -50,55 +53,17 @@ func (msg *MsgClaim) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{claimer}
 }
 
-func (msg *MsgClaim) GetSignBytes() []byte {
+func (msg *MsgClaimDaily) GetSignBytes() []byte {
 	bz := ModuleCdc.MustMarshalJSON(msg)
 	return sdk.MustSortJSON(bz)
 }
 
-func (msg *MsgClaim) ValidateBasic() error {
-	_, err := sdk.AccAddressFromBech32(msg.Claimer)
-	if err != nil {
+func (msg *MsgClaimDaily) ValidateBasic() error {
+	if _, err := sdk.AccAddressFromBech32(msg.Claimer); err != nil {
 		return errorsmod.Wrapf(sdkerrors.ErrInvalidAddress, "invalid address (%s)", err)
 	}
-
-	return nil
-}
-
-// ----------------------------------------------
-//               MsgClaimAndStake
-// ----------------------------------------------
-
-func NewMsgClaimAndStake(claimer string) *MsgClaimAndStake {
-	return &MsgClaimAndStake{
-		Claimer: claimer,
-	}
-}
-
-func (msg MsgClaimAndStake) Type() string {
-	return TypeMsgClaimAndStake
-}
-
-func (msg MsgClaimAndStake) Route() string {
-	return RouterKey
-}
-
-func (msg *MsgClaimAndStake) GetSigners() []sdk.AccAddress {
-	claimer, err := sdk.AccAddressFromBech32(msg.Claimer)
-	if err != nil {
-		panic(err)
-	}
-	return []sdk.AccAddress{claimer}
-}
-
-func (msg *MsgClaimAndStake) GetSignBytes() []byte {
-	bz := ModuleCdc.MustMarshalJSON(msg)
-	return sdk.MustSortJSON(bz)
-}
-
-func (msg *MsgClaimAndStake) ValidateBasic() error {
-	_, err := sdk.AccAddressFromBech32(msg.Claimer)
-	if err != nil {
-		return errorsmod.Wrapf(sdkerrors.ErrInvalidAddress, "invalid address (%s)", err)
+	if msg.AirdropId == "" {
+		return errors.New("airdrop-id must be specified")
 	}
 
 	return nil
@@ -108,9 +73,10 @@ func (msg *MsgClaimAndStake) ValidateBasic() error {
 //               MsgClaimEarly
 // ----------------------------------------------
 
-func NewMsgClaimEarly(claimer string) *MsgClaimEarly {
+func NewMsgClaimEarly(claimer, airdropId string) *MsgClaimEarly {
 	return &MsgClaimEarly{
-		Claimer: claimer,
+		Claimer:   claimer,
+		AirdropId: airdropId,
 	}
 }
 
@@ -136,9 +102,58 @@ func (msg *MsgClaimEarly) GetSignBytes() []byte {
 }
 
 func (msg *MsgClaimEarly) ValidateBasic() error {
-	_, err := sdk.AccAddressFromBech32(msg.Claimer)
-	if err != nil {
+	if _, err := sdk.AccAddressFromBech32(msg.Claimer); err != nil {
 		return errorsmod.Wrapf(sdkerrors.ErrInvalidAddress, "invalid address (%s)", err)
+	}
+	if msg.AirdropId == "" {
+		return errors.New("airdrop-id must be specified")
+	}
+
+	return nil
+}
+
+// ----------------------------------------------
+//               MsgClaimAndStake
+// ----------------------------------------------
+
+func NewMsgClaimAndStake(claimer, airdropId, validatorAddress string) *MsgClaimAndStake {
+	return &MsgClaimAndStake{
+		Claimer:          claimer,
+		AirdropId:        airdropId,
+		ValidatorAddress: validatorAddress,
+	}
+}
+
+func (msg MsgClaimAndStake) Type() string {
+	return TypeMsgClaimAndStake
+}
+
+func (msg MsgClaimAndStake) Route() string {
+	return RouterKey
+}
+
+func (msg *MsgClaimAndStake) GetSigners() []sdk.AccAddress {
+	claimer, err := sdk.AccAddressFromBech32(msg.Claimer)
+	if err != nil {
+		panic(err)
+	}
+	return []sdk.AccAddress{claimer}
+}
+
+func (msg *MsgClaimAndStake) GetSignBytes() []byte {
+	bz := ModuleCdc.MustMarshalJSON(msg)
+	return sdk.MustSortJSON(bz)
+}
+
+func (msg *MsgClaimAndStake) ValidateBasic() error {
+	if _, err := sdk.AccAddressFromBech32(msg.Claimer); err != nil {
+		return errorsmod.Wrapf(sdkerrors.ErrInvalidAddress, "invalid address (%s)", err)
+	}
+	if msg.AirdropId == "" {
+		return errors.New("airdrop-id must be specified")
+	}
+	if _, err := sdk.ValAddressFromBech32(msg.ValidatorAddress); err != nil {
+		return errorsmod.Wrapf(sdkerrors.ErrInvalidAddress, "invalid validator address (%s)", err)
 	}
 
 	return nil

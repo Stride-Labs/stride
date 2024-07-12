@@ -20,20 +20,19 @@ func NewMsgServerImpl(keeper Keeper) types.MsgServer {
 
 var _ types.MsgServer = msgServer{}
 
-// User transaction to claim all the pending daily airdrop rewards
-func (ms msgServer) Claim(goCtx context.Context, msg *types.MsgClaim) (*types.MsgClaimResponse, error) {
+// User transaction to claim all the pending airdrop rewards up to the current day
+func (ms msgServer) ClaimDaily(goCtx context.Context, msg *types.MsgClaimDaily) (*types.MsgClaimDailyResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	err := ms.Keeper.Claim(ctx, msg.Claimer)
+	err := ms.Keeper.ClaimDaily(ctx, msg.Claimer)
 	if err != nil {
 		return nil, err
 	}
 
-	return &types.MsgClaimResponse{}, nil
+	return &types.MsgClaimDailyResponse{}, nil
 }
 
-// User transaction to claim half of their total amount now, and forfeit the
-// other half to be clawed back
+// User transaction to claim half of their total amount now, and forfeit the other half to be clawed back
 func (ms msgServer) ClaimEarly(goCtx context.Context, msg *types.MsgClaimEarly) (*types.MsgClaimEarlyResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
@@ -45,8 +44,8 @@ func (ms msgServer) ClaimEarly(goCtx context.Context, msg *types.MsgClaimEarly) 
 	return &types.MsgClaimEarlyResponse{}, nil
 }
 
-// User transaction to claim and automatically lock stake their whole airdrop
-// amount now. The funds can be unstaked by the user once the airdrop is over
+// User transaction to claim and stake the full airdrop amount
+// The rewards will be locked until the end of the distribution period, but will recieve rewards throughout this time
 func (ms msgServer) ClaimAndStake(goCtx context.Context, msg *types.MsgClaimAndStake) (*types.MsgClaimAndStakeResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
