@@ -7,22 +7,28 @@ import (
 	context "context"
 	fmt "fmt"
 	_ "github.com/cosmos/cosmos-proto"
+	github_com_cosmos_cosmos_sdk_types "github.com/cosmos/cosmos-sdk/types"
 	_ "github.com/cosmos/cosmos-sdk/types/msgservice"
 	_ "github.com/cosmos/cosmos-sdk/types/tx/amino"
+	_ "github.com/cosmos/gogoproto/gogoproto"
 	grpc1 "github.com/cosmos/gogoproto/grpc"
 	proto "github.com/cosmos/gogoproto/proto"
+	_ "github.com/cosmos/gogoproto/types"
+	github_com_cosmos_gogoproto_types "github.com/cosmos/gogoproto/types"
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"
 	io "io"
 	math "math"
 	math_bits "math/bits"
+	time "time"
 )
 
 // Reference imports to suppress errors if they are not otherwise used.
 var _ = proto.Marshal
 var _ = fmt.Errorf
 var _ = math.Inf
+var _ = time.Kitchen
 
 // This is a compile-time assertion to ensure that this generated file
 // is compatible with the proto package it is being compiled against.
@@ -312,6 +318,654 @@ func (m *MsgClaimAndStakeResponse) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_MsgClaimAndStakeResponse proto.InternalMessageInfo
 
+// CreateAirdrop
+type MsgCreateAirdrop struct {
+	// Airdrop admin address
+	Admin string `protobuf:"bytes,1,opt,name=admin,proto3" json:"admin,omitempty"`
+	// Airdrop ID
+	AirdropId string `protobuf:"bytes,2,opt,name=airdrop_id,json=airdropId,proto3" json:"airdrop_id,omitempty"`
+	// The first date that claiming begins and rewards are distributed
+	DistributionStartDate *time.Time `protobuf:"bytes,3,opt,name=distribution_start_date,json=distributionStartDate,proto3,stdtime" json:"distribution_start_date,omitempty"`
+	// The last date for rewards to be distributed. Immediately after this date
+	// the rewards can no longer be claimed, but rewards have not been clawed back
+	// yet
+	DistributionEndDate *time.Time `protobuf:"bytes,4,opt,name=distribution_end_date,json=distributionEndDate,proto3,stdtime" json:"distribution_end_date,omitempty"`
+	// Date with which the rewards are clawed back (occurs after the distribution
+	// end date)
+	ClawbackDate *time.Time `protobuf:"bytes,5,opt,name=clawback_date,json=clawbackDate,proto3,stdtime" json:"clawback_date,omitempty"`
+	// Deadline for the user to make a decision on their claim type
+	ClaimTypeDeadlineDate *time.Time `protobuf:"bytes,6,opt,name=claim_type_deadline_date,json=claimTypeDeadlineDate,proto3,stdtime" json:"claim_type_deadline_date,omitempty"`
+	// Penalty for claiming rewards early - e.g. 0.5 means claiming early will
+	// result in losing 50% of rewards
+	EarlyClaimPenalty github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,7,opt,name=early_claim_penalty,json=earlyClaimPenalty,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"early_claim_penalty"`
+	// Bonus rewards for choosing to claim and stake - e.g. 0.05 means stakers
+	// will receive a 5% bonus
+	ClaimAndStakeBonus github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,8,opt,name=claim_and_stake_bonus,json=claimAndStakeBonus,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"claim_and_stake_bonus"`
+	// Address that holds the total reward balance and distributes to users
+	DistributionAddress string `protobuf:"bytes,9,opt,name=distribution_address,json=distributionAddress,proto3" json:"distribution_address,omitempty"`
+}
+
+func (m *MsgCreateAirdrop) Reset()         { *m = MsgCreateAirdrop{} }
+func (m *MsgCreateAirdrop) String() string { return proto.CompactTextString(m) }
+func (*MsgCreateAirdrop) ProtoMessage()    {}
+func (*MsgCreateAirdrop) Descriptor() ([]byte, []int) {
+	return fileDescriptor_40a6837f542f43b8, []int{6}
+}
+func (m *MsgCreateAirdrop) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *MsgCreateAirdrop) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_MsgCreateAirdrop.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *MsgCreateAirdrop) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MsgCreateAirdrop.Merge(m, src)
+}
+func (m *MsgCreateAirdrop) XXX_Size() int {
+	return m.Size()
+}
+func (m *MsgCreateAirdrop) XXX_DiscardUnknown() {
+	xxx_messageInfo_MsgCreateAirdrop.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_MsgCreateAirdrop proto.InternalMessageInfo
+
+func (m *MsgCreateAirdrop) GetAdmin() string {
+	if m != nil {
+		return m.Admin
+	}
+	return ""
+}
+
+func (m *MsgCreateAirdrop) GetAirdropId() string {
+	if m != nil {
+		return m.AirdropId
+	}
+	return ""
+}
+
+func (m *MsgCreateAirdrop) GetDistributionStartDate() *time.Time {
+	if m != nil {
+		return m.DistributionStartDate
+	}
+	return nil
+}
+
+func (m *MsgCreateAirdrop) GetDistributionEndDate() *time.Time {
+	if m != nil {
+		return m.DistributionEndDate
+	}
+	return nil
+}
+
+func (m *MsgCreateAirdrop) GetClawbackDate() *time.Time {
+	if m != nil {
+		return m.ClawbackDate
+	}
+	return nil
+}
+
+func (m *MsgCreateAirdrop) GetClaimTypeDeadlineDate() *time.Time {
+	if m != nil {
+		return m.ClaimTypeDeadlineDate
+	}
+	return nil
+}
+
+func (m *MsgCreateAirdrop) GetDistributionAddress() string {
+	if m != nil {
+		return m.DistributionAddress
+	}
+	return ""
+}
+
+type MsgCreateAirdropResponse struct {
+}
+
+func (m *MsgCreateAirdropResponse) Reset()         { *m = MsgCreateAirdropResponse{} }
+func (m *MsgCreateAirdropResponse) String() string { return proto.CompactTextString(m) }
+func (*MsgCreateAirdropResponse) ProtoMessage()    {}
+func (*MsgCreateAirdropResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_40a6837f542f43b8, []int{7}
+}
+func (m *MsgCreateAirdropResponse) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *MsgCreateAirdropResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_MsgCreateAirdropResponse.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *MsgCreateAirdropResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MsgCreateAirdropResponse.Merge(m, src)
+}
+func (m *MsgCreateAirdropResponse) XXX_Size() int {
+	return m.Size()
+}
+func (m *MsgCreateAirdropResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_MsgCreateAirdropResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_MsgCreateAirdropResponse proto.InternalMessageInfo
+
+// UpdateAirdrop
+type MsgUpdateAirdrop struct {
+	// Airdrop admin address
+	Admin string `protobuf:"bytes,1,opt,name=admin,proto3" json:"admin,omitempty"`
+	// Airdrop ID
+	AirdropId string `protobuf:"bytes,2,opt,name=airdrop_id,json=airdropId,proto3" json:"airdrop_id,omitempty"`
+	// The first date that claiming begins and rewards are distributed
+	DistributionStartDate *time.Time `protobuf:"bytes,3,opt,name=distribution_start_date,json=distributionStartDate,proto3,stdtime" json:"distribution_start_date,omitempty"`
+	// The last date for rewards to be distributed. Immediately after this date
+	// the rewards can no longer be claimed, but rewards have not been clawed back
+	// yet
+	DistributionEndDate *time.Time `protobuf:"bytes,4,opt,name=distribution_end_date,json=distributionEndDate,proto3,stdtime" json:"distribution_end_date,omitempty"`
+	// Date with which the rewards are clawed back (occurs after the distribution
+	// end date)
+	ClawbackDate *time.Time `protobuf:"bytes,5,opt,name=clawback_date,json=clawbackDate,proto3,stdtime" json:"clawback_date,omitempty"`
+	// Deadline for the user to make a decision on their claim type
+	ClaimTypeDeadlineDate *time.Time `protobuf:"bytes,6,opt,name=claim_type_deadline_date,json=claimTypeDeadlineDate,proto3,stdtime" json:"claim_type_deadline_date,omitempty"`
+	// Penalty for claiming rewards early - e.g. 0.5 means claiming early will
+	// result in losing 50% of rewards
+	EarlyClaimPenalty github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,7,opt,name=early_claim_penalty,json=earlyClaimPenalty,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"early_claim_penalty"`
+	// Bonus rewards for choosing to claim and stake - e.g. 0.05 means stakers
+	// will receive a 5% bonus
+	ClaimAndStakeBonus github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,8,opt,name=claim_and_stake_bonus,json=claimAndStakeBonus,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"claim_and_stake_bonus"`
+	// Address that holds the total reward balance and distributes to users
+	DistributionAddress string `protobuf:"bytes,9,opt,name=distribution_address,json=distributionAddress,proto3" json:"distribution_address,omitempty"`
+}
+
+func (m *MsgUpdateAirdrop) Reset()         { *m = MsgUpdateAirdrop{} }
+func (m *MsgUpdateAirdrop) String() string { return proto.CompactTextString(m) }
+func (*MsgUpdateAirdrop) ProtoMessage()    {}
+func (*MsgUpdateAirdrop) Descriptor() ([]byte, []int) {
+	return fileDescriptor_40a6837f542f43b8, []int{8}
+}
+func (m *MsgUpdateAirdrop) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *MsgUpdateAirdrop) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_MsgUpdateAirdrop.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *MsgUpdateAirdrop) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MsgUpdateAirdrop.Merge(m, src)
+}
+func (m *MsgUpdateAirdrop) XXX_Size() int {
+	return m.Size()
+}
+func (m *MsgUpdateAirdrop) XXX_DiscardUnknown() {
+	xxx_messageInfo_MsgUpdateAirdrop.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_MsgUpdateAirdrop proto.InternalMessageInfo
+
+func (m *MsgUpdateAirdrop) GetAdmin() string {
+	if m != nil {
+		return m.Admin
+	}
+	return ""
+}
+
+func (m *MsgUpdateAirdrop) GetAirdropId() string {
+	if m != nil {
+		return m.AirdropId
+	}
+	return ""
+}
+
+func (m *MsgUpdateAirdrop) GetDistributionStartDate() *time.Time {
+	if m != nil {
+		return m.DistributionStartDate
+	}
+	return nil
+}
+
+func (m *MsgUpdateAirdrop) GetDistributionEndDate() *time.Time {
+	if m != nil {
+		return m.DistributionEndDate
+	}
+	return nil
+}
+
+func (m *MsgUpdateAirdrop) GetClawbackDate() *time.Time {
+	if m != nil {
+		return m.ClawbackDate
+	}
+	return nil
+}
+
+func (m *MsgUpdateAirdrop) GetClaimTypeDeadlineDate() *time.Time {
+	if m != nil {
+		return m.ClaimTypeDeadlineDate
+	}
+	return nil
+}
+
+func (m *MsgUpdateAirdrop) GetDistributionAddress() string {
+	if m != nil {
+		return m.DistributionAddress
+	}
+	return ""
+}
+
+type MsgUpdateAirdropResponse struct {
+}
+
+func (m *MsgUpdateAirdropResponse) Reset()         { *m = MsgUpdateAirdropResponse{} }
+func (m *MsgUpdateAirdropResponse) String() string { return proto.CompactTextString(m) }
+func (*MsgUpdateAirdropResponse) ProtoMessage()    {}
+func (*MsgUpdateAirdropResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_40a6837f542f43b8, []int{9}
+}
+func (m *MsgUpdateAirdropResponse) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *MsgUpdateAirdropResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_MsgUpdateAirdropResponse.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *MsgUpdateAirdropResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MsgUpdateAirdropResponse.Merge(m, src)
+}
+func (m *MsgUpdateAirdropResponse) XXX_Size() int {
+	return m.Size()
+}
+func (m *MsgUpdateAirdropResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_MsgUpdateAirdropResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_MsgUpdateAirdropResponse proto.InternalMessageInfo
+
+// Allocation specification when bootstrapping reward data
+type RawAllocation struct {
+	UserAddress string                                   `protobuf:"bytes,1,opt,name=user_address,json=userAddress,proto3" json:"user_address,omitempty"`
+	Allocations []github_com_cosmos_cosmos_sdk_types.Int `protobuf:"bytes,4,rep,name=allocations,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Int" json:"allocations"`
+}
+
+func (m *RawAllocation) Reset()         { *m = RawAllocation{} }
+func (m *RawAllocation) String() string { return proto.CompactTextString(m) }
+func (*RawAllocation) ProtoMessage()    {}
+func (*RawAllocation) Descriptor() ([]byte, []int) {
+	return fileDescriptor_40a6837f542f43b8, []int{10}
+}
+func (m *RawAllocation) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *RawAllocation) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_RawAllocation.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *RawAllocation) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_RawAllocation.Merge(m, src)
+}
+func (m *RawAllocation) XXX_Size() int {
+	return m.Size()
+}
+func (m *RawAllocation) XXX_DiscardUnknown() {
+	xxx_messageInfo_RawAllocation.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_RawAllocation proto.InternalMessageInfo
+
+func (m *RawAllocation) GetUserAddress() string {
+	if m != nil {
+		return m.UserAddress
+	}
+	return ""
+}
+
+// AddAllocations
+type MsgAddAllocations struct {
+	// Airdrop admin address
+	Admin string `protobuf:"bytes,1,opt,name=admin,proto3" json:"admin,omitempty"`
+	// Airdrop ID
+	AirdropId string `protobuf:"bytes,2,opt,name=airdrop_id,json=airdropId,proto3" json:"airdrop_id,omitempty"`
+	// List of address/allocation pairs for each user
+	Allocations []RawAllocation `protobuf:"bytes,3,rep,name=allocations,proto3" json:"allocations"`
+}
+
+func (m *MsgAddAllocations) Reset()         { *m = MsgAddAllocations{} }
+func (m *MsgAddAllocations) String() string { return proto.CompactTextString(m) }
+func (*MsgAddAllocations) ProtoMessage()    {}
+func (*MsgAddAllocations) Descriptor() ([]byte, []int) {
+	return fileDescriptor_40a6837f542f43b8, []int{11}
+}
+func (m *MsgAddAllocations) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *MsgAddAllocations) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_MsgAddAllocations.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *MsgAddAllocations) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MsgAddAllocations.Merge(m, src)
+}
+func (m *MsgAddAllocations) XXX_Size() int {
+	return m.Size()
+}
+func (m *MsgAddAllocations) XXX_DiscardUnknown() {
+	xxx_messageInfo_MsgAddAllocations.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_MsgAddAllocations proto.InternalMessageInfo
+
+func (m *MsgAddAllocations) GetAdmin() string {
+	if m != nil {
+		return m.Admin
+	}
+	return ""
+}
+
+func (m *MsgAddAllocations) GetAirdropId() string {
+	if m != nil {
+		return m.AirdropId
+	}
+	return ""
+}
+
+func (m *MsgAddAllocations) GetAllocations() []RawAllocation {
+	if m != nil {
+		return m.Allocations
+	}
+	return nil
+}
+
+type MsgAddAllocationsResponse struct {
+}
+
+func (m *MsgAddAllocationsResponse) Reset()         { *m = MsgAddAllocationsResponse{} }
+func (m *MsgAddAllocationsResponse) String() string { return proto.CompactTextString(m) }
+func (*MsgAddAllocationsResponse) ProtoMessage()    {}
+func (*MsgAddAllocationsResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_40a6837f542f43b8, []int{12}
+}
+func (m *MsgAddAllocationsResponse) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *MsgAddAllocationsResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_MsgAddAllocationsResponse.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *MsgAddAllocationsResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MsgAddAllocationsResponse.Merge(m, src)
+}
+func (m *MsgAddAllocationsResponse) XXX_Size() int {
+	return m.Size()
+}
+func (m *MsgAddAllocationsResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_MsgAddAllocationsResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_MsgAddAllocationsResponse proto.InternalMessageInfo
+
+// UpdateUserAllocation
+type MsgUpdateUserAllocation struct {
+	// Airdrop admin address
+	Admin string `protobuf:"bytes,1,opt,name=admin,proto3" json:"admin,omitempty"`
+	// Airdrop ID
+	AirdropId string `protobuf:"bytes,2,opt,name=airdrop_id,json=airdropId,proto3" json:"airdrop_id,omitempty"`
+	// Address of the airdrop recipient
+	UserAddress string `protobuf:"bytes,3,opt,name=user_address,json=userAddress,proto3" json:"user_address,omitempty"`
+	// Allocations - as an array where each element represents the rewards for a
+	// day
+	Allocations []github_com_cosmos_cosmos_sdk_types.Int `protobuf:"bytes,4,rep,name=allocations,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Int" json:"allocations"`
+}
+
+func (m *MsgUpdateUserAllocation) Reset()         { *m = MsgUpdateUserAllocation{} }
+func (m *MsgUpdateUserAllocation) String() string { return proto.CompactTextString(m) }
+func (*MsgUpdateUserAllocation) ProtoMessage()    {}
+func (*MsgUpdateUserAllocation) Descriptor() ([]byte, []int) {
+	return fileDescriptor_40a6837f542f43b8, []int{13}
+}
+func (m *MsgUpdateUserAllocation) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *MsgUpdateUserAllocation) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_MsgUpdateUserAllocation.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *MsgUpdateUserAllocation) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MsgUpdateUserAllocation.Merge(m, src)
+}
+func (m *MsgUpdateUserAllocation) XXX_Size() int {
+	return m.Size()
+}
+func (m *MsgUpdateUserAllocation) XXX_DiscardUnknown() {
+	xxx_messageInfo_MsgUpdateUserAllocation.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_MsgUpdateUserAllocation proto.InternalMessageInfo
+
+func (m *MsgUpdateUserAllocation) GetAdmin() string {
+	if m != nil {
+		return m.Admin
+	}
+	return ""
+}
+
+func (m *MsgUpdateUserAllocation) GetAirdropId() string {
+	if m != nil {
+		return m.AirdropId
+	}
+	return ""
+}
+
+func (m *MsgUpdateUserAllocation) GetUserAddress() string {
+	if m != nil {
+		return m.UserAddress
+	}
+	return ""
+}
+
+type MsgUpdateUserAllocationResponse struct {
+}
+
+func (m *MsgUpdateUserAllocationResponse) Reset()         { *m = MsgUpdateUserAllocationResponse{} }
+func (m *MsgUpdateUserAllocationResponse) String() string { return proto.CompactTextString(m) }
+func (*MsgUpdateUserAllocationResponse) ProtoMessage()    {}
+func (*MsgUpdateUserAllocationResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_40a6837f542f43b8, []int{14}
+}
+func (m *MsgUpdateUserAllocationResponse) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *MsgUpdateUserAllocationResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_MsgUpdateUserAllocationResponse.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *MsgUpdateUserAllocationResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MsgUpdateUserAllocationResponse.Merge(m, src)
+}
+func (m *MsgUpdateUserAllocationResponse) XXX_Size() int {
+	return m.Size()
+}
+func (m *MsgUpdateUserAllocationResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_MsgUpdateUserAllocationResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_MsgUpdateUserAllocationResponse proto.InternalMessageInfo
+
+// LinkAddresses
+type MsgLinkAddresses struct {
+	// Airdrop admin address
+	Admin string `protobuf:"bytes,1,opt,name=admin,proto3" json:"admin,omitempty"`
+	// Airdrop ID
+	AirdropId string `protobuf:"bytes,2,opt,name=airdrop_id,json=airdropId,proto3" json:"airdrop_id,omitempty"`
+	// Stride address - this address may or may not exist in allocations yet
+	StrideAddress string `protobuf:"bytes,3,opt,name=stride_address,json=strideAddress,proto3" json:"stride_address,omitempty"`
+	// Host address - this address must exist
+	HostAddress string `protobuf:"bytes,4,opt,name=host_address,json=hostAddress,proto3" json:"host_address,omitempty"`
+}
+
+func (m *MsgLinkAddresses) Reset()         { *m = MsgLinkAddresses{} }
+func (m *MsgLinkAddresses) String() string { return proto.CompactTextString(m) }
+func (*MsgLinkAddresses) ProtoMessage()    {}
+func (*MsgLinkAddresses) Descriptor() ([]byte, []int) {
+	return fileDescriptor_40a6837f542f43b8, []int{15}
+}
+func (m *MsgLinkAddresses) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *MsgLinkAddresses) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_MsgLinkAddresses.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *MsgLinkAddresses) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MsgLinkAddresses.Merge(m, src)
+}
+func (m *MsgLinkAddresses) XXX_Size() int {
+	return m.Size()
+}
+func (m *MsgLinkAddresses) XXX_DiscardUnknown() {
+	xxx_messageInfo_MsgLinkAddresses.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_MsgLinkAddresses proto.InternalMessageInfo
+
+func (m *MsgLinkAddresses) GetAdmin() string {
+	if m != nil {
+		return m.Admin
+	}
+	return ""
+}
+
+func (m *MsgLinkAddresses) GetAirdropId() string {
+	if m != nil {
+		return m.AirdropId
+	}
+	return ""
+}
+
+func (m *MsgLinkAddresses) GetStrideAddress() string {
+	if m != nil {
+		return m.StrideAddress
+	}
+	return ""
+}
+
+func (m *MsgLinkAddresses) GetHostAddress() string {
+	if m != nil {
+		return m.HostAddress
+	}
+	return ""
+}
+
+type MsgLinkAddressesResponse struct {
+}
+
+func (m *MsgLinkAddressesResponse) Reset()         { *m = MsgLinkAddressesResponse{} }
+func (m *MsgLinkAddressesResponse) String() string { return proto.CompactTextString(m) }
+func (*MsgLinkAddressesResponse) ProtoMessage()    {}
+func (*MsgLinkAddressesResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_40a6837f542f43b8, []int{16}
+}
+func (m *MsgLinkAddressesResponse) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *MsgLinkAddressesResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_MsgLinkAddressesResponse.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *MsgLinkAddressesResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MsgLinkAddressesResponse.Merge(m, src)
+}
+func (m *MsgLinkAddressesResponse) XXX_Size() int {
+	return m.Size()
+}
+func (m *MsgLinkAddressesResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_MsgLinkAddressesResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_MsgLinkAddressesResponse proto.InternalMessageInfo
+
 func init() {
 	proto.RegisterType((*MsgClaimDaily)(nil), "stride.airdrop.MsgClaimDaily")
 	proto.RegisterType((*MsgClaimDailyResponse)(nil), "stride.airdrop.MsgClaimDailyResponse")
@@ -319,38 +973,86 @@ func init() {
 	proto.RegisterType((*MsgClaimEarlyResponse)(nil), "stride.airdrop.MsgClaimEarlyResponse")
 	proto.RegisterType((*MsgClaimAndStake)(nil), "stride.airdrop.MsgClaimAndStake")
 	proto.RegisterType((*MsgClaimAndStakeResponse)(nil), "stride.airdrop.MsgClaimAndStakeResponse")
+	proto.RegisterType((*MsgCreateAirdrop)(nil), "stride.airdrop.MsgCreateAirdrop")
+	proto.RegisterType((*MsgCreateAirdropResponse)(nil), "stride.airdrop.MsgCreateAirdropResponse")
+	proto.RegisterType((*MsgUpdateAirdrop)(nil), "stride.airdrop.MsgUpdateAirdrop")
+	proto.RegisterType((*MsgUpdateAirdropResponse)(nil), "stride.airdrop.MsgUpdateAirdropResponse")
+	proto.RegisterType((*RawAllocation)(nil), "stride.airdrop.RawAllocation")
+	proto.RegisterType((*MsgAddAllocations)(nil), "stride.airdrop.MsgAddAllocations")
+	proto.RegisterType((*MsgAddAllocationsResponse)(nil), "stride.airdrop.MsgAddAllocationsResponse")
+	proto.RegisterType((*MsgUpdateUserAllocation)(nil), "stride.airdrop.MsgUpdateUserAllocation")
+	proto.RegisterType((*MsgUpdateUserAllocationResponse)(nil), "stride.airdrop.MsgUpdateUserAllocationResponse")
+	proto.RegisterType((*MsgLinkAddresses)(nil), "stride.airdrop.MsgLinkAddresses")
+	proto.RegisterType((*MsgLinkAddressesResponse)(nil), "stride.airdrop.MsgLinkAddressesResponse")
 }
 
 func init() { proto.RegisterFile("stride/airdrop/tx.proto", fileDescriptor_40a6837f542f43b8) }
 
 var fileDescriptor_40a6837f542f43b8 = []byte{
-	// 412 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xe2, 0x12, 0x2f, 0x2e, 0x29, 0xca,
-	0x4c, 0x49, 0xd5, 0x4f, 0xcc, 0x2c, 0x4a, 0x29, 0xca, 0x2f, 0xd0, 0x2f, 0xa9, 0xd0, 0x2b, 0x28,
-	0xca, 0x2f, 0xc9, 0x17, 0xe2, 0x83, 0x48, 0xe8, 0x41, 0x25, 0xa4, 0xc4, 0x93, 0xf3, 0x8b, 0x73,
-	0xf3, 0x8b, 0xf5, 0x73, 0x8b, 0xd3, 0xf5, 0xcb, 0x0c, 0x41, 0x14, 0x44, 0xa1, 0x94, 0x60, 0x62,
-	0x6e, 0x66, 0x5e, 0xbe, 0x3e, 0x98, 0x84, 0x0a, 0x49, 0x42, 0xd4, 0xc6, 0x83, 0x79, 0xfa, 0x10,
-	0x0e, 0x44, 0x4a, 0xa9, 0x8b, 0x91, 0x8b, 0xd7, 0xb7, 0x38, 0xdd, 0x39, 0x27, 0x31, 0x33, 0xd7,
-	0x25, 0x31, 0x33, 0xa7, 0x52, 0xc8, 0x88, 0x8b, 0x3d, 0x19, 0xc4, 0x4b, 0x2d, 0x92, 0x60, 0x54,
-	0x60, 0xd4, 0xe0, 0x74, 0x92, 0xb8, 0xb4, 0x45, 0x57, 0x04, 0xaa, 0xc9, 0x31, 0x25, 0xa5, 0x28,
-	0xb5, 0xb8, 0x38, 0xb8, 0xa4, 0x28, 0x33, 0x2f, 0x3d, 0x08, 0xa6, 0x50, 0x48, 0x96, 0x8b, 0x0b,
-	0xea, 0xae, 0xf8, 0xcc, 0x14, 0x09, 0x26, 0x90, 0xb6, 0x20, 0x4e, 0xa8, 0x88, 0x67, 0x8a, 0x95,
-	0x5a, 0xd3, 0xf3, 0x0d, 0x5a, 0x30, 0xc5, 0x5d, 0xcf, 0x37, 0x68, 0x89, 0xc2, 0xbc, 0x87, 0x62,
-	0xb5, 0x92, 0x38, 0x97, 0x28, 0x8a, 0x40, 0x50, 0x6a, 0x71, 0x41, 0x7e, 0x5e, 0x71, 0x2a, 0x8a,
-	0x2b, 0x5d, 0x13, 0x8b, 0x06, 0xca, 0x95, 0x60, 0xab, 0x91, 0x5d, 0x09, 0x16, 0x80, 0xbb, 0x72,
-	0x2f, 0x23, 0x97, 0x00, 0x4c, 0xc6, 0x31, 0x2f, 0x25, 0xb8, 0x24, 0x31, 0x3b, 0x95, 0x06, 0x0e,
-	0x15, 0xd2, 0xe6, 0x12, 0x2c, 0x4b, 0xcc, 0xc9, 0x4c, 0x49, 0x2c, 0xc9, 0x2f, 0x8a, 0x4f, 0x84,
-	0x18, 0x21, 0xc1, 0x0c, 0x56, 0x25, 0x00, 0x97, 0x80, 0x1a, 0x6d, 0xa5, 0x89, 0xee, 0x2b, 0x09,
-	0x74, 0x5f, 0xc1, 0x9c, 0xaa, 0x24, 0xc5, 0x25, 0x81, 0x2e, 0x06, 0xf3, 0x9b, 0x51, 0x17, 0x13,
-	0x17, 0xb3, 0x6f, 0x71, 0xba, 0x50, 0x10, 0x17, 0x17, 0x52, 0x5a, 0x91, 0xd5, 0x43, 0x4d, 0x95,
-	0x7a, 0x28, 0xd1, 0x27, 0xa5, 0x8a, 0x57, 0x1a, 0x66, 0x36, 0xdc, 0x4c, 0x48, 0xcc, 0xe2, 0x34,
-	0x13, 0x2c, 0x8d, 0xdb, 0x4c, 0x94, 0xb8, 0x10, 0x8a, 0xe6, 0xe2, 0x45, 0x8d, 0x07, 0x05, 0x5c,
-	0xfa, 0x60, 0x2a, 0xa4, 0x34, 0x08, 0xa9, 0x80, 0x19, 0xee, 0xe4, 0x7d, 0xe2, 0x91, 0x1c, 0xe3,
-	0x85, 0x47, 0x72, 0x8c, 0x0f, 0x1e, 0xc9, 0x31, 0x4e, 0x78, 0x2c, 0xc7, 0x70, 0xe1, 0xb1, 0x1c,
-	0xc3, 0x8d, 0xc7, 0x72, 0x0c, 0x51, 0x86, 0xe9, 0x99, 0x25, 0x19, 0xa5, 0x49, 0x7a, 0xc9, 0xf9,
-	0xb9, 0xfa, 0xc1, 0x60, 0xd3, 0x74, 0x7d, 0x12, 0x93, 0x8a, 0xf5, 0xa1, 0xb9, 0xba, 0xcc, 0xc8,
-	0x48, 0xbf, 0x02, 0x91, 0xb7, 0x2b, 0x0b, 0x52, 0x8b, 0x93, 0xd8, 0xc0, 0x19, 0xd1, 0x18, 0x10,
-	0x00, 0x00, 0xff, 0xff, 0xcd, 0xdb, 0xb1, 0x0e, 0xfa, 0x03, 0x00, 0x00,
+	// 995 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xec, 0x57, 0xbd, 0x6f, 0xdb, 0x46,
+	0x14, 0x37, 0x23, 0x39, 0xa9, 0xcf, 0x56, 0x10, 0x33, 0x36, 0x44, 0xab, 0x88, 0x64, 0x0b, 0x48,
+	0xe2, 0xa4, 0x30, 0x89, 0xa8, 0x9b, 0x33, 0x49, 0xb5, 0x87, 0x20, 0x31, 0x10, 0xd0, 0x0e, 0xd0,
+	0x0f, 0x20, 0xc4, 0x49, 0x77, 0x65, 0x08, 0x91, 0x3c, 0x82, 0x77, 0x72, 0xe2, 0xb5, 0xe8, 0x94,
+	0x29, 0xff, 0x45, 0xd7, 0x0c, 0x5d, 0xbb, 0x67, 0x0c, 0xda, 0xa5, 0xe8, 0x90, 0x16, 0xf6, 0x90,
+	0xa5, 0xe8, 0xd2, 0x7f, 0xa0, 0xb8, 0x0f, 0xd2, 0x3c, 0x99, 0xaa, 0xd4, 0xc2, 0x41, 0x81, 0xc2,
+	0x8b, 0x69, 0xbe, 0xf7, 0x7b, 0xbf, 0x7b, 0x9f, 0xa7, 0x47, 0x50, 0xa7, 0x2c, 0x0d, 0x10, 0x76,
+	0x60, 0x90, 0xa2, 0x94, 0x24, 0x0e, 0x7b, 0x61, 0x27, 0x29, 0x61, 0xc4, 0xbc, 0x2a, 0x15, 0xb6,
+	0x52, 0x34, 0xea, 0x03, 0x42, 0x23, 0x42, 0x9d, 0x88, 0xfa, 0xce, 0xe1, 0x3d, 0xfe, 0x90, 0xc0,
+	0xc6, 0x32, 0x8c, 0x82, 0x98, 0x38, 0xe2, 0xaf, 0x12, 0xad, 0x49, 0xac, 0x27, 0xde, 0x1c, 0xf9,
+	0xa2, 0x54, 0x2b, 0x3e, 0xf1, 0x89, 0x94, 0xf3, 0xff, 0x94, 0xb4, 0xe5, 0x13, 0xe2, 0x87, 0xd8,
+	0x11, 0x6f, 0xfd, 0xd1, 0xd7, 0x0e, 0x0b, 0x22, 0x4c, 0x19, 0x8c, 0x12, 0x09, 0x68, 0xbf, 0x34,
+	0x40, 0x6d, 0x8f, 0xfa, 0x9f, 0x85, 0x30, 0x88, 0x76, 0x60, 0x10, 0x1e, 0x99, 0x1d, 0x70, 0x65,
+	0xc0, 0xdf, 0x70, 0x6a, 0x19, 0xeb, 0xc6, 0xe6, 0x42, 0xcf, 0xfa, 0xf1, 0xfb, 0xad, 0x15, 0x75,
+	0x56, 0x17, 0xa1, 0x14, 0x53, 0xba, 0xcf, 0xd2, 0x20, 0xf6, 0xdd, 0x0c, 0x68, 0xde, 0x00, 0x40,
+	0x85, 0xe3, 0x05, 0xc8, 0xba, 0xc4, 0xcd, 0xdc, 0x05, 0x25, 0x79, 0x80, 0xb6, 0x6f, 0x7d, 0xf3,
+	0xfe, 0xf5, 0xdd, 0x0c, 0xfc, 0xf2, 0xfd, 0xeb, 0xbb, 0xab, 0x59, 0x56, 0xb4, 0xa3, 0xdb, 0x75,
+	0xb0, 0xaa, 0x09, 0x5c, 0x4c, 0x13, 0x12, 0x53, 0xac, 0x79, 0xb9, 0x0b, 0xd3, 0xff, 0xca, 0x4b,
+	0x71, 0x74, 0xd1, 0x4b, 0x21, 0xc8, 0xbd, 0xfc, 0xc1, 0x00, 0xd7, 0x32, 0x4d, 0x37, 0x46, 0xfb,
+	0x0c, 0x0e, 0xf1, 0x07, 0x70, 0xd4, 0xfc, 0x04, 0x2c, 0x1f, 0xc2, 0x30, 0x40, 0x90, 0x91, 0xd4,
+	0x83, 0x92, 0xc2, 0xaa, 0x08, 0xd4, 0xb5, 0x5c, 0xa1, 0xa8, 0xb7, 0xef, 0x8c, 0x47, 0x65, 0x8d,
+	0x47, 0x95, 0xb9, 0xda, 0x6e, 0x00, 0x6b, 0x5c, 0x96, 0xc7, 0xf6, 0xfb, 0xbc, 0x8c, 0x2d, 0xc5,
+	0x90, 0xe1, 0xae, 0x64, 0x30, 0x6d, 0x30, 0x0f, 0x51, 0x14, 0xc4, 0x53, 0x23, 0x93, 0xb0, 0x69,
+	0x71, 0x7d, 0x0e, 0xea, 0x28, 0xe0, 0xd3, 0xd1, 0x1f, 0xb1, 0x80, 0xc4, 0x1e, 0x65, 0x30, 0x65,
+	0x1e, 0x82, 0x0c, 0x8b, 0xe8, 0x16, 0x3b, 0x0d, 0x5b, 0xb6, 0xb3, 0x9d, 0xb5, 0xb3, 0x7d, 0x90,
+	0xb5, 0x73, 0xaf, 0xfa, 0xea, 0xd7, 0x96, 0xe1, 0xae, 0x16, 0x09, 0xf6, 0xb9, 0xfd, 0x0e, 0x64,
+	0xd8, 0x3c, 0x00, 0x9a, 0xc2, 0xc3, 0x31, 0x92, 0xbc, 0xd5, 0x19, 0x79, 0xaf, 0x17, 0xcd, 0x77,
+	0x63, 0x24, 0x58, 0x77, 0x41, 0x6d, 0x10, 0xc2, 0xe7, 0x7d, 0x38, 0x18, 0x4a, 0xb6, 0xf9, 0x19,
+	0xd9, 0x96, 0x32, 0x33, 0x41, 0xf3, 0x05, 0xb0, 0x44, 0x79, 0x3c, 0x76, 0x94, 0x60, 0x0f, 0x61,
+	0x88, 0xc2, 0x20, 0xc6, 0x92, 0xf1, 0xf2, 0xac, 0x71, 0x0b, 0x86, 0x83, 0xa3, 0x04, 0xef, 0x28,
+	0x7b, 0x41, 0xfd, 0x14, 0x5c, 0xc7, 0xbc, 0x45, 0x3d, 0x79, 0x40, 0x82, 0x63, 0x18, 0xb2, 0x23,
+	0xeb, 0x8a, 0x28, 0x97, 0xfd, 0xe6, 0x5d, 0x6b, 0xee, 0x97, 0x77, 0xad, 0x5b, 0x7e, 0xc0, 0x9e,
+	0x8d, 0xfa, 0xf6, 0x80, 0x44, 0xea, 0x4a, 0x51, 0x8f, 0x2d, 0x8a, 0x86, 0x0e, 0x77, 0x8a, 0xda,
+	0x3b, 0x78, 0xe0, 0x2e, 0x0b, 0x2a, 0xd1, 0x1e, 0x8f, 0x25, 0x91, 0x09, 0x81, 0x3c, 0xd8, 0x83,
+	0x31, 0xe2, 0xe5, 0x1a, 0x62, 0xaf, 0x4f, 0xe2, 0x11, 0xb5, 0x3e, 0xfa, 0x57, 0x27, 0x98, 0x83,
+	0x62, 0xef, 0xf5, 0x38, 0x93, 0xf9, 0x10, 0xac, 0x68, 0xa5, 0xcb, 0xfa, 0x7d, 0x61, 0x4a, 0xcb,
+	0x69, 0x15, 0xcb, 0x86, 0xe1, 0x36, 0x1f, 0x06, 0xd9, 0x8c, 0x67, 0x46, 0xa1, 0xd8, 0xd9, 0xd9,
+	0x28, 0x14, 0x65, 0xe3, 0xa3, 0xf0, 0x24, 0x41, 0x17, 0xa3, 0x70, 0x31, 0x0a, 0xff, 0xc3, 0x51,
+	0xd0, 0x3a, 0x5b, 0x8d, 0x82, 0x26, 0xcb, 0x47, 0xe1, 0x5b, 0x03, 0xd4, 0x5c, 0xf8, 0xbc, 0x1b,
+	0x86, 0x64, 0x00, 0x39, 0xbb, 0xb9, 0x01, 0x96, 0x46, 0x14, 0x9f, 0xfe, 0x2c, 0x89, 0x71, 0x70,
+	0x17, 0xb9, 0x4c, 0x9d, 0x6c, 0x3e, 0x06, 0x8b, 0x30, 0x37, 0xa0, 0x56, 0x75, 0xbd, 0xf2, 0x0f,
+	0xf3, 0xf3, 0x20, 0x66, 0x6e, 0x91, 0xa2, 0xfd, 0x93, 0x01, 0x96, 0xf7, 0xa8, 0xdf, 0x45, 0xe8,
+	0xd4, 0x13, 0x7a, 0xde, 0x23, 0xb9, 0xab, 0xbb, 0x5d, 0x59, 0xaf, 0x6c, 0x2e, 0x76, 0x6e, 0xd8,
+	0xfa, 0x36, 0x67, 0x6b, 0xd9, 0xe8, 0x55, 0x79, 0x54, 0x9a, 0xaf, 0xdb, 0x9b, 0x7a, 0xde, 0xd7,
+	0x0a, 0x79, 0xd7, 0xfd, 0x6f, 0x7f, 0x0c, 0xd6, 0xce, 0x08, 0xf3, 0xcc, 0x7f, 0x77, 0x09, 0xd4,
+	0xf3, 0xb2, 0x3c, 0xe1, 0xd9, 0x3d, 0xad, 0xc1, 0x39, 0x07, 0x7e, 0x7f, 0xac, 0xa4, 0x95, 0x29,
+	0xac, 0x1f, 0xb6, 0xd8, 0xdb, 0xb6, 0x9e, 0xc0, 0xd6, 0x99, 0xc6, 0xd5, 0xb3, 0xd1, 0xde, 0x00,
+	0xad, 0x09, 0xaa, 0x3c, 0x99, 0x7f, 0xc8, 0xc5, 0xed, 0x51, 0x10, 0x0f, 0x95, 0xdf, 0xf8, 0xdc,
+	0xdb, 0xe7, 0x26, 0x50, 0x8b, 0xff, 0xd8, 0xc6, 0x56, 0x93, 0xd2, 0x2c, 0x5f, 0xf7, 0xc1, 0xd2,
+	0x33, 0x42, 0x59, 0x0e, 0xaa, 0x4e, 0x4b, 0x36, 0x47, 0xcf, 0x30, 0xd3, 0x5a, 0x6c, 0x6a, 0xa6,
+	0x35, 0x59, 0x96, 0x8c, 0xce, 0x9f, 0xf3, 0xa0, 0xb2, 0x47, 0x7d, 0xd3, 0x05, 0xa0, 0xf0, 0x55,
+	0x70, 0xa6, 0xd1, 0xb5, 0x45, 0xbd, 0x71, 0xf3, 0x6f, 0xd5, 0x19, 0x77, 0xce, 0x29, 0x77, 0xf8,
+	0x89, 0x9c, 0x42, 0x3d, 0x99, 0x53, 0xdb, 0xba, 0xcd, 0xaf, 0x40, 0x4d, 0xdf, 0xb8, 0xd7, 0x27,
+	0xd9, 0x65, 0x88, 0xc6, 0xe6, 0x34, 0x84, 0x46, 0xae, 0xad, 0xbc, 0xa5, 0xe4, 0x45, 0x44, 0x39,
+	0x79, 0xd9, 0x22, 0xc1, 0xc9, 0xf5, 0x25, 0xa2, 0x8c, 0x5c, 0x43, 0x94, 0x92, 0x97, 0x5e, 0xcd,
+	0xe6, 0x53, 0x70, 0x75, 0xec, 0x3e, 0xdc, 0x28, 0xb1, 0xd5, 0x21, 0x8d, 0x3b, 0x53, 0x21, 0x39,
+	0x7f, 0x02, 0x56, 0x4a, 0x2f, 0x9f, 0xdb, 0x13, 0x3d, 0xd4, 0x81, 0x0d, 0x67, 0x46, 0x60, 0x31,
+	0x5d, 0xfa, 0x84, 0x96, 0xa5, 0x4b, 0x43, 0x94, 0xa6, 0xab, 0xb4, 0xeb, 0x7b, 0x0f, 0xdf, 0x1c,
+	0x37, 0x8d, 0xb7, 0xc7, 0x4d, 0xe3, 0xb7, 0xe3, 0xa6, 0xf1, 0xea, 0xa4, 0x39, 0xf7, 0xf6, 0xa4,
+	0x39, 0xf7, 0xf3, 0x49, 0x73, 0xee, 0xcb, 0x7b, 0x85, 0x4b, 0x6a, 0x5f, 0xb0, 0x6d, 0x3d, 0x82,
+	0x7d, 0xea, 0xa8, 0xef, 0xfb, 0xc3, 0x4e, 0xc7, 0x79, 0x71, 0xfa, 0x95, 0xcf, 0xef, 0xac, 0xfe,
+	0x65, 0xb1, 0x9c, 0x7c, 0xfa, 0x57, 0x00, 0x00, 0x00, 0xff, 0xff, 0x18, 0x5b, 0x55, 0x65, 0x04,
+	0x10, 0x00, 0x00,
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -373,6 +1075,17 @@ type MsgClient interface {
 	// User transaction to claim and automatically lock stake their whole airdrop
 	// amount now. The funds can be unstaked by the user once the airdrop is over
 	ClaimAndStake(ctx context.Context, in *MsgClaimAndStake, opts ...grpc.CallOption) (*MsgClaimAndStakeResponse, error)
+	// Admin transaction to create a new airdrop
+	CreateAirdrop(ctx context.Context, in *MsgCreateAirdrop, opts ...grpc.CallOption) (*MsgCreateAirdropResponse, error)
+	// Admin transaction to update an existing airdrop
+	UpdateAirdrop(ctx context.Context, in *MsgUpdateAirdrop, opts ...grpc.CallOption) (*MsgUpdateAirdropResponse, error)
+	// Admin transaction to add multiple user allocations for a given airdrop
+	AddAllocations(ctx context.Context, in *MsgAddAllocations, opts ...grpc.CallOption) (*MsgAddAllocationsResponse, error)
+	// Admin transaction to update a user's allocation to an airdrop
+	UpdateUserAllocation(ctx context.Context, in *MsgUpdateUserAllocation, opts ...grpc.CallOption) (*MsgUpdateUserAllocationResponse, error)
+	// Admin address to link a stride and non-stride address, merging their
+	// allocations
+	LinkAddresses(ctx context.Context, in *MsgLinkAddresses, opts ...grpc.CallOption) (*MsgLinkAddressesResponse, error)
 }
 
 type msgClient struct {
@@ -410,6 +1123,51 @@ func (c *msgClient) ClaimAndStake(ctx context.Context, in *MsgClaimAndStake, opt
 	return out, nil
 }
 
+func (c *msgClient) CreateAirdrop(ctx context.Context, in *MsgCreateAirdrop, opts ...grpc.CallOption) (*MsgCreateAirdropResponse, error) {
+	out := new(MsgCreateAirdropResponse)
+	err := c.cc.Invoke(ctx, "/stride.airdrop.Msg/CreateAirdrop", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *msgClient) UpdateAirdrop(ctx context.Context, in *MsgUpdateAirdrop, opts ...grpc.CallOption) (*MsgUpdateAirdropResponse, error) {
+	out := new(MsgUpdateAirdropResponse)
+	err := c.cc.Invoke(ctx, "/stride.airdrop.Msg/UpdateAirdrop", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *msgClient) AddAllocations(ctx context.Context, in *MsgAddAllocations, opts ...grpc.CallOption) (*MsgAddAllocationsResponse, error) {
+	out := new(MsgAddAllocationsResponse)
+	err := c.cc.Invoke(ctx, "/stride.airdrop.Msg/AddAllocations", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *msgClient) UpdateUserAllocation(ctx context.Context, in *MsgUpdateUserAllocation, opts ...grpc.CallOption) (*MsgUpdateUserAllocationResponse, error) {
+	out := new(MsgUpdateUserAllocationResponse)
+	err := c.cc.Invoke(ctx, "/stride.airdrop.Msg/UpdateUserAllocation", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *msgClient) LinkAddresses(ctx context.Context, in *MsgLinkAddresses, opts ...grpc.CallOption) (*MsgLinkAddressesResponse, error) {
+	out := new(MsgLinkAddressesResponse)
+	err := c.cc.Invoke(ctx, "/stride.airdrop.Msg/LinkAddresses", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // MsgServer is the server API for Msg service.
 type MsgServer interface {
 	// User transaction to claim all the pending daily airdrop rewards
@@ -420,6 +1178,17 @@ type MsgServer interface {
 	// User transaction to claim and automatically lock stake their whole airdrop
 	// amount now. The funds can be unstaked by the user once the airdrop is over
 	ClaimAndStake(context.Context, *MsgClaimAndStake) (*MsgClaimAndStakeResponse, error)
+	// Admin transaction to create a new airdrop
+	CreateAirdrop(context.Context, *MsgCreateAirdrop) (*MsgCreateAirdropResponse, error)
+	// Admin transaction to update an existing airdrop
+	UpdateAirdrop(context.Context, *MsgUpdateAirdrop) (*MsgUpdateAirdropResponse, error)
+	// Admin transaction to add multiple user allocations for a given airdrop
+	AddAllocations(context.Context, *MsgAddAllocations) (*MsgAddAllocationsResponse, error)
+	// Admin transaction to update a user's allocation to an airdrop
+	UpdateUserAllocation(context.Context, *MsgUpdateUserAllocation) (*MsgUpdateUserAllocationResponse, error)
+	// Admin address to link a stride and non-stride address, merging their
+	// allocations
+	LinkAddresses(context.Context, *MsgLinkAddresses) (*MsgLinkAddressesResponse, error)
 }
 
 // UnimplementedMsgServer can be embedded to have forward compatible implementations.
@@ -434,6 +1203,21 @@ func (*UnimplementedMsgServer) ClaimEarly(ctx context.Context, req *MsgClaimEarl
 }
 func (*UnimplementedMsgServer) ClaimAndStake(ctx context.Context, req *MsgClaimAndStake) (*MsgClaimAndStakeResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ClaimAndStake not implemented")
+}
+func (*UnimplementedMsgServer) CreateAirdrop(ctx context.Context, req *MsgCreateAirdrop) (*MsgCreateAirdropResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CreateAirdrop not implemented")
+}
+func (*UnimplementedMsgServer) UpdateAirdrop(ctx context.Context, req *MsgUpdateAirdrop) (*MsgUpdateAirdropResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UpdateAirdrop not implemented")
+}
+func (*UnimplementedMsgServer) AddAllocations(ctx context.Context, req *MsgAddAllocations) (*MsgAddAllocationsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method AddAllocations not implemented")
+}
+func (*UnimplementedMsgServer) UpdateUserAllocation(ctx context.Context, req *MsgUpdateUserAllocation) (*MsgUpdateUserAllocationResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UpdateUserAllocation not implemented")
+}
+func (*UnimplementedMsgServer) LinkAddresses(ctx context.Context, req *MsgLinkAddresses) (*MsgLinkAddressesResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method LinkAddresses not implemented")
 }
 
 func RegisterMsgServer(s grpc1.Server, srv MsgServer) {
@@ -494,6 +1278,96 @@ func _Msg_ClaimAndStake_Handler(srv interface{}, ctx context.Context, dec func(i
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Msg_CreateAirdrop_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MsgCreateAirdrop)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MsgServer).CreateAirdrop(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/stride.airdrop.Msg/CreateAirdrop",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MsgServer).CreateAirdrop(ctx, req.(*MsgCreateAirdrop))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Msg_UpdateAirdrop_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MsgUpdateAirdrop)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MsgServer).UpdateAirdrop(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/stride.airdrop.Msg/UpdateAirdrop",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MsgServer).UpdateAirdrop(ctx, req.(*MsgUpdateAirdrop))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Msg_AddAllocations_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MsgAddAllocations)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MsgServer).AddAllocations(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/stride.airdrop.Msg/AddAllocations",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MsgServer).AddAllocations(ctx, req.(*MsgAddAllocations))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Msg_UpdateUserAllocation_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MsgUpdateUserAllocation)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MsgServer).UpdateUserAllocation(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/stride.airdrop.Msg/UpdateUserAllocation",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MsgServer).UpdateUserAllocation(ctx, req.(*MsgUpdateUserAllocation))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Msg_LinkAddresses_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MsgLinkAddresses)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MsgServer).LinkAddresses(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/stride.airdrop.Msg/LinkAddresses",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MsgServer).LinkAddresses(ctx, req.(*MsgLinkAddresses))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 var _Msg_serviceDesc = grpc.ServiceDesc{
 	ServiceName: "stride.airdrop.Msg",
 	HandlerType: (*MsgServer)(nil),
@@ -509,6 +1383,26 @@ var _Msg_serviceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ClaimAndStake",
 			Handler:    _Msg_ClaimAndStake_Handler,
+		},
+		{
+			MethodName: "CreateAirdrop",
+			Handler:    _Msg_CreateAirdrop_Handler,
+		},
+		{
+			MethodName: "UpdateAirdrop",
+			Handler:    _Msg_UpdateAirdrop_Handler,
+		},
+		{
+			MethodName: "AddAllocations",
+			Handler:    _Msg_AddAllocations_Handler,
+		},
+		{
+			MethodName: "UpdateUserAllocation",
+			Handler:    _Msg_UpdateUserAllocation_Handler,
+		},
+		{
+			MethodName: "LinkAddresses",
+			Handler:    _Msg_LinkAddresses_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
@@ -702,6 +1596,533 @@ func (m *MsgClaimAndStakeResponse) MarshalToSizedBuffer(dAtA []byte) (int, error
 	return len(dAtA) - i, nil
 }
 
+func (m *MsgCreateAirdrop) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *MsgCreateAirdrop) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *MsgCreateAirdrop) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if len(m.DistributionAddress) > 0 {
+		i -= len(m.DistributionAddress)
+		copy(dAtA[i:], m.DistributionAddress)
+		i = encodeVarintTx(dAtA, i, uint64(len(m.DistributionAddress)))
+		i--
+		dAtA[i] = 0x4a
+	}
+	{
+		size := m.ClaimAndStakeBonus.Size()
+		i -= size
+		if _, err := m.ClaimAndStakeBonus.MarshalTo(dAtA[i:]); err != nil {
+			return 0, err
+		}
+		i = encodeVarintTx(dAtA, i, uint64(size))
+	}
+	i--
+	dAtA[i] = 0x42
+	{
+		size := m.EarlyClaimPenalty.Size()
+		i -= size
+		if _, err := m.EarlyClaimPenalty.MarshalTo(dAtA[i:]); err != nil {
+			return 0, err
+		}
+		i = encodeVarintTx(dAtA, i, uint64(size))
+	}
+	i--
+	dAtA[i] = 0x3a
+	if m.ClaimTypeDeadlineDate != nil {
+		n1, err1 := github_com_cosmos_gogoproto_types.StdTimeMarshalTo(*m.ClaimTypeDeadlineDate, dAtA[i-github_com_cosmos_gogoproto_types.SizeOfStdTime(*m.ClaimTypeDeadlineDate):])
+		if err1 != nil {
+			return 0, err1
+		}
+		i -= n1
+		i = encodeVarintTx(dAtA, i, uint64(n1))
+		i--
+		dAtA[i] = 0x32
+	}
+	if m.ClawbackDate != nil {
+		n2, err2 := github_com_cosmos_gogoproto_types.StdTimeMarshalTo(*m.ClawbackDate, dAtA[i-github_com_cosmos_gogoproto_types.SizeOfStdTime(*m.ClawbackDate):])
+		if err2 != nil {
+			return 0, err2
+		}
+		i -= n2
+		i = encodeVarintTx(dAtA, i, uint64(n2))
+		i--
+		dAtA[i] = 0x2a
+	}
+	if m.DistributionEndDate != nil {
+		n3, err3 := github_com_cosmos_gogoproto_types.StdTimeMarshalTo(*m.DistributionEndDate, dAtA[i-github_com_cosmos_gogoproto_types.SizeOfStdTime(*m.DistributionEndDate):])
+		if err3 != nil {
+			return 0, err3
+		}
+		i -= n3
+		i = encodeVarintTx(dAtA, i, uint64(n3))
+		i--
+		dAtA[i] = 0x22
+	}
+	if m.DistributionStartDate != nil {
+		n4, err4 := github_com_cosmos_gogoproto_types.StdTimeMarshalTo(*m.DistributionStartDate, dAtA[i-github_com_cosmos_gogoproto_types.SizeOfStdTime(*m.DistributionStartDate):])
+		if err4 != nil {
+			return 0, err4
+		}
+		i -= n4
+		i = encodeVarintTx(dAtA, i, uint64(n4))
+		i--
+		dAtA[i] = 0x1a
+	}
+	if len(m.AirdropId) > 0 {
+		i -= len(m.AirdropId)
+		copy(dAtA[i:], m.AirdropId)
+		i = encodeVarintTx(dAtA, i, uint64(len(m.AirdropId)))
+		i--
+		dAtA[i] = 0x12
+	}
+	if len(m.Admin) > 0 {
+		i -= len(m.Admin)
+		copy(dAtA[i:], m.Admin)
+		i = encodeVarintTx(dAtA, i, uint64(len(m.Admin)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *MsgCreateAirdropResponse) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *MsgCreateAirdropResponse) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *MsgCreateAirdropResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	return len(dAtA) - i, nil
+}
+
+func (m *MsgUpdateAirdrop) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *MsgUpdateAirdrop) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *MsgUpdateAirdrop) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if len(m.DistributionAddress) > 0 {
+		i -= len(m.DistributionAddress)
+		copy(dAtA[i:], m.DistributionAddress)
+		i = encodeVarintTx(dAtA, i, uint64(len(m.DistributionAddress)))
+		i--
+		dAtA[i] = 0x4a
+	}
+	{
+		size := m.ClaimAndStakeBonus.Size()
+		i -= size
+		if _, err := m.ClaimAndStakeBonus.MarshalTo(dAtA[i:]); err != nil {
+			return 0, err
+		}
+		i = encodeVarintTx(dAtA, i, uint64(size))
+	}
+	i--
+	dAtA[i] = 0x42
+	{
+		size := m.EarlyClaimPenalty.Size()
+		i -= size
+		if _, err := m.EarlyClaimPenalty.MarshalTo(dAtA[i:]); err != nil {
+			return 0, err
+		}
+		i = encodeVarintTx(dAtA, i, uint64(size))
+	}
+	i--
+	dAtA[i] = 0x3a
+	if m.ClaimTypeDeadlineDate != nil {
+		n5, err5 := github_com_cosmos_gogoproto_types.StdTimeMarshalTo(*m.ClaimTypeDeadlineDate, dAtA[i-github_com_cosmos_gogoproto_types.SizeOfStdTime(*m.ClaimTypeDeadlineDate):])
+		if err5 != nil {
+			return 0, err5
+		}
+		i -= n5
+		i = encodeVarintTx(dAtA, i, uint64(n5))
+		i--
+		dAtA[i] = 0x32
+	}
+	if m.ClawbackDate != nil {
+		n6, err6 := github_com_cosmos_gogoproto_types.StdTimeMarshalTo(*m.ClawbackDate, dAtA[i-github_com_cosmos_gogoproto_types.SizeOfStdTime(*m.ClawbackDate):])
+		if err6 != nil {
+			return 0, err6
+		}
+		i -= n6
+		i = encodeVarintTx(dAtA, i, uint64(n6))
+		i--
+		dAtA[i] = 0x2a
+	}
+	if m.DistributionEndDate != nil {
+		n7, err7 := github_com_cosmos_gogoproto_types.StdTimeMarshalTo(*m.DistributionEndDate, dAtA[i-github_com_cosmos_gogoproto_types.SizeOfStdTime(*m.DistributionEndDate):])
+		if err7 != nil {
+			return 0, err7
+		}
+		i -= n7
+		i = encodeVarintTx(dAtA, i, uint64(n7))
+		i--
+		dAtA[i] = 0x22
+	}
+	if m.DistributionStartDate != nil {
+		n8, err8 := github_com_cosmos_gogoproto_types.StdTimeMarshalTo(*m.DistributionStartDate, dAtA[i-github_com_cosmos_gogoproto_types.SizeOfStdTime(*m.DistributionStartDate):])
+		if err8 != nil {
+			return 0, err8
+		}
+		i -= n8
+		i = encodeVarintTx(dAtA, i, uint64(n8))
+		i--
+		dAtA[i] = 0x1a
+	}
+	if len(m.AirdropId) > 0 {
+		i -= len(m.AirdropId)
+		copy(dAtA[i:], m.AirdropId)
+		i = encodeVarintTx(dAtA, i, uint64(len(m.AirdropId)))
+		i--
+		dAtA[i] = 0x12
+	}
+	if len(m.Admin) > 0 {
+		i -= len(m.Admin)
+		copy(dAtA[i:], m.Admin)
+		i = encodeVarintTx(dAtA, i, uint64(len(m.Admin)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *MsgUpdateAirdropResponse) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *MsgUpdateAirdropResponse) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *MsgUpdateAirdropResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	return len(dAtA) - i, nil
+}
+
+func (m *RawAllocation) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *RawAllocation) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *RawAllocation) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if len(m.Allocations) > 0 {
+		for iNdEx := len(m.Allocations) - 1; iNdEx >= 0; iNdEx-- {
+			{
+				size := m.Allocations[iNdEx].Size()
+				i -= size
+				if _, err := m.Allocations[iNdEx].MarshalTo(dAtA[i:]); err != nil {
+					return 0, err
+				}
+				i = encodeVarintTx(dAtA, i, uint64(size))
+			}
+			i--
+			dAtA[i] = 0x22
+		}
+	}
+	if len(m.UserAddress) > 0 {
+		i -= len(m.UserAddress)
+		copy(dAtA[i:], m.UserAddress)
+		i = encodeVarintTx(dAtA, i, uint64(len(m.UserAddress)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *MsgAddAllocations) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *MsgAddAllocations) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *MsgAddAllocations) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if len(m.Allocations) > 0 {
+		for iNdEx := len(m.Allocations) - 1; iNdEx >= 0; iNdEx-- {
+			{
+				size, err := m.Allocations[iNdEx].MarshalToSizedBuffer(dAtA[:i])
+				if err != nil {
+					return 0, err
+				}
+				i -= size
+				i = encodeVarintTx(dAtA, i, uint64(size))
+			}
+			i--
+			dAtA[i] = 0x1a
+		}
+	}
+	if len(m.AirdropId) > 0 {
+		i -= len(m.AirdropId)
+		copy(dAtA[i:], m.AirdropId)
+		i = encodeVarintTx(dAtA, i, uint64(len(m.AirdropId)))
+		i--
+		dAtA[i] = 0x12
+	}
+	if len(m.Admin) > 0 {
+		i -= len(m.Admin)
+		copy(dAtA[i:], m.Admin)
+		i = encodeVarintTx(dAtA, i, uint64(len(m.Admin)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *MsgAddAllocationsResponse) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *MsgAddAllocationsResponse) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *MsgAddAllocationsResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	return len(dAtA) - i, nil
+}
+
+func (m *MsgUpdateUserAllocation) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *MsgUpdateUserAllocation) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *MsgUpdateUserAllocation) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if len(m.Allocations) > 0 {
+		for iNdEx := len(m.Allocations) - 1; iNdEx >= 0; iNdEx-- {
+			{
+				size := m.Allocations[iNdEx].Size()
+				i -= size
+				if _, err := m.Allocations[iNdEx].MarshalTo(dAtA[i:]); err != nil {
+					return 0, err
+				}
+				i = encodeVarintTx(dAtA, i, uint64(size))
+			}
+			i--
+			dAtA[i] = 0x22
+		}
+	}
+	if len(m.UserAddress) > 0 {
+		i -= len(m.UserAddress)
+		copy(dAtA[i:], m.UserAddress)
+		i = encodeVarintTx(dAtA, i, uint64(len(m.UserAddress)))
+		i--
+		dAtA[i] = 0x1a
+	}
+	if len(m.AirdropId) > 0 {
+		i -= len(m.AirdropId)
+		copy(dAtA[i:], m.AirdropId)
+		i = encodeVarintTx(dAtA, i, uint64(len(m.AirdropId)))
+		i--
+		dAtA[i] = 0x12
+	}
+	if len(m.Admin) > 0 {
+		i -= len(m.Admin)
+		copy(dAtA[i:], m.Admin)
+		i = encodeVarintTx(dAtA, i, uint64(len(m.Admin)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *MsgUpdateUserAllocationResponse) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *MsgUpdateUserAllocationResponse) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *MsgUpdateUserAllocationResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	return len(dAtA) - i, nil
+}
+
+func (m *MsgLinkAddresses) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *MsgLinkAddresses) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *MsgLinkAddresses) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if len(m.HostAddress) > 0 {
+		i -= len(m.HostAddress)
+		copy(dAtA[i:], m.HostAddress)
+		i = encodeVarintTx(dAtA, i, uint64(len(m.HostAddress)))
+		i--
+		dAtA[i] = 0x22
+	}
+	if len(m.StrideAddress) > 0 {
+		i -= len(m.StrideAddress)
+		copy(dAtA[i:], m.StrideAddress)
+		i = encodeVarintTx(dAtA, i, uint64(len(m.StrideAddress)))
+		i--
+		dAtA[i] = 0x1a
+	}
+	if len(m.AirdropId) > 0 {
+		i -= len(m.AirdropId)
+		copy(dAtA[i:], m.AirdropId)
+		i = encodeVarintTx(dAtA, i, uint64(len(m.AirdropId)))
+		i--
+		dAtA[i] = 0x12
+	}
+	if len(m.Admin) > 0 {
+		i -= len(m.Admin)
+		copy(dAtA[i:], m.Admin)
+		i = encodeVarintTx(dAtA, i, uint64(len(m.Admin)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *MsgLinkAddressesResponse) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *MsgLinkAddressesResponse) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *MsgLinkAddressesResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	return len(dAtA) - i, nil
+}
+
 func encodeVarintTx(dAtA []byte, offset int, v uint64) int {
 	offset -= sovTx(v)
 	base := offset
@@ -787,6 +2208,227 @@ func (m *MsgClaimAndStake) Size() (n int) {
 }
 
 func (m *MsgClaimAndStakeResponse) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	return n
+}
+
+func (m *MsgCreateAirdrop) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.Admin)
+	if l > 0 {
+		n += 1 + l + sovTx(uint64(l))
+	}
+	l = len(m.AirdropId)
+	if l > 0 {
+		n += 1 + l + sovTx(uint64(l))
+	}
+	if m.DistributionStartDate != nil {
+		l = github_com_cosmos_gogoproto_types.SizeOfStdTime(*m.DistributionStartDate)
+		n += 1 + l + sovTx(uint64(l))
+	}
+	if m.DistributionEndDate != nil {
+		l = github_com_cosmos_gogoproto_types.SizeOfStdTime(*m.DistributionEndDate)
+		n += 1 + l + sovTx(uint64(l))
+	}
+	if m.ClawbackDate != nil {
+		l = github_com_cosmos_gogoproto_types.SizeOfStdTime(*m.ClawbackDate)
+		n += 1 + l + sovTx(uint64(l))
+	}
+	if m.ClaimTypeDeadlineDate != nil {
+		l = github_com_cosmos_gogoproto_types.SizeOfStdTime(*m.ClaimTypeDeadlineDate)
+		n += 1 + l + sovTx(uint64(l))
+	}
+	l = m.EarlyClaimPenalty.Size()
+	n += 1 + l + sovTx(uint64(l))
+	l = m.ClaimAndStakeBonus.Size()
+	n += 1 + l + sovTx(uint64(l))
+	l = len(m.DistributionAddress)
+	if l > 0 {
+		n += 1 + l + sovTx(uint64(l))
+	}
+	return n
+}
+
+func (m *MsgCreateAirdropResponse) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	return n
+}
+
+func (m *MsgUpdateAirdrop) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.Admin)
+	if l > 0 {
+		n += 1 + l + sovTx(uint64(l))
+	}
+	l = len(m.AirdropId)
+	if l > 0 {
+		n += 1 + l + sovTx(uint64(l))
+	}
+	if m.DistributionStartDate != nil {
+		l = github_com_cosmos_gogoproto_types.SizeOfStdTime(*m.DistributionStartDate)
+		n += 1 + l + sovTx(uint64(l))
+	}
+	if m.DistributionEndDate != nil {
+		l = github_com_cosmos_gogoproto_types.SizeOfStdTime(*m.DistributionEndDate)
+		n += 1 + l + sovTx(uint64(l))
+	}
+	if m.ClawbackDate != nil {
+		l = github_com_cosmos_gogoproto_types.SizeOfStdTime(*m.ClawbackDate)
+		n += 1 + l + sovTx(uint64(l))
+	}
+	if m.ClaimTypeDeadlineDate != nil {
+		l = github_com_cosmos_gogoproto_types.SizeOfStdTime(*m.ClaimTypeDeadlineDate)
+		n += 1 + l + sovTx(uint64(l))
+	}
+	l = m.EarlyClaimPenalty.Size()
+	n += 1 + l + sovTx(uint64(l))
+	l = m.ClaimAndStakeBonus.Size()
+	n += 1 + l + sovTx(uint64(l))
+	l = len(m.DistributionAddress)
+	if l > 0 {
+		n += 1 + l + sovTx(uint64(l))
+	}
+	return n
+}
+
+func (m *MsgUpdateAirdropResponse) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	return n
+}
+
+func (m *RawAllocation) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.UserAddress)
+	if l > 0 {
+		n += 1 + l + sovTx(uint64(l))
+	}
+	if len(m.Allocations) > 0 {
+		for _, e := range m.Allocations {
+			l = e.Size()
+			n += 1 + l + sovTx(uint64(l))
+		}
+	}
+	return n
+}
+
+func (m *MsgAddAllocations) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.Admin)
+	if l > 0 {
+		n += 1 + l + sovTx(uint64(l))
+	}
+	l = len(m.AirdropId)
+	if l > 0 {
+		n += 1 + l + sovTx(uint64(l))
+	}
+	if len(m.Allocations) > 0 {
+		for _, e := range m.Allocations {
+			l = e.Size()
+			n += 1 + l + sovTx(uint64(l))
+		}
+	}
+	return n
+}
+
+func (m *MsgAddAllocationsResponse) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	return n
+}
+
+func (m *MsgUpdateUserAllocation) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.Admin)
+	if l > 0 {
+		n += 1 + l + sovTx(uint64(l))
+	}
+	l = len(m.AirdropId)
+	if l > 0 {
+		n += 1 + l + sovTx(uint64(l))
+	}
+	l = len(m.UserAddress)
+	if l > 0 {
+		n += 1 + l + sovTx(uint64(l))
+	}
+	if len(m.Allocations) > 0 {
+		for _, e := range m.Allocations {
+			l = e.Size()
+			n += 1 + l + sovTx(uint64(l))
+		}
+	}
+	return n
+}
+
+func (m *MsgUpdateUserAllocationResponse) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	return n
+}
+
+func (m *MsgLinkAddresses) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.Admin)
+	if l > 0 {
+		n += 1 + l + sovTx(uint64(l))
+	}
+	l = len(m.AirdropId)
+	if l > 0 {
+		n += 1 + l + sovTx(uint64(l))
+	}
+	l = len(m.StrideAddress)
+	if l > 0 {
+		n += 1 + l + sovTx(uint64(l))
+	}
+	l = len(m.HostAddress)
+	if l > 0 {
+		n += 1 + l + sovTx(uint64(l))
+	}
+	return n
+}
+
+func (m *MsgLinkAddressesResponse) Size() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -1302,6 +2944,1598 @@ func (m *MsgClaimAndStakeResponse) Unmarshal(dAtA []byte) error {
 		}
 		if fieldNum <= 0 {
 			return fmt.Errorf("proto: MsgClaimAndStakeResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		default:
+			iNdEx = preIndex
+			skippy, err := skipTx(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthTx
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *MsgCreateAirdrop) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowTx
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: MsgCreateAirdrop: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: MsgCreateAirdrop: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Admin", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Admin = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field AirdropId", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.AirdropId = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 3:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field DistributionStartDate", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.DistributionStartDate == nil {
+				m.DistributionStartDate = new(time.Time)
+			}
+			if err := github_com_cosmos_gogoproto_types.StdTimeUnmarshal(m.DistributionStartDate, dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 4:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field DistributionEndDate", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.DistributionEndDate == nil {
+				m.DistributionEndDate = new(time.Time)
+			}
+			if err := github_com_cosmos_gogoproto_types.StdTimeUnmarshal(m.DistributionEndDate, dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 5:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field ClawbackDate", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.ClawbackDate == nil {
+				m.ClawbackDate = new(time.Time)
+			}
+			if err := github_com_cosmos_gogoproto_types.StdTimeUnmarshal(m.ClawbackDate, dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 6:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field ClaimTypeDeadlineDate", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.ClaimTypeDeadlineDate == nil {
+				m.ClaimTypeDeadlineDate = new(time.Time)
+			}
+			if err := github_com_cosmos_gogoproto_types.StdTimeUnmarshal(m.ClaimTypeDeadlineDate, dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 7:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field EarlyClaimPenalty", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if err := m.EarlyClaimPenalty.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 8:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field ClaimAndStakeBonus", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if err := m.ClaimAndStakeBonus.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 9:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field DistributionAddress", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.DistributionAddress = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipTx(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthTx
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *MsgCreateAirdropResponse) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowTx
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: MsgCreateAirdropResponse: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: MsgCreateAirdropResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		default:
+			iNdEx = preIndex
+			skippy, err := skipTx(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthTx
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *MsgUpdateAirdrop) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowTx
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: MsgUpdateAirdrop: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: MsgUpdateAirdrop: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Admin", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Admin = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field AirdropId", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.AirdropId = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 3:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field DistributionStartDate", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.DistributionStartDate == nil {
+				m.DistributionStartDate = new(time.Time)
+			}
+			if err := github_com_cosmos_gogoproto_types.StdTimeUnmarshal(m.DistributionStartDate, dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 4:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field DistributionEndDate", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.DistributionEndDate == nil {
+				m.DistributionEndDate = new(time.Time)
+			}
+			if err := github_com_cosmos_gogoproto_types.StdTimeUnmarshal(m.DistributionEndDate, dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 5:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field ClawbackDate", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.ClawbackDate == nil {
+				m.ClawbackDate = new(time.Time)
+			}
+			if err := github_com_cosmos_gogoproto_types.StdTimeUnmarshal(m.ClawbackDate, dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 6:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field ClaimTypeDeadlineDate", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.ClaimTypeDeadlineDate == nil {
+				m.ClaimTypeDeadlineDate = new(time.Time)
+			}
+			if err := github_com_cosmos_gogoproto_types.StdTimeUnmarshal(m.ClaimTypeDeadlineDate, dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 7:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field EarlyClaimPenalty", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if err := m.EarlyClaimPenalty.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 8:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field ClaimAndStakeBonus", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if err := m.ClaimAndStakeBonus.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 9:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field DistributionAddress", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.DistributionAddress = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipTx(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthTx
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *MsgUpdateAirdropResponse) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowTx
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: MsgUpdateAirdropResponse: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: MsgUpdateAirdropResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		default:
+			iNdEx = preIndex
+			skippy, err := skipTx(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthTx
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *RawAllocation) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowTx
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: RawAllocation: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: RawAllocation: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field UserAddress", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.UserAddress = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 4:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Allocations", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			var v github_com_cosmos_cosmos_sdk_types.Int
+			m.Allocations = append(m.Allocations, v)
+			if err := m.Allocations[len(m.Allocations)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipTx(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthTx
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *MsgAddAllocations) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowTx
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: MsgAddAllocations: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: MsgAddAllocations: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Admin", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Admin = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field AirdropId", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.AirdropId = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 3:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Allocations", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Allocations = append(m.Allocations, RawAllocation{})
+			if err := m.Allocations[len(m.Allocations)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipTx(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthTx
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *MsgAddAllocationsResponse) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowTx
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: MsgAddAllocationsResponse: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: MsgAddAllocationsResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		default:
+			iNdEx = preIndex
+			skippy, err := skipTx(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthTx
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *MsgUpdateUserAllocation) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowTx
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: MsgUpdateUserAllocation: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: MsgUpdateUserAllocation: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Admin", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Admin = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field AirdropId", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.AirdropId = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 3:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field UserAddress", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.UserAddress = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 4:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Allocations", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			var v github_com_cosmos_cosmos_sdk_types.Int
+			m.Allocations = append(m.Allocations, v)
+			if err := m.Allocations[len(m.Allocations)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipTx(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthTx
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *MsgUpdateUserAllocationResponse) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowTx
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: MsgUpdateUserAllocationResponse: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: MsgUpdateUserAllocationResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		default:
+			iNdEx = preIndex
+			skippy, err := skipTx(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthTx
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *MsgLinkAddresses) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowTx
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: MsgLinkAddresses: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: MsgLinkAddresses: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Admin", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Admin = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field AirdropId", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.AirdropId = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 3:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field StrideAddress", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.StrideAddress = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 4:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field HostAddress", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.HostAddress = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipTx(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthTx
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *MsgLinkAddressesResponse) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowTx
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: MsgLinkAddressesResponse: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: MsgLinkAddressesResponse: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		default:
