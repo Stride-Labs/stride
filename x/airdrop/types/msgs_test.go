@@ -1140,7 +1140,7 @@ func TestMsgAddAllocations_ValidateBasic(t *testing.T) {
 		},
 		{
 			UserAddress: "user-3",
-			Allocations: []sdkmath.Int{sdkmath.NewInt(1), sdkmath.NewInt(2)},
+			Allocations: []sdkmath.Int{sdkmath.NewInt(2)},
 		},
 	}
 
@@ -1255,6 +1255,28 @@ func TestMsgAddAllocations_ValidateBasic(t *testing.T) {
 				},
 			},
 			expectedError: "address user-1 is specified more than once",
+		},
+		{
+			name: "inconsistent allocations length",
+			msg: types.MsgAddAllocations{
+				Admin:     adminAddress,
+				AirdropId: validAirdropId,
+				Allocations: []types.RawAllocation{
+					{
+						UserAddress: "user-1",
+						Allocations: []sdkmath.Int{sdkmath.NewInt(0)},
+					},
+					{
+						UserAddress: "user-2",
+						Allocations: []sdkmath.Int{sdkmath.NewInt(1)},
+					},
+					{
+						UserAddress: "user-3",
+						Allocations: []sdkmath.Int{sdkmath.NewInt(1), sdkmath.NewInt(2)},
+					},
+				},
+			},
+			expectedError: "address user-3 has an inconsistent number of allocations",
 		},
 	}
 	for _, tc := range tests {

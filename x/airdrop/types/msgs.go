@@ -444,7 +444,8 @@ func (msg *MsgAddAllocations) ValidateBasic() error {
 	}
 
 	addresses := map[string]bool{}
-	for _, allocation := range msg.Allocations {
+	allocationsLength := 0
+	for i, allocation := range msg.Allocations {
 		if allocation.UserAddress == "" {
 			return errors.New("all addresses in allocations must be specified")
 		}
@@ -453,6 +454,14 @@ func (msg *MsgAddAllocations) ValidateBasic() error {
 			return fmt.Errorf("address %s is specified more than once", allocation.UserAddress)
 		}
 		addresses[allocation.UserAddress] = true
+
+		if i == 0 {
+			allocationsLength = len(allocation.Allocations)
+		} else {
+			if len(allocation.Allocations) != allocationsLength {
+				return fmt.Errorf("address %s has an inconsistent number of allocations", allocation.UserAddress)
+			}
+		}
 
 		for _, amount := range allocation.Allocations {
 			if amount.IsNil() || amount.LT(sdkmath.ZeroInt()) {
