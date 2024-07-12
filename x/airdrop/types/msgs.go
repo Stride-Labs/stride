@@ -1,6 +1,8 @@
 package types
 
 import (
+	"errors"
+
 	errorsmod "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -57,9 +59,11 @@ func (msg *MsgClaimDaily) GetSignBytes() []byte {
 }
 
 func (msg *MsgClaimDaily) ValidateBasic() error {
-	_, err := sdk.AccAddressFromBech32(msg.Claimer)
-	if err != nil {
+	if _, err := sdk.AccAddressFromBech32(msg.Claimer); err != nil {
 		return errorsmod.Wrapf(sdkerrors.ErrInvalidAddress, "invalid address (%s)", err)
+	}
+	if msg.AirdropId == "" {
+		return errors.New("airdrop-id must be specified")
 	}
 
 	return nil
@@ -98,9 +102,11 @@ func (msg *MsgClaimEarly) GetSignBytes() []byte {
 }
 
 func (msg *MsgClaimEarly) ValidateBasic() error {
-	_, err := sdk.AccAddressFromBech32(msg.Claimer)
-	if err != nil {
+	if _, err := sdk.AccAddressFromBech32(msg.Claimer); err != nil {
 		return errorsmod.Wrapf(sdkerrors.ErrInvalidAddress, "invalid address (%s)", err)
+	}
+	if msg.AirdropId == "" {
+		return errors.New("airdrop-id must be specified")
 	}
 
 	return nil
@@ -140,9 +146,14 @@ func (msg *MsgClaimAndStake) GetSignBytes() []byte {
 }
 
 func (msg *MsgClaimAndStake) ValidateBasic() error {
-	_, err := sdk.AccAddressFromBech32(msg.Claimer)
-	if err != nil {
+	if _, err := sdk.AccAddressFromBech32(msg.Claimer); err != nil {
 		return errorsmod.Wrapf(sdkerrors.ErrInvalidAddress, "invalid address (%s)", err)
+	}
+	if msg.AirdropId == "" {
+		return errors.New("airdrop-id must be specified")
+	}
+	if _, err := sdk.ValAddressFromBech32(msg.ValidatorAddress); err != nil {
+		return errorsmod.Wrapf(sdkerrors.ErrInvalidAddress, "invalid validator address (%s)", err)
 	}
 
 	return nil
