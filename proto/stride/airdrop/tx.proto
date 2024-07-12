@@ -13,7 +13,7 @@ service Msg {
   // User facing messages:
 
   // User transaction to claim all the pending daily airdrop rewards
-  rpc Claim(MsgClaimDaily) returns (MsgClaimDailyResponse);
+  rpc ClaimDaily(MsgClaimDaily) returns (MsgClaimDailyResponse);
 
   // User transaction to claim half of their total amount now, and forfeit the
   // other half to be clawed back
