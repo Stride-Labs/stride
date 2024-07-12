@@ -3,7 +3,7 @@
 ARG GO_VERSION="1.21"
 ARG RUNNER_IMAGE_VERSION="3.17"
 
-FROM golang:${GO_VERSION}-alpine${RUNNER_IMAGE_VERSION} as builder
+FROM golang:${GO_VERSION}-alpine${RUNNER_IMAGE_VERSION} AS builder
 
 WORKDIR /opt
 RUN apk add --no-cache make git gcc musl-dev openssl-dev linux-headers ca-certificates build-base
@@ -37,7 +37,7 @@ RUN mkdir -p /etc/sudoers.d \
     && adduser stride wheel 
 
 USER 1000
-ENV HOME /home/stride
+ENV HOME=/home/stride
 WORKDIR $HOME
 
 EXPOSE 26657 26656 1317 9090

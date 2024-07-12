@@ -186,14 +186,15 @@ func CmdQueryAllAllocations() *cobra.Command {
 // and the amount claimed and remaining
 func CmdQueryUserSummary() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "user-summary",
+		Use:   "user-summary [airdrop-id] [user-address]",
 		Short: "Queries the summary for a user",
 		Long: strings.TrimSpace(
 			`Queries airdrop summary info for a user including their total claimed, amount remaining, and claim type`,
 		),
-		Args: cobra.ExactArgs(1),
+		Args: cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			address := args[0]
+			airdropId := args[0]
+			address := args[1]
 
 			clientCtx, err := client.GetClientQueryContext(cmd)
 			if err != nil {
@@ -202,7 +203,8 @@ func CmdQueryUserSummary() *cobra.Command {
 			queryClient := types.NewQueryClient(clientCtx)
 
 			req := &types.QueryUserSummaryRequest{
-				Address: address,
+				AirdropId: airdropId,
+				Address:   address,
 			}
 			res, err := queryClient.UserSummary(context.Background(), req)
 			if err != nil {

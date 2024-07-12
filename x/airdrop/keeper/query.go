@@ -23,7 +23,7 @@ func (k Keeper) Airdrop(goCtx context.Context, req *types.QueryAirdropRequest) (
 
 	airdrop, found := k.GetAirdrop(ctx, req.Id)
 	if !found {
-		return nil, status.Errorf(codes.NotFound, "airdrop %s not found", airdrop.Id)
+		return nil, status.Errorf(codes.NotFound, "airdrop %s not found", req.Id)
 	}
 
 	return &types.QueryAirdropResponse{Airdrop: &airdrop}, nil
