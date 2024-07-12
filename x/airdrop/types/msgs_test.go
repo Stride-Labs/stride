@@ -217,6 +217,7 @@ func TestMsgCreateAirdrop_ValidateBasic(t *testing.T) {
 	require.True(t, ok)
 
 	validAirdropId := "airdrop-1"
+	validRewardDenom := "denom"
 	validDistributionAddress := validNonAdminAddress
 
 	validDistributionStartDate := time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC)
@@ -241,6 +242,7 @@ func TestMsgCreateAirdrop_ValidateBasic(t *testing.T) {
 			msg: types.MsgCreateAirdrop{
 				Admin:                 adminAddress,
 				AirdropId:             validAirdropId,
+				RewardDenom:           validRewardDenom,
 				DistributionStartDate: &validDistributionStartDate,
 				DistributionEndDate:   &validDistributionEndDate,
 				ClawbackDate:          &validClawbackDate,
@@ -255,6 +257,7 @@ func TestMsgCreateAirdrop_ValidateBasic(t *testing.T) {
 			msg: types.MsgCreateAirdrop{
 				Admin:                 invalidAddress,
 				AirdropId:             validAirdropId,
+				RewardDenom:           validRewardDenom,
 				DistributionStartDate: &validDistributionStartDate,
 				DistributionEndDate:   &validDistributionEndDate,
 				ClawbackDate:          &validClawbackDate,
@@ -270,6 +273,7 @@ func TestMsgCreateAirdrop_ValidateBasic(t *testing.T) {
 			msg: types.MsgCreateAirdrop{
 				Admin:                 validNonAdminAddress,
 				AirdropId:             validAirdropId,
+				RewardDenom:           validRewardDenom,
 				DistributionStartDate: &validDistributionStartDate,
 				DistributionEndDate:   &validDistributionEndDate,
 				ClawbackDate:          &validClawbackDate,
@@ -280,12 +284,44 @@ func TestMsgCreateAirdrop_ValidateBasic(t *testing.T) {
 			},
 			expectedError: "is not an admin",
 		},
-
+		{
+			name: "invalid airdrop id",
+			msg: types.MsgCreateAirdrop{
+				Admin:                 adminAddress,
+				AirdropId:             "",
+				RewardDenom:           validRewardDenom,
+				DistributionStartDate: &validDistributionStartDate,
+				DistributionEndDate:   &validDistributionEndDate,
+				ClawbackDate:          &validClawbackDate,
+				ClaimTypeDeadlineDate: &validDeadlineDate,
+				EarlyClaimPenalty:     validEarlyClaimPenalty,
+				ClaimAndStakeBonus:    validClaimAndStakeBonus,
+				DistributionAddress:   validDistributionAddress,
+			},
+			expectedError: "airdrop-id must be specified",
+		},
+		{
+			name: "invalid reward denom",
+			msg: types.MsgCreateAirdrop{
+				Admin:                 adminAddress,
+				AirdropId:             validAirdropId,
+				RewardDenom:           "",
+				DistributionStartDate: &validDistributionStartDate,
+				DistributionEndDate:   &validDistributionEndDate,
+				ClawbackDate:          &validClawbackDate,
+				ClaimTypeDeadlineDate: &validDeadlineDate,
+				EarlyClaimPenalty:     validEarlyClaimPenalty,
+				ClaimAndStakeBonus:    validClaimAndStakeBonus,
+				DistributionAddress:   validDistributionAddress,
+			},
+			expectedError: "reward denom must be specified",
+		},
 		{
 			name: "nil distribution start date",
 			msg: types.MsgCreateAirdrop{
 				Admin:                 adminAddress,
 				AirdropId:             validAirdropId,
+				RewardDenom:           validRewardDenom,
 				DistributionEndDate:   &validDistributionEndDate,
 				ClawbackDate:          &validClawbackDate,
 				ClaimTypeDeadlineDate: &validDeadlineDate,
@@ -300,6 +336,7 @@ func TestMsgCreateAirdrop_ValidateBasic(t *testing.T) {
 			msg: types.MsgCreateAirdrop{
 				Admin:                 adminAddress,
 				AirdropId:             validAirdropId,
+				RewardDenom:           validRewardDenom,
 				DistributionStartDate: &validDistributionStartDate,
 				ClawbackDate:          &validClawbackDate,
 				ClaimTypeDeadlineDate: &validDeadlineDate,
@@ -314,6 +351,7 @@ func TestMsgCreateAirdrop_ValidateBasic(t *testing.T) {
 			msg: types.MsgCreateAirdrop{
 				Admin:                 adminAddress,
 				AirdropId:             validAirdropId,
+				RewardDenom:           validRewardDenom,
 				DistributionStartDate: &validDistributionStartDate,
 				DistributionEndDate:   &validDistributionEndDate,
 				ClaimTypeDeadlineDate: &validDeadlineDate,
@@ -328,6 +366,7 @@ func TestMsgCreateAirdrop_ValidateBasic(t *testing.T) {
 			msg: types.MsgCreateAirdrop{
 				Admin:                 adminAddress,
 				AirdropId:             validAirdropId,
+				RewardDenom:           validRewardDenom,
 				DistributionStartDate: &validDistributionStartDate,
 				DistributionEndDate:   &validDistributionEndDate,
 				ClawbackDate:          &validClawbackDate,
@@ -343,6 +382,7 @@ func TestMsgCreateAirdrop_ValidateBasic(t *testing.T) {
 			msg: types.MsgCreateAirdrop{
 				Admin:                 adminAddress,
 				AirdropId:             validAirdropId,
+				RewardDenom:           validRewardDenom,
 				DistributionStartDate: &(time.Time{}),
 				DistributionEndDate:   &validDistributionEndDate,
 				ClawbackDate:          &validClawbackDate,
@@ -358,6 +398,7 @@ func TestMsgCreateAirdrop_ValidateBasic(t *testing.T) {
 			msg: types.MsgCreateAirdrop{
 				Admin:                 adminAddress,
 				AirdropId:             validAirdropId,
+				RewardDenom:           validRewardDenom,
 				DistributionStartDate: &validDistributionStartDate,
 				DistributionEndDate:   &(time.Time{}),
 				ClawbackDate:          &validClawbackDate,
@@ -373,6 +414,7 @@ func TestMsgCreateAirdrop_ValidateBasic(t *testing.T) {
 			msg: types.MsgCreateAirdrop{
 				Admin:                 adminAddress,
 				AirdropId:             validAirdropId,
+				RewardDenom:           validRewardDenom,
 				DistributionStartDate: &validDistributionStartDate,
 				DistributionEndDate:   &validDistributionEndDate,
 				ClawbackDate:          &(time.Time{}),
@@ -388,6 +430,7 @@ func TestMsgCreateAirdrop_ValidateBasic(t *testing.T) {
 			msg: types.MsgCreateAirdrop{
 				Admin:                 adminAddress,
 				AirdropId:             validAirdropId,
+				RewardDenom:           validRewardDenom,
 				DistributionStartDate: &validDistributionStartDate,
 				DistributionEndDate:   &validDistributionEndDate,
 				ClawbackDate:          &validClawbackDate,
@@ -404,6 +447,7 @@ func TestMsgCreateAirdrop_ValidateBasic(t *testing.T) {
 			msg: types.MsgCreateAirdrop{
 				Admin:                 adminAddress,
 				AirdropId:             validAirdropId,
+				RewardDenom:           validRewardDenom,
 				DistributionStartDate: &validDistributionStartDate,
 				DistributionEndDate:   &validDistributionStartDate,
 				ClawbackDate:          &validClawbackDate,
@@ -419,6 +463,7 @@ func TestMsgCreateAirdrop_ValidateBasic(t *testing.T) {
 			msg: types.MsgCreateAirdrop{
 				Admin:                 adminAddress,
 				AirdropId:             validAirdropId,
+				RewardDenom:           validRewardDenom,
 				DistributionStartDate: &endDatePlusDelta,
 				DistributionEndDate:   &validDistributionEndDate,
 				ClawbackDate:          &validClawbackDate,
@@ -434,6 +479,7 @@ func TestMsgCreateAirdrop_ValidateBasic(t *testing.T) {
 			msg: types.MsgCreateAirdrop{
 				Admin:                 adminAddress,
 				AirdropId:             validAirdropId,
+				RewardDenom:           validRewardDenom,
 				DistributionStartDate: &validDistributionStartDate,
 				DistributionEndDate:   &validDistributionEndDate,
 				ClawbackDate:          &validClawbackDate,
@@ -449,6 +495,7 @@ func TestMsgCreateAirdrop_ValidateBasic(t *testing.T) {
 			msg: types.MsgCreateAirdrop{
 				Admin:                 adminAddress,
 				AirdropId:             validAirdropId,
+				RewardDenom:           validRewardDenom,
 				DistributionStartDate: &validDistributionStartDate,
 				DistributionEndDate:   &validDistributionEndDate,
 				ClawbackDate:          &validClawbackDate,
@@ -464,6 +511,7 @@ func TestMsgCreateAirdrop_ValidateBasic(t *testing.T) {
 			msg: types.MsgCreateAirdrop{
 				Admin:                 adminAddress,
 				AirdropId:             validAirdropId,
+				RewardDenom:           validRewardDenom,
 				DistributionStartDate: &validDistributionStartDate,
 				DistributionEndDate:   &validDistributionEndDate,
 				ClawbackDate:          &validClawbackDate,
@@ -479,6 +527,7 @@ func TestMsgCreateAirdrop_ValidateBasic(t *testing.T) {
 			msg: types.MsgCreateAirdrop{
 				Admin:                 adminAddress,
 				AirdropId:             validAirdropId,
+				RewardDenom:           validRewardDenom,
 				DistributionStartDate: &validDistributionStartDate,
 				DistributionEndDate:   &validDistributionEndDate,
 				ClawbackDate:          &validClawbackDate,
@@ -494,6 +543,7 @@ func TestMsgCreateAirdrop_ValidateBasic(t *testing.T) {
 			msg: types.MsgCreateAirdrop{
 				Admin:                 adminAddress,
 				AirdropId:             validAirdropId,
+				RewardDenom:           validRewardDenom,
 				DistributionStartDate: &validDistributionStartDate,
 				DistributionEndDate:   &validDistributionEndDate,
 				ClawbackDate:          &validDistributionEndDate,
@@ -509,6 +559,7 @@ func TestMsgCreateAirdrop_ValidateBasic(t *testing.T) {
 			msg: types.MsgCreateAirdrop{
 				Admin:                 adminAddress,
 				AirdropId:             validAirdropId,
+				RewardDenom:           validRewardDenom,
 				DistributionStartDate: &validDistributionStartDate,
 				DistributionEndDate:   &validDistributionEndDate,
 				ClawbackDate:          &endDateMinusDelta,
@@ -524,6 +575,7 @@ func TestMsgCreateAirdrop_ValidateBasic(t *testing.T) {
 			msg: types.MsgCreateAirdrop{
 				Admin:                 adminAddress,
 				AirdropId:             validAirdropId,
+				RewardDenom:           validRewardDenom,
 				DistributionStartDate: &validDistributionStartDate,
 				DistributionEndDate:   &validDistributionEndDate,
 				ClawbackDate:          &validClawbackDate,
@@ -538,6 +590,7 @@ func TestMsgCreateAirdrop_ValidateBasic(t *testing.T) {
 			msg: types.MsgCreateAirdrop{
 				Admin:                 adminAddress,
 				AirdropId:             validAirdropId,
+				RewardDenom:           validRewardDenom,
 				DistributionStartDate: &validDistributionStartDate,
 				DistributionEndDate:   &validDistributionEndDate,
 				ClawbackDate:          &validClawbackDate,
@@ -552,6 +605,7 @@ func TestMsgCreateAirdrop_ValidateBasic(t *testing.T) {
 			msg: types.MsgCreateAirdrop{
 				Admin:                 adminAddress,
 				AirdropId:             validAirdropId,
+				RewardDenom:           validRewardDenom,
 				DistributionStartDate: &validDistributionStartDate,
 				DistributionEndDate:   &validDistributionEndDate,
 				ClawbackDate:          &validClawbackDate,
@@ -567,6 +621,7 @@ func TestMsgCreateAirdrop_ValidateBasic(t *testing.T) {
 			msg: types.MsgCreateAirdrop{
 				Admin:                 adminAddress,
 				AirdropId:             validAirdropId,
+				RewardDenom:           validRewardDenom,
 				DistributionStartDate: &validDistributionStartDate,
 				DistributionEndDate:   &validDistributionEndDate,
 				ClawbackDate:          &validClawbackDate,
@@ -582,6 +637,7 @@ func TestMsgCreateAirdrop_ValidateBasic(t *testing.T) {
 			msg: types.MsgCreateAirdrop{
 				Admin:                 adminAddress,
 				AirdropId:             validAirdropId,
+				RewardDenom:           validRewardDenom,
 				DistributionStartDate: &validDistributionStartDate,
 				DistributionEndDate:   &validDistributionEndDate,
 				ClawbackDate:          &validClawbackDate,
@@ -597,6 +653,7 @@ func TestMsgCreateAirdrop_ValidateBasic(t *testing.T) {
 			msg: types.MsgCreateAirdrop{
 				Admin:                 adminAddress,
 				AirdropId:             validAirdropId,
+				RewardDenom:           validRewardDenom,
 				DistributionStartDate: &validDistributionStartDate,
 				DistributionEndDate:   &validDistributionEndDate,
 				ClawbackDate:          &validClawbackDate,
@@ -624,6 +681,7 @@ func TestMsgCreateAirdrop_GetSignBytes(t *testing.T) {
 	admin := "admin"
 	airdropId := "airdrop"
 	distributionAddress := "distributor"
+	rewardDenom := "denom"
 
 	distributionStartDate := time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC)
 	distributionEndDate := time.Date(2024, 6, 1, 0, 0, 0, 0, time.UTC)
@@ -636,6 +694,7 @@ func TestMsgCreateAirdrop_GetSignBytes(t *testing.T) {
 	msg := types.NewMsgCreateAirdrop(
 		admin,
 		airdropId,
+		rewardDenom,
 		&distributionStartDate,
 		&distributionEndDate,
 		&clawbackDate,
@@ -656,7 +715,8 @@ func TestMsgCreateAirdrop_GetSignBytes(t *testing.T) {
 		"distribution_address":"distributor",
 		"distribution_end_date":"2024-06-01T00:00:00Z",
 		"distribution_start_date":"2024-01-01T00:00:00Z",
-		"early_claim_penalty":"0.500000000000000000"}}`)
+		"early_claim_penalty":"0.500000000000000000",
+		"reward_denom":"denom"}}`)
 
 	re := regexp.MustCompile(`\s+`)
 	expected = re.ReplaceAllString(expected, "")
@@ -673,6 +733,7 @@ func TestMsgUpdateAirdrop_ValidateBasic(t *testing.T) {
 	require.True(t, ok)
 
 	validAirdropId := "airdrop-1"
+	validRewardDenom := "denom"
 	validDistributionAddress := validNonAdminAddress
 
 	validDistributionStartDate := time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC)
@@ -697,6 +758,7 @@ func TestMsgUpdateAirdrop_ValidateBasic(t *testing.T) {
 			msg: types.MsgUpdateAirdrop{
 				Admin:                 adminAddress,
 				AirdropId:             validAirdropId,
+				RewardDenom:           validRewardDenom,
 				DistributionStartDate: &validDistributionStartDate,
 				DistributionEndDate:   &validDistributionEndDate,
 				ClawbackDate:          &validClawbackDate,
@@ -711,6 +773,7 @@ func TestMsgUpdateAirdrop_ValidateBasic(t *testing.T) {
 			msg: types.MsgUpdateAirdrop{
 				Admin:                 invalidAddress,
 				AirdropId:             validAirdropId,
+				RewardDenom:           validRewardDenom,
 				DistributionStartDate: &validDistributionStartDate,
 				DistributionEndDate:   &validDistributionEndDate,
 				ClawbackDate:          &validClawbackDate,
@@ -726,6 +789,7 @@ func TestMsgUpdateAirdrop_ValidateBasic(t *testing.T) {
 			msg: types.MsgUpdateAirdrop{
 				Admin:                 validNonAdminAddress,
 				AirdropId:             validAirdropId,
+				RewardDenom:           validRewardDenom,
 				DistributionStartDate: &validDistributionStartDate,
 				DistributionEndDate:   &validDistributionEndDate,
 				ClawbackDate:          &validClawbackDate,
@@ -736,12 +800,44 @@ func TestMsgUpdateAirdrop_ValidateBasic(t *testing.T) {
 			},
 			expectedError: "is not an admin",
 		},
-
+		{
+			name: "invalid airdrop id",
+			msg: types.MsgUpdateAirdrop{
+				Admin:                 adminAddress,
+				AirdropId:             "",
+				RewardDenom:           validRewardDenom,
+				DistributionStartDate: &validDistributionStartDate,
+				DistributionEndDate:   &validDistributionEndDate,
+				ClawbackDate:          &validClawbackDate,
+				ClaimTypeDeadlineDate: &validDeadlineDate,
+				EarlyClaimPenalty:     validEarlyClaimPenalty,
+				ClaimAndStakeBonus:    validClaimAndStakeBonus,
+				DistributionAddress:   validDistributionAddress,
+			},
+			expectedError: "airdrop-id must be specified",
+		},
+		{
+			name: "invalid reward denom",
+			msg: types.MsgUpdateAirdrop{
+				Admin:                 adminAddress,
+				AirdropId:             validAirdropId,
+				RewardDenom:           "",
+				DistributionStartDate: &validDistributionStartDate,
+				DistributionEndDate:   &validDistributionEndDate,
+				ClawbackDate:          &validClawbackDate,
+				ClaimTypeDeadlineDate: &validDeadlineDate,
+				EarlyClaimPenalty:     validEarlyClaimPenalty,
+				ClaimAndStakeBonus:    validClaimAndStakeBonus,
+				DistributionAddress:   validDistributionAddress,
+			},
+			expectedError: "reward denom must be specified",
+		},
 		{
 			name: "nil distribution start date",
 			msg: types.MsgUpdateAirdrop{
 				Admin:                 adminAddress,
 				AirdropId:             validAirdropId,
+				RewardDenom:           validRewardDenom,
 				DistributionEndDate:   &validDistributionEndDate,
 				ClawbackDate:          &validClawbackDate,
 				ClaimTypeDeadlineDate: &validDeadlineDate,
@@ -756,6 +852,7 @@ func TestMsgUpdateAirdrop_ValidateBasic(t *testing.T) {
 			msg: types.MsgUpdateAirdrop{
 				Admin:                 adminAddress,
 				AirdropId:             validAirdropId,
+				RewardDenom:           validRewardDenom,
 				DistributionStartDate: &validDistributionStartDate,
 				ClawbackDate:          &validClawbackDate,
 				ClaimTypeDeadlineDate: &validDeadlineDate,
@@ -770,6 +867,7 @@ func TestMsgUpdateAirdrop_ValidateBasic(t *testing.T) {
 			msg: types.MsgUpdateAirdrop{
 				Admin:                 adminAddress,
 				AirdropId:             validAirdropId,
+				RewardDenom:           validRewardDenom,
 				DistributionStartDate: &validDistributionStartDate,
 				DistributionEndDate:   &validDistributionEndDate,
 				ClaimTypeDeadlineDate: &validDeadlineDate,
@@ -784,6 +882,7 @@ func TestMsgUpdateAirdrop_ValidateBasic(t *testing.T) {
 			msg: types.MsgUpdateAirdrop{
 				Admin:                 adminAddress,
 				AirdropId:             validAirdropId,
+				RewardDenom:           validRewardDenom,
 				DistributionStartDate: &validDistributionStartDate,
 				DistributionEndDate:   &validDistributionEndDate,
 				ClawbackDate:          &validClawbackDate,
@@ -799,6 +898,7 @@ func TestMsgUpdateAirdrop_ValidateBasic(t *testing.T) {
 			msg: types.MsgUpdateAirdrop{
 				Admin:                 adminAddress,
 				AirdropId:             validAirdropId,
+				RewardDenom:           validRewardDenom,
 				DistributionStartDate: &(time.Time{}),
 				DistributionEndDate:   &validDistributionEndDate,
 				ClawbackDate:          &validClawbackDate,
@@ -814,6 +914,7 @@ func TestMsgUpdateAirdrop_ValidateBasic(t *testing.T) {
 			msg: types.MsgUpdateAirdrop{
 				Admin:                 adminAddress,
 				AirdropId:             validAirdropId,
+				RewardDenom:           validRewardDenom,
 				DistributionStartDate: &validDistributionStartDate,
 				DistributionEndDate:   &(time.Time{}),
 				ClawbackDate:          &validClawbackDate,
@@ -829,6 +930,7 @@ func TestMsgUpdateAirdrop_ValidateBasic(t *testing.T) {
 			msg: types.MsgUpdateAirdrop{
 				Admin:                 adminAddress,
 				AirdropId:             validAirdropId,
+				RewardDenom:           validRewardDenom,
 				DistributionStartDate: &validDistributionStartDate,
 				DistributionEndDate:   &validDistributionEndDate,
 				ClawbackDate:          &(time.Time{}),
@@ -844,6 +946,7 @@ func TestMsgUpdateAirdrop_ValidateBasic(t *testing.T) {
 			msg: types.MsgUpdateAirdrop{
 				Admin:                 adminAddress,
 				AirdropId:             validAirdropId,
+				RewardDenom:           validRewardDenom,
 				DistributionStartDate: &validDistributionStartDate,
 				DistributionEndDate:   &validDistributionEndDate,
 				ClawbackDate:          &validClawbackDate,
@@ -860,6 +963,7 @@ func TestMsgUpdateAirdrop_ValidateBasic(t *testing.T) {
 			msg: types.MsgUpdateAirdrop{
 				Admin:                 adminAddress,
 				AirdropId:             validAirdropId,
+				RewardDenom:           validRewardDenom,
 				DistributionStartDate: &validDistributionStartDate,
 				DistributionEndDate:   &validDistributionStartDate,
 				ClawbackDate:          &validClawbackDate,
@@ -875,6 +979,7 @@ func TestMsgUpdateAirdrop_ValidateBasic(t *testing.T) {
 			msg: types.MsgUpdateAirdrop{
 				Admin:                 adminAddress,
 				AirdropId:             validAirdropId,
+				RewardDenom:           validRewardDenom,
 				DistributionStartDate: &endDatePlusDelta,
 				DistributionEndDate:   &validDistributionEndDate,
 				ClawbackDate:          &validClawbackDate,
@@ -890,6 +995,7 @@ func TestMsgUpdateAirdrop_ValidateBasic(t *testing.T) {
 			msg: types.MsgUpdateAirdrop{
 				Admin:                 adminAddress,
 				AirdropId:             validAirdropId,
+				RewardDenom:           validRewardDenom,
 				DistributionStartDate: &validDistributionStartDate,
 				DistributionEndDate:   &validDistributionEndDate,
 				ClawbackDate:          &validClawbackDate,
@@ -905,6 +1011,7 @@ func TestMsgUpdateAirdrop_ValidateBasic(t *testing.T) {
 			msg: types.MsgUpdateAirdrop{
 				Admin:                 adminAddress,
 				AirdropId:             validAirdropId,
+				RewardDenom:           validRewardDenom,
 				DistributionStartDate: &validDistributionStartDate,
 				DistributionEndDate:   &validDistributionEndDate,
 				ClawbackDate:          &validClawbackDate,
@@ -920,6 +1027,7 @@ func TestMsgUpdateAirdrop_ValidateBasic(t *testing.T) {
 			msg: types.MsgUpdateAirdrop{
 				Admin:                 adminAddress,
 				AirdropId:             validAirdropId,
+				RewardDenom:           validRewardDenom,
 				DistributionStartDate: &validDistributionStartDate,
 				DistributionEndDate:   &validDistributionEndDate,
 				ClawbackDate:          &validClawbackDate,
@@ -935,6 +1043,7 @@ func TestMsgUpdateAirdrop_ValidateBasic(t *testing.T) {
 			msg: types.MsgUpdateAirdrop{
 				Admin:                 adminAddress,
 				AirdropId:             validAirdropId,
+				RewardDenom:           validRewardDenom,
 				DistributionStartDate: &validDistributionStartDate,
 				DistributionEndDate:   &validDistributionEndDate,
 				ClawbackDate:          &validClawbackDate,
@@ -950,6 +1059,7 @@ func TestMsgUpdateAirdrop_ValidateBasic(t *testing.T) {
 			msg: types.MsgUpdateAirdrop{
 				Admin:                 adminAddress,
 				AirdropId:             validAirdropId,
+				RewardDenom:           validRewardDenom,
 				DistributionStartDate: &validDistributionStartDate,
 				DistributionEndDate:   &validDistributionEndDate,
 				ClawbackDate:          &validDistributionEndDate,
@@ -965,6 +1075,7 @@ func TestMsgUpdateAirdrop_ValidateBasic(t *testing.T) {
 			msg: types.MsgUpdateAirdrop{
 				Admin:                 adminAddress,
 				AirdropId:             validAirdropId,
+				RewardDenom:           validRewardDenom,
 				DistributionStartDate: &validDistributionStartDate,
 				DistributionEndDate:   &validDistributionEndDate,
 				ClawbackDate:          &endDateMinusDelta,
@@ -980,6 +1091,7 @@ func TestMsgUpdateAirdrop_ValidateBasic(t *testing.T) {
 			msg: types.MsgUpdateAirdrop{
 				Admin:                 adminAddress,
 				AirdropId:             validAirdropId,
+				RewardDenom:           validRewardDenom,
 				DistributionStartDate: &validDistributionStartDate,
 				DistributionEndDate:   &validDistributionEndDate,
 				ClawbackDate:          &validClawbackDate,
@@ -994,6 +1106,7 @@ func TestMsgUpdateAirdrop_ValidateBasic(t *testing.T) {
 			msg: types.MsgUpdateAirdrop{
 				Admin:                 adminAddress,
 				AirdropId:             validAirdropId,
+				RewardDenom:           validRewardDenom,
 				DistributionStartDate: &validDistributionStartDate,
 				DistributionEndDate:   &validDistributionEndDate,
 				ClawbackDate:          &validClawbackDate,
@@ -1008,6 +1121,7 @@ func TestMsgUpdateAirdrop_ValidateBasic(t *testing.T) {
 			msg: types.MsgUpdateAirdrop{
 				Admin:                 adminAddress,
 				AirdropId:             validAirdropId,
+				RewardDenom:           validRewardDenom,
 				DistributionStartDate: &validDistributionStartDate,
 				DistributionEndDate:   &validDistributionEndDate,
 				ClawbackDate:          &validClawbackDate,
@@ -1023,6 +1137,7 @@ func TestMsgUpdateAirdrop_ValidateBasic(t *testing.T) {
 			msg: types.MsgUpdateAirdrop{
 				Admin:                 adminAddress,
 				AirdropId:             validAirdropId,
+				RewardDenom:           validRewardDenom,
 				DistributionStartDate: &validDistributionStartDate,
 				DistributionEndDate:   &validDistributionEndDate,
 				ClawbackDate:          &validClawbackDate,
@@ -1038,6 +1153,7 @@ func TestMsgUpdateAirdrop_ValidateBasic(t *testing.T) {
 			msg: types.MsgUpdateAirdrop{
 				Admin:                 adminAddress,
 				AirdropId:             validAirdropId,
+				RewardDenom:           validRewardDenom,
 				DistributionStartDate: &validDistributionStartDate,
 				DistributionEndDate:   &validDistributionEndDate,
 				ClawbackDate:          &validClawbackDate,
@@ -1053,6 +1169,7 @@ func TestMsgUpdateAirdrop_ValidateBasic(t *testing.T) {
 			msg: types.MsgUpdateAirdrop{
 				Admin:                 adminAddress,
 				AirdropId:             validAirdropId,
+				RewardDenom:           validRewardDenom,
 				DistributionStartDate: &validDistributionStartDate,
 				DistributionEndDate:   &validDistributionEndDate,
 				ClawbackDate:          &validClawbackDate,
@@ -1080,6 +1197,7 @@ func TestMsgUpdateAirdrop_GetSignBytes(t *testing.T) {
 	admin := "admin"
 	airdropId := "airdrop"
 	distributionAddress := "distributor"
+	rewardDenom := "denom"
 
 	distributionStartDate := time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC)
 	distributionEndDate := time.Date(2024, 6, 1, 0, 0, 0, 0, time.UTC)
@@ -1092,6 +1210,7 @@ func TestMsgUpdateAirdrop_GetSignBytes(t *testing.T) {
 	msg := types.NewMsgUpdateAirdrop(
 		admin,
 		airdropId,
+		rewardDenom,
 		&distributionStartDate,
 		&distributionEndDate,
 		&clawbackDate,
@@ -1112,7 +1231,8 @@ func TestMsgUpdateAirdrop_GetSignBytes(t *testing.T) {
 		"distribution_address":"distributor",
 		"distribution_end_date":"2024-06-01T00:00:00Z",
 		"distribution_start_date":"2024-01-01T00:00:00Z",
-		"early_claim_penalty":"0.500000000000000000"}}`)
+		"early_claim_penalty":"0.500000000000000000",
+		"reward_denom":"denom"}}`)
 
 	re := regexp.MustCompile(`\s+`)
 	expected = re.ReplaceAllString(expected, "")

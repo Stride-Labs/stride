@@ -25,7 +25,7 @@ var _ types.MsgServer = msgServer{}
 func (ms msgServer) ClaimDaily(goCtx context.Context, msg *types.MsgClaimDaily) (*types.MsgClaimDailyResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	err := ms.Keeper.ClaimDaily(ctx, msg.Claimer)
+	err := ms.Keeper.ClaimDaily(ctx, msg.AirdropId, msg.Claimer)
 	if err != nil {
 		return nil, err
 	}
@@ -37,7 +37,7 @@ func (ms msgServer) ClaimDaily(goCtx context.Context, msg *types.MsgClaimDaily) 
 func (ms msgServer) ClaimEarly(goCtx context.Context, msg *types.MsgClaimEarly) (*types.MsgClaimEarlyResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	err := ms.Keeper.ClaimEarly(ctx, msg.Claimer)
+	err := ms.Keeper.ClaimEarly(ctx, msg.AirdropId, msg.Claimer)
 	if err != nil {
 		return nil, err
 	}
@@ -50,7 +50,7 @@ func (ms msgServer) ClaimEarly(goCtx context.Context, msg *types.MsgClaimEarly) 
 func (ms msgServer) ClaimAndStake(goCtx context.Context, msg *types.MsgClaimAndStake) (*types.MsgClaimAndStakeResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	err := ms.Keeper.ClaimAndStake(ctx, msg.Claimer)
+	err := ms.Keeper.ClaimAndStake(ctx, msg.AirdropId, msg.Claimer, msg.ValidatorAddress)
 	if err != nil {
 		return nil, err
 	}

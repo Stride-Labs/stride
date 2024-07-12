@@ -14,6 +14,7 @@ import (
 var (
 	UserAddress = "address"
 	AirdropId   = "airdrop"
+	RewardDenom = "denom"
 
 	DistributionStartDate = time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC)
 	DistributionEndDate   = time.Date(2024, 6, 1, 0, 0, 0, 0, time.UTC)

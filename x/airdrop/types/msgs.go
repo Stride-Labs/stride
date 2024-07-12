@@ -189,6 +189,7 @@ func (msg *MsgClaimAndStake) ValidateBasic() error {
 func NewMsgCreateAirdrop(
 	admin string,
 	airdropId string,
+	rewardDenom string,
 	distributionStartDate *time.Time,
 	distributionEndDate *time.Time,
 	clawbackDate *time.Time,
@@ -200,6 +201,7 @@ func NewMsgCreateAirdrop(
 	return &MsgCreateAirdrop{
 		Admin:                 admin,
 		AirdropId:             airdropId,
+		RewardDenom:           rewardDenom,
 		DistributionStartDate: distributionStartDate,
 		DistributionEndDate:   distributionEndDate,
 		ClawbackDate:          clawbackDate,
@@ -241,6 +243,9 @@ func (msg *MsgCreateAirdrop) ValidateBasic() error {
 
 	if msg.AirdropId == "" {
 		return errors.New("airdrop-id must be specified")
+	}
+	if msg.RewardDenom == "" {
+		return errors.New("reward denom must be specified")
 	}
 
 	if msg.DistributionStartDate == nil || *msg.DistributionStartDate == (time.Time{}) {
@@ -297,6 +302,7 @@ func (msg *MsgCreateAirdrop) ValidateBasic() error {
 func NewMsgUpdateAirdrop(
 	admin string,
 	airdropId string,
+	rewardDenom string,
 	distributionStartDate *time.Time,
 	distributionEndDate *time.Time,
 	clawbackDate *time.Time,
@@ -308,6 +314,7 @@ func NewMsgUpdateAirdrop(
 	return &MsgUpdateAirdrop{
 		Admin:                 admin,
 		AirdropId:             airdropId,
+		RewardDenom:           rewardDenom,
 		DistributionStartDate: distributionStartDate,
 		DistributionEndDate:   distributionEndDate,
 		ClawbackDate:          clawbackDate,
@@ -349,6 +356,9 @@ func (msg *MsgUpdateAirdrop) ValidateBasic() error {
 
 	if msg.AirdropId == "" {
 		return errors.New("airdrop-id must be specified")
+	}
+	if msg.RewardDenom == "" {
+		return errors.New("reward denom must be specified")
 	}
 
 	if msg.DistributionStartDate == nil || *msg.DistributionStartDate == (time.Time{}) {
