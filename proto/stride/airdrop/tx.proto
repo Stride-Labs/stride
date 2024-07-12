@@ -33,7 +33,10 @@ message MsgClaimDaily {
   option (cosmos.msg.v1.signer) = "claimer";
   option (amino.name) = "airdrop/MsgClaimDaily";
 
+  // Address of the claimer
   string claimer = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+  // Airdrop ID
+  string airdrop_id = 2;
 }
 message MsgClaimDailyResponse {}
 
@@ -42,7 +45,10 @@ message MsgClaimEarly {
   option (cosmos.msg.v1.signer) = "claimer";
   option (amino.name) = "airdrop/MsgClaimEarly";
 
+  // Address of the claimer
   string claimer = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+  // Airdrop ID
+  string airdrop_id = 2;
 }
 message MsgClaimEarlyResponse {}
 
@@ -51,6 +57,11 @@ message MsgClaimAndStake {
   option (cosmos.msg.v1.signer) = "claimer";
   option (amino.name) = "airdrop/MsgClaimAndStake";
 
+  // Address of the claimer
   string claimer = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+  // Airdrop ID
+  string airdrop_id = 2;
+  // Validator address to delegate to when staking
+  string validator_address = 3;
 }
 message MsgClaimAndStakeResponse {}

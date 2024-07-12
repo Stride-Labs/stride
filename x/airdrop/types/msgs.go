@@ -28,9 +28,10 @@ var (
 //               MsgClaim
 // ----------------------------------------------
 
-func NewMsgClaimDaily(claimer string) *MsgClaimDaily {
+func NewMsgClaimDaily(claimer, airdropId string) *MsgClaimDaily {
 	return &MsgClaimDaily{
-		Claimer: claimer,
+		Claimer:   claimer,
+		AirdropId: airdropId,
 	}
 }
 
@@ -68,9 +69,11 @@ func (msg *MsgClaimDaily) ValidateBasic() error {
 //               MsgClaimAndStake
 // ----------------------------------------------
 
-func NewMsgClaimAndStake(claimer string) *MsgClaimAndStake {
+func NewMsgClaimAndStake(claimer, airdropId, validatorAddress string) *MsgClaimAndStake {
 	return &MsgClaimAndStake{
-		Claimer: claimer,
+		Claimer:          claimer,
+		AirdropId:        airdropId,
+		ValidatorAddress: validatorAddress,
 	}
 }
 
@@ -108,9 +111,10 @@ func (msg *MsgClaimAndStake) ValidateBasic() error {
 //               MsgClaimEarly
 // ----------------------------------------------
 
-func NewMsgClaimEarly(claimer string) *MsgClaimEarly {
+func NewMsgClaimEarly(claimer, airdropId string) *MsgClaimEarly {
 	return &MsgClaimEarly{
-		Claimer: claimer,
+		Claimer:   claimer,
+		AirdropId: airdropId,
 	}
 }
 
