@@ -15,5 +15,6 @@ var (
 	ErrClaimTypeUnavailable        = sdkerrors.Register(ModuleName, 2005, "claim type is unavailable due to a previous selection")
 	ErrDistributionNotStarted      = sdkerrors.Register(ModuleName, 2006, "airdrop distribution has not started")
 	ErrDistributionEnded           = sdkerrors.Register(ModuleName, 2007, "airdrop distribution has ended")
-	ErrNoUnclaimedRewards          = sdkerrors.Register(ModuleName, 2008, "no unclaimed rewards for today")
+	ErrNoUnclaimedRewards          = sdkerrors.Register(ModuleName, 2008, "no unclaimed rewards")
+	ErrAfterDecisionDeadline       = sdkerrors.Register(ModuleName, 2009, "claim type decision deadline passed")
 )
