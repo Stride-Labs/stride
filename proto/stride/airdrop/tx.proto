@@ -114,14 +114,14 @@ message MsgCreateAirdrop {
   // Penalty for claiming rewards early - e.g. 0.5 means claiming early will
   // result in losing 50% of rewards
   string early_claim_penalty = 8 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
     (gogoproto.nullable) = false
   ];
 
   // Bonus rewards for choosing to claim and stake - e.g. 0.05 means stakers
   // will receive a 5% bonus
   string claim_and_stake_bonus = 9 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
     (gogoproto.nullable) = false
   ];
 
@@ -166,14 +166,14 @@ message MsgUpdateAirdrop {
   // Penalty for claiming rewards early - e.g. 0.5 means claiming early will
   // result in losing 50% of rewards
   string early_claim_penalty = 8 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
     (gogoproto.nullable) = false
   ];
 
   // Bonus rewards for choosing to claim and stake - e.g. 0.05 means stakers
   // will receive a 5% bonus
   string claim_and_stake_bonus = 9 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
     (gogoproto.nullable) = false
   ];
 
@@ -188,7 +188,7 @@ message RawAllocation {
   string user_address = 1;
   repeated string allocations = 4 [
     (gogoproto.nullable) = false,
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int"
+    (gogoproto.customtype) = "cosmossdk.io/math.Int"
   ];
 }
 
@@ -226,7 +226,7 @@ message MsgUpdateUserAllocation {
   // day
   repeated string allocations = 4 [
     (gogoproto.nullable) = false,
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int"
+    (gogoproto.customtype) = "cosmossdk.io/math.Int"
   ];
 }
 message MsgUpdateUserAllocationResponse {}

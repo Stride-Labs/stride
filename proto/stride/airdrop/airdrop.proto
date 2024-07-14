@@ -40,7 +40,7 @@ message UserAllocation {
 
   // The total amount of tokens that have already been claimed
   string claimed = 3 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
     (gogoproto.nullable) = false
   ];
 
@@ -65,7 +65,7 @@ message UserAllocation {
   //   Day 1: {claimed:15, allocations:[0,0,0], claim_type:CLAIM_EARLY}
   repeated string allocations = 4 [
     (gogoproto.nullable) = false,
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int"
+    (gogoproto.customtype) = "cosmossdk.io/math.Int"
   ];
 
   // The claim type (claim daily, claim early, claim and stake)
@@ -105,14 +105,14 @@ message Airdrop {
   // Penalty for claiming rewards early - e.g. 0.5 means claiming early will
   // result in losing 50% of rewards
   string early_claim_penalty = 7 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
     (gogoproto.nullable) = false
   ];
 
   // Bonus rewards for choosing to claim and stake - e.g. 0.05 means stakers
   // will receive a 5% bonus
   string claim_and_stake_bonus = 8 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
     (gogoproto.nullable) = false
   ];
 
