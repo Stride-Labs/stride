@@ -27,6 +27,21 @@ enum ClaimType {
   CLAIM_EARLY = 3;
 }
 
+// UserLinks tracks the mapping of host addresses to stirde addresses for an
+// airdrop
+message UserLinks {
+  // ID of the airdrop
+  string airdrop_id = 1;
+
+  // Stride address of the account that is receiving the airdrop allocation
+  string stride_address = 2 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+
+  // non-stride addresses of the account that is receiving the airdrop
+  // allocation
+  repeated string host_addresses = 3
+      [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+}
+
 // UserAllocation tracks the status of an allocation for a user on a specific
 // airdrop
 message UserAllocation {

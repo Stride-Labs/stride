@@ -35,6 +35,7 @@ func (s *KeeperTestSuite) TestClaimDaily() {
 		expectedClaimed     int64
 		expectedNewRewards  int64
 		initialClaimType    types.ClaimType
+		expectedClaimType   types.ClaimType
 		expectedError       string
 	}{
 		{
@@ -48,6 +49,7 @@ func (s *KeeperTestSuite) TestClaimDaily() {
 			expectedClaimed:     100 + 10,
 			expectedNewRewards:  10,
 			initialClaimType:    types.UNSPECIFIED,
+			expectedClaimType:   types.CLAIM_DAILY,
 		},
 		{
 			// 10 rewards accrued on each of 3 days
@@ -60,6 +62,7 @@ func (s *KeeperTestSuite) TestClaimDaily() {
 			expectedClaimed:     100 + 20,
 			expectedNewRewards:  20,
 			initialClaimType:    types.UNSPECIFIED,
+			expectedClaimType:   types.CLAIM_DAILY,
 		},
 		{
 			// 10 rewards accrued on each of 3 days
@@ -72,6 +75,7 @@ func (s *KeeperTestSuite) TestClaimDaily() {
 			expectedClaimed:     100 + 30,
 			expectedNewRewards:  30,
 			initialClaimType:    types.UNSPECIFIED,
+			expectedClaimType:   types.CLAIM_DAILY,
 		},
 		{
 			// Previous daily claims causing earlier days to be 0
@@ -84,6 +88,7 @@ func (s *KeeperTestSuite) TestClaimDaily() {
 			expectedClaimed:     100 + 10,
 			expectedNewRewards:  10,
 			initialClaimType:    types.CLAIM_DAILY,
+			expectedClaimType:   types.CLAIM_DAILY,
 		},
 		{
 			// Claimer already chose claim early
@@ -105,12 +110,15 @@ func (s *KeeperTestSuite) TestClaimDaily() {
 		},
 		{
 			// Claimer has no rewards on the current day
-			name:               "no rewards today",
-			timeOffset:         time.Hour * 49, // one hour into third window
-			initialAllocations: []int64{0, 0, 0, 20},
-			initialClaimed:     100,
-			initialClaimType:   types.UNSPECIFIED,
-			expectedError:      "no unclaimed rewards",
+			name:                "no rewards today",
+			timeOffset:          time.Hour * 49, // one hour into third window
+			initialAllocations:  []int64{0, 0, 0, 20},
+			expectedAllocations: []int64{0, 0, 0, 20},
+			initialClaimed:      100,
+			expectedClaimed:     100,
+			expectedNewRewards:  0,
+			initialClaimType:    types.UNSPECIFIED,
+			expectedClaimType:   types.UNSPECIFIED,
 		},
 		{
 			// Claimed 1 hour before the airdrop started
@@ -186,7 +194,7 @@ func (s *KeeperTestSuite) TestClaimDaily() {
 			userAllocation := s.MustGetUserAllocation(AirdropId, claimer.String())
 			s.Require().Equal(tc.expectedAllocations, allocationsToInt64(userAllocation.Allocations), "allocations")
 			s.Require().Equal(tc.expectedClaimed, userAllocation.Claimed.Int64(), "claimed")
-			s.Require().Equal(types.CLAIM_DAILY, userAllocation.ClaimType, "claim types")
+			s.Require().Equal(tc.expectedClaimType, userAllocation.ClaimType, "claim types")
 
 			// Confirm funds were decremented from the distributor
 			expectedDistributorBalance := initialDistributorBalance.Sub(sdkmath.NewInt(tc.expectedNewRewards))
@@ -211,6 +219,7 @@ func (s *KeeperTestSuite) TestClaimEarly() {
 		expectedClaimed    int64
 		expectedNewRewards int64
 		initialClaimType   types.ClaimType
+		expectedClaimType  types.ClaimType
 		expectedError      string
 	}{
 		{
@@ -223,6 +232,7 @@ func (s *KeeperTestSuite) TestClaimEarly() {
 			expectedClaimed:    100 + 30,
 			expectedNewRewards: 15,
 			initialClaimType:   types.UNSPECIFIED,
+			expectedClaimType:  types.CLAIM_EARLY,
 		},
 		{
 			// Claimed early middway through the second day
@@ -234,6 +244,7 @@ func (s *KeeperTestSuite) TestClaimEarly() {
 			expectedClaimed:    100 + 20,
 			expectedNewRewards: 10,
 			initialClaimType:   types.UNSPECIFIED,
+			expectedClaimType:  types.CLAIM_EARLY,
 		},
 		{
 			// Previous daily claims causing earlier days to be 0
@@ -245,6 +256,7 @@ func (s *KeeperTestSuite) TestClaimEarly() {
 			expectedClaimed:    100 + 30,
 			expectedNewRewards: 15,
 			initialClaimType:   types.CLAIM_DAILY,
+			expectedClaimType:  types.CLAIM_EARLY,
 		},
 		{
 			// Claimer already chose claim early
@@ -270,8 +282,10 @@ func (s *KeeperTestSuite) TestClaimEarly() {
 			timeOffset:         time.Hour * 49, // one hour into third window
 			initialAllocations: []int64{0, 0, 0, 0},
 			initialClaimed:     100,
+			expectedClaimed:    100,
+			expectedNewRewards: 0,
 			initialClaimType:   types.UNSPECIFIED,
-			expectedError:      "no unclaimed rewards",
+			expectedClaimType:  types.UNSPECIFIED,
 		},
 		{
 			// Claimed 1 hour before the airdrop started
@@ -347,7 +361,7 @@ func (s *KeeperTestSuite) TestClaimEarly() {
 			// Check that the user was updated
 			userAllocation := s.MustGetUserAllocation(AirdropId, claimer.String())
 			s.Require().Equal(tc.expectedClaimed, userAllocation.Claimed.Int64(), "claimed")
-			s.Require().Equal(types.CLAIM_EARLY, userAllocation.ClaimType, "claim types")
+			s.Require().Equal(tc.expectedClaimType, userAllocation.ClaimType, "claim types")
 			for _, allocation := range userAllocation.Allocations {
 				s.Require().Zero(allocation.Int64(), "allocations should be 0")
 			}
