@@ -189,54 +189,59 @@ func (s *KeeperTestSuite) TestClaimDaily() {
 }
 
 func (s *KeeperTestSuite) TestClaimEarly() {
-	earlyClaimPenalty := sdk.MustNewDecFromStr("0.5")
-
 	testCases := []struct {
-		name               string
-		timeOffset         time.Duration
-		initialAllocations []int64
-		initialClaimed     int64
-		expectedClaimed    int64
-		expectedNewRewards int64
-		expectedForfeited  int64
-		initialClaimType   types.ClaimType
-		expectedError      string
+		name                      string
+		timeOffset                time.Duration
+		penalty                   sdk.Dec
+		initialAllocations        []int64
+		initialClaimed            int64
+		expectedClaimed           int64
+		expectedForfeited         int64
+		expectedUserBalanceChange int64
+		initialClaimType          types.ClaimType
+		expectedError             string
 	}{
 		{
 			// Claimed early middway through the first day
-			// 10 rewards on each of 3 days, 30 total rewards, 15 distributed (from penalty)
-			name:               "claim early the first day",
-			timeOffset:         time.Hour, // one hour into first window
-			initialAllocations: []int64{10, 10, 10},
-			initialClaimed:     100,
-			expectedClaimed:    100 + 15,
-			expectedNewRewards: 15,
-			expectedForfeited:  15,
-			initialClaimType:   types.CLAIM_DAILY,
+			// 10 rewards on each of 3 days, 30 total rewards
+			// 50% penalty, 15 distributed, 15 forfeited
+			name:                      "claim early the first day",
+			timeOffset:                time.Hour, // one hour into first window
+			penalty:                   sdk.MustNewDecFromStr("0.5"),
+			initialAllocations:        []int64{10, 10, 10},
+			initialClaimed:            100,
+			expectedClaimed:           100 + 15,
+			expectedForfeited:         15,
+			expectedUserBalanceChange: 15,
+			initialClaimType:          types.CLAIM_DAILY,
 		},
 		{
 			// Claimed early middway through the second day
-			// 10 rewards on each of last 2 days, 20 total rewards, 10 distributed (from penalty)
-			name:               "claim the second day",
-			timeOffset:         time.Hour * 25, // one hour into second window
-			initialAllocations: []int64{0, 10, 10},
-			initialClaimed:     100,
-			expectedClaimed:    100 + 10,
-			expectedNewRewards: 10,
-			expectedForfeited:  10,
-			initialClaimType:   types.CLAIM_DAILY,
+			// 10 rewards on each of last 2 days, 20 total rewards
+			// 25% penalty, 15 distributed, 5 forfeited
+			name:                      "claim the second day",
+			timeOffset:                time.Hour * 25, // one hour into second window
+			penalty:                   sdk.MustNewDecFromStr("0.25"),
+			initialAllocations:        []int64{0, 10, 10},
+			initialClaimed:            100,
+			expectedClaimed:           100 + 15,
+			expectedForfeited:         5,
+			expectedUserBalanceChange: 15,
+			initialClaimType:          types.CLAIM_DAILY,
 		},
 		{
 			// Previous daily claims causing earlier days to be 0
-			// Claimed on the third day, 30 rewards remaining, 15 distributed (from penalty)
-			name:               "claim with previous claims",
-			timeOffset:         time.Hour * 49, // one hour into third window
-			initialAllocations: []int64{0, 0, 10, 20},
-			initialClaimed:     100,
-			expectedClaimed:    100 + 15,
-			expectedNewRewards: 15,
-			expectedForfeited:  15,
-			initialClaimType:   types.CLAIM_DAILY,
+			// Claimed on the third day, 30 rewards remaining
+			// 10% penalty, 27 distributed, 3 forfeited
+			name:                      "claim with previous claims",
+			timeOffset:                time.Hour * 49, // one hour into third window
+			penalty:                   sdk.MustNewDecFromStr("0.1"),
+			initialAllocations:        []int64{0, 0, 10, 20},
+			initialClaimed:            100,
+			expectedClaimed:           100 + 27,
+			expectedUserBalanceChange: 27,
+			expectedForfeited:         3,
+			initialClaimType:          types.CLAIM_DAILY,
 		},
 		{
 			// Claimer already chose claim early
@@ -258,14 +263,14 @@ func (s *KeeperTestSuite) TestClaimEarly() {
 		},
 		{
 			// Claimer has no rewards remaining
-			name:               "no rewards",
-			timeOffset:         time.Hour * 49, // one hour into third window
-			initialAllocations: []int64{0, 0, 0, 0},
-			initialClaimed:     100,
-			expectedClaimed:    100,
-			expectedNewRewards: 0,
-			initialClaimType:   types.CLAIM_DAILY,
-			expectedError:      "no unclaimed rewards",
+			name:                      "no rewards",
+			timeOffset:                time.Hour * 49, // one hour into third window
+			initialAllocations:        []int64{0, 0, 0, 0},
+			initialClaimed:            100,
+			expectedClaimed:           100,
+			expectedUserBalanceChange: 0,
+			initialClaimType:          types.CLAIM_DAILY,
+			expectedError:             "no unclaimed rewards",
 		},
 		{
 			// Claimed 1 hour before the airdrop started
@@ -311,7 +316,7 @@ func (s *KeeperTestSuite) TestClaimEarly() {
 				DistributionAddress:   distributor.String(),
 				DistributionStartDate: &DistributionStartDate,
 				ClaimTypeDeadlineDate: &DeadlineDate,
-				EarlyClaimPenalty:     earlyClaimPenalty,
+				EarlyClaimPenalty:     tc.penalty,
 			})
 
 			// Set the block time to the distribution start time plus the offset
@@ -346,13 +351,13 @@ func (s *KeeperTestSuite) TestClaimEarly() {
 			}
 
 			// Confirm funds were decremented from the distributor
-			expectedDistributorBalance := initialDistributorBalance.Sub(sdkmath.NewInt(tc.expectedNewRewards))
+			expectedDistributorBalance := initialDistributorBalance.Sub(sdkmath.NewInt(tc.expectedUserBalanceChange))
 			actualDistributorBalance := s.App.BankKeeper.GetBalance(s.Ctx, distributor, RewardDenom).Amount
 			s.Require().Equal(expectedDistributorBalance.Int64(), actualDistributorBalance.Int64(), "distributor balance")
 
 			// Confirm funds were sent to the user
 			claimerBalance := s.App.BankKeeper.GetBalance(s.Ctx, claimer, RewardDenom).Amount
-			s.Require().Equal(tc.expectedNewRewards, claimerBalance.Int64(), "claimer balance")
+			s.Require().Equal(tc.expectedUserBalanceChange, claimerBalance.Int64(), "claimer balance")
 		})
 	}
 }

@@ -1088,8 +1088,8 @@ const _ = grpc.SupportPackageIsVersion4
 type MsgClient interface {
 	// User transaction to claim all the pending daily airdrop rewards
 	ClaimDaily(ctx context.Context, in *MsgClaimDaily, opts ...grpc.CallOption) (*MsgClaimDailyResponse, error)
-	// User transaction to claim half of their total amount now, and forfeit the
-	// other half to be clawed back
+	// User transaction to claim a portion of their total amount now, and forfeit
+	// the remainder to be clawed back
 	ClaimEarly(ctx context.Context, in *MsgClaimEarly, opts ...grpc.CallOption) (*MsgClaimEarlyResponse, error)
 	// User transaction to claim and automatically lock stake their whole airdrop
 	// amount now. The funds can be unstaked by the user once the airdrop is over
@@ -1191,8 +1191,8 @@ func (c *msgClient) LinkAddresses(ctx context.Context, in *MsgLinkAddresses, opt
 type MsgServer interface {
 	// User transaction to claim all the pending daily airdrop rewards
 	ClaimDaily(context.Context, *MsgClaimDaily) (*MsgClaimDailyResponse, error)
-	// User transaction to claim half of their total amount now, and forfeit the
-	// other half to be clawed back
+	// User transaction to claim a portion of their total amount now, and forfeit
+	// the remainder to be clawed back
 	ClaimEarly(context.Context, *MsgClaimEarly) (*MsgClaimEarlyResponse, error)
 	// User transaction to claim and automatically lock stake their whole airdrop
 	// amount now. The funds can be unstaked by the user once the airdrop is over

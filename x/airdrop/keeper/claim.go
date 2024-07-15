@@ -11,23 +11,13 @@ import (
 // User transaction to claim all the pending airdrop rewards up to the current day
 func (k Keeper) ClaimDaily(ctx sdk.Context, airdropId, claimer string) error {
 	// Fetch the airdrop and user's allocations
-	airdrop, found := k.GetAirdrop(ctx, airdropId)
-	if !found {
+	airdrop, airdropFound := k.GetAirdrop(ctx, airdropId)
+	if !airdropFound {
 		return types.ErrAirdropNotFound.Wrapf("airdrop %s", airdropId)
 	}
-	userAllocation, found := k.GetUserAllocation(ctx, airdropId, claimer)
-	if !found {
+	userAllocation, userFound := k.GetUserAllocation(ctx, airdropId, claimer)
+	if !userFound {
 		return types.ErrUserAllocationNotFound.Wrapf("user %s for airdrop %s", claimer, airdropId)
-	}
-
-	// Confirm the distributor and claimer are valid addresses
-	distributorAccount, err := sdk.AccAddressFromBech32(airdrop.DistributionAddress)
-	if err != nil {
-		return errorsmod.Wrapf(err, "invalid distributor address")
-	}
-	claimerAccount, err := sdk.AccAddressFromBech32(userAllocation.Address)
-	if err != nil {
-		return errorsmod.Wrapf(err, "invalid claimer address")
 	}
 
 	// Confirm the user has not elected the non-daily claim types
@@ -63,7 +53,10 @@ func (k Keeper) ClaimDaily(ctx sdk.Context, airdropId, claimer string) error {
 	userAllocation.ClaimType = types.CLAIM_DAILY
 
 	// Distribute rewards from the distributor
+	distributorAccount := sdk.MustAccAddressFromBech32(airdrop.DistributionAddress)
+	claimerAccount := sdk.MustAccAddressFromBech32(userAllocation.Address)
 	rewardsCoin := sdk.NewCoin(airdrop.RewardDenom, todaysRewards)
+
 	if err := k.bankKeeper.SendCoins(ctx, distributorAccount, claimerAccount, sdk.NewCoins(rewardsCoin)); err != nil {
 		return errorsmod.Wrapf(err, "unable to distribute rewards")
 	}
@@ -80,25 +73,17 @@ func (k Keeper) ClaimAndStake(ctx sdk.Context, airdropId, claimer, validatorAddr
 	return nil
 }
 
+// User transaction to claim a portion of their total amount now, and forfeit the
+// remainder to be clawed back
 func (k Keeper) ClaimEarly(ctx sdk.Context, airdropId, claimer string) error {
 	// Fetch the airdrop and user's allocations
-	airdrop, found := k.GetAirdrop(ctx, airdropId)
-	if !found {
+	airdrop, airdropFound := k.GetAirdrop(ctx, airdropId)
+	if !airdropFound {
 		return types.ErrAirdropNotFound.Wrapf("airdrop %s", airdropId)
 	}
-	userAllocation, found := k.GetUserAllocation(ctx, airdropId, claimer)
-	if !found {
+	userAllocation, userFound := k.GetUserAllocation(ctx, airdropId, claimer)
+	if !userFound {
 		return types.ErrUserAllocationNotFound.Wrapf("user %s for airdrop %s", claimer, airdropId)
-	}
-
-	// Confirm the distributor and claimer are valid addresses
-	distributorAccount, err := sdk.AccAddressFromBech32(airdrop.DistributionAddress)
-	if err != nil {
-		return errorsmod.Wrapf(err, "invalid distributor address")
-	}
-	claimerAccount, err := sdk.AccAddressFromBech32(userAllocation.Address)
-	if err != nil {
-		return errorsmod.Wrapf(err, "invalid claimer address")
 	}
 
 	// Confirm the user has not elected the non-daily claim types
@@ -119,25 +104,38 @@ func (k Keeper) ClaimEarly(ctx sdk.Context, airdropId, claimer string) error {
 	}
 
 	// Sum the total rewards 0 them out in the process
-	todaysRewards := sdkmath.ZeroInt()
+	totalAccruedRewards := sdkmath.ZeroInt()
 	for i, rewardsOnDate := range userAllocation.Allocations {
-		todaysRewards = todaysRewards.Add(rewardsOnDate)
+		totalAccruedRewards = totalAccruedRewards.Add(rewardsOnDate)
 		userAllocation.Allocations[i] = sdkmath.ZeroInt()
 	}
 
 	// If there are no rewards, alert the user with an error
-	if todaysRewards.IsZero() {
+	if totalAccruedRewards.IsZero() {
 		return types.ErrNoUnclaimedRewards
 	}
 
+	// Calculate rewards after claim early penalty
+	rewardsRemainingRate := sdk.OneDec().Sub(airdrop.EarlyClaimPenalty)
+	distributedRewards := sdk.NewDecFromInt(totalAccruedRewards).Mul(rewardsRemainingRate).TruncateInt()
+
 	// Update the amount claimed on the allocation record
-	userAllocation.Claimed = userAllocation.Claimed.Add(todaysRewards)
+	// claimed += distributedRewards
+	userAllocation.Claimed = userAllocation.Claimed.Add(distributedRewards)
+
+	// Update the amount forfeited on the allocation record
+	// forfeited += totalAccruedRewards - distributedRewards
+	// Note: forfeited should be zero before the next operation,
+	// but we're doing += just in case there's a scenario where it's not zero in the future
+	userAllocation.Forfeited = userAllocation.Forfeited.Add(totalAccruedRewards.Sub(distributedRewards))
 
 	// Flag the user's claim type decision
 	userAllocation.ClaimType = types.CLAIM_EARLY
 
 	// Distribute rewards from the distributor, deducting the early penalty
-	distributedRewards := sdk.NewDecFromInt(todaysRewards).Mul(airdrop.EarlyClaimPenalty).TruncateInt()
+	distributorAccount := sdk.MustAccAddressFromBech32(airdrop.DistributionAddress)
+	claimerAccount := sdk.MustAccAddressFromBech32(userAllocation.Address)
+
 	rewardsCoin := sdk.NewCoin(airdrop.RewardDenom, distributedRewards)
 	if err := k.bankKeeper.SendCoins(ctx, distributorAccount, claimerAccount, sdk.NewCoins(rewardsCoin)); err != nil {
 		return errorsmod.Wrapf(err, "unable to distribute rewards")
