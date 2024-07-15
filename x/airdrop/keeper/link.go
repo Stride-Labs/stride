@@ -8,7 +8,7 @@ import (
 )
 
 // Adds a user link record to the store
-func (k Keeper) AddUserLink(ctx sdk.Context, airdropId, strideAddress, hostAddress string) error {
+func (k Keeper) AddUserLink(ctx sdk.Context, airdropId, strideAddress, hostAddress string) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.UserLinksKeyPrefix)
 	// Fetch current user links
 	key := types.UserLinksKey(airdropId, strideAddress)
@@ -29,7 +29,7 @@ func (k Keeper) AddUserLink(ctx sdk.Context, airdropId, strideAddress, hostAddre
 	// Check that the new host address is not already linked to this airdrop
 	for _, existingHostAddress := range userLinks.HostAddresses {
 		if existingHostAddress == hostAddress {
-			return types.ErrUserAllocationNotFound.Wrapf("stride address '%s' for airdrop '%s' already linked to host address '%s'", strideAddress, airdropId, hostAddress)
+			return
 		}
 	}
 	// Append the new host address
@@ -44,8 +44,6 @@ func (k Keeper) AddUserLink(ctx sdk.Context, airdropId, strideAddress, hostAddre
 	// Marshal and set the new link record in the store
 	userLinksBz = k.cdc.MustMarshal(&userLinks)
 	store.Set(key, userLinksBz)
-
-	return nil
 }
 
 // Removes a user links record from the store
