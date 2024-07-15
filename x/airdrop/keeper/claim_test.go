@@ -321,7 +321,7 @@ func (s *KeeperTestSuite) TestClaimEarly() {
 				s.Require().ErrorContains(actualError, tc.expectedError)
 				return
 			}
-			s.Require().NoError(actualError, "no error expected when claiming daily")
+			s.Require().NoError(actualError, "no error expected when claiming early")
 
 			// Check that the user was updated
 			userAllocation := s.MustGetUserAllocation(AirdropId, claimer.String())
@@ -340,6 +340,111 @@ func (s *KeeperTestSuite) TestClaimEarly() {
 			// Confirm funds were sent to the user
 			claimerBalance := s.App.BankKeeper.GetBalance(s.Ctx, claimer, RewardDenom).Amount
 			s.Require().Equal(tc.expectedUserBalanceChange, claimerBalance.Int64(), "claimer balance")
+		})
+	}
+}
+
+func (s *KeeperTestSuite) TestLinkAddresses() {
+	testCases := []struct {
+		name                string
+		initialClaimType    types.ClaimType
+		initialClaimed      sdkmath.Int
+		strideAllocations   []int64
+		hostAllocations     []int64
+		expectedAllocations []int64
+		expectedError       string
+	}{
+		{
+			name:                "no stride allocations",
+			initialClaimType:    types.CLAIM_DAILY,
+			initialClaimed:      sdkmath.ZeroInt(),
+			strideAllocations:   nil,
+			hostAllocations:     []int64{10, 20, 30},
+			expectedAllocations: []int64{10, 20, 30},
+		},
+		{
+			name:                "stride and host allocations",
+			initialClaimType:    types.CLAIM_DAILY,
+			initialClaimed:      sdkmath.NewInt(10),
+			strideAllocations:   []int64{10, 20, 30},
+			hostAllocations:     []int64{40, 50, 60},
+			expectedAllocations: []int64{50, 70, 90},
+		},
+		{
+			name:                "user previously claimed early",
+			initialClaimType:    types.CLAIM_EARLY,
+			initialClaimed:      sdkmath.NewInt(20),
+			strideAllocations:   []int64{0, 0, 0},
+			hostAllocations:     []int64{40, 50, 60},
+			expectedAllocations: []int64{40, 50, 60},
+		},
+		{
+			name:                "link after no more left to claim",
+			initialClaimType:    types.CLAIM_EARLY,
+			initialClaimed:      sdkmath.NewInt(100),
+			strideAllocations:   []int64{0, 0, 0},
+			hostAllocations:     []int64{0, 0, 0},
+			expectedAllocations: []int64{0, 0, 0},
+		},
+		{
+			name:              "different allocation lengths",
+			initialClaimType:  types.CLAIM_DAILY,
+			initialClaimed:    sdkmath.NewInt(100),
+			strideAllocations: []int64{10, 20, 30},
+			hostAllocations:   []int64{40, 50},
+			expectedError:     "allocations are not the same length",
+		},
+	}
+
+	for _, tc := range testCases {
+		s.Run(tc.name, func() {
+			s.SetupTest() // reset state
+
+			strideAddress := "stride"
+			hostAddress := "host"
+
+			// Create the initial airdrop (it only has to exist)
+			s.App.AirdropKeeper.SetAirdrop(s.Ctx, types.Airdrop{
+				Id: AirdropId,
+			})
+
+			// Create the stride and host allocations
+			if tc.strideAllocations != nil {
+				s.App.AirdropKeeper.SetUserAllocation(s.Ctx, types.UserAllocation{
+					AirdropId:   AirdropId,
+					Address:     strideAddress,
+					ClaimType:   tc.initialClaimType,
+					Allocations: allocationsToSdkInt(tc.strideAllocations),
+					Claimed:     tc.initialClaimed,
+				})
+			}
+			s.App.AirdropKeeper.SetUserAllocation(s.Ctx, types.UserAllocation{
+				AirdropId:   AirdropId,
+				Address:     hostAddress,
+				ClaimType:   tc.initialClaimType,
+				Allocations: allocationsToSdkInt(tc.hostAllocations),
+				Claimed:     sdkmath.ZeroInt(),
+			})
+
+			// Call link
+			actualError := s.App.AirdropKeeper.LinkAddresses(s.Ctx, AirdropId, strideAddress, hostAddress)
+			if tc.expectedError != "" {
+				s.Require().ErrorContains(actualError, tc.expectedError)
+				return
+			}
+			s.Require().NoError(actualError, "no error expected when linking")
+
+			// Check that the stride user was created (if it didn't already exist)
+			strideUserAllocation, strideFound := s.App.AirdropKeeper.GetUserAllocation(s.Ctx, AirdropId, strideAddress)
+			s.Require().True(strideFound, "stride user allocation should have been created or modified")
+			s.Require().Equal(types.CLAIM_DAILY, strideUserAllocation.ClaimType, "claim types")
+			s.Require().Equal(tc.initialClaimed.Int64(), strideUserAllocation.Claimed.Int64(), "claimed amount should not have changed")
+			s.Require().Equal(tc.expectedAllocations, allocationsToInt64(strideUserAllocation.Allocations),
+				"stride allocations")
+
+			// Check that the host user was removed
+			_, hostFound := s.App.AirdropKeeper.GetUserAllocation(s.Ctx, AirdropId, hostAddress)
+			s.Require().False(hostFound, "host user allocation should have been removed")
 		})
 	}
 }

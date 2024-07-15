@@ -67,12 +67,6 @@ func (k Keeper) ClaimDaily(ctx sdk.Context, airdropId, claimer string) error {
 	return nil
 }
 
-func (k Keeper) ClaimAndStake(ctx sdk.Context, airdropId, claimer, validatorAddress string) error {
-	// TODO[airdrop] implement logic
-
-	return nil
-}
-
 // User transaction to claim a portion of their total amount now, and forfeit the
 // remainder to be clawed back
 func (k Keeper) ClaimEarly(ctx sdk.Context, airdropId, claimer string) error {
@@ -144,6 +138,61 @@ func (k Keeper) ClaimEarly(ctx sdk.Context, airdropId, claimer string) error {
 
 	// Update the reward record for to mark the progress
 	k.SetUserAllocation(ctx, userAllocation)
+
+	return nil
+}
+
+// Admin transaction to merge allocations between a stride and non-stride address
+// If the stride address does not yet have an allocation, the host allocation will be overwritten
+// with the stride address
+// Otherwise, if the stride allocation already exists, the two allocations will be merged and set
+// in on the stride allocation
+// We can safely change the type back to DAILY because if a user claimed early, their allocations
+// will be set to 0 (they will have no remaining allocations)
+// There's no need to merge the Claimed or Forfeited amounts because the host allocations cannot
+// be claimed through a non-stride address
+func (k Keeper) LinkAddresses(ctx sdk.Context, airdropId, strideAddress, hostAddress string) error {
+	// Fetch the airdrop and user's allocations
+	_, airdropFound := k.GetAirdrop(ctx, airdropId)
+	if !airdropFound {
+		return types.ErrAirdropNotFound.Wrapf("airdrop %s", airdropId)
+	}
+	hostAllocation, hostFound := k.GetUserAllocation(ctx, airdropId, hostAddress)
+	if !hostFound {
+		return types.ErrUserAllocationNotFound.Wrapf("user %s for airdrop %s", hostAddress, airdropId)
+	}
+	strideAllocation, strideFound := k.GetUserAllocation(ctx, airdropId, strideAddress)
+
+	// If the stride user doesn't exist yet, just update the address in the host allocation
+	// to the the stride address overwrite it
+	// Also reset the claim type to DAILY
+	if !strideFound {
+		hostAllocation.Address = strideAddress
+		hostAllocation.ClaimType = types.CLAIM_DAILY
+		k.RemoveUserAllocation(ctx, airdropId, hostAddress)
+		k.SetUserAllocation(ctx, hostAllocation)
+		return nil
+	}
+
+	// Confirm the stride and host allocations are the same length
+	if len(strideAllocation.Allocations) != len(hostAllocation.Allocations) {
+		return errorsmod.Wrapf(types.ErrFailedToLinkAddresses,
+			"stride (%s) and host (%s) allocations are not the same length", strideAddress, hostAllocation.Address)
+	}
+
+	// If the stride user does exist, merge the two allocations into the stride user
+	for i, strideRewards := range strideAllocation.Allocations {
+		hostReward := hostAllocation.Allocations[i]
+		strideAllocation.Allocations[i] = strideRewards.Add(hostReward)
+	}
+
+	// Reset the claim type to daily
+	// That's to support the use case of a stride user claiming early and then linking a host address
+	strideAllocation.ClaimType = types.CLAIM_DAILY
+
+	// Use the stride allocation as the canonical one moving forward and remove the host allocation
+	k.SetUserAllocation(ctx, strideAllocation)
+	k.RemoveUserAllocation(ctx, airdropId, hostAddress)
 
 	return nil
 }

@@ -17,4 +17,5 @@ var (
 	ErrDistributionEnded           = sdkerrors.Register(ModuleName, 2007, "airdrop distribution has ended")
 	ErrNoUnclaimedRewards          = sdkerrors.Register(ModuleName, 2008, "no unclaimed rewards")
 	ErrAfterDecisionDeadline       = sdkerrors.Register(ModuleName, 2009, "claim type decision deadline passed")
+	ErrFailedToLinkAddresses       = sdkerrors.Register(ModuleName, 2010, "unable to link addresses")
 )
