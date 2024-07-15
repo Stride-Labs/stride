@@ -59,8 +59,14 @@ message UserAllocation {
     (gogoproto.nullable) = false
   ];
 
+  // The total amount of tokens that have been forfeited by the user for
+  // claiming early
+  string forfeited = 4 [
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
+    (gogoproto.nullable) = false
+  ];
+
   // The current state of allocations for this airdrop
-  //
   //
   // Ex 1:
   //   Day 0: {claimed:0, allocations:[10,10,10], claim_type:DAILY}
@@ -78,17 +84,17 @@ message UserAllocation {
   //   Day 0: {claimed:0, allocations:[10,10,10], claim_type:DAILY}
   //   *MsgClaimEarly*
   //   Day 1: {claimed:15, allocations:[0,0,0], claim_type:CLAIM_EARLY}
-  repeated string allocations = 4 [
+  repeated string allocations = 5 [
     (gogoproto.nullable) = false,
     (gogoproto.customtype) = "cosmossdk.io/math.Int"
   ];
 
   // The claim type (claim daily, claim early, claim and stake)
-  ClaimType claim_type = 5;
+  ClaimType claim_type = 6;
 
   // If the user decides to claim and stake, this will hold the validator
   // address that they will evenually stake to
-  string validator_address = 6;
+  string validator_address = 7;
 }
 
 // Airdrop track the aggregate unbondings across an epoch

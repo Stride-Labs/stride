@@ -107,6 +107,7 @@ func (s *KeeperTestSuite) TestAddAllocations() {
 		s.Require().Equal(expectedAllocation.UserAddress, userAllocation.Address, "user address")
 		s.Require().Equal(expectedAllocation.Allocations, userAllocation.Allocations, "allocations")
 		s.Require().Equal(sdkmath.ZeroInt(), userAllocation.Claimed, "claimed")
+		s.Require().Equal(sdkmath.ZeroInt(), userAllocation.Forfeited, "forfeited")
 		s.Require().Equal(types.UNSPECIFIED, userAllocation.ClaimType, "claim type")
 	}
 

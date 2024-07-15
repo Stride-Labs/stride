@@ -31,6 +31,8 @@ func (s *KeeperTestSuite) TestClaimDaily() {
 		timeOffset          time.Duration
 		initialAllocations  []int64
 		expectedAllocations []int64
+		initialForfeited    int64
+		expectedForfeited   int64
 		initialClaimed      int64
 		expectedClaimed     int64
 		expectedNewRewards  int64
@@ -179,6 +181,7 @@ func (s *KeeperTestSuite) TestClaimDaily() {
 				Address:     claimer.String(),
 				ClaimType:   tc.initialClaimType,
 				Claimed:     sdkmath.NewInt(tc.initialClaimed),
+				Forfeited:   sdkmath.NewInt(tc.initialForfeited),
 				Allocations: allocationsToSdkInt(tc.initialAllocations),
 			})
 
@@ -194,6 +197,7 @@ func (s *KeeperTestSuite) TestClaimDaily() {
 			userAllocation := s.MustGetUserAllocation(AirdropId, claimer.String())
 			s.Require().Equal(tc.expectedAllocations, allocationsToInt64(userAllocation.Allocations), "allocations")
 			s.Require().Equal(tc.expectedClaimed, userAllocation.Claimed.Int64(), "claimed")
+			s.Require().Equal(tc.expectedForfeited, userAllocation.Forfeited.Int64(), "forfeited")
 			s.Require().Equal(tc.expectedClaimType, userAllocation.ClaimType, "claim types")
 
 			// Confirm funds were decremented from the distributor
@@ -218,6 +222,8 @@ func (s *KeeperTestSuite) TestClaimEarly() {
 		initialClaimed     int64
 		expectedClaimed    int64
 		expectedNewRewards int64
+		initialForfeited   int64
+		expectedForfeited  int64
 		initialClaimType   types.ClaimType
 		expectedClaimType  types.ClaimType
 		expectedError      string
@@ -229,8 +235,9 @@ func (s *KeeperTestSuite) TestClaimEarly() {
 			timeOffset:         time.Hour, // one hour into first window
 			initialAllocations: []int64{10, 10, 10},
 			initialClaimed:     100,
-			expectedClaimed:    100 + 30,
+			expectedClaimed:    100 + 15,
 			expectedNewRewards: 15,
+			expectedForfeited:  15,
 			initialClaimType:   types.UNSPECIFIED,
 			expectedClaimType:  types.CLAIM_EARLY,
 		},
@@ -241,8 +248,9 @@ func (s *KeeperTestSuite) TestClaimEarly() {
 			timeOffset:         time.Hour * 25, // one hour into second window
 			initialAllocations: []int64{0, 10, 10},
 			initialClaimed:     100,
-			expectedClaimed:    100 + 20,
+			expectedClaimed:    100 + 10,
 			expectedNewRewards: 10,
+			expectedForfeited:  10,
 			initialClaimType:   types.UNSPECIFIED,
 			expectedClaimType:  types.CLAIM_EARLY,
 		},
@@ -253,8 +261,9 @@ func (s *KeeperTestSuite) TestClaimEarly() {
 			timeOffset:         time.Hour * 49, // one hour into third window
 			initialAllocations: []int64{0, 0, 10, 20},
 			initialClaimed:     100,
-			expectedClaimed:    100 + 30,
+			expectedClaimed:    100 + 15,
 			expectedNewRewards: 15,
+			expectedForfeited:  15,
 			initialClaimType:   types.CLAIM_DAILY,
 			expectedClaimType:  types.CLAIM_EARLY,
 		},
@@ -347,6 +356,7 @@ func (s *KeeperTestSuite) TestClaimEarly() {
 				Address:     claimer.String(),
 				ClaimType:   tc.initialClaimType,
 				Claimed:     sdkmath.NewInt(tc.initialClaimed),
+				Forfeited:   sdkmath.NewInt(tc.initialForfeited),
 				Allocations: allocationsToSdkInt(tc.initialAllocations),
 			})
 
@@ -361,6 +371,7 @@ func (s *KeeperTestSuite) TestClaimEarly() {
 			// Check that the user was updated
 			userAllocation := s.MustGetUserAllocation(AirdropId, claimer.String())
 			s.Require().Equal(tc.expectedClaimed, userAllocation.Claimed.Int64(), "claimed")
+			s.Require().Equal(tc.expectedForfeited, userAllocation.Forfeited.Int64(), "forfeited")
 			s.Require().Equal(tc.expectedClaimType, userAllocation.ClaimType, "claim types")
 			for _, allocation := range userAllocation.Allocations {
 				s.Require().Zero(allocation.Int64(), "allocations should be 0")

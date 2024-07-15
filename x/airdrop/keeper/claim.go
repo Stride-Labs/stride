@@ -132,25 +132,34 @@ func (k Keeper) ClaimEarly(ctx sdk.Context, airdropId, claimer string) error {
 		}
 
 		// Sum the total rewards 0 them out in the process
-		todaysRewards := sdkmath.ZeroInt()
+		totalPendingRewards := sdkmath.ZeroInt()
 		for i, rewardsOnDate := range userAllocation.Allocations {
-			todaysRewards = todaysRewards.Add(rewardsOnDate)
+			totalPendingRewards = totalPendingRewards.Add(rewardsOnDate)
 			userAllocation.Allocations[i] = sdkmath.ZeroInt()
 		}
 
 		// If there are no rewards, continue to check the next allocation
-		if todaysRewards.IsZero() {
+		if totalPendingRewards.IsZero() {
 			continue
 		}
 
+		// Calculate rewards after claim early penalty
+		distributedRewards := sdk.NewDecFromInt(totalPendingRewards).Mul(airdrop.EarlyClaimPenalty).TruncateInt()
+
 		// Update the amount claimed on the allocation record
-		userAllocation.Claimed = userAllocation.Claimed.Add(todaysRewards)
+		// claimed += distributedRewards
+		userAllocation.Claimed = userAllocation.Claimed.Add(distributedRewards)
+
+		// Update the amount forfeited on the allocation record
+		// forfeited += totalPendingRewards - distributedRewards
+		// Note: forfeited should be zero before the next operation,
+		// but we're doing += just in case there's a scenario where it's not zero in the future
+		userAllocation.Forfeited = userAllocation.Forfeited.Add(totalPendingRewards.Sub(distributedRewards))
 
 		// Flag the user's claim type decision
 		userAllocation.ClaimType = types.CLAIM_EARLY
 
 		// Distribute rewards from the distributor, deducting the early penalty
-		distributedRewards := sdk.NewDecFromInt(todaysRewards).Mul(airdrop.EarlyClaimPenalty).TruncateInt()
 		rewardsCoin := sdk.NewCoin(airdrop.RewardDenom, distributedRewards)
 		if err := k.bankKeeper.SendCoins(ctx, distributorAccount, claimerStrideAccount, sdk.NewCoins(rewardsCoin)); err != nil {
 			return errorsmod.Wrapf(err, "unable to distribute rewards")

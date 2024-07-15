@@ -113,6 +113,7 @@ func (k Keeper) UserSummary(goCtx context.Context, req *types.QueryUserSummaryRe
 	summary := &types.QueryUserSummaryResponse{
 		ClaimType: allocation.ClaimType.String(),
 		Claimed:   allocation.Claimed,
+		Forfeited: allocation.Forfeited,
 		Remaining: allocation.RemainingAllocations(),
 	}
 

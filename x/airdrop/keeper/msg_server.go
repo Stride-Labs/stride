@@ -121,6 +121,7 @@ func (ms msgServer) AddAllocations(goCtx context.Context, msg *types.MsgAddAlloc
 			AirdropId:        msg.AirdropId,
 			Address:          rawAllocation.UserAddress,
 			Claimed:          sdkmath.ZeroInt(),
+			Forfeited:        sdkmath.ZeroInt(),
 			Allocations:      rawAllocation.Allocations,
 			ClaimType:        types.UNSPECIFIED,
 			ValidatorAddress: "",

@@ -123,6 +123,7 @@ func (s *KeeperTestSuite) TestQueryUserAllocations() {
 func (s *KeeperTestSuite) TestQueryUserSummary() {
 	// Create a user allocation with 10 claimed and a few days remaining
 	claimed := sdkmath.NewInt(10)
+	forfeited := sdkmath.ZeroInt()
 	remaining := sdkmath.NewInt(1 + 5 + 3)
 	claimType := types.CLAIM_AND_STAKE
 
@@ -130,6 +131,7 @@ func (s *KeeperTestSuite) TestQueryUserSummary() {
 		AirdropId: AirdropId,
 		Address:   UserAddress,
 		Claimed:   claimed,
+		Forfeited: forfeited,
 		ClaimType: claimType,
 		Allocations: []sdkmath.Int{
 			sdkmath.ZeroInt(),
@@ -148,6 +150,7 @@ func (s *KeeperTestSuite) TestQueryUserSummary() {
 	resp, err := s.App.AirdropKeeper.UserSummary(sdk.WrapSDKContext(s.Ctx), req)
 	s.Require().NoError(err, "no error expected when querying user summary")
 	s.Require().Equal(claimed, resp.Claimed, "amount claimed")
+	s.Require().Equal(forfeited, resp.Forfeited, "amount forfeited")
 	s.Require().Equal(remaining, resp.Remaining, "amount remaining")
 	s.Require().Equal(claimType.String(), resp.ClaimType, "amount remaining")
 }

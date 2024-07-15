@@ -15,6 +15,7 @@ func newUserAllocation(airdropId, address string) types.UserAllocation {
 		AirdropId: airdropId,
 		Address:   address,
 		Claimed:   sdkmath.ZeroInt(),
+		Forfeited: sdkmath.ZeroInt(),
 	}
 }
 
