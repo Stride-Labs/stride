@@ -56,3 +56,10 @@ func (s *KeeperTestSuite) MustGetUserAllocation(airdropId, address string) types
 	s.Require().True(found, "user allocation for %s and %s should have been found", airdropId, address)
 	return userAllocation
 }
+
+// Helper function to get a user allocation and confirm there's no error
+func (s *KeeperTestSuite) MustGetUserLinks(airdropId, strideAddress string) types.UserLinks {
+	userLinks, found := s.App.AirdropKeeper.GetUserLinks(s.Ctx, airdropId, strideAddress)
+	s.Require().True(found, "user links for %s and %s should have been found", airdropId, strideAddress)
+	return userLinks
+}
