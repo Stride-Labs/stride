@@ -158,7 +158,10 @@ func (ms msgServer) LinkAddresses(goCtx context.Context, msg *types.MsgLinkAddre
 		return nil, types.ErrAirdropNotFound.Wrapf("airdrop %s", msg.AirdropId)
 	}
 
-	ms.Keeper.AddUserLink(ctx, msg.AirdropId, msg.StrideAddress, msg.HostAddress)
+	err := ms.Keeper.AddUserLink(ctx, msg.AirdropId, msg.StrideAddress, msg.HostAddress)
+	if err != nil {
+		return nil, types.ErrAddUserLink.Wrapf(err.Error())
+	}
 
 	return &types.MsgLinkAddressesResponse{}, nil
 }
