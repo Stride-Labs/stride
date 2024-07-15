@@ -485,7 +485,6 @@ func NewStrideApp(
 	app.AirdropKeeper = airdropkeeper.NewKeeper(
 		appCodec,
 		keys[airdroptypes.StoreKey],
-		app.AccountKeeper,
 		app.BankKeeper,
 	)
 	airdropModule := airdrop.NewAppModule(appCodec, app.AirdropKeeper)
