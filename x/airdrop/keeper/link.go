@@ -51,7 +51,7 @@ func (k Keeper) AddUserLink(ctx sdk.Context, airdropId, strideAddress, hostAddre
 }
 
 // Removes a user links record from the store
-func (k Keeper) RemoveAllUserLinks(ctx sdk.Context, airdropId, strideAddress string) {
+func (k Keeper) RemoveUserLinks(ctx sdk.Context, airdropId, strideAddress string) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.UserLinksKeyPrefix)
 	key := types.UserLinksKey(airdropId, strideAddress)
 
@@ -79,16 +79,18 @@ func (k Keeper) RemoveUserLink(ctx sdk.Context, airdropId, strideAddress, hostAd
 	key := types.UserLinksKey(airdropId, strideAddress)
 	userLinksBz := store.Get(key)
 
+	// If there are no user links yet, create a new one with the given host address
+	userLinks := types.UserLinks{}
+
 	// If there are user links, unmarshal them and append the new host address
 	// Otherwise, return (nothing to remove)
-	var userLinks types.UserLinks
 	if len(userLinksBz) != 0 {
 		k.cdc.MustUnmarshal(userLinksBz, &userLinks)
 	} else {
 		return
 	}
 
-	// Create a new slice without the one to be removed
+	// Check that the new host address is not already linked to this airdrop
 	newHostAddresses := []string{}
 	for _, existingHostAddress := range userLinks.HostAddresses {
 		if existingHostAddress != hostAddress {
