@@ -15,9 +15,8 @@ import (
 )
 
 const (
-	TypeMsgClaimDaily    = "claim_daily"
-	TypeMsgClaimAndStake = "claim_and_stake"
-	TypeMsgClaimEarly    = "claim_early"
+	TypeMsgClaimDaily = "claim_daily"
+	TypeMsgClaimEarly = "claim_early"
 
 	TypeMsgCreateAirdrop        = "create_airdrop"
 	TypeMsgUpdateAirdrop        = "update_airdrop"
@@ -28,7 +27,6 @@ const (
 
 var (
 	_ sdk.Msg = &MsgClaimDaily{}
-	_ sdk.Msg = &MsgClaimAndStake{}
 	_ sdk.Msg = &MsgClaimEarly{}
 
 	_ sdk.Msg = &MsgCreateAirdrop{}
@@ -39,7 +37,6 @@ var (
 
 	// Implement legacy interface for ledger support
 	_ legacytx.LegacyMsg = &MsgClaimDaily{}
-	_ legacytx.LegacyMsg = &MsgClaimAndStake{}
 	_ legacytx.LegacyMsg = &MsgClaimEarly{}
 
 	_ legacytx.LegacyMsg = &MsgCreateAirdrop{}
@@ -130,53 +127,6 @@ func (msg *MsgClaimEarly) ValidateBasic() error {
 	}
 	if msg.AirdropId == "" {
 		return errors.New("airdrop-id must be specified")
-	}
-
-	return nil
-}
-
-// ----------------------------------------------
-//               MsgClaimAndStake
-// ----------------------------------------------
-
-func NewMsgClaimAndStake(claimer, airdropId, validatorAddress string) *MsgClaimAndStake {
-	return &MsgClaimAndStake{
-		Claimer:          claimer,
-		AirdropId:        airdropId,
-		ValidatorAddress: validatorAddress,
-	}
-}
-
-func (msg MsgClaimAndStake) Type() string {
-	return TypeMsgClaimAndStake
-}
-
-func (msg MsgClaimAndStake) Route() string {
-	return RouterKey
-}
-
-func (msg *MsgClaimAndStake) GetSigners() []sdk.AccAddress {
-	claimer, err := sdk.AccAddressFromBech32(msg.Claimer)
-	if err != nil {
-		panic(err)
-	}
-	return []sdk.AccAddress{claimer}
-}
-
-func (msg *MsgClaimAndStake) GetSignBytes() []byte {
-	bz := ModuleCdc.MustMarshalJSON(msg)
-	return sdk.MustSortJSON(bz)
-}
-
-func (msg *MsgClaimAndStake) ValidateBasic() error {
-	if _, err := sdk.AccAddressFromBech32(msg.Claimer); err != nil {
-		return errorsmod.Wrapf(sdkerrors.ErrInvalidAddress, "invalid address (%s)", err)
-	}
-	if msg.AirdropId == "" {
-		return errors.New("airdrop-id must be specified")
-	}
-	if _, err := sdk.ValAddressFromBech32(msg.ValidatorAddress); err != nil {
-		return errorsmod.Wrapf(sdkerrors.ErrInvalidAddress, "invalid validator address (%s)", err)
 	}
 
 	return nil

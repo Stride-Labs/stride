@@ -12,7 +12,6 @@ import (
 func RegisterLegacyAminoCodec(cdc *codec.LegacyAmino) {
 	legacy.RegisterAminoMsg(cdc, &MsgClaimDaily{}, "airdrop/MsgClaimDaily")
 	legacy.RegisterAminoMsg(cdc, &MsgClaimEarly{}, "airdrop/MsgClaimEarly")
-	legacy.RegisterAminoMsg(cdc, &MsgClaimAndStake{}, "airdrop/MsgClaimAndStake")
 	legacy.RegisterAminoMsg(cdc, &MsgCreateAirdrop{}, "airdrop/MsgCreateAirdrop")
 	legacy.RegisterAminoMsg(cdc, &MsgUpdateAirdrop{}, "airdrop/MsgUpdateAirdrop")
 	legacy.RegisterAminoMsg(cdc, &MsgAddAllocations{}, "airdrop/MsgAddAllocations")
@@ -24,7 +23,6 @@ func RegisterInterfaces(registry cdctypes.InterfaceRegistry) {
 	registry.RegisterImplementations((*sdk.Msg)(nil),
 		&MsgClaimDaily{},
 		&MsgClaimEarly{},
-		&MsgClaimAndStake{},
 		&MsgCreateAirdrop{},
 		&MsgUpdateAirdrop{},
 		&MsgAddAllocations{},

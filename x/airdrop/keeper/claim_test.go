@@ -85,15 +85,6 @@ func (s *KeeperTestSuite) TestClaimDaily() {
 			expectedError:      "user has already elected claim option",
 		},
 		{
-			// Claimer already chose claim and stake
-			name:               "already chose to claim and stake",
-			timeOffset:         time.Hour,
-			initialAllocations: []int64{},
-			initialClaimed:     100,
-			initialClaimType:   types.CLAIM_AND_STAKE,
-			expectedError:      "user has already elected claim option",
-		},
-		{
 			// Claimer has no rewards on the current day
 			name:               "no rewards today",
 			timeOffset:         time.Hour * 49, // one hour into third window
@@ -250,15 +241,6 @@ func (s *KeeperTestSuite) TestClaimEarly() {
 			initialAllocations: []int64{},
 			initialClaimed:     100,
 			initialClaimType:   types.CLAIM_EARLY,
-			expectedError:      "user has already elected claim option",
-		},
-		{
-			// Claimer already chose claim and stake
-			name:               "already chose to claim and stake",
-			timeOffset:         time.Hour,
-			initialAllocations: []int64{},
-			initialClaimed:     100,
-			initialClaimType:   types.CLAIM_AND_STAKE,
 			expectedError:      "user has already elected claim option",
 		},
 		{

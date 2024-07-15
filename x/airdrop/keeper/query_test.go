@@ -125,7 +125,7 @@ func (s *KeeperTestSuite) TestQueryUserSummary() {
 	claimed := sdkmath.NewInt(10)
 	forfeited := sdkmath.ZeroInt()
 	remaining := sdkmath.NewInt(1 + 5 + 3)
-	claimType := types.CLAIM_AND_STAKE
+	claimType := types.CLAIM_EARLY
 
 	userAllocation := types.UserAllocation{
 		AirdropId: AirdropId,

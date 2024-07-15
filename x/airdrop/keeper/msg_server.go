@@ -45,19 +45,6 @@ func (ms msgServer) ClaimEarly(goCtx context.Context, msg *types.MsgClaimEarly) 
 	return &types.MsgClaimEarlyResponse{}, nil
 }
 
-// User transaction to claim and stake the full airdrop amount
-// The rewards will be locked until the end of the distribution period, but will recieve rewards throughout this time
-func (ms msgServer) ClaimAndStake(goCtx context.Context, msg *types.MsgClaimAndStake) (*types.MsgClaimAndStakeResponse, error) {
-	ctx := sdk.UnwrapSDKContext(goCtx)
-
-	err := ms.Keeper.ClaimAndStake(ctx, msg.AirdropId, msg.Claimer, msg.ValidatorAddress)
-	if err != nil {
-		return nil, err
-	}
-
-	return &types.MsgClaimAndStakeResponse{}, nil
-}
-
 // Admin transaction to create a new airdrop
 func (ms msgServer) CreateAirdrop(goCtx context.Context, msg *types.MsgCreateAirdrop) (*types.MsgCreateAirdropResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
