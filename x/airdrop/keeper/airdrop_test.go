@@ -11,9 +11,8 @@ import (
 func (s *KeeperTestSuite) addAirdrops() (airdrops []types.Airdrop) {
 	for i := 0; i <= 4; i++ {
 		airdrop := types.Airdrop{
-			Id:                 fmt.Sprintf("airdrop-%d", i),
-			EarlyClaimPenalty:  sdk.ZeroDec(),
-			ClaimAndStakeBonus: sdk.ZeroDec(),
+			Id:                fmt.Sprintf("airdrop-%d", i),
+			EarlyClaimPenalty: sdk.ZeroDec(),
 		}
 		airdrops = append(airdrops, airdrop)
 		s.App.AirdropKeeper.SetAirdrop(s.Ctx, airdrop)

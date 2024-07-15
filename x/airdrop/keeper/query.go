@@ -97,7 +97,7 @@ func (k Keeper) AllAllocations(goCtx context.Context, req *types.QueryAllAllocat
 	}, nil
 }
 
-// Queries the state of an address for an airdrop (daily claim, claim & stake, upfront)
+// Queries the state of an address for an airdrop (daily claim or claim early)
 // and the amount claimed and remaining
 func (k Keeper) UserSummary(goCtx context.Context, req *types.QueryUserSummaryRequest) (*types.QueryUserSummaryResponse, error) {
 	if req == nil {

@@ -146,7 +146,6 @@ func NewMsgCreateAirdrop(
 	clawbackDate *time.Time,
 	claimDeadlineDate *time.Time,
 	earlyClaimPenalty sdk.Dec,
-	claimAndStakeBonus sdk.Dec,
 	distributionAddress string,
 ) *MsgCreateAirdrop {
 	return &MsgCreateAirdrop{
@@ -158,7 +157,6 @@ func NewMsgCreateAirdrop(
 		ClawbackDate:          clawbackDate,
 		ClaimTypeDeadlineDate: claimDeadlineDate,
 		EarlyClaimPenalty:     earlyClaimPenalty,
-		ClaimAndStakeBonus:    claimAndStakeBonus,
 		DistributionAddress:   distributionAddress,
 	}
 }
@@ -228,14 +226,8 @@ func (msg *MsgCreateAirdrop) ValidateBasic() error {
 	if msg.EarlyClaimPenalty.IsNil() {
 		return errors.New("early claim penalty must be specified")
 	}
-	if msg.ClaimAndStakeBonus.IsNil() {
-		return errors.New("claim and stake bonus must be specified")
-	}
 
 	if msg.EarlyClaimPenalty.LT(sdk.ZeroDec()) || msg.EarlyClaimPenalty.GT(sdk.OneDec()) {
-		return errors.New("early claim penalty must be between 0 and 1")
-	}
-	if msg.ClaimAndStakeBonus.LT(sdk.ZeroDec()) || msg.ClaimAndStakeBonus.GT(sdk.OneDec()) {
 		return errors.New("early claim penalty must be between 0 and 1")
 	}
 
@@ -259,7 +251,6 @@ func NewMsgUpdateAirdrop(
 	clawbackDate *time.Time,
 	claimDeadlineDate *time.Time,
 	earlyClaimPenalty sdk.Dec,
-	claimAndStakeBonus sdk.Dec,
 	distributionAddress string,
 ) *MsgUpdateAirdrop {
 	return &MsgUpdateAirdrop{
@@ -271,7 +262,6 @@ func NewMsgUpdateAirdrop(
 		ClawbackDate:          clawbackDate,
 		ClaimTypeDeadlineDate: claimDeadlineDate,
 		EarlyClaimPenalty:     earlyClaimPenalty,
-		ClaimAndStakeBonus:    claimAndStakeBonus,
 		DistributionAddress:   distributionAddress,
 	}
 }
@@ -341,14 +331,8 @@ func (msg *MsgUpdateAirdrop) ValidateBasic() error {
 	if msg.EarlyClaimPenalty.IsNil() {
 		return errors.New("early claim penalty must be specified")
 	}
-	if msg.ClaimAndStakeBonus.IsNil() {
-		return errors.New("claim and stake bonus must be specified")
-	}
 
 	if msg.EarlyClaimPenalty.LT(sdk.ZeroDec()) || msg.EarlyClaimPenalty.GT(sdk.OneDec()) {
-		return errors.New("early claim penalty must be between 0 and 1")
-	}
-	if msg.ClaimAndStakeBonus.LT(sdk.ZeroDec()) || msg.ClaimAndStakeBonus.GT(sdk.OneDec()) {
 		return errors.New("early claim penalty must be between 0 and 1")
 	}
 

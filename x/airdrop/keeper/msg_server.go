@@ -60,7 +60,6 @@ func (ms msgServer) CreateAirdrop(goCtx context.Context, msg *types.MsgCreateAir
 		ClawbackDate:          msg.ClawbackDate,
 		ClaimTypeDeadlineDate: msg.ClaimTypeDeadlineDate,
 		EarlyClaimPenalty:     msg.EarlyClaimPenalty,
-		ClaimAndStakeBonus:    msg.ClaimAndStakeBonus,
 		DistributionAddress:   msg.DistributionAddress,
 	}
 	ms.Keeper.SetAirdrop(ctx, airdrop)
@@ -83,7 +82,6 @@ func (ms msgServer) UpdateAirdrop(goCtx context.Context, msg *types.MsgUpdateAir
 		ClawbackDate:          msg.ClawbackDate,
 		ClaimTypeDeadlineDate: msg.ClaimTypeDeadlineDate,
 		EarlyClaimPenalty:     msg.EarlyClaimPenalty,
-		ClaimAndStakeBonus:    msg.ClaimAndStakeBonus,
 		DistributionAddress:   msg.DistributionAddress,
 	}
 	ms.Keeper.SetAirdrop(ctx, airdrop)
@@ -140,7 +138,10 @@ func (ms msgServer) UpdateUserAllocation(goCtx context.Context, msg *types.MsgUp
 // Admin address to link a stride and non-stride address, merging their allocations
 func (ms msgServer) LinkAddresses(goCtx context.Context, msg *types.MsgLinkAddresses) (*types.MsgLinkAddressesResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
-	_ = ctx
+
+	if err := ms.Keeper.LinkAddresses(ctx, msg.AirdropId, msg.StrideAddress, msg.HostAddress); err != nil {
+		return nil, err
+	}
 
 	return &types.MsgLinkAddressesResponse{}, nil
 }

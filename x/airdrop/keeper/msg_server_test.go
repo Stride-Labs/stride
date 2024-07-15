@@ -16,7 +16,6 @@ func (s *KeeperTestSuite) TestCreateAirdrop() {
 		ClawbackDate:          &ClawbackDate,
 		ClaimTypeDeadlineDate: &DeadlineDate,
 		EarlyClaimPenalty:     sdk.MustNewDecFromStr("0.5"),
-		ClaimAndStakeBonus:    sdk.MustNewDecFromStr("0.05"),
 		DistributionAddress:   "distributor",
 	}
 	_, err := s.GetMsgServer().CreateAirdrop(sdk.UnwrapSDKContext(s.Ctx), &msg)
@@ -30,7 +29,6 @@ func (s *KeeperTestSuite) TestCreateAirdrop() {
 	s.Require().Equal(msg.ClawbackDate, airdrop.ClawbackDate, "clawback date")
 	s.Require().Equal(msg.ClaimTypeDeadlineDate, airdrop.ClaimTypeDeadlineDate, "deadline date")
 	s.Require().Equal(msg.EarlyClaimPenalty, airdrop.EarlyClaimPenalty, "early claim penalty")
-	s.Require().Equal(msg.ClaimAndStakeBonus, airdrop.ClaimAndStakeBonus, "claim and stake bonus")
 	s.Require().Equal(msg.DistributionAddress, airdrop.DistributionAddress, "distribution address")
 
 	// Attempt to create it again, it should fail
@@ -52,7 +50,6 @@ func (s *KeeperTestSuite) TestUpdateAirdrop() {
 		ClawbackDate:          &ClawbackDate,
 		ClaimTypeDeadlineDate: &DeadlineDate,
 		EarlyClaimPenalty:     sdk.MustNewDecFromStr("0.8"),
-		ClaimAndStakeBonus:    sdk.MustNewDecFromStr("0.02"),
 		DistributionAddress:   "distributor2",
 	}
 	_, err := s.GetMsgServer().UpdateAirdrop(sdk.UnwrapSDKContext(s.Ctx), &msg)
@@ -66,7 +63,6 @@ func (s *KeeperTestSuite) TestUpdateAirdrop() {
 	s.Require().Equal(msg.ClawbackDate, airdrop.ClawbackDate, "clawback date")
 	s.Require().Equal(msg.ClaimTypeDeadlineDate, airdrop.ClaimTypeDeadlineDate, "deadline date")
 	s.Require().Equal(msg.EarlyClaimPenalty, airdrop.EarlyClaimPenalty, "early claim penalty")
-	s.Require().Equal(msg.ClaimAndStakeBonus, airdrop.ClaimAndStakeBonus, "claim and stake bonus")
 	s.Require().Equal(msg.DistributionAddress, airdrop.DistributionAddress, "distribution address")
 
 	// Remove the airdrop and try it again, it should error saying the airdrop doesn't exist

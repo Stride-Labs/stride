@@ -22,7 +22,6 @@ const (
 	FlagClawbackDate          = "clawback-date"
 	FlagClaimTypeDeadlineDate = "claim-type-deadline-date"
 	FlagEarlyClaimPenalty     = "early-claim-penalty"
-	FlagClaimAndStakeBonus    = "claim-and-stake-bonus"
 	FlagDistributionAddress   = "distribution-address"
 
 	FlagRewardDenom    = "reward-denom"
@@ -61,7 +60,7 @@ func CmdClaimDaily() *cobra.Command {
 		Short: "Claims all the pending airdrop rewards up to the current day",
 		Long: strings.TrimSpace(
 			fmt.Sprintf(`Claims all pending airdrop rewards up to the current day. 
-This option is only available if the user has not already elected to claim and stake or claim early
+This option is only available if the user has not already elected to claim early
 
 Example:
   $ %[1]s tx %[2]s claim-daily airdrop-1 --from user
@@ -149,7 +148,6 @@ Example:
 	--clawback-date            2024-07-01 \
 	--claim-type-deadline-date 2024-02-01 \
 	--early-claim-penalty      0.5 \
-	--claim-and-stake-bonus    0.05 \
 	--distribution-address     strideXXX \
 	--from admin
 `, version.AppName, types.ModuleName),
@@ -184,10 +182,6 @@ Example:
 			if err != nil {
 				return errorsmod.Wrapf(err, "unable to parse early claim penalty address")
 			}
-			stakeBonusString, err := cmd.Flags().GetString(FlagClaimAndStakeBonus)
-			if err != nil {
-				return errorsmod.Wrapf(err, "unable to parse claim and stake bonus")
-			}
 			distributionAddress, err := cmd.Flags().GetString(FlagDistributionAddress)
 			if err != nil {
 				return errorsmod.Wrapf(err, "unable to parse distribution address")
@@ -214,10 +208,6 @@ Example:
 			if err != nil {
 				return errorsmod.Wrapf(err, "unable to parse early penalty")
 			}
-			claimAndStakeBonus, err := sdk.NewDecFromStr(stakeBonusString)
-			if err != nil {
-				return errorsmod.Wrapf(err, "unable to parse claim and stake bonus")
-			}
 
 			clientCtx, err := client.GetClientTxContext(cmd)
 			if err != nil {
@@ -233,7 +223,6 @@ Example:
 				&clawbackDate,
 				&deadlineDate,
 				earlyClaimPenalty,
-				claimAndStakeBonus,
 				distributionAddress,
 			)
 
@@ -251,7 +240,6 @@ Example:
 	cmd.Flags().String(FlagClawbackDate, "", "Date when rewards are clawed back (after distribution end date)")
 	cmd.Flags().String(FlagClaimTypeDeadlineDate, "", "Deadline to decide on the claim type")
 	cmd.Flags().String(FlagEarlyClaimPenalty, "", "Decimal (0 to 1) representing the penalty for claiming early")
-	cmd.Flags().String(FlagClaimAndStakeBonus, "", "Decimal (0 to 1) representing the bonus for claiming and staking")
 	cmd.Flags().String(FlagDistributionAddress, "", "Address of the distributor account")
 
 	requiredFlags := []string{
@@ -260,7 +248,6 @@ Example:
 		FlagClawbackDate,
 		FlagClaimTypeDeadlineDate,
 		FlagEarlyClaimPenalty,
-		FlagClaimAndStakeBonus,
 		FlagDistributionAddress,
 	}
 	for _, flagName := range requiredFlags {
@@ -289,7 +276,6 @@ Example:
 	--clawback-date            2024-07-01 \
 	--claim-type-deadline-date 2024-02-01 \
 	--early-claim-penalty      0.5 \
-	--claim-and-stake-bonus    0.05 \
 	--distribution-address     strideXXX \
 	--from admin
 `, version.AppName, types.ModuleName),
@@ -324,10 +310,6 @@ Example:
 			if err != nil {
 				return errorsmod.Wrapf(err, "unable to parse early claim penalty address")
 			}
-			stakeBonusString, err := cmd.Flags().GetString(FlagClaimAndStakeBonus)
-			if err != nil {
-				return errorsmod.Wrapf(err, "unable to parse claim and stake bonus")
-			}
 			distributionAddress, err := cmd.Flags().GetString(FlagDistributionAddress)
 			if err != nil {
 				return errorsmod.Wrapf(err, "unable to parse distribution address")
@@ -354,10 +336,6 @@ Example:
 			if err != nil {
 				return errorsmod.Wrapf(err, "unable to parse early penalty")
 			}
-			claimAndStakeBonus, err := sdk.NewDecFromStr(stakeBonusString)
-			if err != nil {
-				return errorsmod.Wrapf(err, "unable to parse claim and stake bonus")
-			}
 
 			clientCtx, err := client.GetClientTxContext(cmd)
 			if err != nil {
@@ -373,7 +351,6 @@ Example:
 				&clawbackDate,
 				&deadlineDate,
 				earlyClaimPenalty,
-				claimAndStakeBonus,
 				distributionAddress,
 			)
 
@@ -392,7 +369,6 @@ Example:
 	cmd.Flags().String(FlagClawbackDate, "", "Date when rewards are clawed back (after distribution end date)")
 	cmd.Flags().String(FlagClaimTypeDeadlineDate, "", "Deadline to decide on the claim type")
 	cmd.Flags().String(FlagEarlyClaimPenalty, "", "Decimal (0 to 1) representing the penalty for claiming early")
-	cmd.Flags().String(FlagClaimAndStakeBonus, "", "Decimal (0 to 1) representing the bonus for claiming and staking")
 	cmd.Flags().String(FlagDistributionAddress, "", "Address of the distributor account")
 
 	requiredFlags := []string{
@@ -401,7 +377,6 @@ Example:
 		FlagClawbackDate,
 		FlagClaimTypeDeadlineDate,
 		FlagEarlyClaimPenalty,
-		FlagClaimAndStakeBonus,
 		FlagDistributionAddress,
 	}
 	for _, flagName := range requiredFlags {

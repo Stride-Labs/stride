@@ -182,7 +182,7 @@ func CmdQueryAllAllocations() *cobra.Command {
 	return cmd
 }
 
-// Queries the claim type of an address for an airdrop (daily claim, claim & stake, early),
+// Queries the claim type of an address for an airdrop (daily claim or claim early),
 // and the amount claimed and remaining
 func CmdQueryUserSummary() *cobra.Command {
 	cmd := &cobra.Command{
