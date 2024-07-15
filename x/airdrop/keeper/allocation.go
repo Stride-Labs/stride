@@ -97,7 +97,7 @@ func (k Keeper) ResetClaimType(ctx sdk.Context, airdropId, address string) {
 	var allocation types.UserAllocation
 	k.cdc.MustUnmarshal(allocationBz, &allocation)
 
-	allocation.ClaimType = types.UNSPECIFIED
+	allocation.ClaimType = types.CLAIM_DAILY
 
 	allocationBz = k.cdc.MustMarshal(&allocation)
 	store.Set(key, allocationBz)

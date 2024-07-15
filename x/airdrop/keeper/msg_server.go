@@ -123,7 +123,7 @@ func (ms msgServer) AddAllocations(goCtx context.Context, msg *types.MsgAddAlloc
 			Claimed:          sdkmath.ZeroInt(),
 			Forfeited:        sdkmath.ZeroInt(),
 			Allocations:      rawAllocation.Allocations,
-			ClaimType:        types.UNSPECIFIED,
+			ClaimType:        types.CLAIM_DAILY,
 			ValidatorAddress: "",
 		}
 		ms.Keeper.SetUserAllocation(ctx, userAllocation)

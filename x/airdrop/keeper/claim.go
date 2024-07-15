@@ -36,9 +36,13 @@ func (k Keeper) ClaimDaily(ctx sdk.Context, airdropId, claimer string) error {
 		}
 
 		// Confirm the user has not elected the non-daily claim types
-		if userAllocation.ClaimType != types.UNSPECIFIED && userAllocation.ClaimType != types.CLAIM_DAILY {
-			return types.ErrClaimTypeUnavailable.Wrapf("user has already elected claim option '%s' for address '%s' (linked to '%s')",
-				userAllocation.ClaimType.String(), address, claimerStrideAddress)
+		if userAllocation.ClaimType != types.CLAIM_DAILY {
+			return types.ErrClaimTypeUnavailable.Wrapf(
+				"user has already elected claim option '%s' for address '%s' (linked to '%s')",
+				userAllocation.ClaimType.String(),
+				address,
+				claimerStrideAddress,
+			)
 		}
 
 		// Get the index in the allocations array from the current date
@@ -63,11 +67,6 @@ func (k Keeper) ClaimDaily(ctx sdk.Context, airdropId, claimer string) error {
 
 		// Update the amount claimed on the allocation record
 		userAllocation.Claimed = userAllocation.Claimed.Add(todaysRewards)
-
-		// If this is their first time claiming, flag their decision
-		if userAllocation.ClaimType == types.UNSPECIFIED {
-			userAllocation.ClaimType = types.CLAIM_DAILY
-		}
 
 		// Distribute rewards from the distributor
 		rewardsCoin := sdk.NewCoin(airdrop.RewardDenom, todaysRewards)
@@ -115,9 +114,13 @@ func (k Keeper) ClaimEarly(ctx sdk.Context, airdropId, claimer string) error {
 		}
 
 		// Confirm the user has not elected the non-daily claim types
-		if userAllocation.ClaimType != types.UNSPECIFIED && userAllocation.ClaimType != types.CLAIM_DAILY {
-			return types.ErrClaimTypeUnavailable.Wrapf("user has already elected claim option %s",
-				userAllocation.ClaimType.String())
+		if userAllocation.ClaimType != types.CLAIM_DAILY {
+			return types.ErrClaimTypeUnavailable.Wrapf(
+				"user has already elected claim option '%s' for address '%s' (linked to '%s')",
+				userAllocation.ClaimType.String(),
+				address,
+				claimerStrideAddress,
+			)
 		}
 
 		// Confirm we're not past the decision date

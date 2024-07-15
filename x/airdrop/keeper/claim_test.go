@@ -50,8 +50,6 @@ func (s *KeeperTestSuite) TestClaimDaily() {
 			initialClaimed:      100,
 			expectedClaimed:     100 + 10,
 			expectedNewRewards:  10,
-			initialClaimType:    types.UNSPECIFIED,
-			expectedClaimType:   types.CLAIM_DAILY,
 		},
 		{
 			// 10 rewards accrued on each of 3 days
@@ -63,8 +61,6 @@ func (s *KeeperTestSuite) TestClaimDaily() {
 			initialClaimed:      100,
 			expectedClaimed:     100 + 20,
 			expectedNewRewards:  20,
-			initialClaimType:    types.UNSPECIFIED,
-			expectedClaimType:   types.CLAIM_DAILY,
 		},
 		{
 			// 10 rewards accrued on each of 3 days
@@ -76,8 +72,6 @@ func (s *KeeperTestSuite) TestClaimDaily() {
 			initialClaimed:      100,
 			expectedClaimed:     100 + 30,
 			expectedNewRewards:  30,
-			initialClaimType:    types.UNSPECIFIED,
-			expectedClaimType:   types.CLAIM_DAILY,
 		},
 		{
 			// Previous daily claims causing earlier days to be 0
@@ -89,8 +83,6 @@ func (s *KeeperTestSuite) TestClaimDaily() {
 			initialClaimed:      100,
 			expectedClaimed:     100 + 10,
 			expectedNewRewards:  10,
-			initialClaimType:    types.CLAIM_DAILY,
-			expectedClaimType:   types.CLAIM_DAILY,
 		},
 		{
 			// Claimer already chose claim early
@@ -119,8 +111,6 @@ func (s *KeeperTestSuite) TestClaimDaily() {
 			initialClaimed:      100,
 			expectedClaimed:     100,
 			expectedNewRewards:  0,
-			initialClaimType:    types.UNSPECIFIED,
-			expectedClaimType:   types.UNSPECIFIED,
 		},
 		{
 			// Claimed 1 hour before the airdrop started
@@ -128,7 +118,6 @@ func (s *KeeperTestSuite) TestClaimDaily() {
 			timeOffset:         (-1 * time.Hour), // before airdrop start
 			initialAllocations: []int64{},
 			initialClaimed:     100,
-			initialClaimType:   types.UNSPECIFIED,
 			expectedError:      "airdrop distribution has not started",
 		},
 		{
@@ -137,7 +126,6 @@ func (s *KeeperTestSuite) TestClaimDaily() {
 			timeOffset:         time.Hour * 24 * 1000, // far into future
 			initialAllocations: []int64{},
 			initialClaimed:     100,
-			initialClaimType:   types.UNSPECIFIED,
 			expectedError:      "airdrop distribution has ended",
 		},
 		{
@@ -146,7 +134,6 @@ func (s *KeeperTestSuite) TestClaimDaily() {
 			timeOffset:         time.Hour,
 			initialAllocations: []int64{1000000},
 			initialClaimed:     100,
-			initialClaimType:   types.UNSPECIFIED,
 			expectedError:      "unable to distribute rewards",
 		},
 	}
@@ -238,7 +225,6 @@ func (s *KeeperTestSuite) TestClaimEarly() {
 			expectedClaimed:    100 + 15,
 			expectedNewRewards: 15,
 			expectedForfeited:  15,
-			initialClaimType:   types.UNSPECIFIED,
 			expectedClaimType:  types.CLAIM_EARLY,
 		},
 		{
@@ -251,7 +237,6 @@ func (s *KeeperTestSuite) TestClaimEarly() {
 			expectedClaimed:    100 + 10,
 			expectedNewRewards: 10,
 			expectedForfeited:  10,
-			initialClaimType:   types.UNSPECIFIED,
 			expectedClaimType:  types.CLAIM_EARLY,
 		},
 		{
@@ -264,7 +249,6 @@ func (s *KeeperTestSuite) TestClaimEarly() {
 			expectedClaimed:    100 + 15,
 			expectedNewRewards: 15,
 			expectedForfeited:  15,
-			initialClaimType:   types.CLAIM_DAILY,
 			expectedClaimType:  types.CLAIM_EARLY,
 		},
 		{
@@ -293,8 +277,6 @@ func (s *KeeperTestSuite) TestClaimEarly() {
 			initialClaimed:     100,
 			expectedClaimed:    100,
 			expectedNewRewards: 0,
-			initialClaimType:   types.UNSPECIFIED,
-			expectedClaimType:  types.UNSPECIFIED,
 		},
 		{
 			// Claimed 1 hour before the airdrop started
@@ -302,7 +284,6 @@ func (s *KeeperTestSuite) TestClaimEarly() {
 			timeOffset:         (-1 * time.Hour), // before airdrop start
 			initialAllocations: []int64{},
 			initialClaimed:     100,
-			initialClaimType:   types.UNSPECIFIED,
 			expectedError:      "airdrop distribution has not started",
 		},
 		{
@@ -311,7 +292,6 @@ func (s *KeeperTestSuite) TestClaimEarly() {
 			timeOffset:         time.Hour * 24 * 1000, // far into future
 			initialAllocations: []int64{},
 			initialClaimed:     100,
-			initialClaimType:   types.UNSPECIFIED,
 			expectedError:      "claim type decision deadline passed",
 		},
 		{
@@ -320,7 +300,6 @@ func (s *KeeperTestSuite) TestClaimEarly() {
 			timeOffset:         time.Hour,
 			initialAllocations: []int64{1000000},
 			initialClaimed:     100,
-			initialClaimType:   types.UNSPECIFIED,
 			expectedError:      "unable to distribute rewards",
 		},
 	}
