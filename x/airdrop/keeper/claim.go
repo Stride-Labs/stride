@@ -127,7 +127,8 @@ func (k Keeper) ClaimEarly(ctx sdk.Context, airdropId, claimer string) error {
 	// forfeited += totalAccruedRewards - distributedRewards
 	// Note: forfeited should be zero before the next operation,
 	// but we're doing += just in case there's a scenario where it's not zero in the future
-	userAllocation.Forfeited = userAllocation.Forfeited.Add(totalAccruedRewards.Sub(distributedRewards))
+	forfeitedRewards := totalAccruedRewards.Sub(distributedRewards)
+	userAllocation.Forfeited = userAllocation.Forfeited.Add(forfeitedRewards)
 
 	// Flag the user's claim type decision
 	userAllocation.ClaimType = types.CLAIM_EARLY
