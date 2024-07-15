@@ -12,9 +12,9 @@ func (k Keeper) SetUserAllocation(ctx sdk.Context, userAllocation types.UserAllo
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.UserAllocationKeyPrefix)
 
 	key := types.UserAllocationKey(userAllocation.AirdropId, userAllocation.Address)
-	allocationBz := k.cdc.MustMarshal(&userAllocation)
+	value := k.cdc.MustMarshal(&userAllocation)
 
-	store.Set(key, allocationBz)
+	store.Set(key, value)
 }
 
 // Retrieves a user allocation record from the store

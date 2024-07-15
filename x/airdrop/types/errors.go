@@ -17,7 +17,4 @@ var (
 	ErrDistributionEnded           = sdkerrors.Register(ModuleName, 2007, "airdrop distribution has ended")
 	ErrNoUnclaimedRewards          = sdkerrors.Register(ModuleName, 2008, "no unclaimed rewards")
 	ErrAfterDecisionDeadline       = sdkerrors.Register(ModuleName, 2009, "claim type decision deadline passed")
-	ErrUserLinkAlreadyExists       = sdkerrors.Register(ModuleName, 2010, "user link already exists")
-	ErrAddUserLink                 = sdkerrors.Register(ModuleName, 2011, "cannot add user link")
-	ErrUserLinkNotFound            = sdkerrors.Register(ModuleName, 2012, "user links not found")
 )

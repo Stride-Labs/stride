@@ -153,15 +153,7 @@ func (ms msgServer) UpdateUserAllocation(goCtx context.Context, msg *types.MsgUp
 // Admin address to link a stride and non-stride address, merging their allocations
 func (ms msgServer) LinkAddresses(goCtx context.Context, msg *types.MsgLinkAddresses) (*types.MsgLinkAddressesResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
-
-	if _, found := ms.Keeper.GetAirdrop(ctx, msg.AirdropId); !found {
-		return nil, types.ErrAirdropNotFound.Wrapf("airdrop %s", msg.AirdropId)
-	}
-
-	err := ms.Keeper.AddUserLink(ctx, msg.AirdropId, msg.StrideAddress, msg.HostAddress)
-	if err != nil {
-		return nil, types.ErrAddUserLink.Wrapf(err.Error())
-	}
+	_ = ctx
 
 	return &types.MsgLinkAddressesResponse{}, nil
 }
