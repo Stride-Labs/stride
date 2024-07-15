@@ -1564,6 +1564,16 @@ func TestMsgLinkAddresses_ValidateBasic(t *testing.T) {
 			},
 			expectedError: "host address must be specified",
 		},
+		{
+			name: "stride address passed as host address",
+			msg: types.MsgLinkAddresses{
+				Admin:         adminAddress,
+				AirdropId:     validAirdropId,
+				StrideAddress: validStrideAddress,
+				HostAddress:   "strideXXX",
+			},
+			expectedError: "linked address cannot be a stride address",
+		},
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {

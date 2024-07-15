@@ -3,6 +3,7 @@ package types
 import (
 	"errors"
 	fmt "fmt"
+	"strings"
 	time "time"
 
 	errorsmod "cosmossdk.io/errors"
@@ -541,6 +542,9 @@ func (msg *MsgLinkAddresses) ValidateBasic() error {
 	}
 	if msg.HostAddress == "" {
 		return errors.New("host address must be specified")
+	}
+	if strings.HasPrefix(msg.HostAddress, "stride") {
+		return errors.New("linked address cannot be a stride address")
 	}
 
 	return nil
