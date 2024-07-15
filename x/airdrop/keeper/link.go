@@ -14,30 +14,26 @@ func (k Keeper) AddUserLink(ctx sdk.Context, airdropId, strideAddress, hostAddre
 	key := types.UserLinksKey(airdropId, strideAddress)
 	userLinksBz := store.Get(key)
 
-	var userLinks types.UserLinks
+	// If there are no user links yet, create a new one with the given host address
+	userLinks := types.UserLinks{
+		AirdropId:     airdropId,
+		StrideAddress: strideAddress,
+		HostAddresses: []string{hostAddress},
+	}
 
+	// If there are user links, unmarshal them and append the new host address
 	if len(userLinksBz) != 0 {
-		// If there are user links, unmarshal them and append the new host address
-
 		k.cdc.MustUnmarshal(userLinksBz, &userLinks)
+	}
 
-		// Check that the new host address is not already linked to this airdrop
-		for _, existingHostAddress := range userLinks.HostAddresses {
-			if existingHostAddress == hostAddress {
-				return
-			}
-		}
-		// Append the new host address
-		userLinks.HostAddresses = append(userLinks.HostAddresses, hostAddress)
-	} else {
-		// If there are no user links yet, create a new one with the given host address
-
-		userLinks = types.UserLinks{
-			AirdropId:     airdropId,
-			StrideAddress: strideAddress,
-			HostAddresses: []string{hostAddress},
+	// Check that the new host address is not already linked to this airdrop
+	for _, existingHostAddress := range userLinks.HostAddresses {
+		if existingHostAddress == hostAddress {
+			return
 		}
 	}
+	// Append the new host address
+	userLinks.HostAddresses = append(userLinks.HostAddresses, hostAddress)
 
 	// Reset the claim type for all allocations involed with this operation
 	// Make sure this happens only when we also update the link
