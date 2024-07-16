@@ -55,6 +55,7 @@ func (ms msgServer) CreateAirdrop(goCtx context.Context, msg *types.MsgCreateAir
 
 	airdrop := types.Airdrop{
 		Id:                    msg.AirdropId,
+		RewardDenom:           msg.RewardDenom,
 		DistributionStartDate: msg.DistributionStartDate,
 		DistributionEndDate:   msg.DistributionEndDate,
 		ClawbackDate:          msg.ClawbackDate,
@@ -77,6 +78,7 @@ func (ms msgServer) UpdateAirdrop(goCtx context.Context, msg *types.MsgUpdateAir
 
 	airdrop := types.Airdrop{
 		Id:                    msg.AirdropId,
+		RewardDenom:           msg.RewardDenom,
 		DistributionStartDate: msg.DistributionStartDate,
 		DistributionEndDate:   msg.DistributionEndDate,
 		ClawbackDate:          msg.ClawbackDate,
