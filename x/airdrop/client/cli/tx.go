@@ -452,7 +452,7 @@ Example file:
  0,10,10,20,30,40,...
 
 Example Command:
-  $ %[1]s tx %[2]s update-user-allocations airdrop-1 allocations.csv --from admin
+  $ %[1]s tx %[2]s update-user-allocation airdrop-1 strideXXX allocations.csv --from admin
 `, version.AppName, types.ModuleName),
 		),
 		Args: cobra.ExactArgs(3),
