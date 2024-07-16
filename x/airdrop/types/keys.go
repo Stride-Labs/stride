@@ -16,6 +16,7 @@ const (
 )
 
 var (
+	ParamsPrefix            = KeyPrefix("params")
 	AirdropKeyPrefix        = KeyPrefix("airdrops")
 	UserAllocationKeyPrefix = KeyPrefix("user-allocations")
 )

@@ -8,6 +8,7 @@ import (
 
 // Loads module state from genesis
 func (k Keeper) InitGenesis(ctx sdk.Context, genState types.GenesisState) {
+	k.SetParams(ctx, genState.Params)
 	for _, airdrop := range genState.Airdrops {
 		k.SetAirdrop(ctx, airdrop)
 	}
@@ -21,5 +22,6 @@ func (k Keeper) ExportGenesis(ctx sdk.Context) *types.GenesisState {
 	genesis := types.DefaultGenesis()
 	genesis.Airdrops = k.GetAllAirdrops(ctx)
 	genesis.UserAllocations = k.GetAllUserAllocations(ctx)
+	genesis.Params = k.GetParams(ctx)
 	return genesis
 }
