@@ -111,12 +111,10 @@ func (k Keeper) ClaimEarly(ctx sdk.Context, airdropId, claimer string) error {
 	rewardsRemainingRate := sdk.OneDec().Sub(airdrop.EarlyClaimPenalty)
 	distributedRewards := sdk.NewDecFromInt(totalAccruedRewards).Mul(rewardsRemainingRate).TruncateInt()
 
-	// Update the amount claimed on the allocation record
-	// claimed += distributedRewards
+	// Update the amount claimed on the allocation record by the amount distributed
 	userAllocation.Claimed = userAllocation.Claimed.Add(distributedRewards)
 
-	// Update the amount forfeited on the allocation record
-	// forfeited += totalAccruedRewards - distributedRewards
+	// Update the amount forfeited on the allocation record by (total rewards amount - distributed rewards)
 	// Note: forfeited should be zero before the next operation,
 	// but we're doing += just in case there's a scenario where it's not zero in the future
 	forfeitedRewards := totalAccruedRewards.Sub(distributedRewards)
