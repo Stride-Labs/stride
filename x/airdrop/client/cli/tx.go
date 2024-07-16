@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -416,7 +417,7 @@ Example Command:
 				return err
 			}
 
-			allocations, err := ParseMultipleUserAllocations(allocationsFileName)
+			allocations, err := ParseUserAllocations(allocationsFileName)
 			if err != nil {
 				return errorsmod.Wrapf(err, "unable to parse allocations csv")
 			}
@@ -443,39 +444,42 @@ Example Command:
 // Admin transaction to update a user's allocation to an airdrop
 func CmdUpdateUserAllocation() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "update-user-allocation [airdrop-id] [user-address] [allocations-file]",
+		Use:   "update-user-allocation [airdrop-id] [allocations-file]",
 		Short: "Update's a single user allocation's for a given airdrop",
 		Long: strings.TrimSpace(
 			fmt.Sprintf(`Update's a single user allocation's for a given airdrop
 
 Example file:
- 0,10,10,20,30,40,...
+ strideXXX,0,10,10,20,30,40,...
 
 Example Command:
-  $ %[1]s tx %[2]s update-user-allocation airdrop-1 strideXXX allocations.csv --from admin
+  $ %[1]s tx %[2]s update-user-allocation airdrop-1 allocations.csv --from admin
 `, version.AppName, types.ModuleName),
 		),
-		Args: cobra.ExactArgs(3),
+		Args: cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			airdropId := args[0]
-			address := args[1]
-			allocationsFileName := args[2]
+			allocationsFileName := args[1]
 
 			clientCtx, err := client.GetClientTxContext(cmd)
 			if err != nil {
 				return err
 			}
 
-			allocations, err := ParseSingleUserAllocations(allocationsFileName)
+			allocations, err := ParseUserAllocations(allocationsFileName)
 			if err != nil {
 				return errorsmod.Wrapf(err, "unable to parse allocations csv")
 			}
+			if len(allocations) != 1 {
+				return errors.New("only one user can be specified in the csv file")
+			}
+			allocation := allocations[0]
 
 			msg := types.NewMsgUpdateUserAllocation(
 				clientCtx.GetFromAddress().String(),
 				airdropId,
-				address,
-				allocations,
+				allocation.UserAddress,
+				allocation.Allocations,
 			)
 
 			if err := msg.ValidateBasic(); err != nil {

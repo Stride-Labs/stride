@@ -37,6 +37,8 @@ const (
 	// CLAIM_DAILY indicates that the airdrop rewards are accumulated daily
 	// A user can claim daily up front and change their decision within the
 	// deadline window
+	// This type is assigned to the user by default when their allocations are
+	// added
 	CLAIM_DAILY ClaimType = 0
 	// CLAIM_EARLY indicates that the airdrop rewards have been claimed early,
 	// with half going to the user and half being clawed back

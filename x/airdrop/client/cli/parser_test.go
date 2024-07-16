@@ -11,7 +11,7 @@ import (
 	"github.com/Stride-Labs/stride/v22/x/airdrop/types"
 )
 
-func ParseMultipleUserAllocations(t *testing.T) {
+func ParseUserAllocations(t *testing.T) {
 	inputCSVContents := `strideXXX,10,10,20
 strideYYY,0,10,0
 strideZZZ,5,100,6`
@@ -43,31 +43,7 @@ strideZZZ,5,100,6`
 	require.NoError(t, err)
 
 	// Call the function with the temporary file name
-	actualAllocations, err := cli.ParseMultipleUserAllocations(tmpfile.Name())
-	require.NoError(t, err)
-
-	// Validate the allocations match expectations
-	require.Equal(t, expectedAllocations, actualAllocations)
-}
-
-func TestParseSingleUserAllocations(t *testing.T) {
-	inputCSVContents := "10,20,30"
-
-	expectedAllocations := []sdkmath.Int{sdkmath.NewInt(10), sdkmath.NewInt(20), sdkmath.NewInt(30)}
-
-	// Create a temporary file
-	tmpfile, err := os.CreateTemp("", "allocations*.csv")
-	require.NoError(t, err)
-	defer os.Remove(tmpfile.Name())
-
-	// Write the CSV string to the temp file
-	_, err = tmpfile.WriteString(inputCSVContents)
-	require.NoError(t, err)
-	err = tmpfile.Close()
-	require.NoError(t, err)
-
-	// Call the function with the temporary file name
-	actualAllocations, err := cli.ParseSingleUserAllocations(tmpfile.Name())
+	actualAllocations, err := cli.ParseUserAllocations(tmpfile.Name())
 	require.NoError(t, err)
 
 	// Validate the allocations match expectations

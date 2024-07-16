@@ -190,52 +190,16 @@ func (msg *MsgCreateAirdrop) ValidateBasic() error {
 		return err
 	}
 
-	if msg.AirdropId == "" {
-		return errors.New("airdrop-id must be specified")
-	}
-	if msg.RewardDenom == "" {
-		return errors.New("reward denom must be specified")
-	}
-
-	if msg.DistributionStartDate == nil || *msg.DistributionStartDate == (time.Time{}) {
-		return errors.New("distribution start date must be specified")
-	}
-	if msg.DistributionEndDate == nil || *msg.DistributionEndDate == (time.Time{}) {
-		return errors.New("distribution end date must be specified")
-	}
-	if msg.ClawbackDate == nil || *msg.ClawbackDate == (time.Time{}) {
-		return errors.New("clawback date must be specified")
-	}
-	if msg.ClaimTypeDeadlineDate == nil || *msg.ClaimTypeDeadlineDate == (time.Time{}) {
-		return errors.New("claim type deadline date must be specified")
-	}
-
-	if !msg.DistributionEndDate.After(*msg.DistributionStartDate) {
-		return errors.New("distribution end date must be after the start date")
-	}
-	if !msg.ClaimTypeDeadlineDate.After(*msg.DistributionStartDate) {
-		return errors.New("claim type deadline date must be after the distribution start date")
-	}
-	if !msg.ClaimTypeDeadlineDate.Before(*msg.DistributionEndDate) {
-		return errors.New("claim type deadline date must be before the distribution end date")
-	}
-	if !msg.ClawbackDate.After(*msg.DistributionEndDate) {
-		return errors.New("clawback date must be after the distribution end date")
-	}
-
-	if msg.EarlyClaimPenalty.IsNil() {
-		return errors.New("early claim penalty must be specified")
-	}
-
-	if msg.EarlyClaimPenalty.LT(sdk.ZeroDec()) || msg.EarlyClaimPenalty.GT(sdk.OneDec()) {
-		return errors.New("early claim penalty must be between 0 and 1")
-	}
-
-	if _, err := sdk.AccAddressFromBech32(msg.DistributionAddress); err != nil {
-		return errorsmod.Wrapf(sdkerrors.ErrInvalidAddress, "invalid distribution address (%s)", err)
-	}
-
-	return nil
+	return AirdropConfigValidateBasic(
+		msg.AirdropId,
+		msg.RewardDenom,
+		msg.DistributionStartDate,
+		msg.DistributionEndDate,
+		msg.ClawbackDate,
+		msg.ClaimTypeDeadlineDate,
+		msg.EarlyClaimPenalty,
+		msg.DistributionAddress,
+	)
 }
 
 // ----------------------------------------------
@@ -295,52 +259,16 @@ func (msg *MsgUpdateAirdrop) ValidateBasic() error {
 		return err
 	}
 
-	if msg.AirdropId == "" {
-		return errors.New("airdrop-id must be specified")
-	}
-	if msg.RewardDenom == "" {
-		return errors.New("reward denom must be specified")
-	}
-
-	if msg.DistributionStartDate == nil || *msg.DistributionStartDate == (time.Time{}) {
-		return errors.New("distribution start date must be specified")
-	}
-	if msg.DistributionEndDate == nil || *msg.DistributionEndDate == (time.Time{}) {
-		return errors.New("distribution end date must be specified")
-	}
-	if msg.ClawbackDate == nil || *msg.ClawbackDate == (time.Time{}) {
-		return errors.New("clawback date must be specified")
-	}
-	if msg.ClaimTypeDeadlineDate == nil || *msg.ClaimTypeDeadlineDate == (time.Time{}) {
-		return errors.New("claim type deadline date must be specified")
-	}
-
-	if !msg.DistributionEndDate.After(*msg.DistributionStartDate) {
-		return errors.New("distribution end date must be after the start date")
-	}
-	if !msg.ClaimTypeDeadlineDate.After(*msg.DistributionStartDate) {
-		return errors.New("claim type deadline date must be after the distribution start date")
-	}
-	if !msg.ClaimTypeDeadlineDate.Before(*msg.DistributionEndDate) {
-		return errors.New("claim type deadline date must be before the distribution end date")
-	}
-	if !msg.ClawbackDate.After(*msg.DistributionEndDate) {
-		return errors.New("clawback date must be after the distribution end date")
-	}
-
-	if msg.EarlyClaimPenalty.IsNil() {
-		return errors.New("early claim penalty must be specified")
-	}
-
-	if msg.EarlyClaimPenalty.LT(sdk.ZeroDec()) || msg.EarlyClaimPenalty.GT(sdk.OneDec()) {
-		return errors.New("early claim penalty must be between 0 and 1")
-	}
-
-	if _, err := sdk.AccAddressFromBech32(msg.DistributionAddress); err != nil {
-		return errorsmod.Wrapf(sdkerrors.ErrInvalidAddress, "invalid distribution address (%s)", err)
-	}
-
-	return nil
+	return AirdropConfigValidateBasic(
+		msg.AirdropId,
+		msg.RewardDenom,
+		msg.DistributionStartDate,
+		msg.DistributionEndDate,
+		msg.ClawbackDate,
+		msg.ClaimTypeDeadlineDate,
+		msg.EarlyClaimPenalty,
+		msg.DistributionAddress,
+	)
 }
 
 // ----------------------------------------------

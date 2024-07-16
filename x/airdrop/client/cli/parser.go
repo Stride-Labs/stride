@@ -1,12 +1,10 @@
 package cli
 
 import (
-	"bufio"
 	"encoding/csv"
 	"errors"
 	"fmt"
 	"os"
-	"strings"
 
 	sdkmath "cosmossdk.io/math"
 
@@ -19,7 +17,7 @@ import (
 //
 //	strideXXX,10,10,20
 //	strideYYY,0,10,0
-func ParseMultipleUserAllocations(fileName string) ([]types.RawAllocation, error) {
+func ParseUserAllocations(fileName string) ([]types.RawAllocation, error) {
 	file, err := os.Open(fileName)
 	if err != nil {
 		return nil, err
@@ -57,39 +55,4 @@ func ParseMultipleUserAllocations(fileName string) ([]types.RawAllocation, error
 	}
 
 	return allAllocations, nil
-}
-
-// Parses a single user's allocations from a single line file with comma separate reward amounts
-// Ex: 10,10,20
-func ParseSingleUserAllocations(fileName string) (allocations []sdkmath.Int, err error) {
-	file, err := os.Open(fileName)
-	if err != nil {
-		return nil, err
-	}
-	defer file.Close()
-
-	scanner := bufio.NewScanner(file)
-	var content string
-
-	if scanner.Scan() {
-		content = scanner.Text()
-	}
-
-	if scanner.Scan() {
-		return nil, fmt.Errorf("file %s has more than one line", fileName)
-	}
-	if err := scanner.Err(); err != nil {
-		return nil, err
-	}
-
-	allocationsSplit := strings.Split(content, ",")
-	for _, allocationString := range allocationsSplit {
-		allocation, ok := sdkmath.NewIntFromString(allocationString)
-		if !ok {
-			return nil, errors.New("unable to parse reward")
-		}
-		allocations = append(allocations, allocation)
-	}
-
-	return allocations, nil
 }
