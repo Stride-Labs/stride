@@ -86,6 +86,8 @@ set_stride_genesis() {
     jq '.app_state.staketia.host_zone.transfer_channel_id = $newVal' --arg newVal "channel-0" $genesis_config > json.tmp && mv json.tmp $genesis_config
     jq '.app_state.staketia.host_zone.native_token_denom = $newVal' --arg newVal "${host_denom}" $genesis_config > json.tmp && mv json.tmp $genesis_config
     jq '.app_state.staketia.host_zone.native_token_ibc_denom = $newVal' --arg newVal "${host_ibc_denom}" $genesis_config > json.tmp && mv json.tmp $genesis_config
+
+    jq '.app_state.airdrop.params.allocation_window_seconds = $newVal' --arg newVal "60" $genesis_config > json.tmp && mv json.tmp $genesis_config
 }
 
 set_host_genesis() {
