@@ -49,9 +49,6 @@ func (k Keeper) ClaimDaily(ctx sdk.Context, airdropId, claimer string) error {
 	// Update the amount claimed on the allocation record
 	userAllocation.Claimed = userAllocation.Claimed.Add(todaysRewards)
 
-	// If this is their first time claiming, flag their decision
-	userAllocation.ClaimType = types.CLAIM_DAILY
-
 	// Distribute rewards from the distributor
 	distributorAccount := sdk.MustAccAddressFromBech32(airdrop.DistributionAddress)
 	claimerAccount := sdk.MustAccAddressFromBech32(userAllocation.Address)
