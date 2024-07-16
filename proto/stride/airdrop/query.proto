@@ -92,17 +92,33 @@ message QueryUserSummaryRequest {
   string address = 2 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
 };
 message QueryUserSummaryResponse {
+  // The claim type (claim daily or claim early)
   string claim_type = 1;
+
+  // The total rewards claimed so far
   string claimed = 2 [
     (gogoproto.nullable) = false,
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int"
   ];
+
+  // The total rewards forfeited (in the case of claiming early)
   string forfeited = 3 [
     (gogoproto.nullable) = false,
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int"
   ];
+
+  // The total rewards remaining
   string remaining = 4 [
     (gogoproto.nullable) = false,
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int"
   ];
+
+  // The total rewards that can be claimed right now
+  string claimable = 5 [
+    (gogoproto.nullable) = false,
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int"
+  ];
+
+  // The current date index into the airdrop array
+  int64 current_date_index = 6;
 }

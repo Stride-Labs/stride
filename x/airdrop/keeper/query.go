@@ -75,10 +75,11 @@ func (k Keeper) AllAllocations(goCtx context.Context, req *types.QueryAllAllocat
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
 	store := ctx.KVStore(k.storeKey)
-	allocationsStore := prefix.NewStore(store, types.UserAllocationKeyPrefix)
+	allAllocationsStore := prefix.NewStore(store, types.UserAllocationKeyPrefix)
+	airdropAllocationsSubstore := prefix.NewStore(allAllocationsStore, types.KeyPrefix(req.AirdropId))
 
 	allocationsOnPage := []types.UserAllocation{}
-	pageRes, err := query.Paginate(allocationsStore, req.Pagination, func(key []byte, value []byte) error {
+	pageRes, err := query.Paginate(airdropAllocationsSubstore, req.Pagination, func(key []byte, value []byte) error {
 		var userAllocation types.UserAllocation
 		if err := k.cdc.Unmarshal(value, &userAllocation); err != nil {
 			return err
@@ -105,16 +106,27 @@ func (k Keeper) UserSummary(goCtx context.Context, req *types.QueryUserSummaryRe
 	}
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	allocation, found := k.GetUserAllocation(ctx, req.AirdropId, req.Address)
-	if !found {
+	airdrop, airdropFound := k.GetAirdrop(ctx, req.AirdropId)
+	if !airdropFound {
+		return nil, status.Errorf(codes.NotFound, "airdrop %s not found", req.AirdropId)
+	}
+	allocation, allocationFound := k.GetUserAllocation(ctx, req.AirdropId, req.Address)
+	if !allocationFound {
 		return nil, status.Errorf(codes.NotFound, "allocations not found for airdrop %s and user %s", req.AirdropId, req.Address)
 	}
 
+	currentDateIndex, err := airdrop.GetCurrentDateIndex(ctx)
+	if err != nil {
+		return nil, status.Errorf(codes.FailedPrecondition, err.Error())
+	}
+
 	summary := &types.QueryUserSummaryResponse{
-		ClaimType: allocation.ClaimType.String(),
-		Claimed:   allocation.Claimed,
-		Forfeited: allocation.Forfeited,
-		Remaining: allocation.RemainingAllocations(),
+		ClaimType:        allocation.ClaimType.String(),
+		Claimed:          allocation.Claimed,
+		Claimable:        allocation.GetClaimableAllocation(currentDateIndex),
+		Forfeited:        allocation.Forfeited,
+		Remaining:        allocation.GetRemainingAllocations(),
+		CurrentDateIndex: int64(currentDateIndex),
 	}
 
 	return summary, nil
