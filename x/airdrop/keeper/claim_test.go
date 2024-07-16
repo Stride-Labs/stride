@@ -65,7 +65,7 @@ func (s *KeeperTestSuite) TestClaimDaily() {
 		},
 		{
 			// 10 rewards accrued on each of 3 days
-			// Claimed shortly into the second day, 20 total claimed
+			// Claimed shortly into the third day, 30 total claimed
 			name:                "claim all days at once",
 			timeOffset:          time.Hour * 49, // one hour into third window
 			initialAllocations:  []int64{10, 10, 10},
