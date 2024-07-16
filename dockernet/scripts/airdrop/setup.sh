@@ -17,9 +17,9 @@ date_with_offset() {
 echo ">>> Creating airdrop..."
 $STRIDE_MAIN_CMD tx airdrop create-airdrop $AIRDROP_NAME \
   	--distribution-start-date  $(date_with_offset 0) \
-	--distribution-end-date    $(date_with_offset 20) \
-	--clawback-date            $(date_with_offset 30) \
-	--claim-type-deadline-date $(date_with_offset 10) \
+	--distribution-end-date    $(date_with_offset 19) \
+	--clawback-date            $(date_with_offset 29) \
+	--claim-type-deadline-date $(date_with_offset 9) \
 	--early-claim-penalty      0.5 \
 	--distribution-address     $($STRIDE_MAIN_CMD keys show admin -a) \
 	--from admin -y | TRIM_TX

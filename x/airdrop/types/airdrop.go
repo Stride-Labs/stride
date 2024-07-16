@@ -34,9 +34,8 @@ func (a *Airdrop) GetCurrentDateIndex(ctx sdk.Context, windowLengthSeconds int64
 }
 
 // Returns the length of the airdrop in days
-// windowLengthSeconds is the time between each element in the allocations array
-func (a *Airdrop) GetAirdropLength(windowLengthSeconds int64) int64 {
+func (a *Airdrop) GetAirdropLength() int64 {
 	airdropLengthSeconds := int64(a.DistributionEndDate.Unix() - a.DistributionStartDate.Unix())
-	numberOfDays := (airdropLengthSeconds / windowLengthSeconds) + 1
+	numberOfDays := (airdropLengthSeconds / (24 * 60 * 60)) + 1
 	return numberOfDays
 }
