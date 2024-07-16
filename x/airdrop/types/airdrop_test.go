@@ -13,7 +13,7 @@ import (
 func TestGetCurrentDateIndex(t *testing.T) {
 	startTime := time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC)
 	endTime := startTime.Add(time.Hour * 24 * 150) // 150 days later
-	windowLength := int64(time.Hour * 24)
+	windowLengthSeconds := int64(24 * 60 * 60)
 
 	airdrop := types.Airdrop{
 		DistributionStartDate: &startTime,
@@ -82,12 +82,59 @@ func TestGetCurrentDateIndex(t *testing.T) {
 			ctx := sdk.Context{}
 			ctx = ctx.WithBlockTime(tc.currentTime)
 
-			actualDateIndex, actualError := airdrop.GetCurrentDateIndex(ctx, windowLength)
+			actualDateIndex, actualError := airdrop.GetCurrentDateIndex(ctx, windowLengthSeconds)
 			if tc.expectedError != nil {
 				require.Equal(t, tc.expectedDateIndex, actualDateIndex, "date index")
 			} else {
 				require.ErrorIs(t, tc.expectedError, actualError)
 			}
+		})
+	}
+}
+
+func TestGetAirdropLength(t *testing.T) {
+	windowLengthSeconds := int64(24 * 60 * 60)
+
+	testCases := []struct {
+		name           string
+		startDate      time.Time
+		endDate        time.Time
+		expectedLength int64
+	}{
+		{
+			name:           "one day",
+			startDate:      time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC),
+			endDate:        time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC),
+			expectedLength: 1,
+		},
+		{
+			name:           "two days",
+			startDate:      time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC),
+			endDate:        time.Date(2024, 1, 2, 0, 0, 0, 0, time.UTC),
+			expectedLength: 2,
+		},
+		{
+			name:           "five days",
+			startDate:      time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC),
+			endDate:        time.Date(2024, 1, 5, 0, 0, 0, 0, time.UTC),
+			expectedLength: 5,
+		},
+		{
+			name:           "one month",
+			startDate:      time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC),
+			endDate:        time.Date(2024, 2, 1, 0, 0, 0, 0, time.UTC),
+			expectedLength: 32,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			airdrop := types.Airdrop{
+				DistributionStartDate: &tc.startDate,
+				DistributionEndDate:   &tc.endDate,
+			}
+			actualLength := airdrop.GetAirdropLength(windowLengthSeconds)
+			require.Equal(t, tc.expectedLength, actualLength, "airdrop length")
 		})
 	}
 }
