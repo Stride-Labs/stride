@@ -27,7 +27,7 @@ const (
 	FlagRewardDenom    = "reward-denom"
 	DefaultRewardDenom = "ustrd"
 
-	DateLayout = "2006-01-02"
+	DateLayout = "2006-01-02T15:04:05"
 )
 
 // GetTxCmd returns the transaction commands for this module
@@ -143,10 +143,10 @@ func CmdCreateAirdrop() *cobra.Command {
 
 Example:
   $ %[1]s tx %[2]s create-airdrop airdrop-1 \
-  	--distribution-start-date  2024-01-01 \
-	--distribution-end-date    2024-06-01 \
-	--clawback-date            2024-07-01 \
-	--claim-type-deadline-date 2024-02-01 \
+  	--distribution-start-date  2024-01-01T00:00:00 \
+	--distribution-end-date    2024-06-01T00:00:00 \
+	--clawback-date            2024-07-01T00:00:00 \
+	--claim-type-deadline-date 2024-02-01T00:00:00 \
 	--early-claim-penalty      0.5 \
 	--distribution-address     strideXXX \
 	--from admin
@@ -271,10 +271,10 @@ func CmdUpdateAirdrop() *cobra.Command {
 
 Example:
   $ %[1]s tx %[2]s update-airdrop airdrop-1 \
-  	--distribution-start-date  2024-01-01 \
-	--distribution-end-date    2024-06-01 \
-	--clawback-date            2024-07-01 \
-	--claim-type-deadline-date 2024-02-01 \
+  	--distribution-start-date  2024-01-01T00:00:00 \
+	--distribution-end-date    2024-06-01T00:00:00 \
+	--clawback-date            2024-07-01T00:00:00 \
+	--claim-type-deadline-date 2024-02-01T00:00:00 \
 	--early-claim-penalty      0.5 \
 	--distribution-address     strideXXX \
 	--from admin
