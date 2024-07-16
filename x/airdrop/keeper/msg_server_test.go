@@ -1,6 +1,8 @@
 package keeper_test
 
 import (
+	"time"
+
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
@@ -72,9 +74,14 @@ func (s *KeeperTestSuite) TestUpdateAirdrop() {
 }
 
 func (s *KeeperTestSuite) TestAddAllocations() {
-	// Create the airdrop
+	// Create airdrop that's 4 days long
+	startDate := time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC)
+	endDate := time.Date(2024, 1, 4, 0, 0, 0, 0, time.UTC)
+
 	s.App.AirdropKeeper.SetAirdrop(s.Ctx, types.Airdrop{
-		Id: AirdropId,
+		Id:                    AirdropId,
+		DistributionStartDate: &startDate,
+		DistributionEndDate:   &endDate,
 	})
 
 	// Submit a message to add allocations
@@ -83,11 +90,20 @@ func (s *KeeperTestSuite) TestAddAllocations() {
 		Allocations: []types.RawAllocation{
 			{
 				UserAddress: "user-1",
-				Allocations: []sdkmath.Int{sdkmath.NewInt(1), sdkmath.NewInt(2)},
+				Allocations: []sdkmath.Int{
+					sdkmath.NewInt(1),
+					sdkmath.NewInt(2),
+					sdkmath.NewInt(3),
+					sdkmath.NewInt(4)},
 			},
 			{
 				UserAddress: "user-2",
-				Allocations: []sdkmath.Int{sdkmath.NewInt(3), sdkmath.NewInt(4)},
+				Allocations: []sdkmath.Int{
+					sdkmath.NewInt(4),
+					sdkmath.NewInt(5),
+					sdkmath.NewInt(6),
+					sdkmath.NewInt(7),
+				},
 			},
 		},
 	}
@@ -110,6 +126,23 @@ func (s *KeeperTestSuite) TestAddAllocations() {
 	// Attempt to create the allocations again, it should error since the allocations already exist
 	_, err = s.GetMsgServer().AddAllocations(sdk.UnwrapSDKContext(s.Ctx), &msg)
 	s.Require().ErrorIs(err, types.ErrUserAllocationAlreadyExists)
+
+	// Try to add allocations with an incorrect number of elements, it should error
+	invalidMsg := types.MsgAddAllocations{
+		AirdropId: AirdropId,
+		Allocations: []types.RawAllocation{
+			{
+				UserAddress: "user-3",
+				Allocations: []sdkmath.Int{
+					sdkmath.NewInt(1),
+					sdkmath.NewInt(2),
+					sdkmath.NewInt(3), // one less than above allocations
+				},
+			},
+		},
+	}
+	_, err = s.GetMsgServer().AddAllocations(sdk.UnwrapSDKContext(s.Ctx), &invalidMsg)
+	s.Require().ErrorIs(err, types.ErrInvalidAllocationListLength)
 
 	// Remove the airdrop and try it again, it should error saying the airdrop doesn't exist
 	s.App.AirdropKeeper.RemoveAirdrop(s.Ctx, AirdropId)
@@ -139,6 +172,15 @@ func (s *KeeperTestSuite) TestUpdateUserAllocation() {
 	}
 	_, err := s.GetMsgServer().UpdateUserAllocation(sdk.UnwrapSDKContext(s.Ctx), &msg)
 	s.Require().NoError(err, "no error expected when updating allocation")
+
+	// Try to update again to a different allocation length, it should fail
+	invalidMsg := types.MsgUpdateUserAllocation{
+		AirdropId:   AirdropId,
+		UserAddress: UserAddress,
+		Allocations: updatedAllocations[1:], // trimmed first element
+	}
+	_, err = s.GetMsgServer().UpdateUserAllocation(sdk.UnwrapSDKContext(s.Ctx), &invalidMsg)
+	s.Require().ErrorIs(err, types.ErrInvalidAllocationListLength)
 
 	// Remove the user allocation and try again, it should error since it's not found
 	s.App.AirdropKeeper.RemoveUserAllocation(s.Ctx, AirdropId, UserAddress)

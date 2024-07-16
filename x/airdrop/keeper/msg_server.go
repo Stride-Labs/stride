@@ -95,13 +95,22 @@ func (ms msgServer) UpdateAirdrop(goCtx context.Context, msg *types.MsgUpdateAir
 func (ms msgServer) AddAllocations(goCtx context.Context, msg *types.MsgAddAllocations) (*types.MsgAddAllocationsResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	if _, found := ms.Keeper.GetAirdrop(ctx, msg.AirdropId); !found {
+	airdrop, found := ms.Keeper.GetAirdrop(ctx, msg.AirdropId)
+	if !found {
 		return nil, types.ErrAirdropNotFound.Wrapf("airdrop %s", msg.AirdropId)
 	}
+
+	windowLength := ms.Keeper.GetParams(ctx).AllocationWindowSeconds
+	expectedDays := airdrop.GetAirdropLength(windowLength)
 
 	for _, rawAllocation := range msg.Allocations {
 		if _, found := ms.Keeper.GetUserAllocation(ctx, msg.AirdropId, rawAllocation.UserAddress); found {
 			return nil, types.ErrUserAllocationAlreadyExists.Wrapf("user %s", rawAllocation.UserAddress)
+		}
+
+		if len(rawAllocation.Allocations) != int(expectedDays) {
+			return nil, types.ErrInvalidAllocationListLength.Wrapf("expected %d, provided %d",
+				expectedDays, len(rawAllocation.Allocations))
 		}
 
 		userAllocation := types.UserAllocation{
@@ -130,6 +139,12 @@ func (ms msgServer) UpdateUserAllocation(goCtx context.Context, msg *types.MsgUp
 	if !found {
 		return nil, types.ErrUserAllocationNotFound.Wrapf("user %s", msg.UserAddress)
 	}
+
+	if len(msg.Allocations) != len(userAllocation.Allocations) {
+		return nil, types.ErrInvalidAllocationListLength.Wrapf("current allocations length: %d, provided length: %d",
+			len(userAllocation.Allocations), len(msg.Allocations))
+	}
+
 	userAllocation.Allocations = msg.Allocations
 	ms.Keeper.SetUserAllocation(ctx, userAllocation)
 
