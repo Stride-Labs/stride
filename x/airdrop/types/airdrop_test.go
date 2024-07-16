@@ -13,6 +13,7 @@ import (
 func TestGetCurrentDateIndex(t *testing.T) {
 	startTime := time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC)
 	endTime := startTime.Add(time.Hour * 24 * 150) // 150 days later
+	windowLength := int64(time.Hour * 24)
 
 	airdrop := types.Airdrop{
 		DistributionStartDate: &startTime,
@@ -81,7 +82,7 @@ func TestGetCurrentDateIndex(t *testing.T) {
 			ctx := sdk.Context{}
 			ctx = ctx.WithBlockTime(tc.currentTime)
 
-			actualDateIndex, actualError := airdrop.GetCurrentDateIndex(ctx)
+			actualDateIndex, actualError := airdrop.GetCurrentDateIndex(ctx, windowLength)
 			if tc.expectedError != nil {
 				require.Equal(t, tc.expectedDateIndex, actualDateIndex, "date index")
 			} else {

@@ -115,7 +115,8 @@ func (k Keeper) UserSummary(goCtx context.Context, req *types.QueryUserSummaryRe
 		return nil, status.Errorf(codes.NotFound, "allocations not found for airdrop %s and user %s", req.AirdropId, req.Address)
 	}
 
-	currentDateIndex, err := airdrop.GetCurrentDateIndex(ctx)
+	windowLength := k.GetParams(ctx).AllocationWindowSeconds
+	currentDateIndex, err := airdrop.GetCurrentDateIndex(ctx, windowLength)
 	if err != nil {
 		return nil, status.Errorf(codes.FailedPrecondition, err.Error())
 	}

@@ -7,7 +7,7 @@ import (
 )
 
 // Returns the date index in the allocations array using the current block time
-func (a *Airdrop) GetCurrentDateIndex(ctx sdk.Context) (dateIndex int, err error) {
+func (a *Airdrop) GetCurrentDateIndex(ctx sdk.Context, windowLength int64) (dateIndex int, err error) {
 	if a.DistributionStartDate == nil {
 		return 0, errors.New("distribution start date not set")
 	}
@@ -27,7 +27,7 @@ func (a *Airdrop) GetCurrentDateIndex(ctx sdk.Context) (dateIndex int, err error
 	}
 
 	elapsedTimeSeconds := blockTime - startTime
-	elapsedDays := elapsedTimeSeconds / (60 * 60 * 24)
+	elapsedDays := elapsedTimeSeconds / windowLength
 
 	return int(elapsedDays), nil
 }
