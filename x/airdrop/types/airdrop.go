@@ -6,6 +6,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
+// Returns the date index in the allocations array using the current block time
 func (a *Airdrop) GetCurrentDateIndex(ctx sdk.Context) (dateIndex int, err error) {
 	if a.DistributionStartDate == nil {
 		return 0, errors.New("distribution start date not set")
