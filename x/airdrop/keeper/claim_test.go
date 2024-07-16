@@ -79,7 +79,7 @@ func (s *KeeperTestSuite) TestClaimDaily() {
 			// Claimer already chose claim early
 			name:               "already chose to claim early",
 			timeOffset:         time.Hour,
-			initialAllocations: []int64{},
+			initialAllocations: []int64{0, 0, 0},
 			initialClaimed:     100,
 			initialClaimType:   types.CLAIM_EARLY,
 			expectedError:      "user has already elected claim option",
@@ -394,6 +394,14 @@ func (s *KeeperTestSuite) TestLinkAddresses() {
 			hostAllocations:   []int64{40, 50},
 			expectedError:     "allocations are not the same length",
 		},
+		{
+			name:              "no host allocations",
+			initialClaimType:  types.CLAIM_DAILY,
+			initialClaimed:    sdkmath.ZeroInt(),
+			strideAllocations: []int64{10, 20, 30},
+			hostAllocations:   nil,
+			expectedError:     "user allocation not found",
+		},
 	}
 
 	for _, tc := range testCases {
@@ -418,13 +426,15 @@ func (s *KeeperTestSuite) TestLinkAddresses() {
 					Claimed:     tc.initialClaimed,
 				})
 			}
-			s.App.AirdropKeeper.SetUserAllocation(s.Ctx, types.UserAllocation{
-				AirdropId:   AirdropId,
-				Address:     hostAddress,
-				ClaimType:   tc.initialClaimType,
-				Allocations: allocationsToSdkInt(tc.hostAllocations),
-				Claimed:     sdkmath.ZeroInt(),
-			})
+			if tc.hostAllocations != nil {
+				s.App.AirdropKeeper.SetUserAllocation(s.Ctx, types.UserAllocation{
+					AirdropId:   AirdropId,
+					Address:     hostAddress,
+					ClaimType:   tc.initialClaimType,
+					Allocations: allocationsToSdkInt(tc.hostAllocations),
+					Claimed:     sdkmath.ZeroInt(),
+				})
+			}
 
 			// Call link
 			actualError := s.App.AirdropKeeper.LinkAddresses(s.Ctx, AirdropId, strideAddress, hostAddress)
