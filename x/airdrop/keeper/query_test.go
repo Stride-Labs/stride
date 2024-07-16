@@ -2,6 +2,7 @@ package keeper_test
 
 import (
 	"fmt"
+	"time"
 
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -125,7 +126,9 @@ func (s *KeeperTestSuite) TestQueryUserSummary() {
 	claimed := sdkmath.NewInt(10)
 	forfeited := sdkmath.ZeroInt()
 	remaining := sdkmath.NewInt(1 + 5 + 3)
+	claimable := sdkmath.NewInt(1 + 5)
 	claimType := types.CLAIM_EARLY
+	dateIndex := int64(2)
 
 	userAllocation := types.UserAllocation{
 		AirdropId: AirdropId,
@@ -136,11 +139,18 @@ func (s *KeeperTestSuite) TestQueryUserSummary() {
 		Allocations: []sdkmath.Int{
 			sdkmath.ZeroInt(),
 			sdkmath.NewInt(1),
-			sdkmath.NewInt(5),
+			sdkmath.NewInt(5), // today
 			sdkmath.NewInt(3),
 		},
 	}
 	s.App.AirdropKeeper.SetUserAllocation(s.Ctx, userAllocation)
+	s.App.AirdropKeeper.SetAirdrop(s.Ctx, types.Airdrop{
+		Id:                    AirdropId,
+		DistributionStartDate: &DistributionStartDate,
+		DistributionEndDate:   &DistributionEndDate,
+	})
+
+	s.Ctx = s.Ctx.WithBlockTime(DistributionStartDate.Add(time.Hour * 49))
 
 	// Query the summary and confirm the remaining total is correct
 	req := &types.QueryUserSummaryRequest{
@@ -152,5 +162,7 @@ func (s *KeeperTestSuite) TestQueryUserSummary() {
 	s.Require().Equal(claimed, resp.Claimed, "amount claimed")
 	s.Require().Equal(forfeited, resp.Forfeited, "amount forfeited")
 	s.Require().Equal(remaining, resp.Remaining, "amount remaining")
+	s.Require().Equal(claimable, resp.Claimable, "amount claimable")
 	s.Require().Equal(claimType.String(), resp.ClaimType, "amount remaining")
+	s.Require().Equal(dateIndex, resp.CurrentDateIndex, "todays index")
 }
