@@ -81,24 +81,3 @@ func (k Keeper) GetUserAllocationsForAddress(ctx sdk.Context, address string) (u
 	}
 	return userAllocations
 }
-
-// Resets a claim type for a user allocation.
-// This is used to reset a claim type after a link has been made or removed.
-func (k Keeper) ResetClaimType(ctx sdk.Context, airdropId, address string) {
-	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.UserAllocationKeyPrefix)
-
-	key := types.UserAllocationKey(airdropId, address)
-	allocationBz := store.Get(key)
-
-	if len(allocationBz) == 0 {
-		return
-	}
-
-	var allocation types.UserAllocation
-	k.cdc.MustUnmarshal(allocationBz, &allocation)
-
-	allocation.ClaimType = types.CLAIM_DAILY
-
-	allocationBz = k.cdc.MustMarshal(&allocation)
-	store.Set(key, allocationBz)
-}
