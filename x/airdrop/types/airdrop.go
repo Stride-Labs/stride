@@ -28,7 +28,7 @@ func (a *Airdrop) GetCurrentDateIndex(ctx sdk.Context, windowLengthSeconds int64
 	elapsedDays := elapsedTimeSeconds / windowLengthSeconds
 
 	// Cap the airdrop index at the last day
-	if elapsedDays > a.GetAirdropPeriods(windowLengthSeconds) {
+	if elapsedDays >= a.GetAirdropPeriods(windowLengthSeconds) {
 		elapsedDays = a.GetAirdropPeriods(windowLengthSeconds) - 1
 	}
 
