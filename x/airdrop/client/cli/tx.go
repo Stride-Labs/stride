@@ -151,7 +151,9 @@ Example:
 	--clawback-date            2024-07-01T00:00:00 \
 	--claim-type-deadline-date 2024-02-01T00:00:00 \
 	--early-claim-penalty      0.5 \
-	--distribution-address     strideXXX \
+	--distributor-address     strideXXX \
+	--allocator-address       strideYYY \
+	--linker-address          strideZZZ \
 	--from admin
 `, version.AppName, types.ModuleName),
 		),
@@ -293,7 +295,9 @@ Example:
 	--clawback-date            2024-07-01T00:00:00 \
 	--claim-type-deadline-date 2024-02-01T00:00:00 \
 	--early-claim-penalty      0.5 \
-	--distribution-address     strideXXX \
+	--distributor-address     strideXXX \
+	--allocator-address       strideYYY \
+	--linker-address          strideZZZ \
 	--from admin
 `, version.AppName, types.ModuleName),
 		),
