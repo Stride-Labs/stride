@@ -64,7 +64,7 @@ while true; do
     echo "STRIDE @ $($STRIDE_MAIN_CMD q tendermint-validator-set | head -n 1 | tr -dc '0-9') | $N_VALIDATORS_STRIDE VALS" >  $balances
     echo "STRIDE @ $($STRIDE_MAIN_CMD q tendermint-validator-set | head -n 1 | tr -dc '0-9') | $N_VALIDATORS_STRIDE VALS" > $channels
 
-    for chain in ${HOST_CHAINS[@]}; do
+    for chain in ${HOST_CHAINS[@]:-}; do
         HOST_MAIN_CMD=$(GET_VAR_VALUE ${chain}_MAIN_CMD)
 
         N_VALIDATORS_HOST=$($HOST_MAIN_CMD q tendermint-validator-set | grep -o address | wc -l | tr -dc '0-9')
@@ -88,7 +88,7 @@ while true; do
     print_header "TRADE ROUTES" $state
     $STRIDE_MAIN_CMD q stakeibc list-trade-routes >> $state
 
-    host_chain="${HOST_CHAINS[0]}"
+    host_chain="${HOST_CHAINS[0]:-}"
     if [[ "$host_chain" == "GAIA" ]]; then
         print_separator "STAKETIA" $state
 
@@ -105,11 +105,13 @@ while true; do
     fi
 
     # Log stride stakeibc balances
-    print_separator "VALIDATORS" $balances
-    host_val_address="$(${host_chain}_ADDRESS)"
-    host_cmd=$(GET_VAR_VALUE ${host_chain}_MAIN_CMD)
-    print_stride_balance $(STRIDE_ADDRESS) "STRIDE" 
-    print_host_balance $host_chain $host_val_address $host_chain
+    if [[ "$host_chain" != "" ]]; then
+        print_separator "VALIDATORS" $balances
+        host_val_address="$(${host_chain}_ADDRESS)"
+        host_cmd=$(GET_VAR_VALUE ${host_chain}_MAIN_CMD)
+        print_stride_balance $(STRIDE_ADDRESS) "STRIDE" 
+        print_host_balance $host_chain $host_val_address $host_chain
+    fi
 
     if [[ "$host_chain" == "GAIA" ]]; then
         # Log stride staketia balances
@@ -144,7 +146,7 @@ while true; do
     print_separator "STRIDE" $channels
     $STRIDE_MAIN_CMD q ibc channel channels | grep -E "channel_id|port|state" >> $channels || true
 
-    for chain in ${HOST_CHAINS[@]}; do
+    for chain in ${HOST_CHAINS[@]:-}; do
         HOST_CHAIN_ID=$(GET_VAR_VALUE ${chain}_CHAIN_ID)
         HOST_MAIN_CMD=$(GET_VAR_VALUE ${chain}_MAIN_CMD)
         

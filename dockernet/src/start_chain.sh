@@ -5,7 +5,7 @@ SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 
 source ${SCRIPT_DIR}/../config.sh
 
-for chain_id in STRIDE ${HOST_CHAINS[@]} ${ACCESSORY_CHAINS[@]:-}; do
+for chain_id in STRIDE ${HOST_CHAINS[@]:-} ${ACCESSORY_CHAINS[@]:-}; do
     num_nodes=$(GET_VAR_VALUE ${chain_id}_NUM_NODES)
     node_prefix=$(GET_VAR_VALUE ${chain_id}_NODE_PREFIX)
 
@@ -18,7 +18,7 @@ for chain_id in STRIDE ${HOST_CHAINS[@]} ${ACCESSORY_CHAINS[@]:-}; do
     SAVE_DOCKER_LOGS ${node_prefix}1 $log_file
 done
 
-for chain_id in STRIDE ${HOST_CHAINS[@]} ${ACCESSORY_CHAINS[@]:-}; do
+for chain_id in STRIDE ${HOST_CHAINS[@]:-} ${ACCESSORY_CHAINS[@]:-}; do
     printf "Waiting for $chain_id to start..."
 
     node_prefix=$(GET_VAR_VALUE ${chain_id}_NODE_PREFIX)
