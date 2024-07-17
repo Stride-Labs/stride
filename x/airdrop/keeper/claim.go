@@ -137,14 +137,14 @@ func (k Keeper) ClaimEarly(ctx sdk.Context, airdropId, claimer string) error {
 	// Distribute rewards from the distributor, deducting the early penalty
 	distributorAccount := sdk.MustAccAddressFromBech32(airdrop.DistributionAddress)
 	claimerAccount := sdk.MustAccAddressFromBech32(userAllocation.Address)
-
 	rewardsCoin := sdk.NewCoin(airdrop.RewardDenom, distributedRewards)
-	if err := k.bankKeeper.SendCoins(ctx, distributorAccount, claimerAccount, sdk.NewCoins(rewardsCoin)); err != nil {
-		return errorsmod.Wrapf(err, "unable to distribute rewards")
-	}
 
 	// Update the reward record for to mark the progress
 	k.SetUserAllocation(ctx, userAllocation)
+
+	if err := k.bankKeeper.SendCoins(ctx, distributorAccount, claimerAccount, sdk.NewCoins(rewardsCoin)); err != nil {
+		return errorsmod.Wrapf(err, "unable to distribute rewards")
+	}
 
 	return nil
 }
