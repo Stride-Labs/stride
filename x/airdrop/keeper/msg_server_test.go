@@ -151,6 +151,12 @@ func (s *KeeperTestSuite) TestAddAllocations() {
 	_, err = s.GetMsgServer().AddAllocations(sdk.UnwrapSDKContext(s.Ctx), &invalidMsg)
 	s.Require().ErrorIs(err, types.ErrInvalidAllocationListLength)
 
+	// Try to add the allocation with a nonadmin address, it should fail
+	invalidMsg = msg
+	invalidMsg.Admin = "different"
+	_, err = s.GetMsgServer().AddAllocations(sdk.UnwrapSDKContext(s.Ctx), &invalidMsg)
+	s.Require().ErrorIs(err, types.ErrInvalidAdminAddress)
+
 	// Remove the airdrop and try it again, it should error saying the airdrop doesn't exist
 	s.App.AirdropKeeper.RemoveAirdrop(s.Ctx, AirdropId)
 	_, err = s.GetMsgServer().AddAllocations(sdk.UnwrapSDKContext(s.Ctx), &msg)
@@ -158,12 +164,15 @@ func (s *KeeperTestSuite) TestAddAllocations() {
 }
 
 func (s *KeeperTestSuite) TestUpdateUserAllocation() {
+	allocator := s.TestAccs[0]
+
 	initialAllocations := []sdkmath.Int{sdkmath.NewInt(1), sdkmath.NewInt(2)}
 	updatedAllocations := []sdkmath.Int{sdkmath.NewInt(3), sdkmath.NewInt(4)}
 
 	// Create an airdrop and user allocation
 	s.App.AirdropKeeper.SetAirdrop(s.Ctx, types.Airdrop{
-		Id: AirdropId,
+		Id:               AirdropId,
+		AllocatorAddress: allocator.String(),
 	})
 	s.App.AirdropKeeper.SetUserAllocation(s.Ctx, types.UserAllocation{
 		AirdropId:   AirdropId,
@@ -173,6 +182,7 @@ func (s *KeeperTestSuite) TestUpdateUserAllocation() {
 
 	// Update the allocations
 	msg := types.MsgUpdateUserAllocation{
+		Admin:       allocator.String(),
 		AirdropId:   AirdropId,
 		UserAddress: UserAddress,
 		Allocations: updatedAllocations,
@@ -181,11 +191,8 @@ func (s *KeeperTestSuite) TestUpdateUserAllocation() {
 	s.Require().NoError(err, "no error expected when updating allocation")
 
 	// Try to update again to a different allocation length, it should fail
-	invalidMsg := types.MsgUpdateUserAllocation{
-		AirdropId:   AirdropId,
-		UserAddress: UserAddress,
-		Allocations: updatedAllocations[1:], // trimmed first element
-	}
+	invalidMsg := msg
+	invalidMsg.Allocations = updatedAllocations[1:] // trimmed first element
 	_, err = s.GetMsgServer().UpdateUserAllocation(sdk.UnwrapSDKContext(s.Ctx), &invalidMsg)
 	s.Require().ErrorIs(err, types.ErrInvalidAllocationListLength)
 
@@ -194,8 +201,83 @@ func (s *KeeperTestSuite) TestUpdateUserAllocation() {
 	_, err = s.GetMsgServer().UpdateUserAllocation(sdk.UnwrapSDKContext(s.Ctx), &msg)
 	s.Require().ErrorIs(err, types.ErrUserAllocationNotFound)
 
+	// Try to update the allocation with a nonadmin address, it should fail
+	invalidMsg = msg
+	invalidMsg.Admin = "different"
+	_, err = s.GetMsgServer().UpdateUserAllocation(sdk.UnwrapSDKContext(s.Ctx), &invalidMsg)
+	s.Require().ErrorIs(err, types.ErrInvalidAdminAddress)
+
 	// Remove the airdrop and try again, it should also error
 	s.App.AirdropKeeper.RemoveAirdrop(s.Ctx, AirdropId)
 	_, err = s.GetMsgServer().UpdateUserAllocation(sdk.UnwrapSDKContext(s.Ctx), &msg)
+	s.Require().ErrorIs(err, types.ErrAirdropNotFound)
+}
+
+func (s *KeeperTestSuite) TestMsgLinkAddresses() {
+	// Most test cases are covered in the keeper function
+	// This is meant mainly to test the happy path and admin address enforcement
+	strideAddress := "stride"
+	hostAddress := "host"
+	linkerAddress := "linker"
+
+	// Create the initial airdrop (it only has to exist)
+	s.App.AirdropKeeper.SetAirdrop(s.Ctx, types.Airdrop{
+		Id:            AirdropId,
+		LinkerAddress: linkerAddress,
+	})
+
+	// Create the stride and host allocations
+	strideUserAllocation := types.UserAllocation{
+		AirdropId:   AirdropId,
+		Address:     strideAddress,
+		Allocations: []sdkmath.Int{sdkmath.NewInt(10), sdkmath.NewInt(10), sdkmath.NewInt(10)},
+		Forfeited:   sdkmath.ZeroInt(),
+		Claimed:     sdkmath.NewInt(10),
+	}
+	hostUserAllocation := types.UserAllocation{
+		AirdropId:   AirdropId,
+		Address:     hostAddress,
+		Allocations: []sdkmath.Int{sdkmath.NewInt(10), sdkmath.NewInt(10), sdkmath.NewInt(10)},
+		Forfeited:   sdkmath.ZeroInt(),
+		Claimed:     sdkmath.ZeroInt(),
+	}
+	s.App.AirdropKeeper.SetUserAllocation(s.Ctx, strideUserAllocation)
+	s.App.AirdropKeeper.SetUserAllocation(s.Ctx, hostUserAllocation)
+
+	expectedUpdatedUserAllocation := types.UserAllocation{
+		AirdropId:   AirdropId,
+		Address:     strideAddress,
+		Claimed:     sdkmath.NewInt(10),
+		Forfeited:   sdkmath.ZeroInt(),
+		Allocations: []sdkmath.Int{sdkmath.NewInt(20), sdkmath.NewInt(20), sdkmath.NewInt(20)},
+	}
+
+	// Call link
+	msg := types.MsgLinkAddresses{
+		Admin:         linkerAddress,
+		AirdropId:     AirdropId,
+		StrideAddress: strideAddress,
+		HostAddress:   hostAddress,
+	}
+	_, err := s.GetMsgServer().LinkAddresses(sdk.UnwrapSDKContext(s.Ctx), &msg)
+	s.Require().NoError(err, "no error expected during linking")
+
+	// Check that the stride allocation was updated
+	actualUserAllocation := s.MustGetUserAllocation(AirdropId, strideAddress)
+	s.Require().Equal(expectedUpdatedUserAllocation, actualUserAllocation, "updated user allocation")
+
+	// Check that the host user was removed
+	_, hostFound := s.App.AirdropKeeper.GetUserAllocation(s.Ctx, AirdropId, hostAddress)
+	s.Require().False(hostFound, "host user allocation should have been removed")
+
+	// Attempt to call it again with a non-admin address, it should fail
+	invalidMsg := msg
+	invalidMsg.Admin = "different"
+	_, err = s.GetMsgServer().LinkAddresses(sdk.UnwrapSDKContext(s.Ctx), &invalidMsg)
+	s.Require().ErrorIs(err, types.ErrInvalidAdminAddress)
+
+	// Remove the airdrop and try it again, it should error even sooner
+	s.App.AirdropKeeper.RemoveAirdrop(s.Ctx, AirdropId)
+	_, err = s.GetMsgServer().LinkAddresses(sdk.UnwrapSDKContext(s.Ctx), &invalidMsg)
 	s.Require().ErrorIs(err, types.ErrAirdropNotFound)
 }

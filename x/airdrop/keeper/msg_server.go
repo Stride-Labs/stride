@@ -103,6 +103,9 @@ func (ms msgServer) AddAllocations(goCtx context.Context, msg *types.MsgAddAlloc
 	if !found {
 		return nil, types.ErrAirdropNotFound.Wrapf("airdrop %s", msg.AirdropId)
 	}
+	if msg.Admin != airdrop.AllocatorAddress {
+		return nil, types.ErrInvalidAdminAddress.Wrapf("user allocations can only be added by the allocator admin")
+	}
 
 	expectedDays := airdrop.GetAirdropLength()
 
