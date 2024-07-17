@@ -26,6 +26,17 @@ func (k Keeper) ClaimDaily(ctx sdk.Context, airdropId, claimer string) error {
 			userAllocation.ClaimType.String())
 	}
 
+	// Confirm we're not past the decision date
+	currentTime := ctx.BlockTime().Unix()
+	if currentTime > airdrop.ClaimTypeDeadlineDate.Unix() {
+		return types.ErrAfterDecisionDeadline
+	}
+
+	// Confirm the airdrop started
+	if currentTime < airdrop.DistributionStartDate.Unix() {
+		return types.ErrDistributionNotStarted
+	}
+
 	// Get the index in the allocations array from the current date
 	// E.g. on the 10th day of distribution, this will map to the 9th index in the list
 	windowLength := k.GetParams(ctx).AllocationWindowSeconds
