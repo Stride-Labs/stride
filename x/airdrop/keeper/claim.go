@@ -78,7 +78,7 @@ func (k Keeper) ClaimEarly(ctx sdk.Context, airdropId, claimer string) error {
 		return types.ErrUserAllocationNotFound.Wrapf("user %s for airdrop %s", claimer, airdropId)
 	}
 
-	// Confirm the user has not elected to claim early (meaning their type will be ClaimDaily)
+	// Confirm the user is still in the daily claim mode (has not elected to ClaimEarly yet)
 	if userAllocation.ClaimType != types.CLAIM_DAILY {
 		return types.ErrClaimTypeUnavailable.Wrapf("user has already elected claim option %s",
 			userAllocation.ClaimType.String())
