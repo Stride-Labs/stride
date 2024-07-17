@@ -30,12 +30,12 @@ current_time_with_minute_offset() {
 	fi
 }
 
-echo ">>> Creating admin accounts"
+echo ">>> Creating admin accounts..."
 echo $DISTRIBUTOR_MNEMONIC | $STRIDE_MAIN_CMD keys add distributor --recover -- | grep -E "address|name"
 echo $ALLOCATOR_MNEMONIC | $STRIDE_MAIN_CMD keys add allocator --recover | grep -E "address|name"
 echo $LINKER_MNEMONIC | $STRIDE_MAIN_CMD keys add linker --recover | grep -E "address|name"
 
-echo -e "\n>>> Creating claimer accounts"
+echo -e "\n>>> Creating claimer accounts..."
 echo $CLAIMER_1_MNEMONIC | $STRIDE_MAIN_CMD keys add claimer1 --recover | grep -E "address|name"
 echo $CLAIMER_2_MNEMONIC | $STRIDE_MAIN_CMD keys add claimer2 --recover | grep -E "address|name"
 echo $CLAIMER_3_MNEMONIC | $STRIDE_MAIN_CMD keys add claimer3 --recover | grep -E "address|name"

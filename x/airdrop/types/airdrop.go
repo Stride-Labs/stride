@@ -28,16 +28,16 @@ func (a *Airdrop) GetCurrentDateIndex(ctx sdk.Context, windowLengthSeconds int64
 	elapsedDays := elapsedTimeSeconds / windowLengthSeconds
 
 	// Cap the airdrop index at the last day
-	if elapsedDays > a.GetAirdropLength(windowLengthSeconds) {
-		elapsedDays = a.GetAirdropLength(windowLengthSeconds) - 1
+	if elapsedDays > a.GetAirdropPeriods(windowLengthSeconds) {
+		elapsedDays = a.GetAirdropPeriods(windowLengthSeconds) - 1
 	}
 
 	return int(elapsedDays), nil
 }
 
-// Returns the length of the airdrop in days
+// Returns number of periods in the airdrop
 // windowLengthSeconds is the time between each element in the allocations array
-func (a *Airdrop) GetAirdropLength(windowLengthSeconds int64) int64 {
+func (a *Airdrop) GetAirdropPeriods(windowLengthSeconds int64) int64 {
 	airdropLengthSeconds := int64(a.DistributionEndDate.Unix() - a.DistributionStartDate.Unix())
 	numberOfDays := (airdropLengthSeconds / (windowLengthSeconds)) + 1
 	return numberOfDays

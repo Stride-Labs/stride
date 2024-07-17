@@ -108,7 +108,7 @@ func (ms msgServer) AddAllocations(goCtx context.Context, msg *types.MsgAddAlloc
 	}
 
 	windowLengthSeconds := ms.Keeper.GetParams(ctx).AllocationWindowSeconds
-	expectedDays := airdrop.GetAirdropLength(windowLengthSeconds)
+	expectedDays := airdrop.GetAirdropPeriods(windowLengthSeconds)
 
 	for _, rawAllocation := range msg.Allocations {
 		if _, found := ms.Keeper.GetUserAllocation(ctx, msg.AirdropId, rawAllocation.UserAddress); found {
