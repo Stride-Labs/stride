@@ -55,12 +55,12 @@ func (k Keeper) ClaimDaily(ctx sdk.Context, airdropId, claimer string) error {
 	claimerAccount := sdk.MustAccAddressFromBech32(userAllocation.Address)
 	rewardsCoin := sdk.NewCoin(airdrop.RewardDenom, todaysRewards)
 
+	// Update the reward record for to mark the progress
+	k.SetUserAllocation(ctx, userAllocation)
+
 	if err := k.bankKeeper.SendCoins(ctx, distributorAccount, claimerAccount, sdk.NewCoins(rewardsCoin)); err != nil {
 		return errorsmod.Wrapf(err, "unable to distribute rewards")
 	}
-
-	// Update the reward record for to mark the progress
-	k.SetUserAllocation(ctx, userAllocation)
 
 	return nil
 }
