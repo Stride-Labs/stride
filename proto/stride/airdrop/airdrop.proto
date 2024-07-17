@@ -115,6 +115,13 @@ message Airdrop {
   ];
 
   // Account that holds the total reward balance and distributes to users
-  string distribution_address = 8
+  string distributor_address = 8
       [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+
+  // Admin account with permissions to add or update allocations
+  string allocator_address = 9
+      [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+
+  // Admin account with permissions to link addresseses
+  string linker_address = 10 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
 }
