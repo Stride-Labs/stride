@@ -94,6 +94,17 @@ func (s *KeeperTestSuite) TestClaimDaily() {
 			expectedNewRewards:  100,
 		},
 		{
+			// Claimed on first day after airdrop distribution ended
+			// Airdrop is 10 days long so an offset of (10 days + 1 second) gives the end date at 00:00:01 UTC
+			name:                "claim on last second of distribution",
+			timeOffset:          ((time.Hour * 24 * 10) + time.Second), // on last second of last distribution day
+			initialAllocations:  []int64{10, 10, 10, 10, 10, 10, 10, 10, 10, 10},
+			expectedAllocations: []int64{0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+			initialClaimed:      100,
+			expectedClaimed:     100 + 100,
+			expectedNewRewards:  100,
+		},
+		{
 			// Claimed on the last second before rewards are clawed back
 			// Clawback occurs 15 days into the airdrop so an offset of 14 days would give the clawback date
 			// And an offset of (14 days - 1 second) gives time 23:59:59 UTC on the day before the clawback
