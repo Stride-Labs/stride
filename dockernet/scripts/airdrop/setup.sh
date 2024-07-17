@@ -21,12 +21,12 @@ CLAIMER_3_MNEMONIC="pet garlic cram security clock element truth soda stomach ug
 
 LINKED_CLAIMER_ADDRESS="dym1uk4ze0x4nvh4fk0xm4jdud58eqn4yxhr6zxkau"
 
-date_with_offset() {
-	days=$1
+current_time_with_minute_offset() {
+	minutes=$1
 	if [[ "$OS" == "Darwin" ]]; then
-		date -u -v+"${days}d" +"%Y-%m-%dT%H:%M:%S"
+		date -u -v+"${minutes}M" +"%Y-%m-%dT%H:%M:%S"
 	else
-		date -u +"%Y-%m-%dT%H:%M:%S" -d "$days days"
+		date -u +"%Y-%m-%dT%H:%M:%S" -d "$minutes minutes"
 	fi
 }
 
@@ -35,7 +35,7 @@ echo $DISTRIBUTOR_MNEMONIC | $STRIDE_MAIN_CMD keys add distributor --recover -- 
 echo $ALLOCATOR_MNEMONIC | $STRIDE_MAIN_CMD keys add allocator --recover | grep -E "address|name"
 echo $LINKER_MNEMONIC | $STRIDE_MAIN_CMD keys add linker --recover | grep -E "address|name"
 
-echo ">>> Creating claimer accounts"
+echo -e "\n>>> Creating claimer accounts"
 echo $CLAIMER_1_MNEMONIC | $STRIDE_MAIN_CMD keys add claimer1 --recover | grep -E "address|name"
 echo $CLAIMER_2_MNEMONIC | $STRIDE_MAIN_CMD keys add claimer2 --recover | grep -E "address|name"
 echo $CLAIMER_3_MNEMONIC | $STRIDE_MAIN_CMD keys add claimer3 --recover | grep -E "address|name"
@@ -66,10 +66,10 @@ sleep 3
 
 echo -e "\n>>> Creating airdrop..."
 $STRIDE_MAIN_CMD tx airdrop create-airdrop $AIRDROP_NAME \
-  	--distribution-start-date  $(date_with_offset 0) \
-	--distribution-end-date    $(date_with_offset 19) \
-	--clawback-date            $(date_with_offset 29) \
-	--claim-type-deadline-date $(date_with_offset 9) \
+  	--distribution-start-date  $(current_time_with_minute_offset 1) \
+	--distribution-end-date    $(current_time_with_minute_offset 20) \
+	--clawback-date            $(current_time_with_minute_offset 30) \
+	--claim-type-deadline-date $(current_time_with_minute_offset 10) \
 	--early-claim-penalty      0.5 \
 	--distributor-address      $distributor_address \
 	--allocator-address        $allocator_address \

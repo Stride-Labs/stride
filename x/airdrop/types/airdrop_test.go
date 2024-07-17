@@ -23,7 +23,7 @@ func TestGetCurrentDateIndex(t *testing.T) {
 		DistributionEndDate:   &endTime,
 		ClawbackDate:          &clawbackTime,
 	}
-	require.Equal(t, airdrop.GetAirdropLength(), int64(10), "airdrop length in setup")
+	require.Equal(t, airdrop.GetAirdropLength(windowLengthSeconds), int64(10), "airdrop length in setup")
 
 	testCases := []struct {
 		name              string
@@ -113,6 +113,8 @@ func TestGetCurrentDateIndex(t *testing.T) {
 }
 
 func TestGetAirdropLength(t *testing.T) {
+	windowLengthSeconds := int64(24 * 60 * 60)
+
 	testCases := []struct {
 		name           string
 		startDate      time.Time
@@ -151,7 +153,7 @@ func TestGetAirdropLength(t *testing.T) {
 				DistributionStartDate: &tc.startDate,
 				DistributionEndDate:   &tc.endDate,
 			}
-			actualLength := airdrop.GetAirdropLength()
+			actualLength := airdrop.GetAirdropLength(windowLengthSeconds)
 			require.Equal(t, tc.expectedLength, actualLength, "airdrop length")
 		})
 	}
