@@ -146,7 +146,9 @@ func NewMsgCreateAirdrop(
 	clawbackDate *time.Time,
 	claimDeadlineDate *time.Time,
 	earlyClaimPenalty sdk.Dec,
-	distributionAddress string,
+	distributorAddress string,
+	allocatorAddress string,
+	linkerAddress string,
 ) *MsgCreateAirdrop {
 	return &MsgCreateAirdrop{
 		Admin:                 admin,
@@ -157,7 +159,9 @@ func NewMsgCreateAirdrop(
 		ClawbackDate:          clawbackDate,
 		ClaimTypeDeadlineDate: claimDeadlineDate,
 		EarlyClaimPenalty:     earlyClaimPenalty,
-		DistributionAddress:   distributionAddress,
+		DistributorAddress:    distributorAddress,
+		AllocatorAddress:      allocatorAddress,
+		LinkerAddress:         linkerAddress,
 	}
 }
 
@@ -198,7 +202,9 @@ func (msg *MsgCreateAirdrop) ValidateBasic() error {
 		msg.ClawbackDate,
 		msg.ClaimTypeDeadlineDate,
 		msg.EarlyClaimPenalty,
-		msg.DistributionAddress,
+		msg.DistributorAddress,
+		msg.AllocatorAddress,
+		msg.LinkerAddress,
 	)
 }
 
@@ -215,7 +221,9 @@ func NewMsgUpdateAirdrop(
 	clawbackDate *time.Time,
 	claimDeadlineDate *time.Time,
 	earlyClaimPenalty sdk.Dec,
-	distributionAddress string,
+	distributorAddress string,
+	allocatorAddress string,
+	linkerAddress string,
 ) *MsgUpdateAirdrop {
 	return &MsgUpdateAirdrop{
 		Admin:                 admin,
@@ -226,7 +234,9 @@ func NewMsgUpdateAirdrop(
 		ClawbackDate:          clawbackDate,
 		ClaimTypeDeadlineDate: claimDeadlineDate,
 		EarlyClaimPenalty:     earlyClaimPenalty,
-		DistributionAddress:   distributionAddress,
+		DistributorAddress:    distributorAddress,
+		AllocatorAddress:      allocatorAddress,
+		LinkerAddress:         linkerAddress,
 	}
 }
 
@@ -267,7 +277,9 @@ func (msg *MsgUpdateAirdrop) ValidateBasic() error {
 		msg.ClawbackDate,
 		msg.ClaimTypeDeadlineDate,
 		msg.EarlyClaimPenalty,
-		msg.DistributionAddress,
+		msg.DistributorAddress,
+		msg.AllocatorAddress,
+		msg.LinkerAddress,
 	)
 }
 

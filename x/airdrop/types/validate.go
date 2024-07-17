@@ -18,7 +18,9 @@ func AirdropConfigValidateBasic(
 	clawbackDate *time.Time,
 	claimTypeDeadlineDate *time.Time,
 	earlyClaimPenalty sdk.Dec,
-	distributionAddress string,
+	distributorAddress string,
+	allocatorAddress string,
+	linkerAddress string,
 ) error {
 	if airdropId == "" {
 		return errors.New("airdrop-id must be specified")
@@ -60,8 +62,14 @@ func AirdropConfigValidateBasic(
 		return errors.New("early claim penalty must be between 0 and 1")
 	}
 
-	if _, err := sdk.AccAddressFromBech32(distributionAddress); err != nil {
-		return errorsmod.Wrapf(sdkerrors.ErrInvalidAddress, "invalid distribution address (%s)", err)
+	if _, err := sdk.AccAddressFromBech32(distributorAddress); err != nil {
+		return errorsmod.Wrapf(sdkerrors.ErrInvalidAddress, "invalid distributor address (%s)", err)
+	}
+	if _, err := sdk.AccAddressFromBech32(allocatorAddress); err != nil {
+		return errorsmod.Wrapf(sdkerrors.ErrInvalidAddress, "invalid allocator address (%s)", err)
+	}
+	if _, err := sdk.AccAddressFromBech32(linkerAddress); err != nil {
+		return errorsmod.Wrapf(sdkerrors.ErrInvalidAddress, "invalid linker address (%s)", err)
 	}
 
 	return nil
