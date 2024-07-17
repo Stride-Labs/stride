@@ -11,7 +11,7 @@ option go_package = "github.com/Stride-Labs/stride/v22/x/airdrop/types";
 message Params {
   // The number of seconds between each element in the allocations array
   // In practice this is always 24 hours, but it's customizable for testing
-  int64 allocation_window_seconds = 1;
+  int64 period_length_seconds = 1;
 }
 
 // ClaimType enum represents the possible claim types for a user getting an

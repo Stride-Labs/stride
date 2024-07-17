@@ -116,11 +116,10 @@ func (k Keeper) UserSummary(goCtx context.Context, req *types.QueryUserSummaryRe
 		return nil, status.Errorf(codes.NotFound, "allocations not found for airdrop %s and user %s", req.AirdropId, req.Address)
 	}
 
-	windowLength := k.GetParams(ctx).AllocationWindowSeconds
-
 	// If the airdrop hasn't started yet or has ended, return date index -1 and claimable 0
 	claimable := sdkmath.ZeroInt()
-	currentDateIndex, err := airdrop.GetCurrentDateIndex(ctx, windowLength)
+	periodLengthSeconds := k.GetParams(ctx).PeriodLengthSeconds
+	currentDateIndex, err := airdrop.GetCurrentDateIndex(ctx, periodLengthSeconds)
 	if err == nil {
 		claimable = allocation.GetClaimableAllocation(currentDateIndex)
 	} else if err == types.ErrAirdropNotStarted || err == types.ErrAirdropEnded {

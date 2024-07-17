@@ -107,8 +107,8 @@ func (ms msgServer) AddAllocations(goCtx context.Context, msg *types.MsgAddAlloc
 		return nil, types.ErrInvalidAdminAddress.Wrapf("user allocations can only be added by the allocator admin")
 	}
 
-	windowLengthSeconds := ms.Keeper.GetParams(ctx).AllocationWindowSeconds
-	expectedDays := airdrop.GetAirdropPeriods(windowLengthSeconds)
+	periodLengthSeconds := ms.Keeper.GetParams(ctx).PeriodLengthSeconds
+	expectedDays := airdrop.GetAirdropPeriods(periodLengthSeconds)
 
 	for _, rawAllocation := range msg.Allocations {
 		if _, found := ms.Keeper.GetUserAllocation(ctx, msg.AirdropId, rawAllocation.UserAddress); found {

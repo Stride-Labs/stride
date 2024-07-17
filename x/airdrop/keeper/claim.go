@@ -33,8 +33,8 @@ func (k Keeper) ClaimDaily(ctx sdk.Context, airdropId, claimer string) error {
 
 	// Get the index in the allocations array from the current date
 	// E.g. on the 10th day of distribution, this will map to the 9th index in the list
-	windowLength := k.GetParams(ctx).AllocationWindowSeconds
-	todaysIndex, err := airdrop.GetCurrentDateIndex(ctx, windowLength)
+	periodLengthSeconds := k.GetParams(ctx).PeriodLengthSeconds
+	todaysIndex, err := airdrop.GetCurrentDateIndex(ctx, periodLengthSeconds)
 	if err != nil {
 		return err
 	}
